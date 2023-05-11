@@ -48,10 +48,10 @@ TEST_F(CUDACSVM, construct_target_and_parameter) {
     EXPECT_NO_THROW((plssvm::cuda::csvm{ plssvm::target_platform::automatic, params }));
     EXPECT_NO_THROW((plssvm::cuda::csvm{ plssvm::target_platform::gpu_nvidia, params }));
 #else
-    EXPECT_THROW_WHAT(plssvm::cuda::csvm{ plssvm::target_platform::automatic, params },
+    EXPECT_THROW_WHAT((plssvm::cuda::csvm{ plssvm::target_platform::automatic, params }),
                       plssvm::cuda::backend_exception,
                       "Requested target platform 'gpu_nvidia' that hasn't been enabled using PLSSVM_TARGET_PLATFORMS!");
-    EXPECT_THROW_WHAT(plssvm::cuda::csvm{ plssvm::target_platform::gpu_nvidia, params },
+    EXPECT_THROW_WHAT((plssvm::cuda::csvm{ plssvm::target_platform::gpu_nvidia, params }),
                       plssvm::cuda::backend_exception,
                       "Requested target platform 'gpu_nvidia' that hasn't been enabled using PLSSVM_TARGET_PLATFORMS!");
 #endif
@@ -73,10 +73,10 @@ TEST_F(CUDACSVM, construct_target_and_named_args) {
     EXPECT_NO_THROW((plssvm::cuda::csvm{ plssvm::target_platform::automatic, plssvm::kernel_type = plssvm::kernel_function_type::linear, plssvm::cost = 2.0 }));
     EXPECT_NO_THROW((plssvm::cuda::csvm{ plssvm::target_platform::gpu_nvidia, plssvm::cost = 2.0 }));
 #else
-    EXPECT_THROW_WHAT(plssvm::cuda::csvm{ plssvm::target_platform::automatic, plssvm::kernel_type = plssvm::kernel_function_type::linear, plssvm::cost = 2.0 },
+    EXPECT_THROW_WHAT((plssvm::cuda::csvm{ plssvm::target_platform::automatic, plssvm::kernel_type = plssvm::kernel_function_type::linear, plssvm::cost = 2.0 }),
                       plssvm::cuda::backend_exception,
                       "Requested target platform 'gpu_nvidia' that hasn't been enabled using PLSSVM_TARGET_PLATFORMS!");
-    EXPECT_THROW_WHAT(plssvm::cuda::csvm{ plssvm::target_platform::gpu_nvidia, plssvm::cost = 2.0 },
+    EXPECT_THROW_WHAT((plssvm::cuda::csvm{ plssvm::target_platform::gpu_nvidia, plssvm::cost = 2.0 }),
                       plssvm::cuda::backend_exception,
                       "Requested target platform 'gpu_nvidia' that hasn't been enabled using PLSSVM_TARGET_PLATFORMS!");
 #endif
