@@ -120,6 +120,50 @@
  * @brief Directory containing implementation details for the SYCL backend.
  */
 
+/**
+ * @dir include/plssvm/backends/SYCL/DPCPP
+ * @author Alexander Van Craen
+ * @author Marcel Breyer
+ * @copyright 2018-today The PLSSVM project - All Rights Reserved
+ * @license This file is part of the PLSSVM project which is released under the MIT license.
+ *          See the LICENSE.md file in the project root for full license information.
+ *
+ * @brief Directory containing the implementation for the SYCL backend using DPC++ as SYCL implementation.
+ */
+
+/**
+ * @dir include/plssvm/backends/SYCL/DPCPP/detail
+ * @author Alexander Van Craen
+ * @author Marcel Breyer
+ * @copyright 2018-today The PLSSVM project - All Rights Reserved
+ * @license This file is part of the PLSSVM project which is released under the MIT license.
+ *          See the LICENSE.md file in the project root for full license information.
+ *
+ * @brief Directory containing implementation details for the SYCL backend using DPC++ as SYCL implementation.
+ */
+
+/**
+ * @dir include/plssvm/backends/SYCL/hipSYCL
+ * @author Alexander Van Craen
+ * @author Marcel Breyer
+ * @copyright 2018-today The PLSSVM project - All Rights Reserved
+ * @license This file is part of the PLSSVM project which is released under the MIT license.
+ *          See the LICENSE.md file in the project root for full license information.
+ *
+ * @brief Directory containing the implementation for the SYCL backend using hipSYCL as SYCL implementation.
+ */
+
+/**
+ * @dir include/plssvm/backends/SYCL/hipSYCL/detail
+ * @author Alexander Van Craen
+ * @author Marcel Breyer
+ * @copyright 2018-today The PLSSVM project - All Rights Reserved
+ * @license This file is part of the PLSSVM project which is released under the MIT license.
+ *          See the LICENSE.md file in the project root for full license information.
+ *
+ * @brief Directory containing implementation details for the SYCL backend using hipSYCL as SYCL implementation.
+ */
+
 
 /**
  * @dir include/plssvm/detail
@@ -130,6 +174,28 @@
  *          See the LICENSE.md file in the project root for full license information.
  *
  * @brief Directory containing implementation details which **should not** be used by users.
+ */
+
+/**
+ * @dir include/plssvm/detail/cmd
+ * @author Alexander Van Craen
+ * @author Marcel Breyer
+ * @copyright 2018-today The PLSSVM project - All Rights Reserved
+ * @license This file is part of the PLSSVM project which is released under the MIT license.
+ *          See the LICENSE.md file in the project root for full license information.
+ *
+ * @brief Directory containing implementation details regarding the command line interface which **should not** be used by users.
+ */
+
+/**
+ * @dir include/plssvm/detail/io
+ * @author Alexander Van Craen
+ * @author Marcel Breyer
+ * @copyright 2018-today The PLSSVM project - All Rights Reserved
+ * @license This file is part of the PLSSVM project which is released under the MIT license.
+ *          See the LICENSE.md file in the project root for full license information.
+ *
+ * @brief Directory containing implementation details regarding the IO functionality which **should not** be used by users.
  */
 
 /**
@@ -152,4 +218,15 @@
  *          See the LICENSE.md file in the project root for full license information.
  *
  * @brief Directory containing compile-time constant version information.
+ */
+
+/**
+ * @dir include/plssvm/version/git_metadata
+ * @author Alexander Van Craen
+ * @author Marcel Breyer
+ * @copyright 2018-today The PLSSVM project - All Rights Reserved
+ * @license This file is part of the PLSSVM project which is released under the MIT license.
+ *          See the LICENSE.md file in the project root for full license information.
+ *
+ * @brief Directory containing compile-time constant meta data for git specific information.
  */

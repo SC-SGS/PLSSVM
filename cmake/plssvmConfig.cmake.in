@@ -7,39 +7,46 @@
 @PACKAGE_INIT@
 
 include(CMakeFindDependencyMacro)
-find_dependency(OpenMP QUIET)
 
-# check if the OpenMP backend is required
+# check if the OpenMP is required (for the OpenMP backend or library utilities)
+set(PLSSVM_HAS_OPENMP_UTILITY @PLSSVM_FOUND_OPENMP_FOR_UTILITY@)
 set(PLSSVM_HAS_OPENMP_BACKEND @PLSSVM_OPENMP_BACKEND_LIBRARY_NAME@)
-if(PLSSVM_HAS_OPENMP_BACKEND)
+if (PLSSVM_HAS_OPENMP_BACKEND OR PLSSVM_HAS_OPENMP_UTILITY)
     find_dependency(OpenMP REQUIRED)
-endif()
+endif ()
 
 # check if fmt has been installed via FetchContent
 set(PLSSVM_FOUND_FMT @fmt_FOUND@)
-if(PLSSVM_FOUND_FMT)
+if (PLSSVM_FOUND_FMT)
     find_dependency(fmt REQUIRED)
-endif()
+endif ()
 
 # check if the CUDA backend is required
 set(PLSSVM_HAS_CUDA_BACKEND @PLSSVM_CUDA_BACKEND_LIBRARY_NAME@)
-if(PLSSVM_HAS_CUDA_BACKEND)
+if (PLSSVM_HAS_CUDA_BACKEND)
     enable_language(CUDA)
-endif()
+endif ()
+
+# check if the HIP backend is required
+set(PLSSVM_HAS_HIP_BACKEND @PLSSVM_HIP_BACKEND_LIBRARY_NAME@)
+if (PLSSVM_HAS_HIP_BACKEND)
+    enable_language(HIP)
+    find_package(HIP REQUIRED)
+endif ()
 
 # check if the OpenCL backend is required
 set(PLSSVM_HAS_OPENCL_BACKEND @PLSSVM_OPENCL_BACKEND_LIBRARY_NAME@)
-if(PLSSVM_HAS_OPENCL_BACKEND)
+if (PLSSVM_HAS_OPENCL_BACKEND)
     find_dependency(OpenCL REQUIRED)
-endif()
+endif ()
 
 # check if the SYCL implementation hipSYCL backend is required
 set(PLSSVM_HAS_SYCL_BACKEND_HIPSYCL @PLSSVM_SYCL_BACKEND_HIPSYCL_LIBRARY_NAME@)
-if(PLSSVM_HAS_SYCL_BACKEND_HIPSYCL)
+if (PLSSVM_HAS_SYCL_BACKEND_HIPSYCL)
     set(HIPSYCL_TARGETS @HIPSYCL_TARGETS@)
     find_dependency(hipSYCL CONFIG REQUIRED)
     message(STATUS "Found hipSYCL with ${HIPSYCL_TARGETS}")
-endif()
+endif ()
 
 include("${CMAKE_CURRENT_LIST_DIR}/plssvmTargets.cmake")
 check_required_components("plssvm")

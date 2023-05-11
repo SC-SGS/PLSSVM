@@ -9,8 +9,12 @@
  * @brief Implements compile-time constants to query the current library version.
  */
 
+#ifndef PLSSVM_VERSION_VERSION_HPP_
+#define PLSSVM_VERSION_VERSION_HPP_
 #pragma once
 
+#include <optional>     // std::optional
+#include <string>       // std::string
 #include <string_view>  // std::string_view
 
 namespace plssvm::version {
@@ -25,7 +29,7 @@ constexpr std::string_view name = "@PROJECT_NAME@";
  * @brief The current version of the library in the form: "major.minor.patch".
  * @details The value gets automatically set during the [`CMake`](https://cmake.org/) configuration step.
  */
-constexpr std::string_view string = "@PROJECT_VERSION@";
+constexpr std::string_view version = "@PROJECT_VERSION@";
 
 /**
  * @brief The current major version of the library.
@@ -45,4 +49,39 @@ constexpr int minor = @PROJECT_VERSION_MINOR@;
  */
 constexpr int patch = @PROJECT_VERSION_PATCH@;
 
+namespace detail {
+
+/**
+ * @brief The provided target platforms to use.
+ * @details The value gets automatically set during the [`CMake`](https://cmake.org/) configuration step.
+ */
+constexpr std::string_view target_platforms = "@PLSSVM_TARGET_PLATFORMS@";
+
+/**
+ * @brief The copyright notice of the PLSSVM library.
+ */
+constexpr std::string_view copyright_notice = "Copyright(C) 2018-today The PLSSVM project - All Rights Reserved\n"
+                                              "This is free software distributed under the MIT license; see the source for more information.";
+
+/**
+ * @brief Special git information used in the `--version` message.
+ * @details If no git could be found, returns a [`std::nullopt`](https://en.cppreference.com/w/cpp/utility/optional/nullopt)
+ * @return the git information: remote url, branch, commit sha1, and commit data (`[[nodiscard]]`)
+ */
+[[nodiscard]] std::optional<std::string> get_git_info();
+
+/**
+ * @brief The full content used for the `--version` message.
+ * @details Contains the executable name, library version, git information, available target platforms, backends, and SYCL implementations (if applicable),
+ *          and the copyright notice.
+ * @param[in] executable_name the name of the executable to generate the `--version` message for
+ * @param[in] with_backend_info if `true`, also includes backend specific information in the version message
+ * @return the information used for the `--version` message (`[[nodiscard]]`)
+ */
+[[nodiscard]] std::string get_version_info(std::string_view executable_name, bool with_backend_info = true);
+
+}  // namespace detail
+
 }  // namespace plssvm::version
+
+#endif  // PLSSVM_VERSION_VERSION_HPP_

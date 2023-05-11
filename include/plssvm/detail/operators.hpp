@@ -6,16 +6,17 @@
  * @license This file is part of the PLSSVM project which is released under the MIT license.
  *          See the LICENSE.md file in the project root for full license information.
  *
- * @brief Defines (arithmetic) functions on [`std::vector`](https://en.cppreference.com/w/cpp/container/vector) (and scalars).
+ * @brief Defines (arithmetic) functions on [`std::vector`](https://en.cppreference.com/w/cpp/container/vector) and scalars.
  */
 
+#ifndef PLSSVM_DETAIL_OPERATORS_HPP_
+#define PLSSVM_DETAIL_OPERATORS_HPP_
 #pragma once
 
 #include "plssvm/detail/assert.hpp"  // PLSSVM_ASSERT
 
-#include <cmath>        // std::fma
-#include <type_traits>  // std::is_arithmetic_v
-#include <vector>       // std::vector
+#include <cmath>                     // std::fma
+#include <vector>                    // std::vector
 
 /**
  * @def PLSSVM_GENERATE_ARITHMETIC_OPERATION
@@ -24,11 +25,11 @@
  *
  * Given the variables
  * @code
- * std::vector<T> vec1 = \dots;
- * std::vector<T> vec2 = \dots;
- * T scalar = \dots;
+ * std::vector<T> vec1 = ...;
+ * std::vector<T> vec2 = ...;
+ * T scalar = ...;
  * @endcode
- * the following operations for @p Op are generated (e.g. Op is `+`):
+ * the following operations for @p Op are generated (e.g., Op is `+`):
  * @code
  * vec1 += vec2;   // operator+=(vector, vector)
  * vec1 + vec2;    // operator+(vector, vector)
@@ -36,7 +37,6 @@
  * vec1 + scalar;  // operator+(vector, scalar)
  * scalar + vec1;  // operator+(scalar, vector)
  * @endcode
- * Also checks that both vectors have the same size using the PLSSVM_ASSERT macro.
  * @param[in] Op the operator to generate
  */
 // clang-format off
@@ -69,7 +69,11 @@
     }                                                                                                 \
     template <typename T>                                                                             \
     [[nodiscard]] inline std::vector<T> operator Op(const T lhs, std::vector<T> rhs) {                \
-        return rhs Op##= lhs;                                                                         \
+        _Pragma("omp simd")                                                                           \
+        for (typename std::vector<T>::size_type i = 0; i < rhs.size(); ++i) {                         \
+            rhs[i] = lhs Op rhs[i];                                                                   \
+        }                                                                                             \
+        return rhs;                                                                                   \
     }
 // clang-format on
 
@@ -85,9 +89,9 @@ PLSSVM_GENERATE_ARITHMETIC_OPERATION(/)
  * @brief Wrapper struct for overloading the dot product operator.
  * @details Used to calculate the dot product \f$x^T \cdot y\f$ using
  * @code
- * std::vector<T> x = \dots;
- * std::vector<T> y = \dots;
- * T res = transposed{ x } * y;  // dot(x, y);
+ * std::vector<T> x = ...;
+ * std::vector<T> y = ...;
+ * T res = transposed{ x } * y;  // same as: dot(x, y);
  * @endcode
  * @tparam T the value type
  */
@@ -97,14 +101,14 @@ struct transposed {
     const std::vector<T> &vec;
 };
 /**
- * @brief Deduction guide needed for C++17.
+ * @brief Deduction guide for the plssvm::operators::transposed struct needed for C++17.
  */
 template <typename T>
 transposed(const std::vector<T> &) -> transposed<T>;
 
 /**
  * @brief Calculate the dot product (\f$x^T \cdot y\f$) between both [`std::vector`](https://en.cppreference.com/w/cpp/container/vector).
- * @details Uses OpenMP SIMD reduction to speedup the calculation.
+ * @details Explicitly uses `std::fma` for better performance and accuracy.
  * @tparam T the value type
  * @param[in] lhs the first vector
  * @param[in] rhs the second vector
@@ -139,7 +143,7 @@ template <typename T>
 template <typename T>
 [[nodiscard]] inline T sum(const std::vector<T> &vec) {
     T val{};
-    #pragma omp simd reduction(+:val)
+    #pragma omp simd reduction(+ : val)
     for (typename std::vector<T>::size_type i = 0; i < vec.size(); ++i) {
         val += vec[i];
     }
@@ -148,7 +152,7 @@ template <typename T>
 
 /**
  * @brief Calculates the squared Euclidean distance of both vectors: \f$d^2(x, y) = (x_1 - y_1)^2 + (x_2 - y_2)^2 + \dots + (x_n - y_n)^2\f$.
- * @details Uses OpenMP SIMD reduction to speedup the calculation.
+ * @details Explicitly uses `std::fma` for better performance and accuracy.
  * @tparam T the value type
  * @param[in] lhs the first vector
  * @param[in] rhs the second vector
@@ -168,8 +172,8 @@ template <typename T>
 
 /**
  * @brief Returns +1 if x is positive and -1 if x is negative or 0.
- * @param[in] x the number parameter to evaluate
- * @return +1 if x is positive and -1 if x is negative or 0 (`[[nodiscard]]`)
+ * @param[in] x the value to calculate the sign for
+ * @return +1 if @p x is positive and -1 if @p x is negative or 0 (`[[nodiscard]]`)
  */
 template <typename T>
 [[nodiscard]] inline constexpr T sign(const T x) {
@@ -179,3 +183,5 @@ template <typename T>
 #undef PLSSVM_GENERATE_ARITHMETIC_OPERATION
 
 }  // namespace plssvm::operators
+
+#endif  // PLSSVM_DETAIL_OPERATORS_HPP_

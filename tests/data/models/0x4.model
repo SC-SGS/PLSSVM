@@ -1,9 +1,0 @@
-# this is a comment
-svm_type c_svc
-kernel_type linear
-nr_class 2
-rho 0.37330625882191915
-label 1 -1
-total_sv 5
-nr_sv 2 3
-SV

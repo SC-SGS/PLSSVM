@@ -43,13 +43,13 @@ __kernel void device_kernel_q_linear(__global real_type *q, __global real_type *
  * @param[in] gamma the gamma parameter used in the polynomial kernel function
  * @param[in] coef0 the coef0 parameter used in the polynomial kernel function
  */
-__kernel void device_kernel_q_poly(__global real_type *q, __global real_type *data_d, __global real_type *data_last, const kernel_index_type num_rows, const kernel_index_type num_cols, const int degree, const real_type gamma, const real_type coef0) {
+__kernel void device_kernel_q_polynomial(__global real_type *q, __global real_type *data_d, __global real_type *data_last, const kernel_index_type num_rows, const kernel_index_type num_cols, const int degree, const real_type gamma, const real_type coef0) {
     const kernel_index_type index = get_global_id(0);
     real_type temp = 0.0;
     for (int i = 0; i < num_cols; ++i) {
         temp += data_d[i * num_rows + index] * data_last[i];
     }
-    q[index] = pown(gamma * temp + coef0, degree);
+    q[index] = pow(gamma * temp + coef0, degree);
 }
 
 /**
@@ -63,7 +63,7 @@ __kernel void device_kernel_q_poly(__global real_type *q, __global real_type *da
  * @param[in] num_cols the number of columns in the data matrix
  * @param[in] gamma the gamma parameter used in the rbf kernel function
  */
-__kernel void device_kernel_q_radial(__global real_type *q, __global real_type *data_d, __global real_type *data_last, const kernel_index_type num_rows, const kernel_index_type num_cols, const real_type gamma) {
+__kernel void device_kernel_q_rbf(__global real_type *q, __global real_type *data_d, __global real_type *data_last, const kernel_index_type num_rows, const kernel_index_type num_cols, const real_type gamma) {
     const kernel_index_type index = get_global_id(0);
     real_type temp = 0.0;
     for (kernel_index_type i = 0; i < num_cols; ++i) {

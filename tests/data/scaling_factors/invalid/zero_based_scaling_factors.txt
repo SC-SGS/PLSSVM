@@ -1,0 +1,7 @@
+# this is a comment that will be ignored!
+x
+-1.4 2.6
+0 0.0 1.0
+1 1.1 2.1
+2 3.3 4.3
+3 4.4 5.4

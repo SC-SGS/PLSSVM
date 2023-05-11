@@ -9,61 +9,80 @@
  * @brief MOCK class for the C-SVM base class.
  */
 
+#ifndef PLSSVM_TESTS_MOCK_CSVM_HPP_
+#define PLSSVM_TESTS_MOCK_CSVM_HPP_
 #pragma once
 
-#include "plssvm/csvm.hpp"             // plssvm::csvm
-#include "plssvm/kernel_types.hpp"     // plssvm::kernel_type
-#include "plssvm/parameter.hpp"        // plssvm::parameter
-#include "plssvm/target_platforms.hpp"  // plssvm::target_platform
+#include "plssvm/csvm.hpp"                   // plssvm::csvm
+#include "plssvm/kernel_function_types.hpp"  // plssvm::kernel_function_type
+#include "plssvm/parameter.hpp"              // plssvm::parameter, plssvm::detail::parameter
 
-#include "gmock/gmock.h"  // MOCK_METHOD
+#include "gmock/gmock.h"                     // MOCK_METHOD, ON_CALL, ::testing::{An, Return}
 
-#include <memory>  // std::shared_ptr
-#include <vector>  // std::vector
+#include <utility>                           // std::pair, std::forward
+#include <vector>                            // std::vector
+
+template <typename real_type>
+const std::pair<std::vector<real_type>, real_type> solve_system_of_linear_equations_fake_return{ { real_type{ 1.0 }, real_type{ 2.0 }, real_type{ 3.0 }, real_type{ 4.0 }, real_type{ 5.0 } }, real_type{ 3.1415 } };
+
+template <typename real_type>
+const std::vector<real_type> predict_values_fake_return{ real_type{ -1.0 }, real_type{ -1.2 }, real_type{ -0.5 }, real_type{ 1.0 }, real_type{ 2.4 } };
 
 /**
  * @brief GTest mock class for the base CSVM class.
- * @tparam T the type of the data
  */
-template <typename T>
-class mock_csvm : public plssvm::csvm<T> {
-    using base_type = plssvm::csvm<T>;
-
+class mock_csvm final : public plssvm::csvm {
   public:
-    using real_type = typename base_type::real_type;
-
-    explicit mock_csvm(const plssvm::parameter<T> &params) :
-        base_type{ params } {}
+    explicit mock_csvm(plssvm::parameter params = {}) :
+        plssvm::csvm{ params } {
+        this->fake_functions();
+    }
+    template <typename... Args>
+    explicit mock_csvm(Args &&...args) :
+        plssvm::csvm{ std::forward<Args>(args)... } {
+        this->fake_functions();
+    }
 
     // mock pure virtual functions
-    MOCK_METHOD(void, setup_data_on_device, (), (override));
-    MOCK_METHOD(std::vector<real_type>, generate_q, (), (override));
-    MOCK_METHOD(std::vector<real_type>, solver_CG, (const std::vector<real_type> &, const std::size_t, const real_type, const std::vector<real_type> &), (override));
-    MOCK_METHOD(void, update_w, (), (override));
-    MOCK_METHOD(std::vector<real_type>, predict, (const std::vector<std::vector<real_type>> &), (override));
+    MOCK_METHOD((std::pair<std::vector<float>, float>), solve_system_of_linear_equations, (const plssvm::detail::parameter<float> &, const std::vector<std::vector<float>> &, std::vector<float>, float, unsigned long long), (const, override));
+    MOCK_METHOD((std::pair<std::vector<double>, double>), solve_system_of_linear_equations, (const plssvm::detail::parameter<double> &, const std::vector<std::vector<double>> &, std::vector<double>, double, unsigned long long), (const, override));
+    MOCK_METHOD(std::vector<float>, predict_values, (const plssvm::detail::parameter<float> &, const std::vector<std::vector<float>> &, const std::vector<float> &, float, std::vector<float> &, const std::vector<std::vector<float>> &), (const, override));
+    MOCK_METHOD(std::vector<double>, predict_values, (const plssvm::detail::parameter<double> &, const std::vector<std::vector<double>> &, const std::vector<double> &, double, std::vector<double> &, const std::vector<std::vector<double>> &), (const, override));
 
-    // make non-virtual functions publicly visible
-    using base_type::kernel_function;
-    using base_type::predict;  // no idea way necessary (since the used 'real_type predict(const std::vector<real_type>&)' is a public member function) but it works
-    using base_type::transform_data;
+  private:
+    void fake_functions() const {
+        // clang-format off
+        ON_CALL(*this, solve_system_of_linear_equations(
+                           ::testing::An<const plssvm::detail::parameter<float> &>(),
+                           ::testing::An<const std::vector<std::vector<float>> &>(),
+                           ::testing::An<std::vector<float>>(),
+                           ::testing::An<float>(),
+                           ::testing::An<unsigned long long>())).WillByDefault(::testing::Return(solve_system_of_linear_equations_fake_return<float>));
 
-    // getter for all parameter
-    plssvm::target_platform get_target() const { return base_type::target_; }
-    plssvm::kernel_type get_kernel() const { return base_type::kernel_; }
-    int get_degree() const { return base_type::degree_; }
-    real_type get_gamma() const { return base_type::gamma_; }
-    real_type get_coef0() const { return base_type::coef0_; }
-    real_type get_cost() const { return base_type::cost_; }
-    real_type get_epsilon() const { return base_type::epsilon_; }
-    bool get_print_info() const { return base_type::print_info_; }
+        ON_CALL(*this, solve_system_of_linear_equations(
+                           ::testing::An<const plssvm::detail::parameter<double> &>(),
+                           ::testing::An<const std::vector<std::vector<double>> &>(),
+                           ::testing::An<std::vector<double>>(),
+                           ::testing::An<double>(),
+                           ::testing::An<unsigned long long>())).WillByDefault(::testing::Return(solve_system_of_linear_equations_fake_return<double>));
 
-    const std::shared_ptr<const std::vector<std::vector<real_type>>> &get_data_ptr() const { return base_type::data_ptr_; }
-    const std::vector<std::vector<real_type>> &get_data() const { return *base_type::data_ptr_; }
-    std::shared_ptr<const std::vector<real_type>> &get_value_ptr() { return base_type::value_ptr_; }
-    std::shared_ptr<const std::vector<real_type>> &get_alpha_ptr() { return base_type::alpha_ptr_; }
+        ON_CALL(*this, predict_values(
+                           ::testing::An<const plssvm::detail::parameter<float> &>(),
+                           ::testing::An<const std::vector<std::vector<float>> &>(),
+                           ::testing::An<const std::vector<float> &>(),
+                           ::testing::An<float>(),
+                           ::testing::An<std::vector<float> &>(),
+                           ::testing::An<const std::vector<std::vector<float>> &>())).WillByDefault(::testing::Return(predict_values_fake_return<float>));
 
-    std::size_t get_num_data_points() const { return base_type::num_data_points_; }
-    std::size_t get_num_features() const { return base_type::num_features_; }
-    real_type get_bias() const { return base_type::bias_; }
-    real_type get_QA_cost() const { return base_type::QA_cost_; }
+        ON_CALL(*this, predict_values(
+                           ::testing::An<const plssvm::detail::parameter<double> &>(),
+                           ::testing::An<const std::vector<std::vector<double>> &>(),
+                           ::testing::An<const std::vector<double> &>(),
+                           ::testing::An<double>(),
+                           ::testing::An<std::vector<double> &>(),
+                           ::testing::An<const std::vector<std::vector<double>> &>())).WillByDefault(::testing::Return(predict_values_fake_return<double>));
+        // clang-format on
+    }
 };
+
+#endif  // PLSSVM_TESTS_MOCK_CSVM_HPP_

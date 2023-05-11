@@ -9,6 +9,8 @@
  * @brief Implements utility functions for string manipulation and querying.
  */
 
+#ifndef PLSSVM_DETAIL_STRING_UTILITY_HPP_
+#define PLSSVM_DETAIL_STRING_UTILITY_HPP_
 #pragma once
 
 #include <string>       // std::string
@@ -84,8 +86,9 @@ namespace plssvm::detail {
  * @param[in,out] str the string to replace the values
  * @param[in] what the string to replace
  * @param[in] with the string to replace with
+ * @return the replaced string
  */
-void replace_all(std::string &str, std::string_view what, std::string_view with);
+std::string &replace_all(std::string &str, std::string_view what, std::string_view with);
 
 /**
  * @brief Convert the string @p str to its all lower case representation.
@@ -123,6 +126,8 @@ std::string &to_upper_case(std::string &str);
  * @param[in] delim the split delimiter
  * @return the split sub-strings (`[[nodiscard]]`)
  */
-[[nodiscard]] std::vector<std::string_view> split(std::string_view str, char delim);
+[[nodiscard]] std::vector<std::string_view> split(std::string_view str, char delim = ' ');
 
 }  // namespace plssvm::detail
+
+#endif  // PLSSVM_DETAIL_STRING_UTILITY_HPP_

@@ -9,14 +9,17 @@
  * @brief Implement a backend independent class used to specify the execution range for all kernel invocations.
  */
 
+#ifndef PLSSVM_DETAIL_EXECUTION_RANGE_HPP_
+#define PLSSVM_DETAIL_EXECUTION_RANGE_HPP_
 #pragma once
 
-#include <algorithm>         // std::copy
-#include <array>             // std::array
-#include <cstddef>           // std::size_t
-#include <initializer_list>  // std::initializer_list
-#include <iosfwd>            // forward declare std::ostream
-#include <type_traits>       // std::enable_if_t
+#include "plssvm/detail/type_traits.hpp"  // PLSSVM_REQUIRES
+
+#include <algorithm>                      // std::copy
+#include <array>                          // std::array
+#include <cstddef>                        // std::size_t
+#include <initializer_list>               // std::initializer_list
+#include <iosfwd>                         // forward declare std::ostream
 
 namespace plssvm::detail {
 
@@ -29,8 +32,7 @@ class execution_range {
   public:
     /**
      * @brief Initialize the grid and block sizes using [`std::initializer_list`](https://en.cppreference.com/w/cpp/utility/initializer_list)s.
-     * @details If less than three values are specified, fills the missing values with zero. Uses the CUDA definition.
-     * @throws plssvm::exception if the number of values specified for the grid and block sizes are less than one or greater than three
+     * @details If less than three values are specified, fills the missing values with ones. Uses the CUDA definition.
      * @param[in] grid specifies the grid sizes
      * @param[in] block specifies the block sizes
      */
@@ -39,19 +41,19 @@ class execution_range {
     /**
      * @brief Initialize the grid and block sizes using [`std::array`](https://en.cppreference.com/w/cpp/container/array)s.
      *        Only available if the number of values specified for the grid and block sizes are greater than zero and less or equal than three.
-     * @details If less than three values are specified, fills the missing values with zero. Uses the CUDA definition.
+     * @details If less than three values are specified, fills the missing values with ones. Uses the CUDA definition.
      * @param[in] p_grid specifies the grid sizes
      * @param[in] p_block specifies the block sizes
      */
-    template <std::size_t I, std::size_t J, std::enable_if_t<(0 < I && I <= 3 && 0 < J && J <= 3), bool> = true>
+    template <std::size_t I, std::size_t J, PLSSVM_REQUIRES((0 < I && I <= 3 && 0 < J && J <= 3))>
     execution_range(const std::array<std::size_t, I> &p_grid, const std::array<std::size_t, J> &p_block) {
-        std::copy(p_grid.begin(), p_grid.end(), grid.begin());
-        std::copy(p_block.begin(), p_block.end(), block.begin());
+        std::copy(p_grid.cbegin(), p_grid.cend(), grid.begin());
+        std::copy(p_block.cbegin(), p_block.cend(), block.begin());
     }
 
-    /// The grid sizes.
+    /// The grid sizes (using the CUDA definition).
     std::array<std::size_t, 3> grid = { 1, 1, 1 };
-    /// The block sizes.
+    /// The block sizes (using the CUDA definition).
     std::array<std::size_t, 3> block = { 1, 1, 1 };
 };
 
@@ -64,3 +66,5 @@ class execution_range {
 std::ostream &operator<<(std::ostream &out, const execution_range &range);
 
 }  // namespace plssvm::detail
+
+#endif  // PLSSVM_DETAIL_EXECUTION_RANGE_HPP_

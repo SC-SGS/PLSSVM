@@ -9,16 +9,18 @@
  * @brief Implements custom exception classes specific to the SYCL backend.
  */
 
+#ifndef PLSSVM_BACKENDS_SYCL_CSVM_HPP_
+#define PLSSVM_BACKENDS_SYCL_CSVM_HPP_
 #pragma once
 
 #include "plssvm/exceptions/exceptions.hpp"       // plssvm::exception
 #include "plssvm/exceptions/source_location.hpp"  // plssvm::source_location
 
-#include <string>  // std::string
+#include <string>                                 // std::string
 
 namespace plssvm {
 
-namespace @PLSSVM_SYCL_BACKEND_NAMESPACE_NAME@ {
+namespace sycl {
 
 /**
  * @brief Exception type thrown if a problem with the SYCL backend occurs.
@@ -31,7 +33,51 @@ class backend_exception : public exception {
      * @param[in] loc the exception's call side information
      */
     explicit backend_exception(const std::string &msg, source_location loc = source_location::current());
+    /**
+     * @brief Construct a new exception forwarding the exception message and source location to plssvm::exception.
+     * @param[in] msg the exception's `what()` message
+     * @param[in] class_name the name of the thrown exception class
+     * @param[in] loc the exception's call side information
+     */
+    explicit backend_exception(const std::string &msg, std::string_view class_name, source_location loc = source_location::current());
 };
 
-}  // namespace @PLSSVM_SYCL_BACKEND_NAMESPACE_NAME@
+}  // namespace sycl
+
+namespace hipsycl {
+
+/**
+ * @brief Exception type thrown if a problem with the hipSYCL SYCL backend occurs.
+ */
+class backend_exception : public sycl::backend_exception {
+  public:
+    /**
+     * @brief Construct a new exception forwarding the exception message and source location to plssvm::sycl::backend_exception.
+     * @param[in] msg the exception's `what()` message
+     * @param[in] loc the exception's call side information
+     */
+    explicit backend_exception(const std::string &msg, source_location loc = source_location::current());
+};
+
+}  // namespace hipsycl
+
+namespace dpcpp {
+
+/**
+ * @brief Exception type thrown if a problem with the DPC++ SYCL backend occurs.
+ */
+class backend_exception : public sycl::backend_exception {
+  public:
+    /**
+     * @brief Construct a new exception forwarding the exception message and source location to plssvm::sycl::backend_exception.
+     * @param[in] msg the exception's `what()` message
+     * @param[in] loc the exception's call side information
+     */
+    explicit backend_exception(const std::string &msg, source_location loc = source_location::current());
+};
+
+}  // namespace dpcpp
+
 }  // namespace plssvm
+
+#endif  // PLSSVM_BACKENDS_SYCL_CSVM_HPP_

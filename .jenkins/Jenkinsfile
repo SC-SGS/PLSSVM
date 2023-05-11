@@ -1,0 +1,755 @@
+#!groovy
+
+def buildbadge = addEmbeddableBadgeConfiguration(id: "Jenkins", subject: "Jenkins Tests", status: "skipped")
+
+if (currentBuild.getBuildCauses().toString().contains('BranchIndexingCause')) {
+    print "INFO: Build on ${env.BRANCH_NAME}/${env.BUILD_NUMBER} triggered by branch indexing..."
+    if (env.BRANCH_NAME != "master") {
+        if (env.BUILD_NUMBER != "1") { // Always execute first build to load this configuration and thus the triggers
+            print "INFO: Build on ${env.BRANCH_NAME}/${env.BUILD_NUMBER} skipped due being triggered by Branch Indexing instead of SCM change!"
+            buildbadge.setStatus('skipped')
+            currentBuild.result = 'ABORTED'
+            return // early exit to avoid redundant builds
+        }
+    }
+} else {
+    print "INFO: Build on ${env.BRANCH_NAME}/${env.BUILD_NUMBER} triggered by SCM change..."
+    print "Proceeding!"
+}
+
+pipeline {
+    agent { label 'pcsgs02 || pcsgs03 || pcsgs04 || pcsgs05' }
+
+    options {
+        buildDiscarder(
+            logRotator(
+                daysToKeepStr: "21",
+                numToKeepStr: "50",
+                artifactDaysToKeepStr: "21",
+                artifactNumToKeepStr: "50"
+            )
+        )
+    disableConcurrentBuilds()
+    }
+
+    triggers {
+        githubPush() // Trigger by push to respective github branch
+        pollSCM 'H/30 * * * *' // Fallback polling solution as some pushes are somehow lost
+    }
+
+    environment {
+        GITHUB_TOKEN = credentials('GITHUB_TOKEN')
+        BRANCH_NAME = "${env.BRANCH_NAME}"
+        WORKSPACE= "${env.WORKSPACE}"
+
+        // ROCM / HIP
+        ROCM_PATH = "/opt/rocm"
+        LD_LIBRARY_PATH = "${env.ROCM_PATH}/lib64:${env.ROCM_PATH}/lib:${env.ROCM_PATH}/opencl/lib/x86_64:${env.ROCM_PATH}/hsa/lib:${env.ROCM_PATH}/hip/lib:${env.LD_LIBRARY_PATH}"
+        CPLUS_INCLUDE_PATH = "${env.ROCM_PATH}/hip/include:${env.CPLUS_INCLUDE_PATH}"
+        CMAKE_PREFIX_PATH = "${env.ROCM_PATH}/hip:${env.ROCM_PATH}:${env.CMAKE_PREFIX_PATH}"
+
+        // PoCL
+        POCL_PATH = "${env.WORKSPACE}/pocl-install"
+
+        // GCC
+        GCC_PATH = "${env.WORKSPACE}/gcc-install"
+
+        // DPCPP
+        DPCPP_PATH = "${env.WORKSPACE}/llvm/build"
+        DPCPP_FORCE_REBUILD = "FALSE"
+
+        // hipSYCL
+        HIPSYCL_PATH = "${env.WORKSPACE}/hipsycl-install"
+        HIPSYCL_FORCE_REBUILD = "FALSE"
+
+        // install path
+        MAKE_INSTALL_PATH = "${env.WORKSPACE}/plssvm_install"
+        MAKE_INSTALL_LIBRARY_SAMPLE_REBUILD = "FALSE"
+
+
+    }
+
+    stages{
+        stage('Dependency -- CMake')
+        {
+            steps{
+                script{
+                    def labels = [ 'pcsgs02', 'pcsgs03', 'pcsgs04', 'pcsgs05', 'pcsgs09', 'pcsgs11']
+                    def builders = [: ]
+                    for (x in labels){
+                        def label = x
+                        builders[label] = {
+                            node(label) {
+                                sh '''
+                                    cd ${WORKSPACE}
+                                    if [ -f cmake-3.25.2-linux-x86_64.tar.gz* ]; then
+                                        rm cmake-3.25.2-linux-x86_64.tar.gz*
+                                        rm -rf cmake-3.25.2-linux-x86_64
+                                    fi
+                                    if [ ! -d cmake-3.25.2-linux-x86_64  ]; then
+                                        wget https://github.com/Kitware/CMake/releases/download/v3.25.2/cmake-3.25.2-linux-x86_64.tar.gz
+                                        tar xvzf cmake-3.25.2-linux-x86_64.tar.gz
+                                        rm cmake-3.25.2-linux-x86_64.tar.gz*
+                                    fi
+                                '''
+                            }
+
+                        }
+                    }
+                    parallel builders
+                }
+            }
+        }
+        stage('Dependency -- Ninja')
+        {
+            steps{
+                script{
+                    def labels = [ 'pcsgs02', 'pcsgs03', 'pcsgs04', 'pcsgs05', 'pcsgs09', 'pcsgs11']
+                    def builders = [: ]
+                    for (x in labels){
+                        def label = x
+                        builders[label] = {
+                            node(label) {
+                                sh '''
+                                  cd ${WORKSPACE}
+                                   if [ ! -f ninja ]; then
+                                       wget https://github.com/ninja-build/ninja/releases/download/v1.11.1/ninja-linux.zip
+                                       unzip ninja-linux.zip
+                                       rm ninja-linux.zip*
+                                   fi
+                                '''
+                            }
+
+                        }
+                    }
+                    parallel builders
+                }
+            }
+        }
+        stage('Checkout PLSSVM') {
+            steps {
+              script{
+                def labels = [ 'pcsgs02', 'pcsgs03', 'pcsgs04', 'pcsgs05', 'pcsgs09', 'pcsgs11']
+                def builders = [: ]
+                for (x in labels){
+                    def label = x
+                        builders[label] = {
+                            node(label) {
+                              dir("${env.WORKSPACE}/plssvm") {
+                               checkout scm
+                               }
+                               checkout scm
+
+                          }
+
+                      }
+
+                  }
+                parallel builders
+                }
+            }
+        }
+        stage('Dependency -- gcc')
+        {
+            steps{
+                script{
+                    def labels = [ 'pcsgs02', 'pcsgs03', 'pcsgs04', 'pcsgs05', 'pcsgs09', 'pcsgs11']
+                    def builders = [: ]
+                    for (x in labels){
+                        def label = x
+                            builders[label] = {
+                                node(label) {
+                                    sh '''
+                                    cd ${WORKSPACE}
+                                    if [ ! -d "$GCC_PATH" ] || [ "$GCC_FORCE_REBUILD" = "TRUE" ]; then
+                                        .jenkins/scripts/build-gcc.sh $GCC_PATH
+                                   fi
+
+                                '''
+                            }
+
+                        }
+                    }
+                    parallel builders
+                }
+            }
+        }
+        stage('Dependency -- Python dependencies')
+        {
+            steps{
+                sh '''
+                    cd ${WORKSPACE}
+                    python3 -m pip install --user -r  install/python_requirements.txt
+                '''
+            }
+        }
+        stage('Generate test files') {
+            steps {
+              script{
+                def labels = [ 'pcsgs02', 'pcsgs03', 'pcsgs04', 'pcsgs05', 'pcsgs09', 'pcsgs11']
+                def builders = [: ]
+                for (x in labels){
+                    def label = x
+                        builders[label] = {
+                            node(label) {
+                              sh '''
+
+                              cd ${WORKSPACE}/plssvm
+                              python3 utility_scripts/generate_data.py --output tests/data/5000x2000.libsvm --format libsvm --problem planes --samples 5000 --features 2000
+                              python3 utility_scripts/generate_data.py --output tests/data/500x100.libsvm --format libsvm --problem planes --samples 500 --features 100
+                              '''
+                          }
+                      }
+
+                  }
+                parallel builders
+                }
+            }
+        }
+        stage('Dependency -- DPC++')
+        {
+            environment {
+                PATH="$WORKSPACE:$GCC_PATH/bin:$WORKSPACE/cmake-3.25.2-linux-x86_64/bin:${env.PATH}"
+            }
+            steps{
+                script{
+                    def labels = [ 'pcsgs02', 'pcsgs03', 'pcsgs04', 'pcsgs05',  'pcsgs11']
+                    def builders = [: ]
+                    for (x in labels){
+                        def label = x
+                        builders[label] = {
+                            node(label) {
+                                sh '''
+                                    cd ${WORKSPACE}
+                                    . /usr/local.nfs/Modules/latest/init/sh
+                                    echo $PATH
+                                    module load cuda/11.4.3
+                                    if [ ! -d "$DPCPP_PATH" ] || [ "$DPCPP_FORCE_REBUILD" = "TRUE" ]; then
+                                        rm -rf llvm
+                                        git clone --dept 1 --branch sycl-nightly/20221102 https://github.com/intel/llvm.git llvm
+                                        cd llvm
+                                        rm -rf build
+                                        whereis g++
+                                        python buildbot/configure.py --cuda --llvm-external-projects="clang-tools-extra,compiler-rt,openmp" --cmake-opt="-DENABLE_LIBOMPTARGET=OFF"
+                                        python buildbot/compile.py
+                                        cmake --build build -- omp
+                                        cmake --build build -- install
+                                        rm -rf "$HIPSYCL_PATH"
+                                    fi
+
+                                '''
+                            }
+                        }
+                         builders['pcsgs09'] = {
+                             node('pcsgs09') {
+                                 sh '''
+                                      cd ${WORKSPACE}
+                                      if [ ! -d "$DPCPP_PATH" ] || [ "$DPCPP_FORCE_REBUILD" = "TRUE" ]; then
+                                          rm -rf llvm
+                                          git clone --dept 1 --branch sycl-nightly/20230110 https://github.com/intel/llvm.git llvm
+                                          cd llvm
+                                          python buildbot/configure.py --hip --llvm-external-projects="clang-tools-extra,compiler-rt,openmp" --cmake-opt="-DENABLE_LIBOMPTARGET=OFF" --cmake-opt=-DSYCL_BUILD_PI_HIP_ROCM_DIR=${ROCM_PATH} --hip-platform AMD
+                                          python buildbot/compile.py
+                                          cmake --build build -- omp
+                                          cmake --build build -- install
+
+                                          rm -rf "$HIPSYCL_PATH"
+                                      fi
+
+                                 '''
+                             }
+                         }
+                    }
+                    parallel builders
+                }
+            }
+        }
+
+        stage('Dependency -- hipSYCL')
+                {
+                     environment {
+                        PATH="$WORKSPACE/cmake-3.25.2-linux-x86_64/bin:$DPCPP_PATH/bin:${env.PATH}"
+                        LIBRARY_PATH="$DPCPP_PATH/lib:${env.LIBRARY_PATH}"
+                        LD_LIBRARY_PATH="$DPCPP_PATH/lib:${env.LD_LIBRARY_PATH}"
+                        CPLUS_INCLUDE_PATH="$DPCPP_PATH/install/include/sycl:$DPCPP_PATH/install/include:$DPCPP_PATH/projects/openmp/runtime/src:${env.CPLUS_INCLUDE_PATH}"
+                    }
+                    steps{
+                        script{
+                            def labels = [ 'pcsgs02', 'pcsgs03', 'pcsgs04', 'pcsgs05',  'pcsgs09' ,'pcsgs11']
+                            def builders = [: ]
+                            for (x in labels){
+                                def label = x
+                                builders[label] = {
+                                    node(label) {
+                                        sh '''
+                                            cd ${WORKSPACE}
+                                            if [ ! "$NODE_NAME" == "pcsgs09" ]; then
+                                                . /usr/local.nfs/Modules/latest/init/sh
+                                                module load cuda/11.4.3
+                                            fi
+                                            if [ ! -d "$HIPSYCL_PATH" ] || [ "$HIPSYCL_FORCE_REBUILD" = "TRUE" ]; then
+                                                rm -rf hipSYCL
+                                                rm -rf "$HIPSYCL_PATH"
+
+                                                mkdir $HIPSYCL_PATH
+                                                git clone https://github.com/illuhad/hipSYCL.git hipSYCL
+                                                cd hipSYCL
+                                                git checkout 012e16d6d3d57330c176d7d536f657b0d8a9a197
+                                                mkdir build
+                                                cd build
+                                                cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=$HIPSYCL_PATH -DCMAKE_CXX_COMPILER=clang++ ..
+                                                make -j
+                                                make install
+                                                cd $WORKSPACE
+                                                rm -rf hipSYCL
+                                            fi
+                                        '''
+                                    }
+                                }
+                            }
+                            parallel builders
+                        }
+                    }
+                }
+        stage('Dependency -- PoCL')
+        {
+
+            steps{
+
+               script{
+                    def labels = [ 'pcsgs02', 'pcsgs03', 'pcsgs04', 'pcsgs05', 'pcsgs09',  'pcsgs11']
+                    def builders = [: ]
+                    for (x in labels){
+                        def label = x
+                        builders[label] = {
+                            node(label) {
+                                sh '${WORKSPACE}/.jenkins/scripts/build-pocl.sh'
+                            }
+
+                        }
+                    }
+                    parallel builders
+                }
+
+            }
+        }
+
+        stage('Build and Test'){
+
+            matrix{
+                axes {
+                    axis {
+                        name 'BACKEND'
+                        values 'OPENMP', 'CUDA', 'OPENCL', 'DPCPP', 'HIPSYCL', 'HIP'
+                    }
+                    axis {
+                        name 'ARCHITECTURE'
+                        values 'NVIDIA', 'AMD', 'CPU'
+                    }
+                    axis {
+                        name 'BUILD_TYPE'
+                        values 'Release', 'Debug'
+                    }
+                  }
+                  excludes {
+                    exclude {
+                      axis{
+                        name 'BACKEND'
+                        values 'HIP'
+                      }
+                      axis{
+                        name 'ARCHITECTURE'
+                        notValues 'AMD'
+                      }
+                    }
+                    exclude {
+                      axis{
+                        name 'BACKEND'
+                        values 'CUDA'
+                      }
+                      axis{
+                        name 'ARCHITECTURE'
+                        notValues 'NVIDIA'
+                      }
+                    }
+                    exclude {
+                      axis{
+                        name 'BACKEND'
+                        values 'OPENMP'
+                      }
+                      axis{
+                        name 'ARCHITECTURE'
+                        notValues 'CPU'
+                      }
+                    }
+                    exclude {
+                      axis{
+                        name 'BACKEND'
+                        values 'DPCPP'
+                      }
+                      axis{
+                        name 'ARCHITECTURE'
+                        values 'CPU'
+                      }
+                    }
+                    exclude {
+                      axis{
+                        name 'BACKEND'
+                        values 'HIPSYCL'
+                      }
+                      axis{
+                        name 'BUILD_TYPE'
+                        values 'Debug'
+                      }
+                    }
+                  }
+
+
+
+                agent { label " ${env.ARCHITECTURE.equalsIgnoreCase('AMD') ? 'pcsgs09' : 'pcsgs02 || pcsgs03 || pcsgs04 || pcsgs05' }"}
+
+                stages{
+                    stage('Build PLSSVM'){
+                        steps{
+                                sh '''
+                                      export COMPILER=g++
+                                      export TARGET_PLATFORM=nvidia:sm_86
+                                      if [ ! "$NODE_NAME" == "pcsgs09" ]; then
+                                          . /usr/local.nfs/Modules/latest/init/sh
+                                          module load cuda/12.0.1
+                                      fi
+                                      if [ "$BACKEND" == "DPCPP" ] || [ "$BACKEND" == "HIPSYCL" ]; then
+                                          export PATH="$DPCPP_PATH/bin:${PATH}"
+                                          export LIBRARY_PATH="$DPCPP_PATH/lib:${LIBRARY_PATH}"
+                                          export LD_LIBRARY_PATH="$DPCPP_PATH/lib:${LD_LIBRARY_PATH}"
+                                          export PLSSVM_SYCL_DPCPP_INCLUDE_DIR="$DPCPP_PATH/install/include"
+                                          export COMPILER=$DPCPP_PATH/bin/clang++
+                                          export export CPLUS_INCLUDE_PATH="$DPCPP_PATH/projects/openmp/runtime/src:${CPLUS_INCLUDE_PATH}"
+                                      fi
+                                      if [ "$BACKEND" == "HIPSYCL" ]; then
+                                          export PATH="$HIPSYCL_PATH/bin:${PATH}"
+                                          export LIBRARY_PATH="$HIPSYCL_PATH/lib:${LIBRARY_PATH}"
+                                          export LD_LIBRARY_PATH="$HIPSYCL_PATH/lib:${LD_LIBRARY_PATH}"
+                                          export CPLUS_INCLUDE_PATH="$HIPSYCL_PATH/include:${CPLUS_INCLUDE_PATH}"
+                                          export PLSSVM_SYCL_HIPSYCL_INCLUDE_DIR="${HIPSYCL_PATH}/include"
+                                      fi
+                                      if [ "$ARCHITECTURE" == "CPU" ]; then
+                                          PATH="$POCL_PATH/bin:${PATH}"
+                                          CPLUS_INCLUDE_PATH="$POCL_PATH/include:${CPLUS_INCLUDE_PATH}"
+                                          LIBRARY_PATH="$POCL_PATH/lib:${LIBRARY_PATH}"
+                                          LD_LIBRARY_PATH="$POCL_PATH/lib:${LD_LIBRARY_PATH}"
+                                          CMAKE_PREFIX_PATH="$POCL_PATH:${CMAKE_PREFIX_PATH}"
+                                          export TARGET_PLATFORM=cpu
+                                      fi
+                                      if [ "$ARCHITECTURE" == "AMD" ]; then
+                                         #export ROCM_PATH_="/opt/rocm"
+                                         export LD_LIBRARY_PATH="${ROCM_PATH}/lib64:${ROCM_PATH}/lib:${ROCM_PATH}/opencl/lib/x86_64:${ROCM_PATH}/hsa/lib:${ROCM_PATH}/hip/lib:${LD_LIBRARY_PATH}"
+                                         export CPLUS_INCLUDE_PATH="${ROCM_PATH}/hip/include:${CPLUS_INCLUDE_PATH}"
+                                         export CMAKE_PREFIX_PATH="${ROCM_PATH}/hip:${ROCM_PATH}:${CMAKE_PREFIX_PATH}"
+                                         export TARGET_PLATFORM=amd:gfx906
+                                         export LIBRARY_PATH=$LD_LIBRARY_PATH
+                                      fi
+                                      if [ "$BACKEND" == "HIP" ]; then
+                                        export COMPILER=hipcc
+                                      fi
+
+                                      if [ "$BUILD_TYPE" == Release ]; then
+                                          export NUM_DATA_POINTS=5000
+                                          export NUM_FEATURES=2000
+                                      else
+                                          export NUM_DATA_POINTS=500
+                                          export NUM_FEATURES=100
+                                      fi
+
+                                      cd ${WORKSPACE}/plssvm
+                                      mkdir -p build/${BACKEND}_${BUILD_TYPE}_${ARCHITECTURE}
+                                      cd build/${BACKEND}_${BUILD_TYPE}_${ARCHITECTURE}
+                                      rm -rf *
+                                      rm -rf $MAKE_INSTALL_PATH/${BACKEND}_${BUILD_TYPE}_${ARCHITECTURE}
+                                      $WORKSPACE/cmake-3.25.2-linux-x86_64/bin/cmake -DCMAKE_INSTALL_PREFIX=$MAKE_INSTALL_PATH/${BACKEND}_${BUILD_TYPE}_${ARCHITECTURE} \
+                                          -DCMAKE_BUILD_TYPE=${BUILD_TYPE} \
+                                          -DCMAKE_CXX_COMPILER=$COMPILER \
+                                          -DPLSSVM_TARGET_PLATFORMS=${TARGET_PLATFORM}\
+                                          -DPLSSVM_ENABLE_ASSERTS=ON \
+                                          -DPLSSVM_ENABLE_OPENMP_BACKEND=$([[ $BACKEND == OPENMP ]] && echo "ON" || echo "OFF") \
+                                          -DPLSSVM_ENABLE_CUDA_BACKEND=$([[ $BACKEND == CUDA ]] && echo "ON" || echo "OFF") \
+                                          -DPLSSVM_ENABLE_HIP_BACKEND=$([[ $BACKEND == HIP ]] && echo "ON" || echo "OFF") \
+                                          -DPLSSVM_ENABLE_OPENCL_BACKEND=$([[ $BACKEND == OPENCL ]] && echo "ON" || echo "OFF") \
+                                          -DPLSSVM_ENABLE_SYCL_HIPSYCL_BACKEND=$([[ $BACKEND == HIPSYCL ]] && echo "ON" || echo "OFF") \
+                                          -DPLSSVM_ENABLE_SYCL_DPCPP_BACKEND=$([[ $BACKEND == DPCPP ]] && echo "ON" || echo "OFF") \
+                                          -DPLSSVM_ENABLE_LANGUAGE_BINDINGS=ON \
+                                          -DPLSSVM_TEST_FILE_NUM_DATA_POINTS=$NUM_DATA_POINTS \
+                                          -DPLSSVM_TEST_FILE_NUM_FEATURES=$NUM_FEATURES \
+                                          ../../
+                                      make -j4 install
+                                '''
+
+                        }
+                    }
+                    stage('Ctest PLSSVM'){
+                        steps{
+                            sh '''
+                                 if [ ! "$NODE_NAME" == "pcsgs09" ]; then
+                                     . /usr/local.nfs/Modules/latest/init/sh
+                                     module load cuda/12.0.1
+                                 fi
+                                 if [ "$BACKEND" == "DPCPP" ] || [ "$BACKEND" == "HIPSYCL" ]; then
+                                    export LD_LIBRARY_PATH="$DPCPP_PATH/lib:${LD_LIBRARY_PATH}"
+                                fi
+                                if [ "$BACKEND" == "HIPSYCL" ]; then
+                                    export LD_LIBRARY_PATH="$HIPSYCL_PATH/lib:${LD_LIBRARY_PATH}"
+                                fi
+                                if [ "$ARCHITECTURE" == "CPU" ]; then
+                                    export PATH="$POCL_PATH/bin:${PATH}"
+                                    export LD_LIBRARY_PATH="$POCL_PATH/lib:${LD_LIBRARY_PATH}"
+                                fi
+                                if [ "$ARCHITECTURE" == "AMD" ]; then
+                                   export ROCM_PATH_="/opt/rocm"
+                                   export LD_LIBRARY_PATH="${ROCM_PATH}/lib64:${ROCM_PATH}/lib:${ROCM_PATH}/opencl/lib/x86_64:${ROCM_PATH}/hsa/lib:${ROCM_PATH}/hip/lib:${LD_LIBRARY_PATH}"
+                                fi
+                                cd ${WORKSPACE}/plssvm/build/${BACKEND}_${BUILD_TYPE}_${ARCHITECTURE}
+                                ctest -j4 --output-on-failure --no-compress-output -T Test
+                            '''
+                        }
+                    }
+                    stage('Test install'){
+                      steps{
+                        sh '''
+                        if [ ! "$NODE_NAME" == "pcsgs09" ]; then
+                             . /usr/local.nfs/Modules/latest/init/sh
+                             module load cuda/12.0.1
+                         fi
+                         if [ "$BACKEND" == "DPCPP" ] || [ "$BACKEND" == "HIPSYCL" ]; then
+                             export LD_LIBRARY_PATH="$DPCPP_PATH/lib:${LD_LIBRARY_PATH}"
+                         fi
+                         if [ "$BACKEND" == "HIPSYCL" ]; then
+                             export LD_LIBRARY_PATH="$HIPSYCL_PATH/lib:${LD_LIBRARY_PATH}"
+                         fi
+                         if [ "$ARCHITECTURE" == "CPU" ]; then
+                             LD_LIBRARY_PATH="$POCL_PATH/lib:${LD_LIBRARY_PATH}"
+                         fi
+                         if [ "$ARCHITECTURE" == "AMD" ]; then
+                            #export ROCM_PATH_="/opt/rocm"
+                            export LD_LIBRARY_PATH="${ROCM_PATH}/lib64:${ROCM_PATH}/lib:${ROCM_PATH}/opencl/lib/x86_64:${ROCM_PATH}/hsa/lib:${ROCM_PATH}/hip/lib:${LD_LIBRARY_PATH}"
+                         fi
+                         cd $MAKE_INSTALL_PATH/${BACKEND}_${BUILD_TYPE}_${ARCHITECTURE}
+                         export PATH=$MAKE_INSTALL_PATH/${BACKEND}_${BUILD_TYPE}_${ARCHITECTURE}/bin:$PATH
+                         export LD_LIBRARY_PATH=$MAKE_INSTALL_PATH/${BACKEND}_${BUILD_TYPE}_${ARCHITECTURE}/lib:$LD_LIBRARY_PATH
+                         plssvm-scale -l -1.0 -u 1.0  ${WORKSPACE}/plssvm/tests/data/libsvm/5x4.libsvm scaled_5x4.libsvm
+                         if [ $BACKEND == "DPCPP" ] || [ $BACKEND == "HIPSYCL" ]; then
+                          plssvm-train --backend sycl --sycl_implementation_type $BACKEND scaled_5x4.libsvm
+                          plssvm-predict --backend sycl --sycl_implementation_type $BACKEND scaled_5x4.libsvm scaled_5x4.libsvm.model
+                         else
+                          plssvm-train --backend $BACKEND  scaled_5x4.libsvm
+                          plssvm-predict --backend $BACKEND scaled_5x4.libsvm scaled_5x4.libsvm.model
+                         fi
+                        '''
+                      }
+                    }
+
+                    stage('Test CMake Library integration'){
+                    steps{
+                      sh '''
+                      export COMPILER=g++
+                      export TARGET_PLATFORM=nvidia:sm_86
+                      if [ ! "$NODE_NAME" == "pcsgs09" ]; then
+                          . /usr/local.nfs/Modules/latest/init/sh
+                          module load cuda/12.0.1
+                      fi
+                      if [ "$BACKEND" == "DPCPP" ] || [ "$BACKEND" == "HIPSYCL" ]; then
+                          export PATH="$DPCPP_PATH/bin:${PATH}"
+                          export LIBRARY_PATH="$DPCPP_PATH/lib:${LIBRARY_PATH}"
+                          export LD_LIBRARY_PATH="$DPCPP_PATH/lib:${LD_LIBRARY_PATH}"
+                          export PLSSVM_SYCL_DPCPP_INCLUDE_DIR="$DPCPP_PATH/install/include"
+                          export COMPILER=$DPCPP_PATH/bin/clang++
+                          export export CPLUS_INCLUDE_PATH="$DPCPP_PATH/projects/openmp/runtime/src:${CPLUS_INCLUDE_PATH}"
+                      fi
+                      if [ "$BACKEND" == "HIPSYCL" ]; then
+                          export PATH="$HIPSYCL_PATH/bin:${PATH}"
+                          export LIBRARY_PATH="$HIPSYCL_PATH/lib:${LIBRARY_PATH}"
+                          export LD_LIBRARY_PATH="$HIPSYCL_PATH/lib:${LD_LIBRARY_PATH}"
+                          export CPLUS_INCLUDE_PATH="$HIPSYCL_PATH/include:${CPLUS_INCLUDE_PATH}"
+                          export PLSSVM_SYCL_HIPSYCL_INCLUDE_DIR="${HIPSYCL_PATH}/include"
+                      fi
+                      if [ "$ARCHITECTURE" == "CPU" ]; then
+                          PATH="$POCL_PATH/bin:${PATH}"
+                          CPLUS_INCLUDE_PATH="$POCL_PATH/include:${CPLUS_INCLUDE_PATH}"
+                          LIBRARY_PATH="$POCL_PATH/lib:${LIBRARY_PATH}"
+                          LD_LIBRARY_PATH="$POCL_PATH/lib:${LD_LIBRARY_PATH}"
+                          CMAKE_PREFIX_PATH="$POCL_PATH:${CMAKE_PREFIX_PATH}"
+                          export TARGET_PLATFORM=cpu
+                      fi
+                      if [ "$ARCHITECTURE" == "AMD" ]; then
+                         #export ROCM_PATH_="/opt/rocm"
+                         export LD_LIBRARY_PATH="${ROCM_PATH}/lib64:${ROCM_PATH}/lib:${ROCM_PATH}/opencl/lib/x86_64:${ROCM_PATH}/hsa/lib:${ROCM_PATH}/hip/lib:${LD_LIBRARY_PATH}"
+                         export CPLUS_INCLUDE_PATH="${ROCM_PATH}/hip/include:${CPLUS_INCLUDE_PATH}"
+                         export CMAKE_PREFIX_PATH="${ROCM_PATH}/hip:${ROCM_PATH}:${CMAKE_PREFIX_PATH}"
+                         export TARGET_PLATFORM=amd:gfx906
+                         export LIBRARY_PATH=$LD_LIBRARY_PATH
+                      fi
+                      if [ "$BACKEND" == "HIP" ]; then
+                        export COMPILER=hipcc
+                      fi
+                       cd $WORKSPACE/plssvm/examples/cpp
+                       mkdir -p build/${BACKEND}_${BUILD_TYPE}_${ARCHITECTURE}
+                       cd build/${BACKEND}_${BUILD_TYPE}_${ARCHITECTURE}
+                       rm -rf *
+                       export CMAKE_PREFIX_PATH=$MAKE_INSTALL_PATH/${BACKEND}_${BUILD_TYPE}_${ARCHITECTURE}/share/plssvm/cmake:$CMAKE_PREFIX_PATH
+                       export LD_LIBRARY_PATH=$MAKE_INSTALL_PATH/${BACKEND}_${BUILD_TYPE}_${ARCHITECTURE}/lib:$LD_LIBRARY_PATH
+                       export CPLUS_INCLUDE_PATH=$MAKE_INSTALL_PATH/${BACKEND}_${BUILD_TYPE}_${ARCHITECTURE}/include:$CPLUS_INCLUDE_PATH
+                       $WORKSPACE/cmake-3.25.2-linux-x86_64/bin/cmake -DCMAKE_BUILD_TYPE=${BUILD_TYPE} -DCMAKE_CXX_COMPILER=$COMPILER ../../
+                        make -j4
+                        ./prog  ${WORKSPACE}/plssvm/tests/data/libsvm/5x4.libsvm
+                      '''
+
+                      }
+                    }
+                    stage('Test python bindings'){
+                    steps{
+                      sh '''
+                      if [ ! "$NODE_NAME" == "pcsgs09" ]; then
+                           . /usr/local.nfs/Modules/latest/init/sh
+                           module load cuda/12.0.1
+                       fi
+                       if [ "$BACKEND" == "DPCPP" ] || [ "$BACKEND" == "HIPSYCL" ]; then
+                           export LD_LIBRARY_PATH="$DPCPP_PATH/lib:${LD_LIBRARY_PATH}"
+                       fi
+                       if [ "$BACKEND" == "HIPSYCL" ]; then
+                           export LD_LIBRARY_PATH="$HIPSYCL_PATH/lib:${LD_LIBRARY_PATH}"
+                       fi
+                       if [ "$ARCHITECTURE" == "CPU" ]; then
+                           LD_LIBRARY_PATH="$POCL_PATH/lib:${LD_LIBRARY_PATH}"
+                       fi
+                       if [ "$ARCHITECTURE" == "AMD" ]; then
+                          #export ROCM_PATH_="/opt/rocm"
+                          export LD_LIBRARY_PATH="${ROCM_PATH}/lib64:${ROCM_PATH}/lib:${ROCM_PATH}/opencl/lib/x86_64:${ROCM_PATH}/hsa/lib:${ROCM_PATH}/hip/lib:${LD_LIBRARY_PATH}"
+                       fi
+                        cd $WORKSPACE/plssvm/examples/python
+                        mkdir -p build/${BACKEND}_${BUILD_TYPE}_${ARCHITECTURE}
+                        cd build/${BACKEND}_${BUILD_TYPE}_${ARCHITECTURE}
+                        rm -rf *
+                        export LD_LIBRARY_PATH=$MAKE_INSTALL_PATH/${BACKEND}_${BUILD_TYPE}_${ARCHITECTURE}/lib:$LD_LIBRARY_PATH
+                        export PYTHONPATH=$MAKE_INSTALL_PATH/${BACKEND}_${BUILD_TYPE}_${ARCHITECTURE}/lib:$PYTHONPATH
+                        python3 ../../sklearn_like_svc.py
+                        cp ${WORKSPACE}/plssvm/tests/data/libsvm/5x4.libsvm train_data.libsvm
+                        cp ${WORKSPACE}/plssvm/tests/data/libsvm/5x4.libsvm test_data.libsvm
+                        python3 ../../main.py
+                      '''
+
+                      }
+                    }
+                }
+            }
+        }
+        stage('Coverage Analysis') {
+            steps {
+                dir('plssvm') {
+                    sh '''
+                        echo $HOSTNAME
+                         . /usr/local.nfs/Modules/latest/init/sh
+                         module load cuda/12.0.1
+                         export PATH="$DPCPP_PATH/bin:${PATH}"
+                         export LIBRARY_PATH="$DPCPP_PATH/lib:${LIBRARY_PATH}"
+                         export LD_LIBRARY_PATH="$DPCPP_PATH/lib:${LD_LIBRARY_PATH}"
+                         export PLSSVM_SYCL_DPCPP_INCLUDE_DIR="$DPCPP_PATH/install/include"
+                         export COMPILER=$DPCPP_PATH/bin/clang++
+                         export export CPLUS_INCLUDE_PATH="$DPCPP_PATH/projects/openmp/runtime/src:${CPLUS_INCLUDE_PATH}"
+                         export PATH="$HIPSYCL_PATH/bin:${PATH}"
+                         export LIBRARY_PATH="$HIPSYCL_PATH/lib:${LIBRARY_PATH}"
+                         export LD_LIBRARY_PATH="$HIPSYCL_PATH/lib:${LD_LIBRARY_PATH}"
+                         export CPLUS_INCLUDE_PATH="$HIPSYCL_PATH/include:${CPLUS_INCLUDE_PATH}"
+                         export PLSSVM_SYCL_HIPSYCL_INCLUDE_DIR="${HIPSYCL_PATH}/include"
+
+                        mkdir -p $WORKSPACE/plssvm/build/Debug_cov
+                        cd $WORKSPACE/plssvm/build/Debug_cov
+                        rm -rf *
+                        $WORKSPACE/cmake-3.25.2-linux-x86_64/bin/cmake -DCMAKE_BUILD_TYPE=Coverage -DCMAKE_CXX_COMPILER=g++ -DCMAKE_CC_COMPILER=gcc -DPLSSVM_ENABLE_ASSERTS=ON -DPLSSVM_TEST_FILE_NUM_DATA_POINTS=50 -DPLSSVM_TEST_FILE_NUM_FEATURES=10 -DPLSSVM_ENABLE_SYCL_HIPSYCL_BACKEND=OFF ../../
+                        make -j36 coverage
+                        wget -N https://raw.githubusercontent.com/eriwen/lcov-to-cobertura-xml/master/lcov_cobertura/lcov_cobertura.py
+                        python lcov_cobertura.py test_clean.info
+                    '''
+                }
+                cobertura coberturaReportFile: "plssvm/build/Debug_cov/coverage.xml"
+            }
+        } // end Coverage Analysis
+}
+
+
+
+    post {
+        always {
+            // Process the CTest xml output with the xUnit plugin
+            xunit (
+                testTimeMargin: '3000',
+                thresholdMode: 1,
+                thresholds: [
+                    failed(failureThreshold: '0')
+                ],
+                tools: [CTest(
+                    pattern: 'plssvm/build/*/Testing/**/*.xml',
+                    deleteOutputFiles: true,
+                    failIfNotNew: false,
+                    skipNoTestFiles: true,
+                    stopProcessingIfError: true
+                )]
+            )
+        }
+        success {
+            script {
+                buildbadge.setStatus('success')
+            }
+            sh '''
+                gitlab_token=$(echo ${GITHUB_TOKEN} | cut -f2 -d':')
+                curl --verbose\
+                     --request POST \
+                     --url "https://api.github.com/repos/SC-SGS/PLSSVM/statuses/$GIT_COMMIT" \
+                     --header "Content-Type: application/json" \
+                     --header "authorization: Bearer ${gitlab_token}" \
+                     --data "{
+                        \\"state\\": \\"success\\",
+                        \\"context\\": \\"Jenkins CPU tests\\",
+                        \\"description\\": \\"Jenkins CI Job: Jenkins CPU tests\\",
+                        \\"target_url\\": \\"https://simsgs.informatik.uni-stuttgart.de/jenkins/view/PLSSVM/job/PLSSVM/job/Github-CPU/job/${BRANCH_NAME}/$BUILD_NUMBER\\"
+                }"
+            '''
+        }
+        failure {
+            script {
+                buildbadge.setStatus('failing')
+            }
+            sh '''
+                gitlab_token=$(echo ${GITHUB_TOKEN} | cut -f2 -d':')
+                curl --verbose\
+                     --request POST \
+                     --url "https://api.github.com/repos/SC-SGS/PLSSVM/statuses/$GIT_COMMIT" \
+                     --header "Content-Type: application/json" \
+                     --header "authorization: Bearer ${gitlab_token}" \
+                     --data "{
+                        \\"state\\": \\"failure\\",
+                        \\"context\\": \\"Jenkins CPU tests\\",
+                        \\"description\\": \\"Jenkins CI Job: Jenkins CPU tests\\",
+                        \\"target_url\\": \\"https://simsgs.informatik.uni-stuttgart.de/jenkins/view/PLSSVM/job/PLSSVM/job/Github-CPU/job/${BRANCH_NAME}/$BUILD_NUMBER\\"
+                }"
+            '''
+        }
+        aborted {
+            script {
+                buildbadge.setStatus('aborted')
+            }
+            sh '''
+                gitlab_token=$(echo ${GITHUB_TOKEN} | cut -f2 -d':')
+                curl --verbose\
+                     --request POST \
+                     --url "https://api.github.com/repos/SC-SGS/PLSSVM/statuses/$GIT_COMMIT" \
+                     --header "Content-Type: application/json" \
+                     --header "authorization: Bearer ${gitlab_token}" \
+                     --data "{
+                        \\"state\\": \\"error\\",
+                        \\"context\\": \\"Jenkins CPU tests\\",
+                        \\"description\\": \\"Jenkins CI Job: Jenkins CPU tests\\",
+                        \\"target_url\\": \\"https://simsgs.informatik.uni-stuttgart.de/jenkins/view/PLSSVM/job/PLSSVM/job/Github-CPU/job/${BRANCH_NAME}/$BUILD_NUMBER\\"
+                }"
+            '''
+        }
+    }
+}

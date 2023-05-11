@@ -6,245 +6,334 @@
  * @license This file is part of the PLSSVM project which is released under the MIT license.
  *          See the LICENSE.md file in the project root for full license information.
  *
- * @brief Implements the parameter base class encapsulating all necessary parameters.
+ * @brief Implements the parameter class encapsulating all important C-SVM parameters.
  */
 
+#ifndef PLSSVM_PARAMETER_HPP_
+#define PLSSVM_PARAMETER_HPP_
 #pragma once
 
-#include "plssvm/backend_types.hpp"                         // plssvm::backend_type
-#include "plssvm/backends/SYCL/implementation_type.hpp"     // plssvm::sycl_generic::implementation_type
-#include "plssvm/backends/SYCL/kernel_invocation_type.hpp"  // plssvm::sycl_generic::kernel_invocation_type
-#include "plssvm/kernel_types.hpp"                          // plssvm::kernel_type
-#include "plssvm/target_platforms.hpp"                      // plssvm::target_platform
+#include "plssvm/default_value.hpp"          // plssvm::default_value, plssvm::is_default_value_v
+#include "plssvm/detail/type_traits.hpp"     // PLSSVM_REQUIRES, plssvm::detail::{remove_cvref_t, always_false_v}
+#include "plssvm/detail/utility.hpp"         // plssvm::detail::unreachable
+#include "plssvm/kernel_function_types.hpp"  // plssvm::kernel_function_type, plssvm::kernel_function_type_to_math_string
 
-#include <iosfwd>       // forward declare std::ostream
-#include <memory>       // std::shared_ptr
-#include <string>       // std::string
-#include <type_traits>  // std::is_same_v
-#include <vector>       // std::vector
+#include "fmt/core.h"                        // fmt::format
+#include "fmt/ostream.h"                     // be able to output custom types with an operator<< overload using fmt
+#include "igor/igor.hpp"                     // IGOR_MAKE_NAMED_ARGUMENT, igor::parser, igor::has_unnamed_arguments, igor::has_other_than
+
+#include <iostream>                          // std::clog, std::endl, std::ostream
+#include <string_view>                       // std::string_view
+#include <type_traits>                       // std::is_same_v, std::is_convertible_v
+#include <utility>                           // std::forward
 
 namespace plssvm {
 
-namespace sycl {
-using namespace ::plssvm::sycl_generic;
+/// @cond Doxygen_suppress
+// create named arguments
+/// Create a named argument for the `kernel` SVM parameter.
+IGOR_MAKE_NAMED_ARGUMENT(kernel_type);
+/// Create a named argument for the `gamma` SVM parameter.
+IGOR_MAKE_NAMED_ARGUMENT(gamma);
+/// Create a named argument for the `degree` SVM parameter.
+IGOR_MAKE_NAMED_ARGUMENT(degree);
+/// Create a named argument for the `coef0` SVM parameter.
+IGOR_MAKE_NAMED_ARGUMENT(coef0);
+/// Create a named argument for the `cost` SVM parameter.
+IGOR_MAKE_NAMED_ARGUMENT(cost);
+/// Create a named argument for the termination criterion `epsilon` of the CG algorithm.
+IGOR_MAKE_NAMED_ARGUMENT(epsilon);
+/// Create a named argument for the maximum number of iterations `max_iter` performed in the CG algorithm.
+IGOR_MAKE_NAMED_ARGUMENT(max_iter);
+/// Create a named argument for the SYCL backend specific SYCL implementation type (DPC++ or hipSYCL).
+IGOR_MAKE_NAMED_ARGUMENT(sycl_implementation_type);
+/// Create a named argument for the SYCL backend specific kernel invocation type (nd_range or hierarchical).
+IGOR_MAKE_NAMED_ARGUMENT(sycl_kernel_invocation_type);
+/// @endcond
+
+namespace detail {
+
+/**
+ * @brief Trait to check whether @p Args only contains named-parameter.
+ */
+template <typename... Args>
+constexpr bool has_only_named_args_v = !igor::has_unnamed_arguments<Args...>();
+
+/**
+ * @brief Trait to check whether @p Args only contains named-parameter that can be used to initialize a `plssvm::parameter` struct.
+ */
+template <typename... Args>
+constexpr bool has_only_parameter_named_args_v = !igor::has_other_than<Args...>(plssvm::kernel_type, plssvm::gamma, plssvm::degree, plssvm::coef0, plssvm::cost);
+
+/**
+ * @brief Trait to check whether @p Args only contains named-parameter that can be used to initialize a `plssvm::parameter` struct including SYCL specific named-parameters.
+ */
+template <typename... Args>
+constexpr bool has_only_sycl_parameter_named_args_v = !igor::has_other_than<Args...>(plssvm::kernel_type, plssvm::gamma, plssvm::degree, plssvm::coef0, plssvm::cost, plssvm::sycl_implementation_type, plssvm::sycl_kernel_invocation_type);
+
+/**
+ * @brief Parse the value hold be @p named_arg and return it converted to the @p ExpectedType.
+ * @tparam ExpectedType the type the value of the named argument should be converted to
+ * @tparam IgorParser the type of the named-parameter parser
+ * @tparam NamedArgType the type of the named-parameter (necessary since they are struct tags)
+ * @param[in] parser the named-parameter parser
+ * @param[in] named_arg the named-parameter argument
+ * @return the value of @p named_arg converted to @p ExpectedType (`[[nodiscard]]`)
+ */
+template <typename ExpectedType, typename IgorParser, typename NamedArgType>
+ExpectedType get_value_from_named_parameter(const IgorParser &parser, const NamedArgType &named_arg) {
+    using parsed_named_arg_type = detail::remove_cvref_t<decltype(parser(named_arg))>;
+    // check whether a plssvm::default_value (e.g., plssvm::default_value<double>) or unwrapped normal value (e.g., double) has been provided
+    if constexpr (is_default_value_v<parsed_named_arg_type>) {
+        static_assert(std::is_convertible_v<typename parsed_named_arg_type::value_type, ExpectedType>, "Cannot convert the wrapped default value to the expected type!");
+        // a plssvm::default_value has been provided (e.g., plssvm::default_value<double>)
+        return static_cast<ExpectedType>(parser(named_arg).value());
+    } else if constexpr (std::is_convertible_v<parsed_named_arg_type, ExpectedType>) {
+        // an unwrapped value has been provided (e.g., double)
+        return static_cast<ExpectedType>(parser(named_arg));
+    } else {
+        static_assert(detail::always_false_v<ExpectedType>, "The named parameter must be of type plssvm::default_value or a fundamental type!");
+    }
+    // may never be reached
+    detail::unreachable();
 }
 
 /**
- * @brief Base class for encapsulating all necessary parameters possibly provided through command line arguments.
- * @tparam T the type of the data
+ * @brief Class for encapsulating all important C-SVM parameters.
+ * @tparam T the used real_type, must either be `float` or `double`
  */
 template <typename T>
-class parameter {
+struct parameter {
     // only float and doubles are allowed
     static_assert(std::is_same_v<T, float> || std::is_same_v<T, double>, "The template type can only be 'float' or 'double'!");
 
-  public:
     /// The type of the data. Must be either `float` or `double`.
     using real_type = T;
 
     /**
-     * @brief Virtual destructor to enable safe inheritance.
+     * @brief Default construct a parameter set, i.e., each SVM parameter has its default value.
      */
-    virtual ~parameter() = default;
+    constexpr parameter() noexcept = default;
+    /**
+     * @brief Construct a parameter set by explicitly overwriting the SVM parameters' default values.
+     * @param[in] kernel_p the kernel type: linear, polynomial, or radial-basis functions (rbf)
+     * @param[in] degree_p the degree used in the polynomial kernel function
+     * @param[in] gamma_p the gamma used in the polynomial and rbf kernel functions
+     * @param[in] coef0_p the coef0 used in the polynomial kernel function
+     * @param[in] cost_p the cost used in all kernel functions
+     */
+    constexpr parameter(const kernel_function_type kernel_p, const int degree_p, const real_type gamma_p, const real_type coef0_p, const real_type cost_p) noexcept {
+        // not in member initializer list since we want to override the default value
+        kernel_type = kernel_p;
+        degree = degree_p;
+        gamma = gamma_p;
+        coef0 = coef0_p;
+        cost = cost_p;
+    }
 
     /**
-     * @brief Parse a file in the [LIBSVM sparse file format](https://www.csie.ntu.edu.tw/~cjlin/libsvm/faq.html#f303).
-     * @details The sparse LIBSVM file format saves each data point with its respective class as follows:
-     * @code
-     * <label> <index1>:<value1> <index2>:<value2> ... <indexN>:<valueN>
-     * @endcode
-     * Only non-empty lines that don't start with `#` (= optional comments) are parsed.
-     *
-     * An example LIBSVM file could look as follows:
-     * @code
-     * # this is a comment
-     *  1 1:1.29801019287324655 2:0.51687296029754564
-     * -1 1:1.01405596624706053
-     * -1 1:0.60276937379453293 3:-0.13086851759108944
-     * -1 2:0.298499933047586044 # this is also a comment
-     * @endcode
-     *
-     * Be aware that the parsed output is **always** in a dense format. The above file for example will be parsed to a
-     * @code
-     * std::vector<std::vector<real_type>> data = {
-     *   { 1.29801019287324655, 0.51687296029754564, 0.0 },
-     *   { 1.01405596624706053, 0.0, 0.0 },
-     *   { 0.60276937379453293, 0.0, -0.13086851759108944 },
-     *   { 0.0, 0.298499933047586044, 0.0 }
-     * }
-     * @endcode
-     *
-     * If possible, uses a memory mapped file internally to speed up the file parsing.
-     * @param[in] filename name of the LIBSVM file to parse
-     * @param[in] data_ptr_ref the underlying matrix to save the parsed values to
-     * @throws plssvm::file_not_found_exception if the @p filename couldn't be found
-     * @throws plssvm::invalid_file_format_exception if the @p filename has an invalid format (e.g. an empty file, a file not using the LIBSVM file format, ...)
+     * @brief Construct a parameter by using the values in @p params and overwriting all values using the provided named-parameters.
+     * @tparam Args the type of the named-parameters
+     * @param[in] params the parameters used to overwrite the default values
+     * @param[in] named_args the potential named-parameters
      */
-    void parse_libsvm_file(const std::string &filename, std::shared_ptr<const std::vector<std::vector<real_type>>> &data_ptr_ref);
-    /**
-     * @brief Parse a file in the [arff file format](https://www.cs.waikato.ac.nz/ml/weka/arff.html).
-     * @details The arff file format saves each data point with its respective class as follows:
-     * @code
-     * <value1>,<value2>,...,<valueN>,<label>
-     * @endcode
-     * Additionally, the sparse arff file format (or a mix of both) is also supported:
-     * @code
-     * {<index1> <value1>, <index2> <value2>, <label>}
-     * @endcode
-     * Only non-empty lines that don't start with `%` (= optional comments) are parsed.
-     *
-     * An example arff file could look as follows:
-     * @code
-     * % Title
-     * % comments
-     * @RELATION name
-     * @ATTRIBUTE first    NUMERIC
-     * @ATTRIBUTE second   numeric
-     * @ATTRIBUTE third    Numeric
-     * @ATTRIBUTE fourth   NUMERIC
-     * @ATTRIBUTE class    NUMERIC
-     *
-     * @DATA
-     * -1.117827500607882,-2.9087188881250993,0.66638344270039144,1.0978832703949288,1
-     * -0.5282118298909262,-0.335880984968183973,0.51687296029754564,0.54604461446026,1
-     * {1 0.60276937379453293, 2 -0.13086851759108944, 4 -1}
-     * {0 1.88494043717792, 1 1.00518564317278263, 2 0.298499933047586044, 3 1.6464627048813514, 4 -1}
-     * @endcode
-     * The necessary arff header values must be present and the type of the `@ATTRIBUTE` tags must be `NUMERIC`.
-     *
-     * Be aware that the parsed output is **always** in a dense format. The above file for example will be parsed to a
-     * @code
-     * std::vector<std::vector<real_type>> data = {
-     *   { -1.117827500607882, -2.9087188881250993, 0.66638344270039144, 1.0978832703949288 },
-     *   { -0.5282118298909262, -0.335880984968183973, 0.51687296029754564, 0.54604461446026 },
-     *   { 0.0, 0.60276937379453293, -0.13086851759108944, 0.0 },
-     *   { 1.88494043717792, 1.00518564317278263, 0.298499933047586044, 1.6464627048813514 }
-     * }
-     * @endcode
-     *
-     * If possible, uses a memory mapped file internally to speed up the file parsing.
-     * @param[in] filename name of the arff file to parse
-     * @param[in] data_ptr_ref the underlying matrix to save the parsed values to
-     * @throws plssvm::file_not_found_exception if the @p filename couldn't be found
-     * @throws plssvm::invalid_file_format_exception if the @p filename has an invalid format (e.g. an empty file, invalid arff header, ...)
-     */
-    void parse_arff_file(const std::string &filename, std::shared_ptr<const std::vector<std::vector<real_type>>> &data_ptr_ref);
-    /**
-     * @brief Parse a model file in the [LIBSVM model file format](https://www.csie.ntu.edu.tw/~cjlin/libsvm/faq.html#f402).
-     * @details An example LIBSVM file could look as follows:
-     * @code
-     * svm_type c_svc
-     * kernel_type linear
-     * nr_class 2
-     * total_sv 5
-     * rho 0.37330625882191915
-     * label 1 -1
-     * nr_sv 2 3
-     * SV
-     * -0.17609610490769723 0:-1.117828e+00 1:-2.908719e+00 2:6.663834e-01 3:1.097883e+00
-     * 0.8838187731213127 0:-5.282118e-01 1:-3.358810e-01 2:5.168730e-01 3:5.460446e-01
-     * -0.47971257671001616 0:-2.098121e-01 1:6.027694e-01 2:-1.308685e-01 3:1.080525e-01
-     * 0.0034556484621847128 0:1.884940e+00 1:1.005186e+00 2:2.984999e-01 3:1.646463e+00
-     * -0.23146573996578407 0:5.765022e-01 1:1.014056e+00 2:1.300943e-01 3:7.261914e-01
-     * @endcode
-     * @param[in] filename the model file to parse
-     * @throws plssvm::file_not_found_exception if the @p filename couldn't be found
-     * @throws plssvm::invalid_file_format_exception if the @p filename has an invalid format (e.g. an empty file, invalid LIBSVM model file header, ...)
-     */
-    void parse_model_file(const std::string &filename);
-    /**
-     * @brief Parse the given file. If the file is in the arff format (has the `.arff` extension), the arff parser is used, otherwise the LIBSVM parser is used.
-     * @param[in] filename name of the file to parse
-     * @param[in] data_ptr_ref the underlying matrix to save the parsed values to
-     * @throws plssvm::file_not_found_exception if the @p filename couldn't be found
-     * @throws plssvm::invalid_file_format_exception if the @p filename has an invalid format (e.g. an empty file, ...)
-     */
-    void parse_file(const std::string &filename, std::shared_ptr<const std::vector<std::vector<real_type>>> &data_ptr_ref);
+    template <typename... Args, PLSSVM_REQUIRES(has_only_named_args_v<Args...>)>
+    constexpr explicit parameter(const parameter &params, Args &&...named_args) :
+        parameter{ params } {
+        this->set_named_arguments(std::forward<Args>(named_args)...);
+    }
 
     /**
-     * @brief Parse the given file as training data. If the file is in the arff format (has the `.arff` extension), the arff parser is used, otherwise the LIBSVM parser is used.
-     * @details Saves the data to the member variable #data_ptr.
-     * @param[in] filename name of the file to parse
-     * @throws plssvm::file_not_found_exception if the @p filename couldn't be found
-     * @throws plssvm::invalid_file_format_exception if the @p filename has an invalid format (e.g. an empty file, ...)
+     * @brief Construct a parameter set by overwriting the SVM parameters' default values that are provided using named-parameters.
+     * @tparam Args the type of the named-parameters
+     * @param[in] named_args the potential named-parameters
      */
-    void parse_train_file(const std::string &filename);
-    /**
-     * @brief Parse the given file as test data. If the file is in the arff format (has the `.arff` extension), the arff parser is used, otherwise the LIBSVM parser is used.
-     * @details Saves the data to the member variable #test_data_ptr.
-     * @param[in] filename name of the file to parse
-     * @throws plssvm::file_not_found_exception if the @p filename couldn't be found
-     * @throws plssvm::invalid_file_format_exception if the @p filename has an invalid format (e.g. an empty file, ...)
-     */
-    void parse_test_file(const std::string &filename);
+    template <typename... Args, PLSSVM_REQUIRES(has_only_named_args_v<Args...>)>
+    constexpr explicit parameter(Args &&...named_args) noexcept {
+        this->set_named_arguments(std::forward<Args>(named_args)...);
+    }
 
-    /// The used kernel function: linear, polynomial or radial basis functions (rbf).
-    kernel_type kernel = kernel_type::linear;
+    /// The used kernel function: linear, polynomial, or radial basis functions (rbf).
+    default_value<kernel_function_type> kernel_type{ default_init<kernel_function_type>{ kernel_function_type::linear } };
     /// The degree parameter used in the polynomial kernel function.
-    int degree = 3;
+    default_value<int> degree{ default_init<int>{ 3 } };
     /// The gamma parameter used in the polynomial and rbf kernel functions.
-    real_type gamma = real_type{ 0.0 };
+    default_value<real_type> gamma{ default_init<real_type>{ 0.0 } };
     /// The coef0 parameter used in the polynomial kernel function.
-    real_type coef0 = real_type{ 0.0 };
+    default_value<real_type> coef0{ default_init<real_type>{ 0.0 } };
     /// The cost parameter in the C-SVM.
-    real_type cost = real_type{ 1.0 };
-    /// The error tolerance parameter for the CG algorithm.
-    real_type epsilon = static_cast<real_type>(0.001);
-    /// If `true` additional information (e.g. timings) will be printed during execution.
-    bool print_info = true;
-    /// The used backend: automatic (depending on the specified target_platforms), OpenMP, OpenCL, CUDA, or SYCL.
-    backend_type backend = backend_type::automatic;
-    /// The target platform: automatic (depending on the used backend), CPUs or GPUs from NVIDIA, AMD or Intel.
-    target_platform target = target_platform::automatic;
+    default_value<real_type> cost{ default_init<real_type>{ 1.0 } };
 
-    /// The kernel invocation type when using SYCL as backend.
-    sycl::kernel_invocation_type sycl_kernel_invocation_type = sycl::kernel_invocation_type::automatic;
-    /// The SYCL implementation to use with --backend=sycl.
-    sycl::implementation_type sycl_implementation_type = sycl::implementation_type::automatic;
-
-    /// The name of the data/test file to parse.
-    std::string input_filename{};
-    /// The name of the model file to write the learned support vectors to/to parse the saved model from.
-    std::string model_filename{};
-    /// The name of the file to write the prediction to.
-    std::string predict_filename{};
-
-    /// The data used the train the SVM.
-    std::shared_ptr<const std::vector<std::vector<real_type>>> data_ptr{};
-    /// The labels associated with each data point.
-    std::shared_ptr<const std::vector<real_type>> value_ptr{};
-    /// The weights associated with each data point after training.
-    std::shared_ptr<const std::vector<real_type>> alpha_ptr{};
-    /// The test data to predict.
-    std::shared_ptr<const std::vector<std::vector<real_type>>> test_data_ptr{};
-
-    /// The rho value of the calculated/read model.
-    real_type rho = real_type{ 0.0 };
-
-  protected:
     /**
-     * @brief Generate a model filename based on the name of the input file.
-     * @return `${input_filename}.model` (`[[nodiscard]]`)
+     * @brief Convert a `plssvm::parameter<T>`to a `plssvm::parameter<U>` (i.e., conversion between float <-> double).
+     * @tparam U the type to convert to
+     * @return the `plssvm::parameter` values converted to @p U (`[[nodiscard]]`)
      */
-    [[nodiscard]] std::string model_name_from_input();
+    template <typename U>
+    [[nodiscard]] constexpr explicit operator parameter<U>() const {
+        if constexpr (std::is_same_v<U, real_type>) {
+            // no special conversions needed
+            return parameter<real_type>{ *this };
+        } else {
+            // convert between parameter<float> <-> parameter<double>
+            return parameter<U>{ kernel_type, degree, default_value<U>{ gamma }, default_value<U>{ coef0 }, default_value<U>{ cost } };
+        }
+    }
+
     /**
-     * @brief Generate a predict filename based on the name of the input file.
-     * @return `${input_filename}.predict` (`[[nodiscard]]`)
+     * @brief Checks whether the current parameter set is **equivalent** to the one given by @p other.
+     * @details Compares the member variables based on the `kernel`, i.e., for example for the rbf kernel both parameter sets
+     *          must **only** have the same `gamma` and `cost` values **but** may differ in the values of `degree` or `coef0`.
+     *          If all members should be compared regardless of the kernel type, one can use the operator== overload.
+     * @param[in] other the other parameter set compared to this one
+     * @return `true` if both parameter sets are equivalent, `false` otherwise (`[[nodiscard]]`)
      */
-    [[nodiscard]] std::string predict_name_from_input();
+    [[nodiscard]] constexpr bool equivalent(const parameter &other) const noexcept {
+        // equality check, but only the member variables that a necessary for the current kernel type are compared!
+        // cannot be equal if both parameters have different kernel types
+        if (kernel_type != other.kernel_type) {
+            return false;
+        }
+        // check member variables based on kernel type
+        switch (kernel_type.value()) {
+            case kernel_function_type::linear:
+                return cost == other.cost;
+            case kernel_function_type::polynomial:
+                return degree == other.degree && gamma == other.gamma && coef0 == other.coef0 && cost == other.cost;
+            case kernel_function_type::rbf:
+                return gamma == other.gamma && cost == other.cost;
+        }
+        return false;
+    }
+
+  private:
+    /**
+     * @brief Overwrite the default values of this parameter object with the potential provided named-parameters @p named_args.
+     * @tparam Args the type of the named-parameters
+     * @param[in] named_args the potential named-parameters
+     */
+    template <typename... Args>
+    void set_named_arguments(Args &&...named_args) {
+        igor::parser parser{ std::forward<Args>(named_args)... };
+
+        // compile time check: only named parameter are permitted
+        static_assert(!parser.has_unnamed_arguments(), "Can only use named parameter!");
+        // compile time check: each named parameter must only be passed once
+        static_assert(!parser.has_duplicates(), "Can only use each named parameter once!");
+        // compile time check: only some named parameters are allowed
+        static_assert(!parser.has_other_than(plssvm::kernel_type, plssvm::gamma, plssvm::degree, plssvm::coef0, plssvm::cost, plssvm::sycl_implementation_type, plssvm::sycl_kernel_invocation_type),
+                      "An illegal named parameter has been passed!");
+
+        // shorthand function for emitting a warning if a provided parameter is not used by the current kernel function
+        [[maybe_unused]] const auto print_warning = [](const std::string_view param_name, const kernel_function_type kernel) {
+            std::clog << fmt::format("{} parameter provided, which is not used in the {} kernel ({})!", param_name, kernel, kernel_function_type_to_math_string(kernel)) << std::endl;
+        };
+
+        // compile time/runtime check: the values must have the correct types
+        if constexpr (parser.has(plssvm::kernel_type)) {
+            // get the value of the provided named parameter
+            kernel_type = get_value_from_named_parameter<typename decltype(kernel_type)::value_type>(parser, plssvm::kernel_type);
+        }
+        if constexpr (parser.has(plssvm::gamma)) {
+            // get the value of the provided named parameter
+            gamma = get_value_from_named_parameter<typename decltype(gamma)::value_type>(parser, plssvm::gamma);
+            // runtime check: the value may only be used with a specific kernel type
+            if (kernel_type == kernel_function_type::linear) {
+                print_warning("gamma", kernel_type);
+            }
+        }
+        if constexpr (parser.has(plssvm::degree)) {
+            // get the value of the provided named parameter
+            degree = get_value_from_named_parameter<typename decltype(degree)::value_type>(parser, plssvm::degree);
+            // runtime check: the value may only be used with a specific kernel type
+            if (kernel_type == kernel_function_type::linear || kernel_type == kernel_function_type::rbf) {
+                print_warning("degree", kernel_type);
+            }
+        }
+        if constexpr (parser.has(plssvm::coef0)) {
+            // get the value of the provided named parameter
+            coef0 = get_value_from_named_parameter<typename decltype(coef0)::value_type>(parser, plssvm::coef0);
+            // runtime check: the value may only be used with a specific kernel type
+            if (kernel_type == kernel_function_type::linear || kernel_type == kernel_function_type::rbf) {
+                print_warning("coef0", kernel_type);
+            }
+        }
+        if constexpr (parser.has(plssvm::cost)) {
+            // get the value of the provided named parameter
+            cost = get_value_from_named_parameter<typename decltype(cost)::value_type>(parser, plssvm::cost);
+        }
+    }
 };
 
-extern template class parameter<float>;
-extern template class parameter<double>;
+extern template struct parameter<float>;
+extern template struct parameter<double>;
+
+/**
+ * @brief Compares the two parameter sets @p lhs and @p rhs for equality.
+ * @details Two parameter sets are equal if and only if **all** SVM parameters are equal.
+ * @tparam T the real_type
+ * @param[in] lhs the first parameter set
+ * @param[in] rhs the second parameter set
+ * @return `true` if both parameter sets are equal, `false` otherwise (`[[nodiscard]]`)
+ */
+template <typename T>
+[[nodiscard]] constexpr bool operator==(const parameter<T> &lhs, const parameter<T> &rhs) noexcept {
+    return lhs.kernel_type == rhs.kernel_type && lhs.degree == rhs.degree && lhs.gamma == rhs.gamma && lhs.coef0 == rhs.coef0 && lhs.cost == rhs.cost;
+}
+/**
+ * @brief Compares the two parameter sets @p lhs and @p rhs for inequality.
+ * @details Two parameter sets are unequal if **any** of the SVM parameters are unequal.
+ * @tparam T the real_type
+ * @param[in] lhs the first parameter set
+ * @param[in] rhs the second parameter set
+ * @return `true` if both parameter sets are unequal, `false` otherwise (`[[nodiscard]]`)
+ */
+template <typename T>
+[[nodiscard]] constexpr bool operator!=(const parameter<T> &lhs, const parameter<T> &rhs) noexcept {
+    return !(lhs == rhs);
+}
+
+/**
+ * @brief Checks whether the two parameter sets @p lhs and @p rhs are **equivalent**.
+ * @details Compares the member variables based on the `kernel`, i.e., for example for the rbf kernel both parameter sets
+ *          must **only** have the same `gamma` and `cost` values **but** may differ in the values of `degree` or `coef0`.
+ *          If all members should be compared regardless of the kernel type, one can use the operator== overload.
+ * @param[in] lhs the first parameter set
+ * @param[in] rhs the second parameter set
+ * @return `true` if both parameter sets are equivalent, `false` otherwise (`[[nodiscard]]`)
+ */
+template <typename T>
+[[nodiscard]] constexpr bool equivalent(const parameter<T> &lhs, const parameter<T> &rhs) noexcept {
+    return lhs.equivalent(rhs);
+}
 
 /**
  * @brief Output all parameters encapsulated by @p params to the given output-stream @p out.
  * @tparam T the type of the data
  * @param[in,out] out the output-stream to write the parameters to
- * @param[in] params the parameters
+ * @param[in] params the parameter set
  * @return the output-stream
  */
 template <typename T>
 std::ostream &operator<<(std::ostream &out, const parameter<T> &params);
 
+}  // namespace detail
+
+/**
+ * @example parameter_examples.cpp
+ * @brief A few examples regarding the plssvm::parameter class.
+ */
+
+/// The public parameter type uses `double` to store the SVM parameters.
+using parameter = detail::parameter<double>;
+
+/**
+ * @copydoc plssvm::detail::equivalent
+ */
+[[nodiscard]] constexpr bool equivalent(const parameter &lhs, const parameter &rhs) noexcept {
+    return detail::equivalent(lhs, rhs);
+}
+
 }  // namespace plssvm
+
+#endif  // PLSSVM_PARAMETER_HPP_

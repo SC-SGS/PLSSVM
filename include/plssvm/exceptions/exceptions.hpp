@@ -6,16 +6,19 @@
  * @license This file is part of the PLSSVM project which is released under the MIT license.
  *          See the LICENSE.md file in the project root for full license information.
  *
- * @brief Implements custom exception classes derived from [`std::runtime_error`](https://en.cppreference.com/w/cpp/error/runtime_error) including source location information.
+ * @brief Implements custom exception classes derived from [`std::runtime_error`](https://en.cppreference.com/w/cpp/error/runtime_error)
+ *        including source location information.
  */
 
+#ifndef PLSSVM_EXCEPTIONS_EXCEPTIONS_HPP_
+#define PLSSVM_EXCEPTIONS_EXCEPTIONS_HPP_
 #pragma once
 
 #include "plssvm/exceptions/source_location.hpp"  // plssvm::source_location
 
-#include <stdexcept>    // std::runtime_error
-#include <string>       // std::string
-#include <string_view>  // std::string_view
+#include <stdexcept>                              // std::runtime_error
+#include <string>                                 // std::string
+#include <string_view>                            // std::string_view
 
 namespace plssvm {
 
@@ -40,15 +43,56 @@ class exception : public std::runtime_error {
     [[nodiscard]] const source_location &loc() const noexcept;
 
     /**
-     * @brief Returns a sting containing the exception's `what()` message, the name of the thrown exception class and information about the call
+     * @brief Returns a string containing the exception's `what()` message, the name of the thrown exception class, and information about the call
      *        side where the exception has been thrown.
-     * @return the exception's `what()` message including source location information
+     * @return the exception's `what()` message including source location information (`[[nodiscard]]`)
      */
     [[nodiscard]] std::string what_with_loc() const;
 
   private:
-    const std::string_view class_name_;
+    /// The name of the thrown exception class.
+    std::string_view class_name_;
+    /// The call side source location information.
     source_location loc_;
+};
+
+/**
+ * @brief Exception type thrown if the provided parameter is invalid.
+ */
+class invalid_parameter_exception : public exception {
+  public:
+    /**
+     * @brief Construct a new exception forwarding the exception message and source location to plssvm::exception.
+     * @param[in] msg the exception's `what()` message
+     * @param[in] loc the exception's call side information
+     */
+    explicit invalid_parameter_exception(const std::string &msg, source_location loc = source_location::current());
+};
+
+/**
+ * @brief Exception type thrown if the file_reader is used inappropriately (e.g., if two files should be opened at the same time).
+ */
+class file_reader_exception : public exception {
+  public:
+    /**
+     * @brief Construct a new exception forwarding the exception message and source location to plssvm::exception.
+     * @param[in] msg the exception's `what()` message
+     * @param[in] loc the exception's call side information
+     */
+    explicit file_reader_exception(const std::string &msg, source_location loc = source_location::current());
+};
+
+/**
+ * @brief Exception type thrown if a data_set is used inappropriately.
+ */
+class data_set_exception : public exception {
+  public:
+    /**
+     * @brief Construct a new exception forwarding the exception message and source location to plssvm::exception.
+     * @param[in] msg the exception's `what()` message
+     * @param[in] loc the exception's call side information
+     */
+    explicit data_set_exception(const std::string &msg, source_location loc = source_location::current());
 };
 
 /**
@@ -65,8 +109,7 @@ class file_not_found_exception : public exception {
 };
 
 /**
- * @brief Exception type thrown if the provided file has an invalid format for the selected parser
- *        (e.g. if the arff parser tries to parse a LIBSVM file).
+ * @brief Exception type thrown if the provided file has an invalid format for the selected parser (e.g. if the arff parser tries to parse a LIBSVM file).
  */
 class invalid_file_format_exception : public exception {
   public:
@@ -105,7 +148,7 @@ class unsupported_kernel_type_exception : public exception {
 };
 
 /**
- * @brief Exception type thrown if an error in the generic `plssvm::detail::gpu_device_ptr` occurred.
+ * @brief Exception type thrown if an error in the generic plssvm::detail::gpu_device_ptr occurred.
  */
 class gpu_device_ptr_exception : public exception {
   public:
@@ -118,3 +161,5 @@ class gpu_device_ptr_exception : public exception {
 };
 
 }  // namespace plssvm
+
+#endif  // PLSSVM_EXCEPTIONS_EXCEPTIONS_HPP_

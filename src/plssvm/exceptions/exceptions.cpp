@@ -10,11 +10,11 @@
 
 #include "plssvm/exceptions/source_location.hpp"  // plssvm::source_location
 
-#include "fmt/core.h"  // fmt::format
+#include "fmt/core.h"                             // fmt::format
 
-#include <stdexcept>    // std::runtime_error
-#include <string>       // std::string
-#include <string_view>  // std::string_view
+#include <stdexcept>                              // std::runtime_error
+#include <string>                                 // std::string
+#include <string_view>                            // std::string_view
 
 namespace plssvm {
 
@@ -36,6 +36,15 @@ std::string exception::what_with_loc() const {
         loc_.function_name(),
         loc_.line());
 }
+
+invalid_parameter_exception::invalid_parameter_exception(const std::string &msg, source_location loc) :
+    exception{ msg, "invalid_parameter_exception", loc } {}
+
+file_reader_exception::file_reader_exception(const std::string &msg, source_location loc) :
+    exception{ msg, "file_reader_exception", loc } {}
+
+data_set_exception::data_set_exception(const std::string &msg, source_location loc) :
+    exception{ msg, "data_set_exception", loc } {}
 
 file_not_found_exception::file_not_found_exception(const std::string &msg, source_location loc) :
     exception{ msg, "file_not_found_exception", loc } {}

@@ -9,6 +9,8 @@
  * @brief Defines OpenMP functions for generating the `q` vector.
  */
 
+#ifndef PLSSVM_BACKENDS_OPENMP_Q_KERNEL_HPP_
+#define PLSSVM_BACKENDS_OPENMP_Q_KERNEL_HPP_
 #pragma once
 
 #include <vector>  // std::vector
@@ -34,7 +36,7 @@ void device_kernel_q_linear(std::vector<real_type> &q, const std::vector<std::ve
  * @param[in] coef0 the coef0 parameter used in the polynomial kernel function
  */
 template <typename real_type>
-void device_kernel_q_poly(std::vector<real_type> &q, const std::vector<std::vector<real_type>> &data, int degree, real_type gamma, real_type coef0);
+void device_kernel_q_polynomial(std::vector<real_type> &q, const std::vector<std::vector<real_type>> &data, int degree, real_type gamma, real_type coef0);
 
 /**
  * @brief Calculates the `q` vector using the radial basis functions C-SVM kernel.
@@ -44,6 +46,8 @@ void device_kernel_q_poly(std::vector<real_type> &q, const std::vector<std::vect
  * @param[in] gamma the gamma parameter used in the rbf kernel function
  */
 template <typename real_type>
-void device_kernel_q_radial(std::vector<real_type> &q, const std::vector<std::vector<real_type>> &data, real_type gamma);
+void device_kernel_q_rbf(std::vector<real_type> &q, const std::vector<std::vector<real_type>> &data, real_type gamma);
 
 }  // namespace plssvm::openmp
+
+#endif  // PLSSVM_BACKENDS_OPENMP_Q_KERNEL_HPP_

@@ -8,44 +8,38 @@
  *
  * @brief MOCK class for the C-SVM class using the OpenCL backend.
  */
+
+#ifndef PLSSVM_TESTS_BACKENDS_OPENCL_MOCK_OPENCL_CSVM_HPP_
+#define PLSSVM_TESTS_BACKENDS_OPENCL_MOCK_OPENCL_CSVM_HPP_
 #pragma once
 
-#include "plssvm/backends/OpenCL/csvm.hpp"                  // plssvm::opencl::csvm
-#include "plssvm/backends/OpenCL/detail/command_queue.hpp"  // plssvm::opencl::detail::command_queue
-#include "plssvm/backends/OpenCL/detail/device_ptr.hpp"     // plssvm::opencl::detail::device_ptr
-#include "plssvm/parameter.hpp"                             // plssvm::parameter
-
-#include <vector>  // std::vector
+#include "plssvm/backends/OpenCL/csvm.hpp"  // plssvm::opencl::csvm
+#include "plssvm/parameter.hpp"             // plssvm::parameter
 
 /**
  * @brief GTest mock class for the OpenCL CSVM.
- * @tparam T the type of the data
  */
-template <typename T>
-class mock_opencl_csvm : public plssvm::opencl::csvm<T> {
-    using base_type = plssvm::opencl::csvm<T>;
+class mock_opencl_csvm : public plssvm::opencl::csvm {
+    using base_type = plssvm::opencl::csvm;
 
   public:
-    using real_type = typename base_type::real_type;
-    using device_ptr_type = typename base_type::device_ptr_type;
-    using queue_type = typename base_type::queue_type;
+    using base_type::device_ptr_type;
 
-    explicit mock_opencl_csvm(const plssvm::parameter<T> &params) :
-        base_type{ params } {}
+    template <typename... Args>
+    explicit mock_opencl_csvm(Args &&...args) :
+        base_type{ std::forward<Args>(args)... } {}
 
-    // make non-virtual functions publicly visible
+    // make protected member functions public
+    using base_type::calculate_w;
     using base_type::device_reduction;
     using base_type::generate_q;
+    using base_type::predict_values;
     using base_type::run_device_kernel;
+    using base_type::select_num_used_devices;
     using base_type::setup_data_on_device;
+    using base_type::solve_system_of_linear_equations;
 
-    // parameter setter
-    void set_cost(const real_type cost) { base_type::cost_ = cost; }
-    void set_QA_cost(const real_type QA_cost) { base_type::QA_cost_ = QA_cost; }
-
-    // getter for internal variables
-    std::shared_ptr<const std::vector<real_type>> &get_alpha_ptr() { return base_type::alpha_ptr_; }
-    const std::vector<device_ptr_type> &get_device_data() { return base_type::data_d_; }
-    std::vector<queue_type> &get_devices() { return base_type::devices_; }
-    typename std::vector<queue_type>::size_type get_num_devices() const { return base_type::devices_.size(); }
+    using base_type::devices_;
 };
+
+#endif  // PLSSVM_TESTS_BACKENDS_OPENCL_MOCK_OPENCL_CSVM_HPP_

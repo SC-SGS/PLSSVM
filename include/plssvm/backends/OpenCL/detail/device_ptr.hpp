@@ -9,6 +9,8 @@
  * @brief Small wrapper around a OpenCL device pointer.
  */
 
+#ifndef PLSSVM_BACKENDS_OPENCL_DETAIL_DEVICE_PTR_HPP_
+#define PLSSVM_BACKENDS_OPENCL_DETAIL_DEVICE_PTR_HPP_
 #pragma once
 
 #include "plssvm/backends/OpenCL/detail/command_queue.hpp"  // plssvm::opencl::detail::command_queue
@@ -23,9 +25,9 @@ namespace plssvm::opencl::detail {
  * @tparam T the type of the kernel pointer to wrap
  */
 template <typename T>
-class device_ptr : public ::plssvm::detail::gpu_device_ptr<T, command_queue *, cl_mem> {
+class device_ptr : public ::plssvm::detail::gpu_device_ptr<T, const command_queue *, cl_mem> {
     /// The template base type of the OpenCL device_ptr class.
-    using base_type = ::plssvm::detail::gpu_device_ptr<T, command_queue *, cl_mem>;
+    using base_type = ::plssvm::detail::gpu_device_ptr<T, const command_queue *, cl_mem>;
 
     using base_type::data_;
     using base_type::queue_;
@@ -33,9 +35,10 @@ class device_ptr : public ::plssvm::detail::gpu_device_ptr<T, command_queue *, c
 
   public:
     // Be able to use overloaded base class functions.
-    using base_type::memcpy_to_device;
-    using base_type::memcpy_to_host;
     using base_type::memset;
+    using base_type::fill;
+    using base_type::copy_to_device;
+    using base_type::copy_to_host;
 
     using typename base_type::const_host_pointer_type;
     using typename base_type::device_pointer_type;
@@ -53,47 +56,52 @@ class device_ptr : public ::plssvm::detail::gpu_device_ptr<T, command_queue *, c
      * @param[in] size the number of elements represented by the device_ptr
      * @param[in] queue the associated command queue
      */
-    device_ptr(size_type size, command_queue &queue);
+    device_ptr(size_type size, const command_queue &queue);
 
     /**
-     * @copydoc plssvm::detail::gpu_device_ptr::gpu_device_ptr(const gpu_device_ptr&)
+     * @copydoc plssvm::detail::gpu_device_ptr::gpu_device_ptr(const plssvm::detail::gpu_device_ptr &)
      */
     device_ptr(const device_ptr &) = delete;
     /**
-     * @copydoc plssvm::detail::gpu_device_ptr::gpu_device_ptr(gpu_device_ptr&&)
+     * @copydoc plssvm::detail::gpu_device_ptr::gpu_device_ptr(plssvm::detail::gpu_device_ptr &&)
      */
     device_ptr(device_ptr &&other) noexcept = default;
 
     /**
-     * @copydoc plssvm::detail::gpu_device_ptr::operator=(const gpu_device_ptr&)
+     * @copydoc plssvm::detail::gpu_device_ptr::operator=(const plssvm::detail::gpu_device_ptr &)
      */
     device_ptr &operator=(const device_ptr &) = delete;
     /**
-     * @copydoc plssvm::detail::gpu_device_ptr::operator=(gpu_device_ptr&&)
+     * @copydoc plssvm::detail::gpu_device_ptr::operator=(plssvm::detail::gpu_device_ptr &&)
      */
     device_ptr &operator=(device_ptr &&other) noexcept = default;
 
     /**
      * @copydoc plssvm::detail::gpu_device_ptr::~gpu_device_ptr()
      */
-    ~device_ptr();
+    ~device_ptr() override;
 
     /**
      * @copydoc plssvm::detail::gpu_device_ptr::memset(int, size_type, size_type)
-     * @note Internally casts the `int` to `value_type`.
      */
-    void memset(int value, size_type pos, size_type count) override;
+    void memset(int pattern, size_type pos, size_type num_bytes) override;
     /**
-     * @copydoc plssvm::detail::gpu_device_ptr::memcpy_to_device(const_host_pointer_type, size_type, size_type)
+     * @copydoc plssvm::detail::gpu_device_ptr::fill(value_type, size_type, size_type)
      */
-    void memcpy_to_device(const_host_pointer_type data_to_copy, size_type pos, size_type count) override;
+    void fill(value_type value, size_type pos, size_type count) override;
     /**
-     * @copydoc plssvm::detail::gpu_device_ptr::memcpy_to_host(host_pointer_type, size_type, size_type) const
+     * @copydoc plssvm::detail::gpu_device_ptr::copy_to_device(const_host_pointer_type, size_type, size_type)
      */
-    void memcpy_to_host(host_pointer_type buffer, size_type pos, size_type count) const override;
+    void copy_to_device(const_host_pointer_type data_to_copy, size_type pos, size_type count) override;
+    /**
+     * @copydoc plssvm::detail::gpu_device_ptr::copy_to_host(host_pointer_type, size_type, size_type) const
+     */
+    void copy_to_host(host_pointer_type buffer, size_type pos, size_type count) const override;
 };
 
 extern template class device_ptr<float>;
 extern template class device_ptr<double>;
 
 }  // namespace plssvm::opencl::detail
+
+#endif  // PLSSVM_BACKENDS_OPENCL_DETAIL_DEVICE_PTR_HPP_

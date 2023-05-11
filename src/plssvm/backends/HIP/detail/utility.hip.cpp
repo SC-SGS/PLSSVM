@@ -12,13 +12,13 @@
 
 #include "hip/hip_runtime_api.h"  // hipError_t, hipSuccess, hipGetErrorName, hipGetErrorString, hipGetDeviceCount, hipSetDevice, hipPeekAtLastError, hipDeviceSynchronize
 
-#include "fmt/format.h"  // fmt::format
+#include "fmt/core.h"  // fmt::format
 
 namespace plssvm::hip::detail {
 
 void gpu_assert(const hipError_t code) {
     if (code != hipSuccess) {
-        throw backend_exception{ fmt::format("HIP assert {}: {}", hipGetErrorName(code), hipGetErrorString(code)) };
+        throw backend_exception{ fmt::format("HIP assert '{}' ({}): {}", hipGetErrorName(code), code, hipGetErrorString(code)) };
     }
 }
 
@@ -29,6 +29,9 @@ void gpu_assert(const hipError_t code) {
 }
 
 void set_device(const int device) {
+    if (device < 0 || device >= static_cast<int>(get_device_count())) {
+        throw backend_exception{ fmt::format("Illegal device ID! Must be in range: [0, {}) but is {}!", get_device_count(), device) };
+    }
     PLSSVM_HIP_ERROR_CHECK(hipSetDevice(device));
 }
 
@@ -38,10 +41,10 @@ void peek_at_last_error() {
 
 void device_synchronize(const int device) {
     if (device < 0 || device >= static_cast<int>(get_device_count())) {
-        throw backend_exception{ fmt::format("Illegal device ID! Must be in range: [0, {}) but is {}.", get_device_count(), device) };
+        throw backend_exception{ fmt::format("Illegal device ID! Must be in range: [0, {}) but is {}!", get_device_count(), device) };
     }
     peek_at_last_error();
-    PLSSVM_HIP_ERROR_CHECK(hipSetDevice(device));
+    set_device(device);
     PLSSVM_HIP_ERROR_CHECK(hipDeviceSynchronize());
 }
 

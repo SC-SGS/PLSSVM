@@ -10,20 +10,20 @@
 
 #include "plssvm/backends/OpenCL/detail/utility.hpp"  // PLSSVM_OPENCL_ERROR_CHECK
 
-#include "CL/cl.h"  // cl_kernel, clReleaseKernel
+#include "CL/cl.h"                                    // cl_kernel, clReleaseKernel
 
-#include <memory>   // std::addressof
-#include <utility>  // std::exchange
+#include <memory>                                     // std::addressof
+#include <utility>                                    // std::exchange
 
 namespace plssvm::opencl::detail {
 
-kernel::kernel(cl_kernel p_compute_kernel) noexcept :
-    compute_kernel{ p_compute_kernel } {}
+kernel::kernel(cl_kernel compute_kernel_p) noexcept :
+    compute_kernel{ compute_kernel_p } {}
 
 kernel::kernel(kernel &&other) noexcept :
     compute_kernel{ std::exchange(other.compute_kernel, nullptr) } {}
 
-kernel &kernel::operator=(kernel &&other) {
+kernel &kernel::operator=(kernel &&other) noexcept {
     if (this != std::addressof(other)) {
         compute_kernel = std::exchange(other.compute_kernel, nullptr);
     }
@@ -32,7 +32,7 @@ kernel &kernel::operator=(kernel &&other) {
 
 kernel::~kernel() {
     if (compute_kernel) {
-        PLSSVM_OPENCL_ERROR_CHECK(clReleaseKernel(compute_kernel), "error realising cl_kernel");
+        PLSSVM_OPENCL_ERROR_CHECK(clReleaseKernel(compute_kernel), "error releasing cl_kernel");
     }
 }
 

@@ -36,21 +36,27 @@ bool contains(const std::string_view str, const char c) noexcept {
 }
 
 std::string_view trim_left(const std::string_view str) noexcept {
-    std::string_view::size_type pos = std::min(str.find_first_not_of(' '), str.size());
+    const std::string_view::size_type pos = std::min(str.find_first_not_of(' '), str.size());
     return str.substr(pos);
 }
 std::string_view trim_right(const std::string_view str) noexcept {
-    std::string_view::size_type pos = std::min(str.find_last_not_of(' ') + 1, str.size());
+    const std::string_view::size_type pos = std::min(str.find_last_not_of(' ') + 1, str.size());
     return str.substr(0, pos);
 }
 std::string_view trim(const std::string_view str) noexcept {
     return trim_left(trim_right(str));
 }
 
-void replace_all(std::string &str, const std::string_view what, const std::string_view with) {
+std::string &replace_all(std::string &str, const std::string_view what, const std::string_view with) {
+    // prevent endless loop if the "what" string is empty -> nothing to do
+    if (what.empty()) {
+        return str;
+    }
+    // replace occurrences of "what" with "with"
     for (std::string::size_type pos = 0; std::string::npos != (pos = str.find(what.data(), pos, what.length())); pos += with.length()) {
         str.replace(pos, what.length(), with.data(), with.length());
     }
+    return str;
 }
 
 std::string &to_lower_case(std::string &str) {
@@ -76,16 +82,21 @@ std::string as_upper_case(const std::string_view str) {
 }
 
 std::vector<std::string_view> split(const std::string_view str, const char delim) {
-    std::vector<std::string_view> splitted;
+    std::vector<std::string_view> split_str;
+
+    // if the input str is empty, return an empty vector
+    if (str.empty()) {
+        return split_str;
+    }
 
     std::string_view::size_type pos = 0;
     std::string_view::size_type next = 0;
     while (next != std::string_view::npos) {
         next = str.find_first_of(delim, pos);
-        splitted.emplace_back(next == std::string_view::npos ? str.substr(pos) : str.substr(pos, next - pos));
+        split_str.emplace_back(next == std::string_view::npos ? str.substr(pos) : str.substr(pos, next - pos));
         pos = next + 1;
     }
-    return splitted;
+    return split_str;
 }
 
 }  // namespace plssvm::detail

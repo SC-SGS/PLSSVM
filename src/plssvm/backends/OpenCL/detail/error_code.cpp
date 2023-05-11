@@ -8,7 +8,7 @@
 
 #include "plssvm/backends/OpenCL/detail/error_code.hpp"
 
-#include "CL/cl.h"  // cl_int, CL_SUCCESS
+#include "CL/cl.h"      // cl_int, CL_SUCCESS
 
 #include <ostream>      // std::ostream
 #include <string_view>  // std::string_view

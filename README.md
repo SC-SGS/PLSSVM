@@ -2,7 +2,7 @@
 
 # PLSSVM - Parallel Least Squares Support Vector Machine
 
-[![Codacy Badge](https://app.codacy.com/project/badge/Grade/e780a63075ce40c29c49d3df4f57c2af)](https://www.codacy.com/gh/SC-SGS/PLSSVM/dashboard?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=SC-SGS/PLSSVM&amp;utm_campaign=Badge_Grade) &ensp; [![Generate documentation](https://github.com/SC-SGS/PLSSVM/actions/workflows/documentation.yml/badge.svg)](https://sc-sgs.github.io/PLSSVM/) &ensp; [![Build Status Linux CPU](https://simsgs.informatik.uni-stuttgart.de/jenkins/buildStatus/icon?job=PLSSVM%2FGithub-CPU%2Fmain&subject=Linux+CPU)](https://simsgs.informatik.uni-stuttgart.de/jenkins/view/PLSSVM/job/PLSSVM/view/All/job/Github-CPU/job/main/) &ensp; [![Build Status Linux NVIDIA GPU](https://simsgs.informatik.uni-stuttgart.de/jenkins/buildStatus/icon?job=PLSSVM%2FGithub-GPU_NVIDIA%2Fmain&subject=Linux+NVIDIA+GPU)](https://simsgs.informatik.uni-stuttgart.de/jenkins/view/PLSSVM/job/PLSSVM/view/All/job/Github-GPU_NVIDIA/job/main/) &ensp; [![Build Status Linux AMD GPU](https://simsgs.informatik.uni-stuttgart.de/jenkins/buildStatus/icon?job=PLSSVM%2FGithub-GPU_AMD%2Fmain&subject=Linux+AMG+GPU)](https://simsgs.informatik.uni-stuttgart.de/jenkins/view/PLSSVM/job/PLSSVM/view/All/job/Github-GPU_AMD/job/main/) &ensp; [![Build Status Linux Multi-GPU](https://simsgs.informatik.uni-stuttgart.de/jenkins/buildStatus/icon?job=PLSSVM%2FGithub-Multi-GPU%2Fmain&subject=Linux+Multi-GPU)](https://simsgs.informatik.uni-stuttgart.de/jenkins/view/PLSSVM/job/PLSSVM/view/All/job/Github-Multi-GPU/job/main/) &ensp; [![Windows CPU](https://github.com/SC-SGS/PLSSVM/actions/workflows/msvc_windows.yml/badge.svg)](https://github.com/SC-SGS/PLSSVM/actions/workflows/msvc_windows.yml)
+[![Codacy Badge](https://app.codacy.com/project/badge/Grade/e780a63075ce40c29c49d3df4f57c2af)](https://www.codacy.com/gh/SC-SGS/PLSSVM/dashboard?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=SC-SGS/PLSSVM&amp;utm_campaign=Badge_Grade) &ensp; [![Generate documentation](https://github.com/SC-SGS/PLSSVM/actions/workflows/documentation.yml/badge.svg)](https://sc-sgs.github.io/PLSSVM/) 
 
 A [Support Vector Machine (SVM)](https://en.wikipedia.org/wiki/Support-vector_machine) is a supervised machine learning model.
 In its basic form SVMs are used for binary classification tasks.
@@ -10,6 +10,10 @@ Their fundamental idea is to learn a hyperplane which separates the two classes 
 This is also the reason, why SVMs are also called "large margin classifiers".
 To predict to which class a new, unseen data point belongs, the SVM simply has to calculate on which side of the previously calculated hyperplane the data point lies.
 This is very efficient since it only involves a single scalar product of the size corresponding to the numer of features of the data set.
+
+<p align="center">
+  <img alt="strong scaling CPU" src=".figures/support_vector_machine.png" width="50%">
+</p>
 
 However, normal SVMs suffer in their potential parallelizability.
 Determining the hyperplane boils down to solving a convex quadratic problem.
@@ -35,7 +39,7 @@ The currently available frameworks (also called backends in our PLSSVM implement
 - [CUDA](https://developer.nvidia.com/cuda-zone)
 - [HIP](https://github.com/ROCm-Developer-Tools/HIP) (only tested on AMD GPUs)
 - [OpenCL](https://www.khronos.org/opencl/)
-- [SYCL](https://www.khronos.org/sycl/) (tested implementations are [DPC++](https://github.com/intel/llvm) and [hipSYCL](https://github.com/illuhad/hipSYCL); specifically the commits [faaba28](https://github.com/intel/llvm/tree/faaba28541138d7ad39a7fa85fa85b863560b45f) and [6962942](https://github.com/illuhad/hipSYCL/tree/6962942c430a7b221eb167b4272c29cf397cda06) respectivelly)
+- [SYCL](https://www.khronos.org/sycl/) (tested implementations are [DPC++](https://github.com/intel/llvm) and [hipSYCL](https://github.com/illuhad/hipSYCL); specifically the versions [sycl-nightly/20230110](https://github.com/intel/llvm/tree/sycl-nightly/20230110) and hipSYCL commit [eb67fc4](https://github.com/illuhad/hipSYCL/commit/eb67fc46d6732b5c4f137ce5564f6adfba57eaa1))
 
 ## Getting Started
 
@@ -45,10 +49,11 @@ General dependencies:
 
 - a C++17 capable compiler (e.g. [`gcc`](https://gcc.gnu.org/) or [`clang`](https://clang.llvm.org/))
 - [CMake](https://cmake.org/) 3.21 or newer
-- [cxxopts ≥ v3.0.0](https://github.com/jarro2783/cxxopts), [fast_float](https://github.com/fastfloat/fast_float) and [{fmt} ≥ v8.0.0](https://github.com/fmtlib/fmt) (all three are automatically build during the CMake configuration if they couldn't be found using the respective `find_package` call)
+- [cxxopts ≥ v3.0.0](https://github.com/jarro2783/cxxopts), [fast_float](https://github.com/fastfloat/fast_float), [{fmt} ≥ v8.1.1](https://github.com/fmtlib/fmt), and [igor](https://github.com/bluescarni/igor) (all four are automatically build during the CMake configuration if they couldn't be found using the respective `find_package` call)
 - [GoogleTest ≥ v1.11.0](https://github.com/google/googletest) if testing is enabled (automatically build during the CMake configuration if `find_package(GTest)` wasn't successful)
 - [doxygen](https://www.doxygen.nl/index.html) if documentation generation is enabled
-- [OpenMP](https://www.openmp.org/) 4.0 or newer (optional) to speed-up file parsing
+- [Pybind11 ≥ v2.10.3](https://github.com/pybind/pybind11) if Python bindings are enabled
+- [OpenMP](https://www.openmp.org/) 4.0 or newer (optional) to speed-up library utilities (like file parsing)
 - multiple Python modules used in the utility scripts, to install all modules use `pip install --user -r install/python_requirements.txt`
 
 Additional dependencies for the OpenMP backend:
@@ -75,7 +80,7 @@ Additional dependencies for the SYCL backend:
 
 Additional dependencies if `PLSSVM_ENABLE_TESTING` and `PLSSVM_GENERATE_TEST_FILE` are both set to `ON`:
 
-- [Python3](https://www.python.org/) with the [`argparse`](https://docs.python.org/3/library/argparse.html), [`timeit`](https://docs.python.org/3/library/timeit.html) and [`sklearn`](https://scikit-learn.org/stable/) modules
+- [Python3](https://www.python.org/) with the [`argparse`](https://docs.python.org/3/library/argparse.html), [`timeit`](https://docs.python.org/3/library/timeit.html), [`sklearn`](https://scikit-learn.org/stable/), and [`humanize`](https://pypi.org/project/humanize/) modules
 
 ### Building
 
@@ -99,18 +104,17 @@ Valid targets are:
 - `amd`: compile for AMD GPUs; **at least one** architectural specification is necessary, e.g., `amd:gfx906`
 - `intel`: compile for Intel GPUs; **at least one** architectural specification is necessary, e.g., `intel:skl`
 
-At least one of the above targets must be present.
+At least one of the above targets must be present. If the option `PLSSVM_TARGET_PLATFORMS` is not present, the targets 
+are automatically determined using the Python3 `utility_scripts/plssvm_target_platforms.py` script (required Python3 dependencies:
+[`argparse`](https://docs.python.org/3/library/argparse.html), [`py-cpuinfo`](https://pypi.org/project/py-cpuinfo/),
+[`GPUtil`](https://pypi.org/project/GPUtil/), [`pyamdgpuinfo`](https://pypi.org/project/pyamdgpuinfo/), and
+[`pylspci`](https://pypi.org/project/pylspci/)).
 
 Note that when using DPC++ only a single architectural specification for `cpu`, `nvidia` or `amd` is allowed.
 
-To retrieve the architectural specifications of the current system, a simple Python3 script `utility/plssvm_target_platforms.py` is provided
-(required Python3 dependencies:
-[`argparse`](https://docs.python.org/3/library/argparse.html), [`py-cpuinfo`](https://pypi.org/project/py-cpuinfo/),
-[`GPUtil`](https://pypi.org/project/GPUtil/), [`pyamdgpuinfo`](https://pypi.org/project/pyamdgpuinfo/), and
-[`pylspci`](https://pypi.org/project/pylspci/))
 
 ```bash
-python3 utility/plssvm_target_platforms.py --help
+python3 utility_scripts/plssvm_target_platforms.py --help
 usage: plssvm_target_platforms.py [-h] [--quiet]
 
 optional arguments:
@@ -118,7 +122,7 @@ optional arguments:
   --quiet     only output the final PLSSVM_TARGET_PLATFORMS string
 ```
 
-Example invocations:
+Example invocation:
 
 ```bash
 python3 utility_scripts/plssvm_target_platforms.py
@@ -129,7 +133,13 @@ Found 1 NVIDIA GPU(s):
 
 Possible -DPLSSVM_TARGET_PLATFORMS entries:
 cpu:avx512;nvidia:sm_86
+```
 
+
+or with the `--quiet` flag given:
+
+
+```bash
 python3 utility_scripts/plssvm_target_platforms.py --quiet
 cpu:avx512;intel:dg1
 ```
@@ -140,9 +150,6 @@ If the architectural information for the requested GPU could not be retrieved, o
 - for AMD GPUs: [clang AMDGPU backend usage](https://llvm.org/docs/AMDGPUUsage.html)
 - for Intel GPUs and CPUs: [Ahead of Time Compilation](https://www.intel.com/content/www/us/en/develop/documentation/oneapi-dpcpp-cpp-compiler-dev-guide-and-reference/top/compilation/ahead-of-time-compilation.html) and [Intel graphics processor table](https://dgpu-docs.intel.com/devices/hardware-table.html)
 
-If the `PLSSVM_TARGET_PLATFORMS` options isn't set during the CMake invocation and isn't set as environment variable, 
-CMake tries to execute the above script and uses its output to automatically set the `PLSSVM_TARGET_PLATFORMS`.
-This, however, requires the Python packages to be installed.
 
 #### Optional CMake Options
 
@@ -178,10 +185,12 @@ The `[optional_options]` can be one or multiple of:
 - `PLSSVM_ENABLE_ASSERTS=ON|OFF` (default: `OFF`): enables custom assertions regardless whether the `DEBUG` macro is defined or not
 - `PLSSVM_THREAD_BLOCK_SIZE` (default: `16`): set a specific thread block size used in the GPU kernels (for fine-tuning optimizations)
 - `PLSSVM_INTERNAL_BLOCK_SIZE` (default: `6`: set a specific internal block size used in the GPU kernels (for fine-tuning optimizations)
-- `PLSSVM_EXECUTABLES_USE_SINGLE_PRECISION` (default: `OFF`): enables single precision calculations instead of double precision for the `plssvm-train` and `plssvm-preidct` executables
+- `PLSSVM_OPENMP_BLOCK_SIZE` (default: `64`): set a specific block size used in the OpenMP kernels
 - `PLSSVM_ENABLE_LTO=ON|OFF` (default: `ON`): enable interprocedural optimization (IPO/LTO) if supported by the compiler
 - `PLSSVM_ENABLE_DOCUMENTATION=ON|OFF` (default: `OFF`): enable the `doc` target using doxygen
+- `PLSSVM_ENABLE_PERFORMANCE_TRACKING`: enable gathering performance characteristics for the three executables using YAML files; example Python3 scripts to perform performance measurements and to process the resulting YAML files can be found in the `utility_scripts/` directory (requires the Python3 modules [wrapt-timeout-decorator](https://pypi.org/project/wrapt-timeout-decorator/), [`pyyaml`](https://pyyaml.org/), and [`pint`](https://pint.readthedocs.io/en/stable/))
 - `PLSSVM_ENABLE_TESTING=ON|OFF` (default: `ON`): enable testing using GoogleTest and ctest
+- `PLSSVM_ENABLE_LANGUAGE_BINDINGS=ON|OFF` (default: `OFF`): enable language bindings
 
 If `PLSSVM_ENABLE_TESTING` is set to `ON`, the following options can also be set:
 
@@ -189,18 +198,39 @@ If `PLSSVM_ENABLE_TESTING` is set to `ON`, the following options can also be set
   - `PLSSVM_TEST_FILE_NUM_DATA_POINTS` (default: `5000`): the number of data points in the test file
   - `PLSSVM_TEST_FILE_NUM_FEATURES` (default: `2000`): the number of features per data point in the test file
 
+If `PLSSVM_ENABLE_LANGUAGE_BINDINGS` is set to `ON`, the following option can also be set:
+
+- `PLSSVM_ENABLE_PYTHON_BINDINGS=ON|OFF` (default: `PLSSVM_ENABLE_LANGUAGE_BINDINGS`): enable Python bindings using Pybind11
+
+If `PLSSVM_ENABLE_PYTHON_BINDINGS` is set to `ON`, the following options can also be set:
+
+- `PLSSVM_PYTHON_BINDINGS_PREFERRED_REAL_TYPE` (default: `double`): the default `real_type` used if the generic `plssvm.Model` and `plssvm.DataSet` Python classes are used
+- `PLSSVM_PYTHON_BINDINGS_PREFERRED_LABEL_TYPE` (default: `std::string`): the default `label_type` used if the generic `plssvm.Model` and `plssvm.DataSet` Python classes are used
+
 If the SYCL backend is available additional options can be set.
+
+- `PLSSVM_ENABLE_SYCL_HIPSYCL_BACKEND=ON|OFF|AUTO` (default: `AUTO`):
+  - `ON`: check for hipSYCL as implementation for the SYCL backend and fail if not available
+  - `AUTO`: check for hipSYCL as implementation for the SYCL backend but **do not** fail if not available
+  - `OFF`: do not check for hipSYCL as implementation for the SYCL backend
+
+- `PLSSVM_ENABLE_SYCL_DPCPP_BACKEND=ON|OFF|AUTO` (default: `AUTO`):
+  - `ON`: check for DPC++ as implementation for the SYCL backend and fail if not available
+  - `AUTO`: check for DPC++ as implementation for the SYCL backend but **do not** fail if not available
+  - `OFF`: do not check for DPC++ as implementation for the SYCL backend
+
 To use DPC++ for SYCL simply set the `CMAKE_CXX_COMPILER` to the respective DPC++ clang executable during CMake invocation.
 
 If the SYCL implementation is DPC++ the following additional options are available:
 
-- `PLSSVM_SYCL_BACKEND_DPCPP_USE_LEVEL_ZERO` (default: `OFF`): use Level-Zero as the DPC++ backend instead of OpenCL
+- `PLSSVM_SYCL_BACKEND_DPCPP_USE_LEVEL_ZERO` (default: `OFF`): use DPC++'s Level-Zero backend instead of its OpenCL backend
+- `PLSSVM_SYCL_BACKEND_DPCPP_GPU_AMD_USE_HIP` (default: `ON`): use DPC++'s HIP backend instead of its OpenCL backend for AMD GPUs
 - `PLSSVM_SYCL_BACKEND_DPCPP_ENABLE_AOT` (default: `ON`): enable Ahead-of-Time (AOT) compilation for the specified target platforms
 
 If more than one SYCL implementation is available the environment variables `PLSSVM_SYCL_HIPSYCL_INCLUDE_DIR` and `PLSSVM_SYCL_DPCPP_INCLUDE_DIR`
 **must** be set to the respective SYCL include paths. Note that those paths **must not** be present in the `CPLUS_INCLUDE_PATH` environment variable or compilation will fail.
 
-- `PLSSVM_SYCL_BACKEND_PREFERRED_IMPLEMENTATION` (`dpcpp`|`hipsycl`): specify the preferred SYCL implementation if the `sycl_implementation_type` is set to `automatic`; additional the specified SYCL implementation is used in the `plssvm::sycl` namespace, the other implementations are available in the `plssvm::dpcpp` and `plssvm::hipsycl` namespace respectively
+- `PLSSVM_SYCL_BACKEND_PREFERRED_IMPLEMENTATION` (`dpcpp`|`hipsycl`): specify the preferred SYCL implementation if the `sycl_implementation_type` option is set to `automatic`; additional the specified SYCL implementation is used in the `plssvm::sycl` namespace, the other implementations are available in the `plssvm::dpcpp` and `plssvm::hipsycl` namespace respectively
 
 ### Running the tests
 
@@ -242,9 +272,19 @@ The library supports the `install` target:
 cmake --build . -- install
 ```
 
+Afterward, the necessary exports should be performed:
+
+```bash
+export CMAKE_PREFIX_PATH=${CMAKE_INSTALL_PREFIX}/share/plssvm/cmake:${CMAKE_PREFIX_PATH}
+export MANPATH=${CMAKE_INSTALL_PREFIX}/share/man:$MANPATH
+
+export PATH=${CMAKE_INSTALL_PREFIX}/bin:${PATH}
+export LD_LIBRARY_PATH=${CMAKE_INSTALL_PREFIX}/lib:${LD_LIBRARY_PATH}
+```
+
 ## Usage
 
-### Generating data
+### Generating artificial data
 
 The repository comes with a Python3 script (in the `utility_scripts/` directory) to simply generate arbitrarily large data sets.
 
@@ -252,11 +292,11 @@ In order to use all functionality, the following Python3 modules must be install
 [`argparse`](https://docs.python.org/3/library/argparse.html), [`timeit`](https://docs.python.org/3/library/timeit.html),
 [`numpy`](https://pypi.org/project/numpy/), [`pandas`](https://pypi.org/project/pandas/),
 [`sklearn`](https://scikit-learn.org/stable/), [`arff`](https://pypi.org/project/arff/),
-[`matplotlib`](https://pypi.org/project/matplotlib/) and
-[`mpl_toolkits`](https://pypi.org/project/matplotlib/)
+[`matplotlib`](https://pypi.org/project/matplotlib/), [`mpl_toolkits`](https://pypi.org/project/matplotlib/),
+and [`humanize`](https://pypi.org/project/humanize/).
 
 ```bash
-python3 utility_scripts/generate_data**.py --help
+python3 utility_scripts/generate_data.py --help
 usage: generate_data.py [-h] --output OUTPUT --format FORMAT [--problem PROBLEM] --samples SAMPLES [--test_samples TEST_SAMPLES] --features FEATURES [--plot]
 
 optional arguments:
@@ -294,14 +334,21 @@ Usage:
   -r, --coef0 arg               set coef0 in kernel function (default: 0)
   -c, --cost arg                set the parameter C (default: 1)
   -e, --epsilon arg             set the tolerance of termination criterion (default: 0.001)
+  -i, --max_iter arg            set the maximum number of CG iterations (default: num_features)
   -b, --backend arg             choose the backend: automatic|openmp|cuda|hip|opencl|sycl (default: automatic)
   -p, --target_platform arg     choose the target platform: automatic|cpu|gpu_nvidia|gpu_amd|gpu_intel (default: automatic)
       --sycl_kernel_invocation_type arg
                                 choose the kernel invocation type when using SYCL as backend: automatic|nd_range|hierarchical (default: automatic)
       --sycl_implementation_type arg
                                 choose the SYCL implementation to be used in the SYCL backend: automatic|dpcpp|hipsycl (default: automatic)
-  -q, --quiet                   quiet mode (no outputs)
+      --performance_tracking arg
+                                the output YAML file where the performance tracking results are written to; if not provided, the results are dumped to stderr
+      --use_strings_as_labels   use strings as labels instead of plane numbers
+      --use_float_as_real_type  use floats as real types instead of doubles
+      --verbosity               choose the level of verbosity: full|timing|libsvm|quiet (default: full)
+  -q, --quiet                   quiet mode (no outputs regardless the provided verbosity level!)
   -h, --help                    print this helper message
+  -v, --version                 print version information
       --input training_set_file
                                 
       --model model_file 
@@ -341,11 +388,12 @@ The `--target_platform=automatic` option works for the different backends as fol
 
 - `OpenMP`: always selects a CPU
 - `CUDA`: always selects an NVIDIA GPU (if no NVIDIA GPU is available, throws an exception)
+- `HIP`: always selects an AMD GPU (if no AMD GPU is available, throws an exception)
 - `OpenCL`: tries to find available devices in the following order: NVIDIA GPUs 🠦 AMD GPUs 🠦 Intel GPUs 🠦 CPU
 - `SYCL`: tries to find available devices in the following order: NVIDIA GPUs 🠦 AMD GPUs 🠦 Intel GPUs 🠦 CPU
 
 The `--sycl_kernel_invocation_type` and `--sycl_implementation_type` flags are only used if the `--backend` is `sycl`, otherwise a warning is emitted on `stderr`.
-If the `--sycl_kernel_invocation_type` is `automatic`, the `nd_range` invocation type is always used, except for hipSYCL on CPUs where the hierarchical formulation is used instead.
+If the `--sycl_kernel_invocation_type` is `automatic`, the `nd_range` invocation type is always used, except for hipSYCL on CPUs where the hierarchical formulation is used instead (if hipSYCL wasn't build with `omp.accelerated`).
 If the `--sycl_implementation_type` is `automatic`, the used SYCL implementation is determined by the `PLSSVM_SYCL_BACKEND_PREFERRED_IMPLEMENTATION` cmake flag.
 
 ### Predicting
@@ -360,8 +408,14 @@ Usage:
   -p, --target_platform arg     choose the target platform: automatic|cpu|gpu_nvidia|gpu_amd|gpu_intel (default: automatic)
       --sycl_implementation_type arg
                                 choose the SYCL implementation to be used in the SYCL backend: automatic|dpcpp|hipsycl (default: automatic)
-  -q, --quiet                   quiet mode (no outputs)
+      --performance_tracking arg
+                                the output YAML file where the performance tracking results are written to; if not provided, the results are dumped to stderr
+      --use_strings_as_labels   use strings as labels instead of plane numbers
+      --use_float_as_real_type  use floats as real types instead of doubles
+      --verbosity               choose the level of verbosity: full|timing|libsvm|quiet (default: full)
+  -q, --quiet                   quiet mode (no outputs regardless the provided verbosity level!)
   -h, --help                    print this helper message
+  -v, --version                 print version information
       --test test_file          
       --model model_file        
       --output output_file
@@ -381,7 +435,44 @@ Another example targeting NVIDIA GPUs using the SYCL backend looks like:
 
 The `--target_platform=automatic` and `--sycl_implementation_type` flags work like in the training (`./plssvm-train`) case.
 
-For more information see the `man` pages for `plssvm-train` and `plssvm-predict` (which are installed via `cmake --build . -- install`).
+### Scaling
+
+```bash
+LS-SVM with multiple (GPU-)backends
+Usage:
+  ./plssvm-scale [OPTION...] input_file [scaled_file]
+
+  -l, --lower arg               lower is the lowest (minimal) value allowed in each dimension (default: -1)
+  -u, --upper arg               upper is the highest (maximal) value allowed in each dimension (default: 1)
+  -f, --format arg              the file format to output the scaled data set to (default: libsvm)
+  -s, --save_filename arg       the file to which the scaling factors should be saved
+  -r, --restore_filename arg    the file from which previous scaling factors should be loaded
+      --performance_tracking arg
+                                the output YAML file where the performance tracking results are written to; if not provided, the results are dumped to stderr
+      --use_strings_as_labels   use strings as labels instead of plane numbers
+      --use_float_as_real_type  use floats as real types instead of doubles
+      --verbosity               choose the level of verbosity: full|timing|libsvm|quiet (default: full)
+  -q, --quiet                   quiet mode (no outputs regardless the provided verbosity level!)
+  -h, --help                    print this helper message
+  -v, --version                 print version information
+      --input input_file        
+      --scaled scaled_file
+```
+
+An example invocation could look like:
+
+```bash
+./plssvm-scale -l -0.5 -u 1.5 --input /path/to/input_file --scaled /path/to/scaled_file
+```
+
+An example invocation to scale a train and test file in the same way looks like:
+
+```bash
+./plssvm-scale -l -1.0 -u 1.0 -s scaling_parameter.txt train_file.libsvm train_file_scaled.libsvm
+./plssvm-scale -r scaling_parameter.txt test_file.libsvm test_file_scaled.libsvm
+```
+
+For more information see the `man` pages for `plssvm-train`, `plssvm-predict`, and `plssvm-scale` (which are installed via `cmake --build . -- install`).
 
 ## Example code for usage as library
 
@@ -396,27 +487,31 @@ A simple C++ program (`main.cpp`) using this library could look like:
 
 int main() {
     try {
-        // parse SVM parameter from command line
-        plssvm::parameter<double> params;
-        params.backend = plssvm::backend_type::cuda;
+      
+        // create a new C-SVM parameter set, explicitly overriding the default kernel function
+        const plssvm::parameter params{ plssvm::kernel_type = plssvm::kernel_function_type::polynomial };
 
-        params.parse_train_file("train_file.libsvm");
+        // create two data sets: one with the training data scaled to [-1, 1] 
+        // and one with the test data scaled like the training data
+        const plssvm::data_set<double> train_data{ "train_file.libsvm", { -1.0, 1.0 } };
+        const plssvm::data_set<double> test_data{ "test_file.libsvm", train_data.scaling_factors()->get() };
 
-        // create C-SVM (based on selected backend)
-        auto svm = plssvm::make_csvm(params);
+        // create C-SVM using the default backend and the previously defined parameter
+        const auto svm = plssvm::make_csvm(params);
 
-        // learn
-        svm->learn();
+        // fit using the training data, (optionally) set the termination criterion
+        const plssvm::model model = svm->fit(train_data, plssvm::epsilon = 10e-6);
 
-        // get accuracy
-        std::cout << "accuracy: " << svm->accuracy() << std::endl;
+        // get accuracy of the trained model
+        const double model_accuracy = svm->score(model);
+        std::cout << "model accuracy: " << model_accuracy << std::endl;
 
-        // predict
-        std::vector<double> point = { ... };
-        std::cout << "label: " << svm->predict(point) << std::endl;
+        // predict the labels
+        const std::vector<int> label = svm->predict(model, test_data);
 
         // write model file to disk
-        svm->write_model("model_file.libsvm");
+        model.save("model_file.libsvm");
+        
     } catch (const plssvm::exception &e) {
         std::cerr << e.what_with_loc() << std::endl;
     } catch (const std::exception &e) {
@@ -442,6 +537,67 @@ add_executable(prog main.cpp)
 target_compile_features(prog PUBLIC cxx_std_17)
 target_link_libraries(prog PUBLIC plssvm::plssvm-all)
 ```
+
+### Using the Python bindings
+
+Roughly the same can be achieved using our Python bindings with the following Python script:
+
+```python
+import plssvm
+
+try:
+    # create a new C-SVM parameter set, explicitly overriding the default kernel function
+    params = plssvm.Parameter(kernel_type=plssvm.KernelFunctionType.POLYNOMIAL)
+  
+    # create two data sets: one with the training data scaled to [-1, 1]
+    # and one with the test data scaled like the training data
+    train_data = plssvm.DataSet("train_data.libsvm", scaling=(-1.0, 1.0))
+    test_data = plssvm.DataSet("test_data.libsvm", scaling=train_data.scaling_factors())
+  
+    # create C-SVM using the default backend and the previously defined parameter
+    svm = plssvm.CSVM(params)
+  
+    # fit using the training data, (optionally) set the termination criterion
+    model = svm.fit(train_data, epsilon=10e-6)
+  
+    # get accuracy of the trained model
+    model_accuracy = svm.score(model)
+    print("model accuracy: {}".format(model_accuracy))
+  
+    # predict labels
+    label = svm.predict(model, test_data)
+  
+    # write model file to disk
+    model.save("model_file.libsvm")
+except plssvm.PLSSVMError as e:
+    print(e)
+except RuntimeError as e:
+    print(e)
+```
+
+**Note:** it may be necessary to set `PYTHONPATH` to the `lib` folder in the PLSSVM install path.
+
+We also provide Python bindings for a `plssvm.SVC` class that offers the same interface as the  [`sklearn.svm.SVC`](https://scikit-learn.org/stable/modules/generated/sklearn.svm.SVC.html) class.
+Note that currently not all functionality has been implemented in PLSSVM.
+The respective functions will throw a Python `AttributeError` if called.
+
+## Citing PLSSVM
+
+If you use PLSSVM in your research, we kindly request you to cite:
+
+```text
+@inproceedings{9835379,
+  author={Van Craen, Alexander and Breyer, Marcel and Pfl\"{u}ger, Dirk},
+  booktitle={2022 IEEE International Parallel and Distributed Processing Symposium Workshops (IPDPSW)}, 
+  title={PLSSVM: A (multi-)GPGPU-accelerated Least Squares Support Vector Machine}, 
+  year={2022},
+  volume={},
+  number={},
+  pages={818-827},
+  doi={10.1109/IPDPSW55747.2022.00138}
+}
+```
+For a full list of all publications involving PLSSVM see our [Wiki Page](https://github.com/SC-SGS/PLSSVM/wiki/List-of-Publications-involving-PLSSVM).
 
 ## License
 
