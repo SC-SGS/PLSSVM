@@ -1,5 +1,5 @@
 .\" Manpage for plssvm-train.
-.TH PLSSVM-TRAIN 1 "13 December 2022" "2.0.0" "plssvm-train Manual"
+.TH PLSSVM-TRAIN 1 "@PLSSVM_CURRENT_BUILD_TIME@" "@PROJECT_VERSION@" "plssvm-train Manual"
 
 .SH NAME
 plssvm-train - LS-SVM with multiple (GPU-)backends

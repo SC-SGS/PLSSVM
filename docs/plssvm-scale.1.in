@@ -1,5 +1,5 @@
 .\" Manpage for plssvm-scale.
-.TH PLSSVM-SCALE 1 "13 December 2022" "2.0.0" "plssvm-predict Manual"
+.TH PLSSVM-SCALE 1 "@PLSSVM_CURRENT_BUILD_TIME@" "@PROJECT_VERSION@" "plssvm-predict Manual"
 
 .SH NAME
 plssvm-scale - LS-SVM with multiple (GPU-)backends

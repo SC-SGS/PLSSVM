@@ -622,6 +622,7 @@ configure_file(
 ########################################################################################################################
 ## assemble the SYCL manpage entry
 message(STATUS "Generating manpage files.")
+string(TIMESTAMP PLSSVM_CURRENT_BUILD_TIME "%d. %B %Y")
 string(REPLACE ";" "|" PLSSVM_PLATFORM_NAME_LIST "${PLSSVM_PLATFORM_NAME_LIST}")
 string(REPLACE ";" "|" PLSSVM_BACKEND_NAME_LIST "${PLSSVM_BACKEND_NAME_LIST}")
 string(REPLACE ";" "|" PLSSVM_SYCL_BACKEND_NAME_LIST "${PLSSVM_SYCL_BACKEND_NAME_LIST}")

@@ -1,5 +1,5 @@
 .\" Manpage for plssvm-predict.
-.TH PLSSVM-PREDICT 1 "13 December 2022" "2.0.0" "plssvm-predict Manual"
+.TH PLSSVM-PREDICT 1 "@PLSSVM_CURRENT_BUILD_TIME@" "@PROJECT_VERSION@" "plssvm-predict Manual"
 
 .SH NAME
 plssvm-predict - LS-SVM with multiple (GPU-)backends
