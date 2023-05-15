@@ -8,17 +8,17 @@
 
 #include "plssvm/backends/OpenMP/csvm.hpp"
 
-#include "plssvm/backends/OpenMP/exceptions.hpp"  // plssvm::openmp::backend_exception
-#include "plssvm/backends/OpenMP/q_kernel.hpp"    // plssvm::openmp::device_kernel_q_linear, plssvm::openmp::device_kernel_q_polynomial, plssvm::openmp::device_kernel_q_rbf
-#include "plssvm/backends/OpenMP/svm_kernel.hpp"  // plssvm::openmp::device_kernel_linear, plssvm::openmp::device_kernel_polynomial, plssvm::openmp::device_kernel_rbf
-#include "plssvm/csvm.hpp"                        // plssvm::csvm
-#include "plssvm/detail/assert.hpp"               // PLSSVM_ASSERT
-#include "plssvm/detail/logger.hpp"               // plssvm::detail::log, plssvm::verbosity_level
-#include "plssvm/detail/operators.hpp"            // various operator overloads for std::vector and scalars
-#include "plssvm/detail/performance_tracker.hpp"  // plssvm::detail::tracking_entry, PLSSVM_DETAIL_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY
-#include "plssvm/kernel_function_types.hpp"       // plssvm::kernel_function_type
-#include "plssvm/parameter.hpp"                   // plssvm::parameter, plssvm::detail::parameter
-#include "plssvm/target_platforms.hpp"            // plssvm::target_platform
+#include "plssvm/backends/OpenMP/exceptions.hpp"              // plssvm::openmp::backend_exception
+#include "plssvm/backends/OpenMP/kernel_matrix_assembly.hpp"  // plssvm::openmp::linear_kernel_matrix_assembly, plssvm::openmp::polynomial_kernel_matrix_assembly, plssvm::openmp::rbf_kernel_matrix_assembly
+#include "plssvm/backends/OpenMP/q_kernel.hpp"                // plssvm::openmp::device_kernel_q_linear, plssvm::openmp::device_kernel_q_polynomial, plssvm::openmp::device_kernel_q_rbf
+#include "plssvm/csvm.hpp"                                    // plssvm::csvm
+#include "plssvm/detail/assert.hpp"                           // PLSSVM_ASSERT
+#include "plssvm/detail/logger.hpp"                           // plssvm::detail::log, plssvm::verbosity_level
+#include "plssvm/detail/operators.hpp"                        // various operator overloads for std::vector and scalars
+#include "plssvm/detail/performance_tracker.hpp"              // plssvm::detail::tracking_entry, PLSSVM_DETAIL_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY
+#include "plssvm/kernel_function_types.hpp"                   // plssvm::kernel_function_type
+#include "plssvm/parameter.hpp"                               // plssvm::parameter, plssvm::detail::parameter
+#include "plssvm/target_platforms.hpp"                        // plssvm::target_platform
 
 #include "fmt/chrono.h"                           // directly print std::chrono literals with fmt
 #include "fmt/core.h"                             // fmt::format
@@ -90,18 +90,42 @@ std::pair<std::vector<real_type>, real_type> csvm::solve_system_of_linear_equati
     b.pop_back();
     b -= b_back_value;
 
+    const typename std::vector<real_type>::size_type dept = b.size();
+
+    // assemble explicit kernel matrix
+
+    const std::chrono::steady_clock::time_point assembly_start_time = std::chrono::steady_clock::now();
+    std::vector<std::vector<real_type>> explicit_A(dept, std::vector<real_type>(dept));
+    switch (params.kernel_type) {
+        case kernel_function_type::linear:
+            openmp::linear_kernel_matrix_assembly(q, explicit_A, A, QA_cost, 1 / params.cost);
+            break;
+        case kernel_function_type::polynomial:
+            openmp::polynomial_kernel_matrix_assembly(q, explicit_A, A, QA_cost, 1 / params.cost, params.degree.value(), params.gamma.value(), params.coef0.value());
+            break;
+        case kernel_function_type::rbf:
+            openmp::rbf_kernel_matrix_assembly(q, explicit_A, A, QA_cost, 1 / params.cost, params.gamma.value());
+            break;
+    }
+    const std::chrono::steady_clock::time_point assembly_end_time = std::chrono::steady_clock::now();
+    detail::log(verbosity_level::full | verbosity_level::timing,
+                "Assembled the kernel matrix in {}.\n",
+                detail::tracking_entry{ "cg", "kernel_matrix_assembly", std::chrono::duration_cast<std::chrono::milliseconds>(assembly_end_time - assembly_start_time) });
+
     // CG
 
     std::vector<real_type> alpha(b.size(), 1.0);
-    const typename std::vector<real_type>::size_type dept = b.size();
 
     // sanity checks
-    PLSSVM_ASSERT(dept == A.size() - 1, "Sizes mismatch!: {} != {}", dept, A.size() - 1);
+    PLSSVM_ASSERT(dept == explicit_A.size(), "Sizes mismatch!: {} != {}", dept, explicit_A.size());
 
     std::vector<real_type> r(b);
 
     // r = A + alpha_ (r = b - Ax)
-    run_device_kernel(params, q, r, alpha, A, QA_cost, real_type{ -1.0 });
+    #pragma omp parallel for
+    for (std::size_t row = 0; row < dept; ++row) {
+        r[row] -= transposed{ explicit_A[row] } * alpha;
+    }
 
     // delta = r.T * r
     real_type delta = transposed{ r } * r;
@@ -129,7 +153,10 @@ std::pair<std::vector<real_type>, real_type> csvm::solve_system_of_linear_equati
 
         // Ad = A * d (q = A * d)
         std::fill(Ad.begin(), Ad.end(), real_type{ 0.0 });
-        run_device_kernel(params, q, Ad, d, A, QA_cost, real_type{ 1.0 });
+        #pragma omp parallel for
+        for (std::size_t row = 0; row < dept; ++row) {
+            Ad[row] += transposed{ explicit_A[row] } * d;
+        }
 
         // (alpha = delta_new / (d^T * q))
         const real_type alpha_cd = delta / (transposed{ d } * Ad);
@@ -142,7 +169,10 @@ std::pair<std::vector<real_type>, real_type> csvm::solve_system_of_linear_equati
             // r = b
             r = b;
             // r -= A * x
-            run_device_kernel(params, q, r, alpha, A, QA_cost, real_type{ -1.0 });
+            #pragma omp parallel for
+            for (std::size_t row = 0; row < dept; ++row) {
+                r[row] -= transposed{ explicit_A[row] } * alpha;
+            }
         } else {
             // r -= alpha_cd * Ad (r = r - alpha * q)
             r -= alpha_cd * Ad;
@@ -281,30 +311,5 @@ std::vector<real_type> csvm::calculate_w(const std::vector<std::vector<real_type
 
 template std::vector<float> csvm::calculate_w(const std::vector<std::vector<float>> &, const std::vector<float> &) const;
 template std::vector<double> csvm::calculate_w(const std::vector<std::vector<double>> &, const std::vector<double> &) const;
-
-template <typename real_type>
-void csvm::run_device_kernel(const detail::parameter<real_type> &params, const std::vector<real_type> &q, std::vector<real_type> &ret, const std::vector<real_type> &d, const std::vector<std::vector<real_type>> &data, const real_type QA_cost, const real_type add) const {
-    PLSSVM_ASSERT(!q.empty(), "The q array may not be empty!");
-    PLSSVM_ASSERT(!ret.empty(), "The ret array may not be empty!");
-    PLSSVM_ASSERT(!d.empty(), "The d array may not be empty!");
-    PLSSVM_ASSERT(!data.empty(), "The data must not be empty!");
-    PLSSVM_ASSERT(!data.front().empty(), "The data points must contain at least one feature!");
-    PLSSVM_ASSERT(std::all_of(data.cbegin(), data.cend(), [](const std::vector<real_type> &features) { return !features.empty(); }), "All data point must have exactly the same number of features!");
-    PLSSVM_ASSERT(add == real_type{ -1.0 } || add == real_type{ 1.0 }, "add must either by -1.0 or 1.0, but is {}!", add);
-
-    switch (params.kernel_type) {
-        case kernel_function_type::linear:
-            openmp::device_kernel_linear(q, ret, d, data, QA_cost, 1 / params.cost, add);
-            break;
-        case kernel_function_type::polynomial:
-            openmp::device_kernel_polynomial(q, ret, d, data, QA_cost, 1 / params.cost, add, params.degree.value(), params.gamma.value(), params.coef0.value());
-            break;
-        case kernel_function_type::rbf:
-            openmp::device_kernel_rbf(q, ret, d, data, QA_cost, 1 / params.cost, add, params.gamma.value());
-            break;
-    }
-}
-template void csvm::run_device_kernel(const detail::parameter<float> &, const std::vector<float> &, std::vector<float> &, const std::vector<float> &, const std::vector<std::vector<float>> &, float, float) const;
-template void csvm::run_device_kernel(const detail::parameter<double> &, const std::vector<double> &, std::vector<double> &, const std::vector<double> &, const std::vector<std::vector<double>> &, double, double) const;
 
 }  // namespace plssvm::openmp

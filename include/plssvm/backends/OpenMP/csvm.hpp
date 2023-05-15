@@ -145,20 +145,6 @@ class csvm : public ::plssvm::csvm {
     template <typename real_type>
     [[nodiscard]] std::vector<real_type> calculate_w(const std::vector<std::vector<real_type>> &support_vectors, const std::vector<real_type> &alpha) const;
 
-    /**
-     * @brief Select the correct kernel based on the value of plssvm::parameter::kernel_type and run it on the CPU using OpenMP.
-     * @details The template parameter `real_type` represents the type of the data points (either `float` or `double`).
-     * @param[in] params the SVM parameter used to calculate `q` (e.g., kernel_type)
-     * @param[in] q the `q` vector used in the dimensional reduction
-     * @param[out] ret the result vector
-     * @param[in] d the right-hand side of the equation
-     * @param[in] data the data points
-     * @param[in] QA_cost a value used in the dimensional reduction
-     * @param[in] add denotes whether the values are added or subtracted from the result vector
-     */
-    template <typename real_type>
-    void run_device_kernel(const detail::parameter<real_type> &params, const std::vector<real_type> &q, std::vector<real_type> &ret, const std::vector<real_type> &d, const std::vector<std::vector<real_type>> &data, real_type QA_cost, real_type add) const;
-
   private:
     /**
      * @brief Initializes the OpenMP backend and performs some sanity checks.

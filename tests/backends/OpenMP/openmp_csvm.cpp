@@ -180,36 +180,3 @@ TYPED_TEST(OpenMPCSVMCalculateW, calculate_w) {
     // check the calculated result for correctness
     EXPECT_FLOATING_POINT_VECTOR_NEAR_EPS(calculated, ground_truth, real_type{ 1.0e6 });
 }
-
-template <typename T>
-class OpenMPCSVMRunDeviceKernel : public OpenMPCSVM {};
-TYPED_TEST_SUITE(OpenMPCSVMRunDeviceKernel, util::real_type_kernel_function_gtest, naming::real_type_kernel_function_to_name);
-
-TYPED_TEST(OpenMPCSVMRunDeviceKernel, run_device_kernel) {
-    using real_type = typename TypeParam::real_type;
-    const plssvm::kernel_function_type kernel_type = TypeParam::kernel_type;
-
-    // create parameter struct
-    const plssvm::detail::parameter<real_type> params{ kernel_type, 2, 0.001, 1.0, 0.1 };
-
-    // create the data that should be used
-    const plssvm::data_set<real_type> data{ PLSSVM_TEST_FILE };
-    const std::vector<real_type> rhs = util::generate_random_vector<real_type>(data.num_data_points() - 1, real_type{ 1.0 }, real_type{ 2.0 });
-    const std::vector<real_type> q = compare::generate_q(params, data.data());
-    const real_type QA_cost = compare::kernel_function(params, data.data().back(), data.data().back()) + 1 / params.cost;
-
-    // create C-SVM: must be done using the mock class, since plssvm::openmp::csvm::calculate_w is protected
-    const mock_openmp_csvm svm{};
-
-    for (const real_type add : { real_type{ -1.0 }, real_type{ 1.0 } }) {
-        // calculate the correct device function result
-        const std::vector<real_type> ground_truth = compare::device_kernel_function(params, data.data(), rhs, q, QA_cost, add);
-
-        // perform the kernel calculation on the device
-        std::vector<real_type> calculated(data.num_data_points() - 1);
-        svm.run_device_kernel(params, q, calculated, rhs, data.data(), QA_cost, add);
-
-        // check the calculated result for correctness
-        EXPECT_FLOATING_POINT_VECTOR_NEAR(calculated, ground_truth);
-    }
-}
