@@ -26,41 +26,13 @@ void kernel_matrix_assembly(const std::vector<real_type> &q, std::vector<std::ve
     PLSSVM_ASSERT(cost != real_type{ 0.0 }, "cost must not be 0.0 since it is 1 / plssvm::cost!");
 
     const auto dept = static_cast<kernel_index_type>(q.size());
-    const auto num_features = static_cast<kernel_index_type>(data.front().size());
 
     #pragma omp parallel for collapse(2)
     for (kernel_index_type row = 0; row < dept; row += OPENMP_BLOCK_SIZE) {
         for (kernel_index_type col = 0; col < dept; col += OPENMP_BLOCK_SIZE) {
             for (kernel_index_type row_block = 0; row_block < OPENMP_BLOCK_SIZE && row + row_block < dept; ++row_block) {
                 for (kernel_index_type col_block = 0; col_block < OPENMP_BLOCK_SIZE && col + col_block < dept; ++col_block) {
-
-                    real_type temp{ 0.0 };
-                    #pragma omp simd reduction(+ : temp)
-                    for (kernel_index_type dim = 0; dim < num_features; ++dim) {
-                        if constexpr (kernel == plssvm::kernel_function_type::rbf) {
-                            const auto diff = data[row + row_block][dim] - data[col + col_block][dim];
-                            temp += diff * diff;
-                        } else {
-                            temp += data[row + row_block][dim] * data[col + col_block][dim];
-                        }
-                    }
-                    if constexpr (kernel == plssvm::kernel_function_type::linear) {
-                        static_assert(sizeof...(args) == 0, "Illegal number of additional parameters! Must be 0.");
-                        ret[row + row_block][col + col_block] = temp + QA_cost - q[row + row_block] - q[col + col_block];
-                    } else if constexpr (kernel == plssvm::kernel_function_type::polynomial) {
-                        static_assert(sizeof...(args) == 3, "Illegal number of additional parameters! Must be 3.");
-                        const auto degree = static_cast<real_type>(::plssvm::detail::get<0>(args...));
-                        const auto gamma = static_cast<real_type>(::plssvm::detail::get<1>(args...));
-                        const auto coef0 = static_cast<real_type>(::plssvm::detail::get<2>(args...));
-                        ret[row + row_block][col + col_block] = std::pow(gamma * temp + coef0, degree) + QA_cost - q[row + row_block] - q[col + col_block];
-                    } else if constexpr (kernel == kernel_function_type::rbf) {
-                        static_assert(sizeof...(args) == 1, "Illegal number of additional parameters! Must be 1.");
-                        const auto gamma = static_cast<real_type>(::plssvm::detail::get<0>(args...));
-                        ret[row + row_block][col + col_block] = std::exp(-gamma * temp) + QA_cost - q[row + row_block] - q[col + col_block];
-                    } else {
-                        static_assert(::plssvm::detail::always_false_v<real_type>, "Unknown kernel type!");
-                    }
-
+                    ret[row + row_block][col + col_block] = kernel_function<kernel>(data[row + row_block], data[col + col_block], std::forward<Args>(args)...) + QA_cost - q[row + row_block] - q[col + col_block];
                 }
             }
         }

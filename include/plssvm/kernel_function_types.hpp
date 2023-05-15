@@ -80,17 +80,33 @@ template <kernel_function_type kernel, typename real_type, typename... Args>
 
     if constexpr (kernel == kernel_function_type::linear) {
         static_assert(sizeof...(args) == 0, "Illegal number of additional parameters! Must be 0.");
-        return transposed{ xi } * xj;
+        real_type temp{ 0.0 };
+        #pragma omp simd reduction(+ : temp)
+        for (typename std::vector<real_type>::size_type dim = 0; dim < xi.size(); ++dim) {
+            temp += xi[dim] * xj[dim];
+        }
+        return temp;
     } else if constexpr (kernel == kernel_function_type::polynomial) {
         static_assert(sizeof...(args) == 3, "Illegal number of additional parameters! Must be 3.");
         const auto degree = static_cast<real_type>(detail::get<0>(args...));
         const auto gamma = static_cast<real_type>(detail::get<1>(args...));
         const auto coef0 = static_cast<real_type>(detail::get<2>(args...));
-        return std::pow(std::fma(gamma, (transposed<real_type>{ xi } * xj), coef0), degree);
+        real_type temp{ 0.0 };
+        #pragma omp simd reduction(+ : temp)
+        for (typename std::vector<real_type>::size_type dim = 0; dim < xi.size(); ++dim) {
+            temp += xi[dim] * xj[dim];
+        }
+        return std::pow(std::fma(gamma, temp, coef0), degree);
     } else if constexpr (kernel == kernel_function_type::rbf) {
         static_assert(sizeof...(args) == 1, "Illegal number of additional parameters! Must be 1.");
         const auto gamma = static_cast<real_type>(detail::get<0>(args...));
-        return std::exp(-gamma * squared_euclidean_dist(xi, xj));
+        real_type temp{ 0.0 };
+        #pragma omp simd reduction(+ : temp)
+        for (typename std::vector<real_type>::size_type dim = 0; dim < xi.size(); ++dim) {
+            const real_type diff = xi[dim] - xj[dim];
+            temp += diff * diff;
+        }
+        return std::exp(-gamma * temp);
     } else {
         static_assert(detail::always_false_v<real_type>, "Unknown kernel type!");
     }
