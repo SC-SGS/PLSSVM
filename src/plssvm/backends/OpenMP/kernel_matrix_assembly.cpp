@@ -26,17 +26,55 @@ void kernel_matrix_assembly(const std::vector<real_type> &q, std::vector<std::ve
     PLSSVM_ASSERT(cost != real_type{ 0.0 }, "cost must not be 0.0 since it is 1 / plssvm::cost!");
 
     const auto dept = static_cast<kernel_index_type>(q.size());
+    const auto num_features = static_cast<kernel_index_type>(data.front().size());
 
-    // can't use default(none) due to the parameter pack Args (args)
     #pragma omp parallel for collapse(2)
     for (kernel_index_type row = 0; row < dept; ++row) {
         for (kernel_index_type col = 0; col < dept; ++col) {
-            ret[row][col] = kernel_function<kernel>(data[row], data[col], std::forward<Args>(args)...) + QA_cost - q[row] - q[col];
-            if (row == col) {
-                ret[row][row] += cost;
+            real_type temp{ 0.0 };
+            #pragma omp simd reduction(+ : temp)
+            for (kernel_index_type dim = 0; dim < num_features; ++dim) {
+                if constexpr (kernel == plssvm::kernel_function_type::rbf) {
+                    temp += (data[row][dim] - data[col][dim]) * (data[row][dim] - data[col][dim]);
+                } else {
+                    temp += data[row][dim] * data[col][dim];
+                }
+            }
+            if constexpr (kernel == plssvm::kernel_function_type::linear) {
+                static_assert(sizeof...(args) == 0, "Illegal number of additional parameters! Must be 0.");
+                ret[row][col] = temp + QA_cost - q[row] - q[col];
+            } else if constexpr (kernel == plssvm::kernel_function_type::polynomial) {
+                static_assert(sizeof...(args) == 3, "Illegal number of additional parameters! Must be 3.");
+                const auto degree = static_cast<real_type>(::plssvm::detail::get<0>(args...));
+                const auto gamma = static_cast<real_type>(::plssvm::detail::get<1>(args...));
+                const auto coef0 = static_cast<real_type>(::plssvm::detail::get<2>(args...));
+                ret[row][col] = std::pow(gamma * temp + coef0, degree) + QA_cost - q[row] - q[col];
+            } else if constexpr (kernel == kernel_function_type::rbf) {
+                static_assert(sizeof...(args) == 1, "Illegal number of additional parameters! Must be 1.");
+                const auto gamma = static_cast<real_type>(::plssvm::detail::get<0>(args...));
+                ret[row][col] = std::exp(-gamma * temp) + QA_cost - q[row] - q[col];
+            } else {
+                static_assert(::plssvm::detail::always_false_v<real_type>, "Unknown kernel type!");
             }
         }
     }
+
+    // apply cost to diagonal
+    #pragma omp parallel for
+    for (kernel_index_type i = 0; i < dept; ++i) {
+        ret[i][i] += cost;
+    }
+
+    // can't use default(none) due to the parameter pack Args (args)
+    //    #pragma omp parallel for collapse(2)
+    //    for (kernel_index_type row = 0; row < dept; ++row) {
+    //        for (kernel_index_type col = 0; col < dept; ++col) {
+    //            ret[row][col] = kernel_function<kernel>(data[row], data[col], std::forward<Args>(args)...) + QA_cost - q[row] - q[col];
+    //            if (row == col) {
+    //                ret[row][row] += cost;
+    //            }
+    //        }
+    //    }
 
     //    #pragma omp parallel for collapse(2) schedule(dynamic)
     //    for (kernel_index_type i = 0; i < dept; i += OPENMP_BLOCK_SIZE) {
