@@ -130,11 +130,22 @@ class csvm : public ::plssvm::csvm {
      * @brief Calculate the `q` vector used in the dimensional reduction.
      * @details The template parameter `real_type` represents the type of the data points (either `float` or `double`).
      * @param[in] params the SVM parameter used to calculate `q` (e.g., kernel_type)
-     * @param[in] data the data points used in the dimensional reduction.
+     * @param[in] data the data points used in the dimensional reduction
      * @return the `q` vector (`[[nodiscard]]`)
      */
     template <typename real_type>
     [[nodiscard]] std::vector<real_type> generate_q(const detail::parameter<real_type> &params, const std::vector<std::vector<real_type>> &data) const;
+    /**
+     * @brief Explicitly assemble the kernel matrix using the respective kernel function.
+     * @details The template parameter `real_type` represents the type of the data points (either `float` or `double`).
+     * @param[in] params the SVM parameter used to calculate `q` (e.g., kernel_type)
+     * @param[in] data the data points used for the kernel matrix
+     * @param[in] q the `q` vector from the dimensional reduction
+     * @param[in] QA_cost the `QA_cost` value from the dimensional reduction
+     * @return the explicitly assembled kernel matrix (`[[nodiscard]]`)
+     */
+    template <typename real_type>
+    [[nodiscard]] std::vector<std::vector<real_type>> assemble_kernel_matrix(const detail::parameter<real_type> &params, const std::vector<std::vector<real_type>> &data, const std::vector<real_type> &q, const real_type QA_cost) const;
     /**
      * @brief Precalculate the `w` vector to speedup up the prediction using the linear kernel function.
      * @details The template parameter `real_type` represents the type of the data points (either `float` or `double`).

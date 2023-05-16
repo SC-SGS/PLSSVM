@@ -94,23 +94,7 @@ std::pair<std::vector<real_type>, real_type> csvm::solve_system_of_linear_equati
 
     // assemble explicit kernel matrix
 
-    const std::chrono::steady_clock::time_point assembly_start_time = std::chrono::steady_clock::now();
-    std::vector<std::vector<real_type>> explicit_A(dept, std::vector<real_type>(dept));
-    switch (params.kernel_type) {
-        case kernel_function_type::linear:
-            openmp::linear_kernel_matrix_assembly(q, explicit_A, A, QA_cost, 1 / params.cost);
-            break;
-        case kernel_function_type::polynomial:
-            openmp::polynomial_kernel_matrix_assembly(q, explicit_A, A, QA_cost, 1 / params.cost, params.degree.value(), params.gamma.value(), params.coef0.value());
-            break;
-        case kernel_function_type::rbf:
-            openmp::rbf_kernel_matrix_assembly(q, explicit_A, A, QA_cost, 1 / params.cost, params.gamma.value());
-            break;
-    }
-    const std::chrono::steady_clock::time_point assembly_end_time = std::chrono::steady_clock::now();
-    detail::log(verbosity_level::full | verbosity_level::timing,
-                "Assembled the kernel matrix in {}.\n",
-                detail::tracking_entry{ "cg", "kernel_matrix_assembly", std::chrono::duration_cast<std::chrono::milliseconds>(assembly_end_time - assembly_start_time) });
+    const std::vector<std::vector<real_type>> explicit_A = this->assemble_kernel_matrix(params, A, q, QA_cost);
 
     // CG
 
@@ -279,8 +263,35 @@ std::vector<real_type> csvm::generate_q(const detail::parameter<real_type> &para
     }
     return q;
 }
+
 template std::vector<float> csvm::generate_q<float>(const detail::parameter<float> &, const std::vector<std::vector<float>> &) const;
 template std::vector<double> csvm::generate_q<double>(const detail::parameter<double> &, const std::vector<std::vector<double>> &) const;
+
+template <typename real_type>
+std::vector<std::vector<real_type>> csvm::assemble_kernel_matrix(const detail::parameter<real_type> &params, const std::vector<std::vector<real_type>> &data, const std::vector<real_type> &q, const real_type QA_cost) const {
+    const std::chrono::steady_clock::time_point assembly_start_time = std::chrono::steady_clock::now();
+    std::vector<std::vector<real_type>> explicit_A(data.size() - 1, std::vector<real_type>(data.size() - 1));
+    switch (params.kernel_type) {
+        case kernel_function_type::linear:
+            openmp::linear_kernel_matrix_assembly(q, explicit_A, data, QA_cost, 1 / params.cost);
+            break;
+        case kernel_function_type::polynomial:
+            openmp::polynomial_kernel_matrix_assembly(q, explicit_A, data, QA_cost, 1 / params.cost, params.degree.value(), params.gamma.value(), params.coef0.value());
+            break;
+        case kernel_function_type::rbf:
+            openmp::rbf_kernel_matrix_assembly(q, explicit_A, data, QA_cost, 1 / params.cost, params.gamma.value());
+            break;
+    }
+    const std::chrono::steady_clock::time_point assembly_end_time = std::chrono::steady_clock::now();
+    detail::log(verbosity_level::full | verbosity_level::timing,
+                "Assembled the kernel matrix in {}.\n",
+                detail::tracking_entry{ "cg", "kernel_matrix_assembly", std::chrono::duration_cast<std::chrono::milliseconds>(assembly_end_time - assembly_start_time) });
+
+    return explicit_A;
+}
+
+template std::vector<std::vector<float>> csvm::assemble_kernel_matrix(const detail::parameter<float> &, const std::vector<std::vector<float>> &, const std::vector<float> &, const float) const;
+template std::vector<std::vector<double>> csvm::assemble_kernel_matrix(const detail::parameter<double> &, const std::vector<std::vector<double>> &, const std::vector<double> &, const double) const;
 
 template <typename real_type>
 std::vector<real_type> csvm::calculate_w(const std::vector<std::vector<real_type>> &support_vectors, const std::vector<real_type> &alpha) const {
