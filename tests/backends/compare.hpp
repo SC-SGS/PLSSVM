@@ -82,6 +82,20 @@ template <typename real_type>
 [[nodiscard]] std::vector<real_type> generate_q(const plssvm::detail::parameter<real_type> &params, const std::vector<std::vector<real_type>> &data, std::size_t num_devices = 1);
 
 /**
+ * @brief Computes the kernel matrix using the kernel function determined by @p params.
+ * @details Single core execution for a deterministic order of floating point operations.
+ * @tparam real_type the type of the data
+ * @param[in] params the parameter used in the kernel function
+ * @param[in] data the data points
+ * @param[in] q the `q` vector from the dimensional reduction
+ * @param[in] QA_cost the `QA_cost` value from the dimensional reduction
+ * @param[in] num_devices used to mimic the floating point operation order in case of multi device execution (`[[maybe_unused]]`)
+ * @return the kernel matrix (`[[nodiscard]]`)
+ */
+template <typename real_type>
+[[nodiscard]] std::vector<std::vector<real_type>> assemble_kernel_matrix(const plssvm::detail::parameter<real_type> &params, const std::vector<std::vector<real_type>> &data, const std::vector<real_type> &q, real_type QA_cost, std::size_t num_devices = 1);
+
+/**
  * @brief Compute the `w` vector used to speedup the prediction when using the linear kernel.
  * @details Single core execution for a deterministic order of floating point operations.
  * @tparam real_type the type of the data

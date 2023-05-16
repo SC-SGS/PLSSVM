@@ -28,6 +28,7 @@ class mock_openmp_csvm final : public plssvm::openmp::csvm {
         base_type{ std::forward<Args>(args)... } {}
 
     // make protected member functions public
+    using base_type::assemble_kernel_matrix;
     using base_type::calculate_w;
     using base_type::generate_q;
     using base_type::predict_values;

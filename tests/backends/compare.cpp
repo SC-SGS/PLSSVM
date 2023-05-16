@@ -113,6 +113,22 @@ template std::vector<float> generate_q(const plssvm::detail::parameter<float> &,
 template std::vector<double> generate_q(const plssvm::detail::parameter<double> &, const std::vector<std::vector<double>> &, std::size_t);
 
 template <typename real_type>
+[[nodiscard]] std::vector<std::vector<real_type>> assemble_kernel_matrix(const plssvm::detail::parameter<real_type> &params, const std::vector<std::vector<real_type>> &data, const std::vector<real_type> &q, const real_type QA_cost, const std::size_t num_devices) {
+    std::vector<std::vector<real_type>> result(data.size() - 1, std::vector<real_type>(data.size() - 1, real_type{ 0.0 }));
+    for (typename std::vector<std::vector<real_type>>::size_type row = 0; row < data.size() - 1; ++row) {
+        for (typename std::vector<std::vector<real_type>>::size_type col = 0; col < data.size() - 1; ++col) {
+            result[row][col] = kernel_function(params, data[row], data[col], num_devices) + QA_cost - q[row] - q[col];
+            if (row == col) {
+                result[row][col] += real_type{ 1.0 } / params.cost;
+            }
+        }
+    }
+    return result;
+}
+template std::vector<std::vector<float>> assemble_kernel_matrix(const plssvm::detail::parameter<float> &, const std::vector<std::vector<float>> &, const std::vector<float> &, const float, const std::size_t);
+template std::vector<std::vector<double>> assemble_kernel_matrix(const plssvm::detail::parameter<double> &, const std::vector<std::vector<double>> &, const std::vector<double> &, const double, const std::size_t);
+
+template <typename real_type>
 std::vector<real_type> calculate_w(const std::vector<std::vector<real_type>> &support_vectors, const std::vector<real_type> &weights) {
     PLSSVM_ASSERT(support_vectors.size() == weights.size(), "Sizes mismatch!: {} != {}", support_vectors.size(), weights.size());
 

@@ -157,6 +157,36 @@ TYPED_TEST(OpenMPCSVMGenerateQ, generate_q) {
     EXPECT_FLOATING_POINT_VECTOR_NEAR(calculated, ground_truth);
 }
 
+
+template <typename T>
+class OpenMPCSVMAssembleKernelMatrix : public OpenMPCSVM {};
+TYPED_TEST_SUITE(OpenMPCSVMAssembleKernelMatrix, util::real_type_kernel_function_gtest, naming::real_type_kernel_function_to_name);
+
+TYPED_TEST(OpenMPCSVMAssembleKernelMatrix, assemble_kernel_matrix) {
+    using real_type = typename TypeParam::real_type;
+    const plssvm::kernel_function_type kernel_type = TypeParam::kernel_type;
+
+    // create parameter struct
+    const plssvm::detail::parameter<real_type> params{ kernel_type, 2, 0.001, 1.0, 0.1 };
+
+    // create the data that should be used
+    const plssvm::data_set<real_type> data{ PLSSVM_TEST_FILE };
+
+    // calculate correct kernel matrix (ground truth)
+    const std::vector<real_type> q = compare::generate_q(params, data.data());
+    const real_type QA_cost = plssvm::kernel_function(data.data().back(), data.data().back(), params) + real_type{ 1.0 } / params.cost;
+    const std::vector<std::vector<real_type>> ground_truth = compare::assemble_kernel_matrix(params, data.data(), q, QA_cost);
+
+    // create C-SVM: must be done using the mock class, since plssvm::openmp::csvm::assemble_kernel_matrix is protected
+    const mock_openmp_csvm svm{};
+
+    // calculate the q vector using the OpenMP backend
+    const std::vector<std::vector<real_type>> calculated = svm.assemble_kernel_matrix(params, data.data(), q, QA_cost);
+
+    // check the calculated result for correctness
+    EXPECT_FLOATING_POINT_2D_VECTOR_NEAR(calculated, ground_truth);
+}
+
 template <typename T>
 class OpenMPCSVMCalculateW : public OpenMPCSVM {};
 TYPED_TEST_SUITE(OpenMPCSVMCalculateW, util::real_type_gtest, naming::real_type_to_name);
