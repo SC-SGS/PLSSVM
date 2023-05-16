@@ -269,6 +269,11 @@ template std::vector<double> csvm::generate_q<double>(const detail::parameter<do
 
 template <typename real_type>
 std::vector<std::vector<real_type>> csvm::assemble_kernel_matrix(const detail::parameter<real_type> &params, const std::vector<std::vector<real_type>> &data, const std::vector<real_type> &q, const real_type QA_cost) const {
+    PLSSVM_ASSERT(!data.empty(), "The data must not be empty!");
+    PLSSVM_ASSERT(!data.front().empty(), "The data points must contain at least one feature!");
+    PLSSVM_ASSERT(std::all_of(data.cbegin(), data.cend(), [](const std::vector<real_type> &features) { return !features.empty(); }), "All data point must have exactly the same number of features!");
+    PLSSVM_ASSERT(q.size() == data.size() - 1, "The q vector must have one entry less than the number of points in data!");
+
     const std::chrono::steady_clock::time_point assembly_start_time = std::chrono::steady_clock::now();
     std::vector<std::vector<real_type>> explicit_A(data.size() - 1, std::vector<real_type>(data.size() - 1));
     switch (params.kernel_type) {
@@ -286,6 +291,10 @@ std::vector<std::vector<real_type>> csvm::assemble_kernel_matrix(const detail::p
     detail::log(verbosity_level::full | verbosity_level::timing,
                 "Assembled the kernel matrix in {}.\n",
                 detail::tracking_entry{ "cg", "kernel_matrix_assembly", std::chrono::duration_cast<std::chrono::milliseconds>(assembly_end_time - assembly_start_time) });
+
+    PLSSVM_ASSERT(explicit_A.size() == q.size(), "The size of the kernel matrix must match the size of the q vector!");
+    PLSSVM_ASSERT(std::all_of(explicit_A.cbegin(), explicit_A.cend(), [](const std::vector<real_type> &features) { return !features.empty(); }), "All data point in the kernel matrix must have exactly the same number of values!");
+    PLSSVM_ASSERT(explicit_A.size() == explicit_A.front().size(), "The kernel matrix must be quadratic!");
 
     return explicit_A;
 }
