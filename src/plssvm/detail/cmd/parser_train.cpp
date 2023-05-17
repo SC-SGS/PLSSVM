@@ -257,17 +257,19 @@ std::ostream &operator<<(std::ostream &out, const parser_train &params) {
         out << fmt::format("max_iter: {}\n", params.max_iter.value());
     }
 
-    return out << fmt::format(
-               "label_type: {}\n"
-               "real_type: {}\n"
-               "input file (data set): '{}'\n"
-               "output file (model): '{}'\n"
-               "performance tracking file: '{}'\n",
-               params.strings_as_labels ? "std::string" : "int (default)",
-               params.float_as_real_type ? "float" : "double (default)",
-               params.input_filename,
-               params.model_filename,
-               params.performance_tracking_filename);
+    out << fmt::format(
+        "label_type: {}\n"
+        "real_type: {}\n"
+        "input file (data set): '{}'\n"
+        "output file (model): '{}'\n",
+        params.strings_as_labels ? "std::string" : "int (default)",
+        params.float_as_real_type ? "float" : "double (default)",
+        params.input_filename,
+        params.model_filename);
+    if (!params.performance_tracking_filename.empty()) {
+        out << fmt::format("performance tracking file: '{}'\n", params.performance_tracking_filename);
+    }
+    return out;
 }
 
 }  // namespace plssvm::detail::cmd
