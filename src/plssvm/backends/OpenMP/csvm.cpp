@@ -147,7 +147,7 @@ std::pair<std::vector<std::vector<real_type>>, std::vector<real_type>> csvm::sol
                     iter + 1,
                     max_iter,
                     delta.front(),
-                    eps * eps * delta0.front());
+                    eps * eps * delta0.front());  // TODO: output
         iteration_start_time = std::chrono::steady_clock::now();
 
         // Q = A * D
@@ -221,7 +221,7 @@ std::pair<std::vector<std::vector<real_type>>, std::vector<real_type>> csvm::sol
                 detail::tracking_entry{ "cg", "iterations", std::min(iter + 1, max_iter) },
                 detail::tracking_entry{ "cg", "max_iterations", max_iter },
                 detail::tracking_entry{ "cg", "residuum", delta.front() },
-                detail::tracking_entry{ "cg", "target_residuum", eps * eps * delta0.front() },
+                detail::tracking_entry{ "cg", "target_residuum", eps * eps * delta0.front() },  // TODO: output
                 detail::tracking_entry{ "cg", "avg_iteration_time", average_iteration_time / std::min(iter + 1, max_iter) });
     PLSSVM_DETAIL_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((detail::tracking_entry{ "cg", "epsilon", eps }));
     detail::log(verbosity_level::libsvm,
