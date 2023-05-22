@@ -185,11 +185,11 @@ class csvm {
      * @throws plssvm::exception any exception thrown by the backend's implementation
      * @return a pair of [the result vector x, the resulting bias] (`[[nodiscard]]`)
      */
-    [[nodiscard]] virtual std::pair<std::vector<float>, float> solve_system_of_linear_equations(const detail::parameter<float> &params, const std::vector<std::vector<float>> &A, std::vector<float> b, float eps, unsigned long long max_iter) const = 0;
+    [[nodiscard]] virtual std::pair<std::vector<float>, float> solve_system_of_linear_equations(const detail::parameter<float> &params, const std::vector<std::vector<float>> &A, std::vector<std::vector<float>> B, float eps, unsigned long long max_iter) const = 0;
     /**
      * @copydoc plssvm::csvm::solve_system_of_linear_equations
      */
-    [[nodiscard]] virtual std::pair<std::vector<double>, double> solve_system_of_linear_equations(const detail::parameter<double> &params, const std::vector<std::vector<double>> &A, std::vector<double> b, double eps, unsigned long long max_iter) const = 0;
+    [[nodiscard]] virtual std::pair<std::vector<double>, double> solve_system_of_linear_equations(const detail::parameter<double> &params, const std::vector<std::vector<double>> &A, std::vector<std::vector<double>> B, double eps, unsigned long long max_iter) const = 0;
     /**
      * @brief Uses the already learned model to predict the class of multiple (new) data points.
      * @param[in] params the SVM parameters used in the respective kernel functions
@@ -336,7 +336,8 @@ std::vector<label_type> csvm::predict(const model<real_type, label_type> &model,
 
     #pragma omp parallel for default(none) shared(predicted_labels, predicted_values, model) if (!std::is_same_v<label_type, bool>)
     for (typename std::vector<label_type>::size_type i = 0; i < predicted_labels.size(); ++i) {
-        predicted_labels[i] = model.data_.mapping_->get_label_by_mapped_value(plssvm::operators::sign(predicted_values[i]));
+        // TODO: implement prediction!
+//        predicted_labels[i] = model.data_.mapping_->get_label_by_mapped_value(plssvm::operators::sign(predicted_values[i]));
     }
 
     return predicted_labels;

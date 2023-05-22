@@ -274,7 +274,7 @@ class data_set {
     /// A pointer to the original labels of this data set; may be `nullptr` if no labels have been provided.
     std::shared_ptr<std::vector<label_type>> labels_ptr_{ nullptr };
     /// A pointer to the mapped values of the labels of this data set; may be `nullptr` if no labels have been provided.
-    std::shared_ptr<std::vector<real_type>> y_ptr_{ nullptr };
+    std::shared_ptr<std::vector<std::vector<real_type>>> y_ptr_{ nullptr };
 
     /// The number of data points in this data set.
     size_type num_data_points_{ 0 };
@@ -386,6 +386,7 @@ void data_set<T, U>::scaling::save(const std::string &filename) const {
 //                                                      label mapper nested-class                                                      //
 //*************************************************************************************************************************************//
 
+// TODO: re-implement
 /**
  * @brief Implements all necessary functionality to map arbitrary labels to labels usable by the C-SVMs.
  * @details Currently maps all labels to { -1 , 1 }.
@@ -439,9 +440,9 @@ data_set<T, U>::data_set::label_mapper::label_mapper(const std::vector<label_typ
     // we are only interested in unique labels
     std::set<label_type> unique_labels(labels.begin(), labels.end());
     // currently, only two different labels are supported
-    if (unique_labels.size() != 2) {
-        throw data_set_exception{ fmt::format("Currently only binary classification is supported, but {} different labels were given!", unique_labels.size()) };
-    }
+//    if (unique_labels.size() != 2) {
+//        throw data_set_exception{ fmt::format("Currently only binary classification is supported, but {} different labels were given!", unique_labels.size()) };
+//    }
     // create mapping
     // first label
     auto iter = unique_labels.begin();
@@ -657,12 +658,14 @@ void data_set<T, U>::create_mapping() {
     label_mapper mapper{ *labels_ptr_ };
 
     // convert input labels to now mapped values
-    std::vector<real_type> tmp(labels_ptr_->size());
+    std::vector<std::vector<real_type>> tmp(mapper.num_mappings(), std::vector<real_type>(labels_ptr_->size()));
     #pragma omp parallel for default(shared) shared(tmp, mapper)
     for (typename std::vector<real_type>::size_type i = 0; i < tmp.size(); ++i) {
-        tmp[i] = mapper.get_mapped_value_by_label((*labels_ptr_)[i]);
+        // TODO: implement
+        tmp[0][i] = mapper.get_mapped_value_by_label((*labels_ptr_)[i]);
     }
-    y_ptr_ = std::make_shared<std::vector<real_type>>(std::move(tmp));
+
+    y_ptr_ = std::make_shared<std::vector<std::vector<real_type>>>(std::move(tmp));
     mapping_ = std::make_shared<const label_mapper>(std::move(mapper));
 }
 

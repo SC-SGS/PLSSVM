@@ -69,7 +69,9 @@ void csvm::init(const target_platform target) {
 }
 
 template <typename real_type>
-std::pair<std::vector<real_type>, real_type> csvm::solve_system_of_linear_equations_impl(const detail::parameter<real_type> &params, const std::vector<std::vector<real_type>> &A, std::vector<real_type> b, const real_type eps, const unsigned long long max_iter) const {
+std::pair<std::vector<real_type>, real_type> csvm::solve_system_of_linear_equations_impl(const detail::parameter<real_type> &params, const std::vector<std::vector<real_type>> &A, std::vector<std::vector<real_type>> B, const real_type eps, const unsigned long long max_iter) const {
+    std::vector<real_type> b = B.front();  // TODO:
+
     PLSSVM_ASSERT(!A.empty(), "The data must not be empty!");
     PLSSVM_ASSERT(!A.front().empty(), "The data points must contain at least one feature!");
     PLSSVM_ASSERT(std::all_of(A.cbegin(), A.cend(), [&A](const std::vector<real_type> &data_point) { return data_point.size() == A.front().size(); }), "All data points must have the same number of features!");
@@ -196,8 +198,8 @@ std::pair<std::vector<real_type>, real_type> csvm::solve_system_of_linear_equati
     return std::make_pair(std::move(alpha), -bias);
 }
 
-template std::pair<std::vector<float>, float> csvm::solve_system_of_linear_equations_impl(const detail::parameter<float> &, const std::vector<std::vector<float>> &, std::vector<float>, const float, const unsigned long long) const;
-template std::pair<std::vector<double>, double> csvm::solve_system_of_linear_equations_impl(const detail::parameter<double> &, const std::vector<std::vector<double>> &, std::vector<double>, const double, const unsigned long long) const;
+template std::pair<std::vector<float>, float> csvm::solve_system_of_linear_equations_impl(const detail::parameter<float> &, const std::vector<std::vector<float>> &, std::vector<std::vector<float>>, const float, const unsigned long long) const;
+template std::pair<std::vector<double>, double> csvm::solve_system_of_linear_equations_impl(const detail::parameter<double> &, const std::vector<std::vector<double>> &, std::vector<std::vector<double>>, const double, const unsigned long long) const;
 
 template <typename real_type>
 std::vector<real_type> csvm::predict_values_impl(const detail::parameter<real_type> &params, const std::vector<std::vector<real_type>> &support_vectors, const std::vector<real_type> &alpha, const real_type rho, std::vector<real_type> &w, const std::vector<std::vector<real_type>> &predict_points) const {
