@@ -660,9 +660,13 @@ void data_set<T, U>::create_mapping() {
     // convert input labels to now mapped values
     std::vector<std::vector<real_type>> tmp(mapper.num_mappings(), std::vector<real_type>(labels_ptr_->size()));
     #pragma omp parallel for default(shared) shared(tmp, mapper)
-    for (typename std::vector<real_type>::size_type i = 0; i < tmp.size(); ++i) {
+    for (typename std::vector<real_type>::size_type i = 0; i < tmp[0].size(); ++i) {
         // TODO: implement
         tmp[0][i] = mapper.get_mapped_value_by_label((*labels_ptr_)[i]);
+    }
+
+    for (std::size_t i = 1; i < tmp.size(); ++i) {
+        tmp[i] = tmp[0];
     }
 
     y_ptr_ = std::make_shared<std::vector<std::vector<real_type>>>(std::move(tmp));

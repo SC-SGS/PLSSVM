@@ -20,16 +20,15 @@
 #include "plssvm/parameter.hpp"                               // plssvm::parameter, plssvm::detail::parameter
 #include "plssvm/target_platforms.hpp"                        // plssvm::target_platform
 
-#include "fmt/chrono.h"                           // directly print std::chrono literals with fmt
-#include "fmt/core.h"                             // fmt::format
-#include "fmt/ostream.h"                          // can use fmt using operator<< overloads
+#include "fmt/chrono.h"   // directly print std::chrono literals with fmt
+#include "fmt/core.h"     // fmt::format
+#include "fmt/ostream.h"  // can use fmt using operator<< overloads
 
-#include <algorithm>                              // std::fill, std::all_of, std::min
-#include <chrono>                                 // std::chrono::{milliseconds, steady_clock, time_point, duration_cast}
-#include <cmath>                                  // std::fma
-#include <iostream>                               // std::cout, std::endl
-#include <utility>                                // std::pair, std::make_pair, std::move
-#include <vector>                                 // std::vector
+#include <algorithm>  // std::fill, std::all_of, std::min
+#include <chrono>     // std::chrono::{milliseconds, steady_clock, time_point, duration_cast}
+#include <cmath>      // std::fma
+#include <utility>    // std::pair, std::make_pair, std::move
+#include <vector>     // std::vector
 
 namespace plssvm::openmp {
 
@@ -60,7 +59,8 @@ void csvm::init(const target_platform target) {
     }
 
     plssvm::detail::log(verbosity_level::full,
-                        "\nUsing OpenMP as backend with {} threads.\n\n", plssvm::detail::tracking_entry{ "backend", "num_threads", num_omp_threads });
+                        "\nUsing OpenMP as backend with {} threads.\n\n",
+                        plssvm::detail::tracking_entry{ "backend", "num_threads", num_omp_threads });
     PLSSVM_DETAIL_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking_entry{ "backend", "backend", plssvm::backend_type::openmp }));
     PLSSVM_DETAIL_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking_entry{ "backend", "target_platform", plssvm::target_platform::cpu }));
 
@@ -69,56 +69,64 @@ void csvm::init(const target_platform target) {
 }
 
 template <typename real_type>
-std::pair<std::vector<real_type>, real_type> csvm::solve_system_of_linear_equations_impl(const detail::parameter<real_type> &params, const std::vector<std::vector<real_type>> &A, std::vector<std::vector<real_type>> B, const real_type eps, const unsigned long long max_iter) const {
-    std::vector<real_type> b = B.front();  // TODO:
-
+std::pair<std::vector<std::vector<real_type>>, std::vector<real_type>> csvm::solve_system_of_linear_equations_impl(const detail::parameter<real_type> &params, const std::vector<std::vector<real_type>> &A, std::vector<std::vector<real_type>> B, const real_type eps, const unsigned long long max_iter) const {
     PLSSVM_ASSERT(!A.empty(), "The data must not be empty!");
     PLSSVM_ASSERT(!A.front().empty(), "The data points must contain at least one feature!");
     PLSSVM_ASSERT(std::all_of(A.cbegin(), A.cend(), [&A](const std::vector<real_type> &data_point) { return data_point.size() == A.front().size(); }), "All data points must have the same number of features!");
-    PLSSVM_ASSERT(A.size() == b.size(), "The number of data points in the matrix A ({}) and the values in the right hand side vector ({}) must be the same!", A.size(), b.size());
+    PLSSVM_ASSERT(!B.empty(), "At least one right hand side must be given!");
+    PLSSVM_ASSERT(std::all_of(B.cbegin(), B.cend(), [&A](const std::vector<real_type> &rhs) { return A.size() == rhs.size(); }), "The number of data points in the matrix A ({}) and the values in all right hand side vectors must be the same!", A.size());
     PLSSVM_ASSERT(eps > real_type{ 0.0 }, "The stopping criterion in the CG algorithm must be greater than 0.0, but is {}!", eps);
     PLSSVM_ASSERT(max_iter > 0, "The number of CG iterations must be greater than 0!");
 
     using namespace plssvm::operators;
 
-    // create q vector
-    const std::vector<real_type> q = this->generate_q(params, A);
+    // create q_red vector
+    const std::vector<real_type> q_red = this->generate_q(params, A);
 
     // calculate QA_costs
     const real_type QA_cost = kernel_function(A.back(), A.back(), params) + real_type{ 1.0 } / params.cost;
 
     // update b
-    const real_type b_back_value = b.back();
-    b.pop_back();
-    b -= b_back_value;
+    std::vector<real_type> b_back_value(B.size());
+    for (std::size_t i = 0; i < B.size(); ++i) {
+        b_back_value[i] = B[i].back();
+        B[i].pop_back();
+        B[i] -= b_back_value[i];
+    }
 
-    const typename std::vector<real_type>::size_type dept = b.size();
+    const typename std::vector<real_type>::size_type dept = B.front().size();
 
     // assemble explicit kernel matrix
 
-    const std::vector<std::vector<real_type>> explicit_A = this->assemble_kernel_matrix(params, A, q, QA_cost);
+    const std::vector<std::vector<real_type>> explicit_A = this->assemble_kernel_matrix(params, A, q_red, QA_cost);
 
     // CG
 
-    std::vector<real_type> alpha(b.size(), 1.0);
+    std::vector<std::vector<real_type>> X(B.size(), std::vector<real_type>(dept, real_type{ 1.0 }));
 
     // sanity checks
     PLSSVM_ASSERT(dept == explicit_A.size(), "Sizes mismatch!: {} != {}", dept, explicit_A.size());
 
-    std::vector<real_type> r(b);
+    std::vector<std::vector<real_type>> R(B);
 
-    // r = A + alpha_ (r = b - Ax)
-    #pragma omp parallel for
-    for (std::size_t row = 0; row < dept; ++row) {
-        r[row] -= transposed{ explicit_A[row] } * alpha;
+    // R = B - AX
+    #pragma omp parallel for collapse(2)
+    for (std::size_t col = 0; col < B.size(); ++col) {
+        for (std::size_t row = 0; row < dept; ++row) {
+            R[col][row] -= transposed{ explicit_A[row] } * X[col];
+        }
     }
 
-    // delta = r.T * r
-    real_type delta = transposed{ r } * r;
-    const real_type delta0 = delta;
-    std::vector<real_type> Ad(dept);
+    // delta = R.T * R
+    std::vector<real_type> delta(B.size());
+    #pragma omp parallel for
+    for (std::size_t i = 0; i < B.size(); ++i) {
+        delta[i] = transposed{ R[i] } * R[i];
+    }
+    const std::vector<real_type> delta0(delta);
+    std::vector<std::vector<real_type>> Q(B.size(), std::vector<real_type>(dept));
 
-    std::vector<real_type> d(r);
+    std::vector<std::vector<real_type>> D(R);
 
     // timing for each CG iteration
     std::chrono::milliseconds average_iteration_time{};
@@ -127,56 +135,84 @@ std::pair<std::vector<real_type>, real_type> csvm::solve_system_of_linear_equati
         const std::chrono::time_point iteration_end_time = std::chrono::steady_clock::now();
         const auto iteration_duration = std::chrono::duration_cast<std::chrono::milliseconds>(iteration_end_time - iteration_start_time);
         detail::log(verbosity_level::full | verbosity_level::timing,
-                    "Done in {}.\n", iteration_duration);
+                    "Done in {}.\n",
+                    iteration_duration);
         average_iteration_time += iteration_duration;
     };
 
     unsigned long long iter = 0;
     for (; iter < max_iter; ++iter) {
         detail::log(verbosity_level::full | verbosity_level::timing,
-                    "Start Iteration {} (max: {}) with current residuum {} (target: {}). ", iter + 1, max_iter, delta, eps * eps * delta0);
+                    "Start Iteration {} (max: {}) with current residuum {} (target: {}). ",
+                    iter + 1,
+                    max_iter,
+                    delta.front(),
+                    eps * eps * delta0.front());
         iteration_start_time = std::chrono::steady_clock::now();
 
-        // Ad = A * d (q = A * d)
-        std::fill(Ad.begin(), Ad.end(), real_type{ 0.0 });
-        #pragma omp parallel for
-        for (std::size_t row = 0; row < dept; ++row) {
-            Ad[row] += transposed{ explicit_A[row] } * d;
+        // Q = A * D
+        #pragma omp parallel for collapse(2)
+        for (std::size_t col = 0; col < B.size(); ++col) {
+            for (std::size_t row = 0; row < dept; ++row) {
+                Q[col][row] = transposed{ explicit_A[row] } * D[col];
+            }
         }
 
-        // (alpha = delta_new / (d^T * q))
-        const real_type alpha_cd = delta / (transposed{ d } * Ad);
+        // (alpha = delta_new / (D^T * Q))
+        std::vector<real_type> alpha(B.size());
+        #pragma omp parallel for
+        for (std::size_t i = 0; i < B.size(); ++i) {
+            alpha[i] = delta[i] / (transposed{ D[i] } * Q[i]);
+        }
 
-        // (x = x + alpha * d)
-        alpha += alpha_cd * d;
+        // X = X + alpha * D)
+        #pragma omp parallel for
+        for (std::size_t i = 0; i < B.size(); ++i) {
+            X[i] += alpha[i] * D[i];
+        }
 
         if (iter % 50 == 49) {
-            // (r = b - A * x)
-            // r = b
-            r = b;
-            // r -= A * x
-            #pragma omp parallel for
-            for (std::size_t row = 0; row < dept; ++row) {
-                r[row] -= transposed{ explicit_A[row] } * alpha;
+            // R = B - A * X
+            R = B;
+            #pragma omp parallel for collapse(2)
+            for (std::size_t i = 0; i < B.size(); ++i) {
+                for (std::size_t row = 0; row < dept; ++row) {
+                    R[i][row] -= transposed{ explicit_A[row] } * X[i];
+                }
             }
         } else {
-            // r -= alpha_cd * Ad (r = r - alpha * q)
-            r -= alpha_cd * Ad;
+            // R = R - alpha * Q
+            #pragma omp parallel for
+            for (std::size_t i = 0; i < B.size(); ++i) {
+                R[i] -= alpha[i] * Q[i];
+            }
         }
 
-        // (delta = r^T * r)
-        const real_type delta_old = delta;
-        delta = transposed{ r } * r;
+        // delta = R^T * R
+        const std::vector<real_type> delta_old = delta;
+        #pragma omp parallel for
+        for (std::size_t i = 0; i < B.size(); ++i) {
+            delta[i] = transposed{ R[i] } * R[i];
+        }
+
         // if we are exact enough stop CG iterations
-        if (delta <= eps * eps * delta0) {
+        std::vector<bool> finished(B.size(), false);
+        #pragma omp parallel for
+        for (std::size_t i = 0; i < B.size(); ++i) {
+            finished[i] = delta[i] <= eps * eps * delta0[i];
+        }
+        if (std::all_of(finished.cbegin(), finished.cend(), [](const bool b) { return b; })) {
             output_iteration_duration();
             break;
         }
 
-        // (beta = delta_new / delta_old)
-        const real_type beta = delta / delta_old;
-        // d = beta * d + r
-        d = beta * d + r;
+        // beta = delta_new / delta_old
+        const std::vector<real_type> beta = delta / delta_old;
+        // D = beta * D + R
+        #pragma omp parallel for
+        for (std::size_t i = 0; i < B.size(); ++i) {
+            D[i] = beta[i] * D[i] + R[i];
+        }
 
         output_iteration_duration();
     }
@@ -184,22 +220,28 @@ std::pair<std::vector<real_type>, real_type> csvm::solve_system_of_linear_equati
                 "Finished after {}/{} iterations with a residuum of {} (target: {}) and an average iteration time of {}.\n",
                 detail::tracking_entry{ "cg", "iterations", std::min(iter + 1, max_iter) },
                 detail::tracking_entry{ "cg", "max_iterations", max_iter },
-                detail::tracking_entry{ "cg", "residuum", delta },
-                detail::tracking_entry{ "cg", "target_residuum", eps * eps * delta0 },
+                detail::tracking_entry{ "cg", "residuum", delta.front() },
+                detail::tracking_entry{ "cg", "target_residuum", eps * eps * delta0.front() },
                 detail::tracking_entry{ "cg", "avg_iteration_time", average_iteration_time / std::min(iter + 1, max_iter) });
     PLSSVM_DETAIL_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((detail::tracking_entry{ "cg", "epsilon", eps }));
     detail::log(verbosity_level::libsvm,
-                "optimization finished, #iter = {}\n", std::min(iter + 1, max_iter));
+                "optimization finished, #iter = {}\n",
+                std::min(iter + 1, max_iter));
+    // TODO: fix outputs
 
     // calculate bias
-    const real_type bias = b_back_value + QA_cost * sum(alpha) - (transposed{ q } * alpha);
-    alpha.push_back(-sum(alpha));
+    std::vector<real_type> bias(B.size());
+    #pragma omp parallel for
+    for (std::size_t i = 0; i < B.size(); ++i) {
+        bias[i] = -(b_back_value[i] + QA_cost * sum(X[i]) - (transposed{ q_red } * X[i]));
+        X[i].push_back(-sum(X[i]));
+    }
 
-    return std::make_pair(std::move(alpha), -bias);
+    return std::make_pair(std::move(X), bias);
 }
 
-template std::pair<std::vector<float>, float> csvm::solve_system_of_linear_equations_impl(const detail::parameter<float> &, const std::vector<std::vector<float>> &, std::vector<std::vector<float>>, const float, const unsigned long long) const;
-template std::pair<std::vector<double>, double> csvm::solve_system_of_linear_equations_impl(const detail::parameter<double> &, const std::vector<std::vector<double>> &, std::vector<std::vector<double>>, const double, const unsigned long long) const;
+template std::pair<std::vector<std::vector<float>>, std::vector<float>> csvm::solve_system_of_linear_equations_impl(const detail::parameter<float> &, const std::vector<std::vector<float>> &, std::vector<std::vector<float>>, const float, const unsigned long long) const;
+template std::pair<std::vector<std::vector<double>>, std::vector<double>> csvm::solve_system_of_linear_equations_impl(const detail::parameter<double> &, const std::vector<std::vector<double>> &, std::vector<std::vector<double>>, const double, const unsigned long long) const;
 
 template <typename real_type>
 std::vector<real_type> csvm::predict_values_impl(const detail::parameter<real_type> &params, const std::vector<std::vector<real_type>> &support_vectors, const std::vector<real_type> &alpha, const real_type rho, std::vector<real_type> &w, const std::vector<std::vector<real_type>> &predict_points) const {
@@ -318,11 +360,11 @@ std::vector<real_type> csvm::calculate_w(const std::vector<std::vector<real_type
     // create w vector and fill with zeros
     std::vector<real_type> w(num_features, real_type{ 0.0 });
 
-    // calculate the w vector
-    #pragma omp parallel for default(none) shared(support_vectors, alpha, w) firstprivate(num_features, num_data_points)
+// calculate the w vector
+#pragma omp parallel for default(none) shared(support_vectors, alpha, w) firstprivate(num_features, num_data_points)
     for (typename std::vector<real_type>::size_type feature_index = 0; feature_index < num_features; ++feature_index) {
         real_type temp{ 0.0 };
-        #pragma omp simd reduction(+ : temp)
+#pragma omp simd reduction(+ : temp)
         for (typename std::vector<std::vector<real_type>>::size_type data_index = 0; data_index < num_data_points; ++data_index) {
             temp = std::fma(alpha[data_index], support_vectors[data_index][feature_index], temp);
         }
