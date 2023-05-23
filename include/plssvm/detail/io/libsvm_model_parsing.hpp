@@ -263,11 +263,6 @@ template <typename real_type, typename label_type, typename size_type>
         pos += num_support_vectors_per_class[i];
     }
 
-    // current limitation
-    if (nr_class != 2) {
-        throw invalid_file_format_exception{ fmt::format("Currently only binary classification is supported, but {} different label where given!", nr_class) };
-    }
-
     return std::make_tuple(params, rho, std::move(data_labels), header_line + 1);
 }
 
