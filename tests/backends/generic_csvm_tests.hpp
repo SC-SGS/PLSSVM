@@ -119,7 +119,8 @@ TYPED_TEST_P(GenericCSVM, solve_system_of_linear_equations_trivial) {
         { real_type{ 0.0 }, real_type{ 0.0 }, real_type{ std::sqrt(real_type(1.0) - 1 / params.cost) }, real_type{ 0.0 } },
         { real_type{ 0.0 }, real_type{ 0.0 }, real_type{ 0.0 }, real_type{ std::sqrt(real_type(1.0) - 1 / params.cost) } },
     };
-    const std::vector<real_type> rhs{ real_type{ 1.0 }, real_type{ -1.0 }, real_type{ 1.0 }, real_type{ -1.0 } };
+    const std::vector<std::vector<real_type>> rhs{ { real_type{ 1.0 }, real_type{ -1.0 }, real_type{ 1.0 }, real_type{ -1.0 } },
+                                                   { real_type{ 1.0 }, real_type{ -1.0 }, real_type{ 1.0 }, real_type{ -1.0 } } };
 
     // create C-SVM: must be done using the mock class, since solve_system_of_linear_equations_impl is protected
     const mock_csvm_type svm = util::construct_from_tuple<mock_csvm_type>(params, TypeParam::additional_arguments);
@@ -131,9 +132,11 @@ TYPED_TEST_P(GenericCSVM, solve_system_of_linear_equations_trivial) {
     const auto &[calculated_x, calculated_rho] = svm.solve_system_of_linear_equations(params, A, rhs, real_type{ 0.00001 }, A.front().size());
 
     // check the calculated result for correctness
-    EXPECT_FLOATING_POINT_VECTOR_NEAR(calculated_x, rhs);
+    EXPECT_FLOATING_POINT_2D_VECTOR_NEAR(calculated_x, rhs);
     // EXPECT_FLOATING_POINT_NEAR(calculated_rho, real_type{ 0.0 });
-    EXPECT_FLOATING_POINT_NEAR(std::abs(calculated_rho) - std::numeric_limits<real_type>::epsilon(), std::numeric_limits<real_type>::epsilon());
+    for (const auto rho : calculated_rho) {
+        EXPECT_FLOATING_POINT_NEAR(std::abs(rho) - std::numeric_limits<real_type>::epsilon(), std::numeric_limits<real_type>::epsilon());
+    }
 }
 
 TYPED_TEST_P(GenericCSVM, solve_system_of_linear_equations) {
@@ -274,16 +277,16 @@ TYPED_TEST_P(GenericCSVMDeathTest, solve_system_of_linear_equations) {
     }
     const mock_csvm_type svm = util::construct_from_tuple<mock_csvm_type>(params, TypeParam::additional_arguments);
 
-    const std::vector<real_type> b{ real_type{ 1.0 }, real_type{ 2.0 } };
+    const std::vector<std::vector<real_type>> B{ { real_type{ 1.0 }, real_type{ 2.0 } }, { real_type{ 1.0 }, real_type{ 2.0 } } };
 
     // empty data is not allowed
-    EXPECT_DEATH(std::ignore = svm.solve_system_of_linear_equations(params, std::vector<std::vector<real_type>>{}, b, real_type{ 0.1 }, 2),
+    EXPECT_DEATH(std::ignore = svm.solve_system_of_linear_equations(params, std::vector<std::vector<real_type>>{}, B, real_type{ 0.1 }, 2),
                  "The data must not be empty!");
     // empty features are not allowed
-    EXPECT_DEATH(std::ignore = (svm.solve_system_of_linear_equations(params, std::vector<std::vector<real_type>>{ std::vector<real_type>{} }, b, real_type{ 0.1 }, 2)),
+    EXPECT_DEATH(std::ignore = (svm.solve_system_of_linear_equations(params, std::vector<std::vector<real_type>>{ std::vector<real_type>{} }, B, real_type{ 0.1 }, 2)),
                  "The data points must contain at least one feature!");
     // all data points must have the same number of features
-    EXPECT_DEATH(std::ignore = (svm.solve_system_of_linear_equations(params, std::vector<std::vector<real_type>>{ std::vector<real_type>{ real_type{ 1.0 } }, std::vector<real_type>{ real_type{ 1.0 }, real_type{ 2.0 } } }, b, real_type{ 0.1 }, 2)),
+    EXPECT_DEATH(std::ignore = (svm.solve_system_of_linear_equations(params, std::vector<std::vector<real_type>>{ std::vector<real_type>{ real_type{ 1.0 } }, std::vector<real_type>{ real_type{ 1.0 }, real_type{ 2.0 } } }, B, real_type{ 0.1 }, 2)),
                  "All data points must have the same number of features!");
 
     const std::vector<std::vector<real_type>> data = {
@@ -291,16 +294,19 @@ TYPED_TEST_P(GenericCSVMDeathTest, solve_system_of_linear_equations) {
         { real_type{ 3.0 }, real_type{ 4.0 } }
     };
 
-    // the number of data points and values in b must be the same
-    EXPECT_DEATH(std::ignore = svm.solve_system_of_linear_equations(params, data, std::vector<real_type>{}, 0.1, 2),
-                 ::testing::HasSubstr("The number of data points in the matrix A (2) and the values in the right hand side vector (0) must be the same!"));
+    // at least one right and side in B must be given
+    EXPECT_DEATH(std::ignore = svm.solve_system_of_linear_equations(params, data, std::vector<std::vector<real_type>>{}, 0.1, 2),
+                 ::testing::HasSubstr("At least one right hand side must be given!"));
+    // the number of values in all right hand sides must be the same
+    EXPECT_DEATH(std::ignore = svm.solve_system_of_linear_equations(params, data, std::vector<std::vector<real_type>>{ { real_type{ 1.0 }, real_type{ 2.0 } }, { real_type{ 1.0 } } }, 0.1, 2),
+                 ::testing::HasSubstr("The number of data points in the matrix A (2) and the values in all right hand side vectors must be the same!"));
     // the stopping criterion must be greater than zero
-    EXPECT_DEATH(std::ignore = svm.solve_system_of_linear_equations(params, data, b, real_type{ 0.0 }, 2),
+    EXPECT_DEATH(std::ignore = svm.solve_system_of_linear_equations(params, data, B, real_type{ 0.0 }, 2),
                  "The stopping criterion in the CG algorithm must be greater than 0.0, but is 0!");
-    EXPECT_DEATH(std::ignore = svm.solve_system_of_linear_equations(params, data, b, real_type{ -0.1 }, 2),
+    EXPECT_DEATH(std::ignore = svm.solve_system_of_linear_equations(params, data, B, real_type{ -0.1 }, 2),
                  "The stopping criterion in the CG algorithm must be greater than 0.0, but is -0.1!");
     // at least one CG iteration must be performed
-    EXPECT_DEATH(std::ignore = svm.solve_system_of_linear_equations(params, data, b, real_type{ 0.1 }, 0),
+    EXPECT_DEATH(std::ignore = svm.solve_system_of_linear_equations(params, data, B, real_type{ 0.1 }, 0),
                  "The number of CG iterations must be greater than 0!");
 }
 

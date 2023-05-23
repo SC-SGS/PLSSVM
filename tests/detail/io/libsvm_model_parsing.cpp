@@ -61,8 +61,8 @@ TYPED_TEST(LIBSVMModelHeaderParseValid, read_linear) {
     EXPECT_TRUE(params.cost.is_default());
     // check remaining values
     EXPECT_FLOATING_POINT_EQ(rho, real_type{ 0.37330625882191915 });
-    const auto [first_label, second_label] = util::get_distinct_label<label_type>();
-    EXPECT_EQ(label, (std::vector<label_type>{ first_label, first_label, second_label, second_label, second_label }));
+    const auto [first_label, second_label, third_label] = util::get_distinct_label<label_type>();
+    EXPECT_EQ(label, (std::vector<label_type>{ first_label, first_label, second_label, second_label, second_label, third_label }));
     EXPECT_EQ(header_lines, 8);
 }
 TYPED_TEST(LIBSVMModelHeaderParseValid, read_polynomial) {
@@ -92,8 +92,8 @@ TYPED_TEST(LIBSVMModelHeaderParseValid, read_polynomial) {
     EXPECT_TRUE(params.cost.is_default());
     // check remaining values
     EXPECT_FLOATING_POINT_EQ(rho, real_type{ 0.37330625882191915 });
-    const auto [first_label, second_label] = util::get_distinct_label<label_type>();
-    EXPECT_EQ(label, (std::vector<label_type>{ first_label, first_label, second_label, second_label, second_label }));
+    const auto [first_label, second_label, third_label] = util::get_distinct_label<label_type>();
+    EXPECT_EQ(label, (std::vector<label_type>{ first_label, first_label, second_label, second_label, second_label, third_label }));
     EXPECT_EQ(header_lines, 11);
 }
 TYPED_TEST(LIBSVMModelHeaderParseValid, read_rbf) {
@@ -121,8 +121,8 @@ TYPED_TEST(LIBSVMModelHeaderParseValid, read_rbf) {
     EXPECT_TRUE(params.cost.is_default());
     // check remaining values
     EXPECT_FLOATING_POINT_EQ(rho, real_type{ 0.37330625882191915 });
-    const auto [first_label, second_label] = util::get_distinct_label<label_type>();
-    EXPECT_EQ(label, (std::vector<label_type>{ first_label, first_label, second_label, second_label, second_label }));
+    const auto [first_label, second_label, third_label] = util::get_distinct_label<label_type>();
+    EXPECT_EQ(label, (std::vector<label_type>{ first_label, first_label, second_label, second_label, second_label, third_label }));
     EXPECT_EQ(header_lines, 9);
 }
 
@@ -405,19 +405,6 @@ TYPED_TEST(LIBSVMModelHeaderParseInvalid, total_sv_and_nr_sv_mismatch) {
                       plssvm::invalid_file_format_exception,
                       "The total number of support vectors is 5, but the sum of nr_sv is 6!");
 }
-TYPED_TEST(LIBSVMModelHeaderParseInvalid, too_many_classes) {
-    using real_type = typename TypeParam::real_type;
-    using label_type = typename TypeParam::real_type;
-    using size_type = std::size_t;
-
-    // parse the LIBSVM model file
-    const std::string filename = PLSSVM_TEST_PATH "/data/model/invalid/too_many_classes.libsvm.model";
-    plssvm::detail::io::file_reader reader{ filename };
-    reader.read_lines('#');
-    EXPECT_THROW_WHAT(std::ignore = (plssvm::detail::io::parse_libsvm_model_header<real_type, label_type, size_type>(reader.lines())),
-                      plssvm::invalid_file_format_exception,
-                      "Currently only binary classification is supported, but 3 different label where given!");
-}
 TYPED_TEST(LIBSVMModelHeaderParseInvalid, missing_sv) {
     using real_type = typename TypeParam::real_type;
     using label_type = typename TypeParam::real_type;
@@ -489,10 +476,11 @@ TYPED_TEST(LIBSVMModelHeaderWrite, write_linear) {
     const std::vector<std::vector<real_type>> data{
         { real_type{ 1.1 }, real_type{ 1.2 }, real_type{ 1.3 } },
         { real_type{ 2.1 }, real_type{ 2.2 }, real_type{ 2.3 } },
-        { real_type{ 3.1 }, real_type{ 3.2 }, real_type{ 3.3 } }
+        { real_type{ 3.1 }, real_type{ 3.2 }, real_type{ 3.3 } },
+        { real_type{ 4.1 }, real_type{ 4.2 }, real_type{ 4.3 } }
     };
-    const auto [first_label, second_label] = util::get_distinct_label<label_type>();
-    const std::vector<label_type> label = { first_label, second_label, first_label };
+    const auto [first_label, second_label, third_label] = util::get_distinct_label<label_type>();
+    const std::vector<label_type> label = { first_label, second_label, first_label, third_label };
 
     // create necessary parameter
     const plssvm::parameter params{};
@@ -504,7 +492,7 @@ TYPED_TEST(LIBSVMModelHeaderWrite, write_linear) {
     out.close();
 
     // check returned label order
-    EXPECT_EQ(label_order, (std::vector<label_type>{ first_label, second_label }));
+    EXPECT_EQ(label_order, (std::vector<label_type>{ first_label, second_label, third_label }));
 
     // read the written file
     plssvm::detail::io::file_reader reader{ this->filename };
@@ -514,10 +502,10 @@ TYPED_TEST(LIBSVMModelHeaderWrite, write_linear) {
     ASSERT_EQ(reader.num_lines(), 8);  // the LIBSVM header
     EXPECT_EQ(reader.line(0), "svm_type c_svc");
     EXPECT_EQ(reader.line(1), "kernel_type linear");
-    EXPECT_EQ(reader.line(2), "nr_class 2");
-    EXPECT_EQ(reader.line(3), fmt::format("label {} {}", first_label, second_label));
-    EXPECT_EQ(reader.line(4), "total_sv 3");
-    EXPECT_EQ(reader.line(5), "nr_sv 2 1");
+    EXPECT_EQ(reader.line(2), "nr_class 3");
+    EXPECT_EQ(reader.line(3), fmt::format("label {} {} {}", first_label, second_label, third_label));
+    EXPECT_EQ(reader.line(4), "total_sv 4");
+    EXPECT_EQ(reader.line(5), "nr_sv 2 1 1");
     EXPECT_EQ(reader.line(6), fmt::format("rho {}", rho));
     EXPECT_EQ(reader.line(7), "SV");
 }
@@ -532,10 +520,11 @@ TYPED_TEST(LIBSVMModelHeaderWrite, write_polynomial) {
     const std::vector<std::vector<real_type>> data{
         { real_type{ 1.1 }, real_type{ 1.2 }, real_type{ 1.3 } },
         { real_type{ 2.1 }, real_type{ 2.2 }, real_type{ 2.3 } },
-        { real_type{ 3.1 }, real_type{ 3.2 }, real_type{ 3.3 } }
+        { real_type{ 3.1 }, real_type{ 3.2 }, real_type{ 3.3 } },
+        { real_type{ 4.1 }, real_type{ 4.2 }, real_type{ 4.3 } }
     };
-    const auto [first_label, second_label] = util::get_distinct_label<label_type>();
-    const std::vector<label_type> label = { first_label, second_label, first_label };
+    const auto [first_label, second_label, third_label] = util::get_distinct_label<label_type>();
+    const std::vector<label_type> label = { first_label, second_label, first_label, third_label };
 
     // create necessary parameter
     plssvm::parameter params{};
@@ -551,7 +540,7 @@ TYPED_TEST(LIBSVMModelHeaderWrite, write_polynomial) {
     out.close();
 
     // check returned label order
-    EXPECT_EQ(label_order, (std::vector<label_type>{ first_label, second_label }));
+    EXPECT_EQ(label_order, (std::vector<label_type>{ first_label, second_label, third_label }));
 
     // read the written file
     plssvm::detail::io::file_reader reader{ this->filename };
@@ -564,10 +553,10 @@ TYPED_TEST(LIBSVMModelHeaderWrite, write_polynomial) {
     EXPECT_EQ(reader.line(2), "degree 3");
     EXPECT_EQ(reader.line(3), "gamma 2.2");
     EXPECT_EQ(reader.line(4), "coef0 4.4");
-    EXPECT_EQ(reader.line(5), "nr_class 2");
-    EXPECT_EQ(reader.line(6), fmt::format("label {} {}", first_label, second_label));
-    EXPECT_EQ(reader.line(7), "total_sv 3");
-    EXPECT_EQ(reader.line(8), "nr_sv 2 1");
+    EXPECT_EQ(reader.line(5), "nr_class 3");
+    EXPECT_EQ(reader.line(6), fmt::format("label {} {} {}", first_label, second_label, third_label));
+    EXPECT_EQ(reader.line(7), "total_sv 4");
+    EXPECT_EQ(reader.line(8), "nr_sv 2 1 1");
     EXPECT_EQ(reader.line(9), fmt::format("rho {}", rho));
     EXPECT_EQ(reader.line(10), "SV");
 }
@@ -582,10 +571,11 @@ TYPED_TEST(LIBSVMModelHeaderWrite, write_rbf) {
     const std::vector<std::vector<real_type>> data{
         { real_type{ 1.1 }, real_type{ 1.2 }, real_type{ 1.3 } },
         { real_type{ 2.1 }, real_type{ 2.2 }, real_type{ 2.3 } },
-        { real_type{ 3.1 }, real_type{ 3.2 }, real_type{ 3.3 } }
+        { real_type{ 3.1 }, real_type{ 3.2 }, real_type{ 3.3 } },
+        { real_type{ 4.1 }, real_type{ 4.2 }, real_type{ 4.3 } }
     };
-    const auto [first_label, second_label] = util::get_distinct_label<label_type>();
-    const std::vector<label_type> label = { first_label, second_label, first_label };
+    const auto [first_label, second_label, third_label] = util::get_distinct_label<label_type>();
+    const std::vector<label_type> label = { first_label, second_label, first_label, third_label };
 
     // create necessary parameter
     plssvm::parameter params{};
@@ -599,7 +589,7 @@ TYPED_TEST(LIBSVMModelHeaderWrite, write_rbf) {
     out.close();
 
     // check returned label order
-    EXPECT_EQ(label_order, (std::vector<label_type>{ first_label, second_label }));
+    EXPECT_EQ(label_order, (std::vector<label_type>{ first_label, second_label, third_label }));
 
     // read the written file
     plssvm::detail::io::file_reader reader{ this->filename };
@@ -610,10 +600,10 @@ TYPED_TEST(LIBSVMModelHeaderWrite, write_rbf) {
     EXPECT_EQ(reader.line(0), "svm_type c_svc");
     EXPECT_EQ(reader.line(1), "kernel_type rbf");
     EXPECT_EQ(reader.line(2), "gamma 0.4");
-    EXPECT_EQ(reader.line(3), "nr_class 2");
-    EXPECT_EQ(reader.line(4), fmt::format("label {} {}", first_label, second_label));
-    EXPECT_EQ(reader.line(5), "total_sv 3");
-    EXPECT_EQ(reader.line(6), "nr_sv 2 1");
+    EXPECT_EQ(reader.line(3), "nr_class 3");
+    EXPECT_EQ(reader.line(4), fmt::format("label {} {} {}", first_label, second_label, third_label));
+    EXPECT_EQ(reader.line(5), "total_sv 4");
+    EXPECT_EQ(reader.line(6), "nr_sv 2 1 1");
     EXPECT_EQ(reader.line(7), fmt::format("rho {}", rho));
     EXPECT_EQ(reader.line(8), "SV");
 }
@@ -630,15 +620,16 @@ TYPED_TEST(LIBSVMModelDataWrite, write) {
     const std::vector<std::vector<real_type>> data{
         { real_type{ 1.1 }, real_type{ 1.2 }, real_type{ 1.3 } },
         { real_type{ 2.1 }, real_type{ 2.2 }, real_type{ 2.3 } },
-        { real_type{ 3.1 }, real_type{ 3.2 }, real_type{ 3.3 } }
+        { real_type{ 3.1 }, real_type{ 3.2 }, real_type{ 3.3 } },
+        { real_type{ 4.1 }, real_type{ 4.2 }, real_type{ 4.3 } }
     };
-    const auto [first_label, second_label] = util::get_distinct_label<label_type>();
-    const std::vector<label_type> label = { first_label, second_label, first_label };
+    const auto [first_label, second_label, third_label] = util::get_distinct_label<label_type>();
+    const std::vector<label_type> label = { first_label, second_label, first_label, third_label };
 
     // create necessary parameter
     const plssvm::parameter params{};
     const real_type rho = 3.1415;
-    const std::vector<real_type> alpha{ -0.1, -0.2, -0.3 };
+    const std::vector<real_type> alpha{ -0.1, -0.2, -0.3, -0.4 };
     const plssvm::data_set<real_type, label_type> data_set{ std::vector<std::vector<real_type>>{ data }, std::vector<label_type>{ label } };
 
     // write the LIBSVM model file
@@ -652,10 +643,10 @@ TYPED_TEST(LIBSVMModelDataWrite, write) {
     ASSERT_EQ(reader.num_lines(), 8 + data.size());  // header lines + data
     EXPECT_EQ(reader.line(0), "svm_type c_svc");
     EXPECT_EQ(reader.line(1), "kernel_type linear");
-    EXPECT_EQ(reader.line(2), "nr_class 2");
-    EXPECT_EQ(reader.line(3), fmt::format("label {} {}", first_label, second_label));
-    EXPECT_EQ(reader.line(4), "total_sv 3");
-    EXPECT_EQ(reader.line(5), "nr_sv 2 1");
+    EXPECT_EQ(reader.line(2), "nr_class 3");
+    EXPECT_EQ(reader.line(3), fmt::format("label {} {} {}", first_label, second_label, third_label));
+    EXPECT_EQ(reader.line(4), "total_sv 4");
+    EXPECT_EQ(reader.line(5), "nr_sv 2 1 1");
     EXPECT_EQ(reader.line(6), fmt::format("rho {}", rho));
     EXPECT_EQ(reader.line(7), "SV");
     // at first the two lines with the first label must have been written, the internal order may be random
@@ -672,8 +663,10 @@ TYPED_TEST(LIBSVMModelDataWrite, write) {
         }
     }
 
-    // then the lines with the second label
+    // then the line with the second label
     ASSERT_EQ(reader.line(10), fmt::format("{:.10e} 1:{:.10e} 2:{:.10e} 3:{:.10e} ", alpha[1], data[1][0], data[1][1], data[1][2]));
+    // then the lines with the third label
+    ASSERT_EQ(reader.line(11), fmt::format("{:.10e} 1:{:.10e} 2:{:.10e} 3:{:.10e} ", alpha[3], data[3][0], data[3][1], data[3][2]));
 }
 
 template <typename T>
@@ -718,13 +711,13 @@ TYPED_TEST(LIBSVMModelWriteDeathTest, num_alphas_and_num_data_points_mismatch) {
     const plssvm::parameter params{};
     const real_type rho{};
     const std::vector<real_type> alpha{ real_type{ 0.1 } };
-    const auto [first_label, second_label] = util::get_distinct_label<label_type>();
+    const auto [first_label, second_label, third_label] = util::get_distinct_label<label_type>();
     const plssvm::data_set<real_type, label_type> data_set{
-        std::vector<std::vector<real_type>>{ { real_type{ 0.0 } }, { real_type{ 1.0 } } },
-        std::vector<label_type>{ first_label, second_label }
+        std::vector<std::vector<real_type>>{ { real_type{ 0.0 } }, { real_type{ 1.0 } }, { real_type{ 2.0 } } },
+        std::vector<label_type>{ first_label, second_label, third_label }
     };
 
     // try writing the LIBSVM model header
     EXPECT_DEATH((plssvm::detail::io::write_libsvm_model_data(this->filename, params, rho, alpha, data_set)),
-                 ::testing::HasSubstr("The number of weights (1) doesn't match the number of data points (2)!"));
+                 ::testing::HasSubstr("The number of weights (1) doesn't match the number of data points (3)!"));
 }

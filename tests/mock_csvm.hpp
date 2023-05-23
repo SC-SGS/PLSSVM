@@ -23,7 +23,10 @@
 #include <vector>                            // std::vector
 
 template <typename real_type>
-const std::pair<std::vector<real_type>, real_type> solve_system_of_linear_equations_fake_return{ { real_type{ 1.0 }, real_type{ 2.0 }, real_type{ 3.0 }, real_type{ 4.0 }, real_type{ 5.0 } }, real_type{ 3.1415 } };
+const std::pair<std::vector<std::vector<real_type>>, std::vector<real_type>> solve_system_of_linear_equations_fake_return{
+    { { real_type{ 1.0 }, real_type{ 2.0 }, real_type{ 3.0 }, real_type{ 4.0 }, real_type{ 5.0 } },
+      { real_type{ 1.0 }, real_type{ 2.0 }, real_type{ 3.0 }, real_type{ 4.0 }, real_type{ 5.0 } } },
+        { real_type{ 3.1415 }, real_type{ 2.7182 } } };
 
 template <typename real_type>
 const std::vector<real_type> predict_values_fake_return{ real_type{ -1.0 }, real_type{ -1.2 }, real_type{ -0.5 }, real_type{ 1.0 }, real_type{ 2.4 } };
@@ -44,8 +47,8 @@ class mock_csvm final : public plssvm::csvm {
     }
 
     // mock pure virtual functions
-    MOCK_METHOD((std::pair<std::vector<float>, float>), solve_system_of_linear_equations, (const plssvm::detail::parameter<float> &, const std::vector<std::vector<float>> &, std::vector<float>, float, unsigned long long), (const, override));
-    MOCK_METHOD((std::pair<std::vector<double>, double>), solve_system_of_linear_equations, (const plssvm::detail::parameter<double> &, const std::vector<std::vector<double>> &, std::vector<double>, double, unsigned long long), (const, override));
+    MOCK_METHOD((std::pair<std::vector<std::vector<float>>, std::vector<float>>), solve_system_of_linear_equations, (const plssvm::detail::parameter<float> &, const std::vector<std::vector<float>> &, std::vector<std::vector<float>>, float, unsigned long long), (const, override));
+    MOCK_METHOD((std::pair<std::vector<std::vector<double>>, std::vector<double>>), solve_system_of_linear_equations, (const plssvm::detail::parameter<double> &, const std::vector<std::vector<double>> &, std::vector<std::vector<double>>, double, unsigned long long), (const, override));
     MOCK_METHOD(std::vector<float>, predict_values, (const plssvm::detail::parameter<float> &, const std::vector<std::vector<float>> &, const std::vector<float> &, float, std::vector<float> &, const std::vector<std::vector<float>> &), (const, override));
     MOCK_METHOD(std::vector<double>, predict_values, (const plssvm::detail::parameter<double> &, const std::vector<std::vector<double>> &, const std::vector<double> &, double, std::vector<double> &, const std::vector<std::vector<double>> &), (const, override));
 
@@ -55,14 +58,14 @@ class mock_csvm final : public plssvm::csvm {
         ON_CALL(*this, solve_system_of_linear_equations(
                            ::testing::An<const plssvm::detail::parameter<float> &>(),
                            ::testing::An<const std::vector<std::vector<float>> &>(),
-                           ::testing::An<std::vector<float>>(),
+                           ::testing::An<std::vector<std::vector<float>>>(),
                            ::testing::An<float>(),
                            ::testing::An<unsigned long long>())).WillByDefault(::testing::Return(solve_system_of_linear_equations_fake_return<float>));
 
         ON_CALL(*this, solve_system_of_linear_equations(
                            ::testing::An<const plssvm::detail::parameter<double> &>(),
                            ::testing::An<const std::vector<std::vector<double>> &>(),
-                           ::testing::An<std::vector<double>>(),
+                           ::testing::An<std::vector<std::vector<double>>>(),
                            ::testing::An<double>(),
                            ::testing::An<unsigned long long>())).WillByDefault(::testing::Return(solve_system_of_linear_equations_fake_return<double>));
 

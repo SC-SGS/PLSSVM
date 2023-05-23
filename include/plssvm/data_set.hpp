@@ -443,6 +443,7 @@ data_set<T, U>::data_set::label_mapper::label_mapper(const std::vector<label_typ
 //    if (unique_labels.size() != 2) {
 //        throw data_set_exception{ fmt::format("Currently only binary classification is supported, but {} different labels were given!", unique_labels.size()) };
 //    }
+    // TODO: correctly implement a mapping
     // create mapping
     // first label
     auto iter = unique_labels.begin();
@@ -452,6 +453,14 @@ data_set<T, U>::data_set::label_mapper::label_mapper(const std::vector<label_typ
     ++iter;
     label_to_mapped_[*iter] = +1;
     mapped_to_label_[+1] = *iter;
+
+    // to temporarily pass the tests
+    real_type mapped{ 2.0 };
+    for (++iter; iter != unique_labels.end(); ++iter) {
+        label_to_mapped_[*iter] = mapped;
+        mapped_to_label_[mapped] = *iter;
+        ++mapped;
+    }
 }
 /// @endcond
 

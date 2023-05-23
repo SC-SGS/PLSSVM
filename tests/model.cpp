@@ -24,6 +24,7 @@
 #include <regex>                   // std::regex, std::regex_match, std::regex::extended
 #include <string>                  // std::string
 #include <string_view>             // std::string_view
+#include <tuple>                   // std::tuple
 #include <vector>                  // std::vector
 
 template <typename T>
@@ -54,7 +55,7 @@ TYPED_TEST(Model, construct) {
     const plssvm::model<real_type, label_type> model{ model_file.filename };
 
     // test for correct construction
-    EXPECT_EQ(model.num_support_vectors(), 5);
+    EXPECT_EQ(model.num_support_vectors(), 6);
     EXPECT_EQ(model.num_features(), 4);
     EXPECT_EQ(model.get_params(), plssvm::parameter{});
     const std::vector<std::vector<real_type>> support_vectors{
@@ -62,11 +63,13 @@ TYPED_TEST(Model, construct) {
         { real_type{ -0.5282118 }, real_type{ -0.3358810 }, real_type{ 0.5168730 }, real_type{ 0.5460446 } },
         { real_type{ -0.2098121 }, real_type{ 0.6027694 }, real_type{ -0.1308685 }, real_type{ 0.1080525 } },
         { real_type{ 1.884940 }, real_type{ 1.005186 }, real_type{ 0.2984999 }, real_type{ 1.646463 } },
-        { real_type{ 0.5765022 }, real_type{ 1.014056 }, real_type{ 0.1300943 }, real_type{ 0.7261914 } }
+        { real_type{ 0.5765022 }, real_type{ 1.014056 }, real_type{ 0.1300943 }, real_type{ 0.7261914 } },
+        { real_type{ 0.3127879 }, real_type{ 9.127879 }, real_type{ -0.3126175 }, real_type{ 0.1125761 } }
     };
     EXPECT_FLOATING_POINT_2D_VECTOR_EQ(model.support_vectors(), support_vectors);
     const std::vector<real_type> weights{
-        real_type{ -0.17609610490769723 }, real_type{ 0.8838187731213127 }, real_type{ -0.47971257671001616 }, real_type{ 0.0034556484621847128 }, real_type{ -0.23146573996578407 }
+        real_type{ -0.17609610490769723 }, real_type{ 0.8838187731213127 }, real_type{ -0.47971257671001616 },
+        real_type{ 0.0034556484621847128 }, real_type{ -0.23146573996578407 }, real_type{ 0.61928364182789611 }
     };
     EXPECT_FLOATING_POINT_VECTOR_EQ(model.weights(), weights);
     EXPECT_FLOATING_POINT_EQ(model.rho(), real_type{ 0.37330625882191915 });
@@ -82,7 +85,7 @@ TYPED_TEST(Model, num_support_vectors) {
     const plssvm::model<real_type, label_type> model{ model_file.filename };
 
     // test for the correct number of support vectors
-    EXPECT_EQ(model.num_support_vectors(), 5);
+    EXPECT_EQ(model.num_support_vectors(), 6);
 }
 TYPED_TEST(Model, num_features) {
     using real_type = typename TypeParam::real_type;
@@ -123,7 +126,8 @@ TYPED_TEST(Model, support_vectors) {
         { real_type{ -0.5282118 }, real_type{ -0.3358810 }, real_type{ 0.5168730 }, real_type{ 0.5460446 } },
         { real_type{ -0.2098121 }, real_type{ 0.6027694 }, real_type{ -0.1308685 }, real_type{ 0.1080525 } },
         { real_type{ 1.884940 }, real_type{ 1.005186 }, real_type{ 0.2984999 }, real_type{ 1.646463 } },
-        { real_type{ 0.5765022 }, real_type{ 1.014056 }, real_type{ 0.1300943 }, real_type{ 0.7261914 } }
+        { real_type{ 0.5765022 }, real_type{ 1.014056 }, real_type{ 0.1300943 }, real_type{ 0.7261914 } },
+        { real_type{ 0.3127879 }, real_type{ 9.127879 }, real_type{ -0.3126175 }, real_type{ 0.1125761 } }
     };
     EXPECT_FLOATING_POINT_2D_VECTOR_EQ(model.support_vectors(), support_vectors);
 }
@@ -137,10 +141,10 @@ TYPED_TEST(Model, labels) {
     const plssvm::model<real_type, label_type> model{ model_file.filename };
 
     // get the distinct labels used to instantiate the test file
-    const std::pair<label_type, label_type> distinct_label = util::get_distinct_label<label_type>();
+    const auto [first_label, second_label, third_label] = util::get_distinct_label<label_type>();
 
     // correct labels
-    const std::vector<label_type> correct_label = { distinct_label.first, distinct_label.first, distinct_label.second, distinct_label.second, distinct_label.second };
+    const std::vector<label_type> correct_label = { first_label, first_label, second_label, second_label, second_label, third_label };
 
     // check labels getter
     EXPECT_EQ(model.labels(), correct_label);
@@ -155,7 +159,7 @@ TYPED_TEST(Model, num_different_labels) {
     const plssvm::model<real_type, label_type> model{ model_file.filename };
 
     // check num_different_labels getter
-    EXPECT_EQ(model.num_different_labels(), 2);
+    EXPECT_EQ(model.num_different_labels(), 3);
 }
  TYPED_TEST(Model, different_labels) {
      using real_type = typename TypeParam::real_type;
@@ -167,8 +171,8 @@ TYPED_TEST(Model, num_different_labels) {
      const plssvm::model<real_type, label_type> model{ model_file.filename };
 
      // get the distinct labels used to instantiate the test file
-     const std::pair<label_type, label_type> distinct_label = util::get_distinct_label<label_type>();
-     const std::vector<label_type> different_label = { distinct_label.first, distinct_label.second};
+     const auto [first_label, second_label, third_label] = util::get_distinct_label<label_type>();
+     const std::vector<label_type> different_label = { first_label, second_label, third_label };
 
      // check different_labels getter
      EXPECT_EQ(model.different_labels(), different_label);
@@ -184,7 +188,8 @@ TYPED_TEST(Model, weights) {
 
     // test for the correct weights
     const std::vector<real_type> weights{
-        real_type{ -0.17609610490769723 }, real_type{ 0.8838187731213127 }, real_type{ -0.47971257671001616 }, real_type{ 0.0034556484621847128 }, real_type{ -0.23146573996578407 }
+        real_type{ -0.17609610490769723 }, real_type{ 0.8838187731213127 }, real_type{ -0.47971257671001616 },
+        real_type{ 0.0034556484621847128 }, real_type{ -0.23146573996578407 }, real_type{ 0.61928364182789611 }
     };
     EXPECT_FLOATING_POINT_VECTOR_EQ(model.weights(), weights);
 }

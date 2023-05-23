@@ -170,25 +170,27 @@ template <typename T>
 }
 
 /**
- * @brief Get two distinct labels based on the provided label type.
+ * @brief Get three distinct labels (two in case of `bool`) based on the provided label type.
  * @details The distinct label values must be provided in increasing order (for a defined order in `std::map`).
  * @tparam T the label type
- * @return two distinct label (`[[nodiscard]]`)
+ * @return the distinct labels (`[[nodiscard]]`)
  */
 template <typename T>
-[[nodiscard]] inline std::pair<T, T> get_distinct_label() {
-    if constexpr (std::is_same_v<T, bool>) {
-        return std::make_pair(false, true);
-    } else if constexpr (sizeof(T) == sizeof(char)) {
-        return std::make_pair('a', 'b');
+[[nodiscard]] inline std::tuple<T, T, T> get_distinct_label() {
+    // TODO: bool?
+//    if constexpr (std::is_same_v<T, bool>) {
+//        return std::make_tuple(false, true, true);
+//    } else
+    if constexpr (sizeof(T) == sizeof(char)) {
+        return std::make_tuple('a', 'b', 'c');
     } else if constexpr (std::is_signed_v<T>) {
-        return std::make_pair(-1, 1);
+        return std::make_tuple(-1, 1, 2);
     } else if constexpr (std::is_unsigned_v<T>) {
-        return std::make_pair(1, 2);
+        return std::make_tuple(1, 2, 3);
     } else if constexpr (std::is_floating_point_v<T>) {
-        return std::make_pair(-1.5, 1.5);
+        return std::make_tuple(-1.5, 1.5, 2.5);
     } else if constexpr (std::is_same_v<T, std::string>) {
-        return std::make_pair("cat", "dog");
+        return std::make_tuple("cat", "dog", "mouse");
     } else {
         static_assert(plssvm::detail::always_false_v<T>, "Unknown label type provided!");
     }
@@ -208,12 +210,13 @@ inline void instantiate_template_file(const std::string &template_filename, cons
         FAIL() << fmt::format("The template file {} does not exist!", template_filename);
     }
     // get a label pair based on the current label type
-    const auto [first_label, second_label] = util::get_distinct_label<T>();
+    const auto [first_label, second_label, third_label] = util::get_distinct_label<T>();
     // read the data set template and replace the label placeholder with the correct labels
     std::ifstream input{ template_filename };
     std::string str((std::istreambuf_iterator<char>(input)), std::istreambuf_iterator<char>());
     plssvm::detail::replace_all(str, "LABEL_1_PLACEHOLDER", fmt::format("{}", first_label));
     plssvm::detail::replace_all(str, "LABEL_2_PLACEHOLDER", fmt::format("{}", second_label));
+    plssvm::detail::replace_all(str, "LABEL_3_PLACEHOLDER", fmt::format("{}", third_label));
     // write the data set with the correct labels to the temporary file
     std::ofstream out{ output_filename };
     out << str;

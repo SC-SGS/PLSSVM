@@ -195,8 +195,8 @@ class ARFFParseDense : public ARFFParse<T>, protected util::temporary_file {
         // create file used in this test fixture by instantiating the template file
         util::instantiate_template_file<label_type>(PLSSVM_TEST_PATH "/data/arff/5x4_TEMPLATE.arff", this->filename);
         // create a vector with the correct labels
-        const auto [first_label, second_label] = util::get_distinct_label<label_type>();
-        correct_label = std::vector<label_type>{ first_label, first_label, second_label, second_label, second_label };
+        const auto [first_label, second_label, third_label] = util::get_distinct_label<label_type>();
+        correct_label = std::vector<label_type>{ first_label, first_label, second_label, third_label, second_label };
     }
 
     using real_type = typename T::real_type;
@@ -220,8 +220,8 @@ class ARFFParseSparse : public ARFFParse<T>, protected util::temporary_file {
         // create file used in this test fixture by instantiating the template file
         util::instantiate_template_file<label_type>(PLSSVM_TEST_PATH "/data/arff/5x4_sparse_TEMPLATE.arff", this->filename);
         // create a vector with the correct labels
-        const auto [first_label, second_label] = util::get_distinct_label<label_type>();
-        correct_label = std::vector<label_type>{ first_label, first_label, second_label, second_label, second_label };
+        const auto [first_label, second_label, third_label] = util::get_distinct_label<label_type>();
+        correct_label = std::vector<label_type>{ first_label, first_label, second_label, third_label, second_label };
     }
 
     using real_type = typename T::real_type;
@@ -485,10 +485,11 @@ TYPED_TEST(ARFFWrite, write_with_label) {
     const std::vector<std::vector<real_type>> data{
         { real_type{ 1.1 }, real_type{ 1.2 }, real_type{ 1.3 } },
         { real_type{ 2.1 }, real_type{ 2.2 }, real_type{ 2.3 } },
-        { real_type{ 3.1 }, real_type{ 3.2 }, real_type{ 3.3 } }
+        { real_type{ 3.1 }, real_type{ 3.2 }, real_type{ 3.3 } },
+        { real_type{ 4.1 }, real_type{ 4.2 }, real_type{ 4.3 } }
     };
-    const auto [first_label, second_label] = util::get_distinct_label<label_type>();
-    std::vector<label_type> label = { first_label, second_label, first_label };
+    const auto [first_label, second_label, third_label] = util::get_distinct_label<label_type>();
+    const std::vector<label_type> label = { first_label, second_label, first_label, third_label };
 
     // write the necessary data to the file
     plssvm::detail::io::write_arff_data(this->filename, data, label);
@@ -504,7 +505,7 @@ TYPED_TEST(ARFFWrite, write_with_label) {
     for (std::size_t i = 0; i < data.front().size(); ++i) {
         EXPECT_EQ(reader.line(i + 1), fmt::format("@ATTRIBUTE feature_{} NUMERIC", i));
     }
-    EXPECT_EQ(reader.line(4), fmt::format("@ATTRIBUTE class {{{},{}}}", first_label, second_label));
+    EXPECT_EQ(reader.line(4), fmt::format("@ATTRIBUTE class {{{},{},{}}}", first_label, second_label, third_label));
     EXPECT_EQ(reader.line(5), "@DATA");
     // check the lines
     for (std::size_t i = 0; i < data.size(); ++i) {
