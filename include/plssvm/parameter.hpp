@@ -14,6 +14,7 @@
 #pragma once
 
 #include "plssvm/default_value.hpp"          // plssvm::default_value, plssvm::is_default_value_v
+#include "plssvm/detail/type_list.hpp"       // plssvm::detail::{real_type_list, type_list_contains_v}
 #include "plssvm/detail/type_traits.hpp"     // PLSSVM_REQUIRES, plssvm::detail::{remove_cvref_t, always_false_v}
 #include "plssvm/detail/utility.hpp"         // plssvm::detail::unreachable
 #include "plssvm/kernel_function_types.hpp"  // plssvm::kernel_function_type, plssvm::kernel_function_type_to_math_string
@@ -104,8 +105,8 @@ ExpectedType get_value_from_named_parameter(const IgorParser &parser, const Name
  */
 template <typename T>
 struct parameter {
-    // only float and doubles are allowed
-    static_assert(std::is_same_v<T, float> || std::is_same_v<T, double>, "The template type can only be 'float' or 'double'!");
+    // make sure only valid template types are used
+    static_assert(detail::type_list_contains_v<T, detail::real_type_list>, "Illegal real type provided! See the 'real_type_list' in the type_list.hpp header for a list of the allowed types.");
 
     /// The type of the data. Must be either `float` or `double`.
     using real_type = T;

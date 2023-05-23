@@ -13,6 +13,8 @@
 #define PLSSVM_BACKENDS_GPU_DEVICE_PTR_HPP_
 #pragma once
 
+#include "plssvm/detail/type_list.hpp"  // plssvm::detail::{real_type_list, type_list_contains_v}
+
 #include <cstddef>      // std::size_t
 #include <type_traits>  // std::is_same_v
 #include <vector>       // std::vector
@@ -27,8 +29,8 @@ namespace plssvm::detail {
  */
 template <typename T, typename queue_t, typename device_pointer_t = T *>
 class gpu_device_ptr {
-    // any non-reference arithmetic type
-    static_assert(std::is_same_v<float, T> || std::is_same_v<double, T>, "Currently only 'float' or 'double' are allowed!");
+    // make sure only valid template types are used
+    static_assert(detail::type_list_contains_v<T, detail::real_type_list>, "Illegal real type provided! See the 'real_type_list' in the type_list.hpp header for a list of the allowed types.");
 
   public:
     /// The type of the values used in the device_ptr.
