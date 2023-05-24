@@ -1,12 +1,14 @@
 # this is a comment
 svm_type c_svc
-kernel_type rbf
-gamma 0.025
-nr_class 3
+kernel_type polynomial
+degree 2
+gamma 0.25
+coef0 1.5
+nr_class NUM_LABEL_PLACEHOLDER
 total_sv 6
 rho 0.37330625882191915
-label LABEL_1_PLACEHOLDER LABEL_2_PLACEHOLDER LABEL_3_PLACEHOLDER
-nr_sv 2 3 1
+label LABEL_PLACEHOLDER
+nr_sv NUM_SV_PLACEHOLDER
 SV
 -0.17609610490769723 1:-1.117828e+00 2:-2.908719e+00 3:6.663834e-01 4:1.097883e+00
 0.8838187731213127 1:-5.282118e-01 2:-3.358810e-01 3:5.168730e-01 4:5.460446e-01

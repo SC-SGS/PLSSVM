@@ -15,7 +15,7 @@
 #include "plssvm/detail/cmd/parser_train.hpp"    // plssvm::detail::cmd::parser_train
 
 #include "../../naming.hpp"                      // naming::pretty_print_data_set_factory
-#include "../../utility.hpp"                     // util::{temporary_file, instantiate_template_file}
+#include "../../utility.hpp"                     // util::{temporary_file, instantiate_template_data_file}
 #include "utility.hpp"                           // util::ParameterBase
 
 #include "fmt/core.h"                            // fmt::format
@@ -34,9 +34,9 @@ TEST_P(DataSetFactory, data_set_factory_predict) {
     const auto [float_as_real_type, strings_as_labels, index] = GetParam();
 
     if (strings_as_labels) {
-        util::instantiate_template_file<std::string>(PLSSVM_TEST_PATH "/data/libsvm/5x4_TEMPLATE.libsvm", this->filename);
+        util::instantiate_template_data_file<std::string>(PLSSVM_TEST_PATH "/data/libsvm/6x4_TEMPLATE.libsvm", this->filename);
     } else {
-        util::instantiate_template_file<int>(PLSSVM_TEST_PATH "/data/libsvm/5x4_TEMPLATE.libsvm", this->filename);
+        util::instantiate_template_data_file<int>(PLSSVM_TEST_PATH "/data/libsvm/6x4_TEMPLATE.libsvm", this->filename);
     }
 
     // assemble command line strings
@@ -63,9 +63,9 @@ TEST_P(DataSetFactory, data_set_factory_scale) {
     const auto [float_as_real_type, strings_as_labels, index] = GetParam();
 
     if (strings_as_labels) {
-        util::instantiate_template_file<std::string>(PLSSVM_TEST_PATH "/data/libsvm/5x4_TEMPLATE.libsvm", this->filename);
+        util::instantiate_template_data_file<std::string>(PLSSVM_TEST_PATH "/data/libsvm/6x4_TEMPLATE.libsvm", this->filename);
     } else {
-        util::instantiate_template_file<int>(PLSSVM_TEST_PATH "/data/libsvm/5x4_TEMPLATE.libsvm", this->filename);
+        util::instantiate_template_data_file<int>(PLSSVM_TEST_PATH "/data/libsvm/6x4_TEMPLATE.libsvm", this->filename);
     }
 
     // assemble command line strings
@@ -92,9 +92,9 @@ TEST_P(DataSetFactory, data_set_factory_scale_restore_filename) {
     const auto [float_as_real_type, strings_as_labels, index] = GetParam();
 
     if (strings_as_labels) {
-        util::instantiate_template_file<std::string>(PLSSVM_TEST_PATH "/data/libsvm/5x4_TEMPLATE.libsvm", this->filename);
+        util::instantiate_template_data_file<std::string>(PLSSVM_TEST_PATH "/data/libsvm/6x4_TEMPLATE.libsvm", this->filename);
     } else {
-        util::instantiate_template_file<int>(PLSSVM_TEST_PATH "/data/libsvm/5x4_TEMPLATE.libsvm", this->filename);
+        util::instantiate_template_data_file<int>(PLSSVM_TEST_PATH "/data/libsvm/6x4_TEMPLATE.libsvm", this->filename);
     }
 
     // assemble command line strings
@@ -121,9 +121,9 @@ TEST_P(DataSetFactory, data_set_factory_train) {
     const auto [float_as_real_type, strings_as_labels, index] = GetParam();
 
     if (strings_as_labels) {
-        util::instantiate_template_file<std::string>(PLSSVM_TEST_PATH "/data/libsvm/5x4_TEMPLATE.libsvm", this->filename);
+        util::instantiate_template_data_file<std::string>(PLSSVM_TEST_PATH "/data/libsvm/6x4_TEMPLATE.libsvm", this->filename);
     } else {
-        util::instantiate_template_file<int>(PLSSVM_TEST_PATH "/data/libsvm/5x4_TEMPLATE.libsvm", this->filename);
+        util::instantiate_template_data_file<int>(PLSSVM_TEST_PATH "/data/libsvm/6x4_TEMPLATE.libsvm", this->filename);
     }
 
     // assemble command line strings

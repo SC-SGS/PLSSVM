@@ -83,8 +83,7 @@ using cartesian_type_product_t = typename cartesian_type_product<T...>::type;
 using real_type_list = std::tuple<float, double>;
 
 /// A type list of all supported label types (currently arithmetic types and `std::string`) as `std::tuple`.
-using label_type_list = std::tuple<char, signed char, unsigned char, short, unsigned short, int, unsigned int, long, unsigned long, long long, unsigned long long, float, double, long double, std::string>;
-// TODO: bool?!?
+using label_type_list = std::tuple<bool, char, signed char, unsigned char, short, unsigned short, int, unsigned int, long, unsigned long, long long, unsigned long long, float, double, long double, std::string>;
 
 /// The cartesian product of all real types and label types as `std::tuple`.
 using real_type_label_type_combination_list = detail::cartesian_type_product_t<real_type_list, label_type_list>;

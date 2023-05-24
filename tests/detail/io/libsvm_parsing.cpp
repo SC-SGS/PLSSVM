@@ -16,7 +16,7 @@
 #include "../../custom_test_macros.hpp"      // EXPECT_FLOATING_POINT_2D_VECTOR_NEAR, EXPECT_FLOATING_POINT_VECTOR_NEAR, EXPECT_THROW_WHAT
 #include "../../naming.hpp"                  // naming::real_type_label_type_combination_to_name
 #include "../../types_to_test.hpp"           // util::{instantiate_template_file, real_type_label_type_combination_gtest}
-#include "../../utility.hpp"                 // util::temporary_file
+#include "../../utility.hpp"                 // util::{temporary_file, instantiate_template_data_file, get_correct_data_file_labels, get_distinct_label, generate_specific_matrix, generate_specific_sparse_matrix}
 
 #include "fmt/core.h"                        // fmt::format
 #include "gmock/gmock-matchers.h"            // ::testing::HasSubstr
@@ -63,10 +63,7 @@ class LIBSVMParseDense : public ::testing::Test, protected util::temporary_file 
   protected:
     void SetUp() override {
         // create file used in this test fixture by instantiating the template file
-        util::instantiate_template_file<label_type>(PLSSVM_TEST_PATH "/data/libsvm/5x4_TEMPLATE.libsvm", this->filename);
-        // create a vector with the correct labels
-        const auto [first_label, second_label, third_label] = util::get_distinct_label<label_type>();
-        correct_label = std::vector<label_type>{ first_label, first_label, second_label, third_label, second_label };
+        util::instantiate_template_data_file<label_type>(PLSSVM_TEST_PATH "/data/libsvm/6x4_TEMPLATE.libsvm", this->filename);
     }
 
     using real_type = typename T::real_type;
@@ -77,9 +74,10 @@ class LIBSVMParseDense : public ::testing::Test, protected util::temporary_file 
         { real_type{ -0.5282118298909262 }, real_type{ -0.335880984968183973 }, real_type{ 0.51687296029754564 }, real_type{ 0.54604461446026 } },
         { real_type{ 0.57650218263054642 }, real_type{ 1.01405596624706053 }, real_type{ 0.13009428079760464 }, real_type{ 0.7261913886869387 } },
         { real_type{ -0.20981208921241892 }, real_type{ 0.60276937379453293 }, real_type{ -0.13086851759108944 }, real_type{ 0.10805254527169827 } },
-        { real_type{ 1.88494043717792 }, real_type{ 1.00518564317278263 }, real_type{ 0.298499933047586044 }, real_type{ 1.6464627048813514 } }
+        { real_type{ 1.88494043717792 }, real_type{ 1.00518564317278263 }, real_type{ 0.298499933047586044 }, real_type{ 1.6464627048813514 } },
+        { real_type{ -1.1256816275635 }, real_type{ 2.12541534341344414 }, real_type{ -0.165126576545454511 }, real_type{ 2.5164553141200987 } }
     };
-    std::vector<label_type> correct_label{};
+    const std::vector<label_type> correct_label{ util::get_correct_data_file_labels<label_type>() };
 };
 TYPED_TEST_SUITE(LIBSVMParseDense, util::real_type_label_type_combination_gtest, naming::real_type_label_type_combination_to_name);
 
@@ -88,10 +86,7 @@ class LIBSVMParseSparse : public ::testing::Test, protected util::temporary_file
   protected:
     void SetUp() override {
         // create file used in this test fixture by instantiating the template file
-        util::instantiate_template_file<label_type>(PLSSVM_TEST_PATH "/data/libsvm/5x4_sparse_TEMPLATE.libsvm", this->filename);
-        // create a vector with the correct labels
-        const auto [first_label, second_label, third_label] = util::get_distinct_label<label_type>();
-        correct_label = std::vector<label_type>{ first_label, first_label, second_label, third_label, second_label };
+        util::instantiate_template_data_file<label_type>(PLSSVM_TEST_PATH "/data/libsvm/6x4_sparse_TEMPLATE.libsvm", this->filename);
     }
 
     using real_type = typename TypeParam::real_type;
@@ -102,9 +97,10 @@ class LIBSVMParseSparse : public ::testing::Test, protected util::temporary_file
         { real_type{ 0.0 }, real_type{ 0.51687296029754564 }, real_type{ 0.0 }, real_type{ 0.0 } },
         { real_type{ 1.01405596624706053 }, real_type{ 0.0 }, real_type{ 0.0 }, real_type{ 0.0 } },
         { real_type{ 0.60276937379453293 }, real_type{ 0.0 }, real_type{ -0.13086851759108944 }, real_type{ 0.0 } },
-        { real_type{ 0.0 }, real_type{ 0.0 }, real_type{ 0.0 }, real_type{ 0.298499933047586044 } }
+        { real_type{ 0.0 }, real_type{ 0.0 }, real_type{ 0.0 }, real_type{ 0.298499933047586044 } },
+        { real_type{ 0.0 }, real_type{ -1.615267454510097261 }, real_type{ 2.098278675127757651  }, real_type{ 0.0 } }
     };
-    std::vector<label_type> correct_label{};
+    const std::vector<label_type> correct_label{ util::get_correct_data_file_labels<label_type>() };
 };
 TYPED_TEST_SUITE(LIBSVMParseSparse, util::real_type_label_type_combination_gtest, naming::real_type_label_type_combination_to_name);
 
@@ -122,7 +118,7 @@ TYPED_TEST(LIBSVMParseDense, read) {
     const auto [num_data_points, num_features, data, label] = plssvm::detail::io::parse_libsvm_data<current_real_type, current_label_type>(reader);
 
     // check for correct sizes
-    ASSERT_EQ(num_data_points, 5);
+    ASSERT_EQ(num_data_points, 6);
     ASSERT_EQ(num_features, 4);
 
     // check for correct data
@@ -163,7 +159,7 @@ TYPED_TEST(LIBSVMParseSparse, read) {
     const auto [num_data_points, num_features, data, label] = plssvm::detail::io::parse_libsvm_data<current_real_type, current_label_type>(reader);
 
     // check for correct sizes
-    ASSERT_EQ(num_data_points, 5);
+    ASSERT_EQ(num_data_points, 6);
     ASSERT_EQ(num_features, 4);
 
     // check for correct data
@@ -403,14 +399,8 @@ TYPED_TEST(LIBSVMWrite, write_dense_with_label) {
     using label_type = typename TypeParam::label_type;
 
     // define data to write
-    const std::vector<std::vector<real_type>> data{
-        { real_type{ 1.1 }, real_type{ 1.2 }, real_type{ 1.3 } },
-        { real_type{ 2.1 }, real_type{ 2.2 }, real_type{ 2.3 } },
-        { real_type{ 3.1 }, real_type{ 3.2 }, real_type{ 3.3 } },
-        { real_type{ 4.1 }, real_type{ 4.2 }, real_type{ 4.3 } }
-    };
-    const auto [first_label, second_label, third_label] = util::get_distinct_label<label_type>();
-    std::vector<label_type> label = { first_label, second_label, first_label, third_label };
+    const std::vector<label_type> label = util::get_correct_data_file_labels<label_type>();
+    const std::vector<std::vector<real_type>> data = util::generate_specific_matrix<real_type>(label.size(), 3);
 
     // write the necessary data to the file
     plssvm::detail::io::write_libsvm_data(this->filename, data, label);
@@ -439,11 +429,7 @@ TYPED_TEST(LIBSVMWrite, write_dense_without_label) {
     using real_type = typename TypeParam::real_type;
 
     // define data to write
-    const std::vector<std::vector<real_type>> data{
-        { real_type{ 1.1 }, real_type{ 1.2 }, real_type{ 1.3 } },
-        { real_type{ 2.1 }, real_type{ 2.2 }, real_type{ 2.3 } },
-        { real_type{ 3.1 }, real_type{ 3.2 }, real_type{ 3.3 } }
-    };
+    const std::vector<std::vector<real_type>> data = util::generate_specific_matrix<real_type>(3, 3);
 
     // write the necessary data to the file
     plssvm::detail::io::write_libsvm_data(this->filename, data);
@@ -474,14 +460,8 @@ TYPED_TEST(LIBSVMWrite, write_sparse_with_label) {
     using label_type = typename TypeParam::label_type;
 
     // define data to write
-    const std::vector<std::vector<real_type>> data{
-        { real_type{ 0.0 }, real_type{ 0.0 }, real_type{ 1.3 } },
-        { real_type{ 2.1 }, real_type{ 0.0 }, real_type{ 0.0 } },
-        { real_type{ 0.0 }, real_type{ 3.2 }, real_type{ 0.0 } },
-        { real_type{ 4.1 }, real_type{ 0.0 }, real_type{ 0.0 } }
-    };
-    const auto [first_label, second_label, third_label] = util::get_distinct_label<label_type>();
-    std::vector<label_type> label = { first_label, second_label, first_label, third_label };
+    const std::vector<label_type> label = util::get_correct_data_file_labels<label_type>();
+    const std::vector<std::vector<real_type>> data = util::generate_specific_sparse_matrix<real_type>(label.size(), 3);
 
     // write the necessary data to the file
     plssvm::detail::io::write_libsvm_data(this->filename, data, label);
@@ -517,11 +497,7 @@ TYPED_TEST(LIBSVMWrite, write_sparse_without_label) {
     using real_type = typename TypeParam::real_type;
 
     // define data to write
-    const std::vector<std::vector<real_type>> data{
-        { real_type{ 0.0 }, real_type{ 0.0 }, real_type{ 1.3 } },
-        { real_type{ 2.1 }, real_type{ 0.0 }, real_type{ 0.0 } },
-        { real_type{ 3.1 }, real_type{ 3.2 }, real_type{ 0.0 } }
-    };
+    const std::vector<std::vector<real_type>> data = util::generate_specific_sparse_matrix<real_type>(3, 3);
 
     // write the necessary data to the file
     plssvm::detail::io::write_libsvm_data(this->filename, data);
@@ -590,7 +566,7 @@ TYPED_TEST(LIBSVMWriteDeathTest, data_and_label_size_mismatch) {
 
     // define data to write
     const std::vector<std::vector<real_type>> data{ { real_type{ 1.0 } }, { real_type{ 2.0 } } };
-    const std::vector<label_type> label{ plssvm::detail::convert_to<label_type>("0") };
+    const std::vector<label_type> label{ util::get_distinct_label<label_type>().front() };
 
     // try to write the necessary data to the file
     EXPECT_DEATH(plssvm::detail::io::write_libsvm_data(this->filename, data, label),
@@ -602,7 +578,7 @@ TYPED_TEST(LIBSVMWriteDeathTest, labels_provided_but_not_written) {
 
     // define data to write
     const std::vector<std::vector<real_type>> data{ { real_type{ 1.0 } }, { real_type{ 2.0 } } };
-    const std::vector<label_type> label{ plssvm::detail::convert_to<label_type>("0") };
+    const std::vector<label_type> label{ util::get_distinct_label<label_type>().front() };
 
     // try to write the necessary data to the file
     EXPECT_DEATH((plssvm::detail::io::write_libsvm_data_impl<real_type, label_type, false>(this->filename, data, label)),

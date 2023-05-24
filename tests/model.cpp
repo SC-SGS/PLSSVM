@@ -15,7 +15,7 @@
 #include "custom_test_macros.hpp"  // EXPECT_FLOATING_POINT_EQ, EXPECT_FLOATING_POINT_VECTOR_EQ, EXPECT_FLOATING_POINT_2D_VECTOR_EQ
 #include "naming.hpp"              // naming::real_type_label_type_combination_to_name
 #include "types_to_test.hpp"       // util::real_type_label_type_combination_gtest
-#include "utility.hpp"             // util::{temporary_file, redirect_output, instantiate_template_file, get_distinct_label}
+#include "utility.hpp"             // util::{temporary_file, redirect_output, instantiate_template_model_file, get_distinct_label, get_correct_model_file_labels}
 
 #include "gtest/gtest.h"           // EXPECT_EQ, EXPECT_TRUE, ASSERT_GT, GTEST_FAIL, TYPED_TEST, TYPED_TEST_SUITE, TEST_P, INSTANTIATE_TEST_SUITE_P
                                    // ::testing::{StaticAssertTypeEq, Test, TestWithParam, Values}
@@ -37,7 +37,7 @@ TYPED_TEST(Model, typedefs) {
 
     // instantiate a model file
     const util::temporary_file model_file;
-    util::instantiate_template_file<label_type>(PLSSVM_TEST_PATH "/data/model/5x4_linear_TEMPLATE.libsvm.model", model_file.filename);
+    util::instantiate_template_model_file<label_type>(PLSSVM_TEST_PATH "/data/model/6x4_linear_TEMPLATE.libsvm.model", model_file.filename);
     const plssvm::model<real_type, label_type> model{ model_file.filename };
 
     // test internal typedefs
@@ -51,7 +51,7 @@ TYPED_TEST(Model, construct) {
 
     // instantiate a model file
     const util::temporary_file model_file;
-    util::instantiate_template_file<label_type>(PLSSVM_TEST_PATH "/data/model/5x4_linear_TEMPLATE.libsvm.model", model_file.filename);
+    util::instantiate_template_model_file<label_type>(PLSSVM_TEST_PATH "/data/model/6x4_linear_TEMPLATE.libsvm.model", model_file.filename);
     const plssvm::model<real_type, label_type> model{ model_file.filename };
 
     // test for correct construction
@@ -81,7 +81,7 @@ TYPED_TEST(Model, num_support_vectors) {
 
     // instantiate a model file
     const util::temporary_file model_file;
-    util::instantiate_template_file<label_type>(PLSSVM_TEST_PATH "/data/model/5x4_linear_TEMPLATE.libsvm.model", model_file.filename);
+    util::instantiate_template_model_file<label_type>(PLSSVM_TEST_PATH "/data/model/6x4_linear_TEMPLATE.libsvm.model", model_file.filename);
     const plssvm::model<real_type, label_type> model{ model_file.filename };
 
     // test for the correct number of support vectors
@@ -93,7 +93,7 @@ TYPED_TEST(Model, num_features) {
 
     // instantiate a model file
     const util::temporary_file model_file;
-    util::instantiate_template_file<label_type>(PLSSVM_TEST_PATH "/data/model/5x4_linear_TEMPLATE.libsvm.model", model_file.filename);
+    util::instantiate_template_model_file<label_type>(PLSSVM_TEST_PATH "/data/model/6x4_linear_TEMPLATE.libsvm.model", model_file.filename);
     const plssvm::model<real_type, label_type> model{ model_file.filename };
 
     // test for the correct number of features
@@ -105,7 +105,7 @@ TYPED_TEST(Model, get_params) {
 
     // instantiate a model file
     const util::temporary_file model_file;
-    util::instantiate_template_file<label_type>(PLSSVM_TEST_PATH "/data/model/5x4_linear_TEMPLATE.libsvm.model", model_file.filename);
+    util::instantiate_template_model_file<label_type>(PLSSVM_TEST_PATH "/data/model/6x4_linear_TEMPLATE.libsvm.model", model_file.filename);
     const plssvm::model<real_type, label_type> model{ model_file.filename };
 
     // test for the correct number of features
@@ -117,7 +117,7 @@ TYPED_TEST(Model, support_vectors) {
 
     // instantiate a model file
     const util::temporary_file model_file;
-    util::instantiate_template_file<label_type>(PLSSVM_TEST_PATH "/data/model/5x4_linear_TEMPLATE.libsvm.model", model_file.filename);
+    util::instantiate_template_model_file<label_type>(PLSSVM_TEST_PATH "/data/model/6x4_linear_TEMPLATE.libsvm.model", model_file.filename);
     const plssvm::model<real_type, label_type> model{ model_file.filename };
 
     // test for the correct support vectors
@@ -137,17 +137,11 @@ TYPED_TEST(Model, labels) {
 
     // instantiate a model file
     const util::temporary_file model_file;
-    util::instantiate_template_file<label_type>(PLSSVM_TEST_PATH "/data/model/5x4_linear_TEMPLATE.libsvm.model", model_file.filename);
+    util::instantiate_template_model_file<label_type>(PLSSVM_TEST_PATH "/data/model/6x4_linear_TEMPLATE.libsvm.model", model_file.filename);
     const plssvm::model<real_type, label_type> model{ model_file.filename };
 
-    // get the distinct labels used to instantiate the test file
-    const auto [first_label, second_label, third_label] = util::get_distinct_label<label_type>();
-
-    // correct labels
-    const std::vector<label_type> correct_label = { first_label, first_label, second_label, second_label, second_label, third_label };
-
     // check labels getter
-    EXPECT_EQ(model.labels(), correct_label);
+    EXPECT_EQ(model.labels(), util::get_correct_model_file_labels<label_type>().first);
 }
 TYPED_TEST(Model, num_different_labels) {
     using real_type = typename TypeParam::real_type;
@@ -155,11 +149,11 @@ TYPED_TEST(Model, num_different_labels) {
 
     // instantiate a model file
     const util::temporary_file model_file;
-    util::instantiate_template_file<label_type>(PLSSVM_TEST_PATH "/data/model/5x4_linear_TEMPLATE.libsvm.model", model_file.filename);
+    util::instantiate_template_model_file<label_type>(PLSSVM_TEST_PATH "/data/model/6x4_linear_TEMPLATE.libsvm.model", model_file.filename);
     const plssvm::model<real_type, label_type> model{ model_file.filename };
 
     // check num_different_labels getter
-    EXPECT_EQ(model.num_different_labels(), 3);
+    EXPECT_EQ(model.num_different_labels(), util::get_distinct_label<label_type>().size());
 }
  TYPED_TEST(Model, different_labels) {
      using real_type = typename TypeParam::real_type;
@@ -167,15 +161,11 @@ TYPED_TEST(Model, num_different_labels) {
 
      // instantiate a model file
      const util::temporary_file model_file;
-     util::instantiate_template_file<label_type>(PLSSVM_TEST_PATH "/data/model/5x4_linear_TEMPLATE.libsvm.model", model_file.filename);
+     util::instantiate_template_model_file<label_type>(PLSSVM_TEST_PATH "/data/model/6x4_linear_TEMPLATE.libsvm.model", model_file.filename);
      const plssvm::model<real_type, label_type> model{ model_file.filename };
 
-     // get the distinct labels used to instantiate the test file
-     const auto [first_label, second_label, third_label] = util::get_distinct_label<label_type>();
-     const std::vector<label_type> different_label = { first_label, second_label, third_label };
-
      // check different_labels getter
-     EXPECT_EQ(model.different_labels(), different_label);
+     EXPECT_EQ(model.different_labels(), util::get_distinct_label<label_type>());
  }
 TYPED_TEST(Model, weights) {
     using real_type = typename TypeParam::real_type;
@@ -183,7 +173,7 @@ TYPED_TEST(Model, weights) {
 
     // instantiate a model file
     const util::temporary_file model_file;
-    util::instantiate_template_file<label_type>(PLSSVM_TEST_PATH "/data/model/5x4_linear_TEMPLATE.libsvm.model", model_file.filename);
+    util::instantiate_template_model_file<label_type>(PLSSVM_TEST_PATH "/data/model/6x4_linear_TEMPLATE.libsvm.model", model_file.filename);
     const plssvm::model<real_type, label_type> model{ model_file.filename };
 
     // test for the correct weights
@@ -199,7 +189,7 @@ TYPED_TEST(Model, rho) {
 
     // instantiate a model file
     const util::temporary_file model_file;
-    util::instantiate_template_file<label_type>(PLSSVM_TEST_PATH "/data/model/5x4_linear_TEMPLATE.libsvm.model", model_file.filename);
+    util::instantiate_template_model_file<label_type>(PLSSVM_TEST_PATH "/data/model/6x4_linear_TEMPLATE.libsvm.model", model_file.filename);
     const plssvm::model<real_type, label_type> model{ model_file.filename };
 
     // test for the correct rho (bias) value

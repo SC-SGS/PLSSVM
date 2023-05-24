@@ -13,12 +13,13 @@
 #define PLSSVM_TESTS_UTILITY_HPP_
 #pragma once
 
-#include "plssvm/detail/string_utility.hpp"  // plssvm::detail::replace_all
-#include "plssvm/detail/type_traits.hpp"     // plssvm::detail::always_false_v
-#include "plssvm/parameter.hpp"              // plssvm::parameter, plssvm::detail::parameter
+#include "plssvm/detail/arithmetic_type_name.hpp"  // plssvm::detail::arithmetic_type_name_v
+#include "plssvm/detail/string_utility.hpp"        // plssvm::detail::replace_all
+#include "plssvm/detail/type_traits.hpp"           // plssvm::detail::always_false_v
+#include "plssvm/parameter.hpp"                    // plssvm::parameter, plssvm::detail::parameter
 
-#include "fmt/core.h"                        // fmt::format
-#include "gtest/gtest.h"                     // FAIL
+#include "fmt/core.h"     // fmt::format
+#include "gtest/gtest.h"  // FAIL
 
 #ifdef __unix__
     #include <cstdlib>  // mkstemp
@@ -31,8 +32,9 @@
 #include <iostream>     // std::ostream, std::cout
 #include <iterator>     // std::istreambuf_iterator
 #include <limits>       // std::numeric_limits{max, lowest}
-#include <random>       // std::random_device, std::mt19937, std::uniform_real_distribution
+#include <random>       // std::random_device, std::mt19937, std::uniform_real_distribution, std::uniform_int_distribution
 #include <sstream>      // std:stringstream, std::ostringstream, std::istringstream
+#include <stdexcept>    // std::runtime_error
 #include <streambuf>    // std::streambuf
 #include <string>       // std::string
 #include <tuple>        // std::tuple, std::make_tuple, std::get, std::tuple_size
@@ -52,7 +54,8 @@ class redirect_output {
     /**
      * @brief Redirect the output and store the original output location of @p out.
      */
-    redirect_output() : sbuf_{ out->rdbuf() } {
+    redirect_output() :
+        sbuf_{ out->rdbuf() } {
         // capture the output from the out stream
         out->rdbuf(buffer_.rdbuf());
     }
@@ -170,60 +173,175 @@ template <typename T>
 }
 
 /**
- * @brief Get three distinct labels (two in case of `bool`) based on the provided label type.
- * @details The distinct label values must be provided in increasing order (for a defined order in `std::map`).
+ * @brief Get three distinct labels (two in case of `bool` and four in case of `std::string`) based on the provided label type.
+ * @details The provided labels are sorted according to `std::less` to reflect the same order as in a `std::map`.
  * @tparam T the label type
  * @return the distinct labels (`[[nodiscard]]`)
  */
 template <typename T>
-[[nodiscard]] inline std::tuple<T, T, T> get_distinct_label() {
-    // TODO: bool?
-//    if constexpr (std::is_same_v<T, bool>) {
-//        return std::make_tuple(false, true, true);
-//    } else
-    if constexpr (sizeof(T) == sizeof(char)) {
-        return std::make_tuple('a', 'b', 'c');
+[[nodiscard]] inline std::vector<T> get_distinct_label() {
+    std::vector<T> ret;
+    if constexpr (std::is_same_v<T, bool>) {
+        ret = std::vector<T>{ false, true };
+    } else if constexpr (sizeof(T) == sizeof(char)) {
+        ret = std::vector<T>{ 'a', 'b', 'c' };
     } else if constexpr (std::is_signed_v<T>) {
-        return std::make_tuple(-1, 1, 2);
+        ret = std::vector<T>{ -1, 1, 2 };
     } else if constexpr (std::is_unsigned_v<T>) {
-        return std::make_tuple(1, 2, 3);
+        ret = std::vector<T>{ 1, 2, 3 };
     } else if constexpr (std::is_floating_point_v<T>) {
-        return std::make_tuple(-1.5, 1.5, 2.5);
+        ret = std::vector<T>{ -1.5, 1.5, 2.5 };
     } else if constexpr (std::is_same_v<T, std::string>) {
-        return std::make_tuple("cat", "dog", "mouse");
+        ret = std::vector<T>{ "cat", "dog", "mouse", "bird" };
     } else {
         static_assert(plssvm::detail::always_false_v<T>, "Unknown label type provided!");
     }
+
+    // sort labels according to std::map order
+    std::sort(ret.begin(), ret.end(), std::less<T>{});
+
+    // be sure that at most four and at least two labels are used!
+    if (ret.size() > 4 || ret.size() < 2) {
+        std::string label_type_name{};
+        if constexpr (std::is_same_v<T, std::string>) {
+            label_type_name = "std::string";
+        } else {
+            label_type_name = plssvm::detail::arithmetic_type_name<T>();
+        }
+        throw std::runtime_error{ fmt::format("The least two and at most four different labels are supported, but {} are specified for the label_type '{}'!", ret.size(), label_type_name) };
+    }
+
+    return ret;
 }
 
 /**
- * @brief Replace the label placeholders in @p template_filename with the labels based on the template type @p T and
+ * @brief Replace the label placeholders in input data @p template_filename with the labels based on the template type @p T and
  *        write the instantiated template file to @p output_filename.
+ * @details The template files contain four label placeholder. If less than four distinct labels are given, the last placeholders share the same label.
  * @tparam T the type of the labels to instantiate the file for
  * @param[in] template_filename the file used as template
  * @param[in] output_filename the file to save the instantiate template to
  */
 template <typename T>
-inline void instantiate_template_file(const std::string &template_filename, const std::string &output_filename) {
+inline void instantiate_template_data_file(const std::string &template_filename, const std::string &output_filename) {
     // check whether the template_file exists
     if (!std::filesystem::exists(template_filename)) {
         FAIL() << fmt::format("The template file {} does not exist!", template_filename);
     }
-    // get a label pair based on the current label type
-    const auto [first_label, second_label, third_label] = util::get_distinct_label<T>();
+
+    // get the distinct labels based on the current label type
+    const std::vector<T> labels = util::get_distinct_label<T>();
+
     // read the data set template and replace the label placeholder with the correct labels
     std::ifstream input{ template_filename };
     std::string str((std::istreambuf_iterator<char>(input)), std::istreambuf_iterator<char>());
-    plssvm::detail::replace_all(str, "LABEL_1_PLACEHOLDER", fmt::format("{}", first_label));
-    plssvm::detail::replace_all(str, "LABEL_2_PLACEHOLDER", fmt::format("{}", second_label));
-    plssvm::detail::replace_all(str, "LABEL_3_PLACEHOLDER", fmt::format("{}", third_label));
+    plssvm::detail::replace_all(str, "LABEL_PLACEHOLDER", fmt::format("{}", fmt::join(labels, ",")));
+    plssvm::detail::replace_all(str, "LABEL_1_PLACEHOLDER", fmt::format("{}", labels[std::min<std::size_t>(0, labels.size() - 1)]));
+    plssvm::detail::replace_all(str, "LABEL_2_PLACEHOLDER", fmt::format("{}", labels[std::min<std::size_t>(1, labels.size() - 1)]));
+    plssvm::detail::replace_all(str, "LABEL_3_PLACEHOLDER", fmt::format("{}", labels[std::min<std::size_t>(2, labels.size() - 1)]));
+    plssvm::detail::replace_all(str, "LABEL_4_PLACEHOLDER", fmt::format("{}", labels[std::min<std::size_t>(3, labels.size() - 1)]));
+
     // write the data set with the correct labels to the temporary file
     std::ofstream out{ output_filename };
     out << str;
 }
+/**
+ * @brief Get the label vector that is described in the input data template files.
+ * @details Works according to the `instantiate_template_data_file` function.
+ * @tparam T the type of the labels
+ * @return the correct label vector with respect to the input data template files (`[[nodiscard]]``)
+ */
+template <typename T>
+[[nodiscard]] inline std::vector<T> get_correct_data_file_labels() {
+    // get the distinct labels based on the current label type
+    const std::vector<T> labels = util::get_distinct_label<T>();
+    // for LABEL_PLACEHOLDER: [ 1, 1, 2, 3, 2, 4 ]
+    // if only two labels, e.g., [ -1, 1 ] are given, the output will look as follows: [ -1, -1, 1, 1, 1, 1 ]
+    // clang-format off
+    return std::vector<T>{ labels[std::min<std::size_t>(0, labels.size() - 1)], labels[std::min<std::size_t>(0, labels.size() - 1)],
+                           labels[std::min<std::size_t>(1, labels.size() - 1)], labels[std::min<std::size_t>(2, labels.size() - 1)],
+                           labels[std::min<std::size_t>(1, labels.size() - 1)], labels[std::min<std::size_t>(3, labels.size() - 1)] };
+    // clang-format on
+}
+
+namespace detail {
 
 /**
- * @brief Generate vector of @p size filled with random floating point values in the range [@p lower, @p upper].
+ * @brief Calculate the label distribution necessary for LIBSVM's model file `num_Sv` field.
+ * @details Example: distinct labels = [ -1, 1 ] and num_labels = 5 would return [ 3, 2 ]
+ * @tparam T the type of the labels
+ * @param num_labels the total number of labels used in this distribution
+ * @return the label distribution (`[[nodiscard]]`)
+ */
+template <typename T>
+[[nodiscard]] std::vector<std::size_t> calculate_model_file_label_distribution(const std::size_t num_labels) {
+    // get the distinct labels based on the current label type
+    const std::vector<T> labels = util::get_distinct_label<T>();
+
+    std::vector<std::size_t> distribution(labels.size(), num_labels / labels.size());
+    const std::size_t remaining = num_labels % labels.size();
+    for (std::size_t i = 0; i < remaining; ++i) {
+        ++distribution[i];
+    }
+
+    return distribution;
+}
+
+}
+
+/**
+ * @brief Replace the label placeholders in model @p template_filename with the labels based on the template type @p T and
+ *        write the instantiated template file to @p output_filename.
+ * @details The template files contain four label placeholder. If less than four distinct labels are given, the last placeholders share the same label.
+ * @tparam T the type of the labels to instantiate the file for
+ * @param[in] template_filename the file used as template
+ * @param[in] output_filename the file to save the instantiate template to
+ */
+template <typename T>
+inline void instantiate_template_model_file(const std::string &template_filename, const std::string &output_filename) {
+    // check whether the template_file exists
+    if (!std::filesystem::exists(template_filename)) {
+        FAIL() << fmt::format("The template file {} does not exist!", template_filename);
+    }
+    // get the distinct labels based on the current label type
+    const std::vector<T> labels = util::get_distinct_label<T>();
+    // read the data set template and replace the label placeholder with the correct labels
+    std::ifstream input{ template_filename };
+    std::string str((std::istreambuf_iterator<char>(input)), std::istreambuf_iterator<char>());
+    plssvm::detail::replace_all(str, "NUM_LABEL_PLACEHOLDER", fmt::format("{}", labels.size()));
+    plssvm::detail::replace_all(str, "LABEL_PLACEHOLDER", fmt::format("{}", fmt::join(labels, " ")));
+    plssvm::detail::replace_all(str, "NUM_SV_PLACEHOLDER", fmt::format("{}", fmt::join(detail::calculate_model_file_label_distribution<T>(6), " ")));
+    // write the data set with the correct labels to the temporary file
+    std::ofstream out{ output_filename };
+    out << str;
+}
+/**
+ * @brief Get the label vector that is described in the model template files.
+ * @details Works according to the `instantiate_template_model_file` function.
+ * @tparam T the type of the labels
+ * @return the correct label vector with respect to the model template files (`[[nodiscard]]``)
+ */
+template <typename T>
+[[nodiscard]] inline std::pair<std::vector<T>, std::vector<std::size_t>> get_correct_model_file_labels() {
+    // get the distinct labels based on the current label type
+    const std::vector<T> labels = util::get_distinct_label<T>();
+    // get the label distribution
+    constexpr std::size_t num_labels = 6;
+    const std::vector<std::size_t> num_sv = detail::calculate_model_file_label_distribution<T>(num_labels);
+
+    std::vector<T> res;
+    res.reserve(num_labels);
+    for (std::size_t i = 0; i < labels.size(); ++i) {
+        for (std::size_t j = 0; j < num_sv[i]; ++j) {
+            res.emplace_back(labels[i]);
+        }
+    }
+
+    return std::make_pair(res, num_sv);
+}
+
+/**
+ * @brief Generate a vector of @p size filled with random floating point values in the range [@p lower, @p upper].
  * @tparam T the type of the elements in the vector (must be a floating point type)
  * @param[in] size the size of the vector
  * @param[in] lower the lower bound of the random values in the vector
@@ -243,6 +361,80 @@ template <typename T>
     std::generate(vec.begin(), vec.end(), [&]() { return dist(gen); });
 
     return vec;
+}
+/**
+ * @brief Generate matrix of size @p rows times @p cols filled with random floating point values in the range [@p lower, @p upper].
+ * @tparam T the type of the elements in the vector (must be a floating point type)
+ * @param[in] rows the number of rows in the matrix
+ * @param[in] cols the number of columns in the matrix
+ * @param[in] lower the lower bound of the random values in the vector
+ * @param[in] upper the upper bound of the random values in the vector
+ * @return the randomly generated matrix (`[[nodiscard]]`)
+ */
+template <typename T>
+[[nodiscard]] inline std::vector<std::vector<T>> generate_random_matrix(const std::size_t rows, const std::size_t cols, const T lower = T{ -1.0 }, const T upper = T{ 1.0 }) {
+    static_assert(std::is_floating_point_v<T>, "Can only meaningfully use a uniform_real_distribution with a floating point type!");
+
+    std::vector<std::vector<T>> matrix(rows);
+    for (std::size_t i = 0; i < rows; ++i) {
+        matrix[i] = generate_random_vector(cols, lower, upper);
+    }
+
+    return matrix;
+}
+
+/**
+ * @brief Generate a matrix of size @p rows times @p cols filled with filled with values "row.(col +1)".
+ * @details Example for row = 1 and cols = 3 is: [ 1.1, 1.2, 1.3 ].
+ * @tparam T the type of the elements in the vector (must be a floating point type)
+ * @param[in] rows the number of rows in the matrix
+ * @param[in] cols the number of columns in the matrix
+ * @return the generated matrix (`[[nodiscard]]`)
+ */
+template <typename T>
+[[nodiscard]] inline std::vector<std::vector<T>> generate_specific_matrix(const std::size_t rows, const std::size_t cols) {
+    static_assert(std::is_floating_point_v<T>, "Only floating point types are allowed!");
+
+    std::vector<std::vector<T>> matrix(rows, std::vector<T>(cols));
+    for (std::size_t i = 0; i < rows; ++i) {
+        for (std::size_t j = 1;  j <= cols; ++j) {
+            matrix[i][j - 1] = rows + cols / T{ 10.0 };
+        }
+    }
+
+    return matrix;
+}
+/**
+ * @brief Generate a sparse matrix of size @p rows times @p cols filled with filled with values "row.(col +1)".
+ *        In each row, approximately 50% of the values are replaced with zeros.
+ * @details Example for row = 1 and cols = 3 is: [ 1.1, 0.0, 1.3 ].
+ * @tparam T the type of the elements in the vector (must be a floating point type)
+ * @param[in] rows the number of rows in the matrix
+ * @param[in] cols the number of columns in the matrix
+ * @return the generated sparse matrix (`[[nodiscard]]`)
+ */
+template <typename T>
+[[nodiscard]] inline std::vector<std::vector<T>> generate_specific_sparse_matrix(const std::size_t rows, const std::size_t cols) {
+    static_assert(std::is_floating_point_v<T>, "Only floating point types are allowed!");
+
+    // random number generate for range [ 0.0, 1.0 ]
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    std::uniform_int_distribution<std::size_t> dis(0, cols - 1);
+
+    // generate sparse matrix
+    std::vector<std::vector<T>> matrix(rows, std::vector<T>(cols));
+    for (std::size_t i = 0; i < rows; ++i) {
+        for (std::size_t j = 1;  j <= cols; ++j) {
+            matrix[i][j - 1] = rows + cols / T{ 10.0 };
+        }
+        // remove half of the created values randomly
+        for (std::size_t j = 0; j < cols / 2; ++j) {
+            matrix[i][dis(gen)] = T{ 0.0 };
+        }
+    }
+
+    return matrix;
 }
 
 /**
