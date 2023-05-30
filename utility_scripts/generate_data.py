@@ -35,6 +35,8 @@ parser.add_argument(
     "--test_samples", help="the number of test samples to generate; default: 0", type=int, default=0)
 parser.add_argument(
     "--features", help="the number of features per data point", required=True, type=int)
+parser.add_argument(
+    "--classes", help="the number of classes to generate; default: 2", type=int, default=2)
 parser.add_argument("--plot", help="plot training samples; only possible if 0 < samples <= 2000 and 1 < features <= 3",
                     action="store_true")
 
@@ -56,19 +58,19 @@ start_time = timer()
 # create labeled data set
 if args.problem == "blobs":
     samples, labels = make_blobs(
-        n_samples=num_samples, n_features=args.features, centers=2)
+        n_samples=num_samples, n_features=args.features, centers=args.classes)
 elif args.problem == "blobs_merged":
     samples, labels = make_blobs(
-        n_samples=num_samples, n_features=args.features, centers=2, cluster_std=4.0)
+        n_samples=num_samples, n_features=args.features, centers=args.classes, cluster_std=4.0)
 elif args.problem == "planes":
     samples, labels = make_classification(n_samples=num_samples, n_features=args.features, n_redundant=0,
-                                          n_informative=2, n_clusters_per_class=1)
+                                          n_informative=args.classes, n_clusters_per_class=1, n_classes=args.classes)
 elif args.problem == "planes_merged":
     samples, labels = make_classification(n_samples=num_samples, n_features=args.features, n_redundant=0,
-                                          n_informative=args.features)
+                                          n_informative=args.features, n_classes=args.classes)
 elif args.problem == "ball":
     samples, labels = make_gaussian_quantiles(
-        n_samples=num_samples, n_features=args.features, n_classes=2)
+        n_samples=num_samples, n_features=args.features, n_classes=args.classes)
 else:
     raise RuntimeError("Invalid problem!")
 
@@ -164,8 +166,8 @@ end_time = timer()
 print("Done in {}ms.".format(int((end_time - start_time) * 1000)))
 
 # output info
-print("Created training data set '{}' ({}) with {} data points and {} features.".format(
-    file, humanize.naturalsize(os.path.getsize(file)), args.samples, args.features))
+print("Created training data set '{}' ({}) with {} data points, {} features, and {} classes.".format(
+    file, humanize.naturalsize(os.path.getsize(file)), args.samples, args.features, args.classes))
 if args.test_samples > 0:
     print("Created test data set '{}' with {} data points and {} features."
           .format(test_file, args.test_samples, args.features))
