@@ -20,7 +20,7 @@
 #include "plssvm/detail/type_traits.hpp"         // plssvm::detail::remove_cvref_t
 
 #include "fmt/chrono.h"                          // format std::chrono types
-#include "fmt/core.h"                            // fmt::format
+#include "fmt/format.h"                          // fmt::format, fmt::join
 #include "fmt/ostream.h"                         // format types with an operator<< overload
 
 #include <memory>                                // std::shared_ptr
@@ -126,6 +126,14 @@ class performance_tracker {
      */
     void add_tracking_entry(const tracking_entry<std::string> &entry);
     /**
+     * @brief Add a tracking_entry consisting of multiple values stored in a `std::vector` to this performance tracker.
+     * @details Saves a string containing the entry name and value in a map with the entry category as key.
+     * @tparam T the type of the value the tracking_entry @p entry encapsulates
+     * @param[in] entry the `std::vector` entry to add
+     */
+    template <typename T>
+    void add_tracking_entry(const tracking_entry<std::vector<T>> &entry);
+    /**
      * @brief Add a tracking_entry encapsulating a plssvm::parameter to this performance tracker.
      * @details Saves a string containing the entry name and value in a map with the entry category as key.
      *          Adds all values stored in the plssvm::parameter as tracking entries.
@@ -198,6 +206,13 @@ template <typename T>
 void performance_tracker::add_tracking_entry(const tracking_entry<T> &entry) {
     if (is_tracking()) {
         tracking_statistics.emplace(entry.entry_category, fmt::format("{}{}: {}\n", entry.entry_category.empty() ? "" : "  ", entry.entry_name, entry.entry_value));
+    }
+}
+
+template <typename T>
+void performance_tracker::add_tracking_entry(const tracking_entry<std::vector<T>> &entry) {
+    if (is_tracking()) {
+        tracking_statistics.emplace(entry.entry_category, fmt::format("{}{}: [{}]\n", entry.entry_category.empty() ? "" : "  ", entry.entry_name, fmt::join(entry.entry_value, ",")));
     }
 }
 

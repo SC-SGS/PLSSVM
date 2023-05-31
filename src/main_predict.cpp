@@ -77,7 +77,7 @@ int main(int argc, char *argv[]) {
                 }
                 // print accuracy
                 plssvm::detail::log(plssvm::verbosity_level::full | plssvm::verbosity_level::libsvm,
-                                    "Accuracy = {}% ({}/{}) (classification)\n",
+                                    "Accuracy = {:.2f}% ({}/{}) (classification)\n",
                                     static_cast<real_type>(correct) / static_cast<real_type>(data.num_data_points()) * real_type{ 100 },
                                     correct,
                                     data.num_data_points());

@@ -15,8 +15,7 @@
 
 #include "plssvm/data_set.hpp"                        // plssvm::data_set
 #include "plssvm/detail/assert.hpp"                   // PLSSVM_ASSERT
-#include "plssvm/detail/io/libsvm_model_parsing.hpp"  // plssvm::detail::io::{parse_libsvm_model_header, write_libsvm_model_data}
-#include "plssvm/detail/io/libsvm_parsing.hpp"        // plssvm::detail::io::parse_libsvm_data
+#include "plssvm/detail/io/libsvm_model_parsing.hpp"  // plssvm::detail::io::{parse_libsvm_model_header, parse_libsvm_model_data, write_libsvm_model_data}
 #include "plssvm/detail/logger.hpp"                   // plssvm::detail::log, plssvm::verbosity_level
 #include "plssvm/detail/performance_tracker.hpp"      // plssvm::detail::tracking_entry
 #include "plssvm/detail/type_list.hpp"                // plssvm::detail::{real_type_list, label_type_list, type_list_contains_v}
@@ -121,18 +120,21 @@ class model {
 
     /**
      * @brief The learned weights for the support vectors.
-     * @details It is of size `num_support_vectors()`.
+     * @details It is of size `num_different_labels() x num_support_vectors()`.
      * @return the weights (`[[nodiscard]]`)
      */
-    [[nodiscard]] const std::vector<real_type> &weights() const noexcept {
+    [[nodiscard]] const std::vector<std::vector<real_type>> &weights() const noexcept {
         PLSSVM_ASSERT(alpha_ptr_ != nullptr, "The alpha_ptr may never be a nullptr!");
         return *alpha_ptr_;
     }
     /**
-     * @brief The bias value after learning.
+     * @brief The bias values for the different classes after learning.
      * @return the bias `rho` (`[[nodiscard]]`)
      */
-    [[nodiscard]] real_type rho() const noexcept { return rho_; }
+    [[nodiscard]] const std::vector<real_type> &rho() const noexcept {
+        PLSSVM_ASSERT(alpha_ptr_ != nullptr, "The rho_ptr may never be a nullptr!");
+        return *rho_ptr_;
+    }
 
   private:
     /**
@@ -153,17 +155,23 @@ class model {
     /// The number of features per support vector.
     size_type num_features_{ 0 };
 
-    /// The learned weights for each support vector.
-    std::shared_ptr<std::vector<real_type>> alpha_ptr_{ nullptr };
-    /// The bias after learning this model.
-    real_type rho_{ 0.0 };
+    /**
+     * @brief The learned weights for each support vector.
+     * @note Must be initialized to an empty vector instead of a `nullptr`.
+     */
+    std::shared_ptr<std::vector<std::vector<real_type>>> alpha_ptr_{ std::make_shared<std::vector<std::vector<real_type>>>() };
+    /**
+     * @brief The bias after learning this model.
+     * @note Must be initialized to an empty vector instead of a `nullptr`.
+     */
+    std::shared_ptr<std::vector<real_type>> rho_ptr_{ std::make_shared<std::vector<real_type>>() };
 
     /**
      * @brief A vector used to speedup the prediction in case of the linear kernel function.
      * @details Will be reused by subsequent calls to `plssvm::csvm::fit`/`plssvm::csvm::score` with the same `plssvm::model`.
      * @note Must be initialized to an empty vector instead of a `nullptr` in order to be passable as const reference.
      */
-    std::shared_ptr<std::vector<real_type>> w_{ std::make_shared<std::vector<real_type>>() };
+    std::shared_ptr<std::vector<std::vector<real_type>>> w_{ std::make_shared<std::vector<std::vector<real_type>>>() };
 };
 
 template <typename T, typename U>
@@ -175,20 +183,19 @@ model<T, U>::model(const std::string &filename) {
     reader.read_lines('#');
 
     // parse the libsvm model header
-    std::vector<label_type> labels{};
+    std::vector<label_type> different_labels{};
     std::size_t num_header_lines{};
-    std::tie(params_, rho_, labels, num_header_lines) = detail::io::parse_libsvm_model_header<real_type, label_type, size_type>(reader.lines());
+    std::tie(params_, *rho_ptr_, different_labels, num_header_lines) = detail::io::parse_libsvm_model_header<real_type, label_type, size_type>(reader.lines());
 
     // create empty support vectors and alpha vector
     std::vector<std::vector<real_type>> support_vectors;
-    std::vector<real_type> alphas;
 
     // parse libsvm model data
-    std::tie(num_support_vectors_, num_features_, support_vectors, alphas) = detail::io::parse_libsvm_data<real_type, real_type>(reader, num_header_lines);
+    std::tie(num_support_vectors_, num_features_, support_vectors, *alpha_ptr_) = detail::io::parse_libsvm_model_data<real_type>(reader, different_labels.size(), num_header_lines); // TODO:
 
     // create data set
-    data_ = data_set<real_type, label_type>{ std::move(support_vectors), std::move(labels) };
-    alpha_ptr_ = std::make_shared<decltype(alphas)>(std::move(alphas));
+    data_ = data_set<real_type, label_type>{ std::move(support_vectors) };
+    data_.mapping_ = std::make_shared<const typename data_set<real_type, label_type>::label_mapper>(different_labels);
 
     const std::chrono::time_point end_time = std::chrono::steady_clock::now();
     detail::log(verbosity_level::full | verbosity_level::timing,
@@ -197,19 +204,23 @@ model<T, U>::model(const std::string &filename) {
                 detail::tracking_entry{ "model_read", "num_features", num_features_ },
                 detail::tracking_entry{ "model_read", "time",  std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time) },
                 detail::tracking_entry{ "model_read", "filename", filename });
-    PLSSVM_DETAIL_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking_entry{ "model_read", "rho", rho_ }));
+    PLSSVM_DETAIL_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking_entry{ "model_read", "num_different_labels", this->num_different_labels() }));
+    PLSSVM_DETAIL_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking_entry{ "model_read", "rho", *rho_ptr_ }));
 }
 
 template <typename T, typename U>
 model<T, U>::model(parameter params, data_set<real_type, label_type> data) :
-    params_{ std::move(params) }, data_{ std::move(data) }, num_support_vectors_{ data_.num_data_points() }, num_features_{ data_.num_features() }, alpha_ptr_{ std::make_shared<std::vector<real_type>>(data_.num_data_points()) } {}
+    params_{ std::move(params) }, data_{ std::move(data) }, num_support_vectors_{ data_.num_data_points() }, num_features_{ data_.num_features() } {}
 
 template <typename T, typename U>
 void model<T, U>::save(const std::string &filename) const {
+    PLSSVM_ASSERT(alpha_ptr_ != nullptr, "The rho_ptr may never be a nullptr!");
+    PLSSVM_ASSERT(alpha_ptr_ != nullptr, "The alpha_ptr may never be a nullptr!");
+
     const std::chrono::time_point start_time = std::chrono::steady_clock::now();
 
     // save model file header and support vectors
-    detail::io::write_libsvm_model_data(filename, params_, rho_, *alpha_ptr_, data_);
+    detail::io::write_libsvm_model_data(filename, params_, *rho_ptr_, *alpha_ptr_, data_);
 
     const std::chrono::time_point end_time = std::chrono::steady_clock::now();
     detail::log(verbosity_level::full | verbosity_level::timing,
@@ -218,7 +229,8 @@ void model<T, U>::save(const std::string &filename) const {
                 detail::tracking_entry{ "model_write", "num_features", num_features_ },
                 detail::tracking_entry{ "model_write", "time",  std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time) },
                 detail::tracking_entry{ "model_write", "filename", filename });
-    PLSSVM_DETAIL_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking_entry{ "model_write", "rho", rho_ }));
+    PLSSVM_DETAIL_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking_entry{ "model_write", "num_different_labels", this->num_different_labels() }));
+    PLSSVM_DETAIL_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking_entry{ "model_write", "rho", *rho_ptr_ }));
 }
 
 }  // namespace plssvm

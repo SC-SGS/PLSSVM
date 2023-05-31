@@ -61,16 +61,18 @@ void instantiate_model_bindings(py::module_ &m, plssvm::detail::real_type_label_
             "the different labels")
         .def(
             "weights", [](const model_type &self) {
-                return vector_to_pyarray(self.weights());
+                return matrix_to_pyarray(self.weights());
             },
-            "the weights learned for each support vector")
-        .def("rho", &model_type::rho, "the bias value after learning")
+            "the weights learned for each support vector and class")
+        .def("rho", [](const model_type &self) {
+                return vector_to_pyarray(self.rho());
+            }, "the bias value after learning for each class")
         .def("__repr__", [class_name](const model_type &self) {
             return fmt::format("<plssvm.{} with {{ #sv: {}, #features: {}, rho: {} }}>",
                                class_name,
                                self.num_support_vectors(),
                                self.num_features(),
-                               self.rho());
+                               fmt::format("[{}]", fmt::join(self.rho(), ",")));
         });
 }
 

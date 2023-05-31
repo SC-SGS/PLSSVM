@@ -386,7 +386,6 @@ void data_set<T, U>::scaling::save(const std::string &filename) const {
 //                                                      label mapper nested-class                                                      //
 //*************************************************************************************************************************************//
 
-// TODO: re-implement
 /**
  * @brief Implements all necessary functionality to map arbitrary labels to labels usable by the C-SVMs.
  * @details Currently maps all labels to { -1 , 1 }.
@@ -403,19 +402,19 @@ class data_set<T, U>::label_mapper {
     explicit label_mapper(const std::vector<label_type> &labels);
 
     /**
-     * @brief Given the original label value, return the mapped label value.
+     * @brief Given the original label value, return the mapped index in the one vs. all mapping.
      * @param[in] label the original label value
      * @throws plssvm::data_set_exception if the original label value does not exist in this mapping
-     * @return the mapped label value (`[[nodiscard]]`)
+     * @return the mapped index (`[[nodiscard]]`)
      */
-    [[nodiscard]] const real_type &get_mapped_value_by_label(const label_type &label) const;
+    [[nodiscard]] const size_type &get_mapped_index_by_label(const label_type &label) const;
     /**
-     * @brief Given the mapped label value, return the original label value.
-     * @param[in] mapped_value the mapped label value
-     * @throws plssvm::data_set_exception if the mapped label value does not exist in this mapping
+     * @brief Given the mapped index in the one vs. all mapping, return the original label value.
+     * @param[in] mapped_index the mapped index
+     * @throws plssvm::data_set_exception if the mapped index does not exist in this mapping
      * @return the original label value (`[[nodiscard]]`)
      */
-    [[nodiscard]] const label_type &get_label_by_mapped_value(const real_type &mapped_value) const;
+    [[nodiscard]] const label_type &get_label_by_mapped_index(const size_type &mapped_index) const;
     /**
      * @brief Returns the number of valid mappings. This is equivalent to the number of different labels.
      * @return the number of valid mapping entries (`[[nodiscard]]`)
@@ -428,10 +427,10 @@ class data_set<T, U>::label_mapper {
     [[nodiscard]] std::vector<label_type> labels() const;
 
   private:
-    /// A mapping from the label to its mapped value, i.e., { -1 , 1 }.
-    std::map<label_type, real_type> label_to_mapped_{};
-    /// A mapping from the mapped value, i.e., { -1 , 1 } to the original label value.
-    std::map<real_type, label_type> mapped_to_label_{};
+    /// A mapping from the label to its mapped index in the right-hand side vector.
+    std::map<label_type, size_type> label_to_index_{};
+    /// A mapping from the mapped index to the original label value.
+    std::map<size_type, label_type> index_to_label_{};
 };
 
 /// @cond Doxygen_suppress
@@ -439,58 +438,43 @@ template <typename T, typename U>
 data_set<T, U>::data_set::label_mapper::label_mapper(const std::vector<label_type> &labels) {
     // we are only interested in unique labels
     std::set<label_type> unique_labels(labels.begin(), labels.end());
-    // currently, only two different labels are supported
-//    if (unique_labels.size() != 2) {
-//        throw data_set_exception{ fmt::format("Currently only binary classification is supported, but {} different labels were given!", unique_labels.size()) };
-//    }
-    // TODO: correctly implement a mapping
     // create mapping
-    // first label
-    auto iter = unique_labels.begin();
-    label_to_mapped_[*iter] = -1;
-    mapped_to_label_[-1] = *iter;
-    // second label
-    ++iter;
-    label_to_mapped_[*iter] = +1;
-    mapped_to_label_[+1] = *iter;
-
-    // to temporarily pass the tests
-    real_type mapped{ 2.0 };
-    for (++iter; iter != unique_labels.end(); ++iter) {
-        label_to_mapped_[*iter] = mapped;
-        mapped_to_label_[mapped] = *iter;
-        ++mapped;
+    std::size_t idx = 0;
+    for (auto it = unique_labels.begin(), end = unique_labels.end(); it != end; ++it) {
+        label_to_index_[*it] = idx;
+        index_to_label_[idx] = *it;
+        ++idx;
     }
 }
 /// @endcond
 
 template <typename T, typename U>
-auto data_set<T, U>::label_mapper::get_mapped_value_by_label(const label_type &label) const -> const real_type & {
-    if (!detail::contains(label_to_mapped_, label)) {
+auto data_set<T, U>::label_mapper::get_mapped_index_by_label(const label_type &label) const -> const size_type & {
+    if (!detail::contains(label_to_index_, label)) {
         throw data_set_exception{ fmt::format("Label \"{}\" unknown in this label mapping!", label) };
     }
-    return label_to_mapped_.at(label);
+    return label_to_index_.at(label);
 }
 
 template <typename T, typename U>
-auto data_set<T, U>::label_mapper::get_label_by_mapped_value(const real_type &mapped_value) const -> const label_type & {
-    if (!detail::contains(mapped_to_label_, mapped_value)) {
-        throw data_set_exception{ fmt::format("Mapped value \"{}\" unknown in this label mapping!", mapped_value) };
+auto data_set<T, U>::label_mapper::get_label_by_mapped_index(const size_type &mapped_index) const -> const label_type & {
+    if (!detail::contains(index_to_label_, mapped_index)) {
+        throw data_set_exception{ fmt::format("Mapped index \"{}\" unknown in this label mapping!", mapped_index) };
     }
-    return mapped_to_label_.at(mapped_value);
+    return index_to_label_.at(mapped_index);
 }
 
 template <typename T, typename U>
 auto data_set<T, U>::label_mapper::num_mappings() const noexcept -> size_type {
-    PLSSVM_ASSERT(label_to_mapped_.size() == mapped_to_label_.size(), "Both maps must contain the same number of values, but {} and {} were given!", label_to_mapped_.size(), mapped_to_label_.size());
-    return label_to_mapped_.size();
+    PLSSVM_ASSERT(label_to_index_.size() == index_to_label_.size(), "Both maps must contain the same number of values, but {} and {} were given!", label_to_index_.size(), index_to_label_.size());
+    return label_to_index_.size();
 }
 
 template <typename T, typename U>
 auto data_set<T, U>::label_mapper::labels() const -> std::vector<label_type> {
     std::vector<label_type> available_labels;
     available_labels.reserve(this->num_mappings());
-    for (const auto &[key, value] : label_to_mapped_) {
+    for (const auto &[key, value] : label_to_index_) {
         available_labels.push_back(key);
     }
     return available_labels;
@@ -667,18 +651,18 @@ void data_set<T, U>::create_mapping() {
     label_mapper mapper{ *labels_ptr_ };
 
     // convert input labels to now mapped values
-    std::vector<std::vector<real_type>> tmp(mapper.num_mappings(), std::vector<real_type>(labels_ptr_->size()));
-    #pragma omp parallel for default(shared) shared(tmp, mapper)
-    for (typename std::vector<real_type>::size_type i = 0; i < tmp[0].size(); ++i) {
-        // TODO: implement
-        tmp[0][i] = mapper.get_mapped_value_by_label((*labels_ptr_)[i]);
+    typename decltype(y_ptr_)::element_type tmp(mapper.num_mappings(), std::vector<real_type>(labels_ptr_->size(), real_type{ -1.0 }));
+
+    #pragma omp parallel for collapse(2)
+    for (typename std::vector<std::vector<real_type>>::size_type label = 0; label < tmp.size(); ++label) {
+        for (typename std::vector<real_type>::size_type i = 0; i < labels_ptr_->size(); ++i) {
+            if (label == mapper.get_mapped_index_by_label((*labels_ptr_)[i])) {
+                tmp[label][i] = real_type{ 1.0 };
+            }
+        }
     }
 
-    for (std::size_t i = 1; i < tmp.size(); ++i) {
-        tmp[i] = tmp[0];
-    }
-
-    y_ptr_ = std::make_shared<std::vector<std::vector<real_type>>>(std::move(tmp));
+    y_ptr_ = std::make_shared<decltype(tmp)>(std::move(tmp));
     mapping_ = std::make_shared<const label_mapper>(std::move(mapper));
 }
 
@@ -770,8 +754,8 @@ void data_set<T, U>::read_file(const std::string &filename, file_format_type for
     reader.read_lines(comment);
 
     // create the empty placeholders
-    std::vector<std::vector<real_type>> data{};
-    std::vector<label_type> label{};
+    typename decltype(X_ptr_)::element_type data{};
+    typename decltype(labels_ptr_)::element_type label{};
 
     // parse the given file
     switch (format) {

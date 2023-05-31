@@ -115,16 +115,16 @@ class csvm : public ::plssvm::csvm {
     /**
      * @copydoc plssvm::csvm::predict_values
      */
-    [[nodiscard]] std::vector<float> predict_values(const detail::parameter<float> &params, const std::vector<std::vector<float>> &support_vectors, const std::vector<float> &alpha, float rho, std::vector<float> &w, const std::vector<std::vector<float>> &predict_points) const override { return this->predict_values_impl(params, support_vectors, alpha, rho, w, predict_points); }
+    [[nodiscard]] std::vector<std::vector<float>> predict_values(const detail::parameter<float> &params, const std::vector<std::vector<float>> &support_vectors, const std::vector<std::vector<float>> &alpha, const std::vector<float> &rho, std::vector<std::vector<float>> &w, const std::vector<std::vector<float>> &predict_points) const override { return this->predict_values_impl(params, support_vectors, alpha, rho, w, predict_points); }
     /**
      * @copydoc plssvm::csvm::predict_values
      */
-    [[nodiscard]] std::vector<double> predict_values(const detail::parameter<double> &params, const std::vector<std::vector<double>> &support_vectors, const std::vector<double> &alpha, double rho, std::vector<double> &w, const std::vector<std::vector<double>> &predict_points) const override { return this->predict_values_impl(params, support_vectors, alpha, rho, w, predict_points); }
+    [[nodiscard]] std::vector<std::vector<double>> predict_values(const detail::parameter<double> &params, const std::vector<std::vector<double>> &support_vectors, const std::vector<std::vector<double>> &alpha, const std::vector<double> &rho, std::vector<std::vector<double>> &w, const std::vector<std::vector<double>> &predict_points) const override { return this->predict_values_impl(params, support_vectors, alpha, rho, w, predict_points); }
     /**
      * @copydoc plssvm::csvm::predict_values
      */
     template <typename real_type>
-    [[nodiscard]] std::vector<real_type> predict_values_impl(const detail::parameter<real_type> &params, const std::vector<std::vector<real_type>> &support_vectors, const std::vector<real_type> &alpha, real_type rho, std::vector<real_type> &w, const std::vector<std::vector<real_type>> &predict_points) const;
+    [[nodiscard]] std::vector<std::vector<real_type>> predict_values_impl(const detail::parameter<real_type> &params, const std::vector<std::vector<real_type>> &support_vectors, const std::vector<std::vector<real_type>> &alpha, const std::vector<real_type> &rho, std::vector<std::vector<real_type>> &w, const std::vector<std::vector<real_type>> &predict_points) const;
 
     /**
      * @brief Calculate the `q` vector used in the dimensional reduction.

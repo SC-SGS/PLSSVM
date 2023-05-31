@@ -29,8 +29,10 @@
 #include "fmt/core.h"                             // fmt::format
 #include "igor/igor.hpp"                          // igor::parser
 
+#include <algorithm>                              // std::max_element
 #include <chrono>                                 // std::chrono::{time_point, steady_clock, duration_cast}
 #include <iostream>                               // std::cout, std::endl
+#include <iterator>                               // std::distance
 #include <tuple>                                  // std::tie
 #include <type_traits>                            // std::enable_if_t, std::is_same_v, std::is_convertible_v, std::false_type
 #include <utility>                                // std::pair, std::forward
@@ -115,6 +117,7 @@ class csvm {
     //*************************************************************************************************************************************//
     /**
      * @brief Fit a model using the current SVM on the @p data.
+     * @details Uses the one vs. all (OAA) for the multi-class classification task.
      * @tparam real_type the type of the data (`float` or `double`)
      * @tparam label_type the type of the label (an arithmetic type or `std::string`)
      * @tparam Args the type of the potential additional parameters
@@ -134,6 +137,7 @@ class csvm {
     //*************************************************************************************************************************************//
     /**
      * @brief Predict the labels for the @p data set using the @p model.
+     * @details Uses the one vs. all (OAA) for the multi-class classification task.
      * @tparam real_type the type of the data (`float` or `double`)
      * @tparam label_type the type of the label (an arithmetic type or `std::string`)
      * @param[in] model a previously learned model
@@ -147,6 +151,7 @@ class csvm {
 
     /**
      * @brief Calculate the accuracy of the @p model.
+     * @details Uses the one vs. all (OAA) for the multi-class classification task.
      * @tparam real_type the type of the data (`float` or `double`)
      * @tparam label_type the type of the label (an arithmetic type or `std::string`)
      * @param[in] model a previously learned model
@@ -157,6 +162,7 @@ class csvm {
     [[nodiscard]] real_type score(const model<real_type, label_type> &model) const;
     /**
      * @brief Calculate the accuracy of the labeled @p data set using the @p model.
+     * @details Uses the one vs. all (OAA) for the multi-class classification task.
      * @tparam real_type the type of the data (`float` or `double`)
      * @tparam label_type the type of the label (an arithmetic type or `std::string`)
      * @param[in] model a previously learned model
@@ -192,20 +198,21 @@ class csvm {
     [[nodiscard]] virtual std::pair<std::vector<std::vector<double>>, std::vector<double>> solve_system_of_linear_equations(const detail::parameter<double> &params, const std::vector<std::vector<double>> &A, std::vector<std::vector<double>> B, double eps, unsigned long long max_iter) const = 0;
     /**
      * @brief Uses the already learned model to predict the class of multiple (new) data points.
+     * @details Uses the one vs. all (OAA) for the multi-class classification task.
      * @param[in] params the SVM parameters used in the respective kernel functions
      * @param[in] support_vectors the previously learned support vectors
-     * @param[in] alpha the alpha values (weights) associated with the support vectors
-     * @param[in] rho the rho value determined after training the model
-     * @param[in,out] w the normal vector to speedup prediction in case of the linear kernel function, an empty vector in case of the polynomial or rbf kernel
+     * @param[in] alpha the alpha values (weights) associated with the support vectors and classes
+     * @param[in] rho the rho values for each class determined after training the model
+     * @param[in,out] w the normal vectors to speedup prediction in case of the linear kernel function, an empty vector in case of the polynomial or rbf kernel
      * @param[in] predict_points the points to predict
      * @throws plssvm::exception any exception thrown by the backend's implementation
      * @return a vector filled with the predictions (not the actual labels!) (`[[nodiscard]]`)
      */
-    [[nodiscard]] virtual std::vector<float> predict_values(const detail::parameter<float> &params, const std::vector<std::vector<float>> &support_vectors, const std::vector<float> &alpha, float rho, std::vector<float> &w, const std::vector<std::vector<float>> &predict_points) const = 0;
+    [[nodiscard]] virtual std::vector<std::vector<float>> predict_values(const detail::parameter<float> &params, const std::vector<std::vector<float>> &support_vectors, const std::vector<std::vector<float>> &alpha, const std::vector<float> &rho, std::vector<std::vector<float>> &w, const std::vector<std::vector<float>> &predict_points) const = 0;
     /**
      * @copydoc plssvm::csvm::predict_values
      */
-    [[nodiscard]] virtual std::vector<double> predict_values(const detail::parameter<double> &params, const std::vector<std::vector<double>> &support_vectors, const std::vector<double> &alpha, double rho, std::vector<double> &w, const std::vector<std::vector<double>> &predict_points) const = 0;
+    [[nodiscard]] virtual std::vector<std::vector<double>> predict_values(const detail::parameter<double> &params, const std::vector<std::vector<double>> &support_vectors, const std::vector<std::vector<double>> &alpha, const std::vector<double> &rho, std::vector<std::vector<double>> &w, const std::vector<std::vector<double>> &predict_points) const = 0;
 
     /// The target platform of this SVM.
     target_platform target_{ plssvm::target_platform::automatic };
@@ -312,10 +319,7 @@ model<real_type, label_type> csvm::fit(const data_set<real_type, label_type> &da
     model<real_type, label_type> csvm_model{ params, data };
 
     // solve the minimization problem
-    const auto& [alpha, rho] = solve_system_of_linear_equations(static_cast<detail::parameter<real_type>>(params), data.data(), *data.y_ptr_, epsilon_val.value(), max_iter_val.value());
-    // TODO: implement
-    *csvm_model.alpha_ptr_ = alpha.front();
-    csvm_model.rho_ = rho.front();
+    std::tie(*csvm_model.alpha_ptr_, *csvm_model.rho_ptr_) = solve_system_of_linear_equations(static_cast<detail::parameter<real_type>>(params), data.data(), *data.y_ptr_, epsilon_val.value(), max_iter_val.value());
 
     const std::chrono::time_point end_time = std::chrono::steady_clock::now();
     detail::log(verbosity_level::full | verbosity_level::timing,
@@ -331,15 +335,16 @@ std::vector<label_type> csvm::predict(const model<real_type, label_type> &model,
         throw invalid_parameter_exception{ fmt::format("Number of features per data point ({}) must match the number of features per support vector of the provided model ({})!", data.num_features(), model.num_features()) };
     }
 
-    // predict values
-    const std::vector<real_type> predicted_values = predict_values(static_cast<detail::parameter<real_type>>(model.params_), model.data_.data(), *model.alpha_ptr_, model.rho_, *model.w_, data.data());
+    // predict values -> num_data_points x num_classes
+    const std::vector<std::vector<real_type>> votes = predict_values(static_cast<detail::parameter<real_type>>(model.params_), model.data_.data(), *model.alpha_ptr_, *model.rho_ptr_, *model.w_, data.data());
 
     // convert predicted values to the correct labels
-    std::vector<label_type> predicted_labels(predicted_values.size());
+    std::vector<label_type> predicted_labels(votes.size());
 
-    #pragma omp parallel for default(none) shared(predicted_labels, predicted_values, model) if (!std::is_same_v<label_type, bool>)
+    #pragma omp parallel for default(none) shared(predicted_labels, votes, model) if (!std::is_same_v<label_type, bool>)
     for (typename std::vector<label_type>::size_type i = 0; i < predicted_labels.size(); ++i) {
-        predicted_labels[i] = model.data_.mapping_->get_label_by_mapped_value(plssvm::operators::sign(predicted_values[i]));
+        const std::size_t argmax = std::distance(votes[i].cbegin(), std::max_element(votes[i].cbegin(), votes[i].cend()));
+        predicted_labels[i] = model.data_.mapping_->get_label_by_mapped_index(argmax);
     }
 
     return predicted_labels;

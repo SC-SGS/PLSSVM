@@ -382,29 +382,9 @@ void init_sklearn(py::module_ &m) {
                 if (self.model_ == nullptr) {
                     throw py::attribute_error{ "'SVC' object has no attribute 'n_support_'" };
                 } else {
+                    // TODO: correct implementation?
                     // all data points are support vectors
-                    using real_type = typename svc::real_type;
-                    using label_type = typename svc::label_type;
-
-                    // use a map to count the number of data points per label
-                    std::unordered_map<label_type, std::int32_t> counts{};
-
-                    // retrieve necessary values
-                    const std::vector<label_type> different_labels = self.data_->different_labels().value();
-                    const std::vector<label_type> &labels = self.data_->labels()->get();
-                    const std::vector<real_type> &weights = self.model_->weights();
-                    for (std::size_t i = 0; i < self.model_->num_support_vectors(); ++i) {
-                        // only count if the weight is non-zero
-                        if (weights[i] != real_type{ 0.0 }) {
-                            ++counts[labels[i]];
-                        }
-                    }
-
-                    // create vector from map
-                    std::vector<std::int32_t> n_support(different_labels.size());
-                    for (std::size_t i = 0; i < n_support.size(); ++i) {
-                        n_support[i] = counts[different_labels[i]];
-                    }
+                    std::vector<std::int32_t> n_support(self.model_->num_different_labels(), self.model_->num_support_vectors());
                     return vector_to_pyarray(n_support);
                 }
             },
