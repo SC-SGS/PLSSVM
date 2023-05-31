@@ -38,7 +38,7 @@ void kernel_matrix_assembly(const std::vector<real_type> &q, std::vector<std::ve
     // apply cost to diagonal
     #pragma omp parallel for
     for (kernel_index_type i = 0; i < dept; ++i) {
-        ret[i][i] = kernel_function<kernel>(data[i], data[i], std::forward<Args>(args)...) + QA_cost - q[i] - q[i] + cost;
+        ret[i][i] = kernel_function<kernel>(data[i], data[i], std::forward<Args>(args)...) + cost + QA_cost - q[i] - q[i];
     }
 }
 
