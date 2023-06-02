@@ -18,7 +18,7 @@
 #include "custom_test_macros.hpp"               // EXPECT_THROW_WHAT, EXPECT_FLOATING_POINT_EQ, EXPECT_FLOATING_POINT_NEAR, EXPECT_FLOATING_POINT_2D_VECTOR_EQ, EXPECT_FLOATING_POINT_2D_VECTOR_NEAR
 #include "naming.hpp"                           // naming::real_type_label_type_combination_to_name
 #include "types_to_test.hpp"                    // util::{real_type_label_type_combination_gtest}
-#include "utility.hpp"                          // util::{temporary_file, redirect_output, instantiate_template_data_file, get_distinct_label, get_correct_data_file_labels, generate_specific_matrix}
+#include "utility.hpp"                          // util::{temporary_file, redirect_output, instantiate_template_file, get_distinct_label, get_correct_data_file_labels, generate_specific_matrix}
 
 #include "gmock/gmock-matchers.h"               // EXPECT_THAT, ::testing::{ContainsRegex, StartsWith}
 #include "gtest/gtest.h"                        // EXPECT_EQ, EXPECT_TRUE, EXPECT_FALSE, ASSERT_EQ, TEST, TYPED_TEST, TYPED_TEST_SUITE, ::testing::Test
@@ -190,13 +190,13 @@ TYPED_TEST(DataSetLabelMapper, construct) {
     // test values
     EXPECT_EQ(mapper.num_mappings(), distinct_labels.size());
     EXPECT_EQ(mapper.labels(), distinct_labels);
-    // test mapping  // TODO: implement
-//    EXPECT_EQ(mapper.get_label_by_mapped_value(real_type{ -1 }), first_label);
-//    EXPECT_EQ(mapper.get_label_by_mapped_value(real_type{ 1 }), second_label);
-//    EXPECT_FLOATING_POINT_EQ(mapper.get_mapped_value_by_label(first_label), real_type{ -1 });
-//    EXPECT_FLOATING_POINT_EQ(mapper.get_mapped_value_by_label(second_label), real_type{ 1 });
+    // test mapping
+    for (std::size_t i = 0; i < distinct_labels.size(); ++i) {
+        EXPECT_EQ(mapper.get_label_by_mapped_index(i), distinct_labels[i]);
+        EXPECT_EQ(mapper.get_mapped_index_by_label(distinct_labels[i]), i);
+    }
 }
-TYPED_TEST(DataSetLabelMapper, get_mapped_value_by_label) {
+TYPED_TEST(DataSetLabelMapper, get_mapped_index_by_label) {
     using real_type = typename TypeParam::real_type;
     using label_type = typename TypeParam::label_type;
     using label_mapper_type = typename plssvm::data_set<real_type, label_type>::label_mapper;
@@ -207,11 +207,15 @@ TYPED_TEST(DataSetLabelMapper, get_mapped_value_by_label) {
     // create label mapper
     const label_mapper_type mapper{ labels };
 
-    // test the number of mappings  // TODO: implement
-//    EXPECT_FLOATING_POINT_EQ(mapper.get_mapped_value_by_label(first_label), real_type{ -1 });
-//    EXPECT_FLOATING_POINT_EQ(mapper.get_mapped_value_by_label(second_label), real_type{ 1 });
+    // test the number of mappings
+    const std::vector<label_type> distinct_labels = util::get_distinct_label<label_type>();
+    ASSERT_EQ(mapper.num_mappings(), distinct_labels.size());
+    for (std::size_t i = 0; i < labels.size(); ++i) {
+        const std::size_t label_idx = std::distance(distinct_labels.cbegin(), std::find(distinct_labels.cbegin(), distinct_labels.cend(), labels[i]));
+        EXPECT_EQ(mapper.get_mapped_index_by_label(labels[i]), label_idx);
+    }
 }
-TYPED_TEST(DataSetLabelMapper, get_mapped_value_by_invalid_label) {
+TYPED_TEST(DataSetLabelMapper, get_mapped_index_by_invalid_label) {
     using real_type = typename TypeParam::real_type;
     using label_type = typename TypeParam::label_type;
     using label_mapper_type = typename plssvm::data_set<real_type, label_type>::label_mapper;
@@ -225,29 +229,14 @@ TYPED_TEST(DataSetLabelMapper, get_mapped_value_by_invalid_label) {
     // test the number of mappings
     if constexpr (!std::is_same_v<label_type, bool>) {
         // can't have an unknown labels for bool
-        EXPECT_THROW_WHAT(std::ignore = mapper.get_mapped_value_by_label(plssvm::detail::convert_to<label_type>("9")),
+        EXPECT_THROW_WHAT(std::ignore = mapper.get_mapped_index_by_label(plssvm::detail::convert_to<label_type>("9")),
                           plssvm::data_set_exception,
                           R"(Label "9" unknown in this label mapping!)");
     } else {
         SUCCEED() << "By definition there can't be unknown labels for the boolean label type.";
     }
 }
-TYPED_TEST(DataSetLabelMapper, get_label_by_mapped_value) {
-    using real_type = typename TypeParam::real_type;
-    using label_type = typename TypeParam::label_type;
-    using label_mapper_type = typename plssvm::data_set<real_type, label_type>::label_mapper;
-
-    // the different labels
-    const std::vector<label_type> labels = util::get_correct_data_file_labels<label_type>();
-
-    // create label mapper
-    const label_mapper_type mapper{ labels };
-
-    // test the number of mappings  // TODO: implement
-//    EXPECT_EQ(mapper.get_label_by_mapped_value(real_type{ -1 }), first_label);
-//    EXPECT_EQ(mapper.get_label_by_mapped_value(real_type{ 1 }), second_label);
-}
-TYPED_TEST(DataSetLabelMapper, get_label_by_invalid_mapped_value) {
+TYPED_TEST(DataSetLabelMapper, get_label_by_mapped_index) {
     using real_type = typename TypeParam::real_type;
     using label_type = typename TypeParam::label_type;
     using label_mapper_type = typename plssvm::data_set<real_type, label_type>::label_mapper;
@@ -259,9 +248,28 @@ TYPED_TEST(DataSetLabelMapper, get_label_by_invalid_mapped_value) {
     const label_mapper_type mapper{ labels };
 
     // test the number of mappings
-    EXPECT_THROW_WHAT(std::ignore = mapper.get_label_by_mapped_value(real_type{ 0.0 }),
+    const std::vector<label_type> distinct_labels = util::get_distinct_label<label_type>();
+    ASSERT_EQ(mapper.num_mappings(), distinct_labels.size());
+    for (std::size_t i = 0; i < labels.size(); ++i) {
+        const std::size_t label_idx = std::distance(distinct_labels.cbegin(), std::find(distinct_labels.cbegin(), distinct_labels.cend(), labels[i]));
+        EXPECT_EQ(mapper.get_label_by_mapped_index(label_idx), labels[i]);
+    }
+}
+TYPED_TEST(DataSetLabelMapper, get_label_by_invalid_mapped_index) {
+    using real_type = typename TypeParam::real_type;
+    using label_type = typename TypeParam::label_type;
+    using label_mapper_type = typename plssvm::data_set<real_type, label_type>::label_mapper;
+
+    // the different labels
+    const std::vector<label_type> labels = util::get_correct_data_file_labels<label_type>();
+
+    // create label mapper
+    const label_mapper_type mapper{ labels };
+
+    // test the number of mappings
+    EXPECT_THROW_WHAT(std::ignore = mapper.get_label_by_mapped_index(mapper.num_mappings() + 1),
                       plssvm::data_set_exception,
-                      R"(Mapped value "0" unknown in this label mapping!)");
+                      fmt::format("Mapped index \"{}\" unknown in this label mapping!", mapper.num_mappings() + 1));
 }
 TYPED_TEST(DataSetLabelMapper, num_mappings) {
     using real_type = typename TypeParam::real_type;
@@ -317,7 +325,7 @@ TYPED_TEST(DataSet, typedefs) {
     using label_type = typename TypeParam::label_type;
 
     // create a data_set using an existing LIBSVM data set file
-    util::instantiate_template_data_file<label_type>(PLSSVM_TEST_PATH "/data/libsvm/6x4_TEMPLATE.libsvm", this->filename);
+    util::instantiate_template_file<label_type>(PLSSVM_TEST_PATH "/data/libsvm/6x4_TEMPLATE.libsvm", this->filename);
     const plssvm::data_set<real_type, label_type> data{ this->filename };
 
     // test internal typedefs
@@ -334,7 +342,7 @@ TYPED_TEST(DataSet, construct_arff_from_file_with_label) {
     this->filename.append(".arff");
 
     // create data set
-    util::instantiate_template_data_file<label_type>(PLSSVM_TEST_PATH "/data/arff/6x4_TEMPLATE.arff", this->filename);
+    util::instantiate_template_file<label_type>(PLSSVM_TEST_PATH "/data/arff/6x4_TEMPLATE.arff", this->filename);
     const plssvm::data_set<real_type, label_type> data{ this->filename };
 
     const std::vector<label_type> correct_different_labels = util::get_distinct_label<label_type>();
@@ -386,7 +394,7 @@ TYPED_TEST(DataSet, construct_libsvm_from_file_with_label) {
     using label_type = typename TypeParam::label_type;
 
     // create data set
-    util::instantiate_template_data_file<label_type>(PLSSVM_TEST_PATH "/data/libsvm/6x4_TEMPLATE.libsvm", this->filename);
+    util::instantiate_template_file<label_type>(PLSSVM_TEST_PATH "/data/libsvm/6x4_TEMPLATE.libsvm", this->filename);
     const plssvm::data_set<real_type, label_type> data{ this->filename };
 
     const std::vector<label_type> correct_different_labels = util::get_distinct_label<label_type>();
@@ -438,7 +446,7 @@ TYPED_TEST(DataSet, construct_explicit_arff_from_file) {
     using label_type = typename TypeParam::label_type;
 
     // create data set
-    util::instantiate_template_data_file<label_type>(PLSSVM_TEST_PATH "/data/arff/6x4_TEMPLATE.arff", this->filename);
+    util::instantiate_template_file<label_type>(PLSSVM_TEST_PATH "/data/arff/6x4_TEMPLATE.arff", this->filename);
     const plssvm::data_set<real_type, label_type> data{ this->filename, plssvm::file_format_type::arff };
 
     const std::vector<label_type> correct_different_labels = util::get_distinct_label<label_type>();
@@ -464,7 +472,7 @@ TYPED_TEST(DataSet, construct_explicit_libsvm_from_file) {
     using label_type = typename TypeParam::label_type;
 
     // create data set
-    util::instantiate_template_data_file<label_type>(PLSSVM_TEST_PATH "/data/libsvm/6x4_TEMPLATE.libsvm", this->filename);
+    util::instantiate_template_file<label_type>(PLSSVM_TEST_PATH "/data/libsvm/6x4_TEMPLATE.libsvm", this->filename);
     const plssvm::data_set<real_type, label_type> data{ this->filename, plssvm::file_format_type::libsvm };
 
     const std::vector<label_type> correct_different_labels = util::get_distinct_label<label_type>();
@@ -494,7 +502,7 @@ TYPED_TEST(DataSet, construct_scaled_arff_from_file) {
     this->filename.append(".arff");
 
     // create data set
-    util::instantiate_template_data_file<label_type>(PLSSVM_TEST_PATH "/data/arff/6x4_TEMPLATE.arff", this->filename);
+    util::instantiate_template_file<label_type>(PLSSVM_TEST_PATH "/data/arff/6x4_TEMPLATE.arff", this->filename);
     const plssvm::data_set<real_type, label_type> data{ this->filename, { real_type{ -1.0 }, real_type{ 1.0 } } };
 
     const std::vector<label_type> correct_different_labels = util::get_distinct_label<label_type>();
@@ -528,7 +536,7 @@ TYPED_TEST(DataSet, construct_scaled_libsvm_from_file) {
     using label_type = typename TypeParam::label_type;
 
     // create data set
-    util::instantiate_template_data_file<label_type>(PLSSVM_TEST_PATH "/data/libsvm/6x4_TEMPLATE.libsvm", this->filename);
+    util::instantiate_template_file<label_type>(PLSSVM_TEST_PATH "/data/libsvm/6x4_TEMPLATE.libsvm", this->filename);
     const plssvm::data_set<real_type, label_type> data{ this->filename, { real_type{ -2.5 }, real_type{ 2.5 } } };
 
     const std::vector<label_type> correct_different_labels = util::get_distinct_label<label_type>();
@@ -563,7 +571,7 @@ TYPED_TEST(DataSet, construct_scaled_explicit_arff_from_file) {
     using label_type = typename TypeParam::label_type;
 
     // create data set
-    util::instantiate_template_data_file<label_type>(PLSSVM_TEST_PATH "/data/arff/6x4_TEMPLATE.arff", this->filename);
+    util::instantiate_template_file<label_type>(PLSSVM_TEST_PATH "/data/arff/6x4_TEMPLATE.arff", this->filename);
     const plssvm::data_set<real_type, label_type> data{ this->filename, plssvm::file_format_type::arff, { real_type{ -1.0 }, real_type{ 1.0 } } };
 
     const std::vector<label_type> correct_different_labels = util::get_distinct_label<label_type>();
@@ -597,7 +605,7 @@ TYPED_TEST(DataSet, construct_scaled_explicit_libsvm_from_file) {
     using label_type = typename TypeParam::label_type;
 
     // create data set
-    util::instantiate_template_data_file<label_type>(PLSSVM_TEST_PATH "/data/libsvm/6x4_TEMPLATE.libsvm", this->filename);
+    util::instantiate_template_file<label_type>(PLSSVM_TEST_PATH "/data/libsvm/6x4_TEMPLATE.libsvm", this->filename);
     const plssvm::data_set<real_type, label_type> data{ this->filename, plssvm::file_format_type::libsvm, { real_type{ -2.5 }, real_type{ 2.5 } } };
 
     const std::vector<label_type> correct_different_labels = util::get_distinct_label<label_type>();
@@ -634,7 +642,7 @@ TYPED_TEST(DataSet, scale_too_many_factors) {
     using factors_type = typename scaling_type::factors;
 
     // create data set
-    util::instantiate_template_data_file<label_type>(PLSSVM_TEST_PATH "/data/libsvm/6x4_TEMPLATE.libsvm", this->filename);
+    util::instantiate_template_file<label_type>(PLSSVM_TEST_PATH "/data/libsvm/6x4_TEMPLATE.libsvm", this->filename);
     // create (invalid) scaling factors
     scaling_type scaling{ real_type{ -1.0 }, real_type{ 1.0 } };
     scaling.scaling_factors = std::vector<factors_type>{
@@ -657,7 +665,7 @@ TYPED_TEST(DataSet, scale_invalid_feature_index) {
     using factors_type = typename scaling_type::factors;
 
     // create data set
-    util::instantiate_template_data_file<label_type>(PLSSVM_TEST_PATH "/data/libsvm/6x4_TEMPLATE.libsvm", this->filename);
+    util::instantiate_template_file<label_type>(PLSSVM_TEST_PATH "/data/libsvm/6x4_TEMPLATE.libsvm", this->filename);
     // create (invalid) scaling factors
     scaling_type scaling{ real_type{ -1.0 }, real_type{ 1.0 } };
     scaling.scaling_factors = std::vector<factors_type>{
@@ -677,7 +685,7 @@ TYPED_TEST(DataSet, scale_duplicate_feature_index) {
     using factors_type = typename scaling_type::factors;
 
     // create data set
-    util::instantiate_template_data_file<label_type>(PLSSVM_TEST_PATH "/data/libsvm/6x4_TEMPLATE.libsvm", this->filename);
+    util::instantiate_template_file<label_type>(PLSSVM_TEST_PATH "/data/libsvm/6x4_TEMPLATE.libsvm", this->filename);
     // create (invalid) scaling factors
     scaling_type scaling{ real_type{ -1.0 }, real_type{ 1.0 } };
     scaling.scaling_factors = std::vector<factors_type>{

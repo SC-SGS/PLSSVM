@@ -103,7 +103,6 @@ namespace plssvm::detail::io {
  * @tparam real_type the floating point type
  * @tparam label_type the type of the labels (any arithmetic type or std::string)
  * @param[in] reader the file_reader used to read the LIBSVM data
- * @param[in] skipped_lines the number of lines that should be skipped at the beginning
  * @note The features must be provided with one-based indices!
  * @throws plssvm::invalid_file_format_exception if no features could be found (may indicate an empty file)
  * @throws plssvm::invalid_file_format_exception if a label couldn't be converted to the provided @p label_type
@@ -115,14 +114,13 @@ namespace plssvm::detail::io {
  * @return a std::tuple containing: [num_data_points, num_features, data_points, labels] (`[[nodiscard]]`)
  */
 template <typename real_type, typename label_type>
-[[nodiscard]] inline std::tuple<std::size_t, std::size_t, std::vector<std::vector<real_type>>, std::vector<label_type>> parse_libsvm_data(const file_reader &reader, const std::size_t skipped_lines = 0) {
+[[nodiscard]] inline std::tuple<std::size_t, std::size_t, std::vector<std::vector<real_type>>, std::vector<label_type>> parse_libsvm_data(const file_reader &reader) {
     PLSSVM_ASSERT(reader.is_open(), "The file_reader is currently not associated with a file!");
     // sanity check: can't skip more lines than are present
-    PLSSVM_ASSERT(skipped_lines <= reader.num_lines(), "Tried to skipp {} lines, but only {} are present!", skipped_lines, reader.num_lines());
 
     // parse sizes
-    const std::size_t num_data_points = reader.num_lines() - skipped_lines;
-    const std::size_t num_features = parse_libsvm_num_features(reader.lines(), skipped_lines);
+    const std::size_t num_data_points = reader.num_lines();
+    const std::size_t num_features = parse_libsvm_num_features(reader.lines());
 
     // no features were parsed -> invalid file
     if (num_features == 0) {
@@ -137,12 +135,12 @@ template <typename real_type, typename label_type>
     bool has_label = false;
     bool has_no_label = false;
 
-    #pragma omp parallel default(none) shared(reader, skipped_lines, data, label, parallel_exception, has_label, has_no_label) firstprivate(num_features)
+    #pragma omp parallel default(none) shared(reader, data, label, parallel_exception, has_label, has_no_label) firstprivate(num_features)
     {
         #pragma omp for reduction(|| : has_label) reduction(|| : has_no_label)
         for (typename std::vector<std::vector<real_type>>::size_type i = 0; i < data.size(); ++i) {
             try {
-                std::string_view line = reader.line(skipped_lines + i);
+                std::string_view line = reader.line(i);
                 unsigned long last_index = 0;
 
                 // check if class labels are present (not necessarily the case for test files)

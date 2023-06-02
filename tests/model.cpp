@@ -15,7 +15,7 @@
 #include "custom_test_macros.hpp"  // EXPECT_FLOATING_POINT_EQ, EXPECT_FLOATING_POINT_VECTOR_EQ, EXPECT_FLOATING_POINT_2D_VECTOR_EQ
 #include "naming.hpp"              // naming::real_type_label_type_combination_to_name
 #include "types_to_test.hpp"       // util::real_type_label_type_combination_gtest
-#include "utility.hpp"             // util::{temporary_file, redirect_output, instantiate_template_model_file, get_distinct_label, get_correct_model_file_labels}
+#include "utility.hpp"             // util::{temporary_file, redirect_output, instantiate_template_file, get_distinct_label, get_correct_model_file_labels}
 
 #include "gtest/gtest.h"           // EXPECT_EQ, EXPECT_TRUE, ASSERT_GT, GTEST_FAIL, TYPED_TEST, TYPED_TEST_SUITE, TEST_P, INSTANTIATE_TEST_SUITE_P
                                    // ::testing::{StaticAssertTypeEq, Test, TestWithParam, Values}
@@ -37,7 +37,8 @@ TYPED_TEST(Model, typedefs) {
 
     // instantiate a model file
     const util::temporary_file model_file;
-    util::instantiate_template_model_file<label_type>(PLSSVM_TEST_PATH "/data/model/6x4_linear_TEMPLATE.libsvm.model", model_file.filename);
+    const std::string template_file_name = fmt::format(PLSSVM_TEST_PATH "/data/model/{}_classes/6x4_linear_TEMPLATE.libsvm.model", util::get_num_classes<label_type>());
+    util::instantiate_template_file<label_type>(template_file_name, model_file.filename);
     const plssvm::model<real_type, label_type> model{ model_file.filename };
 
     // test internal typedefs
@@ -51,7 +52,9 @@ TYPED_TEST(Model, construct) {
 
     // instantiate a model file
     const util::temporary_file model_file;
-    util::instantiate_template_model_file<label_type>(PLSSVM_TEST_PATH "/data/model/6x4_linear_TEMPLATE.libsvm.model", model_file.filename);
+    const std::size_t num_classes_for_label_type = util::get_num_classes<label_type>();
+    const std::string template_file_name = fmt::format(PLSSVM_TEST_PATH "/data/model/{}_classes/6x4_linear_TEMPLATE.libsvm.model", num_classes_for_label_type);
+    util::instantiate_template_file<label_type>(template_file_name, model_file.filename);
     const plssvm::model<real_type, label_type> model{ model_file.filename };
 
     // test for correct construction
@@ -59,20 +62,54 @@ TYPED_TEST(Model, construct) {
     EXPECT_EQ(model.num_features(), 4);
     EXPECT_EQ(model.get_params(), plssvm::parameter{});
     const std::vector<std::vector<real_type>> support_vectors{
-        { real_type{ -1.117828 }, real_type{ -2.908719 }, real_type{ 0.6663834 }, real_type{ 1.097883 } },
-        { real_type{ -0.5282118 }, real_type{ -0.3358810 }, real_type{ 0.5168730 }, real_type{ 0.5460446 } },
-        { real_type{ -0.2098121 }, real_type{ 0.6027694 }, real_type{ -0.1308685 }, real_type{ 0.1080525 } },
-        { real_type{ 1.884940 }, real_type{ 1.005186 }, real_type{ 0.2984999 }, real_type{ 1.646463 } },
-        { real_type{ 0.5765022 }, real_type{ 1.014056 }, real_type{ 0.1300943 }, real_type{ 0.7261914 } },
-        { real_type{ 0.3127879 }, real_type{ 9.127879 }, real_type{ -0.3126175 }, real_type{ 0.1125761 } }
+        { real_type{ -1.1178275006 }, real_type{ -2.9087188881 }, real_type{ 0.66638344270 }, real_type{ 1.0978832704 } },
+        { real_type{ -0.52821182989 }, real_type{ -0.33588098497 }, real_type{ 0.51687296030 }, real_type{ 0.54604461446 } },
+        { real_type{ 0.57650218263 }, real_type{ 1.0140559662 }, real_type{ 0.13009428080 }, real_type{ 0.72619138869 } },
+        { real_type{ 1.8849404372 }, real_type{ 1.0051856432 }, real_type{ 0.29849993305 }, real_type{ 1.6464627049 } },
+        { real_type{ -0.20981208921 }, real_type{ 0.60276937379 }, real_type{ -0.13086851759 }, real_type{ 0.10805254527 } },
+        { real_type{ -1.1256816276 }, real_type{ 2.1254153434 }, real_type{ -0.16512657655 }, real_type{ 2.5164553141 } }
     };
     EXPECT_FLOATING_POINT_2D_VECTOR_EQ(model.support_vectors(), support_vectors);
-    const std::vector<real_type> weights{
-        real_type{ -0.17609610490769723 }, real_type{ 0.8838187731213127 }, real_type{ -0.47971257671001616 },
-        real_type{ 0.0034556484621847128 }, real_type{ -0.23146573996578407 }, real_type{ 0.61928364182789611 }
+
+    const std::vector<std::vector<real_type>> all_weights{
+        { real_type{ -1.8568721894e-01 }, real_type{ 9.0116552290e-01 }, real_type{ -2.2483112395e-01 }, real_type{ 1.4909749921e-02 }, real_type{ -4.5666857706e-01 }, real_type{ -4.8888352876e-02 } },
+        { real_type{ 1.1365048527e-01 }, real_type{ -3.2357185930e-01 }, real_type{ 8.9871548758e-01 }, real_type{ -7.5259922896e-02 }, real_type{ -4.7955922738e-01 }, real_type{ -1.3397496327e-01 } },
+        { real_type{ 2.8929914669e-02 }, real_type{ -4.8559849173e-01 }, real_type{ -5.6740083618e-01 }, real_type{ 8.7841608802e-02 }, real_type{ 9.7960957282e-01 }, real_type{ -4.3381768383e-02 } },
+        { real_type{ 4.3106819001e-02 }, real_type{ -9.1995171877e-02 }, real_type{ -1.0648352745e-01 }, real_type{ -2.7491435827e-02 }, real_type{ -4.3381768383e-02 }, real_type{ 2.2624508453e-01 } }
     };
-    EXPECT_FLOATING_POINT_VECTOR_EQ(model.weights(), weights);
-    EXPECT_FLOATING_POINT_EQ(model.rho(), real_type{ 0.37330625882191915 });
+    const std::vector<real_type> all_rhos{ real_type{ 0.32260160011873423 }, real_type{ 0.401642656885171 }, real_type{ 0.05160647594201395 }, real_type{ 1.224149267054074 } };
+
+    ASSERT_EQ(model.weights().size(), num_classes_for_label_type);
+    switch (num_classes_for_label_type) {
+        case 2:
+            EXPECT_FLOATING_POINT_2D_VECTOR_EQ(model.weights(), (std::vector<std::vector<real_type>>{ all_weights[0], all_weights[1] }));
+            break;
+        case 3:
+            EXPECT_FLOATING_POINT_2D_VECTOR_EQ(model.weights(), (std::vector<std::vector<real_type>>{ all_weights[0], all_weights[1], all_weights[2] }));
+            break;
+        case 4:
+            EXPECT_FLOATING_POINT_2D_VECTOR_EQ(model.weights(), all_weights);
+            break;
+        default:
+            FAIL() << "Unreachable!";
+            break;
+    }
+
+    ASSERT_EQ(model.rho().size(), num_classes_for_label_type);
+    switch (num_classes_for_label_type) {
+        case 2:
+            EXPECT_FLOATING_POINT_VECTOR_EQ(model.rho(), (std::vector<real_type>{ all_rhos[0], all_rhos[1] }));
+            break;
+        case 3:
+            EXPECT_FLOATING_POINT_VECTOR_EQ(model.rho(), (std::vector<real_type>{ all_rhos[0], all_rhos[1], all_rhos[2] }));
+            break;
+        case 4:
+            EXPECT_FLOATING_POINT_VECTOR_EQ(model.rho(), all_rhos);
+            break;
+        default:
+            FAIL() << "Unreachable!";
+            break;
+    }
 }
 
 TYPED_TEST(Model, num_support_vectors) {
@@ -81,7 +118,8 @@ TYPED_TEST(Model, num_support_vectors) {
 
     // instantiate a model file
     const util::temporary_file model_file;
-    util::instantiate_template_model_file<label_type>(PLSSVM_TEST_PATH "/data/model/6x4_linear_TEMPLATE.libsvm.model", model_file.filename);
+    const std::string template_file_name = fmt::format(PLSSVM_TEST_PATH "/data/model/{}_classes/6x4_linear_TEMPLATE.libsvm.model", util::get_num_classes<label_type>());
+    util::instantiate_template_file<label_type>(template_file_name, model_file.filename);
     const plssvm::model<real_type, label_type> model{ model_file.filename };
 
     // test for the correct number of support vectors
@@ -93,7 +131,8 @@ TYPED_TEST(Model, num_features) {
 
     // instantiate a model file
     const util::temporary_file model_file;
-    util::instantiate_template_model_file<label_type>(PLSSVM_TEST_PATH "/data/model/6x4_linear_TEMPLATE.libsvm.model", model_file.filename);
+    const std::string template_file_name = fmt::format(PLSSVM_TEST_PATH "/data/model/{}_classes/6x4_linear_TEMPLATE.libsvm.model", util::get_num_classes<label_type>());
+    util::instantiate_template_file<label_type>(template_file_name, model_file.filename);
     const plssvm::model<real_type, label_type> model{ model_file.filename };
 
     // test for the correct number of features
@@ -105,7 +144,8 @@ TYPED_TEST(Model, get_params) {
 
     // instantiate a model file
     const util::temporary_file model_file;
-    util::instantiate_template_model_file<label_type>(PLSSVM_TEST_PATH "/data/model/6x4_linear_TEMPLATE.libsvm.model", model_file.filename);
+    const std::string template_file_name = fmt::format(PLSSVM_TEST_PATH "/data/model/{}_classes/6x4_linear_TEMPLATE.libsvm.model", util::get_num_classes<label_type>());
+    util::instantiate_template_file<label_type>(template_file_name, model_file.filename);
     const plssvm::model<real_type, label_type> model{ model_file.filename };
 
     // test for the correct number of features
@@ -117,17 +157,18 @@ TYPED_TEST(Model, support_vectors) {
 
     // instantiate a model file
     const util::temporary_file model_file;
-    util::instantiate_template_model_file<label_type>(PLSSVM_TEST_PATH "/data/model/6x4_linear_TEMPLATE.libsvm.model", model_file.filename);
+    const std::string template_file_name = fmt::format(PLSSVM_TEST_PATH "/data/model/{}_classes/6x4_linear_TEMPLATE.libsvm.model", util::get_num_classes<label_type>());
+    util::instantiate_template_file<label_type>(template_file_name, model_file.filename);
     const plssvm::model<real_type, label_type> model{ model_file.filename };
 
     // test for the correct support vectors
     const std::vector<std::vector<real_type>> support_vectors{
-        { real_type{ -1.117828 }, real_type{ -2.908719 }, real_type{ 0.6663834 }, real_type{ 1.097883 } },
-        { real_type{ -0.5282118 }, real_type{ -0.3358810 }, real_type{ 0.5168730 }, real_type{ 0.5460446 } },
-        { real_type{ -0.2098121 }, real_type{ 0.6027694 }, real_type{ -0.1308685 }, real_type{ 0.1080525 } },
-        { real_type{ 1.884940 }, real_type{ 1.005186 }, real_type{ 0.2984999 }, real_type{ 1.646463 } },
-        { real_type{ 0.5765022 }, real_type{ 1.014056 }, real_type{ 0.1300943 }, real_type{ 0.7261914 } },
-        { real_type{ 0.3127879 }, real_type{ 9.127879 }, real_type{ -0.3126175 }, real_type{ 0.1125761 } }
+        { real_type{ -1.1178275006 }, real_type{ -2.9087188881 }, real_type{ 0.66638344270 }, real_type{ 1.0978832704 } },
+        { real_type{ -0.52821182989 }, real_type{ -0.33588098497 }, real_type{ 0.51687296030 }, real_type{ 0.54604461446 } },
+        { real_type{ 0.57650218263 }, real_type{ 1.0140559662 }, real_type{ 0.13009428080 }, real_type{ 0.72619138869 } },
+        { real_type{ 1.8849404372 }, real_type{ 1.0051856432 }, real_type{ 0.29849993305 }, real_type{ 1.6464627049 } },
+        { real_type{ -0.20981208921 }, real_type{ 0.60276937379 }, real_type{ -0.13086851759 }, real_type{ 0.10805254527 } },
+        { real_type{ -1.1256816276 }, real_type{ 2.1254153434 }, real_type{ -0.16512657655 }, real_type{ 2.5164553141 } }
     };
     EXPECT_FLOATING_POINT_2D_VECTOR_EQ(model.support_vectors(), support_vectors);
 }
@@ -137,7 +178,8 @@ TYPED_TEST(Model, labels) {
 
     // instantiate a model file
     const util::temporary_file model_file;
-    util::instantiate_template_model_file<label_type>(PLSSVM_TEST_PATH "/data/model/6x4_linear_TEMPLATE.libsvm.model", model_file.filename);
+    const std::string template_file_name = fmt::format(PLSSVM_TEST_PATH "/data/model/{}_classes/6x4_linear_TEMPLATE.libsvm.model", util::get_num_classes<label_type>());
+    util::instantiate_template_file<label_type>(template_file_name, model_file.filename);
     const plssvm::model<real_type, label_type> model{ model_file.filename };
 
     // check labels getter
@@ -149,11 +191,12 @@ TYPED_TEST(Model, num_different_labels) {
 
     // instantiate a model file
     const util::temporary_file model_file;
-    util::instantiate_template_model_file<label_type>(PLSSVM_TEST_PATH "/data/model/6x4_linear_TEMPLATE.libsvm.model", model_file.filename);
+    const std::string template_file_name = fmt::format(PLSSVM_TEST_PATH "/data/model/{}_classes/6x4_linear_TEMPLATE.libsvm.model", util::get_num_classes<label_type>());
+    util::instantiate_template_file<label_type>(template_file_name, model_file.filename);
     const plssvm::model<real_type, label_type> model{ model_file.filename };
 
     // check num_different_labels getter
-    EXPECT_EQ(model.num_different_labels(), util::get_distinct_label<label_type>().size());
+    EXPECT_EQ(model.num_different_labels(), util::get_num_classes<label_type>());
 }
  TYPED_TEST(Model, different_labels) {
      using real_type = typename TypeParam::real_type;
@@ -161,7 +204,8 @@ TYPED_TEST(Model, num_different_labels) {
 
      // instantiate a model file
      const util::temporary_file model_file;
-     util::instantiate_template_model_file<label_type>(PLSSVM_TEST_PATH "/data/model/6x4_linear_TEMPLATE.libsvm.model", model_file.filename);
+     const std::string template_file_name = fmt::format(PLSSVM_TEST_PATH "/data/model/{}_classes/6x4_linear_TEMPLATE.libsvm.model", util::get_num_classes<label_type>());
+     util::instantiate_template_file<label_type>(template_file_name, model_file.filename);
      const plssvm::model<real_type, label_type> model{ model_file.filename };
 
      // check different_labels getter
@@ -173,15 +217,34 @@ TYPED_TEST(Model, weights) {
 
     // instantiate a model file
     const util::temporary_file model_file;
-    util::instantiate_template_model_file<label_type>(PLSSVM_TEST_PATH "/data/model/6x4_linear_TEMPLATE.libsvm.model", model_file.filename);
+    const std::size_t num_classes_for_label_type = util::get_num_classes<label_type>();
+    const std::string template_file_name = fmt::format(PLSSVM_TEST_PATH "/data/model/{}_classes/6x4_linear_TEMPLATE.libsvm.model", num_classes_for_label_type);
+    util::instantiate_template_file<label_type>(template_file_name, model_file.filename);
     const plssvm::model<real_type, label_type> model{ model_file.filename };
 
     // test for the correct weights
-    const std::vector<real_type> weights{
-        real_type{ -0.17609610490769723 }, real_type{ 0.8838187731213127 }, real_type{ -0.47971257671001616 },
-        real_type{ 0.0034556484621847128 }, real_type{ -0.23146573996578407 }, real_type{ 0.61928364182789611 }
+    const std::vector<std::vector<real_type>> all_weights{
+        { real_type{ -1.8568721894e-01 }, real_type{ 9.0116552290e-01 }, real_type{ -2.2483112395e-01 }, real_type{ 1.4909749921e-02 }, real_type{ -4.5666857706e-01 }, real_type{ -4.8888352876e-02 } },
+        { real_type{ 1.1365048527e-01 }, real_type{ -3.2357185930e-01 }, real_type{ 8.9871548758e-01 }, real_type{ -7.5259922896e-02 }, real_type{ -4.7955922738e-01 }, real_type{ -1.3397496327e-01 } },
+        { real_type{ 2.8929914669e-02 }, real_type{ -4.8559849173e-01 }, real_type{ -5.6740083618e-01 }, real_type{ 8.7841608802e-02 }, real_type{ 9.7960957282e-01 }, real_type{ -4.3381768383e-02 } },
+        { real_type{ 4.3106819001e-02 }, real_type{ -9.1995171877e-02 }, real_type{ -1.0648352745e-01 }, real_type{ -2.7491435827e-02 }, real_type{ -4.3381768383e-02 }, real_type{ 2.2624508453e-01 } }
     };
-    EXPECT_FLOATING_POINT_VECTOR_EQ(model.weights(), weights);
+
+    ASSERT_EQ(model.weights().size(), num_classes_for_label_type);
+    switch (num_classes_for_label_type) {
+        case 2:
+            EXPECT_FLOATING_POINT_2D_VECTOR_EQ(model.weights(), (std::vector<std::vector<real_type>>{ all_weights[0], all_weights[1] }));
+            break;
+        case 3:
+            EXPECT_FLOATING_POINT_2D_VECTOR_EQ(model.weights(), (std::vector<std::vector<real_type>>{ all_weights[0], all_weights[1], all_weights[2] }));
+            break;
+        case 4:
+            EXPECT_FLOATING_POINT_2D_VECTOR_EQ(model.weights(), all_weights);
+            break;
+        default:
+            FAIL() << "Unreachable!";
+            break;
+    }
 }
 TYPED_TEST(Model, rho) {
     using real_type = typename TypeParam::real_type;
@@ -189,17 +252,36 @@ TYPED_TEST(Model, rho) {
 
     // instantiate a model file
     const util::temporary_file model_file;
-    util::instantiate_template_model_file<label_type>(PLSSVM_TEST_PATH "/data/model/6x4_linear_TEMPLATE.libsvm.model", model_file.filename);
+    const std::size_t num_classes_for_label_type = util::get_num_classes<label_type>();
+    const std::string template_file_name = fmt::format(PLSSVM_TEST_PATH "/data/model/{}_classes/6x4_linear_TEMPLATE.libsvm.model", num_classes_for_label_type);
+    util::instantiate_template_file<label_type>(template_file_name, model_file.filename);
     const plssvm::model<real_type, label_type> model{ model_file.filename };
 
     // test for the correct rho (bias) value
-    EXPECT_FLOATING_POINT_EQ(model.rho(), real_type{ 0.37330625882191915 });
+    const std::vector<real_type> all_rhos{ real_type{ 0.32260160011873423 }, real_type{ 0.401642656885171 }, real_type{ 0.05160647594201395 }, real_type{ 1.224149267054074 } };
+
+    ASSERT_EQ(model.rho().size(), num_classes_for_label_type);
+    switch (num_classes_for_label_type) {
+        case 2:
+            EXPECT_FLOATING_POINT_VECTOR_EQ(model.rho(), (std::vector<real_type>{ all_rhos[0], all_rhos[1] }));
+            break;
+        case 3:
+            EXPECT_FLOATING_POINT_VECTOR_EQ(model.rho(), (std::vector<real_type>{ all_rhos[0], all_rhos[1], all_rhos[2] }));
+            break;
+        case 4:
+            EXPECT_FLOATING_POINT_VECTOR_EQ(model.rho(), all_rhos);
+            break;
+        default:
+            FAIL() << "Unreachable!";
+            break;
+    }
 }
 
 class ModelSave : public ::testing::TestWithParam<std::string>, private util::redirect_output<>, protected util::temporary_file {};
 TEST_P(ModelSave, save) {
     // create a model using an existing LIBSVM model file
     const plssvm::model<double, int> model{ fmt::format("{}{}", PLSSVM_TEST_PATH, GetParam()) };
+    // note: binary classification hardcoded -> only two alpha values provided
 
     // write model to file
     model.save(filename);
@@ -228,9 +310,9 @@ TEST_P(ModelSave, save) {
     }
     regex_patterns.emplace_back("nr_class [0-9]+");
     regex_patterns.emplace_back("total_sv [0-9]+");
-    regex_patterns.emplace_back("rho [-+]?[0-9]*.?[0-9]+([eE][-+]?[0-9]+)?");
-    regex_patterns.emplace_back("label (.+ ?)+");
-    regex_patterns.emplace_back("nr_sv ([0-9]+ ?)+");
+    regex_patterns.emplace_back("rho [-+]?[0-9]*.?[0-9]+([eE][-+]?[0-9]+)? [-+]?[0-9]*.?[0-9]+([eE][-+]?[0-9]+)?");
+    regex_patterns.emplace_back("label .+ .+");
+    regex_patterns.emplace_back("nr_sv [0-9]+ [0-9]+");
     regex_patterns.emplace_back("SV");
 
     // at least number of header entries lines must be present
@@ -257,7 +339,7 @@ TEST_P(ModelSave, save) {
         }
     }
     // only support vectors should be left -> check the remaining lines if they match the correct pattern
-    const std::string support_vector_pattern{ "[-+]?[0-9]*.?[0-9]+([eE][-+]?[0-9]+)? ([0-9]*:[-+]?[0-9]*.?[0-9]+([eE][-+]?[0-9]+)? ?)*" };
+    const std::string support_vector_pattern{ "[-+]?[0-9]*.?[0-9]+([eE][-+]?[0-9]+)? [-+]?[0-9]*.?[0-9]+([eE][-+]?[0-9]+)? ([0-9]*:[-+]?[0-9]*.?[0-9]+([eE][-+]?[0-9]+)? ?)*" };
     for (const std::string_view line : lines) {
         const std::regex reg(support_vector_pattern, std::regex::extended);
         EXPECT_TRUE(std::regex_match(std::string{ line }, reg)) << fmt::format(R"(Line "{}" doesn't match the regex pattern "{}".)", line, support_vector_pattern);
@@ -265,7 +347,7 @@ TEST_P(ModelSave, save) {
 }
 // clang-format off
 INSTANTIATE_TEST_SUITE_P(Model, ModelSave, ::testing::Values(
-                "/data/model/5x4_linear.libsvm.model",
-                "/data/model/5x4_polynomial.libsvm.model",
-                "/data/model/5x4_rbf.libsvm.model"));
+                "/data/model/6x4_linear.libsvm.model",
+                "/data/model/6x4_polynomial.libsvm.model",
+                "/data/model/6x4_rbf.libsvm.model"));
 // clang-format on

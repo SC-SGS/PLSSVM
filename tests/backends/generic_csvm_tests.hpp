@@ -171,9 +171,12 @@ TYPED_TEST_P(GenericCSVM, predict_values) {
         { real_type{ 0.0 }, real_type{ 0.0 }, real_type{ 1.0 }, real_type{ 0.0 } },
         { real_type{ 0.0 }, real_type{ 0.0 }, real_type{ 0.0 }, real_type{ 1.0 } }
     };
-    const std::vector<real_type> weights{ real_type{ 1.0 }, real_type{ -1.0 }, real_type{ 1.0 }, real_type{ -1.0 } };
-    const real_type rho{ 0.0 };
-    std::vector<real_type> w{};
+    const std::vector<std::vector<real_type>> weights{
+        { real_type{ 1.0 }, real_type{ -1.0 }, real_type{ 1.0 }, real_type{ -1.0 } },
+        { real_type{ 1.0 }, real_type{ -1.0 }, real_type{ 1.0 }, real_type{ -1.0 } }
+    };
+    const std::vector<real_type> rho{ real_type{ 0.0 }, real_type{ 0.0 } };
+    std::vector<std::vector<real_type>> w{};
     const std::vector<std::vector<real_type>> data{
         { real_type{ 1.0 }, real_type{ 1.0 }, real_type{ 1.0 }, real_type{ 1.0 } },
         { real_type{ 1.0 }, real_type{ -1.0 }, real_type{ 1.0 }, real_type{ -1.0 } }
@@ -183,15 +186,19 @@ TYPED_TEST_P(GenericCSVM, predict_values) {
     const mock_csvm_type svm = util::construct_from_tuple<mock_csvm_type>(params, TypeParam::additional_arguments);
 
     // predict the values using the previously learned support vectors and weights
-    const std::vector<real_type> calculated = svm.predict_values(params, support_vectors, weights, rho, w, data);
+    const std::vector<std::vector<real_type>> calculated = svm.predict_values(params, support_vectors, weights, rho, w, data);
 
     // check the calculated result for correctness
     ASSERT_EQ(calculated.size(), data.size());
-    EXPECT_FLOATING_POINT_VECTOR_NEAR(calculated, (std::vector<real_type>{ real_type{ 0.0 }, real_type{ 4.0 } }));
+    const std::vector<std::vector<real_type>> correct_predict_values{
+        { real_type{ 0.0 }, real_type{ 0.0 } },
+        { real_type{ 4.0 }, real_type{ 4.0 } }
+    };
+    EXPECT_FLOATING_POINT_2D_VECTOR_NEAR(calculated, correct_predict_values);
     // in case of the linear kernel, the w vector should have been filled
     if (kernel == plssvm::kernel_function_type::linear) {
-        EXPECT_EQ(w.size(), support_vectors.front().size());
-        EXPECT_FLOATING_POINT_VECTOR_NEAR(w, weights);
+        EXPECT_EQ(w.size(), rho.size());
+        EXPECT_FLOATING_POINT_2D_VECTOR_NEAR(w, weights);
     } else {
         EXPECT_TRUE(w.empty());
     }
@@ -326,39 +333,63 @@ TYPED_TEST_P(GenericCSVMDeathTest, predict_values) {
         { real_type{ 1.0 }, real_type{ 2.0 } },
         { real_type{ 3.0 }, real_type{ 4.0 } }
     };
-    const std::vector<real_type> alpha{ real_type{ 1.0 }, real_type{ 2.0 } };
-    std::vector<real_type> w{};
+    const std::vector<std::vector<real_type>> alpha{ { real_type{ 1.0 }, real_type{ 2.0 } }, { real_type{ 3.0 }, real_type{4.0 } } };
+    const std::vector<real_type> rho{ real_type{ 0.0 }, real_type{ 1.0 } };
+    std::vector<std::vector<real_type>> w{};
 
     // empty support vector data is not allowed
-    EXPECT_DEATH(std::ignore = (svm.predict_values(params, std::vector<std::vector<real_type>>{}, alpha, real_type{ 0.0 }, w, data)),
+    EXPECT_DEATH(std::ignore = (svm.predict_values(params, std::vector<std::vector<real_type>>{}, alpha, rho, w, data)),
                  "The support vectors must not be empty!");
     // empty support vector features are not allowed
-    EXPECT_DEATH(std::ignore = (svm.predict_values(params, std::vector<std::vector<real_type>>{ std::vector<real_type>{} }, alpha, real_type{ 0.0 }, w, data)),
+    EXPECT_DEATH(std::ignore = (svm.predict_values(params, std::vector<std::vector<real_type>>{ std::vector<real_type>{} }, alpha, rho, w, data)),
                  "The support vectors must contain at least one feature!");
     // all support vector must have the same number of features
-    EXPECT_DEATH(std::ignore = (svm.predict_values(params, std::vector<std::vector<real_type>>{ std::vector<real_type>{ real_type{ 1.0 } }, std::vector<real_type>{ real_type{ 1.0 }, real_type{ 2.0 } } }, alpha, real_type{ 0.0 }, w, data)),
+    EXPECT_DEATH(std::ignore = (svm.predict_values(params, std::vector<std::vector<real_type>>{ std::vector<real_type>{ real_type{ 1.0 } }, std::vector<real_type>{ real_type{ 1.0 }, real_type{ 2.0 } } }, alpha, rho, w, data)),
                  "All support vectors must have the same number of features!");
 
-    // number of support vectors and weights must be the same
-    EXPECT_DEATH(std::ignore = (svm.predict_values(params, data, std::vector<real_type>{ real_type{ 1.0 } }, real_type{ 0.0 }, w, data)),
+    // at least one weight vector must be present
+    EXPECT_DEATH(std::ignore = (svm.predict_values(params, data, std::vector<std::vector<real_type>>{}, rho, w, data)),
+                 ::testing::HasSubstr("The alpha vectors (weights) must not be empty!"));
+    // empty weights vector is not allowed
+    EXPECT_DEATH(std::ignore = (svm.predict_values(params, data, std::vector<std::vector<real_type>>(rho.size()), rho, w, data)),
+                 "The alpha vectors must contain at least one weight!");
+    // all weight vectors must have the same number of values
+    EXPECT_DEATH(std::ignore = (svm.predict_values(params, data, std::vector<std::vector<real_type>>{ std::vector<real_type>{ real_type{ 1.0 } }, std::vector<real_type>{ real_type{ 1.0 }, real_type{ 2.0 } } }, rho, w, data)),
+                 "All alpha vectors must have the same number of weights!");
+    // the number of values in the weight vector must be equal to the number of support vectors
+    EXPECT_DEATH(std::ignore = (svm.predict_values(params, data, std::vector<std::vector<real_type>>{ std::vector<real_type>{ real_type{ 1.0 } }, std::vector<real_type>{ real_type{ 1.0 } } }, rho, w, data)),
                  ::testing::HasSubstr("The number of support vectors (2) and number of weights (1) must be the same!"));
-    // either w must be empty or contain num features many entries
-    w.resize(1);
-    EXPECT_DEATH(std::ignore = (svm.predict_values(params, data, alpha, real_type{ 0.0 }, w, data)),
-                 ::testing::HasSubstr("Either w must be empty or contain exactly the same number of values (1) as features are present (2)!"));
+
+    // the number of rho values must be equal to the number of weight vectors
+    EXPECT_DEATH(std::ignore = (svm.predict_values(params, data, alpha, std::vector<real_type>{ real_type{ 1.0 } }, w, data)),
+                 ::testing::HasSubstr("The number of rho values (1) and the number of weights (2) must be the same!"));
+
+    // either w must be empty or contain num features many entries per weight vector
+    w = std::vector<std::vector<real_type>>{ std::vector<real_type>{ real_type{ 1.0 } }, std::vector<real_type>{ real_type{ 2.0 } } };
+    EXPECT_DEATH(std::ignore = (svm.predict_values(params, data, alpha, rho, w, data)),
+                 ::testing::HasSubstr("Either w must be empty or contain exactly the same number of values as features are present (2)!"));
+    // all vectors in w must have the same number of values
+    w = std::vector<std::vector<real_type>>{ std::vector<real_type>{ real_type{ 1.0 }, real_type{ 2.0 } }, std::vector<real_type>{ real_type{ 3.0 } } };
+    EXPECT_DEATH(std::ignore = (svm.predict_values(params, data, alpha, rho, w, data)),
+                 ::testing::HasSubstr("All w vectors must have the same number of values!"));
+    // either w must be empty or contain as many weight vectors as number of weight vectors
+    w = std::vector<std::vector<real_type>>{ std::vector<real_type>{ real_type{ 1.0 }, real_type{ 2.0 } } };
+    EXPECT_DEATH(std::ignore = (svm.predict_values(params, data, alpha, rho, w, data)),
+                 ::testing::HasSubstr("Either w must be empty or contain exactly the same number of vectors (1) as the alpha vector (2)!"));
+
     w.clear();
 
     // empty data points to predict is not allowed
-    EXPECT_DEATH(std::ignore = (svm.predict_values(params, data, alpha, real_type{ 0.0 }, w, std::vector<std::vector<real_type>>{})),
+    EXPECT_DEATH(std::ignore = (svm.predict_values(params, data, alpha, rho, w, std::vector<std::vector<real_type>>{})),
                  "The data points to predict must not be empty!");
     // empty data points to predict features are not allowed
-    EXPECT_DEATH(std::ignore = (svm.predict_values(params, data, alpha, real_type{ 0.0 }, w, std::vector<std::vector<real_type>>{ std::vector<real_type>{} })),
+    EXPECT_DEATH(std::ignore = (svm.predict_values(params, data, alpha, rho, w, std::vector<std::vector<real_type>>{ std::vector<real_type>{} })),
                  "The data points to predict must contain at least one feature!");
     // all data points to predict must have the same number of features
-    EXPECT_DEATH(std::ignore = (svm.predict_values(params, data, alpha, real_type{ 0.0 }, w, std::vector<std::vector<real_type>>{ std::vector<real_type>{ real_type{ 1.0 } }, std::vector<real_type>{ real_type{ 1.0 }, real_type{ 2.0 } } })),
+    EXPECT_DEATH(std::ignore = (svm.predict_values(params, data, alpha, rho, w, std::vector<std::vector<real_type>>{ std::vector<real_type>{ real_type{ 1.0 } }, std::vector<real_type>{ real_type{ 1.0 }, real_type{ 2.0 } } })),
                  "All data points to predict must have the same number of features!");
     // the number of features in the support vectors and data points to predict must be the same
-    EXPECT_DEATH(std::ignore = (svm.predict_values(params, data, alpha, real_type{ 0.0 }, w, std::vector<std::vector<real_type>>{ std::vector<real_type>{ real_type{ 1.0 } }, std::vector<real_type>{ real_type{ 2.0 } } })),
+    EXPECT_DEATH(std::ignore = (svm.predict_values(params, data, alpha, rho, w, std::vector<std::vector<real_type>>{ std::vector<real_type>{ real_type{ 1.0 } }, std::vector<real_type>{ real_type{ 2.0 } } })),
                  ::testing::HasSubstr("The number of features in the support vectors (2) must be the same as in the data points to predict (1)!"));
 }
 

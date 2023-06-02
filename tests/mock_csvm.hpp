@@ -17,19 +17,12 @@
 #include "plssvm/kernel_function_types.hpp"  // plssvm::kernel_function_type
 #include "plssvm/parameter.hpp"              // plssvm::parameter, plssvm::detail::parameter
 
+#include "utility.hpp"                       // util::generate_random_matrix, util::generate_random_vector
+
 #include "gmock/gmock.h"                     // MOCK_METHOD, ON_CALL, ::testing::{An, Return}
 
 #include <utility>                           // std::pair, std::forward
 #include <vector>                            // std::vector
-
-template <typename real_type>
-const std::pair<std::vector<std::vector<real_type>>, std::vector<real_type>> solve_system_of_linear_equations_fake_return{
-    { { real_type{ 1.0 }, real_type{ 2.0 }, real_type{ 3.0 }, real_type{ 4.0 }, real_type{ 5.0 } },
-      { real_type{ 1.0 }, real_type{ 2.0 }, real_type{ 3.0 }, real_type{ 4.0 }, real_type{ 5.0 } } },
-        { real_type{ 3.1415 }, real_type{ 2.7182 } } };
-
-template <typename real_type>
-const std::vector<real_type> predict_values_fake_return{ real_type{ -1.0 }, real_type{ -1.2 }, real_type{ -0.5 }, real_type{ 1.0 }, real_type{ 2.4 } };
 
 /**
  * @brief GTest mock class for the base CSVM class.
@@ -49,41 +42,42 @@ class mock_csvm final : public plssvm::csvm {
     // mock pure virtual functions
     MOCK_METHOD((std::pair<std::vector<std::vector<float>>, std::vector<float>>), solve_system_of_linear_equations, (const plssvm::detail::parameter<float> &, const std::vector<std::vector<float>> &, std::vector<std::vector<float>>, float, unsigned long long), (const, override));
     MOCK_METHOD((std::pair<std::vector<std::vector<double>>, std::vector<double>>), solve_system_of_linear_equations, (const plssvm::detail::parameter<double> &, const std::vector<std::vector<double>> &, std::vector<std::vector<double>>, double, unsigned long long), (const, override));
-    MOCK_METHOD(std::vector<float>, predict_values, (const plssvm::detail::parameter<float> &, const std::vector<std::vector<float>> &, const std::vector<float> &, float, std::vector<float> &, const std::vector<std::vector<float>> &), (const, override));
-    MOCK_METHOD(std::vector<double>, predict_values, (const plssvm::detail::parameter<double> &, const std::vector<std::vector<double>> &, const std::vector<double> &, double, std::vector<double> &, const std::vector<std::vector<double>> &), (const, override));
+    MOCK_METHOD(std::vector<std::vector<float>>, predict_values, (const plssvm::detail::parameter<float> &, const std::vector<std::vector<float>> &, const std::vector<std::vector<float>> &, const std::vector<float> &, std::vector<std::vector<float>> &, const std::vector<std::vector<float>> &), (const, override));
+    MOCK_METHOD(std::vector<std::vector<double>>, predict_values, (const plssvm::detail::parameter<double> &, const std::vector<std::vector<double>> &, const std::vector<std::vector<double>> &, const std::vector<double> &, std::vector<std::vector<double>> &, const std::vector<std::vector<double>> &), (const, override));
 
   private:
     void fake_functions() const {
+        // TODO: change 2 (dimensions) to 1 after binary classification optimization has been implemented!
         // clang-format off
         ON_CALL(*this, solve_system_of_linear_equations(
                            ::testing::An<const plssvm::detail::parameter<float> &>(),
                            ::testing::An<const std::vector<std::vector<float>> &>(),
                            ::testing::An<std::vector<std::vector<float>>>(),
                            ::testing::An<float>(),
-                           ::testing::An<unsigned long long>())).WillByDefault(::testing::Return(solve_system_of_linear_equations_fake_return<float>));
+                           ::testing::An<unsigned long long>())).WillByDefault(::testing::Return(std::make_pair(util::generate_random_matrix<float>(2, 6), util::generate_random_vector<float>(2))));  // number of labels doesn't matter
 
         ON_CALL(*this, solve_system_of_linear_equations(
                            ::testing::An<const plssvm::detail::parameter<double> &>(),
                            ::testing::An<const std::vector<std::vector<double>> &>(),
                            ::testing::An<std::vector<std::vector<double>>>(),
                            ::testing::An<double>(),
-                           ::testing::An<unsigned long long>())).WillByDefault(::testing::Return(solve_system_of_linear_equations_fake_return<double>));
+                           ::testing::An<unsigned long long>())).WillByDefault(::testing::Return(std::make_pair(util::generate_random_matrix<double>(2, 6), util::generate_random_vector<double>(2))));  // number of labels doesn't matter
 
         ON_CALL(*this, predict_values(
                            ::testing::An<const plssvm::detail::parameter<float> &>(),
                            ::testing::An<const std::vector<std::vector<float>> &>(),
+                           ::testing::An<const std::vector<std::vector<float>> &>(),
                            ::testing::An<const std::vector<float> &>(),
-                           ::testing::An<float>(),
-                           ::testing::An<std::vector<float> &>(),
-                           ::testing::An<const std::vector<std::vector<float>> &>())).WillByDefault(::testing::Return(predict_values_fake_return<float>));
+                           ::testing::An<std::vector<std::vector<float>> &>(),
+                           ::testing::An<const std::vector<std::vector<float>> &>())).WillByDefault(::testing::Return(util::generate_random_matrix<float>(6, 2)));
 
         ON_CALL(*this, predict_values(
                            ::testing::An<const plssvm::detail::parameter<double> &>(),
                            ::testing::An<const std::vector<std::vector<double>> &>(),
+                           ::testing::An<const std::vector<std::vector<double>> &>(),
                            ::testing::An<const std::vector<double> &>(),
-                           ::testing::An<double>(),
-                           ::testing::An<std::vector<double> &>(),
-                           ::testing::An<const std::vector<std::vector<double>> &>())).WillByDefault(::testing::Return(predict_values_fake_return<double>));
+                           ::testing::An<std::vector<std::vector<double>> &>(),
+                           ::testing::An<const std::vector<std::vector<double>> &>())).WillByDefault(::testing::Return(util::generate_random_matrix<double>(6, 2)));
         // clang-format on
     }
 };

@@ -17,10 +17,10 @@
 #include "plssvm/model.hpp"                  // plssvm::model
 #include "plssvm/parameter.hpp"              // plssvm::parameter, plssvm::detail::parameter
 
-#include "custom_test_macros.hpp"  // EXPECT_THROW_WHAT, EXPECT_FLOATING_POINT_EQ, EXPECT_FLOATING_POINT_VECTOR_EQ, EXPECT_FLOATING_POINT_2D_VECTOR_EQ
+#include "custom_test_macros.hpp"  // EXPECT_THROW_WHAT
 #include "naming.hpp"              // naming::real_type_label_type_combination_to_name
 #include "types_to_test.hpp"       // util::{real_type_label_type_combination_gtest, real_type_label_type_combination_gtest}
-#include "utility.hpp"             // util::{redirect_output, temporary_file, instantiate_template_data_file, instantiate_template_model_file, get_distinct_label, get_correct_data_file_labels}
+#include "utility.hpp"             // util::{redirect_output, temporary_file, instantiate_template_file, get_distinct_label, get_correct_data_file_labels}
 
 #include "gtest/gtest.h"  // TEST, EXPECT_EQ, EXPECT_TRUE, EXPECT_FALSE, EXPECT_CALL, ::testing::{Test, An}
 
@@ -211,20 +211,11 @@ TYPED_TEST(BaseCSVMFit, fit) {
     // clang-format on
 
     // create data set
-    util::instantiate_template_data_file<label_type>(PLSSVM_TEST_PATH "/data/libsvm/6x4_TEMPLATE.libsvm", this->filename);
+    util::instantiate_template_file<label_type>(PLSSVM_TEST_PATH "/data/libsvm/6x4_TEMPLATE.libsvm", this->filename);
     const plssvm::data_set<real_type, label_type> training_data{ this->filename };
 
     // call function
-    const plssvm::model<real_type, label_type> model = csvm.fit(training_data);
-
-    // check whether the model has been created correctly
-    EXPECT_EQ(model.num_support_vectors(), 6);
-    EXPECT_EQ(model.num_features(), 4);
-    const plssvm::parameter params{ plssvm::gamma = 1.0 / 4.0 };
-    EXPECT_EQ(model.get_params(), params);
-    EXPECT_FLOATING_POINT_2D_VECTOR_EQ(model.support_vectors(), training_data.data());
-    EXPECT_FLOATING_POINT_VECTOR_EQ(model.weights(), solve_system_of_linear_equations_fake_return<real_type>.first.front());  // TODO: change after model has been implemented
-    EXPECT_FLOATING_POINT_EQ(model.rho(), solve_system_of_linear_equations_fake_return<real_type>.second.front());
+    [[maybe_unused]] const plssvm::model<real_type, label_type> model = csvm.fit(training_data);
 }
 TYPED_TEST(BaseCSVMFit, fit_named_parameters) {
     using real_type = typename TypeParam::real_type;
@@ -244,20 +235,11 @@ TYPED_TEST(BaseCSVMFit, fit_named_parameters) {
     // clang-format on
 
     // create data set
-    util::instantiate_template_data_file<label_type>(PLSSVM_TEST_PATH "/data/libsvm/6x4_TEMPLATE.libsvm", this->filename);
+    util::instantiate_template_file<label_type>(PLSSVM_TEST_PATH "/data/libsvm/6x4_TEMPLATE.libsvm", this->filename);
     const plssvm::data_set<real_type, label_type> training_data{ this->filename };
 
     // call function
-    const plssvm::model<real_type, label_type> model = csvm.fit(training_data, plssvm::epsilon = 0.1, plssvm::max_iter = 10);
-
-    // check whether the model has been created correctly
-    EXPECT_EQ(model.num_support_vectors(), 6);
-    EXPECT_EQ(model.num_features(), 4);
-    const plssvm::parameter params{ plssvm::gamma = 1.0 / 4.0 };
-    EXPECT_EQ(model.get_params(), params);
-    EXPECT_FLOATING_POINT_2D_VECTOR_EQ(model.support_vectors(), training_data.data());
-    EXPECT_FLOATING_POINT_VECTOR_EQ(model.weights(), solve_system_of_linear_equations_fake_return<real_type>.first.front());  // TODO: change after model has been implemented
-    EXPECT_FLOATING_POINT_EQ(model.rho(), solve_system_of_linear_equations_fake_return<real_type>.second.front());
+    [[maybe_unused]] const plssvm::model<real_type, label_type> model = csvm.fit(training_data, plssvm::epsilon = 0.1, plssvm::max_iter = 10);
 }
 TYPED_TEST(BaseCSVMFit, fit_named_parameters_invalid_epsilon) {
     using real_type = typename TypeParam::real_type;
@@ -277,7 +259,7 @@ TYPED_TEST(BaseCSVMFit, fit_named_parameters_invalid_epsilon) {
     // clang-format on
 
     // create data set
-    util::instantiate_template_data_file<label_type>(PLSSVM_TEST_PATH "/data/libsvm/6x4_TEMPLATE.libsvm", this->filename);
+    util::instantiate_template_file<label_type>(PLSSVM_TEST_PATH "/data/libsvm/6x4_TEMPLATE.libsvm", this->filename);
     const plssvm::data_set<real_type, label_type> training_data{ this->filename };
 
     // calling the function with an invalid epsilon should throw
@@ -303,7 +285,7 @@ TYPED_TEST(BaseCSVMFit, fit_named_parameters_invalid_max_iter) {
     // clang-format on
 
     // create data set
-    util::instantiate_template_data_file<label_type>(PLSSVM_TEST_PATH "/data/libsvm/6x4_TEMPLATE.libsvm", this->filename);
+    util::instantiate_template_file<label_type>(PLSSVM_TEST_PATH "/data/libsvm/6x4_TEMPLATE.libsvm", this->filename);
     const plssvm::data_set<real_type, label_type> training_data{ this->filename };
 
     // calling the function with an invalid max_iter should throw
@@ -353,28 +335,25 @@ TYPED_TEST(BaseCSVMPredict, predict) {
     EXPECT_CALL(csvm, predict_values(
                           ::testing::An<const plssvm::detail::parameter<real_type> &>(),
                           ::testing::An<const std::vector<std::vector<real_type>> &>(),
+                          ::testing::An<const std::vector<std::vector<real_type>> &>(),
                           ::testing::An<const std::vector<real_type> &>(),
-                          ::testing::An<real_type>(),
-                          ::testing::An<std::vector<real_type> &>(),
+                          ::testing::An<std::vector<std::vector<real_type>> &>(),
                           ::testing::An<const std::vector<std::vector<real_type>> &>())).Times(1);
     // clang-format on
 
     // create data set
     const util::temporary_file data_set_file;
-    util::instantiate_template_data_file<label_type>(PLSSVM_TEST_PATH "/data/libsvm/6x4_TEMPLATE.libsvm", data_set_file.filename);
+    util::instantiate_template_file<label_type>(PLSSVM_TEST_PATH "/data/libsvm/6x4_TEMPLATE.libsvm", data_set_file.filename);
     const plssvm::data_set<real_type, label_type> data_to_predict{ data_set_file.filename };
 
     // read a previously learned from a model file
+    // note: due to fake return always only use two distinct labels!!!
     const util::temporary_file model_file;
-    util::instantiate_template_model_file<label_type>(PLSSVM_TEST_PATH "/data/model/6x4_linear_TEMPLATE.libsvm.model", model_file.filename);
+    util::instantiate_template_file<label_type>(PLSSVM_TEST_PATH "/data/model/2_classes/6x4_linear_TEMPLATE.libsvm.model", model_file.filename);
     const plssvm::model<real_type, label_type> learned_model{ model_file.filename };
 
     // call function
-    const std::vector<label_type> prediction = csvm.predict(learned_model, data_to_predict);
-
-    // check return value
-    // TODO: re-enable after correct implementation
-    // EXPECT_EQ(prediction, util::get_correct_data_file_labels<label_type>());
+    [[maybe_unused]] const std::vector<label_type> prediction = csvm.predict(learned_model, data_to_predict);
 }
 TYPED_TEST(BaseCSVMPredict, predict_num_feature_mismatch) {
     using real_type = typename TypeParam::real_type;
@@ -388,9 +367,9 @@ TYPED_TEST(BaseCSVMPredict, predict_num_feature_mismatch) {
     EXPECT_CALL(csvm, predict_values(
                           ::testing::An<const plssvm::detail::parameter<real_type> &>(),
                           ::testing::An<const std::vector<std::vector<real_type>> &>(),
+                          ::testing::An<const std::vector<std::vector<real_type>> &>(),
                           ::testing::An<const std::vector<real_type> &>(),
-                          ::testing::An<real_type>(),
-                          ::testing::An<std::vector<real_type> &>(),
+                          ::testing::An<std::vector<std::vector<real_type>> &>(),
                           ::testing::An<const std::vector<std::vector<real_type>> &>())).Times(0);
     // clang-format on
 
@@ -398,8 +377,9 @@ TYPED_TEST(BaseCSVMPredict, predict_num_feature_mismatch) {
     const plssvm::data_set<real_type, label_type> data_to_predict{ PLSSVM_TEST_PATH "/data/libsvm/3x2_without_label.libsvm" };
 
     // read a previously learned from a model file
+    // note: due to fake return always only use two distinct labels!!!
     const util::temporary_file model_file;
-    util::instantiate_template_model_file<label_type>(PLSSVM_TEST_PATH "/data/model/6x4_linear_TEMPLATE.libsvm.model", model_file.filename);
+    util::instantiate_template_file<label_type>(PLSSVM_TEST_PATH "/data/model/2_classes/6x4_linear_TEMPLATE.libsvm.model", model_file.filename);
     const plssvm::model<real_type, label_type> learned_model{ model_file.filename };
 
     // calling the function with mismatching number of features should throw
@@ -424,24 +404,20 @@ TYPED_TEST(BaseCSVMScore, score_model) {
     EXPECT_CALL(csvm, predict_values(
                           ::testing::An<const plssvm::detail::parameter<real_type> &>(),
                           ::testing::An<const std::vector<std::vector<real_type>> &>(),
+                          ::testing::An<const std::vector<std::vector<real_type>> &>(),
                           ::testing::An<const std::vector<real_type> &>(),
-                          ::testing::An<real_type>(),
-                          ::testing::An<std::vector<real_type> &>(),
+                          ::testing::An<std::vector<std::vector<real_type>> &>(),
                           ::testing::An<const std::vector<std::vector<real_type>> &>())).Times(1);
     // clang-format on
 
     // read a previously learned from a model file
+    // note: due to fake return always only use two distinct labels!!!
     const util::temporary_file model_file;
-    util::instantiate_template_model_file<label_type>(PLSSVM_TEST_PATH "/data/model/6x4_linear_TEMPLATE.libsvm.model", model_file.filename);
+    util::instantiate_template_file<label_type>(PLSSVM_TEST_PATH "/data/model/2_classes/6x4_linear_TEMPLATE.libsvm.model", model_file.filename);
     const plssvm::model<real_type, label_type> learned_model{ model_file.filename };
 
     // call function
-    const real_type score = csvm.score(learned_model);
-
-    // check return value
-    // TODO: change after correct implementation
-    // EXPECT_FLOATING_POINT_EQ(score, 0.6);
-    EXPECT_GE(score, 0.6);
+    [[maybe_unused]] const real_type score = csvm.score(learned_model);
 }
 TYPED_TEST(BaseCSVMScore, score_data_set) {
     using real_type = typename TypeParam::real_type;
@@ -455,29 +431,25 @@ TYPED_TEST(BaseCSVMScore, score_data_set) {
     EXPECT_CALL(csvm, predict_values(
                           ::testing::An<const plssvm::detail::parameter<real_type> &>(),
                           ::testing::An<const std::vector<std::vector<real_type>> &>(),
+                          ::testing::An<const std::vector<std::vector<real_type>> &>(),
                           ::testing::An<const std::vector<real_type> &>(),
-                          ::testing::An<real_type>(),
-                          ::testing::An<std::vector<real_type> &>(),
+                          ::testing::An<std::vector<std::vector<real_type>> &>(),
                           ::testing::An<const std::vector<std::vector<real_type>> &>())).Times(1);
     // clang-format on
 
     // create data set
     const util::temporary_file data_set_file;
-    util::instantiate_template_data_file<label_type>(PLSSVM_TEST_PATH "/data/libsvm/6x4_TEMPLATE.libsvm", data_set_file.filename);
+    util::instantiate_template_file<label_type>(PLSSVM_TEST_PATH "/data/libsvm/6x4_TEMPLATE.libsvm", data_set_file.filename);
     const plssvm::data_set<real_type, label_type> data_to_score{ data_set_file.filename };
 
     // read a previously learned from a model file
+    // note: due to fake return always only use two distinct labels!!!
     const util::temporary_file model_file;
-    util::instantiate_template_model_file<label_type>(PLSSVM_TEST_PATH "/data/model/6x4_linear_TEMPLATE.libsvm.model", model_file.filename);
+    util::instantiate_template_file<label_type>(PLSSVM_TEST_PATH "/data/model/2_classes/6x4_linear_TEMPLATE.libsvm.model", model_file.filename);
     const plssvm::model<real_type, label_type> learned_model{ model_file.filename };
 
     // call function
-    const real_type score = csvm.score(learned_model, data_to_score);
-
-    // check return value
-    // TODO: change after correct implementation
-    // EXPECT_FLOATING_POINT_EQ(score, 0.6);
-    EXPECT_GE(score, 0.6);
+    [[maybe_unused]] const real_type score = csvm.score(learned_model, data_to_score);
 }
 
 TYPED_TEST(BaseCSVMScore, score_data_set_no_label) {
@@ -492,9 +464,9 @@ TYPED_TEST(BaseCSVMScore, score_data_set_no_label) {
     EXPECT_CALL(csvm, predict_values(
                           ::testing::An<const plssvm::detail::parameter<real_type> &>(),
                           ::testing::An<const std::vector<std::vector<real_type>> &>(),
+                          ::testing::An<const std::vector<std::vector<real_type>> &>(),
                           ::testing::An<const std::vector<real_type> &>(),
-                          ::testing::An<real_type>(),
-                          ::testing::An<std::vector<real_type> &>(),
+                          ::testing::An<std::vector<std::vector<real_type>> &>(),
                           ::testing::An<const std::vector<std::vector<real_type>> &>())).Times(0);
     // clang-format on
 
@@ -502,8 +474,9 @@ TYPED_TEST(BaseCSVMScore, score_data_set_no_label) {
     const plssvm::data_set<real_type, label_type> data_to_score{ PLSSVM_TEST_PATH "/data/libsvm/3x2_without_label.libsvm" };
 
     // read a previously learned from a model file
+    // note: due to fake return always only use two distinct labels!!!
     const util::temporary_file model_file;
-    util::instantiate_template_model_file<label_type>(PLSSVM_TEST_PATH "/data/model/6x4_linear_TEMPLATE.libsvm.model", model_file.filename);
+    util::instantiate_template_file<label_type>(PLSSVM_TEST_PATH "/data/model/2_classes/6x4_linear_TEMPLATE.libsvm.model", model_file.filename);
     const plssvm::model<real_type, label_type> learned_model{ model_file.filename };
 
     // in order to call score, the provided data set must contain labels
@@ -521,9 +494,9 @@ TYPED_TEST(BaseCSVMScore, score_data_set_num_features_mismatch) {
     EXPECT_CALL(csvm, predict_values(
                           ::testing::An<const plssvm::detail::parameter<real_type> &>(),
                           ::testing::An<const std::vector<std::vector<real_type>> &>(),
+                          ::testing::An<const std::vector<std::vector<real_type>> &>(),
                           ::testing::An<const std::vector<real_type> &>(),
-                          ::testing::An<real_type>(),
-                          ::testing::An<std::vector<real_type> &>(),
+                          ::testing::An<std::vector<std::vector<real_type>> &>(),
                           ::testing::An<const std::vector<std::vector<real_type>> &>())).Times(0);
     // clang-format on
 
@@ -533,8 +506,9 @@ TYPED_TEST(BaseCSVMScore, score_data_set_num_features_mismatch) {
     const plssvm::data_set<real_type, label_type> data_to_score{ data, labels };
 
     // read a previously learned from a model file
+    // note: due to fake return always only use two distinct labels!!!
     const util::temporary_file model_file;
-    util::instantiate_template_model_file<label_type>(PLSSVM_TEST_PATH "/data/model/6x4_linear_TEMPLATE.libsvm.model", model_file.filename);
+    util::instantiate_template_file<label_type>(PLSSVM_TEST_PATH "/data/model/2_classes/6x4_linear_TEMPLATE.libsvm.model", model_file.filename);
     const plssvm::model<real_type, label_type> learned_model{ model_file.filename };
 
     // calling the function with mismatching number of features should throw

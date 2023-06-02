@@ -277,7 +277,9 @@ std::vector<std::vector<real_type>> csvm::predict_values_impl(const detail::para
     PLSSVM_ASSERT(!alpha.front().empty(), "The alpha vectors must contain at least one weight!");
     PLSSVM_ASSERT(std::all_of(alpha.cbegin(), alpha.cend(), [&alpha](const std::vector<real_type> &a) { return a.size() == alpha.front().size(); }), "All alpha vectors must have the same number of weights!");
     PLSSVM_ASSERT(support_vectors.size() == alpha.front().size(), "The number of support vectors ({}) and number of weights ({}) must be the same!", support_vectors.size(), alpha.front().size());
+    PLSSVM_ASSERT(rho.size() == alpha.size(), "The number of rho values ({}) and the number of weights ({}) must be the same!", rho.size(), alpha.size());
     PLSSVM_ASSERT(w.empty() || support_vectors.front().size() == w.front().size(), "Either w must be empty or contain exactly the same number of values as features are present ({})!", support_vectors.front().size());
+    PLSSVM_ASSERT(w.empty() || std::all_of(w.cbegin(), w.cend(), [&w](const std::vector<real_type> &vec) { return vec.size() == w.front().size(); }), "All w vectors must have the same number of values!");
     PLSSVM_ASSERT(w.empty() || alpha.size() == w.size(), "Either w must be empty or contain exactly the same number of vectors ({}) as the alpha vector ({})!", w.size(), alpha.size());
     PLSSVM_ASSERT(!predict_points.empty(), "The data points to predict must not be empty!");
     PLSSVM_ASSERT(!predict_points.front().empty(), "The data points to predict must contain at least one feature!");

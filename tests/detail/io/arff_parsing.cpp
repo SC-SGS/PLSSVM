@@ -16,7 +16,7 @@
 #include "../../custom_test_macros.hpp"      // EXPECT_FLOATING_POINT_2D_VECTOR_NEAR, EXPECT_THROW_WHAT
 #include "../../naming.hpp"                  // naming::real_type_label_type_combination_to_name
 #include "../../types_to_test.hpp"           // util::real_type_label_type_combination_gtest
-#include "../../utility.hpp"                 // util::{temporary_file, instantiate_template_data_file, get_correct_data_file_labels, get_distinct_label, generate_specific_matrix}
+#include "../../utility.hpp"                 // util::{temporary_file, instantiate_template_file, get_correct_data_file_labels, get_distinct_label, generate_specific_matrix}
 
 #include "fmt/core.h"                        // fmt::format
 #include "gmock/gmock-matchers.h"            // ::testing::HasSubstr
@@ -193,7 +193,7 @@ class ARFFParseDense : public ARFFParse<T>, protected util::temporary_file {
   protected:
     void SetUp() override {
         // create file used in this test fixture by instantiating the template file
-        util::instantiate_template_data_file<label_type>(PLSSVM_TEST_PATH "/data/arff/6x4_TEMPLATE.arff", this->filename);
+        util::instantiate_template_file<label_type>(PLSSVM_TEST_PATH "/data/arff/6x4_TEMPLATE.arff", this->filename);
     }
 
     using real_type = typename T::real_type;
@@ -216,7 +216,7 @@ class ARFFParseSparse : public ARFFParse<T>, protected util::temporary_file {
   protected:
     void SetUp() override {
         // create file used in this test fixture by instantiating the template file
-        util::instantiate_template_data_file<label_type>(PLSSVM_TEST_PATH "/data/arff/6x4_sparse_TEMPLATE.arff", this->filename);
+        util::instantiate_template_file<label_type>(PLSSVM_TEST_PATH "/data/arff/6x4_sparse_TEMPLATE.arff", this->filename);
     }
 
     using real_type = typename T::real_type;

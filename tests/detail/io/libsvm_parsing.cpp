@@ -16,7 +16,7 @@
 #include "../../custom_test_macros.hpp"      // EXPECT_FLOATING_POINT_2D_VECTOR_NEAR, EXPECT_FLOATING_POINT_VECTOR_NEAR, EXPECT_THROW_WHAT
 #include "../../naming.hpp"                  // naming::real_type_label_type_combination_to_name
 #include "../../types_to_test.hpp"           // util::{instantiate_template_file, real_type_label_type_combination_gtest}
-#include "../../utility.hpp"                 // util::{temporary_file, instantiate_template_data_file, get_correct_data_file_labels, get_distinct_label, generate_specific_matrix, generate_specific_sparse_matrix}
+#include "../../utility.hpp"                 // util::{temporary_file, instantiate_template_file, get_correct_data_file_labels, get_distinct_label, generate_specific_matrix, generate_specific_sparse_matrix}
 
 #include "fmt/core.h"                        // fmt::format
 #include "gmock/gmock-matchers.h"            // ::testing::HasSubstr
@@ -63,7 +63,7 @@ class LIBSVMParseDense : public ::testing::Test, protected util::temporary_file 
   protected:
     void SetUp() override {
         // create file used in this test fixture by instantiating the template file
-        util::instantiate_template_data_file<label_type>(PLSSVM_TEST_PATH "/data/libsvm/6x4_TEMPLATE.libsvm", this->filename);
+        util::instantiate_template_file<label_type>(PLSSVM_TEST_PATH "/data/libsvm/6x4_TEMPLATE.libsvm", this->filename);
     }
 
     using real_type = typename T::real_type;
@@ -86,7 +86,7 @@ class LIBSVMParseSparse : public ::testing::Test, protected util::temporary_file
   protected:
     void SetUp() override {
         // create file used in this test fixture by instantiating the template file
-        util::instantiate_template_data_file<label_type>(PLSSVM_TEST_PATH "/data/libsvm/6x4_sparse_TEMPLATE.libsvm", this->filename);
+        util::instantiate_template_file<label_type>(PLSSVM_TEST_PATH "/data/libsvm/6x4_sparse_TEMPLATE.libsvm", this->filename);
     }
 
     using real_type = typename TypeParam::real_type;
@@ -125,29 +125,6 @@ TYPED_TEST(LIBSVMParseDense, read) {
     EXPECT_FLOATING_POINT_2D_VECTOR_NEAR(data, this->correct_data);
     EXPECT_EQ(label, this->correct_label);
 }
-TYPED_TEST(LIBSVMParseDense, read_skip_lines) {
-    using current_real_type = typename TypeParam::real_type;
-    using current_label_type = typename TypeParam::label_type;
-
-    // parse the LIBSVM file
-    plssvm::detail::io::file_reader reader{ this->filename };
-    reader.read_lines('#');
-    // skip half of all lines
-    const std::size_t skipped = 3;
-    const auto [num_data_points, num_features, data, label] = plssvm::detail::io::parse_libsvm_data<current_real_type, current_label_type>(reader, skipped);
-
-    // check for correct sizes
-    ASSERT_EQ(num_data_points, reader.num_lines() - skipped);
-    ASSERT_EQ(num_features, 4);
-
-    // check for correct data
-    for (std::size_t i = 0; i < num_data_points; ++i) {
-        EXPECT_FLOATING_POINT_VECTOR_NEAR(data[i], this->correct_data[skipped + i]);
-    }
-    for (std::size_t i = 0; i < num_data_points; ++i) {
-        EXPECT_EQ(label[i], this->correct_label[skipped + i]);
-    }
-}
 
 TYPED_TEST(LIBSVMParseSparse, read) {
     using current_real_type = typename TypeParam::real_type;
@@ -165,29 +142,6 @@ TYPED_TEST(LIBSVMParseSparse, read) {
     // check for correct data
     EXPECT_FLOATING_POINT_2D_VECTOR_NEAR(data, this->correct_data);
     EXPECT_EQ(label, this->correct_label);
-}
-TYPED_TEST(LIBSVMParseSparse, read_skip_lines) {
-    using current_real_type = typename TypeParam::real_type;
-    using current_label_type = typename TypeParam::label_type;
-
-    // parse the LIBSVM file
-    plssvm::detail::io::file_reader reader{ this->filename };
-    reader.read_lines('#');
-    // skip half of all lines
-    const std::size_t skipped = 3;
-    const auto [num_data_points, num_features, data, label] = plssvm::detail::io::parse_libsvm_data<current_real_type, current_label_type>(reader, skipped);
-
-    // check for correct sizes
-    ASSERT_EQ(num_data_points, reader.num_lines() - skipped);
-    ASSERT_EQ(num_features, 4);
-
-    // check for correct data
-    for (std::size_t i = 0; i < num_data_points; ++i) {
-        EXPECT_FLOATING_POINT_VECTOR_NEAR(data[i], this->correct_data[i + skipped]);
-    }
-    for (std::size_t i = 0; i < num_data_points; ++i) {
-        EXPECT_EQ(label[i], this->correct_label[i + skipped]);
-    }
 }
 
 TYPED_TEST(LIBSVMParse, read_without_label) {
@@ -369,18 +323,6 @@ TYPED_TEST(LIBSVMParseDeathTest, invalid_file_reader) {
     const plssvm::detail::io::file_reader reader{};
     EXPECT_DEATH(std::ignore = (plssvm::detail::io::parse_libsvm_data<current_real_type, current_label_type>(reader)),
                  "The file_reader is currently not associated with a file!");
-}
-TYPED_TEST(LIBSVMParseDeathTest, skip_too_many_lines) {
-    using current_real_type = typename TypeParam::real_type;
-    using current_label_type = typename TypeParam::label_type;
-
-    // parse LIBSVM file
-    const std::string filename = PLSSVM_TEST_PATH "/data/libsvm/5x4.libsvm";
-    plssvm::detail::io::file_reader reader{ filename };
-    reader.read_lines('#');
-    // try to skip more lines than are present in the data file
-    EXPECT_DEATH(std::ignore = (plssvm::detail::io::parse_libsvm_data<current_real_type, current_label_type>(reader, 6)),
-                 "Tried to skipp 6 lines, but only 5 are present!");
 }
 
 template <typename T>

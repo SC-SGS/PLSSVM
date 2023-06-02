@@ -215,7 +215,18 @@ template <typename T>
 }
 
 /**
- * @brief Replace the label placeholders in input data @p template_filename with the labels based on the template type @p T and
+ * @brief Get the number of distinct labels based on the provided label type.
+ * @details Same as `util::get_distinct_label<T>().size()`.
+ * @tparam T the label type
+ * @return the number distinct labels (`[[nodiscard]]`)
+ */
+template <typename T>
+[[nodiscard]] inline std::size_t get_num_classes() {
+    return get_distinct_label<T>().size();
+}
+
+/**
+ * @brief Replace the label placeholders in input @p template_filename with the labels based on the template type @p T and
  *        write the instantiated template file to @p output_filename.
  * @details The template files contain four label placeholder. If less than four distinct labels are given, the last placeholders share the same label.
  * @tparam T the type of the labels to instantiate the file for
@@ -223,7 +234,7 @@ template <typename T>
  * @param[in] output_filename the file to save the instantiate template to
  */
 template <typename T>
-inline void instantiate_template_data_file(const std::string &template_filename, const std::string &output_filename) {
+inline void instantiate_template_file(const std::string &template_filename, const std::string &output_filename) {
     // check whether the template_file exists
     if (!std::filesystem::exists(template_filename)) {
         FAIL() << fmt::format("The template file {} does not exist!", template_filename);
@@ -247,7 +258,7 @@ inline void instantiate_template_data_file(const std::string &template_filename,
 }
 /**
  * @brief Get the label vector that is described in the input data template files.
- * @details Works according to the `instantiate_template_data_file` function.
+ * @details Works according to the `instantiate_template_file` function.
  * @tparam T the type of the labels
  * @return the correct label vector with respect to the input data template files (`[[nodiscard]]``)
  */
@@ -287,37 +298,11 @@ template <typename T>
     return distribution;
 }
 
-}
+}  // namespace detail
 
 /**
- * @brief Replace the label placeholders in model @p template_filename with the labels based on the template type @p T and
- *        write the instantiated template file to @p output_filename.
- * @details The template files contain four label placeholder. If less than four distinct labels are given, the last placeholders share the same label.
- * @tparam T the type of the labels to instantiate the file for
- * @param[in] template_filename the file used as template
- * @param[in] output_filename the file to save the instantiate template to
- */
-template <typename T>
-inline void instantiate_template_model_file(const std::string &template_filename, const std::string &output_filename) {
-    // check whether the template_file exists
-    if (!std::filesystem::exists(template_filename)) {
-        FAIL() << fmt::format("The template file {} does not exist!", template_filename);
-    }
-    // get the distinct labels based on the current label type
-    const std::vector<T> labels = util::get_distinct_label<T>();
-    // read the data set template and replace the label placeholder with the correct labels
-    std::ifstream input{ template_filename };
-    std::string str((std::istreambuf_iterator<char>(input)), std::istreambuf_iterator<char>());
-    plssvm::detail::replace_all(str, "NUM_LABEL_PLACEHOLDER", fmt::format("{}", labels.size()));
-    plssvm::detail::replace_all(str, "LABEL_PLACEHOLDER", fmt::format("{}", fmt::join(labels, " ")));
-    plssvm::detail::replace_all(str, "NUM_SV_PLACEHOLDER", fmt::format("{}", fmt::join(detail::calculate_model_file_label_distribution<T>(6), " ")));
-    // write the data set with the correct labels to the temporary file
-    std::ofstream out{ output_filename };
-    out << str;
-}
-/**
  * @brief Get the label vector that is described in the model template files.
- * @details Works according to the `instantiate_template_model_file` function.
+ * @details Works according to the `instantiate_template_file` function.
  * @tparam T the type of the labels
  * @return the correct label vector with respect to the model template files (`[[nodiscard]]``)
  */
@@ -397,8 +382,8 @@ template <typename T>
 
     std::vector<std::vector<T>> matrix(rows, std::vector<T>(cols));
     for (std::size_t i = 0; i < rows; ++i) {
-        for (std::size_t j = 1;  j <= cols; ++j) {
-            matrix[i][j - 1] = rows + cols / T{ 10.0 };
+        for (std::size_t j = 1; j <= cols; ++j) {
+            matrix[i][j - 1] = i + j / T{ 10.0 };
         }
     }
 
@@ -425,8 +410,8 @@ template <typename T>
     // generate sparse matrix
     std::vector<std::vector<T>> matrix(rows, std::vector<T>(cols));
     for (std::size_t i = 0; i < rows; ++i) {
-        for (std::size_t j = 1;  j <= cols; ++j) {
-            matrix[i][j - 1] = rows + cols / T{ 10.0 };
+        for (std::size_t j = 1; j <= cols; ++j) {
+            matrix[i][j - 1] = i + j / T{ 10.0 };
         }
         // remove half of the created values randomly
         for (std::size_t j = 0; j < cols / 2; ++j) {
