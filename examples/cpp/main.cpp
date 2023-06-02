@@ -25,7 +25,10 @@ int main() {
         std::cout << "model accuracy: " << model_accuracy << std::endl;
 
         // predict the labels
-        const std::vector<int> label = svm->predict(model, test_data);
+        const std::vector<int> predicted_label = svm->predict(model, test_data);
+        // output a more complete classification report
+        const std::vector<int> &correct_label = test_data.labels().value();
+        std::cout << plssvm::classification_report{ correct_label, predicted_label } << std::endl;
 
         // write model file to disk
         model.save("model_file.libsvm");

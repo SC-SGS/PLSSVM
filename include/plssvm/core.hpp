@@ -16,6 +16,8 @@
 #include "plssvm/csvm.hpp"                                  // the base C-SVM every backend is inheriting from
 #include "plssvm/csvm_factory.hpp"                          // a factory function to instantiate a C-SVM using a runtime backend; includes the available backend C-SVMs
 
+#include "plssvm/classification_report.hpp"                 // reports different metrics (precision, recall, f1 score, and support) for the different classes after scoring
+
 #include "plssvm/constants.hpp"                             // verbosity flag und compile-time constants
 #include "plssvm/parameter.hpp"                             // the C-SVM parameter
 

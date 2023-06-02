@@ -67,20 +67,14 @@ int main(int argc, char *argv[]) {
 
             // print achieved accuracy (if possible)
             if (data.has_labels()) {
+                // generate the classification report
                 const std::vector<label_type> &correct_labels = data.labels().value();
-                std::size_t correct{ 0 };
-                for (typename std::vector<label_type>::size_type i = 0; i < predicted_labels.size(); ++i) {
-                    // check whether prediction is correct
-                    if (predicted_labels[i] == correct_labels[i]) {
-                        ++correct;
-                    }
-                }
-                // print accuracy
-                plssvm::detail::log(plssvm::verbosity_level::full | plssvm::verbosity_level::libsvm,
-                                    "Accuracy = {:.2f}% ({}/{}) (classification)\n",
-                                    static_cast<real_type>(correct) / static_cast<real_type>(data.num_data_points()) * real_type{ 100 },
-                                    correct,
-                                    data.num_data_points());
+                const plssvm::classification_report report{ correct_labels, predicted_labels };
+
+                // print complete report
+                plssvm::detail::log(plssvm::verbosity_level::full, "\n{}\n", report);
+                // print only accuracy for LIBSVM conformity
+                plssvm::detail::log(plssvm::verbosity_level::libsvm, "{} (classification)\n", report.accuracy());
             }
         }, plssvm::detail::cmd::data_set_factory(cmd_parser));
 

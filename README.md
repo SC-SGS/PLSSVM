@@ -507,7 +507,10 @@ int main() {
         std::cout << "model accuracy: " << model_accuracy << std::endl;
 
         // predict the labels
-        const std::vector<int> label = svm->predict(model, test_data);
+        const std::vector<int> predicted_label = svm->predict(model, test_data);
+        // output a more complete classification report
+        const std::vector<int> &correct_label = test_data.labels().value();
+        std::cout << plssvm::classification_report{ correct_label, predicted_label } << std::endl;
 
         // write model file to disk
         model.save("model_file.libsvm");
@@ -540,10 +543,11 @@ target_link_libraries(prog PUBLIC plssvm::plssvm-all)
 
 ### Using the Python bindings
 
-Roughly the same can be achieved using our Python bindings with the following Python script:
+Roughly the same can be achieved using our Python bindings with the following Python script (note: needs [`sklearn`](https://scikit-learn.org/stable/)):
 
 ```python
 import plssvm
+from sklearn.metrics import classification_report
 
 try:
     # create a new C-SVM parameter set, explicitly overriding the default kernel function
@@ -565,7 +569,10 @@ try:
     print("model accuracy: {}".format(model_accuracy))
   
     # predict labels
-    label = svm.predict(model, test_data)
+    predicted_label = svm.predict(model, test_data)
+    # output a more complete classification report
+    correct_label = test_data.labels()
+    print(classification_report(correct_label, predicted_label))
   
     # write model file to disk
     model.save("model_file.libsvm")
@@ -577,7 +584,7 @@ except RuntimeError as e:
 
 **Note:** it may be necessary to set `PYTHONPATH` to the `lib` folder in the PLSSVM install path.
 
-We also provide Python bindings for a `plssvm.SVC` class that offers the same interface as the  [`sklearn.svm.SVC`](https://scikit-learn.org/stable/modules/generated/sklearn.svm.SVC.html) class.
+We also provide Python bindings for a `plssvm.SVC` class that offers the same interface as the [`sklearn.svm.SVC`](https://scikit-learn.org/stable/modules/generated/sklearn.svm.SVC.html) class.
 Note that currently not all functionality has been implemented in PLSSVM.
 The respective functions will throw a Python `AttributeError` if called.
 
