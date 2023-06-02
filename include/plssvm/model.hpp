@@ -191,7 +191,7 @@ model<T, U>::model(const std::string &filename) {
     std::vector<std::vector<real_type>> support_vectors;
 
     // parse libsvm model data
-    std::tie(num_support_vectors_, num_features_, support_vectors, *alpha_ptr_) = detail::io::parse_libsvm_model_data<real_type>(reader, std::set(labels.cbegin(), labels.cend()).size(), num_header_lines); // TODO: better?
+    std::tie(num_support_vectors_, num_features_, support_vectors, *alpha_ptr_) = detail::io::parse_libsvm_model_data<real_type>(reader, std::set(labels.cbegin(), labels.cend()).size(), num_header_lines);
 
     // create data set
     data_ = data_set<real_type, label_type>{ std::move(support_vectors), std::move(labels) };
