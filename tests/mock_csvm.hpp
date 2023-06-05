@@ -47,21 +47,21 @@ class mock_csvm final : public plssvm::csvm {
 
   private:
     void fake_functions() const {
-        // TODO: change 2 (dimensions) to 1 after binary classification optimization has been implemented!
+        // note: for BINARY classification only!
         // clang-format off
         ON_CALL(*this, solve_system_of_linear_equations(
                            ::testing::An<const plssvm::detail::parameter<float> &>(),
                            ::testing::An<const std::vector<std::vector<float>> &>(),
                            ::testing::An<std::vector<std::vector<float>>>(),
                            ::testing::An<float>(),
-                           ::testing::An<unsigned long long>())).WillByDefault(::testing::Return(std::make_pair(util::generate_random_matrix<float>(2, 6), util::generate_random_vector<float>(2))));  // number of labels doesn't matter
+                           ::testing::An<unsigned long long>())).WillByDefault(::testing::Return(std::make_pair(util::generate_random_matrix<float>(1, 6), util::generate_random_vector<float>(2))));  // number of labels doesn't matter
 
         ON_CALL(*this, solve_system_of_linear_equations(
                            ::testing::An<const plssvm::detail::parameter<double> &>(),
                            ::testing::An<const std::vector<std::vector<double>> &>(),
                            ::testing::An<std::vector<std::vector<double>>>(),
                            ::testing::An<double>(),
-                           ::testing::An<unsigned long long>())).WillByDefault(::testing::Return(std::make_pair(util::generate_random_matrix<double>(2, 6), util::generate_random_vector<double>(2))));  // number of labels doesn't matter
+                           ::testing::An<unsigned long long>())).WillByDefault(::testing::Return(std::make_pair(util::generate_random_matrix<double>(1, 6), util::generate_random_vector<double>(2))));  // number of labels doesn't matter
 
         ON_CALL(*this, predict_values(
                            ::testing::An<const plssvm::detail::parameter<float> &>(),
@@ -69,7 +69,7 @@ class mock_csvm final : public plssvm::csvm {
                            ::testing::An<const std::vector<std::vector<float>> &>(),
                            ::testing::An<const std::vector<float> &>(),
                            ::testing::An<std::vector<std::vector<float>> &>(),
-                           ::testing::An<const std::vector<std::vector<float>> &>())).WillByDefault(::testing::Return(util::generate_random_matrix<float>(6, 2)));
+                           ::testing::An<const std::vector<std::vector<float>> &>())).WillByDefault(::testing::Return(util::generate_random_matrix<float>(6, 1)));
 
         ON_CALL(*this, predict_values(
                            ::testing::An<const plssvm::detail::parameter<double> &>(),
@@ -77,7 +77,7 @@ class mock_csvm final : public plssvm::csvm {
                            ::testing::An<const std::vector<std::vector<double>> &>(),
                            ::testing::An<const std::vector<double> &>(),
                            ::testing::An<std::vector<std::vector<double>> &>(),
-                           ::testing::An<const std::vector<std::vector<double>> &>())).WillByDefault(::testing::Return(util::generate_random_matrix<double>(6, 2)));
+                           ::testing::An<const std::vector<std::vector<double>> &>())).WillByDefault(::testing::Return(util::generate_random_matrix<double>(6, 1)));
         // clang-format on
     }
 };

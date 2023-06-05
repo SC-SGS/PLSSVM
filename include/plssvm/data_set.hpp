@@ -651,7 +651,7 @@ void data_set<T, U>::create_mapping() {
     label_mapper mapper{ *labels_ptr_ };
 
     // convert input labels to now mapped values
-    typename decltype(y_ptr_)::element_type tmp(mapper.num_mappings(), std::vector<real_type>(labels_ptr_->size(), real_type{ -1.0 }));
+    typename decltype(y_ptr_)::element_type tmp(mapper.num_mappings() == 2 ? 1 : mapper.num_mappings(), std::vector<real_type>(labels_ptr_->size(), real_type{ -1.0 }));
 
     #pragma omp parallel for collapse(2)
     for (typename std::vector<std::vector<real_type>>::size_type label = 0; label < tmp.size(); ++label) {

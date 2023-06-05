@@ -79,10 +79,10 @@ TYPED_TEST(Model, construct) {
     };
     const std::vector<real_type> all_rhos{ real_type{ 0.32260160011873423 }, real_type{ 0.401642656885171 }, real_type{ 0.05160647594201395 }, real_type{ 1.224149267054074 } };
 
-    ASSERT_EQ(model.weights().size(), num_classes_for_label_type);
+    ASSERT_EQ(model.weights().size(), num_classes_for_label_type == 2 ? 1 : num_classes_for_label_type);
     switch (num_classes_for_label_type) {
         case 2:
-            EXPECT_FLOATING_POINT_2D_VECTOR_EQ(model.weights(), (std::vector<std::vector<real_type>>{ all_weights[0], all_weights[1] }));
+            EXPECT_FLOATING_POINT_2D_VECTOR_EQ(model.weights(), (std::vector<std::vector<real_type>>{ all_weights[0] }));
             break;
         case 3:
             EXPECT_FLOATING_POINT_2D_VECTOR_EQ(model.weights(), (std::vector<std::vector<real_type>>{ all_weights[0], all_weights[1], all_weights[2] }));
@@ -95,10 +95,10 @@ TYPED_TEST(Model, construct) {
             break;
     }
 
-    ASSERT_EQ(model.rho().size(), num_classes_for_label_type);
+    ASSERT_EQ(model.rho().size(), num_classes_for_label_type == 2 ? 1 : num_classes_for_label_type);
     switch (num_classes_for_label_type) {
         case 2:
-            EXPECT_FLOATING_POINT_VECTOR_EQ(model.rho(), (std::vector<real_type>{ all_rhos[0], all_rhos[1] }));
+            EXPECT_FLOATING_POINT_VECTOR_EQ(model.rho(), (std::vector<real_type>{ all_rhos[0] }));
             break;
         case 3:
             EXPECT_FLOATING_POINT_VECTOR_EQ(model.rho(), (std::vector<real_type>{ all_rhos[0], all_rhos[1], all_rhos[2] }));
@@ -230,10 +230,10 @@ TYPED_TEST(Model, weights) {
         { real_type{ 4.3106819001e-02 }, real_type{ -9.1995171877e-02 }, real_type{ -1.0648352745e-01 }, real_type{ -2.7491435827e-02 }, real_type{ -4.3381768383e-02 }, real_type{ 2.2624508453e-01 } }
     };
 
-    ASSERT_EQ(model.weights().size(), num_classes_for_label_type);
+    ASSERT_EQ(model.weights().size(), num_classes_for_label_type == 2 ? 1 : num_classes_for_label_type);
     switch (num_classes_for_label_type) {
         case 2:
-            EXPECT_FLOATING_POINT_2D_VECTOR_EQ(model.weights(), (std::vector<std::vector<real_type>>{ all_weights[0], all_weights[1] }));
+            EXPECT_FLOATING_POINT_2D_VECTOR_EQ(model.weights(), (std::vector<std::vector<real_type>>{ all_weights[0] }));
             break;
         case 3:
             EXPECT_FLOATING_POINT_2D_VECTOR_EQ(model.weights(), (std::vector<std::vector<real_type>>{ all_weights[0], all_weights[1], all_weights[2] }));
@@ -260,10 +260,10 @@ TYPED_TEST(Model, rho) {
     // test for the correct rho (bias) value
     const std::vector<real_type> all_rhos{ real_type{ 0.32260160011873423 }, real_type{ 0.401642656885171 }, real_type{ 0.05160647594201395 }, real_type{ 1.224149267054074 } };
 
-    ASSERT_EQ(model.rho().size(), num_classes_for_label_type);
+    ASSERT_EQ(model.rho().size(), num_classes_for_label_type == 2 ? 1 : num_classes_for_label_type);
     switch (num_classes_for_label_type) {
         case 2:
-            EXPECT_FLOATING_POINT_VECTOR_EQ(model.rho(), (std::vector<real_type>{ all_rhos[0], all_rhos[1] }));
+            EXPECT_FLOATING_POINT_VECTOR_EQ(model.rho(), (std::vector<real_type>{ all_rhos[0] }));
             break;
         case 3:
             EXPECT_FLOATING_POINT_VECTOR_EQ(model.rho(), (std::vector<real_type>{ all_rhos[0], all_rhos[1], all_rhos[2] }));
@@ -310,7 +310,7 @@ TEST_P(ModelSave, save) {
     }
     regex_patterns.emplace_back("nr_class [0-9]+");
     regex_patterns.emplace_back("total_sv [0-9]+");
-    regex_patterns.emplace_back("rho [-+]?[0-9]*.?[0-9]+([eE][-+]?[0-9]+)? [-+]?[0-9]*.?[0-9]+([eE][-+]?[0-9]+)?");
+    regex_patterns.emplace_back("rho [-+]?[0-9]*.?[0-9]+([eE][-+]?[0-9]+)?");
     regex_patterns.emplace_back("label .+ .+");
     regex_patterns.emplace_back("nr_sv [0-9]+ [0-9]+");
     regex_patterns.emplace_back("SV");
@@ -339,7 +339,7 @@ TEST_P(ModelSave, save) {
         }
     }
     // only support vectors should be left -> check the remaining lines if they match the correct pattern
-    const std::string support_vector_pattern{ "[-+]?[0-9]*.?[0-9]+([eE][-+]?[0-9]+)? [-+]?[0-9]*.?[0-9]+([eE][-+]?[0-9]+)? ([0-9]*:[-+]?[0-9]*.?[0-9]+([eE][-+]?[0-9]+)? ?)*" };
+    const std::string support_vector_pattern{ "[-+]?[0-9]*.?[0-9]+([eE][-+]?[0-9]+)? ([0-9]*:[-+]?[0-9]*.?[0-9]+([eE][-+]?[0-9]+)? ?)*" };
     for (const std::string_view line : lines) {
         const std::regex reg(support_vector_pattern, std::regex::extended);
         EXPECT_TRUE(std::regex_match(std::string{ line }, reg)) << fmt::format(R"(Line "{}" doesn't match the regex pattern "{}".)", line, support_vector_pattern);

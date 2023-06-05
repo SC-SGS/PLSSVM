@@ -184,14 +184,15 @@ model<T, U>::model(const std::string &filename) {
 
     // parse the libsvm model header
     std::vector<label_type> labels{};
+    std::size_t num_classes{};
     std::size_t num_header_lines{};
-    std::tie(params_, *rho_ptr_, labels, num_header_lines) = detail::io::parse_libsvm_model_header<real_type, label_type, size_type>(reader.lines());
+    std::tie(params_, *rho_ptr_, labels, num_classes, num_header_lines) = detail::io::parse_libsvm_model_header<real_type, label_type, size_type>(reader.lines());
 
     // create empty support vectors and alpha vector
     std::vector<std::vector<real_type>> support_vectors;
 
     // parse libsvm model data
-    std::tie(num_support_vectors_, num_features_, support_vectors, *alpha_ptr_) = detail::io::parse_libsvm_model_data<real_type>(reader, std::set(labels.cbegin(), labels.cend()).size(), num_header_lines);
+    std::tie(num_support_vectors_, num_features_, support_vectors, *alpha_ptr_) = detail::io::parse_libsvm_model_data<real_type>(reader, num_classes == 2 ? 1 : num_classes, num_header_lines);
 
     // create data set
     data_ = data_set<real_type, label_type>{ std::move(support_vectors), std::move(labels) };

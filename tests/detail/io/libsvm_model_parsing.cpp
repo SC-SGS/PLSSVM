@@ -51,7 +51,7 @@ TYPED_TEST(LIBSVMModelHeaderParseValid, read_linear) {
     // parse the LIBSVM model file header
     plssvm::detail::io::file_reader reader{ template_file.filename };
     reader.read_lines('#');
-    const auto &[params, rho, label, header_lines] = plssvm::detail::io::parse_libsvm_model_header<real_type, label_type, size_type>(reader.lines());
+    const auto &[params, rho, label, num_classes, header_lines] = plssvm::detail::io::parse_libsvm_model_header<real_type, label_type, size_type>(reader.lines());
 
     // check for correctness
     // check parameter
@@ -63,10 +63,10 @@ TYPED_TEST(LIBSVMModelHeaderParseValid, read_linear) {
     EXPECT_TRUE(params.cost.is_default());
     // check remaining values
     const std::vector<real_type> all_rhos{ real_type{ 0.32260160011873423 }, real_type{ 0.401642656885171 }, real_type{ 0.05160647594201395 }, real_type{ 1.224149267054074 } };
-    ASSERT_EQ(rho.size(), num_classes_for_label_type);
+    ASSERT_EQ(rho.size(), num_classes_for_label_type == 2 ? 1 : num_classes_for_label_type);
     switch (num_classes_for_label_type) {
         case 2:
-            EXPECT_FLOATING_POINT_VECTOR_EQ(rho, (std::vector<real_type>{ all_rhos[0], all_rhos[1] }));
+            EXPECT_FLOATING_POINT_VECTOR_EQ(rho, (std::vector<real_type>{ all_rhos[0] }));
             break;
         case 3:
             EXPECT_FLOATING_POINT_VECTOR_EQ(rho, (std::vector<real_type>{ all_rhos[0], all_rhos[1], all_rhos[2] }));
@@ -79,6 +79,7 @@ TYPED_TEST(LIBSVMModelHeaderParseValid, read_linear) {
             break;
     }
     EXPECT_EQ(label, util::get_correct_model_file_labels<label_type>().first);
+    EXPECT_EQ(num_classes, num_classes_for_label_type);
     EXPECT_EQ(header_lines, 8);
 }
 TYPED_TEST(LIBSVMModelHeaderParseValid, read_polynomial) {
@@ -95,7 +96,7 @@ TYPED_TEST(LIBSVMModelHeaderParseValid, read_polynomial) {
     // parse the LIBSVM model file header
     plssvm::detail::io::file_reader reader{ template_file.filename };
     reader.read_lines('#');
-    const auto &[params, rho, label, header_lines] = plssvm::detail::io::parse_libsvm_model_header<real_type, label_type, size_type>(reader.lines());
+    const auto &[params, rho, label, num_classes, header_lines] = plssvm::detail::io::parse_libsvm_model_header<real_type, label_type, size_type>(reader.lines());
 
     // check for correctness
     // check parameter
@@ -110,10 +111,10 @@ TYPED_TEST(LIBSVMModelHeaderParseValid, read_polynomial) {
     EXPECT_TRUE(params.cost.is_default());
     // check remaining values
     const std::vector<real_type> all_rhos{ real_type{ 0.32260160011873423 }, real_type{ 0.401642656885171 }, real_type{ 0.05160647594201395 }, real_type{ 1.224149267054074 } };
-    ASSERT_EQ(rho.size(), num_classes_for_label_type);
+    ASSERT_EQ(rho.size(), num_classes_for_label_type == 2 ? 1 : num_classes_for_label_type);
     switch (num_classes_for_label_type) {
         case 2:
-            EXPECT_FLOATING_POINT_VECTOR_EQ(rho, (std::vector<real_type>{ all_rhos[0], all_rhos[1] }));
+            EXPECT_FLOATING_POINT_VECTOR_EQ(rho, (std::vector<real_type>{ all_rhos[0] }));
             break;
         case 3:
             EXPECT_FLOATING_POINT_VECTOR_EQ(rho, (std::vector<real_type>{ all_rhos[0], all_rhos[1], all_rhos[2] }));
@@ -126,6 +127,7 @@ TYPED_TEST(LIBSVMModelHeaderParseValid, read_polynomial) {
             break;
     }
     EXPECT_EQ(label, util::get_correct_model_file_labels<label_type>().first);
+    EXPECT_EQ(num_classes, num_classes_for_label_type);
     EXPECT_EQ(header_lines, 11);
 }
 TYPED_TEST(LIBSVMModelHeaderParseValid, read_rbf) {
@@ -142,7 +144,7 @@ TYPED_TEST(LIBSVMModelHeaderParseValid, read_rbf) {
     // parse the LIBSVM model file header
     plssvm::detail::io::file_reader reader{ template_file.filename };
     reader.read_lines('#');
-    const auto &[params, rho, label, header_lines] = plssvm::detail::io::parse_libsvm_model_header<real_type, label_type, size_type>(reader.lines());
+    const auto &[params, rho, label, num_classes, header_lines] = plssvm::detail::io::parse_libsvm_model_header<real_type, label_type, size_type>(reader.lines());
 
     // check for correctness
     // check parameter
@@ -155,10 +157,10 @@ TYPED_TEST(LIBSVMModelHeaderParseValid, read_rbf) {
     EXPECT_TRUE(params.cost.is_default());
     // check remaining values
     const std::vector<real_type> all_rhos{ real_type{ 0.32260160011873423 }, real_type{ 0.401642656885171 }, real_type{ 0.05160647594201395 }, real_type{ 1.224149267054074 } };
-    ASSERT_EQ(rho.size(), num_classes_for_label_type);
+    ASSERT_EQ(rho.size(), num_classes_for_label_type == 2 ? 1 : num_classes_for_label_type);
     switch (num_classes_for_label_type) {
         case 2:
-            EXPECT_FLOATING_POINT_VECTOR_EQ(rho, (std::vector<real_type>{ all_rhos[0], all_rhos[1] }));
+            EXPECT_FLOATING_POINT_VECTOR_EQ(rho, (std::vector<real_type>{ all_rhos[0] }));
             break;
         case 3:
             EXPECT_FLOATING_POINT_VECTOR_EQ(rho, (std::vector<real_type>{ all_rhos[0], all_rhos[1], all_rhos[2] }));
@@ -171,6 +173,7 @@ TYPED_TEST(LIBSVMModelHeaderParseValid, read_rbf) {
             break;
     }
     EXPECT_EQ(label, util::get_correct_model_file_labels<label_type>().first);
+    EXPECT_EQ(num_classes, num_classes_for_label_type);
     EXPECT_EQ(header_lines, 9);
 }
 
@@ -254,7 +257,20 @@ TYPED_TEST(LIBSVMModelHeaderParseInvalid, too_few_rho) {
     reader.read_lines('#');
     EXPECT_THROW_WHAT(std::ignore = (plssvm::detail::io::parse_libsvm_model_header<real_type, label_type, size_type>(reader.lines())),
                       plssvm::invalid_file_format_exception,
-                      "At least two rho values must be set, but only one was given!");
+                      "The number of rho values (rho) is 1, but the provided number of different labels is 3 (nr_class)!");
+}
+TYPED_TEST(LIBSVMModelHeaderParseInvalid, two_rho_values) {
+    using real_type = typename TypeParam::real_type;
+    using label_type = typename TypeParam::real_type;
+    using size_type = std::size_t;
+
+    // parse the LIBSVM model file
+    const std::string filename = PLSSVM_TEST_PATH "/data/model/invalid/two_rho_values.libsvm.model";
+    plssvm::detail::io::file_reader reader{ filename };
+    reader.read_lines('#');
+    EXPECT_THROW_WHAT(std::ignore = (plssvm::detail::io::parse_libsvm_model_header<real_type, label_type, size_type>(reader.lines())),
+                      plssvm::invalid_file_format_exception,
+                      "The number of rho values (rho) is 2, but must be 1 for binary classification!");
 }
 TYPED_TEST(LIBSVMModelHeaderParseInvalid, unrecognized_header_entry) {
     using real_type = typename TypeParam::real_type;
@@ -477,7 +493,7 @@ TYPED_TEST(LIBSVMModelHeaderParseInvalid, missing_sv) {
     reader.read_lines('#');
     EXPECT_THROW_WHAT(std::ignore = (plssvm::detail::io::parse_libsvm_model_header<real_type, label_type, size_type>(reader.lines())),
                       plssvm::invalid_file_format_exception,
-                      "Unrecognized header entry '-1.8568721894e-01 1.1365048527e-01 1:-1.1178275006e+00 2:-2.9087188881e+00 3:6.6638344270e-01 4:1.0978832704e+00'! Maybe SV is missing?");
+                      "Unrecognized header entry '-1.8568721894e-01 1:-1.1178275006e+00 2:-2.9087188881e+00 3:6.6638344270e-01 4:1.0978832704e+00'! Maybe SV is missing?");
 }
 TYPED_TEST(LIBSVMModelHeaderParseInvalid, missing_support_vectors) {
     using real_type = typename TypeParam::real_type;
@@ -535,12 +551,13 @@ TYPED_TEST(LIBSVMModelHeaderWrite, write_linear) {
 
     // define data to write
     const std::vector<label_type> distinct_label = util::get_distinct_label<label_type>();
+    const std::size_t num_alpha_values = distinct_label.size() == 2 ? 1 : distinct_label.size();
     const auto [label, num_sv] = util::get_correct_model_file_labels<label_type>();
     const std::vector<std::vector<real_type>> data = util::generate_specific_matrix<real_type>(label.size(), 3);
 
     // create necessary parameter
     const plssvm::parameter params{};
-    const std::vector<real_type> rho(distinct_label.size(), real_type{ 3.14159265359 });
+    const std::vector<real_type> rho(num_alpha_values, real_type{ 3.14159265359 });
     const plssvm::data_set<real_type, label_type> data_set{ std::vector<std::vector<real_type>>{ data }, std::vector<label_type>{ label } };
 
     // write the LIBSVM model file
@@ -574,6 +591,7 @@ TYPED_TEST(LIBSVMModelHeaderWrite, write_polynomial) {
 
     // define data to write
     const std::vector<label_type> distinct_label = util::get_distinct_label<label_type>();
+    const std::size_t num_alpha_values = distinct_label.size() == 2 ? 1 : distinct_label.size();
     const auto [label, num_sv] = util::get_correct_model_file_labels<label_type>();
     const std::vector<std::vector<real_type>> data = util::generate_specific_matrix<real_type>(label.size(), 3);
 
@@ -583,7 +601,7 @@ TYPED_TEST(LIBSVMModelHeaderWrite, write_polynomial) {
     params.degree = 3;
     params.gamma = 2.2;
     params.coef0 = 4.4;
-    const std::vector<real_type> rho(distinct_label.size(), real_type{ 3.14159265359 });
+    const std::vector<real_type> rho(num_alpha_values, real_type{ 3.14159265359 });
     const plssvm::data_set<real_type, label_type> data_set{ std::vector<std::vector<real_type>>{ data }, std::vector<label_type>{ label } };
 
     // write the LIBSVM model file
@@ -620,6 +638,7 @@ TYPED_TEST(LIBSVMModelHeaderWrite, write_rbf) {
 
     // define data to write
     const std::vector<label_type> distinct_label = util::get_distinct_label<label_type>();
+    const std::size_t num_alpha_values = distinct_label.size() == 2 ? 1 : distinct_label.size();
     const auto [label, num_sv] = util::get_correct_model_file_labels<label_type>();
     const std::vector<std::vector<real_type>> data = util::generate_specific_matrix<real_type>(label.size(), 3);
 
@@ -627,7 +646,7 @@ TYPED_TEST(LIBSVMModelHeaderWrite, write_rbf) {
     plssvm::parameter params{};
     params.kernel_type = plssvm::kernel_function_type::rbf;
     params.gamma = 0.4;
-    const std::vector<real_type> rho(distinct_label.size(), real_type{ 3.14159265359 });
+    const std::vector<real_type> rho(num_alpha_values, real_type{ 3.14159265359 });
     const plssvm::data_set<real_type, label_type> data_set{ std::vector<std::vector<real_type>>{ data }, std::vector<label_type>{ label } };
 
     // write the LIBSVM model file
@@ -688,7 +707,7 @@ TYPED_TEST(LIBSVMModelHeaderWriteDeathTest, write_header_invalid_number_of_rho_v
 
     // try writing the LIBSVM model header
     EXPECT_DEATH(std::ignore = (plssvm::detail::io::write_libsvm_model_header(out, params, rho, data_set)),
-                 ::testing::HasSubstr("The number of rho values (0) must be equal to the number of different labels (1)!"));
+                 ::testing::HasSubstr("The number of rho values (0) must be equal to the number of different labels (1) or must be 1 for binary classification!"));
 }
 
 template <typename T>
@@ -733,7 +752,7 @@ TYPED_TEST(LIBSVMModelDataParseDense, read) {
     reader.read_lines('#');
     // skip the first 8 lines, i.e., the model file header using the linear kernel function
     const std::size_t num_classes_for_label_type = util::get_num_classes<current_label_type >();
-    const auto [num_data_points, num_features, data, alpha] = plssvm::detail::io::parse_libsvm_model_data<current_real_type>(reader, num_classes_for_label_type, 8);
+    const auto [num_data_points, num_features, data, alpha] = plssvm::detail::io::parse_libsvm_model_data<current_real_type>(reader, num_classes_for_label_type == 2 ? 1 : num_classes_for_label_type, 8);
 
     // check for correct sizes
     ASSERT_EQ(num_data_points, 6);
@@ -743,10 +762,10 @@ TYPED_TEST(LIBSVMModelDataParseDense, read) {
     EXPECT_FLOATING_POINT_2D_VECTOR_NEAR(data, this->correct_data);
 
     // check for correct weights
-    ASSERT_EQ(alpha.size(), num_classes_for_label_type);
+    ASSERT_EQ(alpha.size(), num_classes_for_label_type == 2 ? 1 : num_classes_for_label_type);
     switch (num_classes_for_label_type) {
         case 2:
-            EXPECT_FLOATING_POINT_2D_VECTOR_EQ(alpha, (std::vector<std::vector<current_real_type>>{ this->correct_weights[0], this->correct_weights[1] }));
+            EXPECT_FLOATING_POINT_2D_VECTOR_EQ(alpha, (std::vector<std::vector<current_real_type>>{ this->correct_weights[0] }));
             break;
         case 3:
             EXPECT_FLOATING_POINT_2D_VECTOR_EQ(alpha, (std::vector<std::vector<current_real_type>>{ this->correct_weights[0], this->correct_weights[1], this->correct_weights[2] }));
@@ -768,7 +787,7 @@ TYPED_TEST(LIBSVMModelDataParse, zero_based_features) {
     const std::string filename = PLSSVM_TEST_PATH "/data/model/invalid/zero_based_features.libsvm.model";
     plssvm::detail::io::file_reader reader{ filename };
     reader.read_lines('#');
-    EXPECT_THROW_WHAT(std::ignore = (plssvm::detail::io::parse_libsvm_model_data<current_real_type>(reader, 2, 8)),
+    EXPECT_THROW_WHAT(std::ignore = (plssvm::detail::io::parse_libsvm_model_data<current_real_type>(reader, 1, 8)),
                       plssvm::invalid_file_format_exception,
                       "LIBSVM assumes a 1-based feature indexing scheme, but 0 was given!");
 }
@@ -779,7 +798,7 @@ TYPED_TEST(LIBSVMModelDataParse, empty) {
     const std::string filename = PLSSVM_TEST_PATH "/data/model/invalid/empty.libsvm.model";
     plssvm::detail::io::file_reader reader{ filename };
     reader.read_lines('#');
-    EXPECT_THROW_WHAT(std::ignore = (plssvm::detail::io::parse_libsvm_model_data<current_real_type>(reader, 2, 8)),
+    EXPECT_THROW_WHAT(std::ignore = (plssvm::detail::io::parse_libsvm_model_data<current_real_type>(reader, 1, 8)),
                       plssvm::invalid_file_format_exception,
                       "Can't parse file: no data points are given!");
 }
@@ -790,9 +809,9 @@ TYPED_TEST(LIBSVMModelDataParse, too_few_alpha_values) {
     const std::string filename = PLSSVM_TEST_PATH "/data/model/invalid/too_few_alpha_values.libsvm.model";
     plssvm::detail::io::file_reader reader{ filename };
     reader.read_lines('#');
-    EXPECT_THROW_WHAT(std::ignore = (plssvm::detail::io::parse_libsvm_model_data<current_real_type>(reader, 2, 8)),
+    EXPECT_THROW_WHAT(std::ignore = (plssvm::detail::io::parse_libsvm_model_data<current_real_type>(reader, 1, 8)),
                       plssvm::invalid_file_format_exception,
-                      "Can't parse file: need 2 alpha values, but only 1 were given!");
+                      "Can't parse file: need 1 alpha values, but only 0 were given!");
 }
 TYPED_TEST(LIBSVMModelDataParse, too_many_alpha_values) {
     using current_real_type = typename TypeParam::real_type;
@@ -801,7 +820,7 @@ TYPED_TEST(LIBSVMModelDataParse, too_many_alpha_values) {
     const std::string filename = PLSSVM_TEST_PATH "/data/model/invalid/too_many_alpha_values.libsvm.model";
     plssvm::detail::io::file_reader reader{ filename };
     reader.read_lines('#');
-    EXPECT_THROW_WHAT(std::ignore = (plssvm::detail::io::parse_libsvm_model_data<current_real_type>(reader, 2, 8)),
+    EXPECT_THROW_WHAT(std::ignore = (plssvm::detail::io::parse_libsvm_model_data<current_real_type>(reader, 1, 8)),
                       plssvm::invalid_file_format_exception,
                       "Can't parse file: too many alpha values were given!");
 }
@@ -812,7 +831,7 @@ TYPED_TEST(LIBSVMModelDataParse, feature_with_alpha_char_at_the_beginning) {
     const std::string filename = PLSSVM_TEST_PATH "/data/model/invalid/feature_with_alpha_char_at_the_beginning.libsvm.model";
     plssvm::detail::io::file_reader reader{ filename };
     reader.read_lines('#');
-    EXPECT_THROW_WHAT(std::ignore = (plssvm::detail::io::parse_libsvm_model_data<current_real_type>(reader, 2, 8)),
+    EXPECT_THROW_WHAT(std::ignore = (plssvm::detail::io::parse_libsvm_model_data<current_real_type>(reader, 1, 8)),
                       plssvm::invalid_file_format_exception,
                       fmt::format("Can't convert 'a-1.1178275006e+00' to a value of type {}!", plssvm::detail::arithmetic_type_name<current_real_type>()));
 }
@@ -823,7 +842,7 @@ TYPED_TEST(LIBSVMModelDataParse, index_with_alpha_char_at_the_beginning) {
     const std::string filename = PLSSVM_TEST_PATH "/data/model/invalid/index_with_alpha_char_at_the_beginning.libsvm.model";
     plssvm::detail::io::file_reader reader{ filename };
     reader.read_lines('#');
-    EXPECT_THROW_WHAT(std::ignore = (plssvm::detail::io::parse_libsvm_model_data<current_real_type>(reader, 2, 8)),
+    EXPECT_THROW_WHAT(std::ignore = (plssvm::detail::io::parse_libsvm_model_data<current_real_type>(reader, 1, 8)),
                       plssvm::invalid_file_format_exception,
                       "Can't convert ' !2' to a value of type unsigned long!");
 }
@@ -834,9 +853,9 @@ TYPED_TEST(LIBSVMModelDataParse, invalid_colon_at_the_beginning) {
     const std::string filename = PLSSVM_TEST_PATH "/data/model/invalid/invalid_colon_at_the_beginning.libsvm.model";
     plssvm::detail::io::file_reader reader{ filename };
     reader.read_lines('#');
-    EXPECT_THROW_WHAT(std::ignore = (plssvm::detail::io::parse_libsvm_model_data<current_real_type>(reader, 2, 8)),
+    EXPECT_THROW_WHAT(std::ignore = (plssvm::detail::io::parse_libsvm_model_data<current_real_type>(reader, 1, 8)),
                       plssvm::invalid_file_format_exception,
-                      "Can't parse file: need 2 alpha values, but only 0 were given!");
+                      "Can't parse file: need 1 alpha values, but only 0 were given!");
 }
 TYPED_TEST(LIBSVMModelDataParse, invalid_colon_in_the_middle) {
     using current_real_type = typename TypeParam::real_type;
@@ -845,7 +864,7 @@ TYPED_TEST(LIBSVMModelDataParse, invalid_colon_in_the_middle) {
     const std::string filename = PLSSVM_TEST_PATH "/data/model/invalid/invalid_colon_in_the_middle.libsvm.model";
     plssvm::detail::io::file_reader reader{ filename };
     reader.read_lines('#');
-    EXPECT_THROW_WHAT(std::ignore = (plssvm::detail::io::parse_libsvm_model_data<current_real_type>(reader, 2, 8)),
+    EXPECT_THROW_WHAT(std::ignore = (plssvm::detail::io::parse_libsvm_model_data<current_real_type>(reader, 1, 8)),
                       plssvm::invalid_file_format_exception,
                       "Can't convert ' ' to a value of type unsigned long!");
 }
@@ -856,7 +875,7 @@ TYPED_TEST(LIBSVMModelDataParse, missing_feature_value) {
     const std::string filename = PLSSVM_TEST_PATH "/data/model/invalid/missing_feature_value.libsvm.model";
     plssvm::detail::io::file_reader reader{ filename };
     reader.read_lines('#');
-    EXPECT_THROW_WHAT(std::ignore = (plssvm::detail::io::parse_libsvm_model_data<current_real_type>(reader, 2, 8)),
+    EXPECT_THROW_WHAT(std::ignore = (plssvm::detail::io::parse_libsvm_model_data<current_real_type>(reader, 1, 8)),
                       plssvm::invalid_file_format_exception,
                       fmt::format("Can't convert '' to a value of type {}!", plssvm::detail::arithmetic_type_name<current_real_type>()));
 }
@@ -867,7 +886,7 @@ TYPED_TEST(LIBSVMModelDataParse, missing_index_value) {
     const std::string filename = PLSSVM_TEST_PATH "/data/model/invalid/missing_index_value.libsvm.model";
     plssvm::detail::io::file_reader reader{ filename };
     reader.read_lines('#');
-    EXPECT_THROW_WHAT(std::ignore = (plssvm::detail::io::parse_libsvm_model_data<current_real_type>(reader, 2, 8)),
+    EXPECT_THROW_WHAT(std::ignore = (plssvm::detail::io::parse_libsvm_model_data<current_real_type>(reader, 1, 8)),
                       plssvm::invalid_file_format_exception,
                       "Can't convert ' ' to a value of type unsigned long!");
 }
@@ -878,7 +897,7 @@ TYPED_TEST(LIBSVMModelDataParse, non_increasing_indices) {
     const std::string filename = PLSSVM_TEST_PATH "/data/model/invalid/non_increasing_indices.libsvm.model";
     plssvm::detail::io::file_reader reader{ filename };
     reader.read_lines('#');
-    EXPECT_THROW_WHAT(std::ignore = (plssvm::detail::io::parse_libsvm_model_data<current_real_type>(reader, 2, 8)),
+    EXPECT_THROW_WHAT(std::ignore = (plssvm::detail::io::parse_libsvm_model_data<current_real_type>(reader, 1, 8)),
                       plssvm::invalid_file_format_exception,
                       "The features indices must be strictly increasing, but 3 is smaller or equal than 3!");
 }
@@ -889,7 +908,7 @@ TYPED_TEST(LIBSVMModelDataParse, non_strictly_increasing_indices) {
     const std::string filename = PLSSVM_TEST_PATH "/data/model/invalid/non_strictly_increasing_indices.libsvm.model";
     plssvm::detail::io::file_reader reader{ filename };
     reader.read_lines('#');
-    EXPECT_THROW_WHAT(std::ignore = (plssvm::detail::io::parse_libsvm_model_data<current_real_type>(reader, 2, 8)),
+    EXPECT_THROW_WHAT(std::ignore = (plssvm::detail::io::parse_libsvm_model_data<current_real_type>(reader, 1, 8)),
                       plssvm::invalid_file_format_exception,
                       "The features indices must be strictly increasing, but 2 is smaller or equal than 3!");
 }
@@ -903,10 +922,10 @@ TYPED_TEST(LIBSVMModelDataParseDeathTest, invalid_file_reader) {
 
     // open file_reader without associating it to a file
     const plssvm::detail::io::file_reader reader{};
-    EXPECT_DEATH(std::ignore = (plssvm::detail::io::parse_libsvm_model_data<current_real_type>(reader, 2, 0)),
+    EXPECT_DEATH(std::ignore = (plssvm::detail::io::parse_libsvm_model_data<current_real_type>(reader, 1, 0)),
                  "The file_reader is currently not associated with a file!");
 }
-TYPED_TEST(LIBSVMModelDataParseDeathTest, too_few_labels) {
+TYPED_TEST(LIBSVMModelDataParseDeathTest, too_few_alpha_values) {
     using current_real_type = typename TypeParam::real_type;
 
     // parse LIBSVM file
@@ -914,8 +933,19 @@ TYPED_TEST(LIBSVMModelDataParseDeathTest, too_few_labels) {
     plssvm::detail::io::file_reader reader{ filename };
     reader.read_lines('#');
     // try to skip more lines than are present in the data file
-    EXPECT_DEATH(std::ignore = (plssvm::detail::io::parse_libsvm_model_data<current_real_type>(reader, 1, 0)),
-                 "At least two different labels must be present!");
+    EXPECT_DEATH(std::ignore = (plssvm::detail::io::parse_libsvm_model_data<current_real_type>(reader, 0, 0)),
+                 "At least one alpha value must be present!");
+}
+TYPED_TEST(LIBSVMModelDataParseDeathTest, two_alpha_values) {
+    using current_real_type = typename TypeParam::real_type;
+
+    // parse LIBSVM file
+    const std::string filename = PLSSVM_TEST_PATH "/data/libsvm/5x4.libsvm";
+    plssvm::detail::io::file_reader reader{ filename };
+    reader.read_lines('#');
+    // try to skip more lines than are present in the data file
+    EXPECT_DEATH(std::ignore = (plssvm::detail::io::parse_libsvm_model_data<current_real_type>(reader, 2, 0)),
+                 ::testing::HasSubstr("Two alpha values may never be present (binary classification as special case only uses 1 alpha value)!"));
 }
 TYPED_TEST(LIBSVMModelDataParseDeathTest, skip_too_many_lines) {
     using current_real_type = typename TypeParam::real_type;
@@ -925,7 +955,7 @@ TYPED_TEST(LIBSVMModelDataParseDeathTest, skip_too_many_lines) {
     plssvm::detail::io::file_reader reader{ filename };
     reader.read_lines('#');
     // try to skip more lines than are present in the data file
-    EXPECT_DEATH(std::ignore = (plssvm::detail::io::parse_libsvm_model_data<current_real_type>(reader, 2, 15)),
+    EXPECT_DEATH(std::ignore = (plssvm::detail::io::parse_libsvm_model_data<current_real_type>(reader, 1, 15)),
                  "Tried to skipp 15 lines, but only 14 are present!");
 }
 
@@ -939,13 +969,14 @@ TYPED_TEST(LIBSVMModelDataWrite, write) {
 
     // define data to write
     const std::vector<label_type> distinct_label = util::get_distinct_label<label_type>();
+    const std::size_t num_alpha_values = distinct_label.size() == 2 ? 1 : distinct_label.size();
     const auto [label, num_sv] = util::get_correct_model_file_labels<label_type>();
     const std::vector<std::vector<real_type>> data = util::generate_specific_matrix<real_type>(label.size(), 3);
 
     // create necessary parameter
     const plssvm::parameter params{};
-    const std::vector<real_type> rho(distinct_label.size(), 3.1415);
-    const std::vector<std::vector<real_type>> alpha = util::generate_specific_matrix<real_type>(distinct_label.size(), data.size());
+    const std::vector<real_type> rho(num_alpha_values, real_type{ 3.1415 });
+    const std::vector<std::vector<real_type>> alpha = util::generate_specific_matrix<real_type>(num_alpha_values, data.size());
     const plssvm::data_set<real_type, label_type> data_set{ std::vector<std::vector<real_type>>{ data }, std::vector<label_type>{ label } };
 
     // write the LIBSVM model file
@@ -1010,8 +1041,10 @@ TYPED_TEST(LIBSVMModelWriteDeathTest, write_data_without_label) {
 
     // create necessary parameter
     const plssvm::parameter params{};
-    const std::vector<real_type> rho(util::get_num_classes<label_type>());
-    const std::vector<std::vector<real_type>> alpha(util::get_num_classes<label_type>(), std::vector<real_type>{ real_type{ 0.1 } });
+    const std::size_t num_classes = util::get_num_classes<label_type>();
+    const std::size_t num_alpha_values = num_classes == 2 ? 1 : num_classes;
+    const std::vector<real_type> rho(num_alpha_values);
+    const std::vector<std::vector<real_type>> alpha(num_alpha_values, std::vector<real_type>{ real_type{ 0.1 } });
     const plssvm::data_set<real_type, label_type> data_set{ std::vector<std::vector<real_type>>{ { real_type{ 0.0 } } } };
 
     // try writing the LIBSVM model header
@@ -1030,7 +1063,7 @@ TYPED_TEST(LIBSVMModelWriteDeathTest, write_data_invalid_number_of_rho_values) {
 
     // try writing the LIBSVM model header
     EXPECT_DEATH((plssvm::detail::io::write_libsvm_model_data(this->filename, params, rho, alpha, data_set)),
-                 ::testing::HasSubstr("The number of rho values (0) must be equal to the number of different labels (1)!"));
+                 ::testing::HasSubstr("The number of rho values (0) must be equal to the number of different labels (1) or must be 1 for binary classification!"));
 }
 TYPED_TEST(LIBSVMModelWriteDeathTest, write_data_invalid_number_of_weights) {
     using real_type = typename TypeParam::real_type;
@@ -1038,16 +1071,18 @@ TYPED_TEST(LIBSVMModelWriteDeathTest, write_data_invalid_number_of_weights) {
 
     // create necessary parameter
     const plssvm::parameter params{};
-    const std::vector<real_type> rho(util::get_num_classes<label_type>());
+    const std::size_t num_classes = util::get_num_classes<label_type>();
+    const std::size_t num_alpha_values = num_classes == 2 ? 1 : num_classes;
+    const std::vector<real_type> rho(num_alpha_values);
     const std::vector<label_type> label = util::get_correct_model_file_labels<label_type>().first;
-    const std::vector<std::vector<real_type>> alpha = util::generate_random_matrix<real_type>(1, label.size());
+    const std::vector<std::vector<real_type>> alpha = util::generate_random_matrix<real_type>(num_classes + 1, label.size());
     const std::vector<std::vector<real_type>> data = util::generate_specific_matrix<real_type>(label.size(), 1);
 
     const plssvm::data_set<real_type, label_type> data_set{ std::vector<std::vector<real_type>>{ data }, std::move(label) };
 
     // try writing the LIBSVM model header
     EXPECT_DEATH((plssvm::detail::io::write_libsvm_model_data(this->filename, params, rho, alpha, data_set)),
-                 ::testing::HasSubstr(fmt::format("The number of weight vectors (1) must be equal to the number of different labels ({})!", util::get_num_classes<label_type>())));
+                 ::testing::HasSubstr(fmt::format("The number of weight vectors ({}) must be equal to the number of different labels ({}) or must be 1 for binary classification!", num_classes + 1, num_classes)));
 }
 TYPED_TEST(LIBSVMModelWriteDeathTest, write_data_too_few_weights_in_class) {
     using real_type = typename TypeParam::real_type;
@@ -1055,17 +1090,26 @@ TYPED_TEST(LIBSVMModelWriteDeathTest, write_data_too_few_weights_in_class) {
 
     // create necessary parameter
     const plssvm::parameter params{};
-    const std::vector<real_type> rho(util::get_num_classes<label_type>());
+    const std::size_t num_classes = util::get_num_classes<label_type>();
+    const std::size_t num_alpha_values = num_classes == 2 ? 1 : num_classes;
+    const std::vector<real_type> rho(num_alpha_values);
     const std::vector<label_type> label = util::get_correct_model_file_labels<label_type>().first;
-    std::vector<std::vector<real_type>> alpha{ util::generate_random_matrix<real_type>(util::get_num_classes<label_type>(), label.size()) };
+    std::vector<std::vector<real_type>> alpha{ util::generate_random_matrix<real_type>(num_alpha_values, label.size()) };
     alpha.front().pop_back();
     const std::vector<std::vector<real_type>> data = util::generate_specific_matrix<real_type>(label.size(), 1);
 
     const plssvm::data_set<real_type, label_type> data_set{ std::vector<std::vector<real_type>>{ data }, std::move(label) };
 
-    // try writing the LIBSVM model header
-    EXPECT_DEATH((plssvm::detail::io::write_libsvm_model_data(this->filename, params, rho, alpha, data_set)),
-                 ::testing::HasSubstr(fmt::format("The number of weights per class must be equal!")));
+    if (num_classes == 2) {
+        // binary classification
+        // try writing the LIBSVM model header
+        EXPECT_DEATH((plssvm::detail::io::write_libsvm_model_data(this->filename, params, rho, alpha, data_set)),
+                     ::testing::HasSubstr(fmt::format("The number of weights (5) must be equal to the number of support vectors (6)!")));
+    } else {
+        // try writing the LIBSVM model header
+        EXPECT_DEATH((plssvm::detail::io::write_libsvm_model_data(this->filename, params, rho, alpha, data_set)),
+                     ::testing::HasSubstr(fmt::format("The number of weights per class must be equal!")));
+    }
 }
 TYPED_TEST(LIBSVMModelWriteDeathTest, write_data_invalid_number_of_weights_per_class) {
     using real_type = typename TypeParam::real_type;
@@ -1073,9 +1117,11 @@ TYPED_TEST(LIBSVMModelWriteDeathTest, write_data_invalid_number_of_weights_per_c
 
     // create necessary parameter
     const plssvm::parameter params{};
-    const std::vector<real_type> rho(util::get_num_classes<label_type>());
+    const std::size_t num_classes = util::get_num_classes<label_type>();
+    const std::size_t num_alpha_values = num_classes == 2 ? 1 : num_classes;
+    const std::vector<real_type> rho(num_alpha_values);
     const std::vector<label_type> label = util::get_correct_model_file_labels<label_type>().first;
-    const std::vector<std::vector<real_type>> alpha = util::generate_random_matrix<real_type>(util::get_num_classes<label_type>(), label.size() - 1);
+    const std::vector<std::vector<real_type>> alpha = util::generate_random_matrix<real_type>(num_alpha_values, label.size() - 1);
     const std::vector<std::vector<real_type>> data = util::generate_specific_matrix<real_type>(label.size(), 1);
 
     const plssvm::data_set<real_type, label_type> data_set{ std::vector<std::vector<real_type>>{ data }, std::move(label) };

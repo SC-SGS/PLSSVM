@@ -341,10 +341,21 @@ std::vector<label_type> csvm::predict(const model<real_type, label_type> &model,
     // convert predicted values to the correct labels
     std::vector<label_type> predicted_labels(votes.size());
 
-    #pragma omp parallel for default(none) shared(predicted_labels, votes, model) if (!std::is_same_v<label_type, bool>)
-    for (typename std::vector<label_type>::size_type i = 0; i < predicted_labels.size(); ++i) {
-        const std::size_t argmax = std::distance(votes[i].cbegin(), std::max_element(votes[i].cbegin(), votes[i].cend()));
-        predicted_labels[i] = model.data_.mapping_->get_label_by_mapped_index(argmax);
+    if (model.num_different_labels() == 2) {
+        // use sign in case of binary classification
+        #pragma omp parallel for default(none) shared(predicted_labels, votes, model) if (!std::is_same_v<label_type, bool>)
+        for (typename std::vector<label_type>::size_type i = 0; i < predicted_labels.size(); ++i) {
+            // map { 1, -1 } to { 0, 1 }
+            const std::size_t idx = std::abs(plssvm::operators::sign(votes[i][0]) - 1) / 2;
+            predicted_labels[i] = model.data_.mapping_->get_label_by_mapped_index(idx);
+        }
+    } else {
+        // use voting
+        #pragma omp parallel for default(none) shared(predicted_labels, votes, model) if (!std::is_same_v<label_type, bool>)
+        for (typename std::vector<label_type>::size_type i = 0; i < predicted_labels.size(); ++i) {
+            const std::size_t argmax = std::distance(votes[i].cbegin(), std::max_element(votes[i].cbegin(), votes[i].cend()));
+            predicted_labels[i] = model.data_.mapping_->get_label_by_mapped_index(argmax);
+        }
     }
 
     return predicted_labels;
