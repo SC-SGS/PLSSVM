@@ -31,6 +31,10 @@ The LS-SVMs reformulated the original problem such that it boils down to solving
 For this kind of problem many highly parallel algorithms and implementations are known.
 We decided to use the [Conjugate Gradient (CG)](https://en.wikipedia.org/wiki/Conjugate_gradient_method) to solve the system of linear equations.
 
+We support multi-class classification using the one vs. all (also one vs. rest or OAA).
+Therefore, our CG algorithm solves multiple right-hand sides simultaneously. 
+This has the implication that, except for binary classification, our model file isn't LIBSVM conform, since for each support vector #classes many weights must be saved instead of only #classes - 1.
+
 Since one of our main goals was performance, we parallelized the implicit matrix-vector multiplication inside the CG algorithm.
 To do so, we use multiple different frameworks to be able to target a broad variety of different hardware platforms.
 The currently available frameworks (also called backends in our PLSSVM implementation) are:
