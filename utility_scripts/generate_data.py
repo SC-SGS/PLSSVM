@@ -9,6 +9,7 @@
 ########################################################################################################################
 
 import argparse
+import math
 from timeit import default_timer as timer
 import os
 import humanize
@@ -27,7 +28,7 @@ parser.add_argument(
     "--output", help="the output file to write the samples to (without extension)")
 parser.add_argument(
     "--format", help="the file format; either arff, libsvm, or csv", default="libsvm")
-parser.add_argument("--problem", help="the problem to solve; one of: blobs, blobs_merged, planes, planes_merged, ball",
+parser.add_argument("--problem", help="the problem to solve; one of: blobs, blobs_merged, planes, ball",
                     default="blobs")
 parser.add_argument(
     "--samples", help="the number of training samples to generate", required=True, type=int)
@@ -63,19 +64,14 @@ elif args.problem == "blobs_merged":
     samples, labels = make_blobs(
         n_samples=num_samples, n_features=args.features, centers=args.classes, cluster_std=4.0)
 elif args.problem == "planes":
-    samples, labels = make_classification(n_samples=num_samples, n_features=args.features, n_redundant=0,
-                                          n_informative=args.classes, n_clusters_per_class=1, n_classes=args.classes)
-elif args.problem == "planes_merged":
-    samples, labels = make_classification(n_samples=num_samples, n_features=args.features, n_redundant=0,
-                                          n_informative=args.features, n_classes=args.classes)
+    samples, labels = make_classification(n_samples=num_samples, n_features=args.features,
+                                          n_informative=math.ceil(math.sqrt(args.classes)),
+                                          n_clusters_per_class=1, n_classes=args.classes)
 elif args.problem == "ball":
     samples, labels = make_gaussian_quantiles(
         n_samples=num_samples, n_features=args.features, n_classes=args.classes)
 else:
     raise RuntimeError("Invalid problem!")
-
-# map labels to -1 and 1
-labels = labels * 2 - 1
 
 minmax_scale(samples, feature_range=(-1, 1), copy=False)
 
@@ -105,15 +101,15 @@ if args.format == "libsvm":
     dump_svmlight_file(samples[:args.samples, :],
                        labels[:args.samples],
                        file,
-                       comment="This training data set has been created at {}\n{}x{}\n".format(
-                           datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"), args.samples, args.features),
+                       # comment="This training data set has been created at {}\n{}x{}\n".format(
+                       #     datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"), args.samples, args.features),
                        zero_based=False)
     if args.test_samples > 0:
         dump_svmlight_file(samples[args.samples:, :],
                            labels[args.samples:],
                            test_file,
-                           comment="This test data set has been created at {}\n{}x{}\n".format(
-                               datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"), args.test_samples, args.features),
+                           # comment="This test data set has been created at {}\n{}x{}\n".format(
+                           #     datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"), args.test_samples, args.features),
                            zero_based=False)
 elif args.format == "arff":
     import numpy
