@@ -27,8 +27,6 @@
 
 #include "fmt/core.h"  // fmt::format
 
-// TODO: performance tracker
-
 namespace plssvm {
 
 /**
