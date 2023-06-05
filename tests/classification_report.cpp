@@ -146,10 +146,13 @@ TEST_F(ClassificationReport, classification_report) {
 
     // check output
     const std::string correct_output =
-        "class   precision   recall   f1     support\n"
-        "    2   0.47        0.62     0.53   13\n"
-        "    0   0.50        0.60     0.55   15\n"
-        "    1   0.70        0.41     0.52   17\n\n"
-        "Accuracy = 53.33% (24/45)";
+        "               precision   recall     f1   support\n"
+        "           2        0.47     0.62   0.53        13\n"
+        "           0        0.50     0.60   0.55        15\n"
+        "           1        0.70     0.41   0.52        17\n"
+        "\n"
+        "    accuracy                        0.53        45\n"
+        "   macro avg        0.56     0.54   0.53        45\n"
+        "weighted avg        0.57     0.53   0.53        45\n";
     EXPECT_EQ(out.str(), correct_output);
 }
