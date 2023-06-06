@@ -185,7 +185,7 @@ TYPED_TEST(DataSetLabelMapper, construct) {
     const std::vector<label_type> distinct_labels = util::get_distinct_label<label_type>();
 
     // create label mapper
-    const label_mapper_type mapper{ util::get_correct_data_file_labels<label_type>() };
+    const label_mapper_type mapper{ distinct_labels };
 
     // test values
     EXPECT_EQ(mapper.num_mappings(), distinct_labels.size());
@@ -202,13 +202,13 @@ TYPED_TEST(DataSetLabelMapper, get_mapped_index_by_label) {
     using label_mapper_type = typename plssvm::data_set<real_type, label_type>::label_mapper;
 
     // the different labels
+    const std::vector<label_type> distinct_labels = util::get_distinct_label<label_type>();
     const std::vector<label_type> labels = util::get_correct_data_file_labels<label_type>();
 
     // create label mapper
-    const label_mapper_type mapper{ labels };
+    const label_mapper_type mapper{ distinct_labels };
 
     // test the number of mappings
-    const std::vector<label_type> distinct_labels = util::get_distinct_label<label_type>();
     ASSERT_EQ(mapper.num_mappings(), distinct_labels.size());
     for (std::size_t i = 0; i < labels.size(); ++i) {
         const std::size_t label_idx = std::distance(distinct_labels.cbegin(), std::find(distinct_labels.cbegin(), distinct_labels.cend(), labels[i]));
@@ -221,10 +221,10 @@ TYPED_TEST(DataSetLabelMapper, get_mapped_index_by_invalid_label) {
     using label_mapper_type = typename plssvm::data_set<real_type, label_type>::label_mapper;
 
     // the different labels
-    const std::vector<label_type> labels = util::get_correct_data_file_labels<label_type>();
+    const std::vector<label_type> distinct_labels = util::get_distinct_label<label_type>();
 
     // create label mapper
-    const label_mapper_type mapper{ labels };
+    const label_mapper_type mapper{ distinct_labels };
 
     // test the number of mappings
     if constexpr (!std::is_same_v<label_type, bool>) {
@@ -242,13 +242,13 @@ TYPED_TEST(DataSetLabelMapper, get_label_by_mapped_index) {
     using label_mapper_type = typename plssvm::data_set<real_type, label_type>::label_mapper;
 
     // the different labels
+    const std::vector<label_type> distinct_labels = util::get_distinct_label<label_type>();
     const std::vector<label_type> labels = util::get_correct_data_file_labels<label_type>();
 
     // create label mapper
-    const label_mapper_type mapper{ labels };
+    const label_mapper_type mapper{ distinct_labels };
 
     // test the number of mappings
-    const std::vector<label_type> distinct_labels = util::get_distinct_label<label_type>();
     ASSERT_EQ(mapper.num_mappings(), distinct_labels.size());
     for (std::size_t i = 0; i < labels.size(); ++i) {
         const std::size_t label_idx = std::distance(distinct_labels.cbegin(), std::find(distinct_labels.cbegin(), distinct_labels.cend(), labels[i]));
@@ -261,10 +261,10 @@ TYPED_TEST(DataSetLabelMapper, get_label_by_invalid_mapped_index) {
     using label_mapper_type = typename plssvm::data_set<real_type, label_type>::label_mapper;
 
     // the different labels
-    const std::vector<label_type> labels = util::get_correct_data_file_labels<label_type>();
+    const std::vector<label_type> distinct_labels = util::get_distinct_label<label_type>();
 
     // create label mapper
-    const label_mapper_type mapper{ labels };
+    const label_mapper_type mapper{ distinct_labels };
 
     // test the number of mappings
     EXPECT_THROW_WHAT(std::ignore = mapper.get_label_by_mapped_index(mapper.num_mappings() + 1),
@@ -278,10 +278,9 @@ TYPED_TEST(DataSetLabelMapper, num_mappings) {
 
     // the different labels
     const std::vector<label_type> different_labels = util::get_distinct_label<label_type>();
-    const std::vector<label_type> labels = util::get_correct_data_file_labels<label_type>();
 
     // create label mapper
-    const label_mapper_type mapper{ labels };
+    const label_mapper_type mapper{ different_labels };
 
     // test the number of mappings
     EXPECT_EQ(mapper.num_mappings(), different_labels.size());
@@ -293,13 +292,26 @@ TYPED_TEST(DataSetLabelMapper, labels) {
 
     // the different labels
     const std::vector<label_type> different_labels = util::get_distinct_label<label_type>();
-    const std::vector<label_type> labels = util::get_correct_data_file_labels<label_type>();
 
     // create label mapper
-    const label_mapper_type mapper{ labels };
+    const label_mapper_type mapper{ different_labels };
 
     // test the different labels
     EXPECT_EQ(mapper.labels(), different_labels);
+}
+
+template <typename T>
+class DataSetLabelMapperDeathTest : public DataSetLabelMapper<T> {};
+TYPED_TEST_SUITE(DataSetLabelMapperDeathTest, util::real_type_label_type_combination_gtest, naming::real_type_label_type_combination_to_name);
+
+TYPED_TEST(DataSetLabelMapperDeathTest, duplicated_labels) {
+    using real_type = typename TypeParam::real_type;
+    using label_type = typename TypeParam::label_type;
+    using label_mapper_type = typename plssvm::data_set<real_type, label_type>::label_mapper;
+
+    // duplicated labels are not allowed in the label_mapper constructor
+    EXPECT_DEATH(label_mapper_type{ util::get_correct_data_file_labels<label_type>() },
+                 "The provided labels for the label_mapper must not include duplicated ones!");
 }
 
 //*************************************************************************************************************************************//

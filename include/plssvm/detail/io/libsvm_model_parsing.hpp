@@ -81,10 +81,10 @@ namespace plssvm::detail::io {
  * @throws plssvm::invalid_file_format_exception if no support vectors have been provided in the data section
  * @throws plssvm::invalid_file_format_exception if the number of labels is not two
  * @attention Due to using one vs. all (OAA) for multi-class classification, the model file isn't LIBSVM conform except for binary classification!
- * @return the necessary header information: [the SVM parameter, the values of rho, the labels, the number of classes, num_header_lines] (`[[nodiscard]]`)
+ * @return the necessary header information: [the SVM parameter, the values of rho, the labels, the different classes, num_header_lines] (`[[nodiscard]]`)
  */
 template <typename real_type, typename label_type, typename size_type>
-[[nodiscard]] inline std::tuple<plssvm::parameter, std::vector<real_type>, std::vector<label_type>, std::size_t, std::size_t> parse_libsvm_model_header(const std::vector<std::string_view> &lines) {
+[[nodiscard]] inline std::tuple<plssvm::parameter, std::vector<real_type>, std::vector<label_type>, std::vector<label_type>, std::size_t> parse_libsvm_model_header(const std::vector<std::string_view> &lines) {
     // data to read
     plssvm::parameter params{};
     std::vector<real_type> rho{};
@@ -280,7 +280,7 @@ template <typename real_type, typename label_type, typename size_type>
         pos += num_support_vectors_per_class[i];
     }
 
-    return std::make_tuple(params, rho, std::move(data_labels), nr_class, header_line + 1);
+    return std::make_tuple(params, rho, std::move(data_labels), std::move(labels), header_line + 1);
 }
 
 /**

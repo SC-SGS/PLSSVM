@@ -184,9 +184,10 @@ model<T, U>::model(const std::string &filename) {
 
     // parse the libsvm model header
     std::vector<label_type> labels{};
-    std::size_t num_classes{};
+    std::vector<label_type> unique_labels{};
     std::size_t num_header_lines{};
-    std::tie(params_, *rho_ptr_, labels, num_classes, num_header_lines) = detail::io::parse_libsvm_model_header<real_type, label_type, size_type>(reader.lines());
+    std::tie(params_, *rho_ptr_, labels, unique_labels, num_header_lines) = detail::io::parse_libsvm_model_header<real_type, label_type, size_type>(reader.lines());
+    const std::size_t num_classes = unique_labels.size();
 
     // create empty support vectors and alpha vector
     std::vector<std::vector<real_type>> support_vectors;
@@ -195,7 +196,10 @@ model<T, U>::model(const std::string &filename) {
     std::tie(num_support_vectors_, num_features_, support_vectors, *alpha_ptr_) = detail::io::parse_libsvm_model_data<real_type>(reader, num_classes == 2 ? 1 : num_classes, num_header_lines);
 
     // create data set
-    data_ = data_set<real_type, label_type>{ std::move(support_vectors), std::move(labels) };
+    PLSSVM_ASSERT(support_vectors.size() == labels.size(), "Number of labels ({}) must match the number of data points ({})!", labels.size(), support_vectors.size());
+    data_ = data_set<real_type, label_type>{ std::move(support_vectors) };
+    data_.labels_ptr_ = std::make_shared<typename decltype(data_.labels_ptr_)::element_type>(std::move(labels));  // prevent multiple calls to "create_mapping"
+    data_.create_mapping(unique_labels);
 
     const std::chrono::time_point end_time = std::chrono::steady_clock::now();
     detail::log(verbosity_level::full | verbosity_level::timing,

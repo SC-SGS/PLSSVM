@@ -51,7 +51,7 @@ TYPED_TEST(LIBSVMModelHeaderParseValid, read_linear) {
     // parse the LIBSVM model file header
     plssvm::detail::io::file_reader reader{ template_file.filename };
     reader.read_lines('#');
-    const auto &[params, rho, label, num_classes, header_lines] = plssvm::detail::io::parse_libsvm_model_header<real_type, label_type, size_type>(reader.lines());
+    const auto &[params, rho, label, different_classes, header_lines] = plssvm::detail::io::parse_libsvm_model_header<real_type, label_type, size_type>(reader.lines());
 
     // check for correctness
     // check parameter
@@ -79,7 +79,8 @@ TYPED_TEST(LIBSVMModelHeaderParseValid, read_linear) {
             break;
     }
     EXPECT_EQ(label, util::get_correct_model_file_labels<label_type>().first);
-    EXPECT_EQ(num_classes, num_classes_for_label_type);
+    EXPECT_EQ(different_classes.size(), num_classes_for_label_type);
+    EXPECT_EQ(different_classes, util::get_distinct_label<label_type>());
     EXPECT_EQ(header_lines, 8);
 }
 TYPED_TEST(LIBSVMModelHeaderParseValid, read_polynomial) {
@@ -96,7 +97,7 @@ TYPED_TEST(LIBSVMModelHeaderParseValid, read_polynomial) {
     // parse the LIBSVM model file header
     plssvm::detail::io::file_reader reader{ template_file.filename };
     reader.read_lines('#');
-    const auto &[params, rho, label, num_classes, header_lines] = plssvm::detail::io::parse_libsvm_model_header<real_type, label_type, size_type>(reader.lines());
+    const auto &[params, rho, label, different_classes, header_lines] = plssvm::detail::io::parse_libsvm_model_header<real_type, label_type, size_type>(reader.lines());
 
     // check for correctness
     // check parameter
@@ -127,7 +128,8 @@ TYPED_TEST(LIBSVMModelHeaderParseValid, read_polynomial) {
             break;
     }
     EXPECT_EQ(label, util::get_correct_model_file_labels<label_type>().first);
-    EXPECT_EQ(num_classes, num_classes_for_label_type);
+    EXPECT_EQ(different_classes.size(), num_classes_for_label_type);
+    EXPECT_EQ(different_classes, util::get_distinct_label<label_type>());
     EXPECT_EQ(header_lines, 11);
 }
 TYPED_TEST(LIBSVMModelHeaderParseValid, read_rbf) {
@@ -144,7 +146,7 @@ TYPED_TEST(LIBSVMModelHeaderParseValid, read_rbf) {
     // parse the LIBSVM model file header
     plssvm::detail::io::file_reader reader{ template_file.filename };
     reader.read_lines('#');
-    const auto &[params, rho, label, num_classes, header_lines] = plssvm::detail::io::parse_libsvm_model_header<real_type, label_type, size_type>(reader.lines());
+    const auto &[params, rho, label, different_classes, header_lines] = plssvm::detail::io::parse_libsvm_model_header<real_type, label_type, size_type>(reader.lines());
 
     // check for correctness
     // check parameter
@@ -173,7 +175,8 @@ TYPED_TEST(LIBSVMModelHeaderParseValid, read_rbf) {
             break;
     }
     EXPECT_EQ(label, util::get_correct_model_file_labels<label_type>().first);
-    EXPECT_EQ(num_classes, num_classes_for_label_type);
+    EXPECT_EQ(different_classes.size(), num_classes_for_label_type);
+    EXPECT_EQ(different_classes, util::get_distinct_label<label_type>());
     EXPECT_EQ(header_lines, 9);
 }
 

@@ -246,10 +246,11 @@ class data_set {
         X_ptr_{ std::make_shared<std::vector<std::vector<real_type>>>() } {}
 
     /**
-     * @brief Create the mapping between the provided labels and the internally used mapped values, i.e., { -1, 1 }.
+     * @brief Create the mapping between the provided labels and the internally used indices.
+     * @param[in] different_labels the list of different labels used to create the index mapping
      * @throws plssvm::data_set_exception any exception of the plssvm::data_set::label_mapper class
      */
-    void create_mapping();
+    void create_mapping(const std::vector<label_type> &different_labels);
     /**
      * @brief Scale the feature values of the data set to the provided range.
      * @details Scales all data points feature wise, i.e., one scaling factor is responsible, e.g., for the first feature of **all** data points. <br>
@@ -394,12 +395,12 @@ template <typename T, typename U>
 class data_set<T, U>::label_mapper {
   public:
     /**
-     * @brief Create a mapping from all labels to { -1 , 1 } and vice versa.
-     * @param[in] labels the labels to map
+     * @brief Create a mapping from all labels to their index used in the right-hand side when solving the system of linear equations and vice versa.
+     * @param[in] different_labels the labels to map
      * @note Currently only binary classification is supported, i.e., only two different labels may be provided!
-     * @throws plssvm::data_set_exception if not exatcly two different labels are provided
+     * @throws plssvm::data_set_exception if not exactly two different labels are provided
      */
-    explicit label_mapper(const std::vector<label_type> &labels);
+    explicit label_mapper(const std::vector<label_type> &different_labels);
 
     /**
      * @brief Given the original label value, return the mapped index in the one vs. all mapping.
@@ -435,12 +436,12 @@ class data_set<T, U>::label_mapper {
 
 /// @cond Doxygen_suppress
 template <typename T, typename U>
-data_set<T, U>::data_set::label_mapper::label_mapper(const std::vector<label_type> &labels) {
-    // we are only interested in unique labels
-    std::set<label_type> unique_labels(labels.begin(), labels.end());
+data_set<T, U>::data_set::label_mapper::label_mapper(const std::vector<label_type> &different_labels) {
+    PLSSVM_ASSERT(std::set(different_labels.cbegin(), different_labels.cend()).size() == different_labels.size(),
+                  "The provided labels for the label_mapper must not include duplicated ones!");
     // create mapping
     std::size_t idx = 0;
-    for (auto it = unique_labels.begin(), end = unique_labels.end(); it != end; ++it) {
+    for (auto it = different_labels.begin(), end = different_labels.end(); it != end; ++it) {
         label_to_index_[*it] = idx;
         index_to_label_[idx] = *it;
         ++idx;
@@ -546,7 +547,8 @@ data_set<T, U>::data_set(std::vector<std::vector<real_type>> data_points, std::v
     }
 
     // create mapping from labels
-    this->create_mapping();
+    std::set<label_type> unique_labels(labels_ptr_->cbegin(), labels_ptr_->cend());
+    this->create_mapping(std::vector<label_type>(unique_labels.cbegin(), unique_labels.cend()));
 }
 
 template <typename T, typename U>
@@ -644,11 +646,11 @@ auto data_set<T, U>::scaling_factors() const noexcept -> optional_ref<const scal
 //*************************************************************************************************************************************//
 
 template <typename T, typename U>
-void data_set<T, U>::create_mapping() {
+void data_set<T, U>::create_mapping(const std::vector<label_type> &different_labels) {
     PLSSVM_ASSERT(labels_ptr_ != nullptr, "Can't create mapping if no labels are provided!");
 
     // create label mapping
-    label_mapper mapper{ *labels_ptr_ };
+    label_mapper mapper{ different_labels };
 
     // convert input labels to now mapped values
     typename decltype(y_ptr_)::element_type tmp(mapper.num_mappings() == 2 ? 1 : mapper.num_mappings(), std::vector<real_type>(labels_ptr_->size(), real_type{ -1.0 }));
@@ -777,7 +779,8 @@ void data_set<T, U>::read_file(const std::string &filename, file_format_type for
 
     // create label mapping
     if (this->has_labels()) {
-        this->create_mapping();
+        std::set<label_type> unique_labels(labels_ptr_->cbegin(), labels_ptr_->cend());
+        this->create_mapping(std::vector<label_type>(unique_labels.cbegin(), unique_labels.cend()));
     }
 
     const std::chrono::time_point end_time = std::chrono::steady_clock::now();
