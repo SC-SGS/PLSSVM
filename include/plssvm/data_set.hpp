@@ -539,6 +539,11 @@ data_set<T, U>::data_set(std::vector<std::vector<real_type>> data_points) :
 
     num_data_points_ = X_ptr_->size();
     num_features_ = X_ptr_->front().size();
+
+    detail::log(verbosity_level::full | verbosity_level::timing,
+                "Created a data set with {} data points and {} features.\n",
+                detail::tracking_entry{ "data_set_create", "num_data_points", num_data_points_ },
+                detail::tracking_entry{ "data_set_create", "num_features", num_features_ });
 }
 
 template <typename T, typename U>
@@ -553,6 +558,11 @@ data_set<T, U>::data_set(std::vector<std::vector<real_type>> data_points, std::v
 
     // create mapping from labels
     this->create_mapping();
+
+    detail::log(verbosity_level::full | verbosity_level::timing,
+                "Created a data set with {} data points and {} features.\n",
+                detail::tracking_entry{ "data_set_create", "num_data_points", num_data_points_ },
+                detail::tracking_entry{ "data_set_create", "num_features", num_features_ });
 }
 
 template <typename T, typename U>
