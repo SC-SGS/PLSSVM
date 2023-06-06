@@ -16,7 +16,8 @@
 #include "plssvm/detail/assert.hpp"          // PLSSVM_ASSERT
 #include "plssvm/exceptions/exceptions.hpp"  // plssvm::exception
 
-#include <algorithm>  // std::
+#include <algorithm>  // std::find, std::count
+#include <cmath>      // std::isnan
 #include <cstddef>    // std::size_t
 #include <iosfwd>     // forward declaration for std::ostream
 #include <iterator>   // std::distance
@@ -148,9 +149,12 @@ classification_report::classification_report(const std::vector<label_type> &corr
         }
         // const std::size_t TN = correct_label.size() - TP - FN - FP;
         // calculate precision, recall, and f1 score
-        const double precision = static_cast<double>(TP) / static_cast<double>(TP + FP);
-        const double recall = static_cast<double>(TP) / static_cast<double>(TP + FN);
-        const double f1 = 2 * (precision * recall) / (precision + recall);
+        const auto sanitize_nan = [](const double val) {
+            return std::isnan(val) ? 0.0 : val;
+        };
+        const double precision = sanitize_nan(static_cast<double>(TP) / static_cast<double>(TP + FP));
+        const double recall = sanitize_nan(static_cast<double>(TP) / static_cast<double>(TP + FN));
+        const double f1 = sanitize_nan(2 * (precision * recall) / (precision + recall));
         // add metric results to map
         const metric m{ precision, recall, f1, static_cast<std::size_t>(std::count(correct_label.cbegin(), correct_label.cend(), label)) };
         metrics_.emplace(fmt::format("{}", label), m);
