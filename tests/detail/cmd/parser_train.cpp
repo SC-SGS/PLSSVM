@@ -42,6 +42,7 @@ TEST_F(ParserTrain, minimal) {
     EXPECT_DOUBLE_EQ(parser.epsilon.value(), 0.001);
     EXPECT_TRUE(parser.max_iter.is_default());
     EXPECT_EQ(parser.max_iter.value(), 0);
+    EXPECT_EQ(parser.classification.value(), plssvm::classification_type::oaa);
     EXPECT_EQ(parser.backend, plssvm::backend_type::automatic);
     EXPECT_EQ(parser.target, plssvm::target_platform::automatic);
     EXPECT_EQ(parser.sycl_kernel_invocation_type, plssvm::sycl::kernel_invocation_type::automatic);
@@ -66,6 +67,7 @@ TEST_F(ParserTrain, minimal_output) {
         "cost: 1 (default)\n"
         "epsilon: 0.001 (default)\n"
         "max_iter: num_data_points (default)\n"
+        "classification_type: one vs. all (default)\n"
         "label_type: int (default)\n"
         "real_type: double (default)\n"
         "input file (data set): 'data.libsvm'\n"
@@ -75,7 +77,7 @@ TEST_F(ParserTrain, minimal_output) {
 
 TEST_F(ParserTrain, all_arguments) {
     // create artificial command line arguments in test fixture
-    std::vector<std::string> cmd_args = { "./plssvm-train", "--kernel_type", "1", "--degree", "2", "--gamma", "1.5", "--coef0", "-1.5", "--cost", "2", "--epsilon", "1e-10", "--max_iter", "100", "--backend", "cuda", "--target_platform", "gpu_nvidia", "--use_strings_as_labels", "--use_float_as_real_type", "--verbosity", "libsvm" };
+    std::vector<std::string> cmd_args = { "./plssvm-train", "--kernel_type", "1", "--degree", "2", "--gamma", "1.5", "--coef0", "-1.5", "--cost", "2", "--epsilon", "1e-10", "--max_iter", "100", "--classification", "oao", "--backend", "cuda", "--target_platform", "gpu_nvidia", "--use_strings_as_labels", "--use_float_as_real_type", "--verbosity", "libsvm" };
 #if defined(PLSSVM_HAS_SYCL_BACKEND)
     cmd_args.insert(cmd_args.end(), { "--sycl_kernel_invocation_type", "nd_range", "--sycl_implementation_type", "dpcpp" });
 #endif
@@ -99,6 +101,8 @@ TEST_F(ParserTrain, all_arguments) {
     EXPECT_DOUBLE_EQ(parser.epsilon.value(), 1e-10);
     EXPECT_FALSE(parser.max_iter.is_default());
     EXPECT_EQ(parser.max_iter.value(), 100);
+    EXPECT_FALSE(parser.classification.is_default());
+    EXPECT_EQ(parser.classification.value(), plssvm::classification_type::oao);
     EXPECT_EQ(parser.backend, plssvm::backend_type::cuda);
     EXPECT_EQ(parser.target, plssvm::target_platform::gpu_nvidia);
 #if defined(PLSSVM_HAS_SYCL_BACKEND)
@@ -119,7 +123,7 @@ TEST_F(ParserTrain, all_arguments) {
 }
 TEST_F(ParserTrain, all_arguments_output) {
     // create artificial command line arguments in test fixture
-    std::vector<std::string> cmd_args = { "./plssvm-train", "--kernel_type", "1", "--degree", "2", "--gamma", "1.5", "--coef0", "-1.5", "--cost", "2", "--epsilon", "1e-10", "--max_iter", "100", "--backend", "cuda", "--target_platform", "gpu_nvidia", "--use_strings_as_labels", "--use_float_as_real_type", "--verbosity", "libsvm" };
+    std::vector<std::string> cmd_args = { "./plssvm-train", "--kernel_type", "1", "--degree", "2", "--gamma", "1.5", "--coef0", "-1.5", "--cost", "2", "--epsilon", "1e-10", "--max_iter", "100", "--classification", "oao", "--backend", "cuda", "--target_platform", "gpu_nvidia", "--use_strings_as_labels", "--use_float_as_real_type", "--verbosity", "libsvm" };
 #if defined(PLSSVM_HAS_SYCL_BACKEND)
     cmd_args.insert(cmd_args.end(), { "--sycl_kernel_invocation_type", "nd_range", "--sycl_implementation_type", "dpcpp" });
 #endif
@@ -141,6 +145,7 @@ TEST_F(ParserTrain, all_arguments_output) {
         "cost: 2\n"
         "epsilon: 1e-10\n"
         "max_iter: 100\n"
+        "classification_type: one vs. one\n"
         "label_type: std::string\n"
         "real_type: float\n"
         "input file (data set): 'data.libsvm'\n"
@@ -310,6 +315,24 @@ INSTANTIATE_TEST_SUITE_P(ParserTrainDeathTest, ParserTrainMaxIterDeathTest, ::te
                 ::testing::Values("-i", "--max_iter"),
                 ::testing::Values(-100, -10, -1, 0)),
                 naming::pretty_print_parameter_flag_and_value<ParserTrainMaxIterDeathTest>);
+// clang-format on
+
+class ParserTrainClassification : public ParserTrain, public ::testing::WithParamInterface<std::tuple<std::string, plssvm::classification_type>> {};
+TEST_P(ParserTrainClassification, parsing) {
+    const auto &[flag, classification] = GetParam();
+    // create artificial command line arguments in test fixture
+    this->CreateCMDArgs({ "./plssvm-train", flag, fmt::format("{}", classification), "data.libsvm" });
+    // create parameter object
+    const plssvm::detail::cmd::parser_train parser{ this->argc, this->argv };
+    // test for correctness
+    EXPECT_FALSE(parser.classification.is_default());
+    EXPECT_EQ(parser.classification, classification);
+}
+// clang-format off
+INSTANTIATE_TEST_SUITE_P(ParserTrain, ParserTrainClassification, ::testing::Combine(
+                ::testing::Values("-s", "--classification"),
+                ::testing::Values(plssvm::classification_type::oaa, plssvm::classification_type::oao)),
+                naming::pretty_print_parameter_flag_and_value<ParserTrainClassification>);
 // clang-format on
 
 class ParserTrainBackend : public ParserTrain, public ::testing::WithParamInterface<std::tuple<std::string, std::string>> {};

@@ -140,6 +140,7 @@ set(PLSSVM_BASE_TEST_SOURCES
 
         ${CMAKE_CURRENT_LIST_DIR}/backend_types.cpp
         ${CMAKE_CURRENT_LIST_DIR}/classification_report.cpp
+        ${CMAKE_CURRENT_LIST_DIR}/classification_types.cpp
         ${CMAKE_CURRENT_LIST_DIR}/csvm_factory.cpp
         ${CMAKE_CURRENT_LIST_DIR}/csvm.cpp
         ${CMAKE_CURRENT_LIST_DIR}/data_set.cpp

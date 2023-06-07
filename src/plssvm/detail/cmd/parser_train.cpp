@@ -8,6 +8,7 @@
 
 #include "plssvm/detail/cmd/parser_train.hpp"
 
+#include "plssvm/classification_types.hpp"               // plssvm::classification_type, plssvm::classification_type_to_full_string
 #include "plssvm/backend_types.hpp"                      // plssvm::list_available_backends
 #include "plssvm/backends/SYCL/implementation_type.hpp"  // plssvm::sycl_generic::list_available_sycl_implementations
 #include "plssvm/constants.hpp"                          // plssvm::verbose_default, plssvm::verbose
@@ -54,6 +55,7 @@ parser_train::parser_train(int argc, char **argv) {
            ("c,cost", "set the parameter C", cxxopts::value<typename decltype(csvm_params.cost)::value_type>()->default_value(fmt::format("{}", csvm_params.cost)))
            ("e,epsilon", "set the tolerance of termination criterion", cxxopts::value<typename decltype(epsilon)::value_type>()->default_value(fmt::format("{}", epsilon)))
            ("i,max_iter", "set the maximum number of CG iterations (default: num_features)", cxxopts::value<long long int>())
+           ("s,classification", "the classification strategy to use for multi-class classification", cxxopts::value<typename decltype(classification)::value_type>()->default_value(fmt::format("{}", classification)))
            ("b,backend", fmt::format("choose the backend: {}", fmt::join(list_available_backends(), "|")), cxxopts::value<decltype(backend)>()->default_value(fmt::format("{}", backend)))
            ("p,target_platform", fmt::format("choose the target platform: {}", fmt::join(list_available_target_platforms(), "|")), cxxopts::value<decltype(target)>()->default_value(fmt::format("{}", target)))
 #if defined(PLSSVM_HAS_SYCL_BACKEND)
@@ -152,6 +154,11 @@ parser_train::parser_train(int argc, char **argv) {
         }
         // provided max_iter was legal -> override default value
         max_iter = static_cast<typename decltype(max_iter)::value_type>(max_iter_input);
+    }
+
+    // parse the classification type
+    if (result.count("classification")) {
+        classification = result["classification"].as<typename decltype(classification)::value_type>();
     }
 
     // parse backend_type and cast the value to the respective enum
@@ -262,10 +269,13 @@ std::ostream &operator<<(std::ostream &out, const parser_train &params) {
     }
 
     out << fmt::format(
+        "classification_type: {}{}\n"
         "label_type: {}\n"
         "real_type: {}\n"
         "input file (data set): '{}'\n"
         "output file (model): '{}'\n",
+        classification_type_to_full_string(params.classification.value()),
+        params.classification.is_default() ? " (default)" : "",
         params.strings_as_labels ? "std::string" : "int (default)",
         params.float_as_real_type ? "float" : "double (default)",
         params.input_filename,

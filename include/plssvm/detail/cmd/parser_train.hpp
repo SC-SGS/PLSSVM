@@ -16,13 +16,14 @@
 #include "plssvm/backend_types.hpp"                         // plssvm::backend_type
 #include "plssvm/backends/SYCL/implementation_type.hpp"     // plssvm::sycl::implementation_type
 #include "plssvm/backends/SYCL/kernel_invocation_type.hpp"  // plssvm::sycl::kernel_invocation_type
+#include "plssvm/classification_types.hpp"                  // plssvm::classification_type
 #include "plssvm/default_value.hpp"                         // plssvm::default_value
 #include "plssvm/parameter.hpp"                             // plssvm::parameter
 #include "plssvm/target_platforms.hpp"                      // plssvm::target_platform
 
-#include <cstddef>                                          // std::size_t
-#include <iosfwd>                                           // forward declare std::ostream
-#include <string>                                           // std::string
+#include <cstddef>  // std::size_t
+#include <iosfwd>   // forward declare std::ostream
+#include <string>   // std::string
 
 namespace plssvm::detail::cmd {
 
@@ -46,6 +47,8 @@ class parser_train {
     default_value<double> epsilon{ default_init<double>{ 0.001 } };
     /// The maximum number of iterations in the CG algorithm.
     default_value<std::size_t> max_iter{ default_init<std::size_t>{ 0 } };
+    /// The multi-class classification strategy used.
+    default_value<classification_type> classification{ default_init<classification_type>{ classification_type::oaa } };
 
     /// The used backend: automatic (depending on the specified target_platforms), OpenMP, CUDA, HIP, OpenCL, or SYCL.
     backend_type backend{ backend_type::automatic };
