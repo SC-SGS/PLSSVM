@@ -13,6 +13,7 @@
 #define PLSSVM_CSVM_HPP_
 #pragma once
 
+#include "plssvm/classification_types.hpp"        // plssvm::classification_type, plssvm::classification_type_to_full_string
 #include "plssvm/data_set.hpp"                    // plssvm::data_set
 #include "plssvm/default_value.hpp"               // plssvm::default_value, plssvm::default_init
 #include "plssvm/detail/logger.hpp"               // plssvm::detail::log, plssvm::verbosity_level
@@ -117,12 +118,11 @@ class csvm {
     //*************************************************************************************************************************************//
     /**
      * @brief Fit a model using the current SVM on the @p data.
-     * @details Uses the one vs. all (OAA) for the multi-class classification task.
      * @tparam real_type the type of the data (`float` or `double`)
      * @tparam label_type the type of the label (an arithmetic type or `std::string`)
      * @tparam Args the type of the potential additional parameters
      * @param[in] data the data used to train the SVM model
-     * @param[in] named_args the potential additional parameters (`epsilon` and/or `max_iter`)
+     * @param[in] named_args the potential additional parameters (`epsilon`, `max_iter`, and `classification`)
      * @throws plssvm::invalid_parameter_exception if the provided value for `epsilon` is greater or equal than zero
      * @throws plssvm::invlaid_parameter_exception if the provided maximum number of iterations is less or equal than zero
      * @throws plssvm::invalid_parameter_exception if the training @p data does **not** include labels
@@ -274,13 +274,14 @@ model<real_type, label_type> csvm::fit(const data_set<real_type, label_type> &da
     // set default values
     default_value epsilon_val{ default_init<real_type>{ 0.001 } };
     default_value max_iter_val{ default_init<unsigned long long>{ data.num_data_points() } };
+    default_value classification_val{ default_init<classification_type>{ classification_type::oaa } };
 
     // compile time check: only named parameter are permitted
     static_assert(!parser.has_unnamed_arguments(), "Can only use named parameter!");
     // compile time check: each named parameter must only be passed once
     static_assert(!parser.has_duplicates(), "Can only use each named parameter once!");
     // compile time check: only some named parameters are allowed
-    static_assert(!parser.has_other_than(epsilon, max_iter), "An illegal named parameter has been passed!");
+    static_assert(!parser.has_other_than(epsilon, max_iter, classification), "An illegal named parameter has been passed!");
 
     // compile time/runtime check: the values must have the correct types
     if constexpr (parser.has(epsilon)) {
@@ -298,6 +299,10 @@ model<real_type, label_type> csvm::fit(const data_set<real_type, label_type> &da
         if (max_iter_val == static_cast<typename decltype(max_iter_val)::value_type>(0)) {
             throw invalid_parameter_exception{ fmt::format("max_iter must be greater than 0, but is {}!", max_iter_val) };
         }
+    }
+    if constexpr (parser.has(classification)) {
+        // get the value of the provided named parameter
+        classification_val = detail::get_value_from_named_parameter<typename decltype(classification_val)::value_type>(parser, classification);
     }
 
     // start fitting the data set using a C-SVM
@@ -318,8 +323,20 @@ model<real_type, label_type> csvm::fit(const data_set<real_type, label_type> &da
     // create model
     model<real_type, label_type> csvm_model{ params, data };
 
-    // solve the minimization problem
-    std::tie(*csvm_model.alpha_ptr_, *csvm_model.rho_ptr_) = solve_system_of_linear_equations(static_cast<detail::parameter<real_type>>(params), data.data(), *data.y_ptr_, epsilon_val.value(), max_iter_val.value());
+    detail::log(verbosity_level::full | verbosity_level::timing,
+                "Using {} ({}) as multi-class classification strategy.\n",
+                detail::tracking_entry{ "cg", "classification_type", classification_val.value() },
+                classification_type_to_full_string(classification_val.value()));
+
+    if (classification_val.value() == plssvm::classification_type::oaa) {
+        // use the one vs. all multi-class classification strategy
+        // solve the minimization problem
+        std::tie(*csvm_model.alpha_ptr_, *csvm_model.rho_ptr_) = solve_system_of_linear_equations(static_cast<detail::parameter<real_type>>(params), data.data(), *data.y_ptr_, epsilon_val.value(), max_iter_val.value());
+    } else if (classification_val.value() == plssvm::classification_type::oao) {
+        // use the one vs. one multi-class classification strategy
+        // TODO: implement
+        throw exception{ "Error: currently not implemented!" };
+    }
 
     const std::chrono::time_point end_time = std::chrono::steady_clock::now();
     detail::log(verbosity_level::full | verbosity_level::timing,

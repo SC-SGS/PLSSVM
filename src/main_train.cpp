@@ -46,7 +46,10 @@ int main(int argc, char *argv[]) {
             if (cmd_parser.max_iter.is_default()) {
                 cmd_parser.max_iter = data.num_data_points();
             }
-            const plssvm::model<real_type, label_type> model = svm->fit(data, plssvm::epsilon = cmd_parser.epsilon, plssvm::max_iter = cmd_parser.max_iter);
+            const plssvm::model<real_type, label_type> model = svm->fit(data,
+                                                                        plssvm::epsilon = cmd_parser.epsilon,
+                                                                        plssvm::max_iter = cmd_parser.max_iter,
+                                                                        plssvm::classification = cmd_parser.classification);
             // save model to file
             model.save(cmd_parser.model_filename);
         }, plssvm::detail::cmd::data_set_factory(cmd_parser));
