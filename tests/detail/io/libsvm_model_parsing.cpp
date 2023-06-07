@@ -495,7 +495,8 @@ TYPED_TEST(LIBSVMModelHeaderWrite, write_linear) {
     const std::vector<label_type> label = { first_label, second_label, first_label };
 
     // create necessary parameter
-    const plssvm::parameter params{};
+    plssvm::parameter params{};
+    params.kernel_type = plssvm::kernel_function_type::linear;
     const real_type rho = 3.14159265359;
     const plssvm::data_set<real_type, label_type> data_set{ std::vector<std::vector<real_type>>{ data }, std::vector<label_type>{ label } };
 
@@ -636,7 +637,7 @@ TYPED_TEST(LIBSVMModelDataWrite, write) {
     const std::vector<label_type> label = { first_label, second_label, first_label };
 
     // create necessary parameter
-    const plssvm::parameter params{};
+    const plssvm::parameter params{ plssvm::kernel_type = plssvm::kernel_function_type::linear };
     const real_type rho = 3.1415;
     const std::vector<real_type> alpha{ -0.1, -0.2, -0.3 };
     const plssvm::data_set<real_type, label_type> data_set{ std::vector<std::vector<real_type>>{ data }, std::vector<label_type>{ label } };

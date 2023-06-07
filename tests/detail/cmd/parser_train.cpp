@@ -61,7 +61,8 @@ TEST_F(ParserTrain, minimal_output) {
 
     // test output string
     const std::string correct =
-        "kernel_type: linear -> u'*v\n"
+        "kernel_type: rbf -> exp(-gamma*|u-v|^2)\n"
+        "gamma: 1 / num_features (default)\n"
         "cost: 1 (default)\n"
         "epsilon: 0.001 (default)\n"
         "max_iter: num_data_points (default)\n"
