@@ -203,12 +203,12 @@ model<T, U>::model(const std::string &filename) {
 
     const std::chrono::time_point end_time = std::chrono::steady_clock::now();
     detail::log(verbosity_level::full | verbosity_level::timing,
-                "Read {} support vectors with {} features in {} using the libsvm model parser from file '{}'.\n\n",
+                "Read {} support vectors with {} features and {} classes in {} using the libsvm model parser from file '{}'.\n\n",
                 detail::tracking_entry{ "model_read", "num_support_vectors", num_support_vectors_ },
                 detail::tracking_entry{ "model_read", "num_features", num_features_ },
+                detail::tracking_entry{ "model_read", "num_classes", this->num_different_labels() },
                 detail::tracking_entry{ "model_read", "time",  std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time) },
                 detail::tracking_entry{ "model_read", "filename", filename });
-    PLSSVM_DETAIL_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking_entry{ "model_read", "num_different_labels", this->num_different_labels() }));
     PLSSVM_DETAIL_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking_entry{ "model_read", "rho", *rho_ptr_ }));
 }
 
@@ -228,12 +228,12 @@ void model<T, U>::save(const std::string &filename) const {
 
     const std::chrono::time_point end_time = std::chrono::steady_clock::now();
     detail::log(verbosity_level::full | verbosity_level::timing,
-                "Write {} support vectors with {} features in {} to the libsvm model file '{}'.\n",
+                "Write {} support vectors with {} features and {} classes in {} to the libsvm model file '{}'.\n",
                 detail::tracking_entry{ "model_write", "num_support_vectors", num_support_vectors_ },
                 detail::tracking_entry{ "model_write", "num_features", num_features_ },
+                detail::tracking_entry{ "model_write", "num_classes", this->num_different_labels() },
                 detail::tracking_entry{ "model_write", "time",  std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time) },
                 detail::tracking_entry{ "model_write", "filename", filename });
-    PLSSVM_DETAIL_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking_entry{ "model_write", "num_different_labels", this->num_different_labels() }));
     PLSSVM_DETAIL_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking_entry{ "model_write", "rho", *rho_ptr_ }));
 }
 

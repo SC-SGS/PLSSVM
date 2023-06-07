@@ -536,9 +536,10 @@ data_set<T, U>::data_set(std::vector<std::vector<real_type>> data_points) :
     num_features_ = X_ptr_->front().size();
 
     detail::log(verbosity_level::full | verbosity_level::timing,
-                "Created a data set with {} data points and {} features.\n",
+                "Created a data set with {} data points, {} features, and {} classes.\n",
                 detail::tracking_entry{ "data_set_create", "num_data_points", num_data_points_ },
-                detail::tracking_entry{ "data_set_create", "num_features", num_features_ });
+                detail::tracking_entry{ "data_set_create", "num_features", num_features_ },
+                detail::tracking_entry{ "data_set_create", "num_classes", this->num_different_labels() });
 }
 
 template <typename T, typename U>
@@ -556,9 +557,10 @@ data_set<T, U>::data_set(std::vector<std::vector<real_type>> data_points, std::v
     this->create_mapping(std::vector<label_type>(unique_labels.cbegin(), unique_labels.cend()));
 
     detail::log(verbosity_level::full | verbosity_level::timing,
-                "Created a data set with {} data points and {} features.\n",
+                "Created a data set with {} data points, {} features, and {} classes.\n",
                 detail::tracking_entry{ "data_set_create", "num_data_points", num_data_points_ },
-                detail::tracking_entry{ "data_set_create", "num_features", num_features_ });
+                detail::tracking_entry{ "data_set_create", "num_features", num_features_ },
+                detail::tracking_entry{ "data_set_create", "num_classes", this->num_different_labels() });
 }
 
 template <typename T, typename U>
@@ -608,9 +610,10 @@ void data_set<T, U>::save(const std::string &filename, const file_format_type fo
 
     const std::chrono::time_point end_time = std::chrono::steady_clock::now();
     detail::log(verbosity_level::full | verbosity_level::timing,
-                "Write {} data points with {} features in {} to the {} file '{}'.\n",
+                "Write {} data points with {} features and {} classes in {} to the {} file '{}'.\n",
                 detail::tracking_entry{ "data_set_write", "num_data_points", num_data_points_ },
                 detail::tracking_entry{ "data_set_write", "num_features", num_features_ },
+                detail::tracking_entry{ "data_set_write", "num_classes", this->num_different_labels() },
                 detail::tracking_entry{ "data_set_write", "time", std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time) },
                 detail::tracking_entry{ "data_set_write", "format", format },
                 detail::tracking_entry{ "data_set_write", "filename", filename });
@@ -791,16 +794,18 @@ void data_set<T, U>::read_file(const std::string &filename, file_format_type for
     if (this->has_labels()) {
         std::set<label_type> unique_labels(labels_ptr_->cbegin(), labels_ptr_->cend());
         this->create_mapping(std::vector<label_type>(unique_labels.cbegin(), unique_labels.cend()));
-    }
+     }
 
     const std::chrono::time_point end_time = std::chrono::steady_clock::now();
     detail::log(verbosity_level::full | verbosity_level::timing,
-                "Read {} data points with {} features in {} using the {} parser from file '{}'.\n",
+                "Read {} data points with {} features and {} classes in {} using the {} parser from file '{}'.\n",
                 detail::tracking_entry{ "data_set_read", "num_data_points", num_data_points_ },
                 detail::tracking_entry{ "data_set_read", "num_features", num_features_ },
+                detail::tracking_entry{ "data_set_read", "num_classes", this->num_different_labels() },
                 detail::tracking_entry{ "data_set_read", "time", std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time) },
                 detail::tracking_entry{ "data_set_read", "format", format },
                 detail::tracking_entry{ "data_set_read", "filename", filename });
+
 }
 
 }  // namespace plssvm
