@@ -8,14 +8,14 @@
 
 #include "plssvm/classification_types.hpp"
 
+#include "plssvm/detail/assert.hpp"          // PLSSVM_ASSERT
 #include "plssvm/detail/string_utility.hpp"  // plssvm::detail::to_lower_case
 
-#include "fmt/format.h"   // fmt::format, fmt::join
-#include "fmt/ostream.h"  // be able to format types with an operator<< overload
-
+#include <cstddef>      // std::size_t
 #include <ios>          // std::ios::failbit
 #include <istream>      // std::istream
 #include <ostream>      // std::ostream
+#include <string>       // std::string
 #include <string_view>  // std::string_view
 
 namespace plssvm {
@@ -53,6 +53,18 @@ std::string_view classification_type_to_full_string(const classification_type cl
             return "one vs. one";
     }
     return "unknown";
+}
+
+std::size_t calculate_number_of_classifiers(const classification_type classification, const std::size_t num_classes) {
+    PLSSVM_ASSERT(num_classes >= 2, "At least two classes must be given!");
+
+    switch (classification) {
+        case classification_type::oaa:
+            return num_classes == 2 ? 1 : num_classes;
+        case classification_type::oao:
+            return num_classes * (num_classes - 1) / 2;
+    }
+    return 0;
 }
 
 }  // namespace plssvm

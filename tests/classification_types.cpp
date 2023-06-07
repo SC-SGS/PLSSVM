@@ -12,9 +12,10 @@
 
 #include "custom_test_macros.hpp"  // EXPECT_CONVERSION_TO_STRING, EXPECT_CONVERSION_FROM_STRING
 
-#include "gtest/gtest.h"  // EXPECT_EQ
+#include "gtest/gtest.h"  // EXPECT_EQ, EXPECT_DEATH
 
 #include <sstream>  // std::istringstream
+#include <tuple>    // std::ignore
 
 // check whether the plssvm::classification_type -> std::string conversions are correct
 TEST(ClassificationType, to_string) {
@@ -51,4 +52,23 @@ TEST(ClassificationType, classification_type_to_full_string) {
     // check conversion from plssvm::classification_type to a full string
     EXPECT_EQ(plssvm::classification_type_to_full_string(plssvm::classification_type::oaa), "one vs. all");
     EXPECT_EQ(plssvm::classification_type_to_full_string(plssvm::classification_type::oao), "one vs. one");
+}
+
+TEST(ClassificationType, calculate_number_of_classifiers) {
+    // check whether the number of weights for OAA is correct
+    EXPECT_EQ(calculate_number_of_classifiers(plssvm::classification_type::oaa, 2), 1);
+    EXPECT_EQ(calculate_number_of_classifiers(plssvm::classification_type::oaa, 3), 3);
+    EXPECT_EQ(calculate_number_of_classifiers(plssvm::classification_type::oaa, 4), 4);
+    EXPECT_EQ(calculate_number_of_classifiers(plssvm::classification_type::oaa, 42), 42);
+
+    // check whether the number of weights for OA= is correct
+    EXPECT_EQ(calculate_number_of_classifiers(plssvm::classification_type::oao, 2), 1);
+    EXPECT_EQ(calculate_number_of_classifiers(plssvm::classification_type::oao, 3), 3);
+    EXPECT_EQ(calculate_number_of_classifiers(plssvm::classification_type::oao, 4), 6);
+    EXPECT_EQ(calculate_number_of_classifiers(plssvm::classification_type::oao, 42), 861);
+}
+TEST(ClassificationTypeDeathTest, too_few_classes) {
+    // at least two classes must be provided
+    EXPECT_DEATH(std::ignore = plssvm::calculate_number_of_classifiers(plssvm::classification_type::oaa, 1), "At least two classes must be given!");
+    EXPECT_DEATH(std::ignore = plssvm::calculate_number_of_classifiers(plssvm::classification_type::oao, 0), "At least two classes must be given!");
 }

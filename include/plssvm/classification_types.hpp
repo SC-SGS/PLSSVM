@@ -13,6 +13,7 @@
 #define PLSSVM_CLASSIFICATION_TYPES_HPP_
 #pragma once
 
+#include <cstddef>      // std::size_t
 #include <iosfwd>       // forward declare std::ostream and std::istream
 #include <string_view>  // std::string_view
 
@@ -47,6 +48,14 @@ std::istream &operator>>(std::istream &in, classification_type &classification);
  * @return the full name of the multi-class classification strategy (`[[nodiscard]]`)
  */
 [[nodiscard]] std::string_view classification_type_to_full_string(classification_type classification);
+
+/**
+ * @brief Calculate the number of weights based on the @p classification strategy and @p num_classes.
+ * @param[in] classification the classification strategy used
+ * @param[in] num_classes the number of classes
+ * @return the number of weights (`[[nodiscard]]`)
+ */
+[[nodiscard]] std::size_t calculate_number_of_classifiers(classification_type classification, std::size_t num_classes);
 
 }  // namespace plssvm
 
