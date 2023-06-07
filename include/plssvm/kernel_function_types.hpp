@@ -21,6 +21,7 @@
 
 #include <cmath>                             // std::pow, std::exp, std::fma
 #include <iosfwd>                            // forward declare std::ostream and std::istream
+#include <string_view>                       // std::string_view
 #include <vector>                            // std::vector
 
 namespace plssvm {
