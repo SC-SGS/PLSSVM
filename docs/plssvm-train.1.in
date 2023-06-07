@@ -17,7 +17,7 @@ plssvm-train is a utility to train an LS-SVM using different backends to target 
 set type of kernel function.
     0 -- linear: u'*v
     1 -- polynomial: (gamma*u'*v + coef0)^degree
-    2 -- radial basis function: exp(-gamma*|u-v|^2) (default: 0)
+    2 -- radial basis function: exp(-gamma*|u-v|^2) (default: 2)
 
 .TP
 .B -d, --degree arg

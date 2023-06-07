@@ -246,7 +246,11 @@ std::ostream &operator<<(std::ostream &out, const parser_train &params) {
             out << fmt::format("degree: {}{}\n", params.csvm_params.degree.value(), params.csvm_params.degree.is_default() ? " (default)" : "");
         } break;
         case kernel_function_type::rbf:
-            out << fmt::format("gamma: {}\n", params.csvm_params.gamma);
+            if (params.csvm_params.gamma.is_default()) {
+                out << "gamma: 1 / num_features (default)\n";
+            } else {
+                out << fmt::format("gamma: {}\n", params.csvm_params.gamma.value());
+            }
             break;
     }
     out << fmt::format("cost: {}{}\n", params.csvm_params.cost.value(), params.csvm_params.cost.is_default() ? " (default)" : "");

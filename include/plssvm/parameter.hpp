@@ -155,7 +155,7 @@ struct parameter {
     }
 
     /// The used kernel function: linear, polynomial, or radial basis functions (rbf).
-    default_value<kernel_function_type> kernel_type{ default_init<kernel_function_type>{ kernel_function_type::linear } };
+    default_value<kernel_function_type> kernel_type{ default_init<kernel_function_type>{ kernel_function_type::rbf } };
     /// The degree parameter used in the polynomial kernel function.
     default_value<int> degree{ default_init<int>{ 3 } };
     /// The gamma parameter used in the polynomial and rbf kernel functions.

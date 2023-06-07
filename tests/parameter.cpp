@@ -35,7 +35,7 @@ TYPED_TEST(Parameter, default_construct) {
 
     // test default values
     EXPECT_TRUE(param.kernel_type.is_default());
-    EXPECT_EQ(param.kernel_type.value(), plssvm::kernel_function_type::linear);
+    EXPECT_EQ(param.kernel_type.value(), plssvm::kernel_function_type::rbf);
     EXPECT_TRUE(param.degree.is_default());
     EXPECT_EQ(param.degree.value(), 3);
     EXPECT_TRUE(param.gamma.is_default());
@@ -53,7 +53,7 @@ TYPED_TEST(Parameter, construct) {
     // test default values
     EXPECT_FALSE(param.kernel_type.is_default());
     EXPECT_EQ(param.kernel_type.value(), plssvm::kernel_function_type::polynomial);
-    EXPECT_EQ(param.kernel_type.get_default(), plssvm::kernel_function_type::linear);
+    EXPECT_EQ(param.kernel_type.get_default(), plssvm::kernel_function_type::rbf);
 
     EXPECT_FALSE(param.degree.is_default());
     EXPECT_EQ(param.degree.value(), 1);
@@ -85,7 +85,7 @@ TYPED_TEST(Parameter, construct_named_args_all) {
     // test default values
     EXPECT_FALSE(param.kernel_type.is_default());
     EXPECT_EQ(param.kernel_type.value(), plssvm::kernel_function_type::polynomial);
-    EXPECT_EQ(param.kernel_type.get_default(), plssvm::kernel_function_type::linear);
+    EXPECT_EQ(param.kernel_type.get_default(), plssvm::kernel_function_type::rbf);
 
     EXPECT_FALSE(param.degree.is_default());
     EXPECT_EQ(param.degree.value(), 1);
@@ -115,7 +115,7 @@ TYPED_TEST(Parameter, construct_named_args) {
     // test default values
     EXPECT_FALSE(param.kernel_type.is_default());
     EXPECT_EQ(param.kernel_type.value(), plssvm::kernel_function_type::polynomial);
-    EXPECT_EQ(param.kernel_type.get_default(), plssvm::kernel_function_type::linear);
+    EXPECT_EQ(param.kernel_type.get_default(), plssvm::kernel_function_type::rbf);
 
     EXPECT_TRUE(param.degree.is_default());
     EXPECT_EQ(param.degree.value(), 3);
@@ -151,7 +151,7 @@ TYPED_TEST(Parameter, construct_parameter_and_named_args) {
     // test default values
     EXPECT_FALSE(param.kernel_type.is_default());
     EXPECT_EQ(param.kernel_type.value(), plssvm::kernel_function_type::rbf);
-    EXPECT_EQ(param.kernel_type.get_default(), plssvm::kernel_function_type::linear);
+    EXPECT_EQ(param.kernel_type.get_default(), plssvm::kernel_function_type::rbf);
 
     EXPECT_TRUE(param.degree.is_default());
     EXPECT_EQ(param.degree.value(), 3);

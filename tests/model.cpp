@@ -60,7 +60,7 @@ TYPED_TEST(Model, construct) {
     // test for correct construction
     EXPECT_EQ(model.num_support_vectors(), 6);
     EXPECT_EQ(model.num_features(), 4);
-    EXPECT_EQ(model.get_params(), plssvm::parameter{});
+    EXPECT_EQ(model.get_params(), plssvm::parameter{ plssvm::kernel_type = plssvm::kernel_function_type::linear });
     const std::vector<std::vector<real_type>> support_vectors{
         { real_type{ -1.1178275006 }, real_type{ -2.9087188881 }, real_type{ 0.66638344270 }, real_type{ 1.0978832704 } },
         { real_type{ -0.52821182989 }, real_type{ -0.33588098497 }, real_type{ 0.51687296030 }, real_type{ 0.54604461446 } },
@@ -149,7 +149,7 @@ TYPED_TEST(Model, get_params) {
     const plssvm::model<real_type, label_type> model{ model_file.filename };
 
     // test for the correct number of features
-    EXPECT_EQ(model.get_params(), plssvm::parameter{});
+    EXPECT_EQ(model.get_params(), plssvm::parameter{ plssvm::kernel_type = plssvm::kernel_function_type::linear });
 }
 TYPED_TEST(Model, support_vectors) {
     using real_type = typename TypeParam::real_type;

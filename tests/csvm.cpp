@@ -73,7 +73,7 @@ TEST(BaseCSVM, construct_from_parameter_invalid_gamma) {
 
 TEST(BaseCSVM, construct_linear_from_named_parameters) {
     // correct parameters
-    const plssvm::parameter params{ plssvm::cost = 2.0 };
+    const plssvm::parameter params{ plssvm::kernel_type = plssvm::kernel_function_type::linear, plssvm::cost = 2.0 };
 
     // create mock_csvm (since plssvm::csvm is pure virtual!)
     const mock_csvm csvm{ plssvm::kernel_type = plssvm::kernel_function_type::linear, plssvm::cost = params.cost };

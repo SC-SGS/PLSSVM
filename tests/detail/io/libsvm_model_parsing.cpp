@@ -559,7 +559,8 @@ TYPED_TEST(LIBSVMModelHeaderWrite, write_linear) {
     const std::vector<std::vector<real_type>> data = util::generate_specific_matrix<real_type>(label.size(), 3);
 
     // create necessary parameter
-    const plssvm::parameter params{};
+    plssvm::parameter params{};
+    params.kernel_type = plssvm::kernel_function_type::linear;
     const std::vector<real_type> rho(num_alpha_values, real_type{ 3.14159265359 });
     const plssvm::data_set<real_type, label_type> data_set{ std::vector<std::vector<real_type>>{ data }, std::vector<label_type>{ label } };
 
@@ -977,7 +978,7 @@ TYPED_TEST(LIBSVMModelDataWrite, write) {
     const std::vector<std::vector<real_type>> data = util::generate_specific_matrix<real_type>(label.size(), 3);
 
     // create necessary parameter
-    const plssvm::parameter params{};
+    const plssvm::parameter params{ plssvm::kernel_type = plssvm::kernel_function_type::linear };
     const std::vector<real_type> rho(num_alpha_values, real_type{ 3.1415 });
     const std::vector<std::vector<real_type>> alpha = util::generate_specific_matrix<real_type>(num_alpha_values, data.size());
     const plssvm::data_set<real_type, label_type> data_set{ std::vector<std::vector<real_type>>{ data }, std::vector<label_type>{ label } };
