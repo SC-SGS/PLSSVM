@@ -68,8 +68,7 @@ TEST_F(ParserTrain, minimal_output) {
         "label_type: int (default)\n"
         "real_type: double (default)\n"
         "input file (data set): 'data.libsvm'\n"
-        "output file (model): 'data.libsvm.model'\n"
-        "performance tracking file: ''\n";
+        "output file (model): 'data.libsvm.model'\n";
     EXPECT_CONVERSION_TO_STRING(parser, correct);
 }
 
@@ -114,8 +113,6 @@ TEST_F(ParserTrain, all_arguments) {
     EXPECT_EQ(parser.model_filename, "data.libsvm.model");
 #if defined(PLSSVM_PERFORMANCE_TRACKER_ENABLED)
     EXPECT_EQ(parser.performance_tracking_filename, "tracking.yaml");
-#else
-    EXPECT_EQ(parser.performance_tracking_filename, "");
 #endif
     EXPECT_EQ(plssvm::verbosity, plssvm::verbosity_level::libsvm);
 }
@@ -135,7 +132,7 @@ TEST_F(ParserTrain, all_arguments_output) {
     const plssvm::detail::cmd::parser_train parser{ this->argc, this->argv };
 
     // test output string
-    const std::string correct =
+    std::string correct =
         "kernel_type: polynomial -> (gamma*u'*v+coef0)^degree\n"
         "gamma: 1.5\n"
         "coef0: -1.5\n"
@@ -146,11 +143,9 @@ TEST_F(ParserTrain, all_arguments_output) {
         "label_type: std::string\n"
         "real_type: float\n"
         "input file (data set): 'data.libsvm'\n"
-        "output file (model): 'data.libsvm.model'\n"
+        "output file (model): 'data.libsvm.model'\n";
 #if defined(PLSSVM_PERFORMANCE_TRACKER_ENABLED)
-        "performance tracking file: 'tracking.yaml'\n";
-#else
-        "performance tracking file: ''\n";
+        correct += "performance tracking file: 'tracking.yaml'\n";
 #endif
     EXPECT_CONVERSION_TO_STRING(parser, correct);
     EXPECT_EQ(plssvm::verbosity, plssvm::verbosity_level::libsvm);

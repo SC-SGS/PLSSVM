@@ -45,7 +45,6 @@ TEST_F(ParserScale, minimal) {
     EXPECT_EQ(parser.scaled_filename, "");
     EXPECT_EQ(parser.save_filename, "");
     EXPECT_EQ(parser.restore_filename, "");
-    EXPECT_EQ(parser.performance_tracking_filename, "");
 }
 TEST_F(ParserScale, minimal_output) {
     // create artificial command line arguments in test fixture
@@ -64,8 +63,7 @@ TEST_F(ParserScale, minimal_output) {
         "input file: 'data.libsvm'\n"
         "scaled file: ''\n"
         "save file (scaling factors): ''\n"
-        "restore file (scaling factors): ''\n"
-        "performance tracking file: ''\n";
+        "restore file (scaling factors): ''\n";
     EXPECT_CONVERSION_TO_STRING(parser, correct);
 }
 
@@ -93,8 +91,6 @@ TEST_F(ParserScale, all_arguments) {
     EXPECT_EQ(parser.restore_filename, "");
 #if defined(PLSSVM_PERFORMANCE_TRACKER_ENABLED)
     EXPECT_EQ(parser.performance_tracking_filename, "tracking.yaml");
-#else
-    EXPECT_EQ(parser.performance_tracking_filename, "");
 #endif
     EXPECT_EQ(plssvm::verbosity, plssvm::verbosity_level::libsvm);
 }
@@ -111,7 +107,7 @@ TEST_F(ParserScale, all_arguments_output) {
     const plssvm::detail::cmd::parser_scale parser{ this->argc, this->argv };
 
     // test output string
-    const std::string correct =
+    std::string correct =
         "lower: -2\n"
         "upper: 2.5\n"
         "label_type: std::string\n"
@@ -120,11 +116,9 @@ TEST_F(ParserScale, all_arguments_output) {
         "input file: 'data.libsvm'\n"
         "scaled file: 'data.libsvm.scaled'\n"
         "save file (scaling factors): 'data.libsvm.save'\n"
-        "restore file (scaling factors): ''\n"
+        "restore file (scaling factors): ''\n";
 #if defined(PLSSVM_PERFORMANCE_TRACKER_ENABLED)
-        "performance tracking file: 'tracking.yaml'\n";
-#else
-        "performance tracking file: ''\n";
+        correct += "performance tracking file: 'tracking.yaml'\n";
 #endif
     EXPECT_CONVERSION_TO_STRING(parser, correct);
     EXPECT_EQ(plssvm::verbosity, plssvm::verbosity_level::libsvm);

@@ -44,7 +44,6 @@ TEST_F(ParserPredict, minimal) {
     EXPECT_EQ(parser.input_filename, "data.libsvm");
     EXPECT_EQ(parser.model_filename, "data.libsvm.model");
     EXPECT_EQ(parser.predict_filename, "data.libsvm.predict");
-    EXPECT_EQ(parser.performance_tracking_filename, "");
 }
 TEST_F(ParserPredict, minimal_output) {
     // create artificial command line arguments in test fixture
@@ -59,8 +58,7 @@ TEST_F(ParserPredict, minimal_output) {
         "real_type: double (default)\n"
         "input file (data set): 'data.libsvm'\n"
         "input file (model): 'data.libsvm.model'\n"
-        "output file (prediction): 'data.libsvm.predict'\n"
-        "performance tracking file: ''\n";
+        "output file (prediction): 'data.libsvm.predict'\n";
     EXPECT_CONVERSION_TO_STRING(parser, correct);
 }
 
@@ -89,8 +87,6 @@ TEST_F(ParserPredict, all_arguments) {
 #endif
 #if defined(PLSSVM_PERFORMANCE_TRACKER_ENABLED)
     EXPECT_EQ(parser.performance_tracking_filename, "tracking.yaml");
-#else
-    EXPECT_EQ(parser.performance_tracking_filename, "");
 #endif
     EXPECT_TRUE(parser.strings_as_labels);
     EXPECT_TRUE(parser.float_as_real_type);
@@ -115,16 +111,14 @@ TEST_F(ParserPredict, all_arguments_output) {
     const plssvm::detail::cmd::parser_predict parser{ this->argc, this->argv };
 
     // test output string
-    const std::string correct =
+    std::string correct =
         "label_type: std::string\n"
         "real_type: float\n"
         "input file (data set): 'data.libsvm'\n"
         "input file (model): 'data.libsvm.model'\n"
-        "output file (prediction): 'data.libsvm.predict'\n"
+        "output file (prediction): 'data.libsvm.predict'\n";
 #if defined(PLSSVM_PERFORMANCE_TRACKER_ENABLED)
-        "performance tracking file: 'tracking.yaml'\n";
-#else
-        "performance tracking file: ''\n";
+        correct += "performance tracking file: 'tracking.yaml'\n";
 #endif
     EXPECT_CONVERSION_TO_STRING(parser, correct);
     EXPECT_EQ(plssvm::verbosity, plssvm::verbosity_level::libsvm);

@@ -168,27 +168,29 @@ parser_scale::parser_scale(int argc, char **argv) {
 }
 
 std::ostream &operator<<(std::ostream &out, const parser_scale &params) {
-    return out << fmt::format(
-               "lower: {}\n"
-               "upper: {}\n"
-               "label_type: {}\n"
-               "real_type: {}\n"
-               "output file format: {}\n"
-               "input file: '{}'\n"
-               "scaled file: '{}'\n"
-               "save file (scaling factors): '{}'\n"
-               "restore file (scaling factors): '{}'\n"
-               "performance tracking file: '{}'\n",
-               params.lower,
-               params.upper,
-               params.strings_as_labels ? "std::string" : "int (default)",
-               params.float_as_real_type ? "float" : "double (default)",
-               params.format,
-               params.input_filename,
-               params.scaled_filename,
-               params.save_filename,
-               params.restore_filename,
-               params.performance_tracking_filename);
+    out << fmt::format(
+        "lower: {}\n"
+        "upper: {}\n"
+        "label_type: {}\n"
+        "real_type: {}\n"
+        "output file format: {}\n"
+        "input file: '{}'\n"
+        "scaled file: '{}'\n"
+        "save file (scaling factors): '{}'\n"
+        "restore file (scaling factors): '{}'\n",
+        params.lower,
+        params.upper,
+        params.strings_as_labels ? "std::string" : "int (default)",
+        params.float_as_real_type ? "float" : "double (default)",
+        params.format,
+        params.input_filename,
+        params.scaled_filename,
+        params.save_filename,
+        params.restore_filename);
+    if (!params.performance_tracking_filename.empty()) {
+        out << fmt::format("performance tracking file: '{}'\n", params.performance_tracking_filename);
+    }
+    return out;
 }
 
 }  // namespace plssvm::detail::cmd
