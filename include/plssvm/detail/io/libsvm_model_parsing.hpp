@@ -82,10 +82,10 @@ namespace plssvm::detail::io {
  * @throws plssvm::invalid_file_format_exception if no support vectors have been provided in the data section
  * @throws plssvm::invalid_file_format_exception if the number of labels is not two
  * @attention Only for binary classification or one vs. one is the model file compatible with LIBSVM.
- * @return the necessary header information: [the SVM parameter, the values of rho, the labels, the different classes, the classification strategy used, num_header_lines] (`[[nodiscard]]`)
+ * @return the necessary header information: [the SVM parameter, the values of rho, the labels, the different classes, num_header_lines] (`[[nodiscard]]`)
  */
 template <typename real_type, typename label_type, typename size_type>
-[[nodiscard]] inline std::tuple<plssvm::parameter, std::vector<real_type>, std::vector<label_type>, std::vector<label_type>, classification_type, std::size_t> parse_libsvm_model_header(const std::vector<std::string_view> &lines) {
+[[nodiscard]] inline std::tuple<plssvm::parameter, std::vector<real_type>, std::vector<label_type>, std::vector<label_type>, std::vector<size_type>, std::size_t> parse_libsvm_model_header(const std::vector<std::string_view> &lines) {
     // data to read
     plssvm::parameter params{};
     std::vector<real_type> rho{};
@@ -102,7 +102,6 @@ template <typename real_type, typename label_type, typename size_type>
     size_type nr_class{};
     std::vector<label_type> labels{};
     std::vector<size_type> num_support_vectors_per_class{};
-    classification_type classification{ classification_type::oaa };
 
     // parse libsvm model file header
     std::size_t header_line = 0;
@@ -251,27 +250,9 @@ template <typename real_type, typename label_type, typename size_type>
     if (nr_class != num_support_vectors_per_class.size()) {
         throw invalid_file_format_exception{ fmt::format("The number of classes (nr_class) is {}, but the provided number of different labels is {} (nr_sv)!", nr_class, num_support_vectors_per_class.size()) };
     }
-    // the number of rho values must match the number of classes
-    if (nr_class == 2) {
-        if (rho.size() != 1) {
-            throw invalid_file_format_exception{ fmt::format("The number of rho values (rho) is {}, but must be 1 for binary classification!", rho.size()) };
-        }
-    } else {
-        // TODO: PROBLEM 3 !!!!
-        if (rho.size() == nr_class) {
-            // for one vs. all, the number of rho values must be equal to nr_class
-            classification = classification_type::oaa;
-        } else if (rho.size() == nr_class * (nr_class - 1) / 2) {
-            // for one vs. one, the number of rho values must be equal to nr_class * (nr_class - 1) / 2
-            classification = classification_type::oao;
-        } else {
-            // the number of rho values doesn't match OAA or OAO -> invalid model file
-            throw invalid_file_format_exception{ fmt::format("The number of different labels is {} (nr_class). Therefore, the number of rho values must either be {} (one vs. all) or {} (one vs. vs), but is {}!",
-                                                             nr_class,
-                                                             calculate_number_of_classifiers(classification_type::oaa, nr_class),
-                                                             calculate_number_of_classifiers(classification_type::oao, nr_class),
-                                                             rho.size()) };
-        }
+    // the number of rho values must never be 2
+    if (nr_class == 2 && rho.size() != 1) {
+        throw invalid_file_format_exception{ fmt::format("The number of rho values (rho) is {}, but must be 1 for binary classification!", rho.size()) };
     }
     // calculate the number of support as sum of the support vectors per class
     const auto nr_sv_sum = std::accumulate(num_support_vectors_per_class.begin(), num_support_vectors_per_class.end(), size_type{ 0 });
@@ -291,7 +272,7 @@ template <typename real_type, typename label_type, typename size_type>
         pos += num_support_vectors_per_class[i];
     }
 
-    return std::make_tuple(params, rho, std::move(data_labels), std::move(labels), classification, header_line + 1);
+    return std::make_tuple(params, rho, std::move(data_labels), std::move(labels), std::move(num_support_vectors_per_class), header_line + 1);
 }
 
 /**
@@ -310,7 +291,7 @@ template <typename real_type, typename label_type, typename size_type>
  * @tparam real_type the floating point type
  * @param[in] reader the file_reader used to read the LIBSVM data
  * @param[in] classification the used multi-class classification strategy for this model file (as determined by the model header)
- * @param[in] num_alpha_values the number of different labels in the data set
+ * @param[in] max_num_alpha_values the number of different labels in the data set
  * @param[in] skipped_lines the number of lines that should be skipped at the beginning
  * @note The features must be provided with one-based indices!
  * @throws plssvm::invalid_file_format_exception if no features could be found (may indicate an empty file)
@@ -324,10 +305,10 @@ template <typename real_type, typename label_type, typename size_type>
  * @return a std::tuple containing: [num_data_points, num_features, data_points, labels] (`[[nodiscard]]`)
  */
 template <typename real_type>
-[[nodiscard]] inline std::tuple<std::size_t, std::size_t, std::vector<std::vector<real_type>>, std::vector<std::vector<real_type>>> parse_libsvm_model_data(const file_reader &reader, [[maybe_unused]] const classification_type classification, const std::size_t num_alpha_values, const std::size_t skipped_lines) {
+[[nodiscard]] inline std::tuple<std::size_t, std::size_t, std::vector<std::vector<real_type>>, std::vector<std::vector<real_type>>, classification_type> parse_libsvm_model_data(const file_reader &reader, const std::size_t max_num_alpha_values, const std::vector<std::size_t> &num_sv_per_class, const std::size_t skipped_lines) {
     PLSSVM_ASSERT(reader.is_open(), "The file_reader is currently not associated with a file!");
-    PLSSVM_ASSERT(num_alpha_values >= 1, "At least one alpha value must be present!");
-    PLSSVM_ASSERT(num_alpha_values != 2, "Two alpha values may never be present (binary classification as special case only uses 1 alpha value)!");
+//    PLSSVM_ASSERT(max_num_alpha_values >= 1, "At least one alpha value must be present!");
+//    PLSSVM_ASSERT(max_num_alpha_values != 2, "Two alpha values may never be present (binary classification as special case only uses 1 alpha value)!");
     // sanity check: can't skip more lines than are present
     PLSSVM_ASSERT(skipped_lines <= reader.num_lines(), "Tried to skipp {} lines, but only {} are present!", skipped_lines, reader.num_lines());
 
@@ -340,13 +321,17 @@ template <typename real_type>
         throw invalid_file_format_exception{ fmt::format("Can't parse file: no data points are given!") };
     }
 
+    // TODO: num_classes
+
     // create vector containing the data and label
     std::vector<std::vector<real_type>> data(num_data_points);
-    std::vector<std::vector<real_type>> alpha(num_alpha_values, std::vector<real_type>(num_data_points));
+    std::vector<std::vector<real_type>> alpha(max_num_alpha_values, std::vector<real_type>(num_data_points));
+    bool is_oaa{ false };
+    bool is_oao{ false };
 
     std::exception_ptr parallel_exception;
 
-    #pragma omp parallel default(none) shared(std::cerr, reader, skipped_lines, data, alpha, parallel_exception) firstprivate(num_features, num_alpha_values)
+    #pragma omp parallel default(none) shared(std::cerr, reader, skipped_lines, data, alpha, parallel_exception, is_oaa, is_oao) firstprivate(num_features, max_num_alpha_values)
     {
         #pragma omp for
         for (typename std::vector<std::vector<real_type>>::size_type i = 0; i < data.size(); ++i) {
@@ -357,20 +342,33 @@ template <typename real_type>
                 // parse the alpha (weight) values
                 std::string_view::size_type pos = 0;
                 const std::string_view::size_type first_colon = line.find_first_of(":\n");
-                // TODO: parse based on classification strategy -> implement OAO
-                for (std::size_t a = 0; a < num_alpha_values; ++a) {
+                std::size_t alpha_val{ 0 };
+                while (true) {
                     const std::string_view::size_type next_pos = line.find_first_of(" \n", pos);
                     if (first_colon >= next_pos) {
+                        if (alpha_val >= max_num_alpha_values) {
+                            throw invalid_file_format_exception{ fmt::format("Can't parse file: needed at most {} alpha values, but more were provided!", max_num_alpha_values) };
+                        }
+
                         // get alpha value
-                        alpha[a][i] = detail::convert_to<real_type, invalid_file_format_exception>(line.substr(pos, next_pos));
+                        alpha[alpha_val][i] = detail::convert_to<real_type, invalid_file_format_exception>(line.substr(pos, next_pos));
                         pos = next_pos + 1;
+                        ++alpha_val;
                     } else {
-                        throw invalid_file_format_exception{ fmt::format("Can't parse file: need {} alpha values, but only {} were given!", num_alpha_values, a) };
+                        break;
                     }
                 }
-                // check whether too many alpha values are provided
-                if (line.find_first_of(" \n", pos) < first_colon && line.find_first_of(" \n", pos) != std::string_view::npos) {
-                    throw invalid_file_format_exception{ fmt::format("Can't parse file: too many alpha values were given!") };
+                if (alpha_val < max_num_alpha_values - 1) {
+                    throw invalid_file_format_exception{ fmt::format("Can't parse file: needed at least {} alpha values, but fewer ({}) were provided!", max_num_alpha_values - 1, alpha_val) };
+                }
+
+                // check whether we read a file given OAA classification or OAO classification
+                if (alpha_val == max_num_alpha_values) {
+                    #pragma omp critical
+                    is_oaa = true;
+                } else if (alpha_val == max_num_alpha_values - 1) {
+                    #pragma omp critical
+                    is_oao = true;
                 }
 
                 // get data
@@ -424,7 +422,64 @@ template <typename real_type>
         std::rethrow_exception(parallel_exception);
     }
 
-    return std::make_tuple(num_data_points, num_features, std::move(data), std::move(alpha));
+    classification_type classification{};
+    if (is_oaa && is_oao) {
+        // invalid model file
+        throw invalid_file_format_exception{ "Can't distinguish between OAA and OAO in the given model file!" };
+    } else if (is_oaa) {
+        classification = classification_type::oaa;
+    } else if (is_oao) {
+        const std::size_t num_classes = num_sv_per_class.size();
+
+        const auto x_vs_y_to_idx = [&](const std::size_t x, const std::size_t y) {
+            //            return num_classes * x - (x * (x + 1) / 2) + y - 1 - x;
+            return (num_classes * (num_classes - 1) / 2) - (num_classes - x) * ((num_classes - x) - 1) / 2 + y - x - 1;
+            //            return alpha[idx];
+        };
+
+        classification = classification_type::oao;
+        // last vector entry not needed
+        alpha.pop_back();
+        // remap alpha vector from read to 01 02 03 12 13 23 etc.
+        // TODO: implement!
+        std::vector<std::vector<real_type>> oao_alpha(calculate_number_of_classifiers(classification_type::oao, num_classes));
+        std::size_t running_idx{ 0 };
+
+//        for (const auto& val : alpha) {
+//            fmt::print("{}\n", fmt::join(val, " "));
+//        }
+//        std::cout << fmt::format("\n") << std::endl;
+
+        for (std::size_t nr_sv = 0; nr_sv < num_sv_per_class.size(); ++nr_sv) {
+            for (std::size_t i = 0; i < num_sv_per_class[nr_sv]; ++i) {
+                std::size_t running_a{ 0 };
+                for (std::size_t a = 0; a < num_classes - 1; ++a) {
+                    if (a == nr_sv) {
+                        ++running_a;
+                    }
+                    const real_type alpha_val = alpha[a][running_idx];
+                    const std::size_t idx = nr_sv < running_a ? x_vs_y_to_idx(nr_sv, running_a) : x_vs_y_to_idx(running_a, nr_sv);
+//                    fmt::print("nr_sv: {}, running_idx: {}, running_a: {}, a: {}, idx: {}\n", nr_sv, running_idx, running_a, a, idx);
+                    oao_alpha[idx].push_back(alpha_val);
+                    ++running_a;
+                }
+
+                ++running_idx;
+            }
+        }
+
+//        for (const auto& val : oao_alpha) {
+//            fmt::print("{}\n", fmt::join(val, " "));
+//        }
+//        std::cout << fmt::format("\n") << std::endl;
+
+        alpha = oao_alpha;
+    } else {
+        // invalid model file
+        throw invalid_file_format_exception{ "Can't parse file: neither found OAA nor OAO!" };
+    }
+
+    return std::make_tuple(num_data_points, num_features, std::move(data), std::move(alpha), classification);
 }
 
 /**
@@ -703,6 +758,7 @@ inline void write_libsvm_model_data(const std::string &filename, const plssvm::p
             }
         }
     } else {
+        // TODO: parallelize without explicit matrix, optimize
         const auto x_vs_y_to_idx = [&](const std::size_t x, const std::size_t y) {
             //            return num_classes * x - (x * (x + 1) / 2) + y - 1 - x;
             return (num_classes * (num_classes - 1) / 2) - (num_classes - x) * ((num_classes - x) - 1) / 2 + y - x - 1;

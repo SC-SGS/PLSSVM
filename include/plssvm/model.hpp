@@ -205,17 +205,25 @@ model<T, U>::model(const std::string &filename) {
     // parse the libsvm model header
     std::vector<label_type> labels{};
     std::vector<label_type> unique_labels{};
+    std::vector<size_type> num_sv_per_class{};
     std::size_t num_header_lines{};
-    std::tie(params_, *rho_ptr_, labels, unique_labels, classification_strategy_, num_header_lines) = detail::io::parse_libsvm_model_header<real_type, label_type, size_type>(reader.lines());
-    const std::size_t num_classes = unique_labels.size();
-    // calculate the number of alpha values according to the used classification strategy
-    const std::size_t num_alpha_values = calculate_number_of_classifiers(classification_strategy_, num_classes);
+    std::tie(params_, *rho_ptr_, labels, unique_labels, num_sv_per_class, num_header_lines) = detail::io::parse_libsvm_model_header<real_type, label_type, size_type>(reader.lines());
+    const std::size_t num_alpha_values = unique_labels.size() == 2 ? 1 : unique_labels.size();
+
+    // fill indices -> support vectors are sorted!
+    indices_ptr_ = std::make_shared<std::vector<std::vector<std::size_t>>>(unique_labels.size());
+    std::size_t running_idx{ 0 };
+    for (std::size_t i = 0; i < num_sv_per_class.size(); ++i) {
+        (*indices_ptr_)[i] = std::vector<std::size_t>(num_sv_per_class[i]);
+        std::iota((*indices_ptr_)[i].begin(), (*indices_ptr_)[i].end(), running_idx);
+        running_idx += num_sv_per_class[i];
+    }
 
     // create empty support vectors and alpha vector
     std::vector<std::vector<real_type>> support_vectors;
 
     // parse libsvm model data
-    std::tie(num_support_vectors_, num_features_, support_vectors, *alpha_ptr_) = detail::io::parse_libsvm_model_data<real_type>(reader, classification_strategy_, num_alpha_values, num_header_lines);
+    std::tie(num_support_vectors_, num_features_, support_vectors, *alpha_ptr_, classification_strategy_) = detail::io::parse_libsvm_model_data<real_type>(reader, num_alpha_values, num_sv_per_class, num_header_lines);
 
     // create data set
     PLSSVM_ASSERT(support_vectors.size() == labels.size(), "Number of labels ({}) must match the number of data points ({})!", labels.size(), support_vectors.size());
@@ -225,10 +233,11 @@ model<T, U>::model(const std::string &filename) {
 
     const std::chrono::time_point end_time = std::chrono::steady_clock::now();
     detail::log(verbosity_level::full | verbosity_level::timing,
-                "Read {} support vectors with {} features and {} classes in {} using the libsvm model parser from file '{}'.\n\n",
+                "Read {} support vectors with {} features and {} classes using {} classification in {} using the libsvm model parser from file '{}'.\n\n",
                 detail::tracking_entry{ "model_read", "num_support_vectors", num_support_vectors_ },
                 detail::tracking_entry{ "model_read", "num_features", num_features_ },
                 detail::tracking_entry{ "model_read", "num_classes", this->num_different_labels() },
+                classification_type_to_full_string(classification_strategy_),
                 detail::tracking_entry{ "model_read", "time",  std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time) },
                 detail::tracking_entry{ "model_read", "filename", filename });
     PLSSVM_DETAIL_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking_entry{ "model_read", "rho", *rho_ptr_ }));
@@ -247,10 +256,11 @@ void model<T, U>::save(const std::string &filename) const {
 
     const std::chrono::time_point end_time = std::chrono::steady_clock::now();
     detail::log(verbosity_level::full | verbosity_level::timing,
-                "Write {} support vectors with {} features and {} classes in {} to the libsvm model file '{}'.\n",
+                "Write {} support vectors with {} features and {} classes using {} classification in {} to the libsvm model file '{}'.\n",
                 detail::tracking_entry{ "model_write", "num_support_vectors", num_support_vectors_ },
                 detail::tracking_entry{ "model_write", "num_features", num_features_ },
                 detail::tracking_entry{ "model_write", "num_classes", this->num_different_labels() },
+                classification_type_to_full_string(classification_strategy_),
                 detail::tracking_entry{ "model_write", "time",  std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time) },
                 detail::tracking_entry{ "model_write", "filename", filename });
     PLSSVM_DETAIL_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking_entry{ "model_write", "rho", *rho_ptr_ }));
