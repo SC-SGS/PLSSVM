@@ -208,7 +208,6 @@ model<T, U>::model(const std::string &filename) {
     std::vector<size_type> num_sv_per_class{};
     std::size_t num_header_lines{};
     std::tie(params_, *rho_ptr_, labels, unique_labels, num_sv_per_class, num_header_lines) = detail::io::parse_libsvm_model_header<real_type, label_type, size_type>(reader.lines());
-    const std::size_t num_alpha_values = unique_labels.size() == 2 ? 1 : unique_labels.size();
 
     // fill indices -> support vectors are sorted!
     indices_ptr_ = std::make_shared<std::vector<std::vector<std::size_t>>>(unique_labels.size());
@@ -223,7 +222,7 @@ model<T, U>::model(const std::string &filename) {
     std::vector<std::vector<real_type>> support_vectors;
 
     // parse libsvm model data
-    std::tie(num_support_vectors_, num_features_, support_vectors, *alpha_ptr_, classification_strategy_) = detail::io::parse_libsvm_model_data<real_type>(reader, num_alpha_values, num_sv_per_class, num_header_lines);
+    std::tie(num_support_vectors_, num_features_, support_vectors, *alpha_ptr_, classification_strategy_) = detail::io::parse_libsvm_model_data<real_type>(reader, num_sv_per_class, num_header_lines);
 
     // create data set
     PLSSVM_ASSERT(support_vectors.size() == labels.size(), "Number of labels ({}) must match the number of data points ({})!", labels.size(), support_vectors.size());

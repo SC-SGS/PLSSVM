@@ -43,6 +43,15 @@
 
 namespace plssvm::detail::io {
 
+// note: if x > y -> swaps x and y since classifying x vs y equals to classifying y vs x
+[[nodiscard]] constexpr std::size_t x_vs_y_to_idx(std::size_t x, std::size_t y, const std::size_t num_classes) {
+    if (x > y) {
+        std::swap(x, y);
+    }
+    return (num_classes * (num_classes - 1) / 2) - (num_classes - x) * ((num_classes - x) - 1) / 2 + y - x - 1;
+}
+
+
 /**
  * @brief Parse the modified LIBSVM model file header.
  * @details An example modified LIBSVM model file header for the linear kernel and three labels could look like
@@ -305,10 +314,9 @@ template <typename real_type, typename label_type, typename size_type>
  * @return a std::tuple containing: [num_data_points, num_features, data_points, labels] (`[[nodiscard]]`)
  */
 template <typename real_type>
-[[nodiscard]] inline std::tuple<std::size_t, std::size_t, std::vector<std::vector<real_type>>, std::vector<std::vector<real_type>>, classification_type> parse_libsvm_model_data(const file_reader &reader, const std::size_t max_num_alpha_values, const std::vector<std::size_t> &num_sv_per_class, const std::size_t skipped_lines) {
+[[nodiscard]] inline std::tuple<std::size_t, std::size_t, std::vector<std::vector<real_type>>, std::vector<std::vector<real_type>>, classification_type> parse_libsvm_model_data(const file_reader &reader, const std::vector<std::size_t> &num_sv_per_class, const std::size_t skipped_lines) {
     PLSSVM_ASSERT(reader.is_open(), "The file_reader is currently not associated with a file!");
-//    PLSSVM_ASSERT(max_num_alpha_values >= 1, "At least one alpha value must be present!");
-//    PLSSVM_ASSERT(max_num_alpha_values != 2, "Two alpha values may never be present (binary classification as special case only uses 1 alpha value)!");
+    PLSSVM_ASSERT(num_sv_per_class.size() > 1, "At least two classes must be present!");
     // sanity check: can't skip more lines than are present
     PLSSVM_ASSERT(skipped_lines <= reader.num_lines(), "Tried to skipp {} lines, but only {} are present!", skipped_lines, reader.num_lines());
 
@@ -321,10 +329,9 @@ template <typename real_type>
         throw invalid_file_format_exception{ fmt::format("Can't parse file: no data points are given!") };
     }
 
-    // TODO: num_classes
-
     // create vector containing the data and label
     std::vector<std::vector<real_type>> data(num_data_points);
+    const std::size_t max_num_alpha_values = num_sv_per_class.size() == 2 ? 1 : num_sv_per_class.size();
     std::vector<std::vector<real_type>> alpha(max_num_alpha_values, std::vector<real_type>(num_data_points));
     bool is_oaa{ false };
     bool is_oao{ false };
@@ -429,51 +436,43 @@ template <typename real_type>
     } else if (is_oaa) {
         classification = classification_type::oaa;
     } else if (is_oao) {
-        const std::size_t num_classes = num_sv_per_class.size();
-
-        const auto x_vs_y_to_idx = [&](const std::size_t x, const std::size_t y) {
-            //            return num_classes * x - (x * (x + 1) / 2) + y - 1 - x;
-            return (num_classes * (num_classes - 1) / 2) - (num_classes - x) * ((num_classes - x) - 1) / 2 + y - x - 1;
-            //            return alpha[idx];
-        };
-
+        // TODO: parallelize?
         classification = classification_type::oao;
         // last vector entry not needed
         alpha.pop_back();
-        // remap alpha vector from read to 01 02 03 12 13 23 etc.
-        // TODO: implement!
+        // remap alpha vector from the read one to 01 02 03 12 13 23 etc.
+        const std::size_t num_classes = num_sv_per_class.size();
         std::vector<std::vector<real_type>> oao_alpha(calculate_number_of_classifiers(classification_type::oao, num_classes));
+
+        // loop over all classes
         std::size_t running_idx{ 0 };
-
-//        for (const auto& val : alpha) {
-//            fmt::print("{}\n", fmt::join(val, " "));
-//        }
-//        std::cout << fmt::format("\n") << std::endl;
-
         for (std::size_t nr_sv = 0; nr_sv < num_sv_per_class.size(); ++nr_sv) {
+            // loop over all data points in the specific class
+            // note: the data points are sorted according to the labels/classes by definition
             for (std::size_t i = 0; i < num_sv_per_class[nr_sv]; ++i) {
+                // running_a index: since in the case nr_sv == a, one index has to be skipped and, therefore, a can't be used directly
                 std::size_t running_a{ 0 };
+                // loop over all alpha values for the current data point
+                // note: OAO saves one alpha value less than there are classes
                 for (std::size_t a = 0; a < num_classes - 1; ++a) {
+                    // x vs x isn't defined
                     if (a == nr_sv) {
                         ++running_a;
                     }
+                    // get the current alpha value
                     const real_type alpha_val = alpha[a][running_idx];
-                    const std::size_t idx = nr_sv < running_a ? x_vs_y_to_idx(nr_sv, running_a) : x_vs_y_to_idx(running_a, nr_sv);
-//                    fmt::print("nr_sv: {}, running_idx: {}, running_a: {}, a: {}, idx: {}\n", nr_sv, running_idx, running_a, a, idx);
+                    // calculate to which alpha vector the alpha value should be added to
+                    const std::size_t idx = x_vs_y_to_idx(nr_sv, running_a, num_classes);
+                    // add the alpha value
                     oao_alpha[idx].push_back(alpha_val);
                     ++running_a;
                 }
-
+                // update the running index (otherwise a prefix sum over num_sv_per_class is needed)
                 ++running_idx;
             }
         }
-
-//        for (const auto& val : oao_alpha) {
-//            fmt::print("{}\n", fmt::join(val, " "));
-//        }
-//        std::cout << fmt::format("\n") << std::endl;
-
-        alpha = oao_alpha;
+        // update alpha vector
+        alpha = std::move(oao_alpha);
     } else {
         // invalid model file
         throw invalid_file_format_exception{ "Can't parse file: neither found OAA nor OAO!" };
