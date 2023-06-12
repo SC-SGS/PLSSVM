@@ -13,6 +13,7 @@
 #define PLSSVM_MODEL_HPP_
 #pragma once
 
+#include "plssvm/classification_types.hpp"            // plssvm::classification_type
 #include "plssvm/data_set.hpp"                        // plssvm::data_set
 #include "plssvm/detail/assert.hpp"                   // PLSSVM_ASSERT
 #include "plssvm/detail/io/libsvm_model_parsing.hpp"  // plssvm::detail::io::{parse_libsvm_model_header, parse_libsvm_model_data, write_libsvm_model_data}
@@ -135,6 +136,11 @@ class model {
         PLSSVM_ASSERT(alpha_ptr_ != nullptr, "The rho_ptr may never be a nullptr!");
         return *rho_ptr_;
     }
+    /**
+     * @brief Returns the multi-class classification strategy used to ft this model.
+     * @return the multi-class classification strategy (`[[nodiscard]]`)
+     */
+    [[nodiscard]] classification_type get_classification_type() const noexcept { return classification_strategy_; }
 
   private:
     /**
@@ -143,11 +149,14 @@ class model {
      * @note This constructor may only be used in the befriended base C-SVM class!
      * @param[in] params the SVM parameters used to learn this model
      * @param[in] data the data used to learn this model
+     * @param[in] classification_strategy the classification strategy used to fit this model
      */
-    model(parameter params, data_set<real_type, label_type> data);
+    model(parameter params, data_set<real_type, label_type> data, classification_type classification_strategy);
 
     /// The SVM parameter used to learn this model.
     parameter params_{};
+    /// The classification strategy (one vs. all or one vs. one) used to fit this model.
+    classification_type classification_strategy_{};
     /// The data (support vectors + respective label) used to learn this model.
     data_set<real_type, label_type> data_{};
     /// The number of support vectors representing this model.
@@ -160,6 +169,13 @@ class model {
      * @note Must be initialized to an empty vector instead of a `nullptr`.
      */
     std::shared_ptr<std::vector<std::vector<real_type>>> alpha_ptr_{ std::make_shared<std::vector<std::vector<real_type>>>() };
+
+    /**
+     * @brief For each class, holds the indices of all data points in the support vectors.
+     * @note Must be initialized to an empty vector instead of a `nullptr`.
+     */
+    std::shared_ptr<std::vector<std::vector<std::size_t>>> indices_ptr_{ std::make_shared<std::vector<std::vector<std::size_t>>>() };
+
     /**
      * @brief The bias after learning this model.
      * @note Must be initialized to an empty vector instead of a `nullptr`.
@@ -175,6 +191,10 @@ class model {
 };
 
 template <typename T, typename U>
+model<T, U>::model(parameter params, data_set<real_type, label_type> data, const classification_type classification_strategy) :
+    params_{ std::move(params) }, classification_strategy_{ classification_strategy }, data_{ std::move(data) }, num_support_vectors_{ data_.num_data_points() }, num_features_{ data_.num_features() } {}
+
+template <typename T, typename U>
 model<T, U>::model(const std::string &filename) {
     const std::chrono::time_point start_time = std::chrono::steady_clock::now();
 
@@ -186,14 +206,16 @@ model<T, U>::model(const std::string &filename) {
     std::vector<label_type> labels{};
     std::vector<label_type> unique_labels{};
     std::size_t num_header_lines{};
-    std::tie(params_, *rho_ptr_, labels, unique_labels, num_header_lines) = detail::io::parse_libsvm_model_header<real_type, label_type, size_type>(reader.lines());
+    std::tie(params_, *rho_ptr_, labels, unique_labels, classification_strategy_, num_header_lines) = detail::io::parse_libsvm_model_header<real_type, label_type, size_type>(reader.lines());
     const std::size_t num_classes = unique_labels.size();
+    // calculate the number of alpha values according to the used classification strategy
+    const std::size_t num_alpha_values = calculate_number_of_classifiers(classification_strategy_, num_classes);
 
     // create empty support vectors and alpha vector
     std::vector<std::vector<real_type>> support_vectors;
 
     // parse libsvm model data
-    std::tie(num_support_vectors_, num_features_, support_vectors, *alpha_ptr_) = detail::io::parse_libsvm_model_data<real_type>(reader, num_classes == 2 ? 1 : num_classes, num_header_lines);
+    std::tie(num_support_vectors_, num_features_, support_vectors, *alpha_ptr_) = detail::io::parse_libsvm_model_data<real_type>(reader, classification_strategy_, num_alpha_values, num_header_lines);
 
     // create data set
     PLSSVM_ASSERT(support_vectors.size() == labels.size(), "Number of labels ({}) must match the number of data points ({})!", labels.size(), support_vectors.size());
@@ -210,11 +232,8 @@ model<T, U>::model(const std::string &filename) {
                 detail::tracking_entry{ "model_read", "time",  std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time) },
                 detail::tracking_entry{ "model_read", "filename", filename });
     PLSSVM_DETAIL_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking_entry{ "model_read", "rho", *rho_ptr_ }));
+    PLSSVM_DETAIL_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking_entry{ "model_read", "classification_type", classification_strategy_ }));
 }
-
-template <typename T, typename U>
-model<T, U>::model(parameter params, data_set<real_type, label_type> data) :
-    params_{ std::move(params) }, data_{ std::move(data) }, num_support_vectors_{ data_.num_data_points() }, num_features_{ data_.num_features() } {}
 
 template <typename T, typename U>
 void model<T, U>::save(const std::string &filename) const {
@@ -224,7 +243,7 @@ void model<T, U>::save(const std::string &filename) const {
     const std::chrono::time_point start_time = std::chrono::steady_clock::now();
 
     // save model file header and support vectors
-    detail::io::write_libsvm_model_data(filename, params_, *rho_ptr_, *alpha_ptr_, data_);
+    detail::io::write_libsvm_model_data(filename, params_, classification_strategy_, *rho_ptr_, *alpha_ptr_, *indices_ptr_, data_);
 
     const std::chrono::time_point end_time = std::chrono::steady_clock::now();
     detail::log(verbosity_level::full | verbosity_level::timing,
@@ -235,6 +254,7 @@ void model<T, U>::save(const std::string &filename) const {
                 detail::tracking_entry{ "model_write", "time",  std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time) },
                 detail::tracking_entry{ "model_write", "filename", filename });
     PLSSVM_DETAIL_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking_entry{ "model_write", "rho", *rho_ptr_ }));
+    PLSSVM_DETAIL_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking_entry{ "model_write", "classification_type", classification_strategy_ }));
 }
 
 }  // namespace plssvm

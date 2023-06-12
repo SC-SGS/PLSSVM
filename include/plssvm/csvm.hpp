@@ -321,7 +321,7 @@ model<real_type, label_type> csvm::fit(const data_set<real_type, label_type> &da
     const std::chrono::time_point start_time = std::chrono::steady_clock::now();
 
     // create model
-    model<real_type, label_type> csvm_model{ params, data };
+    model<real_type, label_type> csvm_model{ params, data, classification_val.value() };
 
     detail::log(verbosity_level::full | verbosity_level::timing,
                 "Using {} ({}) as multi-class classification strategy.\n",
@@ -333,9 +333,57 @@ model<real_type, label_type> csvm::fit(const data_set<real_type, label_type> &da
         // solve the minimization problem
         std::tie(*csvm_model.alpha_ptr_, *csvm_model.rho_ptr_) = solve_system_of_linear_equations(static_cast<detail::parameter<real_type>>(params), data.data(), *data.y_ptr_, epsilon_val.value(), max_iter_val.value());
     } else if (classification_val.value() == plssvm::classification_type::oao) {
+
         // use the one vs. one multi-class classification strategy
-        // TODO: implement
-        throw exception{ "Error: currently not implemented!" };
+        const std::size_t num_classes = data.num_different_labels();
+        const std::size_t num_binary_classifications = calculate_number_of_classifiers(classification_type::oao, num_classes);
+        // resize alpha_ptr_ and rho_ptr_ to the correct sizes
+        csvm_model.alpha_ptr_->resize(num_binary_classifications);
+        csvm_model.rho_ptr_->resize(num_binary_classifications);
+
+        // create index vector: indices[0] contains the indices of all data points in the big data set with label index 0, and so on
+        std::vector<std::vector<std::size_t>> indices(num_classes);
+        {
+            const std::vector<label_type>& labels = data.labels().value();
+            for (std::size_t i = 0; i < data.num_data_points(); ++i) {
+                indices[data.mapping_->get_mapped_index_by_label(labels[i])].push_back(i);
+            }
+        }
+
+        // perform one vs. one classification
+        std::size_t pos = 0;
+        for (std::size_t i = 0; i < num_classes; ++i) {
+            for (std::size_t j = i + 1; j < num_classes; ++j) {
+                // assemble one vs. one classification matrix and rhs
+                const std::size_t num_data_points_in_sub_matrix{ indices[i].size() + indices[j].size() };
+                std::vector<std::vector<real_type>> binary_data(num_data_points_in_sub_matrix);
+                std::vector<std::vector<real_type>> binary_y(1, std::vector<real_type>(num_data_points_in_sub_matrix));  // note: the first dimension will always be one, since only one rhs is needed
+
+                // TODO: not sorted?
+                #pragma omp parallel for
+                for (std::size_t d = 0; d < indices[i].size(); ++d) {
+                    binary_data[d] = data.data()[indices[i][d]];
+                    binary_y.front()[d] = real_type{ 1.0 };
+                }
+                #pragma omp parallel for
+                for (std::size_t d = 0; d < indices[j].size(); ++d) {
+                    binary_data[indices[i].size() + d] = data.data()[indices[j][d]];
+                    binary_y.front()[indices[i].size() + d] = real_type{ -1.0 };
+                }
+
+                // if max_iter is the default value, update it according to the current binary classification matrix size
+                const unsigned long long binary_max_iter = max_iter_val.is_default() ? static_cast<unsigned long long>(binary_data.size()) : max_iter_val.value();
+                // solve the minimization problem -> note that only a single rhs is present
+                const auto &[alpha, rho] = solve_system_of_linear_equations(static_cast<detail::parameter<real_type>>(params), binary_data, binary_y, epsilon_val.value(), binary_max_iter);
+                (*csvm_model.alpha_ptr_)[pos] = alpha.front();
+                (*csvm_model.rho_ptr_)[pos] = rho.front();
+                // go to next one vs. one classification
+                ++pos;
+                // order of the alpha value: 0 vs 1, 0 vs 2, 0 vs 3, 1 vs 2, 1 vs 3, 2 vs 3
+            }
+        }
+
+        csvm_model.indices_ptr_ = std::make_shared<typename decltype(csvm_model.indices_ptr_)::element_type>(std::move(indices));
     }
 
     const std::chrono::time_point end_time = std::chrono::steady_clock::now();
@@ -353,26 +401,33 @@ std::vector<label_type> csvm::predict(const model<real_type, label_type> &model,
     }
 
     // predict values -> num_data_points x num_classes
+    // TODO: modify predict_values for OAO
     const std::vector<std::vector<real_type>> votes = predict_values(static_cast<detail::parameter<real_type>>(model.params_), model.data_.data(), *model.alpha_ptr_, *model.rho_ptr_, *model.w_, data.data());
 
     // convert predicted values to the correct labels
     std::vector<label_type> predicted_labels(votes.size());
 
-    if (model.num_different_labels() == 2) {
-        // use sign in case of binary classification
-        #pragma omp parallel for default(none) shared(predicted_labels, votes, model) if (!std::is_same_v<label_type, bool>)
-        for (typename std::vector<label_type>::size_type i = 0; i < predicted_labels.size(); ++i) {
-            // map { 1, -1 } to { 0, 1 }
-            const std::size_t idx = std::abs(plssvm::operators::sign(votes[i][0]) - 1) / 2;
-            predicted_labels[i] = model.data_.mapping_->get_label_by_mapped_index(idx);
+
+    if (model.get_classification_type() == classification_type::oaa) {
+        if (model.num_different_labels() == 2) {
+            // use sign in case of binary classification
+            #pragma omp parallel for default(none) shared(predicted_labels, votes, model) if (!std::is_same_v<label_type, bool>)
+            for (typename std::vector<label_type>::size_type i = 0; i < predicted_labels.size(); ++i) {
+                // map { 1, -1 } to { 0, 1 }
+                const std::size_t idx = std::abs(plssvm::operators::sign(votes[i][0]) - 1) / 2;
+                predicted_labels[i] = model.data_.mapping_->get_label_by_mapped_index(idx);
+            }
+        } else {
+            // use voting
+            #pragma omp parallel for default(none) shared(predicted_labels, votes, model) if (!std::is_same_v<label_type, bool>)
+            for (typename std::vector<label_type>::size_type i = 0; i < predicted_labels.size(); ++i) {
+                const std::size_t argmax = std::distance(votes[i].cbegin(), std::max_element(votes[i].cbegin(), votes[i].cend()));
+                predicted_labels[i] = model.data_.mapping_->get_label_by_mapped_index(argmax);
+            }
         }
-    } else {
-        // use voting
-        #pragma omp parallel for default(none) shared(predicted_labels, votes, model) if (!std::is_same_v<label_type, bool>)
-        for (typename std::vector<label_type>::size_type i = 0; i < predicted_labels.size(); ++i) {
-            const std::size_t argmax = std::distance(votes[i].cbegin(), std::max_element(votes[i].cbegin(), votes[i].cend()));
-            predicted_labels[i] = model.data_.mapping_->get_label_by_mapped_index(argmax);
-        }
+    } else if (model.get_classification_type() == classification_type::oao) {
+        // TODO: implement OAO
+        throw exception{ "Error: currently not implemented!" };
     }
 
     return predicted_labels;
