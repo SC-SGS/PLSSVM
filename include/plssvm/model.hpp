@@ -227,9 +227,12 @@ model<T, U>::model(const std::string &filename) {
 
     // create data set
     PLSSVM_ASSERT(support_vectors.size() == labels.size(), "Number of labels ({}) must match the number of data points ({})!", labels.size(), support_vectors.size());
+    const verbosity_level old_verbosity = verbosity;
+    verbosity = verbosity_level::quiet;
     data_ = data_set<real_type, label_type>{ std::move(support_vectors) };
     data_.labels_ptr_ = std::make_shared<typename decltype(data_.labels_ptr_)::element_type>(std::move(labels));  // prevent multiple calls to "create_mapping"
     data_.create_mapping(unique_labels);
+    verbosity = old_verbosity;
 
     const std::chrono::time_point end_time = std::chrono::steady_clock::now();
     detail::log(verbosity_level::full | verbosity_level::timing,
