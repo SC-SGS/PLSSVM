@@ -43,12 +43,52 @@
 
 namespace plssvm::detail::io {
 
-// note: if x > y -> swaps x and y since classifying x vs y equals to classifying y vs x
+/**
+ * @brief Calculates the one-dimensional index in the alpha vector given two classes for the binary classifier.
+ * @details The binary classifiers for four classes are: 0v1, 0vs2, 0vs3, 1vs2, 1vs3, and 2vs3.
+ *          Example function calls with the respective results are: `x_vs_y_to_idx(1, 2, 4) == 3` or `x_vs_y_to_idx(3, 1, 4) == 4`.
+ * @note If `x > y` swaps the to values since, e.g., `3vs2` isn't defined and should be mapped to `2vs3`.
+ * @param[in] x the first class of the binary classifier
+ * @param[in] y the second class if the binary classifier
+ * @param[in] num_classes the number of different classes
+ * @return the one-dimensional index of the classification pair (`[[nodiscard]]`)
+ */
 [[nodiscard]] constexpr std::size_t x_vs_y_to_idx(std::size_t x, std::size_t y, const std::size_t num_classes) {
+    // e.g., 3vs2 isn't defined -> map it to 2vs3
     if (x > y) {
         std::swap(x, y);
     }
     return (num_classes * (num_classes - 1) / 2) - (num_classes - x) * ((num_classes - x) - 1) / 2 + y - x - 1;
+}
+
+/**
+ * @brief Calculates the index in the alpha vector given the index set of the two classes in the current binary classifier.
+ * @details As an example, if the index sets are defined by [0, 2, 4] and [6, 8, 10] and the @p idx_to_find is `4`, returns `2`, if @p idx_to find is `10`, returns `5`.
+ * @param[in] i the first class of the binary classifier
+ * @param[in] j the second class of the binary classifier
+ * @param[in] indices the whole indices, used to (implicitly) create the index set of the current binary classifier
+ * @param[in] idx_to_find to index of the support vector to find the correct alpha index in the current binary classifier
+ * @throws plssvm::invalid_file_format_exception if the @p index_to_find couldn't be found in the index set defined by @p i, @p j, and @p indices.
+ * @return the alpha index (`[[nodiscard]]`)
+ */
+[[nodiscard]] std::size_t calculate_alpha_idx(std::size_t i, std::size_t j, const std::vector<std::vector<std::size_t>> &indices, const std::size_t idx_to_find) {
+    // the order is predefined -> switch order in order to return the correct index
+    if (i > j) {
+        std::swap(i, j);
+    }
+    for (std::size_t idx = 0; idx < indices[i].size(); ++idx) {
+        if (indices[i][idx] == idx_to_find) {
+            return idx;
+        }
+    }
+    for (std::size_t idx = 0; idx < indices[j].size(); ++idx) {
+        if (indices[j][idx] == idx_to_find) {
+            return indices[i].size() + idx;
+        }
+    }
+    // this exception should be unreachable!!!
+    throw invalid_file_format_exception{ fmt::format("The index {} couldn't be found in the index set defined by {} ([{}]) and {} ([{}])!",
+                                                     idx_to_find, i, fmt::join(indices[i], " "), j, fmt::join(indices[j], " ")) };
 }
 
 
@@ -299,8 +339,7 @@ template <typename real_type, typename label_type, typename size_type>
  * @endcode
  * @tparam real_type the floating point type
  * @param[in] reader the file_reader used to read the LIBSVM data
- * @param[in] classification the used multi-class classification strategy for this model file (as determined by the model header)
- * @param[in] max_num_alpha_values the number of different labels in the data set
+ * @param[in] num_sv_per_class the number of support vectors per class
  * @param[in] skipped_lines the number of lines that should be skipped at the beginning
  * @note The features must be provided with one-based indices!
  * @throws plssvm::invalid_file_format_exception if no features could be found (may indicate an empty file)
@@ -577,6 +616,7 @@ inline std::vector<label_type> write_libsvm_model_header(fmt::ostream &out, cons
  * @tparam label_type the type of the labels (any arithmetic type, except bool, or std::string)
  * @param[in] filename the file to write the LIBSVM model to
  * @param[in] params the SVM parameters
+ * @param[in] classification the used multi-class classification strategy
  * @param[in] rho the rho value resulting from the hyperplane learning
  * @param[in] alpha the weights learned by the SVM
  * @param[in] data the data used to create the model
@@ -611,7 +651,8 @@ inline void write_libsvm_model_data(const std::string &filename, const plssvm::p
     // create file
     fmt::ostream out = fmt::output_file(filename);
     // write timestamp for current date time
-    //    out.print("# This model file has been created at {}\n", detail::current_date_time());  // TODO: maybe remove because of LIBSVM?
+    // note: commented out since the resulting model file cannot be read be LIBSVM
+    //    out.print("# This model file has been created at {}\n", detail::current_date_time());
 
     // write header information
     const std::vector<label_type> label_order = write_libsvm_model_header(out, params, rho, data);
@@ -649,30 +690,85 @@ inline void write_libsvm_model_data(const std::string &filename, const plssvm::p
         output.push_back('\n');
     };
 
-    if (classification == classification_type::oaa) {
-        // initialize volatile array
-        auto counts = std::make_unique<volatile int[]>(label_order.size());
-        #pragma omp parallel default(none) shared(counts, alpha, format_libsvm_line, label_order, labels, support_vectors, out, std::cout) firstprivate(BLOCK_SIZE, CHARS_PER_BLOCK, num_features, num_classes, classification)
-        {
-            // preallocate string buffer, only ONE allocation
-            std::string out_string;
-            out_string.reserve(STRING_BUFFER_SIZE + (num_features + 1) * CHARS_PER_BLOCK);
-            std::vector<real_type> alpha_per_point(classification == classification_type::oaa ? alpha.size() : alpha.size() - 1);
+    // initialize volatile array
+    auto counts = std::make_unique<volatile int[]>(label_order.size());
+    #pragma omp parallel default(none) shared(counts, alpha, format_libsvm_line, label_order, labels, support_vectors, out, indices) firstprivate(BLOCK_SIZE, CHARS_PER_BLOCK, num_features, num_classes, classification)
+    {
+        // preallocate string buffer, only ONE allocation
+        std::string out_string;
+        out_string.reserve(STRING_BUFFER_SIZE + (num_features + 1) * CHARS_PER_BLOCK);
+        std::vector<real_type> alpha_per_point(classification == classification_type::oaa ? num_classes : num_classes - 1);  // TODO:
 
-            // support vectors with the first class
+        // support vectors with the first class
+        #pragma omp for nowait
+        for (typename std::vector<real_type>::size_type i = 0; i < support_vectors.size(); ++i) {
+            if (labels[i] == label_order[0]) {
+                switch (classification) {
+                    case classification_type::oaa:
+                        for (typename std::vector<std::vector<real_type>>::size_type a = 0; a < num_classes; ++a) {
+                            alpha_per_point[a] = alpha[a][i];
+                        }
+                        break;
+                    case classification_type::oao: {
+                        std::size_t pos{ 0 };
+                        for (std::size_t j = 1; j < num_classes; ++j) {
+                            const std::size_t idx = x_vs_y_to_idx(0, j, num_classes);
+                            const std::vector<real_type> &alpha_vec = alpha[idx];
+                            const std::size_t sv_idx = calculate_alpha_idx(0, j, indices, i);
+                            alpha_per_point[pos] = alpha_vec[sv_idx];
+                            ++pos;
+                        }
+                    }
+                        break;
+                }
+                format_libsvm_line(out_string, alpha_per_point, support_vectors[i]);
+
+                // if the buffer is full, write it to the file
+                if (out_string.size() > STRING_BUFFER_SIZE) {
+                    #pragma omp critical
+                    {
+                        out.print("{}", out_string);
+                        #pragma omp flush(out)
+                    }
+                    // clear buffer
+                    out_string.clear();
+                }
+            }
+        }
+
+        #pragma omp critical
+        {
+            if (!out_string.empty()) {
+                out.print("{}", out_string);
+                out_string.clear();
+            }
+            counts[0] = counts[0] + 1;
+            #pragma omp flush(counts, out)
+        }
+
+        for (typename std::vector<label_type>::size_type l = 1; l < label_order.size(); ++l) {
+            // the support vectors with the i-th class
             #pragma omp for nowait
             for (typename std::vector<real_type>::size_type i = 0; i < support_vectors.size(); ++i) {
-                if (labels[i] == label_order[0]) {
+                if (labels[i] == label_order[l]) {
                     switch (classification) {
                         case classification_type::oaa:
                             for (typename std::vector<std::vector<real_type>>::size_type a = 0; a < num_classes; ++a) {
                                 alpha_per_point[a] = alpha[a][i];
                             }
                             break;
-                        case classification_type::oao:
-                            for (typename std::vector<std::vector<real_type>>::size_type a = 0; a < num_classes - 1; ++a) {
-                                alpha_per_point[a] = alpha[a][i];
+                        case classification_type::oao: {
+                            std::size_t pos{ 0 };
+                            for (std::size_t j = 0; j < num_classes; ++j) {
+                                if (l != j) {
+                                    const std::size_t idx = x_vs_y_to_idx(l, j, num_classes);
+                                    const std::vector<real_type> &alpha_vec = alpha[idx];
+                                    const std::size_t sv_idx = calculate_alpha_idx(l, j, indices, i);
+                                    alpha_per_point[pos] = alpha_vec[sv_idx];
+                                    ++pos;
+                                }
                             }
+                        }
                             break;
                     }
                     format_libsvm_line(out_string, alpha_per_point, support_vectors[i]);
@@ -689,6 +785,13 @@ inline void write_libsvm_model_data(const std::string &filename, const plssvm::p
                     }
                 }
             }
+            // wait for all threads to write support vectors for previous class
+#ifdef _OPENMP
+            while (counts[l - 1] < omp_get_num_threads()) {
+            }
+#else
+#pragma omp barrier
+#endif
 
             #pragma omp critical
             {
@@ -696,131 +799,8 @@ inline void write_libsvm_model_data(const std::string &filename, const plssvm::p
                     out.print("{}", out_string);
                     out_string.clear();
                 }
-                counts[0] = counts[0] + 1;
+                counts[l] = counts[l] + 1;
                 #pragma omp flush(counts, out)
-            }
-
-            for (typename std::vector<label_type>::size_type l = 1; l < label_order.size(); ++l) {
-                // the support vectors with the i-th class
-                const std::size_t alpha_start = num_classes * l - (l * (l + 1) / 2);
-                const std::size_t num_alpha = num_classes - 1 - l;
-                std::cout << fmt::format("alpha_start: {}, l: {}, num_classes: {}", alpha_start, l, num_classes) << std::endl;
-
-                #pragma omp for nowait
-                for (typename std::vector<real_type>::size_type i = 0; i < support_vectors.size(); ++i) {
-                    if (labels[i] == label_order[l]) {
-                        switch (classification) {
-                            case classification_type::oaa:
-                                for (typename std::vector<std::vector<real_type>>::size_type a = 0; a < num_classes; ++a) {
-                                    alpha_per_point[a] = alpha[a][i];
-                                }
-                                break;
-                            case classification_type::oao:
-                                std::fill(alpha_per_point.begin(), alpha_per_point.end(), real_type{ 0.0 });
-                                for (typename std::vector<std::vector<real_type>>::size_type a = 0; a < num_alpha; ++a) {
-                                    std::cout << "idx: " << (alpha_start + a) << std::endl;
-                                    alpha_per_point[a] = alpha[alpha_start + a][i];
-                                }
-                                break;
-                        }
-                        format_libsvm_line(out_string, alpha_per_point, support_vectors[i]);
-
-                        // if the buffer is full, write it to the file
-                        if (out_string.size() > STRING_BUFFER_SIZE) {
-                            #pragma omp critical
-                            {
-                                out.print("{}", out_string);
-                                #pragma omp flush(out)
-                            }
-                            // clear buffer
-                            out_string.clear();
-                        }
-                    }
-                }
-                // wait for all threads to write support vectors for previous class
-#ifdef _OPENMP
-                while (counts[l - 1] < omp_get_num_threads()) {
-                }
-#else
-    #pragma omp barrier
-#endif
-
-                #pragma omp critical
-                {
-                    if (!out_string.empty()) {
-                        out.print("{}", out_string);
-                        out_string.clear();
-                    }
-                    counts[l] = counts[l] + 1;
-                    #pragma omp flush(counts, out)
-                }
-            }
-        }
-    } else {
-        // TODO: parallelize without explicit matrix, optimize
-        const auto x_vs_y_to_idx = [&](const std::size_t x, const std::size_t y) {
-            //            return num_classes * x - (x * (x + 1) / 2) + y - 1 - x;
-            return (num_classes * (num_classes - 1) / 2) - (num_classes - x) * ((num_classes - x) - 1) / 2 + y - x - 1;
-            //            return alpha[idx];
-        };
-
-        std::vector<std::vector<real_type>> alpha_matrix(data.num_data_points(), std::vector<real_type>(num_classes - 1));
-        for (std::size_t i = 0; i < num_classes; ++i) {
-            for (std::size_t d = 0; d < data.num_data_points(); ++d) {
-                if (labels[d] == label_order[i]) {
-                    std::size_t pos{ 0 };
-                    for (std::size_t j = 0; j < num_classes; ++j) {
-                        if (i != j) {
-                            const std::size_t idx = i < j ? x_vs_y_to_idx(i, j) : x_vs_y_to_idx(j, i);
-                            //                            fmt::print("i: {}, d: {}, j: {}, idx: {}\n", i, d, j, idx);
-                            const std::vector<real_type> &alpha_vec = alpha[idx];
-                            std::vector<std::size_t> index_set{};
-                            if (i < j) {
-                                index_set.insert(index_set.end(), indices[i].begin(), indices[i].end());
-                                index_set.insert(index_set.end(), indices[j].begin(), indices[j].end());
-                            } else {
-                                index_set.insert(index_set.end(), indices[j].begin(), indices[j].end());
-                                index_set.insert(index_set.end(), indices[i].begin(), indices[i].end());
-                            }
-                            //                            fmt::print("index_set: {}\n", fmt::join(index_set, " "));
-                            //                            fmt::print("alpha_vac[{}]: {}\n\n", std::distance(index_set.cbegin(), std::find(index_set.cbegin(), index_set.cend(), d)),
-                            //                                       alpha_vec[std::distance(index_set.cbegin(), std::find(index_set.cbegin(), index_set.cend(), d))]);
-
-                            alpha_matrix[d][pos] = alpha_vec[std::distance(index_set.cbegin(), std::find(index_set.cbegin(), index_set.cend(), d))];
-                            ++pos;
-                        }
-                    }
-                }
-            }
-        }
-
-        //        for (const auto &val : alpha_matrix) {
-        //            fmt::print("{}\n", fmt::join(val, " "));
-        //        }
-        //        fmt::print("\n\n");
-
-        //        for (const auto & val : alpha) {
-        //            fmt::print("{}\n", fmt::join(val, " "));
-        //        }
-        //        for (const auto & val : indices) {
-        //            fmt::print("{}\n", fmt::join(val, " "));
-        //        }
-
-        for (std::size_t c = 0; c < num_classes; ++c) {
-            for (std::size_t i = 0; i < indices[c].size(); ++i) {
-                std::string out_string{};
-                //                std::vector<real_type> alpha_per_point(num_classes - 1, real_type{ 0.0 });
-
-                //                const std::size_t alpha_start = num_classes * c - (c * (c + 1) / 2);
-                //                const std::size_t num_alpha = num_classes - 1 - c;
-                //                for (typename std::vector<std::vector<real_type>>::size_type a = 0; a < num_alpha; ++a) {
-                //                    alpha_per_point[a + c] = alpha[alpha_start + a][i];
-                //                }
-                //
-                //                format_libsvm_line(out_string, alpha_per_point, support_vectors[indices[c][i]]);
-                format_libsvm_line(out_string, alpha_matrix[indices[c][i]], support_vectors[indices[c][i]]);
-                //                std::cout << out_string;
-                out.print("{}", out_string);
             }
         }
     }
