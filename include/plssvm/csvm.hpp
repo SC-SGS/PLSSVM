@@ -360,6 +360,7 @@ model<real_type, label_type> csvm::fit(const data_set<real_type, label_type> &da
                 std::vector<std::vector<real_type>> binary_y(1, std::vector<real_type>(num_data_points_in_sub_matrix));  // note: the first dimension will always be one, since only one rhs is needed
 
                 // TODO: not sorted?
+                // note: if this is changed, it must also be changed in the libsvm_model_parsing.hpp in the calculate_alpha_idx function!!!
                 #pragma omp parallel for
                 for (std::size_t d = 0; d < indices[i].size(); ++d) {
                     binary_data[d] = data.data()[indices[i][d]];

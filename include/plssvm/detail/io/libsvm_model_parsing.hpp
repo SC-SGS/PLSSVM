@@ -53,7 +53,7 @@ namespace plssvm::detail::io {
  * @param[in] num_classes the number of different classes
  * @return the one-dimensional index of the classification pair (`[[nodiscard]]`)
  */
-[[nodiscard]] constexpr std::size_t x_vs_y_to_idx(std::size_t x, std::size_t y, const std::size_t num_classes) {
+[[nodiscard]] inline constexpr std::size_t x_vs_y_to_idx(std::size_t x, std::size_t y, const std::size_t num_classes) {
     // e.g., 3vs2 isn't defined -> map it to 2vs3
     if (x > y) {
         std::swap(x, y);
@@ -71,11 +71,12 @@ namespace plssvm::detail::io {
  * @throws plssvm::invalid_file_format_exception if the @p index_to_find couldn't be found in the index set defined by @p i, @p j, and @p indices.
  * @return the alpha index (`[[nodiscard]]`)
  */
-[[nodiscard]] std::size_t calculate_alpha_idx(std::size_t i, std::size_t j, const std::vector<std::vector<std::size_t>> &indices, const std::size_t idx_to_find) {
+[[nodiscard]] inline std::size_t calculate_alpha_idx(std::size_t i, std::size_t j, const std::vector<std::vector<std::size_t>> &indices, const std::size_t idx_to_find) {
     // the order is predefined -> switch order in order to return the correct index
     if (i > j) {
         std::swap(i, j);
     }
+    // note: if this is changed, it must also be changed in the csvm.hpp in the fit function!!!
     for (std::size_t idx = 0; idx < indices[i].size(); ++idx) {
         if (indices[i][idx] == idx_to_find) {
             return idx;
