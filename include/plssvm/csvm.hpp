@@ -388,7 +388,7 @@ model<real_type, label_type> csvm::fit(const data_set<real_type, label_type> &da
                 const unsigned long long binary_max_iter = max_iter_val.is_default() ? static_cast<unsigned long long>(binary_data.size()) : max_iter_val.value();
                 // solve the minimization problem -> note that only a single rhs is present
                 detail::log(verbosity_level::full | verbosity_level::timing,
-                            "\nclassifying {} vs {} ({} vs {}) ({} / {}):\n",
+                            "\nClassifying {} vs {} ({} vs {}) ({}/{}):\n",
                             i, j,
                             data.mapping_->get_label_by_mapped_index(i),
                             data.mapping_->get_label_by_mapped_index(j),
@@ -408,7 +408,8 @@ model<real_type, label_type> csvm::fit(const data_set<real_type, label_type> &da
 
     const std::chrono::time_point end_time = std::chrono::steady_clock::now();
     detail::log(verbosity_level::full | verbosity_level::timing,
-                "Solved minimization problem (r = b - Ax) using the Conjugate Gradient (CG) methode in {}.\n\n",
+                "\nLearned the SVM classifier for {} multi-class classification in {}.\n\n",
+                classification_type_to_full_string(classification_val.value()),
                 detail::tracking_entry{ "cg", "total_runtime", std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time) });
 
     return csvm_model;
