@@ -648,6 +648,7 @@ inline void write_libsvm_model_data(const std::string &filename, const plssvm::p
     const std::vector<label_type> &labels = data.labels().value();
     const std::size_t num_features = data.num_features();
     const std::size_t num_classes = data.num_different_labels();
+    const std::size_t num_alpha_per_point = num_classes == 2 ? 1 : (classification == classification_type::oaa ? num_classes : num_classes - 1);
 
     // create file
     fmt::ostream out = fmt::output_file(filename);
@@ -693,12 +694,12 @@ inline void write_libsvm_model_data(const std::string &filename, const plssvm::p
 
     // initialize volatile array
     auto counts = std::make_unique<volatile int[]>(label_order.size());
-    #pragma omp parallel default(none) shared(counts, alpha, format_libsvm_line, label_order, labels, support_vectors, out, indices) firstprivate(BLOCK_SIZE, CHARS_PER_BLOCK, num_features, num_classes, classification)
+    #pragma omp parallel default(none) shared(counts, alpha, format_libsvm_line, label_order, labels, support_vectors, out, indices) firstprivate(BLOCK_SIZE, CHARS_PER_BLOCK, num_features, num_classes, num_alpha_per_point, classification)
     {
         // preallocate string buffer, only ONE allocation
         std::string out_string;
-        out_string.reserve(STRING_BUFFER_SIZE + (num_features + 1) * CHARS_PER_BLOCK);
-        std::vector<real_type> alpha_per_point(classification == classification_type::oaa ? num_classes : num_classes - 1);  // TODO:
+        out_string.reserve(STRING_BUFFER_SIZE + (num_features + num_alpha_per_point) * CHARS_PER_BLOCK);  // oversubscribe buffer that at least one additional line fits into it
+        std::vector<real_type> alpha_per_point(num_alpha_per_point);
 
         // support vectors with the first class
         #pragma omp for nowait
@@ -706,20 +707,17 @@ inline void write_libsvm_model_data(const std::string &filename, const plssvm::p
             if (labels[i] == label_order[0]) {
                 switch (classification) {
                     case classification_type::oaa:
-                        for (typename std::vector<std::vector<real_type>>::size_type a = 0; a < num_classes; ++a) {
+                        for (typename std::vector<std::vector<real_type>>::size_type a = 0; a < num_alpha_per_point; ++a) {
                             alpha_per_point[a] = alpha[a][i];
                         }
                         break;
-                    case classification_type::oao: {
-                        std::size_t pos{ 0 };
+                    case classification_type::oao:
                         for (std::size_t j = 1; j < num_classes; ++j) {
                             const std::size_t idx = x_vs_y_to_idx(0, j, num_classes);
                             const std::vector<real_type> &alpha_vec = alpha[idx];
                             const std::size_t sv_idx = calculate_alpha_idx(0, j, indices, i);
-                            alpha_per_point[pos] = alpha_vec[sv_idx];
-                            ++pos;
+                            alpha_per_point[j - 1] = alpha_vec[sv_idx];
                         }
-                    }
                         break;
                 }
                 format_libsvm_line(out_string, alpha_per_point, support_vectors[i]);
@@ -754,13 +752,12 @@ inline void write_libsvm_model_data(const std::string &filename, const plssvm::p
                 if (labels[i] == label_order[l]) {
                     switch (classification) {
                         case classification_type::oaa:
-                            for (typename std::vector<std::vector<real_type>>::size_type a = 0; a < num_classes; ++a) {
+                            for (typename std::vector<std::vector<real_type>>::size_type a = 0; a < num_alpha_per_point; ++a) {
                                 alpha_per_point[a] = alpha[a][i];
                             }
                             break;
-                        case classification_type::oao: {
-                            std::size_t pos{ 0 };
-                            for (std::size_t j = 0; j < num_classes; ++j) {
+                        case classification_type::oao:
+                            for (std::size_t j = 0, pos = 0; j < num_classes; ++j) {
                                 if (l != j) {
                                     const std::size_t idx = x_vs_y_to_idx(l, j, num_classes);
                                     const std::vector<real_type> &alpha_vec = alpha[idx];
@@ -769,13 +766,19 @@ inline void write_libsvm_model_data(const std::string &filename, const plssvm::p
                                     ++pos;
                                 }
                             }
-                        }
                             break;
                     }
                     format_libsvm_line(out_string, alpha_per_point, support_vectors[i]);
 
                     // if the buffer is full, write it to the file
                     if (out_string.size() > STRING_BUFFER_SIZE) {
+                        // wait for all threads to write support vectors for previous class
+#ifdef _OPENMP
+                        while (counts[l - 1] < omp_get_num_threads()) {
+                        }
+#else
+    #pragma omp barrier
+#endif
                         #pragma omp critical
                         {
                             out.print("{}", out_string);

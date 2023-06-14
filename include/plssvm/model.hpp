@@ -187,7 +187,7 @@ class model {
      * @details Will be reused by subsequent calls to `plssvm::csvm::fit`/`plssvm::csvm::score` with the same `plssvm::model`.
      * @note Must be initialized to an empty vector instead of a `nullptr` in order to be passable as const reference.
      */
-    std::shared_ptr<std::vector<std::vector<real_type>>> w_{ std::make_shared<std::vector<std::vector<real_type>>>() };
+    std::shared_ptr<std::vector<std::vector<real_type>>> w_{ std::make_shared<std::vector<std::vector<real_type>>>() };  // TODO: ptr_
 };
 
 template <typename T, typename U>

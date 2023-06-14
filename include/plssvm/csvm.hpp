@@ -117,7 +117,7 @@ class csvm {
     //                                                              fit model                                                              //
     //*************************************************************************************************************************************//
     /**
-     * @brief Fit a model using the current SVM on the @p data.
+     * @brief Fit a model using the current SVM on the @p data using the provided multi-class classification strategy.
      * @tparam real_type the type of the data (`float` or `double`)
      * @tparam label_type the type of the label (an arithmetic type or `std::string`)
      * @tparam Args the type of the potential additional parameters
@@ -127,6 +127,7 @@ class csvm {
      * @throws plssvm::invlaid_parameter_exception if the provided maximum number of iterations is less or equal than zero
      * @throws plssvm::invalid_parameter_exception if the training @p data does **not** include labels
      * @throws plssvm::exception any exception thrown in the respective backend's implementation of `plssvm::csvm::solve_system_of_linear_equations`
+     * @note For binary classification **always** one vs. all is used regardless of the provided parameter!
      * @return the learned model (`[[nodiscard]]`)
      */
     template <typename real_type, typename label_type, typename... Args>
@@ -320,20 +321,28 @@ model<real_type, label_type> csvm::fit(const data_set<real_type, label_type> &da
 
     const std::chrono::time_point start_time = std::chrono::steady_clock::now();
 
+    // for binary classification ALWAYS use OAA
+    if (data.num_different_labels() == 2) {
+        classification_val = classification_type::oaa;
+        detail::log(verbosity_level::full | verbosity_level::timing,
+                    "Using oaa (one vs. all) as binary classification strategy.\n");
+        PLSSVM_DETAIL_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking_entry{ "cg", "classification_type", "OAA" }));  // TODO: groß/klein
+    } else {
+        detail::log(verbosity_level::full | verbosity_level::timing,
+                    "Using {} ({}) as multi-class classification strategy.\n",
+                    detail::tracking_entry{ "cg", "classification_type", classification_val.value() },
+                    classification_type_to_full_string(classification_val.value()));
+    }
+
     // create model
     model<real_type, label_type> csvm_model{ params, data, classification_val.value() };
 
-    detail::log(verbosity_level::full | verbosity_level::timing,
-                "Using {} ({}) as multi-class classification strategy.\n",
-                detail::tracking_entry{ "cg", "classification_type", classification_val.value() },
-                classification_type_to_full_string(classification_val.value()));
 
-    if (classification_val.value() == plssvm::classification_type::oaa) {
+    if (data.num_different_labels() == 2 || classification_val.value() == plssvm::classification_type::oaa) {
         // use the one vs. all multi-class classification strategy
         // solve the minimization problem
         std::tie(*csvm_model.alpha_ptr_, *csvm_model.rho_ptr_) = solve_system_of_linear_equations(static_cast<detail::parameter<real_type>>(params), data.data(), *data.y_ptr_, epsilon_val.value(), max_iter_val.value());
     } else if (classification_val.value() == plssvm::classification_type::oao) {
-
         // use the one vs. one multi-class classification strategy
         const std::size_t num_classes = data.num_different_labels();
         const std::size_t num_binary_classifications = calculate_number_of_classifiers(classification_type::oao, num_classes);
@@ -401,15 +410,13 @@ std::vector<label_type> csvm::predict(const model<real_type, label_type> &model,
         throw invalid_parameter_exception{ fmt::format("Number of features per data point ({}) must match the number of features per support vector of the provided model ({})!", data.num_features(), model.num_features()) };
     }
 
-    // predict values -> num_data_points x num_classes
-    // TODO: modify predict_values for OAO
-    const std::vector<std::vector<real_type>> votes = predict_values(static_cast<detail::parameter<real_type>>(model.params_), model.data_.data(), *model.alpha_ptr_, *model.rho_ptr_, *model.w_, data.data());
-
     // convert predicted values to the correct labels
-    std::vector<label_type> predicted_labels(votes.size());
-
+    std::vector<label_type> predicted_labels(data.num_data_points());
 
     if (model.get_classification_type() == classification_type::oaa) {
+        // predict values using OAA -> num_data_points x num_classes
+        const std::vector<std::vector<real_type>> votes = predict_values(static_cast<detail::parameter<real_type>>(model.params_), model.data_.data(), *model.alpha_ptr_, *model.rho_ptr_, *model.w_, data.data());
+
         if (model.num_different_labels() == 2) {
             // use sign in case of binary classification
             #pragma omp parallel for default(none) shared(predicted_labels, votes, model) if (!std::is_same_v<label_type, bool>)
@@ -427,8 +434,65 @@ std::vector<label_type> csvm::predict(const model<real_type, label_type> &model,
             }
         }
     } else if (model.get_classification_type() == classification_type::oao) {
-        // TODO: implement OAO
-        throw exception{ "Error: currently not implemented!" };
+        // predict values using OAO
+        const std::size_t num_classes = model.num_different_labels();
+        const std::vector<std::vector<std::size_t>> &indices = *model.indices_ptr_;  // TODO: ASSERT
+
+        std::vector<std::vector<std::size_t>> class_vote(data.num_data_points(), std::vector<std::size_t>(num_classes));
+
+        // perform one vs. one prediction
+        std::size_t pos = 0;
+        for (std::size_t i = 0; i < num_classes; ++i) {
+            for (std::size_t j = i + 1; j < num_classes; ++j) {
+                // TODO: reduce amount of copies!?
+                // assemble one vs. one classification matrix and rhs
+                const std::size_t num_data_points_in_sub_matrix{ indices[i].size() + indices[j].size() };
+                std::vector<std::vector<real_type>> binary_sv(num_data_points_in_sub_matrix);
+                std::vector<std::vector<real_type>> binary_alpha{  (*model.alpha_ptr_)[pos]  };  // note: the first dimension will always be one, since only one rhs is needed
+                const std::vector<real_type> binary_rho{ (*model.rho_ptr_)[pos] };  // TODO: ASSERT
+                // TODO: not sorted?
+                // note: if this is changed, it must also be changed in the libsvm_model_parsing.hpp in the calculate_alpha_idx function!!!
+                #pragma omp parallel for
+                for (std::size_t d = 0; d < indices[i].size(); ++d) {
+                    binary_sv[d] = model.data_.data()[indices[i][d]];
+                }
+                #pragma omp parallel for
+                for (std::size_t d = 0; d < indices[j].size(); ++d) {
+                    binary_sv[indices[i].size() + d] = model.data_.data()[indices[j][d]];
+                }
+
+                // predict binary pair
+                std::vector<std::vector<real_type>> binary_votes;
+                if (model.w_->size() < calculate_number_of_classifiers(classification_type::oao, num_classes)) {
+                    std::vector<std::vector<real_type>> w{};
+                    binary_votes = predict_values(static_cast<detail::parameter<real_type>>(model.params_), binary_sv, binary_alpha, binary_rho, w, data.data());
+                    model.w_->push_back(std::move(w.front()));
+                } else {
+                    std::vector<std::vector<real_type>> binary_w{ (*model.w_)[pos] };
+                    binary_votes = predict_values(static_cast<detail::parameter<real_type>>(model.params_), binary_sv, binary_alpha, binary_rho, binary_w, data.data());
+                }
+
+                #pragma omp parallel for
+                for (std::size_t d = 0; d < data.num_data_points(); ++d) {
+                    if (binary_votes[d].front() > real_type{ 0.0 }) {
+                        ++class_vote[d][i];
+                    } else {
+                        ++class_vote[d][j];
+                    }
+                }
+
+                // go to next one vs. one classification
+                ++pos;
+                // order of the alpha value: 0 vs 1, 0 vs 2, 0 vs 3, 1 vs 2, 1 vs 3, 2 vs 3
+            }
+        }
+
+        // map majority vote to predicted class
+        #pragma omp parallel for default(none) shared(predicted_labels, class_vote, model) if (!std::is_same_v<label_type, bool>)
+        for (typename std::vector<label_type>::size_type i = 0; i < predicted_labels.size(); ++i) {
+            const std::size_t argmax = std::distance(class_vote[i].cbegin(), std::max_element(class_vote[i].cbegin(), class_vote[i].cend()));
+            predicted_labels[i] = model.data_.mapping_->get_label_by_mapped_index(argmax);
+        }
     }
 
     return predicted_labels;

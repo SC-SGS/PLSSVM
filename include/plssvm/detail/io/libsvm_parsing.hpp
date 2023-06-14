@@ -48,34 +48,31 @@ namespace plssvm::detail::io {
     std::size_t num_features = 0;
     std::exception_ptr parallel_exception;
 
-    #pragma omp parallel default(none) shared(lines, parallel_exception, num_features) firstprivate(skipped_lines)
-    {
-        #pragma omp for reduction(max : num_features)
-        for (std::size_t i = skipped_lines; i < lines.size(); ++i) {
-            try {
-                const std::string_view line = lines[i];
+    #pragma omp parallel for default(none) shared(lines, parallel_exception) firstprivate(skipped_lines) reduction(max : num_features)
+    for (std::size_t i = skipped_lines; i < lines.size(); ++i) {
+        try {
+            const std::string_view line = lines[i];
 
-                // check index of last feature entry
-                const std::string_view::size_type pos_colon = line.find_last_of(':');
-                if (pos_colon == std::string_view::npos) {
-                    // no features could be found -> can't contribute to the number of feature calculation
-                    continue;
-                }
-                std::string_view::size_type pos_whitespace = line.find_last_of(' ', pos_colon);
-                if (pos_whitespace == std::string_view::npos) {
-                    // no whitespace BEFORE the last colon could be found
-                    // this may only happen if NO labels are given
-                    pos_whitespace = 0;
-                }
-                const auto index = detail::convert_to<unsigned long, invalid_file_format_exception>(line.substr(pos_whitespace, pos_colon - pos_whitespace));
-                num_features = std::max<std::size_t>(num_features, index);
-            } catch (const std::exception &) {
-                // catch first exception and store it
-                #pragma omp critical
-                {
-                    if (!parallel_exception) {
-                        parallel_exception = std::current_exception();
-                    }
+            // check index of last feature entry
+            const std::string_view::size_type pos_colon = line.find_last_of(':');
+            if (pos_colon == std::string_view::npos) {
+                // no features could be found -> can't contribute to the number of feature calculation
+                continue;
+            }
+            std::string_view::size_type pos_whitespace = line.find_last_of(' ', pos_colon);
+            if (pos_whitespace == std::string_view::npos) {
+                // no whitespace BEFORE the last colon could be found
+                // this may only happen if NO labels are given
+                pos_whitespace = 0;
+            }
+            const auto index = detail::convert_to<unsigned long, invalid_file_format_exception>(line.substr(pos_whitespace, pos_colon - pos_whitespace));
+            num_features = std::max<std::size_t>(num_features, index);
+        } catch (const std::exception &) {
+            // catch first exception and store it
+            #pragma omp critical
+            {
+                if (!parallel_exception) {
+                    parallel_exception = std::current_exception();
                 }
             }
         }
