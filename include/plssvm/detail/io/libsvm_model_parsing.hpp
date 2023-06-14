@@ -772,12 +772,10 @@ inline void write_libsvm_model_data(const std::string &filename, const plssvm::p
 
                     // if the buffer is full, write it to the file
                     if (out_string.size() > STRING_BUFFER_SIZE) {
-                        // wait for all threads to write support vectors for previous class
 #ifdef _OPENMP
+                        // wait for all threads to write support vectors for previous class
                         while (counts[l - 1] < omp_get_num_threads()) {
                         }
-#else
-    #pragma omp barrier
 #endif
                         #pragma omp critical
                         {
@@ -789,12 +787,10 @@ inline void write_libsvm_model_data(const std::string &filename, const plssvm::p
                     }
                 }
             }
-            // wait for all threads to write support vectors for previous class
 #ifdef _OPENMP
+            // wait for all threads to write support vectors for previous class
             while (counts[l - 1] < omp_get_num_threads()) {
             }
-#else
-#pragma omp barrier
 #endif
 
             #pragma omp critical
