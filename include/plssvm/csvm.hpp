@@ -486,11 +486,15 @@ std::vector<label_type> csvm::predict(const model<real_type, label_type> &model,
 
                 // predict binary pair
                 std::vector<std::vector<real_type>> binary_votes;
-                if (model.w_ptr_->size() < calculate_number_of_classifiers(classification_type::oao, num_classes)) {
+                // don't use the w vector for the polynomial and rbf kernel OR if the w vector hasn't been calculated yet
+                if (params_.kernel_type != kernel_function_type::linear || model.w_ptr_->size() < calculate_number_of_classifiers(classification_type::oao, num_classes)) {
                     // the w vector optimization has not been applied yet -> calculate w and store it
                     std::vector<std::vector<real_type>> w{};
                     binary_votes = predict_values(static_cast<detail::parameter<real_type>>(model.params_), binary_sv, binary_alpha, binary_rho, w, data.data());
-                    model.w_ptr_->push_back(std::move(w.front()));
+                    // only in case of the linear kernel, the w vector gets filled -> store it
+                    if (params_.kernel_type == kernel_function_type::linear) {
+                        model.w_ptr_->push_back(std::move(w.front()));
+                    }
                 } else {
                     // use previously calculated w vector
                     std::vector<std::vector<real_type>> binary_w{ (*model.w_ptr_)[pos] };
