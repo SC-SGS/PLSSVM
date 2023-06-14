@@ -426,7 +426,7 @@ std::vector<label_type> csvm::predict(const model<real_type, label_type> &model,
         const std::vector<std::vector<real_type>> votes = predict_values(static_cast<detail::parameter<real_type>>(model.params_), model.data_.data(), *model.alpha_ptr_, *model.rho_ptr_, *model.w_ptr_, data.data());
 
         PLSSVM_ASSERT(votes.size() == data.num_data_points(), "The number of votes ({}) must be equal the number of data points ({})!", votes.size(), data.num_data_points());
-        PLSSVM_ASSERT(std::all_of(votes.cbegin(), votes.cend(), [num_classes = model.num_different_labels()](const std::vector<real_type> &vec) { return vec.size() == num_classes; }), "Each vote must contain num_classes ({}) values!", model.num_different_labels());
+        PLSSVM_ASSERT(std::all_of(votes.cbegin(), votes.cend(), [num_classes = model.num_different_labels()](const std::vector<real_type> &vec) { return vec.size() == calculate_number_of_classifiers(classification_type::oaa, num_classes); }), "Each vote must contain num_classes ({}) values!", calculate_number_of_classifiers(classification_type::oaa, model.num_different_labels()));
 
         if (model.num_different_labels() == 2) {
             // use sign in case of binary classification
@@ -493,6 +493,9 @@ std::vector<label_type> csvm::predict(const model<real_type, label_type> &model,
                     std::vector<std::vector<real_type>> binary_w{ (*model.w_ptr_)[pos] };
                     binary_votes = predict_values(static_cast<detail::parameter<real_type>>(model.params_), binary_sv, binary_alpha, binary_rho, binary_w, data.data());
                 }
+
+                PLSSVM_ASSERT(binary_votes.size() == data.num_data_points(), "The number of votes ({}) must be equal the number of data points ({})!", binary_votes.size(), data.num_data_points());
+                PLSSVM_ASSERT(std::all_of(binary_votes.cbegin(), binary_votes.cend(), [](const std::vector<real_type> &vec) { return vec.size() == 1; }), "Each vote must contain exactly one value since OAO uses binary classifiers!");
 
                 #pragma omp parallel for default(none) shared(data, binary_votes, class_vote) firstprivate(i, j)
                 for (std::size_t d = 0; d < data.num_data_points(); ++d) {
