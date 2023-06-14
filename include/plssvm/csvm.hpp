@@ -322,7 +322,7 @@ model<real_type, label_type> csvm::fit(const data_set<real_type, label_type> &da
     const std::chrono::time_point start_time = std::chrono::steady_clock::now();
 
     // for binary classification ALWAYS use OAA
-    if (data.num_different_labels() == 2) {
+    if (data.num_classes() == 2) {
         classification_val = classification_type::oaa;
         detail::log(verbosity_level::full | verbosity_level::timing,
                     "Using oaa (one vs. all) as binary classification strategy.\n");
@@ -338,13 +338,13 @@ model<real_type, label_type> csvm::fit(const data_set<real_type, label_type> &da
     model<real_type, label_type> csvm_model{ params, data, classification_val.value() };
 
 
-    if (data.num_different_labels() == 2 || classification_val.value() == plssvm::classification_type::oaa) {
+    if (data.num_classes() == 2 || classification_val.value() == plssvm::classification_type::oaa) {
         // use the one vs. all multi-class classification strategy
         // solve the minimization problem
         std::tie(*csvm_model.alpha_ptr_, *csvm_model.rho_ptr_) = solve_system_of_linear_equations(static_cast<detail::parameter<real_type>>(params), data.data(), *data.y_ptr_, epsilon_val.value(), max_iter_val.value());
     } else if (classification_val.value() == plssvm::classification_type::oao) {
         // use the one vs. one multi-class classification strategy
-        const std::size_t num_classes = data.num_different_labels();
+        const std::size_t num_classes = data.num_classes();
         const std::size_t num_binary_classifications = calculate_number_of_classifiers(classification_type::oao, num_classes);
         // resize alpha_ptr_ and rho_ptr_ to the correct sizes
         csvm_model.alpha_ptr_->resize(num_binary_classifications);
@@ -426,9 +426,9 @@ std::vector<label_type> csvm::predict(const model<real_type, label_type> &model,
         const std::vector<std::vector<real_type>> votes = predict_values(static_cast<detail::parameter<real_type>>(model.params_), model.data_.data(), *model.alpha_ptr_, *model.rho_ptr_, *model.w_ptr_, data.data());
 
         PLSSVM_ASSERT(votes.size() == data.num_data_points(), "The number of votes ({}) must be equal the number of data points ({})!", votes.size(), data.num_data_points());
-        PLSSVM_ASSERT(std::all_of(votes.cbegin(), votes.cend(), [num_classes = model.num_different_labels()](const std::vector<real_type> &vec) { return vec.size() == calculate_number_of_classifiers(classification_type::oaa, num_classes); }), "Each vote must contain num_classes ({}) values!", calculate_number_of_classifiers(classification_type::oaa, model.num_different_labels()));
+        PLSSVM_ASSERT(std::all_of(votes.cbegin(), votes.cend(), [num_classes = model.num_classes()](const std::vector<real_type> &vec) { return vec.size() == calculate_number_of_classifiers(classification_type::oaa, num_classes); }), "Each vote must contain num_classes ({}) values!", calculate_number_of_classifiers(classification_type::oaa, model.num_classes()));
 
-        if (model.num_different_labels() == 2) {
+        if (model.num_classes() == 2) {
             // use sign in case of binary classification
             #pragma omp parallel for default(none) shared(predicted_labels, votes, model) if (!std::is_same_v<label_type, bool>)
             for (typename std::vector<label_type>::size_type i = 0; i < predicted_labels.size(); ++i) {
@@ -451,7 +451,7 @@ std::vector<label_type> csvm::predict(const model<real_type, label_type> &model,
         PLSSVM_ASSERT(model.w_ptr_ != nullptr, "The w_ptr_ may never be a nullptr!");
 
         // predict values using OAO
-        const std::size_t num_classes = model.num_different_labels();
+        const std::size_t num_classes = model.num_classes();
         const std::vector<std::vector<std::size_t>> &indices = *model.indices_ptr_;
 
         std::vector<std::vector<std::size_t>> class_vote(data.num_data_points(), std::vector<std::size_t>(num_classes));

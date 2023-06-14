@@ -39,7 +39,7 @@ typename data_set_type::scaling create_scaling_object(const py::kwargs &args) {
             scaling = args["scaling"].cast<typename data_set_type::scaling>();
         } catch (const py::cast_error &e) {
             // can't cast to plssvm::data_set_type::scaling
-            // -> try an std::array<real_type, 2> instead!
+            // -> try a std::array<real_type, 2> instead!
             try {
                 const auto interval = args["scaling"].cast<std::array<real_type, 2>>();
                 scaling = typename data_set_type::scaling{ interval[0], interval[1] };
@@ -196,20 +196,20 @@ void instantiate_data_set_bindings(py::module_ &m, plssvm::detail::real_type_lab
                 }
             },
             "the labels")
-        .def("num_different_labels", &data_set_type::num_different_labels, "the number of different labels")
+        .def("num_classes", &data_set_type::num_classes, "the number of classes")
         .def(
-            "different_labels", [](const data_set_type &self) {
+            "classes", [](const data_set_type &self) {
                 if (!self.has_labels()) {
-                    throw py::attribute_error{ "'DataSet' object has no function 'different_labels'. Maybe this DataSet was created without labels?" };
+                    throw py::attribute_error{ "'DataSet' object has no function 'classes'. Maybe this DataSet was created without labels?" };
                 } else {
                     if constexpr (std::is_same_v<label_type, std::string>) {
-                        return self.different_labels().value();
+                        return self.classes().value();
                     } else {
-                        return vector_to_pyarray(self.different_labels().value());
+                        return vector_to_pyarray(self.classes().value());
                     }
                 }
             },
-            "the different labels")
+            "the classes")
         .def("is_scaled", &data_set_type::is_scaled, "check whether the original data has been scaled to [lower, upper] bounds")
         .def(
             "scaling_factors", [](const data_set_type &self) {
@@ -224,7 +224,7 @@ void instantiate_data_set_bindings(py::module_ &m, plssvm::detail::real_type_lab
         .def("__repr__", [class_name](const data_set_type &self) {
             std::string optional_repr{};
             if (self.has_labels()) {
-                optional_repr += fmt::format(", labels: [{}]", fmt::join(self.different_labels().value(), ", "));
+                optional_repr += fmt::format(", classes: [{}]", fmt::join(self.classes().value(), ", "));
             }
             if (self.is_scaled()) {
                 optional_repr += fmt::format(", scaling: [{}, {}]",

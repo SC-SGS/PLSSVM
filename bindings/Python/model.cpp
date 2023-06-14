@@ -49,16 +49,16 @@ void instantiate_model_bindings(py::module_ &m, plssvm::detail::real_type_label_
                 }
             },
             "the labels")
-        .def("num_different_labels", &model_type::num_different_labels, "the number of different labels")
+        .def("num_classes", &model_type::num_classes, "the number of classes")
         .def(
-            "different_labels", [](const model_type &self) {
+            "classes", [](const model_type &self) {
                 if constexpr (std::is_same_v<label_type, std::string>) {
-                    return self.different_labels();
+                    return self.classes();
                 } else {
-                    return vector_to_pyarray(self.different_labels());
+                    return vector_to_pyarray(self.classes());
                 }
             },
-            "the different labels")
+            "the classes")
         .def(
             "weights", [](const model_type &self) {
                 return matrix_to_pyarray(self.weights());

@@ -310,9 +310,9 @@ void init_sklearn(py::module_ &m) {
                     throw py::attribute_error{ "'SVC' object has no attribute 'classes_'" };
                 } else {
                     if constexpr (std::is_same_v<typename svc::label_type, std::string>) {
-                        return self.data_->different_labels().value();
+                        return self.data_->classes().value();
                     } else {
-                        return vector_to_pyarray(self.data_->different_labels().value());
+                        return vector_to_pyarray(self.data_->classes().value());
                     }
                 }
             },
@@ -384,7 +384,7 @@ void init_sklearn(py::module_ &m) {
                 } else {
                     // TODO: correct implementation?
                     // all data points are support vectors
-                    std::vector<std::int32_t> n_support(self.model_->num_different_labels(), self.model_->num_support_vectors());
+                    std::vector<std::int32_t> n_support(self.model_->num_classes(), self.model_->num_support_vectors());
                     return vector_to_pyarray(n_support);
                 }
             },

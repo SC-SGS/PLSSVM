@@ -25,8 +25,8 @@ int main() {
     std::vector<int> label_vector{ 0, 0, 1 };
     plssvm::data_set data3{ std::move(data_vector), std::move(label_vector) };
     // get the different labels
-    const bool has_label = data3.has_labels();                 // will return true, since labels have explicitly been provided
-    auto different_labels = data3.different_labels().value();  // will return an optional vector containing { 0, 1 }
+    const bool has_label = data3.has_labels();        // will return true, since labels have explicitly been provided
+    auto different_labels = data3.classes().value();  // will return an optional vector containing { 0, 1 }
 
     // create a train data set and scale it to the range [-1, 1]
     plssvm::data_set<double> train_data{ "path/to/train/file.libsvm", { -1.0, 1.0 } };

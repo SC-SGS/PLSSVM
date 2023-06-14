@@ -106,22 +106,22 @@ class model {
      */
     [[nodiscard]] const std::vector<label_type> &labels() const noexcept { return data_.labels()->get(); }
     /**
-     * @brief Returns the number of **different** labels in this data set.
+     * @brief Returns the number of classes in this model.
      * @details If the data set contains the labels `std::vector<int>{ -1, 1, 1, -1, -1, 1 }`, this function returns `2`.
-     *          It is the same as: `model.different_labels().size()`
-     * @return the number of **different** labels (`[[nodiscard]]`)
+     *          It is the same as: `model.classes().size()`
+     * @return the number of classes (`[[nodiscard]]`)
      */
-    [[nodiscard]] size_type num_different_labels() const noexcept { return data_.num_different_labels(); }
+    [[nodiscard]] size_type num_classes() const noexcept { return data_.num_classes(); }
     /**
-     * @brief Returns the **different** labels of the support vectors.
-     * @details If the support vectors contain the labels `std::vector<int>{ -1, 1, 1, -1, -1, 1 }`, this function returns the labels `{ -1, 1 }`.
-     * @return all **different** labels (`[[nodiscard]]`)
+     * @brief Returns the classes of the support vectors.
+     * @details If the support vectors contain the labels `std::vector<int>{ -1, 1, 1, -1, -1, 1 }`, this function returns the classes `{ -1, 1 }`.
+     * @return all classes (`[[nodiscard]]`)
      */
-    [[nodiscard]] std::vector<label_type> different_labels() const { return data_.different_labels().value(); }
+    [[nodiscard]] std::vector<label_type> classes() const { return data_.classes().value(); }
 
     /**
      * @brief The learned weights for the support vectors.
-     * @details It is of size `num_different_labels() x num_support_vectors()`.
+     * @details It is of size `num_classes() x num_support_vectors()`.
      * @return the weights (`[[nodiscard]]`)
      */
     [[nodiscard]] const std::vector<std::vector<real_type>> &weights() const noexcept {
@@ -238,7 +238,7 @@ model<T, U>::model(const std::string &filename) {
                 "Read {} support vectors with {} features and {} classes using {} classification in {} using the libsvm model parser from file '{}'.\n\n",
                 detail::tracking_entry{ "model_read", "num_support_vectors", num_support_vectors_ },
                 detail::tracking_entry{ "model_read", "num_features", num_features_ },
-                detail::tracking_entry{ "model_read", "num_classes", this->num_different_labels() },
+                detail::tracking_entry{ "model_read", "num_classes", this->num_classes() },
                 classification_type_to_full_string(classification_strategy_),
                 detail::tracking_entry{ "model_read", "time",  std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time) },
                 detail::tracking_entry{ "model_read", "filename", filename });
@@ -262,7 +262,7 @@ void model<T, U>::save(const std::string &filename) const {
                 "Write {} support vectors with {} features and {} classes using {} classification in {} to the libsvm model file '{}'.\n",
                 detail::tracking_entry{ "model_write", "num_support_vectors", num_support_vectors_ },
                 detail::tracking_entry{ "model_write", "num_features", num_features_ },
-                detail::tracking_entry{ "model_write", "num_classes", this->num_different_labels() },
+                detail::tracking_entry{ "model_write", "num_classes", this->num_classes() },
                 classification_type_to_full_string(classification_strategy_),
                 detail::tracking_entry{ "model_write", "time",  std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time) },
                 detail::tracking_entry{ "model_write", "filename", filename });

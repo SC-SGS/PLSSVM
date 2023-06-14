@@ -344,7 +344,7 @@ template <typename real_type, typename label_type, typename size_type>
  * @param[in] skipped_lines the number of lines that should be skipped at the beginning
  * @note The features must be provided with one-based indices!
  * @throws plssvm::invalid_file_format_exception if no features could be found (may indicate an empty file)
- * @throws plssvm::invalid_file_format_exception if more or less weights than @p num_different_labels could be found
+ * @throws plssvm::invalid_file_format_exception if more or less weights than @p num_classes could be found
  * @throws plssvm::invalid_file_format_exception if a weight couldn't be converted to the provided @p real_type
  * @throws plssvm::invalid_file_format_exception if a feature index couldn't be converted to `unsigned long`
  * @throws plssvm::invalid_file_format_exception if a feature value couldn't be converted to the provided @p real_type
@@ -561,7 +561,7 @@ inline std::vector<label_type> write_libsvm_model_header(fmt::ostream &out, cons
     }
 
     // get the original labels (not the mapped once)
-    const std::vector<label_type> label_values = data.different_labels().value();
+    const std::vector<label_type> label_values = data.classes().value();
 
     // count the occurrence of each label
     std::map<label_type, std::size_t> label_counts_map;
@@ -570,13 +570,13 @@ inline std::vector<label_type> write_libsvm_model_header(fmt::ostream &out, cons
         ++label_counts_map[l];
     }
     // fill vector with number of occurrences in correct order
-    std::vector<std::size_t> label_counts(data.num_different_labels());
-    for (typename data_set<real_type, label_type>::size_type i = 0; i < data.num_different_labels(); ++i) {
+    std::vector<std::size_t> label_counts(data.num_classes());
+    for (typename data_set<real_type, label_type>::size_type i = 0; i < data.num_classes(); ++i) {
         label_counts[i] = label_counts_map[label_values[i]];
     }
 
     out_string += fmt::format("nr_class {}\nlabel {}\ntotal_sv {}\nnr_sv {}\nrho {}\nSV\n",
-                              data.num_different_labels(),
+                              data.num_classes(),
                               fmt::join(label_values, " "),
                               data.num_data_points(),
                               fmt::join(label_counts, " "),
@@ -626,17 +626,17 @@ inline std::vector<label_type> write_libsvm_model_header(fmt::ostream &out, cons
 template <typename real_type, typename label_type>
 inline void write_libsvm_model_data(const std::string &filename, const plssvm::parameter &params, const classification_type classification, const std::vector<real_type> &rho, const std::vector<std::vector<real_type>> &alpha, const std::vector<std::vector<std::size_t>> &indices, const data_set<real_type, label_type> &data) {
     PLSSVM_ASSERT(data.has_labels(), "Cannot write a model file that does not include labels!");
-    PLSSVM_ASSERT(rho.size() == calculate_number_of_classifiers(classification, data.num_different_labels()),
+    PLSSVM_ASSERT(rho.size() == calculate_number_of_classifiers(classification, data.num_classes()),
                   "The number of different labels is {} (nr_class). Therefore, the number of rho values must either be {} (one vs. all) or {} (one vs. vs), but is {}!",
-                  data.num_different_labels(),
-                  calculate_number_of_classifiers(classification_type::oaa, data.num_different_labels()),
-                  calculate_number_of_classifiers(classification_type::oao, data.num_different_labels()),
+                  data.num_classes(),
+                  calculate_number_of_classifiers(classification_type::oaa, data.num_classes()),
+                  calculate_number_of_classifiers(classification_type::oao, data.num_classes()),
                   rho.size());
-    PLSSVM_ASSERT(alpha.size() == calculate_number_of_classifiers(classification, data.num_different_labels()),
+    PLSSVM_ASSERT(alpha.size() == calculate_number_of_classifiers(classification, data.num_classes()),
                   "The number of different labels is {} (nr_class). Therefore, the number of alpha values must either be {} (one vs. all) or {} (one vs. vs), but is {}!",
-                  data.num_different_labels(),
-                  calculate_number_of_classifiers(classification_type::oaa, data.num_different_labels()),
-                  calculate_number_of_classifiers(classification_type::oao, data.num_different_labels()),
+                  data.num_classes(),
+                  calculate_number_of_classifiers(classification_type::oaa, data.num_classes()),
+                  calculate_number_of_classifiers(classification_type::oao, data.num_classes()),
                   rho.size());
 #if defined(PLSSVM_ASSERT_ENABLED)
     if (classification == classification_type::oaa) {
@@ -647,7 +647,7 @@ inline void write_libsvm_model_data(const std::string &filename, const plssvm::p
     const std::vector<std::vector<real_type>> &support_vectors = data.data();
     const std::vector<label_type> &labels = data.labels().value();
     const std::size_t num_features = data.num_features();
-    const std::size_t num_classes = data.num_different_labels();
+    const std::size_t num_classes = data.num_classes();
     const std::size_t num_alpha_per_point = num_classes == 2 ? 1 : (classification == classification_type::oaa ? num_classes : num_classes - 1);
 
     // create file
