@@ -64,7 +64,7 @@ set(PLSSVM_BASE_SOURCES
         ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/kernel_function_types.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/parameter.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/target_platforms.cpp
-        )
+)
 
 ## create base library: linked against all backend libraries
 set(PLSSVM_BASE_LIBRARY_NAME plssvm-base)
@@ -80,7 +80,7 @@ set(PLSSVM_TARGETS_TO_INSTALL ${PLSSVM_ALL_LIBRARY_NAME} ${PLSSVM_BASE_LIBRARY_N
 target_include_directories(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include>
-        )
+)
 
 ## set library cxx standard
 target_compile_features(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC cxx_std_17)
@@ -92,21 +92,30 @@ target_compile_options(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC
         $<$<COMPILE_LANG_AND_ID:CXX,GNU>:-Wsuggest-override -Wstrict-null-sentinel -Wlogical-op -Wduplicated-branches -Wimplicit-fallthrough=5>
         $<$<COMPILE_LANG_AND_ID:CXX,Clang>:-Wdocumentation -Wmost>
         $<$<COMPILE_LANG_AND_ID:CXX,MSVC>:/W4 /bigobj /wd4459>>
-        )
+)
 
 ## nvcc doesn't recognize -Werror=??? option, so only set it when using a CXX compiler
 target_compile_options(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC
         $<$<COMPILE_LANG_AND_ID:CXX,GNU,Clang>:-Werror=switch -fstrict-enums>
         $<$<COMPILE_LANG_AND_ID:CXX,MSVC>:/we4062 /wd4005>
-        )
+)
 ## enable additional optimization flags only in RELEASE mode
 target_compile_options(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC
         $<$<AND:$<CONFIG:RELEASE>,$<CXX_COMPILER_ID:GNU,Clang>>:-ffast-math -march=native>
         $<$<AND:$<CONFIG:RELEASE>,$<CXX_COMPILER_ID:MSVC>>:/fp:fast>
-        )
+)
 target_compile_definitions(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC
         $<$<COMPILE_LANG_AND_ID:CXX,MSVC>:NOMINMAX>
-        )
+)
+
+## enable standard library debug modes if compiled in debug
+if (CMAKE_BUILD_TYPE MATCHES Debug)
+    message(STATUS "Enable standard library debug modes.")
+    # GCC standard library (libstdc++): _GLIBCXX_DEBUG
+    # LLVM standard library (libc++): LIBCXX_ENABLE_DEBUG_MODE
+    # MSVC standard library: _ITERATOR_DEBUG_LEVEL
+    target_compile_definitions(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC _GLIBCXX_DEBUG LIBCXX_ENABLE_DEBUG_MODE _ITERATOR_DEBUG_LEVEL)
+endif ()
 
 
 ########################################################################################################################
@@ -124,7 +133,7 @@ else ()
     target_compile_options(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC
             $<$<COMPILE_LANG_AND_ID:CXX,GNU,Clang>:-Wno-unknown-pragmas>
             $<$<COMPILE_LANG_AND_ID:CXX,MSVC>:/wd4068>
-            )
+    )
 endif ()
 
 ## setup dependencies
@@ -148,13 +157,13 @@ else ()
 
             set (CXXOPTS_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
             set (CXXOPTS_BUILD_TESTS OFF CACHE BOOL "" FORCE)
-            )
+    )
     FetchContent_MakeAvailable(cxxopts)
     add_dependencies(${PLSSVM_BASE_LIBRARY_NAME} cxxopts)
     target_include_directories(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC
             $<BUILD_INTERFACE:${cxxopts_SOURCE_DIR}/include>
             $<INSTALL_INTERFACE:include>
-            )
+    )
     message(STATUS "Installing cxxopts version ${PLSSVM_cxxopts_VERSION}.")
 endif ()
 
@@ -175,7 +184,7 @@ else ()
 
             set (FASTFLOAT_TEST OFF CACHE BOOL "" FORCE)
             set (FASTFLOAT_SANITIZE OFF CACHE BOOL "" FORCE)
-            )
+    )
     FetchContent_GetProperties(fast_float)
     if (NOT fast_float_POPULATED)
         FetchContent_Populate(fast_float)
@@ -185,7 +194,7 @@ else ()
     target_include_directories(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC
             $<BUILD_INTERFACE:${fast_float_SOURCE_DIR}/include>
             $<INSTALL_INTERFACE:include>
-            )
+    )
     list(APPEND PLSSVM_TARGETS_TO_INSTALL "fast_float")
     message(STATUS "Installing fast_float version ${PLSSVM_fast_float_VERSION}.")
 endif ()
@@ -206,7 +215,7 @@ else ()
             QUIET
 
             set (IGOR_BUILD_TESTS OFF CACHE BOOL "" FORCE)
-            )
+    )
     FetchContent_GetProperties(igor)
     if (NOT igor_POPULATED)
         FetchContent_Populate(igor)
@@ -216,7 +225,7 @@ else ()
     target_include_directories(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC
             $<BUILD_INTERFACE:${igor_SOURCE_DIR}/include>
             $<INSTALL_INTERFACE:include>
-            )
+    )
     list(APPEND PLSSVM_TARGETS_TO_INSTALL "igor")
     message(STATUS "Installing igor version ${PLSSVM_igor_VERSION}.")
 endif ()
@@ -239,14 +248,14 @@ else ()
             set (FMT_DOC OFF CACHE BOOL "" FORCE)
             set (FMT_INSTALL OFF CACHE BOOL "" FORCE)
             set (FMT_SYSTEM_HEADERS ON CACHE BOOL "" FORCE)
-            )
+    )
     FetchContent_MakeAvailable(fmt)
     set_property(TARGET fmt PROPERTY POSITION_INDEPENDENT_CODE ON)
     add_dependencies(${PLSSVM_BASE_LIBRARY_NAME} fmt)
     target_include_directories(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC
             $<BUILD_INTERFACE:${fmt_SOURCE_DIR}/include>
             $<INSTALL_INTERFACE:include>
-            )
+    )
     # append fmt to installed targets if build from source
     list(APPEND PLSSVM_TARGETS_TO_INSTALL "fmt")
     message(STATUS "Installing {fmt} version ${PLSSVM_fmt_VERSION}.")
@@ -306,7 +315,7 @@ if (uppercase_CMAKE_BUILD_TYPE MATCHES "COVERAGE")
             COMMAND genhtml test_clean.info --output-directory coverage --title "PLSSVM Test Coverage" --show-details --legend
             BYPRODUCTS ${CMAKE_BINARY_DIR}/test_base.info ${CMAKE_BINARY_DIR}/test_test.info ${CMAKE_BINARY_DIR}/test_total.info ${CMAKE_BINARY_DIR}/test_clean.info ${CMAKE_BINARY_DIR}/coverage
             WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
-            )
+    )
 
     # add executables as coverage target
     add_dependencies(coverage ${PLSSVM_EXECUTABLE_TRAIN_NAME})
@@ -359,7 +368,7 @@ else ()
         message(FATAL_ERROR
                 "Error running '${CMAKE_CURRENT_SOURCE_DIR}/utility_scripts/plssvm_target_platforms.py'."
                 "Please manually specify PLSSVM_TARGET_PLATFORMS (e.g. -DPLSSVM_TARGET_PLATFORMS=\"cpu;nvidia:sm_70,sm_86;amd:gfx906;intel:skl\"!"
-                )
+        )
     endif ()
 
     # set PLSSVM_TARGET_PLATFORMS
@@ -679,31 +688,31 @@ install(TARGETS ${PLSSVM_TARGETS_TO_INSTALL}
         ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}  # all files that are neither executables, shared lib or headers
         LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}  # all shared lib files
         RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}  # all executables
-        )
+)
 
 ## mark header to install via 'make install'
 install(DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/include/"
         DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}"
-        )
+)
 ## install header only libraries fast_float and igor header via 'make install'
 install(DIRECTORY "${fast_float_SOURCE_DIR}/include/"
         DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}"
-        )
+)
 install(DIRECTORY "${igor_SOURCE_DIR}/include/"
         DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}"
-        )
+)
 ## only mark fmt headers to install if build via FetchContent
 if (NOT fmt_FOUND)
     install(DIRECTORY "${fmt_SOURCE_DIR}/include/"
             DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}"
-            )
+    )
 endif ()
 ## mark man pages to install
 install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/docs/plssvm-train.1
         ${CMAKE_CURRENT_SOURCE_DIR}/docs/plssvm-predict.1
         ${CMAKE_CURRENT_SOURCE_DIR}/docs/plssvm-scale.1
         DESTINATION "${CMAKE_INSTALL_MANDIR}/man1"
-        )
+)
 
 ## manage version comparison
 include(CMakePackageConfigHelpers)
@@ -725,10 +734,10 @@ install(EXPORT plssvm_Targets
         FILE plssvmTargets.cmake
         NAMESPACE plssvm::
         DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/plssvm/cmake
-        )
+)
 
 ## create file containing the build configuration and version information
 install(FILES "${PROJECT_BINARY_DIR}/plssvmConfig.cmake"
         "${PROJECT_BINARY_DIR}/plssvmConfigVersion.cmake"
         DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/plssvm/cmake
-        )
+)
