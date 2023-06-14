@@ -69,8 +69,8 @@ std::ostream &operator<<(std::ostream &out, const classification_report &report)
     // print accuracy and average metrics
     out << fmt::format("{:>{}}                        {:.2f}   {:>7}\n", "accuracy", max_label_string_size, report.accuracy_.achieved_accuracy, report.accuracy_.num_total);
     out << fmt::format("{:>{}}        {:.2f}     {:.2f}   {:.2f}   {:>7}\n", "macro avg", max_label_string_size, macro_avg.precision, macro_avg.recall, macro_avg.f1, macro_avg.support);
-    out << fmt::format("{:>{}}        {:.2f}     {:.2f}   {:.2f}   {:>7}", "weighted avg", max_label_string_size, weighted_avg.precision, weighted_avg.recall, weighted_avg.f1, weighted_avg.support);
-    out << std::endl;
+    out << fmt::format("{:>{}}        {:.2f}     {:.2f}   {:.2f}   {:>7}\n\n", "weighted avg", max_label_string_size, weighted_avg.precision, weighted_avg.recall, weighted_avg.f1, weighted_avg.support);
+    out << report.accuracy_ << std::endl;
     return out;
 }
 
