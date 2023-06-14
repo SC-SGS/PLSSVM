@@ -9,15 +9,15 @@
 #include "plssvm/csvm.hpp"
 #include "plssvm/csvm_factory.hpp"
 
-#include "utility.hpp"          // check_kwargs_for_correctness, convert_kwargs_to_parameter
+#include "utility.hpp"  // check_kwargs_for_correctness, convert_kwargs_to_parameter
 
 #include "pybind11/pybind11.h"  // py::module_, py::class_, py::kwargs, py::overload_cast, py::const_
 
-#include <cstddef>              // std::size_t
-#include <string>               // std::string
-#include <tuple>                // std::tuple_element_t, std::tuple_size_v
-#include <type_traits>          // std::is_same_v
-#include <utility>              // std::integer_sequence, std::make_integer_sequence
+#include <cstddef>      // std::size_t
+#include <string>       // std::string
+#include <tuple>        // std::tuple_element_t, std::tuple_size_v
+#include <type_traits>  // std::is_same_v
+#include <utility>      // std::integer_sequence, std::make_integer_sequence
 
 namespace py = pybind11;
 
@@ -26,16 +26,40 @@ void instantiate_csvm_functions(py::class_<plssvm::csvm> &c, plssvm::detail::rea
     c.def(
          "fit", [](const plssvm::csvm &self, const plssvm::data_set<real_type, label_type> &data, const py::kwargs &args) {
              // check keyword arguments
-             check_kwargs_for_correctness(args, { "epsilon", "max_iter" });
+             check_kwargs_for_correctness(args, { "epsilon", "max_iter", "classification" });
 
-             if (args.contains("epsilon") && args.contains("max_iter")) {
-                 return self.fit(data, plssvm::epsilon = args["epsilon"].cast<real_type>(), plssvm::max_iter = args["max_iter"].cast<unsigned long long>());
-             } else if (args.contains("epsilon")) {
-                 return self.fit(data, plssvm::epsilon = args["epsilon"].cast<real_type>());
-             } else if (args.contains("max_iter")) {
-                 return self.fit(data, plssvm::max_iter = args["max_iter"].cast<unsigned long long>());
+             if (args.contains("classification")) {
+                 if (args.contains("epsilon") && args.contains("max_iter")) {
+                     return self.fit(data,
+                                     plssvm::epsilon = args["epsilon"].cast<real_type>(),
+                                     plssvm::max_iter = args["max_iter"].cast<unsigned long long>(),
+                                     plssvm::classification = args["classification"].cast<plssvm::classification_type>());
+                 } else if (args.contains("epsilon")) {
+                     return self.fit(data,
+                                     plssvm::epsilon = args["epsilon"].cast<real_type>(),
+                                     plssvm::classification = args["classification"].cast<plssvm::classification_type>());
+                 } else if (args.contains("max_iter")) {
+                     return self.fit(data,
+                                     plssvm::max_iter = args["max_iter"].cast<unsigned long long>(),
+                                     plssvm::classification = args["classification"].cast<plssvm::classification_type>());
+                 } else {
+                     return self.fit(data,
+                                     plssvm::classification = args["classification"].cast<plssvm::classification_type>());
+                 }
              } else {
-                 return self.fit(data);
+                 if (args.contains("epsilon") && args.contains("max_iter")) {
+                     return self.fit(data,
+                                     plssvm::epsilon = args["epsilon"].cast<real_type>(),
+                                     plssvm::max_iter = args["max_iter"].cast<unsigned long long>());
+                 } else if (args.contains("epsilon")) {
+                     return self.fit(data,
+                                     plssvm::epsilon = args["epsilon"].cast<real_type>());
+                 } else if (args.contains("max_iter")) {
+                     return self.fit(data,
+                                     plssvm::max_iter = args["max_iter"].cast<unsigned long long>());
+                 } else {
+                     return self.fit(data);
+                 }
              }
          },
          "fit a model using the current SVM on the provided data")
