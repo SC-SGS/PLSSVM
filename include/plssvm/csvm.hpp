@@ -415,7 +415,7 @@ std::vector<label_type> csvm::predict(const model<real_type, label_type> &model,
 
     if (model.get_classification_type() == classification_type::oaa) {
         // predict values using OAA -> num_data_points x num_classes
-        const std::vector<std::vector<real_type>> votes = predict_values(static_cast<detail::parameter<real_type>>(model.params_), model.data_.data(), *model.alpha_ptr_, *model.rho_ptr_, *model.w_, data.data());
+        const std::vector<std::vector<real_type>> votes = predict_values(static_cast<detail::parameter<real_type>>(model.params_), model.data_.data(), *model.alpha_ptr_, *model.rho_ptr_, *model.w_ptr_, data.data());
 
         if (model.num_different_labels() == 2) {
             // use sign in case of binary classification
@@ -463,12 +463,12 @@ std::vector<label_type> csvm::predict(const model<real_type, label_type> &model,
 
                 // predict binary pair
                 std::vector<std::vector<real_type>> binary_votes;
-                if (model.w_->size() < calculate_number_of_classifiers(classification_type::oao, num_classes)) {
+                if (model.w_ptr_->size() < calculate_number_of_classifiers(classification_type::oao, num_classes)) {
                     std::vector<std::vector<real_type>> w{};
                     binary_votes = predict_values(static_cast<detail::parameter<real_type>>(model.params_), binary_sv, binary_alpha, binary_rho, w, data.data());
-                    model.w_->push_back(std::move(w.front()));
+                    model.w_ptr_->push_back(std::move(w.front()));
                 } else {
-                    std::vector<std::vector<real_type>> binary_w{ (*model.w_)[pos] };
+                    std::vector<std::vector<real_type>> binary_w{ (*model.w_ptr_)[pos] };
                     binary_votes = predict_values(static_cast<detail::parameter<real_type>>(model.params_), binary_sv, binary_alpha, binary_rho, binary_w, data.data());
                 }
 
