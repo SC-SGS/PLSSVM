@@ -370,15 +370,18 @@ model<real_type, label_type> csvm::fit(const data_set<real_type, label_type> &da
 
                 // TODO: not sorted?
                 // note: if this is changed, it must also be changed in the libsvm_model_parsing.hpp in the calculate_alpha_idx function!!!
-                #pragma omp parallel for
-                for (std::size_t d = 0; d < indices[i].size(); ++d) {
-                    binary_data[d] = data.data()[indices[i][d]];
-                    binary_y.front()[d] = real_type{ 1.0 };
-                }
-                #pragma omp parallel for
-                for (std::size_t d = 0; d < indices[j].size(); ++d) {
-                    binary_data[indices[i].size() + d] = data.data()[indices[j][d]];
-                    binary_y.front()[indices[i].size() + d] = real_type{ -1.0 };
+                #pragma omp parallel default(none) shared(binary_data, binary_y, indices, data) firstprivate(i, j)
+                {
+                    #pragma omp for nowait
+                    for (std::size_t d = 0; d < indices[i].size(); ++d) {
+                        binary_data[d] = data.data()[indices[i][d]];
+                        binary_y.front()[d] = real_type{ 1.0 };
+                    }
+                    #pragma omp for
+                    for (std::size_t d = 0; d < indices[j].size(); ++d) {
+                        binary_data[indices[i].size() + d] = data.data()[indices[j][d]];
+                        binary_y.front()[indices[i].size() + d] = real_type{ -1.0 };
+                    }
                 }
 
                 // if max_iter is the default value, update it according to the current binary classification matrix size
@@ -452,27 +455,32 @@ std::vector<label_type> csvm::predict(const model<real_type, label_type> &model,
                 const std::vector<real_type> binary_rho{ (*model.rho_ptr_)[pos] };  // TODO: ASSERT
                 // TODO: not sorted?
                 // note: if this is changed, it must also be changed in the libsvm_model_parsing.hpp in the calculate_alpha_idx function!!!
-                #pragma omp parallel for
-                for (std::size_t d = 0; d < indices[i].size(); ++d) {
-                    binary_sv[d] = model.data_.data()[indices[i][d]];
-                }
-                #pragma omp parallel for
-                for (std::size_t d = 0; d < indices[j].size(); ++d) {
-                    binary_sv[indices[i].size() + d] = model.data_.data()[indices[j][d]];
+                #pragma omp parallel default(none) shared(binary_sv, indices, model) firstprivate(i, j)
+                {
+                    #pragma omp for nowait
+                    for (std::size_t d = 0; d < indices[i].size(); ++d) {
+                        binary_sv[d] = model.data_.data()[indices[i][d]];
+                    }
+                    #pragma omp for
+                    for (std::size_t d = 0; d < indices[j].size(); ++d) {
+                        binary_sv[indices[i].size() + d] = model.data_.data()[indices[j][d]];
+                    }
                 }
 
                 // predict binary pair
                 std::vector<std::vector<real_type>> binary_votes;
                 if (model.w_ptr_->size() < calculate_number_of_classifiers(classification_type::oao, num_classes)) {
+                    // the w vector optimization has not been applied yet -> calculate w and store it
                     std::vector<std::vector<real_type>> w{};
                     binary_votes = predict_values(static_cast<detail::parameter<real_type>>(model.params_), binary_sv, binary_alpha, binary_rho, w, data.data());
                     model.w_ptr_->push_back(std::move(w.front()));
                 } else {
+                    // use previously calculated w vector
                     std::vector<std::vector<real_type>> binary_w{ (*model.w_ptr_)[pos] };
                     binary_votes = predict_values(static_cast<detail::parameter<real_type>>(model.params_), binary_sv, binary_alpha, binary_rho, binary_w, data.data());
                 }
 
-                #pragma omp parallel for
+                #pragma omp parallel for default(none) shared(data, binary_votes, class_vote) firstprivate(i, j)
                 for (std::size_t d = 0; d < data.num_data_points(); ++d) {
                     if (binary_votes[d].front() > real_type{ 0.0 }) {
                         ++class_vote[d][i];
@@ -521,7 +529,7 @@ real_type csvm::score(const model<real_type, label_type> &model, const data_set<
 
     // calculate the accuracy
     typename std::vector<label_type>::size_type correct{ 0 };
-    #pragma omp parallel for reduction(+ : correct) default(none) shared(predicted_labels, correct_labels)
+    #pragma omp parallel for default(none) shared(predicted_labels, correct_labels) reduction(+ : correct)
     for (typename std::vector<label_type>::size_type i = 0; i < predicted_labels.size(); ++i) {
         if (predicted_labels[i] == correct_labels[i]) {
             ++correct;

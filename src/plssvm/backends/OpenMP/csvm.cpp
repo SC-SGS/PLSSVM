@@ -110,7 +110,7 @@ std::pair<std::vector<std::vector<real_type>>, std::vector<real_type>> csvm::sol
     std::vector<std::vector<real_type>> R(B);
 
     // R = B - AX
-    #pragma omp parallel for collapse(2)
+    #pragma omp parallel for collapse(2) default(none) shared(explicit_A, B, R, X) firstprivate(dept)
     for (std::size_t col = 0; col < B.size(); ++col) {
         for (std::size_t row = 0; row < dept; ++row) {
             R[col][row] -= transposed{ explicit_A[row] } * X[col];
@@ -119,7 +119,7 @@ std::pair<std::vector<std::vector<real_type>>, std::vector<real_type>> csvm::sol
 
     // delta = R.T * R
     std::vector<real_type> delta(B.size());
-    #pragma omp parallel for
+    #pragma omp parallel for default(none) shared(delta, B, R)
     for (std::size_t i = 0; i < B.size(); ++i) {
         delta[i] = transposed{ R[i] } * R[i];
     }
@@ -176,7 +176,7 @@ std::pair<std::vector<std::vector<real_type>>, std::vector<real_type>> csvm::sol
         iteration_start_time = std::chrono::steady_clock::now();
 
         // Q = A * D
-        #pragma omp parallel for collapse(2)
+        #pragma omp parallel for collapse(2) default(none) shared(Q, explicit_A, D, B) firstprivate(dept)
         for (std::size_t col = 0; col < B.size(); ++col) {
             for (std::size_t row = 0; row < dept; ++row) {
                 Q[col][row] = transposed{ explicit_A[row] } * D[col];
@@ -185,13 +185,13 @@ std::pair<std::vector<std::vector<real_type>>, std::vector<real_type>> csvm::sol
 
         // (alpha = delta_new / (D^T * Q))
         std::vector<real_type> alpha(B.size());
-        #pragma omp parallel for
+        #pragma omp parallel for default(none) shared(alpha, delta, D, Q, B)
         for (std::size_t i = 0; i < B.size(); ++i) {
             alpha[i] = delta[i] / (transposed{ D[i] } * Q[i]);
         }
 
         // X = X + alpha * D)
-        #pragma omp parallel for
+        #pragma omp parallel for default(none) shared(X, alpha, D, B)
         for (std::size_t i = 0; i < B.size(); ++i) {
             X[i] += alpha[i] * D[i];
         }
@@ -199,7 +199,7 @@ std::pair<std::vector<std::vector<real_type>>, std::vector<real_type>> csvm::sol
         if (iter % 50 == 49) {
             // R = B - A * X
             R = B;
-            #pragma omp parallel for collapse(2)
+            #pragma omp parallel for collapse(2) default(none) shared(R, explicit_A, X, B) firstprivate(dept)
             for (std::size_t i = 0; i < B.size(); ++i) {
                 for (std::size_t row = 0; row < dept; ++row) {
                     R[i][row] -= transposed{ explicit_A[row] } * X[i];
@@ -207,7 +207,7 @@ std::pair<std::vector<std::vector<real_type>>, std::vector<real_type>> csvm::sol
             }
         } else {
             // R = R - alpha * Q
-            #pragma omp parallel for
+            #pragma omp parallel for default(none) shared(R, alpha, Q, B)
             for (std::size_t i = 0; i < B.size(); ++i) {
                 R[i] -= alpha[i] * Q[i];
             }
@@ -215,7 +215,7 @@ std::pair<std::vector<std::vector<real_type>>, std::vector<real_type>> csvm::sol
 
         // delta = R^T * R
         const std::vector<real_type> delta_old = delta;
-        #pragma omp parallel for
+        #pragma omp parallel for default(none) shared(delta, R, B)
         for (std::size_t i = 0; i < B.size(); ++i) {
             delta[i] = transposed{ R[i] } * R[i];
         }
@@ -229,7 +229,7 @@ std::pair<std::vector<std::vector<real_type>>, std::vector<real_type>> csvm::sol
         // beta = delta_new / delta_old
         const std::vector<real_type> beta = delta / delta_old;
         // D = beta * D + R
-        #pragma omp parallel for
+        #pragma omp parallel for default(none) shared(D, beta, R, B)
         for (std::size_t i = 0; i < B.size(); ++i) {
             D[i] = beta[i] * D[i] + R[i];
         }
@@ -256,7 +256,7 @@ std::pair<std::vector<std::vector<real_type>>, std::vector<real_type>> csvm::sol
 
     // calculate bias
     std::vector<real_type> bias(B.size());
-    #pragma omp parallel for
+    #pragma omp parallel for default(none) shared(bias, b_back_value, QA_cost, X, q_red, B)
     for (std::size_t i = 0; i < B.size(); ++i) {
         bias[i] = -(b_back_value[i] + QA_cost * sum(X[i]) - (transposed{ q_red } * X[i]));
         X[i].push_back(-sum(X[i]));
@@ -296,13 +296,13 @@ std::vector<std::vector<real_type>> csvm::predict_values_impl(const detail::para
         if (w.empty()) {
             // fill w vector
             w.resize(alpha.size());
-            #pragma omp parallel for
+            #pragma omp parallel for default(none) shared(w, support_vectors, alpha)
             for (std::size_t a = 0; a < alpha.size(); ++a) {
                 w[a] = calculate_w(support_vectors, alpha[a]);
             }
         }
         // predict the values using the w vector
-        #pragma omp parallel for collapse(2)
+        #pragma omp parallel for collapse(2) default(none) shared(out, w, rho, alpha, predict_points)
         for (std::size_t point_index = 0; point_index < predict_points.size(); ++point_index) {
             for (std::size_t a = 0; a < alpha.size(); ++a) {
                 out[point_index][a] = transposed{ w[a] } * predict_points[point_index] - rho[a];
@@ -313,14 +313,14 @@ std::vector<std::vector<real_type>> csvm::predict_values_impl(const detail::para
 
         // fill temporary matrix with all kernel function values
         std::vector<std::vector<real_type>> matr(predict_points.size(), std::vector<real_type>(support_vectors.size()));
-        #pragma omp parallel for collapse(2)
+        #pragma omp parallel for collapse(2) default(none) shared(matr, params, support_vectors, predict_points)
         for (std::size_t point_index = 0; point_index < predict_points.size(); ++point_index) {
             for (std::size_t sv_index = 0; sv_index < support_vectors.size(); ++sv_index) {
                 matr[point_index][sv_index] = kernel_function(support_vectors[sv_index], predict_points[point_index], params);
             }
         }
         // predict the values using the previously learned weights
-        #pragma omp parallel for collapse(2)
+        #pragma omp parallel for collapse(2) default(none) shared(predict_points, alpha, rho, support_vectors, matr, out)
         for (std::size_t point_index = 0; point_index < predict_points.size(); ++point_index) {
             for (std::size_t a = 0; a < alpha.size(); ++a) {
                 real_type temp{ -rho[a] };
