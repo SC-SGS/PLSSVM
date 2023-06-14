@@ -388,10 +388,12 @@ model<real_type, label_type> csvm::fit(const data_set<real_type, label_type> &da
                 const unsigned long long binary_max_iter = max_iter_val.is_default() ? static_cast<unsigned long long>(binary_data.size()) : max_iter_val.value();
                 // solve the minimization problem -> note that only a single rhs is present
                 detail::log(verbosity_level::full | verbosity_level::timing,
-                            "\nclassifying {} vs {} ({} vs {}):\n",
+                            "\nclassifying {} vs {} ({} vs {}) ({} / {}):\n",
                             i, j,
                             data.mapping_->get_label_by_mapped_index(i),
-                            data.mapping_->get_label_by_mapped_index(j));
+                            data.mapping_->get_label_by_mapped_index(j),
+                            pos + 1,
+                            calculate_number_of_classifiers(classification_type::oao, num_classes));
                 const auto &[alpha, rho] = solve_system_of_linear_equations(static_cast<detail::parameter<real_type>>(params), binary_data, binary_y, epsilon_val.value(), binary_max_iter);
                 (*csvm_model.alpha_ptr_)[pos] = alpha.front();
                 (*csvm_model.rho_ptr_)[pos] = rho.front();
