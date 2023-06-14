@@ -248,8 +248,9 @@ model<T, U>::model(const std::string &filename) {
 
 template <typename T, typename U>
 void model<T, U>::save(const std::string &filename) const {
-    PLSSVM_ASSERT(alpha_ptr_ != nullptr, "The rho_ptr may never be a nullptr!");
+    PLSSVM_ASSERT(rho_ptr_ != nullptr, "The rho_ptr may never be a nullptr!");
     PLSSVM_ASSERT(alpha_ptr_ != nullptr, "The alpha_ptr may never be a nullptr!");
+    PLSSVM_ASSERT(indices_ptr_ != nullptr, "The indices_ptr may never be a nullptr!");
 
     const std::chrono::time_point start_time = std::chrono::steady_clock::now();
 

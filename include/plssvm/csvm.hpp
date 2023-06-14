@@ -425,6 +425,9 @@ std::vector<label_type> csvm::predict(const model<real_type, label_type> &model,
         // predict values using OAA -> num_data_points x num_classes
         const std::vector<std::vector<real_type>> votes = predict_values(static_cast<detail::parameter<real_type>>(model.params_), model.data_.data(), *model.alpha_ptr_, *model.rho_ptr_, *model.w_ptr_, data.data());
 
+        PLSSVM_ASSERT(votes.size() == data.num_data_points(), "The number of votes ({}) must be equal the number of data points ({})!", votes.size(), data.num_data_points());
+        PLSSVM_ASSERT(std::all_of(votes.cbegin(), votes.cend(), [num_classes = model.num_different_labels()](const std::vector<real_type> &vec) { return vec.size() == num_classes; }), "Each vote must contain num_classes ({}) values!", model.num_different_labels());
+
         if (model.num_different_labels() == 2) {
             // use sign in case of binary classification
             #pragma omp parallel for default(none) shared(predicted_labels, votes, model) if (!std::is_same_v<label_type, bool>)
@@ -442,9 +445,14 @@ std::vector<label_type> csvm::predict(const model<real_type, label_type> &model,
             }
         }
     } else if (model.get_classification_type() == classification_type::oao) {
+        PLSSVM_ASSERT(model.indices_ptr_ != nullptr, "The indices_ptr_ may never be a nullptr!");
+        PLSSVM_ASSERT(model.alpha_ptr_ != nullptr, "The alpha_ptr_ may never be a nullptr!");
+        PLSSVM_ASSERT(model.rho_ptr_ != nullptr, "The rho_ptr_ may never be a nullptr!");
+        PLSSVM_ASSERT(model.w_ptr_ != nullptr, "The w_ptr_ may never be a nullptr!");
+
         // predict values using OAO
         const std::size_t num_classes = model.num_different_labels();
-        const std::vector<std::vector<std::size_t>> &indices = *model.indices_ptr_;  // TODO: ASSERT
+        const std::vector<std::vector<std::size_t>> &indices = *model.indices_ptr_;
 
         std::vector<std::vector<std::size_t>> class_vote(data.num_data_points(), std::vector<std::size_t>(num_classes));
 
@@ -457,7 +465,8 @@ std::vector<label_type> csvm::predict(const model<real_type, label_type> &model,
                 const std::size_t num_data_points_in_sub_matrix{ indices[i].size() + indices[j].size() };
                 std::vector<std::vector<real_type>> binary_sv(num_data_points_in_sub_matrix);
                 std::vector<std::vector<real_type>> binary_alpha{  (*model.alpha_ptr_)[pos]  };  // note: the first dimension will always be one, since only one rhs is needed
-                const std::vector<real_type> binary_rho{ (*model.rho_ptr_)[pos] };  // TODO: ASSERT
+                const std::vector<real_type> binary_rho{ (*model.rho_ptr_)[pos] };
+
                 // TODO: not sorted?
                 // note: if this is changed, it must also be changed in the libsvm_model_parsing.hpp in the calculate_alpha_idx function!!!
                 #pragma omp parallel default(none) shared(binary_sv, indices, model) firstprivate(i, j)
