@@ -13,20 +13,22 @@
 #include "plssvm/detail/cmd/parser_predict.hpp"          // plssvm::detail::cmd::parser_predict
 #include "plssvm/detail/cmd/parser_scale.hpp"            // plssvm::detail::cmd::parser_scale
 #include "plssvm/detail/cmd/parser_train.hpp"            // plssvm::detail::cmd::parser_train
+#include "plssvm/detail/string_conversion.hpp"           // plssvm::detail::split_as
+#include "plssvm/detail/string_utility.hpp"              // plssvm::detail::trim
 #include "plssvm/detail/utility.hpp"                     // plssvm::detail::current_date_time
 #include "plssvm/version/git_metadata/git_metadata.hpp"  // plssvm::version::git_metadata::commit_sha1
 #include "plssvm/version/version.hpp"                    // plssvm::version::{version, detail::target_platforms}
 
-#include "fmt/chrono.h"                                  // format std::chrono types
-#include "fmt/core.h"                                    // fmt::format
-#include "fmt/ostream.h"                                 // format types with an operator<< overload
+#include "fmt/chrono.h"   // format std::chrono types
+#include "fmt/core.h"     // fmt::format
+#include "fmt/ostream.h"  // format types with an operator<< overload
 
-#include <fstream>                                       // std::ofstream
-#include <iostream>                                      // std::ios_base::app
-#include <memory>                                        // std::shared_ptr
-#include <string>                                        // std::string
-#include <unordered_map>                                 // std::unordered_multimap
-#include <utility>                                       // std::pair
+#include <fstream>        // std::ofstream
+#include <iostream>       // std::ios_base::app
+#include <memory>         // std::shared_ptr
+#include <string>         // std::string
+#include <unordered_map>  // std::unordered_multimap
+#include <utility>        // std::pair
 
 namespace plssvm::detail {
 
@@ -64,6 +66,7 @@ void performance_tracker::add_tracking_entry(const tracking_entry<cmd::parser_tr
                                                                       "  cost:                        {}\n"
                                                                       "  epsilon:                     {}\n"
                                                                       "  max_iter:                    {}\n"
+                                                                      "  classification_type:         {}\n"
                                                                       "  backend:                     {}\n"
                                                                       "  target:                      {}\n"
                                                                       "  sycl_kernel_invocation_type: {}\n"
@@ -79,6 +82,7 @@ void performance_tracker::add_tracking_entry(const tracking_entry<cmd::parser_tr
                                                                       entry.entry_value.csvm_params.cost.value(),
                                                                       entry.entry_value.epsilon.value(),
                                                                       entry.entry_value.max_iter.value(),
+                                                                      entry.entry_value.classification.value(),
                                                                       entry.entry_value.backend,
                                                                       entry.entry_value.target,
                                                                       entry.entry_value.sycl_kernel_invocation_type,
@@ -182,10 +186,33 @@ void performance_tracker::save(std::ostream &out) {
         if (!group.empty()) {
             out << group << ":\n";
         }
-        // output all performance statistic entries of the current group
-        for (entry_iter = key_range.first; entry_iter != key_range.second; ++entry_iter) {
-            out << fmt::format("{}", entry_iter->second);
+        // regroup multiple entries into single arrays
+        if (group == "cg") {
+            // special case: multiple conjugate gradients could be performed (e.g., in OAO)
+            std::unordered_map<std::string, std::vector<std::string>> cg_map{};
+            // group the same categories into vectors
+            for (entry_iter = key_range.first; entry_iter != key_range.second; ++entry_iter) {
+                const std::vector<std::string> split = detail::split_as<std::string>(detail::trim(entry_iter->second), ' ');
+                if (cg_map.count(split[0]) == 0) {
+                    cg_map.emplace(split[0], std::vector<std::string>{});
+                }
+                cg_map[split[0]].emplace_back(split[1].data(), split[1].size() - 1);
+            }
+            // output all CG categories
+            for (const auto &[cg_category, cg_values] : cg_map) {
+                if (cg_values.size() == 1) {
+                    out << fmt::format("  {} {}\n", cg_category, cg_values.front());
+                } else {
+                    out << fmt::format("  {} [{}]\n", cg_category, fmt::join(cg_values, ","));
+                }
+            }
+        } else {
+            // output all performance statistic entries of the current group
+            for (entry_iter = key_range.first; entry_iter != key_range.second; ++entry_iter) {
+                out << fmt::format("{}", entry_iter->second);
+            }
         }
+
         out << '\n';
     }
 

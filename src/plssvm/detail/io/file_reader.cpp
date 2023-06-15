@@ -178,6 +178,50 @@ const std::vector<std::string_view> &file_reader::read_lines(const std::string_v
     }
     // create view from buffer
     const std::string_view file_content_view{ file_content_, static_cast<std::string_view::size_type>(num_bytes_) };
+
+//    const auto start = std::chrono::steady_clock::now();
+//    std::vector<const char *> total_newline_chars;
+//    std::vector<std::vector<const char *>> newline_chars;
+//
+//#pragma omp parallel
+//    {
+//        newline_chars.resize(omp_get_num_threads());
+//#pragma omp for
+//        for (std::size_t i = 0; i < file_content_view.size(); ++i) {
+//            if (file_content_view[i] == '\n') {
+//                if (!newline_chars[omp_get_thread_num()].empty() && newline_chars[omp_get_thread_num()].back() + 1 != &file_content_view[i]) {
+//                    newline_chars[omp_get_thread_num()].emplace_back(&file_content_view[i]);
+//                }
+//            }
+//        }
+//
+//#pragma omp single
+//        {
+//            for (const std::vector<const char *> &val : newline_chars) {
+//                total_newline_chars.insert(total_newline_chars.end(), val.begin(), val.end());
+//            }
+//            lines_.resize(total_newline_chars.size());
+//            lines_[0] = file_content_view.substr(0, total_newline_chars[0] - file_content_view.data());
+//        }
+//
+//#pragma omp for
+//        for (std::size_t i = 1; i < lines_.size(); ++i) {
+//            lines_[i] = file_content_view.substr(total_newline_chars[i] - file_content_view.data(), total_newline_chars[i] - total_newline_chars[i - 1]);
+//        }
+//
+//    }
+//
+//    std::size_t total_num_lines = 0;
+//    #pragma omp parallel for reduction(+ : num_lines)
+//    for (std::size_t i = 0; i < file_content_view.size(); ++i) {
+//        if (file_content_view[i] == '\n') {
+//            ++num_lines;
+//        }
+//    }
+//    const auto end = std::chrono::steady_clock::now();
+//    std::cerr << fmt::format("#lines {} in {}", num_lines, std::chrono::duration_cast<std::chrono::milliseconds>(end - start)) << std::endl;
+//
+//    lines_.reserve(num_lines);
     std::string_view::size_type pos = 0;
     while (true) {
         // find newline

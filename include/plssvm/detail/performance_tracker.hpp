@@ -251,7 +251,7 @@ extern std::shared_ptr<performance_tracker> global_tracker;
         ::plssvm::detail::global_tracker->save(filename)
 
     #define PLSSVM_DETAIL_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY(entry) \
-        ::plssvm::detail::global_tracker->add_tracking_entry(entry);
+        ::plssvm::detail::global_tracker->add_tracking_entry(entry)
 #else
 
     #define PLSSVM_DETAIL_PERFORMANCE_TRACKER_PAUSE()

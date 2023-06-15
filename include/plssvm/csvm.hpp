@@ -326,11 +326,10 @@ model<real_type, label_type> csvm::fit(const data_set<real_type, label_type> &da
         classification_val = classification_type::oaa;
         detail::log(verbosity_level::full | verbosity_level::timing,
                     "Using oaa (one vs. all) as binary classification strategy.\n");
-        PLSSVM_DETAIL_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking_entry{ "cg", "classification_type", "OAA" }));  // TODO: groß/klein
     } else {
         detail::log(verbosity_level::full | verbosity_level::timing,
                     "Using {} ({}) as multi-class classification strategy.\n",
-                    detail::tracking_entry{ "cg", "classification_type", classification_val.value() },
+                    classification_val.value(),
                     classification_type_to_full_string(classification_val.value()));
     }
 
