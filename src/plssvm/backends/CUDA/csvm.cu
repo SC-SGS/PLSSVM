@@ -188,4 +188,15 @@ void csvm::run_predict_kernel_impl(const ::plssvm::detail::execution_range &rang
 template void csvm::run_predict_kernel_impl(const ::plssvm::detail::execution_range &, const ::plssvm::detail::parameter<float> &, device_ptr_type<float> &, const device_ptr_type<float> &, const device_ptr_type<float> &, const device_ptr_type<float> &, const device_ptr_type<float> &, std::size_t, std::size_t, std::size_t) const;
 template void csvm::run_predict_kernel_impl(const ::plssvm::detail::execution_range &, const ::plssvm::detail::parameter<double> &, device_ptr_type<double> &, const device_ptr_type<double> &, const device_ptr_type<double> &, const device_ptr_type<double> &, const device_ptr_type<double> &, std::size_t, std::size_t, std::size_t) const;
 
+template <typename real_type>
+void csvm::assemble_kernel_matrix_impl(const ::plssvm::detail::execution_range &range, const ::plssvm::detail::parameter<real_type> &params, std::vector<real_type> & kernel_matrix, const std::vector<std::vector<real_type>> &data, const std::vector<real_type> &q, const real_type QA_cost) const {
+    const std::size_t dept = data.size() - 1;
+
+    // TODO: implement
+}
+
+template void csvm::assemble_kernel_matrix_impl(const ::plssvm::detail::execution_range &, const ::plssvm::detail::parameter<float> &, std::vector<float> & , const std::vector<std::vector<float>> &, const std::vector<float> &, const float) const;
+template void csvm::assemble_kernel_matrix_impl(const ::plssvm::detail::execution_range &, const ::plssvm::detail::parameter<double> &, std::vector<double> & , const std::vector<std::vector<double>> &, const std::vector<double> &, const double) const;
+
+
 }  // namespace plssvm::cuda

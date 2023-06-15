@@ -175,6 +175,12 @@ class csvm : public ::plssvm::detail::gpu_csvm<detail::device_ptr, int> {
     template <typename real_type>
     void run_predict_kernel_impl(const ::plssvm::detail::execution_range &range, const ::plssvm::detail::parameter<real_type> &params, device_ptr_type<real_type> &out_d, const device_ptr_type<real_type> &alpha_d, const device_ptr_type<real_type> &point_d, const device_ptr_type<real_type> &data_d, const device_ptr_type<real_type> &data_last_d, std::size_t num_support_vectors, std::size_t num_predict_points, std::size_t num_features) const;
 
+    void assemble_kernel_matrix(const ::plssvm::detail::execution_range &range, const ::plssvm::detail::parameter<float> &params, std::vector<float> & kernel_matrix, const std::vector<std::vector<float>> &data, const std::vector<float> &q, const float QA_cost) const final { this->assemble_kernel_matrix_impl(range, params, kernel_matrix, data, q, QA_cost); }
+    void assemble_kernel_matrix(const ::plssvm::detail::execution_range &range, const ::plssvm::detail::parameter<double> &params, std::vector<double> & kernel_matrix, const std::vector<std::vector<double>> &data, const std::vector<double> &q, const double QA_cost) const final { this->assemble_kernel_matrix_impl(range, params, kernel_matrix, data, q, QA_cost); }
+    template <typename real_type>
+    void assemble_kernel_matrix_impl(const ::plssvm::detail::execution_range &range, const ::plssvm::detail::parameter<real_type> &params, std::vector<real_type> & kernel_matrix, const std::vector<std::vector<real_type>> &data, const std::vector<real_type> &q, const real_type QA_cost) const;
+
+
   private:
     /**
      * @brief Initialize all important states related to the CUDA backend.
