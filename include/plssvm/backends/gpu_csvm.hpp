@@ -277,8 +277,8 @@ class gpu_csvm : public ::plssvm::csvm {
     virtual void run_predict_kernel(const detail::execution_range &range, const parameter<double> &params, device_ptr_type<double> &out_d, const device_ptr_type<double> &alpha_d, const device_ptr_type<double> &point_d, const device_ptr_type<double> &data_d, const device_ptr_type<double> &data_last_d, std::size_t num_support_vectors, std::size_t num_predict_points, std::size_t num_features) const = 0;
 
 
-    virtual void assemble_kernel_matrix(const detail::execution_range &range, const detail::parameter<float> &params, std::vector<float> & kernel_matrix, const std::vector<std::vector<float>> &data, const std::vector<float> &q, const float QA_cost) const = 0;
-    virtual void assemble_kernel_matrix(const detail::execution_range &range, const detail::parameter<double> &params, std::vector<double> & kernel_matrix, const std::vector<std::vector<double>> &data, const std::vector<double> &q, const double QA_cost) const = 0;
+    virtual void assemble_kernel_matrix(const detail::parameter<float> &params, std::vector<float> & kernel_matrix, const device_ptr_type<float> &data_d, const device_ptr_type<float> &data_last_d, const std::vector<float> &q, float QA_cost, const std::size_t num_data_points, const std::size_t num_features) const = 0;
+    virtual void assemble_kernel_matrix(const detail::parameter<double> &params, std::vector<double> & kernel_matrix, const device_ptr_type<double> &data_d, const device_ptr_type<double> &data_last_d, const std::vector<double> &q, double QA_cost, const std::size_t num_data_points, const std::size_t num_features) const = 0;
 
     /// The available/used backend devices.
     std::vector<queue_type> devices_{};
@@ -497,7 +497,7 @@ std::pair<std::vector<std::vector<real_type>>, std::vector<real_type>> gpu_csvm<
     using namespace plssvm::operators;
 
     const std::size_t dept = A.size() - 1;
-    constexpr auto boundary_size = static_cast<std::size_t>(THREAD_BLOCK_SIZE * INTERNAL_BLOCK_SIZE);
+    constexpr auto boundary_size = 0; // static_cast<std::size_t>(THREAD_BLOCK_SIZE * INTERNAL_BLOCK_SIZE);
     const std::size_t num_features = A.front().size();
 
     [[maybe_unused]] const std::size_t num_used_devices = 1; // TODO: this->select_num_used_devices(params.kernel_type, num_features);
@@ -523,11 +523,19 @@ std::pair<std::vector<std::vector<real_type>>, std::vector<real_type>> gpu_csvm<
 
     // assemble explicit kernel matrix
 
+    const std::chrono::steady_clock::time_point assembly_start_time = std::chrono::steady_clock::now();
+
     std::vector<real_type> explicit_A(dept * dept);
     // TODO: implement
-    const detail::execution_range range{ { 1 } , { 1 } };
-    this->assemble_kernel_matrix(range, params, explicit_A, A, q_red, QA_cost);
+//    const detail::execution_range range{ { 1 } , { 1 } };
+    this->assemble_kernel_matrix(params, explicit_A, data_d.front(), data_last_d.front(), q_red, QA_cost, dept, num_features);
     PLSSVM_ASSERT(dept * dept == explicit_A.size(), "Sizes mismatch!: {} != {}", dept, explicit_A.size());
+
+    const std::chrono::steady_clock::time_point assembly_end_time = std::chrono::steady_clock::now();
+    detail::log(verbosity_level::full | verbosity_level::timing,
+                "Assembled the kernel matrix in {}.\n",
+                detail::tracking_entry{ "cg", "kernel_matrix_assembly", std::chrono::duration_cast<std::chrono::milliseconds>(assembly_end_time - assembly_start_time) });
+
 
 
     // CG
