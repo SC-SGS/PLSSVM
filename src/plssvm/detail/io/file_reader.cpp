@@ -26,9 +26,14 @@
                            // PAGE_READONLY, FILE_MAP_READ, LARGE_INTEGER
 #endif
 
+#if _OPENMP
+    #include "omp.h"
+#endif
+
 #include <algorithm>    // std::min
 #include <climits>      // INT32_MAX
 #include <cmath>        // std::ceil
+#include <deque>        // std::deque
 #include <filesystem>   // std::filesystem::path
 #include <fstream>      // std::ifstream
 #include <ios>          // std::ios, std::streamsize
@@ -178,6 +183,61 @@ const std::vector<std::string_view> &file_reader::read_lines(const std::string_v
     }
     // create view from buffer
     const std::string_view file_content_view{ file_content_, static_cast<std::string_view::size_type>(num_bytes_) };
+
+#if _OPENMP
+    // per thread temporaries
+    std::vector<std::deque<std::size_t>> per_thread_newlines;
+    std::vector<std::vector<std::string_view>> per_thread_lines;
+
+    #pragma omp parallel
+    {
+        // resize vector - single threaded
+        #pragma omp single
+        {
+            per_thread_newlines.resize(omp_get_num_threads());
+            per_thread_lines.resize(omp_get_num_threads());
+        }
+
+        // find all newlines - parallel
+        #pragma omp for ordered
+        for (std::size_t i = 0; i < file_content_view.size(); ++i) {
+            if (file_content_view[i] == '\n') {
+                per_thread_newlines[omp_get_thread_num()].push_back(i + 1);
+            }
+        }
+
+        // merge per thread newlines into global newlines vector - single threaded
+        #pragma omp single
+        {
+            // the first index that no exception for the first thread must be made
+            per_thread_newlines[0].push_front(0);
+
+            for (std::size_t i = 1; i < per_thread_newlines.size(); ++i) {
+                per_thread_newlines[i].push_front(per_thread_newlines[i - 1].back());
+            }
+
+            // in case the last line has no \n at the end
+            per_thread_newlines.back().push_back(file_content_view.size() + 1);
+        }
+
+        // get lines from newlines - parallel
+        #pragma omp for ordered
+        for (std::size_t i = 0; i < per_thread_newlines.size(); ++i) {
+            // reserve lines sizes
+            per_thread_lines[i].reserve(per_thread_newlines[i].size());
+
+            for (std::size_t l = 0; l < per_thread_newlines[i].size() - 1; ++l) {
+                const std::string_view sv = trim_left(std::string_view{ file_content_view.data() + per_thread_newlines[i][l], per_thread_newlines[i][l + 1] - per_thread_newlines[i][l] - 1});
+                if (!sv.empty() && !starts_with(sv, comment)) {
+                    per_thread_lines[i].push_back(sv);
+                }
+            }
+        }
+    }
+    for (const std::vector<std::string_view> &thread_lines : per_thread_lines) {
+        lines_.insert(lines_.cend(), thread_lines.cbegin(), thread_lines.cend());
+    }
+#else
     std::string_view::size_type pos = 0;
     while (true) {
         // find newline
@@ -199,6 +259,7 @@ const std::vector<std::string_view> &file_reader::read_lines(const std::string_v
     if (!sv.empty() && !starts_with(sv, comment)) {
         lines_.push_back(sv);
     }
+#endif
 
     return lines_;
 }
