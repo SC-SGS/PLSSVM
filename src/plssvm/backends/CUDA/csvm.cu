@@ -191,26 +191,26 @@ template void csvm::run_predict_kernel_impl(const ::plssvm::detail::execution_ra
 template void csvm::run_predict_kernel_impl(const ::plssvm::detail::execution_range &, const ::plssvm::detail::parameter<double> &, device_ptr_type<double> &, const device_ptr_type<double> &, const device_ptr_type<double> &, const device_ptr_type<double> &, const device_ptr_type<double> &, std::size_t, std::size_t, std::size_t) const;
 
 template <typename real_type>
-void csvm::assemble_kernel_matrix_impl(const ::plssvm::detail::parameter<real_type> &params, std::vector<real_type> & kernel_matrix, const device_ptr_type<real_type> &data_d, const device_ptr_type<real_type> &data_last_d, const std::vector<real_type> &q, const real_type QA_cost, const std::size_t num_data_points, const std::size_t num_features) const {
+void csvm::assemble_kernel_matrix_impl(const ::plssvm::detail::parameter<real_type> &params, std::vector<real_type> & kernel_matrix, const device_ptr_type<real_type> &data_d, const device_ptr_type<real_type> &data_last_d, const std::vector<real_type> &q, const real_type QA_cost, const std::size_t dept, const std::size_t num_features) const {
     const dim3 block(32, 32);
-    const dim3 grid(static_cast<int>(std::ceil(num_data_points / static_cast<double>(block.x))),
-                    static_cast<int>(std::ceil(num_data_points / static_cast<double>(block.y))));
+    const dim3 grid(static_cast<int>(std::ceil(dept / static_cast<double>(block.x))),
+                    static_cast<int>(std::ceil(dept / static_cast<double>(block.y))));
 
     device_ptr_type<real_type> q_d{ q.size() };
     q_d.copy_to_device(q);
 
-    device_ptr_type<real_type> out_d{ num_data_points * num_data_points };
+    device_ptr_type<real_type> out_d{ dept * dept };
 
     detail::set_device(0);
     switch (params.kernel_type) {
         case kernel_function_type::linear:
-            cuda::device_kernel_assembly_linear<<<grid, block>>>(q_d.get(), out_d.get(), data_d.get(), QA_cost, real_type{ 1.0 } / params.cost, static_cast<kernel_index_type>(num_data_points), static_cast<kernel_index_type>(num_features));
+            cuda::device_kernel_assembly_linear<<<grid, block>>>(q_d.get(), out_d.get(), data_d.get(), QA_cost, real_type{ 1.0 } / params.cost, static_cast<kernel_index_type>(dept), static_cast<kernel_index_type>(num_features));
             break;
         case kernel_function_type::polynomial:
-            cuda::device_kernel_assembly_polynomial<<<grid, block>>>(q_d.get(), out_d.get(), data_d.get(), QA_cost, real_type{ 1.0 } / params.cost, static_cast<kernel_index_type>(num_data_points), static_cast<kernel_index_type>(num_features), params.degree.value(), params.gamma.value(), params.coef0.value());
+            cuda::device_kernel_assembly_polynomial<<<grid, block>>>(q_d.get(), out_d.get(), data_d.get(), QA_cost, real_type{ 1.0 } / params.cost, static_cast<kernel_index_type>(dept), static_cast<kernel_index_type>(num_features), params.degree.value(), params.gamma.value(), params.coef0.value());
             break;
         case kernel_function_type::rbf:
-            cuda::device_kernel_assembly_rbf<<<grid, block>>>(q_d.get(), out_d.get(), data_d.get(), QA_cost, real_type{ 1.0 } / params.cost, static_cast<kernel_index_type>(num_data_points), static_cast<kernel_index_type>(num_features), params.gamma.value());
+            cuda::device_kernel_assembly_rbf<<<grid, block>>>(q_d.get(), out_d.get(), data_d.get(), QA_cost, real_type{ 1.0 } / params.cost, static_cast<kernel_index_type>(dept), static_cast<kernel_index_type>(num_features), params.gamma.value());
             break;
     }
     detail::peek_at_last_error();

@@ -14,21 +14,21 @@
 namespace plssvm::cuda {
 
 template <typename real_type>
-__global__ void device_kernel_assembly_linear(const real_type *q, real_type *ret, const real_type *data_d, const real_type QA_cost, const real_type cost, const kernel_index_type num_rows, const kernel_index_type num_features) {
-    const kernel_index_type i = blockIdx.x * blockDim.x + threadIdx.x;
-    const kernel_index_type j = blockIdx.y * blockDim.y + threadIdx.y;
+__global__ void device_kernel_assembly_linear(const real_type *q, real_type *ret, const real_type *data_d, const real_type QA_cost, const real_type cost, const kernel_index_type dept, const kernel_index_type num_features) {
+    const unsigned long long i = blockIdx.x * blockDim.x + threadIdx.x;
+    const unsigned long long j = blockIdx.y * blockDim.y + threadIdx.y;
 
-    if (i < num_rows && j < num_rows) {
+    if (i < dept && j < dept) {
         real_type temp{ 0.0 };
         for (kernel_index_type dim = 0; dim < num_features; ++dim) {
-            temp += data_d[dim * num_rows + i] * data_d[dim * num_rows + j];
+            temp += data_d[dim * dept + i] * data_d[dim * dept + j];
         }
         temp = temp + QA_cost - q[i] - q[j];
         if (i == j) {
             temp += cost;
         }
 
-        ret[i * num_rows + j] = temp;
+        ret[i * dept + j] = temp;
     }
 }
 template __global__ void device_kernel_assembly_linear(const float *, float *, const float *, const float, const float, const kernel_index_type, const kernel_index_type);
