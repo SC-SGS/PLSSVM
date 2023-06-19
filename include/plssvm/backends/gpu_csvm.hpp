@@ -326,8 +326,8 @@ gpu_csvm<device_ptr_t, queue_t>::setup_data_on_device(const std::vector<std::vec
         feature_ranges[device] = device * num_features_to_setup / num_used_devices;
     }
 
-    // transform 2D to 1D SoA data
-    const std::vector<real_type> transformed_data = detail::transform_to_layout(detail::layout_type::soa, data, boundary_size, num_data_points_to_setup);
+    // transform 2D to 1D AoS data
+    const std::vector<real_type> transformed_data = detail::transform_to_layout(detail::layout_type::aos, data, boundary_size, num_data_points_to_setup);
 
     std::vector<device_ptr_type<real_type>> data_last_d(num_used_devices);
     std::vector<device_ptr_type<real_type>> data_d(num_used_devices);

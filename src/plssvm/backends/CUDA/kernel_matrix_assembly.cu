@@ -21,7 +21,7 @@ __global__ void device_kernel_assembly_linear(const real_type *q, real_type *ret
     if (i < dept && j < dept) {
         real_type temp{ 0.0 };
         for (unsigned long long dim = 0; dim < num_features; ++dim) {
-            temp += data_d[dim * dept + i] * data_d[dim * dept + j];
+            temp += data_d[i * num_features + dim] * data_d[j * num_features + dim];
         }
         temp = temp + QA_cost - q[i] - q[j];
         if (i == j) {
@@ -42,7 +42,7 @@ __global__ void device_kernel_assembly_polynomial(const real_type *q, real_type 
     if (i < num_rows && j < num_rows) {
         real_type temp{ 0.0 };
         for (unsigned long long dim = 0; dim < num_features; ++dim) {
-            temp += data_d[dim * num_rows + i] * data_d[dim * num_rows + j];
+            temp += data_d[i * num_features + dim] * data_d[j * num_features + dim];
         }
         temp = pow(gamma * temp + coef0, degree) + QA_cost - q[i] - q[j];
         if (i == j) {
@@ -64,7 +64,7 @@ __global__ void device_kernel_assembly_rbf(const real_type *q, real_type *ret, c
     if (i < num_rows && j < num_rows) {
         real_type temp{ 0.0 };
         for (unsigned long long dim = 0; dim < num_features; ++dim) {
-            const real_type d = data_d[dim * num_rows + i] - data_d[dim * num_rows + j];
+            const real_type d = data_d[i * num_features + dim] - data_d[j * num_features + dim];
             temp += d * d;
         }
         temp = exp(-gamma * temp) + QA_cost - q[i] - q[j];

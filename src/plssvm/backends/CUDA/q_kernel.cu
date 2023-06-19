@@ -17,7 +17,7 @@ __global__ void device_kernel_q_linear(real_type *q, const real_type *data_d, co
     const kernel_index_type index = blockIdx.x * blockDim.x + threadIdx.x;
     real_type temp{ 0.0 };
     for (kernel_index_type i = 0; i < feature_range; ++i) {
-        temp += data_d[i * num_rows + index] * data_last[i];
+        temp += data_d[index * feature_range + i] * data_last[i];
     }
     q[index] = temp;
 }
@@ -29,7 +29,7 @@ __global__ void device_kernel_q_polynomial(real_type *q, const real_type *data_d
     const kernel_index_type index = blockIdx.x * blockDim.x + threadIdx.x;
     real_type temp{ 0.0 };
     for (kernel_index_type i = 0; i < num_cols; ++i) {
-        temp += data_d[i * num_rows + index] * data_last[i];
+        temp += data_d[index * num_cols + i] * data_last[i];
     }
     q[index] = pow(gamma * temp + coef0, degree);
 }
@@ -41,7 +41,7 @@ __global__ void device_kernel_q_rbf(real_type *q, const real_type *data_d, const
     const kernel_index_type index = blockIdx.x * blockDim.x + threadIdx.x;
     real_type temp{ 0.0 };
     for (kernel_index_type i = 0; i < num_cols; ++i) {
-        temp += (data_d[i * num_rows + index] - data_last[i]) * (data_d[i * num_rows + index] - data_last[i]);
+        temp += (data_d[index * num_cols + i] - data_last[i]) * (data_d[index * num_cols + i] - data_last[i]);
     }
     q[index] = exp(-gamma * temp);
 }
