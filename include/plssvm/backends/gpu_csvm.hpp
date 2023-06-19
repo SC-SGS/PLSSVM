@@ -277,8 +277,14 @@ class gpu_csvm : public ::plssvm::csvm {
     virtual void run_predict_kernel(const detail::execution_range &range, const parameter<double> &params, device_ptr_type<double> &out_d, const device_ptr_type<double> &alpha_d, const device_ptr_type<double> &point_d, const device_ptr_type<double> &data_d, const device_ptr_type<double> &data_last_d, std::size_t num_support_vectors, std::size_t num_predict_points, std::size_t num_features) const = 0;
 
 
-    virtual void assemble_kernel_matrix(const detail::parameter<float> &params, std::vector<float> & kernel_matrix, const device_ptr_type<float> &data_d, const device_ptr_type<float> &data_last_d, const std::vector<float> &q, float QA_cost, const std::size_t num_data_points, const std::size_t num_features) const = 0;
-    virtual void assemble_kernel_matrix(const detail::parameter<double> &params, std::vector<double> & kernel_matrix, const device_ptr_type<double> &data_d, const device_ptr_type<double> &data_last_d, const std::vector<double> &q, double QA_cost, const std::size_t num_data_points, const std::size_t num_features) const = 0;
+    virtual device_ptr_type<float> assemble_kernel_matrix(const detail::parameter<float> &params, const device_ptr_type<float> &data_d, const std::vector<float> &q, float QA_cost, const std::size_t num_data_points, const std::size_t num_features) const = 0;
+    virtual device_ptr_type<double> assemble_kernel_matrix(const detail::parameter<double> &params, const device_ptr_type<double> &data_d, const std::vector<double> &q, double QA_cost, const std::size_t num_data_points, const std::size_t num_features) const = 0;
+
+    virtual void cg_blas_matmul(std::size_t m, std::size_t n, std::size_t k, float alpha, const device_ptr_type<float> &A, const device_ptr_type<float> &B, device_ptr_type<float> &RET) const = 0;
+    virtual void cg_blas_matmul(std::size_t m, std::size_t n, std::size_t k, double alpha, const device_ptr_type<double> &A, const device_ptr_type<double> &B, device_ptr_type<double> &RET) const = 0;
+
+    virtual void cg_blas_matmul2(std::size_t m, std::size_t n, std::size_t k, float alpha, const device_ptr_type<float> &A, const device_ptr_type<float> &B, float beta, const device_ptr_type<float> &C, device_ptr_type<float> &RET) const = 0;
+    virtual void cg_blas_matmul2(std::size_t m, std::size_t n, std::size_t k, double alpha, const device_ptr_type<double> &A, const device_ptr_type<double> &B, double beta, const device_ptr_type<double> &C, device_ptr_type<double> &RET) const = 0;
 
     /// The available/used backend devices.
     std::vector<queue_type> devices_{};
@@ -525,17 +531,15 @@ std::pair<std::vector<std::vector<real_type>>, std::vector<real_type>> gpu_csvm<
 
     const std::chrono::steady_clock::time_point assembly_start_time = std::chrono::steady_clock::now();
 
-    std::vector<real_type> explicit_A(dept * dept);
-    // TODO: implement
-//    const detail::execution_range range{ { 1 } , { 1 } };
-    this->assemble_kernel_matrix(params, explicit_A, data_d.front(), data_last_d.front(), q_red, QA_cost, dept, num_features);
+    std::vector<real_type> explicit_A(dept * dept);  // TODO: may be removed!
+    const device_ptr_type<real_type> explicit_A_d = this->assemble_kernel_matrix(params, data_d.front(), q_red, QA_cost, dept, num_features);
+    explicit_A_d.copy_to_host(explicit_A);
     PLSSVM_ASSERT(dept * dept == explicit_A.size(), "Sizes mismatch!: {} != {}", dept, explicit_A.size());
 
     const std::chrono::steady_clock::time_point assembly_end_time = std::chrono::steady_clock::now();
     detail::log(verbosity_level::full | verbosity_level::timing,
                 "Assembled the kernel matrix in {}.\n",
                 detail::tracking_entry{ "cg", "kernel_matrix_assembly", std::chrono::duration_cast<std::chrono::milliseconds>(assembly_end_time - assembly_start_time) });
-
 
 
     // CG
@@ -545,18 +549,27 @@ std::pair<std::vector<std::vector<real_type>>, std::vector<real_type>> gpu_csvm<
     std::vector<real_type> B_flat = transform_to_aos_layout(B, 0, B.size(), dept);
     std::vector<real_type> R_flat = B_flat;
 
-    // R = B - AX
-    #pragma omp parallel for collapse(2)
-    for (std::size_t col = 0; col < B.size(); ++col) {
-        for (std::size_t row = 0; row < dept; ++row) {
-            real_type temp{ 0.0 };
-            #pragma omp simd reduction(+ : temp)
-            for (std::size_t dim = 0; dim < dept; ++dim) {
-                temp += explicit_A[row * dept + dim] * X_flat[col * dept + dim];
-            }
-            R_flat[col * dept + row] -= temp;
-        }
+    // R = B - A * X
+    {
+        device_ptr_type<real_type> B_flat_d{ B_flat.size() };
+        B_flat_d.copy_to_device(B_flat);
+        device_ptr_type<real_type> X_flat_d{ X_flat.size() };
+        X_flat_d.copy_to_device(X_flat);
+        device_ptr_type<real_type> R_flat_d{ R_flat.size() };
+        this->cg_blas_matmul2(dept, B.size(), dept, real_type{ -1.0 }, explicit_A_d, X_flat_d, real_type{ 1.0 }, B_flat_d, R_flat_d);
+        R_flat_d.copy_to_host(R_flat);
     }
+//    #pragma omp parallel for collapse(2)
+//    for (std::size_t col = 0; col < B.size(); ++col) {
+//        for (std::size_t row = 0; row < dept; ++row) {
+//            real_type temp{ 0.0 };
+//            #pragma omp simd reduction(+ : temp)
+//            for (std::size_t dim = 0; dim < dept; ++dim) {
+//                temp += explicit_A[row * dept + dim] * X_flat[col * dept + dim];
+//            }
+//            R_flat[col * dept + row] -= temp;
+//        }
+//    }
 
     // delta = R.T * R
     std::vector<real_type> delta(B.size());
@@ -622,16 +635,12 @@ std::pair<std::vector<std::vector<real_type>>, std::vector<real_type>> gpu_csvm<
         iteration_start_time = std::chrono::steady_clock::now();
 
         // Q = A * D
-        #pragma omp parallel for collapse(2)
-        for (std::size_t col = 0; col < B.size(); ++col) {
-            for (std::size_t row = 0; row < dept; ++row) {
-                real_type temp{ 0.0 };
-                #pragma omp simd reduction(+ : temp)
-                for (std::size_t dim = 0; dim < dept; ++dim) {
-                    temp += explicit_A[row * dept + dim] * D_flat[col * dept + dim];
-                }
-                Q_flat[col * dept + row] = temp;
-            }
+        {
+            device_ptr_type<real_type> D_flat_d{ D_flat.size() };
+            D_flat_d.copy_to_device(D_flat);
+            device_ptr_type<real_type> Q_flat_d{ Q_flat.size() };
+            this->cg_blas_matmul(dept, B.size(), dept, real_type{ 1.0 }, explicit_A_d, D_flat_d, Q_flat_d);
+            Q_flat_d.copy_to_host(Q_flat);
         }
 
         // (alpha = delta_new / (D^T * Q))
@@ -656,19 +665,27 @@ std::pair<std::vector<std::vector<real_type>>, std::vector<real_type>> gpu_csvm<
 
         if (iter % 50 == 49) {
             // R = B - A * X
-            R_flat = B_flat;
-
-            #pragma omp parallel for collapse(2)
-            for (std::size_t col = 0; col < B.size(); ++col) {
-                for (std::size_t row = 0; row < dept; ++row) {
-                    real_type temp{ 0.0 };
-                    #pragma omp simd reduction(* : temp)
-                    for (std::size_t dim = 0; dim < dept; ++dim) {
-                        temp += explicit_A[row * dept + dim] * X_flat[col * dept + dim];
-                    }
-                    R_flat[col * dept + row] -= temp;
-                }
+            {
+                device_ptr_type<real_type> B_flat_d{ B_flat.size() };
+                B_flat_d.copy_to_device(B_flat);
+                device_ptr_type<real_type> X_flat_d{ X_flat.size() };
+                X_flat_d.copy_to_device(X_flat);
+                device_ptr_type<real_type> R_flat_d{ R_flat.size() };
+                this->cg_blas_matmul2(dept, B.size(), dept, real_type{ -1.0 }, explicit_A_d, X_flat_d, real_type{ 1.0 }, B_flat_d, R_flat_d);
+                R_flat_d.copy_to_host(R_flat);
             }
+//            R_flat = B_flat;
+//            #pragma omp parallel for collapse(2)
+//            for (std::size_t col = 0; col < B.size(); ++col) {
+//                for (std::size_t row = 0; row < dept; ++row) {
+//                    real_type temp{ 0.0 };
+//                    #pragma omp simd reduction(* : temp)
+//                    for (std::size_t dim = 0; dim < dept; ++dim) {
+//                        temp += explicit_A[row * dept + dim] * X_flat[col * dept + dim];
+//                    }
+//                    R_flat[col * dept + row] -= temp;
+//                }
+//            }
 
         } else {
             // R = R - alpha * Q

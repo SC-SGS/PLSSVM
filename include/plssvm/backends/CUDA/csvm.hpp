@@ -175,10 +175,20 @@ class csvm : public ::plssvm::detail::gpu_csvm<detail::device_ptr, int> {
     template <typename real_type>
     void run_predict_kernel_impl(const ::plssvm::detail::execution_range &range, const ::plssvm::detail::parameter<real_type> &params, device_ptr_type<real_type> &out_d, const device_ptr_type<real_type> &alpha_d, const device_ptr_type<real_type> &point_d, const device_ptr_type<real_type> &data_d, const device_ptr_type<real_type> &data_last_d, std::size_t num_support_vectors, std::size_t num_predict_points, std::size_t num_features) const;
 
-    void assemble_kernel_matrix(const ::plssvm::detail::parameter<float> &params, std::vector<float> & kernel_matrix, const device_ptr_type<float> &data_d, const device_ptr_type<float> &data_last_d, const std::vector<float> &q, float QA_cost, const std::size_t num_data_points, const std::size_t num_features) const final { this->assemble_kernel_matrix_impl(params, kernel_matrix, data_d, data_last_d, q, QA_cost, num_data_points, num_features); }
-    void assemble_kernel_matrix(const ::plssvm::detail::parameter<double> &params, std::vector<double> & kernel_matrix, const device_ptr_type<double> &data_d, const device_ptr_type<double> &data_last_d, const std::vector<double> &q, double QA_cost, const std::size_t num_data_points, const std::size_t num_features) const final { this->assemble_kernel_matrix_impl(params, kernel_matrix, data_d, data_last_d, q, QA_cost, num_data_points, num_features); }
+    device_ptr_type<float> assemble_kernel_matrix(const ::plssvm::detail::parameter<float> &params, const device_ptr_type<float> &data_d, const std::vector<float> &q, float QA_cost, const std::size_t num_data_points, const std::size_t num_features) const final { return this->assemble_kernel_matrix_impl(params, data_d, q, QA_cost, num_data_points, num_features); }
+    device_ptr_type<double> assemble_kernel_matrix(const ::plssvm::detail::parameter<double> &params, const device_ptr_type<double> &data_d, const std::vector<double> &q, double QA_cost, const std::size_t num_data_points, const std::size_t num_features) const final { return this->assemble_kernel_matrix_impl(params, data_d, q, QA_cost, num_data_points, num_features); }
     template <typename real_type>
-    void assemble_kernel_matrix_impl(const ::plssvm::detail::parameter<real_type> &params, std::vector<real_type> & kernel_matrix, const device_ptr_type<real_type> &data_d, const device_ptr_type<real_type> &data_last_d, const std::vector<real_type> &q, const real_type QA_cost, const std::size_t num_data_points, const std::size_t num_features) const;
+    device_ptr_type<real_type> assemble_kernel_matrix_impl(const ::plssvm::detail::parameter<real_type> &params, const device_ptr_type<real_type> &data_d, const std::vector<real_type> &q, const real_type QA_cost, const std::size_t num_data_points, const std::size_t num_features) const;
+
+    void cg_blas_matmul(std::size_t m, std::size_t n, std::size_t k, float alpha, const device_ptr_type<float> &A, const device_ptr_type<float> &B, device_ptr_type<float> &RET) const final { this->cg_blas_matmul_impl(m, n, k, alpha, A, B, RET); }
+    void cg_blas_matmul(std::size_t m, std::size_t n, std::size_t k, double alpha, const device_ptr_type<double> &A, const device_ptr_type<double> &B, device_ptr_type<double> &RET) const final { this->cg_blas_matmul_impl(m, n, k, alpha, A, B, RET); }
+    template <typename real_type>
+    void cg_blas_matmul_impl(std::size_t m, std::size_t n, std::size_t k, real_type alpha, const device_ptr_type<real_type> &A, const device_ptr_type<real_type> &B, device_ptr_type<real_type> &RET) const;
+
+    void cg_blas_matmul2(std::size_t m, std::size_t n, std::size_t k, float alpha, const device_ptr_type<float> &A, const device_ptr_type<float> &B, float beta, const device_ptr_type<float> &C, device_ptr_type<float> &RET) const final { this->cg_blas_matmul_impl2(m, n, k, alpha, A, B, beta, C, RET); }
+    void cg_blas_matmul2(std::size_t m, std::size_t n, std::size_t k, double alpha, const device_ptr_type<double> &A, const device_ptr_type<double> &B, double beta, const device_ptr_type<double> &C, device_ptr_type<double> &RET) const final { this->cg_blas_matmul_impl2(m, n, k, alpha, A, B, beta, C, RET); }
+    template <typename real_type>
+    void cg_blas_matmul_impl2(std::size_t m, std::size_t n, std::size_t k, real_type alpha, const device_ptr_type<real_type> &A, const device_ptr_type<real_type> &B, real_type beta, const device_ptr_type<real_type> &C, device_ptr_type<real_type> &RET) const;
 
 
   private:
