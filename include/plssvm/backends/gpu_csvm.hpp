@@ -540,19 +540,17 @@ std::pair<std::vector<std::vector<real_type>>, std::vector<real_type>> gpu_csvm<
     // CG
 
     std::vector<real_type> X_flat(B.size() * dept, real_type{ 1.0 });
+    device_ptr_type<real_type> X_flat_d{ X_flat.size() };
 
     std::vector<real_type> B_flat = transform_to_aos_layout(B, 0, B.size(), dept);
     std::vector<real_type> R_flat = B_flat;
+    device_ptr_type<real_type> R_flat_d{ R_flat.size() };
 
     // R = B - A * X
-    {
-        device_ptr_type<real_type> X_flat_d{ X_flat.size() };
-        X_flat_d.copy_to_device(X_flat);
-        device_ptr_type<real_type> R_flat_d{ R_flat.size() };
-        R_flat_d.copy_to_device(B_flat);
-        this->blas_gemm(dept, B.size(), dept, real_type{ -1.0 }, explicit_A_d, X_flat_d, real_type{ 1.0 }, R_flat_d);
-        R_flat_d.copy_to_host(R_flat);
-    }
+    X_flat_d.copy_to_device(X_flat);
+    R_flat_d.copy_to_device(B_flat);
+    this->blas_gemm(dept, B.size(), dept, real_type{ -1.0 }, explicit_A_d, X_flat_d, real_type{ 1.0 }, R_flat_d);
+    R_flat_d.copy_to_host(R_flat);
 
     // delta = R.T * R
     std::vector<real_type> delta(B.size());
@@ -567,8 +565,10 @@ std::pair<std::vector<std::vector<real_type>>, std::vector<real_type>> gpu_csvm<
     }
     const std::vector<real_type> delta0(delta);
     std::vector<real_type> Q_flat(B.size() * dept);
+    device_ptr_type<real_type> Q_flat_d{ Q_flat.size() };
 
     std::vector<real_type> D_flat(R_flat);
+    device_ptr_type<real_type> D_flat_d{ D_flat.size() };
 
     // timing for each CG iteration
     std::chrono::milliseconds average_iteration_time{};
@@ -618,14 +618,10 @@ std::pair<std::vector<std::vector<real_type>>, std::vector<real_type>> gpu_csvm<
         iteration_start_time = std::chrono::steady_clock::now();
 
         // Q = A * D
-        {
-            device_ptr_type<real_type> D_flat_d{ D_flat.size() };
-            D_flat_d.copy_to_device(D_flat);
-            device_ptr_type<real_type> Q_flat_d{ Q_flat.size() };
-            Q_flat_d.memset(0);
-            this->blas_gemm(dept, B.size(), dept, real_type{ 1.0 }, explicit_A_d, D_flat_d, real_type{ 0.0 }, Q_flat_d);
-            Q_flat_d.copy_to_host(Q_flat);
-        }
+        D_flat_d.copy_to_device(D_flat);
+        Q_flat_d.memset(0);
+        this->blas_gemm(dept, B.size(), dept, real_type{ 1.0 }, explicit_A_d, D_flat_d, real_type{ 0.0 }, Q_flat_d);
+        Q_flat_d.copy_to_host(Q_flat);
 
         // (alpha = delta_new / (D^T * Q))
         std::vector<real_type> alpha(B.size());
@@ -649,15 +645,10 @@ std::pair<std::vector<std::vector<real_type>>, std::vector<real_type>> gpu_csvm<
 
         if (iter % 50 == 49) {
             // R = B - A * X
-            {
-                device_ptr_type<real_type> X_flat_d{ X_flat.size() };
-                X_flat_d.copy_to_device(X_flat);
-                device_ptr_type<real_type> R_flat_d{ R_flat.size() };
-                R_flat_d.copy_to_device(B_flat);
-                this->blas_gemm(dept, B.size(), dept, real_type{ -1.0 }, explicit_A_d, X_flat_d, real_type{ 1.0 }, R_flat_d);
-                R_flat_d.copy_to_host(R_flat);
-            }
-
+            X_flat_d.copy_to_device(X_flat);
+            R_flat_d.copy_to_device(B_flat);
+            this->blas_gemm(dept, B.size(), dept, real_type{ -1.0 }, explicit_A_d, X_flat_d, real_type{ 1.0 }, R_flat_d);
+            R_flat_d.copy_to_host(R_flat);
         } else {
             // R = R - alpha * Q
             #pragma omp parallel for collapse(2)
