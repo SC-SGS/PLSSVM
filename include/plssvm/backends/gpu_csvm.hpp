@@ -554,7 +554,7 @@ std::pair<std::vector<std::vector<real_type>>, std::vector<real_type>> gpu_csvm<
 
     // delta = R.T * R
     std::vector<real_type> delta(B.size());
-    #pragma omp parallel for
+    #pragma omp parallel for default(none) shared(B, R_flat, delta) firstprivate(dept)
     for (std::size_t i = 0; i < B.size(); ++i) {
         real_type temp{ 0.0 };
         #pragma omp simd reduction(+ : temp)
@@ -625,7 +625,7 @@ std::pair<std::vector<std::vector<real_type>>, std::vector<real_type>> gpu_csvm<
 
         // (alpha = delta_new / (D^T * Q))
         std::vector<real_type> alpha(B.size());
-        #pragma omp parallel for
+        #pragma omp parallel for default(none) shared(B, D_flat, Q_flat, alpha, delta) firstprivate(dept)
         for (std::size_t i = 0; i < B.size(); ++i) {
             real_type temp{ 0.0 };
             #pragma omp simd reduction(+ : temp)
@@ -636,7 +636,7 @@ std::pair<std::vector<std::vector<real_type>>, std::vector<real_type>> gpu_csvm<
         }
 
         // X = X + alpha * D)
-        #pragma omp parallel for collapse(2)
+        #pragma omp parallel for collapse(2) default(none) shared(B, X_flat, alpha, D_flat) firstprivate(dept)
         for (std::size_t i = 0; i < B.size(); ++i) {
             for (std::size_t dim = 0; dim < dept; ++dim) {
                 X_flat[i * dept + dim] += alpha[i] * D_flat[i * dept + dim];
@@ -651,7 +651,7 @@ std::pair<std::vector<std::vector<real_type>>, std::vector<real_type>> gpu_csvm<
             R_flat_d.copy_to_host(R_flat);
         } else {
             // R = R - alpha * Q
-            #pragma omp parallel for collapse(2)
+            #pragma omp parallel for collapse(2) default(none) shared(B, R_flat, alpha, Q_flat) firstprivate(dept)
             for (std::size_t i = 0; i < B.size(); ++i) {
                 for (std::size_t dim = 0; dim < dept; ++dim) {
                     R_flat[i * dept + dim] -= alpha[i] * Q_flat[i * dept + dim];
@@ -661,7 +661,7 @@ std::pair<std::vector<std::vector<real_type>>, std::vector<real_type>> gpu_csvm<
 
         // delta = R^T * R
         const std::vector<real_type> delta_old = delta;
-        #pragma omp parallel for
+        #pragma omp parallel for default(none) shared(B, R_flat, delta) firstprivate(dept)
         for (std::size_t col = 0; col < B.size(); ++col) {
             real_type temp{ 0.0 };
             #pragma omp simd reduction(+ : temp)
@@ -680,7 +680,7 @@ std::pair<std::vector<std::vector<real_type>>, std::vector<real_type>> gpu_csvm<
         // (beta = delta_new / delta_old)
         const std::vector<real_type> beta = delta / delta_old;
         // D = beta * D + R
-        #pragma omp parallel for collapse(2)
+        #pragma omp parallel for collapse(2) default(none) shared(B, D_flat, beta, R_flat) firstprivate(dept)
         for (std::size_t i = 0; i < B.size(); ++i) {
             for (std::size_t dim = 0; dim < dept; ++dim) {
                 D_flat[i * dept + dim] = beta[i] * D_flat[i * dept + dim] + R_flat[i * dept + dim];
@@ -710,7 +710,7 @@ std::pair<std::vector<std::vector<real_type>>, std::vector<real_type>> gpu_csvm<
     // calculate bias
     std::vector<std::vector<real_type>> X_ret(B.size(), std::vector<real_type>(A.size()));
     std::vector<real_type> bias(B.size());
-    #pragma omp parallel for
+    #pragma omp parallel for default(none) shared(B, X_flat, q_red, X_ret, bias, b_back_value) firstprivate(dept, QA_cost)
     for (std::size_t i = 0; i < B.size(); ++i) {
         real_type temp_sum{ 0.0 };
         real_type temp_dot{ 0.0 };
