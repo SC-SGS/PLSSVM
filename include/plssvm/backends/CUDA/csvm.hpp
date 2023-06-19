@@ -180,15 +180,10 @@ class csvm : public ::plssvm::detail::gpu_csvm<detail::device_ptr, int> {
     template <typename real_type>
     device_ptr_type<real_type> assemble_kernel_matrix_impl(const ::plssvm::detail::parameter<real_type> &params, const device_ptr_type<real_type> &data_d, const std::vector<real_type> &q, const real_type QA_cost, const std::size_t num_data_points, const std::size_t num_features) const;
 
-    void cg_blas_matmul(std::size_t m, std::size_t n, std::size_t k, float alpha, const device_ptr_type<float> &A, const device_ptr_type<float> &B, device_ptr_type<float> &RET) const final { this->cg_blas_matmul_impl(m, n, k, alpha, A, B, RET); }
-    void cg_blas_matmul(std::size_t m, std::size_t n, std::size_t k, double alpha, const device_ptr_type<double> &A, const device_ptr_type<double> &B, device_ptr_type<double> &RET) const final { this->cg_blas_matmul_impl(m, n, k, alpha, A, B, RET); }
+    void blas_gemm(std::size_t m, std::size_t n, std::size_t k, float alpha, const device_ptr_type<float> &A, const device_ptr_type<float> &B, float beta, device_ptr_type<float> &C) const final { this->blas_gemm_impl(m, n, k, alpha, A, B, beta, C); }
+    void blas_gemm(std::size_t m, std::size_t n, std::size_t k, double alpha, const device_ptr_type<double> &A, const device_ptr_type<double> &B, double beta, device_ptr_type<double> &C) const final { this->blas_gemm_impl(m, n, k, alpha, A, B, beta, C); }
     template <typename real_type>
-    void cg_blas_matmul_impl(std::size_t m, std::size_t n, std::size_t k, real_type alpha, const device_ptr_type<real_type> &A, const device_ptr_type<real_type> &B, device_ptr_type<real_type> &RET) const;
-
-    void cg_blas_matmul2(std::size_t m, std::size_t n, std::size_t k, float alpha, const device_ptr_type<float> &A, const device_ptr_type<float> &B, float beta, const device_ptr_type<float> &C, device_ptr_type<float> &RET) const final { this->cg_blas_matmul_impl2(m, n, k, alpha, A, B, beta, C, RET); }
-    void cg_blas_matmul2(std::size_t m, std::size_t n, std::size_t k, double alpha, const device_ptr_type<double> &A, const device_ptr_type<double> &B, double beta, const device_ptr_type<double> &C, device_ptr_type<double> &RET) const final { this->cg_blas_matmul_impl2(m, n, k, alpha, A, B, beta, C, RET); }
-    template <typename real_type>
-    void cg_blas_matmul_impl2(std::size_t m, std::size_t n, std::size_t k, real_type alpha, const device_ptr_type<real_type> &A, const device_ptr_type<real_type> &B, real_type beta, const device_ptr_type<real_type> &C, device_ptr_type<real_type> &RET) const;
+    void blas_gemm_impl(std::size_t m, std::size_t n, std::size_t k, real_type alpha, const device_ptr_type<real_type> &A, const device_ptr_type<real_type> &B, real_type beta, device_ptr_type<real_type> &C) const;
 
 
   private:

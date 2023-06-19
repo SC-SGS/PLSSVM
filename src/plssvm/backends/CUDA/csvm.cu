@@ -23,8 +23,8 @@
 #include "plssvm/parameter.hpp"                        // plssvm::parameter, plssvm::detail::parameter
 #include "plssvm/target_platforms.hpp"                 // plssvm::target_platform
 
+#include "plssvm/backends/CUDA/blas.cuh"
 #include "plssvm/backends/CUDA/kernel_matrix_assembly.cuh"
-#include "plssvm/backends/CUDA/cg_blas.cuh"
 
 #include "cuda.h"                                      // cuda runtime functions
 #include "cuda_runtime_api.h"                          // cuda runtime functions
@@ -223,30 +223,17 @@ template auto csvm::assemble_kernel_matrix_impl(const ::plssvm::detail::paramete
 template auto csvm::assemble_kernel_matrix_impl(const ::plssvm::detail::parameter<double> &, const device_ptr_type<double> &, const std::vector<double> &, const double, const std::size_t, const std::size_t) const -> device_ptr_type<double>;
 
 template <typename real_type>
-void csvm::cg_blas_matmul_impl(const std::size_t m, const std::size_t n, const std::size_t k, const real_type alpha, const device_ptr_type<real_type> &A, const device_ptr_type<real_type> &B, device_ptr_type<real_type> &RET) const {
+void csvm::blas_gemm_impl(const std::size_t m, const std::size_t n, const std::size_t k, const real_type alpha, const device_ptr_type<real_type> &A, const device_ptr_type<real_type> &B, const real_type beta, device_ptr_type<real_type> &C) const {
     const dim3 block(32, 32);
     const dim3 grid(static_cast<int>(std::ceil(m / static_cast<double>(block.x))),
                     static_cast<int>(std::ceil(n / static_cast<double>(block.y))));
 
-    cuda::device_kernel_matmul1<<<grid, block>>>(m, n, k, alpha, A.get(), B.get(), RET.get());
+    cuda::device_kernel_gemm<<<grid, block>>>(m, n, k, alpha, A.get(), B.get(), beta, C.get());
     detail::peek_at_last_error();
 }
 
-template void csvm::cg_blas_matmul_impl(const std::size_t, const std::size_t, const std::size_t, const float, const device_ptr_type<float> &, const device_ptr_type<float> &, device_ptr_type<float> &) const;
-template void csvm::cg_blas_matmul_impl(const std::size_t, const std::size_t, const std::size_t, const double, const device_ptr_type<double> &, const device_ptr_type<double> &, device_ptr_type<double> &) const;
-
-template <typename real_type>
-void csvm::cg_blas_matmul_impl2(const std::size_t m, const std::size_t n, const std::size_t k, const real_type alpha, const device_ptr_type<real_type> &A, const device_ptr_type<real_type> &B, const real_type beta, const device_ptr_type<real_type> &C, device_ptr_type<real_type> &RET) const {
-    const dim3 block(32, 32);
-    const dim3 grid(static_cast<int>(std::ceil(m / static_cast<double>(block.x))),
-                    static_cast<int>(std::ceil(n / static_cast<double>(block.y))));
-
-    cuda::device_kernel_matmul2<<<grid, block>>>(m, n, k, alpha, A.get(), B.get(), beta, C.get(), RET.get());
-    detail::peek_at_last_error();
-}
-
-template void csvm::cg_blas_matmul_impl2(const std::size_t, const std::size_t, const std::size_t, float, const device_ptr_type<float> &, const device_ptr_type<float> &, float, const device_ptr_type<float> &, device_ptr_type<float> &) const;
-template void csvm::cg_blas_matmul_impl2(const std::size_t, const std::size_t, const std::size_t, double, const device_ptr_type<double> &, const device_ptr_type<double> &, double, const device_ptr_type<double> &, device_ptr_type<double> &) const;
+template void csvm::blas_gemm_impl(const std::size_t, const std::size_t, const std::size_t, float, const device_ptr_type<float> &, const device_ptr_type<float> &, float, device_ptr_type<float> &) const;
+template void csvm::blas_gemm_impl(const std::size_t, const std::size_t, const std::size_t, double, const device_ptr_type<double> &, const device_ptr_type<double> &, double, device_ptr_type<double> &) const;
 
 
 
