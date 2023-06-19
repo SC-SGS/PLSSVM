@@ -635,7 +635,7 @@ std::pair<std::vector<std::vector<real_type>>, std::vector<real_type>> gpu_csvm<
             alpha[i] = delta[i] / temp;
         }
 
-        // X = X + alpha * D)
+        // X = X + alpha * D
         #pragma omp parallel for collapse(2) default(none) shared(B, X_flat, alpha, D_flat) firstprivate(dept)
         for (std::size_t i = 0; i < B.size(); ++i) {
             for (std::size_t dim = 0; dim < dept; ++dim) {
@@ -754,46 +754,55 @@ std::vector<std::vector<real_type>> gpu_csvm<device_ptr_t, queue_t>::predict_val
 
     using namespace plssvm::operators;
 
-    const auto calculate_w_cpu = [](const std::vector<std::vector<real_type>> &support_vectors_p, const std::vector<real_type> &alpha_p) {
-        // create w vector and fill with zeros
-        const typename std::vector<std::vector<real_type>>::size_type num_data_points = support_vectors_p.size();
-        const typename std::vector<real_type>::size_type num_features = support_vectors_p.front().size();
-
-        std::vector<real_type> w_p(num_features, real_type{ 0.0 });
-
-        // calculate the w vector
-        #pragma omp parallel for default(none) shared(support_vectors_p, alpha_p, w_p) firstprivate(num_features, num_data_points)
-        for (typename std::vector<real_type>::size_type feature_index = 0; feature_index < num_features; ++feature_index) {
-            real_type temp{ 0.0 };
-            #pragma omp simd reduction(+ : temp)
-            for (typename std::vector<std::vector<real_type>>::size_type data_index = 0; data_index < num_data_points; ++data_index) {
-                temp = std::fma(alpha_p[data_index], support_vectors_p[data_index][feature_index], temp);
-            }
-            w_p[feature_index] = temp;
-        }
-        return w_p;
-    };
-
-    // TODO: implement on GPU
-
     // num_predict_points x num_classes
-    std::vector<std::vector<real_type>> out(predict_points.size(), std::vector<real_type>(alpha.size()));
+    std::vector<std::vector<real_type>> out_ret(predict_points.size(), std::vector<real_type>(alpha.size()));
 
     if (params.kernel_type == kernel_function_type::linear) {
+        device_ptr_type<real_type> w_d{ alpha.size() * support_vectors.front().size() };
+
         // special optimization for the linear kernel function
         if (w.empty()) {
             // fill w vector
-            w.resize(alpha.size());
-            #pragma omp parallel for default(none) shared(w, support_vectors, alpha, calculate_w_cpu)
+            device_ptr_type<real_type> support_vectors_d{ support_vectors.size() * support_vectors.front().size() };
+            support_vectors_d.copy_to_device(detail::transform_to_soa_layout(support_vectors, 0, support_vectors.size(), support_vectors.front().size()));
+            device_ptr_type<real_type> alpha_d{ alpha.size() * alpha.front().size() };
+            alpha_d.copy_to_device(detail::transform_to_aos_layout(alpha, 0, alpha.size(), alpha.front().size()));
+
+            w_d.memset(0);
+            this->blas_gemm(alpha.size(), support_vectors.front().size(), support_vectors.size(), real_type{ 1.0 }, alpha_d, support_vectors_d, real_type{ 0.0 }, w_d);
+            std::vector<real_type> w_ret(w_d.size());
+            w_d.copy_to_host(w_ret);
+
+            // fill w vector
+            w.resize(alpha.size(), std::vector<real_type>(support_vectors.front().size()));
+            #pragma omp parallel for collapse(2) default(none) shared(alpha, support_vectors, w, w_ret)
             for (std::size_t a = 0; a < alpha.size(); ++a) {
-                w[a] = calculate_w_cpu(support_vectors, alpha[a]);
+                for (std::size_t dim = 0; dim < support_vectors.front().size(); ++dim) {
+                    w[a][dim] = w_ret[dim * alpha.size() + a];
+                }
             }
         }
+
         // predict the values using the w vector
-        #pragma omp parallel for collapse(2) default(none) shared(out, w, rho, alpha, predict_points)
-        for (std::size_t point_index = 0; point_index < predict_points.size(); ++point_index) {
-            for (std::size_t a = 0; a < alpha.size(); ++a) {
-                out[point_index][a] = transposed<real_type>{ w[a] } * predict_points[point_index] - rho[a];
+        device_ptr_type<real_type> out_d{ predict_points.size() * alpha.size() };
+        for (std::size_t a = 0; a < predict_points.size(); ++a) {
+            out_d.copy_to_device(rho, a * rho.size(), rho.size());
+        }
+
+        device_ptr_type<real_type> predict_points_d{ predict_points.size() * predict_points.front().size() };
+        predict_points_d.copy_to_device(detail::transform_to_aos_layout(predict_points, 0, predict_points.size(), predict_points.front().size()));
+        device_ptr_type<real_type> rho_d{ alpha.size() };
+        rho_d.copy_to_device(rho);
+        w_d.copy_to_device(detail::transform_to_aos_layout(w, 0, w.size(), w.front().size()));
+
+        this->blas_gemm(alpha.size(), predict_points.size(), predict_points.front().size(), real_type{ 1.0 }, w_d, predict_points_d, real_type{ -1.0 }, out_d);
+        std::vector<real_type> out(out_d.size());
+        out_d.copy_to_host(out);
+
+        #pragma omp parallel for collapse(2) default(none) shared(alpha, predict_points, out_ret, out)
+        for (std::size_t a = 0; a < alpha.size(); ++a) {
+            for (std::size_t i = 0; i < predict_points.size(); ++i) {
+                out_ret[i][a] = out[i * alpha.size() + a];
             }
         }
     } else {
@@ -808,7 +817,7 @@ std::vector<std::vector<real_type>> gpu_csvm<device_ptr_t, queue_t>::predict_val
             }
         }
         // predict the values using the previously learned weights
-        #pragma omp parallel for collapse(2) default(none) shared(predict_points, alpha, rho, support_vectors, matr, out)
+        #pragma omp parallel for collapse(2) default(none) shared(predict_points, alpha, rho, support_vectors, matr, out_ret)
         for (std::size_t point_index = 0; point_index < predict_points.size(); ++point_index) {
             for (std::size_t a = 0; a < alpha.size(); ++a) {
                 real_type temp{ -rho[a] };
@@ -816,11 +825,11 @@ std::vector<std::vector<real_type>> gpu_csvm<device_ptr_t, queue_t>::predict_val
                 for (std::size_t sv_index = 0; sv_index < support_vectors.size(); ++sv_index) {
                     temp += alpha[a][sv_index] * matr[point_index][sv_index];
                 }
-                out[point_index][a] = temp;
+                out_ret[point_index][a] = temp;
             }
         }
     }
-    return out;
+    return out_ret;
 }
 
 }  // namespace plssvm::detail

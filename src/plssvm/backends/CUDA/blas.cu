@@ -12,7 +12,7 @@ namespace plssvm::cuda {
 
 template <typename real_type>
 __global__ void device_kernel_gemm(const kernel_index_type m, const kernel_index_type n, const kernel_index_type k, const real_type alpha, const real_type *A, const real_type *B, const real_type beta, real_type *C) {
-    // compute: C = alpha * A * B + beta * C with A in m x k, B in k x n, and C in m x n, alpha, beta as scalar
+    // compute: C = alpha * A * B + beta * C with A in m x k, B in n x k, and C in n x m, alpha, beta as scalar
     const unsigned long long i = blockIdx.x * blockDim.x + threadIdx.x;
     const unsigned long long j = blockIdx.y * blockDim.y + threadIdx.y;
 
