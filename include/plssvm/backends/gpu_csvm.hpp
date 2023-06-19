@@ -528,10 +528,8 @@ std::pair<std::vector<std::vector<real_type>>, std::vector<real_type>> gpu_csvm<
 
     const std::chrono::steady_clock::time_point assembly_start_time = std::chrono::steady_clock::now();
 
-    std::vector<real_type> explicit_A(dept * dept);  // TODO: may be removed!
     const device_ptr_type<real_type> explicit_A_d = this->assemble_kernel_matrix(params, data_d.front(), q_red, QA_cost, dept, num_features);
-    explicit_A_d.copy_to_host(explicit_A);
-    PLSSVM_ASSERT(dept * dept == explicit_A.size(), "Sizes mismatch!: {} != {}", dept, explicit_A.size());
+    PLSSVM_ASSERT(dept * dept == explicit_A_d.size(), "Sizes mismatch!: {} != {}", dept, explicit_A_d.size());
 
     const std::chrono::steady_clock::time_point assembly_end_time = std::chrono::steady_clock::now();
     detail::log(verbosity_level::full | verbosity_level::timing,
