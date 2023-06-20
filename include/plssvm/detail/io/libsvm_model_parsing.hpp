@@ -28,6 +28,7 @@
 
 #include <algorithm>    // std::min, std::fill
 #include <cstddef>      // std::size_t
+#include <limits>       // std::numeric_limits::max
 #include <map>          // std::map
 #include <memory>       // std::unique_ptr
 #include <numeric>      // std::accumulate
@@ -418,45 +419,17 @@ inline void write_libsvm_model_data(const std::string &filename, const plssvm::p
     };
 
     // initialize volatile array
-    auto counts = std::make_unique<volatile int[]>(label_order.size());
+    auto counts = std::make_unique<volatile int[]>(label_order.size() + 1);
+    counts[0] = std::numeric_limits<int>::max();
     #pragma omp parallel default(none) shared(counts, alpha, format_libsvm_line, label_order, labels, support_vectors, out) firstprivate(BLOCK_SIZE, CHARS_PER_BLOCK, num_features)
     {
         // preallocate string buffer, only ONE allocation
         std::string out_string;
         out_string.reserve(STRING_BUFFER_SIZE + (num_features + 1) * CHARS_PER_BLOCK);
 
-        // support vectors with the first class
-        #pragma omp for nowait
-        for (typename std::vector<real_type>::size_type i = 0; i < alpha.size(); ++i) {
-            if (labels[i] == label_order[0]) {
-                format_libsvm_line(out_string, alpha[i], support_vectors[i]);
-
-                // if the buffer is full, write it to the file
-                if (out_string.size() > STRING_BUFFER_SIZE) {
-                    #pragma omp critical
-                    {
-                        out.print("{}", out_string);
-                        #pragma omp flush(out)
-                    }
-                    // clear buffer
-                    out_string.clear();
-                }
-            }
-        }
-
-        #pragma omp critical
-        {
-            if (!out_string.empty()) {
-                out.print("{}", out_string);
-                out_string.clear();
-            }
-            counts[0] = counts[0] + 1;
-            #pragma omp flush(counts, out)
-        }
-
-        for (typename std::vector<label_type>::size_type l = 1; l < label_order.size(); ++l) {
-            // the support vectors with the i-th class
-
+        // loop over all classes, since they must be sorted
+        for (typename std::vector<label_type>::size_type l = 0; l < label_order.size(); ++l) {
+            // the support vectors with the l-th class
             #pragma omp for nowait
             for (typename std::vector<real_type>::size_type i = 0; i < alpha.size(); ++i) {
                 if (labels[i] == label_order[l]) {
@@ -466,13 +439,12 @@ inline void write_libsvm_model_data(const std::string &filename, const plssvm::p
                     if (out_string.size() > STRING_BUFFER_SIZE) {
                         // wait for all threads to write support vectors for previous class
 #ifdef _OPENMP
-                        while (counts[l - 1] < omp_get_num_threads()) {
+                        while (counts[l] < omp_get_num_threads()) {
                         }
 #endif
                         #pragma omp critical
                         {
                             out.print("{}", out_string);
-                            #pragma omp flush(out)
                         }
                         // clear buffer
                         out_string.clear();
@@ -481,7 +453,7 @@ inline void write_libsvm_model_data(const std::string &filename, const plssvm::p
             }
             // wait for all threads to write support vectors for previous class
 #ifdef _OPENMP
-            while (counts[l - 1] < omp_get_num_threads()) {
+            while (counts[l] < omp_get_num_threads()) {
             }
 #endif
 
@@ -491,8 +463,7 @@ inline void write_libsvm_model_data(const std::string &filename, const plssvm::p
                     out.print("{}", out_string);
                     out_string.clear();
                 }
-                counts[l] = counts[l] + 1;
-                #pragma omp flush(counts, out)
+                counts[l + 1] = counts[l + 1] + 1;
             }
         }
     }
