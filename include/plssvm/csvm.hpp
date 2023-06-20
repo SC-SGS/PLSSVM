@@ -321,23 +321,16 @@ model<real_type, label_type> csvm::fit(const data_set<real_type, label_type> &da
 
     const std::chrono::time_point start_time = std::chrono::steady_clock::now();
 
-    // for binary classification ALWAYS use OAA
-    if (data.num_classes() == 2) {
-        classification_val = classification_type::oaa;
-        detail::log(verbosity_level::full | verbosity_level::timing,
-                    "Using oaa (one vs. all) as binary classification strategy.\n");
-    } else {
-        detail::log(verbosity_level::full | verbosity_level::timing,
-                    "Using {} ({}) as multi-class classification strategy.\n",
-                    classification_val.value(),
-                    classification_type_to_full_string(classification_val.value()));
-    }
+    detail::log(verbosity_level::full | verbosity_level::timing,
+                "Using {} ({}) as multi-class classification strategy.\n",
+                classification_val.value(),
+                classification_type_to_full_string(classification_val.value()));
 
     // create model
     model<real_type, label_type> csvm_model{ params, data, classification_val.value() };
 
 
-    if (data.num_classes() == 2 || classification_val.value() == plssvm::classification_type::oaa) {
+    if (classification_val.value() == plssvm::classification_type::oaa) {
         // use the one vs. all multi-class classification strategy
         // solve the minimization problem
         std::tie(*csvm_model.alpha_ptr_, *csvm_model.rho_ptr_) = solve_system_of_linear_equations(static_cast<detail::parameter<real_type>>(params), data.data(), *data.y_ptr_, epsilon_val.value(), max_iter_val.value());
@@ -367,7 +360,7 @@ model<real_type, label_type> csvm::fit(const data_set<real_type, label_type> &da
                 std::vector<std::vector<real_type>> binary_data(num_data_points_in_sub_matrix);
                 std::vector<std::vector<real_type>> binary_y(1, std::vector<real_type>(num_data_points_in_sub_matrix));  // note: the first dimension will always be one, since only one rhs is needed
 
-                // TODO: not sorted?
+                // TODO: not sorted? -> would enable optimization for OAO in the binary case
                 // note: if this is changed, it must also be changed in the libsvm_model_parsing.hpp in the calculate_alpha_idx function!!!
                 #pragma omp parallel default(none) shared(binary_data, binary_y, indices, data) firstprivate(i, j)
                 {
@@ -430,21 +423,11 @@ std::vector<label_type> csvm::predict(const model<real_type, label_type> &model,
         PLSSVM_ASSERT(votes.size() == data.num_data_points(), "The number of votes ({}) must be equal the number of data points ({})!", votes.size(), data.num_data_points());
         PLSSVM_ASSERT(std::all_of(votes.cbegin(), votes.cend(), [num_classes = model.num_classes()](const std::vector<real_type> &vec) { return vec.size() == calculate_number_of_classifiers(classification_type::oaa, num_classes); }), "Each vote must contain num_classes ({}) values!", calculate_number_of_classifiers(classification_type::oaa, model.num_classes()));
 
-        if (model.num_classes() == 2) {
-            // use sign in case of binary classification
-            #pragma omp parallel for default(none) shared(predicted_labels, votes, model) if (!std::is_same_v<label_type, bool>)
-            for (typename std::vector<label_type>::size_type i = 0; i < predicted_labels.size(); ++i) {
-                // map { 1, -1 } to { 0, 1 }
-                const std::size_t idx = std::abs(plssvm::operators::sign(votes[i][0]) - 1) / 2;
-                predicted_labels[i] = model.data_.mapping_->get_label_by_mapped_index(idx);
-            }
-        } else {
-            // use voting
-            #pragma omp parallel for default(none) shared(predicted_labels, votes, model) if (!std::is_same_v<label_type, bool>)
-            for (typename std::vector<label_type>::size_type i = 0; i < predicted_labels.size(); ++i) {
-                const std::size_t argmax = std::distance(votes[i].cbegin(), std::max_element(votes[i].cbegin(), votes[i].cend()));
-                predicted_labels[i] = model.data_.mapping_->get_label_by_mapped_index(argmax);
-            }
+        // use voting
+        #pragma omp parallel for default(none) shared(predicted_labels, votes, model) if (!std::is_same_v<label_type, bool>)
+        for (typename std::vector<label_type>::size_type i = 0; i < predicted_labels.size(); ++i) {
+            const std::size_t argmax = std::distance(votes[i].cbegin(), std::max_element(votes[i].cbegin(), votes[i].cend()));
+            predicted_labels[i] = model.data_.mapping_->get_label_by_mapped_index(argmax);
         }
     } else if (model.get_classification_type() == classification_type::oao) {
         PLSSVM_ASSERT(model.indices_ptr_ != nullptr, "The indices_ptr_ may never be a nullptr!");
@@ -469,7 +452,7 @@ std::vector<label_type> csvm::predict(const model<real_type, label_type> &model,
                 std::vector<std::vector<real_type>> binary_alpha{  (*model.alpha_ptr_)[pos]  };  // note: the first dimension will always be one, since only one rhs is needed
                 const std::vector<real_type> binary_rho{ (*model.rho_ptr_)[pos] };
 
-                // TODO: not sorted?
+                // TODO: not sorted? -> would enable optimization for OAO in the binary case
                 // note: if this is changed, it must also be changed in the libsvm_model_parsing.hpp in the calculate_alpha_idx function!!!
                 #pragma omp parallel default(none) shared(binary_sv, indices, model) firstprivate(i, j)
                 {

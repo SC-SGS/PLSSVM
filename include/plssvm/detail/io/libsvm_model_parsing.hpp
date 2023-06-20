@@ -125,14 +125,12 @@ namespace plssvm::detail::io {
  * @throws plssvm::invalid_file_format_exception if the total number of support vectors ('total_sv') is missing
  * @throws plssvm::invalid_file_format_exception if the value for rho is missing
  * @throws plssvm::invalid_file_format_exception if the labels are missing
- * @throws plssvm::invalid_file_format_exception if the number of provided rho values is not the same as the value of 'nr_class' or 1 for binary classification
  * @throws plssvm::invalid_file_format_exception if the number of provided labels is not the same as the value of 'nr_class'
  * @throws plssvm::invalid_file_format_exception if the number of support vectors per class ('nr_sv') is missing
  * @throws plssvm::invalid_file_format_exception if the number of provided number of support vectors per class is not the same as the value of 'nr_class'
  * @throws plssvm::invalid_file_format_exception if the number of sum of all number of support vectors per class is not the same as the value of 'total_sv'
  * @throws plssvm::invalid_file_format_exception if no support vectors have been provided in the data section
- * @throws plssvm::invalid_file_format_exception if the number of labels is not two
- * @attention Only for binary classification or one vs. one is the model file compatible with LIBSVM.
+ * @attention The PLSSVM model file is only compatible with LIBSVM for the one vs. one classification type.
  * @return the necessary header information: [the SVM parameter, the values of rho, the labels, the different classes, num_header_lines] (`[[nodiscard]]`)
  */
 template <typename real_type, typename label_type, typename size_type>
@@ -301,10 +299,6 @@ template <typename real_type, typename label_type, typename size_type>
     if (nr_class != num_support_vectors_per_class.size()) {
         throw invalid_file_format_exception{ fmt::format("The number of classes (nr_class) is {}, but the provided number of different labels is {} (nr_sv)!", nr_class, num_support_vectors_per_class.size()) };
     }
-    // the number of rho values must never be 2
-    if (nr_class == 2 && rho.size() != 1) {
-        throw invalid_file_format_exception{ fmt::format("The number of rho values (rho) is {}, but must be 1 for binary classification!", rho.size()) };
-    }
     // calculate the number of support as sum of the support vectors per class
     const auto nr_sv_sum = std::accumulate(num_support_vectors_per_class.begin(), num_support_vectors_per_class.end(), size_type{ 0 });
     if (nr_sv_sum != num_support_vectors) {
@@ -351,7 +345,7 @@ template <typename real_type, typename label_type, typename size_type>
  * @throws plssvm::invalid_file_format_exception if a feature value couldn't be converted to the provided @p real_type
  * @throws plssvm::invalid_file_format_exception if the provided LIBSVM file uses zero-based indexing (LIBSVM mandates one-based indices)
  * @throws plssvm::invalid_file_format_exception if the feature (indices) are not given in a strictly increasing order
- * @attention Only for binary classification or one vs. one is the model file compatible with LIBSVM.
+ * @attention The PLSSVM model file is only compatible with LIBSVM for the one vs. one classification type.
  * @return a std::tuple containing: [num_data_points, num_features, data_points, labels] (`[[nodiscard]]`)
  */
 template <typename real_type>
@@ -372,7 +366,7 @@ template <typename real_type>
 
     // create vector containing the data and label
     std::vector<std::vector<real_type>> data(num_data_points);
-    const std::size_t max_num_alpha_values = num_sv_per_class.size() == 2 ? 1 : num_sv_per_class.size();
+    const std::size_t max_num_alpha_values = num_sv_per_class.size();
     std::vector<std::vector<real_type>> alpha(max_num_alpha_values, std::vector<real_type>(num_data_points));
     bool is_oaa{ false };
     bool is_oao{ false };
@@ -541,7 +535,7 @@ template <typename real_type>
  * @param[in] params the SVM parameters
  * @param[in] rho the rho values for the different classes resulting from the hyperplane learning
  * @param[in] data the data used to create the model
- * @attention Due to using one vs. all (OAA) for multi-class classification, the model file isn't LIBSVM conform except for binary classification!
+ * @attention The PLSSVM model file is only compatible with LIBSVM for the one vs. one classification type.
  */
 template <typename real_type, typename label_type>
 inline std::vector<label_type> write_libsvm_model_header(fmt::ostream &out, const plssvm::parameter &params, const std::vector<real_type> &rho, const data_set<real_type, label_type> &data) {
@@ -622,7 +616,7 @@ inline std::vector<label_type> write_libsvm_model_header(fmt::ostream &out, cons
  * @param[in] rho the rho value resulting from the hyperplane learning
  * @param[in] alpha the weights learned by the SVM
  * @param[in] data the data used to create the model
- * @attention Due to using one vs. all (OAA) for multi-class classification, the model file isn't LIBSVM conform except for binary classification!
+ * @attention The PLSSVM model file is only compatible with LIBSVM for the one vs. one classification type.
  */
 template <typename real_type, typename label_type>
 inline void write_libsvm_model_data(const std::string &filename, const plssvm::parameter &params, const classification_type classification, const std::vector<real_type> &rho, const std::vector<std::vector<real_type>> &alpha, const std::vector<std::vector<std::size_t>> &indices, const data_set<real_type, label_type> &data) {
@@ -649,7 +643,7 @@ inline void write_libsvm_model_data(const std::string &filename, const plssvm::p
     const std::vector<label_type> &labels = data.labels().value();
     const std::size_t num_features = data.num_features();
     const std::size_t num_classes = data.num_classes();
-    const std::size_t num_alpha_per_point = num_classes == 2 ? 1 : (classification == classification_type::oaa ? num_classes : num_classes - 1);
+    const std::size_t num_alpha_per_point = classification == classification_type::oaa ? num_classes : num_classes - 1;
 
     // create file
     fmt::ostream out = fmt::output_file(filename);
