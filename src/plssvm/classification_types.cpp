@@ -60,7 +60,7 @@ std::size_t calculate_number_of_classifiers(const classification_type classifica
 
     switch (classification) {
         case classification_type::oaa:
-            return num_classes == 2 ? 1 : num_classes;
+            return num_classes;
         case classification_type::oao:
             return num_classes * (num_classes - 1) / 2;
     }

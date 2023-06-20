@@ -30,6 +30,7 @@
 
 #include <algorithm>    // std::min, std::fill
 #include <cstddef>      // std::size_t
+#include <limits>       // std::numeric_limits::max
 #include <map>          // std::map
 #include <memory>       // std::unique_ptr
 #include <numeric>      // std::accumulate
@@ -124,14 +125,12 @@ namespace plssvm::detail::io {
  * @throws plssvm::invalid_file_format_exception if the total number of support vectors ('total_sv') is missing
  * @throws plssvm::invalid_file_format_exception if the value for rho is missing
  * @throws plssvm::invalid_file_format_exception if the labels are missing
- * @throws plssvm::invalid_file_format_exception if the number of provided rho values is not the same as the value of 'nr_class' or 1 for binary classification
  * @throws plssvm::invalid_file_format_exception if the number of provided labels is not the same as the value of 'nr_class'
  * @throws plssvm::invalid_file_format_exception if the number of support vectors per class ('nr_sv') is missing
  * @throws plssvm::invalid_file_format_exception if the number of provided number of support vectors per class is not the same as the value of 'nr_class'
  * @throws plssvm::invalid_file_format_exception if the number of sum of all number of support vectors per class is not the same as the value of 'total_sv'
  * @throws plssvm::invalid_file_format_exception if no support vectors have been provided in the data section
- * @throws plssvm::invalid_file_format_exception if the number of labels is not two
- * @attention Only for binary classification or one vs. one is the model file compatible with LIBSVM.
+ * @attention The PLSSVM model file is only compatible with LIBSVM for the one vs. one classification type.
  * @return the necessary header information: [the SVM parameter, the values of rho, the labels, the different classes, num_header_lines] (`[[nodiscard]]`)
  */
 template <typename real_type, typename label_type, typename size_type>
@@ -300,10 +299,6 @@ template <typename real_type, typename label_type, typename size_type>
     if (nr_class != num_support_vectors_per_class.size()) {
         throw invalid_file_format_exception{ fmt::format("The number of classes (nr_class) is {}, but the provided number of different labels is {} (nr_sv)!", nr_class, num_support_vectors_per_class.size()) };
     }
-    // the number of rho values must never be 2
-    if (nr_class == 2 && rho.size() != 1) {
-        throw invalid_file_format_exception{ fmt::format("The number of rho values (rho) is {}, but must be 1 for binary classification!", rho.size()) };
-    }
     // calculate the number of support as sum of the support vectors per class
     const auto nr_sv_sum = std::accumulate(num_support_vectors_per_class.begin(), num_support_vectors_per_class.end(), size_type{ 0 });
     if (nr_sv_sum != num_support_vectors) {
@@ -350,7 +345,7 @@ template <typename real_type, typename label_type, typename size_type>
  * @throws plssvm::invalid_file_format_exception if a feature value couldn't be converted to the provided @p real_type
  * @throws plssvm::invalid_file_format_exception if the provided LIBSVM file uses zero-based indexing (LIBSVM mandates one-based indices)
  * @throws plssvm::invalid_file_format_exception if the feature (indices) are not given in a strictly increasing order
- * @attention Only for binary classification or one vs. one is the model file compatible with LIBSVM.
+ * @attention The PLSSVM model file is only compatible with LIBSVM for the one vs. one classification type.
  * @return a std::tuple containing: [num_data_points, num_features, data_points, labels] (`[[nodiscard]]`)
  */
 template <typename real_type>
@@ -371,7 +366,7 @@ template <typename real_type>
 
     // create vector containing the data and label
     std::vector<std::vector<real_type>> data(num_data_points);
-    const std::size_t max_num_alpha_values = num_sv_per_class.size() == 2 ? 1 : num_sv_per_class.size();
+    const std::size_t max_num_alpha_values = num_sv_per_class.size();
     std::vector<std::vector<real_type>> alpha(max_num_alpha_values, std::vector<real_type>(num_data_points));
     bool is_oaa{ false };
     bool is_oao{ false };
@@ -540,7 +535,7 @@ template <typename real_type>
  * @param[in] params the SVM parameters
  * @param[in] rho the rho values for the different classes resulting from the hyperplane learning
  * @param[in] data the data used to create the model
- * @attention Due to using one vs. all (OAA) for multi-class classification, the model file isn't LIBSVM conform except for binary classification!
+ * @attention The PLSSVM model file is only compatible with LIBSVM for the one vs. one classification type.
  */
 template <typename real_type, typename label_type>
 inline std::vector<label_type> write_libsvm_model_header(fmt::ostream &out, const plssvm::parameter &params, const std::vector<real_type> &rho, const data_set<real_type, label_type> &data) {
@@ -621,7 +616,7 @@ inline std::vector<label_type> write_libsvm_model_header(fmt::ostream &out, cons
  * @param[in] rho the rho value resulting from the hyperplane learning
  * @param[in] alpha the weights learned by the SVM
  * @param[in] data the data used to create the model
- * @attention Due to using one vs. all (OAA) for multi-class classification, the model file isn't LIBSVM conform except for binary classification!
+ * @attention The PLSSVM model file is only compatible with LIBSVM for the one vs. one classification type.
  */
 template <typename real_type, typename label_type>
 inline void write_libsvm_model_data(const std::string &filename, const plssvm::parameter &params, const classification_type classification, const std::vector<real_type> &rho, const std::vector<std::vector<real_type>> &alpha, const std::vector<std::vector<std::size_t>> &indices, const data_set<real_type, label_type> &data) {
@@ -648,7 +643,7 @@ inline void write_libsvm_model_data(const std::string &filename, const plssvm::p
     const std::vector<label_type> &labels = data.labels().value();
     const std::size_t num_features = data.num_features();
     const std::size_t num_classes = data.num_classes();
-    const std::size_t num_alpha_per_point = num_classes == 2 ? 1 : (classification == classification_type::oaa ? num_classes : num_classes - 1);
+    const std::size_t num_alpha_per_point = classification == classification_type::oaa ? num_classes : num_classes - 1;
 
     // create file
     fmt::ostream out = fmt::output_file(filename);
@@ -693,7 +688,8 @@ inline void write_libsvm_model_data(const std::string &filename, const plssvm::p
     };
 
     // initialize volatile array
-    auto counts = std::make_unique<volatile int[]>(label_order.size());
+    auto counts = std::make_unique<volatile int[]>(label_order.size() + 1);
+    counts[0] = std::numeric_limits<int>::max();
     #pragma omp parallel default(none) shared(counts, alpha, format_libsvm_line, label_order, labels, support_vectors, out, indices) firstprivate(BLOCK_SIZE, CHARS_PER_BLOCK, num_features, num_classes, num_alpha_per_point, classification)
     {
         // preallocate string buffer, only ONE allocation
@@ -701,52 +697,9 @@ inline void write_libsvm_model_data(const std::string &filename, const plssvm::p
         out_string.reserve(STRING_BUFFER_SIZE + (num_features + num_alpha_per_point) * CHARS_PER_BLOCK);  // oversubscribe buffer that at least one additional line fits into it
         std::vector<real_type> alpha_per_point(num_alpha_per_point);
 
-        // support vectors with the first class
-        #pragma omp for nowait
-        for (typename std::vector<real_type>::size_type i = 0; i < support_vectors.size(); ++i) {
-            if (labels[i] == label_order[0]) {
-                switch (classification) {
-                    case classification_type::oaa:
-                        for (typename std::vector<std::vector<real_type>>::size_type a = 0; a < num_alpha_per_point; ++a) {
-                            alpha_per_point[a] = alpha[a][i];
-                        }
-                        break;
-                    case classification_type::oao:
-                        for (std::size_t j = 1; j < num_classes; ++j) {
-                            const std::size_t idx = x_vs_y_to_idx(0, j, num_classes);
-                            const std::vector<real_type> &alpha_vec = alpha[idx];
-                            const std::size_t sv_idx = calculate_alpha_idx(0, j, indices, i);
-                            alpha_per_point[j - 1] = alpha_vec[sv_idx];
-                        }
-                        break;
-                }
-                format_libsvm_line(out_string, alpha_per_point, support_vectors[i]);
-
-                // if the buffer is full, write it to the file
-                if (out_string.size() > STRING_BUFFER_SIZE) {
-                    #pragma omp critical
-                    {
-                        out.print("{}", out_string);
-                        #pragma omp flush(out)
-                    }
-                    // clear buffer
-                    out_string.clear();
-                }
-            }
-        }
-
-        #pragma omp critical
-        {
-            if (!out_string.empty()) {
-                out.print("{}", out_string);
-                out_string.clear();
-            }
-            counts[0] = counts[0] + 1;
-            #pragma omp flush(counts, out)
-        }
-
-        for (typename std::vector<label_type>::size_type l = 1; l < label_order.size(); ++l) {
-            // the support vectors with the i-th class
+        // loop over all classes, since they must be sorted
+        for (typename std::vector<label_type>::size_type l = 0; l < label_order.size(); ++l) {
+            // the support vectors with the l-th class
             #pragma omp for nowait
             for (typename std::vector<real_type>::size_type i = 0; i < support_vectors.size(); ++i) {
                 if (labels[i] == label_order[l]) {
@@ -772,24 +725,23 @@ inline void write_libsvm_model_data(const std::string &filename, const plssvm::p
 
                     // if the buffer is full, write it to the file
                     if (out_string.size() > STRING_BUFFER_SIZE) {
-#ifdef _OPENMP
                         // wait for all threads to write support vectors for previous class
-                        while (counts[l - 1] < omp_get_num_threads()) {
+#ifdef _OPENMP
+                        while (counts[l] < omp_get_num_threads()) {
                         }
 #endif
                         #pragma omp critical
                         {
                             out.print("{}", out_string);
-                            #pragma omp flush(out)
                         }
                         // clear buffer
                         out_string.clear();
                     }
                 }
             }
-#ifdef _OPENMP
             // wait for all threads to write support vectors for previous class
-            while (counts[l - 1] < omp_get_num_threads()) {
+#ifdef _OPENMP
+            while (counts[l] < omp_get_num_threads()) {
             }
 #endif
 
@@ -799,8 +751,7 @@ inline void write_libsvm_model_data(const std::string &filename, const plssvm::p
                     out.print("{}", out_string);
                     out_string.clear();
                 }
-                counts[l] = counts[l] + 1;
-                #pragma omp flush(counts, out)
+                counts[l + 1] = counts[l + 1] + 1;
             }
         }
     }
