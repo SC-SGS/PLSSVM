@@ -67,6 +67,14 @@ __global__ void device_kernel_predict_polynomial(real_type *out_d, const real_ty
 template <typename real_type>
 __global__ void device_kernel_predict_rbf(real_type *out_d, const real_type *data_d, const real_type *data_last_d, const real_type *alpha_d, const kernel_index_type num_data_points, const real_type *points, const kernel_index_type num_predict_points, const kernel_index_type num_features, const real_type gamma);
 
+
+template <typename real_type>
+__global__ void device_kernel_predict_polynomial2(real_type *out_d, const real_type *alpha_d, const real_type *rho_d, const real_type *sv_d, const real_type *predict_points_d, const kernel_index_type num_classes, const kernel_index_type num_sv, const kernel_index_type num_predict_points, const kernel_index_type num_features, const int degree, const real_type gamma, const real_type coef0);
+
+template <typename real_type>
+__global__ void device_kernel_predict_rbf2(real_type *out_d, const real_type *alpha_d, const real_type *rho_d, const real_type *sv_d, const real_type *predict_points_d, const kernel_index_type num_classes, const kernel_index_type num_sv, const kernel_index_type num_predict_points, const kernel_index_type num_features, const real_type gamma);
+
+
 }  // namespace plssvm::cuda
 
 #endif  // PLSSVM_BACKENDS_CUDA_PREDICT_KERNEL_HPP_

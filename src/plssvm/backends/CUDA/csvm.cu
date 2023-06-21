@@ -192,6 +192,36 @@ template void csvm::run_predict_kernel_impl(const ::plssvm::detail::execution_ra
 template void csvm::run_predict_kernel_impl(const ::plssvm::detail::execution_range &, const ::plssvm::detail::parameter<double> &, device_ptr_type<double> &, const device_ptr_type<double> &, const device_ptr_type<double> &, const device_ptr_type<double> &, const device_ptr_type<double> &, std::size_t, std::size_t, std::size_t) const;
 
 template <typename real_type>
+auto csvm::run_predict_kernel2_impl(const ::plssvm::detail::parameter<real_type> &params, const device_ptr_type<real_type> &alpha_d, const device_ptr_type<real_type> &rho_d, const device_ptr_type<real_type> &sv_d, const device_ptr_type<real_type> &predict_points_d, std::size_t num_classes, std::size_t num_sv, std::size_t num_predict_points, std::size_t num_features) const -> device_ptr_type<real_type> {
+    device_ptr_type<real_type> out_d{ num_predict_points * num_classes };
+
+    const dim3 block(16, 16, 4);
+    const dim3 grid(static_cast<int>(std::ceil(num_sv / static_cast<double>(block.x))),
+                    static_cast<int>(std::ceil(num_predict_points / static_cast<double>(block.y))),
+                    static_cast<int>(std::ceil(num_classes / static_cast<double>(block.z))));
+
+    detail::set_device(0);
+    switch (params.kernel_type) {
+        case kernel_function_type::linear:
+            break;
+        case kernel_function_type::polynomial:
+            cuda::device_kernel_predict_polynomial2<<<grid, block>>>(out_d.get(), alpha_d.get(), rho_d.get(), sv_d.get(), predict_points_d.get(), static_cast<kernel_index_type>(num_classes), static_cast<kernel_index_type>(num_sv), static_cast<kernel_index_type>(num_predict_points), static_cast<kernel_index_type>(num_features), params.degree.value(), params.gamma.value(), params.coef0.value());
+//            cuda::device_kernel_predict_polynomial<<<grid, block>>>(out_d.get(), data_d.get(), data_last_d.get(), alpha_d.get(), static_cast<kernel_index_type>(num_support_vectors), point_d.get(), static_cast<kernel_index_type>(num_predict_points), static_cast<kernel_index_type>(num_features), params.degree.value(), params.gamma.value(), params.coef0.value());
+            break;
+        case kernel_function_type::rbf:
+//            cuda::device_kernel_predict_rbf<<<grid, block>>>(out_d.get(), data_d.get(), data_last_d.get(), alpha_d.get(), static_cast<kernel_index_type>(num_support_vectors), point_d.get(), static_cast<kernel_index_type>(num_predict_points), static_cast<kernel_index_type>(num_features), params.gamma.value());
+            cuda::device_kernel_predict_rbf2<<<grid, block>>>(out_d.get(), alpha_d.get(), rho_d.get(), sv_d.get(), predict_points_d.get(), static_cast<kernel_index_type>(num_classes), static_cast<kernel_index_type>(num_sv), static_cast<kernel_index_type>(num_predict_points), static_cast<kernel_index_type>(num_features), params.gamma.value());
+            break;
+    }
+    detail::peek_at_last_error();
+
+    return out_d;
+}
+
+template auto csvm::run_predict_kernel2_impl(const ::plssvm::detail::parameter<float> &, const device_ptr_type<float> &, const device_ptr_type<float> &, const device_ptr_type<float> &, const device_ptr_type<float> &, std::size_t, std::size_t, std::size_t, std::size_t) const -> device_ptr_type<float>;
+template auto csvm::run_predict_kernel2_impl(const ::plssvm::detail::parameter<double> &, const device_ptr_type<double> &, const device_ptr_type<double> &, const device_ptr_type<double> &, const device_ptr_type<double> &, std::size_t, std::size_t, std::size_t, std::size_t) const -> device_ptr_type<double>;
+
+    template <typename real_type>
 auto csvm::assemble_kernel_matrix_impl(const ::plssvm::detail::parameter<real_type> &params, const device_ptr_type<real_type> &data_d, const std::vector<real_type> &q, const real_type QA_cost, const std::size_t dept, const std::size_t num_features) const -> device_ptr_type<real_type> {
     const dim3 block(32, 32);
     const dim3 grid(static_cast<int>(std::ceil(dept / static_cast<double>(block.x))),
