@@ -241,46 +241,12 @@ class gpu_csvm : public ::plssvm::csvm {
      * @copydoc plssvm::detail::gpu_csvm::run_svm_kernel
      */
     virtual void run_svm_kernel(std::size_t device, const detail::execution_range &range, const parameter<double> &params, const device_ptr_type<double> &q_d, device_ptr_type<double> &r_d, const device_ptr_type<double> &x_d, const device_ptr_type<double> &data_d, double QA_cost, double add, std::size_t num_data_points_padded, std::size_t num_features) const = 0;
-    /**
-     * @brief Run the device kernel the calculate the `w` vector used to speed up the prediction when using the linear kernel function.
-     * @param[in] device the device ID denoting the device on which the kernel should be executed
-     * @param[in] range the execution range used to launch the
-     * @param[out] w_d the `w` vector to fill, used to speed up the prediction when using the linear kernel located on the device(s)
-     * @param[in] alpha_d the previously calculated weight for each data point located on the device(s)
-     * @param[in] data_d the data points used in the dimensional reduction located on the device(s)
-     * @param[in] data_last_d the last data point of the data set located on the device(s)
-     * @param[in] num_data_points the number of data points
-     * @param[in] num_features number of features used for the calculation on the @p device
-     */
-    virtual void run_w_kernel(std::size_t device, const detail::execution_range &range, device_ptr_type<float> &w_d, const device_ptr_type<float> &alpha_d, const device_ptr_type<float> &data_d, const device_ptr_type<float> &data_last_d, std::size_t num_data_points, std::size_t num_features) const = 0;
-    /**
-     * @copydoc plssvm::detail::gpu_csvm::run_w_kernel
-     */
-    virtual void run_w_kernel(std::size_t device, const detail::execution_range &range, device_ptr_type<double> &w_d, const device_ptr_type<double> &alpha_d, const device_ptr_type<double> &data_d, const device_ptr_type<double> &data_last_d, std::size_t num_data_points, std::size_t num_features) const = 0;
-    /**
-     * @brief Run the device kernel (only on the first device) to predict the new data points @p point_d.
-     * @param[in] range the execution range used to launch the kernel
-     * @param[in] params the SVM parameter used (e.g., kernel_type)
-     * @param[out] out_d the calculated prediction
-     * @param[in] alpha_d the previously calculated weight for each data point located on the device(s)
-     * @param[in] point_d the data points to predict located on the device(s)
-     * @param[in] data_d the data points used in the dimensional reduction located on the device(s)
-     * @param[in] data_last_d the last data point of the data set located on the device(s)
-     * @param[in] num_support_vectors the number of support vectors
-     * @param[in] num_predict_points the number of data points to predict
-     * @param[in] num_features number of features used for the calculation on the @p device
-     */
-    virtual void run_predict_kernel(const detail::execution_range &range, const parameter<float> &params, device_ptr_type<float> &out_d, const device_ptr_type<float> &alpha_d, const device_ptr_type<float> &point_d, const device_ptr_type<float> &data_d, const device_ptr_type<float> &data_last_d, std::size_t num_support_vectors, std::size_t num_predict_points, std::size_t num_features) const = 0;
-    /**
-     * @copydoc plssvm::detail::gpu_csvm::run_predict_kernel
-     */
-    virtual void run_predict_kernel(const detail::execution_range &range, const parameter<double> &params, device_ptr_type<double> &out_d, const device_ptr_type<double> &alpha_d, const device_ptr_type<double> &point_d, const device_ptr_type<double> &data_d, const device_ptr_type<double> &data_last_d, std::size_t num_support_vectors, std::size_t num_predict_points, std::size_t num_features) const = 0;
 
-    virtual device_ptr_type<float> run_predict_kernel2(const parameter<float> &params, const device_ptr_type<float> &w, const device_ptr_type<float> &alpha_d, const device_ptr_type<float> &rho_d, const device_ptr_type<float> &sv_d, const device_ptr_type<float> &predict_points_d, std::size_t num_classes, std::size_t num_sv, std::size_t num_predict_points, std::size_t num_features) const = 0;
-    virtual device_ptr_type<double> run_predict_kernel2(const parameter<double> &params, const device_ptr_type<double> &w, const device_ptr_type<double> &alpha_d, const device_ptr_type<double> &rho_d, const device_ptr_type<double> &sv_d, const device_ptr_type<double> &predict_points_d, std::size_t num_classes, std::size_t num_sv, std::size_t num_predict_points, std::size_t num_features) const = 0;
+    virtual device_ptr_type<float> run_predict_kernel(const parameter<float> &params, const device_ptr_type<float> &w, const device_ptr_type<float> &alpha_d, const device_ptr_type<float> &rho_d, const device_ptr_type<float> &sv_d, const device_ptr_type<float> &predict_points_d, std::size_t num_classes, std::size_t num_sv, std::size_t num_predict_points, std::size_t num_features) const = 0;
+    virtual device_ptr_type<double> run_predict_kernel(const parameter<double> &params, const device_ptr_type<double> &w, const device_ptr_type<double> &alpha_d, const device_ptr_type<double> &rho_d, const device_ptr_type<double> &sv_d, const device_ptr_type<double> &predict_points_d, std::size_t num_classes, std::size_t num_sv, std::size_t num_predict_points, std::size_t num_features) const = 0;
 
-    virtual device_ptr_type<float> run_w_kernel2(const device_ptr_type<float> &alpha_d, const device_ptr_type<float> &sv_d, std::size_t num_classes, std::size_t num_sv, std::size_t num_features) const = 0;
-    virtual device_ptr_type<double> run_w_kernel2(const device_ptr_type<double> &alpha_d, const device_ptr_type<double> &sv_d, std::size_t num_classes, std::size_t num_sv, std::size_t num_features) const = 0;
+    virtual device_ptr_type<float> run_w_kernel(const device_ptr_type<float> &alpha_d, const device_ptr_type<float> &sv_d, std::size_t num_classes, std::size_t num_sv, std::size_t num_features) const = 0;
+    virtual device_ptr_type<double> run_w_kernel(const device_ptr_type<double> &alpha_d, const device_ptr_type<double> &sv_d, std::size_t num_classes, std::size_t num_sv, std::size_t num_features) const = 0;
 
     virtual device_ptr_type<float> assemble_kernel_matrix(const detail::parameter<float> &params, const device_ptr_type<float> &data_d, const std::vector<float> &q, float QA_cost, const std::size_t num_data_points, const std::size_t num_features) const = 0;
     virtual device_ptr_type<double> assemble_kernel_matrix(const detail::parameter<double> &params, const device_ptr_type<double> &data_d, const std::vector<double> &q, double QA_cost, const std::size_t num_data_points, const std::size_t num_features) const = 0;
@@ -780,7 +746,7 @@ std::vector<std::vector<real_type>> gpu_csvm<device_ptr_t, queue_t>::predict_val
         // special optimization for the linear kernel function
         if (w.empty()) {
             // fill w vector
-            w_d = run_w_kernel2(alpha_d, sv_d, num_classes, num_support_vectors, num_features);
+            w_d = run_w_kernel(alpha_d, sv_d, num_classes, num_support_vectors, num_features);
 
             // convert 1D result to 2D out-parameter
             w.resize(num_classes, std::vector<real_type>(num_features));
@@ -800,7 +766,7 @@ std::vector<std::vector<real_type>> gpu_csvm<device_ptr_t, queue_t>::predict_val
     }
 
     // predict
-    const device_ptr_type<real_type> out_d = run_predict_kernel2(params, w_d, alpha_d, rho_d, sv_d, predict_points_d, num_classes, num_support_vectors, num_predict_points, num_features);;
+    const device_ptr_type<real_type> out_d = run_predict_kernel(params, w_d, alpha_d, rho_d, sv_d, predict_points_d, num_classes, num_support_vectors, num_predict_points, num_features);;
 
     // num_predict_points x num_classes
     std::vector<std::vector<real_type>> out_ret(num_predict_points, std::vector<real_type>(num_classes));
