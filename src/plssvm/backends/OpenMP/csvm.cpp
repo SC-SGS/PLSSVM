@@ -289,7 +289,7 @@ std::vector<std::vector<real_type>> csvm::predict_values_impl(const detail::para
     using namespace plssvm::operators;
 
     // num_predict_points x num_classes
-    std::vector<std::vector<real_type>> out(predict_points.size(), std::vector<real_type>(alpha.size()));
+    std::vector<std::vector<real_type>> out(predict_points.size(), std::vector<real_type>(alpha.size(), real_type{ 0.0 }));
 
     if (params.kernel_type == kernel_function_type::linear) {
         // special optimization for the linear kernel function
@@ -310,25 +310,16 @@ std::vector<std::vector<real_type>> csvm::predict_values_impl(const detail::para
         }
     } else {
         // "default" implementation for the other kernel functions
-
-        // fill temporary matrix with all kernel function values
-        std::vector<std::vector<real_type>> matr(predict_points.size(), std::vector<real_type>(support_vectors.size()));
-        #pragma omp parallel for collapse(2) default(none) shared(matr, params, support_vectors, predict_points)
-        for (std::size_t point_index = 0; point_index < predict_points.size(); ++point_index) {
-            for (std::size_t sv_index = 0; sv_index < support_vectors.size(); ++sv_index) {
-                matr[point_index][sv_index] = kernel_function(support_vectors[sv_index], predict_points[point_index], params);
-            }
-        }
-        // predict the values using the previously learned weights
-        #pragma omp parallel for collapse(2) default(none) shared(predict_points, alpha, rho, support_vectors, matr, out)
+        #pragma omp parallel for default(none) shared(alpha, support_vectors, predict_points, rho, params, out)
         for (std::size_t point_index = 0; point_index < predict_points.size(); ++point_index) {
             for (std::size_t a = 0; a < alpha.size(); ++a) {
-                real_type temp{ -rho[a] };
-                #pragma omp simd reduction(+ : temp)
-                for (std::size_t sv_index = 0; sv_index < support_vectors.size(); ++sv_index) {
-                    temp += alpha[a][sv_index] * matr[point_index][sv_index];
+                out[point_index][a] -= rho[a];
+            }
+            for (std::size_t sv_index = 0; sv_index < support_vectors.size(); ++sv_index) {
+                const real_type kernel_func = kernel_function(support_vectors[sv_index], predict_points[point_index], params);
+                for (std::size_t a = 0; a < alpha.size(); ++a) {
+                    out[point_index][a] += alpha[a][sv_index] * kernel_func;
                 }
-                out[point_index][a] = temp;
             }
         }
     }
