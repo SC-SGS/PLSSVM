@@ -276,9 +276,11 @@ class gpu_csvm : public ::plssvm::csvm {
      */
     virtual void run_predict_kernel(const detail::execution_range &range, const parameter<double> &params, device_ptr_type<double> &out_d, const device_ptr_type<double> &alpha_d, const device_ptr_type<double> &point_d, const device_ptr_type<double> &data_d, const device_ptr_type<double> &data_last_d, std::size_t num_support_vectors, std::size_t num_predict_points, std::size_t num_features) const = 0;
 
-    virtual device_ptr_type<float> run_predict_kernel2(const parameter<float> &params, const device_ptr_type<float> &alpha_d, const device_ptr_type<float> &rho_d, const device_ptr_type<float> &sv_d, const device_ptr_type<float> &predict_points_d, std::size_t num_classes, std::size_t num_sv, std::size_t num_predict_points, std::size_t num_features) const = 0;
-    virtual device_ptr_type<double> run_predict_kernel2(const parameter<double> &params, const device_ptr_type<double> &alpha_d, const device_ptr_type<double> &rho_d, const device_ptr_type<double> &sv_d, const device_ptr_type<double> &predict_points_d, std::size_t num_classes, std::size_t num_sv, std::size_t num_predict_points, std::size_t num_features) const = 0;
+    virtual device_ptr_type<float> run_predict_kernel2(const parameter<float> &params, const device_ptr_type<float> &w, const device_ptr_type<float> &alpha_d, const device_ptr_type<float> &rho_d, const device_ptr_type<float> &sv_d, const device_ptr_type<float> &predict_points_d, std::size_t num_classes, std::size_t num_sv, std::size_t num_predict_points, std::size_t num_features) const = 0;
+    virtual device_ptr_type<double> run_predict_kernel2(const parameter<double> &params, const device_ptr_type<double> &w, const device_ptr_type<double> &alpha_d, const device_ptr_type<double> &rho_d, const device_ptr_type<double> &sv_d, const device_ptr_type<double> &predict_points_d, std::size_t num_classes, std::size_t num_sv, std::size_t num_predict_points, std::size_t num_features) const = 0;
 
+    virtual device_ptr_type<float> run_w_kernel2(const device_ptr_type<float> &alpha_d, const device_ptr_type<float> &sv_d, std::size_t num_classes, std::size_t num_sv, std::size_t num_features) const = 0;
+    virtual device_ptr_type<double> run_w_kernel2(const device_ptr_type<double> &alpha_d, const device_ptr_type<double> &sv_d, std::size_t num_classes, std::size_t num_sv, std::size_t num_features) const = 0;
 
     virtual device_ptr_type<float> assemble_kernel_matrix(const detail::parameter<float> &params, const device_ptr_type<float> &data_d, const std::vector<float> &q, float QA_cost, const std::size_t num_data_points, const std::size_t num_features) const = 0;
     virtual device_ptr_type<double> assemble_kernel_matrix(const detail::parameter<double> &params, const device_ptr_type<double> &data_d, const std::vector<double> &q, double QA_cost, const std::size_t num_data_points, const std::size_t num_features) const = 0;
@@ -757,85 +759,61 @@ std::vector<std::vector<real_type>> gpu_csvm<device_ptr_t, queue_t>::predict_val
 
     using namespace plssvm::operators;
 
-    // num_predict_points x num_classes
-    std::vector<std::vector<real_type>> out_ret(predict_points.size(), std::vector<real_type>(alpha.size()));
+    // defined sizes
+    const std::size_t num_classes = alpha.size();
+    const std::size_t num_support_vectors = support_vectors.size();
+    const std::size_t num_predict_points = predict_points.size();
+    const std::size_t num_features = predict_points.front().size();
+
+    device_ptr_type<real_type> sv_d{ num_support_vectors * num_features };
+    sv_d.copy_to_device(detail::transform_to_aos_layout(support_vectors, 0, num_support_vectors, num_features));
+    device_ptr_type<real_type> predict_points_d{ num_predict_points * num_features };
+    predict_points_d.copy_to_device(detail::transform_to_aos_layout(predict_points, 0, num_predict_points, num_features));
+
+    device_ptr_type<real_type> w_d;  // only used when predicting linear kernel functions
+    device_ptr_type<real_type> alpha_d{ num_support_vectors * num_classes };
+    alpha_d.copy_to_device(detail::transform_to_aos_layout(alpha, 0, num_classes, num_support_vectors));
+    device_ptr_type<real_type> rho_d{ num_classes };
+    rho_d.copy_to_device(rho);
 
     if (params.kernel_type == kernel_function_type::linear) {
-        device_ptr_type<real_type> w_d{ alpha.size() * support_vectors.front().size() };
-
         // special optimization for the linear kernel function
         if (w.empty()) {
             // fill w vector
-            device_ptr_type<real_type> support_vectors_d{ support_vectors.size() * support_vectors.front().size() };
-            support_vectors_d.copy_to_device(detail::transform_to_soa_layout(support_vectors, 0, support_vectors.size(), support_vectors.front().size()));
-            device_ptr_type<real_type> alpha_d{ alpha.size() * alpha.front().size() };
-            alpha_d.copy_to_device(detail::transform_to_aos_layout(alpha, 0, alpha.size(), alpha.front().size()));
+            w_d = run_w_kernel2(alpha_d, sv_d, num_classes, num_support_vectors, num_features);
 
-            w_d.memset(0);
-            this->blas_gemm(alpha.size(), support_vectors.front().size(), support_vectors.size(), real_type{ 1.0 }, alpha_d, support_vectors_d, real_type{ 0.0 }, w_d);
-            std::vector<real_type> w_ret(w_d.size());
-            w_d.copy_to_host(w_ret);
-
-            // fill w vector
-            w.resize(alpha.size(), std::vector<real_type>(support_vectors.front().size()));
-            #pragma omp parallel for collapse(2) default(none) shared(alpha, support_vectors, w, w_ret)
-            for (std::size_t a = 0; a < alpha.size(); ++a) {
-                for (std::size_t dim = 0; dim < support_vectors.front().size(); ++dim) {
-                    w[a][dim] = w_ret[dim * alpha.size() + a];
+            // convert 1D result to 2D out-parameter
+            w.resize(num_classes, std::vector<real_type>(num_features));
+            std::vector<real_type> w_flat(w_d.size());
+            w_d.copy_to_host(w_flat);
+            #pragma omp parallel for collapse(2) default(none) shared(w_flat, w) firstprivate(num_classes, num_features)
+            for (std::size_t a = 0; a < num_classes; ++a) {
+                for (std::size_t dim = 0; dim < num_features; ++dim) {
+                    w[a][dim] = w_flat[a * num_features + dim];
                 }
             }
+        } else {
+            // w already provided -> copy to device
+            w_d = device_ptr_type<real_type>{ num_classes * num_features };
+            w_d.copy_to_device(detail::transform_to_aos_layout(w, 0, num_classes, num_features));
         }
+    }
 
-        // predict the values using the w vector
-        device_ptr_type<real_type> out_d{ predict_points.size() * alpha.size() };
-        for (std::size_t a = 0; a < predict_points.size(); ++a) {
-            out_d.copy_to_device(rho, a * rho.size(), rho.size());
-        }
+    // predict
+    const device_ptr_type<real_type> out_d = run_predict_kernel2(params, w_d, alpha_d, rho_d, sv_d, predict_points_d, num_classes, num_support_vectors, num_predict_points, num_features);;
 
-        device_ptr_type<real_type> predict_points_d{ predict_points.size() * predict_points.front().size() };
-        predict_points_d.copy_to_device(detail::transform_to_aos_layout(predict_points, 0, predict_points.size(), predict_points.front().size()));
-        device_ptr_type<real_type> rho_d{ alpha.size() };
-        rho_d.copy_to_device(rho);
-        w_d.copy_to_device(detail::transform_to_aos_layout(w, 0, w.size(), w.front().size()));
+    // num_predict_points x num_classes
+    std::vector<std::vector<real_type>> out_ret(num_predict_points, std::vector<real_type>(num_classes));
 
-        this->blas_gemm(alpha.size(), predict_points.size(), predict_points.front().size(), real_type{ 1.0 }, w_d, predict_points_d, real_type{ -1.0 }, out_d);
-        std::vector<real_type> out(out_d.size());
-        out_d.copy_to_host(out);
+    // copy results back from GPU
+    std::vector<real_type> out(out_d.size());
+    out_d.copy_to_host(out);
 
-        #pragma omp parallel for collapse(2) default(none) shared(alpha, predict_points, out_ret, out)
-        for (std::size_t a = 0; a < alpha.size(); ++a) {
-            for (std::size_t i = 0; i < predict_points.size(); ++i) {
-                out_ret[i][a] = out[i * alpha.size() + a];
-            }
-        }
-    } else {
-        // "default" implementation for the other kernel functions
-        const std::size_t num_support_vectors = support_vectors.size();
-        const std::size_t num_predict_points = predict_points.size();
-        const std::size_t num_features = predict_points.front().size();
-        const std::size_t num_classes = alpha.size();
-
-        device_ptr_type<real_type> sv_d{ num_support_vectors * num_features };
-        sv_d.copy_to_device(detail::transform_to_aos_layout(support_vectors, 0, num_support_vectors, num_features));
-        device_ptr_type<real_type> predict_points_d{ num_predict_points * num_features };
-        predict_points_d.copy_to_device(detail::transform_to_aos_layout(predict_points, 0, num_predict_points, num_features));
-
-        device_ptr_type<real_type> alpha_d{ num_support_vectors * num_classes };
-        alpha_d.copy_to_device(detail::transform_to_aos_layout(alpha, 0, num_classes, num_support_vectors));
-        device_ptr_type<real_type> rho_d{ num_classes };
-        rho_d.copy_to_device(rho);
-
-        // device_ptr_type<real_type> out_d{ num_predict_points * num_classes };
-        device_ptr_type<real_type> out_d = run_predict_kernel2(params, alpha_d, rho_d, sv_d, predict_points_d, num_classes, num_support_vectors, num_predict_points, num_features);
-
-        std::vector<real_type> out(out_d.size());
-        out_d.copy_to_host(out);
-
-        #pragma omp parallel for collapse(2) default(none) shared(out_ret, out, rho) firstprivate(num_classes, num_predict_points)
-        for (std::size_t i = 0; i < num_predict_points; ++i) {
-            for (std::size_t a = 0; a < num_classes; ++a) {
-                out_ret[i][a] = out[i * num_classes + a];
-            }
+    // convert 1D vector to 2D vector
+    #pragma omp parallel for collapse(2) default(none) shared(out_ret, out, rho) firstprivate(num_classes, num_predict_points)
+    for (std::size_t i = 0; i < num_predict_points; ++i) {
+        for (std::size_t a = 0; a < num_classes; ++a) {
+            out_ret[i][a] = out[i * num_classes + a];
         }
     }
     return out_ret;

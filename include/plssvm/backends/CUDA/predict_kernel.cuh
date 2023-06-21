@@ -69,6 +69,12 @@ __global__ void device_kernel_predict_rbf(real_type *out_d, const real_type *dat
 
 
 template <typename real_type>
+__global__ void device_kernel_w_linear2(real_type *w_d, const real_type *alpha_d, const real_type *sv_d, const kernel_index_type num_classes, const kernel_index_type num_sv, const kernel_index_type num_features);
+
+template <typename real_type>
+__global__ void device_kernel_predict_linear2(real_type *out_d, const real_type *w_d, const real_type *rho_d, const real_type *predict_points_d, const kernel_index_type num_classes, const kernel_index_type num_predict_points, const kernel_index_type num_features);
+
+template <typename real_type>
 __global__ void device_kernel_predict_polynomial2(real_type *out_d, const real_type *alpha_d, const real_type *rho_d, const real_type *sv_d, const real_type *predict_points_d, const kernel_index_type num_classes, const kernel_index_type num_sv, const kernel_index_type num_predict_points, const kernel_index_type num_features, const int degree, const real_type gamma, const real_type coef0);
 
 template <typename real_type>
