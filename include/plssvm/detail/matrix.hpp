@@ -48,6 +48,10 @@ class matrix_impl {
     using const_pointer = const value_type *;
 
     /**
+     * @brief Default construct an empty matrix, i.e., zero rows and columns.
+     */
+    matrix_impl() = default;
+    /**
      * @brief Create a matrix of size @p num_rows x @p num_cols and initialize all entries with the value @p init.
      * @param[in] num_rows the number of rows in the matrix
      * @param[in] num_cols the number of columns in the matrix
@@ -95,11 +99,20 @@ class matrix_impl {
         return num_cols_;
     }
     /**
+     * @brief Check whether the matrix is currently empty, i.e., has zero rows and columns.
+     * @details This may only happen for a default initialized matrix.
+     * @return `true` if the matrix is empty, otherwise `false` (`[[nodiscard]]`)
+     */
+    [[nodiscard]] bool empty() const noexcept {
+        return data_.empty();
+    }
+
+    /**
      * @brief Return the layout type used in this matrix.
      * @details The layout type is either Array-of-Structs (AoS) or Struct-of-Arrays (SoA)
      * @return the layout type (`[[nodiscard]]`)
      */
-    [[nodiscard]] layout_type layout() const noexcept {
+    [[nodiscard]] static constexpr layout_type layout() noexcept {
         return layout_;
     }
 
@@ -223,9 +236,9 @@ class matrix_impl {
 
   private:
     /// The number of rows.
-    size_type num_rows_{};
+    size_type num_rows_{ 0 };
     /// The number of columns.
-    size_type num_cols_{};
+    size_type num_cols_{ 0 };
     /// The (linearized, either in AoS or SoA layout) data.
     std::vector<value_type> data_{};
 };
