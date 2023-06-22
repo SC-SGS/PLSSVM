@@ -113,16 +113,16 @@ class gpu_csvm : public ::plssvm::csvm {
     /**
      * @copydoc plssvm::csvm::predict_values
      */
-    [[nodiscard]] detail::aos_matrix<float> predict_values(const parameter<float> &params, const detail::aos_matrix<float> &support_vectors, const detail::aos_matrix<float> &alpha, const std::vector<float> &rho, std::vector<std::vector<float>> &w, const detail::aos_matrix<float> &predict_points) const final { return this->predict_values_impl(params, support_vectors, alpha, rho, w, predict_points); }
+    [[nodiscard]] detail::aos_matrix<float> predict_values(const parameter<float> &params, const detail::aos_matrix<float> &support_vectors, const detail::aos_matrix<float> &alpha, const std::vector<float> &rho, detail::aos_matrix<float> &w, const detail::aos_matrix<float> &predict_points) const final { return this->predict_values_impl(params, support_vectors, alpha, rho, w, predict_points); }
     /**
      * @copydoc plssvm::csvm::predict_values
      */
-    [[nodiscard]] detail::aos_matrix<double> predict_values(const parameter<double> &params, const detail::aos_matrix<double> &support_vectors, const detail::aos_matrix<double> &alpha, const std::vector<double> &rho, std::vector<std::vector<double>> &w, const detail::aos_matrix<double> &predict_points) const final { return this->predict_values_impl(params, support_vectors, alpha, rho, w, predict_points); }
+    [[nodiscard]] detail::aos_matrix<double> predict_values(const parameter<double> &params, const detail::aos_matrix<double> &support_vectors, const detail::aos_matrix<double> &alpha, const std::vector<double> &rho, detail::aos_matrix<double> &w, const detail::aos_matrix<double> &predict_points) const final { return this->predict_values_impl(params, support_vectors, alpha, rho, w, predict_points); }
     /**
      * @copydoc plssvm::csvm::predict_values
      */
     template <typename real_type>
-    [[nodiscard]] detail::aos_matrix<real_type> predict_values_impl(const parameter<real_type> &params, const detail::aos_matrix<real_type> &support_vectors, const detail::aos_matrix<real_type> &alpha, const std::vector<real_type> &rho, std::vector<std::vector<real_type>> &w, const detail::aos_matrix<real_type> &predict_points) const;
+    [[nodiscard]] detail::aos_matrix<real_type> predict_values_impl(const parameter<real_type> &params, const detail::aos_matrix<real_type> &support_vectors, const detail::aos_matrix<real_type> &alpha, const std::vector<real_type> &rho, detail::aos_matrix<real_type> &w, const detail::aos_matrix<real_type> &predict_points) const;
 
     /**
      * @brief Returns the number of usable devices given the kernel function @p kernel and the number of features @p num_features.
@@ -706,15 +706,14 @@ detail::aos_matrix<real_type> gpu_csvm<device_ptr_t, queue_t>::predict_values_im
                                                                                    const detail::aos_matrix<real_type> &support_vectors,
                                                                                    const detail::aos_matrix<real_type> &alpha,
                                                                                    const std::vector<real_type> &rho,
-                                                                                   std::vector<std::vector<real_type>> &w,
+                                                                                   detail::aos_matrix<real_type> &w,
                                                                                    const detail::aos_matrix<real_type> &predict_points) const {
     PLSSVM_ASSERT(!support_vectors.empty(), "The support vectors must not be empty!");
     PLSSVM_ASSERT(!alpha.empty(), "The alpha vectors (weights) must not be empty!");
     PLSSVM_ASSERT(support_vectors.num_rows() == alpha.num_cols(), "The number of support vectors ({}) and number of weights ({}) must be the same!", support_vectors.num_rows(), alpha.num_cols());
     PLSSVM_ASSERT(rho.size() == alpha.num_rows(), "The number of rho values ({}) and the number of weights ({}) must be the same!", rho.size(), alpha.num_rows());
-    PLSSVM_ASSERT(w.empty() || support_vectors.num_cols() == w.front().size(), "Either w must be empty or contain exactly the same number of values as features are present ({})!", support_vectors.num_cols());
-    PLSSVM_ASSERT(w.empty() || std::all_of(w.cbegin(), w.cend(), [&w](const std::vector<real_type> &vec) { return vec.size() == w.front().size(); }), "All w vectors must have the same number of values!");
-    PLSSVM_ASSERT(w.empty() || alpha.num_rows() == w.size(), "Either w must be empty or contain exactly the same number of vectors ({}) as the alpha vector ({})!", w.size(), alpha.num_rows());
+    PLSSVM_ASSERT(w.empty() || support_vectors.num_cols() == w.num_cols(), "Either w must be empty or contain exactly the same number of values as features are present ({})!", support_vectors.num_cols());
+    PLSSVM_ASSERT(w.empty() || alpha.num_rows() == w.num_rows(), "Either w must be empty or contain exactly the same number of vectors ({}) as the alpha vector ({})!", w.num_rows(), alpha.num_rows());
     PLSSVM_ASSERT(!predict_points.empty(), "The data points to predict must not be empty!");
     PLSSVM_ASSERT(support_vectors.num_cols() == predict_points.num_cols(), "The number of features in the support vectors ({}) must be the same as in the data points to predict ({})!", support_vectors.num_cols(), predict_points.num_cols());
 
@@ -743,20 +742,13 @@ detail::aos_matrix<real_type> gpu_csvm<device_ptr_t, queue_t>::predict_values_im
             // fill w vector
             w_d = run_w_kernel(alpha_d, sv_d, num_classes, num_support_vectors, num_features);
 
-            // convert 1D result to 2D out-parameter
-            w.resize(num_classes, std::vector<real_type>(num_features));
-            std::vector<real_type> w_flat(w_d.size());
-            w_d.copy_to_host(w_flat);
-            #pragma omp parallel for collapse(2) default(none) shared(w_flat, w) firstprivate(num_classes, num_features)
-            for (std::size_t a = 0; a < num_classes; ++a) {
-                for (std::size_t dim = 0; dim < num_features; ++dim) {
-                    w[a][dim] = w_flat[a * num_features + dim];
-                }
-            }
+            // convert 1D result to aos_matrix out-parameter
+            w = detail::aos_matrix<real_type>{ num_classes, num_features };
+            w_d.copy_to_host(w.data());
         } else {
             // w already provided -> copy to device
             w_d = device_ptr_type<real_type>{ num_classes * num_features };
-            w_d.copy_to_device(detail::transform_to_aos_layout(w, 0, num_classes, num_features));
+            w_d.copy_to_device(w.data());
         }
     }
 

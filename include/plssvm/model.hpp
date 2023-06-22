@@ -18,6 +18,7 @@
 #include "plssvm/detail/assert.hpp"                   // PLSSVM_ASSERT
 #include "plssvm/detail/io/libsvm_model_parsing.hpp"  // plssvm::detail::io::{parse_libsvm_model_header, parse_libsvm_model_data, write_libsvm_model_data}
 #include "plssvm/detail/logger.hpp"                   // plssvm::detail::log, plssvm::verbosity_level
+#include "plssvm/detail/matrix.hpp"                   // plssvm::detail::aos_matrix
 #include "plssvm/detail/performance_tracker.hpp"      // plssvm::detail::tracking_entry
 #include "plssvm/detail/type_list.hpp"                // plssvm::detail::{real_type_list, label_type_list, type_list_contains_v}
 #include "plssvm/parameter.hpp"                       // plssvm::parameter
@@ -187,7 +188,7 @@ class model {
      * @details Will be reused by subsequent calls to `plssvm::csvm::fit`/`plssvm::csvm::score` with the same `plssvm::model`.
      * @note Must be initialized to an empty vector instead of a `nullptr` in order to be passable as const reference.
      */
-    std::shared_ptr<std::vector<std::vector<real_type>>> w_ptr_{ std::make_shared<std::vector<std::vector<real_type>>>() };
+    std::shared_ptr<detail::aos_matrix<real_type>> w_ptr_{ std::make_shared<detail::aos_matrix<real_type>>() };
 };
 
 template <typename T, typename U>
