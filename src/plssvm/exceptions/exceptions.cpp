@@ -61,4 +61,7 @@ unsupported_kernel_type_exception::unsupported_kernel_type_exception(const std::
 gpu_device_ptr_exception::gpu_device_ptr_exception(const std::string &msg, source_location loc) :
     exception{ msg, "gpu_device_ptr_exception", loc } {}
 
+matrix_exception::matrix_exception(const std::string &msg, source_location loc) :
+    exception{ msg, "matrix_exception", loc } {}
+
 }  // namespace plssvm
