@@ -189,7 +189,7 @@ const std::vector<std::string_view> &file_reader::read_lines(const std::string_v
     std::vector<std::deque<std::size_t>> per_thread_newlines;
     std::vector<std::vector<std::string_view>> per_thread_lines;
 
-    #pragma omp parallel
+    #pragma omp parallel default(none) shared(per_thread_newlines, per_thread_lines) firstprivate(file_content_view, comment)
     {
         // resize vector - single threaded
         #pragma omp single
