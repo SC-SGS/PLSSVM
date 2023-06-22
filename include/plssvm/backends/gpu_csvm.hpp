@@ -20,6 +20,7 @@
 #include "plssvm/detail/logger.hpp"               // plssvm::detail::log, plssvm::verbosity_level
 #include "plssvm/detail/performance_tracker.hpp"  // plssvm::detail::tracking_entry, PLSSVM_DETAIL_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY
 #include "plssvm/parameter.hpp"                   // plssvm::parameter
+#include "plssvm/detail/matrix.hpp"               // plssvm::detail::aos_matrix
 
 #include "fmt/chrono.h"                           // output std::chrono times using {fmt}
 #include "fmt/core.h"                             // fmt::format
@@ -112,16 +113,16 @@ class gpu_csvm : public ::plssvm::csvm {
     /**
      * @copydoc plssvm::csvm::predict_values
      */
-    [[nodiscard]] std::vector<std::vector<float>> predict_values(const parameter<float> &params, const std::vector<std::vector<float>> &support_vectors, const std::vector<std::vector<float>> &alpha, const std::vector<float> &rho, std::vector<std::vector<float>> &w, const std::vector<std::vector<float>> &predict_points) const final { return this->predict_values_impl(params, support_vectors, alpha, rho, w, predict_points); }
+    [[nodiscard]] detail::aos_matrix<float> predict_values(const parameter<float> &params, const detail::aos_matrix<float> &support_vectors, const detail::aos_matrix<float> &alpha, const std::vector<float> &rho, std::vector<std::vector<float>> &w, const detail::aos_matrix<float> &predict_points) const final { return this->predict_values_impl(params, support_vectors, alpha, rho, w, predict_points); }
     /**
      * @copydoc plssvm::csvm::predict_values
      */
-    [[nodiscard]] std::vector<std::vector<double>> predict_values(const parameter<double> &params, const std::vector<std::vector<double>> &support_vectors, const std::vector<std::vector<double>> &alpha, const std::vector<double> &rho, std::vector<std::vector<double>> &w, const std::vector<std::vector<double>> &predict_points) const final { return this->predict_values_impl(params, support_vectors, alpha, rho, w, predict_points); }
+    [[nodiscard]] detail::aos_matrix<double> predict_values(const parameter<double> &params, const detail::aos_matrix<double> &support_vectors, const detail::aos_matrix<double> &alpha, const std::vector<double> &rho, std::vector<std::vector<double>> &w, const detail::aos_matrix<double> &predict_points) const final { return this->predict_values_impl(params, support_vectors, alpha, rho, w, predict_points); }
     /**
      * @copydoc plssvm::csvm::predict_values
      */
     template <typename real_type>
-    [[nodiscard]] std::vector<std::vector<real_type>> predict_values_impl(const parameter<real_type> &params, const std::vector<std::vector<real_type>> &support_vectors, const std::vector<std::vector<real_type>> &alpha, const std::vector<real_type> &rho, std::vector<std::vector<real_type>> &w, const std::vector<std::vector<real_type>> &predict_points) const;
+    [[nodiscard]] detail::aos_matrix<real_type> predict_values_impl(const parameter<real_type> &params, const detail::aos_matrix<real_type> &support_vectors, const detail::aos_matrix<real_type> &alpha, const std::vector<real_type> &rho, std::vector<std::vector<real_type>> &w, const detail::aos_matrix<real_type> &predict_points) const;
 
     /**
      * @brief Returns the number of usable devices given the kernel function @p kernel and the number of features @p num_features.
@@ -701,44 +702,38 @@ std::pair<std::vector<std::vector<real_type>>, std::vector<real_type>> gpu_csvm<
 
 template <template <typename> typename device_ptr_t, typename queue_t>
 template <typename real_type>
-std::vector<std::vector<real_type>> gpu_csvm<device_ptr_t, queue_t>::predict_values_impl(const parameter<real_type> &params,
-                                                                            const std::vector<std::vector<real_type>> &support_vectors,
-                                                                            const std::vector<std::vector<real_type>> &alpha,
-                                                                            const std::vector<real_type> &rho,
-                                                                            std::vector<std::vector<real_type>> &w,
-                                                                            const std::vector<std::vector<real_type>> &predict_points) const {
+detail::aos_matrix<real_type> gpu_csvm<device_ptr_t, queue_t>::predict_values_impl(const parameter<real_type> &params,
+                                                                                   const detail::aos_matrix<real_type> &support_vectors,
+                                                                                   const detail::aos_matrix<real_type> &alpha,
+                                                                                   const std::vector<real_type> &rho,
+                                                                                   std::vector<std::vector<real_type>> &w,
+                                                                                   const detail::aos_matrix<real_type> &predict_points) const {
     PLSSVM_ASSERT(!support_vectors.empty(), "The support vectors must not be empty!");
-    PLSSVM_ASSERT(!support_vectors.front().empty(), "The support vectors must contain at least one feature!");
-    PLSSVM_ASSERT(std::all_of(support_vectors.cbegin(), support_vectors.cend(), [&support_vectors](const std::vector<real_type> &data_point) { return data_point.size() == support_vectors.front().size(); }), "All support vectors must have the same number of features!");
     PLSSVM_ASSERT(!alpha.empty(), "The alpha vectors (weights) must not be empty!");
-    PLSSVM_ASSERT(!alpha.front().empty(), "The alpha vectors must contain at least one weight!");
-    PLSSVM_ASSERT(std::all_of(alpha.cbegin(), alpha.cend(), [&alpha](const std::vector<real_type> &a) { return a.size() == alpha.front().size(); }), "All alpha vectors must have the same number of weights!");
-    PLSSVM_ASSERT(support_vectors.size() == alpha.front().size(), "The number of support vectors ({}) and number of weights ({}) must be the same!", support_vectors.size(), alpha.front().size());
-    PLSSVM_ASSERT(rho.size() == alpha.size(), "The number of rho values ({}) and the number of weights ({}) must be the same!", rho.size(), alpha.size());
-    PLSSVM_ASSERT(w.empty() || support_vectors.front().size() == w.front().size(), "Either w must be empty or contain exactly the same number of values as features are present ({})!", support_vectors.front().size());
+    PLSSVM_ASSERT(support_vectors.num_rows() == alpha.num_cols(), "The number of support vectors ({}) and number of weights ({}) must be the same!", support_vectors.num_rows(), alpha.num_cols());
+    PLSSVM_ASSERT(rho.size() == alpha.num_rows(), "The number of rho values ({}) and the number of weights ({}) must be the same!", rho.size(), alpha.num_rows());
+    PLSSVM_ASSERT(w.empty() || support_vectors.num_cols() == w.front().size(), "Either w must be empty or contain exactly the same number of values as features are present ({})!", support_vectors.num_cols());
     PLSSVM_ASSERT(w.empty() || std::all_of(w.cbegin(), w.cend(), [&w](const std::vector<real_type> &vec) { return vec.size() == w.front().size(); }), "All w vectors must have the same number of values!");
-    PLSSVM_ASSERT(w.empty() || alpha.size() == w.size(), "Either w must be empty or contain exactly the same number of vectors ({}) as the alpha vector ({})!", w.size(), alpha.size());
+    PLSSVM_ASSERT(w.empty() || alpha.num_rows() == w.size(), "Either w must be empty or contain exactly the same number of vectors ({}) as the alpha vector ({})!", w.size(), alpha.num_rows());
     PLSSVM_ASSERT(!predict_points.empty(), "The data points to predict must not be empty!");
-    PLSSVM_ASSERT(!predict_points.front().empty(), "The data points to predict must contain at least one feature!");
-    PLSSVM_ASSERT(std::all_of(predict_points.cbegin(), predict_points.cend(), [&predict_points](const std::vector<real_type> &data_point) { return data_point.size() == predict_points.front().size(); }), "All data points to predict must have the same number of features!");
-    PLSSVM_ASSERT(support_vectors.front().size() == predict_points.front().size(), "The number of features in the support vectors ({}) must be the same as in the data points to predict ({})!", support_vectors.front().size(), predict_points.front().size());
+    PLSSVM_ASSERT(support_vectors.num_cols() == predict_points.num_cols(), "The number of features in the support vectors ({}) must be the same as in the data points to predict ({})!", support_vectors.num_cols(), predict_points.num_cols());
 
     using namespace plssvm::operators;
 
     // defined sizes
-    const std::size_t num_classes = alpha.size();
-    const std::size_t num_support_vectors = support_vectors.size();
-    const std::size_t num_predict_points = predict_points.size();
-    const std::size_t num_features = predict_points.front().size();
+    const std::size_t num_classes = alpha.num_rows();
+    const std::size_t num_support_vectors = support_vectors.num_rows();
+    const std::size_t num_predict_points = predict_points.num_rows();
+    const std::size_t num_features = predict_points.num_cols();
 
     device_ptr_type<real_type> sv_d{ num_support_vectors * num_features };
-    sv_d.copy_to_device(detail::transform_to_aos_layout(support_vectors, 0, num_support_vectors, num_features));
+    sv_d.copy_to_device(support_vectors.data());
     device_ptr_type<real_type> predict_points_d{ num_predict_points * num_features };
-    predict_points_d.copy_to_device(detail::transform_to_aos_layout(predict_points, 0, num_predict_points, num_features));
+    predict_points_d.copy_to_device(predict_points.data());
 
     device_ptr_type<real_type> w_d;  // only used when predicting linear kernel functions
-    device_ptr_type<real_type> alpha_d{ num_support_vectors * num_classes };
-    alpha_d.copy_to_device(detail::transform_to_aos_layout(alpha, 0, num_classes, num_support_vectors));
+    device_ptr_type<real_type> alpha_d{ num_classes * num_support_vectors };
+    alpha_d.copy_to_device(alpha.data());
     device_ptr_type<real_type> rho_d{ num_classes };
     rho_d.copy_to_device(rho);
 
@@ -768,20 +763,9 @@ std::vector<std::vector<real_type>> gpu_csvm<device_ptr_t, queue_t>::predict_val
     // predict
     const device_ptr_type<real_type> out_d = run_predict_kernel(params, w_d, alpha_d, rho_d, sv_d, predict_points_d, num_classes, num_support_vectors, num_predict_points, num_features);;
 
-    // num_predict_points x num_classes
-    std::vector<std::vector<real_type>> out_ret(num_predict_points, std::vector<real_type>(num_classes));
-
-    // copy results back from GPU
-    std::vector<real_type> out(out_d.size());
-    out_d.copy_to_host(out);
-
-    // convert 1D vector to 2D vector
-    #pragma omp parallel for collapse(2) default(none) shared(out_ret, out, rho) firstprivate(num_classes, num_predict_points)
-    for (std::size_t i = 0; i < num_predict_points; ++i) {
-        for (std::size_t a = 0; a < num_classes; ++a) {
-            out_ret[i][a] = out[i * num_classes + a];
-        }
-    }
+    // copy results back to host
+    detail::aos_matrix<real_type> out_ret{ num_predict_points, num_classes };
+    out_d.copy_to_host(out_ret.data());
     return out_ret;
 }
 
