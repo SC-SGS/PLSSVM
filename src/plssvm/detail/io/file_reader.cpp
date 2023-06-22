@@ -227,7 +227,11 @@ const std::vector<std::string_view> &file_reader::read_lines(const std::string_v
             per_thread_lines[i].reserve(per_thread_newlines[i].size());
 
             for (std::size_t l = 0; l < per_thread_newlines[i].size() - 1; ++l) {
-                const std::string_view sv = trim_left(std::string_view{ file_content_view.data() + per_thread_newlines[i][l], per_thread_newlines[i][l + 1] - per_thread_newlines[i][l] - 1});
+                std::string_view sv = trim_left(std::string_view{ file_content_view.data() + per_thread_newlines[i][l], per_thread_newlines[i][l + 1] - per_thread_newlines[i][l] - 1});
+                // remove \r on windows (\r\n)
+                if (ends_with(sv, '\r')) {
+                    sv.remove_suffix(1);
+                }
                 if (!sv.empty() && !starts_with(sv, comment)) {
                     per_thread_lines[i].push_back(sv);
                 }
