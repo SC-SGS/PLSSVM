@@ -24,6 +24,8 @@
 #include <utility>  // std::pair, std::make_pair, std::swap
 #include <vector>   // std::vector
 
+// TODO: move implementation outside of class!?
+
 namespace plssvm::detail {
 
 /**
@@ -75,6 +77,27 @@ class matrix_impl {
      */
     matrix_impl(const size_type num_rows, const size_type num_cols) :
         matrix_impl{ num_rows, num_cols, value_type{} } {}
+
+    /**
+     * @brief Create a matrix from the provided 2D vector @p data.
+     * @param[in] data the data used to initialize this matrix
+     */
+    matrix_impl(const std::vector<std::vector<value_type>> &data) {
+        PLSSVM_ASSERT(!data.empty(), "The data to create the matrix from may not be empty!");
+        PLSSVM_ASSERT(std::all_of(data.cbegin(), data.cend(), [&data](const std::vector<value_type> &row) { return row.size() == data.front().size(); }), "Each row must contain the same amount of columns!");
+        PLSSVM_ASSERT(!data.front().empty(), "The data to create the matrix must at least have one column!");
+
+        num_rows_ = data.size();
+        num_cols_ = data.front().size();
+        data_ = std::vector<value_type>(num_rows_ * num_cols_);
+
+        #pragma omp parallel for collapse(2) shared(data) firstprivate(num_rows_, num_cols_)
+        for (std::size_t row = 0; row < num_rows_; ++row) {
+            for (std::size_t col = 0; col < num_cols_; ++col) {
+                (*this)(row, col) = data[row][col];
+            }
+        }
+    }
 
     /**
      * @brief Returns the shape of the matrix, i.e., the number of rows and columns.
@@ -200,6 +223,20 @@ class matrix_impl {
      */
     [[nodiscard]] const_pointer data() const noexcept {
         return data_.data();
+    }
+    /**
+     * @brief Return the data as a 2D vector.
+     * @return the two-dimensional data (`[[nodiscard]]`)
+     */
+    [[nodiscard]] std::vector<std::vector<value_type>> to_2D_vector() const {
+        std::vector<std::vector<value_type>> ret(num_rows_, std::vector<value_type>(num_cols_));
+        #pragma omp parallel for collapse(2) shared(ret) firstprivate(num_rows_, num_cols_)
+        for (std::size_t row = 0; row < num_rows_; ++row) {
+            for (std::size_t col = 0; col < num_cols_; ++col) {
+                ret[row][col] =(*this)(row, col);
+            }
+        }
+        return ret;
     }
 
     /**
