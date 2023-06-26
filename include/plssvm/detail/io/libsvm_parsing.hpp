@@ -245,7 +245,8 @@ inline void write_libsvm_data_impl(const std::string &filename, const detail::ao
     // create output file
     fmt::ostream out = fmt::output_file(filename);
     // write timestamp as current date time
-    out.print("# This data set has been created at {}\n", detail::current_date_time());
+    // note: commented out since the resulting model file cannot be read be LIBSVM
+    // out.print("# This data set has been created at {}\n", detail::current_date_time());
 
     const std::size_t num_data_points = data.num_rows();
     if (num_data_points == 0) {
@@ -253,7 +254,8 @@ inline void write_libsvm_data_impl(const std::string &filename, const detail::ao
         return;
     }
     const std::size_t num_features = data.num_cols();
-    out.print("# {}x{}\n", num_data_points, num_features);
+    // note: commented out since the resulting model file cannot be read be LIBSVM
+    // out.print("# {}x{}\n", num_data_points, num_features);
 
     // format one output-line
     auto format_libsvm_line = [num_features](std::string &output, const detail::aos_matrix<real_type> &data_point, const std::size_t row) {
