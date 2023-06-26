@@ -99,16 +99,16 @@ class gpu_csvm : public ::plssvm::csvm {
     /**
      * @copydoc plssvm::csvm::solve_system_of_linear_equations
      */
-    [[nodiscard]] std::pair<std::vector<std::vector<float>>, std::vector<float>> solve_system_of_linear_equations(const parameter<float> &params, const detail::aos_matrix<float> &A, detail::aos_matrix<float> B, float eps, unsigned long long max_iter) const final { return this->solve_system_of_linear_equations_impl(params, A, std::move(B), eps, max_iter); }
+    [[nodiscard]] std::pair<detail::aos_matrix<float>, std::vector<float>> solve_system_of_linear_equations(const parameter<float> &params, const detail::aos_matrix<float> &A, detail::aos_matrix<float> B, float eps, unsigned long long max_iter) const final { return this->solve_system_of_linear_equations_impl(params, A, std::move(B), eps, max_iter); }
     /**
      * @copydoc plssvm::csvm::solve_system_of_linear_equations
      */
-    [[nodiscard]] std::pair<std::vector<std::vector<double>>, std::vector<double>> solve_system_of_linear_equations(const parameter<double> &params, const detail::aos_matrix<double> &A, detail::aos_matrix<double> B, double eps, unsigned long long max_iter) const final { return this->solve_system_of_linear_equations_impl(params, A, std::move(B), eps, max_iter); }
+    [[nodiscard]] std::pair<detail::aos_matrix<double>, std::vector<double>> solve_system_of_linear_equations(const parameter<double> &params, const detail::aos_matrix<double> &A, detail::aos_matrix<double> B, double eps, unsigned long long max_iter) const final { return this->solve_system_of_linear_equations_impl(params, A, std::move(B), eps, max_iter); }
     /**
      * @copydoc plssvm::csvm::solve_system_of_linear_equations
      */
     template <typename real_type>
-    [[nodiscard]] std::pair<std::vector<std::vector<real_type>>, std::vector<real_type>> solve_system_of_linear_equations_impl(const parameter<real_type> &params, const detail::aos_matrix<real_type> &A, detail::aos_matrix<real_type> B, real_type eps, unsigned long long max_iter) const;
+    [[nodiscard]] std::pair<detail::aos_matrix<real_type>, std::vector<real_type>> solve_system_of_linear_equations_impl(const parameter<real_type> &params, const detail::aos_matrix<real_type> &A, detail::aos_matrix<real_type> B, real_type eps, unsigned long long max_iter) const;
 
     /**
      * @copydoc plssvm::csvm::predict_values
@@ -459,7 +459,7 @@ void gpu_csvm<device_ptr_t, queue_t>::device_reduction(std::vector<device_ptr_ty
 
 template <template <typename> typename device_ptr_t, typename queue_t>
 template <typename real_type>
-std::pair<std::vector<std::vector<real_type>>, std::vector<real_type>> gpu_csvm<device_ptr_t, queue_t>::solve_system_of_linear_equations_impl(const parameter<real_type> &params,
+std::pair<detail::aos_matrix<real_type>, std::vector<real_type>> gpu_csvm<device_ptr_t, queue_t>::solve_system_of_linear_equations_impl(const parameter<real_type> &params,
                                                                                                                     const detail::aos_matrix<real_type> &A,
                                                                                                                     detail::aos_matrix<real_type> B_in,
                                                                                                                     const real_type eps,
@@ -688,7 +688,7 @@ std::pair<std::vector<std::vector<real_type>>, std::vector<real_type>> gpu_csvm<
                 std::min(iter + 1, max_iter));
 
     // calculate bias
-    std::vector<std::vector<real_type>> X_ret(num_rhs, std::vector<real_type>(A.num_rows()));
+    detail::aos_matrix<real_type> X_ret{ num_rhs, A.num_rows() };
     std::vector<real_type> bias(num_rhs);
     #pragma omp parallel for default(none) shared(X, q_red, X_ret, bias, b_back_value) firstprivate(num_rhs, dept, QA_cost)
     for (std::size_t i = 0; i < num_rhs; ++i) {
@@ -699,10 +699,10 @@ std::pair<std::vector<std::vector<real_type>>, std::vector<real_type>> gpu_csvm<
             temp_sum += X(i, dim);
             temp_dot += q_red[dim] * X(i, dim);
 
-            X_ret[i][dim] = X(i, dim);
+            X_ret(i, dim) = X(i, dim);
         }
         bias[i] = -(b_back_value[i] + QA_cost * temp_sum - temp_dot);
-        X_ret[i].back() = -temp_sum;
+        X_ret(i, dept) = -temp_sum;
     }
 
     return std::make_pair(std::move(X_ret), std::move(bias));

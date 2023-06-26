@@ -349,7 +349,7 @@ template <typename real_type, typename label_type, typename size_type>
  * @return a std::tuple containing: [num_data_points, num_features, data_points, labels, classification type] (`[[nodiscard]]`)
  */
 template <typename real_type>
-[[nodiscard]] inline std::tuple<std::size_t, std::size_t, detail::aos_matrix<real_type>, std::vector<std::vector<real_type>>, classification_type> parse_libsvm_model_data(const file_reader &reader, const std::vector<std::size_t> &num_sv_per_class, const std::size_t skipped_lines) {
+[[nodiscard]] inline std::tuple<std::size_t, std::size_t, detail::aos_matrix<real_type>, std::vector<detail::aos_matrix<real_type>>, classification_type> parse_libsvm_model_data(const file_reader &reader, const std::vector<std::size_t> &num_sv_per_class, const std::size_t skipped_lines) {
     PLSSVM_ASSERT(reader.is_open(), "The file_reader is currently not associated with a file!");
     PLSSVM_ASSERT(num_sv_per_class.size() > 1, "At least two classes must be present!");
     // sanity check: can't skip more lines than are present
@@ -367,7 +367,7 @@ template <typename real_type>
     // create vector containing the data and label
     detail::aos_matrix<real_type> data{ num_data_points, num_features };
     const std::size_t max_num_alpha_values = num_sv_per_class.size();
-    std::vector<std::vector<real_type>> alpha(max_num_alpha_values, std::vector<real_type>(num_data_points));
+    detail::aos_matrix<real_type> alpha{ max_num_alpha_values, num_data_points };
     bool is_oaa{ false };
     bool is_oao{ false };
 
@@ -393,7 +393,7 @@ template <typename real_type>
                         }
 
                         // get alpha value
-                        alpha[alpha_val][i] = detail::convert_to<real_type, invalid_file_format_exception>(line.substr(pos, next_pos));
+                        alpha(alpha_val, i) = detail::convert_to<real_type, invalid_file_format_exception>(line.substr(pos, next_pos));
                         pos = next_pos + 1;
                         ++alpha_val;
                     } else {
@@ -462,16 +462,17 @@ template <typename real_type>
     }
 
     classification_type classification{};
+    std::vector<detail::aos_matrix<real_type>> alpha_vec{};
     if (is_oaa && is_oao) {
         // invalid model file
         throw invalid_file_format_exception{ "Can't distinguish between OAA and OAO in the given model file!" };
     } else if (is_oaa) {
         classification = classification_type::oaa;
+        alpha_vec = std::vector<detail::aos_matrix<real_type>>{ std::move(alpha) };
     } else if (is_oao) {
         // TODO: parallelize?
         classification = classification_type::oao;
-        // last vector entry not needed
-        alpha.pop_back();
+        // last vector entry must be ignored!
         // remap alpha vector from the read one to 01 02 03 12 13 23 etc.
         const std::size_t num_classes = num_sv_per_class.size();
         std::vector<std::vector<real_type>> oao_alpha(calculate_number_of_classifiers(classification_type::oao, num_classes));
@@ -492,7 +493,7 @@ template <typename real_type>
                         ++running_a;
                     }
                     // get the current alpha value
-                    const real_type alpha_val = alpha[a][running_idx];
+                    const real_type alpha_val = alpha(a, running_idx);
                     // calculate to which alpha vector the alpha value should be added to
                     const std::size_t idx = x_vs_y_to_idx(nr_sv, running_a, num_classes);
                     // add the alpha value
@@ -503,14 +504,21 @@ template <typename real_type>
                 ++running_idx;
             }
         }
-        // update alpha vector
-        alpha = std::move(oao_alpha);
+        // update alpha vector  // TODO: better?
+        alpha_vec.resize(oao_alpha.size());
+        #pragma omp parallel for default(none) shared(oao_alpha, alpha_vec)
+        for (std::size_t i = 0; i < oao_alpha.size(); ++i) {
+            alpha_vec[i] = detail::aos_matrix<real_type>{ 1, oao_alpha[i].size() };
+            for (std::size_t j = 0; j < oao_alpha[i].size(); ++j) {
+                alpha_vec[i](0, j) = oao_alpha[i][j];
+            }
+        }
     } else {
         // invalid model file
         throw invalid_file_format_exception{ "Can't parse file: neither found OAA nor OAO!" };
     }
 
-    return std::make_tuple(num_data_points, num_features, std::move(data), std::move(alpha), classification);
+    return std::make_tuple(num_data_points, num_features, std::move(data), std::move(alpha_vec), classification);
 }
 
 /**
@@ -617,7 +625,7 @@ inline std::vector<label_type> write_libsvm_model_header(fmt::ostream &out, cons
  * @attention The PLSSVM model file is only compatible with LIBSVM for the one vs. one classification type.
  */
 template <typename real_type, typename label_type>
-inline void write_libsvm_model_data(const std::string &filename, const plssvm::parameter &params, const classification_type classification, const std::vector<real_type> &rho, const std::vector<std::vector<real_type>> &alpha, const std::vector<std::vector<std::size_t>> &indices, const data_set<real_type, label_type> &data, const detail::aos_matrix<real_type> &support_vectors) {
+inline void write_libsvm_model_data(const std::string &filename, const plssvm::parameter &params, const classification_type classification, const std::vector<real_type> &rho, const std::vector<detail::aos_matrix<real_type>> &alpha, const std::vector<std::vector<std::size_t>> &indices, const data_set<real_type, label_type> &data, const detail::aos_matrix<real_type> &support_vectors) {
     PLSSVM_ASSERT(data.has_labels(), "Cannot write a model file that does not include labels!");
     PLSSVM_ASSERT(rho.size() == calculate_number_of_classifiers(classification, data.num_classes()),
                   "The number of different labels is {} (nr_class). Therefore, the number of rho values must either be {} (one vs. all) or {} (one vs. vs), but is {}!",
@@ -625,16 +633,17 @@ inline void write_libsvm_model_data(const std::string &filename, const plssvm::p
                   calculate_number_of_classifiers(classification_type::oaa, data.num_classes()),
                   calculate_number_of_classifiers(classification_type::oao, data.num_classes()),
                   rho.size());
-    PLSSVM_ASSERT(alpha.size() == calculate_number_of_classifiers(classification, data.num_classes()),
-                  "The number of different labels is {} (nr_class). Therefore, the number of alpha values must either be {} (one vs. all) or {} (one vs. vs), but is {}!",
-                  data.num_classes(),
-                  calculate_number_of_classifiers(classification_type::oaa, data.num_classes()),
-                  calculate_number_of_classifiers(classification_type::oao, data.num_classes()),
-                  rho.size());
 #if defined(PLSSVM_ASSERT_ENABLED)
-    if (classification == classification_type::oaa) {
-        PLSSVM_ASSERT(std::all_of(alpha.cbegin(), alpha.cend(), [&alpha](const std::vector<real_type> &a) { return a.size() == alpha.front().size(); }), "The number of weights per class must be equal!");
-        PLSSVM_ASSERT(alpha.front().size() == data.num_data_points(), "The number of weights ({}) must be equal to the number of support vectors ({})!", alpha.front().size(), data.num_data_points());
+    switch (classification) {
+        case classification_type::oaa:
+            PLSSVM_ASSERT(alpha.size() == 1, "In case of OAA, the vector may only contain one matrix as entry, but has {}!", alpha.size());
+            PLSSVM_ASSERT(alpha.front().num_rows() == calculate_number_of_classifiers(classification, data.num_classes()), "The number of rows in the matrix must be {}, but is {}!", alpha.front().num_rows(), calculate_number_of_classifiers(classification, data.num_classes()));
+            PLSSVM_ASSERT(alpha.front().num_cols() == data.num_data_points(), "The number of weights ({}) must be equal to the number of support vectors ({})!", alpha.front().num_cols(), data.num_data_points());
+            break;
+        case classification_type::oao:
+            PLSSVM_ASSERT(alpha.size() == calculate_number_of_classifiers(classification, data.num_classes()), "The number of matrices in the alpha vector must contain {} entries, but only contains {} entries!", calculate_number_of_classifiers(classification, data.num_classes()), alpha.size());
+            PLSSVM_ASSERT(std::all_of(alpha.cbegin(), alpha.cend(), [](const detail::aos_matrix<real_type> &matr) { return matr.num_rows() == 1; }), "In case of OAO, each matrix may only contain one row!");
+            break;
     }
 #endif
     const std::vector<label_type> &labels = data.labels().value();
@@ -703,16 +712,16 @@ inline void write_libsvm_model_data(const std::string &filename, const plssvm::p
                     switch (classification) {
                         case classification_type::oaa:
                             for (typename std::vector<std::vector<real_type>>::size_type a = 0; a < num_alpha_per_point; ++a) {
-                                alpha_per_point[a] = alpha[a][i];
+                                alpha_per_point[a] = alpha.front()(a, i);
                             }
                             break;
                         case classification_type::oao:
                             for (std::size_t j = 0, pos = 0; j < num_classes; ++j) {
                                 if (l != j) {
                                     const std::size_t idx = x_vs_y_to_idx(l, j, num_classes);
-                                    const std::vector<real_type> &alpha_vec = alpha[idx];
+                                    const detail::aos_matrix<real_type> &alpha_vec = alpha[idx];
                                     const std::size_t sv_idx = calculate_alpha_idx(l, j, indices, i);
-                                    alpha_per_point[pos] = alpha_vec[sv_idx];
+                                    alpha_per_point[pos] = alpha_vec(0, sv_idx);
                                     ++pos;
                                 }
                             }

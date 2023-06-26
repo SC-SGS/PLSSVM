@@ -171,7 +171,7 @@ class model {
      * @brief The learned weights for each support vector.
      * @note Must be initialized to an empty vector instead of a `nullptr`.
      */
-    std::shared_ptr<std::vector<std::vector<real_type>>> alpha_ptr_{ std::make_shared<std::vector<std::vector<real_type>>>() };
+    std::shared_ptr<std::vector<detail::aos_matrix<real_type>>> alpha_ptr_{ std::make_shared<std::vector<detail::aos_matrix<real_type>>>() };
 
     /**
      * @brief For each class, holds the indices of all data points in the support vectors.
