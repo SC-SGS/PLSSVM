@@ -521,10 +521,10 @@ std::pair<std::vector<std::vector<real_type>>, std::vector<real_type>> gpu_csvm<
     // CG
 
     detail::aos_matrix<real_type> X{ num_rhs, dept, real_type{ 1.0 } };
-    device_ptr_type<real_type> X_d{ X.num_rows() * X.num_cols() };
+    device_ptr_type<real_type> X_d{ X.num_entries() };
 
     detail::aos_matrix<real_type> R{ B };
-    device_ptr_type<real_type> R_d{ R.num_rows() * R.num_cols() };
+    device_ptr_type<real_type> R_d{ R.num_entries() };
 
     // R = B - A * X
     X_d.copy_to_device(X.data());
@@ -545,10 +545,10 @@ std::pair<std::vector<std::vector<real_type>>, std::vector<real_type>> gpu_csvm<
     }
     const std::vector<real_type> delta0(delta);
     detail::aos_matrix<real_type> Q{ num_rhs, dept };
-    device_ptr_type<real_type> Q_d{ Q.num_rows() * Q.num_cols() };
+    device_ptr_type<real_type> Q_d{ Q.num_entries() };
 
     detail::aos_matrix<real_type> D{ R };
-    device_ptr_type<real_type> D_d{ D.num_rows() * D.num_cols() };
+    device_ptr_type<real_type> D_d{ D.num_entries() };
 
     // timing for each CG iteration
     std::chrono::milliseconds average_iteration_time{};
