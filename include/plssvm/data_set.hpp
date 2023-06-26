@@ -18,6 +18,7 @@
 #include "plssvm/detail/io/libsvm_parsing.hpp"           // plssvm::detail::io::{read_arff_data, write_arff_data}
 #include "plssvm/detail/io/scaling_factors_parsing.hpp"  // plssvm::detail::io::{parse_scaling_factors, read_scaling_factors}
 #include "plssvm/detail/logger.hpp"                      // plssvm::detail::log, plssvm::verbosity_level
+#include "plssvm/detail/matrix.hpp"                      // plssvm::detail::aos_matrix
 #include "plssvm/detail/performance_tracker.hpp"         // plssvm::detail::tracking_entry
 #include "plssvm/detail/string_utility.hpp"              // plssvm::detail::ends_with
 #include "plssvm/detail/type_list.hpp"                   // plssvm::detail::{real_type_list, label_type_list, type_list_contains_v}
@@ -43,6 +44,8 @@
 #include <tuple>                                         // std::tie
 #include <utility>                                       // std::move, std::pair, std::make_pair
 #include <vector>                                        // std::vector
+
+// TODO: public API std::vector<std::vector<real_type>> vs plssvm::detail::aos_matrix<real_type>
 
 namespace plssvm {
 
@@ -127,16 +130,16 @@ class data_set {
     data_set(const std::string &filename, file_format_type format, scaling scale_parameter);
 
     /**
-     * @brief Create a new data set using the provided @p data_points.
+     * @brief Create a new data set copying the provided @p data_points.
      * @details Since no labels are provided, this data set may **not** be used to a call to plssvm::csvm::fit!
      * @param[in] data_points the data points used in this data set
      * @throws plssvm::data_set_exception if the @p data_points vector is empty
      * @throws plssvm::data_set_exception if the data points in @p data_points have mismatching number of features
      * @throws plssvm::data_set_exception if any @p data_point has no features
      */
-    explicit data_set(std::vector<std::vector<real_type>> data_points);
+    explicit data_set(const std::vector<std::vector<real_type>> &data_points);
     /**
-     * @brief Create a new data set using the provided @p data_points and @p labels.
+     * @brief Create a new data set copying the provided @p data_points and @p labels.
      * @param[in] data_points the data points used in this data set
      * @param[in] labels the labels used in this data set
      * @throws plssvm::data_set_exception if the @p data_points vector is empty
@@ -144,9 +147,9 @@ class data_set {
      * @throws plssvm::data_set_exception if any @p data_point has no features
      * @throws plssvm::data_set_exception if the number of data points in @p data_points and number of @p labels mismatch
      */
-    data_set(std::vector<std::vector<real_type>> data_points, std::vector<label_type> labels);
+    data_set(const std::vector<std::vector<real_type>> &data_points, std::vector<label_type> labels);
     /**
-     * @brief Create a new data set using the the provided @p data_points and scale them using the provided @p scale_parameter.
+     * @brief Create a new data set copying the the provided @p data_points and scale them using the provided @p scale_parameter.
      * @param[in] data_points the data points used in this data set
      * @param[in] scale_parameter the parameters used to scale the data set feature values to a given range
      * @throws plssvm::data_set_exception if the @p data_points vector is empty
@@ -154,9 +157,9 @@ class data_set {
      * @throws plssvm::data_set_exception if any @p data_point has no features
      * @throws plssvm::data_set_exception all exceptions thrown by plssvm::data_set::scale
      */
-    data_set(std::vector<std::vector<real_type>> data_points, scaling scale_parameter);
+    data_set(const std::vector<std::vector<real_type>> &data_points, scaling scale_parameter);
     /**
-     * @brief Create a new data set using the the provided @p data_points and @p labels and scale the @p data_points using the provided @p scale_parameter.
+     * @brief Create a new data set copying the the provided @p data_points and @p labels and scale the @p data_points using the provided @p scale_parameter.
      * @param[in] data_points the data points used in this data set
      * @param[in] labels the labels used in this data set
      * @param[in] scale_parameter the parameters used to scale the data set feature values to a given range
@@ -166,7 +169,7 @@ class data_set {
      * @throws plssvm::data_set_exception if the number of data points in @p data_points and number of @p labels mismatch
      * @throws plssvm::data_set_exception all exceptions thrown by plssvm::data_set::scale
      */
-    data_set(std::vector<std::vector<real_type>> data_points, std::vector<label_type> labels, scaling scale_parameter);
+    data_set(const std::vector<std::vector<real_type>> &data_points, std::vector<label_type> labels, scaling scale_parameter);
 
     /**
      * @brief Save the data points and potential labels of this data set to the file @p filename using the file @p format type.
@@ -183,10 +186,10 @@ class data_set {
     void save(const std::string &filename) const;
 
     /**
-     * @brief Return the data points in this data set.
+     * @brief Return the data points in this data set by copying them to a 2D vector.
      * @return the data points (`[[nodiscard]]`)
      */
-    [[nodiscard]] const std::vector<std::vector<real_type>> &data() const noexcept { return *data_ptr_; }
+    [[nodiscard]] std::vector<std::vector<real_type>> data() const { return data_ptr_->to_2D_vector(); }
     /**
      * @brief Returns whether this data set contains labels or not.
      * @return `true` if this data set contains labels, `false` otherwise (`[[nodiscard]]`)
@@ -243,7 +246,7 @@ class data_set {
      * @brief Default construct an empty data set.
      */
     data_set() :
-        data_ptr_{ std::make_shared<std::vector<std::vector<real_type>>>() } {}
+        data_ptr_{ std::make_shared<detail::aos_matrix<real_type>>() } {}
 
     /**
      * @brief Create the mapping between the provided labels and the internally used indices.
@@ -271,11 +274,11 @@ class data_set {
     void read_file(const std::string &filename, file_format_type format);
 
     /// A pointer to the two-dimensional data points.
-    std::shared_ptr<std::vector<std::vector<real_type>>> data_ptr_{ nullptr };
+    std::shared_ptr<detail::aos_matrix<real_type>> data_ptr_{ nullptr };
     /// A pointer to the original labels of this data set; may be `nullptr` if no labels have been provided.
     std::shared_ptr<std::vector<label_type>> labels_ptr_{ nullptr };
     /// A pointer to the mapped values of the labels of this data set; may be `nullptr` if no labels have been provided.
-    std::shared_ptr<std::vector<std::vector<real_type>>> y_ptr_{ nullptr };
+    std::shared_ptr<detail::aos_matrix<real_type>> y_ptr_{ nullptr };
 
     /// The number of data points in this data set.
     size_type num_data_points_{ 0 };
@@ -517,23 +520,23 @@ data_set<T, U>::data_set(const std::string &filename, file_format_type format, s
 }
 
 template <typename T, typename U>
-data_set<T, U>::data_set(std::vector<std::vector<real_type>> data_points) :
-    data_ptr_{ std::make_shared<std::vector<std::vector<real_type>>>(std::move(data_points)) } {
+data_set<T, U>::data_set(const std::vector<std::vector<real_type>> &data_points) {
     // the provided data points vector may not be empty
-    if (data_ptr_->empty()) {
+    if (data_points.empty()) {
         throw data_set_exception{ "Data vector is empty!" };
     }
     // check that all data points have the same number of features
-    if (!std::all_of(data_ptr_->cbegin(), data_ptr_->cend(), [this](const std::vector<real_type> &point) { return point.size() == data_ptr_->front().size(); })) {
+    if (!std::all_of(data_points.cbegin(), data_points.cend(), [&data_points](const std::vector<real_type> &point) { return point.size() == data_points.front().size(); })) {
         throw data_set_exception{ "All points in the data vector must have the same number of features!" };
     }
     // check that the data points have at least one feature
-    if (data_ptr_->front().size() == 0) {
+    if (data_points.front().size() == 0) {
         throw data_set_exception{ "No features provided for the data points!" };
     }
 
-    num_data_points_ = data_ptr_->size();
-    num_features_ = data_ptr_->front().size();
+    num_data_points_ = data_points.size();
+    num_features_ = data_points.front().size();
+    data_ptr_ = std::make_shared<detail::aos_matrix<real_type>>(data_points);
 
     detail::log(verbosity_level::full | verbosity_level::timing,
                 "Created a data set with {} data points, {} features, and {} classes.\n",
@@ -543,8 +546,8 @@ data_set<T, U>::data_set(std::vector<std::vector<real_type>> data_points) :
 }
 
 template <typename T, typename U>
-data_set<T, U>::data_set(std::vector<std::vector<real_type>> data_points, std::vector<label_type> labels) :
-    data_set{ std::move(data_points) } {
+data_set<T, U>::data_set(const std::vector<std::vector<real_type>> &data_points, std::vector<label_type> labels) :
+    data_set{ data_points } {
     // initialize labels
     labels_ptr_ = std::make_shared<std::vector<label_type>>(std::move(labels));
     // the number of labels must be equal to the number of data points!
@@ -564,8 +567,8 @@ data_set<T, U>::data_set(std::vector<std::vector<real_type>> data_points, std::v
 }
 
 template <typename T, typename U>
-data_set<T, U>::data_set(std::vector<std::vector<real_type>> data_points, scaling scale_parameter) :
-    data_set{ std::move(data_points) } {
+data_set<T, U>::data_set(const std::vector<std::vector<real_type>> &data_points, scaling scale_parameter) :
+    data_set{ data_points } {
     // initialize scaling
     scale_parameters_ = std::make_shared<scaling>(std::move(scale_parameter));
     // scale data set
@@ -573,8 +576,8 @@ data_set<T, U>::data_set(std::vector<std::vector<real_type>> data_points, scalin
 }
 
 template <typename T, typename U>
-data_set<T, U>::data_set(std::vector<std::vector<real_type>> data_points, std::vector<label_type> labels, scaling scale_parameter) :
-    data_set{ std::move(data_points), std::move(labels) } {
+data_set<T, U>::data_set(const std::vector<std::vector<real_type>> &data_points, std::vector<label_type> labels, scaling scale_parameter) :
+    data_set{ data_points, std::move(labels) } {
     // initialize scaling
     scale_parameters_ = std::make_shared<scaling>(std::move(scale_parameter));
     // scale data set
@@ -666,13 +669,13 @@ void data_set<T, U>::create_mapping(const std::vector<label_type> &classes) {
     label_mapper mapper{ classes };
 
     // convert input labels to now mapped values
-    typename decltype(y_ptr_)::element_type tmp(mapper.num_mappings(), std::vector<real_type>(labels_ptr_->size(), real_type{ -1.0 }));
+    detail::aos_matrix<real_type> tmp{ mapper.num_mappings(), labels_ptr_->size(), real_type{ -1.0 } };
 
     #pragma omp parallel for collapse(2) default(none) shared(tmp, labels_ptr_, mapper)
-    for (typename std::vector<std::vector<real_type>>::size_type label = 0; label < tmp.size(); ++label) {
-        for (typename std::vector<real_type>::size_type i = 0; i < labels_ptr_->size(); ++i) {
+    for (typename std::vector<std::vector<real_type>>::size_type label = 0; label < tmp.num_rows(); ++label) {
+        for (typename std::vector<real_type>::size_type i = 0; i < tmp.num_cols(); ++i) {
             if (label == mapper.get_mapped_index_by_label((*labels_ptr_)[i])) {
-                tmp[label][i] = real_type{ 1.0 };
+                tmp(label, i) = real_type{ 1.0 };
             }
         }
     }
@@ -701,8 +704,8 @@ void data_set<T, U>::scale() {
             // calculate min/max values of all data points at the specific feature
             #pragma omp parallel for default(shared) firstprivate(feature) reduction(min : min_value) reduction(max : max_value)
             for (size_type data_point = 0; data_point < num_data_points_; ++data_point) {
-                min_value = std::min(min_value, (*data_ptr_)[data_point][feature]);
-                max_value = std::max(max_value, (*data_ptr_)[data_point][feature]);
+                min_value = std::min(min_value, (*data_ptr_)(data_point, feature));
+                max_value = std::max(max_value, (*data_ptr_)(data_point, feature));
             }
 
             // add scaling factor only if min_value != 0.0 AND max_value != 0.0
@@ -737,7 +740,7 @@ void data_set<T, U>::scale() {
         const typename scaling::factors factor = scale_parameters_->scaling_factors[i];
         // scale data values
         for (size_type data_point = 0; data_point < num_data_points_; ++data_point) {
-            (*data_ptr_)[data_point][factor.feature] = lower + (upper - lower) * ((*data_ptr_)[data_point][factor.feature] - factor.lower) / (factor.upper - factor.lower);
+            (*data_ptr_)(data_point, factor.feature) = lower + (upper - lower) * ((*data_ptr_)(data_point, factor.feature) - factor.lower) / (factor.upper - factor.lower);
         }
     }
 

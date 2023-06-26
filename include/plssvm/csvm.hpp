@@ -193,11 +193,11 @@ class csvm {
      * @throws plssvm::exception any exception thrown by the backend's implementation
      * @return a pair of [the result vector x, the resulting bias] (`[[nodiscard]]`)
      */
-    [[nodiscard]] virtual std::pair<std::vector<std::vector<float>>, std::vector<float>> solve_system_of_linear_equations(const detail::parameter<float> &params, const std::vector<std::vector<float>> &A, std::vector<std::vector<float>> B, float eps, unsigned long long max_iter) const = 0;
+    [[nodiscard]] virtual std::pair<std::vector<std::vector<float>>, std::vector<float>> solve_system_of_linear_equations(const detail::parameter<float> &params, const detail::aos_matrix<float> &A, detail::aos_matrix<float> B, float eps, unsigned long long max_iter) const = 0;
     /**
      * @copydoc plssvm::csvm::solve_system_of_linear_equations
      */
-    [[nodiscard]] virtual std::pair<std::vector<std::vector<double>>, std::vector<double>> solve_system_of_linear_equations(const detail::parameter<double> &params, const std::vector<std::vector<double>> &A, std::vector<std::vector<double>> B, double eps, unsigned long long max_iter) const = 0;
+    [[nodiscard]] virtual std::pair<std::vector<std::vector<double>>, std::vector<double>> solve_system_of_linear_equations(const detail::parameter<double> &params, const detail::aos_matrix<double> &A, detail::aos_matrix<double> B, double eps, unsigned long long max_iter) const = 0;
     /**
      * @brief Uses the already learned model to predict the class of multiple (new) data points.
      * @details Uses the one vs. all (OAA) for the multi-class classification task.
@@ -334,11 +334,12 @@ model<real_type, label_type> csvm::fit(const data_set<real_type, label_type> &da
     if (classification_val.value() == plssvm::classification_type::oaa) {
         // use the one vs. all multi-class classification strategy
         // solve the minimization problem
-        std::tie(*csvm_model.alpha_ptr_, *csvm_model.rho_ptr_) = solve_system_of_linear_equations(static_cast<detail::parameter<real_type>>(params), data.data(), *data.y_ptr_, epsilon_val.value(), max_iter_val.value());
+        std::tie(*csvm_model.alpha_ptr_, *csvm_model.rho_ptr_) = solve_system_of_linear_equations(static_cast<detail::parameter<real_type>>(params), *data.data_ptr_, *data.y_ptr_, epsilon_val.value(), max_iter_val.value());
     } else if (classification_val.value() == plssvm::classification_type::oao) {
         // use the one vs. one multi-class classification strategy
         const std::size_t num_classes = data.num_classes();
         const std::size_t num_binary_classifications = calculate_number_of_classifiers(classification_type::oao, num_classes);
+        const std::size_t num_features = data.num_features();
         // resize alpha_ptr_ and rho_ptr_ to the correct sizes
         csvm_model.alpha_ptr_->resize(num_binary_classifications);
         csvm_model.rho_ptr_->resize(num_binary_classifications);
@@ -358,27 +359,31 @@ model<real_type, label_type> csvm::fit(const data_set<real_type, label_type> &da
             for (std::size_t j = i + 1; j < num_classes; ++j) {
                 // assemble one vs. one classification matrix and rhs
                 const std::size_t num_data_points_in_sub_matrix{ indices[i].size() + indices[j].size() };
-                std::vector<std::vector<real_type>> binary_data(num_data_points_in_sub_matrix);
-                std::vector<std::vector<real_type>> binary_y(1, std::vector<real_type>(num_data_points_in_sub_matrix));  // note: the first dimension will always be one, since only one rhs is needed
+                detail::aos_matrix<real_type> binary_data{ num_data_points_in_sub_matrix, num_features };
+                detail::aos_matrix<real_type> binary_y{ 1, num_data_points_in_sub_matrix };  // note: the first dimension will always be one, since only one rhs is needed
 
                 // TODO: not sorted? -> would enable optimization for OAO in the binary case
                 // note: if this is changed, it must also be changed in the libsvm_model_parsing.hpp in the calculate_alpha_idx function!!!
-                #pragma omp parallel default(none) shared(binary_data, binary_y, indices, data) firstprivate(i, j)
+                #pragma omp parallel default(none) shared(binary_data, binary_y, indices, data) firstprivate(i, j, num_features)
                 {
                     #pragma omp for nowait
                     for (std::size_t d = 0; d < indices[i].size(); ++d) {
-                        binary_data[d] = data.data()[indices[i][d]];
-                        binary_y.front()[d] = real_type{ 1.0 };
+                        for (std::size_t dim = 0; dim < num_features; ++dim) {
+                            binary_data(d, dim) = (*data.data_ptr_)(indices[i][d], dim);
+                            binary_y(0, d) = real_type{ 1.0 };
+                        }
                     }
                     #pragma omp for
                     for (std::size_t d = 0; d < indices[j].size(); ++d) {
-                        binary_data[indices[i].size() + d] = data.data()[indices[j][d]];
-                        binary_y.front()[indices[i].size() + d] = real_type{ -1.0 };
+                        for (std::size_t dim = 0; dim < num_features; ++dim) {
+                            binary_data(indices[i].size() + d, dim) = (*data.data_ptr_)(indices[j][d], dim);
+                            binary_y(0, indices[i].size() + d) = real_type{ -1.0 };
+                        }
                     }
                 }
 
                 // if max_iter is the default value, update it according to the current binary classification matrix size
-                const unsigned long long binary_max_iter = max_iter_val.is_default() ? static_cast<unsigned long long>(binary_data.size()) : max_iter_val.value();
+                const unsigned long long binary_max_iter = max_iter_val.is_default() ? static_cast<unsigned long long>(binary_data.num_rows()) : max_iter_val.value();
                 // solve the minimization problem -> note that only a single rhs is present
                 detail::log(verbosity_level::full | verbosity_level::timing,
                             "\nClassifying {} vs {} ({} vs {}) ({}/{}):\n",
@@ -417,24 +422,11 @@ std::vector<label_type> csvm::predict(const model<real_type, label_type> &model,
     // convert predicted values to the correct labels
     std::vector<label_type> predicted_labels(data.num_data_points());
 
-    // TODO: remove copy
-    detail::aos_matrix<real_type> predict_points{ data.num_data_points(), data.num_features() };
-    #pragma omp parallel for collapse(2)
-    for (std::size_t row = 0; row < predict_points.num_rows(); ++row) {
-        for (std::size_t col = 0; col < predict_points.num_cols(); ++col) {
-            predict_points(row, col) = data.data()[row][col];
-        }
-    }
+    const detail::aos_matrix<real_type> &predict_points = *data.data_ptr_;
 
     if (model.get_classification_type() == classification_type::oaa) {
-        // TODO: remove copy
-        detail::aos_matrix<real_type> sv{ model.num_support_vectors(), model.num_features() };
-        #pragma omp parallel for collapse(2)
-        for (std::size_t row = 0; row < sv.num_rows(); ++row) {
-            for (std::size_t col = 0; col < sv.num_cols(); ++col) {
-                sv(row, col) = model.support_vectors()[row][col];
-            }
-        }
+        const detail::aos_matrix<real_type> &sv = *model.data_.data_ptr_;
+
         // TODO: remove copy
         detail::aos_matrix<real_type> alpha{ model.alpha_ptr_->size(), model.alpha_ptr_->front().size() };
         #pragma omp parallel for collapse(2)
@@ -494,7 +486,7 @@ std::vector<label_type> csvm::predict(const model<real_type, label_type> &model,
                 detail::aos_matrix<real_type> binary_sv{ num_data_points_in_sub_matrix, num_features };
                 detail::aos_matrix<real_type> binary_alpha{ 1, num_data_points_in_sub_matrix };
                 // TODO: remove copy
-                #pragma omp parallel for
+                #pragma omp parallel for default(none) shared(binary_alpha, model) firstprivate(num_data_points_in_sub_matrix, pos)
                 for (std::size_t a = 0; a < num_data_points_in_sub_matrix; ++a) {
                     binary_alpha(0, a) = (*model.alpha_ptr_)[pos][a];
                 }
@@ -507,13 +499,13 @@ std::vector<label_type> csvm::predict(const model<real_type, label_type> &model,
                     #pragma omp for nowait
                     for (std::size_t d = 0; d < indices[i].size(); ++d) {
                         for (std::size_t dim = 0; dim < num_features; ++dim) {
-                            binary_sv(d, dim) = model.data_.data()[indices[i][d]][dim];
+                            binary_sv(d, dim) = (*model.data_.data_ptr_)(indices[i][d], dim);
                         }
                     }
                     #pragma omp for
                     for (std::size_t d = 0; d < indices[j].size(); ++d) {
                         for (std::size_t dim = 0; dim < num_features; ++dim) {
-                            binary_sv(indices[i].size() + d, dim) = model.data_.data()[indices[j][d]][dim];
+                            binary_sv(indices[i].size() + d, dim) = (*model.data_.data_ptr_)(indices[j][d], dim);
                         }
                     }
                 }

@@ -15,6 +15,7 @@
 
 #include "plssvm/detail/assert.hpp"             // PLSSVM_ASSERT
 #include "plssvm/detail/io/file_reader.hpp"     // plssvm::detail::io::file_reader
+#include "plssvm/detail/matrix.hpp"             // plssvm::detail::aos_matrix
 #include "plssvm/detail/string_conversion.hpp"  // plssvm::detail::convert_to
 #include "plssvm/detail/utility.hpp"            // plssvm::detail::current_date_time
 #include "plssvm/exceptions/exceptions.hpp"     // plssvm::invalid_file_format_exception
@@ -108,10 +109,10 @@ namespace plssvm::detail::io {
  * @throws plssvm::invalid_file_format_exception if the provided LIBSVM file uses zero-based indexing (LIBSVM mandates one-based indices)
  * @throws plssvm::invalid_file_format_exception if the feature (indices) are not given in a strictly increasing order
  * @throws plssvm::invalid_file_format_exception if only **some** data points are annotated with labels
- * @return a std::tuple containing: [num_data_points, num_features, data_points, labels] (`[[nodiscard]]`)
+ * @return a std::tuple containing: [the number of data points, the number of features per data point, the data points, the labels (optional)] (`[[nodiscard]]`)
  */
 template <typename real_type, typename label_type>
-[[nodiscard]] inline std::tuple<std::size_t, std::size_t, std::vector<std::vector<real_type>>, std::vector<label_type>> parse_libsvm_data(const file_reader &reader) {
+[[nodiscard]] inline std::tuple<std::size_t, std::size_t, detail::aos_matrix<real_type>, std::vector<label_type>> parse_libsvm_data(const file_reader &reader) {
     PLSSVM_ASSERT(reader.is_open(), "The file_reader is currently not associated with a file!");
     // sanity check: can't skip more lines than are present
 
@@ -125,17 +126,17 @@ template <typename real_type, typename label_type>
     }
 
     // create vector containing the data and label
-    std::vector<std::vector<real_type>> data(num_data_points);
+    detail::aos_matrix<real_type> data{ num_data_points, num_features };
     std::vector<label_type> label(num_data_points);
 
     std::exception_ptr parallel_exception;
     bool has_label = false;
     bool has_no_label = false;
 
-    #pragma omp parallel default(none) shared(reader, data, label, parallel_exception, has_label, has_no_label) firstprivate(num_features)
+    #pragma omp parallel default(none) shared(reader, data, label, parallel_exception, has_label, has_no_label) firstprivate(num_data_points, num_features)
     {
         #pragma omp for reduction(|| : has_label) reduction(|| : has_no_label)
-        for (typename std::vector<std::vector<real_type>>::size_type i = 0; i < data.size(); ++i) {
+        for (typename std::vector<std::vector<real_type>>::size_type i = 0; i < num_data_points; ++i) {
             try {
                 std::string_view line = reader.line(i);
                 unsigned long last_index = 0;
@@ -159,7 +160,6 @@ template <typename real_type, typename label_type>
                 }
 
                 // get data
-                std::vector<real_type> vline(num_features);
                 while (true) {
                     std::string_view::size_type next_pos = line.find_first_of(':', pos);
                     // no further data points
@@ -186,11 +186,9 @@ template <typename real_type, typename label_type>
 
                     // get value
                     next_pos = line.find_first_of(' ', pos);
-                    vline[index] = detail::convert_to<real_type, invalid_file_format_exception>(line.substr(pos, next_pos - pos));
+                    data(i, index) = detail::convert_to<real_type, invalid_file_format_exception>(line.substr(pos, next_pos - pos));
                     pos = next_pos;
                 }
-                // move filled line to overall matrix
-                data[i] = std::move(vline);
             } catch (const std::exception &) {
                 // catch first exception and store it
                 #pragma omp critical
@@ -236,10 +234,10 @@ template <typename real_type, typename label_type>
  * @note The features are written using one-based indices!
  */
 template <typename real_type, typename label_type, bool has_label>
-inline void write_libsvm_data_impl(const std::string &filename, const std::vector<std::vector<real_type>> &data, const std::vector<label_type> &label) {
+inline void write_libsvm_data_impl(const std::string &filename, const detail::aos_matrix<real_type> &data, const std::vector<label_type> &label) {
     if constexpr (has_label) {
         PLSSVM_ASSERT(data.empty() || !label.empty(), "has_label is 'true' but no labels were provided!");
-        PLSSVM_ASSERT(data.size() == label.size(), "Number of data points ({}) and number of labels ({}) mismatch!", data.size(), label.size());
+        PLSSVM_ASSERT(data.num_rows() == label.size(), "Number of data points ({}) and number of labels ({}) mismatch!", data.num_rows(), label.size());
     } else {
         PLSSVM_ASSERT(label.empty(), "has_label is 'false' but labels were provided!");
     }
@@ -249,27 +247,27 @@ inline void write_libsvm_data_impl(const std::string &filename, const std::vecto
     // write timestamp as current date time
     out.print("# This data set has been created at {}\n", detail::current_date_time());
 
-    const std::size_t num_data_points = data.size();
+    const std::size_t num_data_points = data.num_rows();
     if (num_data_points == 0) {
         // nothing to output
         return;
     }
-    const std::size_t num_features = data.front().size();
+    const std::size_t num_features = data.num_cols();
     out.print("# {}x{}\n", num_data_points, num_features);
 
     // format one output-line
-    auto format_libsvm_line = [](std::string &output, const std::vector<real_type> &data_point) {
+    auto format_libsvm_line = [num_features](std::string &output, const detail::aos_matrix<real_type> &data_point, const std::size_t row) {
         static constexpr std::size_t BLOCK_SIZE = 64;
         static constexpr std::size_t CHARS_PER_BLOCK = 128;
         static constexpr std::size_t BUFFER_SIZE = BLOCK_SIZE * CHARS_PER_BLOCK;
         static std::array<char, BUFFER_SIZE> buffer;
         #pragma omp threadprivate(buffer)
 
-        for (typename std::vector<real_type>::size_type j = 0; j < data_point.size(); j += BLOCK_SIZE) {
+        for (typename std::vector<real_type>::size_type j = 0; j < num_features; j += BLOCK_SIZE) {
             char *ptr = buffer.data();
-            for (std::size_t i = 0; i < std::min<std::size_t>(BLOCK_SIZE, data_point.size() - j); ++i) {
-                if (data_point[j + i] != real_type{ 0.0 }) {
-                    ptr = fmt::format_to(ptr, FMT_COMPILE("{}:{:.10e} "), j + i + 1, data_point[j + i]);
+            for (std::size_t i = 0; i < std::min<std::size_t>(BLOCK_SIZE, num_features - j); ++i) {
+                if (data_point(row, j + i) != real_type{ 0.0 }) {
+                    ptr = fmt::format_to(ptr, FMT_COMPILE("{}:{:.10e} "), j + i + 1, data_point(row, j + i));
                 }
             }
             output.append(buffer.data(), ptr - buffer.data());
@@ -277,16 +275,16 @@ inline void write_libsvm_data_impl(const std::string &filename, const std::vecto
         output.push_back('\n');
     };
 
-    #pragma omp parallel default(none) shared(out, data, label, format_libsvm_line)
+    #pragma omp parallel default(none) shared(out, data, label, format_libsvm_line, num_data_points, num_features)
     {
         // all support vectors
         std::string out_string;
         #pragma omp for schedule(dynamic) nowait
-        for (typename std::vector<real_type>::size_type i = 0; i < data.size(); ++i) {
+        for (typename std::vector<real_type>::size_type i = 0; i < num_data_points; ++i) {
             if constexpr (has_label) {
                 out_string.append(fmt::format(FMT_COMPILE("{} "), label[i]));
             }
-            format_libsvm_line(out_string, data[i]);
+            format_libsvm_line(out_string, data, i);
         }
 
         #pragma omp critical
@@ -314,7 +312,7 @@ inline void write_libsvm_data_impl(const std::string &filename, const std::vecto
  * @note The features are written using one-based indices!
  */
 template <typename real_type, typename label_type>
-inline void write_libsvm_data(const std::string &filename, const std::vector<std::vector<real_type>> &data, const std::vector<label_type> &label) {
+inline void write_libsvm_data(const std::string &filename, const detail::aos_matrix<real_type> &data, const std::vector<label_type> &label) {
     write_libsvm_data_impl<real_type, label_type, true>(filename, data, label);
 }
 
@@ -336,7 +334,7 @@ inline void write_libsvm_data(const std::string &filename, const std::vector<std
  * @note The features are written using one-based indices!
  */
 template <typename real_type>
-inline void write_libsvm_data(const std::string &filename, const std::vector<std::vector<real_type>> &data) {
+inline void write_libsvm_data(const std::string &filename, const detail::aos_matrix<real_type> &data) {
     write_libsvm_data_impl<real_type, real_type, false>(filename, data, {});
 }
 

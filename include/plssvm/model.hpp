@@ -35,6 +35,8 @@
 #include <utility>                                    // std::move
 #include <vector>                                     // std::vector
 
+// TODO: public API std::vector<std::vector<real_type>> vs plssvm::detail::aos_matrix<real_type>
+
 namespace plssvm {
 
 /**
@@ -220,16 +222,17 @@ model<T, U>::model(const std::string &filename) {
     }
 
     // create empty support vectors and alpha vector
-    std::vector<std::vector<real_type>> support_vectors;
+    detail::aos_matrix<real_type> support_vectors{};
 
     // parse libsvm model data
     std::tie(num_support_vectors_, num_features_, support_vectors, *alpha_ptr_, classification_strategy_) = detail::io::parse_libsvm_model_data<real_type>(reader, num_sv_per_class, num_header_lines);
 
     // create data set
-    PLSSVM_ASSERT(support_vectors.size() == labels.size(), "Number of labels ({}) must match the number of data points ({})!", labels.size(), support_vectors.size());
+    PLSSVM_ASSERT(support_vectors.num_rows() == labels.size(), "Number of labels ({}) must match the number of data points ({})!", labels.size(), support_vectors.num_rows());
     const verbosity_level old_verbosity = verbosity;
     verbosity = verbosity_level::quiet;
-    data_ = data_set<real_type, label_type>{ std::move(support_vectors) };
+    data_ = data_set<real_type, label_type>{};
+    (*data_.data_ptr_) = std::move(support_vectors);
     data_.labels_ptr_ = std::make_shared<typename decltype(data_.labels_ptr_)::element_type>(std::move(labels));  // prevent multiple calls to "create_mapping"
     data_.create_mapping(unique_labels);
     verbosity = old_verbosity;
@@ -256,7 +259,7 @@ void model<T, U>::save(const std::string &filename) const {
     const std::chrono::time_point start_time = std::chrono::steady_clock::now();
 
     // save model file header and support vectors
-    detail::io::write_libsvm_model_data(filename, params_, classification_strategy_, *rho_ptr_, *alpha_ptr_, *indices_ptr_, data_);
+    detail::io::write_libsvm_model_data(filename, params_, classification_strategy_, *rho_ptr_, *alpha_ptr_, *indices_ptr_, data_, *data_.data_ptr_);
 
     const std::chrono::time_point end_time = std::chrono::steady_clock::now();
     detail::log(verbosity_level::full | verbosity_level::timing,
