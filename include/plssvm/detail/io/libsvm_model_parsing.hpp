@@ -376,7 +376,7 @@ template <typename real_type>
     #pragma omp parallel default(none) shared(std::cerr, reader, skipped_lines, data, alpha, parallel_exception, is_oaa, is_oao) firstprivate(num_data_points, num_features, max_num_alpha_values)
     {
         #pragma omp for
-        for (typename std::vector<std::vector<real_type>>::size_type i = 0; i < num_data_points; ++i) {
+        for (std::size_t i = 0; i < num_data_points; ++i) {
             try {
                 std::string_view line = reader.line(skipped_lines + i);
                 unsigned long last_index = 0;
@@ -711,7 +711,7 @@ inline void write_libsvm_model_data(const std::string &filename, const plssvm::p
                 if (labels[i] == label_order[l]) {
                     switch (classification) {
                         case classification_type::oaa:
-                            for (typename std::vector<std::vector<real_type>>::size_type a = 0; a < num_alpha_per_point; ++a) {
+                            for (std::size_t a = 0; a < num_alpha_per_point; ++a) {
                                 alpha_per_point[a] = alpha.front()(a, i);
                             }
                             break;

@@ -136,7 +136,7 @@ template <typename real_type, typename label_type>
     #pragma omp parallel default(none) shared(reader, data, label, parallel_exception, has_label, has_no_label) firstprivate(num_data_points, num_features)
     {
         #pragma omp for reduction(|| : has_label) reduction(|| : has_no_label)
-        for (typename std::vector<std::vector<real_type>>::size_type i = 0; i < num_data_points; ++i) {
+        for (std::size_t i = 0; i < num_data_points; ++i) {
             try {
                 std::string_view line = reader.line(i);
                 unsigned long last_index = 0;
