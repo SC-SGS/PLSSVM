@@ -466,6 +466,7 @@ std::pair<detail::aos_matrix<real_type>, std::vector<real_type>> gpu_csvm<device
                                                                                                                     const unsigned long long max_iter) const {
     PLSSVM_ASSERT(!A.empty(), "The data must not be empty!");
     PLSSVM_ASSERT(!B_in.empty(), "At least one right hand side must be given!");
+    PLSSVM_ASSERT(A.num_rows() == B_in.num_rows(), "The number of rows in A ({}) and B({}) must be the same!", A.num_rows(), B_in.num_rows());
     PLSSVM_ASSERT(eps > real_type{ 0.0 }, "The stopping criterion in the CG algorithm must be greater than 0.0, but is {}!", eps);
     PLSSVM_ASSERT(max_iter > 0, "The number of CG iterations must be greater than 0!");
 
