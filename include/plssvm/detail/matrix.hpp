@@ -54,6 +54,13 @@ class matrix_impl {
      */
     matrix_impl() = default;
     /**
+     * @brief Construct a new matrix from @p other. Respects potential different layout types.
+     * @tparam other_layout_ the layout_type of the other matrix
+     * @param[in] other the other matrix
+     */
+    template <layout_type other_layout_>
+    matrix_impl(const matrix_impl<T, other_layout_> &other);
+    /**
      * @brief Create a matrix of size @p num_rows x @p num_cols and initialize all entries with the value @p init.
      * @param[in] num_rows the number of rows in the matrix
      * @param[in] num_cols the number of columns in the matrix
@@ -174,6 +181,23 @@ class matrix_impl {
     /// The (linearized, either in AoS or SoA layout) data.
     std::vector<value_type> data_{};
 };
+
+template <typename T, layout_type layout_>
+template <layout_type other_layout_>
+matrix_impl<T, layout_>::matrix_impl(const matrix_impl<T, other_layout_> &other) : matrix_impl{ other.num_rows(), other.num_cols() } {
+    if constexpr (layout_ == other_layout_) {
+        // same layout -> simply memcpy underlying array
+        std::memcpy(data_.data(), other.data(), this->num_entries() * sizeof(T));
+    } else {
+        // convert AoS -> SoA or SoA -> AoS
+        #pragma omp parallel for collapse(2) default(none) shared(other) firstprivate(num_rows_, num_cols_)
+        for (std::size_t row = 0; row < num_rows_; ++row) {
+            for (std::size_t col = 0; col < num_cols_; ++col) {
+                this->operator()(row, col) = other(row, col);
+            }
+        }
+    }
+}
 
 template <typename T, layout_type layout_>
 matrix_impl<T, layout_>::matrix_impl(const size_type num_rows, const size_type num_cols, const_reference init) :
