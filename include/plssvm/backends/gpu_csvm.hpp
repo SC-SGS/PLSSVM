@@ -491,7 +491,6 @@ std::pair<detail::aos_matrix<real_type>, std::vector<real_type>> gpu_csvm<device
     const real_type QA_cost = kernel_function(A, dept, A, dept, params) + real_type{ 1.0 } / params.cost;
 
     // update b
-    // TODO: better than copy?
     std::vector<real_type> b_back_value(num_rhs);
     detail::aos_matrix<real_type> B{ num_rhs, dept };
     #pragma omp parallel for default(none) shared(B_in, B, b_back_value) firstprivate(dept, num_rhs)

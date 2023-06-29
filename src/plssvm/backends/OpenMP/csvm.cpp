@@ -93,7 +93,6 @@ std::pair<detail::aos_matrix<real_type>, std::vector<real_type>> csvm::solve_sys
     const real_type QA_cost = kernel_function(A, dept, A, dept, params) + real_type{ 1.0 } / params.cost;
 
     // update b
-    // TODO: better than copy?
     std::vector<real_type> b_back_value(num_rhs);
     detail::aos_matrix<real_type> B{ num_rhs, dept };
     #pragma omp parallel for default(none) shared(B_in, B, b_back_value) firstprivate(dept, num_rhs)
@@ -341,7 +340,6 @@ detail::aos_matrix<real_type> csvm::predict_values_impl(const detail::parameter<
 
     // num_predict_points x num_classes
     detail::aos_matrix<real_type> out{ num_predict_points, num_classes };
-//    std::vector<std::vector<real_type>> out(predict_points.size(), std::vector<real_type>(alpha.size(), real_type{ 0.0 }));
 
     if (params.kernel_type == kernel_function_type::linear) {
         // special optimization for the linear kernel function
