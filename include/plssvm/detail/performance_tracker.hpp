@@ -14,23 +14,30 @@
 #define PLSSVM_DETAIL_PERFORMANCE_TRACKER_HPP_
 #pragma once
 
-#include "plssvm/detail/cmd/parser_predict.hpp"  // plssvm::detail::cmd::parser_predict
-#include "plssvm/detail/cmd/parser_scale.hpp"    // plssvm::detail::cmd::parser_scale
-#include "plssvm/detail/cmd/parser_train.hpp"    // plssvm::detail::cmd::parser_train
-#include "plssvm/detail/type_traits.hpp"         // plssvm::detail::remove_cvref_t
+#include "plssvm/parameter.hpp"           // plssvm::parameter
+#include "plssvm/detail/type_traits.hpp"  // plssvm::detail::remove_cvref_t
 
-#include "fmt/chrono.h"                          // format std::chrono types
-#include "fmt/format.h"                          // fmt::format, fmt::join
+#include "fmt/chrono.h"                   // format std::chrono types
+#include "fmt/format.h"                   // fmt::format, fmt::join
 #include "fmt/ostream.h"                         // format types with an operator<< overload
 
-#include <memory>                                // std::shared_ptr
-#include <string>                                // std::string
-#include <string_view>                           // std::string_view
-#include <type_traits>                           // std::false_type, std::true_type
-#include <unordered_map>                         // std::unordered_multimap
-#include <utility>                               // std::move
+#include <memory>                         // std::shared_ptr
+#include <string>                         // std::string
+#include <string_view>                    // std::string_view
+#include <type_traits>                    // std::false_type, std::true_type
+#include <unordered_map>                  // std::unordered_multimap
+#include <utility>                        // std::move
 
 namespace plssvm::detail {
+
+// forward declare cmd parser
+namespace cmd {
+
+class parser_train;
+class parser_predict;
+class parser_scale;
+
+}
 
 /**
  * @brief A single tracking entry containing a specific category, a unique name, and the actual value to be tracked.
