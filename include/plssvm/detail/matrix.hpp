@@ -11,6 +11,7 @@
 
 #ifndef PLSSVM_DETAIL_MATRIX_HPP_
 #define PLSSVM_DETAIL_MATRIX_HPP_
+#pragma once
 
 #include "plssvm/detail/assert.hpp"          // PLSSVM_ASSERT
 #include "plssvm/detail/layout.hpp"          // plssvm::detail::layout_type
