@@ -487,11 +487,7 @@ std::pair<detail::aos_matrix<real_type>, std::vector<real_type>> gpu_csvm<device
     const std::vector<real_type> q_red = this->generate_q(params, data_d, data_last_d, dept, feature_ranges, boundary_size);
 
     // calculate QA_costs
-    std::vector<real_type> A_back(num_features);
-    for (std::size_t i = 0; i < num_features; ++i) {
-        A_back[i] = A(dept, i);
-    }
-    const real_type QA_cost = kernel_function(A_back, A_back, params) + real_type{ 1.0 } / params.cost;
+    const real_type QA_cost = kernel_function(A, dept, A, dept, params) + real_type{ 1.0 } / params.cost;
 
     // update b
     // TODO: better than copy?
