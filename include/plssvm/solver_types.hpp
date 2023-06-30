@@ -11,6 +11,7 @@
 
 #ifndef PLSSVM_SOLVING_TYPES_HPP_
 #define PLSSVM_SOLVING_TYPES_HPP_
+#pragma once
 
 #include <iosfwd>  // forward declare std::ostream and std::istream
 
