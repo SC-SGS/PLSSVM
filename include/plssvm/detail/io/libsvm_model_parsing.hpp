@@ -29,8 +29,9 @@
     #include <omp.h>  // omp_get_num_threads
 #endif
 
-#include <algorithm>    // std::min, std::fill
+#include <algorithm>    // std::min, std::fill, std::lower_bound
 #include <cstddef>      // std::size_t
+#include <iterator>     // std::distance
 #include <limits>       // std::numeric_limits::max
 #include <map>          // std::map
 #include <memory>       // std::unique_ptr
@@ -79,19 +80,10 @@ namespace plssvm::detail::io {
         std::swap(i, j);
     }
     // note: if this is changed, it must also be changed in the csvm.hpp in the fit function!!!
-    for (std::size_t idx = 0; idx < indices[i].size(); ++idx) {
-        if (indices[i][idx] == idx_to_find) {
-            return idx;
-        }
-    }
-    for (std::size_t idx = 0; idx < indices[j].size(); ++idx) {
-        if (indices[j][idx] == idx_to_find) {
-            return indices[i].size() + idx;
-        }
-    }
-    // this exception should be unreachable!!!
-    throw invalid_file_format_exception{ fmt::format("The index {} couldn't be found in the index set defined by {} ([{}]) and {} ([{}])!",
-                                                     idx_to_find, i, fmt::join(indices[i], " "), j, fmt::join(indices[j], " ")) };
+    std::size_t global_idx = 0;
+    global_idx += std::distance(indices[i].cbegin(), std::lower_bound(indices[i].cbegin(), indices[i].cend(), idx_to_find));
+    global_idx += std::distance(indices[j].cbegin(), std::lower_bound(indices[j].cbegin(), indices[j].cend(), idx_to_find));
+    return global_idx;
 }
 
 

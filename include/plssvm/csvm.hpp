@@ -359,29 +359,25 @@ model<real_type, label_type> csvm::fit(const data_set<real_type, label_type> &da
         std::size_t pos = 0;
         for (std::size_t i = 0; i < num_classes; ++i) {
             for (std::size_t j = i + 1; j < num_classes; ++j) {
+                // TODO: reduce amount of copies!?
                 // assemble one vs. one classification matrix and rhs
                 const std::size_t num_data_points_in_sub_matrix{ indices[i].size() + indices[j].size() };
                 aos_matrix<real_type> binary_data{ num_data_points_in_sub_matrix, num_features };
                 aos_matrix<real_type> binary_y{ 1, num_data_points_in_sub_matrix };  // note: the first dimension will always be one, since only one rhs is needed
 
-                // TODO: not sorted? -> would enable optimization for OAO in the binary case
+                // TODO: enable optimization for OAO in the binary case
                 // note: if this is changed, it must also be changed in the libsvm_model_parsing.hpp in the calculate_alpha_idx function!!!
-                #pragma omp parallel default(none) shared(binary_data, binary_y, indices, data) firstprivate(i, j, num_features)
-                {
-                    #pragma omp for nowait
-                    for (std::size_t d = 0; d < indices[i].size(); ++d) {
-                        for (std::size_t dim = 0; dim < num_features; ++dim) {
-                            binary_data(d, dim) = (*data.data_ptr_)(indices[i][d], dim);
-                            binary_y(0, d) = real_type{ 1.0 };
-                        }
+                // order the indices in increasing order
+                std::vector<std::size_t> sorted_indices(num_data_points_in_sub_matrix);
+                std::merge(indices[i].cbegin(), indices[i].cend(), indices[j].cbegin(), indices[j].cend(), sorted_indices.begin());
+                // copy the data points to the binary data set
+                #pragma omp parallel for default(none) shared(sorted_indices, binary_data, binary_y, data, indices) firstprivate(num_data_points_in_sub_matrix, num_features, i)
+                for (std::size_t si = 0; si < num_data_points_in_sub_matrix; ++si) {
+                    for (std::size_t dim = 0; dim < num_features; ++dim) {
+                        binary_data(si, dim) = (*data.data_ptr_)(sorted_indices[si], dim);
                     }
-                    #pragma omp for
-                    for (std::size_t d = 0; d < indices[j].size(); ++d) {
-                        for (std::size_t dim = 0; dim < num_features; ++dim) {
-                            binary_data(indices[i].size() + d, dim) = (*data.data_ptr_)(indices[j][d], dim);
-                            binary_y(0, indices[i].size() + d) = real_type{ -1.0 };
-                        }
-                    }
+                    // needs only the check against i, since sorted_indices is guaranteed to only contain indices from i and j
+                    binary_y(0, si) = detail::contains(indices[i], sorted_indices[si]) ? real_type{ 1.0 } : real_type{ -1.0 };
                 }
 
                 // if max_iter is the default value, update it according to the current binary classification matrix size
@@ -490,21 +486,16 @@ std::vector<label_type> csvm::predict(const model<real_type, label_type> &model,
                 const aos_matrix<real_type> &binary_alpha = (*model.alpha_ptr_)[pos];
                 const std::vector<real_type> binary_rho{ (*model.rho_ptr_)[pos] };
 
-                // TODO: not sorted? -> would enable optimization for OAO in the binary case
+                // TODO: enable optimization for OAO in the binary case
                 // note: if this is changed, it must also be changed in the libsvm_model_parsing.hpp in the calculate_alpha_idx function!!!
-                #pragma omp parallel default(none) shared(binary_sv, indices, model) firstprivate(i, j, num_features)
-                {
-                    #pragma omp for nowait
-                    for (std::size_t d = 0; d < indices[i].size(); ++d) {
-                        for (std::size_t dim = 0; dim < num_features; ++dim) {
-                            binary_sv(d, dim) = (*model.data_.data_ptr_)(indices[i][d], dim);
-                        }
-                    }
-                    #pragma omp for
-                    for (std::size_t d = 0; d < indices[j].size(); ++d) {
-                        for (std::size_t dim = 0; dim < num_features; ++dim) {
-                            binary_sv(indices[i].size() + d, dim) = (*model.data_.data_ptr_)(indices[j][d], dim);
-                        }
+                // order the indices in increasing order
+                std::vector<std::size_t> sorted_indices(num_data_points_in_sub_matrix);
+                std::merge(indices[i].cbegin(), indices[i].cend(), indices[j].cbegin(), indices[j].cend(), sorted_indices.begin());
+                // copy the support vectors to the binary support vectors
+                #pragma omp parallel for collapse(2) default(none) shared(sorted_indices, binary_sv, model) firstprivate(num_data_points_in_sub_matrix, num_features)
+                for (std::size_t si = 0; si < num_data_points_in_sub_matrix; ++si) {
+                    for (std::size_t dim = 0; dim < num_features; ++dim) {
+                        binary_sv(si, dim) = (*model.data_.data_ptr_)(sorted_indices[si], dim);
                     }
                 }
 
