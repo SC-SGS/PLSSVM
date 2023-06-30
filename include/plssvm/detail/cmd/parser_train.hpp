@@ -19,6 +19,7 @@
 #include "plssvm/classification_types.hpp"                  // plssvm::classification_type
 #include "plssvm/default_value.hpp"                         // plssvm::default_value
 #include "plssvm/parameter.hpp"                             // plssvm::parameter
+#include "plssvm/solver_types.hpp"                          // plssvm::solving_type
 #include "plssvm/target_platforms.hpp"                      // plssvm::target_platform
 
 #include <cstddef>  // std::size_t
@@ -52,8 +53,10 @@ class parser_train {
 
     /// The used backend: automatic (depending on the specified target_platforms), OpenMP, CUDA, HIP, OpenCL, or SYCL.
     backend_type backend{ backend_type::automatic };
-    /// The target platform: automatic (depending on the used backend), CPUs or GPUs from NVIDIA, AMD or Intel.
+    /// The target platform: automatic (depending on the used backend), CPUs or GPUs from NVIDIA, AMD, or Intel.
     target_platform target{ target_platform::automatic };
+    /// The used solver type for the LSSVM kernel matrix: automatic (depending on the available (V)RAM), cg_explicit, cg_streaming, or cg_implicit.
+    solver_type solver{ solver_type::automatic };
 
     /// The kernel invocation type when using SYCL as backend.
     sycl::kernel_invocation_type sycl_kernel_invocation_type{ sycl::kernel_invocation_type::automatic };

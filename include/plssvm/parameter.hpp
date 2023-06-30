@@ -46,6 +46,8 @@ IGOR_MAKE_NAMED_ARGUMENT(cost);
 IGOR_MAKE_NAMED_ARGUMENT(epsilon);
 /// Create a named argument for the maximum number of iterations `max_iter` performed in the CG algorithm.
 IGOR_MAKE_NAMED_ARGUMENT(max_iter);
+/// Create a named argument for the used solver type.
+IGOR_MAKE_NAMED_ARGUMENT(solver);
 /// Create a named argument for the classification type used for fitting a model.
 IGOR_MAKE_NAMED_ARGUMENT(classification);
 /// Create a named argument for the SYCL backend specific SYCL implementation type (DPC++ or hipSYCL).

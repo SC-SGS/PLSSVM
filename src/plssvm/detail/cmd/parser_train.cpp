@@ -19,6 +19,7 @@
 #include "plssvm/detail/string_utility.hpp"              // plssvm::detail::as_lower_case
 #include "plssvm/detail/utility.hpp"                     // plssvm::detail::to_underlying
 #include "plssvm/kernel_function_types.hpp"              // plssvm::kernel_type_to_math_string
+#include "plssvm/solver_types.hpp"                       // plssvm::solver_types
 #include "plssvm/target_platforms.hpp"                   // plssvm::list_available_target_platforms
 #include "plssvm/version/version.hpp"                    // plssvm::version::detail::get_version_info
 
@@ -55,7 +56,8 @@ parser_train::parser_train(int argc, char **argv) {
            ("c,cost", "set the parameter C", cxxopts::value<typename decltype(csvm_params.cost)::value_type>()->default_value(fmt::format("{}", csvm_params.cost)))
            ("e,epsilon", "set the tolerance of termination criterion", cxxopts::value<typename decltype(epsilon)::value_type>()->default_value(fmt::format("{}", epsilon)))
            ("i,max_iter", "set the maximum number of CG iterations (default: num_features)", cxxopts::value<long long int>())
-           ("s,classification", "the classification strategy to use for multi-class classification", cxxopts::value<typename decltype(classification)::value_type>()->default_value(fmt::format("{}", classification)))
+           ("s,solver", "choose the solver: automatic|cg_explicit|cg_streaming|cg_implicit", cxxopts::value<decltype(solver)>()->default_value("automatic"))
+           ("a,classification", "the classification strategy to use for multi-class classification", cxxopts::value<typename decltype(classification)::value_type>()->default_value(fmt::format("{}", classification)))
            ("b,backend", fmt::format("choose the backend: {}", fmt::join(list_available_backends(), "|")), cxxopts::value<decltype(backend)>()->default_value(fmt::format("{}", backend)))
            ("p,target_platform", fmt::format("choose the target platform: {}", fmt::join(list_available_target_platforms(), "|")), cxxopts::value<decltype(target)>()->default_value(fmt::format("{}", target)))
 #if defined(PLSSVM_HAS_SYCL_BACKEND)
@@ -166,6 +168,9 @@ parser_train::parser_train(int argc, char **argv) {
 
     // parse target_platform and cast the value to the respective enum
     target = result["target_platform"].as<decltype(target)>();
+
+    // parse the solver_type and cast the value to the respective enum
+    solver = result["solver"].as<decltype(solver)>();
 
 #if defined(PLSSVM_HAS_SYCL_BACKEND)
     // parse kernel invocation type when using SYCL as backend

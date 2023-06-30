@@ -63,6 +63,7 @@ set(PLSSVM_BASE_SOURCES
         ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/kernel_function_types.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/matrix.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/parameter.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/solver_types.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/target_platforms.cpp
 )
 
