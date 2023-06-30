@@ -8,6 +8,7 @@
 
 #include "plssvm/backends/OpenMP/csvm.hpp"
 
+#include "plssvm/backend_types.hpp"                           // plssvm::backend_type
 #include "plssvm/backends/OpenMP/exceptions.hpp"              // plssvm::openmp::backend_exception
 #include "plssvm/backends/OpenMP/kernel_matrix_assembly.hpp"  // plssvm::openmp::linear_kernel_matrix_assembly, plssvm::openmp::polynomial_kernel_matrix_assembly, plssvm::openmp::rbf_kernel_matrix_assembly
 #include "plssvm/backends/OpenMP/q_kernel.hpp"                // plssvm::openmp::device_kernel_q_linear, plssvm::openmp::device_kernel_q_polynomial, plssvm::openmp::device_kernel_q_rbf
