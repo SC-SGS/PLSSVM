@@ -471,16 +471,23 @@ template <typename real_type>
         classification = classification_type::oaa;
         alpha_vec = std::vector<aos_matrix<real_type>>{ std::move(alpha) };
     } else if (is_oao) {
-        // TODO: parallelize?
         classification = classification_type::oao;
         // last vector entry must be ignored!
         // remap alpha vector from the read one to 01 02 03 12 13 23 etc.
         const std::size_t num_classes = num_sv_per_class.size();
-        std::vector<std::vector<real_type>> oao_alpha(calculate_number_of_classifiers(classification_type::oao, num_classes));
+
+        // resize all alpha vectors to the correct, final size
+        alpha_vec.resize(calculate_number_of_classifiers(classification_type::oao, num_classes));
+        for (std::size_t i = 0; i < num_classes; ++i) {
+            for (std::size_t j = i + 1; j < num_classes; ++j) {
+            alpha_vec[x_vs_y_to_idx(i, j, num_classes)] = aos_matrix<real_type>{ 1, num_sv_per_class[i] + num_sv_per_class[j] };
+            }
+        }
+        std::vector<std::size_t> oao_alpha_indices(alpha_vec.size(), 0);
 
         // loop over all classes
         std::size_t running_idx{ 0 };
-        for (std::size_t nr_sv = 0; nr_sv < num_sv_per_class.size(); ++nr_sv) {
+        for (std::size_t nr_sv = 0; nr_sv < num_classes; ++nr_sv) {
             // loop over all data points in the specific class
             // note: the data points are sorted according to the labels/classes by definition
             for (std::size_t i = 0; i < num_sv_per_class[nr_sv]; ++i) {
@@ -498,20 +505,11 @@ template <typename real_type>
                     // calculate to which alpha vector the alpha value should be added to
                     const std::size_t idx = x_vs_y_to_idx(nr_sv, running_a, num_classes);
                     // add the alpha value
-                    oao_alpha[idx].push_back(alpha_val);
+                    alpha_vec[idx](0, oao_alpha_indices[idx]++) = alpha_val;
                     ++running_a;
                 }
                 // update the running index (otherwise a prefix sum over num_sv_per_class is needed)
                 ++running_idx;
-            }
-        }
-        // update alpha vector  // TODO: better?
-        alpha_vec.resize(oao_alpha.size());
-        #pragma omp parallel for default(none) shared(oao_alpha, alpha_vec)
-        for (std::size_t i = 0; i < oao_alpha.size(); ++i) {
-            alpha_vec[i] = aos_matrix<real_type>{ 1, oao_alpha[i].size() };
-            for (std::size_t j = 0; j < oao_alpha[i].size(); ++j) {
-                alpha_vec[i](0, j) = oao_alpha[i][j];
             }
         }
     } else {
