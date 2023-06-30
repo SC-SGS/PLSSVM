@@ -355,47 +355,58 @@ model<real_type, label_type> csvm::fit(const data_set<real_type, label_type> &da
             }
         }
 
-        // perform one vs. one classification
-        std::size_t pos = 0;
-        for (std::size_t i = 0; i < num_classes; ++i) {
-            for (std::size_t j = i + 1; j < num_classes; ++j) {
-                // TODO: reduce amount of copies!?
-                // assemble one vs. one classification matrix and rhs
-                const std::size_t num_data_points_in_sub_matrix{ indices[i].size() + indices[j].size() };
-                aos_matrix<real_type> binary_data{ num_data_points_in_sub_matrix, num_features };
-                aos_matrix<real_type> binary_y{ 1, num_data_points_in_sub_matrix };  // note: the first dimension will always be one, since only one rhs is needed
+        if (num_classes == 2) {
+            // special optimization for binary case (no temporary copies necessary)
+            detail::log(verbosity_level::full | verbosity_level::timing,
+                        "\nClassifying 0 vs 1 ({} vs {}) (1/1):\n",
+                        data.mapping_->get_label_by_mapped_index(0),
+                        data.mapping_->get_label_by_mapped_index(1));
+            const auto &[alpha, rho] = solve_system_of_linear_equations(static_cast<detail::parameter<real_type>>(params), *data.data_ptr_, *data.y_ptr_, epsilon_val.value(), max_iter_val.value());
+            csvm_model.alpha_ptr_->front() = std::move(alpha);
+            csvm_model.rho_ptr_->front() = rho.front();  // prevents std::tie
+        } else {
+            // perform one vs. one classification
+            std::size_t pos = 0;
+            for (std::size_t i = 0; i < num_classes; ++i) {
+                for (std::size_t j = i + 1; j < num_classes; ++j) {
+                    // TODO: reduce amount of copies!?
+                    // assemble one vs. one classification matrix and rhs
+                    const std::size_t num_data_points_in_sub_matrix{ indices[i].size() + indices[j].size() };
+                    aos_matrix<real_type> binary_data{ num_data_points_in_sub_matrix, num_features };
+                    aos_matrix<real_type> binary_y{ 1, num_data_points_in_sub_matrix };  // note: the first dimension will always be one, since only one rhs is needed
 
-                // TODO: enable optimization for OAO in the binary case
-                // note: if this is changed, it must also be changed in the libsvm_model_parsing.hpp in the calculate_alpha_idx function!!!
-                // order the indices in increasing order
-                std::vector<std::size_t> sorted_indices(num_data_points_in_sub_matrix);
-                std::merge(indices[i].cbegin(), indices[i].cend(), indices[j].cbegin(), indices[j].cend(), sorted_indices.begin());
-                // copy the data points to the binary data set
-                #pragma omp parallel for default(none) shared(sorted_indices, binary_data, binary_y, data, indices) firstprivate(num_data_points_in_sub_matrix, num_features, i)
-                for (std::size_t si = 0; si < num_data_points_in_sub_matrix; ++si) {
-                    for (std::size_t dim = 0; dim < num_features; ++dim) {
-                        binary_data(si, dim) = (*data.data_ptr_)(sorted_indices[si], dim);
+                    // note: if this is changed, it must also be changed in the libsvm_model_parsing.hpp in the calculate_alpha_idx function!!!
+                    // order the indices in increasing order
+                    std::vector<std::size_t> sorted_indices(num_data_points_in_sub_matrix);
+                    std::merge(indices[i].cbegin(), indices[i].cend(), indices[j].cbegin(), indices[j].cend(), sorted_indices.begin());
+                    // copy the data points to the binary data set
+                    #pragma omp parallel for default(none) shared(sorted_indices, binary_data, binary_y, data, indices) firstprivate(num_data_points_in_sub_matrix, num_features, i)
+                    for (std::size_t si = 0; si < num_data_points_in_sub_matrix; ++si) {
+                        for (std::size_t dim = 0; dim < num_features; ++dim) {
+                            binary_data(si, dim) = (*data.data_ptr_)(sorted_indices[si], dim);
+                        }
+                        // needs only the check against i, since sorted_indices is guaranteed to only contain indices from i and j
+                        binary_y(0, si) = detail::contains(indices[i], sorted_indices[si]) ? real_type{ 1.0 } : real_type{ -1.0 };
                     }
-                    // needs only the check against i, since sorted_indices is guaranteed to only contain indices from i and j
-                    binary_y(0, si) = detail::contains(indices[i], sorted_indices[si]) ? real_type{ 1.0 } : real_type{ -1.0 };
-                }
 
-                // if max_iter is the default value, update it according to the current binary classification matrix size
-                const unsigned long long binary_max_iter = max_iter_val.is_default() ? static_cast<unsigned long long>(binary_data.num_rows()) : max_iter_val.value();
-                // solve the minimization problem -> note that only a single rhs is present
-                detail::log(verbosity_level::full | verbosity_level::timing,
-                            "\nClassifying {} vs {} ({} vs {}) ({}/{}):\n",
-                            i, j,
-                            data.mapping_->get_label_by_mapped_index(i),
-                            data.mapping_->get_label_by_mapped_index(j),
-                            pos + 1,
-                            calculate_number_of_classifiers(classification_type::oao, num_classes));
-                const auto &[alpha, rho] = solve_system_of_linear_equations(static_cast<detail::parameter<real_type>>(params), binary_data, binary_y, epsilon_val.value(), binary_max_iter);
-                (*csvm_model.alpha_ptr_)[pos] = std::move(alpha);
-                (*csvm_model.rho_ptr_)[pos] = rho.front();  // prevents std::tie
-                // go to next one vs. one classification
-                ++pos;
-                // order of the alpha value: 0 vs 1, 0 vs 2, 0 vs 3, 1 vs 2, 1 vs 3, 2 vs 3
+                    // if max_iter is the default value, update it according to the current binary classification matrix size
+                    const unsigned long long binary_max_iter = max_iter_val.is_default() ? static_cast<unsigned long long>(binary_data.num_rows()) : max_iter_val.value();
+                    // solve the minimization problem -> note that only a single rhs is present
+                    detail::log(verbosity_level::full | verbosity_level::timing,
+                                "\nClassifying {} vs {} ({} vs {}) ({}/{}):\n",
+                                i,
+                                j,
+                                data.mapping_->get_label_by_mapped_index(i),
+                                data.mapping_->get_label_by_mapped_index(j),
+                                pos + 1,
+                                calculate_number_of_classifiers(classification_type::oao, num_classes));
+                    const auto &[alpha, rho] = solve_system_of_linear_equations(static_cast<detail::parameter<real_type>>(params), binary_data, binary_y, epsilon_val.value(), binary_max_iter);
+                    (*csvm_model.alpha_ptr_)[pos] = std::move(alpha);
+                    (*csvm_model.rho_ptr_)[pos] = rho.front();  // prevents std::tie
+                    // go to next one vs. one classification
+                    ++pos;
+                    // order of the alpha value: 0 vs 1, 0 vs 2, 0 vs 3, 1 vs 2, 1 vs 3, 2 vs 3
+                }
             }
         }
 
@@ -482,22 +493,30 @@ std::vector<label_type> csvm::predict(const model<real_type, label_type> &model,
                 // TODO: reduce amount of copies!?
                 // assemble one vs. one classification matrix and rhs
                 const std::size_t num_data_points_in_sub_matrix{ indices[i].size() + indices[j].size() };
-                aos_matrix<real_type> binary_sv{ num_data_points_in_sub_matrix, num_features };
                 const aos_matrix<real_type> &binary_alpha = (*model.alpha_ptr_)[pos];
                 const std::vector<real_type> binary_rho{ (*model.rho_ptr_)[pos] };
 
-                // TODO: enable optimization for OAO in the binary case
-                // note: if this is changed, it must also be changed in the libsvm_model_parsing.hpp in the calculate_alpha_idx function!!!
-                // order the indices in increasing order
-                std::vector<std::size_t> sorted_indices(num_data_points_in_sub_matrix);
-                std::merge(indices[i].cbegin(), indices[i].cend(), indices[j].cbegin(), indices[j].cend(), sorted_indices.begin());
-                // copy the support vectors to the binary support vectors
-                #pragma omp parallel for collapse(2) default(none) shared(sorted_indices, binary_sv, model) firstprivate(num_data_points_in_sub_matrix, num_features)
-                for (std::size_t si = 0; si < num_data_points_in_sub_matrix; ++si) {
-                    for (std::size_t dim = 0; dim < num_features; ++dim) {
-                        binary_sv(si, dim) = (*model.data_.data_ptr_)(sorted_indices[si], dim);
-                    }
-                }
+                // create binary support vector matrix, based on the number of classes
+                const aos_matrix<real_type> &binary_sv = [&]() {
+                   if (num_classes == 2) {
+                       // no special assembly needed in binary case
+                       return *model.data_.data_ptr_;
+                   } else {
+                       // note: if this is changed, it must also be changed in the libsvm_model_parsing.hpp in the calculate_alpha_idx function!!!
+                       // order the indices in increasing order
+                       aos_matrix<real_type> temp{ num_data_points_in_sub_matrix, num_features };
+                       std::vector<std::size_t> sorted_indices(num_data_points_in_sub_matrix);
+                       std::merge(indices[i].cbegin(), indices[i].cend(), indices[j].cbegin(), indices[j].cend(), sorted_indices.begin());
+                        // copy the support vectors to the binary support vectors
+                        #pragma omp parallel for collapse(2) default(none) shared(sorted_indices, temp, model) firstprivate(num_data_points_in_sub_matrix, num_features)
+                       for (std::size_t si = 0; si < num_data_points_in_sub_matrix; ++si) {
+                           for (std::size_t dim = 0; dim < num_features; ++dim) {
+                               temp(si, dim) = (*model.data_.data_ptr_)(sorted_indices[si], dim);
+                           }
+                       }
+                       return temp;
+                   }
+                }();
 
                 // predict binary pair
                 aos_matrix<real_type> binary_votes{};
