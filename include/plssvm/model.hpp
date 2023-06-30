@@ -20,6 +20,7 @@
 #include "plssvm/detail/logger.hpp"                   // plssvm::detail::log, plssvm::verbosity_level
 #include "plssvm/detail/performance_tracker.hpp"      // plssvm::detail::tracking_entry
 #include "plssvm/detail/type_list.hpp"                // plssvm::detail::{real_type_list, label_type_list, type_list_contains_v}
+#include "plssvm/matrix.hpp"                          // plssvm::aos_matrix
 #include "plssvm/parameter.hpp"                       // plssvm::parameter
 
 #include "fmt/chrono.h"                               // format std::chrono types using fmt
@@ -97,7 +98,7 @@ class model {
      * @details The support vectors are of dimension `num_support_vectors()` x `num_features()`.
      * @return the support vectors (`[[nodiscard]]`)
      */
-    [[nodiscard]] const std::vector<std::vector<real_type>> &support_vectors() const noexcept { return data_.data(); }
+    [[nodiscard]] const aos_matrix<real_type> &support_vectors() const noexcept { return data_.data(); }
 
     /**
      * @brief Returns the labels of the support vectors.
@@ -124,7 +125,7 @@ class model {
      * @details It is of size `num_classes() x num_support_vectors()`.
      * @return the weights (`[[nodiscard]]`)
      */
-    [[nodiscard]] const std::vector<std::vector<real_type>> &weights() const noexcept {
+    [[nodiscard]] const std::vector<aos_matrix<real_type>> &weights() const noexcept {
         PLSSVM_ASSERT(alpha_ptr_ != nullptr, "The alpha_ptr may never be a nullptr!");
         return *alpha_ptr_;
     }
@@ -168,7 +169,7 @@ class model {
      * @brief The learned weights for each support vector.
      * @note Must be initialized to an empty vector instead of a `nullptr`.
      */
-    std::shared_ptr<std::vector<std::vector<real_type>>> alpha_ptr_{ std::make_shared<std::vector<std::vector<real_type>>>() };
+    std::shared_ptr<std::vector<aos_matrix<real_type>>> alpha_ptr_{ std::make_shared<std::vector<aos_matrix<real_type>>>() };
 
     /**
      * @brief For each class, holds the indices of all data points in the support vectors.
@@ -187,7 +188,7 @@ class model {
      * @details Will be reused by subsequent calls to `plssvm::csvm::fit`/`plssvm::csvm::score` with the same `plssvm::model`.
      * @note Must be initialized to an empty vector instead of a `nullptr` in order to be passable as const reference.
      */
-    std::shared_ptr<std::vector<std::vector<real_type>>> w_ptr_{ std::make_shared<std::vector<std::vector<real_type>>>() };
+    std::shared_ptr<aos_matrix<real_type>> w_ptr_{ std::make_shared<aos_matrix<real_type>>() };
 };
 
 template <typename T, typename U>
@@ -219,16 +220,17 @@ model<T, U>::model(const std::string &filename) {
     }
 
     // create empty support vectors and alpha vector
-    std::vector<std::vector<real_type>> support_vectors;
+    aos_matrix<real_type> support_vectors{};
 
     // parse libsvm model data
     std::tie(num_support_vectors_, num_features_, support_vectors, *alpha_ptr_, classification_strategy_) = detail::io::parse_libsvm_model_data<real_type>(reader, num_sv_per_class, num_header_lines);
 
     // create data set
-    PLSSVM_ASSERT(support_vectors.size() == labels.size(), "Number of labels ({}) must match the number of data points ({})!", labels.size(), support_vectors.size());
+    PLSSVM_ASSERT(support_vectors.num_rows() == labels.size(), "Number of labels ({}) must match the number of data points ({})!", labels.size(), support_vectors.num_rows());
     const verbosity_level old_verbosity = verbosity;
     verbosity = verbosity_level::quiet;
-    data_ = data_set<real_type, label_type>{ std::move(support_vectors) };
+    data_ = data_set<real_type, label_type>{};
+    (*data_.data_ptr_) = std::move(support_vectors);
     data_.labels_ptr_ = std::make_shared<typename decltype(data_.labels_ptr_)::element_type>(std::move(labels));  // prevent multiple calls to "create_mapping"
     data_.create_mapping(unique_labels);
     verbosity = old_verbosity;
@@ -255,7 +257,7 @@ void model<T, U>::save(const std::string &filename) const {
     const std::chrono::time_point start_time = std::chrono::steady_clock::now();
 
     // save model file header and support vectors
-    detail::io::write_libsvm_model_data(filename, params_, classification_strategy_, *rho_ptr_, *alpha_ptr_, *indices_ptr_, data_);
+    detail::io::write_libsvm_model_data(filename, params_, classification_strategy_, *rho_ptr_, *alpha_ptr_, *indices_ptr_, data_, *data_.data_ptr_);
 
     const std::chrono::time_point end_time = std::chrono::steady_clock::now();
     detail::log(verbosity_level::full | verbosity_level::timing,

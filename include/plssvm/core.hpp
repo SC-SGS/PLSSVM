@@ -21,6 +21,7 @@
 #include "plssvm/constants.hpp"                             // verbosity flag und compile-time constants
 #include "plssvm/parameter.hpp"                             // the C-SVM parameter
 
+#include "plssvm/matrix.hpp"                                // a custom matrix class
 #include "plssvm/data_set.hpp"                              // a data set used for training a C-SVM
 #include "plssvm/model.hpp"                                 // the model as a result of training a C-SVM
 

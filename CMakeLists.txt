@@ -48,7 +48,6 @@ set(PLSSVM_BASE_SOURCES
         ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/detail/cmd/parser_train.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/detail/io/file_reader.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/detail/execution_range.cpp
-        ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/detail/layout.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/detail/logger.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/detail/performance_tracker.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/detail/sha256.cpp
@@ -62,6 +61,7 @@ set(PLSSVM_BASE_SOURCES
         ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/classification_types.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/file_format_types.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/kernel_function_types.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/matrix.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/parameter.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/target_platforms.cpp
 )

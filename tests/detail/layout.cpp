@@ -23,29 +23,29 @@
 #include <tuple>                      // std::ignore
 #include <vector>                     // std::vector
 
-// check whether the plssvm::detail::layout_type -> std::string conversions are correct
+// check whether the plssvm::layout_type -> std::string conversions are correct
 TEST(Layout, to_string) {
     // check conversion to std::string
-    EXPECT_CONVERSION_TO_STRING(plssvm::detail::layout_type::aos, "Array-of-Structs");
-    EXPECT_CONVERSION_TO_STRING(plssvm::detail::layout_type::soa, "Struct-of-Arrays");
+    EXPECT_CONVERSION_TO_STRING(plssvm::layout_type::aos, "Array-of-Structs");
+    EXPECT_CONVERSION_TO_STRING(plssvm::layout_type::soa, "Struct-of-Arrays");
 }
 TEST(Layout, to_string_unknown) {
     // check conversions to std::string from unknown layout_type
-    EXPECT_CONVERSION_TO_STRING(static_cast<plssvm::detail::layout_type>(2), "unknown");
+    EXPECT_CONVERSION_TO_STRING(static_cast<plssvm::layout_type>(2), "unknown");
 }
 
-// check whether the std::string -> plssvm::detail::layout_type conversions are correct
+// check whether the std::string -> plssvm::layout_type conversions are correct
 TEST(Layout, from_string) {
     // check conversion from std::string
-    EXPECT_CONVERSION_FROM_STRING("aos", plssvm::detail::layout_type::aos);
-    EXPECT_CONVERSION_FROM_STRING("Array-of-Structs", plssvm::detail::layout_type::aos);
-    EXPECT_CONVERSION_FROM_STRING("soa", plssvm::detail::layout_type::soa);
-    EXPECT_CONVERSION_FROM_STRING("Struct-of-Arrays", plssvm::detail::layout_type::soa);
+    EXPECT_CONVERSION_FROM_STRING("aos", plssvm::layout_type::aos);
+    EXPECT_CONVERSION_FROM_STRING("Array-of-Structs", plssvm::layout_type::aos);
+    EXPECT_CONVERSION_FROM_STRING("soa", plssvm::layout_type::soa);
+    EXPECT_CONVERSION_FROM_STRING("Struct-of-Arrays", plssvm::layout_type::soa);
 }
 TEST(Layout, from_string_unknown) {
     // foo isn't a valid layout_type
     std::istringstream input{ "foo" };
-    plssvm::detail::layout_type layout{};
+    plssvm::layout_type layout{};
     input >> layout;
     EXPECT_TRUE(input.fail());
 }
@@ -82,7 +82,7 @@ TYPED_TEST(Layout, array_of_structs) {
     EXPECT_FLOATING_POINT_VECTOR_EQ(aos_direct, correct_aos);
 
     // convert to AoS using the indirect function call
-    const std::vector<typename TestFixture::real_type> aos_indirect = plssvm::detail::transform_to_layout(plssvm::detail::layout_type::aos, this->matrix, 0, this->num_points);
+    const std::vector<typename TestFixture::real_type> aos_indirect = plssvm::detail::transform_to_layout(plssvm::layout_type::aos, this->matrix, 0, this->num_points);
     EXPECT_FLOATING_POINT_VECTOR_EQ(aos_indirect, correct_aos);
 }
 TYPED_TEST(Layout, array_of_structs_boundary) {
@@ -94,7 +94,7 @@ TYPED_TEST(Layout, array_of_structs_boundary) {
     EXPECT_FLOATING_POINT_VECTOR_EQ(aos_direct, correct_aos);
 
     // convert to AoS using the indirect function call
-    const std::vector<typename TestFixture::real_type> aos_indirect = plssvm::detail::transform_to_layout(plssvm::detail::layout_type::aos, this->matrix, 2, this->num_points);
+    const std::vector<typename TestFixture::real_type> aos_indirect = plssvm::detail::transform_to_layout(plssvm::layout_type::aos, this->matrix, 2, this->num_points);
     EXPECT_FLOATING_POINT_VECTOR_EQ(aos_indirect, correct_aos);
 }
 TYPED_TEST(Layout, array_of_structs_fewer_data_points) {
@@ -106,7 +106,7 @@ TYPED_TEST(Layout, array_of_structs_fewer_data_points) {
     EXPECT_FLOATING_POINT_VECTOR_EQ(aos_direct, correct_aos);
 
     // convert to AoS using the indirect function call
-    const std::vector<typename TestFixture::real_type> aos_indirect = plssvm::detail::transform_to_layout(plssvm::detail::layout_type::aos, this->matrix, 2, 3);
+    const std::vector<typename TestFixture::real_type> aos_indirect = plssvm::detail::transform_to_layout(plssvm::layout_type::aos, this->matrix, 2, 3);
     EXPECT_FLOATING_POINT_VECTOR_EQ(aos_indirect, correct_aos);
 }
 
@@ -119,7 +119,7 @@ TYPED_TEST(Layout, struct_of_arrays) {
     EXPECT_FLOATING_POINT_VECTOR_EQ(soa_direct, correct_soa);
 
     // convert to SoA using the indirect function call
-    const std::vector<typename TestFixture::real_type> soa_indirect = plssvm::detail::transform_to_layout(plssvm::detail::layout_type::soa, this->matrix, 0, this->num_points);
+    const std::vector<typename TestFixture::real_type> soa_indirect = plssvm::detail::transform_to_layout(plssvm::layout_type::soa, this->matrix, 0, this->num_points);
     EXPECT_FLOATING_POINT_VECTOR_EQ(soa_indirect, correct_soa);
 }
 TYPED_TEST(Layout, struct_of_arrays_boundary) {
@@ -131,7 +131,7 @@ TYPED_TEST(Layout, struct_of_arrays_boundary) {
     EXPECT_FLOATING_POINT_VECTOR_EQ(soa_direct, correct_soa);
 
     // convert to SoA using the indirect function call
-    const std::vector<typename TestFixture::real_type> soa_indirect = plssvm::detail::transform_to_layout(plssvm::detail::layout_type::soa, this->matrix, 2, this->num_points);
+    const std::vector<typename TestFixture::real_type> soa_indirect = plssvm::detail::transform_to_layout(plssvm::layout_type::soa, this->matrix, 2, this->num_points);
     EXPECT_FLOATING_POINT_VECTOR_EQ(soa_indirect, correct_soa);
 }
 TYPED_TEST(Layout, struct_of_arrays_fewer_data_points) {
@@ -143,7 +143,7 @@ TYPED_TEST(Layout, struct_of_arrays_fewer_data_points) {
     EXPECT_FLOATING_POINT_VECTOR_EQ(soa_direct, correct_soa);
 
     // convert to SoA using the indirect function call
-    const std::vector<typename TestFixture::real_type> soa_indirect = plssvm::detail::transform_to_layout(plssvm::detail::layout_type::soa, this->matrix, 2, 3);
+    const std::vector<typename TestFixture::real_type> soa_indirect = plssvm::detail::transform_to_layout(plssvm::layout_type::soa, this->matrix, 2, 3);
     EXPECT_FLOATING_POINT_VECTOR_EQ(soa_indirect, correct_soa);
 }
 
@@ -154,8 +154,8 @@ TYPED_TEST_SUITE(LayoutDeathTest, util::real_type_gtest, naming::real_type_to_na
 TYPED_TEST(LayoutDeathTest, empty_matrix) {
     // matrix must not be empty
     const std::vector<std::vector<TypeParam>> matrix{};
-    EXPECT_DEATH(std::ignore = plssvm::detail::transform_to_layout(plssvm::detail::layout_type::aos, matrix, 0, 0), "Matrix is empty!");
-    EXPECT_DEATH(std::ignore = plssvm::detail::transform_to_layout(plssvm::detail::layout_type::soa, matrix, 0, 0), "Matrix is empty!");
+    EXPECT_DEATH(std::ignore = plssvm::detail::transform_to_layout(plssvm::layout_type::aos, matrix, 0, 0), "Matrix is empty!");
+    EXPECT_DEATH(std::ignore = plssvm::detail::transform_to_layout(plssvm::layout_type::soa, matrix, 0, 0), "Matrix is empty!");
 }
 
 TYPED_TEST(LayoutDeathTest, too_many_data_points_to_transform) {
@@ -164,9 +164,9 @@ TYPED_TEST(LayoutDeathTest, too_many_data_points_to_transform) {
         { 11, 12, 13 },
         { 21, 22, 23 }
     };
-    EXPECT_DEATH(std::ignore = plssvm::detail::transform_to_layout(plssvm::detail::layout_type::aos, matrix, 0, 3),
+    EXPECT_DEATH(std::ignore = plssvm::detail::transform_to_layout(plssvm::layout_type::aos, matrix, 0, 3),
                  "Number of data points to transform can not exceed matrix size!");
-    EXPECT_DEATH(std::ignore = plssvm::detail::transform_to_layout(plssvm::detail::layout_type::soa, matrix, 0, 3),
+    EXPECT_DEATH(std::ignore = plssvm::detail::transform_to_layout(plssvm::layout_type::soa, matrix, 0, 3),
                  "Number of data points to transform can not exceed matrix size!");
 }
 
@@ -176,15 +176,15 @@ TYPED_TEST(LayoutDeathTest, different_number_of_features) {
         { 11, 12, 13 },
         { 21, 22 }
     };
-    EXPECT_DEATH(std::ignore = plssvm::detail::transform_to_layout(plssvm::detail::layout_type::aos, matrix, 0, 2),
+    EXPECT_DEATH(std::ignore = plssvm::detail::transform_to_layout(plssvm::layout_type::aos, matrix, 0, 2),
                  "Feature sizes mismatch! All features should have size 3.");
-    EXPECT_DEATH(std::ignore = plssvm::detail::transform_to_layout(plssvm::detail::layout_type::soa, matrix, 0, 2),
+    EXPECT_DEATH(std::ignore = plssvm::detail::transform_to_layout(plssvm::layout_type::soa, matrix, 0, 2),
                  "Feature sizes mismatch! All features should have size 3.");
 }
 
 TYPED_TEST(LayoutDeathTest, empty_features) {
     // number of features must be the same for all data points
     const std::vector<std::vector<TypeParam>> matrix = { {}, {} };
-    EXPECT_DEATH(std::ignore = plssvm::detail::transform_to_layout(plssvm::detail::layout_type::aos, matrix, 0, 2), "All features are empty!");
-    EXPECT_DEATH(std::ignore = plssvm::detail::transform_to_layout(plssvm::detail::layout_type::soa, matrix, 0, 2), "All features are empty!");
+    EXPECT_DEATH(std::ignore = plssvm::detail::transform_to_layout(plssvm::layout_type::aos, matrix, 0, 2), "All features are empty!");
+    EXPECT_DEATH(std::ignore = plssvm::detail::transform_to_layout(plssvm::layout_type::soa, matrix, 0, 2), "All features are empty!");
 }

@@ -8,6 +8,8 @@
 
 #include "plssvm/csvm.hpp"
 #include "plssvm/csvm_factory.hpp"
+#include "plssvm/backends/SYCL/kernel_invocation_type.hpp"
+#include "plssvm/backends/SYCL/implementation_type.hpp"
 
 #include "utility.hpp"  // check_kwargs_for_correctness, convert_kwargs_to_parameter
 

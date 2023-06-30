@@ -23,6 +23,7 @@
 #include "plssvm/detail/utility.hpp"              // plssvm::detail::to_underlying
 #include "plssvm/exceptions/exceptions.hpp"       // plssvm::invalid_parameter_exception
 #include "plssvm/kernel_function_types.hpp"       // plssvm::kernel_function_type
+#include "plssvm/matrix.hpp"                      // plssvm::aos_matrix
 #include "plssvm/model.hpp"                       // plssvm::model
 #include "plssvm/parameter.hpp"                   // plssvm::parameter, plssvm::detail::{get_value_from_named_parameter, has_only_parameter_named_args_v}
 #include "plssvm/target_platforms.hpp"            // plssvm::target_platform
@@ -192,11 +193,11 @@ class csvm {
      * @throws plssvm::exception any exception thrown by the backend's implementation
      * @return a pair of [the result vector x, the resulting bias] (`[[nodiscard]]`)
      */
-    [[nodiscard]] virtual std::pair<std::vector<std::vector<float>>, std::vector<float>> solve_system_of_linear_equations(const detail::parameter<float> &params, const std::vector<std::vector<float>> &A, std::vector<std::vector<float>> B, float eps, unsigned long long max_iter) const = 0;
+    [[nodiscard]] virtual std::pair<aos_matrix<float>, std::vector<float>> solve_system_of_linear_equations(const detail::parameter<float> &params, const aos_matrix<float> &A, aos_matrix<float> B, float eps, unsigned long long max_iter) const = 0;
     /**
      * @copydoc plssvm::csvm::solve_system_of_linear_equations
      */
-    [[nodiscard]] virtual std::pair<std::vector<std::vector<double>>, std::vector<double>> solve_system_of_linear_equations(const detail::parameter<double> &params, const std::vector<std::vector<double>> &A, std::vector<std::vector<double>> B, double eps, unsigned long long max_iter) const = 0;
+    [[nodiscard]] virtual std::pair<aos_matrix<double>, std::vector<double>> solve_system_of_linear_equations(const detail::parameter<double> &params, const aos_matrix<double> &A, aos_matrix<double> B, double eps, unsigned long long max_iter) const = 0;
     /**
      * @brief Uses the already learned model to predict the class of multiple (new) data points.
      * @details Uses the one vs. all (OAA) for the multi-class classification task.
@@ -209,11 +210,11 @@ class csvm {
      * @throws plssvm::exception any exception thrown by the backend's implementation
      * @return a vector filled with the predictions (not the actual labels!) (`[[nodiscard]]`)
      */
-    [[nodiscard]] virtual std::vector<std::vector<float>> predict_values(const detail::parameter<float> &params, const std::vector<std::vector<float>> &support_vectors, const std::vector<std::vector<float>> &alpha, const std::vector<float> &rho, std::vector<std::vector<float>> &w, const std::vector<std::vector<float>> &predict_points) const = 0;
+    [[nodiscard]] virtual aos_matrix<float> predict_values(const detail::parameter<float> &params, const aos_matrix<float> &support_vectors, const aos_matrix<float> &alpha, const std::vector<float> &rho, aos_matrix<float> &w, const aos_matrix<float> &predict_points) const = 0;
     /**
      * @copydoc plssvm::csvm::predict_values
      */
-    [[nodiscard]] virtual std::vector<std::vector<double>> predict_values(const detail::parameter<double> &params, const std::vector<std::vector<double>> &support_vectors, const std::vector<std::vector<double>> &alpha, const std::vector<double> &rho, std::vector<std::vector<double>> &w, const std::vector<std::vector<double>> &predict_points) const = 0;
+    [[nodiscard]] virtual aos_matrix<double> predict_values(const detail::parameter<double> &params, const aos_matrix<double> &support_vectors, const aos_matrix<double> &alpha, const std::vector<double> &rho, aos_matrix<double> &w, const aos_matrix<double> &predict_points) const = 0;
 
     /// The target platform of this SVM.
     target_platform target_{ plssvm::target_platform::automatic };
@@ -333,11 +334,14 @@ model<real_type, label_type> csvm::fit(const data_set<real_type, label_type> &da
     if (classification_val.value() == plssvm::classification_type::oaa) {
         // use the one vs. all multi-class classification strategy
         // solve the minimization problem
-        std::tie(*csvm_model.alpha_ptr_, *csvm_model.rho_ptr_) = solve_system_of_linear_equations(static_cast<detail::parameter<real_type>>(params), data.data(), *data.y_ptr_, epsilon_val.value(), max_iter_val.value());
+        aos_matrix<real_type> alpha;
+        std::tie(alpha, *csvm_model.rho_ptr_) = solve_system_of_linear_equations(static_cast<detail::parameter<real_type>>(params), *data.data_ptr_, *data.y_ptr_, epsilon_val.value(), max_iter_val.value());
+        csvm_model.alpha_ptr_->push_back(std::move(alpha));
     } else if (classification_val.value() == plssvm::classification_type::oao) {
         // use the one vs. one multi-class classification strategy
         const std::size_t num_classes = data.num_classes();
         const std::size_t num_binary_classifications = calculate_number_of_classifiers(classification_type::oao, num_classes);
+        const std::size_t num_features = data.num_features();
         // resize alpha_ptr_ and rho_ptr_ to the correct sizes
         csvm_model.alpha_ptr_->resize(num_binary_classifications);
         csvm_model.rho_ptr_->resize(num_binary_classifications);
@@ -357,27 +361,31 @@ model<real_type, label_type> csvm::fit(const data_set<real_type, label_type> &da
             for (std::size_t j = i + 1; j < num_classes; ++j) {
                 // assemble one vs. one classification matrix and rhs
                 const std::size_t num_data_points_in_sub_matrix{ indices[i].size() + indices[j].size() };
-                std::vector<std::vector<real_type>> binary_data(num_data_points_in_sub_matrix);
-                std::vector<std::vector<real_type>> binary_y(1, std::vector<real_type>(num_data_points_in_sub_matrix));  // note: the first dimension will always be one, since only one rhs is needed
+                aos_matrix<real_type> binary_data{ num_data_points_in_sub_matrix, num_features };
+                aos_matrix<real_type> binary_y{ 1, num_data_points_in_sub_matrix };  // note: the first dimension will always be one, since only one rhs is needed
 
                 // TODO: not sorted? -> would enable optimization for OAO in the binary case
                 // note: if this is changed, it must also be changed in the libsvm_model_parsing.hpp in the calculate_alpha_idx function!!!
-                #pragma omp parallel default(none) shared(binary_data, binary_y, indices, data) firstprivate(i, j)
+                #pragma omp parallel default(none) shared(binary_data, binary_y, indices, data) firstprivate(i, j, num_features)
                 {
                     #pragma omp for nowait
                     for (std::size_t d = 0; d < indices[i].size(); ++d) {
-                        binary_data[d] = data.data()[indices[i][d]];
-                        binary_y.front()[d] = real_type{ 1.0 };
+                        for (std::size_t dim = 0; dim < num_features; ++dim) {
+                            binary_data(d, dim) = (*data.data_ptr_)(indices[i][d], dim);
+                            binary_y(0, d) = real_type{ 1.0 };
+                        }
                     }
                     #pragma omp for
                     for (std::size_t d = 0; d < indices[j].size(); ++d) {
-                        binary_data[indices[i].size() + d] = data.data()[indices[j][d]];
-                        binary_y.front()[indices[i].size() + d] = real_type{ -1.0 };
+                        for (std::size_t dim = 0; dim < num_features; ++dim) {
+                            binary_data(indices[i].size() + d, dim) = (*data.data_ptr_)(indices[j][d], dim);
+                            binary_y(0, indices[i].size() + d) = real_type{ -1.0 };
+                        }
                     }
                 }
 
                 // if max_iter is the default value, update it according to the current binary classification matrix size
-                const unsigned long long binary_max_iter = max_iter_val.is_default() ? static_cast<unsigned long long>(binary_data.size()) : max_iter_val.value();
+                const unsigned long long binary_max_iter = max_iter_val.is_default() ? static_cast<unsigned long long>(binary_data.num_rows()) : max_iter_val.value();
                 // solve the minimization problem -> note that only a single rhs is present
                 detail::log(verbosity_level::full | verbosity_level::timing,
                             "\nClassifying {} vs {} ({} vs {}) ({}/{}):\n",
@@ -387,8 +395,8 @@ model<real_type, label_type> csvm::fit(const data_set<real_type, label_type> &da
                             pos + 1,
                             calculate_number_of_classifiers(classification_type::oao, num_classes));
                 const auto &[alpha, rho] = solve_system_of_linear_equations(static_cast<detail::parameter<real_type>>(params), binary_data, binary_y, epsilon_val.value(), binary_max_iter);
-                (*csvm_model.alpha_ptr_)[pos] = alpha.front();
-                (*csvm_model.rho_ptr_)[pos] = rho.front();
+                (*csvm_model.alpha_ptr_)[pos] = std::move(alpha);
+                (*csvm_model.rho_ptr_)[pos] = rho.front();  // prevents std::tie
                 // go to next one vs. one classification
                 ++pos;
                 // order of the alpha value: 0 vs 1, 0 vs 2, 0 vs 3, 1 vs 2, 1 vs 3, 2 vs 3
@@ -416,30 +424,60 @@ std::vector<label_type> csvm::predict(const model<real_type, label_type> &model,
     // convert predicted values to the correct labels
     std::vector<label_type> predicted_labels(data.num_data_points());
 
-    if (model.get_classification_type() == classification_type::oaa) {
-        // predict values using OAA -> num_data_points x num_classes
-        const std::vector<std::vector<real_type>> votes = predict_values(static_cast<detail::parameter<real_type>>(model.params_), model.data_.data(), *model.alpha_ptr_, *model.rho_ptr_, *model.w_ptr_, data.data());
+    PLSSVM_ASSERT(data.data_ptr_ != nullptr, "The data_ptr_ (predict points) may never be a nullptr!");
+    const aos_matrix<real_type> &predict_points = *data.data_ptr_;
 
-        PLSSVM_ASSERT(votes.size() == data.num_data_points(), "The number of votes ({}) must be equal the number of data points ({})!", votes.size(), data.num_data_points());
-        PLSSVM_ASSERT(std::all_of(votes.cbegin(), votes.cend(), [num_classes = model.num_classes()](const std::vector<real_type> &vec) { return vec.size() == calculate_number_of_classifiers(classification_type::oaa, num_classes); }), "Each vote must contain num_classes ({}) values!", calculate_number_of_classifiers(classification_type::oaa, model.num_classes()));
+    if (model.get_classification_type() == classification_type::oaa) {
+        PLSSVM_ASSERT(data.data_ptr_ != nullptr, "The data_ptr_ (model) may never be a nullptr!");
+        PLSSVM_ASSERT(model.alpha_ptr_ != nullptr, "The alpha_ptr_ may never be a nullptr!");
+        PLSSVM_ASSERT(model.alpha_ptr_->size() == 1, "For OAA, the alpha vector must only contain a single aos_matrix of size {}x{}!", model.num_classes(), model.num_support_vectors());
+        PLSSVM_ASSERT(model.alpha_ptr_->front().num_rows() == calculate_number_of_classifiers(classification_type::oaa, data.num_classes()), "The number of rows in the matrix must be {}, but is {}!", model.alpha_ptr_->front().num_rows(), calculate_number_of_classifiers(classification_type::oaa, data.num_classes()));
+        PLSSVM_ASSERT(model.alpha_ptr_->front().num_cols() == data.num_data_points(), "The number of weights ({}) must be equal to the number of support vectors ({})!", model.alpha_ptr_->front().num_cols(), data.num_data_points());
+
+        const aos_matrix<real_type> &sv = *model.data_.data_ptr_;
+        const aos_matrix<real_type> &alpha = model.alpha_ptr_->back();
+
+        // predict values using OAA -> num_data_points x num_classes
+        const aos_matrix<real_type> votes = predict_values(static_cast<detail::parameter<real_type>>(model.params_), sv, alpha, *model.rho_ptr_, *model.w_ptr_, predict_points);
+
+        PLSSVM_ASSERT(votes.num_rows() == data.num_data_points(), "The number of votes ({}) must be equal the number of data points ({})!", votes.num_rows(), data.num_data_points());
+        PLSSVM_ASSERT(votes.num_cols() == calculate_number_of_classifiers(classification_type::oaa, model.num_classes()), "The votes contain {} values, but must contain {} values!", votes.num_cols(), calculate_number_of_classifiers(classification_type::oaa, model.num_classes()));
 
         // use voting
         #pragma omp parallel for default(none) shared(predicted_labels, votes, model) if (!std::is_same_v<label_type, bool>)
         for (typename std::vector<label_type>::size_type i = 0; i < predicted_labels.size(); ++i) {
-            const std::size_t argmax = std::distance(votes[i].cbegin(), std::max_element(votes[i].cbegin(), votes[i].cend()));
+            std::size_t argmax = 0;
+            real_type max = std::numeric_limits<real_type>::lowest();
+            for (std::size_t v = 0; v < votes.num_cols(); ++v) {
+                if (max < votes(i, v)) {
+                    argmax = v;
+                    max = votes(i, v);
+                }
+            }
             predicted_labels[i] = model.data_.mapping_->get_label_by_mapped_index(argmax);
         }
     } else if (model.get_classification_type() == classification_type::oao) {
         PLSSVM_ASSERT(model.indices_ptr_ != nullptr, "The indices_ptr_ may never be a nullptr!");
         PLSSVM_ASSERT(model.alpha_ptr_ != nullptr, "The alpha_ptr_ may never be a nullptr!");
+        PLSSVM_ASSERT(model.alpha_ptr_->size() == calculate_number_of_classifiers(classification_type::oao, model.num_classes()), "The alpha vector must contain {} matrices, but it contains {}!", calculate_number_of_classifiers(classification_type::oao, model.num_classes()), model.alpha_ptr_->size());
+        PLSSVM_ASSERT(std::all_of(model.alpha_ptr_->cbegin(), model.alpha_ptr_->cend(), [](const aos_matrix<real_type> &matr) { return matr.num_rows() == 1; }), "In case of OAO, each matrix may only contain one row!");
         PLSSVM_ASSERT(model.rho_ptr_ != nullptr, "The rho_ptr_ may never be a nullptr!");
         PLSSVM_ASSERT(model.w_ptr_ != nullptr, "The w_ptr_ may never be a nullptr!");
 
         // predict values using OAO
+        const std::size_t num_features = model.num_features();
         const std::size_t num_classes = model.num_classes();
         const std::vector<std::vector<std::size_t>> &indices = *model.indices_ptr_;
 
-        std::vector<std::vector<std::size_t>> class_vote(data.num_data_points(), std::vector<std::size_t>(num_classes));
+        aos_matrix<std::size_t> class_votes{ data.num_data_points(), num_classes };
+
+        bool calculate_w{ false };
+        if (model.w_ptr_->empty()) {
+            // w is currently empty
+            // initialize the w matrix and calculate it later!
+            calculate_w = true;
+            (*model.w_ptr_) = aos_matrix<real_type>{ calculate_number_of_classifiers(classification_type::oao, num_classes), num_features };
+        }
 
         // perform one vs. one prediction
         std::size_t pos = 0;
@@ -448,50 +486,62 @@ std::vector<label_type> csvm::predict(const model<real_type, label_type> &model,
                 // TODO: reduce amount of copies!?
                 // assemble one vs. one classification matrix and rhs
                 const std::size_t num_data_points_in_sub_matrix{ indices[i].size() + indices[j].size() };
-                std::vector<std::vector<real_type>> binary_sv(num_data_points_in_sub_matrix);
-                std::vector<std::vector<real_type>> binary_alpha{  (*model.alpha_ptr_)[pos]  };  // note: the first dimension will always be one, since only one rhs is needed
+                aos_matrix<real_type> binary_sv{ num_data_points_in_sub_matrix, num_features };
+                const aos_matrix<real_type> &binary_alpha = (*model.alpha_ptr_)[pos];
                 const std::vector<real_type> binary_rho{ (*model.rho_ptr_)[pos] };
 
                 // TODO: not sorted? -> would enable optimization for OAO in the binary case
                 // note: if this is changed, it must also be changed in the libsvm_model_parsing.hpp in the calculate_alpha_idx function!!!
-                #pragma omp parallel default(none) shared(binary_sv, indices, model) firstprivate(i, j)
+                #pragma omp parallel default(none) shared(binary_sv, indices, model) firstprivate(i, j, num_features)
                 {
                     #pragma omp for nowait
                     for (std::size_t d = 0; d < indices[i].size(); ++d) {
-                        binary_sv[d] = model.data_.data()[indices[i][d]];
+                        for (std::size_t dim = 0; dim < num_features; ++dim) {
+                            binary_sv(d, dim) = (*model.data_.data_ptr_)(indices[i][d], dim);
+                        }
                     }
                     #pragma omp for
                     for (std::size_t d = 0; d < indices[j].size(); ++d) {
-                        binary_sv[indices[i].size() + d] = model.data_.data()[indices[j][d]];
+                        for (std::size_t dim = 0; dim < num_features; ++dim) {
+                            binary_sv(indices[i].size() + d, dim) = (*model.data_.data_ptr_)(indices[j][d], dim);
+                        }
                     }
                 }
 
                 // predict binary pair
-                std::vector<std::vector<real_type>> binary_votes;
+                aos_matrix<real_type> binary_votes{};
                 // don't use the w vector for the polynomial and rbf kernel OR if the w vector hasn't been calculated yet
-                if (params_.kernel_type != kernel_function_type::linear || model.w_ptr_->size() < calculate_number_of_classifiers(classification_type::oao, num_classes)) {
+                if (params_.kernel_type != kernel_function_type::linear || calculate_w) {
                     // the w vector optimization has not been applied yet -> calculate w and store it
-                    std::vector<std::vector<real_type>> w{};
-                    binary_votes = predict_values(static_cast<detail::parameter<real_type>>(model.params_), binary_sv, binary_alpha, binary_rho, w, data.data());
+                    aos_matrix<real_type> w{};
+                    // returned w: 1 x num_features
+                    binary_votes = predict_values(static_cast<detail::parameter<real_type>>(model.params_), binary_sv, binary_alpha, binary_rho, w, predict_points);
                     // only in case of the linear kernel, the w vector gets filled -> store it
                     if (params_.kernel_type == kernel_function_type::linear) {
-                        model.w_ptr_->push_back(std::move(w.front()));
+                        #pragma omp parallel for default(none) shared(model, w) firstprivate(num_features, pos)
+                        for (std::size_t dim = 0; dim < num_features; ++dim) {
+                            (*model.w_ptr_)(pos, dim) = w(0, dim);
+                        }
                     }
                 } else {
                     // use previously calculated w vector
-                    std::vector<std::vector<real_type>> binary_w{ (*model.w_ptr_)[pos] };
-                    binary_votes = predict_values(static_cast<detail::parameter<real_type>>(model.params_), binary_sv, binary_alpha, binary_rho, binary_w, data.data());
+                    aos_matrix<real_type> binary_w{ 1, num_features };
+                    #pragma omp parallel for default(none) shared(model, binary_w) firstprivate(num_features, pos)
+                    for (std::size_t dim = 0; dim < num_features; ++dim) {
+                        binary_w(0, dim) = (*model.w_ptr_)(pos, dim);
+                    }
+                    binary_votes = predict_values(static_cast<detail::parameter<real_type>>(model.params_), binary_sv, binary_alpha, binary_rho, binary_w, predict_points);
                 }
 
-                PLSSVM_ASSERT(binary_votes.size() == data.num_data_points(), "The number of votes ({}) must be equal the number of data points ({})!", binary_votes.size(), data.num_data_points());
-                PLSSVM_ASSERT(std::all_of(binary_votes.cbegin(), binary_votes.cend(), [](const std::vector<real_type> &vec) { return vec.size() == 1; }), "Each vote must contain exactly one value since OAO uses binary classifiers!");
+                PLSSVM_ASSERT(binary_votes.num_rows() == data.num_data_points(), "The number of votes ({}) must be equal the number of data points ({})!", binary_votes.num_rows(), data.num_data_points());
+                PLSSVM_ASSERT(binary_votes.num_cols() == 1, "The votes contain {} values, but must contain one value!", binary_votes.num_cols());
 
-                #pragma omp parallel for default(none) shared(data, binary_votes, class_vote) firstprivate(i, j)
+                #pragma omp parallel for default(none) shared(data, binary_votes, class_votes) firstprivate(i, j)
                 for (std::size_t d = 0; d < data.num_data_points(); ++d) {
-                    if (binary_votes[d].front() > real_type{ 0.0 }) {
-                        ++class_vote[d][i];
+                    if (binary_votes(d, 0) > real_type{ 0.0 }) {
+                        ++class_votes(d, i);
                     } else {
-                        ++class_vote[d][j];
+                        ++class_votes(d, j);
                     }
                 }
 
@@ -502,9 +552,16 @@ std::vector<label_type> csvm::predict(const model<real_type, label_type> &model,
         }
 
         // map majority vote to predicted class
-        #pragma omp parallel for default(none) shared(predicted_labels, class_vote, model) if (!std::is_same_v<label_type, bool>)
+        #pragma omp parallel for default(none) shared(predicted_labels, class_votes, model) if (!std::is_same_v<label_type, bool>)
         for (typename std::vector<label_type>::size_type i = 0; i < predicted_labels.size(); ++i) {
-            const std::size_t argmax = std::distance(class_vote[i].cbegin(), std::max_element(class_vote[i].cbegin(), class_vote[i].cend()));
+            std::size_t argmax = 0;
+            real_type max = std::numeric_limits<real_type>::lowest();
+            for (std::size_t v = 0; v < class_votes.num_cols(); ++v) {
+                if (max < class_votes(i, v)) {
+                    argmax = v;
+                    max = class_votes(i, v);
+                }
+            }
             predicted_labels[i] = model.data_.mapping_->get_label_by_mapped_index(argmax);
         }
     }

@@ -12,6 +12,7 @@
 #include "plssvm/detail/string_utility.hpp"  // plssvm::detail::to_lower_case
 #include "plssvm/detail/utility.hpp"         // plssvm::detail::to_underlying
 #include "plssvm/exceptions/exceptions.hpp"  // plssvm::unsupported_kernel_type_exception
+#include "plssvm/matrix.hpp"                 // plssvm::matrix, plssvm::layout_type
 #include "plssvm/parameter.hpp"              // plssvm::detail::parameter
 
 #include "fmt/core.h"                        // fmt::format
@@ -83,5 +84,23 @@ real_type kernel_function(const std::vector<real_type> &xi, const std::vector<re
 
 template float kernel_function(const std::vector<float> &, const std::vector<float> &, const detail::parameter<float> &);
 template double kernel_function(const std::vector<double> &, const std::vector<double> &, const detail::parameter<double> &);
+
+template <typename real_type, layout_type layout>
+real_type kernel_function(const matrix<real_type, layout> &x, const std::size_t i, const matrix<real_type, layout> &y, const std::size_t j, const detail::parameter<real_type> &params) {
+    switch (params.kernel_type) {
+        case kernel_function_type::linear:
+            return kernel_function<kernel_function_type::linear, real_type, layout>(x, i, y, j);
+        case kernel_function_type::polynomial:
+            return kernel_function<kernel_function_type::polynomial, real_type, layout>(x, i, y, j, params.degree.value(), params.gamma.value(), params.coef0.value());
+        case kernel_function_type::rbf:
+            return kernel_function<kernel_function_type::rbf, real_type, layout>(x, i, y, j, params.gamma.value());
+    }
+    throw unsupported_kernel_type_exception{ fmt::format("Unknown kernel type (value: {})!", detail::to_underlying(params.kernel_type)) };
+}
+
+template float kernel_function(const matrix<float, layout_type::aos> &, const std::size_t, const matrix<float, layout_type::aos> &, const std::size_t, const detail::parameter<float> &);
+template float kernel_function(const matrix<float, layout_type::soa> &, const std::size_t, const matrix<float, layout_type::soa> &, const std::size_t, const detail::parameter<float> &);
+template double kernel_function(const matrix<double, layout_type::aos> &, const std::size_t, const matrix<double, layout_type::aos> &, const std::size_t, const detail::parameter<double> &);
+template double kernel_function(const matrix<double, layout_type::soa> &, const std::size_t, const matrix<double, layout_type::soa> &, const std::size_t, const detail::parameter<double> &);
 
 }  // namespace plssvm

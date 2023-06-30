@@ -16,9 +16,9 @@
 #include "plssvm/constants.hpp"                   // plssvm::{THREAD_BLOCK_SIZE, INTERNAL_BLOCK_SIZE}
 #include "plssvm/csvm.hpp"                        // plssvm::csvm
 #include "plssvm/detail/execution_range.hpp"      // plssvm::detail::execution_range
-#include "plssvm/detail/layout.hpp"               // plssvm::detail::{transform_to_layout, layout_type}
 #include "plssvm/detail/logger.hpp"               // plssvm::detail::log, plssvm::verbosity_level
 #include "plssvm/detail/performance_tracker.hpp"  // plssvm::detail::tracking_entry, PLSSVM_DETAIL_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY
+#include "plssvm/matrix.hpp"                      // plssvm::aos_matrix
 #include "plssvm/parameter.hpp"                   // plssvm::parameter
 
 #include "fmt/chrono.h"                           // output std::chrono times using {fmt}
@@ -98,30 +98,30 @@ class gpu_csvm : public ::plssvm::csvm {
     /**
      * @copydoc plssvm::csvm::solve_system_of_linear_equations
      */
-    [[nodiscard]] std::pair<std::vector<std::vector<float>>, std::vector<float>> solve_system_of_linear_equations(const parameter<float> &params, const std::vector<std::vector<float>> &A, std::vector<std::vector<float>> B, float eps, unsigned long long max_iter) const final { return this->solve_system_of_linear_equations_impl(params, A, std::move(B), eps, max_iter); }
+    [[nodiscard]] std::pair<aos_matrix<float>, std::vector<float>> solve_system_of_linear_equations(const parameter<float> &params, const aos_matrix<float> &A, aos_matrix<float> B, float eps, unsigned long long max_iter) const final { return this->solve_system_of_linear_equations_impl(params, A, std::move(B), eps, max_iter); }
     /**
      * @copydoc plssvm::csvm::solve_system_of_linear_equations
      */
-    [[nodiscard]] std::pair<std::vector<std::vector<double>>, std::vector<double>> solve_system_of_linear_equations(const parameter<double> &params, const std::vector<std::vector<double>> &A, std::vector<std::vector<double>> B, double eps, unsigned long long max_iter) const final { return this->solve_system_of_linear_equations_impl(params, A, std::move(B), eps, max_iter); }
+    [[nodiscard]] std::pair<aos_matrix<double>, std::vector<double>> solve_system_of_linear_equations(const parameter<double> &params, const aos_matrix<double> &A, aos_matrix<double> B, double eps, unsigned long long max_iter) const final { return this->solve_system_of_linear_equations_impl(params, A, std::move(B), eps, max_iter); }
     /**
      * @copydoc plssvm::csvm::solve_system_of_linear_equations
      */
     template <typename real_type>
-    [[nodiscard]] std::pair<std::vector<std::vector<real_type>>, std::vector<real_type>> solve_system_of_linear_equations_impl(const parameter<real_type> &params, const std::vector<std::vector<real_type>> &A, std::vector<std::vector<real_type>> B, real_type eps, unsigned long long max_iter) const;
+    [[nodiscard]] std::pair<aos_matrix<real_type>, std::vector<real_type>> solve_system_of_linear_equations_impl(const parameter<real_type> &params, const aos_matrix<real_type> &A, aos_matrix<real_type> B, real_type eps, unsigned long long max_iter) const;
 
     /**
      * @copydoc plssvm::csvm::predict_values
      */
-    [[nodiscard]] std::vector<std::vector<float>> predict_values(const parameter<float> &params, const std::vector<std::vector<float>> &support_vectors, const std::vector<std::vector<float>> &alpha, const std::vector<float> &rho, std::vector<std::vector<float>> &w, const std::vector<std::vector<float>> &predict_points) const final { return this->predict_values_impl(params, support_vectors, alpha, rho, w, predict_points); }
+    [[nodiscard]] aos_matrix<float> predict_values(const parameter<float> &params, const aos_matrix<float> &support_vectors, const aos_matrix<float> &alpha, const std::vector<float> &rho, aos_matrix<float> &w, const aos_matrix<float> &predict_points) const final { return this->predict_values_impl(params, support_vectors, alpha, rho, w, predict_points); }
     /**
      * @copydoc plssvm::csvm::predict_values
      */
-    [[nodiscard]] std::vector<std::vector<double>> predict_values(const parameter<double> &params, const std::vector<std::vector<double>> &support_vectors, const std::vector<std::vector<double>> &alpha, const std::vector<double> &rho, std::vector<std::vector<double>> &w, const std::vector<std::vector<double>> &predict_points) const final { return this->predict_values_impl(params, support_vectors, alpha, rho, w, predict_points); }
+    [[nodiscard]] aos_matrix<double> predict_values(const parameter<double> &params, const aos_matrix<double> &support_vectors, const aos_matrix<double> &alpha, const std::vector<double> &rho, aos_matrix<double> &w, const aos_matrix<double> &predict_points) const final { return this->predict_values_impl(params, support_vectors, alpha, rho, w, predict_points); }
     /**
      * @copydoc plssvm::csvm::predict_values
      */
     template <typename real_type>
-    [[nodiscard]] std::vector<std::vector<real_type>> predict_values_impl(const parameter<real_type> &params, const std::vector<std::vector<real_type>> &support_vectors, const std::vector<std::vector<real_type>> &alpha, const std::vector<real_type> &rho, std::vector<std::vector<real_type>> &w, const std::vector<std::vector<real_type>> &predict_points) const;
+    [[nodiscard]] aos_matrix<real_type> predict_values_impl(const parameter<real_type> &params, const aos_matrix<real_type> &support_vectors, const aos_matrix<real_type> &alpha, const std::vector<real_type> &rho, aos_matrix<real_type> &w, const aos_matrix<real_type> &predict_points) const;
 
     /**
      * @brief Returns the number of usable devices given the kernel function @p kernel and the number of features @p num_features.
@@ -144,7 +144,7 @@ class gpu_csvm : public ::plssvm::csvm {
      * @return a tuple: [pointers to the main data distributed across the devices, pointers to the last data point of the data set distributed across the devices, the feature ranges a specific device is responsible for] (`[[nodiscard]]`)
      */
     template <typename real_type>
-    [[nodiscard]] std::tuple<std::vector<device_ptr_type<real_type>>, std::vector<device_ptr_type<real_type>>, std::vector<std::size_t>> setup_data_on_device(const std::vector<std::vector<real_type>> &data, std::size_t num_data_points_to_setup, std::size_t num_features_to_setup, std::size_t boundary_size, std::size_t num_used_devices) const;
+    [[nodiscard]] std::tuple<std::vector<device_ptr_type<real_type>>, std::vector<device_ptr_type<real_type>>, std::vector<std::size_t>> setup_data_on_device(const aos_matrix<real_type> &data, std::size_t num_data_points_to_setup, std::size_t num_features_to_setup, std::size_t boundary_size, std::size_t num_used_devices) const;
 
     /**
      * @brief Calculate the `q` vector used in the dimensional reduction.
@@ -280,18 +280,16 @@ std::size_t gpu_csvm<device_ptr_t, queue_t>::select_num_used_devices(const kerne
 template <template <typename> typename device_ptr_t, typename queue_t>
 template <typename real_type>
 std::tuple<std::vector<device_ptr_t<real_type>>, std::vector<device_ptr_t<real_type>>, std::vector<std::size_t>>
-gpu_csvm<device_ptr_t, queue_t>::setup_data_on_device(const std::vector<std::vector<real_type>> &data,
+gpu_csvm<device_ptr_t, queue_t>::setup_data_on_device(const aos_matrix<real_type> &data,
                                                       const std::size_t num_data_points_to_setup,
                                                       const std::size_t num_features_to_setup,
                                                       const std::size_t boundary_size,
                                                       const std::size_t num_used_devices) const {
     PLSSVM_ASSERT(!data.empty(), "The data must not be empty!");
-    PLSSVM_ASSERT(!data.front().empty(), "The data points must contain at least one feature!");
-    PLSSVM_ASSERT(std::all_of(data.cbegin(), data.cend(), [&data](const std::vector<real_type> &data_point) { return data_point.size() == data.front().size(); }), "All data points must have the same number of features!");
     PLSSVM_ASSERT(num_data_points_to_setup > 0, "At least one data point must be copied to the device!");
-    PLSSVM_ASSERT(num_data_points_to_setup <= data.size(), "Can't copy more data points to the device than are present!: {} <= {}", num_data_points_to_setup, data.size());
+    PLSSVM_ASSERT(num_data_points_to_setup <= data.num_rows(), "Can't copy more data points to the device than are present!: {} <= {}", num_data_points_to_setup, data.num_rows());
     PLSSVM_ASSERT(num_features_to_setup > 0, "At least one feature must be copied to the device!");
-    PLSSVM_ASSERT(num_features_to_setup <= data.front().size(), "Can't copy more features to the device than are present!: {} <= {}", num_features_to_setup, data.front().size());
+    PLSSVM_ASSERT(num_features_to_setup <= data.num_cols(), "Can't copy more features to the device than are present!: {} <= {}", num_features_to_setup, data.num_cols());
     PLSSVM_ASSERT(num_used_devices <= devices_.size(), "Can't use more devices than are available!: {} <= {}", num_used_devices, devices_.size());
 
     // calculate the number of features per device
@@ -301,23 +299,28 @@ gpu_csvm<device_ptr_t, queue_t>::setup_data_on_device(const std::vector<std::vec
     }
 
     // transform 2D to 1D AoS data
-    const std::vector<real_type> transformed_data = detail::transform_to_layout(detail::layout_type::aos, data, boundary_size, num_data_points_to_setup);
+    // TODO: boundary?!
+//    const std::vector<real_type> transformed_data = detail::transform_to_layout(layout_type::aos, data, boundary_size, num_data_points_to_setup);
 
     std::vector<device_ptr_type<real_type>> data_last_d(num_used_devices);
     std::vector<device_ptr_type<real_type>> data_d(num_used_devices);
 
-    #pragma omp parallel for default(none) shared(num_used_devices, devices_, feature_ranges, data_last_d, data_d, data, transformed_data) firstprivate(num_data_points_to_setup, boundary_size, num_features_to_setup)
+    #pragma omp parallel for default(none) shared(num_used_devices, devices_, feature_ranges, data_last_d, data_d, data) firstprivate(num_data_points_to_setup, boundary_size, num_features_to_setup)
     for (typename std::vector<queue_type>::size_type device = 0; device < num_used_devices; ++device) {
         const std::size_t num_features_in_range = feature_ranges[device + 1] - feature_ranges[device];
 
         // initialize data_last on device
         data_last_d[device] = device_ptr_type<real_type>{ num_features_in_range + boundary_size, devices_[device] };
         data_last_d[device].memset(0);
-        data_last_d[device].copy_to_device(data.back().data() + feature_ranges[device], 0, num_features_in_range);
+        std::vector<real_type> back_data(num_features_in_range);
+        for (std::size_t i = 0; i < num_features_in_range; ++i) {
+            back_data[i] = data(data.num_rows() - 1, feature_ranges[device] + i);
+        }
+        data_last_d[device].copy_to_device(back_data);
 
         const std::size_t device_data_size = num_features_in_range * (num_data_points_to_setup + boundary_size);
         data_d[device] = device_ptr_type<real_type>{ device_data_size, devices_[device] };
-        data_d[device].copy_to_device(transformed_data.data() + feature_ranges[device] * (num_data_points_to_setup + boundary_size), 0, device_data_size);
+        data_d[device].copy_to_device(data.data() + feature_ranges[device] * (num_data_points_to_setup + boundary_size), 0, device_data_size);
     }
 
     return std::make_tuple(std::move(data_d), std::move(data_last_d), std::move(feature_ranges));
@@ -455,24 +458,23 @@ void gpu_csvm<device_ptr_t, queue_t>::device_reduction(std::vector<device_ptr_ty
 
 template <template <typename> typename device_ptr_t, typename queue_t>
 template <typename real_type>
-std::pair<std::vector<std::vector<real_type>>, std::vector<real_type>> gpu_csvm<device_ptr_t, queue_t>::solve_system_of_linear_equations_impl(const parameter<real_type> &params,
-                                                                                                                    const std::vector<std::vector<real_type>> &A,
-                                                                                                                    std::vector<std::vector<real_type>> B,
+std::pair<aos_matrix<real_type>, std::vector<real_type>> gpu_csvm<device_ptr_t, queue_t>::solve_system_of_linear_equations_impl(const parameter<real_type> &params,
+                                                                                                                    const aos_matrix<real_type> &A,
+                                                                                                                    aos_matrix<real_type> B_in,
                                                                                                                     const real_type eps,
                                                                                                                     const unsigned long long max_iter) const {
     PLSSVM_ASSERT(!A.empty(), "The data must not be empty!");
-    PLSSVM_ASSERT(!A.front().empty(), "The data points must contain at least one feature!");
-    PLSSVM_ASSERT(std::all_of(A.cbegin(), A.cend(), [&A](const std::vector<real_type> &data_point) { return data_point.size() == A.front().size(); }), "All data points must have the same number of features!");
-    PLSSVM_ASSERT(!B.empty(), "At least one right hand side must be given!");
-    PLSSVM_ASSERT(std::all_of(B.cbegin(), B.cend(), [&A](const std::vector<real_type> &rhs) { return A.size() == rhs.size(); }), "The number of data points in the matrix A ({}) and the values in all right hand side vectors must be the same!", A.size());
+    PLSSVM_ASSERT(!B_in.empty(), "At least one right hand side must be given!");
+    PLSSVM_ASSERT(A.num_rows() == B_in.num_cols(), "The number of rows in A ({}) and B({}) must be the same!", A.num_rows(), B_in.num_cols());
     PLSSVM_ASSERT(eps > real_type{ 0.0 }, "The stopping criterion in the CG algorithm must be greater than 0.0, but is {}!", eps);
     PLSSVM_ASSERT(max_iter > 0, "The number of CG iterations must be greater than 0!");
 
     using namespace plssvm::operators;
 
-    const std::size_t dept = A.size() - 1;
+    const std::size_t dept = A.num_rows() - 1;
     constexpr auto boundary_size = 0; // static_cast<std::size_t>(THREAD_BLOCK_SIZE * INTERNAL_BLOCK_SIZE);
-    const std::size_t num_features = A.front().size();
+    const std::size_t num_features = A.num_cols();
+    const std::size_t num_rhs = B_in.num_rows();
 
     [[maybe_unused]] const std::size_t num_used_devices = 1; // TODO: this->select_num_used_devices(params.kernel_type, num_features);
 
@@ -485,14 +487,17 @@ std::pair<std::vector<std::vector<real_type>>, std::vector<real_type>> gpu_csvm<
     const std::vector<real_type> q_red = this->generate_q(params, data_d, data_last_d, dept, feature_ranges, boundary_size);
 
     // calculate QA_costs
-    const real_type QA_cost = kernel_function(A.back(), A.back(), params) + real_type{ 1.0 } / params.cost;
+    const real_type QA_cost = kernel_function(A, dept, A, dept, params) + real_type{ 1.0 } / params.cost;
 
     // update b
-    std::vector<real_type> b_back_value(B.size());
-    for (std::size_t i = 0; i < B.size(); ++i) {
-        b_back_value[i] = B[i].back();
-        B[i].pop_back();
-        B[i] -= b_back_value[i];
+    std::vector<real_type> b_back_value(num_rhs);
+    aos_matrix<real_type> B{ num_rhs, dept };
+    #pragma omp parallel for default(none) shared(B_in, B, b_back_value) firstprivate(dept, num_rhs)
+    for (std::size_t row = 0; row < num_rhs; ++row) {
+        b_back_value[row] = B_in(row, dept);
+        for (std::size_t col = 0; col < dept; ++col) {
+            B(row, col) = B_in(row, col) - b_back_value[row];
+        }
     }
 
     // assemble explicit kernel matrix
@@ -510,36 +515,35 @@ std::pair<std::vector<std::vector<real_type>>, std::vector<real_type>> gpu_csvm<
 
     // CG
 
-    std::vector<real_type> X_flat(B.size() * dept, real_type{ 1.0 });
-    device_ptr_type<real_type> X_flat_d{ X_flat.size() };
+    aos_matrix<real_type> X{ num_rhs, dept, real_type{ 1.0 } };
+    device_ptr_type<real_type> X_d{ X.num_entries() };
 
-    std::vector<real_type> B_flat = transform_to_aos_layout(B, 0, B.size(), dept);
-    std::vector<real_type> R_flat = B_flat;
-    device_ptr_type<real_type> R_flat_d{ R_flat.size() };
+    aos_matrix<real_type> R{ B };
+    device_ptr_type<real_type> R_d{ R.num_entries() };
 
     // R = B - A * X
-    X_flat_d.copy_to_device(X_flat);
-    R_flat_d.copy_to_device(B_flat);
-    this->blas_gemm(dept, B.size(), dept, real_type{ -1.0 }, explicit_A_d, X_flat_d, real_type{ 1.0 }, R_flat_d);
-    R_flat_d.copy_to_host(R_flat);
+    X_d.copy_to_device(X.data());
+    R_d.copy_to_device(B.data());
+    this->blas_gemm(dept, num_rhs, dept, real_type{ -1.0 }, explicit_A_d, X_d, real_type{ 1.0 }, R_d);
+    R_d.copy_to_host(R.data());
 
     // delta = R.T * R
-    std::vector<real_type> delta(B.size());
-    #pragma omp parallel for default(none) shared(B, R_flat, delta) firstprivate(dept)
-    for (std::size_t i = 0; i < B.size(); ++i) {
+    std::vector<real_type> delta(num_rhs);
+    #pragma omp parallel for default(none) shared(R, delta) firstprivate(num_rhs, dept)
+    for (std::size_t i = 0; i < num_rhs; ++i) {
         real_type temp{ 0.0 };
         #pragma omp simd reduction(+ : temp)
         for (std::size_t j = 0; j < dept; ++j) {
-            temp += R_flat[i * dept + j] * R_flat[i * dept + j];
+            temp += R(i, j) * R(i, j);
         }
         delta[i] = temp;
     }
     const std::vector<real_type> delta0(delta);
-    std::vector<real_type> Q_flat(B.size() * dept);
-    device_ptr_type<real_type> Q_flat_d{ Q_flat.size() };
+    aos_matrix<real_type> Q{ num_rhs, dept };
+    device_ptr_type<real_type> Q_d{ Q.num_entries() };
 
-    std::vector<real_type> D_flat(R_flat);
-    device_ptr_type<real_type> D_flat_d{ D_flat.size() };
+    aos_matrix<real_type> D{ R };
+    device_ptr_type<real_type> D_d{ D.num_entries() };
 
     // timing for each CG iteration
     std::chrono::milliseconds average_iteration_time{};
@@ -566,8 +570,8 @@ std::pair<std::vector<std::vector<real_type>>, std::vector<real_type>> gpu_csvm<
     };
     // get the number of rhs that have already been converged
     const auto num_converged = [&]() {
-        std::vector<bool> converged(B.size(), false);
-        for (std::size_t i = 0; i < B.size(); ++i) {
+        std::vector<bool> converged(delta.size(), false);
+        for (std::size_t i = 0; i < delta.size(); ++i) {
             // check if the rhs converged in the current iteration
             converged[i] = delta[i] <= eps * eps * delta0[i];
         }
@@ -582,68 +586,68 @@ std::pair<std::vector<std::vector<real_type>>, std::vector<real_type>> gpu_csvm<
                     iter + 1,
                     max_iter,
                     num_converged(),
-                    B.size(),
+                    num_rhs,
                     delta[max_residual_difference_idx],
                     eps * eps * delta0[max_residual_difference_idx],
                     max_residual_difference_idx);
         iteration_start_time = std::chrono::steady_clock::now();
 
         // Q = A * D
-        D_flat_d.copy_to_device(D_flat);
-        Q_flat_d.memset(0);
-        this->blas_gemm(dept, B.size(), dept, real_type{ 1.0 }, explicit_A_d, D_flat_d, real_type{ 0.0 }, Q_flat_d);
-        Q_flat_d.copy_to_host(Q_flat);
+        D_d.copy_to_device(D.data());
+        Q_d.memset(0);
+        this->blas_gemm(dept, num_rhs, dept, real_type{ 1.0 }, explicit_A_d, D_d, real_type{ 0.0 }, Q_d);
+        Q_d.copy_to_host(Q.data());
 
         // (alpha = delta_new / (D^T * Q))
-        std::vector<real_type> alpha(B.size());
-        #pragma omp parallel for default(none) shared(B, D_flat, Q_flat, alpha, delta) firstprivate(dept)
-        for (std::size_t i = 0; i < B.size(); ++i) {
+        std::vector<real_type> alpha(num_rhs);
+        #pragma omp parallel for default(none) shared(D, Q, alpha, delta) firstprivate(num_rhs, dept)
+        for (std::size_t i = 0; i < num_rhs; ++i) {
             real_type temp{ 0.0 };
             #pragma omp simd reduction(+ : temp)
             for (std::size_t dim = 0; dim < dept; ++dim) {
-                temp += D_flat[i * dept + dim] * Q_flat[i * dept + dim];
+                temp += D(i, dim) * Q(i, dim);
             }
             alpha[i] = delta[i] / temp;
         }
 
         // X = X + alpha * D
-        #pragma omp parallel for collapse(2) default(none) shared(B, X_flat, alpha, D_flat) firstprivate(dept)
-        for (std::size_t i = 0; i < B.size(); ++i) {
+        #pragma omp parallel for collapse(2) default(none) shared(X, alpha, D) firstprivate(num_rhs, dept)
+        for (std::size_t i = 0; i < num_rhs; ++i) {
             for (std::size_t dim = 0; dim < dept; ++dim) {
-                X_flat[i * dept + dim] += alpha[i] * D_flat[i * dept + dim];
+                X(i, dim) += alpha[i] * D(i, dim);
             }
         }
 
         if (iter % 50 == 49) {
             // R = B - A * X
-            X_flat_d.copy_to_device(X_flat);
-            R_flat_d.copy_to_device(B_flat);
-            this->blas_gemm(dept, B.size(), dept, real_type{ -1.0 }, explicit_A_d, X_flat_d, real_type{ 1.0 }, R_flat_d);
-            R_flat_d.copy_to_host(R_flat);
+            X_d.copy_to_device(X.data());
+            R_d.copy_to_device(B.data());
+            this->blas_gemm(dept, num_rhs, dept, real_type{ -1.0 }, explicit_A_d, X_d, real_type{ 1.0 }, R_d);
+            R_d.copy_to_host(R.data());
         } else {
             // R = R - alpha * Q
-            #pragma omp parallel for collapse(2) default(none) shared(B, R_flat, alpha, Q_flat) firstprivate(dept)
-            for (std::size_t i = 0; i < B.size(); ++i) {
+            #pragma omp parallel for collapse(2) default(none) shared(R, alpha, Q) firstprivate(num_rhs, dept)
+            for (std::size_t i = 0; i < num_rhs; ++i) {
                 for (std::size_t dim = 0; dim < dept; ++dim) {
-                    R_flat[i * dept + dim] -= alpha[i] * Q_flat[i * dept + dim];
+                    R(i, dim) -= alpha[i] * Q(i, dim);
                 }
             }
         }
 
         // delta = R^T * R
         const std::vector<real_type> delta_old = delta;
-        #pragma omp parallel for default(none) shared(B, R_flat, delta) firstprivate(dept)
-        for (std::size_t col = 0; col < B.size(); ++col) {
+        #pragma omp parallel for default(none) shared(R, delta) firstprivate(num_rhs, dept)
+        for (std::size_t col = 0; col < num_rhs; ++col) {
             real_type temp{ 0.0 };
             #pragma omp simd reduction(+ : temp)
             for (std::size_t row = 0; row < dept; ++row) {
-                temp += R_flat[col * dept + row] * R_flat[col * dept + row];
+                temp += R(col, row) * R(col, row);
             }
             delta[col] = temp;
         }
 
         // if we are exact enough stop CG iterations, i.e., if every rhs has converged
-        if (num_converged() == B.size()) {
+        if (num_converged() == num_rhs) {
             output_iteration_duration();
             break;
         }
@@ -651,10 +655,10 @@ std::pair<std::vector<std::vector<real_type>>, std::vector<real_type>> gpu_csvm<
         // (beta = delta_new / delta_old)
         const std::vector<real_type> beta = delta / delta_old;
         // D = beta * D + R
-        #pragma omp parallel for collapse(2) default(none) shared(B, D_flat, beta, R_flat) firstprivate(dept)
-        for (std::size_t i = 0; i < B.size(); ++i) {
+        #pragma omp parallel for collapse(2) default(none) shared(D, beta, R) firstprivate(num_rhs, dept)
+        for (std::size_t i = 0; i < num_rhs; ++i) {
             for (std::size_t dim = 0; dim < dept; ++dim) {
-                D_flat[i * dept + dim] = beta[i] * D_flat[i * dept + dim] + R_flat[i * dept + dim];
+                D(i, dim) = beta[i] * D(i, dim) + R(i, dim);
             }
         }
 
@@ -666,7 +670,7 @@ std::pair<std::vector<std::vector<real_type>>, std::vector<real_type>> gpu_csvm<
                 detail::tracking_entry{ "cg", "iterations", std::min(iter + 1, max_iter) },
                 detail::tracking_entry{ "cg", "max_iterations", max_iter },
                 detail::tracking_entry{ "cg", "num_converged_rhs", num_converged() },
-                detail::tracking_entry{ "cg", "num_rhs", B.size() },
+                detail::tracking_entry{ "cg", "num_rhs", num_rhs },
                 delta[max_residual_difference_idx],
                 eps * eps * delta0[max_residual_difference_idx],
                 max_residual_difference_idx,
@@ -679,21 +683,21 @@ std::pair<std::vector<std::vector<real_type>>, std::vector<real_type>> gpu_csvm<
                 std::min(iter + 1, max_iter));
 
     // calculate bias
-    std::vector<std::vector<real_type>> X_ret(B.size(), std::vector<real_type>(A.size()));
-    std::vector<real_type> bias(B.size());
-    #pragma omp parallel for default(none) shared(B, X_flat, q_red, X_ret, bias, b_back_value) firstprivate(dept, QA_cost)
-    for (std::size_t i = 0; i < B.size(); ++i) {
+    aos_matrix<real_type> X_ret{ num_rhs, A.num_rows() };
+    std::vector<real_type> bias(num_rhs);
+    #pragma omp parallel for default(none) shared(X, q_red, X_ret, bias, b_back_value) firstprivate(num_rhs, dept, QA_cost)
+    for (std::size_t i = 0; i < num_rhs; ++i) {
         real_type temp_sum{ 0.0 };
         real_type temp_dot{ 0.0 };
         #pragma omp simd reduction(+ : temp_sum) reduction(+ : temp_dot)
         for (std::size_t dim = 0; dim < dept; ++dim) {
-            temp_sum += X_flat[i * dept + dim];
-            temp_dot += q_red[dim] * X_flat[i * dept + dim];
+            temp_sum += X(i, dim);
+            temp_dot += q_red[dim] * X(i, dim);
 
-            X_ret[i][dim] = X_flat[i * dept + dim];
+            X_ret(i, dim) = X(i, dim);
         }
         bias[i] = -(b_back_value[i] + QA_cost * temp_sum - temp_dot);
-        X_ret[i].back() = -temp_sum;
+        X_ret(i, dept) = -temp_sum;
     }
 
     return std::make_pair(std::move(X_ret), std::move(bias));
@@ -701,44 +705,37 @@ std::pair<std::vector<std::vector<real_type>>, std::vector<real_type>> gpu_csvm<
 
 template <template <typename> typename device_ptr_t, typename queue_t>
 template <typename real_type>
-std::vector<std::vector<real_type>> gpu_csvm<device_ptr_t, queue_t>::predict_values_impl(const parameter<real_type> &params,
-                                                                            const std::vector<std::vector<real_type>> &support_vectors,
-                                                                            const std::vector<std::vector<real_type>> &alpha,
-                                                                            const std::vector<real_type> &rho,
-                                                                            std::vector<std::vector<real_type>> &w,
-                                                                            const std::vector<std::vector<real_type>> &predict_points) const {
+aos_matrix<real_type> gpu_csvm<device_ptr_t, queue_t>::predict_values_impl(const parameter<real_type> &params,
+                                                                                   const aos_matrix<real_type> &support_vectors,
+                                                                                   const aos_matrix<real_type> &alpha,
+                                                                                   const std::vector<real_type> &rho,
+                                                                                   aos_matrix<real_type> &w,
+                                                                                   const aos_matrix<real_type> &predict_points) const {
     PLSSVM_ASSERT(!support_vectors.empty(), "The support vectors must not be empty!");
-    PLSSVM_ASSERT(!support_vectors.front().empty(), "The support vectors must contain at least one feature!");
-    PLSSVM_ASSERT(std::all_of(support_vectors.cbegin(), support_vectors.cend(), [&support_vectors](const std::vector<real_type> &data_point) { return data_point.size() == support_vectors.front().size(); }), "All support vectors must have the same number of features!");
     PLSSVM_ASSERT(!alpha.empty(), "The alpha vectors (weights) must not be empty!");
-    PLSSVM_ASSERT(!alpha.front().empty(), "The alpha vectors must contain at least one weight!");
-    PLSSVM_ASSERT(std::all_of(alpha.cbegin(), alpha.cend(), [&alpha](const std::vector<real_type> &a) { return a.size() == alpha.front().size(); }), "All alpha vectors must have the same number of weights!");
-    PLSSVM_ASSERT(support_vectors.size() == alpha.front().size(), "The number of support vectors ({}) and number of weights ({}) must be the same!", support_vectors.size(), alpha.front().size());
-    PLSSVM_ASSERT(rho.size() == alpha.size(), "The number of rho values ({}) and the number of weights ({}) must be the same!", rho.size(), alpha.size());
-    PLSSVM_ASSERT(w.empty() || support_vectors.front().size() == w.front().size(), "Either w must be empty or contain exactly the same number of values as features are present ({})!", support_vectors.front().size());
-    PLSSVM_ASSERT(w.empty() || std::all_of(w.cbegin(), w.cend(), [&w](const std::vector<real_type> &vec) { return vec.size() == w.front().size(); }), "All w vectors must have the same number of values!");
-    PLSSVM_ASSERT(w.empty() || alpha.size() == w.size(), "Either w must be empty or contain exactly the same number of vectors ({}) as the alpha vector ({})!", w.size(), alpha.size());
+    PLSSVM_ASSERT(support_vectors.num_rows() == alpha.num_cols(), "The number of support vectors ({}) and number of weights ({}) must be the same!", support_vectors.num_rows(), alpha.num_cols());
+    PLSSVM_ASSERT(rho.size() == alpha.num_rows(), "The number of rho values ({}) and the number of weights ({}) must be the same!", rho.size(), alpha.num_rows());
+    PLSSVM_ASSERT(w.empty() || support_vectors.num_cols() == w.num_cols(), "Either w must be empty or contain exactly the same number of values as features are present ({})!", support_vectors.num_cols());
+    PLSSVM_ASSERT(w.empty() || alpha.num_rows() == w.num_rows(), "Either w must be empty or contain exactly the same number of vectors ({}) as the alpha vector ({})!", w.num_rows(), alpha.num_rows());
     PLSSVM_ASSERT(!predict_points.empty(), "The data points to predict must not be empty!");
-    PLSSVM_ASSERT(!predict_points.front().empty(), "The data points to predict must contain at least one feature!");
-    PLSSVM_ASSERT(std::all_of(predict_points.cbegin(), predict_points.cend(), [&predict_points](const std::vector<real_type> &data_point) { return data_point.size() == predict_points.front().size(); }), "All data points to predict must have the same number of features!");
-    PLSSVM_ASSERT(support_vectors.front().size() == predict_points.front().size(), "The number of features in the support vectors ({}) must be the same as in the data points to predict ({})!", support_vectors.front().size(), predict_points.front().size());
+    PLSSVM_ASSERT(support_vectors.num_cols() == predict_points.num_cols(), "The number of features in the support vectors ({}) must be the same as in the data points to predict ({})!", support_vectors.num_cols(), predict_points.num_cols());
 
     using namespace plssvm::operators;
 
     // defined sizes
-    const std::size_t num_classes = alpha.size();
-    const std::size_t num_support_vectors = support_vectors.size();
-    const std::size_t num_predict_points = predict_points.size();
-    const std::size_t num_features = predict_points.front().size();
+    const std::size_t num_classes = alpha.num_rows();
+    const std::size_t num_support_vectors = support_vectors.num_rows();
+    const std::size_t num_predict_points = predict_points.num_rows();
+    const std::size_t num_features = predict_points.num_cols();
 
     device_ptr_type<real_type> sv_d{ num_support_vectors * num_features };
-    sv_d.copy_to_device(detail::transform_to_aos_layout(support_vectors, 0, num_support_vectors, num_features));
+    sv_d.copy_to_device(support_vectors.data());
     device_ptr_type<real_type> predict_points_d{ num_predict_points * num_features };
-    predict_points_d.copy_to_device(detail::transform_to_aos_layout(predict_points, 0, num_predict_points, num_features));
+    predict_points_d.copy_to_device(predict_points.data());
 
     device_ptr_type<real_type> w_d;  // only used when predicting linear kernel functions
-    device_ptr_type<real_type> alpha_d{ num_support_vectors * num_classes };
-    alpha_d.copy_to_device(detail::transform_to_aos_layout(alpha, 0, num_classes, num_support_vectors));
+    device_ptr_type<real_type> alpha_d{ num_classes * num_support_vectors };
+    alpha_d.copy_to_device(alpha.data());
     device_ptr_type<real_type> rho_d{ num_classes };
     rho_d.copy_to_device(rho);
 
@@ -748,40 +745,22 @@ std::vector<std::vector<real_type>> gpu_csvm<device_ptr_t, queue_t>::predict_val
             // fill w vector
             w_d = run_w_kernel(alpha_d, sv_d, num_classes, num_support_vectors, num_features);
 
-            // convert 1D result to 2D out-parameter
-            w.resize(num_classes, std::vector<real_type>(num_features));
-            std::vector<real_type> w_flat(w_d.size());
-            w_d.copy_to_host(w_flat);
-            #pragma omp parallel for collapse(2) default(none) shared(w_flat, w) firstprivate(num_classes, num_features)
-            for (std::size_t a = 0; a < num_classes; ++a) {
-                for (std::size_t dim = 0; dim < num_features; ++dim) {
-                    w[a][dim] = w_flat[a * num_features + dim];
-                }
-            }
+            // convert 1D result to aos_matrix out-parameter
+            w = aos_matrix<real_type>{ num_classes, num_features };
+            w_d.copy_to_host(w.data());
         } else {
             // w already provided -> copy to device
             w_d = device_ptr_type<real_type>{ num_classes * num_features };
-            w_d.copy_to_device(detail::transform_to_aos_layout(w, 0, num_classes, num_features));
+            w_d.copy_to_device(w.data());
         }
     }
 
     // predict
     const device_ptr_type<real_type> out_d = run_predict_kernel(params, w_d, alpha_d, rho_d, sv_d, predict_points_d, num_classes, num_support_vectors, num_predict_points, num_features);;
 
-    // num_predict_points x num_classes
-    std::vector<std::vector<real_type>> out_ret(num_predict_points, std::vector<real_type>(num_classes));
-
-    // copy results back from GPU
-    std::vector<real_type> out(out_d.size());
-    out_d.copy_to_host(out);
-
-    // convert 1D vector to 2D vector
-    #pragma omp parallel for collapse(2) default(none) shared(out_ret, out, rho) firstprivate(num_classes, num_predict_points)
-    for (std::size_t i = 0; i < num_predict_points; ++i) {
-        for (std::size_t a = 0; a < num_classes; ++a) {
-            out_ret[i][a] = out[i * num_classes + a];
-        }
-    }
+    // copy results back to host
+    aos_matrix<real_type> out_ret{ num_predict_points, num_classes };
+    out_d.copy_to_host(out_ret.data());
     return out_ret;
 }
 

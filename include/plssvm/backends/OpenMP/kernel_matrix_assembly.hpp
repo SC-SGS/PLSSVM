@@ -13,6 +13,8 @@
 #define PLSSVM_BACKENDS_OPENMP_KERNEL_MATRIX_ASSEMBLY_HPP_
 #pragma once
 
+#include "plssvm/matrix.hpp"  // plssvm::aos_matrix
+
 #include <vector>  // std::vector
 
 namespace plssvm::openmp {
@@ -27,7 +29,7 @@ namespace plssvm::openmp {
  * @param[in] cost 1 / the cost parameter in the C-SVM
  */
 template <typename real_type>
-void linear_kernel_matrix_assembly(const std::vector<real_type> &q, std::vector<std::vector<real_type>> &ret, const std::vector<std::vector<real_type>> &data, real_type QA_cost, real_type cost);
+void linear_kernel_matrix_assembly(const std::vector<real_type> &q, ::plssvm::aos_matrix<real_type> &ret, const ::plssvm::aos_matrix<real_type> &data, real_type QA_cost, real_type cost);
 
 /**
  * @brief Assemble the kernel matrix using the polynomial kernel function.
@@ -42,7 +44,7 @@ void linear_kernel_matrix_assembly(const std::vector<real_type> &q, std::vector<
  * @param[in] coef0 the coef0 parameter used in the polynomial kernel function
  */
 template <typename real_type>
-void polynomial_kernel_matrix_assembly(const std::vector<real_type> &q, std::vector<std::vector<real_type>> &ret, const std::vector<std::vector<real_type>> &data, real_type QA_cost, real_type cost, int degree, real_type gamma, real_type coef0);
+void polynomial_kernel_matrix_assembly(const std::vector<real_type> &q, ::plssvm::aos_matrix<real_type> &ret, const ::plssvm::aos_matrix<real_type> &data, real_type QA_cost, real_type cost, int degree, real_type gamma, real_type coef0);
 
 /**
  * @brief Assemble the kernel matrix using the radial basis function kernel function.
@@ -55,7 +57,7 @@ void polynomial_kernel_matrix_assembly(const std::vector<real_type> &q, std::vec
  * @param[in] gamma the gamma parameter used in the rbf kernel function
  */
 template <typename real_type>
-void rbf_kernel_matrix_assembly(const std::vector<real_type> &q, std::vector<std::vector<real_type>> &ret, const std::vector<std::vector<real_type>> &data, real_type QA_cost, real_type cost, real_type gamma);
+void rbf_kernel_matrix_assembly(const std::vector<real_type> &q, ::plssvm::aos_matrix<real_type> &ret, const ::plssvm::aos_matrix<real_type> &data, real_type QA_cost, real_type cost, real_type gamma);
 
 }  // namespace plssvm::openmp
 

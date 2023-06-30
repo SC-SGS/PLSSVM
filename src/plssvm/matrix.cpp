@@ -6,16 +6,16 @@
  *          See the LICENSE.md file in the project root for full license information.
  */
 
-#include "plssvm/detail/layout.hpp"
+#include "plssvm/matrix.hpp"
 
 #include "plssvm/detail/string_utility.hpp"  // plssvm::detail::to_lower_case
 
-#include <ios>                               // std::ios::failbit
-#include <istream>                           // std::istream
-#include <ostream>                           // std::ostream
-#include <string>                            // std::string
+#include <ios>      // std::ios::failbit
+#include <istream>  // std::istream
+#include <ostream>  // std::ostream
+#include <string>   // std::string
 
-namespace plssvm::detail {
+namespace plssvm {
 
 std::ostream &operator<<(std::ostream &out, const layout_type layout) {
     switch (layout) {
@@ -42,4 +42,4 @@ std::istream &operator>>(std::istream &in, layout_type &layout) {
     return in;
 }
 
-}  // namespace plssvm::detail
+}  // namespace plssvm
