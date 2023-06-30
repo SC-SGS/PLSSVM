@@ -14,12 +14,11 @@
 #pragma once
 
 #include "plssvm/detail/assert.hpp"          // PLSSVM_ASSERT
-#include "plssvm/detail/layout.hpp"          // plssvm::detail::layout_type
 #include "plssvm/detail/operators.hpp"       // dot product, plssvm::squared_euclidean_dist
 #include "plssvm/detail/type_traits.hpp"     // plssvm::detail::always_false_v
 #include "plssvm/detail/utility.hpp"         // plssvm::detail::get
 #include "plssvm/exceptions/exceptions.hpp"  // plssvm::unsupported_kernel_type_exception
-#include "plssvm/matrix.hpp"                 // plssvm::matrix
+#include "plssvm/matrix.hpp"                 // plssvm::matrix, plssvm::layout_type
 
 #include <cmath>                             // std::pow, std::exp, std::fma
 #include <iosfwd>                            // forward declare std::ostream and std::istream
@@ -146,7 +145,7 @@ template <typename real_type>
  * @param[in] args additional parameters
  * @return the value computed by the @p kernel function (`[[nodiscard]]`)
  */
-template <kernel_function_type kernel, typename real_type, detail::layout_type layout, typename... Args>
+template <kernel_function_type kernel, typename real_type, layout_type layout, typename... Args>
 [[nodiscard]] real_type kernel_function(const matrix<real_type, layout> &x, const std::size_t i, const matrix<real_type, layout> &y, const std::size_t j, Args &&...args) {
     PLSSVM_ASSERT(x.num_cols() == y.num_cols(), "Sizes mismatch!: {} != {}", x.num_cols(), y.num_cols());
     using size_type = typename matrix<real_type, layout>::size_type;
@@ -197,7 +196,7 @@ template <kernel_function_type kernel, typename real_type, detail::layout_type l
  * @throws plssvm::unsupported_kernel_type_exception if the kernel function in @p params is not supported
  * @return the computed kernel function value (`[[nodiscard]]`)
  */
-template <typename real_type, detail::layout_type layout>
+template <typename real_type, layout_type layout>
 [[nodiscard]] real_type kernel_function(const matrix<real_type, layout> &x, std::size_t i, const matrix<real_type, layout> &y, std::size_t j, const detail::parameter<real_type> &params);
 
 

@@ -16,7 +16,6 @@
 #include "plssvm/constants.hpp"                   // plssvm::{THREAD_BLOCK_SIZE, INTERNAL_BLOCK_SIZE}
 #include "plssvm/csvm.hpp"                        // plssvm::csvm
 #include "plssvm/detail/execution_range.hpp"      // plssvm::detail::execution_range
-#include "plssvm/detail/layout.hpp"               // plssvm::detail::{transform_to_layout, layout_type}
 #include "plssvm/detail/logger.hpp"               // plssvm::detail::log, plssvm::verbosity_level
 #include "plssvm/detail/performance_tracker.hpp"  // plssvm::detail::tracking_entry, PLSSVM_DETAIL_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY
 #include "plssvm/matrix.hpp"                      // plssvm::aos_matrix
@@ -301,7 +300,7 @@ gpu_csvm<device_ptr_t, queue_t>::setup_data_on_device(const aos_matrix<real_type
 
     // transform 2D to 1D AoS data
     // TODO: boundary?!
-//    const std::vector<real_type> transformed_data = detail::transform_to_layout(detail::layout_type::aos, data, boundary_size, num_data_points_to_setup);
+//    const std::vector<real_type> transformed_data = detail::transform_to_layout(layout_type::aos, data, boundary_size, num_data_points_to_setup);
 
     std::vector<device_ptr_type<real_type>> data_last_d(num_used_devices);
     std::vector<device_ptr_type<real_type>> data_d(num_used_devices);

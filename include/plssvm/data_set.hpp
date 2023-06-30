@@ -178,7 +178,7 @@ class data_set {
      * @throws plssvm::data_set_exception if the data points in @p data_points have mismatching number of features
      * @throws plssvm::data_set_exception if any @p data_point has no features
      */
-    template <detail::layout_type layout>
+    template <layout_type layout>
     explicit data_set(matrix<real_type, layout> data_points);
     /**
      * @brief Create a new data set from the provided @p data_points and @p labels.
@@ -190,7 +190,7 @@ class data_set {
      * @throws plssvm::data_set_exception if any @p data_point has no features
      * @throws plssvm::data_set_exception if the number of data points in @p data_points and number of @p labels mismatch
      */
-    template <detail::layout_type layout>
+    template <layout_type layout>
     data_set(matrix<real_type, layout> data_points, std::vector<label_type> labels);
     /**
      * @brief Create a new data set from the the provided @p data_points and scale them using the provided @p scale_parameter.
@@ -202,7 +202,7 @@ class data_set {
      * @throws plssvm::data_set_exception if any @p data_point has no features
      * @throws plssvm::data_set_exception all exceptions thrown by plssvm::data_set::scale
      */
-    template <detail::layout_type layout>
+    template <layout_type layout>
     data_set(matrix<real_type, layout> data_points, scaling scale_parameter);
     /**
      * @brief Create a new data set from the the provided @p data_points and @p labels and scale the @p data_points using the provided @p scale_parameter.
@@ -216,7 +216,7 @@ class data_set {
      * @throws plssvm::data_set_exception if the number of data points in @p data_points and number of @p labels mismatch
      * @throws plssvm::data_set_exception all exceptions thrown by plssvm::data_set::scale
      */
-    template <detail::layout_type layout>
+    template <layout_type layout>
     data_set(matrix<real_type, layout> data_points, std::vector<label_type> labels, scaling scale_parameter);
 
     /**
@@ -584,7 +584,7 @@ data_set<T, U>::data_set(const std::vector<std::vector<real_type>> &data_points,
     data_set{ aos_matrix<T>{ data_points }, std::move(labels), std::move(scale_parameter) } { }
 
 template <typename T, typename U>
-template <detail::layout_type layout>
+template <layout_type layout>
 data_set<T, U>::data_set(matrix<real_type, layout> data_points) :
     num_data_points_{ data_points.num_rows() }, num_features_{ data_points.num_cols() }, data_ptr_{ std::make_shared<aos_matrix<real_type>>(std::move(data_points)) } {
     // the provided data points vector may not be empty
@@ -603,7 +603,7 @@ data_set<T, U>::data_set(matrix<real_type, layout> data_points) :
 }
 
 template <typename T, typename U>
-template <detail::layout_type layout>
+template <layout_type layout>
 data_set<T, U>::data_set(matrix<real_type, layout> data_points, std::vector<label_type> labels) :
     data_set{ std::move(data_points) } {
     // initialize labels
@@ -625,7 +625,7 @@ data_set<T, U>::data_set(matrix<real_type, layout> data_points, std::vector<labe
 }
 
 template <typename T, typename U>
-template <detail::layout_type layout>
+template <layout_type layout>
 data_set<T, U>::data_set(matrix<real_type, layout> data_points, scaling scale_parameter) :
     data_set{ std::move(data_points) } {
     // initialize scaling
@@ -635,7 +635,7 @@ data_set<T, U>::data_set(matrix<real_type, layout> data_points, scaling scale_pa
 }
 
 template <typename T, typename U>
-template <detail::layout_type layout>
+template <layout_type layout>
 data_set<T, U>::data_set(matrix<real_type, layout> data_points, std::vector<label_type> labels, scaling scale_parameter) :
     data_set{ std::move(data_points), std::move(labels) } {
     // initialize scaling

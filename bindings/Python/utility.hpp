@@ -13,9 +13,8 @@
 #define PLSSVM_BINDINGS_PYTHON_UTILITY_HPP_
 #pragma once
 
-#include "plssvm/detail/layout.hpp"   // plssvm::detail::layout_type
 #include "plssvm/detail/utility.hpp"  // plssvm::detail::contains
-#include "plssvm/matrix.hpp"          // plssvm::matrix
+#include "plssvm/matrix.hpp"          // plssvm::matrix, plssvm::layout_type
 #include "plssvm/parameter.hpp"       // plssvm::parameter
 
 #include "fmt/format.h"         // fmt::format
@@ -53,7 +52,7 @@ template <typename T>
  * @param[in] mat the 2D vector to convert
  * @return the Python Numpy array (`[[nodiscard]]`)
  */
-template <typename T, plssvm::detail::layout_type layout>
+template <typename T, plssvm::layout_type layout>
 [[nodiscard]] py::array_t<T> matrix_to_pyarray(const plssvm::matrix<T, layout> &mat) {
     using size_type = typename plssvm::matrix<T, layout>::size_type;
     const size_type num_data_points = mat.num_rows();
@@ -130,7 +129,7 @@ template <typename T>
  * @param[in] mat the 2D Python Numpy matrix to convert
  * @return to 2D matrix of `std::vector<std::vector<T>>` (`[[nodiscard]]`)
  */
-template <typename T, plssvm::detail::layout_type layout = plssvm::detail::layout_type::aos>
+template <typename T, plssvm::layout_type layout = plssvm::layout_type::aos>
 [[nodiscard]] plssvm::matrix<T, layout> pyarray_to_matrix(const py::array_t<T> &mat) {
     using size_type = typename plssvm::matrix<T, layout>::size_type;
     // check dimensions
