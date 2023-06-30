@@ -26,15 +26,15 @@
 #include <utility>    // std::pair, std::make_pair, std::swap
 #include <vector>     // std::vector
 
-namespace plssvm::detail {
+namespace plssvm {
 
 /**
  * @brief A matrix class encapsulating a 1D array automatically handling indexing with AoS and SoA.
  * @tparam T the type of the matrix
  * @tparam layout_ the layout type provided at compile time (AoS or SoA)
  */
-template <typename T, layout_type layout_>
-class matrix_impl {
+template <typename T, detail::layout_type layout_>
+class matrix {
   public:
     /// The value type of the entries in this matrix.
     using value_type = T;
@@ -52,14 +52,14 @@ class matrix_impl {
     /**
      * @brief Default construct an empty matrix, i.e., zero rows and columns.
      */
-    matrix_impl() = default;
+    matrix() = default;
     /**
      * @brief Construct a new matrix from @p other. Respects potential different layout types.
      * @tparam other_layout_ the layout_type of the other matrix
      * @param[in] other the other matrix
      */
-    template <layout_type other_layout_>
-    matrix_impl(const matrix_impl<T, other_layout_> &other);
+    template <detail::layout_type other_layout_>
+    explicit matrix(const matrix<T, other_layout_> &other);
     /**
      * @brief Create a matrix of size @p num_rows x @p num_cols and initialize all entries with the value @p init.
      * @param[in] num_rows the number of rows in the matrix
@@ -67,20 +67,20 @@ class matrix_impl {
      * @param[in] init the value of all entries in the matrix
      * @throws plssvm::matrix_exception if at least one of @p num_rows or @p num_cols is zero
      */
-    matrix_impl(size_type num_rows, size_type num_cols, const_reference init);
+    matrix(size_type num_rows, size_type num_cols, const_reference init);
     /**
      * @brief Create a matrix of size @p num_rows x @p num_cols.
      * @param[in] num_rows the number of rows in the matrix
      * @param[in] num_cols the number of columns in the matrix
      * @throws plssvm::matrix_exception if at least one of @p num_rows or @p num_cols is zero
      */
-    matrix_impl(const size_type num_rows, const size_type num_cols) :
-        matrix_impl{ num_rows, num_cols, value_type{} } {}
+    matrix(const size_type num_rows, const size_type num_cols) :
+        matrix{ num_rows, num_cols, value_type{} } {}
     /**
      * @brief Create a matrix from the provided 2D vector @p data.
      * @param[in] data the data used to initialize this matrix
      */
-    explicit matrix_impl(const std::vector<std::vector<value_type>> &data);
+    explicit matrix(const std::vector<std::vector<value_type>> &data);
 
     /**
      * @brief Returns the shape of the matrix, i.e., the number of rows and columns.
@@ -116,7 +116,7 @@ class matrix_impl {
      * @details The layout type is either Array-of-Structs (AoS) or Struct-of-Arrays (SoA)
      * @return the layout type (`[[nodiscard]]`)
      */
-    [[nodiscard]] static constexpr layout_type layout() noexcept { return layout_; }
+    [[nodiscard]] static constexpr detail::layout_type layout() noexcept { return layout_; }
 
     /**
      * @brief Returns the value at @p row and @p col as defined by the matrix's layout type.
@@ -171,7 +171,7 @@ class matrix_impl {
      * @brief Swap the contents of `*this` with the contents of @p other.
      * @param[in,out] other the other matrix to swap the entries from
      */
-    void swap(matrix_impl &other) noexcept;
+    void swap(matrix &other) noexcept;
 
   private:
     /// The number of rows.
@@ -182,9 +182,9 @@ class matrix_impl {
     std::vector<value_type> data_{};
 };
 
-template <typename T, layout_type layout_>
-template <layout_type other_layout_>
-matrix_impl<T, layout_>::matrix_impl(const matrix_impl<T, other_layout_> &other) : matrix_impl{ other.num_rows(), other.num_cols() } {
+template <typename T, detail::layout_type layout_>
+template <detail::layout_type other_layout_>
+matrix<T, layout_>::matrix(const matrix<T, other_layout_> &other) : matrix{ other.num_rows(), other.num_cols() } {
     if constexpr (layout_ == other_layout_) {
         // same layout -> simply memcpy underlying array
         std::memcpy(data_.data(), other.data(), this->num_entries() * sizeof(T));
@@ -199,8 +199,8 @@ matrix_impl<T, layout_>::matrix_impl(const matrix_impl<T, other_layout_> &other)
     }
 }
 
-template <typename T, layout_type layout_>
-matrix_impl<T, layout_>::matrix_impl(const size_type num_rows, const size_type num_cols, const_reference init) :
+template <typename T, detail::layout_type layout_>
+matrix<T, layout_>::matrix(const size_type num_rows, const size_type num_cols, const_reference init) :
     num_rows_{ num_rows }, num_cols_{ num_cols }, data_(num_rows * num_cols, init) {
     if (num_rows_ == 0) {
         throw matrix_exception{ "The number of rows is zero!" };
@@ -210,8 +210,8 @@ matrix_impl<T, layout_>::matrix_impl(const size_type num_rows, const size_type n
     }
 }
 
-template <typename T, layout_type layout_>
-matrix_impl<T, layout_>::matrix_impl(const std::vector<std::vector<value_type>> &data) {
+template <typename T, detail::layout_type layout_>
+matrix<T, layout_>::matrix(const std::vector<std::vector<value_type>> &data) {
     PLSSVM_ASSERT(!data.empty(), "The data to create the matrix from may not be empty!");
     PLSSVM_ASSERT(std::all_of(data.cbegin(), data.cend(), [&data](const std::vector<value_type> &row) { return row.size() == data.front().size(); }), "Each row must contain the same amount of columns!");
     PLSSVM_ASSERT(!data.front().empty(), "The data to create the matrix must at least have one column!");
@@ -228,32 +228,32 @@ matrix_impl<T, layout_>::matrix_impl(const std::vector<std::vector<value_type>> 
     }
 }
 
-template <typename T, layout_type layout_>
-auto matrix_impl<T, layout_>::operator()(const size_type row, const size_type col) const -> value_type {
+template <typename T, detail::layout_type layout_>
+auto matrix<T, layout_>::operator()(const size_type row, const size_type col) const -> value_type {
     PLSSVM_ASSERT(row < num_rows_, fmt::format("The current row ({}) must be smaller than the number of rows ({})!", row, num_rows_));
     PLSSVM_ASSERT(col < num_cols_, fmt::format("The current column ({}) must be smaller than the number of columns ({})!", col, num_cols_));
-    if constexpr (layout_ == layout_type::aos) {
+    if constexpr (layout_ == detail::layout_type::aos) {
         return data_[row * num_cols_ + col];
-    } else if constexpr (layout_ == layout_type::soa) {
+    } else if constexpr (layout_ == detail::layout_type::soa) {
         return data_[col * num_rows_ + row];
     } else {
-        static_assert(always_false_v<T>, "Unrecognized layout_type!");
+        static_assert(detail::always_false_v<T>, "Unrecognized layout_type!");
     }
 }
-template <typename T, layout_type layout_>
-auto matrix_impl<T, layout_>::operator()(const size_type row, const size_type col) -> reference {
+template <typename T, detail::layout_type layout_>
+auto matrix<T, layout_>::operator()(const size_type row, const size_type col) -> reference {
     PLSSVM_ASSERT(row < num_rows_, fmt::format("The current row ({}) must be smaller than the number of rows ({})!", row, num_rows_));
     PLSSVM_ASSERT(col < num_cols_, fmt::format("The current column ({}) must be smaller than the number of columns ({})!", col, num_cols_));
-    if constexpr (layout_ == layout_type::aos) {
+    if constexpr (layout_ == detail::layout_type::aos) {
         return data_[row * num_cols_ + col];
-    } else if constexpr (layout_ == layout_type::soa) {
+    } else if constexpr (layout_ == detail::layout_type::soa) {
         return data_[col * num_rows_ + row];
     } else {
-        static_assert(always_false_v<T>, "Unrecognized layout_type!");
+        static_assert(detail::always_false_v<T>, "Unrecognized layout_type!");
     }
 }
-template <typename T, layout_type layout_>
-auto matrix_impl<T, layout_>::at(const size_type row, const size_type col) const -> value_type {
+template <typename T, detail::layout_type layout_>
+auto matrix<T, layout_>::at(const size_type row, const size_type col) const -> value_type {
     if (row >= num_rows_) {
         throw matrix_exception{ fmt::format("The current row ({}) must be smaller than the number of rows ({})!", row, num_rows_) };
     }
@@ -263,8 +263,8 @@ auto matrix_impl<T, layout_>::at(const size_type row, const size_type col) const
 
     return this->operator()(row, col);
 }
-template <typename T, layout_type layout_>
-auto matrix_impl<T, layout_>::at(const size_type row, const size_type col) -> reference {
+template <typename T, detail::layout_type layout_>
+auto matrix<T, layout_>::at(const size_type row, const size_type col) -> reference {
     if (row >= num_rows_) {
         throw matrix_exception{ fmt::format("The current row ({}) must be smaller than the number of rows ({})!", row, num_rows_) };
     }
@@ -275,8 +275,8 @@ auto matrix_impl<T, layout_>::at(const size_type row, const size_type col) -> re
     return this->operator()(row, col);
 }
 
-template <typename T, layout_type layout_>
-auto matrix_impl<T, layout_>::to_2D_vector() const -> std::vector<std::vector<value_type>> {
+template <typename T, detail::layout_type layout_>
+auto matrix<T, layout_>::to_2D_vector() const -> std::vector<std::vector<value_type>> {
     std::vector<std::vector<value_type>> ret(num_rows_, std::vector<value_type>(num_cols_));
     #pragma omp parallel for collapse(2) shared(ret) firstprivate(num_rows_, num_cols_)
     for (std::size_t row = 0; row < num_rows_; ++row) {
@@ -287,8 +287,8 @@ auto matrix_impl<T, layout_>::to_2D_vector() const -> std::vector<std::vector<va
     return ret;
 }
 
-template <typename T, layout_type layout_>
-void matrix_impl<T, layout_>::swap(matrix_impl<T, layout_> &other) noexcept {
+template <typename T, detail::layout_type layout_>
+void matrix<T, layout_>::swap(matrix<T, layout_> &other) noexcept {
     using std::swap;
     swap(this->num_rows_, other.num_rows_);
     swap(this->num_cols_, other.num_cols_);
@@ -301,8 +301,8 @@ void matrix_impl<T, layout_>::swap(matrix_impl<T, layout_> &other) noexcept {
  * @param[in, out] lhs the first matrix
  * @param[in,out] rhs the second matrix
  */
-template <typename T, layout_type layout>
-inline void swap(matrix_impl<T, layout> &lhs, matrix_impl<T, layout> &rhs) {
+template <typename T, detail::layout_type layout>
+inline void swap(matrix<T, layout> &lhs, matrix<T, layout> &rhs) {
     lhs.swap(rhs);
 }
 
@@ -313,8 +313,8 @@ inline void swap(matrix_impl<T, layout> &lhs, matrix_impl<T, layout> &rhs) {
  * @param[in] rhs the second matrix
  * @return `true` if both matrices are equal, otherwise `false` (`[[nodiscard]]`)
  */
-template <typename T, layout_type layout_>
-[[nodiscard]] inline bool operator==(const matrix_impl<T, layout_> &lhs, const matrix_impl<T, layout_> &rhs) noexcept {
+template <typename T, detail::layout_type layout_>
+[[nodiscard]] inline bool operator==(const matrix<T, layout_> &lhs, const matrix<T, layout_> &rhs) noexcept {
     return lhs.num_rows_ == rhs.num_rows_ && lhs.num_cols_ == rhs.num_cols_ && std::equal(lhs.data(), lhs.data() + lhs.num_entries(), rhs.data());
 }
 /**
@@ -324,8 +324,8 @@ template <typename T, layout_type layout_>
  * @param[in] rhs the second matrix
  * @return `true` if both matrices are equal, otherwise `false` (`[[nodiscard]]`)
  */
-template <typename T, layout_type layout_>
-[[nodiscard]] inline bool operator!=(const matrix_impl<T, layout_> &lhs, const matrix_impl<T, layout_> &rhs) noexcept {
+template <typename T, detail::layout_type layout_>
+[[nodiscard]] inline bool operator!=(const matrix<T, layout_> &lhs, const matrix<T, layout_> &rhs) noexcept {
     return !(lhs == rhs);
 }
 
@@ -337,9 +337,9 @@ template <typename T, layout_type layout_>
  * @param[in] matr the matrix to print
  * @return the output-stream
  */
-template <typename T, layout_type layout>
-inline std::ostream &operator<<(std::ostream &out, const matrix_impl<T, layout> &matr) {
-    using size_type = typename matrix_impl<T, layout>::size_type;
+template <typename T, detail::layout_type layout>
+inline std::ostream &operator<<(std::ostream &out, const matrix<T, layout> &matr) {
+    using size_type = typename matrix<T, layout>::size_type;
     for (size_type row = 0; row < matr.num_rows(); ++row) {
         for (size_type col = 0; col < matr.num_cols(); ++col) {
             out << matr(row, col) << ' ';
@@ -353,17 +353,12 @@ inline std::ostream &operator<<(std::ostream &out, const matrix_impl<T, layout> 
  * @brief Typedef for a matrix in Array-of-Struct (AoS) layout.
  */
 template <typename T>
-using aos_matrix = matrix_impl<T, layout_type::aos>;
+using aos_matrix = matrix<T, detail::layout_type::aos>;
 /**
  * @brief Typedef for a matrix in Struct-of-Array (SoA) layout.
  */
 template <typename T>
-using soa_matrix = matrix_impl<T, layout_type::soa>;
-/**
- * @brief Typedef for a matrix in Array-of-Struct (AoS) layout.
- */
-template <typename T>
-using matrix = aos_matrix<T>;
+using soa_matrix = matrix<T, detail::layout_type::soa>;
 
 }  // namespace plssvm::detail
 

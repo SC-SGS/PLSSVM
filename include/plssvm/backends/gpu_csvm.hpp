@@ -19,8 +19,8 @@
 #include "plssvm/detail/layout.hpp"               // plssvm::detail::{transform_to_layout, layout_type}
 #include "plssvm/detail/logger.hpp"               // plssvm::detail::log, plssvm::verbosity_level
 #include "plssvm/detail/performance_tracker.hpp"  // plssvm::detail::tracking_entry, PLSSVM_DETAIL_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY
+#include "plssvm/matrix.hpp"                      // plssvm::aos_matrix
 #include "plssvm/parameter.hpp"                   // plssvm::parameter
-#include "plssvm/detail/matrix.hpp"               // plssvm::detail::aos_matrix
 
 #include "fmt/chrono.h"                           // output std::chrono times using {fmt}
 #include "fmt/core.h"                             // fmt::format
@@ -99,30 +99,30 @@ class gpu_csvm : public ::plssvm::csvm {
     /**
      * @copydoc plssvm::csvm::solve_system_of_linear_equations
      */
-    [[nodiscard]] std::pair<detail::aos_matrix<float>, std::vector<float>> solve_system_of_linear_equations(const parameter<float> &params, const detail::aos_matrix<float> &A, detail::aos_matrix<float> B, float eps, unsigned long long max_iter) const final { return this->solve_system_of_linear_equations_impl(params, A, std::move(B), eps, max_iter); }
+    [[nodiscard]] std::pair<aos_matrix<float>, std::vector<float>> solve_system_of_linear_equations(const parameter<float> &params, const aos_matrix<float> &A, aos_matrix<float> B, float eps, unsigned long long max_iter) const final { return this->solve_system_of_linear_equations_impl(params, A, std::move(B), eps, max_iter); }
     /**
      * @copydoc plssvm::csvm::solve_system_of_linear_equations
      */
-    [[nodiscard]] std::pair<detail::aos_matrix<double>, std::vector<double>> solve_system_of_linear_equations(const parameter<double> &params, const detail::aos_matrix<double> &A, detail::aos_matrix<double> B, double eps, unsigned long long max_iter) const final { return this->solve_system_of_linear_equations_impl(params, A, std::move(B), eps, max_iter); }
+    [[nodiscard]] std::pair<aos_matrix<double>, std::vector<double>> solve_system_of_linear_equations(const parameter<double> &params, const aos_matrix<double> &A, aos_matrix<double> B, double eps, unsigned long long max_iter) const final { return this->solve_system_of_linear_equations_impl(params, A, std::move(B), eps, max_iter); }
     /**
      * @copydoc plssvm::csvm::solve_system_of_linear_equations
      */
     template <typename real_type>
-    [[nodiscard]] std::pair<detail::aos_matrix<real_type>, std::vector<real_type>> solve_system_of_linear_equations_impl(const parameter<real_type> &params, const detail::aos_matrix<real_type> &A, detail::aos_matrix<real_type> B, real_type eps, unsigned long long max_iter) const;
+    [[nodiscard]] std::pair<aos_matrix<real_type>, std::vector<real_type>> solve_system_of_linear_equations_impl(const parameter<real_type> &params, const aos_matrix<real_type> &A, aos_matrix<real_type> B, real_type eps, unsigned long long max_iter) const;
 
     /**
      * @copydoc plssvm::csvm::predict_values
      */
-    [[nodiscard]] detail::aos_matrix<float> predict_values(const parameter<float> &params, const detail::aos_matrix<float> &support_vectors, const detail::aos_matrix<float> &alpha, const std::vector<float> &rho, detail::aos_matrix<float> &w, const detail::aos_matrix<float> &predict_points) const final { return this->predict_values_impl(params, support_vectors, alpha, rho, w, predict_points); }
+    [[nodiscard]] aos_matrix<float> predict_values(const parameter<float> &params, const aos_matrix<float> &support_vectors, const aos_matrix<float> &alpha, const std::vector<float> &rho, aos_matrix<float> &w, const aos_matrix<float> &predict_points) const final { return this->predict_values_impl(params, support_vectors, alpha, rho, w, predict_points); }
     /**
      * @copydoc plssvm::csvm::predict_values
      */
-    [[nodiscard]] detail::aos_matrix<double> predict_values(const parameter<double> &params, const detail::aos_matrix<double> &support_vectors, const detail::aos_matrix<double> &alpha, const std::vector<double> &rho, detail::aos_matrix<double> &w, const detail::aos_matrix<double> &predict_points) const final { return this->predict_values_impl(params, support_vectors, alpha, rho, w, predict_points); }
+    [[nodiscard]] aos_matrix<double> predict_values(const parameter<double> &params, const aos_matrix<double> &support_vectors, const aos_matrix<double> &alpha, const std::vector<double> &rho, aos_matrix<double> &w, const aos_matrix<double> &predict_points) const final { return this->predict_values_impl(params, support_vectors, alpha, rho, w, predict_points); }
     /**
      * @copydoc plssvm::csvm::predict_values
      */
     template <typename real_type>
-    [[nodiscard]] detail::aos_matrix<real_type> predict_values_impl(const parameter<real_type> &params, const detail::aos_matrix<real_type> &support_vectors, const detail::aos_matrix<real_type> &alpha, const std::vector<real_type> &rho, detail::aos_matrix<real_type> &w, const detail::aos_matrix<real_type> &predict_points) const;
+    [[nodiscard]] aos_matrix<real_type> predict_values_impl(const parameter<real_type> &params, const aos_matrix<real_type> &support_vectors, const aos_matrix<real_type> &alpha, const std::vector<real_type> &rho, aos_matrix<real_type> &w, const aos_matrix<real_type> &predict_points) const;
 
     /**
      * @brief Returns the number of usable devices given the kernel function @p kernel and the number of features @p num_features.
@@ -145,7 +145,7 @@ class gpu_csvm : public ::plssvm::csvm {
      * @return a tuple: [pointers to the main data distributed across the devices, pointers to the last data point of the data set distributed across the devices, the feature ranges a specific device is responsible for] (`[[nodiscard]]`)
      */
     template <typename real_type>
-    [[nodiscard]] std::tuple<std::vector<device_ptr_type<real_type>>, std::vector<device_ptr_type<real_type>>, std::vector<std::size_t>> setup_data_on_device(const detail::aos_matrix<real_type> &data, std::size_t num_data_points_to_setup, std::size_t num_features_to_setup, std::size_t boundary_size, std::size_t num_used_devices) const;
+    [[nodiscard]] std::tuple<std::vector<device_ptr_type<real_type>>, std::vector<device_ptr_type<real_type>>, std::vector<std::size_t>> setup_data_on_device(const aos_matrix<real_type> &data, std::size_t num_data_points_to_setup, std::size_t num_features_to_setup, std::size_t boundary_size, std::size_t num_used_devices) const;
 
     /**
      * @brief Calculate the `q` vector used in the dimensional reduction.
@@ -281,7 +281,7 @@ std::size_t gpu_csvm<device_ptr_t, queue_t>::select_num_used_devices(const kerne
 template <template <typename> typename device_ptr_t, typename queue_t>
 template <typename real_type>
 std::tuple<std::vector<device_ptr_t<real_type>>, std::vector<device_ptr_t<real_type>>, std::vector<std::size_t>>
-gpu_csvm<device_ptr_t, queue_t>::setup_data_on_device(const detail::aos_matrix<real_type> &data,
+gpu_csvm<device_ptr_t, queue_t>::setup_data_on_device(const aos_matrix<real_type> &data,
                                                       const std::size_t num_data_points_to_setup,
                                                       const std::size_t num_features_to_setup,
                                                       const std::size_t boundary_size,
@@ -459,9 +459,9 @@ void gpu_csvm<device_ptr_t, queue_t>::device_reduction(std::vector<device_ptr_ty
 
 template <template <typename> typename device_ptr_t, typename queue_t>
 template <typename real_type>
-std::pair<detail::aos_matrix<real_type>, std::vector<real_type>> gpu_csvm<device_ptr_t, queue_t>::solve_system_of_linear_equations_impl(const parameter<real_type> &params,
-                                                                                                                    const detail::aos_matrix<real_type> &A,
-                                                                                                                    detail::aos_matrix<real_type> B_in,
+std::pair<aos_matrix<real_type>, std::vector<real_type>> gpu_csvm<device_ptr_t, queue_t>::solve_system_of_linear_equations_impl(const parameter<real_type> &params,
+                                                                                                                    const aos_matrix<real_type> &A,
+                                                                                                                    aos_matrix<real_type> B_in,
                                                                                                                     const real_type eps,
                                                                                                                     const unsigned long long max_iter) const {
     PLSSVM_ASSERT(!A.empty(), "The data must not be empty!");
@@ -492,7 +492,7 @@ std::pair<detail::aos_matrix<real_type>, std::vector<real_type>> gpu_csvm<device
 
     // update b
     std::vector<real_type> b_back_value(num_rhs);
-    detail::aos_matrix<real_type> B{ num_rhs, dept };
+    aos_matrix<real_type> B{ num_rhs, dept };
     #pragma omp parallel for default(none) shared(B_in, B, b_back_value) firstprivate(dept, num_rhs)
     for (std::size_t row = 0; row < num_rhs; ++row) {
         b_back_value[row] = B_in(row, dept);
@@ -516,10 +516,10 @@ std::pair<detail::aos_matrix<real_type>, std::vector<real_type>> gpu_csvm<device
 
     // CG
 
-    detail::aos_matrix<real_type> X{ num_rhs, dept, real_type{ 1.0 } };
+    aos_matrix<real_type> X{ num_rhs, dept, real_type{ 1.0 } };
     device_ptr_type<real_type> X_d{ X.num_entries() };
 
-    detail::aos_matrix<real_type> R{ B };
+    aos_matrix<real_type> R{ B };
     device_ptr_type<real_type> R_d{ R.num_entries() };
 
     // R = B - A * X
@@ -540,10 +540,10 @@ std::pair<detail::aos_matrix<real_type>, std::vector<real_type>> gpu_csvm<device
         delta[i] = temp;
     }
     const std::vector<real_type> delta0(delta);
-    detail::aos_matrix<real_type> Q{ num_rhs, dept };
+    aos_matrix<real_type> Q{ num_rhs, dept };
     device_ptr_type<real_type> Q_d{ Q.num_entries() };
 
-    detail::aos_matrix<real_type> D{ R };
+    aos_matrix<real_type> D{ R };
     device_ptr_type<real_type> D_d{ D.num_entries() };
 
     // timing for each CG iteration
@@ -684,7 +684,7 @@ std::pair<detail::aos_matrix<real_type>, std::vector<real_type>> gpu_csvm<device
                 std::min(iter + 1, max_iter));
 
     // calculate bias
-    detail::aos_matrix<real_type> X_ret{ num_rhs, A.num_rows() };
+    aos_matrix<real_type> X_ret{ num_rhs, A.num_rows() };
     std::vector<real_type> bias(num_rhs);
     #pragma omp parallel for default(none) shared(X, q_red, X_ret, bias, b_back_value) firstprivate(num_rhs, dept, QA_cost)
     for (std::size_t i = 0; i < num_rhs; ++i) {
@@ -706,12 +706,12 @@ std::pair<detail::aos_matrix<real_type>, std::vector<real_type>> gpu_csvm<device
 
 template <template <typename> typename device_ptr_t, typename queue_t>
 template <typename real_type>
-detail::aos_matrix<real_type> gpu_csvm<device_ptr_t, queue_t>::predict_values_impl(const parameter<real_type> &params,
-                                                                                   const detail::aos_matrix<real_type> &support_vectors,
-                                                                                   const detail::aos_matrix<real_type> &alpha,
+aos_matrix<real_type> gpu_csvm<device_ptr_t, queue_t>::predict_values_impl(const parameter<real_type> &params,
+                                                                                   const aos_matrix<real_type> &support_vectors,
+                                                                                   const aos_matrix<real_type> &alpha,
                                                                                    const std::vector<real_type> &rho,
-                                                                                   detail::aos_matrix<real_type> &w,
-                                                                                   const detail::aos_matrix<real_type> &predict_points) const {
+                                                                                   aos_matrix<real_type> &w,
+                                                                                   const aos_matrix<real_type> &predict_points) const {
     PLSSVM_ASSERT(!support_vectors.empty(), "The support vectors must not be empty!");
     PLSSVM_ASSERT(!alpha.empty(), "The alpha vectors (weights) must not be empty!");
     PLSSVM_ASSERT(support_vectors.num_rows() == alpha.num_cols(), "The number of support vectors ({}) and number of weights ({}) must be the same!", support_vectors.num_rows(), alpha.num_cols());
@@ -747,7 +747,7 @@ detail::aos_matrix<real_type> gpu_csvm<device_ptr_t, queue_t>::predict_values_im
             w_d = run_w_kernel(alpha_d, sv_d, num_classes, num_support_vectors, num_features);
 
             // convert 1D result to aos_matrix out-parameter
-            w = detail::aos_matrix<real_type>{ num_classes, num_features };
+            w = aos_matrix<real_type>{ num_classes, num_features };
             w_d.copy_to_host(w.data());
         } else {
             // w already provided -> copy to device
@@ -760,7 +760,7 @@ detail::aos_matrix<real_type> gpu_csvm<device_ptr_t, queue_t>::predict_values_im
     const device_ptr_type<real_type> out_d = run_predict_kernel(params, w_d, alpha_d, rho_d, sv_d, predict_points_d, num_classes, num_support_vectors, num_predict_points, num_features);;
 
     // copy results back to host
-    detail::aos_matrix<real_type> out_ret{ num_predict_points, num_classes };
+    aos_matrix<real_type> out_ret{ num_predict_points, num_classes };
     out_d.copy_to_host(out_ret.data());
     return out_ret;
 }

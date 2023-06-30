@@ -14,8 +14,8 @@
 #pragma once
 
 #include "plssvm/csvm.hpp"                // plssvm::csvm
-#include "plssvm/detail/matrix.hpp"       // plssvm::detail::aos_matrix
 #include "plssvm/detail/type_traits.hpp"  // PLSSVM_REQUIRES
+#include "plssvm/matrix.hpp"              // plssvm::aos_matrix
 #include "plssvm/parameter.hpp"           // plssvm::parameter, plssvm::detail::{parameter, has_only_parameter_named_args_v}
 #include "plssvm/target_platforms.hpp"    // plssvm::target_platform
 
@@ -102,30 +102,30 @@ class csvm : public ::plssvm::csvm {
     /**
      * @copydoc plssvm::csvm::solve_system_of_linear_equations
      */
-    [[nodiscard]] std::pair<detail::aos_matrix<float>, std::vector<float>> solve_system_of_linear_equations(const detail::parameter<float> &params, const detail::aos_matrix<float> &A, detail::aos_matrix<float> B, float eps, unsigned long long max_iter) const override { return this->solve_system_of_linear_equations_impl(params, A, B, eps, max_iter); }
+    [[nodiscard]] std::pair<aos_matrix<float>, std::vector<float>> solve_system_of_linear_equations(const detail::parameter<float> &params, const aos_matrix<float> &A, aos_matrix<float> B, float eps, unsigned long long max_iter) const override { return this->solve_system_of_linear_equations_impl(params, A, B, eps, max_iter); }
     /**
      * @copydoc plssvm::csvm::solve_system_of_linear_equations
      */
-    [[nodiscard]] std::pair<detail::aos_matrix<double>, std::vector<double>> solve_system_of_linear_equations(const detail::parameter<double> &params, const detail::aos_matrix<double> &A, detail::aos_matrix<double> B, double eps, unsigned long long max_iter) const override { return this->solve_system_of_linear_equations_impl(params, A, B, eps, max_iter); }
+    [[nodiscard]] std::pair<aos_matrix<double>, std::vector<double>> solve_system_of_linear_equations(const detail::parameter<double> &params, const aos_matrix<double> &A, aos_matrix<double> B, double eps, unsigned long long max_iter) const override { return this->solve_system_of_linear_equations_impl(params, A, B, eps, max_iter); }
     /**
      * @copydoc plssvm::csvm::solve_system_of_linear_equations
      */
     template <typename real_type>
-    [[nodiscard]] std::pair<detail::aos_matrix<real_type>, std::vector<real_type>> solve_system_of_linear_equations_impl(const detail::parameter<real_type> &params, const detail::aos_matrix<real_type> &A, detail::aos_matrix<real_type> B, real_type eps, unsigned long long max_iter) const;
+    [[nodiscard]] std::pair<aos_matrix<real_type>, std::vector<real_type>> solve_system_of_linear_equations_impl(const detail::parameter<real_type> &params, const aos_matrix<real_type> &A, aos_matrix<real_type> B, real_type eps, unsigned long long max_iter) const;
 
     /**
      * @copydoc plssvm::csvm::predict_values
      */
-    [[nodiscard]] detail::aos_matrix<float> predict_values(const detail::parameter<float> &params, const detail::aos_matrix<float> &support_vectors, const detail::aos_matrix<float> &alpha, const std::vector<float> &rho, detail::aos_matrix<float> &w, const detail::aos_matrix<float> &predict_points) const override { return this->predict_values_impl(params, support_vectors, alpha, rho, w, predict_points); }
+    [[nodiscard]] aos_matrix<float> predict_values(const detail::parameter<float> &params, const aos_matrix<float> &support_vectors, const aos_matrix<float> &alpha, const std::vector<float> &rho, aos_matrix<float> &w, const aos_matrix<float> &predict_points) const override { return this->predict_values_impl(params, support_vectors, alpha, rho, w, predict_points); }
     /**
      * @copydoc plssvm::csvm::predict_values
      */
-    [[nodiscard]] detail::aos_matrix<double> predict_values(const detail::parameter<double> &params, const detail::aos_matrix<double> &support_vectors, const detail::aos_matrix<double> &alpha, const std::vector<double> &rho, detail::aos_matrix<double> &w, const detail::aos_matrix<double> &predict_points) const override { return this->predict_values_impl(params, support_vectors, alpha, rho, w, predict_points); }
+    [[nodiscard]] aos_matrix<double> predict_values(const detail::parameter<double> &params, const aos_matrix<double> &support_vectors, const aos_matrix<double> &alpha, const std::vector<double> &rho, aos_matrix<double> &w, const aos_matrix<double> &predict_points) const override { return this->predict_values_impl(params, support_vectors, alpha, rho, w, predict_points); }
     /**
      * @copydoc plssvm::csvm::predict_values
      */
     template <typename real_type>
-    [[nodiscard]] detail::aos_matrix<real_type> predict_values_impl(const detail::parameter<real_type> &params, const detail::aos_matrix<real_type> &support_vectors, const detail::aos_matrix<real_type> &alpha, const std::vector<real_type> &rho, detail::aos_matrix<real_type> &w, const detail::aos_matrix<real_type> &predict_points) const;
+    [[nodiscard]] aos_matrix<real_type> predict_values_impl(const detail::parameter<real_type> &params, const aos_matrix<real_type> &support_vectors, const aos_matrix<real_type> &alpha, const std::vector<real_type> &rho, aos_matrix<real_type> &w, const aos_matrix<real_type> &predict_points) const;
 
     /**
      * @brief Calculate the `q` vector used in the dimensional reduction.
@@ -135,7 +135,7 @@ class csvm : public ::plssvm::csvm {
      * @return the `q` vector (`[[nodiscard]]`)
      */
     template <typename real_type>
-    [[nodiscard]] std::vector<real_type> generate_q(const detail::parameter<real_type> &params, const detail::aos_matrix<real_type> &data) const;
+    [[nodiscard]] std::vector<real_type> generate_q(const detail::parameter<real_type> &params, const aos_matrix<real_type> &data) const;
     /**
      * @brief Explicitly assemble the kernel matrix using the respective kernel function.
      * @details The template parameter `real_type` represents the type of the data points (either `float` or `double`).
@@ -146,7 +146,7 @@ class csvm : public ::plssvm::csvm {
      * @return the explicitly assembled kernel matrix (`[[nodiscard]]`)
      */
     template <typename real_type>
-    [[nodiscard]] detail::aos_matrix<real_type> assemble_kernel_matrix(const detail::parameter<real_type> &params, const detail::aos_matrix<real_type> &data, const std::vector<real_type> &q, const real_type QA_cost) const;
+    [[nodiscard]] aos_matrix<real_type> assemble_kernel_matrix(const detail::parameter<real_type> &params, const aos_matrix<real_type> &data, const std::vector<real_type> &q, const real_type QA_cost) const;
     /**
      * @brief Precalculate the `w` vector to speedup up the prediction using the linear kernel function.
      * @details The template parameter `real_type` represents the type of the data points (either `float` or `double`).

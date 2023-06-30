@@ -13,7 +13,9 @@
 #define PLSSVM_BINDINGS_PYTHON_UTILITY_HPP_
 #pragma once
 
+#include "plssvm/detail/layout.hpp"   // plssvm::detail::layout_type
 #include "plssvm/detail/utility.hpp"  // plssvm::detail::contains
+#include "plssvm/matrix.hpp"          // plssvm::matrix
 #include "plssvm/parameter.hpp"       // plssvm::parameter
 
 #include "fmt/format.h"         // fmt::format
@@ -51,17 +53,18 @@ template <typename T>
  * @param[in] mat the 2D vector to convert
  * @return the Python Numpy array (`[[nodiscard]]`)
  */
-template <typename T>
-[[nodiscard]] py::array_t<T> matrix_to_pyarray(const std::vector<std::vector<T>> &mat) {
-    const typename std::vector<std::vector<T>>::size_type num_data_points = mat.size();
-    const typename std::vector<std::vector<T>>::size_type num_features = mat.front().size();
+template <typename T, plssvm::detail::layout_type layout>
+[[nodiscard]] py::array_t<T> matrix_to_pyarray(const plssvm::matrix<T, layout> &mat) {
+    using size_type = typename plssvm::matrix<T, layout>::size_type;
+    const size_type num_data_points = mat.num_rows();
+    const size_type num_features = mat.num_cols();
 
     py::array_t<T> py_array({ num_data_points, num_features });
     py::buffer_info buffer = py_array.request();
     T *ptr = static_cast<T *>(buffer.ptr);
-    for (typename std::vector<std::vector<T>>::size_type i = 0; i < num_data_points; ++i) {
-        for (typename std::vector<std::vector<T>>::size_type j = 0; j < num_features; ++j) {
-            ptr[i * num_features + j] = mat[i][j];
+    for (size_type i = 0; i < num_data_points; ++i) {
+        for (size_type j = 0; j < num_features; ++j) {
+            ptr[i * num_features + j] = mat(i, j);
         }
     }
     return py_array;
@@ -127,17 +130,20 @@ template <typename T>
  * @param[in] mat the 2D Python Numpy matrix to convert
  * @return to 2D matrix of `std::vector<std::vector<T>>` (`[[nodiscard]]`)
  */
-template <typename T>
-[[nodiscard]] std::vector<std::vector<T>> pyarray_to_matrix(const py::array_t<T> &mat) {
+template <typename T, plssvm::detail::layout_type layout = plssvm::detail::layout_type::aos>
+[[nodiscard]] plssvm::matrix<T, layout> pyarray_to_matrix(const py::array_t<T> &mat) {
+    using size_type = typename plssvm::matrix<T, layout>::size_type;
     // check dimensions
     if (mat.ndim() != 2) {
         throw py::value_error{ fmt::format("the provided matrix must have exactly two dimensions but has {}!", mat.ndim()) };
     }
 
     // convert py::array to std::vector<std::vector<T>>
-    std::vector<std::vector<T>> tmp(mat.shape(0));
-    for (typename std::vector<std::vector<T>>::size_type i = 0; i < tmp.size(); ++i) {
-        tmp[i] = std::vector<T>(mat.data(i, 0), mat.data(i, 0) + mat.shape(1));
+    plssvm::matrix<T, layout> tmp{ static_cast<size_type>(mat.shape(0)), static_cast<size_type>(mat.shape(1)) };
+    for (size_type row = 0; row < tmp.num_rows(); ++row) {
+        for (size_type col = 0; col < tmp.num_cols(); ++col) {
+            tmp(row, col) = *mat.data(row, col);
+        }
     }
 
     return tmp;

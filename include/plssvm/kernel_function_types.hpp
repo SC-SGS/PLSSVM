@@ -15,11 +15,11 @@
 
 #include "plssvm/detail/assert.hpp"          // PLSSVM_ASSERT
 #include "plssvm/detail/layout.hpp"          // plssvm::detail::layout_type
-#include "plssvm/detail/matrix.hpp"          // plssvm::detail::matrix_impl
 #include "plssvm/detail/operators.hpp"       // dot product, plssvm::squared_euclidean_dist
 #include "plssvm/detail/type_traits.hpp"     // plssvm::detail::always_false_v
 #include "plssvm/detail/utility.hpp"         // plssvm::detail::get
 #include "plssvm/exceptions/exceptions.hpp"  // plssvm::unsupported_kernel_type_exception
+#include "plssvm/matrix.hpp"                 // plssvm::matrix
 
 #include <cmath>                             // std::pow, std::exp, std::fma
 #include <iosfwd>                            // forward declare std::ostream and std::istream
@@ -133,8 +133,6 @@ struct parameter;
 template <typename real_type>
 [[nodiscard]] real_type kernel_function(const std::vector<real_type> &xi, const std::vector<real_type> &xj, const detail::parameter<real_type> &params);
 
-namespace detail {
-
 /**
  * @brief Computes the value of the two matrix rows @p i in @p x and @p j in @p y using the @p kernel function determined at compile-time.
  * @tparam kernel the type of the kernel
@@ -148,15 +146,16 @@ namespace detail {
  * @param[in] args additional parameters
  * @return the value computed by the @p kernel function (`[[nodiscard]]`)
  */
-template <kernel_function_type kernel, typename real_type, layout_type layout, typename... Args>
-[[nodiscard]] real_type kernel_function(const matrix_impl<real_type, layout> &x, const std::size_t i, const matrix_impl<real_type, layout> &y, const std::size_t j, Args &&...args) {
+template <kernel_function_type kernel, typename real_type, detail::layout_type layout, typename... Args>
+[[nodiscard]] real_type kernel_function(const matrix<real_type, layout> &x, const std::size_t i, const matrix<real_type, layout> &y, const std::size_t j, Args &&...args) {
     PLSSVM_ASSERT(x.num_cols() == y.num_cols(), "Sizes mismatch!: {} != {}", x.num_cols(), y.num_cols());
+    using size_type = typename matrix<real_type, layout>::size_type;
 
     if constexpr (kernel == kernel_function_type::linear) {
         static_assert(sizeof...(args) == 0, "Illegal number of additional parameters! Must be 0.");
         real_type temp{ 0.0 };
         #pragma omp simd reduction(+ : temp)
-        for (typename std::vector<real_type>::size_type dim = 0; dim < x.num_cols(); ++dim) {
+        for (size_type dim = 0; dim < x.num_cols(); ++dim) {
             temp += x(i, dim) * y(j, dim);
         }
         return temp;
@@ -167,7 +166,7 @@ template <kernel_function_type kernel, typename real_type, layout_type layout, t
         const auto coef0 = static_cast<real_type>(detail::get<2>(args...));
         real_type temp{ 0.0 };
         #pragma omp simd reduction(+ : temp)
-        for (typename std::vector<real_type>::size_type dim = 0; dim < x.num_cols(); ++dim) {
+        for (size_type dim = 0; dim < x.num_cols(); ++dim) {
             temp += x(i, dim) * y(j, dim);
         }
         return std::pow(std::fma(gamma, temp, coef0), degree);
@@ -176,7 +175,7 @@ template <kernel_function_type kernel, typename real_type, layout_type layout, t
         const auto gamma = static_cast<real_type>(detail::get<0>(args...));
         real_type temp{ 0.0 };
         #pragma omp simd reduction(+ : temp)
-        for (typename std::vector<real_type>::size_type dim = 0; dim < x.num_cols(); ++dim) {
+        for (size_type dim = 0; dim < x.num_cols(); ++dim) {
             const real_type diff = x(i, dim) - y(j, dim);
             temp += diff * diff;
         }
@@ -198,10 +197,9 @@ template <kernel_function_type kernel, typename real_type, layout_type layout, t
  * @throws plssvm::unsupported_kernel_type_exception if the kernel function in @p params is not supported
  * @return the computed kernel function value (`[[nodiscard]]`)
  */
-template <typename real_type, layout_type layout>
-[[nodiscard]] real_type kernel_function(const matrix_impl<real_type, layout> &x, std::size_t i, const matrix_impl<real_type, layout> &y, std::size_t j, const parameter<real_type> &params);
+template <typename real_type, detail::layout_type layout>
+[[nodiscard]] real_type kernel_function(const matrix<real_type, layout> &x, std::size_t i, const matrix<real_type, layout> &y, std::size_t j, const detail::parameter<real_type> &params);
 
-}  // namespace detail
 
 }  // namespace plssvm
 

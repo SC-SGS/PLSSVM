@@ -15,10 +15,10 @@
 #include "plssvm/csvm.hpp"                                    // plssvm::csvm
 #include "plssvm/detail/assert.hpp"                           // PLSSVM_ASSERT
 #include "plssvm/detail/logger.hpp"                           // plssvm::detail::log, plssvm::verbosity_level
-#include "plssvm/detail/matrix.hpp"                           // plssvm::detail::aos_matrix
 #include "plssvm/detail/operators.hpp"                        // various operator overloads for std::vector and scalars
 #include "plssvm/detail/performance_tracker.hpp"              // plssvm::detail::tracking_entry, PLSSVM_DETAIL_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY
 #include "plssvm/kernel_function_types.hpp"                   // plssvm::kernel_function_type
+#include "plssvm/matrix.hpp"                                  // plssvm::aos_matrix
 #include "plssvm/parameter.hpp"                               // plssvm::parameter, plssvm::detail::parameter
 #include "plssvm/target_platforms.hpp"                        // plssvm::target_platform
 
@@ -71,9 +71,9 @@ void csvm::init(const target_platform target) {
 }
 
 template <typename real_type>
-std::pair<detail::aos_matrix<real_type>, std::vector<real_type>> csvm::solve_system_of_linear_equations_impl(const detail::parameter<real_type> &params,
-                                                                                                             const detail::aos_matrix<real_type> &A,
-                                                                                                             detail::aos_matrix<real_type> B_in,
+std::pair<aos_matrix<real_type>, std::vector<real_type>> csvm::solve_system_of_linear_equations_impl(const detail::parameter<real_type> &params,
+                                                                                                             const aos_matrix<real_type> &A,
+                                                                                                             aos_matrix<real_type> B_in,
                                                                                                              const real_type eps,
                                                                                                              const unsigned long long max_iter) const {
     PLSSVM_ASSERT(!A.empty(), "The data must not be empty!");
@@ -95,7 +95,7 @@ std::pair<detail::aos_matrix<real_type>, std::vector<real_type>> csvm::solve_sys
 
     // update b
     std::vector<real_type> b_back_value(num_rhs);
-    detail::aos_matrix<real_type> B{ num_rhs, dept };
+    aos_matrix<real_type> B{ num_rhs, dept };
     #pragma omp parallel for default(none) shared(B_in, B, b_back_value) firstprivate(dept, num_rhs)
     for (std::size_t row = 0; row < num_rhs; ++row) {
         b_back_value[row] = B_in(row, dept);
@@ -106,14 +106,14 @@ std::pair<detail::aos_matrix<real_type>, std::vector<real_type>> csvm::solve_sys
 
     // assemble explicit kernel matrix
 
-    const detail::aos_matrix<real_type> explicit_A = this->assemble_kernel_matrix(params, A, q_red, QA_cost);
+    const aos_matrix<real_type> explicit_A = this->assemble_kernel_matrix(params, A, q_red, QA_cost);
     PLSSVM_ASSERT(dept * dept == explicit_A.num_entries(), "Sizes mismatch!: {} != {}", dept * dept, explicit_A.num_entries());
 
     // CG
 
-    detail::aos_matrix<real_type> X{ num_rhs, dept, real_type{ 1.0 } };
+    aos_matrix<real_type> X{ num_rhs, dept, real_type{ 1.0 } };
 
-    detail::aos_matrix<real_type> R{ B };
+    aos_matrix<real_type> R{ B };
 
     // R = B - A * X
     #pragma omp parallel for collapse(2) default(none) shared(explicit_A, R, X) firstprivate(num_rhs, dept)
@@ -140,9 +140,9 @@ std::pair<detail::aos_matrix<real_type>, std::vector<real_type>> csvm::solve_sys
         delta[i] = temp;
     }
     const std::vector<real_type> delta0(delta);
-    detail::aos_matrix<real_type> Q{ num_rhs, dept };
+    aos_matrix<real_type> Q{ num_rhs, dept };
 
-    detail::aos_matrix<real_type> D{ R };
+    aos_matrix<real_type> D{ R };
 
     // timing for each CG iteration
     std::chrono::milliseconds average_iteration_time{};
@@ -297,7 +297,7 @@ std::pair<detail::aos_matrix<real_type>, std::vector<real_type>> csvm::solve_sys
                 std::min(iter + 1, max_iter));
 
     // calculate bias
-    detail::aos_matrix<real_type> X_ret{ num_rhs, A.num_rows() };
+    aos_matrix<real_type> X_ret{ num_rhs, A.num_rows() };
     std::vector<real_type> bias(num_rhs);
     #pragma omp parallel for default(none) shared(X, q_red, X_ret, bias, b_back_value) firstprivate(num_rhs, dept, QA_cost)
     for (std::size_t i = 0; i < num_rhs; ++i) {
@@ -317,11 +317,11 @@ std::pair<detail::aos_matrix<real_type>, std::vector<real_type>> csvm::solve_sys
     return std::make_pair(std::move(X_ret), std::move(bias));
 }
 
-template std::pair<detail::aos_matrix<float>, std::vector<float>> csvm::solve_system_of_linear_equations_impl(const detail::parameter<float> &, const detail::aos_matrix<float> &, detail::aos_matrix<float>, const float, const unsigned long long) const;
-template std::pair<detail::aos_matrix<double>, std::vector<double>> csvm::solve_system_of_linear_equations_impl(const detail::parameter<double> &, const detail::aos_matrix<double> &, detail::aos_matrix<double>, const double, const unsigned long long) const;
+template std::pair<aos_matrix<float>, std::vector<float>> csvm::solve_system_of_linear_equations_impl(const detail::parameter<float> &, const aos_matrix<float> &, aos_matrix<float>, const float, const unsigned long long) const;
+template std::pair<aos_matrix<double>, std::vector<double>> csvm::solve_system_of_linear_equations_impl(const detail::parameter<double> &, const aos_matrix<double> &, aos_matrix<double>, const double, const unsigned long long) const;
 
 template <typename real_type>
-detail::aos_matrix<real_type> csvm::predict_values_impl(const detail::parameter<real_type> &params, const detail::aos_matrix<real_type> &support_vectors, const detail::aos_matrix<real_type> &alpha, const std::vector<real_type> &rho, detail::aos_matrix<real_type> &w, const detail::aos_matrix<real_type> &predict_points) const {
+aos_matrix<real_type> csvm::predict_values_impl(const detail::parameter<real_type> &params, const aos_matrix<real_type> &support_vectors, const aos_matrix<real_type> &alpha, const std::vector<real_type> &rho, aos_matrix<real_type> &w, const aos_matrix<real_type> &predict_points) const {
     PLSSVM_ASSERT(!support_vectors.empty(), "The support vectors must not be empty!");
     PLSSVM_ASSERT(!alpha.empty(), "The alpha vectors (weights) must not be empty!");
     PLSSVM_ASSERT(support_vectors.num_rows() == alpha.num_cols(), "The number of support vectors ({}) and number of weights ({}) must be the same!", support_vectors.num_rows(), alpha.num_cols());
@@ -340,13 +340,13 @@ detail::aos_matrix<real_type> csvm::predict_values_impl(const detail::parameter<
     const std::size_t num_features = predict_points.num_cols();
 
     // num_predict_points x num_classes
-    detail::aos_matrix<real_type> out{ num_predict_points, num_classes };
+    aos_matrix<real_type> out{ num_predict_points, num_classes };
 
     if (params.kernel_type == kernel_function_type::linear) {
         // special optimization for the linear kernel function
         if (w.empty()) {
             // fill w vector
-            w = detail::aos_matrix<real_type>{ num_classes, num_features };
+            w = aos_matrix<real_type>{ num_classes, num_features };
 
             #pragma omp parallel for collapse(2) default(none) shared(w, support_vectors, alpha) firstprivate(num_classes, num_features, num_support_vectors)
             for (std::size_t a = 0; a < num_classes; ++a) {
@@ -390,11 +390,11 @@ detail::aos_matrix<real_type> csvm::predict_values_impl(const detail::parameter<
     return out;
 }
 
-template detail::aos_matrix<float> csvm::predict_values_impl(const detail::parameter<float> &, const detail::aos_matrix<float> &, const detail::aos_matrix<float> &, const std::vector<float> &, detail::aos_matrix<float> &, const detail::aos_matrix<float> &) const;
-template detail::aos_matrix<double> csvm::predict_values_impl(const detail::parameter<double> &, const detail::aos_matrix<double> &, const detail::aos_matrix<double> &, const std::vector<double> &, detail::aos_matrix<double> &, const detail::aos_matrix<double> &) const;
+template aos_matrix<float> csvm::predict_values_impl(const detail::parameter<float> &, const aos_matrix<float> &, const aos_matrix<float> &, const std::vector<float> &, aos_matrix<float> &, const aos_matrix<float> &) const;
+template aos_matrix<double> csvm::predict_values_impl(const detail::parameter<double> &, const aos_matrix<double> &, const aos_matrix<double> &, const std::vector<double> &, aos_matrix<double> &, const aos_matrix<double> &) const;
 
 template <typename real_type>
-std::vector<real_type> csvm::generate_q(const detail::parameter<real_type> &params, const detail::aos_matrix<real_type> &data) const {
+std::vector<real_type> csvm::generate_q(const detail::parameter<real_type> &params, const aos_matrix<real_type> &data) const {
     PLSSVM_ASSERT(!data.empty(), "The data must not be empty!");
 
     std::vector<real_type> q(data.num_rows() - 1);
@@ -412,16 +412,16 @@ std::vector<real_type> csvm::generate_q(const detail::parameter<real_type> &para
     return q;
 }
 
-template std::vector<float> csvm::generate_q<float>(const detail::parameter<float> &, const detail::aos_matrix<float> &) const;
-template std::vector<double> csvm::generate_q<double>(const detail::parameter<double> &, const detail::aos_matrix<double> &) const;
+template std::vector<float> csvm::generate_q<float>(const detail::parameter<float> &, const aos_matrix<float> &) const;
+template std::vector<double> csvm::generate_q<double>(const detail::parameter<double> &, const aos_matrix<double> &) const;
 
 template <typename real_type>
-detail::aos_matrix<real_type> csvm::assemble_kernel_matrix(const detail::parameter<real_type> &params, const detail::aos_matrix<real_type> &data, const std::vector<real_type> &q, const real_type QA_cost) const {
+aos_matrix<real_type> csvm::assemble_kernel_matrix(const detail::parameter<real_type> &params, const aos_matrix<real_type> &data, const std::vector<real_type> &q, const real_type QA_cost) const {
     PLSSVM_ASSERT(!data.empty(), "The data must not be empty!");
     PLSSVM_ASSERT(q.size() == data.num_rows() - 1, "The q vector must have one entry less than the number of points in data!");
 
     const std::chrono::steady_clock::time_point assembly_start_time = std::chrono::steady_clock::now();
-    detail::aos_matrix<real_type> explicit_A{ data.num_rows() - 1, data.num_rows() - 1 };
+    aos_matrix<real_type> explicit_A{ data.num_rows() - 1, data.num_rows() - 1 };
     switch (params.kernel_type) {
         case kernel_function_type::linear:
             openmp::linear_kernel_matrix_assembly(q, explicit_A, data, QA_cost, 1 / params.cost);
@@ -444,8 +444,8 @@ detail::aos_matrix<real_type> csvm::assemble_kernel_matrix(const detail::paramet
     return explicit_A;
 }
 
-template detail::aos_matrix<float> csvm::assemble_kernel_matrix(const detail::parameter<float> &, const detail::aos_matrix<float> &, const std::vector<float> &, const float) const;
-template detail::aos_matrix<double> csvm::assemble_kernel_matrix(const detail::parameter<double> &, const detail::aos_matrix<double> &, const std::vector<double> &, const double) const;
+template aos_matrix<float> csvm::assemble_kernel_matrix(const detail::parameter<float> &, const aos_matrix<float> &, const std::vector<float> &, const float) const;
+template aos_matrix<double> csvm::assemble_kernel_matrix(const detail::parameter<double> &, const aos_matrix<double> &, const std::vector<double> &, const double) const;
 
 template <typename real_type>
 std::vector<real_type> csvm::calculate_w(const std::vector<std::vector<real_type>> &support_vectors, const std::vector<real_type> &alpha) const {

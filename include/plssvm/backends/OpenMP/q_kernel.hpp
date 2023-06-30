@@ -13,7 +13,7 @@
 #define PLSSVM_BACKENDS_OPENMP_Q_KERNEL_HPP_
 #pragma once
 
-#include "plssvm/detail/matrix.hpp"  // plssvm::detail::aos_matrix
+#include "plssvm/matrix.hpp"  // plssvm::aos_matrix
 
 #include <vector>  // std::vector
 
@@ -26,7 +26,7 @@ namespace plssvm::openmp {
  * @param[in] data the two-dimensional data matrix
  */
 template <typename real_type>
-void device_kernel_q_linear(std::vector<real_type> &q, const detail::aos_matrix<real_type> &data);
+void device_kernel_q_linear(std::vector<real_type> &q, const aos_matrix<real_type> &data);
 
 /**
  * @brief Calculates the `q` vector using the polynomial C-SVM kernel.
@@ -38,7 +38,7 @@ void device_kernel_q_linear(std::vector<real_type> &q, const detail::aos_matrix<
  * @param[in] coef0 the coef0 parameter used in the polynomial kernel function
  */
 template <typename real_type>
-void device_kernel_q_polynomial(std::vector<real_type> &q, const detail::aos_matrix<real_type> &data, int degree, real_type gamma, real_type coef0);
+void device_kernel_q_polynomial(std::vector<real_type> &q, const aos_matrix<real_type> &data, int degree, real_type gamma, real_type coef0);
 
 /**
  * @brief Calculates the `q` vector using the radial basis functions C-SVM kernel.
@@ -48,7 +48,7 @@ void device_kernel_q_polynomial(std::vector<real_type> &q, const detail::aos_mat
  * @param[in] gamma the gamma parameter used in the rbf kernel function
  */
 template <typename real_type>
-void device_kernel_q_rbf(std::vector<real_type> &q, const detail::aos_matrix<real_type> &data, real_type gamma);
+void device_kernel_q_rbf(std::vector<real_type> &q, const aos_matrix<real_type> &data, real_type gamma);
 
 }  // namespace plssvm::openmp
 

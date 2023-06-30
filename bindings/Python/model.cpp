@@ -60,8 +60,12 @@ void instantiate_model_bindings(py::module_ &m, plssvm::detail::real_type_label_
             },
             "the classes")
         .def(
-            "weights", [](const model_type &self) {
-                return matrix_to_pyarray(self.weights());
+            "weights", []([[maybe_unused]] const model_type &self) {
+                py::list ret{};
+                for (const plssvm::aos_matrix<typename model_type::real_type> &matr : self.weights()) {
+                    ret.append(matrix_to_pyarray(matr));
+                }
+                return ret;
             },
             "the weights learned for each support vector and class")
         .def("rho", [](const model_type &self) {
