@@ -466,7 +466,7 @@ std::pair<detail::aos_matrix<real_type>, std::vector<real_type>> gpu_csvm<device
                                                                                                                     const unsigned long long max_iter) const {
     PLSSVM_ASSERT(!A.empty(), "The data must not be empty!");
     PLSSVM_ASSERT(!B_in.empty(), "At least one right hand side must be given!");
-    PLSSVM_ASSERT(A.num_rows() == B_in.num_rows(), "The number of rows in A ({}) and B({}) must be the same!", A.num_rows(), B_in.num_rows());
+    PLSSVM_ASSERT(A.num_rows() == B_in.num_cols(), "The number of rows in A ({}) and B({}) must be the same!", A.num_rows(), B_in.num_cols());
     PLSSVM_ASSERT(eps > real_type{ 0.0 }, "The stopping criterion in the CG algorithm must be greater than 0.0, but is {}!", eps);
     PLSSVM_ASSERT(max_iter > 0, "The number of CG iterations must be greater than 0!");
 
@@ -494,9 +494,9 @@ std::pair<detail::aos_matrix<real_type>, std::vector<real_type>> gpu_csvm<device
     std::vector<real_type> b_back_value(num_rhs);
     detail::aos_matrix<real_type> B{ num_rhs, dept };
     #pragma omp parallel for default(none) shared(B_in, B, b_back_value) firstprivate(dept, num_rhs)
-    for (std::size_t row = 0; row < B.num_rows(); ++row) {
+    for (std::size_t row = 0; row < num_rhs; ++row) {
         b_back_value[row] = B_in(row, dept);
-        for (std::size_t col = 0; col < B.num_cols(); ++col) {
+        for (std::size_t col = 0; col < dept; ++col) {
             B(row, col) = B_in(row, col) - b_back_value[row];
         }
     }
