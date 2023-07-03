@@ -28,6 +28,8 @@
 #include "plssvm/parameter.hpp"                   // plssvm::parameter, plssvm::detail::{get_value_from_named_parameter, has_only_parameter_named_args_v}
 #include "plssvm/target_platforms.hpp"            // plssvm::target_platform
 
+#include "plssvm/detail/simple_any.hpp"           // plssvm::detail::simple_any
+
 #include "fmt/core.h"                             // fmt::format
 #include "igor/igor.hpp"                          // igor::parser
 
@@ -182,23 +184,6 @@ class csvm {
     //                        pure virtual functions, must be implemented for all subclasses; doing the actual work                        //
     //*************************************************************************************************************************************//
     /**
-     * @brief Solves the equation \f$Ax = b\f$ using the Conjugated Gradients algorithm.
-     * @details Uses a slightly modified version of the CG algorithm described by [Jonathan Richard Shewchuk](https://www.cs.cmu.edu/~quake-papers/painless-conjugate-gradient.pdf):
-     * \image html cg.png
-     * @param[in] params the SVM parameters used in the respective kernel functions
-     * @param[in] A the matrix of the equation \f$Ax = b\f$ (symmetric positive definite)
-     * @param[in] b the right-hand side of the equation \f$Ax = b\f$
-     * @param[in] eps the error tolerance
-     * @param[in] max_iter the maximum number of CG iterations
-     * @throws plssvm::exception any exception thrown by the backend's implementation
-     * @return a pair of [the result vector x, the resulting bias] (`[[nodiscard]]`)
-     */
-//    [[nodiscard]] virtual std::pair<aos_matrix<float>, std::vector<float>> solve_system_of_linear_equations(const detail::parameter<float> &params, const aos_matrix<float> &A, aos_matrix<float> B, float eps, unsigned long long max_iter) const = 0;
-//    /**
-//     * @copydoc plssvm::csvm::solve_system_of_linear_equations
-//     */
-//    [[nodiscard]] virtual std::pair<aos_matrix<double>, std::vector<double>> solve_system_of_linear_equations(const detail::parameter<double> &params, const aos_matrix<double> &A, aos_matrix<double> B, double eps, unsigned long long max_iter) const = 0;
-    /**
      * @brief Uses the already learned model to predict the class of multiple (new) data points.
      * @details Uses the one vs. all (OAA) for the multi-class classification task.
      * @param[in] params the SVM parameters used in the respective kernel functions
@@ -220,21 +205,19 @@ class csvm {
     std::pair<aos_matrix<real_type>, std::vector<real_type>> solve_system_of_linear_equations_impl(const aos_matrix<real_type> &A, aos_matrix<real_type> B, const detail::parameter<real_type> &params, real_type eps, unsigned long long max_cg_iter);
 
 
-    virtual void setup_data_on_devices(const aos_matrix<float> &A) = 0;
-    virtual void setup_data_on_devices(const aos_matrix<double> &A) = 0;
+    virtual detail::simple_any setup_data_on_devices(const aos_matrix<float> &A) = 0;
+    virtual detail::simple_any setup_data_on_devices(const aos_matrix<double> &A) = 0;
 
     // TODO: rename
-    virtual std::vector<float> generate_q2(const detail::parameter<float> &params, const std::size_t num_rows_reduced, const std::size_t num_features) = 0;
-    virtual std::vector<double> generate_q2(const detail::parameter<double> &params, const std::size_t num_rows_reduced, const std::size_t num_features) = 0;
+    virtual std::vector<float> generate_q(const detail::parameter<float> &params, const ::plssvm::detail::simple_any &data, const std::size_t num_rows_reduced, const std::size_t num_features) = 0;
+    virtual std::vector<double> generate_q(const detail::parameter<double> &params, const ::plssvm::detail::simple_any &data, const std::size_t num_rows_reduced, const std::size_t num_features) = 0;
 
-    virtual void assemble_kernel_matrix_explicit(const detail::parameter<float> &params, const std::size_t num_rows_reduced, const std::size_t num_features, const std::vector<float> &q_red, float QA_cost) = 0;
-    virtual void assemble_kernel_matrix_explicit(const detail::parameter<double> &params, const std::size_t num_rows_reduced, const std::size_t num_features, const std::vector<double> &q_red, double QA_cost) = 0;
+    virtual detail::simple_any assemble_kernel_matrix_explicit(const detail::parameter<float> &params, const ::plssvm::detail::simple_any &data, const std::size_t num_rows_reduced, const std::size_t num_features, const std::vector<float> &q_red, float QA_cost) = 0;
+    virtual detail::simple_any assemble_kernel_matrix_explicit(const detail::parameter<double> &params, const ::plssvm::detail::simple_any &data, const std::size_t num_rows_reduced, const std::size_t num_features, const std::vector<double> &q_red, double QA_cost) = 0;
 
-    virtual aos_matrix<float> kernel_matrix_matmul_explicit(const aos_matrix<float> &vec) = 0;
-    virtual aos_matrix<double> kernel_matrix_matmul_explicit(const aos_matrix<double> &vec) = 0;
+    virtual aos_matrix<float> kernel_matrix_matmul_explicit(const detail::simple_any &explicit_kernel_matrix, const aos_matrix<float> &vec) = 0;
+    virtual aos_matrix<double> kernel_matrix_matmul_explicit(const detail::simple_any &explicit_kernel_matrix, const aos_matrix<double> &vec) = 0;
 
-    virtual void clear_data_on_devices(float) = 0;
-    virtual void clear_data_on_devices(double) = 0;
 
     /// The target platform of this SVM.
     target_platform target_{ plssvm::target_platform::automatic };
@@ -658,11 +641,11 @@ std::pair<aos_matrix<real_type>, std::vector<real_type>> csvm::solve_system_of_l
     const std::size_t num_rhs = B_in.num_rows();
 
     // setup/allocate necessary data on the device(s)
-    this->setup_data_on_devices(A);
+    const detail::simple_any data = this->setup_data_on_devices(A);
 
     const clock_type::time_point dimension_reduction_start_time = clock_type::now();
     // create q_red vector and calculate QA_costs
-    const std::vector<real_type> q_red = this->generate_q2(params, num_rows_reduced, num_features);
+    const std::vector<real_type> q_red = this->generate_q(params, data, num_rows_reduced, num_features);
     const clock_type::time_point dimension_reduction_end_time = clock_type::now();
     detail::log(verbosity_level::full | verbosity_level::timing,
                 "Performed dimensional reduction in {}.\n",
@@ -681,14 +664,13 @@ std::pair<aos_matrix<real_type>, std::vector<real_type>> csvm::solve_system_of_l
     }
 
     // assemble explicit kernel matrix
-    {
-        const clock_type::time_point assembly_start_time = clock_type::now();
-        this->assemble_kernel_matrix_explicit(params, num_rows_reduced, num_features, q_red, QA_cost);
-        const clock_type::time_point assembly_end_time = clock_type::now();
-        detail::log(verbosity_level::full | verbosity_level::timing,
-                    "Assembled the kernel matrix in {}.\n",
-                    detail::tracking_entry{ "cg", "kernel_matrix_assembly", std::chrono::duration_cast<std::chrono::milliseconds>(assembly_end_time - assembly_start_time) });
-    }
+    const clock_type::time_point assembly_start_time = clock_type::now();
+    const detail::simple_any kernel_matrix = this->assemble_kernel_matrix_explicit(params, data, num_rows_reduced, num_features, q_red, QA_cost);
+    const clock_type::time_point assembly_end_time = clock_type::now();
+    detail::log(verbosity_level::full | verbosity_level::timing,
+                "Assembled the kernel matrix in {}.\n",
+                detail::tracking_entry{ "cg", "kernel_matrix_assembly", std::chrono::duration_cast<std::chrono::milliseconds>(assembly_end_time - assembly_start_time) });
+
 
     //
     // perform Conjugate Gradients (CG) algorithm
@@ -697,7 +679,7 @@ std::pair<aos_matrix<real_type>, std::vector<real_type>> csvm::solve_system_of_l
     aos_matrix<real_type> X{ num_rhs, num_rows_reduced, real_type{ 1.0 }};
 
     // R = B - A * X
-    aos_matrix<real_type> R = this->kernel_matrix_matmul_explicit(X);
+    aos_matrix<real_type> R = this->kernel_matrix_matmul_explicit(kernel_matrix, X);
     #pragma omp parallel for collapse(2) shared(R, B) firstprivate(num_rhs, num_rows_reduced)
     for (std::size_t i = 0; i < num_rhs; ++i) {
         for (std::size_t j = 0; j < num_rows_reduced; ++j) {
@@ -769,7 +751,7 @@ std::pair<aos_matrix<real_type>, std::vector<real_type>> csvm::solve_system_of_l
         iteration_start_time = std::chrono::steady_clock::now();
 
         // Q = A * D
-        const aos_matrix<real_type> Q = this->kernel_matrix_matmul_explicit(D);
+        const aos_matrix<real_type> Q = this->kernel_matrix_matmul_explicit(kernel_matrix ,D);
 
         // alpha = delta_new / (D^T * Q))
         std::vector<real_type> alpha(num_rhs);
@@ -794,7 +776,7 @@ std::pair<aos_matrix<real_type>, std::vector<real_type>> csvm::solve_system_of_l
         if (iter % 50 == 49) {
             // explicitly recalculate residual to remove accumulating floating point errors
             // R = B - A * X
-            R = this->kernel_matrix_matmul_explicit(X);
+            R = this->kernel_matrix_matmul_explicit(kernel_matrix, X);
             #pragma omp parallel for collapse(2) shared(R, B) firstprivate(num_rhs, num_rows_reduced)
             for (std::size_t i = 0; i < num_rhs; ++i) {
                 for (std::size_t j = 0; j < num_rows_reduced; ++j) {
@@ -877,8 +859,6 @@ std::pair<aos_matrix<real_type>, std::vector<real_type>> csvm::solve_system_of_l
         bias[i] = -(b_back_value[i] + QA_cost * temp_sum - temp_dot);
         X_ret(i, num_rows_reduced) = -temp_sum;
     }
-
-    this->clear_data_on_devices(real_type{});
 
     return std::make_pair(std::move(X_ret), std::move(bias));
 }

@@ -18,10 +18,11 @@
 #include "plssvm/parameter.hpp"                        // plssvm::parameter, plssvm::detail::parameter
 #include "plssvm/target_platforms.hpp"                 // plssvm::target_platform
 
+#include "plssvm/detail/simple_any.hpp"                // plssvm::detail::simple_any
+
 #include <cstddef>                                     // std::size_t
 #include <type_traits>                                 // std::true_type
 #include <utility>                                     // std::forward
-#include <variant>
 
 namespace plssvm {
 
@@ -135,30 +136,25 @@ class csvm : public ::plssvm::detail::gpu_csvm<detail::device_ptr, int> {
     device_ptr_type<real_type> run_w_kernel_impl(const device_ptr_type<real_type> &alpha_d, const device_ptr_type<real_type> &sv_d, std::size_t num_classes, std::size_t num_sv, std::size_t num_features) const;
 
 
-    void setup_data_on_devices(const aos_matrix<float> &A) override { this->setup_data_on_devices_impl(A); }
-    void setup_data_on_devices(const aos_matrix<double> &A) override { this->setup_data_on_devices_impl(A); }
+    ::plssvm::detail::simple_any setup_data_on_devices(const aos_matrix<float> &A) override { return this->setup_data_on_devices_impl(A); }
+    ::plssvm::detail::simple_any setup_data_on_devices(const aos_matrix<double> &A) override { return this->setup_data_on_devices_impl(A); }
     template <typename real_type>
-    void setup_data_on_devices_impl(const aos_matrix<real_type> &A);
+    ::plssvm::detail::simple_any setup_data_on_devices_impl(const aos_matrix<real_type> &A);
 
-    [[nodiscard]] std::vector<float> generate_q2(const ::plssvm::detail::parameter<float> &params, const std::size_t num_rows_reduced, const std::size_t num_features) override { return this->generate_q2_impl(params, num_rows_reduced, num_features); }
-    [[nodiscard]] std::vector<double> generate_q2(const ::plssvm::detail::parameter<double> &params, const std::size_t num_rows_reduced, const std::size_t num_features) override { return this->generate_q2_impl(params, num_rows_reduced, num_features); }
+    [[nodiscard]] std::vector<float> generate_q(const ::plssvm::detail::parameter<float> &params, const ::plssvm::detail::simple_any &data, const std::size_t num_rows_reduced, const std::size_t num_features) override { return this->generate_q_impl(params, data, num_rows_reduced, num_features); }
+    [[nodiscard]] std::vector<double> generate_q(const ::plssvm::detail::parameter<double> &params, const ::plssvm::detail::simple_any &data, const std::size_t num_rows_reduced, const std::size_t num_features) override { return this->generate_q_impl(params, data, num_rows_reduced, num_features); }
     template <typename real_type>
-    [[nodiscard]] std::vector<real_type> generate_q2_impl(const ::plssvm::detail::parameter<real_type> &params, const std::size_t num_rows_reduced, const std::size_t num_features);
+    [[nodiscard]] std::vector<real_type> generate_q_impl(const ::plssvm::detail::parameter<real_type> &params, const ::plssvm::detail::simple_any &data, const std::size_t num_rows_reduced, const std::size_t num_features);
 
-    void assemble_kernel_matrix_explicit(const ::plssvm::detail::parameter<float> &params, const std::size_t num_rows_reduced, const std::size_t num_features, const std::vector<float> &q_red, float QA_cost) override { this->assemble_kernel_matrix_explicit_impl(params, num_rows_reduced, num_features, q_red, QA_cost); }
-    void assemble_kernel_matrix_explicit(const ::plssvm::detail::parameter<double> &params, const std::size_t num_rows_reduced, const std::size_t num_features, const std::vector<double> &q_red, double QA_cost) override { this->assemble_kernel_matrix_explicit_impl(params, num_rows_reduced, num_features, q_red, QA_cost); }
+    ::plssvm::detail::simple_any assemble_kernel_matrix_explicit(const ::plssvm::detail::parameter<float> &params, const ::plssvm::detail::simple_any & data, const std::size_t num_rows_reduced, const std::size_t num_features, const std::vector<float> &q_red, float QA_cost) override { return this->assemble_kernel_matrix_explicit_impl(params, data, num_rows_reduced, num_features, q_red, QA_cost); }
+    ::plssvm::detail::simple_any assemble_kernel_matrix_explicit(const ::plssvm::detail::parameter<double> &params, const ::plssvm::detail::simple_any &data, const std::size_t num_rows_reduced, const std::size_t num_features, const std::vector<double> &q_red, double QA_cost) override { return this->assemble_kernel_matrix_explicit_impl(params, data, num_rows_reduced, num_features, q_red, QA_cost); }
     template <typename real_type>
-    void assemble_kernel_matrix_explicit_impl(const ::plssvm::detail::parameter<real_type> &params, const std::size_t num_rows_reduced, const std::size_t num_features, const std::vector<real_type> &q_red, real_type QA_cost);
+    ::plssvm::detail::simple_any assemble_kernel_matrix_explicit_impl(const ::plssvm::detail::parameter<real_type> &params, const ::plssvm::detail::simple_any &data, const std::size_t num_rows_reduced, const std::size_t num_features, const std::vector<real_type> &q_red, real_type QA_cost);
 
-    [[nodiscard]] aos_matrix<float> kernel_matrix_matmul_explicit(const aos_matrix<float> &vec) override { return this->kernel_matrix_matmul_explicit_impl(vec); }
-    [[nodiscard]] aos_matrix<double> kernel_matrix_matmul_explicit(const aos_matrix<double> &vec) override { return this->kernel_matrix_matmul_explicit_impl(vec); }
+    [[nodiscard]] aos_matrix<float> kernel_matrix_matmul_explicit(const ::plssvm::detail::simple_any &explicit_kernel_matrix, const aos_matrix<float> &vec) override { return this->kernel_matrix_matmul_explicit_impl(explicit_kernel_matrix, vec); }
+    [[nodiscard]] aos_matrix<double> kernel_matrix_matmul_explicit(const ::plssvm::detail::simple_any &explicit_kernel_matrix, const aos_matrix<double> &vec) override { return this->kernel_matrix_matmul_explicit_impl(explicit_kernel_matrix, vec); }
     template <typename real_type>
-    [[nodiscard]] aos_matrix<real_type> kernel_matrix_matmul_explicit_impl(const aos_matrix<real_type> &vec);
-
-    void clear_data_on_devices(float) override { this->clear_data_on_devices_impl(float{}); }
-    void clear_data_on_devices(double) override { this->clear_data_on_devices_impl(double{}); }
-    template <typename real_type>
-    void clear_data_on_devices_impl(real_type);
+    [[nodiscard]] aos_matrix<real_type> kernel_matrix_matmul_explicit_impl(const ::plssvm::detail::simple_any &explicit_kernel_matrix, const aos_matrix<real_type> &vec);
 
 
   private:
@@ -170,14 +166,6 @@ class csvm : public ::plssvm::detail::gpu_csvm<detail::device_ptr, int> {
      * @throws plssvm::cuda::backend_exception if no CUDA capable devices could be found
      */
     void init(target_platform target);
-
-    // the input data set
-    std::variant<device_ptr_type<float>, device_ptr_type<double>> data_d_;
-    std::variant<device_ptr_type<float>, device_ptr_type<double>> data_last_d_;
-    std::variant<device_ptr_type<float>, device_ptr_type<double>> q_d_;
-
-    // the explicit kernel matrix
-    std::variant<device_ptr_type<float>, device_ptr_type<double>> explicit_kernel_matrix_;
 };
 
 }  // namespace cuda
