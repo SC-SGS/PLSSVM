@@ -22,6 +22,7 @@
 #include <type_traits>                    // std::true_type
 #include <utility>                        // std::forward, std::pair
 #include <vector>                         // std::vector
+#include <variant>
 
 namespace plssvm {
 
@@ -99,19 +100,6 @@ class csvm : public ::plssvm::csvm {
      ~csvm() override = default;
 
   protected:
-    /**
-     * @copydoc plssvm::csvm::solve_system_of_linear_equations
-     */
-    [[nodiscard]] std::pair<aos_matrix<float>, std::vector<float>> solve_system_of_linear_equations(const detail::parameter<float> &params, const aos_matrix<float> &A, aos_matrix<float> B, float eps, unsigned long long max_iter) const override { return this->solve_system_of_linear_equations_impl(params, A, B, eps, max_iter); }
-    /**
-     * @copydoc plssvm::csvm::solve_system_of_linear_equations
-     */
-    [[nodiscard]] std::pair<aos_matrix<double>, std::vector<double>> solve_system_of_linear_equations(const detail::parameter<double> &params, const aos_matrix<double> &A, aos_matrix<double> B, double eps, unsigned long long max_iter) const override { return this->solve_system_of_linear_equations_impl(params, A, B, eps, max_iter); }
-    /**
-     * @copydoc plssvm::csvm::solve_system_of_linear_equations
-     */
-    template <typename real_type>
-    [[nodiscard]] std::pair<aos_matrix<real_type>, std::vector<real_type>> solve_system_of_linear_equations_impl(const detail::parameter<real_type> &params, const aos_matrix<real_type> &A, aos_matrix<real_type> B, real_type eps, unsigned long long max_iter) const;
 
     /**
      * @copydoc plssvm::csvm::predict_values
@@ -127,37 +115,33 @@ class csvm : public ::plssvm::csvm {
     template <typename real_type>
     [[nodiscard]] aos_matrix<real_type> predict_values_impl(const detail::parameter<real_type> &params, const aos_matrix<real_type> &support_vectors, const aos_matrix<real_type> &alpha, const std::vector<real_type> &rho, aos_matrix<real_type> &w, const aos_matrix<real_type> &predict_points) const;
 
-    /**
-     * @brief Calculate the `q` vector used in the dimensional reduction.
-     * @details The template parameter `real_type` represents the type of the data points (either `float` or `double`).
-     * @param[in] params the SVM parameter used to calculate `q` (e.g., kernel_type)
-     * @param[in] data the data points used in the dimensional reduction
-     * @return the `q` vector (`[[nodiscard]]`)
-     */
-    template <typename real_type>
-    [[nodiscard]] std::vector<real_type> generate_q(const detail::parameter<real_type> &params, const aos_matrix<real_type> &data) const;
-    /**
-     * @brief Explicitly assemble the kernel matrix using the respective kernel function.
-     * @details The template parameter `real_type` represents the type of the data points (either `float` or `double`).
-     * @param[in] params the SVM parameter used to calculate `q` (e.g., kernel_type)
-     * @param[in] data the data points used for the kernel matrix
-     * @param[in] q the `q` vector from the dimensional reduction
-     * @param[in] QA_cost the `QA_cost` value from the dimensional reduction
-     * @return the explicitly assembled kernel matrix (`[[nodiscard]]`)
-     */
-    template <typename real_type>
-    [[nodiscard]] aos_matrix<real_type> assemble_kernel_matrix(const detail::parameter<real_type> &params, const aos_matrix<real_type> &data, const std::vector<real_type> &q, const real_type QA_cost) const;
-    /**
-     * @brief Precalculate the `w` vector to speedup up the prediction using the linear kernel function.
-     * @details The template parameter `real_type` represents the type of the data points (either `float` or `double`).
-     * @param[in] support_vectors the previously learned support vectors
-     * @param[in] alpha the previously learned weights
-     * @return the `w` vector (`[[nodiscard]]`)
-     */
-    template <typename real_type>
-    [[nodiscard]] std::vector<real_type> calculate_w(const std::vector<std::vector<real_type>> &support_vectors, const std::vector<real_type> &alpha) const;
 
-  private:
+    void setup_data_on_devices(const aos_matrix<float> &A) override { this->setup_data_on_devices_impl(A); }
+    void setup_data_on_devices(const aos_matrix<double> &A) override { this->setup_data_on_devices_impl(A); }
+    template <typename real_type>
+    void setup_data_on_devices_impl(const aos_matrix<real_type> &A);
+
+    [[nodiscard]] std::vector<float> generate_q2(const detail::parameter<float> &params, const std::size_t num_rows_reduced, const std::size_t num_features) override { return this->generate_q2_impl(params, num_rows_reduced, num_features); }
+    [[nodiscard]] std::vector<double> generate_q2(const detail::parameter<double> &params, const std::size_t num_rows_reduced, const std::size_t num_features) override { return this->generate_q2_impl(params, num_rows_reduced, num_features); }
+    template <typename real_type>
+    [[nodiscard]] std::vector<real_type> generate_q2_impl(const detail::parameter<real_type> &params, const std::size_t num_rows_reduced, const std::size_t num_features);
+
+    void assemble_kernel_matrix_explicit(const detail::parameter<float> &params, const std::size_t num_rows_reduced, const std::size_t num_features, const std::vector<float> &q_red, float QA_cost) override { this->assemble_kernel_matrix_explicit_impl(params, num_rows_reduced, num_features, q_red, QA_cost); }
+    void assemble_kernel_matrix_explicit(const detail::parameter<double> &params, const std::size_t num_rows_reduced, const std::size_t num_features, const std::vector<double> &q_red, double QA_cost) override { this->assemble_kernel_matrix_explicit_impl(params, num_rows_reduced, num_features, q_red, QA_cost); }
+    template <typename real_type>
+    void assemble_kernel_matrix_explicit_impl(const detail::parameter<real_type> &params, const std::size_t num_rows_reduced, const std::size_t num_features, const std::vector<real_type> &q_red, real_type QA_cost);
+
+    [[nodiscard]] aos_matrix<float> kernel_matrix_matmul_explicit(const aos_matrix<float> &vec) override { return this->kernel_matrix_matmul_explicit_impl(vec); }
+    [[nodiscard]] aos_matrix<double> kernel_matrix_matmul_explicit(const aos_matrix<double> &vec) override { return this->kernel_matrix_matmul_explicit_impl(vec); }
+    template <typename real_type>
+    [[nodiscard]] aos_matrix<real_type> kernel_matrix_matmul_explicit_impl(const aos_matrix<real_type> &vec);
+
+    void clear_data_on_devices(float) override { this->clear_data_on_devices_impl(float{}); }
+    void clear_data_on_devices(double) override { this->clear_data_on_devices_impl(double{}); }
+    template <typename real_type>
+    void clear_data_on_devices_impl(real_type);
+
+    private:
     /**
      * @brief Initializes the OpenMP backend and performs some sanity checks.
      * @param[in] target the target platform to use
@@ -165,6 +149,12 @@ class csvm : public ::plssvm::csvm {
      * @throws plssvm::openmp::backend_exception if the plssvm::target_platform::cpu target isn't available
      */
     void init(target_platform target);
+
+    // the input data set
+    std::variant<const aos_matrix<float>*, const aos_matrix<double>*> A_d_;
+
+    // the explicit kernel matrix
+    std::variant<aos_matrix<float>, aos_matrix<double>> explicit_kernel_matrix_;
 };
 
 }  // namespace openmp

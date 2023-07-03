@@ -132,7 +132,7 @@ class csvm {
      * @return the learned model (`[[nodiscard]]`)
      */
     template <typename real_type, typename label_type, typename... Args>
-    [[nodiscard]] model<real_type, label_type> fit(const data_set<real_type, label_type> &data, Args &&...named_args) const;
+    [[nodiscard]] model<real_type, label_type> fit(const data_set<real_type, label_type> &data, Args &&...named_args);
 
     //*************************************************************************************************************************************//
     //                                                          predict and score                                                          //
@@ -193,11 +193,11 @@ class csvm {
      * @throws plssvm::exception any exception thrown by the backend's implementation
      * @return a pair of [the result vector x, the resulting bias] (`[[nodiscard]]`)
      */
-    [[nodiscard]] virtual std::pair<aos_matrix<float>, std::vector<float>> solve_system_of_linear_equations(const detail::parameter<float> &params, const aos_matrix<float> &A, aos_matrix<float> B, float eps, unsigned long long max_iter) const = 0;
-    /**
-     * @copydoc plssvm::csvm::solve_system_of_linear_equations
-     */
-    [[nodiscard]] virtual std::pair<aos_matrix<double>, std::vector<double>> solve_system_of_linear_equations(const detail::parameter<double> &params, const aos_matrix<double> &A, aos_matrix<double> B, double eps, unsigned long long max_iter) const = 0;
+//    [[nodiscard]] virtual std::pair<aos_matrix<float>, std::vector<float>> solve_system_of_linear_equations(const detail::parameter<float> &params, const aos_matrix<float> &A, aos_matrix<float> B, float eps, unsigned long long max_iter) const = 0;
+//    /**
+//     * @copydoc plssvm::csvm::solve_system_of_linear_equations
+//     */
+//    [[nodiscard]] virtual std::pair<aos_matrix<double>, std::vector<double>> solve_system_of_linear_equations(const detail::parameter<double> &params, const aos_matrix<double> &A, aos_matrix<double> B, double eps, unsigned long long max_iter) const = 0;
     /**
      * @brief Uses the already learned model to predict the class of multiple (new) data points.
      * @details Uses the one vs. all (OAA) for the multi-class classification task.
@@ -215,6 +215,26 @@ class csvm {
      * @copydoc plssvm::csvm::predict_values
      */
     [[nodiscard]] virtual aos_matrix<double> predict_values(const detail::parameter<double> &params, const aos_matrix<double> &support_vectors, const aos_matrix<double> &alpha, const std::vector<double> &rho, aos_matrix<double> &w, const aos_matrix<double> &predict_points) const = 0;
+
+    template <typename real_type>
+    std::pair<aos_matrix<real_type>, std::vector<real_type>> solve_system_of_linear_equations_impl(const aos_matrix<real_type> &A, aos_matrix<real_type> B, const detail::parameter<real_type> &params, real_type eps, unsigned long long max_cg_iter);
+
+
+    virtual void setup_data_on_devices(const aos_matrix<float> &A) = 0;
+    virtual void setup_data_on_devices(const aos_matrix<double> &A) = 0;
+
+    // TODO: rename
+    virtual std::vector<float> generate_q2(const detail::parameter<float> &params, const std::size_t num_rows_reduced, const std::size_t num_features) = 0;
+    virtual std::vector<double> generate_q2(const detail::parameter<double> &params, const std::size_t num_rows_reduced, const std::size_t num_features) = 0;
+
+    virtual void assemble_kernel_matrix_explicit(const detail::parameter<float> &params, const std::size_t num_rows_reduced, const std::size_t num_features, const std::vector<float> &q_red, float QA_cost) = 0;
+    virtual void assemble_kernel_matrix_explicit(const detail::parameter<double> &params, const std::size_t num_rows_reduced, const std::size_t num_features, const std::vector<double> &q_red, double QA_cost) = 0;
+
+    virtual aos_matrix<float> kernel_matrix_matmul_explicit(const aos_matrix<float> &vec) = 0;
+    virtual aos_matrix<double> kernel_matrix_matmul_explicit(const aos_matrix<double> &vec) = 0;
+
+    virtual void clear_data_on_devices(float) = 0;
+    virtual void clear_data_on_devices(double) = 0;
 
     /// The target platform of this SVM.
     target_platform target_{ plssvm::target_platform::automatic };
@@ -270,7 +290,7 @@ void csvm::set_params(Args &&...named_args) {
 }
 
 template <typename real_type, typename label_type, typename... Args>
-model<real_type, label_type> csvm::fit(const data_set<real_type, label_type> &data, Args &&...named_args) const {
+model<real_type, label_type> csvm::fit(const data_set<real_type, label_type> &data, Args &&...named_args) {
     igor::parser parser{ std::forward<Args>(named_args)... };
 
     // set default values
@@ -335,7 +355,7 @@ model<real_type, label_type> csvm::fit(const data_set<real_type, label_type> &da
         // use the one vs. all multi-class classification strategy
         // solve the minimization problem
         aos_matrix<real_type> alpha;
-        std::tie(alpha, *csvm_model.rho_ptr_) = solve_system_of_linear_equations(static_cast<detail::parameter<real_type>>(params), *data.data_ptr_, *data.y_ptr_, epsilon_val.value(), max_iter_val.value());
+        std::tie(alpha, *csvm_model.rho_ptr_) = solve_system_of_linear_equations_impl(*data.data_ptr_, *data.y_ptr_, static_cast<detail::parameter<real_type>>(params), epsilon_val.value(), max_iter_val.value());
         csvm_model.alpha_ptr_->push_back(std::move(alpha));
     } else if (classification_val.value() == plssvm::classification_type::oao) {
         // use the one vs. one multi-class classification strategy
@@ -361,7 +381,7 @@ model<real_type, label_type> csvm::fit(const data_set<real_type, label_type> &da
                         "\nClassifying 0 vs 1 ({} vs {}) (1/1):\n",
                         data.mapping_->get_label_by_mapped_index(0),
                         data.mapping_->get_label_by_mapped_index(1));
-            const auto &[alpha, rho] = solve_system_of_linear_equations(static_cast<detail::parameter<real_type>>(params), *data.data_ptr_, *data.y_ptr_, epsilon_val.value(), max_iter_val.value());
+            const auto &[alpha, rho] = solve_system_of_linear_equations_impl(*data.data_ptr_, *data.y_ptr_, static_cast<detail::parameter<real_type>>(params), epsilon_val.value(), max_iter_val.value());
             csvm_model.alpha_ptr_->front() = std::move(alpha);
             csvm_model.rho_ptr_->front() = rho.front();  // prevents std::tie
         } else {
@@ -400,7 +420,7 @@ model<real_type, label_type> csvm::fit(const data_set<real_type, label_type> &da
                                 data.mapping_->get_label_by_mapped_index(j),
                                 pos + 1,
                                 calculate_number_of_classifiers(classification_type::oao, num_classes));
-                    const auto &[alpha, rho] = solve_system_of_linear_equations(static_cast<detail::parameter<real_type>>(params), binary_data, binary_y, epsilon_val.value(), binary_max_iter);
+                    const auto &[alpha, rho] = solve_system_of_linear_equations_impl(binary_data, binary_y, static_cast<detail::parameter<real_type>>(params), epsilon_val.value(), binary_max_iter);
                     (*csvm_model.alpha_ptr_)[pos] = std::move(alpha);
                     (*csvm_model.rho_ptr_)[pos] = rho.front();  // prevents std::tie
                     // go to next one vs. one classification
@@ -611,7 +631,7 @@ real_type csvm::score(const model<real_type, label_type> &model, const data_set<
     return static_cast<real_type>(correct) / static_cast<real_type>(predicted_labels.size());
 }
 
-inline void csvm::sanity_check_parameter() const {
+void csvm::sanity_check_parameter() const {
     // kernel: valid kernel function
     if (params_.kernel_type != kernel_function_type::linear && params_.kernel_type != kernel_function_type::polynomial && params_.kernel_type != kernel_function_type::rbf) {
         throw invalid_parameter_exception{ fmt::format("Invalid kernel function {} given!", detail::to_underlying(params_.kernel_type)) };
@@ -625,6 +645,245 @@ inline void csvm::sanity_check_parameter() const {
     // coef0: all allowed
     // cost: all allowed
 }
+
+// TODO: move to correct place!
+template <typename real_type>
+std::pair<aos_matrix<real_type>, std::vector<real_type>> csvm::solve_system_of_linear_equations_impl(const aos_matrix<real_type> &A, aos_matrix<real_type> B_in, const detail::parameter<real_type> &params, real_type eps, unsigned long long max_cg_iter) {
+    using namespace plssvm::operators;
+    using clock_type = std::chrono::steady_clock;
+
+//    const std::size_t num_rows = A.num_rows();
+    const std::size_t num_features = A.num_cols();
+    const std::size_t num_rows_reduced = A.num_rows() - 1;
+    const std::size_t num_rhs = B_in.num_rows();
+
+    // setup/allocate necessary data on the device(s)
+    this->setup_data_on_devices(A);
+
+    const clock_type::time_point dimension_reduction_start_time = clock_type::now();
+    // create q_red vector and calculate QA_costs
+    const std::vector<real_type> q_red = this->generate_q2(params, num_rows_reduced, num_features);
+    const clock_type::time_point dimension_reduction_end_time = clock_type::now();
+    detail::log(verbosity_level::full | verbosity_level::timing,
+                "Performed dimensional reduction in {}.\n",
+                detail::tracking_entry{ "cg", "dimensional_reduction", std::chrono::duration_cast<std::chrono::milliseconds>(dimension_reduction_end_time - dimension_reduction_start_time) });
+    const real_type QA_cost = kernel_function(A, num_rows_reduced, A, num_rows_reduced, params) + real_type{ 1.0 } / params.cost;
+
+    // update right-hand sides (B)
+    std::vector<real_type> b_back_value(num_rhs);
+    aos_matrix<real_type> B{ num_rhs, num_rows_reduced };
+    #pragma omp parallel for default(none) shared(B_in, B, b_back_value) firstprivate(num_rhs, num_rows_reduced)
+    for (std::size_t row = 0; row < num_rhs; ++row) {
+        b_back_value[row] = B_in(row, num_rows_reduced);
+        for (std::size_t col = 0; col < num_rows_reduced; ++col) {
+            B(row, col) = B_in(row, col) - b_back_value[row];
+        }
+    }
+
+    // assemble explicit kernel matrix
+    {
+        const clock_type::time_point assembly_start_time = clock_type::now();
+        this->assemble_kernel_matrix_explicit(params, num_rows_reduced, num_features, q_red, QA_cost);
+        const clock_type::time_point assembly_end_time = clock_type::now();
+        detail::log(verbosity_level::full | verbosity_level::timing,
+                    "Assembled the kernel matrix in {}.\n",
+                    detail::tracking_entry{ "cg", "kernel_matrix_assembly", std::chrono::duration_cast<std::chrono::milliseconds>(assembly_end_time - assembly_start_time) });
+    }
+
+    //
+    // perform Conjugate Gradients (CG) algorithm
+    //
+
+    aos_matrix<real_type> X{ num_rhs, num_rows_reduced, real_type{ 1.0 }};
+
+    // R = B - A * X
+    aos_matrix<real_type> R = this->kernel_matrix_matmul_explicit(X);
+    #pragma omp parallel for collapse(2) shared(R, B) firstprivate(num_rhs, num_rows_reduced)
+    for (std::size_t i = 0; i < num_rhs; ++i) {
+        for (std::size_t j = 0; j < num_rows_reduced; ++j) {
+            R(i, j) = B(i, j) - R(i, j);
+        }
+    }
+
+    // delta = R.T * R
+    std::vector<real_type> delta(num_rhs);
+    #pragma omp parallel for default(none) shared(R, delta) firstprivate(num_rhs, num_rows_reduced)
+    for (std::size_t i = 0; i < num_rhs; ++i) {
+        real_type temp{ 0.0 };
+        #pragma omp simd reduction(+ : temp)
+        for (std::size_t j = 0; j < num_rows_reduced; ++j) {
+            temp += R(i, j) * R(i, j);
+        }
+        delta[i] = temp;
+    }
+    const std::vector<real_type> delta0(delta);
+
+    aos_matrix<real_type> D{ R };
+
+
+    // timing for each CG iteration
+    std::chrono::milliseconds average_iteration_time{};
+    std::chrono::steady_clock::time_point iteration_start_time{};
+    const auto output_iteration_duration = [&]() {
+        const auto iteration_end_time = std::chrono::steady_clock::now();
+        const auto iteration_duration = std::chrono::duration_cast<std::chrono::milliseconds>(iteration_end_time - iteration_start_time);
+        detail::log(verbosity_level::full | verbosity_level::timing,
+                    "Done in {}.\n",
+                    iteration_duration);
+        average_iteration_time += iteration_duration;
+    };
+    // get the index of the rhs that has the largest residual difference wrt to its target residual
+    const auto residual_info = [&]() {
+        real_type max_difference{ 0.0 };
+        std::size_t idx{ 0 };
+        for (std::size_t i = 0; i < delta.size(); ++i) {
+            const real_type difference = delta[i] - (eps * eps * delta0[i]);
+            if (difference > max_difference) {
+                idx = i;
+            }
+        }
+        return idx;
+    };
+    // get the number of rhs that have already been converged
+    const auto num_converged = [&]() {
+        std::vector<bool> converged(delta.size(), false);
+        for (std::size_t i = 0; i < delta.size(); ++i) {
+            // check if the rhs converged in the current iteration
+            converged[i] = delta[i] <= eps * eps * delta0[i];
+        }
+        return static_cast<std::size_t>(std::count(converged.cbegin(), converged.cend(), true));
+    };
+
+    unsigned long long iter = 0;
+    for (; iter < max_cg_iter; ++iter) {
+        const std::size_t max_residual_difference_idx = residual_info();
+        detail::log(verbosity_level::full | verbosity_level::timing,
+                    "Start Iteration {} (max: {}) with {}/{} converged rhs (max residual {} with target residual {} for rhs {}). ",
+                    iter + 1,
+                    max_cg_iter,
+                    num_converged(),
+                    num_rhs,
+                    delta[max_residual_difference_idx],
+                    eps * eps * delta0[max_residual_difference_idx],
+                    max_residual_difference_idx);
+        iteration_start_time = std::chrono::steady_clock::now();
+
+        // Q = A * D
+        const aos_matrix<real_type> Q = this->kernel_matrix_matmul_explicit(D);
+
+        // alpha = delta_new / (D^T * Q))
+        std::vector<real_type> alpha(num_rhs);
+        #pragma omp parallel for default(none) shared(D, Q, alpha, delta) firstprivate(num_rhs, num_rows_reduced)
+        for (std::size_t i = 0; i < num_rhs; ++i) {
+            real_type temp{ 0.0 };
+            #pragma omp simd reduction(+ : temp)
+            for (std::size_t dim = 0; dim < num_rows_reduced; ++dim) {
+                temp += D(i, dim) * Q(i, dim);
+            }
+            alpha[i] = delta[i] / temp;
+        }
+
+        // X = X + alpha * D
+        #pragma omp parallel for collapse(2) default(none) shared(X, alpha, D) firstprivate(num_rhs, num_rows_reduced)
+        for (std::size_t i = 0; i < num_rhs; ++i) {
+            for (std::size_t dim = 0; dim < num_rows_reduced; ++dim) {
+                X(i, dim) += alpha[i] * D(i, dim);
+            }
+        }
+
+        if (iter % 50 == 49) {
+            // explicitly recalculate residual to remove accumulating floating point errors
+            // R = B - A * X
+            R = this->kernel_matrix_matmul_explicit(X);
+            #pragma omp parallel for collapse(2) shared(R, B) firstprivate(num_rhs, num_rows_reduced)
+            for (std::size_t i = 0; i < num_rhs; ++i) {
+                for (std::size_t j = 0; j < num_rows_reduced; ++j) {
+                    R(i, j) = B(i, j) - R(i, j);
+                }
+            }
+        } else {
+            // R = R - alpha * Q
+            #pragma omp parallel for collapse(2) default(none) shared(R, alpha, Q) firstprivate(num_rhs, num_rows_reduced)
+            for (std::size_t i = 0; i < num_rhs; ++i) {
+                for (std::size_t dim = 0; dim < num_rows_reduced; ++dim) {
+                    R(i, dim) -= alpha[i] * Q(i, dim);
+                }
+            }
+        }
+
+        // delta = R^T * R
+        const std::vector<real_type> delta_old = delta;
+        #pragma omp parallel for default(none) shared(R, delta) firstprivate(num_rhs, num_rows_reduced)
+        for (std::size_t col = 0; col < num_rhs; ++col) {
+            real_type temp{ 0.0 };
+            #pragma omp simd reduction(+ : temp)
+            for (std::size_t row = 0; row < num_rows_reduced; ++row) {
+                temp += R(col, row) * R(col, row);
+            }
+            delta[col] = temp;
+        }
+
+        // if we are exact enough stop CG iterations, i.e., if every rhs has converged
+        if (num_converged() == num_rhs) {
+            output_iteration_duration();
+            break;
+        }
+
+        // beta = delta_new / delta_old
+        const std::vector<real_type> beta = delta / delta_old;
+        // D = beta * D + R
+        #pragma omp parallel for collapse(2) default(none) shared(D, beta, R) firstprivate(num_rhs, num_rows_reduced)
+        for (std::size_t i = 0; i < num_rhs; ++i) {
+            for (std::size_t dim = 0; dim < num_rows_reduced; ++dim) {
+                D(i, dim) = beta[i] * D(i, dim) + R(i, dim);
+            }
+        }
+
+        output_iteration_duration();
+    }
+    const std::size_t max_residual_difference_idx = residual_info();
+    detail::log(verbosity_level::full | verbosity_level::timing,
+                "Finished after {}/{} iterations with {}/{} converged rhs (max residual {} with target residual {} for rhs {}) and an average iteration time of {}.\n",
+                detail::tracking_entry{ "cg", "iterations", std::min(iter + 1, max_cg_iter) },
+                detail::tracking_entry{ "cg", "max_iterations", max_cg_iter },
+                detail::tracking_entry{ "cg", "num_converged_rhs", num_converged() },
+                detail::tracking_entry{ "cg", "num_rhs", num_rhs },
+                delta[max_residual_difference_idx],
+                eps * eps * delta0[max_residual_difference_idx],
+                max_residual_difference_idx,
+                detail::tracking_entry{ "cg", "avg_iteration_time", average_iteration_time / std::min(iter + 1, max_cg_iter) });
+    PLSSVM_DETAIL_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((detail::tracking_entry{ "cg", "residuals", delta }));
+    PLSSVM_DETAIL_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((detail::tracking_entry{ "cg", "target_residuals", eps * eps * delta0 }));
+    PLSSVM_DETAIL_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((detail::tracking_entry{ "cg", "epsilon", eps }));
+    detail::log(verbosity_level::libsvm,
+                "optimization finished, #iter = {}\n",
+                std::min(iter + 1, max_cg_iter));
+
+
+    // calculate bias
+    aos_matrix<real_type> X_ret{ num_rhs, A.num_rows() };
+    std::vector<real_type> bias(num_rhs);
+    #pragma omp parallel for default(none) shared(X, q_red, X_ret, bias, b_back_value) firstprivate(num_rhs, num_rows_reduced, QA_cost)
+    for (std::size_t i = 0; i < num_rhs; ++i) {
+        real_type temp_sum{ 0.0 };
+        real_type temp_dot{ 0.0 };
+        #pragma omp simd reduction(+ : temp_sum) reduction(+ : temp_dot)
+        for (std::size_t dim = 0; dim < num_rows_reduced; ++dim) {
+            temp_sum += X(i, dim);
+            temp_dot += q_red[dim] * X(i, dim);
+
+            X_ret(i, dim) = X(i, dim);
+        }
+        bias[i] = -(b_back_value[i] + QA_cost * temp_sum - temp_dot);
+        X_ret(i, num_rows_reduced) = -temp_sum;
+    }
+
+    this->clear_data_on_devices(real_type{});
+
+    return std::make_pair(std::move(X_ret), std::move(bias));
+}
+
+
 
 /// @cond Doxygen_suppress
 namespace detail {

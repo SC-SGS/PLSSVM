@@ -110,54 +110,6 @@ std::pair<dim3, dim3> execution_range_to_native(const ::plssvm::detail::executio
     return std::make_pair(grid, block);
 }
 
-template <typename real_type>
-void csvm::run_q_kernel_impl(const std::size_t device, const ::plssvm::detail::execution_range &range, const ::plssvm::detail::parameter<real_type> &params, device_ptr_type<real_type> &q_d, const device_ptr_type<real_type> &data_d, const device_ptr_type<real_type> &data_last_d, const std::size_t num_data_points_padded, const std::size_t num_features) const {
-    const auto [grid, block] = execution_range_to_native(range);
-
-    detail::set_device(static_cast<queue_type>(device));
-    switch (params.kernel_type) {
-        case kernel_function_type::linear:
-            cuda::device_kernel_q_linear<<<grid, block>>>(q_d.get(), data_d.get(), data_last_d.get(), static_cast<kernel_index_type>(num_data_points_padded), static_cast<kernel_index_type>(num_features));
-            break;
-        case kernel_function_type::polynomial:
-            PLSSVM_ASSERT(device == 0, "The polynomial kernel function currently only supports single GPU execution!");
-            cuda::device_kernel_q_polynomial<<<grid, block>>>(q_d.get(), data_d.get(), data_last_d.get(), static_cast<kernel_index_type>(num_data_points_padded), static_cast<kernel_index_type>(num_features), params.degree.value(), params.gamma.value(), params.coef0.value());
-            break;
-        case kernel_function_type::rbf:
-            PLSSVM_ASSERT(device == 0, "The radial basis function kernel function currently only supports single GPU execution!");
-            cuda::device_kernel_q_rbf<<<grid, block>>>(q_d.get(), data_d.get(), data_last_d.get(), static_cast<kernel_index_type>(num_data_points_padded), static_cast<kernel_index_type>(num_features), params.gamma.value());
-            break;
-    }
-    detail::peek_at_last_error();
-}
-
-template void csvm::run_q_kernel_impl(std::size_t, const ::plssvm::detail::execution_range &, const ::plssvm::detail::parameter<float> &, device_ptr_type<float> &, const device_ptr_type<float> &, const device_ptr_type<float> &, std::size_t, std::size_t) const;
-template void csvm::run_q_kernel_impl(std::size_t, const ::plssvm::detail::execution_range &, const ::plssvm::detail::parameter<double> &, device_ptr_type<double> &, const device_ptr_type<double> &, const device_ptr_type<double> &, std::size_t, std::size_t) const;
-
-template <typename real_type>
-void csvm::run_svm_kernel_impl(const std::size_t device, const ::plssvm::detail::execution_range &range, const ::plssvm::detail::parameter<real_type> &params, const device_ptr_type<real_type> &q_d, device_ptr_type<real_type> &r_d, const device_ptr_type<real_type> &x_d, const device_ptr_type<real_type> &data_d, const real_type QA_cost, const real_type add, const std::size_t num_data_points_padded, const std::size_t num_features) const {
-    const auto [grid, block] = execution_range_to_native(range);
-
-    detail::set_device(static_cast<queue_type>(device));
-    switch (params.kernel_type) {
-        case kernel_function_type::linear:
-            cuda::device_kernel_linear<<<grid, block>>>(q_d.get(), r_d.get(), x_d.get(), data_d.get(), QA_cost, 1 / params.cost, static_cast<kernel_index_type>(num_data_points_padded), static_cast<kernel_index_type>(num_features), add, static_cast<kernel_index_type>(device));
-            break;
-        case kernel_function_type::polynomial:
-            PLSSVM_ASSERT(device == 0, "The polynomial kernel function currently only supports single GPU execution!");
-            cuda::device_kernel_polynomial<<<grid, block>>>(q_d.get(), r_d.get(), x_d.get(), data_d.get(), QA_cost, 1 / params.cost, static_cast<kernel_index_type>(num_data_points_padded), static_cast<kernel_index_type>(num_features), add, params.degree.value(), params.gamma.value(), params.coef0.value());
-            break;
-        case kernel_function_type::rbf:
-            PLSSVM_ASSERT(device == 0, "The radial basis function kernel function currently only supports single GPU execution!");
-            cuda::device_kernel_rbf<<<grid, block>>>(q_d.get(), r_d.get(), x_d.get(), data_d.get(), QA_cost, 1 / params.cost, static_cast<kernel_index_type>(num_data_points_padded), static_cast<kernel_index_type>(num_features), add, params.gamma.value());
-            break;
-    }
-    detail::peek_at_last_error();
-}
-
-template void csvm::run_svm_kernel_impl(std::size_t, const ::plssvm::detail::execution_range &, const ::plssvm::detail::parameter<float> &, const device_ptr_type<float> &, device_ptr_type<float> &, const device_ptr_type<float> &, const device_ptr_type<float> &, float, float, std::size_t, std::size_t) const;
-template void csvm::run_svm_kernel_impl(std::size_t, const ::plssvm::detail::execution_range &, const ::plssvm::detail::parameter<double> &, const device_ptr_type<double> &, device_ptr_type<double> &, const device_ptr_type<double> &, const device_ptr_type<double> &, double, double, std::size_t, std::size_t) const;
-
 
 template <typename real_type>
 auto csvm::run_w_kernel_impl(const device_ptr_type<real_type> &alpha_d, const device_ptr_type<real_type> &sv_d, std::size_t num_classes, std::size_t num_sv, std::size_t num_features) const -> device_ptr_type<real_type> {
@@ -216,48 +168,138 @@ auto csvm::run_predict_kernel_impl(const ::plssvm::detail::parameter<real_type> 
 template auto csvm::run_predict_kernel_impl(const ::plssvm::detail::parameter<float> &, const device_ptr_type<float> &, const device_ptr_type<float> &, const device_ptr_type<float> &, const device_ptr_type<float> &, const device_ptr_type<float> &, std::size_t, std::size_t, std::size_t, std::size_t) const -> device_ptr_type<float>;
 template auto csvm::run_predict_kernel_impl(const ::plssvm::detail::parameter<double> &, const device_ptr_type<double> &, const device_ptr_type<double> &, const device_ptr_type<double> &, const device_ptr_type<double> &, const device_ptr_type<double> &, std::size_t, std::size_t, std::size_t, std::size_t) const -> device_ptr_type<double>;
 
-    template <typename real_type>
-auto csvm::assemble_kernel_matrix_impl(const ::plssvm::detail::parameter<real_type> &params, const device_ptr_type<real_type> &data_d, const std::vector<real_type> &q, const real_type QA_cost, const std::size_t dept, const std::size_t num_features) const -> device_ptr_type<real_type> {
+
+
+template <typename real_type>
+void csvm::setup_data_on_devices_impl(const aos_matrix<real_type> &A) {
+    const std::size_t num_rows_reduced = A.num_rows() - 1;
+    const std::size_t num_features = A.num_cols();
+
+    // initialize data_last on device
+    device_ptr_type<real_type> data_last_d{ num_features };
+    data_last_d.copy_to_device(A.data() +  (A.num_rows() - 1) * num_features, 0, num_features);  // pos, count
+    data_last_d_ = std::move(data_last_d);
+
+    device_ptr_type<real_type> data_d{ num_rows_reduced * num_features };
+    data_d.copy_to_device(A.data(), 0, data_d.size());
+    data_d_ = std::move(data_d);
+}
+
+template void csvm::setup_data_on_devices_impl(const aos_matrix<float> &);
+template void csvm::setup_data_on_devices_impl(const aos_matrix<double> &);
+
+template <typename real_type>
+std::vector<real_type> csvm::generate_q2_impl(const ::plssvm::detail::parameter<real_type> &params, const std::size_t num_data_points_reduced, const std::size_t num_features) {
+    const std::size_t device = 0;// TODO: implement
+
+    const device_ptr_type<real_type> &data_d = std::get<device_ptr_type<real_type>>(data_d_);
+    const device_ptr_type<real_type> &data_last_d = std::get<device_ptr_type<real_type>>(data_last_d_);
+
+    const dim3 block(1024);
+    const dim3 grid(static_cast<int>(std::ceil(num_data_points_reduced / static_cast<double>(block.x))));
+
+    detail::set_device(static_cast<queue_type>(device));
+    device_ptr_type<real_type> q_d{ num_data_points_reduced };
+    switch (params.kernel_type) {
+        case kernel_function_type::linear:
+            cuda::device_kernel_q_linear<<<grid, block>>>(q_d.get(), data_d.get(), data_last_d.get(), static_cast<kernel_index_type>(num_data_points_reduced), static_cast<kernel_index_type>(num_features));
+            break;
+        case kernel_function_type::polynomial:
+            PLSSVM_ASSERT(device == 0, "The polynomial kernel function currently only supports single GPU execution!");
+            cuda::device_kernel_q_polynomial<<<grid, block>>>(q_d.get(), data_d.get(), data_last_d.get(), static_cast<kernel_index_type>(num_data_points_reduced), static_cast<kernel_index_type>(num_features), params.degree.value(), params.gamma.value(), params.coef0.value());
+            break;
+        case kernel_function_type::rbf:
+            PLSSVM_ASSERT(device == 0, "The radial basis function kernel function currently only supports single GPU execution!");
+            cuda::device_kernel_q_rbf<<<grid, block>>>(q_d.get(), data_d.get(), data_last_d.get(), static_cast<kernel_index_type>(num_data_points_reduced), static_cast<kernel_index_type>(num_features), params.gamma.value());
+            break;
+    }
+    detail::peek_at_last_error();
+    detail::device_synchronize(device);
+
+    // return host array
+    std::vector<real_type> q(q_d.size());
+    q_d.copy_to_host(q);
+
+    // safe q vector for later use on the device
+    q_d_ = std::move(q_d);
+
+    return q;
+}
+
+template std::vector<float> csvm::generate_q2_impl(const ::plssvm::detail::parameter<float> &, const std::size_t, const std::size_t);
+template std::vector<double> csvm::generate_q2_impl(const ::plssvm::detail::parameter<double> &, const std::size_t, const std::size_t);
+
+template <typename real_type>
+void csvm::assemble_kernel_matrix_explicit_impl(const ::plssvm::detail::parameter<real_type> &params, const std::size_t num_rows_reduced, const std::size_t num_features, [[maybe_unused]] const std::vector<real_type> &q_red, real_type QA_cost) {
     const dim3 block(32, 32);
-    const dim3 grid(static_cast<int>(std::ceil(dept / static_cast<double>(block.x))),
-                    static_cast<int>(std::ceil(dept / static_cast<double>(block.y))));
+    const dim3 grid(static_cast<int>(std::ceil(num_rows_reduced / static_cast<double>(block.x))),
+                    static_cast<int>(std::ceil(num_rows_reduced / static_cast<double>(block.y))));
 
-    device_ptr_type<real_type> q_d{ q.size() };
-    q_d.copy_to_device(q);
+    const device_ptr_type<real_type> &q_d = std::get<device_ptr_type<real_type>>(q_d_);
+    const device_ptr_type<real_type> &data_d = std::get<device_ptr_type<real_type>>(data_d_);
 
-    device_ptr_type<real_type> out_d{ dept * dept };
+    device_ptr_type<real_type> kernel_matrix{ num_rows_reduced * num_rows_reduced };
 
     detail::set_device(0);
     switch (params.kernel_type) {
         case kernel_function_type::linear:
-            cuda::device_kernel_assembly_linear<<<grid, block>>>(q_d.get(), out_d.get(), data_d.get(), QA_cost, real_type{ 1.0 } / params.cost, static_cast<kernel_index_type>(dept), static_cast<kernel_index_type>(num_features));
+            cuda::device_kernel_assembly_linear<<<grid, block>>>(q_d.get(), kernel_matrix.get(), data_d.get(), QA_cost, real_type{ 1.0 } / params.cost, static_cast<kernel_index_type>(num_rows_reduced), static_cast<kernel_index_type>(num_features));
             break;
         case kernel_function_type::polynomial:
-            cuda::device_kernel_assembly_polynomial<<<grid, block>>>(q_d.get(), out_d.get(), data_d.get(), QA_cost, real_type{ 1.0 } / params.cost, static_cast<kernel_index_type>(dept), static_cast<kernel_index_type>(num_features), params.degree.value(), params.gamma.value(), params.coef0.value());
+            cuda::device_kernel_assembly_polynomial<<<grid, block>>>(q_d.get(), kernel_matrix.get(), data_d.get(), QA_cost, real_type{ 1.0 } / params.cost, static_cast<kernel_index_type>(num_rows_reduced), static_cast<kernel_index_type>(num_features), params.degree.value(), params.gamma.value(), params.coef0.value());
             break;
         case kernel_function_type::rbf:
-            cuda::device_kernel_assembly_rbf<<<grid, block>>>(q_d.get(), out_d.get(), data_d.get(), QA_cost, real_type{ 1.0 } / params.cost, static_cast<kernel_index_type>(dept), static_cast<kernel_index_type>(num_features), params.gamma.value());
+            cuda::device_kernel_assembly_rbf<<<grid, block>>>(q_d.get(), kernel_matrix.get(), data_d.get(), QA_cost, real_type{ 1.0 } / params.cost, static_cast<kernel_index_type>(num_rows_reduced), static_cast<kernel_index_type>(num_features), params.gamma.value());
             break;
     }
     detail::peek_at_last_error();
+    detail::device_synchronize(0);
 
-    return out_d;
+    // safe kernel matrix
+    explicit_kernel_matrix_ = std::move(kernel_matrix);
 }
 
-template auto csvm::assemble_kernel_matrix_impl(const ::plssvm::detail::parameter<float> &, const device_ptr_type<float> &, const std::vector<float> &, const float, const std::size_t, const std::size_t) const -> device_ptr_type<float>;
-template auto csvm::assemble_kernel_matrix_impl(const ::plssvm::detail::parameter<double> &, const device_ptr_type<double> &, const std::vector<double> &, const double, const std::size_t, const std::size_t) const -> device_ptr_type<double>;
+template void csvm::assemble_kernel_matrix_explicit_impl(const ::plssvm::detail::parameter<float> &, const std::size_t, const std::size_t, const std::vector<float> &, float);
+template void csvm::assemble_kernel_matrix_explicit_impl(const ::plssvm::detail::parameter<double> &, const std::size_t, const std::size_t, const std::vector<double> &, double);
 
 template <typename real_type>
-void csvm::blas_gemm_impl(const std::size_t m, const std::size_t n, const std::size_t k, const real_type alpha, const device_ptr_type<real_type> &A, const device_ptr_type<real_type> &B, const real_type beta, device_ptr_type<real_type> &C) const {
-    const dim3 block(32, 32);
-    const dim3 grid(static_cast<int>(std::ceil(m / static_cast<double>(block.x))),
-                    static_cast<int>(std::ceil(n / static_cast<double>(block.y))));
+aos_matrix<real_type> csvm::kernel_matrix_matmul_explicit_impl(const aos_matrix<real_type> &vec) {
+    const std::size_t num_rhs = vec.num_rows();
+    const std::size_t num_rows = vec.num_cols();
 
-    cuda::device_kernel_gemm<<<grid, block>>>(m, n, k, alpha, A.get(), B.get(), beta, C.get());
+    const device_ptr_type<real_type> &kernel_matrix = std::get<device_ptr_type<real_type>>(explicit_kernel_matrix_);
+    device_ptr_type<real_type> vec_d{ vec.num_entries() };
+    vec_d.copy_to_device(vec.data());
+
+    device_ptr_type<real_type> ret_d{ vec.num_entries() };
+
+    const dim3 block(32, 32);
+    const dim3 grid(static_cast<int>(std::ceil(num_rows / static_cast<double>(block.x))),
+                    static_cast<int>(std::ceil(num_rhs / static_cast<double>(block.y))));
+
+    detail::set_device(0);
+    cuda::device_kernel_gemm<<<grid, block>>>(num_rows, num_rhs, num_rows, real_type{ 1.0 }, kernel_matrix.get(), vec_d.get(), real_type{ 0.0 }, ret_d.get());  // TODO: easier
     detail::peek_at_last_error();
+    detail::device_synchronize(0);
+
+    aos_matrix<real_type> ret{ vec.num_rows(), vec.num_cols() };
+    ret_d.copy_to_host(ret.data());
+    return ret;
 }
 
-template void csvm::blas_gemm_impl(const std::size_t, const std::size_t, const std::size_t, float, const device_ptr_type<float> &, const device_ptr_type<float> &, float, device_ptr_type<float> &) const;
-template void csvm::blas_gemm_impl(const std::size_t, const std::size_t, const std::size_t, double, const device_ptr_type<double> &, const device_ptr_type<double> &, double, device_ptr_type<double> &) const;
+template aos_matrix<float> csvm::kernel_matrix_matmul_explicit_impl(const aos_matrix<float> &);
+template aos_matrix<double> csvm::kernel_matrix_matmul_explicit_impl(const aos_matrix<double> &);
+
+template <typename real_type>
+void csvm::clear_data_on_devices_impl(real_type) {
+    // clear device vectors!
+    std::get<device_ptr_type<real_type>>(data_d_) = device_ptr_type<real_type>{};
+    std::get<device_ptr_type<real_type>>(data_last_d_) = device_ptr_type<real_type>{};
+    std::get<device_ptr_type<real_type>>(q_d_) = device_ptr_type<real_type>{};
+    std::get<device_ptr_type<real_type>>(explicit_kernel_matrix_) = device_ptr_type<real_type>{};
+}
+
+template void csvm::clear_data_on_devices_impl(float);
+template void csvm::clear_data_on_devices_impl(double);
 
 }  // namespace plssvm::cuda
