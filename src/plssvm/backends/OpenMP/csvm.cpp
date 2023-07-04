@@ -152,28 +152,6 @@ template detail::simple_any csvm::setup_data_on_devices_impl(const aos_matrix<fl
 template detail::simple_any csvm::setup_data_on_devices_impl(const aos_matrix<double> &);
 
 template <typename real_type>
-std::vector<real_type> csvm::generate_q_impl(const detail::parameter<real_type> &params, const detail::simple_any &data, const std::size_t num_rows_reduced, const std::size_t) {
-    const aos_matrix<real_type> *data_ptr = data.get<const aos_matrix<real_type>*>();
-
-    std::vector<real_type> q(num_rows_reduced);
-    switch (params.kernel_type) {
-        case kernel_function_type::linear:
-            device_kernel_q_linear(q, *data_ptr);
-            break;
-        case kernel_function_type::polynomial:
-            device_kernel_q_polynomial(q, *data_ptr, params.degree.value(), params.gamma.value(), params.coef0.value());
-            break;
-        case kernel_function_type::rbf:
-            device_kernel_q_rbf(q, *data_ptr, params.gamma.value());
-            break;
-    }
-    return q;
-}
-
-template std::vector<float> csvm::generate_q_impl(const detail::parameter<float> &, const detail::simple_any &, const std::size_t, const std::size_t);
-template std::vector<double> csvm::generate_q_impl(const detail::parameter<double> &, const detail::simple_any &, const std::size_t, const std::size_t);
-
-template <typename real_type>
 detail::simple_any csvm::assemble_kernel_matrix_explicit_impl(const detail::parameter<real_type> &params, const detail::simple_any &data, const std::size_t num_rows_reduced, const std::size_t, const std::vector<real_type> &q_red, real_type QA_cost) {
     const aos_matrix<real_type> *data_ptr = data.get<const aos_matrix<real_type> *>();
 

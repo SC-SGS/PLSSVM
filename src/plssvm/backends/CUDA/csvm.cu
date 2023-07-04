@@ -185,42 +185,6 @@ template ::plssvm::detail::simple_any csvm::setup_data_on_devices_impl(const aos
 template ::plssvm::detail::simple_any csvm::setup_data_on_devices_impl(const aos_matrix<double> &);
 
 template <typename real_type>
-std::vector<real_type> csvm::generate_q_impl(const ::plssvm::detail::parameter<real_type> &params, const ::plssvm::detail::simple_any &data, const std::size_t num_data_points_reduced, const std::size_t num_features) {
-    const std::size_t device = 0;// TODO: implement
-
-    const device_ptr_type<real_type> &data_d = data.get<device_ptr_type<real_type>>();
-
-    const dim3 block(1024);
-    const dim3 grid(static_cast<int>(std::ceil(num_data_points_reduced / static_cast<double>(block.x))));
-
-    detail::set_device(static_cast<queue_type>(device));
-    device_ptr_type<real_type> q_d{ num_data_points_reduced };
-    switch (params.kernel_type) {
-        case kernel_function_type::linear:
-            cuda::device_kernel_q_linear<<<grid, block>>>(q_d.get(), data_d.get(), static_cast<kernel_index_type>(num_data_points_reduced), static_cast<kernel_index_type>(num_features));
-            break;
-        case kernel_function_type::polynomial:
-            PLSSVM_ASSERT(device == 0, "The polynomial kernel function currently only supports single GPU execution!");
-            cuda::device_kernel_q_polynomial<<<grid, block>>>(q_d.get(), data_d.get(), static_cast<kernel_index_type>(num_data_points_reduced), static_cast<kernel_index_type>(num_features), params.degree.value(), params.gamma.value(), params.coef0.value());
-            break;
-        case kernel_function_type::rbf:
-            PLSSVM_ASSERT(device == 0, "The radial basis function kernel function currently only supports single GPU execution!");
-            cuda::device_kernel_q_rbf<<<grid, block>>>(q_d.get(), data_d.get(), static_cast<kernel_index_type>(num_data_points_reduced), static_cast<kernel_index_type>(num_features), params.gamma.value());
-            break;
-    }
-    detail::peek_at_last_error();
-    detail::device_synchronize(device);
-
-    // return host array
-    std::vector<real_type> q(q_d.size());
-    q_d.copy_to_host(q);
-    return q;
-}
-
-template std::vector<float> csvm::generate_q_impl(const ::plssvm::detail::parameter<float> &, const ::plssvm::detail::simple_any &, const std::size_t, const std::size_t);
-template std::vector<double> csvm::generate_q_impl(const ::plssvm::detail::parameter<double> &, const ::plssvm::detail::simple_any &, const std::size_t, const std::size_t);
-
-template <typename real_type>
 ::plssvm::detail::simple_any csvm::assemble_kernel_matrix_explicit_impl(const ::plssvm::detail::parameter<real_type> &params, const ::plssvm::detail::simple_any &data, const std::size_t num_rows_reduced, const std::size_t num_features, const std::vector<real_type> &q_red, real_type QA_cost) {
     const dim3 block(32, 32);
     const dim3 grid(static_cast<int>(std::ceil(num_rows_reduced / static_cast<double>(block.x))),

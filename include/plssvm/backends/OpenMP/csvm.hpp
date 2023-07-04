@@ -123,11 +123,6 @@ class csvm : public ::plssvm::csvm {
     template <typename real_type>
     detail::simple_any  setup_data_on_devices_impl(const aos_matrix<real_type> &A);
 
-    [[nodiscard]] std::vector<float> generate_q(const detail::parameter<float> &params, const detail::simple_any &data, const std::size_t num_rows_reduced, const std::size_t num_features) override { return this->generate_q_impl(params, data, num_rows_reduced, num_features); }
-    [[nodiscard]] std::vector<double> generate_q(const detail::parameter<double> &params, const detail::simple_any &data, const std::size_t num_rows_reduced, const std::size_t num_features) override { return this->generate_q_impl(params, data, num_rows_reduced, num_features); }
-    template <typename real_type>
-    [[nodiscard]] std::vector<real_type> generate_q_impl(const detail::parameter<real_type> &params, const detail::simple_any &data, const std::size_t num_rows_reduced, const std::size_t num_features);
-
     detail::simple_any assemble_kernel_matrix_explicit(const detail::parameter<float> &params, const detail::simple_any &data, const std::size_t num_rows_reduced, const std::size_t num_features, const std::vector<float> &q_red, float QA_cost) override { return this->assemble_kernel_matrix_explicit_impl(params, data, num_rows_reduced, num_features, q_red, QA_cost); }
     detail::simple_any assemble_kernel_matrix_explicit(const detail::parameter<double> &params, const detail::simple_any &data, const std::size_t num_rows_reduced, const std::size_t num_features, const std::vector<double> &q_red, double QA_cost) override { return this->assemble_kernel_matrix_explicit_impl(params, data, num_rows_reduced, num_features, q_red, QA_cost); }
     template <typename real_type>

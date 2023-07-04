@@ -203,14 +203,11 @@ class csvm {
 
     template <typename real_type>
     std::pair<aos_matrix<real_type>, std::vector<real_type>> solve_system_of_linear_equations_impl(const aos_matrix<real_type> &A, aos_matrix<real_type> B, const detail::parameter<real_type> &params, real_type eps, unsigned long long max_cg_iter);
-
+    template <typename real_type>
+    std::pair<std::vector<real_type>, real_type> perform_dimensional_reduction(const detail::parameter<real_type> &params, const aos_matrix<real_type> &A) const;
 
     virtual detail::simple_any setup_data_on_devices(const aos_matrix<float> &A) = 0;
     virtual detail::simple_any setup_data_on_devices(const aos_matrix<double> &A) = 0;
-
-    // TODO: rename
-    virtual std::vector<float> generate_q(const detail::parameter<float> &params, const ::plssvm::detail::simple_any &data, const std::size_t num_rows_reduced, const std::size_t num_features) = 0;
-    virtual std::vector<double> generate_q(const detail::parameter<double> &params, const ::plssvm::detail::simple_any &data, const std::size_t num_rows_reduced, const std::size_t num_features) = 0;
 
     virtual detail::simple_any assemble_kernel_matrix_explicit(const detail::parameter<float> &params, const ::plssvm::detail::simple_any &data, const std::size_t num_rows_reduced, const std::size_t num_features, const std::vector<float> &q_red, float QA_cost) = 0;
     virtual detail::simple_any assemble_kernel_matrix_explicit(const detail::parameter<double> &params, const ::plssvm::detail::simple_any &data, const std::size_t num_rows_reduced, const std::size_t num_features, const std::vector<double> &q_red, double QA_cost) = 0;
@@ -640,17 +637,11 @@ std::pair<aos_matrix<real_type>, std::vector<real_type>> csvm::solve_system_of_l
     const std::size_t num_rows_reduced = A.num_rows() - 1;
     const std::size_t num_rhs = B_in.num_rows();
 
+    // perform dimensional reduction
+    const auto [q_red, QA_cost] = this->perform_dimensional_reduction(params, A);
+
     // setup/allocate necessary data on the device(s)
     const detail::simple_any data = this->setup_data_on_devices(A);
-
-    const clock_type::time_point dimension_reduction_start_time = clock_type::now();
-    // create q_red vector and calculate QA_costs
-    const std::vector<real_type> q_red = this->generate_q(params, data, num_rows_reduced, num_features);
-    const clock_type::time_point dimension_reduction_end_time = clock_type::now();
-    detail::log(verbosity_level::full | verbosity_level::timing,
-                "Performed dimensional reduction in {}.\n",
-                detail::tracking_entry{ "cg", "dimensional_reduction", std::chrono::duration_cast<std::chrono::milliseconds>(dimension_reduction_end_time - dimension_reduction_start_time) });
-    const real_type QA_cost = kernel_function(A, num_rows_reduced, A, num_rows_reduced, params) + real_type{ 1.0 } / params.cost;
 
     // update right-hand sides (B)
     std::vector<real_type> b_back_value(num_rhs);
@@ -863,6 +854,42 @@ std::pair<aos_matrix<real_type>, std::vector<real_type>> csvm::solve_system_of_l
     return std::make_pair(std::move(X_ret), std::move(bias));
 }
 
+template <typename real_type>
+std::pair<std::vector<real_type>, real_type> csvm::perform_dimensional_reduction(const detail::parameter<real_type> &params, const aos_matrix<real_type> &A) const {
+    const std::chrono::steady_clock::time_point dimension_reduction_start_time = std::chrono::steady_clock::now();
+
+    const std::size_t num_rows_reduced = A.num_rows() - 1;
+
+    // create q_red vector and calculate QA_costs
+    std::vector<real_type> q_red(num_rows_reduced);
+    switch (params.kernel_type) {
+        case kernel_function_type::linear:
+            #pragma omp parallel for default(none) shared(q_red, A) firstprivate(num_rows_reduced)
+            for (std::size_t i = 0; i < num_rows_reduced; ++i) {
+                q_red[i] = kernel_function<kernel_function_type::linear>(A, i, A, num_rows_reduced);
+            }
+            break;
+        case kernel_function_type::polynomial:
+            #pragma omp parallel for default(none) shared(q_red, A, params) firstprivate(num_rows_reduced)
+            for (std::size_t i = 0; i < num_rows_reduced; ++i) {
+                q_red[i] = kernel_function<kernel_function_type::polynomial>(A, i, A, num_rows_reduced, params.degree.value(), params.gamma.value(), params.coef0.value());
+            }
+            break;
+        case kernel_function_type::rbf:
+            #pragma omp parallel for default(none) shared(q_red, A, params) firstprivate(num_rows_reduced)
+            for (std::size_t i = 0; i < num_rows_reduced; ++i) {
+                q_red[i] = kernel_function<kernel_function_type::rbf>(A, i, A, num_rows_reduced, params.gamma.value());
+            }
+            break;
+    }
+    const real_type QA_cost = kernel_function(A, num_rows_reduced, A, num_rows_reduced, params) + real_type{ 1.0 } / params.cost;
+    const std::chrono::steady_clock::time_point dimension_reduction_end_time = std::chrono::steady_clock::now();
+    detail::log(verbosity_level::full | verbosity_level::timing,
+                "Performed dimensional reduction in {}.\n",
+                detail::tracking_entry{ "cg", "dimensional_reduction", std::chrono::duration_cast<std::chrono::milliseconds>(dimension_reduction_end_time - dimension_reduction_start_time) });
+
+    return std::make_pair(std::move(q_red), QA_cost);
+}
 
 
 /// @cond Doxygen_suppress

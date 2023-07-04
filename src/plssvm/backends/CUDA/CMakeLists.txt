@@ -66,7 +66,6 @@ set(PLSSVM_CUDA_SOURCES
         ${CMAKE_CURRENT_LIST_DIR}/exceptions.cpp
         ${CMAKE_CURRENT_LIST_DIR}/kernel_matrix_assembly.cu
         ${CMAKE_CURRENT_LIST_DIR}/predict_kernel.cu
-        ${CMAKE_CURRENT_LIST_DIR}/q_kernel.cu
         ${CMAKE_CURRENT_LIST_DIR}/svm_kernel.cu
         ${CMAKE_CURRENT_LIST_DIR}/../gpu_device_ptr.cpp
         )
