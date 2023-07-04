@@ -46,11 +46,13 @@ int main(int argc, char *argv[]) {
             const plssvm::model<real_type, label_type> model =
                 cmd_parser.max_iter.is_default() ? svm->fit(data,
                                                             plssvm::epsilon = cmd_parser.epsilon,
-                                                            plssvm::classification = cmd_parser.classification)
+                                                            plssvm::classification = cmd_parser.classification,
+                                                            plssvm::solver = cmd_parser.solver)
                                                  : svm->fit(data,
                                                             plssvm::epsilon = cmd_parser.epsilon,
                                                             plssvm::max_iter = cmd_parser.max_iter,
-                                                            plssvm::classification = cmd_parser.classification);
+                                                            plssvm::classification = cmd_parser.classification,
+                                                            plssvm::solver = cmd_parser.solver);
             // save model to file
             model.save(cmd_parser.model_filename);
         }, plssvm::detail::cmd::data_set_factory(cmd_parser));

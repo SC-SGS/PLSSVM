@@ -19,6 +19,7 @@
 #include "plssvm/detail/logger.hpp"               // plssvm::detail::log, plssvm::verbosity_level
 #include "plssvm/detail/operators.hpp"            // plssvm::operators::sign
 #include "plssvm/detail/performance_tracker.hpp"  // plssvm::detail::performance_tracker
+#include "plssvm/detail/simple_any.hpp"           // plssvm::detail::simple_any
 #include "plssvm/detail/type_traits.hpp"          // PLSSVM_REQUIRES, plssvm::detail::remove_cvref_t
 #include "plssvm/detail/utility.hpp"              // plssvm::detail::to_underlying
 #include "plssvm/exceptions/exceptions.hpp"       // plssvm::invalid_parameter_exception
@@ -26,9 +27,8 @@
 #include "plssvm/matrix.hpp"                      // plssvm::aos_matrix
 #include "plssvm/model.hpp"                       // plssvm::model
 #include "plssvm/parameter.hpp"                   // plssvm::parameter, plssvm::detail::{get_value_from_named_parameter, has_only_parameter_named_args_v}
+#include "plssvm/solver_types.hpp"                // plssvm::solver_type
 #include "plssvm/target_platforms.hpp"            // plssvm::target_platform
-
-#include "plssvm/detail/simple_any.hpp"           // plssvm::detail::simple_any
 
 #include "fmt/core.h"                             // fmt::format
 #include "igor/igor.hpp"                          // igor::parser
@@ -234,17 +234,18 @@ class csvm {
     template <typename real_type, typename... Args>
     [[nodiscard]] std::pair<aos_matrix<real_type>, std::vector<real_type>> solve_system_of_linear_equations(const aos_matrix<real_type> &A, const aos_matrix<real_type> &B, const detail::parameter<real_type> &params, Args&&... named_args);
     /**
-     * @brief Solve the system of linear equations `K * X = B` where `K` is the kernel matrix assembled from @p A using the @p params with potentially multiple right-hand sides using the conjugate gradients algorithm.
+     * @brief Solve the system of linear equations `K * X = B` where `K` is the kernel matrix assembled from @p A using the @p params with potentially multiple right-hand sides using the Conjugate Gradients (CG) algorithm.
      * @tparam real_type the floating point type of the data
      * @param[in] A the data used to create the kernel matrix
      * @param[in] B the right-hand sides
      * @param[in] params the parameter to create the kernel matrix
      * @param[in] eps the termination criterion for the CG algorithm
      * @param[in] max_cg_iter the maximum number of CG iterations
+     * @param[in] cd_solver_variant the variation of the CG algorithm to use, i.e., how the kernel matrix is assembled (currently: explicit, streaming, implicit)
      * @return the result matrix `X` and the respective biases (`[[nodiscard]]`)
      */
     template <typename real_type>
-    [[nodiscard]] std::pair<aos_matrix<real_type>, std::vector<real_type>> conjugate_gradients(const aos_matrix<real_type> &A, const aos_matrix<real_type> &B, const detail::parameter<real_type> &params, real_type eps, unsigned long long max_cg_iter);
+    [[nodiscard]] std::pair<aos_matrix<real_type>, std::vector<real_type>> conjugate_gradients(const aos_matrix<real_type> &A, const aos_matrix<real_type> &B, const detail::parameter<real_type> &params, real_type eps, unsigned long long max_cg_iter, solver_type cd_solver_variant);
     /**
      * @brief Perform a dimensional reduction for the kernel matrix.
      * @details Reduces the resulting dimension by `2` compared to the original LS-SVM formulation.
@@ -309,19 +310,19 @@ model<real_type, label_type> csvm::fit(const data_set<real_type, label_type> &da
     igor::parser parser{ named_args... };
 
     // set default values
-    default_value classification_val{ default_init<classification_type>{ classification_type::oaa } };
+    classification_type used_classification{ classification_type::oaa };
 
     // compile time check: only named parameters are permitted
     static_assert(!parser.has_unnamed_arguments(), "Can only use named parameter!");
     // compile time check: each named parameter must only be passed once
     static_assert(!parser.has_duplicates(), "Can only use each named parameter once!");
     // compile time check: only some named parameters are allowed
-    static_assert(!parser.has_other_than(epsilon, max_iter, classification), "An illegal named parameter has been passed!");
+    static_assert(!parser.has_other_than(epsilon, max_iter, classification, solver), "An illegal named parameter has been passed!");
 
     // compile time/runtime check: the values must have the correct types
     if constexpr (parser.has(classification)) {
         // get the value of the provided named parameter
-        classification_val = detail::get_value_from_named_parameter<typename decltype(classification_val)::value_type>(parser, classification);
+        used_classification = detail::get_value_from_named_parameter<classification_type>(parser, classification);
     }
 
     // start fitting the data set using a C-SVM
@@ -329,8 +330,8 @@ model<real_type, label_type> csvm::fit(const data_set<real_type, label_type> &da
 
     detail::log(verbosity_level::full | verbosity_level::timing,
                 "Using {} ({}) as multi-class classification strategy.\n",
-                classification_val.value(),
-                classification_type_to_full_string(classification_val.value()));
+                used_classification,
+                classification_type_to_full_string(used_classification));
 
     // copy parameter and set gamma if necessary
     parameter params{ params_ };
@@ -340,16 +341,16 @@ model<real_type, label_type> csvm::fit(const data_set<real_type, label_type> &da
     }
 
     // create model
-    model<real_type, label_type> csvm_model{ params, data, classification_val.value() };
+    model<real_type, label_type> csvm_model{ params, data, used_classification };
 
 
-    if (classification_val.value() == plssvm::classification_type::oaa) {
+    if (used_classification == plssvm::classification_type::oaa) {
         // use the one vs. all multi-class classification strategy
         // solve the minimization problem
         aos_matrix<real_type> alpha;
         std::tie(alpha, *csvm_model.rho_ptr_) = solve_system_of_linear_equations(*data.data_ptr_, *data.y_ptr_, static_cast<detail::parameter<real_type>>(params), std::forward<Args>(named_args)...);
         csvm_model.alpha_ptr_->push_back(std::move(alpha));
-    } else if (classification_val.value() == plssvm::classification_type::oao) {
+    } else if (used_classification == plssvm::classification_type::oao) {
         // use the one vs. one multi-class classification strategy
         const std::size_t num_classes = data.num_classes();
         const std::size_t num_binary_classifications = calculate_number_of_classifiers(classification_type::oao, num_classes);
@@ -426,7 +427,7 @@ model<real_type, label_type> csvm::fit(const data_set<real_type, label_type> &da
     const std::chrono::time_point end_time = std::chrono::steady_clock::now();
     detail::log(verbosity_level::full | verbosity_level::timing,
                 "\nLearned the SVM classifier for {} multi-class classification in {}.\n\n",
-                classification_type_to_full_string(classification_val.value()),
+                classification_type_to_full_string(used_classification),
                 detail::tracking_entry{ "cg", "total_runtime", std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time) });
 
     return csvm_model;
@@ -645,39 +646,59 @@ std::pair<aos_matrix<real_type>, std::vector<real_type>> csvm::solve_system_of_l
     igor::parser parser{ std::forward<Args>(named_args)... };
 
     // set default values
-    default_value epsilon_val{ default_init<real_type>{ 0.001 } };
-    default_value max_iter_val{ default_init<unsigned long long>{ A.num_rows() } };
+    real_type used_epsilon{ 0.001 };
+    unsigned long long used_max_iter{ A.num_rows() };
+    solver_type used_solver{ solver_type::automatic };
 
     // compile time check: only named parameters are permitted
     static_assert(!parser.has_unnamed_arguments(), "Can only use named parameter!");
     // compile time check: each named parameter must only be passed once
     static_assert(!parser.has_duplicates(), "Can only use each named parameter once!");
     // compile time check: only some named parameters are allowed
-    static_assert(!parser.has_other_than(epsilon, max_iter, classification), "An illegal named parameter has been passed!");
+    static_assert(!parser.has_other_than(epsilon, max_iter, classification, solver), "An illegal named parameter has been passed!");
 
     // compile time/runtime check: the values must have the correct types
     if constexpr (parser.has(epsilon)) {
         // get the value of the provided named parameter
-        epsilon_val = detail::get_value_from_named_parameter<typename decltype(epsilon_val)::value_type>(parser, epsilon);
+        used_epsilon = detail::get_value_from_named_parameter<real_type>(parser, epsilon);
         // check if value makes sense
-        if (epsilon_val <= static_cast<typename decltype(epsilon_val)::value_type>(0)) {
-            throw invalid_parameter_exception{ fmt::format("epsilon must be less than 0.0, but is {}!", epsilon_val) };
+        if (used_epsilon <= real_type{ 0.0 }) {
+            throw invalid_parameter_exception{ fmt::format("epsilon must be less than 0.0, but is {}!", used_epsilon) };
         }
     }
     if constexpr (parser.has(max_iter)) {
         // get the value of the provided named parameter
-        max_iter_val = detail::get_value_from_named_parameter<typename decltype(max_iter_val)::value_type>(parser, max_iter);
+        used_max_iter = detail::get_value_from_named_parameter<unsigned long long>(parser, max_iter);
         // check if value makes sense
-        if (max_iter_val == static_cast<typename decltype(max_iter_val)::value_type>(0)) {
-            throw invalid_parameter_exception{ fmt::format("max_iter must be greater than 0, but is {}!", max_iter_val) };
+        if (used_max_iter == 0) {
+            throw invalid_parameter_exception{ fmt::format("max_iter must be greater than 0, but is {}!", used_max_iter) };
         }
     }
+    if constexpr (parser.has(solver)) {
+        // get the value of the provided parameter
+        used_solver = detail::get_value_from_named_parameter<solver_type>(parser, solver);
+    }
 
-    return conjugate_gradients(A, B, params, epsilon_val.value(), max_iter_val.value());
+    detail::log(verbosity_level::full | verbosity_level::timing,
+                "Using {} as solver for AX=B.\n",
+                used_solver);
+
+    // choose the correct algorithm based on the (provided) solver type
+    switch (used_solver) {
+        case solver_type::automatic:
+            // TODO: decide which solver to use
+            return conjugate_gradients(A, B, params, used_epsilon, used_max_iter, solver_type::cg_explicit);
+        case solver_type::cg_explicit:
+            return conjugate_gradients(A, B, params, used_epsilon, used_max_iter, used_solver);
+        case solver_type::cg_streaming:
+        case solver_type::cg_implicit:
+            throw exception{ fmt::format("The CG variation {} is currently not implemented!", used_solver) };
+    }
+    throw invalid_parameter_exception{ "The provided solver type is not recognized!" };
 }
 
 template <typename real_type>
-std::pair<aos_matrix<real_type>, std::vector<real_type>> csvm::conjugate_gradients(const aos_matrix<real_type> &A, const aos_matrix<real_type> &B, const detail::parameter<real_type> &params, real_type eps, unsigned long long max_cg_iter) {
+std::pair<aos_matrix<real_type>, std::vector<real_type>> csvm::conjugate_gradients(const aos_matrix<real_type> &A, const aos_matrix<real_type> &B, const detail::parameter<real_type> &params, const real_type eps, const unsigned long long max_cg_iter, const solver_type) {
     using namespace plssvm::operators;
     using clock_type = std::chrono::steady_clock;
 
