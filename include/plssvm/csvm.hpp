@@ -215,12 +215,12 @@ class csvm {
     /**
      * @brief Explicitly assemble the kernel matrix. Backend specific!
      * @param[in] params the parameters used to assemble the kernel matrix (e.g., the used kernel function
-     * @param[in] data the data used to assemble the kernel matrix
+     * @param[in] data the data used to assemble the kernel matrix; fully stored on the device
      * @param[in] num_rows_reduced the number of rows (and columns) in the kernel matrix; pay attention to the dimension reduction
      * @param[in] num_features the number of features in the data
      * @param[in] q_red the vector used in the dimensional reduction
      * @param[in] QA_cost the value used in the dimensional reduction
-     * @return the kernel matrix (`[[nodiscard]]`)
+     * @return the kernel matrix; fully stored on the device (`[[nodiscard]]`)
      */
     [[nodiscard]] virtual detail::simple_any assemble_kernel_matrix_explicit(const detail::parameter<float> &params, const ::plssvm::detail::simple_any &data, const std::size_t num_rows_reduced, const std::size_t num_features, const std::vector<float> &q_red, float QA_cost) = 0;
     /**
@@ -229,16 +229,18 @@ class csvm {
     [[nodiscard]] virtual detail::simple_any assemble_kernel_matrix_explicit(const detail::parameter<double> &params, const ::plssvm::detail::simple_any &data, const std::size_t num_rows_reduced, const std::size_t num_features, const std::vector<double> &q_red, double QA_cost) = 0;
 
     /**
-     * @brief Perform a matrix-matrix multiplication using the @p explicit_kernel_matrix with @p other.
-     * @param[in] explicit_kernel_matrix the explicit kernel matrix for the matrix multiplication
-     * @param[in] other the other matrix to multiply the kernel matrix with
-     * @return the result matrix (`[[nodiscard]]`)
+     * @brief Perform a BLAS like GEMM matrix-matrix multiplication: `C = alpha * A * B + beta * C`.
+     * @param[in] alpha the value to scale the result of the matrix-matrix multiplication
+     * @param[in] A the explicit kernel matrix for the matrix multiplication; fully stored on the device
+     * @param[in] B the other matrix to multiply the kernel matrix with
+     * @param[in] beta the value to scale the matrix o add with
+     * @param[in,out] C the result matrix and the matrix to add (inplace)
      */
-    [[nodiscard]] virtual aos_matrix<float> kernel_matrix_matmul_explicit(const detail::simple_any &explicit_kernel_matrix, const aos_matrix<float> &other) = 0;
+    virtual void kernel_gemm_explicit(float alpha, const detail::simple_any &A, const aos_matrix<float> &B, float beta, aos_matrix<float> &C) = 0;
     /**
      * @copydoc plssvm::csvm::kernel_matrix_matmul_explicit
      */
-    [[nodiscard]] virtual aos_matrix<double> kernel_matrix_matmul_explicit(const detail::simple_any &explicit_kernel_matrix, const aos_matrix<double> &other) = 0;
+    virtual void kernel_gemm_explicit(double alpha, const detail::simple_any &A, const aos_matrix<double> &B, double beta, aos_matrix<double> &C) = 0;
 
 
     /// The target platform of this SVM.
@@ -770,13 +772,8 @@ std::pair<aos_matrix<real_type>, std::vector<real_type>> csvm::conjugate_gradien
     aos_matrix<real_type> X{ num_rhs, num_rows_reduced, real_type{ 1.0 }};
 
     // R = B - A * X
-    aos_matrix<real_type> R = this->kernel_matrix_matmul_explicit(kernel_matrix, X);
-    #pragma omp parallel for collapse(2) shared(R, B) firstprivate(num_rhs, num_rows_reduced)
-    for (std::size_t i = 0; i < num_rhs; ++i) {
-        for (std::size_t j = 0; j < num_rows_reduced; ++j) {
-            R(i, j) = B_red(i, j) - R(i, j);
-        }
-    }
+    aos_matrix<real_type> R{ B_red };
+    this->kernel_gemm_explicit(real_type{ -1.0 }, kernel_matrix, X, real_type{ 1.0 }, R);
 
     // delta = R.T * R
     std::vector<real_type> delta(num_rhs);
@@ -842,7 +839,8 @@ std::pair<aos_matrix<real_type>, std::vector<real_type>> csvm::conjugate_gradien
         iteration_start_time = std::chrono::steady_clock::now();
 
         // Q = A * D
-        const aos_matrix<real_type> Q = this->kernel_matrix_matmul_explicit(kernel_matrix ,D);
+        aos_matrix<real_type> Q{ D.num_rows(), D.num_cols() };
+        this->kernel_gemm_explicit(real_type{ 1.0 }, kernel_matrix, D, real_type{ 0.0 }, Q);
 
         // alpha = delta_new / (D^T * Q))
         std::vector<real_type> alpha(num_rhs);
@@ -867,13 +865,8 @@ std::pair<aos_matrix<real_type>, std::vector<real_type>> csvm::conjugate_gradien
         if (iter % 50 == 49) {
             // explicitly recalculate residual to remove accumulating floating point errors
             // R = B - A * X
-            R = this->kernel_matrix_matmul_explicit(kernel_matrix, X);
-            #pragma omp parallel for collapse(2) shared(R, B) firstprivate(num_rhs, num_rows_reduced)
-            for (std::size_t i = 0; i < num_rhs; ++i) {
-                for (std::size_t j = 0; j < num_rows_reduced; ++j) {
-                    R(i, j) = B_red(i, j) - R(i, j);
-                }
-            }
+            R = B_red;
+            this->kernel_gemm_explicit(real_type{ -1.0 }, kernel_matrix, X, real_type{ 1.0 }, R);
         } else {
             // R = R - alpha * Q
             #pragma omp parallel for collapse(2) default(none) shared(R, alpha, Q) firstprivate(num_rhs, num_rows_reduced)

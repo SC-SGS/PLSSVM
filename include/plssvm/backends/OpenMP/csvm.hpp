@@ -148,16 +148,16 @@ class csvm : public ::plssvm::csvm {
     /**
      * @copydoc plssvm::csvm::kernel_matrix_matmul_explicit
      */
-    [[nodiscard]] aos_matrix<float> kernel_matrix_matmul_explicit(const detail::simple_any &explicit_kernel_matrix, const aos_matrix<float> &other) final { return this->kernel_matrix_matmul_explicit_impl(explicit_kernel_matrix, other); }
+    void kernel_gemm_explicit(const float alpha, const detail::simple_any &A, const aos_matrix<float> &B, const float beta, aos_matrix<float> &C) final { this->kernel_gemm_explicit_impl(alpha, A, B, beta, C); }
     /**
      * @copydoc plssvm::csvm::kernel_matrix_matmul_explicit
      */
-    [[nodiscard]] aos_matrix<double> kernel_matrix_matmul_explicit(const detail::simple_any &explicit_kernel_matrix, const aos_matrix<double> &other) final { return this->kernel_matrix_matmul_explicit_impl(explicit_kernel_matrix, other); }
+    void kernel_gemm_explicit(const double alpha, const detail::simple_any &A, const aos_matrix<double> &B, const double beta, aos_matrix<double> &C) final { this->kernel_gemm_explicit_impl(alpha, A, B, beta, C); }
     /**
      * @copydoc plssvm::csvm::kernel_matrix_matmul_explicit
      */
     template <typename real_type>
-    [[nodiscard]] aos_matrix<real_type> kernel_matrix_matmul_explicit_impl(const detail::simple_any &explicit_kernel_matrix, const aos_matrix<real_type> &other);
+    void kernel_gemm_explicit_impl(real_type alpha, const detail::simple_any &A, const aos_matrix<real_type> &B, real_type beta, aos_matrix<real_type> &C);
 
     private:
     /**

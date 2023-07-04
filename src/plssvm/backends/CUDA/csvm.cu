@@ -218,31 +218,30 @@ template ::plssvm::detail::simple_any csvm::assemble_kernel_matrix_explicit_impl
 template ::plssvm::detail::simple_any csvm::assemble_kernel_matrix_explicit_impl(const ::plssvm::detail::parameter<double> &, const ::plssvm::detail::simple_any &, const std::size_t, const std::size_t, const std::vector<double> &, double);
 
 template <typename real_type>
-aos_matrix<real_type> csvm::kernel_matrix_matmul_explicit_impl(const ::plssvm::detail::simple_any &kernel_matrix, const aos_matrix<real_type> &other) {
-    const std::size_t num_rhs = other.num_rows();
-    const std::size_t num_rows = other.num_cols();
+void csvm::kernel_gemm_explicit_impl(const real_type alpha, const ::plssvm::detail::simple_any &A, const aos_matrix<real_type> &B, const real_type beta, aos_matrix<real_type> &C) {
+    const std::size_t num_rhs = B.num_rows();
+    const std::size_t num_rows = B.num_cols();
 
-    const device_ptr_type<real_type> &kernel_matrix_d = kernel_matrix.get<device_ptr_type<real_type>>();
-    device_ptr_type<real_type> vec_d{ other.num_entries() };
-    vec_d.copy_to_device(other.data());
-
-    device_ptr_type<real_type> ret_d{ other.num_entries() };
+    const device_ptr_type<real_type> &A_d = A.get<device_ptr_type<real_type>>();
+    // allocate memory on the device
+    device_ptr_type<real_type> B_d{ B.num_entries() };
+    B_d.copy_to_device(B.data());
+    device_ptr_type<real_type> C_d{ C.num_entries() };
+    C_d.copy_to_device(C.data());
 
     const dim3 block(32, 32);
     const dim3 grid(static_cast<int>(std::ceil(num_rows / static_cast<double>(block.x))),
                     static_cast<int>(std::ceil(num_rhs / static_cast<double>(block.y))));
 
     detail::set_device(0);
-    cuda::device_kernel_gemm<<<grid, block>>>(num_rows, num_rhs, num_rows, real_type{ 1.0 }, kernel_matrix_d.get(), vec_d.get(), real_type{ 0.0 }, ret_d.get());  // TODO: easier
+    cuda::device_kernel_gemm<<<grid, block>>>(num_rows, num_rhs, num_rows, alpha, A_d.get(), B_d.get(), beta, C_d.get());
     detail::peek_at_last_error();
     detail::device_synchronize(0);
 
-    aos_matrix<real_type> ret{ other.num_rows(), other.num_cols() };
-    ret_d.copy_to_host(ret.data());
-    return ret;
+    C_d.copy_to_host(C.data());
 }
 
-template aos_matrix<float> csvm::kernel_matrix_matmul_explicit_impl(const ::plssvm::detail::simple_any &, const aos_matrix<float> &);
-template aos_matrix<double> csvm::kernel_matrix_matmul_explicit_impl(const ::plssvm::detail::simple_any &, const aos_matrix<double> &);
+template void csvm::kernel_gemm_explicit_impl(const float, const ::plssvm::detail::simple_any &, const aos_matrix<float> &, const float, aos_matrix<float> &);
+template void csvm::kernel_gemm_explicit_impl(const double, const ::plssvm::detail::simple_any &, const aos_matrix<double> &, const double, aos_matrix<double> &);
 
 }  // namespace plssvm::cuda
