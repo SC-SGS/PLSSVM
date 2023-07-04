@@ -201,14 +201,44 @@ class csvm {
     [[nodiscard]] virtual aos_matrix<double> predict_values(const detail::parameter<double> &params, const aos_matrix<double> &support_vectors, const aos_matrix<double> &alpha, const std::vector<double> &rho, aos_matrix<double> &w, const aos_matrix<double> &predict_points) const = 0;
 
 
-    virtual detail::simple_any setup_data_on_devices(const aos_matrix<float> &A) = 0;
-    virtual detail::simple_any setup_data_on_devices(const aos_matrix<double> &A) = 0;
+    /**
+     * @brief Setup all necessary data on the device(s). Backend specific!
+     * @param[in] A the data to setup
+     * @return the backend specific setup data, e.g., pointer to GPU memory for the GPU related backends (`[[nodiscard]]`)
+     */
+    [[nodiscard]] virtual detail::simple_any setup_data_on_devices(const aos_matrix<float> &A) = 0;
+    /**
+     * @copydoc plssvm::csvm::setup_data_on_devices
+     */
+    [[nodiscard]] virtual detail::simple_any setup_data_on_devices(const aos_matrix<double> &A) = 0;
 
-    virtual detail::simple_any assemble_kernel_matrix_explicit(const detail::parameter<float> &params, const ::plssvm::detail::simple_any &data, const std::size_t num_rows_reduced, const std::size_t num_features, const std::vector<float> &q_red, float QA_cost) = 0;
-    virtual detail::simple_any assemble_kernel_matrix_explicit(const detail::parameter<double> &params, const ::plssvm::detail::simple_any &data, const std::size_t num_rows_reduced, const std::size_t num_features, const std::vector<double> &q_red, double QA_cost) = 0;
+    /**
+     * @brief Explicitly assemble the kernel matrix. Backend specific!
+     * @param[in] params the parameters used to assemble the kernel matrix (e.g., the used kernel function
+     * @param[in] data the data used to assemble the kernel matrix
+     * @param[in] num_rows_reduced the number of rows (and columns) in the kernel matrix; pay attention to the dimension reduction
+     * @param[in] num_features the number of features in the data
+     * @param[in] q_red the vector used in the dimensional reduction
+     * @param[in] QA_cost the value used in the dimensional reduction
+     * @return the kernel matrix (`[[nodiscard]]`)
+     */
+    [[nodiscard]] virtual detail::simple_any assemble_kernel_matrix_explicit(const detail::parameter<float> &params, const ::plssvm::detail::simple_any &data, const std::size_t num_rows_reduced, const std::size_t num_features, const std::vector<float> &q_red, float QA_cost) = 0;
+    /**
+     * @copydoc plssvm::csvm::assemble_kernel_matrix_explicit
+     */
+    [[nodiscard]] virtual detail::simple_any assemble_kernel_matrix_explicit(const detail::parameter<double> &params, const ::plssvm::detail::simple_any &data, const std::size_t num_rows_reduced, const std::size_t num_features, const std::vector<double> &q_red, double QA_cost) = 0;
 
-    virtual aos_matrix<float> kernel_matrix_matmul_explicit(const detail::simple_any &explicit_kernel_matrix, const aos_matrix<float> &vec) = 0;
-    virtual aos_matrix<double> kernel_matrix_matmul_explicit(const detail::simple_any &explicit_kernel_matrix, const aos_matrix<double> &vec) = 0;
+    /**
+     * @brief Perform a matrix-matrix multiplication using the @p explicit_kernel_matrix with @p other.
+     * @param[in] explicit_kernel_matrix the explicit kernel matrix for the matrix multiplication
+     * @param[in] other the other matrix to multiply the kernel matrix with
+     * @return the result matrix (`[[nodiscard]]`)
+     */
+    [[nodiscard]] virtual aos_matrix<float> kernel_matrix_matmul_explicit(const detail::simple_any &explicit_kernel_matrix, const aos_matrix<float> &other) = 0;
+    /**
+     * @copydoc plssvm::csvm::kernel_matrix_matmul_explicit
+     */
+    [[nodiscard]] virtual aos_matrix<double> kernel_matrix_matmul_explicit(const detail::simple_any &explicit_kernel_matrix, const aos_matrix<double> &other) = 0;
 
 
     /// The target platform of this SVM.

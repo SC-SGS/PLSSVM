@@ -175,21 +175,21 @@ template detail::simple_any csvm::assemble_kernel_matrix_explicit_impl(const det
 template detail::simple_any csvm::assemble_kernel_matrix_explicit_impl(const detail::parameter<double> &, const detail::simple_any &, const std::size_t, const std::size_t, const std::vector<double> &, double);
 
 template <typename real_type>
-aos_matrix<real_type> csvm::kernel_matrix_matmul_explicit_impl(const detail::simple_any &explicit_kernel_matrix, const aos_matrix<real_type> &vec) {
+aos_matrix<real_type> csvm::kernel_matrix_matmul_explicit_impl(const detail::simple_any &explicit_kernel_matrix, const aos_matrix<real_type> &other) {
     const aos_matrix<real_type> &explicit_A = explicit_kernel_matrix.get<aos_matrix<real_type>>();
 
-    const std::size_t num_rhs = vec.num_rows();
-    const std::size_t num_rows = vec.num_cols();
+    const std::size_t num_rhs = other.num_rows();
+    const std::size_t num_rows = other.num_cols();
 
     aos_matrix<real_type> ret{ num_rhs, num_rows };
-    // ret = explicit_A * vec
-    #pragma omp parallel for collapse(2) default(none) shared(explicit_A, vec, ret) firstprivate(num_rhs, num_rows)
+    // ret = explicit_A * other
+    #pragma omp parallel for collapse(2) default(none) shared(explicit_A, other, ret) firstprivate(num_rhs, num_rows)
     for (std::size_t rhs = 0; rhs < num_rhs; ++rhs) {
         for (std::size_t row = 0; row < num_rows; ++row) {
             real_type temp{ 0.0 };
             #pragma omp simd reduction(+ : temp)
             for (std::size_t dim = 0; dim < num_rows; ++dim) {
-                temp += explicit_A(row, dim) * vec(rhs, dim);
+                temp += explicit_A(row, dim) * other(rhs, dim);
             }
             ret(rhs, row) = temp;
         }

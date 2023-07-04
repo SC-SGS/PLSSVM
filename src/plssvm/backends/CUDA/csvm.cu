@@ -218,15 +218,15 @@ template ::plssvm::detail::simple_any csvm::assemble_kernel_matrix_explicit_impl
 template ::plssvm::detail::simple_any csvm::assemble_kernel_matrix_explicit_impl(const ::plssvm::detail::parameter<double> &, const ::plssvm::detail::simple_any &, const std::size_t, const std::size_t, const std::vector<double> &, double);
 
 template <typename real_type>
-aos_matrix<real_type> csvm::kernel_matrix_matmul_explicit_impl(const ::plssvm::detail::simple_any &kernel_matrix, const aos_matrix<real_type> &vec) {
-    const std::size_t num_rhs = vec.num_rows();
-    const std::size_t num_rows = vec.num_cols();
+aos_matrix<real_type> csvm::kernel_matrix_matmul_explicit_impl(const ::plssvm::detail::simple_any &kernel_matrix, const aos_matrix<real_type> &other) {
+    const std::size_t num_rhs = other.num_rows();
+    const std::size_t num_rows = other.num_cols();
 
     const device_ptr_type<real_type> &kernel_matrix_d = kernel_matrix.get<device_ptr_type<real_type>>();
-    device_ptr_type<real_type> vec_d{ vec.num_entries() };
-    vec_d.copy_to_device(vec.data());
+    device_ptr_type<real_type> vec_d{ other.num_entries() };
+    vec_d.copy_to_device(other.data());
 
-    device_ptr_type<real_type> ret_d{ vec.num_entries() };
+    device_ptr_type<real_type> ret_d{ other.num_entries() };
 
     const dim3 block(32, 32);
     const dim3 grid(static_cast<int>(std::ceil(num_rows / static_cast<double>(block.x))),
@@ -237,7 +237,7 @@ aos_matrix<real_type> csvm::kernel_matrix_matmul_explicit_impl(const ::plssvm::d
     detail::peek_at_last_error();
     detail::device_synchronize(0);
 
-    aos_matrix<real_type> ret{ vec.num_rows(), vec.num_cols() };
+    aos_matrix<real_type> ret{ other.num_rows(), other.num_cols() };
     ret_d.copy_to_host(ret.data());
     return ret;
 }

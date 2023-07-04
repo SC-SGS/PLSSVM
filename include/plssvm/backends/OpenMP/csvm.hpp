@@ -14,12 +14,12 @@
 #pragma once
 
 #include "plssvm/csvm.hpp"                // plssvm::csvm
+#include "plssvm/detail/simple_any.hpp"   // plssvm::detail::simple_any
 #include "plssvm/detail/type_traits.hpp"  // PLSSVM_REQUIRES
 #include "plssvm/matrix.hpp"              // plssvm::aos_matrix
 #include "plssvm/parameter.hpp"           // plssvm::parameter, plssvm::detail::{parameter, has_only_parameter_named_args_v}
 #include "plssvm/target_platforms.hpp"    // plssvm::target_platform
 
-#include "plssvm/detail/simple_any.hpp"
 
 #include <type_traits>                    // std::true_type
 #include <utility>                        // std::forward, std::pair
@@ -117,21 +117,47 @@ class csvm : public ::plssvm::csvm {
     template <typename real_type>
     [[nodiscard]] aos_matrix<real_type> predict_values_impl(const detail::parameter<real_type> &params, const aos_matrix<real_type> &support_vectors, const aos_matrix<real_type> &alpha, const std::vector<real_type> &rho, aos_matrix<real_type> &w, const aos_matrix<real_type> &predict_points) const;
 
-
-    detail::simple_any  setup_data_on_devices(const aos_matrix<float> &A) override { return this->setup_data_on_devices_impl(A); }
-    detail::simple_any  setup_data_on_devices(const aos_matrix<double> &A) override { return this->setup_data_on_devices_impl(A); }
+    /**
+     * @copydoc plssvm::csvm::setup_data_on_devices
+     */
+    [[nodiscard]] detail::simple_any  setup_data_on_devices(const aos_matrix<float> &A) final { return this->setup_data_on_devices_impl(A); }
+    /**
+     * @copydoc plssvm::csvm::setup_data_on_devices
+     */
+    [[nodiscard]] detail::simple_any  setup_data_on_devices(const aos_matrix<double> &A) final { return this->setup_data_on_devices_impl(A); }
+    /**
+     * @copydoc plssvm::csvm::setup_data_on_devices
+     */
     template <typename real_type>
-    detail::simple_any  setup_data_on_devices_impl(const aos_matrix<real_type> &A);
+    [[nodiscard]] detail::simple_any  setup_data_on_devices_impl(const aos_matrix<real_type> &A);
 
-    detail::simple_any assemble_kernel_matrix_explicit(const detail::parameter<float> &params, const detail::simple_any &data, const std::size_t num_rows_reduced, const std::size_t num_features, const std::vector<float> &q_red, float QA_cost) override { return this->assemble_kernel_matrix_explicit_impl(params, data, num_rows_reduced, num_features, q_red, QA_cost); }
-    detail::simple_any assemble_kernel_matrix_explicit(const detail::parameter<double> &params, const detail::simple_any &data, const std::size_t num_rows_reduced, const std::size_t num_features, const std::vector<double> &q_red, double QA_cost) override { return this->assemble_kernel_matrix_explicit_impl(params, data, num_rows_reduced, num_features, q_red, QA_cost); }
+    /**
+     * @copydoc plssvm::csvm::assemble_kernel_matrix_explicit
+     */
+    [[nodiscard]] detail::simple_any assemble_kernel_matrix_explicit(const detail::parameter<float> &params, const detail::simple_any &data, const std::size_t num_rows_reduced, const std::size_t num_features, const std::vector<float> &q_red, float QA_cost) final { return this->assemble_kernel_matrix_explicit_impl(params, data, num_rows_reduced, num_features, q_red, QA_cost); }
+    /**
+     * @copydoc plssvm::csvm::assemble_kernel_matrix_explicit
+     */
+    [[nodiscard]] detail::simple_any assemble_kernel_matrix_explicit(const detail::parameter<double> &params, const detail::simple_any &data, const std::size_t num_rows_reduced, const std::size_t num_features, const std::vector<double> &q_red, double QA_cost) final { return this->assemble_kernel_matrix_explicit_impl(params, data, num_rows_reduced, num_features, q_red, QA_cost); }
+    /**
+     * @copydoc plssvm::csvm::assemble_kernel_matrix_explicit
+     */
     template <typename real_type>
-    detail::simple_any assemble_kernel_matrix_explicit_impl(const detail::parameter<real_type> &params, const detail::simple_any &data, const std::size_t num_rows_reduced, const std::size_t num_features, const std::vector<real_type> &q_red, real_type QA_cost);
+    [[nodiscard]] detail::simple_any assemble_kernel_matrix_explicit_impl(const detail::parameter<real_type> &params, const detail::simple_any &data, const std::size_t num_rows_reduced, const std::size_t num_features, const std::vector<real_type> &q_red, real_type QA_cost);
 
-    [[nodiscard]] aos_matrix<float> kernel_matrix_matmul_explicit(const detail::simple_any &explicit_kernel_matrix, const aos_matrix<float> &vec) override { return this->kernel_matrix_matmul_explicit_impl(explicit_kernel_matrix, vec); }
-    [[nodiscard]] aos_matrix<double> kernel_matrix_matmul_explicit(const detail::simple_any &explicit_kernel_matrix, const aos_matrix<double> &vec) override { return this->kernel_matrix_matmul_explicit_impl(explicit_kernel_matrix, vec); }
+    /**
+     * @copydoc plssvm::csvm::kernel_matrix_matmul_explicit
+     */
+    [[nodiscard]] aos_matrix<float> kernel_matrix_matmul_explicit(const detail::simple_any &explicit_kernel_matrix, const aos_matrix<float> &other) final { return this->kernel_matrix_matmul_explicit_impl(explicit_kernel_matrix, other); }
+    /**
+     * @copydoc plssvm::csvm::kernel_matrix_matmul_explicit
+     */
+    [[nodiscard]] aos_matrix<double> kernel_matrix_matmul_explicit(const detail::simple_any &explicit_kernel_matrix, const aos_matrix<double> &other) final { return this->kernel_matrix_matmul_explicit_impl(explicit_kernel_matrix, other); }
+    /**
+     * @copydoc plssvm::csvm::kernel_matrix_matmul_explicit
+     */
     template <typename real_type>
-    [[nodiscard]] aos_matrix<real_type> kernel_matrix_matmul_explicit_impl(const detail::simple_any &explicit_kernel_matrix, const aos_matrix<real_type> &vec);
+    [[nodiscard]] aos_matrix<real_type> kernel_matrix_matmul_explicit_impl(const detail::simple_any &explicit_kernel_matrix, const aos_matrix<real_type> &other);
 
     private:
     /**
