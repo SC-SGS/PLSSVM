@@ -174,6 +174,8 @@ template auto csvm::run_predict_kernel_impl(const ::plssvm::detail::parameter<do
 
 template <typename real_type>
 ::plssvm::detail::simple_any csvm::setup_data_on_devices_impl(const aos_matrix<real_type> &A) const {
+    PLSSVM_ASSERT(!A.empty(), "The matrix to setup on the devices may not be empty!");
+
     // initialize the data on the device
     device_ptr_type<real_type> data_d{ A.num_entries() };
     data_d.copy_to_device(A.data());
@@ -186,14 +188,24 @@ template ::plssvm::detail::simple_any csvm::setup_data_on_devices_impl(const aos
 
 template <typename real_type>
 ::plssvm::detail::simple_any csvm::assemble_kernel_matrix_explicit_impl(const ::plssvm::detail::parameter<real_type> &params, const ::plssvm::detail::simple_any &data, const std::size_t num_rows_reduced, const std::size_t num_features, const std::vector<real_type> &q_red, real_type QA_cost) const {
+    PLSSVM_ASSERT(num_rows_reduced > 0, "At least one row must be given!");
+    PLSSVM_ASSERT(num_features > 0, "At least one feature must be given!");
+    PLSSVM_ASSERT(!q_red.empty(), "The q_red vector may not be empty!");
+
+    // define grid and block sizes
     const dim3 block(32, 32);
     const dim3 grid(static_cast<int>(std::ceil(num_rows_reduced / static_cast<double>(block.x))),
                     static_cast<int>(std::ceil(num_rows_reduced / static_cast<double>(block.y))));
 
+    // get the pointer to the data that already is on the device
+    const device_ptr_type<real_type> &data_d = data.get<device_ptr_type<real_type>>();
+    PLSSVM_ASSERT((num_rows_reduced + 1) * num_features == data_d.size(),
+                  "The number of values on the device data array is {}, but the provided sizes are {} ((num_rows_reduced + 1) * num_features)",
+                  data_d.size(), (num_rows_reduced + 1) * num_features);
+
+    // allocate memory for the values currently not on the device
     device_ptr_type<real_type> q_red_d{ q_red.size() };
     q_red_d.copy_to_device(q_red);
-    const device_ptr_type<real_type> &data_d = data.get<device_ptr_type<real_type>>();
-
     device_ptr_type<real_type> kernel_matrix{ num_rows_reduced * num_rows_reduced };
 
     detail::set_device(0);
@@ -211,6 +223,10 @@ template <typename real_type>
     detail::peek_at_last_error();
     detail::device_synchronize(0);
 
+    PLSSVM_ASSERT(num_rows_reduced * num_rows_reduced == kernel_matrix.size(),
+                  "The kernel matrix must be a quadratic matrix with num_rows_reduced^2 ({}) entries, but is {}!",
+                  num_rows_reduced * num_rows_reduced, kernel_matrix.size());
+
     return ::plssvm::detail::simple_any{ std::move(kernel_matrix) };
 }
 
@@ -219,10 +235,15 @@ template ::plssvm::detail::simple_any csvm::assemble_kernel_matrix_explicit_impl
 
 template <typename real_type>
 void csvm::kernel_gemm_explicit_impl(const real_type alpha, const ::plssvm::detail::simple_any &A, const aos_matrix<real_type> &B, const real_type beta, aos_matrix<real_type> &C) const {
+    const device_ptr_type<real_type> &A_d = A.get<device_ptr_type<real_type>>();
+
+    PLSSVM_ASSERT(!A_d.empty(), "The A matrix may not be empty!");
+    PLSSVM_ASSERT(!B.empty(), "The B matrix may not be empty!");
+    PLSSVM_ASSERT(!C.empty(), "The C matrix may not be empty!");
+
     const std::size_t num_rhs = B.num_rows();
     const std::size_t num_rows = B.num_cols();
 
-    const device_ptr_type<real_type> &A_d = A.get<device_ptr_type<real_type>>();
     // allocate memory on the device
     device_ptr_type<real_type> B_d{ B.num_entries() };
     B_d.copy_to_device(B.data());

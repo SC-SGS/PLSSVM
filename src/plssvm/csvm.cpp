@@ -8,6 +8,7 @@
 
 #include "plssvm/csvm.hpp"
 
+#include "plssvm/detail/assert.hpp"               // PLSSVM_ASSERT
 #include "plssvm/detail/logger.hpp"               // plssvm::detail::log, plssvm::verbosity_level
 #include "plssvm/detail/operators.hpp"            // plssvm operator overloads for vectors
 #include "plssvm/detail/performance_tracker.hpp"  // PLSSVM_DETAIL_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY, plssvm::detail::tracking_entry
@@ -47,6 +48,8 @@ void csvm::sanity_check_parameter() const {
 template <typename real_type>
 aos_matrix<real_type> csvm::conjugate_gradients(const detail::simple_any &A, const aos_matrix<real_type> &B, const real_type eps, const unsigned long long max_cg_iter, const solver_type) const {
     using namespace plssvm::operators;
+
+    PLSSVM_ASSERT(!B.empty(), "The right-hand sides may not be empty!");
 
     const std::size_t num_rows = B.num_cols();
     const std::size_t num_rhs = B.num_rows();

@@ -145,6 +145,8 @@ template aos_matrix<double> csvm::predict_values_impl(const detail::parameter<do
 
 template <typename real_type>
 detail::simple_any csvm::setup_data_on_devices_impl(const aos_matrix<real_type> &A) const {
+    PLSSVM_ASSERT(!A.empty(), "The matrix to setup on the devices may not be empty!");
+
     return detail::simple_any{ &A };
 }
 
@@ -153,7 +155,14 @@ template detail::simple_any csvm::setup_data_on_devices_impl(const aos_matrix<do
 
 template <typename real_type>
 detail::simple_any csvm::assemble_kernel_matrix_explicit_impl(const detail::parameter<real_type> &params, const detail::simple_any &data, const std::size_t num_rows_reduced, const std::size_t, const std::vector<real_type> &q_red, real_type QA_cost) const {
+    PLSSVM_ASSERT(num_rows_reduced > 0, "At least one row must be given!");
+//    PLSSVM_ASSERT(num_features > 0, "At least one feature must be given!");
+    PLSSVM_ASSERT(!q_red.empty(), "The q_red vector may not be empty!");
+
     const aos_matrix<real_type> *data_ptr = data.get<const aos_matrix<real_type> *>();
+    PLSSVM_ASSERT(data_ptr != nullptr, "The data_ptr must not be a nullptr!");
+    PLSSVM_ASSERT(data_ptr->num_rows() == num_rows_reduced + 1, "The number of rows in the data matrix must be {}, but is {}!", num_rows_reduced + 1, data_ptr->num_rows());
+//    PLSSVM_ASSERT(data_ptr->num_cols() == num_features, "The number of columns in the data matrix must be {}, but is {}!", num_features, data_ptr->num_cols());
 
     aos_matrix<real_type> explicit_A{ num_rows_reduced, num_rows_reduced };
     switch (params.kernel_type) {
@@ -168,6 +177,10 @@ detail::simple_any csvm::assemble_kernel_matrix_explicit_impl(const detail::para
             break;
     }
 
+    PLSSVM_ASSERT(explicit_A.num_rows() == num_rows_reduced && explicit_A.num_cols() == num_rows_reduced,
+                  "The kernel matrix must be a quadratic matrix with shape {}x{}, but has a {}x{} shape!",
+                  num_rows_reduced, num_rows_reduced, explicit_A.num_rows(), explicit_A.num_cols());
+
     return detail::simple_any{ std::move(explicit_A) };
 }
 
@@ -177,6 +190,12 @@ template detail::simple_any csvm::assemble_kernel_matrix_explicit_impl(const det
 template <typename real_type>
 void csvm::kernel_gemm_explicit_impl(const real_type alpha, const detail::simple_any &A, const aos_matrix<real_type> &B, const real_type beta, aos_matrix<real_type> &C) const {
     const aos_matrix<real_type> &explicit_A = A.get<aos_matrix<real_type>>();
+
+    PLSSVM_ASSERT(!explicit_A.empty(), "The A matrix may not be empty!");
+    PLSSVM_ASSERT(!B.empty(), "The B matrix may not be empty!");
+    PLSSVM_ASSERT(!C.empty(), "The C matrix may not be empty!");
+    PLSSVM_ASSERT(explicit_A.num_rows() == C.num_cols(), "The C matrix must have {} columns, but has {}!", explicit_A.num_rows(), C.num_cols());
+    PLSSVM_ASSERT(B.num_rows() == C.num_rows(), "The C matrix must have {} rows, but has {}!", B.num_rows(), C.num_rows());
 
     const std::size_t num_rhs = B.num_rows();
     const std::size_t num_rows = B.num_cols();

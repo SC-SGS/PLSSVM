@@ -659,6 +659,10 @@ real_type csvm::score(const model<real_type, label_type> &model, const data_set<
 
 template <typename real_type, typename... Args>
 std::pair<aos_matrix<real_type>, std::vector<real_type>> csvm::solve_system_of_linear_equations(const aos_matrix<real_type> &A, const aos_matrix<real_type> &B, const detail::parameter<real_type> &params, Args &&...named_args) const {
+    PLSSVM_ASSERT(!A.empty(), "The A matrix may not be empty!");
+    PLSSVM_ASSERT(!B.empty(), "The B matrix may not be empty!");
+    PLSSVM_ASSERT(A.num_rows() == B.num_cols(), "The number of data points in A ({}) and B ({}) must be the same!", A.num_rows(), B.num_cols());
+
     igor::parser parser{ std::forward<Args>(named_args)... };
 
     // set default values
