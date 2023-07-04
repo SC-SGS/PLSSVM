@@ -266,18 +266,17 @@ class csvm {
     template <typename real_type, typename... Args>
     [[nodiscard]] std::pair<aos_matrix<real_type>, std::vector<real_type>> solve_system_of_linear_equations(const aos_matrix<real_type> &A, const aos_matrix<real_type> &B, const detail::parameter<real_type> &params, Args&&... named_args) const;
     /**
-     * @brief Solve the system of linear equations `K * X = B` where `K` is the kernel matrix assembled from @p A using the @p params with potentially multiple right-hand sides using the Conjugate Gradients (CG) algorithm.
+     * @brief Solve the system of linear equations `AX = B` where `A` is the kernel matrix using the Conjugate Gradients (CG) algorithm.
      * @tparam real_type the floating point type of the data
-     * @param[in] A the data used to create the kernel matrix
+     * @param[in] A the kernel matrix
      * @param[in] B the right-hand sides
-     * @param[in] params the parameter to create the kernel matrix
      * @param[in] eps the termination criterion for the CG algorithm
      * @param[in] max_cg_iter the maximum number of CG iterations
      * @param[in] cd_solver_variant the variation of the CG algorithm to use, i.e., how the kernel matrix is assembled (currently: explicit, streaming, implicit)
-     * @return the result matrix `X` and the respective biases (`[[nodiscard]]`)
+     * @return the result matrix `X` (`[[nodiscard]]`)
      */
     template <typename real_type>
-    [[nodiscard]] std::pair<aos_matrix<real_type>, std::vector<real_type>> conjugate_gradients(const aos_matrix<real_type> &A, const aos_matrix<real_type> &B, const detail::parameter<real_type> &params, real_type eps, unsigned long long max_cg_iter, solver_type cd_solver_variant) const;
+    [[nodiscard]] aos_matrix<real_type> conjugate_gradients(const detail::simple_any &A, const aos_matrix<real_type> &B, real_type eps, unsigned long long max_cg_iter, solver_type cd_solver_variant) const;
     /**
      * @brief Perform a dimensional reduction for the kernel matrix.
      * @details Reduces the resulting dimension by `2` compared to the original LS-SVM formulation.
@@ -700,18 +699,72 @@ std::pair<aos_matrix<real_type>, std::vector<real_type>> csvm::solve_system_of_l
                 "Using {} as solver for AX=B.\n",
                 used_solver);
 
+    const std::size_t num_rows = A.num_rows();
+    const std::size_t num_features = A.num_cols();
+    const std::size_t num_rows_reduced = num_rows - 1;
+    const std::size_t num_rhs = B.num_rows();
+
+    // perform dimensional reduction
+    const auto [q_red, QA_cost] = this->perform_dimensional_reduction(params, A);
+
+    // update right-hand sides (B)
+    std::vector<real_type> b_back_value(num_rhs);
+    aos_matrix<real_type> B_red{ num_rhs, num_rows_reduced };
+    #pragma omp parallel for default(none) shared(B, B_red, b_back_value) firstprivate(num_rhs, num_rows_reduced)
+    for (std::size_t row = 0; row < num_rhs; ++row) {
+        b_back_value[row] = B(row, num_rows_reduced);
+        for (std::size_t col = 0; col < num_rows_reduced; ++col) {
+            B_red(row, col) = B(row, col) - b_back_value[row];
+        }
+    }
+
+    // setup/allocate necessary data on the device(s)
+    const detail::simple_any data = this->setup_data_on_devices(A);
+
+    // assemble explicit kernel matrix
+    const std::chrono::steady_clock::time_point assembly_start_time = std::chrono::steady_clock::now();
+    const detail::simple_any kernel_matrix = this->assemble_kernel_matrix_explicit(params, data, num_rows_reduced, num_features, q_red, QA_cost);
+    const std::chrono::steady_clock::time_point assembly_end_time = std::chrono::steady_clock::now();
+    detail::log(verbosity_level::full | verbosity_level::timing,
+                "Assembled the kernel matrix in {}.\n",
+                detail::tracking_entry{ "kernel_matrix", "kernel_matrix_assembly", std::chrono::duration_cast<std::chrono::milliseconds>(assembly_end_time - assembly_start_time) });
+
+
+    aos_matrix<real_type> X{};
     // choose the correct algorithm based on the (provided) solver type
     switch (used_solver) {
         case solver_type::automatic:
             // TODO: decide which solver to use
-            return conjugate_gradients(A, B, params, used_epsilon, used_max_iter, solver_type::cg_explicit);
+            X = conjugate_gradients(kernel_matrix, B_red, used_epsilon, used_max_iter, solver_type::cg_explicit);
+            break;
         case solver_type::cg_explicit:
-            return conjugate_gradients(A, B, params, used_epsilon, used_max_iter, used_solver);
+            X = conjugate_gradients(kernel_matrix, B_red, used_epsilon, used_max_iter, used_solver);
+            break;
         case solver_type::cg_streaming:
         case solver_type::cg_implicit:
             throw exception{ fmt::format("The CG variation {} is currently not implemented!", used_solver) };
+            break;
     }
-    throw invalid_parameter_exception{ "The provided solver type is not recognized!" };
+
+    // calculate bias and undo dimensional reduction
+    aos_matrix<real_type> X_ret{ num_rhs, A.num_rows() };
+    std::vector<real_type> bias(num_rhs);
+    #pragma omp parallel for default(none) shared(X, q_red, X_ret, bias, b_back_value) firstprivate(num_rhs, num_rows_reduced, QA_cost)
+    for (std::size_t i = 0; i < num_rhs; ++i) {
+        real_type temp_sum{ 0.0 };
+        real_type temp_dot{ 0.0 };
+        #pragma omp simd reduction(+ : temp_sum) reduction(+ : temp_dot)
+        for (std::size_t dim = 0; dim < num_rows_reduced; ++dim) {
+            temp_sum += X(i, dim);
+            temp_dot += q_red[dim] * X(i, dim);
+
+            X_ret(i, dim) = X(i, dim);
+        }
+        bias[i] = -(b_back_value[i] + QA_cost * temp_sum - temp_dot);
+        X_ret(i, num_rows_reduced) = -temp_sum;
+    }
+
+    return std::make_pair(std::move(X_ret), std::move(bias));
 }
 
 /// @cond Doxygen_suppress
