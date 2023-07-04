@@ -173,7 +173,7 @@ template auto csvm::run_predict_kernel_impl(const ::plssvm::detail::parameter<do
 
 
 template <typename real_type>
-::plssvm::detail::simple_any csvm::setup_data_on_devices_impl(const aos_matrix<real_type> &A) {
+::plssvm::detail::simple_any csvm::setup_data_on_devices_impl(const aos_matrix<real_type> &A) const {
     // initialize the data on the device
     device_ptr_type<real_type> data_d{ A.num_entries() };
     data_d.copy_to_device(A.data());
@@ -181,11 +181,11 @@ template <typename real_type>
     return ::plssvm::detail::simple_any{ std::move(data_d) };
 }
 
-template ::plssvm::detail::simple_any csvm::setup_data_on_devices_impl(const aos_matrix<float> &);
-template ::plssvm::detail::simple_any csvm::setup_data_on_devices_impl(const aos_matrix<double> &);
+template ::plssvm::detail::simple_any csvm::setup_data_on_devices_impl(const aos_matrix<float> &) const;
+template ::plssvm::detail::simple_any csvm::setup_data_on_devices_impl(const aos_matrix<double> &) const;
 
 template <typename real_type>
-::plssvm::detail::simple_any csvm::assemble_kernel_matrix_explicit_impl(const ::plssvm::detail::parameter<real_type> &params, const ::plssvm::detail::simple_any &data, const std::size_t num_rows_reduced, const std::size_t num_features, const std::vector<real_type> &q_red, real_type QA_cost) {
+::plssvm::detail::simple_any csvm::assemble_kernel_matrix_explicit_impl(const ::plssvm::detail::parameter<real_type> &params, const ::plssvm::detail::simple_any &data, const std::size_t num_rows_reduced, const std::size_t num_features, const std::vector<real_type> &q_red, real_type QA_cost) const {
     const dim3 block(32, 32);
     const dim3 grid(static_cast<int>(std::ceil(num_rows_reduced / static_cast<double>(block.x))),
                     static_cast<int>(std::ceil(num_rows_reduced / static_cast<double>(block.y))));
@@ -214,11 +214,11 @@ template <typename real_type>
     return ::plssvm::detail::simple_any{ std::move(kernel_matrix) };
 }
 
-template ::plssvm::detail::simple_any csvm::assemble_kernel_matrix_explicit_impl(const ::plssvm::detail::parameter<float> &, const ::plssvm::detail::simple_any &, const std::size_t, const std::size_t, const std::vector<float> &, float);
-template ::plssvm::detail::simple_any csvm::assemble_kernel_matrix_explicit_impl(const ::plssvm::detail::parameter<double> &, const ::plssvm::detail::simple_any &, const std::size_t, const std::size_t, const std::vector<double> &, double);
+template ::plssvm::detail::simple_any csvm::assemble_kernel_matrix_explicit_impl(const ::plssvm::detail::parameter<float> &, const ::plssvm::detail::simple_any &, const std::size_t, const std::size_t, const std::vector<float> &, float) const;
+template ::plssvm::detail::simple_any csvm::assemble_kernel_matrix_explicit_impl(const ::plssvm::detail::parameter<double> &, const ::plssvm::detail::simple_any &, const std::size_t, const std::size_t, const std::vector<double> &, double) const;
 
 template <typename real_type>
-void csvm::kernel_gemm_explicit_impl(const real_type alpha, const ::plssvm::detail::simple_any &A, const aos_matrix<real_type> &B, const real_type beta, aos_matrix<real_type> &C) {
+void csvm::kernel_gemm_explicit_impl(const real_type alpha, const ::plssvm::detail::simple_any &A, const aos_matrix<real_type> &B, const real_type beta, aos_matrix<real_type> &C) const {
     const std::size_t num_rhs = B.num_rows();
     const std::size_t num_rows = B.num_cols();
 
@@ -241,7 +241,7 @@ void csvm::kernel_gemm_explicit_impl(const real_type alpha, const ::plssvm::deta
     C_d.copy_to_host(C.data());
 }
 
-template void csvm::kernel_gemm_explicit_impl(const float, const ::plssvm::detail::simple_any &, const aos_matrix<float> &, const float, aos_matrix<float> &);
-template void csvm::kernel_gemm_explicit_impl(const double, const ::plssvm::detail::simple_any &, const aos_matrix<double> &, const double, aos_matrix<double> &);
+template void csvm::kernel_gemm_explicit_impl(const float, const ::plssvm::detail::simple_any &, const aos_matrix<float> &, const float, aos_matrix<float> &) const;
+template void csvm::kernel_gemm_explicit_impl(const double, const ::plssvm::detail::simple_any &, const aos_matrix<double> &, const double, aos_matrix<double> &) const;
 
 }  // namespace plssvm::cuda

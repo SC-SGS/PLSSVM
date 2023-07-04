@@ -59,6 +59,7 @@ set(PLSSVM_BASE_SOURCES
         ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/backend_types.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/classification_report.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/classification_types.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/csvm.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/file_format_types.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/kernel_function_types.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/matrix.cpp

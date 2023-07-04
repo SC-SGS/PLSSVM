@@ -137,44 +137,44 @@ class csvm : public ::plssvm::detail::gpu_csvm<detail::device_ptr, int> {
     /**
      * @copydoc plssvm::csvm::setup_data_on_devices
      */
-    [[nodiscard]] ::plssvm::detail::simple_any setup_data_on_devices(const aos_matrix<float> &A) final { return this->setup_data_on_devices_impl(A); }
+    [[nodiscard]] ::plssvm::detail::simple_any setup_data_on_devices(const aos_matrix<float> &A) const final { return this->setup_data_on_devices_impl(A); }
     /**
      * @copydoc plssvm::csvm::setup_data_on_devices
      */
-    [[nodiscard]] ::plssvm::detail::simple_any setup_data_on_devices(const aos_matrix<double> &A) final { return this->setup_data_on_devices_impl(A); }
+    [[nodiscard]] ::plssvm::detail::simple_any setup_data_on_devices(const aos_matrix<double> &A) const final { return this->setup_data_on_devices_impl(A); }
     /**
      * @copydoc plssvm::csvm::setup_data_on_devices
      */
     template <typename real_type>
-    [[nodiscard]] ::plssvm::detail::simple_any setup_data_on_devices_impl(const aos_matrix<real_type> &A);
+    [[nodiscard]] ::plssvm::detail::simple_any setup_data_on_devices_impl(const aos_matrix<real_type> &A) const;
 
     /**
      * @copydoc plssvm::csvm::assemble_kernel_matrix_explicit_impl
      */
-    [[nodiscard]] ::plssvm::detail::simple_any assemble_kernel_matrix_explicit(const ::plssvm::detail::parameter<float> &params, const ::plssvm::detail::simple_any & data, const std::size_t num_rows_reduced, const std::size_t num_features, const std::vector<float> &q_red, float QA_cost) final { return this->assemble_kernel_matrix_explicit_impl(params, data, num_rows_reduced, num_features, q_red, QA_cost); }
+    [[nodiscard]] ::plssvm::detail::simple_any assemble_kernel_matrix_explicit(const ::plssvm::detail::parameter<float> &params, const ::plssvm::detail::simple_any & data, const std::size_t num_rows_reduced, const std::size_t num_features, const std::vector<float> &q_red, float QA_cost) const final { return this->assemble_kernel_matrix_explicit_impl(params, data, num_rows_reduced, num_features, q_red, QA_cost); }
     /**
      * @copydoc plssvm::csvm::assemble_kernel_matrix_explicit_impl
      */
-    [[nodiscard]] ::plssvm::detail::simple_any assemble_kernel_matrix_explicit(const ::plssvm::detail::parameter<double> &params, const ::plssvm::detail::simple_any &data, const std::size_t num_rows_reduced, const std::size_t num_features, const std::vector<double> &q_red, double QA_cost) final { return this->assemble_kernel_matrix_explicit_impl(params, data, num_rows_reduced, num_features, q_red, QA_cost); }
+    [[nodiscard]] ::plssvm::detail::simple_any assemble_kernel_matrix_explicit(const ::plssvm::detail::parameter<double> &params, const ::plssvm::detail::simple_any &data, const std::size_t num_rows_reduced, const std::size_t num_features, const std::vector<double> &q_red, double QA_cost) const final { return this->assemble_kernel_matrix_explicit_impl(params, data, num_rows_reduced, num_features, q_red, QA_cost); }
     /**
      * @copydoc plssvm::csvm::assemble_kernel_matrix_explicit_impl
      */
     template <typename real_type>
-    [[nodiscard]] ::plssvm::detail::simple_any assemble_kernel_matrix_explicit_impl(const ::plssvm::detail::parameter<real_type> &params, const ::plssvm::detail::simple_any &data, const std::size_t num_rows_reduced, const std::size_t num_features, const std::vector<real_type> &q_red, real_type QA_cost);
+    [[nodiscard]] ::plssvm::detail::simple_any assemble_kernel_matrix_explicit_impl(const ::plssvm::detail::parameter<real_type> &params, const ::plssvm::detail::simple_any &data, const std::size_t num_rows_reduced, const std::size_t num_features, const std::vector<real_type> &q_red, real_type QA_cost) const;
 
     /**
      * @copydoc plssvm::csvm::kernel_matrix_matmul_explicit
      */
-    void kernel_gemm_explicit(float alpha, const ::plssvm::detail::simple_any &A, const aos_matrix<float> &B, const float beta, aos_matrix<float> &C) final { this->kernel_gemm_explicit_impl(alpha, A, B, beta, C); }
+    void kernel_gemm_explicit(float alpha, const ::plssvm::detail::simple_any &A, const aos_matrix<float> &B, const float beta, aos_matrix<float> &C) const final { this->kernel_gemm_explicit_impl(alpha, A, B, beta, C); }
     /**
      * @copydoc plssvm::csvm::kernel_matrix_matmul_explicit
      */
-    void kernel_gemm_explicit(double alpha, const ::plssvm::detail::simple_any &A, const aos_matrix<double> &B, const double beta, aos_matrix<double> &C) final { this->kernel_gemm_explicit_impl(alpha, A, B, beta, C); }
+    void kernel_gemm_explicit(double alpha, const ::plssvm::detail::simple_any &A, const aos_matrix<double> &B, const double beta, aos_matrix<double> &C) const final { this->kernel_gemm_explicit_impl(alpha, A, B, beta, C); }
     /**
      * @copydoc plssvm::csvm::kernel_matrix_matmul_explicit
      */
     template <typename real_type>
-    void kernel_gemm_explicit_impl(real_type alpha, const ::plssvm::detail::simple_any &A, const aos_matrix<real_type> &B, real_type beta, aos_matrix<real_type> &C);
+    void kernel_gemm_explicit_impl(real_type alpha, const ::plssvm::detail::simple_any &A, const aos_matrix<real_type> &B, real_type beta, aos_matrix<real_type> &C) const;
 
 
   private:
