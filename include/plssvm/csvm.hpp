@@ -222,6 +222,18 @@ class csvm {
     void sanity_check_parameter() const;
 
     /**
+     * @brief Solve the system of linear equations `K * X = B` where `K` is the kernel matrix assembled from @p A using the @p params with potentially multiple right-hand sides.
+     * @tparam real_type the floating point type of the data
+     * @tparam Args the type of the potential additional parameters
+     * @param[in] A the data used to create the kernel matrix
+     * @param[in] B the right-hand sides
+     * @param[in] params the parameter to create the kernel matrix
+     * @param[in] named_args additional parameters for the respective algorithm used to solve the system of linear equations
+     * @return the result matrix `X` and the respective biases (`[[nodiscard]]`)
+     */
+    template <typename real_type, typename... Args>
+    [[nodiscard]] std::pair<aos_matrix<real_type>, std::vector<real_type>> solve_system_of_linear_equations(const aos_matrix<real_type> &A, const aos_matrix<real_type> &B, const detail::parameter<real_type> &params, Args&&... named_args);
+    /**
      * @brief Solve the system of linear equations `K * X = B` where `K` is the kernel matrix assembled from @p A using the @p params with potentially multiple right-hand sides using the conjugate gradients algorithm.
      * @tparam real_type the floating point type of the data
      * @param[in] A the data used to create the kernel matrix
@@ -232,7 +244,7 @@ class csvm {
      * @return the result matrix `X` and the respective biases (`[[nodiscard]]`)
      */
     template <typename real_type>
-    [[nodiscard]] std::pair<aos_matrix<real_type>, std::vector<real_type>> solve_system_of_linear_equations(const aos_matrix<real_type> &A, const aos_matrix<real_type> &B, const detail::parameter<real_type> &params, real_type eps, unsigned long long max_cg_iter);
+    [[nodiscard]] std::pair<aos_matrix<real_type>, std::vector<real_type>> conjugate_gradients(const aos_matrix<real_type> &A, const aos_matrix<real_type> &B, const detail::parameter<real_type> &params, real_type eps, unsigned long long max_cg_iter);
     /**
      * @brief Perform a dimensional reduction for the kernel matrix.
      * @details Reduces the resulting dimension by `2` compared to the original LS-SVM formulation.
@@ -290,14 +302,16 @@ void csvm::set_params(Args &&...named_args) {
 
 template <typename real_type, typename label_type, typename... Args>
 model<real_type, label_type> csvm::fit(const data_set<real_type, label_type> &data, Args &&...named_args) {
-    igor::parser parser{ std::forward<Args>(named_args)... };
+    if (!data.has_labels()) {
+        throw invalid_parameter_exception{ "No labels given for training! Maybe the data is only usable for prediction?" };
+    }
+
+    igor::parser parser{ named_args... };
 
     // set default values
-    default_value epsilon_val{ default_init<real_type>{ 0.001 } };
-    default_value max_iter_val{ default_init<unsigned long long>{ data.num_data_points() } };
     default_value classification_val{ default_init<classification_type>{ classification_type::oaa } };
 
-    // compile time check: only named parameter are permitted
+    // compile time check: only named parameters are permitted
     static_assert(!parser.has_unnamed_arguments(), "Can only use named parameter!");
     // compile time check: each named parameter must only be passed once
     static_assert(!parser.has_duplicates(), "Can only use each named parameter once!");
@@ -305,46 +319,25 @@ model<real_type, label_type> csvm::fit(const data_set<real_type, label_type> &da
     static_assert(!parser.has_other_than(epsilon, max_iter, classification), "An illegal named parameter has been passed!");
 
     // compile time/runtime check: the values must have the correct types
-    if constexpr (parser.has(epsilon)) {
-        // get the value of the provided named parameter
-        epsilon_val = detail::get_value_from_named_parameter<typename decltype(epsilon_val)::value_type>(parser, epsilon);
-        // check if value makes sense
-        if (epsilon_val <= static_cast<typename decltype(epsilon_val)::value_type>(0)) {
-            throw invalid_parameter_exception{ fmt::format("epsilon must be less than 0.0, but is {}!", epsilon_val) };
-        }
-    }
-    if constexpr (parser.has(max_iter)) {
-        // get the value of the provided named parameter
-        max_iter_val = detail::get_value_from_named_parameter<typename decltype(max_iter_val)::value_type>(parser, max_iter);
-        // check if value makes sense
-        if (max_iter_val == static_cast<typename decltype(max_iter_val)::value_type>(0)) {
-            throw invalid_parameter_exception{ fmt::format("max_iter must be greater than 0, but is {}!", max_iter_val) };
-        }
-    }
     if constexpr (parser.has(classification)) {
         // get the value of the provided named parameter
         classification_val = detail::get_value_from_named_parameter<typename decltype(classification_val)::value_type>(parser, classification);
     }
 
     // start fitting the data set using a C-SVM
-
-    if (!data.has_labels()) {
-        throw invalid_parameter_exception{ "No labels given for training! Maybe the data is only usable for prediction?" };
-    }
-
-    // copy parameter and set gamma if necessary
-    parameter params{ params_ };
-    if (params.gamma.is_default()) {
-        // no gamma provided -> use default value which depends on the number of features of the data set
-        params.gamma = 1.0 / data.num_features();
-    }
-
     const std::chrono::time_point start_time = std::chrono::steady_clock::now();
 
     detail::log(verbosity_level::full | verbosity_level::timing,
                 "Using {} ({}) as multi-class classification strategy.\n",
                 classification_val.value(),
                 classification_type_to_full_string(classification_val.value()));
+
+    // copy parameter and set gamma if necessary
+    parameter params{ params_ };
+    if (params.gamma.is_default()) {
+        // no gamma provided -> use default value which depends on the number of features in the data set
+        params.gamma = 1.0 / data.num_features();
+    }
 
     // create model
     model<real_type, label_type> csvm_model{ params, data, classification_val.value() };
@@ -354,7 +347,7 @@ model<real_type, label_type> csvm::fit(const data_set<real_type, label_type> &da
         // use the one vs. all multi-class classification strategy
         // solve the minimization problem
         aos_matrix<real_type> alpha;
-        std::tie(alpha, *csvm_model.rho_ptr_) = solve_system_of_linear_equations(*data.data_ptr_, *data.y_ptr_, static_cast<detail::parameter<real_type>>(params), epsilon_val.value(), max_iter_val.value());
+        std::tie(alpha, *csvm_model.rho_ptr_) = solve_system_of_linear_equations(*data.data_ptr_, *data.y_ptr_, static_cast<detail::parameter<real_type>>(params), std::forward<Args>(named_args)...);
         csvm_model.alpha_ptr_->push_back(std::move(alpha));
     } else if (classification_val.value() == plssvm::classification_type::oao) {
         // use the one vs. one multi-class classification strategy
@@ -380,7 +373,7 @@ model<real_type, label_type> csvm::fit(const data_set<real_type, label_type> &da
                         "\nClassifying 0 vs 1 ({} vs {}) (1/1):\n",
                         data.mapping_->get_label_by_mapped_index(0),
                         data.mapping_->get_label_by_mapped_index(1));
-            const auto &[alpha, rho] = solve_system_of_linear_equations(*data.data_ptr_, *data.y_ptr_, static_cast<detail::parameter<real_type>>(params), epsilon_val.value(), max_iter_val.value());
+            const auto &[alpha, rho] = solve_system_of_linear_equations(*data.data_ptr_, *data.y_ptr_, static_cast<detail::parameter<real_type>>(params), std::forward<Args>(named_args)...);
             csvm_model.alpha_ptr_->front() = std::move(alpha);
             csvm_model.rho_ptr_->front() = rho.front();  // prevents std::tie
         } else {
@@ -408,8 +401,6 @@ model<real_type, label_type> csvm::fit(const data_set<real_type, label_type> &da
                         binary_y(0, si) = detail::contains(indices[i], sorted_indices[si]) ? real_type{ 1.0 } : real_type{ -1.0 };
                     }
 
-                    // if max_iter is the default value, update it according to the current binary classification matrix size
-                    const unsigned long long binary_max_iter = max_iter_val.is_default() ? static_cast<unsigned long long>(binary_data.num_rows()) : max_iter_val.value();
                     // solve the minimization problem -> note that only a single rhs is present
                     detail::log(verbosity_level::full | verbosity_level::timing,
                                 "\nClassifying {} vs {} ({} vs {}) ({}/{}):\n",
@@ -419,7 +410,7 @@ model<real_type, label_type> csvm::fit(const data_set<real_type, label_type> &da
                                 data.mapping_->get_label_by_mapped_index(j),
                                 pos + 1,
                                 calculate_number_of_classifiers(classification_type::oao, num_classes));
-                    const auto &[alpha, rho] = solve_system_of_linear_equations(binary_data, binary_y, static_cast<detail::parameter<real_type>>(params), epsilon_val.value(), binary_max_iter);
+                    const auto &[alpha, rho] = solve_system_of_linear_equations(binary_data, binary_y, static_cast<detail::parameter<real_type>>(params), std::forward<Args>(named_args)...);
                     (*csvm_model.alpha_ptr_)[pos] = std::move(alpha);
                     (*csvm_model.rho_ptr_)[pos] = rho.front();  // prevents std::tie
                     // go to next one vs. one classification
@@ -526,8 +517,8 @@ std::vector<label_type> csvm::predict(const model<real_type, label_type> &model,
                        aos_matrix<real_type> temp{ num_data_points_in_sub_matrix, num_features };
                        std::vector<std::size_t> sorted_indices(num_data_points_in_sub_matrix);
                        std::merge(indices[i].cbegin(), indices[i].cend(), indices[j].cbegin(), indices[j].cend(), sorted_indices.begin());
-                        // copy the support vectors to the binary support vectors
-                        #pragma omp parallel for collapse(2) default(none) shared(sorted_indices, temp, model) firstprivate(num_data_points_in_sub_matrix, num_features)
+                       // copy the support vectors to the binary support vectors
+                       #pragma omp parallel for collapse(2) default(none) shared(sorted_indices, temp, model) firstprivate(num_data_points_in_sub_matrix, num_features)
                        for (std::size_t si = 0; si < num_data_points_in_sub_matrix; ++si) {
                            for (std::size_t dim = 0; dim < num_features; ++dim) {
                                temp(si, dim) = (*model.data_.data_ptr_)(sorted_indices[si], dim);
@@ -649,8 +640,44 @@ void csvm::sanity_check_parameter() const {
 //                                                       private member functions                                                      //
 //*************************************************************************************************************************************//
 
+template <typename real_type, typename... Args>
+std::pair<aos_matrix<real_type>, std::vector<real_type>> csvm::solve_system_of_linear_equations(const aos_matrix<real_type> &A, const aos_matrix<real_type> &B, const detail::parameter<real_type> &params, Args &&...named_args) {
+    igor::parser parser{ std::forward<Args>(named_args)... };
+
+    // set default values
+    default_value epsilon_val{ default_init<real_type>{ 0.001 } };
+    default_value max_iter_val{ default_init<unsigned long long>{ A.num_rows() } };
+
+    // compile time check: only named parameters are permitted
+    static_assert(!parser.has_unnamed_arguments(), "Can only use named parameter!");
+    // compile time check: each named parameter must only be passed once
+    static_assert(!parser.has_duplicates(), "Can only use each named parameter once!");
+    // compile time check: only some named parameters are allowed
+    static_assert(!parser.has_other_than(epsilon, max_iter, classification), "An illegal named parameter has been passed!");
+
+    // compile time/runtime check: the values must have the correct types
+    if constexpr (parser.has(epsilon)) {
+        // get the value of the provided named parameter
+        epsilon_val = detail::get_value_from_named_parameter<typename decltype(epsilon_val)::value_type>(parser, epsilon);
+        // check if value makes sense
+        if (epsilon_val <= static_cast<typename decltype(epsilon_val)::value_type>(0)) {
+            throw invalid_parameter_exception{ fmt::format("epsilon must be less than 0.0, but is {}!", epsilon_val) };
+        }
+    }
+    if constexpr (parser.has(max_iter)) {
+        // get the value of the provided named parameter
+        max_iter_val = detail::get_value_from_named_parameter<typename decltype(max_iter_val)::value_type>(parser, max_iter);
+        // check if value makes sense
+        if (max_iter_val == static_cast<typename decltype(max_iter_val)::value_type>(0)) {
+            throw invalid_parameter_exception{ fmt::format("max_iter must be greater than 0, but is {}!", max_iter_val) };
+        }
+    }
+
+    return conjugate_gradients(A, B, params, epsilon_val.value(), max_iter_val.value());
+}
+
 template <typename real_type>
-std::pair<aos_matrix<real_type>, std::vector<real_type>> csvm::solve_system_of_linear_equations(const aos_matrix<real_type> &A, const aos_matrix<real_type> &B, const detail::parameter<real_type> &params, real_type eps, unsigned long long max_cg_iter) {
+std::pair<aos_matrix<real_type>, std::vector<real_type>> csvm::conjugate_gradients(const aos_matrix<real_type> &A, const aos_matrix<real_type> &B, const detail::parameter<real_type> &params, real_type eps, unsigned long long max_cg_iter) {
     using namespace plssvm::operators;
     using clock_type = std::chrono::steady_clock;
 
