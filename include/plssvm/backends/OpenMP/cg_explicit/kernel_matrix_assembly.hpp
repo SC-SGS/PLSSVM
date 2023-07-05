@@ -6,11 +6,11 @@
  * @license This file is part of the PLSSVM project which is released under the MIT license.
  *          See the LICENSE.md file in the project root for full license information.
  *
- * @brief Defines the kernel functions for the C-SVM using the OpenMP backend.
+ * @brief Functions for explicitly assemblying the kernel matrix using the OpenMP backend.
  */
 
-#ifndef PLSSVM_BACKENDS_OPENMP_KERNEL_MATRIX_ASSEMBLY_HPP_
-#define PLSSVM_BACKENDS_OPENMP_KERNEL_MATRIX_ASSEMBLY_HPP_
+#ifndef PLSSVM_BACKENDS_OPENMP_CG_EXPLICIT_KERNEL_MATRIX_ASSEMBLY_HPP_
+#define PLSSVM_BACKENDS_OPENMP_CG_EXPLICIT_KERNEL_MATRIX_ASSEMBLY_HPP_
 #pragma once
 
 #include "plssvm/matrix.hpp"  // plssvm::aos_matrix

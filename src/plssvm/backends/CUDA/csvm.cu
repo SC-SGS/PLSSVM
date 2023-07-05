@@ -8,24 +8,23 @@
 
 #include "plssvm/backends/CUDA/csvm.hpp"
 
-#include "plssvm/backend_types.hpp"                    // plssvm::backend_type
-#include "plssvm/backends/CUDA/detail/device_ptr.cuh"  // plssvm::cuda::detail::device_ptr
-#include "plssvm/backends/CUDA/detail/utility.cuh"     // plssvm::cuda::detail::{device_synchronize, get_device_count, set_device, peek_at_last_error}
-#include "plssvm/backends/CUDA/exceptions.hpp"         // plssvm::cuda::backend_exception
-#include "plssvm/backends/CUDA/predict_kernel.cuh"     // plssvm::cuda::detail::{device_kernel_w_linear, device_kernel_predict_polynomial, device_kernel_predict_rbf}
-#include "plssvm/backends/CUDA/q_kernel.cuh"           // plssvm::cuda::detail::{device_kernel_q_linear, device_kernel_q_polynomial, device_kernel_q_rbf}
-#include "plssvm/backends/CUDA/svm_kernel.cuh"         // plssvm::cuda::detail::{device_kernel_linear, device_kernel_polynomial, device_kernel_rbf}
-#include "plssvm/detail/assert.hpp"                    // PLSSVM_ASSERT
-#include "plssvm/detail/execution_range.hpp"           // plssvm::detail::execution_range
-#include "plssvm/detail/logger.hpp"                    // plssvm::detail::log, plssvm::verbosity_level
-#include "plssvm/detail/performance_tracker.hpp"       // plssvm::detail::tracking_entry
-#include "plssvm/exceptions/exceptions.hpp"            // plssvm::exception
-#include "plssvm/kernel_function_types.hpp"            // plssvm::kernel_function_type
-#include "plssvm/parameter.hpp"                        // plssvm::parameter, plssvm::detail::parameter
-#include "plssvm/target_platforms.hpp"                 // plssvm::target_platform
-
-#include "plssvm/backends/CUDA/blas.cuh"
-#include "plssvm/backends/CUDA/kernel_matrix_assembly.cuh"
+#include "plssvm/backend_types.hpp"                                     // plssvm::backend_type
+#include "plssvm/backends/CUDA/cg_explicit/blas.cuh"                    // plssvm::cuda::device_kernel_gemm
+#include "plssvm/backends/CUDA/cg_explicit/kernel_matrix_assembly.cuh"  // plssvm::cuda::{device_kernel_assembly_linear, device_kernel_assembly_polynomial, device_kernel_assembly_rbf}
+#include "plssvm/backends/CUDA/cg_implicit/svm_kernel.cuh"              // plssvm::cuda::detail::{device_kernel_linear, device_kernel_polynomial, device_kernel_rbf}
+#include "plssvm/backends/CUDA/detail/device_ptr.cuh"                   // plssvm::cuda::detail::device_ptr
+#include "plssvm/backends/CUDA/detail/utility.cuh"                      // plssvm::cuda::detail::{device_synchronize, get_device_count, set_device, peek_at_last_error}
+#include "plssvm/backends/CUDA/exceptions.hpp"                          // plssvm::cuda::backend_exception
+#include "plssvm/backends/CUDA/predict_kernel.cuh"                      // plssvm::cuda::detail::{device_kernel_w_linear, device_kernel_predict_polynomial, device_kernel_predict_rbf}
+#include "plssvm/detail/assert.hpp"                                     // PLSSVM_ASSERT
+#include "plssvm/detail/execution_range.hpp"                            // plssvm::detail::execution_range
+#include "plssvm/detail/logger.hpp"                                     // plssvm::detail::log, plssvm::verbosity_level
+#include "plssvm/detail/performance_tracker.hpp"                        // plssvm::detail::tracking_entry
+#include "plssvm/detail/simple_any.hpp"                                 // plssvm::detail::simple_any
+#include "plssvm/exceptions/exceptions.hpp"                             // plssvm::exception
+#include "plssvm/kernel_function_types.hpp"                             // plssvm::kernel_function_type
+#include "plssvm/parameter.hpp"                                         // plssvm::parameter, plssvm::detail::parameter
+#include "plssvm/target_platforms.hpp"                                  // plssvm::target_platform
 
 #include "cuda.h"                                      // cuda runtime functions
 #include "cuda_runtime_api.h"                          // cuda runtime functions
@@ -38,7 +37,6 @@
 #include <iostream>                                    // std::cout, std::endl
 #include <numeric>                                     // std::iota
 #include <utility>                                     // std::pair, std::make_pair
-#include <any>
 
 namespace plssvm::cuda {
 

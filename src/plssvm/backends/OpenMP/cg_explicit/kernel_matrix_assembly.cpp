@@ -6,7 +6,7 @@
  *          See the LICENSE.md file in the project root for full license information.
  */
 
-#include "plssvm/backends/OpenMP/kernel_matrix_assembly.hpp"
+#include "plssvm/backends/OpenMP/cg_explicit/kernel_matrix_assembly.hpp"
 
 #include "plssvm/constants.hpp"              // plssvm::kernel_index_type, plssvm::OPENMP_BLOCK_SIZE
 #include "plssvm/detail/assert.hpp"          // PLSSVM_ASSERT

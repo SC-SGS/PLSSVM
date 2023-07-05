@@ -1,15 +1,14 @@
 /**
-* @author Alexander Van Craen
-* @author Marcel Breyer
-* @copyright 2018-today The PLSSVM project - All Rights Reserved
-* @license This file is part of the PLSSVM project which is released under the MIT license.
-*          See the LICENSE.md file in the project root for full license information.
-*/
+ * @author Alexander Van Craen
+ * @author Marcel Breyer
+ * @copyright 2018-today The PLSSVM project - All Rights Reserved
+ * @license This file is part of the PLSSVM project which is released under the MIT license.
+ *          See the LICENSE.md file in the project root for full license information.
+ */
 
-#include "plssvm/backends/CUDA/kernel_matrix_assembly.cuh"
+#include "plssvm/backends/CUDA/cg_explicit/kernel_matrix_assembly.cuh"
 
-#include "plssvm/backends/CUDA/detail/atomics.cuh"  // atomicAdd for double precision floating point numbers on older CUDA hardware
-#include "plssvm/constants.hpp"                     // plssvm::kernel_index_type, plssvm::THREAD_BLOCK_SIZE, plssvm::INTERNAL_BLOCK_SIZE
+#include "plssvm/constants.hpp"  // plssvm::kernel_index_type
 
 namespace plssvm::cuda {
 
@@ -55,7 +54,6 @@ __global__ void device_kernel_assembly_polynomial(const real_type *q, real_type 
 template __global__ void device_kernel_assembly_polynomial(const float *, float *, const float *, const float, const float, const kernel_index_type, const kernel_index_type, const int, const float, const float);
 template __global__ void device_kernel_assembly_polynomial(const double *, double *, const double *, const double, const double, const kernel_index_type, const kernel_index_type, const int, const double, const double);
 
-
 template <typename real_type>
 __global__ void device_kernel_assembly_rbf(const real_type *q, real_type *ret, const real_type *data_d, const real_type QA_cost, const real_type cost, const kernel_index_type num_rows, const kernel_index_type num_features, const real_type gamma) {
     const unsigned long long i = blockIdx.x * blockDim.x + threadIdx.x;
@@ -78,5 +76,4 @@ __global__ void device_kernel_assembly_rbf(const real_type *q, real_type *ret, c
 template __global__ void device_kernel_assembly_rbf(const float *, float *, const float *, const float, const float, const kernel_index_type, const kernel_index_type, const float);
 template __global__ void device_kernel_assembly_rbf(const double *, double *, const double *, const double, const double, const kernel_index_type, const kernel_index_type, const double);
 
-
-}
+}  // namespace plssvm::cuda

@@ -6,7 +6,7 @@
  *          See the LICENSE.md file in the project root for full license information.
  */
 
-#include "plssvm/backends/CUDA/blas.cuh"
+#include "plssvm/backends/CUDA/cg_explicit/blas.cuh"
 
 namespace plssvm::cuda {
 

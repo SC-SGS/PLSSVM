@@ -8,19 +8,19 @@
 
 #include "plssvm/backends/OpenMP/csvm.hpp"
 
-#include "plssvm/backend_types.hpp"                           // plssvm::backend_type
-#include "plssvm/backends/OpenMP/exceptions.hpp"              // plssvm::openmp::backend_exception
-#include "plssvm/backends/OpenMP/kernel_matrix_assembly.hpp"  // plssvm::openmp::linear_kernel_matrix_assembly, plssvm::openmp::polynomial_kernel_matrix_assembly, plssvm::openmp::rbf_kernel_matrix_assembly
-#include "plssvm/backends/OpenMP/q_kernel.hpp"                // plssvm::openmp::device_kernel_q_linear, plssvm::openmp::device_kernel_q_polynomial, plssvm::openmp::device_kernel_q_rbf
-#include "plssvm/csvm.hpp"                                    // plssvm::csvm
-#include "plssvm/detail/assert.hpp"                           // PLSSVM_ASSERT
-#include "plssvm/detail/logger.hpp"                           // plssvm::detail::log, plssvm::verbosity_level
-#include "plssvm/detail/operators.hpp"                        // various operator overloads for std::vector and scalars
-#include "plssvm/detail/performance_tracker.hpp"              // plssvm::detail::tracking_entry, PLSSVM_DETAIL_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY
-#include "plssvm/kernel_function_types.hpp"                   // plssvm::kernel_function_type
-#include "plssvm/matrix.hpp"                                  // plssvm::aos_matrix
-#include "plssvm/parameter.hpp"                               // plssvm::parameter, plssvm::detail::parameter
-#include "plssvm/target_platforms.hpp"                        // plssvm::target_platform
+#include "plssvm/backend_types.hpp"                                       // plssvm::backend_type
+#include "plssvm/backends/OpenMP/cg_explicit/kernel_matrix_assembly.hpp"  // plssvm::openmp::linear_kernel_matrix_assembly, plssvm::openmp::polynomial_kernel_matrix_assembly, plssvm::openmp::rbf_kernel_matrix_assembly
+#include "plssvm/backends/OpenMP/exceptions.hpp"                          // plssvm::openmp::backend_exception
+#include "plssvm/backends/OpenMP/q_kernel.hpp"                            // plssvm::openmp::device_kernel_q_linear, plssvm::openmp::device_kernel_q_polynomial, plssvm::openmp::device_kernel_q_rbf
+#include "plssvm/csvm.hpp"                                                // plssvm::csvm
+#include "plssvm/detail/assert.hpp"                                       // PLSSVM_ASSERT
+#include "plssvm/detail/logger.hpp"                                       // plssvm::detail::log, plssvm::verbosity_level
+#include "plssvm/detail/operators.hpp"                                    // various operator overloads for std::vector and scalars
+#include "plssvm/detail/performance_tracker.hpp"                          // plssvm::detail::tracking_entry, PLSSVM_DETAIL_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY
+#include "plssvm/kernel_function_types.hpp"                               // plssvm::kernel_function_type
+#include "plssvm/matrix.hpp"                                              // plssvm::aos_matrix
+#include "plssvm/parameter.hpp"                                           // plssvm::parameter, plssvm::detail::parameter
+#include "plssvm/target_platforms.hpp"                                    // plssvm::target_platform
 
 #include "fmt/chrono.h"   // directly print std::chrono literals with fmt
 #include "fmt/core.h"     // fmt::format
