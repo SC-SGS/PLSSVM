@@ -204,44 +204,47 @@ class csvm {
 
     /**
      * @brief Setup all necessary data on the device(s). Backend specific!
+     * @param[in] solver the used solver type
      * @param[in] A the data to setup
      * @return the backend specific setup data, e.g., pointer to GPU memory for the GPU related backends (`[[nodiscard]]`)
      */
-    [[nodiscard]] virtual detail::simple_any setup_data_on_devices(const solver_type solver, const aos_matrix<float> &A) const = 0;
+    [[nodiscard]] virtual detail::simple_any setup_data_on_devices(solver_type solver, const aos_matrix<float> &A) const = 0;
     /**
      * @copydoc plssvm::csvm::setup_data_on_devices
      */
-    [[nodiscard]] virtual detail::simple_any setup_data_on_devices(const solver_type solver, const aos_matrix<double> &A) const = 0;
+    [[nodiscard]] virtual detail::simple_any setup_data_on_devices(solver_type solver, const aos_matrix<double> &A) const = 0;
 
     /**
      * @brief Explicitly assemble the kernel matrix. Backend specific!
-     * @param[in] params the parameters used to assemble the kernel matrix (e.g., the used kernel function
+     * @param[in] solver the used solver type, determines the return type
+     * @param[in] params the parameters used to assemble the kernel matrix (e.g., the used kernel function)
      * @param[in] data the data used to assemble the kernel matrix; fully stored on the device
      * @param[in] num_rows_reduced the number of rows (and columns) in the kernel matrix; pay attention to the dimension reduction
      * @param[in] num_features the number of features in the data
      * @param[in] q_red the vector used in the dimensional reduction
      * @param[in] QA_cost the value used in the dimensional reduction
-     * @return the kernel matrix; fully stored on the device (`[[nodiscard]]`)
+     * @return based on the used solver type (e.g., cg_explicit -> kernel matrix fully stored on the device; cg_implicit -> "nothing") (`[[nodiscard]]`)
      */
-    [[nodiscard]] virtual detail::simple_any assemble_kernel_matrix(const detail::parameter<float> &params, solver_type solver, const ::plssvm::detail::simple_any &data, const std::vector<float> &q_red, float QA_cost) const = 0;
+    [[nodiscard]] virtual detail::simple_any assemble_kernel_matrix(solver_type solver, const detail::parameter<float> &params, const ::plssvm::detail::simple_any &data, const std::vector<float> &q_red, float QA_cost) const = 0;
     /**
      * @copydoc plssvm::csvm::assemble_kernel_matrix_explicit
      */
-    [[nodiscard]] virtual detail::simple_any assemble_kernel_matrix(const detail::parameter<double> &params, solver_type solver, const ::plssvm::detail::simple_any &data, const std::vector<double> &q_red, double QA_cost) const = 0;
+    [[nodiscard]] virtual detail::simple_any assemble_kernel_matrix(solver_type solver, const detail::parameter<double> &params, const ::plssvm::detail::simple_any &data, const std::vector<double> &q_red, double QA_cost) const = 0;
 
     /**
      * @brief Perform a BLAS like GEMM matrix-matrix multiplication: `C = alpha * A * B + beta * C`.
+     * @param[in] solver the used solver type, determines the type of @p A
      * @param[in] alpha the value to scale the result of the matrix-matrix multiplication
-     * @param[in] A the explicit kernel matrix for the matrix multiplication; fully stored on the device
+     * @param[in] A a matrix depending on the used solver type (e.g., cg_explicit -> the kernel matrix fully stored on the device; cg_implicit -> the input data set used to implicitly perfom the matrix-matrix multiplication)
      * @param[in] B the other matrix to multiply the kernel matrix with
      * @param[in] beta the value to scale the matrix o add with
      * @param[in,out] C the result matrix and the matrix to add (inplace)
      */
-    virtual void kernel_gemm(solver_type solver, float alpha, const detail::simple_any &A, const aos_matrix<float> &B, float beta, aos_matrix<float> &C) const = 0;
+    virtual void blas_gemm(solver_type solver, float alpha, const detail::simple_any &A, const aos_matrix<float> &B, float beta, aos_matrix<float> &C) const = 0;
     /**
      * @copydoc plssvm::csvm::kernel_matrix_matmul_explicit
      */
-    virtual void kernel_gemm(solver_type solver, double alpha, const detail::simple_any &A, const aos_matrix<double> &B, double beta, aos_matrix<double> &C) const = 0;
+    virtual void blas_gemm(solver_type solver, double alpha, const detail::simple_any &A, const aos_matrix<double> &B, double beta, aos_matrix<double> &C) const = 0;
 
 
     /// The target platform of this SVM.
@@ -751,7 +754,7 @@ std::pair<aos_matrix<real_type>, std::vector<real_type>> csvm::solve_system_of_l
 
     // assemble explicit kernel matrix
     const std::chrono::steady_clock::time_point assembly_start_time = std::chrono::steady_clock::now();
-    const detail::simple_any kernel_matrix = this->assemble_kernel_matrix(params, used_solver, data, q_red, QA_cost);
+    const detail::simple_any kernel_matrix = this->assemble_kernel_matrix(used_solver, params,  data, q_red, QA_cost);
     const std::chrono::steady_clock::time_point assembly_end_time = std::chrono::steady_clock::now();
     detail::log(verbosity_level::full | verbosity_level::timing,
                 "Assembled the kernel matrix in {}.\n",

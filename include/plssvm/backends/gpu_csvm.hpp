@@ -167,6 +167,7 @@ class gpu_csvm : public ::plssvm::csvm {
     template <typename real_type>
     void device_reduction(std::vector<device_ptr_type<real_type>> &buffer_d, std::vector<real_type> &buffer) const;
 
+
     /**
      * @copydoc plssvm::csvm::setup_data_on_devices
      */
@@ -184,30 +185,30 @@ class gpu_csvm : public ::plssvm::csvm {
     /**
      * @copydoc plssvm::csvm::assemble_kernel_matrix_explicit_impl
      */
-    [[nodiscard]] ::plssvm::detail::simple_any assemble_kernel_matrix(const ::plssvm::detail::parameter<float> &params, const solver_type solver, const ::plssvm::detail::simple_any & data, const std::vector<float> &q_red, float QA_cost) const final { return this->assemble_kernel_matrix_impl(params, solver, data, q_red, QA_cost); }
+    [[nodiscard]] ::plssvm::detail::simple_any assemble_kernel_matrix(const solver_type solver, const ::plssvm::detail::parameter<float> &params, const ::plssvm::detail::simple_any & data, const std::vector<float> &q_red, const float QA_cost) const final { return this->assemble_kernel_matrix_impl(solver, params, data, q_red, QA_cost); }
     /**
      * @copydoc plssvm::csvm::assemble_kernel_matrix_explicit_impl
      */
-    [[nodiscard]] ::plssvm::detail::simple_any assemble_kernel_matrix(const ::plssvm::detail::parameter<double> &params, const solver_type solver, const ::plssvm::detail::simple_any &data, const std::vector<double> &q_red, double QA_cost) const final { return this->assemble_kernel_matrix_impl(params, solver, data, q_red, QA_cost); }
+    [[nodiscard]] ::plssvm::detail::simple_any assemble_kernel_matrix(const solver_type solver, const ::plssvm::detail::parameter<double> &params, const ::plssvm::detail::simple_any &data, const std::vector<double> &q_red, const double QA_cost) const final { return this->assemble_kernel_matrix_impl(solver, params, data, q_red, QA_cost); }
     /**
      * @copydoc plssvm::csvm::assemble_kernel_matrix_explicit_impl
      */
     template <typename real_type>
-    [[nodiscard]] ::plssvm::detail::simple_any assemble_kernel_matrix_impl(const ::plssvm::detail::parameter<real_type> &params, solver_type solver, const ::plssvm::detail::simple_any &data, const std::vector<real_type> &q_red, real_type QA_cost) const;
+    [[nodiscard]] ::plssvm::detail::simple_any assemble_kernel_matrix_impl(solver_type solver, const ::plssvm::detail::parameter<real_type> &params, const ::plssvm::detail::simple_any &data, const std::vector<real_type> &q_red, real_type QA_cost) const;
 
     /**
      * @copydoc plssvm::csvm::kernel_matrix_matmul_explicit
      */
-    void kernel_gemm(solver_type solver, float alpha, const ::plssvm::detail::simple_any &A, const aos_matrix<float> &B, const float beta, aos_matrix<float> &C) const final { this->kernel_gemm_impl(solver, alpha, A, B, beta, C); }
+    void blas_gemm(const solver_type solver, const float alpha, const ::plssvm::detail::simple_any &A, const aos_matrix<float> &B, const float beta, aos_matrix<float> &C) const final { this->blas_gemm_impl(solver, alpha, A, B, beta, C); }
     /**
      * @copydoc plssvm::csvm::kernel_matrix_matmul_explicit
      */
-    void kernel_gemm(solver_type solver, double alpha, const ::plssvm::detail::simple_any &A, const aos_matrix<double> &B, const double beta, aos_matrix<double> &C) const final { this->kernel_gemm_impl(solver, alpha, A, B, beta, C); }
+    void blas_gemm(const solver_type solver, const double alpha, const ::plssvm::detail::simple_any &A, const aos_matrix<double> &B, const double beta, aos_matrix<double> &C) const final { this->blas_gemm_impl(solver, alpha, A, B, beta, C); }
     /**
      * @copydoc plssvm::csvm::kernel_matrix_matmul_explicit
      */
     template <typename real_type>
-    void kernel_gemm_impl(solver_type solver, real_type alpha, const ::plssvm::detail::simple_any &A, const aos_matrix<real_type> &B, real_type beta, aos_matrix<real_type> &C) const;
+    void blas_gemm_impl(solver_type solver, real_type alpha, const ::plssvm::detail::simple_any &A, const aos_matrix<real_type> &B, real_type beta, aos_matrix<real_type> &C) const;
 
 
     //*************************************************************************************************************************************//
@@ -429,7 +430,7 @@ template <typename real_type>
 
 template <template <typename> typename device_ptr_t, typename queue_t>
 template <typename real_type>
-::plssvm::detail::simple_any gpu_csvm<device_ptr_t, queue_t>::assemble_kernel_matrix_impl(const ::plssvm::detail::parameter<real_type> &params, const solver_type solver, const ::plssvm::detail::simple_any &data, const std::vector<real_type> &q_red, real_type QA_cost) const {
+::plssvm::detail::simple_any gpu_csvm<device_ptr_t, queue_t>::assemble_kernel_matrix_impl(const solver_type solver, const ::plssvm::detail::parameter<real_type> &params, const ::plssvm::detail::simple_any &data, const std::vector<real_type> &q_red, real_type QA_cost) const {
     PLSSVM_ASSERT(!q_red.empty(), "The q_red vector may not be empty!");
     PLSSVM_ASSERT(solver != solver_type::automatic, "An explicit solver type must be provided instead of solver_type::automatic!");
 
@@ -463,7 +464,7 @@ template <typename real_type>
 
 template <template <typename> typename device_ptr_t, typename queue_t>
 template <typename real_type>
-void gpu_csvm<device_ptr_t, queue_t>::kernel_gemm_impl(const solver_type solver, const real_type alpha, const ::plssvm::detail::simple_any &A, const aos_matrix<real_type> &B, const real_type beta, aos_matrix<real_type> &C) const {
+void gpu_csvm<device_ptr_t, queue_t>::blas_gemm_impl(const solver_type solver, const real_type alpha, const ::plssvm::detail::simple_any &A, const aos_matrix<real_type> &B, const real_type beta, aos_matrix<real_type> &C) const {
     PLSSVM_ASSERT(!B.empty(), "The B matrix may not be empty!");
     PLSSVM_ASSERT(!C.empty(), "The C matrix may not be empty!");
     PLSSVM_ASSERT(solver != solver_type::automatic, "An explicit solver type must be provided instead of solver_type::automatic!");

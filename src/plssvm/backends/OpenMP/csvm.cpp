@@ -164,7 +164,7 @@ template detail::simple_any csvm::setup_data_on_devices_impl(const solver_type, 
 template detail::simple_any csvm::setup_data_on_devices_impl(const solver_type, const aos_matrix<double> &) const;
 
 template <typename real_type>
-detail::simple_any csvm::assemble_kernel_matrix_impl(const detail::parameter<real_type> &params, const solver_type solver, const detail::simple_any &data, const std::vector<real_type> &q_red, real_type QA_cost) const {
+detail::simple_any csvm::assemble_kernel_matrix_impl(const solver_type solver, const detail::parameter<real_type> &params, const detail::simple_any &data, const std::vector<real_type> &q_red, const real_type QA_cost) const {
     PLSSVM_ASSERT(!q_red.empty(), "The q_red vector may not be empty!");
     PLSSVM_ASSERT(solver != solver_type::automatic, "An explicit solver type must be provided instead of solver_type::automatic!");
 
@@ -200,11 +200,11 @@ detail::simple_any csvm::assemble_kernel_matrix_impl(const detail::parameter<rea
     }
 }
 
-template detail::simple_any csvm::assemble_kernel_matrix_impl(const detail::parameter<float> &, const solver_type, const detail::simple_any &, const std::vector<float> &, float) const;
-template detail::simple_any csvm::assemble_kernel_matrix_impl(const detail::parameter<double> &, const solver_type, const detail::simple_any &, const std::vector<double> &, double) const;
+template detail::simple_any csvm::assemble_kernel_matrix_impl(const solver_type, const detail::parameter<float> &, const detail::simple_any &, const std::vector<float> &, const float) const;
+template detail::simple_any csvm::assemble_kernel_matrix_impl(const solver_type, const detail::parameter<double> &, const detail::simple_any &, const std::vector<double> &, const double) const;
 
 template <typename real_type>
-void csvm::kernel_gemm_impl(const solver_type solver, const real_type alpha, const detail::simple_any &A, const aos_matrix<real_type> &B, const real_type beta, aos_matrix<real_type> &C) const {
+void csvm::blas_gemm_impl(const solver_type solver, const real_type alpha, const detail::simple_any &A, const aos_matrix<real_type> &B, const real_type beta, aos_matrix<real_type> &C) const {
     PLSSVM_ASSERT(!B.empty(), "The B matrix may not be empty!");
     PLSSVM_ASSERT(!C.empty(), "The C matrix may not be empty!");
     PLSSVM_ASSERT(B.num_rows() == C.num_rows(), "The C matrix must have {} rows, but has {}!", B.num_rows(), C.num_rows());
@@ -236,7 +236,7 @@ void csvm::kernel_gemm_impl(const solver_type solver, const real_type alpha, con
     }
 }
 
-template void csvm::kernel_gemm_impl(const solver_type, const float, const detail::simple_any &, const aos_matrix<float> &, const float, aos_matrix<float> &) const;
-template void csvm::kernel_gemm_impl(const solver_type, const double, const detail::simple_any &, const aos_matrix<double> &, const double, aos_matrix<double> &) const;
+template void csvm::blas_gemm_impl(const solver_type, const float, const detail::simple_any &, const aos_matrix<float> &, const float, aos_matrix<float> &) const;
+template void csvm::blas_gemm_impl(const solver_type, const double, const detail::simple_any &, const aos_matrix<double> &, const double, aos_matrix<double> &) const;
 
 }  // namespace plssvm::openmp
