@@ -173,96 +173,48 @@ template auto csvm::run_predict_kernel_impl(const ::plssvm::detail::parameter<do
 
 
 template <typename real_type>
-::plssvm::detail::simple_any csvm::setup_data_on_devices_impl(const aos_matrix<real_type> &A) const {
-    PLSSVM_ASSERT(!A.empty(), "The matrix to setup on the devices may not be empty!");
-
-    // initialize the data on the device
-    device_ptr_type<real_type> data_d{ A.num_entries() };
-    data_d.copy_to_device(A.data());
-
-    return ::plssvm::detail::simple_any{ std::move(data_d) };
-}
-
-template ::plssvm::detail::simple_any csvm::setup_data_on_devices_impl(const aos_matrix<float> &) const;
-template ::plssvm::detail::simple_any csvm::setup_data_on_devices_impl(const aos_matrix<double> &) const;
-
-template <typename real_type>
-::plssvm::detail::simple_any csvm::assemble_kernel_matrix_explicit_impl(const ::plssvm::detail::parameter<real_type> &params, const ::plssvm::detail::simple_any &data, const std::size_t num_rows_reduced, const std::size_t num_features, const std::vector<real_type> &q_red, real_type QA_cost) const {
-    PLSSVM_ASSERT(num_rows_reduced > 0, "At least one row must be given!");
-    PLSSVM_ASSERT(num_features > 0, "At least one feature must be given!");
-    PLSSVM_ASSERT(!q_red.empty(), "The q_red vector may not be empty!");
-
+auto csvm::run_assemble_kernel_matrix_explicit_impl(const ::plssvm::detail::parameter<real_type> &params, const device_ptr_type<real_type> &data_d, const std::size_t num_rows_reduced, const std::size_t num_features, const device_ptr_type<real_type> &q_red_d, real_type QA_cost) const -> device_ptr_type<real_type> {
     // define grid and block sizes
     const dim3 block(32, 32);
     const dim3 grid(static_cast<int>(std::ceil(num_rows_reduced / static_cast<double>(block.x))),
                     static_cast<int>(std::ceil(num_rows_reduced / static_cast<double>(block.y))));
 
-    // get the pointer to the data that already is on the device
-    const device_ptr_type<real_type> &data_d = data.get<device_ptr_type<real_type>>();
-    PLSSVM_ASSERT((num_rows_reduced + 1) * num_features == data_d.size(),
-                  "The number of values on the device data array is {}, but the provided sizes are {} ((num_rows_reduced + 1) * num_features)",
-                  data_d.size(), (num_rows_reduced + 1) * num_features);
-
-    // allocate memory for the values currently not on the device
-    device_ptr_type<real_type> q_red_d{ q_red.size() };
-    q_red_d.copy_to_device(q_red);
-    device_ptr_type<real_type> kernel_matrix{ num_rows_reduced * num_rows_reduced };
+    device_ptr_type<real_type> kernel_matrix_d{ num_rows_reduced * num_rows_reduced };
 
     detail::set_device(0);
     switch (params.kernel_type) {
         case kernel_function_type::linear:
-            cuda::device_kernel_assembly_linear<<<grid, block>>>(q_red_d.get(), kernel_matrix.get(), data_d.get(), QA_cost, real_type{ 1.0 } / params.cost, static_cast<kernel_index_type>(num_rows_reduced), static_cast<kernel_index_type>(num_features));
+            cuda::device_kernel_assembly_linear<<<grid, block>>>(q_red_d.get(), kernel_matrix_d.get(), data_d.get(), QA_cost, real_type{ 1.0 } / params.cost, static_cast<kernel_index_type>(num_rows_reduced), static_cast<kernel_index_type>(num_features));
             break;
         case kernel_function_type::polynomial:
-            cuda::device_kernel_assembly_polynomial<<<grid, block>>>(q_red_d.get(), kernel_matrix.get(), data_d.get(), QA_cost, real_type{ 1.0 } / params.cost, static_cast<kernel_index_type>(num_rows_reduced), static_cast<kernel_index_type>(num_features), params.degree.value(), params.gamma.value(), params.coef0.value());
+            cuda::device_kernel_assembly_polynomial<<<grid, block>>>(q_red_d.get(), kernel_matrix_d.get(), data_d.get(), QA_cost, real_type{ 1.0 } / params.cost, static_cast<kernel_index_type>(num_rows_reduced), static_cast<kernel_index_type>(num_features), params.degree.value(), params.gamma.value(), params.coef0.value());
             break;
         case kernel_function_type::rbf:
-            cuda::device_kernel_assembly_rbf<<<grid, block>>>(q_red_d.get(), kernel_matrix.get(), data_d.get(), QA_cost, real_type{ 1.0 } / params.cost, static_cast<kernel_index_type>(num_rows_reduced), static_cast<kernel_index_type>(num_features), params.gamma.value());
+            cuda::device_kernel_assembly_rbf<<<grid, block>>>(q_red_d.get(), kernel_matrix_d.get(), data_d.get(), QA_cost, real_type{ 1.0 } / params.cost, static_cast<kernel_index_type>(num_rows_reduced), static_cast<kernel_index_type>(num_features), params.gamma.value());
             break;
     }
     detail::peek_at_last_error();
     detail::device_synchronize(0);
 
-    PLSSVM_ASSERT(num_rows_reduced * num_rows_reduced == kernel_matrix.size(),
-                  "The kernel matrix must be a quadratic matrix with num_rows_reduced^2 ({}) entries, but is {}!",
-                  num_rows_reduced * num_rows_reduced, kernel_matrix.size());
-
-    return ::plssvm::detail::simple_any{ std::move(kernel_matrix) };
+    return kernel_matrix_d;
 }
 
-template ::plssvm::detail::simple_any csvm::assemble_kernel_matrix_explicit_impl(const ::plssvm::detail::parameter<float> &, const ::plssvm::detail::simple_any &, const std::size_t, const std::size_t, const std::vector<float> &, float) const;
-template ::plssvm::detail::simple_any csvm::assemble_kernel_matrix_explicit_impl(const ::plssvm::detail::parameter<double> &, const ::plssvm::detail::simple_any &, const std::size_t, const std::size_t, const std::vector<double> &, double) const;
+template auto csvm::run_assemble_kernel_matrix_explicit_impl(const ::plssvm::detail::parameter<float> &, const device_ptr_type<float> &, const std::size_t, const std::size_t, const device_ptr_type<float> &, float) const -> device_ptr_type<float>;
+template auto csvm::run_assemble_kernel_matrix_explicit_impl(const ::plssvm::detail::parameter<double> &, const device_ptr_type<double> &, const std::size_t, const std::size_t, const device_ptr_type<double> &, double) const -> device_ptr_type<double>;
 
 template <typename real_type>
-void csvm::kernel_gemm_explicit_impl(const real_type alpha, const ::plssvm::detail::simple_any &A, const aos_matrix<real_type> &B, const real_type beta, aos_matrix<real_type> &C) const {
-    const device_ptr_type<real_type> &A_d = A.get<device_ptr_type<real_type>>();
-
-    PLSSVM_ASSERT(!A_d.empty(), "The A matrix may not be empty!");
-    PLSSVM_ASSERT(!B.empty(), "The B matrix may not be empty!");
-    PLSSVM_ASSERT(!C.empty(), "The C matrix may not be empty!");
-
-    const std::size_t num_rhs = B.num_rows();
-    const std::size_t num_rows = B.num_cols();
-
-    // allocate memory on the device
-    device_ptr_type<real_type> B_d{ B.num_entries() };
-    B_d.copy_to_device(B.data());
-    device_ptr_type<real_type> C_d{ C.num_entries() };
-    C_d.copy_to_device(C.data());
-
+void csvm::run_device_kernel_gemm_explicit_impl(const std::size_t m, const std::size_t n, const std::size_t k, const real_type alpha, const device_ptr_type<real_type> &A_d, const device_ptr_type<real_type> &B_d, const real_type beta, device_ptr_type<real_type> &C_d) const {
     const dim3 block(32, 32);
-    const dim3 grid(static_cast<int>(std::ceil(num_rows / static_cast<double>(block.x))),
-                    static_cast<int>(std::ceil(num_rhs / static_cast<double>(block.y))));
+    const dim3 grid(static_cast<int>(std::ceil(m / static_cast<double>(block.x))),
+                    static_cast<int>(std::ceil(n / static_cast<double>(block.y))));
 
     detail::set_device(0);
-    cuda::device_kernel_gemm<<<grid, block>>>(num_rows, num_rhs, num_rows, alpha, A_d.get(), B_d.get(), beta, C_d.get());
+    cuda::device_kernel_gemm<<<grid, block>>>(m, n, k, alpha, A_d.get(), B_d.get(), beta, C_d.get());
     detail::peek_at_last_error();
     detail::device_synchronize(0);
-
-    C_d.copy_to_host(C.data());
 }
 
-template void csvm::kernel_gemm_explicit_impl(const float, const ::plssvm::detail::simple_any &, const aos_matrix<float> &, const float, aos_matrix<float> &) const;
-template void csvm::kernel_gemm_explicit_impl(const double, const ::plssvm::detail::simple_any &, const aos_matrix<double> &, const double, aos_matrix<double> &) const;
+template void csvm::run_device_kernel_gemm_explicit_impl(const std::size_t, const std::size_t, const std::size_t, const float, const device_ptr_type<float> &, const device_ptr_type<float> &, const float, device_ptr_type<float> &) const;
+template void csvm::run_device_kernel_gemm_explicit_impl(const std::size_t, const std::size_t, const std::size_t, const double, const device_ptr_type<double> &, const device_ptr_type<double> &, const double, device_ptr_type<double> &) const;
 
 }  // namespace plssvm::cuda

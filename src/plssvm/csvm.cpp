@@ -46,7 +46,7 @@ void csvm::sanity_check_parameter() const {
 }
 
 template <typename real_type>
-aos_matrix<real_type> csvm::conjugate_gradients(const detail::simple_any &A, const aos_matrix<real_type> &B, const real_type eps, const unsigned long long max_cg_iter, const solver_type) const {
+aos_matrix<real_type> csvm::conjugate_gradients(const detail::simple_any &A, const aos_matrix<real_type> &B, const real_type eps, const unsigned long long max_cg_iter, const solver_type cg_solver) const {
     using namespace plssvm::operators;
 
     PLSSVM_ASSERT(!B.empty(), "The right-hand sides may not be empty!");
@@ -62,7 +62,7 @@ aos_matrix<real_type> csvm::conjugate_gradients(const detail::simple_any &A, con
 
     // R = B - A * X
     aos_matrix<real_type> R{ B };
-    this->kernel_gemm_explicit(real_type{ -1.0 }, A, X, real_type{ 1.0 }, R);
+    this->kernel_gemm(cg_solver, real_type{ -1.0 }, A, X, real_type{ 1.0 }, R);
 
     // delta = R.T * R
     std::vector<real_type> delta(num_rhs);
@@ -128,7 +128,7 @@ aos_matrix<real_type> csvm::conjugate_gradients(const detail::simple_any &A, con
 
         // Q = A * D
         aos_matrix<real_type> Q{ D.num_rows(), D.num_cols() };
-        this->kernel_gemm_explicit(real_type{ 1.0 }, A, D, real_type{ 0.0 }, Q);
+        this->kernel_gemm(cg_solver, real_type{ 1.0 }, A, D, real_type{ 0.0 }, Q);
 
         // alpha = delta_new / (D^T * Q))
         std::vector<real_type> alpha(num_rhs);
@@ -154,7 +154,7 @@ aos_matrix<real_type> csvm::conjugate_gradients(const detail::simple_any &A, con
             // explicitly recalculate residual to remove accumulating floating point errors
             // R = B - A * X
             R = B;
-            this->kernel_gemm_explicit(real_type{ -1.0 }, A, X, real_type{ 1.0 }, R);
+            this->kernel_gemm(cg_solver, real_type{ -1.0 }, A, X, real_type{ 1.0 }, R);
         } else {
             // R = R - alpha * Q
             #pragma omp parallel for collapse(2) default(none) shared(R, alpha, Q) firstprivate(num_rhs, num_rows)

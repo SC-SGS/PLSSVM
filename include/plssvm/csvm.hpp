@@ -206,11 +206,11 @@ class csvm {
      * @param[in] A the data to setup
      * @return the backend specific setup data, e.g., pointer to GPU memory for the GPU related backends (`[[nodiscard]]`)
      */
-    [[nodiscard]] virtual detail::simple_any setup_data_on_devices(const aos_matrix<float> &A) const = 0;
+    [[nodiscard]] virtual detail::simple_any setup_data_on_devices(const solver_type solver, const aos_matrix<float> &A) const = 0;
     /**
      * @copydoc plssvm::csvm::setup_data_on_devices
      */
-    [[nodiscard]] virtual detail::simple_any setup_data_on_devices(const aos_matrix<double> &A) const = 0;
+    [[nodiscard]] virtual detail::simple_any setup_data_on_devices(const solver_type solver, const aos_matrix<double> &A) const = 0;
 
     /**
      * @brief Explicitly assemble the kernel matrix. Backend specific!
@@ -222,11 +222,11 @@ class csvm {
      * @param[in] QA_cost the value used in the dimensional reduction
      * @return the kernel matrix; fully stored on the device (`[[nodiscard]]`)
      */
-    [[nodiscard]] virtual detail::simple_any assemble_kernel_matrix_explicit(const detail::parameter<float> &params, const ::plssvm::detail::simple_any &data, const std::size_t num_rows_reduced, const std::size_t num_features, const std::vector<float> &q_red, float QA_cost) const = 0;
+    [[nodiscard]] virtual detail::simple_any assemble_kernel_matrix(const detail::parameter<float> &params, solver_type solver, const ::plssvm::detail::simple_any &data, const std::size_t num_rows_reduced, const std::size_t num_features, const std::vector<float> &q_red, float QA_cost) const = 0;
     /**
      * @copydoc plssvm::csvm::assemble_kernel_matrix_explicit
      */
-    [[nodiscard]] virtual detail::simple_any assemble_kernel_matrix_explicit(const detail::parameter<double> &params, const ::plssvm::detail::simple_any &data, const std::size_t num_rows_reduced, const std::size_t num_features, const std::vector<double> &q_red, double QA_cost) const = 0;
+    [[nodiscard]] virtual detail::simple_any assemble_kernel_matrix(const detail::parameter<double> &params, solver_type solver, const ::plssvm::detail::simple_any &data, const std::size_t num_rows_reduced, const std::size_t num_features, const std::vector<double> &q_red, double QA_cost) const = 0;
 
     /**
      * @brief Perform a BLAS like GEMM matrix-matrix multiplication: `C = alpha * A * B + beta * C`.
@@ -236,11 +236,11 @@ class csvm {
      * @param[in] beta the value to scale the matrix o add with
      * @param[in,out] C the result matrix and the matrix to add (inplace)
      */
-    virtual void kernel_gemm_explicit(float alpha, const detail::simple_any &A, const aos_matrix<float> &B, float beta, aos_matrix<float> &C) const = 0;
+    virtual void kernel_gemm(solver_type solver, float alpha, const detail::simple_any &A, const aos_matrix<float> &B, float beta, aos_matrix<float> &C) const = 0;
     /**
      * @copydoc plssvm::csvm::kernel_matrix_matmul_explicit
      */
-    virtual void kernel_gemm_explicit(double alpha, const detail::simple_any &A, const aos_matrix<double> &B, double beta, aos_matrix<double> &C) const = 0;
+    virtual void kernel_gemm(solver_type solver, double alpha, const detail::simple_any &A, const aos_matrix<double> &B, double beta, aos_matrix<double> &C) const = 0;
 
 
     /// The target platform of this SVM.
@@ -699,6 +699,12 @@ std::pair<aos_matrix<real_type>, std::vector<real_type>> csvm::solve_system_of_l
         used_solver = detail::get_value_from_named_parameter<solver_type>(parser, solver);
     }
 
+    // determine the correct solver type, if the automatic solver type has been provided
+    if (used_solver == solver_type::automatic) {
+        // TODO: decide which solver to use
+        used_solver = solver_type::cg_explicit;
+    }
+
     detail::log(verbosity_level::full | verbosity_level::timing,
                 "Using {} as solver for AX=B.\n",
                 used_solver);
@@ -723,32 +729,20 @@ std::pair<aos_matrix<real_type>, std::vector<real_type>> csvm::solve_system_of_l
     }
 
     // setup/allocate necessary data on the device(s)
-    const detail::simple_any data = this->setup_data_on_devices(A);
+    const detail::simple_any data = this->setup_data_on_devices(used_solver, A);
 
     // assemble explicit kernel matrix
     const std::chrono::steady_clock::time_point assembly_start_time = std::chrono::steady_clock::now();
-    const detail::simple_any kernel_matrix = this->assemble_kernel_matrix_explicit(params, data, num_rows_reduced, num_features, q_red, QA_cost);
+    const detail::simple_any kernel_matrix = this->assemble_kernel_matrix(params, used_solver, data, num_rows_reduced, num_features, q_red, QA_cost);
     const std::chrono::steady_clock::time_point assembly_end_time = std::chrono::steady_clock::now();
     detail::log(verbosity_level::full | verbosity_level::timing,
                 "Assembled the kernel matrix in {}.\n",
                 detail::tracking_entry{ "kernel_matrix", "kernel_matrix_assembly", std::chrono::duration_cast<std::chrono::milliseconds>(assembly_end_time - assembly_start_time) });
 
 
-    aos_matrix<real_type> X{};
-    // choose the correct algorithm based on the (provided) solver type
-    switch (used_solver) {
-        case solver_type::automatic:
-            // TODO: decide which solver to use
-            X = conjugate_gradients(kernel_matrix, B_red, used_epsilon, used_max_iter, solver_type::cg_explicit);
-            break;
-        case solver_type::cg_explicit:
-            X = conjugate_gradients(kernel_matrix, B_red, used_epsilon, used_max_iter, used_solver);
-            break;
-        case solver_type::cg_streaming:
-        case solver_type::cg_implicit:
-            throw exception{ fmt::format("The CG variation {} is currently not implemented!", used_solver) };
-            break;
-    }
+
+    // choose the correct algorithm based on the (provided) solver type -> currently only CG available
+    const aos_matrix<real_type> X = conjugate_gradients(kernel_matrix, B_red, used_epsilon, used_max_iter, used_solver);
 
     // calculate bias and undo dimensional reduction
     aos_matrix<real_type> X_ret{ num_rhs, A.num_rows() };

@@ -167,6 +167,49 @@ class gpu_csvm : public ::plssvm::csvm {
     template <typename real_type>
     void device_reduction(std::vector<device_ptr_type<real_type>> &buffer_d, std::vector<real_type> &buffer) const;
 
+    /**
+     * @copydoc plssvm::csvm::setup_data_on_devices
+     */
+    [[nodiscard]] ::plssvm::detail::simple_any setup_data_on_devices(const solver_type solver, const aos_matrix<float> &A) const final { return this->setup_data_on_devices_impl(solver, A); }
+    /**
+     * @copydoc plssvm::csvm::setup_data_on_devices
+     */
+    [[nodiscard]] ::plssvm::detail::simple_any setup_data_on_devices(const solver_type solver, const aos_matrix<double> &A) const final { return this->setup_data_on_devices_impl(solver, A); }
+    /**
+     * @copydoc plssvm::csvm::setup_data_on_devices
+     */
+    template <typename real_type>
+    [[nodiscard]] ::plssvm::detail::simple_any setup_data_on_devices_impl(solver_type solver, const aos_matrix<real_type> &A) const;
+
+    /**
+     * @copydoc plssvm::csvm::assemble_kernel_matrix_explicit_impl
+     */
+    [[nodiscard]] ::plssvm::detail::simple_any assemble_kernel_matrix(const ::plssvm::detail::parameter<float> &params, const solver_type solver, const ::plssvm::detail::simple_any & data, const std::size_t num_rows_reduced, const std::size_t num_features, const std::vector<float> &q_red, float QA_cost) const final { return this->assemble_kernel_matrix_impl(params, solver, data, num_rows_reduced, num_features, q_red, QA_cost); }
+    /**
+     * @copydoc plssvm::csvm::assemble_kernel_matrix_explicit_impl
+     */
+    [[nodiscard]] ::plssvm::detail::simple_any assemble_kernel_matrix(const ::plssvm::detail::parameter<double> &params, const solver_type solver, const ::plssvm::detail::simple_any &data, const std::size_t num_rows_reduced, const std::size_t num_features, const std::vector<double> &q_red, double QA_cost) const final { return this->assemble_kernel_matrix_impl(params, solver, data, num_rows_reduced, num_features, q_red, QA_cost); }
+    /**
+     * @copydoc plssvm::csvm::assemble_kernel_matrix_explicit_impl
+     */
+    template <typename real_type>
+    [[nodiscard]] ::plssvm::detail::simple_any assemble_kernel_matrix_impl(const ::plssvm::detail::parameter<real_type> &params, solver_type solver, const ::plssvm::detail::simple_any &data, const std::size_t num_rows_reduced, const std::size_t num_features, const std::vector<real_type> &q_red, real_type QA_cost) const;
+
+    /**
+     * @copydoc plssvm::csvm::kernel_matrix_matmul_explicit
+     */
+    void kernel_gemm(solver_type solver, float alpha, const ::plssvm::detail::simple_any &A, const aos_matrix<float> &B, const float beta, aos_matrix<float> &C) const final { this->kernel_gemm_impl(solver, alpha, A, B, beta, C); }
+    /**
+     * @copydoc plssvm::csvm::kernel_matrix_matmul_explicit
+     */
+    void kernel_gemm(solver_type solver, double alpha, const ::plssvm::detail::simple_any &A, const aos_matrix<double> &B, const double beta, aos_matrix<double> &C) const final { this->kernel_gemm_impl(solver, alpha, A, B, beta, C); }
+    /**
+     * @copydoc plssvm::csvm::kernel_matrix_matmul_explicit
+     */
+    template <typename real_type>
+    void kernel_gemm_impl(solver_type solver, real_type alpha, const ::plssvm::detail::simple_any &A, const aos_matrix<real_type> &B, real_type beta, aos_matrix<real_type> &C) const;
+
+
     //*************************************************************************************************************************************//
     //                                         pure virtual, must be implemented by all subclasses                                         //
     //*************************************************************************************************************************************//
@@ -183,6 +226,12 @@ class gpu_csvm : public ::plssvm::csvm {
 
     virtual device_ptr_type<float> run_w_kernel(const device_ptr_type<float> &alpha_d, const device_ptr_type<float> &sv_d, std::size_t num_classes, std::size_t num_sv, std::size_t num_features) const = 0;
     virtual device_ptr_type<double> run_w_kernel(const device_ptr_type<double> &alpha_d, const device_ptr_type<double> &sv_d, std::size_t num_classes, std::size_t num_sv, std::size_t num_features) const = 0;
+
+    virtual void run_device_kernel_gemm_explicit(std::size_t m, std::size_t n, std::size_t k, float alpha, const device_ptr_type<float> &A, const device_ptr_type<float> &B, float beta, device_ptr_type<float> &C) const = 0;
+    virtual void run_device_kernel_gemm_explicit(std::size_t m, std::size_t n, std::size_t k, double alpha, const device_ptr_type<double> &A, const device_ptr_type<double> &B, double beta, device_ptr_type<double> &C) const = 0;
+
+    virtual device_ptr_type<float> run_assemble_kernel_matrix_explicit(const ::plssvm::detail::parameter<float> &params, const device_ptr_type<float> & data_d, const std::size_t num_rows_reduced, const std::size_t num_features, const device_ptr_type<float> &q_red_d, float QA_cost) const = 0;
+    virtual device_ptr_type<double> run_assemble_kernel_matrix_explicit(const ::plssvm::detail::parameter<double> &params, const device_ptr_type<double> &data_d, const std::size_t num_rows_reduced, const std::size_t num_features, const device_ptr_type<double> &q_red_d, double QA_cost) const = 0;
 
     /// The available/used backend devices.
     std::vector<queue_type> devices_{};
@@ -357,6 +406,85 @@ aos_matrix<real_type> gpu_csvm<device_ptr_t, queue_t>::predict_values_impl(const
     aos_matrix<real_type> out_ret{ num_predict_points, num_classes };
     out_d.copy_to_host(out_ret.data());
     return out_ret;
+}
+
+
+template <template <typename> typename device_ptr_t, typename queue_t>
+template <typename real_type>
+::plssvm::detail::simple_any gpu_csvm<device_ptr_t, queue_t>::setup_data_on_devices_impl(const solver_type solver, const aos_matrix<real_type> &A) const {
+    PLSSVM_ASSERT(!A.empty(), "The matrix to setup on the devices may not be empty!");
+    PLSSVM_ASSERT(solver != solver_type::automatic, "An explicit solver type must be provided instead of solver_type::automatic!");
+
+    if (solver == solver_type::cg_explicit) {
+        // initialize the data on the device
+        device_ptr_type<real_type> data_d{ A.num_entries() };
+        data_d.copy_to_device(A.data());
+
+        return ::plssvm::detail::simple_any{ std::move(data_d) };
+    } else {
+        // TODO: implement for other solver types
+        throw exception{ fmt::format("Assemblying the kernel matrix using the {} CG variation is currently not implemented!", solver) };
+    }
+}
+
+template <template <typename> typename device_ptr_t, typename queue_t>
+template <typename real_type>
+::plssvm::detail::simple_any gpu_csvm<device_ptr_t, queue_t>::assemble_kernel_matrix_impl(const ::plssvm::detail::parameter<real_type> &params, const solver_type solver, const ::plssvm::detail::simple_any &data, const std::size_t num_rows_reduced, const std::size_t num_features, const std::vector<real_type> &q_red, real_type QA_cost) const {
+    PLSSVM_ASSERT(num_rows_reduced > 0, "At least one row must be given!");
+    PLSSVM_ASSERT(num_features > 0, "At least one feature must be given!");
+    PLSSVM_ASSERT(!q_red.empty(), "The q_red vector may not be empty!");
+    PLSSVM_ASSERT(solver != solver_type::automatic, "An explicit solver type must be provided instead of solver_type::automatic!");
+
+    if (solver == solver_type::cg_explicit) {
+        // get the pointer to the data that already is on the device
+        const device_ptr_type<real_type> &data_d = data.get<device_ptr_type<real_type>>();
+        PLSSVM_ASSERT((num_rows_reduced + 1) * num_features == data_d.size(),
+                      "The number of values on the device data array is {}, but the provided sizes are {} ((num_rows_reduced + 1) * num_features)",
+                      data_d.size(), (num_rows_reduced + 1) * num_features);
+
+        // allocate memory for the values currently not on the device
+        device_ptr_type<real_type> q_red_d{ q_red.size() };
+        q_red_d.copy_to_device(q_red);
+        device_ptr_type<real_type> kernel_matrix = this->run_assemble_kernel_matrix_explicit(params, data_d, num_rows_reduced, num_features, q_red_d, QA_cost);  // TODO:
+
+        PLSSVM_ASSERT(num_rows_reduced * num_rows_reduced == kernel_matrix.size(),
+                      "The kernel matrix must be a quadratic matrix with num_rows_reduced^2 ({}) entries, but is {}!",
+                      num_rows_reduced * num_rows_reduced, kernel_matrix.size());
+
+        return ::plssvm::detail::simple_any{ std::move(kernel_matrix) };
+    } else {
+        // TODO: implement for other solver types
+        throw exception{ fmt::format("Assemblying the kernel matrix using the {} CG variation is currently not implemented!", solver) };
+    }
+}
+
+template <template <typename> typename device_ptr_t, typename queue_t>
+template <typename real_type>
+void gpu_csvm<device_ptr_t, queue_t>::kernel_gemm_impl(const solver_type solver, const real_type alpha, const ::plssvm::detail::simple_any &A, const aos_matrix<real_type> &B, const real_type beta, aos_matrix<real_type> &C) const {
+    PLSSVM_ASSERT(!B.empty(), "The B matrix may not be empty!");
+    PLSSVM_ASSERT(!C.empty(), "The C matrix may not be empty!");
+    PLSSVM_ASSERT(solver != solver_type::automatic, "An explicit solver type must be provided instead of solver_type::automatic!");
+
+    if (solver == solver_type::cg_explicit) {
+        const device_ptr_type<real_type> &A_d = A.get<device_ptr_type<real_type>>();
+        PLSSVM_ASSERT(!A_d.empty(), "The A matrix may not be empty!");
+
+        const std::size_t num_rhs = B.num_rows();  // TODO: must be changed for implicit :/
+        const std::size_t num_rows = B.num_cols();
+
+        // allocate memory on the device
+        device_ptr_type<real_type> B_d{ B.num_entries() };
+        B_d.copy_to_device(B.data());
+        device_ptr_type<real_type> C_d{ C.num_entries() };
+        C_d.copy_to_device(C.data());
+
+        this->run_device_kernel_gemm_explicit(num_rows, num_rhs, num_rows, alpha, A_d, B_d, beta, C_d);
+
+        C_d.copy_to_host(C.data());
+    } else {
+        // TODO: implement for other solver types
+        throw exception{ fmt::format("The GEMM calculation using the {} CG variation is currently not implemented!", solver) };
+    }
 }
 
 }  // namespace plssvm::detail
