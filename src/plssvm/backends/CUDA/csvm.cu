@@ -178,11 +178,11 @@ template void csvm::run_gemm_kernel_explicit_impl(const std::size_t, const std::
 
 template <typename real_type>
 auto csvm::run_w_kernel_impl(const device_ptr_type<real_type> &alpha_d, const device_ptr_type<real_type> &sv_d, std::size_t num_classes, std::size_t num_sv, std::size_t num_features) const -> device_ptr_type<real_type> {
-    device_ptr_type<real_type> w_d{ num_classes * num_features };
-
     const dim3 block(256, 4);
     const dim3 grid(static_cast<int>(std::ceil(num_features / static_cast<double>(block.x))),
                     static_cast<int>(std::ceil(num_classes / static_cast<double>(block.y))));
+
+    device_ptr_type<real_type> w_d{ { num_classes, num_features } };
 
     detail::set_device(0);
     cuda::device_kernel_w_linear<<<grid, block>>>(w_d.get(), alpha_d.get(), sv_d.get(), num_classes, num_sv, num_features);

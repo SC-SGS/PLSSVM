@@ -350,7 +350,7 @@ void gpu_csvm<device_ptr_t, queue_t>::blas_gemm_impl(const solver_type solver, c
         const device_ptr_type<real_type> &A_d = A.get<device_ptr_type<real_type>>();
         PLSSVM_ASSERT(!A_d.empty(), "The A matrix may not be empty!");
 
-        const std::size_t num_rhs = B.num_rows();  // TODO: must be changed for implicit :/
+        const std::size_t num_rhs = B.num_rows();
         const std::size_t num_rows = B.num_cols();
 
         // allocate memory on the device

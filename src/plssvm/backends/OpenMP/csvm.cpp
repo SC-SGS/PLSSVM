@@ -146,15 +146,15 @@ void csvm::blas_gemm_impl(const solver_type solver, const real_type alpha, const
         PLSSVM_ASSERT(!explicit_A.empty(), "The A matrix may not be empty!");
         PLSSVM_ASSERT(explicit_A.num_rows() == C.num_cols(), "The C matrix must have {} columns, but has {}!", explicit_A.num_rows(), C.num_cols());
 
-        const std::size_t num_rhs = B.num_rows();  // TODO: must be changed for implicit :/
+        const std::size_t num_rhs = B.num_rows();
         const std::size_t num_rows = B.num_cols();
 
-// ret = explicit_A * other
-#pragma omp parallel for collapse(2) default(none) shared(explicit_A, B, C) firstprivate(num_rhs, num_rows, alpha, beta)
+        // ret = explicit_A * other
+        #pragma omp parallel for collapse(2) default(none) shared(explicit_A, B, C) firstprivate(num_rhs, num_rows, alpha, beta)
         for (std::size_t rhs = 0; rhs < num_rhs; ++rhs) {
             for (std::size_t row = 0; row < num_rows; ++row) {
                 real_type temp{ 0.0 };
-#pragma omp simd reduction(+ : temp)
+                #pragma omp simd reduction(+ : temp)
                 for (std::size_t dim = 0; dim < num_rows; ++dim) {
                     temp += explicit_A(row, dim) * B(rhs, dim);
                 }
