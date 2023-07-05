@@ -119,6 +119,59 @@ std::pair<dim3, dim3> execution_range_to_native(const ::plssvm::detail::executio
     return std::make_pair(grid, block);
 }
 
+//***************************************************//
+//                        fit                        //
+//***************************************************//
+
+template <typename real_type>
+auto csvm::run_assemble_kernel_matrix_explicit_impl(const ::plssvm::detail::parameter<real_type> &params, const device_ptr_type<real_type> &data_d, const std::size_t num_rows_reduced, const std::size_t num_features, const device_ptr_type<real_type> &q_red_d, real_type QA_cost) const -> device_ptr_type<real_type> {
+    // define grid and block sizes
+    const dim3 block(32, 32);
+    const dim3 grid(static_cast<int>(std::ceil(num_rows_reduced / static_cast<double>(block.x))),
+                    static_cast<int>(std::ceil(num_rows_reduced / static_cast<double>(block.y))));
+
+    device_ptr_type<real_type> kernel_matrix_d{ { num_rows_reduced, num_rows_reduced } };
+
+    detail::set_device(0);
+    switch (params.kernel_type) {
+        case kernel_function_type::linear:
+            cuda::device_kernel_assembly_linear<<<grid, block>>>(q_red_d.get(), kernel_matrix_d.get(), data_d.get(), QA_cost, real_type{ 1.0 } / params.cost, static_cast<kernel_index_type>(num_rows_reduced), static_cast<kernel_index_type>(num_features));
+            break;
+        case kernel_function_type::polynomial:
+            cuda::device_kernel_assembly_polynomial<<<grid, block>>>(q_red_d.get(), kernel_matrix_d.get(), data_d.get(), QA_cost, real_type{ 1.0 } / params.cost, static_cast<kernel_index_type>(num_rows_reduced), static_cast<kernel_index_type>(num_features), params.degree.value(), params.gamma.value(), params.coef0.value());
+            break;
+        case kernel_function_type::rbf:
+            cuda::device_kernel_assembly_rbf<<<grid, block>>>(q_red_d.get(), kernel_matrix_d.get(), data_d.get(), QA_cost, real_type{ 1.0 } / params.cost, static_cast<kernel_index_type>(num_rows_reduced), static_cast<kernel_index_type>(num_features), params.gamma.value());
+            break;
+    }
+    detail::peek_at_last_error();
+    detail::device_synchronize(0);
+
+    return kernel_matrix_d;
+}
+
+template auto csvm::run_assemble_kernel_matrix_explicit_impl(const ::plssvm::detail::parameter<float> &, const device_ptr_type<float> &, const std::size_t, const std::size_t, const device_ptr_type<float> &, float) const -> device_ptr_type<float>;
+template auto csvm::run_assemble_kernel_matrix_explicit_impl(const ::plssvm::detail::parameter<double> &, const device_ptr_type<double> &, const std::size_t, const std::size_t, const device_ptr_type<double> &, double) const -> device_ptr_type<double>;
+
+template <typename real_type>
+void csvm::run_gemm_kernel_explicit_impl(const std::size_t m, const std::size_t n, const std::size_t k, const real_type alpha, const device_ptr_type<real_type> &A_d, const device_ptr_type<real_type> &B_d, const real_type beta, device_ptr_type<real_type> &C_d) const {
+    const dim3 block(32, 32);
+    const dim3 grid(static_cast<int>(std::ceil(m / static_cast<double>(block.x))),
+                    static_cast<int>(std::ceil(n / static_cast<double>(block.y))));
+
+    detail::set_device(0);
+    cuda::device_kernel_gemm<<<grid, block>>>(m, n, k, alpha, A_d.get(), B_d.get(), beta, C_d.get());
+    detail::peek_at_last_error();
+    detail::device_synchronize(0);
+}
+
+template void csvm::run_gemm_kernel_explicit_impl(const std::size_t, const std::size_t, const std::size_t, const float, const device_ptr_type<float> &, const device_ptr_type<float> &, const float, device_ptr_type<float> &) const;
+template void csvm::run_gemm_kernel_explicit_impl(const std::size_t, const std::size_t, const std::size_t, const double, const device_ptr_type<double> &, const device_ptr_type<double> &, const double, device_ptr_type<double> &) const;
+
+
+//***************************************************//
+//                   predict, score                  //
+//***************************************************//
 
 template <typename real_type>
 auto csvm::run_w_kernel_impl(const device_ptr_type<real_type> &alpha_d, const device_ptr_type<real_type> &sv_d, std::size_t num_classes, std::size_t num_sv, std::size_t num_features) const -> device_ptr_type<real_type> {
@@ -137,7 +190,6 @@ auto csvm::run_w_kernel_impl(const device_ptr_type<real_type> &alpha_d, const de
 
 template auto csvm::run_w_kernel_impl(const device_ptr_type<float> &, const device_ptr_type<float> &, std::size_t, std::size_t, std::size_t) const -> device_ptr_type<float>;
 template auto csvm::run_w_kernel_impl(const device_ptr_type<double> &, const device_ptr_type<double> &, std::size_t, std::size_t, std::size_t) const -> device_ptr_type<double>;
-
 
 template <typename real_type>
 auto csvm::run_predict_kernel_impl(const ::plssvm::detail::parameter<real_type> &params, const device_ptr_type<real_type> &w_d, const device_ptr_type<real_type> &alpha_d, const device_ptr_type<real_type> &rho_d, const device_ptr_type<real_type> &sv_d, const device_ptr_type<real_type> &predict_points_d, std::size_t num_classes, std::size_t num_sv, std::size_t num_predict_points, std::size_t num_features) const -> device_ptr_type<real_type> {
@@ -176,52 +228,5 @@ auto csvm::run_predict_kernel_impl(const ::plssvm::detail::parameter<real_type> 
 
 template auto csvm::run_predict_kernel_impl(const ::plssvm::detail::parameter<float> &, const device_ptr_type<float> &, const device_ptr_type<float> &, const device_ptr_type<float> &, const device_ptr_type<float> &, const device_ptr_type<float> &, std::size_t, std::size_t, std::size_t, std::size_t) const -> device_ptr_type<float>;
 template auto csvm::run_predict_kernel_impl(const ::plssvm::detail::parameter<double> &, const device_ptr_type<double> &, const device_ptr_type<double> &, const device_ptr_type<double> &, const device_ptr_type<double> &, const device_ptr_type<double> &, std::size_t, std::size_t, std::size_t, std::size_t) const -> device_ptr_type<double>;
-
-
-
-template <typename real_type>
-auto csvm::run_assemble_kernel_matrix_explicit_impl(const ::plssvm::detail::parameter<real_type> &params, const device_ptr_type<real_type> &data_d, const std::size_t num_rows_reduced, const std::size_t num_features, const device_ptr_type<real_type> &q_red_d, real_type QA_cost) const -> device_ptr_type<real_type> {
-    // define grid and block sizes
-    const dim3 block(32, 32);
-    const dim3 grid(static_cast<int>(std::ceil(num_rows_reduced / static_cast<double>(block.x))),
-                    static_cast<int>(std::ceil(num_rows_reduced / static_cast<double>(block.y))));
-
-    device_ptr_type<real_type> kernel_matrix_d{ { num_rows_reduced, num_rows_reduced } };
-
-    detail::set_device(0);
-    switch (params.kernel_type) {
-        case kernel_function_type::linear:
-            cuda::device_kernel_assembly_linear<<<grid, block>>>(q_red_d.get(), kernel_matrix_d.get(), data_d.get(), QA_cost, real_type{ 1.0 } / params.cost, static_cast<kernel_index_type>(num_rows_reduced), static_cast<kernel_index_type>(num_features));
-            break;
-        case kernel_function_type::polynomial:
-            cuda::device_kernel_assembly_polynomial<<<grid, block>>>(q_red_d.get(), kernel_matrix_d.get(), data_d.get(), QA_cost, real_type{ 1.0 } / params.cost, static_cast<kernel_index_type>(num_rows_reduced), static_cast<kernel_index_type>(num_features), params.degree.value(), params.gamma.value(), params.coef0.value());
-            break;
-        case kernel_function_type::rbf:
-            cuda::device_kernel_assembly_rbf<<<grid, block>>>(q_red_d.get(), kernel_matrix_d.get(), data_d.get(), QA_cost, real_type{ 1.0 } / params.cost, static_cast<kernel_index_type>(num_rows_reduced), static_cast<kernel_index_type>(num_features), params.gamma.value());
-            break;
-    }
-    detail::peek_at_last_error();
-    detail::device_synchronize(0);
-
-    return kernel_matrix_d;
-}
-
-template auto csvm::run_assemble_kernel_matrix_explicit_impl(const ::plssvm::detail::parameter<float> &, const device_ptr_type<float> &, const std::size_t, const std::size_t, const device_ptr_type<float> &, float) const -> device_ptr_type<float>;
-template auto csvm::run_assemble_kernel_matrix_explicit_impl(const ::plssvm::detail::parameter<double> &, const device_ptr_type<double> &, const std::size_t, const std::size_t, const device_ptr_type<double> &, double) const -> device_ptr_type<double>;
-
-template <typename real_type>
-void csvm::run_device_kernel_gemm_explicit_impl(const std::size_t m, const std::size_t n, const std::size_t k, const real_type alpha, const device_ptr_type<real_type> &A_d, const device_ptr_type<real_type> &B_d, const real_type beta, device_ptr_type<real_type> &C_d) const {
-    const dim3 block(32, 32);
-    const dim3 grid(static_cast<int>(std::ceil(m / static_cast<double>(block.x))),
-                    static_cast<int>(std::ceil(n / static_cast<double>(block.y))));
-
-    detail::set_device(0);
-    cuda::device_kernel_gemm<<<grid, block>>>(m, n, k, alpha, A_d.get(), B_d.get(), beta, C_d.get());
-    detail::peek_at_last_error();
-    detail::device_synchronize(0);
-}
-
-template void csvm::run_device_kernel_gemm_explicit_impl(const std::size_t, const std::size_t, const std::size_t, const float, const device_ptr_type<float> &, const device_ptr_type<float> &, const float, device_ptr_type<float> &) const;
-template void csvm::run_device_kernel_gemm_explicit_impl(const std::size_t, const std::size_t, const std::size_t, const double, const device_ptr_type<double> &, const device_ptr_type<double> &, const double, device_ptr_type<double> &) const;
 
 }  // namespace plssvm::cuda

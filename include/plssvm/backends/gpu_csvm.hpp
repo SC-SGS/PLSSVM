@@ -96,20 +96,6 @@ class gpu_csvm : public ::plssvm::csvm {
 
   protected:
     /**
-     * @copydoc plssvm::csvm::predict_values
-     */
-    [[nodiscard]] aos_matrix<float> predict_values(const parameter<float> &params, const aos_matrix<float> &support_vectors, const aos_matrix<float> &alpha, const std::vector<float> &rho, aos_matrix<float> &w, const aos_matrix<float> &predict_points) const final { return this->predict_values_impl(params, support_vectors, alpha, rho, w, predict_points); }
-    /**
-     * @copydoc plssvm::csvm::predict_values
-     */
-    [[nodiscard]] aos_matrix<double> predict_values(const parameter<double> &params, const aos_matrix<double> &support_vectors, const aos_matrix<double> &alpha, const std::vector<double> &rho, aos_matrix<double> &w, const aos_matrix<double> &predict_points) const final { return this->predict_values_impl(params, support_vectors, alpha, rho, w, predict_points); }
-    /**
-     * @copydoc plssvm::csvm::predict_values
-     */
-    template <typename real_type>
-    [[nodiscard]] aos_matrix<real_type> predict_values_impl(const parameter<real_type> &params, const aos_matrix<real_type> &support_vectors, const aos_matrix<real_type> &alpha, const std::vector<real_type> &rho, aos_matrix<real_type> &w, const aos_matrix<real_type> &predict_points) const;
-
-    /**
      * @brief Returns the number of usable devices given the kernel function @p kernel and the number of features @p num_features.
      * @details Only the linear kernel supports multi-GPU execution, i.e., for the polynomial and rbf kernel, this function **always** returns 1.
      *          In addition, at most @p num_features devices may be used (i.e., if **more** devices than features are present not all devices are used).
@@ -119,47 +105,6 @@ class gpu_csvm : public ::plssvm::csvm {
      */
     [[nodiscard]] std::size_t select_num_used_devices(kernel_function_type kernel, std::size_t num_features) const noexcept;
     /**
-     * @brief Performs all necessary steps such that the data is available on the device with the correct layout.
-     * @details Distributed the data evenly across all devices, adds padding data points, and transforms the data layout to SoA.
-     * @tparam real_type the type of the data points (either `float` or `double`)
-     * @param[in] data the data that should be copied to the device(s)
-     * @param[in] num_data_points_to_setup the number of data points that should be copied to the device
-     * @param[in] num_features_to_setup the number of features in the data set
-     * @param[in] boundary_size the size of the padding boundary
-     * @param[in] num_used_devices the number of devices to distribute the data across
-     * @return a tuple: [pointers to the main data distributed across the devices, pointers to the last data point of the data set distributed across the devices, the feature ranges a specific device is responsible for] (`[[nodiscard]]`)
-     */
-
-    /**
-     * @brief Precalculate the `w` vector to speedup up the prediction using the linear kernel function.
-     * @tparam real_type the type of the data points (either `float` or `double`)
-     * @param[in] data_d the data points used in the dimensional reduction located on the device(s)
-     * @param[in] data_last_d the last data point of the data set located on the device(s)
-     * @param[in] alpha_d the previously learned weights located on the device(s)
-     * @param[in] num_data_points the number of data points in @p data_p
-     * @param[in] feature_ranges the range of features a specific device is responsible for
-     * @return the `w` vector (`[[nodiscard]]`)
-     */
-    template <typename real_type>
-    [[nodiscard]] std::vector<real_type> calculate_w(const std::vector<device_ptr_type<real_type>> &data_d, const std::vector<device_ptr_type<real_type>> &data_last_d, const std::vector<device_ptr_type<real_type>> &alpha_d, std::size_t num_data_points, const std::vector<std::size_t> &feature_ranges) const;
-
-    /**
-     * @brief Select the correct kernel based on the value of @p kernel_ and run it on the device denoted by @p device.
-     * @param[in] device the device ID denoting the device on which the kernel should be executed
-     * @param[in] params the SVM parameter used (e.g., kernel_type)
-     * @param[in] q_d subvector of the least-squares matrix equation located on the device(s)
-     * @param[in,out] r_d the result vector located on the device(s)
-     * @param[in] x_d the right-hand side of the equation located on the device(s)
-     * @param[in] data_d the data points used in the dimensional reduction located on the device(s)
-     * @param[in] feature_ranges the range of features a specific device is responsible for
-     * @param[in] QA_cost a value used in the dimensional reduction
-     * @param[in] add denotes whether the values are added or subtracted from the result vector
-     * @param[in] dept the number of data points after the dimensional reduction
-     * @param[in] boundary_size the size of the padding boundary
-     */
-    template <typename real_type>
-    void run_device_kernel(std::size_t device, const parameter<real_type> &params, const device_ptr_type<real_type> &q_d, device_ptr_type<real_type> &r_d, const device_ptr_type<real_type> &x_d, const device_ptr_type<real_type> &data_d, const std::vector<std::size_t> &feature_ranges, real_type QA_cost, real_type add, std::size_t dept, std::size_t boundary_size) const;
-    /**
      * @brief Combines the data in @p buffer_d from all devices into @p buffer and distributes them back to each device.
      * @param[in,out] buffer_d the data to gather
      * @param[in,out] buffer the reduced data
@@ -167,7 +112,9 @@ class gpu_csvm : public ::plssvm::csvm {
     template <typename real_type>
     void device_reduction(std::vector<device_ptr_type<real_type>> &buffer_d, std::vector<real_type> &buffer) const;
 
-
+    //***************************************************//
+    //                        fit                        //
+    //***************************************************//
     /**
      * @copydoc plssvm::csvm::setup_data_on_devices
      */
@@ -210,6 +157,52 @@ class gpu_csvm : public ::plssvm::csvm {
     template <typename real_type>
     void blas_gemm_impl(solver_type solver, real_type alpha, const ::plssvm::detail::simple_any &A, const aos_matrix<real_type> &B, real_type beta, aos_matrix<real_type> &C) const;
 
+    //***************************************************//
+    //                   predict, score                  //
+    //***************************************************//
+    /**
+     * @copydoc plssvm::csvm::predict_values
+     */
+    [[nodiscard]] aos_matrix<float> predict_values(const parameter<float> &params, const aos_matrix<float> &support_vectors, const aos_matrix<float> &alpha, const std::vector<float> &rho, aos_matrix<float> &w, const aos_matrix<float> &predict_points) const final { return this->predict_values_impl(params, support_vectors, alpha, rho, w, predict_points); }
+    /**
+     * @copydoc plssvm::csvm::predict_values
+     */
+    [[nodiscard]] aos_matrix<double> predict_values(const parameter<double> &params, const aos_matrix<double> &support_vectors, const aos_matrix<double> &alpha, const std::vector<double> &rho, aos_matrix<double> &w, const aos_matrix<double> &predict_points) const final { return this->predict_values_impl(params, support_vectors, alpha, rho, w, predict_points); }
+    /**
+     * @copydoc plssvm::csvm::predict_values
+     */
+    template <typename real_type>
+    [[nodiscard]] aos_matrix<real_type> predict_values_impl(const parameter<real_type> &params, const aos_matrix<real_type> &support_vectors, const aos_matrix<real_type> &alpha, const std::vector<real_type> &rho, aos_matrix<real_type> &w, const aos_matrix<real_type> &predict_points) const;
+
+    /**
+     * @brief Precalculate the `w` vector to speedup up the prediction using the linear kernel function.
+     * @tparam real_type the type of the data points (either `float` or `double`)
+     * @param[in] data_d the data points used in the dimensional reduction located on the device(s)
+     * @param[in] data_last_d the last data point of the data set located on the device(s)
+     * @param[in] alpha_d the previously learned weights located on the device(s)
+     * @param[in] num_data_points the number of data points in @p data_p
+     * @param[in] feature_ranges the range of features a specific device is responsible for
+     * @return the `w` vector (`[[nodiscard]]`)
+     */
+    template <typename real_type>
+    [[nodiscard]] std::vector<real_type> calculate_w(const std::vector<device_ptr_type<real_type>> &data_d, const std::vector<device_ptr_type<real_type>> &data_last_d, const std::vector<device_ptr_type<real_type>> &alpha_d, std::size_t num_data_points, const std::vector<std::size_t> &feature_ranges) const;
+
+    /**
+     * @brief Select the correct kernel based on the value of @p kernel_ and run it on the device denoted by @p device.
+     * @param[in] device the device ID denoting the device on which the kernel should be executed
+     * @param[in] params the SVM parameter used (e.g., kernel_type)
+     * @param[in] q_d subvector of the least-squares matrix equation located on the device(s)
+     * @param[in,out] r_d the result vector located on the device(s)
+     * @param[in] x_d the right-hand side of the equation located on the device(s)
+     * @param[in] data_d the data points used in the dimensional reduction located on the device(s)
+     * @param[in] feature_ranges the range of features a specific device is responsible for
+     * @param[in] QA_cost a value used in the dimensional reduction
+     * @param[in] add denotes whether the values are added or subtracted from the result vector
+     * @param[in] dept the number of data points after the dimensional reduction
+     * @param[in] boundary_size the size of the padding boundary
+     */
+    template <typename real_type>
+    void run_device_kernel(std::size_t device, const parameter<real_type> &params, const device_ptr_type<real_type> &q_d, device_ptr_type<real_type> &r_d, const device_ptr_type<real_type> &x_d, const device_ptr_type<real_type> &data_d, const std::vector<std::size_t> &feature_ranges, real_type QA_cost, real_type add, std::size_t dept, std::size_t boundary_size) const;
 
     //*************************************************************************************************************************************//
     //                                         pure virtual, must be implemented by all subclasses                                         //
@@ -222,17 +215,24 @@ class gpu_csvm : public ::plssvm::csvm {
      */
     virtual void device_synchronize(const queue_type &queue) const = 0;
 
+    //***************************************************//
+    //                        fit                        //
+    //***************************************************//
+    virtual device_ptr_type<float> run_assemble_kernel_matrix_explicit(const ::plssvm::detail::parameter<float> &params, const device_ptr_type<float> & data_d, const std::size_t num_rows_reduced, const std::size_t num_features, const device_ptr_type<float> &q_red_d, float QA_cost) const = 0;
+    virtual device_ptr_type<double> run_assemble_kernel_matrix_explicit(const ::plssvm::detail::parameter<double> &params, const device_ptr_type<double> &data_d, const std::size_t num_rows_reduced, const std::size_t num_features, const device_ptr_type<double> &q_red_d, double QA_cost) const = 0;
+
+    virtual void run_gemm_kernel_explicit(std::size_t m, std::size_t n, std::size_t k, float alpha, const device_ptr_type<float> &A, const device_ptr_type<float> &B, float beta, device_ptr_type<float> &C) const = 0;
+    virtual void run_gemm_kernel_explicit(std::size_t m, std::size_t n, std::size_t k, double alpha, const device_ptr_type<double> &A, const device_ptr_type<double> &B, double beta, device_ptr_type<double> &C) const = 0;
+
+    //***************************************************//
+    //                   predict, score                  //
+    //***************************************************//
     virtual device_ptr_type<float> run_predict_kernel(const parameter<float> &params, const device_ptr_type<float> &w, const device_ptr_type<float> &alpha_d, const device_ptr_type<float> &rho_d, const device_ptr_type<float> &sv_d, const device_ptr_type<float> &predict_points_d, std::size_t num_classes, std::size_t num_sv, std::size_t num_predict_points, std::size_t num_features) const = 0;
     virtual device_ptr_type<double> run_predict_kernel(const parameter<double> &params, const device_ptr_type<double> &w, const device_ptr_type<double> &alpha_d, const device_ptr_type<double> &rho_d, const device_ptr_type<double> &sv_d, const device_ptr_type<double> &predict_points_d, std::size_t num_classes, std::size_t num_sv, std::size_t num_predict_points, std::size_t num_features) const = 0;
 
     virtual device_ptr_type<float> run_w_kernel(const device_ptr_type<float> &alpha_d, const device_ptr_type<float> &sv_d, std::size_t num_classes, std::size_t num_sv, std::size_t num_features) const = 0;
     virtual device_ptr_type<double> run_w_kernel(const device_ptr_type<double> &alpha_d, const device_ptr_type<double> &sv_d, std::size_t num_classes, std::size_t num_sv, std::size_t num_features) const = 0;
 
-    virtual void run_device_kernel_gemm_explicit(std::size_t m, std::size_t n, std::size_t k, float alpha, const device_ptr_type<float> &A, const device_ptr_type<float> &B, float beta, device_ptr_type<float> &C) const = 0;
-    virtual void run_device_kernel_gemm_explicit(std::size_t m, std::size_t n, std::size_t k, double alpha, const device_ptr_type<double> &A, const device_ptr_type<double> &B, double beta, device_ptr_type<double> &C) const = 0;
-
-    virtual device_ptr_type<float> run_assemble_kernel_matrix_explicit(const ::plssvm::detail::parameter<float> &params, const device_ptr_type<float> & data_d, const std::size_t num_rows_reduced, const std::size_t num_features, const device_ptr_type<float> &q_red_d, float QA_cost) const = 0;
-    virtual device_ptr_type<double> run_assemble_kernel_matrix_explicit(const ::plssvm::detail::parameter<double> &params, const device_ptr_type<double> &data_d, const std::size_t num_rows_reduced, const std::size_t num_features, const device_ptr_type<double> &q_red_d, double QA_cost) const = 0;
 
     /// The available/used backend devices.
     std::vector<queue_type> devices_{};
@@ -254,70 +254,6 @@ std::size_t gpu_csvm<device_ptr_t, queue_t>::select_num_used_devices(const kerne
         std::clog << fmt::format("Warning: found {} devices, however only {} device(s) can be used since the data set only has {} features!", devices_.size(), num_used_devices, num_features) << std::endl;
     }
     return num_used_devices;
-}
-
-template <template <typename> typename device_ptr_t, typename queue_t>
-template <typename real_type>
-std::vector<real_type> gpu_csvm<device_ptr_t, queue_t>::calculate_w(const std::vector<device_ptr_type<real_type>> &data_d,
-                                                                    const std::vector<device_ptr_type<real_type>> &data_last_d,
-                                                                    const std::vector<device_ptr_type<real_type>> &alpha_d,
-                                                                    const std::size_t num_data_points,
-                                                                    const std::vector<std::size_t> &feature_ranges) const {
-    PLSSVM_ASSERT(!data_d.empty(), "The data_d array may not be empty!");
-    PLSSVM_ASSERT(std::all_of(data_d.cbegin(), data_d.cend(), [](const device_ptr_type<real_type> &ptr) { return !ptr.empty(); }), "Each device_ptr in data_d must at least contain one data point!");
-    PLSSVM_ASSERT(!data_last_d.empty(), "The data_last_d array may not be empty!");
-    PLSSVM_ASSERT(std::all_of(data_last_d.cbegin(), data_last_d.cend(), [](const device_ptr_type<real_type> &ptr) { return !ptr.empty(); }), "Each device_ptr in data_last_d must at least contain one data point!");
-    PLSSVM_ASSERT(data_d.size() == data_last_d.size(), "The number of used devices to the data_d and data_last_d vectors must be equal!: {} != {}", data_d.size(), data_last_d.size());
-    PLSSVM_ASSERT(!alpha_d.empty(), "The alpha_d array may not be empty!");
-    PLSSVM_ASSERT(std::all_of(alpha_d.cbegin(), alpha_d.cend(), [](const device_ptr_type<real_type> &ptr) { return !ptr.empty(); }), "Each device_ptr in alpha_d must at least contain one data point!");
-    PLSSVM_ASSERT(data_d.size() == alpha_d.size(), "The number of used devices to the data_d and alpha_d vectors must be equal!: {} != {}", data_d.size(), alpha_d.size());
-    PLSSVM_ASSERT(num_data_points > 0, "At least one data point must be used to calculate q!");
-    PLSSVM_ASSERT(feature_ranges.size() == data_d.size() + 1, "The number of values in the feature_range vector must be exactly one more than the number of used devices!: {} != {} + 1", feature_ranges.size(), data_d.size());
-    PLSSVM_ASSERT(std::adjacent_find(feature_ranges.cbegin(), feature_ranges.cend(), std::less_equal<>{}) != feature_ranges.cend(), "The feature ranges are not monotonically increasing!");
-
-    const std::size_t num_used_devices = data_d.size();
-
-    // create w vector and fill with zeros
-    std::vector<real_type> w(feature_ranges.back(), real_type{ 0.0 });
-
-    #pragma omp parallel for default(none) shared(num_used_devices, devices_, feature_ranges, alpha_d, data_d, data_last_d, w) firstprivate(num_data_points, THREAD_BLOCK_SIZE)
-    for (typename std::vector<queue_type>::size_type device = 0; device < num_used_devices; ++device) {
-        // feature splitting on multiple devices
-        const std::size_t num_features_in_range = feature_ranges[device + 1] - feature_ranges[device];
-
-        // create the w vector on the device
-        device_ptr_type<real_type> w_d = device_ptr_type<real_type>{ num_features_in_range, devices_[device] };
-
-        const detail::execution_range range({ static_cast<std::size_t>(std::ceil(static_cast<real_type>(num_features_in_range) / static_cast<real_type>(THREAD_BLOCK_SIZE))) },
-                                            { std::min<std::size_t>(THREAD_BLOCK_SIZE, num_features_in_range) });
-
-        // calculate the w vector on the device
-        run_w_kernel(device, range, w_d, alpha_d[device], data_d[device], data_last_d[device], num_data_points, num_features_in_range);
-        device_synchronize(devices_[device]);
-
-        // copy back to host memory
-        w_d.copy_to_host(w.data() + feature_ranges[device], 0, num_features_in_range);
-    }
-    return w;
-}
-
-
-template <template <typename> typename device_ptr_t, typename queue_t>
-template <typename real_type>
-void gpu_csvm<device_ptr_t, queue_t>::run_device_kernel(const std::size_t device, const parameter<real_type> &params, const device_ptr_type<real_type> &q_d, device_ptr_type<real_type> &r_d, const device_ptr_type<real_type> &x_d, const device_ptr_type<real_type> &data_d, const std::vector<std::size_t> &feature_ranges, const real_type QA_cost, const real_type add, const std::size_t dept, const std::size_t boundary_size) const {
-    PLSSVM_ASSERT(device < devices_.size(), "Requested device {}, but only {} device(s) are available!", device, devices_.size());
-    PLSSVM_ASSERT(!q_d.empty(), "The q_d device_ptr may not be empty!");
-    PLSSVM_ASSERT(!r_d.empty(), "The r_d device_ptr may not be empty!");
-    PLSSVM_ASSERT(!x_d.empty(), "The x_d device_ptr may not be empty!");
-    PLSSVM_ASSERT(!data_d.empty(), "The data_d device_ptr may not be empty!");
-    PLSSVM_ASSERT(std::adjacent_find(feature_ranges.cbegin(), feature_ranges.cend(), std::less_equal<>{}) != feature_ranges.cend(), "The feature ranges are not monotonically increasing!");
-    PLSSVM_ASSERT(add == real_type{ -1.0 } || add == real_type{ 1.0 }, "add must either by -1.0 or 1.0, but is {}!", add);
-    PLSSVM_ASSERT(dept > 0, "At least one data point must be used to calculate q!");
-
-    const auto grid = static_cast<std::size_t>(std::ceil(static_cast<real_type>(dept) / static_cast<real_type>(boundary_size)));
-    const detail::execution_range range({ grid, grid }, { THREAD_BLOCK_SIZE, THREAD_BLOCK_SIZE });
-
-    run_svm_kernel(device, range, params, q_d, r_d, x_d, data_d, QA_cost, add, dept + boundary_size, feature_ranges[device + 1] - feature_ranges[device]);
 }
 
 template <template <typename> typename device_ptr_t, typename queue_t>
@@ -348,68 +284,9 @@ void gpu_csvm<device_ptr_t, queue_t>::device_reduction(std::vector<device_ptr_ty
     }
 }
 
-template <template <typename> typename device_ptr_t, typename queue_t>
-template <typename real_type>
-aos_matrix<real_type> gpu_csvm<device_ptr_t, queue_t>::predict_values_impl(const parameter<real_type> &params,
-                                                                                   const aos_matrix<real_type> &support_vectors,
-                                                                                   const aos_matrix<real_type> &alpha,
-                                                                                   const std::vector<real_type> &rho,
-                                                                                   aos_matrix<real_type> &w,
-                                                                                   const aos_matrix<real_type> &predict_points) const {
-    PLSSVM_ASSERT(!support_vectors.empty(), "The support vectors must not be empty!");
-    PLSSVM_ASSERT(!alpha.empty(), "The alpha vectors (weights) must not be empty!");
-    PLSSVM_ASSERT(support_vectors.num_rows() == alpha.num_cols(), "The number of support vectors ({}) and number of weights ({}) must be the same!", support_vectors.num_rows(), alpha.num_cols());
-    PLSSVM_ASSERT(rho.size() == alpha.num_rows(), "The number of rho values ({}) and the number of weights ({}) must be the same!", rho.size(), alpha.num_rows());
-    PLSSVM_ASSERT(w.empty() || support_vectors.num_cols() == w.num_cols(), "Either w must be empty or contain exactly the same number of values as features are present ({})!", support_vectors.num_cols());
-    PLSSVM_ASSERT(w.empty() || alpha.num_rows() == w.num_rows(), "Either w must be empty or contain exactly the same number of vectors ({}) as the alpha vector ({})!", w.num_rows(), alpha.num_rows());
-    PLSSVM_ASSERT(!predict_points.empty(), "The data points to predict must not be empty!");
-    PLSSVM_ASSERT(support_vectors.num_cols() == predict_points.num_cols(), "The number of features in the support vectors ({}) must be the same as in the data points to predict ({})!", support_vectors.num_cols(), predict_points.num_cols());
-
-    using namespace plssvm::operators;
-
-    // defined sizes
-    const std::size_t num_classes = alpha.num_rows();
-    const std::size_t num_support_vectors = support_vectors.num_rows();
-    const std::size_t num_predict_points = predict_points.num_rows();
-    const std::size_t num_features = predict_points.num_cols();
-
-    device_ptr_type<real_type> sv_d{ num_support_vectors * num_features };
-    sv_d.copy_to_device(support_vectors.data());
-    device_ptr_type<real_type> predict_points_d{ num_predict_points * num_features };
-    predict_points_d.copy_to_device(predict_points.data());
-
-    device_ptr_type<real_type> w_d;  // only used when predicting linear kernel functions
-    device_ptr_type<real_type> alpha_d{ num_classes * num_support_vectors };
-    alpha_d.copy_to_device(alpha.data());
-    device_ptr_type<real_type> rho_d{ num_classes };
-    rho_d.copy_to_device(rho);
-
-    if (params.kernel_type == kernel_function_type::linear) {
-        // special optimization for the linear kernel function
-        if (w.empty()) {
-            // fill w vector
-            w_d = run_w_kernel(alpha_d, sv_d, num_classes, num_support_vectors, num_features);
-
-            // convert 1D result to aos_matrix out-parameter
-            w = aos_matrix<real_type>{ num_classes, num_features };
-            w_d.copy_to_host(w.data());
-        } else {
-            // w already provided -> copy to device
-            w_d = device_ptr_type<real_type>{ num_classes * num_features };
-            w_d.copy_to_device(w.data());
-        }
-    }
-
-    // predict
-    const device_ptr_type<real_type> out_d = run_predict_kernel(params, w_d, alpha_d, rho_d, sv_d, predict_points_d, num_classes, num_support_vectors, num_predict_points, num_features);;
-
-    // copy results back to host
-    aos_matrix<real_type> out_ret{ num_predict_points, num_classes };
-    out_d.copy_to_host(out_ret.data());
-    return out_ret;
-}
-
-
+//***************************************************//
+//                        fit                        //
+//***************************************************//
 template <template <typename> typename device_ptr_t, typename queue_t>
 template <typename real_type>
 ::plssvm::detail::simple_any gpu_csvm<device_ptr_t, queue_t>::setup_data_on_devices_impl(const solver_type solver, const aos_matrix<real_type> &A) const {
@@ -488,13 +365,141 @@ void gpu_csvm<device_ptr_t, queue_t>::blas_gemm_impl(const solver_type solver, c
         }
         C_d.copy_to_device(C.data());
 
-        this->run_device_kernel_gemm_explicit(num_rows, num_rhs, num_rows, alpha, A_d, B_d, beta, C_d);
+        this->run_gemm_kernel_explicit(num_rows, num_rhs, num_rows, alpha, A_d, B_d, beta, C_d);
 
         C_d.copy_to_host(C.data());
     } else {
         // TODO: implement for other solver types
         throw exception{ fmt::format("The GEMM calculation using the {} CG variation is currently not implemented!", solver) };
     }
+}
+
+//***************************************************//
+//                   predict, score                  //
+//***************************************************//
+template <template <typename> typename device_ptr_t, typename queue_t>
+template <typename real_type>
+std::vector<real_type> gpu_csvm<device_ptr_t, queue_t>::calculate_w(const std::vector<device_ptr_type<real_type>> &data_d,
+                                                                    const std::vector<device_ptr_type<real_type>> &data_last_d,
+                                                                    const std::vector<device_ptr_type<real_type>> &alpha_d,
+                                                                    const std::size_t num_data_points,
+                                                                    const std::vector<std::size_t> &feature_ranges) const {
+    PLSSVM_ASSERT(!data_d.empty(), "The data_d array may not be empty!");
+    PLSSVM_ASSERT(std::all_of(data_d.cbegin(), data_d.cend(), [](const device_ptr_type<real_type> &ptr) { return !ptr.empty(); }), "Each device_ptr in data_d must at least contain one data point!");
+    PLSSVM_ASSERT(!data_last_d.empty(), "The data_last_d array may not be empty!");
+    PLSSVM_ASSERT(std::all_of(data_last_d.cbegin(), data_last_d.cend(), [](const device_ptr_type<real_type> &ptr) { return !ptr.empty(); }), "Each device_ptr in data_last_d must at least contain one data point!");
+    PLSSVM_ASSERT(data_d.size() == data_last_d.size(), "The number of used devices to the data_d and data_last_d vectors must be equal!: {} != {}", data_d.size(), data_last_d.size());
+    PLSSVM_ASSERT(!alpha_d.empty(), "The alpha_d array may not be empty!");
+    PLSSVM_ASSERT(std::all_of(alpha_d.cbegin(), alpha_d.cend(), [](const device_ptr_type<real_type> &ptr) { return !ptr.empty(); }), "Each device_ptr in alpha_d must at least contain one data point!");
+    PLSSVM_ASSERT(data_d.size() == alpha_d.size(), "The number of used devices to the data_d and alpha_d vectors must be equal!: {} != {}", data_d.size(), alpha_d.size());
+    PLSSVM_ASSERT(num_data_points > 0, "At least one data point must be used to calculate q!");
+    PLSSVM_ASSERT(feature_ranges.size() == data_d.size() + 1, "The number of values in the feature_range vector must be exactly one more than the number of used devices!: {} != {} + 1", feature_ranges.size(), data_d.size());
+    PLSSVM_ASSERT(std::adjacent_find(feature_ranges.cbegin(), feature_ranges.cend(), std::less_equal<>{}) != feature_ranges.cend(), "The feature ranges are not monotonically increasing!");
+
+    const std::size_t num_used_devices = data_d.size();
+
+    // create w vector and fill with zeros
+    std::vector<real_type> w(feature_ranges.back(), real_type{ 0.0 });
+
+    #pragma omp parallel for default(none) shared(num_used_devices, devices_, feature_ranges, alpha_d, data_d, data_last_d, w) firstprivate(num_data_points, THREAD_BLOCK_SIZE)
+    for (typename std::vector<queue_type>::size_type device = 0; device < num_used_devices; ++device) {
+        // feature splitting on multiple devices
+        const std::size_t num_features_in_range = feature_ranges[device + 1] - feature_ranges[device];
+
+        // create the w vector on the device
+        device_ptr_type<real_type> w_d = device_ptr_type<real_type>{ num_features_in_range, devices_[device] };
+
+        const detail::execution_range range({ static_cast<std::size_t>(std::ceil(static_cast<real_type>(num_features_in_range) / static_cast<real_type>(THREAD_BLOCK_SIZE))) },
+                                            { std::min<std::size_t>(THREAD_BLOCK_SIZE, num_features_in_range) });
+
+        // calculate the w vector on the device
+        run_w_kernel(device, range, w_d, alpha_d[device], data_d[device], data_last_d[device], num_data_points, num_features_in_range);
+        device_synchronize(devices_[device]);
+
+        // copy back to host memory
+        w_d.copy_to_host(w.data() + feature_ranges[device], 0, num_features_in_range);
+    }
+    return w;
+}
+
+template <template <typename> typename device_ptr_t, typename queue_t>
+template <typename real_type>
+void gpu_csvm<device_ptr_t, queue_t>::run_device_kernel(const std::size_t device, const parameter<real_type> &params, const device_ptr_type<real_type> &q_d, device_ptr_type<real_type> &r_d, const device_ptr_type<real_type> &x_d, const device_ptr_type<real_type> &data_d, const std::vector<std::size_t> &feature_ranges, const real_type QA_cost, const real_type add, const std::size_t dept, const std::size_t boundary_size) const {
+    PLSSVM_ASSERT(device < devices_.size(), "Requested device {}, but only {} device(s) are available!", device, devices_.size());
+    PLSSVM_ASSERT(!q_d.empty(), "The q_d device_ptr may not be empty!");
+    PLSSVM_ASSERT(!r_d.empty(), "The r_d device_ptr may not be empty!");
+    PLSSVM_ASSERT(!x_d.empty(), "The x_d device_ptr may not be empty!");
+    PLSSVM_ASSERT(!data_d.empty(), "The data_d device_ptr may not be empty!");
+    PLSSVM_ASSERT(std::adjacent_find(feature_ranges.cbegin(), feature_ranges.cend(), std::less_equal<>{}) != feature_ranges.cend(), "The feature ranges are not monotonically increasing!");
+    PLSSVM_ASSERT(add == real_type{ -1.0 } || add == real_type{ 1.0 }, "add must either by -1.0 or 1.0, but is {}!", add);
+    PLSSVM_ASSERT(dept > 0, "At least one data point must be used to calculate q!");
+
+    const auto grid = static_cast<std::size_t>(std::ceil(static_cast<real_type>(dept) / static_cast<real_type>(boundary_size)));
+    const detail::execution_range range({ grid, grid }, { THREAD_BLOCK_SIZE, THREAD_BLOCK_SIZE });
+
+    run_svm_kernel(device, range, params, q_d, r_d, x_d, data_d, QA_cost, add, dept + boundary_size, feature_ranges[device + 1] - feature_ranges[device]);
+}
+
+
+template <template <typename> typename device_ptr_t, typename queue_t>
+template <typename real_type>
+aos_matrix<real_type> gpu_csvm<device_ptr_t, queue_t>::predict_values_impl(const parameter<real_type> &params,
+                                                                                   const aos_matrix<real_type> &support_vectors,
+                                                                                   const aos_matrix<real_type> &alpha,
+                                                                                   const std::vector<real_type> &rho,
+                                                                                   aos_matrix<real_type> &w,
+                                                                                   const aos_matrix<real_type> &predict_points) const {
+    PLSSVM_ASSERT(!support_vectors.empty(), "The support vectors must not be empty!");
+    PLSSVM_ASSERT(!alpha.empty(), "The alpha vectors (weights) must not be empty!");
+    PLSSVM_ASSERT(support_vectors.num_rows() == alpha.num_cols(), "The number of support vectors ({}) and number of weights ({}) must be the same!", support_vectors.num_rows(), alpha.num_cols());
+    PLSSVM_ASSERT(rho.size() == alpha.num_rows(), "The number of rho values ({}) and the number of weights ({}) must be the same!", rho.size(), alpha.num_rows());
+    PLSSVM_ASSERT(w.empty() || support_vectors.num_cols() == w.num_cols(), "Either w must be empty or contain exactly the same number of values as features are present ({})!", support_vectors.num_cols());
+    PLSSVM_ASSERT(w.empty() || alpha.num_rows() == w.num_rows(), "Either w must be empty or contain exactly the same number of vectors ({}) as the alpha vector ({})!", w.num_rows(), alpha.num_rows());
+    PLSSVM_ASSERT(!predict_points.empty(), "The data points to predict must not be empty!");
+    PLSSVM_ASSERT(support_vectors.num_cols() == predict_points.num_cols(), "The number of features in the support vectors ({}) must be the same as in the data points to predict ({})!", support_vectors.num_cols(), predict_points.num_cols());
+
+    using namespace plssvm::operators;
+
+    // defined sizes
+    const std::size_t num_classes = alpha.num_rows();
+    const std::size_t num_support_vectors = support_vectors.num_rows();
+    const std::size_t num_predict_points = predict_points.num_rows();
+    const std::size_t num_features = predict_points.num_cols();
+
+    device_ptr_type<real_type> sv_d{ num_support_vectors * num_features };
+    sv_d.copy_to_device(support_vectors.data());
+    device_ptr_type<real_type> predict_points_d{ num_predict_points * num_features };
+    predict_points_d.copy_to_device(predict_points.data());
+
+    device_ptr_type<real_type> w_d;  // only used when predicting linear kernel functions
+    device_ptr_type<real_type> alpha_d{ num_classes * num_support_vectors };
+    alpha_d.copy_to_device(alpha.data());
+    device_ptr_type<real_type> rho_d{ num_classes };
+    rho_d.copy_to_device(rho);
+
+    if (params.kernel_type == kernel_function_type::linear) {
+        // special optimization for the linear kernel function
+        if (w.empty()) {
+            // fill w vector
+            w_d = run_w_kernel(alpha_d, sv_d, num_classes, num_support_vectors, num_features);
+
+            // convert 1D result to aos_matrix out-parameter
+            w = aos_matrix<real_type>{ num_classes, num_features };
+            w_d.copy_to_host(w.data());
+        } else {
+            // w already provided -> copy to device
+            w_d = device_ptr_type<real_type>{ num_classes * num_features };
+            w_d.copy_to_device(w.data());
+        }
+    }
+
+    // predict
+    const device_ptr_type<real_type> out_d = run_predict_kernel(params, w_d, alpha_d, rho_d, sv_d, predict_points_d, num_classes, num_support_vectors, num_predict_points, num_features);;
+
+    // copy results back to host
+    aos_matrix<real_type> out_ret{ num_predict_points, num_classes };
+    out_d.copy_to_host(out_ret.data());
+    return out_ret;
 }
 
 }  // namespace plssvm::detail

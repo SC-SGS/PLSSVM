@@ -183,23 +183,13 @@ class csvm {
     //*************************************************************************************************************************************//
     //                        pure virtual functions, must be implemented for all subclasses; doing the actual work                        //
     //*************************************************************************************************************************************//
+    //***************************************************//
+    //                        fit                        //
+    //***************************************************//
     /**
-     * @brief Uses the already learned model to predict the class of multiple (new) data points.
-     * @param[in] params the SVM parameters used in the respective kernel functions
-     * @param[in] support_vectors the previously learned support vectors
-     * @param[in] alpha the alpha values (weights) associated with the support vectors and classes
-     * @param[in] rho the rho values for each class determined after training the model
-     * @param[in,out] w the normal vectors to speedup prediction in case of the linear kernel function, an empty vector in case of the polynomial or rbf kernel
-     * @param[in] predict_points the points to predict
-     * @throws plssvm::exception any exception thrown by the backend's implementation
-     * @return a vector filled with the predictions (not the actual labels!) (`[[nodiscard]]`)
+     * @brief Calculate the available device memory based on the used backend.
+     * @return the available device memory (`[[nodiscard]]`)
      */
-    [[nodiscard]] virtual aos_matrix<float> predict_values(const detail::parameter<float> &params, const aos_matrix<float> &support_vectors, const aos_matrix<float> &alpha, const std::vector<float> &rho, aos_matrix<float> &w, const aos_matrix<float> &predict_points) const = 0;
-    /**
-     * @copydoc plssvm::csvm::predict_values
-     */
-    [[nodiscard]] virtual aos_matrix<double> predict_values(const detail::parameter<double> &params, const aos_matrix<double> &support_vectors, const aos_matrix<double> &alpha, const std::vector<double> &rho, aos_matrix<double> &w, const aos_matrix<double> &predict_points) const = 0;
-
     [[nodiscard]] virtual unsigned long long get_device_memory() const = 0;
 
     /**
@@ -245,6 +235,27 @@ class csvm {
      * @copydoc plssvm::csvm::kernel_matrix_matmul_explicit
      */
     virtual void blas_gemm(solver_type solver, double alpha, const detail::simple_any &A, const aos_matrix<double> &B, double beta, aos_matrix<double> &C) const = 0;
+
+
+    //***************************************************//
+    //                   predict, score                  //
+    //***************************************************//
+    /**
+     * @brief Uses the already learned model to predict the class of multiple (new) data points.
+     * @param[in] params the SVM parameters used in the respective kernel functions
+     * @param[in] support_vectors the previously learned support vectors
+     * @param[in] alpha the alpha values (weights) associated with the support vectors and classes
+     * @param[in] rho the rho values for each class determined after training the model
+     * @param[in,out] w the normal vectors to speedup prediction in case of the linear kernel function, an empty vector in case of the polynomial or rbf kernel
+     * @param[in] predict_points the points to predict
+     * @throws plssvm::exception any exception thrown by the backend's implementation
+     * @return a vector filled with the predictions (not the actual labels!) (`[[nodiscard]]`)
+     */
+    [[nodiscard]] virtual aos_matrix<float> predict_values(const detail::parameter<float> &params, const aos_matrix<float> &support_vectors, const aos_matrix<float> &alpha, const std::vector<float> &rho, aos_matrix<float> &w, const aos_matrix<float> &predict_points) const = 0;
+    /**
+     * @copydoc plssvm::csvm::predict_values
+     */
+    [[nodiscard]] virtual aos_matrix<double> predict_values(const detail::parameter<double> &params, const aos_matrix<double> &support_vectors, const aos_matrix<double> &alpha, const std::vector<double> &rho, aos_matrix<double> &w, const aos_matrix<double> &predict_points) const = 0;
 
 
     /// The target platform of this SVM.
@@ -710,7 +721,7 @@ std::pair<aos_matrix<real_type>, std::vector<real_type>> csvm::solve_system_of_l
 
     // determine the correct solver type, if the automatic solver type has been provided
     if (used_solver == solver_type::automatic) {
-        // TODO: decide which solver to use based on the available (V)RAM (maybe onl lets say 95% of the memory should be used)
+        // TODO: decide which solver to use based on the available (V)RAM (maybe only lets say 95% of the memory should be used)
         const double total_system_memory = detail::get_system_memory() * 0.95;
         const double total_device_memory = this->get_device_memory() * 0.95;
         const unsigned long long total_memory_needed = sizeof(real_type) * (num_rows * num_features + num_rows_reduced * num_rows_reduced + 2 * num_rows_reduced * num_rhs);

@@ -74,78 +74,9 @@ unsigned long long csvm::get_device_memory() const {
     return detail::get_system_memory();
 }
 
-template <typename real_type>
-aos_matrix<real_type> csvm::predict_values_impl(const detail::parameter<real_type> &params, const aos_matrix<real_type> &support_vectors, const aos_matrix<real_type> &alpha, const std::vector<real_type> &rho, aos_matrix<real_type> &w, const aos_matrix<real_type> &predict_points) const {
-    PLSSVM_ASSERT(!support_vectors.empty(), "The support vectors must not be empty!");
-    PLSSVM_ASSERT(!alpha.empty(), "The alpha vectors (weights) must not be empty!");
-    PLSSVM_ASSERT(support_vectors.num_rows() == alpha.num_cols(), "The number of support vectors ({}) and number of weights ({}) must be the same!", support_vectors.num_rows(), alpha.num_cols());
-    PLSSVM_ASSERT(rho.size() == alpha.num_rows(), "The number of rho values ({}) and the number of weights ({}) must be the same!", rho.size(), alpha.num_rows());
-    PLSSVM_ASSERT(w.empty() || support_vectors.num_cols() == w.num_cols(), "Either w must be empty or contain exactly the same number of values as features are present ({})!", support_vectors.num_cols());
-    PLSSVM_ASSERT(w.empty() || alpha.num_rows() == w.num_rows(), "Either w must be empty or contain exactly the same number of vectors ({}) as the alpha vector ({})!", w.num_rows(), alpha.num_rows());
-    PLSSVM_ASSERT(!predict_points.empty(), "The data points to predict must not be empty!");
-    PLSSVM_ASSERT(support_vectors.num_cols() == predict_points.num_cols(), "The number of features in the support vectors ({}) must be the same as in the data points to predict ({})!", support_vectors.num_cols(), predict_points.num_cols());
-
-    using namespace plssvm::operators;
-
-    // defined sizes
-    const std::size_t num_classes = alpha.num_rows();
-    const std::size_t num_support_vectors = support_vectors.num_rows();
-    const std::size_t num_predict_points = predict_points.num_rows();
-    const std::size_t num_features = predict_points.num_cols();
-
-    // num_predict_points x num_classes
-    aos_matrix<real_type> out{ num_predict_points, num_classes };
-
-    if (params.kernel_type == kernel_function_type::linear) {
-        // special optimization for the linear kernel function
-        if (w.empty()) {
-            // fill w vector
-            w = aos_matrix<real_type>{ num_classes, num_features };
-
-            #pragma omp parallel for collapse(2) default(none) shared(w, support_vectors, alpha) firstprivate(num_classes, num_features, num_support_vectors)
-            for (std::size_t a = 0; a < num_classes; ++a) {
-                for (std::size_t dim = 0; dim < num_features; ++dim) {
-                    real_type temp{ 0.0 };
-                    #pragma omp simd reduction(+ : temp)
-                    for (std::size_t idx = 0; idx < num_support_vectors; ++idx) {
-                        temp = std::fma(alpha(a, idx), support_vectors(idx, dim), temp);
-                    }
-                    w(a, dim) = temp;
-                }
-            }
-        }
-        // predict the values using the w vector
-        #pragma omp parallel for collapse(2) default(none) shared(out, w, rho, alpha, predict_points) firstprivate(num_classes, num_features, num_predict_points)
-        for (std::size_t point_index = 0; point_index < num_predict_points; ++point_index) {
-            for (std::size_t a = 0; a < num_classes; ++a) {
-                real_type temp{ 0.0 };
-                #pragma omp simd reduction(+ : temp)
-                for (std::size_t dim = 0; dim < num_features; ++dim) {
-                    temp += w(a, dim) * predict_points(point_index, dim);
-                }
-                out(point_index, a) = temp - rho[a];
-            }
-        }
-    } else {
-        // "default" implementation for the other kernel functions
-        #pragma omp parallel for default(none) shared(alpha, support_vectors, predict_points, rho, params, out) firstprivate(num_predict_points, num_classes, num_support_vectors)
-        for (std::size_t point_index = 0; point_index < num_predict_points; ++point_index) {
-            for (std::size_t a = 0; a < num_classes; ++a) {
-                out(point_index, a) -= rho[a];
-            }
-            for (std::size_t sv_index = 0; sv_index < num_support_vectors; ++sv_index) {
-                const real_type kernel_func = kernel_function(support_vectors, sv_index, predict_points, point_index, params);
-                for (std::size_t a = 0; a < num_classes; ++a) {
-                    out(point_index, a) += alpha(a, sv_index) * kernel_func;
-                }
-            }
-        }
-    }
-    return out;
-}
-
-template aos_matrix<float> csvm::predict_values_impl(const detail::parameter<float> &, const aos_matrix<float> &, const aos_matrix<float> &, const std::vector<float> &, aos_matrix<float> &, const aos_matrix<float> &) const;
-template aos_matrix<double> csvm::predict_values_impl(const detail::parameter<double> &, const aos_matrix<double> &, const aos_matrix<double> &, const std::vector<double> &, aos_matrix<double> &, const aos_matrix<double> &) const;
+//***************************************************//
+//                        fit                        //
+//***************************************************//
 
 template <typename real_type>
 detail::simple_any csvm::setup_data_on_devices_impl(const solver_type solver, const aos_matrix<real_type> &A) const {
@@ -218,12 +149,12 @@ void csvm::blas_gemm_impl(const solver_type solver, const real_type alpha, const
         const std::size_t num_rhs = B.num_rows();  // TODO: must be changed for implicit :/
         const std::size_t num_rows = B.num_cols();
 
-        // ret = explicit_A * other
-        #pragma omp parallel for collapse(2) default(none) shared(explicit_A, B, C) firstprivate(num_rhs, num_rows, alpha, beta)
+// ret = explicit_A * other
+#pragma omp parallel for collapse(2) default(none) shared(explicit_A, B, C) firstprivate(num_rhs, num_rows, alpha, beta)
         for (std::size_t rhs = 0; rhs < num_rhs; ++rhs) {
             for (std::size_t row = 0; row < num_rows; ++row) {
                 real_type temp{ 0.0 };
-                #pragma omp simd reduction(+ : temp)
+#pragma omp simd reduction(+ : temp)
                 for (std::size_t dim = 0; dim < num_rows; ++dim) {
                     temp += explicit_A(row, dim) * B(rhs, dim);
                 }
@@ -238,5 +169,82 @@ void csvm::blas_gemm_impl(const solver_type solver, const real_type alpha, const
 
 template void csvm::blas_gemm_impl(const solver_type, const float, const detail::simple_any &, const aos_matrix<float> &, const float, aos_matrix<float> &) const;
 template void csvm::blas_gemm_impl(const solver_type, const double, const detail::simple_any &, const aos_matrix<double> &, const double, aos_matrix<double> &) const;
+
+//***************************************************//
+//                   predict, score                  //
+//***************************************************//
+
+template <typename real_type>
+aos_matrix<real_type> csvm::predict_values_impl(const detail::parameter<real_type> &params, const aos_matrix<real_type> &support_vectors, const aos_matrix<real_type> &alpha, const std::vector<real_type> &rho, aos_matrix<real_type> &w, const aos_matrix<real_type> &predict_points) const {
+    PLSSVM_ASSERT(!support_vectors.empty(), "The support vectors must not be empty!");
+    PLSSVM_ASSERT(!alpha.empty(), "The alpha vectors (weights) must not be empty!");
+    PLSSVM_ASSERT(support_vectors.num_rows() == alpha.num_cols(), "The number of support vectors ({}) and number of weights ({}) must be the same!", support_vectors.num_rows(), alpha.num_cols());
+    PLSSVM_ASSERT(rho.size() == alpha.num_rows(), "The number of rho values ({}) and the number of weights ({}) must be the same!", rho.size(), alpha.num_rows());
+    PLSSVM_ASSERT(w.empty() || support_vectors.num_cols() == w.num_cols(), "Either w must be empty or contain exactly the same number of values as features are present ({})!", support_vectors.num_cols());
+    PLSSVM_ASSERT(w.empty() || alpha.num_rows() == w.num_rows(), "Either w must be empty or contain exactly the same number of vectors ({}) as the alpha vector ({})!", w.num_rows(), alpha.num_rows());
+    PLSSVM_ASSERT(!predict_points.empty(), "The data points to predict must not be empty!");
+    PLSSVM_ASSERT(support_vectors.num_cols() == predict_points.num_cols(), "The number of features in the support vectors ({}) must be the same as in the data points to predict ({})!", support_vectors.num_cols(), predict_points.num_cols());
+
+    using namespace plssvm::operators;
+
+    // defined sizes
+    const std::size_t num_classes = alpha.num_rows();
+    const std::size_t num_support_vectors = support_vectors.num_rows();
+    const std::size_t num_predict_points = predict_points.num_rows();
+    const std::size_t num_features = predict_points.num_cols();
+
+    // num_predict_points x num_classes
+    aos_matrix<real_type> out{ num_predict_points, num_classes };
+
+    if (params.kernel_type == kernel_function_type::linear) {
+        // special optimization for the linear kernel function
+        if (w.empty()) {
+            // fill w vector
+            w = aos_matrix<real_type>{ num_classes, num_features };
+
+            #pragma omp parallel for collapse(2) default(none) shared(w, support_vectors, alpha) firstprivate(num_classes, num_features, num_support_vectors)
+            for (std::size_t a = 0; a < num_classes; ++a) {
+                for (std::size_t dim = 0; dim < num_features; ++dim) {
+                    real_type temp{ 0.0 };
+                    #pragma omp simd reduction(+ : temp)
+                    for (std::size_t idx = 0; idx < num_support_vectors; ++idx) {
+                        temp = std::fma(alpha(a, idx), support_vectors(idx, dim), temp);
+                    }
+                    w(a, dim) = temp;
+                }
+            }
+        }
+        // predict the values using the w vector
+        #pragma omp parallel for collapse(2) default(none) shared(out, w, rho, alpha, predict_points) firstprivate(num_classes, num_features, num_predict_points)
+        for (std::size_t point_index = 0; point_index < num_predict_points; ++point_index) {
+            for (std::size_t a = 0; a < num_classes; ++a) {
+                real_type temp{ 0.0 };
+                #pragma omp simd reduction(+ : temp)
+                for (std::size_t dim = 0; dim < num_features; ++dim) {
+                    temp += w(a, dim) * predict_points(point_index, dim);
+                }
+                out(point_index, a) = temp - rho[a];
+            }
+        }
+    } else {
+        // "default" implementation for the other kernel functions
+        #pragma omp parallel for default(none) shared(alpha, support_vectors, predict_points, rho, params, out) firstprivate(num_predict_points, num_classes, num_support_vectors)
+        for (std::size_t point_index = 0; point_index < num_predict_points; ++point_index) {
+            for (std::size_t a = 0; a < num_classes; ++a) {
+                out(point_index, a) -= rho[a];
+            }
+            for (std::size_t sv_index = 0; sv_index < num_support_vectors; ++sv_index) {
+                const real_type kernel_func = kernel_function(support_vectors, sv_index, predict_points, point_index, params);
+                for (std::size_t a = 0; a < num_classes; ++a) {
+                    out(point_index, a) += alpha(a, sv_index) * kernel_func;
+                }
+            }
+        }
+    }
+    return out;
+}
+
+template aos_matrix<float> csvm::predict_values_impl(const detail::parameter<float> &, const aos_matrix<float> &, const aos_matrix<float> &, const std::vector<float> &, aos_matrix<float> &, const aos_matrix<float> &) const;
+template aos_matrix<double> csvm::predict_values_impl(const detail::parameter<double> &, const aos_matrix<double> &, const aos_matrix<double> &, const std::vector<double> &, aos_matrix<double> &, const aos_matrix<double> &) const;
 
 }  // namespace plssvm::openmp
