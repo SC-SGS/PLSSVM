@@ -473,9 +473,15 @@ void gpu_csvm<device_ptr_t, queue_t>::kernel_gemm_impl(const solver_type solver,
         const std::size_t num_rows = B.num_cols();
 
         // allocate memory on the device
-        device_ptr_type<real_type> B_d{ B.num_entries() };
+        static device_ptr_type<real_type> B_d{ B.num_entries() };
+        if (B_d.size() != B.num_entries()) {
+            B_d = device_ptr_type<real_type>{ B.num_entries() };
+        }
         B_d.copy_to_device(B.data());
-        device_ptr_type<real_type> C_d{ C.num_entries() };
+        static device_ptr_type<real_type> C_d{ C.num_entries() };
+        if (C_d.size() != C.num_entries()) {
+            C_d = device_ptr_type<real_type>{ C.num_entries() };
+        }
         C_d.copy_to_device(C.data());
 
         this->run_device_kernel_gemm_explicit(num_rows, num_rhs, num_rows, alpha, A_d, B_d, beta, C_d);
