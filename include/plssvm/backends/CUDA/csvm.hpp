@@ -133,16 +133,16 @@ class csvm : public ::plssvm::detail::gpu_csvm<detail::device_ptr, int> {
     /**
      * @copydoc plssvm::detail::gpu_csvm::run_assemble_kernel_matrix_explicit
      */
-    [[nodiscard]] device_ptr_type<float> run_assemble_kernel_matrix_explicit(const ::plssvm::detail::parameter<float> &params, const device_ptr_type<float> & data_d, const std::size_t num_rows_reduced, const std::size_t num_features, const device_ptr_type<float> &q_red_d, float QA_cost) const final { return this->run_assemble_kernel_matrix_explicit_impl(params, data_d, num_rows_reduced, num_features, q_red_d, QA_cost); }
+    [[nodiscard]] device_ptr_type<float> run_assemble_kernel_matrix_explicit(const ::plssvm::detail::parameter<float> &params, const device_ptr_type<float> & data_d, const device_ptr_type<float> &q_red_d, float QA_cost) const final { return this->run_assemble_kernel_matrix_explicit_impl(params, data_d, q_red_d, QA_cost); }
     /**
      * @copydoc plssvm::detail::gpu_csvm::run_assemble_kernel_matrix_explicit
      */
-    [[nodiscard]] device_ptr_type<double> run_assemble_kernel_matrix_explicit(const ::plssvm::detail::parameter<double> &params, const device_ptr_type<double> &data_d, const std::size_t num_rows_reduced, const std::size_t num_features, const device_ptr_type<double> &q_red_d, double QA_cost) const final { return this->run_assemble_kernel_matrix_explicit_impl(params, data_d, num_rows_reduced, num_features, q_red_d, QA_cost); }
+    [[nodiscard]] device_ptr_type<double> run_assemble_kernel_matrix_explicit(const ::plssvm::detail::parameter<double> &params, const device_ptr_type<double> &data_d, const device_ptr_type<double> &q_red_d, double QA_cost) const final { return this->run_assemble_kernel_matrix_explicit_impl(params, data_d, q_red_d, QA_cost); }
     /**
      * @copydoc plssvm::detail::gpu_csvm::run_assemble_kernel_matrix_explicit
      */
     template <typename real_type>
-    [[nodiscard]] device_ptr_type<real_type> run_assemble_kernel_matrix_explicit_impl(const ::plssvm::detail::parameter<real_type> &params, const device_ptr_type<real_type> &data_d, const std::size_t num_rows_reduced, const std::size_t num_features, const device_ptr_type<real_type> &q_red_d, real_type QA_cost) const;
+    [[nodiscard]] device_ptr_type<real_type> run_assemble_kernel_matrix_explicit_impl(const ::plssvm::detail::parameter<real_type> &params, const device_ptr_type<real_type> &data_d, const device_ptr_type<real_type> &q_red_d, real_type QA_cost) const;
 
     /**
      * @copydoc plssvm::detail::gpu_csvm::run_gemm_kernel_explicit

@@ -218,8 +218,8 @@ class gpu_csvm : public ::plssvm::csvm {
     //***************************************************//
     //                        fit                        //
     //***************************************************//
-    virtual device_ptr_type<float> run_assemble_kernel_matrix_explicit(const ::plssvm::detail::parameter<float> &params, const device_ptr_type<float> & data_d, const std::size_t num_rows_reduced, const std::size_t num_features, const device_ptr_type<float> &q_red_d, float QA_cost) const = 0;
-    virtual device_ptr_type<double> run_assemble_kernel_matrix_explicit(const ::plssvm::detail::parameter<double> &params, const device_ptr_type<double> &data_d, const std::size_t num_rows_reduced, const std::size_t num_features, const device_ptr_type<double> &q_red_d, double QA_cost) const = 0;
+    virtual device_ptr_type<float> run_assemble_kernel_matrix_explicit(const ::plssvm::detail::parameter<float> &params, const device_ptr_type<float> & data_d, const device_ptr_type<float> &q_red_d, float QA_cost) const = 0;
+    virtual device_ptr_type<double> run_assemble_kernel_matrix_explicit(const ::plssvm::detail::parameter<double> &params, const device_ptr_type<double> &data_d, const device_ptr_type<double> &q_red_d, double QA_cost) const = 0;
 
     virtual void run_gemm_kernel_explicit(std::size_t m, std::size_t n, std::size_t k, float alpha, const device_ptr_type<float> &A, const device_ptr_type<float> &B, float beta, device_ptr_type<float> &C) const = 0;
     virtual void run_gemm_kernel_explicit(std::size_t m, std::size_t n, std::size_t k, double alpha, const device_ptr_type<double> &A, const device_ptr_type<double> &B, double beta, device_ptr_type<double> &C) const = 0;
@@ -326,7 +326,7 @@ template <typename real_type>
         // allocate memory for the values currently not on the device
         device_ptr_type<real_type> q_red_d{ q_red.size() };
         q_red_d.copy_to_device(q_red);
-        device_ptr_type<real_type> kernel_matrix = this->run_assemble_kernel_matrix_explicit(params, data_d, num_rows_reduced, num_features, q_red_d, QA_cost);  // TODO:
+        device_ptr_type<real_type> kernel_matrix = this->run_assemble_kernel_matrix_explicit(params, data_d, q_red_d, QA_cost);
 
         PLSSVM_ASSERT(num_rows_reduced * num_rows_reduced == kernel_matrix.size(),
                       "The kernel matrix must be a quadratic matrix with num_rows_reduced^2 ({}) entries, but is {}!",

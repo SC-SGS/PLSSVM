@@ -124,7 +124,10 @@ std::pair<dim3, dim3> execution_range_to_native(const ::plssvm::detail::executio
 //***************************************************//
 
 template <typename real_type>
-auto csvm::run_assemble_kernel_matrix_explicit_impl(const ::plssvm::detail::parameter<real_type> &params, const device_ptr_type<real_type> &data_d, const std::size_t num_rows_reduced, const std::size_t num_features, const device_ptr_type<real_type> &q_red_d, real_type QA_cost) const -> device_ptr_type<real_type> {
+auto csvm::run_assemble_kernel_matrix_explicit_impl(const ::plssvm::detail::parameter<real_type> &params, const device_ptr_type<real_type> &data_d, const device_ptr_type<real_type> &q_red_d, real_type QA_cost) const -> device_ptr_type<real_type> {
+    const std::size_t num_rows_reduced = data_d.size(0) - 1;
+    const std::size_t num_features = data_d.size(1);
+
     // define grid and block sizes
     const dim3 block(32, 32);
     const dim3 grid(static_cast<int>(std::ceil(num_rows_reduced / static_cast<double>(block.x))),
@@ -150,8 +153,8 @@ auto csvm::run_assemble_kernel_matrix_explicit_impl(const ::plssvm::detail::para
     return kernel_matrix_d;
 }
 
-template auto csvm::run_assemble_kernel_matrix_explicit_impl(const ::plssvm::detail::parameter<float> &, const device_ptr_type<float> &, const std::size_t, const std::size_t, const device_ptr_type<float> &, float) const -> device_ptr_type<float>;
-template auto csvm::run_assemble_kernel_matrix_explicit_impl(const ::plssvm::detail::parameter<double> &, const device_ptr_type<double> &, const std::size_t, const std::size_t, const device_ptr_type<double> &, double) const -> device_ptr_type<double>;
+template auto csvm::run_assemble_kernel_matrix_explicit_impl(const ::plssvm::detail::parameter<float> &, const device_ptr_type<float> &, const device_ptr_type<float> &, float) const -> device_ptr_type<float>;
+template auto csvm::run_assemble_kernel_matrix_explicit_impl(const ::plssvm::detail::parameter<double> &, const device_ptr_type<double> &, const device_ptr_type<double> &, double) const -> device_ptr_type<double>;
 
 template <typename real_type>
 void csvm::run_gemm_kernel_explicit_impl(const std::size_t m, const std::size_t n, const std::size_t k, const real_type alpha, const device_ptr_type<real_type> &A_d, const device_ptr_type<real_type> &B_d, const real_type beta, device_ptr_type<real_type> &C_d) const {
