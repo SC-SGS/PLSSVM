@@ -123,6 +123,8 @@ class csvm : public ::plssvm::detail::gpu_csvm<detail::device_ptr, int> {
      */
     void device_synchronize(const queue_type &queue) const final;
 
+    unsigned long long get_device_memory() const final;
+
 
     device_ptr_type<float> run_predict_kernel(const ::plssvm::detail::parameter<float> &params, const device_ptr_type<float> &w_d, const device_ptr_type<float> &alpha_d, const device_ptr_type<float> &rho_d, const device_ptr_type<float> &sv_d, const device_ptr_type<float> &predict_points_d, std::size_t num_classes, std::size_t num_sv, std::size_t num_predict_points, std::size_t num_features) const final { return this->run_predict_kernel_impl(params, w_d, alpha_d, rho_d, sv_d, predict_points_d, num_classes, num_sv, num_predict_points, num_features); }
     device_ptr_type<double> run_predict_kernel(const ::plssvm::detail::parameter<double> &params, const device_ptr_type<double> &w_d, const device_ptr_type<double> &alpha_d, const device_ptr_type<double> &rho_d, const device_ptr_type<double> &sv_d, const device_ptr_type<double> &predict_points_d, std::size_t num_classes, std::size_t num_sv, std::size_t num_predict_points, std::size_t num_features) const final { return this->run_predict_kernel_impl(params, w_d, alpha_d, rho_d, sv_d, predict_points_d, num_classes, num_sv, num_predict_points, num_features); }

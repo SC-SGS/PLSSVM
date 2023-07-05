@@ -200,6 +200,7 @@ class csvm {
      */
     [[nodiscard]] virtual aos_matrix<double> predict_values(const detail::parameter<double> &params, const aos_matrix<double> &support_vectors, const aos_matrix<double> &alpha, const std::vector<double> &rho, aos_matrix<double> &w, const aos_matrix<double> &predict_points) const = 0;
 
+    [[nodiscard]] virtual unsigned long long get_device_memory() const = 0;
 
     /**
      * @brief Setup all necessary data on the device(s). Backend specific!
@@ -359,7 +360,7 @@ model<real_type, label_type> csvm::fit(const data_set<real_type, label_type> &da
     // start fitting the data set using a C-SVM
     const std::chrono::time_point start_time = std::chrono::steady_clock::now();
 
-    detail::log(verbosity_level::full | verbosity_level::timing,
+    detail::log(verbosity_level::full,
                 "Using {} ({}) as multi-class classification strategy.\n",
                 used_classification,
                 classification_type_to_full_string(used_classification));
@@ -401,7 +402,7 @@ model<real_type, label_type> csvm::fit(const data_set<real_type, label_type> &da
 
         if (num_classes == 2) {
             // special optimization for binary case (no temporary copies necessary)
-            detail::log(verbosity_level::full | verbosity_level::timing,
+            detail::log(verbosity_level::full,
                         "\nClassifying 0 vs 1 ({} vs {}) (1/1):\n",
                         data.mapping_->get_label_by_mapped_index(0),
                         data.mapping_->get_label_by_mapped_index(1));
@@ -434,7 +435,7 @@ model<real_type, label_type> csvm::fit(const data_set<real_type, label_type> &da
                     }
 
                     // solve the minimization problem -> note that only a single rhs is present
-                    detail::log(verbosity_level::full | verbosity_level::timing,
+                    detail::log(verbosity_level::full,
                                 "\nClassifying {} vs {} ({} vs {}) ({}/{}):\n",
                                 i,
                                 j,
@@ -699,20 +700,37 @@ std::pair<aos_matrix<real_type>, std::vector<real_type>> csvm::solve_system_of_l
         used_solver = detail::get_value_from_named_parameter<solver_type>(parser, solver);
     }
 
-    // determine the correct solver type, if the automatic solver type has been provided
-    if (used_solver == solver_type::automatic) {
-        // TODO: decide which solver to use
-        used_solver = solver_type::cg_explicit;
-    }
-
-    detail::log(verbosity_level::full | verbosity_level::timing,
-                "Using {} as solver for AX=B.\n",
-                used_solver);
-
     const std::size_t num_rows = A.num_rows();
     const std::size_t num_features = A.num_cols();
     const std::size_t num_rows_reduced = num_rows - 1;
     const std::size_t num_rhs = B.num_rows();
+
+    // determine the correct solver type, if the automatic solver type has been provided
+    if (used_solver == solver_type::automatic) {
+        // TODO: decide which solver to use based on the available (V)RAM (maybe onl lets say 95% of the memory should be used)
+        const double total_system_memory = detail::get_system_memory() * 0.95;
+        const double total_device_memory = this->get_device_memory() * 0.95;
+        const unsigned long long total_memory_needed = sizeof(real_type) * (num_rows * num_features + num_rows_reduced * num_rows_reduced + 2 * num_rows_reduced * num_rhs);
+
+        detail::log(verbosity_level::full,
+                    "Determining the solver type based on the available memory:\n"
+                    "  - system memory (95%): {:.2f} GB\n"
+                    "  - device memory (95%): {:.2f} GB\n"
+                    "  - memory needed: {:.2f} GB\n",
+                    total_system_memory / 1024. / 1024. / 1024., total_device_memory / 1024. / 1024. / 1024., total_memory_needed / 1024. / 1024. / 1024.);
+
+        if (total_memory_needed < total_device_memory) {
+            used_solver = solver_type::cg_explicit;
+        } else if (total_memory_needed > total_device_memory && total_memory_needed < total_system_memory) {
+            used_solver = solver_type::cg_streaming;
+        } else {
+            used_solver = solver_type::cg_implicit;
+        }
+    }
+
+    detail::log(verbosity_level::full,
+                "Using {} as solver for AX=B.\n",
+                used_solver);
 
     // perform dimensional reduction
     const auto [q_red, QA_cost] = this->perform_dimensional_reduction(params, A);

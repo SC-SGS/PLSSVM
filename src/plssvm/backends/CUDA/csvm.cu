@@ -106,6 +106,13 @@ void csvm::device_synchronize(const queue_type &queue) const {
     detail::device_synchronize(queue);
 }
 
+unsigned long long csvm::get_device_memory() const {
+    // TODO: total vs. available device memory
+    cudaDeviceProp prop{};
+    cudaGetDeviceProperties(&prop, devices_[0]);
+    return static_cast<unsigned long long>(prop.totalGlobalMem);
+}
+
 std::pair<dim3, dim3> execution_range_to_native(const ::plssvm::detail::execution_range &range) {
     const dim3 grid(range.grid[0], range.grid[1], range.grid[2]);
     const dim3 block(range.block[0], range.block[1], range.block[2]);

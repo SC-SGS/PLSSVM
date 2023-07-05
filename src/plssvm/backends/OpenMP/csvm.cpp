@@ -70,6 +70,10 @@ void csvm::init(const target_platform target) {
     target_ = plssvm::target_platform::cpu;
 }
 
+unsigned long long csvm::get_device_memory() const {
+    return detail::get_system_memory();
+}
+
 template <typename real_type>
 aos_matrix<real_type> csvm::predict_values_impl(const detail::parameter<real_type> &params, const aos_matrix<real_type> &support_vectors, const aos_matrix<real_type> &alpha, const std::vector<real_type> &rho, aos_matrix<real_type> &w, const aos_matrix<real_type> &predict_points) const {
     PLSSVM_ASSERT(!support_vectors.empty(), "The support vectors must not be empty!");

@@ -102,6 +102,7 @@ class csvm : public ::plssvm::csvm {
      ~csvm() override = default;
 
   protected:
+    unsigned long long get_device_memory() const final;
 
     /**
      * @copydoc plssvm::csvm::predict_values
