@@ -31,6 +31,7 @@
 #include "fmt/core.h"                        // fmt::format
 
 #include <algorithm>                         // std::min
+#include <array>                             // std::array
 #include <memory>                            // std::addressof
 #include <utility>                           // std::exchange, std::swap
 #include <vector>                            // std::vector
@@ -39,13 +40,17 @@ namespace plssvm::detail {
 
 template <typename T, typename queue_t, typename device_pointer_t>
 gpu_device_ptr<T, queue_t, device_pointer_t>::gpu_device_ptr(size_type size, const queue_type queue) :
-    queue_{ queue }, size_{ size } {}
+    queue_{ queue }, extends_{ { size, 1 } } {}
+
+template <typename T, typename queue_t, typename device_pointer_t>
+gpu_device_ptr<T, queue_t, device_pointer_t>::gpu_device_ptr(std::array<size_type, 2> extends, const queue_type queue) :
+    queue_{ queue }, extends_{ extends } {}
 
 template <typename T, typename queue_t, typename device_pointer_t>
 gpu_device_ptr<T, queue_t, device_pointer_t>::gpu_device_ptr(gpu_device_ptr &&other) noexcept :
     queue_{ std::exchange(other.queue_, queue_type{}) },
     data_{ std::exchange(other.data_, device_pointer_type{}) },
-    size_{ std::exchange(other.size_, size_type{}) } {}
+    extends_{ std::exchange(other.extends_, std::array<size_type, 2>{}) } {}
 
 template <typename T, typename queue_t, typename device_pointer_t>
 auto gpu_device_ptr<T, queue_t, device_pointer_t>::operator=(gpu_device_ptr &&other) noexcept -> gpu_device_ptr & {
@@ -53,7 +58,7 @@ auto gpu_device_ptr<T, queue_t, device_pointer_t>::operator=(gpu_device_ptr &&ot
     if (this != std::addressof(other)) {
         queue_ = std::exchange(other.queue_, queue_type{});
         data_ = std::exchange(other.data_, device_pointer_type{});
-        size_ = std::exchange(other.size_, size_type{});
+        extends_ = std::exchange(other.extends_, std::array<size_type, 2>{});
     }
     return *this;
 }
@@ -62,34 +67,34 @@ template <typename T, typename queue_t, typename device_pointer_t>
 void gpu_device_ptr<T, queue_t, device_pointer_t>::swap(gpu_device_ptr &other) noexcept {
     std::swap(queue_, other.queue_);
     std::swap(data_, other.data_);
-    std::swap(size_, other.size_);
+    std::swap(extends_, other.extends_);
 }
 
 template <typename T, typename queue_t, typename device_pointer_t>
 void gpu_device_ptr<T, queue_t, device_pointer_t>::memset(const int pattern, const size_type pos) {
     PLSSVM_ASSERT(data_ != nullptr, "Invalid data pointer! Maybe *this has been default constructed?");
 
-    this->memset(pattern, pos, size_ * sizeof(value_type));
+    this->memset(pattern, pos, this->size() * sizeof(value_type));
 }
 
 template <typename T, typename queue_t, typename device_pointer_t>
 void gpu_device_ptr<T, queue_t, device_pointer_t>::fill(const value_type value, const size_type pos) {
     PLSSVM_ASSERT(data_ != nullptr, "Invalid data pointer! Maybe *this has been default constructed?");
 
-    this->fill(value, pos, size_);
+    this->fill(value, pos, this->size());
 }
 
 template <typename T, typename queue_t, typename device_pointer_t>
 void gpu_device_ptr<T, queue_t, device_pointer_t>::copy_to_device(const std::vector<value_type> &data_to_copy) {
     PLSSVM_ASSERT(data_ != nullptr, "Invalid data pointer! Maybe *this has been default constructed?");
 
-    this->copy_to_device(data_to_copy, 0, size_);
+    this->copy_to_device(data_to_copy, 0, this->size());
 }
 template <typename T, typename queue_t, typename device_pointer_t>
 void gpu_device_ptr<T, queue_t, device_pointer_t>::copy_to_device(const std::vector<value_type> &data_to_copy, const size_type pos, const size_type count) {
     PLSSVM_ASSERT(data_ != nullptr, "Invalid data pointer! Maybe *this has been default constructed?");
 
-    const size_type rcount = std::min(count, size_ - pos);
+    const size_type rcount = std::min(count, this->size() - pos);
     if (data_to_copy.size() < rcount) {
         throw gpu_device_ptr_exception{ fmt::format("Too few data to perform copy (needed: {}, provided: {})!", rcount, data_to_copy.size()) };
     }
@@ -100,20 +105,20 @@ void gpu_device_ptr<T, queue_t, device_pointer_t>::copy_to_device(const_host_poi
     PLSSVM_ASSERT(data_ != nullptr, "Invalid data pointer! Maybe *this has been default constructed?");
     PLSSVM_ASSERT(data_to_copy != nullptr, "Invalid host pointer for the data to copy!");
 
-    this->copy_to_device(data_to_copy, 0, size_);
+    this->copy_to_device(data_to_copy, 0, this->size());
 }
 
 template <typename T, typename queue_t, typename device_pointer_t>
 void gpu_device_ptr<T, queue_t, device_pointer_t>::copy_to_host(std::vector<value_type> &buffer) const {
     PLSSVM_ASSERT(data_ != nullptr, "Invalid data pointer! Maybe *this has been default constructed?");
 
-    this->copy_to_host(buffer, 0, size_);
+    this->copy_to_host(buffer, 0, this->size());
 }
 template <typename T, typename queue_t, typename device_pointer_t>
 void gpu_device_ptr<T, queue_t, device_pointer_t>::copy_to_host(std::vector<value_type> &buffer, const size_type pos, const size_type count) const {
     PLSSVM_ASSERT(data_ != nullptr, "Invalid data pointer! Maybe *this has been default constructed?");
 
-    const size_type rcount = std::min(count, size_ - pos);
+    const size_type rcount = std::min(count, this->size() - pos);
     if (buffer.size() < rcount) {
         throw gpu_device_ptr_exception{ fmt::format("Buffer too small to perform copy (needed: {}, provided: {})!", rcount, buffer.size()) };
     }
@@ -124,7 +129,7 @@ void gpu_device_ptr<T, queue_t, device_pointer_t>::copy_to_host(host_pointer_typ
     PLSSVM_ASSERT(data_ != nullptr, "Invalid data pointer! Maybe *this has been default constructed?");
     PLSSVM_ASSERT(buffer != nullptr, "Invalid host pointer for the data to copy!");
 
-    this->copy_to_host(buffer, 0, size_);
+    this->copy_to_host(buffer, 0, this->size());
 }
 
 // explicitly instantiate template class depending on available backends

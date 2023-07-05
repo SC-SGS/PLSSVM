@@ -13,10 +13,12 @@
 #define PLSSVM_BACKENDS_GPU_DEVICE_PTR_HPP_
 #pragma once
 
+#include "plssvm/detail/assert.hpp"     // PLSSVM_ASSERT
 #include "plssvm/detail/type_list.hpp"  // plssvm::detail::{real_type_list, type_list_contains_v}
 
 #include <cstddef>      // std::size_t
 #include <type_traits>  // std::is_same_v
+#include <array>      // std::array
 #include <vector>       // std::vector
 
 namespace plssvm::detail {
@@ -51,11 +53,17 @@ class gpu_device_ptr {
      */
     gpu_device_ptr() = default;
     /**
-     * @brief Construct a device_ptr for the device managed by @p queue with the size @p size.
+     * @brief Construct a device_ptr for the device managed by @p queue with the extends { @p size, 1 }.
      * @param[in] size the size of the managed memory
      * @param[in] queue the queue (or similar) to manage the device_ptr
      */
     gpu_device_ptr(size_type size, const queue_type queue);
+    /**
+     * @brief Construct a device_ptr for the device managed by @p queue with the extends @p extends.
+     * @param[in] extends the extends of the managed memory; size = extends[0] * extends[1]
+     * @param[in] queue the queue (or similar) to manage the device_ptr
+     */
+    gpu_device_ptr(std::array<size_type, 2> extends, const queue_type queue);
 
     /**
      * @brief Delete copy-constructor to make device_ptr a move only type.
@@ -121,7 +129,16 @@ class gpu_device_ptr {
      * @return the number of elements (`[[nodiscard]]`)
      */
     [[nodiscard]] size_type size() const noexcept {
-        return size_;
+        return extends_[0] * extends_[1];
+    }
+    /**
+     * @brief Get the number of elements in the @p extend direction in the wrapped device_ptr.
+     * @param[in] extend the extend to retrieve
+     * @return the number of elements in direction @p extend (`[[nodiscard]]`)
+     */
+    [[nodiscard]] size_type size(const size_type extend) const noexcept {
+        PLSSVM_ASSERT(extend < 2, "Only extends 0 and 1 are allowed, but {} was provided!", extend);
+        return extends_[extend];
     }
     /**
      * @brief Check whether the device_ptr currently maps zero elements.
@@ -129,7 +146,7 @@ class gpu_device_ptr {
      * @return `true` if no elements are wrapped, `false` otherwise (`[[nodiscard]]`)
      */
     [[nodiscard]] bool empty() const noexcept {
-        return size_ == 0;
+        return this->size() == 0;
     }
     /**
      * @brief Return the queue managing the memory of the wrapped device pointer.
@@ -237,7 +254,7 @@ class gpu_device_ptr {
     /// The device pointer pointing to the managed memory.
     device_pointer_type data_{};
     /// The size of the managed memory.
-    size_type size_{ 0 };
+    std::array<size_type, 2> extends_{ { 0, 0 } };
 };
 
 }  // namespace plssvm::detail
