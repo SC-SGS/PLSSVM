@@ -141,7 +141,7 @@ template auto csvm::run_w_kernel_impl(const device_ptr_type<double> &, const dev
 
 template <typename real_type>
 auto csvm::run_predict_kernel_impl(const ::plssvm::detail::parameter<real_type> &params, const device_ptr_type<real_type> &w_d, const device_ptr_type<real_type> &alpha_d, const device_ptr_type<real_type> &rho_d, const device_ptr_type<real_type> &sv_d, const device_ptr_type<real_type> &predict_points_d, std::size_t num_classes, std::size_t num_sv, std::size_t num_predict_points, std::size_t num_features) const -> device_ptr_type<real_type> {
-    device_ptr_type<real_type> out_d{ num_predict_points * num_classes };
+    device_ptr_type<real_type> out_d{ { num_predict_points, num_classes } };
 
     detail::set_device(0);
     if (params.kernel_type == kernel_function_type::linear) {
@@ -186,7 +186,7 @@ auto csvm::run_assemble_kernel_matrix_explicit_impl(const ::plssvm::detail::para
     const dim3 grid(static_cast<int>(std::ceil(num_rows_reduced / static_cast<double>(block.x))),
                     static_cast<int>(std::ceil(num_rows_reduced / static_cast<double>(block.y))));
 
-    device_ptr_type<real_type> kernel_matrix_d{ num_rows_reduced * num_rows_reduced };
+    device_ptr_type<real_type> kernel_matrix_d{ { num_rows_reduced, num_rows_reduced } };
 
     detail::set_device(0);
     switch (params.kernel_type) {

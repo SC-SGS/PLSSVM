@@ -223,11 +223,11 @@ class csvm {
      * @param[in] QA_cost the value used in the dimensional reduction
      * @return the kernel matrix; fully stored on the device (`[[nodiscard]]`)
      */
-    [[nodiscard]] virtual detail::simple_any assemble_kernel_matrix(const detail::parameter<float> &params, solver_type solver, const ::plssvm::detail::simple_any &data, const std::size_t num_rows_reduced, const std::size_t num_features, const std::vector<float> &q_red, float QA_cost) const = 0;
+    [[nodiscard]] virtual detail::simple_any assemble_kernel_matrix(const detail::parameter<float> &params, solver_type solver, const ::plssvm::detail::simple_any &data, const std::vector<float> &q_red, float QA_cost) const = 0;
     /**
      * @copydoc plssvm::csvm::assemble_kernel_matrix_explicit
      */
-    [[nodiscard]] virtual detail::simple_any assemble_kernel_matrix(const detail::parameter<double> &params, solver_type solver, const ::plssvm::detail::simple_any &data, const std::size_t num_rows_reduced, const std::size_t num_features, const std::vector<double> &q_red, double QA_cost) const = 0;
+    [[nodiscard]] virtual detail::simple_any assemble_kernel_matrix(const detail::parameter<double> &params, solver_type solver, const ::plssvm::detail::simple_any &data, const std::vector<double> &q_red, double QA_cost) const = 0;
 
     /**
      * @brief Perform a BLAS like GEMM matrix-matrix multiplication: `C = alpha * A * B + beta * C`.
@@ -751,7 +751,7 @@ std::pair<aos_matrix<real_type>, std::vector<real_type>> csvm::solve_system_of_l
 
     // assemble explicit kernel matrix
     const std::chrono::steady_clock::time_point assembly_start_time = std::chrono::steady_clock::now();
-    const detail::simple_any kernel_matrix = this->assemble_kernel_matrix(params, used_solver, data, num_rows_reduced, num_features, q_red, QA_cost);
+    const detail::simple_any kernel_matrix = this->assemble_kernel_matrix(params, used_solver, data, q_red, QA_cost);
     const std::chrono::steady_clock::time_point assembly_end_time = std::chrono::steady_clock::now();
     detail::log(verbosity_level::full | verbosity_level::timing,
                 "Assembled the kernel matrix in {}.\n",

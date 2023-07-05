@@ -135,16 +135,16 @@ class csvm : public ::plssvm::csvm {
     /**
      * @copydoc plssvm::csvm::assemble_kernel_matrix_explicit
      */
-    [[nodiscard]] detail::simple_any assemble_kernel_matrix(const detail::parameter<float> &params, const solver_type solver, const detail::simple_any &data, const std::size_t num_rows_reduced, const std::size_t num_features, const std::vector<float> &q_red, float QA_cost) const final { return this->assemble_kernel_matrix_impl(params, solver, data, num_rows_reduced, num_features, q_red, QA_cost); }
+    [[nodiscard]] detail::simple_any assemble_kernel_matrix(const detail::parameter<float> &params, const solver_type solver, const detail::simple_any &data, const std::vector<float> &q_red, float QA_cost) const final { return this->assemble_kernel_matrix_impl(params, solver, data, q_red, QA_cost); }
     /**
      * @copydoc plssvm::csvm::assemble_kernel_matrix_explicit
      */
-    [[nodiscard]] detail::simple_any assemble_kernel_matrix(const detail::parameter<double> &params, const solver_type solver, const detail::simple_any &data, const std::size_t num_rows_reduced, const std::size_t num_features, const std::vector<double> &q_red, double QA_cost) const final { return this->assemble_kernel_matrix_impl(params, solver ,data, num_rows_reduced, num_features, q_red, QA_cost); }
+    [[nodiscard]] detail::simple_any assemble_kernel_matrix(const detail::parameter<double> &params, const solver_type solver, const detail::simple_any &data, const std::vector<double> &q_red, double QA_cost) const final { return this->assemble_kernel_matrix_impl(params, solver ,data, q_red, QA_cost); }
     /**
      * @copydoc plssvm::csvm::assemble_kernel_matrix_explicit
      */
     template <typename real_type>
-    [[nodiscard]] detail::simple_any assemble_kernel_matrix_impl(const detail::parameter<real_type> &params, solver_type solver, const detail::simple_any &data, const std::size_t num_rows_reduced, const std::size_t num_features, const std::vector<real_type> &q_red, real_type QA_cost) const;
+    [[nodiscard]] detail::simple_any assemble_kernel_matrix_impl(const detail::parameter<real_type> &params, solver_type solver, const detail::simple_any &data, const std::vector<real_type> &q_red, real_type QA_cost) const;
 
     /**
      * @copydoc plssvm::csvm::kernel_matrix_matmul_explicit

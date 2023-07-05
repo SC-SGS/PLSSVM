@@ -184,16 +184,16 @@ class gpu_csvm : public ::plssvm::csvm {
     /**
      * @copydoc plssvm::csvm::assemble_kernel_matrix_explicit_impl
      */
-    [[nodiscard]] ::plssvm::detail::simple_any assemble_kernel_matrix(const ::plssvm::detail::parameter<float> &params, const solver_type solver, const ::plssvm::detail::simple_any & data, const std::size_t num_rows_reduced, const std::size_t num_features, const std::vector<float> &q_red, float QA_cost) const final { return this->assemble_kernel_matrix_impl(params, solver, data, num_rows_reduced, num_features, q_red, QA_cost); }
+    [[nodiscard]] ::plssvm::detail::simple_any assemble_kernel_matrix(const ::plssvm::detail::parameter<float> &params, const solver_type solver, const ::plssvm::detail::simple_any & data, const std::vector<float> &q_red, float QA_cost) const final { return this->assemble_kernel_matrix_impl(params, solver, data, q_red, QA_cost); }
     /**
      * @copydoc plssvm::csvm::assemble_kernel_matrix_explicit_impl
      */
-    [[nodiscard]] ::plssvm::detail::simple_any assemble_kernel_matrix(const ::plssvm::detail::parameter<double> &params, const solver_type solver, const ::plssvm::detail::simple_any &data, const std::size_t num_rows_reduced, const std::size_t num_features, const std::vector<double> &q_red, double QA_cost) const final { return this->assemble_kernel_matrix_impl(params, solver, data, num_rows_reduced, num_features, q_red, QA_cost); }
+    [[nodiscard]] ::plssvm::detail::simple_any assemble_kernel_matrix(const ::plssvm::detail::parameter<double> &params, const solver_type solver, const ::plssvm::detail::simple_any &data, const std::vector<double> &q_red, double QA_cost) const final { return this->assemble_kernel_matrix_impl(params, solver, data, q_red, QA_cost); }
     /**
      * @copydoc plssvm::csvm::assemble_kernel_matrix_explicit_impl
      */
     template <typename real_type>
-    [[nodiscard]] ::plssvm::detail::simple_any assemble_kernel_matrix_impl(const ::plssvm::detail::parameter<real_type> &params, solver_type solver, const ::plssvm::detail::simple_any &data, const std::size_t num_rows_reduced, const std::size_t num_features, const std::vector<real_type> &q_red, real_type QA_cost) const;
+    [[nodiscard]] ::plssvm::detail::simple_any assemble_kernel_matrix_impl(const ::plssvm::detail::parameter<real_type> &params, solver_type solver, const ::plssvm::detail::simple_any &data, const std::vector<real_type> &q_red, real_type QA_cost) const;
 
     /**
      * @copydoc plssvm::csvm::kernel_matrix_matmul_explicit
@@ -417,7 +417,7 @@ template <typename real_type>
 
     if (solver == solver_type::cg_explicit) {
         // initialize the data on the device
-        device_ptr_type<real_type> data_d{ A.num_entries() };
+        device_ptr_type<real_type> data_d{ A.shape() };  // TODO: don't copy last data point to device?
         data_d.copy_to_device(A.data());
 
         return ::plssvm::detail::simple_any{ std::move(data_d) };
@@ -429,15 +429,18 @@ template <typename real_type>
 
 template <template <typename> typename device_ptr_t, typename queue_t>
 template <typename real_type>
-::plssvm::detail::simple_any gpu_csvm<device_ptr_t, queue_t>::assemble_kernel_matrix_impl(const ::plssvm::detail::parameter<real_type> &params, const solver_type solver, const ::plssvm::detail::simple_any &data, const std::size_t num_rows_reduced, const std::size_t num_features, const std::vector<real_type> &q_red, real_type QA_cost) const {
-    PLSSVM_ASSERT(num_rows_reduced > 0, "At least one row must be given!");
-    PLSSVM_ASSERT(num_features > 0, "At least one feature must be given!");
+::plssvm::detail::simple_any gpu_csvm<device_ptr_t, queue_t>::assemble_kernel_matrix_impl(const ::plssvm::detail::parameter<real_type> &params, const solver_type solver, const ::plssvm::detail::simple_any &data, const std::vector<real_type> &q_red, real_type QA_cost) const {
     PLSSVM_ASSERT(!q_red.empty(), "The q_red vector may not be empty!");
     PLSSVM_ASSERT(solver != solver_type::automatic, "An explicit solver type must be provided instead of solver_type::automatic!");
 
     if (solver == solver_type::cg_explicit) {
         // get the pointer to the data that already is on the device
         const device_ptr_type<real_type> &data_d = data.get<device_ptr_type<real_type>>();
+        const std::size_t num_rows_reduced = data_d.size(0) - 1;
+        const std::size_t num_features = data_d.size(1);
+
+        PLSSVM_ASSERT(num_rows_reduced > 0, "At least one row must be given!");
+        PLSSVM_ASSERT(num_features > 0, "At least one feature must be given!");
         PLSSVM_ASSERT((num_rows_reduced + 1) * num_features == data_d.size(),
                       "The number of values on the device data array is {}, but the provided sizes are {} ((num_rows_reduced + 1) * num_features)",
                       data_d.size(), (num_rows_reduced + 1) * num_features);
@@ -473,14 +476,14 @@ void gpu_csvm<device_ptr_t, queue_t>::kernel_gemm_impl(const solver_type solver,
         const std::size_t num_rows = B.num_cols();
 
         // allocate memory on the device
-        static device_ptr_type<real_type> B_d{ B.num_entries() };
+        static device_ptr_type<real_type> B_d{ B.shape() };
         if (B_d.size() != B.num_entries()) {
-            B_d = device_ptr_type<real_type>{ B.num_entries() };
+            B_d = device_ptr_type<real_type>{ B.shape() };
         }
         B_d.copy_to_device(B.data());
-        static device_ptr_type<real_type> C_d{ C.num_entries() };
+        static device_ptr_type<real_type> C_d{ C.shape() };
         if (C_d.size() != C.num_entries()) {
-            C_d = device_ptr_type<real_type>{ C.num_entries() };
+            C_d = device_ptr_type<real_type>{ C.shape() };
         }
         C_d.copy_to_device(C.data());
 

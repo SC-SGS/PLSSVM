@@ -164,16 +164,16 @@ template detail::simple_any csvm::setup_data_on_devices_impl(const solver_type, 
 template detail::simple_any csvm::setup_data_on_devices_impl(const solver_type, const aos_matrix<double> &) const;
 
 template <typename real_type>
-detail::simple_any csvm::assemble_kernel_matrix_impl(const detail::parameter<real_type> &params, const solver_type solver, const detail::simple_any &data, const std::size_t num_rows_reduced, const std::size_t, const std::vector<real_type> &q_red, real_type QA_cost) const {
-    PLSSVM_ASSERT(num_rows_reduced > 0, "At least one row must be given!");
-//    PLSSVM_ASSERT(num_features > 0, "At least one feature must be given!");
+detail::simple_any csvm::assemble_kernel_matrix_impl(const detail::parameter<real_type> &params, const solver_type solver, const detail::simple_any &data, const std::vector<real_type> &q_red, real_type QA_cost) const {
     PLSSVM_ASSERT(!q_red.empty(), "The q_red vector may not be empty!");
     PLSSVM_ASSERT(solver != solver_type::automatic, "An explicit solver type must be provided instead of solver_type::automatic!");
 
     const aos_matrix<real_type> *data_ptr = data.get<const aos_matrix<real_type> *>();
     PLSSVM_ASSERT(data_ptr != nullptr, "The data_ptr must not be a nullptr!");
+
+    const std::size_t num_rows_reduced = data_ptr->num_rows() - 1;
+    PLSSVM_ASSERT(num_rows_reduced > 0, "At least one row must be given!");
     PLSSVM_ASSERT(data_ptr->num_rows() == num_rows_reduced + 1, "The number of rows in the data matrix must be {}, but is {}!", num_rows_reduced + 1, data_ptr->num_rows());
-//    PLSSVM_ASSERT(data_ptr->num_cols() == num_features, "The number of columns in the data matrix must be {}, but is {}!", num_features, data_ptr->num_cols());
 
     if (solver == solver_type::cg_explicit) {
         aos_matrix<real_type> explicit_A{ num_rows_reduced, num_rows_reduced };
@@ -200,8 +200,8 @@ detail::simple_any csvm::assemble_kernel_matrix_impl(const detail::parameter<rea
     }
 }
 
-template detail::simple_any csvm::assemble_kernel_matrix_impl(const detail::parameter<float> &, const solver_type, const detail::simple_any &, const std::size_t, const std::size_t, const std::vector<float> &, float) const;
-template detail::simple_any csvm::assemble_kernel_matrix_impl(const detail::parameter<double> &, const solver_type, const detail::simple_any &, const std::size_t, const std::size_t, const std::vector<double> &, double) const;
+template detail::simple_any csvm::assemble_kernel_matrix_impl(const detail::parameter<float> &, const solver_type, const detail::simple_any &, const std::vector<float> &, float) const;
+template detail::simple_any csvm::assemble_kernel_matrix_impl(const detail::parameter<double> &, const solver_type, const detail::simple_any &, const std::vector<double> &, double) const;
 
 template <typename real_type>
 void csvm::kernel_gemm_impl(const solver_type solver, const real_type alpha, const detail::simple_any &A, const aos_matrix<real_type> &B, const real_type beta, aos_matrix<real_type> &C) const {
