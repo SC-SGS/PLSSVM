@@ -13,6 +13,7 @@
 #define PLSSVM_BACKENDS_OPENMP_CSVM_HPP_
 #pragma once
 
+#include "plssvm/constants.hpp"           // plssvm::real_type
 #include "plssvm/csvm.hpp"                // plssvm::csvm
 #include "plssvm/detail/simple_any.hpp"   // plssvm::detail::simple_any
 #include "plssvm/detail/type_traits.hpp"  // PLSSVM_REQUIRES
@@ -105,7 +106,7 @@ class csvm : public ::plssvm::csvm {
     /**
      * @copydoc plssvm::csvm::get_device_memory
      */
-    unsigned long long get_device_memory() const final;
+    [[nodiscard]] unsigned long long get_device_memory() const final;
 
     //***************************************************//
     //                        fit                        //
@@ -113,44 +114,16 @@ class csvm : public ::plssvm::csvm {
     /**
      * @copydoc plssvm::csvm::setup_data_on_devices
      */
-    [[nodiscard]] detail::simple_any setup_data_on_devices(const solver_type solver, const aos_matrix<float> &A) const final { return this->setup_data_on_devices_impl(solver, A); }
-    /**
-     * @copydoc plssvm::csvm::setup_data_on_devices
-     */
-    [[nodiscard]] detail::simple_any setup_data_on_devices(const solver_type solver, const aos_matrix<double> &A) const final { return this->setup_data_on_devices_impl(solver, A); }
-    /**
-     * @copydoc plssvm::csvm::setup_data_on_devices
-     */
-    template <typename real_type>
-    [[nodiscard]] detail::simple_any setup_data_on_devices_impl(solver_type solver, const aos_matrix<real_type> &A) const;
+    [[nodiscard]] detail::simple_any setup_data_on_devices(const solver_type solver, const aos_matrix<real_type> &A) const final;
 
     /**
      * @copydoc plssvm::csvm::assemble_kernel_matrix
      */
-    [[nodiscard]] detail::simple_any assemble_kernel_matrix(const solver_type solver, const detail::parameter<float> &params, const detail::simple_any &data, const std::vector<float> &q_red, const float QA_cost) const final { return this->assemble_kernel_matrix_impl(solver, params, data, q_red, QA_cost); }
-    /**
-     * @copydoc plssvm::csvm::assemble_kernel_matrix
-     */
-    [[nodiscard]] detail::simple_any assemble_kernel_matrix(const solver_type solver, const detail::parameter<double> &params, const detail::simple_any &data, const std::vector<double> &q_red, const double QA_cost) const final { return this->assemble_kernel_matrix_impl(solver, params, data, q_red, QA_cost); }
-    /**
-     * @copydoc plssvm::csvm::assemble_kernel_matrix
-     */
-    template <typename real_type>
-    [[nodiscard]] detail::simple_any assemble_kernel_matrix_impl(solver_type solver, const detail::parameter<real_type> &params, const detail::simple_any &data, const std::vector<real_type> &q_red, real_type QA_cost) const;
-
+    [[nodiscard]] detail::simple_any assemble_kernel_matrix(const solver_type solver, const detail::parameter<real_type> &params, const detail::simple_any &data, const std::vector<real_type> &q_red, const real_type QA_cost) const final;
     /**
      * @copydoc plssvm::csvm::blas_gemm
      */
-    void blas_gemm(const solver_type solver, const float alpha, const detail::simple_any &A, const aos_matrix<float> &B, const float beta, aos_matrix<float> &C) const final { this->blas_gemm_impl(solver, alpha, A, B, beta, C); }
-    /**
-     * @copydoc plssvm::csvm::blas_gemm
-     */
-    void blas_gemm(const solver_type solver, const double alpha, const detail::simple_any &A, const aos_matrix<double> &B, const double beta, aos_matrix<double> &C) const final { this->blas_gemm_impl(solver, alpha, A, B, beta, C); }
-    /**
-     * @copydoc plssvm::csvm::blas_gemm
-     */
-    template <typename real_type>
-    void blas_gemm_impl(solver_type solver, real_type alpha, const detail::simple_any &A, const aos_matrix<real_type> &B, real_type beta, aos_matrix<real_type> &C) const;
+    void blas_gemm(const solver_type solver, const real_type alpha, const detail::simple_any &A, const aos_matrix<real_type> &B, const real_type beta, aos_matrix<real_type> &C) const final;
 
     //***************************************************//
     //                   predict, score                  //
@@ -158,16 +131,7 @@ class csvm : public ::plssvm::csvm {
     /**
      * @copydoc plssvm::csvm::predict_values
      */
-    [[nodiscard]] aos_matrix<float> predict_values(const detail::parameter<float> &params, const aos_matrix<float> &support_vectors, const aos_matrix<float> &alpha, const std::vector<float> &rho, aos_matrix<float> &w, const aos_matrix<float> &predict_points) const override { return this->predict_values_impl(params, support_vectors, alpha, rho, w, predict_points); }
-    /**
-     * @copydoc plssvm::csvm::predict_values
-     */
-    [[nodiscard]] aos_matrix<double> predict_values(const detail::parameter<double> &params, const aos_matrix<double> &support_vectors, const aos_matrix<double> &alpha, const std::vector<double> &rho, aos_matrix<double> &w, const aos_matrix<double> &predict_points) const override { return this->predict_values_impl(params, support_vectors, alpha, rho, w, predict_points); }
-    /**
-     * @copydoc plssvm::csvm::predict_values
-     */
-    template <typename real_type>
-    [[nodiscard]] aos_matrix<real_type> predict_values_impl(const detail::parameter<real_type> &params, const aos_matrix<real_type> &support_vectors, const aos_matrix<real_type> &alpha, const std::vector<real_type> &rho, aos_matrix<real_type> &w, const aos_matrix<real_type> &predict_points) const;
+    [[nodiscard]] aos_matrix<real_type> predict_values(const detail::parameter<real_type> &params, const aos_matrix<real_type> &support_vectors, const aos_matrix<real_type> &alpha, const std::vector<real_type> &rho, aos_matrix<real_type> &w, const aos_matrix<real_type> &predict_points) const final;
 
     private:
     /**

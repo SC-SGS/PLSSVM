@@ -14,6 +14,7 @@
 #pragma once
 
 #include "plssvm/classification_types.hpp"        // plssvm::classification_type, plssvm::classification_type_to_full_string
+#include "plssvm/constants.hpp"                   // plssvm::real_type
 #include "plssvm/data_set.hpp"                    // plssvm::data_set
 #include "plssvm/default_value.hpp"               // plssvm::default_value, plssvm::default_init
 #include "plssvm/detail/logger.hpp"               // plssvm::detail::log, plssvm::verbosity_level
@@ -121,7 +122,6 @@ class csvm {
     //*************************************************************************************************************************************//
     /**
      * @brief Fit a model using the current SVM on the @p data using the provided multi-class classification strategy.
-     * @tparam real_type the type of the data (`float` or `double`)
      * @tparam label_type the type of the label (an arithmetic type or `std::string`)
      * @tparam Args the type of the potential additional parameters
      * @param[in] data the data used to train the SVM model
@@ -133,7 +133,7 @@ class csvm {
      * @note For binary classification **always** one vs. all is used regardless of the provided parameter!
      * @return the learned model (`[[nodiscard]]`)
      */
-    template <typename real_type, typename label_type, typename... Args>
+    template <typename label_type, typename... Args>
     [[nodiscard]] model<real_type, label_type> fit(const data_set<real_type, label_type> &data, Args &&...named_args);
 
     //*************************************************************************************************************************************//
@@ -142,7 +142,6 @@ class csvm {
     /**
      * @brief Predict the labels for the @p data set using the @p model.
      * @details Uses the one vs. all (OAA) for the multi-class classification task.
-     * @tparam real_type the type of the data (`float` or `double`)
      * @tparam label_type the type of the label (an arithmetic type or `std::string`)
      * @param[in] model a previously learned model
      * @param[in] data the data to predict the labels for
@@ -150,24 +149,22 @@ class csvm {
      * @throws plssvm::exception any exception thrown in the respective backend's implementation of `plssvm::csvm::predict_values`
      * @return the predicted labels (`[[nodiscard]]`)
      */
-    template <typename real_type, typename label_type>
+    template <typename label_type>
     [[nodiscard]] std::vector<label_type> predict(const model<real_type, label_type> &model, const data_set<real_type, label_type> &data) const;
 
     /**
      * @brief Calculate the accuracy of the @p model.
      * @details Uses the one vs. all (OAA) for the multi-class classification task.
-     * @tparam real_type the type of the data (`float` or `double`)
      * @tparam label_type the type of the label (an arithmetic type or `std::string`)
      * @param[in] model a previously learned model
      * @throws plssvm::exception any exception thrown in the respective backend's implementation of `plssvm::csvm::predict_values`
      * @return the accuracy of the model (`[[nodiscard]]`)
      */
-    template <typename real_type, typename label_type>
+    template <typename label_type>
     [[nodiscard]] real_type score(const model<real_type, label_type> &model) const;
     /**
      * @brief Calculate the accuracy of the labeled @p data set using the @p model.
      * @details Uses the one vs. all (OAA) for the multi-class classification task.
-     * @tparam real_type the type of the data (`float` or `double`)
      * @tparam label_type the type of the label (an arithmetic type or `std::string`)
      * @param[in] model a previously learned model
      * @param[in] data the labeled data set to score
@@ -176,7 +173,7 @@ class csvm {
      * @throws plssvm::exception any exception thrown in the respective backend's implementation of `plssvm::csvm::predict_values`
      * @return the accuracy of the labeled @p data (`[[nodiscard]]`)
      */
-    template <typename real_type, typename label_type>
+    template <typename label_type>
     [[nodiscard]] real_type score(const model<real_type, label_type> &model, const data_set<real_type, label_type> &data) const;
 
   protected:
@@ -198,11 +195,7 @@ class csvm {
      * @param[in] A the data to setup
      * @return the backend specific setup data, e.g., pointer to GPU memory for the GPU related backends (`[[nodiscard]]`)
      */
-    [[nodiscard]] virtual detail::simple_any setup_data_on_devices(solver_type solver, const aos_matrix<float> &A) const = 0;
-    /**
-     * @copydoc plssvm::csvm::setup_data_on_devices
-     */
-    [[nodiscard]] virtual detail::simple_any setup_data_on_devices(solver_type solver, const aos_matrix<double> &A) const = 0;
+    [[nodiscard]] virtual detail::simple_any setup_data_on_devices(solver_type solver, const aos_matrix<real_type> &A) const = 0;
 
     /**
      * @brief Explicitly assemble the kernel matrix. Backend specific!
@@ -215,11 +208,7 @@ class csvm {
      * @param[in] QA_cost the value used in the dimensional reduction
      * @return based on the used solver type (e.g., cg_explicit -> kernel matrix fully stored on the device; cg_implicit -> "nothing") (`[[nodiscard]]`)
      */
-    [[nodiscard]] virtual detail::simple_any assemble_kernel_matrix(solver_type solver, const detail::parameter<float> &params, const ::plssvm::detail::simple_any &data, const std::vector<float> &q_red, float QA_cost) const = 0;
-    /**
-     * @copydoc plssvm::csvm::assemble_kernel_matrix_explicit
-     */
-    [[nodiscard]] virtual detail::simple_any assemble_kernel_matrix(solver_type solver, const detail::parameter<double> &params, const ::plssvm::detail::simple_any &data, const std::vector<double> &q_red, double QA_cost) const = 0;
+    [[nodiscard]] virtual detail::simple_any assemble_kernel_matrix(solver_type solver, const detail::parameter<real_type> &params, const ::plssvm::detail::simple_any &data, const std::vector<real_type> &q_red, real_type QA_cost) const = 0;
 
     /**
      * @brief Perform a BLAS like GEMM matrix-matrix multiplication: `C = alpha * A * B + beta * C`.
@@ -230,12 +219,7 @@ class csvm {
      * @param[in] beta the value to scale the matrix o add with
      * @param[in,out] C the result matrix and the matrix to add (inplace)
      */
-    virtual void blas_gemm(solver_type solver, float alpha, const detail::simple_any &A, const aos_matrix<float> &B, float beta, aos_matrix<float> &C) const = 0;
-    /**
-     * @copydoc plssvm::csvm::kernel_matrix_matmul_explicit
-     */
-    virtual void blas_gemm(solver_type solver, double alpha, const detail::simple_any &A, const aos_matrix<double> &B, double beta, aos_matrix<double> &C) const = 0;
-
+    virtual void blas_gemm(solver_type solver, real_type alpha, const detail::simple_any &A, const aos_matrix<real_type> &B, real_type beta, aos_matrix<real_type> &C) const = 0;
 
     //***************************************************//
     //                   predict, score                  //
@@ -251,12 +235,7 @@ class csvm {
      * @throws plssvm::exception any exception thrown by the backend's implementation
      * @return a vector filled with the predictions (not the actual labels!) (`[[nodiscard]]`)
      */
-    [[nodiscard]] virtual aos_matrix<float> predict_values(const detail::parameter<float> &params, const aos_matrix<float> &support_vectors, const aos_matrix<float> &alpha, const std::vector<float> &rho, aos_matrix<float> &w, const aos_matrix<float> &predict_points) const = 0;
-    /**
-     * @copydoc plssvm::csvm::predict_values
-     */
-    [[nodiscard]] virtual aos_matrix<double> predict_values(const detail::parameter<double> &params, const aos_matrix<double> &support_vectors, const aos_matrix<double> &alpha, const std::vector<double> &rho, aos_matrix<double> &w, const aos_matrix<double> &predict_points) const = 0;
-
+    [[nodiscard]] virtual aos_matrix<real_type> predict_values(const detail::parameter<real_type> &params, const aos_matrix<real_type> &support_vectors, const aos_matrix<real_type> &alpha, const std::vector<real_type> &rho, aos_matrix<real_type> &w, const aos_matrix<real_type> &predict_points) const = 0;
 
     /// The target platform of this SVM.
     target_platform target_{ plssvm::target_platform::automatic };
@@ -270,7 +249,6 @@ class csvm {
 
     /**
      * @brief Solve the system of linear equations `K * X = B` where `K` is the kernel matrix assembled from @p A using the @p params with potentially multiple right-hand sides.
-     * @tparam real_type the floating point type of the data
      * @tparam Args the type of the potential additional parameters
      * @param[in] A the data used to create the kernel matrix
      * @param[in] B the right-hand sides
@@ -278,11 +256,10 @@ class csvm {
      * @param[in] named_args additional parameters for the respective algorithm used to solve the system of linear equations
      * @return the result matrix `X` and the respective biases (`[[nodiscard]]`)
      */
-    template <typename real_type, typename... Args>
+    template <typename... Args>
     [[nodiscard]] std::pair<aos_matrix<real_type>, std::vector<real_type>> solve_system_of_linear_equations(const aos_matrix<real_type> &A, const aos_matrix<real_type> &B, const detail::parameter<real_type> &params, Args&&... named_args) const;
     /**
      * @brief Solve the system of linear equations `AX = B` where `A` is the kernel matrix using the Conjugate Gradients (CG) algorithm.
-     * @tparam real_type the floating point type of the data
      * @param[in] A the kernel matrix
      * @param[in] B the right-hand sides
      * @param[in] eps the termination criterion for the CG algorithm
@@ -290,17 +267,14 @@ class csvm {
      * @param[in] cd_solver_variant the variation of the CG algorithm to use, i.e., how the kernel matrix is assembled (currently: explicit, streaming, implicit)
      * @return the result matrix `X` (`[[nodiscard]]`)
      */
-    template <typename real_type>
     [[nodiscard]] aos_matrix<real_type> conjugate_gradients(const detail::simple_any &A, const aos_matrix<real_type> &B, real_type eps, unsigned long long max_cg_iter, solver_type cd_solver_variant) const;
     /**
      * @brief Perform a dimensional reduction for the kernel matrix.
      * @details Reduces the resulting dimension by `2` compared to the original LS-SVM formulation.
-     * @tparam real_type the floating point type of the data
      * @param[in] params the parameter used for the kernel matrix
      * @param[in] A the data used for the kernel matrix
      * @return the reduction vector ´q_red` and the bottom-right value `QA_cost` (`[[nodiscard]]`)
      */
-    template <typename real_type>
     [[nodiscard]] std::pair<std::vector<real_type>, real_type> perform_dimensional_reduction(const detail::parameter<real_type> &params, const aos_matrix<real_type> &A) const;
 
 
@@ -347,7 +321,7 @@ void csvm::set_params(Args &&...named_args) {
     this->sanity_check_parameter();
 }
 
-template <typename real_type, typename label_type, typename... Args>
+template <typename label_type, typename... Args>
 model<real_type, label_type> csvm::fit(const data_set<real_type, label_type> &data, Args &&...named_args) {
     if (!data.has_labels()) {
         throw invalid_parameter_exception{ "No labels given for training! Maybe the data is only usable for prediction?" };
@@ -479,7 +453,7 @@ model<real_type, label_type> csvm::fit(const data_set<real_type, label_type> &da
     return csvm_model;
 }
 
-template <typename real_type, typename label_type>
+template <typename label_type>
 std::vector<label_type> csvm::predict(const model<real_type, label_type> &model, const data_set<real_type, label_type> &data) const {
     if (model.num_features() != data.num_features()) {
         throw invalid_parameter_exception{ fmt::format("Number of features per data point ({}) must match the number of features per support vector of the provided model ({})!", data.num_features(), model.num_features()) };
@@ -636,12 +610,12 @@ std::vector<label_type> csvm::predict(const model<real_type, label_type> &model,
     return predicted_labels;
 }
 
-template <typename real_type, typename label_type>
+template <typename label_type>
 real_type csvm::score(const model<real_type, label_type> &model) const {
     return this->score(model, model.data_);
 }
 
-template <typename real_type, typename label_type>
+template <typename label_type>
 real_type csvm::score(const model<real_type, label_type> &model, const data_set<real_type, label_type> &data) const {
     // the data set must contain labels in order to score the learned model
     if (!data.has_labels()) {
@@ -672,7 +646,7 @@ real_type csvm::score(const model<real_type, label_type> &model, const data_set<
 //                                                       private member functions                                                      //
 //*************************************************************************************************************************************//
 
-template <typename real_type, typename... Args>
+template <typename... Args>
 std::pair<aos_matrix<real_type>, std::vector<real_type>> csvm::solve_system_of_linear_equations(const aos_matrix<real_type> &A, const aos_matrix<real_type> &B, const detail::parameter<real_type> &params, Args &&...named_args) const {
     PLSSVM_ASSERT(!A.empty(), "The A matrix may not be empty!");
     PLSSVM_ASSERT(!B.empty(), "The B matrix may not be empty!");

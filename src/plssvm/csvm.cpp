@@ -8,6 +8,7 @@
 
 #include "plssvm/csvm.hpp"
 
+#include "plssvm/constants.hpp"                   // plssvm::real_type
 #include "plssvm/detail/assert.hpp"               // PLSSVM_ASSERT
 #include "plssvm/detail/logger.hpp"               // plssvm::detail::log, plssvm::verbosity_level
 #include "plssvm/detail/operators.hpp"            // plssvm operator overloads for vectors
@@ -45,7 +46,6 @@ void csvm::sanity_check_parameter() const {
     // cost: all allowed
 }
 
-template <typename real_type>
 aos_matrix<real_type> csvm::conjugate_gradients(const detail::simple_any &A, const aos_matrix<real_type> &B, const real_type eps, const unsigned long long max_cg_iter, const solver_type cg_solver) const {
     using namespace plssvm::operators;
 
@@ -216,10 +216,6 @@ aos_matrix<real_type> csvm::conjugate_gradients(const detail::simple_any &A, con
     return X;
 }
 
-template aos_matrix<float> csvm::conjugate_gradients(const detail::simple_any &, const aos_matrix<float> &, const float, const unsigned long long, const solver_type) const;
-template aos_matrix<double> csvm::conjugate_gradients(const detail::simple_any &, const aos_matrix<double> &, const double, const unsigned long long, const solver_type) const;
-
-template <typename real_type>
 std::pair<std::vector<real_type>, real_type> csvm::perform_dimensional_reduction(const detail::parameter<real_type> &params, const aos_matrix<real_type> &A) const {
     const std::chrono::steady_clock::time_point dimension_reduction_start_time = std::chrono::steady_clock::now();
 
@@ -255,8 +251,5 @@ std::pair<std::vector<real_type>, real_type> csvm::perform_dimensional_reduction
 
     return std::make_pair(std::move(q_red), QA_cost);
 }
-
-template std::pair<std::vector<float>, float> csvm::perform_dimensional_reduction(const detail::parameter<float> &, const aos_matrix<float> &) const;
-template std::pair<std::vector<double>, double> csvm::perform_dimensional_reduction(const detail::parameter<double> &, const aos_matrix<double> &) const;
 
 }  // namespace plssvm
