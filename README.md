@@ -339,6 +339,8 @@ Usage:
   -c, --cost arg                set the parameter C (default: 1)
   -e, --epsilon arg             set the tolerance of termination criterion (default: 0.001)
   -i, --max_iter arg            set the maximum number of CG iterations (default: num_features)
+  -s, --solver arg              choose the solver: automatic|cg_explicit|cg_streaming|cg_implicit (default: automatic)
+  -a, --classification arg      the classification strategy to use for multi-class classification: oaa|oao (default: oaa)
   -b, --backend arg             choose the backend: automatic|openmp|cuda|hip|opencl|sycl (default: automatic)
   -p, --target_platform arg     choose the target platform: automatic|cpu|gpu_nvidia|gpu_amd|gpu_intel (default: automatic)
       --sycl_kernel_invocation_type arg

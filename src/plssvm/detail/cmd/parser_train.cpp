@@ -59,7 +59,7 @@ parser_train::parser_train(int argc, char **argv) {
            ("e,epsilon", "set the tolerance of termination criterion", cxxopts::value<typename decltype(epsilon)::value_type>()->default_value(fmt::format("{}", epsilon)))
            ("i,max_iter", "set the maximum number of CG iterations (default: num_features)", cxxopts::value<long long int>())
            ("s,solver", "choose the solver: automatic|cg_explicit|cg_streaming|cg_implicit", cxxopts::value<decltype(solver)>()->default_value("automatic"))
-           ("a,classification", "the classification strategy to use for multi-class classification", cxxopts::value<typename decltype(classification)::value_type>()->default_value(fmt::format("{}", classification)))
+           ("a,classification", "the classification strategy to use for multi-class classification: oaa|oao", cxxopts::value<typename decltype(classification)::value_type>()->default_value(fmt::format("{}", classification)))
            ("b,backend", fmt::format("choose the backend: {}", fmt::join(list_available_backends(), "|")), cxxopts::value<decltype(backend)>()->default_value(fmt::format("{}", backend)))
            ("p,target_platform", fmt::format("choose the target platform: {}", fmt::join(list_available_target_platforms(), "|")), cxxopts::value<decltype(target)>()->default_value(fmt::format("{}", target)))
 #if defined(PLSSVM_HAS_SYCL_BACKEND)
