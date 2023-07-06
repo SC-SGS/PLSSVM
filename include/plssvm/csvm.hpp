@@ -707,7 +707,9 @@ std::pair<aos_matrix<real_type>, std::vector<real_type>> csvm::solve_system_of_l
                     "  - system memory (95%): {:.2f} GiB\n"
                     "  - device memory (95%): {:.2f} GiB\n"
                     "  - memory needed: {:.2f} GiB\n",
-                    total_system_memory / 1024. / 1024. / 1024., total_device_memory / 1024. / 1024. / 1024., total_memory_needed / 1024. / 1024. / 1024.);
+                    detail::tracking_entry{ "solver", "system_memory_GiB", total_system_memory / 1024. / 1024. / 1024. },
+                    detail::tracking_entry{ "solver", "device_memory_GiB", total_device_memory / 1024. / 1024. / 1024. },
+                    detail::tracking_entry{ "solver", "needed_memory_GiB", total_memory_needed / 1024. / 1024. / 1024. });
 
         // TODO: total_device_memory > total_system_memory?
         if (total_memory_needed < total_device_memory) {
@@ -721,7 +723,7 @@ std::pair<aos_matrix<real_type>, std::vector<real_type>> csvm::solve_system_of_l
 
     detail::log(verbosity_level::full,
                 "Using {} as solver for AX=B.\n",
-                used_solver);
+                detail::tracking_entry{ "solver", "solver_type", used_solver });
 
     // perform dimensional reduction
     const auto [q_red, QA_cost] = this->perform_dimensional_reduction(params, A);
