@@ -22,7 +22,6 @@ namespace plssvm {
 /// Integer type used inside kernels.
 using kernel_index_type = int;  // TODO: remove and replace by backend specific type?
 
-// TODO: implement in CMake
 /// The used floating point type. May be changed during the CMake configuration step.
 #if defined(PLSSVM_FLOAT_AS_REAL_TYPE)
 using real_type = float;
