@@ -39,10 +39,6 @@ the file name from which previous scaling factors should be loaded
 must be specified if the labels should be interpreted as strings instead of integers
 
 .TP
-.B --use_float_as_real_type arg
-must be specified if float should be used instead of double as floating point type
-
-.TP
 .B --verbosity arg
 choose the level of verbosity: full|timing|libsvm|quiet (default: full)
 
