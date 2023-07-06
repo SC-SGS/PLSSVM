@@ -330,6 +330,7 @@ model<label_type> csvm::fit(const data_set<label_type> &data, Args &&...named_ar
     igor::parser parser{ named_args... };
 
     // set default values
+    // note: if the default value is changed, they must also be changed in the Python bindings!
     classification_type used_classification{ classification_type::oaa };
 
     // compile time check: only named parameters are permitted
@@ -655,6 +656,7 @@ std::pair<aos_matrix<real_type>, std::vector<real_type>> csvm::solve_system_of_l
     igor::parser parser{ std::forward<Args>(named_args)... };
 
     // set default values
+    // note: if the default values are changed, they must also be changed in the Python bindings!
     real_type used_epsilon{ 0.001 };
     unsigned long long used_max_iter{ A.num_rows() };
     solver_type used_solver{ solver_type::automatic };

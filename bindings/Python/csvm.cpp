@@ -8,10 +8,10 @@
 
 #include "plssvm/csvm.hpp"
 
+#include "plssvm/backends/SYCL/implementation_type.hpp"
+#include "plssvm/backends/SYCL/kernel_invocation_type.hpp"
 #include "plssvm/constants.hpp"  // plssvm::real_type
 #include "plssvm/csvm_factory.hpp"
-#include "plssvm/backends/SYCL/kernel_invocation_type.hpp"
-#include "plssvm/backends/SYCL/implementation_type.hpp"
 
 #include "utility.hpp"  // check_kwargs_for_correctness, convert_kwargs_to_parameter
 
@@ -30,40 +30,36 @@ void instantiate_csvm_functions(py::class_<plssvm::csvm> &c, label_type) {
     c.def(
          "fit", [](const plssvm::csvm &self, const plssvm::data_set<label_type> &data, const py::kwargs &args) {
              // check keyword arguments
-             check_kwargs_for_correctness(args, { "epsilon", "max_iter", "classification" });
+             check_kwargs_for_correctness(args, { "epsilon", "max_iter", "classification", "solver" });
 
+             plssvm::real_type epsilon{ 0.001 };
+             if (args.contains("epsilon")) {
+                 epsilon = args["epsilon"].cast<plssvm::real_type>();
+             }
+
+             // can't do it with max_iter due to OAO splitting the data set
+
+             plssvm::classification_type classification { plssvm::classification_type::oaa };
              if (args.contains("classification")) {
-                 if (args.contains("epsilon") && args.contains("max_iter")) {
-                     return self.fit(data,
-                                     plssvm::epsilon = args["epsilon"].cast<plssvm::real_type>(),
-                                     plssvm::max_iter = args["max_iter"].cast<unsigned long long>(),
-                                     plssvm::classification = args["classification"].cast<plssvm::classification_type>());
-                 } else if (args.contains("epsilon")) {
-                     return self.fit(data,
-                                     plssvm::epsilon = args["epsilon"].cast<plssvm::real_type>(),
-                                     plssvm::classification = args["classification"].cast<plssvm::classification_type>());
-                 } else if (args.contains("max_iter")) {
-                     return self.fit(data,
-                                     plssvm::max_iter = args["max_iter"].cast<unsigned long long>(),
-                                     plssvm::classification = args["classification"].cast<plssvm::classification_type>());
-                 } else {
-                     return self.fit(data,
-                                     plssvm::classification = args["classification"].cast<plssvm::classification_type>());
-                 }
+                 classification = args["classification"].cast<plssvm::classification_type>();
+             }
+
+             plssvm::solver_type solver{ plssvm::solver_type::automatic };
+             if (args.contains("solver")) {
+                 solver = args["solver"].cast<plssvm::solver_type>();
+             }
+
+             if (args.contains("max_iter")) {
+                 return self.fit(data,
+                                 plssvm::epsilon = epsilon,
+                                 plssvm::max_iter = args["max_iter"].cast<unsigned long long>(),
+                                 plssvm::classification = classification,
+                                 plssvm::solver = solver);
              } else {
-                 if (args.contains("epsilon") && args.contains("max_iter")) {
-                     return self.fit(data,
-                                     plssvm::epsilon = args["epsilon"].cast<plssvm::real_type>(),
-                                     plssvm::max_iter = args["max_iter"].cast<unsigned long long>());
-                 } else if (args.contains("epsilon")) {
-                     return self.fit(data,
-                                     plssvm::epsilon = args["epsilon"].cast<plssvm::real_type>());
-                 } else if (args.contains("max_iter")) {
-                     return self.fit(data,
-                                     plssvm::max_iter = args["max_iter"].cast<unsigned long long>());
-                 } else {
-                     return self.fit(data);
-                 }
+                 return self.fit(data,
+                                 plssvm::epsilon = epsilon,
+                                 plssvm::classification = classification,
+                                 plssvm::solver = solver);
              }
          },
          "fit a model using the current SVM on the provided data")
