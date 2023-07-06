@@ -95,7 +95,7 @@ real_type kernel_function(const matrix<real_type, layout> &x, const std::size_t 
     throw unsupported_kernel_type_exception{ fmt::format("Unknown kernel type (value: {})!", detail::to_underlying(params.kernel_type)) };
 }
 
-template double kernel_function(const matrix<real_type, layout_type::aos> &, const std::size_t, const matrix<real_type, layout_type::aos> &, const std::size_t, const parameter &);
-template double kernel_function(const matrix<real_type, layout_type::soa> &, const std::size_t, const matrix<real_type, layout_type::soa> &, const std::size_t, const parameter &);
+template real_type kernel_function(const matrix<real_type, layout_type::aos> &, const std::size_t, const matrix<real_type, layout_type::aos> &, const std::size_t, const parameter &);
+template real_type kernel_function(const matrix<real_type, layout_type::soa> &, const std::size_t, const matrix<real_type, layout_type::soa> &, const std::size_t, const parameter &);
 
 }  // namespace plssvm

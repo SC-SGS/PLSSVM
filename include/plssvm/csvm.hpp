@@ -357,7 +357,7 @@ model<label_type> csvm::fit(const data_set<label_type> &data, Args &&...named_ar
     parameter params{ params_ };
     if (params.gamma.is_default()) {
         // no gamma provided -> use default value which depends on the number of features in the data set
-        params.gamma = 1.0 / data.num_features();
+        params.gamma = real_type{ 1.0 } / data.num_features();
     }
 
     // create model

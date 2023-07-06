@@ -17,6 +17,7 @@
 #include "plssvm/backends/SYCL/implementation_type.hpp"     // plssvm::sycl::implementation_type
 #include "plssvm/backends/SYCL/kernel_invocation_type.hpp"  // plssvm::sycl::kernel_invocation_type
 #include "plssvm/classification_types.hpp"                  // plssvm::classification_type
+#include "plssvm/constants.hpp"                             // plssvm::real_type
 #include "plssvm/default_value.hpp"                         // plssvm::default_value
 #include "plssvm/parameter.hpp"                             // plssvm::parameter
 #include "plssvm/solver_types.hpp"                          // plssvm::solving_type
@@ -45,7 +46,7 @@ class parser_train {
     plssvm::parameter csvm_params{};
 
     /// The error tolerance parameter for the CG algorithm.
-    default_value<double> epsilon{ default_init<double>{ 0.001 } };
+    default_value<real_type> epsilon{ default_init<real_type>{ 0.001 } };
     /// The maximum number of iterations in the CG algorithm.
     default_value<std::size_t> max_iter{ default_init<std::size_t>{ 0 } };
     /// The multi-class classification strategy used.

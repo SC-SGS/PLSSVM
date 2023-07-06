@@ -38,7 +38,7 @@ void csvm::sanity_check_parameter() const {
     }
 
     // gamma: must be greater than 0 IF explicitly provided, but only in the polynomial and rbf kernel
-    if ((params_.kernel_type == kernel_function_type::polynomial || params_.kernel_type == kernel_function_type::rbf) && !params_.gamma.is_default() && params_.gamma.value() <= 0.0) {
+    if ((params_.kernel_type == kernel_function_type::polynomial || params_.kernel_type == kernel_function_type::rbf) && !params_.gamma.is_default() && params_.gamma.value() <= real_type{ 0.0 }) {
         throw invalid_parameter_exception{ fmt::format("gamma must be greater than 0.0, but is {}!", params_.gamma) };
     }
     // degree: all allowed
