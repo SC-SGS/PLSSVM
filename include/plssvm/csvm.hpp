@@ -724,15 +724,18 @@ std::pair<aos_matrix<real_type>, std::vector<real_type>> csvm::solve_system_of_l
         // TODO: decide which solver to use based on the available (V)RAM (maybe only lets say 95% of the memory should be used)
         const double total_system_memory = detail::get_system_memory() * 0.95;
         const double total_device_memory = this->get_device_memory() * 0.95;
-        const unsigned long long total_memory_needed = sizeof(real_type) * (num_rows * num_features + num_rows_reduced * num_rows_reduced + 2 * num_rows_reduced * num_rhs);
+        // TODO: docu
+        // data_set + explicit ker
+        const unsigned long long total_memory_needed = sizeof(real_type) * (num_rows * num_features + num_rows_reduced * num_rows_reduced + 2 * num_rows_reduced * num_rhs + num_features);
 
         detail::log(verbosity_level::full,
                     "Determining the solver type based on the available memory:\n"
-                    "  - system memory (95%): {:.2f} GB\n"
-                    "  - device memory (95%): {:.2f} GB\n"
-                    "  - memory needed: {:.2f} GB\n",
+                    "  - system memory (95%): {:.2f} GiB\n"
+                    "  - device memory (95%): {:.2f} GiB\n"
+                    "  - memory needed: {:.2f} GiB\n",
                     total_system_memory / 1024. / 1024. / 1024., total_device_memory / 1024. / 1024. / 1024., total_memory_needed / 1024. / 1024. / 1024.);
 
+        // TODO: total_device_memory > total_system_memory?
         if (total_memory_needed < total_device_memory) {
             used_solver = solver_type::cg_explicit;
         } else if (total_memory_needed > total_device_memory && total_memory_needed < total_system_memory) {
@@ -765,16 +768,16 @@ std::pair<aos_matrix<real_type>, std::vector<real_type>> csvm::solve_system_of_l
 
     // assemble explicit kernel matrix
     const std::chrono::steady_clock::time_point assembly_start_time = std::chrono::steady_clock::now();
-    const detail::simple_any kernel_matrix = this->assemble_kernel_matrix(used_solver, params,  data, q_red, QA_cost);
+    const detail::simple_any kernel_matrix = this->assemble_kernel_matrix(used_solver, params, data, q_red, QA_cost);
     const std::chrono::steady_clock::time_point assembly_end_time = std::chrono::steady_clock::now();
     detail::log(verbosity_level::full | verbosity_level::timing,
                 "Assembled the kernel matrix in {}.\n",
                 detail::tracking_entry{ "kernel_matrix", "kernel_matrix_assembly", std::chrono::duration_cast<std::chrono::milliseconds>(assembly_end_time - assembly_start_time) });
 
 
-
     // choose the correct algorithm based on the (provided) solver type -> currently only CG available
-    const aos_matrix<real_type> X = conjugate_gradients(kernel_matrix, B_red, used_epsilon, used_max_iter, used_solver);
+    const aos_matrix<real_type> X = conjugate_gradients(kernel_matrix, B_red, used_epsilon, used_max_iter, used_solver);  // TODO: q_red for implicit
+
 
     // calculate bias and undo dimensional reduction
     aos_matrix<real_type> X_ret{ num_rhs, A.num_rows() };
