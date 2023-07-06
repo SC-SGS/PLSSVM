@@ -134,7 +134,7 @@ class csvm {
      * @return the learned model (`[[nodiscard]]`)
      */
     template <typename label_type, typename... Args>
-    [[nodiscard]] model<real_type, label_type> fit(const data_set<real_type, label_type> &data, Args &&...named_args);
+    [[nodiscard]] model<label_type> fit(const data_set<label_type> &data, Args &&...named_args);
 
     //*************************************************************************************************************************************//
     //                                                          predict and score                                                          //
@@ -150,7 +150,7 @@ class csvm {
      * @return the predicted labels (`[[nodiscard]]`)
      */
     template <typename label_type>
-    [[nodiscard]] std::vector<label_type> predict(const model<real_type, label_type> &model, const data_set<real_type, label_type> &data) const;
+    [[nodiscard]] std::vector<label_type> predict(const model<label_type> &model, const data_set<label_type> &data) const;
 
     /**
      * @brief Calculate the accuracy of the @p model.
@@ -161,7 +161,7 @@ class csvm {
      * @return the accuracy of the model (`[[nodiscard]]`)
      */
     template <typename label_type>
-    [[nodiscard]] real_type score(const model<real_type, label_type> &model) const;
+    [[nodiscard]] real_type score(const model<label_type> &model) const;
     /**
      * @brief Calculate the accuracy of the labeled @p data set using the @p model.
      * @details Uses the one vs. all (OAA) for the multi-class classification task.
@@ -174,7 +174,7 @@ class csvm {
      * @return the accuracy of the labeled @p data (`[[nodiscard]]`)
      */
     template <typename label_type>
-    [[nodiscard]] real_type score(const model<real_type, label_type> &model, const data_set<real_type, label_type> &data) const;
+    [[nodiscard]] real_type score(const model<label_type> &model, const data_set<label_type> &data) const;
 
   protected:
     //*************************************************************************************************************************************//
@@ -208,7 +208,7 @@ class csvm {
      * @param[in] QA_cost the value used in the dimensional reduction
      * @return based on the used solver type (e.g., cg_explicit -> kernel matrix fully stored on the device; cg_implicit -> "nothing") (`[[nodiscard]]`)
      */
-    [[nodiscard]] virtual detail::simple_any assemble_kernel_matrix(solver_type solver, const detail::parameter<real_type> &params, const ::plssvm::detail::simple_any &data, const std::vector<real_type> &q_red, real_type QA_cost) const = 0;
+    [[nodiscard]] virtual detail::simple_any assemble_kernel_matrix(solver_type solver, const parameter &params, const ::plssvm::detail::simple_any &data, const std::vector<real_type> &q_red, real_type QA_cost) const = 0;
 
     /**
      * @brief Perform a BLAS like GEMM matrix-matrix multiplication: `C = alpha * A * B + beta * C`.
@@ -235,7 +235,7 @@ class csvm {
      * @throws plssvm::exception any exception thrown by the backend's implementation
      * @return a vector filled with the predictions (not the actual labels!) (`[[nodiscard]]`)
      */
-    [[nodiscard]] virtual aos_matrix<real_type> predict_values(const detail::parameter<real_type> &params, const aos_matrix<real_type> &support_vectors, const aos_matrix<real_type> &alpha, const std::vector<real_type> &rho, aos_matrix<real_type> &w, const aos_matrix<real_type> &predict_points) const = 0;
+    [[nodiscard]] virtual aos_matrix<real_type> predict_values(const parameter &params, const aos_matrix<real_type> &support_vectors, const aos_matrix<real_type> &alpha, const std::vector<real_type> &rho, aos_matrix<real_type> &w, const aos_matrix<real_type> &predict_points) const = 0;
 
     /// The target platform of this SVM.
     target_platform target_{ plssvm::target_platform::automatic };
@@ -257,7 +257,7 @@ class csvm {
      * @return the result matrix `X` and the respective biases (`[[nodiscard]]`)
      */
     template <typename... Args>
-    [[nodiscard]] std::pair<aos_matrix<real_type>, std::vector<real_type>> solve_system_of_linear_equations(const aos_matrix<real_type> &A, const aos_matrix<real_type> &B, const detail::parameter<real_type> &params, Args&&... named_args) const;
+    [[nodiscard]] std::pair<aos_matrix<real_type>, std::vector<real_type>> solve_system_of_linear_equations(const aos_matrix<real_type> &A, const aos_matrix<real_type> &B, const parameter &params, Args&&... named_args) const;
     /**
      * @brief Solve the system of linear equations `AX = B` where `A` is the kernel matrix using the Conjugate Gradients (CG) algorithm.
      * @param[in] A the kernel matrix
@@ -275,7 +275,7 @@ class csvm {
      * @param[in] A the data used for the kernel matrix
      * @return the reduction vector ´q_red` and the bottom-right value `QA_cost` (`[[nodiscard]]`)
      */
-    [[nodiscard]] std::pair<std::vector<real_type>, real_type> perform_dimensional_reduction(const detail::parameter<real_type> &params, const aos_matrix<real_type> &A) const;
+    [[nodiscard]] std::pair<std::vector<real_type>, real_type> perform_dimensional_reduction(const parameter &params, const aos_matrix<real_type> &A) const;
 
 
     /// The SVM parameter (e.g., cost, degree, gamma, coef0) currently in use.
@@ -322,7 +322,7 @@ void csvm::set_params(Args &&...named_args) {
 }
 
 template <typename label_type, typename... Args>
-model<real_type, label_type> csvm::fit(const data_set<real_type, label_type> &data, Args &&...named_args) {
+model<label_type> csvm::fit(const data_set<label_type> &data, Args &&...named_args) {
     if (!data.has_labels()) {
         throw invalid_parameter_exception{ "No labels given for training! Maybe the data is only usable for prediction?" };
     }
@@ -361,14 +361,14 @@ model<real_type, label_type> csvm::fit(const data_set<real_type, label_type> &da
     }
 
     // create model
-    model<real_type, label_type> csvm_model{ params, data, used_classification };
+    model<label_type> csvm_model{ params, data, used_classification };
 
 
     if (used_classification == plssvm::classification_type::oaa) {
         // use the one vs. all multi-class classification strategy
         // solve the minimization problem
         aos_matrix<real_type> alpha;
-        std::tie(alpha, *csvm_model.rho_ptr_) = solve_system_of_linear_equations(*data.data_ptr_, *data.y_ptr_, static_cast<detail::parameter<real_type>>(params), std::forward<Args>(named_args)...);
+        std::tie(alpha, *csvm_model.rho_ptr_) = solve_system_of_linear_equations(*data.data_ptr_, *data.y_ptr_, params, std::forward<Args>(named_args)...);
         csvm_model.alpha_ptr_->push_back(std::move(alpha));
     } else if (used_classification == plssvm::classification_type::oao) {
         // use the one vs. one multi-class classification strategy
@@ -394,7 +394,7 @@ model<real_type, label_type> csvm::fit(const data_set<real_type, label_type> &da
                         "\nClassifying 0 vs 1 ({} vs {}) (1/1):\n",
                         data.mapping_->get_label_by_mapped_index(0),
                         data.mapping_->get_label_by_mapped_index(1));
-            const auto &[alpha, rho] = solve_system_of_linear_equations(*data.data_ptr_, *data.y_ptr_, static_cast<detail::parameter<real_type>>(params), std::forward<Args>(named_args)...);
+            const auto &[alpha, rho] = solve_system_of_linear_equations(*data.data_ptr_, *data.y_ptr_, params, std::forward<Args>(named_args)...);
             csvm_model.alpha_ptr_->front() = std::move(alpha);
             csvm_model.rho_ptr_->front() = rho.front();  // prevents std::tie
         } else {
@@ -431,7 +431,7 @@ model<real_type, label_type> csvm::fit(const data_set<real_type, label_type> &da
                                 data.mapping_->get_label_by_mapped_index(j),
                                 pos + 1,
                                 calculate_number_of_classifiers(classification_type::oao, num_classes));
-                    const auto &[alpha, rho] = solve_system_of_linear_equations(binary_data, binary_y, static_cast<detail::parameter<real_type>>(params), std::forward<Args>(named_args)...);
+                    const auto &[alpha, rho] = solve_system_of_linear_equations(binary_data, binary_y, params, std::forward<Args>(named_args)...);
                     (*csvm_model.alpha_ptr_)[pos] = std::move(alpha);
                     (*csvm_model.rho_ptr_)[pos] = rho.front();  // prevents std::tie
                     // go to next one vs. one classification
@@ -454,7 +454,7 @@ model<real_type, label_type> csvm::fit(const data_set<real_type, label_type> &da
 }
 
 template <typename label_type>
-std::vector<label_type> csvm::predict(const model<real_type, label_type> &model, const data_set<real_type, label_type> &data) const {
+std::vector<label_type> csvm::predict(const model<label_type> &model, const data_set<label_type> &data) const {
     if (model.num_features() != data.num_features()) {
         throw invalid_parameter_exception{ fmt::format("Number of features per data point ({}) must match the number of features per support vector of the provided model ({})!", data.num_features(), model.num_features()) };
     }
@@ -476,7 +476,7 @@ std::vector<label_type> csvm::predict(const model<real_type, label_type> &model,
         const aos_matrix<real_type> &alpha = model.alpha_ptr_->back();
 
         // predict values using OAA -> num_data_points x num_classes
-        const aos_matrix<real_type> votes = predict_values(static_cast<detail::parameter<real_type>>(model.params_), sv, alpha, *model.rho_ptr_, *model.w_ptr_, predict_points);
+        const aos_matrix<real_type> votes = predict_values(model.params_, sv, alpha, *model.rho_ptr_, *model.w_ptr_, predict_points);
 
         PLSSVM_ASSERT(votes.num_rows() == data.num_data_points(), "The number of votes ({}) must be equal the number of data points ({})!", votes.num_rows(), data.num_data_points());
         PLSSVM_ASSERT(votes.num_cols() == calculate_number_of_classifiers(classification_type::oaa, model.num_classes()), "The votes contain {} values, but must contain {} values!", votes.num_cols(), calculate_number_of_classifiers(classification_type::oaa, model.num_classes()));
@@ -556,7 +556,7 @@ std::vector<label_type> csvm::predict(const model<real_type, label_type> &model,
                     // the w vector optimization has not been applied yet -> calculate w and store it
                     aos_matrix<real_type> w{};
                     // returned w: 1 x num_features
-                    binary_votes = predict_values(static_cast<detail::parameter<real_type>>(model.params_), binary_sv, binary_alpha, binary_rho, w, predict_points);
+                    binary_votes = predict_values(model.params_, binary_sv, binary_alpha, binary_rho, w, predict_points);
                     // only in case of the linear kernel, the w vector gets filled -> store it
                     if (params_.kernel_type == kernel_function_type::linear) {
                         #pragma omp parallel for default(none) shared(model, w) firstprivate(num_features, pos)
@@ -571,7 +571,7 @@ std::vector<label_type> csvm::predict(const model<real_type, label_type> &model,
                     for (std::size_t dim = 0; dim < num_features; ++dim) {
                         binary_w(0, dim) = (*model.w_ptr_)(pos, dim);
                     }
-                    binary_votes = predict_values(static_cast<detail::parameter<real_type>>(model.params_), binary_sv, binary_alpha, binary_rho, binary_w, predict_points);
+                    binary_votes = predict_values(model.params_, binary_sv, binary_alpha, binary_rho, binary_w, predict_points);
                 }
 
                 PLSSVM_ASSERT(binary_votes.num_rows() == data.num_data_points(), "The number of votes ({}) must be equal the number of data points ({})!", binary_votes.num_rows(), data.num_data_points());
@@ -611,12 +611,12 @@ std::vector<label_type> csvm::predict(const model<real_type, label_type> &model,
 }
 
 template <typename label_type>
-real_type csvm::score(const model<real_type, label_type> &model) const {
+real_type csvm::score(const model<label_type> &model) const {
     return this->score(model, model.data_);
 }
 
 template <typename label_type>
-real_type csvm::score(const model<real_type, label_type> &model, const data_set<real_type, label_type> &data) const {
+real_type csvm::score(const model<label_type> &model, const data_set<label_type> &data) const {
     // the data set must contain labels in order to score the learned model
     if (!data.has_labels()) {
         throw invalid_parameter_exception{ "The data set to score must have labels!" };
@@ -647,7 +647,7 @@ real_type csvm::score(const model<real_type, label_type> &model, const data_set<
 //*************************************************************************************************************************************//
 
 template <typename... Args>
-std::pair<aos_matrix<real_type>, std::vector<real_type>> csvm::solve_system_of_linear_equations(const aos_matrix<real_type> &A, const aos_matrix<real_type> &B, const detail::parameter<real_type> &params, Args &&...named_args) const {
+std::pair<aos_matrix<real_type>, std::vector<real_type>> csvm::solve_system_of_linear_equations(const aos_matrix<real_type> &A, const aos_matrix<real_type> &B, const parameter &params, Args &&...named_args) const {
     PLSSVM_ASSERT(!A.empty(), "The A matrix may not be empty!");
     PLSSVM_ASSERT(!B.empty(), "The B matrix may not be empty!");
     PLSSVM_ASSERT(A.num_rows() == B.num_cols(), "The number of data points in A ({}) and B ({}) must be the same!", A.num_rows(), B.num_cols());

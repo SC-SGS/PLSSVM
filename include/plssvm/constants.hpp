@@ -13,6 +13,8 @@
 #define PLSSVM_CONSTANTS_HPP_
 #pragma once
 
+#include "plssvm/detail/type_list.hpp"  // plssvm::detail::type_list_contains_v
+
 #include <type_traits>  // std::is_same_v
 
 namespace plssvm {
@@ -50,7 +52,7 @@ constexpr kernel_index_type OPENMP_BLOCK_SIZE = 64;
 #endif
 
 // perform sanity checks
-static_assert(std::is_same_v<real_type, float> || std::is_same_v<real_type, double>, "the real_type must either be float or double!");
+static_assert(detail::type_list_contains_v<real_type, detail::real_type_list>, "Illegal real type provided! See the 'real_type_list' in the type_list.hpp header for a list of the allowed types.");
 static_assert(THREAD_BLOCK_SIZE > 0, "THREAD_BLOCK_SIZE must be greater than 0!");
 static_assert(INTERNAL_BLOCK_SIZE > 0, "INTERNAL_BLOCK_SIZE must be greater than 0!");
 static_assert(OPENMP_BLOCK_SIZE > 0, "OPENMP_BLOCK_SIZE must be greater than 0!");

@@ -146,7 +146,7 @@ class performance_tracker {
      *          Adds all values stored in the plssvm::parameter as tracking entries.
      * @param[in] entry the entry to add
      */
-    void add_tracking_entry(const tracking_entry<::plssvm::parameter> &entry);
+    void add_tracking_entry(const tracking_entry<plssvm::parameter> &entry);
     /**
      * @brief Add a tracking_entry encapsulating a plssvm::detail::cmd::parser_train to this performance tracker.
      * @details Saves a string containing the entry name and value in a map with the entry category as key.

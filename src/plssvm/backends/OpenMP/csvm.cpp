@@ -20,7 +20,7 @@
 #include "plssvm/detail/performance_tracker.hpp"                          // plssvm::detail::tracking_entry, PLSSVM_DETAIL_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY
 #include "plssvm/kernel_function_types.hpp"                               // plssvm::kernel_function_type
 #include "plssvm/matrix.hpp"                                              // plssvm::aos_matrix
-#include "plssvm/parameter.hpp"                                           // plssvm::parameter, plssvm::detail::parameter
+#include "plssvm/parameter.hpp"                                           // plssvm::parameter
 #include "plssvm/target_platforms.hpp"                                    // plssvm::target_platform
 
 #include "fmt/chrono.h"   // directly print std::chrono literals with fmt
@@ -91,7 +91,7 @@ detail::simple_any csvm::setup_data_on_devices(const solver_type solver, const a
     }
 }
 
-detail::simple_any csvm::assemble_kernel_matrix(const solver_type solver, const detail::parameter<real_type> &params, const detail::simple_any &data, const std::vector<real_type> &q_red, const real_type QA_cost) const {
+detail::simple_any csvm::assemble_kernel_matrix(const solver_type solver, const parameter &params, const detail::simple_any &data, const std::vector<real_type> &q_red, const real_type QA_cost) const {
     PLSSVM_ASSERT(!q_red.empty(), "The q_red vector may not be empty!");
     PLSSVM_ASSERT(solver != solver_type::automatic, "An explicit solver type must be provided instead of solver_type::automatic!");
 
@@ -163,7 +163,7 @@ void csvm::blas_gemm(const solver_type solver, const real_type alpha, const deta
 //                   predict, score                  //
 //***************************************************//
 
-aos_matrix<real_type> csvm::predict_values(const detail::parameter<real_type> &params, const aos_matrix<real_type> &support_vectors, const aos_matrix<real_type> &alpha, const std::vector<real_type> &rho, aos_matrix<real_type> &w, const aos_matrix<real_type> &predict_points) const {
+aos_matrix<real_type> csvm::predict_values(const parameter &params, const aos_matrix<real_type> &support_vectors, const aos_matrix<real_type> &alpha, const std::vector<real_type> &rho, aos_matrix<real_type> &w, const aos_matrix<real_type> &predict_points) const {
     PLSSVM_ASSERT(!support_vectors.empty(), "The support vectors must not be empty!");
     PLSSVM_ASSERT(!alpha.empty(), "The alpha vectors (weights) must not be empty!");
     PLSSVM_ASSERT(support_vectors.num_rows() == alpha.num_cols(), "The number of support vectors ({}) and number of weights ({}) must be the same!", support_vectors.num_rows(), alpha.num_cols());

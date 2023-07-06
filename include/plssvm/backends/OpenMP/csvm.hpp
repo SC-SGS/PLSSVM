@@ -18,7 +18,7 @@
 #include "plssvm/detail/simple_any.hpp"   // plssvm::detail::simple_any
 #include "plssvm/detail/type_traits.hpp"  // PLSSVM_REQUIRES
 #include "plssvm/matrix.hpp"              // plssvm::aos_matrix
-#include "plssvm/parameter.hpp"           // plssvm::parameter, plssvm::detail::{parameter, has_only_parameter_named_args_v}
+#include "plssvm/parameter.hpp"           // plssvm::parameter, plssvm::detail::has_only_parameter_named_args_v
 #include "plssvm/target_platforms.hpp"    // plssvm::target_platform
 
 
@@ -119,7 +119,7 @@ class csvm : public ::plssvm::csvm {
     /**
      * @copydoc plssvm::csvm::assemble_kernel_matrix
      */
-    [[nodiscard]] detail::simple_any assemble_kernel_matrix(const solver_type solver, const detail::parameter<real_type> &params, const detail::simple_any &data, const std::vector<real_type> &q_red, const real_type QA_cost) const final;
+    [[nodiscard]] detail::simple_any assemble_kernel_matrix(const solver_type solver, const parameter &params, const detail::simple_any &data, const std::vector<real_type> &q_red, const real_type QA_cost) const final;
     /**
      * @copydoc plssvm::csvm::blas_gemm
      */
@@ -131,7 +131,7 @@ class csvm : public ::plssvm::csvm {
     /**
      * @copydoc plssvm::csvm::predict_values
      */
-    [[nodiscard]] aos_matrix<real_type> predict_values(const detail::parameter<real_type> &params, const aos_matrix<real_type> &support_vectors, const aos_matrix<real_type> &alpha, const std::vector<real_type> &rho, aos_matrix<real_type> &w, const aos_matrix<real_type> &predict_points) const final;
+    [[nodiscard]] aos_matrix<real_type> predict_values(const parameter &params, const aos_matrix<real_type> &support_vectors, const aos_matrix<real_type> &alpha, const std::vector<real_type> &rho, aos_matrix<real_type> &w, const aos_matrix<real_type> &predict_points) const final;
 
     private:
     /**

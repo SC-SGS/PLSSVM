@@ -13,7 +13,6 @@
 #define PLSSVM_DETAIL_CMD_DATA_SET_VARIANTS_HPP_
 #pragma once
 
-#include "plssvm/constants.hpp"                  // plssvm::real_type
 #include "plssvm/data_set.hpp"                   // plssvm::data_set
 #include "plssvm/detail/cmd/parser_predict.hpp"  // plssvm::detail::cmd::parser_predict
 #include "plssvm/detail/cmd/parser_scale.hpp"    // plssvm::detail::cmd::parser_scale
@@ -28,7 +27,7 @@ namespace plssvm::detail::cmd {
 /**
  * @brief Two different type combinations are allowed in the command line invocation: `real_type` + `int` and `real_type` + `std::string`.
  */
-using data_set_variants = std::variant<plssvm::data_set<real_type, int>, plssvm::data_set<real_type, std::string>>;
+using data_set_variants = std::variant<plssvm::data_set<int>, plssvm::data_set<std::string>>;
 // clang-format on
 
 /**
@@ -37,9 +36,9 @@ using data_set_variants = std::variant<plssvm::data_set<real_type, int>, plssvm:
  * @param[in] cmd_parser the provided command line parser
  * @return the data set type based on the provided command line parser (`[[nodiscard]]`)
  */
-template <typename label_type = typename data_set<real_type>::label_type>
+template <typename label_type = typename data_set<>::label_type>
 [[nodiscard]] inline data_set_variants data_set_factory_impl(const cmd::parser_train &cmd_parser) {
-    return data_set_variants{ plssvm::data_set<real_type, label_type>{ cmd_parser.input_filename } };
+    return data_set_variants{ plssvm::data_set<label_type>{ cmd_parser.input_filename } };
 }
 /**
  * @brief Return the correct data set type based on the plssvm::detail::cmd::parser_predict command line options.
@@ -47,9 +46,9 @@ template <typename label_type = typename data_set<real_type>::label_type>
  * @param[in] cmd_parser the provided command line parser
  * @return the data set type based on the provided command line parser (`[[nodiscard]]`)
  */
-template <typename label_type = typename data_set<real_type>::label_type>
+template <typename label_type = typename data_set<>::label_type>
 [[nodiscard]] inline data_set_variants data_set_factory_impl(const cmd::parser_predict &cmd_parser) {
-    return data_set_variants{ plssvm::data_set<real_type, label_type>{ cmd_parser.input_filename } };
+    return data_set_variants{ plssvm::data_set<label_type>{ cmd_parser.input_filename } };
 }
 /**
  * @brief Return the correct data set type based on the plssvm::detail::cmd::parser_scale command line options.
@@ -57,12 +56,12 @@ template <typename label_type = typename data_set<real_type>::label_type>
  * @param[in] cmd_parser the provided command line parser
  * @return the data set type based on the provided command line parser (`[[nodiscard]]`)
  */
-template <typename label_type = typename data_set<real_type>::label_type>
+template <typename label_type = typename data_set<>::label_type>
 [[nodiscard]] inline data_set_variants data_set_factory_impl(const cmd::parser_scale &cmd_parser) {
     if (!cmd_parser.restore_filename.empty()) {
-        return data_set_variants{ plssvm::data_set<real_type, label_type>{ cmd_parser.input_filename, { cmd_parser.restore_filename } } };
+        return data_set_variants{ plssvm::data_set<label_type>{ cmd_parser.input_filename, { cmd_parser.restore_filename } } };
     } else {
-        return data_set_variants{ plssvm::data_set<real_type, label_type>{ cmd_parser.input_filename, { static_cast<real_type>(cmd_parser.lower), static_cast<real_type>(cmd_parser.upper) } } };
+        return data_set_variants{ plssvm::data_set<label_type>{ cmd_parser.input_filename, { cmd_parser.lower, cmd_parser.upper } } };
     }
 }
 

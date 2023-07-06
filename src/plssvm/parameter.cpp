@@ -8,6 +8,7 @@
 
 #include "plssvm/parameter.hpp"
 
+#include "plssvm/constants.hpp"                    // plssvm::real_type
 #include "plssvm/detail/arithmetic_type_name.hpp"  // plssvm::detail::arithmetic_type_name
 
 #include "fmt/core.h"                              // fmt::format
@@ -17,12 +18,7 @@
 
 namespace plssvm::detail {
 
-// explicitly instantiate template class
-template struct parameter<float>;
-template struct parameter<double>;
-
-template <typename T>
-std::ostream &operator<<(std::ostream &out, const parameter<T> &params) {
+std::ostream &operator<<(std::ostream &out, const parameter &params) {
     return out << fmt::format(
                "kernel_type                 {}\n"
                "degree                      {}\n"
@@ -35,9 +31,7 @@ std::ostream &operator<<(std::ostream &out, const parameter<T> &params) {
                params.gamma,
                params.coef0,
                params.cost,
-               detail::arithmetic_type_name<typename parameter<T>::real_type>());
+               detail::arithmetic_type_name<real_type>());
 }
-template std::ostream &operator<<(std::ostream &, const parameter<float> &);
-template std::ostream &operator<<(std::ostream &, const parameter<double> &);
 
 }  // namespace plssvm::detail

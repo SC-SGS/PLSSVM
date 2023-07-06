@@ -13,6 +13,7 @@
 #define PLSSVM_DETAIL_IO_LIBSVM_PARSING_HPP_
 #pragma once
 
+#include "plssvm/constants.hpp"                 // plssvm::real_type
 #include "plssvm/detail/assert.hpp"             // PLSSVM_ASSERT
 #include "plssvm/detail/io/file_reader.hpp"     // plssvm::detail::io::file_reader
 #include "plssvm/detail/string_conversion.hpp"  // plssvm::detail::convert_to
@@ -98,7 +99,6 @@ namespace plssvm::detail::io {
  * -1 1:-0.20981208921241892 2:0.60276937379453293 3:-0.13086851759108944 4:0.10805254527169827
  * -1 1:1.88494043717792 2:1.00518564317278263 3:0.298499933047586044 4:1.6464627048813514
  * @endcode
- * @tparam real_type the floating point type
  * @tparam label_type the type of the labels (any arithmetic type or std::string)
  * @param[in] reader the file_reader used to read the LIBSVM data
  * @note The features must be provided with one-based indices!
@@ -111,7 +111,7 @@ namespace plssvm::detail::io {
  * @throws plssvm::invalid_file_format_exception if only **some** data points are annotated with labels
  * @return a std::tuple containing: [the number of data points, the number of features per data point, the data points, the labels (optional)] (`[[nodiscard]]`)
  */
-template <typename real_type, typename label_type>
+template <typename label_type>
 [[nodiscard]] inline std::tuple<std::size_t, std::size_t, aos_matrix<real_type>, std::vector<label_type>> parse_libsvm_data(const file_reader &reader) {
     PLSSVM_ASSERT(reader.is_open(), "The file_reader is currently not associated with a file!");
     // sanity check: can't skip more lines than are present
@@ -224,7 +224,6 @@ template <typename real_type, typename label_type>
  * -1 4:1.6464627048813514
  * @endcode
  * Note that the output may be sparse, i.e., all features with a value of `0.0` are omitted in the resulting file.
- * @tparam real_type the floating point type
  * @tparam label_type the type of the labels (any arithmetic type or std::string)
  * @tparam has_label if `true` the provided labels are also written to the file, if `false` **no** labels are outputted
  * @param[in] filename the filename to write the data to
@@ -233,7 +232,7 @@ template <typename real_type, typename label_type>
  * @note The resulting order of the data points in the LIBSVM file is unspecified!
  * @note The features are written using one-based indices!
  */
-template <typename real_type, typename label_type, bool has_label>
+template <typename label_type, bool has_label>
 inline void write_libsvm_data_impl(const std::string &filename, const aos_matrix<real_type> &data, const std::vector<label_type> &label) {
     if constexpr (has_label) {
         PLSSVM_ASSERT(data.empty() || !label.empty(), "has_label is 'true' but no labels were provided!");
@@ -269,7 +268,11 @@ inline void write_libsvm_data_impl(const std::string &filename, const aos_matrix
             char *ptr = buffer.data();
             for (std::size_t i = 0; i < std::min<std::size_t>(BLOCK_SIZE, num_features - j); ++i) {
                 if (data_point(row, j + i) != real_type{ 0.0 }) {
+#if defined(__CUDACC__)
+                    ptr = fmt::format_to(ptr, "{}:{:.10e} ", j + i + 1, data_point(row, j + i));
+#else
                     ptr = fmt::format_to(ptr, FMT_COMPILE("{}:{:.10e} "), j + i + 1, data_point(row, j + i));
+#endif
                 }
             }
             output.append(buffer.data(), ptr - buffer.data());
@@ -305,7 +308,6 @@ inline void write_libsvm_data_impl(const std::string &filename, const aos_matrix
  * -1 4:1.6464627048813514
  * @endcode
  * Note that the output may be sparse, i.e., all features with a value of `0.0` are omitted in the resulting file.
- * @tparam real_type the floating point type
  * @tparam label_type the type of the labels (any arithmetic type or std::string)
  * @param[in] filename the filename to write the data to
  * @param[in] data the data points to write to the file
@@ -313,9 +315,9 @@ inline void write_libsvm_data_impl(const std::string &filename, const aos_matrix
  * @note The resulting order of the data points in the LIBSVM file is unspecified!
  * @note The features are written using one-based indices!
  */
-template <typename real_type, typename label_type>
+template <typename label_type>
 inline void write_libsvm_data(const std::string &filename, const aos_matrix<real_type> &data, const std::vector<label_type> &label) {
-    write_libsvm_data_impl<real_type, label_type, true>(filename, data, label);
+    write_libsvm_data_impl<label_type, true>(filename, data, label);
 }
 
 /**
@@ -329,15 +331,13 @@ inline void write_libsvm_data(const std::string &filename, const aos_matrix<real
  * 4:1.6464627048813514
  * @endcode
  * Note that the output may be sparse, i.e., all features with a value of `0.0` are omitted in the resulting file.
- * @tparam real_type the floating point type
  * @param[in] filename the filename to write the data to
  * @param[in] data the data points to write to the file
  * @note The resulting order of the data points in the LIBSVM file is unspecified!
  * @note The features are written using one-based indices!
  */
-template <typename real_type>
 inline void write_libsvm_data(const std::string &filename, const aos_matrix<real_type> &data) {
-    write_libsvm_data_impl<real_type, real_type, false>(filename, data, {});
+    write_libsvm_data_impl<real_type, false>(filename, data, {});
 }
 
 }  // namespace plssvm::detail::io

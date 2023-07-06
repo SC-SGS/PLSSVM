@@ -17,7 +17,7 @@
 #include "plssvm/exceptions/exceptions.hpp"       // plssvm::invalid_parameter_exception
 #include "plssvm/kernel_function_types.hpp"       // plssvm::kernel_function_type, plssvm::kernel_function
 #include "plssvm/matrix.hpp"                      // plssvm::aos_matrix
-#include "plssvm/parameter.hpp"                   // plssvm::detail::parameter
+#include "plssvm/parameter.hpp"                   // plssvm::parameter
 #include "plssvm/solver_types.hpp"                // plssvm::solver_type
 
 #include "fmt/core.h"  // fmt::format
@@ -216,7 +216,7 @@ aos_matrix<real_type> csvm::conjugate_gradients(const detail::simple_any &A, con
     return X;
 }
 
-std::pair<std::vector<real_type>, real_type> csvm::perform_dimensional_reduction(const detail::parameter<real_type> &params, const aos_matrix<real_type> &A) const {
+std::pair<std::vector<real_type>, real_type> csvm::perform_dimensional_reduction(const parameter &params, const aos_matrix<real_type> &A) const {
     const std::chrono::steady_clock::time_point dimension_reduction_start_time = std::chrono::steady_clock::now();
 
     const std::size_t num_rows_reduced = A.num_rows() - 1;

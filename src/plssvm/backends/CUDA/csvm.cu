@@ -24,7 +24,7 @@
 #include "plssvm/detail/simple_any.hpp"                                 // plssvm::detail::simple_any
 #include "plssvm/exceptions/exceptions.hpp"                             // plssvm::exception
 #include "plssvm/kernel_function_types.hpp"                             // plssvm::kernel_function_type
-#include "plssvm/parameter.hpp"                                         // plssvm::parameter, plssvm::detail::parameter
+#include "plssvm/parameter.hpp"                                         // plssvm::parameter
 #include "plssvm/target_platforms.hpp"                                  // plssvm::target_platform
 
 #include "cuda.h"                                      // cuda runtime functions
@@ -122,7 +122,7 @@ std::pair<dim3, dim3> execution_range_to_native(const ::plssvm::detail::executio
 //                        fit                        //
 //***************************************************//
 
-auto csvm::run_assemble_kernel_matrix_explicit(const ::plssvm::detail::parameter<real_type> &params, const device_ptr_type &data_d, const device_ptr_type &q_red_d, real_type QA_cost) const -> device_ptr_type {
+auto csvm::run_assemble_kernel_matrix_explicit(const parameter &params, const device_ptr_type &data_d, const device_ptr_type &q_red_d, real_type QA_cost) const -> device_ptr_type {
     const std::size_t num_rows_reduced = data_d.size(0) - 1;
     const std::size_t num_features = data_d.size(1);
 
@@ -180,7 +180,7 @@ auto csvm::run_w_kernel(const device_ptr_type &alpha_d, const device_ptr_type &s
     return w_d;
 }
 
-auto csvm::run_predict_kernel(const ::plssvm::detail::parameter<real_type> &params, const device_ptr_type &w_d, const device_ptr_type &alpha_d, const device_ptr_type &rho_d, const device_ptr_type &sv_d, const device_ptr_type &predict_points_d, std::size_t num_classes, std::size_t num_sv, std::size_t num_predict_points, std::size_t num_features) const -> device_ptr_type {
+auto csvm::run_predict_kernel(const parameter &params, const device_ptr_type &w_d, const device_ptr_type &alpha_d, const device_ptr_type &rho_d, const device_ptr_type &sv_d, const device_ptr_type &predict_points_d, std::size_t num_classes, std::size_t num_sv, std::size_t num_predict_points, std::size_t num_features) const -> device_ptr_type {
     device_ptr_type out_d{ { num_predict_points, num_classes } };
 
     detail::set_device(0);

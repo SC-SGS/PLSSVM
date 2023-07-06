@@ -53,7 +53,7 @@ class gpu_csvm : public ::plssvm::csvm {
     /**
      * @copydoc plssvm::csvm::csvm()
      */
-    explicit gpu_csvm(plssvm::parameter params = {}) :
+    explicit gpu_csvm(parameter params = {}) :
         ::plssvm::csvm{ params } {}
     /**
      * @brief Construct a C-SVM forwarding all parameters @p args to the plssvm::parameter constructor.
@@ -121,7 +121,7 @@ class gpu_csvm : public ::plssvm::csvm {
     /**
      * @copydoc plssvm::csvm::assemble_kernel_matrix_explicit_impl
      */
-    [[nodiscard]] ::plssvm::detail::simple_any assemble_kernel_matrix(const solver_type solver, const ::plssvm::detail::parameter<real_type> &params, const ::plssvm::detail::simple_any & data, const std::vector<real_type> &q_red, const real_type QA_cost) const final;
+    [[nodiscard]] ::plssvm::detail::simple_any assemble_kernel_matrix(const solver_type solver, const parameter &params, const ::plssvm::detail::simple_any & data, const std::vector<real_type> &q_red, const real_type QA_cost) const final;
     /**
      * @copydoc plssvm::csvm::kernel_matrix_matmul_explicit
      */
@@ -133,7 +133,7 @@ class gpu_csvm : public ::plssvm::csvm {
     /**
      * @copydoc plssvm::csvm::predict_values
      */
-    [[nodiscard]] aos_matrix<real_type> predict_values(const parameter<real_type> &params, const aos_matrix<real_type> &support_vectors, const aos_matrix<real_type> &alpha, const std::vector<real_type> &rho, aos_matrix<real_type> &w, const aos_matrix<real_type> &predict_points) const final;
+    [[nodiscard]] aos_matrix<real_type> predict_values(const parameter &params, const aos_matrix<real_type> &support_vectors, const aos_matrix<real_type> &alpha, const std::vector<real_type> &rho, aos_matrix<real_type> &w, const aos_matrix<real_type> &predict_points) const final;
 
     /**
      * @brief Precalculate the `w` vector to speedup up the prediction using the linear kernel function.
@@ -160,7 +160,7 @@ class gpu_csvm : public ::plssvm::csvm {
      * @param[in] dept the number of data points after the dimensional reduction
      * @param[in] boundary_size the size of the padding boundary
      */
-    void run_device_kernel(std::size_t device, const parameter<real_type> &params, const device_ptr_type &q_d, device_ptr_type &r_d, const device_ptr_type &x_d, const device_ptr_type &data_d, const std::vector<std::size_t> &feature_ranges, real_type QA_cost, real_type add, std::size_t dept, std::size_t boundary_size) const;
+    void run_device_kernel(std::size_t device, const parameter &params, const device_ptr_type &q_d, device_ptr_type &r_d, const device_ptr_type &x_d, const device_ptr_type &data_d, const std::vector<std::size_t> &feature_ranges, real_type QA_cost, real_type add, std::size_t dept, std::size_t boundary_size) const;
 
     //*************************************************************************************************************************************//
     //                                         pure virtual, must be implemented by all subclasses                                         //
@@ -176,14 +176,14 @@ class gpu_csvm : public ::plssvm::csvm {
     //***************************************************//
     //                        fit                        //
     //***************************************************//
-    virtual device_ptr_type run_assemble_kernel_matrix_explicit(const ::plssvm::detail::parameter<real_type> &params, const device_ptr_type & data_d, const device_ptr_type &q_red_d, real_type QA_cost) const = 0;
+    virtual device_ptr_type run_assemble_kernel_matrix_explicit(const parameter &params, const device_ptr_type & data_d, const device_ptr_type &q_red_d, real_type QA_cost) const = 0;
 
     virtual void run_gemm_kernel_explicit(std::size_t m, std::size_t n, std::size_t k, real_type alpha, const device_ptr_type &A, const device_ptr_type &B, real_type beta, device_ptr_type &C) const = 0;
 
     //***************************************************//
     //                   predict, score                  //
     //***************************************************//
-    virtual device_ptr_type run_predict_kernel(const parameter<real_type> &params, const device_ptr_type &w, const device_ptr_type &alpha_d, const device_ptr_type &rho_d, const device_ptr_type &sv_d, const device_ptr_type &predict_points_d, std::size_t num_classes, std::size_t num_sv, std::size_t num_predict_points, std::size_t num_features) const = 0;
+    virtual device_ptr_type run_predict_kernel(const parameter &params, const device_ptr_type &w, const device_ptr_type &alpha_d, const device_ptr_type &rho_d, const device_ptr_type &sv_d, const device_ptr_type &predict_points_d, std::size_t num_classes, std::size_t num_sv, std::size_t num_predict_points, std::size_t num_features) const = 0;
 
     virtual device_ptr_type run_w_kernel(const device_ptr_type &alpha_d, const device_ptr_type &sv_d, std::size_t num_classes, std::size_t num_sv, std::size_t num_features) const = 0;
 
@@ -258,7 +258,7 @@ template <template <typename> typename device_ptr_t, typename queue_t>
 }
 
 template <template <typename> typename device_ptr_t, typename queue_t>
-::plssvm::detail::simple_any gpu_csvm<device_ptr_t, queue_t>::assemble_kernel_matrix(const solver_type solver, const ::plssvm::detail::parameter<real_type> &params, const ::plssvm::detail::simple_any &data, const std::vector<real_type> &q_red, real_type QA_cost) const {
+::plssvm::detail::simple_any gpu_csvm<device_ptr_t, queue_t>::assemble_kernel_matrix(const solver_type solver, const parameter &params, const ::plssvm::detail::simple_any &data, const std::vector<real_type> &q_red, real_type QA_cost) const {
     PLSSVM_ASSERT(!q_red.empty(), "The q_red vector may not be empty!");
     PLSSVM_ASSERT(solver != solver_type::automatic, "An explicit solver type must be provided instead of solver_type::automatic!");
 
@@ -372,7 +372,7 @@ std::vector<real_type> gpu_csvm<device_ptr_t, queue_t>::calculate_w(const std::v
 }
 
 template <template <typename> typename device_ptr_t, typename queue_t>
-void gpu_csvm<device_ptr_t, queue_t>::run_device_kernel(const std::size_t device, const parameter<real_type> &params, const device_ptr_type &q_d, device_ptr_type &r_d, const device_ptr_type &x_d, const device_ptr_type &data_d, const std::vector<std::size_t> &feature_ranges, const real_type QA_cost, const real_type add, const std::size_t dept, const std::size_t boundary_size) const {
+void gpu_csvm<device_ptr_t, queue_t>::run_device_kernel(const std::size_t device, const parameter &params, const device_ptr_type &q_d, device_ptr_type &r_d, const device_ptr_type &x_d, const device_ptr_type &data_d, const std::vector<std::size_t> &feature_ranges, const real_type QA_cost, const real_type add, const std::size_t dept, const std::size_t boundary_size) const {
     PLSSVM_ASSERT(device < devices_.size(), "Requested device {}, but only {} device(s) are available!", device, devices_.size());
     PLSSVM_ASSERT(!q_d.empty(), "The q_d device_ptr may not be empty!");
     PLSSVM_ASSERT(!r_d.empty(), "The r_d device_ptr may not be empty!");
@@ -390,7 +390,7 @@ void gpu_csvm<device_ptr_t, queue_t>::run_device_kernel(const std::size_t device
 
 
 template <template <typename> typename device_ptr_t, typename queue_t>
-aos_matrix<real_type> gpu_csvm<device_ptr_t, queue_t>::predict_values(const parameter<real_type> &params,
+aos_matrix<real_type> gpu_csvm<device_ptr_t, queue_t>::predict_values(const parameter &params,
                                                                                    const aos_matrix<real_type> &support_vectors,
                                                                                    const aos_matrix<real_type> &alpha,
                                                                                    const std::vector<real_type> &rho,

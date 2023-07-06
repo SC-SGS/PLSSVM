@@ -13,6 +13,7 @@
 #define PLSSVM_KERNEL_FUNCTION_TYPES_HPP_
 #pragma once
 
+#include "plssvm/constants.hpp"              // plssvm::real_type
 #include "plssvm/detail/assert.hpp"          // PLSSVM_ASSERT
 #include "plssvm/detail/operators.hpp"       // dot product, plssvm::squared_euclidean_dist
 #include "plssvm/detail/type_traits.hpp"     // plssvm::detail::always_false_v
@@ -67,14 +68,13 @@ std::istream &operator>>(std::istream &in, kernel_function_type &kernel);
 /**
  * @brief Computes the value of the two vectors @p xi and @p xj using the @p kernel function determined at compile-time.
  * @tparam kernel the type of the kernel
- * @tparam real_type the type of the values
  * @tparam Args additional parameters used in the respective kernel function
  * @param[in] xi the first vector
  * @param[in] xj the second vector
  * @param[in] args additional parameters
  * @return the value computed by the @p kernel function (`[[nodiscard]]`)
  */
-template <kernel_function_type kernel, typename real_type, typename... Args>
+template <kernel_function_type kernel, typename... Args>
 [[nodiscard]] inline real_type kernel_function(const std::vector<real_type> &xi, const std::vector<real_type> &xj, Args &&...args) {
     using namespace plssvm::operators;
 
@@ -110,32 +110,26 @@ template <kernel_function_type kernel, typename real_type, typename... Args>
         }
         return std::exp(-gamma * temp);
     } else {
-        static_assert(detail::always_false_v<real_type>, "Unknown kernel type!");
+        static_assert(detail::always_false_v<Args...>, "Unknown kernel type!");
     }
 }
 
 // forward declare parameter class
-namespace detail {
-template <typename>
 struct parameter;
-}
 
 /**
  * @brief Computes the value of the two vectors @p xi and @p xj using the kernel function and kernel parameter stored in @p params.
- * @tparam real_type the type of the values
  * @param[in] xi the first vector
  * @param[in] xj the second vector
  * @param[in] params class encapsulating the kernel type and kernel parameters
  * @throws plssvm::unsupported_kernel_type_exception if the kernel function in @p params is not supported
  * @return the computed kernel function value (`[[nodiscard]]`)
  */
-template <typename real_type>
-[[nodiscard]] real_type kernel_function(const std::vector<real_type> &xi, const std::vector<real_type> &xj, const detail::parameter<real_type> &params);
+[[nodiscard]] real_type kernel_function(const std::vector<real_type> &xi, const std::vector<real_type> &xj, const parameter &params);
 
 /**
  * @brief Computes the value of the two matrix rows @p i in @p x and @p j in @p y using the @p kernel function determined at compile-time.
  * @tparam kernel the type of the kernel
- * @tparam real_type the type of the values
  * @tparam layout the layout type of the two matrices
  * @tparam Args additional parameters used in the respective kernel function
  * @param[in] x the first matrix
@@ -145,7 +139,7 @@ template <typename real_type>
  * @param[in] args additional parameters
  * @return the value computed by the @p kernel function (`[[nodiscard]]`)
  */
-template <kernel_function_type kernel, typename real_type, layout_type layout, typename... Args>
+template <kernel_function_type kernel, layout_type layout, typename... Args>
 [[nodiscard]] real_type kernel_function(const matrix<real_type, layout> &x, const std::size_t i, const matrix<real_type, layout> &y, const std::size_t j, Args &&...args) {
     PLSSVM_ASSERT(x.num_cols() == y.num_cols(), "Sizes mismatch!: {} != {}", x.num_cols(), y.num_cols());
     using size_type = typename matrix<real_type, layout>::size_type;
@@ -180,13 +174,12 @@ template <kernel_function_type kernel, typename real_type, layout_type layout, t
         }
         return std::exp(-gamma * temp);
     } else {
-        static_assert(detail::always_false_v<real_type>, "Unknown kernel type!");
+        static_assert(detail::always_false_v<Args...>, "Unknown kernel type!");
     }
 }
 
 /**
  * @brief Computes the value of the two matrix rows @p i in @p x and @p j in @p y using the kernel function and kernel parameter stored in @p params.
- * @tparam real_type the type of the values
  * @tparam layout the layout type of the two matrices
  * @param[in] x the first matrix
  * @param[in] i the row in the first matrix
@@ -196,8 +189,8 @@ template <kernel_function_type kernel, typename real_type, layout_type layout, t
  * @throws plssvm::unsupported_kernel_type_exception if the kernel function in @p params is not supported
  * @return the computed kernel function value (`[[nodiscard]]`)
  */
-template <typename real_type, layout_type layout>
-[[nodiscard]] real_type kernel_function(const matrix<real_type, layout> &x, std::size_t i, const matrix<real_type, layout> &y, std::size_t j, const detail::parameter<real_type> &params);
+template <layout_type layout>
+[[nodiscard]] real_type kernel_function(const matrix<real_type, layout> &x, std::size_t i, const matrix<real_type, layout> &y, std::size_t j, const parameter &params);
 
 
 }  // namespace plssvm

@@ -17,7 +17,7 @@
 #include "plssvm/backends/gpu_csvm.hpp"                // plssvm::detail::gpu_csvm
 #include "plssvm/constants.hpp"                        // plssvm::real_type
 #include "plssvm/detail/simple_any.hpp"                // plssvm::detail::simple_any
-#include "plssvm/parameter.hpp"                        // plssvm::parameter, plssvm::detail::parameter
+#include "plssvm/parameter.hpp"                        // plssvm::parameter
 #include "plssvm/target_platforms.hpp"                 // plssvm::target_platform
 
 #include <cstddef>                                     // std::size_t
@@ -134,7 +134,7 @@ class csvm : public ::plssvm::detail::gpu_csvm<detail::device_ptr, int> {
     /**
      * @copydoc plssvm::detail::gpu_csvm::run_assemble_kernel_matrix_explicit
      */
-    [[nodiscard]] device_ptr_type run_assemble_kernel_matrix_explicit(const ::plssvm::detail::parameter<real_type> &params, const device_ptr_type & data_d, const device_ptr_type &q_red_d, real_type QA_cost) const final;
+    [[nodiscard]] device_ptr_type run_assemble_kernel_matrix_explicit(const parameter &params, const device_ptr_type & data_d, const device_ptr_type &q_red_d, real_type QA_cost) const final;
     /**
      * @copydoc plssvm::detail::gpu_csvm::run_gemm_kernel_explicit
      */
@@ -143,7 +143,7 @@ class csvm : public ::plssvm::detail::gpu_csvm<detail::device_ptr, int> {
     //***************************************************//
     //                   predict, score                  //
     //***************************************************//
-    device_ptr_type run_predict_kernel(const ::plssvm::detail::parameter<real_type> &params, const device_ptr_type &w_d, const device_ptr_type &alpha_d, const device_ptr_type &rho_d, const device_ptr_type &sv_d, const device_ptr_type &predict_points_d, std::size_t num_classes, std::size_t num_sv, std::size_t num_predict_points, std::size_t num_features) const final;
+    device_ptr_type run_predict_kernel(const parameter &params, const device_ptr_type &w_d, const device_ptr_type &alpha_d, const device_ptr_type &rho_d, const device_ptr_type &sv_d, const device_ptr_type &predict_points_d, std::size_t num_classes, std::size_t num_sv, std::size_t num_predict_points, std::size_t num_features) const final;
     device_ptr_type run_w_kernel(const device_ptr_type &alpha_d, const device_ptr_type &sv_d, std::size_t num_classes, std::size_t num_sv, std::size_t num_features) const final;
 
   private:

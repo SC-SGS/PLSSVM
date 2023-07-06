@@ -13,6 +13,7 @@
 #define PLSSVM_DATA_SET_HPP_
 #pragma once
 
+#include "plssvm/constants.hpp"                          // plssvm::real_type
 #include "plssvm/detail/io/arff_parsing.hpp"             // plssvm::detail::io::{read_libsvm_data, write_libsvm_data}
 #include "plssvm/detail/io/file_reader.hpp"              // plssvm::detail::io::file_reader
 #include "plssvm/detail/io/libsvm_parsing.hpp"           // plssvm::detail::io::{read_arff_data, write_arff_data}
@@ -63,24 +64,20 @@ using optional_ref = std::optional<std::reference_wrapper<T>>;
  * @brief Encapsulate all necessary data that is needed for training or predicting using an SVM.
  * @details May or may not contain labels!
  *          Internally, saves all data using [`std::shared_ptr`](https://en.cppreference.com/w/cpp/memory/shared_ptr) to make a plssvm::data_set relatively cheap to copy!
- * @tparam T the floating point type of the data (must either be `float` or `double`)
  * @tparam U the label type of the data (must be an arithmetic type or `std::string`; default: `int`)
  */
-template <typename T, typename U = int>
+template <typename U = int>
 class data_set {
     // make sure only valid template types are used
-    static_assert(detail::type_list_contains_v<T, detail::real_type_list>, "Illegal real type provided! See the 'real_type_list' in the type_list.hpp header for a list of the allowed types.");
     static_assert(detail::type_list_contains_v<U, detail::label_type_list>, "Illegal label type provided! See the 'label_type_list' in the type_list.hpp header for a list of the allowed types.");
 
     // plssvm::model needs the default constructor
-    template <typename, typename>
+    template <typename>
     friend class model;
     // plssvm::csvm needs the label mapping
     friend class csvm;
 
   public:
-    /// The type of the data points: either `float` or `double`.
-    using real_type = T;
     /// The type of the labels: any arithmetic type or `std::string`.
     using label_type = U;
     /// An unsigned integer type.
@@ -346,8 +343,8 @@ class data_set {
 /**
  * @brief Implements all necessary data and functions needed for scaling a plssvm::data_set to an user-defined range.
  */
-template <typename T, typename U>
-class data_set<T, U>::scaling {
+template <typename U>
+class data_set<U>::scaling {
   public:
     /**
      * @brief The calculated or read feature-wise scaling factors.
@@ -401,26 +398,26 @@ class data_set<T, U>::scaling {
     std::vector<factors> scaling_factors{};
 };
 
-template <typename T, typename U>
-data_set<T, U>::scaling::scaling(const real_type lower, const real_type upper) :
+template <typename U>
+data_set<U>::scaling::scaling(const real_type lower, const real_type upper) :
     scaling_interval{ std::make_pair(lower, upper) } {
     if (lower >= upper) {
         throw data_set_exception{ fmt::format("Inconsistent scaling interval specification: lower ({}) must be less than upper ({})!", lower, upper) };
     }
 }
 
-template <typename T, typename U>
-data_set<T, U>::scaling::scaling(const std::string &filename) {
+template <typename U>
+data_set<U>::scaling::scaling(const std::string &filename) {
     // open the file
     detail::io::file_reader reader{ filename };
     reader.read_lines('#');
 
     // read scaling values from file
-    std::tie(scaling_interval, scaling_factors) = detail::io::parse_scaling_factors<real_type, factors>(reader);
+    std::tie(scaling_interval, scaling_factors) = detail::io::parse_scaling_factors<factors>(reader);
 }
 
-template <typename T, typename U>
-void data_set<T, U>::scaling::save(const std::string &filename) const {
+template <typename U>
+void data_set<U>::scaling::save(const std::string &filename) const {
     const std::chrono::time_point start_time = std::chrono::steady_clock::now();
 
     // write scaling values to file
@@ -442,8 +439,8 @@ void data_set<T, U>::scaling::save(const std::string &filename) const {
  * @brief Implements all necessary functionality to map arbitrary labels to labels usable by the C-SVMs.
  * @details Currently maps all labels to { -1 , 1 }.
  */
-template <typename T, typename U>
-class data_set<T, U>::label_mapper {
+template <typename U>
+class data_set<U>::label_mapper {
   public:
     /**
      * @brief Create a mapping from all labels to their index used in the right-hand side when solving the system of linear equations and vice versa.
@@ -486,8 +483,8 @@ class data_set<T, U>::label_mapper {
 };
 
 /// @cond Doxygen_suppress
-template <typename T, typename U>
-data_set<T, U>::data_set::label_mapper::label_mapper(const std::vector<label_type> &classes) {
+template <typename U>
+data_set<U>::data_set::label_mapper::label_mapper(const std::vector<label_type> &classes) {
     PLSSVM_ASSERT(std::set(classes.cbegin(), classes.cend()).size() == classes.size(),
                   "The provided labels for the label_mapper must not include duplicated ones!");
     // create mapping
@@ -500,30 +497,30 @@ data_set<T, U>::data_set::label_mapper::label_mapper(const std::vector<label_typ
 }
 /// @endcond
 
-template <typename T, typename U>
-auto data_set<T, U>::label_mapper::get_mapped_index_by_label(const label_type &label) const -> const size_type & {
+template <typename U>
+auto data_set<U>::label_mapper::get_mapped_index_by_label(const label_type &label) const -> const size_type & {
     if (!detail::contains(label_to_index_, label)) {
         throw data_set_exception{ fmt::format("Label \"{}\" unknown in this label mapping!", label) };
     }
     return label_to_index_.at(label);
 }
 
-template <typename T, typename U>
-auto data_set<T, U>::label_mapper::get_label_by_mapped_index(const size_type &mapped_index) const -> const label_type & {
+template <typename U>
+auto data_set<U>::label_mapper::get_label_by_mapped_index(const size_type &mapped_index) const -> const label_type & {
     if (!detail::contains(index_to_label_, mapped_index)) {
         throw data_set_exception{ fmt::format("Mapped index \"{}\" unknown in this label mapping!", mapped_index) };
     }
     return index_to_label_.at(mapped_index);
 }
 
-template <typename T, typename U>
-auto data_set<T, U>::label_mapper::num_mappings() const noexcept -> size_type {
+template <typename U>
+auto data_set<U>::label_mapper::num_mappings() const noexcept -> size_type {
     PLSSVM_ASSERT(label_to_index_.size() == index_to_label_.size(), "Both maps must contain the same number of values, but {} and {} were given!", label_to_index_.size(), index_to_label_.size());
     return label_to_index_.size();
 }
 
-template <typename T, typename U>
-auto data_set<T, U>::label_mapper::labels() const -> std::vector<label_type> {
+template <typename U>
+auto data_set<U>::label_mapper::labels() const -> std::vector<label_type> {
     std::vector<label_type> available_labels;
     available_labels.reserve(this->num_mappings());
     for (const auto &[key, value] : label_to_index_) {
@@ -536,21 +533,21 @@ auto data_set<T, U>::label_mapper::labels() const -> std::vector<label_type> {
 //                                                           data set class                                                            //
 //*************************************************************************************************************************************//
 
-template <typename T, typename U>
-data_set<T, U>::data_set(const std::string &filename) {
+template <typename U>
+data_set<U>::data_set(const std::string &filename) {
     // read data set from file
     // if the file doesn't end with .arff, assume a LIBSVM file
     this->read_file(filename, detail::ends_with(filename, ".arff") ? file_format_type::arff : file_format_type::libsvm);
 }
 
-template <typename T, typename U>
-data_set<T, U>::data_set(const std::string &filename, const file_format_type format) {
+template <typename U>
+data_set<U>::data_set(const std::string &filename, const file_format_type format) {
     // read data set from file
     this->read_file(filename, format);
 }
 
-template <typename T, typename U>
-data_set<T, U>::data_set(const std::string &filename, scaling scale_parameter) :
+template <typename U>
+data_set<U>::data_set(const std::string &filename, scaling scale_parameter) :
     data_set{ filename } {
     // initialize scaling
     scale_parameters_ = std::make_shared<scaling>(std::move(scale_parameter));
@@ -558,8 +555,8 @@ data_set<T, U>::data_set(const std::string &filename, scaling scale_parameter) :
     this->scale();
 }
 
-template <typename T, typename U>
-data_set<T, U>::data_set(const std::string &filename, file_format_type format, scaling scale_parameter) :
+template <typename U>
+data_set<U>::data_set(const std::string &filename, file_format_type format, scaling scale_parameter) :
     data_set{ filename, format } {
     // initialize scaling
     scale_parameters_ = std::make_shared<scaling>(std::move(scale_parameter));
@@ -567,25 +564,25 @@ data_set<T, U>::data_set(const std::string &filename, file_format_type format, s
     this->scale();
 }
 
-template <typename T, typename U>
-data_set<T, U>::data_set(const std::vector<std::vector<real_type>> &data_points) :
-    data_set{ aos_matrix<T>{ data_points } } {}
+template <typename U>
+data_set<U>::data_set(const std::vector<std::vector<real_type>> &data_points) :
+    data_set{ aos_matrix<real_type>{ data_points } } {}
 
-template <typename T, typename U>
-data_set<T, U>::data_set(const std::vector<std::vector<real_type>> &data_points, std::vector<label_type> labels) :
-    data_set{ aos_matrix<T>{ data_points }, std::move(labels) } { }
+template <typename U>
+data_set<U>::data_set(const std::vector<std::vector<real_type>> &data_points, std::vector<label_type> labels) :
+    data_set{ aos_matrix<real_type>{ data_points }, std::move(labels) } { }
 
-template <typename T, typename U>
-data_set<T, U>::data_set(const std::vector<std::vector<real_type>> &data_points, scaling scale_parameter) :
-    data_set{ aos_matrix<T>{ data_points }, std::move(scale_parameter) } {}
+template <typename U>
+data_set<U>::data_set(const std::vector<std::vector<real_type>> &data_points, scaling scale_parameter) :
+    data_set{ aos_matrix<real_type>{ data_points }, std::move(scale_parameter) } {}
 
-template <typename T, typename U>
-data_set<T, U>::data_set(const std::vector<std::vector<real_type>> &data_points, std::vector<label_type> labels, scaling scale_parameter) :
-    data_set{ aos_matrix<T>{ data_points }, std::move(labels), std::move(scale_parameter) } { }
+template <typename U>
+data_set<U>::data_set(const std::vector<std::vector<real_type>> &data_points, std::vector<label_type> labels, scaling scale_parameter) :
+    data_set{ aos_matrix<real_type>{ data_points }, std::move(labels), std::move(scale_parameter) } { }
 
-template <typename T, typename U>
+template <typename U>
 template <layout_type layout>
-data_set<T, U>::data_set(matrix<real_type, layout> data_points) :
+data_set<U>::data_set(matrix<real_type, layout> data_points) :
     num_data_points_{ data_points.num_rows() }, num_features_{ data_points.num_cols() }, data_ptr_{ std::make_shared<aos_matrix<real_type>>(std::move(data_points)) } {
     // the provided data points vector may not be empty
     if (data_ptr_->num_rows() != 0) {
@@ -602,9 +599,9 @@ data_set<T, U>::data_set(matrix<real_type, layout> data_points) :
                 detail::tracking_entry{ "data_set_create", "num_classes", this->num_classes() });
 }
 
-template <typename T, typename U>
+template <typename U>
 template <layout_type layout>
-data_set<T, U>::data_set(matrix<real_type, layout> data_points, std::vector<label_type> labels) :
+data_set<U>::data_set(matrix<real_type, layout> data_points, std::vector<label_type> labels) :
     data_set{ std::move(data_points) } {
     // initialize labels
     labels_ptr_ = std::make_shared<std::vector<label_type>>(std::move(labels));
@@ -624,9 +621,9 @@ data_set<T, U>::data_set(matrix<real_type, layout> data_points, std::vector<labe
                 detail::tracking_entry{ "data_set_create", "num_classes", this->num_classes() });
 }
 
-template <typename T, typename U>
+template <typename U>
 template <layout_type layout>
-data_set<T, U>::data_set(matrix<real_type, layout> data_points, scaling scale_parameter) :
+data_set<U>::data_set(matrix<real_type, layout> data_points, scaling scale_parameter) :
     data_set{ std::move(data_points) } {
     // initialize scaling
     scale_parameters_ = std::make_shared<scaling>(std::move(scale_parameter));
@@ -634,9 +631,9 @@ data_set<T, U>::data_set(matrix<real_type, layout> data_points, scaling scale_pa
     this->scale();
 }
 
-template <typename T, typename U>
+template <typename U>
 template <layout_type layout>
-data_set<T, U>::data_set(matrix<real_type, layout> data_points, std::vector<label_type> labels, scaling scale_parameter) :
+data_set<U>::data_set(matrix<real_type, layout> data_points, std::vector<label_type> labels, scaling scale_parameter) :
     data_set{ std::move(data_points), std::move(labels) } {
     // initialize scaling
     scale_parameters_ = std::make_shared<scaling>(std::move(scale_parameter));
@@ -644,8 +641,8 @@ data_set<T, U>::data_set(matrix<real_type, layout> data_points, std::vector<labe
     this->scale();
 }
 
-template <typename T, typename U>
-void data_set<T, U>::save(const std::string &filename, const file_format_type format) const {
+template <typename U>
+void data_set<U>::save(const std::string &filename, const file_format_type format) const {
     const std::chrono::time_point start_time = std::chrono::steady_clock::now();
 
     // save the data set
@@ -682,8 +679,8 @@ void data_set<T, U>::save(const std::string &filename, const file_format_type fo
                 detail::tracking_entry{ "data_set_write", "filename", filename });
 }
 
-template <typename T, typename U>
-void data_set<T, U>::save(const std::string &filename) const {
+template <typename U>
+void data_set<U>::save(const std::string &filename) const {
     if (detail::ends_with(filename, ".libsvm")) {
         this->save(filename, file_format_type::libsvm);
     } else if (detail::ends_with(filename, ".arff")) {
@@ -693,24 +690,24 @@ void data_set<T, U>::save(const std::string &filename) const {
     }
 }
 
-template <typename T, typename U>
-auto data_set<T, U>::labels() const noexcept -> optional_ref<const std::vector<label_type>> {
+template <typename U>
+auto data_set<U>::labels() const noexcept -> optional_ref<const std::vector<label_type>> {
     if (this->has_labels()) {
         return std::make_optional(std::cref(*labels_ptr_));
     }
     return std::nullopt;
 }
 
-template <typename T, typename U>
-auto data_set<T, U>::classes() const -> std::optional<std::vector<label_type>> {
+template <typename U>
+auto data_set<U>::classes() const -> std::optional<std::vector<label_type>> {
     if (this->has_labels()) {
         return std::make_optional(mapping_->labels());
     }
     return std::nullopt;
 }
 
-template <typename T, typename U>
-auto data_set<T, U>::scaling_factors() const noexcept -> optional_ref<const scaling> {
+template <typename U>
+auto data_set<U>::scaling_factors() const noexcept -> optional_ref<const scaling> {
     if (this->is_scaled()) {
         return std::make_optional(std::cref(*scale_parameters_));
     }
@@ -721,8 +718,8 @@ auto data_set<T, U>::scaling_factors() const noexcept -> optional_ref<const scal
 //                                                      PRIVATE MEMBER FUNCTIONS                                                       //
 //*************************************************************************************************************************************//
 
-template <typename T, typename U>
-void data_set<T, U>::create_mapping(const std::vector<label_type> &classes) {
+template <typename U>
+void data_set<U>::create_mapping(const std::vector<label_type> &classes) {
     PLSSVM_ASSERT(labels_ptr_ != nullptr, "Can't create mapping if no labels are provided!");
 
     // create label mapping
@@ -744,8 +741,8 @@ void data_set<T, U>::create_mapping(const std::vector<label_type> &classes) {
     mapping_ = std::make_shared<const label_mapper>(std::move(mapper));
 }
 
-template <typename T, typename U>
-void data_set<T, U>::scale() {
+template <typename U>
+void data_set<U>::scale() {
     PLSSVM_ASSERT(this->is_scaled(), "No scaling parameters given for scaling!");
 
     const std::chrono::time_point start_time = std::chrono::steady_clock::now();
@@ -812,8 +809,8 @@ void data_set<T, U>::scale() {
                 detail::tracking_entry{ "data_set_scale", "time", std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time) });
 }
 
-template <typename T, typename U>
-void data_set<T, U>::read_file(const std::string &filename, file_format_type format) {
+template <typename U>
+void data_set<U>::read_file(const std::string &filename, file_format_type format) {
     const std::chrono::time_point start_time = std::chrono::steady_clock::now();
 
     // get the comment character based on the file_format_type
@@ -838,10 +835,10 @@ void data_set<T, U>::read_file(const std::string &filename, file_format_type for
     // parse the given file
     switch (format) {
         case file_format_type::libsvm:
-            std::tie(num_data_points_, num_features_, data, label) = detail::io::parse_libsvm_data<real_type, label_type>(reader);
+            std::tie(num_data_points_, num_features_, data, label) = detail::io::parse_libsvm_data<label_type>(reader);
             break;
         case file_format_type::arff:
-            std::tie(num_data_points_, num_features_, data, label) = detail::io::parse_arff_data<real_type, label_type>(reader);
+            std::tie(num_data_points_, num_features_, data, label) = detail::io::parse_arff_data<label_type>(reader);
             break;
     }
 
