@@ -203,9 +203,9 @@ model<U>::model(const std::string &filename) {
     // parse the libsvm model header
     std::vector<label_type> labels{};
     std::vector<label_type> unique_labels{};
-    std::vector<size_type> num_sv_per_class{};
+    std::vector<std::size_t> num_sv_per_class{};
     std::size_t num_header_lines{};
-    std::tie(params_, *rho_ptr_, labels, unique_labels, num_sv_per_class, num_header_lines) = detail::io::parse_libsvm_model_header<label_type, size_type>(reader.lines());
+    std::tie(params_, *rho_ptr_, labels, unique_labels, num_sv_per_class, num_header_lines) = detail::io::parse_libsvm_model_header<label_type>(reader.lines());
 
     // fill indices -> support vectors are sorted!
     indices_ptr_ = std::make_shared<std::vector<std::vector<std::size_t>>>(unique_labels.size());

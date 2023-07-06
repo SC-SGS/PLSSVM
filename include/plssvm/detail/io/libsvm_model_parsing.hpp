@@ -102,7 +102,6 @@ namespace plssvm::detail::io {
  * SV
  * @endcode
  * @tparam label_type the type of the labels (any arithmetic type, except bool, or std::string)
- * @tparam size_type the size type
  * @param[in] lines the LIBSVM model file header to parse>
  * @throws plssvm::invalid_file_format_exception if an invalid 'svm_type' has been provided, i.e., 'svm_type' is not 'c_csc'
  * @throws plssvm::invalid_file_format_exception if an invalid 'kernel_type has been provided
@@ -126,12 +125,12 @@ namespace plssvm::detail::io {
  * @attention The PLSSVM model file is only compatible with LIBSVM for the one vs. one classification type.
  * @return the necessary header information: [the SVM parameter, the values of rho, the labels, the different classes, num_header_lines] (`[[nodiscard]]`)
  */
-template <typename label_type, typename size_type>
-[[nodiscard]] inline std::tuple<plssvm::parameter, std::vector<real_type>, std::vector<label_type>, std::vector<label_type>, std::vector<size_type>, std::size_t> parse_libsvm_model_header(const std::vector<std::string_view> &lines) {
+template <typename label_type>
+[[nodiscard]] inline std::tuple<plssvm::parameter, std::vector<real_type>, std::vector<label_type>, std::vector<label_type>, std::vector<std::size_t>, std::size_t> parse_libsvm_model_header(const std::vector<std::string_view> &lines) {
     // data to read
     plssvm::parameter params{};
     std::vector<real_type> rho{};
-    size_type num_support_vectors{};
+    std::size_t num_support_vectors{};
 
     // helper variables
     bool svm_type_set{ false };
@@ -141,9 +140,9 @@ template <typename label_type, typename size_type>
     bool rho_set{ false };
     bool label_set{ false };
     bool nr_sv_set{ false };
-    size_type nr_class{};
+    std::size_t nr_class{};
     std::vector<label_type> labels{};
-    std::vector<size_type> num_support_vectors_per_class{};
+    std::vector<std::size_t> num_support_vectors_per_class{};
 
     // parse libsvm model file header
     std::size_t header_line = 0;
@@ -190,7 +189,7 @@ template <typename label_type, typename size_type>
                 nr_class_set = true;
             } else if (detail::starts_with(line, "total_sv")) {
                 // the total number of support vectors must be greater than 0
-                num_support_vectors = detail::convert_to<size_type>(value);
+                num_support_vectors = detail::convert_to<std::size_t>(value);
                 if (num_support_vectors == 0) {
                     throw invalid_file_format_exception{ "The number of support vectors must be greater than 0!" };
                 }
@@ -222,7 +221,7 @@ template <typename label_type, typename size_type>
                 label_set = true;
             } else if (detail::starts_with(line, "nr_sv")) {
                 // parse number of support vectors per class
-                num_support_vectors_per_class = detail::split_as<size_type>(value, ' ');
+                num_support_vectors_per_class = detail::split_as<std::size_t>(value, ' ');
                 if (num_support_vectors_per_class.size() < 2) {
                     throw invalid_file_format_exception{ "At least two nr_sv must be set, but only one was given!" };
                 }
@@ -293,7 +292,7 @@ template <typename label_type, typename size_type>
         throw invalid_file_format_exception{ fmt::format("The number of classes (nr_class) is {}, but the provided number of different labels is {} (nr_sv)!", nr_class, num_support_vectors_per_class.size()) };
     }
     // calculate the number of support as sum of the support vectors per class
-    const auto nr_sv_sum = std::accumulate(num_support_vectors_per_class.begin(), num_support_vectors_per_class.end(), size_type{ 0 });
+    const auto nr_sv_sum = std::accumulate(num_support_vectors_per_class.begin(), num_support_vectors_per_class.end(), std::size_t{ 0 });
     if (nr_sv_sum != num_support_vectors) {
         throw invalid_file_format_exception{ fmt::format("The total number of support vectors is {}, but the sum of nr_sv is {}!", num_support_vectors, nr_sv_sum) };
     }
@@ -305,7 +304,7 @@ template <typename label_type, typename size_type>
     // set label according to model file definition
     std::vector<label_type> data_labels(num_support_vectors);
     std::size_t pos = 0;
-    for (size_type i = 0; i < labels.size(); ++i) {
+    for (std::size_t i = 0; i < labels.size(); ++i) {
         std::fill(data_labels.begin() + pos, data_labels.begin() + pos + num_support_vectors_per_class[i], labels[i]);
         pos += num_support_vectors_per_class[i];
     }
