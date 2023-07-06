@@ -9,8 +9,8 @@
  * @brief Defines very simple type erasure class.
  */
 
-#ifndef PLSSVM_DETAIL_SIMPLE_ANY
-#define PLSSVM_DETAIL_SIMPLE_ANY
+#ifndef PLSSVM_DETAIL_SIMPLE_ANY_HPP_
+#define PLSSVM_DETAIL_SIMPLE_ANY_HPP_
 #pragma once
 
 #include <memory>   // std::unique_ptr, std::make_unique
@@ -89,4 +89,4 @@ class simple_any {
 
 }  // namespace plssvm::detail
 
-#endif  // PLSSVM_DETAIL_SIMPLE_ANY
+#endif  // PLSSVM_DETAIL_SIMPLE_ANY_HPP_
