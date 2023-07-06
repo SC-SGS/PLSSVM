@@ -134,7 +134,7 @@ class csvm {
      * @return the learned model (`[[nodiscard]]`)
      */
     template <typename label_type, typename... Args>
-    [[nodiscard]] model<label_type> fit(const data_set<label_type> &data, Args &&...named_args);
+    [[nodiscard]] model<label_type> fit(const data_set<label_type> &data, Args &&...named_args) const;
 
     //*************************************************************************************************************************************//
     //                                                          predict and score                                                          //
@@ -322,7 +322,7 @@ void csvm::set_params(Args &&...named_args) {
 }
 
 template <typename label_type, typename... Args>
-model<label_type> csvm::fit(const data_set<label_type> &data, Args &&...named_args) {
+model<label_type> csvm::fit(const data_set<label_type> &data, Args &&...named_args) const {
     if (!data.has_labels()) {
         throw invalid_parameter_exception{ "No labels given for training! Maybe the data is only usable for prediction?" };
     }
