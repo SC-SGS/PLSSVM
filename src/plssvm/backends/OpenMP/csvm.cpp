@@ -12,6 +12,7 @@
 #include "plssvm/backends/OpenMP/cg_explicit/kernel_matrix_assembly.hpp"  // plssvm::openmp::linear_kernel_matrix_assembly, plssvm::openmp::polynomial_kernel_matrix_assembly, plssvm::openmp::rbf_kernel_matrix_assembly
 #include "plssvm/backends/OpenMP/exceptions.hpp"                          // plssvm::openmp::backend_exception
 #include "plssvm/backends/OpenMP/q_kernel.hpp"                            // plssvm::openmp::device_kernel_q_linear, plssvm::openmp::device_kernel_q_polynomial, plssvm::openmp::device_kernel_q_rbf
+#include "plssvm/constants.hpp"                                           // plssvm::real_type
 #include "plssvm/csvm.hpp"                                                // plssvm::csvm
 #include "plssvm/detail/assert.hpp"                                       // PLSSVM_ASSERT
 #include "plssvm/detail/logger.hpp"                                       // plssvm::detail::log, plssvm::verbosity_level
@@ -19,7 +20,7 @@
 #include "plssvm/detail/performance_tracker.hpp"                          // plssvm::detail::tracking_entry, PLSSVM_DETAIL_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY
 #include "plssvm/kernel_function_types.hpp"                               // plssvm::kernel_function_type
 #include "plssvm/matrix.hpp"                                              // plssvm::aos_matrix
-#include "plssvm/parameter.hpp"                                           // plssvm::parameter, plssvm::detail::parameter
+#include "plssvm/parameter.hpp"                                           // plssvm::parameter
 #include "plssvm/target_platforms.hpp"                                    // plssvm::target_platform
 
 #include "fmt/chrono.h"   // directly print std::chrono literals with fmt
@@ -78,8 +79,7 @@ unsigned long long csvm::get_device_memory() const {
 //                        fit                        //
 //***************************************************//
 
-template <typename real_type>
-detail::simple_any csvm::setup_data_on_devices_impl(const solver_type solver, const aos_matrix<real_type> &A) const {
+detail::simple_any csvm::setup_data_on_devices(const solver_type solver, const aos_matrix<real_type> &A) const {
     PLSSVM_ASSERT(!A.empty(), "The matrix to setup on the devices may not be empty!");
     PLSSVM_ASSERT(solver != solver_type::automatic, "An explicit solver type must be provided instead of solver_type::automatic!");
 
@@ -91,11 +91,7 @@ detail::simple_any csvm::setup_data_on_devices_impl(const solver_type solver, co
     }
 }
 
-template detail::simple_any csvm::setup_data_on_devices_impl(const solver_type, const aos_matrix<float> &) const;
-template detail::simple_any csvm::setup_data_on_devices_impl(const solver_type, const aos_matrix<double> &) const;
-
-template <typename real_type>
-detail::simple_any csvm::assemble_kernel_matrix_impl(const solver_type solver, const detail::parameter<real_type> &params, const detail::simple_any &data, const std::vector<real_type> &q_red, const real_type QA_cost) const {
+detail::simple_any csvm::assemble_kernel_matrix(const solver_type solver, const parameter &params, const detail::simple_any &data, const std::vector<real_type> &q_red, const real_type QA_cost) const {
     PLSSVM_ASSERT(!q_red.empty(), "The q_red vector may not be empty!");
     PLSSVM_ASSERT(solver != solver_type::automatic, "An explicit solver type must be provided instead of solver_type::automatic!");
 
@@ -131,11 +127,7 @@ detail::simple_any csvm::assemble_kernel_matrix_impl(const solver_type solver, c
     }
 }
 
-template detail::simple_any csvm::assemble_kernel_matrix_impl(const solver_type, const detail::parameter<float> &, const detail::simple_any &, const std::vector<float> &, const float) const;
-template detail::simple_any csvm::assemble_kernel_matrix_impl(const solver_type, const detail::parameter<double> &, const detail::simple_any &, const std::vector<double> &, const double) const;
-
-template <typename real_type>
-void csvm::blas_gemm_impl(const solver_type solver, const real_type alpha, const detail::simple_any &A, const aos_matrix<real_type> &B, const real_type beta, aos_matrix<real_type> &C) const {
+void csvm::blas_gemm(const solver_type solver, const real_type alpha, const detail::simple_any &A, const aos_matrix<real_type> &B, const real_type beta, aos_matrix<real_type> &C) const {
     PLSSVM_ASSERT(!B.empty(), "The B matrix may not be empty!");
     PLSSVM_ASSERT(!C.empty(), "The C matrix may not be empty!");
     PLSSVM_ASSERT(B.num_rows() == C.num_rows(), "The C matrix must have {} rows, but has {}!", B.num_rows(), C.num_rows());
@@ -167,15 +159,11 @@ void csvm::blas_gemm_impl(const solver_type solver, const real_type alpha, const
     }
 }
 
-template void csvm::blas_gemm_impl(const solver_type, const float, const detail::simple_any &, const aos_matrix<float> &, const float, aos_matrix<float> &) const;
-template void csvm::blas_gemm_impl(const solver_type, const double, const detail::simple_any &, const aos_matrix<double> &, const double, aos_matrix<double> &) const;
-
 //***************************************************//
 //                   predict, score                  //
 //***************************************************//
 
-template <typename real_type>
-aos_matrix<real_type> csvm::predict_values_impl(const detail::parameter<real_type> &params, const aos_matrix<real_type> &support_vectors, const aos_matrix<real_type> &alpha, const std::vector<real_type> &rho, aos_matrix<real_type> &w, const aos_matrix<real_type> &predict_points) const {
+aos_matrix<real_type> csvm::predict_values(const parameter &params, const aos_matrix<real_type> &support_vectors, const aos_matrix<real_type> &alpha, const std::vector<real_type> &rho, aos_matrix<real_type> &w, const aos_matrix<real_type> &predict_points) const {
     PLSSVM_ASSERT(!support_vectors.empty(), "The support vectors must not be empty!");
     PLSSVM_ASSERT(!alpha.empty(), "The alpha vectors (weights) must not be empty!");
     PLSSVM_ASSERT(support_vectors.num_rows() == alpha.num_cols(), "The number of support vectors ({}) and number of weights ({}) must be the same!", support_vectors.num_rows(), alpha.num_cols());
@@ -243,8 +231,5 @@ aos_matrix<real_type> csvm::predict_values_impl(const detail::parameter<real_typ
     }
     return out;
 }
-
-template aos_matrix<float> csvm::predict_values_impl(const detail::parameter<float> &, const aos_matrix<float> &, const aos_matrix<float> &, const std::vector<float> &, aos_matrix<float> &, const aos_matrix<float> &) const;
-template aos_matrix<double> csvm::predict_values_impl(const detail::parameter<double> &, const aos_matrix<double> &, const aos_matrix<double> &, const std::vector<double> &, aos_matrix<double> &, const aos_matrix<double> &) const;
 
 }  // namespace plssvm::openmp

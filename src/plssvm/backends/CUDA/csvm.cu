@@ -16,6 +16,7 @@
 #include "plssvm/backends/CUDA/detail/utility.cuh"                      // plssvm::cuda::detail::{device_synchronize, get_device_count, set_device, peek_at_last_error}
 #include "plssvm/backends/CUDA/exceptions.hpp"                          // plssvm::cuda::backend_exception
 #include "plssvm/backends/CUDA/predict_kernel.cuh"                      // plssvm::cuda::detail::{device_kernel_w_linear, device_kernel_predict_polynomial, device_kernel_predict_rbf}
+#include "plssvm/constants.hpp"                                         // plssvm::real_type
 #include "plssvm/detail/assert.hpp"                                     // PLSSVM_ASSERT
 #include "plssvm/detail/execution_range.hpp"                            // plssvm::detail::execution_range
 #include "plssvm/detail/logger.hpp"                                     // plssvm::detail::log, plssvm::verbosity_level
@@ -23,7 +24,7 @@
 #include "plssvm/detail/simple_any.hpp"                                 // plssvm::detail::simple_any
 #include "plssvm/exceptions/exceptions.hpp"                             // plssvm::exception
 #include "plssvm/kernel_function_types.hpp"                             // plssvm::kernel_function_type
-#include "plssvm/parameter.hpp"                                         // plssvm::parameter, plssvm::detail::parameter
+#include "plssvm/parameter.hpp"                                         // plssvm::parameter
 #include "plssvm/target_platforms.hpp"                                  // plssvm::target_platform
 
 #include "cuda.h"                                      // cuda runtime functions
@@ -121,8 +122,7 @@ std::pair<dim3, dim3> execution_range_to_native(const ::plssvm::detail::executio
 //                        fit                        //
 //***************************************************//
 
-template <typename real_type>
-auto csvm::run_assemble_kernel_matrix_explicit_impl(const ::plssvm::detail::parameter<real_type> &params, const device_ptr_type<real_type> &data_d, const device_ptr_type<real_type> &q_red_d, real_type QA_cost) const -> device_ptr_type<real_type> {
+auto csvm::run_assemble_kernel_matrix_explicit(const parameter &params, const device_ptr_type &data_d, const device_ptr_type &q_red_d, real_type QA_cost) const -> device_ptr_type {
     const std::size_t num_rows_reduced = data_d.size(0) - 1;
     const std::size_t num_features = data_d.size(1);
 
@@ -131,7 +131,7 @@ auto csvm::run_assemble_kernel_matrix_explicit_impl(const ::plssvm::detail::para
     const dim3 grid(static_cast<int>(std::ceil(num_rows_reduced / static_cast<double>(block.x))),
                     static_cast<int>(std::ceil(num_rows_reduced / static_cast<double>(block.y))));
 
-    device_ptr_type<real_type> kernel_matrix_d{ { num_rows_reduced, num_rows_reduced } };
+    device_ptr_type kernel_matrix_d{ { num_rows_reduced, num_rows_reduced } };
 
     detail::set_device(0);
     switch (params.kernel_type) {
@@ -151,11 +151,7 @@ auto csvm::run_assemble_kernel_matrix_explicit_impl(const ::plssvm::detail::para
     return kernel_matrix_d;
 }
 
-template auto csvm::run_assemble_kernel_matrix_explicit_impl(const ::plssvm::detail::parameter<float> &, const device_ptr_type<float> &, const device_ptr_type<float> &, float) const -> device_ptr_type<float>;
-template auto csvm::run_assemble_kernel_matrix_explicit_impl(const ::plssvm::detail::parameter<double> &, const device_ptr_type<double> &, const device_ptr_type<double> &, double) const -> device_ptr_type<double>;
-
-template <typename real_type>
-void csvm::run_gemm_kernel_explicit_impl(const std::size_t m, const std::size_t n, const std::size_t k, const real_type alpha, const device_ptr_type<real_type> &A_d, const device_ptr_type<real_type> &B_d, const real_type beta, device_ptr_type<real_type> &C_d) const {
+void csvm::run_gemm_kernel_explicit(const std::size_t m, const std::size_t n, const std::size_t k, const real_type alpha, const device_ptr_type &A_d, const device_ptr_type &B_d, const real_type beta, device_ptr_type &C_d) const {
     const dim3 block(32, 32);
     const dim3 grid(static_cast<int>(std::ceil(m / static_cast<double>(block.x))),
                     static_cast<int>(std::ceil(n / static_cast<double>(block.y))));
@@ -166,21 +162,16 @@ void csvm::run_gemm_kernel_explicit_impl(const std::size_t m, const std::size_t 
     detail::device_synchronize(0);
 }
 
-template void csvm::run_gemm_kernel_explicit_impl(const std::size_t, const std::size_t, const std::size_t, const float, const device_ptr_type<float> &, const device_ptr_type<float> &, const float, device_ptr_type<float> &) const;
-template void csvm::run_gemm_kernel_explicit_impl(const std::size_t, const std::size_t, const std::size_t, const double, const device_ptr_type<double> &, const device_ptr_type<double> &, const double, device_ptr_type<double> &) const;
-
-
 //***************************************************//
 //                   predict, score                  //
 //***************************************************//
 
-template <typename real_type>
-auto csvm::run_w_kernel_impl(const device_ptr_type<real_type> &alpha_d, const device_ptr_type<real_type> &sv_d, std::size_t num_classes, std::size_t num_sv, std::size_t num_features) const -> device_ptr_type<real_type> {
+auto csvm::run_w_kernel(const device_ptr_type &alpha_d, const device_ptr_type &sv_d, std::size_t num_classes, std::size_t num_sv, std::size_t num_features) const -> device_ptr_type {
     const dim3 block(256, 4);
     const dim3 grid(static_cast<int>(std::ceil(num_features / static_cast<double>(block.x))),
                     static_cast<int>(std::ceil(num_classes / static_cast<double>(block.y))));
 
-    device_ptr_type<real_type> w_d{ { num_classes, num_features } };
+    device_ptr_type w_d{ { num_classes, num_features } };
 
     detail::set_device(0);
     cuda::device_kernel_w_linear<<<grid, block>>>(w_d.get(), alpha_d.get(), sv_d.get(), num_classes, num_sv, num_features);
@@ -189,12 +180,8 @@ auto csvm::run_w_kernel_impl(const device_ptr_type<real_type> &alpha_d, const de
     return w_d;
 }
 
-template auto csvm::run_w_kernel_impl(const device_ptr_type<float> &, const device_ptr_type<float> &, std::size_t, std::size_t, std::size_t) const -> device_ptr_type<float>;
-template auto csvm::run_w_kernel_impl(const device_ptr_type<double> &, const device_ptr_type<double> &, std::size_t, std::size_t, std::size_t) const -> device_ptr_type<double>;
-
-template <typename real_type>
-auto csvm::run_predict_kernel_impl(const ::plssvm::detail::parameter<real_type> &params, const device_ptr_type<real_type> &w_d, const device_ptr_type<real_type> &alpha_d, const device_ptr_type<real_type> &rho_d, const device_ptr_type<real_type> &sv_d, const device_ptr_type<real_type> &predict_points_d, std::size_t num_classes, std::size_t num_sv, std::size_t num_predict_points, std::size_t num_features) const -> device_ptr_type<real_type> {
-    device_ptr_type<real_type> out_d{ { num_predict_points, num_classes } };
+auto csvm::run_predict_kernel(const parameter &params, const device_ptr_type &w_d, const device_ptr_type &alpha_d, const device_ptr_type &rho_d, const device_ptr_type &sv_d, const device_ptr_type &predict_points_d, std::size_t num_classes, std::size_t num_sv, std::size_t num_predict_points, std::size_t num_features) const -> device_ptr_type {
+    device_ptr_type out_d{ { num_predict_points, num_classes } };
 
     detail::set_device(0);
     if (params.kernel_type == kernel_function_type::linear) {
@@ -226,8 +213,5 @@ auto csvm::run_predict_kernel_impl(const ::plssvm::detail::parameter<real_type> 
 
     return out_d;
 }
-
-template auto csvm::run_predict_kernel_impl(const ::plssvm::detail::parameter<float> &, const device_ptr_type<float> &, const device_ptr_type<float> &, const device_ptr_type<float> &, const device_ptr_type<float> &, const device_ptr_type<float> &, std::size_t, std::size_t, std::size_t, std::size_t) const -> device_ptr_type<float>;
-template auto csvm::run_predict_kernel_impl(const ::plssvm::detail::parameter<double> &, const device_ptr_type<double> &, const device_ptr_type<double> &, const device_ptr_type<double> &, const device_ptr_type<double> &, const device_ptr_type<double> &, std::size_t, std::size_t, std::size_t, std::size_t) const -> device_ptr_type<double>;
 
 }  // namespace plssvm::cuda

@@ -8,6 +8,8 @@
 
 #include "plssvm/core.hpp"
 
+#include "plssvm/constants.hpp"  // plssvm::real_type
+
 #include "utility.hpp"           // check_kwargs_for_correctness, assemble_unique_class_name, pyarray_to_vector, pyarray_to_matrix
 
 #include "fmt/core.h"            // fmt::format
@@ -34,10 +36,10 @@ namespace py = pybind11;
 // dummy
 struct svc {
     // the types
-    using real_type = PLSSVM_PYTHON_BINDINGS_PREFERRED_REAL_TYPE;
+    using real_type = plssvm::real_type;
     using label_type = PLSSVM_PYTHON_BINDINGS_PREFERRED_LABEL_TYPE;
-    using data_set_type = plssvm::data_set<real_type, label_type>;
-    using model_type = plssvm::model<real_type, label_type>;
+    using data_set_type = plssvm::data_set<label_type>;
+    using model_type = plssvm::model<label_type>;
 
     std::optional<real_type> epsilon{};
     std::optional<long long> max_iter{};

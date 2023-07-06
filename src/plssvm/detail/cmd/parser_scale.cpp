@@ -8,7 +8,7 @@
 
 #include "plssvm/detail/cmd/parser_scale.hpp"
 
-#include "plssvm/constants.hpp"        // plssvm::verbose_default, plssvm::verbose
+#include "plssvm/constants.hpp"        // plssvm::real_type
 #include "plssvm/detail/assert.hpp"    // PLSSVM_ASSERT
 #include "plssvm/detail/logger.hpp"    // plssvm::verbosity
 #include "plssvm/version/version.hpp"  // plssvm::version::detail::get_version_info
@@ -21,6 +21,7 @@
 #include <exception>                   // std::exception
 #include <filesystem>                  // std::filesystem::path
 #include <iostream>                    // std::cout, std::cerr, std::clog, std::endl
+#include <type_traits>                 // std::is_same_v
 
 namespace plssvm::detail::cmd {
 
@@ -48,7 +49,6 @@ parser_scale::parser_scale(int argc, char **argv) {
            ("performance_tracking", "the output YAML file where the performance tracking results are written to; if not provided, the results are dumped to stderr", cxxopts::value<decltype(performance_tracking_filename)>())
 #endif
            ("use_strings_as_labels", "use strings as labels instead of plane numbers", cxxopts::value<decltype(strings_as_labels)>()->default_value(fmt::format("{}", strings_as_labels)))
-           ("use_float_as_real_type", "use floats as real types instead of doubles", cxxopts::value<decltype(float_as_real_type)>()->default_value(fmt::format("{}", float_as_real_type)))
            ("verbosity", fmt::format("choose the level of verbosity: full|timing|libsvm|quiet (default: {})", fmt::format("{}", verbosity)), cxxopts::value<verbosity_level>())
            ("q,quiet", "quiet mode (no outputs regardless the provided verbosity level!)", cxxopts::value<bool>()->default_value(verbosity == verbosity_level::quiet ? "true" : "false"))
            ("h,help", "print this helper message", cxxopts::value<bool>())
@@ -105,9 +105,6 @@ parser_scale::parser_scale(int argc, char **argv) {
 
     // parse whether strings should be used as labels
     strings_as_labels = result["use_strings_as_labels"].as<decltype(strings_as_labels)>();
-
-    // parse whether floats should be used as real_type
-    float_as_real_type = result["use_float_as_real_type"].as<decltype(float_as_real_type)>();
 
     // parse whether output is quiet or not
     const bool quiet = result["quiet"].as<bool>();
@@ -181,7 +178,7 @@ std::ostream &operator<<(std::ostream &out, const parser_scale &params) {
         params.lower,
         params.upper,
         params.strings_as_labels ? "std::string" : "int (default)",
-        params.float_as_real_type ? "float" : "double (default)",
+        std::is_same_v<real_type, float> ? "float" : "double (default)",
         params.format,
         params.input_filename,
         params.scaled_filename,

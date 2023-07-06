@@ -485,6 +485,15 @@ if (PLSSVM_ENABLE_ASSERTS)
     target_compile_definitions(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC PLSSVM_ENABLE_ASSERTS)
 endif ()
 
+## use float as real_type if requested
+option(PLSSVM_USE_FLOAT_AS_REAL_TYPE "Use float as real_type instead of double." OFF)
+if (PLSSVM_USE_FLOAT_AS_REAL_TYPE)
+    message(STATUS "Using float as real_type.")
+    target_compile_definitions(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC PLSSVM_FLOAT_AS_REAL_TYPE)
+else ()
+    message(STATUS "Using double as real_type (default).")
+endif ()
+
 ## set specific thread block sizes if requested
 if (DEFINED ENV{PLSSVM_THREAD_BLOCK_SIZE})
     set(PLSSVM_THREAD_BLOCK_SIZE $ENV{PLSSVM_THREAD_BLOCK_SIZE} CACHE STRING "The used thread block size." FORCE)

@@ -8,11 +8,10 @@
 
 #include "plssvm/backends/CUDA/cg_explicit/kernel_matrix_assembly.cuh"
 
-#include "plssvm/constants.hpp"  // plssvm::kernel_index_type
+#include "plssvm/constants.hpp"  // plssvm::real_type, plssvm::kernel_index_type
 
 namespace plssvm::cuda {
 
-template <typename real_type>
 __global__ void device_kernel_assembly_linear(const real_type *q, real_type *ret, const real_type *data_d, const real_type QA_cost, const real_type cost, const kernel_index_type dept, const kernel_index_type num_features) {
     const unsigned long long i = blockIdx.x * blockDim.x + threadIdx.x;
     const unsigned long long j = blockIdx.y * blockDim.y + threadIdx.y;
@@ -30,10 +29,7 @@ __global__ void device_kernel_assembly_linear(const real_type *q, real_type *ret
         ret[i * dept + j] = temp;
     }
 }
-template __global__ void device_kernel_assembly_linear(const float *, float *, const float *, const float, const float, const kernel_index_type, const kernel_index_type);
-template __global__ void device_kernel_assembly_linear(const double *, double *, const double *, const double, const double, const kernel_index_type, const kernel_index_type);
 
-template <typename real_type>
 __global__ void device_kernel_assembly_polynomial(const real_type *q, real_type *ret, const real_type *data_d, const real_type QA_cost, const real_type cost, const kernel_index_type num_rows, const kernel_index_type num_features, const int degree, const real_type gamma, const real_type coef0) {
     const unsigned long long i = blockIdx.x * blockDim.x + threadIdx.x;
     const unsigned long long j = blockIdx.y * blockDim.y + threadIdx.y;
@@ -51,10 +47,7 @@ __global__ void device_kernel_assembly_polynomial(const real_type *q, real_type 
         ret[i * num_rows + j] = temp;
     }
 }
-template __global__ void device_kernel_assembly_polynomial(const float *, float *, const float *, const float, const float, const kernel_index_type, const kernel_index_type, const int, const float, const float);
-template __global__ void device_kernel_assembly_polynomial(const double *, double *, const double *, const double, const double, const kernel_index_type, const kernel_index_type, const int, const double, const double);
 
-template <typename real_type>
 __global__ void device_kernel_assembly_rbf(const real_type *q, real_type *ret, const real_type *data_d, const real_type QA_cost, const real_type cost, const kernel_index_type num_rows, const kernel_index_type num_features, const real_type gamma) {
     const unsigned long long i = blockIdx.x * blockDim.x + threadIdx.x;
     const unsigned long long j = blockIdx.y * blockDim.y + threadIdx.y;
@@ -73,7 +66,5 @@ __global__ void device_kernel_assembly_rbf(const real_type *q, real_type *ret, c
         ret[i * num_rows + j] = temp;
     }
 }
-template __global__ void device_kernel_assembly_rbf(const float *, float *, const float *, const float, const float, const kernel_index_type, const kernel_index_type, const float);
-template __global__ void device_kernel_assembly_rbf(const double *, double *, const double *, const double, const double, const kernel_index_type, const kernel_index_type, const double);
 
 }  // namespace plssvm::cuda

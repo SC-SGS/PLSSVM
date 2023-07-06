@@ -13,6 +13,7 @@
 #define PLSSVM_DETAIL_IO_ARFF_PARSING_HPP_
 #pragma once
 
+#include "plssvm/constants.hpp"                 // plssvm::real_type
 #include "plssvm/detail/io/file_reader.hpp"     // plssvm::detail::io::file_reader
 #include "plssvm/detail/operators.hpp"          // plssvm::operator::sign
 #include "plssvm/detail/string_conversion.hpp"  // plssvm::detail::convert_to
@@ -216,7 +217,6 @@ template <typename label_type>
  * 0.57650218263054642,1.01405596624706053,0.13009428079760464,0.7261913886869387,-1
  * 1.88494043717792,1.00518564317278263,0.298499933047586044,1.6464627048813514,-1
  * @endcode
- * @tparam real_type the floating point type
  * @tparam label_type the type of the labels (any arithmetic type or std::string)
  * @param[in] reader the file_reader used to read the ARFF data
  * @note The features must be provided with zero-based indices!
@@ -233,7 +233,7 @@ template <typename label_type>
  * @throws plssvm::invalid_file_format_exception if a label in the data section has been found, that did not appear in the header
  * @return a std::tuple containing: [the number of data points, the number of features per data point, the data points, the labels (optional)] (`[[nodiscard]]`)
  */
-template <typename real_type, typename label_type>
+template <typename label_type>
 [[nodiscard]] inline std::tuple<std::size_t, std::size_t, aos_matrix<real_type>, std::vector<label_type>> parse_arff_data(const file_reader &reader) {
     PLSSVM_ASSERT(reader.is_open(), "The file_reader is currently not associated with a file!");
 
@@ -396,7 +396,6 @@ template <typename real_type, typename label_type>
  * 1.88494043717792,1.00518564317278263,0.298499933047586044,1.6464627048813514,-1
  * @endcode
  * Note that the output will always be dense, i.e., all features with a value of `0.0` are explicitly written in the resulting file.
- * @tparam real_type the floating point type
  * @tparam label_type the type of the labels (any arithmetic type or std::string)
  * @tparam has_label if `true` the provided labels are also written to the file, if `false` **no** labels are outputted
  * @param[in] filename the filename to write the data to
@@ -405,7 +404,7 @@ template <typename real_type, typename label_type>
  * @note The resulting order of the data points in the ARFF file is unspecified!
  * @note The features are written using zero-based indices!
  */
-template <typename real_type, typename label_type, bool has_label>
+template <typename label_type, bool has_label>
 inline void write_arff_data_impl(const std::string &filename, const aos_matrix<real_type> &data, const std::vector<label_type> &label) {
     if constexpr (has_label) {
         PLSSVM_ASSERT(data.empty() || !label.empty(), "has_label is 'true' but no labels were provided!");
@@ -484,7 +483,6 @@ inline void write_arff_data_impl(const std::string &filename, const aos_matrix<r
  * 1.88494043717792,1.00518564317278263,0.298499933047586044,1.6464627048813514,-1
  * @endcode
  * Note that the output will always be dense, i.e., all features with a value of `0.0` are explicitly written in the resulting file.
- * @tparam real_type the floating point type
  * @tparam label_type the type of the labels (any arithmetic type or std::string)
  * @param[in] filename the filename to write the data to
  * @param[in] data the data points to write to the file
@@ -492,9 +490,9 @@ inline void write_arff_data_impl(const std::string &filename, const aos_matrix<r
  * @note The resulting order of the data points in the ARFF file is unspecified!
  * @note The features are written using zero-based indices!
  */
-template <typename real_type, typename label_type>
+template <typename label_type>
 inline void write_arff_data(const std::string &filename, const aos_matrix<real_type> &data, const std::vector<label_type> &label) {
-    write_arff_data_impl<real_type, label_type, true>(filename, data, label);
+    write_arff_data_impl<label_type, true>(filename, data, label);
 }
 
 /**
@@ -516,15 +514,13 @@ inline void write_arff_data(const std::string &filename, const aos_matrix<real_t
  * 1.88494043717792,1.00518564317278263,0.298499933047586044,1.6464627048813514
  * @endcode
  * Note that the output will always be dense, i.e., all features with a value of `0.0` are explicitly written in the resulting file.
- * @tparam real_type the floating point type
  * @param[in] filename the filename to write the data to
  * @param[in] data the data points to write to the file
  * @note The resulting order of the data points in the ARFF file is unspecified!
  * @note The features are written using zero-based indices!
  */
-template <typename real_type>
 inline void write_arff_data(const std::string &filename, const aos_matrix<real_type> &data) {
-    write_arff_data_impl<real_type, real_type, false>(filename, data, {});
+    write_arff_data_impl<real_type, false>(filename, data, {});
 }
 
 }  // namespace plssvm::detail::io

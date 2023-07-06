@@ -12,7 +12,7 @@
 
 int main() {
     // create a data set from a file
-    const plssvm::data_set<double> data{ "path/to/train/file.libsvm" };
+    const plssvm::data_set data{ "path/to/train/file.libsvm" };
 
     // create a support vector machine
     const auto svm = plssvm::make_csvm();

@@ -42,7 +42,7 @@ int main(int argc, char *argv[]) {
                 data.save(cmd_parser.scaled_filename, cmd_parser.format);
             } else {
                 fmt::print("\n");
-                using real_type = typename plssvm::detail::remove_cvref_t<decltype(data)>::real_type;
+                using real_type = plssvm::real_type;
                 using label_type = typename plssvm::detail::remove_cvref_t<decltype(data)>::label_type;
 
                 // output to console if no output filename is provided

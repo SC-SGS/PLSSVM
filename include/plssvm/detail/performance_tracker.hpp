@@ -17,6 +17,10 @@
 #include "plssvm/parameter.hpp"           // plssvm::parameter
 #include "plssvm/detail/type_traits.hpp"  // plssvm::detail::remove_cvref_t
 
+#include "plssvm/detail/cmd/parser_train.hpp"    // plssvm::detail::cmd::parser_train
+#include "plssvm/detail/cmd/parser_predict.hpp"  // plssvm::detail::cmd::parser_predict
+#include "plssvm/detail/cmd/parser_scale.hpp"    // plssvm::detail::cmd::parser_scale
+
 #include "fmt/chrono.h"                   // format std::chrono types
 #include "fmt/format.h"                   // fmt::format, fmt::join
 #include "fmt/ostream.h"                         // format types with an operator<< overload
@@ -29,15 +33,6 @@
 #include <utility>                        // std::move
 
 namespace plssvm::detail {
-
-// forward declare cmd parser
-namespace cmd {
-
-class parser_train;
-class parser_predict;
-class parser_scale;
-
-}
 
 /**
  * @brief A single tracking entry containing a specific category, a unique name, and the actual value to be tracked.
@@ -146,7 +141,7 @@ class performance_tracker {
      *          Adds all values stored in the plssvm::parameter as tracking entries.
      * @param[in] entry the entry to add
      */
-    void add_tracking_entry(const tracking_entry<::plssvm::parameter> &entry);
+    void add_tracking_entry(const tracking_entry<plssvm::parameter> &entry);
     /**
      * @brief Add a tracking_entry encapsulating a plssvm::detail::cmd::parser_train to this performance tracker.
      * @details Saves a string containing the entry name and value in a map with the entry category as key.
