@@ -698,8 +698,8 @@ std::pair<aos_matrix<real_type>, std::vector<real_type>> csvm::solve_system_of_l
         // TODO: decide which solver to use based on the available (V)RAM (maybe only lets say 95% of the memory should be used)
         const double total_system_memory = detail::get_system_memory() * 0.95;
         const double total_device_memory = this->get_device_memory() * 0.95;
-        // TODO: docu
-        // data_set + explicit ker
+
+        // 4B/8B * (data_set size + explicit kernel matrix size + B and C matrix in GEMM + q_red vector)
         const unsigned long long total_memory_needed = sizeof(real_type) * (num_rows * num_features + num_rows_reduced * num_rows_reduced + 2 * num_rows_reduced * num_rhs + num_features);
 
         detail::log(verbosity_level::full,
