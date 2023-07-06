@@ -13,6 +13,8 @@
 #include "plssvm/detail/cmd/parser_predict.hpp"          // plssvm::detail::cmd::parser_predict
 #include "plssvm/detail/cmd/parser_scale.hpp"            // plssvm::detail::cmd::parser_scale
 #include "plssvm/detail/cmd/parser_train.hpp"            // plssvm::detail::cmd::parser_train
+#include "plssvm/constants.hpp"                          // plssvm::real_type
+#include "plssvm/detail/arithmetic_type_name.hpp"        // plssvm::detail::arithmetic_type_name
 #include "plssvm/detail/string_conversion.hpp"           // plssvm::detail::split_as
 #include "plssvm/detail/string_utility.hpp"              // plssvm::detail::trim
 #include "plssvm/detail/utility.hpp"                     // plssvm::detail::current_date_time
@@ -72,7 +74,7 @@ void performance_tracker::add_tracking_entry(const tracking_entry<cmd::parser_tr
                                                                       "  sycl_kernel_invocation_type: {}\n"
                                                                       "  sycl_implementation_type:    {}\n"
                                                                       "  strings_as_labels:           {}\n"
-                                                                      "  float_as_real_type:          {}\n"
+                                                                      "  real_type:                   {}\n"
                                                                       "  input_filename:              \"{}\"\n"
                                                                       "  model_filename:              \"{}\"\n",
                                                                       entry.entry_value.csvm_params.kernel_type.value(),
@@ -88,7 +90,7 @@ void performance_tracker::add_tracking_entry(const tracking_entry<cmd::parser_tr
                                                                       entry.entry_value.sycl_kernel_invocation_type,
                                                                       entry.entry_value.sycl_implementation_type,
                                                                       entry.entry_value.strings_as_labels,
-                                                                      entry.entry_value.float_as_real_type,
+                                                                      arithmetic_type_name<real_type>(),
                                                                       entry.entry_value.input_filename,
                                                                       entry.entry_value.model_filename));
     }
@@ -101,7 +103,7 @@ void performance_tracker::add_tracking_entry(const tracking_entry<cmd::parser_pr
                                                                       "  target:                   {}\n"
                                                                       "  sycl_implementation_type: {}\n"
                                                                       "  strings_as_labels:        {}\n"
-                                                                      "  float_as_real_type:       {}\n"
+                                                                      "  real_type:                {}\n"
                                                                       "  input_filename:           \"{}\"\n"
                                                                       "  model_filename:           \"{}\"\n"
                                                                       "  predict_filename:         \"{}\"\n",
@@ -109,7 +111,7 @@ void performance_tracker::add_tracking_entry(const tracking_entry<cmd::parser_pr
                                                                       entry.entry_value.target,
                                                                       entry.entry_value.sycl_implementation_type,
                                                                       entry.entry_value.strings_as_labels,
-                                                                      entry.entry_value.float_as_real_type,
+                                                                      arithmetic_type_name<real_type>(),
                                                                       entry.entry_value.input_filename,
                                                                       entry.entry_value.model_filename,
                                                                       entry.entry_value.predict_filename));
@@ -123,7 +125,7 @@ void performance_tracker::add_tracking_entry(const tracking_entry<cmd::parser_sc
                                                                       "  upper:              {}\n"
                                                                       "  format:             {}\n"
                                                                       "  strings_as_labels:  {}\n"
-                                                                      "  float_as_real_type: {}\n"
+                                                                      "  real_type:          {}\n"
                                                                       "  input_filename:     \"{}\"\n"
                                                                       "  scaled_filename:    \"{}\"\n"
                                                                       "  save_filename:      \"{}\"\n"
@@ -132,7 +134,7 @@ void performance_tracker::add_tracking_entry(const tracking_entry<cmd::parser_sc
                                                                       entry.entry_value.upper,
                                                                       entry.entry_value.format,
                                                                       entry.entry_value.strings_as_labels,
-                                                                      entry.entry_value.float_as_real_type,
+                                                                      arithmetic_type_name<real_type>(),
                                                                       entry.entry_value.input_filename,
                                                                       entry.entry_value.scaled_filename,
                                                                       entry.entry_value.save_filename,
