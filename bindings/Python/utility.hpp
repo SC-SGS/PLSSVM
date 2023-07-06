@@ -13,6 +13,7 @@
 #define PLSSVM_BINDINGS_PYTHON_UTILITY_HPP_
 #pragma once
 
+#include "plssvm/constants.hpp"       // plssvm::real_type
 #include "plssvm/detail/utility.hpp"  // plssvm::detail::contains
 #include "plssvm/matrix.hpp"          // plssvm::matrix, plssvm::layout_type
 #include "plssvm/parameter.hpp"       // plssvm::parameter
@@ -251,14 +252,13 @@ PLSSVM_CREATE_NUMPY_NAME_MAPPING(std::string, "string")
 
 /**
  * @brief Append the type information to the base @p class_name.
- * @tparam real_type the type of the data points to convert to its Numpy name
  * @tparam label_type the type of the labels to convert to its Numpy name
  * @param class_name the base class name (the type names are appended to it)
  * @return the unique class name
  */
-template <typename real_type, typename label_type>
+template <typename label_type>
 [[nodiscard]] inline std::string assemble_unique_class_name(const std::string_view class_name) {
-    return fmt::format("{}_{}_{}", class_name, detail::numpy_name_mapping<real_type>(), detail::numpy_name_mapping<label_type>());
+    return fmt::format("{}_{}_{}", class_name, detail::numpy_name_mapping<plssvm::real_type>(), detail::numpy_name_mapping<label_type>());
 }
 
 #endif  // PLSSVM_BINDINGS_PYTHON_UTILITY_HPP_
