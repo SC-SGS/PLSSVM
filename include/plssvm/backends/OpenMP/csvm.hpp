@@ -102,7 +102,14 @@ class csvm : public ::plssvm::csvm {
      */
      ~csvm() override = default;
 
-  protected:
+  private:
+    /**
+    * @brief Initializes the OpenMP backend and performs some sanity checks.
+    * @param[in] target the target platform to use
+    * @throws plssvm::openmp::backend_exception if the target platform isn't plssvm::target_platform::automatic or plssvm::target_platform::cpu
+    * @throws plssvm::openmp::backend_exception if the plssvm::target_platform::cpu target isn't available
+     */
+    void init(target_platform target);
     /**
      * @copydoc plssvm::csvm::get_device_memory
      */
@@ -115,7 +122,6 @@ class csvm : public ::plssvm::csvm {
      * @copydoc plssvm::csvm::setup_data_on_devices
      */
     [[nodiscard]] detail::simple_any setup_data_on_devices(const solver_type solver, const aos_matrix<real_type> &A) const final;
-
     /**
      * @copydoc plssvm::csvm::assemble_kernel_matrix
      */
@@ -132,15 +138,6 @@ class csvm : public ::plssvm::csvm {
      * @copydoc plssvm::csvm::predict_values
      */
     [[nodiscard]] aos_matrix<real_type> predict_values(const parameter &params, const aos_matrix<real_type> &support_vectors, const aos_matrix<real_type> &alpha, const std::vector<real_type> &rho, aos_matrix<real_type> &w, const aos_matrix<real_type> &predict_points) const final;
-
-    private:
-    /**
-     * @brief Initializes the OpenMP backend and performs some sanity checks.
-     * @param[in] target the target platform to use
-     * @throws plssvm::openmp::backend_exception if the target platform isn't plssvm::target_platform::automatic or plssvm::target_platform::cpu
-     * @throws plssvm::openmp::backend_exception if the plssvm::target_platform::cpu target isn't available
-     */
-    void init(target_platform target);
 };
 
 }  // namespace openmp

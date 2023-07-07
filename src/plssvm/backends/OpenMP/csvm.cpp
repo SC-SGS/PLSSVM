@@ -11,7 +11,6 @@
 #include "plssvm/backend_types.hpp"                                       // plssvm::backend_type
 #include "plssvm/backends/OpenMP/cg_explicit/kernel_matrix_assembly.hpp"  // plssvm::openmp::linear_kernel_matrix_assembly, plssvm::openmp::polynomial_kernel_matrix_assembly, plssvm::openmp::rbf_kernel_matrix_assembly
 #include "plssvm/backends/OpenMP/exceptions.hpp"                          // plssvm::openmp::backend_exception
-#include "plssvm/backends/OpenMP/q_kernel.hpp"                            // plssvm::openmp::device_kernel_q_linear, plssvm::openmp::device_kernel_q_polynomial, plssvm::openmp::device_kernel_q_rbf
 #include "plssvm/constants.hpp"                                           // plssvm::real_type
 #include "plssvm/csvm.hpp"                                                // plssvm::csvm
 #include "plssvm/detail/assert.hpp"                                       // PLSSVM_ASSERT
