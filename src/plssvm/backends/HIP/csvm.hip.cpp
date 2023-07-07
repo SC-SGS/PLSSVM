@@ -117,8 +117,8 @@ auto csvm::run_assemble_kernel_matrix_explicit(const parameter &params, const de
 
     // define grid and block sizes
     const dim3 block(32, 32);
-    const dim3 grid(static_cast<int>(std::ceil(num_rows_reduced / static_cast<double>(block.x))),
-                    static_cast<int>(std::ceil(num_rows_reduced / static_cast<double>(block.y))));
+    const dim3 grid(static_cast<int>(std::ceil(static_cast<double>(num_rows_reduced) / static_cast<double>(block.x))),
+                    static_cast<int>(std::ceil(static_cast<double>(num_rows_reduced) / static_cast<double>(block.y))));
 
     device_ptr_type kernel_matrix_d{ { num_rows_reduced, num_rows_reduced } };
     const real_type cost_factor = real_type{ 1.0 } / params.cost;
@@ -143,11 +143,16 @@ auto csvm::run_assemble_kernel_matrix_explicit(const parameter &params, const de
 
 void csvm::run_gemm_kernel_explicit(const std::size_t m, const std::size_t n, const std::size_t k, const real_type alpha, const device_ptr_type &A_d, const device_ptr_type &B_d, const real_type beta, device_ptr_type &C_d) const {
     const dim3 block(32, 32);
-    const dim3 grid(static_cast<int>(std::ceil(m / static_cast<double>(block.x))),
-                    static_cast<int>(std::ceil(n / static_cast<double>(block.y))));
+    const dim3 grid(static_cast<int>(std::ceil(static_cast<double>(m) / static_cast<double>(block.x))),
+                    static_cast<int>(std::ceil(static_cast<double>(n) / static_cast<double>(block.y))));
+
+    // cast to correct type
+    const auto m_ull = static_cast<unsigned long long>(m);
+    const auto n_ull = static_cast<unsigned long long>(n);
+    const auto k_ull = static_cast<unsigned long long>(k);
 
     detail::set_device(0);
-    hip::device_kernel_gemm<<<grid, block>>>(m, n, k, alpha, A_d.get(), B_d.get(), beta, C_d.get());
+    hip::device_kernel_gemm<<<grid, block>>>(m_ull, n_ull, k_ull, alpha, A_d.get(), B_d.get(), beta, C_d.get());
     detail::peek_at_last_error();
     this->device_synchronize(devices_[0]);
 }
@@ -157,13 +162,13 @@ void csvm::run_gemm_kernel_explicit(const std::size_t m, const std::size_t n, co
 //***************************************************//
 
 auto csvm::run_w_kernel(const device_ptr_type &alpha_d, const device_ptr_type &sv_d) const -> device_ptr_type {
-    const std::size_t num_classes = alpha_d.size(0);
-    const std::size_t num_sv = sv_d.size(0);
-    const std::size_t num_features = sv_d.size(1);
+    const unsigned long long num_classes = alpha_d.size(0);
+    const unsigned long long num_sv = sv_d.size(0);
+    const unsigned long long num_features = sv_d.size(1);
 
     const dim3 block(256, 4);
-    const dim3 grid(static_cast<int>(std::ceil(num_features / static_cast<double>(block.x))),
-                    static_cast<int>(std::ceil(num_classes / static_cast<double>(block.y))));
+    const dim3 grid(static_cast<int>(std::ceil(static_cast<double>(num_features) / static_cast<double>(block.x))),
+                    static_cast<int>(std::ceil(static_cast<double>(num_classes) / static_cast<double>(block.y))));
 
     device_ptr_type w_d{ { num_classes, num_features } };
 
@@ -176,25 +181,25 @@ auto csvm::run_w_kernel(const device_ptr_type &alpha_d, const device_ptr_type &s
 }
 
 auto csvm::run_predict_kernel(const parameter &params, const device_ptr_type &w_d, const device_ptr_type &alpha_d, const device_ptr_type &rho_d, const device_ptr_type &sv_d, const device_ptr_type &predict_points_d) const -> device_ptr_type {
-    const std::size_t num_classes = alpha_d.size(0);
-    const std::size_t num_sv = sv_d.size(0);
-    const std::size_t num_predict_points = predict_points_d.size(0);
-    const std::size_t num_features = predict_points_d.size(1);
+    const unsigned long long num_classes = alpha_d.size(0);
+    const unsigned long long num_sv = sv_d.size(0);
+    const unsigned long long num_predict_points = predict_points_d.size(0);
+    const unsigned long long num_features = predict_points_d.size(1);
 
     device_ptr_type out_d{ { num_predict_points, num_classes } };
 
     detail::set_device(0);
     if (params.kernel_type == kernel_function_type::linear) {
         const dim3 block(256, 4);
-        const dim3 grid(static_cast<int>(std::ceil(num_predict_points / static_cast<double>(block.x))),
-                        static_cast<int>(std::ceil(num_classes / static_cast<double>(block.y))));
+        const dim3 grid(static_cast<int>(std::ceil(static_cast<double>(num_predict_points) / static_cast<double>(block.x))),
+                        static_cast<int>(std::ceil(static_cast<double>(num_classes) / static_cast<double>(block.y))));
 
         hip::device_kernel_predict_linear<<<grid, block>>>(out_d.get(), w_d.get(), rho_d.get(), predict_points_d.get(), num_classes, num_predict_points, num_features);
     } else {
         const dim3 block(16, 16, 4);
-        const dim3 grid(static_cast<int>(std::ceil(num_sv / static_cast<double>(block.x))),
-                        static_cast<int>(std::ceil(num_predict_points / static_cast<double>(block.y))),
-                        static_cast<int>(std::ceil(num_classes / static_cast<double>(block.z))));
+        const dim3 grid(static_cast<int>(std::ceil(static_cast<double>(num_sv) / static_cast<double>(block.x))),
+                        static_cast<int>(std::ceil(static_cast<double>(num_predict_points) / static_cast<double>(block.y))),
+                        static_cast<int>(std::ceil(static_cast<double>(num_classes) / static_cast<double>(block.z))));
 
         switch (params.kernel_type) {
             case kernel_function_type::linear:

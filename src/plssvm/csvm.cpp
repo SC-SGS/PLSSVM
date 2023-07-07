@@ -79,6 +79,7 @@ aos_matrix<real_type> csvm::conjugate_gradients(const detail::simple_any &A, con
 
     aos_matrix<real_type> D{ R };
 
+    // TODO: look at functions
     // timing for each CG iteration
     std::chrono::milliseconds average_iteration_time{};
     std::chrono::steady_clock::time_point iteration_start_time{};
@@ -92,7 +93,7 @@ aos_matrix<real_type> csvm::conjugate_gradients(const detail::simple_any &A, con
     };
     // get the index of the rhs that has the largest residual difference wrt to its target residual
     const auto residual_info = [&]() {
-        real_type max_difference{ 0.0 };
+        const real_type max_difference{ 0.0 };
         std::size_t idx{ 0 };
         for (std::size_t i = 0; i < delta.size(); ++i) {
             const real_type difference = delta[i] - (eps * eps * delta0[i]);
