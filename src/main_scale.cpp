@@ -42,7 +42,6 @@ int main(int argc, char *argv[]) {
                 data.save(cmd_parser.scaled_filename, cmd_parser.format);
             } else {
                 fmt::print("\n");
-                using real_type = plssvm::real_type;
                 using label_type = typename plssvm::detail::remove_cvref_t<decltype(data)>::label_type;
 
                 // output to console if no output filename is provided
@@ -53,7 +52,7 @@ int main(int argc, char *argv[]) {
                         fmt::print(FMT_COMPILE("{} "), label.value().get()[row]);
                     }
                     for (std::size_t col = 0; col < matrix.num_cols(); ++col) {
-                        if (matrix(row, col) != real_type{ 0.0 }) {
+                        if (matrix(row, col) != plssvm::real_type{ 0.0 }) {
                             fmt::print(FMT_COMPILE("{}:{:.10e} "), col + 1, matrix(row, col));
                         }
                     }
