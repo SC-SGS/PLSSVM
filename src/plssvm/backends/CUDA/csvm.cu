@@ -18,10 +18,8 @@
 #include "plssvm/backends/CUDA/predict_kernel.cuh"                      // plssvm::cuda::detail::{device_kernel_w_linear, device_kernel_predict_polynomial, device_kernel_predict_rbf}
 #include "plssvm/constants.hpp"                                         // plssvm::real_type
 #include "plssvm/detail/assert.hpp"                                     // PLSSVM_ASSERT
-#include "plssvm/detail/execution_range.hpp"                            // plssvm::detail::execution_range
 #include "plssvm/detail/logger.hpp"                                     // plssvm::detail::log, plssvm::verbosity_level
 #include "plssvm/detail/performance_tracker.hpp"                        // plssvm::detail::tracking_entry
-#include "plssvm/detail/simple_any.hpp"                                 // plssvm::detail::simple_any
 #include "plssvm/exceptions/exceptions.hpp"                             // plssvm::exception
 #include "plssvm/kernel_function_types.hpp"                             // plssvm::kernel_function_type
 #include "plssvm/parameter.hpp"                                         // plssvm::parameter

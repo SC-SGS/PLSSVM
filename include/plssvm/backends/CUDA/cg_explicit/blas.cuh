@@ -16,6 +16,7 @@
 #include "plssvm/constants.hpp"  // plssvm::real_type
 
 namespace plssvm::cuda {
+
 /**
  * @brief Perform an explicit BLAS GEMM operation: `C = alpha * A * B + beta * C` where @p A is a `m x k` matrix, @p B is a `k x n` matrix, @p C is a `m x n` matrix, and @p alpha and @p beta are scalars.
  * @param[in] m the number of rows in @p A and @p C
