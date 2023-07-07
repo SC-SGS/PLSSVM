@@ -22,8 +22,8 @@
 #include "plssvm/detail/cmd/parser_scale.hpp"    // plssvm::detail::cmd::parser_scale
 
 #include "fmt/chrono.h"                   // format std::chrono types
-#include "fmt/format.h"                   // fmt::format, fmt::join
-#include "fmt/ostream.h"                         // format types with an operator<< overload
+#include "fmt/format.h"                   // fmt::format, fmt::join, fmt::formatter
+#include "fmt/ostream.h"                  // format types with an operator<< overload
 
 #include <memory>                         // std::shared_ptr
 #include <string>                         // std::string
@@ -56,6 +56,30 @@ struct tracking_entry {
     /// The tracked value in the YAML file.
     const T entry_value{};
 };
+
+}
+
+/**
+ * @brief Custom tracking_entry formatter to be able to use fmt format specifiers for values of type T.
+ * @tparam T the performance tracked type
+ */
+template<typename T>
+struct fmt::formatter<plssvm::detail::tracking_entry<T>> : fmt::formatter<T>
+{
+    /**
+     * @brief Format the tracking @p entry using the provided format specifier for type T.
+     * @tparam FormatContext the type of the format context
+     * @param[in] entry the tracking entry to format
+     * @param[in,out] context the format context
+     * @return the formatted string
+     */
+    template <typename FormatContext>
+    auto format(const plssvm::detail::tracking_entry<T>& entry, FormatContext& context) {
+        return fmt::formatter<T>::format(entry.entry_value, context);
+    }
+};
+
+namespace plssvm::detail {
 
 /**
  * @brief Output the tracking @p entry to the given output-stream @p out. Only the tracked value is output **excluding** the category and name.
