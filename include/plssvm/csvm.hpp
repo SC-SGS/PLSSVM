@@ -700,7 +700,7 @@ std::pair<aos_matrix<real_type>, std::vector<real_type>> csvm::solve_system_of_l
     if (used_solver == solver_type::automatic) {
         using namespace detail::literals;
 
-        const auto reduce_total_memory = [](const double total_memory) {
+        const auto reduce_total_memory = [](const double total_memory) -> double {
             return total_memory - std::max<double>(total_memory * 0.05, 512_MiB);  // 512 MiB
         };
         const double total_system_memory = reduce_total_memory(detail::get_system_memory());

@@ -26,13 +26,6 @@
 
 namespace plssvm {
 
-namespace detail {
-
-// forward declare execution_range class
-class execution_range;
-
-}  // namespace detail
-
 namespace cuda {
 
 /**
@@ -118,7 +111,16 @@ class csvm : public ::plssvm::detail::gpu_csvm<detail::device_ptr, int> {
      */
     ~csvm() override;
 
-  protected:
+  private:
+    /**
+     * @brief Initialize all important states related to the CUDA backend.
+     * @param[in] target the target platform to use
+     * @throws plssvm::cuda::backend_exception if the target platform isn't plssvm::target_platform::automatic or plssvm::target_platform::gpu_nvidia
+     * @throws plssvm::cuda::backend_exception if the plssvm::target_platform::gpu_nvidia target isn't available
+     * @throws plssvm::cuda::backend_exception if no CUDA capable devices could be found
+     */
+    void init(target_platform target);
+
     /**
      * @copydoc plssvm::detail::gpu_csvm::device_synchronize
      */
@@ -143,18 +145,14 @@ class csvm : public ::plssvm::detail::gpu_csvm<detail::device_ptr, int> {
     //***************************************************//
     //                   predict, score                  //
     //***************************************************//
-    device_ptr_type run_predict_kernel(const parameter &params, const device_ptr_type &w_d, const device_ptr_type &alpha_d, const device_ptr_type &rho_d, const device_ptr_type &sv_d, const device_ptr_type &predict_points_d, std::size_t num_classes, std::size_t num_sv, std::size_t num_predict_points, std::size_t num_features) const final;
-    device_ptr_type run_w_kernel(const device_ptr_type &alpha_d, const device_ptr_type &sv_d, std::size_t num_classes, std::size_t num_sv, std::size_t num_features) const final;
-
-  private:
     /**
-     * @brief Initialize all important states related to the CUDA backend.
-     * @param[in] target the target platform to use
-     * @throws plssvm::cuda::backend_exception if the target platform isn't plssvm::target_platform::automatic or plssvm::target_platform::gpu_nvidia
-     * @throws plssvm::cuda::backend_exception if the plssvm::target_platform::gpu_nvidia target isn't available
-     * @throws plssvm::cuda::backend_exception if no CUDA capable devices could be found
+     * @copydoc plssvm::detail::gpu_csvm::run_w_kernel
      */
-    void init(target_platform target);
+    [[nodiscard]] device_ptr_type run_w_kernel(const device_ptr_type &alpha_d, const device_ptr_type &sv_d) const final;
+    /**
+     * @copydoc plssvm::detail::gpu_csvm::run_predict_kernel
+     */
+    [[nodiscard]] device_ptr_type run_predict_kernel(const parameter &params, const device_ptr_type &w_d, const device_ptr_type &alpha_d, const device_ptr_type &rho_d, const device_ptr_type &sv_d, const device_ptr_type &predict_points_d) const final;
 };
 
 }  // namespace cuda

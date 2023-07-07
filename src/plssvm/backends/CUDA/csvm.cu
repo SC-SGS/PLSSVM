@@ -49,6 +49,18 @@ csvm::csvm(target_platform target, parameter params) :
     this->init(target);
 }
 
+csvm::~csvm() {
+    try {
+        // be sure that all operations on the CUDA devices have finished before destruction
+        for (const queue_type &device : devices_) {
+            detail::device_synchronize(device);
+        }
+    } catch (const plssvm::exception &e) {
+        std::cout << e.what_with_loc() << std::endl;
+        std::terminate();
+    }
+}
+
 void csvm::init(const target_platform target) {
     // check if supported target platform has been selected
     if (target != target_platform::automatic && target != target_platform::gpu_nvidia) {
@@ -89,18 +101,6 @@ void csvm::init(const target_platform target) {
                         "\n");
 }
 
-csvm::~csvm() {
-    try {
-        // be sure that all operations on the CUDA devices have finished before destruction
-        for (const queue_type &device : devices_) {
-            detail::device_synchronize(device);
-        }
-    } catch (const plssvm::exception &e) {
-        std::cout << e.what_with_loc() << std::endl;
-        std::terminate();
-    }
-}
-
 void csvm::device_synchronize(const queue_type &queue) const {
     detail::device_synchronize(queue);
 }
@@ -111,19 +111,13 @@ unsigned long long csvm::get_device_memory() const {
     return static_cast<unsigned long long>(prop.totalGlobalMem);
 }
 
-std::pair<dim3, dim3> execution_range_to_native(const ::plssvm::detail::execution_range &range) {
-    const dim3 grid(range.grid[0], range.grid[1], range.grid[2]);
-    const dim3 block(range.block[0], range.block[1], range.block[2]);
-    return std::make_pair(grid, block);
-}
-
 //***************************************************//
 //                        fit                        //
 //***************************************************//
 
 auto csvm::run_assemble_kernel_matrix_explicit(const parameter &params, const device_ptr_type &data_d, const device_ptr_type &q_red_d, real_type QA_cost) const -> device_ptr_type {
-    const std::size_t num_rows_reduced = data_d.size(0) - 1;
-    const std::size_t num_features = data_d.size(1);
+    const unsigned long long num_rows_reduced = data_d.size(0) - 1;
+    const unsigned long long num_features = data_d.size(1);
 
     // define grid and block sizes
     const dim3 block(32, 32);
@@ -131,21 +125,22 @@ auto csvm::run_assemble_kernel_matrix_explicit(const parameter &params, const de
                     static_cast<int>(std::ceil(num_rows_reduced / static_cast<double>(block.y))));
 
     device_ptr_type kernel_matrix_d{ { num_rows_reduced, num_rows_reduced } };
+    const real_type cost_factor = real_type{ 1.0 } / params.cost;
 
     detail::set_device(0);
     switch (params.kernel_type) {
         case kernel_function_type::linear:
-            cuda::device_kernel_assembly_linear<<<grid, block>>>(q_red_d.get(), kernel_matrix_d.get(), data_d.get(), QA_cost, real_type{ 1.0 } / params.cost, static_cast<kernel_index_type>(num_rows_reduced), static_cast<kernel_index_type>(num_features));
+            cuda::device_kernel_assembly_linear<<<grid, block>>>(kernel_matrix_d.get(), data_d.get(), num_rows_reduced, num_features, q_red_d.get(), QA_cost, cost_factor);
             break;
         case kernel_function_type::polynomial:
-            cuda::device_kernel_assembly_polynomial<<<grid, block>>>(q_red_d.get(), kernel_matrix_d.get(), data_d.get(), QA_cost, real_type{ 1.0 } / params.cost, static_cast<kernel_index_type>(num_rows_reduced), static_cast<kernel_index_type>(num_features), params.degree.value(), params.gamma.value(), params.coef0.value());
+            cuda::device_kernel_assembly_polynomial<<<grid, block>>>(kernel_matrix_d.get(), data_d.get(), num_rows_reduced, num_features, q_red_d.get(), QA_cost, cost_factor, params.degree.value(), params.gamma.value(), params.coef0.value());
             break;
         case kernel_function_type::rbf:
-            cuda::device_kernel_assembly_rbf<<<grid, block>>>(q_red_d.get(), kernel_matrix_d.get(), data_d.get(), QA_cost, real_type{ 1.0 } / params.cost, static_cast<kernel_index_type>(num_rows_reduced), static_cast<kernel_index_type>(num_features), params.gamma.value());
+            cuda::device_kernel_assembly_rbf<<<grid, block>>>(kernel_matrix_d.get(), data_d.get(), num_rows_reduced, num_features, q_red_d.get(), QA_cost, cost_factor, params.gamma.value());
             break;
     }
     detail::peek_at_last_error();
-    detail::device_synchronize(0);
+    this->device_synchronize(devices_[0]);
 
     return kernel_matrix_d;
 }
@@ -158,14 +153,18 @@ void csvm::run_gemm_kernel_explicit(const std::size_t m, const std::size_t n, co
     detail::set_device(0);
     cuda::device_kernel_gemm<<<grid, block>>>(m, n, k, alpha, A_d.get(), B_d.get(), beta, C_d.get());
     detail::peek_at_last_error();
-    detail::device_synchronize(0);
+    this->device_synchronize(devices_[0]);
 }
 
 //***************************************************//
 //                   predict, score                  //
 //***************************************************//
 
-auto csvm::run_w_kernel(const device_ptr_type &alpha_d, const device_ptr_type &sv_d, std::size_t num_classes, std::size_t num_sv, std::size_t num_features) const -> device_ptr_type {
+auto csvm::run_w_kernel(const device_ptr_type &alpha_d, const device_ptr_type &sv_d) const -> device_ptr_type {
+    const std::size_t num_classes = alpha_d.size(0);
+    const std::size_t num_sv = sv_d.size(0);
+    const std::size_t num_features = sv_d.size(1);
+
     const dim3 block(256, 4);
     const dim3 grid(static_cast<int>(std::ceil(num_features / static_cast<double>(block.x))),
                     static_cast<int>(std::ceil(num_classes / static_cast<double>(block.y))));
@@ -175,11 +174,17 @@ auto csvm::run_w_kernel(const device_ptr_type &alpha_d, const device_ptr_type &s
     detail::set_device(0);
     cuda::device_kernel_w_linear<<<grid, block>>>(w_d.get(), alpha_d.get(), sv_d.get(), num_classes, num_sv, num_features);
     detail::peek_at_last_error();
+    this->device_synchronize(devices_[0]);
 
     return w_d;
 }
 
-auto csvm::run_predict_kernel(const parameter &params, const device_ptr_type &w_d, const device_ptr_type &alpha_d, const device_ptr_type &rho_d, const device_ptr_type &sv_d, const device_ptr_type &predict_points_d, std::size_t num_classes, std::size_t num_sv, std::size_t num_predict_points, std::size_t num_features) const -> device_ptr_type {
+auto csvm::run_predict_kernel(const parameter &params, const device_ptr_type &w_d, const device_ptr_type &alpha_d, const device_ptr_type &rho_d, const device_ptr_type &sv_d, const device_ptr_type &predict_points_d) const -> device_ptr_type {
+    const std::size_t num_classes = alpha_d.size(0);
+    const std::size_t num_sv = sv_d.size(0);
+    const std::size_t num_predict_points = predict_points_d.size(0);
+    const std::size_t num_features = predict_points_d.size(1);
+
     device_ptr_type out_d{ { num_predict_points, num_classes } };
 
     detail::set_device(0);
@@ -207,8 +212,8 @@ auto csvm::run_predict_kernel(const parameter &params, const device_ptr_type &w_
                 break;
         }
     }
-
     detail::peek_at_last_error();
+    this->device_synchronize(devices_[0]);
 
     return out_d;
 }

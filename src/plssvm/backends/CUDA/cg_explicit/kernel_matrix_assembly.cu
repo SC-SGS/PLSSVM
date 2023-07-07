@@ -8,15 +8,15 @@
 
 #include "plssvm/backends/CUDA/cg_explicit/kernel_matrix_assembly.cuh"
 
-#include "plssvm/constants.hpp"  // plssvm::real_type, plssvm::kernel_index_type
+#include "plssvm/constants.hpp"  // plssvm::real_type
 
 namespace plssvm::cuda {
 
-__global__ void device_kernel_assembly_linear(const real_type *q, real_type *ret, const real_type *data_d, const real_type QA_cost, const real_type cost, const kernel_index_type dept, const kernel_index_type num_features) {
+__global__ void device_kernel_assembly_linear(real_type *ret, const real_type *data_d, const unsigned long long num_rows, const unsigned long long num_features, const real_type *q, const real_type QA_cost, const real_type cost) {
     const unsigned long long i = blockIdx.x * blockDim.x + threadIdx.x;
     const unsigned long long j = blockIdx.y * blockDim.y + threadIdx.y;
 
-    if (i < dept && j < dept) {
+    if (i < num_rows && j < num_rows) {
         real_type temp{ 0.0 };
         for (unsigned long long dim = 0; dim < num_features; ++dim) {
             temp += data_d[i * num_features + dim] * data_d[j * num_features + dim];
@@ -26,11 +26,11 @@ __global__ void device_kernel_assembly_linear(const real_type *q, real_type *ret
             temp += cost;
         }
 
-        ret[i * dept + j] = temp;
+        ret[i * num_rows + j] = temp;
     }
 }
 
-__global__ void device_kernel_assembly_polynomial(const real_type *q, real_type *ret, const real_type *data_d, const real_type QA_cost, const real_type cost, const kernel_index_type num_rows, const kernel_index_type num_features, const int degree, const real_type gamma, const real_type coef0) {
+__global__ void device_kernel_assembly_polynomial(real_type *ret, const real_type *data_d, const unsigned long long num_rows, const unsigned long long num_features, const real_type *q, const real_type QA_cost, const real_type cost, const int degree, const real_type gamma, const real_type coef0) {
     const unsigned long long i = blockIdx.x * blockDim.x + threadIdx.x;
     const unsigned long long j = blockIdx.y * blockDim.y + threadIdx.y;
 
@@ -48,7 +48,7 @@ __global__ void device_kernel_assembly_polynomial(const real_type *q, real_type 
     }
 }
 
-__global__ void device_kernel_assembly_rbf(const real_type *q, real_type *ret, const real_type *data_d, const real_type QA_cost, const real_type cost, const kernel_index_type num_rows, const kernel_index_type num_features, const real_type gamma) {
+__global__ void device_kernel_assembly_rbf(real_type *ret, const real_type *data_d, const unsigned long long num_rows, const unsigned long long num_features, const real_type *q, const real_type QA_cost, const real_type cost, const real_type gamma) {
     const unsigned long long i = blockIdx.x * blockDim.x + threadIdx.x;
     const unsigned long long j = blockIdx.y * blockDim.y + threadIdx.y;
 
