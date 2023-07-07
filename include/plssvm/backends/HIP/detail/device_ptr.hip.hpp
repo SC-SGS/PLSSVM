@@ -15,6 +15,8 @@
 
 #include "plssvm/backends/gpu_device_ptr.hpp"  // plssvm::detail::gpu_device_ptr
 
+#include <array>  // std::array
+
 namespace plssvm::hip::detail {
 
 /**
