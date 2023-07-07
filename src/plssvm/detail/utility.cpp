@@ -29,7 +29,6 @@ std::string current_date_time() {
 }
 
 unsigned long long get_system_memory() {
-    // TODO: return total vs available system memory
 #if defined(PLSSVM_UNIX_AVAILABLE_MEMORY)
     const auto pages = static_cast<unsigned long long>(sysconf(_SC_PHYS_PAGES));  // vs. _SC_AVPHYS_PAGES
     const auto page_size = static_cast<unsigned long long>(sysconf(_SC_PAGE_SIZE));

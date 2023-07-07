@@ -17,6 +17,7 @@
 #include "plssvm/constants.hpp"                   // plssvm::real_type
 #include "plssvm/data_set.hpp"                    // plssvm::data_set
 #include "plssvm/default_value.hpp"               // plssvm::default_value, plssvm::default_init
+#include "plssvm/detail/custom_literals.hpp"      // custom byte related literals
 #include "plssvm/detail/logger.hpp"               // plssvm::detail::log, plssvm::verbosity_level
 #include "plssvm/detail/operators.hpp"            // plssvm::operators::sign
 #include "plssvm/detail/performance_tracker.hpp"  // plssvm::detail::performance_tracker
@@ -184,8 +185,8 @@ class csvm {
     //                        fit                        //
     //***************************************************//
     /**
-     * @brief Calculate the available device memory based on the used backend.
-     * @return the available device memory (`[[nodiscard]]`)
+     * @brief Calculate the total available device memory based on the used backend.
+     * @return the total device memory (`[[nodiscard]]`)
      */
     [[nodiscard]] virtual unsigned long long get_device_memory() const = 0;
 
@@ -697,23 +698,26 @@ std::pair<aos_matrix<real_type>, std::vector<real_type>> csvm::solve_system_of_l
 
     // determine the correct solver type, if the automatic solver type has been provided
     if (used_solver == solver_type::automatic) {
-        // TODO: decide which solver to use based on the available (V)RAM (maybe only lets say 95% of the memory should be used)
-        const double total_system_memory = detail::get_system_memory() * 0.95;
-        const double total_device_memory = this->get_device_memory() * 0.95;
+        using namespace detail::literals;
+
+        const auto reduce_total_memory = [](const double total_memory) {
+            return total_memory - std::max<double>(total_memory * 0.05, 512_MiB);  // 512 MiB
+        };
+        const double total_system_memory = reduce_total_memory(detail::get_system_memory());
+        const double total_device_memory = reduce_total_memory(this->get_device_memory());
 
         // 4B/8B * (data_set size + explicit kernel matrix size + B and C matrix in GEMM + q_red vector)
         const unsigned long long total_memory_needed = sizeof(real_type) * (num_rows * num_features + num_rows_reduced * num_rows_reduced + 2 * num_rows_reduced * num_rhs + num_features);
 
         detail::log(verbosity_level::full,
                     "Determining the solver type based on the available memory:\n"
-                    "  - system memory (95%): {:.2f} GiB\n"
-                    "  - device memory (95%): {:.2f} GiB\n"
+                    "  - system memory: {:.2f} GiB\n"
+                    "  - device memory: {:.2f} GiB\n"
                     "  - memory needed: {:.2f} GiB\n",
-                    detail::tracking_entry{ "solver", "system_memory_GiB", total_system_memory / 1024. / 1024. / 1024. },
-                    detail::tracking_entry{ "solver", "device_memory_GiB", total_device_memory / 1024. / 1024. / 1024. },
-                    detail::tracking_entry{ "solver", "needed_memory_GiB", total_memory_needed / 1024. / 1024. / 1024. });
+                    detail::tracking_entry{ "solver", "system_memory_GiB", total_system_memory / 1.0_GiB },
+                    detail::tracking_entry{ "solver", "device_memory_GiB", total_device_memory / 1.0_GiB },
+                    detail::tracking_entry{ "solver", "needed_memory_GiB", total_memory_needed / 1.0_GiB });
 
-        // TODO: total_device_memory > total_system_memory?
         if (total_memory_needed < total_device_memory) {
             used_solver = solver_type::cg_explicit;
         } else if (total_memory_needed > total_device_memory && total_memory_needed < total_system_memory) {

@@ -106,7 +106,6 @@ void csvm::device_synchronize(const queue_type &queue) const {
 }
 
 unsigned long long csvm::get_device_memory() const {
-    // TODO: total vs. available device memory
     cudaDeviceProp prop{};
     cudaGetDeviceProperties(&prop, devices_[0]);
     return static_cast<unsigned long long>(prop.totalGlobalMem);
