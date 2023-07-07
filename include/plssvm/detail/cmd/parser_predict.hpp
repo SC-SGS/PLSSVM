@@ -45,8 +45,6 @@ class parser_predict {
 
     /// `true` if `std::string` should be used as label type instead of the default type `ìnt`.
     bool strings_as_labels{ false };
-    /// `true` if `float` should be used as real type instead of the default type `double`.
-    bool float_as_real_type{ false };
 
     /// The name of the data file to predict.
     std::string input_filename{};

@@ -187,6 +187,7 @@ The `[optional_options]` can be one or multiple of:
 **Attention:** at least one backend must be enabled and available!
 
 - `PLSSVM_ENABLE_ASSERTS=ON|OFF` (default: `OFF`): enables custom assertions regardless whether the `DEBUG` macro is defined or not
+- `PLSSVM_USE_FLOAT_AS_REAL_TYPE=ON|OFF` (default: `OFF`): use `float` as real_type instead of `double`
 - `PLSSVM_THREAD_BLOCK_SIZE` (default: `16`): set a specific thread block size used in the GPU kernels (for fine-tuning optimizations)
 - `PLSSVM_INTERNAL_BLOCK_SIZE` (default: `6`: set a specific internal block size used in the GPU kernels (for fine-tuning optimizations)
 - `PLSSVM_OPENMP_BLOCK_SIZE` (default: `64`): set a specific block size used in the OpenMP kernels
@@ -208,7 +209,6 @@ If `PLSSVM_ENABLE_LANGUAGE_BINDINGS` is set to `ON`, the following option can al
 
 If `PLSSVM_ENABLE_PYTHON_BINDINGS` is set to `ON`, the following options can also be set:
 
-- `PLSSVM_PYTHON_BINDINGS_PREFERRED_REAL_TYPE` (default: `double`): the default `real_type` used if the generic `plssvm.Model` and `plssvm.DataSet` Python classes are used
 - `PLSSVM_PYTHON_BINDINGS_PREFERRED_LABEL_TYPE` (default: `std::string`): the default `label_type` used if the generic `plssvm.Model` and `plssvm.DataSet` Python classes are used
 
 If the SYCL backend is available additional options can be set.
@@ -339,6 +339,8 @@ Usage:
   -c, --cost arg                set the parameter C (default: 1)
   -e, --epsilon arg             set the tolerance of termination criterion (default: 0.001)
   -i, --max_iter arg            set the maximum number of CG iterations (default: num_features)
+  -s, --solver arg              choose the solver: automatic|cg_explicit|cg_streaming|cg_implicit (default: automatic)
+  -a, --classification arg      the classification strategy to use for multi-class classification: oaa|oao (default: oaa)
   -b, --backend arg             choose the backend: automatic|openmp|cuda|hip|opencl|sycl (default: automatic)
   -p, --target_platform arg     choose the target platform: automatic|cpu|gpu_nvidia|gpu_amd|gpu_intel (default: automatic)
       --sycl_kernel_invocation_type arg
@@ -348,7 +350,6 @@ Usage:
       --performance_tracking arg
                                 the output YAML file where the performance tracking results are written to; if not provided, the results are dumped to stderr
       --use_strings_as_labels   use strings as labels instead of plane numbers
-      --use_float_as_real_type  use floats as real types instead of doubles
       --verbosity               choose the level of verbosity: full|timing|libsvm|quiet (default: full)
   -q, --quiet                   quiet mode (no outputs regardless the provided verbosity level!)
   -h, --help                    print this helper message
@@ -415,7 +416,6 @@ Usage:
       --performance_tracking arg
                                 the output YAML file where the performance tracking results are written to; if not provided, the results are dumped to stderr
       --use_strings_as_labels   use strings as labels instead of plane numbers
-      --use_float_as_real_type  use floats as real types instead of doubles
       --verbosity               choose the level of verbosity: full|timing|libsvm|quiet (default: full)
   -q, --quiet                   quiet mode (no outputs regardless the provided verbosity level!)
   -h, --help                    print this helper message
@@ -454,7 +454,6 @@ Usage:
       --performance_tracking arg
                                 the output YAML file where the performance tracking results are written to; if not provided, the results are dumped to stderr
       --use_strings_as_labels   use strings as labels instead of plane numbers
-      --use_float_as_real_type  use floats as real types instead of doubles
       --verbosity               choose the level of verbosity: full|timing|libsvm|quiet (default: full)
   -q, --quiet                   quiet mode (no outputs regardless the provided verbosity level!)
   -h, --help                    print this helper message
@@ -491,14 +490,13 @@ A simple C++ program (`main.cpp`) using this library could look like:
 
 int main() {
     try {
-      
         // create a new C-SVM parameter set, explicitly overriding the default kernel function
         const plssvm::parameter params{ plssvm::kernel_type = plssvm::kernel_function_type::polynomial };
 
         // create two data sets: one with the training data scaled to [-1, 1] 
         // and one with the test data scaled like the training data
-        const plssvm::data_set<double> train_data{ "train_file.libsvm", { -1.0, 1.0 } };
-        const plssvm::data_set<double> test_data{ "test_file.libsvm", train_data.scaling_factors()->get() };
+        const plssvm::data_set train_data{ "train_file.libsvm", { -1.0, 1.0 } };
+        const plssvm::data_set test_data{ "test_file.libsvm", train_data.scaling_factors()->get() };
 
         // create C-SVM using the default backend and the previously defined parameter
         const auto svm = plssvm::make_csvm(params);
@@ -518,7 +516,6 @@ int main() {
 
         // write model file to disk
         model.save("model_file.libsvm");
-        
     } catch (const plssvm::exception &e) {
         std::cerr << e.what_with_loc() << std::endl;
     } catch (const std::exception &e) {

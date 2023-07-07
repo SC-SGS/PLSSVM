@@ -13,8 +13,8 @@
 #define PLSSVM_PARAMETER_HPP_
 #pragma once
 
+#include "plssvm/constants.hpp"              // plssvm::real_type
 #include "plssvm/default_value.hpp"          // plssvm::default_value, plssvm::is_default_value_v
-#include "plssvm/detail/type_list.hpp"       // plssvm::detail::{real_type_list, type_list_contains_v}
 #include "plssvm/detail/type_traits.hpp"     // PLSSVM_REQUIRES, plssvm::detail::{remove_cvref_t, always_false_v}
 #include "plssvm/detail/utility.hpp"         // plssvm::detail::unreachable
 #include "plssvm/kernel_function_types.hpp"  // plssvm::kernel_function_type, plssvm::kernel_function_type_to_math_string
@@ -46,6 +46,8 @@ IGOR_MAKE_NAMED_ARGUMENT(cost);
 IGOR_MAKE_NAMED_ARGUMENT(epsilon);
 /// Create a named argument for the maximum number of iterations `max_iter` performed in the CG algorithm.
 IGOR_MAKE_NAMED_ARGUMENT(max_iter);
+/// Create a named argument for the used solver type.
+IGOR_MAKE_NAMED_ARGUMENT(solver);
 /// Create a named argument for the classification type used for fitting a model.
 IGOR_MAKE_NAMED_ARGUMENT(classification);
 /// Create a named argument for the SYCL backend specific SYCL implementation type (DPC++ or hipSYCL).
@@ -101,17 +103,17 @@ ExpectedType get_value_from_named_parameter(const IgorParser &parser, const Name
     detail::unreachable();
 }
 
+}  // namespace detail
+
+/**
+ * @example parameter_examples.cpp
+ * @brief A few examples regarding the plssvm::parameter class.
+ */
+
 /**
  * @brief Class for encapsulating all important C-SVM parameters.
- * @tparam T the used real_type, must either be `float` or `double`
  */
-template <typename T>
 struct parameter {
-    // make sure only valid template types are used
-    static_assert(detail::type_list_contains_v<T, detail::real_type_list>, "Illegal real type provided! See the 'real_type_list' in the type_list.hpp header for a list of the allowed types.");
-
-    /// The type of the data. Must be either `float` or `double`.
-    using real_type = T;
 
     /**
      * @brief Default construct a parameter set, i.e., each SVM parameter has its default value.
@@ -140,7 +142,7 @@ struct parameter {
      * @param[in] params the parameters used to overwrite the default values
      * @param[in] named_args the potential named-parameters
      */
-    template <typename... Args, PLSSVM_REQUIRES(has_only_named_args_v<Args...>)>
+    template <typename... Args, PLSSVM_REQUIRES(detail::has_only_named_args_v<Args...>)>
     constexpr explicit parameter(const parameter &params, Args &&...named_args) :
         parameter{ params } {
         this->set_named_arguments(std::forward<Args>(named_args)...);
@@ -151,7 +153,7 @@ struct parameter {
      * @tparam Args the type of the named-parameters
      * @param[in] named_args the potential named-parameters
      */
-    template <typename... Args, PLSSVM_REQUIRES(has_only_named_args_v<Args...>)>
+    template <typename... Args, PLSSVM_REQUIRES(detail::has_only_named_args_v<Args...>)>
     constexpr explicit parameter(Args &&...named_args) noexcept {
         this->set_named_arguments(std::forward<Args>(named_args)...);
     }
@@ -166,22 +168,6 @@ struct parameter {
     default_value<real_type> coef0{ default_init<real_type>{ 0.0 } };
     /// The cost parameter in the C-SVM.
     default_value<real_type> cost{ default_init<real_type>{ 1.0 } };
-
-    /**
-     * @brief Convert a `plssvm::parameter<T>`to a `plssvm::parameter<U>` (i.e., conversion between float <-> double).
-     * @tparam U the type to convert to
-     * @return the `plssvm::parameter` values converted to @p U (`[[nodiscard]]`)
-     */
-    template <typename U>
-    [[nodiscard]] constexpr explicit operator parameter<U>() const {
-        if constexpr (std::is_same_v<U, real_type>) {
-            // no special conversions needed
-            return parameter<real_type>{ *this };
-        } else {
-            // convert between parameter<float> <-> parameter<double>
-            return parameter<U>{ kernel_type, degree, default_value<U>{ gamma }, default_value<U>{ coef0 }, default_value<U>{ cost } };
-        }
-    }
 
     /**
      * @brief Checks whether the current parameter set is **equivalent** to the one given by @p other.
@@ -235,11 +221,11 @@ struct parameter {
         // compile time/runtime check: the values must have the correct types
         if constexpr (parser.has(plssvm::kernel_type)) {
             // get the value of the provided named parameter
-            kernel_type = get_value_from_named_parameter<typename decltype(kernel_type)::value_type>(parser, plssvm::kernel_type);
+            kernel_type = detail::get_value_from_named_parameter<typename decltype(kernel_type)::value_type>(parser, plssvm::kernel_type);
         }
         if constexpr (parser.has(plssvm::gamma)) {
             // get the value of the provided named parameter
-            gamma = get_value_from_named_parameter<typename decltype(gamma)::value_type>(parser, plssvm::gamma);
+            gamma = detail::get_value_from_named_parameter<typename decltype(gamma)::value_type>(parser, plssvm::gamma);
             // runtime check: the value may only be used with a specific kernel type
             if (kernel_type == kernel_function_type::linear) {
                 print_warning("gamma", kernel_type);
@@ -247,7 +233,7 @@ struct parameter {
         }
         if constexpr (parser.has(plssvm::degree)) {
             // get the value of the provided named parameter
-            degree = get_value_from_named_parameter<typename decltype(degree)::value_type>(parser, plssvm::degree);
+            degree = detail::get_value_from_named_parameter<typename decltype(degree)::value_type>(parser, plssvm::degree);
             // runtime check: the value may only be used with a specific kernel type
             if (kernel_type == kernel_function_type::linear || kernel_type == kernel_function_type::rbf) {
                 print_warning("degree", kernel_type);
@@ -255,7 +241,7 @@ struct parameter {
         }
         if constexpr (parser.has(plssvm::coef0)) {
             // get the value of the provided named parameter
-            coef0 = get_value_from_named_parameter<typename decltype(coef0)::value_type>(parser, plssvm::coef0);
+            coef0 = detail::get_value_from_named_parameter<typename decltype(coef0)::value_type>(parser, plssvm::coef0);
             // runtime check: the value may only be used with a specific kernel type
             if (kernel_type == kernel_function_type::linear || kernel_type == kernel_function_type::rbf) {
                 print_warning("coef0", kernel_type);
@@ -263,36 +249,29 @@ struct parameter {
         }
         if constexpr (parser.has(plssvm::cost)) {
             // get the value of the provided named parameter
-            cost = get_value_from_named_parameter<typename decltype(cost)::value_type>(parser, plssvm::cost);
+            cost = detail::get_value_from_named_parameter<typename decltype(cost)::value_type>(parser, plssvm::cost);
         }
     }
 };
 
-extern template struct parameter<float>;
-extern template struct parameter<double>;
-
 /**
  * @brief Compares the two parameter sets @p lhs and @p rhs for equality.
  * @details Two parameter sets are equal if and only if **all** SVM parameters are equal.
- * @tparam T the real_type
  * @param[in] lhs the first parameter set
  * @param[in] rhs the second parameter set
  * @return `true` if both parameter sets are equal, `false` otherwise (`[[nodiscard]]`)
  */
-template <typename T>
-[[nodiscard]] constexpr bool operator==(const parameter<T> &lhs, const parameter<T> &rhs) noexcept {
+[[nodiscard]] constexpr bool operator==(const parameter &lhs, const parameter &rhs) noexcept {
     return lhs.kernel_type == rhs.kernel_type && lhs.degree == rhs.degree && lhs.gamma == rhs.gamma && lhs.coef0 == rhs.coef0 && lhs.cost == rhs.cost;
 }
 /**
  * @brief Compares the two parameter sets @p lhs and @p rhs for inequality.
  * @details Two parameter sets are unequal if **any** of the SVM parameters are unequal.
- * @tparam T the real_type
  * @param[in] lhs the first parameter set
  * @param[in] rhs the second parameter set
  * @return `true` if both parameter sets are unequal, `false` otherwise (`[[nodiscard]]`)
  */
-template <typename T>
-[[nodiscard]] constexpr bool operator!=(const parameter<T> &lhs, const parameter<T> &rhs) noexcept {
+[[nodiscard]] constexpr bool operator!=(const parameter &lhs, const parameter &rhs) noexcept {
     return !(lhs == rhs);
 }
 
@@ -305,37 +284,18 @@ template <typename T>
  * @param[in] rhs the second parameter set
  * @return `true` if both parameter sets are equivalent, `false` otherwise (`[[nodiscard]]`)
  */
-template <typename T>
-[[nodiscard]] constexpr bool equivalent(const parameter<T> &lhs, const parameter<T> &rhs) noexcept {
+[[nodiscard]] constexpr bool equivalent(const parameter &lhs, const parameter &rhs) noexcept {
     return lhs.equivalent(rhs);
 }
 
 /**
  * @brief Output all parameters encapsulated by @p params to the given output-stream @p out.
- * @tparam T the type of the data
  * @param[in,out] out the output-stream to write the parameters to
  * @param[in] params the parameter set
  * @return the output-stream
  */
 template <typename T>
-std::ostream &operator<<(std::ostream &out, const parameter<T> &params);
-
-}  // namespace detail
-
-/**
- * @example parameter_examples.cpp
- * @brief A few examples regarding the plssvm::parameter class.
- */
-
-/// The public parameter type uses `double` to store the SVM parameters.
-using parameter = detail::parameter<double>;
-
-/**
- * @copydoc plssvm::detail::equivalent
- */
-[[nodiscard]] constexpr bool equivalent(const parameter &lhs, const parameter &rhs) noexcept {
-    return detail::equivalent(lhs, rhs);
-}
+std::ostream &operator<<(std::ostream &out, const parameter &params);
 
 }  // namespace plssvm
 

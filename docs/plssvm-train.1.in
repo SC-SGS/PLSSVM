@@ -44,6 +44,14 @@ set the tolerance of termination criterion (default: 0.001)
 the maximum number of CG iterations (default: #features)
 
 .TP
+.B -s, --solver arg
+choose the solver: automatic|cg_explicit|cg_streaming|cg_implicit (default: automatic)
+
+.TP
+.B -a, --classification arg
+the classification strategy to use for multi-class classification: oaa|oao (default: oaa)
+
+.TP
 .B -b, --backend arg
 choose the backend: @PLSSVM_BACKEND_NAME_LIST@ (default: automatic)
 
@@ -58,10 +66,6 @@ choose the target platform: @PLSSVM_PLATFORM_NAME_LIST@ (default: automatic)
 .TP
 .B --use_string_as_labels arg
 must be specified if the labels should be interpreted as strings instead of integers
-
-.TP
-.B --use_float_as_real_type arg
-must be specified if float should be used instead of double as floating point type
 
 .TP
 .B --verbosity arg

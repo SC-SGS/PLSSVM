@@ -47,6 +47,7 @@ set(PLSSVM_PYTHON_BINDINGS_SOURCES
         ${CMAKE_CURRENT_LIST_DIR}/kernel_function_types.cpp
         ${CMAKE_CURRENT_LIST_DIR}/model.cpp
         ${CMAKE_CURRENT_LIST_DIR}/parameter.cpp
+        ${CMAKE_CURRENT_LIST_DIR}/solver_types.cpp
         ${CMAKE_CURRENT_LIST_DIR}/target_platforms.cpp
 
         ${CMAKE_CURRENT_LIST_DIR}/sklearn.cpp
@@ -80,15 +81,6 @@ endif ()
 set(PLSSVM_PYTHON_BINDINGS_LIBRARY_NAME plssvm)
 pybind11_add_module(${PLSSVM_PYTHON_BINDINGS_LIBRARY_NAME} ${PLSSVM_PYTHON_BINDINGS_SOURCES})
 
-# set default real type
-set(PLSSVM_PYTHON_BINDINGS_POSSIBLE_REAL_TYPE "float;double")
-set(PLSSVM_PYTHON_BINDINGS_PREFERRED_REAL_TYPE "double" CACHE STRING "The preferred type of the data points for the Python bindings.")
-set_property(CACHE PLSSVM_PYTHON_BINDINGS_PREFERRED_REAL_TYPE PROPERTY STRINGS ${PLSSVM_PYTHON_BINDINGS_POSSIBLE_REAL_TYPE})
-if (NOT "${PLSSVM_PYTHON_BINDINGS_PREFERRED_REAL_TYPE}" IN_LIST PLSSVM_PYTHON_BINDINGS_POSSIBLE_REAL_TYPE)
-    message(FATAL_ERROR "The provided real_type \"${PLSSVM_PYTHON_BINDINGS_PREFERRED_REAL_TYPE}\" is not one of the allowed values: \"${PLSSVM_PYTHON_BINDINGS_POSSIBLE_REAL_TYPE}\"")
-endif ()
-message(STATUS "The preferred real_type for the Python bindings is \"${PLSSVM_PYTHON_BINDINGS_PREFERRED_REAL_TYPE}\".")
-
 # set default label type
 set(PLSSVM_PYTHON_BINDINGS_POSSIBLE_LABEL_TYPE "bool;char;signed char;unsigned char;short;unsigned short;int;unsigned int;long;unsigned long;long long;unsigned long long;float;double;long double;std::string")
 set(PLSSVM_PYTHON_BINDINGS_PREFERRED_LABEL_TYPE "std::string" CACHE STRING "The preferred type of the labels for the Python bindings.")
@@ -99,7 +91,6 @@ endif ()
 message(STATUS "The preferred label_type for the Python bindings is \"${PLSSVM_PYTHON_BINDINGS_PREFERRED_LABEL_TYPE}\".")
 
 # add necessary compile definitions for the default real_type and label_type
-target_compile_definitions(${PLSSVM_PYTHON_BINDINGS_LIBRARY_NAME} PRIVATE PLSSVM_PYTHON_BINDINGS_PREFERRED_REAL_TYPE=${PLSSVM_PYTHON_BINDINGS_PREFERRED_REAL_TYPE})
 target_compile_definitions(${PLSSVM_PYTHON_BINDINGS_LIBRARY_NAME} PRIVATE PLSSVM_PYTHON_BINDINGS_PREFERRED_LABEL_TYPE=${PLSSVM_PYTHON_BINDINGS_PREFERRED_LABEL_TYPE})
 if (PLSSVM_PYTHON_BINDINGS_PREFERRED_LABEL_TYPE STREQUAL "std::string")
     target_compile_definitions(${PLSSVM_PYTHON_BINDINGS_LIBRARY_NAME} PRIVATE PLSSVM_PYTHON_BINDINGS_LABEL_TYPE_IS_STRING)

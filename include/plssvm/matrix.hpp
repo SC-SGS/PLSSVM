@@ -20,10 +20,11 @@
 #include "fmt/core.h"  // fmt::format
 
 #include <algorithm>  // std::equal, std::all_of
+#include <array>      // std::array
 #include <cstddef>    // std::size_t
 #include <iosfwd>     // std::istream forward declaration
 #include <ostream>    // std::ostream
-#include <utility>    // std::pair, std::make_pair, std::swap
+#include <utility>    // std::swap
 #include <vector>     // std::vector
 
 namespace plssvm {
@@ -113,7 +114,7 @@ class matrix {
      * @detail It holds: `m.shape().first == m.num_rows()` and `m.shape().second == m.num_cols()`.
      * @return the shape of the matrix (`[[nodiscard]]`)
      */
-    [[nodiscard]] std::pair<size_type, size_type> shape() const noexcept { return std::make_pair(num_rows_, num_cols_); }
+    [[nodiscard]] std::array<size_type, 2> shape() const noexcept { return { num_rows_, num_cols_ }; }
     /**
      * @brief Return the number of rows in the matrix.
      * @return the number of rows (`[[nodiscard]]`)

@@ -59,10 +59,12 @@ set(PLSSVM_BASE_SOURCES
         ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/backend_types.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/classification_report.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/classification_types.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/csvm.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/file_format_types.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/kernel_function_types.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/matrix.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/parameter.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/solver_types.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/target_platforms.cpp
 )
 
@@ -481,6 +483,15 @@ option(PLSSVM_ENABLE_ASSERTS "Enables PLSSVM asserts even if NDEBUG is set." OFF
 if (PLSSVM_ENABLE_ASSERTS)
     message(STATUS "Enable additional debugging assertions.")
     target_compile_definitions(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC PLSSVM_ENABLE_ASSERTS)
+endif ()
+
+## use float as real_type if requested
+option(PLSSVM_USE_FLOAT_AS_REAL_TYPE "Use float as real_type instead of double." OFF)
+if (PLSSVM_USE_FLOAT_AS_REAL_TYPE)
+    message(STATUS "Using float as real_type.")
+    target_compile_definitions(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC PLSSVM_FLOAT_AS_REAL_TYPE)
+else ()
+    message(STATUS "Using double as real_type (default).")
 endif ()
 
 ## set specific thread block sizes if requested

@@ -8,7 +8,7 @@
  * @brief Tests for the functions performing the actual kernel calculations using the OpenMP backend.
  */
 
-#include "plssvm/backends/OpenMP/kernel_matrix_assembly.hpp"
+#include "plssvm/backends/OpenMP/cg_explicit/kernel_matrix_assembly.hpp"
 
 #include "../../custom_test_macros.hpp"  // EXPECT_FLOATING_POINT_2D_VECTOR_NEAR
 #include "../../naming.hpp"              // naming::real_type_to_name

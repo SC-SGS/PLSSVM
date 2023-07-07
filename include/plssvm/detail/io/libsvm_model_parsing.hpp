@@ -14,6 +14,7 @@
 #pragma once
 
 #include "plssvm/classification_types.hpp"      // plssvm::classification_type
+#include "plssvm/constants.hpp"                 // plssvm::real_type
 #include "plssvm/data_set.hpp"                  // plssvm::data_set
 #include "plssvm/detail/assert.hpp"             // PLSSVM_ASSERT
 #include "plssvm/detail/io/libsvm_parsing.hpp"  // plssvm::detail::io::parse_libsvm_num_features
@@ -100,9 +101,7 @@ namespace plssvm::detail::io {
  * nr_sv 4 2 2
  * SV
  * @endcode
- * @tparam real_type the floating point type
  * @tparam label_type the type of the labels (any arithmetic type, except bool, or std::string)
- * @tparam size_type the size type
  * @param[in] lines the LIBSVM model file header to parse>
  * @throws plssvm::invalid_file_format_exception if an invalid 'svm_type' has been provided, i.e., 'svm_type' is not 'c_csc'
  * @throws plssvm::invalid_file_format_exception if an invalid 'kernel_type has been provided
@@ -126,12 +125,12 @@ namespace plssvm::detail::io {
  * @attention The PLSSVM model file is only compatible with LIBSVM for the one vs. one classification type.
  * @return the necessary header information: [the SVM parameter, the values of rho, the labels, the different classes, num_header_lines] (`[[nodiscard]]`)
  */
-template <typename real_type, typename label_type, typename size_type>
-[[nodiscard]] inline std::tuple<plssvm::parameter, std::vector<real_type>, std::vector<label_type>, std::vector<label_type>, std::vector<size_type>, std::size_t> parse_libsvm_model_header(const std::vector<std::string_view> &lines) {
+template <typename label_type>
+[[nodiscard]] inline std::tuple<plssvm::parameter, std::vector<real_type>, std::vector<label_type>, std::vector<label_type>, std::vector<std::size_t>, std::size_t> parse_libsvm_model_header(const std::vector<std::string_view> &lines) {
     // data to read
     plssvm::parameter params{};
     std::vector<real_type> rho{};
-    size_type num_support_vectors{};
+    std::size_t num_support_vectors{};
 
     // helper variables
     bool svm_type_set{ false };
@@ -141,9 +140,9 @@ template <typename real_type, typename label_type, typename size_type>
     bool rho_set{ false };
     bool label_set{ false };
     bool nr_sv_set{ false };
-    size_type nr_class{};
+    std::size_t nr_class{};
     std::vector<label_type> labels{};
-    std::vector<size_type> num_support_vectors_per_class{};
+    std::vector<std::size_t> num_support_vectors_per_class{};
 
     // parse libsvm model file header
     std::size_t header_line = 0;
@@ -190,7 +189,7 @@ template <typename real_type, typename label_type, typename size_type>
                 nr_class_set = true;
             } else if (detail::starts_with(line, "total_sv")) {
                 // the total number of support vectors must be greater than 0
-                num_support_vectors = detail::convert_to<size_type>(value);
+                num_support_vectors = detail::convert_to<std::size_t>(value);
                 if (num_support_vectors == 0) {
                     throw invalid_file_format_exception{ "The number of support vectors must be greater than 0!" };
                 }
@@ -222,7 +221,7 @@ template <typename real_type, typename label_type, typename size_type>
                 label_set = true;
             } else if (detail::starts_with(line, "nr_sv")) {
                 // parse number of support vectors per class
-                num_support_vectors_per_class = detail::split_as<size_type>(value, ' ');
+                num_support_vectors_per_class = detail::split_as<std::size_t>(value, ' ');
                 if (num_support_vectors_per_class.size() < 2) {
                     throw invalid_file_format_exception{ "At least two nr_sv must be set, but only one was given!" };
                 }
@@ -293,7 +292,7 @@ template <typename real_type, typename label_type, typename size_type>
         throw invalid_file_format_exception{ fmt::format("The number of classes (nr_class) is {}, but the provided number of different labels is {} (nr_sv)!", nr_class, num_support_vectors_per_class.size()) };
     }
     // calculate the number of support as sum of the support vectors per class
-    const auto nr_sv_sum = std::accumulate(num_support_vectors_per_class.begin(), num_support_vectors_per_class.end(), size_type{ 0 });
+    const auto nr_sv_sum = std::accumulate(num_support_vectors_per_class.begin(), num_support_vectors_per_class.end(), std::size_t{ 0 });
     if (nr_sv_sum != num_support_vectors) {
         throw invalid_file_format_exception{ fmt::format("The total number of support vectors is {}, but the sum of nr_sv is {}!", num_support_vectors, nr_sv_sum) };
     }
@@ -305,7 +304,7 @@ template <typename real_type, typename label_type, typename size_type>
     // set label according to model file definition
     std::vector<label_type> data_labels(num_support_vectors);
     std::size_t pos = 0;
-    for (size_type i = 0; i < labels.size(); ++i) {
+    for (std::size_t i = 0; i < labels.size(); ++i) {
         std::fill(data_labels.begin() + pos, data_labels.begin() + pos + num_support_vectors_per_class[i], labels[i]);
         pos += num_support_vectors_per_class[i];
     }
@@ -326,7 +325,6 @@ template <typename real_type, typename label_type, typename size_type>
  * 1.2048548972e+00 -4.5199224962e-02 -9.1864283628e-01 1:5.6054664148e-02 2:6.6037150647e-01 3:2.6221749918e-01 4:3.7216083001e-02
  * -6.9331414578e-01 4.0173372861e-01 8.7072111162e-01 1:2.3912649397e-02 2:3.4604367826e-01 3:-2.5696199624e-01 4:6.0591633490e-01
  * @endcode
- * @tparam real_type the floating point type
  * @param[in] reader the file_reader used to read the LIBSVM data
  * @param[in] num_sv_per_class the number of support vectors per class
  * @param[in] skipped_lines the number of lines that should be skipped at the beginning
@@ -341,7 +339,6 @@ template <typename real_type, typename label_type, typename size_type>
  * @attention The PLSSVM model file is only compatible with LIBSVM for the one vs. one classification type.
  * @return a std::tuple containing: [num_data_points, num_features, data_points, labels, classification type] (`[[nodiscard]]`)
  */
-template <typename real_type>
 [[nodiscard]] inline std::tuple<std::size_t, std::size_t, aos_matrix<real_type>, std::vector<aos_matrix<real_type>>, classification_type> parse_libsvm_model_data(const file_reader &reader, const std::vector<std::size_t> &num_sv_per_class, const std::size_t skipped_lines) {
     PLSSVM_ASSERT(reader.is_open(), "The file_reader is currently not associated with a file!");
     PLSSVM_ASSERT(num_sv_per_class.size() > 1, "At least two classes must be present!");
@@ -525,7 +522,6 @@ template <typename real_type>
  * nr_sv 4 2 2
  * SV
  * @endcode
- * @tparam real_type the floating point type
  * @tparam label_type the type of the labels (any arithmetic type, except bool, or std::string)
  * @param[in,out] out the output-stream to write the header information to
  * @param[in] params the SVM parameters
@@ -533,8 +529,8 @@ template <typename real_type>
  * @param[in] data the data used to create the model
  * @attention The PLSSVM model file is only compatible with LIBSVM for the one vs. one classification type.
  */
-template <typename real_type, typename label_type>
-inline std::vector<label_type> write_libsvm_model_header(fmt::ostream &out, const plssvm::parameter &params, const std::vector<real_type> &rho, const data_set<real_type, label_type> &data) {
+template <typename label_type>
+inline std::vector<label_type> write_libsvm_model_header(fmt::ostream &out, const plssvm::parameter &params, const std::vector<real_type> &rho, const data_set<label_type> &data) {
     PLSSVM_ASSERT(data.has_labels(), "Cannot write a model file that does not include labels!");
 
     // save model file header
@@ -562,7 +558,7 @@ inline std::vector<label_type> write_libsvm_model_header(fmt::ostream &out, cons
     }
     // fill vector with number of occurrences in correct order
     std::vector<std::size_t> label_counts(data.num_classes());
-    for (typename data_set<real_type, label_type>::size_type i = 0; i < data.num_classes(); ++i) {
+    for (typename data_set<label_type>::size_type i = 0; i < data.num_classes(); ++i) {
         label_counts[i] = label_counts_map[label_values[i]];
     }
 
@@ -604,7 +600,6 @@ inline std::vector<label_type> write_libsvm_model_header(fmt::ostream &out, cons
  * 1.2048548972e+00 -4.5199224962e-02 -9.1864283628e-01 1:5.6054664148e-02 2:6.6037150647e-01 3:2.6221749918e-01 4:3.7216083001e-02
  * -6.9331414578e-01 4.0173372861e-01 8.7072111162e-01 1:2.3912649397e-02 2:3.4604367826e-01 3:-2.5696199624e-01 4:6.0591633490e-01
  * @endcode
- * @tparam real_type the floating point type
  * @tparam label_type the type of the labels (any arithmetic type, except bool, or std::string)
  * @param[in] filename the file to write the LIBSVM model to
  * @param[in] params the SVM parameters
@@ -615,8 +610,8 @@ inline std::vector<label_type> write_libsvm_model_header(fmt::ostream &out, cons
  * @param[in] support_vectors the support vectors (no access to private member of plssvm::data_set in this function -> must be explicitly passed as parameter)
  * @attention The PLSSVM model file is only compatible with LIBSVM for the one vs. one classification type.
  */
-template <typename real_type, typename label_type>
-inline void write_libsvm_model_data(const std::string &filename, const plssvm::parameter &params, const classification_type classification, const std::vector<real_type> &rho, const std::vector<aos_matrix<real_type>> &alpha, const std::vector<std::vector<std::size_t>> &indices, const data_set<real_type, label_type> &data, const aos_matrix<real_type> &support_vectors) {
+template <typename label_type>
+inline void write_libsvm_model_data(const std::string &filename, const plssvm::parameter &params, const classification_type classification, const std::vector<real_type> &rho, const std::vector<aos_matrix<real_type>> &alpha, const std::vector<std::vector<std::size_t>> &indices, const data_set<label_type> &data, const aos_matrix<real_type> &support_vectors) {
     PLSSVM_ASSERT(data.has_labels(), "Cannot write a model file that does not include labels!");
     PLSSVM_ASSERT(rho.size() == calculate_number_of_classifiers(classification, data.num_classes()),
                   "The number of different labels is {} (nr_class). Therefore, the number of rho values must either be {} (one vs. all) or {} (one vs. vs), but is {}!",

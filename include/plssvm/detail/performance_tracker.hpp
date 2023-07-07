@@ -17,9 +17,13 @@
 #include "plssvm/parameter.hpp"           // plssvm::parameter
 #include "plssvm/detail/type_traits.hpp"  // plssvm::detail::remove_cvref_t
 
+#include "plssvm/detail/cmd/parser_train.hpp"    // plssvm::detail::cmd::parser_train
+#include "plssvm/detail/cmd/parser_predict.hpp"  // plssvm::detail::cmd::parser_predict
+#include "plssvm/detail/cmd/parser_scale.hpp"    // plssvm::detail::cmd::parser_scale
+
 #include "fmt/chrono.h"                   // format std::chrono types
-#include "fmt/format.h"                   // fmt::format, fmt::join
-#include "fmt/ostream.h"                         // format types with an operator<< overload
+#include "fmt/format.h"                   // fmt::format, fmt::join, fmt::formatter
+#include "fmt/ostream.h"                  // format types with an operator<< overload
 
 #include <memory>                         // std::shared_ptr
 #include <string>                         // std::string
@@ -29,15 +33,6 @@
 #include <utility>                        // std::move
 
 namespace plssvm::detail {
-
-// forward declare cmd parser
-namespace cmd {
-
-class parser_train;
-class parser_predict;
-class parser_scale;
-
-}
 
 /**
  * @brief A single tracking entry containing a specific category, a unique name, and the actual value to be tracked.
@@ -61,6 +56,30 @@ struct tracking_entry {
     /// The tracked value in the YAML file.
     const T entry_value{};
 };
+
+}
+
+/**
+ * @brief Custom tracking_entry formatter to be able to use fmt format specifiers for values of type T.
+ * @tparam T the performance tracked type
+ */
+template<typename T>
+struct fmt::formatter<plssvm::detail::tracking_entry<T>> : fmt::formatter<T>
+{
+    /**
+     * @brief Format the tracking @p entry using the provided format specifier for type T.
+     * @tparam FormatContext the type of the format context
+     * @param[in] entry the tracking entry to format
+     * @param[in,out] context the format context
+     * @return the formatted string
+     */
+    template <typename FormatContext>
+    auto format(const plssvm::detail::tracking_entry<T>& entry, FormatContext& context) {
+        return fmt::formatter<T>::format(entry.entry_value, context);
+    }
+};
+
+namespace plssvm::detail {
 
 /**
  * @brief Output the tracking @p entry to the given output-stream @p out. Only the tracked value is output **excluding** the category and name.
@@ -146,7 +165,7 @@ class performance_tracker {
      *          Adds all values stored in the plssvm::parameter as tracking entries.
      * @param[in] entry the entry to add
      */
-    void add_tracking_entry(const tracking_entry<::plssvm::parameter> &entry);
+    void add_tracking_entry(const tracking_entry<plssvm::parameter> &entry);
     /**
      * @brief Add a tracking_entry encapsulating a plssvm::detail::cmd::parser_train to this performance tracker.
      * @details Saves a string containing the entry name and value in a map with the entry category as key.

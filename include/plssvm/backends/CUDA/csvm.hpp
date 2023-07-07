@@ -15,7 +15,9 @@
 
 #include "plssvm/backends/CUDA/detail/device_ptr.cuh"  // plssvm::cuda::detail::device_ptr
 #include "plssvm/backends/gpu_csvm.hpp"                // plssvm::detail::gpu_csvm
-#include "plssvm/parameter.hpp"                        // plssvm::parameter, plssvm::detail::parameter
+#include "plssvm/constants.hpp"                        // plssvm::real_type
+#include "plssvm/detail/simple_any.hpp"                // plssvm::detail::simple_any
+#include "plssvm/parameter.hpp"                        // plssvm::parameter
 #include "plssvm/target_platforms.hpp"                 // plssvm::target_platform
 
 #include <cstddef>                                     // std::size_t
@@ -23,13 +25,6 @@
 #include <utility>                                     // std::forward
 
 namespace plssvm {
-
-namespace detail {
-
-// forward declare execution_range class
-class execution_range;
-
-}  // namespace detail
 
 namespace cuda {
 
@@ -116,61 +111,6 @@ class csvm : public ::plssvm::detail::gpu_csvm<detail::device_ptr, int> {
      */
     ~csvm() override;
 
-  protected:
-    /**
-     * @copydoc plssvm::detail::gpu_csvm::device_synchronize
-     */
-    void device_synchronize(const queue_type &queue) const final;
-
-    /**
-     * @copydoc plssvm::detail::gpu_csvm::run_q_kernel
-     */
-    void run_q_kernel(std::size_t device, const ::plssvm::detail::execution_range &range, const ::plssvm::detail::parameter<float> &params, device_ptr_type<float> &q_d, const device_ptr_type<float> &data_d, const device_ptr_type<float> &data_last_d, std::size_t num_data_points_padded, std::size_t num_features) const final { this->run_q_kernel_impl(device, range, params, q_d, data_d, data_last_d, num_data_points_padded, num_features); }
-    /**
-     * @copydoc plssvm::detail::gpu_csvm::run_q_kernel
-     */
-    void run_q_kernel(std::size_t device, const ::plssvm::detail::execution_range &range, const ::plssvm::detail::parameter<double> &params, device_ptr_type<double> &q_d, const device_ptr_type<double> &data_d, const device_ptr_type<double> &data_last_d, std::size_t num_data_points_padded, std::size_t num_features) const final { this->run_q_kernel_impl(device, range, params, q_d, data_d, data_last_d, num_data_points_padded, num_features); }
-    /**
-     * @copydoc plssvm::detail::gpu_csvm::run_q_kernel
-     */
-    template <typename real_type>
-    void run_q_kernel_impl(std::size_t device, const ::plssvm::detail::execution_range &range, const ::plssvm::detail::parameter<real_type> &params, device_ptr_type<real_type> &q_d, const device_ptr_type<real_type> &data_d, const device_ptr_type<real_type> &data_last_d, std::size_t num_data_points_padded, std::size_t num_features) const;
-    /**
-     * @copydoc plssvm::detail::gpu_csvm::run_svm_kernel
-     */
-    void run_svm_kernel(std::size_t device, const ::plssvm::detail::execution_range &range, const ::plssvm::detail::parameter<float> &params, const device_ptr_type<float> &q_d, device_ptr_type<float> &r_d, const device_ptr_type<float> &x_d, const device_ptr_type<float> &data_d, float QA_cost, float add, std::size_t num_data_points_padded, std::size_t num_features) const final { this->run_svm_kernel_impl(device, range, params, q_d, r_d, x_d, data_d, QA_cost, add, num_data_points_padded, num_features); }
-    /**
-     * @copydoc plssvm::detail::gpu_csvm::run_svm_kernel
-     */
-    void run_svm_kernel(std::size_t device, const ::plssvm::detail::execution_range &range, const ::plssvm::detail::parameter<double> &params, const device_ptr_type<double> &q_d, device_ptr_type<double> &r_d, const device_ptr_type<double> &x_d, const device_ptr_type<double> &data_d, double QA_cost, double add, std::size_t num_data_points_padded, std::size_t num_features) const final { this->run_svm_kernel_impl(device, range, params, q_d, r_d, x_d, data_d, QA_cost, add, num_data_points_padded, num_features); }
-    /**
-     * @copydoc plssvm::detail::gpu_csvm::run_svm_kernel
-     */
-    template <typename real_type>
-    void run_svm_kernel_impl(std::size_t device, const ::plssvm::detail::execution_range &range, const ::plssvm::detail::parameter<real_type> &params, const device_ptr_type<real_type> &q_d, device_ptr_type<real_type> &r_d, const device_ptr_type<real_type> &x_d, const device_ptr_type<real_type> &data_d, real_type QA_cost, real_type add, std::size_t num_data_points_padded, std::size_t num_features) const;
-
-    device_ptr_type<float> run_predict_kernel(const ::plssvm::detail::parameter<float> &params, const device_ptr_type<float> &w_d, const device_ptr_type<float> &alpha_d, const device_ptr_type<float> &rho_d, const device_ptr_type<float> &sv_d, const device_ptr_type<float> &predict_points_d, std::size_t num_classes, std::size_t num_sv, std::size_t num_predict_points, std::size_t num_features) const final { return this->run_predict_kernel_impl(params, w_d, alpha_d, rho_d, sv_d, predict_points_d, num_classes, num_sv, num_predict_points, num_features); }
-    device_ptr_type<double> run_predict_kernel(const ::plssvm::detail::parameter<double> &params, const device_ptr_type<double> &w_d, const device_ptr_type<double> &alpha_d, const device_ptr_type<double> &rho_d, const device_ptr_type<double> &sv_d, const device_ptr_type<double> &predict_points_d, std::size_t num_classes, std::size_t num_sv, std::size_t num_predict_points, std::size_t num_features) const final { return this->run_predict_kernel_impl(params, w_d, alpha_d, rho_d, sv_d, predict_points_d, num_classes, num_sv, num_predict_points, num_features); }
-    template <typename real_type>
-    device_ptr_type<real_type> run_predict_kernel_impl(const ::plssvm::detail::parameter<real_type> &params, const device_ptr_type<real_type> &w_d, const device_ptr_type<real_type> &alpha_d, const device_ptr_type<real_type> &rho_d, const device_ptr_type<real_type> &sv_d, const device_ptr_type<real_type> &predict_points_d, std::size_t num_classes, std::size_t num_sv, std::size_t num_predict_points, std::size_t num_features) const;
-
-    device_ptr_type<float> run_w_kernel(const device_ptr_type<float> &alpha_d, const device_ptr_type<float> &sv_d, std::size_t num_classes, std::size_t num_sv, std::size_t num_features) const final { return this->run_w_kernel_impl(alpha_d, sv_d, num_classes, num_sv, num_features); }
-    device_ptr_type<double> run_w_kernel(const device_ptr_type<double> &alpha_d, const device_ptr_type<double> &sv_d, std::size_t num_classes, std::size_t num_sv, std::size_t num_features) const final { return this->run_w_kernel_impl(alpha_d, sv_d, num_classes, num_sv, num_features); }
-    template <typename real_type>
-    device_ptr_type<real_type> run_w_kernel_impl(const device_ptr_type<real_type> &alpha_d, const device_ptr_type<real_type> &sv_d, std::size_t num_classes, std::size_t num_sv, std::size_t num_features) const;
-
-
-    device_ptr_type<float> assemble_kernel_matrix(const ::plssvm::detail::parameter<float> &params, const device_ptr_type<float> &data_d, const std::vector<float> &q, float QA_cost, const std::size_t num_data_points, const std::size_t num_features) const final { return this->assemble_kernel_matrix_impl(params, data_d, q, QA_cost, num_data_points, num_features); }
-    device_ptr_type<double> assemble_kernel_matrix(const ::plssvm::detail::parameter<double> &params, const device_ptr_type<double> &data_d, const std::vector<double> &q, double QA_cost, const std::size_t num_data_points, const std::size_t num_features) const final { return this->assemble_kernel_matrix_impl(params, data_d, q, QA_cost, num_data_points, num_features); }
-    template <typename real_type>
-    device_ptr_type<real_type> assemble_kernel_matrix_impl(const ::plssvm::detail::parameter<real_type> &params, const device_ptr_type<real_type> &data_d, const std::vector<real_type> &q, const real_type QA_cost, const std::size_t num_data_points, const std::size_t num_features) const;
-
-    void blas_gemm(std::size_t m, std::size_t n, std::size_t k, float alpha, const device_ptr_type<float> &A, const device_ptr_type<float> &B, float beta, device_ptr_type<float> &C) const final { this->blas_gemm_impl(m, n, k, alpha, A, B, beta, C); }
-    void blas_gemm(std::size_t m, std::size_t n, std::size_t k, double alpha, const device_ptr_type<double> &A, const device_ptr_type<double> &B, double beta, device_ptr_type<double> &C) const final { this->blas_gemm_impl(m, n, k, alpha, A, B, beta, C); }
-    template <typename real_type>
-    void blas_gemm_impl(std::size_t m, std::size_t n, std::size_t k, real_type alpha, const device_ptr_type<real_type> &A, const device_ptr_type<real_type> &B, real_type beta, device_ptr_type<real_type> &C) const;
-
-
   private:
     /**
      * @brief Initialize all important states related to the CUDA backend.
@@ -180,6 +120,39 @@ class csvm : public ::plssvm::detail::gpu_csvm<detail::device_ptr, int> {
      * @throws plssvm::cuda::backend_exception if no CUDA capable devices could be found
      */
     void init(target_platform target);
+
+    /**
+     * @copydoc plssvm::detail::gpu_csvm::device_synchronize
+     */
+    void device_synchronize(const queue_type &queue) const final;
+    /**
+     * @copydoc plssvm::csvm::get_device_memory
+     */
+    [[nodiscard]] unsigned long long get_device_memory() const final;
+
+    //***************************************************//
+    //                        fit                        //
+    //***************************************************//
+    /**
+     * @copydoc plssvm::detail::gpu_csvm::run_assemble_kernel_matrix_explicit
+     */
+    [[nodiscard]] device_ptr_type run_assemble_kernel_matrix_explicit(const parameter &params, const device_ptr_type & data_d, const device_ptr_type &q_red_d, real_type QA_cost) const final;
+    /**
+     * @copydoc plssvm::detail::gpu_csvm::run_gemm_kernel_explicit
+     */
+    void run_gemm_kernel_explicit(std::size_t m, std::size_t n, std::size_t k, real_type alpha, const device_ptr_type &A_d, const device_ptr_type &B_d, const real_type beta, device_ptr_type &C_d) const final;
+
+    //***************************************************//
+    //                   predict, score                  //
+    //***************************************************//
+    /**
+     * @copydoc plssvm::detail::gpu_csvm::run_w_kernel
+     */
+    [[nodiscard]] device_ptr_type run_w_kernel(const device_ptr_type &alpha_d, const device_ptr_type &sv_d) const final;
+    /**
+     * @copydoc plssvm::detail::gpu_csvm::run_predict_kernel
+     */
+    [[nodiscard]] device_ptr_type run_predict_kernel(const parameter &params, const device_ptr_type &w_d, const device_ptr_type &alpha_d, const device_ptr_type &rho_d, const device_ptr_type &sv_d, const device_ptr_type &predict_points_d) const final;
 };
 
 }  // namespace cuda

@@ -9,8 +9,8 @@
  * @brief Defines the kernel functions for the C-SVM using the CUDA backend.
  */
 
-#ifndef PLSSVM_BACKENDS_CUDA_SVM_KERNEL_HPP_
-#define PLSSVM_BACKENDS_CUDA_SVM_KERNEL_HPP_
+#ifndef PLSSVM_BACKENDS_CUDA_CG_IMPLICIT_SVM_KERNEL_HPP_
+#define PLSSVM_BACKENDS_CUDA_CG_IMPLICIT_SVM_KERNEL_HPP_
 #pragma once
 
 #include "plssvm/constants.hpp"  // plssvm::kernel_index_type
@@ -75,4 +75,4 @@ __global__ void device_kernel_rbf(const real_type *q, real_type *ret, const real
 
 }  // namespace plssvm::cuda
 
-#endif  // PLSSVM_BACKENDS_CUDA_SVM_KERNEL_HPP_
+#endif  // PLSSVM_BACKENDS_CUDA_CG_IMPLICIT_SVM_KERNEL_HPP_

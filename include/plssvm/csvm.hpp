@@ -14,11 +14,14 @@
 #pragma once
 
 #include "plssvm/classification_types.hpp"        // plssvm::classification_type, plssvm::classification_type_to_full_string
+#include "plssvm/constants.hpp"                   // plssvm::real_type
 #include "plssvm/data_set.hpp"                    // plssvm::data_set
 #include "plssvm/default_value.hpp"               // plssvm::default_value, plssvm::default_init
+#include "plssvm/detail/custom_literals.hpp"      // custom byte related literals
 #include "plssvm/detail/logger.hpp"               // plssvm::detail::log, plssvm::verbosity_level
 #include "plssvm/detail/operators.hpp"            // plssvm::operators::sign
 #include "plssvm/detail/performance_tracker.hpp"  // plssvm::detail::performance_tracker
+#include "plssvm/detail/simple_any.hpp"           // plssvm::detail::simple_any
 #include "plssvm/detail/type_traits.hpp"          // PLSSVM_REQUIRES, plssvm::detail::remove_cvref_t
 #include "plssvm/detail/utility.hpp"              // plssvm::detail::to_underlying
 #include "plssvm/exceptions/exceptions.hpp"       // plssvm::invalid_parameter_exception
@@ -26,6 +29,7 @@
 #include "plssvm/matrix.hpp"                      // plssvm::aos_matrix
 #include "plssvm/model.hpp"                       // plssvm::model
 #include "plssvm/parameter.hpp"                   // plssvm::parameter, plssvm::detail::{get_value_from_named_parameter, has_only_parameter_named_args_v}
+#include "plssvm/solver_types.hpp"                // plssvm::solver_type
 #include "plssvm/target_platforms.hpp"            // plssvm::target_platform
 
 #include "fmt/core.h"                             // fmt::format
@@ -119,7 +123,6 @@ class csvm {
     //*************************************************************************************************************************************//
     /**
      * @brief Fit a model using the current SVM on the @p data using the provided multi-class classification strategy.
-     * @tparam real_type the type of the data (`float` or `double`)
      * @tparam label_type the type of the label (an arithmetic type or `std::string`)
      * @tparam Args the type of the potential additional parameters
      * @param[in] data the data used to train the SVM model
@@ -131,8 +134,8 @@ class csvm {
      * @note For binary classification **always** one vs. all is used regardless of the provided parameter!
      * @return the learned model (`[[nodiscard]]`)
      */
-    template <typename real_type, typename label_type, typename... Args>
-    [[nodiscard]] model<real_type, label_type> fit(const data_set<real_type, label_type> &data, Args &&...named_args) const;
+    template <typename label_type, typename... Args>
+    [[nodiscard]] model<label_type> fit(const data_set<label_type> &data, Args &&...named_args) const;
 
     //*************************************************************************************************************************************//
     //                                                          predict and score                                                          //
@@ -140,7 +143,6 @@ class csvm {
     /**
      * @brief Predict the labels for the @p data set using the @p model.
      * @details Uses the one vs. all (OAA) for the multi-class classification task.
-     * @tparam real_type the type of the data (`float` or `double`)
      * @tparam label_type the type of the label (an arithmetic type or `std::string`)
      * @param[in] model a previously learned model
      * @param[in] data the data to predict the labels for
@@ -148,24 +150,22 @@ class csvm {
      * @throws plssvm::exception any exception thrown in the respective backend's implementation of `plssvm::csvm::predict_values`
      * @return the predicted labels (`[[nodiscard]]`)
      */
-    template <typename real_type, typename label_type>
-    [[nodiscard]] std::vector<label_type> predict(const model<real_type, label_type> &model, const data_set<real_type, label_type> &data) const;
+    template <typename label_type>
+    [[nodiscard]] std::vector<label_type> predict(const model<label_type> &model, const data_set<label_type> &data) const;
 
     /**
      * @brief Calculate the accuracy of the @p model.
      * @details Uses the one vs. all (OAA) for the multi-class classification task.
-     * @tparam real_type the type of the data (`float` or `double`)
      * @tparam label_type the type of the label (an arithmetic type or `std::string`)
      * @param[in] model a previously learned model
      * @throws plssvm::exception any exception thrown in the respective backend's implementation of `plssvm::csvm::predict_values`
      * @return the accuracy of the model (`[[nodiscard]]`)
      */
-    template <typename real_type, typename label_type>
-    [[nodiscard]] real_type score(const model<real_type, label_type> &model) const;
+    template <typename label_type>
+    [[nodiscard]] real_type score(const model<label_type> &model) const;
     /**
      * @brief Calculate the accuracy of the labeled @p data set using the @p model.
      * @details Uses the one vs. all (OAA) for the multi-class classification task.
-     * @tparam real_type the type of the data (`float` or `double`)
      * @tparam label_type the type of the label (an arithmetic type or `std::string`)
      * @param[in] model a previously learned model
      * @param[in] data the labeled data set to score
@@ -174,33 +174,59 @@ class csvm {
      * @throws plssvm::exception any exception thrown in the respective backend's implementation of `plssvm::csvm::predict_values`
      * @return the accuracy of the labeled @p data (`[[nodiscard]]`)
      */
-    template <typename real_type, typename label_type>
-    [[nodiscard]] real_type score(const model<real_type, label_type> &model, const data_set<real_type, label_type> &data) const;
+    template <typename label_type>
+    [[nodiscard]] real_type score(const model<label_type> &model, const data_set<label_type> &data) const;
 
   protected:
     //*************************************************************************************************************************************//
     //                        pure virtual functions, must be implemented for all subclasses; doing the actual work                        //
     //*************************************************************************************************************************************//
+    //***************************************************//
+    //                        fit                        //
+    //***************************************************//
     /**
-     * @brief Solves the equation \f$Ax = b\f$ using the Conjugated Gradients algorithm.
-     * @details Uses a slightly modified version of the CG algorithm described by [Jonathan Richard Shewchuk](https://www.cs.cmu.edu/~quake-papers/painless-conjugate-gradient.pdf):
-     * \image html cg.png
-     * @param[in] params the SVM parameters used in the respective kernel functions
-     * @param[in] A the matrix of the equation \f$Ax = b\f$ (symmetric positive definite)
-     * @param[in] b the right-hand side of the equation \f$Ax = b\f$
-     * @param[in] eps the error tolerance
-     * @param[in] max_iter the maximum number of CG iterations
-     * @throws plssvm::exception any exception thrown by the backend's implementation
-     * @return a pair of [the result vector x, the resulting bias] (`[[nodiscard]]`)
+     * @brief Calculate the total available device memory based on the used backend.
+     * @return the total device memory (`[[nodiscard]]`)
      */
-    [[nodiscard]] virtual std::pair<aos_matrix<float>, std::vector<float>> solve_system_of_linear_equations(const detail::parameter<float> &params, const aos_matrix<float> &A, aos_matrix<float> B, float eps, unsigned long long max_iter) const = 0;
+    [[nodiscard]] virtual unsigned long long get_device_memory() const = 0;
+
     /**
-     * @copydoc plssvm::csvm::solve_system_of_linear_equations
+     * @brief Setup all necessary data on the device(s). Backend specific!
+     * @param[in] solver the used solver type
+     * @param[in] A the data to setup
+     * @return the backend specific setup data, e.g., pointer to GPU memory for the GPU related backends (`[[nodiscard]]`)
      */
-    [[nodiscard]] virtual std::pair<aos_matrix<double>, std::vector<double>> solve_system_of_linear_equations(const detail::parameter<double> &params, const aos_matrix<double> &A, aos_matrix<double> B, double eps, unsigned long long max_iter) const = 0;
+    [[nodiscard]] virtual detail::simple_any setup_data_on_devices(solver_type solver, const aos_matrix<real_type> &A) const = 0;
+
+    /**
+     * @brief Explicitly assemble the kernel matrix. Backend specific!
+     * @param[in] solver the used solver type, determines the return type
+     * @param[in] params the parameters used to assemble the kernel matrix (e.g., the used kernel function)
+     * @param[in] data the data used to assemble the kernel matrix; fully stored on the device
+     * @param[in] num_rows_reduced the number of rows (and columns) in the kernel matrix; pay attention to the dimension reduction
+     * @param[in] num_features the number of features in the data
+     * @param[in] q_red the vector used in the dimensional reduction
+     * @param[in] QA_cost the value used in the dimensional reduction
+     * @return based on the used solver type (e.g., cg_explicit -> kernel matrix fully stored on the device; cg_implicit -> "nothing") (`[[nodiscard]]`)
+     */
+    [[nodiscard]] virtual detail::simple_any assemble_kernel_matrix(solver_type solver, const parameter &params, const ::plssvm::detail::simple_any &data, const std::vector<real_type> &q_red, real_type QA_cost) const = 0;
+
+    /**
+     * @brief Perform a BLAS like GEMM matrix-matrix multiplication: `C = alpha * A * B + beta * C`.
+     * @param[in] solver the used solver type, determines the type of @p A
+     * @param[in] alpha the value to scale the result of the matrix-matrix multiplication
+     * @param[in] A a matrix depending on the used solver type (e.g., cg_explicit -> the kernel matrix fully stored on the device; cg_implicit -> the input data set used to implicitly perfom the matrix-matrix multiplication)
+     * @param[in] B the other matrix to multiply the kernel matrix with
+     * @param[in] beta the value to scale the matrix o add with
+     * @param[in,out] C the result matrix and the matrix to add (inplace)
+     */
+    virtual void blas_gemm(solver_type solver, real_type alpha, const detail::simple_any &A, const aos_matrix<real_type> &B, real_type beta, aos_matrix<real_type> &C) const = 0;
+
+    //***************************************************//
+    //                   predict, score                  //
+    //***************************************************//
     /**
      * @brief Uses the already learned model to predict the class of multiple (new) data points.
-     * @details Uses the one vs. all (OAA) for the multi-class classification task.
      * @param[in] params the SVM parameters used in the respective kernel functions
      * @param[in] support_vectors the previously learned support vectors
      * @param[in] alpha the alpha values (weights) associated with the support vectors and classes
@@ -210,11 +236,7 @@ class csvm {
      * @throws plssvm::exception any exception thrown by the backend's implementation
      * @return a vector filled with the predictions (not the actual labels!) (`[[nodiscard]]`)
      */
-    [[nodiscard]] virtual aos_matrix<float> predict_values(const detail::parameter<float> &params, const aos_matrix<float> &support_vectors, const aos_matrix<float> &alpha, const std::vector<float> &rho, aos_matrix<float> &w, const aos_matrix<float> &predict_points) const = 0;
-    /**
-     * @copydoc plssvm::csvm::predict_values
-     */
-    [[nodiscard]] virtual aos_matrix<double> predict_values(const detail::parameter<double> &params, const aos_matrix<double> &support_vectors, const aos_matrix<double> &alpha, const std::vector<double> &rho, aos_matrix<double> &w, const aos_matrix<double> &predict_points) const = 0;
+    [[nodiscard]] virtual aos_matrix<real_type> predict_values(const parameter &params, const aos_matrix<real_type> &support_vectors, const aos_matrix<real_type> &alpha, const std::vector<real_type> &rho, aos_matrix<real_type> &w, const aos_matrix<real_type> &predict_points) const = 0;
 
     /// The target platform of this SVM.
     target_platform target_{ plssvm::target_platform::automatic };
@@ -225,6 +247,37 @@ class csvm {
      * @throws plssvm::invalid_parameter_exception if the gamma value for the polynomial or radial basis function kernel is **not** greater than zero
      */
     void sanity_check_parameter() const;
+
+    /**
+     * @brief Solve the system of linear equations `K * X = B` where `K` is the kernel matrix assembled from @p A using the @p params with potentially multiple right-hand sides.
+     * @tparam Args the type of the potential additional parameters
+     * @param[in] A the data used to create the kernel matrix
+     * @param[in] B the right-hand sides
+     * @param[in] params the parameter to create the kernel matrix
+     * @param[in] named_args additional parameters for the respective algorithm used to solve the system of linear equations
+     * @return the result matrix `X` and the respective biases (`[[nodiscard]]`)
+     */
+    template <typename... Args>
+    [[nodiscard]] std::pair<aos_matrix<real_type>, std::vector<real_type>> solve_system_of_linear_equations(const aos_matrix<real_type> &A, const aos_matrix<real_type> &B, const parameter &params, Args&&... named_args) const;
+    /**
+     * @brief Solve the system of linear equations `AX = B` where `A` is the kernel matrix using the Conjugate Gradients (CG) algorithm.
+     * @param[in] A the kernel matrix
+     * @param[in] B the right-hand sides
+     * @param[in] eps the termination criterion for the CG algorithm
+     * @param[in] max_cg_iter the maximum number of CG iterations
+     * @param[in] cd_solver_variant the variation of the CG algorithm to use, i.e., how the kernel matrix is assembled (currently: explicit, streaming, implicit)
+     * @return the result matrix `X` (`[[nodiscard]]`)
+     */
+    [[nodiscard]] aos_matrix<real_type> conjugate_gradients(const detail::simple_any &A, const aos_matrix<real_type> &B, real_type eps, unsigned long long max_cg_iter, solver_type cd_solver_variant) const;
+    /**
+     * @brief Perform a dimensional reduction for the kernel matrix.
+     * @details Reduces the resulting dimension by `2` compared to the original LS-SVM formulation.
+     * @param[in] params the parameter used for the kernel matrix
+     * @param[in] A the data used for the kernel matrix
+     * @return the reduction vector ´q_red` and the bottom-right value `QA_cost` (`[[nodiscard]]`)
+     */
+    [[nodiscard]] std::pair<std::vector<real_type>, real_type> perform_dimensional_reduction(const parameter &params, const aos_matrix<real_type> &A) const;
+
 
     /// The SVM parameter (e.g., cost, degree, gamma, coef0) currently in use.
     parameter params_{};
@@ -269,75 +322,57 @@ void csvm::set_params(Args &&...named_args) {
     this->sanity_check_parameter();
 }
 
-template <typename real_type, typename label_type, typename... Args>
-model<real_type, label_type> csvm::fit(const data_set<real_type, label_type> &data, Args &&...named_args) const {
-    igor::parser parser{ std::forward<Args>(named_args)... };
-
-    // set default values
-    default_value epsilon_val{ default_init<real_type>{ 0.001 } };
-    default_value max_iter_val{ default_init<unsigned long long>{ data.num_data_points() } };
-    default_value classification_val{ default_init<classification_type>{ classification_type::oaa } };
-
-    // compile time check: only named parameter are permitted
-    static_assert(!parser.has_unnamed_arguments(), "Can only use named parameter!");
-    // compile time check: each named parameter must only be passed once
-    static_assert(!parser.has_duplicates(), "Can only use each named parameter once!");
-    // compile time check: only some named parameters are allowed
-    static_assert(!parser.has_other_than(epsilon, max_iter, classification), "An illegal named parameter has been passed!");
-
-    // compile time/runtime check: the values must have the correct types
-    if constexpr (parser.has(epsilon)) {
-        // get the value of the provided named parameter
-        epsilon_val = detail::get_value_from_named_parameter<typename decltype(epsilon_val)::value_type>(parser, epsilon);
-        // check if value makes sense
-        if (epsilon_val <= static_cast<typename decltype(epsilon_val)::value_type>(0)) {
-            throw invalid_parameter_exception{ fmt::format("epsilon must be less than 0.0, but is {}!", epsilon_val) };
-        }
-    }
-    if constexpr (parser.has(max_iter)) {
-        // get the value of the provided named parameter
-        max_iter_val = detail::get_value_from_named_parameter<typename decltype(max_iter_val)::value_type>(parser, max_iter);
-        // check if value makes sense
-        if (max_iter_val == static_cast<typename decltype(max_iter_val)::value_type>(0)) {
-            throw invalid_parameter_exception{ fmt::format("max_iter must be greater than 0, but is {}!", max_iter_val) };
-        }
-    }
-    if constexpr (parser.has(classification)) {
-        // get the value of the provided named parameter
-        classification_val = detail::get_value_from_named_parameter<typename decltype(classification_val)::value_type>(parser, classification);
-    }
-
-    // start fitting the data set using a C-SVM
-
+template <typename label_type, typename... Args>
+model<label_type> csvm::fit(const data_set<label_type> &data, Args &&...named_args) const {
     if (!data.has_labels()) {
         throw invalid_parameter_exception{ "No labels given for training! Maybe the data is only usable for prediction?" };
     }
 
+    igor::parser parser{ named_args... };
+
+    // set default values
+    // note: if the default value is changed, they must also be changed in the Python bindings!
+    classification_type used_classification{ classification_type::oaa };
+
+    // compile time check: only named parameters are permitted
+    static_assert(!parser.has_unnamed_arguments(), "Can only use named parameter!");
+    // compile time check: each named parameter must only be passed once
+    static_assert(!parser.has_duplicates(), "Can only use each named parameter once!");
+    // compile time check: only some named parameters are allowed
+    static_assert(!parser.has_other_than(epsilon, max_iter, classification, solver), "An illegal named parameter has been passed!");
+
+    // compile time/runtime check: the values must have the correct types
+    if constexpr (parser.has(classification)) {
+        // get the value of the provided named parameter
+        used_classification = detail::get_value_from_named_parameter<classification_type>(parser, classification);
+    }
+
+    // start fitting the data set using a C-SVM
+    const std::chrono::time_point start_time = std::chrono::steady_clock::now();
+
+    detail::log(verbosity_level::full,
+                "Using {} ({}) as multi-class classification strategy.\n",
+                used_classification,
+                classification_type_to_full_string(used_classification));
+
     // copy parameter and set gamma if necessary
     parameter params{ params_ };
     if (params.gamma.is_default()) {
-        // no gamma provided -> use default value which depends on the number of features of the data set
-        params.gamma = 1.0 / data.num_features();
+        // no gamma provided -> use default value which depends on the number of features in the data set
+        params.gamma = real_type{ 1.0 } / data.num_features();
     }
 
-    const std::chrono::time_point start_time = std::chrono::steady_clock::now();
-
-    detail::log(verbosity_level::full | verbosity_level::timing,
-                "Using {} ({}) as multi-class classification strategy.\n",
-                classification_val.value(),
-                classification_type_to_full_string(classification_val.value()));
-
     // create model
-    model<real_type, label_type> csvm_model{ params, data, classification_val.value() };
+    model<label_type> csvm_model{ params, data, used_classification };
 
 
-    if (classification_val.value() == plssvm::classification_type::oaa) {
+    if (used_classification == plssvm::classification_type::oaa) {
         // use the one vs. all multi-class classification strategy
         // solve the minimization problem
         aos_matrix<real_type> alpha;
-        std::tie(alpha, *csvm_model.rho_ptr_) = solve_system_of_linear_equations(static_cast<detail::parameter<real_type>>(params), *data.data_ptr_, *data.y_ptr_, epsilon_val.value(), max_iter_val.value());
+        std::tie(alpha, *csvm_model.rho_ptr_) = solve_system_of_linear_equations(*data.data_ptr_, *data.y_ptr_, params, std::forward<Args>(named_args)...);
         csvm_model.alpha_ptr_->push_back(std::move(alpha));
-    } else if (classification_val.value() == plssvm::classification_type::oao) {
+    } else if (used_classification == plssvm::classification_type::oao) {
         // use the one vs. one multi-class classification strategy
         const std::size_t num_classes = data.num_classes();
         const std::size_t num_binary_classifications = calculate_number_of_classifiers(classification_type::oao, num_classes);
@@ -357,11 +392,11 @@ model<real_type, label_type> csvm::fit(const data_set<real_type, label_type> &da
 
         if (num_classes == 2) {
             // special optimization for binary case (no temporary copies necessary)
-            detail::log(verbosity_level::full | verbosity_level::timing,
+            detail::log(verbosity_level::full,
                         "\nClassifying 0 vs 1 ({} vs {}) (1/1):\n",
                         data.mapping_->get_label_by_mapped_index(0),
                         data.mapping_->get_label_by_mapped_index(1));
-            const auto &[alpha, rho] = solve_system_of_linear_equations(static_cast<detail::parameter<real_type>>(params), *data.data_ptr_, *data.y_ptr_, epsilon_val.value(), max_iter_val.value());
+            const auto &[alpha, rho] = solve_system_of_linear_equations(*data.data_ptr_, *data.y_ptr_, params, std::forward<Args>(named_args)...);
             csvm_model.alpha_ptr_->front() = std::move(alpha);
             csvm_model.rho_ptr_->front() = rho.front();  // prevents std::tie
         } else {
@@ -389,10 +424,8 @@ model<real_type, label_type> csvm::fit(const data_set<real_type, label_type> &da
                         binary_y(0, si) = detail::contains(indices[i], sorted_indices[si]) ? real_type{ 1.0 } : real_type{ -1.0 };
                     }
 
-                    // if max_iter is the default value, update it according to the current binary classification matrix size
-                    const unsigned long long binary_max_iter = max_iter_val.is_default() ? static_cast<unsigned long long>(binary_data.num_rows()) : max_iter_val.value();
                     // solve the minimization problem -> note that only a single rhs is present
-                    detail::log(verbosity_level::full | verbosity_level::timing,
+                    detail::log(verbosity_level::full,
                                 "\nClassifying {} vs {} ({} vs {}) ({}/{}):\n",
                                 i,
                                 j,
@@ -400,7 +433,7 @@ model<real_type, label_type> csvm::fit(const data_set<real_type, label_type> &da
                                 data.mapping_->get_label_by_mapped_index(j),
                                 pos + 1,
                                 calculate_number_of_classifiers(classification_type::oao, num_classes));
-                    const auto &[alpha, rho] = solve_system_of_linear_equations(static_cast<detail::parameter<real_type>>(params), binary_data, binary_y, epsilon_val.value(), binary_max_iter);
+                    const auto &[alpha, rho] = solve_system_of_linear_equations(binary_data, binary_y, params, std::forward<Args>(named_args)...);
                     (*csvm_model.alpha_ptr_)[pos] = std::move(alpha);
                     (*csvm_model.rho_ptr_)[pos] = rho.front();  // prevents std::tie
                     // go to next one vs. one classification
@@ -416,14 +449,14 @@ model<real_type, label_type> csvm::fit(const data_set<real_type, label_type> &da
     const std::chrono::time_point end_time = std::chrono::steady_clock::now();
     detail::log(verbosity_level::full | verbosity_level::timing,
                 "\nLearned the SVM classifier for {} multi-class classification in {}.\n\n",
-                classification_type_to_full_string(classification_val.value()),
+                classification_type_to_full_string(used_classification),
                 detail::tracking_entry{ "cg", "total_runtime", std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time) });
 
     return csvm_model;
 }
 
-template <typename real_type, typename label_type>
-std::vector<label_type> csvm::predict(const model<real_type, label_type> &model, const data_set<real_type, label_type> &data) const {
+template <typename label_type>
+std::vector<label_type> csvm::predict(const model<label_type> &model, const data_set<label_type> &data) const {
     if (model.num_features() != data.num_features()) {
         throw invalid_parameter_exception{ fmt::format("Number of features per data point ({}) must match the number of features per support vector of the provided model ({})!", data.num_features(), model.num_features()) };
     }
@@ -445,7 +478,7 @@ std::vector<label_type> csvm::predict(const model<real_type, label_type> &model,
         const aos_matrix<real_type> &alpha = model.alpha_ptr_->back();
 
         // predict values using OAA -> num_data_points x num_classes
-        const aos_matrix<real_type> votes = predict_values(static_cast<detail::parameter<real_type>>(model.params_), sv, alpha, *model.rho_ptr_, *model.w_ptr_, predict_points);
+        const aos_matrix<real_type> votes = predict_values(model.params_, sv, alpha, *model.rho_ptr_, *model.w_ptr_, predict_points);
 
         PLSSVM_ASSERT(votes.num_rows() == data.num_data_points(), "The number of votes ({}) must be equal the number of data points ({})!", votes.num_rows(), data.num_data_points());
         PLSSVM_ASSERT(votes.num_cols() == calculate_number_of_classifiers(classification_type::oaa, model.num_classes()), "The votes contain {} values, but must contain {} values!", votes.num_cols(), calculate_number_of_classifiers(classification_type::oaa, model.num_classes()));
@@ -507,8 +540,8 @@ std::vector<label_type> csvm::predict(const model<real_type, label_type> &model,
                        aos_matrix<real_type> temp{ num_data_points_in_sub_matrix, num_features };
                        std::vector<std::size_t> sorted_indices(num_data_points_in_sub_matrix);
                        std::merge(indices[i].cbegin(), indices[i].cend(), indices[j].cbegin(), indices[j].cend(), sorted_indices.begin());
-                        // copy the support vectors to the binary support vectors
-                        #pragma omp parallel for collapse(2) default(none) shared(sorted_indices, temp, model) firstprivate(num_data_points_in_sub_matrix, num_features)
+                       // copy the support vectors to the binary support vectors
+                       #pragma omp parallel for collapse(2) default(none) shared(sorted_indices, temp, model) firstprivate(num_data_points_in_sub_matrix, num_features)
                        for (std::size_t si = 0; si < num_data_points_in_sub_matrix; ++si) {
                            for (std::size_t dim = 0; dim < num_features; ++dim) {
                                temp(si, dim) = (*model.data_.data_ptr_)(sorted_indices[si], dim);
@@ -525,7 +558,7 @@ std::vector<label_type> csvm::predict(const model<real_type, label_type> &model,
                     // the w vector optimization has not been applied yet -> calculate w and store it
                     aos_matrix<real_type> w{};
                     // returned w: 1 x num_features
-                    binary_votes = predict_values(static_cast<detail::parameter<real_type>>(model.params_), binary_sv, binary_alpha, binary_rho, w, predict_points);
+                    binary_votes = predict_values(model.params_, binary_sv, binary_alpha, binary_rho, w, predict_points);
                     // only in case of the linear kernel, the w vector gets filled -> store it
                     if (params_.kernel_type == kernel_function_type::linear) {
                         #pragma omp parallel for default(none) shared(model, w) firstprivate(num_features, pos)
@@ -540,7 +573,7 @@ std::vector<label_type> csvm::predict(const model<real_type, label_type> &model,
                     for (std::size_t dim = 0; dim < num_features; ++dim) {
                         binary_w(0, dim) = (*model.w_ptr_)(pos, dim);
                     }
-                    binary_votes = predict_values(static_cast<detail::parameter<real_type>>(model.params_), binary_sv, binary_alpha, binary_rho, binary_w, predict_points);
+                    binary_votes = predict_values(model.params_, binary_sv, binary_alpha, binary_rho, binary_w, predict_points);
                 }
 
                 PLSSVM_ASSERT(binary_votes.num_rows() == data.num_data_points(), "The number of votes ({}) must be equal the number of data points ({})!", binary_votes.num_rows(), data.num_data_points());
@@ -579,13 +612,13 @@ std::vector<label_type> csvm::predict(const model<real_type, label_type> &model,
     return predicted_labels;
 }
 
-template <typename real_type, typename label_type>
-real_type csvm::score(const model<real_type, label_type> &model) const {
+template <typename label_type>
+real_type csvm::score(const model<label_type> &model) const {
     return this->score(model, model.data_);
 }
 
-template <typename real_type, typename label_type>
-real_type csvm::score(const model<real_type, label_type> &model, const data_set<real_type, label_type> &data) const {
+template <typename label_type>
+real_type csvm::score(const model<label_type> &model, const data_set<label_type> &data) const {
     // the data set must contain labels in order to score the learned model
     if (!data.has_labels()) {
         throw invalid_parameter_exception{ "The data set to score must have labels!" };
@@ -611,19 +644,142 @@ real_type csvm::score(const model<real_type, label_type> &model, const data_set<
     return static_cast<real_type>(correct) / static_cast<real_type>(predicted_labels.size());
 }
 
-inline void csvm::sanity_check_parameter() const {
-    // kernel: valid kernel function
-    if (params_.kernel_type != kernel_function_type::linear && params_.kernel_type != kernel_function_type::polynomial && params_.kernel_type != kernel_function_type::rbf) {
-        throw invalid_parameter_exception{ fmt::format("Invalid kernel function {} given!", detail::to_underlying(params_.kernel_type)) };
+//*************************************************************************************************************************************//
+//                                                       private member functions                                                      //
+//*************************************************************************************************************************************//
+
+template <typename... Args>
+std::pair<aos_matrix<real_type>, std::vector<real_type>> csvm::solve_system_of_linear_equations(const aos_matrix<real_type> &A, const aos_matrix<real_type> &B, const parameter &params, Args &&...named_args) const {
+    PLSSVM_ASSERT(!A.empty(), "The A matrix may not be empty!");
+    PLSSVM_ASSERT(!B.empty(), "The B matrix may not be empty!");
+    PLSSVM_ASSERT(A.num_rows() == B.num_cols(), "The number of data points in A ({}) and B ({}) must be the same!", A.num_rows(), B.num_cols());
+
+    igor::parser parser{ std::forward<Args>(named_args)... };
+
+    // set default values
+    // note: if the default values are changed, they must also be changed in the Python bindings!
+    real_type used_epsilon{ 0.001 };
+    unsigned long long used_max_iter{ A.num_rows() };
+    solver_type used_solver{ solver_type::automatic };
+
+    // compile time check: only named parameters are permitted
+    static_assert(!parser.has_unnamed_arguments(), "Can only use named parameter!");
+    // compile time check: each named parameter must only be passed once
+    static_assert(!parser.has_duplicates(), "Can only use each named parameter once!");
+    // compile time check: only some named parameters are allowed
+    static_assert(!parser.has_other_than(epsilon, max_iter, classification, solver), "An illegal named parameter has been passed!");
+
+    // compile time/runtime check: the values must have the correct types
+    if constexpr (parser.has(epsilon)) {
+        // get the value of the provided named parameter
+        used_epsilon = detail::get_value_from_named_parameter<real_type>(parser, epsilon);
+        // check if value makes sense
+        if (used_epsilon <= real_type{ 0.0 }) {
+            throw invalid_parameter_exception{ fmt::format("epsilon must be less than 0.0, but is {}!", used_epsilon) };
+        }
+    }
+    if constexpr (parser.has(max_iter)) {
+        // get the value of the provided named parameter
+        used_max_iter = detail::get_value_from_named_parameter<unsigned long long>(parser, max_iter);
+        // check if value makes sense
+        if (used_max_iter == 0) {
+            throw invalid_parameter_exception{ fmt::format("max_iter must be greater than 0, but is {}!", used_max_iter) };
+        }
+    }
+    if constexpr (parser.has(solver)) {
+        // get the value of the provided parameter
+        used_solver = detail::get_value_from_named_parameter<solver_type>(parser, solver);
     }
 
-    // gamma: must be greater than 0 IF explicitly provided, but only in the polynomial and rbf kernel
-    if ((params_.kernel_type == kernel_function_type::polynomial || params_.kernel_type == kernel_function_type::rbf) && !params_.gamma.is_default() && params_.gamma.value() <= 0.0) {
-        throw invalid_parameter_exception{ fmt::format("gamma must be greater than 0.0, but is {}!", params_.gamma) };
+    const std::size_t num_rows = A.num_rows();
+    const std::size_t num_features = A.num_cols();
+    const std::size_t num_rows_reduced = num_rows - 1;
+    const std::size_t num_rhs = B.num_rows();
+
+    // determine the correct solver type, if the automatic solver type has been provided
+    if (used_solver == solver_type::automatic) {
+        using namespace detail::literals;
+
+        const auto reduce_total_memory = [](const double total_memory) -> double {
+            return total_memory - std::max<double>(total_memory * 0.05, 512_MiB);  // 512 MiB
+        };
+        const double total_system_memory = reduce_total_memory(detail::get_system_memory());
+        const double total_device_memory = reduce_total_memory(this->get_device_memory());
+
+        // 4B/8B * (data_set size + explicit kernel matrix size + B and C matrix in GEMM + q_red vector)
+        const unsigned long long total_memory_needed = sizeof(real_type) * (num_rows * num_features + num_rows_reduced * num_rows_reduced + 2 * num_rows_reduced * num_rhs + num_features);
+
+        detail::log(verbosity_level::full,
+                    "Determining the solver type based on the available memory:\n"
+                    "  - system memory: {:.2f} GiB\n"
+                    "  - device memory: {:.2f} GiB\n"
+                    "  - memory needed: {:.2f} GiB\n",
+                    detail::tracking_entry{ "solver", "system_memory_GiB", total_system_memory / 1.0_GiB },
+                    detail::tracking_entry{ "solver", "device_memory_GiB", total_device_memory / 1.0_GiB },
+                    detail::tracking_entry{ "solver", "needed_memory_GiB", total_memory_needed / 1.0_GiB });
+
+        if (total_memory_needed < total_device_memory) {
+            used_solver = solver_type::cg_explicit;
+        } else if (total_memory_needed > total_device_memory && total_memory_needed < total_system_memory) {
+            used_solver = solver_type::cg_streaming;
+        } else {
+            used_solver = solver_type::cg_implicit;
+        }
     }
-    // degree: all allowed
-    // coef0: all allowed
-    // cost: all allowed
+
+    detail::log(verbosity_level::full,
+                "Using {} as solver for AX=B.\n",
+                detail::tracking_entry{ "solver", "solver_type", used_solver });
+
+    // perform dimensional reduction
+    const auto [q_red, QA_cost] = this->perform_dimensional_reduction(params, A);
+
+    // update right-hand sides (B)
+    std::vector<real_type> b_back_value(num_rhs);
+    aos_matrix<real_type> B_red{ num_rhs, num_rows_reduced };
+    #pragma omp parallel for default(none) shared(B, B_red, b_back_value) firstprivate(num_rhs, num_rows_reduced)
+    for (std::size_t row = 0; row < num_rhs; ++row) {
+        b_back_value[row] = B(row, num_rows_reduced);
+        for (std::size_t col = 0; col < num_rows_reduced; ++col) {
+            B_red(row, col) = B(row, col) - b_back_value[row];
+        }
+    }
+
+    // setup/allocate necessary data on the device(s)
+    const detail::simple_any data = this->setup_data_on_devices(used_solver, A);
+
+    // assemble explicit kernel matrix
+    const std::chrono::steady_clock::time_point assembly_start_time = std::chrono::steady_clock::now();
+    const detail::simple_any kernel_matrix = this->assemble_kernel_matrix(used_solver, params, data, q_red, QA_cost);
+    const std::chrono::steady_clock::time_point assembly_end_time = std::chrono::steady_clock::now();
+    detail::log(verbosity_level::full | verbosity_level::timing,
+                "Assembled the kernel matrix in {}.\n",
+                detail::tracking_entry{ "kernel_matrix", "kernel_matrix_assembly", std::chrono::duration_cast<std::chrono::milliseconds>(assembly_end_time - assembly_start_time) });
+
+
+    // choose the correct algorithm based on the (provided) solver type -> currently only CG available
+    const aos_matrix<real_type> X = conjugate_gradients(kernel_matrix, B_red, used_epsilon, used_max_iter, used_solver);  // TODO: q_red for implicit
+
+
+    // calculate bias and undo dimensional reduction
+    aos_matrix<real_type> X_ret{ num_rhs, A.num_rows() };
+    std::vector<real_type> bias(num_rhs);
+    #pragma omp parallel for default(none) shared(X, q_red, X_ret, bias, b_back_value) firstprivate(num_rhs, num_rows_reduced, QA_cost)
+    for (std::size_t i = 0; i < num_rhs; ++i) {
+        real_type temp_sum{ 0.0 };
+        real_type temp_dot{ 0.0 };
+        #pragma omp simd reduction(+ : temp_sum) reduction(+ : temp_dot)
+        for (std::size_t dim = 0; dim < num_rows_reduced; ++dim) {
+            temp_sum += X(i, dim);
+            temp_dot += q_red[dim] * X(i, dim);
+
+            X_ret(i, dim) = X(i, dim);
+        }
+        bias[i] = -(b_back_value[i] + QA_cost * temp_sum - temp_dot);
+        X_ret(i, num_rows_reduced) = -temp_sum;
+    }
+
+    return std::make_pair(std::move(X_ret), std::move(bias));
 }
 
 /// @cond Doxygen_suppress

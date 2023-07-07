@@ -28,6 +28,7 @@
 #include "plssvm/backend_types.hpp"                         // all supported backend types
 #include "plssvm/classification_types.hpp"                  // all supported multi-class classification strategies
 #include "plssvm/kernel_function_types.hpp"                 // all supported kernel function types
+#include "plssvm/solver_types.hpp"                          // all supported solver types (e.g., Conjugate Gradients with explicit, streaming, or implicit kernel matrix generation)
 #include "plssvm/target_platforms.hpp"                      // all supported target platforms
 
 #include "plssvm/backends/SYCL/implementation_type.hpp"     // the SYCL implementation type
