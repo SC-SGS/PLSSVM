@@ -11,6 +11,7 @@
 
 #ifndef PLSSVM_BACKENDS_HIP_CG_EXPLICIT_KERNEL_MATRIX_ASSEMBLY_HIP_HPP_
 #define PLSSVM_BACKENDS_HIP_CG_EXPLICIT_KERNEL_MATRIX_ASSEMBLY_HIP_HPP_
+#pragma once
 
 #include "plssvm/constants.hpp"  // plssvm::real_type
 
