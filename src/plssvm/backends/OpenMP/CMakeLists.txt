@@ -34,8 +34,7 @@ message(CHECK_PASS "found ")
 set(PLSSVM_OPENMP_SOURCES
         ${CMAKE_CURRENT_LIST_DIR}/csvm.cpp
         ${CMAKE_CURRENT_LIST_DIR}/exceptions.cpp
-        ${CMAKE_CURRENT_LIST_DIR}/q_kernel.cpp
-        ${CMAKE_CURRENT_LIST_DIR}/kernel_matrix_assembly.cpp
+        ${CMAKE_CURRENT_LIST_DIR}/cg_explicit/kernel_matrix_assembly.cpp
         )
 
 

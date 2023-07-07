@@ -13,14 +13,19 @@
 #define PLSSVM_BACKENDS_OPENMP_CSVM_HPP_
 #pragma once
 
+#include "plssvm/constants.hpp"           // plssvm::real_type
 #include "plssvm/csvm.hpp"                // plssvm::csvm
+#include "plssvm/detail/simple_any.hpp"   // plssvm::detail::simple_any
 #include "plssvm/detail/type_traits.hpp"  // PLSSVM_REQUIRES
-#include "plssvm/parameter.hpp"           // plssvm::parameter, plssvm::detail::{parameter, has_only_parameter_named_args_v}
+#include "plssvm/matrix.hpp"              // plssvm::aos_matrix
+#include "plssvm/parameter.hpp"           // plssvm::parameter, plssvm::detail::has_only_parameter_named_args_v
 #include "plssvm/target_platforms.hpp"    // plssvm::target_platform
+
 
 #include <type_traits>                    // std::true_type
 #include <utility>                        // std::forward, std::pair
 #include <vector>                         // std::vector
+#include <variant>
 
 namespace plssvm {
 
@@ -97,73 +102,42 @@ class csvm : public ::plssvm::csvm {
      */
      ~csvm() override = default;
 
-  protected:
-    /**
-     * @copydoc plssvm::csvm::solve_system_of_linear_equations
-     */
-    [[nodiscard]] std::pair<std::vector<std::vector<float>>, std::vector<float>> solve_system_of_linear_equations(const detail::parameter<float> &params, const std::vector<std::vector<float>> &A, std::vector<std::vector<float>> B, float eps, unsigned long long max_iter) const override { return this->solve_system_of_linear_equations_impl(params, A, B, eps, max_iter); }
-    /**
-     * @copydoc plssvm::csvm::solve_system_of_linear_equations
-     */
-    [[nodiscard]] std::pair<std::vector<std::vector<double>>, std::vector<double>> solve_system_of_linear_equations(const detail::parameter<double> &params, const std::vector<std::vector<double>> &A, std::vector<std::vector<double>> B, double eps, unsigned long long max_iter) const override { return this->solve_system_of_linear_equations_impl(params, A, B, eps, max_iter); }
-    /**
-     * @copydoc plssvm::csvm::solve_system_of_linear_equations
-     */
-    template <typename real_type>
-    [[nodiscard]] std::pair<std::vector<std::vector<real_type>>, std::vector<real_type>> solve_system_of_linear_equations_impl(const detail::parameter<real_type> &params, const std::vector<std::vector<real_type>> &A, std::vector<std::vector<real_type>> B, real_type eps, unsigned long long max_iter) const;
-
-    /**
-     * @copydoc plssvm::csvm::predict_values
-     */
-    [[nodiscard]] std::vector<std::vector<float>> predict_values(const detail::parameter<float> &params, const std::vector<std::vector<float>> &support_vectors, const std::vector<std::vector<float>> &alpha, const std::vector<float> &rho, std::vector<std::vector<float>> &w, const std::vector<std::vector<float>> &predict_points) const override { return this->predict_values_impl(params, support_vectors, alpha, rho, w, predict_points); }
-    /**
-     * @copydoc plssvm::csvm::predict_values
-     */
-    [[nodiscard]] std::vector<std::vector<double>> predict_values(const detail::parameter<double> &params, const std::vector<std::vector<double>> &support_vectors, const std::vector<std::vector<double>> &alpha, const std::vector<double> &rho, std::vector<std::vector<double>> &w, const std::vector<std::vector<double>> &predict_points) const override { return this->predict_values_impl(params, support_vectors, alpha, rho, w, predict_points); }
-    /**
-     * @copydoc plssvm::csvm::predict_values
-     */
-    template <typename real_type>
-    [[nodiscard]] std::vector<std::vector<real_type>> predict_values_impl(const detail::parameter<real_type> &params, const std::vector<std::vector<real_type>> &support_vectors, const std::vector<std::vector<real_type>> &alpha, const std::vector<real_type> &rho, std::vector<std::vector<real_type>> &w, const std::vector<std::vector<real_type>> &predict_points) const;
-
-    /**
-     * @brief Calculate the `q` vector used in the dimensional reduction.
-     * @details The template parameter `real_type` represents the type of the data points (either `float` or `double`).
-     * @param[in] params the SVM parameter used to calculate `q` (e.g., kernel_type)
-     * @param[in] data the data points used in the dimensional reduction
-     * @return the `q` vector (`[[nodiscard]]`)
-     */
-    template <typename real_type>
-    [[nodiscard]] std::vector<real_type> generate_q(const detail::parameter<real_type> &params, const std::vector<std::vector<real_type>> &data) const;
-    /**
-     * @brief Explicitly assemble the kernel matrix using the respective kernel function.
-     * @details The template parameter `real_type` represents the type of the data points (either `float` or `double`).
-     * @param[in] params the SVM parameter used to calculate `q` (e.g., kernel_type)
-     * @param[in] data the data points used for the kernel matrix
-     * @param[in] q the `q` vector from the dimensional reduction
-     * @param[in] QA_cost the `QA_cost` value from the dimensional reduction
-     * @return the explicitly assembled kernel matrix (`[[nodiscard]]`)
-     */
-    template <typename real_type>
-    [[nodiscard]] std::vector<std::vector<real_type>> assemble_kernel_matrix(const detail::parameter<real_type> &params, const std::vector<std::vector<real_type>> &data, const std::vector<real_type> &q, const real_type QA_cost) const;
-    /**
-     * @brief Precalculate the `w` vector to speedup up the prediction using the linear kernel function.
-     * @details The template parameter `real_type` represents the type of the data points (either `float` or `double`).
-     * @param[in] support_vectors the previously learned support vectors
-     * @param[in] alpha the previously learned weights
-     * @return the `w` vector (`[[nodiscard]]`)
-     */
-    template <typename real_type>
-    [[nodiscard]] std::vector<real_type> calculate_w(const std::vector<std::vector<real_type>> &support_vectors, const std::vector<real_type> &alpha) const;
-
   private:
     /**
-     * @brief Initializes the OpenMP backend and performs some sanity checks.
-     * @param[in] target the target platform to use
-     * @throws plssvm::openmp::backend_exception if the target platform isn't plssvm::target_platform::automatic or plssvm::target_platform::cpu
-     * @throws plssvm::openmp::backend_exception if the plssvm::target_platform::cpu target isn't available
+    * @brief Initializes the OpenMP backend and performs some sanity checks.
+    * @param[in] target the target platform to use
+    * @throws plssvm::openmp::backend_exception if the target platform isn't plssvm::target_platform::automatic or plssvm::target_platform::cpu
+    * @throws plssvm::openmp::backend_exception if the plssvm::target_platform::cpu target isn't available
      */
     void init(target_platform target);
+    /**
+     * @copydoc plssvm::csvm::get_device_memory
+     */
+    [[nodiscard]] unsigned long long get_device_memory() const final;
+
+    //***************************************************//
+    //                        fit                        //
+    //***************************************************//
+    /**
+     * @copydoc plssvm::csvm::setup_data_on_devices
+     */
+    [[nodiscard]] detail::simple_any setup_data_on_devices(const solver_type solver, const aos_matrix<real_type> &A) const final;
+    /**
+     * @copydoc plssvm::csvm::assemble_kernel_matrix
+     */
+    [[nodiscard]] detail::simple_any assemble_kernel_matrix(const solver_type solver, const parameter &params, const detail::simple_any &data, const std::vector<real_type> &q_red, const real_type QA_cost) const final;
+    /**
+     * @copydoc plssvm::csvm::blas_gemm
+     */
+    void blas_gemm(const solver_type solver, const real_type alpha, const detail::simple_any &A, const aos_matrix<real_type> &B, const real_type beta, aos_matrix<real_type> &C) const final;
+
+    //***************************************************//
+    //                   predict, score                  //
+    //***************************************************//
+    /**
+     * @copydoc plssvm::csvm::predict_values
+     */
+    [[nodiscard]] aos_matrix<real_type> predict_values(const parameter &params, const aos_matrix<real_type> &support_vectors, const aos_matrix<real_type> &alpha, const std::vector<real_type> &rho, aos_matrix<real_type> &w, const aos_matrix<real_type> &predict_points) const final;
 };
 
 }  // namespace openmp

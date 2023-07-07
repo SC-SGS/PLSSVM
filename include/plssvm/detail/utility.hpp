@@ -132,6 +132,12 @@ template <typename Container, typename T, PLSSVM_REQUIRES(is_container_v<Contain
  */
 [[nodiscard]] std::string current_date_time();
 
+/**
+ * @brief Returns the available total system memory.
+ * @return the total system memory in bytes (`[[nodiscard]]`)
+ */
+[[nodiscard]] unsigned long long get_system_memory();
+
 }  // namespace plssvm::detail
 
 #endif  // PLSSVM_DETAIL_UTILITY_HPP_

@@ -7,7 +7,9 @@
  */
 
 #include "plssvm/model.hpp"
-#include "plssvm/detail/type_list.hpp"  // plssvm::detail::real_type_label_type_combination_list
+
+#include "plssvm/constants.hpp"         // plssvm::real_type
+#include "plssvm/detail/type_list.hpp"  // plssvm::detail::label_type_list
 
 #include "utility.hpp"                  // assemble_unique_class_name, vector_to_pyarray, matrix_to_pyarray
 
@@ -23,11 +25,11 @@
 
 namespace py = pybind11;
 
-template <typename real_type, typename label_type>
-void instantiate_model_bindings(py::module_ &m, plssvm::detail::real_type_label_type_combination<real_type, label_type>) {
-    using model_type = plssvm::model<real_type, label_type>;
+template <typename label_type>
+void instantiate_model_bindings(py::module_ &m, label_type) {
+    using model_type = plssvm::model<label_type>;
 
-    const std::string class_name = assemble_unique_class_name<real_type, label_type>("Model");
+    const std::string class_name = assemble_unique_class_name<label_type>("Model");
 
     py::class_<model_type>(m, class_name.c_str())
         .def(py::init<const std::string &>(), "load a previously learned model from a file")
@@ -60,8 +62,12 @@ void instantiate_model_bindings(py::module_ &m, plssvm::detail::real_type_label_
             },
             "the classes")
         .def(
-            "weights", [](const model_type &self) {
-                return matrix_to_pyarray(self.weights());
+            "weights", []([[maybe_unused]] const model_type &self) {
+                py::list ret{};
+                for (const plssvm::aos_matrix<plssvm::real_type> &matr : self.weights()) {
+                    ret.append(matrix_to_pyarray(matr));
+                }
+                return ret;
             },
             "the weights learned for each support vector and class")
         .def("rho", [](const model_type &self) {
@@ -88,8 +94,8 @@ void instantiate_model_bindings(py::module_ &m) {
 
 void init_model(py::module_ &m) {
     // bind all model classes
-    instantiate_model_bindings<plssvm::detail::real_type_label_type_combination_list>(m);
+    instantiate_model_bindings<plssvm::detail::label_type_list>(m);
 
     // create alias
-    m.attr("Model") = m.attr(assemble_unique_class_name<PLSSVM_PYTHON_BINDINGS_PREFERRED_REAL_TYPE, PLSSVM_PYTHON_BINDINGS_PREFERRED_LABEL_TYPE>("Model").c_str());
+    m.attr("Model") = m.attr(assemble_unique_class_name<PLSSVM_PYTHON_BINDINGS_PREFERRED_LABEL_TYPE>("Model").c_str());
 }

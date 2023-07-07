@@ -7,6 +7,8 @@
  */
 
 #include "plssvm/kernel_function_types.hpp"
+
+#include "plssvm/constants.hpp"  // plssvm::real_type
 #include "plssvm/parameter.hpp"  // plssvm::parameter
 
 #include "pybind11/pybind11.h"   // py::module_, py::enum_, py::arg, py::pos_only
@@ -29,10 +31,10 @@ void init_kernel_function_types(py::module_ &m) {
 
     const plssvm::parameter default_params{};
 
-    m.def("linear_kernel_function", &plssvm::kernel_function<plssvm::kernel_function_type::linear, double>, "apply the linear kernel function to two vectors");
+    m.def("linear_kernel_function", &plssvm::kernel_function<plssvm::kernel_function_type::linear>, "apply the linear kernel function to two vectors");
     m.def(
-        "polynomial_kernel_function", [](const std::vector<double> &x, const std::vector<double> &y, const int degree, const std::optional<double> gamma, const double coef0) {
-            return plssvm::kernel_function<plssvm::kernel_function_type::polynomial>(x, y, degree, gamma.has_value() ? gamma.value() : 1.0 / static_cast<double>(x.size()), coef0);
+        "polynomial_kernel_function", [](const std::vector<plssvm::real_type> &x, const std::vector<plssvm::real_type> &y, const int degree, const std::optional<plssvm::real_type> gamma, const plssvm::real_type coef0) {
+            return plssvm::kernel_function<plssvm::kernel_function_type::polynomial>(x, y, degree, gamma.has_value() ? gamma.value() : plssvm::real_type{ 1.0 } / static_cast<plssvm::real_type>(x.size()), coef0);
         },
         "apply the polynomial kernel function to two vectors",
         py::arg("x"),
@@ -42,8 +44,8 @@ void init_kernel_function_types(py::module_ &m) {
         py::arg("gamma") = std::nullopt,
         py::arg("coef0") = default_params.coef0.value());
     m.def(
-        "rbf_kernel_function", [](const std::vector<double> &x, const std::vector<double> &y, const std::optional<double> gamma) {
-            return plssvm::kernel_function<plssvm::kernel_function_type::rbf>(x, y, gamma.has_value() ? gamma.value() : 1.0 / static_cast<double>(x.size()));
+        "rbf_kernel_function", [](const std::vector<plssvm::real_type> &x, const std::vector<plssvm::real_type> &y, const std::optional<plssvm::real_type> gamma) {
+            return plssvm::kernel_function<plssvm::kernel_function_type::rbf>(x, y, gamma.has_value() ? gamma.value() : plssvm::real_type{ 1.0 } / static_cast<plssvm::real_type>(x.size()));
         },
         "apply the radial basis function kernel function to two vectors",
         py::arg("x"),
@@ -52,10 +54,10 @@ void init_kernel_function_types(py::module_ &m) {
         py::arg("gamma") = std::nullopt);
 
     m.def(
-        "kernel_function", [](const std::vector<double> &x, const std::vector<double> &y, plssvm::parameter params) {
+        "kernel_function", [](const std::vector<plssvm::real_type> &x, const std::vector<plssvm::real_type> &y, plssvm::parameter params) {
             // set default gamma value
             if (params.gamma.is_default()) {
-                params.gamma = 1.0 / static_cast<double>(x.size());
+                params.gamma = plssvm::real_type{ 1.0 } / static_cast<plssvm::real_type>(x.size());
             }
             return plssvm::kernel_function(x, y, params);
         },

@@ -664,7 +664,7 @@ TYPED_TEST_P(GenericGPUCSVM, setup_data_on_device) {
         EXPECT_EQ(feature_ranges[i], i * (num_features - 1) / num_devices);
     }
 
-    const std::vector<real_type> transformed_data = plssvm::detail::transform_to_layout(plssvm::detail::layout_type::soa, input, boundary_size, num_data_points - 1);
+    const std::vector<real_type> transformed_data = plssvm::detail::transform_to_layout(plssvm::layout_type::soa, input, boundary_size, num_data_points - 1);
 
     // the "big" data vector
     ASSERT_EQ(data_d.size(), num_devices);

@@ -35,7 +35,6 @@ int main(int argc, char *argv[]) {
 
         // create data set
         std::visit([&](auto &&data) {
-            using real_type = typename std::remove_reference_t<decltype(data)>::real_type;
             using label_type = typename std::remove_reference_t<decltype(data)>::label_type;
 
             // create SVM
@@ -43,14 +42,16 @@ int main(int argc, char *argv[]) {
                                                                                                          : plssvm::make_csvm(cmd_parser.backend, cmd_parser.target, cmd_parser.csvm_params);
 
             // only specify plssvm::max_iter if it isn't its default value
-            const plssvm::model<real_type, label_type> model =
+            const plssvm::model<label_type> model =
                 cmd_parser.max_iter.is_default() ? svm->fit(data,
                                                             plssvm::epsilon = cmd_parser.epsilon,
-                                                            plssvm::classification = cmd_parser.classification)
+                                                            plssvm::classification = cmd_parser.classification,
+                                                            plssvm::solver = cmd_parser.solver)
                                                  : svm->fit(data,
                                                             plssvm::epsilon = cmd_parser.epsilon,
                                                             plssvm::max_iter = cmd_parser.max_iter,
-                                                            plssvm::classification = cmd_parser.classification);
+                                                            plssvm::classification = cmd_parser.classification,
+                                                            plssvm::solver = cmd_parser.solver);
             // save model to file
             model.save(cmd_parser.model_filename);
         }, plssvm::detail::cmd::data_set_factory(cmd_parser));
