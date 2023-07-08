@@ -68,7 +68,7 @@ __global__ void device_kernel_predict_rbf(real_type *out_d, const real_type *alp
 
     if (sv_idx < num_sv && predict_points_idx < num_predict_points && class_idx < num_classes) {
         real_type temp{ 0.0 };
-        // perform dot product
+        // perform dist calculation
         for (unsigned long long dim = 0; dim < num_features; ++dim) {
             const real_type diff = sv_d[sv_idx * num_features + dim] - predict_points_d[predict_points_idx * num_features + dim];
             temp += diff * diff;
