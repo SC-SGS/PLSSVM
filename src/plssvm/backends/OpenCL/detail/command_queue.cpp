@@ -35,13 +35,12 @@ command_queue::command_queue(cl_context context, cl_device_id device) {
 }
 
 command_queue::command_queue(command_queue &&other) noexcept :
-    queue{ std::exchange(other.queue, nullptr) }, float_kernels{ std::move(other.float_kernels) }, double_kernels{ std::move(other.double_kernels) } {}
+    queue{ std::exchange(other.queue, nullptr) }, kernels{ std::move(other.kernels) } {}
 
 command_queue &command_queue::operator=(command_queue &&other) noexcept {
     if (this != std::addressof(other)) {
         queue = std::exchange(other.queue, nullptr);
-        float_kernels = std::move(other.float_kernels);
-        double_kernels = std::move(other.double_kernels);
+        kernels = std::move(other.kernels);
     }
     return *this;
 }
@@ -52,34 +51,13 @@ command_queue::~command_queue() {
     }
 }
 
-template <typename real_type>
 void command_queue::add_kernel(compute_kernel_name name, kernel &&compute_kernel) {
-    if constexpr (std::is_same_v<real_type, float>) {
-        PLSSVM_ASSERT(float_kernels.count(name) == 0, "The given (float) kernel as already been added to this command queue!");
-        float_kernels.insert_or_assign(name, std::move(compute_kernel));
-    } else if constexpr (std::is_same_v<real_type, double>) {
-        PLSSVM_ASSERT(double_kernels.count(name) == 0, "The given (double) kernel as already been added to this command queue!");
-        double_kernels.insert_or_assign(name, std::move(compute_kernel));
-    } else {
-        ::plssvm::detail::always_false_v<real_type>;
-    }
+    PLSSVM_ASSERT(kernels.count(name) == 0, "The given kernel as already been added to this command queue!");
+    kernels.insert_or_assign(name, std::move(compute_kernel));
 }
 
-template void command_queue::add_kernel<float>(compute_kernel_name, kernel &&);
-template void command_queue::add_kernel<double>(compute_kernel_name, kernel &&);
-
-template <typename real_type>
 [[nodiscard]] const kernel &command_queue::get_kernel(compute_kernel_name name) const {
-    if constexpr (std::is_same_v<real_type, float>) {
-        return float_kernels.at(name);
-    } else if constexpr (std::is_same_v<real_type, double>) {
-        return double_kernels.at(name);
-    } else {
-        ::plssvm::detail::always_false_v<real_type>;
-    }
+    return kernels.at(name);
 }
-
-template const kernel &command_queue::get_kernel<float>(compute_kernel_name) const;
-template const kernel &command_queue::get_kernel<double>(compute_kernel_name) const;
 
 }  // namespace plssvm::opencl::detail
