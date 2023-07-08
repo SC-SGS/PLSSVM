@@ -145,7 +145,7 @@ class device_kernel_assembly_rbf {
      * @param[in] cost the cost factor the diagonal is scaled with
      * @param[in] gamma parameter used in the rbf kernel function
      */
-    device_kernel_assembly_rbf(real_type *ret, const real_type *data_d, const unsigned long long num_rows, const unsigned long long num_features, const real_type *q, const real_type QA_cost, const real_type cost, const double gamma) :
+    device_kernel_assembly_rbf(real_type *ret, const real_type *data_d, const unsigned long long num_rows, const unsigned long long num_features, const real_type *q, const real_type QA_cost, const real_type cost, const real_type gamma) :
         ret_{ ret }, data_d_{ data_d }, num_rows_{ num_rows }, num_features_{ num_features }, q_{ q }, QA_cost_{ QA_cost }, cost_{ cost }, gamma_{ gamma } {}
 
     /**

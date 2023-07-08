@@ -732,7 +732,7 @@ std::pair<aos_matrix<real_type>, std::vector<real_type>> csvm::solve_system_of_l
     // perform dimensional reduction
     // note: structured binding is rejected by clang HIP compiler!
     std::vector<real_type> q_red{};
-    double QA_cost{};
+    real_type QA_cost{};
     std::tie(q_red, QA_cost) = this->perform_dimensional_reduction(params, A);
 
     // update right-hand sides (B)
