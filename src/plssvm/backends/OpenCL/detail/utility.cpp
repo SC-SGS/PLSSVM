@@ -283,7 +283,7 @@ void fill_command_queues_with_kernels(std::vector<command_queue> &queues, const 
 
     if (use_cached_binaries != caching_status::success) {
         plssvm::detail::log(verbosity_level::full,
-                            "Building OpenCL kernels from source (reason: {}).", caching_status_to_string(use_cached_binaries));
+                            "Building OpenCL kernels from source (reason: {}).\n", caching_status_to_string(use_cached_binaries));
 
         // create and build program
         cl_program program = clCreateProgramWithSource(contexts[0], 1, &kernel_src_ptr, nullptr, &err);
@@ -324,7 +324,7 @@ void fill_command_queues_with_kernels(std::vector<command_queue> &queues, const 
             out.write(reinterpret_cast<char *>(binaries[i]), binary_sizes[i]);
         }
         plssvm::detail::log(verbosity_level::full,
-                            "Cached OpenCL kernel binaries in {}.", cache_dir_name);
+                            "Cached OpenCL kernel binaries in {}.\n", cache_dir_name);
 
         // release resource
         if (program) {
@@ -332,7 +332,7 @@ void fill_command_queues_with_kernels(std::vector<command_queue> &queues, const 
         }
     } else {
         plssvm::detail::log(verbosity_level::full,
-                            "Using cached OpenCL kernel binaries from {}.", cache_dir_name);
+                            "Using cached OpenCL kernel binaries from {}.\n", cache_dir_name);
 
         const auto common_read_file = [](const std::filesystem::path &file) -> std::pair<unsigned char *, std::size_t> {
             std::ifstream f{ file };
