@@ -132,7 +132,7 @@ class device_kernel_predict_polynomial {
      * @param[in] gamma the parameter in the polynomial kernel function
      * @param[in] coef0 the parameter in the polynomial kernel function
      */
-    device_kernel_predict_polynomial(real_type *out_d, const real_type *alpha_d, const real_type *rho_d, const real_type *sv_d, const real_type *predict_points_d, const unsigned long long num_classes, const unsigned long long num_sv, const unsigned long long num_predict_points, const unsigned long long num_features, const int degree, const real_type gamma, const real_type coef0) :
+    device_kernel_predict_polynomial(real_type *out_d, const real_type *alpha_d, const real_type *rho_d, const real_type *sv_d, const real_type *predict_points_d, const unsigned long long num_classes, const unsigned long long num_sv, const unsigned long long num_predict_points, const unsigned long long num_features, const real_type degree, const real_type gamma, const real_type coef0) :
         out_d_{ out_d }, alpha_d_{ alpha_d }, rho_d_{ rho_d }, sv_d_{ sv_d }, predict_points_d_{ predict_points_d }, num_classes_{ num_classes }, num_sv_{ num_sv }, num_predict_points_{ num_predict_points }, num_features_{ num_features }, degree_{ degree }, gamma_{ gamma }, coef0_{ coef0 } {}
 
     /**
@@ -172,7 +172,7 @@ class device_kernel_predict_polynomial {
     const unsigned long long num_sv_;
     const unsigned long long num_predict_points_;
     const unsigned long long num_features_;
-    const int degree_;
+    const real_type degree_;  // no overload for sycl::pow(double, int)
     const real_type gamma_;
     const real_type coef0_;
     /// @endcond

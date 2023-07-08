@@ -160,7 +160,7 @@ auto csvm::run_assemble_kernel_matrix_explicit(const parameter &params, const de
             devices_[0].impl->sycl_queue.parallel_for(execution_range, sycl::detail::device_kernel_assembly_linear{ kernel_matrix_d.get(), data_d.get(), num_rows_reduced, num_features, q_red_d.get(), QA_cost, cost_factor });
             break;
         case kernel_function_type::polynomial:
-            devices_[0].impl->sycl_queue.parallel_for(execution_range, sycl::detail::device_kernel_assembly_polynomial{ kernel_matrix_d.get(), data_d.get(), num_rows_reduced, num_features, q_red_d.get(), QA_cost, cost_factor, params.degree.value(), params.gamma.value(), params.coef0.value() });
+            devices_[0].impl->sycl_queue.parallel_for(execution_range, sycl::detail::device_kernel_assembly_polynomial{ kernel_matrix_d.get(), data_d.get(), num_rows_reduced, num_features, q_red_d.get(), QA_cost, cost_factor, static_cast<real_type>(params.degree.value()), params.gamma.value(), params.coef0.value() });
             break;
         case kernel_function_type::rbf:
             devices_[0].impl->sycl_queue.parallel_for(execution_range, sycl::detail::device_kernel_assembly_rbf{ kernel_matrix_d.get(), data_d.get(), num_rows_reduced, num_features, q_red_d.get(), QA_cost, cost_factor, params.gamma.value() });
@@ -223,7 +223,7 @@ auto csvm::run_predict_kernel(const parameter &params, const device_ptr_type &w_
                 // already handled
                 break;
             case kernel_function_type::polynomial:
-                devices_[0].impl->sycl_queue.parallel_for(execution_range, sycl::detail::device_kernel_predict_polynomial{ out_d.get(), alpha_d.get(), rho_d.get(), sv_d.get(), predict_points_d.get(), num_classes, num_sv, num_predict_points, num_features, params.degree.value(), params.gamma.value(), params.coef0.value() });
+                devices_[0].impl->sycl_queue.parallel_for(execution_range, sycl::detail::device_kernel_predict_polynomial{ out_d.get(), alpha_d.get(), rho_d.get(), sv_d.get(), predict_points_d.get(), num_classes, num_sv, num_predict_points, num_features, static_cast<real_type>(params.degree.value()), params.gamma.value(), params.coef0.value() });
                 break;
             case kernel_function_type::rbf:
                 devices_[0].impl->sycl_queue.parallel_for(execution_range, sycl::detail::device_kernel_predict_rbf{ out_d.get(), alpha_d.get(), rho_d.get(), sv_d.get(), predict_points_d.get(), num_classes, num_sv, num_predict_points, num_features, params.gamma.value() });
