@@ -33,6 +33,8 @@ message(CHECK_PASS "found")
 
 enable_language(CUDA)
 
+find_package(CUDAToolkit)
+
 # set necessary flags
 set(CMAKE_CUDA_STANDARD 17)
 set(CMAKE_CUDA_STANDARD_REQUIRED ON)
@@ -79,6 +81,8 @@ endif ()
 if (CMAKE_CUDA_COMPILER_ID STREQUAL "Clang")
     target_compile_options(${PLSSVM_CUDA_BACKEND_LIBRARY_NAME} PUBLIC -fPIC)
 endif ()
+
+target_link_libraries(${PLSSVM_CUDA_BACKEND_LIBRARY_NAME} PUBLIC CUDA::cudart)
 
 # prepare architectures for CMake's CUDA_ARCHITECTURES
 list(TRANSFORM PLSSVM_NVIDIA_TARGET_ARCHS REPLACE "sm_" "")
