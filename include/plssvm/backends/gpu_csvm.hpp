@@ -15,7 +15,6 @@
 
 #include "plssvm/constants.hpp"                   // plssvm::real_type, plssvm::{THREAD_BLOCK_SIZE, INTERNAL_BLOCK_SIZE}
 #include "plssvm/csvm.hpp"                        // plssvm::csvm
-#include "plssvm/detail/execution_range.hpp"      // plssvm::detail::execution_range
 #include "plssvm/detail/logger.hpp"               // plssvm::detail::log, plssvm::verbosity_level
 #include "plssvm/detail/performance_tracker.hpp"  // plssvm::detail::tracking_entry, PLSSVM_DETAIL_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY
 #include "plssvm/matrix.hpp"                      // plssvm::aos_matrix

@@ -20,7 +20,6 @@
 #include "plssvm/backends/SYCL/predict_kernel.hpp"                       // plssvm::sycl::detail::{kernel_w, device_kernel_predict_polynomial, device_kernel_predict_rbf}
 #include "plssvm/constants.hpp"                                          // plssvm::kernel_index_type
 #include "plssvm/detail/assert.hpp"                                      // PLSSVM_ASSERT
-#include "plssvm/detail/execution_range.hpp"                             // plssvm::detail::execution_range
 #include "plssvm/detail/logger.hpp"                                      // plssvm::detail::log, plssvm::verbosity_level
 #include "plssvm/detail/performance_tracker.hpp"                         // plssvm::detail::tracking_entry
 #include "plssvm/exceptions/exceptions.hpp"                              // plssvm::exception

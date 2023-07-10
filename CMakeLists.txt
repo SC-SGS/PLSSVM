@@ -47,7 +47,6 @@ set(PLSSVM_BASE_SOURCES
         ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/detail/cmd/parser_scale.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/detail/cmd/parser_train.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/detail/io/file_reader.cpp
-        ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/detail/execution_range.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/detail/logger.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/detail/performance_tracker.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/detail/sha256.cpp
