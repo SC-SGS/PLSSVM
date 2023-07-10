@@ -102,8 +102,8 @@ target_compile_options(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC
 )
 ## enable additional optimization flags only in RELEASE mode
 target_compile_options(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC
-        $<$<AND:$<CONFIG:RELEASE>,$<CXX_COMPILER_ID:GNU,Clang>>:-ffast-math -march=native>
-        $<$<AND:$<CONFIG:RELEASE>,$<CXX_COMPILER_ID:MSVC>>:/fp:fast>
+        $<$<AND:$<OR:$<CONFIG:RELEASE>,$<CONFIG:RELWITHDEBINFO>>,$<CXX_COMPILER_ID:GNU,Clang>>:-ffast-math -march=native>
+        $<$<AND:$<OR:$<CONFIG:RELEASE>,$<CONFIG:RELWITHDEBINFO>>,$<CXX_COMPILER_ID:MSVC>>:/fp:fast>
 )
 target_compile_definitions(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC
         $<$<COMPILE_LANG_AND_ID:CXX,MSVC>:NOMINMAX>
