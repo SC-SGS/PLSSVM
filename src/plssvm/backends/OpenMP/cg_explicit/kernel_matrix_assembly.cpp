@@ -8,7 +8,7 @@
 
 #include "plssvm/backends/OpenMP/cg_explicit/kernel_matrix_assembly.hpp"
 
-#include "plssvm/constants.hpp"              // plssvm::real_type, plssvm::kernel_index_type, plssvm::OPENMP_BLOCK_SIZE
+#include "plssvm/constants.hpp"              // plssvm::real_type
 #include "plssvm/detail/assert.hpp"          // PLSSVM_ASSERT
 #include "plssvm/kernel_function_types.hpp"  // plssvm::kernel_function_type, plssvm::kernel_function
 #include "plssvm/matrix.hpp"                 // plssvm::aos_matrix
@@ -27,11 +27,11 @@ void kernel_matrix_assembly(const std::vector<real_type> &q, aos_matrix<real_typ
     PLSSVM_ASSERT(q.size() == ret.num_cols(), "Sizes mismatch!: {} != {}", q.size(), ret.num_cols());
     PLSSVM_ASSERT(cost != real_type{ 0.0 }, "cost must not be 0.0 since it is 1 / plssvm::cost!");
 
-    const auto dept = static_cast<kernel_index_type>(q.size());
+    const std::size_t dept = q.size();
 
     #pragma omp parallel for schedule(dynamic)
-    for (kernel_index_type row = 0; row < dept; ++row) {
-        for (kernel_index_type col = row + 1; col < dept; ++col) {
+    for (std::size_t row = 0; row < dept; ++row) {
+        for (std::size_t col = row + 1; col < dept; ++col) {
             ret(row, col) = kernel_function<kernel>(data, row, data, col, std::forward<Args>(args)...) + QA_cost - q[row] - q[col];
             ret(col, row) = ret(row, col);
         }
@@ -39,7 +39,7 @@ void kernel_matrix_assembly(const std::vector<real_type> &q, aos_matrix<real_typ
 
     // apply cost to diagonal
     #pragma omp parallel for
-    for (kernel_index_type i = 0; i < dept; ++i) {
+    for (std::size_t i = 0; i < dept; ++i) {
         ret(i, i) = kernel_function<kernel>(data, i, data, i, std::forward<Args>(args)...) + cost + QA_cost - q[i] - q[i];
     }
 }

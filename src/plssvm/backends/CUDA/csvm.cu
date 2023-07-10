@@ -11,7 +11,6 @@
 #include "plssvm/backend_types.hpp"                                     // plssvm::backend_type
 #include "plssvm/backends/CUDA/cg_explicit/blas.cuh"                    // plssvm::cuda::device_kernel_gemm
 #include "plssvm/backends/CUDA/cg_explicit/kernel_matrix_assembly.cuh"  // plssvm::cuda::{device_kernel_assembly_linear, device_kernel_assembly_polynomial, device_kernel_assembly_rbf}
-#include "plssvm/backends/CUDA/cg_implicit/svm_kernel.cuh"              // plssvm::cuda::detail::{device_kernel_linear, device_kernel_polynomial, device_kernel_rbf}
 #include "plssvm/backends/CUDA/detail/device_ptr.cuh"                   // plssvm::cuda::detail::device_ptr
 #include "plssvm/backends/CUDA/detail/utility.cuh"                      // plssvm::cuda::detail::{device_synchronize, get_device_count, set_device, peek_at_last_error}
 #include "plssvm/backends/CUDA/exceptions.hpp"                          // plssvm::cuda::backend_exception

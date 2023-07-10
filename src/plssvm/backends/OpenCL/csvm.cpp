@@ -15,7 +15,6 @@
 #include "plssvm/backends/OpenCL/detail/utility.hpp"        // plssvm::opencl::detail::{get_contexts, create_command_queues, run_kernel, kernel_type_to_function_name, device_synchronize}
 #include "plssvm/backends/OpenCL/exceptions.hpp"            // plssvm::opencl::backend_exception
 #include "plssvm/constants.hpp"                             // plssvm::real_type
-#include "plssvm/constants.hpp"                             // plssvm::kernel_index_type
 #include "plssvm/detail/assert.hpp"                         // PLSSVM_ASSERT
 #include "plssvm/detail/logger.hpp"                         // plssvm::detail::log, plssvm::verbosity_level
 #include "plssvm/detail/performance_tracker.hpp"            // plssvm::detail::tracking_entry

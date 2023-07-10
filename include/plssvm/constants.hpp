@@ -19,9 +19,6 @@
 
 namespace plssvm {
 
-/// Integer type used inside kernels.
-using kernel_index_type = int;  // TODO: remove and replace by backend specific type?
-
 /// The used floating point type. May be changed during the CMake configuration step.
 #if defined(PLSSVM_FLOAT_AS_REAL_TYPE)
 using real_type = float;
@@ -31,23 +28,23 @@ using real_type = double;
 
 /// Global compile-time constant used for internal caching. May be changed during the CMake configuration step.
 #if defined(PLSSVM_THREAD_BLOCK_SIZE)
-constexpr kernel_index_type THREAD_BLOCK_SIZE = PLSSVM_THREAD_BLOCK_SIZE;
+constexpr unsigned long long THREAD_BLOCK_SIZE = PLSSVM_THREAD_BLOCK_SIZE;
 #else
-constexpr kernel_index_type THREAD_BLOCK_SIZE = 16;
+constexpr unsigned long long THREAD_BLOCK_SIZE = 16;
 #endif
 
 /// Global compile-time constant used for internal caching. May be changed during the CMake configuration step.
 #if defined(PLSSVM_INTERNAL_BLOCK_SIZE)
-constexpr kernel_index_type INTERNAL_BLOCK_SIZE = PLSSVM_INTERNAL_BLOCK_SIZE;
+constexpr unsigned long long INTERNAL_BLOCK_SIZE = PLSSVM_INTERNAL_BLOCK_SIZE;
 #else
-constexpr kernel_index_type INTERNAL_BLOCK_SIZE = 6;
+constexpr unsigned long long INTERNAL_BLOCK_SIZE = 6;
 #endif
 
 /// Global compile-time constant used for internal caching in the OpenMP kernel. May be changed during the CMake configuration step.
 #if defined(PLSSVM_OPENMP_BLOCK_SIZE)
-constexpr kernel_index_type OPENMP_BLOCK_SIZE = PLSSVM_OPENMP_BLOCK_SIZE;
+constexpr unsigned long long OPENMP_BLOCK_SIZE = PLSSVM_OPENMP_BLOCK_SIZE;
 #else
-constexpr kernel_index_type OPENMP_BLOCK_SIZE = 64;
+constexpr unsigned long long OPENMP_BLOCK_SIZE = 64;  // TODO: use again?!
 #endif
 
 // perform sanity checks

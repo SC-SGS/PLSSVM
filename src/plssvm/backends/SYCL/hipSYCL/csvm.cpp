@@ -14,8 +14,6 @@
 
 #include "plssvm/backends/SYCL/cg_explicit/blas.hpp"                     // plssvm::sycl::device_kernel_gemm
 #include "plssvm/backends/SYCL/cg_explicit/kernel_matrix_assembly.hpp"   // plssvm::sycl::{device_kernel_assembly_linear, device_kernel_assembly_polynomial, device_kernel_assembly_rbf}
-#include "plssvm/backends/SYCL/cg_implicit/svm_kernel_hierarchical.hpp"  // plssvm::sycl::detail::{hierarchical_device_kernel_linear, hierarchical_device_kernel_polynomial, hierarchical_device_kernel_rbf}
-#include "plssvm/backends/SYCL/cg_implicit/svm_kernel_nd_range.hpp"      // plssvm::sycl::detail::{nd_range_device_kernel_linear, nd_range_device_kernel_polynomial, nd_range_device_kernel_rbf}
 #include "plssvm/backends/SYCL/exceptions.hpp"                           // plssvm::hipsycl::backend_exception
 #include "plssvm/backends/SYCL/predict_kernel.hpp"                       // plssvm::sycl::detail::{kernel_w, device_kernel_predict_polynomial, device_kernel_predict_rbf}
 #include "plssvm/constants.hpp"                                          // plssvm::real_type

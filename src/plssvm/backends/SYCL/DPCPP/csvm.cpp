@@ -14,11 +14,9 @@
 
 #include "plssvm/backends/SYCL/cg_explicit/blas.hpp"                     // plssvm::sycl::device_kernel_gemm
 #include "plssvm/backends/SYCL/cg_explicit/kernel_matrix_assembly.hpp"   // plssvm::sycl::{device_kernel_assembly_linear, device_kernel_assembly_polynomial, device_kernel_assembly_rbf}
-#include "plssvm/backends/SYCL/cg_implicit/svm_kernel_hierarchical.hpp"  // plssvm::sycl::detail::{hierarchical_device_kernel_linear, hierarchical_device_kernel_polynomial, hierarchical_device_kernel_rbf}
-#include "plssvm/backends/SYCL/cg_implicit/svm_kernel_nd_range.hpp"      // plssvm::sycl::detail::{nd_range_device_kernel_linear, nd_range_device_kernel_polynomial, nd_range_device_kernel_rbf}
 #include "plssvm/backends/SYCL/exceptions.hpp"                           // plssvm::dpcpp::backend_exception
 #include "plssvm/backends/SYCL/predict_kernel.hpp"                       // plssvm::sycl::detail::{kernel_w, device_kernel_predict_polynomial, device_kernel_predict_rbf}
-#include "plssvm/constants.hpp"                                          // plssvm::kernel_index_type
+#include "plssvm/constants.hpp"                                          // plssvm::real_type
 #include "plssvm/detail/assert.hpp"                                      // PLSSVM_ASSERT
 #include "plssvm/detail/logger.hpp"                                      // plssvm::detail::log, plssvm::verbosity_level
 #include "plssvm/detail/performance_tracker.hpp"                         // plssvm::detail::tracking_entry

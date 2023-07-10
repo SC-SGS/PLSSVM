@@ -11,7 +11,6 @@
 #include "plssvm/backend_types.hpp"                                        // plssvm::backend_type
 #include "plssvm/backends/HIP/cg_explicit/blas.hip.hpp"                    // plssvm::hip::device_kernel_gemm
 #include "plssvm/backends/HIP/cg_explicit/kernel_matrix_assembly.hip.hpp"  // plssvm::hip::{device_kernel_assembly_linear, device_kernel_assembly_polynomial, device_kernel_assembly_rbf}
-#include "plssvm/backends/HIP/cg_implicit/svm_kernel.hip.hpp"              // plssvm::hip::detail::{device_kernel_linear, device_kernel_polynomial, device_kernel_rbf}
 #include "plssvm/backends/HIP/detail/device_ptr.hip.hpp"                   // plssvm::hip::detail::device_ptr
 #include "plssvm/backends/HIP/detail/utility.hip.hpp"                      // plssvm::hip::detail::{device_synchronize, get_device_count, set_device, peek_at_last_error}
 #include "plssvm/backends/HIP/exceptions.hpp"                              // plssvm::hip::backend_exception
