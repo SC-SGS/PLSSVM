@@ -132,6 +132,8 @@ class csvm : public ::plssvm::detail::gpu_csvm<detail::device_ptr, detail::comma
      */
     [[nodiscard]] unsigned long long get_device_memory() const final;
 
+    [[nodiscard]] std::size_t get_max_work_group_size() const;
+
     //***************************************************//
     //                        fit                        //
     //***************************************************//

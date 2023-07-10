@@ -180,6 +180,16 @@ unsigned long long csvm::get_device_memory() const {
     return total_device_memory;
 }
 
+[[nodiscard]] std::size_t csvm::get_max_work_group_size() const {  // TODO: also for other backend?!
+    // get device
+    cl_device_id device_id{};
+    PLSSVM_OPENCL_ERROR_CHECK(clGetCommandQueueInfo(devices_[0], CL_QUEUE_DEVICE, sizeof(cl_device_id), &device_id, nullptr), "error obtaining device");
+    // get maximum work group size
+    cl_ulong max_work_group_size{};
+    PLSSVM_OPENCL_ERROR_CHECK(clGetDeviceInfo(device_id, CL_DEVICE_MAX_WORK_GROUP_SIZE, sizeof(cl_ulong), &max_work_group_size, nullptr), "error obtaining device's global memory size");
+    return max_work_group_size;
+}
+
 //***************************************************//
 //                        fit                        //
 //***************************************************//
@@ -189,7 +199,9 @@ auto csvm::run_assemble_kernel_matrix_explicit(const parameter &params, const de
     const cl_ulong num_features = data_d.size(1);
 
     // define grid and block sizes
-    const std::vector<std::size_t> block = { 32, 32 };
+    const std::size_t max_work_group_size = this->get_max_work_group_size();
+    const auto max_work_group_size_2D = static_cast<std::size_t>(std::sqrt(static_cast<real_type>(max_work_group_size)));
+    const std::vector<std::size_t> block = { max_work_group_size_2D, max_work_group_size_2D };
     const std::vector<std::size_t> grid = { static_cast<std::size_t>(std::ceil(static_cast<double>(num_rows_reduced) / static_cast<double>(block[0]))) * block[0],
                                             static_cast<std::size_t>(std::ceil(static_cast<double>(num_rows_reduced) / static_cast<double>(block[1]))) * block[1] };
 
@@ -213,7 +225,9 @@ auto csvm::run_assemble_kernel_matrix_explicit(const parameter &params, const de
 }
 
 void csvm::run_gemm_kernel_explicit(const std::size_t m, const std::size_t n, const std::size_t k, const real_type alpha, const device_ptr_type &A_d, const device_ptr_type &B_d, const real_type beta, device_ptr_type &C_d) const {
-    const std::vector<std::size_t> block = { 32, 32 };
+    const std::size_t max_work_group_size = this->get_max_work_group_size();
+    const auto max_work_group_size_2D = static_cast<std::size_t>(std::sqrt(static_cast<real_type>(max_work_group_size)));
+    const std::vector<std::size_t> block = { max_work_group_size_2D, max_work_group_size_2D };
     const std::vector<std::size_t> grid = { static_cast<std::size_t>(std::ceil(static_cast<double>(m) / static_cast<double>(block[0]))) * block[0],
                                             static_cast<std::size_t>(std::ceil(static_cast<double>(n) / static_cast<double>(block[1]))) * block[1] };
 
@@ -235,7 +249,9 @@ auto csvm::run_w_kernel(const device_ptr_type &alpha_d, const device_ptr_type &s
     const cl_ulong num_sv = sv_d.size(0);
     const cl_ulong num_features = sv_d.size(1);
 
-    const std::vector<std::size_t> block = { 256, 4 };
+    const std::size_t max_work_group_size = this->get_max_work_group_size();
+    const auto max_work_group_size_2D = max_work_group_size / 4;
+    const std::vector<std::size_t> block = { max_work_group_size_2D, 4 };
     const std::vector<std::size_t> grid = { static_cast<std::size_t>(std::ceil(static_cast<double>(num_features) / static_cast<double>(block[0]))) * block[0],
                                             static_cast<std::size_t>(std::ceil(static_cast<double>(num_classes) / static_cast<double>(block[1]))) * block[1] };
 
@@ -257,13 +273,17 @@ auto csvm::run_predict_kernel(const parameter &params, const device_ptr_type &w_
     device_ptr_type out_d{ { num_predict_points, num_classes }, devices_[0] };
 
     if (params.kernel_type == kernel_function_type::linear) {
-        const std::vector<std::size_t> block = { 256, 4 };
+        const std::size_t max_work_group_size = this->get_max_work_group_size();
+        const auto max_work_group_size_2D = max_work_group_size / 4;
+        const std::vector<std::size_t> block = { max_work_group_size_2D, 4 };
         const std::vector<std::size_t> grid = { static_cast<std::size_t>(std::ceil(static_cast<double>(num_predict_points) / static_cast<double>(block[0]))) * block[0],
                                                 static_cast<std::size_t>(std::ceil(static_cast<double>(num_classes) / static_cast<double>(block[1]))) * block[1] };
 
         detail::run_kernel(devices_[0], devices_[0].get_kernel(detail::compute_kernel_name::predict_kernel), grid, block, out_d.get(), w_d.get(), rho_d.get(), predict_points_d.get(), num_classes, num_predict_points, num_features);
     } else {
-        const std::vector<std::size_t> block = { 16, 16, 4 };
+        const std::size_t max_work_group_size = this->get_max_work_group_size();
+        const auto max_work_group_size_2D = static_cast<std::size_t>(std::sqrt(static_cast<real_type>(max_work_group_size / 4)));
+        const std::vector<std::size_t> block = { max_work_group_size_2D, max_work_group_size_2D, 4 };
         const std::vector<std::size_t> grid = { static_cast<std::size_t>(std::ceil(static_cast<double>(num_sv) / static_cast<double>(block[0]))) * block[0],
                                                 static_cast<std::size_t>(std::ceil(static_cast<double>(num_predict_points) / static_cast<double>(block[1]))) * block[1],
                                                 static_cast<std::size_t>(std::ceil(static_cast<double>(num_classes) / static_cast<double>(block[2]))) * block[2] };
