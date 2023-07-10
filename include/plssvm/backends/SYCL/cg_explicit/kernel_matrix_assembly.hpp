@@ -45,7 +45,7 @@ class device_kernel_assembly_linear {
         const unsigned long long i = idx.get_id(0);
         const unsigned long long j = idx.get_id(1);
 
-        if (i < num_rows_ && j < num_rows_) {
+        if (i < num_rows_ && j < num_rows_ && j >= i) {
             real_type temp{ 0.0 };
             for (unsigned long long dim = 0; dim < num_features_; ++dim) {
                 temp += data_d_[i * num_features_ + dim] * data_d_[j * num_features_ + dim];
@@ -56,6 +56,7 @@ class device_kernel_assembly_linear {
             }
 
             ret_[i * num_rows_ + j] = temp;
+            ret_[j * num_rows_ + i] = temp;
         }
     }
 
@@ -100,7 +101,7 @@ class device_kernel_assembly_polynomial {
         const unsigned long long i = idx.get_id(0);
         const unsigned long long j = idx.get_id(1);
 
-        if (i < num_rows_ && j < num_rows_) {
+        if (i < num_rows_ && j < num_rows_ && j >= i) {
             real_type temp{ 0.0 };
             for (unsigned long long dim = 0; dim < num_features_; ++dim) {
                 temp += data_d_[i * num_features_ + dim] * data_d_[j * num_features_ + dim];
@@ -111,6 +112,7 @@ class device_kernel_assembly_polynomial {
             }
 
             ret_[i * num_rows_ + j] = temp;
+            ret_[j * num_rows_ + i] = temp;
         }
     }
 
@@ -156,7 +158,7 @@ class device_kernel_assembly_rbf {
         const unsigned long long i = idx.get_id(0);
         const unsigned long long j = idx.get_id(1);
 
-        if (i < num_rows_ && j < num_rows_) {
+        if (i < num_rows_ && j < num_rows_ && j >= i) {
             real_type temp{ 0.0 };
             for (unsigned long long dim = 0; dim < num_features_; ++dim) {
                 const real_type d = data_d_[i * num_features_ + dim] - data_d_[j * num_features_ + dim];
@@ -168,6 +170,7 @@ class device_kernel_assembly_rbf {
             }
 
             ret_[i * num_rows_ + j] = temp;
+            ret_[j * num_rows_ + i] = temp;
         }
     }
 

@@ -16,7 +16,7 @@ __global__ void device_kernel_assembly_linear(real_type *ret, const real_type *d
     const unsigned long long i = blockIdx.x * blockDim.x + threadIdx.x;
     const unsigned long long j = blockIdx.y * blockDim.y + threadIdx.y;
 
-    if (i < num_rows && j < num_rows) {
+    if (i < num_rows && j < num_rows && j >= i) {
         real_type temp{ 0.0 };
         for (unsigned long long dim = 0; dim < num_features; ++dim) {
             temp += data_d[i * num_features + dim] * data_d[j * num_features + dim];
@@ -27,6 +27,7 @@ __global__ void device_kernel_assembly_linear(real_type *ret, const real_type *d
         }
 
         ret[i * num_rows + j] = temp;
+        ret[j * num_rows + i] = temp;
     }
 }
 
@@ -34,7 +35,7 @@ __global__ void device_kernel_assembly_polynomial(real_type *ret, const real_typ
     const unsigned long long i = blockIdx.x * blockDim.x + threadIdx.x;
     const unsigned long long j = blockIdx.y * blockDim.y + threadIdx.y;
 
-    if (i < num_rows && j < num_rows) {
+    if (i < num_rows && j < num_rows && j >= i) {
         real_type temp{ 0.0 };
         for (unsigned long long dim = 0; dim < num_features; ++dim) {
             temp += data_d[i * num_features + dim] * data_d[j * num_features + dim];
@@ -45,6 +46,7 @@ __global__ void device_kernel_assembly_polynomial(real_type *ret, const real_typ
         }
 
         ret[i * num_rows + j] = temp;
+        ret[j * num_rows + i] = temp;
     }
 }
 
@@ -52,7 +54,7 @@ __global__ void device_kernel_assembly_rbf(real_type *ret, const real_type *data
     const unsigned long long i = blockIdx.x * blockDim.x + threadIdx.x;
     const unsigned long long j = blockIdx.y * blockDim.y + threadIdx.y;
 
-    if (i < num_rows && j < num_rows) {
+    if (i < num_rows && j < num_rows && j >= i) {
         real_type temp{ 0.0 };
         for (unsigned long long dim = 0; dim < num_features; ++dim) {
             const real_type d = data_d[i * num_features + dim] - data_d[j * num_features + dim];
@@ -64,6 +66,7 @@ __global__ void device_kernel_assembly_rbf(real_type *ret, const real_type *data
         }
 
         ret[i * num_rows + j] = temp;
+        ret[j * num_rows + i] = temp;
     }
 }
 

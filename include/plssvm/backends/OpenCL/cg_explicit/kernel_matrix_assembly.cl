@@ -25,7 +25,7 @@ __kernel void device_kernel_assembly_linear(__global real_type *ret, __global co
     const ulong i = get_global_id(0);
     const ulong j = get_global_id(1);
 
-    if (i < num_rows && j < num_rows) {
+    if (i < num_rows && j < num_rows && j >= i) {
         real_type temp = 0.0;
         for (ulong dim = 0; dim < num_features; ++dim) {
             temp += data_d[i * num_features + dim] * data_d[j * num_features + dim];
@@ -36,6 +36,7 @@ __kernel void device_kernel_assembly_linear(__global real_type *ret, __global co
         }
 
         ret[i * num_rows + j] = temp;
+        ret[j * num_rows + i] = temp;
     }
 }
 
@@ -56,7 +57,7 @@ __kernel void device_kernel_assembly_polynomial(__global real_type *ret, __globa
     const ulong i = get_global_id(0);
     const ulong j = get_global_id(1);
 
-    if (i < num_rows && j < num_rows) {
+    if (i < num_rows && j < num_rows && j >= i) {
         real_type temp = 0.0;
         for (ulong dim = 0; dim < num_features; ++dim) {
             temp += data_d[i * num_features + dim] * data_d[j * num_features + dim];
@@ -67,6 +68,7 @@ __kernel void device_kernel_assembly_polynomial(__global real_type *ret, __globa
         }
 
         ret[i * num_rows + j] = temp;
+        ret[j * num_rows + i] = temp;
     }
 }
 
@@ -85,7 +87,7 @@ __kernel void device_kernel_assembly_rbf(__global real_type *ret, __global const
     const ulong i = get_global_id(0);
     const ulong j = get_global_id(1);
 
-    if (i < num_rows && j < num_rows) {
+    if (i < num_rows && j < num_rows && j >= i) {
         real_type temp = 0.0;
         for (ulong dim = 0; dim < num_features; ++dim) {
             const real_type d = data_d[i * num_features + dim] - data_d[j * num_features + dim];
@@ -97,5 +99,6 @@ __kernel void device_kernel_assembly_rbf(__global real_type *ret, __global const
         }
 
         ret[i * num_rows + j] = temp;
+        ret[j * num_rows + i] = temp;
     }
 }
