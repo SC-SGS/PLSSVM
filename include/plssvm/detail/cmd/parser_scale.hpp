@@ -16,6 +16,8 @@
 #include "plssvm/constants.hpp"          // plssvm::real_type
 #include "plssvm/file_format_types.hpp"  // plssvm::file_format_type
 
+#include "fmt/ostream.h"                 // fmt::formatter, fmt::ostream_formatter
+
 #include <iosfwd>                        // forward declare std::ostream
 #include <string>                        // std::string
 
@@ -66,5 +68,7 @@ class parser_scale {
 std::ostream &operator<<(std::ostream &out, const parser_scale &params);
 
 }  // namespace plssvm::detail::cmd
+
+template <> struct fmt::formatter<plssvm::detail::cmd::parser_scale> : fmt::ostream_formatter {};
 
 #endif  // PLSSVM_DETAIL_CMD_PARSER_SCALE_HPP_

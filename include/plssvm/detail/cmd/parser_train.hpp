@@ -23,6 +23,8 @@
 #include "plssvm/solver_types.hpp"                          // plssvm::solving_type
 #include "plssvm/target_platforms.hpp"                      // plssvm::target_platform
 
+#include "fmt/ostream.h"  // fmt::formatter, fmt::ostream_formatter
+
 #include <cstddef>  // std::size_t
 #include <iosfwd>   // forward declare std::ostream
 #include <string>   // std::string
@@ -85,5 +87,7 @@ class parser_train {
 std::ostream &operator<<(std::ostream &out, const parser_train &params);
 
 }  // namespace plssvm::detail::cmd
+
+template <> struct fmt::formatter<plssvm::detail::cmd::parser_train> : fmt::ostream_formatter {};
 
 #endif  // PLSSVM_DETAIL_CMD_PARSER_TRAIN_HPP_

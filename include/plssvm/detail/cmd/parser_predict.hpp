@@ -17,6 +17,8 @@
 #include "plssvm/backends/SYCL/implementation_type.hpp"  // plssvm::sycl::implementation_type
 #include "plssvm/target_platforms.hpp"                   // plssvm::target_platform
 
+#include "fmt/ostream.h"                                 // fmt::formatter, fmt::ostream_formatter
+
 #include <iosfwd>                                        // forward declare std::ostream
 #include <string>                                        // std::string
 
@@ -66,5 +68,7 @@ class parser_predict {
 std::ostream &operator<<(std::ostream &out, const parser_predict &params);
 
 }  // namespace plssvm::detail::cmd
+
+template <> struct fmt::formatter<plssvm::detail::cmd::parser_predict> : fmt::ostream_formatter {};
 
 #endif  // PLSSVM_DETAIL_CMD_PARSER_PREDICT_HPP_

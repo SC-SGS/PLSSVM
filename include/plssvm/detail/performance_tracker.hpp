@@ -23,7 +23,6 @@
 
 #include "fmt/chrono.h"                   // format std::chrono types
 #include "fmt/format.h"                   // fmt::format, fmt::join, fmt::formatter
-#include "fmt/ostream.h"                  // format types with an operator<< overload
 
 #include <memory>                         // std::shared_ptr
 #include <string>                         // std::string

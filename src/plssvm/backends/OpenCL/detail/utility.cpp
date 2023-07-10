@@ -28,7 +28,8 @@
                                                             // clCreateProgramWithSource, clBuildProgram, clGetProgramBuildInfo, clGetProgramInfo, clCreateKernel, clReleaseProgram, clCreateProgramWithBinary,
                                                             //  clSetKernelArg, clEnqueueNDRangeKernel, clFinish, clGetPlatformIDs, clGetDeviceIDs, clGetDeviceInfo, clCreateContext
 #include "fmt/core.h"                                       // fmt::print, fmt::format
-#include "fmt/ostream.h"                                    // can use fmt using operator<< overloads
+#include "fmt/ostream.h"                                    // fmt::formatter, fmt::ostream_formatter
+#include "fmt/std.h"                                        // format std::filesystem::path
 
 #include <algorithm>                                        // std::count_if
 #include <array>                                            // std::array

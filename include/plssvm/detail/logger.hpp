@@ -18,7 +18,7 @@
 
 #include "fmt/chrono.h"                           // format std::chrono types
 #include "fmt/format.h"                           // fmt::format
-#include "fmt/ostream.h"                          // format types with an operator<< overload
+#include "fmt/ostream.h"                          // fmt::formatter, fmt::ostream_formatter
 
 #include <iosfwd>                                 // std::istream, std::ostream
 #include <iostream>                               // std::cout
@@ -125,5 +125,7 @@ void log(const verbosity_level verb, const std::string_view msg, Args &&...args)
 }  // namespace detail
 
 }  // namespace plssvm
+
+template <> struct fmt::formatter<plssvm::verbosity_level> : fmt::ostream_formatter {};
 
 #endif  // PLSSVM_DETAIL_LOGGER_HPP_

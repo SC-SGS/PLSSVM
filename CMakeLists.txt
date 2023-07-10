@@ -142,13 +142,13 @@ include(FetchContent)
 list(APPEND CMAKE_MESSAGE_INDENT "Dependencies:  ")
 
 ## try finding cxxopts
-find_package(cxxopts 3.0.0 QUIET)
+find_package(cxxopts 3.1.1 QUIET)
 if (cxxopts_FOUND)
     message(STATUS "Found package cxxopts.")
     target_include_directories(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC ${cxxopts_INCLUDE_DIR})
 else ()
     message(STATUS "Couldn't find package cxxopts. Building from source ...")
-    set(PLSSVM_cxxopts_VERSION v3.0.0)
+    set(PLSSVM_cxxopts_VERSION v3.1.1)
     # fetch command line parser library cxxopts
     FetchContent_Declare(cxxopts
             GIT_REPOSITORY https://github.com/jarro2783/cxxopts.git
@@ -175,7 +175,7 @@ if (fast_float_FOUND)
     target_include_directories(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC ${fast_float_INCLUDE_DIR})
 else ()
     message(STATUS "Couldn't find package fast_float. Building from source ...")
-    set(PLSSVM_fast_float_VERSION v3.4.0)
+    set(PLSSVM_fast_float_VERSION v3.10.0) # TODO: 5.2.0: https://github.com/fastfloat/fast_float/issues/215
     # fetch float parsing library fast_float
     FetchContent_Declare(fast_float
             GIT_REPOSITORY https://github.com/fastfloat/fast_float
@@ -232,12 +232,12 @@ else ()
 endif ()
 
 ## try finding fmt
-find_package(fmt 8.1.1 QUIET)
+find_package(fmt 10.0.0 QUIET)
 if (fmt_FOUND)
     message(STATUS "Found package fmt.")
 else ()
     message(STATUS "Couldn't find package fmt. Building from source ...")
-    set(PLSSVM_fmt_VERSION 8.1.1)
+    set(PLSSVM_fmt_VERSION 10.0.0)
     # fetch string formatting library fmt
     FetchContent_Declare(fmt
             GIT_REPOSITORY https://github.com/fmtlib/fmt.git
@@ -698,6 +698,7 @@ install(TARGETS ${PLSSVM_TARGETS_TO_INSTALL}
         ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}  # all files that are neither executables, shared lib or headers
         LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}  # all shared lib files
         RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}  # all executables
+        PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
 )
 
 ## mark header to install via 'make install'
