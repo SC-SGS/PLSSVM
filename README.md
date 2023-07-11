@@ -231,6 +231,10 @@ If the SYCL implementation is DPC++ the following additional options are availab
 - `PLSSVM_SYCL_BACKEND_DPCPP_GPU_AMD_USE_HIP` (default: `ON`): use DPC++'s HIP backend instead of its OpenCL backend for AMD GPUs
 - `PLSSVM_SYCL_BACKEND_DPCPP_ENABLE_AOT` (default: `ON`): enable Ahead-of-Time (AOT) compilation for the specified target platforms
 
+If the SYCL implementation is hipSYCL the following additional option is available:
+
+- `PLSSVM_SYCL_BACKEND_HIPSYCL_USE_GENERIC_SSCP` (default: `ON`): use hipSYCL's new SSCP compilation flow
+
 If more than one SYCL implementation is available the environment variables `PLSSVM_SYCL_HIPSYCL_INCLUDE_DIR` and `PLSSVM_SYCL_DPCPP_INCLUDE_DIR`
 **must** be set to the respective SYCL include paths. Note that those paths **must not** be present in the `CPLUS_INCLUDE_PATH` environment variable or compilation will fail.
 
