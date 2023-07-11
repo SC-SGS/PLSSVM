@@ -135,35 +135,20 @@ void csvm::init(const target_platform target) {
     plssvm::detail::log(verbosity_level::full | verbosity_level::timing,
                         "\n");
 
-    // sanity checks for the number of the float OpenCL kernels
-    // TODO: reenable!
-//    PLSSVM_ASSERT(std::all_of(devices_.begin(), devices_.end(), [](const queue_type &queue) { return queue.float_kernels.size() == 3; }),
-//                  "Every command queue must have exactly three associated float kernels!");
-//    PLSSVM_ASSERT(std::all_of(devices_.begin(), devices_.end(), [](const queue_type &queue) { return queue.float_kernels.count(detail::compute_kernel_name::q_kernel) == 1; }),
-//                  "The float q_kernel kernel is missing!");
-//    PLSSVM_ASSERT(std::all_of(devices_.begin(), devices_.end(), [](const queue_type &queue) { return queue.float_kernels.count(detail::compute_kernel_name::svm_kernel) == 1; }),
-//                  "The float device kernel is missing!");
-//    if (kernel == kernel_function_type::linear) {
-//        PLSSVM_ASSERT(std::all_of(devices_.begin(), devices_.end(), [](const queue_type &queue) { return queue.float_kernels.count(detail::compute_kernel_name::w_kernel) == 1; }),
-//                      "The float w_kernel device kernel is missing!");
-//    } else {
-//        PLSSVM_ASSERT(std::all_of(devices_.begin(), devices_.end(), [](const queue_type &queue) { return queue.float_kernels.count(detail::compute_kernel_name::predict_kernel) == 1; }),
-//                      "The float predict_kernel device kernel is missing!");
-//    }
-//    // sanity checks for the number of the double OpenCL kernels
-//    PLSSVM_ASSERT(std::all_of(devices_.begin(), devices_.end(), [](const queue_type &queue) { return queue.double_kernels.size() == 3; }),
-//                  "Every command queue must have exactly three associated double kernels!");
-//    PLSSVM_ASSERT(std::all_of(devices_.begin(), devices_.end(), [](const queue_type &queue) { return queue.double_kernels.count(detail::compute_kernel_name::q_kernel) == 1; }),
-//                  "The double q_kernel kernel is missing!");
-//    PLSSVM_ASSERT(std::all_of(devices_.begin(), devices_.end(), [](const queue_type &queue) { return queue.double_kernels.count(detail::compute_kernel_name::svm_kernel) == 1; }),
-//                  "The double device kernel is missing!");
-//    if (kernel == kernel_function_type::linear) {
-//        PLSSVM_ASSERT(std::all_of(devices_.begin(), devices_.end(), [](const queue_type &queue) { return queue.double_kernels.count(detail::compute_kernel_name::w_kernel) == 1; }),
-//                      "The double w_kernel device kernel is missing!");
-//    } else {
-//        PLSSVM_ASSERT(std::all_of(devices_.begin(), devices_.end(), [](const queue_type &queue) { return queue.double_kernels.count(detail::compute_kernel_name::predict_kernel) == 1; }),
-//                      "The double predict_kernel device kernel is missing!");
-//    }
+    // sanity checks for the number of the OpenCL kernels
+    PLSSVM_ASSERT(std::all_of(devices_.begin(), devices_.end(), [](const queue_type &queue) { return queue.kernels.count(detail::compute_kernel_name::assemble_kernel_matrix_explicit) == 1; }),
+                  "The explicit kernel matrix assembly device kernel is missing!");
+    PLSSVM_ASSERT(std::all_of(devices_.begin(), devices_.end(), [](const queue_type &queue) { return queue.kernels.count(detail::compute_kernel_name::gemm_kernel_explicit) == 1; }),
+                  "The explicit BLAS GEMM device kernel is missing!");
+    if (kernel == kernel_function_type::linear) {
+        PLSSVM_ASSERT(std::all_of(devices_.begin(), devices_.end(), [](const queue_type &queue) { return queue.kernels.size() == 4; }), "Every command queue for the linear kernel function must have exactly four associated kernels!");
+        PLSSVM_ASSERT(std::all_of(devices_.begin(), devices_.end(), [](const queue_type &queue) { return queue.kernels.count(detail::compute_kernel_name::w_kernel) == 1; }),
+                      "The w_kernel device kernel is missing!");
+    } else {
+        PLSSVM_ASSERT(std::all_of(devices_.begin(), devices_.end(), [](const queue_type &queue) { return queue.kernels.size() == 3; }), "Every command queue for the polynomial or rbf kernel function must have exactly four associated kernels!");
+    }
+    PLSSVM_ASSERT(std::all_of(devices_.begin(), devices_.end(), [](const queue_type &queue) { return queue.kernels.count(detail::compute_kernel_name::predict_kernel) == 1; }),
+                  "The predict_kernel device kernel is missing!");
 }
 
 void csvm::device_synchronize(const queue_type &queue) const {
