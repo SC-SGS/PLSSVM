@@ -106,6 +106,12 @@ unsigned long long csvm::get_device_memory() const {
     return static_cast<unsigned long long>(prop.totalGlobalMem);
 }
 
+std::size_t csvm::get_max_work_group_size() const {
+    hipDeviceProp_t prop{};
+    PLSSVM_HIP_ERROR_CHECK(hipGetDeviceProperties(&prop, devices_[0]));
+    return static_cast<std::size_t>(prop.maxThreadsPerBlock);
+}
+
 //***************************************************//
 //                        fit                        //
 //***************************************************//
@@ -115,9 +121,11 @@ auto csvm::run_assemble_kernel_matrix_explicit(const parameter &params, const de
     const unsigned long long num_features = data_d.size(1);
 
     // define grid and block sizes
-    const dim3 block(32, 32);
-    const dim3 grid(static_cast<int>(std::ceil(static_cast<double>(num_rows_reduced) / static_cast<double>(block.x))),
-                    static_cast<int>(std::ceil(static_cast<double>(num_rows_reduced) / static_cast<double>(block.y))));
+    const std::size_t max_work_group_size = this->get_max_work_group_size();
+    const auto max_work_group_size_2D = static_cast<int>(std::sqrt(static_cast<real_type>(max_work_group_size)));
+    const dim3 block(max_work_group_size_2D, max_work_group_size_2D);
+    const dim3 grid(static_cast<int>(std::ceil(static_cast<double>(num_rows_reduced) / static_cast<double>(block.x))) * block.x,
+                    static_cast<int>(std::ceil(static_cast<double>(num_rows_reduced) / static_cast<double>(block.y))) * block.y);
 
     device_ptr_type kernel_matrix_d{ { num_rows_reduced, num_rows_reduced } };
     const real_type cost_factor = real_type{ 1.0 } / params.cost;
@@ -141,9 +149,12 @@ auto csvm::run_assemble_kernel_matrix_explicit(const parameter &params, const de
 }
 
 void csvm::run_gemm_kernel_explicit(const std::size_t m, const std::size_t n, const std::size_t k, const real_type alpha, const device_ptr_type &A_d, const device_ptr_type &B_d, const real_type beta, device_ptr_type &C_d) const {
-    const dim3 block(32, 32);
-    const dim3 grid(static_cast<int>(std::ceil(static_cast<double>(m) / static_cast<double>(block.x))),
-                    static_cast<int>(std::ceil(static_cast<double>(n) / static_cast<double>(block.y))));
+    // define the grid and block sizes
+    const std::size_t max_work_group_size = this->get_max_work_group_size();
+    const auto max_work_group_size_2D = static_cast<int>(std::sqrt(static_cast<real_type>(max_work_group_size)));
+    const dim3 block(max_work_group_size_2D, max_work_group_size_2D);
+    const dim3 grid(static_cast<int>(std::ceil(static_cast<double>(m) / static_cast<double>(block.x))) * block.x,
+                    static_cast<int>(std::ceil(static_cast<double>(n) / static_cast<double>(block.y))) * block.y);
 
     // cast to correct type
     const auto m_ull = static_cast<unsigned long long>(m);
@@ -165,9 +176,12 @@ auto csvm::run_w_kernel(const device_ptr_type &alpha_d, const device_ptr_type &s
     const unsigned long long num_sv = sv_d.size(0);
     const unsigned long long num_features = sv_d.size(1);
 
-    const dim3 block(256, 4);
-    const dim3 grid(static_cast<int>(std::ceil(static_cast<double>(num_features) / static_cast<double>(block.x))),
-                    static_cast<int>(std::ceil(static_cast<double>(num_classes) / static_cast<double>(block.y))));
+    // define the grid and block sizes
+    const std::size_t max_work_group_size = this->get_max_work_group_size();
+    const auto max_work_group_size_2D = static_cast<int>(max_work_group_size / 4);
+    const dim3 block(max_work_group_size_2D, 4);
+    const dim3 grid(static_cast<int>(std::ceil(static_cast<double>(num_features) / static_cast<double>(block.x))) * block.x,
+                    static_cast<int>(std::ceil(static_cast<double>(num_classes) / static_cast<double>(block.y))) * block.y);
 
     device_ptr_type w_d{ { num_classes, num_features } };
 
@@ -189,13 +203,19 @@ auto csvm::run_predict_kernel(const parameter &params, const device_ptr_type &w_
 
     detail::set_device(0);
     if (params.kernel_type == kernel_function_type::linear) {
-        const dim3 block(256, 4);
+        // define the grid and block sizes
+        const std::size_t max_work_group_size = this->get_max_work_group_size();
+        const auto max_work_group_size_2D = static_cast<int>(max_work_group_size / 4);
+        const dim3 block(max_work_group_size_2D, 4);
         const dim3 grid(static_cast<int>(std::ceil(static_cast<double>(num_predict_points) / static_cast<double>(block.x))),
                         static_cast<int>(std::ceil(static_cast<double>(num_classes) / static_cast<double>(block.y))));
 
         hip::device_kernel_predict_linear<<<grid, block>>>(out_d.get(), w_d.get(), rho_d.get(), predict_points_d.get(), num_classes, num_predict_points, num_features);
     } else {
-        const dim3 block(16, 16, 4);
+        // define the grid and block sizes
+        const std::size_t max_work_group_size = this->get_max_work_group_size();
+        const auto max_work_group_size_3D = static_cast<int>(std::sqrt(static_cast<real_type>(max_work_group_size / 4)));
+        const dim3 block(max_work_group_size_3D, max_work_group_size_3D, 4);
         const dim3 grid(static_cast<int>(std::ceil(static_cast<double>(num_sv) / static_cast<double>(block.x))),
                         static_cast<int>(std::ceil(static_cast<double>(num_predict_points) / static_cast<double>(block.y))),
                         static_cast<int>(std::ceil(static_cast<double>(num_classes) / static_cast<double>(block.z))));

@@ -143,6 +143,11 @@ class gpu_csvm : public ::plssvm::csvm {
      * @param[in] queue the queue denoting the device to synchronize
      */
     virtual void device_synchronize(const queue_type &queue) const = 0;
+    /**
+     * @brief Return the maximum allowed work group size.
+     * @return the maximum allowed work group size (`[[nodiscard]]`)
+     */
+    [[nodiscard]] virtual std::size_t get_max_work_group_size() const = 0;
 
     //***************************************************//
     //                        fit                        //

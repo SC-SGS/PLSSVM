@@ -146,6 +146,10 @@ unsigned long long csvm::get_device_memory() const {
     }
 }
 
+[[nodiscard]] std::size_t csvm::get_max_work_group_size() const {
+    return devices_[0].impl->sycl_queue.get_device().get_info<::sycl::info::device::max_work_group_size>();
+}
+
 //***************************************************//
 //                        fit                        //
 //***************************************************//
