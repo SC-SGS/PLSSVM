@@ -33,6 +33,10 @@
 #include <string>         // std::string
 #include <unordered_map>  // std::unordered_multimap
 #include <utility>        // std::pair
+#if __has_include(<unistd.h>)
+    #include <unistd.h>             // gethostname
+    #define PLSSVM_UNISTD_AVAILABLE
+#endif
 
 namespace plssvm::detail {
 
@@ -161,6 +165,15 @@ void performance_tracker::save(std::ostream &out) {
     // append the current performance statistics to an already existing file if possible
     PLSSVM_ASSERT(out.good(), "Can't write to the provided output stream!");
 
+#ifdef PLSSVM_UNISTD_AVAILABLE
+    char hostname[HOST_NAME_MAX];
+    char username[LOGIN_NAME_MAX];
+    gethostname(hostname, HOST_NAME_MAX);
+    getlogin_r(username, LOGIN_NAME_MAX);
+#else
+    string hostname = "not available";
+    string username = "not available";
+#endif
     // begin a new YAML document (only with "---" multiple YAML docments in a single file are allowed)
     out << "---\n";
 
@@ -171,11 +184,15 @@ void performance_tracker::save(std::ostream &out) {
         "  PLSSVM_TARGET_PLATFORMS: \"{}\"\n"
         "  commit:                  {}\n"
         "  version:                 {}\n"
+        "  hostname:                {}\n"
+        "  user:                    {}\n"
         "\n",
         plssvm::detail::current_date_time(),
         version::detail::target_platforms,
         version::git_metadata::commit_sha1().empty() ? "unknown" : version::git_metadata::commit_sha1(),
-        version::version);
+        version::version,
+        hostname,
+        username);
 
     // output the actual (performance) statistics
     std::unordered_multimap<std::string, std::string>::iterator group_iter;  // iterate over all groups
