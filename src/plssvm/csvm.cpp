@@ -22,12 +22,14 @@
 
 #include "fmt/core.h"  // fmt::format
 
-#include <algorithm>  // std::count, std::min
-#include <chrono>     // std::chrono::{steady_clock, duration_cast, milliseconds}
-#include <cstddef>    // std::size_t
-#include <utility>    // std::move
-#include <utility>    // std::pair, std::make_pair
-#include <vector>     // std::vector
+#include <algorithm>   // std::count
+#include <chrono>      // std::chrono::{steady_clock, duration_cast, milliseconds}
+#include <cstddef>     // std::size_t
+#include <functional>  // std::plus
+#include <numeric>     // std::inner_product
+#include <utility>     // std::move
+#include <utility>     // std::pair, std::make_pair
+#include <vector>      // std::vector
 
 namespace plssvm {
 
@@ -79,20 +81,11 @@ aos_matrix<real_type> csvm::conjugate_gradients(const detail::simple_any &A, con
 
     aos_matrix<real_type> D{ R };
 
-    // TODO: look at functions
     // timing for each CG iteration
-    std::chrono::milliseconds average_iteration_time{};
-    std::chrono::steady_clock::time_point iteration_start_time{};
-    const auto output_iteration_duration = [&]() {
-        const auto iteration_end_time = std::chrono::steady_clock::now();
-        const auto iteration_duration = std::chrono::duration_cast<std::chrono::milliseconds>(iteration_end_time - iteration_start_time);
-        detail::log(verbosity_level::full | verbosity_level::timing,
-                    "Done in {}.\n",
-                    iteration_duration);
-        average_iteration_time += iteration_duration;
-    };
+    std::chrono::milliseconds total_iteration_time{};
+
     // get the index of the rhs that has the largest residual difference wrt to its target residual
-    const auto residual_info = [&]() {
+    const auto rhs_idx_max_residual_difference = [&]() {
         const real_type max_difference{ 0.0 };
         std::size_t idx{ 0 };
         for (std::size_t i = 0; i < delta.size(); ++i) {
@@ -104,28 +97,26 @@ aos_matrix<real_type> csvm::conjugate_gradients(const detail::simple_any &A, con
         return idx;
     };
     // get the number of rhs that have already been converged
-    const auto num_converged = [&]() {
-        std::vector<bool> converged(delta.size(), false);
-        for (std::size_t i = 0; i < delta.size(); ++i) {
-            // check if the rhs converged in the current iteration
-            converged[i] = delta[i] <= eps * eps * delta0[i];
-        }
-        return static_cast<std::size_t>(std::count(converged.cbegin(), converged.cend(), true));
+    const auto num_rhs_converged = [eps, &delta, &delta0]() {
+        return static_cast<std::size_t>(std::inner_product(delta.cbegin(), delta.cend(), delta0.cbegin(),
+                                                           real_type{ 0.0 },
+                                                           std::plus<>{},
+                                                           [eps](const real_type d, const real_type d0) { return d <= eps * eps *d0; }));
     };
 
     unsigned long long iter = 0;
-    for (; iter < max_cg_iter; ++iter) {
-        const std::size_t max_residual_difference_idx = residual_info();
+    while (iter < max_cg_iter && num_rhs_converged() < num_rhs) {
+        const std::size_t max_residual_difference_idx = rhs_idx_max_residual_difference();
         detail::log(verbosity_level::full | verbosity_level::timing,
                     "Start Iteration {} (max: {}) with {}/{} converged rhs (max residual {} with target residual {} for rhs {}). ",
                     iter + 1,
                     max_cg_iter,
-                    num_converged(),
+                    num_rhs_converged(),
                     num_rhs,
                     delta[max_residual_difference_idx],
                     eps * eps * delta0[max_residual_difference_idx],
                     max_residual_difference_idx);
-        iteration_start_time = std::chrono::steady_clock::now();
+        const std::chrono::steady_clock::time_point iteration_start_time = std::chrono::steady_clock::now();
 
         // Q = A * D
         aos_matrix<real_type> Q{ D.num_rows(), D.num_cols() };
@@ -178,12 +169,6 @@ aos_matrix<real_type> csvm::conjugate_gradients(const detail::simple_any &A, con
             delta[col] = temp;
         }
 
-        // if we are exact enough stop CG iterations, i.e., if every rhs has converged
-        if (num_converged() == num_rhs) {
-            output_iteration_duration();
-            break;
-        }
-
         // beta = delta_new / delta_old
         const std::vector<real_type> beta = delta / delta_old;
         // D = beta * D + R
@@ -194,25 +179,33 @@ aos_matrix<real_type> csvm::conjugate_gradients(const detail::simple_any &A, con
             }
         }
 
-        output_iteration_duration();
+        const std::chrono::steady_clock::time_point iteration_end_time = std::chrono::steady_clock::now();
+        const std::chrono::duration iteration_duration = std::chrono::duration_cast<std::chrono::milliseconds>(iteration_end_time - iteration_start_time);
+        detail::log(verbosity_level::full | verbosity_level::timing,
+                    "Done in {}.\n",
+                    iteration_duration);
+        total_iteration_time += iteration_duration;
+
+        // next CG iteration
+        ++iter;
     }
-    const std::size_t max_residual_difference_idx = residual_info();
+    const std::size_t max_residual_difference_idx = rhs_idx_max_residual_difference();
     detail::log(verbosity_level::full | verbosity_level::timing,
                 "Finished after {}/{} iterations with {}/{} converged rhs (max residual {} with target residual {} for rhs {}) and an average iteration time of {}.\n",
-                detail::tracking_entry{ "cg", "iterations", std::min(iter + 1, max_cg_iter) },
+                detail::tracking_entry{ "cg", "iterations", iter },
                 detail::tracking_entry{ "cg", "max_iterations", max_cg_iter },
-                detail::tracking_entry{ "cg", "num_converged_rhs", num_converged() },
+                detail::tracking_entry{ "cg", "num_converged_rhs", num_rhs_converged() },
                 detail::tracking_entry{ "cg", "num_rhs", num_rhs },
                 delta[max_residual_difference_idx],
                 eps * eps * delta0[max_residual_difference_idx],
                 max_residual_difference_idx,
-                detail::tracking_entry{ "cg", "avg_iteration_time", average_iteration_time / std::min(iter + 1, max_cg_iter) });
+                detail::tracking_entry{ "cg", "avg_iteration_time", total_iteration_time / iter });
     PLSSVM_DETAIL_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((detail::tracking_entry{ "cg", "residuals", delta }));
     PLSSVM_DETAIL_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((detail::tracking_entry{ "cg", "target_residuals", eps * eps * delta0 }));
     PLSSVM_DETAIL_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((detail::tracking_entry{ "cg", "epsilon", eps }));
     detail::log(verbosity_level::libsvm,
                 "optimization finished, #iter = {}\n",
-                std::min(iter + 1, max_cg_iter));
+                iter);
 
     return X;
 }
