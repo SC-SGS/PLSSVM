@@ -237,7 +237,11 @@ void performance_tracker::add_tracking_entry(const tracking_entry<T> &entry) {
 template <typename T>
 void performance_tracker::add_tracking_entry(const tracking_entry<std::vector<T>> &entry) {
     if (is_tracking()) {
-        tracking_statistics.emplace(entry.entry_category, fmt::format("{}{}: [{}]\n", entry.entry_category.empty() ? "" : "  ", entry.entry_name, fmt::join(entry.entry_value, ",")));
+        if constexpr (std::is_same_v<T, std::string>) {
+            tracking_statistics.emplace(entry.entry_category, fmt::format("{}{}: [\"{}\"]\n", entry.entry_category.empty() ? "" : "  ", entry.entry_name, fmt::join(entry.entry_value, "\",\"")));
+        } else {
+            tracking_statistics.emplace(entry.entry_category, fmt::format("{}{}: [{}]\n", entry.entry_category.empty() ? "" : "  ", entry.entry_name, fmt::join(entry.entry_value, ",")));
+        }
     }
 }
 
