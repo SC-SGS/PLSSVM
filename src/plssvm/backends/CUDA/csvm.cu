@@ -126,8 +126,8 @@ auto csvm::run_assemble_kernel_matrix_explicit(const parameter &params, const de
     const std::size_t max_work_group_size = this->get_max_work_group_size();
     const auto max_work_group_size_2D = static_cast<int>(std::sqrt(static_cast<real_type>(max_work_group_size)));
     const dim3 block(max_work_group_size_2D, max_work_group_size_2D);
-    const dim3 grid(static_cast<int>(std::ceil(static_cast<double>(num_rows_reduced) / static_cast<double>(block.x))) * block.x,
-                    static_cast<int>(std::ceil(static_cast<double>(num_rows_reduced) / static_cast<double>(block.y))) * block.y);
+    const dim3 grid(static_cast<int>(std::ceil(static_cast<double>(num_rows_reduced) / static_cast<double>(block.x))),
+                    static_cast<int>(std::ceil(static_cast<double>(num_rows_reduced) / static_cast<double>(block.y))));
 
     device_ptr_type kernel_matrix_d{ { num_rows_reduced, num_rows_reduced } };
     const real_type cost_factor = real_type{ 1.0 } / params.cost;
@@ -155,8 +155,8 @@ void csvm::run_gemm_kernel_explicit(const std::size_t m, const std::size_t n, co
     const std::size_t max_work_group_size = this->get_max_work_group_size();
     const auto max_work_group_size_2D = static_cast<int>(std::sqrt(static_cast<real_type>(max_work_group_size)));
     const dim3 block(max_work_group_size_2D, max_work_group_size_2D);
-    const dim3 grid(static_cast<int>(std::ceil(static_cast<double>(m) / static_cast<double>(block.x))) * block.x,
-                    static_cast<int>(std::ceil(static_cast<double>(n) / static_cast<double>(block.y))) * block.y);
+    const dim3 grid(static_cast<int>(std::ceil(static_cast<double>(m) / static_cast<double>(block.x))),
+                    static_cast<int>(std::ceil(static_cast<double>(n) / static_cast<double>(block.y))));
 
     // cast to correct type
     const auto m_ull = static_cast<unsigned long long>(m);
@@ -182,8 +182,8 @@ auto csvm::run_w_kernel(const device_ptr_type &alpha_d, const device_ptr_type &s
     const std::size_t max_work_group_size = this->get_max_work_group_size();
     const auto max_work_group_size_2D = static_cast<int>(max_work_group_size / 4);
     const dim3 block(max_work_group_size_2D, 4);
-    const dim3 grid(static_cast<int>(std::ceil(static_cast<double>(num_features) / static_cast<double>(block.x))) * block.x,
-                    static_cast<int>(std::ceil(static_cast<double>(num_classes) / static_cast<double>(block.y))) * block.y);
+    const dim3 grid(static_cast<int>(std::ceil(static_cast<double>(num_features) / static_cast<double>(block.x))),
+                    static_cast<int>(std::ceil(static_cast<double>(num_classes) / static_cast<double>(block.y))));
 
     device_ptr_type w_d{ { num_classes, num_features } };
 
