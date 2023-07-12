@@ -127,7 +127,7 @@ foreach (SYCL_IMPLEMENTATION ${PLSSVM_SYCL_BACKEND_FOUND_IMPLEMENTATIONS})
     # do not print CPU and Intel GPU target architectures when using hipSYCL
     if ("${SYCL_IMPLEMENTATION}" MATCHES "^hipsycl")
         if (PLSSVM_SYCL_BACKEND_HIPSYCL_USE_GENERIC_SSCP)
-            if (PLSSVM_CPU_TARGET_ARCHS STREQUAL "")
+            if (DEFINED PLSSVM_INTEL_TARGET_ARCHS)
                 set(PLSSVM_SYCL_BACKEND_SUMMARY_STRING_ARCHS " cpu, generic")
             else ()
                 set(PLSSVM_SYCL_BACKEND_SUMMARY_STRING_ARCHS " generic")
