@@ -20,7 +20,7 @@
 #include "plssvm/kernel_function_types.hpp"  // plssvm::kernel_function_type, plssvm::kernel_function_type_to_math_string
 
 #include "fmt/core.h"                        // fmt::format
-#include "fmt/ostream.h"                     // be able to output custom types with an operator<< overload using fmt
+#include "fmt/ostream.h"                     // fmt::formatter, fmt::ostream_formatter
 #include "igor/igor.hpp"                     // IGOR_MAKE_NAMED_ARGUMENT, igor::parser, igor::has_unnamed_arguments, igor::has_other_than
 
 #include <iostream>                          // std::clog, std::endl, std::ostream
@@ -298,5 +298,7 @@ template <typename T>
 std::ostream &operator<<(std::ostream &out, const parameter &params);
 
 }  // namespace plssvm
+
+template <> struct fmt::formatter<plssvm::parameter> : fmt::ostream_formatter {};
 
 #endif  // PLSSVM_PARAMETER_HPP_

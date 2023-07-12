@@ -13,6 +13,8 @@
 #define PLSSVM_SOLVING_TYPES_HPP_
 #pragma once
 
+#include "fmt/ostream.h"  // fmt::formatter, fmt::ostream_formatter
+
 #include <iosfwd>  // forward declare std::ostream and std::istream
 
 namespace plssvm {
@@ -53,5 +55,7 @@ std::ostream &operator<<(std::ostream &out, solver_type solving);
 std::istream &operator>>(std::istream &in, solver_type &solving);
 
 }  // namespace plssvm
+
+template <> struct fmt::formatter<plssvm::solver_type> : fmt::ostream_formatter {};
 
 #endif  // PLSSVM_SOLVING_TYPES_HPP_

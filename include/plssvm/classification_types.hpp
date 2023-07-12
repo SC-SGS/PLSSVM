@@ -13,6 +13,9 @@
 #define PLSSVM_CLASSIFICATION_TYPES_HPP_
 #pragma once
 
+
+#include "fmt/ostream.h"  // fmt::formatter, fmt::ostream_formatter
+
 #include <cstddef>      // std::size_t
 #include <iosfwd>       // forward declare std::ostream and std::istream
 #include <string_view>  // std::string_view
@@ -58,5 +61,7 @@ std::istream &operator>>(std::istream &in, classification_type &classification);
 [[nodiscard]] std::size_t calculate_number_of_classifiers(classification_type classification, std::size_t num_classes);
 
 }  // namespace plssvm
+
+template <> struct fmt::formatter<plssvm::classification_type> : fmt::ostream_formatter {};
 
 #endif  // PLSSVM_CLASSIFICATION_TYPES_HPP_

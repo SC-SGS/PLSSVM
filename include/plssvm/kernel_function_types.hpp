@@ -21,6 +21,8 @@
 #include "plssvm/exceptions/exceptions.hpp"  // plssvm::unsupported_kernel_type_exception
 #include "plssvm/matrix.hpp"                 // plssvm::matrix, plssvm::layout_type
 
+#include "fmt/ostream.h"                     // fmt::formatter, fmt::ostream_formatter
+
 #include <cmath>                             // std::pow, std::exp, std::fma
 #include <iosfwd>                            // forward declare std::ostream and std::istream
 #include <string_view>                       // std::string_view
@@ -194,5 +196,7 @@ template <layout_type layout>
 
 
 }  // namespace plssvm
+
+template <> struct fmt::formatter<plssvm::kernel_function_type> : fmt::ostream_formatter {};
 
 #endif  // PLSSVM_KERNEL_FUNCTION_TYPES_HPP_

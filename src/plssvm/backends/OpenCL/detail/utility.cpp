@@ -28,7 +28,8 @@
                                                             // clCreateProgramWithSource, clBuildProgram, clGetProgramBuildInfo, clGetProgramInfo, clCreateKernel, clReleaseProgram, clCreateProgramWithBinary,
                                                             //  clSetKernelArg, clEnqueueNDRangeKernel, clFinish, clGetPlatformIDs, clGetDeviceIDs, clGetDeviceInfo, clCreateContext
 #include "fmt/core.h"                                       // fmt::print, fmt::format
-#include "fmt/ostream.h"                                    // can use fmt using operator<< overloads
+#include "fmt/ostream.h"                                    // fmt::formatter, fmt::ostream_formatter
+#include "fmt/std.h"                                        // format std::filesystem::path
 
 #include <algorithm>                                        // std::count_if
 #include <array>                                            // std::array
@@ -294,7 +295,7 @@ std::vector<command_queue> create_command_queues(const std::vector<context> &con
         // create and build program
         cl_program program = clCreateProgramWithSource(contexts[0], 1, &kernel_src_ptr, nullptr, &err);
         PLSSVM_OPENCL_ERROR_CHECK(err, "error creating program from source");
-        err = clBuildProgram(program, static_cast<cl_uint>(contexts[0].devices.size()), contexts[0].devices.data(), "-cl-fast-relaxed-math -cl-mad-enable", nullptr, nullptr);
+        err = clBuildProgram(program, static_cast<cl_uint>(contexts[0].devices.size()), contexts[0].devices.data(), "-cl-fast-relaxed-math -cl-mad-enable -cl-no-signed-zeros", nullptr, nullptr);
         if (!err) {
             // check all devices for errors
             for (std::vector<context>::size_type device = 0; device < contexts[0].devices.size(); ++device) {

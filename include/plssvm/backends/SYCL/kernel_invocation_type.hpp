@@ -13,6 +13,8 @@
 #define PLSSVM_BACKENDS_SYCL_KERNEL_INVOCATION_TYPE_HPP_
 #pragma once
 
+#include "fmt/ostream.h"  // fmt::formatter, fmt::ostream_formatter
+
 #include <iosfwd>  // forward declare std::ostream and std::istream
 
 namespace plssvm::sycl {
@@ -46,5 +48,7 @@ std::ostream &operator<<(std::ostream &out, kernel_invocation_type invocation);
 std::istream &operator>>(std::istream &in, kernel_invocation_type &invocation);
 
 }  // namespace plssvm::sycl
+
+template <> struct fmt::formatter<plssvm::sycl::kernel_invocation_type> : fmt::ostream_formatter {};
 
 #endif  // PLSSVM_BACKENDS_SYCL_KERNEL_INVOCATION_TYPE_HPP_

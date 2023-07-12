@@ -17,7 +17,8 @@
 #include "plssvm/detail/utility.hpp"         // plssvm::detail::always_false_v
 #include "plssvm/exceptions/exceptions.hpp"  // plssvm::matrix_exception
 
-#include "fmt/core.h"  // fmt::format
+#include "fmt/core.h"     // fmt::format
+#include "fmt/ostream.h"  // fmt::formatter, fmt::ostream_formatter
 
 #include <algorithm>  // std::equal, std::all_of
 #include <array>      // std::array
@@ -388,5 +389,8 @@ template <typename T>
 using soa_matrix = matrix<T, layout_type::soa>;
 
 }  // namespace plssvm::detail
+
+template <> struct fmt::formatter<plssvm::layout_type> : fmt::ostream_formatter {};
+template <typename T, plssvm::layout_type layout> struct fmt::formatter<plssvm::matrix<T, layout>> : fmt::ostream_formatter {};
 
 #endif  // PLSSVM_DETAIL_MATRIX_HPP_

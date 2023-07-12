@@ -13,7 +13,6 @@
 #include "plssvm/exceptions/exceptions.hpp"  // plssvm::unsupported_backend_exception
 
 #include "fmt/format.h"                      // fmt::format, fmt::join
-#include "fmt/ostream.h"                     // be able to format types with an operator<< overload
 
 #include <array>                             // std::array
 #include <ios>                               // std::ios::failbit

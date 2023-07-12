@@ -20,6 +20,7 @@
 #include "plssvm/detail/assert.hpp"                                      // PLSSVM_ASSERT
 #include "plssvm/detail/logger.hpp"                                      // plssvm::detail::log, plssvm::verbosity_level
 #include "plssvm/detail/performance_tracker.hpp"                         // plssvm::detail::tracking_entry
+#include "plssvm/detail/utility.hpp"                                     // plssvm::detail::get_system_memory
 #include "plssvm/exceptions/exceptions.hpp"                              // plssvm::exception
 #include "plssvm/kernel_function_types.hpp"                              // plssvm::kernel_type
 #include "plssvm/parameter.hpp"                                          // plssvm::parameter, plssvm::detail::parameter
@@ -111,10 +112,15 @@ void csvm::init(const target_platform target) {
                         "Found {} SYCL device(s) for the target platform {}:\n",
                         plssvm::detail::tracking_entry{ "backend", "num_devices", devices_.size() },
                         plssvm::detail::tracking_entry{ "backend", "target_platform", target_ });
+    std::vector<std::string> device_names;
+    device_names.reserve(devices_.size());
     for (typename std::vector<queue_type>::size_type device = 0; device < devices_.size(); ++device) {
+        const std::string device_name = devices_[device].impl->sycl_queue.get_device().template get_info<::sycl::info::device::name>();
         plssvm::detail::log(verbosity_level::full,
-                            "  [{}, {}]\n", device, devices_[device].impl->sycl_queue.get_device().template get_info<::sycl::info::device::name>());
+                            "  [{}, {}]\n", device, device_name);
+        device_names.emplace_back(device_name);
     }
+    PLSSVM_DETAIL_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking_entry{ "backend", "device", device_names }));
     plssvm::detail::log(verbosity_level::full | verbosity_level::timing,
                         "\n");
 }
@@ -136,7 +142,17 @@ void csvm::device_synchronize(const queue_type &queue) const {
 }
 
 unsigned long long csvm::get_device_memory() const {
-    return devices_[0].impl->sycl_queue.get_device().get_info<::sycl::info::device::global_mem_size>();
+    const unsigned long long hipsycl_global_mem_size = devices_[0].impl->sycl_queue.get_device().get_info<::sycl::info::device::global_mem_size>();
+    if (target_ == target_platform::cpu) {
+        std::clog << "Warning: the returned 'global_mem_size' for hipSYCL targeting the CPU is nonsensical ('std::numeric_limits<std::size_t>::max()'). Using 'get_system_memory()' instead." << std::endl;
+        return std::min(hipsycl_global_mem_size, ::plssvm::detail::get_system_memory());
+    } else {
+        return hipsycl_global_mem_size;
+    }
+}
+
+[[nodiscard]] std::size_t csvm::get_max_work_group_size() const {
+    return devices_[0].impl->sycl_queue.get_device().get_info<::sycl::info::device::max_work_group_size>();
 }
 
 //***************************************************//
