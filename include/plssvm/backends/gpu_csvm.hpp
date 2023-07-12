@@ -201,21 +201,23 @@ class gpu_csvm : public ::plssvm::csvm {
 };
 
 template <template <typename> typename device_ptr_t, typename queue_t>
-std::size_t gpu_csvm<device_ptr_t, queue_t>::select_num_used_devices(const kernel_function_type kernel, const std::size_t num_features) const noexcept {
-    PLSSVM_ASSERT(num_features > 0, "At lest one feature must be given!");
-
-    // polynomial and rbf kernel currently only support single GPU execution
-    if ((kernel == kernel_function_type::polynomial || kernel == kernel_function_type::rbf) && devices_.size() > 1) {
-        std::clog << fmt::format("Warning: found {} devices, however only 1 device can be used since the polynomial and rbf kernels currently only support single GPU execution!", devices_.size()) << std::endl;
-        return 1;
-    }
-
-    // the number of used devices may not exceed the number of features
-    const std::size_t num_used_devices = std::min(devices_.size(), num_features);
-    if (num_used_devices < devices_.size()) {
-        std::clog << fmt::format("Warning: found {} devices, however only {} device(s) can be used since the data set only has {} features!", devices_.size(), num_used_devices, num_features) << std::endl;
-    }
-    return num_used_devices;
+std::size_t gpu_csvm<device_ptr_t, queue_t>::select_num_used_devices(const kernel_function_type, const std::size_t) const noexcept {
+//    PLSSVM_ASSERT(num_features > 0, "At lest one feature must be given!");
+//
+//    // polynomial and rbf kernel currently only support single GPU execution
+//    if ((kernel == kernel_function_type::polynomial || kernel == kernel_function_type::rbf) && devices_.size() > 1) {
+//        std::clog << fmt::format("Warning: found {} devices, however only 1 device can be used since the polynomial and rbf kernels currently only support single GPU execution!", devices_.size()) << std::endl;
+//        return 1;
+//    }
+//
+//    // the number of used devices may not exceed the number of features
+//    const std::size_t num_used_devices = std::min(devices_.size(), num_features);
+//    if (num_used_devices < devices_.size()) {
+//        std::clog << fmt::format("Warning: found {} devices, however only {} device(s) can be used since the data set only has {} features!", devices_.size(), num_used_devices, num_features) << std::endl;
+//    }
+//    return num_used_devices;
+    // TODO: currently only a single device is supported!
+    return 1;
 }
 
 template <template <typename> typename device_ptr_t, typename queue_t>
