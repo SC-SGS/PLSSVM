@@ -276,6 +276,11 @@ class csvm {
      */
     [[nodiscard]] std::pair<std::vector<real_type>, real_type> perform_dimensional_reduction(const parameter &params, const aos_matrix<real_type> &A) const;
 
+    /**
+     * @copydoc plssvm::csvm::blas_gemm
+     * @detail Small wrapper around the virtual `plssvm::csvm::blas_gemm` function to easily track its execution time.
+     */
+    [[nodiscard]] std::chrono::duration<long, std::milli> run_blas_gemm(solver_type cg_solver, real_type alpha, const detail::simple_any &A, const aos_matrix<real_type> &B, real_type beta, aos_matrix<real_type> &C) const;
 
     /// The SVM parameter (e.g., cost, degree, gamma, coef0) currently in use.
     parameter params_{};

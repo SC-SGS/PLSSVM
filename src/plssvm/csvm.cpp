@@ -56,6 +56,10 @@ aos_matrix<real_type> csvm::conjugate_gradients(const detail::simple_any &A, con
     const std::size_t num_rows = B.num_cols();
     const std::size_t num_rhs = B.num_rows();
 
+    // timing for each CG iteration
+    std::chrono::milliseconds total_iteration_time{};
+    std::chrono::milliseconds total_blas_gemm_time{};
+
     //
     // perform Conjugate Gradients (CG) algorithm
     //
@@ -64,7 +68,7 @@ aos_matrix<real_type> csvm::conjugate_gradients(const detail::simple_any &A, con
 
     // R = B - A * X
     aos_matrix<real_type> R{ B };
-    this->blas_gemm(cg_solver, real_type{ -1.0 }, A, X, real_type{ 1.0 }, R);
+    total_blas_gemm_time += this->run_blas_gemm(cg_solver, real_type{ -1.0 }, A, X, real_type{ 1.0 }, R);
 
     // delta = R.T * R
     std::vector<real_type> delta(num_rhs);
@@ -80,9 +84,6 @@ aos_matrix<real_type> csvm::conjugate_gradients(const detail::simple_any &A, con
     const std::vector<real_type> delta0(delta);
 
     aos_matrix<real_type> D{ R };
-
-    // timing for each CG iteration
-    std::chrono::milliseconds total_iteration_time{};
 
     // get the index of the rhs that has the largest residual difference wrt to its target residual
     const auto rhs_idx_max_residual_difference = [&]() {
@@ -120,7 +121,7 @@ aos_matrix<real_type> csvm::conjugate_gradients(const detail::simple_any &A, con
 
         // Q = A * D
         aos_matrix<real_type> Q{ D.num_rows(), D.num_cols() };
-        this->blas_gemm(cg_solver, real_type{ 1.0 }, A, D, real_type{ 0.0 }, Q);
+        total_blas_gemm_time += this->run_blas_gemm(cg_solver, real_type{ 1.0 }, A, D, real_type{ 0.0 }, Q);
 
         // alpha = delta_new / (D^T * Q))
         std::vector<real_type> alpha(num_rhs);
@@ -146,7 +147,7 @@ aos_matrix<real_type> csvm::conjugate_gradients(const detail::simple_any &A, con
             // explicitly recalculate residual to remove accumulating floating point errors
             // R = B - A * X
             R = B;
-            this->blas_gemm(cg_solver, real_type{ -1.0 }, A, X, real_type{ 1.0 }, R);
+            total_blas_gemm_time += this->run_blas_gemm(cg_solver, real_type{ -1.0 }, A, X, real_type{ 1.0 }, R);
         } else {
             // R = R - alpha * Q
             #pragma omp parallel for collapse(2) default(none) shared(R, alpha, Q) firstprivate(num_rhs, num_rows)
@@ -191,7 +192,7 @@ aos_matrix<real_type> csvm::conjugate_gradients(const detail::simple_any &A, con
     }
     const std::size_t max_residual_difference_idx = rhs_idx_max_residual_difference();
     detail::log(verbosity_level::full | verbosity_level::timing,
-                "Finished after {}/{} iterations with {}/{} converged rhs (max residual {} with target residual {} for rhs {}) and an average iteration time of {}.\n",
+                "Finished after {}/{} iterations with {}/{} converged rhs (max residual {} with target residual {} for rhs {}) and an average iteration time of {} and an average GEMM time of {}.\n",
                 detail::tracking_entry{ "cg", "iterations", iter },
                 detail::tracking_entry{ "cg", "max_iterations", max_cg_iter },
                 detail::tracking_entry{ "cg", "num_converged_rhs", num_rhs_converged() },
@@ -199,7 +200,8 @@ aos_matrix<real_type> csvm::conjugate_gradients(const detail::simple_any &A, con
                 delta[max_residual_difference_idx],
                 eps * eps * delta0[max_residual_difference_idx],
                 max_residual_difference_idx,
-                detail::tracking_entry{ "cg", "avg_iteration_time", total_iteration_time / iter });
+                detail::tracking_entry{ "cg", "avg_iteration_time", total_iteration_time / iter },
+                detail::tracking_entry{ "cg", "avg_gemm_time", total_blas_gemm_time / (1 + iter + iter / 50) });
     PLSSVM_DETAIL_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((detail::tracking_entry{ "cg", "residuals", delta }));
     PLSSVM_DETAIL_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((detail::tracking_entry{ "cg", "target_residuals", eps * eps * delta0 }));
     PLSSVM_DETAIL_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((detail::tracking_entry{ "cg", "epsilon", eps }));
@@ -244,6 +246,15 @@ std::pair<std::vector<real_type>, real_type> csvm::perform_dimensional_reduction
                 detail::tracking_entry{ "cg", "dimensional_reduction", std::chrono::duration_cast<std::chrono::milliseconds>(dimension_reduction_end_time - dimension_reduction_start_time) });
 
     return std::make_pair(std::move(q_red), QA_cost);
+}
+
+std::chrono::duration<long, std::milli> csvm::run_blas_gemm(const solver_type cg_solver, const real_type alpha, const detail::simple_any &A, const aos_matrix<real_type> &B, const real_type beta, aos_matrix<real_type> &C) const {
+    const std::chrono::steady_clock::time_point start_time = std::chrono::steady_clock::now();
+
+    this->blas_gemm(cg_solver, alpha, A, B, beta, C);
+
+    const std::chrono::steady_clock::time_point end_time = std::chrono::steady_clock::now();
+    return std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time);
 }
 
 }  // namespace plssvm
