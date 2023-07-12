@@ -10,12 +10,11 @@
 
 #include "plssvm/constants.hpp"                          // plssvm::real_type
 #include "plssvm/detail/arithmetic_type_name.hpp"        // plssvm::detail::arithmetic_type_name_v
-#include "plssvm/detail/assert.hpp"                      // PLSSVM_ASSERT
+#include "plssvm/detail/arithmetic_type_name.hpp"        // plssvm::detail::arithmetic_type_name
+#include "plssvm/detail/assert.hpp"                      // PLSSVM_ASSERT, PLSSVM_ASSERT_ENABLED
 #include "plssvm/detail/cmd/parser_predict.hpp"          // plssvm::detail::cmd::parser_predict
 #include "plssvm/detail/cmd/parser_scale.hpp"            // plssvm::detail::cmd::parser_scale
 #include "plssvm/detail/cmd/parser_train.hpp"            // plssvm::detail::cmd::parser_train
-#include "plssvm/constants.hpp"                          // plssvm::real_type
-#include "plssvm/detail/arithmetic_type_name.hpp"        // plssvm::detail::arithmetic_type_name
 #include "plssvm/detail/string_conversion.hpp"           // plssvm::detail::split_as
 #include "plssvm/detail/string_utility.hpp"              // plssvm::detail::trim
 #include "plssvm/detail/utility.hpp"                     // plssvm::detail::current_date_time
@@ -27,16 +26,17 @@
 #include "fmt/core.h"     // fmt::format
 #include "fmt/ostream.h"  // format types with an operator<< overload
 
+#if __has_include(<unistd.h>)
+    #include <unistd.h>  // gethostname, getlogin_r, HOST_NAME_MAX, LOGIN_NAME_MAX
+    #define PLSSVM_UNISTD_AVAILABLE
+#endif
+
 #include <fstream>        // std::ofstream
 #include <iostream>       // std::ios_base::app
 #include <memory>         // std::shared_ptr
 #include <string>         // std::string
 #include <unordered_map>  // std::unordered_multimap
 #include <utility>        // std::pair
-#if __has_include(<unistd.h>)
-    #include <unistd.h>             // gethostname
-    #define PLSSVM_UNISTD_AVAILABLE
-#endif
 
 namespace plssvm::detail {
 
@@ -165,34 +165,90 @@ void performance_tracker::save(std::ostream &out) {
     // append the current performance statistics to an already existing file if possible
     PLSSVM_ASSERT(out.good(), "Can't write to the provided output stream!");
 
-#ifdef PLSSVM_UNISTD_AVAILABLE
-    char hostname[HOST_NAME_MAX];
-    char username[LOGIN_NAME_MAX];
-    gethostname(hostname, HOST_NAME_MAX);
-    getlogin_r(username, LOGIN_NAME_MAX);
+    // get the current host- and username
+#if defined(PLSSVM_UNISTD_AVAILABLE)
+    std::string hostname(HOST_NAME_MAX, '\0');
+    gethostname(hostname.data(), HOST_NAME_MAX);
+    std::string username(LOGIN_NAME_MAX, '\0');
+    getlogin_r(username.data(), LOGIN_NAME_MAX);
 #else
-    string hostname = "not available";
-    string username = "not available";
+    constexpr std::string_view hostname{ "not available" };
+    constexpr std::string_view username{ "not available" };
 #endif
+    // check whether asserts are enabled
+#if defined(PLSSVM_ASSERT_ENABLED)
+    constexpr bool assert_enabled = true;
+#else
+    constexpr bool assert_enabled = false;
+#endif
+    // check whether LTO has been enabled
+#if defined(PLSSVM_LTO_SUPPORTED)
+    constexpr bool lto_enabled = true;
+#else
+    constexpr bool lto_enabled = false;
+#endif
+
+
     // begin a new YAML document (only with "---" multiple YAML docments in a single file are allowed)
     out << "---\n";
 
     // output metadata information
     out << fmt::format(
         "meta_data:\n"
-        "  date:                    \"{}\"\n"
-        "  PLSSVM_TARGET_PLATFORMS: \"{}\"\n"
-        "  commit:                  {}\n"
-        "  version:                 {}\n"
-        "  hostname:                {}\n"
-        "  user:                    {}\n"
-        "\n",
+        "  date:                       \"{}\"\n"
+        "  PLSSVM_TARGET_PLATFORMS:    \"{}\"\n"
+        "  commit:                     {}\n"
+        "  version:                    {}\n"
+        "  hostname:                   {}\n"
+        "  user:                       {}\n"
+        "  build_type:                 {}\n"
+        "  LTO:                        {}\n"
+        "  asserts:                    {}\n"
+        "  PLSSVM_THREAD_BLOCK_SIZE:   {}\n"
+        "  PLSSVM_INTERNAL_BLOCK_SIZE: {}\n"
+        "  PLSSVM_OPENMP_BLOCK_SIZE:   {}\n",
         plssvm::detail::current_date_time(),
         version::detail::target_platforms,
         version::git_metadata::commit_sha1().empty() ? "unknown" : version::git_metadata::commit_sha1(),
         version::version,
         hostname,
-        username);
+        username,
+        PLSSVM_BUILD_TYPE,
+        lto_enabled,
+        assert_enabled,
+        THREAD_BLOCK_SIZE,
+        INTERNAL_BLOCK_SIZE,
+        OPENMP_BLOCK_SIZE);
+
+#if defined(PLSSVM_SYCL_BACKEND_HAS_DPCPP)
+    //  check whether DPC++ AOT has been enabled
+    #if defined(PLSSVM_SYCL_BACKEND_DPCPP_ENABLE_AOT)
+    constexpr bool dpcpp_aot = true;
+    #else
+    constexpr bool dpcpp_aot = false;
+    #endif
+
+    out << fmt::format(
+        "  DPCPP_backend_type:         {}\n"
+        "  DPCPP_amd_gpu_backend_type: {}\n"
+        "  DPCPP_with_aot:             {}\n",
+        PLSSVM_SYCL_BACKEND_DPCPP_BACKEND_TYPE,
+        PLSSVM_SYCL_BACKEND_DPCPP_GPU_AMD_BACKEND_TYPE,
+        dpcpp_aot);
+#endif
+#if defined(PLSSVM_SYCL_BACKEND_HAS_HIPSYCL)
+    // check whether hipSYCL's new SSCP has been enabled
+    #if defined(PLSSVM_SYCL_BACKEND_HIPSYCL_USE_GENERIC_SSCP)
+    constexpr bool hipsycl_sscp = true;
+    #else
+    constexpr bool hipsycl_sscp = false;
+    #endif
+
+    out << fmt::format(
+        "  HIPSYCL_with_generic_SSCP:  {}\n",
+        hipsycl_sscp);
+#endif
+    out << "\n";
 
     // output the actual (performance) statistics
     std::unordered_multimap<std::string, std::string>::iterator group_iter;  // iterate over all groups

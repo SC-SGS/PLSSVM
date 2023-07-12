@@ -477,6 +477,8 @@ target_link_libraries(${PLSSVM_EXECUTABLE_SCALE_NAME} ${PLSSVM_ALL_LIBRARY_NAME}
 ########################################################################################################################
 ##                                         add additional compile definitions                                         ##
 ########################################################################################################################
+## the CMake build type for performance tracking
+target_compile_definitions(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC PLSSVM_BUILD_TYPE="${CMAKE_BUILD_TYPE}")
 ## add assert option
 option(PLSSVM_ENABLE_ASSERTS "Enables PLSSVM asserts even if NDEBUG is set." OFF)
 if (PLSSVM_ENABLE_ASSERTS)
@@ -558,6 +560,7 @@ if (PLSSVM_ENABLE_LTO)
         set_property(TARGET ${PLSSVM_EXECUTABLE_TRAIN_NAME} PROPERTY INTERPROCEDURAL_OPTIMIZATION TRUE)
         set_property(TARGET ${PLSSVM_EXECUTABLE_PREDICT_NAME} PROPERTY INTERPROCEDURAL_OPTIMIZATION TRUE)
         set_property(TARGET ${PLSSVM_EXECUTABLE_SCALE_NAME} PROPERTY INTERPROCEDURAL_OPTIMIZATION TRUE)
+        target_compile_definitions(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC PLSSVM_LTO_SUPPORTED)
     else ()
         message(STATUS "Interprocedural optimization (IPO/LTO) not supported.")
     endif ()
