@@ -94,7 +94,7 @@ void csvm::init(const target_platform target) {
         cudaDeviceProp prop{};
         cudaGetDeviceProperties(&prop, device);
         plssvm::detail::log(verbosity_level::full,
-                            "  [{}, {}, {}.{}]\n\n", device, prop.name, prop.major, prop.minor);
+                            "  [{}, {}, {}.{}]\n", device, prop.name, prop.major, prop.minor);
         device_names.emplace_back(prop.name);
     }
     PLSSVM_DETAIL_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking_entry{ "backend", "device", device_names }));
