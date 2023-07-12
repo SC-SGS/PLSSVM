@@ -74,12 +74,16 @@ void csvm::init(const target_platform target) {
     // print found HIP devices
     plssvm::detail::log(verbosity_level::full,
                         "Found {} HIP device(s):\n", plssvm::detail::tracking_entry{ "backend", "num_devices", devices_.size() });
+    std::vector<std::string> device_names;
+    device_names.reserve(devices_.size());
     for (const queue_type &device : devices_) {
         hipDeviceProp_t prop{};
         PLSSVM_HIP_ERROR_CHECK(hipGetDeviceProperties(&prop, device));
         plssvm::detail::log(verbosity_level::full,
                             "  [{}, {}, {}.{}]\n", device, prop.name, prop.major, prop.minor);
+        device_names.emplace_back(prop.name);
     }
+    PLSSVM_DETAIL_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking_entry{ "backend", "device", device_names }));
     plssvm::detail::log(verbosity_level::full | verbosity_level::timing,
                         "\n");
 }

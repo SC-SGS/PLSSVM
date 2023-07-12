@@ -112,10 +112,15 @@ void csvm::init(const target_platform target) {
                         "Found {} SYCL device(s) for the target platform {}:\n",
                         plssvm::detail::tracking_entry{ "backend", "num_devices", devices_.size() },
                         plssvm::detail::tracking_entry{ "backend", "target_platform", target_ });
+    std::vector<std::string> device_names;
+    device_names.reserve(devices_.size());
     for (typename std::vector<queue_type>::size_type device = 0; device < devices_.size(); ++device) {
+        const std::string device_name = devices_[device].impl->sycl_queue.get_device().template get_info<::sycl::info::device::name>();
         plssvm::detail::log(verbosity_level::full,
-                            "  [{}, {}]\n", device, devices_[device].impl->sycl_queue.get_device().template get_info<::sycl::info::device::name>());
+                            "  [{}, {}]\n", device, device_name);
+        device_names.emplace_back(device_name);
     }
+    PLSSVM_DETAIL_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking_entry{ "backend", "device", device_names }));
     plssvm::detail::log(verbosity_level::full | verbosity_level::timing,
                         "\n");
 }
