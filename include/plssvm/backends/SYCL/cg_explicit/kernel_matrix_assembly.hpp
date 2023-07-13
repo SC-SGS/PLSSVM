@@ -15,7 +15,7 @@
 
 #include "plssvm/constants.hpp"  // plssvm::real_type
 
-#include "sycl/sycl.hpp"  // sycl::item, sycl::pow, sycl::exp
+#include "sycl/sycl.hpp"  // sycl::nd_item, sycl::pow, sycl::exp
 
 namespace plssvm::sycl::detail {
 
@@ -39,11 +39,11 @@ class device_kernel_assembly_linear {
 
     /**
      * @brief Function call operator overload performing the actual calculation.
-     * @param[in] idx indices representing the current point in the execution space
+     * @param[in] nd_idx indices representing the current point in the execution space
      */
-    void operator()(::sycl::item<2> idx) const {
-        const unsigned long long i = idx.get_id(0);
-        const unsigned long long j = idx.get_id(1);
+    void operator()(::sycl::nd_item<2> nd_idx) const {
+        const unsigned long long i = nd_idx.get_global_id(0);
+        const unsigned long long j = nd_idx.get_global_id(1);
 
         if (i < num_rows_ && j < num_rows_ && j >= i) {
             real_type temp{ 0.0 };
@@ -95,11 +95,11 @@ class device_kernel_assembly_polynomial {
 
     /**
      * @brief Function call operator overload performing the actual calculation.
-     * @param[in] idx indices representing the current point in the execution space
+     * @param[in] nd_idx indices representing the current point in the execution space
      */
-    void operator()(::sycl::item<2> idx) const {
-        const unsigned long long i = idx.get_id(0);
-        const unsigned long long j = idx.get_id(1);
+    void operator()(::sycl::nd_item<2> nd_idx) const {
+        const unsigned long long i = nd_idx.get_global_id(0);
+        const unsigned long long j = nd_idx.get_global_id(1);
 
         if (i < num_rows_ && j < num_rows_ && j >= i) {
             real_type temp{ 0.0 };
@@ -152,11 +152,11 @@ class device_kernel_assembly_rbf {
 
     /**
      * @brief Function call operator overload performing the actual calculation.
-     * @param[in] idx indices representing the current point in the execution space
+     * @param[in] nd_idx indices representing the current point in the execution space
      */
-    void operator()(::sycl::item<2> idx) const {
-        const unsigned long long i = idx.get_id(0);
-        const unsigned long long j = idx.get_id(1);
+    void operator()(::sycl::nd_item<2> nd_idx) const {
+        const unsigned long long i = nd_idx.get_global_id(0);
+        const unsigned long long j = nd_idx.get_global_id(1);
 
         if (i < num_rows_ && j < num_rows_ && j >= i) {
             real_type temp{ 0.0 };

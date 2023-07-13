@@ -15,7 +15,7 @@
 
 #include "plssvm/constants.hpp"  // plssvm::real_type
 
-#include "sycl/sycl.hpp"  // sycl::item
+#include "sycl/sycl.hpp"  // sycl::nd_item
 
 namespace plssvm::sycl::detail {
 
@@ -40,12 +40,12 @@ class device_kernel_gemm {
 
     /**
      * @brief Function call operator overload performing the actual calculation.
-     * @param[in] idx indices representing the current point in the execution space
+     * @param[in] nd_idx indices representing the current point in the execution space
      */
-    void operator()(::sycl::item<2> idx) const {
+    void operator()(::sycl::nd_item<2> nd_idx) const {
         // compute: C = alpha * A * B + beta * C with A in m x k, B in n x k, and C in n x m, alpha, beta as scalar
-        const unsigned long long i = idx.get_id(0);
-        const unsigned long long j = idx.get_id(1);
+        const unsigned long long i = nd_idx.get_global_id(0);
+        const unsigned long long j = nd_idx.get_global_id(1);
 
         if (i < m_ && j < n_) {
             real_type temp{ 0.0 };
