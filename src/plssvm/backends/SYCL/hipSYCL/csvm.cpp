@@ -169,7 +169,7 @@ auto csvm::run_assemble_kernel_matrix_explicit(const parameter &params, const de
     const ::sycl::range<2> block{ max_work_group_size_2D, max_work_group_size_2D };
     const ::sycl::range<2> grid{ static_cast<std::size_t>(std::ceil(static_cast<double>(num_rows_reduced) / static_cast<double>(block[0]))) * block[0],
                                  static_cast<std::size_t>(std::ceil(static_cast<double>(num_rows_reduced) / static_cast<double>(block[1]))) * block[1] };
-    const ::sycl::nd_range<2> execution_range{ block, grid };
+    const ::sycl::nd_range<2> execution_range{ grid, block };
 
     device_ptr_type kernel_matrix_d{ { num_rows_reduced, num_rows_reduced }, devices_[0] };
     const real_type cost_factor = real_type{ 1.0 } / params.cost;
@@ -197,7 +197,7 @@ void csvm::run_gemm_kernel_explicit(const std::size_t m, const std::size_t n, co
     const ::sycl::range<2> block{ max_work_group_size_2D, max_work_group_size_2D };
     const ::sycl::range<2> grid{ static_cast<std::size_t>(std::ceil(static_cast<double>(m) / static_cast<double>(block[0]))) * block[0],
                                  static_cast<std::size_t>(std::ceil(static_cast<double>(n) / static_cast<double>(block[1]))) * block[1] };
-    const ::sycl::nd_range<2> execution_range{ block, grid };
+    const ::sycl::nd_range<2> execution_range{ grid, block };
 
     // cast to correct type
     const auto m_ull = static_cast<unsigned long long>(m);
