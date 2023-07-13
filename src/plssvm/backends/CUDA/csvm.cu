@@ -11,17 +11,14 @@
 #include "plssvm/backend_types.hpp"                                     // plssvm::backend_type
 #include "plssvm/backends/CUDA/cg_explicit/blas.cuh"                    // plssvm::cuda::device_kernel_gemm
 #include "plssvm/backends/CUDA/cg_explicit/kernel_matrix_assembly.cuh"  // plssvm::cuda::{device_kernel_assembly_linear, device_kernel_assembly_polynomial, device_kernel_assembly_rbf}
-#include "plssvm/backends/CUDA/cg_implicit/svm_kernel.cuh"              // plssvm::cuda::detail::{device_kernel_linear, device_kernel_polynomial, device_kernel_rbf}
 #include "plssvm/backends/CUDA/detail/device_ptr.cuh"                   // plssvm::cuda::detail::device_ptr
 #include "plssvm/backends/CUDA/detail/utility.cuh"                      // plssvm::cuda::detail::{device_synchronize, get_device_count, set_device, peek_at_last_error}
 #include "plssvm/backends/CUDA/exceptions.hpp"                          // plssvm::cuda::backend_exception
 #include "plssvm/backends/CUDA/predict_kernel.cuh"                      // plssvm::cuda::detail::{device_kernel_w_linear, device_kernel_predict_polynomial, device_kernel_predict_rbf}
 #include "plssvm/constants.hpp"                                         // plssvm::real_type
 #include "plssvm/detail/assert.hpp"                                     // PLSSVM_ASSERT
-#include "plssvm/detail/execution_range.hpp"                            // plssvm::detail::execution_range
 #include "plssvm/detail/logger.hpp"                                     // plssvm::detail::log, plssvm::verbosity_level
 #include "plssvm/detail/performance_tracker.hpp"                        // plssvm::detail::tracking_entry
-#include "plssvm/detail/simple_any.hpp"                                 // plssvm::detail::simple_any
 #include "plssvm/exceptions/exceptions.hpp"                             // plssvm::exception
 #include "plssvm/kernel_function_types.hpp"                             // plssvm::kernel_function_type
 #include "plssvm/parameter.hpp"                                         // plssvm::parameter
@@ -91,12 +88,16 @@ void csvm::init(const target_platform target) {
     // print found CUDA devices
     plssvm::detail::log(verbosity_level::full,
                         "Found {} CUDA device(s):\n", plssvm::detail::tracking_entry{ "backend", "num_devices", devices_.size() });
+    std::vector<std::string> device_names;
+    device_names.reserve(devices_.size());
     for (const queue_type &device : devices_) {
         cudaDeviceProp prop{};
         cudaGetDeviceProperties(&prop, device);
         plssvm::detail::log(verbosity_level::full,
-                            "  [{}, {}, {}.{}]\n\n", device, prop.name, prop.major, prop.minor);
+                            "  [{}, {}, {}.{}]\n", device, prop.name, prop.major, prop.minor);
+        device_names.emplace_back(prop.name);
     }
+    PLSSVM_DETAIL_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking_entry{ "backend", "device", device_names }));
     plssvm::detail::log(verbosity_level::full | verbosity_level::timing,
                         "\n");
 }
@@ -111,6 +112,12 @@ unsigned long long csvm::get_device_memory() const {
     return static_cast<unsigned long long>(prop.totalGlobalMem);
 }
 
+std::size_t csvm::get_max_work_group_size() const {
+    cudaDeviceProp prop{};
+    cudaGetDeviceProperties(&prop, devices_[0]);
+    return static_cast<std::size_t>(prop.maxThreadsPerBlock);
+}
+
 //***************************************************//
 //                        fit                        //
 //***************************************************//
@@ -120,9 +127,11 @@ auto csvm::run_assemble_kernel_matrix_explicit(const parameter &params, const de
     const unsigned long long num_features = data_d.size(1);
 
     // define grid and block sizes
-    const dim3 block(32, 32);
-    const dim3 grid(static_cast<int>(std::ceil(num_rows_reduced / static_cast<double>(block.x))),
-                    static_cast<int>(std::ceil(num_rows_reduced / static_cast<double>(block.y))));
+    const std::size_t max_work_group_size = this->get_max_work_group_size();
+    const auto max_work_group_size_2D = static_cast<int>(std::sqrt(static_cast<real_type>(max_work_group_size)));
+    const dim3 block(max_work_group_size_2D, max_work_group_size_2D);
+    const dim3 grid(static_cast<int>(std::ceil(static_cast<double>(num_rows_reduced) / static_cast<double>(block.x))),
+                    static_cast<int>(std::ceil(static_cast<double>(num_rows_reduced) / static_cast<double>(block.y))));
 
     device_ptr_type kernel_matrix_d{ { num_rows_reduced, num_rows_reduced } };
     const real_type cost_factor = real_type{ 1.0 } / params.cost;
@@ -146,12 +155,20 @@ auto csvm::run_assemble_kernel_matrix_explicit(const parameter &params, const de
 }
 
 void csvm::run_gemm_kernel_explicit(const std::size_t m, const std::size_t n, const std::size_t k, const real_type alpha, const device_ptr_type &A_d, const device_ptr_type &B_d, const real_type beta, device_ptr_type &C_d) const {
-    const dim3 block(32, 32);
-    const dim3 grid(static_cast<int>(std::ceil(m / static_cast<double>(block.x))),
-                    static_cast<int>(std::ceil(n / static_cast<double>(block.y))));
+    // define the grid and block sizes
+    const std::size_t max_work_group_size = this->get_max_work_group_size();
+    const auto max_work_group_size_2D = static_cast<int>(std::sqrt(static_cast<real_type>(max_work_group_size)));
+    const dim3 block(max_work_group_size_2D, max_work_group_size_2D);
+    const dim3 grid(static_cast<int>(std::ceil(static_cast<double>(m) / static_cast<double>(block.x))),
+                    static_cast<int>(std::ceil(static_cast<double>(n) / static_cast<double>(block.y))));
+
+    // cast to correct type
+    const auto m_ull = static_cast<unsigned long long>(m);
+    const auto n_ull = static_cast<unsigned long long>(n);
+    const auto k_ull = static_cast<unsigned long long>(k);
 
     detail::set_device(0);
-    cuda::device_kernel_gemm<<<grid, block>>>(m, n, k, alpha, A_d.get(), B_d.get(), beta, C_d.get());
+    cuda::device_kernel_gemm<<<grid, block>>>(m_ull, n_ull, k_ull, alpha, A_d.get(), B_d.get(), beta, C_d.get());
     detail::peek_at_last_error();
     this->device_synchronize(devices_[0]);
 }
@@ -161,13 +178,16 @@ void csvm::run_gemm_kernel_explicit(const std::size_t m, const std::size_t n, co
 //***************************************************//
 
 auto csvm::run_w_kernel(const device_ptr_type &alpha_d, const device_ptr_type &sv_d) const -> device_ptr_type {
-    const std::size_t num_classes = alpha_d.size(0);
-    const std::size_t num_sv = sv_d.size(0);
-    const std::size_t num_features = sv_d.size(1);
+    const unsigned long long num_classes = alpha_d.size(0);
+    const unsigned long long num_sv = sv_d.size(0);
+    const unsigned long long num_features = sv_d.size(1);
 
-    const dim3 block(256, 4);
-    const dim3 grid(static_cast<int>(std::ceil(num_features / static_cast<double>(block.x))),
-                    static_cast<int>(std::ceil(num_classes / static_cast<double>(block.y))));
+    // define the grid and block sizes
+    const std::size_t max_work_group_size = this->get_max_work_group_size();
+    const auto max_work_group_size_2D = static_cast<int>(max_work_group_size / 4);
+    const dim3 block(max_work_group_size_2D, 4);
+    const dim3 grid(static_cast<int>(std::ceil(static_cast<double>(num_features) / static_cast<double>(block.x))),
+                    static_cast<int>(std::ceil(static_cast<double>(num_classes) / static_cast<double>(block.y))));
 
     device_ptr_type w_d{ { num_classes, num_features } };
 
@@ -180,35 +200,41 @@ auto csvm::run_w_kernel(const device_ptr_type &alpha_d, const device_ptr_type &s
 }
 
 auto csvm::run_predict_kernel(const parameter &params, const device_ptr_type &w_d, const device_ptr_type &alpha_d, const device_ptr_type &rho_d, const device_ptr_type &sv_d, const device_ptr_type &predict_points_d) const -> device_ptr_type {
-    const std::size_t num_classes = alpha_d.size(0);
-    const std::size_t num_sv = sv_d.size(0);
-    const std::size_t num_predict_points = predict_points_d.size(0);
-    const std::size_t num_features = predict_points_d.size(1);
+    const unsigned long long num_classes = alpha_d.size(0);
+    const unsigned long long num_sv = sv_d.size(0);
+    const unsigned long long num_predict_points = predict_points_d.size(0);
+    const unsigned long long num_features = predict_points_d.size(1);
 
     device_ptr_type out_d{ { num_predict_points, num_classes } };
 
     detail::set_device(0);
     if (params.kernel_type == kernel_function_type::linear) {
-        const dim3 block(256, 4);
-        const dim3 grid(static_cast<int>(std::ceil(num_predict_points / static_cast<double>(block.x))),
-                        static_cast<int>(std::ceil(num_classes / static_cast<double>(block.y))));
+        // define the grid and block sizes
+        const std::size_t max_work_group_size = this->get_max_work_group_size();
+        const auto max_work_group_size_2D = static_cast<int>(max_work_group_size / 4);
+        const dim3 block(max_work_group_size_2D, 4);
+        const dim3 grid(static_cast<int>(std::ceil(static_cast<double>(num_predict_points) / static_cast<double>(block.x))),
+                        static_cast<int>(std::ceil(static_cast<double>(num_classes) / static_cast<double>(block.y))));
 
         cuda::device_kernel_predict_linear<<<grid, block>>>(out_d.get(), w_d.get(), rho_d.get(), predict_points_d.get(), num_classes, num_predict_points, num_features);
     } else {
-        const dim3 block(16, 16, 4);
-        const dim3 grid(static_cast<int>(std::ceil(num_sv / static_cast<double>(block.x))),
-                        static_cast<int>(std::ceil(num_predict_points / static_cast<double>(block.y))),
-                        static_cast<int>(std::ceil(num_classes / static_cast<double>(block.z))));
+        // define the grid and block sizes
+        const std::size_t max_work_group_size = this->get_max_work_group_size();
+        const auto max_work_group_size_3D = static_cast<int>(std::sqrt(static_cast<real_type>(max_work_group_size / 4)));
+        const dim3 block(max_work_group_size_3D, max_work_group_size_3D, 4);
+        const dim3 grid(static_cast<int>(std::ceil(static_cast<double>(num_sv) / static_cast<double>(block.x))),
+                        static_cast<int>(std::ceil(static_cast<double>(num_predict_points) / static_cast<double>(block.y))),
+                        static_cast<int>(std::ceil(static_cast<double>(num_classes) / static_cast<double>(block.z))));
 
         switch (params.kernel_type) {
             case kernel_function_type::linear:
                 // already handled
                 break;
             case kernel_function_type::polynomial:
-                cuda::device_kernel_predict_polynomial<<<grid, block>>>(out_d.get(), alpha_d.get(), rho_d.get(), sv_d.get(), predict_points_d.get(), static_cast<kernel_index_type>(num_classes), static_cast<kernel_index_type>(num_sv), static_cast<kernel_index_type>(num_predict_points), static_cast<kernel_index_type>(num_features), params.degree.value(), params.gamma.value(), params.coef0.value());
+                cuda::device_kernel_predict_polynomial<<<grid, block>>>(out_d.get(), alpha_d.get(), rho_d.get(), sv_d.get(), predict_points_d.get(), num_classes, num_sv, num_predict_points, num_features, params.degree.value(), params.gamma.value(), params.coef0.value());
                 break;
             case kernel_function_type::rbf:
-                cuda::device_kernel_predict_rbf<<<grid, block>>>(out_d.get(), alpha_d.get(), rho_d.get(), sv_d.get(), predict_points_d.get(), static_cast<kernel_index_type>(num_classes), static_cast<kernel_index_type>(num_sv), static_cast<kernel_index_type>(num_predict_points), static_cast<kernel_index_type>(num_features), params.gamma.value());
+                cuda::device_kernel_predict_rbf<<<grid, block>>>(out_d.get(), alpha_d.get(), rho_d.get(), sv_d.get(), predict_points_d.get(), num_classes, num_sv, num_predict_points, num_features, params.gamma.value());
                 break;
         }
     }

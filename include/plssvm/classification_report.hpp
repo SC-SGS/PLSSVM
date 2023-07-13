@@ -16,6 +16,8 @@
 #include "plssvm/detail/assert.hpp"          // PLSSVM_ASSERT
 #include "plssvm/exceptions/exceptions.hpp"  // plssvm::exception
 
+#include "fmt/ostream.h"  // fmt::formatter, fmt::ostream_formatter
+
 #include <algorithm>  // std::find, std::count
 #include <cmath>      // std::isnan
 #include <cstddef>    // std::size_t
@@ -173,5 +175,8 @@ classification_report::classification_report(const std::vector<label_type> &corr
 std::ostream &operator<<(std::ostream &out, const classification_report::accuracy_metric &accuracy);
 
 }  // namespace plssvm
+
+template <> struct fmt::formatter<plssvm::classification_report> : fmt::ostream_formatter {};
+template <> struct fmt::formatter<plssvm::classification_report::accuracy_metric> : fmt::ostream_formatter {};
 
 #endif  // PLSSVM_CLASSIFICATION_REPORT_HPP_

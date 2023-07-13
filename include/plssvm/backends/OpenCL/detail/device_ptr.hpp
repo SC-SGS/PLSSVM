@@ -18,6 +18,8 @@
 
 #include "CL/cl.h"  // cl_mem
 
+#include <array>  // std::array
+
 namespace plssvm::opencl::detail {
 
 /**
@@ -31,7 +33,7 @@ class device_ptr : public ::plssvm::detail::gpu_device_ptr<T, const command_queu
 
     using base_type::data_;
     using base_type::queue_;
-    using base_type::size_;
+    using base_type::extends_;
 
   public:
     // Be able to use overloaded base class functions.
@@ -52,11 +54,17 @@ class device_ptr : public ::plssvm::detail::gpu_device_ptr<T, const command_queu
      */
     device_ptr() = default;
     /**
-     * @brief Allocates `size * sizeof(T)` bytes on the device with ID @p device.
+     * @brief Allocates `size * sizeof(T)` bytes on the device associated with @p queue.
      * @param[in] size the number of elements represented by the device_ptr
      * @param[in] queue the associated command queue
      */
     device_ptr(size_type size, const command_queue &queue);
+    /**
+     * @brief Allocates `extends[0] * extends[1] * sizeof(T)` bytes on the device associated with @p queue.
+     * @param[in] extends the number of elements represented by the device_ptr
+     * @param[in] queue the associated command queue
+     */
+    device_ptr(std::array<size_type, 2> extends, const command_queue &queue);
 
     /**
      * @copydoc plssvm::detail::gpu_device_ptr::gpu_device_ptr(const plssvm::detail::gpu_device_ptr &)

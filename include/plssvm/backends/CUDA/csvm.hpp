@@ -16,7 +16,6 @@
 #include "plssvm/backends/CUDA/detail/device_ptr.cuh"  // plssvm::cuda::detail::device_ptr
 #include "plssvm/backends/gpu_csvm.hpp"                // plssvm::detail::gpu_csvm
 #include "plssvm/constants.hpp"                        // plssvm::real_type
-#include "plssvm/detail/simple_any.hpp"                // plssvm::detail::simple_any
 #include "plssvm/parameter.hpp"                        // plssvm::parameter
 #include "plssvm/target_platforms.hpp"                 // plssvm::target_platform
 
@@ -129,6 +128,10 @@ class csvm : public ::plssvm::detail::gpu_csvm<detail::device_ptr, int> {
      * @copydoc plssvm::csvm::get_device_memory
      */
     [[nodiscard]] unsigned long long get_device_memory() const final;
+    /**
+     * @copydoc plssvm::detail::gpu_csvm::get_max_work_group_size
+     */
+    [[nodiscard]] std::size_t get_max_work_group_size() const final;
 
     //***************************************************//
     //                        fit                        //

@@ -13,6 +13,8 @@
 #define PLSSVM_BACKENDS_SYCL_IMPLEMENTATION_TYPE_HPP_
 #pragma once
 
+#include "fmt/ostream.h"  // fmt::formatter, fmt::ostream_formatter
+
 #include <iosfwd>  // forward declare std::ostream and std::istream
 #include <vector>  // std::vector
 
@@ -54,5 +56,7 @@ std::ostream &operator<<(std::ostream &out, implementation_type impl);
 std::istream &operator>>(std::istream &in, implementation_type &impl);
 
 }  // namespace plssvm::sycl
+
+template <> struct fmt::formatter<plssvm::sycl::implementation_type> : fmt::ostream_formatter {};
 
 #endif  // PLSSVM_BACKENDS_SYCL_IMPLEMENTATION_TYPE_HPP_

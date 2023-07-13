@@ -199,7 +199,7 @@ const std::vector<std::string_view> &file_reader::read_lines(const std::string_v
         }
 
         // find all newlines - parallel
-        #pragma omp for ordered
+        #pragma omp for
         for (std::size_t i = 0; i < file_content_view.size(); ++i) {
             if (file_content_view[i] == '\n') {
                 per_thread_newlines[omp_get_thread_num()].push_back(i + 1);
@@ -221,7 +221,7 @@ const std::vector<std::string_view> &file_reader::read_lines(const std::string_v
         }
 
         // get lines from newlines - parallel
-        #pragma omp for ordered
+        #pragma omp for
         for (std::size_t i = 0; i < per_thread_newlines.size(); ++i) {
             // reserve lines sizes
             per_thread_lines[i].reserve(per_thread_newlines[i].size());

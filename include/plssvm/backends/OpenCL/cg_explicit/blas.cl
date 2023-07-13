@@ -6,16 +6,10 @@
  * @license This file is part of the PLSSVM project which is released under the MIT license.
  *          See the LICENSE.md file in the project root for full license information.
  *
- * @brief Functions for explicitly performing a BLAS GEMM like matrix-matrix multiplication using the CUDA backend.
+ * @brief Functions for explicitly performing a BLAS GEMM like matrix-matrix multiplication using the OpenCL backend.
  */
 
-#ifndef PLSSVM_BACKENDS_CUDA_CG_EXPLICIT_BLAS_CUH_
-#define PLSSVM_BACKENDS_CUDA_CG_EXPLICIT_BLAS_CUH_
-#pragma once
-
-#include "plssvm/constants.hpp"  // plssvm::real_type
-
-namespace plssvm::cuda {
+#pragma OPENCL EXTENSION cl_khr_fp64 : enable
 
 /**
  * @brief Perform an explicit BLAS GEMM operation: `C = alpha * A * B + beta * C` where @p A is a `m x k` matrix, @p B is a `k x n` matrix, @p C is a `m x n` matrix, and @p alpha and @p beta are scalars.
@@ -28,8 +22,16 @@ namespace plssvm::cuda {
  * @param[in] beta the scalar beta value
  * @param[in,out] C the matrix @p C, also used as result matrix
  */
-__global__ void device_kernel_gemm(const unsigned long long m, const unsigned long long n, const unsigned long long k, const real_type alpha, const real_type *A, const real_type *B, const real_type beta, real_type *C);
+__kernel void device_kernel_gemm(const ulong m, const ulong n, const ulong k, const real_type alpha, __global const real_type *A, __global const real_type *B, const real_type beta, __global real_type *C) {
+    // compute: C = alpha * A * B + beta * C with A in m x k, B in n x k, and C in n x m, alpha, beta as scalar
+    const ulong i = get_global_id(0);
+    const ulong j = get_global_id(1);
 
-}  // namespace plssvm::cuda
-
-#endif  // PLSSVM_BACKENDS_CUDA_CG_EXPLICIT_BLAS_CUH_
+    if (i < m && j < n) {
+        real_type temp = 0.0;
+        for (ulong dim = 0; dim < k; ++dim) {
+            temp += A[i * k + dim] * B[j * k + dim];
+        }
+        C[j * m + i] = alpha * temp + beta * C[j * m + i];
+    }
+}

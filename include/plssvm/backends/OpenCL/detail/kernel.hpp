@@ -22,10 +22,10 @@ namespace plssvm::opencl::detail {
  * @details Used to distinguish kernels in the plssvm::opencl::detail::command_queue class.
  */
 enum class compute_kernel_name {
-    /// The kernels to generate the `q` vector.
-    q_kernel,
-    /// The main C-SVM kernel.
-    svm_kernel,
+    /// The kernels to explicitly assemble the kernel matrix.
+    assemble_kernel_matrix_explicit,
+    /// The kernel performing a explicit BLAS GEMM calculation.
+    gemm_kernel_explicit,
     /// The predict kernel for the linear kernel function.
     w_kernel,
     /// The predict kernels for the polynomial and rbf kernel functions.

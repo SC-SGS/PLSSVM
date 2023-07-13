@@ -585,10 +585,10 @@ template <layout_type layout>
 data_set<U>::data_set(matrix<real_type, layout> data_points) :
     num_data_points_{ data_points.num_rows() }, num_features_{ data_points.num_cols() }, data_ptr_{ std::make_shared<aos_matrix<real_type>>(std::move(data_points)) } {
     // the provided data points vector may not be empty
-    if (data_ptr_->num_rows() != 0) {
+    if (data_ptr_->num_rows() == 0) {
         throw data_set_exception{ "Data vector is empty!" };
     }
-    if (data_ptr_->num_cols() != 0) {
+    if (data_ptr_->num_cols() == 0) {
         throw data_set_exception{ "No features provided for the data points!" };
     }
 

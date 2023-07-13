@@ -203,8 +203,6 @@ class csvm {
      * @param[in] solver the used solver type, determines the return type
      * @param[in] params the parameters used to assemble the kernel matrix (e.g., the used kernel function)
      * @param[in] data the data used to assemble the kernel matrix; fully stored on the device
-     * @param[in] num_rows_reduced the number of rows (and columns) in the kernel matrix; pay attention to the dimension reduction
-     * @param[in] num_features the number of features in the data
      * @param[in] q_red the vector used in the dimensional reduction
      * @param[in] QA_cost the value used in the dimensional reduction
      * @return based on the used solver type (e.g., cg_explicit -> kernel matrix fully stored on the device; cg_implicit -> "nothing") (`[[nodiscard]]`)
@@ -278,6 +276,11 @@ class csvm {
      */
     [[nodiscard]] std::pair<std::vector<real_type>, real_type> perform_dimensional_reduction(const parameter &params, const aos_matrix<real_type> &A) const;
 
+    /**
+     * @copydoc plssvm::csvm::blas_gemm
+     * @detail Small wrapper around the virtual `plssvm::csvm::blas_gemm` function to easily track its execution time.
+     */
+    [[nodiscard]] std::chrono::duration<long, std::milli> run_blas_gemm(solver_type cg_solver, real_type alpha, const detail::simple_any &A, const aos_matrix<real_type> &B, real_type beta, aos_matrix<real_type> &C) const;
 
     /// The SVM parameter (e.g., cost, degree, gamma, coef0) currently in use.
     parameter params_{};
@@ -700,11 +703,11 @@ std::pair<aos_matrix<real_type>, std::vector<real_type>> csvm::solve_system_of_l
     if (used_solver == solver_type::automatic) {
         using namespace detail::literals;
 
-        const auto reduce_total_memory = [](const double total_memory) -> double {
-            return total_memory - std::max<double>(total_memory * 0.05, 512_MiB);  // 512 MiB
+        const auto reduce_total_memory = [](const long double total_memory) {
+            return total_memory - std::max<long double>(total_memory * 0.05L, 512_MiB);  // 512 MiB
         };
-        const double total_system_memory = reduce_total_memory(detail::get_system_memory());
-        const double total_device_memory = reduce_total_memory(this->get_device_memory());
+        const long double total_system_memory = reduce_total_memory(detail::get_system_memory());
+        const long double total_device_memory = reduce_total_memory(this->get_device_memory());
 
         // 4B/8B * (data_set size + explicit kernel matrix size + B and C matrix in GEMM + q_red vector)
         const unsigned long long total_memory_needed = sizeof(real_type) * (num_rows * num_features + num_rows_reduced * num_rows_reduced + 2 * num_rows_reduced * num_rhs + num_features);
@@ -716,7 +719,7 @@ std::pair<aos_matrix<real_type>, std::vector<real_type>> csvm::solve_system_of_l
                     "  - memory needed: {:.2f} GiB\n",
                     detail::tracking_entry{ "solver", "system_memory_GiB", total_system_memory / 1.0_GiB },
                     detail::tracking_entry{ "solver", "device_memory_GiB", total_device_memory / 1.0_GiB },
-                    detail::tracking_entry{ "solver", "needed_memory_GiB", total_memory_needed / 1.0_GiB });
+                    detail::tracking_entry{ "solver", "needed_memory_GiB", static_cast<long double>(total_memory_needed) / 1.0_GiB });
 
         if (total_memory_needed < total_device_memory) {
             used_solver = solver_type::cg_explicit;
@@ -732,7 +735,10 @@ std::pair<aos_matrix<real_type>, std::vector<real_type>> csvm::solve_system_of_l
                 detail::tracking_entry{ "solver", "solver_type", used_solver });
 
     // perform dimensional reduction
-    const auto [q_red, QA_cost] = this->perform_dimensional_reduction(params, A);
+    // note: structured binding is rejected by clang HIP compiler!
+    std::vector<real_type> q_red{};
+    real_type QA_cost{};
+    std::tie(q_red, QA_cost) = this->perform_dimensional_reduction(params, A);
 
     // update right-hand sides (B)
     std::vector<real_type> b_back_value(num_rhs);
