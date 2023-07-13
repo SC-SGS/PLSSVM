@@ -171,7 +171,7 @@ std::string get_device_name(const command_queue &queue) {
     // get device name
     std::size_t name_length{};
     PLSSVM_OPENCL_ERROR_CHECK(clGetDeviceInfo(device_id, CL_DEVICE_NAME, 0, nullptr, &name_length), "error obtaining device name size");
-    std::string device_name(name_length, '\0');
+    std::string device_name(name_length - 1, '\0');
     PLSSVM_OPENCL_ERROR_CHECK(clGetDeviceInfo(device_id, CL_DEVICE_NAME, name_length, device_name.data(), nullptr), "error obtaining device name");
     return device_name;
 }
