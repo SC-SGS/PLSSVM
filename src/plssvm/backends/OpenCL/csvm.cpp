@@ -164,6 +164,11 @@ unsigned long long csvm::get_device_memory() const {
     // get device
     cl_device_id device_id{};
     PLSSVM_OPENCL_ERROR_CHECK(clGetCommandQueueInfo(devices_[0], CL_QUEUE_DEVICE, sizeof(cl_device_id), &device_id, nullptr), "error obtaining device");
+
+    // TODO:
+//    cl_ulong max_alloc_size{};
+//    PLSSVM_OPENCL_ERROR_CHECK(clGetDeviceInfo(device_id, CL_DEVICE_MAX_MEM_ALLOC_SIZE, sizeof(cl_ulong), &max_alloc_size, nullptr), "error obtaining device's global memory size");
+
     // get device global memory size
     cl_ulong total_device_memory{};
     PLSSVM_OPENCL_ERROR_CHECK(clGetDeviceInfo(device_id, CL_DEVICE_GLOBAL_MEM_SIZE, sizeof(cl_ulong), &total_device_memory, nullptr), "error obtaining device's global memory size");
