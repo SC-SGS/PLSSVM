@@ -31,6 +31,7 @@
     #define PLSSVM_UNISTD_AVAILABLE
 #endif
 
+#include <array>          // std::array
 #include <fstream>        // std::ofstream
 #include <iostream>       // std::ios_base::app
 #include <memory>         // std::shared_ptr
@@ -211,8 +212,8 @@ void performance_tracker::save(std::ostream &out) {
         version::detail::target_platforms,
         version::git_metadata::commit_sha1().empty() ? "unknown" : version::git_metadata::commit_sha1(),
         version::version,
-        hostname,
-        username,
+        hostname.data(),
+        username.data(),
         PLSSVM_BUILD_TYPE,
         lto_enabled,
         assert_enabled,
