@@ -26,8 +26,7 @@ __global__ void device_kernel_assembly_linear(real_type *ret, const real_type *d
             temp += cost;
         }
 
-        ret[i * num_rows + j] = temp;
-        ret[j * num_rows + i] = temp;
+        ret[i * num_rows + j - i * (i + 1) / 2] = temp;
     }
 }
 
@@ -45,8 +44,7 @@ __global__ void device_kernel_assembly_polynomial(real_type *ret, const real_typ
             temp += cost;
         }
 
-        ret[i * num_rows + j] = temp;
-        ret[j * num_rows + i] = temp;
+        ret[i * num_rows + j - i * (i + 1) / 2] = temp;
     }
 }
 
@@ -65,8 +63,7 @@ __global__ void device_kernel_assembly_rbf(real_type *ret, const real_type *data
             temp += cost;
         }
 
-        ret[i * num_rows + j] = temp;
-        ret[j * num_rows + i] = temp;
+        ret[i * num_rows + j - i * (i + 1) / 2] = temp;
     }
 }
 

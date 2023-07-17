@@ -58,8 +58,7 @@ class device_kernel_assembly_linear {
                 temp += cost_;
             }
 
-            ret_[i * num_rows_ + j] = temp;
-            ret_[j * num_rows_ + i] = temp;
+            ret_[i * num_rows_ + j - i * (i + 1) / 2] = temp;
         }
     }
 
@@ -117,8 +116,7 @@ class device_kernel_assembly_polynomial {
                 temp += cost_;
             }
 
-            ret_[i * num_rows_ + j] = temp;
-            ret_[j * num_rows_ + i] = temp;
+            ret_[i * num_rows_ + j - i * (i + 1) / 2] = temp;
         }
     }
 
@@ -178,8 +176,7 @@ class device_kernel_assembly_rbf {
                 temp += cost_;
             }
 
-            ret_[i * num_rows_ + j] = temp;
-            ret_[j * num_rows_ + i] = temp;
+            ret_[i * num_rows_ + j - i * (i + 1) / 2] = temp;
         }
     }
 

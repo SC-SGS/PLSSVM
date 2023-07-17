@@ -717,7 +717,7 @@ std::pair<aos_matrix<real_type>, std::vector<real_type>> csvm::solve_system_of_l
 
         // 4B/8B * (data_set size + explicit kernel matrix size + B and C matrix in GEMM + q_red vector)
 //        const unsigned long long max_single_allocation_size = sizeof(real_type) * std::max(num_rows * num_features, num_rows_reduced * num_rows_reduced);
-        const unsigned long long total_memory_needed = sizeof(real_type) * (num_rows * num_features + num_rows_reduced * num_rows_reduced + 2 * num_rows_reduced * num_rhs + num_features);
+        const unsigned long long total_memory_needed = sizeof(real_type) * (num_rows * num_features + (num_rows_reduced * (num_rows_reduced + 1) / 2) + 2 * num_rows_reduced * num_rhs + num_features);
 
         detail::log(verbosity_level::full,
                     "Determining the solver type based on the available memory:\n"

@@ -106,7 +106,7 @@ detail::simple_any csvm::assemble_kernel_matrix(const solver_type solver, const 
     PLSSVM_ASSERT(data_ptr->num_rows() == num_rows_reduced + 1, "The number of rows in the data matrix must be {}, but is {}!", num_rows_reduced + 1, data_ptr->num_rows());
 
     if (solver == solver_type::cg_explicit) {
-        aos_matrix<real_type> explicit_A{ num_rows_reduced, num_rows_reduced };
+        aos_matrix<real_type> explicit_A{ num_rows_reduced, num_rows_reduced };  // TODO: memory optimization
         switch (params.kernel_type) {
             case kernel_function_type::linear:
                 openmp::linear_kernel_matrix_assembly(q_red, explicit_A, *data_ptr, QA_cost, 1 / params.cost);

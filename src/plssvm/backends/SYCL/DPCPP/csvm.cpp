@@ -160,7 +160,7 @@ auto csvm::run_assemble_kernel_matrix_explicit(const parameter &params, const de
 //    const ::sycl::nd_range<2> execution_range{ grid, block };
     const ::sycl::range<2> execution_range{ num_rows_reduced, num_rows_reduced };
 
-    device_ptr_type kernel_matrix_d{ { num_rows_reduced, num_rows_reduced }, devices_[0] };
+    device_ptr_type kernel_matrix_d{ num_rows_reduced * (num_rows_reduced + 1) / 2, devices_[0] };  // only explicitly store the upper triangular matrix
     const real_type cost_factor = real_type{ 1.0 } / params.cost;
 
     switch (params.kernel_type) {

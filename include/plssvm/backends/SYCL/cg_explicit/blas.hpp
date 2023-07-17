@@ -52,8 +52,16 @@ class device_kernel_gemm {
 
         if (i < m_ && j < n_) {
             real_type temp{ 0.0 };
-            for (unsigned long long dim = 0; dim < k_; ++dim) {
-                temp += A_[i * k_ + dim] * B_[j * k_ + dim];
+            unsigned long long offset = 0;
+            // left of the diagonal -> use symmetrically mirrored values
+            for (unsigned long long dim = 0; dim < i; ++dim) {
+                offset += dim;
+                temp += A_[dim * k_ + i - offset] * B_[j * k_ + dim];
+            }
+            // diagonal + right of the diagonal -> use contiguous values
+            offset += i;
+            for (unsigned long long dim = i; dim < k_; ++dim) {
+                temp += A_[i * k_ + dim - offset] * B_[j * k_ + dim];
             }
             C_[j * m_ + i] = alpha_ * temp + beta_ * C_[j * m_ + i];
         }
