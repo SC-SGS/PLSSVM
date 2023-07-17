@@ -212,7 +212,7 @@ aos_matrix<real_type> csvm::conjugate_gradients(const detail::simple_any &A, con
     return X;
 }
 
-std::pair<std::vector<real_type>, real_type> csvm::perform_dimensional_reduction(const parameter &params, const aos_matrix<real_type> &A) const {
+std::pair<std::vector<real_type>, real_type> csvm::perform_dimensional_reduction(const parameter &params, const soa_matrix<real_type> &A) const {
     const std::chrono::steady_clock::time_point dimension_reduction_start_time = std::chrono::steady_clock::now();
 
     const std::size_t num_rows_reduced = A.num_rows() - 1;

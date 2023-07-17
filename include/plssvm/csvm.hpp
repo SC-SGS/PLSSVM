@@ -201,7 +201,7 @@ class csvm {
      * @param[in] A the data to setup
      * @return the backend specific setup data, e.g., pointer to GPU memory for the GPU related backends (`[[nodiscard]]`)
      */
-    [[nodiscard]] virtual detail::simple_any setup_data_on_devices(solver_type solver, const aos_matrix<real_type> &A) const = 0;
+    [[nodiscard]] virtual detail::simple_any setup_data_on_devices(solver_type solver, const soa_matrix<real_type> &A) const = 0;
 
     /**
      * @brief Explicitly assemble the kernel matrix. Backend specific!
@@ -239,7 +239,7 @@ class csvm {
      * @throws plssvm::exception any exception thrown by the backend's implementation
      * @return a vector filled with the predictions (not the actual labels!) (`[[nodiscard]]`)
      */
-    [[nodiscard]] virtual aos_matrix<real_type> predict_values(const parameter &params, const aos_matrix<real_type> &support_vectors, const aos_matrix<real_type> &alpha, const std::vector<real_type> &rho, aos_matrix<real_type> &w, const aos_matrix<real_type> &predict_points) const = 0;
+    [[nodiscard]] virtual aos_matrix<real_type> predict_values(const parameter &params, const soa_matrix<real_type> &support_vectors, const aos_matrix<real_type> &alpha, const std::vector<real_type> &rho, aos_matrix<real_type> &w, const soa_matrix<real_type> &predict_points) const = 0;
 
     /// The target platform of this SVM.
     target_platform target_{ plssvm::target_platform::automatic };
@@ -261,7 +261,7 @@ class csvm {
      * @return the result matrix `X` and the respective biases (`[[nodiscard]]`)
      */
     template <typename... Args>
-    [[nodiscard]] std::pair<aos_matrix<real_type>, std::vector<real_type>> solve_system_of_linear_equations(const aos_matrix<real_type> &A, const aos_matrix<real_type> &B, const parameter &params, Args&&... named_args) const;
+    [[nodiscard]] std::pair<aos_matrix<real_type>, std::vector<real_type>> solve_system_of_linear_equations(const soa_matrix<real_type> &A, const aos_matrix<real_type> &B, const parameter &params, Args&&... named_args) const;
     /**
      * @brief Solve the system of linear equations `AX = B` where `A` is the kernel matrix using the Conjugate Gradients (CG) algorithm.
      * @param[in] A the kernel matrix
@@ -279,7 +279,7 @@ class csvm {
      * @param[in] A the data used for the kernel matrix
      * @return the reduction vector ´q_red` and the bottom-right value `QA_cost` (`[[nodiscard]]`)
      */
-    [[nodiscard]] std::pair<std::vector<real_type>, real_type> perform_dimensional_reduction(const parameter &params, const aos_matrix<real_type> &A) const;
+    [[nodiscard]] std::pair<std::vector<real_type>, real_type> perform_dimensional_reduction(const parameter &params, const soa_matrix<real_type> &A) const;
 
     /**
      * @copydoc plssvm::csvm::blas_gemm
@@ -415,7 +415,7 @@ model<label_type> csvm::fit(const data_set<label_type> &data, Args &&...named_ar
                     // TODO: reduce amount of copies!?
                     // assemble one vs. one classification matrix and rhs
                     const std::size_t num_data_points_in_sub_matrix{ indices[i].size() + indices[j].size() };
-                    aos_matrix<real_type> binary_data{ num_data_points_in_sub_matrix, num_features };
+                    soa_matrix<real_type> binary_data{ num_data_points_in_sub_matrix, num_features };
                     aos_matrix<real_type> binary_y{ 1, num_data_points_in_sub_matrix };  // note: the first dimension will always be one, since only one rhs is needed
 
                     // note: if this is changed, it must also be changed in the libsvm_model_parsing.hpp in the calculate_alpha_idx function!!!
@@ -473,7 +473,7 @@ std::vector<label_type> csvm::predict(const model<label_type> &model, const data
     std::vector<label_type> predicted_labels(data.num_data_points());
 
     PLSSVM_ASSERT(data.data_ptr_ != nullptr, "The data_ptr_ (predict points) may never be a nullptr!");
-    const aos_matrix<real_type> &predict_points = *data.data_ptr_;
+    const soa_matrix<real_type> &predict_points = *data.data_ptr_;
 
     if (model.get_classification_type() == classification_type::oaa) {
         PLSSVM_ASSERT(data.data_ptr_ != nullptr, "The data_ptr_ (model) may never be a nullptr!");
@@ -482,7 +482,7 @@ std::vector<label_type> csvm::predict(const model<label_type> &model, const data
         PLSSVM_ASSERT(model.alpha_ptr_->front().num_rows() == calculate_number_of_classifiers(classification_type::oaa, data.num_classes()), "The number of rows in the matrix must be {}, but is {}!", model.alpha_ptr_->front().num_rows(), calculate_number_of_classifiers(classification_type::oaa, data.num_classes()));
         PLSSVM_ASSERT(model.alpha_ptr_->front().num_cols() == data.num_data_points(), "The number of weights ({}) must be equal to the number of support vectors ({})!", model.alpha_ptr_->front().num_cols(), data.num_data_points());
 
-        const aos_matrix<real_type> &sv = *model.data_.data_ptr_;
+        const soa_matrix<real_type> &sv = *model.data_.data_ptr_;
         const aos_matrix<real_type> &alpha = model.alpha_ptr_->back();
 
         // predict values using OAA -> num_data_points x num_classes
@@ -538,14 +538,14 @@ std::vector<label_type> csvm::predict(const model<label_type> &model, const data
                 const std::vector<real_type> binary_rho{ (*model.rho_ptr_)[pos] };
 
                 // create binary support vector matrix, based on the number of classes
-                const aos_matrix<real_type> &binary_sv = [&]() {
+                const soa_matrix<real_type> &binary_sv = [&]() {
                    if (num_classes == 2) {
                        // no special assembly needed in binary case
                        return *model.data_.data_ptr_;
                    } else {
                        // note: if this is changed, it must also be changed in the libsvm_model_parsing.hpp in the calculate_alpha_idx function!!!
                        // order the indices in increasing order
-                       aos_matrix<real_type> temp{ num_data_points_in_sub_matrix, num_features };
+                       soa_matrix<real_type> temp{ num_data_points_in_sub_matrix, num_features };
                        std::vector<std::size_t> sorted_indices(num_data_points_in_sub_matrix);
                        std::merge(indices[i].cbegin(), indices[i].cend(), indices[j].cbegin(), indices[j].cend(), sorted_indices.begin());
                        // copy the support vectors to the binary support vectors
@@ -657,7 +657,7 @@ real_type csvm::score(const model<label_type> &model, const data_set<label_type>
 //*************************************************************************************************************************************//
 
 template <typename... Args>
-std::pair<aos_matrix<real_type>, std::vector<real_type>> csvm::solve_system_of_linear_equations(const aos_matrix<real_type> &A, const aos_matrix<real_type> &B, const parameter &params, Args &&...named_args) const {
+std::pair<aos_matrix<real_type>, std::vector<real_type>> csvm::solve_system_of_linear_equations(const soa_matrix<real_type> &A, const aos_matrix<real_type> &B, const parameter &params, Args &&...named_args) const {
     PLSSVM_ASSERT(!A.empty(), "The A matrix may not be empty!");
     PLSSVM_ASSERT(!B.empty(), "The B matrix may not be empty!");
     PLSSVM_ASSERT(A.num_rows() == B.num_cols(), "The number of data points in A ({}) and B ({}) must be the same!", A.num_rows(), B.num_cols());

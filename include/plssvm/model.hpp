@@ -21,7 +21,7 @@
 #include "plssvm/detail/logger.hpp"                   // plssvm::detail::log, plssvm::verbosity_level
 #include "plssvm/detail/performance_tracker.hpp"      // plssvm::detail::tracking_entry
 #include "plssvm/detail/type_list.hpp"                // plssvm::detail::{real_type_list, label_type_list, type_list_contains_v}
-#include "plssvm/matrix.hpp"                          // plssvm::aos_matrix
+#include "plssvm/matrix.hpp"                          // plssvm::soa_matrix
 #include "plssvm/parameter.hpp"                       // plssvm::parameter
 
 #include "fmt/chrono.h"                               // format std::chrono types using fmt
@@ -95,7 +95,7 @@ class model {
      * @details The support vectors are of dimension `num_support_vectors()` x `num_features()`.
      * @return the support vectors (`[[nodiscard]]`)
      */
-    [[nodiscard]] const aos_matrix<real_type> &support_vectors() const noexcept { return data_.data(); }
+    [[nodiscard]] const soa_matrix<real_type> &support_vectors() const noexcept { return data_.data(); }
 
     /**
      * @brief Returns the labels of the support vectors.
@@ -217,7 +217,7 @@ model<U>::model(const std::string &filename) {
     }
 
     // create empty support vectors and alpha vector
-    aos_matrix<real_type> support_vectors{};
+    soa_matrix<real_type> support_vectors{};
 
     // parse libsvm model data
     std::tie(num_support_vectors_, num_features_, support_vectors, *alpha_ptr_, classification_strategy_) = detail::io::parse_libsvm_model_data(reader, num_sv_per_class, num_header_lines);

@@ -159,7 +159,7 @@ class device_kernel_assembly_rbf {
         if (i < num_rows_ && j < num_rows_ && j >= i) {
             real_type temp{ 0.0 };
             for (unsigned long long dim = 0; dim < num_features_; ++dim) {
-                const real_type d = data_d_[i * num_features_ + dim] - data_d_[j * num_features_ + dim];
+                const real_type d = data_d_[dim * (num_rows_ + 1) + i] - data_d_[dim * (num_rows_ + 1) + j];
                 temp += d * d;
             }
             temp = ::sycl::exp(-gamma_ * temp) + QA_cost_ - q_[i] - q_[j];

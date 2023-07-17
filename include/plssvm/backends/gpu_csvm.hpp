@@ -115,7 +115,7 @@ class gpu_csvm : public ::plssvm::csvm {
     /**
      * @copydoc plssvm::csvm::setup_data_on_devices
      */
-    [[nodiscard]] ::plssvm::detail::simple_any setup_data_on_devices(const solver_type solver, const aos_matrix<real_type> &A) const final;
+    [[nodiscard]] ::plssvm::detail::simple_any setup_data_on_devices(const solver_type solver, const soa_matrix<real_type> &A) const final;
     /**
      * @copydoc plssvm::csvm::assemble_kernel_matrix_explicit_impl
      */
@@ -131,7 +131,7 @@ class gpu_csvm : public ::plssvm::csvm {
     /**
      * @copydoc plssvm::csvm::predict_values
      */
-    [[nodiscard]] aos_matrix<real_type> predict_values(const parameter &params, const aos_matrix<real_type> &support_vectors, const aos_matrix<real_type> &alpha, const std::vector<real_type> &rho, aos_matrix<real_type> &w, const aos_matrix<real_type> &predict_points) const final;
+    [[nodiscard]] aos_matrix<real_type> predict_values(const parameter &params, const soa_matrix<real_type> &support_vectors, const aos_matrix<real_type> &alpha, const std::vector<real_type> &rho, aos_matrix<real_type> &w, const soa_matrix<real_type> &predict_points) const final;
 
     //*************************************************************************************************************************************//
     //                                         pure virtual, must be implemented by all subclasses                                         //
@@ -251,7 +251,7 @@ void gpu_csvm<device_ptr_t, queue_t>::device_reduction(std::vector<device_ptr_ty
 //                        fit                        //
 //***************************************************//
 template <template <typename> typename device_ptr_t, typename queue_t>
-::plssvm::detail::simple_any gpu_csvm<device_ptr_t, queue_t>::setup_data_on_devices(const solver_type solver, const aos_matrix<real_type> &A) const {
+::plssvm::detail::simple_any gpu_csvm<device_ptr_t, queue_t>::setup_data_on_devices(const solver_type solver, const soa_matrix<real_type> &A) const {
     PLSSVM_ASSERT(!A.empty(), "The matrix to setup on the devices may not be empty!");
     PLSSVM_ASSERT(solver != solver_type::automatic, "An explicit solver type must be provided instead of solver_type::automatic!");
 
@@ -339,11 +339,11 @@ void gpu_csvm<device_ptr_t, queue_t>::blas_gemm(const solver_type solver, const 
 //***************************************************//
 template <template <typename> typename device_ptr_t, typename queue_t>
 aos_matrix<real_type> gpu_csvm<device_ptr_t, queue_t>::predict_values(const parameter &params,
-                                                                                   const aos_matrix<real_type> &support_vectors,
+                                                                                   const soa_matrix<real_type> &support_vectors,
                                                                                    const aos_matrix<real_type> &alpha,
                                                                                    const std::vector<real_type> &rho,
                                                                                    aos_matrix<real_type> &w,
-                                                                                   const aos_matrix<real_type> &predict_points) const {
+                                                                                   const soa_matrix<real_type> &predict_points) const {
     PLSSVM_ASSERT(!support_vectors.empty(), "The support vectors must not be empty!");
     PLSSVM_ASSERT(!alpha.empty(), "The alpha vectors (weights) must not be empty!");
     PLSSVM_ASSERT(support_vectors.num_rows() == alpha.num_cols(), "The number of support vectors ({}) and number of weights ({}) must be the same!", support_vectors.num_rows(), alpha.num_cols());

@@ -25,7 +25,7 @@
 #include "plssvm/detail/utility.hpp"                     // plssvm::detail::contains
 #include "plssvm/exceptions/exceptions.hpp"              // plssvm::data_set_exception
 #include "plssvm/file_format_types.hpp"                  // plssvm::file_format_type
-#include "plssvm/matrix.hpp"                             // plssvm::aos_matrix
+#include "plssvm/matrix.hpp"                             // plssvm::soa_matrix
 
 #include "fmt/chrono.h"                                  // directly output std::chrono times via fmt
 #include "fmt/core.h"                                    // fmt::format
@@ -234,7 +234,7 @@ class data_set {
      * @brief Return the data points in this data set by copying them to a 2D vector.
      * @return the data points (`[[nodiscard]]`)
      */
-    [[nodiscard]] const aos_matrix<real_type> &data() const { return *data_ptr_; }
+    [[nodiscard]] const soa_matrix<real_type> &data() const { return *data_ptr_; }
     /**
      * @brief Returns whether this data set contains labels or not.
      * @return `true` if this data set contains labels, `false` otherwise (`[[nodiscard]]`)
@@ -291,7 +291,7 @@ class data_set {
      * @brief Default construct an empty data set.
      */
     data_set() :
-        data_ptr_{ std::make_shared<aos_matrix<real_type>>() } {}
+        data_ptr_{ std::make_shared<soa_matrix<real_type>>() } {}
 
     /**
      * @brief Create the mapping between the provided labels and the internally used indices.
@@ -324,7 +324,7 @@ class data_set {
     size_type num_features_{ 0 };
 
     /// A pointer to the two-dimensional data points.
-    std::shared_ptr<aos_matrix<real_type>> data_ptr_{ nullptr };
+    std::shared_ptr<soa_matrix<real_type>> data_ptr_{ nullptr };
     /// A pointer to the original labels of this data set; may be `nullptr` if no labels have been provided.
     std::shared_ptr<std::vector<label_type>> labels_ptr_{ nullptr };
     /// A pointer to the mapped values of the labels of this data set; may be `nullptr` if no labels have been provided.
@@ -566,24 +566,24 @@ data_set<U>::data_set(const std::string &filename, file_format_type format, scal
 
 template <typename U>
 data_set<U>::data_set(const std::vector<std::vector<real_type>> &data_points) :
-    data_set{ aos_matrix<real_type>{ data_points } } {}
+    data_set{ soa_matrix<real_type>{ data_points } } {}
 
 template <typename U>
 data_set<U>::data_set(const std::vector<std::vector<real_type>> &data_points, std::vector<label_type> labels) :
-    data_set{ aos_matrix<real_type>{ data_points }, std::move(labels) } { }
+    data_set{ soa_matrix<real_type>{ data_points }, std::move(labels) } { }
 
 template <typename U>
 data_set<U>::data_set(const std::vector<std::vector<real_type>> &data_points, scaling scale_parameter) :
-    data_set{ aos_matrix<real_type>{ data_points }, std::move(scale_parameter) } {}
+    data_set{ soa_matrix<real_type>{ data_points }, std::move(scale_parameter) } {}
 
 template <typename U>
 data_set<U>::data_set(const std::vector<std::vector<real_type>> &data_points, std::vector<label_type> labels, scaling scale_parameter) :
-    data_set{ aos_matrix<real_type>{ data_points }, std::move(labels), std::move(scale_parameter) } { }
+    data_set{ soa_matrix<real_type>{ data_points }, std::move(labels), std::move(scale_parameter) } { }
 
 template <typename U>
 template <layout_type layout>
 data_set<U>::data_set(matrix<real_type, layout> data_points) :
-    num_data_points_{ data_points.num_rows() }, num_features_{ data_points.num_cols() }, data_ptr_{ std::make_shared<aos_matrix<real_type>>(std::move(data_points)) } {
+    num_data_points_{ data_points.num_rows() }, num_features_{ data_points.num_cols() }, data_ptr_{ std::make_shared<soa_matrix<real_type>>(std::move(data_points)) } {
     // the provided data points vector may not be empty
     if (data_ptr_->num_rows() == 0) {
         throw data_set_exception{ "Data vector is empty!" };

@@ -20,7 +20,7 @@
 #include "plssvm/detail/io/libsvm_parsing.hpp"  // plssvm::detail::io::parse_libsvm_num_features
 #include "plssvm/detail/logger.hpp"             // plssvm::detail::log, plssvm::verbosity_level
 #include "plssvm/detail/utility.hpp"            // plssvm::detail::current_date_time
-#include "plssvm/matrix.hpp"                    // plssvm::aos_matrix
+#include "plssvm/matrix.hpp"                    // plssvm::soa_matrix
 #include "plssvm/parameter.hpp"                 // plssvm::parameter
 
 #include "fmt/compile.h"  // FMT_COMPILE
@@ -339,7 +339,7 @@ template <typename label_type>
  * @attention The PLSSVM model file is only compatible with LIBSVM for the one vs. one classification type.
  * @return a std::tuple containing: [num_data_points, num_features, data_points, labels, classification type] (`[[nodiscard]]`)
  */
-[[nodiscard]] inline std::tuple<std::size_t, std::size_t, aos_matrix<real_type>, std::vector<aos_matrix<real_type>>, classification_type> parse_libsvm_model_data(const file_reader &reader, const std::vector<std::size_t> &num_sv_per_class, const std::size_t skipped_lines) {
+[[nodiscard]] inline std::tuple<std::size_t, std::size_t, soa_matrix<real_type>, std::vector<aos_matrix<real_type>>, classification_type> parse_libsvm_model_data(const file_reader &reader, const std::vector<std::size_t> &num_sv_per_class, const std::size_t skipped_lines) {
     PLSSVM_ASSERT(reader.is_open(), "The file_reader is currently not associated with a file!");
     PLSSVM_ASSERT(num_sv_per_class.size() > 1, "At least two classes must be present!");
     // sanity check: can't skip more lines than are present
@@ -355,7 +355,7 @@ template <typename label_type>
     }
 
     // create vector containing the data and label
-    aos_matrix<real_type> data{ num_data_points, num_features };
+    soa_matrix<real_type> data{ num_data_points, num_features };
     const std::size_t max_num_alpha_values = num_sv_per_class.size();
     aos_matrix<real_type> alpha{ max_num_alpha_values, num_data_points };
     bool is_oaa{ false };
@@ -611,7 +611,7 @@ inline std::vector<label_type> write_libsvm_model_header(fmt::ostream &out, cons
  * @attention The PLSSVM model file is only compatible with LIBSVM for the one vs. one classification type.
  */
 template <typename label_type>
-inline void write_libsvm_model_data(const std::string &filename, const plssvm::parameter &params, const classification_type classification, const std::vector<real_type> &rho, const std::vector<aos_matrix<real_type>> &alpha, const std::vector<std::vector<std::size_t>> &indices, const data_set<label_type> &data, const aos_matrix<real_type> &support_vectors) {
+inline void write_libsvm_model_data(const std::string &filename, const plssvm::parameter &params, const classification_type classification, const std::vector<real_type> &rho, const std::vector<aos_matrix<real_type>> &alpha, const std::vector<std::vector<std::size_t>> &indices, const data_set<label_type> &data, const soa_matrix<real_type> &support_vectors) {
     PLSSVM_ASSERT(data.has_labels(), "Cannot write a model file that does not include labels!");
     PLSSVM_ASSERT(rho.size() == calculate_number_of_classifiers(classification, data.num_classes()),
                   "The number of different labels is {} (nr_class). Therefore, the number of rho values must either be {} (one vs. all) or {} (one vs. vs), but is {}!",
@@ -660,7 +660,7 @@ inline void write_libsvm_model_data(const std::string &filename, const plssvm::p
     constexpr std::size_t STRING_BUFFER_SIZE = 1024 * 1024;
 
     // format one output-line
-    auto format_libsvm_line = [](std::string &output, const std::vector<real_type> &a, const aos_matrix<real_type> &d, const std::size_t point) {
+    auto format_libsvm_line = [](std::string &output, const std::vector<real_type> &a, const soa_matrix<real_type> &d, const std::size_t point) {
         static constexpr std::size_t STACK_BUFFER_SIZE = BLOCK_SIZE * CHARS_PER_BLOCK;
         static char buffer[STACK_BUFFER_SIZE];
         #pragma omp threadprivate(buffer)
