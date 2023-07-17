@@ -189,6 +189,11 @@ class csvm {
      * @return the total device memory (`[[nodiscard]]`)
      */
     [[nodiscard]] virtual unsigned long long get_device_memory() const = 0;
+    /**
+     * @brief Return the maximum allocation size possible in a single allocation.
+     * @return the maximum (single) allocation size (`[[nodiscard]]`)
+     */
+    [[nodiscard]] virtual unsigned long long get_max_mem_alloc_size() const = 0;
 
     /**
      * @brief Setup all necessary data on the device(s). Backend specific!
@@ -703,22 +708,26 @@ std::pair<aos_matrix<real_type>, std::vector<real_type>> csvm::solve_system_of_l
     if (used_solver == solver_type::automatic) {
         using namespace detail::literals;
 
-        const auto reduce_total_memory = [](const long double total_memory) {
-            return total_memory - std::max<long double>(total_memory * 0.05L, 512_MiB);  // 512 MiB
+        const auto reduce_total_memory = [](const unsigned long long total_memory) {
+            return total_memory - std::max<long double>(static_cast<long double>(total_memory) * 0.05L, 512_MiB);  // 512 MiB
         };
         const long double total_system_memory = reduce_total_memory(detail::get_system_memory());
         const long double total_device_memory = reduce_total_memory(this->get_device_memory());
+        const unsigned long long max_mem_alloc_size = this->get_max_mem_alloc_size();  // TODO: use this value somehow? -> "wrong" numbers on the NVIDIA GPU
 
         // 4B/8B * (data_set size + explicit kernel matrix size + B and C matrix in GEMM + q_red vector)
+//        const unsigned long long max_single_allocation_size = sizeof(real_type) * std::max(num_rows * num_features, num_rows_reduced * num_rows_reduced);
         const unsigned long long total_memory_needed = sizeof(real_type) * (num_rows * num_features + num_rows_reduced * num_rows_reduced + 2 * num_rows_reduced * num_rhs + num_features);
 
         detail::log(verbosity_level::full,
                     "Determining the solver type based on the available memory:\n"
                     "  - system memory: {:.2f} GiB\n"
                     "  - device memory: {:.2f} GiB\n"
+                    "  - max. memory allocation size: {:.2f} GiB\n"
                     "  - memory needed: {:.2f} GiB\n",
                     detail::tracking_entry{ "solver", "system_memory_GiB", total_system_memory / 1.0_GiB },
                     detail::tracking_entry{ "solver", "device_memory_GiB", total_device_memory / 1.0_GiB },
+                    detail::tracking_entry{ "solver", "device_max_mem_alloc_size_GiB", max_mem_alloc_size / 1.0_GiB },
                     detail::tracking_entry{ "solver", "needed_memory_GiB", static_cast<long double>(total_memory_needed) / 1.0_GiB });
 
         if (total_memory_needed < total_device_memory) {

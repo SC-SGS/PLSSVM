@@ -74,6 +74,10 @@ unsigned long long csvm::get_device_memory() const {
     return detail::get_system_memory();
 }
 
+unsigned long long csvm::get_max_mem_alloc_size() const {
+    return this->get_device_memory();
+}
+
 //***************************************************//
 //                        fit                        //
 //***************************************************//

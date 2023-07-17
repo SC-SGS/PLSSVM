@@ -110,6 +110,10 @@ unsigned long long csvm::get_device_memory() const {
     return static_cast<unsigned long long>(prop.totalGlobalMem);
 }
 
+unsigned long long csvm::get_max_mem_alloc_size() const {
+    return this->get_device_memory();
+}
+
 std::size_t csvm::get_max_work_group_size() const {
     hipDeviceProp_t prop{};
     PLSSVM_HIP_ERROR_CHECK(hipGetDeviceProperties(&prop, devices_[0]));

@@ -114,6 +114,10 @@ class csvm : public ::plssvm::csvm {
      * @copydoc plssvm::csvm::get_device_memory
      */
     [[nodiscard]] unsigned long long get_device_memory() const final;
+    /**
+     * @copydoc plssvm::csvm::get_max_mem_alloc_size
+     */
+    [[nodiscard]] unsigned long long get_max_mem_alloc_size() const final;
 
     //***************************************************//
     //                        fit                        //

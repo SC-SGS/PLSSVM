@@ -140,6 +140,10 @@ class csvm : public ::plssvm::detail::gpu_csvm<detail::device_ptr, int> {
      */
     [[nodiscard]] unsigned long long get_device_memory() const final;
     /**
+     * @copydoc plssvm::csvm::get_max_mem_alloc_size
+     */
+    [[nodiscard]] unsigned long long get_max_mem_alloc_size() const final;
+    /**
      * @copydoc plssvm::detail::gpu_csvm::get_max_work_group_size
      */
     [[nodiscard]] std::size_t get_max_work_group_size() const final;
