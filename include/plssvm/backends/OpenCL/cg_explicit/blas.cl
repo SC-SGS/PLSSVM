@@ -27,19 +27,19 @@ __kernel void device_kernel_gemm(const ulong m, const ulong n, const ulong k, co
     const ulong i = get_global_id(0);
     const ulong j = get_global_id(1);
 
-    if (i < m && j < n) {
+    if (i < n && j < m) {
         real_type temp = 0.0;
         ulong offset = 0;
-        // left of the diagonal -> use symmetrically mirrored values
-        for (ulong dim = 0; dim < i; ++dim) {
+        // left of the diagonal -> use contiguous values
+        for (ulong dim = 0; dim < j; ++dim) {
             offset += dim;
-            temp += A[dim * k + i - offset] * B[j * k + dim];
+            temp += A[dim * k + j - offset] * B[dim * n + i];
         }
-        // diagonal + right of the diagonal -> use contiguous values
-        offset += i;
-        for (ulong dim = i; dim < k; ++dim) {
-            temp += A[i * k + dim - offset] * B[j * k + dim];
+        // diagonal + right of the diagonal -> use symmetrically mirrored values
+        offset += j;
+        for (ulong dim = j; dim < k; ++dim) {
+            temp += A[j * k + dim - offset] * B[dim * n + i];
         }
-        C[j * m + i] = alpha * temp + beta * C[j * m + i];
+        C[j * n + i] = alpha * temp + beta * C[j * n + i];
     }
 }

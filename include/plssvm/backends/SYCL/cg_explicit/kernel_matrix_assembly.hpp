@@ -45,17 +45,17 @@ class device_kernel_assembly_linear {
         const unsigned long long i = nd_idx.get_global_id(0);
         const unsigned long long j = nd_idx.get_global_id(1);
 
-        if (i < num_rows_ && j < num_rows_ && j >= i) {
+        if (i < num_rows_ && j < num_rows_ && i >= j) {
             real_type temp{ 0.0 };
             for (unsigned long long dim = 0; dim < num_features_; ++dim) {
-                temp += data_d_[i * num_features_ + dim] * data_d_[j * num_features_ + dim];
+                temp += data_d_[dim * (num_rows_ + 1) + i] * data_d_[dim * (num_rows_ + 1) + j];
             }
             temp = temp + QA_cost_ - q_[i] - q_[j];
             if (i == j) {
                 temp += cost_;
             }
 
-            ret_[i * num_rows_ + j - i * (i + 1) / 2] = temp;
+            ret_[j * num_rows_ + i - j * (j + 1) / 2] = temp;
         }
     }
 
@@ -100,17 +100,17 @@ class device_kernel_assembly_polynomial {
         const unsigned long long i = nd_idx.get_global_id(0);
         const unsigned long long j = nd_idx.get_global_id(1);
 
-        if (i < num_rows_ && j < num_rows_ && j >= i) {
+        if (i < num_rows_ && j < num_rows_ && i >= j) {
             real_type temp{ 0.0 };
             for (unsigned long long dim = 0; dim < num_features_; ++dim) {
-                temp += data_d_[i * num_features_ + dim] * data_d_[j * num_features_ + dim];
+                temp += data_d_[dim * (num_rows_ + 1) + i] * data_d_[dim * (num_rows_ + 1) + j];
             }
             temp = ::sycl::pow(gamma_ * temp + coef0_, degree_) + QA_cost_ - q_[i] - q_[j];
             if (i == j) {
                 temp += cost_;
             }
 
-            ret_[i * num_rows_ + j - i * (i + 1) / 2] = temp;
+            ret_[j * num_rows_ + i - j * (j + 1) / 2] = temp;
         }
     }
 
@@ -156,7 +156,7 @@ class device_kernel_assembly_rbf {
         const unsigned long long i = nd_idx.get_global_id(0);
         const unsigned long long j = nd_idx.get_global_id(1);
 
-        if (i < num_rows_ && j < num_rows_ && j >= i) {
+        if (i < num_rows_ && j < num_rows_ && i >= j) {
             real_type temp{ 0.0 };
             for (unsigned long long dim = 0; dim < num_features_; ++dim) {
                 const real_type d = data_d_[dim * (num_rows_ + 1) + i] - data_d_[dim * (num_rows_ + 1) + j];
@@ -167,7 +167,7 @@ class device_kernel_assembly_rbf {
                 temp += cost_;
             }
 
-            ret_[i * num_rows_ + j - i * (i + 1) / 2] = temp;
+            ret_[j * num_rows_ + i - j * (j + 1) / 2] = temp;
         }
     }
 

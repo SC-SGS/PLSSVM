@@ -36,20 +36,20 @@ __global__ void device_kernel_gemm(const unsigned long long m, const unsigned lo
     const unsigned long long i = blockIdx.x * blockDim.x + threadIdx.x;
     const unsigned long long j = blockIdx.y * blockDim.y + threadIdx.y;
 
-    if (i < m && j < n) {
+    if (i < n && j < m) {
         real_type temp{ 0.0 };
         unsigned long long offset = 0;
-        // left of the diagonal -> use symmetrically mirrored values
-        for (unsigned long long dim = 0; dim < i; ++dim) {
+        // left of the diagonal -> use contiguous values
+        for (unsigned long long dim = 0; dim < j; ++dim) {
             offset += dim;
-            temp += A[dim * k + i - offset] * B[j * k + dim];
+            temp += A[dim * k + j - offset] * B[dim * n + i];
         }
-        // diagonal + right of the diagonal -> use contiguous values
-        offset += i;
-        for (unsigned long long dim = i; dim < k; ++dim) {
-            temp += A[i * k + dim - offset] * B[j * k + dim];
+        // diagonal + right of the diagonal -> use symmetrically mirrored values
+        offset += j;
+        for (unsigned long long dim = j; dim < k; ++dim) {
+            temp += A[j * k + dim - offset] * B[dim * n + i];
         }
-        C[j * m + i] = alpha * temp + beta * C[j * m + i];
+        C[j * n + i] = alpha * temp + beta * C[j * n + i];
     }
 }
 

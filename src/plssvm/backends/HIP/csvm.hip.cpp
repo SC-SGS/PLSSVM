@@ -161,8 +161,8 @@ void csvm::run_gemm_kernel_explicit(const std::size_t m, const std::size_t n, co
     const std::size_t max_work_group_size = this->get_max_work_group_size();
     const auto max_work_group_size_2D = static_cast<int>(std::sqrt(static_cast<real_type>(max_work_group_size)));
     const dim3 block(max_work_group_size_2D, max_work_group_size_2D);
-    const dim3 grid(static_cast<int>(std::ceil(static_cast<double>(m) / static_cast<double>(block.x))),
-                    static_cast<int>(std::ceil(static_cast<double>(n) / static_cast<double>(block.y))));
+    const dim3 grid(static_cast<int>(std::ceil(static_cast<double>(n) / static_cast<double>(block.x))),
+                    static_cast<int>(std::ceil(static_cast<double>(m) / static_cast<double>(block.y))));
 
     // cast to correct type
     const auto m_ull = static_cast<unsigned long long>(m);
