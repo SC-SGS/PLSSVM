@@ -223,7 +223,7 @@ class csvm {
      * @param[in] beta the value to scale the matrix o add with
      * @param[in,out] C the result matrix and the matrix to add (inplace)
      */
-    virtual void blas_gemm(solver_type solver, real_type alpha, const detail::simple_any &A, const aos_matrix<real_type> &B, real_type beta, aos_matrix<real_type> &C) const = 0;
+    virtual void blas_gemm(solver_type solver, real_type alpha, const detail::simple_any &A, const soa_matrix<real_type> &B, real_type beta, soa_matrix<real_type> &C) const = 0;
 
     //***************************************************//
     //                   predict, score                  //
@@ -271,7 +271,7 @@ class csvm {
      * @param[in] cd_solver_variant the variation of the CG algorithm to use, i.e., how the kernel matrix is assembled (currently: explicit, streaming, implicit)
      * @return the result matrix `X` (`[[nodiscard]]`)
      */
-    [[nodiscard]] aos_matrix<real_type> conjugate_gradients(const detail::simple_any &A, const aos_matrix<real_type> &B, real_type eps, unsigned long long max_cg_iter, solver_type cd_solver_variant) const;
+    [[nodiscard]] soa_matrix<real_type> conjugate_gradients(const detail::simple_any &A, const soa_matrix<real_type> &B, real_type eps, unsigned long long max_cg_iter, solver_type cd_solver_variant) const;
     /**
      * @brief Perform a dimensional reduction for the kernel matrix.
      * @details Reduces the resulting dimension by `2` compared to the original LS-SVM formulation.
@@ -285,7 +285,7 @@ class csvm {
      * @copydoc plssvm::csvm::blas_gemm
      * @detail Small wrapper around the virtual `plssvm::csvm::blas_gemm` function to easily track its execution time.
      */
-    [[nodiscard]] std::chrono::duration<long, std::milli> run_blas_gemm(solver_type cg_solver, real_type alpha, const detail::simple_any &A, const aos_matrix<real_type> &B, real_type beta, aos_matrix<real_type> &C) const;
+    [[nodiscard]] std::chrono::duration<long, std::milli> run_blas_gemm(solver_type cg_solver, real_type alpha, const detail::simple_any &A, const soa_matrix<real_type> &B, real_type beta, soa_matrix<real_type> &C) const;
 
     /// The SVM parameter (e.g., cost, degree, gamma, coef0) currently in use.
     parameter params_{};
@@ -751,7 +751,7 @@ std::pair<aos_matrix<real_type>, std::vector<real_type>> csvm::solve_system_of_l
 
     // update right-hand sides (B)
     std::vector<real_type> b_back_value(num_rhs);
-    aos_matrix<real_type> B_red{ num_rhs, num_rows_reduced };
+    soa_matrix<real_type> B_red{ num_rhs, num_rows_reduced };
     #pragma omp parallel for default(none) shared(B, B_red, b_back_value) firstprivate(num_rhs, num_rows_reduced)
     for (std::size_t row = 0; row < num_rhs; ++row) {
         b_back_value[row] = B(row, num_rows_reduced);
@@ -773,7 +773,7 @@ std::pair<aos_matrix<real_type>, std::vector<real_type>> csvm::solve_system_of_l
 
 
     // choose the correct algorithm based on the (provided) solver type -> currently only CG available
-    const aos_matrix<real_type> X = conjugate_gradients(kernel_matrix, B_red, used_epsilon, used_max_iter, used_solver);  // TODO: q_red for implicit
+    const soa_matrix<real_type> X = conjugate_gradients(kernel_matrix, B_red, used_epsilon, used_max_iter, used_solver);  // TODO: q_red for implicit
 
 
     // calculate bias and undo dimensional reduction

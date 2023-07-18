@@ -48,7 +48,7 @@ void csvm::sanity_check_parameter() const {
     // cost: all allowed
 }
 
-aos_matrix<real_type> csvm::conjugate_gradients(const detail::simple_any &A, const aos_matrix<real_type> &B, const real_type eps, const unsigned long long max_cg_iter, const solver_type cg_solver) const {
+soa_matrix<real_type> csvm::conjugate_gradients(const detail::simple_any &A, const soa_matrix<real_type> &B, const real_type eps, const unsigned long long max_cg_iter, const solver_type cg_solver) const {
     using namespace plssvm::operators;
 
     PLSSVM_ASSERT(!B.empty(), "The right-hand sides may not be empty!");
@@ -64,10 +64,10 @@ aos_matrix<real_type> csvm::conjugate_gradients(const detail::simple_any &A, con
     // perform Conjugate Gradients (CG) algorithm
     //
 
-    aos_matrix<real_type> X{ num_rhs, num_rows, real_type{ 1.0 } };
+    soa_matrix<real_type> X{ num_rhs, num_rows, real_type{ 1.0 } };
 
     // R = B - A * X
-    aos_matrix<real_type> R{ B };
+    soa_matrix<real_type> R{ B };
     total_blas_gemm_time += this->run_blas_gemm(cg_solver, real_type{ -1.0 }, A, X, real_type{ 1.0 }, R);
 
     // delta = R.T * R
@@ -83,7 +83,7 @@ aos_matrix<real_type> csvm::conjugate_gradients(const detail::simple_any &A, con
     }
     const std::vector<real_type> delta0(delta);
 
-    aos_matrix<real_type> D{ R };
+    soa_matrix<real_type> D{ R };
 
     // get the index of the rhs that has the largest residual difference wrt to its target residual
     const auto rhs_idx_max_residual_difference = [&]() {
@@ -120,7 +120,7 @@ aos_matrix<real_type> csvm::conjugate_gradients(const detail::simple_any &A, con
         const std::chrono::steady_clock::time_point iteration_start_time = std::chrono::steady_clock::now();
 
         // Q = A * D
-        aos_matrix<real_type> Q{ D.num_rows(), D.num_cols() };
+        soa_matrix<real_type> Q{ D.num_rows(), D.num_cols() };
         total_blas_gemm_time += this->run_blas_gemm(cg_solver, real_type{ 1.0 }, A, D, real_type{ 0.0 }, Q);
 
         // alpha = delta_new / (D^T * Q))
@@ -248,7 +248,7 @@ std::pair<std::vector<real_type>, real_type> csvm::perform_dimensional_reduction
     return std::make_pair(std::move(q_red), QA_cost);
 }
 
-std::chrono::duration<long, std::milli> csvm::run_blas_gemm(const solver_type cg_solver, const real_type alpha, const detail::simple_any &A, const aos_matrix<real_type> &B, const real_type beta, aos_matrix<real_type> &C) const {
+std::chrono::duration<long, std::milli> csvm::run_blas_gemm(const solver_type cg_solver, const real_type alpha, const detail::simple_any &A, const soa_matrix<real_type> &B, const real_type beta, soa_matrix<real_type> &C) const {
     const std::chrono::steady_clock::time_point start_time = std::chrono::steady_clock::now();
 
     this->blas_gemm(cg_solver, alpha, A, B, beta, C);
