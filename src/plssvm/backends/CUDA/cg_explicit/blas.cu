@@ -20,12 +20,12 @@ __global__ void device_kernel_gemm(const unsigned long long m, const unsigned lo
     if (i < m && j < n) {
         real_type temp{ 0.0 };
         unsigned long long offset = 0;
-        // left of the diagonal -> use symmetrically mirrored values
+        // left of the diagonal -> use contiguous values
         for (unsigned long long dim = 0; dim < i; ++dim) {
             offset += dim;
             temp += A[dim * k + i - offset] * B[dim * n + j];
         }
-        // diagonal + right of the diagonal -> use contiguous values
+        // diagonal + right of the diagonal -> use symmetrically mirrored values
         offset += i;
         for (unsigned long long dim = i; dim < k; ++dim) {
             temp += A[i * k + dim - offset] * B[dim * n + j];
