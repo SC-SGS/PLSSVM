@@ -47,20 +47,20 @@ class device_kernel_gemm {
         const unsigned long long i = nd_idx.get_global_id(0);
         const unsigned long long j = nd_idx.get_global_id(1);
 
-        if (i < n_ && j < m_) {
+        if (i < m_ && j < n_) {
             real_type temp{ 0.0 };
             unsigned long long offset = 0;
             // left of the diagonal -> use symmetrically mirrored values
-            for (unsigned long long dim = 0; dim < j; ++dim) {
+            for (unsigned long long dim = 0; dim < i; ++dim) {
                 offset += dim;
-                temp += A_[dim * k_ + j - offset] * B_[dim * n_ + i];
+                temp += A_[dim * k_ + i - offset] * B_[dim * n_ + j];
             }
             // diagonal + right of the diagonal -> use contiguous values
-            offset += j;
-            for (unsigned long long dim = j; dim < k_; ++dim) {
-                temp += A_[j * k_ + dim - offset] * B_[dim * n_ + i];
+            offset += i;
+            for (unsigned long long dim = i; dim < k_; ++dim) {
+                temp += A_[i * k_ + dim - offset] * B_[dim * n_ + j];
             }
-            C_[j * n_ + i] = alpha_ * temp + beta_ * C_[j * n_ + i];
+            C_[i * n_ + j] = alpha_ * temp + beta_ * C_[i * n_ + j];
         }
     }
 
