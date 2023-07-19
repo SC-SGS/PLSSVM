@@ -82,6 +82,7 @@ if (CMAKE_CUDA_COMPILER_ID STREQUAL "NVIDIA")
 endif ()
 if (CMAKE_CUDA_COMPILER_ID STREQUAL "Clang")
     target_compile_options(${PLSSVM_CUDA_BACKEND_LIBRARY_NAME} PUBLIC -fPIC)
+    target_link_options(${PLSSVM_CUDA_BACKEND_LIBRARY_NAME} PUBLIC -lcudart)
 endif ()
 
 target_link_libraries(${PLSSVM_CUDA_BACKEND_LIBRARY_NAME} PUBLIC CUDA::cudart)
