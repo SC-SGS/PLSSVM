@@ -289,9 +289,9 @@ template <template <typename> typename device_ptr_t, typename queue_t>
         q_red_d.copy_to_device(q_red);
         device_ptr_type kernel_matrix = this->run_assemble_kernel_matrix_explicit(params, data_d, q_red_d, QA_cost);
 
-        PLSSVM_ASSERT(num_rows_reduced * num_rows_reduced == kernel_matrix.size(),
-                      "The kernel matrix must be a quadratic matrix with num_rows_reduced^2 ({}) entries, but is {}!",
-                      num_rows_reduced * num_rows_reduced, kernel_matrix.size());
+        PLSSVM_ASSERT(num_rows_reduced * (num_rows_reduced + 1) / 2 == kernel_matrix.size(),
+                      "The kernel matrix must only save one triangular matrix (symmetric) with {} entries, but is {}!",
+                      num_rows_reduced * (num_rows_reduced + 1) / 2, kernel_matrix.size());
 
         return ::plssvm::detail::simple_any{ std::move(kernel_matrix) };
     } else {
