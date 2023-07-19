@@ -82,7 +82,7 @@ unsigned long long csvm::get_max_mem_alloc_size() const {
 //                        fit                        //
 //***************************************************//
 
-detail::simple_any csvm::setup_data_on_devices(const solver_type solver, const aos_matrix<real_type> &A) const {
+detail::simple_any csvm::setup_data_on_devices(const solver_type solver, const soa_matrix<real_type> &A) const {
     PLSSVM_ASSERT(!A.empty(), "The matrix to setup on the devices may not be empty!");
     PLSSVM_ASSERT(solver != solver_type::automatic, "An explicit solver type must be provided instead of solver_type::automatic!");
 
@@ -130,7 +130,7 @@ detail::simple_any csvm::assemble_kernel_matrix(const solver_type solver, const 
     }
 }
 
-void csvm::blas_gemm(const solver_type solver, const real_type alpha, const detail::simple_any &A, const aos_matrix<real_type> &B, const real_type beta, aos_matrix<real_type> &C) const {
+void csvm::blas_gemm(const solver_type solver, const real_type alpha, const detail::simple_any &A, const soa_matrix<real_type> &B, const real_type beta, soa_matrix<real_type> &C) const {
     PLSSVM_ASSERT(!B.empty(), "The B matrix may not be empty!");
     PLSSVM_ASSERT(!C.empty(), "The C matrix may not be empty!");
     PLSSVM_ASSERT(B.num_rows() == C.num_rows(), "The C matrix must have {} rows, but has {}!", B.num_rows(), C.num_rows());
