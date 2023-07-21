@@ -158,7 +158,7 @@ class device_kernel_assembly_rbf {
      */
     void operator()(::sycl::nd_item<2> nd_idx) const {
         const unsigned long long i = nd_idx.get_global_id(0);
-        const unsigned long long i_cached_index = nd_idx.get_group(0) * nd_idx.get_local_range(0) + nd_idx.get_local_id(1);
+        const unsigned long long i_cached_idx = nd_idx.get_group(0) * nd_idx.get_local_range(0) + nd_idx.get_local_id(1);
         const unsigned long long j = nd_idx.get_global_id(1);
 
         if (nd_idx.get_group(0) >= nd_idx.get_group(1)) {
@@ -172,8 +172,8 @@ class device_kernel_assembly_rbf {
 
                 // load data into shared memory
                 if (nd_idx.get_local_id(0) < BLOCK_SIZE && dim + nd_idx.get_local_id(0) < num_features_) {
-                    if (i_cached_index < num_rows_) {
-                        data_cache_i_[nd_idx.get_local_id(0)][nd_idx.get_local_id(1)] = data_d_[(dim + nd_idx.get_local_id(0)) * (num_rows_ + 1) + i_cached_index];
+                    if (i_cached_idx < num_rows_) {
+                        data_cache_i_[nd_idx.get_local_id(0)][nd_idx.get_local_id(1)] = data_d_[(dim + nd_idx.get_local_id(0)) * (num_rows_ + 1) + i_cached_idx];
                     }
                     if (j < num_rows_) {
                         data_cache_j_[nd_idx.get_local_id(0)][nd_idx.get_local_id(1)] = data_d_[(dim + nd_idx.get_local_id(0)) * (num_rows_ + 1) + j];

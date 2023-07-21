@@ -210,7 +210,9 @@ void csvm::run_gemm_kernel_explicit(const std::size_t m, const std::size_t n, co
     const auto n_ull = static_cast<unsigned long long>(n);
     const auto k_ull = static_cast<unsigned long long>(k);
 
-    devices_[0].impl->sycl_queue.parallel_for(execution_range, sycl::detail::device_kernel_gemm{ m_ull, n_ull, k_ull, alpha, A_d.get(), B_d.get(), beta, C_d.get() });
+    devices_[0].impl->sycl_queue.submit([&](::sycl::handler &cgh) {
+        cgh.parallel_for(execution_range, sycl::detail::device_kernel_gemm{ cgh, m_ull, n_ull, k_ull, alpha, A_d.get(), B_d.get(), beta, C_d.get() });
+    });
     devices_[0].impl->sycl_queue.wait_and_throw();
 }
 
