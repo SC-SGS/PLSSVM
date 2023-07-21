@@ -170,7 +170,7 @@ auto csvm::run_assemble_kernel_matrix_explicit(const parameter &params, const de
             break;
         case kernel_function_type::polynomial:
             devices_[0].impl->sycl_queue.submit([&](::sycl::handler &cgh) {
-                cgh.parallel_for(execution_range, sycl::detail::device_kernel_assembly_polynomial{ cgh, kernel_matrix_d.get(), data_d.get(), num_rows_reduced, num_features, q_red_d.get(), QA_cost, cost_factor, static_cast<real_type>(params.degree.value()), params.gamma.value(), params.coef0.value() });
+                cgh.parallel_for(execution_range, sycl::detail::device_kernel_assembly_polynomial{ cgh, kernel_matrix_d.get(), data_d.get(), num_rows_reduced, num_features, q_red_d.get(), QA_cost, cost_factor, params.degree.value(), params.gamma.value(), params.coef0.value() });
             });
             break;
         case kernel_function_type::rbf:

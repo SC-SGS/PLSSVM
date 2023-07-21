@@ -122,7 +122,7 @@ class device_kernel_assembly_polynomial {
      * @param[in] gamma parameter used in the polynomial kernel function
      * @param[in] coef0 parameter used in the polynomial kernel function
      */
-    device_kernel_assembly_polynomial(::sycl::handler &cgh, real_type *ret, const real_type *data_d, const unsigned long long num_rows, const unsigned long long num_features, const real_type *q, const real_type QA_cost, const real_type cost, const real_type degree, const real_type gamma, const real_type coef0) :
+    device_kernel_assembly_polynomial(::sycl::handler &cgh, real_type *ret, const real_type *data_d, const unsigned long long num_rows, const unsigned long long num_features, const real_type *q, const real_type QA_cost, const real_type cost, const int degree, const real_type gamma, const real_type coef0) :
         data_cache_i_{ ::sycl::range<2>{ FEATURE_BLOCK_SIZE, THREAD_BLOCK_SIZE }, cgh }, data_cache_j_{ ::sycl::range<2>{ FEATURE_BLOCK_SIZE, THREAD_BLOCK_SIZE }, cgh },
         ret_{ ret }, data_d_{ data_d }, num_rows_{ num_rows }, num_features_{ num_features }, q_{ q }, QA_cost_{ QA_cost }, cost_{ cost }, degree_{ degree }, gamma_{ gamma }, coef0_{ coef0 } {}
 
@@ -163,7 +163,7 @@ class device_kernel_assembly_polynomial {
             }
 
             if (i < num_rows_ && j < num_rows_ && i >= j) {
-                temp = ::sycl::pow(gamma_ * temp + coef0_, degree_) + QA_cost_ - q_[i] - q_[j];
+                temp = ::sycl::pown(gamma_ * temp + coef0_, degree_) + QA_cost_ - q_[i] - q_[j];
                 if (i == j) {
                     temp += cost_;
                 }
@@ -187,7 +187,7 @@ class device_kernel_assembly_polynomial {
     const real_type *q_;
     const real_type QA_cost_;
     const real_type cost_;
-    const real_type degree_;
+    const int degree_;
     const real_type gamma_;
     const real_type coef0_;
     /// @endcond
