@@ -16,6 +16,7 @@ __global__ void device_kernel_gemm(const unsigned long long m, const unsigned lo
     // compute: C = alpha * A * B + beta * C with A in m x k, B in n x k, and C in n x m, alpha, beta as scalar
     const unsigned long long i = blockIdx.x * blockDim.x + threadIdx.x;  // # rhs
     const unsigned long long j = blockIdx.y * blockDim.y + threadIdx.y;  // # rows
+    const unsigned long long j_cached_idx = blockIdx.y * blockDim.y + threadIdx.x;
 
     constexpr unsigned long long WARP_SIZE = 32;
     constexpr unsigned long long BLOCK_SIZE = 16;
@@ -27,22 +28,22 @@ __global__ void device_kernel_gemm(const unsigned long long m, const unsigned lo
 
     for (unsigned long long dim = 0; dim < k; dim += BLOCK_SIZE) {
         // zero out shared memory
-        if (threadIdx.x < BLOCK_SIZE) {
-            A_cache[threadIdx.x][threadIdx.y] = real_type{ 0.0 };
-        }
         if (threadIdx.y < BLOCK_SIZE) {
+            A_cache[threadIdx.y][threadIdx.x] = real_type{ 0.0 };
             B_cache[threadIdx.y][threadIdx.x] = real_type{ 0.0 };
         }
 
         // load data into shared memory
-        if (threadIdx.y < BLOCK_SIZE) {
-            B_cache[threadIdx.y][threadIdx.x] = B[(dim + threadIdx.y) * n + i];
-        }
-        if (threadIdx.x < BLOCK_SIZE) {
-            if (dim + threadIdx.x < j) {
-                A_cache[threadIdx.x][threadIdx.y] = A[(dim + threadIdx.x) * k + j - (dim + threadIdx.x) * (dim + threadIdx.x + 1) / 2];
+        if (threadIdx.y < BLOCK_SIZE && dim + threadIdx.y < k) {
+            if (dim + threadIdx.y < j_cached_idx) {
+                if (j_cached_idx < k) {
+                    A_cache[threadIdx.y][threadIdx.x] = A[(dim + threadIdx.y) * k + j_cached_idx - (dim + threadIdx.y) * (dim + threadIdx.y + 1) / 2];
+                }
             } else {
-                A_cache[threadIdx.x][threadIdx.y] = A[j * k + dim + threadIdx.x - j * (j + 1) / 2];
+                A_cache[threadIdx.y][threadIdx.x] = A[j_cached_idx * k + dim + threadIdx.y - j_cached_idx * (j_cached_idx + 1) / 2];
+            }
+            if (i < n) {
+                B_cache[threadIdx.y][threadIdx.x] = B[(dim + threadIdx.y) * n + i];
             }
         }
         __syncthreads();
