@@ -27,6 +27,7 @@ class device_kernel_gemm {
   public:
     /**
      * @brief Initialize the SYCL kernel function object.
+     * @param[in] cgh the SYCL handler used to allocate the local memory
      * @param[in] m the number of rows in @p A and @p C
      * @param[in] n the number of columns in @p B and @p C
      * @param[in] k the number of rows in @p A and number of columns in @p B
