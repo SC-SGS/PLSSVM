@@ -24,22 +24,48 @@
  */
 __kernel void device_kernel_gemm(const ulong m, const ulong n, const ulong k, const real_type alpha, __global const real_type *A, __global const real_type *B, const real_type beta, __global real_type *C) {
     // compute: C = alpha * A * B + beta * C with A in m x k, B in n x k, and C in n x m, alpha, beta as scalar
-    const ulong i = get_global_id(0);
-    const ulong j = get_global_id(1);
+    const ulong i = get_global_id(0);  // # rhs
+    const ulong j = get_global_id(1);  // # rows
+    const ulong j_cached_idx = get_group_id(1) * get_local_size(1) + get_local_id(0);
+
+    const ulong WARP_SIZE = 32;
+    const ulong BLOCK_SIZE = 16;
+
+    __local real_type A_cache[BLOCK_SIZE][WARP_SIZE];
+    __local real_type B_cache[BLOCK_SIZE][WARP_SIZE];
+
+    real_type temp = 0.0;
+
+    for (ulong dim = 0; dim < k; dim += BLOCK_SIZE) {
+        // zero out shared memory
+        if (get_local_id(1) < BLOCK_SIZE) {
+            A_cache[get_local_id(1)][get_local_id(0)] = 0.0;
+            B_cache[get_local_id(1)][get_local_id(0)] = 0.0;
+        }
+
+        // load data into shared memory
+        if (get_local_id(1) < BLOCK_SIZE && dim + get_local_id(1) < k) {
+            if (dim + get_local_id(1) < j_cached_idx) {
+                if (j_cached_idx < k) {
+                    A_cache[get_local_id(1)][get_local_id(0)] = A[(dim + get_local_id(1)) * k + j_cached_idx - (dim + get_local_id(1)) * (dim + get_local_id(1) + 1) / 2];
+                }
+            } else {
+                A_cache[get_local_id(1)][get_local_id(0)] = A[j_cached_idx * k + dim + get_local_id(1) - j_cached_idx * (j_cached_idx + 1) / 2];
+            }
+            if (i < n) {
+                B_cache[get_local_id(1)][get_local_id(0)] = B[(dim + get_local_id(1)) * n + i];
+            }
+        }
+        barrier(CLK_LOCAL_MEM_FENCE);
+
+        // calculation
+        for (unsigned long long block_dim = 0; block_dim < BLOCK_SIZE; ++block_dim) {
+            temp += A_cache[block_dim][get_local_id(1)] * B_cache[block_dim][get_local_id(0)];
+        }
+        barrier(CLK_LOCAL_MEM_FENCE);
+    }
 
     if (i < n && j < m) {
-        real_type temp = 0.0;
-        ulong offset = 0;
-        // left of the diagonal -> use contiguous values
-        for (ulong dim = 0; dim < j; ++dim) {
-            offset += dim;
-            temp += A[dim * k + j - offset] * B[dim * n + i];
-        }
-        // diagonal + right of the diagonal -> use symmetrically mirrored values
-        offset += j;
-        for (ulong dim = j; dim < k; ++dim) {
-            temp += A[j * k + dim - offset] * B[dim * n + i];
-        }
         C[j * n + i] = alpha * temp + beta * C[j * n + i];
     }
 }

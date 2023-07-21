@@ -84,7 +84,7 @@ __kernel void device_kernel_assembly_polynomial(__global real_type *ret, __globa
 __kernel void device_kernel_assembly_rbf(__global real_type *ret, __global const real_type *data_d, const ulong num_rows, const ulong num_features, __global const real_type *q, const real_type QA_cost, const real_type cost, const real_type gamma) {
     const ulong i = get_global_id(0);
     const ulong j = get_global_id(1);
-    const ulong j_cached_index = get_group_id(1) * get_local_size(1) + get_local_id(0);
+    const ulong j_cached_idx = get_group_id(1) * get_local_size(1) + get_local_id(0);
 
     const ulong WARP_SIZE = 32;
     const ulong BLOCK_SIZE = 16;
@@ -106,8 +106,8 @@ __kernel void device_kernel_assembly_rbf(__global real_type *ret, __global const
                 if (i < num_rows) {
                     data_cache_i[get_local_id(1)][get_local_id(0)] = data_d[(dim + get_local_id(1)) * (num_rows + 1) + i];
                 }
-                if (j_cached_index < num_rows) {
-                    data_cache_j[get_local_id(1)][get_local_id(0)] = data_d[(dim + get_local_id(1)) * (num_rows + 1) + j_cached_index];
+                if (j_cached_idx < num_rows) {
+                    data_cache_j[get_local_id(1)][get_local_id(0)] = data_d[(dim + get_local_id(1)) * (num_rows + 1) + j_cached_idx];
                 }
             }
             barrier(CLK_LOCAL_MEM_FENCE);
