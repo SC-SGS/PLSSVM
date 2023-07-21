@@ -84,18 +84,49 @@ __kernel void device_kernel_assembly_polynomial(__global real_type *ret, __globa
 __kernel void device_kernel_assembly_rbf(__global real_type *ret, __global const real_type *data_d, const ulong num_rows, const ulong num_features, __global const real_type *q, const real_type QA_cost, const real_type cost, const real_type gamma) {
     const ulong i = get_global_id(0);
     const ulong j = get_global_id(1);
+    const ulong j_cached_index = get_group_id(1) * get_local_size(1) + get_local_id(0);
 
-    if (i < num_rows && j < num_rows && i >= j) {
+    const ulong WARP_SIZE = 32;
+    const ulong BLOCK_SIZE = 16;
+
+    __local real_type data_cache_i[BLOCK_SIZE][WARP_SIZE];
+    __local real_type data_cache_j[BLOCK_SIZE][WARP_SIZE];
+
+    if (get_group_id(0) >= get_group_id(1)) {
         real_type temp = 0.0;
-        for (ulong dim = 0; dim < num_features; ++dim) {
-            const real_type d = data_d[dim * (num_rows + 1) + i] - data_d[dim * (num_rows + 1) + j];
-            temp += d * d;
-        }
-        temp = exp(-gamma * temp) + QA_cost - q[i] - q[j];
-        if (i == j) {
-            temp += cost;
+        for (ulong dim = 0; dim < num_features; dim += BLOCK_SIZE) {
+            // zero out shared memory
+            if (get_local_id(1) < BLOCK_SIZE) {
+                data_cache_i[get_local_id(1)][get_local_id(0)] = 0.0;
+                data_cache_j[get_local_id(1)][get_local_id(0)] = 0.0;
+            }
+
+            // load data into shared memory
+            if (get_local_id(1) < BLOCK_SIZE && dim + get_local_id(1) < num_features) {
+                if (i < num_rows) {
+                    data_cache_i[get_local_id(1)][get_local_id(0)] = data_d[(dim + get_local_id(1)) * (num_rows + 1) + i];
+                }
+                if (j_cached_index < num_rows) {
+                    data_cache_j[get_local_id(1)][get_local_id(0)] = data_d[(dim + get_local_id(1)) * (num_rows + 1) + j_cached_index];
+                }
+            }
+            barrier(CLK_LOCAL_MEM_FENCE);
+
+            // calculation
+            for (ulong block_dim = 0; block_dim < BLOCK_SIZE; ++block_dim) {
+                const real_type d = data_cache_i[block_dim][get_local_id(0)] - data_cache_j[block_dim][get_local_id(1)];
+                temp += d * d;
+            }
+            barrier(CLK_LOCAL_MEM_FENCE);
         }
 
-        ret[j * num_rows + i - j * (j + 1) / 2] = temp;
+        if (i < num_rows && j < num_rows && i >= j) {
+            temp = exp(-gamma * temp) + QA_cost - q[i] - q[j];
+            if (i == j) {
+                temp += cost;
+            }
+
+            ret[j * num_rows + i - j * (j + 1) / 2] = temp;
+        }
     }
 }

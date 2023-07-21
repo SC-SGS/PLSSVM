@@ -53,7 +53,7 @@ __global__ void device_kernel_assembly_rbf(real_type *ret, const real_type *data
     const unsigned long long j = blockIdx.y * blockDim.y + threadIdx.y;
     const unsigned long long j_cached_idx = blockIdx.y * blockDim.y + threadIdx.x;
 
-    constexpr unsigned long long WARP_SIZE = 32;  // TODO: AMD
+    constexpr unsigned long long WARP_SIZE = 32;
     constexpr unsigned long long BLOCK_SIZE = 16;
 
     __shared__ real_type data_cache_i[BLOCK_SIZE][WARP_SIZE];

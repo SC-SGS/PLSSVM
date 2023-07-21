@@ -93,19 +93,50 @@ __global__ void device_kernel_assembly_polynomial(real_type *ret, const real_typ
 __global__ void device_kernel_assembly_rbf(real_type *ret, const real_type *data_d, const unsigned long long num_rows, const unsigned long long num_features, const real_type *q, const real_type QA_cost, const real_type cost, const real_type gamma) {
     const unsigned long long i = blockIdx.x * blockDim.x + threadIdx.x;
     const unsigned long long j = blockIdx.y * blockDim.y + threadIdx.y;
+    const unsigned long long j_cached_idx = blockIdx.y * blockDim.y + threadIdx.x;
 
-    if (i < num_rows && j < num_rows && j >= i) {
+    constexpr unsigned long long WARP_SIZE = 32;
+    constexpr unsigned long long BLOCK_SIZE = 16;
+
+    __shared__ real_type data_cache_i[BLOCK_SIZE][WARP_SIZE];
+    __shared__ real_type data_cache_j[BLOCK_SIZE][WARP_SIZE];
+
+    if (blockIdx.x >= blockIdx.y) {
         real_type temp{ 0.0 };
-        for (unsigned long long dim = 0; dim < num_features; ++dim) {
-            const real_type d = data_d[dim * (num_rows + 1) + i] - data_d[dim * (num_rows + 1) + j];
-            temp += d * d;
-        }
-        temp = exp(-gamma * temp) + QA_cost - q[i] - q[j];
-        if (i == j) {
-            temp += cost;
+        for (unsigned long long dim = 0; dim < num_features; dim += BLOCK_SIZE) {
+            // zero out shared memory
+            if (threadIdx.y < BLOCK_SIZE) {
+                data_cache_i[threadIdx.y][threadIdx.x] = real_type{ 0.0 };
+                data_cache_j[threadIdx.y][threadIdx.x] = real_type{ 0.0 };
+            }
+
+            // load data into shared memory
+            if (threadIdx.y < BLOCK_SIZE && dim + threadIdx.y < num_features) {
+                if (i < num_rows) {
+                    data_cache_i[threadIdx.y][threadIdx.x] = data_d[(dim + threadIdx.y) * (num_rows + 1) + i];
+                }
+                if (j_cached_idx < num_rows) {
+                    data_cache_j[threadIdx.y][threadIdx.x] = data_d[(dim + threadIdx.y) * (num_rows + 1) + j_cached_idx];
+                }
+            }
+            __syncthreads();
+
+            // calculation
+            for (unsigned long long block_dim = 0; block_dim < BLOCK_SIZE; ++block_dim) {
+                const real_type d = data_cache_i[block_dim][threadIdx.x] - data_cache_j[block_dim][threadIdx.y];
+                temp += d * d;
+            }
+            __syncthreads();
         }
 
-        ret[j * num_rows + i - j * (j + 1) / 2] = temp;
+        if (i < num_rows && j < num_rows && i >= j) {
+            temp = exp(-gamma * temp) + QA_cost - q[i] - q[j];
+            if (i == j) {
+                temp += cost;
+            }
+
+            ret[j * num_rows + i - j * (j + 1) / 2] = temp;
+        }
     }
 }
 
