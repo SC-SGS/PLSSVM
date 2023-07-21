@@ -13,7 +13,7 @@
 #define PLSSVM_BACKENDS_SYCL_CG_EXPLICIT_KERNEL_MATRIX_ASSEMBLY_HPP_
 #pragma once
 
-#include "plssvm/constants.hpp"  // plssvm::real_type
+#include "plssvm/constants.hpp"  // plssvm::real_type, plssvm::THREAD_BLOCK_SIZE, plssvm::FEATURE_BLOCK_SIZE
 
 #include "sycl/sycl.hpp"  // sycl::nd_item, sycl::pow, sycl::exp
 
@@ -133,9 +133,6 @@ class device_kernel_assembly_polynomial {
  * Create the explicit kernel matrix using the rbf kernel function (\f$e^{(-gamma \cdot |\vec{u} - \vec{v}|^2)}\f$).
  */
 class device_kernel_assembly_rbf {
-    static constexpr unsigned long long WARP_SIZE = 32;
-    static constexpr unsigned long long BLOCK_SIZE = 16;
-
   public:
     /**
      * @brief Initialize the SYCL kernel function object.
@@ -149,7 +146,7 @@ class device_kernel_assembly_rbf {
      * @param[in] gamma parameter used in the rbf kernel function
      */
     device_kernel_assembly_rbf(::sycl::handler &cgh, real_type *ret, const real_type *data_d, const unsigned long long num_rows, const unsigned long long num_features, const real_type *q, const real_type QA_cost, const real_type cost, const real_type gamma) :
-        data_cache_i_{ ::sycl::range<2>{ BLOCK_SIZE, WARP_SIZE }, cgh }, data_cache_j_{ ::sycl::range<2>{ BLOCK_SIZE, WARP_SIZE }, cgh },
+        data_cache_i_{ ::sycl::range<2>{ FEATURE_BLOCK_SIZE, THREAD_BLOCK_SIZE }, cgh }, data_cache_j_{ ::sycl::range<2>{ FEATURE_BLOCK_SIZE, THREAD_BLOCK_SIZE }, cgh },
         ret_{ ret }, data_d_{ data_d }, num_rows_{ num_rows }, num_features_{ num_features }, q_{ q }, QA_cost_{ QA_cost }, cost_{ cost }, gamma_{ gamma } {}
 
     /**
@@ -163,15 +160,15 @@ class device_kernel_assembly_rbf {
 
         if (nd_idx.get_group(0) >= nd_idx.get_group(1)) {
             real_type temp{ 0.0 };
-            for (unsigned long long dim = 0; dim < num_features_; dim += BLOCK_SIZE) {
+            for (unsigned long long dim = 0; dim < num_features_; dim += FEATURE_BLOCK_SIZE) {
                 // zero out shared memory
-                if (nd_idx.get_local_id(0) < BLOCK_SIZE) {
+                if (nd_idx.get_local_id(0) < FEATURE_BLOCK_SIZE) {
                     data_cache_i_[nd_idx.get_local_id(0)][nd_idx.get_local_id(1)] = real_type{ 0.0 };
                     data_cache_j_[nd_idx.get_local_id(0)][nd_idx.get_local_id(1)] = real_type{ 0.0 };
                 }
 
                 // load data into shared memory
-                if (nd_idx.get_local_id(0) < BLOCK_SIZE && dim + nd_idx.get_local_id(0) < num_features_) {
+                if (nd_idx.get_local_id(0) < FEATURE_BLOCK_SIZE && dim + nd_idx.get_local_id(0) < num_features_) {
                     if (i_cached_idx < num_rows_) {
                         data_cache_i_[nd_idx.get_local_id(0)][nd_idx.get_local_id(1)] = data_d_[(dim + nd_idx.get_local_id(0)) * (num_rows_ + 1) + i_cached_idx];
                     }
@@ -182,7 +179,7 @@ class device_kernel_assembly_rbf {
                 nd_idx.barrier();
 
                 // calculation
-                for (unsigned long long block_dim = 0; block_dim < BLOCK_SIZE; ++block_dim) {
+                for (unsigned long long block_dim = 0; block_dim < FEATURE_BLOCK_SIZE; ++block_dim) {
                     const real_type d = data_cache_i_[block_dim][nd_idx.get_local_id(0)] - data_cache_j_[block_dim][nd_idx.get_local_id(1)];
                     temp += d * d;
                 }

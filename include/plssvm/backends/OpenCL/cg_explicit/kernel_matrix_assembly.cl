@@ -86,23 +86,20 @@ __kernel void device_kernel_assembly_rbf(__global real_type *ret, __global const
     const ulong j = get_global_id(1);
     const ulong j_cached_idx = get_group_id(1) * get_local_size(1) + get_local_id(0);
 
-    const ulong WARP_SIZE = 32;
-    const ulong BLOCK_SIZE = 16;
-
-    __local real_type data_cache_i[BLOCK_SIZE][WARP_SIZE];
-    __local real_type data_cache_j[BLOCK_SIZE][WARP_SIZE];
+    __local real_type data_cache_i[FEATURE_BLOCK_SIZE][THREAD_BLOCK_SIZE];
+    __local real_type data_cache_j[FEATURE_BLOCK_SIZE][THREAD_BLOCK_SIZE];
 
     if (get_group_id(0) >= get_group_id(1)) {
         real_type temp = 0.0;
-        for (ulong dim = 0; dim < num_features; dim += BLOCK_SIZE) {
+        for (ulong dim = 0; dim < num_features; dim += FEATURE_BLOCK_SIZE) {
             // zero out shared memory
-            if (get_local_id(1) < BLOCK_SIZE) {
+            if (get_local_id(1) < FEATURE_BLOCK_SIZE) {
                 data_cache_i[get_local_id(1)][get_local_id(0)] = 0.0;
                 data_cache_j[get_local_id(1)][get_local_id(0)] = 0.0;
             }
 
             // load data into shared memory
-            if (get_local_id(1) < BLOCK_SIZE && dim + get_local_id(1) < num_features) {
+            if (get_local_id(1) < FEATURE_BLOCK_SIZE && dim + get_local_id(1) < num_features) {
                 if (i < num_rows) {
                     data_cache_i[get_local_id(1)][get_local_id(0)] = data_d[(dim + get_local_id(1)) * (num_rows + 1) + i];
                 }
@@ -113,7 +110,7 @@ __kernel void device_kernel_assembly_rbf(__global real_type *ret, __global const
             barrier(CLK_LOCAL_MEM_FENCE);
 
             // calculation
-            for (ulong block_dim = 0; block_dim < BLOCK_SIZE; ++block_dim) {
+            for (ulong block_dim = 0; block_dim < FEATURE_BLOCK_SIZE; ++block_dim) {
                 const real_type d = data_cache_i[block_dim][get_local_id(0)] - data_cache_j[block_dim][get_local_id(1)];
                 temp += d * d;
             }
