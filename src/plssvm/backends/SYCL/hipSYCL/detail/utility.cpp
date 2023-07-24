@@ -50,7 +50,8 @@ namespace plssvm::hipsycl::detail {
                 } else if ((::plssvm::detail::contains(vendor_string, "amd") || ::plssvm::detail::contains(vendor_string, "advanced micro devices"))
                            && ::plssvm::detail::contains(available_target_platforms, target_platform::gpu_amd)) {
                     platform_devices.insert({ target_platform::gpu_amd, device });
-                } else if (::plssvm::detail::contains(vendor_string, "intel") && ::plssvm::detail::contains(available_target_platforms, target_platform::gpu_intel)) {
+                } else if ((::plssvm::detail::contains(vendor_string, "intel") || ::plssvm::detail::contains(vendor_string, "pci"))  // TODO: https://github.com/OpenSYCL/OpenSYCL/issues/1090
+                           && ::plssvm::detail::contains(available_target_platforms, target_platform::gpu_intel)) {
                     platform_devices.insert({ target_platform::gpu_intel, device });
                 }
             }
