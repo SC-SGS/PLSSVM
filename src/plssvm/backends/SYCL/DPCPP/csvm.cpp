@@ -153,8 +153,10 @@ auto csvm::run_assemble_kernel_matrix_explicit(const parameter &params, const de
 
     // define grid and block sizes
     const std::size_t max_work_group_size = this->get_max_work_group_size();
-    const auto max_work_group_size_2D = static_cast<std::size_t>(std::sqrt(static_cast<real_type>(max_work_group_size)));
-    const ::sycl::range<2> block{ max_work_group_size_2D, max_work_group_size_2D };
+    if (max_work_group_size < THREAD_BLOCK_SIZE * THREAD_BLOCK_SIZE) {
+        throw kernel_launch_resources{ fmt::format("Not enough work-items allowed for a work-groups of size {}x{}! Try reducing THREAD_BLOCK_SIZE.", THREAD_BLOCK_SIZE, THREAD_BLOCK_SIZE) };
+    }
+    const ::sycl::range<2> block{ THREAD_BLOCK_SIZE, THREAD_BLOCK_SIZE };
     const ::sycl::range<2> grid{ static_cast<std::size_t>(std::ceil(static_cast<double>(num_rows_reduced) / static_cast<double>(block[0]))) * block[0],
                                  static_cast<std::size_t>(std::ceil(static_cast<double>(num_rows_reduced) / static_cast<double>(block[1]))) * block[1] };
     const ::sycl::nd_range<2> execution_range{ grid, block };
@@ -164,13 +166,19 @@ auto csvm::run_assemble_kernel_matrix_explicit(const parameter &params, const de
 
     switch (params.kernel_type) {
         case kernel_function_type::linear:
-            devices_[0].impl->sycl_queue.parallel_for(execution_range, sycl::detail::device_kernel_assembly_linear{ kernel_matrix_d.get(), data_d.get(), num_rows_reduced, num_features, q_red_d.get(), QA_cost, cost_factor });
+            devices_[0].impl->sycl_queue.submit([&](::sycl::handler &cgh) {
+                cgh.parallel_for(execution_range, sycl::detail::device_kernel_assembly_linear{ cgh, kernel_matrix_d.get(), data_d.get(), num_rows_reduced, num_features, q_red_d.get(), QA_cost, cost_factor });
+            });
             break;
         case kernel_function_type::polynomial:
-            devices_[0].impl->sycl_queue.parallel_for(execution_range, sycl::detail::device_kernel_assembly_polynomial{ kernel_matrix_d.get(), data_d.get(), num_rows_reduced, num_features, q_red_d.get(), QA_cost, cost_factor, static_cast<real_type>(params.degree.value()), params.gamma.value(), params.coef0.value() });
+            devices_[0].impl->sycl_queue.submit([&](::sycl::handler &cgh) {
+                cgh.parallel_for(execution_range, sycl::detail::device_kernel_assembly_polynomial{ cgh, kernel_matrix_d.get(), data_d.get(), num_rows_reduced, num_features, q_red_d.get(), QA_cost, cost_factor, params.degree.value(), params.gamma.value(), params.coef0.value() });
+            });
             break;
         case kernel_function_type::rbf:
-            devices_[0].impl->sycl_queue.parallel_for(execution_range, sycl::detail::device_kernel_assembly_rbf{ kernel_matrix_d.get(), data_d.get(), num_rows_reduced, num_features, q_red_d.get(), QA_cost, cost_factor, params.gamma.value() });
+            devices_[0].impl->sycl_queue.submit([&](::sycl::handler &cgh) {
+                cgh.parallel_for(execution_range, sycl::detail::device_kernel_assembly_rbf{ cgh, kernel_matrix_d.get(), data_d.get(), num_rows_reduced, num_features, q_red_d.get(), QA_cost, cost_factor, params.gamma.value() });
+            });
             break;
     }
     devices_[0].impl->sycl_queue.wait_and_throw();
@@ -181,8 +189,10 @@ auto csvm::run_assemble_kernel_matrix_explicit(const parameter &params, const de
 void csvm::run_gemm_kernel_explicit(const std::size_t m, const std::size_t n, const std::size_t k, const real_type alpha, const device_ptr_type &A_d, const device_ptr_type &B_d, const real_type beta, device_ptr_type &C_d) const {
     // define grid and block sizes
     const std::size_t max_work_group_size = this->get_max_work_group_size();
-    const auto max_work_group_size_2D = static_cast<std::size_t>(std::sqrt(static_cast<real_type>(max_work_group_size)));
-    const ::sycl::range<2> block{ max_work_group_size_2D, max_work_group_size_2D };
+    if (max_work_group_size < THREAD_BLOCK_SIZE * THREAD_BLOCK_SIZE) {
+        throw kernel_launch_resources{ fmt::format("Not enough work-items allowed for a work-groups of size {}x{}! Try reducing THREAD_BLOCK_SIZE.", THREAD_BLOCK_SIZE, THREAD_BLOCK_SIZE) };
+    }
+    const ::sycl::range<2> block{ THREAD_BLOCK_SIZE, THREAD_BLOCK_SIZE };
     const ::sycl::range<2> grid{ static_cast<std::size_t>(std::ceil(static_cast<double>(m) / static_cast<double>(block[0]))) * block[0],
                                  static_cast<std::size_t>(std::ceil(static_cast<double>(n) / static_cast<double>(block[1]))) * block[1] };
     const ::sycl::nd_range<2> execution_range{ grid, block };
@@ -192,7 +202,9 @@ void csvm::run_gemm_kernel_explicit(const std::size_t m, const std::size_t n, co
     const auto n_ull = static_cast<unsigned long long>(n);
     const auto k_ull = static_cast<unsigned long long>(k);
 
-    devices_[0].impl->sycl_queue.parallel_for(execution_range, sycl::detail::device_kernel_gemm{ m_ull, n_ull, k_ull, alpha, A_d.get(), B_d.get(), beta, C_d.get() });
+    devices_[0].impl->sycl_queue.submit([&](::sycl::handler &cgh) {
+        cgh.parallel_for(execution_range, sycl::detail::device_kernel_gemm{ cgh, m_ull, n_ull, k_ull, alpha, A_d.get(), B_d.get(), beta, C_d.get() });
+    });
     devices_[0].impl->sycl_queue.wait_and_throw();
 }
 

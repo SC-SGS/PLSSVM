@@ -13,7 +13,8 @@
 #define PLSSVM_BACKENDS_SYCL_CG_EXPLICIT_KERNEL_MATRIX_ASSEMBLY_HPP_
 #pragma once
 
-#include "plssvm/constants.hpp"  // plssvm::real_type
+#include "plssvm/constants.hpp"  // plssvm::real_type, plssvm::THREAD_BLOCK_SIZE, plssvm::FEATURE_BLOCK_SIZE
+#include "plssvm/backends/SYCL/detail/constants.hpp"  // PLSSVM_SYCL_BACKEND_COMPILER_HIPSYCL
 
 #include "sycl/sycl.hpp"  // sycl::nd_item, sycl::pow, sycl::exp
 
@@ -26,6 +27,7 @@ class device_kernel_assembly_linear {
   public:
     /**
      * @brief Initialize the SYCL kernel function object.
+     * @param[in] cgh the SYCL handler used to allocate the local memory
      * @param[out] ret the calculated kernel matrix
      * @param[in] data_d the data points to calculate the kernel matrix from
      * @param[in] num_rows the number of data points
@@ -34,7 +36,8 @@ class device_kernel_assembly_linear {
      * @param[in] QA_cost the scalar used in the dimensional reduction
      * @param[in] cost the cost factor the diagonal is scaled with
      */
-    device_kernel_assembly_linear(real_type *ret, const real_type *data_d, const unsigned long long num_rows, const unsigned long long num_features, const real_type *q, const real_type QA_cost, const real_type cost) :
+    device_kernel_assembly_linear(::sycl::handler &cgh, real_type *ret, const real_type *data_d, const unsigned long long num_rows, const unsigned long long num_features, const real_type *q, const real_type QA_cost, const real_type cost) :
+        data_cache_i_{ ::sycl::range<2>{ FEATURE_BLOCK_SIZE, THREAD_BLOCK_SIZE }, cgh }, data_cache_j_{ ::sycl::range<2>{ FEATURE_BLOCK_SIZE, THREAD_BLOCK_SIZE }, cgh },
         ret_{ ret }, data_d_{ data_d }, num_rows_{ num_rows }, num_features_{ num_features }, q_{ q }, QA_cost_{ QA_cost }, cost_{ cost } {}
 
     /**
@@ -43,23 +46,53 @@ class device_kernel_assembly_linear {
      */
     void operator()(::sycl::nd_item<2> nd_idx) const {
         const unsigned long long i = nd_idx.get_global_id(0);
+        const unsigned long long i_cached_idx = nd_idx.get_group(0) * nd_idx.get_local_range(0) + nd_idx.get_local_id(1);
         const unsigned long long j = nd_idx.get_global_id(1);
 
-        if (i < num_rows_ && j < num_rows_ && j >= i) {
+        if (nd_idx.get_group(0) >= nd_idx.get_group(1)) {
             real_type temp{ 0.0 };
-            for (unsigned long long dim = 0; dim < num_features_; ++dim) {
-                temp += data_d_[dim * (num_rows_ + 1) + i] * data_d_[dim * (num_rows_ + 1) + j];
-            }
-            temp = temp + QA_cost_ - q_[i] - q_[j];
-            if (i == j) {
-                temp += cost_;
+            for (unsigned long long dim = 0; dim < num_features_; dim += FEATURE_BLOCK_SIZE) {
+                // zero out shared memory
+                if (nd_idx.get_local_id(0) < FEATURE_BLOCK_SIZE) {
+                    data_cache_i_[nd_idx.get_local_id(0)][nd_idx.get_local_id(1)] = real_type{ 0.0 };
+                    data_cache_j_[nd_idx.get_local_id(0)][nd_idx.get_local_id(1)] = real_type{ 0.0 };
+                }
+
+                // load data into shared memory
+                if (nd_idx.get_local_id(0) < FEATURE_BLOCK_SIZE && dim + nd_idx.get_local_id(0) < num_features_) {
+                    if (i_cached_idx < num_rows_) {
+                        data_cache_i_[nd_idx.get_local_id(0)][nd_idx.get_local_id(1)] = data_d_[(dim + nd_idx.get_local_id(0)) * (num_rows_ + 1) + i_cached_idx];
+                    }
+                    if (j < num_rows_) {
+                        data_cache_j_[nd_idx.get_local_id(0)][nd_idx.get_local_id(1)] = data_d_[(dim + nd_idx.get_local_id(0)) * (num_rows_ + 1) + j];
+                    }
+                }
+                nd_idx.barrier();
+
+                // calculation
+                for (unsigned long long block_dim = 0; block_dim < FEATURE_BLOCK_SIZE; ++block_dim) {
+                    temp += data_cache_i_[block_dim][nd_idx.get_local_id(0)] * data_cache_j_[block_dim][nd_idx.get_local_id(1)];
+                }
+                nd_idx.barrier();
             }
 
-            ret_[i * num_rows_ + j - i * (i + 1) / 2] = temp;
+            if (i < num_rows_ && j < num_rows_ && i >= j) {
+                temp = temp + QA_cost_ - q_[i] - q_[j];
+                if (i == j) {
+                    temp += cost_;
+                }
+
+                ret_[j * num_rows_ + i - j * (j + 1) / 2] = temp;
+            }
         }
     }
 
   private:
+    /// Local memory used for internal memory access optimizations.
+    ::sycl::local_accessor<real_type, 2> data_cache_i_;
+    /// Local memory used for internal memory access optimizations.
+    ::sycl::local_accessor<real_type, 2> data_cache_j_;
+
     /// @cond Doxygen_suppress
     real_type *ret_;
     const real_type *data_d_;
@@ -78,6 +111,7 @@ class device_kernel_assembly_polynomial {
   public:
     /**
      * @brief Initialize the SYCL kernel function object.
+     * @param[in] cgh the SYCL handler used to allocate the local memory
      * @param[out] ret the calculated kernel matrix
      * @param[in] data_d the data points to calculate the kernel matrix from
      * @param[in] num_rows the number of data points
@@ -89,7 +123,8 @@ class device_kernel_assembly_polynomial {
      * @param[in] gamma parameter used in the polynomial kernel function
      * @param[in] coef0 parameter used in the polynomial kernel function
      */
-    device_kernel_assembly_polynomial(real_type *ret, const real_type *data_d, const unsigned long long num_rows, const unsigned long long num_features, const real_type *q, const real_type QA_cost, const real_type cost, const real_type degree, const real_type gamma, const real_type coef0) :
+    device_kernel_assembly_polynomial(::sycl::handler &cgh, real_type *ret, const real_type *data_d, const unsigned long long num_rows, const unsigned long long num_features, const real_type *q, const real_type QA_cost, const real_type cost, const int degree, const real_type gamma, const real_type coef0) :
+        data_cache_i_{ ::sycl::range<2>{ FEATURE_BLOCK_SIZE, THREAD_BLOCK_SIZE }, cgh }, data_cache_j_{ ::sycl::range<2>{ FEATURE_BLOCK_SIZE, THREAD_BLOCK_SIZE }, cgh },
         ret_{ ret }, data_d_{ data_d }, num_rows_{ num_rows }, num_features_{ num_features }, q_{ q }, QA_cost_{ QA_cost }, cost_{ cost }, degree_{ degree }, gamma_{ gamma }, coef0_{ coef0 } {}
 
     /**
@@ -98,23 +133,57 @@ class device_kernel_assembly_polynomial {
      */
     void operator()(::sycl::nd_item<2> nd_idx) const {
         const unsigned long long i = nd_idx.get_global_id(0);
+        const unsigned long long i_cached_idx = nd_idx.get_group(0) * nd_idx.get_local_range(0) + nd_idx.get_local_id(1);
         const unsigned long long j = nd_idx.get_global_id(1);
 
-        if (i < num_rows_ && j < num_rows_ && j >= i) {
+        if (nd_idx.get_group(0) >= nd_idx.get_group(1)) {
             real_type temp{ 0.0 };
-            for (unsigned long long dim = 0; dim < num_features_; ++dim) {
-                temp += data_d_[dim * (num_rows_ + 1) + i] * data_d_[dim * (num_rows_ + 1) + j];
-            }
-            temp = ::sycl::pow(gamma_ * temp + coef0_, degree_) + QA_cost_ - q_[i] - q_[j];
-            if (i == j) {
-                temp += cost_;
+            for (unsigned long long dim = 0; dim < num_features_; dim += FEATURE_BLOCK_SIZE) {
+                // zero out shared memory
+                if (nd_idx.get_local_id(0) < FEATURE_BLOCK_SIZE) {
+                    data_cache_i_[nd_idx.get_local_id(0)][nd_idx.get_local_id(1)] = real_type{ 0.0 };
+                    data_cache_j_[nd_idx.get_local_id(0)][nd_idx.get_local_id(1)] = real_type{ 0.0 };
+                }
+
+                // load data into shared memory
+                if (nd_idx.get_local_id(0) < FEATURE_BLOCK_SIZE && dim + nd_idx.get_local_id(0) < num_features_) {
+                    if (i_cached_idx < num_rows_) {
+                        data_cache_i_[nd_idx.get_local_id(0)][nd_idx.get_local_id(1)] = data_d_[(dim + nd_idx.get_local_id(0)) * (num_rows_ + 1) + i_cached_idx];
+                    }
+                    if (j < num_rows_) {
+                        data_cache_j_[nd_idx.get_local_id(0)][nd_idx.get_local_id(1)] = data_d_[(dim + nd_idx.get_local_id(0)) * (num_rows_ + 1) + j];
+                    }
+                }
+                nd_idx.barrier();
+
+                // calculation
+                for (unsigned long long block_dim = 0; block_dim < FEATURE_BLOCK_SIZE; ++block_dim) {
+                    temp += data_cache_i_[block_dim][nd_idx.get_local_id(0)] * data_cache_j_[block_dim][nd_idx.get_local_id(1)];
+                }
+                nd_idx.barrier();
             }
 
-            ret_[i * num_rows_ + j - i * (i + 1) / 2] = temp;
+            if (i < num_rows_ && j < num_rows_ && i >= j) {
+    #if PLSSVM_SYCL_BACKEND_COMPILER == PLSSVM_SYCL_BACKEND_COMPILER_HIPSYCL
+                temp = ::sycl::pow(gamma_ * temp + coef0_, static_cast<real_type>(degree_)) + QA_cost_ - q_[i] - q_[j];
+    #else
+                temp = ::sycl::pown(gamma_ * temp + coef0_, degree_) + QA_cost_ - q_[i] - q_[j];  // TODO: https://github.com/OpenSYCL/OpenSYCL/issues/1089
+    #endif
+                if (i == j) {
+                    temp += cost_;
+                }
+
+                ret_[j * num_rows_ + i - j * (j + 1) / 2] = temp;
+            }
         }
     }
 
   private:
+    /// Local memory used for internal memory access optimizations.
+    ::sycl::local_accessor<real_type, 2> data_cache_i_;
+    /// Local memory used for internal memory access optimizations.
+    ::sycl::local_accessor<real_type, 2> data_cache_j_;
+
     /// @cond Doxygen_suppress
     real_type *ret_;
     const real_type *data_d_;
@@ -123,7 +192,7 @@ class device_kernel_assembly_polynomial {
     const real_type *q_;
     const real_type QA_cost_;
     const real_type cost_;
-    const real_type degree_;  // no overload for sycl::pow(double, int)
+    const int degree_;
     const real_type gamma_;
     const real_type coef0_;
     /// @endcond
@@ -136,6 +205,7 @@ class device_kernel_assembly_rbf {
   public:
     /**
      * @brief Initialize the SYCL kernel function object.
+     * @param[in] cgh the SYCL handler used to allocate the local memory
      * @param[out] ret the calculated kernel matrix
      * @param[in] data_d the data points to calculate the kernel matrix from
      * @param[in] num_rows the number of data points
@@ -145,7 +215,8 @@ class device_kernel_assembly_rbf {
      * @param[in] cost the cost factor the diagonal is scaled with
      * @param[in] gamma parameter used in the rbf kernel function
      */
-    device_kernel_assembly_rbf(real_type *ret, const real_type *data_d, const unsigned long long num_rows, const unsigned long long num_features, const real_type *q, const real_type QA_cost, const real_type cost, const real_type gamma) :
+    device_kernel_assembly_rbf(::sycl::handler &cgh, real_type *ret, const real_type *data_d, const unsigned long long num_rows, const unsigned long long num_features, const real_type *q, const real_type QA_cost, const real_type cost, const real_type gamma) :
+        data_cache_i_{ ::sycl::range<2>{ FEATURE_BLOCK_SIZE, THREAD_BLOCK_SIZE }, cgh }, data_cache_j_{ ::sycl::range<2>{ FEATURE_BLOCK_SIZE, THREAD_BLOCK_SIZE }, cgh },
         ret_{ ret }, data_d_{ data_d }, num_rows_{ num_rows }, num_features_{ num_features }, q_{ q }, QA_cost_{ QA_cost }, cost_{ cost }, gamma_{ gamma } {}
 
     /**
@@ -154,24 +225,54 @@ class device_kernel_assembly_rbf {
      */
     void operator()(::sycl::nd_item<2> nd_idx) const {
         const unsigned long long i = nd_idx.get_global_id(0);
+        const unsigned long long i_cached_idx = nd_idx.get_group(0) * nd_idx.get_local_range(0) + nd_idx.get_local_id(1);
         const unsigned long long j = nd_idx.get_global_id(1);
 
-        if (i < num_rows_ && j < num_rows_ && j >= i) {
+        if (nd_idx.get_group(0) >= nd_idx.get_group(1)) {
             real_type temp{ 0.0 };
-            for (unsigned long long dim = 0; dim < num_features_; ++dim) {
-                const real_type d = data_d_[dim * (num_rows_ + 1) + i] - data_d_[dim * (num_rows_ + 1) + j];
-                temp += d * d;
-            }
-            temp = ::sycl::exp(-gamma_ * temp) + QA_cost_ - q_[i] - q_[j];
-            if (i == j) {
-                temp += cost_;
+            for (unsigned long long dim = 0; dim < num_features_; dim += FEATURE_BLOCK_SIZE) {
+                // zero out shared memory
+                if (nd_idx.get_local_id(0) < FEATURE_BLOCK_SIZE) {
+                    data_cache_i_[nd_idx.get_local_id(0)][nd_idx.get_local_id(1)] = real_type{ 0.0 };
+                    data_cache_j_[nd_idx.get_local_id(0)][nd_idx.get_local_id(1)] = real_type{ 0.0 };
+                }
+
+                // load data into shared memory
+                if (nd_idx.get_local_id(0) < FEATURE_BLOCK_SIZE && dim + nd_idx.get_local_id(0) < num_features_) {
+                    if (i_cached_idx < num_rows_) {
+                        data_cache_i_[nd_idx.get_local_id(0)][nd_idx.get_local_id(1)] = data_d_[(dim + nd_idx.get_local_id(0)) * (num_rows_ + 1) + i_cached_idx];
+                    }
+                    if (j < num_rows_) {
+                        data_cache_j_[nd_idx.get_local_id(0)][nd_idx.get_local_id(1)] = data_d_[(dim + nd_idx.get_local_id(0)) * (num_rows_ + 1) + j];
+                    }
+                }
+                nd_idx.barrier();
+
+                // calculation
+                for (unsigned long long block_dim = 0; block_dim < FEATURE_BLOCK_SIZE; ++block_dim) {
+                    const real_type d = data_cache_i_[block_dim][nd_idx.get_local_id(0)] - data_cache_j_[block_dim][nd_idx.get_local_id(1)];
+                    temp += d * d;
+                }
+                nd_idx.barrier();
             }
 
-            ret_[i * num_rows_ + j - i * (i + 1) / 2] = temp;
+            if (i < num_rows_ && j < num_rows_ && i >= j) {
+                temp = ::sycl::exp(-gamma_ * temp) + QA_cost_ - q_[i] - q_[j];
+                if (i == j) {
+                    temp += cost_;
+                }
+
+                ret_[j * num_rows_ + i - j * (j + 1) / 2] = temp;
+            }
         }
     }
 
   private:
+    /// Local memory used for internal memory access optimizations.
+    ::sycl::local_accessor<real_type, 2> data_cache_i_;
+    /// Local memory used for internal memory access optimizations.
+    ::sycl::local_accessor<real_type, 2> data_cache_j_;
+
     /// @cond Doxygen_suppress
     real_type *ret_;
     const real_type *data_d_;

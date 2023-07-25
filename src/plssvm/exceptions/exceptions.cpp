@@ -64,4 +64,7 @@ gpu_device_ptr_exception::gpu_device_ptr_exception(const std::string &msg, sourc
 matrix_exception::matrix_exception(const std::string &msg, source_location loc) :
     exception{ msg, "matrix_exception", loc } {}
 
+kernel_launch_resources::kernel_launch_resources(const std::string &msg, source_location loc) :
+    exception{ msg, "kernel_launch_resources", loc } {}
+
 }  // namespace plssvm

@@ -13,7 +13,8 @@
 #define PLSSVM_BACKENDS_SYCL_CG_EXPLICIT_BLAS_HPP_
 #pragma once
 
-#include "plssvm/constants.hpp"  // plssvm::real_type
+#include "plssvm/constants.hpp"  // plssvm::real_type, plssvm::THREAD_BLOCK_SIZE, plssvm::FEATURE_BLOCK_SIZE
+#include "plssvm/backends/SYCL/detail/constants.hpp"  // PLSSVM_SYCL_BACKEND_COMPILER_HIPSYCL
 
 #include "sycl/sycl.hpp"  // sycl::nd_item
 
@@ -26,6 +27,7 @@ class device_kernel_gemm {
   public:
     /**
      * @brief Initialize the SYCL kernel function object.
+     * @param[in] cgh the SYCL handler used to allocate the local memory
      * @param[in] m the number of rows in @p A and @p C
      * @param[in] n the number of columns in @p B and @p C
      * @param[in] k the number of rows in @p A and number of columns in @p B
@@ -35,7 +37,8 @@ class device_kernel_gemm {
      * @param[in] beta the scalar beta value
      * @param[in,out] C the matrix @p C, also used as result matrix
      */
-    device_kernel_gemm(const unsigned long long m, const unsigned long long n, const unsigned long long k, const real_type alpha, const real_type *A, const real_type *B, const real_type beta, real_type *C) :
+    device_kernel_gemm(::sycl::handler &cgh, const unsigned long long m, const unsigned long long n, const unsigned long long k, const real_type alpha, const real_type *A, const real_type *B, const real_type beta, real_type *C) :
+        A_cache_{ ::sycl::range<2>{ FEATURE_BLOCK_SIZE, THREAD_BLOCK_SIZE }, cgh }, B_cache_{ ::sycl::range<2>{ FEATURE_BLOCK_SIZE, THREAD_BLOCK_SIZE }, cgh },
         m_{ m }, n_{ n }, k_{ k }, alpha_{ alpha }, A_{ A }, B_{ B }, beta_{ beta }, C_{ C } {}
 
     /**
@@ -45,26 +48,54 @@ class device_kernel_gemm {
     void operator()(::sycl::nd_item<2> nd_idx) const {
         // compute: C = alpha * A * B + beta * C with A in m x k, B in n x k, and C in n x m, alpha, beta as scalar
         const unsigned long long i = nd_idx.get_global_id(0);
+        const unsigned long long i_cached_idx = nd_idx.get_group(0) * nd_idx.get_local_range(0) + nd_idx.get_local_id(1);
         const unsigned long long j = nd_idx.get_global_id(1);
 
+        real_type temp{ 0.0 };
+
+        for (unsigned long long dim = 0; dim < k_; dim += FEATURE_BLOCK_SIZE) {
+            // zero out shared memory
+            if (nd_idx.get_local_id(0) < FEATURE_BLOCK_SIZE) {
+                A_cache_[nd_idx.get_local_id(0)][nd_idx.get_local_id(1)] = real_type{ 0.0 };
+                B_cache_[nd_idx.get_local_id(0)][nd_idx.get_local_id(1)] = real_type{ 0.0 };
+            }
+#if PLSSVM_SYCL_BACKEND_COMPILER == PLSSVM_SYCL_BACKEND_COMPILER_HIPSYCL
+            nd_idx.barrier();  // shouldn't be necessary
+#endif
+
+            // load data into shared memory
+            if (nd_idx.get_local_id(0) < FEATURE_BLOCK_SIZE && dim + nd_idx.get_local_id(0) < k_) {
+                if (dim + nd_idx.get_local_id(0) < i_cached_idx) {
+                    if (i_cached_idx < k_) {
+                        A_cache_[nd_idx.get_local_id(0)][nd_idx.get_local_id(1)] = A_[(dim + nd_idx.get_local_id(0)) * k_ + i_cached_idx - (dim + nd_idx.get_local_id(0)) * (dim + nd_idx.get_local_id(0) + 1) / 2];
+                    }
+                } else {
+                    A_cache_[nd_idx.get_local_id(0)][nd_idx.get_local_id(1)] = A_[i_cached_idx * k_ + dim + nd_idx.get_local_id(0) - i_cached_idx * (i_cached_idx + 1) / 2];
+                }
+                if (j < n_) {
+                    B_cache_[nd_idx.get_local_id(0)][nd_idx.get_local_id(1)] = B_[(dim + nd_idx.get_local_id(0)) * n_ + j];
+                }
+            }
+            nd_idx.barrier();
+
+            // calculation
+            for (unsigned long long block_dim = 0; block_dim < FEATURE_BLOCK_SIZE; ++block_dim) {
+                temp += A_cache_[block_dim][nd_idx.get_local_id(0)] * B_cache_[block_dim][nd_idx.get_local_id(1)];
+            }
+            nd_idx.barrier();
+        }
+
         if (i < m_ && j < n_) {
-            real_type temp{ 0.0 };
-            unsigned long long offset = 0;
-            // left of the diagonal -> use symmetrically mirrored values
-            for (unsigned long long dim = 0; dim < i; ++dim) {
-                offset += dim;
-                temp += A_[dim * k_ + i - offset] * B_[dim * n_ + j];
-            }
-            // diagonal + right of the diagonal -> use contiguous values
-            offset += i;
-            for (unsigned long long dim = i; dim < k_; ++dim) {
-                temp += A_[i * k_ + dim - offset] * B_[dim * n_ + j];
-            }
             C_[i * n_ + j] = alpha_ * temp + beta_ * C_[i * n_ + j];
         }
     }
 
   private:
+    /// Local memory used for internal memory access optimizations.
+    ::sycl::local_accessor<real_type, 2> A_cache_;
+    /// Local memory used for internal memory access optimizations.
+    ::sycl::local_accessor<real_type, 2> B_cache_;
+
     /// @cond Doxygen_suppress
     const unsigned long long m_;
     const unsigned long long n_;

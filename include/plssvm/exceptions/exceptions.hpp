@@ -173,6 +173,11 @@ class matrix_exception : public exception {
     explicit matrix_exception(const std::string &msg, source_location loc = source_location::current());
 };
 
+class kernel_launch_resources : public exception {
+  public:
+    explicit kernel_launch_resources(const std::string &msg, source_location loc = source_location::current());
+};
+
 }  // namespace plssvm
 
 #endif  // PLSSVM_EXCEPTIONS_EXCEPTIONS_HPP_
