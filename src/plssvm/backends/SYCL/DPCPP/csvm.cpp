@@ -153,11 +153,10 @@ auto csvm::run_assemble_kernel_matrix_explicit(const parameter &params, const de
 
     // define grid and block sizes
     const std::size_t max_work_group_size = this->get_max_work_group_size();
-    const std::size_t work_group_size_x = std::min(max_work_group_size / THREAD_BLOCK_SIZE, THREAD_BLOCK_SIZE);
-    if (work_group_size_x < FEATURE_BLOCK_SIZE) {
-        throw kernel_launch_resources{ fmt::format("At least {} threads per block.y must be available, but only {} are available! Try reducing THREAD_BLOCK_SIZE or FEATURE_BLOCK_SIZE.", FEATURE_BLOCK_SIZE, work_group_size_x) };
+    if (max_work_group_size < THREAD_BLOCK_SIZE * THREAD_BLOCK_SIZE) {
+        throw kernel_launch_resources{ fmt::format("Not enough work-items allowed for a work-groups of size {}x{}! Try reducing THREAD_BLOCK_SIZE.", THREAD_BLOCK_SIZE, THREAD_BLOCK_SIZE) };
     }
-    const ::sycl::range<2> block{ work_group_size_x, THREAD_BLOCK_SIZE };
+    const ::sycl::range<2> block{ THREAD_BLOCK_SIZE, THREAD_BLOCK_SIZE };
     const ::sycl::range<2> grid{ static_cast<std::size_t>(std::ceil(static_cast<double>(num_rows_reduced) / static_cast<double>(block[0]))) * block[0],
                                  static_cast<std::size_t>(std::ceil(static_cast<double>(num_rows_reduced) / static_cast<double>(block[1]))) * block[1] };
     const ::sycl::nd_range<2> execution_range{ grid, block };
@@ -190,11 +189,10 @@ auto csvm::run_assemble_kernel_matrix_explicit(const parameter &params, const de
 void csvm::run_gemm_kernel_explicit(const std::size_t m, const std::size_t n, const std::size_t k, const real_type alpha, const device_ptr_type &A_d, const device_ptr_type &B_d, const real_type beta, device_ptr_type &C_d) const {
     // define grid and block sizes
     const std::size_t max_work_group_size = this->get_max_work_group_size();
-    const std::size_t work_group_size_x = std::min(max_work_group_size / THREAD_BLOCK_SIZE, THREAD_BLOCK_SIZE);
-    if (work_group_size_x < FEATURE_BLOCK_SIZE) {
-        throw kernel_launch_resources{ fmt::format("At least {} threads per block.y must be available, but only {} are available! Try reducing THREAD_BLOCK_SIZE or FEATURE_BLOCK_SIZE.", FEATURE_BLOCK_SIZE, work_group_size_x) };
+    if (max_work_group_size < THREAD_BLOCK_SIZE * THREAD_BLOCK_SIZE) {
+        throw kernel_launch_resources{ fmt::format("Not enough work-items allowed for a work-groups of size {}x{}! Try reducing THREAD_BLOCK_SIZE.", THREAD_BLOCK_SIZE, THREAD_BLOCK_SIZE) };
     }
-    const ::sycl::range<2> block{ work_group_size_x, THREAD_BLOCK_SIZE };
+    const ::sycl::range<2> block{ THREAD_BLOCK_SIZE, THREAD_BLOCK_SIZE };
     const ::sycl::range<2> grid{ static_cast<std::size_t>(std::ceil(static_cast<double>(m) / static_cast<double>(block[0]))) * block[0],
                                  static_cast<std::size_t>(std::ceil(static_cast<double>(n) / static_cast<double>(block[1]))) * block[1] };
     const ::sycl::nd_range<2> execution_range{ grid, block };
