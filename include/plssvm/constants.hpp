@@ -30,7 +30,7 @@ using real_type = double;
 #if defined(PLSSVM_THREAD_BLOCK_SIZE)
 constexpr unsigned long long THREAD_BLOCK_SIZE = PLSSVM_THREAD_BLOCK_SIZE;
 #else
-constexpr unsigned long long THREAD_BLOCK_SIZE = 32;
+constexpr unsigned long long THREAD_BLOCK_SIZE = 16;
 #endif
 
 /// Global compile time constant used for internal feature caching. May be changed during the CMake configuration step.
