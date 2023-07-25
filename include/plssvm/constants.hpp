@@ -58,6 +58,7 @@ constexpr unsigned long long OPENMP_BLOCK_SIZE = 64;  // TODO: use again?!
 static_assert(detail::type_list_contains_v<real_type, detail::real_type_list>, "Illegal real type provided! See the 'real_type_list' in the type_list.hpp header for a list of the allowed types.");
 static_assert(THREAD_BLOCK_SIZE > 0, "THREAD_BLOCK_SIZE must be greater than 0!");
 static_assert(FEATURE_BLOCK_SIZE > 0, "FEATURE_BLOCK_SIZE must be greater than 0!");
+static_assert(THREAD_BLOCK_SIZE >= FEATURE_BLOCK_SIZE, "THREAD_BLOCK_SIZE must be greater than or equal to FEATURE_BLOCK_SIZE!");
 static_assert(INTERNAL_BLOCK_SIZE > 0, "INTERNAL_BLOCK_SIZE must be greater than 0!");
 static_assert(OPENMP_BLOCK_SIZE > 0, "OPENMP_BLOCK_SIZE must be greater than 0!");
 
