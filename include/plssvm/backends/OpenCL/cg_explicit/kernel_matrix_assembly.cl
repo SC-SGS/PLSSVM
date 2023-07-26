@@ -138,48 +138,78 @@ __kernel void device_kernel_assembly_polynomial(__global real_type *ret, __globa
  * @param[in] gamma parameter used in the rbf kernel function
  */
 __kernel void device_kernel_assembly_rbf(__global real_type *ret, __global const real_type *data_d, const ulong num_rows, const ulong num_features, __global const real_type *q, const real_type QA_cost, const real_type cost, const real_type gamma) {
-    const ulong i = get_global_id(0);
-    const ulong j = get_global_id(1);
-    const ulong j_cached_idx = get_group_id(1) * get_local_size(1) + get_local_id(0);
+    const ulong i = get_global_id(0) * INTERNAL_BLOCK_SIZE;
+    const ulong i_linear = get_group_id(0) * get_local_size(0) * INTERNAL_BLOCK_SIZE + get_local_id(0);
+    const ulong j = get_global_id(1) * INTERNAL_BLOCK_SIZE;
+    const ulong j_cached_idx_linear = get_group_id(1) * get_local_size(1) * INTERNAL_BLOCK_SIZE + get_local_id(0);
 
-    __local real_type data_cache_i[FEATURE_BLOCK_SIZE][THREAD_BLOCK_SIZE];
-    __local real_type data_cache_j[FEATURE_BLOCK_SIZE][THREAD_BLOCK_SIZE];
+
+    __local real_type data_cache_i[FEATURE_BLOCK_SIZE][INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE];
+    __local real_type data_cache_j[FEATURE_BLOCK_SIZE][INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE];
 
     if (get_group_id(0) >= get_group_id(1)) {
-        real_type temp = 0.0;
+        real_type temp[INTERNAL_BLOCK_SIZE][INTERNAL_BLOCK_SIZE] = { 0.0 };
+
         for (ulong dim = 0; dim < num_features; dim += FEATURE_BLOCK_SIZE) {
             // zero out shared memory
-            if (get_local_id(1) < FEATURE_BLOCK_SIZE) {
-                data_cache_i[get_local_id(1)][get_local_id(0)] = 0.0;
-                data_cache_j[get_local_id(1)][get_local_id(0)] = 0.0;
+            for (unsigned internal = 0; internal < INTERNAL_BLOCK_SIZE; ++internal) {
+                data_cache_i[get_local_id(1)][internal * THREAD_BLOCK_SIZE + get_local_id(0)] = 0.0;
+                data_cache_i[get_local_id(1) + THREAD_BLOCK_SIZE][internal * THREAD_BLOCK_SIZE + get_local_id(0)] = 0.0;
+                data_cache_j[get_local_id(1)][internal * THREAD_BLOCK_SIZE + get_local_id(0)] = 0.0;
+                data_cache_j[get_local_id(1) + THREAD_BLOCK_SIZE][internal * THREAD_BLOCK_SIZE + get_local_id(0)] = 0.0;
             }
 
             // load data into shared memory
-            if (get_local_id(1) < FEATURE_BLOCK_SIZE && dim + get_local_id(1) < num_features) {
-                if (i < num_rows) {
-                    data_cache_i[get_local_id(1)][get_local_id(0)] = data_d[(dim + get_local_id(1)) * (num_rows + 1) + i];
+            for (uint internal = 0; internal < INTERNAL_BLOCK_SIZE; ++internal) {
+                const ulong global_i = i_linear + internal * THREAD_BLOCK_SIZE;
+                const ulong global_j = j_cached_idx_linear + internal * THREAD_BLOCK_SIZE;
+
+                if (global_i < num_rows) {
+                    if (dim + get_local_id(1) < num_features) {
+                        data_cache_i[get_local_id(1)][internal * THREAD_BLOCK_SIZE + get_local_id(0)] = data_d[(dim + get_local_id(1)) * (num_rows + 1) + global_i];
+                    }
+                    if (dim + get_local_id(1) + THREAD_BLOCK_SIZE < num_features) {
+                        data_cache_i[get_local_id(1) + THREAD_BLOCK_SIZE][internal * THREAD_BLOCK_SIZE + get_local_id(0)] = data_d[(dim + get_local_id(1) + THREAD_BLOCK_SIZE) * (num_rows + 1) + global_i];
+                    }
                 }
-                if (j_cached_idx < num_rows) {
-                    data_cache_j[get_local_id(1)][get_local_id(0)] = data_d[(dim + get_local_id(1)) * (num_rows + 1) + j_cached_idx];
+                if (global_j < num_rows) {
+                    if (dim + get_local_id(1) < num_features) {
+                        data_cache_j[get_local_id(1)][internal * THREAD_BLOCK_SIZE + get_local_id(0)] = data_d[(dim + get_local_id(1)) * (num_rows + 1) + global_j];
+                    }
+                    if (dim + get_local_id(1) + THREAD_BLOCK_SIZE < num_features) {
+                        data_cache_j[get_local_id(1) + THREAD_BLOCK_SIZE][internal * THREAD_BLOCK_SIZE + get_local_id(0)] = data_d[(dim + get_local_id(1) + THREAD_BLOCK_SIZE) * (num_rows + 1) + global_j];
+                    }
                 }
             }
             barrier(CLK_LOCAL_MEM_FENCE);
 
             // calculation
-            for (ulong block_dim = 0; block_dim < FEATURE_BLOCK_SIZE; ++block_dim) {
-                const real_type d = data_cache_i[block_dim][get_local_id(0)] - data_cache_j[block_dim][get_local_id(1)];
-                temp += d * d;
+            for (uint block_dim = 0; block_dim < FEATURE_BLOCK_SIZE; ++block_dim) {
+                for (uint internal_i = 0; internal_i < INTERNAL_BLOCK_SIZE; ++internal_i) {
+                    for (uint internal_j = 0; internal_j < INTERNAL_BLOCK_SIZE; ++internal_j) {
+                        const real_type d = data_cache_i[block_dim][get_local_id(0) * INTERNAL_BLOCK_SIZE + internal_i] - data_cache_j[block_dim][get_local_id(1) * INTERNAL_BLOCK_SIZE + internal_j];
+                        temp[internal_i][internal_j] += d * d;
+                    }
+                }
             }
             barrier(CLK_LOCAL_MEM_FENCE);
         }
 
-        if (i < num_rows && j < num_rows && i >= j) {
-            temp = exp(-gamma * temp) + QA_cost - q[i] - q[j];
-            if (i == j) {
-                temp += cost;
-            }
+        for (uint internal_i = 0; internal_i < INTERNAL_BLOCK_SIZE; ++internal_i) {
+            for (uint internal_j = 0; internal_j < INTERNAL_BLOCK_SIZE; ++internal_j) {
+                const ulong global_i = i + internal_i;
+                const ulong global_j = j + internal_j;
 
-            ret[j * num_rows + i - j * (j + 1) / 2] = temp;
+                if (global_i < num_rows && global_j < num_rows && global_i >= global_j) {
+                    real_type temp_ij = temp[internal_i][internal_j];
+                    temp_ij = exp(-gamma * temp_ij) + QA_cost - q[global_i] - q[global_j];
+                    if (global_i == global_j) {
+                        temp_ij += cost;
+                    }
+
+                    ret[global_j * num_rows + global_i - global_j * (global_j + 1) / 2] = temp_ij;
+                }
+            }
         }
     }
 }

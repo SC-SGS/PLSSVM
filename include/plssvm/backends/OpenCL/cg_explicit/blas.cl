@@ -28,20 +28,20 @@ __kernel void device_kernel_gemm(const ulong m, const ulong n, const ulong k, co
     const ulong j = get_global_id(1);  // # rows
     const ulong j_cached_idx = get_group_id(1) * get_local_size(1) + get_local_id(0);
 
-    __local real_type A_cache[FEATURE_BLOCK_SIZE][THREAD_BLOCK_SIZE];
-    __local real_type B_cache[FEATURE_BLOCK_SIZE][THREAD_BLOCK_SIZE];
+    __local real_type A_cache[FEATURE_BLOCK_SIZE_OLD][THREAD_BLOCK_SIZE_OLD];
+    __local real_type B_cache[FEATURE_BLOCK_SIZE_OLD][THREAD_BLOCK_SIZE_OLD];
 
     real_type temp = 0.0;
 
-    for (ulong dim = 0; dim < k; dim += FEATURE_BLOCK_SIZE) {
+    for (ulong dim = 0; dim < k; dim += FEATURE_BLOCK_SIZE_OLD) {
         // zero out shared memory
-        if (get_local_id(1) < FEATURE_BLOCK_SIZE) {
+        if (get_local_id(1) < FEATURE_BLOCK_SIZE_OLD) {
             A_cache[get_local_id(1)][get_local_id(0)] = 0.0;
             B_cache[get_local_id(1)][get_local_id(0)] = 0.0;
         }
 
         // load data into shared memory
-        if (get_local_id(1) < FEATURE_BLOCK_SIZE && dim + get_local_id(1) < k) {
+        if (get_local_id(1) < FEATURE_BLOCK_SIZE_OLD && dim + get_local_id(1) < k) {
             if (dim + get_local_id(1) < j_cached_idx) {
                 if (j_cached_idx < k) {
                     A_cache[get_local_id(1)][get_local_id(0)] = A[(dim + get_local_id(1)) * k + j_cached_idx - (dim + get_local_id(1)) * (dim + get_local_id(1) + 1) / 2];
@@ -56,7 +56,7 @@ __kernel void device_kernel_gemm(const ulong m, const ulong n, const ulong k, co
         barrier(CLK_LOCAL_MEM_FENCE);
 
         // calculation
-        for (unsigned long long block_dim = 0; block_dim < FEATURE_BLOCK_SIZE; ++block_dim) {
+        for (ulong block_dim = 0; block_dim < FEATURE_BLOCK_SIZE_OLD; ++block_dim) {
             temp += A_cache[block_dim][get_local_id(1)] * B_cache[block_dim][get_local_id(0)];
         }
         barrier(CLK_LOCAL_MEM_FENCE);

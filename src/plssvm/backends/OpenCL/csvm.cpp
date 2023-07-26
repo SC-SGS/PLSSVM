@@ -206,8 +206,8 @@ auto csvm::run_assemble_kernel_matrix_explicit(const parameter &params, const de
         throw kernel_launch_resources{ fmt::format("Not enough work-items allowed for a work-groups of size {}x{}! Try reducing THREAD_BLOCK_SIZE.", THREAD_BLOCK_SIZE, THREAD_BLOCK_SIZE) };
     }
     const std::vector<std::size_t> block = { THREAD_BLOCK_SIZE, THREAD_BLOCK_SIZE };
-    const std::vector<std::size_t> grid = { static_cast<std::size_t>(std::ceil(static_cast<double>(num_rows_reduced) / static_cast<double>(block[0]))) * block[0],
-                                            static_cast<std::size_t>(std::ceil(static_cast<double>(num_rows_reduced) / static_cast<double>(block[1]))) * block[1] };
+    const std::vector<std::size_t> grid = { static_cast<std::size_t>(std::ceil(static_cast<double>(num_rows_reduced) / static_cast<double>(block[0] * INTERNAL_BLOCK_SIZE))) * block[0],
+                                            static_cast<std::size_t>(std::ceil(static_cast<double>(num_rows_reduced) / static_cast<double>(block[1] * INTERNAL_BLOCK_SIZE))) * block[1] };
 
     device_ptr_type kernel_matrix_d{ num_rows_reduced * (num_rows_reduced + 1) / 2, devices_[0] };  // only explicitly store the upper triangular matrix
     const real_type cost_factor = real_type{ 1.0 } / params.cost;
@@ -231,10 +231,10 @@ auto csvm::run_assemble_kernel_matrix_explicit(const parameter &params, const de
 void csvm::run_gemm_kernel_explicit(const std::size_t m, const std::size_t n, const std::size_t k, const real_type alpha, const device_ptr_type &A_d, const device_ptr_type &B_d, const real_type beta, device_ptr_type &C_d) const {
     // define the grid and block sizes
     const std::size_t max_work_group_size = this->get_max_work_group_size();
-    if (max_work_group_size < THREAD_BLOCK_SIZE * THREAD_BLOCK_SIZE) {
-        throw kernel_launch_resources{ fmt::format("Not enough work-items allowed for a work-groups of size {}x{}! Try reducing THREAD_BLOCK_SIZE.", THREAD_BLOCK_SIZE, THREAD_BLOCK_SIZE) };
+    if (max_work_group_size < THREAD_BLOCK_SIZE_OLD * THREAD_BLOCK_SIZE_OLD) {
+        throw kernel_launch_resources{ fmt::format("Not enough work-items allowed for a work-groups of size {}x{}! Try reducing THREAD_BLOCK_SIZE.", THREAD_BLOCK_SIZE_OLD, THREAD_BLOCK_SIZE_OLD) };
     }
-    const std::vector<std::size_t> block = { THREAD_BLOCK_SIZE, THREAD_BLOCK_SIZE };
+    const std::vector<std::size_t> block = { THREAD_BLOCK_SIZE_OLD, THREAD_BLOCK_SIZE_OLD };
     const std::vector<std::size_t> grid = { static_cast<std::size_t>(std::ceil(static_cast<double>(n) / static_cast<double>(block[0]))) * block[0],
                                             static_cast<std::size_t>(std::ceil(static_cast<double>(m) / static_cast<double>(block[1]))) * block[1] };
 
