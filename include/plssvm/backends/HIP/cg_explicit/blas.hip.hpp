@@ -13,7 +13,7 @@
 #define PLSSVM_BACKENDS_HIP_CG_EXPLICIT_BLAS_HIP_HPP_
 #pragma once
 
-#include "plssvm/constants.hpp"  // plssvm::real_type, plssvm::THREAD_BLOCK_SIZE, plssvm::FEATURE_BLOCK_SIZE
+#include "plssvm/constants.hpp"  // plssvm::real_type, plssvm::THREAD_BLOCK_SIZE_OLD, plssvm::FEATURE_BLOCK_SIZE_OLD
 
 #include "hip/hip_runtime.h"
 #include "hip/hip_runtime_api.h"
@@ -37,20 +37,20 @@ __global__ void device_kernel_gemm(const unsigned long long m, const unsigned lo
     const unsigned long long j = blockIdx.y * blockDim.y + threadIdx.y;  // # rows
     const unsigned long long j_cached_idx = blockIdx.y * blockDim.y + threadIdx.x;
 
-    __shared__ real_type A_cache[FEATURE_BLOCK_SIZE][THREAD_BLOCK_SIZE];
-    __shared__ real_type B_cache[FEATURE_BLOCK_SIZE][THREAD_BLOCK_SIZE];
+    __shared__ real_type A_cache[FEATURE_BLOCK_SIZE_OLD][THREAD_BLOCK_SIZE_OLD];
+    __shared__ real_type B_cache[FEATURE_BLOCK_SIZE_OLD][THREAD_BLOCK_SIZE_OLD];
 
     real_type temp{ 0.0 };
 
-    for (unsigned long long dim = 0; dim < k; dim += FEATURE_BLOCK_SIZE) {
+    for (unsigned long long dim = 0; dim < k; dim += FEATURE_BLOCK_SIZE_OLD) {
         // zero out shared memory
-        if (threadIdx.y < FEATURE_BLOCK_SIZE) {
+        if (threadIdx.y < FEATURE_BLOCK_SIZE_OLD) {
             A_cache[threadIdx.y][threadIdx.x] = real_type{ 0.0 };
             B_cache[threadIdx.y][threadIdx.x] = real_type{ 0.0 };
         }
 
         // load data into shared memory
-        if (threadIdx.y < FEATURE_BLOCK_SIZE && dim + threadIdx.y < k) {
+        if (threadIdx.y < FEATURE_BLOCK_SIZE_OLD && dim + threadIdx.y < k) {
             if (dim + threadIdx.y < j_cached_idx) {
                 if (j_cached_idx < k) {
                     A_cache[threadIdx.y][threadIdx.x] = A[(dim + threadIdx.y) * k + j_cached_idx - (dim + threadIdx.y) * (dim + threadIdx.y + 1) / 2];
@@ -65,7 +65,7 @@ __global__ void device_kernel_gemm(const unsigned long long m, const unsigned lo
         __syncthreads();
 
         // calculation
-        for (unsigned long long block_dim = 0; block_dim < FEATURE_BLOCK_SIZE; ++block_dim) {
+        for (unsigned long long block_dim = 0; block_dim < FEATURE_BLOCK_SIZE_OLD; ++block_dim) {
             temp += A_cache[block_dim][threadIdx.y] * B_cache[block_dim][threadIdx.x];
         }
         __syncthreads();
