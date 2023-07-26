@@ -65,6 +65,8 @@ static_assert(FEATURE_BLOCK_SIZE > 0, "FEATURE_BLOCK_SIZE must be greater than 0
 static_assert(INTERNAL_BLOCK_SIZE > 0, "INTERNAL_BLOCK_SIZE must be greater than 0!");
 static_assert(OPENMP_BLOCK_SIZE > 0, "OPENMP_BLOCK_SIZE must be greater than 0!");
 
+// TODO: restrictions/assumptions for BLOCK sizes!
+
 }  // namespace plssvm
 
 #endif  // PLSSVM_CONSTANTS_HPP_
