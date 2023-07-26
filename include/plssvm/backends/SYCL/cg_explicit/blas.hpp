@@ -13,7 +13,7 @@
 #define PLSSVM_BACKENDS_SYCL_CG_EXPLICIT_BLAS_HPP_
 #pragma once
 
-#include "plssvm/constants.hpp"  // plssvm::real_type, plssvm::THREAD_BLOCK_SIZE, plssvm::FEATURE_BLOCK_SIZE
+#include "plssvm/constants.hpp"  // plssvm::real_type, plssvm::THREAD_BLOCK_SIZE_OLD, plssvm::FEATURE_BLOCK_SIZE_OLD
 #include "plssvm/backends/SYCL/detail/constants.hpp"  // PLSSVM_SYCL_BACKEND_COMPILER_HIPSYCL
 
 #include "sycl/sycl.hpp"  // sycl::nd_item
@@ -38,7 +38,7 @@ class device_kernel_gemm {
      * @param[in,out] C the matrix @p C, also used as result matrix
      */
     device_kernel_gemm(::sycl::handler &cgh, const unsigned long long m, const unsigned long long n, const unsigned long long k, const real_type alpha, const real_type *A, const real_type *B, const real_type beta, real_type *C) :
-        A_cache_{ ::sycl::range<2>{ FEATURE_BLOCK_SIZE, THREAD_BLOCK_SIZE }, cgh }, B_cache_{ ::sycl::range<2>{ FEATURE_BLOCK_SIZE, THREAD_BLOCK_SIZE }, cgh },
+        A_cache_{ ::sycl::range<2>{ FEATURE_BLOCK_SIZE_OLD, THREAD_BLOCK_SIZE_OLD }, cgh }, B_cache_{ ::sycl::range<2>{ FEATURE_BLOCK_SIZE_OLD, THREAD_BLOCK_SIZE_OLD }, cgh },
         m_{ m }, n_{ n }, k_{ k }, alpha_{ alpha }, A_{ A }, B_{ B }, beta_{ beta }, C_{ C } {}
 
     /**
@@ -53,9 +53,9 @@ class device_kernel_gemm {
 
         real_type temp{ 0.0 };
 
-        for (unsigned long long dim = 0; dim < k_; dim += FEATURE_BLOCK_SIZE) {
+        for (unsigned long long dim = 0; dim < k_; dim += FEATURE_BLOCK_SIZE_OLD) {
             // zero out shared memory
-            if (nd_idx.get_local_id(0) < FEATURE_BLOCK_SIZE) {
+            if (nd_idx.get_local_id(0) < FEATURE_BLOCK_SIZE_OLD) {
                 A_cache_[nd_idx.get_local_id(0)][nd_idx.get_local_id(1)] = real_type{ 0.0 };
                 B_cache_[nd_idx.get_local_id(0)][nd_idx.get_local_id(1)] = real_type{ 0.0 };
             }
@@ -64,7 +64,7 @@ class device_kernel_gemm {
 #endif
 
             // load data into shared memory
-            if (nd_idx.get_local_id(0) < FEATURE_BLOCK_SIZE && dim + nd_idx.get_local_id(0) < k_) {
+            if (nd_idx.get_local_id(0) < FEATURE_BLOCK_SIZE_OLD && dim + nd_idx.get_local_id(0) < k_) {
                 if (dim + nd_idx.get_local_id(0) < i_cached_idx) {
                     if (i_cached_idx < k_) {
                         A_cache_[nd_idx.get_local_id(0)][nd_idx.get_local_id(1)] = A_[(dim + nd_idx.get_local_id(0)) * k_ + i_cached_idx - (dim + nd_idx.get_local_id(0)) * (dim + nd_idx.get_local_id(0) + 1) / 2];
@@ -79,7 +79,7 @@ class device_kernel_gemm {
             nd_idx.barrier();
 
             // calculation
-            for (unsigned long long block_dim = 0; block_dim < FEATURE_BLOCK_SIZE; ++block_dim) {
+            for (unsigned long long block_dim = 0; block_dim < FEATURE_BLOCK_SIZE_OLD; ++block_dim) {
                 temp += A_cache_[block_dim][nd_idx.get_local_id(0)] * B_cache_[block_dim][nd_idx.get_local_id(1)];
             }
             nd_idx.barrier();
