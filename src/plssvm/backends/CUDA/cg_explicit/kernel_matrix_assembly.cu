@@ -109,8 +109,8 @@ __global__ void device_kernel_assembly_rbf(real_type *ret, const real_type *data
     const unsigned long long j = (blockIdx.y * blockDim.y + threadIdx.y) * INTERNAL_BLOCK_SIZE;
     const unsigned long long j_cached_idx = (blockIdx.y * blockDim.y + threadIdx.x) * INTERNAL_BLOCK_SIZE;
 
-    __shared__ real_type data_cache_i[FEATURE_BLOCK_SIZE][THREAD_BLOCK_SIZE][INTERNAL_BLOCK_SIZE];
-    __shared__ real_type data_cache_j[FEATURE_BLOCK_SIZE][THREAD_BLOCK_SIZE][INTERNAL_BLOCK_SIZE];
+    __shared__ real_type data_cache_i[FEATURE_BLOCK_SIZE][INTERNAL_BLOCK_SIZE][THREAD_BLOCK_SIZE];
+    __shared__ real_type data_cache_j[FEATURE_BLOCK_SIZE][INTERNAL_BLOCK_SIZE][THREAD_BLOCK_SIZE];
     // 2 * 8B * 16 * (8 * 4) = 8KiB
 
     if (blockIdx.x >= blockIdx.y) {
@@ -119,10 +119,10 @@ __global__ void device_kernel_assembly_rbf(real_type *ret, const real_type *data
         for (unsigned long long dim = 0; dim < num_features; dim += FEATURE_BLOCK_SIZE) {
             // zero out shared memory
             for (unsigned internal = 0; internal < INTERNAL_BLOCK_SIZE; ++internal) {
-                data_cache_i[threadIdx.y][threadIdx.x][internal] = real_type{ 0.0 };
-                data_cache_i[threadIdx.y + THREAD_BLOCK_SIZE][threadIdx.x][internal] = real_type{ 0.0 };
-                data_cache_j[threadIdx.y][threadIdx.x][internal] = real_type{ 0.0 };
-                data_cache_j[threadIdx.y + THREAD_BLOCK_SIZE][threadIdx.x][internal] = real_type{ 0.0 };
+                data_cache_i[threadIdx.y][internal][threadIdx.x] = real_type{ 0.0 };
+                data_cache_i[threadIdx.y + THREAD_BLOCK_SIZE][internal][threadIdx.x] = real_type{ 0.0 };
+                data_cache_j[threadIdx.y][internal][threadIdx.x] = real_type{ 0.0 };
+                data_cache_j[threadIdx.y + THREAD_BLOCK_SIZE][internal][threadIdx.x] = real_type{ 0.0 };
             }
 
             // load data into shared memory
@@ -132,35 +132,34 @@ __global__ void device_kernel_assembly_rbf(real_type *ret, const real_type *data
 
                 if (global_i < num_rows) {
                     if (dim + threadIdx.y < num_features) {
-                        data_cache_i[threadIdx.y][threadIdx.x][internal] = data_d[(dim + threadIdx.y) * (num_rows + 1) + global_i];
+                        data_cache_i[threadIdx.y][internal][threadIdx.x] = data_d[(dim + threadIdx.y) * (num_rows + 1) + global_i];
                     }
                     if (dim + threadIdx.y + THREAD_BLOCK_SIZE < num_features) {
-                        data_cache_i[threadIdx.y + THREAD_BLOCK_SIZE][threadIdx.x][internal] = data_d[(dim + threadIdx.y + THREAD_BLOCK_SIZE) * (num_rows + 1) + global_i];
+                        data_cache_i[threadIdx.y + THREAD_BLOCK_SIZE][internal][threadIdx.x] = data_d[(dim + threadIdx.y + THREAD_BLOCK_SIZE) * (num_rows + 1) + global_i];
                     }
                 }
                 if (global_j < num_rows) {
                     if (dim + threadIdx.y < num_features) {
-                        data_cache_j[threadIdx.y][threadIdx.x][internal] = data_d[(dim + threadIdx.y) * (num_rows + 1) + global_j];
+                        data_cache_j[threadIdx.y][internal][threadIdx.x] = data_d[(dim + threadIdx.y) * (num_rows + 1) + global_j];
                     }
                     if (dim + threadIdx.y + THREAD_BLOCK_SIZE < num_features) {
-                        data_cache_j[threadIdx.y + THREAD_BLOCK_SIZE][threadIdx.x][internal] = data_d[(dim + threadIdx.y + THREAD_BLOCK_SIZE) * (num_rows + 1) + global_j];
+                        data_cache_j[threadIdx.y + THREAD_BLOCK_SIZE][internal][threadIdx.x] = data_d[(dim + threadIdx.y + THREAD_BLOCK_SIZE) * (num_rows + 1) + global_j];
                     }
                 }
             }
             __syncthreads();
 
             // calculation
-            for (unsigned internal_i = 0; internal_i < INTERNAL_BLOCK_SIZE; ++internal_i) {
-                for (unsigned internal_j = 0; internal_j < INTERNAL_BLOCK_SIZE; ++internal_j) {
-                    for (unsigned block_dim = 0; block_dim < FEATURE_BLOCK_SIZE; ++block_dim) {
-                        const real_type d = data_cache_i[block_dim][threadIdx.x][internal_i] - data_cache_j[block_dim][threadIdx.y][internal_j];
+            for (unsigned block_dim = 0; block_dim < FEATURE_BLOCK_SIZE; ++block_dim) {
+                for (unsigned internal_i = 0; internal_i < INTERNAL_BLOCK_SIZE; ++internal_i) {
+                    for (unsigned internal_j = 0; internal_j < INTERNAL_BLOCK_SIZE; ++internal_j) {
+                        const real_type d = data_cache_i[block_dim][internal_i][threadIdx.x] - data_cache_j[block_dim][internal_j][threadIdx.y];
                         temp[internal_i][internal_j] += d * d;
                     }
                 }
             }
             __syncthreads();
         }
-
 
         for (unsigned internal_i = 0; internal_i < INTERNAL_BLOCK_SIZE; ++internal_i) {
             for (unsigned internal_j = 0; internal_j < INTERNAL_BLOCK_SIZE; ++internal_j) {
