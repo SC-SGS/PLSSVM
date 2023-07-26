@@ -106,12 +106,12 @@ __global__ void device_kernel_assembly_polynomial(real_type *ret, const real_typ
 
 __global__ void device_kernel_assembly_rbf(real_type *ret, const real_type *data_d, const unsigned long long num_rows, const unsigned long long num_features, const real_type *q, const real_type QA_cost, const real_type cost, const real_type gamma) {
     const unsigned long long i = (blockIdx.x * blockDim.x + threadIdx.x) * INTERNAL_BLOCK_SIZE;
+    const unsigned long long i_linear = blockIdx.x * blockDim.x * INTERNAL_BLOCK_SIZE + threadIdx.x;
     const unsigned long long j = (blockIdx.y * blockDim.y + threadIdx.y) * INTERNAL_BLOCK_SIZE;
-    const unsigned long long j_cached_idx = (blockIdx.y * blockDim.y + threadIdx.x) * INTERNAL_BLOCK_SIZE;
+    const unsigned long long j_cached_idx_linear = blockIdx.y * blockDim.y * INTERNAL_BLOCK_SIZE + threadIdx.x;
 
-    __shared__ real_type data_cache_i[FEATURE_BLOCK_SIZE][INTERNAL_BLOCK_SIZE][THREAD_BLOCK_SIZE];
-    __shared__ real_type data_cache_j[FEATURE_BLOCK_SIZE][INTERNAL_BLOCK_SIZE][THREAD_BLOCK_SIZE];
-    // 2 * 8B * 16 * (8 * 4) = 8KiB
+    __shared__ real_type data_cache_i[FEATURE_BLOCK_SIZE][INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE];
+    __shared__ real_type data_cache_j[FEATURE_BLOCK_SIZE][INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE];
 
     if (blockIdx.x >= blockIdx.y) {
         real_type temp[INTERNAL_BLOCK_SIZE][INTERNAL_BLOCK_SIZE] = { 0.0 };
@@ -119,31 +119,31 @@ __global__ void device_kernel_assembly_rbf(real_type *ret, const real_type *data
         for (unsigned long long dim = 0; dim < num_features; dim += FEATURE_BLOCK_SIZE) {
             // zero out shared memory
             for (unsigned internal = 0; internal < INTERNAL_BLOCK_SIZE; ++internal) {
-                data_cache_i[threadIdx.y][internal][threadIdx.x] = real_type{ 0.0 };
-                data_cache_i[threadIdx.y + THREAD_BLOCK_SIZE][internal][threadIdx.x] = real_type{ 0.0 };
-                data_cache_j[threadIdx.y][internal][threadIdx.x] = real_type{ 0.0 };
-                data_cache_j[threadIdx.y + THREAD_BLOCK_SIZE][internal][threadIdx.x] = real_type{ 0.0 };
+                data_cache_i[threadIdx.y][internal * THREAD_BLOCK_SIZE + threadIdx.x] = real_type{ 0.0 };
+                data_cache_i[threadIdx.y + THREAD_BLOCK_SIZE][internal * THREAD_BLOCK_SIZE + threadIdx.x] = real_type{ 0.0 };
+                data_cache_j[threadIdx.y][internal * THREAD_BLOCK_SIZE + threadIdx.x] = real_type{ 0.0 };
+                data_cache_j[threadIdx.y + THREAD_BLOCK_SIZE][internal * THREAD_BLOCK_SIZE + threadIdx.x] = real_type{ 0.0 };
             }
 
             // load data into shared memory
             for (unsigned internal = 0; internal < INTERNAL_BLOCK_SIZE; ++internal) {
-                const unsigned long long global_i = i + internal;
-                const unsigned long long global_j = j_cached_idx + internal;
+                const unsigned long long global_i = i_linear + internal * THREAD_BLOCK_SIZE;
+                const unsigned long long global_j = j_cached_idx_linear + internal * THREAD_BLOCK_SIZE;
 
                 if (global_i < num_rows) {
                     if (dim + threadIdx.y < num_features) {
-                        data_cache_i[threadIdx.y][internal][threadIdx.x] = data_d[(dim + threadIdx.y) * (num_rows + 1) + global_i];
+                        data_cache_i[threadIdx.y][internal * THREAD_BLOCK_SIZE + threadIdx.x] = data_d[(dim + threadIdx.y) * (num_rows + 1) + global_i];
                     }
                     if (dim + threadIdx.y + THREAD_BLOCK_SIZE < num_features) {
-                        data_cache_i[threadIdx.y + THREAD_BLOCK_SIZE][internal][threadIdx.x] = data_d[(dim + threadIdx.y + THREAD_BLOCK_SIZE) * (num_rows + 1) + global_i];
+                        data_cache_i[threadIdx.y + THREAD_BLOCK_SIZE][internal * THREAD_BLOCK_SIZE + threadIdx.x] = data_d[(dim + threadIdx.y + THREAD_BLOCK_SIZE) * (num_rows + 1) + global_i];
                     }
                 }
                 if (global_j < num_rows) {
                     if (dim + threadIdx.y < num_features) {
-                        data_cache_j[threadIdx.y][internal][threadIdx.x] = data_d[(dim + threadIdx.y) * (num_rows + 1) + global_j];
+                        data_cache_j[threadIdx.y][internal * THREAD_BLOCK_SIZE + threadIdx.x] = data_d[(dim + threadIdx.y) * (num_rows + 1) + global_j];
                     }
                     if (dim + threadIdx.y + THREAD_BLOCK_SIZE < num_features) {
-                        data_cache_j[threadIdx.y + THREAD_BLOCK_SIZE][internal][threadIdx.x] = data_d[(dim + threadIdx.y + THREAD_BLOCK_SIZE) * (num_rows + 1) + global_j];
+                        data_cache_j[threadIdx.y + THREAD_BLOCK_SIZE][internal * THREAD_BLOCK_SIZE + threadIdx.x] = data_d[(dim + threadIdx.y + THREAD_BLOCK_SIZE) * (num_rows + 1) + global_j];
                     }
                 }
             }
@@ -153,7 +153,7 @@ __global__ void device_kernel_assembly_rbf(real_type *ret, const real_type *data
             for (unsigned block_dim = 0; block_dim < FEATURE_BLOCK_SIZE; ++block_dim) {
                 for (unsigned internal_i = 0; internal_i < INTERNAL_BLOCK_SIZE; ++internal_i) {
                     for (unsigned internal_j = 0; internal_j < INTERNAL_BLOCK_SIZE; ++internal_j) {
-                        const real_type d = data_cache_i[block_dim][internal_i][threadIdx.x] - data_cache_j[block_dim][internal_j][threadIdx.y];
+                        const real_type d = data_cache_i[block_dim][threadIdx.x * INTERNAL_BLOCK_SIZE + internal_i] - data_cache_j[block_dim][threadIdx.y * INTERNAL_BLOCK_SIZE + internal_j];
                         temp[internal_i][internal_j] += d * d;
                     }
                 }

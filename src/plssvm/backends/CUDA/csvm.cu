@@ -136,12 +136,8 @@ auto csvm::run_assemble_kernel_matrix_explicit(const parameter &params, const de
         throw kernel_launch_resources{ fmt::format("Not enough work-items allowed for a work-groups of size {}x{}! Try reducing THREAD_BLOCK_SIZE.", THREAD_BLOCK_SIZE, THREAD_BLOCK_SIZE) };
     }
     const dim3 block(THREAD_BLOCK_SIZE, THREAD_BLOCK_SIZE);
-//    const dim3 grid(static_cast<int>(std::ceil(static_cast<double>(num_rows_reduced) / static_cast<double>(block.x))),
-//                    static_cast<int>(std::ceil(static_cast<double>(num_rows_reduced) / static_cast<double>(block.y))));
-
     const dim3 grid(static_cast<int>(std::ceil(static_cast<double>(num_rows_reduced) / static_cast<double>(block.x * INTERNAL_BLOCK_SIZE))),
                     static_cast<int>(std::ceil(static_cast<double>(num_rows_reduced) / static_cast<double>(block.y * INTERNAL_BLOCK_SIZE))));
-//    std::cerr << fmt::format("{}x{} -> {}x{}", block.x, block.y, grid.x, grid.y) << std::endl;
 
     device_ptr_type kernel_matrix_d{ num_rows_reduced * (num_rows_reduced + 1) / 2 };  // only explicitly store the upper triangular matrix
     const real_type cost_factor = real_type{ 1.0 } / params.cost;
