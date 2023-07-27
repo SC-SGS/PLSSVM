@@ -30,7 +30,6 @@ using real_type = double;
 #if defined(PLSSVM_THREAD_BLOCK_SIZE)
 constexpr unsigned long long THREAD_BLOCK_SIZE = PLSSVM_THREAD_BLOCK_SIZE;
 #else
-constexpr unsigned long long THREAD_BLOCK_SIZE_OLD = 16;
 constexpr unsigned THREAD_BLOCK_SIZE = 8;
 #endif
 
@@ -38,7 +37,6 @@ constexpr unsigned THREAD_BLOCK_SIZE = 8;
 #if defined(PLSSVM_FEATURE_BLOCK_SIZE)
 constexpr unsigned long long FEATURE_BLOCK_SIZE = PLSSVM_FEATURE_BLOCK_SIZE;
 #else
-constexpr unsigned long long FEATURE_BLOCK_SIZE_OLD = 16;
 constexpr unsigned FEATURE_BLOCK_SIZE = 16;
 #endif
 
@@ -46,7 +44,6 @@ constexpr unsigned FEATURE_BLOCK_SIZE = 16;
 #if defined(PLSSVM_INTERNAL_BLOCK_SIZE)
 constexpr unsigned long long INTERNAL_BLOCK_SIZE = PLSSVM_INTERNAL_BLOCK_SIZE;
 #else
-constexpr unsigned long long INTERNAL_BLOCK_SIZE_OLD = 6;
 constexpr unsigned INTERNAL_BLOCK_SIZE = 4;
 #endif
 

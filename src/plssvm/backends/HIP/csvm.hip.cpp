@@ -161,12 +161,12 @@ auto csvm::run_assemble_kernel_matrix_explicit(const parameter &params, const de
 void csvm::run_gemm_kernel_explicit(const std::size_t m, const std::size_t n, const std::size_t k, const real_type alpha, const device_ptr_type &A_d, const device_ptr_type &B_d, const real_type beta, device_ptr_type &C_d) const {
     // define the grid and block sizes
     const std::size_t max_work_group_size = this->get_max_work_group_size();
-    if (max_work_group_size < THREAD_BLOCK_SIZE_OLD * THREAD_BLOCK_SIZE_OLD) {
-        throw kernel_launch_resources{ fmt::format("Not enough work-items allowed for a work-groups of size {}x{}! Try reducing THREAD_BLOCK_SIZE.", THREAD_BLOCK_SIZE_OLD, THREAD_BLOCK_SIZE_OLD) };
+    if (max_work_group_size < THREAD_BLOCK_SIZE * THREAD_BLOCK_SIZE) {
+        throw kernel_launch_resources{ fmt::format("Not enough work-items allowed for a work-groups of size {}x{}! Try reducing THREAD_BLOCK_SIZE.", THREAD_BLOCK_SIZE, THREAD_BLOCK_SIZE) };
     }
-    const dim3 block(THREAD_BLOCK_SIZE_OLD, THREAD_BLOCK_SIZE_OLD);
-    const dim3 grid(static_cast<int>(std::ceil(static_cast<double>(n) / static_cast<double>(block.x))),
-                    static_cast<int>(std::ceil(static_cast<double>(m) / static_cast<double>(block.y))));
+    const dim3 block(THREAD_BLOCK_SIZE, THREAD_BLOCK_SIZE);
+    const dim3 grid(static_cast<int>(std::ceil(static_cast<double>(n) / static_cast<double>(block.x * INTERNAL_BLOCK_SIZE))),
+                    static_cast<int>(std::ceil(static_cast<double>(m) / static_cast<double>(block.y * INTERNAL_BLOCK_SIZE))));
 
     // cast to correct type
     const auto m_ull = static_cast<unsigned long long>(m);

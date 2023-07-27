@@ -203,7 +203,6 @@ __kernel void device_kernel_assembly_rbf(__global real_type *ret, __global const
     const ulong j = get_global_id(1) * INTERNAL_BLOCK_SIZE;
     const ulong j_cached_idx_linear = get_group_id(1) * get_local_size(1) * INTERNAL_BLOCK_SIZE + get_local_id(0);
 
-
     __local real_type data_cache_i[FEATURE_BLOCK_SIZE][INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE];
     __local real_type data_cache_j[FEATURE_BLOCK_SIZE][INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE];
 

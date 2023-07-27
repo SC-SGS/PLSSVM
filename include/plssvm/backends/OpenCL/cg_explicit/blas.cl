@@ -24,45 +24,76 @@
  */
 __kernel void device_kernel_gemm(const ulong m, const ulong n, const ulong k, const real_type alpha, __global const real_type *A, __global const real_type *B, const real_type beta, __global real_type *C) {
     // compute: C = alpha * A * B + beta * C with A in m x k, B in n x k, and C in n x m, alpha, beta as scalar
-    const ulong i = get_global_id(0);  // # rhs
-    const ulong j = get_global_id(1);  // # rows
-    const ulong j_cached_idx = get_group_id(1) * get_local_size(1) + get_local_id(0);
+    const ulong i = get_global_id(0) * INTERNAL_BLOCK_SIZE;  // # rhs
+    const ulong i_linear = get_group_id(0) * get_local_size(0) * INTERNAL_BLOCK_SIZE + get_local_id(0);
+    const ulong j = get_global_id(1) * INTERNAL_BLOCK_SIZE;  // # rows
+    const ulong j_cached_idx_linear = get_group_id(1) * get_local_size(1) * INTERNAL_BLOCK_SIZE + get_local_id(0);
 
-    __local real_type A_cache[FEATURE_BLOCK_SIZE_OLD][THREAD_BLOCK_SIZE_OLD];
-    __local real_type B_cache[FEATURE_BLOCK_SIZE_OLD][THREAD_BLOCK_SIZE_OLD];
+    __local real_type A_cache[FEATURE_BLOCK_SIZE][INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE];
+    __local real_type B_cache[FEATURE_BLOCK_SIZE][INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE];
 
-    real_type temp = 0.0;
+    real_type temp[INTERNAL_BLOCK_SIZE][INTERNAL_BLOCK_SIZE] = { 0.0 };
 
-    for (ulong dim = 0; dim < k; dim += FEATURE_BLOCK_SIZE_OLD) {
+    for (ulong dim = 0; dim < k; dim += FEATURE_BLOCK_SIZE) {
         // zero out shared memory
-        if (get_local_id(1) < FEATURE_BLOCK_SIZE_OLD) {
-            A_cache[get_local_id(1)][get_local_id(0)] = 0.0;
-            B_cache[get_local_id(1)][get_local_id(0)] = 0.0;
+        for (unsigned internal = 0; internal < INTERNAL_BLOCK_SIZE; ++internal) {
+            A_cache[get_local_id(1)][internal * THREAD_BLOCK_SIZE + get_local_id(0)] = 0.0;
+            A_cache[get_local_id(1) + THREAD_BLOCK_SIZE][internal * THREAD_BLOCK_SIZE + get_local_id(0)] = 0.0;
+            B_cache[get_local_id(1)][internal * THREAD_BLOCK_SIZE + get_local_id(0)] = 0.0;
+            B_cache[get_local_id(1) + THREAD_BLOCK_SIZE][internal * THREAD_BLOCK_SIZE + get_local_id(0)] = 0.0;
         }
 
         // load data into shared memory
-        if (get_local_id(1) < FEATURE_BLOCK_SIZE_OLD && dim + get_local_id(1) < k) {
-            if (dim + get_local_id(1) < j_cached_idx) {
-                if (j_cached_idx < k) {
-                    A_cache[get_local_id(1)][get_local_id(0)] = A[(dim + get_local_id(1)) * k + j_cached_idx - (dim + get_local_id(1)) * (dim + get_local_id(1) + 1) / 2];
+        for (uint internal = 0; internal < INTERNAL_BLOCK_SIZE; ++internal) {
+            const ulong global_i = i_linear + internal * THREAD_BLOCK_SIZE;
+            const ulong global_j = j_cached_idx_linear + internal * THREAD_BLOCK_SIZE;
+
+            if (dim + get_local_id(1) < k) {
+                if (dim + get_local_id(1) < global_j) {
+                    if (global_j < k) {
+                        A_cache[get_local_id(1)][internal * THREAD_BLOCK_SIZE + get_local_id(0)] = A[(dim + get_local_id(1)) * k + global_j - (dim + get_local_id(1)) * (dim + get_local_id(1) + 1) / 2];
+                    }
+                } else {
+                    A_cache[get_local_id(1)][internal * THREAD_BLOCK_SIZE + get_local_id(0)] = A[global_j * k + dim + get_local_id(1) - global_j * (global_j + 1) / 2];
                 }
-            } else {
-                A_cache[get_local_id(1)][get_local_id(0)] = A[j_cached_idx * k + dim + get_local_id(1) - j_cached_idx * (j_cached_idx + 1) / 2];
             }
-            if (i < n) {
-                B_cache[get_local_id(1)][get_local_id(0)] = B[(dim + get_local_id(1)) * n + i];
+
+            if (dim + get_local_id(1) + THREAD_BLOCK_SIZE < k) {
+                if (dim + get_local_id(1) + THREAD_BLOCK_SIZE < global_j) {
+                    if (global_j < k) {
+                        A_cache[get_local_id(1) + THREAD_BLOCK_SIZE][internal * THREAD_BLOCK_SIZE + get_local_id(0)] = A[(dim + get_local_id(1) + THREAD_BLOCK_SIZE) * k + global_j - (dim + get_local_id(1) + THREAD_BLOCK_SIZE) * (dim + get_local_id(1) + THREAD_BLOCK_SIZE + 1) / 2];
+                    }
+                } else {
+                    A_cache[get_local_id(1) + THREAD_BLOCK_SIZE][internal * THREAD_BLOCK_SIZE + get_local_id(0)] = A[global_j * k + dim + get_local_id(1) + THREAD_BLOCK_SIZE - global_j * (global_j + 1) / 2];
+                }
+            }
+
+            if (global_i < n) {
+                B_cache[get_local_id(1)][internal * THREAD_BLOCK_SIZE + get_local_id(0)] = B[(dim + get_local_id(1)) * n + global_i];
+                B_cache[get_local_id(1) + THREAD_BLOCK_SIZE][internal * THREAD_BLOCK_SIZE + get_local_id(0)] = B[(dim + get_local_id(1) + THREAD_BLOCK_SIZE) * n + global_i];
             }
         }
         barrier(CLK_LOCAL_MEM_FENCE);
 
         // calculation
-        for (ulong block_dim = 0; block_dim < FEATURE_BLOCK_SIZE_OLD; ++block_dim) {
-            temp += A_cache[block_dim][get_local_id(1)] * B_cache[block_dim][get_local_id(0)];
+        for (uint block_dim = 0; block_dim < FEATURE_BLOCK_SIZE; ++block_dim) {
+            for (uint internal_i = 0; internal_i < INTERNAL_BLOCK_SIZE; ++internal_i) {
+                for (uint internal_j = 0; internal_j < INTERNAL_BLOCK_SIZE; ++internal_j) {
+                    temp[internal_i][internal_j] += A_cache[block_dim][get_local_id(1) * INTERNAL_BLOCK_SIZE + internal_j] * B_cache[block_dim][get_local_id(0) * INTERNAL_BLOCK_SIZE + internal_i];
+                }
+            }
         }
         barrier(CLK_LOCAL_MEM_FENCE);
     }
 
-    if (i < n && j < m) {
-        C[j * n + i] = alpha * temp + beta * C[j * n + i];
+    for (uint internal_i = 0; internal_i < INTERNAL_BLOCK_SIZE; ++internal_i) {
+        for (uint internal_j = 0; internal_j < INTERNAL_BLOCK_SIZE; ++internal_j) {
+            const ulong global_i = i + internal_i;
+            const ulong global_j = j + internal_j;
+
+            if (global_i < n && global_j < m) {
+                C[global_j * n + global_i] = alpha * temp[internal_i][internal_j] + beta * C[global_j * n + global_i];
+            }
+        }
     }
 }

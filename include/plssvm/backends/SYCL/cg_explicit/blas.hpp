@@ -13,7 +13,7 @@
 #define PLSSVM_BACKENDS_SYCL_CG_EXPLICIT_BLAS_HPP_
 #pragma once
 
-#include "plssvm/constants.hpp"  // plssvm::real_type, plssvm::THREAD_BLOCK_SIZE_OLD, plssvm::FEATURE_BLOCK_SIZE_OLD
+#include "plssvm/constants.hpp"  // plssvm::real_type, plssvm::THREAD_BLOCK_SIZE, plssvm::FEATURE_BLOCK_SIZE, plssvm::INTERNAL_BLOCK_SIZE
 #include "plssvm/backends/SYCL/detail/constants.hpp"  // PLSSVM_SYCL_BACKEND_COMPILER_HIPSYCL
 
 #include "sycl/sycl.hpp"  // sycl::nd_item
@@ -38,7 +38,7 @@ class device_kernel_gemm {
      * @param[in,out] C the matrix @p C, also used as result matrix
      */
     device_kernel_gemm(::sycl::handler &cgh, const unsigned long long m, const unsigned long long n, const unsigned long long k, const real_type alpha, const real_type *A, const real_type *B, const real_type beta, real_type *C) :
-        A_cache_{ ::sycl::range<2>{ FEATURE_BLOCK_SIZE_OLD, THREAD_BLOCK_SIZE_OLD }, cgh }, B_cache_{ ::sycl::range<2>{ FEATURE_BLOCK_SIZE_OLD, THREAD_BLOCK_SIZE_OLD }, cgh },
+        A_cache_{ ::sycl::range<2>{ FEATURE_BLOCK_SIZE, INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE }, cgh }, B_cache_{ ::sycl::range<2>{ FEATURE_BLOCK_SIZE, INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE }, cgh },
         m_{ m }, n_{ n }, k_{ k }, alpha_{ alpha }, A_{ A }, B_{ B }, beta_{ beta }, C_{ C } {}
 
     /**
@@ -47,46 +47,77 @@ class device_kernel_gemm {
      */
     void operator()(::sycl::nd_item<2> nd_idx) const {
         // compute: C = alpha * A * B + beta * C with A in m x k, B in n x k, and C in n x m, alpha, beta as scalar
-        const unsigned long long i = nd_idx.get_global_id(0);
-        const unsigned long long i_cached_idx = nd_idx.get_group(0) * nd_idx.get_local_range(0) + nd_idx.get_local_id(1);
-        const unsigned long long j = nd_idx.get_global_id(1);
+        const unsigned long long i = nd_idx.get_global_id(0) * INTERNAL_BLOCK_SIZE;
+        const unsigned long long i_cached_idx_linear = nd_idx.get_group(0) * nd_idx.get_local_range(0) * INTERNAL_BLOCK_SIZE + nd_idx.get_local_id(1);
+        const unsigned long long j = nd_idx.get_global_id(1) * INTERNAL_BLOCK_SIZE;
+        const unsigned long long j_linear = nd_idx.get_group(1) * nd_idx.get_local_range(1) * INTERNAL_BLOCK_SIZE + nd_idx.get_local_id(1);
 
-        real_type temp{ 0.0 };
+        real_type temp[INTERNAL_BLOCK_SIZE][INTERNAL_BLOCK_SIZE] = { { 0.0 } };
 
-        for (unsigned long long dim = 0; dim < k_; dim += FEATURE_BLOCK_SIZE_OLD) {
+        for (unsigned long long dim = 0; dim < k_; dim += FEATURE_BLOCK_SIZE) {
             // zero out shared memory
-            if (nd_idx.get_local_id(0) < FEATURE_BLOCK_SIZE_OLD) {
-                A_cache_[nd_idx.get_local_id(0)][nd_idx.get_local_id(1)] = real_type{ 0.0 };
-                B_cache_[nd_idx.get_local_id(0)][nd_idx.get_local_id(1)] = real_type{ 0.0 };
+            for (unsigned internal = 0; internal < INTERNAL_BLOCK_SIZE; ++internal) {
+                A_cache_[nd_idx.get_local_id(0)][internal * THREAD_BLOCK_SIZE + nd_idx.get_local_id(1)] = real_type{ 0.0 };
+                A_cache_[nd_idx.get_local_id(0) + THREAD_BLOCK_SIZE][internal * THREAD_BLOCK_SIZE + nd_idx.get_local_id(1)] = real_type{ 0.0 };
+                B_cache_[nd_idx.get_local_id(0)][internal * THREAD_BLOCK_SIZE + nd_idx.get_local_id(1)] = real_type{ 0.0 };
+                B_cache_[nd_idx.get_local_id(0) + THREAD_BLOCK_SIZE][internal * THREAD_BLOCK_SIZE + nd_idx.get_local_id(1)] = real_type{ 0.0 };
             }
 #if PLSSVM_SYCL_BACKEND_COMPILER == PLSSVM_SYCL_BACKEND_COMPILER_HIPSYCL
             nd_idx.barrier();  // shouldn't be necessary
 #endif
 
             // load data into shared memory
-            if (nd_idx.get_local_id(0) < FEATURE_BLOCK_SIZE_OLD && dim + nd_idx.get_local_id(0) < k_) {
-                if (dim + nd_idx.get_local_id(0) < i_cached_idx) {
-                    if (i_cached_idx < k_) {
-                        A_cache_[nd_idx.get_local_id(0)][nd_idx.get_local_id(1)] = A_[(dim + nd_idx.get_local_id(0)) * k_ + i_cached_idx - (dim + nd_idx.get_local_id(0)) * (dim + nd_idx.get_local_id(0) + 1) / 2];
+            for (unsigned internal = 0; internal < INTERNAL_BLOCK_SIZE; ++internal) {
+                const unsigned long long global_i = i_cached_idx_linear + internal * THREAD_BLOCK_SIZE;
+                const unsigned long long global_j = j_linear + internal * THREAD_BLOCK_SIZE;
+
+                if (dim + nd_idx.get_local_id(0) < k_) {
+                    if (dim + nd_idx.get_local_id(0) < global_i) {
+                        if (global_i < k_) {
+                            A_cache_[nd_idx.get_local_id(0)][internal * THREAD_BLOCK_SIZE + nd_idx.get_local_id(1)] = A_[(dim + nd_idx.get_local_id(0)) * k_ + global_i - (dim + nd_idx.get_local_id(0)) * (dim + nd_idx.get_local_id(0) + 1) / 2];
+                        }
+                    } else {
+                        A_cache_[nd_idx.get_local_id(0)][internal * THREAD_BLOCK_SIZE + nd_idx.get_local_id(1)] = A_[global_i * k_ + dim + nd_idx.get_local_id(0) - global_i * (global_i + 1) / 2];
                     }
-                } else {
-                    A_cache_[nd_idx.get_local_id(0)][nd_idx.get_local_id(1)] = A_[i_cached_idx * k_ + dim + nd_idx.get_local_id(0) - i_cached_idx * (i_cached_idx + 1) / 2];
                 }
-                if (j < n_) {
-                    B_cache_[nd_idx.get_local_id(0)][nd_idx.get_local_id(1)] = B_[(dim + nd_idx.get_local_id(0)) * n_ + j];
+
+                if (dim + nd_idx.get_local_id(0) + THREAD_BLOCK_SIZE < k_) {
+                    if (dim + nd_idx.get_local_id(0) + THREAD_BLOCK_SIZE < global_i) {
+                        if (global_i < k_) {
+                            A_cache_[nd_idx.get_local_id(0) + THREAD_BLOCK_SIZE][internal * THREAD_BLOCK_SIZE + nd_idx.get_local_id(1)] = A_[(dim + nd_idx.get_local_id(0) + THREAD_BLOCK_SIZE) * k_ + global_i - (dim + nd_idx.get_local_id(0) + THREAD_BLOCK_SIZE) * (dim + nd_idx.get_local_id(0) + THREAD_BLOCK_SIZE + 1) / 2];
+                        }
+                    } else {
+                        A_cache_[nd_idx.get_local_id(0) + THREAD_BLOCK_SIZE][internal * THREAD_BLOCK_SIZE + nd_idx.get_local_id(1)] = A_[global_i * k_ + dim + nd_idx.get_local_id(0) + THREAD_BLOCK_SIZE - global_i * (global_i + 1) / 2];
+                    }
+                }
+
+                if (global_j < n_) {
+                    B_cache_[nd_idx.get_local_id(0)][internal * THREAD_BLOCK_SIZE + nd_idx.get_local_id(1)] = B_[(dim + nd_idx.get_local_id(0)) * n_ + global_j];
+                    B_cache_[nd_idx.get_local_id(0) + THREAD_BLOCK_SIZE][internal * THREAD_BLOCK_SIZE + nd_idx.get_local_id(1)] = B_[(dim + nd_idx.get_local_id(0) + THREAD_BLOCK_SIZE) * n_ + global_j];
                 }
             }
             nd_idx.barrier();
 
             // calculation
-            for (unsigned long long block_dim = 0; block_dim < FEATURE_BLOCK_SIZE_OLD; ++block_dim) {
-                temp += A_cache_[block_dim][nd_idx.get_local_id(0)] * B_cache_[block_dim][nd_idx.get_local_id(1)];
+            for (unsigned block_dim = 0; block_dim < FEATURE_BLOCK_SIZE; ++block_dim) {
+                for (unsigned internal_i = 0; internal_i < INTERNAL_BLOCK_SIZE; ++internal_i) {
+                    for (unsigned internal_j = 0; internal_j < INTERNAL_BLOCK_SIZE; ++internal_j) {
+                        temp[internal_i][internal_j] += A_cache_[block_dim][nd_idx.get_local_id(0) * INTERNAL_BLOCK_SIZE + internal_i] * B_cache_[block_dim][nd_idx.get_local_id(1) * INTERNAL_BLOCK_SIZE + internal_j];
+                    }
+                }
             }
             nd_idx.barrier();
         }
 
-        if (i < m_ && j < n_) {
-            C_[i * n_ + j] = alpha_ * temp + beta_ * C_[i * n_ + j];
+        for (unsigned internal_i = 0; internal_i < INTERNAL_BLOCK_SIZE; ++internal_i) {
+            for (unsigned internal_j = 0; internal_j < INTERNAL_BLOCK_SIZE; ++internal_j) {
+                const unsigned long long global_i = i + internal_i;
+                const unsigned long long global_j = j + internal_j;
+
+                if (global_i < m_ && global_j < n_) {
+                    C_[global_i * n_ + global_j] = alpha_ * temp[internal_i][internal_j] + beta_ * C_[global_i * n_ + global_j];
+                }
+            }
         }
     }
 
