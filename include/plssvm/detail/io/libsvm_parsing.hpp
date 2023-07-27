@@ -126,7 +126,7 @@ template <typename label_type>
     }
 
     // create vector containing the data and label
-    soa_matrix<real_type> data{ num_data_points, num_features };
+    soa_matrix<real_type> data{ num_data_points, num_features, THREAD_BLOCK_SIZE * INTERNAL_BLOCK_SIZE, FEATURE_BLOCK_SIZE };
     std::vector<label_type> label(num_data_points);
 
     std::exception_ptr parallel_exception;

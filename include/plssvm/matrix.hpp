@@ -95,7 +95,8 @@ class matrix {
      * @param[in] init the value of all entries in the matrix
      * @throws plssvm::matrix_exception if at least one of @p num_rows or @p num_cols is zero
      */
-    matrix(size_type num_rows, size_type num_cols, const_reference init);
+    matrix(const size_type num_rows, const size_type num_cols, const_reference init) :
+        matrix{ num_rows, num_cols, init, size_type{ 0 }, size_type{ 0 } } {}
     /**
      * @brief Create a matrix of size @p num_rows x @p num_cols.
      * @param[in] num_rows the number of rows in the matrix
@@ -103,7 +104,12 @@ class matrix {
      * @throws plssvm::matrix_exception if at least one of @p num_rows or @p num_cols is zero
      */
     matrix(const size_type num_rows, const size_type num_cols) :
-        matrix{ num_rows, num_cols, value_type{} } {}
+        matrix{ num_rows, num_cols, value_type{}, size_type{ 0 }, size_type{ 0 } } {}
+
+    matrix(size_type num_rows, size_type num_cols, const_reference init, size_type row_padding, size_type col_padding);
+    matrix(const size_type num_rows, const size_type num_cols, size_type row_padding, size_type col_padding) :
+        matrix{ num_rows, num_cols, value_type{}, row_padding, col_padding } {}
+
     /**
      * @brief Create a matrix from the provided 2D vector @p data.
      * @param[in] data the data used to initialize this matrix
@@ -138,6 +144,12 @@ class matrix {
      * @return `true` if the matrix is empty, otherwise `false` (`[[nodiscard]]`)
      */
     [[nodiscard]] bool empty() const noexcept { return data_.empty(); }
+
+    [[nodiscard]] std::array<size_type, 2> padding() const noexcept { return { row_padding_, col_padding_ }; }
+    [[nodiscard]] std::array<size_type, 2> shape_padded() const noexcept { return { num_rows_ + row_padding_, num_cols_ + col_padding_ }; }
+    [[nodiscard]] size_type num_rows_padded() const noexcept { return num_rows_ + row_padding_; }
+    [[nodiscard]] size_type num_cols_padded() const noexcept { return num_cols_ + col_padding_; }
+    [[nodiscard]] size_type num_entries_padded() const noexcept { return (num_rows_ + row_padding_) * (num_cols_ + col_padding_); }
 
     /**
      * @brief Return the layout type used in this matrix.
@@ -204,15 +216,19 @@ class matrix {
   private:
     /// The number of rows.
     size_type num_rows_{ 0 };
+    size_type row_padding_{ 0 };
     /// The number of columns.
     size_type num_cols_{ 0 };
+    size_type col_padding_{ 0 };
     /// The (linearized, either in AoS or SoA layout) data.
     std::vector<value_type> data_{};
 };
 
 template <typename T, layout_type layout_>
 template <layout_type other_layout_>
-matrix<T, layout_>::matrix(const matrix<T, other_layout_> &other) : matrix{ other.num_rows(), other.num_cols() } {
+matrix<T, layout_>::matrix(const matrix<T, other_layout_> &other) :
+    matrix{ other.num_rows(), other.num_cols() } {
+    // TODO: padding!
     if constexpr (layout_ == other_layout_) {
         // same layout -> simply memcpy underlying array
         std::memcpy(data_.data(), other.data(), this->num_entries() * sizeof(T));
@@ -228,8 +244,8 @@ matrix<T, layout_>::matrix(const matrix<T, other_layout_> &other) : matrix{ othe
 }
 
 template <typename T, layout_type layout_>
-matrix<T, layout_>::matrix(const size_type num_rows, const size_type num_cols, const_reference init) :
-    num_rows_{ num_rows }, num_cols_{ num_cols }, data_(num_rows * num_cols, init) {
+matrix<T, layout_>::matrix(const size_type num_rows, const size_type num_cols, const_reference init, const size_type row_padding, const size_type col_padding) :
+    num_rows_{ num_rows }, row_padding_{ row_padding }, num_cols_{ num_cols }, col_padding_{ col_padding }, data_(this->num_entries_padded(), init) {
     if (num_rows_ == 0) {
         throw matrix_exception{ "The number of rows is zero!" };
     }
@@ -240,6 +256,7 @@ matrix<T, layout_>::matrix(const size_type num_rows, const size_type num_cols, c
 
 template <typename T, layout_type layout_>
 matrix<T, layout_>::matrix(const std::vector<std::vector<value_type>> &data) {
+    // TODO: add padding
     PLSSVM_ASSERT(!data.empty(), "The data to create the matrix from may not be empty!");
     PLSSVM_ASSERT(std::all_of(data.cbegin(), data.cend(), [&data](const std::vector<value_type> &row) { return row.size() == data.front().size(); }), "Each row must contain the same amount of columns!");
     PLSSVM_ASSERT(!data.front().empty(), "The data to create the matrix must at least have one column!");
@@ -261,9 +278,9 @@ auto matrix<T, layout_>::operator()(const size_type row, const size_type col) co
     PLSSVM_ASSERT(row < num_rows_, fmt::format("The current row ({}) must be smaller than the number of rows ({})!", row, num_rows_));
     PLSSVM_ASSERT(col < num_cols_, fmt::format("The current column ({}) must be smaller than the number of columns ({})!", col, num_cols_));
     if constexpr (layout_ == layout_type::aos) {
-        return data_[row * num_cols_ + col];
+        return data_[row * (num_cols_ + col_padding_) + col];
     } else if constexpr (layout_ == layout_type::soa) {
-        return data_[col * num_rows_ + row];
+        return data_[col * (num_rows_ + row_padding_) + row];
     } else {
         static_assert(detail::always_false_v<T>, "Unrecognized layout_type!");
     }
@@ -273,15 +290,16 @@ auto matrix<T, layout_>::operator()(const size_type row, const size_type col) ->
     PLSSVM_ASSERT(row < num_rows_, fmt::format("The current row ({}) must be smaller than the number of rows ({})!", row, num_rows_));
     PLSSVM_ASSERT(col < num_cols_, fmt::format("The current column ({}) must be smaller than the number of columns ({})!", col, num_cols_));
     if constexpr (layout_ == layout_type::aos) {
-        return data_[row * num_cols_ + col];
+        return data_[row * (num_cols_ + col_padding_) + col];
     } else if constexpr (layout_ == layout_type::soa) {
-        return data_[col * num_rows_ + row];
+        return data_[col * (num_rows_ + row_padding_) + row];
     } else {
         static_assert(detail::always_false_v<T>, "Unrecognized layout_type!");
     }
 }
 template <typename T, layout_type layout_>
 auto matrix<T, layout_>::at(const size_type row, const size_type col) const -> value_type {
+    // TODO: padding
     if (row >= num_rows_) {
         throw matrix_exception{ fmt::format("The current row ({}) must be smaller than the number of rows ({})!", row, num_rows_) };
     }
@@ -293,6 +311,7 @@ auto matrix<T, layout_>::at(const size_type row, const size_type col) const -> v
 }
 template <typename T, layout_type layout_>
 auto matrix<T, layout_>::at(const size_type row, const size_type col) -> reference {
+    // TODO: padding
     if (row >= num_rows_) {
         throw matrix_exception{ fmt::format("The current row ({}) must be smaller than the number of rows ({})!", row, num_rows_) };
     }
@@ -305,6 +324,7 @@ auto matrix<T, layout_>::at(const size_type row, const size_type col) -> referen
 
 template <typename T, layout_type layout_>
 auto matrix<T, layout_>::to_2D_vector() const -> std::vector<std::vector<value_type>> {
+    // TODO: add padding
     std::vector<std::vector<value_type>> ret(num_rows_, std::vector<value_type>(num_cols_));
     #pragma omp parallel for collapse(2) shared(ret) firstprivate(num_rows_, num_cols_)
     for (std::size_t row = 0; row < num_rows_; ++row) {
@@ -319,7 +339,9 @@ template <typename T, layout_type layout_>
 void matrix<T, layout_>::swap(matrix<T, layout_> &other) noexcept {
     using std::swap;
     swap(this->num_rows_, other.num_rows_);
+    swap(this->row_padding_, other.row_padding_);
     swap(this->num_cols_, other.num_cols_);
+    swap(this->col_padding_, other.col_padding_);
     swap(this->data_, other.data_);
 }
 /**
@@ -343,7 +365,7 @@ inline void swap(matrix<T, layout> &lhs, matrix<T, layout> &rhs) {
  */
 template <typename T, layout_type layout_>
 [[nodiscard]] inline bool operator==(const matrix<T, layout_> &lhs, const matrix<T, layout_> &rhs) noexcept {
-    return lhs.num_rows_ == rhs.num_rows_ && lhs.num_cols_ == rhs.num_cols_ && std::equal(lhs.data(), lhs.data() + lhs.num_entries(), rhs.data());
+    return lhs.num_rows_ == rhs.num_rows_ && lhs.row_padding_ == rhs.row_padding_ && lhs.num_cols_ == rhs.num_cols_ && lhs.col_padding_ == rhs.col_padding_ && std::equal(lhs.data(), lhs.data() + lhs.num_entries(), rhs.data());
 }
 /**
  * @brief Compares @p lhs and @p rhs for inequality.
@@ -388,9 +410,12 @@ using aos_matrix = matrix<T, layout_type::aos>;
 template <typename T>
 using soa_matrix = matrix<T, layout_type::soa>;
 
-}  // namespace plssvm::detail
+}  // namespace plssvm
 
-template <> struct fmt::formatter<plssvm::layout_type> : fmt::ostream_formatter {};
-template <typename T, plssvm::layout_type layout> struct fmt::formatter<plssvm::matrix<T, layout>> : fmt::ostream_formatter {};
+template <>
+struct fmt::formatter<plssvm::layout_type> : fmt::ostream_formatter {};
+
+template <typename T, plssvm::layout_type layout>
+struct fmt::formatter<plssvm::matrix<T, layout>> : fmt::ostream_formatter {};
 
 #endif  // PLSSVM_DETAIL_MATRIX_HPP_

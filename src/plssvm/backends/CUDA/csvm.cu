@@ -127,8 +127,8 @@ std::size_t csvm::get_max_work_group_size() const {
 //***************************************************//
 
 auto csvm::run_assemble_kernel_matrix_explicit(const parameter &params, const device_ptr_type &data_d, const device_ptr_type &q_red_d, real_type QA_cost) const -> device_ptr_type {
-    const unsigned long long num_rows_reduced = data_d.size(0) - 1;
-    const unsigned long long num_features = data_d.size(1);
+    const unsigned long long num_rows_reduced = data_d.size(0) - 1 - THREAD_BLOCK_SIZE * INTERNAL_BLOCK_SIZE;
+    const unsigned long long num_features = data_d.size(1) - FEATURE_BLOCK_SIZE;
 
     // define grid and block sizes
     const std::size_t max_work_group_size = this->get_max_work_group_size();
