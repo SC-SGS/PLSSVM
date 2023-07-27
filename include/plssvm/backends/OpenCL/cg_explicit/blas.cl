@@ -69,8 +69,12 @@ __kernel void device_kernel_gemm(const ulong m, const ulong n, const ulong k, co
             }
 
             if (global_i < n) {
-                B_cache[get_local_id(1)][internal * THREAD_BLOCK_SIZE + get_local_id(0)] = B[(dim + get_local_id(1)) * n + global_i];
-                B_cache[get_local_id(1) + THREAD_BLOCK_SIZE][internal * THREAD_BLOCK_SIZE + get_local_id(0)] = B[(dim + get_local_id(1) + THREAD_BLOCK_SIZE) * n + global_i];
+                if (dim + get_local_id(1) < k) {
+                    B_cache[get_local_id(1)][internal * THREAD_BLOCK_SIZE + get_local_id(0)] = B[(dim + get_local_id(1)) * n + global_i];
+                }
+                if (dim + get_local_id(1) + THREAD_BLOCK_SIZE < k) {
+                    B_cache[get_local_id(1) + THREAD_BLOCK_SIZE][internal * THREAD_BLOCK_SIZE + get_local_id(0)] = B[(dim + get_local_id(1) + THREAD_BLOCK_SIZE) * n + global_i];
+                }
             }
         }
         barrier(CLK_LOCAL_MEM_FENCE);

@@ -92,8 +92,12 @@ class device_kernel_gemm {
                 }
 
                 if (global_j < n_) {
-                    B_cache_[nd_idx.get_local_id(0)][internal * THREAD_BLOCK_SIZE + nd_idx.get_local_id(1)] = B_[(dim + nd_idx.get_local_id(0)) * n_ + global_j];
-                    B_cache_[nd_idx.get_local_id(0) + THREAD_BLOCK_SIZE][internal * THREAD_BLOCK_SIZE + nd_idx.get_local_id(1)] = B_[(dim + nd_idx.get_local_id(0) + THREAD_BLOCK_SIZE) * n_ + global_j];
+                    if (dim + nd_idx.get_local_id(0) < k_) {
+                        B_cache_[nd_idx.get_local_id(0)][internal * THREAD_BLOCK_SIZE + nd_idx.get_local_id(1)] = B_[(dim + nd_idx.get_local_id(0)) * n_ + global_j];
+                    }
+                    if (dim + nd_idx.get_local_id(0) + THREAD_BLOCK_SIZE < k_) {
+                        B_cache_[nd_idx.get_local_id(0) + THREAD_BLOCK_SIZE][internal * THREAD_BLOCK_SIZE + nd_idx.get_local_id(1)] = B_[(dim + nd_idx.get_local_id(0) + THREAD_BLOCK_SIZE) * n_ + global_j];
+                    }
                 }
             }
             nd_idx.barrier();

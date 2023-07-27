@@ -59,8 +59,12 @@ __global__ void device_kernel_gemm(const unsigned long long m, const unsigned lo
             }
 
             if (global_i < n) {
-                B_cache[threadIdx.y][internal * THREAD_BLOCK_SIZE + threadIdx.x] = B[(dim + threadIdx.y) * n + global_i];
-                B_cache[threadIdx.y + THREAD_BLOCK_SIZE][internal * THREAD_BLOCK_SIZE + threadIdx.x] = B[(dim + threadIdx.y + THREAD_BLOCK_SIZE) * n + global_i];
+                if (dim + threadIdx.y < k) {
+                    B_cache[threadIdx.y][internal * THREAD_BLOCK_SIZE + threadIdx.x] = B[(dim + threadIdx.y) * n + global_i];
+                }
+                if (dim + threadIdx.y + THREAD_BLOCK_SIZE < k) {
+                    B_cache[threadIdx.y + THREAD_BLOCK_SIZE][internal * THREAD_BLOCK_SIZE + threadIdx.x] = B[(dim + threadIdx.y + THREAD_BLOCK_SIZE) * n + global_i];
+                }
             }
         }
         __syncthreads();
