@@ -250,7 +250,7 @@ template <typename label_type>
     const std::size_t num_attributes = num_features + static_cast<std::size_t>(has_label);
 
     // create data and label vectors
-    soa_matrix<real_type> data{ num_data_points, num_features };
+    soa_matrix<real_type> data{ num_data_points, num_features, THREAD_BLOCK_SIZE * INTERNAL_BLOCK_SIZE, FEATURE_BLOCK_SIZE };
     std::vector<label_type> label(num_data_points);
 
     std::exception_ptr parallel_exception;
