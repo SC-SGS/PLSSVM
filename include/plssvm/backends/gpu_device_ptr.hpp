@@ -60,10 +60,19 @@ class gpu_device_ptr {
     gpu_device_ptr(size_type size, const queue_type queue);
     /**
      * @brief Construct a device_ptr for the device managed by @p queue with the extends @p extends.
-     * @param[in] extends the extends of the managed memory; size = extends[0] * extends[1]
+     * @details The managed memory size is: extends[0] * extends[1].
+     * @param[in] extends the extends of the managed memory
      * @param[in] queue the queue (or similar) to manage the device_ptr
      */
     gpu_device_ptr(std::array<size_type, 2> extends, const queue_type queue);
+    /**
+     * @brief Construct a device_ptr for the device managed by @p queue with the extends @p extends including @p padding.
+     * @details The managed memory size is: (extends[0] + padding[0]) * (extends[1] + padding[1]).
+     * @param[in] extends the extends of the managed memory
+     * @param[in] padding the padding applied to the extends
+     * @param[in] queue the queue (or similar) to manage the device_ptr
+     */
+    gpu_device_ptr(std::array<size_type, 2> extends, std::array<size_type, 2> padding, const queue_type queue);
 
     /**
      * @brief Delete copy-constructor to make device_ptr a move only type.
@@ -129,7 +138,7 @@ class gpu_device_ptr {
      * @return the number of elements (`[[nodiscard]]`)
      */
     [[nodiscard]] size_type size() const noexcept {
-        return extends_[0] * extends_[1];
+        return (extends_[0] + padding_[0]) * (extends_[1] + padding_[1]);
     }
     /**
      * @brief Get the number of elements in the @p extend direction in the wrapped device_ptr.
@@ -139,6 +148,10 @@ class gpu_device_ptr {
     [[nodiscard]] size_type size(const size_type extend) const noexcept {
         PLSSVM_ASSERT(extend < 2, "Only extends 0 and 1 are allowed, but {} was provided!", extend);
         return extends_[extend];
+    }
+    [[nodiscard]] size_type padding(const size_type pad) const noexcept {
+        PLSSVM_ASSERT(pad < 2, "Only extends 0 and 1 are allowed, but {} was provided!", pad);
+        return padding_[pad];
     }
     /**
      * @brief Check whether the device_ptr currently maps zero elements.
@@ -255,6 +268,8 @@ class gpu_device_ptr {
     device_pointer_type data_{};
     /// The size of the managed memory.
     std::array<size_type, 2> extends_{ { 0, 0 } };
+    /// The padding size of the managed memory.
+    std::array<size_type, 2> padding_{ { 0, 0 } };
 };
 
 }  // namespace plssvm::detail

@@ -257,7 +257,7 @@ template <template <typename> typename device_ptr_t, typename queue_t>
 
     if (solver == solver_type::cg_explicit) {
         // initialize the data on the device
-        device_ptr_type data_d{ A.shape_padded(), devices_[0] };  // TODO: don't copy last data point to device?
+        device_ptr_type data_d{ A.shape(), A.padding(), devices_[0] };  // TODO: don't copy last data point to device?
         data_d.copy_to_device(A.data());
 
         return ::plssvm::detail::simple_any{ std::move(data_d) };
@@ -275,8 +275,8 @@ template <template <typename> typename device_ptr_t, typename queue_t>
     if (solver == solver_type::cg_explicit) {
         // get the pointer to the data that already is on the device
         const device_ptr_type &data_d = data.get<device_ptr_type>();
-        [[maybe_unused]] const std::size_t num_rows_reduced = data_d.size(0) - 1 - THREAD_BLOCK_SIZE * INTERNAL_BLOCK_SIZE;
-        [[maybe_unused]] const std::size_t num_features = data_d.size(1) - FEATURE_BLOCK_SIZE;  // TODO: better
+        [[maybe_unused]] const std::size_t num_rows_reduced = data_d.size(0) - 1;
+        [[maybe_unused]] const std::size_t num_features = data_d.size(1);
 
         // TODO: ASSERTS
         PLSSVM_ASSERT(num_rows_reduced > 0, "At least one row must be given!");

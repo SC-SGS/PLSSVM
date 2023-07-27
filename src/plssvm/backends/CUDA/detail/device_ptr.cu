@@ -23,11 +23,15 @@ namespace plssvm::cuda::detail {
 
 template <typename T>
 device_ptr<T>::device_ptr(const size_type size, const queue_type device) :
-    device_ptr{ { size, 1 }, device } { }
+    device_ptr{ { size, 1 }, { 0, 0 }, device } { }
 
 template <typename T>
 device_ptr<T>::device_ptr(const std::array<size_type, 2> extends, const queue_type device) :
-    base_type{ extends, device } {
+    device_ptr{ extends, { 0, 0 }, device } { }
+
+template <typename T>
+device_ptr<T>::device_ptr(const std::array<size_type, 2> extends, std::array<size_type, 2> padding, const queue_type device) :
+    base_type{ extends, padding, device } {
     if (queue_ < 0 || queue_ >= static_cast<int>(get_device_count())) {
         throw backend_exception{ fmt::format("Illegal device ID! Must be in range: [0, {}) but is {}.", get_device_count(), queue_) };
     }
