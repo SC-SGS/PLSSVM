@@ -221,7 +221,7 @@ __global__ void device_kernel_assembly_rbf(real_type *ret, const real_type *data
                         temp_ij += cost;
                     }
 
-                    ret[global_j * num_rows + global_i - global_j * (global_j + 1) / 2] = temp_ij;
+                    ret[global_j * (num_rows + PADDING) + global_i - global_j * (global_j + 1) / 2] = temp_ij;
                 }
             }
         }

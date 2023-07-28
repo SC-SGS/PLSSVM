@@ -286,8 +286,9 @@ template <template <typename> typename device_ptr_t, typename queue_t>
                       data_d.size(), (num_rows_reduced + 1) * num_features);
 
         // allocate memory for the values currently not on the device
-        device_ptr_type q_red_d{ q_red.size(), devices_[0] };
-        q_red_d.copy_to_device(q_red);
+        device_ptr_type q_red_d{ q_red.size() + THREAD_BLOCK_SIZE * INTERNAL_BLOCK_SIZE, devices_[0] };
+        q_red_d.copy_to_device(q_red, 0, q_red.size());
+        q_red_d.memset(0, q_red.size());
         device_ptr_type kernel_matrix = this->run_assemble_kernel_matrix_explicit(params, data_d, q_red_d, QA_cost);
 
         PLSSVM_ASSERT(num_rows_reduced * (num_rows_reduced + 1) / 2 == kernel_matrix.size(),
