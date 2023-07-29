@@ -214,7 +214,7 @@ __global__ void device_kernel_assembly_rbf(real_type *ret, const real_type *data
     __shared__ real_type data_cache_j[FEATURE_BLOCK_SIZE][INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE];
 
     if (blockIdx.x >= blockIdx.y) {
-        real_type temp[INTERNAL_BLOCK_SIZE][INTERNAL_BLOCK_SIZE] = { 0.0 };
+        real_type temp[INTERNAL_BLOCK_SIZE][INTERNAL_BLOCK_SIZE] = { { 0.0 } };
 
         for (unsigned long long dim = 0; dim < num_features; dim += FEATURE_BLOCK_SIZE) {
             // load data into shared memory
@@ -246,7 +246,6 @@ __global__ void device_kernel_assembly_rbf(real_type *ret, const real_type *data
                 const unsigned long long global_i = i + internal_i;
                 const unsigned long long global_j = j + internal_j;
 
-                // TODO: remove global_i < num_rows && global_j < num_rows? -> padding entries may not all be zero in ret afterwards -> adjust BLAS kernel
                 if (global_i < num_rows && global_j < num_rows && global_i >= global_j) {
                     real_type temp_ij = temp[internal_i][internal_j];
                     temp_ij = exp(-gamma * temp_ij) + QA_cost - q[global_i] - q[global_j];

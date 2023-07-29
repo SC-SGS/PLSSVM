@@ -41,7 +41,7 @@ __global__ void device_kernel_gemm(const unsigned long long m, const unsigned lo
     __shared__ real_type A_cache[FEATURE_BLOCK_SIZE][INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE];
     __shared__ real_type B_cache[FEATURE_BLOCK_SIZE][INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE];
 
-    real_type temp[INTERNAL_BLOCK_SIZE][INTERNAL_BLOCK_SIZE] = { 0.0 };
+    real_type temp[INTERNAL_BLOCK_SIZE][INTERNAL_BLOCK_SIZE] = { { 0.0 } };
 
     for (unsigned long long dim = 0; dim < k; dim += FEATURE_BLOCK_SIZE) {
         // load data into shared memory
