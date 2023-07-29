@@ -65,7 +65,7 @@ __global__ void device_kernel_gemm(const unsigned long long m, const unsigned lo
             const unsigned long long global_i = i + internal_i;
             const unsigned long long global_j = j + internal_j;
 
-            C[global_j * (n + FEATURE_BLOCK_SIZE) + global_i] = alpha * temp[internal_i][internal_j] + beta * C[global_j * (n + FEATURE_BLOCK_SIZE) + global_i];
+            C[global_j * (n + PADDING) + global_i] = alpha * temp[internal_i][internal_j] + beta * C[global_j * (n + PADDING) + global_i];
         }
     }
 }
