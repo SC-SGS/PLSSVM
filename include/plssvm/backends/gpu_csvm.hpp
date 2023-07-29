@@ -172,7 +172,7 @@ class gpu_csvm : public ::plssvm::csvm {
      * @param[in] beta the scalar beta value
      * @param[in,out] C the matrix @p C, also used as result matrix
      */
-    virtual void run_blas_level_3_symm_kernel_explicit(std::size_t m, std::size_t n, std::size_t k, real_type alpha, const device_ptr_type &A, const device_ptr_type &B, real_type beta, device_ptr_type &C) const = 0;
+    virtual void run_blas_level_3_kernel_explicit(std::size_t m, std::size_t n, std::size_t k, real_type alpha, const device_ptr_type &A, const device_ptr_type &B, real_type beta, device_ptr_type &C) const = 0;
 
     //***************************************************//
     //                   predict, score                  //
@@ -325,7 +325,7 @@ void gpu_csvm<device_ptr_t, queue_t>::blas_level_3(const solver_type solver, con
         }
         C_d.copy_to_device(C.data());
 
-        this->run_blas_level_3_symm_kernel_explicit(num_rows, num_rhs, num_rows, alpha, A_d, B_d, beta, C_d);
+        this->run_blas_level_3_kernel_explicit(num_rows, num_rhs, num_rows, alpha, A_d, B_d, beta, C_d);
 
         C_d.copy_to_host(C.data());
     } else {

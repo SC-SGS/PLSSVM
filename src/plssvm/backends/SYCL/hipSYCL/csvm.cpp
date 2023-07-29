@@ -188,7 +188,7 @@ auto csvm::run_assemble_kernel_matrix_explicit(const parameter &params, const de
     return kernel_matrix_d;
 }
 
-void csvm::run_blas_level_3_symm_kernel_explicit(const std::size_t m, const std::size_t n, const std::size_t k, const real_type alpha, const device_ptr_type &A_d, const device_ptr_type &B_d, const real_type beta, device_ptr_type &C_d) const {
+void csvm::run_blas_level_3_kernel_explicit(const std::size_t m, const std::size_t n, const std::size_t k, const real_type alpha, const device_ptr_type &A_d, const device_ptr_type &B_d, const real_type beta, device_ptr_type &C_d) const {
     const ::sycl::range<2> execution_range{ m, n };
 
     // cast to correct type
@@ -196,7 +196,11 @@ void csvm::run_blas_level_3_symm_kernel_explicit(const std::size_t m, const std:
     const auto n_ull = static_cast<unsigned long long>(n);
     const auto k_ull = static_cast<unsigned long long>(k);
 
+#if defined(PLSSVM_USE_GEMM)
+    devices_[0].impl->sycl_queue.parallel_for(execution_range, sycl::detail::device_kernel_gemm{ m_ull, n_ull, k_ull, alpha, A_d.get(), B_d.get(), beta, C_d.get() });
+#else
     devices_[0].impl->sycl_queue.parallel_for(execution_range, sycl::detail::device_kernel_symm{ m_ull, n_ull, k_ull, alpha, A_d.get(), B_d.get(), beta, C_d.get() });
+#endif
     devices_[0].impl->sycl_queue.wait_and_throw();
 }
 
