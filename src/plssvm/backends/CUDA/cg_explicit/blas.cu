@@ -26,12 +26,6 @@ __global__ void device_kernel_gemm(const unsigned long long m, const unsigned lo
     constexpr unsigned PADDING = THREAD_BLOCK_SIZE * INTERNAL_BLOCK_SIZE;
 
     for (unsigned long long dim = 0; dim < k; dim += FEATURE_BLOCK_SIZE) {
-        // zero out shared memory
-        for (unsigned internal = 0; internal < INTERNAL_BLOCK_SIZE; ++internal) {
-            B_cache[threadIdx.y][internal * THREAD_BLOCK_SIZE + threadIdx.x] = real_type{ 0.0 };
-            B_cache[threadIdx.y + THREAD_BLOCK_SIZE][internal * THREAD_BLOCK_SIZE + threadIdx.x] = real_type{ 0.0 };
-        }
-
         // load data into shared memory
         for (unsigned internal = 0; internal < INTERNAL_BLOCK_SIZE; ++internal) {
             const unsigned long long global_i = i_linear + internal * THREAD_BLOCK_SIZE;
@@ -50,14 +44,8 @@ __global__ void device_kernel_gemm(const unsigned long long m, const unsigned lo
                 A_cache[threadIdx.y + THREAD_BLOCK_SIZE][internal * THREAD_BLOCK_SIZE + threadIdx.x] = A[global_j * (k + PADDING) + dim + threadIdx.y + THREAD_BLOCK_SIZE - global_j * (global_j + 1) / 2];
             }
 
-            if (global_i < n) {
-                if (dim + threadIdx.y < k) {
-                    B_cache[threadIdx.y][internal * THREAD_BLOCK_SIZE + threadIdx.x] = B[(dim + threadIdx.y) * n + global_i];
-                }
-                if (dim + threadIdx.y + THREAD_BLOCK_SIZE < k) {
-                    B_cache[threadIdx.y + THREAD_BLOCK_SIZE][internal * THREAD_BLOCK_SIZE + threadIdx.x] = B[(dim + threadIdx.y + THREAD_BLOCK_SIZE) * n + global_i];
-                }
-            }
+            B_cache[threadIdx.y][internal * THREAD_BLOCK_SIZE + threadIdx.x] = B[(dim + threadIdx.y) * (n + FEATURE_BLOCK_SIZE) + global_i];
+            B_cache[threadIdx.y + THREAD_BLOCK_SIZE][internal * THREAD_BLOCK_SIZE + threadIdx.x] = B[(dim + threadIdx.y + THREAD_BLOCK_SIZE) * (n + FEATURE_BLOCK_SIZE) + global_i];
         }
         __syncthreads();
 

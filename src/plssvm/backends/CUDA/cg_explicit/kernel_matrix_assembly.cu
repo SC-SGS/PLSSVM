@@ -205,7 +205,8 @@ __global__ void device_kernel_assembly_rbf(real_type *ret, const real_type *data
                 const unsigned long long global_i = i + internal_i;
                 const unsigned long long global_j = j + internal_j;
 
-                if (global_i < num_rows && global_j < num_rows && global_i >= global_j) {  // TODO: global_i < num_rows && global_j < num_rows
+                // TODO: remove global_i < num_rows && global_j < num_rows? -> padding entries may not all be zero in ret afterwards -> adjust BLAS kernel
+                if (global_i < num_rows && global_j < num_rows && global_i >= global_j) {
                     real_type temp_ij = temp[internal_i][internal_j];
                     temp_ij = exp(-gamma * temp_ij) + QA_cost - q[global_i] - q[global_j];
 //                    temp_ij += (global_i == global_j) * cost;

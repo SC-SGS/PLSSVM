@@ -64,7 +64,7 @@ soa_matrix<real_type> csvm::conjugate_gradients(const detail::simple_any &A, con
     // perform Conjugate Gradients (CG) algorithm
     //
 
-    soa_matrix<real_type> X{ num_rhs, num_rows, real_type{ 1.0 } };
+    soa_matrix<real_type> X{ num_rhs, num_rows, real_type{ 1.0 }, FEATURE_BLOCK_SIZE, THREAD_BLOCK_SIZE * INTERNAL_BLOCK_SIZE };
 
     // R = B - A * X
     soa_matrix<real_type> R{ B };
@@ -83,7 +83,7 @@ soa_matrix<real_type> csvm::conjugate_gradients(const detail::simple_any &A, con
     }
     const std::vector<real_type> delta0(delta);
 
-    soa_matrix<real_type> D{ R };
+    soa_matrix<real_type> D{ R, FEATURE_BLOCK_SIZE, THREAD_BLOCK_SIZE * INTERNAL_BLOCK_SIZE };
 
     // get the index of the rhs that has the largest residual difference wrt to its target residual
     const auto rhs_idx_max_residual_difference = [&]() {

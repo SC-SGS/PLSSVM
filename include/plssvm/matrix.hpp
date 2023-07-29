@@ -94,6 +94,14 @@ class matrix {
     template <layout_type other_layout_>
     explicit matrix(const matrix<T, other_layout_> &other);
     /**
+     * @brief Construct a new matrix from @p other with the new padding sizes @p row_padding and @p col_padding. Respects potential different layout types.
+     * @tparam other_layout_ the layout_type of the other matrix
+     * @param[in] other the other matrix
+     */
+    template <layout_type other_layout_>
+    matrix(const matrix<T, other_layout_> &other, size_type row_padding, size_type col_padding);
+
+    /**
      * @brief Create a matrix of size @p num_rows x @p num_cols and initialize all entries with the value @p init.
      * @param[in] num_rows the number of rows in the matrix
      * @param[in] num_cols the number of columns in the matrix
@@ -298,6 +306,25 @@ matrix<T, layout_>::matrix(const matrix<T, other_layout_> &other) :
         std::memcpy(data_.data(), other.data(), this->num_entries_padded() * sizeof(T));
     } else {
         // convert AoS -> SoA or SoA -> AoS
+        #pragma omp parallel for collapse(2) default(none) shared(other) firstprivate(num_rows_, num_cols_)
+        for (std::size_t row = 0; row < num_rows_; ++row) {
+            for (std::size_t col = 0; col < num_cols_; ++col) {
+                (*this)(row, col) = other(row, col);
+            }
+        }
+    }
+}
+
+template <typename T, layout_type layout_>
+template <layout_type other_layout_>
+matrix<T, layout_>::matrix(const matrix<T, other_layout_> &other, size_type row_padding, size_type col_padding) :
+    matrix{ other.num_rows(), other.num_cols(), row_padding, col_padding } {
+    // TODO: opt
+    if (layout_ == other_layout_ && row_padding == other.padding()[0] && col_padding == other.padding()[1]) {
+        // same layout -> simply memcpy underlying array
+        std::memcpy(data_.data(), other.data(), this->num_entries_padded() * sizeof(T));
+    } else {
+        // convert AoS -> SoA or SoA -> AoS or manual copy because of mismatching padding sizes
         #pragma omp parallel for collapse(2) default(none) shared(other) firstprivate(num_rows_, num_cols_)
         for (std::size_t row = 0; row < num_rows_; ++row) {
             for (std::size_t col = 0; col < num_cols_; ++col) {
