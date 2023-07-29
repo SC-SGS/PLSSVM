@@ -53,35 +53,15 @@ class device_kernel_assembly_linear {
         if (nd_idx.get_group(0) >= nd_idx.get_group(1)) {
             real_type temp[INTERNAL_BLOCK_SIZE][INTERNAL_BLOCK_SIZE] = { { 0.0 } };
             for (unsigned long long dim = 0; dim < num_features_; dim += FEATURE_BLOCK_SIZE) {
-                // zero out shared memory
-                for (unsigned internal = 0; internal < INTERNAL_BLOCK_SIZE; ++internal) {
-                    data_cache_i_[nd_idx.get_local_id(0)][internal * THREAD_BLOCK_SIZE + nd_idx.get_local_id(1)] = real_type{ 0.0 };
-                    data_cache_i_[nd_idx.get_local_id(0) + THREAD_BLOCK_SIZE][internal * THREAD_BLOCK_SIZE + nd_idx.get_local_id(1)] = real_type{ 0.0 };
-                    data_cache_j_[nd_idx.get_local_id(0)][internal * THREAD_BLOCK_SIZE + nd_idx.get_local_id(1)] = real_type{ 0.0 };
-                    data_cache_j_[nd_idx.get_local_id(0) + THREAD_BLOCK_SIZE][internal * THREAD_BLOCK_SIZE + nd_idx.get_local_id(1)] = real_type{ 0.0 };
-                }
-
                 // load data into shared memory
                 for (unsigned internal = 0; internal < INTERNAL_BLOCK_SIZE; ++internal) {
                     const unsigned long long global_i = i_cached_idx_linear + internal * THREAD_BLOCK_SIZE;
                     const unsigned long long global_j = j_linear + internal * THREAD_BLOCK_SIZE;
 
-                    if (global_i < num_rows_) {
-                        if (dim + nd_idx.get_local_id(0) < num_features_) {
-                            data_cache_i_[nd_idx.get_local_id(0)][internal * THREAD_BLOCK_SIZE + nd_idx.get_local_id(1)] = data_d_[(dim + nd_idx.get_local_id(0)) * (num_rows_ + 1) + global_i];
-                        }
-                        if (dim + nd_idx.get_local_id(0) + THREAD_BLOCK_SIZE < num_features_) {
-                            data_cache_i_[nd_idx.get_local_id(0) + THREAD_BLOCK_SIZE][internal * THREAD_BLOCK_SIZE + nd_idx.get_local_id(1)] = data_d_[(dim + nd_idx.get_local_id(0) + THREAD_BLOCK_SIZE) * (num_rows_ + 1) + global_i];
-                        }
-                    }
-                    if (global_j < num_rows_) {
-                        if (dim + nd_idx.get_local_id(0) < num_features_) {
-                            data_cache_j_[nd_idx.get_local_id(0)][internal * THREAD_BLOCK_SIZE + nd_idx.get_local_id(1)] = data_d_[(dim + nd_idx.get_local_id(0)) * (num_rows_ + 1) + global_j];
-                        }
-                        if (dim + nd_idx.get_local_id(0) + THREAD_BLOCK_SIZE < num_features_) {
-                            data_cache_j_[nd_idx.get_local_id(0) + THREAD_BLOCK_SIZE][internal * THREAD_BLOCK_SIZE + nd_idx.get_local_id(1)] = data_d_[(dim + nd_idx.get_local_id(0) + THREAD_BLOCK_SIZE) * (num_rows_ + 1) + global_j];
-                        }
-                    }
+                    data_cache_i_[nd_idx.get_local_id(0)][internal * THREAD_BLOCK_SIZE + nd_idx.get_local_id(1)] = data_d_[(dim + nd_idx.get_local_id(0)) * (num_rows_ + 1 + THREAD_BLOCK_PADDING) + global_i];
+                    data_cache_i_[nd_idx.get_local_id(0) + THREAD_BLOCK_SIZE][internal * THREAD_BLOCK_SIZE + nd_idx.get_local_id(1)] = data_d_[(dim + nd_idx.get_local_id(0) + THREAD_BLOCK_SIZE) * (num_rows_ + 1 + THREAD_BLOCK_PADDING) + global_i];
+                    data_cache_j_[nd_idx.get_local_id(0)][internal * THREAD_BLOCK_SIZE + nd_idx.get_local_id(1)] = data_d_[(dim + nd_idx.get_local_id(0)) * (num_rows_ + 1 + THREAD_BLOCK_PADDING) + global_j];
+                    data_cache_j_[nd_idx.get_local_id(0) + THREAD_BLOCK_SIZE][internal * THREAD_BLOCK_SIZE + nd_idx.get_local_id(1)] = data_d_[(dim + nd_idx.get_local_id(0) + THREAD_BLOCK_SIZE) * (num_rows_ + 1 + THREAD_BLOCK_PADDING) + global_j];
                 }
                 nd_idx.barrier();
 
@@ -108,7 +88,7 @@ class device_kernel_assembly_linear {
                             temp_ij += cost_;
                         }
 
-                        ret_[global_j * num_rows_ + global_i - global_j * (global_j + 1) / 2] = temp_ij;
+                        ret_[global_j * (num_rows_ + THREAD_BLOCK_PADDING) + global_i - global_j * (global_j + 1) / 2] = temp_ij;
                     }
                 }
             }
@@ -168,35 +148,15 @@ class device_kernel_assembly_polynomial {
         if (nd_idx.get_group(0) >= nd_idx.get_group(1)) {
             real_type temp[INTERNAL_BLOCK_SIZE][INTERNAL_BLOCK_SIZE] = { { 0.0 } };
             for (unsigned long long dim = 0; dim < num_features_; dim += FEATURE_BLOCK_SIZE) {
-                // zero out shared memory
-                for (unsigned internal = 0; internal < INTERNAL_BLOCK_SIZE; ++internal) {
-                    data_cache_i_[nd_idx.get_local_id(0)][internal * THREAD_BLOCK_SIZE + nd_idx.get_local_id(1)] = real_type{ 0.0 };
-                    data_cache_i_[nd_idx.get_local_id(0) + THREAD_BLOCK_SIZE][internal * THREAD_BLOCK_SIZE + nd_idx.get_local_id(1)] = real_type{ 0.0 };
-                    data_cache_j_[nd_idx.get_local_id(0)][internal * THREAD_BLOCK_SIZE + nd_idx.get_local_id(1)] = real_type{ 0.0 };
-                    data_cache_j_[nd_idx.get_local_id(0) + THREAD_BLOCK_SIZE][internal * THREAD_BLOCK_SIZE + nd_idx.get_local_id(1)] = real_type{ 0.0 };
-                }
-
                 // load data into shared memory
                 for (unsigned internal = 0; internal < INTERNAL_BLOCK_SIZE; ++internal) {
                     const unsigned long long global_i = i_cached_idx_linear + internal * THREAD_BLOCK_SIZE;
                     const unsigned long long global_j = j_linear + internal * THREAD_BLOCK_SIZE;
 
-                    if (global_i < num_rows_) {
-                        if (dim + nd_idx.get_local_id(0) < num_features_) {
-                            data_cache_i_[nd_idx.get_local_id(0)][internal * THREAD_BLOCK_SIZE + nd_idx.get_local_id(1)] = data_d_[(dim + nd_idx.get_local_id(0)) * (num_rows_ + 1) + global_i];
-                        }
-                        if (dim + nd_idx.get_local_id(0) + THREAD_BLOCK_SIZE < num_features_) {
-                            data_cache_i_[nd_idx.get_local_id(0) + THREAD_BLOCK_SIZE][internal * THREAD_BLOCK_SIZE + nd_idx.get_local_id(1)] = data_d_[(dim + nd_idx.get_local_id(0) + THREAD_BLOCK_SIZE) * (num_rows_ + 1) + global_i];
-                        }
-                    }
-                    if (global_j < num_rows_) {
-                        if (dim + nd_idx.get_local_id(0) < num_features_) {
-                            data_cache_j_[nd_idx.get_local_id(0)][internal * THREAD_BLOCK_SIZE + nd_idx.get_local_id(1)] = data_d_[(dim + nd_idx.get_local_id(0)) * (num_rows_ + 1) + global_j];
-                        }
-                        if (dim + nd_idx.get_local_id(0) + THREAD_BLOCK_SIZE < num_features_) {
-                            data_cache_j_[nd_idx.get_local_id(0) + THREAD_BLOCK_SIZE][internal * THREAD_BLOCK_SIZE + nd_idx.get_local_id(1)] = data_d_[(dim + nd_idx.get_local_id(0) + THREAD_BLOCK_SIZE) * (num_rows_ + 1) + global_j];
-                        }
-                    }
+                    data_cache_i_[nd_idx.get_local_id(0)][internal * THREAD_BLOCK_SIZE + nd_idx.get_local_id(1)] = data_d_[(dim + nd_idx.get_local_id(0)) * (num_rows_ + 1 + THREAD_BLOCK_PADDING) + global_i];
+                    data_cache_i_[nd_idx.get_local_id(0) + THREAD_BLOCK_SIZE][internal * THREAD_BLOCK_SIZE + nd_idx.get_local_id(1)] = data_d_[(dim + nd_idx.get_local_id(0) + THREAD_BLOCK_SIZE) * (num_rows_ + 1 + THREAD_BLOCK_PADDING) + global_i];
+                    data_cache_j_[nd_idx.get_local_id(0)][internal * THREAD_BLOCK_SIZE + nd_idx.get_local_id(1)] = data_d_[(dim + nd_idx.get_local_id(0)) * (num_rows_ + 1 + THREAD_BLOCK_PADDING) + global_j];
+                    data_cache_j_[nd_idx.get_local_id(0) + THREAD_BLOCK_SIZE][internal * THREAD_BLOCK_SIZE + nd_idx.get_local_id(1)] = data_d_[(dim + nd_idx.get_local_id(0) + THREAD_BLOCK_SIZE) * (num_rows_ + 1 + THREAD_BLOCK_PADDING) + global_j];
                 }
                 nd_idx.barrier();
 
@@ -227,7 +187,7 @@ class device_kernel_assembly_polynomial {
                             temp_ij += cost_;
                         }
 
-                        ret_[global_j * num_rows_ + global_i - global_j * (global_j + 1) / 2] = temp_ij;
+                        ret_[global_j * (num_rows_ + THREAD_BLOCK_PADDING) + global_i - global_j * (global_j + 1) / 2] = temp_ij;
                     }
                 }
             }
