@@ -151,13 +151,6 @@ auto csvm::run_assemble_kernel_matrix_explicit(const parameter &params, const de
     const unsigned long long num_rows_reduced = data_d.size(0) - 1;
     const unsigned long long num_features = data_d.size(1);
 
-    // define grid and block sizes
-//    const std::size_t max_work_group_size = this->get_max_work_group_size();
-//    const auto max_work_group_size_2D = static_cast<std::size_t>(std::sqrt(static_cast<real_type>(max_work_group_size)));
-//    const ::sycl::range<2> block{ max_work_group_size_2D, max_work_group_size_2D };
-//    const ::sycl::range<2> grid{ static_cast<std::size_t>(std::ceil(static_cast<double>(num_rows_reduced) / static_cast<double>(block[0]))) * block[0],
-//                                 static_cast<std::size_t>(std::ceil(static_cast<double>(num_rows_reduced) / static_cast<double>(block[1]))) * block[1] };
-//    const ::sycl::nd_range<2> execution_range{ grid, block };
     const ::sycl::range<2> execution_range{ num_rows_reduced, num_rows_reduced };
 
     device_ptr_type kernel_matrix_d{ num_rows_reduced * (num_rows_reduced + 1) / 2, devices_[0] };  // only explicitly store the upper triangular matrix
@@ -179,14 +172,7 @@ auto csvm::run_assemble_kernel_matrix_explicit(const parameter &params, const de
     return kernel_matrix_d;
 }
 
-void csvm::run_gemm_kernel_explicit(const std::size_t m, const std::size_t n, const std::size_t k, const real_type alpha, const device_ptr_type &A_d, const device_ptr_type &B_d, const real_type beta, device_ptr_type &C_d) const {
-    // define grid and block sizes
-//    const std::size_t max_work_group_size = this->get_max_work_group_size();
-//    const auto max_work_group_size_2D = static_cast<std::size_t>(std::sqrt(static_cast<real_type>(max_work_group_size)));
-//    const ::sycl::range<2> block{ max_work_group_size_2D, max_work_group_size_2D };
-//    const ::sycl::range<2> grid{ static_cast<std::size_t>(std::ceil(static_cast<double>(m) / static_cast<double>(block[0]))) * block[0],
-//                                 static_cast<std::size_t>(std::ceil(static_cast<double>(n) / static_cast<double>(block[1]))) * block[1] };
-//    const ::sycl::nd_range<2> execution_range{ grid, block };
+void csvm::run_blas_level_3_symm_kernel_explicit(const std::size_t m, const std::size_t n, const std::size_t k, const real_type alpha, const device_ptr_type &A_d, const device_ptr_type &B_d, const real_type beta, device_ptr_type &C_d) const {
     const ::sycl::range<2> execution_range{ m, n };
 
     // cast to correct type
@@ -194,7 +180,7 @@ void csvm::run_gemm_kernel_explicit(const std::size_t m, const std::size_t n, co
     const auto n_ull = static_cast<unsigned long long>(n);
     const auto k_ull = static_cast<unsigned long long>(k);
 
-    devices_[0].impl->sycl_queue.parallel_for(execution_range, sycl::detail::device_kernel_gemm{ m_ull, n_ull, k_ull, alpha, A_d.get(), B_d.get(), beta, C_d.get() });
+    devices_[0].impl->sycl_queue.parallel_for(execution_range, sycl::detail::device_kernel_symm{ m_ull, n_ull, k_ull, alpha, A_d.get(), B_d.get(), beta, C_d.get() });
     devices_[0].impl->sycl_queue.wait_and_throw();
 }
 

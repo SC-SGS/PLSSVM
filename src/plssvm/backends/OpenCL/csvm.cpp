@@ -226,7 +226,7 @@ auto csvm::run_assemble_kernel_matrix_explicit(const parameter &params, const de
     return kernel_matrix_d;
 }
 
-void csvm::run_gemm_kernel_explicit(const std::size_t m, const std::size_t n, const std::size_t k, const real_type alpha, const device_ptr_type &A_d, const device_ptr_type &B_d, const real_type beta, device_ptr_type &C_d) const {
+void csvm::run_blas_level_3_symm_kernel_explicit(const std::size_t m, const std::size_t n, const std::size_t k, const real_type alpha, const device_ptr_type &A_d, const device_ptr_type &B_d, const real_type beta, device_ptr_type &C_d) const {
     // define the grid and block sizes
     const std::size_t max_work_group_size = this->get_max_work_group_size();
     const auto max_work_group_size_2D = static_cast<std::size_t>(std::sqrt(static_cast<real_type>(max_work_group_size)));

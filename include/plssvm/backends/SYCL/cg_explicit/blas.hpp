@@ -20,9 +20,9 @@
 namespace plssvm::sycl::detail {
 
 /**
- * @brief Perform an explicit BLAS GEMM operation: `C = alpha * A * B + beta * C` where A is a `m x k` matrix, B is a `k x n` matrix, C is a `m x n` matrix, and alpha and beta are scalars.
+ * @brief Perform an explicit BLAS SYMM operation: `C = alpha * A * B + beta * C` where A is a `m x k` symmetric matrix (memory optimized), B is a `k x n` matrix, C is a `m x n` matrix, and alpha and beta are scalars.
  */
-class device_kernel_gemm {
+class device_kernel_symm {
   public:
     /**
      * @brief Initialize the SYCL kernel function object.
@@ -35,18 +35,15 @@ class device_kernel_gemm {
      * @param[in] beta the scalar beta value
      * @param[in,out] C the matrix @p C, also used as result matrix
      */
-    device_kernel_gemm(const unsigned long long m, const unsigned long long n, const unsigned long long k, const real_type alpha, const real_type *A, const real_type *B, const real_type beta, real_type *C) :
+    device_kernel_symm(const unsigned long long m, const unsigned long long n, const unsigned long long k, const real_type alpha, const real_type *A, const real_type *B, const real_type beta, real_type *C) :
         m_{ m }, n_{ n }, k_{ k }, alpha_{ alpha }, A_{ A }, B_{ B }, beta_{ beta }, C_{ C } {}
 
     /**
      * @brief Function call operator overload performing the actual calculation.
-     * @param[in] nd_idx indices representing the current point in the execution space
+     * @param[in] idx indices representing the current point in the execution space
      */
-//    void operator()(::sycl::nd_item<2> nd_idx) const {
     void operator()(::sycl::item<2> idx) const {
         // compute: C = alpha * A * B + beta * C with A in m x k, B in n x k, and C in n x m, alpha, beta as scalar
-//        const unsigned long long i = nd_idx.get_global_id(0);
-//        const unsigned long long j = nd_idx.get_global_id(1);
         const unsigned long long i = idx.get_id(0);
         const unsigned long long j = idx.get_id(1);
 
