@@ -41,49 +41,29 @@ __global__ void device_kernel_gemm(const unsigned long long m, const unsigned lo
     __shared__ real_type A_cache[FEATURE_BLOCK_SIZE][INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE];
     __shared__ real_type B_cache[FEATURE_BLOCK_SIZE][INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE];
 
-    real_type temp[INTERNAL_BLOCK_SIZE][INTERNAL_BLOCK_SIZE] = { { 0.0 } };
+    real_type temp[INTERNAL_BLOCK_SIZE][INTERNAL_BLOCK_SIZE] = { 0.0 };
 
     for (unsigned long long dim = 0; dim < k; dim += FEATURE_BLOCK_SIZE) {
-        // zero out shared memory
-        for (unsigned internal = 0; internal < INTERNAL_BLOCK_SIZE; ++internal) {
-            A_cache[threadIdx.y][internal * THREAD_BLOCK_SIZE + threadIdx.x] = real_type{ 0.0 };
-            A_cache[threadIdx.y + THREAD_BLOCK_SIZE][internal * THREAD_BLOCK_SIZE + threadIdx.x] = real_type{ 0.0 };
-            B_cache[threadIdx.y][internal * THREAD_BLOCK_SIZE + threadIdx.x] = real_type{ 0.0 };
-            B_cache[threadIdx.y + THREAD_BLOCK_SIZE][internal * THREAD_BLOCK_SIZE + threadIdx.x] = real_type{ 0.0 };
-        }
-
         // load data into shared memory
         for (unsigned internal = 0; internal < INTERNAL_BLOCK_SIZE; ++internal) {
             const unsigned long long global_i = i_linear + internal * THREAD_BLOCK_SIZE;
             const unsigned long long global_j = j_cached_idx_linear + internal * THREAD_BLOCK_SIZE;
 
-            if (dim + threadIdx.y < k) {
-                if (dim + threadIdx.y < global_j) {
-                    if (global_j < k) {
-                        A_cache[threadIdx.y][internal * THREAD_BLOCK_SIZE + threadIdx.x] = A[(dim + threadIdx.y) * k + global_j - (dim + threadIdx.y) * (dim + threadIdx.y + 1) / 2];
-                    }
-                } else {
-                    A_cache[threadIdx.y][internal * THREAD_BLOCK_SIZE + threadIdx.x] = A[global_j * k + dim + threadIdx.y - global_j * (global_j + 1) / 2];
-                }
+            // determine on which side of the diagonal we are located
+            if (dim + threadIdx.y < global_j) {
+                A_cache[threadIdx.y][internal * THREAD_BLOCK_SIZE + threadIdx.x] = A[(dim + threadIdx.y) * (k + THREAD_BLOCK_PADDING) + global_j - (dim + threadIdx.y) * (dim + threadIdx.y + 1) / 2];
+            } else {
+                A_cache[threadIdx.y][internal * THREAD_BLOCK_SIZE + threadIdx.x] = A[global_j * (k + THREAD_BLOCK_PADDING) + dim + threadIdx.y - global_j * (global_j + 1) / 2];
+            }
+            // determine on which side of the diagonal we are located
+            if (dim + threadIdx.y + THREAD_BLOCK_SIZE < global_j) {
+                A_cache[threadIdx.y + THREAD_BLOCK_SIZE][internal * THREAD_BLOCK_SIZE + threadIdx.x] = A[(dim + threadIdx.y + THREAD_BLOCK_SIZE) * (k + THREAD_BLOCK_PADDING) + global_j - (dim + threadIdx.y + THREAD_BLOCK_SIZE) * (dim + threadIdx.y + THREAD_BLOCK_SIZE + 1) / 2];
+            } else {
+                A_cache[threadIdx.y + THREAD_BLOCK_SIZE][internal * THREAD_BLOCK_SIZE + threadIdx.x] = A[global_j * (k + THREAD_BLOCK_PADDING) + dim + threadIdx.y + THREAD_BLOCK_SIZE - global_j * (global_j + 1) / 2];
             }
 
-            if (dim + threadIdx.y + THREAD_BLOCK_SIZE < k) {
-                if (dim + threadIdx.y + THREAD_BLOCK_SIZE < global_j) {
-                    if (global_j < k) {
-                        A_cache[threadIdx.y + THREAD_BLOCK_SIZE][internal * THREAD_BLOCK_SIZE + threadIdx.x] = A[(dim + threadIdx.y + THREAD_BLOCK_SIZE) * k + global_j - (dim + threadIdx.y + THREAD_BLOCK_SIZE) * (dim + threadIdx.y + THREAD_BLOCK_SIZE + 1) / 2];
-                    }
-                } else {
-                    A_cache[threadIdx.y + THREAD_BLOCK_SIZE][internal * THREAD_BLOCK_SIZE + threadIdx.x] = A[global_j * k + dim + threadIdx.y + THREAD_BLOCK_SIZE - global_j * (global_j + 1) / 2];
-                }
-            }
-
-            if (global_i < n) {
-                if (dim + threadIdx.y < k) {
-                    B_cache[threadIdx.y][internal * THREAD_BLOCK_SIZE + threadIdx.x] = B[(dim + threadIdx.y) * n + global_i];
-                }
-                if (dim + threadIdx.y + THREAD_BLOCK_SIZE < k) {
-                    B_cache[threadIdx.y + THREAD_BLOCK_SIZE][internal * THREAD_BLOCK_SIZE + threadIdx.x] = B[(dim + threadIdx.y + THREAD_BLOCK_SIZE) * n + global_i];
-                }
+            B_cache[threadIdx.y][internal * THREAD_BLOCK_SIZE + threadIdx.x] = B[(dim + threadIdx.y) * (n + FEATURE_BLOCK_SIZE) + global_i];
+            B_cache[threadIdx.y + THREAD_BLOCK_SIZE][internal * THREAD_BLOCK_SIZE + threadIdx.x] = B[(dim + threadIdx.y + THREAD_BLOCK_SIZE) * (n + FEATURE_BLOCK_SIZE) + global_i];
         }
         __syncthreads();
 
@@ -103,9 +83,7 @@ __global__ void device_kernel_gemm(const unsigned long long m, const unsigned lo
             const unsigned long long global_i = i + internal_i;
             const unsigned long long global_j = j + internal_j;
 
-            if (global_i < n && global_j < m) {
-                C[global_j * n + global_i] = alpha * temp[internal_i][internal_j] + beta * C[global_j * n + global_i];
-            }
+            C[global_j * (n + THREAD_BLOCK_PADDING) + global_i] = alpha * temp[internal_i][internal_j] + beta * C[global_j * (n + THREAD_BLOCK_PADDING) + global_i];
         }
     }
 }

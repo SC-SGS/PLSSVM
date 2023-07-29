@@ -214,38 +214,18 @@ __global__ void device_kernel_assembly_rbf(real_type *ret, const real_type *data
     __shared__ real_type data_cache_j[FEATURE_BLOCK_SIZE][INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE];
 
     if (blockIdx.x >= blockIdx.y) {
-        real_type temp[INTERNAL_BLOCK_SIZE][INTERNAL_BLOCK_SIZE] = { { 0.0 } };
+        real_type temp[INTERNAL_BLOCK_SIZE][INTERNAL_BLOCK_SIZE] = { 0.0 };
 
         for (unsigned long long dim = 0; dim < num_features; dim += FEATURE_BLOCK_SIZE) {
-            // zero out shared memory
-            for (unsigned internal = 0; internal < INTERNAL_BLOCK_SIZE; ++internal) {
-                data_cache_i[threadIdx.y][internal * THREAD_BLOCK_SIZE + threadIdx.x] = real_type{ 0.0 };
-                data_cache_i[threadIdx.y + THREAD_BLOCK_SIZE][internal * THREAD_BLOCK_SIZE + threadIdx.x] = real_type{ 0.0 };
-                data_cache_j[threadIdx.y][internal * THREAD_BLOCK_SIZE + threadIdx.x] = real_type{ 0.0 };
-                data_cache_j[threadIdx.y + THREAD_BLOCK_SIZE][internal * THREAD_BLOCK_SIZE + threadIdx.x] = real_type{ 0.0 };
-            }
-
             // load data into shared memory
             for (unsigned internal = 0; internal < INTERNAL_BLOCK_SIZE; ++internal) {
                 const unsigned long long global_i = i_linear + internal * THREAD_BLOCK_SIZE;
                 const unsigned long long global_j = j_cached_idx_linear + internal * THREAD_BLOCK_SIZE;
 
-                if (global_i < num_rows) {
-                    if (dim + threadIdx.y < num_features) {
-                        data_cache_i[threadIdx.y][internal * THREAD_BLOCK_SIZE + threadIdx.x] = data_d[(dim + threadIdx.y) * (num_rows + 1) + global_i];
-                    }
-                    if (dim + threadIdx.y + THREAD_BLOCK_SIZE < num_features) {
-                        data_cache_i[threadIdx.y + THREAD_BLOCK_SIZE][internal * THREAD_BLOCK_SIZE + threadIdx.x] = data_d[(dim + threadIdx.y + THREAD_BLOCK_SIZE) * (num_rows + 1) + global_i];
-                    }
-                }
-                if (global_j < num_rows) {
-                    if (dim + threadIdx.y < num_features) {
-                        data_cache_j[threadIdx.y][internal * THREAD_BLOCK_SIZE + threadIdx.x] = data_d[(dim + threadIdx.y) * (num_rows + 1) + global_j];
-                    }
-                    if (dim + threadIdx.y + THREAD_BLOCK_SIZE < num_features) {
-                        data_cache_j[threadIdx.y + THREAD_BLOCK_SIZE][internal * THREAD_BLOCK_SIZE + threadIdx.x] = data_d[(dim + threadIdx.y + THREAD_BLOCK_SIZE) * (num_rows + 1) + global_j];
-                    }
-                }
+                data_cache_i[threadIdx.y][internal * THREAD_BLOCK_SIZE + threadIdx.x] = data_d[(dim + threadIdx.y) * (num_rows + 1 + THREAD_BLOCK_PADDING) + global_i];
+                data_cache_i[threadIdx.y + THREAD_BLOCK_SIZE][internal * THREAD_BLOCK_SIZE + threadIdx.x] = data_d[(dim + threadIdx.y + THREAD_BLOCK_SIZE) * (num_rows + 1 + THREAD_BLOCK_PADDING) + global_i];
+                data_cache_j[threadIdx.y][internal * THREAD_BLOCK_SIZE + threadIdx.x] = data_d[(dim + threadIdx.y) * (num_rows + 1 + THREAD_BLOCK_PADDING) + global_j];
+                data_cache_j[threadIdx.y + THREAD_BLOCK_SIZE][internal * THREAD_BLOCK_SIZE + threadIdx.x] = data_d[(dim + threadIdx.y + THREAD_BLOCK_SIZE) * (num_rows + 1 + THREAD_BLOCK_PADDING) + global_j];
             }
             __syncthreads();
 
@@ -266,14 +246,16 @@ __global__ void device_kernel_assembly_rbf(real_type *ret, const real_type *data
                 const unsigned long long global_i = i + internal_i;
                 const unsigned long long global_j = j + internal_j;
 
+                // TODO: remove global_i < num_rows && global_j < num_rows? -> padding entries may not all be zero in ret afterwards -> adjust BLAS kernel
                 if (global_i < num_rows && global_j < num_rows && global_i >= global_j) {
                     real_type temp_ij = temp[internal_i][internal_j];
                     temp_ij = exp(-gamma * temp_ij) + QA_cost - q[global_i] - q[global_j];
+                    //                    temp_ij += (global_i == global_j) * cost;
                     if (global_i == global_j) {
                         temp_ij += cost;
                     }
 
-                    ret[global_j * num_rows + global_i - global_j * (global_j + 1) / 2] = temp_ij;
+                    ret[global_j * (num_rows + THREAD_BLOCK_PADDING) + global_i - global_j * (global_j + 1) / 2] = temp_ij;
                 }
             }
         }
