@@ -210,35 +210,15 @@ __kernel void device_kernel_assembly_rbf(__global real_type *ret, __global const
         real_type temp[INTERNAL_BLOCK_SIZE][INTERNAL_BLOCK_SIZE] = { 0.0 };
 
         for (ulong dim = 0; dim < num_features; dim += FEATURE_BLOCK_SIZE) {
-            // zero out shared memory
-            for (unsigned internal = 0; internal < INTERNAL_BLOCK_SIZE; ++internal) {
-                data_cache_i[get_local_id(1)][internal * THREAD_BLOCK_SIZE + get_local_id(0)] = 0.0;
-                data_cache_i[get_local_id(1) + THREAD_BLOCK_SIZE][internal * THREAD_BLOCK_SIZE + get_local_id(0)] = 0.0;
-                data_cache_j[get_local_id(1)][internal * THREAD_BLOCK_SIZE + get_local_id(0)] = 0.0;
-                data_cache_j[get_local_id(1) + THREAD_BLOCK_SIZE][internal * THREAD_BLOCK_SIZE + get_local_id(0)] = 0.0;
-            }
-
             // load data into shared memory
             for (uint internal = 0; internal < INTERNAL_BLOCK_SIZE; ++internal) {
                 const ulong global_i = i_linear + internal * THREAD_BLOCK_SIZE;
                 const ulong global_j = j_cached_idx_linear + internal * THREAD_BLOCK_SIZE;
 
-                if (global_i < num_rows) {
-                    if (dim + get_local_id(1) < num_features) {
-                        data_cache_i[get_local_id(1)][internal * THREAD_BLOCK_SIZE + get_local_id(0)] = data_d[(dim + get_local_id(1)) * (num_rows + 1) + global_i];
-                    }
-                    if (dim + get_local_id(1) + THREAD_BLOCK_SIZE < num_features) {
-                        data_cache_i[get_local_id(1) + THREAD_BLOCK_SIZE][internal * THREAD_BLOCK_SIZE + get_local_id(0)] = data_d[(dim + get_local_id(1) + THREAD_BLOCK_SIZE) * (num_rows + 1) + global_i];
-                    }
-                }
-                if (global_j < num_rows) {
-                    if (dim + get_local_id(1) < num_features) {
-                        data_cache_j[get_local_id(1)][internal * THREAD_BLOCK_SIZE + get_local_id(0)] = data_d[(dim + get_local_id(1)) * (num_rows + 1) + global_j];
-                    }
-                    if (dim + get_local_id(1) + THREAD_BLOCK_SIZE < num_features) {
-                        data_cache_j[get_local_id(1) + THREAD_BLOCK_SIZE][internal * THREAD_BLOCK_SIZE + get_local_id(0)] = data_d[(dim + get_local_id(1) + THREAD_BLOCK_SIZE) * (num_rows + 1) + global_j];
-                    }
-                }
+                data_cache_i[get_local_id(1)][internal * THREAD_BLOCK_SIZE + get_local_id(0)] = data_d[(dim + get_local_id(1)) * (num_rows + 1 + THREAD_BLOCK_PADDING) + global_i];
+                data_cache_i[get_local_id(1) + THREAD_BLOCK_SIZE][internal * THREAD_BLOCK_SIZE + get_local_id(0)] = data_d[(dim + get_local_id(1) + THREAD_BLOCK_SIZE) * (num_rows + 1 + THREAD_BLOCK_PADDING) + global_i];
+                data_cache_j[get_local_id(1)][internal * THREAD_BLOCK_SIZE + get_local_id(0)] = data_d[(dim + get_local_id(1)) * (num_rows + 1 + THREAD_BLOCK_PADDING) + global_j];
+                data_cache_j[get_local_id(1) + THREAD_BLOCK_SIZE][internal * THREAD_BLOCK_SIZE + get_local_id(0)] = data_d[(dim + get_local_id(1) + THREAD_BLOCK_SIZE) * (num_rows + 1 + THREAD_BLOCK_PADDING) + global_j];
             }
             barrier(CLK_LOCAL_MEM_FENCE);
 
@@ -266,7 +246,7 @@ __kernel void device_kernel_assembly_rbf(__global real_type *ret, __global const
                         temp_ij += cost;
                     }
 
-                    ret[global_j * num_rows + global_i - global_j * (global_j + 1) / 2] = temp_ij;
+                    ret[global_j * (num_rows + THREAD_BLOCK_PADDING) + global_i - global_j * (global_j + 1) / 2] = temp_ij;
                 }
             }
         }

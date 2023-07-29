@@ -65,6 +65,13 @@ class device_ptr : public ::plssvm::detail::gpu_device_ptr<T, const command_queu
      * @param[in] queue the associated command queue
      */
     device_ptr(std::array<size_type, 2> extends, const command_queue &queue);
+    /**
+     * @brief Allocates `(extends[0] + padding[0]) * (extends[1] + padding[1]) * sizeof(T)` bytes on the device associated with @p queue.
+     * @param[in] extends the number of elements represented by the device_ptr
+     * @param[in] padding the number of padding elements added to the extend values
+     * @param[in] queue the associated command queue
+     */
+    device_ptr(std::array<size_type, 2> extends, std::array<size_type, 2> padding, const command_queue &queue);
 
     /**
      * @copydoc plssvm::detail::gpu_device_ptr::gpu_device_ptr(const plssvm::detail::gpu_device_ptr &)

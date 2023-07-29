@@ -237,6 +237,7 @@ std::vector<command_queue> create_command_queues(const std::vector<context> &con
     ::plssvm::detail::replace_all(kernel_src_string, "THREAD_BLOCK_SIZE", fmt::format("{}", THREAD_BLOCK_SIZE));
     ::plssvm::detail::replace_all(kernel_src_string, "FEATURE_BLOCK_SIZE", fmt::format("{}", FEATURE_BLOCK_SIZE));
     ::plssvm::detail::replace_all(kernel_src_string, "INTERNAL_BLOCK_SIZE", fmt::format("{}", INTERNAL_BLOCK_SIZE));
+    ::plssvm::detail::replace_all(kernel_src_string, "THREAD_BLOCK_PADDING", fmt::format("{}", THREAD_BLOCK_PADDING));
 
     // append number of device to influence checksum calculation
     kernel_src_string.append(fmt::format("\n// num_devices: {}\n// OpenCL library: {}", contexts[0].devices.size(), PLSSVM_OPENCL_LIBRARY));

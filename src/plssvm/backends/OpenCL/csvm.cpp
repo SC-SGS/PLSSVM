@@ -209,7 +209,7 @@ auto csvm::run_assemble_kernel_matrix_explicit(const parameter &params, const de
     const std::vector<std::size_t> grid = { static_cast<std::size_t>(std::ceil(static_cast<double>(num_rows_reduced) / static_cast<double>(block[0] * INTERNAL_BLOCK_SIZE))) * block[0],
                                             static_cast<std::size_t>(std::ceil(static_cast<double>(num_rows_reduced) / static_cast<double>(block[1] * INTERNAL_BLOCK_SIZE))) * block[1] };
 
-    device_ptr_type kernel_matrix_d{ num_rows_reduced * (num_rows_reduced + 1) / 2, devices_[0] };  // only explicitly store the upper triangular matrix
+    device_ptr_type kernel_matrix_d{ (num_rows_reduced + THREAD_BLOCK_PADDING) * (num_rows_reduced + THREAD_BLOCK_PADDING + 1) / 2, devices_[0] };  // only explicitly store the upper triangular matrix
     const real_type cost_factor = real_type{ 1.0 } / params.cost;
 
     switch (params.kernel_type) {

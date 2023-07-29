@@ -25,11 +25,15 @@ namespace plssvm::opencl::detail {
 
 template <typename T>
 device_ptr<T>::device_ptr(const size_type size, const command_queue &queue) :
-    device_ptr{ { size, 1 }, queue } { }
+    device_ptr{ { size, 1 }, { 0, 0 }, queue } { }
 
 template <typename T>
 device_ptr<T>::device_ptr(const std::array<size_type, 2> extends, const command_queue &queue) :
-    base_type{ extends, &queue } {
+    device_ptr{ extends, { 0, 0 }, queue } { }
+
+template <typename T>
+device_ptr<T>::device_ptr(const std::array<size_type, 2> extends, std::array<size_type, 2> padding, const command_queue &queue) :
+    base_type{ extends, padding, &queue } {
     error_code err{};
     cl_context cont{};
     PLSSVM_OPENCL_ERROR_CHECK(clGetCommandQueueInfo(queue_->queue, CL_QUEUE_CONTEXT, sizeof(cl_context), &cont, nullptr));
