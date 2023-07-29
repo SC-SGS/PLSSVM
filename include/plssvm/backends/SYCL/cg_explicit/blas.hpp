@@ -55,50 +55,26 @@ class device_kernel_gemm {
         real_type temp[INTERNAL_BLOCK_SIZE][INTERNAL_BLOCK_SIZE] = { { 0.0 } };
 
         for (unsigned long long dim = 0; dim < k_; dim += FEATURE_BLOCK_SIZE) {
-            // zero out shared memory
-            for (unsigned internal = 0; internal < INTERNAL_BLOCK_SIZE; ++internal) {
-                A_cache_[nd_idx.get_local_id(0)][internal * THREAD_BLOCK_SIZE + nd_idx.get_local_id(1)] = real_type{ 0.0 };
-                A_cache_[nd_idx.get_local_id(0) + THREAD_BLOCK_SIZE][internal * THREAD_BLOCK_SIZE + nd_idx.get_local_id(1)] = real_type{ 0.0 };
-                B_cache_[nd_idx.get_local_id(0)][internal * THREAD_BLOCK_SIZE + nd_idx.get_local_id(1)] = real_type{ 0.0 };
-                B_cache_[nd_idx.get_local_id(0) + THREAD_BLOCK_SIZE][internal * THREAD_BLOCK_SIZE + nd_idx.get_local_id(1)] = real_type{ 0.0 };
-            }
-#if PLSSVM_SYCL_BACKEND_COMPILER == PLSSVM_SYCL_BACKEND_COMPILER_HIPSYCL
-            nd_idx.barrier();  // shouldn't be necessary
-#endif
-
             // load data into shared memory
             for (unsigned internal = 0; internal < INTERNAL_BLOCK_SIZE; ++internal) {
                 const unsigned long long global_i = i_cached_idx_linear + internal * THREAD_BLOCK_SIZE;
                 const unsigned long long global_j = j_linear + internal * THREAD_BLOCK_SIZE;
 
-                if (dim + nd_idx.get_local_id(0) < k_) {
-                    if (dim + nd_idx.get_local_id(0) < global_i) {
-                        if (global_i < k_) {
-                            A_cache_[nd_idx.get_local_id(0)][internal * THREAD_BLOCK_SIZE + nd_idx.get_local_id(1)] = A_[(dim + nd_idx.get_local_id(0)) * k_ + global_i - (dim + nd_idx.get_local_id(0)) * (dim + nd_idx.get_local_id(0) + 1) / 2];
-                        }
-                    } else {
-                        A_cache_[nd_idx.get_local_id(0)][internal * THREAD_BLOCK_SIZE + nd_idx.get_local_id(1)] = A_[global_i * k_ + dim + nd_idx.get_local_id(0) - global_i * (global_i + 1) / 2];
-                    }
+                // determine on which side of the diagonal we are located
+                if (dim + nd_idx.get_local_id(0) < global_i) {
+                    A_cache_[nd_idx.get_local_id(0)][internal * THREAD_BLOCK_SIZE + nd_idx.get_local_id(1)] = A_[(dim + nd_idx.get_local_id(0)) * (k_ + THREAD_BLOCK_PADDING) + global_i - (dim + nd_idx.get_local_id(0)) * (dim + nd_idx.get_local_id(0) + 1) / 2];
+                } else {
+                    A_cache_[nd_idx.get_local_id(0)][internal * THREAD_BLOCK_SIZE + nd_idx.get_local_id(1)] = A_[global_i * (k_ + THREAD_BLOCK_PADDING) + dim + nd_idx.get_local_id(0) - global_i * (global_i + 1) / 2];
+                }
+                // determine on which side of the diagonal we are located
+                if (dim + nd_idx.get_local_id(0) + THREAD_BLOCK_SIZE < global_i) {
+                        A_cache_[nd_idx.get_local_id(0) + THREAD_BLOCK_SIZE][internal * THREAD_BLOCK_SIZE + nd_idx.get_local_id(1)] = A_[(dim + nd_idx.get_local_id(0) + THREAD_BLOCK_SIZE) * (k_ + THREAD_BLOCK_PADDING) + global_i - (dim + nd_idx.get_local_id(0) + THREAD_BLOCK_SIZE) * (dim + nd_idx.get_local_id(0) + THREAD_BLOCK_SIZE + 1) / 2];
+                } else {
+                    A_cache_[nd_idx.get_local_id(0) + THREAD_BLOCK_SIZE][internal * THREAD_BLOCK_SIZE + nd_idx.get_local_id(1)] = A_[global_i * (k_ + THREAD_BLOCK_PADDING) + dim + nd_idx.get_local_id(0) + THREAD_BLOCK_SIZE - global_i * (global_i + 1) / 2];
                 }
 
-                if (dim + nd_idx.get_local_id(0) + THREAD_BLOCK_SIZE < k_) {
-                    if (dim + nd_idx.get_local_id(0) + THREAD_BLOCK_SIZE < global_i) {
-                        if (global_i < k_) {
-                            A_cache_[nd_idx.get_local_id(0) + THREAD_BLOCK_SIZE][internal * THREAD_BLOCK_SIZE + nd_idx.get_local_id(1)] = A_[(dim + nd_idx.get_local_id(0) + THREAD_BLOCK_SIZE) * k_ + global_i - (dim + nd_idx.get_local_id(0) + THREAD_BLOCK_SIZE) * (dim + nd_idx.get_local_id(0) + THREAD_BLOCK_SIZE + 1) / 2];
-                        }
-                    } else {
-                        A_cache_[nd_idx.get_local_id(0) + THREAD_BLOCK_SIZE][internal * THREAD_BLOCK_SIZE + nd_idx.get_local_id(1)] = A_[global_i * k_ + dim + nd_idx.get_local_id(0) + THREAD_BLOCK_SIZE - global_i * (global_i + 1) / 2];
-                    }
-                }
-
-                if (global_j < n_) {
-                    if (dim + nd_idx.get_local_id(0) < k_) {
-                        B_cache_[nd_idx.get_local_id(0)][internal * THREAD_BLOCK_SIZE + nd_idx.get_local_id(1)] = B_[(dim + nd_idx.get_local_id(0)) * n_ + global_j];
-                    }
-                    if (dim + nd_idx.get_local_id(0) + THREAD_BLOCK_SIZE < k_) {
-                        B_cache_[nd_idx.get_local_id(0) + THREAD_BLOCK_SIZE][internal * THREAD_BLOCK_SIZE + nd_idx.get_local_id(1)] = B_[(dim + nd_idx.get_local_id(0) + THREAD_BLOCK_SIZE) * n_ + global_j];
-                    }
-                }
+                B_cache_[nd_idx.get_local_id(0)][internal * THREAD_BLOCK_SIZE + nd_idx.get_local_id(1)] = B_[(dim + nd_idx.get_local_id(0)) * (n_ + FEATURE_BLOCK_SIZE) + global_j];
+                B_cache_[nd_idx.get_local_id(0) + THREAD_BLOCK_SIZE][internal * THREAD_BLOCK_SIZE + nd_idx.get_local_id(1)] = B_[(dim + nd_idx.get_local_id(0) + THREAD_BLOCK_SIZE) * (n_ + FEATURE_BLOCK_SIZE) + global_j];
             }
             nd_idx.barrier();
 
@@ -118,9 +94,7 @@ class device_kernel_gemm {
                 const unsigned long long global_i = i + internal_i;
                 const unsigned long long global_j = j + internal_j;
 
-                if (global_i < m_ && global_j < n_) {
-                    C_[global_i * n_ + global_j] = alpha_ * temp[internal_i][internal_j] + beta_ * C_[global_i * n_ + global_j];
-                }
+                C_[global_i * (n_ + THREAD_BLOCK_PADDING) + global_j] = alpha_ * temp[internal_i][internal_j] + beta_ * C_[global_i * (n_ + THREAD_BLOCK_PADDING) + global_j];
             }
         }
     }
@@ -132,7 +106,7 @@ class device_kernel_gemm {
     ::sycl::local_accessor<real_type, 2> B_cache_;
 
     /// @cond Doxygen_suppress
-    const unsigned long long m_;
+    [[maybe_unused]] const unsigned long long m_;
     const unsigned long long n_;
     const unsigned long long k_;
     const real_type alpha_;

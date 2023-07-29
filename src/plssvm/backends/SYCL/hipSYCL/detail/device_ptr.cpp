@@ -24,11 +24,15 @@ namespace plssvm::hipsycl::detail {
 
 template <typename T>
 device_ptr<T>::device_ptr(const size_type size, const queue &q) :
-    device_ptr{ { size, 1 }, q } {}
+    device_ptr{ { size, 1 }, { 0, 0 }, q } {}
 
 template <typename T>
 device_ptr<T>::device_ptr(const std::array<size_type, 2> extends, const queue &q) :
-    base_type{ extends, q } {
+    device_ptr{ extends, { 0, 0 }, q } { }
+
+template <typename T>
+device_ptr<T>::device_ptr(const std::array<size_type, 2> extends, const std::array<size_type, 2> padding, const queue &q) :
+    base_type{ extends, padding, q } {
     data_ = ::sycl::malloc_device<value_type>(this->size(), queue_.impl->sycl_queue);
 }
 
