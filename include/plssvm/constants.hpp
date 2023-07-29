@@ -47,6 +47,9 @@ constexpr unsigned long long INTERNAL_BLOCK_SIZE = PLSSVM_INTERNAL_BLOCK_SIZE;
 constexpr unsigned INTERNAL_BLOCK_SIZE = 4;
 #endif
 
+/// Padding used in a thread block to prevent out-of-bounce accesses without ifs.
+constexpr unsigned THREAD_BLOCK_PADDING = THREAD_BLOCK_SIZE * INTERNAL_BLOCK_SIZE;
+
 /// Global compile-time constant used for internal caching in the OpenMP kernel. May be changed during the CMake configuration step.
 #if defined(PLSSVM_OPENMP_BLOCK_SIZE)
 constexpr unsigned long long OPENMP_BLOCK_SIZE = PLSSVM_OPENMP_BLOCK_SIZE;

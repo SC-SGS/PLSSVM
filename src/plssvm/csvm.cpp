@@ -64,10 +64,10 @@ soa_matrix<real_type> csvm::conjugate_gradients(const detail::simple_any &A, con
     // perform Conjugate Gradients (CG) algorithm
     //
 
-    soa_matrix<real_type> X{ num_rhs, num_rows, real_type{ 1.0 }, FEATURE_BLOCK_SIZE, THREAD_BLOCK_SIZE * INTERNAL_BLOCK_SIZE };
+    soa_matrix<real_type> X{ num_rhs, num_rows, real_type{ 1.0 }, FEATURE_BLOCK_SIZE, THREAD_BLOCK_PADDING };
 
     // R = B - A * X
-    soa_matrix<real_type> R{ B, THREAD_BLOCK_SIZE * INTERNAL_BLOCK_SIZE, THREAD_BLOCK_SIZE * INTERNAL_BLOCK_SIZE };
+    soa_matrix<real_type> R{ B, THREAD_BLOCK_PADDING, THREAD_BLOCK_PADDING };
     total_blas_gemm_time += this->run_blas_gemm(cg_solver, real_type{ -1.0 }, A, X, real_type{ 1.0 }, R);
 
     // delta = R.T * R
@@ -83,7 +83,7 @@ soa_matrix<real_type> csvm::conjugate_gradients(const detail::simple_any &A, con
     }
     const std::vector<real_type> delta0(delta);
 
-    soa_matrix<real_type> D{ R, FEATURE_BLOCK_SIZE, THREAD_BLOCK_SIZE * INTERNAL_BLOCK_SIZE };
+    soa_matrix<real_type> D{ R, FEATURE_BLOCK_SIZE, THREAD_BLOCK_PADDING };
 
     // get the index of the rhs that has the largest residual difference wrt to its target residual
     const auto rhs_idx_max_residual_difference = [&]() {
@@ -120,7 +120,7 @@ soa_matrix<real_type> csvm::conjugate_gradients(const detail::simple_any &A, con
         const std::chrono::steady_clock::time_point iteration_start_time = std::chrono::steady_clock::now();
 
         // Q = A * D
-        soa_matrix<real_type> Q{ D.num_rows(), D.num_cols(), THREAD_BLOCK_SIZE * INTERNAL_BLOCK_SIZE, THREAD_BLOCK_SIZE * INTERNAL_BLOCK_SIZE };
+        soa_matrix<real_type> Q{ D.num_rows(), D.num_cols(), THREAD_BLOCK_PADDING, THREAD_BLOCK_PADDING };
         total_blas_gemm_time += this->run_blas_gemm(cg_solver, real_type{ 1.0 }, A, D, real_type{ 0.0 }, Q);
 
         // alpha = delta_new / (D^T * Q))
@@ -146,7 +146,7 @@ soa_matrix<real_type> csvm::conjugate_gradients(const detail::simple_any &A, con
         if (iter % 50 == 49) {
             // explicitly recalculate residual to remove accumulating floating point errors
             // R = B - A * X
-            R = soa_matrix<real_type>{ B, THREAD_BLOCK_SIZE * INTERNAL_BLOCK_SIZE, THREAD_BLOCK_SIZE * INTERNAL_BLOCK_SIZE };
+            R = soa_matrix<real_type>{ B, THREAD_BLOCK_PADDING, THREAD_BLOCK_PADDING };
             total_blas_gemm_time += this->run_blas_gemm(cg_solver, real_type{ -1.0 }, A, X, real_type{ 1.0 }, R);
         } else {
             // R = R - alpha * Q

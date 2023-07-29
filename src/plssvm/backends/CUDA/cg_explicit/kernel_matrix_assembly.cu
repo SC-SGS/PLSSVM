@@ -172,7 +172,6 @@ __global__ void device_kernel_assembly_rbf(real_type *ret, const real_type *data
     __shared__ real_type data_cache_j[FEATURE_BLOCK_SIZE][INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE];
 
     if (blockIdx.x >= blockIdx.y) {
-        constexpr unsigned PADDING = THREAD_BLOCK_SIZE * INTERNAL_BLOCK_SIZE;
         real_type temp[INTERNAL_BLOCK_SIZE][INTERNAL_BLOCK_SIZE] = { 0.0 };
 
         for (unsigned long long dim = 0; dim < num_features; dim += FEATURE_BLOCK_SIZE) {
@@ -181,10 +180,10 @@ __global__ void device_kernel_assembly_rbf(real_type *ret, const real_type *data
                 const unsigned long long global_i = i_linear + internal * THREAD_BLOCK_SIZE;
                 const unsigned long long global_j = j_cached_idx_linear + internal * THREAD_BLOCK_SIZE;
 
-                data_cache_i[threadIdx.y][internal * THREAD_BLOCK_SIZE + threadIdx.x] = data_d[(dim + threadIdx.y) * (num_rows + 1 + PADDING) + global_i];
-                data_cache_i[threadIdx.y + THREAD_BLOCK_SIZE][internal * THREAD_BLOCK_SIZE + threadIdx.x] = data_d[(dim + threadIdx.y + THREAD_BLOCK_SIZE) * (num_rows + 1 + PADDING) + global_i];
-                data_cache_j[threadIdx.y][internal * THREAD_BLOCK_SIZE + threadIdx.x] = data_d[(dim + threadIdx.y) * (num_rows + 1 + PADDING) + global_j];
-                data_cache_j[threadIdx.y + THREAD_BLOCK_SIZE][internal * THREAD_BLOCK_SIZE + threadIdx.x] = data_d[(dim + threadIdx.y + THREAD_BLOCK_SIZE) * (num_rows + 1 + PADDING) + global_j];
+                data_cache_i[threadIdx.y][internal * THREAD_BLOCK_SIZE + threadIdx.x] = data_d[(dim + threadIdx.y) * (num_rows + 1 + THREAD_BLOCK_PADDING) + global_i];
+                data_cache_i[threadIdx.y + THREAD_BLOCK_SIZE][internal * THREAD_BLOCK_SIZE + threadIdx.x] = data_d[(dim + threadIdx.y + THREAD_BLOCK_SIZE) * (num_rows + 1 + THREAD_BLOCK_PADDING) + global_i];
+                data_cache_j[threadIdx.y][internal * THREAD_BLOCK_SIZE + threadIdx.x] = data_d[(dim + threadIdx.y) * (num_rows + 1 + THREAD_BLOCK_PADDING) + global_j];
+                data_cache_j[threadIdx.y + THREAD_BLOCK_SIZE][internal * THREAD_BLOCK_SIZE + threadIdx.x] = data_d[(dim + threadIdx.y + THREAD_BLOCK_SIZE) * (num_rows + 1 + THREAD_BLOCK_PADDING) + global_j];
             }
             __syncthreads();
 
@@ -214,7 +213,7 @@ __global__ void device_kernel_assembly_rbf(real_type *ret, const real_type *data
                         temp_ij += cost;
                     }
 
-                    ret[global_j * (num_rows + PADDING) + global_i - global_j * (global_j + 1) / 2] = temp_ij;
+                    ret[global_j * (num_rows + THREAD_BLOCK_PADDING) + global_i - global_j * (global_j + 1) / 2] = temp_ij;
                 }
             }
         }
