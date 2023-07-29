@@ -67,7 +67,7 @@ soa_matrix<real_type> csvm::conjugate_gradients(const detail::simple_any &A, con
     soa_matrix<real_type> X{ num_rhs, num_rows, real_type{ 1.0 }, FEATURE_BLOCK_SIZE, THREAD_BLOCK_SIZE * INTERNAL_BLOCK_SIZE };
 
     // R = B - A * X
-    soa_matrix<real_type> R{ B };
+    soa_matrix<real_type> R{ B, FEATURE_BLOCK_SIZE, THREAD_BLOCK_SIZE * INTERNAL_BLOCK_SIZE };
     total_blas_gemm_time += this->run_blas_gemm(cg_solver, real_type{ -1.0 }, A, X, real_type{ 1.0 }, R);
 
     // delta = R.T * R
@@ -120,7 +120,7 @@ soa_matrix<real_type> csvm::conjugate_gradients(const detail::simple_any &A, con
         const std::chrono::steady_clock::time_point iteration_start_time = std::chrono::steady_clock::now();
 
         // Q = A * D
-        soa_matrix<real_type> Q{ D.num_rows(), D.num_cols() };
+        soa_matrix<real_type> Q{ D.num_rows(), D.num_cols(), FEATURE_BLOCK_SIZE, THREAD_BLOCK_SIZE * INTERNAL_BLOCK_SIZE };
         total_blas_gemm_time += this->run_blas_gemm(cg_solver, real_type{ 1.0 }, A, D, real_type{ 0.0 }, Q);
 
         // alpha = delta_new / (D^T * Q))
@@ -146,7 +146,7 @@ soa_matrix<real_type> csvm::conjugate_gradients(const detail::simple_any &A, con
         if (iter % 50 == 49) {
             // explicitly recalculate residual to remove accumulating floating point errors
             // R = B - A * X
-            R = B;
+            R = soa_matrix<real_type>{ B, FEATURE_BLOCK_SIZE, THREAD_BLOCK_SIZE * INTERNAL_BLOCK_SIZE };
             total_blas_gemm_time += this->run_blas_gemm(cg_solver, real_type{ -1.0 }, A, X, real_type{ 1.0 }, R);
         } else {
             // R = R - alpha * Q

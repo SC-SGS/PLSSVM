@@ -321,9 +321,9 @@ void gpu_csvm<device_ptr_t, queue_t>::blas_gemm(const solver_type solver, const 
             B_d = device_ptr_type{ B.shape_padded(), devices_[0] };
         }
         B_d.copy_to_device(B.data());
-        static device_ptr_type C_d{ C.shape(), devices_[0] };
-        if (C_d.size() != C.num_entries()) {
-            C_d = device_ptr_type{ C.shape(), devices_[0] };
+        static device_ptr_type C_d{ C.shape_padded(), devices_[0] };
+        if (C_d.size() != C.num_entries_padded()) {
+            C_d = device_ptr_type{ C.shape_padded(), devices_[0] };
         }
         C_d.copy_to_device(C.data());
 
