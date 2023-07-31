@@ -121,9 +121,9 @@ class gpu_csvm : public ::plssvm::csvm {
      */
     [[nodiscard]] ::plssvm::detail::simple_any assemble_kernel_matrix(const solver_type solver, const parameter &params, const ::plssvm::detail::simple_any & data, const std::vector<real_type> &q_red, const real_type QA_cost) const final;
     /**
-     * @copydoc plssvm::csvm::kernel_matrix_matmul_explicit
+     * @copydoc plssvm::csvm::blas_level_3
      */
-    void blas_gemm(const solver_type solver, const real_type alpha, const ::plssvm::detail::simple_any &A, const aos_matrix<real_type> &B, const real_type beta, aos_matrix<real_type> &C) const final;
+    void blas_level_3(const solver_type solver, const real_type alpha, const ::plssvm::detail::simple_any &A, const aos_matrix<real_type> &B, const real_type beta, aos_matrix<real_type> &C) const final;
 
     //***************************************************//
     //                   predict, score                  //
@@ -162,7 +162,7 @@ class gpu_csvm : public ::plssvm::csvm {
      */
     [[nodiscard]] virtual device_ptr_type run_assemble_kernel_matrix_explicit(const parameter &params, const device_ptr_type & data_d, const device_ptr_type &q_red_d, real_type QA_cost) const = 0;
     /**
-     * @brief Perform an explicit BLAS GEMM operation: `C = alpha * A * B + beta * C` where @p A is a `m x k` matrix, @p B is a `k x n` matrix, @p C is a `m x n` matrix, and @p alpha and @p beta are scalars.
+     * @brief Perform an explicit BLAS level 3 operation: `C = alpha * A * B + beta * C` where @p A is a `m x k` matrix, @p B is a `k x n` matrix, @p C is a `m x n` matrix, and @p alpha and @p beta are scalars.
      * @param[in] m the number of rows in @p A and @p C
      * @param[in] n the number of columns in @p B and @p C
      * @param[in] k the number of rows in @p A and number of columns in @p B
@@ -172,7 +172,7 @@ class gpu_csvm : public ::plssvm::csvm {
      * @param[in] beta the scalar beta value
      * @param[in,out] C the matrix @p C, also used as result matrix
      */
-    virtual void run_gemm_kernel_explicit(std::size_t m, std::size_t n, std::size_t k, real_type alpha, const device_ptr_type &A, const device_ptr_type &B, real_type beta, device_ptr_type &C) const = 0;
+    virtual void run_blas_level_3_kernel_explicit(std::size_t m, std::size_t n, std::size_t k, real_type alpha, const device_ptr_type &A, const device_ptr_type &B, real_type beta, device_ptr_type &C) const = 0;
 
     //***************************************************//
     //                   predict, score                  //
@@ -289,9 +289,15 @@ template <template <typename> typename device_ptr_t, typename queue_t>
         q_red_d.copy_to_device(q_red);
         device_ptr_type kernel_matrix = this->run_assemble_kernel_matrix_explicit(params, data_d, q_red_d, QA_cost);
 
+#if defined(PLSSVM_USE_GEMM)
         PLSSVM_ASSERT(num_rows_reduced * num_rows_reduced == kernel_matrix.size(),
                       "The kernel matrix must be a quadratic matrix with num_rows_reduced^2 ({}) entries, but is {}!",
                       num_rows_reduced * num_rows_reduced, kernel_matrix.size());
+#else
+        PLSSVM_ASSERT(num_rows_reduced * (num_rows_reduced + 1) / 2 == kernel_matrix.size(),
+                      "The kernel matrix must be a triangular matrix only with num_rows_reduced * (num_rows_reduced + 1) / 2 ({}) entries, but is {}!",
+                      num_rows_reduced * (num_rows_reduced + 1) / 2, kernel_matrix.size());
+#endif
 
         return ::plssvm::detail::simple_any{ std::move(kernel_matrix) };
     } else {
@@ -301,7 +307,7 @@ template <template <typename> typename device_ptr_t, typename queue_t>
 }
 
 template <template <typename> typename device_ptr_t, typename queue_t>
-void gpu_csvm<device_ptr_t, queue_t>::blas_gemm(const solver_type solver, const real_type alpha, const ::plssvm::detail::simple_any &A, const aos_matrix<real_type> &B, const real_type beta, aos_matrix<real_type> &C) const {
+void gpu_csvm<device_ptr_t, queue_t>::blas_level_3(const solver_type solver, const real_type alpha, const ::plssvm::detail::simple_any &A, const aos_matrix<real_type> &B, const real_type beta, aos_matrix<real_type> &C) const {
     PLSSVM_ASSERT(!B.empty(), "The B matrix may not be empty!");
     PLSSVM_ASSERT(!C.empty(), "The C matrix may not be empty!");
     PLSSVM_ASSERT(solver != solver_type::automatic, "An explicit solver type must be provided instead of solver_type::automatic!");
@@ -325,7 +331,7 @@ void gpu_csvm<device_ptr_t, queue_t>::blas_gemm(const solver_type solver, const 
         }
         C_d.copy_to_device(C.data());
 
-        this->run_gemm_kernel_explicit(num_rows, num_rhs, num_rows, alpha, A_d, B_d, beta, C_d);
+        this->run_blas_level_3_kernel_explicit(num_rows, num_rhs, num_rows, alpha, A_d, B_d, beta, C_d);
 
         C_d.copy_to_host(C.data());
     } else {

@@ -35,7 +35,12 @@ __kernel void device_kernel_assembly_linear(__global real_type *ret, __global co
             temp += cost;
         }
 
+#ifdef PLSSVM_USE_GEMM
+        ret[i * num_rows + j] = temp;
+        ret[j * num_rows + i] = temp;
+#else
         ret[i * num_rows + j - i * (i + 1) / 2] = temp;
+#endif
     }
 }
 
@@ -66,7 +71,12 @@ __kernel void device_kernel_assembly_polynomial(__global real_type *ret, __globa
             temp += cost;
         }
 
+#ifdef PLSSVM_USE_GEMM
+        ret[i * num_rows + j] = temp;
+        ret[j * num_rows + i] = temp;
+#else
         ret[i * num_rows + j - i * (i + 1) / 2] = temp;
+#endif
     }
 }
 
@@ -96,6 +106,11 @@ __kernel void device_kernel_assembly_rbf(__global real_type *ret, __global const
             temp += cost;
         }
 
+#ifdef PLSSVM_USE_GEMM
+        ret[i * num_rows + j] = temp;
+        ret[j * num_rows + i] = temp;
+#else
         ret[i * num_rows + j - i * (i + 1) / 2] = temp;
+#endif
     }
 }
