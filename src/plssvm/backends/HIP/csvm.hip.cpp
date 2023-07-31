@@ -135,7 +135,11 @@ auto csvm::run_assemble_kernel_matrix_explicit(const parameter &params, const de
     const dim3 grid(static_cast<int>(std::ceil(static_cast<double>(num_rows_reduced) / static_cast<double>(block.x))),
                     static_cast<int>(std::ceil(static_cast<double>(num_rows_reduced) / static_cast<double>(block.y))));
 
+#if defined(PLSSVM_USE_GEMM)
+    device_ptr_type kernel_matrix_d{ num_rows_reduced * num_rows_reduced };  // store full matrix
+#else
     device_ptr_type kernel_matrix_d{ num_rows_reduced * (num_rows_reduced + 1) / 2 };  // only explicitly store the upper triangular matrix
+#endif
     const real_type cost_factor = real_type{ 1.0 } / params.cost;
 
     detail::set_device(0);

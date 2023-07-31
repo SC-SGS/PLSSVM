@@ -153,7 +153,11 @@ auto csvm::run_assemble_kernel_matrix_explicit(const parameter &params, const de
 
     const ::sycl::range<2> execution_range{ num_rows_reduced, num_rows_reduced };
 
+#if defined(PLSSVM_USE_GEMM)
+    device_ptr_type kernel_matrix_d{ num_rows_reduced * num_rows_reduced, devices_[0] };  // store full matrix
+#else
     device_ptr_type kernel_matrix_d{ num_rows_reduced * (num_rows_reduced + 1) / 2, devices_[0] };  // only explicitly store the upper triangular matrix
+#endif
     const real_type cost_factor = real_type{ 1.0 } / params.cost;
 
     switch (params.kernel_type) {
