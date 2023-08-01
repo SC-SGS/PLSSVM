@@ -27,7 +27,7 @@ __kernel void device_kernel_gemm(const ulong m, const ulong n, const ulong k, co
     const ulong i = get_global_id(0);
     const ulong j = get_global_id(1);
 
-    if (i < m && j < n) {
+    if (i < n && j < m) {
         real_type temp = 0.0;
         for (ulong dim = 0; dim < k; ++dim) {
             temp += A[dim * k + j] * B[dim * n + i];
@@ -52,7 +52,7 @@ __kernel void device_kernel_symm(const ulong m, const ulong n, const ulong k, co
     const ulong i = get_global_id(0);
     const ulong j = get_global_id(1);
 
-    if (i < m && j < n) {
+    if (i < n && j < m) {
         real_type temp = 0.0;
         ulong offset = 0;
         // left of the diagonal -> use contiguous values

@@ -17,7 +17,7 @@ __global__ void device_kernel_gemm(const unsigned long long m, const unsigned lo
     const unsigned long long i = blockIdx.x * blockDim.x + threadIdx.x;
     const unsigned long long j = blockIdx.y * blockDim.y + threadIdx.y;
 
-    if (i < m && j < n) {
+    if (i < n && j < m) {
         real_type temp{ 0.0 };
         for (unsigned long long dim = 0; dim < k; ++dim) {
             temp += A[dim * k + j] * B[dim * n + i];
@@ -31,7 +31,7 @@ __global__ void device_kernel_symm(const unsigned long long m, const unsigned lo
     const unsigned long long i = blockIdx.x * blockDim.x + threadIdx.x;
     const unsigned long long j = blockIdx.y * blockDim.y + threadIdx.y;
 
-    if (i < m && j < n) {
+    if (i < n && j < m) {
         real_type temp{ 0.0 };
         unsigned long long offset = 0;
         // left of the diagonal -> use contiguous values
