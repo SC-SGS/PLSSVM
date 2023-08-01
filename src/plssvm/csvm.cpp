@@ -58,7 +58,7 @@ soa_matrix<real_type> csvm::conjugate_gradients(const detail::simple_any &A, con
 
     // timing for each CG iteration
     std::chrono::milliseconds total_iteration_time{};
-    std::chrono::milliseconds total_blas_gemm_time{};
+    std::chrono::milliseconds total_blas_level_3_time{};
 
     //
     // perform Conjugate Gradients (CG) algorithm
@@ -68,7 +68,7 @@ soa_matrix<real_type> csvm::conjugate_gradients(const detail::simple_any &A, con
 
     // R = B - A * X
     soa_matrix<real_type> R{ B };
-    total_blas_gemm_time += this->run_blas_gemm(cg_solver, real_type{ -1.0 }, A, X, real_type{ 1.0 }, R);
+    total_blas_level_3_time += this->run_blas_level_3(cg_solver, real_type{ -1.0 }, A, X, real_type{ 1.0 }, R);
 
     // delta = R.T * R
     std::vector<real_type> delta(num_rhs);
@@ -121,7 +121,7 @@ soa_matrix<real_type> csvm::conjugate_gradients(const detail::simple_any &A, con
 
         // Q = A * D
         soa_matrix<real_type> Q{ D.num_rows(), D.num_cols() };
-        total_blas_gemm_time += this->run_blas_gemm(cg_solver, real_type{ 1.0 }, A, D, real_type{ 0.0 }, Q);
+        total_blas_level_3_time += this->run_blas_level_3(cg_solver, real_type{ 1.0 }, A, D, real_type{ 0.0 }, Q);
 
         // alpha = delta_new / (D^T * Q))
         std::vector<real_type> alpha(num_rhs);
@@ -147,7 +147,7 @@ soa_matrix<real_type> csvm::conjugate_gradients(const detail::simple_any &A, con
             // explicitly recalculate residual to remove accumulating floating point errors
             // R = B - A * X
             R = B;
-            total_blas_gemm_time += this->run_blas_gemm(cg_solver, real_type{ -1.0 }, A, X, real_type{ 1.0 }, R);
+            total_blas_level_3_time += this->run_blas_level_3(cg_solver, real_type{ -1.0 }, A, X, real_type{ 1.0 }, R);
         } else {
             // R = R - alpha * Q
             #pragma omp parallel for collapse(2) default(none) shared(R, alpha, Q) firstprivate(num_rhs, num_rows)
@@ -201,7 +201,7 @@ soa_matrix<real_type> csvm::conjugate_gradients(const detail::simple_any &A, con
                 eps * eps * delta0[max_residual_difference_idx],
                 max_residual_difference_idx,
                 detail::tracking_entry{ "cg", "avg_iteration_time", total_iteration_time / iter },
-                detail::tracking_entry{ "cg", "avg_gemm_time", total_blas_gemm_time / (1 + iter + iter / 50) });
+                detail::tracking_entry{ "cg", "avg_blas_level_3_time", total_blas_level_3_time / (1 + iter + iter / 50) });
     PLSSVM_DETAIL_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((detail::tracking_entry{ "cg", "residuals", delta }));
     PLSSVM_DETAIL_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((detail::tracking_entry{ "cg", "target_residuals", eps * eps * delta0 }));
     PLSSVM_DETAIL_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((detail::tracking_entry{ "cg", "epsilon", eps }));
@@ -248,10 +248,10 @@ std::pair<std::vector<real_type>, real_type> csvm::perform_dimensional_reduction
     return std::make_pair(std::move(q_red), QA_cost);
 }
 
-std::chrono::duration<long, std::milli> csvm::run_blas_gemm(const solver_type cg_solver, const real_type alpha, const detail::simple_any &A, const soa_matrix<real_type> &B, const real_type beta, soa_matrix<real_type> &C) const {
+std::chrono::duration<long, std::milli> csvm::run_blas_level_3(const solver_type cg_solver, const real_type alpha, const detail::simple_any &A, const soa_matrix<real_type> &B, const real_type beta, soa_matrix<real_type> &C) const {
     const std::chrono::steady_clock::time_point start_time = std::chrono::steady_clock::now();
 
-    this->blas_gemm(cg_solver, alpha, A, B, beta, C);
+    this->blas_level_3(cg_solver, alpha, A, B, beta, C);
 
     const std::chrono::steady_clock::time_point end_time = std::chrono::steady_clock::now();
     return std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time);

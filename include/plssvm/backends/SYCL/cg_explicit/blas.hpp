@@ -49,6 +49,56 @@ class device_kernel_gemm {
 
         if (i < m_ && j < n_) {
             real_type temp{ 0.0 };
+            for (unsigned long long dim = 0; dim < k_; ++dim) {
+                temp += A_[dim * k_ + i] * B_[dim * n_ + j];
+            }
+            C_[i * n_ + j] = alpha_ * temp + beta_ * C_[i * n_ + j];
+        }
+    }
+
+  private:
+    /// @cond Doxygen_suppress
+    const unsigned long long m_;
+    const unsigned long long n_;
+    const unsigned long long k_;
+    const real_type alpha_;
+    const real_type *A_;
+    const real_type *B_;
+    const real_type beta_;
+    real_type *C_;
+    /// @endcond
+};
+
+/**
+ * @brief Perform an explicit BLAS SYMM operation: `C = alpha * A * B + beta * C` where A is a `m x k` symmetric matrix (memory optimized), B is a `k x n` matrix, C is a `m x n` matrix, and alpha and beta are scalars.
+ */
+class device_kernel_symm {
+  public:
+    /**
+     * @brief Initialize the SYCL kernel function object.
+     * @param[in] m the number of rows in @p A and @p C
+     * @param[in] n the number of columns in @p B and @p C
+     * @param[in] k the number of rows in @p A and number of columns in @p B
+     * @param[in] alpha the scalar alpha value
+     * @param[in] A the matrix @p A
+     * @param[in] B the matrix @p B
+     * @param[in] beta the scalar beta value
+     * @param[in,out] C the matrix @p C, also used as result matrix
+     */
+    device_kernel_symm(const unsigned long long m, const unsigned long long n, const unsigned long long k, const real_type alpha, const real_type *A, const real_type *B, const real_type beta, real_type *C) :
+        m_{ m }, n_{ n }, k_{ k }, alpha_{ alpha }, A_{ A }, B_{ B }, beta_{ beta }, C_{ C } {}
+
+    /**
+     * @brief Function call operator overload performing the actual calculation.
+     * @param[in] nd_idx indices representing the current point in the execution space
+     */
+    void operator()(::sycl::nd_item<2> nd_idx) const {
+        // compute: C = alpha * A * B + beta * C with A in m x k, B in n x k, and C in n x m, alpha, beta as scalar
+        const unsigned long long i = nd_idx.get_global_id(0);
+        const unsigned long long j = nd_idx.get_global_id(1);
+
+        if (i < m_ && j < n_) {
+            real_type temp{ 0.0 };
             unsigned long long offset = 0;
             // left of the diagonal -> use symmetrically mirrored values
             for (unsigned long long dim = 0; dim < i; ++dim) {

@@ -215,7 +215,7 @@ class csvm {
     [[nodiscard]] virtual detail::simple_any assemble_kernel_matrix(solver_type solver, const parameter &params, const ::plssvm::detail::simple_any &data, const std::vector<real_type> &q_red, real_type QA_cost) const = 0;
 
     /**
-     * @brief Perform a BLAS like GEMM matrix-matrix multiplication: `C = alpha * A * B + beta * C`.
+     * @brief Perform a BLAS level 3 matrix-matrix multiplication: `C = alpha * A * B + beta * C`.
      * @param[in] solver the used solver type, determines the type of @p A
      * @param[in] alpha the value to scale the result of the matrix-matrix multiplication
      * @param[in] A a matrix depending on the used solver type (e.g., cg_explicit -> the kernel matrix fully stored on the device; cg_implicit -> the input data set used to implicitly perfom the matrix-matrix multiplication)
@@ -223,7 +223,7 @@ class csvm {
      * @param[in] beta the value to scale the matrix o add with
      * @param[in,out] C the result matrix and the matrix to add (inplace)
      */
-    virtual void blas_gemm(solver_type solver, real_type alpha, const detail::simple_any &A, const soa_matrix<real_type> &B, real_type beta, soa_matrix<real_type> &C) const = 0;
+    virtual void blas_level_3(solver_type solver, real_type alpha, const detail::simple_any &A, const soa_matrix<real_type> &B, real_type beta, soa_matrix<real_type> &C) const = 0;
 
     //***************************************************//
     //                   predict, score                  //
@@ -282,10 +282,10 @@ class csvm {
     [[nodiscard]] std::pair<std::vector<real_type>, real_type> perform_dimensional_reduction(const parameter &params, const soa_matrix<real_type> &A) const;
 
     /**
-     * @copydoc plssvm::csvm::blas_gemm
-     * @detail Small wrapper around the virtual `plssvm::csvm::blas_gemm` function to easily track its execution time.
+     * @copydoc plssvm::csvm::blas_level_3
+     * @detail Small wrapper around the virtual `plssvm::csvm::blas_level_3` function to easily track its execution time.
      */
-    [[nodiscard]] std::chrono::duration<long, std::milli> run_blas_gemm(solver_type cg_solver, real_type alpha, const detail::simple_any &A, const soa_matrix<real_type> &B, real_type beta, soa_matrix<real_type> &C) const;
+    [[nodiscard]] std::chrono::duration<long, std::milli> run_blas_level_3(solver_type cg_solver, real_type alpha, const detail::simple_any &A, const soa_matrix<real_type> &B, real_type beta, soa_matrix<real_type> &C) const;
 
     /// The SVM parameter (e.g., cost, degree, gamma, coef0) currently in use.
     parameter params_{};
