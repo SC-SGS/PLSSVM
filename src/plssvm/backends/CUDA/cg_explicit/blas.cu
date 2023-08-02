@@ -32,6 +32,47 @@ __global__ void device_kernel_gemm(const unsigned long long m, const unsigned lo
 
         // load data into shared memory
         if (threadIdx.y < FEATURE_BLOCK_SIZE && dim + threadIdx.y < k) {
+            if (j_cached_idx < k) {
+                A_cache[threadIdx.y][threadIdx.x] = A[(dim + threadIdx.y) * k + j_cached_idx - (dim + threadIdx.y) * (dim + threadIdx.y + 1) / 2];
+            }
+            if (i < n) {
+                B_cache[threadIdx.y][threadIdx.x] = B[(dim + threadIdx.y) * n + i];
+            }
+        }
+        __syncthreads();
+
+        // calculation
+        for (unsigned long long block_dim = 0; block_dim < FEATURE_BLOCK_SIZE; ++block_dim) {
+            temp += A_cache[block_dim][threadIdx.y] * B_cache[block_dim][threadIdx.x];
+        }
+        __syncthreads();
+    }
+
+    if (i < n && j < m) {
+        C[j * n + i] = alpha * temp + beta * C[j * n + i];
+    }
+}
+
+__global__ void device_kernel_symm(const unsigned long long m, const unsigned long long n, const unsigned long long k, const real_type alpha, const real_type *A, const real_type *B, const real_type beta, real_type *C) {
+    // compute: C = alpha * A * B + beta * C with A in m x k, B in n x k, and C in n x m, alpha, beta as scalar
+    const unsigned long long i = blockIdx.x * blockDim.x + threadIdx.x;  // # rhs
+    const unsigned long long j = blockIdx.y * blockDim.y + threadIdx.y;  // # rows
+    const unsigned long long j_cached_idx = blockIdx.y * blockDim.y + threadIdx.x;
+
+    __shared__ real_type A_cache[FEATURE_BLOCK_SIZE][THREAD_BLOCK_SIZE];
+    __shared__ real_type B_cache[FEATURE_BLOCK_SIZE][THREAD_BLOCK_SIZE];
+
+    real_type temp{ 0.0 };
+
+    for (unsigned long long dim = 0; dim < k; dim += FEATURE_BLOCK_SIZE) {
+        // zero out shared memory
+        if (threadIdx.y < FEATURE_BLOCK_SIZE) {
+            A_cache[threadIdx.y][threadIdx.x] = real_type{ 0.0 };
+            B_cache[threadIdx.y][threadIdx.x] = real_type{ 0.0 };
+        }
+
+        // load data into shared memory
+        if (threadIdx.y < FEATURE_BLOCK_SIZE && dim + threadIdx.y < k) {
             if (dim + threadIdx.y < j_cached_idx) {
                 if (j_cached_idx < k) {
                     A_cache[threadIdx.y][threadIdx.x] = A[(dim + threadIdx.y) * k + j_cached_idx - (dim + threadIdx.y) * (dim + threadIdx.y + 1) / 2];
