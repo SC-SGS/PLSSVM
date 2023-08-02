@@ -14,7 +14,6 @@
 #pragma once
 
 #include "plssvm/constants.hpp"  // plssvm::real_type, plssvm::THREAD_BLOCK_SIZE, plssvm::FEATURE_BLOCK_SIZE
-#include "plssvm/backends/SYCL/detail/constants.hpp"  // PLSSVM_SYCL_BACKEND_COMPILER_HIPSYCL
 
 #include "sycl/sycl.hpp"  // sycl::nd_item
 
@@ -59,9 +58,6 @@ class device_kernel_gemm {
                 A_cache_[nd_idx.get_local_id(0)][nd_idx.get_local_id(1)] = real_type{ 0.0 };
                 B_cache_[nd_idx.get_local_id(0)][nd_idx.get_local_id(1)] = real_type{ 0.0 };
             }
-#if PLSSVM_SYCL_BACKEND_COMPILER == PLSSVM_SYCL_BACKEND_COMPILER_HIPSYCL
-            nd_idx.barrier();  // shouldn't be necessary
-#endif
 
             // load data into shared memory
             if (nd_idx.get_local_id(0) < FEATURE_BLOCK_SIZE && dim + nd_idx.get_local_id(0) < k_) {
@@ -143,9 +139,6 @@ class device_kernel_symm {
                 A_cache_[nd_idx.get_local_id(0)][nd_idx.get_local_id(1)] = real_type{ 0.0 };
                 B_cache_[nd_idx.get_local_id(0)][nd_idx.get_local_id(1)] = real_type{ 0.0 };
             }
-#if PLSSVM_SYCL_BACKEND_COMPILER == PLSSVM_SYCL_BACKEND_COMPILER_HIPSYCL
-            nd_idx.barrier();  // shouldn't be necessary
-#endif
 
             // load data into shared memory
             if (nd_idx.get_local_id(0) < FEATURE_BLOCK_SIZE && dim + nd_idx.get_local_id(0) < k_) {
