@@ -14,7 +14,6 @@
 #pragma once
 
 #include "plssvm/constants.hpp"  // plssvm::real_type, plssvm::THREAD_BLOCK_SIZE, plssvm::FEATURE_BLOCK_SIZE
-#include "plssvm/backends/SYCL/detail/constants.hpp"  // PLSSVM_SYCL_BACKEND_COMPILER_HIPSYCL
 
 #include "sycl/sycl.hpp"  // sycl::nd_item, sycl::pow, sycl::exp
 
@@ -169,11 +168,7 @@ class device_kernel_assembly_polynomial {
             }
 
             if (i < num_rows_ && j < num_rows_ && i >= j) {
-#if PLSSVM_SYCL_BACKEND_COMPILER == PLSSVM_SYCL_BACKEND_COMPILER_HIPSYCL
-                temp = ::sycl::pow(gamma_ * temp + coef0_, static_cast<real_type>(degree_)) + QA_cost_ - q_[i] - q_[j];
-#else
-                temp = ::sycl::pown(gamma_ * temp + coef0_, degree_) + QA_cost_ - q_[i] - q_[j];  // TODO: https://github.com/OpenSYCL/OpenSYCL/issues/1089
-#endif
+                temp = ::sycl::pown(gamma_ * temp + coef0_, degree_) + QA_cost_ - q_[i] - q_[j];
                 if (i == j) {
                     temp += cost_;
                 }
