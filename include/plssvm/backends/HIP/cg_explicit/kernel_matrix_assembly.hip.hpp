@@ -72,11 +72,12 @@ __global__ void device_kernel_assembly_linear(real_type *ret, const real_type *d
             }
 
 #if defined(PLSSVM_USE_GEMM)
-        ret[j * num_rows + i] = temp;
-        ret[i * num_rows + j] = temp;
+            ret[j * num_rows + i] = temp;
+            ret[i * num_rows + j] = temp;
 #else
-        ret[j * num_rows + i - j * (j + 1) / 2] = temp;
+            ret[j * num_rows + i - j * (j + 1) / 2] = temp;
 #endif
+        }
     }
 }
 
@@ -135,11 +136,12 @@ __global__ void device_kernel_assembly_polynomial(real_type *ret, const real_typ
             }
 
 #if defined(PLSSVM_USE_GEMM)
-        ret[j * num_rows + i] = temp;
-        ret[i * num_rows + j] = temp;
+            ret[j * num_rows + i] = temp;
+            ret[i * num_rows + j] = temp;
 #else
-        ret[j * num_rows + i - j * (j + 1) / 2] = temp;
+            ret[j * num_rows + i - j * (j + 1) / 2] = temp;
 #endif
+        }
     }
 }
 
@@ -197,11 +199,12 @@ __global__ void device_kernel_assembly_rbf(real_type *ret, const real_type *data
             }
 
 #if defined(PLSSVM_USE_GEMM)
-        ret[j * num_rows + i] = temp;
-        ret[i * num_rows + j] = temp;
+            ret[j * num_rows + i] = temp;
+            ret[i * num_rows + j] = temp;
 #else
-        ret[j * num_rows + i - j * (j + 1) / 2] = temp;
+            ret[j * num_rows + i - j * (j + 1) / 2] = temp;
 #endif
+        }
     }
 }
 
