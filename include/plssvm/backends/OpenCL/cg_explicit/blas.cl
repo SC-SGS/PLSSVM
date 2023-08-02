@@ -43,7 +43,7 @@ __kernel void device_kernel_gemm(const ulong m, const ulong n, const ulong k, co
         // load data into shared memory
         if (get_local_id(1) < FEATURE_BLOCK_SIZE && dim + get_local_id(1) < k) {
             if (j_cached_idx < k) {
-                A_cache[get_local_id(1)][get_local_id(0)] = A[(dim + get_local_id(1)) * k + j_cached_idx - (dim + get_local_id(1)) * (dim + get_local_id(1) + 1) / 2];
+                A_cache[get_local_id(1)][get_local_id(0)] = A[(dim + get_local_id(1)) * k + j_cached_idx];
             }
             if (i < n) {
                 B_cache[get_local_id(1)][get_local_id(0)] = B[(dim + get_local_id(1)) * n + i];

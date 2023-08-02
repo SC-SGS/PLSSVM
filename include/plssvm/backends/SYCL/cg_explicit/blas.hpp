@@ -66,7 +66,7 @@ class device_kernel_gemm {
             // load data into shared memory
             if (nd_idx.get_local_id(0) < FEATURE_BLOCK_SIZE && dim + nd_idx.get_local_id(0) < k_) {
                 if (i_cached_idx < k_) {
-                    A_cache_[nd_idx.get_local_id(0)][nd_idx.get_local_id(1)] = A_[(dim + nd_idx.get_local_id(0)) * k_ + i_cached_idx - (dim + nd_idx.get_local_id(0)) * (dim + nd_idx.get_local_id(0) + 1) / 2];
+                    A_cache_[nd_idx.get_local_id(0)][nd_idx.get_local_id(1)] = A_[(dim + nd_idx.get_local_id(0)) * k_ + i_cached_idx];
                 }
                 if (j < n_) {
                     B_cache_[nd_idx.get_local_id(0)][nd_idx.get_local_id(1)] = B_[(dim + nd_idx.get_local_id(0)) * n_ + j];

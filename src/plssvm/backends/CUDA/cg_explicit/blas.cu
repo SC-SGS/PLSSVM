@@ -33,7 +33,7 @@ __global__ void device_kernel_gemm(const unsigned long long m, const unsigned lo
         // load data into shared memory
         if (threadIdx.y < FEATURE_BLOCK_SIZE && dim + threadIdx.y < k) {
             if (j_cached_idx < k) {
-                A_cache[threadIdx.y][threadIdx.x] = A[(dim + threadIdx.y) * k + j_cached_idx - (dim + threadIdx.y) * (dim + threadIdx.y + 1) / 2];
+                A_cache[threadIdx.y][threadIdx.x] = A[(dim + threadIdx.y) * k + j_cached_idx];
             }
             if (i < n) {
                 B_cache[threadIdx.y][threadIdx.x] = B[(dim + threadIdx.y) * n + i];
