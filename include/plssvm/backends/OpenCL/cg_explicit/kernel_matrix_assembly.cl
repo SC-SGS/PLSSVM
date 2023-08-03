@@ -70,7 +70,12 @@ __kernel void device_kernel_assembly_linear(__global real_type *ret, __global co
                         temp_ij += cost;
                     }
 
+#ifdef PLSSVM_USE_GEMM
+                    ret[global_j * (num_rows + THREAD_BLOCK_PADDING) + global_i] = temp_ij;
+                    ret[global_i * (num_rows + THREAD_BLOCK_PADDING) + global_j] = temp_ij;
+#else
                     ret[global_j * (num_rows + THREAD_BLOCK_PADDING) + global_i - global_j * (global_j + 1) / 2] = temp_ij;
+#endif
                 }
             }
         }
@@ -139,7 +144,12 @@ __kernel void device_kernel_assembly_polynomial(__global real_type *ret, __globa
                         temp_ij += cost;
                     }
 
+#ifdef PLSSVM_USE_GEMM
+                    ret[global_j * (num_rows + THREAD_BLOCK_PADDING) + global_i] = temp_ij;
+                    ret[global_i * (num_rows + THREAD_BLOCK_PADDING) + global_j] = temp_ij;
+#else
                     ret[global_j * (num_rows + THREAD_BLOCK_PADDING) + global_i - global_j * (global_j + 1) / 2] = temp_ij;
+#endif
                 }
             }
         }
@@ -206,7 +216,12 @@ __kernel void device_kernel_assembly_rbf(__global real_type *ret, __global const
                         temp_ij += cost;
                     }
 
+#ifdef PLSSVM_USE_GEMM
+                    ret[global_j * (num_rows + THREAD_BLOCK_PADDING) + global_i] = temp_ij;
+                    ret[global_i * (num_rows + THREAD_BLOCK_PADDING) + global_j] = temp_ij;
+#else
                     ret[global_j * (num_rows + THREAD_BLOCK_PADDING) + global_i - global_j * (global_j + 1) / 2] = temp_ij;
+#endif
                 }
             }
         }

@@ -177,7 +177,11 @@ auto csvm::run_assemble_kernel_matrix_explicit(const parameter &params, const de
                                  static_cast<std::size_t>(std::ceil(static_cast<double>(num_rows_reduced) / static_cast<double>(block[1] * INTERNAL_BLOCK_SIZE))) * block[1] };
     const ::sycl::nd_range<2> execution_range{ grid, block };
 
+#if defined(PLSSVM_USE_GEMM)
+    device_ptr_type kernel_matrix_d{ (num_rows_reduced + THREAD_BLOCK_PADDING) * (num_rows_reduced + THREAD_BLOCK_PADDING), devices_[0] };  // store full matrix
+#else
     device_ptr_type kernel_matrix_d{ (num_rows_reduced + THREAD_BLOCK_PADDING) * (num_rows_reduced + THREAD_BLOCK_PADDING + 1) / 2, devices_[0] };  // only explicitly store the upper triangular matrix
+#endif
     const real_type cost_factor = real_type{ 1.0 } / params.cost;
 
     switch (params.kernel_type) {
@@ -202,7 +206,7 @@ auto csvm::run_assemble_kernel_matrix_explicit(const parameter &params, const de
     return kernel_matrix_d;
 }
 
-void csvm::run_gemm_kernel_explicit(const std::size_t m, const std::size_t n, const std::size_t k, const real_type alpha, const device_ptr_type &A_d, const device_ptr_type &B_d, const real_type beta, device_ptr_type &C_d) const {
+void csvm::run_blas_level_3_kernel_explicit(const std::size_t m, const std::size_t n, const std::size_t k, const real_type alpha, const device_ptr_type &A_d, const device_ptr_type &B_d, const real_type beta, device_ptr_type &C_d) const {
     // define grid and block sizes
     const std::size_t max_work_group_size = this->get_max_work_group_size();
     if (max_work_group_size < THREAD_BLOCK_SIZE * THREAD_BLOCK_SIZE) {
@@ -218,9 +222,15 @@ void csvm::run_gemm_kernel_explicit(const std::size_t m, const std::size_t n, co
     const auto n_ull = static_cast<unsigned long long>(n);
     const auto k_ull = static_cast<unsigned long long>(k);
 
+#if defined(PLSSVM_USE_GEMM)
     devices_[0].impl->sycl_queue.submit([&](::sycl::handler &cgh) {
         cgh.parallel_for(execution_range, sycl::detail::device_kernel_gemm{ cgh, m_ull, n_ull, k_ull, alpha, A_d.get(), B_d.get(), beta, C_d.get() });
     });
+#else
+    devices_[0].impl->sycl_queue.submit([&](::sycl::handler &cgh) {
+        cgh.parallel_for(execution_range, sycl::detail::device_kernel_symm{ cgh, m_ull, n_ull, k_ull, alpha, A_d.get(), B_d.get(), beta, C_d.get() });
+    });
+#endif
     devices_[0].impl->sycl_queue.wait_and_throw();
 }
 

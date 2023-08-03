@@ -13,7 +13,7 @@
 #define PLSSVM_BACKENDS_HIP_CG_EXPLICIT_KERNEL_MATRIX_ASSEMBLY_HIP_HPP_
 #pragma once
 
-#include "plssvm/constants.hpp"  // plssvm::real_type, plssvm::THREAD_BLOCK_SIZE_OLD, plssvm::FEATURE_BLOCK_SIZE_OLD
+#include "plssvm/constants.hpp"  // plssvm::real_type, plssvm::THREAD_BLOCK_SIZE, plssvm::FEATURE_BLOCK_SIZE
 
 #include "hip/hip_runtime.h"
 #include "hip/hip_runtime_api.h"
@@ -78,7 +78,12 @@ __global__ void device_kernel_assembly_linear(real_type *ret, const real_type *d
                         temp_ij += cost;
                     }
 
+#if defined(PLSSVM_USE_GEMM)
+                    ret[global_j * (num_rows + THREAD_BLOCK_PADDING) + global_i] = temp_ij;
+                    ret[global_i * (num_rows + THREAD_BLOCK_PADDING) + global_j] = temp_ij;
+#else
                     ret[global_j * (num_rows + THREAD_BLOCK_PADDING) + global_i - global_j * (global_j + 1) / 2] = temp_ij;
+#endif
                 }
             }
         }
@@ -146,7 +151,12 @@ __global__ void device_kernel_assembly_polynomial(real_type *ret, const real_typ
                         temp_ij += cost;
                     }
 
+#if defined(PLSSVM_USE_GEMM)
+                    ret[global_j * (num_rows + THREAD_BLOCK_PADDING) + global_i] = temp_ij;
+                    ret[global_i * (num_rows + THREAD_BLOCK_PADDING) + global_j] = temp_ij;
+#else
                     ret[global_j * (num_rows + THREAD_BLOCK_PADDING) + global_i - global_j * (global_j + 1) / 2] = temp_ij;
+#endif
                 }
             }
         }
@@ -209,12 +219,16 @@ __global__ void device_kernel_assembly_rbf(real_type *ret, const real_type *data
                 if (global_i < num_rows && global_j < num_rows && global_i >= global_j) {
                     real_type temp_ij = temp[internal_i][internal_j];
                     temp_ij = exp(-gamma * temp_ij) + QA_cost - q[global_i] - q[global_j];
-                    //                    temp_ij += (global_i == global_j) * cost;
                     if (global_i == global_j) {
                         temp_ij += cost;
                     }
 
+#if defined(PLSSVM_USE_GEMM)
+                    ret[global_j * (num_rows + THREAD_BLOCK_PADDING) + global_i] = temp_ij;
+                    ret[global_i * (num_rows + THREAD_BLOCK_PADDING) + global_j] = temp_ij;
+#else
                     ret[global_j * (num_rows + THREAD_BLOCK_PADDING) + global_i - global_j * (global_j + 1) / 2] = temp_ij;
+#endif
                 }
             }
         }

@@ -178,18 +178,22 @@ std::string get_device_name(const command_queue &queue) {
 
 std::vector<std::pair<compute_kernel_name, std::string>> kernel_type_to_function_names(const kernel_function_type kernel) {
     switch (kernel) {
+        // TODO: guard behind ifdef?
         case kernel_function_type::linear:
             return { std::make_pair(compute_kernel_name::assemble_kernel_matrix_explicit, "device_kernel_assembly_linear"),
                      std::make_pair(compute_kernel_name::gemm_kernel_explicit, "device_kernel_gemm"),
+                     std::make_pair(compute_kernel_name::symm_kernel_explicit, "device_kernel_symm"),
                      std::make_pair(compute_kernel_name::w_kernel, "device_kernel_w_linear"),
                      std::make_pair(compute_kernel_name::predict_kernel, "device_kernel_predict_linear") };
         case kernel_function_type::polynomial:
             return { std::make_pair(compute_kernel_name::assemble_kernel_matrix_explicit, "device_kernel_assembly_polynomial"),
                      std::make_pair(compute_kernel_name::gemm_kernel_explicit, "device_kernel_gemm"),
+                     std::make_pair(compute_kernel_name::symm_kernel_explicit, "device_kernel_symm"),
                      std::make_pair(compute_kernel_name::predict_kernel, "device_kernel_predict_polynomial") };
         case kernel_function_type::rbf:
             return { std::make_pair(compute_kernel_name::assemble_kernel_matrix_explicit, "device_kernel_assembly_rbf"),
                      std::make_pair(compute_kernel_name::gemm_kernel_explicit, "device_kernel_gemm"),
+                     std::make_pair(compute_kernel_name::symm_kernel_explicit, "device_kernel_symm"),
                      std::make_pair(compute_kernel_name::predict_kernel, "device_kernel_predict_rbf") };
     }
     throw unsupported_kernel_type_exception{ fmt::format("Unknown kernel type (value: {})!", ::plssvm::detail::to_underlying(kernel)) };
@@ -297,7 +301,11 @@ std::vector<command_queue> create_command_queues(const std::vector<context> &con
         // create and build program
         cl_program program = clCreateProgramWithSource(contexts[0], 1, &kernel_src_ptr, nullptr, &err);
         PLSSVM_OPENCL_ERROR_CHECK(err, "error creating program from source");
+#if defined(PLSSVM_USE_GEMM)
+        err = clBuildProgram(program, static_cast<cl_uint>(contexts[0].devices.size()), contexts[0].devices.data(), "-cl-fast-relaxed-math -cl-mad-enable -cl-no-signed-zeros -DPLSSVM_USE_GEMM", nullptr, nullptr);
+#else
         err = clBuildProgram(program, static_cast<cl_uint>(contexts[0].devices.size()), contexts[0].devices.data(), "-cl-fast-relaxed-math -cl-mad-enable -cl-no-signed-zeros", nullptr, nullptr);
+#endif
         if (!err) {
             // check all devices for errors
             for (std::vector<context>::size_type device = 0; device < contexts[0].devices.size(); ++device) {

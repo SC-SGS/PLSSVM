@@ -137,7 +137,11 @@ auto csvm::run_assemble_kernel_matrix_explicit(const parameter &params, const de
     const dim3 grid(static_cast<int>(std::ceil(static_cast<double>(num_rows_reduced) / static_cast<double>(block.x * INTERNAL_BLOCK_SIZE))),
                     static_cast<int>(std::ceil(static_cast<double>(num_rows_reduced) / static_cast<double>(block.y * INTERNAL_BLOCK_SIZE))));
 
+#if defined(PLSSVM_USE_GEMM)
+    device_ptr_type kernel_matrix_d{ (num_rows_reduced + THREAD_BLOCK_PADDING) * (num_rows_reduced + THREAD_BLOCK_PADDING) };  // store full matrix
+#else
     device_ptr_type kernel_matrix_d{ (num_rows_reduced + THREAD_BLOCK_PADDING) * (num_rows_reduced + THREAD_BLOCK_PADDING + 1) / 2 };  // only explicitly store the upper triangular matrix
+#endif
     const real_type cost_factor = real_type{ 1.0 } / params.cost;
 
     detail::set_device(0);
@@ -158,7 +162,7 @@ auto csvm::run_assemble_kernel_matrix_explicit(const parameter &params, const de
     return kernel_matrix_d;
 }
 
-void csvm::run_gemm_kernel_explicit(const std::size_t m, const std::size_t n, const std::size_t k, const real_type alpha, const device_ptr_type &A_d, const device_ptr_type &B_d, const real_type beta, device_ptr_type &C_d) const {
+void csvm::run_blas_level_3_kernel_explicit(const std::size_t m, const std::size_t n, const std::size_t k, const real_type alpha, const device_ptr_type &A_d, const device_ptr_type &B_d, const real_type beta, device_ptr_type &C_d) const {
     // define the grid and block sizes
     const std::size_t max_work_group_size = this->get_max_work_group_size();
     if (max_work_group_size < THREAD_BLOCK_SIZE * THREAD_BLOCK_SIZE) {
@@ -174,7 +178,11 @@ void csvm::run_gemm_kernel_explicit(const std::size_t m, const std::size_t n, co
     const auto k_ull = static_cast<unsigned long long>(k);
 
     detail::set_device(0);
+#if defined(PLSSVM_USE_GEMM)
     hip::device_kernel_gemm<<<grid, block>>>(m_ull, n_ull, k_ull, alpha, A_d.get(), B_d.get(), beta, C_d.get());
+#else
+    hip::device_kernel_symm<<<grid, block>>>(m_ull, n_ull, k_ull, alpha, A_d.get(), B_d.get(), beta, C_d.get());
+#endif
     detail::peek_at_last_error();
     this->device_synchronize(devices_[0]);
 }

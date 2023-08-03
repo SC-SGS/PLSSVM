@@ -188,6 +188,12 @@ void performance_tracker::save(std::ostream &out) {
 #else
     constexpr bool lto_enabled = false;
 #endif
+    // check whether GEMM has been used instead of SYMM
+#if defined(PLSSVM_USE_GEMM)
+    constexpr bool use_gemm = true;
+#else
+    constexpr bool use_gemm = false;
+#endif
 
 
     // begin a new YAML document (only with "---" multiple YAML docments in a single file are allowed)
@@ -205,6 +211,7 @@ void performance_tracker::save(std::ostream &out) {
         "  build_type:                 {}\n"
         "  LTO:                        {}\n"
         "  asserts:                    {}\n"
+        "  gemm:                       {}\n"
         "  PLSSVM_THREAD_BLOCK_SIZE:   {}\n"
         "  PLSSVM_INTERNAL_BLOCK_SIZE: {}\n"
         "  PLSSVM_OPENMP_BLOCK_SIZE:   {}\n",
@@ -217,6 +224,7 @@ void performance_tracker::save(std::ostream &out) {
         PLSSVM_BUILD_TYPE,
         lto_enabled,
         assert_enabled,
+        use_gemm,
         THREAD_BLOCK_SIZE,
         INTERNAL_BLOCK_SIZE,
         OPENMP_BLOCK_SIZE);
