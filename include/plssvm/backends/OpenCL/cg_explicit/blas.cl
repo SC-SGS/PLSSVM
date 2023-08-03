@@ -36,7 +36,7 @@ __kernel void device_kernel_gemm(const ulong m, const ulong n, const ulong k, co
 
     for (ulong dim = 0; dim < k; dim += FEATURE_BLOCK_SIZE) {
         // zero out shared memory
-        for (unsigned internal = 0; internal < INTERNAL_BLOCK_SIZE; ++internal) {
+        for (uint internal = 0; internal < INTERNAL_BLOCK_SIZE; ++internal) {
             A_cache[get_local_id(1)][internal * THREAD_BLOCK_SIZE + get_local_id(0)] = 0.0;
             A_cache[get_local_id(1) + THREAD_BLOCK_SIZE][internal * THREAD_BLOCK_SIZE + get_local_id(0)] = 0.0;
             B_cache[get_local_id(1)][internal * THREAD_BLOCK_SIZE + get_local_id(0)] = 0.0;
@@ -116,7 +116,7 @@ __kernel void device_kernel_symm(const ulong m, const ulong n, const ulong k, co
 
     for (ulong dim = 0; dim < k; dim += FEATURE_BLOCK_SIZE) {
         // zero out shared memory
-        for (unsigned internal = 0; internal < INTERNAL_BLOCK_SIZE; ++internal) {
+        for (uint internal = 0; internal < INTERNAL_BLOCK_SIZE; ++internal) {
             A_cache[get_local_id(1)][internal * THREAD_BLOCK_SIZE + get_local_id(0)] = 0.0;
             A_cache[get_local_id(1) + THREAD_BLOCK_SIZE][internal * THREAD_BLOCK_SIZE + get_local_id(0)] = 0.0;
             B_cache[get_local_id(1)][internal * THREAD_BLOCK_SIZE + get_local_id(0)] = 0.0;
