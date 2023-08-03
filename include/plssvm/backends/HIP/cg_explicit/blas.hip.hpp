@@ -62,7 +62,7 @@ __global__ void device_kernel_gemm(const unsigned long long m, const unsigned lo
                     A_cache[threadIdx.y][internal * THREAD_BLOCK_SIZE + threadIdx.x] = A[(dim + threadIdx.y) * k + global_j];
                 }
                 if (dim + threadIdx.y + THREAD_BLOCK_SIZE < k) {
-                    A_cache[threadIdx.y + THREAD_BLOCK_SIZE][internal * THREAD_BLOCK_SIZE + threadIdx.x] = A[(dim + threadIdx.y + THREAD_BLOCK_SIZE) * k];
+                    A_cache[threadIdx.y + THREAD_BLOCK_SIZE][internal * THREAD_BLOCK_SIZE + threadIdx.x] = A[(dim + threadIdx.y + THREAD_BLOCK_SIZE) * k + global_j];
                 }
             }
 
@@ -74,27 +74,27 @@ __global__ void device_kernel_gemm(const unsigned long long m, const unsigned lo
                     B_cache[threadIdx.y + THREAD_BLOCK_SIZE][internal * THREAD_BLOCK_SIZE + threadIdx.x] = B[(dim + threadIdx.y + THREAD_BLOCK_SIZE) * n + global_i];
                 }
             }
-            __syncthreads();
+        }
+        __syncthreads();
 
-            // calculation
-            for (unsigned block_dim = 0; block_dim < FEATURE_BLOCK_SIZE; ++block_dim) {
-                for (unsigned internal_i = 0; internal_i < INTERNAL_BLOCK_SIZE; ++internal_i) {
-                    for (unsigned internal_j = 0; internal_j < INTERNAL_BLOCK_SIZE; ++internal_j) {
-                        temp[internal_i][internal_j] += A_cache[block_dim][threadIdx.y * INTERNAL_BLOCK_SIZE + internal_j] * B_cache[block_dim][threadIdx.x * INTERNAL_BLOCK_SIZE + internal_i];
-                    }
+        // calculation
+        for (unsigned block_dim = 0; block_dim < FEATURE_BLOCK_SIZE; ++block_dim) {
+            for (unsigned internal_i = 0; internal_i < INTERNAL_BLOCK_SIZE; ++internal_i) {
+                for (unsigned internal_j = 0; internal_j < INTERNAL_BLOCK_SIZE; ++internal_j) {
+                    temp[internal_i][internal_j] += A_cache[block_dim][threadIdx.y * INTERNAL_BLOCK_SIZE + internal_j] * B_cache[block_dim][threadIdx.x * INTERNAL_BLOCK_SIZE + internal_i];
                 }
             }
-            __syncthreads();
         }
+        __syncthreads();
+    }
 
-        for (unsigned internal_i = 0; internal_i < INTERNAL_BLOCK_SIZE; ++internal_i) {
-            for (unsigned internal_j = 0; internal_j < INTERNAL_BLOCK_SIZE; ++internal_j) {
-                const unsigned long long global_i = i + internal_i;
-                const unsigned long long global_j = j + internal_j;
+    for (unsigned internal_i = 0; internal_i < INTERNAL_BLOCK_SIZE; ++internal_i) {
+        for (unsigned internal_j = 0; internal_j < INTERNAL_BLOCK_SIZE; ++internal_j) {
+            const unsigned long long global_i = i + internal_i;
+            const unsigned long long global_j = j + internal_j;
 
-                if (global_i < n && global_j < m) {
-                    C[global_j * n + global_i] = alpha * temp[internal_i][internal_j] + beta * C[global_j * n + global_i];
-                }
+            if (global_i < n && global_j < m) {
+                C[global_j * n + global_i] = alpha * temp[internal_i][internal_j] + beta * C[global_j * n + global_i];
             }
         }
     }
@@ -165,27 +165,27 @@ __global__ void device_kernel_symm(const unsigned long long m, const unsigned lo
                     B_cache[threadIdx.y + THREAD_BLOCK_SIZE][internal * THREAD_BLOCK_SIZE + threadIdx.x] = B[(dim + threadIdx.y + THREAD_BLOCK_SIZE) * n + global_i];
                 }
             }
-            __syncthreads();
+        }
+        __syncthreads();
 
-            // calculation
-            for (unsigned block_dim = 0; block_dim < FEATURE_BLOCK_SIZE; ++block_dim) {
-                for (unsigned internal_i = 0; internal_i < INTERNAL_BLOCK_SIZE; ++internal_i) {
-                    for (unsigned internal_j = 0; internal_j < INTERNAL_BLOCK_SIZE; ++internal_j) {
-                        temp[internal_i][internal_j] += A_cache[block_dim][threadIdx.y * INTERNAL_BLOCK_SIZE + internal_j] * B_cache[block_dim][threadIdx.x * INTERNAL_BLOCK_SIZE + internal_i];
-                    }
+        // calculation
+        for (unsigned block_dim = 0; block_dim < FEATURE_BLOCK_SIZE; ++block_dim) {
+            for (unsigned internal_i = 0; internal_i < INTERNAL_BLOCK_SIZE; ++internal_i) {
+                for (unsigned internal_j = 0; internal_j < INTERNAL_BLOCK_SIZE; ++internal_j) {
+                    temp[internal_i][internal_j] += A_cache[block_dim][threadIdx.y * INTERNAL_BLOCK_SIZE + internal_j] * B_cache[block_dim][threadIdx.x * INTERNAL_BLOCK_SIZE + internal_i];
                 }
             }
-            __syncthreads();
         }
+        __syncthreads();
+    }
 
-        for (unsigned internal_i = 0; internal_i < INTERNAL_BLOCK_SIZE; ++internal_i) {
-            for (unsigned internal_j = 0; internal_j < INTERNAL_BLOCK_SIZE; ++internal_j) {
-                const unsigned long long global_i = i + internal_i;
-                const unsigned long long global_j = j + internal_j;
+    for (unsigned internal_i = 0; internal_i < INTERNAL_BLOCK_SIZE; ++internal_i) {
+        for (unsigned internal_j = 0; internal_j < INTERNAL_BLOCK_SIZE; ++internal_j) {
+            const unsigned long long global_i = i + internal_i;
+            const unsigned long long global_j = j + internal_j;
 
-                if (global_i < n && global_j < m) {
-                    C[global_j * n + global_i] = alpha * temp[internal_i][internal_j] + beta * C[global_j * n + global_i];
-                }
+            if (global_i < n && global_j < m) {
+                C[global_j * n + global_i] = alpha * temp[internal_i][internal_j] + beta * C[global_j * n + global_i];
             }
         }
     }
