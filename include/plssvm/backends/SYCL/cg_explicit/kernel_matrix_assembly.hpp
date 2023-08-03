@@ -13,8 +13,7 @@
 #define PLSSVM_BACKENDS_SYCL_CG_EXPLICIT_KERNEL_MATRIX_ASSEMBLY_HPP_
 #pragma once
 
-#include "plssvm/constants.hpp"  // plssvm::real_type, plssvm::THREAD_BLOCK_SIZE_OLD, plssvm::FEATURE_BLOCK_SIZE_OLD
-#include "plssvm/backends/SYCL/detail/constants.hpp"  // PLSSVM_SYCL_BACKEND_COMPILER_HIPSYCL
+#include "plssvm/constants.hpp"  // plssvm::real_type, plssvm::THREAD_BLOCK_SIZE, plssvm::FEATURE_BLOCK_SIZE
 
 #include "sycl/sycl.hpp"  // sycl::nd_item, sycl::pow, sycl::exp
 
@@ -108,7 +107,12 @@ class device_kernel_assembly_linear {
                             temp_ij += cost_;
                         }
 
+#if defined(PLSSVM_USE_GEMM)
+                        ret_[global_j * num_rows_ + global_i] = temp_ij;
+                        ret_[global_i * num_rows_ + global_j] = temp_ij;
+#else
                         ret_[global_j * num_rows_ + global_i - global_j * (global_j + 1) / 2] = temp_ij;
+#endif
                     }
                 }
             }
@@ -218,16 +222,17 @@ class device_kernel_assembly_polynomial {
 
                     if (global_i < num_rows_ && global_j < num_rows_ && global_i >= global_j) {
                         real_type temp_ij = temp[internal_i][internal_j];
-#if PLSSVM_SYCL_BACKEND_COMPILER == PLSSVM_SYCL_BACKEND_COMPILER_HIPSYCL
-                        temp_ij = ::sycl::pow(gamma_ * temp_ij + coef0_, static_cast<real_type>(degree_)) + QA_cost_ - q_[global_i] - q_[global_j];
-#else
-                        temp_ij = ::sycl::pown(gamma_ * temp_ij + coef0_, degree_) + QA_cost_ - q_[global_i] - q_[global_j];  // TODO: https://github.com/OpenSYCL/OpenSYCL/issues/1089
-#endif
+                        temp_ij = ::sycl::pown(gamma_ * temp_ij + coef0_, degree_) + QA_cost_ - q_[global_i] - q_[global_j];
                         if (global_i == global_j) {
                             temp_ij += cost_;
                         }
 
+#if defined(PLSSVM_USE_GEMM)
+                        ret_[global_j * num_rows_ + global_i] = temp_ij;
+                        ret_[global_i * num_rows_ + global_j] = temp_ij;
+#else
                         ret_[global_j * num_rows_ + global_i - global_j * (global_j + 1) / 2] = temp_ij;
+#endif
                     }
                 }
             }
@@ -344,7 +349,12 @@ class device_kernel_assembly_rbf {
                             temp_ij += cost_;
                         }
 
+#if defined(PLSSVM_USE_GEMM)
+                        ret_[global_j * num_rows_ + global_i] = temp_ij;
+                        ret_[global_i * num_rows_ + global_j] = temp_ij;
+#else
                         ret_[global_j * num_rows_ + global_i - global_j * (global_j + 1) / 2] = temp_ij;
+#endif
                     }
                 }
             }
