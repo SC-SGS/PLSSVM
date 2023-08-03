@@ -104,6 +104,8 @@ __global__ void device_kernel_assembly_linear(real_type *ret, const real_type *d
 #else
                     ret[global_j * num_rows + global_i - global_j * (global_j + 1) / 2] = temp_ij;
 #endif
+                }
+            }
         }
     }
 }
@@ -195,6 +197,8 @@ __global__ void device_kernel_assembly_polynomial(real_type *ret, const real_typ
 #else
                     ret[global_j * num_rows + global_i - global_j * (global_j + 1) / 2] = temp_ij;
 #endif
+                }
+            }
         }
     }
 }
@@ -285,6 +289,8 @@ __global__ void device_kernel_assembly_rbf(real_type *ret, const real_type *data
 #else
                     ret[global_j * num_rows + global_i - global_j * (global_j + 1) / 2] = temp_ij;
 #endif
+                }
+            }
         }
     }
 }
