@@ -95,7 +95,7 @@ class device_kernel_gemm {
     ::sycl::local_accessor<real_type, 2> B_cache_;
 
     /// @cond Doxygen_suppress
-    const unsigned long long m_;
+    [[maybe_unused]] const unsigned long long m_;
     const unsigned long long n_;
     const unsigned long long k_;
     const real_type alpha_;
