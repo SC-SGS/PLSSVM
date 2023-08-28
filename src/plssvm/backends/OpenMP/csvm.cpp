@@ -108,27 +108,33 @@ detail::simple_any csvm::assemble_kernel_matrix(const solver_type solver, const 
 
     if (solver == solver_type::cg_explicit) {
 #if defined(PLSSVM_USE_GEMM)
-        std::vector<real_type> explicit_A(num_rows_reduced * num_rows_reduced);  // store full matrix
+        std::vector<real_type> kernel_matrix(num_rows_reduced * num_rows_reduced);  // store full matrix
 #else
-        std::vector<real_type> explicit_A(num_rows_reduced * (num_rows_reduced + 1) / 2);  // only explicitly store the upper triangular matrix
+        std::vector<real_type> kernel_matrix(num_rows_reduced * (num_rows_reduced + 1) / 2);  // only explicitly store the upper triangular matrix
 #endif
         switch (params.kernel_type) {
             case kernel_function_type::linear:
-                openmp::device_kernel_assembly_linear(q_red, explicit_A, *data_ptr, QA_cost, 1 / params.cost);
+                openmp::device_kernel_assembly_linear(q_red, kernel_matrix, *data_ptr, QA_cost, 1 / params.cost);
                 break;
             case kernel_function_type::polynomial:
-                openmp::device_kernel_assembly_polynomial(q_red, explicit_A, *data_ptr, QA_cost, 1 / params.cost, params.degree.value(), params.gamma.value(), params.coef0.value());
+                openmp::device_kernel_assembly_polynomial(q_red, kernel_matrix, *data_ptr, QA_cost, 1 / params.cost, params.degree.value(), params.gamma.value(), params.coef0.value());
                 break;
             case kernel_function_type::rbf:
-                openmp::device_kernel_assembly_rbf(q_red, explicit_A, *data_ptr, QA_cost, 1 / params.cost, params.gamma.value());
+                openmp::device_kernel_assembly_rbf(q_red, kernel_matrix, *data_ptr, QA_cost, 1 / params.cost, params.gamma.value());
                 break;
         }
 
-//        PLSSVM_ASSERT(explicit_A.num_rows() == num_rows_reduced && explicit_A.num_cols() == num_rows_reduced,
-//                      "The kernel matrix must be a quadratic matrix with shape {}x{}, but has a {}x{} shape!",
-//                      num_rows_reduced, num_rows_reduced, explicit_A.num_rows(), explicit_A.num_cols());
+#if defined(PLSSVM_USE_GEMM)
+        PLSSVM_ASSERT(num_rows_reduced * num_rows_reduced == kernel_matrix.size(),
+                      "The kernel matrix must be a quadratic matrix with num_rows_reduced^2 ({}) entries, but is {}!",
+                      num_rows_reduced * num_rows_reduced, kernel_matrix.size());
+#else
+        PLSSVM_ASSERT(num_rows_reduced * (num_rows_reduced + 1) / 2 == kernel_matrix.size(),
+                      "The kernel matrix must be a triangular matrix only with num_rows_reduced * (num_rows_reduced + 1) / 2 ({}) entries, but is {}!",
+                      num_rows_reduced * (num_rows_reduced + 1) / 2, kernel_matrix.size());
+#endif
 
-        return detail::simple_any{ std::move(explicit_A) };
+        return detail::simple_any{ std::move(kernel_matrix) };
     } else {
         // TODO: implement for other solver types
         throw exception{ fmt::format("Assemblying the kernel matrix using the {} CG variation is currently not implemented!", solver) };
@@ -144,7 +150,6 @@ void csvm::blas_level_3(const solver_type solver, const real_type alpha, const d
     if (solver == solver_type::cg_explicit) {
         const auto &explicit_A = A.get<std::vector<real_type>>();
         PLSSVM_ASSERT(!explicit_A.empty(), "The A matrix may not be empty!");
-//        PLSSVM_ASSERT(explicit_A.num_rows() == C.num_cols(), "The C matrix must have {} columns, but has {}!", explicit_A.num_rows(), C.num_cols());
 
         // cast to correct type
         const auto m_ull = static_cast<unsigned long long>(B.num_cols());

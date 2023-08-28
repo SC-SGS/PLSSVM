@@ -13,6 +13,7 @@
 #include "plssvm/kernel_function_types.hpp"  // plssvm::kernel_function_type, plssvm::kernel_function
 #include "plssvm/matrix.hpp"                 // plssvm::aos_matrix
 
+#include <cstddef>                           // std::size_t
 #include <utility>                           // std::forward
 #include <vector>                            // std::vector
 
@@ -23,8 +24,11 @@ namespace detail {
 template <kernel_function_type kernel, typename... Args>
 void device_kernel_assembly(const std::vector<real_type> &q, std::vector<real_type> &ret, const aos_matrix<real_type> &data, const real_type QA_cost, const real_type cost, Args &&...args) {
     PLSSVM_ASSERT(q.size() == data.num_rows() - 1, "Sizes mismatch!: {} != {}", q.size(), data.num_rows() - 1);
-//    PLSSVM_ASSERT(q.size() == ret.num_rows(), "Sizes mismatch!: {} != {}", q.size(), ret.num_rows());
-//    PLSSVM_ASSERT(q.size() == ret.num_cols(), "Sizes mismatch!: {} != {}", q.size(), ret.num_cols());
+#if defined(PLSSVM_USE_GEMM)
+    PLSSVM_ASSERT(ret.size() == q.size() * q.size(), "Sizes mismatch (GEMM)!: {} != {}", ret.size(), q.size() * q.size());
+#else
+    PLSSVM_ASSERT(ret.size() == q.size() * (q.size() + 1) / 2, "Sizes mismatch (SYMM)!: {} != {}", ret.size(), q.size() * (q.size() + 1) / 2);
+#endif
     PLSSVM_ASSERT(cost != real_type{ 0.0 }, "cost must not be 0.0 since it is 1 / plssvm::cost!");
 
     const std::size_t dept = q.size();
