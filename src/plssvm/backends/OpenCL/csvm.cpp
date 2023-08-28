@@ -150,7 +150,7 @@ void csvm::init(const target_platform target) {
         PLSSVM_ASSERT(std::all_of(devices_.begin(), devices_.end(), [](const queue_type &queue) { return queue.kernels.count(detail::compute_kernel_name::w_kernel) == 1; }),
                       "The w_kernel device kernel is missing!");
     } else {
-        PLSSVM_ASSERT(std::all_of(devices_.begin(), devices_.end(), [](const queue_type &queue) { return queue.kernels.size() == 3; }), "Every command queue for the polynomial or rbf kernel function must have exactly four associated kernels!");
+        PLSSVM_ASSERT(std::all_of(devices_.begin(), devices_.end(), [](const queue_type &queue) { return queue.kernels.size() == 4; }), "Every command queue for the polynomial or rbf kernel function must have exactly four associated kernels!");
     }
     PLSSVM_ASSERT(std::all_of(devices_.begin(), devices_.end(), [](const queue_type &queue) { return queue.kernels.count(detail::compute_kernel_name::predict_kernel) == 1; }),
                   "The predict_kernel device kernel is missing!");
