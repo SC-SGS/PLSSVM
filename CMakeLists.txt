@@ -553,6 +553,14 @@ if (PLSSVM_USE_GEMM)
     target_compile_definitions(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC PLSSVM_USE_GEMM)
 endif ()
 
+## enforce maximum device memory allocation sizes for the automatic solver type
+option(PLSSVM_ENFORCE_MAX_MEM_ALLOC_SIZE "Enforce the maximum device memory allocation sizes for the automatic plssvm::solver_type." ON)
+if (PLSSVM_ENFORCE_MAX_MEM_ALLOC_SIZE)
+    message(STATUS "Enforce the maximum device memory allocation sizes for the automatic plssvm::solver_type.")
+    # add target definition
+    target_compile_definitions(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC PLSSVM_ENFORCE_MAX_MEM_ALLOC_SIZE)
+endif ()
+
 ########################################################################################################################
 ##                                          check for Link Time Optimization                                          ##
 ########################################################################################################################
