@@ -708,12 +708,13 @@ std::pair<aos_matrix<real_type>, std::vector<real_type>> csvm::solve_system_of_l
     if (used_solver == solver_type::automatic) {
         using namespace detail::literals;
 
+        // define used safety margin constants
         constexpr long double minimal_safety_margin = 512_MiB;
         constexpr long double percentual_safety_margin = 0.05L;
         const auto reduce_total_memory = [minimal_safety_margin](const unsigned long long total_memory) {
             return total_memory - std::max<long double>(static_cast<long double>(total_memory) * percentual_safety_margin, minimal_safety_margin);
         };
-//        const long double total_system_memory = reduce_total_memory(detail::get_system_memory());
+
         const long double total_system_memory = detail::get_system_memory();
         const long double total_device_memory = this->get_device_memory();
         const unsigned long long max_mem_alloc_size = this->get_max_mem_alloc_size();  // TODO: use this value somehow? -> "wrong" numbers on the NVIDIA GPU
