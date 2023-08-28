@@ -708,11 +708,14 @@ std::pair<aos_matrix<real_type>, std::vector<real_type>> csvm::solve_system_of_l
     if (used_solver == solver_type::automatic) {
         using namespace detail::literals;
 
-        const auto reduce_total_memory = [](const unsigned long long total_memory) {
-            return total_memory - std::max<long double>(static_cast<long double>(total_memory) * 0.05L, 512_MiB);  // 512 MiB
+        constexpr long double minimal_safety_margin = 512_MiB;
+        constexpr long double percentual_safety_margin = 0.05L;
+        const auto reduce_total_memory = [minimal_safety_margin](const unsigned long long total_memory) {
+            return total_memory - std::max<long double>(static_cast<long double>(total_memory) * percentual_safety_margin, minimal_safety_margin);
         };
-        const long double total_system_memory = reduce_total_memory(detail::get_system_memory());
-        const long double total_device_memory = reduce_total_memory(this->get_device_memory());
+//        const long double total_system_memory = reduce_total_memory(detail::get_system_memory());
+        const long double total_system_memory = detail::get_system_memory();
+        const long double total_device_memory = this->get_device_memory();
         const unsigned long long max_mem_alloc_size = this->get_max_mem_alloc_size();  // TODO: use this value somehow? -> "wrong" numbers on the NVIDIA GPU
 
         // 4B/8B * (data_set size + explicit kernel matrix size + B and C matrix in GEMM + q_red vector)
@@ -725,12 +728,18 @@ std::pair<aos_matrix<real_type>, std::vector<real_type>> csvm::solve_system_of_l
 
         detail::log(verbosity_level::full,
                     "Determining the solver type based on the available memory:\n"
-                    "  - system memory: {:.2f} GiB\n"
-                    "  - device memory: {:.2f} GiB\n"
+                    "  - total system memory: {:.2f} GiB\n"
+                    "  - usable system memory: {} = {:.2f} GiB\n"
+                    "  - total device memory: {:.2f} GiB\n"
+                    "  - usable device memory: {} = {:.2f} GiB\n"
                     "  - max. memory allocation size: {:.2f} GiB\n"
                     "  - memory needed: {:.2f} GiB\n",
                     detail::tracking_entry{ "solver", "system_memory_GiB", total_system_memory / 1.0_GiB },
+                    fmt::format("{:.2f} GiB {}", total_system_memory / 1.0_GiB, total_system_memory * percentual_safety_margin > minimal_safety_margin ? "* 0.95" : "- 512 MiB"),
+                    detail::tracking_entry{ "solver", "available_system_memory_GiB", reduce_total_memory(total_system_memory) / 1.0_GiB },
                     detail::tracking_entry{ "solver", "device_memory_GiB", total_device_memory / 1.0_GiB },
+                    fmt::format("{:.2f} GiB {}", total_device_memory / 1.0_GiB, total_device_memory * percentual_safety_margin > minimal_safety_margin ? "* 0.95" : "- 512 MiB"),
+                    detail::tracking_entry{ "solver", "available_device_memory_GiB", reduce_total_memory(total_device_memory) / 1.0_GiB },
                     detail::tracking_entry{ "solver", "device_max_mem_alloc_size_GiB", max_mem_alloc_size / 1.0_GiB },
                     detail::tracking_entry{ "solver", "needed_memory_GiB", static_cast<long double>(total_memory_needed) / 1.0_GiB });
 
