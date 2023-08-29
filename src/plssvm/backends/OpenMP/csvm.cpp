@@ -9,13 +9,14 @@
 #include "plssvm/backends/OpenMP/csvm.hpp"
 
 #include "plssvm/backend_types.hpp"                                       // plssvm::backend_type
-#include "plssvm/backends/OpenMP/cg_explicit/kernel_matrix_assembly.hpp"  // plssvm::openmp::device_kernel_assembly_linear, plssvm::openmp::device_kernel_assembly_polynomial, plssvm::openmp::device_kernel_assembly_rbf
 #include "plssvm/backends/OpenMP/cg_explicit/blas.hpp"                    // plssvm::openmp::device_kernel_gemm, plssvm::openmp::device_kernel_symm
+#include "plssvm/backends/OpenMP/cg_explicit/kernel_matrix_assembly.hpp"  // plssvm::openmp::device_kernel_assembly_linear, plssvm::openmp::device_kernel_assembly_polynomial, plssvm::openmp::device_kernel_assembly_rbf
 #include "plssvm/backends/OpenMP/exceptions.hpp"                          // plssvm::openmp::backend_exception
 #include "plssvm/constants.hpp"                                           // plssvm::real_type
 #include "plssvm/csvm.hpp"                                                // plssvm::csvm
 #include "plssvm/detail/assert.hpp"                                       // PLSSVM_ASSERT
 #include "plssvm/detail/logger.hpp"                                       // plssvm::detail::log, plssvm::verbosity_level
+#include "plssvm/detail/memory_size.hpp"                                  // plssvm::detail::memory_size
 #include "plssvm/detail/operators.hpp"                                    // various operator overloads for std::vector and scalars
 #include "plssvm/detail/performance_tracker.hpp"                          // plssvm::detail::tracking_entry, PLSSVM_DETAIL_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY
 #include "plssvm/kernel_function_types.hpp"                               // plssvm::kernel_function_type
@@ -71,11 +72,11 @@ void csvm::init(const target_platform target) {
     target_ = plssvm::target_platform::cpu;
 }
 
-unsigned long long csvm::get_device_memory() const {
+::plssvm::detail::memory_size csvm::get_device_memory() const {
     return detail::get_system_memory();
 }
 
-unsigned long long csvm::get_max_mem_alloc_size() const {
+::plssvm::detail::memory_size csvm::get_max_mem_alloc_size() const {
     return this->get_device_memory();
 }
 

@@ -160,7 +160,7 @@ void csvm::device_synchronize(const queue_type &queue) const {
     detail::device_synchronize(queue);
 }
 
-unsigned long long csvm::get_device_memory() const {
+::plssvm::detail::memory_size csvm::get_device_memory() const {
     // get device
     cl_device_id device_id{};
     PLSSVM_OPENCL_ERROR_CHECK(clGetCommandQueueInfo(devices_[0], CL_QUEUE_DEVICE, sizeof(cl_device_id), &device_id, nullptr), "error obtaining device");
@@ -168,10 +168,10 @@ unsigned long long csvm::get_device_memory() const {
     // get device global memory size
     cl_ulong total_device_memory{};
     PLSSVM_OPENCL_ERROR_CHECK(clGetDeviceInfo(device_id, CL_DEVICE_GLOBAL_MEM_SIZE, sizeof(cl_ulong), &total_device_memory, nullptr), "error obtaining device's global memory size");
-    return total_device_memory;
+    return ::plssvm::detail::memory_size{ static_cast<unsigned long long>(total_device_memory) };
 }
 
-unsigned long long csvm::get_max_mem_alloc_size() const {
+::plssvm::detail::memory_size csvm::get_max_mem_alloc_size() const {
     // get device
     cl_device_id device_id{};
     PLSSVM_OPENCL_ERROR_CHECK(clGetCommandQueueInfo(devices_[0], CL_QUEUE_DEVICE, sizeof(cl_device_id), &device_id, nullptr), "error obtaining device");
@@ -179,10 +179,10 @@ unsigned long long csvm::get_max_mem_alloc_size() const {
     // get maximum allocation size
     cl_ulong max_alloc_size{};
     PLSSVM_OPENCL_ERROR_CHECK(clGetDeviceInfo(device_id, CL_DEVICE_MAX_MEM_ALLOC_SIZE, sizeof(cl_ulong), &max_alloc_size, nullptr), "error obtaining device's maximum allocation size");
-    return max_alloc_size;
+    return ::plssvm::detail::memory_size{ static_cast<unsigned long long>(max_alloc_size) };
 }
 
-[[nodiscard]] std::size_t csvm::get_max_work_group_size() const {
+std::size_t csvm::get_max_work_group_size() const {
     // get device
     cl_device_id device_id{};
     PLSSVM_OPENCL_ERROR_CHECK(clGetCommandQueueInfo(devices_[0], CL_QUEUE_DEVICE, sizeof(cl_device_id), &device_id, nullptr), "error obtaining device");

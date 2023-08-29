@@ -15,6 +15,7 @@
 
 #include "plssvm/constants.hpp"           // plssvm::real_type
 #include "plssvm/csvm.hpp"                // plssvm::csvm
+#include "plssvm/detail/memory_size.hpp"  // plssvm::detail::memory_size
 #include "plssvm/detail/simple_any.hpp"   // plssvm::detail::simple_any
 #include "plssvm/detail/type_traits.hpp"  // PLSSVM_REQUIRES
 #include "plssvm/matrix.hpp"              // plssvm::aos_matrix
@@ -113,11 +114,11 @@ class csvm : public ::plssvm::csvm {
     /**
      * @copydoc plssvm::csvm::get_device_memory
      */
-    [[nodiscard]] unsigned long long get_device_memory() const final;
+    [[nodiscard]] ::plssvm::detail::memory_size get_device_memory() const final;
     /**
      * @copydoc plssvm::csvm::get_max_mem_alloc_size
      */
-    [[nodiscard]] unsigned long long get_max_mem_alloc_size() const final;
+    [[nodiscard]] ::plssvm::detail::memory_size get_max_mem_alloc_size() const final;
 
     //***************************************************//
     //                        fit                        //

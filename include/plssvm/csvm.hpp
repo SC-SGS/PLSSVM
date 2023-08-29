@@ -17,8 +17,8 @@
 #include "plssvm/constants.hpp"                   // plssvm::real_type
 #include "plssvm/data_set.hpp"                    // plssvm::data_set
 #include "plssvm/default_value.hpp"               // plssvm::default_value, plssvm::default_init
-#include "plssvm/detail/custom_literals.hpp"      // custom byte related literals
 #include "plssvm/detail/logger.hpp"               // plssvm::detail::log, plssvm::verbosity_level
+#include "plssvm/detail/memory_size.hpp"          // plssvm::detail::memory_size
 #include "plssvm/detail/operators.hpp"            // plssvm::operators::sign
 #include "plssvm/detail/performance_tracker.hpp"  // plssvm::detail::performance_tracker
 #include "plssvm/detail/simple_any.hpp"           // plssvm::detail::simple_any
@@ -189,12 +189,12 @@ class csvm {
      * @brief Calculate the total available device memory based on the used backend.
      * @return the total device memory (`[[nodiscard]]`)
      */
-    [[nodiscard]] virtual unsigned long long get_device_memory() const = 0;
+    [[nodiscard]] virtual detail::memory_size get_device_memory() const = 0;
     /**
      * @brief Return the maximum allocation size possible in a single allocation.
      * @return the maximum (single) allocation size (`[[nodiscard]]`)
      */
-    [[nodiscard]] virtual unsigned long long get_max_mem_alloc_size() const = 0;
+    [[nodiscard]] virtual detail::memory_size get_max_mem_alloc_size() const = 0;
 
     /**
      * @brief Setup all necessary data on the device(s). Backend specific!
@@ -710,14 +710,14 @@ std::pair<aos_matrix<real_type>, std::vector<real_type>> csvm::solve_system_of_l
         using namespace detail::literals;
 
         // define used safety margin constants
-        constexpr long double minimal_safety_margin = 512_MiB;
+        constexpr detail::memory_size minimal_safety_margin = 512_MiB;
         constexpr long double percentual_safety_margin = 0.05L;
-        const auto reduce_total_memory = [minimal_safety_margin](const unsigned long long total_memory) {
-            return total_memory - std::max<long double>(static_cast<long double>(total_memory) * percentual_safety_margin, minimal_safety_margin);
+        const auto reduce_total_memory = [minimal_safety_margin](const detail::memory_size total_memory) {
+            return total_memory - std::max(total_memory * percentual_safety_margin, minimal_safety_margin);
         };
 
-        const long double total_system_memory = detail::get_system_memory();
-        const long double total_device_memory = this->get_device_memory();
+        const detail::memory_size total_system_memory = detail::get_system_memory();
+        const detail::memory_size total_device_memory = this->get_device_memory();
 
         // 4B/8B * (data_set size + explicit kernel matrix size + B and C matrix in GEMM + q_red vector)
 #if defined(PLSSVM_USE_GEMM)
@@ -725,22 +725,22 @@ std::pair<aos_matrix<real_type>, std::vector<real_type>> csvm::solve_system_of_l
 #else
         const unsigned long long kernel_matrix_size = num_rows_reduced * (num_rows_reduced + 1) / 2;
 #endif
-        const unsigned long long total_memory_needed = sizeof(real_type) * (num_rows * num_features + kernel_matrix_size + 2 * num_rows_reduced * num_rhs + num_features);
+        const detail::memory_size total_memory_needed{ sizeof(real_type) * (num_rows * num_features + kernel_matrix_size + 2 * num_rows_reduced * num_rhs + num_features) };
 
         detail::log(verbosity_level::full,
                     "Determining the solver type based on the available memory:\n"
-                    "  - total system memory: {:.2f} GiB\n"
-                    "  - usable system memory: {} = {:.2f} GiB\n"
-                    "  - total device memory: {:.2f} GiB\n"
-                    "  - usable device memory: {} = {:.2f} GiB\n"
-                    "  - memory needed: {:.2f} GiB\n",
-                    detail::tracking_entry{ "solver", "system_memory_GiB", total_system_memory / 1.0_GiB },
-                    fmt::format("{:.2f} GiB {}", total_system_memory / 1.0_GiB, total_system_memory * percentual_safety_margin > minimal_safety_margin ? "* 0.95" : "- 512 MiB"),
-                    detail::tracking_entry{ "solver", "available_system_memory_GiB", reduce_total_memory(total_system_memory) / 1.0_GiB },
-                    detail::tracking_entry{ "solver", "device_memory_GiB", total_device_memory / 1.0_GiB },
-                    fmt::format("{:.2f} GiB {}", total_device_memory / 1.0_GiB, total_device_memory * percentual_safety_margin > minimal_safety_margin ? "* 0.95" : "- 512 MiB"),
-                    detail::tracking_entry{ "solver", "available_device_memory_GiB", reduce_total_memory(total_device_memory) / 1.0_GiB },
-                    detail::tracking_entry{ "solver", "needed_memory_GiB", static_cast<long double>(total_memory_needed) / 1.0_GiB });
+                    "  - total system memory: {}\n"
+                    "  - usable system memory: {} = {}\n"
+                    "  - total device memory: {}\n"
+                    "  - usable device memory: {} = {}\n"
+                    "  - memory needed: {}\n",
+                    detail::tracking_entry{ "solver", "system_memory", total_system_memory },
+                    fmt::format("{} {}", total_system_memory, total_system_memory * percentual_safety_margin > minimal_safety_margin ? "* 0.95" : "- 512 MiB"),
+                    detail::tracking_entry{ "solver", "available_system_memory", reduce_total_memory(total_system_memory) },
+                    detail::tracking_entry{ "solver", "device_memory", total_device_memory },
+                    fmt::format("{} {}", total_device_memory, total_device_memory * percentual_safety_margin > minimal_safety_margin ? "* 0.95" : "- 512 MiB"),
+                    detail::tracking_entry{ "solver", "available_device_memory", reduce_total_memory(total_device_memory) },
+                    detail::tracking_entry{ "solver", "needed_memory", total_memory_needed });
 
         // select solver type based on the available memory
         if (total_memory_needed < total_device_memory) {
@@ -753,18 +753,19 @@ std::pair<aos_matrix<real_type>, std::vector<real_type>> csvm::solve_system_of_l
 
 #if defined(PLSSVM_ENFORCE_MAX_MEM_ALLOC_SIZE)
         // enforce max mem alloc size if requested
-        const unsigned long long max_mem_alloc_size = this->get_max_mem_alloc_size();
+        const detail::memory_size max_mem_alloc_size = this->get_max_mem_alloc_size();
         // maximum of data set and kernel matrix
-        const unsigned long long max_single_allocation_size = sizeof(real_type) * std::max<unsigned long long>(num_rows * num_features, kernel_matrix_size);
+        const detail::memory_size max_single_allocation_size{ sizeof(real_type) * std::max<unsigned long long>(num_rows * num_features, kernel_matrix_size) };
         detail::log(verbosity_level::full,
-                    "  - max. memory allocation size: {:.2f} GiB\n",
-                    detail::tracking_entry{ "solver", "device_max_mem_alloc_size_GiB", max_mem_alloc_size / 1.0_GiB });
+                    "  - max. memory allocation size: {}\n",
+                    detail::tracking_entry{ "solver", "device_max_mem_alloc_size", max_mem_alloc_size });
 
         // note: only cg_explicit currently implemented
+        // TODO: also implement logic for cg_streaming and cg_implicit
         if (used_solver == solver_type::cg_explicit && max_single_allocation_size > max_mem_alloc_size) {
             detail::log(verbosity_level::full,
-                        "The biggest single allocation ({:.2f} GiB) exceeds the guaranteed maximum memory allocation size ({:.2f} GiB), falling back to solver_type::cg_streaming.\n",
-                        max_single_allocation_size / 1.0_GiB, max_mem_alloc_size / 1.0_GiB);
+                        "The biggest single allocation ({}) exceeds the guaranteed maximum memory allocation size ({}), falling back to solver_type::cg_streaming.\n",
+                        max_single_allocation_size, max_mem_alloc_size);
             std::clog << fmt::format(fmt::fg(fmt::color::orange),
                                      "Warning: if you are sure that the guaranteed maximum memory allocation size can be safely ignored on your deivce, "
                                      "this check can be disabled via \"-DPLSSVM_ENFORCE_MAX_MEM_ALLOC_SIZE=OFF\" during the CMake configuration!") << std::endl;
