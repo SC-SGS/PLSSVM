@@ -123,7 +123,7 @@ namespace plssvm::detail::io {
  * @throws plssvm::invalid_file_format_exception if the number of sum of all number of support vectors per class is not the same as the value of 'total_sv'
  * @throws plssvm::invalid_file_format_exception if no support vectors have been provided in the data section
  * @attention The PLSSVM model file is only compatible with LIBSVM for the one vs. one classification type.
- * @return the necessary header information: [the SVM parameter, the values of rho, the labels, the different classes, num_header_lines] (`[[nodiscard]]`)
+ * @return the necessary header information: [the SVM parameter, the values of rho, the labels, the different classes, the number of support vectors, per class, num_header_lines] (`[[nodiscard]]`)
  */
 template <typename label_type>
 [[nodiscard]] inline std::tuple<plssvm::parameter, std::vector<real_type>, std::vector<label_type>, std::vector<label_type>, std::vector<std::size_t>, std::size_t> parse_libsvm_model_header(const std::vector<std::string_view> &lines) {
