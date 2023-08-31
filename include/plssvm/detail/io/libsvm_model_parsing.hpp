@@ -532,6 +532,7 @@ template <typename label_type>
 template <typename label_type>
 inline std::vector<label_type> write_libsvm_model_header(fmt::ostream &out, const plssvm::parameter &params, const std::vector<real_type> &rho, const data_set<label_type> &data) {
     PLSSVM_ASSERT(data.has_labels(), "Cannot write a model file that does not include labels!");
+    PLSSVM_ASSERT(!rho.empty(), "At least one rho value must be provided!");
 
     // save model file header
     std::string out_string = fmt::format("svm_type c_svc\nkernel_type {}\n", params.kernel_type);
