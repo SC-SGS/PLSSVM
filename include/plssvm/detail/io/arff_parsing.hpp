@@ -452,7 +452,7 @@ inline void write_arff_data_impl(const std::string &filename, const aos_matrix<r
             out_string.append(fmt::format("{:.10e}", data(i, num_features - 1)));
             // output label if provided
             if constexpr (has_label) {
-                out_string.append(fmt::format("{}", label[i]));
+                out_string.append(fmt::format(",{}", label[i]));
             }
             // output newline at the end
             out_string.push_back('\n');
