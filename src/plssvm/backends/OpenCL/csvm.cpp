@@ -145,8 +145,10 @@ void csvm::init(const target_platform target) {
                   "The explicit kernel matrix assembly device kernel is missing!");
     PLSSVM_ASSERT(std::all_of(devices_.begin(), devices_.end(), [](const queue_type &queue) { return queue.kernels.count(detail::compute_kernel_name::gemm_kernel_explicit) == 1; }),
                   "The explicit BLAS GEMM device kernel is missing!");
+    PLSSVM_ASSERT(std::all_of(devices_.begin(), devices_.end(), [](const queue_type &queue) { return queue.kernels.count(detail::compute_kernel_name::symm_kernel_explicit) == 1; }),
+                  "The explicit BLAS SYMM device kernel is missing!");
     if (kernel == kernel_function_type::linear) {
-        PLSSVM_ASSERT(std::all_of(devices_.begin(), devices_.end(), [](const queue_type &queue) { return queue.kernels.size() == 4; }), "Every command queue for the linear kernel function must have exactly four associated kernels!");
+        PLSSVM_ASSERT(std::all_of(devices_.begin(), devices_.end(), [](const queue_type &queue) { return queue.kernels.size() == 5; }), "Every command queue for the linear kernel function must have exactly four associated kernels!");
         PLSSVM_ASSERT(std::all_of(devices_.begin(), devices_.end(), [](const queue_type &queue) { return queue.kernels.count(detail::compute_kernel_name::w_kernel) == 1; }),
                       "The w_kernel device kernel is missing!");
     } else {
