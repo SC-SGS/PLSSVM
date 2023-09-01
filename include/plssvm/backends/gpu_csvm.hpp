@@ -276,10 +276,12 @@ template <template <typename> typename device_ptr_t, typename queue_t>
         // get the pointer to the data that already is on the device
         const device_ptr_type &data_d = data.get<device_ptr_type>();
         [[maybe_unused]] const std::size_t num_rows_reduced = data_d.size(0) - 1;
+        [[maybe_unused]] const std::size_t num_rows_reduced_padded = num_rows_reduced + THREAD_BLOCK_PADDING;
         [[maybe_unused]] const std::size_t num_features = data_d.size(1);
 
         // TODO: ASSERTS
         PLSSVM_ASSERT(num_rows_reduced > 0, "At least one row must be given!");
+        PLSSVM_ASSERT(num_rows_reduced_padded >= num_rows_reduced, "The number of rows with padding ({}) must be greater or equal to the number of rows without padding!", num_rows_reduced_padded, num_rows_reduced);
         PLSSVM_ASSERT(num_features > 0, "At least one feature must be given!");
         PLSSVM_ASSERT((num_rows_reduced + 1) * num_features == data_d.size(),
                       "The number of values on the device data array is {}, but the provided sizes are {} ((num_rows_reduced + 1) * num_features)",
@@ -292,13 +294,13 @@ template <template <typename> typename device_ptr_t, typename queue_t>
         device_ptr_type kernel_matrix = this->run_assemble_kernel_matrix_explicit(params, data_d, q_red_d, QA_cost);
 
 #if defined(PLSSVM_USE_GEMM)
-        PLSSVM_ASSERT(num_rows_reduced * num_rows_reduced == kernel_matrix.size(),
-                      "The kernel matrix must be a quadratic matrix with num_rows_reduced^2 ({}) entries, but is {}!",
-                      num_rows_reduced * num_rows_reduced, kernel_matrix.size());
+        PLSSVM_ASSERT(num_rows_reduced_padded * num_rows_reduced_padded == kernel_matrix.size(),
+                      "The kernel matrix must be a quadratic matrix with (num_rows_reduced + THREAD_BLOCK_PADDING)^2 ({}) entries, but is {}!",
+                      num_rows_reduced_padded * num_rows_reduced_padded, kernel_matrix.size());
 #else
-        PLSSVM_ASSERT(num_rows_reduced * (num_rows_reduced + 1) / 2 == kernel_matrix.size(),
-                      "The kernel matrix must be a triangular matrix only with num_rows_reduced * (num_rows_reduced + 1) / 2 ({}) entries, but is {}!",
-                      num_rows_reduced * (num_rows_reduced + 1) / 2, kernel_matrix.size());
+        PLSSVM_ASSERT(num_rows_reduced_padded * (num_rows_reduced_padded + 1) / 2 == kernel_matrix.size(),
+                      "The kernel matrix must be a triangular matrix only with (num_rows_reduced + THREAD_BLOCK_PADDING) * (num_rows_reduced + THREAD_BLOCK_PADDING + 1) / 2 ({}) entries, but is {}!",
+                      num_rows_reduced_padded * (num_rows_reduced_padded + 1) / 2, kernel_matrix.size());
 #endif
 
         return ::plssvm::detail::simple_any{ std::move(kernel_matrix) };
