@@ -134,7 +134,7 @@ class csvm : public ::plssvm::csvm {
     /**
      * @copydoc plssvm::csvm::blas_level_3
      */
-    void blas_gemm(const solver_type solver, const real_type alpha, const detail::simple_any &A, const soa_matrix<real_type> &B, const real_type beta, soa_matrix<real_type> &C) const final;
+    void blas_level_3(const solver_type solver, const real_type alpha, const detail::simple_any &A, const soa_matrix<real_type> &B, const real_type beta, soa_matrix<real_type> &C) const final;
 
     //***************************************************//
     //                   predict, score                  //
@@ -142,7 +142,7 @@ class csvm : public ::plssvm::csvm {
     /**
      * @copydoc plssvm::csvm::predict_values
      */
-    [[nodiscard]] aos_matrix<real_type> predict_values(const parameter &params, const aos_matrix<real_type> &support_vectors, const aos_matrix<real_type> &alpha, const std::vector<real_type> &rho, aos_matrix<real_type> &w, const aos_matrix<real_type> &predict_points) const final;
+    [[nodiscard]] aos_matrix<real_type> predict_values(const parameter &params, const soa_matrix<real_type> &support_vectors, const aos_matrix<real_type> &alpha, const std::vector<real_type> &rho, aos_matrix<real_type> &w, const soa_matrix<real_type> &predict_points) const final;
 };
 
 }  // namespace openmp

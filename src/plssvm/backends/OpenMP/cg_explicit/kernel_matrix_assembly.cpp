@@ -11,7 +11,7 @@
 #include "plssvm/constants.hpp"              // plssvm::real_type
 #include "plssvm/detail/assert.hpp"          // PLSSVM_ASSERT
 #include "plssvm/kernel_function_types.hpp"  // plssvm::kernel_function_type, plssvm::kernel_function
-#include "plssvm/matrix.hpp"                 // plssvm::aos_matrix
+#include "plssvm/matrix.hpp"                 // plssvm::soa_matrix
 
 #include <cstddef>                           // std::size_t
 #include <utility>                           // std::forward
@@ -22,7 +22,7 @@ namespace plssvm::openmp {
 namespace detail {
 
 template <kernel_function_type kernel, typename... Args>
-void device_kernel_assembly(const std::vector<real_type> &q, std::vector<real_type> &ret, const aos_matrix<real_type> &data, const real_type QA_cost, const real_type cost, Args &&...args) {
+void device_kernel_assembly(const std::vector<real_type> &q, std::vector<real_type> &ret, const soa_matrix<real_type> &data, const real_type QA_cost, const real_type cost, Args &&...args) {
     PLSSVM_ASSERT(q.size() == data.num_rows() - 1, "Sizes mismatch!: {} != {}", q.size(), data.num_rows() - 1);
 #if defined(PLSSVM_USE_GEMM)
     PLSSVM_ASSERT(ret.size() == q.size() * q.size(), "Sizes mismatch (GEMM)!: {} != {}", ret.size(), q.size() * q.size());
@@ -60,17 +60,17 @@ void device_kernel_assembly(const std::vector<real_type> &q, std::vector<real_ty
 
 }  // namespace detail
 
-void device_kernel_assembly_linear(const std::vector<real_type> &q, std::vector<real_type> &ret, const aos_matrix<real_type> &data, const real_type QA_cost, const real_type cost) {
+void device_kernel_assembly_linear(const std::vector<real_type> &q, std::vector<real_type> &ret, const soa_matrix<real_type> &data, const real_type QA_cost, const real_type cost) {
     detail::device_kernel_assembly<kernel_function_type::linear>(q, ret, data, QA_cost, cost);
 }
 
-void device_kernel_assembly_polynomial(const std::vector<real_type> &q, std::vector<real_type> &ret, const aos_matrix<real_type> &data, const real_type QA_cost, const real_type cost, const int degree, const real_type gamma, const real_type coef0) {
+void device_kernel_assembly_polynomial(const std::vector<real_type> &q, std::vector<real_type> &ret, const soa_matrix<real_type> &data, const real_type QA_cost, const real_type cost, const int degree, const real_type gamma, const real_type coef0) {
     PLSSVM_ASSERT(gamma > real_type{ 0.0 }, "gamma must be greater than 0, but is {}!", gamma);
 
     detail::device_kernel_assembly<kernel_function_type::polynomial>(q, ret, data, QA_cost, cost, degree, gamma, coef0);
 }
 
-void device_kernel_assembly_rbf(const std::vector<real_type> &q, std::vector<real_type> &ret, const aos_matrix<real_type> &data, const real_type QA_cost, const real_type cost, const real_type gamma) {
+void device_kernel_assembly_rbf(const std::vector<real_type> &q, std::vector<real_type> &ret, const soa_matrix<real_type> &data, const real_type QA_cost, const real_type cost, const real_type gamma) {
     PLSSVM_ASSERT(gamma > real_type{ 0.0 }, "gamma must be greater than 0, but is {}!", gamma);
 
     detail::device_kernel_assembly<kernel_function_type::rbf>(q, ret, data, QA_cost, cost, gamma);

@@ -20,7 +20,7 @@
 #include "plssvm/detail/operators.hpp"                                    // various operator overloads for std::vector and scalars
 #include "plssvm/detail/performance_tracker.hpp"                          // plssvm::detail::tracking_entry, PLSSVM_DETAIL_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY
 #include "plssvm/kernel_function_types.hpp"                               // plssvm::kernel_function_type
-#include "plssvm/matrix.hpp"                                              // plssvm::aos_matrix
+#include "plssvm/matrix.hpp"                                              // plssvm::aos_matrix, plssvm::soa_matrix
 #include "plssvm/parameter.hpp"                                           // plssvm::parameter
 #include "plssvm/target_platforms.hpp"                                    // plssvm::target_platform
 
@@ -100,7 +100,7 @@ detail::simple_any csvm::assemble_kernel_matrix(const solver_type solver, const 
     PLSSVM_ASSERT(!q_red.empty(), "The q_red vector may not be empty!");
     PLSSVM_ASSERT(solver != solver_type::automatic, "An explicit solver type must be provided instead of solver_type::automatic!");
 
-    const aos_matrix<real_type> *data_ptr = data.get<const aos_matrix<real_type> *>();
+    const soa_matrix<real_type> *data_ptr = data.get<const soa_matrix<real_type> *>();
     PLSSVM_ASSERT(data_ptr != nullptr, "The data_ptr must not be a nullptr!");
 
     const std::size_t num_rows_reduced = data_ptr->num_rows() - 1;
@@ -142,7 +142,7 @@ detail::simple_any csvm::assemble_kernel_matrix(const solver_type solver, const 
     }
 }
 
-void csvm::blas_gemm(const solver_type solver, const real_type alpha, const detail::simple_any &A, const soa_matrix<real_type> &B, const real_type beta, soa_matrix<real_type> &C) const {
+void csvm::blas_level_3(const solver_type solver, const real_type alpha, const detail::simple_any &A, const soa_matrix<real_type> &B, const real_type beta, soa_matrix<real_type> &C) const {
     PLSSVM_ASSERT(!B.empty(), "The B matrix may not be empty!");
     PLSSVM_ASSERT(!C.empty(), "The C matrix may not be empty!");
     PLSSVM_ASSERT(B.num_rows() == C.num_rows(), "The C matrix must have {} rows, but has {}!", B.num_rows(), C.num_rows());
@@ -172,7 +172,7 @@ void csvm::blas_gemm(const solver_type solver, const real_type alpha, const deta
 //                   predict, score                  //
 //***************************************************//
 
-aos_matrix<real_type> csvm::predict_values(const parameter &params, const aos_matrix<real_type> &support_vectors, const aos_matrix<real_type> &alpha, const std::vector<real_type> &rho, aos_matrix<real_type> &w, const aos_matrix<real_type> &predict_points) const {
+aos_matrix<real_type> csvm::predict_values(const parameter &params, const soa_matrix<real_type> &support_vectors, const aos_matrix<real_type> &alpha, const std::vector<real_type> &rho, aos_matrix<real_type> &w, const soa_matrix<real_type> &predict_points) const {
     PLSSVM_ASSERT(!support_vectors.empty(), "The support vectors must not be empty!");
     PLSSVM_ASSERT(!alpha.empty(), "The alpha vectors (weights) must not be empty!");
     PLSSVM_ASSERT(support_vectors.num_rows() == alpha.num_cols(), "The number of support vectors ({}) and number of weights ({}) must be the same!", support_vectors.num_rows(), alpha.num_cols());
