@@ -15,6 +15,7 @@
 
 #include "plssvm/constants.hpp"           // plssvm::real_type
 #include "plssvm/csvm.hpp"                // plssvm::csvm
+#include "plssvm/detail/memory_size.hpp"  // plssvm::detail::memory_size
 #include "plssvm/detail/simple_any.hpp"   // plssvm::detail::simple_any
 #include "plssvm/detail/type_traits.hpp"  // PLSSVM_REQUIRES
 #include "plssvm/matrix.hpp"              // plssvm::aos_matrix
@@ -113,11 +114,11 @@ class csvm : public ::plssvm::csvm {
     /**
      * @copydoc plssvm::csvm::get_device_memory
      */
-    [[nodiscard]] unsigned long long get_device_memory() const final;
+    [[nodiscard]] ::plssvm::detail::memory_size get_device_memory() const final;
     /**
      * @copydoc plssvm::csvm::get_max_mem_alloc_size
      */
-    [[nodiscard]] unsigned long long get_max_mem_alloc_size() const final;
+    [[nodiscard]] ::plssvm::detail::memory_size get_max_mem_alloc_size() const final;
 
     //***************************************************//
     //                        fit                        //
@@ -129,11 +130,11 @@ class csvm : public ::plssvm::csvm {
     /**
      * @copydoc plssvm::csvm::assemble_kernel_matrix
      */
-    [[nodiscard]] detail::simple_any assemble_kernel_matrix(const solver_type solver, const parameter &params, const detail::simple_any &data, const std::vector<real_type> &q_red, const real_type QA_cost) const final;
+    [[nodiscard]] detail::simple_any assemble_kernel_matrix(solver_type solver, const parameter &params, const detail::simple_any &data, const std::vector<real_type> &q_red, const real_type QA_cost) const final;
     /**
-     * @copydoc plssvm::csvm::blas_gemm
+     * @copydoc plssvm::csvm::blas_level_3
      */
-    void blas_gemm(const solver_type solver, const real_type alpha, const detail::simple_any &A, const soa_matrix<real_type> &B, const real_type beta, soa_matrix<real_type> &C) const final;
+    void blas_level_3(const solver_type solver, const real_type alpha, const detail::simple_any &A, const soa_matrix<real_type> &B, const real_type beta, soa_matrix<real_type> &C) const final;
 
     //***************************************************//
     //                   predict, score                  //
@@ -141,7 +142,7 @@ class csvm : public ::plssvm::csvm {
     /**
      * @copydoc plssvm::csvm::predict_values
      */
-    [[nodiscard]] aos_matrix<real_type> predict_values(const parameter &params, const aos_matrix<real_type> &support_vectors, const aos_matrix<real_type> &alpha, const std::vector<real_type> &rho, aos_matrix<real_type> &w, const aos_matrix<real_type> &predict_points) const final;
+    [[nodiscard]] aos_matrix<real_type> predict_values(const parameter &params, const soa_matrix<real_type> &support_vectors, const aos_matrix<real_type> &alpha, const std::vector<real_type> &rho, aos_matrix<real_type> &w, const soa_matrix<real_type> &predict_points) const final;
 };
 
 }  // namespace openmp

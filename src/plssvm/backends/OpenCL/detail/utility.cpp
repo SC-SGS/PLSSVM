@@ -177,26 +177,22 @@ std::string get_device_name(const command_queue &queue) {
 }
 
 std::vector<std::pair<compute_kernel_name, std::string>> kernel_type_to_function_names(const kernel_function_type kernel) {
-    switch (kernel) {
-        // TODO: guard behind ifdef?
-        case kernel_function_type::linear:
-            return { std::make_pair(compute_kernel_name::assemble_kernel_matrix_explicit, "device_kernel_assembly_linear"),
-                     std::make_pair(compute_kernel_name::gemm_kernel_explicit, "device_kernel_gemm"),
-                     std::make_pair(compute_kernel_name::symm_kernel_explicit, "device_kernel_symm"),
-                     std::make_pair(compute_kernel_name::w_kernel, "device_kernel_w_linear"),
-                     std::make_pair(compute_kernel_name::predict_kernel, "device_kernel_predict_linear") };
-        case kernel_function_type::polynomial:
-            return { std::make_pair(compute_kernel_name::assemble_kernel_matrix_explicit, "device_kernel_assembly_polynomial"),
-                     std::make_pair(compute_kernel_name::gemm_kernel_explicit, "device_kernel_gemm"),
-                     std::make_pair(compute_kernel_name::symm_kernel_explicit, "device_kernel_symm"),
-                     std::make_pair(compute_kernel_name::predict_kernel, "device_kernel_predict_polynomial") };
-        case kernel_function_type::rbf:
-            return { std::make_pair(compute_kernel_name::assemble_kernel_matrix_explicit, "device_kernel_assembly_rbf"),
-                     std::make_pair(compute_kernel_name::gemm_kernel_explicit, "device_kernel_gemm"),
-                     std::make_pair(compute_kernel_name::symm_kernel_explicit, "device_kernel_symm"),
-                     std::make_pair(compute_kernel_name::predict_kernel, "device_kernel_predict_rbf") };
-    }
-    throw unsupported_kernel_type_exception{ fmt::format("Unknown kernel type (value: {})!", ::plssvm::detail::to_underlying(kernel)) };
+    // since the correct predict kernel function cannot be determined during construction, add all predict kernels
+    std::vector<std::pair<compute_kernel_name, std::string>> kernels{
+        std::make_pair(compute_kernel_name::assemble_kernel_matrix_explicit, fmt::format("device_kernel_assembly_{}", kernel)),
+        std::make_pair(compute_kernel_name::predict_kernel_linear, "device_kernel_predict_linear"),
+        std::make_pair(compute_kernel_name::predict_kernel_polynomial, "device_kernel_predict_polynomial"),
+        std::make_pair(compute_kernel_name::predict_kernel_rbf, "device_kernel_predict_rbf"),
+        std::make_pair(compute_kernel_name::w_kernel, "device_kernel_w_linear")
+    };
+
+#if defined(PLSSVM_USE_GEMM)
+    kernels.emplace_back(compute_kernel_name::gemm_kernel_explicit, "device_kernel_gemm");
+#else
+    kernels.emplace_back(compute_kernel_name::symm_kernel_explicit, "device_kernel_symm");
+#endif
+
+    return kernels;
 }
 
 std::vector<command_queue> create_command_queues(const std::vector<context> &contexts, const target_platform target, const std::vector<std::pair<compute_kernel_name, std::string>> &kernel_names) {

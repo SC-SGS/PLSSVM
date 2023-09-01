@@ -18,6 +18,7 @@
 #include "plssvm/detail/assert.hpp"                         // PLSSVM_ASSERT
 #include "plssvm/detail/logger.hpp"                         // plssvm::detail::log, plssvm::verbosity_level
 #include "plssvm/detail/performance_tracker.hpp"            // plssvm::detail::tracking_entry
+#include "plssvm/detail/utility.hpp"                        // plssvm::detail::contains
 #include "plssvm/exceptions/exceptions.hpp"                 // plssvm::exception
 #include "plssvm/kernel_function_types.hpp"                 // plssvm::kernel_function_type
 #include "plssvm/parameter.hpp"                             // plssvm::parameter, plssvm::detail::parameter
@@ -141,26 +142,32 @@ void csvm::init(const target_platform target) {
                         "\n");
 
     // sanity checks for the number of the OpenCL kernels
-    PLSSVM_ASSERT(std::all_of(devices_.begin(), devices_.end(), [](const queue_type &queue) { return queue.kernels.count(detail::compute_kernel_name::assemble_kernel_matrix_explicit) == 1; }),
+    PLSSVM_ASSERT(std::all_of(devices_.begin(), devices_.end(), [](const queue_type &queue) { return queue.kernels.size() == 6; }), "Every command queue must have exactly four associated kernels!");
+
+    PLSSVM_ASSERT(std::all_of(devices_.begin(), devices_.end(), [](const queue_type &queue) { return ::plssvm::detail::contains(queue.kernels, detail::compute_kernel_name::assemble_kernel_matrix_explicit); }),
                   "The explicit kernel matrix assembly device kernel is missing!");
-    PLSSVM_ASSERT(std::all_of(devices_.begin(), devices_.end(), [](const queue_type &queue) { return queue.kernels.count(detail::compute_kernel_name::gemm_kernel_explicit) == 1; }),
+#if defined(PLSSVM_USE_GEMM)
+    PLSSVM_ASSERT(std::all_of(devices_.begin(), devices_.end(), [](const queue_type &queue) { return ::plssvm::detail::contains(queue.kernels, detail::compute_kernel_name::gemm_kernel_explicit); }),
                   "The explicit BLAS GEMM device kernel is missing!");
-    if (kernel == kernel_function_type::linear) {
-        PLSSVM_ASSERT(std::all_of(devices_.begin(), devices_.end(), [](const queue_type &queue) { return queue.kernels.size() == 4; }), "Every command queue for the linear kernel function must have exactly four associated kernels!");
-        PLSSVM_ASSERT(std::all_of(devices_.begin(), devices_.end(), [](const queue_type &queue) { return queue.kernels.count(detail::compute_kernel_name::w_kernel) == 1; }),
-                      "The w_kernel device kernel is missing!");
-    } else {
-        PLSSVM_ASSERT(std::all_of(devices_.begin(), devices_.end(), [](const queue_type &queue) { return queue.kernels.size() == 3; }), "Every command queue for the polynomial or rbf kernel function must have exactly four associated kernels!");
-    }
-    PLSSVM_ASSERT(std::all_of(devices_.begin(), devices_.end(), [](const queue_type &queue) { return queue.kernels.count(detail::compute_kernel_name::predict_kernel) == 1; }),
-                  "The predict_kernel device kernel is missing!");
+#else
+    PLSSVM_ASSERT(std::all_of(devices_.begin(), devices_.end(), [](const queue_type &queue) { return ::plssvm::detail::contains(queue.kernels, detail::compute_kernel_name::symm_kernel_explicit); }),
+                  "The explicit BLAS SYMM device kernel is missing!");
+#endif
+    PLSSVM_ASSERT(std::all_of(devices_.begin(), devices_.end(), [](const queue_type &queue) { return ::plssvm::detail::contains(queue.kernels, detail::compute_kernel_name::w_kernel); }),
+                  "The w_kernel device kernel is missing!");
+    PLSSVM_ASSERT(std::all_of(devices_.begin(), devices_.end(), [](const queue_type &queue) { return ::plssvm::detail::contains(queue.kernels, detail::compute_kernel_name::predict_kernel_linear); }),
+                  "The predict_kernel_linear device kernel is missing!");
+    PLSSVM_ASSERT(std::all_of(devices_.begin(), devices_.end(), [](const queue_type &queue) { return ::plssvm::detail::contains(queue.kernels, detail::compute_kernel_name::predict_kernel_polynomial); }),
+                  "The predict_kernel_polynomial device kernel is missing!");
+    PLSSVM_ASSERT(std::all_of(devices_.begin(), devices_.end(), [](const queue_type &queue) { return ::plssvm::detail::contains(queue.kernels, detail::compute_kernel_name::predict_kernel_rbf); }),
+                  "The predict_kernel_rbf device kernel is missing!");
 }
 
 void csvm::device_synchronize(const queue_type &queue) const {
     detail::device_synchronize(queue);
 }
 
-unsigned long long csvm::get_device_memory() const {
+::plssvm::detail::memory_size csvm::get_device_memory() const {
     // get device
     cl_device_id device_id{};
     PLSSVM_OPENCL_ERROR_CHECK(clGetCommandQueueInfo(devices_[0], CL_QUEUE_DEVICE, sizeof(cl_device_id), &device_id, nullptr), "error obtaining device");
@@ -168,10 +175,10 @@ unsigned long long csvm::get_device_memory() const {
     // get device global memory size
     cl_ulong total_device_memory{};
     PLSSVM_OPENCL_ERROR_CHECK(clGetDeviceInfo(device_id, CL_DEVICE_GLOBAL_MEM_SIZE, sizeof(cl_ulong), &total_device_memory, nullptr), "error obtaining device's global memory size");
-    return total_device_memory;
+    return ::plssvm::detail::memory_size{ static_cast<unsigned long long>(total_device_memory) };
 }
 
-unsigned long long csvm::get_max_mem_alloc_size() const {
+::plssvm::detail::memory_size csvm::get_max_mem_alloc_size() const {
     // get device
     cl_device_id device_id{};
     PLSSVM_OPENCL_ERROR_CHECK(clGetCommandQueueInfo(devices_[0], CL_QUEUE_DEVICE, sizeof(cl_device_id), &device_id, nullptr), "error obtaining device");
@@ -179,10 +186,10 @@ unsigned long long csvm::get_max_mem_alloc_size() const {
     // get maximum allocation size
     cl_ulong max_alloc_size{};
     PLSSVM_OPENCL_ERROR_CHECK(clGetDeviceInfo(device_id, CL_DEVICE_MAX_MEM_ALLOC_SIZE, sizeof(cl_ulong), &max_alloc_size, nullptr), "error obtaining device's maximum allocation size");
-    return max_alloc_size;
+    return ::plssvm::detail::memory_size{ static_cast<unsigned long long>(max_alloc_size) };
 }
 
-[[nodiscard]] std::size_t csvm::get_max_work_group_size() const {
+std::size_t csvm::get_max_work_group_size() const {
     // get device
     cl_device_id device_id{};
     PLSSVM_OPENCL_ERROR_CHECK(clGetCommandQueueInfo(devices_[0], CL_QUEUE_DEVICE, sizeof(cl_device_id), &device_id, nullptr), "error obtaining device");
@@ -272,7 +279,6 @@ auto csvm::run_w_kernel(const device_ptr_type &alpha_d, const device_ptr_type &s
 
     device_ptr_type w_d{ { num_classes, num_features }, devices_[0] };
 
-
     detail::run_kernel(devices_[0], devices_[0].get_kernel(detail::compute_kernel_name::w_kernel), grid, block, w_d.get(), alpha_d.get(), sv_d.get(), num_classes, num_sv, num_features);
     this->device_synchronize(devices_[0]);
 
@@ -295,7 +301,7 @@ auto csvm::run_predict_kernel(const parameter &params, const device_ptr_type &w_
         const std::vector<std::size_t> grid = { static_cast<std::size_t>(std::ceil(static_cast<double>(num_predict_points) / static_cast<double>(block[0]))) * block[0],
                                                 static_cast<std::size_t>(std::ceil(static_cast<double>(num_classes) / static_cast<double>(block[1]))) * block[1] };
 
-        detail::run_kernel(devices_[0], devices_[0].get_kernel(detail::compute_kernel_name::predict_kernel), grid, block, out_d.get(), w_d.get(), rho_d.get(), predict_points_d.get(), num_classes, num_predict_points, num_features);
+        detail::run_kernel(devices_[0], devices_[0].get_kernel(detail::compute_kernel_name::predict_kernel_linear), grid, block, out_d.get(), w_d.get(), rho_d.get(), predict_points_d.get(), num_classes, num_predict_points, num_features);
     } else {
         // define the grid and block sizes
         const std::size_t max_work_group_size = this->get_max_work_group_size();
@@ -310,10 +316,10 @@ auto csvm::run_predict_kernel(const parameter &params, const device_ptr_type &w_
                 // already handled
                 break;
             case kernel_function_type::polynomial:
-                detail::run_kernel(devices_[0], devices_[0].get_kernel(detail::compute_kernel_name::predict_kernel), grid, block, out_d.get(), alpha_d.get(), rho_d.get(), sv_d.get(), predict_points_d.get(), num_classes, num_sv, num_predict_points, num_features, params.degree.value(), params.gamma.value(), params.coef0.value());
+                detail::run_kernel(devices_[0], devices_[0].get_kernel(detail::compute_kernel_name::predict_kernel_polynomial), grid, block, out_d.get(), alpha_d.get(), rho_d.get(), sv_d.get(), predict_points_d.get(), num_classes, num_sv, num_predict_points, num_features, params.degree.value(), params.gamma.value(), params.coef0.value());
                 break;
             case kernel_function_type::rbf:
-                detail::run_kernel(devices_[0], devices_[0].get_kernel(detail::compute_kernel_name::predict_kernel), grid, block, out_d.get(), alpha_d.get(), rho_d.get(), sv_d.get(), predict_points_d.get(), num_classes, num_sv, num_predict_points, num_features, params.gamma.value());
+                detail::run_kernel(devices_[0], devices_[0].get_kernel(detail::compute_kernel_name::predict_kernel_rbf), grid, block, out_d.get(), alpha_d.get(), rho_d.get(), sv_d.get(), predict_points_d.get(), num_classes, num_sv, num_predict_points, num_features, params.gamma.value());
                 break;
         }
     }

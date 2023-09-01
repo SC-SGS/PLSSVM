@@ -28,10 +28,14 @@ enum class compute_kernel_name {
     gemm_kernel_explicit,
     /// The kernel performing a explicit BLAS SYMM calculation.
     symm_kernel_explicit,
-    /// The predict kernel for the linear kernel function.
+    /// The kernel to speed up the linear kernel function prediction.
     w_kernel,
-    /// The predict kernels for the polynomial and rbf kernel functions.
-    predict_kernel
+    /// The predict kernel for the linear kernel function.
+    predict_kernel_linear,
+    /// The predict kernel for the polynomial kernel function.
+    predict_kernel_polynomial,
+    /// The predict kernel for the radial basis function kernel function.
+    predict_kernel_rbf
 };
 
 /**
