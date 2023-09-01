@@ -721,11 +721,11 @@ std::pair<aos_matrix<real_type>, std::vector<real_type>> csvm::solve_system_of_l
 
         // 4B/8B * (data_set size including padding + explicit kernel matrix size + B and C matrix in GEMM + q_red vector)
 #if defined(PLSSVM_USE_GEMM)
-        const unsigned long long kernel_matrix_size = num_rows_reduced * num_rows_reduced;  // TODO: add padding
+        const unsigned long long kernel_matrix_size = (num_rows_reduced + THREAD_BLOCK_PADDING) * (num_rows_reduced + THREAD_BLOCK_PADDING);
 #else
-        const unsigned long long kernel_matrix_size = num_rows_reduced * (num_rows_reduced + 1) / 2;
+        const unsigned long long kernel_matrix_size = (num_rows_reduced + THREAD_BLOCK_PADDING) * (num_rows_reduced + THREAD_BLOCK_PADDING + 1) / 2;
 #endif
-        const detail::memory_size total_memory_needed{ sizeof(real_type) * ((num_rows + THREAD_BLOCK_SIZE * INTERNAL_BLOCK_SIZE) * (num_features + FEATURE_BLOCK_SIZE) + kernel_matrix_size + 2 * num_rows_reduced * num_rhs + num_features) };
+        const detail::memory_size total_memory_needed{ sizeof(real_type) * ((num_rows + THREAD_BLOCK_PADDING) * (num_features + FEATURE_BLOCK_SIZE) + kernel_matrix_size + 2 * num_rows_reduced * num_rhs + num_features) };
 
         detail::log(verbosity_level::full,
                     "Determining the solver type based on the available memory:\n"
