@@ -19,6 +19,7 @@ enable_language(CUDA)
 
 # add test executable
 add_executable(${PLSSVM_CUDA_TEST_NAME} ${CMAKE_CURRENT_LIST_DIR}/../../main.cpp ${PLSSVM_CUDA_TEST_SOURCES})
+target_include_directories(${PLSSVM_CUDA_TEST_NAME} PRIVATE ${CMAKE_CURRENT_LIST_DIR}/..)
 
 # link against test library
 target_link_libraries(${PLSSVM_CUDA_TEST_NAME} PRIVATE ${PLSSVM_BASE_TEST_LIBRARY_NAME})

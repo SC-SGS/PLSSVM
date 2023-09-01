@@ -9,7 +9,9 @@
  */
 
 #include "plssvm/detail/cmd/parser_train.hpp"
-#include "plssvm/detail/logger.hpp"      // plssvm::verbosity
+
+#include "plssvm/constants.hpp"      // plssvm::real_type
+#include "plssvm/detail/logger.hpp"  // plssvm::verbosity
 
 #include "../../custom_test_macros.hpp"  // EXPECT_CONVERSION_TO_STRING
 #include "../../naming.hpp"              // naming::{pretty_print_parameter_flag_and_value, pretty_print_parameter_flag}
@@ -48,7 +50,6 @@ TEST_F(ParserTrain, minimal) {
     EXPECT_EQ(parser.sycl_kernel_invocation_type, plssvm::sycl::kernel_invocation_type::automatic);
     EXPECT_EQ(parser.sycl_implementation_type, plssvm::sycl::implementation_type::automatic);
     EXPECT_FALSE(parser.strings_as_labels);
-    EXPECT_FALSE(parser.float_as_real_type);
     EXPECT_EQ(parser.input_filename, "data.libsvm");
     EXPECT_EQ(parser.model_filename, "data.libsvm.model");
     EXPECT_EQ(parser.performance_tracking_filename, "");
@@ -68,8 +69,8 @@ TEST_F(ParserTrain, minimal_output) {
         "epsilon: 0.001 (default)\n"
         "max_iter: num_data_points (default)\n"
         "classification_type: one vs. all (default)\n"
-        "label_type: int (default)\n"
-        "real_type: double (default)\n"
+        "label_type: int (default)\n" +
+        fmt::format("real_type: {}\n", std::is_same_v<plssvm::real_type, float> ? "float" : "double (default)") +
         "input file (data set): 'data.libsvm'\n"
         "output file (model): 'data.libsvm.model'\n";
     EXPECT_CONVERSION_TO_STRING(parser, correct);
@@ -77,7 +78,7 @@ TEST_F(ParserTrain, minimal_output) {
 
 TEST_F(ParserTrain, all_arguments) {
     // create artificial command line arguments in test fixture
-    std::vector<std::string> cmd_args = { "./plssvm-train", "--kernel_type", "1", "--degree", "2", "--gamma", "1.5", "--coef0", "-1.5", "--cost", "2", "--epsilon", "1e-10", "--max_iter", "100", "--classification", "oao", "--backend", "cuda", "--target_platform", "gpu_nvidia", "--use_strings_as_labels", "--use_float_as_real_type", "--verbosity", "libsvm" };
+    std::vector<std::string> cmd_args = { "./plssvm-train", "--kernel_type", "1", "--degree", "2", "--gamma", "1.5", "--coef0", "-1.5", "--cost", "2", "--epsilon", "1e-10", "--max_iter", "100", "--classification", "oao", "--backend", "cuda", "--target_platform", "gpu_nvidia", "--use_strings_as_labels", "--verbosity", "libsvm" };
 #if defined(PLSSVM_HAS_SYCL_BACKEND)
     cmd_args.insert(cmd_args.end(), { "--sycl_kernel_invocation_type", "nd_range", "--sycl_implementation_type", "dpcpp" });
 #endif
@@ -113,7 +114,6 @@ TEST_F(ParserTrain, all_arguments) {
     EXPECT_EQ(parser.sycl_implementation_type, plssvm::sycl::implementation_type::automatic);
 #endif
     EXPECT_TRUE(parser.strings_as_labels);
-    EXPECT_TRUE(parser.float_as_real_type);
     EXPECT_EQ(parser.input_filename, "data.libsvm");
     EXPECT_EQ(parser.model_filename, "data.libsvm.model");
 #if defined(PLSSVM_PERFORMANCE_TRACKER_ENABLED)
@@ -123,7 +123,7 @@ TEST_F(ParserTrain, all_arguments) {
 }
 TEST_F(ParserTrain, all_arguments_output) {
     // create artificial command line arguments in test fixture
-    std::vector<std::string> cmd_args = { "./plssvm-train", "--kernel_type", "1", "--degree", "2", "--gamma", "1.5", "--coef0", "-1.5", "--cost", "2", "--epsilon", "1e-10", "--max_iter", "100", "--classification", "oao", "--backend", "cuda", "--target_platform", "gpu_nvidia", "--use_strings_as_labels", "--use_float_as_real_type", "--verbosity", "libsvm" };
+    std::vector<std::string> cmd_args = { "./plssvm-train", "--kernel_type", "1", "--degree", "2", "--gamma", "1.5", "--coef0", "-1.5", "--cost", "2", "--epsilon", "1e-10", "--max_iter", "100", "--classification", "oao", "--backend", "cuda", "--target_platform", "gpu_nvidia", "--use_strings_as_labels", "--verbosity", "libsvm" };
 #if defined(PLSSVM_HAS_SYCL_BACKEND)
     cmd_args.insert(cmd_args.end(), { "--sycl_kernel_invocation_type", "nd_range", "--sycl_implementation_type", "dpcpp" });
 #endif
@@ -146,8 +146,8 @@ TEST_F(ParserTrain, all_arguments_output) {
         "epsilon: 1e-10\n"
         "max_iter: 100\n"
         "classification_type: one vs. one\n"
-        "label_type: std::string\n"
-        "real_type: float\n"
+        "label_type: std::string\n" +
+        fmt::format("real_type: {}\n", std::is_same_v<plssvm::real_type, float> ? "float" : "double (default)") +
         "input file (data set): 'data.libsvm'\n"
         "output file (model): 'data.libsvm.model'\n";
 #if defined(PLSSVM_PERFORMANCE_TRACKER_ENABLED)
@@ -330,7 +330,7 @@ TEST_P(ParserTrainClassification, parsing) {
 }
 // clang-format off
 INSTANTIATE_TEST_SUITE_P(ParserTrain, ParserTrainClassification, ::testing::Combine(
-                ::testing::Values("-s", "--classification"),
+                ::testing::Values("-a", "--classification"),
                 ::testing::Values(plssvm::classification_type::oaa, plssvm::classification_type::oao)),
                 naming::pretty_print_parameter_flag_and_value<ParserTrainClassification>);
 // clang-format on
@@ -451,23 +451,6 @@ INSTANTIATE_TEST_SUITE_P(ParserTrain, ParserTrainUseStringsAsLabels, ::testing::
                 ::testing::Values("--use_strings_as_labels"),
                 ::testing::Bool()),
                 naming::pretty_print_parameter_flag_and_value<ParserTrainUseStringsAsLabels>);
-// clang-format on
-
-class ParserTrainUseFloatAsRealType : public ParserTrain, public ::testing::WithParamInterface<std::tuple<std::string, bool>> {};
-TEST_P(ParserTrainUseFloatAsRealType, parsing) {
-    const auto &[flag, value] = GetParam();
-    // create artificial command line arguments in test fixture
-    this->CreateCMDArgs({ "./plssvm-train", fmt::format("{}={}", flag, value), "data.libsvm" });
-    // create parameter object
-    const plssvm::detail::cmd::parser_train parser{ this->argc, this->argv };
-    // test for correctness
-    EXPECT_EQ(parser.float_as_real_type, value);
-}
-// clang-format off
-INSTANTIATE_TEST_SUITE_P(ParserTrain, ParserTrainUseFloatAsRealType, ::testing::Combine(
-                ::testing::Values("--use_float_as_real_type"),
-                ::testing::Bool()),
-                naming::pretty_print_parameter_flag_and_value<ParserTrainUseFloatAsRealType>);
 // clang-format on
 
 class ParserTrainVerbosity : public ParserTrain, public ::testing::WithParamInterface<std::tuple<std::string, std::string>> {};

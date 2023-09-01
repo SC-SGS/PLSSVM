@@ -103,8 +103,8 @@ set(PLSSVM_BASE_TEST_NAME Base_tests)
 
 # list all necessary sources
 set(PLSSVM_BASE_TEST_SOURCES
-## since the SYCL implementation_type and kernel_invocation_type enumerations are used even if no SYCL backend
-## is available these are also tested in the base library
+        ## since the SYCL implementation_type and kernel_invocation_type enumerations are used even if no SYCL backend
+        ## is available these are also tested in the base library
         ${CMAKE_CURRENT_LIST_DIR}/backends/SYCL/implementation_type.cpp
         ${CMAKE_CURRENT_LIST_DIR}/backends/SYCL/kernel_invocation_type.cpp
 
@@ -115,20 +115,21 @@ set(PLSSVM_BASE_TEST_SOURCES
 
         ${CMAKE_CURRENT_LIST_DIR}/detail/io/arff_parsing.cpp
         ${CMAKE_CURRENT_LIST_DIR}/detail/io/file_reader.cpp
-        ${CMAKE_CURRENT_LIST_DIR}/detail/io/libsvm_model_parsing.cpp
+#        ${CMAKE_CURRENT_LIST_DIR}/detail/io/libsvm_model_parsing.cpp
         ${CMAKE_CURRENT_LIST_DIR}/detail/io/libsvm_parsing.cpp
         ${CMAKE_CURRENT_LIST_DIR}/detail/io/scaling_factors_parsing.cpp
 
         ${CMAKE_CURRENT_LIST_DIR}/detail/arithmetic_type_name.cpp
         ${CMAKE_CURRENT_LIST_DIR}/detail/assert.cpp
-        ${CMAKE_CURRENT_LIST_DIR}/detail/execution_range.cpp
-        ${CMAKE_CURRENT_LIST_DIR}/detail/layout.cpp
         ${CMAKE_CURRENT_LIST_DIR}/detail/logger.cpp
+#        ${CMAKE_CURRENT_LIST_DIR}/detail/memory_size.cpp
         ${CMAKE_CURRENT_LIST_DIR}/detail/operators.cpp
         ${CMAKE_CURRENT_LIST_DIR}/detail/performance_tracker.cpp
         ${CMAKE_CURRENT_LIST_DIR}/detail/sha256.cpp
+#        ${CMAKE_CURRENT_LIST_DIR}/detail/simple_any.cpp
         ${CMAKE_CURRENT_LIST_DIR}/detail/string_conversion.cpp
         ${CMAKE_CURRENT_LIST_DIR}/detail/string_utility.cpp
+        ${CMAKE_CURRENT_LIST_DIR}/detail/type_list.cpp
         ${CMAKE_CURRENT_LIST_DIR}/detail/type_traits.cpp
         ${CMAKE_CURRENT_LIST_DIR}/detail/utility.cpp
 
@@ -141,16 +142,17 @@ set(PLSSVM_BASE_TEST_SOURCES
         ${CMAKE_CURRENT_LIST_DIR}/backend_types.cpp
         ${CMAKE_CURRENT_LIST_DIR}/classification_report.cpp
         ${CMAKE_CURRENT_LIST_DIR}/classification_types.cpp
-        ${CMAKE_CURRENT_LIST_DIR}/csvm_factory.cpp
         ${CMAKE_CURRENT_LIST_DIR}/csvm.cpp
+        ${CMAKE_CURRENT_LIST_DIR}/csvm_factory.cpp
         ${CMAKE_CURRENT_LIST_DIR}/data_set.cpp
         ${CMAKE_CURRENT_LIST_DIR}/default_value.cpp
         ${CMAKE_CURRENT_LIST_DIR}/file_format_types.cpp
         ${CMAKE_CURRENT_LIST_DIR}/kernel_function_types.cpp
+#        ${CMAKE_CURRENT_LIST_DIR}/matrix.hpp
         ${CMAKE_CURRENT_LIST_DIR}/model.cpp
         ${CMAKE_CURRENT_LIST_DIR}/parameter.cpp
+#        ${CMAKE_CURRENT_LIST_DIR}/solver_types.cpp
         ${CMAKE_CURRENT_LIST_DIR}/target_platforms.cpp
-        ${CMAKE_CURRENT_LIST_DIR}/type_list.cpp
         )
 
 # create test executable

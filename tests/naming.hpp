@@ -296,7 +296,7 @@ template <typename T>
 template <typename T>
 [[nodiscard]] inline std::string pretty_print_data_set_factory(const ::testing::TestParamInfo<typename T::ParamType> &param_info) {
     // the values are bools
-    return fmt::format("float_as_real_type_{}__strings_as_labels_{}", std::get<0>(param_info.param), std::get<1>(param_info.param));
+    return fmt::format("strings_as_labels_{}", std::get<0>(param_info.param));
 }
 
 // detail/sha256.cpp -> Sha256

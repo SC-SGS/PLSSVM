@@ -9,7 +9,9 @@
  */
 
 #include "plssvm/detail/cmd/parser_predict.hpp"
-#include "plssvm/detail/logger.hpp"      // plssvm::verbosity
+
+#include "plssvm/constants.hpp"      // plssvm::real_type
+#include "plssvm/detail/logger.hpp"  // plssvm::verbosity
 
 #include "../../custom_test_macros.hpp"  // EXPECT_CONVERSION_TO_STRING
 #include "../../naming.hpp"              // naming::{pretty_print_parameter_flag_and_value, pretty_print_parameter_flag}
@@ -40,7 +42,6 @@ TEST_F(ParserPredict, minimal) {
     EXPECT_EQ(parser.target, plssvm::target_platform::automatic);
     EXPECT_EQ(parser.sycl_implementation_type, plssvm::sycl::implementation_type::automatic);
     EXPECT_FALSE(parser.strings_as_labels);
-    EXPECT_FALSE(parser.float_as_real_type);
     EXPECT_EQ(parser.input_filename, "data.libsvm");
     EXPECT_EQ(parser.model_filename, "data.libsvm.model");
     EXPECT_EQ(parser.predict_filename, "data.libsvm.predict");
@@ -54,8 +55,8 @@ TEST_F(ParserPredict, minimal_output) {
 
     // test output string
     const std::string correct =
-        "label_type: int (default)\n"
-        "real_type: double (default)\n"
+        "label_type: int (default)\n" +
+        fmt::format("real_type: {}\n", std::is_same_v<plssvm::real_type, float> ? "float" : "double (default)") +
         "input file (data set): 'data.libsvm'\n"
         "input file (model): 'data.libsvm.model'\n"
         "output file (prediction): 'data.libsvm.predict'\n";
@@ -64,7 +65,7 @@ TEST_F(ParserPredict, minimal_output) {
 
 TEST_F(ParserPredict, all_arguments) {
     // create artificial command line arguments in test fixture
-    std::vector<std::string> cmd_args = { "./plssvm-predict", "--backend", "cuda", "--target_platform", "gpu_nvidia", "--use_strings_as_labels", "--use_float_as_real_type", "--verbosity", "libsvm" };
+    std::vector<std::string> cmd_args = { "./plssvm-predict", "--backend", "cuda", "--target_platform", "gpu_nvidia", "--use_strings_as_labels", "--verbosity", "libsvm" };
 #if defined(PLSSVM_HAS_SYCL_BACKEND)
     cmd_args.insert(cmd_args.end(), { "--sycl_implementation_type", "dpcpp" });
 #endif
@@ -89,7 +90,6 @@ TEST_F(ParserPredict, all_arguments) {
     EXPECT_EQ(parser.performance_tracking_filename, "tracking.yaml");
 #endif
     EXPECT_TRUE(parser.strings_as_labels);
-    EXPECT_TRUE(parser.float_as_real_type);
     EXPECT_EQ(parser.input_filename, "data.libsvm");
     EXPECT_EQ(parser.model_filename, "data.libsvm.model");
     EXPECT_EQ(parser.predict_filename, "data.libsvm.predict");
@@ -97,7 +97,7 @@ TEST_F(ParserPredict, all_arguments) {
 }
 TEST_F(ParserPredict, all_arguments_output) {
     // create artificial command line arguments in test fixture
-    std::vector<std::string> cmd_args = { "./plssvm-predict", "--backend", "cuda", "--target_platform", "gpu_nvidia", "--use_strings_as_labels", "--use_float_as_real_type", "--verbosity", "libsvm" };
+    std::vector<std::string> cmd_args = { "./plssvm-predict", "--backend", "cuda", "--target_platform", "gpu_nvidia", "--use_strings_as_labels", "--verbosity", "libsvm" };
 #if defined(PLSSVM_HAS_SYCL_BACKEND)
     cmd_args.insert(cmd_args.end(), { "--sycl_implementation_type", "dpcpp" });
 #endif
@@ -112,8 +112,8 @@ TEST_F(ParserPredict, all_arguments_output) {
 
     // test output string
     std::string correct =
-        "label_type: std::string\n"
-        "real_type: float\n"
+        "label_type: std::string\n" +
+        fmt::format("real_type: {}\n", std::is_same_v<plssvm::real_type, float> ? "float" : "double (default)") +
         "input file (data set): 'data.libsvm'\n"
         "input file (model): 'data.libsvm.model'\n"
         "output file (prediction): 'data.libsvm.predict'\n";
@@ -222,23 +222,6 @@ INSTANTIATE_TEST_SUITE_P(ParserPredict, ParserPredictUseStringsAsLabels, ::testi
                 ::testing::Values("--use_strings_as_labels"),
                 ::testing::Bool()),
                 naming::pretty_print_parameter_flag_and_value<ParserPredictUseStringsAsLabels>);
-// clang-format on
-
-class ParserPredictUseFloatAsRealType : public ParserPredict, public ::testing::WithParamInterface<std::tuple<std::string, bool>> {};
-TEST_P(ParserPredictUseFloatAsRealType, parsing) {
-    const auto &[flag, value] = GetParam();
-    // create artificial command line arguments in test fixture
-    this->CreateCMDArgs({ "./plssvm-predict", fmt::format("{}={}", flag, value), "data.libsvm", "data.libsvm.model" });
-    // create parameter object
-    const plssvm::detail::cmd::parser_predict parser{ this->argc, this->argv };
-    // test for correctness
-    EXPECT_EQ(parser.float_as_real_type, value);
-}
-// clang-format off
-INSTANTIATE_TEST_SUITE_P(ParserPredict, ParserPredictUseFloatAsRealType, ::testing::Combine(
-                ::testing::Values("--use_float_as_real_type"),
-                ::testing::Bool()),
-                naming::pretty_print_parameter_flag_and_value<ParserPredictUseFloatAsRealType>);
 // clang-format on
 
 class ParserPredictVerbosity : public ParserPredict, public ::testing::WithParamInterface<std::tuple<std::string, std::string>> {};

@@ -93,11 +93,10 @@ TEST_F(CUDACSVM, construct_target_and_named_args) {
                       "Invalid target platform 'gpu_intel' for the CUDA backend!");
 }
 
-template <typename T, plssvm::kernel_function_type kernel>
+template <plssvm::kernel_function_type kernel>
 struct csvm_test_type {
     using mock_csvm_type = mock_cuda_csvm;
     using csvm_type = plssvm::cuda::csvm;
-    using real_type = T;
     static constexpr plssvm::kernel_function_type kernel_type = kernel;
     inline static auto additional_arguments = std::make_tuple();
 };
@@ -106,20 +105,16 @@ class csvm_test_type_to_name {
   public:
     template <typename T>
     static std::string GetName(int) {
-        return fmt::format("{}_{}_{}",
+        return fmt::format("{}_{}",
                            plssvm::csvm_to_backend_type_v<typename T::csvm_type>,
-                           plssvm::detail::arithmetic_type_name<typename T::real_type>(),
                            T::kernel_type);
     }
 };
 
 using csvm_test_types = ::testing::Types<
-    csvm_test_type<float, plssvm::kernel_function_type::linear>,
-    csvm_test_type<float, plssvm::kernel_function_type::polynomial>,
-    csvm_test_type<float, plssvm::kernel_function_type::rbf>,
-    csvm_test_type<double, plssvm::kernel_function_type::linear>,
-    csvm_test_type<double, plssvm::kernel_function_type::polynomial>,
-    csvm_test_type<double, plssvm::kernel_function_type::rbf>>;
+    csvm_test_type<plssvm::kernel_function_type::linear>,
+    csvm_test_type<plssvm::kernel_function_type::polynomial>,
+    csvm_test_type<plssvm::kernel_function_type::rbf>>;
 
 // instantiate type-parameterized tests
 INSTANTIATE_TYPED_TEST_SUITE_P(CUDABackend, GenericCSVM, csvm_test_types, csvm_test_type_to_name);

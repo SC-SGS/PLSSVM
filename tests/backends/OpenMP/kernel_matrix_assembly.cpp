@@ -10,140 +10,165 @@
 
 #include "plssvm/backends/OpenMP/cg_explicit/kernel_matrix_assembly.hpp"
 
-#include "../../custom_test_macros.hpp"  // EXPECT_FLOATING_POINT_2D_VECTOR_NEAR
-#include "../../naming.hpp"              // naming::real_type_to_name
-#include "../../types_to_test.hpp"       // util::real_type_gtest
+#include "plssvm/constants.hpp"  // plssvm::real_type
 
-#include "gmock/gmock-matchers.h"        // ::testing::HasSubstr
-#include "gtest/gtest.h"                 // TYPED_TEST, TYPED_TEST_SUITE, EXPECT_DEATH, ::testing::Test
+#include "../../custom_test_macros.hpp"  // EXPECT_FLOATING_POINT_VECTOR_NEAR
 
-#include <vector>                        // std::vector
+#include "gmock/gmock-matchers.h"  // ::testing::HasSubstr
+#include "gtest/gtest.h"           // TEST, EXPECT_DEATH
 
-template <typename T>
-class OpenMPSVMKernelMatrixAssembly : public ::testing::Test {};
-TYPED_TEST_SUITE(OpenMPSVMKernelMatrixAssembly, util::real_type_gtest, naming::real_type_to_name);
+#include <vector>  // std::vector
 
-TYPED_TEST(OpenMPSVMKernelMatrixAssembly, linear_assembly) {
-    using real_type = TypeParam;
+TEST(OpenMPCSVMKernelMatrixAssembly, linear_assembly) {
+    using plssvm::real_type;
 
     // create vectors with mismatching sizes: note that the provided out vector is one smaller than the data vector!
-    const std::vector<std::vector<real_type>> correct_data = {
+    const plssvm::aos_matrix<plssvm::real_type> data{ std::vector<std::vector<real_type>>{
         { real_type{ 0.0 }, real_type{ 1.0 } },
         { real_type{ 2.0 }, real_type{ 3.0 } },
-        { real_type{ 4.0 }, real_type{ 5.0 } }
+        { real_type{ 4.0 }, real_type{ 5.0 } } } };
+
+    const std::vector<real_type> q = { real_type{ 1.0 }, real_type{ 2.0 } };
+    const real_type QA_cost{ 0.5 };
+    const real_type cost{ 1.0 };
+
+#if defined(PLSSVM_USE_GEMM)
+    const std::vector<real_type> correct_ret = {
+        real_type{ 0.5 }, real_type{ 0.5 }, real_type{ 0.5 }, real_type{ 10.5 }
     };
-    const std::vector<std::vector<real_type>> correct_ret = {
-        { real_type{ 0.5 }, real_type{ 0.5 } },
-        { real_type{ 0.5 }, real_type{ 10.5 } },
+#else
+    const std::vector<real_type> correct_ret = {
+        real_type{ 0.5 }, real_type{ 0.5 }, real_type{ 10.5 }
     };
+#endif
+    std::vector<real_type> ret(correct_ret.size());
+
+    // assemble kernel matrix
+    plssvm::openmp::device_kernel_assembly_linear(q, ret, data, QA_cost, cost);
+
+    EXPECT_FLOATING_POINT_VECTOR_NEAR(ret, correct_ret);
+}
+TEST(OpenMPCSVMKernelMatrixAssembly, polynomial_assembly) {
+    using plssvm::real_type;
+
+    // create vectors with mismatching sizes: note that the provided out vector is one smaller than the data vector!
+    const plssvm::aos_matrix<plssvm::real_type> data{ std::vector<std::vector<real_type>>{
+        { real_type{ 0.0 }, real_type{ 1.0 } },
+        { real_type{ 2.0 }, real_type{ 3.0 } },
+        { real_type{ 4.0 }, real_type{ 5.0 } } } };
+
+    const std::vector<real_type> q = { real_type{ 1.0 }, real_type{ 2.0 } };
+    const real_type QA_cost{ 0.5 };
+    const real_type cost{ 1.0 };
+
+#if defined(PLSSVM_USE_GEMM)
+    const std::vector<real_type> correct_ret = {
+        real_type{ 3.91 }, real_type{ 2.79 }, real_type{ 2.79 }, real_type{ 8.39 }
+    };
+#else
+    const std::vector<real_type> correct_ret = {
+        real_type{ 3.91 }, real_type{ 2.79 }, real_type{ 8.39 }
+    };
+#endif
+    std::vector<real_type> ret(correct_ret.size());
+
+    // assemble kernel matrix
+    plssvm::openmp::device_kernel_assembly_polynomial(q, ret, data, QA_cost, cost, 2, real_type{ 0.1 }, real_type{ 2.0 });
+
+    EXPECT_FLOATING_POINT_VECTOR_NEAR(ret, correct_ret);
+}
+TEST(OpenMPCSVMKernelMatrixAssembly, rbf_assembly) {
+    using plssvm::real_type;
+
+    // create vectors with mismatching sizes: note that the provided out vector is one smaller than the data vector!
+    const plssvm::aos_matrix<plssvm::real_type> data{ std::vector<std::vector<real_type>>{
+        { real_type{ 0.0 }, real_type{ 1.0 } },
+        { real_type{ 2.0 }, real_type{ 3.0 } },
+        { real_type{ 4.0 }, real_type{ 5.0 } } } };
 
     const std::vector<real_type> q = { real_type{ 1.0 }, real_type{ 2.0 } };
     const real_type QA_cost{ 0.5 };
     const real_type cost{ 1.0 };
 
     // assemble kernel matrix
-    std::vector<std::vector<real_type>> ret(correct_data.size() - 1, std::vector<real_type>(correct_data.size() - 1, real_type{ 0.0 }));
-    plssvm::openmp::linear_kernel_matrix_assembly(q, ret, correct_data, QA_cost, cost);
+#if defined(PLSSVM_USE_GEMM)
+    const std::vector<real_type> correct_ret = {
+        real_type{ 0.5 }, std::exp(real_type{ -0.8 }) + real_type{ -2.5 }, std::exp(real_type{ -0.8 }) + real_type{ -2.5 }, real_type{ -1.5 }
+    };
+#else
+    const std::vector<real_type> correct_ret = {
+        real_type{ 0.5 }, std::exp(real_type{ -0.8 }) + real_type{ -2.5 }, real_type{ -1.5 }
+    };
+#endif
+    std::vector<real_type> ret(correct_ret.size());
 
-    EXPECT_FLOATING_POINT_2D_VECTOR_NEAR(ret, correct_ret);
+    plssvm::openmp::device_kernel_assembly_rbf(q, ret, data, QA_cost, cost, real_type{ 0.1 });
+
+    EXPECT_FLOATING_POINT_VECTOR_NEAR(ret, correct_ret);
 }
-TYPED_TEST(OpenMPSVMKernelMatrixAssembly, polynomial_assembly) {
-    using real_type = TypeParam;
+
+TEST(OpenMPCSVMKernelMatrixAssemblyDeathTest, linear_assembly) {
+    using plssvm::real_type;
 
     // create vectors with mismatching sizes: note that the provided out vector is one smaller than the data vector!
-    const std::vector<std::vector<real_type>> correct_data = {
+    const plssvm::aos_matrix<plssvm::real_type> data{ std::vector<std::vector<real_type>>{
         { real_type{ 0.0 }, real_type{ 1.0 } },
         { real_type{ 2.0 }, real_type{ 3.0 } },
-        { real_type{ 4.0 }, real_type{ 5.0 } }
-    };
-    const std::vector<std::vector<real_type>> correct_ret = {
-        { real_type{ 3.91 }, real_type{ 2.79 } },
-        { real_type{ 2.79 }, real_type{ 8.39 } },
-    };
-
-    const std::vector<real_type> q = { real_type{ 1.0 }, real_type{ 2.0 } };
+        { real_type{ 4.0 }, real_type{ 5.0 } } } };
     const real_type QA_cost{ 0.5 };
     const real_type cost{ 1.0 };
 
-    // assemble kernel matrix
-    std::vector<std::vector<real_type>> ret(correct_data.size() - 1, std::vector<real_type>(correct_data.size() - 1, real_type{ 0.0 }));
-    plssvm::openmp::polynomial_kernel_matrix_assembly(q, ret, correct_data, QA_cost, cost, 2, real_type{ 0.1 }, real_type{ 2.0 });
+    const std::vector<real_type> q(data.num_rows() - 1);
+#if defined(PLSSVM_USE_GEMM)
+    std::vector<real_type> correct_ret((data.num_rows() - 1) * (data.num_rows() - 1));
+#else
+    std::vector<real_type> correct_ret((data.num_rows() - 1) * (data.num_rows()) / 2);
+#endif
 
-    EXPECT_FLOATING_POINT_2D_VECTOR_NEAR(ret, correct_ret);
+    EXPECT_DEATH(plssvm::openmp::device_kernel_assembly_linear(std::vector<real_type>(1), correct_ret, data, QA_cost, cost), ::testing::HasSubstr("Sizes mismatch!: 1 != 2"));
+    std::vector<real_type> ret(1);
+#if defined(PLSSVM_USE_GEMM)
+    EXPECT_DEATH(plssvm::openmp::device_kernel_assembly_linear(q, ret, data, QA_cost, cost), ::testing::HasSubstr("Sizes mismatch (GEMM)!: 1 != 4"));
+#else
+    EXPECT_DEATH(plssvm::openmp::device_kernel_assembly_linear(q, ret, data, QA_cost, cost), ::testing::HasSubstr("Sizes mismatch (SYMM)!: 1 != 3"));
+#endif
+    EXPECT_DEATH(plssvm::openmp::device_kernel_assembly_linear(q, correct_ret, data, QA_cost, real_type{ 0.0 }), ::testing::HasSubstr("cost must not be 0.0 since it is 1 / plssvm::cost!"));
 }
-TYPED_TEST(OpenMPSVMKernelMatrixAssembly, rbf_assembly) {
-    using real_type = TypeParam;
+TEST(OpenMPCSVMKernelMatrixAssemblyDeathTest, polynomial_assembly) {
+    using plssvm::real_type;
 
     // create vectors with mismatching sizes: note that the provided out vector is one smaller than the data vector!
-    const std::vector<std::vector<real_type>> correct_data = {
+    const plssvm::aos_matrix<plssvm::real_type> data{ std::vector<std::vector<real_type>>{
         { real_type{ 0.0 }, real_type{ 1.0 } },
         { real_type{ 2.0 }, real_type{ 3.0 } },
-        { real_type{ 4.0 }, real_type{ 5.0 } }
-    };
-    const std::vector<std::vector<real_type>> correct_ret = {
-        { real_type{ 0.5 }, std::exp(real_type{ -0.8 }) + real_type{ -2.5 } },
-        { std::exp(real_type{ -0.8 }) + real_type{ -2.5 }, real_type{ -1.5 } },
-    };
-
-    const std::vector<real_type> q = { real_type{ 1.0 }, real_type{ 2.0 } };
+        { real_type{ 4.0 }, real_type{ 5.0 } } } };
     const real_type QA_cost{ 0.5 };
     const real_type cost{ 1.0 };
 
-    // assemble kernel matrix
-    std::vector<std::vector<real_type>> ret(correct_data.size() - 1, std::vector<real_type>(correct_data.size() - 1, real_type{ 0.0 }));
-    plssvm::openmp::rbf_kernel_matrix_assembly(q, ret, correct_data, QA_cost, cost, real_type{ 0.1 });
-
-    EXPECT_FLOATING_POINT_2D_VECTOR_NEAR(ret, correct_ret);
+    const std::vector<real_type> q(data.num_rows() - 1);
+#if defined(PLSSVM_USE_GEMM)
+    std::vector<real_type> ret((data.num_rows() - 1) * (data.num_rows() - 1));
+#else
+    std::vector<real_type> ret((data.num_rows() - 1) * (data.num_rows()) / 2);
+#endif
+    EXPECT_DEATH(plssvm::openmp::device_kernel_assembly_polynomial(q, ret, data, QA_cost, cost, 2, real_type{ 0.0 }, real_type{ 1.0 }), ::testing::HasSubstr("gamma must be greater than 0, but is 0!"));
 }
-
-template <typename T>
-class OpenMPSVMKernelMatrixAssemblyDeathTest : public ::testing::Test {};
-TYPED_TEST_SUITE(OpenMPSVMKernelMatrixAssemblyDeathTest, util::real_type_gtest, naming::real_type_to_name);
-
-TYPED_TEST(OpenMPSVMKernelMatrixAssemblyDeathTest, linear_assembly) {
-    using real_type = TypeParam;
+TEST(OpenMPCSVMKernelMatrixAssemblyDeathTest, rbf_assembly) {
+    using plssvm::real_type;
 
     // create vectors with mismatching sizes: note that the provided out vector is one smaller than the data vector!
-    const std::vector<std::vector<real_type>> correct_data = {
+    const plssvm::aos_matrix<plssvm::real_type> data{ std::vector<std::vector<real_type>>{
         { real_type{ 0.0 }, real_type{ 1.0 } },
         { real_type{ 2.0 }, real_type{ 3.0 } },
-        { real_type{ 4.0 }, real_type{ 5.0 } }
-    };
-    const std::vector<real_type> correct_q(correct_data.size() - 1);
-    std::vector<std::vector<real_type>> correct_ret(correct_data.size() - 1, std::vector<real_type>(correct_data.size() - 1));
-    const std::vector<real_type> correct_d(correct_data.size() - 1);
-
-    EXPECT_DEATH(plssvm::openmp::linear_kernel_matrix_assembly(std::vector<real_type>(1), correct_ret, correct_data, real_type{ 0.0 }, real_type{ 1.0 }), ::testing::HasSubstr("Sizes mismatch!: 1 != 2"));
-    std::vector<std::vector<real_type>> ret(1);
-    EXPECT_DEATH(plssvm::openmp::linear_kernel_matrix_assembly(correct_q, ret, correct_data, real_type{ 0.0 }, real_type{ 1.0 }), ::testing::HasSubstr("Sizes mismatch!: 2 != 1"));
-    EXPECT_DEATH(plssvm::openmp::linear_kernel_matrix_assembly(correct_q, correct_ret, correct_data, real_type{ 0.0 }, real_type{ 0.0 }), ::testing::HasSubstr("cost must not be 0.0 since it is 1 / plssvm::cost!"));
-}
-TYPED_TEST(OpenMPSVMKernelMatrixAssemblyDeathTest, polynomial_assembly) {
-    using real_type = TypeParam;
-
-    // create vectors with mismatching sizes: note that the provided out vector is one smaller than the data vector!
-    const std::vector<std::vector<real_type>> data = {
-        { real_type{ 0.0 }, real_type{ 1.0 } },
-        { real_type{ 2.0 }, real_type{ 3.0 } },
-        { real_type{ 4.0 }, real_type{ 5.0 } }
-    };
-    const std::vector<real_type> q(data.size() - 1);
-    std::vector<std::vector<real_type>> ret(data.size() - 1, std::vector<real_type>(data.size() - 1));
-    const real_type QA_cost{};
+        { real_type{ 4.0 }, real_type{ 5.0 } } } };
+    const real_type QA_cost{ 0.5 };
     const real_type cost{ 1.0 };
-    EXPECT_DEATH(plssvm::openmp::polynomial_kernel_matrix_assembly(q, ret, data, QA_cost, cost, 2, real_type{ 0.0 }, real_type{ 1.0 }), ::testing::HasSubstr("gamma must be greater than 0, but is 0!"));
-}
-TYPED_TEST(OpenMPSVMKernelMatrixAssemblyDeathTest, rbf_assembly) {
-    using real_type = TypeParam;
 
-    // create vectors with mismatching sizes: note that the provided out vector is one smaller than the data vector!
-    const std::vector<std::vector<real_type>> data = {
-        { real_type{ 0.0 }, real_type{ 1.0 } },
-        { real_type{ 2.0 }, real_type{ 3.0 } },
-        { real_type{ 4.0 }, real_type{ 5.0 } }
-    };
-    const std::vector<real_type> q(data.size() - 1);
-    std::vector<std::vector<real_type>> ret(data.size() - 1, std::vector<real_type>(data.size() - 1));
-
-    EXPECT_DEATH(plssvm::openmp::rbf_kernel_matrix_assembly(q, ret, data, real_type{ 0.0 }, real_type{ 1.0 }, real_type{ 0.0 }), ::testing::HasSubstr("gamma must be greater than 0, but is 0!"));
+    const std::vector<real_type> q(data.num_rows() - 1);
+#if defined(PLSSVM_USE_GEMM)
+    std::vector<real_type> ret((data.num_rows() - 1) * (data.num_rows() - 1));
+#else
+    std::vector<real_type> ret((data.num_rows() - 1) * (data.num_rows()) / 2);
+#endif
+    EXPECT_DEATH(plssvm::openmp::device_kernel_assembly_rbf(q, ret, data, QA_cost, cost, real_type{ 0.0 }), ::testing::HasSubstr("gamma must be greater than 0, but is 0!"));
 }

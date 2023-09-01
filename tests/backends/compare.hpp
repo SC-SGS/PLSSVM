@@ -13,7 +13,8 @@
 #define PLSSVM_TESTS_BACKENDS_COMPARE_HPP_
 #pragma once
 
-#include "plssvm/parameter.hpp"  // plssvm::detail::parameter
+#include "plssvm/matrix.hpp"     // plssvm::aos_matrix
+#include "plssvm/parameter.hpp"  // plssvm::parameter
 
 #include <vector>                // std::vector
 
@@ -55,6 +56,15 @@ template <typename real_type>
 template <typename real_type>
 [[nodiscard]] real_type rbf_kernel(const std::vector<real_type> &x, const std::vector<real_type> &y, real_type gamma);
 
+template <typename real_type, plssvm::layout_type layout>
+[[nodiscard]] real_type linear_kernel(const plssvm::matrix<real_type, layout> &X, std::size_t i, const plssvm::matrix<real_type, layout> &Y, std::size_t j, std::size_t num_devices = 1);
+
+template <typename real_type, plssvm::layout_type layout>
+[[nodiscard]] real_type polynomial_kernel(const plssvm::matrix<real_type, layout> &X, std::size_t i, const plssvm::matrix<real_type, layout> &Y, std::size_t j, int degree, real_type gamma, real_type coef0);
+
+template <typename real_type, plssvm::layout_type layout>
+[[nodiscard]] real_type rbf_kernel(const plssvm::matrix<real_type, layout> &X, std::size_t i, const plssvm::matrix<real_type, layout> &Y, std::size_t j, real_type gamma);
+
 }  // namespace detail
 
 /**
@@ -68,7 +78,10 @@ template <typename real_type>
  * @return the result after applying the kernel function (`[[nodiscard]]`)
  */
 template <typename real_type>
-[[nodiscard]] real_type kernel_function(const plssvm::detail::parameter<real_type> &params, const std::vector<real_type> &x, const std::vector<real_type> &y, std::size_t num_devices = 1);
+[[nodiscard]] real_type kernel_function(const plssvm::parameter &params, const std::vector<real_type> &x, const std::vector<real_type> &y, std::size_t num_devices = 1);
+template <typename real_type, plssvm::layout_type layout>
+[[nodiscard]] real_type kernel_function(const plssvm::parameter &params, const plssvm::matrix<real_type, layout> &X, std::size_t i, const plssvm::matrix<real_type, layout> &Y, std::size_t j, std::size_t num_devices = 1);
+
 /**
  * @brief Computes the `q` vector, a subvector of the least-squares matrix equation, using the kernel function determined by @p params.
  * @details Single core execution for a deterministic order of floating point operations.
@@ -79,7 +92,7 @@ template <typename real_type>
  * @return the generated `q` vector (`[[nodiscard]]`)
  */
 template <typename real_type>
-[[nodiscard]] std::vector<real_type> generate_q(const plssvm::detail::parameter<real_type> &params, const std::vector<std::vector<real_type>> &data, std::size_t num_devices = 1);
+[[nodiscard]] std::vector<real_type> generate_q(const plssvm::parameter &params, const plssvm::aos_matrix<real_type> &data, std::size_t num_devices = 1);
 
 /**
  * @brief Computes the kernel matrix using the kernel function determined by @p params.
@@ -93,7 +106,7 @@ template <typename real_type>
  * @return the kernel matrix (`[[nodiscard]]`)
  */
 template <typename real_type>
-[[nodiscard]] std::vector<std::vector<real_type>> assemble_kernel_matrix(const plssvm::detail::parameter<real_type> &params, const std::vector<std::vector<real_type>> &data, const std::vector<real_type> &q, real_type QA_cost, std::size_t num_devices = 1);
+[[nodiscard]] std::vector<std::vector<real_type>> assemble_kernel_matrix(const plssvm::parameter &params, const std::vector<std::vector<real_type>> &data, const std::vector<real_type> &q, real_type QA_cost, std::size_t num_devices = 1);
 
 /**
  * @brief Compute the `w` vector used to speedup the prediction when using the linear kernel.
@@ -103,8 +116,8 @@ template <typename real_type>
  * @param[in] weights the previously learned weights
  * @return the resulting `w` vector to speedup the prediction when using the linear kernel (`[[nodiscard]]`)
  */
-template <typename real_type>
-[[nodiscard]] std::vector<real_type> calculate_w(const std::vector<std::vector<real_type>> &support_vectors, const std::vector<real_type> &weights);
+template <typename real_type, plssvm::layout_type layout>
+[[nodiscard]] std::vector<real_type> calculate_w(const plssvm::matrix<real_type, layout> &support_vectors, const std::vector<real_type> &weights);
 
 /**
  * @brief Computes the device kernel, using the kernel function determined by @p params.
@@ -119,7 +132,7 @@ template <typename real_type>
  * @return the resulting `x` vector of Ax=b (`[[nodiscard]]`)
  */
 template <typename real_type>
-[[nodiscard]] std::vector<real_type> device_kernel_function(const plssvm::detail::parameter<real_type> &params, const std::vector<std::vector<real_type>> &data, const std::vector<real_type> &rhs, const std::vector<real_type> &q, real_type QA_cost, real_type add);
+[[nodiscard]] std::vector<real_type> device_kernel_function(const plssvm::parameter &params, const std::vector<std::vector<real_type>> &data, const std::vector<real_type> &rhs, const std::vector<real_type> &q, real_type QA_cost, real_type add);
 
 }  // namespace compare
 

@@ -32,6 +32,7 @@ endif ()
 
 # add test executable
 add_executable(${PLSSVM_SYCL_TEST_NAME} ${CMAKE_CURRENT_LIST_DIR}/../../main.cpp ${PLSSVM_SYCL_TEST_SOURCES})
+target_include_directories(${PLSSVM_SYCL_TEST_NAME} PRIVATE ${CMAKE_CURRENT_LIST_DIR}/..)
 
 # link against test library
 target_link_libraries(${PLSSVM_SYCL_TEST_NAME} PRIVATE ${PLSSVM_BASE_TEST_LIBRARY_NAME})

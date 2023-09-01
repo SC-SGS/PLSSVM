@@ -9,7 +9,9 @@
  */
 
 #include "plssvm/detail/cmd/parser_scale.hpp"
-#include "plssvm/detail/logger.hpp"      // plssvm::verbosity
+
+#include "plssvm/constants.hpp"      // plssvm::real_type
+#include "plssvm/detail/logger.hpp"  // plssvm::verbosity
 
 #include "../../custom_test_macros.hpp"  // EXPECT_CONVERSION_TO_STRING
 #include "../../naming.hpp"              // naming::{pretty_print_parameter_flag_and_value, pretty_print_parameter_flag}
@@ -40,7 +42,6 @@ TEST_F(ParserScale, minimal) {
     EXPECT_DOUBLE_EQ(+1.0, parser.upper);
     EXPECT_EQ(parser.format, plssvm::file_format_type::libsvm);
     EXPECT_FALSE(parser.strings_as_labels);
-    EXPECT_FALSE(parser.float_as_real_type);
     EXPECT_EQ(parser.input_filename, "data.libsvm");
     EXPECT_EQ(parser.scaled_filename, "");
     EXPECT_EQ(parser.save_filename, "");
@@ -57,8 +58,8 @@ TEST_F(ParserScale, minimal_output) {
     const std::string correct =
         "lower: -1\n"
         "upper: 1\n"
-        "label_type: int (default)\n"
-        "real_type: double (default)\n"
+        "label_type: int (default)\n" +
+        fmt::format("real_type: {}\n", std::is_same_v<plssvm::real_type, float> ? "float" : "double (default)") +
         "output file format: libsvm\n"
         "input file: 'data.libsvm'\n"
         "scaled file: ''\n"
@@ -69,7 +70,7 @@ TEST_F(ParserScale, minimal_output) {
 
 TEST_F(ParserScale, all_arguments) {
     // create artificial command line arguments in test fixture
-    std::vector<std::string> cmd_args = { "./plssvm-scale", "-l", "-2.0", "-u", "2.5", "-f", "arff", "-s", "data.libsvm.save", "--use_strings_as_labels", "--use_float_as_real_type", "--verbosity", "libsvm" };
+    std::vector<std::string> cmd_args = { "./plssvm-scale", "-l", "-2.0", "-u", "2.5", "-f", "arff", "-s", "data.libsvm.save", "--use_strings_as_labels", "--verbosity", "libsvm" };
 #if defined(PLSSVM_PERFORMANCE_TRACKER_ENABLED)
     cmd_args.insert(cmd_args.end(), { "--performance_tracking", "tracking.yaml" });
 #endif
@@ -84,7 +85,6 @@ TEST_F(ParserScale, all_arguments) {
     EXPECT_DOUBLE_EQ(+2.5, parser.upper);
     EXPECT_EQ(parser.format, plssvm::file_format_type::arff);
     EXPECT_TRUE(parser.strings_as_labels);
-    EXPECT_TRUE(parser.float_as_real_type);
     EXPECT_EQ(parser.input_filename, "data.libsvm");
     EXPECT_EQ(parser.scaled_filename, "data.libsvm.scaled");
     EXPECT_EQ(parser.save_filename, "data.libsvm.save");
@@ -96,7 +96,7 @@ TEST_F(ParserScale, all_arguments) {
 }
 TEST_F(ParserScale, all_arguments_output) {
     // create artificial command line arguments in test fixture
-    std::vector<std::string> cmd_args = { "./plssvm-scale", "-l", "-2.0", "-u", "2.5", "-f", "arff", "-s", "data.libsvm.save", "--use_strings_as_labels", "--use_float_as_real_type", "--verbosity", "libsvm" };
+    std::vector<std::string> cmd_args = { "./plssvm-scale", "-l", "-2.0", "-u", "2.5", "-f", "arff", "-s", "data.libsvm.save", "--use_strings_as_labels", "--verbosity", "libsvm" };
 #if defined(PLSSVM_PERFORMANCE_TRACKER_ENABLED)
     cmd_args.insert(cmd_args.end(), { "--performance_tracking", "tracking.yaml" });
 #endif
@@ -110,8 +110,8 @@ TEST_F(ParserScale, all_arguments_output) {
     std::string correct =
         "lower: -2\n"
         "upper: 2.5\n"
-        "label_type: std::string\n"
-        "real_type: float\n"
+        "label_type: std::string\n" +
+        fmt::format("real_type: {}\n", std::is_same_v<plssvm::real_type, float> ? "float" : "double (default)") +
         "output file format: arff\n"
         "input file: 'data.libsvm'\n"
         "scaled file: 'data.libsvm.scaled'\n"
@@ -248,23 +248,6 @@ INSTANTIATE_TEST_SUITE_P(ParserScale, ParserScaleUseStringsAsLabels, ::testing::
                 ::testing::Values("--use_strings_as_labels"),
                 ::testing::Bool()),
                 naming::pretty_print_parameter_flag_and_value<ParserScaleUseStringsAsLabels>);
-// clang-format on
-
-class ParserScaleUseFloatAsRealType : public ParserScale, public ::testing::WithParamInterface<std::tuple<std::string, bool>> {};
-TEST_P(ParserScaleUseFloatAsRealType, parsing) {
-    const auto &[flag, value] = GetParam();
-    // create artificial command line arguments in test fixture
-    this->CreateCMDArgs({ "./plssvm-scale", fmt::format("{}={}", flag, value), "data.libsvm" });
-    // create parameter object
-    const plssvm::detail::cmd::parser_scale parser{ this->argc, this->argv };
-    // test for correctness
-    EXPECT_EQ(parser.float_as_real_type, value);
-}
-// clang-format off
-INSTANTIATE_TEST_SUITE_P(ParserScale, ParserScaleUseFloatAsRealType, ::testing::Combine(
-                ::testing::Values("--use_float_as_real_type"),
-                ::testing::Bool()),
-                naming::pretty_print_parameter_flag_and_value<ParserScaleUseFloatAsRealType>);
 // clang-format on
 
 class ParserScaleVerbosity : public ParserScale, public ::testing::WithParamInterface<std::tuple<std::string, std::string>> {};

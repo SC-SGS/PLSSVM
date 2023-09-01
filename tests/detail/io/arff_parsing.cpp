@@ -12,10 +12,11 @@
 
 #include "plssvm/detail/io/file_reader.hpp"  // plssvm::detail::io::file_reader
 #include "plssvm/exceptions/exceptions.hpp"  // plssvm::invalid_file_format_exception
+#include "plssvm/matrix.hpp"                 // plssvm::aos_matrix
 
-#include "../../custom_test_macros.hpp"      // EXPECT_FLOATING_POINT_2D_VECTOR_NEAR, EXPECT_THROW_WHAT
-#include "../../naming.hpp"                  // naming::real_type_label_type_combination_to_name
-#include "../../types_to_test.hpp"           // util::real_type_label_type_combination_gtest
+#include "../../custom_test_macros.hpp"      // EXPECT_FLOATING_POINT_MATRIX_NEAR, EXPECT_THROW_WHAT
+#include "../../naming.hpp"                  // naming::label_type_to_name
+#include "../../types_to_test.hpp"           // util::label_type_gtest
 #include "../../utility.hpp"                 // util::{temporary_file, instantiate_template_file, get_correct_data_file_labels, get_distinct_label, generate_specific_matrix}
 
 #include "fmt/core.h"                        // fmt::format
@@ -186,7 +187,7 @@ TEST(ARFFParseHeader, empty) {
 
 template <typename T>
 class ARFFParse : public ::testing::Test {};
-TYPED_TEST_SUITE(ARFFParse, util::real_type_label_type_combination_gtest, naming::real_type_label_type_combination_to_name);
+TYPED_TEST_SUITE(ARFFParse, util::label_type_gtest, naming::label_type_to_name);
 
 template <typename T>
 class ARFFParseDense : public ARFFParse<T>, protected util::temporary_file {
@@ -196,8 +197,8 @@ class ARFFParseDense : public ARFFParse<T>, protected util::temporary_file {
         util::instantiate_template_file<label_type>(PLSSVM_TEST_PATH "/data/arff/6x4_TEMPLATE.arff", this->filename);
     }
 
-    using real_type = typename T::real_type;
-    using label_type = typename T::label_type;
+    using real_type = plssvm::real_type;
+    using label_type = T;
 
     const std::vector<std::vector<real_type>> correct_data{
         { real_type{ -1.117827500607882 }, real_type{ -2.9087188881250993 }, real_type{ 0.66638344270039144 }, real_type{ 1.0978832703949288 } },
@@ -209,7 +210,7 @@ class ARFFParseDense : public ARFFParse<T>, protected util::temporary_file {
     };
     const std::vector<label_type> correct_label{ util::get_correct_data_file_labels<label_type>() };
 };
-TYPED_TEST_SUITE(ARFFParseDense, util::real_type_label_type_combination_gtest, naming::real_type_label_type_combination_to_name);
+TYPED_TEST_SUITE(ARFFParseDense, util::label_type_gtest, naming::label_type_to_name);
 
 template <typename T>
 class ARFFParseSparse : public ARFFParse<T>, protected util::temporary_file {
@@ -219,8 +220,8 @@ class ARFFParseSparse : public ARFFParse<T>, protected util::temporary_file {
         util::instantiate_template_file<label_type>(PLSSVM_TEST_PATH "/data/arff/6x4_sparse_TEMPLATE.arff", this->filename);
     }
 
-    using real_type = typename T::real_type;
-    using label_type = typename T::label_type;
+    using real_type = plssvm::real_type;
+    using label_type = T;
 
     const std::vector<std::vector<real_type>> correct_data{
         { real_type{ 0.0 }, real_type{ 0.0 }, real_type{ 0.0 }, real_type{ 0.0 } },
@@ -232,180 +233,167 @@ class ARFFParseSparse : public ARFFParse<T>, protected util::temporary_file {
     };
     const std::vector<label_type> correct_label{ util::get_correct_data_file_labels<label_type>() };
 };
-TYPED_TEST_SUITE(ARFFParseSparse, util::real_type_label_type_combination_gtest, naming::real_type_label_type_combination_to_name);
+TYPED_TEST_SUITE(ARFFParseSparse, util::label_type_gtest, naming::label_type_to_name);
 
 TYPED_TEST(ARFFParseDense, read) {
-    using current_real_type = typename TypeParam::real_type;
-    using current_label_type = typename TypeParam::label_type;
+    using current_label_type = TypeParam;
 
     // parse the ARFF file
     plssvm::detail::io::file_reader reader{ this->filename };
     reader.read_lines('%');
 
-    const auto [num_data_points, num_features, data, label] = plssvm::detail::io::parse_arff_data<current_real_type, current_label_type>(reader);
+    const auto [num_data_points, num_features, data, label] = plssvm::detail::io::parse_arff_data<current_label_type>(reader);
 
     // check for correct sizes
     ASSERT_EQ(num_data_points, 6);
     ASSERT_EQ(num_features, 4);
 
     // check for correct data
-    EXPECT_FLOATING_POINT_2D_VECTOR_NEAR(data, this->correct_data);
+    EXPECT_FLOATING_POINT_MATRIX_NEAR(data, plssvm::aos_matrix<plssvm::real_type>{ this->correct_data });
     EXPECT_EQ(label, this->correct_label);
 }
 TYPED_TEST(ARFFParseSparse, read) {
-    using current_real_type = typename TypeParam::real_type;
-    using current_label_type = typename TypeParam::label_type;
+    using current_label_type = TypeParam;
 
     // parse the ARFF file
     plssvm::detail::io::file_reader reader{ this->filename };
     reader.read_lines('%');
-    const auto [num_data_points, num_features, data, label] = plssvm::detail::io::parse_arff_data<current_real_type, current_label_type>(reader);
+    const auto [num_data_points, num_features, data, label] = plssvm::detail::io::parse_arff_data<current_label_type>(reader);
 
     // check for correct sizes
     ASSERT_EQ(num_data_points, 6);
     ASSERT_EQ(num_features, 4);
 
     // check for correct data
-    EXPECT_FLOATING_POINT_2D_VECTOR_NEAR(data, this->correct_data);
+    EXPECT_FLOATING_POINT_MATRIX_NEAR(data, plssvm::aos_matrix<plssvm::real_type>{ this->correct_data });
     EXPECT_EQ(label, this->correct_label);
 }
 
 TYPED_TEST(ARFFParse, read_without_label) {
-    using current_real_type = typename TypeParam::real_type;
-    using current_label_type = typename TypeParam::label_type;
+    using current_label_type = TypeParam;
 
     // parse the ARFF file
     const std::string filename = PLSSVM_TEST_PATH "/data/arff/3x2_without_label.arff";
     plssvm::detail::io::file_reader reader{ filename };
     reader.read_lines('%');
-    const auto [num_data_points, num_features, data, label] = plssvm::detail::io::parse_arff_data<current_real_type, current_label_type>(reader);
+    const auto [num_data_points, num_features, data, label] = plssvm::detail::io::parse_arff_data<current_label_type>(reader);
 
     // check for correct sizes
     ASSERT_EQ(num_data_points, 3);
     ASSERT_EQ(num_features, 2);
 
     // check for correct data
-    const std::vector<std::vector<current_real_type>> correct_data{
-        { current_real_type{ 1.5 }, current_real_type{ -2.9 } },
-        { current_real_type{ 0.0 }, current_real_type{ -0.3 } },
-        { current_real_type{ 5.5 }, current_real_type{ 0.0 } }
+    const std::vector<std::vector<plssvm::real_type>> correct_data{
+        { plssvm::real_type{ 1.5 }, plssvm::real_type{ -2.9 } },
+        { plssvm::real_type{ 0.0 }, plssvm::real_type{ -0.3 } },
+        { plssvm::real_type{ 5.5 }, plssvm::real_type{ 0.0 } }
     };
-    EXPECT_FLOATING_POINT_2D_VECTOR_NEAR(data, correct_data);
+    EXPECT_FLOATING_POINT_MATRIX_NEAR(data, plssvm::aos_matrix<plssvm::real_type>{ correct_data });
     EXPECT_TRUE(label.empty());
 }
 
 TYPED_TEST(ARFFParse, at_inside_data_section) {
-    using current_real_type = typename TypeParam::real_type;
-    using current_label_type = typename TypeParam::label_type;
+    using current_label_type = TypeParam;
 
     // parse the ARFF file
     const std::string filename = PLSSVM_TEST_PATH "/data/arff/invalid/@_inside_data_section.arff";
     plssvm::detail::io::file_reader reader{ filename };
     reader.read_lines('%');
-    EXPECT_THROW_WHAT(std::ignore = (plssvm::detail::io::parse_arff_data<current_real_type, current_label_type>(reader)),
+    EXPECT_THROW_WHAT(std::ignore = (plssvm::detail::io::parse_arff_data<current_label_type>(reader)),
                       plssvm::invalid_file_format_exception,
                       R"(Read @ inside data section!: "@ATTRIBUTE invalid numeric"!)");
 }
 TYPED_TEST(ARFFParse, sparse_missing_closing_brace) {
-    using current_real_type = typename TypeParam::real_type;
-    using current_label_type = typename TypeParam::label_type;
+    using current_label_type = TypeParam;
 
     // parse the ARFF file
     const std::string filename = PLSSVM_TEST_PATH "/data/arff/invalid/sparse_missing_closing_brace.arff";
     plssvm::detail::io::file_reader reader{ filename };
     reader.read_lines('%');
-    EXPECT_THROW_WHAT(std::ignore = (plssvm::detail::io::parse_arff_data<current_real_type, current_label_type>(reader)),
+    EXPECT_THROW_WHAT(std::ignore = (plssvm::detail::io::parse_arff_data<current_label_type>(reader)),
                       plssvm::invalid_file_format_exception,
                       R"(Missing closing '}' for sparse data point "{2 0.51687296029754564,3 0.54604461446026,4 1" description!)");
 }
 TYPED_TEST(ARFFParse, sparse_missing_opening_brace) {
-    using current_real_type = typename TypeParam::real_type;
-    using current_label_type = typename TypeParam::label_type;
+    using current_label_type = TypeParam;
 
     // parse the ARFF file
     const std::string filename = PLSSVM_TEST_PATH "/data/arff/invalid/sparse_missing_opening_brace.arff";
     plssvm::detail::io::file_reader reader{ filename };
     reader.read_lines('%');
-    EXPECT_THROW_WHAT(std::ignore = (plssvm::detail::io::parse_arff_data<current_real_type, current_label_type>(reader)),
+    EXPECT_THROW_WHAT(std::ignore = (plssvm::detail::io::parse_arff_data<current_label_type>(reader)),
                       plssvm::invalid_file_format_exception,
                       R"(Missing opening '{' for sparse data point "1 0.60276937379453293,2 -0.13086851759108944,4 0}" description!)");
 }
 TYPED_TEST(ARFFParse, sparse_invalid_feature_index) {
-    using current_real_type = typename TypeParam::real_type;
-    using current_label_type = typename TypeParam::label_type;
+    using current_label_type = TypeParam;
 
     // parse the ARFF file
     const std::string filename = PLSSVM_TEST_PATH "/data/arff/invalid/sparse_invalid_feature_index.arff";
     plssvm::detail::io::file_reader reader{ filename };
     reader.read_lines('%');
-    EXPECT_THROW_WHAT(std::ignore = (plssvm::detail::io::parse_arff_data<current_real_type, current_label_type>(reader)),
+    EXPECT_THROW_WHAT(std::ignore = (plssvm::detail::io::parse_arff_data<current_label_type>(reader)),
                       plssvm::invalid_file_format_exception,
                       "Trying to add feature/label at index 5 but the maximum index is 4!");
 }
 TYPED_TEST(ARFFParse, sparse_missing_label) {
-    using current_real_type = typename TypeParam::real_type;
-    using current_label_type = typename TypeParam::label_type;
+    using current_label_type = TypeParam;
 
     // parse the ARFF file
     const std::string filename = PLSSVM_TEST_PATH "/data/arff/invalid/sparse_missing_label.arff";
     plssvm::detail::io::file_reader reader{ filename };
     reader.read_lines('%');
-    EXPECT_THROW_WHAT(std::ignore = (plssvm::detail::io::parse_arff_data<current_real_type, current_label_type>(reader)),
+    EXPECT_THROW_WHAT(std::ignore = (plssvm::detail::io::parse_arff_data<current_label_type>(reader)),
                       plssvm::invalid_file_format_exception,
                       R"(Missing label for data point "{0 1.88494043717792,1 1.00518564317278263,2 0.298499933047586044,3 1.6464627048813514}"!)");
 }
 
 TYPED_TEST(ARFFParse, dense_missing_value) {
-    using current_real_type = typename TypeParam::real_type;
-    using current_label_type = typename TypeParam::label_type;
+    using current_label_type = TypeParam;
 
     // parse the ARFF file
     const std::string filename = PLSSVM_TEST_PATH "/data/arff/invalid/dense_missing_value.arff";
     plssvm::detail::io::file_reader reader{ filename };
     reader.read_lines('%');
-    EXPECT_THROW_WHAT(std::ignore = (plssvm::detail::io::parse_arff_data<current_real_type, current_label_type>(reader)),
+    EXPECT_THROW_WHAT(std::ignore = (plssvm::detail::io::parse_arff_data<current_label_type>(reader)),
                       plssvm::invalid_file_format_exception,
                       "Invalid number of features and labels! Found 3 but should be 5!");
 }
 TYPED_TEST(ARFFParse, dense_too_many_values) {
-    using current_real_type = typename TypeParam::real_type;
-    using current_label_type = typename TypeParam::label_type;
+    using current_label_type = TypeParam;
 
     // parse the ARFF file
     const std::string filename = PLSSVM_TEST_PATH "/data/arff/invalid/dense_too_many_values.arff";
     plssvm::detail::io::file_reader reader{ filename };
     reader.read_lines('%');
-    EXPECT_THROW_WHAT(std::ignore = (plssvm::detail::io::parse_arff_data<current_real_type, current_label_type>(reader)),
+    EXPECT_THROW_WHAT(std::ignore = (plssvm::detail::io::parse_arff_data<current_label_type>(reader)),
                       plssvm::invalid_file_format_exception,
                       "Invalid number of features and labels! Found 6 but should be 5!");
 }
 TYPED_TEST(ARFFParse, class_same_label_multiple_times) {
-    using current_real_type = typename TypeParam::real_type;
-    using current_label_type = typename TypeParam::label_type;
+    using current_label_type = TypeParam;
 
     // parse the ARFF file
     const std::string filename = PLSSVM_TEST_PATH "/data/arff/invalid/class_same_label_multiple_times.arff";
     plssvm::detail::io::file_reader reader{ filename };
     reader.read_lines('%');
-    EXPECT_THROW_WHAT(std::ignore = (plssvm::detail::io::parse_arff_data<current_real_type, current_label_type>(reader)),
+    EXPECT_THROW_WHAT(std::ignore = (plssvm::detail::io::parse_arff_data<current_label_type>(reader)),
                       plssvm::invalid_file_format_exception,
                       "Provided 2 labels but only 1 of them was/where unique!");
 }
 TYPED_TEST(ARFFParse, class_with_only_one_label) {
-    using current_real_type = typename TypeParam::real_type;
-    using current_label_type = typename TypeParam::label_type;
+    using current_label_type = TypeParam;
 
     // parse the ARFF file
     const std::string filename = PLSSVM_TEST_PATH "/data/arff/invalid/class_with_only_one_label.arff";
     plssvm::detail::io::file_reader reader{ filename };
     reader.read_lines('%');
-    EXPECT_THROW_WHAT(std::ignore = (plssvm::detail::io::parse_arff_data<current_real_type, current_label_type>(reader)),
+    EXPECT_THROW_WHAT(std::ignore = (plssvm::detail::io::parse_arff_data<current_label_type>(reader)),
                       plssvm::invalid_file_format_exception,
                       "Only a single label has been provided!");
 }
 TYPED_TEST(ARFFParse, usage_of_undefined_label) {
-    using current_real_type = typename TypeParam::real_type;
-    using current_label_type = typename TypeParam::label_type;
+    using current_label_type = TypeParam;
 
     // parse the ARFF file
     const std::string filename = PLSSVM_TEST_PATH "/data/arff/invalid/usage_of_undefined_label.arff";
@@ -413,16 +401,15 @@ TYPED_TEST(ARFFParse, usage_of_undefined_label) {
     reader.read_lines('%');
     if constexpr (!std::is_same_v<current_label_type, bool>) {
         // it is not possible to have two boolean label and use a third undefined one
-        EXPECT_THROW_WHAT(std::ignore = (plssvm::detail::io::parse_arff_data<current_real_type, current_label_type>(reader)),
+        EXPECT_THROW_WHAT(std::ignore = (plssvm::detail::io::parse_arff_data<current_label_type>(reader)),
                           plssvm::invalid_file_format_exception,
-                          R"#(Found the label "2" which was not specified in the header ({0,1})!)#");
+                          R"#(Found the label "2" which was not specified in the header ({0, 1})!)#");
     } else {
         SUCCEED() << "By definition boolean labels do only support two different labels and, therefore, no third undefined one can be used.";
     }
 }
 TYPED_TEST(ARFFParse, string_label_with_whitespace) {
-    using current_real_type = typename TypeParam::real_type;
-    using current_label_type = typename TypeParam::label_type;
+    using current_label_type = TypeParam;
 
     // parse the ARFF file
     const std::string filename = PLSSVM_TEST_PATH "/data/arff/invalid/string_label_with_whitespace.arff";
@@ -430,7 +417,7 @@ TYPED_TEST(ARFFParse, string_label_with_whitespace) {
     reader.read_lines('%');
     if constexpr (std::is_same_v<current_label_type, std::string>) {
         // it is not possible to have two boolean label and use a third undefined one
-        EXPECT_THROW_WHAT(std::ignore = (plssvm::detail::io::parse_arff_data<current_real_type, current_label_type>(reader)),
+        EXPECT_THROW_WHAT(std::ignore = (plssvm::detail::io::parse_arff_data<current_label_type>(reader)),
                           plssvm::invalid_file_format_exception,
                           R"(String labels may not contain whitespaces, but "Hello World" has at least one!)");
     } else {
@@ -438,27 +425,25 @@ TYPED_TEST(ARFFParse, string_label_with_whitespace) {
     }
 }
 TYPED_TEST(ARFFParse, libsvm_file) {
-    using current_real_type = typename TypeParam::real_type;
-    using current_label_type = typename TypeParam::label_type;
+    using current_label_type = TypeParam;
 
     // parse the ARFF file
     const std::string filename = PLSSVM_TEST_PATH "/data/libsvm/5x4.libsvm";
     plssvm::detail::io::file_reader reader{ filename };
     reader.read_lines('#');
-    EXPECT_THROW(std::ignore = (plssvm::detail::io::parse_arff_data<current_real_type, current_label_type>(reader)), plssvm::invalid_file_format_exception);
+    EXPECT_THROW(std::ignore = (plssvm::detail::io::parse_arff_data<current_label_type>(reader)), plssvm::invalid_file_format_exception);
 }
 
 template <typename T>
 class ARFFParseDeathTest : public ::testing::Test {};
-TYPED_TEST_SUITE(ARFFParseDeathTest, util::real_type_label_type_combination_gtest, naming::real_type_label_type_combination_to_name);
+TYPED_TEST_SUITE(ARFFParseDeathTest, util::label_type_gtest, naming::label_type_to_name);
 
 TYPED_TEST(ARFFParseDeathTest, invalid_file_reader) {
-    using current_real_type = typename TypeParam::real_type;
-    using current_label_type = typename TypeParam::label_type;
+    using current_label_type = TypeParam;
 
     // open file_reader without associating it to a file
     const plssvm::detail::io::file_reader reader{};
-    EXPECT_DEATH(std::ignore = (plssvm::detail::io::parse_arff_data<current_real_type, current_label_type>(reader)),
+    EXPECT_DEATH(std::ignore = (plssvm::detail::io::parse_arff_data<current_label_type>(reader)),
                  "The file_reader is currently not associated with a file!");
 }
 
@@ -467,19 +452,18 @@ class ARFFWriteBase : public ::testing::Test, protected util::temporary_file {};
 
 template <typename T>
 class ARFFWrite : public ARFFWriteBase<T> {};
-TYPED_TEST_SUITE(ARFFWrite, util::real_type_label_type_combination_gtest, naming::real_type_label_type_combination_to_name);
+TYPED_TEST_SUITE(ARFFWrite, util::label_type_gtest, naming::label_type_to_name);
 
 template <typename T>
 class ARFFWriteDeathTest : public ARFFWriteBase<T> {};
-TYPED_TEST_SUITE(ARFFWriteDeathTest, util::real_type_label_type_combination_gtest, naming::real_type_label_type_combination_to_name);
+TYPED_TEST_SUITE(ARFFWriteDeathTest, util::label_type_gtest, naming::label_type_to_name);
 
 TYPED_TEST(ARFFWrite, write_with_label) {
-    using real_type = typename TypeParam::real_type;
-    using label_type = typename TypeParam::label_type;
+    using label_type = TypeParam;
 
     // define data to write
     const std::vector<label_type> label = util::get_correct_data_file_labels<label_type>();
-    const std::vector<std::vector<real_type>> data = util::generate_specific_matrix<real_type>(label.size(), 3);
+    const auto data = util::generate_specific_matrix<plssvm::aos_matrix<plssvm::real_type>>(label.size(), 3);
 
     // write the necessary data to the file
     plssvm::detail::io::write_arff_data(this->filename, data, label);
@@ -488,18 +472,21 @@ TYPED_TEST(ARFFWrite, write_with_label) {
     plssvm::detail::io::file_reader reader{ this->filename };
     reader.read_lines('%');
 
+    std::cerr << data << std::endl << std::endl;
+    std::cerr << fmt::format("{}", fmt::join(reader.lines(), "\n")) << std::endl;
+
     // check if the correct number of lines have been read
-    ASSERT_EQ(reader.num_lines(), 6 + data.size());  // 6 header lines: @RELATION + 3 features + class + @DATA
+    ASSERT_EQ(reader.num_lines(), 6 + data.num_rows());  // 6 header lines: @RELATION + 3 features + class + @DATA
     // check the header information
     EXPECT_TRUE(plssvm::detail::starts_with(reader.line(0), "@RELATION"));
-    for (std::size_t i = 0; i < data.front().size(); ++i) {
+    for (std::size_t i = 0; i < data.num_cols(); ++i) {
         EXPECT_EQ(reader.line(i + 1), fmt::format("@ATTRIBUTE feature_{} NUMERIC", i));
     }
     EXPECT_EQ(reader.line(4), fmt::format("@ATTRIBUTE class {{{}}}", fmt::join(util::get_distinct_label<label_type>(), ",")));
     EXPECT_EQ(reader.line(5), "@DATA");
     // check the lines
-    for (std::size_t i = 0; i < data.size(); ++i) {
-        const std::string line = fmt::format("{:.10e},{:.10e},{:.10e},{}", data[i][0], data[i][1], data[i][2], label[i]);
+    for (std::size_t i = 0; i < data.num_rows(); ++i) {
+        const std::string line = fmt::format("{:.10e},{:.10e},{:.10e},{}", data(i, 0), data(i, 1), data(i, 2), label[i]);
         bool line_found = false;
         for (std::size_t j = 6; j < reader.num_lines(); ++j) {
             if (reader.line(j) == line) {
@@ -513,10 +500,8 @@ TYPED_TEST(ARFFWrite, write_with_label) {
 }
 
 TYPED_TEST(ARFFWrite, write_without_label) {
-    using real_type = typename TypeParam::real_type;
-
     // define data to write
-    const std::vector<std::vector<real_type>> data = util::generate_specific_matrix<real_type>(3, 3);
+    const auto data = util::generate_specific_matrix<plssvm::aos_matrix<plssvm::real_type>>(3, 3);
 
     // write the necessary data to the file
     plssvm::detail::io::write_arff_data(this->filename, data);
@@ -526,16 +511,16 @@ TYPED_TEST(ARFFWrite, write_without_label) {
     reader.read_lines('%');
 
     // check if the correct number of lines have been read
-    ASSERT_EQ(reader.num_lines(), 5 + data.size());  // 6 header lines: @RELATION + 3 features + @DATA
+    ASSERT_EQ(reader.num_lines(), 5 + data.num_rows());  // 6 header lines: @RELATION + 3 features + @DATA
     // check the header information
     EXPECT_TRUE(plssvm::detail::starts_with(reader.line(0), "@RELATION"));
-    for (std::size_t i = 0; i < data.front().size(); ++i) {
+    for (std::size_t i = 0; i < data.num_cols(); ++i) {
         EXPECT_EQ(reader.line(i + 1), fmt::format("@ATTRIBUTE feature_{} NUMERIC", i));
     }
     EXPECT_EQ(reader.line(4), "@DATA");
     // check the lines
-    for (std::size_t i = 0; i < data.size(); ++i) {
-        const std::string line = fmt::format("{:.10e},{:.10e},{:.10e}", data[i][0], data[i][1], data[i][2]);
+    for (std::size_t i = 0; i < data.num_rows(); ++i) {
+        const std::string line = fmt::format("{:.10e},{:.10e},{:.10e}", data(i, 0), data(i, 1), data(i, 2));
         bool line_found = false;
         for (std::size_t j = 5; j < reader.num_lines(); ++j) {
             if (reader.line(j) == line) {
@@ -549,11 +534,10 @@ TYPED_TEST(ARFFWrite, write_without_label) {
 }
 
 TYPED_TEST(ARFFWrite, empty_data) {
-    using real_type = typename TypeParam::real_type;
-    using label_type = typename TypeParam::label_type;
+    using label_type = TypeParam;
 
     // define data to write
-    const std::vector<std::vector<real_type>> data{};
+    const plssvm::aos_matrix<plssvm::real_type> data{};
     const std::vector<label_type> label{};
 
     // write the necessary data to the file
@@ -568,22 +552,20 @@ TYPED_TEST(ARFFWrite, empty_data) {
 }
 
 TYPED_TEST(ARFFWriteDeathTest, data_with_provided_empty_labels) {
-    using real_type = typename TypeParam::real_type;
-    using label_type = typename TypeParam::label_type;
+    using label_type = TypeParam;
 
     // define data to write
-    const std::vector<std::vector<real_type>> data{ { real_type{ 1.0 } } };
+    const plssvm::aos_matrix<plssvm::real_type> data{ 1, 1, plssvm::real_type{ 1.0 } };
     const std::vector<label_type> label{};
 
     // try to write the necessary data to the file
     EXPECT_DEATH(plssvm::detail::io::write_arff_data(this->filename, data, label), "has_label is 'true' but no labels were provided!");
 }
 TYPED_TEST(ARFFWriteDeathTest, data_and_label_size_mismatch) {
-    using real_type = typename TypeParam::real_type;
-    using label_type = typename TypeParam::label_type;
+    using label_type = TypeParam;
 
     // define data to write
-    const std::vector<std::vector<real_type>> data{ { real_type{ 1.0 } }, { real_type{ 2.0 } } };
+    const plssvm::aos_matrix<plssvm::real_type> data{ 2, 1, plssvm::real_type{ 1.0 } };
     const std::vector<label_type> label{ util::get_distinct_label<label_type>().front() };
 
     // try to write the necessary data to the file
@@ -591,14 +573,13 @@ TYPED_TEST(ARFFWriteDeathTest, data_and_label_size_mismatch) {
                  ::testing::HasSubstr("Number of data points (2) and number of labels (1) mismatch!"));
 }
 TYPED_TEST(ARFFWriteDeathTest, labels_provided_but_not_written) {
-    using real_type = typename TypeParam::real_type;
-    using label_type = typename TypeParam::label_type;
+    using label_type = TypeParam;
 
     // define data to write
-    const std::vector<std::vector<real_type>> data{ { real_type{ 1.0 } }, { real_type{ 2.0 } } };
+    const plssvm::aos_matrix<plssvm::real_type> data{ 2, 1, plssvm::real_type{ 1.0 } };
     const std::vector<label_type> label{ util::get_distinct_label<label_type>().front() };
 
     // try to write the necessary data to the file
-    EXPECT_DEATH((plssvm::detail::io::write_arff_data_impl<real_type, label_type, false>(this->filename, data, label)),
+    EXPECT_DEATH((plssvm::detail::io::write_arff_data_impl<label_type, false>(this->filename, data, label)),
                  "has_label is 'false' but labels were provided!");
 }

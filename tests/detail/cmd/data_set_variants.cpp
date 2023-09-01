@@ -27,11 +27,11 @@
 
 // the variant order is: <float, int>, <float, std::string>, <double, int>, <double, std::string>
 
-class DataSetFactory : public util::ParameterBase, public ::testing::WithParamInterface<std::tuple<bool, bool, std::size_t>>, protected util::temporary_file {};
+class DataSetFactory : public util::ParameterBase, public ::testing::WithParamInterface<std::tuple<bool, std::size_t>>, protected util::temporary_file {};
 
 TEST_P(DataSetFactory, data_set_factory_predict) {
     // get parameter
-    const auto [float_as_real_type, strings_as_labels, index] = GetParam();
+    const auto [strings_as_labels, index] = GetParam();
 
     if (strings_as_labels) {
         util::instantiate_template_file<std::string>(PLSSVM_TEST_PATH "/data/libsvm/6x4_TEMPLATE.libsvm", this->filename);
@@ -43,9 +43,6 @@ TEST_P(DataSetFactory, data_set_factory_predict) {
     std::vector<std::string> cmd_args = { "./plssvm-predict" };
     if (strings_as_labels) {
         cmd_args.emplace_back("--use_strings_as_labels");
-    }
-    if (float_as_real_type) {
-        cmd_args.emplace_back("--use_float_as_real_type");
     }
     cmd_args.insert(cmd_args.end(), { this->filename, "data.libsvm.model" });
 
@@ -60,7 +57,7 @@ TEST_P(DataSetFactory, data_set_factory_predict) {
 }
 TEST_P(DataSetFactory, data_set_factory_scale) {
     // get parameter
-    const auto [float_as_real_type, strings_as_labels, index] = GetParam();
+    const auto [strings_as_labels, index] = GetParam();
 
     if (strings_as_labels) {
         util::instantiate_template_file<std::string>(PLSSVM_TEST_PATH "/data/libsvm/6x4_TEMPLATE.libsvm", this->filename);
@@ -72,9 +69,6 @@ TEST_P(DataSetFactory, data_set_factory_scale) {
     std::vector<std::string> cmd_args = { "./plssvm-scale" };
     if (strings_as_labels) {
         cmd_args.emplace_back("--use_strings_as_labels");
-    }
-    if (float_as_real_type) {
-        cmd_args.emplace_back("--use_float_as_real_type");
     }
     cmd_args.push_back(this->filename);
 
@@ -89,7 +83,7 @@ TEST_P(DataSetFactory, data_set_factory_scale) {
 }
 TEST_P(DataSetFactory, data_set_factory_scale_restore_filename) {
     // get parameter
-    const auto [float_as_real_type, strings_as_labels, index] = GetParam();
+    const auto [strings_as_labels, index] = GetParam();
 
     if (strings_as_labels) {
         util::instantiate_template_file<std::string>(PLSSVM_TEST_PATH "/data/libsvm/6x4_TEMPLATE.libsvm", this->filename);
@@ -101,9 +95,6 @@ TEST_P(DataSetFactory, data_set_factory_scale_restore_filename) {
     std::vector<std::string> cmd_args = { "./plssvm-scale", "-r", PLSSVM_TEST_PATH "/data/scaling_factors/no_scaling_factors.txt" };
     if (strings_as_labels) {
         cmd_args.emplace_back("--use_strings_as_labels");
-    }
-    if (float_as_real_type) {
-        cmd_args.emplace_back("--use_float_as_real_type");
     }
     cmd_args.push_back(this->filename);
 
@@ -118,7 +109,7 @@ TEST_P(DataSetFactory, data_set_factory_scale_restore_filename) {
 }
 TEST_P(DataSetFactory, data_set_factory_train) {
     // get parameter
-    const auto [float_as_real_type, strings_as_labels, index] = GetParam();
+    const auto [strings_as_labels, index] = GetParam();
 
     if (strings_as_labels) {
         util::instantiate_template_file<std::string>(PLSSVM_TEST_PATH "/data/libsvm/6x4_TEMPLATE.libsvm", this->filename);
@@ -130,9 +121,6 @@ TEST_P(DataSetFactory, data_set_factory_train) {
     std::vector<std::string> cmd_args = { "./plssvm-train" };
     if (strings_as_labels) {
         cmd_args.emplace_back("--use_strings_as_labels");
-    }
-    if (float_as_real_type) {
-        cmd_args.emplace_back("--use_float_as_real_type");
     }
     cmd_args.push_back(this->filename);
 
@@ -147,7 +135,6 @@ TEST_P(DataSetFactory, data_set_factory_train) {
 }
 // clang-format off
 INSTANTIATE_TEST_SUITE_P(DataSetFactory, DataSetFactory, ::testing::Values(
-                std::make_tuple(false, false, 2), std::make_tuple(false, true, 3),
-                std::make_tuple(true, false, 0), std::make_tuple(true, true, 1)),
+                std::make_tuple(false, 0), std::make_tuple(true, 1)),
                 naming::pretty_print_data_set_factory<DataSetFactory>);
 // clang-format on

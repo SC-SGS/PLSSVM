@@ -10,8 +10,6 @@
 
 #include "plssvm/classification_report.hpp"
 
-#include "plssvm/backends/SYCL/detail/constants.hpp"
-
 #include "custom_test_macros.hpp"  // EXPECT_THROW_WHAT, EXPECT_FLOATING_POINT_EQ
 
 #include "gtest/gtest.h"  // TEST, EXPECT_EQ, ::testing::Test
@@ -153,6 +151,7 @@ TEST_F(ClassificationReport, classification_report) {
         "\n"
         "    accuracy                        0.53        45\n"
         "   macro avg        0.56     0.54   0.53        45\n"
-        "weighted avg        0.57     0.53   0.53        45\n";
+        "weighted avg        0.57     0.53   0.53        45\n\n"
+        "Accuracy = 53.33% (24/45)\n";
     EXPECT_EQ(out.str(), correct_output);
 }

@@ -13,16 +13,21 @@
 #define PLSSVM_TESTS_MOCK_CSVM_HPP_
 #pragma once
 
+#include "plssvm/constants.hpp"              // plssvm::real_type
 #include "plssvm/csvm.hpp"                   // plssvm::csvm
+#include "plssvm/detail/memory_size.hpp"     // plssvm::detail::memory_size
+#include "plssvm/detail/simple_any.hpp"      // plssvm::simple_any
 #include "plssvm/kernel_function_types.hpp"  // plssvm::kernel_function_type
+#include "plssvm/matrix.hpp"                 // plssvm::aos_matrix
 #include "plssvm/parameter.hpp"              // plssvm::parameter, plssvm::detail::parameter
+#include "plssvm/solver_types.hpp"           // plssvm::solver_type
 
-#include "utility.hpp"                       // util::generate_random_matrix, util::generate_random_vector
+#include "utility.hpp"  // util::generate_random_matrix, util::generate_random_vector
 
-#include "gmock/gmock.h"                     // MOCK_METHOD, ON_CALL, ::testing::{An, Return}
+#include "gmock/gmock.h"  // MOCK_METHOD, ON_CALL, ::testing::{An, Return}
 
-#include <utility>                           // std::pair, std::forward
-#include <vector>                            // std::vector
+#include <utility>  // std::pair, std::forward
+#include <vector>   // std::vector
 
 /**
  * @brief GTest mock class for the base CSVM class.
@@ -40,44 +45,43 @@ class mock_csvm final : public plssvm::csvm {
     }
 
     // mock pure virtual functions
-    MOCK_METHOD((std::pair<std::vector<std::vector<float>>, std::vector<float>>), solve_system_of_linear_equations, (const plssvm::detail::parameter<float> &, const std::vector<std::vector<float>> &, std::vector<std::vector<float>>, float, unsigned long long), (const, override));
-    MOCK_METHOD((std::pair<std::vector<std::vector<double>>, std::vector<double>>), solve_system_of_linear_equations, (const plssvm::detail::parameter<double> &, const std::vector<std::vector<double>> &, std::vector<std::vector<double>>, double, unsigned long long), (const, override));
-    MOCK_METHOD(std::vector<std::vector<float>>, predict_values, (const plssvm::detail::parameter<float> &, const std::vector<std::vector<float>> &, const std::vector<std::vector<float>> &, const std::vector<float> &, std::vector<std::vector<float>> &, const std::vector<std::vector<float>> &), (const, override));
-    MOCK_METHOD(std::vector<std::vector<double>>, predict_values, (const plssvm::detail::parameter<double> &, const std::vector<std::vector<double>> &, const std::vector<std::vector<double>> &, const std::vector<double> &, std::vector<std::vector<double>> &, const std::vector<std::vector<double>> &), (const, override));
+    MOCK_METHOD((plssvm::detail::memory_size), get_device_memory, (), (const, override));
+    MOCK_METHOD((plssvm::detail::memory_size), get_max_mem_alloc_size, (), (const, override));
+    MOCK_METHOD((plssvm::detail::simple_any), setup_data_on_devices, (plssvm::solver_type, const plssvm::aos_matrix<plssvm::real_type> &), (const, override));
+    MOCK_METHOD((plssvm::detail::simple_any), assemble_kernel_matrix, (plssvm::solver_type, const plssvm::parameter &, const plssvm::detail::simple_any &, const std::vector<plssvm::real_type> &, plssvm::real_type), (const, override));
+    MOCK_METHOD((void), blas_level_3, (plssvm::solver_type, plssvm::real_type, const plssvm::detail::simple_any &, const plssvm::aos_matrix<plssvm::real_type> &, plssvm::real_type, plssvm::aos_matrix<plssvm::real_type> &), (const, override));
+    MOCK_METHOD((plssvm::aos_matrix<plssvm::real_type>), predict_values, (const plssvm::parameter &, const plssvm::aos_matrix<plssvm::real_type> &, const plssvm::aos_matrix<plssvm::real_type> &, const std::vector<plssvm::real_type> &, plssvm::aos_matrix<plssvm::real_type> &, const plssvm::aos_matrix<plssvm::real_type> &), (const, override));
 
   private:
     void fake_functions() const {
+        using namespace plssvm::detail::literals;
         // note: for BINARY classification only!
         // clang-format off
-        ON_CALL(*this, solve_system_of_linear_equations(
-                           ::testing::An<const plssvm::detail::parameter<float> &>(),
-                           ::testing::An<const std::vector<std::vector<float>> &>(),
-                           ::testing::An<std::vector<std::vector<float>>>(),
-                           ::testing::An<float>(),
-                           ::testing::An<unsigned long long>())).WillByDefault(::testing::Return(std::make_pair(util::generate_random_matrix<float>(1, 6), util::generate_random_vector<float>(2))));  // number of labels doesn't matter
-
-        ON_CALL(*this, solve_system_of_linear_equations(
-                           ::testing::An<const plssvm::detail::parameter<double> &>(),
-                           ::testing::An<const std::vector<std::vector<double>> &>(),
-                           ::testing::An<std::vector<std::vector<double>>>(),
-                           ::testing::An<double>(),
-                           ::testing::An<unsigned long long>())).WillByDefault(::testing::Return(std::make_pair(util::generate_random_matrix<double>(1, 6), util::generate_random_vector<double>(2))));  // number of labels doesn't matter
-
+        ON_CALL(*this, get_device_memory()).WillByDefault(::testing::Return(1_GiB));
+        ON_CALL(*this, get_max_mem_alloc_size()).WillByDefault(::testing::Return(512_MiB));
+        ON_CALL(*this, setup_data_on_devices(
+                           ::testing::An<plssvm::solver_type>(),
+                           ::testing::An<const plssvm::aos_matrix<plssvm::real_type> &>())).WillByDefault(::testing::Return(::testing::ByMove(plssvm::detail::simple_any{ nullptr })));  // TODO: nullptr?
+        ON_CALL(*this, assemble_kernel_matrix(
+                           ::testing::An<plssvm::solver_type>(),
+                           ::testing::An<const plssvm::parameter &>(),
+                           ::testing::An<const plssvm::detail::simple_any &>(),
+                           ::testing::An<const std::vector<plssvm::real_type> &>(),
+                           ::testing::An<plssvm::real_type>())).WillByDefault(::testing::Return(::testing::ByMove(plssvm::detail::simple_any{ nullptr })));  // TODO: nullptr?
+//        ON_CALL(*this, blas_level_3(
+//                           ::testing::An<plssvm::solver_type>(),
+//                           ::testing::An<plssvm::real_type>(),
+//                           ::testing::An<const plssvm::detail::simple_any &>(),
+//                           ::testing::An<const plssvm::aos_matrix<plssvm::real_type> &>(),
+//                           ::testing::An<plssvm::real_type>(),
+//                           ::testing::An<plssvm::aos_matrix<plssvm::real_type> &>())).WillByDefault(::testing::Return(void));
         ON_CALL(*this, predict_values(
-                           ::testing::An<const plssvm::detail::parameter<float> &>(),
-                           ::testing::An<const std::vector<std::vector<float>> &>(),
-                           ::testing::An<const std::vector<std::vector<float>> &>(),
-                           ::testing::An<const std::vector<float> &>(),
-                           ::testing::An<std::vector<std::vector<float>> &>(),
-                           ::testing::An<const std::vector<std::vector<float>> &>())).WillByDefault(::testing::Return(util::generate_random_matrix<float>(6, 1)));
-
-        ON_CALL(*this, predict_values(
-                           ::testing::An<const plssvm::detail::parameter<double> &>(),
-                           ::testing::An<const std::vector<std::vector<double>> &>(),
-                           ::testing::An<const std::vector<std::vector<double>> &>(),
-                           ::testing::An<const std::vector<double> &>(),
-                           ::testing::An<std::vector<std::vector<double>> &>(),
-                           ::testing::An<const std::vector<std::vector<double>> &>())).WillByDefault(::testing::Return(util::generate_random_matrix<double>(6, 1)));
+                           ::testing::An<const plssvm::parameter &>(),
+                           ::testing::An<const plssvm::aos_matrix<plssvm::real_type> &>(),
+                           ::testing::An<const plssvm::aos_matrix<plssvm::real_type> &>(),
+                           ::testing::An<const std::vector<plssvm::real_type> &>(),
+                           ::testing::An<plssvm::aos_matrix<plssvm::real_type> &>(),
+                           ::testing::An<const plssvm::aos_matrix<plssvm::real_type> &>())).WillByDefault(::testing::Return(util::generate_random_matrix<plssvm::aos_matrix<plssvm::real_type>>(6, 1)));
         // clang-format on
     }
 };

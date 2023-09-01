@@ -10,11 +10,11 @@
 
 #include "plssvm/backends/CUDA/exceptions.hpp"  // plssvm::cuda::backend_exception
 
-#include "../generic_exceptions_tests.hpp"      // generic exception tests to instantiate
+#include "../generic_exceptions_tests.hpp"  // generic exception tests to instantiate
 
-#include "gtest/gtest.h"                        // INSTANTIATE_TYPED_TEST_SUITE_P
+#include "gtest/gtest.h"  // INSTANTIATE_TYPED_TEST_SUITE_P
 
-#include <string_view>                          // std::string_view
+#include <string_view>  // std::string_view
 
 struct exception_test_type {
     using exception_type = plssvm::cuda::backend_exception;
