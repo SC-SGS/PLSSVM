@@ -15,7 +15,7 @@
 
 #include "plssvm/constants.hpp"  // plssvm::real_type, plssvm::THREAD_BLOCK_SIZE, plssvm::FEATURE_BLOCK_SIZE
 
-#include "sycl/sycl.hpp"  // sycl::nd_item, sycl::pow, sycl::exp
+#include "sycl/sycl.hpp"  // sycl::nd_item, sycl::pown, sycl::exp
 
 namespace plssvm::sycl::detail {
 

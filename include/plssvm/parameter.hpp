@@ -294,7 +294,6 @@ struct parameter {
  * @param[in] params the parameter set
  * @return the output-stream
  */
-template <typename T>
 std::ostream &operator<<(std::ostream &out, const parameter &params);
 
 }  // namespace plssvm

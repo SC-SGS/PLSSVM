@@ -48,6 +48,7 @@ set(PLSSVM_BASE_SOURCES
         ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/detail/cmd/parser_train.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/detail/io/file_reader.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/detail/logger.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/detail/memory_size.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/detail/performance_tracker.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/detail/sha256.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/detail/string_utility.cpp
@@ -565,6 +566,14 @@ if (PLSSVM_USE_GEMM)
     message(STATUS "Use the GEMM kernel instead of the SYMM kernel.")
     # add target definition
     target_compile_definitions(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC PLSSVM_USE_GEMM)
+endif ()
+
+## enforce maximum device memory allocation sizes for the automatic solver type
+option(PLSSVM_ENFORCE_MAX_MEM_ALLOC_SIZE "Enforce the maximum device memory allocation sizes for the automatic plssvm::solver_type." ON)
+if (PLSSVM_ENFORCE_MAX_MEM_ALLOC_SIZE)
+    message(STATUS "Enforce the maximum device memory allocation sizes for the automatic plssvm::solver_type.")
+    # add target definition
+    target_compile_definitions(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC PLSSVM_ENFORCE_MAX_MEM_ALLOC_SIZE)
 endif ()
 
 ########################################################################################################################

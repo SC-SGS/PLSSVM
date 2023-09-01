@@ -19,6 +19,7 @@
 #include "plssvm/constants.hpp"                                          // plssvm::real_type
 #include "plssvm/detail/assert.hpp"                                      // PLSSVM_ASSERT
 #include "plssvm/detail/logger.hpp"                                      // plssvm::detail::log, plssvm::verbosity_level
+#include "plssvm/detail/memory_size.hpp"                                 // plssvm::detail::memory_size
 #include "plssvm/detail/performance_tracker.hpp"                         // plssvm::detail::tracking_entry
 #include "plssvm/exceptions/exceptions.hpp"                              // plssvm::exception
 #include "plssvm/kernel_function_types.hpp"                              // plssvm::kernel_type
@@ -131,16 +132,16 @@ void csvm::device_synchronize(const queue_type &queue) const {
     detail::device_synchronize(queue);
 }
 
-unsigned long long csvm::get_device_memory() const {
-    return devices_[0].impl->sycl_queue.get_device().get_info<::sycl::info::device::global_mem_size>();
+::plssvm::detail::memory_size csvm::get_device_memory() const {
+    return ::plssvm::detail::memory_size{ static_cast<unsigned long long>(devices_[0].impl->sycl_queue.get_device().get_info<::sycl::info::device::global_mem_size>()) };
+}
+
+::plssvm::detail::memory_size csvm::get_max_mem_alloc_size() const {
+    return ::plssvm::detail::memory_size{ static_cast<unsigned long long>(devices_[0].impl->sycl_queue.get_device().get_info<::sycl::info::device::max_mem_alloc_size>()) };
 }
 
 std::size_t csvm::get_max_work_group_size() const {
     return devices_[0].impl->sycl_queue.get_device().get_info<::sycl::info::device::max_work_group_size>();
-}
-
-unsigned long long csvm::get_max_mem_alloc_size() const {
-    return devices_[0].impl->sycl_queue.get_device().get_info<::sycl::info::device::max_mem_alloc_size>();
 }
 
 //***************************************************//
@@ -258,7 +259,7 @@ auto csvm::run_predict_kernel(const parameter &params, const device_ptr_type &w_
                 // already handled
                 break;
             case kernel_function_type::polynomial:
-                devices_[0].impl->sycl_queue.parallel_for(execution_range, sycl::detail::device_kernel_predict_polynomial{ out_d.get(), alpha_d.get(), rho_d.get(), sv_d.get(), predict_points_d.get(), num_classes, num_sv, num_predict_points, num_features, static_cast<real_type>(params.degree.value()), params.gamma.value(), params.coef0.value() });
+                devices_[0].impl->sycl_queue.parallel_for(execution_range, sycl::detail::device_kernel_predict_polynomial{ out_d.get(), alpha_d.get(), rho_d.get(), sv_d.get(), predict_points_d.get(), num_classes, num_sv, num_predict_points, num_features, params.degree.value(), params.gamma.value(), params.coef0.value() });
                 break;
             case kernel_function_type::rbf:
                 devices_[0].impl->sycl_queue.parallel_for(execution_range, sycl::detail::device_kernel_predict_rbf{ out_d.get(), alpha_d.get(), rho_d.get(), sv_d.get(), predict_points_d.get(), num_classes, num_sv, num_predict_points, num_features, params.gamma.value() });

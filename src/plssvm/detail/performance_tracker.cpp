@@ -194,6 +194,12 @@ void performance_tracker::save(std::ostream &out) {
 #else
     constexpr bool use_gemm = false;
 #endif
+    // check whether the maximum memory allocation size for the plssvm::solver_type::automatic has been enforced
+#if defined(PLSSVM_ENFORCE_MAX_MEM_ALLOC_SIZE)
+    constexpr bool enforce_max_mem_alloc_size = true;
+#else
+    constexpr bool enforce_max_mem_alloc_size = false;
+#endif
 
 
     // begin a new YAML document (only with "---" multiple YAML docments in a single file are allowed)
@@ -212,6 +218,7 @@ void performance_tracker::save(std::ostream &out) {
         "  LTO:                        {}\n"
         "  asserts:                    {}\n"
         "  gemm:                       {}\n"
+        "  enforce_max_mem_alloc_size: {}\n"
         "  PLSSVM_THREAD_BLOCK_SIZE:   {}\n"
         "  PLSSVM_INTERNAL_BLOCK_SIZE: {}\n"
         "  PLSSVM_OPENMP_BLOCK_SIZE:   {}\n",
@@ -225,6 +232,7 @@ void performance_tracker::save(std::ostream &out) {
         lto_enabled,
         assert_enabled,
         use_gemm,
+        enforce_max_mem_alloc_size,
         THREAD_BLOCK_SIZE,
         INTERNAL_BLOCK_SIZE,
         OPENMP_BLOCK_SIZE);

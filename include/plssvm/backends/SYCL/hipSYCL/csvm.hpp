@@ -19,6 +19,7 @@
 #include "plssvm/backends/SYCL/kernel_invocation_type.hpp"     // plssvm::sycl::kernel_invocation_type
 #include "plssvm/backends/gpu_csvm.hpp"                        // plssvm::detail::gpu_csvm
 #include "plssvm/constants.hpp"                                // plssvm::real_type
+#include "plssvm/detail/memory_size.hpp"                       // plssvm::detail::memory_size
 #include "plssvm/detail/type_traits.hpp"                       // PLSSVM_REQUIRES, plssvm::detail::remove_cvref_t
 #include "plssvm/parameter.hpp"                                // plssvm::parameter, plssvm::detail::parameter
 #include "plssvm/target_platforms.hpp"                         // plssvm::target_platform
@@ -145,11 +146,11 @@ class csvm : public ::plssvm::detail::gpu_csvm<detail::device_ptr, detail::queue
     /**
      * @copydoc plssvm::csvm::get_device_memory
      */
-    [[nodiscard]] unsigned long long get_device_memory() const final;
+    [[nodiscard]] ::plssvm::detail::memory_size get_device_memory() const final;
     /**
      * @copydoc plssvm::csvm::get_max_mem_alloc_size
      */
-    [[nodiscard]] unsigned long long get_max_mem_alloc_size() const final;
+    [[nodiscard]] ::plssvm::detail::memory_size get_max_mem_alloc_size() const final;
     /**
      * @copydoc plssvm::detail::gpu_csvm::get_max_work_group_size
      */

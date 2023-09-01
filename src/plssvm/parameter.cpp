@@ -16,7 +16,7 @@
 
 #include <ostream>                                 // std::ostream
 
-namespace plssvm::detail {
+namespace plssvm {
 
 std::ostream &operator<<(std::ostream &out, const parameter &params) {
     return out << fmt::format(

@@ -18,6 +18,7 @@
 #include "plssvm/constants.hpp"                                         // plssvm::real_type
 #include "plssvm/detail/assert.hpp"                                     // PLSSVM_ASSERT
 #include "plssvm/detail/logger.hpp"                                     // plssvm::detail::log, plssvm::verbosity_level
+#include "plssvm/detail/memory_size.hpp"                                // plssvm::detail::memory_size
 #include "plssvm/detail/performance_tracker.hpp"                        // plssvm::detail::tracking_entry
 #include "plssvm/exceptions/exceptions.hpp"                             // plssvm::exception
 #include "plssvm/kernel_function_types.hpp"                             // plssvm::kernel_function_type
@@ -106,13 +107,13 @@ void csvm::device_synchronize(const queue_type &queue) const {
     detail::device_synchronize(queue);
 }
 
-unsigned long long csvm::get_device_memory() const {
+::plssvm::detail::memory_size csvm::get_device_memory() const {
     cudaDeviceProp prop{};
     cudaGetDeviceProperties(&prop, devices_[0]);
-    return static_cast<unsigned long long>(prop.totalGlobalMem);
+    return ::plssvm::detail::memory_size{ static_cast<unsigned long long>(prop.totalGlobalMem) };
 }
 
-unsigned long long csvm::get_max_mem_alloc_size() const {
+::plssvm::detail::memory_size csvm::get_max_mem_alloc_size() const {
     return this->get_device_memory();
 }
 

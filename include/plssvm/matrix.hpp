@@ -145,6 +145,9 @@ class matrix {
     /**
      * @brief Create a matrix from the provided 2D vector @p data.
      * @param[in] data the data used to initialize this matrix
+     * @throws plssvm::matrix_exception if the data vector is empty
+     * @throws plssvm::matrix_exception if the data vectors contain different number of values
+     * @throws plssvm::matrix_exception if one vector in the data vector is empty
      */
     explicit matrix(const std::vector<std::vector<value_type>> &data) :
         matrix{ data, size_type{ 0 }, size_type{ 0 } } {}
@@ -359,9 +362,15 @@ matrix<T, layout_>::matrix(const size_type num_rows, const size_type num_cols, c
 template <typename T, layout_type layout_>
 matrix<T, layout_>::matrix(const std::vector<std::vector<value_type>> &data, const size_type row_padding, const size_type col_padding) :
     row_padding_{ row_padding }, col_padding_{ col_padding } {
-    PLSSVM_ASSERT(!data.empty(), "The data to create the matrix from may not be empty!");
-    PLSSVM_ASSERT(std::all_of(data.cbegin(), data.cend(), [&data](const std::vector<value_type> &row) { return row.size() == data.front().size(); }), "Each row must contain the same amount of columns!");
-    PLSSVM_ASSERT(!data.front().empty(), "The data to create the matrix must at least have one column!");
+    if (data.empty()) {
+        throw matrix_exception{ "The data to create the matrix from may not be empty!" };
+    }
+    if (!std::all_of(data.cbegin(), data.cend(), [&data](const std::vector<value_type> &row) { return row.size() == data.front().size(); })) {
+        throw matrix_exception{ "Each row in the matrix must contain the same amount of columns!" };
+    }
+    if (data.front().empty()) {
+        throw matrix_exception{ "The data to create the matrix must at least have one column!" };
+    }
 
     num_rows_ = data.size();
     num_cols_ = data.front().size();
