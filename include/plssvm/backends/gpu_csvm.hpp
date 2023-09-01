@@ -372,7 +372,7 @@ aos_matrix<real_type> gpu_csvm<device_ptr_t, queue_t>::predict_values(const para
 
     device_ptr_type sv_d{ support_vectors.shape(), devices_[0] };
     sv_d.copy_to_device(support_vectors.data());
-    device_ptr_type predict_points_d{ predict_points.shape(), devices_[0] };
+    device_ptr_type predict_points_d{ predict_points.shape(), predict_points.padding(), devices_[0] };
     predict_points_d.copy_to_device(predict_points.data());
 
     device_ptr_type w_d;  // only used when predicting linear kernel functions
