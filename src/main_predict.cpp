@@ -44,8 +44,34 @@ int main(int argc, char *argv[]) {
 
             // create model
             const plssvm::model<label_type> model{ cmd_parser.model_filename };
+
+            // output parameter used to learn the model
+            {
+                const plssvm::parameter params = model.get_params();
+                plssvm::detail::log(plssvm::verbosity_level::full,
+                                    "Parameter used to train the model:\n"
+                                    "  kernel_type: {} -> {}\n",
+                                    params.kernel_type, plssvm::kernel_function_type_to_math_string(params.kernel_type));
+                switch (params.kernel_type) {
+                    case plssvm::kernel_function_type::linear:
+                        break;
+                    case plssvm::kernel_function_type::polynomial:
+                        plssvm::detail::log(plssvm::verbosity_level::full,
+                                            "  degree: {}\n"
+                                            "  gamma: {}\n"
+                                            "  coef0: {}\n",
+                                            params.degree, params.gamma, params.coef0);
+                        break;
+                    case plssvm::kernel_function_type::rbf:
+                        plssvm::detail::log(plssvm::verbosity_level::full, "  gamma: {}\n", params.gamma);
+                        break;
+                }
+                plssvm::detail::log(plssvm::verbosity_level::full, "  cost: {}\n",  params.cost);
+            }
+
             // create default csvm
-            const auto svm = plssvm::make_csvm(cmd_parser.backend, cmd_parser.target);
+            const std::unique_ptr<plssvm::csvm> svm = (cmd_parser.backend == plssvm::backend_type::sycl) ? plssvm::make_csvm(cmd_parser.backend, cmd_parser.target, plssvm::sycl_implementation_type = cmd_parser.sycl_implementation_type)
+                                                                                                         : plssvm::make_csvm(cmd_parser.backend, cmd_parser.target);
             // predict labels
             const std::vector<label_type> predicted_labels = svm->predict(model, data);
 
