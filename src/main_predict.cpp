@@ -45,7 +45,8 @@ int main(int argc, char *argv[]) {
             // create model
             const plssvm::model<label_type> model{ cmd_parser.model_filename };
             // create default csvm
-            const auto svm = plssvm::make_csvm(cmd_parser.backend, cmd_parser.target);
+            const std::unique_ptr<plssvm::csvm> svm = (cmd_parser.backend == plssvm::backend_type::sycl) ? plssvm::make_csvm(cmd_parser.backend, cmd_parser.target, plssvm::sycl_implementation_type = cmd_parser.sycl_implementation_type)
+                                                                                                         : plssvm::make_csvm(cmd_parser.backend, cmd_parser.target);
             // predict labels
             const std::vector<label_type> predicted_labels = svm->predict(model, data);
 
