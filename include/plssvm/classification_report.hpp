@@ -151,12 +151,12 @@ classification_report::classification_report(const std::vector<label_type> &corr
         }
         // const std::size_t TN = correct_label.size() - TP - FN - FP;
         // calculate precision, recall, and f1 score
-        const auto sanitize_nan = [](const double val) {
-            return std::isnan(val) ? 0.0 : val;
+        const auto sanitize_nan = [](const double dividend, const double divisor) {
+            return divisor == 0.0 ? 0.0 : dividend / divisor;
         };
-        const double precision = sanitize_nan(static_cast<double>(TP) / static_cast<double>(TP + FP));
-        const double recall = sanitize_nan(static_cast<double>(TP) / static_cast<double>(TP + FN));
-        const double f1 = sanitize_nan(2 * (precision * recall) / (precision + recall));
+        const double precision = sanitize_nan(static_cast<double>(TP), static_cast<double>(TP + FP));
+        const double recall = sanitize_nan(static_cast<double>(TP), static_cast<double>(TP + FN));
+        const double f1 = sanitize_nan(2 * (precision * recall), (precision + recall));
         // add metric results to map
         const metric m{ precision, recall, f1, static_cast<std::size_t>(std::count(correct_label.cbegin(), correct_label.cend(), label)) };
         metrics_.emplace(fmt::format("{}", label), m);

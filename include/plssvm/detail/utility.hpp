@@ -14,6 +14,7 @@
 #pragma once
 
 #include "plssvm/default_value.hpp"       // plssvm::default_value
+#include "plssvm/detail/memory_size.hpp"  // plssvm::detail::memory_size
 #include "plssvm/detail/type_traits.hpp"  // PLSSVM_REQUIRES, plssvm::detail::always_false_v
 
 #include <algorithm>                      // std::remove_if, std::find
@@ -136,7 +137,7 @@ template <typename Container, typename T, PLSSVM_REQUIRES(is_container_v<Contain
  * @brief Returns the available total system memory.
  * @return the total system memory in bytes (`[[nodiscard]]`)
  */
-[[nodiscard]] unsigned long long get_system_memory();
+[[nodiscard]] memory_size get_system_memory();
 
 }  // namespace plssvm::detail
 
