@@ -354,7 +354,7 @@ template <typename label_type>
 
                 // check if the parsed label is one of the labels specified in the ARFF file header
                 if (has_label && !detail::contains(unique_label, static_cast<label_type>(label[i]))) {
-                    throw invalid_file_format_exception{ fmt::format("Found the label \"{}\" which was not specified in the header ({{{}}})!", label[i], fmt::join(unique_label, ",")) };
+                    throw invalid_file_format_exception{ fmt::format("Found the label \"{}\" which was not specified in the header ({{{}}})!", static_cast<label_type>(label[i]), fmt::join(unique_label, ", ")) };
                 }
             } catch (const std::exception &) {
                 // catch first exception and store it
@@ -452,7 +452,7 @@ inline void write_arff_data_impl(const std::string &filename, const aos_matrix<r
             out_string.append(fmt::format("{:.10e}", data(i, num_features - 1)));
             // output label if provided
             if constexpr (has_label) {
-                out_string.append(fmt::format("{}", label[i]));
+                out_string.append(fmt::format(",{}", label[i]));
             }
             // output newline at the end
             out_string.push_back('\n');
