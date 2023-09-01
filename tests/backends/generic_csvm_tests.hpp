@@ -243,9 +243,9 @@ TYPED_TEST_P(GenericCSVM, assemble_kernel_matrix) {
             break;
         case plssvm::kernel_function_type::rbf:
 #if defined(PLSSVM_USE_GEMM)
-            EXPECT_FLOATING_POINT_VECTOR_NEAR(kernel_matrix, (std::vector<real_type>{ real_type{ std::exp(-1.0) + 1.0 }, real_type{ std::exp(-9.0) }, real_type{ std::exp(-9.0) }, real_type{ std::exp(-1.0) + 1.0 } }));
+            EXPECT_FLOATING_POINT_VECTOR_NEAR(kernel_matrix, (std::vector<real_type>{ real_type{ 2.0 }, real_type{ std::exp(-9.0) }, real_type{ std::exp(-9.0) }, real_type{ 2.0 } }));
 #else
-            EXPECT_FLOATING_POINT_VECTOR_NEAR(kernel_matrix, (std::vector<real_type>{ real_type{ std::exp(-1.0) + 1.0 }, real_type{ std::exp(-9.0) }, real_type{ std::exp(-1.0) } + 1.0 }));
+            EXPECT_FLOATING_POINT_VECTOR_NEAR(kernel_matrix, (std::vector<real_type>{ real_type{ 2.0 }, real_type{ std::exp(-9.0) }, real_type{ 2.0 }));
 #endif
             break;
     }
