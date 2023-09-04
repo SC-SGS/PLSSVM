@@ -77,25 +77,9 @@ void csvm::init(const target_platform target) {
     // get all available devices wrt the requested target platform
     std::tie(devices_, target_) = detail::get_device_list(target);
 
-    // set correct kernel invocation type if "automatic" has been provided
-    if (invocation_type_ == sycl::kernel_invocation_type::automatic) {
-        if (target_ != target_platform::cpu) {
-            // always use nd_range on GPUs
-            invocation_type_ = sycl::kernel_invocation_type::nd_range;
-        } else {
-            // on CPUs: use hierarchical, except if omp.accelerated is present then also use nd_range
-#if defined(__HIPSYCL_USE_ACCELERATED_CPU__)
-            invocation_type_ = sycl::kernel_invocation_type::nd_range;
-#else
-            invocation_type_ = sycl::kernel_invocation_type::hierarchical;
-#endif
-        }
-    }
-
     plssvm::detail::log(verbosity_level::full,
-                        "\nUsing hipSYCL ({}) as SYCL backend with the kernel invocation type \"{}\" for the svm_kernel.\n",
-                        plssvm::detail::tracking_entry{ "backend", "version", ::hipsycl::sycl::detail::version_string() },
-                        plssvm::detail::tracking_entry{ "backend", "sycl_kernel_invocation_type", invocation_type_ });
+                        "\nUsing hipSYCL ({}) as SYCL backend.\n",
+                        plssvm::detail::tracking_entry{ "backend", "version", ::hipsycl::sycl::detail::version_string() });
     if (target == target_platform::automatic) {
         plssvm::detail::log(verbosity_level::full,
                             "Using {} as automatic target platform.\n", target_);

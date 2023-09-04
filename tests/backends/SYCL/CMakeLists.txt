@@ -10,10 +10,9 @@ set(PLSSVM_SYCL_TEST_NAME SYCL_tests)
 # list all necessary sources
 set(PLSSVM_SYCL_TEST_SOURCES
         ${CMAKE_CURRENT_LIST_DIR}/exceptions.cpp
-## since the SYCL implementation_type and kernel_invocation_type enumerations are used even if no SYCL backend
+## since the SYCL implementation_type enumeration is used even if no SYCL backend
 ## is available these are also tested in the base library
 #        ${CMAKE_CURRENT_LIST_DIR}/implementation_type.cpp
-#        ${CMAKE_CURRENT_LIST_DIR}/kernel_invocation_type.cpp
         )
 
 if (TARGET ${PLSSVM_SYCL_BACKEND_HIPSYCL_LIBRARY_NAME})

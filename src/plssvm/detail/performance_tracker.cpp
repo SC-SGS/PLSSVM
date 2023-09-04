@@ -78,7 +78,6 @@ void performance_tracker::add_tracking_entry(const tracking_entry<cmd::parser_tr
                                                                       "  classification_type:         {}\n"
                                                                       "  backend:                     {}\n"
                                                                       "  target:                      {}\n"
-                                                                      "  sycl_kernel_invocation_type: {}\n"
                                                                       "  sycl_implementation_type:    {}\n"
                                                                       "  strings_as_labels:           {}\n"
                                                                       "  real_type:                   {}\n"

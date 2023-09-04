@@ -32,7 +32,6 @@
 #include "plssvm/target_platforms.hpp"                      // all supported target platforms
 
 #include "plssvm/backends/SYCL/implementation_type.hpp"     // the SYCL implementation type
-#include "plssvm/backends/SYCL/kernel_invocation_type.hpp"  // the SYCL specific kernel invocation typ
 
 #include "plssvm/exceptions/exceptions.hpp"                 // exception hierarchy
 #include "plssvm/version/version.hpp"                       // version information
