@@ -8,32 +8,30 @@
 
 #include "plssvm/detail/cmd/parser_train.hpp"
 
-#include "plssvm/classification_types.hpp"               // plssvm::classification_type, plssvm::classification_type_to_full_string
-#include "plssvm/constants.hpp"                          // plssvm::real_type
 #include "plssvm/backend_types.hpp"                      // plssvm::list_available_backends
 #include "plssvm/backends/SYCL/implementation_type.hpp"  // plssvm::sycl_generic::list_available_sycl_implementations
+#include "plssvm/classification_types.hpp"               // plssvm::classification_type, plssvm::classification_type_to_full_string
+#include "plssvm/constants.hpp"                          // plssvm::real_type
 #include "plssvm/constants.hpp"                          // plssvm::verbose_default, plssvm::verbose
 #include "plssvm/default_value.hpp"                      // plssvm::default_value
-#include "plssvm/detail/arithmetic_type_name.hpp"        // plssvm::detail::arithmetic_type_name
 #include "plssvm/detail/assert.hpp"                      // PLSSVM_ASSERT
 #include "plssvm/detail/logger.hpp"                      // plssvm::verbosity
-#include "plssvm/detail/string_utility.hpp"              // plssvm::detail::as_lower_case
 #include "plssvm/detail/utility.hpp"                     // plssvm::detail::to_underlying
 #include "plssvm/kernel_function_types.hpp"              // plssvm::kernel_type_to_math_string
 #include "plssvm/solver_types.hpp"                       // plssvm::solver_types
 #include "plssvm/target_platforms.hpp"                   // plssvm::list_available_target_platforms
 #include "plssvm/version/version.hpp"                    // plssvm::version::detail::get_version_info
 
-#include "cxxopts.hpp"                                   // cxxopts::Options, cxxopts::value,cxxopts::ParseResult
-#include "fmt/color.h"                                   // fmt::fg, fmt::color::orange
-#include "fmt/core.h"                                    // fmt::format, fmt::join
-#include "fmt/ostream.h"                                 // can use fmt using operator<< overloads
+#include "cxxopts.hpp"    // cxxopts::Options, cxxopts::value,cxxopts::ParseResult
+#include "fmt/color.h"    // fmt::fg, fmt::color::orange
+#include "fmt/core.h"     // fmt::format, fmt::join
+#include "fmt/ostream.h"  // can use fmt using operator<< overloads
 
-#include <cstdlib>                                       // std::exit, EXIT_SUCCESS, EXIT_FAILURE
-#include <exception>                                     // std::exception
-#include <filesystem>                                    // std::filesystem::path
-#include <iostream>                                      // std::cout, std::cerr, std::clog, std::endl
-#include <type_traits>                                   // std::is_same_v
+#include <cstdlib>      // std::exit, EXIT_SUCCESS, EXIT_FAILURE
+#include <exception>    // std::exception
+#include <filesystem>   // std::filesystem::path
+#include <iostream>     // std::cout, std::cerr, std::clog, std::endl
+#include <type_traits>  // std::is_same_v
 
 namespace plssvm::detail::cmd {
 
@@ -63,7 +61,6 @@ parser_train::parser_train(int argc, char **argv) {
            ("b,backend", fmt::format("choose the backend: {}", fmt::join(list_available_backends(), "|")), cxxopts::value<decltype(backend)>()->default_value(fmt::format("{}", backend)))
            ("p,target_platform", fmt::format("choose the target platform: {}", fmt::join(list_available_target_platforms(), "|")), cxxopts::value<decltype(target)>()->default_value(fmt::format("{}", target)))
 #if defined(PLSSVM_HAS_SYCL_BACKEND)
-           ("sycl_kernel_invocation_type", "choose the kernel invocation type when using SYCL as backend: automatic|nd_range|hierarchical", cxxopts::value<decltype(sycl_kernel_invocation_type)>()->default_value(fmt::format("{}", sycl_kernel_invocation_type)))
            ("sycl_implementation_type", fmt::format("choose the SYCL implementation to be used in the SYCL backend: {}", fmt::join(sycl::list_available_sycl_implementations(), "|")), cxxopts::value<decltype(sycl_implementation_type)>()->default_value(fmt::format("{}", sycl_implementation_type)))
 #endif
 #if defined(PLSSVM_PERFORMANCE_TRACKER_ENABLED)
@@ -174,17 +171,6 @@ parser_train::parser_train(int argc, char **argv) {
     solver = result["solver"].as<decltype(solver)>();
 
 #if defined(PLSSVM_HAS_SYCL_BACKEND)
-    // parse kernel invocation type when using SYCL as backend
-    sycl_kernel_invocation_type = result["sycl_kernel_invocation_type"].as<decltype(sycl_kernel_invocation_type)>();
-
-    // warn if kernel invocation type nd_range or hierarchical are explicitly set but SYCL isn't the current backend
-    if (backend != backend_type::sycl && sycl_kernel_invocation_type != sycl::kernel_invocation_type::automatic) {
-        std::clog << fmt::format(fmt::fg(fmt::color::orange),
-                                 "WARNING: explicitly set a SYCL kernel invocation type but the current backend isn't SYCL; ignoring --sycl_kernel_invocation_type={}",
-                                 sycl_kernel_invocation_type)
-                  << std::endl;
-    }
-
     // parse SYCL implementation used in the SYCL backend
     sycl_implementation_type = result["sycl_implementation_type"].as<decltype(sycl_implementation_type)>();
 

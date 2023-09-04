@@ -18,17 +18,17 @@
 #include "../../utility.hpp"             // util::convert_from_string
 #include "utility.hpp"                   // util::ParameterBase
 
-#include "fmt/core.h"                    // fmt::format
-#include "gmock/gmock-matchers.h"        // ::testing::{StartsWith, HasSubstr}
-#include "gtest/gtest.h"                 // TEST_F, TEST_P, EXPECT_EQ, EXPECT_TRUE, EXPECT_FALSE, EXPECT_EXIT, EXPECT_DEATH, INSTANTIATE_TEST_SUITE_P,
-                                         // ::testing::WithParamInterface, ::testing::Combine, ::testing::Values, ::testing::Bool, ::testing::ExitedWithCode
+#include "fmt/core.h"              // fmt::format
+#include "gmock/gmock-matchers.h"  // ::testing::{StartsWith, HasSubstr}
+#include "gtest/gtest.h"           // TEST_F, TEST_P, EXPECT_EQ, EXPECT_TRUE, EXPECT_FALSE, EXPECT_EXIT, EXPECT_DEATH, INSTANTIATE_TEST_SUITE_P,
+                                   // ::testing::WithParamInterface, ::testing::Combine, ::testing::Values, ::testing::Bool, ::testing::ExitedWithCode
 
-#include <cstdlib>                       // EXIT_SUCCESS, EXIT_FAILURE
-#include <string>                        // std::string
-#include <tuple>                         // std::tuple
+#include <cstdlib>      // EXIT_SUCCESS, EXIT_FAILURE
+#include <string>       // std::string
+#include <tuple>        // std::tuple
+#include <type_traits>  // std::is_same_v
 
 class ParserPredict : public util::ParameterBase {};
-class ParserPredictDeathTest : public util::ParameterBase {};
 
 TEST_F(ParserPredict, minimal) {
     // create artificial command line arguments in test fixture
@@ -45,6 +45,9 @@ TEST_F(ParserPredict, minimal) {
     EXPECT_EQ(parser.input_filename, "data.libsvm");
     EXPECT_EQ(parser.model_filename, "data.libsvm.model");
     EXPECT_EQ(parser.predict_filename, "data.libsvm.predict");
+    EXPECT_EQ(parser.performance_tracking_filename, "");
+
+    EXPECT_EQ(plssvm::verbosity, plssvm::verbosity_level::full);
 }
 TEST_F(ParserPredict, minimal_output) {
     // create artificial command line arguments in test fixture
@@ -54,13 +57,17 @@ TEST_F(ParserPredict, minimal_output) {
     const plssvm::detail::cmd::parser_predict parser{ this->argc, this->argv };
 
     // test output string
-    const std::string correct =
-        "label_type: int (default)\n" +
-        fmt::format("real_type: {}\n", std::is_same_v<plssvm::real_type, float> ? "float" : "double (default)") +
+    const std::string correct = fmt::format(
+        "label_type: int (default)\n"
+        "real_type: {}\n"
         "input file (data set): 'data.libsvm'\n"
         "input file (model): 'data.libsvm.model'\n"
-        "output file (prediction): 'data.libsvm.predict'\n";
+        "output file (prediction): 'data.libsvm.predict'\n",
+        std::is_same_v<plssvm::real_type, float> ? "float" : "double (default)");
+
     EXPECT_CONVERSION_TO_STRING(parser, correct);
+
+    EXPECT_EQ(plssvm::verbosity, plssvm::verbosity_level::full);
 }
 
 TEST_F(ParserPredict, all_arguments) {
@@ -86,13 +93,16 @@ TEST_F(ParserPredict, all_arguments) {
 #else
     EXPECT_EQ(parser.sycl_implementation_type, plssvm::sycl::implementation_type::automatic);
 #endif
-#if defined(PLSSVM_PERFORMANCE_TRACKER_ENABLED)
-    EXPECT_EQ(parser.performance_tracking_filename, "tracking.yaml");
-#endif
     EXPECT_TRUE(parser.strings_as_labels);
     EXPECT_EQ(parser.input_filename, "data.libsvm");
     EXPECT_EQ(parser.model_filename, "data.libsvm.model");
     EXPECT_EQ(parser.predict_filename, "data.libsvm.predict");
+#if defined(PLSSVM_PERFORMANCE_TRACKER_ENABLED)
+    EXPECT_EQ(parser.performance_tracking_filename, "tracking.yaml");
+#else
+    EXPECT_EQ(parser.performance_tracking_filename, "");
+#endif
+
     EXPECT_EQ(plssvm::verbosity, plssvm::verbosity_level::libsvm);
 }
 TEST_F(ParserPredict, all_arguments_output) {
@@ -104,23 +114,26 @@ TEST_F(ParserPredict, all_arguments_output) {
 #if defined(PLSSVM_PERFORMANCE_TRACKER_ENABLED)
     cmd_args.insert(cmd_args.end(), { "--performance_tracking", "tracking.yaml" });
 #endif
-    cmd_args.insert(cmd_args.end(), { "data.libsvm", "data.libsvm.model", "data.libsvm.predict" });
+    cmd_args.insert(cmd_args.end(), { "data1.libsvm", "data2.libsvm.model", "data3.libsvm.predict" });
     this->CreateCMDArgs(cmd_args);
 
     // create parameter object
     const plssvm::detail::cmd::parser_predict parser{ this->argc, this->argv };
 
     // test output string
-    std::string correct =
-        "label_type: std::string\n" +
-        fmt::format("real_type: {}\n", std::is_same_v<plssvm::real_type, float> ? "float" : "double (default)") +
-        "input file (data set): 'data.libsvm'\n"
-        "input file (model): 'data.libsvm.model'\n"
-        "output file (prediction): 'data.libsvm.predict'\n";
+    std::string correct = fmt::format(
+        "label_type: std::string\n"
+        "real_type: {}\n"
+        "input file (data set): 'data1.libsvm'\n"
+        "input file (model): 'data2.libsvm.model'\n"
+        "output file (prediction): 'data3.libsvm.predict'\n",
+        std::is_same_v<plssvm::real_type, float> ? "float" : "double (default)");
 #if defined(PLSSVM_PERFORMANCE_TRACKER_ENABLED)
-        correct += "performance tracking file: 'tracking.yaml'\n";
+    correct += "performance tracking file: 'tracking.yaml'\n";
 #endif
+
     EXPECT_CONVERSION_TO_STRING(parser, correct);
+
     EXPECT_EQ(plssvm::verbosity, plssvm::verbosity_level::libsvm);
 }
 
@@ -283,19 +296,21 @@ TEST_P(ParserPredictVersion, parsing) {
 }
 INSTANTIATE_TEST_SUITE_P(ParserPredict, ParserPredictVersion, ::testing::Values("-v", "--version"), naming::pretty_print_parameter_flag<ParserPredictHelp>);
 
-TEST_F(ParserPredict, no_positional_argument) {
+class ParserPredictDeathTest : public util::ParameterBase {};
+
+TEST_F(ParserPredictDeathTest, no_positional_argument) {
     this->CreateCMDArgs({ "./plssvm-predict" });
     EXPECT_EXIT((plssvm::detail::cmd::parser_predict{ this->argc, this->argv }),
                 ::testing::ExitedWithCode(EXIT_FAILURE),
                 ::testing::StartsWith("Error missing test file!"));
 }
-TEST_F(ParserPredict, single_positional_argument) {
+TEST_F(ParserPredictDeathTest, single_positional_argument) {
     this->CreateCMDArgs({ "./plssvm-predict", "data.libsvm" });
     EXPECT_EXIT((plssvm::detail::cmd::parser_predict{ this->argc, this->argv }),
                 ::testing::ExitedWithCode(EXIT_FAILURE),
                 ::testing::StartsWith("Error missing model file!"));
 }
-TEST_F(ParserPredict, too_many_positional_arguments) {
+TEST_F(ParserPredictDeathTest, too_many_positional_arguments) {
     this->CreateCMDArgs({ "./plssvm-predict", "p1", "p2", "p3", "p4" });
     EXPECT_EXIT((plssvm::detail::cmd::parser_predict{ this->argc, this->argv }),
                 ::testing::ExitedWithCode(EXIT_FAILURE),
