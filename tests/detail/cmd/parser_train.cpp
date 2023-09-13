@@ -18,18 +18,19 @@
 #include "../../utility.hpp"             // util::convert_from_string
 #include "utility.hpp"                   // util::ParameterBase
 
-#include "fmt/core.h"                    // fmt::format
-#include "gmock/gmock-matchers.h"        // ::testing::{StartsWith, HasSubstr}
-#include "gtest/gtest.h"                 // TEST_F, TEST_P, EXPECT_EQ, EXPECT_TRUE, EXPECT_FALSE, EXPECT_EXIT, EXPECT_DEATH, INSTANTIATE_TEST_SUITE_P,
-                                         // ::testing::WithParamInterface, ::testing::Combine, ::testing::Values, ::testing::Range, ::testing::Bool, ::testing::ExitedWithCode
+#include "fmt/core.h"              // fmt::format
+#include "gmock/gmock-matchers.h"  // ::testing::{StartsWith, HasSubstr}
+#include "gtest/gtest.h"           // TEST_F, TEST_P, EXPECT_EQ, EXPECT_TRUE, EXPECT_FALSE, EXPECT_EXIT, EXPECT_DEATH, INSTANTIATE_TEST_SUITE_P,
+                                   // ::testing::WithParamInterface, ::testing::Combine, ::testing::Values, ::testing::Range, ::testing::Bool, ::testing::ExitedWithCode
 
-#include <cstddef>                       // std::size_t
-#include <cstdlib>                       // EXIT_SUCCESS, EXIT_FAILURE
-#include <string>                        // std::string
-#include <tuple>                         // std::tuple
+#include <cstddef>      // std::size_t
+#include <cstdlib>      // EXIT_SUCCESS, EXIT_FAILURE
+#include <string>       // std::string
+#include <tuple>        // std::tuple
+#include <type_traits>  // std::is_same_v
 
 class ParserTrain : public util::ParameterBase {};
-class ParserTrainDeathTest : public util::ParameterBase {};
+class ParserTrainDeathTest : public ParserTrain {};
 
 TEST_F(ParserTrain, minimal) {
     // create artificial command line arguments in test fixture
@@ -53,6 +54,8 @@ TEST_F(ParserTrain, minimal) {
     EXPECT_EQ(parser.input_filename, "data.libsvm");
     EXPECT_EQ(parser.model_filename, "data.libsvm.model");
     EXPECT_EQ(parser.performance_tracking_filename, "");
+
+    EXPECT_EQ(plssvm::verbosity, plssvm::verbosity_level::full);
 }
 TEST_F(ParserTrain, minimal_output) {
     // create artificial command line arguments in test fixture
@@ -62,18 +65,21 @@ TEST_F(ParserTrain, minimal_output) {
     const plssvm::detail::cmd::parser_train parser{ this->argc, this->argv };
 
     // test output string
-    const std::string correct =
+    const std::string correct = fmt::format(
         "kernel_type: rbf -> exp(-gamma*|u-v|^2)\n"
         "gamma: 1 / num_features (default)\n"
         "cost: 1 (default)\n"
         "epsilon: 0.001 (default)\n"
         "max_iter: num_data_points (default)\n"
         "classification_type: one vs. all (default)\n"
-        "label_type: int (default)\n" +
-        fmt::format("real_type: {}\n", std::is_same_v<plssvm::real_type, float> ? "float" : "double (default)") +
+        "label_type: int (default)\n"
+        "real_type: {}\n"
         "input file (data set): 'data.libsvm'\n"
-        "output file (model): 'data.libsvm.model'\n";
+        "output file (model): 'data.libsvm.model'\n",
+        std::is_same_v<plssvm::real_type, float> ? "float" : "double (default)");
     EXPECT_CONVERSION_TO_STRING(parser, correct);
+
+    EXPECT_EQ(plssvm::verbosity, plssvm::verbosity_level::full);
 }
 
 TEST_F(ParserTrain, all_arguments) {
@@ -119,6 +125,7 @@ TEST_F(ParserTrain, all_arguments) {
 #if defined(PLSSVM_PERFORMANCE_TRACKER_ENABLED)
     EXPECT_EQ(parser.performance_tracking_filename, "tracking.yaml");
 #endif
+
     EXPECT_EQ(plssvm::verbosity, plssvm::verbosity_level::libsvm);
 }
 TEST_F(ParserTrain, all_arguments_output) {
@@ -137,7 +144,7 @@ TEST_F(ParserTrain, all_arguments_output) {
     const plssvm::detail::cmd::parser_train parser{ this->argc, this->argv };
 
     // test output string
-    std::string correct =
+    std::string correct = fmt::format(
         "kernel_type: polynomial -> (gamma*u'*v+coef0)^degree\n"
         "gamma: 1.5\n"
         "coef0: -1.5\n"
@@ -146,14 +153,16 @@ TEST_F(ParserTrain, all_arguments_output) {
         "epsilon: 1e-10\n"
         "max_iter: 100\n"
         "classification_type: one vs. one\n"
-        "label_type: std::string\n" +
-        fmt::format("real_type: {}\n", std::is_same_v<plssvm::real_type, float> ? "float" : "double (default)") +
+        "label_type: std::string\n"
+        "real_type: {}\n"
         "input file (data set): 'data.libsvm'\n"
-        "output file (model): 'data.libsvm.model'\n";
+        "output file (model): 'data.libsvm.model'\n",
+        std::is_same_v<plssvm::real_type, float> ? "float" : "double (default)");
 #if defined(PLSSVM_PERFORMANCE_TRACKER_ENABLED)
-        correct += "performance tracking file: 'tracking.yaml'\n";
+    correct += "performance tracking file: 'tracking.yaml'\n";
 #endif
     EXPECT_CONVERSION_TO_STRING(parser, correct);
+
     EXPECT_EQ(plssvm::verbosity, plssvm::verbosity_level::libsvm);
 }
 
@@ -300,6 +309,24 @@ INSTANTIATE_TEST_SUITE_P(ParserTrain, ParserTrainMaxIter, ::testing::Combine(
                 ::testing::Values("-i", "--max_iter"),
                 ::testing::Values(1, 10, 100, 1000, 10000)),
                 naming::pretty_print_parameter_flag_and_value<ParserTrainMaxIter>);
+// clang-format on
+
+class ParserTrainSolver : public ParserTrain, public ::testing::WithParamInterface<std::tuple<std::string, plssvm::solver_type>> {};
+TEST_P(ParserTrainSolver, parsing) {
+    const auto &[flag, solver] = GetParam();
+    // create artificial command line arguments in test fixture
+    this->CreateCMDArgs({ "./plssvm-train", flag, fmt::format("{}", solver), "data.libsvm" });
+    // create parameter object
+    const plssvm::detail::cmd::parser_train parser{ this->argc, this->argv };
+    // test for correctness
+    EXPECT_EQ(parser.solver, solver);
+}
+// clang-format off
+INSTANTIATE_TEST_SUITE_P(ParserTrain, ParserTrainSolver, ::testing::Combine(
+                ::testing::Values("-s", "--solver"),
+                ::testing::Values(plssvm::solver_type::automatic, plssvm::solver_type::cg_explicit,
+                                  plssvm::solver_type::cg_streaming, plssvm::solver_type::cg_implicit)),
+                naming::pretty_print_parameter_flag_and_value<ParserTrainSolver>);
 // clang-format on
 
 class ParserTrainMaxIterDeathTest : public ParserTrain, public ::testing::WithParamInterface<std::tuple<std::string, long long int>> {};
@@ -512,13 +539,13 @@ TEST_P(ParserTrainVersion, parsing) {
 }
 INSTANTIATE_TEST_SUITE_P(ParserTrain, ParserTrainVersion, ::testing::Values("-v", "--version"), naming::pretty_print_parameter_flag<ParserTrainVersion>);
 
-TEST_F(ParserTrain, no_positional_argument) {
+TEST_F(ParserTrainDeathTest, no_positional_argument) {
     this->CreateCMDArgs({ "./plssvm-train" });
     EXPECT_EXIT((plssvm::detail::cmd::parser_train{ this->argc, this->argv }),
                 ::testing::ExitedWithCode(EXIT_FAILURE),
                 ::testing::StartsWith("Error missing input file!"));
 }
-TEST_F(ParserTrain, too_many_positional_arguments) {
+TEST_F(ParserTrainDeathTest, too_many_positional_arguments) {
     this->CreateCMDArgs({ "./plssvm-train", "p1", "p2", "p3", "p4" });
     EXPECT_EXIT((plssvm::detail::cmd::parser_train{ this->argc, this->argv }),
                 ::testing::ExitedWithCode(EXIT_FAILURE),

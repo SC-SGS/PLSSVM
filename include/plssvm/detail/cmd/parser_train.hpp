@@ -80,14 +80,15 @@ class parser_train {
 
 /**
  * @brief Output all train parameters encapsulated by @p params to the given output-stream @p out.
- * @param[in,out] out the output-stream to write the parameters to
- * @param[in] params the parameters
+ * @param[in,out] out the output-stream to write the train parameters to
+ * @param[in] params the train parameters
  * @return the output-stream
  */
 std::ostream &operator<<(std::ostream &out, const parser_train &params);
 
 }  // namespace plssvm::detail::cmd
 
-template <> struct fmt::formatter<plssvm::detail::cmd::parser_train> : fmt::ostream_formatter {};
+template <>
+struct fmt::formatter<plssvm::detail::cmd::parser_train> : fmt::ostream_formatter {};
 
 #endif  // PLSSVM_DETAIL_CMD_PARSER_TRAIN_HPP_

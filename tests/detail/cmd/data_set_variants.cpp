@@ -14,16 +14,16 @@
 #include "plssvm/detail/cmd/parser_scale.hpp"    // plssvm::detail::cmd::parser_scale
 #include "plssvm/detail/cmd/parser_train.hpp"    // plssvm::detail::cmd::parser_train
 
-#include "../../naming.hpp"                      // naming::pretty_print_data_set_factory
-#include "../../utility.hpp"                     // util::{temporary_file, instantiate_template_file}
-#include "utility.hpp"                           // util::ParameterBase
+#include "../../naming.hpp"   // naming::pretty_print_data_set_factory
+#include "../../utility.hpp"  // util::{temporary_file, instantiate_template_file}
+#include "utility.hpp"        // util::ParameterBase
 
-#include "fmt/core.h"                            // fmt::format
-#include "gtest/gtest.h"                         // TEST_P, INSTANTIATE_TEST_SUITE_P, EXPECT_EQ,  ::testing::{WithParamInterface, Values}
+#include "fmt/core.h"     // fmt::format
+#include "gtest/gtest.h"  // TEST_P, INSTANTIATE_TEST_SUITE_P, EXPECT_EQ,  ::testing::{WithParamInterface, Values}
 
-#include <cstddef>                               // std::size_t
-#include <string>                                // std::string
-#include <tuple>                                 // std::tuple, std::make_tuple
+#include <cstddef>  // std::size_t
+#include <string>   // std::string
+#include <tuple>    // std::tuple, std::make_tuple
 
 // the variant order is: <float, int>, <float, std::string>, <double, int>, <double, std::string>
 
@@ -134,6 +134,8 @@ TEST_P(DataSetFactory, data_set_factory_train) {
     EXPECT_EQ(var.index(), index);
 }
 // clang-format off
+// get<0>(tuple): whether the command line flag "string_as_labels" is provided (true) or not (false)
+// get<1>(tuple): the active index in the constructed variant
 INSTANTIATE_TEST_SUITE_P(DataSetFactory, DataSetFactory, ::testing::Values(
                 std::make_tuple(false, 0), std::make_tuple(true, 1)),
                 naming::pretty_print_data_set_factory<DataSetFactory>);
