@@ -41,6 +41,7 @@ endif ()
 ########################################################################################################################
 ## set base sources
 set(PLSSVM_BASE_SOURCES
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/backends/SYCL/kernel_invocation_type.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/backends/SYCL/implementation_type.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/detail/cmd/parser_predict.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/detail/cmd/parser_scale.cpp
@@ -670,8 +671,13 @@ if (TARGET ${PLSSVM_SYCL_BACKEND_LIBRARY_NAME})
 .B --sycl_implementation_type
 choose the SYCL implementation to be used in the SYCL backend: ${PLSSVM_SYCL_BACKEND_NAME_LIST} (default: automatic)
 ")
+    set(PLSSVM_SYCL_KERNEL_INVOCATION_TYPE_MANPAGE_ENTRY "
+.TP
+.B --sycl_kernel_invocation_type
+choose the kernel invocation type when using SYCL as backend: automatic|nd_range|hierarchical (default: automatic)
+")
 endif ()
-set(PLSSVM_SYCL_MANPAGE_ENTRY "${PLSSVM_SYCL_IMPLEMENTATION_TYPE_MANPAGE_ENTRY}")
+set(PLSSVM_SYCL_MANPAGE_ENTRY "${PLSSVM_SYCL_KERNEL_INVOCATION_TYPE_MANPAGE_ENTRY}${PLSSVM_SYCL_IMPLEMENTATION_TYPE_MANPAGE_ENTRY}")
 ## assemble the performance tracker manpage entry
 if (PLSSVM_ENABLE_PERFORMANCE_TRACKING)
     set(PLSSVM_PERFORMANCE_TRACKER_MANPAGE_ENTRY "

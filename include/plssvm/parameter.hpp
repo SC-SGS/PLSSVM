@@ -52,6 +52,8 @@ IGOR_MAKE_NAMED_ARGUMENT(solver);
 IGOR_MAKE_NAMED_ARGUMENT(classification);
 /// Create a named argument for the SYCL backend specific SYCL implementation type (DPC++ or hipSYCL).
 IGOR_MAKE_NAMED_ARGUMENT(sycl_implementation_type);
+/// Create a named argument for the SYCL backend specific kernel invocation type (nd_range or hierarchical).
+IGOR_MAKE_NAMED_ARGUMENT(sycl_kernel_invocation_type);
 /// @endcond
 
 namespace detail {
@@ -72,7 +74,7 @@ constexpr bool has_only_parameter_named_args_v = !igor::has_other_than<Args...>(
  * @brief Trait to check whether @p Args only contains named-parameter that can be used to initialize a `plssvm::parameter` struct including SYCL specific named-parameters.
  */
 template <typename... Args>
-constexpr bool has_only_sycl_parameter_named_args_v = !igor::has_other_than<Args...>(plssvm::kernel_type, plssvm::gamma, plssvm::degree, plssvm::coef0, plssvm::cost, plssvm::sycl_implementation_type);
+constexpr bool has_only_sycl_parameter_named_args_v = !igor::has_other_than<Args...>(plssvm::kernel_type, plssvm::gamma, plssvm::degree, plssvm::coef0, plssvm::cost, plssvm::sycl_implementation_type, plssvm::sycl_kernel_invocation_type);
 
 /**
  * @brief Parse the value hold be @p named_arg and return it converted to the @p ExpectedType.
@@ -208,7 +210,7 @@ struct parameter {
         // compile time check: each named parameter must only be passed once
         static_assert(!parser.has_duplicates(), "Can only use each named parameter once!");
         // compile time check: only some named parameters are allowed
-        static_assert(!parser.has_other_than(plssvm::kernel_type, plssvm::gamma, plssvm::degree, plssvm::coef0, plssvm::cost, plssvm::sycl_implementation_type),
+        static_assert(!parser.has_other_than(plssvm::kernel_type, plssvm::gamma, plssvm::degree, plssvm::coef0, plssvm::cost, plssvm::sycl_implementation_type, plssvm::sycl_kernel_invocation_type),
                       "An illegal named parameter has been passed!");
 
         // shorthand function for emitting a warning if a provided parameter is not used by the current kernel function

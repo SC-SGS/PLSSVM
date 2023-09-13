@@ -8,6 +8,7 @@
 
 #include "plssvm/backends/SYCL/exceptions.hpp"
 #include "plssvm/backends/SYCL/implementation_type.hpp"
+#include "plssvm/backends/SYCL/kernel_invocation_type.hpp"
 
 #include "../utility.hpp"       // register_py_exception
 
@@ -36,6 +37,11 @@ void init_sycl(py::module_ &m, const py::exception<plssvm::exception> &base_exce
         .value("HIPSYCL", plssvm::sycl::implementation_type::hipsycl, "use hipSYCL as SYCL implementation");
 
     sycl_module.def("list_available_sycl_implementations", &plssvm::sycl::list_available_sycl_implementations, "list all available SYCL implementations");
+
+    py::enum_<plssvm::sycl::kernel_invocation_type>(sycl_module, "KernelInvocationType")
+        .value("AUTOMATIC", plssvm::sycl::kernel_invocation_type::automatic, "use the best kernel invocation type for the current SYCL implementation and target hardware platform")
+        .value("ND_RANGE", plssvm::sycl::kernel_invocation_type::nd_range, "use the nd_range kernel invocation type")
+        .value("HIERARCHICAL", plssvm::sycl::kernel_invocation_type::hierarchical, "use the hierarchical kernel invocation type");
 
 // initialize SYCL binding classes
 #if defined(PLSSVM_SYCL_BACKEND_HAS_HIPSYCL)

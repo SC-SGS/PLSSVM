@@ -9,6 +9,7 @@
 #include "plssvm/csvm.hpp"
 
 #include "plssvm/backends/SYCL/implementation_type.hpp"
+#include "plssvm/backends/SYCL/kernel_invocation_type.hpp"
 #include "plssvm/constants.hpp"  // plssvm::real_type
 #include "plssvm/csvm_factory.hpp"
 
@@ -87,7 +88,7 @@ void instantiate_model_bindings(py::class_<plssvm::csvm> &c) {
 
 std::unique_ptr<plssvm::csvm> assemble_csvm(const plssvm::backend_type backend, const plssvm::target_platform target, const py::kwargs &args, plssvm::parameter input_params = {}) {
     // check keyword arguments
-    check_kwargs_for_correctness(args, { "kernel_type", "degree", "gamma", "coef0", "cost", "sycl_implementation_type" });
+    check_kwargs_for_correctness(args, { "kernel_type", "degree", "gamma", "coef0", "cost", "sycl_implementation_type", "sycl_kernel_invocation_type" });
     // if one of the value keyword parameter is provided, set the respective value
     const plssvm::parameter params = convert_kwargs_to_parameter(args, input_params);
     // parse SYCL specific keyword arguments
@@ -97,8 +98,12 @@ std::unique_ptr<plssvm::csvm> assemble_csvm(const plssvm::backend_type backend, 
         if (args.contains("sycl_implementation_type")) {
             impl_type = args["sycl_implementation_type"].cast<plssvm::sycl::implementation_type>();
         }
+        plssvm::sycl::kernel_invocation_type invocation_type = plssvm::sycl::kernel_invocation_type::automatic;
+        if (args.contains("sycl_kernel_invocation_type")) {
+            invocation_type = args["sycl_kernel_invocation_type"].cast<plssvm::sycl::kernel_invocation_type>();
+        }
 
-        return plssvm::make_csvm(backend, target, params, plssvm::sycl_implementation_type = impl_type);
+        return plssvm::make_csvm(backend, target, params, plssvm::sycl_implementation_type = impl_type, plssvm::sycl_kernel_invocation_type = invocation_type);
     } else {
         return plssvm::make_csvm(backend, target, params);
     }

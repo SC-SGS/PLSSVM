@@ -11,6 +11,7 @@
 #include "plssvm/parameter.hpp"
 
 #include "plssvm/backends/SYCL/implementation_type.hpp"     // plssvm::sycl::implementation_type
+#include "plssvm/backends/SYCL/kernel_invocation_type.hpp"  // plssvm::sycl::kernel_invocation_type
 #include "plssvm/detail/arithmetic_type_name.hpp"           // plssvm::detail::arithmetic_type_name
 
 #include "custom_test_macros.hpp"  // EXPECT_CONVERSION_TO_STRING, EXPECT_FLOATING_POINT_EQ
@@ -131,7 +132,8 @@ TEST(Parameter, construct_parameter_and_named_args) {
     // create new parameter set using a previous parameter set together with some named parameters
     const plssvm::parameter param{ param_base,
                                    plssvm::kernel_type = plssvm::kernel_function_type::rbf,
-                                   plssvm::sycl_implementation_type = plssvm::sycl::implementation_type::hipsycl };
+                                   plssvm::sycl_implementation_type = plssvm::sycl::implementation_type::hipsycl,
+                                   plssvm::sycl_kernel_invocation_type = plssvm::sycl::kernel_invocation_type::hierarchical };
 
     // test default values
     EXPECT_FALSE(param.kernel_type.is_default());
