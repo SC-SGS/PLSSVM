@@ -23,8 +23,6 @@ std::ostream &operator<<(std::ostream &out, const kernel_invocation_type target)
             return out << "automatic";
         case kernel_invocation_type::nd_range:
             return out << "nd_range";
-        case kernel_invocation_type::hierarchical:
-            return out << "hierarchical";
     }
     return out << "unknown";
 }
@@ -38,8 +36,6 @@ std::istream &operator>>(std::istream &in, kernel_invocation_type &target) {
         target = kernel_invocation_type::automatic;
     } else if (str == "nd_range") {
         target = kernel_invocation_type::nd_range;
-    } else if (str == "hierarchical") {
-        target = kernel_invocation_type::hierarchical;
     } else {
         in.setstate(std::ios::failbit);
     }

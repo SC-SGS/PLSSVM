@@ -349,7 +349,7 @@ Usage:
   -b, --backend arg             choose the backend: automatic|openmp|cuda|hip|opencl|sycl (default: automatic)
   -p, --target_platform arg     choose the target platform: automatic|cpu|gpu_nvidia|gpu_amd|gpu_intel (default: automatic)
       --sycl_kernel_invocation_type arg
-                                choose the kernel invocation type when using SYCL as backend: automatic|nd_range|hierarchical (default: automatic)
+                                choose the kernel invocation type when using SYCL as backend: automatic|nd_range (default: automatic)
       --sycl_implementation_type arg
                                 choose the SYCL implementation to be used in the SYCL backend: automatic|dpcpp|hipsycl (default: automatic)
       --performance_tracking arg
@@ -403,7 +403,7 @@ The `--target_platform=automatic` option works for the different backends as fol
 - `SYCL`: tries to find available devices in the following order: NVIDIA GPUs 🠦 AMD GPUs 🠦 Intel GPUs 🠦 CPU
 
 The `--sycl_kernel_invocation_type` and `--sycl_implementation_type` flags are only used if the `--backend` is `sycl`, otherwise a warning is emitted on `stderr`.
-If the `--sycl_kernel_invocation_type` is `automatic`, the `nd_range` invocation type is always used, except for hipSYCL on CPUs where the hierarchical formulation is used instead (if hipSYCL wasn't build with `omp.accelerated`).
+If the `--sycl_kernel_invocation_type` is `automatic`, the `nd_range` invocation type is currently always used.
 If the `--sycl_implementation_type` is `automatic`, the used SYCL implementation is determined by the `PLSSVM_SYCL_BACKEND_PREFERRED_IMPLEMENTATION` cmake flag.
 
 ### Predicting

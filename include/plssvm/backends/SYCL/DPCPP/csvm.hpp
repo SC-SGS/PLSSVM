@@ -123,7 +123,7 @@ class csvm : public ::plssvm::detail::gpu_csvm<detail::device_ptr, detail::queue
     ~csvm() override;
 
     /**
-     * @brief Return the kernel invocation type (nd_range or the SYCL specific hierarchical kernel) used in this SYCL SVM.
+     * @brief Return the kernel invocation type used in this SYCL SVM.
      * @return the SYCL kernel invocation type (`[[nodiscard]]`)
      */
     [[nodiscard]] sycl::kernel_invocation_type get_kernel_invocation_type() const noexcept { return invocation_type_; }
@@ -178,7 +178,7 @@ class csvm : public ::plssvm::detail::gpu_csvm<detail::device_ptr, detail::queue
      */
     [[nodiscard]] device_ptr_type run_predict_kernel(const parameter &params, const device_ptr_type &w_d, const device_ptr_type &alpha_d, const device_ptr_type &rho_d, const device_ptr_type &sv_d, const device_ptr_type &predict_points_d) const final;
 
-    /// The SYCL kernel invocation type for the svm kernel. Either nd_range or hierarchical.
+    /// The SYCL kernel invocation type for the svm kernel.
     sycl::kernel_invocation_type invocation_type_{ sycl::kernel_invocation_type::automatic };
 };
 

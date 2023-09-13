@@ -133,7 +133,7 @@ TEST(Parameter, construct_parameter_and_named_args) {
     const plssvm::parameter param{ param_base,
                                    plssvm::kernel_type = plssvm::kernel_function_type::rbf,
                                    plssvm::sycl_implementation_type = plssvm::sycl::implementation_type::hipsycl,
-                                   plssvm::sycl_kernel_invocation_type = plssvm::sycl::kernel_invocation_type::hierarchical };
+                                   plssvm::sycl_kernel_invocation_type = plssvm::sycl::kernel_invocation_type::nd_range };
 
     // test default values
     EXPECT_FALSE(param.kernel_type.is_default());

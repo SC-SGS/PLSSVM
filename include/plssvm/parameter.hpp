@@ -52,7 +52,7 @@ IGOR_MAKE_NAMED_ARGUMENT(solver);
 IGOR_MAKE_NAMED_ARGUMENT(classification);
 /// Create a named argument for the SYCL backend specific SYCL implementation type (DPC++ or hipSYCL).
 IGOR_MAKE_NAMED_ARGUMENT(sycl_implementation_type);
-/// Create a named argument for the SYCL backend specific kernel invocation type (nd_range or hierarchical).
+/// Create a named argument for the SYCL backend specific kernel invocation type.
 IGOR_MAKE_NAMED_ARGUMENT(sycl_kernel_invocation_type);
 /// @endcond
 

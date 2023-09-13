@@ -79,15 +79,12 @@ void csvm::init(const target_platform target) {
 
     // set correct kernel invocation type if "automatic" has been provided
     if (invocation_type_ == sycl::kernel_invocation_type::automatic) {
-        if (target_ != target_platform::cpu) {
-            // always use nd_range on GPUs
-            invocation_type_ = sycl::kernel_invocation_type::nd_range;
-        } else {
-            // on CPUs: use hierarchical, except if omp.accelerated is present then also use nd_range
-#if defined(__HIPSYCL_USE_ACCELERATED_CPU__)
-            invocation_type_ = sycl::kernel_invocation_type::nd_range;
-#else
-            invocation_type_ = sycl::kernel_invocation_type::hierarchical;
+        // always use nd_range for hipSYCL (
+        invocation_type_ = sycl::kernel_invocation_type::nd_range;
+        if (target_ == target_platform::cpu) {
+#if !defined(__HIPSYCL_USE_ACCELERATED_CPU__)
+            std::clog << fmt::format(fmt::fg(fmt::color::orange),
+                                     "WARNING: the hipSYCL automatic target for the CPU is set to nd_range, but hipSYCL hasn't been build with the \"omp.accelerated\" compilation flow resulting in major performance losses!") << std::endl;
 #endif
         }
     }

@@ -674,7 +674,7 @@ choose the SYCL implementation to be used in the SYCL backend: ${PLSSVM_SYCL_BAC
     set(PLSSVM_SYCL_KERNEL_INVOCATION_TYPE_MANPAGE_ENTRY "
 .TP
 .B --sycl_kernel_invocation_type
-choose the kernel invocation type when using SYCL as backend: automatic|nd_range|hierarchical (default: automatic)
+choose the kernel invocation type when using SYCL as backend: automatic|nd_range (default: automatic)
 ")
 endif ()
 set(PLSSVM_SYCL_MANPAGE_ENTRY "${PLSSVM_SYCL_KERNEL_INVOCATION_TYPE_MANPAGE_ENTRY}${PLSSVM_SYCL_IMPLEMENTATION_TYPE_MANPAGE_ENTRY}")

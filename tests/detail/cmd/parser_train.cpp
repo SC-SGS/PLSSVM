@@ -417,7 +417,7 @@ TEST_P(ParserTrainSYCLKernelInvocation, parsing) {
 // clang-format off
 INSTANTIATE_TEST_SUITE_P(ParserTrain, ParserTrainSYCLKernelInvocation, ::testing::Combine(
                 ::testing::Values("--sycl_kernel_invocation_type"),
-                ::testing::Values("automatic", "nd_range", "ND_RANGE", "hierarchical")),
+                ::testing::Values("automatic", "nd_range", "ND_RANGE")),
                 naming::pretty_print_parameter_flag_and_value<ParserTrainSYCLKernelInvocation>);
 // clang-format on
 
