@@ -18,15 +18,17 @@
 #include "plssvm/detail/cmd/parser_scale.hpp"    // plssvm::detail::cmd::parser_scale
 #include "plssvm/detail/cmd/parser_train.hpp"    // plssvm::detail::cmd::parser_train
 
-#include <string>   // std::string
-#include <variant>  // std::variant
+#include <string>                                // std::string
+#include <variant>                               // std::variant
 
 namespace plssvm::detail::cmd {
 
+// clang-format off
 /**
  * @brief Two different type combinations are allowed in the command line invocation: `real_type` + `int` and `real_type` + `std::string`.
  */
 using data_set_variants = std::variant<plssvm::data_set<int>, plssvm::data_set<std::string>>;
+// clang-format on
 
 /**
  * @brief Return the correct data set type based on the plssvm::detail::cmd::parser_train command line options.

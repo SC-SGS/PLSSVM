@@ -13,15 +13,15 @@
 #include "plssvm/detail/logger.hpp"    // plssvm::verbosity
 #include "plssvm/version/version.hpp"  // plssvm::version::detail::get_version_info
 
-#include "cxxopts.hpp"    // cxxopts::{Options, value, ParseResult}
-#include "fmt/core.h"     // fmt::format, fmt::join
-#include "fmt/ostream.h"  // can use fmt using operator<< overloads
+#include "cxxopts.hpp"                 // cxxopts::{Options, value, ParseResult}
+#include "fmt/core.h"                  // fmt::format, fmt::join
+#include "fmt/ostream.h"               // can use fmt using operator<< overloads
 
-#include <cstdlib>      // std::exit, EXIT_SUCCESS, EXIT_FAILURE
-#include <exception>    // std::exception
-#include <filesystem>   // std::filesystem::path
-#include <iostream>     // std::cout, std::cerr, std::clog, std::endl
-#include <type_traits>  // std::is_same_v
+#include <cstdlib>                     // std::exit, EXIT_SUCCESS, EXIT_FAILURE
+#include <exception>                   // std::exception
+#include <filesystem>                  // std::filesystem::path
+#include <iostream>                    // std::cout, std::cerr, std::clog, std::endl
+#include <type_traits>                 // std::is_same_v
 
 namespace plssvm::detail::cmd {
 

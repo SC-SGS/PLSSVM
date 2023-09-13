@@ -16,10 +16,10 @@
 #include "plssvm/constants.hpp"          // plssvm::real_type
 #include "plssvm/file_format_types.hpp"  // plssvm::file_format_type
 
-#include "fmt/ostream.h"  // fmt::formatter, fmt::ostream_formatter
+#include "fmt/ostream.h"                 // fmt::formatter, fmt::ostream_formatter
 
-#include <iosfwd>  // forward declare std::ostream
-#include <string>  // std::string
+#include <iosfwd>                        // forward declare std::ostream
+#include <string>                        // std::string
 
 namespace plssvm::detail::cmd {
 
@@ -61,15 +61,14 @@ class parser_scale {
 
 /**
  * @brief Output all scale parameters encapsulated by @p params to the given output-stream @p out.
- * @param[in,out] out the output-stream to write the scale parameters to
- * @param[in] params the scale parameters
+ * @param[in,out] out the output-stream to write the parameters to
+ * @param[in] params the parameters
  * @return the output-stream
  */
 std::ostream &operator<<(std::ostream &out, const parser_scale &params);
 
 }  // namespace plssvm::detail::cmd
 
-template <>
-struct fmt::formatter<plssvm::detail::cmd::parser_scale> : fmt::ostream_formatter {};
+template <> struct fmt::formatter<plssvm::detail::cmd::parser_scale> : fmt::ostream_formatter {};
 
 #endif  // PLSSVM_DETAIL_CMD_PARSER_SCALE_HPP_

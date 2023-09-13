@@ -13,13 +13,16 @@
 #define PLSSVM_TESTS_DETAIL_CMD_UTILITY_HPP_
 #pragma once
 
-#include "../../utility.hpp"  // util::redirect_output
+#include "plssvm/detail/string_conversion.hpp"  // plssvm::detail::split_as
 
-#include "gtest/gtest.h"  // :testing::Test
+#include "../../utility.hpp"                    // util::redirect_output
 
-#include <cstring>  // std::strcpy
-#include <string>   // std::string
-#include <vector>   // std::vector
+#include "gtest/gtest.h"                        // :testing::Test
+
+#include <cstring>                              // std::strcpy
+#include <string>                               // std::string
+#include <string_view>                          // std::string_view
+#include <vector>                               // std::vector
 
 namespace util {
 
@@ -42,7 +45,7 @@ class ParameterBase : public ::testing::Test, private redirect_output<> {
         }
     }
     /**
-     * @brief Free memory used for argv; automatically called at the end of a test.
+     * @brief Free memory used for argv and end capturing std::cout. Automatically called at the end of a test.
      */
     void TearDown() override {
         // free memory at the end

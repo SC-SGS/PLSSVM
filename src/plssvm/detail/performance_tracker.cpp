@@ -94,6 +94,7 @@ void performance_tracker::add_tracking_entry(const tracking_entry<cmd::parser_tr
                                                                       entry.entry_value.classification.value(),
                                                                       entry.entry_value.backend,
                                                                       entry.entry_value.target,
+                                                                      entry.entry_value.sycl_kernel_invocation_type,
                                                                       entry.entry_value.sycl_implementation_type,
                                                                       entry.entry_value.strings_as_labels,
                                                                       arithmetic_type_name<real_type>(),

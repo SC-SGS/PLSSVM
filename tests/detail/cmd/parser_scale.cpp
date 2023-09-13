@@ -18,17 +18,17 @@
 #include "../../utility.hpp"             // util::convert_from_string
 #include "utility.hpp"                   // util::ParameterBase
 
-#include "fmt/core.h"              // fmt::format
-#include "gmock/gmock-matchers.h"  // ::testing::{StartsWith, HasSubstr}
-#include "gtest/gtest.h"           // TEST_F, TEST_P, EXPECT_EQ, EXPECT_TRUE, EXPECT_FALSE, EXPECT_EXIT, EXPECT_DEATH, INSTANTIATE_TEST_SUITE_P,
-                                   // ::testing::WithParamInterface, ::testing::Combine, ::testing::Values, ::testing::Bool, ::testing::ExitedWithCode
+#include "fmt/core.h"                    // fmt::format
+#include "gmock/gmock-matchers.h"        // ::testing::{StartsWith, HasSubstr}
+#include "gtest/gtest.h"                 // TEST_F, TEST_P, EXPECT_EQ, EXPECT_TRUE, EXPECT_FALSE, EXPECT_EXIT, EXPECT_DEATH, INSTANTIATE_TEST_SUITE_P,
+                                         // ::testing::WithParamInterface, ::testing::Combine, ::testing::Values, ::testing::Bool, ::testing::ExitedWithCode
 
-#include <cstdlib>      // EXIT_SUCCESS, EXIT_FAILURE
-#include <string>       // std::string
-#include <tuple>        // std::tuple
-#include <type_traits>  // std::is_same_v
+#include <cstdlib>                       // EXIT_SUCCESS, EXIT_FAILURE
+#include <string>                        // std::string
+#include <tuple>                         // std::tuple
 
 class ParserScale : public util::ParameterBase {};
+class ParserScaleDeathTest : public util::ParameterBase {};
 
 TEST_F(ParserScale, minimal) {
     // create artificial command line arguments in test fixture
@@ -46,9 +46,6 @@ TEST_F(ParserScale, minimal) {
     EXPECT_EQ(parser.scaled_filename, "");
     EXPECT_EQ(parser.save_filename, "");
     EXPECT_EQ(parser.restore_filename, "");
-    EXPECT_EQ(parser.performance_tracking_filename, "");
-
-    EXPECT_EQ(plssvm::verbosity, plssvm::verbosity_level::full);
 }
 TEST_F(ParserScale, minimal_output) {
     // create artificial command line arguments in test fixture
@@ -58,21 +55,17 @@ TEST_F(ParserScale, minimal_output) {
     const plssvm::detail::cmd::parser_scale parser{ this->argc, this->argv };
 
     // test output string
-    const std::string correct = fmt::format(
+    const std::string correct =
         "lower: -1\n"
         "upper: 1\n"
-        "label_type: int (default)\n"
-        "real_type: {}\n"
+        "label_type: int (default)\n" +
+        fmt::format("real_type: {}\n", std::is_same_v<plssvm::real_type, float> ? "float" : "double (default)") +
         "output file format: libsvm\n"
         "input file: 'data.libsvm'\n"
         "scaled file: ''\n"
         "save file (scaling factors): ''\n"
-        "restore file (scaling factors): ''\n",
-        std::is_same_v<plssvm::real_type, float> ? "float" : "double (default)");
-
+        "restore file (scaling factors): ''\n";
     EXPECT_CONVERSION_TO_STRING(parser, correct);
-
-    EXPECT_EQ(plssvm::verbosity, plssvm::verbosity_level::full);
 }
 
 TEST_F(ParserScale, all_arguments) {
@@ -99,7 +92,6 @@ TEST_F(ParserScale, all_arguments) {
 #if defined(PLSSVM_PERFORMANCE_TRACKER_ENABLED)
     EXPECT_EQ(parser.performance_tracking_filename, "tracking.yaml");
 #endif
-
     EXPECT_EQ(plssvm::verbosity, plssvm::verbosity_level::libsvm);
 }
 TEST_F(ParserScale, all_arguments_output) {
@@ -108,29 +100,27 @@ TEST_F(ParserScale, all_arguments_output) {
 #if defined(PLSSVM_PERFORMANCE_TRACKER_ENABLED)
     cmd_args.insert(cmd_args.end(), { "--performance_tracking", "tracking.yaml" });
 #endif
-    cmd_args.insert(cmd_args.end(), { "data1.libsvm", "data2.libsvm.scaled" });
+    cmd_args.insert(cmd_args.end(), { "data.libsvm", "data.libsvm.scaled" });
     this->CreateCMDArgs(cmd_args);
 
     // create parameter object
     const plssvm::detail::cmd::parser_scale parser{ this->argc, this->argv };
 
     // test output string
-    std::string correct = fmt::format(
+    std::string correct =
         "lower: -2\n"
         "upper: 2.5\n"
-        "label_type: std::string\n"
-        "real_type: {}\n"
+        "label_type: std::string\n" +
+        fmt::format("real_type: {}\n", std::is_same_v<plssvm::real_type, float> ? "float" : "double (default)") +
         "output file format: arff\n"
-        "input file: 'data1.libsvm'\n"
-        "scaled file: 'data2.libsvm.scaled'\n"
+        "input file: 'data.libsvm'\n"
+        "scaled file: 'data.libsvm.scaled'\n"
         "save file (scaling factors): 'data.libsvm.save'\n"
-        "restore file (scaling factors): ''\n",
-        std::is_same_v<plssvm::real_type, float> ? "float" : "double (default)");
+        "restore file (scaling factors): ''\n";
 #if defined(PLSSVM_PERFORMANCE_TRACKER_ENABLED)
-    correct += "performance tracking file: 'tracking.yaml'\n";
+        correct += "performance tracking file: 'tracking.yaml'\n";
 #endif
     EXPECT_CONVERSION_TO_STRING(parser, correct);
-
     EXPECT_EQ(plssvm::verbosity, plssvm::verbosity_level::libsvm);
 }
 
@@ -318,8 +308,6 @@ TEST_P(ParserScaleVersion, parsing) {
     EXPECT_EXIT((plssvm::detail::cmd::parser_scale{ this->argc, this->argv }), ::testing::ExitedWithCode(EXIT_SUCCESS), "");
 }
 INSTANTIATE_TEST_SUITE_P(ParserScale, ParserScaleVersion, ::testing::Values("-v", "--version"), naming::pretty_print_parameter_flag<ParserScaleVersion>);
-
-class ParserScaleDeathTest : public util::ParameterBase {};
 
 TEST_F(ParserScaleDeathTest, no_positional_argument) {
     this->CreateCMDArgs({ "./plssvm-scale" });
