@@ -14,10 +14,10 @@
 #include "../naming.hpp"              // naming::real_type_to_name
 #include "../types_to_test.hpp"       // util::real_type_gtest
 
-#include "gtest/gtest.h"              // TYPED_TEST_SUITE, TYPED_TEST, EXPECT_EQ, EXPECT_DEATH, ::testing::{Types, Test}
+#include "gtest/gtest.h"  // TYPED_TEST_SUITE, TYPED_TEST, EXPECT_EQ, EXPECT_DEATH, ::testing::{Types, Test}
 
-#include <tuple>                      // std::ignore
-#include <vector>                     // std::vector
+#include <tuple>   // std::ignore
+#include <vector>  // std::vector
 
 // make all operator overloads available in all tests
 using namespace plssvm::operators;
@@ -305,11 +305,11 @@ TYPED_TEST(Operators, operator_sum) {
 }
 
 TYPED_TEST(Operators, operator_squared_euclidean_dist) {
-    // calculate the squared euclidean distance between two vectors
+    // calculate the squared Euclidean distance between two vectors
     EXPECT_FLOATING_POINT_NEAR(squared_euclidean_dist(this->a, this->b), 1.25);
 }
 TYPED_TEST(OperatorsDeathTest, operator_squared_euclidean_dist) {
-    // try to calculate the squared euclidean distance between two vectors with different distance
+    // try to calculate the squared Euclidean distance between two vectors with different distance
     EXPECT_DEATH(std::ignore = squared_euclidean_dist(this->a, this->b), "Sizes mismatch!: 4 != 2");
     EXPECT_DEATH(std::ignore = squared_euclidean_dist(this->b, this->a), "Sizes mismatch!: 2 != 4");
 }

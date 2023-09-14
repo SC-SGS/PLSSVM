@@ -10,17 +10,17 @@
 
 #include "plssvm/exceptions/exceptions.hpp"  // plssvm::{*_exception}
 
-#include "../custom_test_macros.hpp"         // EXPECT_THROW_WHAT
-#include "../naming.hpp"                     // naming::exception_types_to_name
-#include "utility.hpp"                       // util::exception_type_name
+#include "../custom_test_macros.hpp"  // EXPECT_THROW_WHAT
+#include "../naming.hpp"              // naming::exception_types_to_name
+#include "utility.hpp"                // util::exception_type_name
 
-#include "fmt/core.h"                        // fmt::format
-#include "gmock/gmock.h"                     // EXPECT_THAT, ::testing::{HasSubstr, ContainsRegex}
-#include "gtest/gtest.h"                     // TYPED_TEST, TYPED_TEST_SUITE, EXPECT_EQ, EXPECT_TRUE, ASSERT_EQ, ::testing::Test, ::testing::Types
+#include "fmt/core.h"     // fmt::format
+#include "gmock/gmock.h"  // EXPECT_THAT, ::testing::{HasSubstr, ContainsRegex}
+#include "gtest/gtest.h"  // TYPED_TEST, TYPED_TEST_SUITE, EXPECT_EQ, EXPECT_TRUE, ASSERT_EQ, ::testing::Test, ::testing::Types
 
-#include <string>                            // std::string
-#include <string_view>                       // std::string_view
-#include <vector>                            // std::vector
+#include <string>       // std::string
+#include <string_view>  // std::string_view
+#include <vector>       // std::vector
 
 // helper function returning an exception used to be able to name the source location function
 template <typename Exception>
@@ -32,7 +32,8 @@ Exception dummy(const std::string &msg) {
 // enumerate all custom exception types; ATTENTION: don't forget to also specialize the PLSSVM_CREATE_EXCEPTION_TYPE_NAME macro if a new exception type is added
 using exception_types = ::testing::Types<plssvm::exception, plssvm::invalid_parameter_exception, plssvm::file_reader_exception,
                                          plssvm::data_set_exception, plssvm::file_not_found_exception, plssvm::invalid_file_format_exception,
-                                         plssvm::unsupported_backend_exception, plssvm::unsupported_kernel_type_exception, plssvm::gpu_device_ptr_exception>;
+                                         plssvm::unsupported_backend_exception, plssvm::unsupported_kernel_type_exception, plssvm::gpu_device_ptr_exception,
+                                         plssvm::matrix_exception>;
 // clang-format on
 
 template <typename T>
