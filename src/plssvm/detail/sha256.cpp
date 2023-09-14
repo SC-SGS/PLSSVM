@@ -10,10 +10,10 @@
 
 #include "fmt/format.h"  // fmt::format, fmt::join
 
-#include <array>         // std::array
-#include <cstdint>       // std::uint32_t, std::uint64_t
-#include <limits>        // std::numeric_limits::digits
-#include <string>        // std::string
+#include <array>    // std::array
+#include <cstdint>  // std::uint32_t, std::uint64_t
+#include <limits>   // std::numeric_limits::digits
+#include <string>   // std::string
 
 namespace plssvm::detail {
 
