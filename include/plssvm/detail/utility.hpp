@@ -21,6 +21,7 @@
 #include <cstddef>                        // std::size_t
 #include <iterator>                       // std::distance
 #include <string>                         // std::string
+#include <string_view>                    // std::string_view
 #include <tuple>                          // std::forward_as_tuple, std::get
 #include <type_traits>                    // std::underlying_type_t, std::is_enum_v
 
@@ -139,6 +140,18 @@ template <typename Container, typename T, PLSSVM_REQUIRES(is_container_v<Contain
  */
 [[nodiscard]] memory_size get_system_memory();
 
+namespace impl {
+
+constexpr bool check_is_defined(const char s1[], const char s2[]) {
+    return std::string_view(s1) != s2;
+}
+
+}
+
 }  // namespace plssvm::detail
+
+// see: https://stackoverflow.com/questions/18048039/c-constexpr-function-to-test-preprocessor-macros
+#define PLSSVM_EVAL_HELPER(x) #x // extra round of macroexpansion (see https://stackoverflow.com/a/13074537/12808416)
+#define PLSSVM_IS_DEFINED(x) plssvm::detail::impl::check_is_defined(#x, PLSSVM_EVAL_HELPER(x))
 
 #endif  // PLSSVM_DETAIL_UTILITY_HPP_

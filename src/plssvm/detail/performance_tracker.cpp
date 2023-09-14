@@ -10,14 +10,13 @@
 
 #include "plssvm/constants.hpp"                          // plssvm::real_type
 #include "plssvm/detail/arithmetic_type_name.hpp"        // plssvm::detail::arithmetic_type_name_v
-#include "plssvm/detail/arithmetic_type_name.hpp"        // plssvm::detail::arithmetic_type_name
 #include "plssvm/detail/assert.hpp"                      // PLSSVM_ASSERT, PLSSVM_ASSERT_ENABLED
 #include "plssvm/detail/cmd/parser_predict.hpp"          // plssvm::detail::cmd::parser_predict
 #include "plssvm/detail/cmd/parser_scale.hpp"            // plssvm::detail::cmd::parser_scale
 #include "plssvm/detail/cmd/parser_train.hpp"            // plssvm::detail::cmd::parser_train
 #include "plssvm/detail/string_conversion.hpp"           // plssvm::detail::split_as
 #include "plssvm/detail/string_utility.hpp"              // plssvm::detail::trim
-#include "plssvm/detail/utility.hpp"                     // plssvm::detail::current_date_time
+#include "plssvm/detail/utility.hpp"                     // plssvm::detail::current_date_time, PLSSVM_IS_DEFINED
 #include "plssvm/parameter.hpp"                          // plssvm::parameter
 #include "plssvm/version/git_metadata/git_metadata.hpp"  // plssvm::version::git_metadata::commit_sha1
 #include "plssvm/version/version.hpp"                    // plssvm::version::{version, detail::target_platforms}
@@ -41,8 +40,8 @@
 
 namespace plssvm::detail {
 
-performance_tracker::performance_tracker() {}
-performance_tracker::~performance_tracker() {}
+performance_tracker::performance_tracker() = default;
+performance_tracker::~performance_tracker() = default;
 
 void performance_tracker::add_tracking_entry(const tracking_entry<std::string> &entry) {
     tracking_statistics.emplace(entry.entry_category, fmt::format("{}{}: \"{}\"\n", entry.entry_category.empty() ? "" : "  ", entry.entry_name, entry.entry_value));
@@ -177,30 +176,13 @@ void performance_tracker::save(std::ostream &out) {
     constexpr std::string_view username{ "not available" };
 #endif
     // check whether asserts are enabled
-#if defined(PLSSVM_ASSERT_ENABLED)
-    constexpr bool assert_enabled = true;
-#else
-    constexpr bool assert_enabled = false;
-#endif
+    constexpr bool assert_enabled = PLSSVM_IS_DEFINED(PLSSVM_ASSERT_ENABLED);
     // check whether LTO has been enabled
-#if defined(PLSSVM_LTO_SUPPORTED)
-    constexpr bool lto_enabled = true;
-#else
-    constexpr bool lto_enabled = false;
-#endif
+    constexpr bool lto_enabled = PLSSVM_IS_DEFINED(PLSSVM_LTO_SUPPORTED);
     // check whether GEMM has been used instead of SYMM
-#if defined(PLSSVM_USE_GEMM)
-    constexpr bool use_gemm = true;
-#else
-    constexpr bool use_gemm = false;
-#endif
-    // check whether the maximum memory allocation size for the plssvm::solver_type::automatic has been enforced
-#if defined(PLSSVM_ENFORCE_MAX_MEM_ALLOC_SIZE)
-    constexpr bool enforce_max_mem_alloc_size = true;
-#else
-    constexpr bool enforce_max_mem_alloc_size = false;
-#endif
-
+    constexpr bool use_gemm = PLSSVM_IS_DEFINED(PLSSVM_USE_GEMM);
+    // check whether the maximum allocatable memory size should be enforced
+    constexpr bool enforce_max_mem_alloc_size = PLSSVM_IS_DEFINED(PLSSVM_ENFORCE_MAX_MEM_ALLOC_SIZE);
 
     // begin a new YAML document (only with "---" multiple YAML docments in a single file are allowed)
     out << "---\n";
@@ -239,11 +221,7 @@ void performance_tracker::save(std::ostream &out) {
 
 #if defined(PLSSVM_SYCL_BACKEND_HAS_DPCPP)
     //  check whether DPC++ AOT has been enabled
-    #if defined(PLSSVM_SYCL_BACKEND_DPCPP_ENABLE_AOT)
-    constexpr bool dpcpp_aot = true;
-    #else
-    constexpr bool dpcpp_aot = false;
-    #endif
+    constexpr bool dpcpp_aot = PLSSVM_IS_DEFINED(PLSSVM_SYCL_BACKEND_DPCPP_ENABLE_AOT);
 
     out << fmt::format(
         "  DPCPP_backend_type:         {}\n"
@@ -255,11 +233,7 @@ void performance_tracker::save(std::ostream &out) {
 #endif
 #if defined(PLSSVM_SYCL_BACKEND_HAS_HIPSYCL)
     // check whether hipSYCL's new SSCP has been enabled
-    #if defined(PLSSVM_SYCL_BACKEND_HIPSYCL_USE_GENERIC_SSCP)
-    constexpr bool hipsycl_sscp = true;
-    #else
-    constexpr bool hipsycl_sscp = false;
-    #endif
+    constexpr bool hipsycl_sscp = PLSSVM_IS_DEFINED(PLSSVM_SYCL_BACKEND_HIPSYCL_USE_GENERIC_SSCP);
 
     out << fmt::format(
         "  HIPSYCL_with_generic_SSCP:  {}\n",
@@ -316,7 +290,7 @@ void performance_tracker::save(std::ostream &out) {
 
 void performance_tracker::pause_tracking() noexcept { is_tracking_ = false; }
 void performance_tracker::resume_tracking() noexcept { is_tracking_ = true; }
-bool performance_tracker::is_tracking() noexcept { return is_tracking_; }
+bool performance_tracker::is_tracking() const noexcept { return is_tracking_; }
 const std::unordered_multimap<std::string, std::string> &performance_tracker::get_tracking_entries() noexcept { return tracking_statistics; }
 
 std::shared_ptr<performance_tracker> global_tracker = std::make_shared<performance_tracker>();

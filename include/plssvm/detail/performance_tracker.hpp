@@ -14,22 +14,22 @@
 #define PLSSVM_DETAIL_PERFORMANCE_TRACKER_HPP_
 #pragma once
 
-#include "plssvm/parameter.hpp"           // plssvm::parameter
 #include "plssvm/detail/type_traits.hpp"  // plssvm::detail::remove_cvref_t
+#include "plssvm/parameter.hpp"           // plssvm::parameter
 
-#include "plssvm/detail/cmd/parser_train.hpp"    // plssvm::detail::cmd::parser_train
 #include "plssvm/detail/cmd/parser_predict.hpp"  // plssvm::detail::cmd::parser_predict
 #include "plssvm/detail/cmd/parser_scale.hpp"    // plssvm::detail::cmd::parser_scale
+#include "plssvm/detail/cmd/parser_train.hpp"    // plssvm::detail::cmd::parser_train
 
-#include "fmt/chrono.h"                   // format std::chrono types
-#include "fmt/format.h"                   // fmt::format, fmt::join, fmt::formatter
+#include "fmt/chrono.h"  // format std::chrono types
+#include "fmt/format.h"  // fmt::format, fmt::join, fmt::formatter
 
-#include <memory>                         // std::shared_ptr
-#include <string>                         // std::string
-#include <string_view>                    // std::string_view
-#include <type_traits>                    // std::false_type, std::true_type
-#include <unordered_map>                  // std::unordered_multimap
-#include <utility>                        // std::move
+#include <memory>         // std::shared_ptr
+#include <string>         // std::string
+#include <string_view>    // std::string_view
+#include <type_traits>    // std::false_type, std::true_type
+#include <unordered_map>  // std::unordered_multimap
+#include <utility>        // std::move
 
 namespace plssvm::detail {
 
@@ -56,15 +56,14 @@ struct tracking_entry {
     const T entry_value{};
 };
 
-}
+}  // namespace plssvm::detail
 
 /**
  * @brief Custom tracking_entry formatter to be able to use fmt format specifiers for values of type T.
  * @tparam T the performance tracked type
  */
-template<typename T>
-struct fmt::formatter<plssvm::detail::tracking_entry<T>> : fmt::formatter<T>
-{
+template <typename T>
+struct fmt::formatter<plssvm::detail::tracking_entry<T>> : fmt::formatter<T> {
     /**
      * @brief Format the tracking @p entry using the provided format specifier for type T.
      * @tparam FormatContext the type of the format context
@@ -73,7 +72,7 @@ struct fmt::formatter<plssvm::detail::tracking_entry<T>> : fmt::formatter<T>
      * @return the formatted string
      */
     template <typename FormatContext>
-    auto format(const plssvm::detail::tracking_entry<T>& entry, FormatContext& context) {
+    auto format(const plssvm::detail::tracking_entry<T> &entry, FormatContext &context) {
         return fmt::formatter<T>::format(entry.entry_value, context);
     }
 };
@@ -212,7 +211,7 @@ class performance_tracker {
      * @brief Check whether tracking is currently active or paused.
      * @return `true` if tracking is enabled, `false` if it is currently paused (`[[nodiscard]]`)
      */
-    [[nodiscard]] bool is_tracking() noexcept;
+    [[nodiscard]] bool is_tracking() const noexcept;
 
     /**
      * @brief Return the currently available tracking entries.
