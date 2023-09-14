@@ -126,7 +126,7 @@ set(PLSSVM_BASE_TEST_SOURCES
         ${CMAKE_CURRENT_LIST_DIR}/detail/operators.cpp
         ${CMAKE_CURRENT_LIST_DIR}/detail/performance_tracker.cpp
         ${CMAKE_CURRENT_LIST_DIR}/detail/sha256.cpp
-#        ${CMAKE_CURRENT_LIST_DIR}/detail/simple_any.cpp
+        ${CMAKE_CURRENT_LIST_DIR}/detail/simple_any.cpp
         ${CMAKE_CURRENT_LIST_DIR}/detail/string_conversion.cpp
         ${CMAKE_CURRENT_LIST_DIR}/detail/string_utility.cpp
         ${CMAKE_CURRENT_LIST_DIR}/detail/type_list.cpp
