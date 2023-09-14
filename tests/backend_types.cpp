@@ -13,17 +13,17 @@
 #include "plssvm/backends/SYCL/detail/constants.hpp"  // namespace plssvm::sycl
 #include "plssvm/detail/utility.hpp"                  // plssvm::detail::contains
 
-#include "custom_test_macros.hpp"                     // EXPECT_CONVERSION_TO_STRING, EXPECT_CONVERSION_FROM_STRING, EXPECT_THROW_WHAT
-#include "naming.hpp"                                 // naming::{pretty_print_unsupported_backend_combination, pretty_print_supported_backend_combination}
+#include "custom_test_macros.hpp"  // EXPECT_CONVERSION_TO_STRING, EXPECT_CONVERSION_FROM_STRING, EXPECT_THROW_WHAT
+#include "naming.hpp"              // naming::{pretty_print_unsupported_backend_combination, pretty_print_supported_backend_combination}
 
-#include "fmt/core.h"                                 // fmt::format
-#include "gmock/gmock.h"                              // EXPECT_THAT, ::testing::Contains
-#include "gtest/gtest.h"                              // TEST, EXPECT_EQ, EXPECT_TRUE, EXPECT_GE, TEST_P, INSTANTIATE_TEST_SUITE_P
+#include "fmt/core.h"     // fmt::format
+#include "gmock/gmock.h"  // EXPECT_THAT, ::testing::Contains
+#include "gtest/gtest.h"  // TEST, EXPECT_EQ, EXPECT_TRUE, EXPECT_GE, TEST_P, INSTANTIATE_TEST_SUITE_P
 
-#include <sstream>                                    // std::istringstream
-#include <tuple>                                      // std::tuple, std::ignore
-#include <utility>                                    // std::pair
-#include <vector>                                     // std::vector
+#include <sstream>  // std::istringstream
+#include <tuple>    // std::tuple, std::ignore
+#include <utility>  // std::pair
+#include <vector>   // std::vector
 
 // check whether the plssvm::backend_type -> std::string conversions are correct
 TEST(BackendType, to_string) {
