@@ -15,10 +15,10 @@
 #include "fmt/core.h"     // fmt::format
 #include "gtest/gtest.h"  // TEST, ASSERT_EQ, EXPECT_EQ
 
-#include <string>         // std::string
-#include <string_view>    // std::string_view
-#include <tuple>          // std::tuple, std::make_tuple
-#include <vector>         // std::vector
+#include <string>       // std::string
+#include <string_view>  // std::string_view
+#include <tuple>        // std::tuple, std::make_tuple
+#include <vector>       // std::vector
 
 TEST(StringUtility, starts_with_string) {
     EXPECT_TRUE(plssvm::detail::starts_with("abc", "abc"));
