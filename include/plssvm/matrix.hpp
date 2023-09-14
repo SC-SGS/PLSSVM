@@ -352,7 +352,7 @@ inline void swap(matrix<T, layout> &lhs, matrix<T, layout> &rhs) {
  */
 template <typename T, layout_type layout_>
 [[nodiscard]] inline bool operator==(const matrix<T, layout_> &lhs, const matrix<T, layout_> &rhs) noexcept {
-    return lhs.num_rows_ == rhs.num_rows_ && lhs.num_cols_ == rhs.num_cols_ && std::equal(lhs.data(), lhs.data() + lhs.num_entries(), rhs.data());
+    return lhs.shape() == rhs.shape() && std::equal(lhs.data(), lhs.data() + lhs.num_entries(), rhs.data());
 }
 /**
  * @brief Compares @p lhs and @p rhs for inequality.
