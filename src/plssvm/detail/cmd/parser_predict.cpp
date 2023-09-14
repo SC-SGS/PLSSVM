@@ -10,7 +10,6 @@
 
 #include "plssvm/backend_types.hpp"                      // plssvm::list_available_backends
 #include "plssvm/backends/SYCL/implementation_type.hpp"  // plssvm::sycl::list_available_sycl_implementations
-#include "plssvm/constants.hpp"                          // plssvm::real_type
 #include "plssvm/detail/assert.hpp"                      // PLSSVM_ASSERT
 #include "plssvm/detail/logger.hpp"                      // plssvm::verbosity
 #include "plssvm/target_platforms.hpp"                   // plssvm::list_available_target_platforms
@@ -165,6 +164,16 @@ parser_predict::parser_predict(int argc, char **argv) {
 
 std::ostream &operator<<(std::ostream &out, const parser_predict &params) {
     out << fmt::format(
+        "backend: {}\n"
+        "target platform: {}\n",
+        params.backend,
+        params.target);
+
+    if (params.backend == backend_type::sycl || params.backend == backend_type::automatic) {
+        out << fmt::format("SYCL implementation type: {}\n", params.sycl_implementation_type);
+    }
+
+    out << fmt::format(
         "label_type: {}\n"
         "real_type: {}\n"
         "input file (data set): '{}'\n"
@@ -175,9 +184,11 @@ std::ostream &operator<<(std::ostream &out, const parser_predict &params) {
         params.input_filename,
         params.model_filename,
         params.predict_filename);
+
     if (!params.performance_tracking_filename.empty()) {
         out << fmt::format("performance tracking file: '{}'\n", params.performance_tracking_filename);
     }
+
     return out;
 }
 

@@ -12,9 +12,7 @@
 #include "plssvm/backends/SYCL/implementation_type.hpp"  // plssvm::sycl_generic::list_available_sycl_implementations
 #include "plssvm/classification_types.hpp"               // plssvm::classification_type, plssvm::classification_type_to_full_string
 #include "plssvm/constants.hpp"                          // plssvm::real_type
-#include "plssvm/constants.hpp"                          // plssvm::verbose_default, plssvm::verbose
 #include "plssvm/default_value.hpp"                      // plssvm::default_value
-#include "plssvm/detail/arithmetic_type_name.hpp"        // plssvm::detail::arithmetic_type_name
 #include "plssvm/detail/assert.hpp"                      // PLSSVM_ASSERT
 #include "plssvm/detail/logger.hpp"                      // plssvm::verbosity
 #include "plssvm/detail/string_utility.hpp"              // plssvm::detail::as_lower_case
@@ -269,6 +267,22 @@ std::ostream &operator<<(std::ostream &out, const parser_train &params) {
         out << "max_iter: num_data_points (default)\n";
     } else {
         out << fmt::format("max_iter: {}\n", params.max_iter.value());
+    }
+
+    out << fmt::format(
+        "backend: {}\n"
+        "target platform: {}\n"
+        "solver: {}\n",
+        params.backend,
+        params.target,
+        params.solver);
+
+    if (params.backend == backend_type::sycl || params.backend == backend_type::automatic) {
+        out << fmt::format(
+            "SYCL implementation type: {}\n"
+            "SYCL kernel invocation type: {}\n",
+            params.sycl_implementation_type,
+            params.sycl_kernel_invocation_type);
     }
 
     out << fmt::format(

@@ -25,10 +25,9 @@
 namespace plssvm::detail::cmd {
 
 /**
- * @brief Class for encapsulating all necessary parameters for prediction; normally provided through command line arguments.
+ * @brief Struct for encapsulating all necessary parameters for prediction; normally provided through command line arguments.
  */
-class parser_predict {
-  public:
+struct parser_predict {
     /**
      * @brief Parse the command line arguments @p argv using [`cxxopts`](https://github.com/jarro2783/cxxopts) and set the predict parameters accordingly.
      * @details If no output filename is given, uses the input filename and appends a ".predict". The output file is than saved in the current working directory.

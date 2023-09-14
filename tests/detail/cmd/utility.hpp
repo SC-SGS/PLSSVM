@@ -55,6 +55,22 @@ class ParameterBase : public ::testing::Test, private redirect_output<> {
         delete[] argv;
     }
 
+    /**
+     * @brief Return the number of command line arguments encapsulated in this class.
+     * @return the number of cmd arguments (`[[nodiscard]]`)
+     */
+    [[nodiscard]] int get_argc() const noexcept {
+        return argc;
+    }
+    /**
+     * @brief The command line arguments encapsulated in this class.
+     * @return the cmd arguments (`[[nodiscard]])
+     */
+    [[nodiscard]] char** get_argv() const noexcept {
+        return argv;
+    }
+
+  private:
     /// The number of the artificial command line arguments.
     int argc{ 0 };
     /// The artificial command line arguments.

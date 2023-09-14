@@ -24,10 +24,9 @@
 namespace plssvm::detail::cmd {
 
 /**
- * @brief Class for encapsulating all necessary parameters for scaling a data set; normally provided through command line arguments.
+ * @brief Struct for encapsulating all necessary parameters for scaling a data set; normally provided through command line arguments.
  */
-class parser_scale {
-  public:
+struct parser_scale {
     /**
      * @brief Parse the command line arguments @p argv using [`cxxopts`](https://github.com/jarro2783/cxxopts) and set the scale parameters accordingly.
      * @details If no scaled filename is given, the scaled data is directly output to the terminal (the default behavior of LIBSVM).

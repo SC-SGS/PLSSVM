@@ -32,10 +32,9 @@
 namespace plssvm::detail::cmd {
 
 /**
- * @brief Class for encapsulating all necessary parameters for training; normally provided through command line arguments.
+ * @brief Struct for encapsulating all necessary parameters for training; normally provided through command line arguments.
  */
-class parser_train {
-  public:
+struct parser_train {
     /**
      * @brief Parse the command line arguments @p argv using [`cxxopts`](https://github.com/jarro2783/cxxopts) and set the training parameters accordingly.
      * @details If no model filename is given, uses the input filename and appends a ".model". The model file is than saved in the current working directory.
@@ -58,7 +57,7 @@ class parser_train {
     backend_type backend{ backend_type::automatic };
     /// The target platform: automatic (depending on the used backend), CPUs or GPUs from NVIDIA, AMD, or Intel.
     target_platform target{ target_platform::automatic };
-    /// The used solver type for the LSSVM kernel matrix: automatic (depending on the available (V)RAM), cg_explicit, cg_streaming, or cg_implicit.
+    /// The used solver type for the LS-SVM kernel matrix: automatic (depending on the available (V)RAM), cg_explicit, cg_streaming, or cg_implicit.
     solver_type solver{ solver_type::automatic };
 
     /// The kernel invocation type when using SYCL as backend.

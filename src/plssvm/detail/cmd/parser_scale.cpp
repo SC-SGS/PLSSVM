@@ -8,7 +8,6 @@
 
 #include "plssvm/detail/cmd/parser_scale.hpp"
 
-#include "plssvm/constants.hpp"        // plssvm::real_type
 #include "plssvm/detail/assert.hpp"    // PLSSVM_ASSERT
 #include "plssvm/detail/logger.hpp"    // plssvm::verbosity
 #include "plssvm/version/version.hpp"  // plssvm::version::detail::get_version_info
@@ -168,18 +167,18 @@ std::ostream &operator<<(std::ostream &out, const parser_scale &params) {
     out << fmt::format(
         "lower: {}\n"
         "upper: {}\n"
+        "output file format: {}\n"
         "label_type: {}\n"
         "real_type: {}\n"
-        "output file format: {}\n"
         "input file: '{}'\n"
         "scaled file: '{}'\n"
         "save file (scaling factors): '{}'\n"
         "restore file (scaling factors): '{}'\n",
         params.lower,
         params.upper,
+        params.format,
         params.strings_as_labels ? "std::string" : "int (default)",
         std::is_same_v<real_type, float> ? "float" : "double (default)",
-        params.format,
         params.input_filename,
         params.scaled_filename,
         params.save_filename,

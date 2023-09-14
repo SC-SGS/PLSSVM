@@ -18,14 +18,13 @@
 #include "../../utility.hpp"  // util::{temporary_file, instantiate_template_file}
 #include "utility.hpp"        // util::ParameterBase
 
-#include "fmt/core.h"     // fmt::format
 #include "gtest/gtest.h"  // TEST_P, INSTANTIATE_TEST_SUITE_P, EXPECT_EQ,  ::testing::{WithParamInterface, Values}
 
 #include <cstddef>  // std::size_t
 #include <string>   // std::string
 #include <tuple>    // std::tuple, std::make_tuple
 
-// the variant order is: <float, int>, <float, std::string>, <double, int>, <double, std::string>
+// the variant order is: <real_type, int> -> <real_type, std::string>
 
 class DataSetFactory : public util::ParameterBase, public ::testing::WithParamInterface<std::tuple<bool, std::size_t>>, protected util::temporary_file {};
 
@@ -49,7 +48,7 @@ TEST_P(DataSetFactory, data_set_factory_predict) {
     // create artificial command line arguments in test fixture
     this->CreateCMDArgs(cmd_args);
     // create parameter object
-    const plssvm::detail::cmd::parser_predict parser{ this->argc, this->argv };
+    const plssvm::detail::cmd::parser_predict parser{ this->get_argc(), this->get_argv() };
 
     // test active variant type
     const plssvm::detail::cmd::data_set_variants var = plssvm::detail::cmd::data_set_factory(parser);
@@ -75,7 +74,7 @@ TEST_P(DataSetFactory, data_set_factory_scale) {
     // create artificial command line arguments in test fixture
     this->CreateCMDArgs(cmd_args);
     // create parameter object
-    const plssvm::detail::cmd::parser_scale parser{ this->argc, this->argv };
+    const plssvm::detail::cmd::parser_scale parser{ this->get_argc(), this->get_argv() };
 
     // test active variant type
     const plssvm::detail::cmd::data_set_variants var = plssvm::detail::cmd::data_set_factory(parser);
@@ -101,7 +100,7 @@ TEST_P(DataSetFactory, data_set_factory_scale_restore_filename) {
     // create artificial command line arguments in test fixture
     this->CreateCMDArgs(cmd_args);
     // create parameter object
-    const plssvm::detail::cmd::parser_scale parser{ this->argc, this->argv };
+    const plssvm::detail::cmd::parser_scale parser{ this->get_argc(), this->get_argv() };
 
     // test active variant type
     const plssvm::detail::cmd::data_set_variants var = plssvm::detail::cmd::data_set_factory(parser);
@@ -127,12 +126,13 @@ TEST_P(DataSetFactory, data_set_factory_train) {
     // create artificial command line arguments in test fixture
     this->CreateCMDArgs(cmd_args);
     // create parameter object
-    const plssvm::detail::cmd::parser_train parser{ this->argc, this->argv };
+    const plssvm::detail::cmd::parser_train parser{ this->get_argc(), this->get_argv() };
 
     // test active variant type
     const plssvm::detail::cmd::data_set_variants var = plssvm::detail::cmd::data_set_factory(parser);
     EXPECT_EQ(var.index(), index);
 }
+
 // clang-format off
 // get<0>(tuple): whether the command line flag "string_as_labels" is provided (true) or not (false)
 // get<1>(tuple): the active index in the constructed variant
