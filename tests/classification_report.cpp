@@ -21,8 +21,24 @@
 
 class ClassificationReport : public ::testing::Test {
   protected:
-    const std::vector<int> correct_label = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2 };
-    const std::vector<int> predicted_label = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 2, 2, 2, 2, 2, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 0, 0, 0, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2 };
+    /**
+     * @brief Return the correct labels to calculate the classification report with.
+     * @return the correct labels (`[[nodiscard]]`)
+     */
+    [[nodiscard]] const std::vector<int> &get_correct_label() const noexcept {
+        return correct_label;
+    }
+    /**
+     * @brief Return the predicted labels to calculate the classification report with.
+     * @return the predicted labels (`[[nodiscard]]`)
+     */
+    [[nodiscard]] const std::vector<int> &get_predicted_label() const noexcept {
+        return predicted_label;
+    }
+
+  private:
+    std::vector<int> correct_label = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2 };
+    std::vector<int> predicted_label = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 2, 2, 2, 2, 2, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 0, 0, 0, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2 };
 };
 class ClassificationReportDeathTest : public ClassificationReport {};
 
@@ -49,14 +65,13 @@ TEST_F(ClassificationReport, construct_accuracy_metric) {
 
 TEST_F(ClassificationReport, construct_all) {
     // construct a classification report
-    const plssvm::classification_report report{ this->correct_label, this->predicted_label };
+    const plssvm::classification_report report{ this->get_correct_label(), this->get_predicted_label() };
 
     // check if values are set correctly
-    const std::vector<std::vector<std::size_t>> correct_confusion_matrix{
+    const auto correct_confusion_matrix = plssvm::aos_matrix<std::size_t>{ std::vector<std::vector<std::size_t>>{
         { 9, 1, 5 },
         { 6, 7, 4 },
-        { 3, 2, 8 }
-    };
+        { 3, 2, 8 } } };
     EXPECT_EQ(report.confusion_matrix(), correct_confusion_matrix);
     EXPECT_EQ(report.accuracy().achieved_accuracy, 24.0 / 45.0);
     EXPECT_EQ(report.accuracy().num_correct, 24);
@@ -71,28 +86,27 @@ TEST_F(ClassificationReport, construct_label_size_mismatch) {
 }
 TEST_F(ClassificationReportDeathTest, construct_empty_correct_label) {
     // the correct labels vector must not be empty
-    EXPECT_DEATH((plssvm::classification_report{ std::vector<int>{}, this->predicted_label }), "The correct labels list may not be empty!");
+    EXPECT_DEATH((plssvm::classification_report{ std::vector<int>{}, this->get_predicted_label() }), "The correct labels list may not be empty!");
 }
 TEST_F(ClassificationReportDeathTest, construct_empty_predicted_label) {
     // the predicted labels vector must not be empty
-    EXPECT_DEATH((plssvm::classification_report{ this->correct_label, std::vector<int>{} }), "The predicted labels list may not be empty!");
+    EXPECT_DEATH((plssvm::classification_report{ this->get_correct_label(), std::vector<int>{} }), "The predicted labels list may not be empty!");
 }
 
 TEST_F(ClassificationReport, confusion_matrix) {
     // construct a classification report
-    const plssvm::classification_report report{ this->correct_label, this->predicted_label };
+    const plssvm::classification_report report{ this->get_correct_label(), this->get_predicted_label() };
 
     // check if the confusion matrix is correct
-    const std::vector<std::vector<std::size_t>> correct_confusion_matrix{
+    const auto correct_confusion_matrix = plssvm::aos_matrix<std::size_t>{ std::vector<std::vector<std::size_t>>{
         { 9, 1, 5 },
         { 6, 7, 4 },
-        { 3, 2, 8 }
-    };
+        { 3, 2, 8 } } };
     EXPECT_EQ(report.confusion_matrix(), correct_confusion_matrix);
 }
 TEST_F(ClassificationReport, accuracy_metrics) {
     // construct a classification report
-    const plssvm::classification_report report{ this->correct_label, this->predicted_label };
+    const plssvm::classification_report report{ this->get_correct_label(), this->get_predicted_label() };
 
     // check if the accuracy metrics are set correctly
     EXPECT_EQ(report.accuracy().achieved_accuracy, 24.0 / 45.0);
@@ -101,7 +115,7 @@ TEST_F(ClassificationReport, accuracy_metrics) {
 }
 TEST_F(ClassificationReport, metric_for_class) {
     // construct a classification report
-    const plssvm::classification_report report{ this->correct_label, this->predicted_label };
+    const plssvm::classification_report report{ this->get_correct_label(), this->get_predicted_label() };
 
     // check the precision, recall, f1 score, and support metrics for all labels
     // label 0
@@ -120,12 +134,12 @@ TEST_F(ClassificationReport, metric_for_class) {
     EXPECT_FLOATING_POINT_EQ(report.metric_for_class(2).f1, 0.5333333333333333);
     EXPECT_EQ(report.metric_for_class(2).support, 13);
 
-    EXPECT_EQ(report.metric_for_class(0).support + report.metric_for_class(1).support + report.metric_for_class(2).support, this->correct_label.size());
+    EXPECT_EQ(report.metric_for_class(0).support + report.metric_for_class(1).support + report.metric_for_class(2).support, this->get_correct_label().size());
 }
 
 TEST_F(ClassificationReport, output_accuracy_metric) {
     // construct a classification report
-    const plssvm::classification_report report{ this->correct_label, this->predicted_label };
+    const plssvm::classification_report report{ this->get_correct_label(), this->get_predicted_label() };
 
     // output accuracy metric
     std::ostringstream out;
@@ -136,7 +150,7 @@ TEST_F(ClassificationReport, output_accuracy_metric) {
 }
 TEST_F(ClassificationReport, classification_report) {
     // construct a classification report
-    const plssvm::classification_report report{ this->correct_label, this->predicted_label };
+    const plssvm::classification_report report{ this->get_correct_label(), this->get_predicted_label() };
 
     // output accuracy metric
     std::ostringstream out;

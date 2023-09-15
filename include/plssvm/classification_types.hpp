@@ -13,7 +13,6 @@
 #define PLSSVM_CLASSIFICATION_TYPES_HPP_
 #pragma once
 
-
 #include "fmt/ostream.h"  // fmt::formatter, fmt::ostream_formatter
 
 #include <cstddef>      // std::size_t
@@ -62,6 +61,7 @@ std::istream &operator>>(std::istream &in, classification_type &classification);
 
 }  // namespace plssvm
 
-template <> struct fmt::formatter<plssvm::classification_type> : fmt::ostream_formatter {};
+template <>
+struct fmt::formatter<plssvm::classification_type> : fmt::ostream_formatter {};
 
 #endif  // PLSSVM_CLASSIFICATION_TYPES_HPP_

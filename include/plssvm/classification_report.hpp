@@ -15,7 +15,9 @@
 
 #include "plssvm/detail/assert.hpp"          // PLSSVM_ASSERT
 #include "plssvm/exceptions/exceptions.hpp"  // plssvm::exception
+#include "plssvm/matrix.hpp"                 // plssvm::aos_matrix
 
+#include "fmt/core.h"     // fmt::format
 #include "fmt/ostream.h"  // fmt::formatter, fmt::ostream_formatter
 
 #include <algorithm>  // std::find, std::count
@@ -27,8 +29,6 @@
 #include <set>        // std::set
 #include <string>     // std::string
 #include <vector>     // std::vector
-
-#include "fmt/core.h"  // fmt::format
 
 namespace plssvm {
 
@@ -78,7 +78,7 @@ class classification_report {
      * @brief Return the confusion matrix.
      * @return the confusion matrix (`[[nodiscard]]`)
      */
-    [[nodiscard]] const std::vector<std::vector<std::size_t>> &confusion_matrix() const noexcept { return confusion_matrix_; }
+    [[nodiscard]] const aos_matrix<std::size_t> &confusion_matrix() const noexcept { return confusion_matrix_; }
     /**
      * @brief Return the achieved accuracy.
      * @return the achieved accuracy (`[[nodiscard]]`)
@@ -105,7 +105,7 @@ class classification_report {
 
   private:
     /// The confusion matrix.
-    std::vector<std::vector<std::size_t>> confusion_matrix_{};
+    aos_matrix<std::size_t> confusion_matrix_{};
     /// The metrics for each label: precision, recall, f1 score, and support.
     std::map<std::string, metric> metrics_;
     /// The global accuracy.
@@ -122,9 +122,9 @@ classification_report::classification_report(const std::vector<label_type> &corr
     }
 
     // initialize confusion matrix
-    std::set<label_type> distinct_label(correct_label.cbegin(), correct_label.cend());
+    std::set<label_type> distinct_label(correct_label.cbegin(), correct_label.cend());  // use std::Set for a predefined label order
     distinct_label.insert(predicted_label.cbegin(), predicted_label.cend());
-    confusion_matrix_ = std::vector<std::vector<std::size_t>>(distinct_label.size(), std::vector<std::size_t>(distinct_label.size()));
+    confusion_matrix_ = aos_matrix<std::size_t>{ distinct_label.size(), distinct_label.size() };
 
     // function to map a label to its confusion matrix index
     const auto label_to_idx = [&](const label_type &label) -> std::size_t {
@@ -133,20 +133,20 @@ classification_report::classification_report(const std::vector<label_type> &corr
 
     // fill the confusion matrix
     for (std::size_t i = 0; i < correct_label.size(); ++i) {
-        ++confusion_matrix_[label_to_idx(correct_label[i])][label_to_idx(predicted_label[i])];
+        ++confusion_matrix_(label_to_idx(correct_label[i]), label_to_idx(predicted_label[i]));
     }
 
     // calculate the metrics for each label
     for (const label_type &label : distinct_label) {
         const std::size_t label_idx = label_to_idx(label);
         // calculate TP, FN, FP, and TN
-        const std::size_t TP = confusion_matrix_[label_idx][label_idx];
+        const std::size_t TP = confusion_matrix_(label_idx, label_idx);
         std::size_t FN = 0;
         std::size_t FP = 0;
         for (std::size_t i = 0; i < distinct_label.size(); ++i) {
             if (i != label_idx) {
-                FN += confusion_matrix_[label_idx][i];
-                FP += confusion_matrix_[i][label_idx];
+                FN += confusion_matrix_(label_idx, i);
+                FP += confusion_matrix_(i, label_idx);
             }
         }
         // const std::size_t TN = correct_label.size() - TP - FN - FP;
@@ -176,7 +176,9 @@ std::ostream &operator<<(std::ostream &out, const classification_report::accurac
 
 }  // namespace plssvm
 
-template <> struct fmt::formatter<plssvm::classification_report> : fmt::ostream_formatter {};
-template <> struct fmt::formatter<plssvm::classification_report::accuracy_metric> : fmt::ostream_formatter {};
+template <>
+struct fmt::formatter<plssvm::classification_report> : fmt::ostream_formatter {};
+template <>
+struct fmt::formatter<plssvm::classification_report::accuracy_metric> : fmt::ostream_formatter {};
 
 #endif  // PLSSVM_CLASSIFICATION_REPORT_HPP_
