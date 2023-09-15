@@ -85,6 +85,10 @@ target_include_directories(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC
 )
 
 ## set library cxx standard
+if ($ENV{CLION_IDE})
+    # somehow necessary for CLion to detect the C++ standard as 17
+    set(CMAKE_CXX_STANDARD 17)
+endif ()
 target_compile_features(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC cxx_std_17)
 ## additional base library compile options
 target_compile_options(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC
