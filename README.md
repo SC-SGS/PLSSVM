@@ -228,9 +228,9 @@ To use DPC++ for SYCL simply set the `CMAKE_CXX_COMPILER` to the respective DPC+
 
 If the SYCL implementation is DPC++ the following additional options are available:
 
-- `PLSSVM_SYCL_BACKEND_DPCPP_USE_LEVEL_ZERO` (default: `ON`): use DPC++'s Level-Zero backend instead of its OpenCL backend
-- `PLSSVM_SYCL_BACKEND_DPCPP_GPU_AMD_USE_HIP` (default: `ON`): use DPC++'s HIP backend instead of its OpenCL backend for AMD GPUs
 - `PLSSVM_SYCL_BACKEND_DPCPP_ENABLE_AOT` (default: `ON`): enable Ahead-of-Time (AOT) compilation for the specified target platforms
+- `PLSSVM_SYCL_BACKEND_DPCPP_USE_LEVEL_ZERO` (default: `ON`): use DPC++'s Level-Zero backend instead of its OpenCL backend **(only available if a CPU or Intel GPU is targeted)**
+- `PLSSVM_SYCL_BACKEND_DPCPP_GPU_AMD_USE_HIP` (default: `ON`): use DPC++'s HIP backend instead of its OpenCL backend for AMD GPUs **(only available if an AMD GPU is targeted)**
 
 If the SYCL implementation is hipSYCL the following additional option is available:
 
