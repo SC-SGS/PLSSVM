@@ -11,11 +11,7 @@ option(PLSSVM_SYCL_BACKEND_HIPSYCL_USE_GENERIC_SSCP "Enables the generic SSCP ta
 
 if (PLSSVM_SYCL_BACKEND_HIPSYCL_USE_GENERIC_SSCP)
     message(STATUS "Using the new hipSYCL SSCP compilation flow.")
-    if ("cpu" IN_LIST PLSSVM_TARGET_PLATFORMS)
-        set(HIPSYCL_TARGETS "omp;generic" CACHE STRING "" FORCE)
-    else ()
-        set(HIPSYCL_TARGETS "generic" CACHE STRING "" FORCE)
-    endif ()
+    set(HIPSYCL_TARGETS "generic" CACHE STRING "" FORCE)
 else ()
     message(STATUS "Using the old hipSYCL compilation flow.")
     # reformat PLSSVM_TARGET_PLATFORMS to be usable with HIPSYCL_TARGETS (in case hipSYCL may be available)
