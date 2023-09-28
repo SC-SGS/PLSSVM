@@ -23,6 +23,7 @@
 #include <algorithm>  // std::equal, std::all_of
 #include <array>      // std::array
 #include <cstddef>    // std::size_t
+#include <cstring>    // std::memcpy
 #include <iosfwd>     // std::istream forward declaration
 #include <ostream>    // std::ostream
 #include <utility>    // std::swap
