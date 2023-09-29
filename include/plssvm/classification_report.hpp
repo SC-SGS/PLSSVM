@@ -14,10 +14,9 @@
 #pragma once
 
 #include "plssvm/detail/assert.hpp"          // PLSSVM_ASSERT
+#include "plssvm/detail/igor_utility.hpp"    // plssvm::detail::{has_only_named_args_v, get_value_from_named_parameter}
 #include "plssvm/exceptions/exceptions.hpp"  // plssvm::exception
 #include "plssvm/matrix.hpp"                 // plssvm::aos_matrix
-
-#include "plssvm/parameter.hpp"  // TODO: move igor utility to other header?
 
 #include "fmt/core.h"     // fmt::format
 #include "fmt/ostream.h"  // fmt::formatter, fmt::ostream_formatter

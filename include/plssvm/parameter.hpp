@@ -15,6 +15,7 @@
 
 #include "plssvm/constants.hpp"              // plssvm::real_type
 #include "plssvm/default_value.hpp"          // plssvm::default_value, plssvm::is_default_value_v
+#include "plssvm/detail/igor_utility.hpp"    // plssvm::detail::{has_only_named_args_v, get_value_from_named_parameter}
 #include "plssvm/detail/type_traits.hpp"     // PLSSVM_REQUIRES, plssvm::detail::{remove_cvref_t, always_false_v}
 #include "plssvm/detail/utility.hpp"         // plssvm::detail::unreachable
 #include "plssvm/kernel_function_types.hpp"  // plssvm::kernel_function_type, plssvm::kernel_function_type_to_math_string
@@ -58,11 +59,6 @@ IGOR_MAKE_NAMED_ARGUMENT(sycl_kernel_invocation_type);
 
 namespace detail {
 
-/**
- * @brief Trait to check whether @p Args only contains named-parameter.
- */
-template <typename... Args>
-constexpr bool has_only_named_args_v = !igor::has_unnamed_arguments<Args...>();
 
 /**
  * @brief Trait to check whether @p Args only contains named-parameter that can be used to initialize a `plssvm::parameter` struct.
@@ -75,33 +71,6 @@ constexpr bool has_only_parameter_named_args_v = !igor::has_other_than<Args...>(
  */
 template <typename... Args>
 constexpr bool has_only_sycl_parameter_named_args_v = !igor::has_other_than<Args...>(plssvm::kernel_type, plssvm::gamma, plssvm::degree, plssvm::coef0, plssvm::cost, plssvm::sycl_implementation_type, plssvm::sycl_kernel_invocation_type);
-
-/**
- * @brief Parse the value hold be @p named_arg and return it converted to the @p ExpectedType.
- * @tparam ExpectedType the type the value of the named argument should be converted to
- * @tparam IgorParser the type of the named-parameter parser
- * @tparam NamedArgType the type of the named-parameter (necessary since they are struct tags)
- * @param[in] parser the named-parameter parser
- * @param[in] named_arg the named-parameter argument
- * @return the value of @p named_arg converted to @p ExpectedType (`[[nodiscard]]`)
- */
-template <typename ExpectedType, typename IgorParser, typename NamedArgType>
-ExpectedType get_value_from_named_parameter(const IgorParser &parser, const NamedArgType &named_arg) {
-    using parsed_named_arg_type = detail::remove_cvref_t<decltype(parser(named_arg))>;
-    // check whether a plssvm::default_value (e.g., plssvm::default_value<double>) or unwrapped normal value (e.g., double) has been provided
-    if constexpr (is_default_value_v<parsed_named_arg_type>) {
-        static_assert(std::is_convertible_v<typename parsed_named_arg_type::value_type, ExpectedType>, "Cannot convert the wrapped default value to the expected type!");
-        // a plssvm::default_value has been provided (e.g., plssvm::default_value<double>)
-        return static_cast<ExpectedType>(parser(named_arg).value());
-    } else if constexpr (std::is_convertible_v<parsed_named_arg_type, ExpectedType>) {
-        // an unwrapped value has been provided (e.g., double)
-        return static_cast<ExpectedType>(parser(named_arg));
-    } else {
-        static_assert(detail::always_false_v<ExpectedType>, "The named parameter must be of type plssvm::default_value or a fundamental type!");
-    }
-    // may never be reached
-    detail::unreachable();
-}
 
 }  // namespace detail
 

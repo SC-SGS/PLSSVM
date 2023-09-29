@@ -17,6 +17,7 @@
 #include "plssvm/constants.hpp"                   // plssvm::real_type
 #include "plssvm/data_set.hpp"                    // plssvm::data_set
 #include "plssvm/default_value.hpp"               // plssvm::default_value, plssvm::default_init
+#include "plssvm/detail/igor_utility.hpp"         // plssvm::detail::{get_value_from_named_parameter, has_only_parameter_named_args_v}
 #include "plssvm/detail/logger.hpp"               // plssvm::detail::log, plssvm::verbosity_level
 #include "plssvm/detail/memory_size.hpp"          // plssvm::detail::memory_size
 #include "plssvm/detail/operators.hpp"            // plssvm::operators::sign
@@ -28,7 +29,7 @@
 #include "plssvm/kernel_function_types.hpp"       // plssvm::kernel_function_type
 #include "plssvm/matrix.hpp"                      // plssvm::aos_matrix
 #include "plssvm/model.hpp"                       // plssvm::model
-#include "plssvm/parameter.hpp"                   // plssvm::parameter, plssvm::detail::{get_value_from_named_parameter, has_only_parameter_named_args_v}
+#include "plssvm/parameter.hpp"                   // plssvm::parameter
 #include "plssvm/solver_types.hpp"                // plssvm::solver_type
 #include "plssvm/target_platforms.hpp"            // plssvm::target_platform
 

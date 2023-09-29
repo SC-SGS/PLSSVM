@@ -16,6 +16,7 @@
 #include "plssvm/backend_types.hpp"                      // plssvm::backend, plssvm::csvm_to_backend_type_v
 #include "plssvm/backends/SYCL/implementation_type.hpp"  // plssvm::sycl::implementation_type
 #include "plssvm/csvm.hpp"                               // plssvm::csvm, plssvm::csvm_backend_exists_v
+#include "plssvm/detail/igor_utility.hpp"                // plssvm::detail::get_value_from_named_parameter
 #include "plssvm/detail/type_traits.hpp"                 // plssvm::detail::remove_cvref_t
 #include "plssvm/exceptions/exceptions.hpp"              // plssvm::unsupported_backend_exception
 
@@ -97,8 +98,7 @@ template <typename... Args>
     // check whether a specific SYCL implementation type has been requested
     if constexpr (parser.has(sycl_implementation_type)) {
         // compile time check: the value must have the correct type
-        static_assert(std::is_same_v<detail::remove_cvref_t<decltype(parser(sycl_implementation_type))>, sycl::implementation_type>, "Provided sycl_implementation_type must be convertible to a plssvm::sycl::implementation_type!");
-        impl_type = static_cast<sycl::implementation_type>(parser(sycl_implementation_type));
+        impl_type = detail::get_value_from_named_parameter<sycl::implementation_type>(parser, sycl_implementation_type);
     }
 
     switch (impl_type) {

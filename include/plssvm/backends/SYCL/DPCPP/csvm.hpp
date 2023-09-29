@@ -19,6 +19,7 @@
 #include "plssvm/backends/SYCL/kernel_invocation_type.hpp"   // plssvm::sycl::kernel_invocation_type
 #include "plssvm/backends/gpu_csvm.hpp"                      // plssvm::detail::gpu_csvm
 #include "plssvm/constants.hpp"                              // plssvm::real_type
+#include "plssvm/detail/igor_utility.hpp"                    // plssvm::detail::get_value_from_named_parameter
 #include "plssvm/detail/memory_size.hpp"                     // plssvm::detail::memory_size
 #include "plssvm/detail/type_traits.hpp"                     // PLSSVM_REQUIRES, plssvm::detail::remove_cvref_t
 #include "plssvm/parameter.hpp"                              // plssvm::parameter, plssvm::detail::parameter
@@ -94,8 +95,7 @@ class csvm : public ::plssvm::detail::gpu_csvm<detail::device_ptr, detail::queue
         // check whether a specific SYCL kernel invocation type has been requested
         if constexpr (parser.has(sycl_kernel_invocation_type)) {
             // compile time check: the value must have the correct type
-            static_assert(std::is_same_v<::plssvm::detail::remove_cvref_t<decltype(parser(sycl_kernel_invocation_type))>, sycl::kernel_invocation_type>, "Provided sycl_kernel_invocation_type must be convertible to a plssvm::sycl::kernel_invocation_type!");
-            invocation_type_ = static_cast<sycl::kernel_invocation_type>(parser(sycl_kernel_invocation_type));
+            invocation_type_ = ::plssvm::detail::get_value_from_named_parameter<sycl::kernel_invocation_type>(parser, sycl_kernel_invocation_type);
         }
         this->init(target);
     }

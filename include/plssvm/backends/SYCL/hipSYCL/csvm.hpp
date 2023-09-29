@@ -96,8 +96,7 @@ class csvm : public ::plssvm::detail::gpu_csvm<detail::device_ptr, detail::queue
         // check whether a specific SYCL kernel invocation type has been requested
         if constexpr (parser.has(sycl_kernel_invocation_type)) {
             // compile time check: the value must have the correct type
-            static_assert(std::is_same_v<::plssvm::detail::remove_cvref_t<decltype(parser(sycl_kernel_invocation_type))>, sycl::kernel_invocation_type>, "Provided sycl_kernel_invocation_type must be convertible to a plssvm::sycl::kernel_invocation_type!");
-            invocation_type_ = static_cast<sycl::kernel_invocation_type>(parser(sycl_kernel_invocation_type));
+            invocation_type_ = ::plssvm::detail::get_value_from_named_parameter<sycl::kernel_invocation_type>(parser, sycl_kernel_invocation_type);
         }
         this->init(target);
     }
