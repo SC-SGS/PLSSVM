@@ -27,7 +27,6 @@
 #include <cstddef>    // std::size_t
 #include <iosfwd>     // forward declaration for std::ostream and std::istream
 #include <iterator>   // std::distance
-#include <map>        // std::map
 #include <set>        // std::set
 #include <string>     // std::string
 #include <vector>     // std::vector
@@ -44,6 +43,8 @@ class classification_report {
     static IGOR_MAKE_NAMED_ARGUMENT(digits);
     /// Create a named argument for the zero division behavior: warn (and set to 0.0), 0.0, 1.0, or NaN.
     static IGOR_MAKE_NAMED_ARGUMENT(zero_division);
+    /// Create a named argument for the displayed target names in the classification report as `std::vector<std::string>`. Must have the same number of names as there are labels.
+    static IGOR_MAKE_NAMED_ARGUMENT(target_names);
 
     /**
      * @brief Enum class for all possible zero division behaviors when calculating the precision, recall, or F1-score.
@@ -130,7 +131,7 @@ class classification_report {
     /// The confusion matrix.
     aos_matrix<unsigned long long> confusion_matrix_{};
     /// The metrics for each label: precision, recall, f1 score, and support.
-    std::map<std::string, metric> metrics_;
+    std::vector<std::pair<std::string, metric>> metrics_;
     /// The global accuracy.
     accuracy_metric accuracy_;
 
@@ -150,7 +151,7 @@ classification_report::classification_report(const std::vector<label_type> &corr
     // compile time check: each named parameter must only be passed once
     static_assert(!parser.has_duplicates(), "Can only use each named parameter once!");
     // compile time check: only some named parameters are allowed
-    static_assert(!parser.has_other_than(plssvm::classification_report::digits, plssvm::classification_report::zero_division),
+    static_assert(!parser.has_other_than(plssvm::classification_report::digits, plssvm::classification_report::zero_division, plssvm::classification_report::target_names),
                   "An illegal named parameter has been passed!");
 
     // compile time/runtime check: the values must have the correct types
@@ -174,8 +175,21 @@ classification_report::classification_report(const std::vector<label_type> &corr
     }
 
     // initialize confusion matrix
-    std::set<label_type> distinct_label(correct_label.cbegin(), correct_label.cend());  // use std::Set for a predefined label order
+    std::set<label_type> distinct_label(correct_label.cbegin(), correct_label.cend());  // use std::set for a predefined label order
     distinct_label.insert(predicted_label.cbegin(), predicted_label.cend());
+
+    // compile time/runtime check: the values must have the correct types
+    std::vector<std::string> display_names;
+    if constexpr (parser.has(plssvm::classification_report::target_names)) {
+        // get the value of the provided named parameter
+        display_names = detail::get_value_from_named_parameter<decltype(display_names)>(parser, plssvm::classification_report::target_names);
+        // the number of display names must match the number of distinct labels
+        if (display_names.size() != distinct_label.size()) {
+            throw plssvm::exception{ fmt::format("Provided {} display names, but found {} distinct labels!", display_names.size(), distinct_label.size()) };
+        }
+    }
+
+    // allocate confusion matrx
     confusion_matrix_ = aos_matrix<unsigned long long>{ distinct_label.size(), distinct_label.size() };
 
     // function to map a label to its confusion matrix index
@@ -191,6 +205,10 @@ classification_report::classification_report(const std::vector<label_type> &corr
     // calculate the metrics for each label
     for (const label_type &label : distinct_label) {
         const std::size_t label_idx = label_to_idx(label);
+
+        // get the display_label -> if target_names is provided use this value, otherwise the actually used label name
+        const std::string label_name = display_names.empty() ? fmt::format("{}", label) : display_names[label_idx];
+
         // calculate TP, FN, and FP
         const unsigned long long TP = confusion_matrix_(label_idx, label_idx);
         unsigned long long FN{ 0 };
@@ -226,7 +244,7 @@ classification_report::classification_report(const std::vector<label_type> &corr
         const double f1 = sanitize_nan(2 * (precision * recall), (precision + recall), "F1-score");
         // add metric results to map
         const metric m{ precision, recall, f1, static_cast<unsigned long long>(std::count(correct_label.cbegin(), correct_label.cend(), label)) };
-        metrics_.emplace(fmt::format("{}", label), m);
+        metrics_.emplace_back(label_name, m);
     }
 
     // calculate accuracy

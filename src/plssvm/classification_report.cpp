@@ -59,9 +59,9 @@ std::ostream &operator<<(std::ostream &out, const classification_report &report)
     weighted_avg.f1 /= static_cast<double>(weighted_avg.support);
 
     // sort the table rows in increasing order of the precision
-    std::sort(table_rows.begin(), table_rows.end(), [](const auto &lhs, const auto &rhs) {
-        return lhs.first < rhs.first;
-    });
+//    std::sort(table_rows.begin(), table_rows.end(), [](const auto &lhs, const auto &rhs) {
+//        return lhs.first < rhs.first;
+//    });
     // output sorted metrics
     for (const auto &[key, row] : table_rows) {
         out << row;
