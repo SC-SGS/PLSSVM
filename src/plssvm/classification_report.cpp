@@ -33,44 +33,62 @@ std::ostream &operator<<(std::ostream &out, const classification_report &report)
     // confusion matrix not printed due to potential size
 
     // print metrics
-    out << fmt::format("{0:>{1}} {0:>{2}}precision {0:>{2}}recall   {0:>{2}}f1   support\n", "", max_label_string_size, report.output_digits_);
+    out << fmt::format("{0:>{1}}{0:>{2}}precision  {0:>{2}}recall{0:>{2}}f1-score   support\n\n", "", max_label_string_size, report.output_digits_);
     // used for sorting the table output
     std::vector<std::pair<double, std::string>> table_rows;
     table_rows.reserve(report.metrics_.size());
+    unsigned long long micro_avg_TP_sum{};
+    unsigned long long micro_avg_FP_sum{};
+    unsigned long long micro_avg_FN_sum{};
+    classification_report::metric micro_avg{};
     classification_report::metric macro_avg{};
     classification_report::metric weighted_avg{};
     for (const auto &[key, val] : report.metrics_) {
-        table_rows.emplace_back(val.precision, fmt::format("{1:>{2}}        {3:.{0}f}     {4:.{0}f}   {5:.{0}f}   {6:>7}\n", report.output_digits_, key, max_label_string_size, val.precision, val.recall, val.f1, val.support));
+        table_rows.emplace_back(val.precision, fmt::format("{1:>{2}}       {3:.{0}f}      {4:.{0}f}      {5:.{0}f}   {6:>7}\n", report.output_digits_, key, max_label_string_size, val.precision, val.recall, val.f1, val.support));
+
+        // micro average
+        micro_avg_TP_sum += val.TP;
+        micro_avg_FP_sum += val.FP;
+        micro_avg_FN_sum += val.FN;
+        micro_avg.support += val.support;
+
+        // macro average
         macro_avg.precision += val.precision;
-        weighted_avg.precision += val.precision * static_cast<double>(val.support);
         macro_avg.recall += val.recall;
-        weighted_avg.recall += val.recall * static_cast<double>(val.support);
         macro_avg.f1 += val.f1;
-        weighted_avg.f1 += val.f1 * static_cast<double>(val.support);
         macro_avg.support += val.support;
+
+        // weighted average
+        weighted_avg.precision += val.precision * static_cast<double>(val.support);
+        weighted_avg.recall += val.recall * static_cast<double>(val.support);
+        weighted_avg.f1 += val.f1 * static_cast<double>(val.support);
         weighted_avg.support += val.support;
     }
-    // calculate macro average and weighted average
+    // calculate micro, macro, and weighted averages
+    // TODO: zero div behavior
+    micro_avg.precision = static_cast<double>(micro_avg_TP_sum) / static_cast<double>(micro_avg_TP_sum + micro_avg_FP_sum);
+    micro_avg.recall = static_cast<double>(micro_avg_TP_sum) / static_cast<double>(micro_avg_TP_sum + micro_avg_FN_sum);
+    micro_avg.f1 = (2 * micro_avg.precision * micro_avg.recall) / (micro_avg.precision + micro_avg.recall);
     macro_avg.precision /= static_cast<double>(report.metrics_.size());
-    weighted_avg.precision /= static_cast<double>(weighted_avg.support);
     macro_avg.recall /= static_cast<double>(report.metrics_.size());
-    weighted_avg.recall /= static_cast<double>(weighted_avg.support);
     macro_avg.f1 /= static_cast<double>(report.metrics_.size());
+    weighted_avg.precision /= static_cast<double>(weighted_avg.support);
+    weighted_avg.recall /= static_cast<double>(weighted_avg.support);
     weighted_avg.f1 /= static_cast<double>(weighted_avg.support);
 
-    // sort the table rows in increasing order of the precision
-//    std::sort(table_rows.begin(), table_rows.end(), [](const auto &lhs, const auto &rhs) {
-//        return lhs.first < rhs.first;
-//    });
     // output sorted metrics
     for (const auto &[key, row] : table_rows) {
         out << row;
     }
     out << '\n';
     // print accuracy and average metrics
-    out << fmt::format("{1:>{2}}                    {3:>{4}}{5:.{0}f}   {6:>7}\n", report.output_digits_, "accuracy", max_label_string_size, "", 2 * report.output_digits_, report.accuracy_.achieved_accuracy, report.accuracy_.num_total);
-    out << fmt::format("{1:>{2}}        {3:.{0}f}     {4:.{0}f}   {5:.{0}f}   {6:>7}\n", report.output_digits_, "macro avg", max_label_string_size, macro_avg.precision, macro_avg.recall, macro_avg.f1, macro_avg.support);
-    out << fmt::format("{1:>{2}}        {3:.{0}f}     {4:.{0}f}   {5:.{0}f}   {6:>7}\n\n", report.output_digits_, "weighted avg", max_label_string_size, weighted_avg.precision, weighted_avg.recall, weighted_avg.f1, weighted_avg.support);
+    if (!report.use_micro_average_) {
+        out << fmt::format("{1:>{2}}                       {3:>{4}}{5:.{0}f}   {6:>7}\n", report.output_digits_, "accuracy", max_label_string_size, "", 2 * report.output_digits_, report.accuracy_.achieved_accuracy, report.accuracy_.num_total);
+    } else {
+        out << fmt::format("{1:>{2}}       {3:.{0}f}      {4:.{0}f}      {5:.{0}f}   {6:>7}\n", report.output_digits_, "micro avg", max_label_string_size, micro_avg.precision, micro_avg.recall, micro_avg.f1, micro_avg.support);
+    }
+    out << fmt::format("{1:>{2}}       {3:.{0}f}      {4:.{0}f}      {5:.{0}f}   {6:>7}\n", report.output_digits_, "macro avg", max_label_string_size, macro_avg.precision, macro_avg.recall, macro_avg.f1, macro_avg.support);
+    out << fmt::format("{1:>{2}}       {3:.{0}f}      {4:.{0}f}      {5:.{0}f}   {6:>7}\n\n", report.output_digits_, "weighted avg", max_label_string_size, weighted_avg.precision, weighted_avg.recall, weighted_avg.f1, weighted_avg.support);
     out << report.accuracy_ << std::endl;
     return out;
 }

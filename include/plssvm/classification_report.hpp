@@ -43,6 +43,8 @@ class classification_report {
     static IGOR_MAKE_NAMED_ARGUMENT(digits);
     /// Create a named argument for the zero division behavior: warn (and set to 0.0), 0.0, 1.0, or NaN.
     static IGOR_MAKE_NAMED_ARGUMENT(zero_division);
+    /// The label indices that are used in the classification report.
+    static IGOR_MAKE_NAMED_ARGUMENT(labels);
     /// Create a named argument for the displayed target names in the classification report as `std::vector<std::string>`. Must have the same number of names as there are labels.
     static IGOR_MAKE_NAMED_ARGUMENT(target_names);
 
@@ -64,6 +66,12 @@ class classification_report {
      * @brief Struct encapsulating the different metrics, i.e., precision, recall, f1 score, and support.
      */
     struct metric {
+        /// The number of true positives.
+        unsigned long long TP{};
+        /// The number of true negatives.
+        unsigned long long FP{};
+        /// The number of false negatives.
+        unsigned long long FN{};
         /// The precision calculated as: TP / (TP + FP).
         double precision{};
         /// The recall calculated as: TP / (TP + FN).
@@ -137,12 +145,19 @@ class classification_report {
 
     /// The number of floating point digits printed in the classification report output.
     int output_digits_{ 2 };
+    /// Flag, whether the micro average or the accuracy should be printed in the classification report output.
+    bool use_micro_average_{ false };
 };
 
 template <typename label_type, typename... Args>
 classification_report::classification_report(const std::vector<label_type> &correct_label, const std::vector<label_type> &predicted_label, Args &&...named_args) {
     PLSSVM_ASSERT(!correct_label.empty(), "The correct labels list may not be empty!");
     PLSSVM_ASSERT(!predicted_label.empty(), "The predicted labels list may not be empty!");
+
+    // sanity check for input correct sizes
+    if (correct_label.size() != predicted_label.size()) {
+        throw exception{ fmt::format("The number of correct labels ({}) and predicted labels ({}) must be the same!", correct_label.size(), predicted_label.size()) };
+    }
 
     igor::parser parser{ std::forward<Args>(named_args)... };
 
@@ -151,7 +166,8 @@ classification_report::classification_report(const std::vector<label_type> &corr
     // compile time check: each named parameter must only be passed once
     static_assert(!parser.has_duplicates(), "Can only use each named parameter once!");
     // compile time check: only some named parameters are allowed
-    static_assert(!parser.has_other_than(plssvm::classification_report::digits, plssvm::classification_report::zero_division, plssvm::classification_report::target_names),
+    static_assert(!parser.has_other_than(plssvm::classification_report::digits, plssvm::classification_report::zero_division,
+                                         plssvm::classification_report::labels, plssvm::classification_report::target_names),
                   "An illegal named parameter has been passed!");
 
     // compile time/runtime check: the values must have the correct types
@@ -163,6 +179,7 @@ classification_report::classification_report(const std::vector<label_type> &corr
             throw exception{ fmt::format("Invalid number of output digits provided! Number of digits must be greater than zero but is {}!", output_digits_) };
         }
     }
+
     // compile time/runtime check: the values must have the correct types
     zero_division_behavior zero_div{ zero_division_behavior::warn };
     if constexpr (parser.has(plssvm::classification_report::zero_division)) {
@@ -170,13 +187,39 @@ classification_report::classification_report(const std::vector<label_type> &corr
         zero_div = detail::get_value_from_named_parameter<decltype(zero_div)>(parser, plssvm::classification_report::zero_division);
     }
 
-    if (correct_label.size() != predicted_label.size()) {
-        throw exception{ fmt::format("The number of correct labels ({}) and predicted labels ({}) must be the same!", correct_label.size(), predicted_label.size()) };
-    }
-
     // initialize confusion matrix
     std::set<label_type> distinct_label(correct_label.cbegin(), correct_label.cend());  // use std::set for a predefined label order
     distinct_label.insert(predicted_label.cbegin(), predicted_label.cend());
+    std::vector<label_type> distinct_label_vec(distinct_label.cbegin(), distinct_label.cend());
+
+    // compile time/runtime check: the values must have the correct types
+    std::vector<int> displayed_indices;
+    if constexpr (parser.has(plssvm::classification_report::labels)) {
+        // get the value of the provided named parameter
+        displayed_indices = detail::get_value_from_named_parameter<decltype(displayed_indices)>(parser, plssvm::classification_report::labels);
+        // the indices must be greater than zero
+        if (std::any_of(displayed_indices.cbegin(), displayed_indices.cend(), [](const auto idx) { return idx < 0; })) {
+            throw plssvm::exception{ "At least one of the provided indices is less than zero!" };
+        }
+        if (std::any_of(displayed_indices.cbegin(), displayed_indices.cend(),
+                        [size = distinct_label_vec.size()](const auto idx) { return static_cast<std::size_t>(idx) >= size; })) {
+            throw plssvm::exception{ "At least one of the provided indices is greater or equal than the total number of different labels!" };
+        }
+
+        // sort indices
+        std::sort(displayed_indices.begin(), displayed_indices.end());
+
+        // include only the requested indices
+        std::vector<label_type> displayed_label;
+        for (const int idx : displayed_indices) {
+            displayed_label.push_back(std::move(distinct_label_vec[idx]));
+        }
+        distinct_label_vec = std::move(displayed_label);
+
+        if (distinct_label_vec.size() != distinct_label.size()) {
+            use_micro_average_ = true;
+        }
+    }
 
     // compile time/runtime check: the values must have the correct types
     std::vector<std::string> display_names;
@@ -184,17 +227,17 @@ classification_report::classification_report(const std::vector<label_type> &corr
         // get the value of the provided named parameter
         display_names = detail::get_value_from_named_parameter<decltype(display_names)>(parser, plssvm::classification_report::target_names);
         // the number of display names must match the number of distinct labels
-        if (display_names.size() != distinct_label.size()) {
-            throw plssvm::exception{ fmt::format("Provided {} display names, but found {} distinct labels!", display_names.size(), distinct_label.size()) };
+        if (display_names.size() != distinct_label_vec.size()) {
+            throw plssvm::exception{ fmt::format("Provided {} display names, but found {} distinct labels!", display_names.size(), distinct_label_vec.size()) };
         }
     }
 
     // allocate confusion matrx
-    confusion_matrix_ = aos_matrix<unsigned long long>{ distinct_label.size(), distinct_label.size() };
+    confusion_matrix_ = aos_matrix<unsigned long long>{ distinct_label_vec.size(), distinct_label_vec.size() };
 
     // function to map a label to its confusion matrix index
     const auto label_to_idx = [&](const label_type &label) -> std::size_t {
-        return std::distance(distinct_label.cbegin(), std::find(distinct_label.cbegin(), distinct_label.cend(), label));
+        return std::distance(distinct_label_vec.cbegin(), std::find(distinct_label_vec.cbegin(), distinct_label_vec.cend(), label));
     };
 
     // fill the confusion matrix
@@ -203,8 +246,8 @@ classification_report::classification_report(const std::vector<label_type> &corr
     }
 
     // calculate the metrics for each label
-    for (const label_type &label : distinct_label) {
-        const std::size_t label_idx = label_to_idx(label);
+    for (typename std::vector<label_type>::size_type label_idx = 0; label_idx < distinct_label_vec.size(); ++label_idx) {
+        const label_type &label = distinct_label_vec[label_idx];
 
         // get the display_label -> if target_names is provided use this value, otherwise the actually used label name
         const std::string label_name = display_names.empty() ? fmt::format("{}", label) : display_names[label_idx];
@@ -213,7 +256,7 @@ classification_report::classification_report(const std::vector<label_type> &corr
         const unsigned long long TP = confusion_matrix_(label_idx, label_idx);
         unsigned long long FN{ 0 };
         unsigned long long FP{ 0 };
-        for (typename std::set<label_type>::size_type i = 0; i < distinct_label.size(); ++i) {
+        for (typename std::set<label_type>::size_type i = 0; i < distinct_label_vec.size(); ++i) {
             if (i != label_idx) {
                 FN += confusion_matrix_(label_idx, i);
                 FP += confusion_matrix_(i, label_idx);
@@ -243,7 +286,7 @@ classification_report::classification_report(const std::vector<label_type> &corr
         const double recall = sanitize_nan(static_cast<double>(TP), static_cast<double>(TP + FN), "Recall");
         const double f1 = sanitize_nan(2 * (precision * recall), (precision + recall), "F1-score");
         // add metric results to map
-        const metric m{ precision, recall, f1, static_cast<unsigned long long>(std::count(correct_label.cbegin(), correct_label.cend(), label)) };
+        const metric m{ TP, FP, FN, precision, recall, f1, static_cast<unsigned long long>(std::count(correct_label.cbegin(), correct_label.cend(), label)) };
         metrics_.emplace_back(label_name, m);
     }
 
