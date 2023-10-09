@@ -12,9 +12,9 @@
 
 #include "custom_test_macros.hpp"  // EXPECT_CONVERSION_TO_STRING, EXPECT_CONVERSION_FROM_STRING
 
-#include "gtest/gtest.h"           // TEST, EXPECT_EQ, EXPECT_TRUE
+#include "gtest/gtest.h"  // TEST, EXPECT_EQ, EXPECT_TRUE
 
-#include <sstream>                 // std::istringstream
+#include <sstream>  // std::istringstream
 
 // check whether the plssvm::file_format_type -> std::string conversions are correct
 TEST(FileFormatType, to_string) {

@@ -53,6 +53,10 @@ TEST(ClassificationType, classification_type_to_full_string) {
     EXPECT_EQ(plssvm::classification_type_to_full_string(plssvm::classification_type::oaa), "one vs. all");
     EXPECT_EQ(plssvm::classification_type_to_full_string(plssvm::classification_type::oao), "one vs. one");
 }
+TEST(ClassificationType, classification_type_to_full_string_unknown) {
+    // check conversion from unknown classification_typ to a full string
+    EXPECT_EQ(plssvm::classification_type_to_full_string(static_cast<plssvm::classification_type>(2)), "unknown");
+}
 
 TEST(ClassificationType, calculate_number_of_classifiers) {
     // check whether the number of weights for OAA is correct

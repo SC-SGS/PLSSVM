@@ -74,7 +74,7 @@ TEST(BackendType, minimal_available_backend) {
     EXPECT_THAT(backends, ::testing::Contains(plssvm::backend_type::automatic));
 }
 
-TEST(v, determine_default_backend_type) {
+TEST(BackendType, determine_default_backend_type) {
     // the determined default backend must not be backend_type::automatic
     const plssvm::backend_type backend = plssvm::determine_default_backend();
     EXPECT_NE(backend, plssvm::backend_type::automatic);
