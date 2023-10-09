@@ -23,6 +23,30 @@
 
 namespace plssvm {
 
+namespace detail {
+
+double sanitize_nan(const double dividend, const double divisor, const classification_report::zero_division_behavior zero_div, const std::string_view metric_name) {
+    if (divisor == 0.0) {
+        // handle the correct zero division behavior
+        switch (zero_div) {
+            case classification_report::zero_division_behavior::warn:
+                std::clog << metric_name << " is ill-defined and is set to 0.0 in labels with no predicted samples. "
+                                            "Use 'plssvm::classification_report::zero_division' parameter to control this behavior.\n";
+                [[fallthrough]];
+            case classification_report::zero_division_behavior::zero:
+                return 0.0;
+            case classification_report::zero_division_behavior::one:
+                return 1.0;
+            case classification_report::zero_division_behavior::nan:
+                return std::numeric_limits<double>::quiet_NaN();
+        }
+    } else {
+        return dividend / divisor;
+    }
+}
+
+}
+
 std::ostream &operator<<(std::ostream &out, const classification_report &report) {
     // calculate the maximum size of the label for better table alignment
     std::size_t max_label_string_size = 12;  // weighted avg = 12 characters
@@ -65,10 +89,9 @@ std::ostream &operator<<(std::ostream &out, const classification_report &report)
         weighted_avg.support += val.support;
     }
     // calculate micro, macro, and weighted averages
-    // TODO: zero div behavior
-    micro_avg.precision = static_cast<double>(micro_avg_TP_sum) / static_cast<double>(micro_avg_TP_sum + micro_avg_FP_sum);
-    micro_avg.recall = static_cast<double>(micro_avg_TP_sum) / static_cast<double>(micro_avg_TP_sum + micro_avg_FN_sum);
-    micro_avg.f1 = (2 * micro_avg.precision * micro_avg.recall) / (micro_avg.precision + micro_avg.recall);
+    micro_avg.precision = detail::sanitize_nan(static_cast<double>(micro_avg_TP_sum), static_cast<double>(micro_avg_TP_sum + micro_avg_FP_sum), report.zero_div_, "Precision");
+    micro_avg.recall = detail::sanitize_nan(static_cast<double>(micro_avg_TP_sum), static_cast<double>(micro_avg_TP_sum + micro_avg_FN_sum), report.zero_div_, "Recall");
+    micro_avg.f1 = detail::sanitize_nan(2 * micro_avg.precision * micro_avg.recall, micro_avg.precision + micro_avg.recall, report.zero_div_, "F1-Score");
     macro_avg.precision /= static_cast<double>(report.metrics_.size());
     macro_avg.recall /= static_cast<double>(report.metrics_.size());
     macro_avg.f1 /= static_cast<double>(report.metrics_.size());

@@ -147,7 +147,23 @@ class classification_report {
     int output_digits_{ 2 };
     /// Flag, whether the micro average or the accuracy should be printed in the classification report output.
     bool use_micro_average_{ false };
+    /// The used zero division behavior.
+    zero_division_behavior zero_div_{ zero_division_behavior::warn};
 };
+
+namespace detail {
+
+/**
+ * @brief divided @p dividend by @p divisor using the @p zero_div zero division behavior if @p divisor is `0`.
+ * @param dividend the dividend
+ * @param divisor the divisor
+ * @param zero_div the zero division behavior
+ * @param metric_name the metric name in which the zero division occurred, only used if @p zero_div is equal to `classification_report::zero_division_behavior::warn`
+ * @return the quotient (`[[nodiscard]]`)
+ */
+[[nodiscard]] double sanitize_nan(double dividend, double divisor, classification_report::zero_division_behavior zero_div, std::string_view metric_name);
+
+}  // namespace detail
 
 template <typename label_type, typename... Args>
 classification_report::classification_report(const std::vector<label_type> &correct_label, const std::vector<label_type> &predicted_label, Args &&...named_args) {
@@ -166,8 +182,7 @@ classification_report::classification_report(const std::vector<label_type> &corr
     // compile time check: each named parameter must only be passed once
     static_assert(!parser.has_duplicates(), "Can only use each named parameter once!");
     // compile time check: only some named parameters are allowed
-    static_assert(!parser.has_other_than(plssvm::classification_report::digits, plssvm::classification_report::zero_division,
-                                         plssvm::classification_report::labels, plssvm::classification_report::target_names),
+    static_assert(!parser.has_other_than(plssvm::classification_report::digits, plssvm::classification_report::zero_division, plssvm::classification_report::labels, plssvm::classification_report::target_names),
                   "An illegal named parameter has been passed!");
 
     // compile time/runtime check: the values must have the correct types
@@ -181,10 +196,9 @@ classification_report::classification_report(const std::vector<label_type> &corr
     }
 
     // compile time/runtime check: the values must have the correct types
-    zero_division_behavior zero_div{ zero_division_behavior::warn };
     if constexpr (parser.has(plssvm::classification_report::zero_division)) {
         // get the value of the provided named parameter
-        zero_div = detail::get_value_from_named_parameter<decltype(zero_div)>(parser, plssvm::classification_report::zero_division);
+        zero_div_ = detail::get_value_from_named_parameter<decltype(zero_div_)>(parser, plssvm::classification_report::zero_division);
     }
 
     // initialize confusion matrix
@@ -201,8 +215,7 @@ classification_report::classification_report(const std::vector<label_type> &corr
         if (std::any_of(displayed_indices.cbegin(), displayed_indices.cend(), [](const auto idx) { return idx < 0; })) {
             throw plssvm::exception{ "At least one of the provided indices is less than zero!" };
         }
-        if (std::any_of(displayed_indices.cbegin(), displayed_indices.cend(),
-                        [size = distinct_label_vec.size()](const auto idx) { return static_cast<std::size_t>(idx) >= size; })) {
+        if (std::any_of(displayed_indices.cbegin(), displayed_indices.cend(), [size = distinct_label_vec.size()](const auto idx) { return static_cast<std::size_t>(idx) >= size; })) {
             throw plssvm::exception{ "At least one of the provided indices is greater or equal than the total number of different labels!" };
         }
 
@@ -262,29 +275,9 @@ classification_report::classification_report(const std::vector<label_type> &corr
                 FP += confusion_matrix_(i, label_idx);
             }
         }
-        // calculate precision, recall, and f1 score
-        const auto sanitize_nan = [zero_div](const double dividend, const double divisor, const std::string_view metric_name) {
-            if (divisor == 0.0) {
-                // handle the correct zero division behavior
-                switch (zero_div) {
-                    case zero_division_behavior::warn:
-                        std::clog << metric_name << " is ill-defined and is set to 0.0 in labels with no predicted samples. "
-                                                    "Use 'plssvm::classification_report::zero_division' parameter to control this behavior.\n";
-                        [[fallthrough]];
-                    case zero_division_behavior::zero:
-                        return 0.0;
-                    case zero_division_behavior::one:
-                        return 1.0;
-                    case zero_division_behavior::nan:
-                        return std::numeric_limits<double>::quiet_NaN();
-                }
-            } else {
-                return dividend / divisor;
-            }
-        };
-        const double precision = sanitize_nan(static_cast<double>(TP), static_cast<double>(TP + FP), "Precision");
-        const double recall = sanitize_nan(static_cast<double>(TP), static_cast<double>(TP + FN), "Recall");
-        const double f1 = sanitize_nan(2 * (precision * recall), (precision + recall), "F1-score");
+        const double precision = detail::sanitize_nan(static_cast<double>(TP), static_cast<double>(TP + FP), zero_div_, "Precision");
+        const double recall = detail::sanitize_nan(static_cast<double>(TP), static_cast<double>(TP + FN), zero_div_, "Recall");
+        const double f1 = detail::sanitize_nan(2 * (precision * recall), (precision + recall), zero_div_, "F1-score");
         // add metric results to map
         const metric m{ TP, FP, FN, precision, recall, f1, static_cast<unsigned long long>(std::count(correct_label.cbegin(), correct_label.cend(), label)) };
         metrics_.emplace_back(label_name, m);
