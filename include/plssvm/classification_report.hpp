@@ -22,14 +22,15 @@
 #include "fmt/ostream.h"  // fmt::formatter, fmt::ostream_formatter
 #include "igor/igor.hpp"  // IGOR_MAKE_NAMED_ARGUMENT, igor::parser, igor::has_unnamed_arguments, igor::has_other_than
 
-#include <algorithm>  // std::find, std::count
-#include <cmath>      // std::isnan
-#include <cstddef>    // std::size_t
-#include <iosfwd>     // forward declaration for std::ostream and std::istream
-#include <iterator>   // std::distance
-#include <set>        // std::set
-#include <string>     // std::string
-#include <vector>     // std::vector
+#include <algorithm>    // std::find, std::find_if, std::count, std::sort, std::any_of
+#include <cstddef>      // std::size_t
+#include <iosfwd>       // forward declaration for std::ostream and std::istream
+#include <iterator>     // std::distance
+#include <set>          // std::set
+#include <string>       // std::string
+#include <string_view>  // std::string_view
+#include <utility>      // std::pair, std::move, std::forward
+#include <vector>       // std::vector
 
 namespace plssvm {
 
@@ -43,8 +44,6 @@ class classification_report {
     static IGOR_MAKE_NAMED_ARGUMENT(digits);
     /// Create a named argument for the zero division behavior: warn (and set to 0.0), 0.0, 1.0, or NaN.
     static IGOR_MAKE_NAMED_ARGUMENT(zero_division);
-    /// The label indices that are used in the classification report.
-    static IGOR_MAKE_NAMED_ARGUMENT(labels);
     /// Create a named argument for the displayed target names in the classification report as `std::vector<std::string>`. Must have the same number of names as there are labels.
     static IGOR_MAKE_NAMED_ARGUMENT(target_names);
 
@@ -99,7 +98,8 @@ class classification_report {
      * @tparam label_type the type of the labels
      * @param[in] correct_label the list of correct labels
      * @param[in] predicted_label the list of predicted labels
-     * @param[in] named_args the potential name arguments (digits and/or zero_division)
+     * @param[in] named_args the potential name arguments (digits, zero_division, target_names)
+     * @throws plssvm::exception if the @p correct_label or @p predicted_label are empty
      * @throws plssvm::exception if the @p correct_label and @p predicted_label sizes mismatch
      * @throws plssvm::exception if the number of digits to print has been provided but is less or equal to 0
      */
@@ -121,10 +121,17 @@ class classification_report {
      * @details The metrics are: precision, recall, f1 score, and support.
      * @tparam label_type the type of the label
      * @param[in] label the label to query the metrics for
+     * @throws plssvm::exception if the @p label couldn't be found
      * @return the classification report for the specific label (`[[nodiscard]]`)
      */
     template <typename label_type>
-    [[nodiscard]] metric metric_for_class(const label_type &label) const { return metrics_.at(fmt::format("{}", label)); }
+    [[nodiscard]] metric metric_for_class(const label_type &label) const {
+        const auto it = std::find_if(metrics_.cbegin(), metrics_.cend(), [label_str = fmt::format("{}", label)](const auto &p) { return p.first == label_str; });
+        if (it == metrics_.cend()) {
+            throw exception{ fmt::format("Couldn't find the label \"{}\"!", label) };
+        }
+        return it->second;
+    }
 
     /**
      * @brief Output the classification @p report to the given output-stream @p out.
@@ -148,13 +155,13 @@ class classification_report {
     /// Flag, whether the micro average or the accuracy should be printed in the classification report output.
     bool use_micro_average_{ false };
     /// The used zero division behavior.
-    zero_division_behavior zero_div_{ zero_division_behavior::warn};
+    zero_division_behavior zero_div_{ zero_division_behavior::warn };
 };
 
 namespace detail {
 
 /**
- * @brief divided @p dividend by @p divisor using the @p zero_div zero division behavior if @p divisor is `0`.
+ * @brief Divide the @p dividend by the @p divisor using the @p zero_div zero division behavior if @p divisor is `0`.
  * @param dividend the dividend
  * @param divisor the divisor
  * @param zero_div the zero division behavior
@@ -167,10 +174,13 @@ namespace detail {
 
 template <typename label_type, typename... Args>
 classification_report::classification_report(const std::vector<label_type> &correct_label, const std::vector<label_type> &predicted_label, Args &&...named_args) {
-    PLSSVM_ASSERT(!correct_label.empty(), "The correct labels list may not be empty!");
-    PLSSVM_ASSERT(!predicted_label.empty(), "The predicted labels list may not be empty!");
-
     // sanity check for input correct sizes
+    if (correct_label.empty()) {
+        throw exception{ "The correct labels list must not be empty!" };
+    }
+    if (predicted_label.empty()) {
+        throw exception{ "The predicted labels list must not be empty!" };
+    }
     if (correct_label.size() != predicted_label.size()) {
         throw exception{ fmt::format("The number of correct labels ({}) and predicted labels ({}) must be the same!", correct_label.size(), predicted_label.size()) };
     }
@@ -182,7 +192,7 @@ classification_report::classification_report(const std::vector<label_type> &corr
     // compile time check: each named parameter must only be passed once
     static_assert(!parser.has_duplicates(), "Can only use each named parameter once!");
     // compile time check: only some named parameters are allowed
-    static_assert(!parser.has_other_than(plssvm::classification_report::digits, plssvm::classification_report::zero_division, plssvm::classification_report::labels, plssvm::classification_report::target_names),
+    static_assert(!parser.has_other_than(plssvm::classification_report::digits, plssvm::classification_report::zero_division, plssvm::classification_report::target_names),
                   "An illegal named parameter has been passed!");
 
     // compile time/runtime check: the values must have the correct types
@@ -207,41 +217,13 @@ classification_report::classification_report(const std::vector<label_type> &corr
     std::vector<label_type> distinct_label_vec(distinct_label.cbegin(), distinct_label.cend());
 
     // compile time/runtime check: the values must have the correct types
-    std::vector<int> displayed_indices;
-    if constexpr (parser.has(plssvm::classification_report::labels)) {
-        // get the value of the provided named parameter
-        displayed_indices = detail::get_value_from_named_parameter<decltype(displayed_indices)>(parser, plssvm::classification_report::labels);
-        // the indices must be greater than zero
-        if (std::any_of(displayed_indices.cbegin(), displayed_indices.cend(), [](const auto idx) { return idx < 0; })) {
-            throw plssvm::exception{ "At least one of the provided indices is less than zero!" };
-        }
-        if (std::any_of(displayed_indices.cbegin(), displayed_indices.cend(), [size = distinct_label_vec.size()](const auto idx) { return static_cast<std::size_t>(idx) >= size; })) {
-            throw plssvm::exception{ "At least one of the provided indices is greater or equal than the total number of different labels!" };
-        }
-
-        // sort indices
-        std::sort(displayed_indices.begin(), displayed_indices.end());
-
-        // include only the requested indices
-        std::vector<label_type> displayed_label;
-        for (const int idx : displayed_indices) {
-            displayed_label.push_back(std::move(distinct_label_vec[idx]));
-        }
-        distinct_label_vec = std::move(displayed_label);
-
-        if (distinct_label_vec.size() != distinct_label.size()) {
-            use_micro_average_ = true;
-        }
-    }
-
-    // compile time/runtime check: the values must have the correct types
     std::vector<std::string> display_names;
     if constexpr (parser.has(plssvm::classification_report::target_names)) {
         // get the value of the provided named parameter
         display_names = detail::get_value_from_named_parameter<decltype(display_names)>(parser, plssvm::classification_report::target_names);
         // the number of display names must match the number of distinct labels
         if (display_names.size() != distinct_label_vec.size()) {
-            throw plssvm::exception{ fmt::format("Provided {} display names, but found {} distinct labels!", display_names.size(), distinct_label_vec.size()) };
+            throw plssvm::exception{ fmt::format("Provided {} target names, but found {} distinct labels!", display_names.size(), distinct_label_vec.size()) };
         }
     }
 
@@ -255,7 +237,9 @@ classification_report::classification_report(const std::vector<label_type> &corr
 
     // fill the confusion matrix
     for (typename std::vector<label_type>::size_type i = 0; i < correct_label.size(); ++i) {
-        ++confusion_matrix_(label_to_idx(correct_label[i]), label_to_idx(predicted_label[i]));
+        if (detail::contains(distinct_label_vec, correct_label[i]) && detail::contains(distinct_label_vec, predicted_label[i])) {
+            ++confusion_matrix_(label_to_idx(correct_label[i]), label_to_idx(predicted_label[i]));
+        }
     }
 
     // calculate the metrics for each label
@@ -293,6 +277,13 @@ classification_report::classification_report(const std::vector<label_type> &corr
     accuracy_ = accuracy_metric{ static_cast<double>(count) / static_cast<double>(correct_label.size()), count, correct_label.size() };
 }
 
+/**
+ * @brief Output the metric @p m to the given output-stream @p out.
+ * @param[in,out] out the output-stream to write the metric to
+ * @param[in] metric the metric
+ * @return the output-stream
+ */
+std::ostream &operator<<(std::ostream &out, const classification_report::metric &metric);
 /**
  * @brief Output the accuracy_metric @p accuracy to the given output-stream @p out.
  * @param[in,out] out the output-stream to write the accuracy metric to

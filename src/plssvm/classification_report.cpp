@@ -12,14 +12,16 @@
 
 #include "fmt/format.h"  // fmt::format
 
-#include <algorithm>  // std::max, std::sort
-#include <cstddef>    // std::size_t
-#include <ios>        // std::ios::failbit
-#include <istream>    // std::istream
-#include <ostream>    // std::ostream, std::endl
-#include <string>     // std::string
-#include <utility>    // std::pair
-#include <vector>     // std::vector
+#include <algorithm>    // std::max, std::sort
+#include <cstddef>      // std::size_t
+#include <ios>          // std::ios::failbit
+#include <istream>      // std::istream
+#include <limits>       // std::numeric_limits::quiet_NaN
+#include <ostream>      // std::ostream, std::clog, std::endl
+#include <string>       // std::string
+#include <string_view>  // std::string_view
+#include <utility>      // std::pair
+#include <vector>       // std::vector
 
 namespace plssvm {
 
@@ -40,12 +42,11 @@ double sanitize_nan(const double dividend, const double divisor, const classific
             case classification_report::zero_division_behavior::nan:
                 return std::numeric_limits<double>::quiet_NaN();
         }
-    } else {
-        return dividend / divisor;
     }
+    return dividend / divisor;
 }
 
-}
+}  // namespace detail
 
 std::ostream &operator<<(std::ostream &out, const classification_report &report) {
     // calculate the maximum size of the label for better table alignment
@@ -59,7 +60,7 @@ std::ostream &operator<<(std::ostream &out, const classification_report &report)
     // print metrics
     out << fmt::format("{0:>{1}}{0:>{2}}precision  {0:>{2}}recall{0:>{2}}f1-score   support\n\n", "", max_label_string_size, report.output_digits_);
     // used for sorting the table output
-    std::vector<std::pair<double, std::string>> table_rows;
+    std::vector<std::string> table_rows;
     table_rows.reserve(report.metrics_.size());
     unsigned long long micro_avg_TP_sum{};
     unsigned long long micro_avg_FP_sum{};
@@ -68,7 +69,7 @@ std::ostream &operator<<(std::ostream &out, const classification_report &report)
     classification_report::metric macro_avg{};
     classification_report::metric weighted_avg{};
     for (const auto &[key, val] : report.metrics_) {
-        table_rows.emplace_back(val.precision, fmt::format("{1:>{2}}       {3:.{0}f}      {4:.{0}f}      {5:.{0}f}   {6:>7}\n", report.output_digits_, key, max_label_string_size, val.precision, val.recall, val.f1, val.support));
+        out << fmt::format("{1:>{2}}       {3:.{0}f}      {4:.{0}f}      {5:.{0}f}   {6:>7}\n", report.output_digits_, key, max_label_string_size, val.precision, val.recall, val.f1, val.support);
 
         // micro average
         micro_avg_TP_sum += val.TP;
@@ -99,10 +100,6 @@ std::ostream &operator<<(std::ostream &out, const classification_report &report)
     weighted_avg.recall /= static_cast<double>(weighted_avg.support);
     weighted_avg.f1 /= static_cast<double>(weighted_avg.support);
 
-    // output sorted metrics
-    for (const auto &[key, row] : table_rows) {
-        out << row;
-    }
     out << '\n';
     // print accuracy and average metrics
     if (!report.use_micro_average_) {
@@ -114,6 +111,24 @@ std::ostream &operator<<(std::ostream &out, const classification_report &report)
     out << fmt::format("{1:>{2}}       {3:.{0}f}      {4:.{0}f}      {5:.{0}f}   {6:>7}\n\n", report.output_digits_, "weighted avg", max_label_string_size, weighted_avg.precision, weighted_avg.recall, weighted_avg.f1, weighted_avg.support);
     out << report.accuracy_ << std::endl;
     return out;
+}
+
+std::ostream &operator<<(std::ostream &out, const classification_report::metric &metric) {
+    return out << fmt::format(
+               "TP: {}\n"
+               "FP: {}\n"
+               "FN: {}\n"
+               "precision: {}\n"
+               "recall:    {}\n"
+               "f1-score:  {}\n"
+               "support:   {}",
+               metric.TP,
+               metric.FP,
+               metric.FN,
+               metric.precision,
+               metric.recall,
+               metric.f1,
+               metric.support);
 }
 
 std::ostream &operator<<(std::ostream &out, const classification_report::accuracy_metric &accuracy) {
