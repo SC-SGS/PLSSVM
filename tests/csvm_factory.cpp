@@ -17,16 +17,16 @@
 #include "plssvm/parameter.hpp"              // plssvm::parameter
 #include "plssvm/target_platforms.hpp"       // plssvm::target_platform
 
-#include "custom_test_macros.hpp"            // EXPECT_THROW_WHAT_MATCHER
-#include "utility.hpp"                       // util::redirect_output
+#include "custom_test_macros.hpp"  // EXPECT_THROW_WHAT_MATCHER
+#include "utility.hpp"             // util::redirect_output
 
-#include "fmt/core.h"                        // fmt::format
-#include "fmt/ostream.h"                     // be able to format a plssvm::backend_type using fmt
-#include "gmock/gmock-matchers.h"            // ::testing::StartsWith
-#include "gtest/gtest.h"                     // TYPED_TEST_SUITE, TYPED_TEST, ::testing::{Test, Types, internal::GetTypeName}
+#include "fmt/core.h"              // fmt::format
+#include "fmt/ostream.h"           // be able to format a plssvm::backend_type using fmt
+#include "gmock/gmock-matchers.h"  // ::testing::StartsWith
+#include "gtest/gtest.h"           // TYPED_TEST_SUITE, TYPED_TEST, ::testing::{Test, Types, internal::GetTypeName}
 
-#include <string>                            // std::string
-#include <tuple>                             // std::ignore
+#include <string>  // std::string
+#include <tuple>   // std::ignore
 
 namespace util {
 

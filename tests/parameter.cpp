@@ -62,7 +62,7 @@ TEST(Parameter, construct) {
     EXPECT_FLOATING_POINT_EQ(param.cost.get_default(), plssvm::real_type{ 1.0 });
 }
 TEST(Parameter, construct_named_args_all) {
-    // construct a parameter set explicitly overwriting the default values using named parameters
+    // construct a parameter set explicitly overwriting all default values using named parameters
     const plssvm::parameter param{
         plssvm::kernel_type = plssvm::kernel_function_type::polynomial,
         plssvm::degree = 1,

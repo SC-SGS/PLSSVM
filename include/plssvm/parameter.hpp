@@ -20,14 +20,14 @@
 #include "plssvm/detail/utility.hpp"         // plssvm::detail::unreachable
 #include "plssvm/kernel_function_types.hpp"  // plssvm::kernel_function_type, plssvm::kernel_function_type_to_math_string
 
-#include "fmt/core.h"                        // fmt::format
-#include "fmt/ostream.h"                     // fmt::formatter, fmt::ostream_formatter
-#include "igor/igor.hpp"                     // IGOR_MAKE_NAMED_ARGUMENT, igor::parser, igor::has_unnamed_arguments, igor::has_other_than
+#include "fmt/core.h"     // fmt::format
+#include "fmt/ostream.h"  // fmt::formatter, fmt::ostream_formatter
+#include "igor/igor.hpp"  // IGOR_MAKE_NAMED_ARGUMENT, igor::parser, igor::has_unnamed_arguments, igor::has_other_than
 
-#include <iostream>                          // std::clog, std::endl, std::ostream
-#include <string_view>                       // std::string_view
-#include <type_traits>                       // std::is_same_v, std::is_convertible_v
-#include <utility>                           // std::forward
+#include <iostream>     // std::clog, std::endl, std::ostream
+#include <string_view>  // std::string_view
+#include <type_traits>  // std::is_same_v, std::is_convertible_v
+#include <utility>      // std::forward
 
 namespace plssvm {
 
@@ -59,7 +59,6 @@ IGOR_MAKE_NAMED_ARGUMENT(sycl_kernel_invocation_type);
 
 namespace detail {
 
-
 /**
  * @brief Trait to check whether @p Args only contains named-parameter that can be used to initialize a `plssvm::parameter` struct.
  */
@@ -83,7 +82,6 @@ constexpr bool has_only_sycl_parameter_named_args_v = !igor::has_other_than<Args
  * @brief Class for encapsulating all important C-SVM parameters.
  */
 struct parameter {
-
     /**
      * @brief Default construct a parameter set, i.e., each SVM parameter has its default value.
      */
@@ -267,6 +265,7 @@ std::ostream &operator<<(std::ostream &out, const parameter &params);
 
 }  // namespace plssvm
 
-template <> struct fmt::formatter<plssvm::parameter> : fmt::ostream_formatter {};
+template <>
+struct fmt::formatter<plssvm::parameter> : fmt::ostream_formatter {};
 
 #endif  // PLSSVM_PARAMETER_HPP_

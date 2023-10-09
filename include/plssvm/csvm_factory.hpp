@@ -20,8 +20,8 @@
 #include "plssvm/detail/type_traits.hpp"                 // plssvm::detail::remove_cvref_t
 #include "plssvm/exceptions/exceptions.hpp"              // plssvm::unsupported_backend_exception
 
-#include "plssvm/backends/SYCL/detail/constants.hpp"     // alias plssvm::sycl to the PLSSVM_SYCL_BACKEND_PREFERRED_IMPLEMENTATION
-                                                         // or to plssvm::dpcpp if no SYCL backend is available
+#include "plssvm/backends/SYCL/detail/constants.hpp"  // alias plssvm::sycl to the PLSSVM_SYCL_BACKEND_PREFERRED_IMPLEMENTATION
+                                                      // or to plssvm::dpcpp if no SYCL backend is available
 
 // only include requested/available backends
 #if defined(PLSSVM_HAS_OPENMP_BACKEND)
@@ -48,9 +48,9 @@
 #include "fmt/core.h"     // fmt::format
 #include "igor/igor.hpp"  // igor::parser, igor::has_unnamed_arguments
 
-#include <memory>         // std::unique_ptr, std::make_unique
-#include <type_traits>    // std::is_same_v, std::is_constructible_v
-#include <utility>        // std::forward
+#include <memory>       // std::unique_ptr, std::make_unique
+#include <type_traits>  // std::is_same_v, std::is_constructible_v
+#include <utility>      // std::forward
 
 namespace plssvm {
 
