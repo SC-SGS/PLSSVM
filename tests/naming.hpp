@@ -17,17 +17,17 @@
 #include "plssvm/detail/string_utility.hpp"        // plssvm::detail::replace_all
 #include "plssvm/detail/type_traits.hpp"           // plssvm::detail::{always_false_v, is_map_v, is_unordered_map_v, is_set_v, is_unordered_set_v, is_vector_v}
 
-#include "exceptions/utility.hpp"                  // util::exception_type_name
+#include "exceptions/utility.hpp"  // util::exception_type_name
 
-#include "fmt/core.h"                              // fmt::format
-#include "fmt/ostream.h"                           // directly output types with an operator<< overload using fmt
-#include "gtest/gtest.h"                           // ::testing::TestParamInfo
+#include "fmt/core.h"     // fmt::format
+#include "fmt/ostream.h"  // directly output types with an operator<< overload using fmt
+#include "gtest/gtest.h"  // ::testing::TestParamInfo
 
-#include <filesystem>                              // std::filesystem::path
-#include <string>                                  // std::string
-#include <string_view>                             // std::string_view
-#include <tuple>                                   // std::tuple, std::get
-#include <type_traits>                             // std::is_same_v, std::true_type, std::false_type
+#include <filesystem>   // std::filesystem::path
+#include <string>       // std::string
+#include <string_view>  // std::string_view
+#include <tuple>        // std::tuple, std::get
+#include <type_traits>  // std::is_same_v, std::true_type, std::false_type
 
 namespace naming {
 
@@ -50,6 +50,38 @@ struct is_tuple<std::tuple<Args...>> : std::true_type {};
  */
 template <typename T>
 constexpr bool is_tuple_v = is_tuple<T>::value;
+
+/**
+ * @brief Escape some characters of the string such that GTest accepts it as test case name.
+ * @details Replaces some special cases for better readability: "-" with "_M_" (for Minus), all " " with "_W_" (for Whitespace), "." with "_D_" (for dot),
+ *          ":" with "_C_" (for colon), "/" with "_", and "@" with "_A_" (for at).
+ *          Afterwards, if there are still non alphanumeric or underscore characters present, simply replaces them with "_".
+ *          If the resulting string would be empty, returns a string containing "EMPTY".
+ * @param[in] sv the string to escape for GTest
+ * @return the escaped test case name (`[[nodiscard]]`)
+ */
+[[nodiscard]] inline std::string escape_string(const std::string_view sv) {
+    std::string str{ sv };
+    // replace some special cases for better readability
+    plssvm::detail::replace_all(str, "-", "_M_");
+    plssvm::detail::replace_all(str, " ", "_W_");
+    plssvm::detail::replace_all(str, ".", "_D_");
+    plssvm::detail::replace_all(str, ":", "_S_");
+    plssvm::detail::replace_all(str, "/", "_");
+    plssvm::detail::replace_all(str, "@", "_A_");
+
+    // replace all remaining characters with '_' that are not alphanumeric values or underscores
+    for (char &c : str) {
+        if (!std::isalnum(c) && c != '_') {
+            c = '_';
+        }
+    }
+
+    if (str.empty()) {
+        str = "EMPTY";
+    }
+    return str;
+}
 
 }  // namespace detail
 
@@ -174,55 +206,19 @@ class real_type_label_type_combination_to_name {
 };
 
 /**
- * @brief A class used to map all real type and kernel function combinations to a readable name in the GTest test case name.
+ * @brief A class used to map a parameter definition to a readable name in the GTest test case name.
  */
-class real_type_kernel_function_to_name {
+class parameter_definition_to_name {
   public:
     template <typename T>
     static std::string GetName(int) {
-        return fmt::format("{}__{}", real_type_to_name::GetName<typename T::real_type>(0), T::kernel_type);
+        return fmt::format("{}__{}", real_type_to_name::GetName<typename T::real_type>(0), T::value);
     }
 };
 
 //*************************************************************************************************************************************//
 //                                                   PRETTY PRINT PARAMETERIZED TESTS                                                  //
 //*************************************************************************************************************************************//
-namespace detail {
-
-/**
- * @brief Escape some characters of the string such that GTest accepts it as test case name.
- * @details Replaces some special cases for better readability: "-" with "_M_" (for Minus), all " " with "_W_" (for Whitespace), "." with "_D_" (for dot),
- *          ":" with "_C_" (for colon), "/" with "_", and "@" with "_A_" (for at).
- *          Afterwards, if there are still non alphanumeric or underscore characters present, simply replaces them with "_".
- *          If the resulting string would be empty, returns a string containing "EMPTY".
- * @param[in] sv the string to escape for GTest
- * @return the escaped test case name (`[[nodiscard]]`)
- */
-[[nodiscard]] inline std::string escape_string(const std::string_view sv) {
-    std::string str{ sv };
-    // replace some special cases for better readability
-    plssvm::detail::replace_all(str, "-", "_M_");
-    plssvm::detail::replace_all(str, " ", "_W_");
-    plssvm::detail::replace_all(str, ".", "_D_");
-    plssvm::detail::replace_all(str, ":", "_S_");
-    plssvm::detail::replace_all(str, "/", "_");
-    plssvm::detail::replace_all(str, "@", "_A_");
-
-    // replace all remaining characters with '_' that are not alphanumeric values or underscores
-    for (char &c : str) {
-        if (!std::isalnum(c) && c != '_') {
-            c = '_';
-        }
-    }
-
-    if (str.empty()) {
-        str = "EMPTY";
-    }
-    return str;
-}
-
-}  // namespace detail
-
 // general
 /**
  * @brief Either escape the first string in the parameter info @p param_info if it is an `std::tuple` or directly escapes the value in @p param_info.

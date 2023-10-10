@@ -6,7 +6,7 @@
  * @license This file is part of the PLSSVM project which is released under the MIT license.
  *          See the LICENSE.md file in the project root for full license information.
  *
- * @brief Defines (arithmetic) functions on [`std::vector`](https://en.cppreference.com/w/cpp/container/vector) and scalars.
+ * @brief Defines (arithmetic) functions on scalars, [`std::vector`](https://en.cppreference.com/w/cpp/container/vector), and plssvm::matrix.
  */
 
 #ifndef PLSSVM_DETAIL_OPERATORS_HPP_
@@ -18,6 +18,24 @@
 
 #include <cmath>   // std::fma
 #include <vector>  // std::vector
+
+//*************************************************************************************************************************************//
+//                                                          scalar operations                                                          //
+//*************************************************************************************************************************************//
+
+/**
+ * @brief Returns +1 if x is positive and -1 if x is negative or 0.
+ * @param[in] x the value to calculate the sign for
+ * @return +1 if @p x is positive and -1 if @p x is negative or 0 (`[[nodiscard]]`)
+ */
+template <typename T>
+[[nodiscard]] inline constexpr T sign(const T x) {
+    return x > T{ 0 } ? T{ +1 } : T{ -1 };
+}
+
+//*************************************************************************************************************************************//
+//                                                        std::vector operations                                                       //
+//*************************************************************************************************************************************//
 
 /**
  * @def PLSSVM_GENERATE_ARITHMETIC_OPERATION
@@ -41,7 +59,7 @@
  * @param[in] Op the operator to generate
  */
 // clang-format off
-#define PLSSVM_GENERATE_ARITHMETIC_OPERATION(Op)                                                      \
+#define PLSSVM_GENERATE_VECTOR_ARITHMETIC_OPERATION(Op)                                               \
     template <typename T>                                                                             \
     inline std::vector<T> &operator Op##=(std::vector<T> &lhs, const std::vector<T> &rhs) {           \
         PLSSVM_ASSERT(lhs.size() == rhs.size(), "Sizes mismatch!: {} != {}", lhs.size(), rhs.size()); \
@@ -81,10 +99,10 @@
 namespace plssvm::operators {
 
 // define arithmetic operations +-*/ on std::vector
-PLSSVM_GENERATE_ARITHMETIC_OPERATION(+)
-PLSSVM_GENERATE_ARITHMETIC_OPERATION(-)
-PLSSVM_GENERATE_ARITHMETIC_OPERATION(*)
-PLSSVM_GENERATE_ARITHMETIC_OPERATION(/)
+PLSSVM_GENERATE_VECTOR_ARITHMETIC_OPERATION(+)
+PLSSVM_GENERATE_VECTOR_ARITHMETIC_OPERATION(-)
+PLSSVM_GENERATE_VECTOR_ARITHMETIC_OPERATION(*)
+PLSSVM_GENERATE_VECTOR_ARITHMETIC_OPERATION(/)
 
 /**
  * @brief Wrapper struct for overloading the dot product operator.
@@ -171,16 +189,11 @@ template <typename T>
     return val;
 }
 
-/**
- * @brief Returns +1 if x is positive and -1 if x is negative or 0.
- * @param[in] x the value to calculate the sign for
- * @return +1 if @p x is positive and -1 if @p x is negative or 0 (`[[nodiscard]]`)
- */
-template <typename T>
-[[nodiscard]] inline constexpr T sign(const T x) {
-    return x > T{ 0 } ? T{ +1 } : T{ -1 };
-}
+#undef PLSSVM_GENERATE_VECTOR_ARITHMETIC_OPERATION
 
+//*************************************************************************************************************************************//
+//                                                      plssvm::matrix operations                                                      //
+//*************************************************************************************************************************************//
 /**
  * @brief Scale all elements in the matrix @p matr by @p scale.
  * @tparam T the value type of the matrix
@@ -302,7 +315,7 @@ template <typename T, layout_type layout>
  */
 template <typename T, layout_type layout>
 [[nodiscard]] matrix<T, layout> operator*(const matrix<T, layout> &lhs, const matrix<T, layout> &rhs) {
-    PLSSVM_ASSERT(lhs.shape() == rhs.shape(), "Error: shapes missmatch! ([{}] != [{}])", fmt::join(lhs.shape(), ", "), fmt::join(rhs.shape(), ", "));
+    PLSSVM_ASSERT(lhs.num_cols() == rhs.num_rows(), "Error: shapes missmatch! ({} (num_cols) != {} (num_rows))", lhs.num_cols(), rhs.num_rows());
     using size_type = typename matrix<T, layout>::size_type;
     matrix<T, layout> res{ lhs.num_rows(), rhs.num_cols() };
 
@@ -357,7 +370,7 @@ template <typename T, layout_type layout>
  */
 template <typename T, layout_type layout>
 [[nodiscard]] matrix<T, layout> rowwise_scale(const std::vector<T> &scale, matrix<T, layout> matr) {
-    PLSSVM_ASSERT(scale.size() == matr.num_rows(), "Error: shapes missmatch! {} != {} (num_rows)", scale.size(), matr.num_rows());
+    PLSSVM_ASSERT(scale.size() == matr.num_rows(), "Error: shapes missmatch! ({} != {} (num_rows))", scale.size(), matr.num_rows());
     using size_type = typename matrix<T, layout>::size_type;
 
     #pragma omp parallel for collapse(2) default(none) shared(matr, scale)
@@ -368,8 +381,6 @@ template <typename T, layout_type layout>
     }
     return matr;
 }
-
-#undef PLSSVM_GENERATE_ARITHMETIC_OPERATION
 
 }  // namespace plssvm::operators
 

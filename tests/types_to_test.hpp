@@ -15,6 +15,7 @@
 
 #include "plssvm/detail/type_list.hpp"       // plssvm::detail::{real_type_list, label_type_list, real_type_label_type_combination_list}
 #include "plssvm/kernel_function_types.hpp"  // plssvm::kernel_function_type
+#include "plssvm/matrix.hpp"                 // plssvm::layout_type
 
 #include "gtest/gtest.h"                     // ::testing::Types
 
@@ -52,14 +53,14 @@ using label_type_gtest = detail::tuple_to_gtest_types_t<plssvm::detail::label_ty
 using real_type_label_type_combination_gtest = detail::tuple_to_gtest_types_t<plssvm::detail::real_type_label_type_combination_list>;
 
 /**
- * @brief Encapsulates a combination of a used `real_type` (`float` or `double`) and a `plssvm::kernel_function_type`.
+ * @brief Encapsulates a combination of a used `real_type` (`float` or `double`) and a specific non-type template value (e.g., `plssvm::kernel_function_type` or `plssvm::layout_type`).
  * @tparam T the used `real_type`
- * @tparam kernel the `plssvm::kernel_function_type`
+ * @tparam non_type a non-type template value
  */
-template <typename T, plssvm::kernel_function_type kernel>
+template <typename T, auto non_type>
 struct parameter_definition {
     using real_type = T;
-    static constexpr plssvm::kernel_function_type kernel_type = kernel;
+    static constexpr decltype(auto) value = non_type;
 };
 
 /// A type list of all supported real_type and kernel_function_type combinations.
@@ -70,6 +71,13 @@ using real_type_kernel_function_gtest = ::testing::Types<
     parameter_definition<double, plssvm::kernel_function_type::linear>,
     parameter_definition<double, plssvm::kernel_function_type::polynomial>,
     parameter_definition<double, plssvm::kernel_function_type::rbf>>;
+
+/// A type list of all supported real_type and layout_type combinations.
+using real_type_layout_type_gtest = ::testing::Types<
+    parameter_definition<float, plssvm::layout_type::aos>,
+    parameter_definition<float, plssvm::layout_type::soa>,
+    parameter_definition<double, plssvm::layout_type::aos>,
+    parameter_definition<double, plssvm::layout_type::soa>>;
 
 }  // namespace util
 
