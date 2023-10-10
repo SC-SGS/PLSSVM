@@ -261,8 +261,8 @@ TEST_F(ClassificationReport, construct_zero_division_behavior) {
     const plssvm::classification_report report{ std::vector<int>{ 0, 0, 0 }, std::vector<int>{ 1, 1, 1 }, plssvm::classification_report::zero_division = plssvm::classification_report::zero_division_behavior::one };
 
     // check if values are set correctly
-    const plssvm::aos_matrix<unsigned long long> confusion_matrix{ std::vector<std::vector<unsigned long long>>{ { 0, 3 }, { 0, 0 } } };
-    EXPECT_EQ(report.confusion_matrix(), confusion_matrix);
+    const plssvm::aos_matrix<unsigned long long> correct_confusion_matrix{ std::vector<std::vector<unsigned long long>>{ { 0, 3 }, { 0, 0 } } };
+    EXPECT_EQ(report.confusion_matrix(), correct_confusion_matrix);
 
     plssvm::classification_report::metric m = report.metric_for_class(0);
     EXPECT_EQ(m.TP, 0);
