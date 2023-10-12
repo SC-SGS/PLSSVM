@@ -58,6 +58,13 @@ std::ostream &operator<<(std::ostream &out, layout_type layout);
 std::istream &operator>>(std::istream &in, layout_type &layout);
 
 /**
+ * @brief In contrast to operator>> return the full name of the provided @p layout type.
+ * @param[in] layout the layout type
+ * @return the full name of the layout type (`[[nodiscard]]`)
+ */
+[[nodiscard]] std::string_view layout_type_to_full_string(layout_type layout);
+
+/**
  * @brief A matrix class encapsulating a 1D array automatically handling indexing with AoS and SoA.
  * @tparam T the type of the matrix
  * @tparam layout_ the layout type provided at compile time (AoS or SoA)
