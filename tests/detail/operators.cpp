@@ -497,8 +497,6 @@ class MatrixOperationsDeathTest : public ::testing::Test {
 };
 TYPED_TEST_SUITE(MatrixOperationsDeathTest, util::real_type_layout_type_gtest, naming::parameter_definition_to_name);
 
-// TODO: implement matrix tests
-
 TYPED_TEST(MatrixOperations, operator_scale_binary) {
     using real_type = typename TestFixture::fixture_real_type;
     constexpr plssvm::layout_type layout = TestFixture::fixture_layout;
@@ -640,7 +638,7 @@ TYPED_TEST(MatrixOperations, operator_matrix_multiplication_empty) {
     EXPECT_THROW_WHAT(std::ignore = this->get_empty() * this->get_empty(), plssvm::matrix_exception, "The number of rows is zero!");
 }
 TYPED_TEST(MatrixOperationsDeathTest, operator_matrix_multiplication) {
-    EXPECT_DEATH(std::ignore = this->get_A() * this->get_empty(), ::testing::HasSubstr("Error: shapes missmatch! (2 (num_cols) != 0 (num_rows))"));
+    EXPECT_DEATH(std::ignore = this->get_A() * this->get_empty(), ::testing::HasSubstr("Error: shapes missmatch! (3 (num_cols) != 0 (num_rows))"));
     EXPECT_DEATH(std::ignore = this->get_empty() * this->get_A(), ::testing::HasSubstr("Error: shapes missmatch! (0 (num_cols) != 2 (num_rows))"));
 }
 
