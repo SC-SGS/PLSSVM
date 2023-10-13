@@ -16,14 +16,15 @@
 #include "plssvm/matrix.hpp"                 // plssvm::matrix, plssvm::layout_type
 #include "plssvm/parameter.hpp"              // plssvm::parameter
 
-#include "fmt/core.h"                        // fmt::format
+#include "fmt/core.h"  // fmt::format
 
-#include <ios>                               // std::ios::failbit
-#include <istream>                           // std::istream
-#include <ostream>                           // std::ostream
-#include <string>                            // std::string
-#include <string_view>                       // std::string_view
-#include <vector>                            // std::vector
+#include <cstddef>      // std::Size_t
+#include <ios>          // std::ios::failbit
+#include <istream>      // std::istream
+#include <ostream>      // std::ostream
+#include <string>       // std::string
+#include <string_view>  // std::string_view
+#include <vector>       // std::vector
 
 namespace plssvm {
 

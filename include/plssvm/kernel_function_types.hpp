@@ -21,12 +21,13 @@
 #include "plssvm/exceptions/exceptions.hpp"  // plssvm::unsupported_kernel_type_exception
 #include "plssvm/matrix.hpp"                 // plssvm::matrix, plssvm::layout_type
 
-#include "fmt/ostream.h"                     // fmt::formatter, fmt::ostream_formatter
+#include "fmt/ostream.h"  // fmt::formatter, fmt::ostream_formatter
 
-#include <cmath>                             // std::pow, std::exp, std::fma
-#include <iosfwd>                            // forward declare std::ostream and std::istream
-#include <string_view>                       // std::string_view
-#include <vector>                            // std::vector
+#include <cmath>        // std::pow, std::exp, std::fma
+#include <cstddef>      // std::size_t
+#include <iosfwd>       // forward declare std::ostream and std::istream
+#include <string_view>  // std::string_view
+#include <vector>       // std::vector
 
 namespace plssvm {
 
@@ -83,34 +84,24 @@ template <kernel_function_type kernel, typename... Args>
     PLSSVM_ASSERT(xi.size() == xj.size(), "Sizes mismatch!: {} != {}", xi.size(), xj.size());
 
     if constexpr (kernel == kernel_function_type::linear) {
+        // get parameters
         static_assert(sizeof...(args) == 0, "Illegal number of additional parameters! Must be 0.");
-        real_type temp{ 0.0 };
-        #pragma omp simd reduction(+ : temp)
-        for (typename std::vector<real_type>::size_type dim = 0; dim < xi.size(); ++dim) {
-            temp += xi[dim] * xj[dim];
-        }
-        return temp;
+        // perform kernel function calculation
+        return transposed{ xi } * xj;
     } else if constexpr (kernel == kernel_function_type::polynomial) {
+        // get parameters
         static_assert(sizeof...(args) == 3, "Illegal number of additional parameters! Must be 3.");
         const auto degree = static_cast<real_type>(detail::get<0>(args...));
         const auto gamma = static_cast<real_type>(detail::get<1>(args...));
         const auto coef0 = static_cast<real_type>(detail::get<2>(args...));
-        real_type temp{ 0.0 };
-        #pragma omp simd reduction(+ : temp)
-        for (typename std::vector<real_type>::size_type dim = 0; dim < xi.size(); ++dim) {
-            temp += xi[dim] * xj[dim];
-        }
-        return std::pow(std::fma(gamma, temp, coef0), degree);
+        // perform kernel function calculation
+        return std::pow(std::fma(gamma, transposed{ xi } * xj, coef0), degree);
     } else if constexpr (kernel == kernel_function_type::rbf) {
+        // get parameters
         static_assert(sizeof...(args) == 1, "Illegal number of additional parameters! Must be 1.");
         const auto gamma = static_cast<real_type>(detail::get<0>(args...));
-        real_type temp{ 0.0 };
-        #pragma omp simd reduction(+ : temp)
-        for (typename std::vector<real_type>::size_type dim = 0; dim < xi.size(); ++dim) {
-            const real_type diff = xi[dim] - xj[dim];
-            temp += diff * diff;
-        }
-        return std::exp(-gamma * temp);
+        // perform kernel function calculation
+        return std::exp(-gamma * squared_euclidean_dist(xi, xj));
     } else {
         static_assert(detail::always_false_v<Args...>, "Unknown kernel type!");
     }
@@ -151,7 +142,7 @@ template <kernel_function_type kernel, layout_type layout, typename... Args>
         real_type temp{ 0.0 };
         #pragma omp simd reduction(+ : temp)
         for (size_type dim = 0; dim < x.num_cols(); ++dim) {
-            temp += x(i, dim) * y(j, dim);
+            temp = std::fma(x(i, dim), y(j, dim), temp);
         }
         return temp;
     } else if constexpr (kernel == kernel_function_type::polynomial) {
@@ -162,7 +153,7 @@ template <kernel_function_type kernel, layout_type layout, typename... Args>
         real_type temp{ 0.0 };
         #pragma omp simd reduction(+ : temp)
         for (size_type dim = 0; dim < x.num_cols(); ++dim) {
-            temp += x(i, dim) * y(j, dim);
+            temp = std::fma(x(i, dim), y(j, dim), temp);
         }
         return std::pow(std::fma(gamma, temp, coef0), degree);
     } else if constexpr (kernel == kernel_function_type::rbf) {
@@ -172,7 +163,7 @@ template <kernel_function_type kernel, layout_type layout, typename... Args>
         #pragma omp simd reduction(+ : temp)
         for (size_type dim = 0; dim < x.num_cols(); ++dim) {
             const real_type diff = x(i, dim) - y(j, dim);
-            temp += diff * diff;
+            temp = std::fma(diff, diff, temp);
         }
         return std::exp(-gamma * temp);
     } else {
@@ -194,9 +185,9 @@ template <kernel_function_type kernel, layout_type layout, typename... Args>
 template <layout_type layout>
 [[nodiscard]] real_type kernel_function(const matrix<real_type, layout> &x, std::size_t i, const matrix<real_type, layout> &y, std::size_t j, const parameter &params);
 
-
 }  // namespace plssvm
 
-template <> struct fmt::formatter<plssvm::kernel_function_type> : fmt::ostream_formatter {};
+template <>
+struct fmt::formatter<plssvm::kernel_function_type> : fmt::ostream_formatter {};
 
 #endif  // PLSSVM_KERNEL_FUNCTION_TYPES_HPP_

@@ -19,15 +19,18 @@
 
 #include "exceptions/utility.hpp"  // util::exception_type_name
 
-#include "fmt/core.h"     // fmt::format
+#include "fmt/format.h"     // fmt::format, fmt::join
 #include "fmt/ostream.h"  // directly output types with an operator<< overload using fmt
 #include "gtest/gtest.h"  // ::testing::TestParamInfo
 
+#include <array>        // std::array
 #include <filesystem>   // std::filesystem::path
 #include <string>       // std::string
 #include <string_view>  // std::string_view
 #include <tuple>        // std::tuple, std::get
 #include <type_traits>  // std::is_same_v, std::true_type, std::false_type
+
+// TODO: better
 
 namespace naming {
 
@@ -383,6 +386,18 @@ template <typename T>
 template <typename T>
 [[nodiscard]] inline std::string pretty_print_calc_alpha_idx(const ::testing::TestParamInfo<typename T::ParamType> &param_info) {
     return fmt::format("{}__AND__{}__WITH__{}__RESULT_IDX__{}", std::get<0>(param_info.param), std::get<1>(param_info.param), std::get<2>(param_info.param), std::get<3>(param_info.param));
+}
+
+// kernel_function_types -> KernelFunction
+/**
+ * @brief Generate a test case name for the LIBSVM model parsing utility function `plssvm::detail::io::calculate_alpha_idx` tests.
+ * @tparam T the test suite type
+ * @param param_info the parameters to aggregate
+ * @return the test case name (`[[nodiscard]]`)
+ */
+template <typename T>
+[[nodiscard]] inline std::string pretty_print_kernel_function(const ::testing::TestParamInfo<typename T::ParamType> &param_info) {
+    return detail::escape_string(fmt::format("{}__{}", std::get<0>(param_info.param), fmt::join(std::get<1>(param_info.param), "__")));
 }
 
 }  // namespace naming
