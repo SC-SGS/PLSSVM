@@ -21,18 +21,18 @@
 #include "plssvm/exceptions/exceptions.hpp"     // plssvm::invalid_file_format_exception
 #include "plssvm/matrix.hpp"                    // plssvm::os_matrix
 
-#include "fmt/compile.h"                        // FMT_COMPILE
-#include "fmt/format.h"                         // fmt::format, fmt::format_to
-#include "fmt/os.h"                             // fmt::ostream, fmt::output_file
+#include "fmt/compile.h"  // FMT_COMPILE
+#include "fmt/format.h"   // fmt::format, fmt::format_to
+#include "fmt/os.h"       // fmt::ostream, fmt::output_file
 
-#include <algorithm>                            // std::max, std::min
-#include <cstddef>                              // std::size_t
-#include <exception>                            // std::exception, std::exception_ptr, std::current_exception, std::rethrow_exception
-#include <string>                               // std::string
-#include <string_view>                          // std::string_view
-#include <tuple>                                // std::tuple, std::make_tuple
-#include <utility>                              // std::move
-#include <vector>                               // std::vector
+#include <algorithm>    // std::max, std::min
+#include <cstddef>      // std::size_t
+#include <exception>    // std::exception, std::exception_ptr, std::current_exception, std::rethrow_exception
+#include <string>       // std::string
+#include <string_view>  // std::string_view
+#include <tuple>        // std::tuple, std::make_tuple
+#include <utility>      // std::move
+#include <vector>       // std::vector
 
 namespace plssvm::detail::io {
 
@@ -138,7 +138,7 @@ template <typename label_type>
         #pragma omp for reduction(|| : has_label) reduction(|| : has_no_label)
         for (std::size_t i = 0; i < num_data_points; ++i) {
             try {
-                std::string_view line = reader.line(i);
+                const std::string_view line = reader.line(i);
                 unsigned long last_index = 0;
 
                 // check if class labels are present (not necessarily the case for test files)

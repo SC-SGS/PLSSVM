@@ -10,26 +10,27 @@
 
 #include "plssvm/detail/io/arff_parsing.hpp"
 
+#include "plssvm/constants.hpp"              // plssvm::real_type
 #include "plssvm/detail/io/file_reader.hpp"  // plssvm::detail::io::file_reader
 #include "plssvm/exceptions/exceptions.hpp"  // plssvm::invalid_file_format_exception
 #include "plssvm/matrix.hpp"                 // plssvm::aos_matrix
 
-#include "../../custom_test_macros.hpp"      // EXPECT_FLOATING_POINT_MATRIX_NEAR, EXPECT_THROW_WHAT
-#include "../../naming.hpp"                  // naming::label_type_to_name
-#include "../../types_to_test.hpp"           // util::label_type_gtest
-#include "../../utility.hpp"                 // util::{temporary_file, instantiate_template_file, get_correct_data_file_labels, get_distinct_label, generate_specific_matrix}
+#include "../../custom_test_macros.hpp"  // EXPECT_FLOATING_POINT_MATRIX_NEAR, EXPECT_THROW_WHAT
+#include "../../naming.hpp"              // naming::label_type_to_name
+#include "../../types_to_test.hpp"       // util::label_type_gtest
+#include "../../utility.hpp"             // util::{temporary_file, instantiate_template_file, get_correct_data_file_labels, get_distinct_label, generate_specific_matrix}
 
-#include "fmt/core.h"                        // fmt::format
-#include "gmock/gmock-matchers.h"            // ::testing::HasSubstr
-#include "gtest/gtest.h"                     // TEST, TEST_P, TYPED_TEST, TYPED_TEST_SUITE, INSTANTIATE_TEST_SUITE_P, EXPECT_EQ, EXPECT_TRUE, EXPECT_DEATH, ASSERT_EQ, GTEST_FAIL
-                                             // ::testing::{Test, Types, TestWithParam, Values}
+#include "fmt/core.h"              // fmt::format
+#include "gmock/gmock-matchers.h"  // ::testing::HasSubstr
+#include "gtest/gtest.h"           // TEST, TEST_P, TYPED_TEST, TYPED_TEST_SUITE, INSTANTIATE_TEST_SUITE_P, EXPECT_EQ, EXPECT_TRUE, EXPECT_DEATH, ASSERT_EQ, FAIL
+                                   // ::testing::{Test, Types, TestWithParam, Values}
 
-#include <cstddef>                           // std::size_t
-#include <set>                               // std::set
-#include <string>                            // std::string
-#include <tuple>                             // std::tuple, std::make_tuple, std::ignore
-#include <type_traits>                       // std::is_same_v
-#include <vector>                            // std::vector
+#include <cstddef>      // std::size_t
+#include <set>          // std::set
+#include <string>       // std::string
+#include <tuple>        // std::tuple, std::make_tuple, std::ignore
+#include <type_traits>  // std::is_same_v
+#include <vector>       // std::vector
 
 class ARFFParseHeader : public ::testing::Test {};
 class ARFFParseHeaderValid : public ::testing::TestWithParam<std::tuple<std::string, std::size_t, std::size_t, bool, std::size_t>> {};
@@ -192,46 +193,68 @@ TYPED_TEST_SUITE(ARFFParse, util::label_type_gtest, naming::label_type_to_name);
 template <typename T>
 class ARFFParseDense : public ARFFParse<T>, protected util::temporary_file {
   protected:
+    using label_type = T;
+
     void SetUp() override {
         // create file used in this test fixture by instantiating the template file
         util::instantiate_template_file<label_type>(PLSSVM_TEST_PATH "/data/arff/6x4_TEMPLATE.arff", this->filename);
     }
 
-    using real_type = plssvm::real_type;
-    using label_type = T;
+    /**
+     * @brief Return the correct dense data points of the template ARFF file.
+     * @return the correct data points (`[[nodiscard]]`)
+     */
+    [[nodiscard]] const plssvm::aos_matrix<plssvm::real_type> &get_correct_data() const noexcept { return correct_data; }
+    /**
+     * @brief Return the correct labels of the template ARFF file.
+     * @return the correct labels (`[[nodiscard]]`)
+     */
+    [[nodiscard]] const std::vector<label_type> &get_correct_label() const noexcept { return correct_label; }
 
-    const std::vector<std::vector<real_type>> correct_data{
-        { real_type{ -1.117827500607882 }, real_type{ -2.9087188881250993 }, real_type{ 0.66638344270039144 }, real_type{ 1.0978832703949288 } },
-        { real_type{ -0.5282118298909262 }, real_type{ -0.335880984968183973 }, real_type{ 0.51687296029754564 }, real_type{ 0.54604461446026 } },
-        { real_type{ 0.57650218263054642 }, real_type{ 1.01405596624706053 }, real_type{ 0.13009428079760464 }, real_type{ 0.7261913886869387 } },
-        { real_type{ -0.20981208921241892 }, real_type{ 0.60276937379453293 }, real_type{ -0.13086851759108944 }, real_type{ 0.10805254527169827 } },
-        { real_type{ 1.88494043717792 }, real_type{ 1.00518564317278263 }, real_type{ 0.298499933047586044 }, real_type{ 1.6464627048813514 } },
-        { real_type{ -1.1256816275635 }, real_type{ 2.12541534341344414 }, real_type{ -0.165126576545454511 }, real_type{ 2.5164553141200987 } }
-    };
-    const std::vector<label_type> correct_label{ util::get_correct_data_file_labels<label_type>() };
+  private:
+    /// The correct dense data points.
+    plssvm::aos_matrix<plssvm::real_type> correct_data{ { { plssvm::real_type{ -1.117827500607882 }, plssvm::real_type{ -2.9087188881250993 }, plssvm::real_type{ 0.66638344270039144 }, plssvm::real_type{ 1.0978832703949288 } },
+                                                          { plssvm::real_type{ -0.5282118298909262 }, plssvm::real_type{ -0.335880984968183973 }, plssvm::real_type{ 0.51687296029754564 }, plssvm::real_type{ 0.54604461446026 } },
+                                                          { plssvm::real_type{ 0.57650218263054642 }, plssvm::real_type{ 1.01405596624706053 }, plssvm::real_type{ 0.13009428079760464 }, plssvm::real_type{ 0.7261913886869387 } },
+                                                          { plssvm::real_type{ -0.20981208921241892 }, plssvm::real_type{ 0.60276937379453293 }, plssvm::real_type{ -0.13086851759108944 }, plssvm::real_type{ 0.10805254527169827 } },
+                                                          { plssvm::real_type{ 1.88494043717792 }, plssvm::real_type{ 1.00518564317278263 }, plssvm::real_type{ 0.298499933047586044 }, plssvm::real_type{ 1.6464627048813514 } },
+                                                          { plssvm::real_type{ -1.1256816275635 }, plssvm::real_type{ 2.12541534341344414 }, plssvm::real_type{ -0.165126576545454511 }, plssvm::real_type{ 2.5164553141200987 } } } };
+    /// The correct labels.
+    std::vector<label_type> correct_label{ util::get_correct_data_file_labels<label_type>() };
 };
 TYPED_TEST_SUITE(ARFFParseDense, util::label_type_gtest, naming::label_type_to_name);
 
 template <typename T>
 class ARFFParseSparse : public ARFFParse<T>, protected util::temporary_file {
   protected:
+    using label_type = T;
+
     void SetUp() override {
         // create file used in this test fixture by instantiating the template file
         util::instantiate_template_file<label_type>(PLSSVM_TEST_PATH "/data/arff/6x4_sparse_TEMPLATE.arff", this->filename);
     }
 
-    using real_type = plssvm::real_type;
-    using label_type = T;
+    /**
+     * @brief Return the correct sparse data points of the template ARFF file.
+     * @return the correct data points (`[[nodiscard]]`)
+     */
+    [[nodiscard]] const plssvm::aos_matrix<plssvm::real_type> &get_correct_data() const noexcept { return correct_data; }
+    /**
+     * @brief Return the correct labels of the template ARFF file.
+     * @return the correct labels (`[[nodiscard]]`)
+     */
+    [[nodiscard]] const std::vector<label_type> &get_correct_label() const noexcept { return correct_label; }
 
-    const std::vector<std::vector<real_type>> correct_data{
-        { real_type{ 0.0 }, real_type{ 0.0 }, real_type{ 0.0 }, real_type{ 0.0 } },
-        { real_type{ 0.0 }, real_type{ 0.51687296029754564 }, real_type{ 0.0 }, real_type{ 0.0 } },
-        { real_type{ 1.01405596624706053 }, real_type{ 0.0 }, real_type{ 0.0 }, real_type{ 0.0 } },
-        { real_type{ 0.60276937379453293 }, real_type{ 0.0 }, real_type{ -0.13086851759108944 }, real_type{ 0.0 } },
-        { real_type{ 0.0 }, real_type{ 0.0 }, real_type{ 0.0 }, real_type{ 0.298499933047586044 } },
-        { real_type{ 0.0 }, real_type{ -1.615267454510097261 }, real_type{ 2.098278675127757651  }, real_type{ 0.0 } }
-    };
-    const std::vector<label_type> correct_label{ util::get_correct_data_file_labels<label_type>() };
+  private:
+    /// The correct sparse data points.
+    plssvm::aos_matrix<plssvm::real_type> correct_data{ { { plssvm::real_type{ 0.0 }, plssvm::real_type{ 0.0 }, plssvm::real_type{ 0.0 }, plssvm::real_type{ 0.0 } },
+                                                          { plssvm::real_type{ 0.0 }, plssvm::real_type{ 0.51687296029754564 }, plssvm::real_type{ 0.0 }, plssvm::real_type{ 0.0 } },
+                                                          { plssvm::real_type{ 1.01405596624706053 }, plssvm::real_type{ 0.0 }, plssvm::real_type{ 0.0 }, plssvm::real_type{ 0.0 } },
+                                                          { plssvm::real_type{ 0.60276937379453293 }, plssvm::real_type{ 0.0 }, plssvm::real_type{ -0.13086851759108944 }, plssvm::real_type{ 0.0 } },
+                                                          { plssvm::real_type{ 0.0 }, plssvm::real_type{ 0.0 }, plssvm::real_type{ 0.0 }, plssvm::real_type{ 0.298499933047586044 } },
+                                                          { plssvm::real_type{ 0.0 }, plssvm::real_type{ -1.615267454510097261 }, plssvm::real_type{ 2.098278675127757651 }, plssvm::real_type{ 0.0 } } } };
+    /// The correct labels.
+    std::vector<label_type> correct_label{ util::get_correct_data_file_labels<label_type>() };
 };
 TYPED_TEST_SUITE(ARFFParseSparse, util::label_type_gtest, naming::label_type_to_name);
 
@@ -249,8 +272,8 @@ TYPED_TEST(ARFFParseDense, read) {
     ASSERT_EQ(num_features, 4);
 
     // check for correct data
-    EXPECT_FLOATING_POINT_MATRIX_NEAR(data, plssvm::aos_matrix<plssvm::real_type>{ this->correct_data });
-    EXPECT_EQ(label, this->correct_label);
+    EXPECT_FLOATING_POINT_MATRIX_NEAR(data, this->get_correct_data());
+    EXPECT_EQ(label, this->get_correct_label());
 }
 TYPED_TEST(ARFFParseSparse, read) {
     using current_label_type = TypeParam;
@@ -265,8 +288,8 @@ TYPED_TEST(ARFFParseSparse, read) {
     ASSERT_EQ(num_features, 4);
 
     // check for correct data
-    EXPECT_FLOATING_POINT_MATRIX_NEAR(data, plssvm::aos_matrix<plssvm::real_type>{ this->correct_data });
-    EXPECT_EQ(label, this->correct_label);
+    EXPECT_FLOATING_POINT_MATRIX_NEAR(data, this->get_correct_data());
+    EXPECT_EQ(label, this->get_correct_label());
 }
 
 TYPED_TEST(ARFFParse, read_without_label) {
@@ -283,12 +306,10 @@ TYPED_TEST(ARFFParse, read_without_label) {
     ASSERT_EQ(num_features, 2);
 
     // check for correct data
-    const std::vector<std::vector<plssvm::real_type>> correct_data{
-        { plssvm::real_type{ 1.5 }, plssvm::real_type{ -2.9 } },
-        { plssvm::real_type{ 0.0 }, plssvm::real_type{ -0.3 } },
-        { plssvm::real_type{ 5.5 }, plssvm::real_type{ 0.0 } }
-    };
-    EXPECT_FLOATING_POINT_MATRIX_NEAR(data, plssvm::aos_matrix<plssvm::real_type>{ correct_data });
+    const plssvm::aos_matrix<plssvm::real_type> correct_data{ { { plssvm::real_type{ 1.5 }, plssvm::real_type{ -2.9 } },
+                                                                { plssvm::real_type{ 0.0 }, plssvm::real_type{ -0.3 } },
+                                                                { plssvm::real_type{ 5.5 }, plssvm::real_type{ 0.0 } } } };
+    EXPECT_FLOATING_POINT_MATRIX_NEAR(data, correct_data);
     EXPECT_TRUE(label.empty());
 }
 
@@ -472,9 +493,6 @@ TYPED_TEST(ARFFWrite, write_with_label) {
     plssvm::detail::io::file_reader reader{ this->filename };
     reader.read_lines('%');
 
-    std::cerr << data << std::endl << std::endl;
-    std::cerr << fmt::format("{}", fmt::join(reader.lines(), "\n")) << std::endl;
-
     // check if the correct number of lines have been read
     ASSERT_EQ(reader.num_lines(), 6 + data.num_rows());  // 6 header lines: @RELATION + 3 features + class + @DATA
     // check the header information
@@ -494,7 +512,7 @@ TYPED_TEST(ARFFWrite, write_with_label) {
             }
         }
         if (!line_found) {
-            GTEST_FAIL() << fmt::format("Couldn't find line '{}' in the output file.", line);
+            FAIL() << fmt::format("Couldn't find line '{}' in the output file.", line);
         }
     }
 }
@@ -528,7 +546,7 @@ TYPED_TEST(ARFFWrite, write_without_label) {
             }
         }
         if (!line_found) {
-            GTEST_FAIL() << fmt::format("Couldn't find line '{}' in the output file.", line);
+            FAIL() << fmt::format("Couldn't find line '{}' in the output file.", line);
         }
     }
 }

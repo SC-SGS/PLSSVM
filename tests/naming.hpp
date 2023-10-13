@@ -212,7 +212,7 @@ class parameter_definition_to_name {
   public:
     template <typename T>
     static std::string GetName(int) {
-        return fmt::format("{}__{}", real_type_to_name::GetName<typename T::real_type>(0), T::value);
+        return fmt::format("{}__{}", label_type_to_name::GetName<typename T::type>(0), T::value);
     }
 };
 
@@ -359,6 +359,30 @@ template <typename T>
 template <typename T>
 [[nodiscard]] inline std::string pretty_print_default_value_relational(const ::testing::TestParamInfo<typename T::ParamType> &param_info) {
     return std::string{ std::get<1>(param_info.param) };
+}
+
+// io/libsvm_model_parsing/utility_functions.cpp -> LIBSVMModelUtilityXvsY
+/**
+ * @brief Generate a test case name for the LIBSVM model parsing utility function `plssvm::detail::io::x_vs_y_to_idx` tests.
+ * @tparam T the test suite type
+ * @param param_info the parameters to aggregate
+ * @return the test case name (`[[nodiscard]]`)
+ */
+template <typename T>
+[[nodiscard]] inline std::string pretty_print_x_vs_y(const ::testing::TestParamInfo<typename T::ParamType> &param_info) {
+    return fmt::format("{}vs{}__WITH__{}__CLASSES__RESULT_IDX__{}", std::get<0>(param_info.param), std::get<1>(param_info.param), std::get<2>(param_info.param), std::get<3>(param_info.param));
+}
+
+// io/libsvm_model_parsing/utility_functions.cpp -> LIBSVMModelUtilityAlphaIdx
+/**
+ * @brief Generate a test case name for the LIBSVM model parsing utility function `plssvm::detail::io::calculate_alpha_idx` tests.
+ * @tparam T the test suite type
+ * @param param_info the parameters to aggregate
+ * @return the test case name (`[[nodiscard]]`)
+ */
+template <typename T>
+[[nodiscard]] inline std::string pretty_print_calc_alpha_idx(const ::testing::TestParamInfo<typename T::ParamType> &param_info) {
+    return fmt::format("{}__AND__{}__WITH__{}__RESULT_IDX__{}", std::get<0>(param_info.param), std::get<1>(param_info.param), std::get<2>(param_info.param), std::get<3>(param_info.param));
 }
 
 }  // namespace naming

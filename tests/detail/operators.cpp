@@ -410,7 +410,7 @@ TYPED_TEST(VectorOperationsDeathTest, operator_squared_euclidean_dist) {
 template <typename T>
 class MatrixOperations : public ::testing::Test {
   protected:
-    using fixture_real_type = typename T::real_type;
+    using fixture_real_type = typename T::type;
     static constexpr plssvm::layout_type fixture_layout = T::value;
 
     void SetUp() override {
@@ -463,7 +463,7 @@ TYPED_TEST_SUITE(MatrixOperations, util::real_type_layout_type_gtest, naming::pa
 template <typename T>
 class MatrixOperationsDeathTest : public ::testing::Test {
   protected:
-    using fixture_real_type = typename T::real_type;
+    using fixture_real_type = typename T::type;
     static constexpr plssvm::layout_type fixture_layout = T::value;
 
     void SetUp() override {

@@ -13,11 +13,12 @@
 #define PLSSVM_TESTS_TYPES_TO_TEST_HPP_
 #pragma once
 
+#include "plssvm/classification_types.hpp"   // plssvm::classification_type
 #include "plssvm/detail/type_list.hpp"       // plssvm::detail::{real_type_list, label_type_list, real_type_label_type_combination_list}
 #include "plssvm/kernel_function_types.hpp"  // plssvm::kernel_function_type
 #include "plssvm/matrix.hpp"                 // plssvm::layout_type
 
-#include "gtest/gtest.h"                     // ::testing::Types
+#include "gtest/gtest.h"  // ::testing::Types
 
 namespace util {
 
@@ -53,13 +54,13 @@ using label_type_gtest = detail::tuple_to_gtest_types_t<plssvm::detail::label_ty
 using real_type_label_type_combination_gtest = detail::tuple_to_gtest_types_t<plssvm::detail::real_type_label_type_combination_list>;
 
 /**
- * @brief Encapsulates a combination of a used `real_type` (`float` or `double`) and a specific non-type template value (e.g., `plssvm::kernel_function_type` or `plssvm::layout_type`).
- * @tparam T the used `real_type`
+ * @brief Encapsulates a combination of a used type and a specific non-type template value (e.g., `plssvm::kernel_function_type` or `plssvm::layout_type`).
+ * @tparam T the used type
  * @tparam non_type a non-type template value
  */
 template <typename T, auto non_type>
 struct parameter_definition {
-    using real_type = T;
+    using type = T;
     static constexpr decltype(auto) value = non_type;
 };
 
@@ -78,6 +79,41 @@ using real_type_layout_type_gtest = ::testing::Types<
     parameter_definition<float, plssvm::layout_type::soa>,
     parameter_definition<double, plssvm::layout_type::aos>,
     parameter_definition<double, plssvm::layout_type::soa>>;
+
+// TODO: BETTER
+
+/// A type list of all supported label_type and classification_type combinations.
+using label_type_classification_type_gtest = ::testing::Types<
+    parameter_definition<bool, plssvm::classification_type::oaa>,
+    parameter_definition<bool, plssvm::classification_type::oao>,
+    parameter_definition<char, plssvm::classification_type::oaa>,
+    parameter_definition<char, plssvm::classification_type::oao>,
+    parameter_definition<signed char, plssvm::classification_type::oaa>,
+    parameter_definition<signed char, plssvm::classification_type::oao>,
+    parameter_definition<unsigned char, plssvm::classification_type::oaa>,
+    parameter_definition<unsigned char, plssvm::classification_type::oao>,
+    parameter_definition<short, plssvm::classification_type::oaa>,
+    parameter_definition<short, plssvm::classification_type::oao>,
+    parameter_definition<unsigned short, plssvm::classification_type::oaa>,
+    parameter_definition<unsigned short, plssvm::classification_type::oao>,
+    parameter_definition<int, plssvm::classification_type::oaa>,
+    parameter_definition<int, plssvm::classification_type::oao>,
+    parameter_definition<unsigned int, plssvm::classification_type::oaa>,
+    parameter_definition<unsigned int, plssvm::classification_type::oao>,
+    parameter_definition<long, plssvm::classification_type::oaa>,
+    parameter_definition<long, plssvm::classification_type::oao>,
+    parameter_definition<unsigned long, plssvm::classification_type::oaa>,
+    parameter_definition<unsigned long, plssvm::classification_type::oao>,
+    parameter_definition<long long, plssvm::classification_type::oaa>,
+    parameter_definition<long long, plssvm::classification_type::oao>,
+    parameter_definition<unsigned long long, plssvm::classification_type::oaa>,
+    parameter_definition<unsigned long long, plssvm::classification_type::oao>,
+    parameter_definition<float, plssvm::classification_type::oaa>,
+    parameter_definition<float, plssvm::classification_type::oao>,
+    parameter_definition<double, plssvm::classification_type::oaa>,
+    parameter_definition<double, plssvm::classification_type::oao>,
+    parameter_definition<std::string, plssvm::classification_type::oaa>,
+    parameter_definition<std::string, plssvm::classification_type::oao>>;
 
 }  // namespace util
 

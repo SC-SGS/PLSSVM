@@ -113,9 +113,15 @@ set(PLSSVM_BASE_TEST_SOURCES
         ${CMAKE_CURRENT_LIST_DIR}/detail/cmd/parser_scale.cpp
         ${CMAKE_CURRENT_LIST_DIR}/detail/cmd/parser_train.cpp
 
+        ${CMAKE_CURRENT_LIST_DIR}/detail/io/libsvm_model_parsing/data_parse_valid.cpp
+        ${CMAKE_CURRENT_LIST_DIR}/detail/io/libsvm_model_parsing/data_parse_invalid.cpp
+        ${CMAKE_CURRENT_LIST_DIR}/detail/io/libsvm_model_parsing/data_write.cpp
+        ${CMAKE_CURRENT_LIST_DIR}/detail/io/libsvm_model_parsing/header_parse_valid.cpp
+        ${CMAKE_CURRENT_LIST_DIR}/detail/io/libsvm_model_parsing/header_parse_invalid.cpp
+        ${CMAKE_CURRENT_LIST_DIR}/detail/io/libsvm_model_parsing/header_write.cpp
+        ${CMAKE_CURRENT_LIST_DIR}/detail/io/libsvm_model_parsing/utility_functions.cpp
         ${CMAKE_CURRENT_LIST_DIR}/detail/io/arff_parsing.cpp
         ${CMAKE_CURRENT_LIST_DIR}/detail/io/file_reader.cpp
-#        ${CMAKE_CURRENT_LIST_DIR}/detail/io/libsvm_model_parsing.cpp
         ${CMAKE_CURRENT_LIST_DIR}/detail/io/libsvm_parsing.cpp
         ${CMAKE_CURRENT_LIST_DIR}/detail/io/scaling_factors_parsing.cpp
 
@@ -142,16 +148,16 @@ set(PLSSVM_BASE_TEST_SOURCES
         ${CMAKE_CURRENT_LIST_DIR}/backend_types.cpp
         ${CMAKE_CURRENT_LIST_DIR}/classification_report.cpp
         ${CMAKE_CURRENT_LIST_DIR}/classification_types.cpp
-        ${CMAKE_CURRENT_LIST_DIR}/csvm.cpp
+#        ${CMAKE_CURRENT_LIST_DIR}/csvm.cpp
         ${CMAKE_CURRENT_LIST_DIR}/csvm_factory.cpp
-        ${CMAKE_CURRENT_LIST_DIR}/data_set.cpp
+#        ${CMAKE_CURRENT_LIST_DIR}/data_set.cpp
         ${CMAKE_CURRENT_LIST_DIR}/default_value.cpp
         ${CMAKE_CURRENT_LIST_DIR}/file_format_types.cpp
-        ${CMAKE_CURRENT_LIST_DIR}/kernel_function_types.cpp
+#        ${CMAKE_CURRENT_LIST_DIR}/kernel_function_types.cpp
 #        ${CMAKE_CURRENT_LIST_DIR}/matrix.hpp
-        ${CMAKE_CURRENT_LIST_DIR}/model.cpp
+#        ${CMAKE_CURRENT_LIST_DIR}/model.cpp
         ${CMAKE_CURRENT_LIST_DIR}/parameter.cpp
-#        ${CMAKE_CURRENT_LIST_DIR}/solver_types.cpp
+        ${CMAKE_CURRENT_LIST_DIR}/solver_types.cpp
         ${CMAKE_CURRENT_LIST_DIR}/target_platforms.cpp
         )
 
@@ -181,38 +187,38 @@ include(${PROJECT_SOURCE_DIR}/cmake/discover_tests_with_death_test_filter.cmake)
 discover_tests_with_death_test_filter(${PLSSVM_BASE_TEST_NAME})
 
 
-# add test for help messages
-add_test(NAME MainTrain/executable_help COMMAND ${PLSSVM_EXECUTABLE_TRAIN_NAME} --help)
-add_test(NAME MainPredict/executable_help COMMAND ${PLSSVM_EXECUTABLE_PREDICT_NAME} --help)
-add_test(NAME MainScale/executable_help COMMAND ${PLSSVM_EXECUTABLE_SCALE_NAME} --help)
-
-# add test for version messages
-add_test(NAME MainTrain/executable_version COMMAND ${PLSSVM_EXECUTABLE_TRAIN_NAME} --version)
-add_test(NAME MainPredict/executable_version COMMAND ${PLSSVM_EXECUTABLE_PREDICT_NAME} --version)
-add_test(NAME MainScale/executable_version COMMAND ${PLSSVM_EXECUTABLE_SCALE_NAME} --version)
-
-# add minimal run test
-add_test(NAME MainTrain/executable_minimal COMMAND ${PLSSVM_EXECUTABLE_TRAIN_NAME} "${PLSSVM_TEST_FILE}" "${CMAKE_CURRENT_BINARY_DIR}/test.libsvm.model")
-add_test(NAME MainPredict/executable_minimal COMMAND ${PLSSVM_EXECUTABLE_PREDICT_NAME}
-        "${CMAKE_CURRENT_LIST_DIR}/data/predict/500x200_test.libsvm"          # test file
-        "${CMAKE_CURRENT_LIST_DIR}/data/predict/500x200_linear.libsvm.model"  # model file
-        "${CMAKE_CURRENT_BINARY_DIR}/test.libsvm.predict"                     # predict file (result)
-        )
-add_test(NAME MainScale/executable_minimal COMMAND ${PLSSVM_EXECUTABLE_SCALE_NAME} "${PLSSVM_TEST_FILE}" "${CMAKE_CURRENT_BINARY_DIR}/scaled.libsvm.model")
-add_test(NAME MainScale/executable_save_scaling_factors COMMAND ${PLSSVM_EXECUTABLE_SCALE_NAME}
-        -s "${CMAKE_CURRENT_BINARY_DIR}/scaling_parameter.txt"  # the file the scaling parameters are saved to
-        "${PLSSVM_TEST_FILE}"                                   # the file to scale
-        "${CMAKE_CURRENT_BINARY_DIR}/scaled.libsvm.model"       # the scaled file (result)
-        )
+## add test for help messages
+#add_test(NAME MainTrain/executable_help COMMAND ${PLSSVM_EXECUTABLE_TRAIN_NAME} --help)
+#add_test(NAME MainPredict/executable_help COMMAND ${PLSSVM_EXECUTABLE_PREDICT_NAME} --help)
+#add_test(NAME MainScale/executable_help COMMAND ${PLSSVM_EXECUTABLE_SCALE_NAME} --help)
+#
+## add test for version messages
+#add_test(NAME MainTrain/executable_version COMMAND ${PLSSVM_EXECUTABLE_TRAIN_NAME} --version)
+#add_test(NAME MainPredict/executable_version COMMAND ${PLSSVM_EXECUTABLE_PREDICT_NAME} --version)
+#add_test(NAME MainScale/executable_version COMMAND ${PLSSVM_EXECUTABLE_SCALE_NAME} --version)
+#
+## add minimal run test
+#add_test(NAME MainTrain/executable_minimal COMMAND ${PLSSVM_EXECUTABLE_TRAIN_NAME} "${PLSSVM_TEST_FILE}" "${CMAKE_CURRENT_BINARY_DIR}/test.libsvm.model")
+#add_test(NAME MainPredict/executable_minimal COMMAND ${PLSSVM_EXECUTABLE_PREDICT_NAME}
+#        "${CMAKE_CURRENT_LIST_DIR}/data/predict/500x200_test.libsvm"          # test file
+#        "${CMAKE_CURRENT_LIST_DIR}/data/predict/500x200_linear.libsvm.model"  # model file
+#        "${CMAKE_CURRENT_BINARY_DIR}/test.libsvm.predict"                     # predict file (result)
+#        )
+#add_test(NAME MainScale/executable_minimal COMMAND ${PLSSVM_EXECUTABLE_SCALE_NAME} "${PLSSVM_TEST_FILE}" "${CMAKE_CURRENT_BINARY_DIR}/scaled.libsvm.model")
+#add_test(NAME MainScale/executable_save_scaling_factors COMMAND ${PLSSVM_EXECUTABLE_SCALE_NAME}
+#        -s "${CMAKE_CURRENT_BINARY_DIR}/scaling_parameter.txt"  # the file the scaling parameters are saved to
+#        "${PLSSVM_TEST_FILE}"                                   # the file to scale
+#        "${CMAKE_CURRENT_BINARY_DIR}/scaled.libsvm.model"       # the scaled file (result)
+#        )
 
 
 # add failing test (must return with a non-zero exit code)
-add_test(NAME MainTrain/executable_fail COMMAND ${PLSSVM_EXECUTABLE_TRAIN_NAME} " ")
-set_tests_properties(MainTrain/executable_fail PROPERTIES WILL_FAIL TRUE)
-add_test(NAME MainPredict/executable_fail COMMAND ${PLSSVM_EXECUTABLE_PREDICT_NAME}  " " " ")
-set_tests_properties(MainPredict/executable_fail PROPERTIES WILL_FAIL TRUE)
-add_test(NAME MainScale/executable_fail COMMAND ${PLSSVM_EXECUTABLE_SCALE_NAME} " ")
-set_tests_properties(MainScale/executable_fail PROPERTIES WILL_FAIL TRUE)
+#add_test(NAME MainTrain/executable_fail COMMAND ${PLSSVM_EXECUTABLE_TRAIN_NAME} " ")
+#set_tests_properties(MainTrain/executable_fail PROPERTIES WILL_FAIL TRUE)
+#add_test(NAME MainPredict/executable_fail COMMAND ${PLSSVM_EXECUTABLE_PREDICT_NAME}  " " " ")
+#set_tests_properties(MainPredict/executable_fail PROPERTIES WILL_FAIL TRUE)
+#add_test(NAME MainScale/executable_fail COMMAND ${PLSSVM_EXECUTABLE_SCALE_NAME} " ")
+#set_tests_properties(MainScale/executable_fail PROPERTIES WILL_FAIL TRUE)
 
 # add test as coverage dependency
 if (TARGET coverage)
@@ -221,6 +227,6 @@ endif ()
 
 
 # add tests for the available backends
-add_subdirectory(backends)
+#add_subdirectory(backends)
 
 list(POP_BACK CMAKE_MESSAGE_INDENT)

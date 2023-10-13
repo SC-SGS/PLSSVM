@@ -15,17 +15,17 @@
 #include "plssvm/detail/io/file_reader.hpp"  // plssvm::detail::io::file_reader
 #include "plssvm/exceptions/exceptions.hpp"  // plssvm::invalid_file_format_exception
 
-#include "../../custom_test_macros.hpp"      // EXPECT_FLOATING_POINT_EQ, EXPECT_THROW_WHAT
-#include "../../utility.hpp"                 // util::temporary_file
+#include "../../custom_test_macros.hpp"  // EXPECT_FLOATING_POINT_EQ, EXPECT_THROW_WHAT
+#include "../../utility.hpp"             // util::temporary_file
 
-#include "gmock/gmock-matchers.h"            // ::testing::HasSubstr
-#include "gtest/gtest.h"                     // TEST, TEST_F, EXPECT_EQ, EXPECT_TRUE, EXPECT_DEATH, ASSERT_EQ, ::testing::Test
+#include "gmock/gmock-matchers.h"  // ::testing::HasSubstr
+#include "gtest/gtest.h"           // TEST, TEST_F, EXPECT_EQ, EXPECT_TRUE, EXPECT_DEATH, ASSERT_EQ, ::testing::Test
 
-#include <cstddef>                           // std::size_t
-#include <stdexcept>                         // std::runtime_error
-#include <tuple>                             // std::ignore
-#include <utility>                           // std::pair
-#include <vector>                            // std::vector
+#include <cstddef>    // std::size_t
+#include <stdexcept>  // std::runtime_error
+#include <tuple>      // std::ignore
+#include <utility>    // std::pair
+#include <vector>     // std::vector
 
 // typedef nested struct
 using factors_type = plssvm::data_set<>::scaling::factors;
@@ -180,7 +180,7 @@ TEST_F(ScalingFactorsWrite, write) {
     EXPECT_EQ(reader.line(1), "-2 2");
     // the following lines contain the scaling factors for each feature; note the one-based indexing
     for (std::size_t i = 0; i < scaling_factors.size(); ++i) {
-        EXPECT_EQ(reader.line(i + 2), fmt::format("{} {} {}", scaling_factors[i].feature + 1, scaling_factors[i].lower, scaling_factors[i].upper));
+        EXPECT_EQ(reader.line(i + 2), fmt::format("{} {:.10e} {:.10e}", scaling_factors[i].feature + 1, scaling_factors[i].lower, scaling_factors[i].upper));
     }
 }
 TEST_F(ScalingFactorsWrite, write_empty_scaling_factors) {

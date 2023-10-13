@@ -275,17 +275,15 @@ template <typename T>
     // clang-format on
 }
 
-namespace detail {
-
 /**
- * @brief Calculate the label distribution necessary for LIBSVM's model file `num_Sv` field.
+ * @brief Calculate the label distribution necessary for LIBSVM's model file `num_sv` field.
  * @details Example: distinct labels = [ -1, 1 ] and num_labels = 5 would return [ 3, 2 ]
  * @tparam T the type of the labels
  * @param num_labels the total number of labels used in this distribution
  * @return the label distribution (`[[nodiscard]]`)
  */
 template <typename T>
-[[nodiscard]] std::vector<std::size_t> calculate_model_file_label_distribution(const std::size_t num_labels) {
+[[nodiscard]] std::vector<std::size_t> get_correct_model_file_num_sv_per_class(const std::size_t num_labels = 6) {
     // get the distinct labels based on the current label type
     const std::vector<T> labels = util::get_distinct_label<T>();
 
@@ -298,8 +296,6 @@ template <typename T>
     return distribution;
 }
 
-}  // namespace detail
-
 /**
  * @brief Get the label vector that is described in the model template files.
  * @details Works according to the `instantiate_template_file` function.
@@ -307,22 +303,20 @@ template <typename T>
  * @return the correct label vector with respect to the model template files (`[[nodiscard]]``)
  */
 template <typename T>
-[[nodiscard]] inline std::pair<std::vector<T>, std::vector<std::size_t>> get_correct_model_file_labels() {
+[[nodiscard]] inline std::vector<T> get_correct_model_file_labels() {
     // get the distinct labels based on the current label type
     const std::vector<T> labels = util::get_distinct_label<T>();
     // get the label distribution
-    constexpr std::size_t num_labels = 6;
-    const std::vector<std::size_t> num_sv = detail::calculate_model_file_label_distribution<T>(num_labels);
+    const std::vector<std::size_t> num_sv = get_correct_model_file_num_sv_per_class<T>();
 
     std::vector<T> res;
-    res.reserve(num_labels);
     for (std::size_t i = 0; i < labels.size(); ++i) {
         for (std::size_t j = 0; j < num_sv[i]; ++j) {
             res.emplace_back(labels[i]);
         }
     }
 
-    return std::make_pair(res, num_sv);
+    return res;
 }
 
 /**

@@ -17,7 +17,7 @@
 #include "types_to_test.hpp"       // util::real_type_label_type_combination_gtest
 #include "utility.hpp"             // util::{temporary_file, redirect_output, instantiate_template_file, get_distinct_label, get_correct_model_file_labels}
 
-#include "gtest/gtest.h"           // EXPECT_EQ, EXPECT_TRUE, ASSERT_GT, GTEST_FAIL, TYPED_TEST, TYPED_TEST_SUITE, TEST_P, INSTANTIATE_TEST_SUITE_P
+#include "gtest/gtest.h"           // EXPECT_EQ, EXPECT_TRUE, ASSERT_GT, FAIL, TYPED_TEST, TYPED_TEST_SUITE, TEST_P, INSTANTIATE_TEST_SUITE_P
                                    // ::testing::{StaticAssertTypeEq, Test, TestWithParam, Values}
 
 #include <cstddef>                 // std::size_t
@@ -335,7 +335,7 @@ TEST_P(ModelSave, save) {
         }
         // NO line matches the pattern -> test failed
         if (!found_matching_line) {
-            GTEST_FAIL() << fmt::format(R"(Can't find a line matching the regex pattern: "{}".)", pattern);
+            FAIL() << fmt::format(R"(Can't find a line matching the regex pattern: "{}".)", pattern);
         }
     }
     // only support vectors should be left -> check the remaining lines if they match the correct pattern
