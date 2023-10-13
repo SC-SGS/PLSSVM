@@ -428,44 +428,14 @@ template <typename matrix_type>
 /**
  * @brief Scale the @p data set to the range [@p lower, @p upper].
  * @tparam T the type of the data that should be scaled (must be a floating point type)
+ * @tparam layout the memory layout used for the plssvm::matrix @p data
  * @param[in] data the data to scale
  * @param[in] lower the lower bound to which the data should be scaled
  * @param[in] upper the upper bound to which the data should be scaled
  * @return a pair consisting of: [the data set scaled to [@p lower, @p upper], the scaling factors used to scale the data] (`[[nodiscard]]`)
  */
-template <typename T>
-[[nodiscard]] inline std::pair<std::vector<std::vector<T>>, std::vector<std::tuple<std::size_t, T, T>>> scale(const std::vector<std::vector<T>> &data, const T lower, const T upper) {
-    static_assert(std::is_floating_point_v<T>, "Scaling a data set only makes sense for values with a floating point type!");
-
-    std::vector<std::tuple<std::size_t, T, T>> factors(data.front().size(), std::make_tuple(0, std::numeric_limits<T>::max(), std::numeric_limits<T>::lowest()));
-    // calculate the scaling factors
-    for (std::size_t i = 0; i < factors.size(); ++i) {
-        std::get<0>(factors[i]) = i;
-        for (std::size_t j = 0; j < data.size(); ++j) {
-            std::get<1>(factors[i]) = std::min(std::get<1>(factors[i]), data[j][i]);
-            std::get<2>(factors[i]) = std::max(std::get<2>(factors[i]), data[j][i]);
-        }
-    }
-    // scale the data set
-    std::vector<std::vector<T>> ret = data;
-    for (std::size_t i = 0; i < ret.size(); ++i) {
-        for (std::size_t j = 0; j < ret.front().size(); ++j) {
-            ret[i][j] = lower + (upper - lower) * (data[i][j] - std::get<1>(factors[j])) / (std::get<2>(factors[j]) - std::get<1>(factors[j]));
-        }
-    }
-    return std::make_pair(std::move(ret), std::move(factors));
-}
-
-/**
- * @brief Scale the @p data set to the range [@p lower, @p upper].
- * @tparam T the type of the data that should be scaled (must be a floating point type)
- * @param[in] data the data to scale
- * @param[in] lower the lower bound to which the data should be scaled
- * @param[in] upper the upper bound to which the data should be scaled
- * @return a pair consisting of: [the data set scaled to [@p lower, @p upper], the scaling factors used to scale the data] (`[[nodiscard]]`)
- */
-template <typename T>
-[[nodiscard]] inline std::pair<plssvm::aos_matrix<T>, std::vector<std::tuple<std::size_t, T, T>>> scale(const plssvm::aos_matrix<T> &data, const T lower, const T upper) {
+template <typename T, plssvm::layout_type layout>
+[[nodiscard]] inline std::pair<plssvm::matrix<T, layout>, std::vector<std::tuple<std::size_t, T, T>>> scale(const plssvm::matrix<T, layout> &data, const T lower, const T upper) {
     static_assert(std::is_floating_point_v<T>, "Scaling a data set only makes sense for values with a floating point type!");
 
     std::vector<std::tuple<std::size_t, T, T>> factors(data.num_cols(), std::make_tuple(0, std::numeric_limits<T>::max(), std::numeric_limits<T>::lowest()));
@@ -478,7 +448,7 @@ template <typename T>
         }
     }
     // scale the data set
-    plssvm::aos_matrix<T> ret = data;
+    plssvm::matrix<T, layout> ret = data;
     for (std::size_t i = 0; i < ret.num_rows(); ++i) {
         for (std::size_t j = 0; j < ret.num_cols(); ++j) {
             ret(i, j) = lower + (upper - lower) * (data(i, j) - std::get<1>(factors[j])) / (std::get<2>(factors[j]) - std::get<1>(factors[j]));

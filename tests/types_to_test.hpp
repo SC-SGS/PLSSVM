@@ -115,6 +115,39 @@ using label_type_classification_type_gtest = ::testing::Types<
     parameter_definition<std::string, plssvm::classification_type::oaa>,
     parameter_definition<std::string, plssvm::classification_type::oao>>;
 
+/// A type list of all supported label_type and layout_type combinations.
+using label_type_layout_type_gtest = ::testing::Types<
+    parameter_definition<bool, plssvm::layout_type::aos>,
+    parameter_definition<bool, plssvm::layout_type::soa>,
+    parameter_definition<char, plssvm::layout_type::aos>,
+    parameter_definition<char, plssvm::layout_type::soa>,
+    parameter_definition<signed char, plssvm::layout_type::aos>,
+    parameter_definition<signed char, plssvm::layout_type::soa>,
+    parameter_definition<unsigned char, plssvm::layout_type::aos>,
+    parameter_definition<unsigned char, plssvm::layout_type::soa>,
+    parameter_definition<short, plssvm::layout_type::aos>,
+    parameter_definition<short, plssvm::layout_type::soa>,
+    parameter_definition<unsigned short, plssvm::layout_type::aos>,
+    parameter_definition<unsigned short, plssvm::layout_type::soa>,
+    parameter_definition<int, plssvm::layout_type::aos>,
+    parameter_definition<int, plssvm::layout_type::soa>,
+    parameter_definition<unsigned int, plssvm::layout_type::aos>,
+    parameter_definition<unsigned int, plssvm::layout_type::soa>,
+    parameter_definition<long, plssvm::layout_type::aos>,
+    parameter_definition<long, plssvm::layout_type::soa>,
+    parameter_definition<unsigned long, plssvm::layout_type::aos>,
+    parameter_definition<unsigned long, plssvm::layout_type::soa>,
+    parameter_definition<long long, plssvm::layout_type::aos>,
+    parameter_definition<long long, plssvm::layout_type::soa>,
+    parameter_definition<unsigned long long, plssvm::layout_type::aos>,
+    parameter_definition<unsigned long long, plssvm::layout_type::soa>,
+    parameter_definition<float, plssvm::layout_type::aos>,
+    parameter_definition<float, plssvm::layout_type::soa>,
+    parameter_definition<double, plssvm::layout_type::aos>,
+    parameter_definition<double, plssvm::layout_type::soa>,
+    parameter_definition<std::string, plssvm::layout_type::aos>,
+    parameter_definition<std::string, plssvm::layout_type::soa>>;
+
 }  // namespace util
 
 #endif  // PLSSVM_TESTS_TYPES_TO_TEST_HPP_
