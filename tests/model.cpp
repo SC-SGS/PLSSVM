@@ -23,7 +23,7 @@
 #include "utility.hpp"             // util::{redirect_output, temporary_file, instantiate_template_file, get_num_classes, get_distinct_label, get_correct_model_file_labels}
 
 #include "gtest/gtest-matchers.h"  // ::testing::HasSubstr
-#include "gtest/gtest.h"           // TYPED_TEST, TYPED_TEST_SUITE, EXPECT_EQ, EXPECT_TRUE, EXPECT_DATH, ASSERT_EQ, ASSERT_GT, FAIL,
+#include "gtest/gtest.h"           // TYPED_TEST, TYPED_TEST_SUITE, EXPECT_EQ, EXPECT_TRUE, EXPECT_DEATH, ASSERT_EQ, ASSERT_GT, FAIL,
                                    // ::testing::{Test, StaticAssertTypeEq}
 
 #include <array>        // std::array
