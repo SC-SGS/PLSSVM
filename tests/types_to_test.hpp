@@ -64,6 +64,8 @@ struct parameter_definition {
     static constexpr decltype(auto) value = non_type;
 };
 
+// TODO: BETTER: see https://godbolt.org/z/PhbY1ozrf for a C++20 solution
+
 /// A type list of all supported real_type and kernel_function_type combinations.
 using real_type_kernel_function_gtest = ::testing::Types<
     parameter_definition<float, plssvm::kernel_function_type::linear>,
@@ -79,8 +81,6 @@ using real_type_layout_type_gtest = ::testing::Types<
     parameter_definition<float, plssvm::layout_type::soa>,
     parameter_definition<double, plssvm::layout_type::aos>,
     parameter_definition<double, plssvm::layout_type::soa>>;
-
-// TODO: BETTER
 
 /// A type list of all supported label_type and classification_type combinations.
 using label_type_classification_type_gtest = ::testing::Types<
