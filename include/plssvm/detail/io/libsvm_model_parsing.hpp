@@ -368,6 +368,7 @@ template <typename label_type>
  * @param[in] skipped_lines the number of lines that should be skipped at the beginning
  * @note The features must be provided with one-based indices!
  * @throws plssvm::invalid_file_format_exception if no features could be found (may indicate an empty file)
+ * @throws plssvm::invalid_file_format_exception if the provided total @p num_sv_per_class is greater or less than the number of read support vectors
  * @throws plssvm::invalid_file_format_exception if more or less weights than @p num_classes could be found
  * @throws plssvm::invalid_file_format_exception if a weight couldn't be converted to the provided @p real_type
  * @throws plssvm::invalid_file_format_exception if a feature index couldn't be converted to `unsigned long`
@@ -380,7 +381,6 @@ template <typename label_type>
 [[nodiscard]] inline std::tuple<std::size_t, std::size_t, aos_matrix<real_type>, std::vector<aos_matrix<real_type>>, classification_type> parse_libsvm_model_data(const file_reader &reader, const std::vector<std::size_t> &num_sv_per_class, const std::size_t skipped_lines) {
     PLSSVM_ASSERT(reader.is_open(), "The file_reader is currently not associated with a file!");
     PLSSVM_ASSERT(num_sv_per_class.size() > 1, "At least two classes must be present!");
-    // sanity check: can't skip more lines than are present
     PLSSVM_ASSERT(skipped_lines <= reader.num_lines(), "Tried to skipp {} lines, but only {} are present!", skipped_lines, reader.num_lines());
 
     // parse sizes
@@ -390,6 +390,10 @@ template <typename label_type>
     // no features were parsed -> invalid file
     if (num_features == 0) {
         throw invalid_file_format_exception{ fmt::format("Can't parse file: no data points are given!") };
+    }
+    // mismatching number of data points and num_sv_per_class
+    if (std::reduce(num_sv_per_class.cbegin(), num_sv_per_class.cend()) != num_data_points) {
+        throw invalid_file_format_exception{ fmt::format("Found {} support vectors, but it should be {}!", num_data_points, std::reduce(num_sv_per_class.cbegin(), num_sv_per_class.cend())) };
     }
 
     // create vector containing the data and label

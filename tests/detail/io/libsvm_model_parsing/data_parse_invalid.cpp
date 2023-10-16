@@ -157,6 +157,24 @@ TYPED_TEST(LIBSVMModelDataParseInvalid, too_many_num_sv_per_class) {
                       plssvm::invalid_file_format_exception,
                       "Can't parse file: needed at least 3 alpha values, but fewer (2) were provided!");
 }
+TYPED_TEST(LIBSVMModelDataParseInvalid, too_few_sv_according_to_header) {
+    // parse the LIBSVM file
+    const std::string filename = PLSSVM_TEST_PATH "/data/model/invalid/too_few_sv_according_to_header.libsvm.model";
+    plssvm::detail::io::file_reader reader{ filename };
+    reader.read_lines('#');
+    EXPECT_THROW_WHAT(std::ignore = (plssvm::detail::io::parse_libsvm_model_data(reader, std::vector<std::size_t>{ 3, 3 }, 8)),
+                      plssvm::invalid_file_format_exception,
+                      "Found 5 support vectors, but it should be 6!");
+}
+TYPED_TEST(LIBSVMModelDataParseInvalid, too_many_sv_according_to_header) {
+    // parse the LIBSVM file
+    const std::string filename = PLSSVM_TEST_PATH "/data/model/invalid/too_many_sv_according_to_header.libsvm.model";
+    plssvm::detail::io::file_reader reader{ filename };
+    reader.read_lines('#');
+    EXPECT_THROW_WHAT(std::ignore = (plssvm::detail::io::parse_libsvm_model_data(reader, std::vector<std::size_t>{ 3, 3 }, 8)),
+                      plssvm::invalid_file_format_exception,
+                      "Found 7 support vectors, but it should be 6!");
+}
 
 template <typename T>
 class LIBSVMModelDataParseInvalidDeathTest : public LIBSVMModelDataParseInvalid<T> {};
