@@ -24,17 +24,17 @@
 #include "plssvm/matrix.hpp"                          // plssvm::aos_matrix
 #include "plssvm/parameter.hpp"                       // plssvm::parameter
 
-#include "fmt/chrono.h"                               // format std::chrono types using fmt
-#include "fmt/core.h"                                 // fmt::format
+#include "fmt/chrono.h"  // format std::chrono types using fmt
+#include "fmt/core.h"    // fmt::format
 
-#include <chrono>                                     // std::chrono::{time_point, steady_clock, duration_cast, milliseconds}
-#include <cstddef>                                    // std::size_t
-#include <iostream>                                   // std::cout, std::endl
-#include <memory>                                     // std::shared_ptr, std::make_shared
-#include <string>                                     // std::string
-#include <tuple>                                      // std::tie
-#include <utility>                                    // std::move
-#include <vector>                                     // std::vector
+#include <chrono>    // std::chrono::{time_point, steady_clock, duration_cast, milliseconds}
+#include <cstddef>   // std::size_t
+#include <iostream>  // std::cout, std::endl
+#include <memory>    // std::shared_ptr, std::make_shared
+#include <string>    // std::string
+#include <tuple>     // std::tie
+#include <utility>   // std::move
+#include <vector>    // std::vector
 
 namespace plssvm {
 
@@ -131,7 +131,7 @@ class model {
      * @return the bias `rho` (`[[nodiscard]]`)
      */
     [[nodiscard]] const std::vector<real_type> &rho() const noexcept {
-        PLSSVM_ASSERT(alpha_ptr_ != nullptr, "The rho_ptr may never be a nullptr!");
+        PLSSVM_ASSERT(rho_ptr_ != nullptr, "The rho_ptr may never be a nullptr!");
         return *rho_ptr_;
     }
     /**
@@ -207,26 +207,36 @@ model<U>::model(const std::string &filename) {
     std::size_t num_header_lines{};
     std::tie(params_, *rho_ptr_, labels, unique_labels, num_sv_per_class, num_header_lines) = detail::io::parse_libsvm_model_header<label_type>(reader.lines());
 
-    // fill indices -> support vectors are sorted!
-    indices_ptr_ = std::make_shared<std::vector<std::vector<std::size_t>>>(unique_labels.size());
-    std::size_t running_idx{ 0 };
-    for (std::size_t i = 0; i < num_sv_per_class.size(); ++i) {
-        (*indices_ptr_)[i] = std::vector<std::size_t>(num_sv_per_class[i]);
-        std::iota((*indices_ptr_)[i].begin(), (*indices_ptr_)[i].end(), running_idx);
-        running_idx += num_sv_per_class[i];
-    }
-
     // create empty support vectors and alpha vector
     aos_matrix<real_type> support_vectors{};
 
     // parse libsvm model data
     std::tie(num_support_vectors_, num_features_, support_vectors, *alpha_ptr_, classification_strategy_) = detail::io::parse_libsvm_model_data(reader, num_sv_per_class, num_header_lines);
 
+    switch (classification_strategy_) {
+        case classification_type::oaa:
+            // empty index set for the OAA classification
+            indices_ptr_ = std::make_shared<std::vector<std::vector<std::size_t>>>();
+            break;
+        case classification_type::oao: {
+            // fill indices -> support vectors are sorted!
+            indices_ptr_ = std::make_shared<std::vector<std::vector<std::size_t>>>(unique_labels.size());
+            std::size_t running_idx{ 0 };
+            for (std::size_t i = 0; i < num_sv_per_class.size(); ++i) {
+                (*indices_ptr_)[i] = std::vector<std::size_t>(num_sv_per_class[i]);
+                std::iota((*indices_ptr_)[i].begin(), (*indices_ptr_)[i].end(), running_idx);
+                running_idx += num_sv_per_class[i];
+            }
+        } break;
+    }
+
     // create data set
     PLSSVM_ASSERT(support_vectors.num_rows() == labels.size(), "Number of labels ({}) must match the number of data points ({})!", labels.size(), support_vectors.num_rows());
     const verbosity_level old_verbosity = verbosity;
     verbosity = verbosity_level::quiet;
     data_ = data_set<label_type>{};
+    data_.num_data_points_ = support_vectors.num_rows();
+    data_.num_features_ = support_vectors.num_cols();
     (*data_.data_ptr_) = std::move(support_vectors);
     data_.labels_ptr_ = std::make_shared<typename decltype(data_.labels_ptr_)::element_type>(std::move(labels));  // prevent multiple calls to "create_mapping"
     data_.create_mapping(unique_labels);
@@ -239,7 +249,7 @@ model<U>::model(const std::string &filename) {
                 detail::tracking_entry{ "model_read", "num_features", num_features_ },
                 detail::tracking_entry{ "model_read", "num_classes", this->num_classes() },
                 classification_type_to_full_string(classification_strategy_),
-                detail::tracking_entry{ "model_read", "time",  std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time) },
+                detail::tracking_entry{ "model_read", "time", std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time) },
                 detail::tracking_entry{ "model_read", "filename", filename });
     PLSSVM_DETAIL_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking_entry{ "model_read", "rho", *rho_ptr_ }));
     PLSSVM_DETAIL_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking_entry{ "model_read", "classification_type", classification_strategy_ }));
@@ -263,7 +273,7 @@ void model<U>::save(const std::string &filename) const {
                 detail::tracking_entry{ "model_write", "num_features", num_features_ },
                 detail::tracking_entry{ "model_write", "num_classes", this->num_classes() },
                 classification_type_to_full_string(classification_strategy_),
-                detail::tracking_entry{ "model_write", "time",  std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time) },
+                detail::tracking_entry{ "model_write", "time", std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time) },
                 detail::tracking_entry{ "model_write", "filename", filename });
     PLSSVM_DETAIL_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking_entry{ "model_write", "rho", *rho_ptr_ }));
     PLSSVM_DETAIL_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking_entry{ "model_write", "classification_type", classification_strategy_ }));
