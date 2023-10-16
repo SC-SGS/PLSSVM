@@ -17,10 +17,10 @@
 #include "custom_test_macros.hpp"  // EXPECT_CONVERSION_TO_STRING, EXPECT_CONVERSION_FROM_STRING, EXPECT_THROW_WHAT, EXPECT_FLOATING_POINT_NEAR, EXPECT_FLOATING_POINT_NEAR_EPS
 #include "naming.hpp"              // naming::pretty_print_kernel_function
 #include "types_to_test.hpp"       // util::real_type_gtest
-#include "utility.hpp"             // util::generate_random_vector
+#include "utility.hpp"             // util::{generate_random_vector, generate_random_matrix}
 
-#include "gtest/gtest.h"  // TEST, TEST_P, INSTANTIATE_TEST_SUITE_P, EXPECT_EQ, EXPECT_TRUE, EXPECT_FALSE, EXPECT_DEATH
-                          // ::testing::{TestWithParam, Combine, Values}
+#include "fmt/core.h"     // fmt::format
+#include "gtest/gtest.h"  // TEST, TYPED_TEST, TYPED_TEST_SUITE, EXPECT_EQ, EXPECT_TRUE, EXPECT_FALSE, EXPECT_DEATH, SCOPED_TRACE, ::testing::Test
 
 #include <array>    // std::array
 #include <cstddef>  // std::size_t
