@@ -20,14 +20,15 @@
 #include "fmt/core.h"     // fmt::format
 #include "fmt/ostream.h"  // fmt::formatter, fmt::ostream_formatter
 
-#include <algorithm>  // std::equal, std::all_of
-#include <array>      // std::array
-#include <cstddef>    // std::size_t
-#include <cstring>    // std::memcpy
-#include <iosfwd>     // std::istream forward declaration
-#include <ostream>    // std::ostream
-#include <utility>    // std::swap
-#include <vector>     // std::vector
+#include <algorithm>   // std::equal, std::all_of
+#include <array>       // std::array
+#include <cstddef>     // std::size_t
+#include <cstring>     // std::memcpy
+#include <iosfwd>      // std::istream forward declaration
+#include <ostream>     // std::ostream
+#include <string_view> // std::string_view
+#include <utility>     // std::swap
+#include <vector>      // std::vector
 
 namespace plssvm {
 
@@ -97,14 +98,6 @@ class matrix {
     template <layout_type other_layout_>
     explicit matrix(const matrix<T, other_layout_> &other);
     /**
-     * @brief Create a matrix of size @p num_rows x @p num_cols and initialize all entries with the value @p init.
-     * @param[in] num_rows the number of rows in the matrix
-     * @param[in] num_cols the number of columns in the matrix
-     * @param[in] init the value of all entries in the matrix
-     * @throws plssvm::matrix_exception if at least one of @p num_rows or @p num_cols is zero
-     */
-    matrix(size_type num_rows, size_type num_cols, const_reference init);
-    /**
      * @brief Create a matrix of size @p num_rows x @p num_cols.
      * @param[in] num_rows the number of rows in the matrix
      * @param[in] num_cols the number of columns in the matrix
@@ -112,6 +105,14 @@ class matrix {
      */
     matrix(const size_type num_rows, const size_type num_cols) :
         matrix{ num_rows, num_cols, value_type{} } {}
+    /**
+     * @brief Create a matrix of size @p num_rows x @p num_cols and initialize all entries with the value @p init.
+     * @param[in] num_rows the number of rows in the matrix
+     * @param[in] num_cols the number of columns in the matrix
+     * @param[in] init the value of all entries in the matrix
+     * @throws plssvm::matrix_exception if at least one of @p num_rows or @p num_cols is zero
+     */
+    matrix(size_type num_rows, size_type num_cols, const_reference init);
     /**
      * @brief Create a matrix from the provided 2D vector @p data.
      * @param[in] data the data used to initialize this matrix
@@ -223,7 +224,8 @@ class matrix {
 
 template <typename T, layout_type layout_>
 template <layout_type other_layout_>
-matrix<T, layout_>::matrix(const matrix<T, other_layout_> &other) : matrix{ other.num_rows(), other.num_cols() } {
+matrix<T, layout_>::matrix(const matrix<T, other_layout_> &other) :
+    matrix{ other.num_rows(), other.num_cols() } {
     if constexpr (layout_ == other_layout_) {
         // same layout -> simply memcpy underlying array
         std::memcpy(data_.data(), other.data(), this->num_entries() * sizeof(T));
@@ -303,7 +305,7 @@ auto matrix<T, layout_>::at(const size_type row, const size_type col) const -> v
         throw matrix_exception{ fmt::format("The current row ({}) must be smaller than the number of rows ({})!", row, num_rows_) };
     }
     if (col >= num_cols_) {
-        throw matrix_exception{ fmt::format("The current column ({}) must be smaller than the number of columns ({})!", row, num_rows_) };
+        throw matrix_exception{ fmt::format("The current column ({}) must be smaller than the number of columns ({})!", col, num_cols_) };
     }
 
     return this->operator()(row, col);
@@ -314,7 +316,7 @@ auto matrix<T, layout_>::at(const size_type row, const size_type col) -> referen
         throw matrix_exception{ fmt::format("The current row ({}) must be smaller than the number of rows ({})!", row, num_rows_) };
     }
     if (col >= num_cols_) {
-        throw matrix_exception{ fmt::format("The current column ({}) must be smaller than the number of columns ({})!", row, num_rows_) };
+        throw matrix_exception{ fmt::format("The current column ({}) must be smaller than the number of columns ({})!", col, num_cols_) };
     }
 
     return this->operator()(row, col);
@@ -387,9 +389,11 @@ inline std::ostream &operator<<(std::ostream &out, const matrix<T, layout> &matr
     using size_type = typename matrix<T, layout>::size_type;
     for (size_type row = 0; row < matr.num_rows(); ++row) {
         for (size_type col = 0; col < matr.num_cols(); ++col) {
-            out << matr(row, col) << ' ';
+            out << fmt::format("{:.10e} ",  matr(row, col));
         }
-        out << '\n';
+        if (row < matr.num_rows() - 1) {
+            out << '\n';
+        }
     }
     return out;
 }
@@ -405,9 +409,11 @@ using aos_matrix = matrix<T, layout_type::aos>;
 template <typename T>
 using soa_matrix = matrix<T, layout_type::soa>;
 
-}  // namespace plssvm::detail
+}  // namespace plssvm
 
-template <> struct fmt::formatter<plssvm::layout_type> : fmt::ostream_formatter {};
-template <typename T, plssvm::layout_type layout> struct fmt::formatter<plssvm::matrix<T, layout>> : fmt::ostream_formatter {};
+template <>
+struct fmt::formatter<plssvm::layout_type> : fmt::ostream_formatter {};
+template <typename T, plssvm::layout_type layout>
+struct fmt::formatter<plssvm::matrix<T, layout>> : fmt::ostream_formatter {};
 
 #endif  // PLSSVM_DETAIL_MATRIX_HPP_
