@@ -367,7 +367,7 @@ TYPED_TEST(LIBSVMModelDataWriteDeathTest, invalid_alpha_vector) {
             if (this->get_data_set().num_classes() == 2) {
                 // binary classification special case
                 EXPECT_DEATH((plssvm::detail::io::write_libsvm_model_data(this->filename, this->get_params(), classification, this->get_rho(), alpha, this->get_indices(), this->get_data_set())),
-                             "In case of binary OAO, each matrix may only contain two rows!");
+                             ::testing::HasSubstr("In case of binary OAO, each matrix may only contain one (model read) or two (fit) rows!"));
             } else {
                 EXPECT_DEATH((plssvm::detail::io::write_libsvm_model_data(this->filename, this->get_params(), classification, this->get_rho(), alpha, this->get_indices(), this->get_data_set())),
                              "In case of multi-class OAO, each matrix may only contain one row!");
