@@ -8,15 +8,15 @@
  * @brief Tests for the custom utility functions related to the CUDA backend.
  */
 
-#include "plssvm/backends/CUDA/detail/utility.cuh"  // PLSSVM_CUDA_ERROR_CHECK, plssvm::cuda::detail::{gpu_assert, get_device_count, set_device, device_synchronize}
+#include "plssvm/backends/CUDA/detail/utility.cuh"
 
-#include "plssvm/backends/CUDA/exceptions.hpp"      // plssvm::cuda::backend_exception
+#include "plssvm/backends/CUDA/exceptions.hpp"  // plssvm::cuda::backend_exception
 
-#include "../../../custom_test_macros.hpp"          // EXPECT_THROW_WHAT, EXPECT_THROW_WHAT_MATCHER
+#include "../../../custom_test_macros.hpp"  // EXPECT_THROW_WHAT, EXPECT_THROW_WHAT_MATCHER
 
-#include "fmt/core.h"                               // fmt::format
-#include "gmock/gmock-matchers.h"                   // ::testing::StartsWith
-#include "gtest/gtest.h"                            // TEST, EXPECT_GE, EXPECT_NO_THROW
+#include "fmt/core.h"              // fmt::format
+#include "gmock/gmock-matchers.h"  // ::testing::StartsWith
+#include "gtest/gtest.h"           // TEST, EXPECT_GE, EXPECT_NO_THROW
 
 #if __has_include("cuda_runtime.h")
 
