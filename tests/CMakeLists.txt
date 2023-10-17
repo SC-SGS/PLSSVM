@@ -148,14 +148,18 @@ set(PLSSVM_BASE_TEST_SOURCES
         ${CMAKE_CURRENT_LIST_DIR}/backend_types.cpp
         ${CMAKE_CURRENT_LIST_DIR}/classification_report.cpp
         ${CMAKE_CURRENT_LIST_DIR}/classification_types.cpp
-#        ${CMAKE_CURRENT_LIST_DIR}/csvm.cpp
+        ${CMAKE_CURRENT_LIST_DIR}/csvm.cpp
         ${CMAKE_CURRENT_LIST_DIR}/csvm_factory.cpp
-#        ${CMAKE_CURRENT_LIST_DIR}/data_set.cpp
+        ${CMAKE_CURRENT_LIST_DIR}/data_set/constructors.cpp
+        ${CMAKE_CURRENT_LIST_DIR}/data_set/getter.cpp
+        ${CMAKE_CURRENT_LIST_DIR}/data_set/label_mapper.cpp
+        ${CMAKE_CURRENT_LIST_DIR}/data_set/save.cpp
+        ${CMAKE_CURRENT_LIST_DIR}/data_set/scaling.cpp
         ${CMAKE_CURRENT_LIST_DIR}/default_value.cpp
         ${CMAKE_CURRENT_LIST_DIR}/file_format_types.cpp
-#        ${CMAKE_CURRENT_LIST_DIR}/kernel_function_types.cpp
-#        ${CMAKE_CURRENT_LIST_DIR}/matrix.hpp
-#        ${CMAKE_CURRENT_LIST_DIR}/model.cpp
+        ${CMAKE_CURRENT_LIST_DIR}/kernel_function_types.cpp
+        ${CMAKE_CURRENT_LIST_DIR}/matrix.cpp
+        ${CMAKE_CURRENT_LIST_DIR}/model.cpp
         ${CMAKE_CURRENT_LIST_DIR}/parameter.cpp
         ${CMAKE_CURRENT_LIST_DIR}/solver_types.cpp
         ${CMAKE_CURRENT_LIST_DIR}/target_platforms.cpp
