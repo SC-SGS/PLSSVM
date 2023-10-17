@@ -25,17 +25,18 @@
 #include "plssvm/parameter.hpp"                                         // plssvm::parameter
 #include "plssvm/target_platforms.hpp"                                  // plssvm::target_platform
 
-#include "cuda.h"                                      // cuda runtime functions
-#include "cuda_runtime_api.h"                          // cuda runtime functions
+#include "cuda.h"              // cuda runtime functions
+#include "cuda_runtime_api.h"  // cuda runtime functions
 
-#include "fmt/core.h"                                  // fmt::format
-#include "fmt/ostream.h"                               // can use fmt using operator<< overloads
+#include "fmt/core.h"     // fmt::format
 
-#include <cstddef>                                     // std::size_t
-#include <exception>                                   // std::terminate
-#include <iostream>                                    // std::cout, std::endl
-#include <numeric>                                     // std::iota
-#include <utility>                                     // std::pair, std::make_pair
+#include <cmath>      // std::sqrt, std::ceil
+#include <cstddef>    // std::size_t
+#include <exception>  // std::terminate
+#include <iostream>   // std::cout, std::endl
+#include <numeric>    // std::iota
+#include <string>     // std::string
+#include <vector>     // std:vector
 
 namespace plssvm::cuda {
 
@@ -88,14 +89,19 @@ void csvm::init(const target_platform target) {
 
     // print found CUDA devices
     plssvm::detail::log(verbosity_level::full,
-                        "Found {} CUDA device(s):\n", plssvm::detail::tracking_entry{ "backend", "num_devices", devices_.size() });
+                        "Found {} CUDA device(s):\n",
+                        plssvm::detail::tracking_entry{ "backend", "num_devices", devices_.size() });
     std::vector<std::string> device_names;
     device_names.reserve(devices_.size());
     for (const queue_type &device : devices_) {
         cudaDeviceProp prop{};
         cudaGetDeviceProperties(&prop, device);
         plssvm::detail::log(verbosity_level::full,
-                            "  [{}, {}, {}.{}]\n", device, prop.name, prop.major, prop.minor);
+                            "  [{}, {}, {}.{}]\n",
+                            device,
+                            prop.name,
+                            prop.major,
+                            prop.minor);
         device_names.emplace_back(prop.name);
     }
     PLSSVM_DETAIL_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking_entry{ "backend", "device", device_names }));

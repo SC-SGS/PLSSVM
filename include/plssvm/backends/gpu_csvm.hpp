@@ -13,25 +13,19 @@
 #define PLSSVM_BACKENDS_GPU_CSVM_HPP_
 #pragma once
 
-#include "plssvm/constants.hpp"                   // plssvm::real_type, plssvm::{THREAD_BLOCK_SIZE, INTERNAL_BLOCK_SIZE}
-#include "plssvm/csvm.hpp"                        // plssvm::csvm
-#include "plssvm/detail/logger.hpp"               // plssvm::detail::log, plssvm::verbosity_level
-#include "plssvm/detail/performance_tracker.hpp"  // plssvm::detail::tracking_entry, PLSSVM_DETAIL_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY
-#include "plssvm/matrix.hpp"                      // plssvm::aos_matrix
-#include "plssvm/parameter.hpp"                   // plssvm::parameter
+#include "plssvm/constants.hpp"     // plssvm::real_type
+#include "plssvm/csvm.hpp"          // plssvm::csvm
+#include "plssvm/matrix.hpp"        // plssvm::aos_matrix
+#include "plssvm/parameter.hpp"     // plssvm::parameter
+#include "plssvm/solver_types.hpp"  // plssvm::solver_type
 
-#include "fmt/chrono.h"                           // output std::chrono times using {fmt}
-#include "fmt/core.h"                             // fmt::format
+#include "fmt/core.h"  // fmt::format
 
-#include <algorithm>                              // std::min, std::all_of, std::adjacent_find
-#include <chrono>                                 // std::chrono::{milliseconds, steady_clock, duration_cast}
-#include <cmath>                                  // std::ceil
-#include <cstddef>                                // std::size_t
-#include <functional>                             // std::less_equal
-#include <iostream>                               // std::clog, std::cout, std::endl
-#include <tuple>                                  // std::tuple, std::make_tuple
-#include <utility>                                // std::forward, std::pair, std::move, std::make_pair
-#include <vector>                                 // std::vector
+#include <algorithm>   // std::min, std::all_of
+#include <cstddef>     // std::size_t
+#include <iostream>    // std::clog, std::endl
+#include <utility>     // std::forward, std::move
+#include <vector>      // std::vector
 
 namespace plssvm::detail {
 
@@ -119,7 +113,7 @@ class gpu_csvm : public ::plssvm::csvm {
     /**
      * @copydoc plssvm::csvm::assemble_kernel_matrix_explicit_impl
      */
-    [[nodiscard]] ::plssvm::detail::simple_any assemble_kernel_matrix(const solver_type solver, const parameter &params, const ::plssvm::detail::simple_any & data, const std::vector<real_type> &q_red, const real_type QA_cost) const final;
+    [[nodiscard]] ::plssvm::detail::simple_any assemble_kernel_matrix(const solver_type solver, const parameter &params, const ::plssvm::detail::simple_any &data, const std::vector<real_type> &q_red, const real_type QA_cost) const final;
     /**
      * @copydoc plssvm::csvm::blas_level_3
      */
@@ -160,7 +154,7 @@ class gpu_csvm : public ::plssvm::csvm {
      * @param[in] QA_cost the scalar used in the dimensional reduction
      * @return the explicit kernel matrix stored on the device (`[[nodiscard]]`)
      */
-    [[nodiscard]] virtual device_ptr_type run_assemble_kernel_matrix_explicit(const parameter &params, const device_ptr_type & data_d, const device_ptr_type &q_red_d, real_type QA_cost) const = 0;
+    [[nodiscard]] virtual device_ptr_type run_assemble_kernel_matrix_explicit(const parameter &params, const device_ptr_type &data_d, const device_ptr_type &q_red_d, real_type QA_cost) const = 0;
     /**
      * @brief Perform an explicit BLAS level 3 operation: `C = alpha * A * B + beta * C` where @p A is a `m x k` matrix, @p B is a `k x n` matrix, @p C is a `m x n` matrix, and @p alpha and @p beta are scalars.
      * @param[in] m the number of rows in @p A and @p C
@@ -202,20 +196,20 @@ class gpu_csvm : public ::plssvm::csvm {
 
 template <template <typename> typename device_ptr_t, typename queue_t>
 std::size_t gpu_csvm<device_ptr_t, queue_t>::select_num_used_devices(const kernel_function_type, const std::size_t) const noexcept {
-//    PLSSVM_ASSERT(num_features > 0, "At lest one feature must be given!");
-//
-//    // polynomial and rbf kernel currently only support single GPU execution
-//    if ((kernel == kernel_function_type::polynomial || kernel == kernel_function_type::rbf) && devices_.size() > 1) {
-//        std::clog << fmt::format("Warning: found {} devices, however only 1 device can be used since the polynomial and rbf kernels currently only support single GPU execution!", devices_.size()) << std::endl;
-//        return 1;
-//    }
-//
-//    // the number of used devices may not exceed the number of features
-//    const std::size_t num_used_devices = std::min(devices_.size(), num_features);
-//    if (num_used_devices < devices_.size()) {
-//        std::clog << fmt::format("Warning: found {} devices, however only {} device(s) can be used since the data set only has {} features!", devices_.size(), num_used_devices, num_features) << std::endl;
-//    }
-//    return num_used_devices;
+    //    PLSSVM_ASSERT(num_features > 0, "At lest one feature must be given!");
+    //
+    //    // polynomial and rbf kernel currently only support single GPU execution
+    //    if ((kernel == kernel_function_type::polynomial || kernel == kernel_function_type::rbf) && devices_.size() > 1) {
+    //        std::clog << fmt::format("Warning: found {} devices, however only 1 device can be used since the polynomial and rbf kernels currently only support single GPU execution!", devices_.size()) << std::endl;
+    //        return 1;
+    //    }
+    //
+    //    // the number of used devices may not exceed the number of features
+    //    const std::size_t num_used_devices = std::min(devices_.size(), num_features);
+    //    if (num_used_devices < devices_.size()) {
+    //        std::clog << fmt::format("Warning: found {} devices, however only {} device(s) can be used since the data set only has {} features!", devices_.size(), num_used_devices, num_features) << std::endl;
+    //    }
+    //    return num_used_devices;
     // TODO: currently only a single device is supported!
     return 1;
 }
@@ -282,7 +276,8 @@ template <template <typename> typename device_ptr_t, typename queue_t>
         PLSSVM_ASSERT(num_features > 0, "At least one feature must be given!");
         PLSSVM_ASSERT((num_rows_reduced + 1) * num_features == data_d.size(),
                       "The number of values on the device data array is {}, but the provided sizes are {} ((num_rows_reduced + 1) * num_features)",
-                      data_d.size(), (num_rows_reduced + 1) * num_features);
+                      data_d.size(),
+                      (num_rows_reduced + 1) * num_features);
 
         // allocate memory for the values currently not on the device
         device_ptr_type q_red_d{ q_red.size(), devices_[0] };
@@ -292,11 +287,13 @@ template <template <typename> typename device_ptr_t, typename queue_t>
 #if defined(PLSSVM_USE_GEMM)
         PLSSVM_ASSERT(num_rows_reduced * num_rows_reduced == kernel_matrix.size(),
                       "The kernel matrix must be a quadratic matrix with num_rows_reduced^2 ({}) entries, but is {}!",
-                      num_rows_reduced * num_rows_reduced, kernel_matrix.size());
+                      num_rows_reduced * num_rows_reduced,
+                      kernel_matrix.size());
 #else
         PLSSVM_ASSERT(num_rows_reduced * (num_rows_reduced + 1) / 2 == kernel_matrix.size(),
                       "The kernel matrix must be a triangular matrix only with num_rows_reduced * (num_rows_reduced + 1) / 2 ({}) entries, but is {}!",
-                      num_rows_reduced * (num_rows_reduced + 1) / 2, kernel_matrix.size());
+                      num_rows_reduced * (num_rows_reduced + 1) / 2,
+                      kernel_matrix.size());
 #endif
 
         return ::plssvm::detail::simple_any{ std::move(kernel_matrix) };
@@ -345,11 +342,11 @@ void gpu_csvm<device_ptr_t, queue_t>::blas_level_3(const solver_type solver, con
 //***************************************************//
 template <template <typename> typename device_ptr_t, typename queue_t>
 aos_matrix<real_type> gpu_csvm<device_ptr_t, queue_t>::predict_values(const parameter &params,
-                                                                                   const aos_matrix<real_type> &support_vectors,
-                                                                                   const aos_matrix<real_type> &alpha,
-                                                                                   const std::vector<real_type> &rho,
-                                                                                   aos_matrix<real_type> &w,
-                                                                                   const aos_matrix<real_type> &predict_points) const {
+                                                                      const aos_matrix<real_type> &support_vectors,
+                                                                      const aos_matrix<real_type> &alpha,
+                                                                      const std::vector<real_type> &rho,
+                                                                      aos_matrix<real_type> &w,
+                                                                      const aos_matrix<real_type> &predict_points) const {
     PLSSVM_ASSERT(!support_vectors.empty(), "The support vectors must not be empty!");
     PLSSVM_ASSERT(!alpha.empty(), "The alpha vectors (weights) must not be empty!");
     PLSSVM_ASSERT(support_vectors.num_rows() == alpha.num_cols(), "The number of support vectors ({}) and number of weights ({}) must be the same!", support_vectors.num_rows(), alpha.num_cols());
@@ -394,7 +391,7 @@ aos_matrix<real_type> gpu_csvm<device_ptr_t, queue_t>::predict_values(const para
     }
 
     // predict
-    const device_ptr_type out_d = run_predict_kernel(params, w_d, alpha_d, rho_d, sv_d, predict_points_d);;
+    const device_ptr_type out_d = run_predict_kernel(params, w_d, alpha_d, rho_d, sv_d, predict_points_d);
 
     // copy results back to host
     aos_matrix<real_type> out_ret{ num_predict_points, num_classes };
