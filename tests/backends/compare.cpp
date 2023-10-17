@@ -11,13 +11,13 @@
 
 #include "plssvm/detail/assert.hpp"          // PLSSVM_ASSERT
 #include "plssvm/kernel_function_types.hpp"  // plssvm::kernel_function_type
-#include "plssvm/matrix.hpp"                 // plssvm::aos_matrix
-#include "plssvm/parameter.hpp"              // plssvm::detail::parameter
+#include "plssvm/matrix.hpp"                 // plssvm::matrix, plssvm::layout_type
+#include "plssvm/parameter.hpp"              // plssvm::parameter
 
-#include <algorithm>                         // std::min
-#include <cmath>                             // std::pow, std::exp, std::fma
-#include <cstddef>                           // std::size_t
-#include <vector>                            // std::vector
+#include <algorithm>  // std::min
+#include <cmath>      // std::pow, std::exp, std::fma
+#include <cstddef>    // std::size_t
+#include <vector>     // std::vector
 
 namespace compare {
 
@@ -82,7 +82,6 @@ real_type rbf_kernel(const std::vector<real_type> &x, const std::vector<real_typ
 template float rbf_kernel(const std::vector<float> &, const std::vector<float> &, float);
 template double rbf_kernel(const std::vector<double> &, const std::vector<double> &, double);
 
-
 template <typename real_type, plssvm::layout_type layout>
 real_type linear_kernel(const plssvm::matrix<real_type, layout> &X, const std::size_t i, const plssvm::matrix<real_type, layout> &Y, const std::size_t j, const std::size_t num_devices) {
     PLSSVM_ASSERT(X.num_cols() == Y.num_cols(), "Sizes mismatch!: {} != {}", X.num_cols(), Y.num_cols());
@@ -124,7 +123,6 @@ template float polynomial_kernel(const plssvm::matrix<float, plssvm::layout_type
 template double polynomial_kernel(const plssvm::matrix<double, plssvm::layout_type::aos> &, const std::size_t, const plssvm::matrix<double, plssvm::layout_type::aos> &, const std::size_t, const int, const double, const double);
 template double polynomial_kernel(const plssvm::matrix<double, plssvm::layout_type::soa> &, const std::size_t, const plssvm::matrix<double, plssvm::layout_type::soa> &, const std::size_t, const int, const double, const double);
 
-
 template <typename real_type, plssvm::layout_type layout>
 real_type rbf_kernel(const plssvm::matrix<real_type, layout> &X, const std::size_t i, const plssvm::matrix<real_type, layout> &Y, const std::size_t j, const real_type gamma) {
     PLSSVM_ASSERT(X.num_cols() == Y.num_cols(), "Sizes mismatch!: {} != {}", X.num_cols(), Y.num_cols());
@@ -142,7 +140,6 @@ template float rbf_kernel(const plssvm::matrix<float, plssvm::layout_type::aos> 
 template float rbf_kernel(const plssvm::matrix<float, plssvm::layout_type::soa> &, const std::size_t, const plssvm::matrix<float, plssvm::layout_type::soa> &, const std::size_t, const float);
 template double rbf_kernel(const plssvm::matrix<double, plssvm::layout_type::aos> &, const std::size_t, const plssvm::matrix<double, plssvm::layout_type::aos> &, const std::size_t, const double);
 template double rbf_kernel(const plssvm::matrix<double, plssvm::layout_type::soa> &, const std::size_t, const plssvm::matrix<double, plssvm::layout_type::soa> &, const std::size_t, const double);
-
 
 }  // namespace detail
 

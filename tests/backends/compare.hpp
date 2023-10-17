@@ -13,10 +13,11 @@
 #define PLSSVM_TESTS_BACKENDS_COMPARE_HPP_
 #pragma once
 
-#include "plssvm/matrix.hpp"     // plssvm::aos_matrix
+#include "plssvm/matrix.hpp"     // plssvm::matrix, plssvm::layout_type
 #include "plssvm/parameter.hpp"  // plssvm::parameter
 
-#include <vector>                // std::vector
+#include <cstddef>  // std::size_t
+#include <vector>   // std::vector
 
 namespace compare {
 
