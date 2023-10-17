@@ -9,25 +9,25 @@
 #include "plssvm/backends/CUDA/detail/device_ptr.cuh"
 
 #include "plssvm/backends/CUDA/detail/fill_kernel.cuh"  // plssvm::cuda::detail::fill_array
-#include "plssvm/backends/CUDA/detail/utility.cuh"      // PLSSVM_CUDA_ERROR_CHECK, plssvm::cuda::detail::get_device_count
+#include "plssvm/backends/CUDA/detail/utility.cuh"      // PLSSVM_CUDA_ERROR_CHECK, plssvm::cuda::detail::{set_device, peek_at_last_error, device_synchronize, get_device_count}
 #include "plssvm/backends/CUDA/exceptions.hpp"          // plssvm::cuda::backend_exception
 #include "plssvm/backends/gpu_device_ptr.hpp"           // plssvm::detail::gpu_device_ptr
 #include "plssvm/detail/assert.hpp"                     // PLSSVM_ASSERT
 
-#include "fmt/core.h"                                   // fmt::format
+#include "fmt/core.h"  // fmt::format
 
-#include <algorithm>                                    // std::min
-#include <array>                                        // std::array
+#include <algorithm>  // std::min
+#include <array>      // std::array
 
 namespace plssvm::cuda::detail {
 
 template <typename T>
 device_ptr<T>::device_ptr(const size_type size, const queue_type device) :
-    device_ptr{ { size, 1 }, device } { }
+    device_ptr{ { size, 0 }, device } {}
 
 template <typename T>
-device_ptr<T>::device_ptr(const std::array<size_type, 2> extends, const queue_type device) :
-    base_type{ extends, device } {
+device_ptr<T>::device_ptr(const std::array<size_type, 2> extents, const queue_type device) :
+    base_type{ extents, device } {
     if (queue_ < 0 || queue_ >= static_cast<int>(get_device_count())) {
         throw backend_exception{ fmt::format("Illegal device ID! Must be in range: [0, {}) but is {}.", get_device_count(), queue_) };
     }

@@ -15,14 +15,14 @@
 
 #include "plssvm/exceptions/exceptions.hpp"  // plssvm::gpu_device_ptr_exception
 
-#include "../custom_test_macros.hpp"         // EXPECT_THROW_WHAT
+#include "../custom_test_macros.hpp"  // EXPECT_THROW_WHAT
 
-#include "gtest//gtest.h"                    // TYPED_TEST_SUITE_P, TYPED_TEST_P, REGISTER_TYPED_TEST_SUITE_P, EXPECT_TRUE, EXPECT_FALSE, EXPECT_EQ, EXPECT_NE, EXPECT_DEATH
-                                             // ::testing::{Test, hasSubstr}
+#include "gtest//gtest.h"  // TYPED_TEST_SUITE_P, TYPED_TEST_P, REGISTER_TYPED_TEST_SUITE_P, EXPECT_TRUE, EXPECT_FALSE, EXPECT_EQ, EXPECT_NE, EXPECT_DEATH
+                           // ::testing::{Test, hasSubstr}
 
-#include <cstring>                           // std::memset
-#include <utility>                           // std::move, std::swap
-#include <vector>                            // std::vector
+#include <cstring>  // std::memset
+#include <utility>  // std::move, std::swap
+#include <vector>   // std::vector
 
 template <typename T>
 class DevicePtr : public ::testing::Test {};
@@ -38,6 +38,7 @@ TYPED_TEST_P(DevicePtr, default_construct) {
     EXPECT_FALSE(static_cast<bool>(ptr));
     EXPECT_EQ(ptr.get(), nullptr);
     EXPECT_EQ(ptr.size(), 0);
+    EXPECT_EQ(ptr.extents(), (std::array<std::size_t, 2>{ 0, 0 }));
     EXPECT_TRUE(ptr.empty());
 }
 TYPED_TEST_P(DevicePtr, construct) {
@@ -50,9 +51,24 @@ TYPED_TEST_P(DevicePtr, construct) {
 
     // check data
     EXPECT_TRUE(static_cast<bool>(ptr));
-    //    EXPECT_EQ(ptr.queue(), queue);
     EXPECT_NE(ptr.get(), nullptr);
     EXPECT_EQ(ptr.size(), 42);
+    EXPECT_EQ(ptr.extents(), (std::array<std::size_t, 2>{ 42, 0 }));
+    EXPECT_FALSE(ptr.empty());
+}
+TYPED_TEST_P(DevicePtr, construct_extents) {
+    using device_ptr_type = typename TypeParam::device_ptr_type;
+    using queue_type = typename TypeParam::queue_type;
+    const queue_type &queue = TypeParam::default_queue();
+
+    // construct device_ptr
+    const device_ptr_type ptr{ { 42, 16 }, queue };
+
+    // check data
+    EXPECT_TRUE(static_cast<bool>(ptr));
+    EXPECT_NE(ptr.get(), nullptr);
+    EXPECT_EQ(ptr.size(), 42 * 16);
+    EXPECT_EQ(ptr.extents(), (std::array<std::size_t, 2>{ 42, 16 }));
     EXPECT_FALSE(ptr.empty());
 }
 TYPED_TEST_P(DevicePtr, move_construct) {
@@ -66,15 +82,17 @@ TYPED_TEST_P(DevicePtr, move_construct) {
 
     // check data
     EXPECT_TRUE(static_cast<bool>(second));
-    //    EXPECT_EQ(second.queue(), queue);
+    // EXPECT_EQ(second.queue(), queue);
     EXPECT_NE(second.get(), nullptr);
     EXPECT_EQ(second.size(), 42);
+    EXPECT_EQ(second.extents(), (std::array<std::size_t, 2>{ 42, 0 }));
     EXPECT_FALSE(second.empty());
 
     // check moved-from data
     EXPECT_FALSE(static_cast<bool>(first));
     EXPECT_EQ(first.get(), nullptr);
     EXPECT_EQ(first.size(), 0);
+    EXPECT_EQ(first.extents(), (std::array<std::size_t, 2>{ 0, 0 }));
     EXPECT_TRUE(first.empty());
 }
 TYPED_TEST_P(DevicePtr, move_assign) {
@@ -91,15 +109,16 @@ TYPED_TEST_P(DevicePtr, move_assign) {
 
     // check data
     EXPECT_TRUE(static_cast<bool>(second));
-    //    EXPECT_EQ(second.queue(), queue);
     EXPECT_NE(second.get(), nullptr);
     EXPECT_EQ(second.size(), 42);
+    EXPECT_EQ(second.extents(), (std::array<std::size_t, 2>{ 42, 0 }));
     EXPECT_FALSE(second.empty());
 
     // check moved-from data
     EXPECT_FALSE(static_cast<bool>(first));
     EXPECT_EQ(first.get(), nullptr);
     EXPECT_EQ(first.size(), 0);
+    EXPECT_EQ(first.extents(), (std::array<std::size_t, 2>{ 0, 0 }));
     EXPECT_TRUE(first.empty());
 }
 
@@ -110,21 +129,22 @@ TYPED_TEST_P(DevicePtr, swap_member_function) {
 
     // construct two device_ptr
     device_ptr_type first{ 42, queue };
-    device_ptr_type second;
+    device_ptr_type second{};
 
     // swap both device_ptr using the member function
     first.swap(second);
 
     // check data
     EXPECT_TRUE(static_cast<bool>(second));
-    //    EXPECT_EQ(second.queue(), queue);
     EXPECT_NE(second.get(), nullptr);
     EXPECT_EQ(second.size(), 42);
+    EXPECT_EQ(second.extents(), (std::array<std::size_t, 2>{ 42, 0 }));
     EXPECT_FALSE(second.empty());
 
     EXPECT_FALSE(static_cast<bool>(first));
     EXPECT_EQ(first.get(), nullptr);
     EXPECT_EQ(first.size(), 0);
+    EXPECT_EQ(first.extents(), (std::array<std::size_t, 2>{ 0, 0 }));
     EXPECT_TRUE(first.empty());
 }
 TYPED_TEST_P(DevicePtr, swap_free_function) {
@@ -142,15 +162,97 @@ TYPED_TEST_P(DevicePtr, swap_free_function) {
 
     // check data
     EXPECT_TRUE(static_cast<bool>(second));
-    //    EXPECT_EQ(second.queue(), queue);
     EXPECT_NE(second.get(), nullptr);
     EXPECT_EQ(second.size(), 42);
+    EXPECT_EQ(second.extents(), (std::array<std::size_t, 2>{ 42, 0 }));
     EXPECT_FALSE(second.empty());
 
     EXPECT_FALSE(static_cast<bool>(first));
     EXPECT_EQ(first.get(), nullptr);
     EXPECT_EQ(first.size(), 0);
+    EXPECT_EQ(first.extents(), (std::array<std::size_t, 2>{ 0, 0 }));
     EXPECT_TRUE(first.empty());
+}
+
+TYPED_TEST_P(DevicePtr, operator_bool) {
+    using device_ptr_type = typename TypeParam::device_ptr_type;
+    using queue_type = typename TypeParam::queue_type;
+    const queue_type &queue = TypeParam::default_queue();
+
+    // construct device_ptr
+    const device_ptr_type ptr1{ 42, queue };
+    EXPECT_TRUE(static_cast<bool>(ptr1));
+
+    // construct empty device_ptr
+    const device_ptr_type ptr2{ };
+    EXPECT_FALSE(static_cast<bool>(ptr2));
+}
+TYPED_TEST_P(DevicePtr, size) {
+    using device_ptr_type = typename TypeParam::device_ptr_type;
+    using queue_type = typename TypeParam::queue_type;
+    const queue_type &queue = TypeParam::default_queue();
+
+    // construct device_ptr
+    const device_ptr_type ptr1{ 42, queue };
+    EXPECT_EQ(ptr1.size(), 42);
+
+    // construct device_ptr with extents
+    const device_ptr_type ptr2{ { 42, 16 }, queue };
+    EXPECT_EQ(ptr2.size(), 42 * 16);
+
+    // construct empty device_ptr
+    const device_ptr_type ptr3{ };
+    EXPECT_EQ(ptr3.size(), 0);
+}
+TYPED_TEST_P(DevicePtr, size_idx) {
+    using device_ptr_type = typename TypeParam::device_ptr_type;
+    using queue_type = typename TypeParam::queue_type;
+    const queue_type &queue = TypeParam::default_queue();
+
+    // construct device_ptr
+    const device_ptr_type ptr1{ 42, queue };
+    EXPECT_EQ(ptr1.size(0), 42);
+    EXPECT_EQ(ptr1.size(1), 0);
+
+    // construct device_ptr with extents
+    const device_ptr_type ptr2{ { 42, 16 }, queue };
+    EXPECT_EQ(ptr2.size(0), 42);
+    EXPECT_EQ(ptr2.size(1), 16);
+
+    // construct empty device_ptr
+    const device_ptr_type ptr3{ };
+    EXPECT_EQ(ptr3.size(0), 0);
+    EXPECT_EQ(ptr3.size(1), 0);
+}
+TYPED_TEST_P(DevicePtr, extent) {
+    using device_ptr_type = typename TypeParam::device_ptr_type;
+    using queue_type = typename TypeParam::queue_type;
+    const queue_type &queue = TypeParam::default_queue();
+
+    // construct device_ptr
+    const device_ptr_type ptr1{ 42, queue };
+    EXPECT_EQ(ptr1.extents(), (std::array<std::size_t, 2>{ 42, 0 }));
+
+    // construct device_ptr with extents
+    const device_ptr_type ptr2{ { 42, 16 }, queue };
+    EXPECT_EQ(ptr2.extents(), (std::array<std::size_t, 2>{ 42, 16 }));
+
+    // construct empty device_ptr
+    const device_ptr_type ptr3{ };
+    EXPECT_EQ(ptr3.extents(), (std::array<std::size_t, 2>{ 0, 0 }));
+}
+TYPED_TEST_P(DevicePtr, empty) {
+    using device_ptr_type = typename TypeParam::device_ptr_type;
+    using queue_type = typename TypeParam::queue_type;
+    const queue_type &queue = TypeParam::default_queue();
+
+    // construct device_ptr
+    const device_ptr_type ptr1{ 42, queue };
+    EXPECT_FALSE(ptr1.empty());
+
+    // construct empty device_ptr
+    const device_ptr_type ptr2{ };
+    EXPECT_TRUE(ptr2.empty());
 }
 
 TYPED_TEST_P(DevicePtr, memset) {
@@ -505,8 +607,9 @@ TYPED_TEST_P(DevicePtr, copy_ptr_with_count_copy_to_too_many) {
 
 // clang-format off
 REGISTER_TYPED_TEST_SUITE_P(DevicePtr,
-                            default_construct, construct, move_construct, move_assign,
+                            default_construct, construct, construct_extents, move_construct, move_assign,
                             swap_member_function, swap_free_function,
+                            operator_bool, size, size_idx, extent, empty,
                             memset, memset_with_numbytes, memset_invalid_pos,
                             fill, fill_with_count, fill_invalid_pos,
                             copy_vector, copy_vector_with_count_copy_back_all, copy_vector_with_count_copy_back_some, copy_vector_with_count_copy_to_too_many,

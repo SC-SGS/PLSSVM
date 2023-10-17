@@ -30,7 +30,7 @@ class device_ptr : public ::plssvm::detail::gpu_device_ptr<T, int> {
 
     using base_type::data_;
     using base_type::queue_;
-    using base_type::extends_;
+    using base_type::extents_;
 
   public:
     // Be able to use overloaded base class functions.
@@ -59,12 +59,12 @@ class device_ptr : public ::plssvm::detail::gpu_device_ptr<T, int> {
      */
     explicit device_ptr(size_type size, queue_type device = 0);
     /**
-     * @brief Allocates `extends[0] * extends[1] * sizeof(T)` bytes on the device with ID @p device.
-     * @param[in] extends the number of elements represented by the device_ptr
+     * @brief Allocates `extents[0] * extents[1] * sizeof(T)` bytes on the device with ID @p device.
+     * @param[in] extents the number of elements represented by the device_ptr
      * @param[in] device the associated CUDA device
      * @throws plssvm::cuda::backend_exception if the given device ID is smaller than 0 or greater or equal than the available number of devices
      */
-    explicit device_ptr(std::array<size_type, 2> extends, queue_type device = 0);
+    explicit device_ptr(std::array<size_type, 2> extents, queue_type device = 0);
 
     /**
      * @copydoc plssvm::detail::gpu_device_ptr::gpu_device_ptr(const plssvm::detail::gpu_device_ptr &)
