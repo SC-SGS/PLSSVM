@@ -90,10 +90,7 @@ aos_matrix<real_type> csvm::conjugate_gradients(const detail::simple_any &A, con
     };
     // get the number of rhs that have already been converged
     const auto num_rhs_converged = [eps, &delta, &delta0]() {
-        return static_cast<std::size_t>(std::inner_product(delta.cbegin(), delta.cend(), delta0.cbegin(),
-                                                           real_type{ 0.0 },
-                                                           std::plus<>{},
-                                                           [eps](const real_type d, const real_type d0) { return d <= eps * eps *d0; }));
+        return static_cast<std::size_t>(std::inner_product(delta.cbegin(), delta.cend(), delta0.cbegin(), real_type{ 0.0 }, std::plus<>{}, [eps](const real_type d, const real_type d0) { return d <= eps * eps * d0; }));
     };
 
     unsigned long long iter = 0;

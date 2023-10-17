@@ -33,18 +33,18 @@
 #include "plssvm/solver_types.hpp"                // plssvm::solver_type
 #include "plssvm/target_platforms.hpp"            // plssvm::target_platform
 
-#include "fmt/color.h"                            // fmt::fg, fmt::color::orange
-#include "fmt/core.h"                             // fmt::format
-#include "igor/igor.hpp"                          // igor::parser
+#include "fmt/color.h"    // fmt::fg, fmt::color::orange
+#include "fmt/core.h"     // fmt::format
+#include "igor/igor.hpp"  // igor::parser
 
-#include <algorithm>                              // std::max_element
-#include <chrono>                                 // std::chrono::{time_point, steady_clock, duration_cast}
-#include <iostream>                               // std::cout, std::endl
-#include <iterator>                               // std::distance
-#include <tuple>                                  // std::tie
-#include <type_traits>                            // std::enable_if_t, std::is_same_v, std::is_convertible_v, std::false_type
-#include <utility>                                // std::pair, std::forward
-#include <vector>                                 // std::vector
+#include <algorithm>    // std::max_element
+#include <chrono>       // std::chrono::{time_point, steady_clock, duration_cast}
+#include <iostream>     // std::cout, std::endl
+#include <iterator>     // std::distance
+#include <tuple>        // std::tie
+#include <type_traits>  // std::enable_if_t, std::is_same_v, std::is_convertible_v, std::false_type
+#include <utility>      // std::pair, std::forward
+#include <vector>       // std::vector
 
 namespace plssvm {
 
@@ -100,7 +100,7 @@ class csvm {
      * @brief Return the target platform (i.e, CPU or GPU including the vendor) this SVM runs on.
      * @return the target platform (`[[nodiscard]]`)
      */
-    [[nodiscard]] target_platform get_target_platform() const noexcept { return target_;}
+    [[nodiscard]] target_platform get_target_platform() const noexcept { return target_; }
     /**
      * @brief Return the currently used SVM parameter.
      * @return the SVM parameter (`[[nodiscard]]`)
@@ -245,6 +245,7 @@ class csvm {
 
     /// The target platform of this SVM.
     target_platform target_{ plssvm::target_platform::automatic };
+
   private:
     /**
      * @brief Perform some sanity checks on the passed SVM parameters.
@@ -263,7 +264,7 @@ class csvm {
      * @return the result matrix `X` and the respective biases (`[[nodiscard]]`)
      */
     template <typename... Args>
-    [[nodiscard]] std::pair<aos_matrix<real_type>, std::vector<real_type>> solve_system_of_linear_equations(const aos_matrix<real_type> &A, const aos_matrix<real_type> &B, const parameter &params, Args&&... named_args) const;
+    [[nodiscard]] std::pair<aos_matrix<real_type>, std::vector<real_type>> solve_system_of_linear_equations(const aos_matrix<real_type> &A, const aos_matrix<real_type> &B, const parameter &params, Args &&...named_args) const;
     /**
      * @brief Solve the system of linear equations `AX = B` where `A` is the kernel matrix using the Conjugate Gradients (CG) algorithm.
      * @param[in] A the kernel matrix
@@ -375,7 +376,6 @@ model<label_type> csvm::fit(const data_set<label_type> &data, Args &&...named_ar
     // create model
     model<label_type> csvm_model{ params, data, used_classification };
 
-
     if (used_classification == plssvm::classification_type::oaa) {
         // use the one vs. all multi-class classification strategy
         // solve the minimization problem
@@ -394,7 +394,7 @@ model<label_type> csvm::fit(const data_set<label_type> &data, Args &&...named_ar
         // create index vector: indices[0] contains the indices of all data points in the big data set with label index 0, and so on
         std::vector<std::vector<std::size_t>> indices(num_classes);
         {
-            const std::vector<label_type>& labels = data.labels().value();
+            const std::vector<label_type> &labels = data.labels().value();
             for (std::size_t i = 0; i < data.num_data_points(); ++i) {
                 indices[data.mapping_->get_mapped_index_by_label(labels[i])].push_back(i);
             }
@@ -485,7 +485,7 @@ std::vector<label_type> csvm::predict(const model<label_type> &model, const data
         PLSSVM_ASSERT(model.alpha_ptr_->front().num_cols() == data.num_data_points(), "The number of weights ({}) must be equal to the number of support vectors ({})!", model.alpha_ptr_->front().num_cols(), data.num_data_points());
 
         const aos_matrix<real_type> &sv = *model.data_.data_ptr_;
-        const aos_matrix<real_type> &alpha = model.alpha_ptr_->back();
+        const aos_matrix<real_type> &alpha = model.alpha_ptr_->front();  // num_classes x num_data_points
 
         // predict values using OAA -> num_data_points x num_classes
         const aos_matrix<real_type> votes = predict_values(model.params_, sv, alpha, *model.rho_ptr_, *model.w_ptr_, predict_points);
@@ -541,24 +541,24 @@ std::vector<label_type> csvm::predict(const model<label_type> &model, const data
 
                 // create binary support vector matrix, based on the number of classes
                 const aos_matrix<real_type> &binary_sv = [&]() {
-                   if (num_classes == 2) {
-                       // no special assembly needed in binary case
-                       return *model.data_.data_ptr_;
-                   } else {
-                       // note: if this is changed, it must also be changed in the libsvm_model_parsing.hpp in the calculate_alpha_idx function!!!
-                       // order the indices in increasing order
-                       aos_matrix<real_type> temp{ num_data_points_in_sub_matrix, num_features };
-                       std::vector<std::size_t> sorted_indices(num_data_points_in_sub_matrix);
-                       std::merge(indices[i].cbegin(), indices[i].cend(), indices[j].cbegin(), indices[j].cend(), sorted_indices.begin());
-                       // copy the support vectors to the binary support vectors
-                       #pragma omp parallel for collapse(2) default(none) shared(sorted_indices, temp, model) firstprivate(num_data_points_in_sub_matrix, num_features)
-                       for (std::size_t si = 0; si < num_data_points_in_sub_matrix; ++si) {
-                           for (std::size_t dim = 0; dim < num_features; ++dim) {
-                               temp(si, dim) = (*model.data_.data_ptr_)(sorted_indices[si], dim);
-                           }
-                       }
-                       return temp;
-                   }
+                    if (num_classes == 2) {
+                        // no special assembly needed in binary case
+                        return *model.data_.data_ptr_;
+                    } else {
+                        // note: if this is changed, it must also be changed in the libsvm_model_parsing.hpp in the calculate_alpha_idx function!!!
+                        // order the indices in increasing order
+                        aos_matrix<real_type> temp{ num_data_points_in_sub_matrix, num_features };
+                        std::vector<std::size_t> sorted_indices(num_data_points_in_sub_matrix);
+                        std::merge(indices[i].cbegin(), indices[i].cend(), indices[j].cbegin(), indices[j].cend(), sorted_indices.begin());
+                        // copy the support vectors to the binary support vectors
+                        #pragma omp parallel for collapse(2) default(none) shared(sorted_indices, temp, model) firstprivate(num_data_points_in_sub_matrix, num_features)
+                        for (std::size_t si = 0; si < num_data_points_in_sub_matrix; ++si) {
+                            for (std::size_t dim = 0; dim < num_features; ++dim) {
+                                temp(si, dim) = (*model.data_.data_ptr_)(sorted_indices[si], dim);
+                            }
+                        }
+                        return temp;
+                    }
                 }();
 
                 // predict binary pair
@@ -669,7 +669,7 @@ std::pair<aos_matrix<real_type>, std::vector<real_type>> csvm::solve_system_of_l
     // set default values
     // note: if the default values are changed, they must also be changed in the Python bindings!
     real_type used_epsilon{ 0.001 };
-    unsigned long long used_max_iter{ A.num_rows() };
+    unsigned long long used_max_iter{ A.num_rows() - 1 };  // account for later dimensional reduction
     solver_type used_solver{ solver_type::automatic };
 
     // compile time check: only named parameters are permitted
@@ -766,10 +766,12 @@ std::pair<aos_matrix<real_type>, std::vector<real_type>> csvm::solve_system_of_l
         if (used_solver == solver_type::cg_explicit && max_single_allocation_size > max_mem_alloc_size) {
             detail::log(verbosity_level::full,
                         "The biggest single allocation ({}) exceeds the guaranteed maximum memory allocation size ({}), falling back to solver_type::cg_streaming.\n",
-                        max_single_allocation_size, max_mem_alloc_size);
+                        max_single_allocation_size,
+                        max_mem_alloc_size);
             std::clog << fmt::format(fmt::fg(fmt::color::orange),
                                      "Warning: if you are sure that the guaranteed maximum memory allocation size can be safely ignored on your deivce, "
-                                     "this check can be disabled via \"-DPLSSVM_ENFORCE_MAX_MEM_ALLOC_SIZE=OFF\" during the CMake configuration!") << std::endl;
+                                     "this check can be disabled via \"-DPLSSVM_ENFORCE_MAX_MEM_ALLOC_SIZE=OFF\" during the CMake configuration!")
+                      << std::endl;
             used_solver = solver_type::cg_streaming;
         }
 #endif
@@ -807,10 +809,8 @@ std::pair<aos_matrix<real_type>, std::vector<real_type>> csvm::solve_system_of_l
                 "Assembled the kernel matrix in {}.\n",
                 detail::tracking_entry{ "kernel_matrix", "kernel_matrix_assembly", std::chrono::duration_cast<std::chrono::milliseconds>(assembly_end_time - assembly_start_time) });
 
-
     // choose the correct algorithm based on the (provided) solver type -> currently only CG available
     const aos_matrix<real_type> X = conjugate_gradients(kernel_matrix, B_red, used_epsilon, used_max_iter, used_solver);  // TODO: q_red for implicit
-
 
     // calculate bias and undo dimensional reduction
     aos_matrix<real_type> X_ret{ num_rhs, A.num_rows() };
