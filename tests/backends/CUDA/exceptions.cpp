@@ -22,4 +22,4 @@ struct exception_test_type {
 };
 
 // instantiate type-parameterized tests
-INSTANTIATE_TYPED_TEST_SUITE_P(CUDABackend, Exception, exception_test_type);
+INSTANTIATE_TYPED_TEST_SUITE_P(CUDAExceptions, Exception, exception_test_type);
