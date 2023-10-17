@@ -16,18 +16,18 @@
 #include "plssvm/detail/type_traits.hpp"  // plssvm::detail::{always_false_v, remove_cvref_t}
 #include "plssvm/matrix.hpp"              // plssvm::matrix
 
-#include "fmt/core.h"                     // fmt::format
-#include "gmock/gmock-matchers.h"         // ::testing::StrEq
-#include "gtest/gtest.h"                  // EXPECT_FLOAT_EQ, EXPECT_DOUBLE_EQ, ASSERT_FLOAT_EQ, ASSERT_DOUBLE_EQ, EXPECT_EQ, ASSERT_EQ, FAIL, EXPECT_LT, ASSERT_LT
+#include "fmt/core.h"              // fmt::format
+#include "gmock/gmock-matchers.h"  // EXPECT_THAT, ::testing::{StrEq, Ge, Le, Gt, Lt}
+#include "gtest/gtest.h"           // EXPECT_FLOAT_EQ, EXPECT_DOUBLE_EQ, ASSERT_FLOAT_EQ, ASSERT_DOUBLE_EQ, EXPECT_EQ, ASSERT_EQ, FAIL, EXPECT_LT, ASSERT_LT
 
-#include <algorithm>                      // std::max, std::min
-#include <cmath>                          // std::abs
-#include <limits>                         // std::numeric_limits::{epsilon, max, min}
-#include <sstream>                        // std::ostringstream
-#include <string>                         // std::string
-#include <string_view>                    // std::string_view
-#include <type_traits>                    // std::is_same_v
-#include <vector>                         // std::vector
+#include <algorithm>    // std::max, std::min
+#include <cmath>        // std::abs
+#include <limits>       // std::numeric_limits::{epsilon, max, min}
+#include <sstream>      // std::ostringstream
+#include <string>       // std::string
+#include <string_view>  // std::string_view
+#include <type_traits>  // std::is_same_v
+#include <vector>       // std::vector
 
 namespace detail {
 
@@ -238,7 +238,7 @@ inline void convert_to_string(const T &value, const std::string_view expected_st
 template <typename T, bool expect>
 inline void convert_from_string(const std::string &str, const T &expected_value) {
     // convert a string to a value of type T
-    std::istringstream input{ str };
+    const std::istringstream input{ str };
     T value{};
     input >> value;
 
@@ -540,5 +540,38 @@ inline void convert_from_string(const std::string &str, const T &expected_value)
         auto ptr = dynamic_cast<type *>(&*instance); \
         EXPECT_NE(ptr, nullptr);                     \
     } while (false)
+
+/**
+ * @brief Check whether @p val is in the **inclusive** range [@p min, @p max].
+ * @details Other tests in the test case are executed even if this test fails.
+ * @param[in] val the value to check
+ * @param[in] min the lower bound value for @p val (**inclusive**)
+ * @param[in] max the upper bound value for @p val (**inclusive**)
+ */
+#define EXPECT_INCLUSIVE_RANGE(val, min, max) EXPECT_THAT((val), ::testing::AllOf(::testing::Ge((min)), ::testing::Le((max))))
+/**
+ * @brief Check whether @p val is in the **inclusive** range [@p min, @p max].
+ * @details Other tests in the test case are aborted if this test fails.
+ * @param[in] val the value to check
+ * @param[in] min the lower bound value for @p val (**inclusive**)
+ * @param[in] max the upper bound value for @p val (**inclusive**)
+ */
+#define ASSERT_INCLUSIVE_RANGE(val, min, max) ASSERT_THAT((val), ::testing::AllOf(::testing::Ge((min)), ::testing::Le((max))))
+/**
+ * @brief Check whether @p val is in the **exclusive** range (@p min, @p max).
+ * @details Other tests in the test case are executed even if this test fails.
+ * @param[in] val the value to check
+ * @param[in] min the lower bound value for @p val (**exclusive**)
+ * @param[in] max the upper bound value for @p val (**exclusive**)
+ */
+#define EXPECT_EXCLUSIVE_RANGE(val, min, max) EXPECT_THAT((val), ::testing::AllOf(::testing::Gt((min)), ::testing::Lt((max))))
+/**
+ * @brief Check whether @p val is in the **exclusive** range (@p min, @p max).
+ * @details Other tests in the test case are aborted if this test fails.
+ * @param[in] val the value to check
+ * @param[in] min the lower bound value for @p val (**exclusive**)
+ * @param[in] max the upper bound value for @p val (**exclusive**)
+ */
+#define ASSERT_EXCLUSIVE_RANGE(val, min, max) ASSERT_THAT((val), ::testing::AllOf(::testing::Gt((min)), ::testing::Lt((max))))
 
 #endif  // PLSSVM_TESTS_CUSTOM_TEST_MACROS_HPP_
