@@ -238,7 +238,7 @@ inline void convert_to_string(const T &value, const std::string_view expected_st
 template <typename T, bool expect>
 inline void convert_from_string(const std::string &str, const T &expected_value) {
     // convert a string to a value of type T
-    const std::istringstream input{ str };
+    std::istringstream input{ str };
     T value{};
     input >> value;
 
