@@ -237,12 +237,12 @@ else ()
 endif ()
 
 ## try finding fmt
-find_package(fmt 10.0.0 QUIET)
+find_package(fmt 10.1.1 QUIET)
 if (fmt_FOUND)
     message(STATUS "Found package fmt.")
 else ()
-    message(STATUS "Couldn't find package fmt. Building from source ...")
-    set(PLSSVM_fmt_VERSION 10.0.0)
+    message(STATUS "Couldn't find package fmt. Building from source ...")  # TODO: change to next release; bug fix commit
+    set(PLSSVM_fmt_VERSION d9063baf227882da0f48c761abcbb08247eb1296)
     # fetch string formatting library fmt
     FetchContent_Declare(fmt
             GIT_REPOSITORY https://github.com/fmtlib/fmt.git
