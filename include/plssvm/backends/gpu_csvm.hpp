@@ -87,22 +87,6 @@ class gpu_csvm : public ::plssvm::csvm {
     }
 
   protected:
-    /**
-     * @brief Returns the number of usable devices given the kernel function @p kernel and the number of features @p num_features.
-     * @details Only the linear kernel supports multi-GPU execution, i.e., for the polynomial and rbf kernel, this function **always** returns 1.
-     *          In addition, at most @p num_features devices may be used (i.e., if **more** devices than features are present not all devices are used).
-     * @param[in] kernel the kernel function type
-     * @param[in] num_features the number of features
-     * @return the number of usable devices; may be less than the discovered devices in the system (`[[nodiscard]]`)
-     */
-    [[nodiscard]] std::size_t select_num_used_devices(kernel_function_type kernel, std::size_t num_features) const noexcept;
-    /**
-     * @brief Combines the data in @p buffer_d from all devices into @p buffer and distributes them back to each device.
-     * @param[in,out] buffer_d the data to gather
-     * @param[in,out] buffer the reduced data
-     */
-    void device_reduction(std::vector<device_ptr_type> &buffer_d, std::vector<real_type> &buffer) const;
-
     //***************************************************//
     //                        fit                        //
     //***************************************************//
@@ -194,53 +178,6 @@ class gpu_csvm : public ::plssvm::csvm {
     std::vector<queue_type> devices_{};
 };
 
-template <template <typename> typename device_ptr_t, typename queue_t>
-std::size_t gpu_csvm<device_ptr_t, queue_t>::select_num_used_devices(const kernel_function_type, const std::size_t) const noexcept {
-    //    PLSSVM_ASSERT(num_features > 0, "At lest one feature must be given!");
-    //
-    //    // polynomial and rbf kernel currently only support single GPU execution
-    //    if ((kernel == kernel_function_type::polynomial || kernel == kernel_function_type::rbf) && devices_.size() > 1) {
-    //        std::clog << fmt::format("Warning: found {} devices, however only 1 device can be used since the polynomial and rbf kernels currently only support single GPU execution!", devices_.size()) << std::endl;
-    //        return 1;
-    //    }
-    //
-    //    // the number of used devices may not exceed the number of features
-    //    const std::size_t num_used_devices = std::min(devices_.size(), num_features);
-    //    if (num_used_devices < devices_.size()) {
-    //        std::clog << fmt::format("Warning: found {} devices, however only {} device(s) can be used since the data set only has {} features!", devices_.size(), num_used_devices, num_features) << std::endl;
-    //    }
-    //    return num_used_devices;
-    // TODO: currently only a single device is supported!
-    return 1;
-}
-
-template <template <typename> typename device_ptr_t, typename queue_t>
-void gpu_csvm<device_ptr_t, queue_t>::device_reduction(std::vector<device_ptr_type> &buffer_d, std::vector<real_type> &buffer) const {
-    PLSSVM_ASSERT(!buffer_d.empty(), "The buffer_d array may not be empty!");
-    PLSSVM_ASSERT(std::all_of(buffer_d.cbegin(), buffer_d.cend(), [](const device_ptr_type &ptr) { return !ptr.empty(); }), "Each device_ptr in buffer_d must at least contain one data point!");
-    PLSSVM_ASSERT(!buffer.empty(), "The buffer array may not be empty!");
-
-    using namespace plssvm::operators;
-
-    device_synchronize(devices_[0]);
-    buffer_d[0].copy_to_host(buffer, 0, buffer.size());
-
-    if (buffer_d.size() > 1) {
-        std::vector<real_type> ret(buffer.size());
-        for (typename std::vector<device_ptr_type>::size_type device = 1; device < buffer_d.size(); ++device) {
-            device_synchronize(devices_[device]);
-            buffer_d[device].copy_to_host(ret, 0, ret.size());
-
-            buffer += ret;
-        }
-
-        #pragma omp parallel for default(none) shared(buffer_d, buffer)
-        for (typename std::vector<device_ptr_type>::size_type device = 0; device < buffer_d.size(); ++device) {
-            buffer_d[device].copy_to_device(buffer, 0, buffer.size());
-        }
-    }
-}
-
 //***************************************************//
 //                        fit                        //
 //***************************************************//
@@ -257,7 +194,7 @@ template <template <typename> typename device_ptr_t, typename queue_t>
         return ::plssvm::detail::simple_any{ std::move(data_d) };
     } else {
         // TODO: implement for other solver types
-        throw exception{ fmt::format("Assemblying the kernel matrix using the {} CG variation is currently not implemented!", solver) };
+        throw exception{ fmt::format("Assembling the kernel matrix using the {} CG variation is currently not implemented!", solver) };
     }
 }
 
@@ -299,7 +236,7 @@ template <template <typename> typename device_ptr_t, typename queue_t>
         return ::plssvm::detail::simple_any{ std::move(kernel_matrix) };
     } else {
         // TODO: implement for other solver types
-        throw exception{ fmt::format("Assemblying the kernel matrix using the {} CG variation is currently not implemented!", solver) };
+        throw exception{ fmt::format("Assembling the kernel matrix using the {} CG variation is currently not implemented!", solver) };
     }
 }
 
@@ -350,8 +287,8 @@ aos_matrix<real_type> gpu_csvm<device_ptr_t, queue_t>::predict_values(const para
     PLSSVM_ASSERT(!support_vectors.empty(), "The support vectors must not be empty!");
     PLSSVM_ASSERT(!alpha.empty(), "The alpha vectors (weights) must not be empty!");
     PLSSVM_ASSERT(support_vectors.num_rows() == alpha.num_cols(), "The number of support vectors ({}) and number of weights ({}) must be the same!", support_vectors.num_rows(), alpha.num_cols());
-    PLSSVM_ASSERT(rho.size() == alpha.num_rows(), "The number of rho values ({}) and the number of weights ({}) must be the same!", rho.size(), alpha.num_rows());
-    PLSSVM_ASSERT(w.empty() || support_vectors.num_cols() == w.num_cols(), "Either w must be empty or contain exactly the same number of values as features are present ({})!", support_vectors.num_cols());
+    PLSSVM_ASSERT(rho.size() == alpha.num_rows(), "The number of rho values ({}) and the number of weight vectors ({}) must be the same!", rho.size(), alpha.num_rows());
+    PLSSVM_ASSERT(w.empty() || support_vectors.num_cols() == w.num_cols(), "Either w must be empty or contain exactly the same number of values ({}) as features are present ({})!", w.num_cols(), support_vectors.num_cols());
     PLSSVM_ASSERT(w.empty() || alpha.num_rows() == w.num_rows(), "Either w must be empty or contain exactly the same number of vectors ({}) as the alpha vector ({})!", w.num_rows(), alpha.num_rows());
     PLSSVM_ASSERT(!predict_points.empty(), "The data points to predict must not be empty!");
     PLSSVM_ASSERT(support_vectors.num_cols() == predict_points.num_cols(), "The number of features in the support vectors ({}) must be the same as in the data points to predict ({})!", support_vectors.num_cols(), predict_points.num_cols());
@@ -378,7 +315,7 @@ aos_matrix<real_type> gpu_csvm<device_ptr_t, queue_t>::predict_values(const para
         // special optimization for the linear kernel function
         if (w.empty()) {
             // fill w vector
-            w_d = run_w_kernel(alpha_d, sv_d);
+            w_d = this->run_w_kernel(alpha_d, sv_d);
 
             // convert 1D result to aos_matrix out-parameter
             w = aos_matrix<real_type>{ num_classes, num_features };
@@ -391,7 +328,7 @@ aos_matrix<real_type> gpu_csvm<device_ptr_t, queue_t>::predict_values(const para
     }
 
     // predict
-    const device_ptr_type out_d = run_predict_kernel(params, w_d, alpha_d, rho_d, sv_d, predict_points_d);
+    const device_ptr_type out_d = this->run_predict_kernel(params, w_d, alpha_d, rho_d, sv_d, predict_points_d);
 
     // copy results back to host
     aos_matrix<real_type> out_ret{ num_predict_points, num_classes };

@@ -21,6 +21,8 @@
 
 namespace compare {
 
+// TODO: remove unused functions
+
 namespace detail {
 
 /**
@@ -84,7 +86,7 @@ template <typename real_type, plssvm::layout_type layout>
 [[nodiscard]] real_type kernel_function(const plssvm::parameter &params, const plssvm::matrix<real_type, layout> &X, std::size_t i, const plssvm::matrix<real_type, layout> &Y, std::size_t j, std::size_t num_devices = 1);
 
 /**
- * @brief Computes the `q` vector, a subvector of the least-squares matrix equation, using the kernel function determined by @p params.
+ * @brief Computes the `q` vector, a subvector of the least-squares matrix equation, using the kernel function determined by @p params for the dimensional reduction.
  * @details Single core execution for a deterministic order of floating point operations.
  * @tparam real_type the type of the data
  * @param[in] params the parameter used in the kernel function
@@ -93,7 +95,7 @@ template <typename real_type, plssvm::layout_type layout>
  * @return the generated `q` vector (`[[nodiscard]]`)
  */
 template <typename real_type>
-[[nodiscard]] std::vector<real_type> generate_q(const plssvm::parameter &params, const plssvm::aos_matrix<real_type> &data, std::size_t num_devices = 1);
+[[nodiscard]] std::vector<real_type> perform_dimensional_reduction(const plssvm::parameter &params, const plssvm::aos_matrix<real_type> &data, std::size_t num_devices = 1);
 
 /**
  * @brief Computes the kernel matrix using the kernel function determined by @p params.

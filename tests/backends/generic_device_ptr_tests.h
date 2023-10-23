@@ -16,6 +16,7 @@
 #include "plssvm/exceptions/exceptions.hpp"  // plssvm::gpu_device_ptr_exception
 
 #include "../custom_test_macros.hpp"  // EXPECT_THROW_WHAT
+#include "../types_to_test.hpp"       // util::test_parameter_type_at_t
 
 #include "gtest//gtest.h"  // TYPED_TEST_SUITE_P, TYPED_TEST_P, REGISTER_TYPED_TEST_SUITE_P, EXPECT_TRUE, EXPECT_FALSE, EXPECT_EQ, EXPECT_NE, EXPECT_DEATH
                            // ::testing::{Test, hasSubstr}
@@ -25,11 +26,15 @@
 #include <vector>   // std::vector
 
 template <typename T>
-class DevicePtr : public ::testing::Test {};
+class DevicePtr : public ::testing::Test {
+  protected:
+    using fixture_test_type = util::test_parameter_type_at_t<0, T>;
+};
 TYPED_TEST_SUITE_P(DevicePtr);
 
 TYPED_TEST_P(DevicePtr, default_construct) {
-    using device_ptr_type = typename TypeParam::device_ptr_type;
+    using test_type = typename TestFixture::fixture_test_type;
+    using device_ptr_type = typename test_type::device_ptr_type;
 
     // default construct device_ptr
     const device_ptr_type ptr{};
@@ -42,9 +47,10 @@ TYPED_TEST_P(DevicePtr, default_construct) {
     EXPECT_TRUE(ptr.empty());
 }
 TYPED_TEST_P(DevicePtr, construct) {
-    using device_ptr_type = typename TypeParam::device_ptr_type;
-    using queue_type = typename TypeParam::queue_type;
-    const queue_type &queue = TypeParam::default_queue();
+    using test_type = typename TestFixture::fixture_test_type;
+    using device_ptr_type = typename test_type::device_ptr_type;
+    using queue_type = typename test_type::queue_type;
+    const queue_type &queue = test_type::default_queue();
 
     // construct device_ptr
     const device_ptr_type ptr{ 42, queue };
@@ -57,9 +63,10 @@ TYPED_TEST_P(DevicePtr, construct) {
     EXPECT_FALSE(ptr.empty());
 }
 TYPED_TEST_P(DevicePtr, construct_extents) {
-    using device_ptr_type = typename TypeParam::device_ptr_type;
-    using queue_type = typename TypeParam::queue_type;
-    const queue_type &queue = TypeParam::default_queue();
+    using test_type = typename TestFixture::fixture_test_type;
+    using device_ptr_type = typename test_type::device_ptr_type;
+    using queue_type = typename test_type::queue_type;
+    const queue_type &queue = test_type::default_queue();
 
     // construct device_ptr
     const device_ptr_type ptr{ { 42, 16 }, queue };
@@ -72,9 +79,10 @@ TYPED_TEST_P(DevicePtr, construct_extents) {
     EXPECT_FALSE(ptr.empty());
 }
 TYPED_TEST_P(DevicePtr, move_construct) {
-    using device_ptr_type = typename TypeParam::device_ptr_type;
-    using queue_type = typename TypeParam::queue_type;
-    const queue_type &queue = TypeParam::default_queue();
+    using test_type = typename TestFixture::fixture_test_type;
+    using device_ptr_type = typename test_type::device_ptr_type;
+    using queue_type = typename test_type::queue_type;
+    const queue_type &queue = test_type::default_queue();
 
     // construct device_ptr
     device_ptr_type first{ 42, queue };
@@ -96,9 +104,10 @@ TYPED_TEST_P(DevicePtr, move_construct) {
     EXPECT_TRUE(first.empty());
 }
 TYPED_TEST_P(DevicePtr, move_assign) {
-    using device_ptr_type = typename TypeParam::device_ptr_type;
-    using queue_type = typename TypeParam::queue_type;
-    const queue_type &queue = TypeParam::default_queue();
+    using test_type = typename TestFixture::fixture_test_type;
+    using device_ptr_type = typename test_type::device_ptr_type;
+    using queue_type = typename test_type::queue_type;
+    const queue_type &queue = test_type::default_queue();
 
     // construct device_ptr
     device_ptr_type first{ 42, queue };
@@ -123,9 +132,10 @@ TYPED_TEST_P(DevicePtr, move_assign) {
 }
 
 TYPED_TEST_P(DevicePtr, swap_member_function) {
-    using device_ptr_type = typename TypeParam::device_ptr_type;
-    using queue_type = typename TypeParam::queue_type;
-    const queue_type &queue = TypeParam::default_queue();
+    using test_type = typename TestFixture::fixture_test_type;
+    using device_ptr_type = typename test_type::device_ptr_type;
+    using queue_type = typename test_type::queue_type;
+    const queue_type &queue = test_type::default_queue();
 
     // construct two device_ptr
     device_ptr_type first{ 42, queue };
@@ -148,9 +158,10 @@ TYPED_TEST_P(DevicePtr, swap_member_function) {
     EXPECT_TRUE(first.empty());
 }
 TYPED_TEST_P(DevicePtr, swap_free_function) {
-    using device_ptr_type = typename TypeParam::device_ptr_type;
-    using queue_type = typename TypeParam::queue_type;
-    const queue_type &queue = TypeParam::default_queue();
+    using test_type = typename TestFixture::fixture_test_type;
+    using device_ptr_type = typename test_type::device_ptr_type;
+    using queue_type = typename test_type::queue_type;
+    const queue_type &queue = test_type::default_queue();
 
     // construct two device_ptr
     device_ptr_type first{ 42, queue };
@@ -175,22 +186,24 @@ TYPED_TEST_P(DevicePtr, swap_free_function) {
 }
 
 TYPED_TEST_P(DevicePtr, operator_bool) {
-    using device_ptr_type = typename TypeParam::device_ptr_type;
-    using queue_type = typename TypeParam::queue_type;
-    const queue_type &queue = TypeParam::default_queue();
+    using test_type = typename TestFixture::fixture_test_type;
+    using device_ptr_type = typename test_type::device_ptr_type;
+    using queue_type = typename test_type::queue_type;
+    const queue_type &queue = test_type::default_queue();
 
     // construct device_ptr
     const device_ptr_type ptr1{ 42, queue };
     EXPECT_TRUE(static_cast<bool>(ptr1));
 
     // construct empty device_ptr
-    const device_ptr_type ptr2{ };
+    const device_ptr_type ptr2{};
     EXPECT_FALSE(static_cast<bool>(ptr2));
 }
 TYPED_TEST_P(DevicePtr, size) {
-    using device_ptr_type = typename TypeParam::device_ptr_type;
-    using queue_type = typename TypeParam::queue_type;
-    const queue_type &queue = TypeParam::default_queue();
+    using test_type = typename TestFixture::fixture_test_type;
+    using device_ptr_type = typename test_type::device_ptr_type;
+    using queue_type = typename test_type::queue_type;
+    const queue_type &queue = test_type::default_queue();
 
     // construct device_ptr
     const device_ptr_type ptr1{ 42, queue };
@@ -201,13 +214,14 @@ TYPED_TEST_P(DevicePtr, size) {
     EXPECT_EQ(ptr2.size(), 42 * 16);
 
     // construct empty device_ptr
-    const device_ptr_type ptr3{ };
+    const device_ptr_type ptr3{};
     EXPECT_EQ(ptr3.size(), 0);
 }
 TYPED_TEST_P(DevicePtr, size_idx) {
-    using device_ptr_type = typename TypeParam::device_ptr_type;
-    using queue_type = typename TypeParam::queue_type;
-    const queue_type &queue = TypeParam::default_queue();
+    using test_type = typename TestFixture::fixture_test_type;
+    using device_ptr_type = typename test_type::device_ptr_type;
+    using queue_type = typename test_type::queue_type;
+    const queue_type &queue = test_type::default_queue();
 
     // construct device_ptr
     const device_ptr_type ptr1{ 42, queue };
@@ -220,14 +234,15 @@ TYPED_TEST_P(DevicePtr, size_idx) {
     EXPECT_EQ(ptr2.size(1), 16);
 
     // construct empty device_ptr
-    const device_ptr_type ptr3{ };
+    const device_ptr_type ptr3{};
     EXPECT_EQ(ptr3.size(0), 0);
     EXPECT_EQ(ptr3.size(1), 0);
 }
 TYPED_TEST_P(DevicePtr, extent) {
-    using device_ptr_type = typename TypeParam::device_ptr_type;
-    using queue_type = typename TypeParam::queue_type;
-    const queue_type &queue = TypeParam::default_queue();
+    using test_type = typename TestFixture::fixture_test_type;
+    using device_ptr_type = typename test_type::device_ptr_type;
+    using queue_type = typename test_type::queue_type;
+    const queue_type &queue = test_type::default_queue();
 
     // construct device_ptr
     const device_ptr_type ptr1{ 42, queue };
@@ -238,28 +253,30 @@ TYPED_TEST_P(DevicePtr, extent) {
     EXPECT_EQ(ptr2.extents(), (std::array<std::size_t, 2>{ 42, 16 }));
 
     // construct empty device_ptr
-    const device_ptr_type ptr3{ };
+    const device_ptr_type ptr3{};
     EXPECT_EQ(ptr3.extents(), (std::array<std::size_t, 2>{ 0, 0 }));
 }
 TYPED_TEST_P(DevicePtr, empty) {
-    using device_ptr_type = typename TypeParam::device_ptr_type;
-    using queue_type = typename TypeParam::queue_type;
-    const queue_type &queue = TypeParam::default_queue();
+    using test_type = typename TestFixture::fixture_test_type;
+    using device_ptr_type = typename test_type::device_ptr_type;
+    using queue_type = typename test_type::queue_type;
+    const queue_type &queue = test_type::default_queue();
 
     // construct device_ptr
     const device_ptr_type ptr1{ 42, queue };
     EXPECT_FALSE(ptr1.empty());
 
     // construct empty device_ptr
-    const device_ptr_type ptr2{ };
+    const device_ptr_type ptr2{};
     EXPECT_TRUE(ptr2.empty());
 }
 
 TYPED_TEST_P(DevicePtr, memset) {
-    using device_ptr_type = typename TypeParam::device_ptr_type;
+    using test_type = typename TestFixture::fixture_test_type;
+    using device_ptr_type = typename test_type::device_ptr_type;
     using value_type = typename device_ptr_type::value_type;
-    using queue_type = typename TypeParam::queue_type;
-    const queue_type &queue = TypeParam::default_queue();
+    using queue_type = typename test_type::queue_type;
+    const queue_type &queue = test_type::default_queue();
 
     // construct device_ptr
     device_ptr_type ptr{ 10, queue };
@@ -278,10 +295,11 @@ TYPED_TEST_P(DevicePtr, memset) {
     EXPECT_EQ(result, correct);
 }
 TYPED_TEST_P(DevicePtr, memset_with_numbytes) {
-    using device_ptr_type = typename TypeParam::device_ptr_type;
+    using test_type = typename TestFixture::fixture_test_type;
+    using device_ptr_type = typename test_type::device_ptr_type;
     using value_type = typename device_ptr_type::value_type;
-    using queue_type = typename TypeParam::queue_type;
-    const queue_type &queue = TypeParam::default_queue();
+    using queue_type = typename test_type::queue_type;
+    const queue_type &queue = test_type::default_queue();
 
     // construct device_ptr
     device_ptr_type ptr{ 10, queue };
@@ -300,9 +318,10 @@ TYPED_TEST_P(DevicePtr, memset_with_numbytes) {
     EXPECT_EQ(result, correct);
 }
 TYPED_TEST_P(DevicePtr, memset_invalid_pos) {
-    using device_ptr_type = typename TypeParam::device_ptr_type;
-    using queue_type = typename TypeParam::queue_type;
-    const queue_type &queue = TypeParam::default_queue();
+    using test_type = typename TestFixture::fixture_test_type;
+    using device_ptr_type = typename test_type::device_ptr_type;
+    using queue_type = typename test_type::queue_type;
+    const queue_type &queue = test_type::default_queue();
 
     // construct device_ptr
     device_ptr_type ptr{ 10, queue };
@@ -315,10 +334,11 @@ TYPED_TEST_P(DevicePtr, memset_invalid_pos) {
 }
 
 TYPED_TEST_P(DevicePtr, fill) {
-    using device_ptr_type = typename TypeParam::device_ptr_type;
+    using test_type = typename TestFixture::fixture_test_type;
+    using device_ptr_type = typename test_type::device_ptr_type;
     using value_type = typename device_ptr_type::value_type;
-    using queue_type = typename TypeParam::queue_type;
-    const queue_type &queue = TypeParam::default_queue();
+    using queue_type = typename test_type::queue_type;
+    const queue_type &queue = test_type::default_queue();
 
     // construct device_ptr
     device_ptr_type ptr{ 10, queue };
@@ -337,10 +357,11 @@ TYPED_TEST_P(DevicePtr, fill) {
     EXPECT_EQ(result, correct);
 }
 TYPED_TEST_P(DevicePtr, fill_with_count) {
-    using device_ptr_type = typename TypeParam::device_ptr_type;
+    using test_type = typename TestFixture::fixture_test_type;
+    using device_ptr_type = typename test_type::device_ptr_type;
     using value_type = typename device_ptr_type::value_type;
-    using queue_type = typename TypeParam::queue_type;
-    const queue_type &queue = TypeParam::default_queue();
+    using queue_type = typename test_type::queue_type;
+    const queue_type &queue = test_type::default_queue();
 
     // construct device_ptr
     device_ptr_type ptr{ 10, queue };
@@ -359,10 +380,11 @@ TYPED_TEST_P(DevicePtr, fill_with_count) {
     EXPECT_EQ(result, correct);
 }
 TYPED_TEST_P(DevicePtr, fill_invalid_pos) {
-    using device_ptr_type = typename TypeParam::device_ptr_type;
+    using test_type = typename TestFixture::fixture_test_type;
+    using device_ptr_type = typename test_type::device_ptr_type;
     using value_type = typename device_ptr_type::value_type;
-    using queue_type = typename TypeParam::queue_type;
-    const queue_type &queue = TypeParam::default_queue();
+    using queue_type = typename test_type::queue_type;
+    const queue_type &queue = test_type::default_queue();
 
     // construct device_ptr
     device_ptr_type ptr{ 10, queue };
@@ -375,10 +397,11 @@ TYPED_TEST_P(DevicePtr, fill_invalid_pos) {
 }
 
 TYPED_TEST_P(DevicePtr, copy_vector) {
-    using device_ptr_type = typename TypeParam::device_ptr_type;
+    using test_type = typename TestFixture::fixture_test_type;
+    using device_ptr_type = typename test_type::device_ptr_type;
     using value_type = typename device_ptr_type::value_type;
-    using queue_type = typename TypeParam::queue_type;
-    const queue_type &queue = TypeParam::default_queue();
+    using queue_type = typename test_type::queue_type;
+    const queue_type &queue = test_type::default_queue();
 
     // construct device_ptr
     device_ptr_type ptr{ 10, queue };
@@ -397,10 +420,11 @@ TYPED_TEST_P(DevicePtr, copy_vector) {
     EXPECT_EQ(result, std::vector<value_type>(10, 42));
 }
 TYPED_TEST_P(DevicePtr, copy_vector_with_count_copy_back_all) {
-    using device_ptr_type = typename TypeParam::device_ptr_type;
+    using test_type = typename TestFixture::fixture_test_type;
+    using device_ptr_type = typename test_type::device_ptr_type;
     using value_type = typename device_ptr_type::value_type;
-    using queue_type = typename TypeParam::queue_type;
-    const queue_type &queue = TypeParam::default_queue();
+    using queue_type = typename test_type::queue_type;
+    const queue_type &queue = test_type::default_queue();
 
     // construct device_ptr
     device_ptr_type ptr{ 6, queue };
@@ -419,10 +443,11 @@ TYPED_TEST_P(DevicePtr, copy_vector_with_count_copy_back_all) {
     EXPECT_EQ(result, (std::vector<value_type>{ value_type{ 0.0 }, value_type{ 42.0 }, value_type{ 42.0 }, value_type{ 42.0 }, value_type{ 0.0 }, value_type{ 0.0 } }));
 }
 TYPED_TEST_P(DevicePtr, copy_vector_with_count_copy_back_some) {
-    using device_ptr_type = typename TypeParam::device_ptr_type;
+    using test_type = typename TestFixture::fixture_test_type;
+    using device_ptr_type = typename test_type::device_ptr_type;
     using value_type = typename device_ptr_type::value_type;
-    using queue_type = typename TypeParam::queue_type;
-    const queue_type &queue = TypeParam::default_queue();
+    using queue_type = typename test_type::queue_type;
+    const queue_type &queue = test_type::default_queue();
 
     // construct device_ptr
     device_ptr_type ptr{ 6, queue };
@@ -441,10 +466,11 @@ TYPED_TEST_P(DevicePtr, copy_vector_with_count_copy_back_some) {
     EXPECT_EQ(result, (std::vector<value_type>{ value_type{ 42.0 }, value_type{ 42.0 }, value_type{ 0.0 } }));
 }
 TYPED_TEST_P(DevicePtr, copy_vector_with_count_copy_to_too_many) {
-    using device_ptr_type = typename TypeParam::device_ptr_type;
+    using test_type = typename TestFixture::fixture_test_type;
+    using device_ptr_type = typename test_type::device_ptr_type;
     using value_type = typename device_ptr_type::value_type;
-    using queue_type = typename TypeParam::queue_type;
-    const queue_type &queue = TypeParam::default_queue();
+    using queue_type = typename test_type::queue_type;
+    const queue_type &queue = test_type::default_queue();
 
     // construct device_ptr
     device_ptr_type ptr{ 6, queue };
@@ -464,10 +490,11 @@ TYPED_TEST_P(DevicePtr, copy_vector_with_count_copy_to_too_many) {
 }
 
 TYPED_TEST_P(DevicePtr, copy_vector_too_few_host_elements) {
-    using device_ptr_type = typename TypeParam::device_ptr_type;
+    using test_type = typename TestFixture::fixture_test_type;
+    using device_ptr_type = typename test_type::device_ptr_type;
     using value_type = typename device_ptr_type::value_type;
-    using queue_type = typename TypeParam::queue_type;
-    const queue_type &queue = TypeParam::default_queue();
+    using queue_type = typename test_type::queue_type;
+    const queue_type &queue = test_type::default_queue();
 
     // construct device_ptr
     device_ptr_type ptr{ 10, queue };
@@ -477,10 +504,11 @@ TYPED_TEST_P(DevicePtr, copy_vector_too_few_host_elements) {
     EXPECT_THROW_WHAT(ptr.copy_to_device(data), plssvm::gpu_device_ptr_exception, "Too few data to perform copy (needed: 10, provided: 8)!");
 }
 TYPED_TEST_P(DevicePtr, copy_vector_too_few_buffer_elements) {
-    using device_ptr_type = typename TypeParam::device_ptr_type;
+    using test_type = typename TestFixture::fixture_test_type;
+    using device_ptr_type = typename test_type::device_ptr_type;
     using value_type = typename device_ptr_type::value_type;
-    using queue_type = typename TypeParam::queue_type;
-    const queue_type &queue = TypeParam::default_queue();
+    using queue_type = typename test_type::queue_type;
+    const queue_type &queue = test_type::default_queue();
 
     // construct device_ptr
     device_ptr_type ptr{ 10, queue };
@@ -490,10 +518,11 @@ TYPED_TEST_P(DevicePtr, copy_vector_too_few_buffer_elements) {
     EXPECT_THROW_WHAT(ptr.copy_to_host(buffer), plssvm::gpu_device_ptr_exception, "Buffer too small to perform copy (needed: 10, provided: 8)!");
 }
 TYPED_TEST_P(DevicePtr, copy_vector_with_count_too_few_host_elements) {
-    using device_ptr_type = typename TypeParam::device_ptr_type;
+    using test_type = typename TestFixture::fixture_test_type;
+    using device_ptr_type = typename test_type::device_ptr_type;
     using value_type = typename device_ptr_type::value_type;
-    using queue_type = typename TypeParam::queue_type;
-    const queue_type &queue = TypeParam::default_queue();
+    using queue_type = typename test_type::queue_type;
+    const queue_type &queue = test_type::default_queue();
 
     // construct device_ptr
     device_ptr_type ptr{ 10, queue };
@@ -503,10 +532,11 @@ TYPED_TEST_P(DevicePtr, copy_vector_with_count_too_few_host_elements) {
     EXPECT_THROW_WHAT(ptr.copy_to_device(data, 1, 7), plssvm::gpu_device_ptr_exception, "Too few data to perform copy (needed: 7, provided: 4)!");
 }
 TYPED_TEST_P(DevicePtr, copy_vector_with_count_too_few_buffer_elements) {
-    using device_ptr_type = typename TypeParam::device_ptr_type;
+    using test_type = typename TestFixture::fixture_test_type;
+    using device_ptr_type = typename test_type::device_ptr_type;
     using value_type = typename device_ptr_type::value_type;
-    using queue_type = typename TypeParam::queue_type;
-    const queue_type &queue = TypeParam::default_queue();
+    using queue_type = typename test_type::queue_type;
+    const queue_type &queue = test_type::default_queue();
 
     // construct device_ptr
     device_ptr_type ptr{ 6, queue };
@@ -517,10 +547,11 @@ TYPED_TEST_P(DevicePtr, copy_vector_with_count_too_few_buffer_elements) {
 }
 
 TYPED_TEST_P(DevicePtr, copy_ptr) {
-    using device_ptr_type = typename TypeParam::device_ptr_type;
+    using test_type = typename TestFixture::fixture_test_type;
+    using device_ptr_type = typename test_type::device_ptr_type;
     using value_type = typename device_ptr_type::value_type;
-    using queue_type = typename TypeParam::queue_type;
-    const queue_type &queue = TypeParam::default_queue();
+    using queue_type = typename test_type::queue_type;
+    const queue_type &queue = test_type::default_queue();
 
     // construct device_ptr
     device_ptr_type ptr{ 10, queue };
@@ -539,10 +570,11 @@ TYPED_TEST_P(DevicePtr, copy_ptr) {
     EXPECT_EQ(result, std::vector<value_type>(10, 42));
 }
 TYPED_TEST_P(DevicePtr, copy_ptr_with_count_copy_back_all) {
-    using device_ptr_type = typename TypeParam::device_ptr_type;
+    using test_type = typename TestFixture::fixture_test_type;
+    using device_ptr_type = typename test_type::device_ptr_type;
     using value_type = typename device_ptr_type::value_type;
-    using queue_type = typename TypeParam::queue_type;
-    const queue_type &queue = TypeParam::default_queue();
+    using queue_type = typename test_type::queue_type;
+    const queue_type &queue = test_type::default_queue();
 
     // construct device_ptr
     device_ptr_type ptr{ 6, queue };
@@ -561,10 +593,11 @@ TYPED_TEST_P(DevicePtr, copy_ptr_with_count_copy_back_all) {
     EXPECT_EQ(result, (std::vector<value_type>{ value_type{ 0.0 }, value_type{ 42.0 }, value_type{ 42.0 }, value_type{ 42.0 }, value_type{ 0.0 }, value_type{ 0.0 } }));
 }
 TYPED_TEST_P(DevicePtr, copy_ptr_with_count_copy_back_some) {
-    using device_ptr_type = typename TypeParam::device_ptr_type;
+    using test_type = typename TestFixture::fixture_test_type;
+    using device_ptr_type = typename test_type::device_ptr_type;
     using value_type = typename device_ptr_type::value_type;
-    using queue_type = typename TypeParam::queue_type;
-    const queue_type &queue = TypeParam::default_queue();
+    using queue_type = typename test_type::queue_type;
+    const queue_type &queue = test_type::default_queue();
 
     // construct device_ptr
     device_ptr_type ptr{ 6, queue };
@@ -583,10 +616,11 @@ TYPED_TEST_P(DevicePtr, copy_ptr_with_count_copy_back_some) {
     EXPECT_EQ(result, (std::vector<value_type>{ value_type{ 42.0 }, value_type{ 42.0 }, value_type{ 0.0 } }));
 }
 TYPED_TEST_P(DevicePtr, copy_ptr_with_count_copy_to_too_many) {
-    using device_ptr_type = typename TypeParam::device_ptr_type;
+    using test_type = typename TestFixture::fixture_test_type;
+    using device_ptr_type = typename test_type::device_ptr_type;
     using value_type = typename device_ptr_type::value_type;
-    using queue_type = typename TypeParam::queue_type;
-    const queue_type &queue = TypeParam::default_queue();
+    using queue_type = typename test_type::queue_type;
+    const queue_type &queue = test_type::default_queue();
 
     // construct device_ptr
     device_ptr_type ptr{ 6, queue };
@@ -622,7 +656,8 @@ class DevicePtrDeathTest : public DevicePtr<T> {};
 TYPED_TEST_SUITE_P(DevicePtrDeathTest);
 
 TYPED_TEST_P(DevicePtrDeathTest, memset) {
-    using device_ptr_type = typename TypeParam::device_ptr_type;
+    using test_type = typename TestFixture::fixture_test_type;
+    using device_ptr_type = typename test_type::device_ptr_type;
 
     // default construct device_ptr
     device_ptr_type ptr{};
@@ -633,7 +668,8 @@ TYPED_TEST_P(DevicePtrDeathTest, memset) {
 }
 
 TYPED_TEST_P(DevicePtrDeathTest, fill) {
-    using device_ptr_type = typename TypeParam::device_ptr_type;
+    using test_type = typename TestFixture::fixture_test_type;
+    using device_ptr_type = typename test_type::device_ptr_type;
     using value_type = typename device_ptr_type::value_type;
 
     // default construct device_ptr
@@ -645,9 +681,10 @@ TYPED_TEST_P(DevicePtrDeathTest, fill) {
 }
 
 TYPED_TEST_P(DevicePtrDeathTest, copy_ptr_invalid_host_ptr) {
-    using device_ptr_type = typename TypeParam::device_ptr_type;
-    using queue_type = typename TypeParam::queue_type;
-    const queue_type &queue = TypeParam::default_queue();
+    using test_type = typename TestFixture::fixture_test_type;
+    using device_ptr_type = typename test_type::device_ptr_type;
+    using queue_type = typename test_type::queue_type;
+    const queue_type &queue = test_type::default_queue();
 
     // construct device_ptr
     device_ptr_type ptr{ 10, queue };
@@ -657,7 +694,8 @@ TYPED_TEST_P(DevicePtrDeathTest, copy_ptr_invalid_host_ptr) {
     EXPECT_DEATH(ptr.copy_to_host(nullptr), ::testing::HasSubstr("Invalid host pointer for the data to copy!"));
 }
 TYPED_TEST_P(DevicePtrDeathTest, copy_ptr_invalid_device_ptr) {
-    using device_ptr_type = typename TypeParam::device_ptr_type;
+    using test_type = typename TestFixture::fixture_test_type;
+    using device_ptr_type = typename test_type::device_ptr_type;
     using value_type = typename device_ptr_type::value_type;
 
     // construct default device_ptr
@@ -672,9 +710,10 @@ TYPED_TEST_P(DevicePtrDeathTest, copy_ptr_invalid_device_ptr) {
 }
 
 TYPED_TEST_P(DevicePtrDeathTest, copy_ptr_with_count_invalid_host_ptr) {
-    using device_ptr_type = typename TypeParam::device_ptr_type;
-    using queue_type = typename TypeParam::queue_type;
-    const queue_type &queue = TypeParam::default_queue();
+    using test_type = typename TestFixture::fixture_test_type;
+    using device_ptr_type = typename test_type::device_ptr_type;
+    using queue_type = typename test_type::queue_type;
+    const queue_type &queue = test_type::default_queue();
 
     // construct device_ptr
     device_ptr_type ptr{ 10, queue };
@@ -684,7 +723,8 @@ TYPED_TEST_P(DevicePtrDeathTest, copy_ptr_with_count_invalid_host_ptr) {
     EXPECT_DEATH(ptr.copy_to_host(nullptr, 0, 10), ::testing::HasSubstr("Invalid host pointer for the data to copy!"));
 }
 TYPED_TEST_P(DevicePtrDeathTest, copy_ptr_with_count_invalid_device_ptr) {
-    using device_ptr_type = typename TypeParam::device_ptr_type;
+    using test_type = typename TestFixture::fixture_test_type;
+    using device_ptr_type = typename test_type::device_ptr_type;
     using value_type = typename device_ptr_type::value_type;
 
     // construct default device_ptr

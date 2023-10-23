@@ -246,7 +246,7 @@ class csvm {
     /// The target platform of this SVM.
     target_platform target_{ plssvm::target_platform::automatic };
 
-  private:
+  protected:  // necessary for tests, would otherwise be private
     /**
      * @brief Perform some sanity checks on the passed SVM parameters.
      * @throws plssvm::invalid_parameter_exception if the kernel function is invalid
@@ -290,6 +290,7 @@ class csvm {
      */
     [[nodiscard]] std::chrono::duration<long, std::milli> run_blas_level_3(solver_type cg_solver, real_type alpha, const detail::simple_any &A, const aos_matrix<real_type> &B, real_type beta, aos_matrix<real_type> &C) const;
 
+  private:
     /// The SVM parameter (e.g., cost, degree, gamma, coef0) currently in use.
     parameter params_{};
 };

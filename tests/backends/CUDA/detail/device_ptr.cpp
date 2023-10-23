@@ -12,7 +12,12 @@
 
 #include "../../generic_device_ptr_tests.h"  // generic device pointer tests to instantiate
 
-#include "gtest/gtest.h"  // INSTANTIATE_TYPED_TEST_SUITE_P, ::testing::Types
+#include "../../../naming.hpp"         // naming::test_parameter_to_name
+#include "../../../types_to_test.hpp"  // util::{combine_test_parameters_gtest_t, detail::wrap_tuple_types_in_type_lists_t}
+
+#include "gtest/gtest.h"  // INSTANTIATE_TYPED_TEST_SUITE_P
+
+#include <tuple>  // std::tuple
 
 template <typename T>
 struct device_ptr_test_type {
@@ -24,11 +29,11 @@ struct device_ptr_test_type {
         return queue;
     }
 };
+using device_ptr_test_types = std::tuple<device_ptr_test_type<float>, device_ptr_test_type<double>>;
 
-using device_ptr_test_types = ::testing::Types<
-    device_ptr_test_type<float>,
-    device_ptr_test_type<double>>;
+// the tests used in the instantiated GTest test suites
+using device_ptr_test_types_gtest = util::combine_test_parameters_gtest_t<util::wrap_tuple_types_in_type_lists_t<device_ptr_test_types>>;
 
 // instantiate type-parameterized tests
-INSTANTIATE_TYPED_TEST_SUITE_P(CUDADevicePtr, DevicePtr, device_ptr_test_types);
-INSTANTIATE_TYPED_TEST_SUITE_P(CUDADevicePtrDeathTest, DevicePtrDeathTest, device_ptr_test_types);
+INSTANTIATE_TYPED_TEST_SUITE_P(CUDADevicePtr, DevicePtr, device_ptr_test_types_gtest, naming::test_parameter_to_name);
+INSTANTIATE_TYPED_TEST_SUITE_P(CUDADevicePtrDeathTest, DevicePtrDeathTest, device_ptr_test_types_gtest, naming::test_parameter_to_name);

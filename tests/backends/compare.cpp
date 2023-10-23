@@ -188,15 +188,15 @@ template double kernel_function(const plssvm::parameter &, const plssvm::matrix<
 template double kernel_function(const plssvm::parameter &, const plssvm::matrix<double, plssvm::layout_type::soa> &, const std::size_t, const plssvm::matrix<double, plssvm::layout_type::soa> &, const std::size_t, const std::size_t);
 
 template <typename real_type>
-std::vector<real_type> generate_q(const plssvm::parameter &params, const plssvm::aos_matrix<real_type> &data, [[maybe_unused]] const std::size_t num_devices) {
+std::vector<real_type> perform_dimensional_reduction(const plssvm::parameter &params, const plssvm::aos_matrix<real_type> &data, [[maybe_unused]] const std::size_t num_devices) {
     std::vector<real_type> result(data.num_rows() - 1);
     for (typename std::vector<std::vector<real_type>>::size_type i = 0; i < result.size(); ++i) {
         result[i] = kernel_function(params, data, data.num_rows() - 1, data, i, num_devices);
     }
     return result;
 }
-template std::vector<float> generate_q(const plssvm::parameter &, const plssvm::aos_matrix<float> &, std::size_t);
-template std::vector<double> generate_q(const plssvm::parameter &, const plssvm::aos_matrix<double> &, std::size_t);
+template std::vector<float> perform_dimensional_reduction(const plssvm::parameter &, const plssvm::aos_matrix<float> &, std::size_t);
+template std::vector<double> perform_dimensional_reduction(const plssvm::parameter &, const plssvm::aos_matrix<double> &, std::size_t);
 
 template <typename real_type>
 [[nodiscard]] std::vector<std::vector<real_type>> assemble_kernel_matrix(const plssvm::parameter &params, const std::vector<std::vector<real_type>> &data, const std::vector<real_type> &q, const real_type QA_cost, const std::size_t num_devices) {

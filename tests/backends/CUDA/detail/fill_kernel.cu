@@ -10,8 +10,8 @@
 
 #include "plssvm/backends/CUDA/detail/fill_kernel.cuh"
 
-#include "../../../naming.hpp"         // util::real_type_to_name
-#include "../../../types_to_test.hpp"  // util::real_type_gtest
+#include "../../../naming.hpp"         // util::test_parameter_to_name
+#include "../../../types_to_test.hpp"  // util::{real_type_gtest, test_parameter_type_at_t}
 
 #include "gtest/gtest.h"  // TYPED_TEST, TYPED_TEST_SUITE, EXPECT_TRUE, ::testing::test
 
@@ -23,11 +23,14 @@
 #if __has_include("cuda_runtime.h")
 
 template <typename T>
-class CUDAFillUtility : public ::testing::Test {};
-TYPED_TEST_SUITE(CUDAFillUtility, util::real_type_gtest, naming::real_type_to_name);
+class CUDAFillUtility : public ::testing::Test {
+  protected:
+    using fixture_real_type = util::test_parameter_type_at_t<0, T>;
+};
+TYPED_TEST_SUITE(CUDAFillUtility, util::real_type_gtest, naming::test_parameter_to_name);
 
 TYPED_TEST(CUDAFillUtility, fill_kernel) {
-    using real_type = TypeParam;
+    using real_type = typename TestFixture::fixture_real_type;
 
     // allocate array on the host
     std::vector<real_type> vec(2053);
@@ -53,7 +56,7 @@ TYPED_TEST(CUDAFillUtility, fill_kernel) {
 }
 
 TYPED_TEST(CUDAFillUtility, fill_kernel_partial) {
-    using real_type = TypeParam;
+    using real_type = typename TestFixture::fixture_real_type;
 
     // allocate array on the host
     std::vector<real_type> vec(2053);
