@@ -86,18 +86,18 @@ class KernelFunctionVector : public ::testing::Test {
      * @brief Return the different vector sizes to test.
      * @return the vector sizes (`[[nodiscard]]`)
      */
-    [[nodiscard]] const std::vector<std::size_t> &get_sizes() const noexcept { return sizes; }
+    [[nodiscard]] const std::vector<std::size_t> &get_sizes() const noexcept { return sizes_; }
     /**
      * @brief Return the different parameter values to test.
      * @return the parameter values (`[[nodiscard]]`)
      */
-    [[nodiscard]] const std::vector<std::array<double, 4>> &get_param_values() const noexcept { return param_values; }
+    [[nodiscard]] const std::vector<std::array<double, 4>> &get_param_values() const noexcept { return param_values_; }
 
   private:
     /// The different vector sizes to test.
-    std::vector<std::size_t> sizes{ 0, 1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024 };
+    std::vector<std::size_t> sizes_{ 0, 1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024 };
     /// The different parameter values to test.
-    std::vector<std::array<double, 4>> param_values{
+    std::vector<std::array<double, 4>> param_values_{
         std::array{ 3.0, 0.05, 1.0, 1.0 },
         std::array{ 1.0, 0.0, 0.0, 1.0 },
         std::array{ 4.0, -0.05, 1.5, 1.0 },
@@ -268,18 +268,18 @@ class KernelFunctionMatrix : public ::testing::Test {
      * @brief Return the different matrix sizes to test.
      * @return the matrix sizes (`[[nodiscard]]`)
      */
-    [[nodiscard]] const std::vector<std::size_t> &get_sizes() const noexcept { return sizes; }
+    [[nodiscard]] const std::vector<std::size_t> &get_sizes() const noexcept { return sizes_; }
     /**
      * @brief Return the different parameter values to test.
      * @return the parameter values (`[[nodiscard]]`)
      */
-    [[nodiscard]] const std::vector<std::array<double, 4>> &get_param_values() const noexcept { return param_values; }
+    [[nodiscard]] const std::vector<std::array<double, 4>> &get_param_values() const noexcept { return param_values_; }
 
   private:
     /// The different matrix sizes to test.
-    std::vector<std::size_t> sizes{ 1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024 };
+    std::vector<std::size_t> sizes_{ 1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024 };
     /// The different parameter values to test.
-    std::vector<std::array<double, 4>> param_values{
+    std::vector<std::array<double, 4>> param_values_{
         std::array{ 3.0, 0.05, 1.0, 1.0 },
         std::array{ 1.0, 0.0, 0.0, 1.0 },
         std::array{ 4.0, -0.05, 1.5, 1.0 },

@@ -52,41 +52,41 @@ class VectorOperations : public ::testing::Test {
     using fixture_real_type = util::test_parameter_type_at_t<0, T>;
 
     void SetUp() override {
-        a = { 1, 2, 3, 4, 5 };
-        b = { 1.5, 2.5, 3.5, 4.5, 5.5 };
-        scalar = 1.5;
+        a_ = { 1, 2, 3, 4, 5 };
+        b_ = { 1.5, 2.5, 3.5, 4.5, 5.5 };
+        scalar_ = 1.5;
     }
 
     /**
      * @brief Return the sample vector @p a.
      * @return the sample vector (`[[nodiscard]]`)
      */
-    [[nodiscard]] std::vector<fixture_real_type> &get_a() noexcept { return a; }
+    [[nodiscard]] std::vector<fixture_real_type> &get_a() noexcept { return a_; }
     /**
      * @brief Return the sample vector @p b.
      * @return the sample vector (`[[nodiscard]]`)
      */
-    [[nodiscard]] std::vector<fixture_real_type> &get_b() noexcept { return b; }
+    [[nodiscard]] std::vector<fixture_real_type> &get_b() noexcept { return b_; }
     /**
      * @brief Return the empty vector.
      * @return the empty vector (`[[nodiscard]]`)
      */
-    [[nodiscard]] std::vector<fixture_real_type> &get_empty() noexcept { return empty; }
+    [[nodiscard]] std::vector<fixture_real_type> &get_empty() noexcept { return empty_; }
     /**
      * @brief Return the sample scalar.
      * @return the scalar (`[[nodiscard]]`)
      */
-    [[nodiscard]] fixture_real_type &get_scalar() noexcept { return scalar; }
+    [[nodiscard]] fixture_real_type &get_scalar() noexcept { return scalar_; }
 
   private:
     /// Sample vector to test the different operations.
-    std::vector<fixture_real_type> a{};
+    std::vector<fixture_real_type> a_{};
     /// Sample vector to test the different operations.
-    std::vector<fixture_real_type> b{};
+    std::vector<fixture_real_type> b_{};
     /// Empty vector to test the different operations.
-    std::vector<fixture_real_type> empty{};
+    std::vector<fixture_real_type> empty_{};
     /// Sample scalar to test the different operations.
-    fixture_real_type scalar{};
+    fixture_real_type scalar_{};
 };
 TYPED_TEST_SUITE(VectorOperations, util::real_type_gtest, naming::test_parameter_to_name);
 
@@ -96,26 +96,26 @@ class VectorOperationsDeathTest : public ::testing::Test {
     using fixture_real_type = util::test_parameter_type_at_t<0, T>;
 
     void SetUp() override {
-        a = { 1, 2, 3, 4 };
-        b = { 5, 6 };
+        a_ = { 1, 2, 3, 4 };
+        b_ = { 5, 6 };
     }
 
     /**
      * @brief Return the sample vector @p a.
      * @return the sample vector (`[[nodiscard]]`)
      */
-    [[nodiscard]] std::vector<fixture_real_type> &get_a() noexcept { return a; }
+    [[nodiscard]] std::vector<fixture_real_type> &get_a() noexcept { return a_; }
     /**
      * @brief Return the sample vector @p b.
      * @return the sample vector (`[[nodiscard]]`)
      */
-    [[nodiscard]] std::vector<fixture_real_type> &get_b() noexcept { return b; }
+    [[nodiscard]] std::vector<fixture_real_type> &get_b() noexcept { return b_; }
 
   private:
     /// Sample vector to test the different operations.
-    std::vector<fixture_real_type> a{};
+    std::vector<fixture_real_type> a_{};
     /// Sample vector to test the different operations.
-    std::vector<fixture_real_type> b{};
+    std::vector<fixture_real_type> b_{};
 };
 TYPED_TEST_SUITE(VectorOperationsDeathTest, util::real_type_gtest, naming::test_parameter_to_name);
 
@@ -418,49 +418,49 @@ class MatrixOperations : public ::testing::Test {
     static constexpr plssvm::layout_type fixture_layout = util::test_parameter_value_at_v<0, T>;
 
     void SetUp() override {
-        A = plssvm::matrix<fixture_real_type, fixture_layout>{ { { 1, 2, 3 }, { 4, 5, 6 } } };
-        B = plssvm::matrix<fixture_real_type, fixture_layout>{ { { 1.5, 2.5, 3.5 }, { 4.5, 5.5, 6.5 } } };
-        c = std::vector<fixture_real_type>{ 1.5, -2.5 };
-        scalar = 1.5;
+        A_ = plssvm::matrix<fixture_real_type, fixture_layout>{ { { 1, 2, 3 }, { 4, 5, 6 } } };
+        B_ = plssvm::matrix<fixture_real_type, fixture_layout>{ { { 1.5, 2.5, 3.5 }, { 4.5, 5.5, 6.5 } } };
+        c_ = std::vector<fixture_real_type>{ 1.5, -2.5 };
+        scalar_ = 1.5;
     }
 
     /**
      * @brief Return the sample matrix @p A.
      * @return the matrix vector (`[[nodiscard]]`)
      */
-    [[nodiscard]] plssvm::matrix<fixture_real_type, fixture_layout> &get_A() noexcept { return A; }
+    [[nodiscard]] plssvm::matrix<fixture_real_type, fixture_layout> &get_A() noexcept { return A_; }
     /**
      * @brief Return the sample matrix @p B.
      * @return the sample matrix (`[[nodiscard]]`)
      */
-    [[nodiscard]] plssvm::matrix<fixture_real_type, fixture_layout> &get_B() noexcept { return B; }
+    [[nodiscard]] plssvm::matrix<fixture_real_type, fixture_layout> &get_B() noexcept { return B_; }
     /**
      * @brief Return the sample vector @p c.
      * @return the sample vector (`[[nodiscard]]`)
      */
-    [[nodiscard]] std::vector<fixture_real_type> &get_c() noexcept { return c; }
+    [[nodiscard]] std::vector<fixture_real_type> &get_c() noexcept { return c_; }
     /**
      * @brief Return the empty matrix.
      * @return the empty matrix (`[[nodiscard]]`)
      */
-    [[nodiscard]] plssvm::matrix<fixture_real_type, fixture_layout> &get_empty() noexcept { return empty; }
+    [[nodiscard]] plssvm::matrix<fixture_real_type, fixture_layout> &get_empty() noexcept { return empty_; }
     /**
      * @brief Return the sample scalar.
      * @return the scalar (`[[nodiscard]]`)
      */
-    [[nodiscard]] fixture_real_type &get_scalar() noexcept { return scalar; }
+    [[nodiscard]] fixture_real_type &get_scalar() noexcept { return scalar_; }
 
   private:
     /// Sample matrix to test the different operations.
-    plssvm::matrix<fixture_real_type, fixture_layout> A{};
+    plssvm::matrix<fixture_real_type, fixture_layout> A_{};
     /// Sample matrix to test the different operations.
-    plssvm::matrix<fixture_real_type, fixture_layout> B{};
+    plssvm::matrix<fixture_real_type, fixture_layout> B_{};
     /// Sample vector to test the different operations.
-    std::vector<fixture_real_type> c{};
+    std::vector<fixture_real_type> c_{};
     /// Empty matrix to test the different operations.
-    plssvm::matrix<fixture_real_type, fixture_layout> empty{};
+    plssvm::matrix<fixture_real_type, fixture_layout> empty_{};
     /// Sample scalar to test the different operations.
-    fixture_real_type scalar{};
+    fixture_real_type scalar_{};
 };
 TYPED_TEST_SUITE(MatrixOperations, util::real_type_layout_type_gtest, naming::test_parameter_to_name);
 
@@ -471,33 +471,33 @@ class MatrixOperationsDeathTest : public ::testing::Test {
     static constexpr plssvm::layout_type fixture_layout = util::test_parameter_value_at_v<0, T>;
 
     void SetUp() override {
-        A = plssvm::matrix<fixture_real_type, fixture_layout>{ { { 1, 2, 3 }, { 4, 5, 6 } } };
-        B = plssvm::matrix<fixture_real_type, fixture_layout>{ { { 1.5, 2.5 }, { 3.5, 4.5 }, { 5.5, 6.5 } } };
+        A_ = plssvm::matrix<fixture_real_type, fixture_layout>{ { { 1, 2, 3 }, { 4, 5, 6 } } };
+        B_ = plssvm::matrix<fixture_real_type, fixture_layout>{ { { 1.5, 2.5 }, { 3.5, 4.5 }, { 5.5, 6.5 } } };
     }
 
     /**
      * @brief Return the sample matrix @p A.
      * @return the matrix vector (`[[nodiscard]]`)
      */
-    [[nodiscard]] plssvm::matrix<fixture_real_type, fixture_layout> &get_A() noexcept { return A; }
+    [[nodiscard]] plssvm::matrix<fixture_real_type, fixture_layout> &get_A() noexcept { return A_; }
     /**
      * @brief Return the sample matrix @p B.
      * @return the sample matrix (`[[nodiscard]]`)
      */
-    [[nodiscard]] plssvm::matrix<fixture_real_type, fixture_layout> &get_B() noexcept { return B; }
+    [[nodiscard]] plssvm::matrix<fixture_real_type, fixture_layout> &get_B() noexcept { return B_; }
     /**
      * @brief Return the empty matrix.
      * @return the empty matrix (`[[nodiscard]]`)
      */
-    [[nodiscard]] plssvm::matrix<fixture_real_type, fixture_layout> &get_empty() noexcept { return empty; }
+    [[nodiscard]] plssvm::matrix<fixture_real_type, fixture_layout> &get_empty() noexcept { return empty_; }
 
   private:
     /// Sample matrix to test the different operations.
-    plssvm::matrix<fixture_real_type, fixture_layout> A{};
+    plssvm::matrix<fixture_real_type, fixture_layout> A_{};
     /// Sample matrix to test the different operations.
-    plssvm::matrix<fixture_real_type, fixture_layout> B{};
+    plssvm::matrix<fixture_real_type, fixture_layout> B_{};
     /// Empty matrix to test the different operations.
-    plssvm::matrix<fixture_real_type, fixture_layout> empty{};
+    plssvm::matrix<fixture_real_type, fixture_layout> empty_{};
 };
 TYPED_TEST_SUITE(MatrixOperationsDeathTest, util::real_type_layout_type_gtest, naming::test_parameter_to_name);
 

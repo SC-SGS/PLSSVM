@@ -21,7 +21,7 @@
 #include "plssvm/matrix.hpp"                 // plssvm::aos_matrix
 #include "plssvm/model.hpp"                  // plssvm::model
 #include "plssvm/parameter.hpp"              // plssvm::parameter
-#include "plssvm/solver_types.hpp"           // plsvm::soler_type
+#include "plssvm/solver_types.hpp"           // plssvm::solver_type
 #include "plssvm/target_platforms.hpp"       // plssvm::target_platform
 
 #include "custom_test_macros.hpp"  // EXPECT_THROW_WHAT, EXPECT_INCLUSIVE_RANGE
@@ -272,29 +272,29 @@ class BaseCSVMMemberBase : public BaseCSVM, private util::redirect_output<> {
     static constexpr plssvm::classification_type fixture_classification = util::test_parameter_value_at_v<0, T>;
 
     void SetUp() override {
-        util::instantiate_template_file<fixture_label_type>(PLSSVM_TEST_PATH "/data/libsvm/6x4_TEMPLATE.libsvm", data_set_file.filename);
+        util::instantiate_template_file<fixture_label_type>(PLSSVM_TEST_PATH "/data/libsvm/6x4_TEMPLATE.libsvm", data_set_file_.filename);
         const std::string model_template_file = fmt::format(PLSSVM_TEST_PATH "/data/model/{}_classes/6x4_linear_{}_TEMPLATE.libsvm.model",
                                                             util::get_num_classes<fixture_label_type>(),
                                                             fixture_classification);
-        util::instantiate_template_file<fixture_label_type>(model_template_file, model_file.filename);
+        util::instantiate_template_file<fixture_label_type>(model_template_file, model_file_.filename);
     }
 
     /**
      * @brief Return the name of the instantiated data template file.
      * @return the file name (`[[nodiscard]]`)
      */
-    [[nodiscard]] const std::string &get_data_filename() const noexcept { return data_set_file.filename; }
+    [[nodiscard]] const std::string &get_data_filename() const noexcept { return data_set_file_.filename; }
     /**
      * @brief Return the name of the instantiated model template file.
      * @return the file name (`[[nodiscard]]`)
      */
-    [[nodiscard]] const std::string &get_model_filename() const noexcept { return model_file.filename; }
+    [[nodiscard]] const std::string &get_model_filename() const noexcept { return model_file_.filename; }
 
   private:
     /// The temporary data file.
-    util::temporary_file data_set_file{};
+    util::temporary_file data_set_file_{};
     /// The temporary model file.
-    util::temporary_file model_file{};
+    util::temporary_file model_file_{};
 };
 
 template <typename T>
@@ -306,18 +306,18 @@ class BaseCSVMFit : public BaseCSVM, private util::redirect_output<> {
     static constexpr plssvm::classification_type fixture_classification = util::test_parameter_value_at_v<2, T>;
 
     void SetUp() override {
-        util::instantiate_template_file<fixture_label_type>(PLSSVM_TEST_PATH "/data/libsvm/6x4_TEMPLATE.libsvm", data_set_file.filename);
+        util::instantiate_template_file<fixture_label_type>(PLSSVM_TEST_PATH "/data/libsvm/6x4_TEMPLATE.libsvm", data_set_file_.filename);
     }
 
     /**
      * @brief Return the name of the instantiated data template file.
      * @return the file name (`[[nodiscard]]`)
      */
-    [[nodiscard]] const std::string &get_data_filename() const noexcept { return data_set_file.filename; }
+    [[nodiscard]] const std::string &get_data_filename() const noexcept { return data_set_file_.filename; }
 
   private:
     /// The temporary data file.
-    util::temporary_file data_set_file{};
+    util::temporary_file data_set_file_{};
 };
 TYPED_TEST_SUITE(BaseCSVMFit, util::label_type_solver_and_kernel_function_and_classification_type_gtest, naming::test_parameter_to_name);
 

@@ -46,12 +46,12 @@ class LIBSVMModelDataParseValid : public ::testing::Test, protected util::tempor
      * @brief Return the correct data points.
      * @return the correct data points (`[[nodiscard]]`)
      */
-    [[nodiscard]] const plssvm::aos_matrix<plssvm::real_type> &get_correct_data() const noexcept { return correct_data; }
+    [[nodiscard]] const plssvm::aos_matrix<plssvm::real_type> &get_correct_data() const noexcept { return correct_data_; }
     /**
      * @brief Return all correct weights.
      * @return the correct weights (`[[nodiscard]]`)
      */
-    [[nodiscard]] std::vector<std::vector<plssvm::real_type>> &get_correct_weights() noexcept { return correct_weights; }
+    [[nodiscard]] std::vector<std::vector<plssvm::real_type>> &get_correct_weights() noexcept { return correct_weights_; }
     /**
      * @brief Return the specific weight at position [@p i][@p j].
      * @details Throws if @p i or @p j are out-of-bounce.
@@ -59,18 +59,18 @@ class LIBSVMModelDataParseValid : public ::testing::Test, protected util::tempor
      * @param[in] j the row index (in the model file)
      * @return the specific weight (`[[nodiscard]]`)
      */
-    [[nodiscard]] plssvm::real_type get_correct_weights(const std::size_t i, const std::size_t j) const noexcept { return correct_weights.at(i).at(j); }
+    [[nodiscard]] plssvm::real_type get_correct_weights(const std::size_t i, const std::size_t j) const noexcept { return correct_weights_.at(i).at(j); }
 
   private:
     /// The correct data points.
-    plssvm::aos_matrix<plssvm::real_type> correct_data{ { { plssvm::real_type{ -1.1178275006 }, plssvm::real_type{ -2.9087188881 }, plssvm::real_type{ 0.66638344270 }, plssvm::real_type{ 1.0978832704 } },
-                                                          { plssvm::real_type{ -0.52821182989 }, plssvm::real_type{ -0.33588098497 }, plssvm::real_type{ 0.51687296030 }, plssvm::real_type{ 0.54604461446 } },
-                                                          { plssvm::real_type{ 0.57650218263 }, plssvm::real_type{ 1.0140559662 }, plssvm::real_type{ 0.13009428080 }, plssvm::real_type{ 0.72619138869 } },
-                                                          { plssvm::real_type{ 1.8849404372 }, plssvm::real_type{ 1.0051856432 }, plssvm::real_type{ 0.29849993305 }, plssvm::real_type{ 1.6464627049 } },
-                                                          { plssvm::real_type{ -0.20981208921 }, plssvm::real_type{ 0.60276937379 }, plssvm::real_type{ -0.13086851759 }, plssvm::real_type{ 0.10805254527 } },
-                                                          { plssvm::real_type{ -1.1256816276 }, plssvm::real_type{ 2.1254153434 }, plssvm::real_type{ -0.16512657655 }, plssvm::real_type{ 2.5164553141 } } } };
+    plssvm::aos_matrix<plssvm::real_type> correct_data_{ { { plssvm::real_type{ -1.1178275006 }, plssvm::real_type{ -2.9087188881 }, plssvm::real_type{ 0.66638344270 }, plssvm::real_type{ 1.0978832704 } },
+                                                           { plssvm::real_type{ -0.52821182989 }, plssvm::real_type{ -0.33588098497 }, plssvm::real_type{ 0.51687296030 }, plssvm::real_type{ 0.54604461446 } },
+                                                           { plssvm::real_type{ 0.57650218263 }, plssvm::real_type{ 1.0140559662 }, plssvm::real_type{ 0.13009428080 }, plssvm::real_type{ 0.72619138869 } },
+                                                           { plssvm::real_type{ 1.8849404372 }, plssvm::real_type{ 1.0051856432 }, plssvm::real_type{ 0.29849993305 }, plssvm::real_type{ 1.6464627049 } },
+                                                           { plssvm::real_type{ -0.20981208921 }, plssvm::real_type{ 0.60276937379 }, plssvm::real_type{ -0.13086851759 }, plssvm::real_type{ 0.10805254527 } },
+                                                           { plssvm::real_type{ -1.1256816276 }, plssvm::real_type{ 2.1254153434 }, plssvm::real_type{ -0.16512657655 }, plssvm::real_type{ 2.5164553141 } } } };
     /// The correct weights. Might be more than are actually used in a specific test case.
-    std::vector<std::vector<plssvm::real_type>> correct_weights{
+    std::vector<std::vector<plssvm::real_type>> correct_weights_{
         { plssvm::real_type{ -1.8568721894e-01 }, plssvm::real_type{ 9.0116552290e-01 }, plssvm::real_type{ -2.2483112395e-01 }, plssvm::real_type{ 1.4909749921e-02 }, plssvm::real_type{ -4.5666857706e-01 }, plssvm::real_type{ -4.8888352876e-02 } },
         { plssvm::real_type{ 1.1365048527e-01 }, plssvm::real_type{ -3.2357185930e-01 }, plssvm::real_type{ 8.9871548758e-01 }, plssvm::real_type{ -7.5259922896e-02 }, plssvm::real_type{ -4.7955922738e-01 }, plssvm::real_type{ -1.3397496327e-01 } },
         { plssvm::real_type{ 2.8929914669e-02 }, plssvm::real_type{ -4.8559849173e-01 }, plssvm::real_type{ -5.6740083618e-01 }, plssvm::real_type{ 8.7841608802e-02 }, plssvm::real_type{ 9.7960957282e-01 }, plssvm::real_type{ -4.3381768383e-02 } },

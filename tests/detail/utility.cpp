@@ -108,16 +108,16 @@ class UtilityMapContainer : public ::testing::Test {
      */
     void SetUp() override {
         // initialize map
-        map = { { 0, 0 }, { 1, 1 } };
+        map_ = { { 0, 0 }, { 1, 1 } };
     }
     /**
      * @brief Return the encapsulated map.
      * @return the map (`[[nodiscard]]`)
      */
-    map_type &get_map() { return map; }
+    map_type &get_map() { return map_; }
 
   private:
-    map_type map;
+    map_type map_;
 };
 TYPED_TEST_SUITE(UtilityMapContainer, map_types_gtest, naming::test_parameter_to_name);
 
@@ -153,16 +153,16 @@ class UtilitySetContainer : public ::testing::Test {
      */
     void SetUp() override {
         // initialize set
-        set = { 0, 1 };
+        set_ = { 0, 1 };
     }
     /**
      * @brief Return the encapsulated set.
      * @return the set (`[[nodiscard]]`)
      */
-    set_type &get_set() { return set; }
+    set_type &get_set() { return set_; }
 
   private:
-    set_type set;
+    set_type set_;
 };
 TYPED_TEST_SUITE(UtilitySetContainer, set_types_gtest, naming::test_parameter_to_name);
 
@@ -198,16 +198,16 @@ class UtilityVectorContainer : public ::testing::Test {
      */
     void SetUp() override {
         // initialize vector
-        vec = { 0, 1 };
+        vec_ = { 0, 1 };
     }
     /**
      * @brief Return the encapsulated vector.
      * @return the set (`[[nodiscard]]`)
      */
-    vector_type &get_vector() { return vec; }
+    vector_type &get_vector() { return vec_; }
 
   private:
-    vector_type vec;
+    vector_type vec_;
 };
 
 TYPED_TEST_SUITE(UtilityVectorContainer, vector_types_gtest, naming::test_parameter_to_name);

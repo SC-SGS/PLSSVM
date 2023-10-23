@@ -135,33 +135,33 @@ class ClassificationReport : public ::testing::Test {
      * @return the correct labels (`[[nodiscard]]`)
      */
     [[nodiscard]] const std::vector<int> &get_correct_label() const noexcept {
-        return correct_label;
+        return correct_label_;
     }
     /**
      * @brief Return the predicted labels to calculate the classification report with.
      * @return the predicted labels (`[[nodiscard]]`)
      */
     [[nodiscard]] const std::vector<int> &get_predicted_label() const noexcept {
-        return predicted_label;
+        return predicted_label_;
     }
     /**
      * @brief Return the confusion matrix for @p correct_label land @p predict_label.
      * @return the confusion matrix (`[[nodiscard]]`)
      */
-    [[nodiscard]] const plssvm::aos_matrix<unsigned long long> &get_confusion_matrix() const noexcept { return confusion_matrix; }
+    [[nodiscard]] const plssvm::aos_matrix<unsigned long long> &get_confusion_matrix() const noexcept { return confusion_matrix_; }
 
   private:
     // clang-format off
     /// The correct class labels.
-    std::vector<int> correct_label = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1,
+    std::vector<int> correct_label_ = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1,
                                         1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2 };
     /// The predicted class labels.
-    std::vector<int> predicted_label = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 2, 2, 2, 2, 2, 0, 0, 0, 0, 0, 0, 1, 1,
+    std::vector<int> predicted_label_ = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 2, 2, 2, 2, 2, 0, 0, 0, 0, 0, 0, 1, 1,
                                           1, 1, 1, 1, 1, 2, 2, 2, 2, 0, 0, 0, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2 };
     /// The confusion matrix resulting from correct_label and predicted_label.
-    plssvm::aos_matrix<unsigned long long> confusion_matrix{ { { 9, 1, 5 },
-                                                               { 6, 7, 4 },
-                                                               { 3, 2, 8 } }
+    plssvm::aos_matrix<unsigned long long> confusion_matrix_{ { { 9, 1, 5 },
+                                                                { 6, 7, 4 },
+                                                                { 3, 2, 8 } }
     };
     // clang-format on
 };

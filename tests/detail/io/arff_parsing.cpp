@@ -207,23 +207,23 @@ class ARFFParseDense : public ARFFParse<T>, protected util::temporary_file {
      * @brief Return the correct dense data points of the template ARFF file.
      * @return the correct data points (`[[nodiscard]]`)
      */
-    [[nodiscard]] const plssvm::aos_matrix<plssvm::real_type> &get_correct_data() const noexcept { return correct_data; }
+    [[nodiscard]] const plssvm::aos_matrix<plssvm::real_type> &get_correct_data() const noexcept { return correct_data_; }
     /**
      * @brief Return the correct labels of the template ARFF file.
      * @return the correct labels (`[[nodiscard]]`)
      */
-    [[nodiscard]] const std::vector<fixture_label_type> &get_correct_label() const noexcept { return correct_label; }
+    [[nodiscard]] const std::vector<fixture_label_type> &get_correct_label() const noexcept { return correct_label_; }
 
   private:
     /// The correct dense data points.
-    plssvm::aos_matrix<plssvm::real_type> correct_data{ { { plssvm::real_type{ -1.117827500607882 }, plssvm::real_type{ -2.9087188881250993 }, plssvm::real_type{ 0.66638344270039144 }, plssvm::real_type{ 1.0978832703949288 } },
-                                                          { plssvm::real_type{ -0.5282118298909262 }, plssvm::real_type{ -0.335880984968183973 }, plssvm::real_type{ 0.51687296029754564 }, plssvm::real_type{ 0.54604461446026 } },
-                                                          { plssvm::real_type{ 0.57650218263054642 }, plssvm::real_type{ 1.01405596624706053 }, plssvm::real_type{ 0.13009428079760464 }, plssvm::real_type{ 0.7261913886869387 } },
-                                                          { plssvm::real_type{ -0.20981208921241892 }, plssvm::real_type{ 0.60276937379453293 }, plssvm::real_type{ -0.13086851759108944 }, plssvm::real_type{ 0.10805254527169827 } },
-                                                          { plssvm::real_type{ 1.88494043717792 }, plssvm::real_type{ 1.00518564317278263 }, plssvm::real_type{ 0.298499933047586044 }, plssvm::real_type{ 1.6464627048813514 } },
-                                                          { plssvm::real_type{ -1.1256816275635 }, plssvm::real_type{ 2.12541534341344414 }, plssvm::real_type{ -0.165126576545454511 }, plssvm::real_type{ 2.5164553141200987 } } } };
+    plssvm::aos_matrix<plssvm::real_type> correct_data_{ { { plssvm::real_type{ -1.117827500607882 }, plssvm::real_type{ -2.9087188881250993 }, plssvm::real_type{ 0.66638344270039144 }, plssvm::real_type{ 1.0978832703949288 } },
+                                                           { plssvm::real_type{ -0.5282118298909262 }, plssvm::real_type{ -0.335880984968183973 }, plssvm::real_type{ 0.51687296029754564 }, plssvm::real_type{ 0.54604461446026 } },
+                                                           { plssvm::real_type{ 0.57650218263054642 }, plssvm::real_type{ 1.01405596624706053 }, plssvm::real_type{ 0.13009428079760464 }, plssvm::real_type{ 0.7261913886869387 } },
+                                                           { plssvm::real_type{ -0.20981208921241892 }, plssvm::real_type{ 0.60276937379453293 }, plssvm::real_type{ -0.13086851759108944 }, plssvm::real_type{ 0.10805254527169827 } },
+                                                           { plssvm::real_type{ 1.88494043717792 }, plssvm::real_type{ 1.00518564317278263 }, plssvm::real_type{ 0.298499933047586044 }, plssvm::real_type{ 1.6464627048813514 } },
+                                                           { plssvm::real_type{ -1.1256816275635 }, plssvm::real_type{ 2.12541534341344414 }, plssvm::real_type{ -0.165126576545454511 }, plssvm::real_type{ 2.5164553141200987 } } } };
     /// The correct labels.
-    std::vector<fixture_label_type> correct_label{ util::get_correct_data_file_labels<fixture_label_type>() };
+    std::vector<fixture_label_type> correct_label_{ util::get_correct_data_file_labels<fixture_label_type>() };
 };
 TYPED_TEST_SUITE(ARFFParseDense, util::label_type_gtest, naming::test_parameter_to_name);
 

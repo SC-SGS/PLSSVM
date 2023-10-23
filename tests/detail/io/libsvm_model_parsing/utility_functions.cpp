@@ -53,7 +53,7 @@ TEST(LIBSVMModelUtilityXvsYDeathTest, y_greater_or_equal_than_num_classes) {
 class LIBSVMModelUtilityAlphaIdx : public ::testing::TestWithParam<std::tuple<std::size_t, std::size_t, std::size_t, std::size_t>> {
   protected:
     void SetUp() override {
-        indices = std::vector<std::vector<std::size_t>>{
+        indices_ = std::vector<std::vector<std::size_t>>{
             { 0, 2, 4 },   // 0
             { 1, 3, 5 },   // 1
             { 6, 8, 10 },  // 2
@@ -65,11 +65,11 @@ class LIBSVMModelUtilityAlphaIdx : public ::testing::TestWithParam<std::tuple<st
      * @brief Return the indices of the support vectors used for testing the `plssvm::detail::io::calculate_alpha_idx` function.
      * @return the indices (`[[nodiscard]]`)
      */
-    [[nodiscard]] const std::vector<std::vector<std::size_t>> &get_indices() const noexcept { return indices; }
+    [[nodiscard]] const std::vector<std::vector<std::size_t>> &get_indices() const noexcept { return indices_; }
 
   private:
     /// The support vector index sets per class.
-    std::vector<std::vector<std::size_t>> indices{};
+    std::vector<std::vector<std::size_t>> indices_{};
 };
 
 TEST_P(LIBSVMModelUtilityAlphaIdx, calculate_alpha_idx) {

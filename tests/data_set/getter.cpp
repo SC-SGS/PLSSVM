@@ -34,25 +34,25 @@ class DataSetGetter : public ::testing::Test, private util::redirect_output<> {
      * @brief Return the different classes.
      * @return the classes (`[[nodiscard]]`)
      */
-    [[nodiscard]] const std::vector<fixture_label_type> &get_classes() const noexcept { return classes; }
+    [[nodiscard]] const std::vector<fixture_label_type> &get_classes() const noexcept { return classes_; }
     /**
      * @brief Return the correct labels.
      * @return the correct labels (`[[nodiscard]]`)
      */
-    [[nodiscard]] const std::vector<fixture_label_type> &get_label() const noexcept { return label; }
+    [[nodiscard]] const std::vector<fixture_label_type> &get_label() const noexcept { return label_; }
     /**
      * @brief Return the correct data points.
      * @return the correct data points (`[[nodiscard]]`)
      */
-    [[nodiscard]] const plssvm::aos_matrix<plssvm::real_type> &get_data_points() const noexcept { return data_points; }
+    [[nodiscard]] const plssvm::aos_matrix<plssvm::real_type> &get_data_points() const noexcept { return data_points_; }
 
   private:
     /// The correct, different classes.
-    std::vector<fixture_label_type> classes{ util::get_distinct_label<fixture_label_type>() };
+    std::vector<fixture_label_type> classes_{ util::get_distinct_label<fixture_label_type>() };
     /// The correct labels.
-    std::vector<fixture_label_type> label{ util::get_correct_data_file_labels<fixture_label_type>() };
+    std::vector<fixture_label_type> label_{ util::get_correct_data_file_labels<fixture_label_type>() };
     /// The correct data points.
-    plssvm::aos_matrix<plssvm::real_type> data_points{ util::generate_specific_matrix<plssvm::aos_matrix<plssvm::real_type>>(label.size(), 4) };
+    plssvm::aos_matrix<plssvm::real_type> data_points_{ util::generate_specific_matrix<plssvm::aos_matrix<plssvm::real_type>>(label_.size(), 4) };
 };
 TYPED_TEST_SUITE(DataSetGetter, util::label_type_gtest, naming::test_parameter_to_name);
 

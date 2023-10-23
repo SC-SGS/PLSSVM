@@ -41,18 +41,18 @@ class DataSetSave : public ::testing::Test, private util::redirect_output<>, pro
      * @brief Return the correct labels used to save a data file.
      * @return the correct label (`[[nodiscard]]`)
      */
-    [[nodiscard]] const std::vector<fixture_label_type> &get_label() const noexcept { return label; }
+    [[nodiscard]] const std::vector<fixture_label_type> &get_label() const noexcept { return label_; }
     /**
      * @brief Return the correct data points used to save a data file.
      * @return the data points (`[[nodiscard]]`)
      */
-    [[nodiscard]] const plssvm::aos_matrix<plssvm::real_type> &get_data_points() const noexcept { return data_points; }
+    [[nodiscard]] const plssvm::aos_matrix<plssvm::real_type> &get_data_points() const noexcept { return data_points_; }
 
   private:
     /// The correct labels.
-    std::vector<fixture_label_type> label{ util::get_correct_data_file_labels<fixture_label_type>() };
+    std::vector<fixture_label_type> label_{ util::get_correct_data_file_labels<fixture_label_type>() };
     /// The correct data points.
-    plssvm::aos_matrix<plssvm::real_type> data_points{ util::generate_specific_matrix<plssvm::aos_matrix<plssvm::real_type>>(label.size(), 4) };
+    plssvm::aos_matrix<plssvm::real_type> data_points_{ util::generate_specific_matrix<plssvm::aos_matrix<plssvm::real_type>>(label_.size(), 4) };
 };
 TYPED_TEST_SUITE(DataSetSave, util::label_type_gtest, naming::test_parameter_to_name);
 

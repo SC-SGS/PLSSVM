@@ -400,32 +400,32 @@ using relation_op_func_ptr = bool (*)(const plssvm::default_value<int> &, const 
 class DefaultValueRelational : public ::testing::TestWithParam<std::tuple<relation_op_func_ptr, std::string_view, std::vector<bool>>> {
   protected:
     void SetUp() override {
-        val1 = 42;
+        val1_ = 42;
     }
 
     /**
      * @brief Return the first default_value used for the relational operator overloads tests.
      * @return the default value (`[[nodiscard]]`)
      */
-    [[nodiscard]] const plssvm::default_value<int> &get_val1() const noexcept { return val1; }
+    [[nodiscard]] const plssvm::default_value<int> &get_val1() const noexcept { return val1_; }
     /**
      * @brief Return the second default_value used for the relational operator overloads tests.
      * @return the default value (`[[nodiscard]]`)
      */
-    [[nodiscard]] const plssvm::default_value<int> &get_val2() const noexcept { return val2; }
+    [[nodiscard]] const plssvm::default_value<int> &get_val2() const noexcept { return val2_; }
     /**
      * @brief Return the third default_value used for the relational operator overloads tests.
      * @return the default value (`[[nodiscard]]`)
      */
-    [[nodiscard]] const plssvm::default_value<int> &get_val3() const noexcept { return val3; }
+    [[nodiscard]] const plssvm::default_value<int> &get_val3() const noexcept { return val3_; }
 
   private:
     /// A default value used to test the relational operator overloads.
-    plssvm::default_value<int> val1{ plssvm::default_init{ 1 } };
+    plssvm::default_value<int> val1_{ plssvm::default_init{ 1 } };
     /// A default value used to test the relational operator overloads.
-    plssvm::default_value<int> val2{ plssvm::default_init{ 1 } };
+    plssvm::default_value<int> val2_{ plssvm::default_init{ 1 } };
     /// A default value used to test the relational operator overloads.
-    plssvm::default_value<int> val3{ plssvm::default_init{ 42 } };
+    plssvm::default_value<int> val3_{ plssvm::default_init{ 42 } };
 };
 
 TEST_P(DefaultValueRelational, relational_operators) {

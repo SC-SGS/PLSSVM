@@ -37,11 +37,11 @@ class ParameterBase : public ::testing::Test, private redirect_output<> {
      */
     void CreateCMDArgs(const std::vector<std::string> &cmd_line_split) {
         // create argc and argv from a std::string
-        argc = static_cast<int>(cmd_line_split.size());
-        argv = new char *[argc];
-        for (int i = 0; i < argc; ++i) {
-            argv[i] = new char[cmd_line_split[i].size() + 1];
-            std::strcpy(argv[i], cmd_line_split[i].c_str());
+        argc_ = static_cast<int>(cmd_line_split.size());
+        argv_ = new char *[argc_];
+        for (int i = 0; i < argc_; ++i) {
+            argv_[i] = new char[cmd_line_split[i].size() + 1];
+            std::strcpy(argv_[i], cmd_line_split[i].c_str());
         }
     }
     /**
@@ -49,32 +49,28 @@ class ParameterBase : public ::testing::Test, private redirect_output<> {
      */
     void TearDown() override {
         // free memory at the end
-        for (int i = 0; i < argc; ++i) {
-            delete[] argv[i];
+        for (int i = 0; i < argc_; ++i) {
+            delete[] argv_[i];
         }
-        delete[] argv;
+        delete[] argv_;
     }
 
     /**
      * @brief Return the number of command line arguments encapsulated in this class.
      * @return the number of cmd arguments (`[[nodiscard]]`)
      */
-    [[nodiscard]] int get_argc() const noexcept {
-        return argc;
-    }
+    [[nodiscard]] int get_argc() const noexcept { return argc_; }
     /**
      * @brief The command line arguments encapsulated in this class.
      * @return the cmd arguments (`[[nodiscard]])
      */
-    [[nodiscard]] char** get_argv() const noexcept {
-        return argv;
-    }
+    [[nodiscard]] char **get_argv() const noexcept { return argv_; }
 
   private:
     /// The number of the artificial command line arguments.
-    int argc{ 0 };
+    int argc_{ 0 };
     /// The artificial command line arguments.
-    char **argv{ nullptr };
+    char **argv_{ nullptr };
 };
 
 }  // namespace util
