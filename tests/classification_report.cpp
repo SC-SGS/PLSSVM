@@ -159,11 +159,9 @@ class ClassificationReport : public ::testing::Test {
     std::vector<int> predicted_label = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 2, 2, 2, 2, 2, 0, 0, 0, 0, 0, 0, 1, 1,
                                           1, 1, 1, 1, 1, 2, 2, 2, 2, 0, 0, 0, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2 };
     /// The confusion matrix resulting from correct_label and predicted_label.
-    plssvm::aos_matrix<unsigned long long> confusion_matrix = plssvm::aos_matrix<unsigned long long>{
-        std::vector<std::vector<unsigned long long>>{
-         { 9, 1, 5 },
-         { 6, 7, 4 },
-         { 3, 2, 8 } }
+    plssvm::aos_matrix<unsigned long long> confusion_matrix{ { { 9, 1, 5 },
+                                                               { 6, 7, 4 },
+                                                               { 3, 2, 8 } }
     };
     // clang-format on
 };
@@ -261,7 +259,7 @@ TEST_F(ClassificationReport, construct_zero_division_behavior) {
     const plssvm::classification_report report{ std::vector<int>{ 0, 0, 0 }, std::vector<int>{ 1, 1, 1 }, plssvm::classification_report::zero_division = plssvm::classification_report::zero_division_behavior::one };
 
     // check if values are set correctly
-    const plssvm::aos_matrix<unsigned long long> correct_confusion_matrix{ std::vector<std::vector<unsigned long long>>{ { 0, 3 }, { 0, 0 } } };
+    const plssvm::aos_matrix<unsigned long long> correct_confusion_matrix{ { { 0, 3 }, { 0, 0 } } };
     EXPECT_EQ(report.confusion_matrix(), correct_confusion_matrix);
 
     plssvm::classification_report::metric m = report.metric_for_class(0);
