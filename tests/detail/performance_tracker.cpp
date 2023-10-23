@@ -12,8 +12,8 @@
 
 #include "plssvm/detail/io/file_reader.hpp"  // plssvm::detail::io::file_reader
 
-#include "../naming.hpp"         // naming::label_type_to_name
-#include "../types_to_test.hpp"  // util::label_type_gtest
+#include "../naming.hpp"         // naming::test_parameter_to_name
+#include "../types_to_test.hpp"  // util::{label_type_gtest, test_parameter_type_at_t}
 #include "../utility.hpp"        // util::redirect_output
 
 #include "fmt/core.h"              // fmt::format
@@ -24,11 +24,14 @@
 #include <string>    // std::string
 
 template <typename T>
-class TrackingEntry : public ::testing::Test, public util::redirect_output<> {};
-TYPED_TEST_SUITE(TrackingEntry, util::label_type_gtest, naming::label_type_to_name);
+class TrackingEntry : public ::testing::Test, public util::redirect_output<> {
+  protected:
+    using fixture_type = util::test_parameter_type_at_t<0, T>;
+};
+TYPED_TEST_SUITE(TrackingEntry, util::label_type_gtest, naming::test_parameter_to_name);
 
 TYPED_TEST(TrackingEntry, construct) {
-    using type = TypeParam;
+    using type = typename TestFixture::fixture_type;
 
     // construct a tracking entry
     const plssvm::detail::tracking_entry e{ "category", "name", type{} };
@@ -40,7 +43,7 @@ TYPED_TEST(TrackingEntry, construct) {
 }
 
 TYPED_TEST(TrackingEntry, output_operator) {
-    using type = TypeParam;
+    using type = typename TestFixture::fixture_type;
 
     // construct a tracking entry
     const plssvm::detail::tracking_entry e{ "category", "name", type{} };

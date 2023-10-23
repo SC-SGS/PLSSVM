@@ -11,8 +11,8 @@
 #include "plssvm/default_value.hpp"
 
 #include "custom_test_macros.hpp"  // EXPECT_CONVERSION_TO_STRING, EXPECT_CONVERSION_FROM_STRING
-#include "naming.hpp"              // naming::label_type_to_name
-#include "types_to_test.hpp"       // util::label_type_gtest
+#include "naming.hpp"              // naming::test_parameter_to_name
+#include "types_to_test.hpp"       // util::[label_type_gtest, test_parameter_type_at_t}
 
 #include "gtest/gtest.h"  // TEST, TYPED_TEST, TEST_P, TYPED_TEST_SUITE, INSTANTIATE_TEST_SUITE_P, EXPECT_EQ, EXPECT_TRUE, EXPECT_FALSE, EXPECT_DOUBLE_EQ
                           // ::testing::{Test, WithParamInterface, Values}
@@ -30,10 +30,10 @@
 
 template <typename T>
 class DefaultInitDefault : public ::testing::Test {};
-TYPED_TEST_SUITE(DefaultInitDefault, util::label_type_gtest, naming::label_type_to_name);
+TYPED_TEST_SUITE(DefaultInitDefault, util::label_type_gtest, naming::test_parameter_to_name);
 
 TYPED_TEST(DefaultInitDefault, default_construct) {
-    using type = TypeParam;
+    using type = util::test_parameter_type_at_t<0, TypeParam>;
 
     // check for correct default construction
     EXPECT_EQ(plssvm::default_init<type>{}.value, type{});

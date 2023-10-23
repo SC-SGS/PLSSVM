@@ -21,6 +21,7 @@
 #include "plssvm/matrix.hpp"                 // plssvm::aos_matrix
 #include "plssvm/model.hpp"                  // plssvm::model
 #include "plssvm/parameter.hpp"              // plssvm::parameter
+#include "plssvm/solver_types.hpp"           // plsvm::soler_type
 #include "plssvm/target_platforms.hpp"       // plssvm::target_platform
 
 #include "custom_test_macros.hpp"  // EXPECT_THROW_WHAT, EXPECT_INCLUSIVE_RANGE
@@ -30,7 +31,7 @@
                                    // generate_random_matrix, get_correct_data_file_labels}
 
 #include "gmock/gmock.h"  // EXPECT_CALL, ::testing::{An, Between, Return}
-#include "gtest/gtest.h"  // TEST, TYPED_TEST, TYPED_TEST_SUITE, EXPECT_EQ, EXPECT_TRUE, EXPECT_FALSE, ASSERT_EQ, ::testing::Test
+#include "gtest/gtest.h"  // TEST, TYPED_TEST, TYPED_TEST_SUITE, EXPECT_EQ, EXPECT_TRUE, EXPECT_FALSE, ASSERT_EQ, GTEST_SKIP, ::testing::Test
 
 #include <cstddef>   // std::size_t
 #include <iostream>  // std::clog
@@ -267,8 +268,8 @@ TEST_F(BaseCSVMWarning, construct_unused_parameter_warning_coef0) {
 template <typename T>
 class BaseCSVMMemberBase : public BaseCSVM, private util::redirect_output<> {
   protected:
-    using fixture_label_type = typename T::type;
-    static constexpr plssvm::classification_type fixture_classification = T::value;
+    using fixture_label_type = util::test_parameter_type_at_t<0, T>;
+    static constexpr plssvm::classification_type fixture_classification = util::test_parameter_value_at_v<0, T>;
 
     void SetUp() override {
         util::instantiate_template_file<fixture_label_type>(PLSSVM_TEST_PATH "/data/libsvm/6x4_TEMPLATE.libsvm", data_set_file.filename);
@@ -296,27 +297,55 @@ class BaseCSVMMemberBase : public BaseCSVM, private util::redirect_output<> {
     util::temporary_file model_file{};
 };
 
-// TODO: solver_type
 template <typename T>
-class BaseCSVMFit : public BaseCSVMMemberBase<T> {};
-TYPED_TEST_SUITE(BaseCSVMFit, util::label_type_classification_type_gtest, naming::parameter_definition_to_name);
+class BaseCSVMFit : public BaseCSVM, private util::redirect_output<> {
+  protected:
+    using fixture_label_type = util::test_parameter_type_at_t<0, T>;
+    static constexpr plssvm::solver_type fixture_solver = util::test_parameter_value_at_v<0, T>;
+    static constexpr plssvm::kernel_function_type fixture_kernel = util::test_parameter_value_at_v<1, T>;
+    static constexpr plssvm::classification_type fixture_classification = util::test_parameter_value_at_v<2, T>;
+
+    void SetUp() override {
+        util::instantiate_template_file<fixture_label_type>(PLSSVM_TEST_PATH "/data/libsvm/6x4_TEMPLATE.libsvm", data_set_file.filename);
+    }
+
+    /**
+     * @brief Return the name of the instantiated data template file.
+     * @return the file name (`[[nodiscard]]`)
+     */
+    [[nodiscard]] const std::string &get_data_filename() const noexcept { return data_set_file.filename; }
+
+  private:
+    /// The temporary data file.
+    util::temporary_file data_set_file{};
+};
+TYPED_TEST_SUITE(BaseCSVMFit, util::label_type_solver_and_kernel_function_and_classification_type_gtest, naming::test_parameter_to_name);
 
 TYPED_TEST(BaseCSVMFit, fit) {
     using label_type = typename TestFixture::fixture_label_type;
+    constexpr plssvm::solver_type solver = TestFixture::fixture_solver;
+    constexpr plssvm::kernel_function_type kernel = TestFixture::fixture_kernel;
     constexpr plssvm::classification_type classification = TestFixture::fixture_classification;
 
+    // skip unimplemented tests
+    if constexpr (solver == plssvm::solver_type::cg_streaming || solver == plssvm::solver_type::cg_implicit) {
+        GTEST_SKIP() << "Currently not implemented!";
+    }
+
     // create mock_csvm (since plssvm::csvm is pure virtual!)
-    const mock_csvm csvm{};
+    const mock_csvm csvm{ plssvm::parameter{ plssvm::kernel_type = kernel } };
 
     // determine the EXPECT_CALL values for the current classification type
     const std::size_t num_calls = classification == plssvm::classification_type::oaa ? 1 : util::calculate_number_of_classifiers(plssvm::classification_type::oao, util::get_num_classes<label_type>());
 
     // mock the solve_system_of_linear_equations function
     // clang-format off
-    EXPECT_CALL(csvm, get_device_memory()).Times(num_calls);
+    if constexpr (solver == plssvm::solver_type::automatic) {
+        EXPECT_CALL(csvm, get_device_memory()).Times(num_calls);
 #if defined(PLSSVM_ENFORCE_MAX_MEM_ALLOC_SIZE)
-    EXPECT_CALL(csvm, get_max_mem_alloc_size()).Times(num_calls);
+        EXPECT_CALL(csvm, get_max_mem_alloc_size()).Times(num_calls);
 #endif
+    }
     EXPECT_CALL(csvm, setup_data_on_devices(
                             ::testing::An<plssvm::solver_type>(),
                             ::testing::An<const plssvm::aos_matrix<plssvm::real_type> &>()))
@@ -338,25 +367,32 @@ TYPED_TEST(BaseCSVMFit, fit) {
                             ::testing::An<plssvm::real_type>(),
                             ::testing::An<plssvm::aos_matrix<plssvm::real_type> &>()))
                         .Times(::testing::Between(num_calls * 1, num_calls * 6));  // at least once before CG loop, at most # data_points - 1 + 1
-    // clang-format on
+// clang-format on
 
-    // create data set
-    const plssvm::data_set<label_type> training_data{ this->get_data_filename() };
+// create data set
+const plssvm::data_set<label_type> training_data{ this->get_data_filename() };
 
-    // call function
-    const plssvm::model<label_type> model = csvm.fit(training_data, plssvm::classification = classification);
-    EXPECT_EQ(model.num_support_vectors(), 6);
-    EXPECT_EQ(model.num_features(), 4);
-    EXPECT_EQ(model.num_classes(), util::get_num_classes<label_type>());
-    EXPECT_EQ(model.get_classification_type(), classification);
-    EXPECT_EQ(model.get_params(), plssvm::parameter{ plssvm::gamma = 0.25 });
+// call function
+const plssvm::model<label_type> model = csvm.fit(training_data, plssvm::solver = solver, plssvm::classification = classification);
+EXPECT_EQ(model.num_support_vectors(), 6);
+EXPECT_EQ(model.num_features(), 4);
+EXPECT_EQ(model.num_classes(), util::get_num_classes<label_type>());
+EXPECT_EQ(model.get_classification_type(), classification);
+EXPECT_EQ(model.get_params(), (plssvm::parameter{ plssvm::kernel_type = kernel, plssvm::gamma = 0.25 }));
 }
 TYPED_TEST(BaseCSVMFit, fit_named_parameters) {
     using label_type = typename TestFixture::fixture_label_type;
+    constexpr plssvm::solver_type solver = TestFixture::fixture_solver;
+    constexpr plssvm::kernel_function_type kernel = TestFixture::fixture_kernel;
     constexpr plssvm::classification_type classification = TestFixture::fixture_classification;
 
+    // skip unimplemented tests
+    if constexpr (solver == plssvm::solver_type::cg_streaming || solver == plssvm::solver_type::cg_implicit) {
+        GTEST_SKIP() << "Currently not implemented!";
+    }
+
     // create mock_csvm (since plssvm::csvm is pure virtual!)
-    const mock_csvm csvm{};
+    const mock_csvm csvm{ plssvm::parameter{ plssvm::kernel_type = kernel } };
 
     // determine the EXPECT_CALL values for the current classification type
     const std::size_t num_calls = classification == plssvm::classification_type::oaa ? 1 : util::calculate_number_of_classifiers(plssvm::classification_type::oao, util::get_num_classes<label_type>());
@@ -364,10 +400,12 @@ TYPED_TEST(BaseCSVMFit, fit_named_parameters) {
 
     // mock the solve_system_of_linear_equations function
     // clang-format off
-    EXPECT_CALL(csvm, get_device_memory()).Times(num_calls);
+    if constexpr (solver == plssvm::solver_type::automatic) {
+        EXPECT_CALL(csvm, get_device_memory()).Times(num_calls);
 #if defined(PLSSVM_ENFORCE_MAX_MEM_ALLOC_SIZE)
-    EXPECT_CALL(csvm, get_max_mem_alloc_size()).Times(num_calls);
+        EXPECT_CALL(csvm, get_max_mem_alloc_size()).Times(num_calls);
 #endif
+    }
     EXPECT_CALL(csvm, setup_data_on_devices(
                             ::testing::An<plssvm::solver_type>(),
                             ::testing::An<const plssvm::aos_matrix<plssvm::real_type> &>()))
@@ -396,6 +434,7 @@ TYPED_TEST(BaseCSVMFit, fit_named_parameters) {
 
     // call function
     const plssvm::model<label_type> model = csvm.fit(training_data,
+                                                     plssvm::solver = solver,
                                                      plssvm::classification = classification,
                                                      plssvm::epsilon = 1e-10,
                                                      plssvm::max_iter = max_iter);
@@ -403,14 +442,16 @@ TYPED_TEST(BaseCSVMFit, fit_named_parameters) {
     EXPECT_EQ(model.num_features(), 4);
     EXPECT_EQ(model.num_classes(), util::get_num_classes<label_type>());
     EXPECT_EQ(model.get_classification_type(), classification);
-    EXPECT_EQ(model.get_params(), plssvm::parameter{ plssvm::gamma = 0.25 });
+    EXPECT_EQ(model.get_params(), (plssvm::parameter{ plssvm::kernel_type = kernel, plssvm::gamma = 0.25 }));
 }
 TYPED_TEST(BaseCSVMFit, fit_named_parameters_invalid_epsilon) {
     using label_type = typename TestFixture::fixture_label_type;
+    constexpr plssvm::solver_type solver = TestFixture::fixture_solver;
+    constexpr plssvm::kernel_function_type kernel = TestFixture::fixture_kernel;
     constexpr plssvm::classification_type classification = TestFixture::fixture_classification;
 
     // create mock_csvm (since plssvm::csvm is pure virtual!)
-    const mock_csvm csvm{};
+    const mock_csvm csvm{ plssvm::parameter{ plssvm::kernel_type = kernel } };
 
     // mock the solve_system_of_linear_equations function -> since an exception should be triggered, the mocked function should never be called
     // clang-format off
@@ -443,16 +484,18 @@ TYPED_TEST(BaseCSVMFit, fit_named_parameters_invalid_epsilon) {
     const plssvm::data_set<label_type> training_data{ this->get_data_filename() };
 
     // calling the function with an invalid epsilon should throw
-    EXPECT_THROW_WHAT((std::ignore = csvm.fit(training_data, plssvm::classification = classification, plssvm::epsilon = 0.0)),
+    EXPECT_THROW_WHAT((std::ignore = csvm.fit(training_data, plssvm::solver = solver, plssvm::classification = classification, plssvm::epsilon = 0.0)),
                       plssvm::invalid_parameter_exception,
                       "epsilon must be less than 0.0, but is 0!");
 }
 TYPED_TEST(BaseCSVMFit, fit_named_parameters_invalid_max_iter) {
     using label_type = typename TestFixture::fixture_label_type;
+    constexpr plssvm::solver_type solver = TestFixture::fixture_solver;
+    constexpr plssvm::kernel_function_type kernel = TestFixture::fixture_kernel;
     constexpr plssvm::classification_type classification = TestFixture::fixture_classification;
 
     // create mock_csvm (since plssvm::csvm is pure virtual!)
-    const mock_csvm csvm{};
+    const mock_csvm csvm{ plssvm::parameter{ plssvm::kernel_type = kernel } };
 
     // mock the solve_system_of_linear_equations function -> since an exception should be triggered, the mocked function should never be called
     // clang-format off
@@ -485,16 +528,18 @@ TYPED_TEST(BaseCSVMFit, fit_named_parameters_invalid_max_iter) {
     const plssvm::data_set<label_type> training_data{ this->get_data_filename() };
 
     // calling the function with an invalid epsilon should throw
-    EXPECT_THROW_WHAT((std::ignore = csvm.fit(training_data, plssvm::classification = classification, plssvm::max_iter = 0)),
+    EXPECT_THROW_WHAT((std::ignore = csvm.fit(training_data, plssvm::solver = solver, plssvm::classification = classification, plssvm::max_iter = 0)),
                       plssvm::invalid_parameter_exception,
                       "max_iter must be greater than 0, but is 0!");
 }
 TYPED_TEST(BaseCSVMFit, fit_no_label) {
     using label_type = typename TestFixture::fixture_label_type;
+    constexpr plssvm::solver_type solver = TestFixture::fixture_solver;
+    constexpr plssvm::kernel_function_type kernel = TestFixture::fixture_kernel;
     constexpr plssvm::classification_type classification = TestFixture::fixture_classification;
 
     // create mock_csvm (since plssvm::csvm is pure virtual!)
-    const mock_csvm csvm{};
+    const mock_csvm csvm{ plssvm::parameter{ plssvm::kernel_type = kernel } };
 
     // mock the solve_system_of_linear_equations function -> since an exception should be triggered, the mocked function should never be called
     // clang-format off
@@ -527,14 +572,14 @@ TYPED_TEST(BaseCSVMFit, fit_no_label) {
     const plssvm::data_set<label_type> training_data{ PLSSVM_TEST_PATH "/data/libsvm/3x2_without_label.libsvm" };
 
     // in order to call fit, the provided data set must contain labels
-    EXPECT_THROW_WHAT((std::ignore = csvm.fit(training_data, plssvm::classification = classification)),
+    EXPECT_THROW_WHAT((std::ignore = csvm.fit(training_data, plssvm::solver = solver, plssvm::classification = classification)),
                       plssvm::invalid_parameter_exception,
                       "No labels given for training! Maybe the data is only usable for prediction?");
 }
 
 template <typename T>
 class BaseCSVMPredict : public BaseCSVMMemberBase<T> {};
-TYPED_TEST_SUITE(BaseCSVMPredict, util::label_type_classification_type_gtest, naming::parameter_definition_to_name);
+TYPED_TEST_SUITE(BaseCSVMPredict, util::label_type_classification_type_gtest, naming::test_parameter_to_name);
 
 TYPED_TEST(BaseCSVMPredict, predict) {
     using label_type = typename TestFixture::fixture_label_type;
@@ -597,7 +642,7 @@ TYPED_TEST(BaseCSVMPredict, predict_num_feature_mismatch) {
 
 template <typename T>
 class BaseCSVMScore : public BaseCSVMMemberBase<T> {};
-TYPED_TEST_SUITE(BaseCSVMScore, util::label_type_classification_type_gtest, naming::parameter_definition_to_name);
+TYPED_TEST_SUITE(BaseCSVMScore, util::label_type_classification_type_gtest, naming::test_parameter_to_name);
 
 TYPED_TEST(BaseCSVMScore, score_model) {
     using label_type = typename TestFixture::fixture_label_type;

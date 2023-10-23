@@ -14,8 +14,8 @@
 #include "plssvm/exceptions/exceptions.hpp"     // plssvm::data_set_exception
 
 #include "custom_test_macros.hpp"  // EXPECT_THROW_WHAT
-#include "naming.hpp"              // naming::label_type_to_name
-#include "types_to_test.hpp"       // util::label_type_gtest
+#include "naming.hpp"              // naming::test_parameter_to_name
+#include "types_to_test.hpp"       // util::{label_type_gtest, test_parameter_type_at_t}
 #include "utility.hpp"             // util::{get_distinct_label, get_correct_data_file_labels}
 
 #include "gtest/gtest.h"  // TYPED_TEST, TYPED_TEST_SUITE, EXPECT_EQ, EXPECT_DEATH, ASSERT_EQ, SUCCEED, ::testing::Test
@@ -28,11 +28,14 @@
 #include <vector>       // std::vector
 
 template <typename T>
-class DataSetLabelMapper : public ::testing::Test {};
-TYPED_TEST_SUITE(DataSetLabelMapper, util::label_type_gtest, naming::label_type_to_name);
+class DataSetLabelMapper : public ::testing::Test {
+  protected:
+    using fixture_label_type = util::test_parameter_type_at_t<0, T>;
+};
+TYPED_TEST_SUITE(DataSetLabelMapper, util::label_type_gtest, naming::test_parameter_to_name);
 
 TYPED_TEST(DataSetLabelMapper, construct) {
-    using label_type = TypeParam;
+    using label_type = typename TestFixture::fixture_label_type;
     using label_mapper_type = typename plssvm::data_set<label_type>::label_mapper;
 
     // the different labels
@@ -51,7 +54,7 @@ TYPED_TEST(DataSetLabelMapper, construct) {
     }
 }
 TYPED_TEST(DataSetLabelMapper, get_mapped_index_by_label) {
-    using label_type = TypeParam;
+    using label_type = typename TestFixture::fixture_label_type;
     using label_mapper_type = typename plssvm::data_set<label_type>::label_mapper;
 
     // the different labels
@@ -69,7 +72,7 @@ TYPED_TEST(DataSetLabelMapper, get_mapped_index_by_label) {
     }
 }
 TYPED_TEST(DataSetLabelMapper, get_mapped_index_by_invalid_label) {
-    using label_type = TypeParam;
+    using label_type = typename TestFixture::fixture_label_type;
     using label_mapper_type = typename plssvm::data_set<label_type>::label_mapper;
 
     // the different labels
@@ -89,7 +92,7 @@ TYPED_TEST(DataSetLabelMapper, get_mapped_index_by_invalid_label) {
     }
 }
 TYPED_TEST(DataSetLabelMapper, get_label_by_mapped_index) {
-    using label_type = TypeParam;
+    using label_type = typename TestFixture::fixture_label_type;
     using label_mapper_type = typename plssvm::data_set<label_type>::label_mapper;
 
     // the different labels
@@ -107,7 +110,7 @@ TYPED_TEST(DataSetLabelMapper, get_label_by_mapped_index) {
     }
 }
 TYPED_TEST(DataSetLabelMapper, get_label_by_invalid_mapped_index) {
-    using label_type = TypeParam;
+    using label_type = typename TestFixture::fixture_label_type;
     using label_mapper_type = typename plssvm::data_set<label_type>::label_mapper;
 
     // the different labels
@@ -122,7 +125,7 @@ TYPED_TEST(DataSetLabelMapper, get_label_by_invalid_mapped_index) {
                       fmt::format("Mapped index \"{}\" unknown in this label mapping!", mapper.num_mappings() + 1));
 }
 TYPED_TEST(DataSetLabelMapper, num_mappings) {
-    using label_type = TypeParam;
+    using label_type = typename TestFixture::fixture_label_type;
     using label_mapper_type = typename plssvm::data_set<label_type>::label_mapper;
 
     // the different labels
@@ -135,7 +138,7 @@ TYPED_TEST(DataSetLabelMapper, num_mappings) {
     EXPECT_EQ(mapper.num_mappings(), different_labels.size());
 }
 TYPED_TEST(DataSetLabelMapper, labels) {
-    using label_type = TypeParam;
+    using label_type = typename TestFixture::fixture_label_type;
     using label_mapper_type = typename plssvm::data_set<label_type>::label_mapper;
 
     // the different labels
@@ -150,10 +153,10 @@ TYPED_TEST(DataSetLabelMapper, labels) {
 
 template <typename T>
 class DataSetLabelMapperDeathTest : public DataSetLabelMapper<T> {};
-TYPED_TEST_SUITE(DataSetLabelMapperDeathTest, util::label_type_gtest, naming::label_type_to_name);
+TYPED_TEST_SUITE(DataSetLabelMapperDeathTest, util::label_type_gtest, naming::test_parameter_to_name);
 
 TYPED_TEST(DataSetLabelMapperDeathTest, duplicated_labels) {
-    using label_type = TypeParam;
+    using label_type = typename TestFixture::fixture_label_type;
     using label_mapper_type = typename plssvm::data_set<label_type>::label_mapper;
 
     // duplicated labels are not allowed in the label_mapper constructor

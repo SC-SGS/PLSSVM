@@ -14,8 +14,8 @@
 #include "plssvm/matrix.hpp"     // plssvm::aos_matrix
 
 #include "custom_test_macros.hpp"  // EXPECT_FLOATING_POINT_MATRIX_EQ, EXPECT_FLOATING_POINT_EQ, EXPECT_FLOATING_POINT_NEAR
-#include "naming.hpp"              // naming::label_type_to_name
-#include "types_to_test.hpp"       // util::label_type_gtest
+#include "naming.hpp"              // naming::test_parameter_to_name
+#include "types_to_test.hpp"       // util::{label_type_gtest, test_parameter_type_at_t}
 #include "utility.hpp"             // util::{redirect_output, scale}
 
 #include "gmock/gmock-matchers.h"  // EXPECT_THAT, ::testing::{ContainsRegex, StartsWith}
@@ -28,7 +28,7 @@
 template <typename T>
 class DataSetGetter : public ::testing::Test, private util::redirect_output<> {
   protected:
-    using fixture_label_type = T;
+    using fixture_label_type = util::test_parameter_type_at_t<0, T>;
 
     /**
      * @brief Return the different classes.
@@ -54,10 +54,10 @@ class DataSetGetter : public ::testing::Test, private util::redirect_output<> {
     /// The correct data points.
     plssvm::aos_matrix<plssvm::real_type> data_points{ util::generate_specific_matrix<plssvm::aos_matrix<plssvm::real_type>>(label.size(), 4) };
 };
-TYPED_TEST_SUITE(DataSetGetter, util::label_type_gtest, naming::label_type_to_name);
+TYPED_TEST_SUITE(DataSetGetter, util::label_type_gtest, naming::test_parameter_to_name);
 
 TYPED_TEST(DataSetGetter, data) {
-    using label_type = TypeParam;
+    using label_type = typename TestFixture::fixture_label_type;
 
     // create data set without labels
     const plssvm::data_set<label_type> data{ this->get_data_points() };
@@ -65,7 +65,7 @@ TYPED_TEST(DataSetGetter, data) {
     EXPECT_FLOATING_POINT_MATRIX_EQ(data.data(), this->get_data_points());
 }
 TYPED_TEST(DataSetGetter, has_labels) {
-    using label_type = TypeParam;
+    using label_type = typename TestFixture::fixture_label_type;
 
     // create data set without labels
     const plssvm::data_set<label_type> data_without_labels{ this->get_data_points() };
@@ -77,7 +77,7 @@ TYPED_TEST(DataSetGetter, has_labels) {
     EXPECT_TRUE(data_with_labels.has_labels());
 }
 TYPED_TEST(DataSetGetter, labels) {
-    using label_type = TypeParam;
+    using label_type = typename TestFixture::fixture_label_type;
 
     // create data set without labels
     const plssvm::data_set<label_type> data_without_labels{ this->get_data_points() };
@@ -90,7 +90,7 @@ TYPED_TEST(DataSetGetter, labels) {
     EXPECT_EQ(data_with_labels.labels().value().get(), this->get_label());
 }
 TYPED_TEST(DataSetGetter, classes) {
-    using label_type = TypeParam;
+    using label_type = typename TestFixture::fixture_label_type;
 
     // create data set without labels
     const plssvm::data_set<label_type> data_without_labels{ this->get_data_points() };
@@ -104,7 +104,7 @@ TYPED_TEST(DataSetGetter, classes) {
 }
 
 TYPED_TEST(DataSetGetter, num_data_points) {
-    using label_type = TypeParam;
+    using label_type = typename TestFixture::fixture_label_type;
 
     // create data set
     const plssvm::data_set<label_type> data{ this->get_data_points() };
@@ -112,7 +112,7 @@ TYPED_TEST(DataSetGetter, num_data_points) {
     EXPECT_EQ(data.num_data_points(), this->get_data_points().num_rows());
 }
 TYPED_TEST(DataSetGetter, num_features) {
-    using label_type = TypeParam;
+    using label_type = typename TestFixture::fixture_label_type;
 
     // create data set
     const plssvm::data_set<label_type> data{ this->get_data_points() };
@@ -120,7 +120,7 @@ TYPED_TEST(DataSetGetter, num_features) {
     EXPECT_EQ(data.num_features(), this->get_data_points().num_cols());
 }
 TYPED_TEST(DataSetGetter, num_classes) {
-    using label_type = TypeParam;
+    using label_type = typename TestFixture::fixture_label_type;
 
     // create data set without labels
     const plssvm::data_set<label_type> data_without_label{ this->get_data_points() };
@@ -134,7 +134,7 @@ TYPED_TEST(DataSetGetter, num_classes) {
 }
 
 TYPED_TEST(DataSetGetter, is_scaled) {
-    using label_type = TypeParam;
+    using label_type = typename TestFixture::fixture_label_type;
     using scaling_type = typename plssvm::data_set<label_type>::scaling;
 
     // create data set
@@ -148,7 +148,7 @@ TYPED_TEST(DataSetGetter, is_scaled) {
     EXPECT_TRUE(data_scaled.is_scaled());
 }
 TYPED_TEST(DataSetGetter, scaling_factors) {
-    using label_type = TypeParam;
+    using label_type = typename TestFixture::fixture_label_type;
     using scaling_type = typename plssvm::data_set<label_type>::scaling;
 
     // create data set

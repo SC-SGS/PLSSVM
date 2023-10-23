@@ -33,10 +33,10 @@
 
 template <typename T>
 class LIBSVMModelHeaderWrite : public ::testing::Test, protected util::temporary_file {};
-TYPED_TEST_SUITE(LIBSVMModelHeaderWrite, util::label_type_gtest, naming::label_type_to_name);
+TYPED_TEST_SUITE(LIBSVMModelHeaderWrite, util::label_type_gtest, naming::test_parameter_to_name);
 
 TYPED_TEST(LIBSVMModelHeaderWrite, write_linear) {
-    using label_type = TypeParam;
+    using label_type = util::test_parameter_type_at_t<0, TypeParam>;
 
     // define data to write
     const std::vector<label_type> distinct_label = util::get_distinct_label<label_type>();
@@ -74,7 +74,7 @@ TYPED_TEST(LIBSVMModelHeaderWrite, write_linear) {
     EXPECT_EQ(reader.line(7), "SV");
 }
 TYPED_TEST(LIBSVMModelHeaderWrite, write_polynomial) {
-    using label_type = TypeParam;
+    using label_type = util::test_parameter_type_at_t<0, TypeParam>;
 
     // define data to write
     const std::vector<label_type> distinct_label = util::get_distinct_label<label_type>();
@@ -115,7 +115,7 @@ TYPED_TEST(LIBSVMModelHeaderWrite, write_polynomial) {
     EXPECT_EQ(reader.line(10), "SV");
 }
 TYPED_TEST(LIBSVMModelHeaderWrite, write_rbf) {
-    using label_type = TypeParam;
+    using label_type = util::test_parameter_type_at_t<0, TypeParam>;
 
     // define data to write
     const std::vector<label_type> distinct_label = util::get_distinct_label<label_type>();
@@ -156,10 +156,10 @@ TYPED_TEST(LIBSVMModelHeaderWrite, write_rbf) {
 
 template <typename T>
 class LIBSVMModelHeaderWriteDeathTest : public LIBSVMModelHeaderWrite<T> {};
-TYPED_TEST_SUITE(LIBSVMModelHeaderWriteDeathTest, util::label_type_gtest, naming::label_type_to_name);
+TYPED_TEST_SUITE(LIBSVMModelHeaderWriteDeathTest, util::label_type_gtest, naming::test_parameter_to_name);
 
 TYPED_TEST(LIBSVMModelHeaderWriteDeathTest, write_header_without_label) {
-    using label_type = TypeParam;
+    using label_type = util::test_parameter_type_at_t<0, TypeParam>;
 
     // create necessary parameter
     const plssvm::parameter params{};
@@ -175,7 +175,7 @@ TYPED_TEST(LIBSVMModelHeaderWriteDeathTest, write_header_without_label) {
                  "Cannot write a model file that does not include labels!");
 }
 TYPED_TEST(LIBSVMModelHeaderWriteDeathTest, write_header_invalid_number_of_rho_values) {
-    using label_type = TypeParam;
+    using label_type = util::test_parameter_type_at_t<0, TypeParam>;
 
     // create necessary parameter
     const plssvm::parameter params{};

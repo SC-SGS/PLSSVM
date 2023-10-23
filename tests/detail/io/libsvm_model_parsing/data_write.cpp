@@ -34,11 +34,11 @@
 
 template <typename T>
 class LIBSVMModelDataWrite : public ::testing::Test, private util::redirect_output<>, protected util::temporary_file {};
-TYPED_TEST_SUITE(LIBSVMModelDataWrite, util::label_type_classification_type_gtest, naming::parameter_definition_to_name);
+TYPED_TEST_SUITE(LIBSVMModelDataWrite, util::label_type_classification_type_gtest, naming::test_parameter_to_name);
 
 TYPED_TEST(LIBSVMModelDataWrite, write) {
-    using label_type = typename TypeParam::type;
-    constexpr plssvm::classification_type classification = TypeParam::value;
+    using label_type = util::test_parameter_type_at_t<0, TypeParam>;
+    constexpr plssvm::classification_type classification = util::test_parameter_value_at_v<0, TypeParam>;
 
     // define data to write
     const std::vector<label_type> classes = util::get_distinct_label<label_type>();
@@ -204,8 +204,8 @@ TYPED_TEST(LIBSVMModelDataWrite, write) {
 template <typename T>
 class LIBSVMModelDataWriteDeathTest : public LIBSVMModelDataWrite<T> {
   protected:
-    using fixture_label_type = typename T::type;
-    static constexpr plssvm::classification_type fixture_classification = T::value;
+    using fixture_label_type = util::test_parameter_type_at_t<0, T>;
+    static constexpr plssvm::classification_type fixture_classification = util::test_parameter_value_at_v<0, T>;
 
     void SetUp() override {
         const std::size_t num_classes = util::get_num_classes<fixture_label_type>();
@@ -300,7 +300,7 @@ class LIBSVMModelDataWriteDeathTest : public LIBSVMModelDataWrite<T> {
     /// The support vectors.
     plssvm::data_set<fixture_label_type> data_set_{ util::generate_random_matrix<plssvm::aos_matrix<plssvm::real_type>>(6, 2), util::get_correct_model_file_labels<fixture_label_type>() };
 };
-TYPED_TEST_SUITE(LIBSVMModelDataWriteDeathTest, util::label_type_classification_type_gtest, naming::parameter_definition_to_name);
+TYPED_TEST_SUITE(LIBSVMModelDataWriteDeathTest, util::label_type_classification_type_gtest, naming::test_parameter_to_name);
 
 TYPED_TEST(LIBSVMModelDataWriteDeathTest, empty_filename) {
     constexpr plssvm::classification_type classification = TestFixture::fixture_classification;

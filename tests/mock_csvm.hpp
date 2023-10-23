@@ -31,10 +31,6 @@
  */
 class mock_csvm final : public plssvm::csvm {
   public:
-    explicit mock_csvm(plssvm::parameter params = {}) :
-        plssvm::csvm{ params } {
-        this->fake_functions();
-    }
     template <typename... Args>
     explicit mock_csvm(Args &&...args) :
         plssvm::csvm{ std::forward<Args>(args)... } {

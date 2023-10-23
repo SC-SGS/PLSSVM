@@ -29,7 +29,7 @@
 
 template <typename T>
 class LIBSVMModelDataParseInvalid : public ::testing::Test {};
-TYPED_TEST_SUITE(LIBSVMModelDataParseInvalid, util::label_type_gtest, naming::label_type_to_name);
+TYPED_TEST_SUITE(LIBSVMModelDataParseInvalid, util::label_type_gtest, naming::test_parameter_to_name);
 
 TYPED_TEST(LIBSVMModelDataParseInvalid, zero_based_features) {
     // parse the LIBSVM file
@@ -178,7 +178,7 @@ TYPED_TEST(LIBSVMModelDataParseInvalid, too_many_sv_according_to_header) {
 
 template <typename T>
 class LIBSVMModelDataParseInvalidDeathTest : public LIBSVMModelDataParseInvalid<T> {};
-TYPED_TEST_SUITE(LIBSVMModelDataParseInvalidDeathTest, util::label_type_gtest, naming::label_type_to_name);
+TYPED_TEST_SUITE(LIBSVMModelDataParseInvalidDeathTest, util::label_type_gtest, naming::test_parameter_to_name);
 
 TYPED_TEST(LIBSVMModelDataParseInvalidDeathTest, invalid_file_reader) {
     // open file_reader without associating it to a file

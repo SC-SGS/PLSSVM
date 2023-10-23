@@ -20,7 +20,7 @@
 #include "plssvm/detail/io/libsvm_model_parsing.hpp"  // plssvm::detail::io::{parse_libsvm_model_header, parse_libsvm_model_data, write_libsvm_model_data}
 #include "plssvm/detail/logger.hpp"                   // plssvm::detail::log, plssvm::verbosity_level
 #include "plssvm/detail/performance_tracker.hpp"      // plssvm::detail::tracking_entry
-#include "plssvm/detail/type_list.hpp"                // plssvm::detail::{real_type_list, label_type_list, type_list_contains_v}
+#include "plssvm/detail/type_list.hpp"                // plssvm::detail::{supported_label_types, tuple_contains_v}
 #include "plssvm/matrix.hpp"                          // plssvm::aos_matrix
 #include "plssvm/parameter.hpp"                       // plssvm::parameter
 
@@ -50,7 +50,7 @@ namespace plssvm {
 template <typename U = int>
 class model {
     // make sure only valid template types are used
-    static_assert(detail::type_list_contains_v<U, detail::label_type_list>, "Illegal label type provided! See the 'label_type_list' in the type_list.hpp header for a list of the allowed types.");
+    static_assert(detail::tuple_contains_v<U, detail::supported_label_types>, "Illegal label type provided! See the 'label_type_list' in the type_list.hpp header for a list of the allowed types.");
 
     // plssvm::csvm needs the private constructor
     friend class csvm;

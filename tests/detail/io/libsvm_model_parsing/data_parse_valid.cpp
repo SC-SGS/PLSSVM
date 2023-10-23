@@ -33,8 +33,8 @@
 template <typename T>
 class LIBSVMModelDataParseValid : public ::testing::Test, protected util::temporary_file {
   protected:
-    using fixture_label_type = typename T::type;
-    static constexpr plssvm::classification_type fixture_classification = T::value;
+    using fixture_label_type = util::test_parameter_type_at_t<0, T>;
+    static constexpr plssvm::classification_type fixture_classification = util::test_parameter_value_at_v<0, T>;
 
     void SetUp() override {
         // create file used in this test fixture by instantiating the template file
@@ -77,7 +77,7 @@ class LIBSVMModelDataParseValid : public ::testing::Test, protected util::tempor
         { plssvm::real_type{ 4.3106819001e-02 }, plssvm::real_type{ -9.1995171877e-02 }, plssvm::real_type{ -1.0648352745e-01 }, plssvm::real_type{ -2.7491435827e-02 }, plssvm::real_type{ -4.3381768383e-02 }, plssvm::real_type{ 2.2624508453e-01 } }
     };
 };
-TYPED_TEST_SUITE(LIBSVMModelDataParseValid, util::label_type_classification_type_gtest, naming::parameter_definition_to_name);
+TYPED_TEST_SUITE(LIBSVMModelDataParseValid, util::label_type_classification_type_gtest, naming::test_parameter_to_name);
 
 TYPED_TEST(LIBSVMModelDataParseValid, read) {
     using label_type = typename TestFixture::fixture_label_type;

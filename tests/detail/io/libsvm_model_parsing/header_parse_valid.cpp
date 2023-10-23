@@ -29,12 +29,16 @@
 #include <vector>   // std::vector
 
 template <typename T>
-class LIBSVMModelHeaderParseValid : public ::testing::Test {};
-TYPED_TEST_SUITE(LIBSVMModelHeaderParseValid, util::label_type_classification_type_gtest, naming::parameter_definition_to_name);
+class LIBSVMModelHeaderParseValid : public ::testing::Test {
+  protected:
+    using fixture_label_type = util::test_parameter_type_at_t<0, T>;
+    static constexpr plssvm::classification_type fixture_classification = util::test_parameter_value_at_v<0, T>;
+};
+TYPED_TEST_SUITE(LIBSVMModelHeaderParseValid, util::label_type_classification_type_gtest, naming::test_parameter_to_name);
 
 TYPED_TEST(LIBSVMModelHeaderParseValid, read_linear) {
-    using label_type = typename TypeParam::type;
-    constexpr plssvm::classification_type classification = TypeParam::value;
+    using label_type = typename TestFixture::fixture_label_type;
+    constexpr plssvm::classification_type classification = TestFixture::fixture_classification;
 
     // create temporary file
     const util::temporary_file template_file{};
@@ -113,8 +117,8 @@ TYPED_TEST(LIBSVMModelHeaderParseValid, read_linear) {
 }
 
 TYPED_TEST(LIBSVMModelHeaderParseValid, read_polynomial) {
-    using label_type = typename TypeParam::type;
-    constexpr plssvm::classification_type classification = TypeParam::value;
+    using label_type = typename TestFixture::fixture_label_type;
+    constexpr plssvm::classification_type classification = TestFixture::fixture_classification;
 
     // create temporary file
     const util::temporary_file template_file{};
@@ -196,8 +200,8 @@ TYPED_TEST(LIBSVMModelHeaderParseValid, read_polynomial) {
 }
 
 TYPED_TEST(LIBSVMModelHeaderParseValid, read_rbf) {
-    using label_type = typename TypeParam::type;
-    constexpr plssvm::classification_type classification = TypeParam::value;
+    using label_type = typename TestFixture::fixture_label_type;
+    constexpr plssvm::classification_type classification = TestFixture::fixture_classification;
 
     // create temporary file
     const util::temporary_file template_file{};

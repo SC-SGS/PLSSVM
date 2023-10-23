@@ -14,7 +14,7 @@
 #pragma once
 
 #include "plssvm/detail/assert.hpp"     // PLSSVM_ASSERT
-#include "plssvm/detail/type_list.hpp"  // plssvm::detail::{real_type_list, type_list_contains_v}
+#include "plssvm/detail/type_list.hpp"  // plssvm::detail::{supported_real_types, tuple_contains_v}
 
 #include <array>    // std::array
 #include <cstddef>  // std::size_t
@@ -31,7 +31,7 @@ namespace plssvm::detail {
 template <typename T, typename queue_t, typename device_pointer_t = T *>
 class gpu_device_ptr {
     // make sure only valid template types are used
-    static_assert(detail::type_list_contains_v<T, detail::real_type_list>, "Illegal real type provided! See the 'real_type_list' in the type_list.hpp header for a list of the allowed types.");
+    static_assert(detail::tuple_contains_v<T, detail::supported_real_types>, "Illegal real type provided! See the 'real_type_list' in the type_list.hpp header for a list of the allowed types.");
 
   public:
     /// The type of the values used in the device_ptr.

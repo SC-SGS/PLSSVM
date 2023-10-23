@@ -426,6 +426,22 @@ template <typename matrix_type>
 }
 
 /**
+ * @brief Convert the provided 2D vector to a 1D vector.
+ * @tparam T the type in the vector
+ * @param[in] vec_2D the 2D input vector
+ * @return the 1D result vector (`[[nodiscard]]`)
+ */
+template <typename T>
+[[nodiscard]] inline std::vector<T> flatten(const std::vector<std::vector<T>> &vec_2D) {
+    std::vector<T> ret{};
+    for (const std::vector<T> &vec : vec_2D) {
+        ret.insert(ret.end(), vec.begin(), vec.end());
+    }
+    return ret;
+}
+
+
+/**
  * @brief Scale the @p data set to the range [@p lower, @p upper].
  * @tparam T the type of the data that should be scaled (must be a floating point type)
  * @tparam layout the memory layout used for the plssvm::matrix @p data

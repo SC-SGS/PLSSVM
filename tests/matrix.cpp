@@ -13,8 +13,8 @@
 #include "plssvm/exceptions/exceptions.hpp"  // plssvm::matrix_exception
 
 #include "custom_test_macros.hpp"  // EXPECT_CONVERSION_TO_STRING, EXPECT_CONVERSION_FROM_STRING, EXPECT_THROW_WHAT
-#include "naming.hpp"              // naming::parameter_definition_to_name
-#include "types_to_test.hpp"       // util::real_type_layout_type_gtest
+#include "naming.hpp"              // naming::test_parameter_to_name
+#include "types_to_test.hpp"       // util::{real_type_layout_type_gtest, test_parameter_type_at_t, test_parameter_value_at_v}
 #include "utility.hpp"             // util::generate_random_matrix
 
 #include "gtest/gtest-matchers.h"  // ::testing::HasSubstr
@@ -69,12 +69,16 @@ TEST(LayoutType, layout_type_to_full_string_unknown) {
 }
 
 template <typename T>
-class Matrix : public ::testing::Test {};
-TYPED_TEST_SUITE(Matrix, util::real_type_layout_type_gtest, naming::parameter_definition_to_name);
+class Matrix : public ::testing::Test {
+  protected:
+    using fixture_real_type = util::test_parameter_type_at_t<0, T>;
+    static constexpr plssvm::layout_type fixture_layout = util::test_parameter_value_at_v<0, T>;
+};
+TYPED_TEST_SUITE(Matrix, util::real_type_layout_type_gtest, naming::test_parameter_to_name);
 
 TYPED_TEST(Matrix, construct_default) {
-    using real_type = typename TypeParam::type;
-    constexpr plssvm::layout_type layout = TypeParam::value;
+    using real_type = typename TestFixture::fixture_real_type;
+    constexpr plssvm::layout_type layout = TestFixture::fixture_layout;
 
     // default construct matrix
     const plssvm::matrix<real_type, layout> matr{};
@@ -86,8 +90,8 @@ TYPED_TEST(Matrix, construct_default) {
 }
 
 TYPED_TEST(Matrix, construct_from_same_matrix) {
-    using real_type = typename TypeParam::type;
-    constexpr plssvm::layout_type layout = TypeParam::value;
+    using real_type = typename TestFixture::fixture_real_type;
+    constexpr plssvm::layout_type layout = TestFixture::fixture_layout;
 
     // construct matrix
     const auto matr = util::generate_random_matrix<plssvm::matrix<real_type, layout>>(3, 2);
@@ -99,8 +103,8 @@ TYPED_TEST(Matrix, construct_from_same_matrix) {
     EXPECT_EQ(matr, new_matr);
 }
 TYPED_TEST(Matrix, construct_from_other_matrix) {
-    using real_type = typename TypeParam::type;
-    constexpr plssvm::layout_type layout = TypeParam::value;
+    using real_type = typename TestFixture::fixture_real_type;
+    constexpr plssvm::layout_type layout = TestFixture::fixture_layout;
 
     // construct matrix with the opposite layout type
     const auto matr = util::generate_random_matrix<plssvm::matrix<real_type, layout == plssvm::layout_type::aos ? plssvm::layout_type::soa : plssvm::layout_type::aos>>(3, 2);
@@ -121,8 +125,8 @@ TYPED_TEST(Matrix, construct_from_other_matrix) {
 }
 
 TYPED_TEST(Matrix, construct_with_size) {
-    using real_type = typename TypeParam::type;
-    constexpr plssvm::layout_type layout = TypeParam::value;
+    using real_type = typename TestFixture::fixture_real_type;
+    constexpr plssvm::layout_type layout = TestFixture::fixture_layout;
 
     // construct a matrix with a specific size
     const plssvm::matrix<real_type, layout> matr{ 3, 2 };
@@ -133,8 +137,8 @@ TYPED_TEST(Matrix, construct_with_size) {
     EXPECT_TRUE(std::all_of(matr.data(), matr.data() + matr.num_entries(), [](const real_type val) { return val == real_type{}; }));
 }
 TYPED_TEST(Matrix, construct_with_size_zero_num_rows) {
-    using real_type = typename TypeParam::type;
-    constexpr plssvm::layout_type layout = TypeParam::value;
+    using real_type = typename TestFixture::fixture_real_type;
+    constexpr plssvm::layout_type layout = TestFixture::fixture_layout;
 
     // try constructing a matrix with zero rows
     EXPECT_THROW_WHAT((plssvm::matrix<real_type, layout>{ 0, 2 }),
@@ -142,8 +146,8 @@ TYPED_TEST(Matrix, construct_with_size_zero_num_rows) {
                       "The number of rows is zero!");
 }
 TYPED_TEST(Matrix, construct_with_size_zero_num_cols) {
-    using real_type = typename TypeParam::type;
-    constexpr plssvm::layout_type layout = TypeParam::value;
+    using real_type = typename TestFixture::fixture_real_type;
+    constexpr plssvm::layout_type layout = TestFixture::fixture_layout;
 
     // try constructing a matrix with zero columns
     EXPECT_THROW_WHAT((plssvm::matrix<real_type, layout>{ 2, 0 }),
@@ -152,8 +156,8 @@ TYPED_TEST(Matrix, construct_with_size_zero_num_cols) {
 }
 
 TYPED_TEST(Matrix, construct_with_size_and_default_value) {
-    using real_type = typename TypeParam::type;
-    constexpr plssvm::layout_type layout = TypeParam::value;
+    using real_type = typename TestFixture::fixture_real_type;
+    constexpr plssvm::layout_type layout = TestFixture::fixture_layout;
 
     // construct a matrix with a specific size
     const plssvm::matrix<real_type, layout> matr{ 2, 3, real_type{ 3.1415 } };
@@ -164,8 +168,8 @@ TYPED_TEST(Matrix, construct_with_size_and_default_value) {
     EXPECT_TRUE(std::all_of(matr.data(), matr.data() + matr.num_entries(), [](const real_type val) { return val == real_type{ 3.1415 }; }));
 }
 TYPED_TEST(Matrix, construct_with_size_and_default_value_zero_num_rows) {
-    using real_type = typename TypeParam::type;
-    constexpr plssvm::layout_type layout = TypeParam::value;
+    using real_type = typename TestFixture::fixture_real_type;
+    constexpr plssvm::layout_type layout = TestFixture::fixture_layout;
 
     // try constructing a matrix with zero rows
     EXPECT_THROW_WHAT((plssvm::matrix<real_type, layout>{ 0, 2, real_type{ 3.1415 } }),
@@ -173,8 +177,8 @@ TYPED_TEST(Matrix, construct_with_size_and_default_value_zero_num_rows) {
                       "The number of rows is zero!");
 }
 TYPED_TEST(Matrix, construct_with_size_and_default_value_zero_num_cols) {
-    using real_type = typename TypeParam::type;
-    constexpr plssvm::layout_type layout = TypeParam::value;
+    using real_type = typename TestFixture::fixture_real_type;
+    constexpr plssvm::layout_type layout = TestFixture::fixture_layout;
 
     // try constructing a matrix with zero columns
     EXPECT_THROW_WHAT((plssvm::matrix<real_type, layout>{ 2, 0, real_type{ 3.1415 } }),
@@ -182,8 +186,8 @@ TYPED_TEST(Matrix, construct_with_size_and_default_value_zero_num_cols) {
                       "The number of columns is zero!");
 }
 TYPED_TEST(Matrix, construct_from_2D_vector) {
-    using real_type = typename TypeParam::type;
-    constexpr plssvm::layout_type layout = TypeParam::value;
+    using real_type = typename TestFixture::fixture_real_type;
+    constexpr plssvm::layout_type layout = TestFixture::fixture_layout;
 
     // create the 2D vector
     const std::vector<std::vector<real_type>> matr_2D{ { real_type{ 0.1 }, real_type{ 0.2 } }, { real_type{ 1.1 }, real_type{ 1.2 } } };
@@ -197,15 +201,15 @@ TYPED_TEST(Matrix, construct_from_2D_vector) {
     EXPECT_EQ(matr.to_2D_vector(), matr_2D);
 }
 TYPED_TEST(Matrix, construct_from_empty_2D_vector) {
-    using real_type = typename TypeParam::type;
-    constexpr plssvm::layout_type layout = TypeParam::value;
+    using real_type = typename TestFixture::fixture_real_type;
+    constexpr plssvm::layout_type layout = TestFixture::fixture_layout;
 
     // try constructing a matrix from an empty 2D vector
     EXPECT_THROW_WHAT((plssvm::matrix<real_type, layout>{ {} }), plssvm::matrix_exception, "The data to create the matrix from may not be empty!");
 }
 TYPED_TEST(Matrix, construct_from_2D_vector_invalid_columns) {
-    using real_type = typename TypeParam::type;
-    constexpr plssvm::layout_type layout = TypeParam::value;
+    using real_type = typename TestFixture::fixture_real_type;
+    constexpr plssvm::layout_type layout = TestFixture::fixture_layout;
 
     // try constructing a matrix from an empty 2D vector with mismatching column sizes
     EXPECT_THROW_WHAT((plssvm::matrix<real_type, layout>{ { { real_type{ 0.0 }, real_type{ 0.0 } }, { real_type{ 0.0 } } } }),
@@ -213,8 +217,8 @@ TYPED_TEST(Matrix, construct_from_2D_vector_invalid_columns) {
                       "Each row in the matrix must contain the same amount of columns!");
 }
 TYPED_TEST(Matrix, construct_from_2D_vector_empty_columns) {
-    using real_type = typename TypeParam::type;
-    constexpr plssvm::layout_type layout = TypeParam::value;
+    using real_type = typename TestFixture::fixture_real_type;
+    constexpr plssvm::layout_type layout = TestFixture::fixture_layout;
 
     // try constructing a matrix from an empty 2D vector with empty columns
     EXPECT_THROW_WHAT((plssvm::matrix<real_type, layout>{ { {}, {} } }),
@@ -223,8 +227,8 @@ TYPED_TEST(Matrix, construct_from_2D_vector_empty_columns) {
 }
 
 TYPED_TEST(Matrix, shape) {
-    using real_type = typename TypeParam::type;
-    constexpr plssvm::layout_type layout = TypeParam::value;
+    using real_type = typename TestFixture::fixture_real_type;
+    constexpr plssvm::layout_type layout = TestFixture::fixture_layout;
 
     // create random matrix
     const plssvm::matrix<real_type, layout> matr{ 42, 4 };
@@ -233,8 +237,8 @@ TYPED_TEST(Matrix, shape) {
     EXPECT_EQ(matr.shape(), (std::array<std::size_t, 2>{ 42, 4 }));
 }
 TYPED_TEST(Matrix, num_rows) {
-    using real_type = typename TypeParam::type;
-    constexpr plssvm::layout_type layout = TypeParam::value;
+    using real_type = typename TestFixture::fixture_real_type;
+    constexpr plssvm::layout_type layout = TestFixture::fixture_layout;
 
     // create random matrix
     const plssvm::matrix<real_type, layout> matr{ 42, 4 };
@@ -243,8 +247,8 @@ TYPED_TEST(Matrix, num_rows) {
     EXPECT_EQ(matr.num_rows(), 42);
 }
 TYPED_TEST(Matrix, num_cols) {
-    using real_type = typename TypeParam::type;
-    constexpr plssvm::layout_type layout = TypeParam::value;
+    using real_type = typename TestFixture::fixture_real_type;
+    constexpr plssvm::layout_type layout = TestFixture::fixture_layout;
 
     // create random matrix
     const plssvm::matrix<real_type, layout> matr{ 42, 4 };
@@ -253,8 +257,8 @@ TYPED_TEST(Matrix, num_cols) {
     EXPECT_EQ(matr.num_cols(), 4);
 }
 TYPED_TEST(Matrix, num_entries) {
-    using real_type = typename TypeParam::type;
-    constexpr plssvm::layout_type layout = TypeParam::value;
+    using real_type = typename TestFixture::fixture_real_type;
+    constexpr plssvm::layout_type layout = TestFixture::fixture_layout;
 
     // create random matrix
     const plssvm::matrix<real_type, layout> matr{ 42, 4 };
@@ -263,8 +267,8 @@ TYPED_TEST(Matrix, num_entries) {
     EXPECT_EQ(matr.num_entries(), 168);
 }
 TYPED_TEST(Matrix, empty) {
-    using real_type = typename TypeParam::type;
-    constexpr plssvm::layout_type layout = TypeParam::value;
+    using real_type = typename TestFixture::fixture_real_type;
+    constexpr plssvm::layout_type layout = TestFixture::fixture_layout;
 
     // create random matrix
     const plssvm::matrix<real_type, layout> matr{ 42, 4 };
@@ -275,8 +279,8 @@ TYPED_TEST(Matrix, empty) {
 }
 
 TYPED_TEST(Matrix, layout) {
-    using real_type = typename TypeParam::type;
-    constexpr plssvm::layout_type layout = TypeParam::value;
+    using real_type = typename TestFixture::fixture_real_type;
+    constexpr plssvm::layout_type layout = TestFixture::fixture_layout;
 
     // create random matrix
     const plssvm::matrix<real_type, layout> matr{ 4, 4 };
@@ -286,8 +290,8 @@ TYPED_TEST(Matrix, layout) {
 }
 
 TYPED_TEST(Matrix, function_call_operator) {
-    using real_type = typename TypeParam::type;
-    constexpr plssvm::layout_type layout = TypeParam::value;
+    using real_type = typename TestFixture::fixture_real_type;
+    constexpr plssvm::layout_type layout = TestFixture::fixture_layout;
 
     // create the 2D vector
     const std::vector<std::vector<real_type>> matr_2D{ { real_type{ 0.1 }, real_type{ 0.2 } }, { real_type{ 1.1 }, real_type{ 1.2 } } };
@@ -306,8 +310,8 @@ TYPED_TEST(Matrix, function_call_operator) {
     }
 }
 TYPED_TEST(Matrix, function_call_operator_const) {
-    using real_type = typename TypeParam::type;
-    constexpr plssvm::layout_type layout = TypeParam::value;
+    using real_type = typename TestFixture::fixture_real_type;
+    constexpr plssvm::layout_type layout = TestFixture::fixture_layout;
 
     // create the 2D vector
     const std::vector<std::vector<real_type>> matr_2D{ { real_type{ 0.1 }, real_type{ 0.2 } }, { real_type{ 1.1 }, real_type{ 1.2 } } };
@@ -326,8 +330,8 @@ TYPED_TEST(Matrix, function_call_operator_const) {
     }
 }
 TYPED_TEST(Matrix, at) {
-    using real_type = typename TypeParam::type;
-    constexpr plssvm::layout_type layout = TypeParam::value;
+    using real_type = typename TestFixture::fixture_real_type;
+    constexpr plssvm::layout_type layout = TestFixture::fixture_layout;
 
     // create the 2D vector
     const std::vector<std::vector<real_type>> matr_2D{ { real_type{ 0.1 }, real_type{ 0.2 } }, { real_type{ 1.1 }, real_type{ 1.2 } } };
@@ -346,8 +350,8 @@ TYPED_TEST(Matrix, at) {
     }
 }
 TYPED_TEST(Matrix, at_out_of_bounce) {
-    using real_type = typename TypeParam::type;
-    constexpr plssvm::layout_type layout = TypeParam::value;
+    using real_type = typename TestFixture::fixture_real_type;
+    constexpr plssvm::layout_type layout = TestFixture::fixture_layout;
 
     // create random matrix
     plssvm::matrix<real_type, layout> matr{ 2, 2 };
@@ -357,8 +361,8 @@ TYPED_TEST(Matrix, at_out_of_bounce) {
     EXPECT_THROW_WHAT(std::ignore = matr.at(0, 2), plssvm::matrix_exception, "The current column (2) must be smaller than the number of columns (2)!");
 }
 TYPED_TEST(Matrix, at_const) {
-    using real_type = typename TypeParam::type;
-    constexpr plssvm::layout_type layout = TypeParam::value;
+    using real_type = typename TestFixture::fixture_real_type;
+    constexpr plssvm::layout_type layout = TestFixture::fixture_layout;
 
     // create the 2D vector
     const std::vector<std::vector<real_type>> matr_2D{ { real_type{ 0.1 }, real_type{ 0.2 } }, { real_type{ 1.1 }, real_type{ 1.2 } } };
@@ -377,8 +381,8 @@ TYPED_TEST(Matrix, at_const) {
     }
 }
 TYPED_TEST(Matrix, at_const_out_of_bounce) {
-    using real_type = typename TypeParam::type;
-    constexpr plssvm::layout_type layout = TypeParam::value;
+    using real_type = typename TestFixture::fixture_real_type;
+    constexpr plssvm::layout_type layout = TestFixture::fixture_layout;
 
     // create random matrix
     const plssvm::matrix<real_type, layout> matr{ 2, 2 };
@@ -389,8 +393,8 @@ TYPED_TEST(Matrix, at_const_out_of_bounce) {
 }
 
 TYPED_TEST(Matrix, to_2D_vector) {
-    using real_type = typename TypeParam::type;
-    constexpr plssvm::layout_type layout = TypeParam::value;
+    using real_type = typename TestFixture::fixture_real_type;
+    constexpr plssvm::layout_type layout = TestFixture::fixture_layout;
 
     // create the 2D vector
     const std::vector<std::vector<real_type>> matr_2D{ { real_type{ 0.1 }, real_type{ 0.2 } }, { real_type{ 1.1 }, real_type{ 1.2 } } };
@@ -403,8 +407,8 @@ TYPED_TEST(Matrix, to_2D_vector) {
 }
 
 TYPED_TEST(Matrix, swap_member_function) {
-    using real_type = typename TypeParam::type;
-    constexpr plssvm::layout_type layout = TypeParam::value;
+    using real_type = typename TestFixture::fixture_real_type;
+    constexpr plssvm::layout_type layout = TestFixture::fixture_layout;
 
     // create data
     const std::vector<std::vector<real_type>> matr1_2D = { { real_type{ 1.0 }, real_type{ 2.0 }, real_type{ 3.0 } }, { real_type{ 4.0 }, real_type{ 5.0 }, real_type{ 6.0 } } };
@@ -428,8 +432,8 @@ TYPED_TEST(Matrix, swap_member_function) {
     EXPECT_EQ(matr2.to_2D_vector(), matr1_2D);
 }
 TYPED_TEST(Matrix, swap_free_function) {
-    using real_type = typename TypeParam::type;
-    constexpr plssvm::layout_type layout = TypeParam::value;
+    using real_type = typename TestFixture::fixture_real_type;
+    constexpr plssvm::layout_type layout = TestFixture::fixture_layout;
 
     // create data
     const std::vector<std::vector<real_type>> matr1_2D = { { real_type{ 1.0 }, real_type{ 2.0 }, real_type{ 3.0 } }, { real_type{ 4.0 }, real_type{ 5.0 }, real_type{ 6.0 } } };
@@ -455,8 +459,8 @@ TYPED_TEST(Matrix, swap_free_function) {
 }
 
 TYPED_TEST(Matrix, operator_equal) {
-    using real_type = typename TypeParam::type;
-    constexpr plssvm::layout_type layout = TypeParam::value;
+    using real_type = typename TestFixture::fixture_real_type;
+    constexpr plssvm::layout_type layout = TestFixture::fixture_layout;
 
     // create matrices
     const plssvm::matrix<real_type, layout> matr1{ 3, 2 };
@@ -474,8 +478,8 @@ TYPED_TEST(Matrix, operator_equal) {
     EXPECT_TRUE(matr4 == matr4);
 }
 TYPED_TEST(Matrix, operator_unequal) {
-    using real_type = typename TypeParam::type;
-    constexpr plssvm::layout_type layout = TypeParam::value;
+    using real_type = typename TestFixture::fixture_real_type;
+    constexpr plssvm::layout_type layout = TestFixture::fixture_layout;
 
     // create matrices
     const plssvm::matrix<real_type, layout> matr1{ 3, 2 };
@@ -494,8 +498,8 @@ TYPED_TEST(Matrix, operator_unequal) {
 }
 
 TYPED_TEST(Matrix, output_operator) {
-    using real_type = typename TypeParam::type;
-    constexpr plssvm::layout_type layout = TypeParam::value;
+    using real_type = typename TestFixture::fixture_real_type;
+    constexpr plssvm::layout_type layout = TestFixture::fixture_layout;
 
     // create data
     const std::vector<std::vector<real_type>> matr_2D = { { real_type{ 1.0 }, real_type{ 2.0 }, real_type{ 3.0 } }, { real_type{ 4.0 }, real_type{ 5.0 }, real_type{ 6.0 } } };
@@ -513,8 +517,8 @@ TYPED_TEST(Matrix, output_operator) {
 }
 
 TYPED_TEST(Matrix, matrix_shorthands) {
-    using real_type = typename TypeParam::type;
-    constexpr plssvm::layout_type layout = TypeParam::value;
+    using real_type = typename TestFixture::fixture_real_type;
+    constexpr plssvm::layout_type layout = TestFixture::fixture_layout;
 
     if constexpr (layout == plssvm::layout_type::aos) {
         ::testing::StaticAssertTypeEq<plssvm::matrix<real_type, layout>, plssvm::aos_matrix<real_type>>();
@@ -526,12 +530,12 @@ TYPED_TEST(Matrix, matrix_shorthands) {
 }
 
 template <typename T>
-class MatrixDeathTest : public ::testing::Test {};
-TYPED_TEST_SUITE(MatrixDeathTest, util::real_type_layout_type_gtest, naming::parameter_definition_to_name);
+class MatrixDeathTest : public Matrix<T> {};
+TYPED_TEST_SUITE(MatrixDeathTest, util::real_type_layout_type_gtest, naming::test_parameter_to_name);
 
 TYPED_TEST(MatrixDeathTest, function_call_operator_out_of_bounce) {
-    using real_type = typename TypeParam::type;
-    constexpr plssvm::layout_type layout = TypeParam::value;
+    using real_type = typename TestFixture::fixture_real_type;
+    constexpr plssvm::layout_type layout = TestFixture::fixture_layout;
 
     // create random matrix
     plssvm::matrix<real_type, layout> matr{ 2, 2 };
@@ -541,8 +545,8 @@ TYPED_TEST(MatrixDeathTest, function_call_operator_out_of_bounce) {
     EXPECT_DEATH(std::ignore = matr(0, 2), ::testing::HasSubstr("The current column (2) must be smaller than the number of columns (2)!"));
 }
 TYPED_TEST(MatrixDeathTest, function_call_operator_const_out_of_bounce) {
-    using real_type = typename TypeParam::type;
-    constexpr plssvm::layout_type layout = TypeParam::value;
+    using real_type = typename TestFixture::fixture_real_type;
+    constexpr plssvm::layout_type layout = TestFixture::fixture_layout;
 
     // create random matrix
     const plssvm::matrix<real_type, layout> matr{ 2, 2 };

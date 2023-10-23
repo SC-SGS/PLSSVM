@@ -16,8 +16,8 @@
 #include "plssvm/exceptions/exceptions.hpp"     // plssvm::data_set_exception
 
 #include "custom_test_macros.hpp"  // EXPECT_FLOATING_POINT_EQ, EXPECT_THROW_WHAT
-#include "naming.hpp"              // naming::label_type_to_name
-#include "types_to_test.hpp"       // util::label_type_gtest
+#include "naming.hpp"              // naming::test_parameter_to_name
+#include "types_to_test.hpp"       // util::{label_type_gtest, test_parameter_type_at_t}
 #include "utility.hpp"             // util::{temporary_file, redirect_output}
 
 #include "gtest/gtest.h"  // TYPED_TEST, TYPED_TEST_SUITE, EXPECT_EQ, EXPECT_TRUE, ASSERT_EQ, ASSERT_GE , ::testing::Test
@@ -27,11 +27,14 @@
 #include <vector>   // std::vector
 
 template <typename T>
-class DataSetScaling : public ::testing::Test, private util::redirect_output<> {};
-TYPED_TEST_SUITE(DataSetScaling, util::label_type_gtest, naming::label_type_to_name);
+class DataSetScaling : public ::testing::Test, private util::redirect_output<> {
+  protected:
+    using fixture_label_type = util::test_parameter_type_at_t<0, T>;
+};
+TYPED_TEST_SUITE(DataSetScaling, util::label_type_gtest, naming::test_parameter_to_name);
 
 TYPED_TEST(DataSetScaling, default_construct_factor) {
-    using label_type = TypeParam;
+    using label_type = typename TestFixture::fixture_label_type;
     using scaling_type = typename plssvm::data_set<label_type>::scaling;
     using factor_type = typename scaling_type::factors;
 
@@ -44,7 +47,7 @@ TYPED_TEST(DataSetScaling, default_construct_factor) {
     EXPECT_FLOATING_POINT_EQ(factor.upper, plssvm::real_type{});
 }
 TYPED_TEST(DataSetScaling, construct_factor) {
-    using label_type = TypeParam;
+    using label_type = typename TestFixture::fixture_label_type;
     using scaling_type = typename plssvm::data_set<label_type>::scaling;
     using factor_type = typename scaling_type::factors;
 
@@ -58,7 +61,7 @@ TYPED_TEST(DataSetScaling, construct_factor) {
 }
 
 TYPED_TEST(DataSetScaling, construct_interval) {
-    using label_type = TypeParam;
+    using label_type = typename TestFixture::fixture_label_type;
     using scaling_type = typename plssvm::data_set<label_type>::scaling;
 
     // create scaling class
@@ -70,7 +73,7 @@ TYPED_TEST(DataSetScaling, construct_interval) {
     EXPECT_TRUE(scale.scaling_factors.empty());
 }
 TYPED_TEST(DataSetScaling, construct_invalid_interval) {
-    using label_type = TypeParam;
+    using label_type = typename TestFixture::fixture_label_type;
     using scaling_type = typename plssvm::data_set<label_type>::scaling;
 
     // create scaling class with an invalid interval
@@ -79,7 +82,7 @@ TYPED_TEST(DataSetScaling, construct_invalid_interval) {
                       "Inconsistent scaling interval specification: lower (1) must be less than upper (-1)!");
 }
 TYPED_TEST(DataSetScaling, construct_from_file) {
-    using label_type = TypeParam;
+    using label_type = typename TestFixture::fixture_label_type;
     using scaling_type = typename plssvm::data_set<label_type>::scaling;
     using factors_type = typename scaling_type::factors;
 
@@ -104,7 +107,7 @@ TYPED_TEST(DataSetScaling, construct_from_file) {
 }
 
 TYPED_TEST(DataSetScaling, save) {
-    using label_type = TypeParam;
+    using label_type = typename TestFixture::fixture_label_type;
     using scaling_type = typename plssvm::data_set<label_type>::scaling;
 
     // create scaling class
@@ -130,7 +133,7 @@ TYPED_TEST(DataSetScaling, save) {
     }
 }
 TYPED_TEST(DataSetScaling, save_empty_scaling_factors) {
-    using label_type = TypeParam;
+    using label_type = typename TestFixture::fixture_label_type;
     using scaling_type = typename plssvm::data_set<label_type>::scaling;
 
     // create scaling class

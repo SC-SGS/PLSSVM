@@ -15,8 +15,8 @@
 
 #include "backends/compare.hpp"    // compare::detail::{linear_kernel, poly_kernel, rbf_kernel}
 #include "custom_test_macros.hpp"  // EXPECT_CONVERSION_TO_STRING, EXPECT_CONVERSION_FROM_STRING, EXPECT_THROW_WHAT, EXPECT_FLOATING_POINT_NEAR, EXPECT_FLOATING_POINT_NEAR_EPS
-#include "naming.hpp"              // naming::pretty_print_kernel_function
-#include "types_to_test.hpp"       // util::real_type_gtest
+#include "naming.hpp"              // naming::test_parameter_to_name
+#include "types_to_test.hpp"       // util::{real_type_gtest, test_parameter_type_at_t, test_parameter_value_at_v}
 #include "utility.hpp"             // util::{generate_random_vector, generate_random_matrix}
 
 #include "fmt/core.h"     // fmt::format
@@ -80,7 +80,7 @@ TEST(KernelType, kernel_to_math_string_unkown) {
 template <typename T>
 class KernelFunctionVector : public ::testing::Test {
   protected:
-    using fixture_real_type = T;
+    using fixture_real_type = util::test_parameter_type_at_t<0, T>;
 
     /**
      * @brief Return the different vector sizes to test.
@@ -104,7 +104,7 @@ class KernelFunctionVector : public ::testing::Test {
         std::array{ 2.0, 0.025, -1.0, 0.5 },
     };
 };
-TYPED_TEST_SUITE(KernelFunctionVector, util::real_type_gtest, naming::real_type_to_name);
+TYPED_TEST_SUITE(KernelFunctionVector, util::real_type_gtest, naming::test_parameter_to_name);
 
 TYPED_TEST(KernelFunctionVector, linear_kernel_function_variadic) {
     using real_type = typename TestFixture::fixture_real_type;
@@ -226,7 +226,7 @@ TYPED_TEST(KernelFunctionVector, unknown_kernel_function_parameter) {
 
 template <typename T>
 class KernelFunctionVectorDeathTest : public KernelFunctionVector<T> {};
-TYPED_TEST_SUITE(KernelFunctionVectorDeathTest, util::real_type_gtest, naming::real_type_to_name);
+TYPED_TEST_SUITE(KernelFunctionVectorDeathTest, util::real_type_gtest, naming::test_parameter_to_name);
 
 TYPED_TEST(KernelFunctionVectorDeathTest, size_mismatch_kernel_function_variadic) {
     using real_type = typename TestFixture::fixture_real_type;
@@ -261,8 +261,8 @@ TYPED_TEST(KernelFunctionVectorDeathTest, size_mismatch_kernel_function_paramete
 template <typename T>
 class KernelFunctionMatrix : public ::testing::Test {
   protected:
-    using fixture_real_type = typename T::type;
-    static constexpr plssvm::layout_type fixture_layout = T::value;
+    using fixture_real_type = util::test_parameter_type_at_t<0, T>;
+    static constexpr plssvm::layout_type fixture_layout = util::test_parameter_value_at_v<0, T>;
 
     /**
      * @brief Return the different matrix sizes to test.
@@ -286,7 +286,7 @@ class KernelFunctionMatrix : public ::testing::Test {
         std::array{ 2.0, 0.025, -1.0, 0.5 },
     };
 };
-TYPED_TEST_SUITE(KernelFunctionMatrix, util::real_type_layout_type_gtest, naming::parameter_definition_to_name);
+TYPED_TEST_SUITE(KernelFunctionMatrix, util::real_type_layout_type_gtest, naming::test_parameter_to_name);
 
 TYPED_TEST(KernelFunctionMatrix, linear_kernel_function_variadic) {
     using real_type = typename TestFixture::fixture_real_type;
@@ -514,7 +514,7 @@ TYPED_TEST(KernelFunctionMatrix, unknown_kernel_function_parameter) {
 
 template <typename T>
 class KernelFunctionMatrixDeathTest : public KernelFunctionMatrix<T> {};
-TYPED_TEST_SUITE(KernelFunctionMatrixDeathTest, util::real_type_layout_type_gtest, naming::parameter_definition_to_name);
+TYPED_TEST_SUITE(KernelFunctionMatrixDeathTest, util::real_type_layout_type_gtest, naming::test_parameter_to_name);
 
 TYPED_TEST(KernelFunctionMatrixDeathTest, size_mismatch_kernel_function_variadic) {
     using real_type = typename TestFixture::fixture_real_type;

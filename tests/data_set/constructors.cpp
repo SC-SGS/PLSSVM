@@ -16,8 +16,8 @@
 #include "plssvm/matrix.hpp"                 // plssvm::matrix, plssvm::layout_type
 
 #include "custom_test_macros.hpp"  // EXPECT_FLOATING_POINT_MATRIX_EQ, EXPECT_FLOATING_POINT_MATRIX_NEAR, EXPECT_FLOATING_POINT_NEAR, EXPECT_THROW_WHAT
-#include "naming.hpp"              // naming::{label_type_to_name, parameter_definition_to_name}
-#include "types_to_test.hpp"       // util::{label_type_gtest, label_type_layout_type_gtest}
+#include "naming.hpp"              // naming::test_parameter_to_name
+#include "types_to_test.hpp"       // util::{label_type_gtest, label_type_layout_type_gtest, test_parameter_type_at_t, test_parameter_value_at_v}
 #include "utility.hpp"             // util::{redirect_output, temporary_file, instantiate_template_file, get_distinct_label, get_correct_data_file_labels, generate_specific_matrix, scale}
 
 #include "gmock/gmock-matchers.h"  // EXPECT_THAT, ::testing::{ContainsRegex, StartsWith}
@@ -31,6 +31,8 @@
 template <typename T>
 class DataSetConstructors : public ::testing::Test, private util::redirect_output<>, protected util::temporary_file {
   protected:
+    using fixture_label_type = util::test_parameter_type_at_t<0, T>;
+
     /**
      * @brief Return the correct data points according to the ARFF and LIBSVM template files.
      * @return the correct data points (`[[nodiscard]]`)
@@ -46,10 +48,10 @@ class DataSetConstructors : public ::testing::Test, private util::redirect_outpu
                                                                                { plssvm::real_type{ 1.88494043717792 }, plssvm::real_type{ 1.00518564317278263 }, plssvm::real_type{ 0.298499933047586044 }, plssvm::real_type{ 1.6464627048813514 } },
                                                                                { plssvm::real_type{ -1.1256816275635 }, plssvm::real_type{ 2.12541534341344414 }, plssvm::real_type{ -0.165126576545454511 }, plssvm::real_type{ 2.5164553141200987 } } } };
 };
-TYPED_TEST_SUITE(DataSetConstructors, util::label_type_gtest, naming::label_type_to_name);
+TYPED_TEST_SUITE(DataSetConstructors, util::label_type_gtest, naming::test_parameter_to_name);
 
 TYPED_TEST(DataSetConstructors, typedefs) {
-    using label_type = TypeParam;
+    using label_type = typename TestFixture::fixture_label_type;
 
     // create a data_set using an existing LIBSVM data set file
     util::instantiate_template_file<label_type>(PLSSVM_TEST_PATH "/data/libsvm/6x4_TEMPLATE.libsvm", this->filename);
@@ -61,7 +63,7 @@ TYPED_TEST(DataSetConstructors, typedefs) {
 }
 
 TYPED_TEST(DataSetConstructors, construct_arff_from_file_with_label) {
-    using label_type = TypeParam;
+    using label_type = typename TestFixture::fixture_label_type;
 
     // must append .arff to filename so that the correct function is called in the data_set constructor
     this->filename.append(".arff");
@@ -89,7 +91,7 @@ TYPED_TEST(DataSetConstructors, construct_arff_from_file_with_label) {
     EXPECT_FALSE(data.scaling_factors().has_value());
 }
 TYPED_TEST(DataSetConstructors, construct_arff_from_file_without_label) {
-    using label_type = TypeParam;
+    using label_type = typename TestFixture::fixture_label_type;
 
     // create data set
     const plssvm::data_set<label_type> data{ PLSSVM_TEST_PATH "/data/arff/3x2_without_label.arff" };
@@ -113,7 +115,7 @@ TYPED_TEST(DataSetConstructors, construct_arff_from_file_without_label) {
     EXPECT_FALSE(data.scaling_factors().has_value());
 }
 TYPED_TEST(DataSetConstructors, construct_libsvm_from_file_with_label) {
-    using label_type = TypeParam;
+    using label_type = typename TestFixture::fixture_label_type;
 
     // create data set
     util::instantiate_template_file<label_type>(PLSSVM_TEST_PATH "/data/libsvm/6x4_TEMPLATE.libsvm", this->filename);
@@ -138,7 +140,7 @@ TYPED_TEST(DataSetConstructors, construct_libsvm_from_file_with_label) {
     EXPECT_FALSE(data.scaling_factors().has_value());
 }
 TYPED_TEST(DataSetConstructors, construct_libsvm_from_file_without_label) {
-    using label_type = TypeParam;
+    using label_type = typename TestFixture::fixture_label_type;
 
     // create data set
     const plssvm::data_set<label_type> data{ PLSSVM_TEST_PATH "/data/libsvm/3x2_without_label.libsvm" };
@@ -163,7 +165,7 @@ TYPED_TEST(DataSetConstructors, construct_libsvm_from_file_without_label) {
 }
 
 TYPED_TEST(DataSetConstructors, construct_explicit_arff_from_file) {
-    using label_type = TypeParam;
+    using label_type = typename TestFixture::fixture_label_type;
 
     // create data set
     util::instantiate_template_file<label_type>(PLSSVM_TEST_PATH "/data/arff/6x4_TEMPLATE.arff", this->filename);
@@ -188,7 +190,7 @@ TYPED_TEST(DataSetConstructors, construct_explicit_arff_from_file) {
     EXPECT_FALSE(data.scaling_factors().has_value());
 }
 TYPED_TEST(DataSetConstructors, construct_explicit_libsvm_from_file) {
-    using label_type = TypeParam;
+    using label_type = typename TestFixture::fixture_label_type;
 
     // create data set
     util::instantiate_template_file<label_type>(PLSSVM_TEST_PATH "/data/libsvm/6x4_TEMPLATE.libsvm", this->filename);
@@ -214,7 +216,7 @@ TYPED_TEST(DataSetConstructors, construct_explicit_libsvm_from_file) {
 }
 
 TYPED_TEST(DataSetConstructors, construct_scaled_arff_from_file) {
-    using label_type = TypeParam;
+    using label_type = typename TestFixture::fixture_label_type;
 
     // must append .arff to filename so that the correct function is called in the data_set constructor
     this->filename.append(".arff");
@@ -250,7 +252,7 @@ TYPED_TEST(DataSetConstructors, construct_scaled_arff_from_file) {
     }
 }
 TYPED_TEST(DataSetConstructors, construct_scaled_libsvm_from_file) {
-    using label_type = TypeParam;
+    using label_type = typename TestFixture::fixture_label_type;
 
     // create data set
     util::instantiate_template_file<label_type>(PLSSVM_TEST_PATH "/data/libsvm/6x4_TEMPLATE.libsvm", this->filename);
@@ -284,7 +286,7 @@ TYPED_TEST(DataSetConstructors, construct_scaled_libsvm_from_file) {
 }
 
 TYPED_TEST(DataSetConstructors, construct_scaled_explicit_arff_from_file) {
-    using label_type = TypeParam;
+    using label_type = typename TestFixture::fixture_label_type;
 
     // create data set
     util::instantiate_template_file<label_type>(PLSSVM_TEST_PATH "/data/arff/6x4_TEMPLATE.arff", this->filename);
@@ -317,7 +319,7 @@ TYPED_TEST(DataSetConstructors, construct_scaled_explicit_arff_from_file) {
     }
 }
 TYPED_TEST(DataSetConstructors, construct_scaled_explicit_libsvm_from_file) {
-    using label_type = TypeParam;
+    using label_type = typename TestFixture::fixture_label_type;
 
     // create data set
     util::instantiate_template_file<label_type>(PLSSVM_TEST_PATH "/data/libsvm/6x4_TEMPLATE.libsvm", this->filename);
@@ -351,7 +353,7 @@ TYPED_TEST(DataSetConstructors, construct_scaled_explicit_libsvm_from_file) {
 }
 
 TYPED_TEST(DataSetConstructors, construct_scaled_too_many_factors) {
-    using label_type = TypeParam;
+    using label_type = typename TestFixture::fixture_label_type;
     using scaling_type = typename plssvm::data_set<label_type>::scaling;
     using factors_type = typename scaling_type::factors;
 
@@ -373,7 +375,7 @@ TYPED_TEST(DataSetConstructors, construct_scaled_too_many_factors) {
                       "Need at most as much scaling factors as features in the data set are present (4), but 5 were given!");
 }
 TYPED_TEST(DataSetConstructors, construct_scaled_invalid_feature_index) {
-    using label_type = TypeParam;
+    using label_type = typename TestFixture::fixture_label_type;
     using scaling_type = typename plssvm::data_set<label_type>::scaling;
     using factors_type = typename scaling_type::factors;
 
@@ -392,7 +394,7 @@ TYPED_TEST(DataSetConstructors, construct_scaled_invalid_feature_index) {
                       "The maximum scaling feature index most not be greater than 3, but is 4!");
 }
 TYPED_TEST(DataSetConstructors, construct_scaled_duplicate_feature_index) {
-    using label_type = TypeParam;
+    using label_type = typename TestFixture::fixture_label_type;
     using scaling_type = typename plssvm::data_set<label_type>::scaling;
     using factors_type = typename scaling_type::factors;
 
@@ -414,7 +416,7 @@ TYPED_TEST(DataSetConstructors, construct_scaled_duplicate_feature_index) {
 }
 
 TYPED_TEST(DataSetConstructors, construct_from_vector_without_label) {
-    using label_type = TypeParam;
+    using label_type = typename TestFixture::fixture_label_type;
 
     // create data points
     const auto correct_data_points = util::generate_specific_matrix<plssvm::aos_matrix<plssvm::real_type>>(4, 4);
@@ -436,7 +438,7 @@ TYPED_TEST(DataSetConstructors, construct_from_vector_without_label) {
     EXPECT_FALSE(data.scaling_factors().has_value());
 }
 TYPED_TEST(DataSetConstructors, construct_from_empty_vector) {
-    using label_type = TypeParam;
+    using label_type = typename TestFixture::fixture_label_type;
 
     // creating a data set from an empty vector is illegal
     EXPECT_THROW_WHAT((plssvm::data_set<label_type>{ std::vector<std::vector<plssvm::real_type>>{} }),
@@ -444,7 +446,7 @@ TYPED_TEST(DataSetConstructors, construct_from_empty_vector) {
                       "The data to create the matrix from may not be empty!");
 }
 TYPED_TEST(DataSetConstructors, construct_from_vector_with_differing_num_features) {
-    using label_type = TypeParam;
+    using label_type = typename TestFixture::fixture_label_type;
 
     // create data points
     const std::vector<std::vector<plssvm::real_type>> correct_data_points = {
@@ -458,7 +460,7 @@ TYPED_TEST(DataSetConstructors, construct_from_vector_with_differing_num_feature
                       "Each row in the matrix must contain the same amount of columns!");
 }
 TYPED_TEST(DataSetConstructors, construct_from_vector_with_no_features) {
-    using label_type = TypeParam;
+    using label_type = typename TestFixture::fixture_label_type;
 
     // create data points
     const std::vector<std::vector<plssvm::real_type>> correct_data_points = { {}, {} };
@@ -470,7 +472,7 @@ TYPED_TEST(DataSetConstructors, construct_from_vector_with_no_features) {
 }
 
 TYPED_TEST(DataSetConstructors, construct_from_vector_with_label) {
-    using label_type = TypeParam;
+    using label_type = typename TestFixture::fixture_label_type;
 
     // create data points and labels
     const std::vector<label_type> different_labels = util::get_distinct_label<label_type>();
@@ -496,7 +498,7 @@ TYPED_TEST(DataSetConstructors, construct_from_vector_with_label) {
     EXPECT_FALSE(data.scaling_factors().has_value());
 }
 TYPED_TEST(DataSetConstructors, construct_from_vector_mismatching_num_data_points_and_labels) {
-    using label_type = TypeParam;
+    using label_type = typename TestFixture::fixture_label_type;
 
     // create data points and labels
     const auto correct_data_points = util::generate_specific_matrix<plssvm::aos_matrix<plssvm::real_type>>(4, 4);
@@ -510,7 +512,7 @@ TYPED_TEST(DataSetConstructors, construct_from_vector_mismatching_num_data_point
 }
 
 TYPED_TEST(DataSetConstructors, construct_scaled_from_vector_without_label) {
-    using label_type = TypeParam;
+    using label_type = typename TestFixture::fixture_label_type;
     using scaling_type = typename plssvm::data_set<label_type>::scaling;
 
     // create data points
@@ -542,7 +544,7 @@ TYPED_TEST(DataSetConstructors, construct_scaled_from_vector_without_label) {
 }
 
 TYPED_TEST(DataSetConstructors, construct_scaled_from_vector_with_label) {
-    using label_type = TypeParam;
+    using label_type = typename TestFixture::fixture_label_type;
 
     // create data points and labels
     const std::vector<label_type> different_labels = util::get_distinct_label<label_type>();
@@ -577,12 +579,16 @@ TYPED_TEST(DataSetConstructors, construct_scaled_from_vector_with_label) {
 }
 
 template <typename T>
-class DataSetMatrixConstructors : public DataSetConstructors<typename T::type> {};
-TYPED_TEST_SUITE(DataSetMatrixConstructors, util::label_type_layout_type_gtest, naming::parameter_definition_to_name);
+class DataSetMatrixConstructors : public DataSetConstructors<T> {
+  protected:
+    using typename DataSetConstructors<T>::fixture_label_type;
+    static constexpr plssvm::layout_type fixture_layout = util::test_parameter_value_at_v<0, T>;
+};
+TYPED_TEST_SUITE(DataSetMatrixConstructors, util::label_type_layout_type_gtest, naming::test_parameter_to_name);
 
 TYPED_TEST(DataSetMatrixConstructors, construct_from_matrix_without_label) {
-    using label_type = typename TypeParam::type;
-    constexpr plssvm::layout_type layout = TypeParam::value;
+    using label_type = typename TestFixture::fixture_label_type;
+    constexpr plssvm::layout_type layout = TestFixture::fixture_layout;
 
     // create data points
     const auto correct_data_points = util::generate_specific_matrix<plssvm::matrix<plssvm::real_type, layout>>(4, 4);
@@ -604,8 +610,8 @@ TYPED_TEST(DataSetMatrixConstructors, construct_from_matrix_without_label) {
     EXPECT_FALSE(data.scaling_factors().has_value());
 }
 TYPED_TEST(DataSetMatrixConstructors, construct_from_empty_matrix) {
-    using label_type = typename TypeParam::type;
-    constexpr plssvm::layout_type layout = TypeParam::value;
+    using label_type = typename TestFixture::fixture_label_type;
+    constexpr plssvm::layout_type layout = TestFixture::fixture_layout;
 
     // creating a data set from an empty vector is illegal
     if constexpr (layout == plssvm::layout_type::aos) {
@@ -622,8 +628,8 @@ TYPED_TEST(DataSetMatrixConstructors, construct_from_empty_matrix) {
 }
 
 TYPED_TEST(DataSetMatrixConstructors, construct_from_matrix_with_label) {
-    using label_type = typename TypeParam::type;
-    constexpr plssvm::layout_type layout = TypeParam::value;
+    using label_type = typename TestFixture::fixture_label_type;
+    constexpr plssvm::layout_type layout = TestFixture::fixture_layout;
 
     // create data points and labels
     const std::vector<label_type> different_labels = util::get_distinct_label<label_type>();
@@ -650,8 +656,8 @@ TYPED_TEST(DataSetMatrixConstructors, construct_from_matrix_with_label) {
 }
 
 TYPED_TEST(DataSetMatrixConstructors, construct_scaled_from_matrix_without_label) {
-    using label_type = typename TypeParam::type;
-    constexpr plssvm::layout_type layout = TypeParam::value;
+    using label_type = typename TestFixture::fixture_label_type;
+    constexpr plssvm::layout_type layout = TestFixture::fixture_layout;
     using scaling_type = typename plssvm::data_set<label_type>::scaling;
 
     // create data points
@@ -683,8 +689,8 @@ TYPED_TEST(DataSetMatrixConstructors, construct_scaled_from_matrix_without_label
 }
 
 TYPED_TEST(DataSetMatrixConstructors, construct_scaled_from_matrix_with_label) {
-    using label_type = typename TypeParam::type;
-    constexpr plssvm::layout_type layout = TypeParam::value;
+    using label_type = typename TestFixture::fixture_label_type;
+    constexpr plssvm::layout_type layout = TestFixture::fixture_layout;
 
     // create data points and labels
     const std::vector<label_type> different_labels = util::get_distinct_label<label_type>();

@@ -52,6 +52,8 @@ aos_matrix<real_type> csvm::conjugate_gradients(const detail::simple_any &A, con
     using namespace plssvm::operators;
 
     PLSSVM_ASSERT(!B.empty(), "The right-hand sides may not be empty!");
+    PLSSVM_ASSERT(eps > real_type{ 0.0 }, "The epsilon value must be greater than 0.0!");
+    PLSSVM_ASSERT(max_cg_iter > 0, "The maximum number of iterations must be greater than 0!");
 
     const std::size_t num_rows = B.num_cols();
     const std::size_t num_rhs = B.num_rows();
@@ -169,6 +171,8 @@ aos_matrix<real_type> csvm::conjugate_gradients(const detail::simple_any &A, con
 }
 
 std::pair<std::vector<real_type>, real_type> csvm::perform_dimensional_reduction(const parameter &params, const aos_matrix<real_type> &A) const {
+    PLSSVM_ASSERT(!A.empty(), "The matrix must not be empty!");
+
     const std::chrono::steady_clock::time_point dimension_reduction_start_time = std::chrono::steady_clock::now();
 
     const std::size_t num_rows_reduced = A.num_rows() - 1;
@@ -205,6 +209,9 @@ std::pair<std::vector<real_type>, real_type> csvm::perform_dimensional_reduction
 }
 
 std::chrono::duration<long, std::milli> csvm::run_blas_level_3(const solver_type cg_solver, const real_type alpha, const detail::simple_any &A, const aos_matrix<real_type> &B, const real_type beta, aos_matrix<real_type> &C) const {
+    PLSSVM_ASSERT(!B.empty(), "The B matrix must not be empty!");
+    PLSSVM_ASSERT(!C.empty(), "The C matrix must not be empty!");
+
     const std::chrono::steady_clock::time_point start_time = std::chrono::steady_clock::now();
 
     this->blas_level_3(cg_solver, alpha, A, B, beta, C);

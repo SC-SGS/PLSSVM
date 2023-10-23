@@ -11,8 +11,8 @@
 #include "plssvm/detail/operators.hpp"
 
 #include "../custom_test_macros.hpp"  // EXPECT_FLOATING_POINT_EQ, EXPECT_FLOATING_POINT_NEAR, EXPECT_FLOATING_POINT_VECTOR_NEAR
-#include "../naming.hpp"              // naming::real_type_to_name
-#include "../types_to_test.hpp"       // util::real_type_gtest
+#include "../naming.hpp"              // naming::test_parameter_to_name
+#include "../types_to_test.hpp"       // util::{real_type_gtest, test_parameter_type_at_t, test_parameter_value_at_v}
 
 #include "gtest/gtest.h"  // TYPED_TEST_SUITE, TYPED_TEST, EXPECT_EQ, EXPECT_DEATH, ::testing::{Types, Test}
 
@@ -27,16 +27,20 @@ using namespace plssvm::operators;
 //*************************************************************************************************************************************//
 template <typename T>
 class ScalarOperations : public ::testing::Test {};
-TYPED_TEST_SUITE(ScalarOperations, util::real_type_gtest, naming::real_type_to_name);
+TYPED_TEST_SUITE(ScalarOperations, util::real_type_gtest, naming::test_parameter_to_name);
 
 TYPED_TEST(ScalarOperations, operator_sign_positive) {
-    EXPECT_FLOATING_POINT_EQ(sign(TypeParam{ 1.6 }), TypeParam{ 1 });
-    EXPECT_FLOATING_POINT_EQ(sign(TypeParam{ 3 }), TypeParam{ 1 });
+    using real_type = util::test_parameter_type_at_t<0, TypeParam>;
+
+    EXPECT_FLOATING_POINT_EQ(sign(real_type{ 1.6 }), real_type{ 1 });
+    EXPECT_FLOATING_POINT_EQ(sign(real_type{ 3 }), real_type{ 1 });
 }
 TYPED_TEST(ScalarOperations, operator_sign_negative) {
-    EXPECT_FLOATING_POINT_EQ(sign(TypeParam{ -2.4 }), TypeParam{ -1 });
-    EXPECT_FLOATING_POINT_EQ(sign(TypeParam{ -4 }), TypeParam{ -1 });
-    EXPECT_FLOATING_POINT_EQ(sign(TypeParam{ 0 }), TypeParam{ -1 });
+    using real_type = util::test_parameter_type_at_t<0, TypeParam>;
+
+    EXPECT_FLOATING_POINT_EQ(sign(real_type{ -2.4 }), real_type{ -1 });
+    EXPECT_FLOATING_POINT_EQ(sign(real_type{ -4 }), real_type{ -1 });
+    EXPECT_FLOATING_POINT_EQ(sign(real_type{ 0 }), real_type{ -1 });
 }
 
 //*************************************************************************************************************************************//
@@ -45,7 +49,7 @@ TYPED_TEST(ScalarOperations, operator_sign_negative) {
 template <typename T>
 class VectorOperations : public ::testing::Test {
   protected:
-    using fixture_real_type = T;
+    using fixture_real_type = util::test_parameter_type_at_t<0, T>;
 
     void SetUp() override {
         a = { 1, 2, 3, 4, 5 };
@@ -84,12 +88,12 @@ class VectorOperations : public ::testing::Test {
     /// Sample scalar to test the different operations.
     fixture_real_type scalar{};
 };
-TYPED_TEST_SUITE(VectorOperations, util::real_type_gtest, naming::real_type_to_name);
+TYPED_TEST_SUITE(VectorOperations, util::real_type_gtest, naming::test_parameter_to_name);
 
 template <typename T>
 class VectorOperationsDeathTest : public ::testing::Test {
   protected:
-    using fixture_real_type = T;
+    using fixture_real_type = util::test_parameter_type_at_t<0, T>;
 
     void SetUp() override {
         a = { 1, 2, 3, 4 };
@@ -113,7 +117,7 @@ class VectorOperationsDeathTest : public ::testing::Test {
     /// Sample vector to test the different operations.
     std::vector<fixture_real_type> b{};
 };
-TYPED_TEST_SUITE(VectorOperationsDeathTest, util::real_type_gtest, naming::real_type_to_name);
+TYPED_TEST_SUITE(VectorOperationsDeathTest, util::real_type_gtest, naming::test_parameter_to_name);
 
 TYPED_TEST(VectorOperations, operator_add_binary) {
     using real_type = typename TestFixture::fixture_real_type;
@@ -410,8 +414,8 @@ TYPED_TEST(VectorOperationsDeathTest, operator_squared_euclidean_dist) {
 template <typename T>
 class MatrixOperations : public ::testing::Test {
   protected:
-    using fixture_real_type = typename T::type;
-    static constexpr plssvm::layout_type fixture_layout = T::value;
+    using fixture_real_type = util::test_parameter_type_at_t<0, T>;
+    static constexpr plssvm::layout_type fixture_layout = util::test_parameter_value_at_v<0, T>;
 
     void SetUp() override {
         A = plssvm::matrix<fixture_real_type, fixture_layout>{ { { 1, 2, 3 }, { 4, 5, 6 } } };
@@ -458,13 +462,13 @@ class MatrixOperations : public ::testing::Test {
     /// Sample scalar to test the different operations.
     fixture_real_type scalar{};
 };
-TYPED_TEST_SUITE(MatrixOperations, util::real_type_layout_type_gtest, naming::parameter_definition_to_name);
+TYPED_TEST_SUITE(MatrixOperations, util::real_type_layout_type_gtest, naming::test_parameter_to_name);
 
 template <typename T>
 class MatrixOperationsDeathTest : public ::testing::Test {
   protected:
-    using fixture_real_type = typename T::type;
-    static constexpr plssvm::layout_type fixture_layout = T::value;
+    using fixture_real_type = util::test_parameter_type_at_t<0, T>;
+    static constexpr plssvm::layout_type fixture_layout = util::test_parameter_value_at_v<0, T>;
 
     void SetUp() override {
         A = plssvm::matrix<fixture_real_type, fixture_layout>{ { { 1, 2, 3 }, { 4, 5, 6 } } };
@@ -495,7 +499,7 @@ class MatrixOperationsDeathTest : public ::testing::Test {
     /// Empty matrix to test the different operations.
     plssvm::matrix<fixture_real_type, fixture_layout> empty{};
 };
-TYPED_TEST_SUITE(MatrixOperationsDeathTest, util::real_type_layout_type_gtest, naming::parameter_definition_to_name);
+TYPED_TEST_SUITE(MatrixOperationsDeathTest, util::real_type_layout_type_gtest, naming::test_parameter_to_name);
 
 TYPED_TEST(MatrixOperations, operator_scale_binary) {
     using real_type = typename TestFixture::fixture_real_type;

@@ -18,8 +18,8 @@
 #include "plssvm/parameter.hpp"              // plssvm::parameter
 
 #include "custom_test_macros.hpp"  // EXPECT_FLOATING_POINT_MATRIX_EQ, EXPECT_FLOATING_POINT_VECTOR_EQ
-#include "naming.hpp"              // naming::parameter_definition_to_name
-#include "types_to_test.hpp"       // util::label_type_classification_type_gtest
+#include "naming.hpp"              // naming::test_parameter_to_name
+#include "types_to_test.hpp"       // util::{label_type_classification_type_gtest, test_parameter_type_at_t, test_parameter_value_at_v}
 #include "utility.hpp"             // util::{redirect_output, temporary_file, instantiate_template_file, get_num_classes, get_distinct_label, get_correct_model_file_labels}
 
 #include "gtest/gtest-matchers.h"  // ::testing::HasSubstr
@@ -36,8 +36,8 @@
 template <typename T>
 class Model : public ::testing::Test, private util::redirect_output<>, protected util::temporary_file {
   protected:
-    using fixture_label_type = typename T::type;
-    static constexpr plssvm::classification_type fixture_classification = T::value;
+    using fixture_label_type = util::test_parameter_type_at_t<0, T>;
+    static constexpr plssvm::classification_type fixture_classification = util::test_parameter_value_at_v<0, T>;
 
     void SetUp() override {
         // create file used in this test fixture by instantiating the template file
@@ -45,10 +45,10 @@ class Model : public ::testing::Test, private util::redirect_output<>, protected
         util::instantiate_template_file<fixture_label_type>(template_filename, this->filename);
     }
 };
-TYPED_TEST_SUITE(Model, util::label_type_classification_type_gtest, naming::parameter_definition_to_name);
+TYPED_TEST_SUITE(Model, util::label_type_classification_type_gtest, naming::test_parameter_to_name);
 
 TYPED_TEST(Model, typedefs) {
-    using label_type = typename TypeParam::type;
+    using label_type = typename TestFixture::fixture_label_type;
 
     // create model
     const plssvm::model<label_type> model{ this->filename };
@@ -59,8 +59,8 @@ TYPED_TEST(Model, typedefs) {
 }
 
 TYPED_TEST(Model, construct) {
-    using label_type = typename TypeParam::type;
-    constexpr plssvm::classification_type classification = TypeParam::value;
+    using label_type = typename TestFixture::fixture_label_type;
+    constexpr plssvm::classification_type classification = TestFixture::fixture_classification;
 
     // create model
     const plssvm::model<label_type> model{ this->filename };
@@ -89,7 +89,7 @@ TYPED_TEST(Model, construct) {
 }
 
 TYPED_TEST(Model, num_support_vectors) {
-    using label_type = typename TypeParam::type;
+    using label_type = typename TestFixture::fixture_label_type;
 
     // create model
     const plssvm::model<label_type> model{ this->filename };
@@ -98,7 +98,7 @@ TYPED_TEST(Model, num_support_vectors) {
     EXPECT_EQ(model.num_support_vectors(), 6);
 }
 TYPED_TEST(Model, num_features) {
-    using label_type = typename TypeParam::type;
+    using label_type = typename TestFixture::fixture_label_type;
 
     // create model
     const plssvm::model<label_type> model{ this->filename };
@@ -107,7 +107,7 @@ TYPED_TEST(Model, num_features) {
     EXPECT_EQ(model.num_features(), 4);
 }
 TYPED_TEST(Model, get_params) {
-    using label_type = typename TypeParam::type;
+    using label_type = typename TestFixture::fixture_label_type;
 
     // create model
     const plssvm::model<label_type> model{ this->filename };
@@ -116,7 +116,7 @@ TYPED_TEST(Model, get_params) {
     EXPECT_EQ(model.get_params(), plssvm::parameter{ plssvm::kernel_type = plssvm::kernel_function_type::linear });
 }
 TYPED_TEST(Model, support_vectors) {
-    using label_type = typename TypeParam::type;
+    using label_type = typename TestFixture::fixture_label_type;
 
     // create model
     const plssvm::model<label_type> model{ this->filename };
@@ -131,7 +131,7 @@ TYPED_TEST(Model, support_vectors) {
     EXPECT_FLOATING_POINT_MATRIX_EQ(model.support_vectors(), support_vectors);
 }
 TYPED_TEST(Model, labels) {
-    using label_type = typename TypeParam::type;
+    using label_type = typename TestFixture::fixture_label_type;
 
     // create model
     const plssvm::model<label_type> model{ this->filename };
@@ -140,7 +140,7 @@ TYPED_TEST(Model, labels) {
     EXPECT_EQ(model.labels(), util::get_correct_model_file_labels<label_type>());
 }
 TYPED_TEST(Model, num_classes) {
-    using label_type = typename TypeParam::type;
+    using label_type = typename TestFixture::fixture_label_type;
 
     // create model
     const plssvm::model<label_type> model{ this->filename };
@@ -149,7 +149,7 @@ TYPED_TEST(Model, num_classes) {
     EXPECT_EQ(model.num_classes(), util::get_num_classes<label_type>());
 }
 TYPED_TEST(Model, classes) {
-    using label_type = typename TypeParam::type;
+    using label_type = typename TestFixture::fixture_label_type;
 
     // create model
     const plssvm::model<label_type> model{ this->filename };
@@ -158,8 +158,8 @@ TYPED_TEST(Model, classes) {
     EXPECT_EQ(model.classes(), util::get_distinct_label<label_type>());
 }
 TYPED_TEST(Model, weights) {
-    using label_type = typename TypeParam::type;
-    constexpr plssvm::classification_type classification = TypeParam::value;
+    using label_type = typename TestFixture::fixture_label_type;
+    constexpr plssvm::classification_type classification = TestFixture::fixture_classification;
 
     // create model
     const plssvm::model<label_type> model{ this->filename };
@@ -240,8 +240,8 @@ TYPED_TEST(Model, weights) {
     }
 }
 TYPED_TEST(Model, rho) {
-    using label_type = typename TypeParam::type;
-    constexpr plssvm::classification_type classification = TypeParam::value;
+    using label_type = typename TestFixture::fixture_label_type;
+    constexpr plssvm::classification_type classification = TestFixture::fixture_classification;
 
     // create model
     const plssvm::model<label_type> model{ this->filename };
@@ -289,8 +289,8 @@ TYPED_TEST(Model, rho) {
     }
 }
 TYPED_TEST(Model, get_classification_type) {
-    using label_type = typename TypeParam::type;
-    constexpr plssvm::classification_type classification = TypeParam::value;
+    using label_type = typename TestFixture::fixture_label_type;
+    constexpr plssvm::classification_type classification = TestFixture::fixture_classification;
 
     // create model
     const plssvm::model<label_type> model{ this->filename };
@@ -300,12 +300,16 @@ TYPED_TEST(Model, get_classification_type) {
 }
 
 template <typename T>
-class ModelSave : public ::testing::Test, private util::redirect_output<> {};
-TYPED_TEST_SUITE(ModelSave, util::label_type_classification_type_gtest, naming::parameter_definition_to_name);
+class ModelSave : public ::testing::Test, private util::redirect_output<> {
+  protected:
+    using fixture_label_type = util::test_parameter_type_at_t<0, T>;
+    static constexpr plssvm::classification_type fixture_classification = util::test_parameter_value_at_v<0, T>;
+};
+TYPED_TEST_SUITE(ModelSave, util::label_type_classification_type_gtest, naming::test_parameter_to_name);
 
 TYPED_TEST(ModelSave, save) {
-    using label_type = typename TypeParam::type;
-    constexpr plssvm::classification_type classification = TypeParam::value;
+    using label_type = typename TestFixture::fixture_label_type;
+    constexpr plssvm::classification_type classification = TestFixture::fixture_classification;
 
     for (const plssvm::kernel_function_type kernel_function : { plssvm::kernel_function_type::linear, plssvm::kernel_function_type::polynomial, plssvm::kernel_function_type::rbf }) {
         const std::size_t num_classes = util::get_num_classes<label_type>();

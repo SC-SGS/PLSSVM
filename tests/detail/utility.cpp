@@ -12,15 +12,17 @@
 
 #include "plssvm/default_value.hpp"  // plssvm::default_value
 
-#include "../naming.hpp"  // naming::{map_types_to_name, set_types_to_name, vector_types_to_name}
+#include "../naming.hpp"         // naming::{test_parameter_to_name}
+#include "../types_to_test.hpp"  // util::{combine_test_parameters_gtest_t, detail::wrap_tuple_types_in_type_lists_t, test_parameter_type_at_t}
 
 #include "gmock/gmock-matchers.h"  // EXPECT_THAT, ::testing::HasSubstr
-#include "gtest/gtest.h"           // TEST, EXPECT_EQ, EXPECT_TRUE, EXPECT_FALSE
+#include "gtest/gtest.h"           // TEST, EXPECT_EQ, EXPECT_TRUE, EXPECT_FALSE, ::testing::Test
 
 #include <map>            // std::map
 #include <regex>          // std::regex, std::regex::extended, std::regex_match
 #include <set>            // std::set
 #include <string>         // std::string
+#include <tuple>          // std::tuple
 #include <unordered_map>  // std::unordered_map
 #include <unordered_set>  // std::unordered_set
 #include <vector>         // std::vector
@@ -89,12 +91,16 @@ TEST(Utility, to_underlying_default_value_char) {
     EXPECT_EQ(plssvm::detail::to_underlying(char_default_c), 'c');
 }
 
+// the map container types to test
+using map_types = std::tuple<std::map<int, int>, std::unordered_map<int, int>>;
+using map_types_gtest = util::combine_test_parameters_gtest_t<util::wrap_tuple_types_in_type_lists_t<map_types>>;
+
 // test fixture for map like classes
 template <typename T>
 class UtilityMapContainer : public ::testing::Test {
   public:
     /// The type of the encapsulated map.
-    using map_type = T;
+    using map_type = util::test_parameter_type_at_t<0, T>;
 
   protected:
     /**
@@ -113,10 +119,7 @@ class UtilityMapContainer : public ::testing::Test {
   private:
     map_type map;
 };
-
-// the map container types to test
-using map_types = ::testing::Types<std::map<int, int>, std::unordered_map<int, int>>;
-TYPED_TEST_SUITE(UtilityMapContainer, map_types, naming::map_types_to_name);
+TYPED_TEST_SUITE(UtilityMapContainer, map_types_gtest, naming::test_parameter_to_name);
 
 TYPED_TEST(UtilityMapContainer, erase_if) {
     EXPECT_EQ(plssvm::detail::erase_if(this->get_map(), [](const typename TestFixture::map_type::value_type value) { return value.second % 2 == 0; }), 1);
@@ -133,12 +136,16 @@ TYPED_TEST(UtilityMapContainer, contains) {
     EXPECT_FALSE(plssvm::detail::contains(this->get_map(), -1));
 }
 
+// the set container types to test
+using set_types = std::tuple<std::set<int>, std::unordered_set<int>>;
+using set_types_gtest = util::combine_test_parameters_gtest_t<util::wrap_tuple_types_in_type_lists_t<set_types>>;
+
 // test fixture for set like classes
 template <typename T>
 class UtilitySetContainer : public ::testing::Test {
   public:
     /// The type of the encapsulated set.
-    using set_type = T;
+    using set_type = util::test_parameter_type_at_t<0, T>;
 
   protected:
     /**
@@ -157,10 +164,7 @@ class UtilitySetContainer : public ::testing::Test {
   private:
     set_type set;
 };
-
-// the set container types to test
-using set_types = ::testing::Types<std::set<int>, std::unordered_set<int>>;
-TYPED_TEST_SUITE(UtilitySetContainer, set_types, naming::set_types_to_name);
+TYPED_TEST_SUITE(UtilitySetContainer, set_types_gtest, naming::test_parameter_to_name);
 
 TYPED_TEST(UtilitySetContainer, erase_if) {
     EXPECT_EQ(plssvm::detail::erase_if(this->get_set(), [](const typename TestFixture::set_type::value_type value) { return value % 2 == 0; }), 1);
@@ -177,12 +181,16 @@ TYPED_TEST(UtilitySetContainer, contains) {
     EXPECT_FALSE(plssvm::detail::contains(this->get_set(), -1));
 }
 
+// the vector container types to test
+using vector_types = std::tuple<std::vector<int>>;
+using vector_types_gtest = util::combine_test_parameters_gtest_t<util::wrap_tuple_types_in_type_lists_t<vector_types>>;
+
 // test fixture for vector like classes
 template <typename T>
 class UtilityVectorContainer : public ::testing::Test {
   public:
     /// The type of the encapsulated vector.
-    using vector_type = T;
+    using vector_type = util::test_parameter_type_at_t<0, T>;
 
   protected:
     /**
@@ -202,9 +210,7 @@ class UtilityVectorContainer : public ::testing::Test {
     vector_type vec;
 };
 
-// the vector container types to test
-using vector_types = ::testing::Types<std::vector<int>>;
-TYPED_TEST_SUITE(UtilityVectorContainer, vector_types, naming::vector_types_to_name);
+TYPED_TEST_SUITE(UtilityVectorContainer, vector_types_gtest, naming::test_parameter_to_name);
 
 TYPED_TEST(UtilityVectorContainer, erase_if) {
     EXPECT_EQ(plssvm::detail::erase_if(this->get_vector(), [](const typename TestFixture::vector_type::value_type value) { return value % 2 == 0; }), 1);

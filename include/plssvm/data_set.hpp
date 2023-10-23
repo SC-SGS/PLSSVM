@@ -21,7 +21,7 @@
 #include "plssvm/detail/logger.hpp"                      // plssvm::detail::log, plssvm::verbosity_level
 #include "plssvm/detail/performance_tracker.hpp"         // plssvm::detail::tracking_entry
 #include "plssvm/detail/string_utility.hpp"              // plssvm::detail::ends_with
-#include "plssvm/detail/type_list.hpp"                   // plssvm::detail::{real_type_list, label_type_list, type_list_contains_v}
+#include "plssvm/detail/type_list.hpp"                   // plssvm::detail::{supported_label_types, tuple_contains_v}
 #include "plssvm/detail/utility.hpp"                     // plssvm::detail::contains
 #include "plssvm/exceptions/exceptions.hpp"              // plssvm::data_set_exception
 #include "plssvm/file_format_types.hpp"                  // plssvm::file_format_type
@@ -69,7 +69,7 @@ using optional_ref = std::optional<std::reference_wrapper<T>>;
 template <typename U = int>
 class data_set {
     // make sure only valid template types are used
-    static_assert(detail::type_list_contains_v<U, detail::label_type_list>, "Illegal label type provided! See the 'label_type_list' in the type_list.hpp header for a list of the allowed types.");
+    static_assert(detail::tuple_contains_v<U, detail::supported_label_types>, "Illegal label type provided! See the 'label_type_list' in the type_list.hpp header for a list of the allowed types.");
 
     // plssvm::model needs the default constructor
     template <typename>

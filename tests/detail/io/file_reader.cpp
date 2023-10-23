@@ -14,7 +14,8 @@
 #include "plssvm/exceptions/exceptions.hpp"  // plssvm::file_not_found_exception, plssvm::file_reader_exception
 
 #include "../../custom_test_macros.hpp"  // EXPECT_THROW_WHAT
-#include "../../naming.hpp"              // naming::{open_parameter_types_to_name, pretty_print_escaped_string}
+#include "../../naming.hpp"              // naming::{test_parameter_to_name, pretty_print_escaped_string}
+#include "../../types_to_test.hpp"       //  util::{wrap_tuple_types_in_type_lists_t, detail::wrap_tuple_types_in_type_lists_t, test_parameter_type_at_t};
 
 #include "fmt/core.h"     // fmt::format
 #include "gtest/gtest.h"  // TEST, TEST_P, TYPED_TEST, EXPECT_EQ, EXPECT_NE, EXPECT_TRUE, EXPECT_FALSE, ASSERT_TRUE, ASSERT_FALSE, TYPED_TEST_SUITE, INSTANTIATE_TEST_SUITE_P
@@ -83,16 +84,22 @@ TEST(FileReader, move_assign) {
     EXPECT_EQ(reader1.buffer(), nullptr);
 }
 
-template <typename T>
-class FileReaderConstructWithOpen : public ::testing::Test {};
-
 // the input filename types to test
-using open_parameter_types = ::testing::Types<const char *, std::string, std::filesystem::path>;
-TYPED_TEST_SUITE(FileReaderConstructWithOpen, open_parameter_types, naming::open_parameter_types_to_name);
+using open_parameter_types = std::tuple<const char *, std::string, std::filesystem::path>;
+using open_parameter_types_gtest = util::combine_test_parameters_gtest_t<util::wrap_tuple_types_in_type_lists_t<open_parameter_types>>;
+
+template <typename T>
+class FileReaderConstructWithOpen : public ::testing::Test {
+  protected:
+    using fixture_open_type = util::test_parameter_type_at_t<0, T>;
+};
+TYPED_TEST_SUITE(FileReaderConstructWithOpen, open_parameter_types_gtest, naming::test_parameter_to_name);
 
 TYPED_TEST(FileReaderConstructWithOpen, non_empty_file) {
+    using open_type = typename TestFixture::fixture_open_type;
+
     // create file name depending on the current test type
-    const TypeParam filename{ PLSSVM_TEST_PATH "/data/libsvm/5x4.libsvm" };
+    const open_type filename{ PLSSVM_TEST_PATH "/data/libsvm/5x4.libsvm" };
     // construct a file_reader
     const plssvm::detail::io::file_reader reader{ filename };
 
@@ -103,8 +110,10 @@ TYPED_TEST(FileReaderConstructWithOpen, non_empty_file) {
     EXPECT_NE(reader.buffer(), nullptr);
 }
 TYPED_TEST(FileReaderConstructWithOpen, empty_file) {
+    using open_type = typename TestFixture::fixture_open_type;
+
     // create file name depending on the current test type
-    const TypeParam filename{ PLSSVM_TEST_PATH "/data/empty.txt" };
+    const open_type filename{ PLSSVM_TEST_PATH "/data/empty.txt" };
     // construct a file_reader using a c-string literal
     const plssvm::detail::io::file_reader reader{ filename };
 
@@ -115,20 +124,27 @@ TYPED_TEST(FileReaderConstructWithOpen, empty_file) {
     EXPECT_EQ(reader.buffer(), nullptr);
 }
 TYPED_TEST(FileReaderConstructWithOpen, file_not_found) {
+    using open_type = typename TestFixture::fixture_open_type;
+
     // create file name depending on the current test type
-    const TypeParam filename{ PLSSVM_TEST_PATH "/data/file_not_found" };
+    const open_type filename{ PLSSVM_TEST_PATH "/data/file_not_found" };
     EXPECT_THROW_WHAT(plssvm::detail::io::file_reader{ filename },
                       plssvm::file_not_found_exception,
                       "Couldn't find file: '" PLSSVM_TEST_PATH "/data/file_not_found'!");
 }
 
 template <typename T>
-class FileReaderOpen : public ::testing::Test {};
-TYPED_TEST_SUITE(FileReaderOpen, open_parameter_types, naming::open_parameter_types_to_name);
+class FileReaderOpen : public ::testing::Test {
+  protected:
+    using fixture_open_type = util::test_parameter_type_at_t<0, T>;
+};
+TYPED_TEST_SUITE(FileReaderOpen, open_parameter_types_gtest, naming::test_parameter_to_name);
 
 TYPED_TEST(FileReaderOpen, non_empty_file) {
+    using open_type = typename TestFixture::fixture_open_type;
+
     // create default constructed file reader and open it using the file name depending on the current test type
-    const TypeParam filename{ PLSSVM_TEST_PATH "/data/libsvm/5x4.libsvm" };
+    const open_type filename{ PLSSVM_TEST_PATH "/data/libsvm/5x4.libsvm" };
     // construct a default file_reader and open a file
     plssvm::detail::io::file_reader reader{};
     reader.open(filename);
@@ -140,8 +156,10 @@ TYPED_TEST(FileReaderOpen, non_empty_file) {
     EXPECT_NE(reader.buffer(), nullptr);
 }
 TYPED_TEST(FileReaderOpen, empty_file) {
+    using open_type = typename TestFixture::fixture_open_type;
+
     // create default constructed file reader and open it using the file name depending on the current test type
-    const TypeParam filename{ PLSSVM_TEST_PATH "/data/empty.txt" };
+    const open_type filename{ PLSSVM_TEST_PATH "/data/empty.txt" };
     // construct a default file_reader and open a file
     plssvm::detail::io::file_reader reader{};
     reader.open(filename);
@@ -153,8 +171,10 @@ TYPED_TEST(FileReaderOpen, empty_file) {
     EXPECT_EQ(reader.buffer(), nullptr);
 }
 TYPED_TEST(FileReaderOpen, file_not_found) {
+    using open_type = typename TestFixture::fixture_open_type;
+
     // create default constructed file reader and open it using the file name depending on the current test type
-    const TypeParam filename{ PLSSVM_TEST_PATH "/data/file_not_found" };
+    const open_type filename{ PLSSVM_TEST_PATH "/data/file_not_found" };
     // construct a default file_reader and open a file
     plssvm::detail::io::file_reader reader{};
     EXPECT_THROW_WHAT(reader.open(filename),
@@ -162,8 +182,10 @@ TYPED_TEST(FileReaderOpen, file_not_found) {
                       "Couldn't find file: '" PLSSVM_TEST_PATH "/data/file_not_found'!");
 }
 TYPED_TEST(FileReaderOpen, multiple_open) {
+    using open_type = typename TestFixture::fixture_open_type;
+
     // create default constructed file reader and open it using the file name depending on the current test type
-    const TypeParam filename{ PLSSVM_TEST_PATH "/data/empty.txt" };
+    const open_type filename{ PLSSVM_TEST_PATH "/data/empty.txt" };
     // construct a default file_reader and open a file
     plssvm::detail::io::file_reader reader{};
     reader.open(filename);

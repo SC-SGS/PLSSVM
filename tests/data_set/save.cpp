@@ -18,8 +18,8 @@
 #include "plssvm/matrix.hpp"                 // plssvm::aos_matrix
 
 #include "custom_test_macros.hpp"  // EXPECT_THROW_WHAT
-#include "naming.hpp"              // naming::label_type_to_name
-#include "types_to_test.hpp"       // util::label_type_gtest
+#include "naming.hpp"              // naming::test_parameter_to_name
+#include "types_to_test.hpp"       // util::{label_type_gtest, test_parameter_type_at_t}
 #include "utility.hpp"             // util::{redirect_output, temporary_file, get_correct_data_file_labels, generate_specific_matrix}
 
 #include "gmock/gmock-matchers.h"  // EXPECT_THAT, ::testing::{ContainsRegex, StartsWith}
@@ -35,7 +35,7 @@
 template <typename T>
 class DataSetSave : public ::testing::Test, private util::redirect_output<>, protected util::temporary_file {
   protected:
-    using fixture_label_type = T;
+    using fixture_label_type = util::test_parameter_type_at_t<0, T>;
 
     /**
      * @brief Return the correct labels used to save a data file.
@@ -54,10 +54,10 @@ class DataSetSave : public ::testing::Test, private util::redirect_output<>, pro
     /// The correct data points.
     plssvm::aos_matrix<plssvm::real_type> data_points{ util::generate_specific_matrix<plssvm::aos_matrix<plssvm::real_type>>(label.size(), 4) };
 };
-TYPED_TEST_SUITE(DataSetSave, util::label_type_gtest, naming::label_type_to_name);
+TYPED_TEST_SUITE(DataSetSave, util::label_type_gtest, naming::test_parameter_to_name);
 
 TYPED_TEST(DataSetSave, save_invalid_automatic_format) {
-    using label_type = TypeParam;
+    using label_type = typename TestFixture::fixture_label_type;
 
     // create data set with labels
     const plssvm::data_set<label_type> data{ this->get_data_points(), this->get_label() };
@@ -69,7 +69,7 @@ TYPED_TEST(DataSetSave, save_invalid_automatic_format) {
 }
 
 TYPED_TEST(DataSetSave, save_libsvm_with_label) {
-    using label_type = TypeParam;
+    using label_type = typename TestFixture::fixture_label_type;
 
     // create data set with labels
     const plssvm::data_set<label_type> data{ this->get_data_points(), this->get_label() };
@@ -88,7 +88,7 @@ TYPED_TEST(DataSetSave, save_libsvm_with_label) {
     }
 }
 TYPED_TEST(DataSetSave, save_libsvm_without_label) {
-    using label_type = TypeParam;
+    using label_type = typename TestFixture::fixture_label_type;
 
     // create data set without labels
     const plssvm::data_set<label_type> data{ this->get_data_points() };
@@ -107,7 +107,7 @@ TYPED_TEST(DataSetSave, save_libsvm_without_label) {
     }
 }
 TYPED_TEST(DataSetSave, save_libsvm_automatic_format) {
-    using label_type = TypeParam;
+    using label_type = typename TestFixture::fixture_label_type;
 
     // create data set with labels
     const plssvm::data_set<label_type> data{ this->get_data_points(), this->get_label() };
@@ -131,7 +131,7 @@ TYPED_TEST(DataSetSave, save_libsvm_automatic_format) {
 }
 
 TYPED_TEST(DataSetSave, save_arff_with_label) {
-    using label_type = TypeParam;
+    using label_type = typename TestFixture::fixture_label_type;
 
     // create data set with labels
     const plssvm::data_set<label_type> data{ this->get_data_points(), this->get_label() };
@@ -160,7 +160,7 @@ TYPED_TEST(DataSetSave, save_arff_with_label) {
     }
 }
 TYPED_TEST(DataSetSave, save_arff_without_label) {
-    using label_type = TypeParam;
+    using label_type = typename TestFixture::fixture_label_type;
 
     // create data set with labels
     const plssvm::data_set<label_type> data{ this->get_data_points() };
@@ -188,7 +188,7 @@ TYPED_TEST(DataSetSave, save_arff_without_label) {
     }
 }
 TYPED_TEST(DataSetSave, save_arff_automatic_format) {
-    using label_type = TypeParam;
+    using label_type = typename TestFixture::fixture_label_type;
 
     // create data set with labels
     const plssvm::data_set<label_type> data{ this->get_data_points(), this->get_label() };
