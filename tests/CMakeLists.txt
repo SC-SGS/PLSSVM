@@ -95,7 +95,7 @@ target_compile_definitions(${PLSSVM_BASE_TEST_LIBRARY_NAME} PUBLIC PLSSVM_TEST_F
 target_link_libraries(${PLSSVM_BASE_TEST_LIBRARY_NAME} PUBLIC ${PLSSVM_ALL_LIBRARY_NAME})
 
 # link against gtest
-target_link_libraries(${PLSSVM_BASE_TEST_LIBRARY_NAME} PUBLIC GTest::gtest_main GTest::gmock)
+target_link_libraries(${PLSSVM_BASE_TEST_LIBRARY_NAME} PUBLIC GTest::gmock)
 
 # precompile expensive TMP header
 target_precompile_headers(${PLSSVM_BASE_TEST_LIBRARY_NAME} PUBLIC types_to_test.hpp)
