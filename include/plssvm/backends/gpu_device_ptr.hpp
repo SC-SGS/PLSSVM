@@ -13,8 +13,10 @@
 #define PLSSVM_BACKENDS_GPU_DEVICE_PTR_HPP_
 #pragma once
 
-#include "plssvm/detail/assert.hpp"     // PLSSVM_ASSERT
-#include "plssvm/detail/type_list.hpp"  // plssvm::detail::{supported_real_types, tuple_contains_v}
+#include "plssvm/detail/assert.hpp"          // PLSSVM_ASSERT
+#include "plssvm/detail/type_list.hpp"       // plssvm::detail::{supported_real_types, tuple_contains_v}
+#include "plssvm/exceptions/exceptions.hpp"  // plssvm::gpu_device_ptr_exception
+#include "plssvm/matrix.hpp"                 // plssvm::layout_type, plssvm::matrix
 
 #include <array>    // std::array
 #include <cstddef>  // std::size_t
@@ -199,6 +201,21 @@ class gpu_device_ptr {
 
     /**
      * @brief Copy device_ptr::size() many values from @p data_to_copy to the device.
+     * @tparam layout the layout type of the matrix
+     * @param[in] data_to_copy the data to copy onto the device
+     * @throws plssvm::gpu_device_ptr_exception if @p data_to_copy is too small to satisfy the copy
+     */
+    template <layout_type layout>
+    void copy_to_device(const matrix<value_type, layout> &data_to_copy) {
+        PLSSVM_ASSERT(data_ != nullptr, "Invalid data pointer! Maybe *this has been default constructed?");
+
+        if (data_to_copy.num_entries() < this->size()) {
+            throw gpu_device_ptr_exception{ fmt::format("Too few data to perform copy (needed: {}, provided: {})!", this->size(), data_to_copy.num_entries()) };
+        }
+        this->copy_to_device(data_to_copy.data());
+    }
+    /**
+     * @brief Copy device_ptr::size() many values from @p data_to_copy to the device.
      * @param[in] data_to_copy the data to copy onto the device
      * @throws plssvm::gpu_device_ptr_exception if @p data_to_copy is too small to satisfy the copy
      */
@@ -226,6 +243,21 @@ class gpu_device_ptr {
      */
     virtual void copy_to_device(const_host_pointer_type data_to_copy, size_type pos, size_type count) = 0;
 
+    /**
+     * @brief Copy device_ptr::size() many values from the device to the host buffer @p buffer.
+     * @tparam layout the layout type of the matrix
+     * @param[in] buffer the buffer to copy the data to
+     * @throws plssvm::gpu_device_ptr_exception if @p buffer is too small to satisfy the copy
+     */
+    template <layout_type layout>
+    void copy_to_host(matrix<value_type, layout> &buffer) const {
+        PLSSVM_ASSERT(data_ != nullptr, "Invalid data pointer! Maybe *this has been default constructed?");
+
+        if (buffer.num_entries() < this->size()) {
+            throw gpu_device_ptr_exception{ fmt::format("Buffer too small to perform copy (needed: {}, provided: {})!", this->size(), buffer.num_entries()) };
+        }
+        this->copy_to_host(buffer.data());
+    }
     /**
      * @brief Copy device_ptr::size() many values from the device to the host buffer @p buffer.
      * @param[out] buffer the buffer to copy the data to

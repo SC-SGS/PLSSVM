@@ -396,6 +396,30 @@ TYPED_TEST_P(DevicePtr, fill_invalid_pos) {
                       "Illegal access in fill!: 10 >= 10");
 }
 
+TYPED_TEST_P(DevicePtr, copy_matrix) {
+    using test_type = typename TestFixture::fixture_test_type;
+    using device_ptr_type = typename test_type::device_ptr_type;
+    using value_type = typename device_ptr_type::value_type;
+    using queue_type = typename test_type::queue_type;
+    const queue_type &queue = test_type::default_queue();
+
+    // construct device_ptr
+    device_ptr_type ptr{ 10, queue };
+    ptr.memset(0);
+
+    // create data to copy to the device
+    plssvm::aos_matrix<value_type> data{ 5, 3, 42 };
+
+    // copy data to the device
+    ptr.copy_to_device(data);
+    // copy data back to the host
+    plssvm::aos_matrix<value_type> result{ 5, 3, 0 };
+    ptr.copy_to_host(result);
+
+    // check values for correctness
+    const plssvm::aos_matrix<value_type> correct_result{ { { 42, 42, 42 }, { 42, 42, 42 }, { 42, 42, 42 }, { 42, 0, 0 }, { 0, 0, 0 } } };
+    EXPECT_FLOATING_POINT_MATRIX_EQ(result, correct_result);
+}
 TYPED_TEST_P(DevicePtr, copy_vector) {
     using test_type = typename TestFixture::fixture_test_type;
     using device_ptr_type = typename test_type::device_ptr_type;
@@ -489,6 +513,34 @@ TYPED_TEST_P(DevicePtr, copy_vector_with_count_copy_to_too_many) {
     EXPECT_EQ(result, (std::vector<value_type>{ value_type{ 0.0 }, value_type{ 0.0 }, value_type{ 42.0 }, value_type{ 42.0 }, value_type{ 42.0 }, value_type{ 42.0 } }));
 }
 
+TYPED_TEST_P(DevicePtr, copy_matrix_too_few_host_elements) {
+    using test_type = typename TestFixture::fixture_test_type;
+    using device_ptr_type = typename test_type::device_ptr_type;
+    using value_type = typename device_ptr_type::value_type;
+    using queue_type = typename test_type::queue_type;
+    const queue_type &queue = test_type::default_queue();
+
+    // construct device_ptr
+    device_ptr_type ptr{ 10, queue };
+
+    // try copying data to the device with too few elements
+    plssvm::aos_matrix<value_type> data{ 2, 4, 42 };
+    EXPECT_THROW_WHAT(ptr.copy_to_device(data), plssvm::gpu_device_ptr_exception, "Too few data to perform copy (needed: 10, provided: 8)!");
+}
+TYPED_TEST_P(DevicePtr, copy_matrix_too_few_buffer_elements) {
+    using test_type = typename TestFixture::fixture_test_type;
+    using device_ptr_type = typename test_type::device_ptr_type;
+    using value_type = typename device_ptr_type::value_type;
+    using queue_type = typename test_type::queue_type;
+    const queue_type &queue = test_type::default_queue();
+
+    // construct device_ptr
+    device_ptr_type ptr{ 10, queue };
+
+    // try copying data back to the host with a buffer with too few elements
+    plssvm::aos_matrix<value_type> buffer{ 2, 4 };
+    EXPECT_THROW_WHAT(ptr.copy_to_host(buffer), plssvm::gpu_device_ptr_exception, "Buffer too small to perform copy (needed: 10, provided: 8)!");
+}
 TYPED_TEST_P(DevicePtr, copy_vector_too_few_host_elements) {
     using test_type = typename TestFixture::fixture_test_type;
     using device_ptr_type = typename test_type::device_ptr_type;
@@ -646,7 +698,9 @@ REGISTER_TYPED_TEST_SUITE_P(DevicePtr,
                             operator_bool, size, size_idx, extent, empty,
                             memset, memset_with_numbytes, memset_invalid_pos,
                             fill, fill_with_count, fill_invalid_pos,
+                            copy_matrix,
                             copy_vector, copy_vector_with_count_copy_back_all, copy_vector_with_count_copy_back_some, copy_vector_with_count_copy_to_too_many,
+                            copy_matrix_too_few_host_elements, copy_matrix_too_few_buffer_elements,
                             copy_vector_too_few_host_elements, copy_vector_too_few_buffer_elements, copy_vector_with_count_too_few_host_elements, copy_vector_with_count_too_few_buffer_elements,
                             copy_ptr, copy_ptr_with_count_copy_back_all, copy_ptr_with_count_copy_back_some, copy_ptr_with_count_copy_to_too_many);
 // clang-format on
@@ -703,6 +757,9 @@ TYPED_TEST_P(DevicePtrDeathTest, copy_ptr_invalid_device_ptr) {
 
     // copy with invalid device pointer
     std::vector<value_type> data(def.size());
+    plssvm::aos_matrix<value_type> matr{};
+    EXPECT_DEATH(def.copy_to_device(matr.data()), ::testing::HasSubstr("Invalid data pointer! Maybe *this has been default constructed?"));
+    EXPECT_DEATH(def.copy_to_host(matr.data()), ::testing::HasSubstr("Invalid data pointer! Maybe *this has been default constructed?"));
     EXPECT_DEATH(def.copy_to_device(data.data()), ::testing::HasSubstr("Invalid data pointer! Maybe *this has been default constructed?"));
     EXPECT_DEATH(def.copy_to_host(data.data()), ::testing::HasSubstr("Invalid data pointer! Maybe *this has been default constructed?"));
     EXPECT_DEATH(def.copy_to_device(data), ::testing::HasSubstr("Invalid data pointer! Maybe *this has been default constructed?"));

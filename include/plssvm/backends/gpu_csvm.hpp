@@ -189,7 +189,7 @@ template <template <typename> typename device_ptr_t, typename queue_t>
     if (solver == solver_type::cg_explicit) {
         // initialize the data on the device
         device_ptr_type data_d{ A.shape(), devices_[0] };  // TODO: don't copy last data point to device?
-        data_d.copy_to_device(A.data());
+        data_d.copy_to_device(A);
 
         return ::plssvm::detail::simple_any{ std::move(data_d) };
     } else {
@@ -258,16 +258,16 @@ void gpu_csvm<device_ptr_t, queue_t>::blas_level_3(const solver_type solver, con
         if (B_d.size() != B.num_entries()) {
             B_d = device_ptr_type{ B.shape(), devices_[0] };
         }
-        B_d.copy_to_device(B.data());
+        B_d.copy_to_device(B);
         static device_ptr_type C_d{ C.shape(), devices_[0] };
         if (C_d.size() != C.num_entries()) {
             C_d = device_ptr_type{ C.shape(), devices_[0] };
         }
-        C_d.copy_to_device(C.data());
+        C_d.copy_to_device(C);
 
         this->run_blas_level_3_kernel_explicit(num_rows, num_rhs, num_rows, alpha, A_d, B_d, beta, C_d);
 
-        C_d.copy_to_host(C.data());
+        C_d.copy_to_host(C);
     } else {
         // TODO: implement for other solver types
         throw exception{ fmt::format("The GEMM calculation using the {} CG variation is currently not implemented!", solver) };
@@ -301,13 +301,13 @@ aos_matrix<real_type> gpu_csvm<device_ptr_t, queue_t>::predict_values(const para
     const std::size_t num_features = predict_points.num_cols();
 
     device_ptr_type sv_d{ support_vectors.shape(), devices_[0] };
-    sv_d.copy_to_device(support_vectors.data());
+    sv_d.copy_to_device(support_vectors);
     device_ptr_type predict_points_d{ predict_points.shape(), devices_[0] };
-    predict_points_d.copy_to_device(predict_points.data());
+    predict_points_d.copy_to_device(predict_points);
 
     device_ptr_type w_d;  // only used when predicting linear kernel functions
     device_ptr_type alpha_d{ alpha.shape(), devices_[0] };
-    alpha_d.copy_to_device(alpha.data());
+    alpha_d.copy_to_device(alpha);
     device_ptr_type rho_d{ num_classes, devices_[0] };
     rho_d.copy_to_device(rho);
 
@@ -319,11 +319,11 @@ aos_matrix<real_type> gpu_csvm<device_ptr_t, queue_t>::predict_values(const para
 
             // convert 1D result to aos_matrix out-parameter
             w = aos_matrix<real_type>{ num_classes, num_features };
-            w_d.copy_to_host(w.data());
+            w_d.copy_to_host(w);
         } else {
             // w already provided -> copy to device
             w_d = device_ptr_type{ { num_classes, num_features }, devices_[0] };
-            w_d.copy_to_device(w.data());
+            w_d.copy_to_device(w);
         }
     }
 
@@ -332,7 +332,7 @@ aos_matrix<real_type> gpu_csvm<device_ptr_t, queue_t>::predict_values(const para
 
     // copy results back to host
     aos_matrix<real_type> out_ret{ num_predict_points, num_classes };
-    out_d.copy_to_host(out_ret.data());
+    out_d.copy_to_host(out_ret);
     return out_ret;
 }
 
