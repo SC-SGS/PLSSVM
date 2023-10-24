@@ -673,12 +673,7 @@ inline void write_libsvm_model_data(const std::string &filename, const plssvm::p
         case classification_type::oao:
             // weights
             PLSSVM_ASSERT(alpha.size() == calculate_number_of_classifiers(classification, data.num_classes()), "The number of matrices in the alpha vector must contain {} entries, but contains {} entries!", calculate_number_of_classifiers(classification, data.num_classes()), alpha.size());
-            if (data.num_classes() == 2) {
-                // special OAO case
-                PLSSVM_ASSERT(std::all_of(alpha.cbegin(), alpha.cend(), [](const aos_matrix<real_type> &matr) { return matr.num_rows() == 1 || matr.num_rows() == 2; }), "In case of binary OAO, each matrix may only contain one (model read) or two (fit) rows!");
-            } else {
-                PLSSVM_ASSERT(std::all_of(alpha.cbegin(), alpha.cend(), [](const aos_matrix<real_type> &matr) { return matr.num_rows() == 1; }), "In case of multi-class OAO, each matrix may only contain one row!");
-            }
+            PLSSVM_ASSERT(std::all_of(alpha.cbegin(), alpha.cend(), [](const aos_matrix<real_type> &matr) { return matr.num_rows() == 1; }), "In case of OAO, each matrix may only contain one row!");
 
             // indices: only calculated for OAO
             PLSSVM_ASSERT(indices.size() == data.num_classes(), "The number of index sets ({}) must be equal to the number of different classes ({})!", indices.size(), data.num_classes());

@@ -80,13 +80,9 @@ TYPED_TEST(LIBSVMModelDataWrite, write) {
     if constexpr (classification == plssvm::classification_type::oaa) {
         alpha.emplace_back(util::generate_random_matrix<plssvm::aos_matrix<plssvm::real_type>>(num_classifiers, data.num_rows()));
     } else if constexpr (classification == plssvm::classification_type::oao) {
-        if (num_classes == 2) {
-            alpha.emplace_back(util::generate_random_matrix<plssvm::aos_matrix<plssvm::real_type>>(2, data.num_rows()));
-        } else {
-            for (std::size_t i = 0; i < num_classes; ++i) {
-                for (std::size_t j = i + 1; j < num_classes; ++j) {
-                    alpha.emplace_back(util::generate_random_matrix<plssvm::aos_matrix<plssvm::real_type>>(1, indices[i].size() + indices[j].size()));
-                }
+        for (std::size_t i = 0; i < num_classes; ++i) {
+            for (std::size_t j = i + 1; j < num_classes; ++j) {
+                alpha.emplace_back(util::generate_random_matrix<plssvm::aos_matrix<plssvm::real_type>>(1, indices[i].size() + indices[j].size()));
             }
         }
     } else {
@@ -218,7 +214,7 @@ class LIBSVMModelDataWriteDeathTest : public LIBSVMModelDataWrite<T> {
             case plssvm::classification_type::oao:
                 switch (num_classes) {
                     case 2:
-                        alpha_.emplace_back(2, 6);
+                        alpha_.emplace_back(1, 6);
                         break;
                     case 3:
                         alpha_.emplace_back(1, 4);
@@ -363,15 +359,8 @@ TYPED_TEST(LIBSVMModelDataWriteDeathTest, invalid_alpha_vector) {
             // invalid matrix shape
             std::vector<plssvm::aos_matrix<plssvm::real_type>> alpha(this->get_alpha());
             alpha.back() = plssvm::aos_matrix<plssvm::real_type>{ 3, 2 };
-
-            if (this->get_data_set().num_classes() == 2) {
-                // binary classification special case
-                EXPECT_DEATH((plssvm::detail::io::write_libsvm_model_data(this->filename, this->get_params(), classification, this->get_rho(), alpha, this->get_indices(), this->get_data_set())),
-                             ::testing::HasSubstr("In case of binary OAO, each matrix may only contain one (model read) or two (fit) rows!"));
-            } else {
-                EXPECT_DEATH((plssvm::detail::io::write_libsvm_model_data(this->filename, this->get_params(), classification, this->get_rho(), alpha, this->get_indices(), this->get_data_set())),
-                             "In case of multi-class OAO, each matrix may only contain one row!");
-            }
+            EXPECT_DEATH((plssvm::detail::io::write_libsvm_model_data(this->filename, this->get_params(), classification, this->get_rho(), alpha, this->get_indices(), this->get_data_set())),
+                         "In case of OAO, each matrix may only contain one row!");
         }
     } else {
         FAIL() << "Invalid classification_type!";

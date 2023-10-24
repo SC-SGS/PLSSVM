@@ -407,7 +407,16 @@ model<label_type> csvm::fit(const data_set<label_type> &data, Args &&...named_ar
                         "\nClassifying 0 vs 1 ({} vs {}) (1/1):\n",
                         data.mapping_->get_label_by_mapped_index(0),
                         data.mapping_->get_label_by_mapped_index(1));
-            const auto &[alpha, rho] = solve_system_of_linear_equations(*data.data_ptr_, *data.y_ptr_, params, std::forward<Args>(named_args)...);
+
+            // reduce the size of the rhs (y_ptr)
+            // -> consistent with the multi-class case as well as when reading the model from file in the model class constructor
+            aos_matrix<real_type> reduced_y{ 1, data.y_ptr_->num_cols() };
+            #pragma omp parallel for default(none) shared(data, reduced_y)
+            for (std::size_t col = 0; col < data.y_ptr_->num_cols(); ++col) {
+                reduced_y(0, col) = (*data.y_ptr_)(0, col);
+            }
+
+            const auto &[alpha, rho] = solve_system_of_linear_equations(*data.data_ptr_, reduced_y, params, std::forward<Args>(named_args)...);
             csvm_model.alpha_ptr_->front() = std::move(alpha);
             csvm_model.rho_ptr_->front() = rho.front();  // prevents std::tie
         } else {
