@@ -25,6 +25,9 @@ target_include_directories(${PLSSVM_CUDA_TEST_NAME} PRIVATE ${CMAKE_CURRENT_LIST
 # link against test library
 target_link_libraries(${PLSSVM_CUDA_TEST_NAME} PRIVATE ${PLSSVM_BASE_TEST_LIBRARY_NAME})
 
+# reuse precompiled header
+target_precompile_headers(${PLSSVM_CUDA_TEST_NAME} REUSE_FROM ${PLSSVM_BASE_TEST_LIBRARY_NAME})
+
 
 # add tests to google test
 include(GoogleTest)
