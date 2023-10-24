@@ -84,18 +84,18 @@ namespace plssvm::detail::io {
  * @details As an example, if the index sets are defined by [0, 2, 4] and [6, 8, 10] and the @p idx_to_find is `4`, returns `2`, if @p idx_to find is `10`, returns `5`.
  * @param[in] i the first class of the binary classifier
  * @param[in] j the second class of the binary classifier
- * @param[in] indices the whole indices, used to (implicitly) create the index set of the current binary classifier
+ * @param[in] index_sets the whole indices, used to (implicitly) create the index set of the current binary classifier
  * @param[in] idx_to_find to index of the support vector to find the correct alpha index in the current binary classifier
  * @return the alpha index (`[[nodiscard]]`)
  */
-[[nodiscard]] inline std::size_t calculate_alpha_idx(std::size_t i, std::size_t j, const std::vector<std::vector<std::size_t>> &indices, const std::size_t idx_to_find) {
+[[nodiscard]] inline std::size_t calculate_alpha_idx(std::size_t i, std::size_t j, const std::vector<std::vector<std::size_t>> &index_sets, const std::size_t idx_to_find) {
     PLSSVM_ASSERT(i != j, "Can't compute the index for {} == {}!", i, j);
-    PLSSVM_ASSERT(indices.size() > 1, "At least two index sets must be provided!");
-    PLSSVM_ASSERT(i < indices.size(), "The index i ({}) must be smaller than the total number of indices ({})!", i, indices.size());
-    PLSSVM_ASSERT(j < indices.size(), "The index j ({}) must be smaller than the total number of indices ({})!", j, indices.size());
-    PLSSVM_ASSERT(std::is_sorted(indices[i].cbegin(), indices[i].cend()) && std::is_sorted(indices[j].cbegin(), indices[j].cend()), "The index sets must be sorted in ascending order!");
-    PLSSVM_ASSERT(std::adjacent_find(indices[i].cbegin(), indices[i].cend()) == indices[i].cend() && std::adjacent_find(indices[j].cbegin(), indices[j].cend()) == indices[j].cend(), "All indices in one index set must be unique!");
-    PLSSVM_ASSERT(std::find_first_of(indices[i].cbegin(), indices[i].cend(), indices[j].cbegin(), indices[j].cend()) == indices[i].cend(), "The content of both index sets must be disjoint!");
+    PLSSVM_ASSERT(index_sets.size() > 1, "At least two index sets must be provided!");
+    PLSSVM_ASSERT(i < index_sets.size(), "The index i ({}) must be smaller than the total number of indices ({})!", i, index_sets.size());
+    PLSSVM_ASSERT(j < index_sets.size(), "The index j ({}) must be smaller than the total number of indices ({})!", j, index_sets.size());
+    PLSSVM_ASSERT(std::is_sorted(index_sets[i].cbegin(), index_sets[i].cend()) && std::is_sorted(index_sets[j].cbegin(), index_sets[j].cend()), "The index sets must be sorted in ascending order!");
+    PLSSVM_ASSERT(std::adjacent_find(index_sets[i].cbegin(), index_sets[i].cend()) == index_sets[i].cend() && std::adjacent_find(index_sets[j].cbegin(), index_sets[j].cend()) == index_sets[j].cend(), "All indices in one index set must be unique!");
+    PLSSVM_ASSERT(std::find_first_of(index_sets[i].cbegin(), index_sets[i].cend(), index_sets[j].cbegin(), index_sets[j].cend()) == index_sets[i].cend(), "The content of both index sets must be disjoint!");
 
     // the order is predefined -> switch order in order to return the correct index
     if (i > j) {
@@ -103,17 +103,17 @@ namespace plssvm::detail::io {
     }
 
     std::size_t global_idx{ 0 };
-    const auto i_it = std::lower_bound(indices[i].cbegin(), indices[i].cend(), idx_to_find);
-    if (i_it != indices[i].cend() && *i_it == idx_to_find) {
+    const auto i_it = std::lower_bound(index_sets[i].cbegin(), index_sets[i].cend(), idx_to_find);
+    if (i_it != index_sets[i].cend() && *i_it == idx_to_find) {
         // index found
-        global_idx = std::distance(indices[i].cbegin(), i_it);
+        global_idx = std::distance(index_sets[i].cbegin(), i_it);
     } else {
         // index not yet found
-        global_idx = indices[i].size() + std::distance(indices[j].cbegin(), std::lower_bound(indices[j].cbegin(), indices[j].cend(), idx_to_find));
+        global_idx = index_sets[i].size() + std::distance(index_sets[j].cbegin(), std::lower_bound(index_sets[j].cbegin(), index_sets[j].cend(), idx_to_find));
     }
 
-    PLSSVM_ASSERT(global_idx < indices[i].size() + indices[j].size(), "The global index ({}) for the provided index to find ({}) must be smaller than the combined size of both index sets ({} + {})!",
-                  global_idx, idx_to_find, indices[i].size(), indices[j].size());
+    PLSSVM_ASSERT(global_idx < index_sets[i].size() + index_sets[j].size(), "The global index ({}) for the provided index to find ({}) must be smaller than the combined size of both index sets ({} + {})!",
+                  global_idx, idx_to_find, index_sets[i].size(), index_sets[j].size());
 
     return global_idx;
 }
@@ -647,11 +647,12 @@ template <typename label_type>
  * @param[in] classification the used multi-class classification strategy
  * @param[in] rho the rho value resulting from the hyperplane learning
  * @param[in] alpha the weights learned by the SVM
+ * @param[in] index_sets index sets containing the SV indices per class
  * @param[in] data the data used to create the model
  * @attention The PLSSVM model file is only compatible with LIBSVM for the one vs. one classification type.
  */
 template <typename label_type>
-inline void write_libsvm_model_data(const std::string &filename, const plssvm::parameter &params, const classification_type classification, const std::vector<real_type> &rho, const std::vector<aos_matrix<real_type>> &alpha, const std::vector<std::vector<std::size_t>> &indices, const data_set<label_type> &data) {
+inline void write_libsvm_model_data(const std::string &filename, const plssvm::parameter &params, const classification_type classification, const std::vector<real_type> &rho, const std::vector<aos_matrix<real_type>> &alpha, const std::vector<std::vector<std::size_t>> &index_sets, const data_set<label_type> &data) {
     PLSSVM_ASSERT(!filename.empty(), "The provided model filename must not be empty!");
     PLSSVM_ASSERT(data.has_labels(), "Cannot write a model file that does not include labels!");
     PLSSVM_ASSERT(rho.size() == calculate_number_of_classifiers(classification, data.num_classes()),
@@ -667,8 +668,8 @@ inline void write_libsvm_model_data(const std::string &filename, const plssvm::p
             PLSSVM_ASSERT(alpha.front().num_rows() == calculate_number_of_classifiers(classification, data.num_classes()), "The number of rows in the matrix must be {}, but is {}!", calculate_number_of_classifiers(classification, data.num_classes()), alpha.front().num_rows());
             PLSSVM_ASSERT(alpha.front().num_cols() == data.num_data_points(), "The number of weights ({}) must be equal to the number of support vectors ({})!", alpha.front().num_cols(), data.num_data_points());
 
-            // indices: NO indices are calculated for OAA
-            PLSSVM_ASSERT(indices.empty(), "There shouldn't be any index sets for the OAA classification, but {} were found!", indices.size());
+            // indices: NO index sets are calculated for OAA
+            PLSSVM_ASSERT(index_sets.empty(), "There shouldn't be any index sets for the OAA classification, but {} were found!", index_sets.size());
             break;
         case classification_type::oao:
             // weights
@@ -676,15 +677,15 @@ inline void write_libsvm_model_data(const std::string &filename, const plssvm::p
             PLSSVM_ASSERT(std::all_of(alpha.cbegin(), alpha.cend(), [](const aos_matrix<real_type> &matr) { return matr.num_rows() == 1; }), "In case of OAO, each matrix may only contain one row!");
 
             // indices: only calculated for OAO
-            PLSSVM_ASSERT(indices.size() == data.num_classes(), "The number of index sets ({}) must be equal to the number of different classes ({})!", indices.size(), data.num_classes());
-            PLSSVM_ASSERT(std::accumulate(indices.cbegin(), indices.cend(), std::size_t{ 0 }, [](const std::size_t count, const std::vector<std::size_t> &set) { return count + set.size(); }) == data.num_data_points(), "Each data point must have exactly one entry in the index set!");
-            PLSSVM_ASSERT(std::all_of(indices.cbegin(), indices.cend(), [](const std::vector<std::size_t> &set) { return std::is_sorted(set.cbegin(), set.cend()); }), "All index sets must be sorted in ascending order!");
-            PLSSVM_ASSERT(std::all_of(indices.cbegin(), indices.cend(), [](const std::vector<std::size_t> &set) { return std::adjacent_find(set.cbegin(), set.cend()) == set.cend(); }), "All indices in one index set must be unique!");
+            PLSSVM_ASSERT(index_sets.size() == data.num_classes(), "The number of index sets ({}) must be equal to the number of different classes ({})!", index_sets.size(), data.num_classes());
+            PLSSVM_ASSERT(std::accumulate(index_sets.cbegin(), index_sets.cend(), std::size_t{ 0 }, [](const std::size_t count, const std::vector<std::size_t> &set) { return count + set.size(); }) == data.num_data_points(), "Each data point must have exactly one entry in the index set!");
+            PLSSVM_ASSERT(std::all_of(index_sets.cbegin(), index_sets.cend(), [](const std::vector<std::size_t> &set) { return std::is_sorted(set.cbegin(), set.cend()); }), "All index sets must be sorted in ascending order!");
+            PLSSVM_ASSERT(std::all_of(index_sets.cbegin(), index_sets.cend(), [](const std::vector<std::size_t> &set) { return std::adjacent_find(set.cbegin(), set.cend()) == set.cend(); }), "All indices in one index set must be unique!");
 
             // note: computationally expensive!!!
-            for (std::size_t i = 0; i < indices.size(); ++i) {
-                for (std::size_t j = i + 1; j < indices.size(); ++j) {
-                    PLSSVM_ASSERT(std::find_first_of(indices[i].cbegin(), indices[i].cend(), indices[j].cbegin(), indices[j].cend()) == indices[i].cend(), "All index sets must be pairwise unique, but index sets {} and {} share at least one index!", i, j);
+            for (std::size_t i = 0; i < index_sets.size(); ++i) {
+                for (std::size_t j = i + 1; j < index_sets.size(); ++j) {
+                    PLSSVM_ASSERT(std::find_first_of(index_sets[i].cbegin(), index_sets[i].cend(), index_sets[j].cbegin(), index_sets[j].cend()) == index_sets[i].cend(), "All index sets must be pairwise unique, but index sets {} and {} share at least one index!", i, j);
                 }
             }
             break;
@@ -742,7 +743,7 @@ inline void write_libsvm_model_data(const std::string &filename, const plssvm::p
     // initialize volatile array
     auto counts = std::make_unique<volatile int[]>(label_order.size() + 1);
     counts[0] = std::numeric_limits<int>::max();
-    #pragma omp parallel default(none) shared(counts, alpha, format_libsvm_line, label_order, labels, support_vectors, out, indices) firstprivate(BLOCK_SIZE, CHARS_PER_BLOCK, num_features, num_classes, num_alpha_per_point, classification)
+    #pragma omp parallel default(none) shared(counts, alpha, format_libsvm_line, label_order, labels, support_vectors, out, index_sets) firstprivate(BLOCK_SIZE, CHARS_PER_BLOCK, num_features, num_classes, num_alpha_per_point, classification)
     {
         // preallocate string buffer, only ONE allocation
         std::string out_string;
@@ -766,7 +767,7 @@ inline void write_libsvm_model_data(const std::string &filename, const plssvm::p
                                 if (l != j) {
                                     const std::size_t idx = x_vs_y_to_idx(l, j, num_classes);
                                     const aos_matrix<real_type> &alpha_vec = alpha[idx];
-                                    const std::size_t sv_idx = calculate_alpha_idx(l, j, indices, i);
+                                    const std::size_t sv_idx = calculate_alpha_idx(l, j, index_sets, i);
                                     alpha_per_point[pos] = alpha_vec(0, sv_idx);
                                     ++pos;
                                 }

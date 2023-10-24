@@ -392,12 +392,12 @@ model<label_type> csvm::fit(const data_set<label_type> &data, Args &&...named_ar
         csvm_model.alpha_ptr_->resize(num_binary_classifications);
         csvm_model.rho_ptr_->resize(num_binary_classifications);
 
-        // create index vector: indices[0] contains the indices of all data points in the big data set with label index 0, and so on
-        std::vector<std::vector<std::size_t>> indices(num_classes);
+        // create index vector: index_sets[0] contains the indices of all data points in the big data set with label index 0, and so on
+        std::vector<std::vector<std::size_t>> index_sets(num_classes);
         {
             const std::vector<label_type> &labels = data.labels().value();
             for (std::size_t i = 0; i < data.num_data_points(); ++i) {
-                indices[data.mapping_->get_mapped_index_by_label(labels[i])].push_back(i);
+                index_sets[data.mapping_->get_mapped_index_by_label(labels[i])].push_back(i);
             }
         }
 
@@ -426,22 +426,22 @@ model<label_type> csvm::fit(const data_set<label_type> &data, Args &&...named_ar
                 for (std::size_t j = i + 1; j < num_classes; ++j) {
                     // TODO: reduce amount of copies!?
                     // assemble one vs. one classification matrix and rhs
-                    const std::size_t num_data_points_in_sub_matrix{ indices[i].size() + indices[j].size() };
+                    const std::size_t num_data_points_in_sub_matrix{ index_sets[i].size() + index_sets[j].size() };
                     aos_matrix<real_type> binary_data{ num_data_points_in_sub_matrix, num_features };
                     aos_matrix<real_type> binary_y{ 1, num_data_points_in_sub_matrix };  // note: the first dimension will always be one, since only one rhs is needed
 
                     // note: if this is changed, it must also be changed in the libsvm_model_parsing.hpp in the calculate_alpha_idx function!!!
                     // order the indices in increasing order
                     std::vector<std::size_t> sorted_indices(num_data_points_in_sub_matrix);
-                    std::merge(indices[i].cbegin(), indices[i].cend(), indices[j].cbegin(), indices[j].cend(), sorted_indices.begin());
+                    std::merge(index_sets[i].cbegin(), index_sets[i].cend(), index_sets[j].cbegin(), index_sets[j].cend(), sorted_indices.begin());
                     // copy the data points to the binary data set
-                    #pragma omp parallel for default(none) shared(sorted_indices, binary_data, binary_y, data, indices) firstprivate(num_data_points_in_sub_matrix, num_features, i)
+                    #pragma omp parallel for default(none) shared(sorted_indices, binary_data, binary_y, data, index_sets) firstprivate(num_data_points_in_sub_matrix, num_features, i)
                     for (std::size_t si = 0; si < num_data_points_in_sub_matrix; ++si) {
                         for (std::size_t dim = 0; dim < num_features; ++dim) {
                             binary_data(si, dim) = (*data.data_ptr_)(sorted_indices[si], dim);
                         }
                         // needs only the check against i, since sorted_indices is guaranteed to only contain indices from i and j
-                        binary_y(0, si) = detail::contains(indices[i], sorted_indices[si]) ? real_type{ 1.0 } : real_type{ -1.0 };
+                        binary_y(0, si) = detail::contains(index_sets[i], sorted_indices[si]) ? real_type{ 1.0 } : real_type{ -1.0 };
                     }
 
                     // solve the minimization problem -> note that only a single rhs is present
@@ -463,7 +463,7 @@ model<label_type> csvm::fit(const data_set<label_type> &data, Args &&...named_ar
             }
         }
 
-        csvm_model.indices_ptr_ = std::make_shared<typename decltype(csvm_model.indices_ptr_)::element_type>(std::move(indices));
+        csvm_model.index_sets_ptr_ = std::make_shared<typename decltype(csvm_model.index_sets_ptr_)::element_type>(std::move(index_sets));
     }
 
     const std::chrono::time_point end_time = std::chrono::steady_clock::now();
@@ -517,7 +517,7 @@ std::vector<label_type> csvm::predict(const model<label_type> &model, const data
             predicted_labels[i] = model.data_.mapping_->get_label_by_mapped_index(argmax);
         }
     } else if (model.get_classification_type() == classification_type::oao) {
-        PLSSVM_ASSERT(model.indices_ptr_ != nullptr, "The indices_ptr_ may never be a nullptr!");
+        PLSSVM_ASSERT(model.index_sets_ptr_ != nullptr, "The index_sets_ptr_ may never be a nullptr!");
         PLSSVM_ASSERT(model.alpha_ptr_ != nullptr, "The alpha_ptr_ may never be a nullptr!");
         PLSSVM_ASSERT(model.alpha_ptr_->size() == calculate_number_of_classifiers(classification_type::oao, model.num_classes()), "The alpha vector must contain {} matrices, but it contains {}!", calculate_number_of_classifiers(classification_type::oao, model.num_classes()), model.alpha_ptr_->size());
         PLSSVM_ASSERT(std::all_of(model.alpha_ptr_->cbegin(), model.alpha_ptr_->cend(), [](const aos_matrix<real_type> &matr) { return matr.num_rows() == 1; }), "In case of OAO, each matrix may only contain one row!");
@@ -527,7 +527,7 @@ std::vector<label_type> csvm::predict(const model<label_type> &model, const data
         // predict values using OAO
         const std::size_t num_features = model.num_features();
         const std::size_t num_classes = model.num_classes();
-        const std::vector<std::vector<std::size_t>> &indices = *model.indices_ptr_;
+        const std::vector<std::vector<std::size_t>> &index_sets = *model.index_sets_ptr_;
 
         aos_matrix<std::size_t> class_votes{ data.num_data_points(), num_classes };
 
@@ -545,7 +545,7 @@ std::vector<label_type> csvm::predict(const model<label_type> &model, const data
             for (std::size_t j = i + 1; j < num_classes; ++j) {
                 // TODO: reduce amount of copies!?
                 // assemble one vs. one classification matrix and rhs
-                const std::size_t num_data_points_in_sub_matrix{ indices[i].size() + indices[j].size() };
+                const std::size_t num_data_points_in_sub_matrix{ index_sets[i].size() + index_sets[j].size() };
                 const aos_matrix<real_type> &binary_alpha = (*model.alpha_ptr_)[pos];
                 const std::vector<real_type> binary_rho{ (*model.rho_ptr_)[pos] };
 
@@ -559,7 +559,7 @@ std::vector<label_type> csvm::predict(const model<label_type> &model, const data
                         // order the indices in increasing order
                         aos_matrix<real_type> temp{ num_data_points_in_sub_matrix, num_features };
                         std::vector<std::size_t> sorted_indices(num_data_points_in_sub_matrix);
-                        std::merge(indices[i].cbegin(), indices[i].cend(), indices[j].cbegin(), indices[j].cend(), sorted_indices.begin());
+                        std::merge(index_sets[i].cbegin(), index_sets[i].cend(), index_sets[j].cbegin(), index_sets[j].cend(), sorted_indices.begin());
                         // copy the support vectors to the binary support vectors
                         #pragma omp parallel for collapse(2) default(none) shared(sorted_indices, temp, model) firstprivate(num_data_points_in_sub_matrix, num_features)
                         for (std::size_t si = 0; si < num_data_points_in_sub_matrix; ++si) {

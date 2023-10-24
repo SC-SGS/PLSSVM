@@ -172,7 +172,7 @@ class model {
      * @brief For each class, holds the indices of all data points in the support vectors.
      * @note Must be initialized to an empty vector instead of a `nullptr`.
      */
-    std::shared_ptr<std::vector<std::vector<std::size_t>>> indices_ptr_{ std::make_shared<std::vector<std::vector<std::size_t>>>() };
+    std::shared_ptr<std::vector<std::vector<std::size_t>>> index_sets_ptr_{ std::make_shared<std::vector<std::vector<std::size_t>>>() };
 
     /**
      * @brief The bias after learning this model.
@@ -216,15 +216,15 @@ model<U>::model(const std::string &filename) {
     switch (classification_strategy_) {
         case classification_type::oaa:
             // empty index set for the OAA classification
-            indices_ptr_ = std::make_shared<std::vector<std::vector<std::size_t>>>();
+            index_sets_ptr_ = std::make_shared<std::vector<std::vector<std::size_t>>>();
             break;
         case classification_type::oao: {
-            // fill indices -> support vectors are sorted!
-            indices_ptr_ = std::make_shared<std::vector<std::vector<std::size_t>>>(unique_labels.size());
+            // fill index_sets -> support vectors are sorted!
+            index_sets_ptr_ = std::make_shared<std::vector<std::vector<std::size_t>>>(unique_labels.size());
             std::size_t running_idx{ 0 };
             for (std::size_t i = 0; i < num_sv_per_class.size(); ++i) {
-                (*indices_ptr_)[i] = std::vector<std::size_t>(num_sv_per_class[i]);
-                std::iota((*indices_ptr_)[i].begin(), (*indices_ptr_)[i].end(), running_idx);
+                (*index_sets_ptr_)[i] = std::vector<std::size_t>(num_sv_per_class[i]);
+                std::iota((*index_sets_ptr_)[i].begin(), (*index_sets_ptr_)[i].end(), running_idx);
                 running_idx += num_sv_per_class[i];
             }
         } break;
@@ -259,12 +259,12 @@ template <typename U>
 void model<U>::save(const std::string &filename) const {
     PLSSVM_ASSERT(rho_ptr_ != nullptr, "The rho_ptr may never be a nullptr!");
     PLSSVM_ASSERT(alpha_ptr_ != nullptr, "The alpha_ptr may never be a nullptr!");
-    PLSSVM_ASSERT(indices_ptr_ != nullptr, "The indices_ptr may never be a nullptr!");
+    PLSSVM_ASSERT(index_sets_ptr_ != nullptr, "The index_sets_ptr may never be a nullptr!");
 
     const std::chrono::time_point start_time = std::chrono::steady_clock::now();
 
     // save model file header and support vectors
-    detail::io::write_libsvm_model_data(filename, params_, classification_strategy_, *rho_ptr_, *alpha_ptr_, *indices_ptr_, data_);
+    detail::io::write_libsvm_model_data(filename, params_, classification_strategy_, *rho_ptr_, *alpha_ptr_, *index_sets_ptr_, data_);
 
     const std::chrono::time_point end_time = std::chrono::steady_clock::now();
     detail::log(verbosity_level::full | verbosity_level::timing,
