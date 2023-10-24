@@ -575,7 +575,7 @@ TYPED_TEST_P(GenericCSVMSolverKernelFunction, solve_system_of_linear_equations_t
     // create parameter struct
     plssvm::parameter params{ plssvm::kernel_type = kernel, plssvm::cost = 2.0 };
     if constexpr (kernel == plssvm::kernel_function_type::polynomial) {
-        params.degree = 1.0;
+        params.degree = 1;
         params.gamma = 1.0;
         params.coef0 = 0.0;
     } else if constexpr (kernel == plssvm::kernel_function_type::rbf) {
@@ -626,13 +626,14 @@ TYPED_TEST_P(GenericCSVMSolverKernelFunction, assemble_kernel_matrix_minimal) {
         GTEST_SKIP() << "Currently not implemented!";
     }
 
-    const plssvm::parameter params{
-        plssvm::kernel_type = kernel,
-        plssvm::cost = 1.0,
-        plssvm::gamma = 1.0,
-        plssvm::coef0 = 0.0,
-        plssvm::degree = 1
-    };
+    plssvm::parameter params{ plssvm::kernel_type = kernel, plssvm::cost = 1.0 };
+    if constexpr (kernel == plssvm::kernel_function_type::polynomial) {
+        params.degree = 1;
+        params.gamma = 1.0;
+        params.coef0 = 0.0;
+    } else if constexpr (kernel == plssvm::kernel_function_type::rbf) {
+        params.gamma = 1.0;
+    }
     const plssvm::aos_matrix<plssvm::real_type> data{ { { plssvm::real_type{ 1.0 }, plssvm::real_type{ 2.0 }, plssvm::real_type{ 3.0 } },
                                                         { plssvm::real_type{ 4.0 }, plssvm::real_type{ 5.0 }, plssvm::real_type{ 6.0 } },
                                                         { plssvm::real_type{ 7.0 }, plssvm::real_type{ 8.0 }, plssvm::real_type{ 9.0 } } } };  // 3 x 3 -> assemble 2 x 2 matrix
@@ -699,11 +700,13 @@ TYPED_TEST_P(GenericCSVMSolverKernelFunction, assemble_kernel_matrix) {
         GTEST_SKIP() << "Currently not implemented!";
     }
 
-    const plssvm::parameter params{
-        plssvm::kernel_type = kernel,
-        plssvm::coef0 = 1.0,
-        plssvm::gamma = 1.0 / 3.0
-    };
+    plssvm::parameter params{ plssvm::kernel_type = kernel };
+    if constexpr (kernel == plssvm::kernel_function_type::polynomial) {
+        params.gamma = 1.0 / 3.0;
+        params.coef0 = 1.0;
+    } else if constexpr (kernel == plssvm::kernel_function_type::rbf) {
+        params.gamma = 1.0 / 3.0;
+    }
     const plssvm::aos_matrix<plssvm::real_type> data{ { { plssvm::real_type{ 1.0 }, plssvm::real_type{ 2.0 }, plssvm::real_type{ 3.0 } },
                                                         { plssvm::real_type{ 4.0 }, plssvm::real_type{ 5.0 }, plssvm::real_type{ 6.0 } },
                                                         { plssvm::real_type{ 7.0 }, plssvm::real_type{ 8.0 }, plssvm::real_type{ 9.0 } } } };

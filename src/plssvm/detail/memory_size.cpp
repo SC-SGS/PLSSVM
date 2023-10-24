@@ -65,7 +65,6 @@ std::istream &operator>>(std::istream &in, memory_size &mem) {
     } else if (unit == "TB") {
         size *= 1000L * 1000L * 1000L * 1000L;
     } else {
-        std::cerr << "!!!" << std::endl;
         in.setstate(std::ios::failbit);
     }
 

@@ -155,7 +155,7 @@ TYPED_TEST(LIBSVMModelHeaderWrite, write_rbf) {
 }
 
 template <typename T>
-class LIBSVMModelHeaderWriteDeathTest : public LIBSVMModelHeaderWrite<T> {};
+class LIBSVMModelHeaderWriteDeathTest : public LIBSVMModelHeaderWrite<T>, private util::redirect_output<> {};
 TYPED_TEST_SUITE(LIBSVMModelHeaderWriteDeathTest, util::label_type_gtest, naming::test_parameter_to_name);
 
 TYPED_TEST(LIBSVMModelHeaderWriteDeathTest, write_header_without_label) {

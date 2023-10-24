@@ -159,11 +159,13 @@ TYPED_TEST_P(GenericGPUCSVMKernelFunction, run_assemble_kernel_matrix_explicit) 
     using device_ptr_type = typename csvm_test_type::device_ptr_type;
     constexpr plssvm::kernel_function_type kernel = util::test_parameter_value_at_v<0, TypeParam>;
 
-    const plssvm::parameter params{
-        plssvm::kernel_type = kernel,
-        plssvm::coef0 = 1.0,
-        plssvm::gamma = 1.0 / 3.0
-    };
+    plssvm::parameter params{ plssvm::kernel_type = kernel };
+    if constexpr (kernel == plssvm::kernel_function_type::polynomial) {
+        params.gamma = 1.0 / 3.0;
+        params.coef0 = 1.0;
+    } else if constexpr (kernel == plssvm::kernel_function_type::rbf) {
+        params.gamma = 1.0 / 3.0;
+    }
     const plssvm::aos_matrix<plssvm::real_type> data{ { { plssvm::real_type{ 1.0 }, plssvm::real_type{ 2.0 }, plssvm::real_type{ 3.0 } },
                                                         { plssvm::real_type{ 4.0 }, plssvm::real_type{ 5.0 }, plssvm::real_type{ 6.0 } },
                                                         { plssvm::real_type{ 7.0 }, plssvm::real_type{ 8.0 }, plssvm::real_type{ 9.0 } } } };

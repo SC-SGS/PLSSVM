@@ -367,18 +367,19 @@ TYPED_TEST(BaseCSVMFit, fit) {
                             ::testing::An<plssvm::real_type>(),
                             ::testing::An<plssvm::aos_matrix<plssvm::real_type> &>()))
                         .Times(::testing::Between(num_calls * 1, num_calls * 6));  // at least once before CG loop, at most # data_points - 1 + 1
-// clang-format on
+    // clang-format on
 
-// create data set
-const plssvm::data_set<label_type> training_data{ this->get_data_filename() };
+    // create data set
+    const plssvm::data_set<label_type> training_data{ this->get_data_filename() };
 
-// call function
-const plssvm::model<label_type> model = csvm.fit(training_data, plssvm::solver = solver, plssvm::classification = classification);
-EXPECT_EQ(model.num_support_vectors(), 6);
-EXPECT_EQ(model.num_features(), 4);
-EXPECT_EQ(model.num_classes(), util::get_num_classes<label_type>());
-EXPECT_EQ(model.get_classification_type(), classification);
-EXPECT_EQ(model.get_params(), (plssvm::parameter{ plssvm::kernel_type = kernel, plssvm::gamma = 0.25 }));
+    // call function
+    const plssvm::model<label_type> model = csvm.fit(training_data, plssvm::solver = solver, plssvm::classification = classification);
+    EXPECT_EQ(model.num_support_vectors(), 6);
+    EXPECT_EQ(model.num_features(), 4);
+    EXPECT_EQ(model.num_classes(), util::get_num_classes<label_type>());
+    EXPECT_EQ(model.get_classification_type(), classification);
+    EXPECT_EQ(model.get_params().kernel_type, kernel);
+    EXPECT_EQ(model.get_params().gamma, 0.25);
 }
 TYPED_TEST(BaseCSVMFit, fit_named_parameters) {
     using label_type = typename TestFixture::fixture_label_type;
@@ -442,7 +443,8 @@ TYPED_TEST(BaseCSVMFit, fit_named_parameters) {
     EXPECT_EQ(model.num_features(), 4);
     EXPECT_EQ(model.num_classes(), util::get_num_classes<label_type>());
     EXPECT_EQ(model.get_classification_type(), classification);
-    EXPECT_EQ(model.get_params(), (plssvm::parameter{ plssvm::kernel_type = kernel, plssvm::gamma = 0.25 }));
+    EXPECT_EQ(model.get_params().kernel_type, kernel);
+    EXPECT_EQ(model.get_params().gamma, 0.25);
 }
 TYPED_TEST(BaseCSVMFit, fit_named_parameters_invalid_epsilon) {
     using label_type = typename TestFixture::fixture_label_type;
