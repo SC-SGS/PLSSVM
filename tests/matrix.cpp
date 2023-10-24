@@ -136,6 +136,17 @@ TYPED_TEST(Matrix, construct_with_size) {
     EXPECT_EQ(matr.num_cols(), 2);
     EXPECT_TRUE(std::all_of(matr.data(), matr.data() + matr.num_entries(), [](const real_type val) { return val == real_type{}; }));
 }
+TYPED_TEST(Matrix, construct_with_size_empty) {
+    using real_type = typename TestFixture::fixture_real_type;
+    constexpr plssvm::layout_type layout = TestFixture::fixture_layout;
+
+    // construct a matrix with a specific size
+    const plssvm::matrix<real_type, layout> matr{ 0, 0 };
+
+    // check content
+    EXPECT_EQ(matr.num_rows(), 0);
+    EXPECT_EQ(matr.num_cols(), 0);
+}
 TYPED_TEST(Matrix, construct_with_size_zero_num_rows) {
     using real_type = typename TestFixture::fixture_real_type;
     constexpr plssvm::layout_type layout = TestFixture::fixture_layout;
@@ -143,7 +154,7 @@ TYPED_TEST(Matrix, construct_with_size_zero_num_rows) {
     // try constructing a matrix with zero rows
     EXPECT_THROW_WHAT((plssvm::matrix<real_type, layout>{ 0, 2 }),
                       plssvm::matrix_exception,
-                      "The number of rows is zero!");
+                      "The number of rows is zero but the number of columns is not!");
 }
 TYPED_TEST(Matrix, construct_with_size_zero_num_cols) {
     using real_type = typename TestFixture::fixture_real_type;
@@ -152,7 +163,7 @@ TYPED_TEST(Matrix, construct_with_size_zero_num_cols) {
     // try constructing a matrix with zero columns
     EXPECT_THROW_WHAT((plssvm::matrix<real_type, layout>{ 2, 0 }),
                       plssvm::matrix_exception,
-                      "The number of columns is zero!");
+                      "The number of columns is zero but the number of rows is not!");
 }
 
 TYPED_TEST(Matrix, construct_with_size_and_default_value) {
@@ -167,6 +178,17 @@ TYPED_TEST(Matrix, construct_with_size_and_default_value) {
     EXPECT_EQ(matr.num_cols(), 3);
     EXPECT_TRUE(std::all_of(matr.data(), matr.data() + matr.num_entries(), [](const real_type val) { return val == real_type{ 3.1415 }; }));
 }
+TYPED_TEST(Matrix, construct_with_size_and_default_value_empty) {
+    using real_type = typename TestFixture::fixture_real_type;
+    constexpr plssvm::layout_type layout = TestFixture::fixture_layout;
+
+    // construct a matrix with a specific size
+    const plssvm::matrix<real_type, layout> matr{ 0, 0, real_type{ 3.1415 } };
+
+    // check content
+    EXPECT_EQ(matr.num_rows(), 0);
+    EXPECT_EQ(matr.num_cols(), 0);
+}
 TYPED_TEST(Matrix, construct_with_size_and_default_value_zero_num_rows) {
     using real_type = typename TestFixture::fixture_real_type;
     constexpr plssvm::layout_type layout = TestFixture::fixture_layout;
@@ -174,7 +196,7 @@ TYPED_TEST(Matrix, construct_with_size_and_default_value_zero_num_rows) {
     // try constructing a matrix with zero rows
     EXPECT_THROW_WHAT((plssvm::matrix<real_type, layout>{ 0, 2, real_type{ 3.1415 } }),
                       plssvm::matrix_exception,
-                      "The number of rows is zero!");
+                      "The number of rows is zero but the number of columns is not!");
 }
 TYPED_TEST(Matrix, construct_with_size_and_default_value_zero_num_cols) {
     using real_type = typename TestFixture::fixture_real_type;
@@ -183,7 +205,7 @@ TYPED_TEST(Matrix, construct_with_size_and_default_value_zero_num_cols) {
     // try constructing a matrix with zero columns
     EXPECT_THROW_WHAT((plssvm::matrix<real_type, layout>{ 2, 0, real_type{ 3.1415 } }),
                       plssvm::matrix_exception,
-                      "The number of columns is zero!");
+                      "The number of columns is zero but the number of rows is not!");
 }
 
 TYPED_TEST(Matrix, construct_with_size_and_vector) {
@@ -202,6 +224,17 @@ TYPED_TEST(Matrix, construct_with_size_and_vector) {
         EXPECT_FLOATING_POINT_EQ(*(matr.data() + i), data[i]);
     }
 }
+TYPED_TEST(Matrix, construct_with_size_and_vector_empty) {
+    using real_type = typename TestFixture::fixture_real_type;
+    constexpr plssvm::layout_type layout = TestFixture::fixture_layout;
+
+    // construct a matrix with a specific size
+    const plssvm::matrix<real_type, layout> matr{ 0, 0, std::vector<real_type>{} };
+
+    // check content
+    EXPECT_EQ(matr.num_rows(), 0);
+    EXPECT_EQ(matr.num_cols(), 0);
+}
 TYPED_TEST(Matrix, construct_with_size_and_vector_value_zero_num_rows) {
     using real_type = typename TestFixture::fixture_real_type;
     constexpr plssvm::layout_type layout = TestFixture::fixture_layout;
@@ -209,7 +242,7 @@ TYPED_TEST(Matrix, construct_with_size_and_vector_value_zero_num_rows) {
     // try constructing a matrix with zero rows
     EXPECT_THROW_WHAT((plssvm::matrix<real_type, layout>{ 0, 2, std::vector<real_type>(2) }),
                       plssvm::matrix_exception,
-                      "The number of rows is zero!");
+                      "The number of rows is zero but the number of columns is not!");
 }
 TYPED_TEST(Matrix, construct_with_size_and_vector_zero_num_cols) {
     using real_type = typename TestFixture::fixture_real_type;
@@ -218,7 +251,7 @@ TYPED_TEST(Matrix, construct_with_size_and_vector_zero_num_cols) {
     // try constructing a matrix with zero columns
     EXPECT_THROW_WHAT((plssvm::matrix<real_type, layout>{ 2, 0, std::vector<real_type>(2) }),
                       plssvm::matrix_exception,
-                      "The number of columns is zero!");
+                      "The number of columns is zero but the number of rows is not!");
 }
 
 TYPED_TEST(Matrix, construct_from_2D_vector) {
@@ -236,12 +269,16 @@ TYPED_TEST(Matrix, construct_from_2D_vector) {
     ASSERT_EQ(matr.num_cols(), matr_2D.front().size());
     EXPECT_EQ(matr.to_2D_vector(), matr_2D);
 }
-TYPED_TEST(Matrix, construct_from_empty_2D_vector) {
+TYPED_TEST(Matrix, construct_from_2D_vector_empty) {
     using real_type = typename TestFixture::fixture_real_type;
     constexpr plssvm::layout_type layout = TestFixture::fixture_layout;
 
-    // try constructing a matrix from an empty 2D vector
-    EXPECT_THROW_WHAT((plssvm::matrix<real_type, layout>{ {} }), plssvm::matrix_exception, "The data to create the matrix from may not be empty!");
+    // construct a matrix from a std::vector<std::vector<>>
+    const plssvm::matrix<real_type, layout> matr{ { } };
+
+    // check content
+    ASSERT_EQ(matr.num_rows(), 0);
+    ASSERT_EQ(matr.num_cols(), 0);
 }
 TYPED_TEST(Matrix, construct_from_2D_vector_invalid_columns) {
     using real_type = typename TestFixture::fixture_real_type;

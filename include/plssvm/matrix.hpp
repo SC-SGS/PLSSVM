@@ -101,7 +101,7 @@ class matrix {
      * @brief Create a matrix of size @p num_rows x @p num_cols.
      * @param[in] num_rows the number of rows in the matrix
      * @param[in] num_cols the number of columns in the matrix
-     * @throws plssvm::matrix_exception if at least one of @p num_rows or @p num_cols is zero
+     * @throws plssvm::matrix_exception if exactly one of @p num_rows or @p num_cols is zero; creates an empty matrix if both are zero
      */
     matrix(const size_type num_rows, const size_type num_cols) :
         matrix{ num_rows, num_cols, value_type{} } {}
@@ -110,7 +110,7 @@ class matrix {
      * @param[in] num_rows the number of rows in the matrix
      * @param[in] num_cols the number of columns in the matrix
      * @param[in] init the value of all entries in the matrix
-     * @throws plssvm::matrix_exception if at least one of @p num_rows or @p num_cols is zero
+     * @throws plssvm::matrix_exception if exactly one of @p num_rows or @p num_cols is zero; creates an empty matrix if both are zero
      */
     matrix(size_type num_rows, size_type num_cols, const_reference init);
     /**
@@ -118,7 +118,7 @@ class matrix {
      * @param[in] num_rows the number of rows in the matrix
      * @param[in] num_cols the number of cols in the matrix
      * @param[in] data the data values
-     * @throws plssvm::matrix_exception if at least one of @p num_rows or @p num_cols is zero
+     * @throws plssvm::matrix_exception if exactly one of @p num_rows or @p num_cols is zero; creates an empty matrix if both are zero
      * @throws plssvm::matrix_exception if @p num_rows times @p num_cols is not equal to the number of values in @p data
      */
     matrix(size_type num_rows, size_type num_cols, const std::vector<value_type> &data);
@@ -126,7 +126,6 @@ class matrix {
     /**
      * @brief Create a matrix from the provided 2D vector @p data.
      * @param[in] data the data used to initialize this matrix
-     * @throws plssvm::matrix_exception if the data vector is empty
      * @throws plssvm::matrix_exception if the data vectors contain different number of values
      * @throws plssvm::matrix_exception if one vector in the data vector is empty
      */
@@ -253,22 +252,22 @@ matrix<T, layout_>::matrix(const matrix<T, other_layout_> &other) :
 template <typename T, layout_type layout_>
 matrix<T, layout_>::matrix(const size_type num_rows, const size_type num_cols, const_reference init) :
     num_rows_{ num_rows }, num_cols_{ num_cols }, data_(num_rows * num_cols, init) {
-    if (num_rows_ == 0) {
-        throw matrix_exception{ "The number of rows is zero!" };
+    if (num_rows_ == 0 && num_cols_ != 0) {
+        throw matrix_exception{ "The number of rows is zero but the number of columns is not!" };
     }
-    if (num_cols_ == 0) {
-        throw matrix_exception{ "The number of columns is zero!" };
+    if (num_rows_ != 0 && num_cols_ == 0) {
+        throw matrix_exception{ "The number of columns is zero but the number of rows is not!" };
     }
 }
 
 template <typename T, layout_type layout_>
 matrix<T, layout_>::matrix(const size_type num_rows, const size_type num_cols, const std::vector<value_type> &data) :
     num_rows_{ num_rows }, num_cols_{ num_cols }, data_(num_rows * num_cols) {
-    if (num_rows_ == 0) {
-        throw matrix_exception{ "The number of rows is zero!" };
+    if (num_rows_ == 0 && num_cols_ != 0) {
+        throw matrix_exception{ "The number of rows is zero but the number of columns is not!" };
     }
-    if (num_cols_ == 0) {
-        throw matrix_exception{ "The number of columns is zero!" };
+    if (num_rows_ != 0 && num_cols_ == 0) {
+        throw matrix_exception{ "The number of columns is zero but the number of rows is not!" };
     }
     if (this->num_entries() != data.size()) {
         throw matrix_exception{ fmt::format("The number of entries in the matrix ({}) must be equal to the size of the data ({})!", this->num_entries(), data.size()) };
@@ -280,25 +279,31 @@ matrix<T, layout_>::matrix(const size_type num_rows, const size_type num_cols, c
 template <typename T, layout_type layout_>
 matrix<T, layout_>::matrix(const std::vector<std::vector<value_type>> &data) {
     if (data.empty()) {
-        throw matrix_exception{ "The data to create the matrix from may not be empty!" };
-    }
-    if (!std::all_of(data.cbegin(), data.cend(), [&data](const std::vector<value_type> &row) { return row.size() == data.front().size(); })) {
-        throw matrix_exception{ "Each row in the matrix must contain the same amount of columns!" };
-    }
-    if (data.front().empty()) {
-        throw matrix_exception{ "The data to create the matrix must at least have one column!" };
-    }
+        // the provided 2D vector was empty -> set to empty matrix
+        num_rows_ = 0;
+        num_cols_ = 0;
+        data_ = std::vector<value_type>{};
+    } else {
+        if (!std::all_of(data.cbegin(), data.cend(), [&data](const std::vector<value_type> &row) { return row.size() == data.front().size(); })) {
+            throw matrix_exception{ "Each row in the matrix must contain the same amount of columns!" };
+        }
+        if (data.front().empty()) {
+            throw matrix_exception{ "The data to create the matrix must at least have one column!" };
+        }
 
-    num_rows_ = data.size();
-    num_cols_ = data.front().size();
-    data_ = std::vector<value_type>(num_rows_ * num_cols_);
+        // the provided 2D vector contains at least one element -> initialize matrix
+        num_rows_ = data.size();
+        num_cols_ = data.front().size();
+        data_ = std::vector<value_type>(num_rows_ * num_cols_);
 
-    #pragma omp parallel for collapse(2) shared(data) firstprivate(num_rows_, num_cols_)
-    for (std::size_t row = 0; row < num_rows_; ++row) {
-        for (std::size_t col = 0; col < num_cols_; ++col) {
-            (*this)(row, col) = data[row][col];
+        #pragma omp parallel for collapse(2) shared(data) firstprivate(num_rows_, num_cols_)
+        for (std::size_t row = 0; row < num_rows_; ++row) {
+            for (std::size_t col = 0; col < num_cols_; ++col) {
+                (*this)(row, col) = data[row][col];
+            }
         }
     }
+
 }
 
 template <typename T, layout_type layout_>

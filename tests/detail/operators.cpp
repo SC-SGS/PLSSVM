@@ -639,7 +639,7 @@ TYPED_TEST(MatrixOperations, operator_matrix_multiplication) {
     }
 }
 TYPED_TEST(MatrixOperations, operator_matrix_multiplication_empty) {
-    EXPECT_THROW_WHAT(std::ignore = this->get_empty() * this->get_empty(), plssvm::matrix_exception, "The number of rows is zero!");
+    EXPECT_FLOATING_POINT_MATRIX_EQ(this->get_empty() * this->get_empty(), this->get_empty());
 }
 TYPED_TEST(MatrixOperationsDeathTest, operator_matrix_multiplication) {
     EXPECT_DEATH(std::ignore = this->get_A() * this->get_empty(), ::testing::HasSubstr("Error: shapes missmatch! (3 (num_cols) != 0 (num_rows))"));

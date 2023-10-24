@@ -442,8 +442,8 @@ TYPED_TEST(DataSetConstructors, construct_from_empty_vector) {
 
     // creating a data set from an empty vector is illegal
     EXPECT_THROW_WHAT((plssvm::data_set<label_type>{ std::vector<std::vector<plssvm::real_type>>{} }),
-                      plssvm::matrix_exception,
-                      "The data to create the matrix from may not be empty!");
+                      plssvm::data_set_exception,
+                      "Data vector is empty!");
 }
 TYPED_TEST(DataSetConstructors, construct_from_vector_with_differing_num_features) {
     using label_type = typename TestFixture::fixture_label_type;
@@ -614,17 +614,9 @@ TYPED_TEST(DataSetMatrixConstructors, construct_from_empty_matrix) {
     constexpr plssvm::layout_type layout = TestFixture::fixture_layout;
 
     // creating a data set from an empty vector is illegal
-    if constexpr (layout == plssvm::layout_type::aos) {
-        EXPECT_THROW_WHAT((plssvm::data_set<label_type>{ plssvm::matrix<plssvm::real_type, layout>{} }),
-                          plssvm::data_set_exception,
-                          "Data vector is empty!");
-    } else if constexpr (layout == plssvm::layout_type::soa) {
-        EXPECT_THROW_WHAT((plssvm::data_set<label_type>{ plssvm::matrix<plssvm::real_type, layout>{} }),
-                          plssvm::matrix_exception,
-                          "The number of rows is zero!");
-    } else {
-        FAIL() << "Invalid layout type!";
-    }
+    EXPECT_THROW_WHAT((plssvm::data_set<label_type>{ plssvm::matrix<plssvm::real_type, layout>{} }),
+                      plssvm::data_set_exception,
+                      "Data vector is empty!");
 }
 
 TYPED_TEST(DataSetMatrixConstructors, construct_from_matrix_with_label) {
