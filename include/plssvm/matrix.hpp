@@ -114,6 +114,16 @@ class matrix {
      */
     matrix(size_type num_rows, size_type num_cols, const_reference init);
     /**
+     * @brief Create a matrix of size @p num_rows x @p num_cols and initialize it to the values provided via @p data.
+     * @param[in] num_rows the number of rows in the matrix
+     * @param[in] num_cols the number of cols in the matrix
+     * @param[in] data the data values
+     * @throws plssvm::matrix_exception if at least one of @p num_rows or @p num_cols is zero
+     * @throws plssvm::matrix_exception if @p num_rows times @p num_cols is not equal to the number of values in @p data
+     */
+    matrix(size_type num_rows, size_type num_cols, const std::vector<value_type> &data);
+
+    /**
      * @brief Create a matrix from the provided 2D vector @p data.
      * @param[in] data the data used to initialize this matrix
      * @throws plssvm::matrix_exception if the data vector is empty
@@ -249,6 +259,22 @@ matrix<T, layout_>::matrix(const size_type num_rows, const size_type num_cols, c
     if (num_cols_ == 0) {
         throw matrix_exception{ "The number of columns is zero!" };
     }
+}
+
+template <typename T, layout_type layout_>
+matrix<T, layout_>::matrix(const size_type num_rows, const size_type num_cols, const std::vector<value_type> &data) :
+    num_rows_{ num_rows }, num_cols_{ num_cols }, data_(num_rows * num_cols) {
+    if (num_rows_ == 0) {
+        throw matrix_exception{ "The number of rows is zero!" };
+    }
+    if (num_cols_ == 0) {
+        throw matrix_exception{ "The number of columns is zero!" };
+    }
+    if (this->num_entries() != data.size()) {
+        throw matrix_exception{ fmt::format("The number of entries in the matrix ({}) must be equal to the size of the data ({})!", this->num_entries(), data.size()) };
+    }
+    // memcpy data to matrix
+    std::memcpy(data_.data(), data.data(), this->num_entries() * sizeof(T));
 }
 
 template <typename T, layout_type layout_>
