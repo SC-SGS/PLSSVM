@@ -11,7 +11,7 @@
 #include "plssvm/data_set.hpp"
 
 #include "plssvm/constants.hpp"              // plssvm::real_type
-#include "plssvm/exceptions/exceptions.hpp"  // plssvm::data_set_exception, plssvm::matrix_exception
+#include "plssvm/exceptions/exceptions.hpp"  // plssvm::data_set_exception
 #include "plssvm/file_format_types.hpp"      // plssvm::file_format_type
 #include "plssvm/matrix.hpp"                 // plssvm::matrix, plssvm::layout_type
 
@@ -456,7 +456,7 @@ TYPED_TEST(DataSetConstructors, construct_from_vector_with_differing_num_feature
 
     // creating a data set from an empty vector is illegal
     EXPECT_THROW_WHAT((plssvm::data_set<label_type>{ correct_data_points }),
-                      plssvm::matrix_exception,
+                      plssvm::data_set_exception,
                       "Each row in the matrix must contain the same amount of columns!");
 }
 TYPED_TEST(DataSetConstructors, construct_from_vector_with_no_features) {
@@ -467,7 +467,7 @@ TYPED_TEST(DataSetConstructors, construct_from_vector_with_no_features) {
 
     // creating a data set from an empty vector is illegal
     EXPECT_THROW_WHAT((plssvm::data_set<label_type>{ correct_data_points }),
-                      plssvm::matrix_exception,
+                      plssvm::data_set_exception,
                       "The data to create the matrix must at least have one column!");
 }
 

@@ -565,20 +565,32 @@ data_set<U>::data_set(const std::string &filename, file_format_type format, scal
 }
 
 template <typename U>
-data_set<U>::data_set(const std::vector<std::vector<real_type>> &data_points) :
+data_set<U>::data_set(const std::vector<std::vector<real_type>> &data_points) try :
     data_set{ aos_matrix<real_type>{ data_points } } {}
+    catch (const matrix_exception &e) {
+        throw data_set_exception{ e.what() };
+    }
 
 template <typename U>
-data_set<U>::data_set(const std::vector<std::vector<real_type>> &data_points, std::vector<label_type> labels) :
+data_set<U>::data_set(const std::vector<std::vector<real_type>> &data_points, std::vector<label_type> labels) try :
     data_set{ aos_matrix<real_type>{ data_points }, std::move(labels) } {}
+    catch (const matrix_exception &e) {
+        throw data_set_exception{ e.what() };
+    }
 
 template <typename U>
-data_set<U>::data_set(const std::vector<std::vector<real_type>> &data_points, scaling scale_parameter) :
+data_set<U>::data_set(const std::vector<std::vector<real_type>> &data_points, scaling scale_parameter) try :
     data_set{ aos_matrix<real_type>{ data_points }, std::move(scale_parameter) } {}
+    catch (const matrix_exception &e) {
+        throw data_set_exception{ e.what() };
+    }
 
 template <typename U>
-data_set<U>::data_set(const std::vector<std::vector<real_type>> &data_points, std::vector<label_type> labels, scaling scale_parameter) :
+data_set<U>::data_set(const std::vector<std::vector<real_type>> &data_points, std::vector<label_type> labels, scaling scale_parameter) try :
     data_set{ aos_matrix<real_type>{ data_points }, std::move(labels), std::move(scale_parameter) } {}
+    catch (const matrix_exception &e) {
+        throw data_set_exception{ e.what() };
+    }
 
 template <typename U>
 template <layout_type layout>
