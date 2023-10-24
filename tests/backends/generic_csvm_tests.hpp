@@ -240,7 +240,7 @@ TYPED_TEST_P(GenericCSVMSolver, blas_level_3_without_C) {
     plssvm::aos_matrix<plssvm::real_type> C{ 3, 3 };
     plssvm::aos_matrix<plssvm::real_type> C2{ C };
 
-    // create C-SVM: must be done using the mock class, since solve_system_of_linear_equations_impl is protected
+    // create C-SVM: must be done using the mock class, since solve_lssvm_system_of_linear_equations is protected
     const mock_csvm_type svm = util::construct_from_tuple<mock_csvm_type>(csvm_test_type::additional_arguments);
 
     // automatic solver type not permitted
@@ -301,7 +301,7 @@ TYPED_TEST_P(GenericCSVMSolver, blas_level_3) {
     auto C = util::generate_specific_matrix<plssvm::aos_matrix<plssvm::real_type>>(3, 3);
     plssvm::aos_matrix<plssvm::real_type> C2{ C };
 
-    // create C-SVM: must be done using the mock class, since solve_system_of_linear_equations_impl is protected
+    // create C-SVM: must be done using the mock class, since solve_lssvm_system_of_linear_equations is protected
     const mock_csvm_type svm = util::construct_from_tuple<mock_csvm_type>(csvm_test_type::additional_arguments);
 
     // automatic solver type not permitted
@@ -356,7 +356,7 @@ TYPED_TEST_P(GenericCSVMSolver, conjugate_gradients_trivial) {
     const plssvm::aos_matrix<plssvm::real_type> B{ { { plssvm::real_type{ 1.0 }, plssvm::real_type{ -1.0 }, plssvm::real_type{ 1.0 }, plssvm::real_type{ -1.0 } },
                                                      { plssvm::real_type{ -1.0 }, plssvm::real_type{ 1.0 }, plssvm::real_type{ -1.0 }, plssvm::real_type{ 1.0 } } } };
 
-    // create C-SVM: must be done using the mock class, since solve_system_of_linear_equations_impl is protected
+    // create C-SVM: must be done using the mock class, since solve_lssvm_system_of_linear_equations is protected
     const mock_csvm_type svm = util::construct_from_tuple<mock_csvm_type>(csvm_test_type::additional_arguments);
 
     // automatic solver type not permitted
@@ -398,7 +398,7 @@ TYPED_TEST_P(GenericCSVMSolver, conjugate_gradients) {
     const plssvm::aos_matrix<plssvm::real_type> correct_X{ { { plssvm::real_type{ 1.0 / 11.0 }, plssvm::real_type{ 7.0 / 11.0 } },
                                                              { plssvm::real_type{ 1.0 / 11.0 }, plssvm::real_type{ 7.0 / 11.0 } } } };
 
-    // create C-SVM: must be done using the mock class, since solve_system_of_linear_equations_impl is protected
+    // create C-SVM: must be done using the mock class, since solve_lssvm_system_of_linear_equations is protected
     const mock_csvm_type svm = util::construct_from_tuple<mock_csvm_type>(csvm_test_type::additional_arguments);
 
     // automatic solver type not permitted
@@ -463,7 +463,7 @@ TYPED_TEST_P(GenericCSVMKernelFunction, predict_values) {
     const plssvm::aos_matrix<plssvm::real_type> correct_predict_values{ { { plssvm::real_type{ 0.0 }, plssvm::real_type{ 0.0 } },
                                                                           { plssvm::real_type{ 4.0 }, plssvm::real_type{ 4.0 } } } };
 
-    // create C-SVM: must be done using the mock class, since solve_system_of_linear_equations_impl is protected
+    // create C-SVM: must be done using the mock class, since solve_lssvm_system_of_linear_equations is protected
     const mock_csvm_type svm = util::construct_from_tuple<mock_csvm_type>(params, csvm_test_type::additional_arguments);
 
     // predict the values using the previously learned support vectors and weights
@@ -509,7 +509,7 @@ TYPED_TEST_P(GenericCSVMKernelFunction, predict_values_provided_w) {
         const plssvm::aos_matrix<plssvm::real_type> correct_predict_values{ { { plssvm::real_type{ 0.0 }, plssvm::real_type{ 0.0 } },
                                                                               { plssvm::real_type{ 4.0 }, plssvm::real_type{ 4.0 } } } };
 
-        // create C-SVM: must be done using the mock class, since solve_system_of_linear_equations_impl is protected
+        // create C-SVM: must be done using the mock class, since solve_lssvm_system_of_linear_equations is protected
         const mock_csvm_type svm = util::construct_from_tuple<mock_csvm_type>(params, csvm_test_type::additional_arguments);
 
         // predict the values using the previously learned support vectors and weights
@@ -534,7 +534,7 @@ TYPED_TEST_P(GenericCSVMKernelFunction, perform_dimensional_reduction) {
 
     const auto data = util::generate_random_matrix<plssvm::aos_matrix<plssvm::real_type>>(6, 4);
 
-    // create C-SVM: must be done using the mock class, since solve_system_of_linear_equations_impl is protected
+    // create C-SVM: must be done using the mock class, since solve_lssvm_system_of_linear_equations is protected
     const mock_csvm_type svm = util::construct_from_tuple<mock_csvm_type>(params, csvm_test_type::additional_arguments);
 
     // perform dimensional reduction
@@ -561,7 +561,7 @@ template <typename T>
 class GenericCSVMSolverKernelFunction : public GenericCSVM<T> {};
 TYPED_TEST_SUITE_P(GenericCSVMSolverKernelFunction);
 
-TYPED_TEST_P(GenericCSVMSolverKernelFunction, solve_system_of_linear_equations_trivial) {
+TYPED_TEST_P(GenericCSVMSolverKernelFunction, solve_lssvm_system_of_linear_equations_trivial) {
     using csvm_test_type = util::test_parameter_type_at_t<0, TypeParam>;
     using mock_csvm_type = typename csvm_test_type::mock_csvm_type;
     constexpr plssvm::solver_type solver = util::test_parameter_value_at_v<0, TypeParam>;
@@ -579,7 +579,7 @@ TYPED_TEST_P(GenericCSVMSolverKernelFunction, solve_system_of_linear_equations_t
         params.gamma = 1.0;
         params.coef0 = 0.0;
     } else if constexpr (kernel == plssvm::kernel_function_type::rbf) {
-        GTEST_SKIP() << "solve_system_of_linear_equations_trivial_cg_explicit currently doesn't work with the rbf kernel!";
+        GTEST_SKIP() << "solve_lssvm_system_of_linear_equations_trivial_cg_explicit currently doesn't work with the rbf kernel!";
     }
 
     // create the data that should be used
@@ -591,14 +591,14 @@ TYPED_TEST_P(GenericCSVMSolverKernelFunction, solve_system_of_linear_equations_t
     const plssvm::aos_matrix<plssvm::real_type> B{ { { plssvm::real_type{ 1.0 }, plssvm::real_type{ -1.0 }, plssvm::real_type{ 1.0 }, plssvm::real_type{ -1.0 } },
                                                      { plssvm::real_type{ 1.0 }, plssvm::real_type{ -1.0 }, plssvm::real_type{ 1.0 }, plssvm::real_type{ -1.0 } } } };
 
-    // create C-SVM: must be done using the mock class, since solve_system_of_linear_equations_impl is protected
+    // create C-SVM: must be done using the mock class, since solve_lssvm_system_of_linear_equations is protected
     const mock_csvm_type svm = util::construct_from_tuple<mock_csvm_type>(params, csvm_test_type::additional_arguments);
 
     // solve the system of linear equations using the CG algorithm:
     // | Q  1 |  *  | a |  =  | y |
     // | 1  0 |     | b |     | 0 |
     // with Q = A^TA
-    const auto &[calculated_x, calculated_rho] = svm.solve_system_of_linear_equations(A, B, params, plssvm::epsilon = 0.00001, plssvm::solver = plssvm::solver_type::cg_explicit);
+    const auto &[calculated_x, calculated_rho] = svm.solve_lssvm_system_of_linear_equations(A, B, params, plssvm::epsilon = 0.00001, plssvm::solver = plssvm::solver_type::cg_explicit);
 
     // check the calculated result for correctness
     EXPECT_FLOATING_POINT_MATRIX_NEAR(calculated_x, B);
@@ -606,10 +606,10 @@ TYPED_TEST_P(GenericCSVMSolverKernelFunction, solve_system_of_linear_equations_t
         EXPECT_FLOATING_POINT_NEAR(std::abs(rho) - std::numeric_limits<plssvm::real_type>::epsilon(), std::numeric_limits<plssvm::real_type>::epsilon());
     }
 }
-TYPED_TEST_P(GenericCSVMSolverKernelFunction, solve_system_of_linear_equations) {
+TYPED_TEST_P(GenericCSVMSolverKernelFunction, solve_lssvm_system_of_linear_equations) {
     GTEST_SKIP() << "Currently not implemented!";
 }
-TYPED_TEST_P(GenericCSVMSolverKernelFunction, solve_system_of_linear_equations_with_correction) {
+TYPED_TEST_P(GenericCSVMSolverKernelFunction, solve_lssvm_system_of_linear_equations_with_correction) {
     GTEST_SKIP() << "Currently not implemented!";
 }
 
@@ -773,7 +773,7 @@ TYPED_TEST_P(GenericCSVMSolverKernelFunction, assemble_kernel_matrix) {
 
 // clang-format off
 REGISTER_TYPED_TEST_SUITE_P(GenericCSVMSolverKernelFunction,
-                            solve_system_of_linear_equations_trivial, solve_system_of_linear_equations, solve_system_of_linear_equations_with_correction,
+                            solve_lssvm_system_of_linear_equations_trivial, solve_lssvm_system_of_linear_equations, solve_lssvm_system_of_linear_equations_with_correction,
                             assemble_kernel_matrix_minimal, assemble_kernel_matrix);
 // clang-format on
 
@@ -1027,7 +1027,7 @@ template <typename T>
 class GenericCSVMKernelFunctionDeathTest : public GenericCSVMKernelFunction<T> {};
 TYPED_TEST_SUITE_P(GenericCSVMKernelFunctionDeathTest);
 
-TYPED_TEST_P(GenericCSVMKernelFunctionDeathTest, solve_system_of_linear_equations_empty_A) {
+TYPED_TEST_P(GenericCSVMKernelFunctionDeathTest, solve_lssvm_system_of_linear_equations_empty_A) {
     using csvm_test_type = util::test_parameter_type_at_t<0, TypeParam>;
     using mock_csvm_type = typename csvm_test_type::mock_csvm_type;
     constexpr plssvm::kernel_function_type kernel = util::test_parameter_value_at_v<0, TypeParam>;
@@ -1042,9 +1042,9 @@ TYPED_TEST_P(GenericCSVMKernelFunctionDeathTest, solve_system_of_linear_equation
     const plssvm::aos_matrix<plssvm::real_type> empty_matr{};
     const plssvm::aos_matrix<plssvm::real_type> B{ 1, 3 };
 
-    EXPECT_DEATH(std::ignore = csvm.solve_system_of_linear_equations(empty_matr, B, params), "The A matrix may not be empty!");
+    EXPECT_DEATH(std::ignore = csvm.solve_lssvm_system_of_linear_equations(empty_matr, B, params), "The A matrix may not be empty!");
 }
-TYPED_TEST_P(GenericCSVMKernelFunctionDeathTest, solve_system_of_linear_equations_empty_B) {
+TYPED_TEST_P(GenericCSVMKernelFunctionDeathTest, solve_lssvm_system_of_linear_equations_empty_B) {
     using csvm_test_type = util::test_parameter_type_at_t<0, TypeParam>;
     using mock_csvm_type = typename csvm_test_type::mock_csvm_type;
     constexpr plssvm::kernel_function_type kernel = util::test_parameter_value_at_v<0, TypeParam>;
@@ -1059,9 +1059,9 @@ TYPED_TEST_P(GenericCSVMKernelFunctionDeathTest, solve_system_of_linear_equation
     const plssvm::aos_matrix<plssvm::real_type> empty_matr{};
     const plssvm::aos_matrix<plssvm::real_type> A{ 6, 4 };
 
-    EXPECT_DEATH(std::ignore = csvm.solve_system_of_linear_equations(A, empty_matr, params), "The B matrix may not be empty!");
+    EXPECT_DEATH(std::ignore = csvm.solve_lssvm_system_of_linear_equations(A, empty_matr, params), "The B matrix may not be empty!");
 }
-TYPED_TEST_P(GenericCSVMKernelFunctionDeathTest, solve_system_of_linear_equations_size_mismatch) {
+TYPED_TEST_P(GenericCSVMKernelFunctionDeathTest, solve_lssvm_system_of_linear_equations_size_mismatch) {
     using csvm_test_type = util::test_parameter_type_at_t<0, TypeParam>;
     using mock_csvm_type = typename csvm_test_type::mock_csvm_type;
     constexpr plssvm::kernel_function_type kernel = util::test_parameter_value_at_v<0, TypeParam>;
@@ -1076,7 +1076,7 @@ TYPED_TEST_P(GenericCSVMKernelFunctionDeathTest, solve_system_of_linear_equation
     const plssvm::aos_matrix<plssvm::real_type> A{ 6, 4 };
     const plssvm::aos_matrix<plssvm::real_type> B{ 1, 3 };
 
-    EXPECT_DEATH(std::ignore = csvm.solve_system_of_linear_equations(A, B, params), ::testing::HasSubstr("The number of data points in A (6) and B (3) must be the same!"));
+    EXPECT_DEATH(std::ignore = csvm.solve_lssvm_system_of_linear_equations(A, B, params), ::testing::HasSubstr("The number of data points in A (6) and B (3) must be the same!"));
 }
 
 TYPED_TEST_P(GenericCSVMKernelFunctionDeathTest, perform_dimensional_reduction_empty_A) {
@@ -1214,7 +1214,7 @@ TYPED_TEST_P(GenericCSVMKernelFunctionDeathTest, predict_values_num_features_mis
 
 // clang-format off
 REGISTER_TYPED_TEST_SUITE_P(GenericCSVMKernelFunctionDeathTest,
-                            solve_system_of_linear_equations_empty_A, solve_system_of_linear_equations_empty_B, solve_system_of_linear_equations_size_mismatch,
+                            solve_lssvm_system_of_linear_equations_empty_A, solve_lssvm_system_of_linear_equations_empty_B, solve_lssvm_system_of_linear_equations_size_mismatch,
                             perform_dimensional_reduction_empty_A,
                             predict_values_empty_matrices, predict_values_sv_alpha_size_mismatch, predict_values_rho_alpha_size_mismatch, predict_values_w_size_mismatch, predict_values_num_features_mismatch);
 // clang-format on

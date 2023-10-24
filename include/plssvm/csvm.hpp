@@ -132,7 +132,7 @@ class csvm {
      * @throws plssvm::invalid_parameter_exception if the provided value for `epsilon` is greater or equal than zero
      * @throws plssvm::invlaid_parameter_exception if the provided maximum number of iterations is less or equal than zero
      * @throws plssvm::invalid_parameter_exception if the training @p data does **not** include labels
-     * @throws plssvm::exception any exception thrown in the respective backend's implementation of `plssvm::csvm::solve_system_of_linear_equations`
+     * @throws plssvm::exception any exception thrown in the respective backend's implementation of `plssvm::csvm::solve_lssvm_system_of_linear_equations`
      * @note For binary classification **always** one vs. all is used regardless of the provided parameter!
      * @return the learned model (`[[nodiscard]]`)
      */
@@ -264,7 +264,7 @@ class csvm {
      * @return the result matrix `X` and the respective biases (`[[nodiscard]]`)
      */
     template <typename... Args>
-    [[nodiscard]] std::pair<aos_matrix<real_type>, std::vector<real_type>> solve_system_of_linear_equations(const aos_matrix<real_type> &A, const aos_matrix<real_type> &B, const parameter &params, Args &&...named_args) const;
+    [[nodiscard]] std::pair<aos_matrix<real_type>, std::vector<real_type>> solve_lssvm_system_of_linear_equations(const aos_matrix<real_type> &A, const aos_matrix<real_type> &B, const parameter &params, Args &&...named_args) const;
     /**
      * @brief Solve the system of linear equations `AX = B` where `A` is the kernel matrix using the Conjugate Gradients (CG) algorithm.
      * @param[in] A the kernel matrix
@@ -381,7 +381,7 @@ model<label_type> csvm::fit(const data_set<label_type> &data, Args &&...named_ar
         // use the one vs. all multi-class classification strategy
         // solve the minimization problem
         aos_matrix<real_type> alpha;
-        std::tie(alpha, *csvm_model.rho_ptr_) = solve_system_of_linear_equations(*data.data_ptr_, *data.y_ptr_, params, std::forward<Args>(named_args)...);
+        std::tie(alpha, *csvm_model.rho_ptr_) = solve_lssvm_system_of_linear_equations(*data.data_ptr_, *data.y_ptr_, params, std::forward<Args>(named_args)...);
         csvm_model.alpha_ptr_->push_back(std::move(alpha));
     } else if (used_classification == plssvm::classification_type::oao) {
         // use the one vs. one multi-class classification strategy
@@ -416,7 +416,7 @@ model<label_type> csvm::fit(const data_set<label_type> &data, Args &&...named_ar
                 reduced_y(0, col) = (*data.y_ptr_)(0, col);
             }
 
-            const auto &[alpha, rho] = solve_system_of_linear_equations(*data.data_ptr_, reduced_y, params, std::forward<Args>(named_args)...);
+            const auto &[alpha, rho] = solve_lssvm_system_of_linear_equations(*data.data_ptr_, reduced_y, params, std::forward<Args>(named_args)...);
             csvm_model.alpha_ptr_->front() = std::move(alpha);
             csvm_model.rho_ptr_->front() = rho.front();  // prevents std::tie
         } else {
@@ -453,7 +453,7 @@ model<label_type> csvm::fit(const data_set<label_type> &data, Args &&...named_ar
                                 data.mapping_->get_label_by_mapped_index(j),
                                 pos + 1,
                                 calculate_number_of_classifiers(classification_type::oao, num_classes));
-                    const auto &[alpha, rho] = solve_system_of_linear_equations(binary_data, binary_y, params, std::forward<Args>(named_args)...);
+                    const auto &[alpha, rho] = solve_lssvm_system_of_linear_equations(binary_data, binary_y, params, std::forward<Args>(named_args)...);
                     (*csvm_model.alpha_ptr_)[pos] = std::move(alpha);
                     (*csvm_model.rho_ptr_)[pos] = rho.front();  // prevents std::tie
                     // go to next one vs. one classification
@@ -669,7 +669,7 @@ real_type csvm::score(const model<label_type> &model, const data_set<label_type>
 //*************************************************************************************************************************************//
 
 template <typename... Args>
-std::pair<aos_matrix<real_type>, std::vector<real_type>> csvm::solve_system_of_linear_equations(const aos_matrix<real_type> &A, const aos_matrix<real_type> &B, const parameter &params, Args &&...named_args) const {
+std::pair<aos_matrix<real_type>, std::vector<real_type>> csvm::solve_lssvm_system_of_linear_equations(const aos_matrix<real_type> &A, const aos_matrix<real_type> &B, const parameter &params, Args &&...named_args) const {
     PLSSVM_ASSERT(!A.empty(), "The A matrix may not be empty!");
     PLSSVM_ASSERT(!B.empty(), "The B matrix may not be empty!");
     PLSSVM_ASSERT(A.num_rows() == B.num_cols(), "The number of data points in A ({}) and B ({}) must be the same!", A.num_rows(), B.num_cols());

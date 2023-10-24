@@ -42,7 +42,7 @@ class mock_cuda_csvm final : public plssvm::cuda::csvm {
     using base_type::conjugate_gradients;
     using base_type::perform_dimensional_reduction;
     using base_type::run_blas_level_3;
-    using base_type::solve_system_of_linear_equations;
+    using base_type::solve_lssvm_system_of_linear_equations;
 
     using base_type::get_max_mem_alloc_size;
 

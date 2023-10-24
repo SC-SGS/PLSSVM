@@ -86,7 +86,7 @@ TYPED_TEST_P(GenericGPUCSVM, run_blas_level_3_kernel_explicit) {
     device_ptr_type C_d{ C.shape() };
     C_d.copy_to_device(C.data());
 
-    // create C-SVM: must be done using the mock class, since solve_system_of_linear_equations_impl is protected
+    // create C-SVM: must be done using the mock class, since solve_lssvm_system_of_linear_equations is protected
     const mock_csvm_type svm = util::construct_from_tuple<mock_csvm_type>(csvm_test_type::additional_arguments);
 
     // perform BLAS calculation

@@ -338,7 +338,7 @@ TYPED_TEST(BaseCSVMFit, fit) {
     // determine the EXPECT_CALL values for the current classification type
     const std::size_t num_calls = classification == plssvm::classification_type::oaa ? 1 : util::calculate_number_of_classifiers(plssvm::classification_type::oao, util::get_num_classes<label_type>());
 
-    // mock the solve_system_of_linear_equations function
+    // mock the solve_lssvm_system_of_linear_equations function
     // clang-format off
     if constexpr (solver == plssvm::solver_type::automatic) {
         EXPECT_CALL(csvm, get_device_memory()).Times(num_calls);
@@ -399,7 +399,7 @@ TYPED_TEST(BaseCSVMFit, fit_named_parameters) {
     const std::size_t num_calls = classification == plssvm::classification_type::oaa ? 1 : util::calculate_number_of_classifiers(plssvm::classification_type::oao, util::get_num_classes<label_type>());
     const std::size_t max_iter = 20;
 
-    // mock the solve_system_of_linear_equations function
+    // mock the solve_lssvm_system_of_linear_equations function
     // clang-format off
     if constexpr (solver == plssvm::solver_type::automatic) {
         EXPECT_CALL(csvm, get_device_memory()).Times(num_calls);
@@ -455,7 +455,7 @@ TYPED_TEST(BaseCSVMFit, fit_named_parameters_invalid_epsilon) {
     // create mock_csvm (since plssvm::csvm is pure virtual!)
     const mock_csvm csvm{ plssvm::parameter{ plssvm::kernel_type = kernel } };
 
-    // mock the solve_system_of_linear_equations function -> since an exception should be triggered, the mocked function should never be called
+    // mock the solve_lssvm_system_of_linear_equations function -> since an exception should be triggered, the mocked function should never be called
     // clang-format off
     EXPECT_CALL(csvm, get_device_memory()).Times(0);
 #if defined(PLSSVM_ENFORCE_MAX_MEM_ALLOC_SIZE)
@@ -499,7 +499,7 @@ TYPED_TEST(BaseCSVMFit, fit_named_parameters_invalid_max_iter) {
     // create mock_csvm (since plssvm::csvm is pure virtual!)
     const mock_csvm csvm{ plssvm::parameter{ plssvm::kernel_type = kernel } };
 
-    // mock the solve_system_of_linear_equations function -> since an exception should be triggered, the mocked function should never be called
+    // mock the solve_lssvm_system_of_linear_equations function -> since an exception should be triggered, the mocked function should never be called
     // clang-format off
     EXPECT_CALL(csvm, get_device_memory()).Times(0);
 #if defined(PLSSVM_ENFORCE_MAX_MEM_ALLOC_SIZE)
@@ -543,7 +543,7 @@ TYPED_TEST(BaseCSVMFit, fit_no_label) {
     // create mock_csvm (since plssvm::csvm is pure virtual!)
     const mock_csvm csvm{ plssvm::parameter{ plssvm::kernel_type = kernel } };
 
-    // mock the solve_system_of_linear_equations function -> since an exception should be triggered, the mocked function should never be called
+    // mock the solve_lssvm_system_of_linear_equations function -> since an exception should be triggered, the mocked function should never be called
     // clang-format off
     EXPECT_CALL(csvm, get_device_memory()).Times(0);
 #if defined(PLSSVM_ENFORCE_MAX_MEM_ALLOC_SIZE)
