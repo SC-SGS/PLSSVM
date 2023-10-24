@@ -13,7 +13,7 @@
 #include "plssvm/default_value.hpp"  // plssvm::default_value
 
 #include "../naming.hpp"         // naming::{test_parameter_to_name}
-#include "../types_to_test.hpp"  // util::{combine_test_parameters_gtest_t, detail::wrap_tuple_types_in_type_lists_t, test_parameter_type_at_t}
+#include "../types_to_test.hpp"  // util::{combine_test_parameters_gtest_t, cartesian_type_product_t, test_parameter_type_at_t}
 
 #include "gmock/gmock-matchers.h"  // EXPECT_THAT, ::testing::HasSubstr
 #include "gtest/gtest.h"           // TEST, EXPECT_EQ, EXPECT_TRUE, EXPECT_FALSE, ::testing::Test
@@ -93,7 +93,7 @@ TEST(Utility, to_underlying_default_value_char) {
 
 // the map container types to test
 using map_types = std::tuple<std::map<int, int>, std::unordered_map<int, int>>;
-using map_types_gtest = util::combine_test_parameters_gtest_t<util::wrap_tuple_types_in_type_lists_t<map_types>>;
+using map_types_gtest = util::combine_test_parameters_gtest_t<util::cartesian_type_product_t<map_types>>;
 
 // test fixture for map like classes
 template <typename T>
@@ -138,7 +138,7 @@ TYPED_TEST(UtilityMapContainer, contains) {
 
 // the set container types to test
 using set_types = std::tuple<std::set<int>, std::unordered_set<int>>;
-using set_types_gtest = util::combine_test_parameters_gtest_t<util::wrap_tuple_types_in_type_lists_t<set_types>>;
+using set_types_gtest = util::combine_test_parameters_gtest_t<util::cartesian_type_product_t<set_types>>;
 
 // test fixture for set like classes
 template <typename T>
@@ -183,7 +183,7 @@ TYPED_TEST(UtilitySetContainer, contains) {
 
 // the vector container types to test
 using vector_types = std::tuple<std::vector<int>>;
-using vector_types_gtest = util::combine_test_parameters_gtest_t<util::wrap_tuple_types_in_type_lists_t<vector_types>>;
+using vector_types_gtest = util::combine_test_parameters_gtest_t<util::cartesian_type_product_t<vector_types>>;
 
 // test fixture for vector like classes
 template <typename T>

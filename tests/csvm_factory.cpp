@@ -19,7 +19,7 @@
 
 #include "custom_test_macros.hpp"  // EXPECT_THROW_WHAT_MATCHER
 #include "utility.hpp"             // util::redirect_output
-#include "types_to_test.hpp"       // util::{combine_test_parameters_gtest_t, util::wrap_tuple_types_in_type_lists_t, test_parameter_type_at_t}
+#include "types_to_test.hpp"       // util::{combine_test_parameters_gtest_t, cartesian_type_product_t, test_parameter_type_at_t}
 
 #include "fmt/core.h"              // fmt::format
 #include "fmt/ostream.h"           // be able to format a plssvm::backend_type using fmt
@@ -33,10 +33,10 @@ namespace util {
 
 // clang-format off
 using csvm_types = std::tuple<plssvm::openmp::csvm, plssvm::cuda::csvm, plssvm::hip::csvm, plssvm::opencl::csvm, plssvm::sycl::csvm>;
-using csvm_types_gtest = util::combine_test_parameters_gtest_t<util::wrap_tuple_types_in_type_lists_t<csvm_types>>;
+using csvm_types_gtest = util::combine_test_parameters_gtest_t<util::cartesian_type_product_t<csvm_types>>;
 /// A type list of all supported SYCL C-SVMs.
 using sycl_csvm_types = std::tuple<plssvm::sycl::csvm, plssvm::hipsycl::csvm, plssvm::dpcpp::csvm>;
-using sycl_csvm_types_gtest = util::combine_test_parameters_gtest_t<util::wrap_tuple_types_in_type_lists_t<sycl_csvm_types>>;
+using sycl_csvm_types_gtest = util::combine_test_parameters_gtest_t<util::cartesian_type_product_t<sycl_csvm_types>>;
 // clang-format on
 
 }  // namespace util

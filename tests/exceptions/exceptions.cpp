@@ -12,7 +12,7 @@
 
 #include "../custom_test_macros.hpp"  // EXPECT_THROW_WHAT
 #include "../naming.hpp"              // naming::test_parameter_to_name
-#include "../types_to_test.hpp"       // util::{combine_test_parameters_gtest_t, detail::wrap_tuple_types_in_type_lists_t,test_parameter_type_at_t}
+#include "../types_to_test.hpp"       // util::{combine_test_parameters_gtest_t, cartesian_type_product_t, test_parameter_type_at_t}
 #include "utility.hpp"                // util::exception_type_name
 
 #include "fmt/core.h"     // fmt::format
@@ -36,7 +36,7 @@ using exception_types_list = std::tuple<plssvm::exception, plssvm::invalid_param
                                         plssvm::data_set_exception, plssvm::file_not_found_exception, plssvm::invalid_file_format_exception,
                                         plssvm::unsupported_backend_exception, plssvm::unsupported_kernel_type_exception, plssvm::gpu_device_ptr_exception,
                                         plssvm::matrix_exception>;
-using exception_types_gtest = util::combine_test_parameters_gtest_t<util::wrap_tuple_types_in_type_lists_t<exception_types_list>>;
+using exception_types_gtest = util::combine_test_parameters_gtest_t<util::cartesian_type_product_t<exception_types_list>>;
 // clang-format on
 
 template <typename T>

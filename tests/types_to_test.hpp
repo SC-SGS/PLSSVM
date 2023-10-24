@@ -149,181 +149,199 @@ template <typename... T>
 using concat_tuple_types_t = typename concat_tuple_types<T...>::type;
 
 //*************************************************************************************************************************************//
-//                                            cartesian product of up to three value arrays                                            //
+//                                          cartesian product of an arbitrary number of arrays                                         //
 //*************************************************************************************************************************************//
 
-template <typename, std::size_t, std::size_t, auto, typename, std::size_t, std::size_t, auto, typename, std::size_t, std::size_t, auto>
-struct cartesian_value_product_impl_3;
-
+template <typename T, auto N>
+struct add_to_value_list;
 /**
- * @brief Terminate the recursion for the case with three value arrays.
+ * @brief Add the compile-time constant value @p N to the values in the provided `value_list`.
+ * @tparam Values the values already in the `value_list`
+ * @tparam N the new value to be added to the `value_list`
  */
-template <typename T, std::size_t I_SIZE, const std::array<T, I_SIZE> *Array1, typename U, std::size_t J_SIZE, const std::array<U, J_SIZE> *Array2, typename V, std::size_t K_SIZE, const std::array<V, K_SIZE> *Array3>
-struct cartesian_value_product_impl_3<T, I_SIZE, 0, Array1, U, J_SIZE, 0, Array2, V, K_SIZE, 0, Array3> {
-    using type = std::tuple<value_list<std::get<0>(*Array1), std::get<0>(*Array2), std::get<0>(*Array3)>>;
+template <auto... Values, auto N>
+struct add_to_value_list<value_list<Values...>, N> {
+    using type = value_list<N, Values...>;
 };
-
 /**
- * @brief Recursion case: the indices of the 2nd and 3rd arrays are zero -> reset their indices and decrement the index of the 1st array by one.
+ * @brief Shorthand for `typename add_to_value_list<...>::type`.
  */
-template <typename T, std::size_t I_SIZE, std::size_t I, const std::array<T, I_SIZE> *Array1, typename U, std::size_t J_SIZE, const std::array<U, J_SIZE> *Array2, typename V, std::size_t K_SIZE, const std::array<V, K_SIZE> *Array3>
-struct cartesian_value_product_impl_3<T, I_SIZE, I, Array1, U, J_SIZE, 0, Array2, V, K_SIZE, 0, Array3> {
+template <typename T, auto N>
+using add_to_value_list_t = typename add_to_value_list<T, N>::type;
+
+template <const auto &Array, typename Indices = std::make_index_sequence<Array.size()>>
+struct wrap_in_value_list;
+/**
+ * @brief Wrap the elements in @p Array in `value_list` types and return a std::tuple to this type.
+ * @tparam Array the values to wrap
+ * @tparam I index sequence used to iterate over the @p Array
+ */
+template <const auto &Array, std::size_t... I>
+struct wrap_in_value_list<Array, std::index_sequence<I...>> {
+    using type = std::tuple<value_list<std::get<I>(Array)>...>;
+};
+/**
+ * @brief Shorthand for `typename wrap_in_value_list<...>::type`.
+ */
+template <const auto &Array>
+using wrap_in_value_list_t = typename wrap_in_value_list<Array>::type;
+
+template <typename T, std::size_t, std::size_t, const auto &Array, typename Tuple>
+struct combine_values;
+/**
+ * @brief Recursion termination: add the last value in the @p Array to the `value_list`s in the std::tuple.
+ * @tparam T the type in the array
+ * @tparam SIZE the size of the array
+ * @tparam Array the array
+ * @tparam Types the already existing `value_list`s
+ */
+template <typename T, std::size_t SIZE, const std::array<T, SIZE> &Array, typename... Types>
+struct combine_values<T, SIZE, 0, Array, std::tuple<Types...>> {
+    using type = std::tuple<add_to_value_list_t<Types, std::get<0>(Array)>...>;
+};
+/**
+ * @brief Recursively add the value @p I of the @p Array to the `value_list`s in the std::tuple.
+ * @tparam T the type in the array
+ * @tparam SIZE the size of the array
+ * @tparam I the currently investigated array element
+ * @tparam Array the array
+ * @tparam Types the already existing `value_list`s
+ */
+template <typename T, std::size_t SIZE, std::size_t I, const std::array<T, SIZE> &Array, typename... Types>
+struct combine_values<T, SIZE, I, Array, std::tuple<Types...>> {
     using type = concat_tuple_types_t<
-        std::tuple<value_list<std::get<I>(*Array1), std::get<0>(*Array2), std::get<0>(*Array3)>>,
-        typename cartesian_value_product_impl_3<T, I_SIZE, I - 1, Array1, U, J_SIZE, J_SIZE - 1, Array2, V, K_SIZE, K_SIZE - 1, Array3>::type>;
+        std::tuple<add_to_value_list_t<Types, std::get<I>(Array)>...>,
+        typename combine_values<T, SIZE, I - 1, Array, std::tuple<Types...>>::type>;
 };
+/**
+ * @brief Shorthand for `typename combine_values<...>::type`.
+ */
+template <const auto &Array, typename Tuple>
+using combine_values_t = typename combine_values<typename plssvm::detail::remove_cvref_t<decltype(Array)>::value_type, Array.size(), Array.size() - 1, Array, Tuple>::type;
 
 /**
- * @brief Recursion case: the index of the 3rd array is zero -> reset its index and decrement the index of the 2nd array by one.
+ * @brief Calculate the cartesian product of the values in @p FirstArray and @p RemainingArrays recursively.
+ * @tparam FirstArray the first array to combine
+ * @tparam RemainingArrays the remaining arrays
  */
-template <typename T, std::size_t I_SIZE, std::size_t I, const std::array<T, I_SIZE> *Array1, typename U, std::size_t J_SIZE, std::size_t J, const std::array<U, J_SIZE> *Array2, typename V, std::size_t K_SIZE, const std::array<V, K_SIZE> *Array3>
-struct cartesian_value_product_impl_3<T, I_SIZE, I, Array1, U, J_SIZE, J, Array2, V, K_SIZE, 0, Array3> {
-    using type = concat_tuple_types_t<
-        std::tuple<value_list<std::get<I>(*Array1), std::get<J>(*Array2), std::get<0>(*Array3)>>,
-        typename cartesian_value_product_impl_3<T, I_SIZE, I, Array1, U, J_SIZE, J - 1, Array2, V, K_SIZE, K_SIZE - 1, Array3>::type>;
+template <const auto &FirstArray, const auto &...RemainingArrays>
+struct cartesian_value_product {
+    using type = combine_values_t<FirstArray, typename cartesian_value_product<RemainingArrays...>::type>;
 };
-
 /**
- * @brief General case for three value arrays: decrement the index of the 3rd array by one.
+ * @brief Recursion termination: the cartesian product of a single array is the array itself wrapped in `value_list`s.
+ * @tparam Array the array to wrap
  */
-template <typename T, std::size_t I_SIZE, std::size_t I, const std::array<T, I_SIZE> *Array1, typename U, std::size_t J_SIZE, std::size_t J, const std::array<U, J_SIZE> *Array2, typename V, std::size_t K_SIZE, std::size_t K, const std::array<V, K_SIZE> *Array3>
-struct cartesian_value_product_impl_3<T, I_SIZE, I, Array1, U, J_SIZE, J, Array2, V, K_SIZE, K, Array3> {
-    using type = concat_tuple_types_t<
-        std::tuple<value_list<std::get<I>(*Array1), std::get<J>(*Array2), std::get<K>(*Array3)>>,
-        typename cartesian_value_product_impl_3<T, I_SIZE, I, Array1, U, J_SIZE, J, Array2, V, K_SIZE, K - 1, Array3>::type>;
-};
-
-template <typename, std::size_t, std::size_t, auto, typename, std::size_t, std::size_t, auto>
-struct cartesian_value_product_impl_2;
-
-/**
- * @brief Terminate the recursion for the case with two value arrays.
- */
-template <typename T, std::size_t I_SIZE, const std::array<T, I_SIZE> *Array1, typename U, std::size_t J_SIZE, const std::array<U, J_SIZE> *Array2>
-struct cartesian_value_product_impl_2<T, I_SIZE, 0, Array1, U, J_SIZE, 0, Array2> {
-    using type = std::tuple<value_list<std::get<0>(*Array1), std::get<0>(*Array2)>>;
-};
-
-/**
- * @brief Recursion case: the index of the 2nd array is zero -> reset its index and decrement the index of the 1st array by one.
- */
-template <typename T, std::size_t I_SIZE, std::size_t I, const std::array<T, I_SIZE> *Array1, typename U, std::size_t J_SIZE, const std::array<U, J_SIZE> *Array2>
-struct cartesian_value_product_impl_2<T, I_SIZE, I, Array1, U, J_SIZE, 0, Array2> {
-    using type = concat_tuple_types_t<
-        std::tuple<value_list<std::get<I>(*Array1), std::get<0>(*Array2)>>,
-        typename cartesian_value_product_impl_2<T, I_SIZE, I - 1, Array1, U, J_SIZE, J_SIZE - 1, Array2>::type>;
-};
-
-/**
- * @brief General case for two value arrays: decrement the index of the 2nd array by one.
- */
-template <typename T, std::size_t I_SIZE, std::size_t I, const std::array<T, I_SIZE> *Array1, typename U, std::size_t J_SIZE, std::size_t J, const std::array<U, J_SIZE> *Array2>
-struct cartesian_value_product_impl_2<T, I_SIZE, I, Array1, U, J_SIZE, J, Array2> {
-    using type = concat_tuple_types_t<
-        std::tuple<value_list<std::get<I>(*Array1), std::get<J>(*Array2)>>,
-        typename cartesian_value_product_impl_2<T, I_SIZE, I, Array1, U, J_SIZE, J - 1, Array2>::type>;
-};
-
-template <typename, std::size_t, std::size_t, auto>
-struct cartesian_value_product_impl_1;
-
-/**
- * @brief Terminate the recursion for the case with one value array.
- */
-template <typename T, std::size_t I_SIZE, const std::array<T, I_SIZE> *Array>
-struct cartesian_value_product_impl_1<T, I_SIZE, 0, Array> {
-    using type = std::tuple<value_list<std::get<0>(*Array)>>;
-};
-
-/**
- * @brief General case for one value array: decrement the index of the 1st array by one.
- */
-template <typename T, std::size_t I_SIZE, std::size_t I, const std::array<T, I_SIZE> *Array>
-struct cartesian_value_product_impl_1<T, I_SIZE, I, Array> {
-    using type = concat_tuple_types_t<
-        std::tuple<value_list<std::get<I>(*Array)>>,
-        typename cartesian_value_product_impl_1<T, I_SIZE, I - 1, Array>::type>;
+template <const auto &Array>
+struct cartesian_value_product<Array> {
+    using type = wrap_in_value_list_t<Array>;
 };
 
 //*************************************************************************************************************************************//
-//               cartesian product dispatcher to select the correct function based on the number of provided value arrays              //
+//                               cartesian product of an arbitrary number of types wrapped in std::tuple                               //
 //*************************************************************************************************************************************//
 
-// TODO: https://godbolt.org/z/bhEPfW17r
-
-template <std::size_t SIZE, auto... Arrays>
-struct cartesian_value_product_dispatcher;
-
+template <typename T, typename U>
+struct add_to_type_list;
 /**
- * @brief Only one value array is given -> dispatch to `cartesian_value_product_impl_1`.
+ * @brief Add the type @p U to the types in the provided `type_list`.
+ * @tparam Types the types already in the `type_list`
+ * @tparam U the new type to be added to the `type_list`
  */
-template <auto Array>
-struct cartesian_value_product_dispatcher<1, Array> {
-    using type = typename cartesian_value_product_impl_1<
-        typename std::remove_pointer_t<decltype(Array)>::value_type,
-        Array->size(),
-        Array->size() - 1,
-        Array>::type;
+template <typename... Types, typename U>
+struct add_to_type_list<type_list<Types...>, U> {
+    using type = type_list<U, Types...>;
 };
-
 /**
- * @brief Two value arrays are given -> dispatch to `cartesian_value_product_impl_2`.
+ * @brief Shorthand for `typename add_to_type_list<...>::type`.
  */
-template <auto Array1, auto Array2>
-struct cartesian_value_product_dispatcher<2, Array1, Array2> {
-    using type = typename cartesian_value_product_impl_2<
-        typename std::remove_pointer_t<decltype(Array1)>::value_type,
-        Array1->size(),
-        Array1->size() - 1,
-        Array1,
-        typename std::remove_pointer_t<decltype(Array2)>::value_type,
-        Array2->size(),
-        Array2->size() - 1,
-        Array2>::type;
+template <typename T, typename U>
+using add_to_type_list_t = typename add_to_type_list<T, U>::type;
+
+template <typename Tuple>
+struct wrap_in_type_list;
+/**
+ * @brief Wrap the @p Types given in a std::tuple in `type_list` types and return a std::tuple to this type.
+ * @tparam Types the types to wrap
+ */
+template <typename... Types>
+struct wrap_in_type_list<std::tuple<Types...>> {
+    using type = std::tuple<type_list<Types>...>;
 };
+/**
+ * @brief Shorthand for `typename wrap_in_type_list<...>::type`.
+ */
+template <typename Tuple>
+using wrap_in_type_list_t = typename wrap_in_type_list<Tuple>::type;
+
+template <std::size_t, typename Tuple, typename ResultTuple>
+struct combine_types;
+/**
+ * @brief Recursion termination: add the last type in the @p Tuple to the `type_list`s in the std::tuple.
+ * @tparam Tuple the std::tuple containing the types to add
+ * @tparam ResultTupleTypes the already existing `type_list`s
+ */
+template <typename Tuple, typename... ResultTupleTypes>
+struct combine_types<0, Tuple, std::tuple<ResultTupleTypes...>> {
+    using type = std::tuple<add_to_type_list_t<ResultTupleTypes, std::tuple_element_t<0, Tuple>>...>;
+};
+/**
+ * @brief Recursively add the type @p I of the @p Tuple to the `type_list`s in the std::tuple.
+ * @tparam I the currently investigated tuple element
+ * @tparam Tuple the tuple
+ * @tparam ResultTupleTypes the already existing `type_list`s
+ */
+template <std::size_t I, typename Tuple, typename... ResultTupleTypes>
+struct combine_types<I, Tuple, std::tuple<ResultTupleTypes...>> {
+    using type = concat_tuple_types_t<
+        std::tuple<add_to_type_list_t<ResultTupleTypes, std::tuple_element_t<I, Tuple>>...>,
+        typename combine_types<I - 1, Tuple, std::tuple<ResultTupleTypes...>>::type>;
+};
+/**
+ * @brief Shorthand for `typename combine_types<...>::type`.
+ */
+template <typename Tuple, typename ResultTuple>
+using combine_types_t = typename combine_types<std::tuple_size_v<Tuple> - 1, Tuple, ResultTuple>::type;
 
 /**
- * @brief Three value arrays are given -> dispatch to `cartesian_value_product_impl_3`.
+ * @brief Calculate the cartesian product of the types in @p FirstTuple and @p RemainingTuples recursively.
+ * @tparam FirstTuple the first std:tuple to combine
+ * @tparam RemainingTuples the remaining std::tuple
  */
-template <auto Array1, auto Array2, auto Array3>
-struct cartesian_value_product_dispatcher<3, Array1, Array2, Array3> {
-    using type = typename cartesian_value_product_impl_3<
-        typename std::remove_pointer_t<decltype(Array1)>::value_type,
-        Array1->size(),
-        Array1->size() - 1,
-        Array1,
-        typename std::remove_pointer_t<decltype(Array2)>::value_type,
-        Array2->size(),
-        Array2->size() - 1,
-        Array2,
-        typename std::remove_pointer_t<decltype(Array3)>::value_type,
-        Array3->size(),
-        Array3->size() - 1,
-        Array3>::type;
+template <typename FirstTuple, typename... RemainingTuples>
+struct cartesian_type_product {
+    using type = combine_types_t<FirstTuple, typename cartesian_type_product<RemainingTuples...>::type>;
+};
+/**
+ * @brief Recursion termination: the cartesian product of a single tuple is the tuple itself wrapped in `type_list`s.
+ * @tparam Tuple the tuple to wrap
+ */
+template <typename Tuple>
+struct cartesian_type_product<Tuple> {
+    using type = wrap_in_type_list_t<Tuple>;
 };
 
 //*************************************************************************************************************************************//
-//                                                    cartesian product of two types                                                   //
+//                         be able to create a test_parameter even if no type- or value-list has been provided                         //
 //*************************************************************************************************************************************//
 
 // calculate the cartesian product of the types in two tuples and return a new tuple with the corresponding type combinations stored in a WrapperType.
-template <template <typename...> typename WrapperType, typename S, typename T>
-struct cartesian_type_product_impl;
+template <typename S, typename T>
+struct create_test_parameters_impl;
 
 /**
  * @brief Create the cartesian product of the types given in two std::tuple.
- * @tparam WrapperType the type to store the type combinations to
  * @tparam FirstTupleType the first type in the first std::tuple
  * @tparam FirstTupleRemainingTypes  the remaining types in the first tuple
  * @tparam SecondTupleTypes the types in the second tuple
  */
-template <template <typename...> typename WrapperType, typename FirstTupleType, typename... FirstTupleRemainingTypes, typename... SecondTupleTypes>
-struct cartesian_type_product_impl<WrapperType, std::tuple<FirstTupleType, FirstTupleRemainingTypes...>, std::tuple<SecondTupleTypes...>> {
+template <typename FirstTupleType, typename... FirstTupleRemainingTypes, typename... SecondTupleTypes>
+struct create_test_parameters_impl<std::tuple<FirstTupleType, FirstTupleRemainingTypes...>, std::tuple<SecondTupleTypes...>> {
     // the cartesian product of {FirstTupleType} and {SecondTupleTypes...} is a list of real_type_label_type_combination
-    using FirstTupleType_cross_SecondTupleTypes = std::tuple<WrapperType<FirstTupleType, SecondTupleTypes>...>;
+    using FirstTupleType_cross_SecondTupleTypes = std::tuple<test_parameter<FirstTupleType, SecondTupleTypes>...>;
 
     // the cartesian product of {FirstTupleRemainingTypes...} and {Ts...} (computed recursively)
-    using FirstTupleRemainingTypes_cross_SecondTupleTypes = typename cartesian_type_product_impl<WrapperType, std::tuple<FirstTupleRemainingTypes...>, std::tuple<SecondTupleTypes...>>::type;
+    using FirstTupleRemainingTypes_cross_SecondTupleTypes = typename create_test_parameters_impl<std::tuple<FirstTupleRemainingTypes...>, std::tuple<SecondTupleTypes...>>::type;
 
     // concatenate both products
     using type = concat_tuple_types_t<FirstTupleType_cross_SecondTupleTypes, FirstTupleRemainingTypes_cross_SecondTupleTypes>;
@@ -331,17 +349,12 @@ struct cartesian_type_product_impl<WrapperType, std::tuple<FirstTupleType, First
 
 /**
  * @brief End the recursion if the first tuple does not have any types left.
- * @tparam WrapperType the type to store the type combinations to
  * @tparam SecondTupleTypes the types in the second tuple
  */
-template <template <typename...> typename WrapperType, typename... SecondTupleTypes>
-struct cartesian_type_product_impl<WrapperType, std::tuple<>, std::tuple<SecondTupleTypes...>> {
+template <typename... SecondTupleTypes>
+struct create_test_parameters_impl<std::tuple<>, std::tuple<SecondTupleTypes...>> {
     using type = std::tuple<>;  // the cartesian product of {}x{...} is {}
 };
-
-//*************************************************************************************************************************************//
-//                         be able to create a test_parameter even if no type- or value-list has been provided                         //
-//*************************************************************************************************************************************//
 
 template <typename T>
 struct wrap_types_in_test_parameter_with_empty_value_list;
@@ -393,71 +406,25 @@ struct create_test_parameters_dispatcher<1, std::tuple<Types...>> {
  */
 template <typename T, typename U>
 struct create_test_parameters_dispatcher<2, T, U> {
-    using type = typename detail::cartesian_type_product_impl<test_parameter, T, U>::type;
+    using type = typename detail::create_test_parameters_impl<T, U>::type;
 };
 
 }  // namespace detail
-
-//*************************************************************************************************************************************//
-//                                               simple wrappers for a single std::tuple                                               //
-//*************************************************************************************************************************************//
-
-template <typename T>
-struct wrap_tuple_types_in_type_lists;
-
-/**
- * @brief Wrap all types in the std::tuple in a `type_list`.
- */
-template <typename... Types>
-struct wrap_tuple_types_in_type_lists<std::tuple<Types...>> {
-    using type = std::tuple<type_list<Types>...>;
-};
-/**
- * @brief Shorthand for `typename wrap_tuple_types_in_type_lists<T>::type`.
- */
-template <typename T>
-using wrap_tuple_types_in_type_lists_t = typename wrap_tuple_types_in_type_lists<T>::type;
-
-/**
- * @brief Wrap all values in the std::array in a `value_list`.
- */
-template <auto Array>
-using wrap_value_array_in_value_lists = detail::cartesian_value_product_impl_1<
-    typename std::remove_pointer_t<decltype(Array)>::value_type,
-    Array->size(),
-    Array->size() - 1,
-    Array>;
-/**
- * @brief Shorthand for `typename wrap_value_array_in_value_lists<Array>::type`.
- */
-template <auto Array>
-using wrap_value_array_in_value_lists_t = typename wrap_value_array_in_value_lists<Array>::type;
 
 //*************************************************************************************************************************************//
 //                                                          helper shorthands                                                          //
 //*************************************************************************************************************************************//
 
 /**
- * @brief Create a std::tuple of `value_list`s as the result of the cartesian product of the values in up to three arrays.
+ * @brief Shorthand for `typename detail::cartesian_value_product<...>::type`.
  */
-template <auto... Arrays>
-using cartesian_value_product = detail::cartesian_value_product_dispatcher<sizeof...(Arrays), Arrays...>;
+template <const auto &...Arrays>
+using cartesian_value_product_t = typename detail::cartesian_value_product<Arrays...>::type;
 /**
- * @brief Shorthand for `typename cartesian_value_product<...>::type`.
+ * @brief Shorthand for `typename detail::cartesian_type_product<...>::type`.
  */
-template <auto... Arrays>
-using cartesian_value_product_t = typename cartesian_value_product<Arrays...>::type;
-
-/**
- * @brief Create a std::tuple of `type_list`s as the result of the cartesian product of the two types.
- */
-template <typename... Types>
-using cartesian_type_product = detail::cartesian_type_product_impl<type_list, Types...>;
-/**
- * @brief Shorthand for `typename cartesian_type_product<...>::type`.
- */
-template <typename... Types>
-using cartesian_type_product_t = typename cartesian_type_product<Types...>::type;
+template <typename... Tuples>
+using cartesian_type_product_t = typename detail::cartesian_type_product<Tuples...>::type;
 
 /**
  * @brief Combine a std::tuple of `type_list`s and/or a std::tuple of `value_list`s to a std::tuple of `test_parameter`.
@@ -492,24 +459,24 @@ constexpr std::array<plssvm::solver_type, 4> solver_types_to_test = {
 };
 
 /// A list of all solver types.
-using solver_type_list = wrap_value_array_in_value_lists_t<&solver_types_to_test>;
+using solver_type_list = cartesian_value_product_t<solver_types_to_test>;
 /// A list of all kernel function types.
-using kernel_function_type_list = wrap_value_array_in_value_lists_t<&kernel_functions_to_test>;
+using kernel_function_type_list = cartesian_value_product_t<kernel_functions_to_test>;
 /// A list of all classification types.
-using classification_type_list = wrap_value_array_in_value_lists_t<&classification_types_to_test>;
+using classification_type_list = cartesian_value_product_t<classification_types_to_test>;
 /// A list of all layout types.
-using layout_type_list = wrap_value_array_in_value_lists_t<&layout_types_to_test>;
+using layout_type_list = cartesian_value_product_t<layout_types_to_test>;
 /// A list of a combination of all solver and kernel function types.
-using solver_and_kernel_function_type_list = cartesian_value_product_t<&solver_types_to_test, &kernel_functions_to_test>;
+using solver_and_kernel_function_type_list = cartesian_value_product_t<solver_types_to_test, kernel_functions_to_test>;
 /// A list of a combination of all kernel function and classification types.
-using kernel_function_and_classification_type_list = cartesian_value_product_t<&kernel_functions_to_test, &classification_types_to_test>;
+using kernel_function_and_classification_type_list = cartesian_value_product_t<kernel_functions_to_test, classification_types_to_test>;
 /// A list of a combination of all solver, kernel function, and classification types.
-using solver_and_kernel_function_and_classification_type_list = cartesian_value_product_t<&solver_types_to_test, &kernel_functions_to_test, &classification_types_to_test>;
+using solver_and_kernel_function_and_classification_type_list = cartesian_value_product_t<solver_types_to_test, kernel_functions_to_test, classification_types_to_test>;
 
 /// A list of all supported real types based on `plssvm::detail::supported_real_types`.
-using real_type_list = wrap_tuple_types_in_type_lists_t<plssvm::detail::supported_real_types>;
+using real_type_list = cartesian_type_product_t<plssvm::detail::supported_real_types>;
 /// A list of all supported label types based on `plssvm::detail::supported_label_types`.
-using label_type_list = wrap_tuple_types_in_type_lists_t<plssvm::detail::supported_label_types>;
+using label_type_list = cartesian_type_product_t<plssvm::detail::supported_label_types>;
 
 /// A list of all supported real types wrapped in a Google test type.
 using real_type_gtest = combine_test_parameters_gtest_t<real_type_list>;

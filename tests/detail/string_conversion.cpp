@@ -14,7 +14,7 @@
 
 #include "../custom_test_macros.hpp"  // EXPECT_THROW_WHAT
 #include "../naming.hpp"              // naming::{real_type_to_name, pretty_print_escaped_string}
-#include "../types_to_test.hpp" // util::{combine_test_parameters_gtest_t, wrap_tuple_types_in_type_lists_t, test_parameter_type_at_t}
+#include "../types_to_test.hpp" // util::{combine_test_parameters_gtest_t, cartesian_type_product_t, test_parameter_type_at_t}
 
 #include "fmt/format.h"   // fmt::format
 #include "gtest/gtest.h"  // TEST, ASSERT_EQ, EXPECT_EQ, EXPECT_TRUE, TYPED_TEST, TYPED_TEST_SUITE, TEST_P, INSTANTIATE_TEST_SUITE_P
@@ -91,7 +91,7 @@ TEST(StringConversion, string_conversion) {
 }
 
 using string_conversion_exception_types = std::tuple<short, unsigned char, int, unsigned int, long, unsigned long, long long, unsigned long long, float, double>;
-using string_conversion_exception_types_gtest = util::combine_test_parameters_gtest_t<util::wrap_tuple_types_in_type_lists_t<string_conversion_exception_types>>;
+using string_conversion_exception_types_gtest = util::combine_test_parameters_gtest_t<util::cartesian_type_product_t<string_conversion_exception_types>>;
 
 template <typename T>
 class StringConversionException : public ::testing::Test {
@@ -157,7 +157,7 @@ TEST(StringConversion, extract_first_integer_from_string_exception) {
 }
 
 using split_as_types = std::tuple<short, int, long, long long, float, double>;
-using split_as_types_gtest = util::combine_test_parameters_gtest_t<util::wrap_tuple_types_in_type_lists_t<split_as_types>>;
+using split_as_types_gtest = util::combine_test_parameters_gtest_t<util::cartesian_type_product_t<split_as_types>>;
 
 template <typename T>
 class StringConversionSplitAs : public ::testing::Test {

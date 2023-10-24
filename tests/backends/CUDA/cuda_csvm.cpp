@@ -19,7 +19,7 @@
 
 #include "../../custom_test_macros.hpp"   // EXPECT_THROW_WHAT
 #include "../../naming.hpp"               // naming::test_parameter_to_name
-#include "../../types_to_test.hpp"        // util::{cartesian_type_product_t, combine_test_parameters_gtest_t, wrap_tuple_types_in_type_lists_t}
+#include "../../types_to_test.hpp"        // util::{cartesian_type_product_t, combine_test_parameters_gtest_t}
 #include "../../utility.hpp"              // util::redirect_output
 #include "../generic_csvm_tests.hpp"      // generic CSVM tests to instantiate
 #include "../generic_gpu_csvm_tests.hpp"  // generic GPU CSVM tests to instantiate
@@ -114,7 +114,7 @@ struct cuda_csvm_test_type {
 };
 using cuda_csvm_test_tuple = std::tuple<cuda_csvm_test_type>;
 using cuda_csvm_test_label_type_list = util::cartesian_type_product_t<cuda_csvm_test_tuple, plssvm::detail::supported_label_types>;
-using cuda_csvm_test_type_list = util::wrap_tuple_types_in_type_lists_t<cuda_csvm_test_tuple>;
+using cuda_csvm_test_type_list = util::cartesian_type_product_t<cuda_csvm_test_tuple>;
 
 // the tests used in the instantiated GTest test suites
 using cuda_csvm_test_type_gtest = util::combine_test_parameters_gtest_t<cuda_csvm_test_type_list>;
