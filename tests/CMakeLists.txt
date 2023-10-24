@@ -97,6 +97,9 @@ target_link_libraries(${PLSSVM_BASE_TEST_LIBRARY_NAME} PUBLIC ${PLSSVM_ALL_LIBRA
 # link against gtest
 target_link_libraries(${PLSSVM_BASE_TEST_LIBRARY_NAME} PUBLIC GTest::gtest_main GTest::gmock)
 
+# precompile expensive TMP header
+target_precompile_headers(${PLSSVM_BASE_TEST_LIBRARY_NAME} PUBLIC types_to_test.hpp)
+
 
 ## create base tests
 set(PLSSVM_BASE_TEST_NAME Base_tests)
@@ -214,9 +217,9 @@ discover_tests_with_death_test_filter(${PLSSVM_BASE_TEST_NAME})
 #        "${PLSSVM_TEST_FILE}"                                   # the file to scale
 #        "${CMAKE_CURRENT_BINARY_DIR}/scaled.libsvm.model"       # the scaled file (result)
 #        )
-
-
-# add failing test (must return with a non-zero exit code)
+#
+#
+## add failing test (must return with a non-zero exit code)
 #add_test(NAME MainTrain/executable_fail COMMAND ${PLSSVM_EXECUTABLE_TRAIN_NAME} " ")
 #set_tests_properties(MainTrain/executable_fail PROPERTIES WILL_FAIL TRUE)
 #add_test(NAME MainPredict/executable_fail COMMAND ${PLSSVM_EXECUTABLE_PREDICT_NAME}  " " " ")
@@ -231,6 +234,6 @@ endif ()
 
 
 # add tests for the available backends
-#add_subdirectory(backends)
+add_subdirectory(backends)
 
 list(POP_BACK CMAKE_MESSAGE_INDENT)
