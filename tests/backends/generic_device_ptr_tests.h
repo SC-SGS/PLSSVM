@@ -396,30 +396,6 @@ TYPED_TEST_P(DevicePtr, fill_invalid_pos) {
                       "Illegal access in fill!: 10 >= 10");
 }
 
-TYPED_TEST_P(DevicePtr, copy_matrix) {
-    using test_type = typename TestFixture::fixture_test_type;
-    using device_ptr_type = typename test_type::device_ptr_type;
-    using value_type = typename device_ptr_type::value_type;
-    using queue_type = typename test_type::queue_type;
-    const queue_type &queue = test_type::default_queue();
-
-    // construct device_ptr
-    device_ptr_type ptr{ 10, queue };
-    ptr.memset(0);
-
-    // create data to copy to the device
-    plssvm::aos_matrix<value_type> data{ 5, 3, 42 };
-
-    // copy data to the device
-    ptr.copy_to_device(data);
-    // copy data back to the host
-    plssvm::aos_matrix<value_type> result{ 5, 3, 0 };
-    ptr.copy_to_host(result);
-
-    // check values for correctness
-    const plssvm::aos_matrix<value_type> correct_result{ { { 42, 42, 42 }, { 42, 42, 42 }, { 42, 42, 42 }, { 42, 0, 0 }, { 0, 0, 0 } } };
-    EXPECT_FLOATING_POINT_MATRIX_EQ(result, correct_result);
-}
 TYPED_TEST_P(DevicePtr, copy_vector) {
     using test_type = typename TestFixture::fixture_test_type;
     using device_ptr_type = typename test_type::device_ptr_type;
@@ -513,34 +489,6 @@ TYPED_TEST_P(DevicePtr, copy_vector_with_count_copy_to_too_many) {
     EXPECT_EQ(result, (std::vector<value_type>{ value_type{ 0.0 }, value_type{ 0.0 }, value_type{ 42.0 }, value_type{ 42.0 }, value_type{ 42.0 }, value_type{ 42.0 } }));
 }
 
-TYPED_TEST_P(DevicePtr, copy_matrix_too_few_host_elements) {
-    using test_type = typename TestFixture::fixture_test_type;
-    using device_ptr_type = typename test_type::device_ptr_type;
-    using value_type = typename device_ptr_type::value_type;
-    using queue_type = typename test_type::queue_type;
-    const queue_type &queue = test_type::default_queue();
-
-    // construct device_ptr
-    device_ptr_type ptr{ 10, queue };
-
-    // try copying data to the device with too few elements
-    plssvm::aos_matrix<value_type> data{ 2, 4, 42 };
-    EXPECT_THROW_WHAT(ptr.copy_to_device(data), plssvm::gpu_device_ptr_exception, "Too few data to perform copy (needed: 10, provided: 8)!");
-}
-TYPED_TEST_P(DevicePtr, copy_matrix_too_few_buffer_elements) {
-    using test_type = typename TestFixture::fixture_test_type;
-    using device_ptr_type = typename test_type::device_ptr_type;
-    using value_type = typename device_ptr_type::value_type;
-    using queue_type = typename test_type::queue_type;
-    const queue_type &queue = test_type::default_queue();
-
-    // construct device_ptr
-    device_ptr_type ptr{ 10, queue };
-
-    // try copying data back to the host with a buffer with too few elements
-    plssvm::aos_matrix<value_type> buffer{ 2, 4 };
-    EXPECT_THROW_WHAT(ptr.copy_to_host(buffer), plssvm::gpu_device_ptr_exception, "Buffer too small to perform copy (needed: 10, provided: 8)!");
-}
 TYPED_TEST_P(DevicePtr, copy_vector_too_few_host_elements) {
     using test_type = typename TestFixture::fixture_test_type;
     using device_ptr_type = typename test_type::device_ptr_type;
@@ -698,11 +646,121 @@ REGISTER_TYPED_TEST_SUITE_P(DevicePtr,
                             operator_bool, size, size_idx, extent, empty,
                             memset, memset_with_numbytes, memset_invalid_pos,
                             fill, fill_with_count, fill_invalid_pos,
-                            copy_matrix,
                             copy_vector, copy_vector_with_count_copy_back_all, copy_vector_with_count_copy_back_some, copy_vector_with_count_copy_to_too_many,
-                            copy_matrix_too_few_host_elements, copy_matrix_too_few_buffer_elements,
                             copy_vector_too_few_host_elements, copy_vector_too_few_buffer_elements, copy_vector_with_count_too_few_host_elements, copy_vector_with_count_too_few_buffer_elements,
                             copy_ptr, copy_ptr_with_count_copy_back_all, copy_ptr_with_count_copy_back_some, copy_ptr_with_count_copy_to_too_many);
+// clang-format on
+
+template <typename T>
+class DevicePtrLayout : public DevicePtr<T> {
+  protected:
+    using typename DevicePtr<T>::fixture_test_type;
+};
+TYPED_TEST_SUITE_P(DevicePtrLayout);
+
+TYPED_TEST_P(DevicePtrLayout, copy_matrix) {
+    using test_type = typename TestFixture::fixture_test_type;
+    using device_ptr_type = typename test_type::device_ptr_type;
+    using value_type = typename device_ptr_type::value_type;
+    using queue_type = typename test_type::queue_type;
+    const queue_type &queue = test_type::default_queue();
+    constexpr plssvm::layout_type layout = util::test_parameter_value_at_v<0, TypeParam>;
+
+    // construct device_ptr
+    device_ptr_type ptr{ 10, queue };
+    ptr.memset(0);
+
+    // create data to copy to the device
+    plssvm::matrix<value_type, layout> data{ 5, 3, 42 };
+
+    // copy data to the device
+    ptr.copy_to_device(data);
+    // copy data back to the host
+    plssvm::matrix<value_type, layout> result{ 5, 3, 0 };
+    ptr.copy_to_host(result);
+
+    // check values for correctness
+    plssvm::matrix<value_type, layout> correct_result{};
+    switch (layout) {
+        case plssvm::layout_type::aos:
+            correct_result = plssvm::matrix<value_type, layout>{ { { 42, 42, 42 }, { 42, 42, 42 }, { 42, 42, 42 }, { 42, 0, 0 }, { 0, 0, 0 } } };
+            break;
+        case plssvm::layout_type::soa:
+            correct_result = plssvm::matrix<value_type, layout>{ { { 42, 42, 0 }, { 42, 42, 0 }, { 42, 42, 0 }, { 42, 42, 0 }, { 42, 42, 0 } } };
+            break;
+    }
+    EXPECT_FLOATING_POINT_MATRIX_EQ(result, correct_result);
+}
+TYPED_TEST_P(DevicePtrLayout, copy_matrix_different_layouts) {
+    using test_type = typename TestFixture::fixture_test_type;
+    using device_ptr_type = typename test_type::device_ptr_type;
+    using value_type = typename device_ptr_type::value_type;
+    using queue_type = typename test_type::queue_type;
+    const queue_type &queue = test_type::default_queue();
+    constexpr plssvm::layout_type layout = util::test_parameter_value_at_v<0, TypeParam>;
+    constexpr plssvm::layout_type other_layout = layout == plssvm::layout_type::aos ? plssvm::layout_type::soa : plssvm::layout_type::aos;
+
+    // construct device_ptr
+    device_ptr_type ptr{ 10, queue };
+    ptr.memset(0);
+
+    // create data to copy to the device
+    plssvm::matrix<value_type, layout> data{ 5, 3, 42 };
+
+    // copy data to the device
+    ptr.copy_to_device(data);
+    // copy data back to the host
+    plssvm::matrix<value_type, other_layout> result{ 5, 3, 0 };
+    ptr.copy_to_host(result);
+
+    // check values for correctness
+    plssvm::matrix<value_type, other_layout> correct_result{};
+    switch (other_layout) {
+        case plssvm::layout_type::aos:
+            correct_result = plssvm::matrix<value_type, other_layout>{ { { 42, 42, 42 }, { 42, 42, 42 }, { 42, 42, 42 }, { 42, 0, 0 }, { 0, 0, 0 } } };
+            break;
+        case plssvm::layout_type::soa:
+            correct_result = plssvm::matrix<value_type, other_layout>{ { { 42, 42, 0 }, { 42, 42, 0 }, { 42, 42, 0 }, { 42, 42, 0 }, { 42, 42, 0 } } };
+            break;
+    }
+    EXPECT_FLOATING_POINT_MATRIX_EQ(result, correct_result);
+}
+
+TYPED_TEST_P(DevicePtrLayout, copy_matrix_too_few_host_elements) {
+    using test_type = typename TestFixture::fixture_test_type;
+    using device_ptr_type = typename test_type::device_ptr_type;
+    using value_type = typename device_ptr_type::value_type;
+    using queue_type = typename test_type::queue_type;
+    const queue_type &queue = test_type::default_queue();
+    constexpr plssvm::layout_type layout = util::test_parameter_value_at_v<0, TypeParam>;
+
+    // construct device_ptr
+    device_ptr_type ptr{ 10, queue };
+
+    // try copying data to the device with too few elements
+    plssvm::matrix<value_type, layout> data{ 2, 4, 42 };
+    EXPECT_THROW_WHAT(ptr.copy_to_device(data), plssvm::gpu_device_ptr_exception, "Too few data to perform copy (needed: 10, provided: 8)!");
+}
+TYPED_TEST_P(DevicePtrLayout, copy_matrix_too_few_buffer_elements) {
+    using test_type = typename TestFixture::fixture_test_type;
+    using device_ptr_type = typename test_type::device_ptr_type;
+    using value_type = typename device_ptr_type::value_type;
+    using queue_type = typename test_type::queue_type;
+    const queue_type &queue = test_type::default_queue();
+    constexpr plssvm::layout_type layout = util::test_parameter_value_at_v<0, TypeParam>;
+
+    // construct device_ptr
+    device_ptr_type ptr{ 10, queue };
+
+    // try copying data back to the host with a buffer with too few elements
+    plssvm::matrix<value_type, layout> buffer{ 2, 4 };
+    EXPECT_THROW_WHAT(ptr.copy_to_host(buffer), plssvm::gpu_device_ptr_exception, "Buffer too small to perform copy (needed: 10, provided: 8)!");
+}
+
+// clang-format off
+REGISTER_TYPED_TEST_SUITE_P(DevicePtrLayout,
+                            copy_matrix, copy_matrix_different_layouts,
+                            copy_matrix_too_few_host_elements, copy_matrix_too_few_buffer_elements);
 // clang-format on
 
 template <typename T>
