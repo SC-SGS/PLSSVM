@@ -11,6 +11,7 @@
 #include "plssvm/kernel_function_types.hpp"
 
 #include "plssvm/detail/utility.hpp"  // plssvm::detail::contains
+#include "plssvm/detail/utility.hpp"  // plssvm::detail::erase_if
 #include "plssvm/parameter.hpp"       // plssvm::parameter
 
 #include "backends/compare.hpp"    // compare::detail::{linear_kernel, poly_kernel, rbf_kernel}
@@ -86,7 +87,7 @@ class KernelFunctionVector : public ::testing::Test {
      * @brief Return the different vector sizes to test.
      * @return the vector sizes (`[[nodiscard]]`)
      */
-    [[nodiscard]] const std::vector<std::size_t> &get_sizes() const noexcept { return sizes_; }
+    [[nodiscard]] virtual std::vector<std::size_t> get_sizes() const noexcept { return sizes_; }
     /**
      * @brief Return the different parameter values to test.
      * @return the parameter values (`[[nodiscard]]`)
@@ -263,6 +264,18 @@ class KernelFunctionMatrix : public KernelFunctionVector<T> {
   protected:
     using typename KernelFunctionVector<T>::fixture_real_type;
     static constexpr plssvm::layout_type fixture_layout = util::test_parameter_value_at_v<0, T>;
+
+    /**
+     * @brief Return the different sizes to test. Removes the zero entry since it is not applicable to the matrix tests.
+     * @return the sizes (`[[nodiscard]]`)
+     */
+    [[nodiscard]] std::vector<std::size_t> get_sizes() const noexcept override {
+        // get the sizes defined by the base class
+        std::vector<std::size_t> sizes = KernelFunctionVector<T>::get_sizes();
+        // erase the size 0 entry
+        plssvm::detail::erase_if(sizes, [](const std::size_t size) { return size == 0; });
+        return sizes;
+    }
 };
 TYPED_TEST_SUITE(KernelFunctionMatrix, util::real_type_layout_type_gtest, naming::test_parameter_to_name);
 
