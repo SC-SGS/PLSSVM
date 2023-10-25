@@ -91,17 +91,17 @@ class KernelFunctionVector : public ::testing::Test {
      * @brief Return the different parameter values to test.
      * @return the parameter values (`[[nodiscard]]`)
      */
-    [[nodiscard]] const std::vector<std::array<double, 4>> &get_param_values() const noexcept { return param_values_; }
+    [[nodiscard]] const std::vector<std::array<plssvm::real_type, 4>> &get_param_values() const noexcept { return param_values_; }
 
   private:
     /// The different vector sizes to test.
     std::vector<std::size_t> sizes_{ 0, 1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024 };
     /// The different parameter values to test.
-    std::vector<std::array<double, 4>> param_values_{
-        std::array{ 3.0, 0.05, 1.0, 1.0 },
-        std::array{ 1.0, 0.0, 0.0, 1.0 },
-        std::array{ 4.0, -0.05, 1.5, 1.0 },
-        std::array{ 2.0, 0.025, -1.0, 0.5 },
+    std::vector<std::array<plssvm::real_type, 4>> param_values_{
+        std::array{ plssvm::real_type{ 3.0 }, plssvm::real_type{ 0.05 }, plssvm::real_type{ 1.0 }, plssvm::real_type{ 1.0 } },
+        std::array{ plssvm::real_type{ 1.0 }, plssvm::real_type{ 0.0 }, plssvm::real_type{ 0.0 }, plssvm::real_type{ 1.0 } },
+        std::array{ plssvm::real_type{ 4.0 }, plssvm::real_type{ -0.05 }, plssvm::real_type{ 1.5 }, plssvm::real_type{ 1.0 } },
+        std::array{ plssvm::real_type{ 2.0 }, plssvm::real_type{ 0.025 }, plssvm::real_type{ -1.0 }, plssvm::real_type{ 0.5 } },
     };
 };
 TYPED_TEST_SUITE(KernelFunctionVector, util::real_type_gtest, naming::test_parameter_to_name);
@@ -259,32 +259,10 @@ TYPED_TEST(KernelFunctionVectorDeathTest, size_mismatch_kernel_function_paramete
 //*************************************************************************************************************************************//
 
 template <typename T>
-class KernelFunctionMatrix : public ::testing::Test {
+class KernelFunctionMatrix : public KernelFunctionVector<T> {
   protected:
-    using fixture_real_type = util::test_parameter_type_at_t<0, T>;
+    using typename KernelFunctionVector<T>::fixture_real_type;
     static constexpr plssvm::layout_type fixture_layout = util::test_parameter_value_at_v<0, T>;
-
-    /**
-     * @brief Return the different matrix sizes to test.
-     * @return the matrix sizes (`[[nodiscard]]`)
-     */
-    [[nodiscard]] const std::vector<std::size_t> &get_sizes() const noexcept { return sizes_; }
-    /**
-     * @brief Return the different parameter values to test.
-     * @return the parameter values (`[[nodiscard]]`)
-     */
-    [[nodiscard]] const std::vector<std::array<double, 4>> &get_param_values() const noexcept { return param_values_; }
-
-  private:
-    /// The different matrix sizes to test.
-    std::vector<std::size_t> sizes_{ 1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024 };
-    /// The different parameter values to test.
-    std::vector<std::array<double, 4>> param_values_{
-        std::array{ 3.0, 0.05, 1.0, 1.0 },
-        std::array{ 1.0, 0.0, 0.0, 1.0 },
-        std::array{ 4.0, -0.05, 1.5, 1.0 },
-        std::array{ 2.0, 0.025, -1.0, 0.5 },
-    };
 };
 TYPED_TEST_SUITE(KernelFunctionMatrix, util::real_type_layout_type_gtest, naming::test_parameter_to_name);
 

@@ -203,9 +203,9 @@ TYPED_TEST_P(GenericGPUCSVMKernelFunction, run_assemble_kernel_matrix_explicit) 
             break;
         case plssvm::kernel_function_type::polynomial:
 #if defined(PLSSVM_USE_GEMM)
-            EXPECT_FLOATING_POINT_VECTOR_NEAR(kernel_matrix, (std::vector<plssvm::real_type>{ plssvm::real_type{ std::pow(14.0 / 3.0 + 1.0, 3) - 3.0 }, plssvm::real_type{ std::pow(32.0 / 3.0 + 1.0, 3) - 5.0 }, plssvm::real_type{ std::pow(32.0 / 3.0 + 1.0, 3) - 5.0 }, plssvm::real_type{ std::pow(77.0 / 3.0 + 1.0, 3) + 1.0 } - 6.0 }));
+            EXPECT_FLOATING_POINT_VECTOR_NEAR(kernel_matrix, (std::vector<plssvm::real_type>{ plssvm::real_type{ std::pow(14.0 / 3.0 + 1.0, 3) - 3.0 }, plssvm::real_type{ std::pow(32.0 / 3.0 + 1.0, 3) - 5.0 }, plssvm::real_type{ std::pow(32.0 / 3.0 + 1.0, 3) - 5.0 }, plssvm::real_type{ std::pow(77.0 / 3.0 + 1.0, 3) + 1.0 - 6.0 } }));
 #else
-            EXPECT_FLOATING_POINT_VECTOR_NEAR(kernel_matrix, (std::vector<plssvm::real_type>{ plssvm::real_type{ std::pow(14.0 / 3.0 + 1.0, 3) - 3.0 }, plssvm::real_type{ std::pow(32.0 / 3.0 + 1.0, 3) - 5.0 }, plssvm::real_type{ std::pow(77.0 / 3.0 + 1.0, 3) + 1.0 } - 6.0 }));
+            EXPECT_FLOATING_POINT_VECTOR_NEAR(kernel_matrix, (std::vector<plssvm::real_type>{ plssvm::real_type{ std::pow(14.0 / 3.0 + 1.0, 3) - 3.0 }, plssvm::real_type{ std::pow(32.0 / 3.0 + 1.0, 3) - 5.0 }, plssvm::real_type{ std::pow(77.0 / 3.0 + 1.0, 3) + 1.0 - 6.0 } }));
 #endif
             break;
         case plssvm::kernel_function_type::rbf:
