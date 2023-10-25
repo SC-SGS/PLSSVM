@@ -194,38 +194,38 @@ include(${PROJECT_SOURCE_DIR}/cmake/discover_tests_with_death_test_filter.cmake)
 discover_tests_with_death_test_filter(${PLSSVM_BASE_TEST_NAME})
 
 
-## add test for help messages
-#add_test(NAME MainTrain/executable_help COMMAND ${PLSSVM_EXECUTABLE_TRAIN_NAME} --help)
-#add_test(NAME MainPredict/executable_help COMMAND ${PLSSVM_EXECUTABLE_PREDICT_NAME} --help)
-#add_test(NAME MainScale/executable_help COMMAND ${PLSSVM_EXECUTABLE_SCALE_NAME} --help)
-#
-## add test for version messages
-#add_test(NAME MainTrain/executable_version COMMAND ${PLSSVM_EXECUTABLE_TRAIN_NAME} --version)
-#add_test(NAME MainPredict/executable_version COMMAND ${PLSSVM_EXECUTABLE_PREDICT_NAME} --version)
-#add_test(NAME MainScale/executable_version COMMAND ${PLSSVM_EXECUTABLE_SCALE_NAME} --version)
-#
-## add minimal run test
-#add_test(NAME MainTrain/executable_minimal COMMAND ${PLSSVM_EXECUTABLE_TRAIN_NAME} "${PLSSVM_TEST_FILE}" "${CMAKE_CURRENT_BINARY_DIR}/test.libsvm.model")
-#add_test(NAME MainPredict/executable_minimal COMMAND ${PLSSVM_EXECUTABLE_PREDICT_NAME}
-#        "${CMAKE_CURRENT_LIST_DIR}/data/predict/500x200_test.libsvm"          # test file
-#        "${CMAKE_CURRENT_LIST_DIR}/data/predict/500x200_linear.libsvm.model"  # model file
-#        "${CMAKE_CURRENT_BINARY_DIR}/test.libsvm.predict"                     # predict file (result)
-#        )
-#add_test(NAME MainScale/executable_minimal COMMAND ${PLSSVM_EXECUTABLE_SCALE_NAME} "${PLSSVM_TEST_FILE}" "${CMAKE_CURRENT_BINARY_DIR}/scaled.libsvm.model")
-#add_test(NAME MainScale/executable_save_scaling_factors COMMAND ${PLSSVM_EXECUTABLE_SCALE_NAME}
-#        -s "${CMAKE_CURRENT_BINARY_DIR}/scaling_parameter.txt"  # the file the scaling parameters are saved to
-#        "${PLSSVM_TEST_FILE}"                                   # the file to scale
-#        "${CMAKE_CURRENT_BINARY_DIR}/scaled.libsvm.model"       # the scaled file (result)
-#        )
-#
-#
-## add failing test (must return with a non-zero exit code)
-#add_test(NAME MainTrain/executable_fail COMMAND ${PLSSVM_EXECUTABLE_TRAIN_NAME} " ")
-#set_tests_properties(MainTrain/executable_fail PROPERTIES WILL_FAIL TRUE)
-#add_test(NAME MainPredict/executable_fail COMMAND ${PLSSVM_EXECUTABLE_PREDICT_NAME}  " " " ")
-#set_tests_properties(MainPredict/executable_fail PROPERTIES WILL_FAIL TRUE)
-#add_test(NAME MainScale/executable_fail COMMAND ${PLSSVM_EXECUTABLE_SCALE_NAME} " ")
-#set_tests_properties(MainScale/executable_fail PROPERTIES WILL_FAIL TRUE)
+# add test for help messages
+add_test(NAME MainTrain/executable_help COMMAND ${PLSSVM_EXECUTABLE_TRAIN_NAME} --help)
+add_test(NAME MainPredict/executable_help COMMAND ${PLSSVM_EXECUTABLE_PREDICT_NAME} --help)
+add_test(NAME MainScale/executable_help COMMAND ${PLSSVM_EXECUTABLE_SCALE_NAME} --help)
+
+# add test for version messages
+add_test(NAME MainTrain/executable_version COMMAND ${PLSSVM_EXECUTABLE_TRAIN_NAME} --version)
+add_test(NAME MainPredict/executable_version COMMAND ${PLSSVM_EXECUTABLE_PREDICT_NAME} --version)
+add_test(NAME MainScale/executable_version COMMAND ${PLSSVM_EXECUTABLE_SCALE_NAME} --version)
+
+# add minimal run test
+add_test(NAME MainTrain/executable_minimal COMMAND ${PLSSVM_EXECUTABLE_TRAIN_NAME} "${PLSSVM_TEST_FILE}" "${CMAKE_CURRENT_BINARY_DIR}/test.libsvm.model")
+add_test(NAME MainPredict/executable_minimal COMMAND ${PLSSVM_EXECUTABLE_PREDICT_NAME}
+        "${CMAKE_CURRENT_LIST_DIR}/data/predict/500x200_test.libsvm"              # test file
+        "${CMAKE_CURRENT_LIST_DIR}/data/predict/500x200_linear_oaa.libsvm.model"  # model file
+        "${CMAKE_CURRENT_BINARY_DIR}/test.libsvm.predict"                         # predict file (result)
+        )
+add_test(NAME MainScale/executable_minimal COMMAND ${PLSSVM_EXECUTABLE_SCALE_NAME} "${PLSSVM_TEST_FILE}" "${CMAKE_CURRENT_BINARY_DIR}/scaled.libsvm.model")
+add_test(NAME MainScale/executable_save_scaling_factors COMMAND ${PLSSVM_EXECUTABLE_SCALE_NAME}
+        -s "${CMAKE_CURRENT_BINARY_DIR}/scaling_parameter.txt"  # the file the scaling parameters are saved to
+        "${PLSSVM_TEST_FILE}"                                   # the file to scale
+        "${CMAKE_CURRENT_BINARY_DIR}/scaled.libsvm.model"       # the scaled file (result)
+        )
+
+
+# add failing test (must return with a non-zero exit code)
+add_test(NAME MainTrain/executable_fail COMMAND ${PLSSVM_EXECUTABLE_TRAIN_NAME} " ")
+set_tests_properties(MainTrain/executable_fail PROPERTIES WILL_FAIL TRUE)
+add_test(NAME MainPredict/executable_fail COMMAND ${PLSSVM_EXECUTABLE_PREDICT_NAME}  " " " ")
+set_tests_properties(MainPredict/executable_fail PROPERTIES WILL_FAIL TRUE)
+add_test(NAME MainScale/executable_fail COMMAND ${PLSSVM_EXECUTABLE_SCALE_NAME} " ")
+set_tests_properties(MainScale/executable_fail PROPERTIES WILL_FAIL TRUE)
 
 # add test as coverage dependency
 if (TARGET coverage)
