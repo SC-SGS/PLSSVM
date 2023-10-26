@@ -247,13 +247,13 @@ else ()
     FetchContent_Declare(fmt
             GIT_REPOSITORY https://github.com/fmtlib/fmt.git
             GIT_TAG ${PLSSVM_fmt_VERSION}
-            GIT_SHALLOW TRUE
+#            GIT_SHALLOW TRUE
             QUIET
 
-            set (FMT_TEST OFF CACHE BOOL "" FORCE)
-            set (FMT_DOC OFF CACHE BOOL "" FORCE)
-            set (FMT_INSTALL OFF CACHE BOOL "" FORCE)
-            set (FMT_SYSTEM_HEADERS ON CACHE BOOL "" FORCE)
+#            set (FMT_TEST OFF CACHE BOOL "" FORCE)
+#            set (FMT_DOC OFF CACHE BOOL "" FORCE)
+#            set (FMT_INSTALL OFF CACHE BOOL "" FORCE)
+#            set (FMT_SYSTEM_HEADERS ON CACHE BOOL "" FORCE)
     )
     FetchContent_MakeAvailable(fmt)
     set_property(TARGET fmt PROPERTY POSITION_INDEPENDENT_CODE ON)
