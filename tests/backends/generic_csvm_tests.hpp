@@ -797,7 +797,7 @@ TYPED_TEST_P(GenericCSVMKernelFunctionClassification, predict) {
     const plssvm::data_set<label_type> test_data{ PLSSVM_TEST_PATH "/data/predict/500x200.libsvm" };
 
     // read the previously learned model
-    const plssvm::model<label_type> model{ fmt::format(PLSSVM_TEST_PATH "/data/predict/500x200_{}_{}.libsvm.model", kernel, classification) };
+    const plssvm::model<label_type> model{ fmt::format(PLSSVM_TEST_PATH "/data/predict/500x200_{}_{}_{}.libsvm.model", plssvm::detail::arithmetic_type_name<plssvm::real_type>(), kernel, classification) };
 
     // create C-SVM
     const csvm_type svm = util::construct_from_tuple<csvm_type>(params, csvm_test_type::additional_arguments);
@@ -827,7 +827,7 @@ TYPED_TEST_P(GenericCSVMKernelFunctionClassification, score_model) {
     plssvm::parameter params{ plssvm::kernel_type = kernel };
 
     // read the previously learned model
-    const plssvm::model<label_type> model{ fmt::format(PLSSVM_TEST_PATH "/data/predict/500x200_{}_{}.libsvm.model", kernel, classification) };
+    const plssvm::model<label_type> model{ fmt::format(PLSSVM_TEST_PATH "/data/predict/500x200_{}_{}_{}.libsvm.model", plssvm::detail::arithmetic_type_name<plssvm::real_type>(), kernel, classification) };
 
     // create C-SVM
     const csvm_type svm = util::construct_from_tuple<csvm_type>(params, csvm_test_type::additional_arguments);
@@ -852,7 +852,7 @@ TYPED_TEST_P(GenericCSVMKernelFunctionClassification, score) {
     const plssvm::data_set<label_type> test_data{ PLSSVM_TEST_PATH "/data/predict/500x200.libsvm" };
 
     // read the previously learned model
-    const plssvm::model<label_type> model{ fmt::format(PLSSVM_TEST_PATH "/data/predict/500x200_{}_{}.libsvm.model", kernel, classification) };
+    const plssvm::model<label_type> model{ fmt::format(PLSSVM_TEST_PATH "/data/predict/500x200_{}_{}_{}.libsvm.model", plssvm::detail::arithmetic_type_name<plssvm::real_type>(), kernel, classification) };
 
     // create C-SVM
     const csvm_type svm = util::construct_from_tuple<csvm_type>(params, csvm_test_type::additional_arguments);
@@ -897,7 +897,7 @@ TYPED_TEST_P(GenericCSVMSolverKernelFunctionClassification, fit) {
     const plssvm::data_set<label_type> test_data{ PLSSVM_TEST_PATH "/data/predict/500x200.libsvm" };
 
     // read the previously learned model
-    const plssvm::model<label_type> correct_model{ fmt::format(PLSSVM_TEST_PATH "/data/predict/500x200_{}_{}.libsvm.model", kernel, classification) };
+    const plssvm::model<label_type> correct_model{ fmt::format(PLSSVM_TEST_PATH "/data/predict/500x200_{}_{}_{}.libsvm.model", plssvm::detail::arithmetic_type_name<plssvm::real_type>(), kernel, classification) };
 
     // create C-SVM
     const csvm_type svm = util::construct_from_tuple<csvm_type>(params, csvm_test_type::additional_arguments);
@@ -912,7 +912,8 @@ TYPED_TEST_P(GenericCSVMSolverKernelFunctionClassification, fit) {
     // can't check support vectors for equality since the SV order after our IO is non-deterministic
     ASSERT_EQ(model.weights().size(), correct_model.weights().size());
     // can't check weights for equality since the SV order after our IO is non-deterministic
-    EXPECT_FLOATING_POINT_VECTOR_NEAR_EPS(model.rho(), correct_model.rho(), plssvm::real_type{ 1e10 });
+    EXPECT_FLOATING_POINT_VECTOR_NEAR_EPS(model.rho(), correct_model.rho(), plssvm::real_type{ 1e5 });
+//    EXPECT_FLOATING_POINT_VECTOR_NEAR_EPS(model.rho(), correct_model.rho(), plssvm::real_type{ 1e10 });
 }
 
 // clang-format off

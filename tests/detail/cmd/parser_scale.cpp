@@ -38,8 +38,8 @@ TEST_F(ParserScale, minimal) {
     const plssvm::detail::cmd::parser_scale parser{ this->get_argc(), this->get_argv() };
 
     // check default values
-    EXPECT_DOUBLE_EQ(-1.0, parser.lower);
-    EXPECT_DOUBLE_EQ(+1.0, parser.upper);
+    EXPECT_FLOATING_POINT_EQ(plssvm::real_type{ -1.0 }, parser.lower);
+    EXPECT_FLOATING_POINT_EQ(plssvm::real_type{ +1.0 }, parser.upper);
     EXPECT_EQ(parser.format, plssvm::file_format_type::libsvm);
     EXPECT_FALSE(parser.strings_as_labels);
     EXPECT_EQ(parser.input_filename, "data.libsvm");
@@ -88,8 +88,8 @@ TEST_F(ParserScale, all_arguments) {
     const plssvm::detail::cmd::parser_scale parser{ this->get_argc(), this->get_argv() };
 
     // check default values
-    EXPECT_DOUBLE_EQ(-2.0, parser.lower);
-    EXPECT_DOUBLE_EQ(+2.5, parser.upper);
+    EXPECT_FLOATING_POINT_EQ(plssvm::real_type{ -2.0 }, parser.lower);
+    EXPECT_FLOATING_POINT_EQ(plssvm::real_type{ +2.5 }, parser.upper);
     EXPECT_EQ(parser.format, plssvm::file_format_type::arff);
     EXPECT_TRUE(parser.strings_as_labels);
     EXPECT_EQ(parser.input_filename, "data.libsvm");
@@ -135,7 +135,7 @@ TEST_F(ParserScale, all_arguments_output) {
 }
 
 // test all command line parameter separately
-class ParserScaleLower : public ParserScale, public ::testing::WithParamInterface<std::tuple<std::string, double>> {};
+class ParserScaleLower : public ParserScale, public ::testing::WithParamInterface<std::tuple<std::string, plssvm::real_type>> {};
 TEST_P(ParserScaleLower, parsing) {
     const auto &[flag, value] = GetParam();
     // create artificial command line arguments in test fixture
@@ -143,16 +143,16 @@ TEST_P(ParserScaleLower, parsing) {
     // create parameter object
     const plssvm::detail::cmd::parser_scale parser{ this->get_argc(), this->get_argv() };
     // test for correctness
-    EXPECT_EQ(parser.lower, value);
+    EXPECT_FLOATING_POINT_EQ(parser.lower, value);
 }
 // clang-format off
 INSTANTIATE_TEST_SUITE_P(ParserScale, ParserScaleLower, ::testing::Combine(
                 ::testing::Values("-l", "--lower"),
-                ::testing::Values(-2.5, -1.0, -0.01, 0.0)),
+                ::testing::Values(plssvm::real_type{ -2.5 }, plssvm::real_type{ -1.0 }, plssvm::real_type{ -0.01 }, plssvm::real_type{ 0.0 })),
                 naming::pretty_print_parameter_flag_and_value<ParserScaleLower>);
 // clang-format on
 
-class ParserScaleUpper : public ParserScale, public ::testing::WithParamInterface<std::tuple<std::string, double>> {};
+class ParserScaleUpper : public ParserScale, public ::testing::WithParamInterface<std::tuple<std::string, plssvm::real_type>> {};
 TEST_P(ParserScaleUpper, parsing) {
     const auto &[flag, value] = GetParam();
     // create artificial command line arguments in test fixture
@@ -160,12 +160,12 @@ TEST_P(ParserScaleUpper, parsing) {
     // create parameter object
     const plssvm::detail::cmd::parser_scale parser{ this->get_argc(), this->get_argv() };
     // test for correctness
-    EXPECT_EQ(parser.upper, value);
+    EXPECT_FLOATING_POINT_EQ(parser.upper, value);
 }
 // clang-format off
 INSTANTIATE_TEST_SUITE_P(ParserScale, ParserScaleUpper,
                 ::testing::Combine(::testing::Values("-u", "--upper"),
-                ::testing::Values(0.0, 0.01, 1.0, 2.5)),
+                ::testing::Values(plssvm::real_type{ 0.0 }, plssvm::real_type{ 0.01 }, plssvm::real_type{ 1.0 }, plssvm::real_type{ 2.5 })),
                 naming::pretty_print_parameter_flag_and_value<ParserScaleUpper>);
 // clang-format on
 

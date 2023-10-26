@@ -42,7 +42,7 @@ TEST_F(ParserTrain, minimal) {
     // check parsed values
     EXPECT_EQ(parser.csvm_params, plssvm::parameter{});
     EXPECT_TRUE(parser.epsilon.is_default());
-    EXPECT_DOUBLE_EQ(parser.epsilon.value(), 0.001);
+    EXPECT_FLOATING_POINT_EQ(parser.epsilon.value(), plssvm::real_type{ 0.001 });
     EXPECT_TRUE(parser.max_iter.is_default());
     EXPECT_EQ(parser.max_iter.value(), 0);
     EXPECT_EQ(parser.classification.value(), plssvm::classification_type::oaa);
@@ -106,12 +106,12 @@ TEST_F(ParserTrain, all_arguments) {
     // check parsed values
     EXPECT_EQ(parser.csvm_params.kernel_type, plssvm::kernel_function_type::polynomial);
     EXPECT_EQ(parser.csvm_params.degree, 2);
-    EXPECT_DOUBLE_EQ(parser.csvm_params.gamma, 1.5);
-    EXPECT_DOUBLE_EQ(parser.csvm_params.coef0, -1.5);
-    EXPECT_DOUBLE_EQ(parser.csvm_params.cost, 2.0);
+    EXPECT_FLOATING_POINT_EQ(parser.csvm_params.gamma.value(), plssvm::real_type{ 1.5 });
+    EXPECT_FLOATING_POINT_EQ(parser.csvm_params.coef0.value(), plssvm::real_type{ -1.5 });
+    EXPECT_FLOATING_POINT_EQ(parser.csvm_params.cost.value(), plssvm::real_type{ 2.0 });
 
     EXPECT_FALSE(parser.epsilon.is_default());
-    EXPECT_DOUBLE_EQ(parser.epsilon.value(), 1e-10);
+    EXPECT_FLOATING_POINT_EQ(parser.epsilon.value(), plssvm::real_type{ 1e-10 });
     EXPECT_FALSE(parser.max_iter.is_default());
     EXPECT_EQ(parser.max_iter.value(), 100);
     EXPECT_FALSE(parser.classification.is_default());
@@ -224,7 +224,7 @@ INSTANTIATE_TEST_SUITE_P(ParserTrain, ParserTrainDegree, ::testing::Combine(
                 naming::pretty_print_parameter_flag_and_value<ParserTrainDegree>);
 // clang-format on
 
-class ParserTrainGamma : public ParserTrain, public ::testing::WithParamInterface<std::tuple<std::string, double>> {};
+class ParserTrainGamma : public ParserTrain, public ::testing::WithParamInterface<std::tuple<std::string, plssvm::real_type>> {};
 TEST_P(ParserTrainGamma, parsing) {
     const auto &[flag, gamma] = GetParam();
     // create artificial command line arguments in test fixture
@@ -233,16 +233,16 @@ TEST_P(ParserTrainGamma, parsing) {
     const plssvm::detail::cmd::parser_train parser{ this->get_argc(), this->get_argv() };
     // test for correctness
     EXPECT_FALSE(parser.csvm_params.gamma.is_default());
-    EXPECT_DOUBLE_EQ(parser.csvm_params.gamma, gamma);
+    EXPECT_FLOATING_POINT_EQ(parser.csvm_params.gamma.value(), gamma);
 }
 // clang-format off
 INSTANTIATE_TEST_SUITE_P(ParserTrain, ParserTrainGamma,
                 ::testing::Combine(::testing::Values("-g", "--gamma"),
-                ::testing::Values(0.001, 0.75, 1.5, 2)),
+                ::testing::Values(plssvm::real_type{ 0.001 }, plssvm::real_type{ 0.75 }, plssvm::real_type{ 1.5 }, plssvm::real_type{ 2 })),
                 naming::pretty_print_parameter_flag_and_value<ParserTrainGamma>);
 // clang-format on
 
-class ParserTrainGammaDeathTest : public ParserTrain, public ::testing::WithParamInterface<std::tuple<std::string, double>> {};
+class ParserTrainGammaDeathTest : public ParserTrain, public ::testing::WithParamInterface<std::tuple<std::string, plssvm::real_type>> {};
 TEST_P(ParserTrainGammaDeathTest, gamma_explicit_less_or_equal_to_zero) {
     const auto &[flag, gamma] = GetParam();
     // create artificial command line arguments in test fixture
@@ -253,11 +253,11 @@ TEST_P(ParserTrainGammaDeathTest, gamma_explicit_less_or_equal_to_zero) {
 // clang-format off
 INSTANTIATE_TEST_SUITE_P(ParserTrainDeathTest, ParserTrainGammaDeathTest, ::testing::Combine(
                 ::testing::Values("-g", "--gamma"),
-                ::testing::Values(-2, -1.5, 0.0)),
+                ::testing::Values(plssvm::real_type{ -2 }, plssvm::real_type{ -1.5 }, plssvm::real_type{ 0.0 })),
                 naming::pretty_print_parameter_flag_and_value<ParserTrainGammaDeathTest>);
 // clang-format on
 
-class ParserTrainCoef0 : public ParserTrain, public ::testing::WithParamInterface<std::tuple<std::string, double>> {};
+class ParserTrainCoef0 : public ParserTrain, public ::testing::WithParamInterface<std::tuple<std::string, plssvm::real_type>> {};
 TEST_P(ParserTrainCoef0, parsing) {
     const auto &[flag, coef0] = GetParam();
     // create artificial command line arguments in test fixture
@@ -266,16 +266,18 @@ TEST_P(ParserTrainCoef0, parsing) {
     const plssvm::detail::cmd::parser_train parser{ this->get_argc(), this->get_argv() };
     // test for correctness
     EXPECT_FALSE(parser.csvm_params.coef0.is_default());
-    EXPECT_DOUBLE_EQ(parser.csvm_params.coef0, coef0);
+    EXPECT_FLOATING_POINT_EQ(parser.csvm_params.coef0.value(), coef0);
 }
 // clang-format off
 INSTANTIATE_TEST_SUITE_P(ParserTrain, ParserTrainCoef0, ::testing::Combine(
                 ::testing::Values("-r", "--coef0"),
-                ::testing::Values(-2, -1.5, -0.75, -0.001, 0, 0.001, 0.75, 1.5, 2)),
+                ::testing::Values(plssvm::real_type{ -2 }, plssvm::real_type{ -1.5 }, plssvm::real_type{ -0.75 }, plssvm::real_type{ -0.001 },
+                                  plssvm::real_type{ 0 }, plssvm::real_type{ 0.001 }, plssvm::real_type{ 0.75 }, plssvm::real_type{ 1.5 },
+                                  plssvm::real_type{ 2 })),
                 naming::pretty_print_parameter_flag_and_value<ParserTrainCoef0>);
 // clang-format on
 
-class ParserTrainCost : public ParserTrain, public ::testing::WithParamInterface<std::tuple<std::string, int>> {};
+class ParserTrainCost : public ParserTrain, public ::testing::WithParamInterface<std::tuple<std::string, plssvm::real_type>> {};
 TEST_P(ParserTrainCost, parsing) {
     const auto &[flag, cost] = GetParam();
     // create artificial command line arguments in test fixture
@@ -284,16 +286,16 @@ TEST_P(ParserTrainCost, parsing) {
     const plssvm::detail::cmd::parser_train parser{ this->get_argc(), this->get_argv() };
     // test for correctness
     EXPECT_FALSE(parser.csvm_params.cost.is_default());
-    EXPECT_DOUBLE_EQ(parser.csvm_params.cost, cost);
+    EXPECT_FLOATING_POINT_EQ(parser.csvm_params.cost.value(), cost);
 }
 // clang-format off
 INSTANTIATE_TEST_SUITE_P(ParserTrain, ParserTrainCost, ::testing::Combine(
                 ::testing::Values("-c", "--cost"),
-                ::testing::Range(-2, 3)),
+                ::testing::Values(plssvm::real_type{ -2 }, plssvm::real_type{ 3 }, plssvm::real_type{ 1.5 }, plssvm::real_type{ -2.4 })),
                 naming::pretty_print_parameter_flag_and_value<ParserTrainCost>);
 // clang-format on
 
-class ParserTrainEpsilon : public ParserTrain, public ::testing::WithParamInterface<std::tuple<std::string, double>> {};
+class ParserTrainEpsilon : public ParserTrain, public ::testing::WithParamInterface<std::tuple<std::string, plssvm::real_type>> {};
 TEST_P(ParserTrainEpsilon, parsing) {
     const auto &[flag, eps] = GetParam();
     // create artificial command line arguments in test fixture
@@ -302,12 +304,13 @@ TEST_P(ParserTrainEpsilon, parsing) {
     const plssvm::detail::cmd::parser_train parser{ this->get_argc(), this->get_argv() };
     // test for correctness
     EXPECT_FALSE(parser.epsilon.is_default());
-    EXPECT_DOUBLE_EQ(parser.epsilon, eps);
+    EXPECT_FLOATING_POINT_EQ(parser.epsilon.value(), eps);
 }
 // clang-format off
 INSTANTIATE_TEST_SUITE_P(ParserTrain, ParserTrainEpsilon, ::testing::Combine(
                 ::testing::Values("-e", "--epsilon"),
-                ::testing::Values(10.0, 1.0, 0.0, 0.1, 0.01, 0.001, 0.0001, 0.00001)),
+                ::testing::Values(plssvm::real_type{ 10.0 }, plssvm::real_type{ 1.0 }, plssvm::real_type{ 0.0 }, plssvm::real_type{ 0.1 },
+                                  plssvm::real_type{ 0.01 }, plssvm::real_type{ 0.001 }, plssvm::real_type{ 0.0001 }, plssvm::real_type{ 0.00001 })),
                 naming::pretty_print_parameter_flag_and_value<ParserTrainEpsilon>);
 // clang-format on
 

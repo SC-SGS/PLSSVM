@@ -207,9 +207,9 @@ add_test(NAME MainScale/executable_version COMMAND ${PLSSVM_EXECUTABLE_SCALE_NAM
 # add minimal run test
 add_test(NAME MainTrain/executable_minimal COMMAND ${PLSSVM_EXECUTABLE_TRAIN_NAME} "${PLSSVM_TEST_FILE}" "${CMAKE_CURRENT_BINARY_DIR}/test.libsvm.model")
 add_test(NAME MainPredict/executable_minimal COMMAND ${PLSSVM_EXECUTABLE_PREDICT_NAME}
-        "${CMAKE_CURRENT_LIST_DIR}/data/predict/500x200_test.libsvm"              # test file
-        "${CMAKE_CURRENT_LIST_DIR}/data/predict/500x200_linear_oaa.libsvm.model"  # model file
-        "${CMAKE_CURRENT_BINARY_DIR}/test.libsvm.predict"                         # predict file (result)
+        "${CMAKE_CURRENT_LIST_DIR}/data/predict/500x200_test.libsvm"                     # test file
+        "${CMAKE_CURRENT_LIST_DIR}/data/predict/500x200_double_linear_oaa.libsvm.model"  # model file
+        "${CMAKE_CURRENT_BINARY_DIR}/test.libsvm.predict"                                # predict file (result)
         )
 add_test(NAME MainScale/executable_minimal COMMAND ${PLSSVM_EXECUTABLE_SCALE_NAME} "${PLSSVM_TEST_FILE}" "${CMAKE_CURRENT_BINARY_DIR}/scaled.libsvm.model")
 add_test(NAME MainScale/executable_save_scaling_factors COMMAND ${PLSSVM_EXECUTABLE_SCALE_NAME}
