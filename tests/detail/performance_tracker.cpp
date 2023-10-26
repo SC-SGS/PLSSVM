@@ -96,24 +96,25 @@ TEST_F(PerformanceTracker, add_entry_macro) {
     PLSSVM_DETAIL_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking_entry{ "foo", "bar", 42 }));
     PLSSVM_DETAIL_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking_entry{ "foo", "baz", 3.1415 }));
     PLSSVM_DETAIL_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking_entry{ "", "foobar", 'a' }));
+    PLSSVM_DETAIL_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking_entry{ "", "foobar", 'b' }));
 
     // get the tracking entries
-    const std::unordered_multimap<std::string, std::string> entries = plssvm::detail::global_tracker->get_tracking_entries();
+    const std::map<std::string, std::map<std::string, std::vector<std::string>>> entries = plssvm::detail::global_tracker->get_tracking_entries();
 
     // check entries for correctness
-    EXPECT_EQ(entries.size(), 3);
+    EXPECT_EQ(entries.size(), 2);
 
-    auto r1 = entries.equal_range("foo");
-    ASSERT_EQ(std::distance(r1.first, r1.second), 2);
-    for (auto it = r1.first; it != r1.second; ++it) {
-        EXPECT_EQ(it->first, "foo");
-        EXPECT_TRUE(it->second == "  bar: 42\n" || it->second == "  baz: 3.1415\n");
-    }
+    // first category
+    ASSERT_EQ(entries.at("foo").size(), 2);
+    ASSERT_EQ(entries.at("foo").at("bar").size(), 1);
+    EXPECT_EQ(entries.at("foo").at("bar").front(), "42");
+    ASSERT_EQ(entries.at("foo").at("baz").size(), 1);
+    EXPECT_EQ(entries.at("foo").at("baz").front(), "3.1415");
 
-    auto r2 = entries.equal_range("");
-    ASSERT_EQ(std::distance(r2.first, r2.second), 1);
-    EXPECT_EQ(r2.first->first, "");
-    EXPECT_EQ(r2.first->second, "foobar: a\n");
+    // second category
+    ASSERT_EQ(entries.at("").size(), 1);
+    ASSERT_EQ(entries.at("").at("foobar").size(), 2);
+    EXPECT_EQ(entries.at("").at("foobar"), (std::vector<std::string>{ "a", "b" }));
 }
 
 TEST_F(PerformanceTracker, save_macro) {
@@ -123,6 +124,7 @@ TEST_F(PerformanceTracker, save_macro) {
     plssvm::detail::global_tracker->add_tracking_entry(plssvm::detail::tracking_entry{ "foo", "bar", 42 });
     plssvm::detail::global_tracker->add_tracking_entry(plssvm::detail::tracking_entry{ "foo", "baz", 3.1415 });
     plssvm::detail::global_tracker->add_tracking_entry(plssvm::detail::tracking_entry{ "", "foobar", 'a' });
+    plssvm::detail::global_tracker->add_tracking_entry(plssvm::detail::tracking_entry{ "", "foobar", 'b' });
     PLSSVM_DETAIL_PERFORMANCE_TRACKER_SAVE(tmp_file.filename);
 
     // the file must not be empty
@@ -136,7 +138,7 @@ TEST_F(PerformanceTracker, save_macro) {
     EXPECT_THAT(reader.buffer(), ::testing::HasSubstr("foo:"));
     EXPECT_THAT(reader.buffer(), ::testing::HasSubstr("bar: 42"));
     EXPECT_THAT(reader.buffer(), ::testing::HasSubstr("baz: 3.1415"));
-    EXPECT_THAT(reader.buffer(), ::testing::HasSubstr("foobar: a"));
+    EXPECT_THAT(reader.buffer(), ::testing::HasSubstr("foobar: [a, b]"));
 
     // the tracking entries must be empty now
     EXPECT_TRUE(plssvm::detail::global_tracker->get_tracking_entries().empty());
@@ -161,69 +163,66 @@ TEST_F(PerformanceTracker, add_generic_tracking_entry) {
     plssvm::detail::global_tracker->add_tracking_entry(plssvm::detail::tracking_entry{ "foo", "bar", 42 });
     plssvm::detail::global_tracker->add_tracking_entry(plssvm::detail::tracking_entry{ "foo", "baz", 3.1415 });
     plssvm::detail::global_tracker->add_tracking_entry(plssvm::detail::tracking_entry{ "", "foobar", 'a' });
+    plssvm::detail::global_tracker->add_tracking_entry(plssvm::detail::tracking_entry{ "", "foobar", 'b' });
 
     // get the tracking entries
-    const std::unordered_multimap<std::string, std::string> entries = plssvm::detail::global_tracker->get_tracking_entries();
+    const std::map<std::string, std::map<std::string, std::vector<std::string>>> entries = plssvm::detail::global_tracker->get_tracking_entries();
 
     // check entries for correctness
-    EXPECT_EQ(entries.size(), 3);
+    EXPECT_EQ(entries.size(), 2);
 
-    auto r1 = entries.equal_range("foo");
-    ASSERT_EQ(std::distance(r1.first, r1.second), 2);
-    for (auto it = r1.first; it != r1.second; ++it) {
-        EXPECT_EQ(it->first, "foo");
-        EXPECT_TRUE(it->second == "  bar: 42\n" || it->second == "  baz: 3.1415\n");
-    }
+    // first category
+    ASSERT_EQ(entries.at("foo").size(), 2);
+    ASSERT_EQ(entries.at("foo").at("bar").size(), 1);
+    EXPECT_EQ(entries.at("foo").at("bar").front(), "42");
+    ASSERT_EQ(entries.at("foo").at("baz").size(), 1);
+    EXPECT_EQ(entries.at("foo").at("baz").front(), "3.1415");
 
-    auto r2 = entries.equal_range("");
-    ASSERT_EQ(std::distance(r2.first, r2.second), 1);
-    EXPECT_EQ(r2.first->first, "");
-    EXPECT_EQ(r2.first->second, "foobar: a\n");
+    // second category
+    ASSERT_EQ(entries.at("").size(), 1);
+    ASSERT_EQ(entries.at("").at("foobar").size(), 2);
+    EXPECT_EQ(entries.at("").at("foobar"), (std::vector<std::string>{ "a", "b" }));
 }
 TEST_F(PerformanceTracker, add_string_tracking_entry) {
     // add a tracking entry
     plssvm::detail::global_tracker->add_tracking_entry(plssvm::detail::tracking_entry{ "foo", "bar", std::string{ "baz" } });
 
     // get the tracking entries
-    const std::unordered_multimap<std::string, std::string> entries = plssvm::detail::global_tracker->get_tracking_entries();
+    const std::map<std::string, std::map<std::string, std::vector<std::string>>> entries = plssvm::detail::global_tracker->get_tracking_entries();
 
     // check entries for correctness
     EXPECT_EQ(entries.size(), 1);
 
-    auto r = entries.equal_range("foo");
-    ASSERT_EQ(std::distance(r.first, r.second), 1);
-    EXPECT_EQ(r.first->first, "foo");
-    EXPECT_EQ(r.first->second, "  bar: \"baz\"\n");
+    ASSERT_EQ(entries.at("foo").size(), 1);
+    ASSERT_EQ(entries.at("foo").at("bar").size(), 1);
+    EXPECT_EQ(entries.at("foo").at("bar").front(), "\"baz\"");
 }
 TEST_F(PerformanceTracker, add_vector_tracking_entry) {
     // add a tracking entry
     plssvm::detail::global_tracker->add_tracking_entry(plssvm::detail::tracking_entry{ "foo", "bar", std::vector{ 1, 2, 3 } });
+    plssvm::detail::global_tracker->add_tracking_entry(plssvm::detail::tracking_entry{ "foo", "bar", std::vector{ std::string{ "a" }, std::string{ "b" } } });
 
     // get the tracking entries
-    const std::unordered_multimap<std::string, std::string> entries = plssvm::detail::global_tracker->get_tracking_entries();
+    const std::map<std::string, std::map<std::string, std::vector<std::string>>> entries = plssvm::detail::global_tracker->get_tracking_entries();
 
     // check entries for correctness
     EXPECT_EQ(entries.size(), 1);
 
-    auto r = entries.equal_range("foo");
-    ASSERT_EQ(std::distance(r.first, r.second), 1);
-    EXPECT_EQ(r.first->first, "foo");
-    EXPECT_EQ(r.first->second, "  bar: [1,2,3]\n");
+    ASSERT_EQ(entries.at("foo").size(), 1);
+    ASSERT_EQ(entries.at("foo").at("bar").size(), 2);
+    EXPECT_EQ(entries.at("foo").at("bar"), (std::vector<std::string>{ "[1, 2, 3]", "[\"a\", \"b\"]" }));
 }
 TEST_F(PerformanceTracker, add_parameter_tracking_entry) {
     // add a tracking entry
     plssvm::detail::global_tracker->add_tracking_entry(plssvm::detail::tracking_entry{ "parameter", "", plssvm::parameter{} });
 
     // get the tracking entries
-    const std::unordered_multimap<std::string, std::string> entries = plssvm::detail::global_tracker->get_tracking_entries();
+    const std::map<std::string, std::map<std::string, std::vector<std::string>>> entries = plssvm::detail::global_tracker->get_tracking_entries();
 
     // check entries for correctness
     EXPECT_EQ(entries.size(), 1);
 
-    auto r = entries.equal_range("parameter");
-    ASSERT_EQ(std::distance(r.first, r.second), 1);
-    EXPECT_EQ(r.first->first, "parameter");
-    EXPECT_FALSE(r.first->second.empty());
+    ASSERT_EQ(entries.at("parameter").size(), 6);
 }
 TEST_F(PerformanceTracker, add_parser_train_tracking_entry) {
     // create a parameter train object
@@ -236,15 +235,12 @@ TEST_F(PerformanceTracker, add_parser_train_tracking_entry) {
     plssvm::detail::global_tracker->add_tracking_entry(plssvm::detail::tracking_entry{ "parameter", "", parser });
 
     // get the tracking entries
-    const std::unordered_multimap<std::string, std::string> entry = plssvm::detail::global_tracker->get_tracking_entries();
+    const std::map<std::string, std::map<std::string, std::vector<std::string>>> entries = plssvm::detail::global_tracker->get_tracking_entries();
 
     // check entries for correctness
-    EXPECT_EQ(entry.size(), 1);
+    EXPECT_EQ(entries.size(), 1);
 
-    auto r = entry.equal_range("parameter");
-    ASSERT_EQ(std::distance(r.first, r.second), 1);
-    EXPECT_EQ(r.first->first, "parameter");
-    EXPECT_FALSE(r.first->second.empty());
+    ASSERT_EQ(entries.at("parameter").size(), 17);
 }
 TEST_F(PerformanceTracker, add_parser_predict_tracking_entry) {
     // create a parameter train object
@@ -253,19 +249,16 @@ TEST_F(PerformanceTracker, add_parser_predict_tracking_entry) {
     char *argv[]{ argv_arr[0], argv_arr[1], argv_arr[2], argv_arr[3] };
     const plssvm::detail::cmd::parser_predict parser{ argc, static_cast<char **>(argv) };
 
-    // save cmd::parser_train entry
+    // save cmd::parser_predict entry
     plssvm::detail::global_tracker->add_tracking_entry(plssvm::detail::tracking_entry{ "parameter", "", parser });
 
     // get the tracking entries
-    const std::unordered_multimap<std::string, std::string> entry = plssvm::detail::global_tracker->get_tracking_entries();
+    const std::map<std::string, std::map<std::string, std::vector<std::string>>> entries = plssvm::detail::global_tracker->get_tracking_entries();
 
     // check entries for correctness
-    EXPECT_EQ(entry.size(), 1);
+    EXPECT_EQ(entries.size(), 1);
 
-    auto r = entry.equal_range("parameter");
-    ASSERT_EQ(std::distance(r.first, r.second), 1);
-    EXPECT_EQ(r.first->first, "parameter");
-    EXPECT_FALSE(r.first->second.empty());
+    ASSERT_EQ(entries.at("parameter").size(), 9);
 }
 TEST_F(PerformanceTracker, add_parser_scale_tracking_entry) {
     // create a parameter train object
@@ -274,19 +267,16 @@ TEST_F(PerformanceTracker, add_parser_scale_tracking_entry) {
     char *argv[]{ argv_arr[0], argv_arr[1], argv_arr[2] };
     const plssvm::detail::cmd::parser_scale parser{ argc, static_cast<char **>(argv) };
 
-    // save cmd::parser_train entry
+    // save cmd::parser_scale entry
     plssvm::detail::global_tracker->add_tracking_entry(plssvm::detail::tracking_entry{ "parameter", "", parser });
 
     // get the tracking entries
-    const std::unordered_multimap<std::string, std::string> entry = plssvm::detail::global_tracker->get_tracking_entries();
+    const std::map<std::string, std::map<std::string, std::vector<std::string>>> entries = plssvm::detail::global_tracker->get_tracking_entries();
 
     // check entries for correctness
-    EXPECT_EQ(entry.size(), 1);
+    EXPECT_EQ(entries.size(), 1);
 
-    auto r = entry.equal_range("parameter");
-    ASSERT_EQ(std::distance(r.first, r.second), 1);
-    EXPECT_EQ(r.first->first, "parameter");
-    EXPECT_FALSE(r.first->second.empty());
+    ASSERT_EQ(entries.at("parameter").size(), 10);
 }
 
 TEST_F(PerformanceTracker, save_no_additional_entries) {
@@ -308,6 +298,7 @@ TEST_F(PerformanceTracker, save_entries_to_file) {
     plssvm::detail::global_tracker->add_tracking_entry(plssvm::detail::tracking_entry{ "foo", "bar", 42 });
     plssvm::detail::global_tracker->add_tracking_entry(plssvm::detail::tracking_entry{ "foo", "baz", 3.1415 });
     plssvm::detail::global_tracker->add_tracking_entry(plssvm::detail::tracking_entry{ "", "foobar", 'a' });
+    plssvm::detail::global_tracker->add_tracking_entry(plssvm::detail::tracking_entry{ "", "foobar", 'b' });
     plssvm::detail::global_tracker->save(tmp_file.filename);
 
     // the file must not be empty
@@ -321,7 +312,7 @@ TEST_F(PerformanceTracker, save_entries_to_file) {
     EXPECT_THAT(reader.buffer(), ::testing::HasSubstr("foo:"));
     EXPECT_THAT(reader.buffer(), ::testing::HasSubstr("bar: 42"));
     EXPECT_THAT(reader.buffer(), ::testing::HasSubstr("baz: 3.1415"));
-    EXPECT_THAT(reader.buffer(), ::testing::HasSubstr("foobar: a"));
+    EXPECT_THAT(reader.buffer(), ::testing::HasSubstr("foobar: [a, b]"));
 
     // the tracking entries must be empty now
     EXPECT_TRUE(plssvm::detail::global_tracker->get_tracking_entries().empty());
@@ -331,6 +322,7 @@ TEST_F(PerformanceTracker, save_entries_empty_file) {
     plssvm::detail::global_tracker->add_tracking_entry(plssvm::detail::tracking_entry{ "foo", "bar", 42 });
     plssvm::detail::global_tracker->add_tracking_entry(plssvm::detail::tracking_entry{ "foo", "baz", 3.1415 });
     plssvm::detail::global_tracker->add_tracking_entry(plssvm::detail::tracking_entry{ "", "foobar", 'a' });
+    plssvm::detail::global_tracker->add_tracking_entry(plssvm::detail::tracking_entry{ "", "foobar", 'b' });
     // save to empty file, i.e., dump the performance tracking entries to std::clog
     plssvm::detail::global_tracker->save("");
 
@@ -341,8 +333,61 @@ TEST_F(PerformanceTracker, save_entries_empty_file) {
     EXPECT_THAT(this->get_capture(), ::testing::HasSubstr("foo:"));
     EXPECT_THAT(this->get_capture(), ::testing::HasSubstr("bar: 42"));
     EXPECT_THAT(this->get_capture(), ::testing::HasSubstr("baz: 3.1415"));
-    EXPECT_THAT(this->get_capture(), ::testing::HasSubstr("foobar: a"));
+    EXPECT_THAT(this->get_capture(), ::testing::HasSubstr("foobar: [a, b]"));
 
     // the tracking entries must be empty now
     EXPECT_TRUE(plssvm::detail::global_tracker->get_tracking_entries().empty());
+}
+
+class PerformanceTrackerDeathTest : public PerformanceTracker {};
+
+TEST_F(PerformanceTrackerDeathTest, add_parameter_tracking_entry_twice) {
+    // add a tracking entry
+    plssvm::detail::global_tracker->add_tracking_entry(plssvm::detail::tracking_entry{ "parameter", "", plssvm::parameter{} });
+    // try adding it again should be an error
+    EXPECT_DEATH(plssvm::detail::global_tracker->add_tracking_entry(plssvm::detail::tracking_entry{ "parameter", "", plssvm::parameter{} }),
+                 "plssvm::parameter already added to the performance tracker output!");
+}
+
+TEST_F(PerformanceTrackerDeathTest, add_parser_train_tracking_entry_twice) {
+    // create a parameter train object
+    constexpr int argc = 3;
+    char argv_arr[argc][20] = { "./plssvm-train", "/path/to/train", "/path/to/model" };
+    char *argv[]{ argv_arr[0], argv_arr[1], argv_arr[2] };
+    const plssvm::detail::cmd::parser_train parser{ argc, static_cast<char **>(argv) };
+
+    // save cmd::parser_train entry
+    plssvm::detail::global_tracker->add_tracking_entry(plssvm::detail::tracking_entry{ "parameter", "", parser });
+
+    // try adding it again should be an error
+    EXPECT_DEATH(plssvm::detail::global_tracker->add_tracking_entry(plssvm::detail::tracking_entry{ "parameter", "", parser }),
+                 "plssvm::detail::cmd::parser_train already added to the performance tracker output!");
+}
+TEST_F(PerformanceTrackerDeathTest, add_parser_predict_tracking_entry_twice) {
+    // create a parameter train object
+    constexpr int argc = 4;
+    char argv_arr[argc][20] = { "./plssvm-predict", "/path/to/train", "/path/to/model", "/path/to/predict" };
+    char *argv[]{ argv_arr[0], argv_arr[1], argv_arr[2], argv_arr[3] };
+    const plssvm::detail::cmd::parser_predict parser{ argc, static_cast<char **>(argv) };
+
+    // save cmd::parser_predict entry
+    plssvm::detail::global_tracker->add_tracking_entry(plssvm::detail::tracking_entry{ "parameter", "", parser });
+
+    // try adding it again should be an error
+    EXPECT_DEATH(plssvm::detail::global_tracker->add_tracking_entry(plssvm::detail::tracking_entry{ "parameter", "", parser }),
+                 "plssvm::detail::cmd::parser_predict already added to the performance tracker output!");
+}
+TEST_F(PerformanceTrackerDeathTest, add_parser_scale_tracking_entry_twice) {
+    // create a parameter train object
+    constexpr int argc = 3;
+    char argv_arr[argc][20] = { "./plssvm-train", "/path/to/train", "/path/to/scaled" };
+    char *argv[]{ argv_arr[0], argv_arr[1], argv_arr[2] };
+    const plssvm::detail::cmd::parser_scale parser{ argc, static_cast<char **>(argv) };
+
+    // save cmd::parser_scale entry
+    plssvm::detail::global_tracker->add_tracking_entry(plssvm::detail::tracking_entry{ "parameter", "", parser });
+
+    // try adding it again should be an error
+    EXPECT_DEATH(plssvm::detail::global_tracker->add_tracking_entry(plssvm::detail::tracking_entry{ "parameter", "",parser }),
+                 "plssvm::detail::cmd::parser_scale already added to the performance tracker output!");
 }
