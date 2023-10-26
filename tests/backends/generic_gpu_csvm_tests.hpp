@@ -68,7 +68,13 @@ TYPED_TEST_P(GenericGPUCSVM, run_blas_level_3_kernel_explicit) {
     const plssvm::real_type alpha{ 1.0 };
 
 #if defined(PLSSVM_USE_GEMM)
-    std::vector<plssvm::real_type> matr_A = util::flatten(util::generate_specific_matrix<plssvm::aos_matrix<plssvm::real_type>>(3, 3).to_2D_vector());
+    // clang-format off
+    std::vector<plssvm::real_type> matr_A{
+        plssvm::real_type{ 0.1 }, plssvm::real_type{ 0.2 }, plssvm::real_type{ 0.3 },
+        plssvm::real_type{ 0.2 }, plssvm::real_type{ 1.2 }, plssvm::real_type{ 1.3 },
+        plssvm::real_type{ 0.3 }, plssvm::real_type{ 1.3 }, plssvm::real_type{ 2.3 }
+    };
+    // clang-format on
 #else
     std::vector<plssvm::real_type> matr_A = { plssvm::real_type{ 0.1 }, plssvm::real_type{ 0.2 }, plssvm::real_type{ 0.3 }, plssvm::real_type{ 1.2 }, plssvm::real_type{ 1.3 }, plssvm::real_type{ 2.3 } };
 #endif
@@ -96,17 +102,10 @@ TYPED_TEST_P(GenericGPUCSVM, run_blas_level_3_kernel_explicit) {
     C_d.copy_to_host(C.data());
 
     // check C for correctness
-#if defined(PLSSVM_USE_GEMM)
-    const plssvm::aos_matrix<plssvm::real_type> correct_C{ { { plssvm::real_type{ 1.45 }, plssvm::real_type{ 7.5 }, plssvm::real_type{ 13.55 } },
-                                                             { plssvm::real_type{ 3.75 }, plssvm::real_type{ 18.8 }, plssvm::real_type{ 27.85 } },
-                                                             { plssvm::real_type{ 6.05 }, plssvm::real_type{ 30.1 }, plssvm::real_type{ 54.15 } } } };
-    EXPECT_FLOATING_POINT_MATRIX_NEAR(C, correct_C);
-#else
     const plssvm::aos_matrix<plssvm::real_type> correct_C{ { { plssvm::real_type{ 1.45 }, plssvm::real_type{ 6.6 }, plssvm::real_type{ 9.95 } },
                                                              { plssvm::real_type{ 3.75 }, plssvm::real_type{ 15.2 }, plssvm::real_type{ 22.15 } },
                                                              { plssvm::real_type{ 6.05 }, plssvm::real_type{ 23.8 }, plssvm::real_type{ 34.35 } } } };
     EXPECT_FLOATING_POINT_MATRIX_NEAR(C, correct_C);
-#endif
 }
 TYPED_TEST_P(GenericGPUCSVM, run_w_kernel) {
     using csvm_test_type = util::test_parameter_type_at_t<0, TypeParam>;
