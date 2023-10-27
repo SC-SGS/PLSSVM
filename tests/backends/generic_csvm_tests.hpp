@@ -180,7 +180,7 @@ TYPED_TEST_P(GenericCSVMSolver, setup_data_on_devices) {
     // minimal example
     const auto input = util::generate_specific_matrix<plssvm::aos_matrix<plssvm::real_type>>(3, 3);
 
-    // create C-SVM: must be done using the mock class, since plssvm::detail::gpu_csvm::setup_data_on_device is protected
+    // create C-SVM: must be done using the mock class, since plssvm::detail::csvm::setup_data_on_device is protected
     const mock_csvm_type svm = util::construct_from_tuple<mock_csvm_type>(csvm_test_type::additional_arguments);
 
     // automatic solver type not permitted
@@ -246,7 +246,7 @@ TYPED_TEST_P(GenericCSVMSolver, blas_level_3_without_C) {
     plssvm::aos_matrix<plssvm::real_type> C{ 3, 3 };
     plssvm::aos_matrix<plssvm::real_type> C2{ C };
 
-    // create C-SVM: must be done using the mock class, since solve_lssvm_system_of_linear_equations is protected
+    // create C-SVM: must be done using the mock class, since plssvm::detail::csvm::blas_level_3 is protected
     const mock_csvm_type svm = util::construct_from_tuple<mock_csvm_type>(csvm_test_type::additional_arguments);
 
     // automatic solver type not permitted
@@ -306,7 +306,7 @@ TYPED_TEST_P(GenericCSVMSolver, blas_level_3) {
     auto C = util::generate_specific_matrix<plssvm::aos_matrix<plssvm::real_type>>(3, 3);
     plssvm::aos_matrix<plssvm::real_type> C2{ C };
 
-    // create C-SVM: must be done using the mock class, since solve_lssvm_system_of_linear_equations is protected
+    // create C-SVM: must be done using the mock class, since plssvm::detail::csvm::blas_level_3 is protected
     const mock_csvm_type svm = util::construct_from_tuple<mock_csvm_type>(csvm_test_type::additional_arguments);
 
     // automatic solver type not permitted
@@ -354,7 +354,7 @@ TYPED_TEST_P(GenericCSVMSolver, conjugate_gradients_trivial) {
     const plssvm::aos_matrix<plssvm::real_type> B{ { { plssvm::real_type{ 1.0 }, plssvm::real_type{ -1.0 }, plssvm::real_type{ 1.0 }, plssvm::real_type{ -1.0 } },
                                                      { plssvm::real_type{ -1.0 }, plssvm::real_type{ 1.0 }, plssvm::real_type{ -1.0 }, plssvm::real_type{ 1.0 } } } };
 
-    // create C-SVM: must be done using the mock class, since solve_lssvm_system_of_linear_equations is protected
+    // create C-SVM: must be done using the mock class, since plssvm::detail::csvm::conjugate_gradients is protected
     const mock_csvm_type svm = util::construct_from_tuple<mock_csvm_type>(csvm_test_type::additional_arguments);
 
     // automatic solver type not permitted
@@ -396,7 +396,7 @@ TYPED_TEST_P(GenericCSVMSolver, conjugate_gradients) {
     const plssvm::aos_matrix<plssvm::real_type> correct_X{ { { plssvm::real_type{ 1.0 / 11.0 }, plssvm::real_type{ 7.0 / 11.0 } },
                                                              { plssvm::real_type{ 1.0 / 11.0 }, plssvm::real_type{ 7.0 / 11.0 } } } };
 
-    // create C-SVM: must be done using the mock class, since solve_lssvm_system_of_linear_equations is protected
+    // create C-SVM: must be done using the mock class, since plssvm::detail::csvm::conjugate_gradients is protected
     const mock_csvm_type svm = util::construct_from_tuple<mock_csvm_type>(csvm_test_type::additional_arguments);
 
     // automatic solver type not permitted
@@ -461,7 +461,7 @@ TYPED_TEST_P(GenericCSVMKernelFunction, predict_values) {
     const plssvm::aos_matrix<plssvm::real_type> correct_predict_values{ { { plssvm::real_type{ 0.0 }, plssvm::real_type{ 0.0 } },
                                                                           { plssvm::real_type{ 4.0 }, plssvm::real_type{ 4.0 } } } };
 
-    // create C-SVM: must be done using the mock class, since solve_lssvm_system_of_linear_equations is protected
+    // create C-SVM: must be done using the mock class, since plssvm::detail::csvm::predict_values is protected
     const mock_csvm_type svm = util::construct_from_tuple<mock_csvm_type>(params, csvm_test_type::additional_arguments);
 
     // predict the values using the previously learned support vectors and weights
@@ -507,7 +507,7 @@ TYPED_TEST_P(GenericCSVMKernelFunction, predict_values_provided_w) {
         const plssvm::aos_matrix<plssvm::real_type> correct_predict_values{ { { plssvm::real_type{ 0.0 }, plssvm::real_type{ 0.0 } },
                                                                               { plssvm::real_type{ 4.0 }, plssvm::real_type{ 4.0 } } } };
 
-        // create C-SVM: must be done using the mock class, since solve_lssvm_system_of_linear_equations is protected
+        // create C-SVM: must be done using the mock class, since plssvm::detail::csvm::predict_values is protected
         const mock_csvm_type svm = util::construct_from_tuple<mock_csvm_type>(params, csvm_test_type::additional_arguments);
 
         // predict the values using the previously learned support vectors and weights
@@ -532,7 +532,7 @@ TYPED_TEST_P(GenericCSVMKernelFunction, perform_dimensional_reduction) {
 
     const auto data = util::generate_random_matrix<plssvm::aos_matrix<plssvm::real_type>>(6, 4);
 
-    // create C-SVM: must be done using the mock class, since solve_lssvm_system_of_linear_equations is protected
+    // create C-SVM: must be done using the mock class, since plssvm::detail::csvm::perform_dimensional_reduction is protected
     const mock_csvm_type svm = util::construct_from_tuple<mock_csvm_type>(params, csvm_test_type::additional_arguments);
 
     // perform dimensional reduction
@@ -589,7 +589,7 @@ TYPED_TEST_P(GenericCSVMSolverKernelFunction, solve_lssvm_system_of_linear_equat
     const plssvm::aos_matrix<plssvm::real_type> B{ { { plssvm::real_type{ 1.0 }, plssvm::real_type{ -1.0 }, plssvm::real_type{ 1.0 }, plssvm::real_type{ -1.0 } },
                                                      { plssvm::real_type{ 1.0 }, plssvm::real_type{ -1.0 }, plssvm::real_type{ 1.0 }, plssvm::real_type{ -1.0 } } } };
 
-    // create C-SVM: must be done using the mock class, since solve_lssvm_system_of_linear_equations is protected
+    // create C-SVM: must be done using the mock class, since plssvm::detail::csvm::solve_lssvm_system_of_linear_equations is protected
     const mock_csvm_type svm = util::construct_from_tuple<mock_csvm_type>(params, csvm_test_type::additional_arguments);
 
     // solve the system of linear equations using the CG algorithm:
@@ -638,7 +638,7 @@ TYPED_TEST_P(GenericCSVMSolverKernelFunction, assemble_kernel_matrix_minimal) {
     [[maybe_unused]] const std::vector<plssvm::real_type> q_red(data.num_cols() - 1, plssvm::real_type{ 0.0 });
     [[maybe_unused]] const plssvm::real_type QA_cost{ 0.0 };
 
-    // create C-SVM: must be done using the mock class, since plssvm::detail::gpu_csvm::setup_data_on_device is protected
+    // create C-SVM: must be done using the mock class, since plssvm::detail::csvm::assemble_kernel_matrix is protected
     const mock_csvm_type svm = util::construct_from_tuple<mock_csvm_type>(csvm_test_type::additional_arguments);
 
     // automatic solver type not permitted
@@ -672,9 +672,9 @@ TYPED_TEST_P(GenericCSVMSolverKernelFunction, assemble_kernel_matrix_minimal) {
 
         if constexpr (kernel == plssvm::kernel_function_type::rbf) {
 #if defined(PLSSVM_USE_GEMM)
-            EXPECT_FLOATING_POINT_VECTOR_NEAR(kernel_matrix, (std::vector<plssvm::real_type>{ plssvm::real_type{ 2.0 }, plssvm::real_type{ std::exp(-27.0) }, plssvm::real_type{ std::exp(-27.0) }, plssvm::real_type{ 2.0 } }));
+            EXPECT_FLOATING_POINT_VECTOR_NEAR(kernel_matrix, (std::vector<plssvm::real_type>{ plssvm::real_type{ 2.0 }, static_cast<plssvm::real_type>(std::exp(-27.0)), static_cast<plssvm::real_type>(std::exp(-27.0)), plssvm::real_type{ 2.0 } }));
 #else
-            EXPECT_FLOATING_POINT_VECTOR_NEAR(kernel_matrix, (std::vector<plssvm::real_type>{ plssvm::real_type{ 2.0 }, plssvm::real_type{ std::exp(-27.0) }, plssvm::real_type{ 2.0 } }));
+            EXPECT_FLOATING_POINT_VECTOR_NEAR(kernel_matrix, (std::vector<plssvm::real_type>{ plssvm::real_type{ 2.0 }, static_cast<plssvm::real_type>(std::exp(-27.0)), plssvm::real_type{ 2.0 } }));
 #endif
         } else {
 #if defined(PLSSVM_USE_GEMM)
@@ -711,7 +711,7 @@ TYPED_TEST_P(GenericCSVMSolverKernelFunction, assemble_kernel_matrix) {
     [[maybe_unused]] const std::vector<plssvm::real_type> q_red = { plssvm::real_type{ 3.0 }, plssvm::real_type{ 4.0 } };
     [[maybe_unused]] const plssvm::real_type QA_cost{ 2.0 };
 
-    // create C-SVM: must be done using the mock class, since plssvm::detail::gpu_csvm::setup_data_on_device is protected
+    // create C-SVM: must be done using the mock class, since plssvm::detail::csvm::assemble_kernel_matrix is protected
     const mock_csvm_type svm = util::construct_from_tuple<mock_csvm_type>(csvm_test_type::additional_arguments);
 
     // automatic solver type not permitted
@@ -753,16 +753,16 @@ TYPED_TEST_P(GenericCSVMSolverKernelFunction, assemble_kernel_matrix) {
                 break;
             case plssvm::kernel_function_type::polynomial:
 #if defined(PLSSVM_USE_GEMM)
-                EXPECT_FLOATING_POINT_VECTOR_NEAR(kernel_matrix, (std::vector<plssvm::real_type>{ plssvm::real_type{ std::pow(14.0 / 3.0 + 1.0, 3) - 3.0 }, plssvm::real_type{ std::pow(32.0 / 3.0 + 1.0, 3) - 5.0 }, plssvm::real_type{ std::pow(32.0 / 3.0 + 1.0, 3) - 5.0 }, plssvm::real_type{ std::pow(77.0 / 3.0 + 1.0, 3) + 1.0 - 6.0 } }));
+                EXPECT_FLOATING_POINT_VECTOR_NEAR(kernel_matrix, (std::vector<plssvm::real_type>{ static_cast<plssvm::real_type>(std::pow(14.0 / 3.0 + 1.0, 3) - 3.0), static_cast<plssvm::real_type>(std::pow(32.0 / 3.0 + 1.0, 3) - 5.0), static_cast<plssvm::real_type>(std::pow(32.0 / 3.0 + 1.0, 3) - 5.0), static_cast<plssvm::real_type>(std::pow(77.0 / 3.0 + 1.0, 3) + 1.0 - 6.0) }));
 #else
-                EXPECT_FLOATING_POINT_VECTOR_NEAR(kernel_matrix, (std::vector<plssvm::real_type>{ plssvm::real_type{ std::pow(14.0 / 3.0 + 1.0, 3) - 3.0 }, plssvm::real_type{ std::pow(32.0 / 3.0 + 1.0, 3) - 5.0 }, plssvm::real_type{ std::pow(77.0 / 3.0 + 1.0, 3) + 1.0 - 6.0 } }));
+                EXPECT_FLOATING_POINT_VECTOR_NEAR(kernel_matrix, (std::vector<plssvm::real_type>{ static_cast<plssvm::real_type>(std::pow(14.0 / 3.0 + 1.0, 3) - 3.0), static_cast<plssvm::real_type>(std::pow(32.0 / 3.0 + 1.0, 3) - 5.0), static_cast<plssvm::real_type>(std::pow(77.0 / 3.0 + 1.0, 3) + 1.0 - 6.0) }));
 #endif
                 break;
             case plssvm::kernel_function_type::rbf:
 #if defined(PLSSVM_USE_GEMM)
-                EXPECT_FLOATING_POINT_VECTOR_NEAR(kernel_matrix, (std::vector<plssvm::real_type>{ plssvm::real_type{ -2.0 }, plssvm::real_type{ std::exp(-9.0) - 5.0 }, plssvm::real_type{ std::exp(-9.0) - 5.0 }, plssvm::real_type{ -4.0 } }));
+                EXPECT_FLOATING_POINT_VECTOR_NEAR(kernel_matrix, (std::vector<plssvm::real_type>{ plssvm::real_type{ -2.0 }, static_cast<plssvm::real_type>(std::exp(-9.0) - 5.0), static_cast<plssvm::real_type>(std::exp(-9.0) - 5.0), plssvm::real_type{ -4.0 } }));
 #else
-                EXPECT_FLOATING_POINT_VECTOR_NEAR(kernel_matrix, (std::vector<plssvm::real_type>{ plssvm::real_type{ -2.0 }, plssvm::real_type{ std::exp(-9.0) - 5.0 }, plssvm::real_type{ -4.0 } }));
+                EXPECT_FLOATING_POINT_VECTOR_NEAR(kernel_matrix, (std::vector<plssvm::real_type>{ plssvm::real_type{ -2.0 }, static_cast<plssvm::real_type>(std::exp(-9.0) - 5.0), plssvm::real_type{ -4.0 } }));
 #endif
                 break;
         }
@@ -953,7 +953,7 @@ TYPED_TEST_P(GenericCSVMSolverDeathTest, conjugate_gradients_invalid_eps) {
     using device_ptr_type = typename csvm_test_type::device_ptr_type;
     constexpr plssvm::solver_type solver = util::test_parameter_value_at_v<0, TypeParam>;
 
-    // create mock_csvm (since plssvm::csvm is pure virtual!)
+    // create mock_csvm
     const mock_csvm_type csvm{};
 
     const std::vector<plssvm::real_type> matr_A(24);
@@ -970,7 +970,7 @@ TYPED_TEST_P(GenericCSVMSolverDeathTest, conjugate_gradients_invalid_max_cg_iter
     using device_ptr_type = typename csvm_test_type::device_ptr_type;
     constexpr plssvm::solver_type solver = util::test_parameter_value_at_v<0, TypeParam>;
 
-    // create mock_csvm (since plssvm::csvm is pure virtual!)
+    // create mock_csvm
     const mock_csvm_type csvm{};
 
     const std::vector<plssvm::real_type> matr_A(24);
@@ -987,7 +987,7 @@ TYPED_TEST_P(GenericCSVMSolverDeathTest, run_blas_level_3_empty_B) {
     using device_ptr_type = typename csvm_test_type::device_ptr_type;
     constexpr plssvm::solver_type solver = util::test_parameter_value_at_v<0, TypeParam>;
 
-    // create mock_csvm (since plssvm::csvm is pure virtual!)
+    // create mock_csvm
     const mock_csvm_type csvm{};
 
     const std::vector<plssvm::real_type> matr_A(16);
@@ -1004,7 +1004,7 @@ TYPED_TEST_P(GenericCSVMSolverDeathTest, run_blas_level_3_empty_C) {
     using device_ptr_type = typename csvm_test_type::device_ptr_type;
     constexpr plssvm::solver_type solver = util::test_parameter_value_at_v<0, TypeParam>;
 
-    // create mock_csvm (since plssvm::csvm is pure virtual!)
+    // create mock_csvm
     const mock_csvm_type csvm{};
 
     const std::vector<plssvm::real_type> matr_A(16);
@@ -1033,7 +1033,7 @@ TYPED_TEST_P(GenericCSVMKernelFunctionDeathTest, solve_lssvm_system_of_linear_eq
     // create parameter
     const plssvm::parameter params{ plssvm::kernel_type = kernel };
 
-    // create mock_csvm (since plssvm::csvm is pure virtual!)
+    // create mock_csvm
     const mock_csvm_type csvm{};
 
     // create empty matrix
@@ -1050,7 +1050,7 @@ TYPED_TEST_P(GenericCSVMKernelFunctionDeathTest, solve_lssvm_system_of_linear_eq
     // create parameter
     const plssvm::parameter params{ plssvm::kernel_type = kernel };
 
-    // create mock_csvm (since plssvm::csvm is pure virtual!)
+    // create mock_csvm
     const mock_csvm_type csvm{};
 
     // create empty matrix
@@ -1067,7 +1067,7 @@ TYPED_TEST_P(GenericCSVMKernelFunctionDeathTest, solve_lssvm_system_of_linear_eq
     // create parameter
     const plssvm::parameter params{ plssvm::kernel_type = kernel };
 
-    // create mock_csvm (since plssvm::csvm is pure virtual!)
+    // create mock_csvm
     const mock_csvm_type csvm{};
 
     // create empty matrix
@@ -1085,7 +1085,7 @@ TYPED_TEST_P(GenericCSVMKernelFunctionDeathTest, perform_dimensional_reduction_e
     // create parameter
     const plssvm::parameter params{ plssvm::kernel_type = kernel };
 
-    // create mock_csvm (since plssvm::csvm is pure virtual!)
+    // create mock_csvm
     const mock_csvm_type csvm{};
 
     // create empty matrix
@@ -1102,7 +1102,7 @@ TYPED_TEST_P(GenericCSVMKernelFunctionDeathTest, predict_values_empty_matrices) 
     // create parameter
     const plssvm::parameter params{ plssvm::kernel_type = kernel };
 
-    // create mock_csvm (since plssvm::csvm is pure virtual!)
+    // create mock_csvm
     const mock_csvm_type csvm{};
 
     // create empty matrix
@@ -1130,7 +1130,7 @@ TYPED_TEST_P(GenericCSVMKernelFunctionDeathTest, predict_values_sv_alpha_size_mi
     // create parameter
     const plssvm::parameter params{ plssvm::kernel_type = kernel };
 
-    // create mock_csvm (since plssvm::csvm is pure virtual!)
+    // create mock_csvm
     const mock_csvm_type csvm{};
 
     // create correct input matrices
@@ -1151,7 +1151,7 @@ TYPED_TEST_P(GenericCSVMKernelFunctionDeathTest, predict_values_rho_alpha_size_m
     // create parameter
     const plssvm::parameter params{ plssvm::kernel_type = kernel };
 
-    // create mock_csvm (since plssvm::csvm is pure virtual!)
+    // create mock_csvm
     const mock_csvm_type csvm{};
 
     // create correct input matrices
@@ -1172,7 +1172,7 @@ TYPED_TEST_P(GenericCSVMKernelFunctionDeathTest, predict_values_w_size_mismatch)
     // create parameter
     const plssvm::parameter params{ plssvm::kernel_type = kernel };
 
-    // create mock_csvm (since plssvm::csvm is pure virtual!)
+    // create mock_csvm
     const mock_csvm_type csvm{};
 
     // create correct input matrices
@@ -1196,7 +1196,7 @@ TYPED_TEST_P(GenericCSVMKernelFunctionDeathTest, predict_values_num_features_mis
     // create parameter
     const plssvm::parameter params{ plssvm::kernel_type = kernel };
 
-    // create mock_csvm (since plssvm::csvm is pure virtual!)
+    // create mock_csvm
     const mock_csvm_type csvm{};
 
     // create correct input matrices
