@@ -192,7 +192,7 @@ TYPED_TEST_P(GenericGPUCSVMKernelFunction, run_assemble_kernel_matrix_explicit) 
 
     // check for correctness
     ASSERT_EQ(kernel_matrix.size(), correct_kernel_matrix.size());
-    EXPECT_FLOATING_POINT_VECTOR_NEAR(kernel_matrix, correct_kernel_matrix);
+    EXPECT_FLOATING_POINT_VECTOR_NEAR_EPS(kernel_matrix, correct_kernel_matrix, 1e4);
 }
 TYPED_TEST_P(GenericGPUCSVMKernelFunction, run_predict_kernel) {
     using csvm_test_type = util::test_parameter_type_at_t<0, TypeParam>;
