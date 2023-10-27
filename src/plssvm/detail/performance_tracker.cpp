@@ -242,13 +242,14 @@ void performance_tracker::save(std::ostream &out) {
     }
 
     // clear tracking statistics
-    tracking_statistics_.clear();
+    this->clear_tracking_entries();
 }
 
 void performance_tracker::pause_tracking() noexcept { is_tracking_ = false; }
 void performance_tracker::resume_tracking() noexcept { is_tracking_ = true; }
 bool performance_tracker::is_tracking() const noexcept { return is_tracking_; }
 const std::map<std::string, std::map<std::string, std::vector<std::string>>> &performance_tracker::get_tracking_entries() noexcept { return tracking_statistics_; }
+void performance_tracker::clear_tracking_entries() noexcept { tracking_statistics_.clear(); }
 
 std::shared_ptr<performance_tracker> global_tracker = std::make_shared<performance_tracker>();
 

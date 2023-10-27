@@ -212,10 +212,13 @@ class performance_tracker {
      * @return the previously added tracking entries (`[[nodiscard]]`)
      */
     [[nodiscard]] const std::map<std::string, std::map<std::string, std::vector<std::string>>> &get_tracking_entries() noexcept;
+    /**
+     * @brief Remove all currently saved tracking entries from the performance tracker.
+     */
+    void clear_tracking_entries() noexcept;
 
   private:
     /// All performance statistics grouped by their specified categories.
-    //    std::unordered_multimap<std::string, std::string> tracking_statistics_{};
     std::map<std::string, std::map<std::string, std::vector<std::string>>> tracking_statistics_{};
     /// The tracking is enabled by default.
     bool is_tracking_{ true };
