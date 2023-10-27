@@ -10,7 +10,7 @@
 
 #include "plssvm/classification_report.hpp"
 
-#include "custom_test_macros.hpp"  // EXPECT_THROW_WHAT, EXPECT_FLOATING_POINT_EQ, EXPECT_CONVERSION_TO_STRING, EXPECT_CONVERSION_FROM_STRING
+#include "custom_test_macros.hpp"  // EXPECT_THROW_WHAT, EXPECT_CONVERSION_TO_STRING, EXPECT_CONVERSION_FROM_STRING
 #include "utility.hpp"             // util::redirect_output
 
 #include "gtest/gtest.h"  // TEST, TEST_F, EXPECT_EQ, EXPECT_TRUE, EXPECT_FALSE, ::testing::Test

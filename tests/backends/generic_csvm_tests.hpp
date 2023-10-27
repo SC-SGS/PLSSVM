@@ -913,7 +913,6 @@ TYPED_TEST_P(GenericCSVMSolverKernelFunctionClassification, fit) {
     ASSERT_EQ(model.weights().size(), correct_model.weights().size());
     // can't check weights for equality since the SV order after our IO is non-deterministic
     EXPECT_FLOATING_POINT_VECTOR_NEAR_EPS(model.rho(), correct_model.rho(), plssvm::real_type{ 1e5 });
-//    EXPECT_FLOATING_POINT_VECTOR_NEAR_EPS(model.rho(), correct_model.rho(), plssvm::real_type{ 1e10 });
 }
 
 // clang-format off
