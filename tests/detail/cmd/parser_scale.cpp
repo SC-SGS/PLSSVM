@@ -15,7 +15,7 @@
 
 #include "../../custom_test_macros.hpp"  // EXPECT_CONVERSION_TO_STRING
 #include "../../naming.hpp"              // naming::{pretty_print_parameter_flag_and_value, pretty_print_parameter_flag}
-#include "../../utility.hpp"             // util::convert_from_string
+#include "../../utility.hpp"             // util::{convert_from_string, redirect_output}
 #include "utility.hpp"                   // util::ParameterBase
 
 #include "fmt/core.h"              // fmt::format
@@ -24,6 +24,7 @@
                                    // ::testing::WithParamInterface, ::testing::Combine, ::testing::Values, ::testing::Bool, ::testing::ExitedWithCode
 
 #include <cstdlib>      // EXIT_SUCCESS, EXIT_FAILURE
+#include <iostream>     // std::clog
 #include <string>       // std::string
 #include <tuple>        // std::tuple
 #include <type_traits>  // std::is_same_v
@@ -289,7 +290,7 @@ TEST_P(ParserScaleQuiet, parsing) {
 }
 INSTANTIATE_TEST_SUITE_P(ParserScale, ParserScaleQuiet, ::testing::Values("-q", "--quiet", ""), naming::pretty_print_parameter_flag<ParserScaleQuiet>);
 
-class ParserScaleVerbosityAndQuiet : public ParserScale {};
+class ParserScaleVerbosityAndQuiet : public ParserScale, private util::redirect_output<&std::clog> {};
 TEST_F(ParserScaleVerbosityAndQuiet, parsing) {
     // create artificial command line arguments in test fixture
     this->CreateCMDArgs({ "./plssvm-scale", "--quiet", "--verbosity", "full", "data.libsvm" });

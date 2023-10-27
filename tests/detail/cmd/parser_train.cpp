@@ -15,7 +15,7 @@
 
 #include "../../custom_test_macros.hpp"  // EXPECT_CONVERSION_TO_STRING
 #include "../../naming.hpp"              // naming::{pretty_print_parameter_flag_and_value, pretty_print_parameter_flag}
-#include "../../utility.hpp"             // util::convert_from_string
+#include "../../utility.hpp"             // util::{convert_from_string, redirect_output}
 #include "utility.hpp"                   // util::ParameterBase
 
 #include "fmt/core.h"              // fmt::format
@@ -25,6 +25,7 @@
 
 #include <cstddef>      // std::size_t
 #include <cstdlib>      // EXIT_SUCCESS, EXIT_FAILURE
+#include <iostream>     // std::clog
 #include <string>       // std::string
 #include <tuple>        // std::tuple
 #include <type_traits>  // std::is_same_v
@@ -530,7 +531,7 @@ TEST_P(ParserTrainQuiet, parsing) {
 }
 INSTANTIATE_TEST_SUITE_P(ParserTrain, ParserTrainQuiet, ::testing::Values("-q", "--quiet", ""), naming::pretty_print_parameter_flag<ParserTrainQuiet>);
 
-class ParserTrainVerbosityAndQuiet : public ParserTrain {};
+class ParserTrainVerbosityAndQuiet : public ParserTrain, private util::redirect_output<&std::clog> {};
 TEST_F(ParserTrainVerbosityAndQuiet, parsing) {
     // create artificial command line arguments in test fixture
     this->CreateCMDArgs({ "./plssvm-train", "--quiet", "--verbosity", "full", "data.libsvm" });

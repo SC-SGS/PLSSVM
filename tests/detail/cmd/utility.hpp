@@ -13,6 +13,7 @@
 #define PLSSVM_TESTS_DETAIL_CMD_UTILITY_HPP_
 #pragma once
 
+#include "plssvm/detail/logger.hpp"             // plssvm::verbosity_level, plssvm::verbosity
 #include "plssvm/detail/string_conversion.hpp"  // plssvm::detail::split_as
 
 #include "../../utility.hpp"  // util::redirect_output
@@ -31,6 +32,10 @@ namespace util {
  */
 class ParameterBase : public ::testing::Test, private redirect_output<> {
   protected:
+    void SetUp() override {
+        // save the current verbosity state
+        verbosity_save_ = plssvm::verbosity;
+    }
     /**
      * @brief Create artificial argc and argv from the given command line string.
      * @param[in] cmd_line_split the command line argument to create the argc and argv from
@@ -53,6 +58,8 @@ class ParameterBase : public ::testing::Test, private redirect_output<> {
             delete[] argv_[i];
         }
         delete[] argv_;
+        // restore verbosity state
+        plssvm::verbosity = verbosity_save_;
     }
 
     /**
@@ -71,6 +78,8 @@ class ParameterBase : public ::testing::Test, private redirect_output<> {
     int argc_{ 0 };
     /// The artificial command line arguments.
     char **argv_{ nullptr };
+    /// The verbosity level at the time of the test start.
+    plssvm::verbosity_level verbosity_save_{};
 };
 
 }  // namespace util
