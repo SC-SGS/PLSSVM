@@ -74,7 +74,13 @@ TEST(TrackingEntry, is_no_tracking_entry) {
     EXPECT_FALSE(plssvm::detail::is_tracking_entry_v<std::string>);
 }
 
-class PerformanceTracker : public ::testing::Test, public util::redirect_output<&std::clog> {};
+class PerformanceTracker : public ::testing::Test, public util::redirect_output<&std::clog> {
+  protected:
+    void TearDown() override {
+        // clear possible tracking entries stored from previous tests
+        plssvm::detail::global_tracker->clear_tracking_entries();
+    }
+};
 
 // the macros are only available if PLSSVM_PERFORMANCE_TRACKER_ENABLED is defined!
 #if defined(PLSSVM_PERFORMANCE_TRACKER_ENABLED)
@@ -132,7 +138,7 @@ TEST_F(PerformanceTracker, save_macro) {
 
     // read the file
     plssvm::detail::io::file_reader reader{ tmp_file.filename };
-    reader.read_lines('#');
+    reader.read_lines();
 
     // test file contents
     EXPECT_THAT(reader.buffer(), ::testing::HasSubstr("foo:"));
@@ -339,55 +345,42 @@ TEST_F(PerformanceTracker, save_entries_empty_file) {
     EXPECT_TRUE(plssvm::detail::global_tracker->get_tracking_entries().empty());
 }
 
-class PerformanceTrackerDeathTest : public PerformanceTracker {};
+TEST_F(PerformanceTracker, get_tracking_entries) {
+    // add different tracking entries
+    plssvm::detail::global_tracker->add_tracking_entry(plssvm::detail::tracking_entry{ "foo", "bar", 42 });
+    plssvm::detail::global_tracker->add_tracking_entry(plssvm::detail::tracking_entry{ "foo", "baz", 3.1415 });
+    plssvm::detail::global_tracker->add_tracking_entry(plssvm::detail::tracking_entry{ "", "foobar", 'a' });
+    plssvm::detail::global_tracker->add_tracking_entry(plssvm::detail::tracking_entry{ "", "foobar", 'b' });
 
-TEST_F(PerformanceTrackerDeathTest, add_parameter_tracking_entry_twice) {
-    // add a tracking entry
-    plssvm::detail::global_tracker->add_tracking_entry(plssvm::detail::tracking_entry{ "parameter", "", plssvm::parameter{} });
-    // try adding it again should be an error
-    EXPECT_DEATH(plssvm::detail::global_tracker->add_tracking_entry(plssvm::detail::tracking_entry{ "parameter", "", plssvm::parameter{} }),
-                 "plssvm::parameter already added to the performance tracker output!");
+    // get the tracking entries
+    const std::map<std::string, std::map<std::string, std::vector<std::string>>> entries = plssvm::detail::global_tracker->get_tracking_entries();
+
+    // check entries for correctness
+    EXPECT_EQ(entries.size(), 2);
+
+    // first category
+    ASSERT_EQ(entries.at("foo").size(), 2);
+    ASSERT_EQ(entries.at("foo").at("bar").size(), 1);
+    ASSERT_EQ(entries.at("foo").at("baz").size(), 1);
+
+    // second category
+    ASSERT_EQ(entries.at("").size(), 1);
+    ASSERT_EQ(entries.at("").at("foobar").size(), 2);
 }
 
-TEST_F(PerformanceTrackerDeathTest, add_parser_train_tracking_entry_twice) {
-    // create a parameter train object
-    constexpr int argc = 3;
-    char argv_arr[argc][20] = { "./plssvm-train", "/path/to/train", "/path/to/model" };
-    char *argv[]{ argv_arr[0], argv_arr[1], argv_arr[2] };
-    const plssvm::detail::cmd::parser_train parser{ argc, static_cast<char **>(argv) };
+TEST_F(PerformanceTracker, clear_tracking_entries) {
+    // add different tracking entries
+    plssvm::detail::global_tracker->add_tracking_entry(plssvm::detail::tracking_entry{ "foo", "bar", 42 });
+    plssvm::detail::global_tracker->add_tracking_entry(plssvm::detail::tracking_entry{ "foo", "baz", 3.1415 });
+    plssvm::detail::global_tracker->add_tracking_entry(plssvm::detail::tracking_entry{ "", "foobar", 'a' });
+    plssvm::detail::global_tracker->add_tracking_entry(plssvm::detail::tracking_entry{ "", "foobar", 'b' });
 
-    // save cmd::parser_train entry
-    plssvm::detail::global_tracker->add_tracking_entry(plssvm::detail::tracking_entry{ "parameter", "", parser });
+    // the performance tracker should contain entries
+    EXPECT_FALSE(plssvm::detail::global_tracker->get_tracking_entries().empty());
 
-    // try adding it again should be an error
-    EXPECT_DEATH(plssvm::detail::global_tracker->add_tracking_entry(plssvm::detail::tracking_entry{ "parameter", "", parser }),
-                 "plssvm::detail::cmd::parser_train already added to the performance tracker output!");
-}
-TEST_F(PerformanceTrackerDeathTest, add_parser_predict_tracking_entry_twice) {
-    // create a parameter train object
-    constexpr int argc = 4;
-    char argv_arr[argc][20] = { "./plssvm-predict", "/path/to/train", "/path/to/model", "/path/to/predict" };
-    char *argv[]{ argv_arr[0], argv_arr[1], argv_arr[2], argv_arr[3] };
-    const plssvm::detail::cmd::parser_predict parser{ argc, static_cast<char **>(argv) };
+    // clear all tracking entries
+    plssvm::detail::global_tracker->clear_tracking_entries();
 
-    // save cmd::parser_predict entry
-    plssvm::detail::global_tracker->add_tracking_entry(plssvm::detail::tracking_entry{ "parameter", "", parser });
-
-    // try adding it again should be an error
-    EXPECT_DEATH(plssvm::detail::global_tracker->add_tracking_entry(plssvm::detail::tracking_entry{ "parameter", "", parser }),
-                 "plssvm::detail::cmd::parser_predict already added to the performance tracker output!");
-}
-TEST_F(PerformanceTrackerDeathTest, add_parser_scale_tracking_entry_twice) {
-    // create a parameter train object
-    constexpr int argc = 3;
-    char argv_arr[argc][20] = { "./plssvm-train", "/path/to/train", "/path/to/scaled" };
-    char *argv[]{ argv_arr[0], argv_arr[1], argv_arr[2] };
-    const plssvm::detail::cmd::parser_scale parser{ argc, static_cast<char **>(argv) };
-
-    // save cmd::parser_scale entry
-    plssvm::detail::global_tracker->add_tracking_entry(plssvm::detail::tracking_entry{ "parameter", "", parser });
-
-    // try adding it again should be an error
-    EXPECT_DEATH(plssvm::detail::global_tracker->add_tracking_entry(plssvm::detail::tracking_entry{ "parameter", "",parser }),
-                 "plssvm::detail::cmd::parser_scale already added to the performance tracker output!");
+    // the performance tracker should now contain no tracking entries
+    EXPECT_TRUE(plssvm::detail::global_tracker->get_tracking_entries().empty());
 }
