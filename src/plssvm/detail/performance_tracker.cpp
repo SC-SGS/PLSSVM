@@ -46,103 +46,75 @@ performance_tracker::~performance_tracker() = default;
 
 void performance_tracker::add_tracking_entry(const tracking_entry<plssvm::parameter> &entry) {
     if (is_tracking()) {
-        static bool already_added = false;
-        if (!already_added) {
-            // create category
-            tracking_statistics_.emplace("parameter", std::map<std::string, std::vector<std::string>>{});
-            // fill category with value
-            tracking_statistics_["parameter"].emplace("kernel_type", std::vector<std::string>{ fmt::format("{}", entry.entry_value.kernel_type.value()) });
-            tracking_statistics_["parameter"].emplace("degree", std::vector<std::string>{ fmt::format("{}", entry.entry_value.degree.value()) });
-            tracking_statistics_["parameter"].emplace("gamma", std::vector<std::string>{ entry.entry_value.gamma.is_default() ? std::string{ "#data_points" } : fmt::format("{}", entry.entry_value.gamma.value()) });
-            tracking_statistics_["parameter"].emplace("coef0", std::vector<std::string>{ fmt::format("{}", entry.entry_value.coef0.value()) });
-            tracking_statistics_["parameter"].emplace("cost", std::vector<std::string>{ fmt::format("{}", entry.entry_value.cost.value()) });
-            tracking_statistics_["parameter"].emplace("real_type", std::vector<std::string>{ std::string{ arithmetic_type_name<real_type>() } });
-
-            already_added = true;
-        } else {
-            PLSSVM_ASSERT(!already_added, "plssvm::parameter already added to the performance tracker output!");
-        }
+        // create category
+        tracking_statistics_.emplace(entry.entry_category, std::map<std::string, std::vector<std::string>>{});
+        // fill category with value
+        tracking_statistics_["parameter"].emplace("kernel_type", std::vector<std::string>{ fmt::format("{}", entry.entry_value.kernel_type.value()) });
+        tracking_statistics_["parameter"].emplace("degree", std::vector<std::string>{ fmt::format("{}", entry.entry_value.degree.value()) });
+        tracking_statistics_["parameter"].emplace("gamma", std::vector<std::string>{ entry.entry_value.gamma.is_default() ? std::string{ "#data_points" } : fmt::format("{}", entry.entry_value.gamma.value()) });
+        tracking_statistics_["parameter"].emplace("coef0", std::vector<std::string>{ fmt::format("{}", entry.entry_value.coef0.value()) });
+        tracking_statistics_["parameter"].emplace("cost", std::vector<std::string>{ fmt::format("{}", entry.entry_value.cost.value()) });
+        tracking_statistics_["parameter"].emplace("real_type", std::vector<std::string>{ std::string{ arithmetic_type_name<real_type>() } });
     }
 }
 
 void performance_tracker::add_tracking_entry(const tracking_entry<cmd::parser_train> &entry) {
     if (is_tracking()) {
-        static bool already_added = false;
-        if (!already_added) {
-            // create category
-            tracking_statistics_.emplace(entry.entry_category, std::map<std::string, std::vector<std::string>>{});
-            // fill category with value
-            tracking_statistics_[entry.entry_category].emplace("task", std::vector<std::string>{ "train" });
-            tracking_statistics_[entry.entry_category].emplace("kernel_type", std::vector<std::string>{ fmt::format("{}", entry.entry_value.csvm_params.kernel_type.value()) });
-            tracking_statistics_[entry.entry_category].emplace("degree", std::vector<std::string>{ fmt::format("{}", entry.entry_value.csvm_params.degree.value()) });
-            tracking_statistics_[entry.entry_category].emplace("gamma", std::vector<std::string>{ fmt::format("{}", entry.entry_value.csvm_params.gamma.value()) });
-            tracking_statistics_[entry.entry_category].emplace("coef0", std::vector<std::string>{ fmt::format("{}", entry.entry_value.csvm_params.coef0.value()) });
-            tracking_statistics_[entry.entry_category].emplace("cost", std::vector<std::string>{ fmt::format("{}", entry.entry_value.csvm_params.cost.value()) });
-            tracking_statistics_[entry.entry_category].emplace("epsilon", std::vector<std::string>{ fmt::format("{}", entry.entry_value.epsilon.value()) });
-            tracking_statistics_[entry.entry_category].emplace("max_iter", std::vector<std::string>{ fmt::format("{}", entry.entry_value.max_iter.value()) });
-            tracking_statistics_[entry.entry_category].emplace("classification_type", std::vector<std::string>{ fmt::format("{}", entry.entry_value.classification.value()) });
-            tracking_statistics_[entry.entry_category].emplace("backend", std::vector<std::string>{ fmt::format("{}", entry.entry_value.backend) });
-            tracking_statistics_[entry.entry_category].emplace("target", std::vector<std::string>{ fmt::format("{}", entry.entry_value.target) });
-            tracking_statistics_[entry.entry_category].emplace("sycl_kernel_invocation_type", std::vector<std::string>{ fmt::format("{}", entry.entry_value.sycl_kernel_invocation_type) });
-            tracking_statistics_[entry.entry_category].emplace("sycl_implementation_type", std::vector<std::string>{ fmt::format("{}", entry.entry_value.sycl_implementation_type) });
-            tracking_statistics_[entry.entry_category].emplace("strings_as_labels", std::vector<std::string>{ fmt::format("{}", entry.entry_value.strings_as_labels) });
-            tracking_statistics_[entry.entry_category].emplace("real_type", std::vector<std::string>{ std::string{ arithmetic_type_name<real_type>() } });
-            tracking_statistics_[entry.entry_category].emplace("input_filename", std::vector<std::string>{ fmt::format("\"{}\"", entry.entry_value.input_filename) });
-            tracking_statistics_[entry.entry_category].emplace("model_filename", std::vector<std::string>{ fmt::format("\"{}\"", entry.entry_value.model_filename) });
-
-            already_added = true;
-        } else {
-            PLSSVM_ASSERT(!already_added, "plssvm::detail::cmd::parser_train already added to the performance tracker output!");
-        }
+        // create category
+        tracking_statistics_.emplace(entry.entry_category, std::map<std::string, std::vector<std::string>>{});
+        // fill category with value
+        tracking_statistics_[entry.entry_category].emplace("task", std::vector<std::string>{ "train" });
+        tracking_statistics_[entry.entry_category].emplace("kernel_type", std::vector<std::string>{ fmt::format("{}", entry.entry_value.csvm_params.kernel_type.value()) });
+        tracking_statistics_[entry.entry_category].emplace("degree", std::vector<std::string>{ fmt::format("{}", entry.entry_value.csvm_params.degree.value()) });
+        tracking_statistics_[entry.entry_category].emplace("gamma", std::vector<std::string>{ fmt::format("{}", entry.entry_value.csvm_params.gamma.value()) });
+        tracking_statistics_[entry.entry_category].emplace("coef0", std::vector<std::string>{ fmt::format("{}", entry.entry_value.csvm_params.coef0.value()) });
+        tracking_statistics_[entry.entry_category].emplace("cost", std::vector<std::string>{ fmt::format("{}", entry.entry_value.csvm_params.cost.value()) });
+        tracking_statistics_[entry.entry_category].emplace("epsilon", std::vector<std::string>{ fmt::format("{}", entry.entry_value.epsilon.value()) });
+        tracking_statistics_[entry.entry_category].emplace("max_iter", std::vector<std::string>{ fmt::format("{}", entry.entry_value.max_iter.value()) });
+        tracking_statistics_[entry.entry_category].emplace("classification_type", std::vector<std::string>{ fmt::format("{}", entry.entry_value.classification.value()) });
+        tracking_statistics_[entry.entry_category].emplace("backend", std::vector<std::string>{ fmt::format("{}", entry.entry_value.backend) });
+        tracking_statistics_[entry.entry_category].emplace("target", std::vector<std::string>{ fmt::format("{}", entry.entry_value.target) });
+        tracking_statistics_[entry.entry_category].emplace("sycl_kernel_invocation_type", std::vector<std::string>{ fmt::format("{}", entry.entry_value.sycl_kernel_invocation_type) });
+        tracking_statistics_[entry.entry_category].emplace("sycl_implementation_type", std::vector<std::string>{ fmt::format("{}", entry.entry_value.sycl_implementation_type) });
+        tracking_statistics_[entry.entry_category].emplace("strings_as_labels", std::vector<std::string>{ fmt::format("{}", entry.entry_value.strings_as_labels) });
+        tracking_statistics_[entry.entry_category].emplace("real_type", std::vector<std::string>{ std::string{ arithmetic_type_name<real_type>() } });
+        tracking_statistics_[entry.entry_category].emplace("input_filename", std::vector<std::string>{ fmt::format("\"{}\"", entry.entry_value.input_filename) });
+        tracking_statistics_[entry.entry_category].emplace("model_filename", std::vector<std::string>{ fmt::format("\"{}\"", entry.entry_value.model_filename) });
     }
 }
 
 void performance_tracker::add_tracking_entry(const tracking_entry<cmd::parser_predict> &entry) {
     if (is_tracking()) {
-        static bool already_added = false;
-        if (!already_added) {
-            // create category
-            tracking_statistics_.emplace(entry.entry_category, std::map<std::string, std::vector<std::string>>{});
-            // fill category with value
-            tracking_statistics_[entry.entry_category].emplace("task", std::vector<std::string>{ "predict" });
-            tracking_statistics_[entry.entry_category].emplace("backend", std::vector<std::string>{ fmt::format("{}", entry.entry_value.backend) });
-            tracking_statistics_[entry.entry_category].emplace("target", std::vector<std::string>{ fmt::format("{}", entry.entry_value.target) });
-            tracking_statistics_[entry.entry_category].emplace("sycl_implementation_type", std::vector<std::string>{ fmt::format("{}", entry.entry_value.sycl_implementation_type) });
-            tracking_statistics_[entry.entry_category].emplace("strings_as_labels", std::vector<std::string>{ fmt::format("{}", entry.entry_value.strings_as_labels) });
-            tracking_statistics_[entry.entry_category].emplace("real_type", std::vector<std::string>{ std::string{ arithmetic_type_name<real_type>() } });
-            tracking_statistics_[entry.entry_category].emplace("input_filename", std::vector<std::string>{ fmt::format("\"{}\"", entry.entry_value.input_filename) });
-            tracking_statistics_[entry.entry_category].emplace("model_filename", std::vector<std::string>{ fmt::format("\"{}\"", entry.entry_value.model_filename) });
-            tracking_statistics_[entry.entry_category].emplace("predict_filename", std::vector<std::string>{ fmt::format("\"{}\"", entry.entry_value.predict_filename) });
-
-            already_added = true;
-        } else {
-            PLSSVM_ASSERT(!already_added, "plssvm::detail::cmd::parser_predict already added to the performance tracker output!");
-        }
+        // create category
+        tracking_statistics_.emplace(entry.entry_category, std::map<std::string, std::vector<std::string>>{});
+        // fill category with value
+        tracking_statistics_[entry.entry_category].emplace("task", std::vector<std::string>{ "predict" });
+        tracking_statistics_[entry.entry_category].emplace("backend", std::vector<std::string>{ fmt::format("{}", entry.entry_value.backend) });
+        tracking_statistics_[entry.entry_category].emplace("target", std::vector<std::string>{ fmt::format("{}", entry.entry_value.target) });
+        tracking_statistics_[entry.entry_category].emplace("sycl_implementation_type", std::vector<std::string>{ fmt::format("{}", entry.entry_value.sycl_implementation_type) });
+        tracking_statistics_[entry.entry_category].emplace("strings_as_labels", std::vector<std::string>{ fmt::format("{}", entry.entry_value.strings_as_labels) });
+        tracking_statistics_[entry.entry_category].emplace("real_type", std::vector<std::string>{ std::string{ arithmetic_type_name<real_type>() } });
+        tracking_statistics_[entry.entry_category].emplace("input_filename", std::vector<std::string>{ fmt::format("\"{}\"", entry.entry_value.input_filename) });
+        tracking_statistics_[entry.entry_category].emplace("model_filename", std::vector<std::string>{ fmt::format("\"{}\"", entry.entry_value.model_filename) });
+        tracking_statistics_[entry.entry_category].emplace("predict_filename", std::vector<std::string>{ fmt::format("\"{}\"", entry.entry_value.predict_filename) });
     }
 }
 
 void performance_tracker::add_tracking_entry(const tracking_entry<cmd::parser_scale> &entry) {
     if (is_tracking()) {
-        static bool already_added = false;
-        if (!already_added) {
-            // create category
-            tracking_statistics_.emplace(entry.entry_category, std::map<std::string, std::vector<std::string>>{});
-            // fill category with value
-            tracking_statistics_[entry.entry_category].emplace("task", std::vector<std::string>{ "scale" });
-            tracking_statistics_[entry.entry_category].emplace("lower", std::vector<std::string>{ fmt::format("{}", entry.entry_value.lower) });
-            tracking_statistics_[entry.entry_category].emplace("upper", std::vector<std::string>{ fmt::format("{}", entry.entry_value.upper) });
-            tracking_statistics_[entry.entry_category].emplace("format", std::vector<std::string>{ fmt::format("{}", entry.entry_value.format) });
-            tracking_statistics_[entry.entry_category].emplace("strings_as_labels", std::vector<std::string>{ fmt::format("{}", entry.entry_value.strings_as_labels) });
-            tracking_statistics_[entry.entry_category].emplace("real_type", std::vector<std::string>{ std::string{ arithmetic_type_name<real_type>() } });
-            tracking_statistics_[entry.entry_category].emplace("input_filename", std::vector<std::string>{ fmt::format("\"{}\"", entry.entry_value.input_filename) });
-            tracking_statistics_[entry.entry_category].emplace("scaled_filename", std::vector<std::string>{ fmt::format("\"{}\"", entry.entry_value.scaled_filename) });
-            tracking_statistics_[entry.entry_category].emplace("save_filename", std::vector<std::string>{ fmt::format("\"{}\"", entry.entry_value.save_filename) });
-            tracking_statistics_[entry.entry_category].emplace("restore_filename", std::vector<std::string>{ fmt::format("\"{}\"", entry.entry_value.restore_filename) });
-
-            already_added = true;
-        } else {
-            PLSSVM_ASSERT(!already_added, "plssvm::detail::cmd::parser_scale already added to the performance tracker output!");
-        }
+        // create category
+        tracking_statistics_.emplace(entry.entry_category, std::map<std::string, std::vector<std::string>>{});
+        // fill category with value
+        tracking_statistics_[entry.entry_category].emplace("task", std::vector<std::string>{ "scale" });
+        tracking_statistics_[entry.entry_category].emplace("lower", std::vector<std::string>{ fmt::format("{}", entry.entry_value.lower) });
+        tracking_statistics_[entry.entry_category].emplace("upper", std::vector<std::string>{ fmt::format("{}", entry.entry_value.upper) });
+        tracking_statistics_[entry.entry_category].emplace("format", std::vector<std::string>{ fmt::format("{}", entry.entry_value.format) });
+        tracking_statistics_[entry.entry_category].emplace("strings_as_labels", std::vector<std::string>{ fmt::format("{}", entry.entry_value.strings_as_labels) });
+        tracking_statistics_[entry.entry_category].emplace("real_type", std::vector<std::string>{ std::string{ arithmetic_type_name<real_type>() } });
+        tracking_statistics_[entry.entry_category].emplace("input_filename", std::vector<std::string>{ fmt::format("\"{}\"", entry.entry_value.input_filename) });
+        tracking_statistics_[entry.entry_category].emplace("scaled_filename", std::vector<std::string>{ fmt::format("\"{}\"", entry.entry_value.scaled_filename) });
+        tracking_statistics_[entry.entry_category].emplace("save_filename", std::vector<std::string>{ fmt::format("\"{}\"", entry.entry_value.save_filename) });
+        tracking_statistics_[entry.entry_category].emplace("restore_filename", std::vector<std::string>{ fmt::format("\"{}\"", entry.entry_value.restore_filename) });
     }
 }
 
