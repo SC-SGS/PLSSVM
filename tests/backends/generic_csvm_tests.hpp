@@ -223,7 +223,7 @@ TYPED_TEST_P(GenericCSVMSolver, blas_level_3_without_C) {
         GTEST_SKIP() << "Currently not implemented!";
     }
 
-    const plssvm::real_type alpha{ 1.0 };
+    [[maybe_unused]] const plssvm::real_type alpha{ 1.0 };
 
 #if defined(PLSSVM_USE_GEMM)
     // clang-format off
@@ -242,7 +242,7 @@ TYPED_TEST_P(GenericCSVMSolver, blas_level_3_without_C) {
                                                      { plssvm::real_type{ 4.0 }, plssvm::real_type{ 5.0 }, plssvm::real_type{ 6.0 } },
                                                      { plssvm::real_type{ 7.0 }, plssvm::real_type{ 8.0 }, plssvm::real_type{ 9.0 } } } };
 
-    const plssvm::real_type beta{ 0.0 };
+    [[maybe_unused]] const plssvm::real_type beta{ 0.0 };
     plssvm::aos_matrix<plssvm::real_type> C{ 3, 3 };
     plssvm::aos_matrix<plssvm::real_type> C2{ C };
 
@@ -267,7 +267,7 @@ TYPED_TEST_P(GenericCSVMSolver, blas_level_3_without_C) {
         EXPECT_FLOATING_POINT_MATRIX_NEAR(C, correct_C);
 
         // check wrapper function
-        svm.blas_level_3(solver, alpha, A, B, beta, C2);
+        std::ignore = svm.run_blas_level_3(solver, alpha, A, B, beta, C2);
         EXPECT_EQ(C2, C);
     }
 }
@@ -283,7 +283,7 @@ TYPED_TEST_P(GenericCSVMSolver, blas_level_3) {
         GTEST_SKIP() << "Currently not implemented!";
     }
 
-    const plssvm::real_type alpha{ 1.0 };
+    [[maybe_unused]] const plssvm::real_type alpha{ 1.0 };
 
 #if defined(PLSSVM_USE_GEMM)
     // clang-format off
@@ -302,7 +302,7 @@ TYPED_TEST_P(GenericCSVMSolver, blas_level_3) {
                                                      { plssvm::real_type{ 4.0 }, plssvm::real_type{ 5.0 }, plssvm::real_type{ 6.0 } },
                                                      { plssvm::real_type{ 7.0 }, plssvm::real_type{ 8.0 }, plssvm::real_type{ 9.0 } } } };
 
-    const plssvm::real_type beta{ 0.5 };
+    [[maybe_unused]] const plssvm::real_type beta{ 0.5 };
     auto C = util::generate_specific_matrix<plssvm::aos_matrix<plssvm::real_type>>(3, 3);
     plssvm::aos_matrix<plssvm::real_type> C2{ C };
 
@@ -327,7 +327,7 @@ TYPED_TEST_P(GenericCSVMSolver, blas_level_3) {
         EXPECT_FLOATING_POINT_MATRIX_NEAR(C, correct_C);
 
         // check wrapper function
-        svm.blas_level_3(solver, alpha, A, B, beta, C2);
+        std::ignore = svm.run_blas_level_3(solver, alpha, A, B, beta, C2);
         EXPECT_EQ(C2, C);
     }
 }
