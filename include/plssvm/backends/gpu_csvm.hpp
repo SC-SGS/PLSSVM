@@ -293,8 +293,6 @@ aos_matrix<real_type> gpu_csvm<device_ptr_t, queue_t>::predict_values(const para
     PLSSVM_ASSERT(!predict_points.empty(), "The data points to predict must not be empty!");
     PLSSVM_ASSERT(support_vectors.num_cols() == predict_points.num_cols(), "The number of features in the support vectors ({}) must be the same as in the data points to predict ({})!", support_vectors.num_cols(), predict_points.num_cols());
 
-    using namespace plssvm::operators;
-
     // defined sizes
     const std::size_t num_classes = alpha.num_rows();
     const std::size_t num_predict_points = predict_points.num_rows();
