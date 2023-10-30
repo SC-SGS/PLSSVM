@@ -80,8 +80,12 @@ TEST_F(ZeroDivisionBehavior, sanitize_nan_one) {
 }
 TEST_F(ZeroDivisionBehavior, sanitize_nan_nan) {
     // sanitize NaN using nan
-    // ATTENTION: std::isnan will ALWAYS return false due to -ffast-math being enabled
+#if !defined(NDEBUG)
+    EXPECT_TRUE(std::isnan(plssvm::detail::sanitize_nan(42.0, 0.0, plssvm::classification_report::zero_division_behavior::nan, "Foo")));
+#else
+    // ATTENTION: std::isnan will ALWAYS return false due to -ffast-math being enabled in release mode
     EXPECT_FALSE(std::isnan(plssvm::detail::sanitize_nan(42.0, 0.0, plssvm::classification_report::zero_division_behavior::nan, "Foo")));
+#endif
     EXPECT_EQ(plssvm::detail::sanitize_nan(42.0, 1.0, plssvm::classification_report::zero_division_behavior::nan, "Foo"), 42.0);
 }
 
