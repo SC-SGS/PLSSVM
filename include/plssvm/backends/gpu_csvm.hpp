@@ -254,15 +254,9 @@ void gpu_csvm<device_ptr_t, queue_t>::blas_level_3(const solver_type solver, con
         const std::size_t num_rows = B.num_cols();
 
         // allocate memory on the device
-        static device_ptr_type B_d{ B.shape(), devices_[0] };
-        if (B_d.size() != B.num_entries()) {
-            B_d = device_ptr_type{ B.shape(), devices_[0] };
-        }
+        device_ptr_type B_d{ B.shape(), devices_[0] };
         B_d.copy_to_device(B);
-        static device_ptr_type C_d{ C.shape(), devices_[0] };
-        if (C_d.size() != C.num_entries()) {
-            C_d = device_ptr_type{ C.shape(), devices_[0] };
-        }
+        device_ptr_type C_d{ C.shape(), devices_[0] };
         C_d.copy_to_device(C);
 
         this->run_blas_level_3_kernel_explicit(num_rows, num_rhs, num_rows, alpha, A_d, B_d, beta, C_d);
