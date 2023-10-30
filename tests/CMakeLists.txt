@@ -12,7 +12,9 @@ if (GTEST_FOUND)
     message(STATUS "Found package GTest.")
 else ()
     message(STATUS "Couldn't find package GTest. Building from source...")
-    set(PLSSVM_googletest_VERSION release-1.11.0)
+    set(PLSSVM_googletest_VERSION v1.14.0)
+    set(CMAKE_CXX_FLAGS_DEBUG_OLD "${CMAKE_CXX_FLAGS_DEBUG}")
+    set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -D_GLIBCXX_DEBUG -DLIBCXX_ENABLE_DEBUG_MODE -D_ITERATOR_DEBUG_LEVEL")
     # fetch testing framework GoogleTest
     include(FetchContent)
     FetchContent_Declare(googletest
@@ -29,6 +31,7 @@ else ()
         add_subdirectory(${googletest_SOURCE_DIR} ${googletest_SOURCE_DIR} EXCLUDE_FROM_ALL)
     endif ()
     message(STATUS "Installed GoogleTest version ${PLSSVM_googletest_VERSION}.")
+    set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG_OLD}")
 endif ()
 
 
