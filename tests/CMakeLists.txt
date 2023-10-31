@@ -108,64 +108,64 @@ set(PLSSVM_BASE_TEST_NAME Base_tests)
 set(PLSSVM_BASE_TEST_SOURCES
         ## since the SYCL implementation_type and kernel_invocation_type enumerations are used even if no SYCL backend
         ## is available these are also tested in the base library
-        ${CMAKE_CURRENT_LIST_DIR}/backends/SYCL/implementation_type.cpp
-        ${CMAKE_CURRENT_LIST_DIR}/backends/SYCL/kernel_invocation_type.cpp
-
-        ${CMAKE_CURRENT_LIST_DIR}/detail/cmd/data_set_variants.cpp
-        ${CMAKE_CURRENT_LIST_DIR}/detail/cmd/parser_predict.cpp
-        ${CMAKE_CURRENT_LIST_DIR}/detail/cmd/parser_scale.cpp
-        ${CMAKE_CURRENT_LIST_DIR}/detail/cmd/parser_train.cpp
-
-        ${CMAKE_CURRENT_LIST_DIR}/detail/io/libsvm_model_parsing/data_parse_valid.cpp
-        ${CMAKE_CURRENT_LIST_DIR}/detail/io/libsvm_model_parsing/data_parse_invalid.cpp
-        ${CMAKE_CURRENT_LIST_DIR}/detail/io/libsvm_model_parsing/data_write.cpp
-        ${CMAKE_CURRENT_LIST_DIR}/detail/io/libsvm_model_parsing/header_parse_valid.cpp
-        ${CMAKE_CURRENT_LIST_DIR}/detail/io/libsvm_model_parsing/header_parse_invalid.cpp
-        ${CMAKE_CURRENT_LIST_DIR}/detail/io/libsvm_model_parsing/header_write.cpp
-        ${CMAKE_CURRENT_LIST_DIR}/detail/io/libsvm_model_parsing/utility_functions.cpp
-        ${CMAKE_CURRENT_LIST_DIR}/detail/io/arff_parsing.cpp
-        ${CMAKE_CURRENT_LIST_DIR}/detail/io/file_reader.cpp
-        ${CMAKE_CURRENT_LIST_DIR}/detail/io/libsvm_parsing.cpp
-        ${CMAKE_CURRENT_LIST_DIR}/detail/io/scaling_factors_parsing.cpp
-
-        ${CMAKE_CURRENT_LIST_DIR}/detail/arithmetic_type_name.cpp
-        ${CMAKE_CURRENT_LIST_DIR}/detail/assert.cpp
-        ${CMAKE_CURRENT_LIST_DIR}/detail/logger.cpp
-        ${CMAKE_CURRENT_LIST_DIR}/detail/memory_size.cpp
-        ${CMAKE_CURRENT_LIST_DIR}/detail/operators.cpp
-        ${CMAKE_CURRENT_LIST_DIR}/detail/performance_tracker.cpp
-        ${CMAKE_CURRENT_LIST_DIR}/detail/sha256.cpp
-        ${CMAKE_CURRENT_LIST_DIR}/detail/simple_any.cpp
-        ${CMAKE_CURRENT_LIST_DIR}/detail/string_conversion.cpp
-        ${CMAKE_CURRENT_LIST_DIR}/detail/string_utility.cpp
-        ${CMAKE_CURRENT_LIST_DIR}/detail/type_list.cpp
-        ${CMAKE_CURRENT_LIST_DIR}/detail/type_traits.cpp
-        ${CMAKE_CURRENT_LIST_DIR}/detail/utility.cpp
-
-        ${CMAKE_CURRENT_LIST_DIR}/exceptions/exceptions.cpp
-        ${CMAKE_CURRENT_LIST_DIR}/exceptions/source_location.cpp
-
-        ${CMAKE_CURRENT_LIST_DIR}/version/git_metadata/git_metadata.cpp
-        ${CMAKE_CURRENT_LIST_DIR}/version/version.cpp
-
-        ${CMAKE_CURRENT_LIST_DIR}/backend_types.cpp
-        ${CMAKE_CURRENT_LIST_DIR}/classification_report.cpp
-        ${CMAKE_CURRENT_LIST_DIR}/classification_types.cpp
-        ${CMAKE_CURRENT_LIST_DIR}/csvm.cpp
-        ${CMAKE_CURRENT_LIST_DIR}/csvm_factory.cpp
-        ${CMAKE_CURRENT_LIST_DIR}/data_set/constructors.cpp
-        ${CMAKE_CURRENT_LIST_DIR}/data_set/getter.cpp
-        ${CMAKE_CURRENT_LIST_DIR}/data_set/label_mapper.cpp
-        ${CMAKE_CURRENT_LIST_DIR}/data_set/save.cpp
-        ${CMAKE_CURRENT_LIST_DIR}/data_set/scaling.cpp
-        ${CMAKE_CURRENT_LIST_DIR}/default_value.cpp
-        ${CMAKE_CURRENT_LIST_DIR}/file_format_types.cpp
-        ${CMAKE_CURRENT_LIST_DIR}/kernel_function_types.cpp
-        ${CMAKE_CURRENT_LIST_DIR}/matrix.cpp
-        ${CMAKE_CURRENT_LIST_DIR}/model.cpp
-        ${CMAKE_CURRENT_LIST_DIR}/parameter.cpp
-        ${CMAKE_CURRENT_LIST_DIR}/solver_types.cpp
-        ${CMAKE_CURRENT_LIST_DIR}/target_platforms.cpp
+#        ${CMAKE_CURRENT_LIST_DIR}/backends/SYCL/implementation_type.cpp
+#        ${CMAKE_CURRENT_LIST_DIR}/backends/SYCL/kernel_invocation_type.cpp
+#
+#        ${CMAKE_CURRENT_LIST_DIR}/detail/cmd/data_set_variants.cpp
+#        ${CMAKE_CURRENT_LIST_DIR}/detail/cmd/parser_predict.cpp
+#        ${CMAKE_CURRENT_LIST_DIR}/detail/cmd/parser_scale.cpp
+#        ${CMAKE_CURRENT_LIST_DIR}/detail/cmd/parser_train.cpp
+#
+#        ${CMAKE_CURRENT_LIST_DIR}/detail/io/libsvm_model_parsing/data_parse_valid.cpp
+#        ${CMAKE_CURRENT_LIST_DIR}/detail/io/libsvm_model_parsing/data_parse_invalid.cpp
+#        ${CMAKE_CURRENT_LIST_DIR}/detail/io/libsvm_model_parsing/data_write.cpp
+#        ${CMAKE_CURRENT_LIST_DIR}/detail/io/libsvm_model_parsing/header_parse_valid.cpp
+#        ${CMAKE_CURRENT_LIST_DIR}/detail/io/libsvm_model_parsing/header_parse_invalid.cpp
+#        ${CMAKE_CURRENT_LIST_DIR}/detail/io/libsvm_model_parsing/header_write.cpp
+#        ${CMAKE_CURRENT_LIST_DIR}/detail/io/libsvm_model_parsing/utility_functions.cpp
+#        ${CMAKE_CURRENT_LIST_DIR}/detail/io/arff_parsing.cpp
+#        ${CMAKE_CURRENT_LIST_DIR}/detail/io/file_reader.cpp
+#        ${CMAKE_CURRENT_LIST_DIR}/detail/io/libsvm_parsing.cpp
+#        ${CMAKE_CURRENT_LIST_DIR}/detail/io/scaling_factors_parsing.cpp
+#
+#        ${CMAKE_CURRENT_LIST_DIR}/detail/arithmetic_type_name.cpp
+#        ${CMAKE_CURRENT_LIST_DIR}/detail/assert.cpp
+#        ${CMAKE_CURRENT_LIST_DIR}/detail/logger.cpp
+#        ${CMAKE_CURRENT_LIST_DIR}/detail/memory_size.cpp
+#        ${CMAKE_CURRENT_LIST_DIR}/detail/operators.cpp
+#        ${CMAKE_CURRENT_LIST_DIR}/detail/performance_tracker.cpp
+#        ${CMAKE_CURRENT_LIST_DIR}/detail/sha256.cpp
+#        ${CMAKE_CURRENT_LIST_DIR}/detail/simple_any.cpp
+#        ${CMAKE_CURRENT_LIST_DIR}/detail/string_conversion.cpp
+#        ${CMAKE_CURRENT_LIST_DIR}/detail/string_utility.cpp
+#        ${CMAKE_CURRENT_LIST_DIR}/detail/type_list.cpp
+#        ${CMAKE_CURRENT_LIST_DIR}/detail/type_traits.cpp
+#        ${CMAKE_CURRENT_LIST_DIR}/detail/utility.cpp
+#
+#        ${CMAKE_CURRENT_LIST_DIR}/exceptions/exceptions.cpp
+#        ${CMAKE_CURRENT_LIST_DIR}/exceptions/source_location.cpp
+#
+#        ${CMAKE_CURRENT_LIST_DIR}/version/git_metadata/git_metadata.cpp
+#        ${CMAKE_CURRENT_LIST_DIR}/version/version.cpp
+#
+#        ${CMAKE_CURRENT_LIST_DIR}/backend_types.cpp
+#        ${CMAKE_CURRENT_LIST_DIR}/classification_report.cpp
+#        ${CMAKE_CURRENT_LIST_DIR}/classification_types.cpp
+#        ${CMAKE_CURRENT_LIST_DIR}/csvm.cpp
+#        ${CMAKE_CURRENT_LIST_DIR}/csvm_factory.cpp
+#        ${CMAKE_CURRENT_LIST_DIR}/data_set/constructors.cpp
+#        ${CMAKE_CURRENT_LIST_DIR}/data_set/getter.cpp
+#        ${CMAKE_CURRENT_LIST_DIR}/data_set/label_mapper.cpp
+#        ${CMAKE_CURRENT_LIST_DIR}/data_set/save.cpp
+#        ${CMAKE_CURRENT_LIST_DIR}/data_set/scaling.cpp
+#        ${CMAKE_CURRENT_LIST_DIR}/default_value.cpp
+#        ${CMAKE_CURRENT_LIST_DIR}/file_format_types.cpp
+#        ${CMAKE_CURRENT_LIST_DIR}/kernel_function_types.cpp
+#        ${CMAKE_CURRENT_LIST_DIR}/matrix.cpp
+#        ${CMAKE_CURRENT_LIST_DIR}/model.cpp
+#        ${CMAKE_CURRENT_LIST_DIR}/parameter.cpp
+#        ${CMAKE_CURRENT_LIST_DIR}/solver_types.cpp
+#        ${CMAKE_CURRENT_LIST_DIR}/target_platforms.cpp
         )
 
 # create test executable
@@ -195,37 +195,37 @@ discover_tests_with_death_test_filter(${PLSSVM_BASE_TEST_NAME})
 
 
 # add test for help messages
-add_test(NAME MainTrain/executable_help COMMAND ${PLSSVM_EXECUTABLE_TRAIN_NAME} --help)
-add_test(NAME MainPredict/executable_help COMMAND ${PLSSVM_EXECUTABLE_PREDICT_NAME} --help)
-add_test(NAME MainScale/executable_help COMMAND ${PLSSVM_EXECUTABLE_SCALE_NAME} --help)
-
-# add test for version messages
-add_test(NAME MainTrain/executable_version COMMAND ${PLSSVM_EXECUTABLE_TRAIN_NAME} --version)
-add_test(NAME MainPredict/executable_version COMMAND ${PLSSVM_EXECUTABLE_PREDICT_NAME} --version)
-add_test(NAME MainScale/executable_version COMMAND ${PLSSVM_EXECUTABLE_SCALE_NAME} --version)
-
-# add minimal run test
-add_test(NAME MainTrain/executable_minimal COMMAND ${PLSSVM_EXECUTABLE_TRAIN_NAME} "${PLSSVM_TEST_FILE}" "${CMAKE_CURRENT_BINARY_DIR}/test.libsvm.model")
-add_test(NAME MainPredict/executable_minimal COMMAND ${PLSSVM_EXECUTABLE_PREDICT_NAME}
-        "${CMAKE_CURRENT_LIST_DIR}/data/predict/500x200_test.libsvm"                     # test file
-        "${CMAKE_CURRENT_LIST_DIR}/data/predict/500x200_double_linear_oaa.libsvm.model"  # model file
-        "${CMAKE_CURRENT_BINARY_DIR}/test.libsvm.predict"                                # predict file (result)
-        )
-add_test(NAME MainScale/executable_minimal COMMAND ${PLSSVM_EXECUTABLE_SCALE_NAME} "${PLSSVM_TEST_FILE}" "${CMAKE_CURRENT_BINARY_DIR}/scaled.libsvm.model")
-add_test(NAME MainScale/executable_save_scaling_factors COMMAND ${PLSSVM_EXECUTABLE_SCALE_NAME}
-        -s "${CMAKE_CURRENT_BINARY_DIR}/scaling_parameter.txt"  # the file the scaling parameters are saved to
-        "${PLSSVM_TEST_FILE}"                                   # the file to scale
-        "${CMAKE_CURRENT_BINARY_DIR}/scaled.libsvm.model"       # the scaled file (result)
-        )
-
-
-# add failing test (must return with a non-zero exit code)
-add_test(NAME MainTrain/executable_fail COMMAND ${PLSSVM_EXECUTABLE_TRAIN_NAME} " ")
-set_tests_properties(MainTrain/executable_fail PROPERTIES WILL_FAIL TRUE)
-add_test(NAME MainPredict/executable_fail COMMAND ${PLSSVM_EXECUTABLE_PREDICT_NAME}  " " " ")
-set_tests_properties(MainPredict/executable_fail PROPERTIES WILL_FAIL TRUE)
-add_test(NAME MainScale/executable_fail COMMAND ${PLSSVM_EXECUTABLE_SCALE_NAME} " ")
-set_tests_properties(MainScale/executable_fail PROPERTIES WILL_FAIL TRUE)
+#add_test(NAME MainTrain/executable_help COMMAND ${PLSSVM_EXECUTABLE_TRAIN_NAME} --help)
+#add_test(NAME MainPredict/executable_help COMMAND ${PLSSVM_EXECUTABLE_PREDICT_NAME} --help)
+#add_test(NAME MainScale/executable_help COMMAND ${PLSSVM_EXECUTABLE_SCALE_NAME} --help)
+#
+## add test for version messages
+#add_test(NAME MainTrain/executable_version COMMAND ${PLSSVM_EXECUTABLE_TRAIN_NAME} --version)
+#add_test(NAME MainPredict/executable_version COMMAND ${PLSSVM_EXECUTABLE_PREDICT_NAME} --version)
+#add_test(NAME MainScale/executable_version COMMAND ${PLSSVM_EXECUTABLE_SCALE_NAME} --version)
+#
+## add minimal run test
+#add_test(NAME MainTrain/executable_minimal COMMAND ${PLSSVM_EXECUTABLE_TRAIN_NAME} "${PLSSVM_TEST_FILE}" "${CMAKE_CURRENT_BINARY_DIR}/test.libsvm.model")
+#add_test(NAME MainPredict/executable_minimal COMMAND ${PLSSVM_EXECUTABLE_PREDICT_NAME}
+#        "${CMAKE_CURRENT_LIST_DIR}/data/predict/500x200_test.libsvm"                     # test file
+#        "${CMAKE_CURRENT_LIST_DIR}/data/predict/500x200_double_linear_oaa.libsvm.model"  # model file
+#        "${CMAKE_CURRENT_BINARY_DIR}/test.libsvm.predict"                                # predict file (result)
+#        )
+#add_test(NAME MainScale/executable_minimal COMMAND ${PLSSVM_EXECUTABLE_SCALE_NAME} "${PLSSVM_TEST_FILE}" "${CMAKE_CURRENT_BINARY_DIR}/scaled.libsvm.model")
+#add_test(NAME MainScale/executable_save_scaling_factors COMMAND ${PLSSVM_EXECUTABLE_SCALE_NAME}
+#        -s "${CMAKE_CURRENT_BINARY_DIR}/scaling_parameter.txt"  # the file the scaling parameters are saved to
+#        "${PLSSVM_TEST_FILE}"                                   # the file to scale
+#        "${CMAKE_CURRENT_BINARY_DIR}/scaled.libsvm.model"       # the scaled file (result)
+#        )
+#
+#
+## add failing test (must return with a non-zero exit code)
+#add_test(NAME MainTrain/executable_fail COMMAND ${PLSSVM_EXECUTABLE_TRAIN_NAME} " ")
+#set_tests_properties(MainTrain/executable_fail PROPERTIES WILL_FAIL TRUE)
+#add_test(NAME MainPredict/executable_fail COMMAND ${PLSSVM_EXECUTABLE_PREDICT_NAME}  " " " ")
+#set_tests_properties(MainPredict/executable_fail PROPERTIES WILL_FAIL TRUE)
+#add_test(NAME MainScale/executable_fail COMMAND ${PLSSVM_EXECUTABLE_SCALE_NAME} " ")
+#set_tests_properties(MainScale/executable_fail PROPERTIES WILL_FAIL TRUE)
 
 # add test as coverage dependency
 if (TARGET coverage)

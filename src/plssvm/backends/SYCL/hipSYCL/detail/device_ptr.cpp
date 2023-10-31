@@ -24,7 +24,7 @@ namespace plssvm::hipsycl::detail {
 
 template <typename T>
 device_ptr<T>::device_ptr(const size_type size, const queue &q) :
-    device_ptr{ { size, 1 }, q } {}
+    device_ptr{ { size, 0 }, q } {}
 
 template <typename T>
 device_ptr<T>::device_ptr(const std::array<size_type, 2> extends, const queue &q) :

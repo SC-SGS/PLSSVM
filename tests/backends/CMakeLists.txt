@@ -26,5 +26,5 @@ endif ()
 
 # create SYCL tests if the SYCL backend is available
 if (TARGET ${PLSSVM_SYCL_BACKEND_LIBRARY_NAME})
-#    add_subdirectory(SYCL)
+    add_subdirectory(SYCL)
 endif ()

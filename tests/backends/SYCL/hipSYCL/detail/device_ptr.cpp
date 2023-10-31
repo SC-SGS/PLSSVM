@@ -9,14 +9,20 @@
  */
 
 #include "plssvm/backends/SYCL/hipSYCL/detail/device_ptr.hpp"  // plssvm::hipsycl::detail::device_ptr
-#include "backends/generic_device_ptr_tests.h"                 // plssvm::cuda::detail::device_ptr
 #include "plssvm/backends/SYCL/hipSYCL/detail/utility.hpp"     // plssvm::hipsycl::detail::get_default_device
 
-#include "gtest/gtest.h"                                       // INSTANTIATE_TYPED_TEST_SUITE_P, ::testing::Types
+#include "../../../generic_device_ptr_tests.h"  // generic device pointer tests to instantiate
 
-template <typename device_ptr_t>
+#include "../../../../naming.hpp"         // naming::test_parameter_to_name
+#include "../../../../types_to_test.hpp"  // util::{combine_test_parameters_gtest_t, cartesian_type_product_t, layout_type_list}
+
+#include "gtest/gtest.h"  // INSTANTIATE_TYPED_TEST_SUITE_P
+
+#include <tuple>  // std::tuple
+
+template <typename T>
 struct hipsycl_device_ptr_test_type {
-    using device_ptr_type = device_ptr_t;
+    using device_ptr_type = plssvm::hipsycl::detail::device_ptr<T>;
     using queue_type = typename device_ptr_type::queue_type;
 
     static const queue_type &default_queue() {
@@ -24,11 +30,14 @@ struct hipsycl_device_ptr_test_type {
         return queue;
     }
 };
+using device_ptr_test_types = std::tuple<hipsycl_device_ptr_test_type<float>, hipsycl_device_ptr_test_type<double>>;
 
-using hipsycl_device_ptr_test_types = ::testing::Types<
-    hipsycl_device_ptr_test_type<plssvm::hipsycl::detail::device_ptr<float>>,
-    hipsycl_device_ptr_test_type<plssvm::hipsycl::detail::device_ptr<double>>>;
+// the tests used in the instantiated GTest test suites
+using device_ptr_type_gtest = util::combine_test_parameters_gtest_t<util::cartesian_type_product_t<device_ptr_test_types>>;
+using device_ptr_layout_type_gtest = util::combine_test_parameters_gtest_t<util::cartesian_type_product_t<device_ptr_test_types>, util::layout_type_list>;
 
 // instantiate type-parameterized tests
-INSTANTIATE_TYPED_TEST_SUITE_P(hipSYCLDevicePtr, DevicePtr, hipsycl_device_ptr_test_types);
-INSTANTIATE_TYPED_TEST_SUITE_P(hipSYCLDevicePtrDeathTest, DevicePtrDeathTest, hipsycl_device_ptr_test_types);
+INSTANTIATE_TYPED_TEST_SUITE_P(hipSYCLDevicePtr, DevicePtr, device_ptr_type_gtest, naming::test_parameter_to_name);
+INSTANTIATE_TYPED_TEST_SUITE_P(hipSYCLDevicePtr, DevicePtrLayout, device_ptr_layout_type_gtest, naming::test_parameter_to_name);
+
+INSTANTIATE_TYPED_TEST_SUITE_P(hipSYCLDevicePtrDeathTest, DevicePtrDeathTest, device_ptr_type_gtest, naming::test_parameter_to_name);
