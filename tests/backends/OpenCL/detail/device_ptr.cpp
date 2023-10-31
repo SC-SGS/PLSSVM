@@ -13,11 +13,15 @@
 #include "plssvm/backends/OpenCL/detail/context.hpp"        // plssvm::opencl::detail::context
 #include "plssvm/backends/OpenCL/detail/utility.hpp"        // plssvm::opencl::detail::get_contexts
 
-#include "../../generic_device_ptr_tests.h"                 // generic device pointer tests to instantiate
+#include "../../generic_device_ptr_tests.h"  // generic device pointer tests to instantiate
 
-#include "gtest/gtest.h"                                    // INSTANTIATE_TYPED_TEST_SUITE_P, ::testing::Types
+#include "../../../naming.hpp"         // naming::test_parameter_to_name
+#include "../../../types_to_test.hpp"  // util::{combine_test_parameters_gtest_t, cartesian_type_product_t, layout_type_list}
 
-#include <vector>                                           // std::vector
+#include "gtest/gtest.h"  // INSTANTIATE_TYPED_TEST_SUITE_P
+
+#include <tuple>   // std::tuple
+#include <vector>  // std::vector
 
 template <typename T>
 struct device_ptr_test_type {
@@ -30,11 +34,14 @@ struct device_ptr_test_type {
         return queue;
     }
 };
+using device_ptr_test_types = std::tuple<device_ptr_test_type<float>, device_ptr_test_type<double>>;
 
-using device_ptr_test_types = ::testing::Types<
-    device_ptr_test_type<float>,
-    device_ptr_test_type<double>>;
+// the tests used in the instantiated GTest test suites
+using device_ptr_type_gtest = util::combine_test_parameters_gtest_t<util::cartesian_type_product_t<device_ptr_test_types>>;
+using device_ptr_layout_type_gtest = util::combine_test_parameters_gtest_t<util::cartesian_type_product_t<device_ptr_test_types>, util::layout_type_list>;
 
 // instantiate type-parameterized tests
-INSTANTIATE_TYPED_TEST_SUITE_P(OpenCLBackend, DevicePtr, device_ptr_test_types);
-INSTANTIATE_TYPED_TEST_SUITE_P(OpenCLBackendDeathTest, DevicePtrDeathTest, device_ptr_test_types);
+INSTANTIATE_TYPED_TEST_SUITE_P(OpenCLDevicePtr, DevicePtr, device_ptr_type_gtest, naming::test_parameter_to_name);
+INSTANTIATE_TYPED_TEST_SUITE_P(OpenCLDevicePtr, DevicePtrLayout, device_ptr_layout_type_gtest, naming::test_parameter_to_name);
+
+INSTANTIATE_TYPED_TEST_SUITE_P(OpenCLDevicePtrDeathTest, DevicePtrDeathTest, device_ptr_type_gtest, naming::test_parameter_to_name);

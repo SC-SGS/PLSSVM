@@ -66,6 +66,10 @@ TYPED_TEST_P(GenericGPUCSVM, run_blas_level_3_kernel_explicit) {
     using mock_csvm_type = typename csvm_test_type::mock_csvm_type;
     using device_ptr_type = typename csvm_test_type::device_ptr_type;
 
+    // create C-SVM: must be done using the mock class, since solve_lssvm_system_of_linear_equations is protected
+    const mock_csvm_type svm = util::construct_from_tuple<mock_csvm_type>(csvm_test_type::additional_arguments);
+    auto &device = svm.devices_[0];
+
     const plssvm::real_type alpha{ 1.0 };
 
     // create kernel matrix to use in the BLAS calculation
@@ -79,20 +83,17 @@ TYPED_TEST_P(GenericGPUCSVM, run_blas_level_3_kernel_explicit) {
     const std::vector<plssvm::real_type> kernel_matrix = compare::assemble_kernel_matrix_symm(params, data.data(), q_red, QA_cost);
 #endif
 
-    device_ptr_type A_d{ kernel_matrix.size() };
+    device_ptr_type A_d{ kernel_matrix.size(), device };
     A_d.copy_to_device(kernel_matrix);
 
     const auto B = util::generate_random_matrix<plssvm::aos_matrix<plssvm::real_type>>(data.num_data_points() - 1, data.num_data_points() - 1);
-    device_ptr_type B_d{ B.shape() };
+    device_ptr_type B_d{ B.shape(), device };
     B_d.copy_to_device(B);
 
     const plssvm::real_type beta{ 0.5 };
     auto C = util::generate_random_matrix<plssvm::aos_matrix<plssvm::real_type>>(data.num_data_points() - 1, data.num_data_points() - 1);
-    device_ptr_type C_d{ C.shape() };
+    device_ptr_type C_d{ C.shape(), device };
     C_d.copy_to_device(C);
-
-    // create C-SVM: must be done using the mock class, since solve_lssvm_system_of_linear_equations is protected
-    const mock_csvm_type svm = util::construct_from_tuple<mock_csvm_type>(csvm_test_type::additional_arguments);
 
     // perform BLAS calculation
     svm.run_blas_level_3_kernel_explicit(B.num_cols(), B.num_rows(), B.num_cols(), alpha, A_d, B_d, beta, C_d);
@@ -119,14 +120,15 @@ TYPED_TEST_P(GenericGPUCSVM, run_w_kernel) {
 
     // create C-SVM
     const mock_csvm_type svm = util::construct_from_tuple<mock_csvm_type>(csvm_test_type::additional_arguments);
+    auto &device = svm.devices_[0];
 
     // create support vectors
     const plssvm::data_set data{ PLSSVM_TEST_FILE };
-    device_ptr_type sv_d{ data.data().shape() };
+    device_ptr_type sv_d{ data.data().shape(), device };
     sv_d.copy_to_device(data.data());
     // create weights vector
     const auto weights = util::generate_specific_matrix<plssvm::aos_matrix<plssvm::real_type>>(3, data.num_data_points());
-    device_ptr_type weights_d{ weights.shape() };
+    device_ptr_type weights_d{ weights.shape(), device };
     weights_d.copy_to_device(weights);
 
     // calculate w
@@ -166,16 +168,19 @@ TYPED_TEST_P(GenericGPUCSVMKernelFunction, run_assemble_kernel_matrix_explicit) 
 
     const plssvm::parameter params{ plssvm::kernel_type = kernel };
     const plssvm::data_set data{ PLSSVM_TEST_FILE };
-    device_ptr_type data_d{ data.data().shape() };
+
+    // create C-SVM: must be done using the mock class, since plssvm::detail::gpu_csvm::setup_data_on_device is protected
+    const mock_csvm_type svm = util::construct_from_tuple<mock_csvm_type>(params, csvm_test_type::additional_arguments);
+    auto &device = svm.devices_[0];
+
+    device_ptr_type data_d{ data.data().shape(), device };
     data_d.copy_to_device(data.data());
 
     const std::vector<plssvm::real_type> q_red = compare::perform_dimensional_reduction(params, data.data());
-    device_ptr_type q_red_d{ q_red.size() };
+    device_ptr_type q_red_d{ q_red.size(), device };
     q_red_d.copy_to_device(q_red);
     const plssvm::real_type QA_cost = compare::kernel_function(params, data.data(), data.num_data_points() - 1, data.data(), data.num_data_points() - 1);
 
-    // create C-SVM: must be done using the mock class, since plssvm::detail::gpu_csvm::setup_data_on_device is protected
-    const mock_csvm_type svm = util::construct_from_tuple<mock_csvm_type>(csvm_test_type::additional_arguments);
 
     const device_ptr_type kernel_matrix_d = svm.run_assemble_kernel_matrix_explicit(params, data_d, q_red_d, QA_cost);
 
@@ -203,15 +208,16 @@ TYPED_TEST_P(GenericGPUCSVMKernelFunction, run_predict_kernel) {
     const plssvm::parameter params{ plssvm::kernel_type = kernel };
 
     // create C-SVM: must be done using the mock class, since plssvm::detail::gpu_csvm::setup_data_on_device is protected
-    const mock_csvm_type svm = util::construct_from_tuple<mock_csvm_type>(csvm_test_type::additional_arguments);
+    const mock_csvm_type svm = util::construct_from_tuple<mock_csvm_type>(params, csvm_test_type::additional_arguments);
+    auto &device = svm.devices_[0];
 
     // create support vectors
     const plssvm::data_set data{ PLSSVM_TEST_FILE };
-    device_ptr_type sv_d{ data.data().shape() };
+    device_ptr_type sv_d{ data.data().shape(), device };
     sv_d.copy_to_device(data.data());
     // create weights vector
     const auto weights = util::generate_specific_matrix<plssvm::aos_matrix<plssvm::real_type>>(3, data.data().num_rows());
-    device_ptr_type weights_d{ weights.shape() };
+    device_ptr_type weights_d{ weights.shape(), device };
     weights_d.copy_to_device(weights);
     // calculate w if the linear kernel function is used
     device_ptr_type w_d;
@@ -220,11 +226,11 @@ TYPED_TEST_P(GenericGPUCSVMKernelFunction, run_predict_kernel) {
     }
     // create predict points
     const auto predict_points = util::generate_random_matrix<plssvm::aos_matrix<plssvm::real_type>>(data.data().num_rows(), data.data().num_cols());
-    device_ptr_type predict_points_d{ predict_points.shape() };
+    device_ptr_type predict_points_d{ predict_points.shape(), device };
     predict_points_d.copy_to_device(predict_points);
     // create rho vector
     const std::vector<plssvm::real_type> rho = util::generate_random_vector<plssvm::real_type>(weights.num_rows());
-    device_ptr_type rho_d{ rho.size() };
+    device_ptr_type rho_d{ rho.size(), device };
     rho_d.copy_to_device(rho);
 
     // call predict kernel
