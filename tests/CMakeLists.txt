@@ -22,7 +22,7 @@ else ()
             GIT_TAG ${PLSSVM_googletest_VERSION}
             GIT_SHALLOW TRUE
             QUIET
-            )
+    )
     # For Windows: Prevent overriding the parent project's compiler/linker settings
     set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
     FetchContent_GetProperties(googletest)
@@ -48,13 +48,13 @@ if (PLSSVM_GENERATE_TEST_FILE)
     # check if the requested test file already exists and is not zero based indexed (otherwise create new test file)
     if (EXISTS "${PLSSVM_TEST_FILE}")
         file(READ "${PLSSVM_TEST_FILE}" PLSSVM_TEST_FILE_CONTENT)
-        if(PLSSVM_TEST_FILE_CONTENT MATCHES " 0:[0-9]")
+        if (PLSSVM_TEST_FILE_CONTENT MATCHES " 0:[0-9]")
             message(STATUS "Test file already exists but is zero based indexed. Generating new test file.")
             file(REMOVE "${PLSSVM_TEST_FILE}")
-        else()
+        else ()
             message(STATUS "Skipped test file generation since it already exists (${PLSSVM_TEST_FILE})!")
-        endif()
-    endif()
+        endif ()
+    endif ()
     if (NOT EXISTS "${PLSSVM_TEST_FILE}")
         # find necessary Python3 packages to use the test file generator
         find_package(Python3 REQUIRED COMPONENTS Interpreter Development NumPy)
@@ -82,7 +82,7 @@ set(PLSSVM_BASE_TEST_LIBRARY_NAME base_tests_lib)
 # list all necessary sources
 set(PLSSVM_BASE_TEST_LIBRARY_NAME_SOURCES
         ${CMAKE_CURRENT_LIST_DIR}/backends/compare.cpp
-        )
+)
 
 # create base test library
 add_library(${PLSSVM_BASE_TEST_LIBRARY_NAME} STATIC ${PLSSVM_BASE_TEST_LIBRARY_NAME_SOURCES})

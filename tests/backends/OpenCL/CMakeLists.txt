@@ -14,7 +14,7 @@ set(PLSSVM_OPENCL_TEST_SOURCES
         ${CMAKE_CURRENT_LIST_DIR}/detail/utility.cpp
         ${CMAKE_CURRENT_LIST_DIR}/exceptions.cpp
         ${CMAKE_CURRENT_LIST_DIR}/opencl_csvm.cpp
-        )
+)
 
 # add test executable
 add_executable(${PLSSVM_OPENCL_TEST_NAME} ${CMAKE_CURRENT_LIST_DIR}/../../main.cpp ${PLSSVM_OPENCL_TEST_SOURCES})
