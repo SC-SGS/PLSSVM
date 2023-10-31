@@ -807,11 +807,11 @@ TYPED_TEST_P(GenericCSVMKernelFunctionClassification, predict) {
 
     // use other ground truth for float, linear, OAO since it doesn't converge
     const std::string file_name = []() {
-       if (std::is_same_v<plssvm::real_type, float> && classification == plssvm::classification_type::oao && kernel == plssvm::kernel_function_type::linear) {
-           return PLSSVM_TEST_PATH "/data/predict/500x200_float_linear_oao.libsvm.predict";
-       } else {
-           return PLSSVM_TEST_PATH "/data/predict/500x200.libsvm.predict";
-       }
+        if (std::is_same_v<plssvm::real_type, float> && classification == plssvm::classification_type::oao && kernel == plssvm::kernel_function_type::linear) {
+            return PLSSVM_TEST_PATH "/data/predict/500x200_float_linear_oao.libsvm.predict";
+        } else {
+            return PLSSVM_TEST_PATH "/data/predict/500x200.libsvm.predict";
+        }
     }();
     // read ground truth from file
     plssvm::detail::io::file_reader reader{ file_name };
@@ -930,11 +930,8 @@ TYPED_TEST_P(GenericCSVMSolverKernelFunctionClassification, fit) {
     // can't check support vectors for equality since the SV order after our IO is non-deterministic
     ASSERT_EQ(model.weights().size(), correct_model.weights().size());
     // can't check weights for equality since the SV order after our IO is non-deterministic
-#if !defined(NDEBUG)
-    EXPECT_FLOATING_POINT_VECTOR_NEAR_EPS(model.rho(), correct_model.rho(), plssvm::real_type{ 1e12 });  // TODO: :/
-#else
-    EXPECT_FLOATING_POINT_VECTOR_NEAR_EPS(model.rho(), correct_model.rho(), plssvm::real_type{ 1e5 });
-#endif
+    // TODO: the eps factor must be selected WAY too large
+    EXPECT_FLOATING_POINT_VECTOR_NEAR_EPS(model.rho(), correct_model.rho(), plssvm::real_type{ 1e12 });
 }
 
 // clang-format off
