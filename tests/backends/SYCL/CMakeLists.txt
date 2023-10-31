@@ -14,7 +14,7 @@ set(PLSSVM_SYCL_TEST_SOURCES
 ## is available these are also tested in the base library
 #        ${CMAKE_CURRENT_LIST_DIR}/implementation_type.cpp
 #        ${CMAKE_CURRENT_LIST_DIR}/kernel_invocation_type.cpp
-        )
+)
 
 if (TARGET ${PLSSVM_SYCL_BACKEND_HIPSYCL_LIBRARY_NAME})
     # add hipSYCL specific test files

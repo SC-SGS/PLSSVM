@@ -43,7 +43,7 @@ if (hipSYCL_FOUND)
             ${CMAKE_CURRENT_LIST_DIR}/detail/device_ptr.cpp
             ${CMAKE_CURRENT_LIST_DIR}/detail/utility.cpp
             ${CMAKE_CURRENT_LIST_DIR}/csvm.cpp
-            )
+    )
 
     # set target properties
     set(PLSSVM_SYCL_BACKEND_HIPSYCL_LIBRARY_NAME plssvm-SYCL_hipsycl CACHE INTERNAL "")
@@ -74,7 +74,7 @@ if (hipSYCL_FOUND)
     # silence unknown options warnings
     target_compile_options(${PLSSVM_SYCL_BACKEND_HIPSYCL_LIBRARY_NAME} PRIVATE -Wno-unknown-warning-option
             $<$<CXX_COMPILER_ID:GNU>:-Wno-unknown-pragmas>
-            )
+    )
 
     # print note that Intel GPU architecture specifications are ignored when using hipSYCL
     if (DEFINED PLSSVM_INTEL_TARGET_ARCHS)

@@ -14,7 +14,7 @@ message(CHECK_START "Checking for SYCL backend")
 set(PLSSVM_SYCL_SOURCES
         ${CMAKE_CURRENT_LIST_DIR}/exceptions.cpp
         ${CMAKE_CURRENT_LIST_DIR}/../gpu_device_ptr.cpp
-        )
+)
 
 # list of found SYCL implementations
 set(PLSSVM_SYCL_BACKEND_FOUND_IMPLEMENTATIONS "")
