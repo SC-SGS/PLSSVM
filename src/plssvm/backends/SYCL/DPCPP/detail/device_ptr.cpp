@@ -10,15 +10,15 @@
 
 #include "plssvm/backends/SYCL/DPCPP/detail/queue_impl.hpp"  // plssvm::dpcpp::detail::queue (PImpl implementation)
 
-#include "plssvm/backends/SYCL/exceptions.hpp"               // plssvm::dpcpp::backend_exception
-#include "plssvm/backends/gpu_device_ptr.hpp"                // plssvm::detail::gpu_device_ptr
-#include "plssvm/detail/assert.hpp"                          // PLSSVM_ASSERT
+#include "plssvm/backends/SYCL/exceptions.hpp"  // plssvm::dpcpp::backend_exception
+#include "plssvm/backends/gpu_device_ptr.hpp"   // plssvm::detail::gpu_device_ptr
+#include "plssvm/detail/assert.hpp"             // PLSSVM_ASSERT
 
-#include "fmt/core.h"                                        // fmt::format
-#include "sycl/sycl.hpp"                                     // ::sycl::malloc_device, ::sycl::free
+#include "fmt/core.h"     // fmt::format
+#include "sycl/sycl.hpp"  // ::sycl::malloc_device, ::sycl::free
 
-#include <algorithm>                                         // std::min
-#include <array>                                             // std::array
+#include <algorithm>  // std::min
+#include <array>      // std::array
 
 namespace plssvm::dpcpp::detail {
 
