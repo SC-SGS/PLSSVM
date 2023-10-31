@@ -19,14 +19,16 @@
 #include "plssvm/parameter.hpp"                             // plssvm::parameter, plssvm::kernel_type, plssvm::cost
 #include "plssvm/target_platforms.hpp"                      // plssvm::target_platform
 
-#include "../../../custom_test_macros.hpp"                  // EXPECT_THROW_WHAT
-#include "../../../utility.hpp"                             // util::redirect_output
-#include "../../generic_csvm_tests.hpp"                     // generic CSVM tests to instantiate
+#include "../../../custom_test_macros.hpp"   // EXPECT_THROW_WHAT
+#include "../../../naming.hpp"               // naming::test_parameter_to_name
+#include "../../../types_to_test.hpp"        // util::{cartesian_type_product_t, combine_test_parameters_gtest_t}
+#include "../../../utility.hpp"              // util::redirect_output
+#include "../../generic_csvm_tests.hpp"      // generic CSVM tests to instantiate
+#include "../../generic_gpu_csvm_tests.hpp"  // generic GPU CSVM tests to instantiate
 
-#include "gtest/gtest.h"                                    // TEST_F, EXPECT_NO_THROW, EXPECT_NE, TYPED_TEST_SUITE, TYPED_TEST, INSTANTIATE_TYPED_TEST_SUITE_P, ::testing::{Test, Types}
+#include "gtest/gtest.h"  // TEST_F, EXPECT_NO_THROW, INSTANTIATE_TYPED_TEST_SUITE_P, ::testing::Test
 
-#include <tuple>                                            // std::make_tuple, std::get
-#include <utility>                                          // std::make_pair
+#include <tuple>  // std::make_tuple, std::tuple
 
 class DPCPPCSVM : public ::testing::Test, private util::redirect_output<> {};
 
@@ -133,31 +135,37 @@ TEST_F(DPCPPCSVM, get_kernel_invocation_type) {
     EXPECT_NE(svm.get_kernel_invocation_type(), plssvm::sycl::kernel_invocation_type::automatic);
 }
 
-template <plssvm::kernel_function_type kernel>
-struct csvm_test_type {
+struct dpcpp_csvm_test_type {
     using mock_csvm_type = mock_dpcpp_csvm;
     using csvm_type = plssvm::dpcpp::csvm;
-    static constexpr plssvm::kernel_function_type kernel_type = kernel;
+    using device_ptr_type = typename csvm_type::device_ptr_type;
     inline static auto additional_arguments = std::make_tuple();
 };
+using dpcpp_csvm_test_tuple = std::tuple<dpcpp_csvm_test_type>;
+using dpcpp_csvm_test_label_type_list = util::cartesian_type_product_t<dpcpp_csvm_test_tuple, plssvm::detail::supported_label_types>;
+using dpcpp_csvm_test_type_list = util::cartesian_type_product_t<dpcpp_csvm_test_tuple>;
 
-class csvm_test_type_to_name {
-  public:
-    template <typename T>
-    static std::string GetName(int) {
-        return fmt::format("{}_{}",
-                           plssvm::csvm_to_backend_type_v<typename T::csvm_type>,
-                           T::kernel_type);
-    }
-};
-
-using csvm_test_types = ::testing::Types<
-    csvm_test_type<plssvm::kernel_function_type::linear>,
-    csvm_test_type<plssvm::kernel_function_type::polynomial>,
-    csvm_test_type<plssvm::kernel_function_type::rbf>>;
+// the tests used in the instantiated GTest test suites
+using dpcpp_csvm_test_type_gtest = util::combine_test_parameters_gtest_t<dpcpp_csvm_test_type_list>;
+using dpcppsolver_type_gtest = util::combine_test_parameters_gtest_t<dpcpp_csvm_test_type_list, util::solver_type_list>;
+using dpcppkernel_function_type_gtest = util::combine_test_parameters_gtest_t<dpcpp_csvm_test_type_list, util::kernel_function_type_list>;
+using dpcppsolver_and_kernel_function_type_gtest = util::combine_test_parameters_gtest_t<dpcpp_csvm_test_type_list, util::solver_and_kernel_function_type_list>;
+using dpcpplabel_type_kernel_function_and_classification_type_gtest = util::combine_test_parameters_gtest_t<dpcpp_csvm_test_label_type_list, util::kernel_function_and_classification_type_list>;
+using dpcpplabel_type_solver_kernel_function_and_classification_type_gtest = util::combine_test_parameters_gtest_t<dpcpp_csvm_test_label_type_list, util::solver_and_kernel_function_and_classification_type_list>;
 
 // instantiate type-parameterized tests
-INSTANTIATE_TYPED_TEST_SUITE_P(DPCPPBackend, GenericCSVM, csvm_test_types, csvm_test_type_to_name);
-INSTANTIATE_TYPED_TEST_SUITE_P(DPCPPBackendDeathTest, GenericCSVMDeathTest, csvm_test_types, csvm_test_type_to_name);
-INSTANTIATE_TYPED_TEST_SUITE_P(DPCPPBackend, GenericGPUCSVM, csvm_test_types, csvm_test_type_to_name);
-INSTANTIATE_TYPED_TEST_SUITE_P(DPCPPBackendDeathTest, GenericGPUCSVMDeathTest, csvm_test_types, csvm_test_type_to_name);
+// generic CSVM tests
+INSTANTIATE_TYPED_TEST_SUITE_P(DPCPPCSVM, GenericCSVM, dpcpp_csvm_test_type_gtest, naming::test_parameter_to_name);
+INSTANTIATE_TYPED_TEST_SUITE_P(DPCPPCSVM, GenericCSVMSolver, dpcppsolver_type_gtest, naming::test_parameter_to_name);
+INSTANTIATE_TYPED_TEST_SUITE_P(DPCPPCSVM, GenericCSVMKernelFunction, dpcppkernel_function_type_gtest, naming::test_parameter_to_name);
+INSTANTIATE_TYPED_TEST_SUITE_P(DPCPPCSVM, GenericCSVMSolverKernelFunction, dpcppsolver_and_kernel_function_type_gtest, naming::test_parameter_to_name);
+INSTANTIATE_TYPED_TEST_SUITE_P(DPCPPCSVM, GenericCSVMKernelFunctionClassification, dpcpplabel_type_kernel_function_and_classification_type_gtest, naming::test_parameter_to_name);
+INSTANTIATE_TYPED_TEST_SUITE_P(DPCPPCSVM, GenericCSVMSolverKernelFunctionClassification, dpcpplabel_type_solver_kernel_function_and_classification_type_gtest, naming::test_parameter_to_name);
+
+// generic CSVM DeathTests
+INSTANTIATE_TYPED_TEST_SUITE_P(DPCPPCSVMDeathTest, GenericCSVMSolverDeathTest, dpcppsolver_type_gtest, naming::test_parameter_to_name);
+INSTANTIATE_TYPED_TEST_SUITE_P(DPCPPCSVMDeathTest, GenericCSVMKernelFunctionDeathTest, dpcppkernel_function_type_gtest, naming::test_parameter_to_name);
+
+// generic GPU CSVM tests
+INSTANTIATE_TYPED_TEST_SUITE_P(DPCPPCSVM, GenericGPUCSVM, dpcpp_csvm_test_type_gtest, naming::test_parameter_to_name);
+INSTANTIATE_TYPED_TEST_SUITE_P(DPCPPCSVM, GenericGPUCSVMKernelFunction, dpcppkernel_function_type_gtest, naming::test_parameter_to_name);

@@ -128,7 +128,7 @@ class csvm : public ::plssvm::detail::gpu_csvm<detail::device_ptr, detail::queue
      */
     [[nodiscard]] sycl::kernel_invocation_type get_kernel_invocation_type() const noexcept { return invocation_type_; }
 
-  private:
+  protected:
     /**
      * @brief Initialize all important states related to the SYCL backend.
      * @param[in] target the target platform to use
