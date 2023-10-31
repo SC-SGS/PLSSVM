@@ -25,15 +25,15 @@
 #include "plssvm/parameter.hpp"                                            // plssvm::parameter, plssvm::detail::parameter
 #include "plssvm/target_platforms.hpp"                                     // plssvm::target_platform
 
-#include "fmt/core.h"                                     // fmt::format
-#include "fmt/ostream.h"                                  // can use fmt using operator<< overloads
-#include "hip/hip_runtime_api.h"                          // HIP runtime functions
+#include "fmt/core.h"             // fmt::format
+#include "fmt/ostream.h"          // can use fmt using operator<< overloads
+#include "hip/hip_runtime_api.h"  // HIP runtime functions
 
-#include <cstddef>                                        // std::size_t
-#include <exception>                                      // std::terminate
-#include <iostream>                                       // std::cout, std::endl
-#include <numeric>                                        // std::iota
-#include <utility>                                        // std::pair, std::make_pair
+#include <cstddef>    // std::size_t
+#include <exception>  // std::terminate
+#include <iostream>   // std::cout, std::endl
+#include <numeric>    // std::iota
+#include <utility>    // std::pair, std::make_pair
 
 namespace plssvm::hip {
 
@@ -74,14 +74,19 @@ void csvm::init(const target_platform target) {
 
     // print found HIP devices
     plssvm::detail::log(verbosity_level::full,
-                        "Found {} HIP device(s):\n", plssvm::detail::tracking_entry{ "backend", "num_devices", devices_.size() });
+                        "Found {} HIP device(s):\n",
+                        plssvm::detail::tracking_entry{ "backend", "num_devices", devices_.size() });
     std::vector<std::string> device_names;
     device_names.reserve(devices_.size());
     for (const queue_type &device : devices_) {
         hipDeviceProp_t prop{};
         PLSSVM_HIP_ERROR_CHECK(hipGetDeviceProperties(&prop, device));
         plssvm::detail::log(verbosity_level::full,
-                            "  [{}, {}, {}.{}]\n", device, prop.name, prop.major, prop.minor);
+                            "  [{}, {}, {}.{}]\n",
+                            device,
+                            prop.name,
+                            prop.major,
+                            prop.minor);
         device_names.emplace_back(prop.name);
     }
     PLSSVM_DETAIL_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking_entry{ "backend", "device", device_names }));
