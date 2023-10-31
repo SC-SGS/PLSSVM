@@ -139,7 +139,7 @@ struct hipsycl_csvm_test_type {
     using mock_csvm_type = mock_hipsycl_csvm;
     using csvm_type = plssvm::hipsycl::csvm;
     using device_ptr_type = typename csvm_type::device_ptr_type;
-    inline static auto additional_arguments = std::make_tuple();
+    inline static constexpr auto additional_arguments = std::make_tuple();
 };
 using hipsycl_csvm_test_tuple = std::tuple<hipsycl_csvm_test_type>;
 using hipsycl_csvm_test_label_type_list = util::cartesian_type_product_t<hipsycl_csvm_test_tuple, plssvm::detail::supported_label_types>;
