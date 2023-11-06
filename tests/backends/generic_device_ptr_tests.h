@@ -15,8 +15,8 @@
 
 #include "plssvm/exceptions/exceptions.hpp"  // plssvm::gpu_device_ptr_exception
 
-#include "../custom_test_macros.hpp"  // EXPECT_THROW_WHAT, EXPECT_FLOATING_POINT_MATRIX_EQ
-#include "../types_to_test.hpp"       // util::test_parameter_type_at_t
+#include "custom_test_macros.hpp"  // EXPECT_THROW_WHAT, EXPECT_FLOATING_POINT_MATRIX_EQ
+#include "types_to_test.hpp"       // util::test_parameter_type_at_t
 
 #include "gtest//gtest.h"  // TYPED_TEST_SUITE_P, TYPED_TEST_P, REGISTER_TYPED_TEST_SUITE_P, EXPECT_TRUE, EXPECT_FALSE, EXPECT_EQ, EXPECT_NE, EXPECT_DEATH
                            // ::testing::{Test, hasSubstr}

@@ -15,10 +15,10 @@
 #include "plssvm/exceptions/exceptions.hpp"  // plssvm::invalid_file_format_exception
 #include "plssvm/matrix.hpp"                 // plssvm::aos_matrix
 
-#include "../../custom_test_macros.hpp"  // EXPECT_FLOATING_POINT_MATRIX_NEAR, EXPECT_THROW_WHAT
-#include "../../naming.hpp"              // naming::test_parameter_to_name
-#include "../../types_to_test.hpp"       // util::label_type_gtest, util::test_parameter_type_at_t
-#include "../../utility.hpp"             // util::{temporary_file, instantiate_template_file, get_correct_data_file_labels, get_distinct_label, generate_specific_matrix}
+#include "custom_test_macros.hpp"  // EXPECT_FLOATING_POINT_MATRIX_NEAR, EXPECT_THROW_WHAT
+#include "naming.hpp"              // naming::test_parameter_to_name
+#include "types_to_test.hpp"       // util::label_type_gtest, util::test_parameter_type_at_t
+#include "utility.hpp"             // util::{temporary_file, instantiate_template_file, get_correct_data_file_labels, get_distinct_label, generate_specific_matrix}
 
 #include "fmt/core.h"              // fmt::format
 #include "gmock/gmock-matchers.h"  // ::testing::HasSubstr

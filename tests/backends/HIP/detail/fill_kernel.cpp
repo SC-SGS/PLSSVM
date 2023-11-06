@@ -10,8 +10,8 @@
 
 #include "plssvm/backends/HIP/detail/fill_kernel.hip.hpp"
 
-#include "../../../naming.hpp"         // util::test_parameter_to_name
-#include "../../../types_to_test.hpp"  // util::{real_type_gtest, test_parameter_type_at_t}
+#include "naming.hpp"         // util::test_parameter_to_name
+#include "types_to_test.hpp"  // util::{real_type_gtest, test_parameter_type_at_t}
 
 #include "gtest/gtest.h"  // TYPED_TEST, TYPED_TEST_SUITE, EXPECT_TRUE, ::testing::test
 

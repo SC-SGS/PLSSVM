@@ -7,7 +7,7 @@
  *          See the LICENSE.md file in the project root for full license information.
  */
 
-#include "compare.hpp"
+#include "backends/compare.hpp"
 
 #include "plssvm/detail/assert.hpp"          // PLSSVM_ASSERT
 #include "plssvm/kernel_function_types.hpp"  // plssvm::kernel_function_type

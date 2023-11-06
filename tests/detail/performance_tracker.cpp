@@ -12,9 +12,9 @@
 
 #include "plssvm/detail/io/file_reader.hpp"  // plssvm::detail::io::file_reader
 
-#include "../naming.hpp"         // naming::test_parameter_to_name
-#include "../types_to_test.hpp"  // util::{label_type_gtest, test_parameter_type_at_t}
-#include "../utility.hpp"        // util::redirect_output
+#include "naming.hpp"         // naming::test_parameter_to_name
+#include "types_to_test.hpp"  // util::{label_type_gtest, test_parameter_type_at_t}
+#include "utility.hpp"        // util::redirect_output
 
 #include "fmt/core.h"              // fmt::format
 #include "gmock/gmock-matchers.h"  // EXPECT_THAT, ::testing::{HasSubstr}

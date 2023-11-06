@@ -17,12 +17,12 @@
 #include "plssvm/parameter.hpp"                 // plssvm::parameter
 #include "plssvm/target_platforms.hpp"          // plssvm::target_platform
 
-#include "../../custom_test_macros.hpp"   // EXPECT_THROW_WHAT
-#include "../../naming.hpp"               // naming::test_parameter_to_name
-#include "../../types_to_test.hpp"        // util::{cartesian_type_product_t, combine_test_parameters_gtest_t}
-#include "../../utility.hpp"              // util::redirect_output
-#include "../generic_csvm_tests.hpp"      // generic CSVM tests to instantiate
-#include "../generic_gpu_csvm_tests.hpp"  // generic GPU CSVM tests to instantiate
+#include "backends/generic_csvm_tests.hpp"      // generic CSVM tests to instantiate
+#include "backends/generic_gpu_csvm_tests.hpp"  // generic GPU CSVM tests to instantiate
+#include "custom_test_macros.hpp"               // EXPECT_THROW_WHAT
+#include "naming.hpp"                           // naming::test_parameter_to_name
+#include "types_to_test.hpp"                    // util::{cartesian_type_product_t, combine_test_parameters_gtest_t}
+#include "utility.hpp"                          // util::redirect_output
 
 #include "gtest/gtest.h"  // TEST_F, EXPECT_NO_THROW, INSTANTIATE_TYPED_TEST_SUITE_P, ::testing::Test
 

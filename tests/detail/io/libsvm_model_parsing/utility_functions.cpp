@@ -10,7 +10,7 @@
 
 #include "plssvm/detail/io/libsvm_model_parsing.hpp"
 
-#include "../../../naming.hpp"  // naming::{pretty_print_x_vs_y, pretty_print_calc_alpha_idx}
+#include "naming.hpp"  // naming::{pretty_print_x_vs_y, pretty_print_calc_alpha_idx}
 
 #include "gmock/gmock-matchers.h"  // ::testing::HasSubstr
 #include "gtest/gtest.h"           // TEST, TEST_P, INSTANTIATE_TEST_SUITE_P, EXPECT_EQ, EXPECT_DEATH

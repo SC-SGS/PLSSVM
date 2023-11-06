@@ -17,10 +17,10 @@
 #include "plssvm/matrix.hpp"                 // plssvm::aos_matrix
 #include "plssvm/parameter.hpp"              // plssvm::parameter
 
-#include "../../../naming.hpp"         // naming::label_type_to_name
-#include "../../../types_to_test.hpp"  // util::label_type_gtest
-#include "../../../utility.hpp"        // util::{temporary_file, get_distinct_label, get_correct_model_file_labels, get_correct_model_file_num_sv_per_class,
-                                       // generate_specific_matrix, get_num_classes}
+#include "naming.hpp"         // naming::label_type_to_name
+#include "types_to_test.hpp"  // util::label_type_gtest
+#include "utility.hpp"        // util::{temporary_file, get_distinct_label, get_correct_model_file_labels, get_correct_model_file_num_sv_per_class,
+                              // generate_specific_matrix, get_num_classes}
 
 #include "fmt/format.h"            // fmt::format, fmt::join
 #include "fmt/os.h"                // fmt::ostream, fmt::output_file

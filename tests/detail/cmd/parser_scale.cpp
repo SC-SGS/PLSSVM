@@ -13,10 +13,10 @@
 #include "plssvm/constants.hpp"      // plssvm::real_type
 #include "plssvm/detail/logger.hpp"  // plssvm::verbosity
 
-#include "../../custom_test_macros.hpp"  // EXPECT_CONVERSION_TO_STRING
-#include "../../naming.hpp"              // naming::{pretty_print_parameter_flag_and_value, pretty_print_parameter_flag}
-#include "../../utility.hpp"             // util::{convert_from_string, redirect_output}
-#include "utility.hpp"                   // util::ParameterBase
+#include "custom_test_macros.hpp"      // EXPECT_CONVERSION_TO_STRING
+#include "detail/cmd/cmd_utility.hpp"  // util::ParameterBase
+#include "naming.hpp"                  // naming::{pretty_print_parameter_flag_and_value, pretty_print_parameter_flag}
+#include "utility.hpp"                 // util::{convert_from_string, redirect_output}
 
 #include "fmt/core.h"              // fmt::format
 #include "gmock/gmock-matchers.h"  // ::testing::{StartsWith, HasSubstr}

@@ -12,8 +12,8 @@
 
 #include "plssvm/default_value.hpp"  // plssvm::default_value
 
-#include "../naming.hpp"         // naming::{test_parameter_to_name}
-#include "../types_to_test.hpp"  // util::{combine_test_parameters_gtest_t, cartesian_type_product_t, test_parameter_type_at_t}
+#include "naming.hpp"         // naming::{test_parameter_to_name}
+#include "types_to_test.hpp"  // util::{combine_test_parameters_gtest_t, cartesian_type_product_t, test_parameter_type_at_t}
 
 #include "gmock/gmock-matchers.h"  // EXPECT_THAT, ::testing::HasSubstr
 #include "gtest/gtest.h"           // TEST, EXPECT_EQ, EXPECT_TRUE, EXPECT_FALSE, ::testing::Test

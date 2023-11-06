@@ -12,9 +12,9 @@
 
 #include "plssvm/detail/arithmetic_type_name.hpp"  // plssvm::detail::arithmetic_type_name
 
-#include "../custom_test_macros.hpp"  // EXPECT_THROW_WHAT
-#include "../naming.hpp"              // naming::{real_type_to_name, pretty_print_escaped_string}
-#include "../types_to_test.hpp" // util::{combine_test_parameters_gtest_t, cartesian_type_product_t, test_parameter_type_at_t}
+#include "custom_test_macros.hpp"  // EXPECT_THROW_WHAT
+#include "naming.hpp"              // naming::{real_type_to_name, pretty_print_escaped_string}
+#include "types_to_test.hpp"       // util::{combine_test_parameters_gtest_t, cartesian_type_product_t, test_parameter_type_at_t}
 
 #include "fmt/format.h"   // fmt::format
 #include "gtest/gtest.h"  // TEST, ASSERT_EQ, EXPECT_EQ, EXPECT_TRUE, TYPED_TEST, TYPED_TEST_SUITE, TEST_P, INSTANTIATE_TEST_SUITE_P

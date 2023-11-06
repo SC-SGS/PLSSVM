@@ -11,10 +11,9 @@
 #include "plssvm/backends/SYCL/hipSYCL/detail/device_ptr.hpp"  // plssvm::hipsycl::detail::device_ptr
 #include "plssvm/backends/SYCL/hipSYCL/detail/utility.hpp"     // plssvm::hipsycl::detail::get_default_device
 
-#include "../../../generic_device_ptr_tests.h"  // generic device pointer tests to instantiate
-
-#include "../../../../naming.hpp"         // naming::test_parameter_to_name
-#include "../../../../types_to_test.hpp"  // util::{combine_test_parameters_gtest_t, cartesian_type_product_t, layout_type_list}
+#include "backends/generic_device_ptr_tests.h"  // generic device pointer tests to instantiate
+#include "naming.hpp"                           // naming::test_parameter_to_name
+#include "types_to_test.hpp"                    // util::{combine_test_parameters_gtest_t, cartesian_type_product_t, layout_type_list}
 
 #include "gtest/gtest.h"  // INSTANTIATE_TYPED_TEST_SUITE_P
 

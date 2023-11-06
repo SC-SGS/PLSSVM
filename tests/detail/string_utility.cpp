@@ -10,7 +10,7 @@
 
 #include "plssvm/detail/string_utility.hpp"
 
-#include "../naming.hpp"  // naming::pretty_print_escaped_string
+#include "naming.hpp"  // naming::pretty_print_escaped_string
 
 #include "fmt/core.h"     // fmt::format
 #include "gtest/gtest.h"  // TEST, ASSERT_EQ, EXPECT_EQ

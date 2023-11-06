@@ -15,14 +15,13 @@
 #include "plssvm/detail/io/file_reader.hpp"  // plssvm::detail::io::file_reader
 #include "plssvm/matrix.hpp"                 // plssvm::aos_matrix
 
-#include "../../../custom_test_macros.hpp"  // EXPECT_FLOATING_POINT_MATRIX_NEAR
-#include "../../../naming.hpp"              // naming::parameter_definition_to_name
-#include "../../../types_to_test.hpp"       // util::label_type_classification_type_gtest
-#include "../../../utility.hpp"             // util::{temporary_file, get_correct_model_file_labels, get_distinct_label, generate_specific_matrix}
+#include "custom_test_macros.hpp"  // EXPECT_FLOATING_POINT_MATRIX_NEAR
+#include "naming.hpp"              // naming::parameter_definition_to_name
+#include "types_to_test.hpp"       // util::label_type_classification_type_gtest
+#include "utility.hpp"             // util::{temporary_file, get_correct_model_file_labels, get_distinct_label, generate_specific_matrix}
 
 #include "fmt/core.h"     // fmt::format
-#include "gtest/gtest.h"  // TYPED_TEST, TYPED_TEST_SUITE, EXPECT_EQ, ASSERT_EQ, FAIL
-                          // ::testing::Test
+#include "gtest/gtest.h"  // TYPED_TEST, TYPED_TEST_SUITE, EXPECT_EQ, ASSERT_EQ, FAIL, ::testing::Test
 
 #include <array>    // std::array
 #include <cstddef>  // std::size_t

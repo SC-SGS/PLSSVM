@@ -12,7 +12,7 @@
 
 #include "plssvm/exceptions/exceptions.hpp"  // plssvm::exception
 
-#include "../custom_test_macros.hpp"  // EXPECT_THROW_WHAT, EXPECT_CONVERSION_TO_STRING
+#include "custom_test_macros.hpp"  // EXPECT_THROW_WHAT, EXPECT_CONVERSION_TO_STRING
 
 #include "gtest/gtest.h"  // TEST, EXPECT_EQ, EXPECT_TRUE, EXPECT_FALSE
 

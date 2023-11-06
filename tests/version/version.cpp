@@ -11,7 +11,7 @@
 #include "plssvm/version/version.hpp"
 #include "plssvm/version/git_metadata/git_metadata.hpp"  // plssvm::version::git_metadata::is_populated
 
-#include "../naming.hpp"  // naming::pretty_print_version_info
+#include "naming.hpp"  // naming::pretty_print_version_info
 
 #include "fmt/core.h"              // fmt::format
 #include "gmock/gmock-matchers.h"  // ::testing::HasSubstr

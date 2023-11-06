@@ -16,7 +16,7 @@
 #include "plssvm/detail/logger.hpp"             // plssvm::verbosity_level, plssvm::verbosity
 #include "plssvm/detail/string_conversion.hpp"  // plssvm::detail::split_as
 
-#include "../../utility.hpp"  // util::redirect_output
+#include "utility.hpp"  // util::redirect_output
 
 #include "gtest/gtest.h"  // :testing::Test
 

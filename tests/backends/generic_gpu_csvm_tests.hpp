@@ -19,10 +19,10 @@
 #include "plssvm/matrix.hpp"                 // plssvm::aos_matrix
 #include "plssvm/parameter.hpp"              // plssvm::parameter
 
-#include "../custom_test_macros.hpp"  // EXPECT_FLOATING_POINT_MATRIX_NEAR, EXPECT_FLOATING_POINT_VECTOR_NEAR
-#include "../types_to_test.hpp"       // util::{test_parameter_type_at_t, test_parameter_value_at_v}
-#include "../utility.hpp"             // util::{redirect_output, construct_from_tuple, generate_random_matrix}
-#include "compare.hpp"                // compare::{perform_dimensional_reduction, kernel_function, assemble_kernel_matrix_gemm, assemble_kernel_matrix_symm, gemm, calculate_w, predict_values}
+#include "backends/compare.hpp"    // compare::{perform_dimensional_reduction, kernel_function, assemble_kernel_matrix_gemm, assemble_kernel_matrix_symm, gemm, calculate_w, predict_values}
+#include "custom_test_macros.hpp"  // EXPECT_FLOATING_POINT_MATRIX_NEAR, EXPECT_FLOATING_POINT_VECTOR_NEAR
+#include "types_to_test.hpp"       // util::{test_parameter_type_at_t, test_parameter_value_at_v}
+#include "utility.hpp"             // util::{redirect_output, construct_from_tuple, generate_random_matrix}
 
 #include "gtest/gtest.h"  // TYPED_TEST_SUITE_P, TYPED_TEST_P, REGISTER_TYPED_TEST_SUITE_P, EXPECT_GT, EXPECT_GE, ASSERT_EQ, ::testing::Test
 
@@ -183,7 +183,6 @@ TYPED_TEST_P(GenericGPUCSVMKernelFunction, run_assemble_kernel_matrix_explicit) 
     device_ptr_type q_red_d{ q_red.size(), device };
     q_red_d.copy_to_device(q_red);
     const plssvm::real_type QA_cost = compare::kernel_function(params, data.data(), data.num_data_points() - 1, data.data(), data.num_data_points() - 1);
-
 
     const device_ptr_type kernel_matrix_d = svm.run_assemble_kernel_matrix_explicit(params, data_d, q_red_d, QA_cost);
 

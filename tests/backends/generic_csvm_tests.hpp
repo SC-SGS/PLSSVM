@@ -27,10 +27,10 @@
 #include "plssvm/solver_types.hpp"              // plssvm::solver_type
 #include "plssvm/target_platforms.hpp"          // plssvm::target_platform
 
-#include "../custom_test_macros.hpp"  // EXPECT_FLOATING_POINT_MATRIX_EQ, EXPECT_FLOATING_POINT_VECTOR_NEAR, EXPECT_FLOATING_POINT_NEAR
-#include "../types_to_test.hpp"       // util::{test_parameter_type_at_t, test_parameter_value_at_v}
-#include "../utility.hpp"             // util::{redirect_output, generate_specific_matrix, construct_from_tuple, flatten, generate_random_matrix}
-#include "compare.hpp"                // compare::{kernel_function, perform_dimensional_reduction}
+#include "backends/compare.hpp"    // compare::{kernel_function, perform_dimensional_reduction}
+#include "custom_test_macros.hpp"  // EXPECT_FLOATING_POINT_MATRIX_EQ, EXPECT_FLOATING_POINT_VECTOR_NEAR, EXPECT_FLOATING_POINT_NEAR
+#include "types_to_test.hpp"       // util::{test_parameter_type_at_t, test_parameter_value_at_v}
+#include "utility.hpp"             // util::{redirect_output, generate_specific_matrix, construct_from_tuple, flatten, generate_random_matrix}
 
 #include "fmt/format.h"   // fmt::format
 #include "fmt/ostream.h"  // can use fmt using operator<< overloads

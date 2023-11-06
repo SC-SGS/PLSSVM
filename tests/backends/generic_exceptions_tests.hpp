@@ -15,7 +15,7 @@
 
 #include "plssvm/detail/string_utility.hpp"  // plssvm::detail::split
 
-#include "../custom_test_macros.hpp"  // EXPECT_THROW_WHAT
+#include "custom_test_macros.hpp"  // EXPECT_THROW_WHAT
 
 #include "fmt/core.h"              // fmt::format
 #include "gmock/gmock-matchers.h"  // ::testing::{HasSubstr, ContainsRegex}

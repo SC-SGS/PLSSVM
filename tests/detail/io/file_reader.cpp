@@ -13,9 +13,9 @@
 #include "plssvm/detail/string_utility.hpp"  // plssvm::detail::starts_with
 #include "plssvm/exceptions/exceptions.hpp"  // plssvm::file_not_found_exception, plssvm::file_reader_exception
 
-#include "../../custom_test_macros.hpp"  // EXPECT_THROW_WHAT
-#include "../../naming.hpp"              // naming::{test_parameter_to_name, pretty_print_escaped_string}
-#include "../../types_to_test.hpp"       //  util::{wrap_tuple_types_in_type_lists_t, cartesian_type_product_t, test_parameter_type_at_t};
+#include "custom_test_macros.hpp"  // EXPECT_THROW_WHAT
+#include "naming.hpp"              // naming::{test_parameter_to_name, pretty_print_escaped_string}
+#include "types_to_test.hpp"       //  util::{wrap_tuple_types_in_type_lists_t, cartesian_type_product_t, test_parameter_type_at_t};
 
 #include "fmt/core.h"     // fmt::format
 #include "gtest/gtest.h"  // TEST, TEST_P, TYPED_TEST, EXPECT_EQ, EXPECT_NE, EXPECT_TRUE, EXPECT_FALSE, ASSERT_TRUE, ASSERT_FALSE, TYPED_TEST_SUITE, INSTANTIATE_TEST_SUITE_P

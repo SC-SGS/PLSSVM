@@ -15,9 +15,9 @@
 #include "plssvm/detail/io/file_reader.hpp"        // plssvm::detail::io::file_reader
 #include "plssvm/exceptions/exceptions.hpp"        // plssvm::invalid_file_format_exception
 
-#include "../../../custom_test_macros.hpp"  // EXPECT_THROW_WHAT
-#include "../../../naming.hpp"              // naming::label_type_to_name
-#include "../../../types_to_test.hpp"       // util::label_type_gtest
+#include "custom_test_macros.hpp"  // EXPECT_THROW_WHAT
+#include "naming.hpp"              // naming::label_type_to_name
+#include "types_to_test.hpp"       // util::label_type_gtest
 
 #include "fmt/core.h"     // fmt::format
 #include "gtest/gtest.h"  // TYPED_TEST, TYPED_TEST_SUITE, ::testing::Test

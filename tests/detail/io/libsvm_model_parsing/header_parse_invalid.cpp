@@ -12,10 +12,10 @@
 
 #include "plssvm/exceptions/exceptions.hpp"  // plssvm::invalid_file_format_exception
 
-#include "../../../custom_test_macros.hpp"  // EXPECT_THROW_WHAT
-#include "../../../naming.hpp"              // naming::label_type_to_name
-#include "../../../types_to_test.hpp"       // util::label_type_gtest
-#include "../../../utility.hpp"             // util::get_num_classes
+#include "custom_test_macros.hpp"  // EXPECT_THROW_WHAT
+#include "naming.hpp"              // naming::label_type_to_name
+#include "types_to_test.hpp"       // util::label_type_gtest
+#include "utility.hpp"             // util::get_num_classes
 
 #include "gtest/gtest.h"  // TYPED_TEST, TYPED_TEST_SUITE
                           // ::testing::Test

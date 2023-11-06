@@ -15,8 +15,8 @@
 #include "plssvm/detail/io/file_reader.hpp"  // plssvm::detail::io::file_reader
 #include "plssvm/exceptions/exceptions.hpp"  // plssvm::invalid_file_format_exception
 
-#include "../../custom_test_macros.hpp"  // EXPECT_FLOATING_POINT_EQ, EXPECT_THROW_WHAT
-#include "../../utility.hpp"             // util::temporary_file
+#include "custom_test_macros.hpp"  // EXPECT_FLOATING_POINT_EQ, EXPECT_THROW_WHAT
+#include "utility.hpp"             // util::temporary_file
 
 #include "gmock/gmock-matchers.h"  // ::testing::HasSubstr
 #include "gtest/gtest.h"           // TEST, TEST_F, EXPECT_EQ, EXPECT_TRUE, EXPECT_DEATH, ASSERT_EQ, ::testing::Test

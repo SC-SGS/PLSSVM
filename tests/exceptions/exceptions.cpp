@@ -10,9 +10,9 @@
 
 #include "plssvm/exceptions/exceptions.hpp"  // plssvm::{*_exception}
 
-#include "../custom_test_macros.hpp"  // EXPECT_THROW_WHAT
-#include "../naming.hpp"              // naming::test_parameter_to_name
-#include "../types_to_test.hpp"       // util::{combine_test_parameters_gtest_t, cartesian_type_product_t, test_parameter_type_at_t}
+#include "custom_test_macros.hpp"  // EXPECT_THROW_WHAT
+#include "naming.hpp"              // naming::test_parameter_to_name
+#include "types_to_test.hpp"       // util::{combine_test_parameters_gtest_t, cartesian_type_product_t, test_parameter_type_at_t}
 #include "utility.hpp"                // util::exception_type_name
 
 #include "fmt/core.h"     // fmt::format

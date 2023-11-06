@@ -18,10 +18,10 @@
 #include "plssvm/matrix.hpp"                 // plssvm::aos_matrix
 #include "plssvm/parameter.hpp"              // plssvm::parameter
 
-#include "../../../naming.hpp"         // naming::parameter_definition_to_name
-#include "../../../types_to_test.hpp"  // util::label_type_classification_type_gtest
-#include "../../../utility.hpp"        // util::{get_distinct_label, get_correct_model_file_labels, get_correct_model_file_num_sv_per_class,
-                                       // generate_random_matrix, get_num_classes, generate_random_vector}
+#include "naming.hpp"         // naming::parameter_definition_to_name
+#include "types_to_test.hpp"  // util::label_type_classification_type_gtest
+#include "utility.hpp"        // util::{get_distinct_label, get_correct_model_file_labels, get_correct_model_file_num_sv_per_class,
+                              // generate_random_matrix, get_num_classes, generate_random_vector}
 
 #include "fmt/format.h"            // fmt::format, fmt::join
 #include "gmock/gmock-matchers.h"  // ::testing::HasSubstr
