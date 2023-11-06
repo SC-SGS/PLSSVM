@@ -102,7 +102,7 @@ class csvm : public ::plssvm::csvm {
      */
     ~csvm() override = default;
 
-   protected:
+  protected:
     /**
      * @copydoc plssvm::csvm::get_device_memory
      */

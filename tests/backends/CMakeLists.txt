@@ -6,7 +6,7 @@
 
 # create OpenMP tests if the OpenMP backend is available
 if (TARGET ${PLSSVM_OPENMP_BACKEND_LIBRARY_NAME})
-#    add_subdirectory(OpenMP)
+    add_subdirectory(OpenMP)
 endif ()
 
 # create CUDA tests if the CUDA backend is available
