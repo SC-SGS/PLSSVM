@@ -147,7 +147,7 @@ auto csvm::run_assemble_kernel_matrix_explicit(const parameter &params, const de
 #if defined(PLSSVM_USE_GEMM)
     device_ptr_type kernel_matrix_d{ num_rows_reduced * num_rows_reduced };  // store full matrix
 #else
-    device_ptr_type kernel_matrix_d{ num_rows_reduced * (num_rows_reduced + 1) / 2 };  // only explicitly store the upper triangular matrix
+    device_ptr_type kernel_matrix_d{ num_rows_reduced * (num_rows_reduced + 1) / 2, devices_[0] };  // only explicitly store the upper triangular matrix
 #endif
     const real_type cost_factor = real_type{ 1.0 } / params.cost;
 
@@ -208,7 +208,7 @@ auto csvm::run_w_kernel(const device_ptr_type &alpha_d, const device_ptr_type &s
     const dim3 grid(static_cast<int>(std::ceil(static_cast<double>(num_features) / static_cast<double>(block.x))),
                     static_cast<int>(std::ceil(static_cast<double>(num_classes) / static_cast<double>(block.y))));
 
-    device_ptr_type w_d{ { num_classes, num_features } };
+    device_ptr_type w_d{ { num_classes, num_features }, devices_[0] };
 
     detail::set_device(0);
     cuda::device_kernel_w_linear<<<grid, block>>>(w_d.get(), alpha_d.get(), sv_d.get(), num_classes, num_sv, num_features);
@@ -224,7 +224,7 @@ auto csvm::run_predict_kernel(const parameter &params, const device_ptr_type &w_
     const unsigned long long num_predict_points = predict_points_d.size(0);
     const unsigned long long num_features = predict_points_d.size(1);
 
-    device_ptr_type out_d{ { num_predict_points, num_classes } };
+    device_ptr_type out_d{ { num_predict_points, num_classes }, devices_[0] };
 
     detail::set_device(0);
     if (params.kernel_type == kernel_function_type::linear) {

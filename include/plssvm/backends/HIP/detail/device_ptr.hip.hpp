@@ -57,14 +57,14 @@ class device_ptr : public ::plssvm::detail::gpu_device_ptr<T, int> {
      * @param[in] device the associated HIP device
      * @throws plssvm::hip::backend_exception if the given device ID is smaller than 0 or greater or equal than the available number of devices
      */
-    explicit device_ptr(size_type size, queue_type device = 0);
+    explicit device_ptr(size_type size, queue_type device);
     /**
      * @brief Allocates `extents[0] * extents[1] * sizeof(T)` bytes on the device with ID @p device.
      * @param[in] extents the number of elements represented by the device_ptr
      * @param[in] device the associated HIP device
      * @throws plssvm::hip::backend_exception if the given device ID is smaller than 0 or greater or equal than the available number of devices
      */
-    explicit device_ptr(std::array<size_type, 2> extents, queue_type device = 0);
+    explicit device_ptr(std::array<size_type, 2> extents, queue_type device);
 
     /**
      * @copydoc plssvm::detail::gpu_device_ptr::gpu_device_ptr(const plssvm::detail::gpu_device_ptr &)
