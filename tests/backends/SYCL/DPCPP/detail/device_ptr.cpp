@@ -30,14 +30,14 @@ struct dpcpp_device_ptr_test_type {
         return queue;
     }
 };
-using device_ptr_test_types = std::tuple<dpcpp_device_ptr_test_type<float>, dpcpp_device_ptr_test_type<double>>;
+using dpcpp_device_ptr_tuple = std::tuple<dpcpp_device_ptr_test_type<float>, dpcpp_device_ptr_test_type<double>>;
 
 // the tests used in the instantiated GTest test suites
-using device_ptr_type_gtest = util::combine_test_parameters_gtest_t<util::cartesian_type_product_t<device_ptr_test_types>>;
-using device_ptr_layout_type_gtest = util::combine_test_parameters_gtest_t<util::cartesian_type_product_t<device_ptr_test_types>, util::layout_type_list>;
+using dpcpp_device_ptr_type_gtest = util::combine_test_parameters_gtest_t<util::cartesian_type_product_t<dpcpp_device_ptr_tuple>>;
+using dpcpp_device_ptr_layout_type_gtest = util::combine_test_parameters_gtest_t<util::cartesian_type_product_t<dpcpp_device_ptr_tuple>, util::layout_type_list>;
 
 // instantiate type-parameterized tests
-INSTANTIATE_TYPED_TEST_SUITE_P(hipSYCLDevicePtr, DevicePtr, device_ptr_type_gtest, naming::test_parameter_to_name);
-INSTANTIATE_TYPED_TEST_SUITE_P(hipSYCLDevicePtr, DevicePtrLayout, device_ptr_layout_type_gtest, naming::test_parameter_to_name);
+INSTANTIATE_TYPED_TEST_SUITE_P(hipSYCLDevicePtr, DevicePtr, dpcpp_device_ptr_type_gtest, naming::test_parameter_to_name);
+INSTANTIATE_TYPED_TEST_SUITE_P(hipSYCLDevicePtr, DevicePtrLayout, dpcpp_device_ptr_layout_type_gtest, naming::test_parameter_to_name);
 
-INSTANTIATE_TYPED_TEST_SUITE_P(hipSYCLDevicePtrDeathTest, DevicePtrDeathTest, device_ptr_type_gtest, naming::test_parameter_to_name);
+INSTANTIATE_TYPED_TEST_SUITE_P(hipSYCLDevicePtrDeathTest, DevicePtrDeathTest, dpcpp_device_ptr_type_gtest, naming::test_parameter_to_name);

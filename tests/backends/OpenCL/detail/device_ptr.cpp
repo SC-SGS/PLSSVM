@@ -24,7 +24,7 @@
 #include <vector>  // std::vector
 
 template <typename T>
-struct device_ptr_test_type {
+struct opencl_device_ptr_test_type {
     using device_ptr_type = plssvm::opencl::detail::device_ptr<T>;
     using queue_type = plssvm::opencl::detail::command_queue;
 
@@ -34,14 +34,14 @@ struct device_ptr_test_type {
         return queue;
     }
 };
-using device_ptr_test_types = std::tuple<device_ptr_test_type<float>, device_ptr_test_type<double>>;
+using opencl_device_ptr_tuple = std::tuple<opencl_device_ptr_test_type<float>, opencl_device_ptr_test_type<double>>;
 
 // the tests used in the instantiated GTest test suites
-using device_ptr_type_gtest = util::combine_test_parameters_gtest_t<util::cartesian_type_product_t<device_ptr_test_types>>;
-using device_ptr_layout_type_gtest = util::combine_test_parameters_gtest_t<util::cartesian_type_product_t<device_ptr_test_types>, util::layout_type_list>;
+using opencl_device_ptr_type_gtest = util::combine_test_parameters_gtest_t<util::cartesian_type_product_t<opencl_device_ptr_tuple>>;
+using opencl_device_ptr_layout_type_gtest = util::combine_test_parameters_gtest_t<util::cartesian_type_product_t<opencl_device_ptr_tuple>, util::layout_type_list>;
 
 // instantiate type-parameterized tests
-INSTANTIATE_TYPED_TEST_SUITE_P(OpenCLDevicePtr, DevicePtr, device_ptr_type_gtest, naming::test_parameter_to_name);
-INSTANTIATE_TYPED_TEST_SUITE_P(OpenCLDevicePtr, DevicePtrLayout, device_ptr_layout_type_gtest, naming::test_parameter_to_name);
+INSTANTIATE_TYPED_TEST_SUITE_P(OpenCLDevicePtr, DevicePtr, opencl_device_ptr_type_gtest, naming::test_parameter_to_name);
+INSTANTIATE_TYPED_TEST_SUITE_P(OpenCLDevicePtr, DevicePtrLayout, opencl_device_ptr_layout_type_gtest, naming::test_parameter_to_name);
 
-INSTANTIATE_TYPED_TEST_SUITE_P(OpenCLDevicePtrDeathTest, DevicePtrDeathTest, device_ptr_type_gtest, naming::test_parameter_to_name);
+INSTANTIATE_TYPED_TEST_SUITE_P(OpenCLDevicePtrDeathTest, DevicePtrDeathTest, opencl_device_ptr_type_gtest, naming::test_parameter_to_name);
