@@ -113,8 +113,7 @@ real_type polynomial_kernel(const plssvm::matrix<real_type, layout> &X, const st
 
     real_type result{ 0.0 };
     for (typename std::vector<real_type>::size_type dim = 0; dim < X.num_cols(); ++dim) {
-        const real_type diff = X(i, dim) - Y(j, dim);
-        result = std::fma(diff, diff, result);
+        result = std::fma(X(i, dim), Y(j, dim), result);
     }
     return std::pow(std::fma(gamma, result, coef0), static_cast<real_type>(degree));
 }
