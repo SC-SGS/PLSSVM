@@ -22,11 +22,10 @@
 #include "plssvm/parameter.hpp"           // plssvm::parameter, plssvm::detail::has_only_parameter_named_args_v
 #include "plssvm/target_platforms.hpp"    // plssvm::target_platform
 
-
-#include <type_traits>                    // std::true_type
-#include <utility>                        // std::forward, std::pair
-#include <vector>                         // std::vector
+#include <type_traits>  // std::true_type
+#include <utility>      // std::forward, std::pair
 #include <variant>
+#include <vector>  // std::vector
 
 namespace plssvm {
 
@@ -101,7 +100,7 @@ class csvm : public ::plssvm::csvm {
     /**
      * @brief Default destructor since the copy and move constructors and copy- and move-assignment operators are defined.
      */
-     ~csvm() override = default;
+    ~csvm() override = default;
 
    protected:
     /**
@@ -139,10 +138,10 @@ class csvm : public ::plssvm::csvm {
 
   private:
     /**
-    * @brief Initializes the OpenMP backend and performs some sanity checks.
-    * @param[in] target the target platform to use
-    * @throws plssvm::openmp::backend_exception if the target platform isn't plssvm::target_platform::automatic or plssvm::target_platform::cpu
-    * @throws plssvm::openmp::backend_exception if the plssvm::target_platform::cpu target isn't available
+     * @brief Initializes the OpenMP backend and performs some sanity checks.
+     * @param[in] target the target platform to use
+     * @throws plssvm::openmp::backend_exception if the target platform isn't plssvm::target_platform::automatic or plssvm::target_platform::cpu
+     * @throws plssvm::openmp::backend_exception if the plssvm::target_platform::cpu target isn't available
      */
     void init(target_platform target);
 };
