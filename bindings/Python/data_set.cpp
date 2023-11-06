@@ -251,7 +251,7 @@ void instantiate_data_set_bindings(py::module_ &m) {
 
 void init_data_set(py::module_ &m) {
     // bind all data_set classes
-    instantiate_data_set_bindings<plssvm::detail::label_type_list>(m);
+    instantiate_data_set_bindings<plssvm::detail::supported_label_types>(m);
 
     // create aliases
     m.attr("DataSetScalingFactors") = m.attr(assemble_unique_class_name<PLSSVM_PYTHON_BINDINGS_PREFERRED_LABEL_TYPE>("DataSetScalingFactors").c_str());

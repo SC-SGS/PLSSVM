@@ -130,7 +130,7 @@ void init_csvm(py::module_ &m) {
         .def("get_target_platform", &plssvm::csvm::get_target_platform, "get the actual target platform this SVM runs on");
 
     // instantiate all functions using all available label_type
-    instantiate_model_bindings<plssvm::detail::label_type_list>(pycsvm);
+    instantiate_model_bindings<plssvm::detail::supported_label_types>(pycsvm);
 
     // bind plssvm::make_csvm factory function to a "generic" Python csvm class
     py::class_<plssvm::csvm>(m, "CSVM", pycsvm, py::module_local())

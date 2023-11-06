@@ -73,12 +73,16 @@ void instantiate_model_bindings(py::module_ &m, label_type) {
         .def("rho", [](const model_type &self) {
                 return vector_to_pyarray(self.rho());
             }, "the bias value after learning for each class")
+        .def("get_classification_type", [](const model_type &self) {
+            return self.get_classification_type();
+        }, "the classification type used to create this model")
         .def("__repr__", [class_name](const model_type &self) {
-            return fmt::format("<plssvm.{} with {{ #sv: {}, #features: {}, rho: {} }}>",
+            return fmt::format("<plssvm.{} with {{ #sv: {}, #features: {}, rho: {}, classification_type: {} }}>",
                                class_name,
                                self.num_support_vectors(),
                                self.num_features(),
-                               fmt::format("[{}]", fmt::join(self.rho(), ",")));
+                               fmt::format("[{}]", fmt::join(self.rho(), ",")),
+                               self.get_classification_type());
         });
 }
 
@@ -94,7 +98,7 @@ void instantiate_model_bindings(py::module_ &m) {
 
 void init_model(py::module_ &m) {
     // bind all model classes
-    instantiate_model_bindings<plssvm::detail::label_type_list>(m);
+    instantiate_model_bindings<plssvm::detail::supported_label_types>(m);
 
     // create alias
     m.attr("Model") = m.attr(assemble_unique_class_name<PLSSVM_PYTHON_BINDINGS_PREFERRED_LABEL_TYPE>("Model").c_str());

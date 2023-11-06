@@ -23,6 +23,7 @@
 #include "pybind11/pybind11.h"  // py::kwargs, py::value_error, py::exception, py::str
 #include "pybind11/stl.h"       // support for STL types
 
+#include <cstring>      // std::memcpy
 #include <exception>    // std::exception_ptr, std::rethrow_exception
 #include <string>       // std::string
 #include <string_view>  // std::string_view
@@ -41,14 +42,20 @@ template <typename T>
     py::array_t<T> py_array(vec.size());
     py::buffer_info buffer = py_array.request();
     T *ptr = static_cast<T *>(buffer.ptr);
-    for (typename std::vector<T>::size_type i = 0; i < vec.size(); ++i) {
-        ptr[i] = vec[i];
+    if constexpr (std::is_same_v<T, bool>) {
+        // can't use memcpy with std::vector<bool>
+        for (typename std::vector<T>::size_type i = 0; i < vec.size(); ++i) {
+            ptr[i] = vec[i];
+        }
+    } else {
+        // use plain memcpy
+        std::memcpy(ptr, vec.data(), vec.size() * sizeof(T));
     }
     return py_array;
 }
 
 /**
- * @brief Convert a `std::vector<std::vector<T>>` to a Python Numpy array.
+ * @brief Convert a `plssvm::matrix<T>` to a Python Numpy array.
  * @tparam T the type in the array
  * @param[in] mat the 2D vector to convert
  * @return the Python Numpy array (`[[nodiscard]]`)
@@ -250,6 +257,7 @@ PLSSVM_CREATE_NUMPY_NAME_MAPPING(std::string, "string")
 
 }  // namespace detail
 
+// TODO: encode real_type?
 /**
  * @brief Append the type information to the base @p class_name.
  * @tparam label_type the type of the labels to convert to its Numpy name

@@ -10,7 +10,7 @@
 
 #include "plssvm/constants.hpp"  // plssvm::real_type
 
-#include "utility.hpp"           // check_kwargs_for_correctness, assemble_unique_class_name, pyarray_to_vector, pyarray_to_matrix
+#include "utility.hpp"  // check_kwargs_for_correctness, assemble_unique_class_name, pyarray_to_vector, pyarray_to_matrix
 
 #include "fmt/core.h"            // fmt::format
 #include "pybind11/numpy.h"      // support for STL types
@@ -18,16 +18,16 @@
 #include "pybind11/pybind11.h"   // py::module_, py::class_, py::init, py::arg, py::return_value_policy, py::self
 #include "pybind11/stl.h"        // support for STL types
 
-#include <cstddef>               // std::size_t
-#include <cstdint>               // std::int32_t
-#include <map>                   // std::map
-#include <memory>                // std::unique_ptr, std::make_unique
-#include <numeric>               // std::iota
-#include <optional>              // std::optional, std::nullopt
-#include <sstream>               // std::stringstream
-#include <string>                // std::string
-#include <tuple>                 // std::tuple
-#include <vector>                // std::vector
+#include <cstddef>   // std::size_t
+#include <cstdint>   // std::int32_t
+#include <map>       // std::map
+#include <memory>    // std::unique_ptr, std::make_unique
+#include <numeric>   // std::iota
+#include <optional>  // std::optional, std::nullopt
+#include <sstream>   // std::stringstream
+#include <string>    // std::string
+#include <tuple>     // std::tuple
+#include <vector>    // std::vector
 
 namespace py = pybind11;
 

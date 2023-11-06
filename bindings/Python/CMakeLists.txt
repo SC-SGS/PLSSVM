@@ -21,12 +21,12 @@ else ()
             GIT_TAG ${PLSSVM_pybind11_VERSION}
             GIT_SHALLOW TRUE
             QUIET
-            )
+    )
     FetchContent_MakeAvailable(pybind11)
     target_include_directories(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC
             $<BUILD_INTERFACE:${pybind11_SOURCE_DIR}/include>
             $<INSTALL_INTERFACE:include>
-            )
+    )
     message(STATUS "Installed pybind11 version ${PLSSVM_pybind11_VERSION}.")
 endif ()
 
@@ -53,7 +53,7 @@ set(PLSSVM_PYTHON_BINDINGS_SOURCES
         ${CMAKE_CURRENT_LIST_DIR}/sklearn.cpp
 
         ${CMAKE_CURRENT_LIST_DIR}/main.cpp
-        )
+)
 # set backends specific source files if the respective backend is used
 if (TARGET ${PLSSVM_OPENMP_BACKEND_LIBRARY_NAME})
     list(APPEND PLSSVM_PYTHON_BINDINGS_SOURCES ${CMAKE_CURRENT_LIST_DIR}/backends/openmp_csvm.cpp)

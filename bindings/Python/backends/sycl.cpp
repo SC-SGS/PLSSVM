@@ -10,7 +10,7 @@
 #include "plssvm/backends/SYCL/implementation_type.hpp"
 #include "plssvm/backends/SYCL/kernel_invocation_type.hpp"
 
-#include "../utility.hpp"       // register_py_exception
+#include "../utility.hpp"  // register_py_exception
 
 #include "pybind11/pybind11.h"  // py::module_, py::enum_, py::exception
 #include "pybind11/stl.h"       // support for STL types: std:vector
