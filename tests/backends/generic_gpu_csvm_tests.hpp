@@ -166,7 +166,10 @@ TYPED_TEST_P(GenericGPUCSVMKernelFunction, run_assemble_kernel_matrix_explicit) 
     using device_ptr_type = typename csvm_test_type::device_ptr_type;
     constexpr plssvm::kernel_function_type kernel = util::test_parameter_value_at_v<0, TypeParam>;
 
-    const plssvm::parameter params{ plssvm::kernel_type = kernel };
+    plssvm::parameter params{ plssvm::kernel_type = kernel };
+    if constexpr (kernel != plssvm::kernel_function_type::linear) {
+        params.gamma = plssvm::real_type{ 0.001 };
+    }
     const plssvm::data_set data{ PLSSVM_TEST_FILE };
 
     // create C-SVM: must be done using the mock class, since plssvm::detail::gpu_csvm::setup_data_on_device is protected
