@@ -14,7 +14,7 @@ if (pybind11_FOUND)
     message(STATUS "Found package pybind11.")
 else ()
     message(STATUS "Couldn't find package pybind11. Building from source ...")
-    set(PLSSVM_pybind11_VERSION v2.10.3)
+    set(PLSSVM_pybind11_VERSION v2.11.1)
     # fetch pybind11 library for creating Python bindings
     FetchContent_Declare(pybind11
             GIT_REPOSITORY https://github.com/pybind/pybind11.git
