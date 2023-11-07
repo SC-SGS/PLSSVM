@@ -60,6 +60,9 @@ void parse_provided_params(svc &self, const py::kwargs &args) {
         std::stringstream ss{ args["kernel"].cast<std::string>() };
         plssvm::kernel_function_type kernel{};
         ss >> kernel;
+        if (ss.fail()) {
+            throw py::value_error{ fmt::format("'{}' is not in list", args["kernel"].cast<std::string>()) };
+        }
         self.svm_->set_params(plssvm::kernel_type = kernel);
     }
     if (args.contains("degree")) {
