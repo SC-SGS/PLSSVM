@@ -57,23 +57,21 @@ template <typename T>
 /**
  * @brief Convert a `plssvm::matrix<T>` to a Python Numpy array.
  * @tparam T the type in the array
- * @param[in] mat the 2D vector to convert
+ * @param[in] mat the matrix to convert
  * @return the Python Numpy array (`[[nodiscard]]`)
  */
 template <typename T, plssvm::layout_type layout>
-[[nodiscard]] py::array_t<T> matrix_to_pyarray(const plssvm::matrix<T, layout> &mat) {
+[[nodiscard]] auto matrix_to_pyarray(const plssvm::matrix<T, layout> &mat) {
     using size_type = typename plssvm::matrix<T, layout>::size_type;
     const size_type num_data_points = mat.num_rows();
     const size_type num_features = mat.num_cols();
 
-    py::array_t<T> py_array({ num_data_points, num_features });
+    using py_array_type = std::conditional_t<layout == plssvm::layout_type::aos, py::array_t<T, py::array::c_style>, py::array_t<T, py::array::f_style>>;
+
+    py_array_type py_array({ num_data_points, num_features });
     py::buffer_info buffer = py_array.request();
     T *ptr = static_cast<T *>(buffer.ptr);
-    for (size_type i = 0; i < num_data_points; ++i) {
-        for (size_type j = 0; j < num_features; ++j) {
-            ptr[i * num_features + j] = mat(i, j);
-        }
-    }
+    std::memcpy(ptr, mat.data(), mat.num_entries() * sizeof(T));
     return py_array;
 }
 
@@ -132,27 +130,24 @@ template <typename T>
 }
 
 /**
- * @brief Convert a Python Numpy array to a `std::vector<std::vector<T>>`.
+ * @brief Convert a Python Numpy array to a `plssvm::aos_matrix<T>`.
  * @tparam T the type in the array
  * @param[in] mat the 2D Python Numpy matrix to convert
- * @return to 2D matrix of `std::vector<std::vector<T>>` (`[[nodiscard]]`)
+ * @return the `plssvm::aos_matrix` (`[[nodiscard]]`)
  */
-template <typename T, plssvm::layout_type layout = plssvm::layout_type::aos>
-[[nodiscard]] plssvm::matrix<T, layout> pyarray_to_matrix(const py::array_t<T> &mat) {
-    using size_type = typename plssvm::matrix<T, layout>::size_type;
+template <typename T>
+[[nodiscard]] plssvm::aos_matrix<T> pyarray_to_matrix(const py::array_t<T, py::array::c_style | py::array::forcecast> &mat) {
+    // TODO: if C++20 is available, use templated lambdas to also support f_style arrays (template)
+    using size_type = typename plssvm::aos_matrix<T>::size_type;
     // check dimensions
     if (mat.ndim() != 2) {
         throw py::value_error{ fmt::format("the provided matrix must have exactly two dimensions but has {}!", mat.ndim()) };
     }
 
-    // convert py::array to std::vector<std::vector<T>>
-    plssvm::matrix<T, layout> tmp{ static_cast<size_type>(mat.shape(0)), static_cast<size_type>(mat.shape(1)) };
-    for (size_type row = 0; row < tmp.num_rows(); ++row) {
-        for (size_type col = 0; col < tmp.num_cols(); ++col) {
-            tmp(row, col) = *mat.data(row, col);
-        }
-    }
-
+    // convert py::array to plssvm::matrix<T>
+    py::buffer_info buffer = mat.request();
+    T *ptr = static_cast<T *>(buffer.ptr);
+    plssvm::aos_matrix<T> tmp{ static_cast<size_type>(mat.shape(0)), static_cast<size_type>(mat.shape(1)), ptr };
     return tmp;
 }
 
@@ -257,7 +252,6 @@ PLSSVM_CREATE_NUMPY_NAME_MAPPING(std::string, "string")
 
 }  // namespace detail
 
-// TODO: encode real_type?
 /**
  * @brief Append the type information to the base @p class_name.
  * @tparam label_type the type of the labels to convert to its Numpy name
@@ -266,7 +260,7 @@ PLSSVM_CREATE_NUMPY_NAME_MAPPING(std::string, "string")
  */
 template <typename label_type>
 [[nodiscard]] inline std::string assemble_unique_class_name(const std::string_view class_name) {
-    return fmt::format("{}_{}_{}", class_name, detail::numpy_name_mapping<plssvm::real_type>(), detail::numpy_name_mapping<label_type>());
+    return fmt::format("{}_{}", class_name, detail::numpy_name_mapping<label_type>());
 }
 
 #endif  // PLSSVM_BINDINGS_PYTHON_UTILITY_HPP_

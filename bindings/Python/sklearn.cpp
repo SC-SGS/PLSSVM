@@ -155,7 +155,7 @@ void init_sklearn(py::module_ &m) {
         });
 #if !defined(PLSSVM_PYTHON_BINDINGS_LABEL_TYPE_IS_STRING)
     py_svc.def(
-        "fit", [](svc &self, py::array_t<typename svc::real_type> data, py::array_t<typename svc::label_type> labels, std::optional<std::vector<typename svc::real_type>> sample_weight) {
+        "fit", [](svc &self, py::array_t<typename svc::real_type, py::array::c_style | py::array::forcecast> data, py::array_t<typename svc::label_type> labels, std::optional<std::vector<typename svc::real_type>> sample_weight) {
             if (sample_weight.has_value()) {
                 throw py::attribute_error{ "The 'sample_weight' parameter for a call to 'fit' is not implemented yet!" };
             }
@@ -171,7 +171,7 @@ void init_sklearn(py::module_ &m) {
         py::arg("sample_weight") = std::nullopt);
 #else
     py_svc.def(
-              "fit", [](svc &self, py::array_t<typename svc::real_type> data, py::array_t<typename svc::real_type> labels, const std::optional<std::vector<typename svc::real_type>> &sample_weight) {
+              "fit", [](svc &self, py::array_t<typename svc::real_type, py::array::c_style | py::array::forcecast> data, py::array_t<typename svc::real_type> labels, const std::optional<std::vector<typename svc::real_type>> &sample_weight) {
                   if (sample_weight.has_value()) {
                       throw py::attribute_error{ "The 'sample_weight' parameter for a call to 'fit' is not implemented yet!" };
                   }
@@ -186,7 +186,7 @@ void init_sklearn(py::module_ &m) {
               py::pos_only(),
               py::arg("sample_weight") = std::nullopt)
         .def(
-            "fit", [](svc &self, py::array_t<typename svc::real_type> data, const py::list &labels, const std::optional<std::vector<typename svc::real_type>> &sample_weight) {
+            "fit", [](svc &self, py::array_t<typename svc::real_type, py::array::c_style | py::array::forcecast> data, const py::list &labels, const std::optional<std::vector<typename svc::real_type>> &sample_weight) {
                 if (sample_weight.has_value()) {
                     throw py::attribute_error{ "The 'sample_weight' parameter for a call to 'fit' is not implemented yet!" };
                 }
@@ -228,7 +228,7 @@ void init_sklearn(py::module_ &m) {
               },
               "Get parameters for this estimator.")
         .def(
-            "predict", [](svc &self, py::array_t<typename svc::real_type> data) {
+            "predict", [](svc &self, py::array_t<typename svc::real_type, py::array::c_style | py::array::forcecast> data) {
                 if (self.model_ == nullptr) {
                     throw py::attribute_error{ "This SVC instance is not fitted yet. Call 'fit' with appropriate arguments before using this estimator." };
                 } else {
@@ -249,7 +249,7 @@ void init_sklearn(py::module_ &m) {
         });
 #if !defined(PLSSVM_PYTHON_BINDINGS_LABEL_TYPE_IS_STRING)
     py_svc.def(
-        "score", [](svc &self, py::array_t<typename svc::real_type> data, py::array_t<typename svc::label_type> labels, std::optional<std::vector<typename svc::real_type>> sample_weight) {
+        "score", [](svc &self, py::array_t<typename svc::real_type, py::array::c_style | py::array::forcecast> data, py::array_t<typename svc::label_type> labels, std::optional<std::vector<typename svc::real_type>> sample_weight) {
             if (sample_weight.has_value()) {
                 throw py::attribute_error{ "The 'sample_weight' parameter for a call to 'fit' is not implemented yet!" };
             }
@@ -268,7 +268,7 @@ void init_sklearn(py::module_ &m) {
         py::arg("sample_weight") = std::nullopt);
 #else
     py_svc.def(
-              "score", [](svc &self, py::array_t<typename svc::real_type> data, py::array_t<typename svc::real_type> labels, const std::optional<std::vector<typename svc::real_type>> &sample_weight) {
+              "score", [](svc &self, py::array_t<typename svc::real_type, py::array::c_style | py::array::forcecast> data, py::array_t<typename svc::real_type> labels, const std::optional<std::vector<typename svc::real_type>> &sample_weight) {
                   if (sample_weight.has_value()) {
                       throw py::attribute_error{ "The 'sample_weight' parameter for a call to 'fit' is not implemented yet!" };
                   }
@@ -286,7 +286,7 @@ void init_sklearn(py::module_ &m) {
               py::pos_only(),
               py::arg("sample_weight") = std::nullopt)
         .def(
-            "score", [](svc &self, py::array_t<typename svc::real_type> data, py::list labels, const std::optional<std::vector<typename svc::real_type>> &sample_weight) {
+            "score", [](svc &self, py::array_t<typename svc::real_type, py::array::c_style | py::array::forcecast> data, py::list labels, const std::optional<std::vector<typename svc::real_type>> &sample_weight) {
                 if (sample_weight.has_value()) {
                     throw py::attribute_error{ "The 'sample_weight' parameter for a call to 'fit' is not implemented yet!" };
                 }
