@@ -111,13 +111,21 @@ void parse_provided_params(svc &self, const py::kwargs &args) {
 void fit(svc &self) {
     // fit the model using potentially provided keyword arguments
     if (self.epsilon.has_value() && self.max_iter.has_value()) {
-        self.model_ = std::make_unique<typename svc::model_type>(self.svm_->fit(*self.data_, plssvm::epsilon = self.epsilon.value(), plssvm::max_iter = self.max_iter.value()));
+        self.model_ = std::make_unique<typename svc::model_type>(self.svm_->fit(*self.data_,
+                                                                                plssvm::classification = plssvm::classification_type::oao,
+                                                                                plssvm::epsilon = self.epsilon.value(),
+                                                                                plssvm::max_iter = self.max_iter.value()));
     } else if (self.epsilon.has_value()) {
-        self.model_ = std::make_unique<typename svc::model_type>(self.svm_->fit(*self.data_, plssvm::epsilon = self.epsilon.value()));
+        self.model_ = std::make_unique<typename svc::model_type>(self.svm_->fit(*self.data_,
+                                                                                plssvm::classification = plssvm::classification_type::oao,
+                                                                                plssvm::epsilon = self.epsilon.value()));
     } else if (self.max_iter.has_value()) {
-        self.model_ = std::make_unique<typename svc::model_type>(self.svm_->fit(*self.data_, plssvm::max_iter = self.max_iter.value()));
+        self.model_ = std::make_unique<typename svc::model_type>(self.svm_->fit(*self.data_,
+                                                                                plssvm::classification = plssvm::classification_type::oao,
+                                                                                plssvm::max_iter = self.max_iter.value()));
     } else {
-        self.model_ = std::make_unique<typename svc::model_type>(self.svm_->fit(*self.data_));
+        self.model_ = std::make_unique<typename svc::model_type>(self.svm_->fit(*self.data_,
+                                                                                plssvm::classification = plssvm::classification_type::oao));
     }
 }
 
@@ -322,7 +330,7 @@ void init_sklearn(py::module_ &m) {
         .def_property_readonly("coef_", [](const svc &) {
             throw py::attribute_error{ "'SVC' object has no attribute 'coef_' (not implemented)" };
         })
-        .def_property_readonly("coef_", [](const svc &) {
+        .def_property_readonly("dual_coef_", [](const svc &) {
             throw py::attribute_error{ "'SVC' object has no attribute 'dual_coef_' (not implemented)" };
         })
         .def_property_readonly(
