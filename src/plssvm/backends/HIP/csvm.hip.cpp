@@ -25,9 +25,11 @@
 #include "plssvm/parameter.hpp"                                            // plssvm::parameter, plssvm::detail::parameter
 #include "plssvm/target_platforms.hpp"                                     // plssvm::target_platform
 
-#include "fmt/core.h"             // fmt::format
-#include "fmt/ostream.h"          // can use fmt using operator<< overloads
 #include "hip/hip_runtime_api.h"  // HIP runtime functions
+
+#include "fmt/color.h"    // fmt::fg, fmt::color::orange
+#include "fmt/core.h"     // fmt::format
+#include "fmt/ostream.h"  // can use fmt using operator<< overloads
 
 #include <cstddef>    // std::size_t
 #include <exception>  // std::terminate
@@ -66,6 +68,12 @@ void csvm::init(const target_platform target) {
     // get all available devices wrt the requested target platform
     devices_.resize(detail::get_device_count());
     std::iota(devices_.begin(), devices_.end(), 0);
+
+    // currently only single GPU execution is supported
+    if (devices_.size() != 1) {
+        std::clog << fmt::format(fmt::fg(fmt::color::orange), "WARNING: found {} devices, but currently only single GPU execution is supported. Continuing only with device 0!", devices_.size()) << std::endl;
+        devices_.resize(1);
+    }
 
     // throw exception if no HIP devices could be found
     if (devices_.empty()) {

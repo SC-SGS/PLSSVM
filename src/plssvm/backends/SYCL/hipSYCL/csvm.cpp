@@ -27,6 +27,7 @@
 #include "plssvm/parameter.hpp"                                         // plssvm::parameter, plssvm::detail::parameter
 #include "plssvm/target_platforms.hpp"                                  // plssvm::target_platform
 
+#include "fmt/color.h"    // fmt::fg, fmt::color::orange
 #include "fmt/core.h"     // fmt::format
 #include "fmt/ostream.h"  // can use fmt using operator<< overloads
 #include "sycl/sycl.hpp"  // ::sycl::range, ::sycl::nd_range, ::sycl::handler, ::sycl::info::device
@@ -76,6 +77,12 @@ void csvm::init(const target_platform target) {
 
     // get all available devices wrt the requested target platform
     std::tie(devices_, target_) = detail::get_device_list(target);
+
+    // currently only single GPU execution is supported
+    if (devices_.size() != 1) {
+        std::clog << fmt::format(fmt::fg(fmt::color::orange), "WARNING: found {} devices, but currently only single GPU execution is supported. Continuing only with device 0!", devices_.size()) << std::endl;
+        devices_.resize(1);
+    }
 
     // set correct kernel invocation type if "automatic" has been provided
     if (invocation_type_ == sycl::kernel_invocation_type::automatic) {

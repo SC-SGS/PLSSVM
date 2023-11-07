@@ -25,6 +25,7 @@
 #include "plssvm/target_platforms.hpp"                      // plssvm::target_platform
 
 #include "fmt/chrono.h"   // can directly print std::chrono literals
+#include "fmt/color.h"    // fmt::fg, fmt::color::orange
 #include "fmt/core.h"     // fmt::format
 #include "fmt/ostream.h"  // can use fmt using operator<< overloads
 
@@ -119,6 +120,12 @@ void csvm::init(const target_platform target) {
     const std::vector<std::pair<detail::compute_kernel_name, std::string>> kernel_names = detail::kernel_type_to_function_names(kernel);
     // compile all kernels for float and double
     devices_ = detail::create_command_queues(contexts_, target_, kernel_names);
+
+    // currently only single GPU execution is supported
+    if (devices_.size() != 1) {
+        std::clog << fmt::format(fmt::fg(fmt::color::orange), "WARNING: found {} devices, but currently only single GPU execution is supported. Continuing only with device 0!", devices_.size()) << std::endl;
+        devices_.resize(1);
+    }
 
     const auto jit_end_time = std::chrono::steady_clock::now();
     plssvm::detail::log(verbosity_level::full | verbosity_level::timing,
