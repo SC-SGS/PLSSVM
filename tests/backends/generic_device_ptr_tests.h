@@ -671,12 +671,12 @@ TYPED_TEST_P(DevicePtrLayout, copy_matrix) {
     ptr.memset(0);
 
     // create data to copy to the device
-    plssvm::matrix<value_type, layout> data{ 5, 3, 42 };
+    plssvm::matrix<value_type, layout> data{ 5, 3, value_type{ 42 } };
 
     // copy data to the device
     ptr.copy_to_device(data);
     // copy data back to the host
-    plssvm::matrix<value_type, layout> result{ 5, 3, 0 };
+    plssvm::matrix<value_type, layout> result{ 5, 3, value_type{ 0 } };
     ptr.copy_to_host(result);
 
     // check values for correctness
@@ -705,12 +705,12 @@ TYPED_TEST_P(DevicePtrLayout, copy_matrix_different_layouts) {
     ptr.memset(0);
 
     // create data to copy to the device
-    plssvm::matrix<value_type, layout> data{ 5, 3, 42 };
+    plssvm::matrix<value_type, layout> data{ 5, 3, value_type{ 42 } };
 
     // copy data to the device
     ptr.copy_to_device(data);
     // copy data back to the host
-    plssvm::matrix<value_type, other_layout> result{ 5, 3, 0 };
+    plssvm::matrix<value_type, other_layout> result{ 5, 3, value_type{ 0 } };
     ptr.copy_to_host(result);
 
     // check values for correctness
@@ -738,7 +738,7 @@ TYPED_TEST_P(DevicePtrLayout, copy_matrix_too_few_host_elements) {
     device_ptr_type ptr{ 10, queue };
 
     // try copying data to the device with too few elements
-    plssvm::matrix<value_type, layout> data{ 2, 4, 42 };
+    plssvm::matrix<value_type, layout> data{ 2, 4, value_type{ 42 } };
     EXPECT_THROW_WHAT(ptr.copy_to_device(data), plssvm::gpu_device_ptr_exception, "Too few data to perform copy (needed: 10, provided: 8)!");
 }
 TYPED_TEST_P(DevicePtrLayout, copy_matrix_too_few_buffer_elements) {
