@@ -42,7 +42,7 @@ void init_sycl(py::module_ &m, const py::exception<plssvm::exception> &base_exce
         .value("AUTOMATIC", plssvm::sycl::kernel_invocation_type::automatic, "use the best kernel invocation type for the current SYCL implementation and target hardware platform")
         .value("ND_RANGE", plssvm::sycl::kernel_invocation_type::nd_range, "use the nd_range kernel invocation type");
 
-// initialize SYCL binding classes
+    // initialize SYCL binding classes
 #if defined(PLSSVM_SYCL_BACKEND_HAS_HIPSYCL)
     const py::module_ hipsycl_module = init_hipsycl_csvm(m, base_exception);
 #endif

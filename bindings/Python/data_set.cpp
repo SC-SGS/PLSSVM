@@ -11,21 +11,21 @@
 #include "plssvm/constants.hpp"         // plssvm::real_type
 #include "plssvm/detail/type_list.hpp"  // plssvm::detail::label_type_list
 
-#include "utility.hpp"                  // check_kwargs_for_correctness, assemble_unique_class_name,
-                                        // pyarray_to_vector, pyarray_to_string_vector, pylist_to_string_vector, pyarray_to_matrix
+#include "utility.hpp"  // check_kwargs_for_correctness, assemble_unique_class_name,
+                        // pyarray_to_vector, pyarray_to_string_vector, pylist_to_string_vector, pyarray_to_matrix
 
-#include "fmt/core.h"                   // fmt::format
-#include "fmt/format.h"                 // fmt::join
-#include "pybind11/numpy.h"             // py::array_t
-#include "pybind11/pybind11.h"          // py::module_, py::class_, py::init, py::return_value_policy, py::arg, py::kwargs, py::value_error, py::pos_only, py::list
-#include "pybind11/stl.h"               // support for STL types
+#include "fmt/core.h"           // fmt::format
+#include "fmt/format.h"         // fmt::join
+#include "pybind11/numpy.h"     // py::array_t
+#include "pybind11/pybind11.h"  // py::module_, py::class_, py::init, py::return_value_policy, py::arg, py::kwargs, py::value_error, py::pos_only, py::list
+#include "pybind11/stl.h"       // support for STL types
 
-#include <array>                        // std::array
-#include <cstddef>                      // std::size_t
-#include <string>                       // std::string
-#include <tuple>                        // std::tuple_element_t, std::tuple_size_v
-#include <type_traits>                  // std::is_same_v
-#include <utility>                      // std::move, std::integer_sequence, std::make_integer_sequence
+#include <array>        // std::array
+#include <cstddef>      // std::size_t
+#include <string>       // std::string
+#include <tuple>        // std::tuple_element_t, std::tuple_size_v
+#include <type_traits>  // std::is_same_v
+#include <utility>      // std::move, std::integer_sequence, std::make_integer_sequence
 
 namespace py = pybind11;
 
@@ -176,7 +176,6 @@ void instantiate_data_set_bindings(py::module_ &m, label_type) {
         .def("save", py::overload_cast<const std::string &>(&data_set_type::save, py::const_), "save the data set to a file automatically deriving the file format type from the file extension")
         .def("num_data_points", &data_set_type::num_data_points, "the number of data points in the data set")
         .def("num_features", &data_set_type::num_features, "the number of features per data point")
-        .def("data", &data_set_type::data, py::return_value_policy::reference_internal, "the data saved as 2D vector")
         .def(
             "data", [](const data_set_type &data) {
                 return matrix_to_pyarray(data.data());
