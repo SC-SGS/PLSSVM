@@ -64,6 +64,7 @@ void instantiate_data_set_bindings(py::module_ &m, label_type) {
     const std::string class_name_scaling = assemble_unique_class_name<label_type>("DataSetScaling");
     const std::string class_name = assemble_unique_class_name<label_type>("DataSet");
 
+    PYBIND11_NUMPY_DTYPE(typename data_set_type::scaling::factors, feature, lower, upper);
     // bind the plssvm::data_set::scaling internal "factors" struct
     py::class_<typename data_set_type::scaling::factors>(m, class_name_scaling_factors.c_str())
         .def(py::init<size_type, plssvm::real_type, plssvm::real_type>(), "create a new scaling factor", py::arg("feature"), py::arg("lower"), py::arg("upper"))
