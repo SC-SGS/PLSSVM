@@ -58,7 +58,7 @@ std::istream &operator>>(std::istream &in, kernel_function_type &kernel) {
 
     if (str == "linear" || str == "0") {
         kernel = kernel_function_type::linear;
-    } else if (str == "polynomial" || str == "1") {
+    } else if (str == "polynomial" || str == "poly" || str == "1") {
         kernel = kernel_function_type::polynomial;
     } else if (str == "rbf" || str == "2") {
         kernel = kernel_function_type::rbf;

@@ -49,6 +49,7 @@ TEST(KernelType, from_string) {
     EXPECT_CONVERSION_FROM_STRING("0", plssvm::kernel_function_type::linear);
     EXPECT_CONVERSION_FROM_STRING("polynomial", plssvm::kernel_function_type::polynomial);
     EXPECT_CONVERSION_FROM_STRING("POLynomIAL", plssvm::kernel_function_type::polynomial);
+    EXPECT_CONVERSION_FROM_STRING("poly", plssvm::kernel_function_type::polynomial);
     EXPECT_CONVERSION_FROM_STRING("1", plssvm::kernel_function_type::polynomial);
     EXPECT_CONVERSION_FROM_STRING("rbf", plssvm::kernel_function_type::rbf);
     EXPECT_CONVERSION_FROM_STRING("rBf", plssvm::kernel_function_type::rbf);
