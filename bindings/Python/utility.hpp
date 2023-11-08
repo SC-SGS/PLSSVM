@@ -38,20 +38,28 @@ namespace py = pybind11;
  * @return the Python Numpy array (`[[nodiscard]]`)
  */
 template <typename T>
-[[nodiscard]] py::array_t<T> vector_to_pyarray(const std::vector<T> &vec) {
-    py::array_t<T> py_array(vec.size());
-    py::buffer_info buffer = py_array.request();
-    T *ptr = static_cast<T *>(buffer.ptr);
-    if constexpr (std::is_same_v<T, bool>) {
-        // can't use memcpy with std::vector<bool>
-        for (typename std::vector<T>::size_type i = 0; i < vec.size(); ++i) {
-            ptr[i] = vec[i];
+[[nodiscard]] auto vector_to_pyarray(const std::vector<T> &vec) {
+    if constexpr (std::is_same_v<T, std::string>) {
+        py::list l{};
+        for (const std::string &str : vec) {
+            l.append(str);
         }
+        return py::array{ l };
     } else {
-        // use plain memcpy
-        std::memcpy(ptr, vec.data(), vec.size() * sizeof(T));
+        py::array_t<T, py::array::c_style> py_array(vec.size());
+        py::buffer_info buffer = py_array.request();
+        T *ptr = static_cast<T *>(buffer.ptr);
+        if constexpr (std::is_same_v<T, bool>) {
+            // can't use memcpy with std::vector<bool>
+            for (typename std::vector<T>::size_type i = 0; i < vec.size(); ++i) {
+                ptr[i] = vec[i];
+            }
+        } else {
+            // use plain memcpy
+            std::memcpy(ptr, vec.data(), vec.size() * sizeof(T));
+        }
+        return py_array;
     }
-    return py_array;
 }
 
 /**
@@ -82,7 +90,7 @@ template <typename T, plssvm::layout_type layout>
  * @return the `std::vector<T>` (`[[nodiscard]]`)
  */
 template <typename T>
-[[nodiscard]] std::vector<T> pyarray_to_vector(const py::array_t<T> &vec) {
+[[nodiscard]] std::vector<T> pyarray_to_vector(const py::array_t<T, py::array::c_style | py::array::forcecast> &vec) {
     // check dimensions
     if (vec.ndim() != 1) {
         throw py::value_error{ fmt::format("the provided array must have exactly one dimension but has {}!", vec.ndim()) };
@@ -99,7 +107,7 @@ template <typename T>
  * @return the `std::vector<std::string>` (`[[nodiscard]]`)
  */
 template <typename T>
-[[nodiscard]] std::vector<std::string> pyarray_to_string_vector(const py::array_t<T> &vec) {
+[[nodiscard]] std::vector<std::string> pyarray_to_string_vector(const py::array_t<T, py::array::c_style | py::array::forcecast> &vec) {
     // check dimensions
     if (vec.ndim() != 1) {
         throw py::value_error{ fmt::format("the provided array must have exactly one dimension but has {}!", vec.ndim()) };

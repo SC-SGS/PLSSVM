@@ -135,7 +135,7 @@ void instantiate_data_set_bindings(py::module_ &m, label_type) {
                     "create a new data set without labels given additional optional parameters");
 
     if constexpr (!std::is_same_v<label_type, std::string>) {
-        py_data_set.def(py::init([](py::array_t<plssvm::real_type, py::array::c_style | py::array::forcecast> data, py::array_t<label_type> labels, py::kwargs args) {
+        py_data_set.def(py::init([](py::array_t<plssvm::real_type, py::array::c_style | py::array::forcecast> data, py::array_t<label_type, py::array::c_style | py::array::forcecast> labels, py::kwargs args) {
                             // check keyword arguments
                             check_kwargs_for_correctness(args, { "scaling" });
 
@@ -148,7 +148,7 @@ void instantiate_data_set_bindings(py::module_ &m, label_type) {
                         "create a new data set with labels from a numpy array given additional optional parameters");
     } else {
         // if the requested label_type is std::string, accept numpy arrays with real_type and convert them to a std::string internally
-        py_data_set.def(py::init([](py::array_t<plssvm::real_type, py::array::c_style | py::array::forcecast> data, py::array_t<plssvm::real_type> labels, py::kwargs args) {
+        py_data_set.def(py::init([](py::array_t<plssvm::real_type, py::array::c_style | py::array::forcecast> data, py::array_t<plssvm::real_type, py::array::c_style | py::array::forcecast> labels, py::kwargs args) {
                             // check keyword arguments
                             check_kwargs_for_correctness(args, { "scaling" });
 
