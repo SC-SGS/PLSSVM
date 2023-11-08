@@ -261,10 +261,10 @@ class csvm {
      * @param[in] B the right-hand sides
      * @param[in] params the parameter to create the kernel matrix
      * @param[in] named_args additional parameters for the respective algorithm used to solve the system of linear equations
-     * @return the result matrix `X` and the respective biases (`[[nodiscard]]`)
+     * @return the result matrix `X`, the respective biases, and the number of iterations necessary to solve the system of linear equations (`[[nodiscard]]`)
      */
     template <typename... Args>
-    [[nodiscard]] std::pair<aos_matrix<real_type>, std::vector<real_type>> solve_lssvm_system_of_linear_equations(const aos_matrix<real_type> &A, const aos_matrix<real_type> &B, const parameter &params, Args &&...named_args) const;
+    [[nodiscard]] std::tuple<aos_matrix<real_type>, std::vector<real_type>, unsigned long long> solve_lssvm_system_of_linear_equations(const aos_matrix<real_type> &A, const aos_matrix<real_type> &B, const parameter &params, Args &&...named_args) const;
     /**
      * @brief Solve the system of linear equations `AX = B` where `A` is the kernel matrix using the Conjugate Gradients (CG) algorithm.
      * @param[in] A the kernel matrix
@@ -272,9 +272,9 @@ class csvm {
      * @param[in] eps the termination criterion for the CG algorithm
      * @param[in] max_cg_iter the maximum number of CG iterations
      * @param[in] cd_solver_variant the variation of the CG algorithm to use, i.e., how the kernel matrix is assembled (currently: explicit, streaming, implicit)
-     * @return the result matrix `X` (`[[nodiscard]]`)
+     * @return the result matrix `X` and the number of CG iterations necessary to solve the system of linear equations (`[[nodiscard]]`)
      */
-    [[nodiscard]] aos_matrix<real_type> conjugate_gradients(const detail::simple_any &A, const aos_matrix<real_type> &B, real_type eps, unsigned long long max_cg_iter, solver_type cd_solver_variant) const;
+    [[nodiscard]] std::pair<aos_matrix<real_type>, unsigned long long> conjugate_gradients(const detail::simple_any &A, const aos_matrix<real_type> &B, real_type eps, unsigned long long max_cg_iter, solver_type cd_solver_variant) const;
     /**
      * @brief Perform a dimensional reduction for the kernel matrix.
      * @details Reduces the resulting dimension by `2` compared to the original LS-SVM formulation.
@@ -376,13 +376,16 @@ model<label_type> csvm::fit(const data_set<label_type> &data, Args &&...named_ar
 
     // create model
     model<label_type> csvm_model{ params, data, used_classification };
+    std::vector<unsigned long long> num_iters{};
 
     if (used_classification == plssvm::classification_type::oaa) {
         // use the one vs. all multi-class classification strategy
         // solve the minimization problem
         aos_matrix<real_type> alpha;
-        std::tie(alpha, *csvm_model.rho_ptr_) = solve_lssvm_system_of_linear_equations(*data.data_ptr_, *data.y_ptr_, params, std::forward<Args>(named_args)...);
+        unsigned long long num_iter{};
+        std::tie(alpha, *csvm_model.rho_ptr_, num_iter) = solve_lssvm_system_of_linear_equations(*data.data_ptr_, *data.y_ptr_, params, std::forward<Args>(named_args)...);
         csvm_model.alpha_ptr_->push_back(std::move(alpha));
+        num_iters.resize(calculate_number_of_classifiers(used_classification, data.num_classes()), num_iter);
     } else if (used_classification == plssvm::classification_type::oao) {
         // use the one vs. one multi-class classification strategy
         const std::size_t num_classes = data.num_classes();
@@ -416,9 +419,10 @@ model<label_type> csvm::fit(const data_set<label_type> &data, Args &&...named_ar
                 reduced_y(0, col) = (*data.y_ptr_)(0, col);
             }
 
-            const auto &[alpha, rho] = solve_lssvm_system_of_linear_equations(*data.data_ptr_, reduced_y, params, std::forward<Args>(named_args)...);
+            const auto &[alpha, rho, num_iter] = solve_lssvm_system_of_linear_equations(*data.data_ptr_, reduced_y, params, std::forward<Args>(named_args)...);
             csvm_model.alpha_ptr_->front() = std::move(alpha);
             csvm_model.rho_ptr_->front() = rho.front();  // prevents std::tie
+            num_iters.push_back(num_iter);
         } else {
             // perform one vs. one classification
             std::size_t pos = 0;
@@ -453,9 +457,10 @@ model<label_type> csvm::fit(const data_set<label_type> &data, Args &&...named_ar
                                 data.mapping_->get_label_by_mapped_index(j),
                                 pos + 1,
                                 calculate_number_of_classifiers(classification_type::oao, num_classes));
-                    const auto &[alpha, rho] = solve_lssvm_system_of_linear_equations(binary_data, binary_y, params, std::forward<Args>(named_args)...);
+                    const auto &[alpha, rho, num_iter] = solve_lssvm_system_of_linear_equations(binary_data, binary_y, params, std::forward<Args>(named_args)...);
                     (*csvm_model.alpha_ptr_)[pos] = std::move(alpha);
                     (*csvm_model.rho_ptr_)[pos] = rho.front();  // prevents std::tie
+                    num_iters.push_back(num_iter);
                     // go to next one vs. one classification
                     ++pos;
                     // order of the alpha value: 0 vs 1, 0 vs 2, 0 vs 3, 1 vs 2, 1 vs 3, 2 vs 3
@@ -465,6 +470,9 @@ model<label_type> csvm::fit(const data_set<label_type> &data, Args &&...named_ar
 
         csvm_model.index_sets_ptr_ = std::make_shared<typename decltype(csvm_model.index_sets_ptr_)::element_type>(std::move(index_sets));
     }
+
+    // move number of CG iterations to model
+    csvm_model.num_iters_ = std::make_optional(std::move(num_iters));
 
     const std::chrono::time_point end_time = std::chrono::steady_clock::now();
     detail::log(verbosity_level::full | verbosity_level::timing,
@@ -669,7 +677,7 @@ real_type csvm::score(const model<label_type> &model, const data_set<label_type>
 //*************************************************************************************************************************************//
 
 template <typename... Args>
-std::pair<aos_matrix<real_type>, std::vector<real_type>> csvm::solve_lssvm_system_of_linear_equations(const aos_matrix<real_type> &A, const aos_matrix<real_type> &B, const parameter &params, Args &&...named_args) const {
+std::tuple<aos_matrix<real_type>, std::vector<real_type>, unsigned long long> csvm::solve_lssvm_system_of_linear_equations(const aos_matrix<real_type> &A, const aos_matrix<real_type> &B, const parameter &params, Args &&...named_args) const {
     PLSSVM_ASSERT(!A.empty(), "The A matrix may not be empty!");
     PLSSVM_ASSERT(!B.empty(), "The B matrix may not be empty!");
     PLSSVM_ASSERT(A.num_rows() == B.num_cols(), "The number of data points in A ({}) and B ({}) must be the same!", A.num_rows(), B.num_cols());
@@ -820,7 +828,9 @@ std::pair<aos_matrix<real_type>, std::vector<real_type>> csvm::solve_lssvm_syste
                 detail::tracking_entry{ "kernel_matrix", "kernel_matrix_assembly", std::chrono::duration_cast<std::chrono::milliseconds>(assembly_end_time - assembly_start_time) });
 
     // choose the correct algorithm based on the (provided) solver type -> currently only CG available
-    const aos_matrix<real_type> X = conjugate_gradients(kernel_matrix, B_red, used_epsilon, used_max_iter, used_solver);  // TODO: q_red for implicit
+    aos_matrix<real_type> X;
+    unsigned long long num_iter{};
+    std::tie(X, num_iter) = conjugate_gradients(kernel_matrix, B_red, used_epsilon, used_max_iter, used_solver);  // TODO: q_red for implicit
 
     // calculate bias and undo dimensional reduction
     aos_matrix<real_type> X_ret{ num_rhs, A.num_rows() };
@@ -840,7 +850,7 @@ std::pair<aos_matrix<real_type>, std::vector<real_type>> csvm::solve_lssvm_syste
         X_ret(i, num_rows_reduced) = -temp_sum;
     }
 
-    return std::make_pair(std::move(X_ret), std::move(bias));
+    return std::make_tuple(std::move(X_ret), std::move(bias), num_iter);
 }
 
 /// @cond Doxygen_suppress

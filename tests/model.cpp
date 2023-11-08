@@ -86,6 +86,7 @@ TYPED_TEST(Model, construct) {
     }
     EXPECT_EQ(model.rho().size(), plssvm::calculate_number_of_classifiers(classification, model.num_classes()));
     EXPECT_EQ(model.get_classification_type(), classification);
+    EXPECT_FALSE(model.num_iters().has_value());
 }
 
 TYPED_TEST(Model, num_support_vectors) {
@@ -297,6 +298,16 @@ TYPED_TEST(Model, get_classification_type) {
 
     // check different_labels getter
     EXPECT_EQ(model.get_classification_type(), classification);
+}
+TYPED_TEST(Model, num_iters) {
+    using label_type = typename TestFixture::fixture_label_type;
+    constexpr plssvm::classification_type classification = TestFixture::fixture_classification;
+
+    // create model
+    const plssvm::model<label_type> model{ this->filename };
+
+    // check different_labels getter
+    EXPECT_FALSE(model.num_iters().has_value());
 }
 
 template <typename T>

@@ -48,7 +48,7 @@ void csvm::sanity_check_parameter() const {
     // cost: all allowed
 }
 
-aos_matrix<real_type> csvm::conjugate_gradients(const detail::simple_any &A, const aos_matrix<real_type> &B, const real_type eps, const unsigned long long max_cg_iter, const solver_type cg_solver) const {
+std::pair<aos_matrix<real_type>, unsigned long long> csvm::conjugate_gradients(const detail::simple_any &A, const aos_matrix<real_type> &B, const real_type eps, const unsigned long long max_cg_iter, const solver_type cg_solver) const {
     using namespace plssvm::operators;
 
     PLSSVM_ASSERT(!B.empty(), "The right-hand sides may not be empty!");
@@ -167,7 +167,7 @@ aos_matrix<real_type> csvm::conjugate_gradients(const detail::simple_any &A, con
                 "optimization finished, #iter = {}\n",
                 iter);
 
-    return X;
+    return std::make_pair(X, iter);
 }
 
 std::pair<std::vector<real_type>, real_type> csvm::perform_dimensional_reduction(const parameter &params, const aos_matrix<real_type> &A) const {

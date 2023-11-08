@@ -139,6 +139,12 @@ class model {
      * @return the multi-class classification strategy (`[[nodiscard]]`)
      */
     [[nodiscard]] classification_type get_classification_type() const noexcept { return classification_strategy_; }
+    /**
+     * @brief Returns the number of CG iterations to learn the classifiers used for this model.
+     * @details Equal to `std::nullopt` if the model has been read from a model file.
+     * @return the number of iterations (`[[nodiscard]]`)
+     */
+    [[nodiscard]] const std::optional<std::vector<unsigned long long>> &num_iters() const noexcept { return num_iters_; }
 
   private:
     /**
@@ -161,6 +167,8 @@ class model {
     size_type num_support_vectors_{ 0 };
     /// The number of features per support vector.
     size_type num_features_{ 0 };
+    /// The number of iterations needed to fit this model.
+    std::optional<std::vector<unsigned long long>> num_iters_{};
 
     /**
      * @brief The learned weights for each support vector.

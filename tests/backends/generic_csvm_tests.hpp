@@ -368,10 +368,11 @@ TYPED_TEST_P(GenericCSVMSolver, conjugate_gradients_trivial) {
 #endif
     } else {
         // solve AX = B
-        const plssvm::aos_matrix<plssvm::real_type> X = svm.conjugate_gradients(A, B, 0.00001, 4, solver);
+        const auto [X, num_iter] = svm.conjugate_gradients(A, B, 0.00001, 4, solver);
 
         // check result
         EXPECT_FLOATING_POINT_MATRIX_NEAR(X, B);
+        EXPECT_GT(num_iter, 0);
     }
 }
 TYPED_TEST_P(GenericCSVMSolver, conjugate_gradients) {
@@ -410,10 +411,11 @@ TYPED_TEST_P(GenericCSVMSolver, conjugate_gradients) {
 #endif
     } else {
         // solve AX = B
-        const plssvm::aos_matrix<plssvm::real_type> X = svm.conjugate_gradients(A, B, 0.00001, 2, solver);
+        const auto [X, num_iters] = svm.conjugate_gradients(A, B, 0.00001, 2, solver);
 
         // check result
         EXPECT_FLOATING_POINT_MATRIX_NEAR(X, correct_X);
+        EXPECT_GT(num_iters, 0);
     }
 }
 
@@ -598,13 +600,14 @@ TYPED_TEST_P(GenericCSVMSolverKernelFunction, solve_lssvm_system_of_linear_equat
     // | Q  1 |  *  | a |  =  | y |
     // | 1  0 |     | b |     | 0 |
     // with Q = A^TA
-    const auto &[calculated_x, calculated_rho] = svm.solve_lssvm_system_of_linear_equations(A, B, params, plssvm::epsilon = 0.00001, plssvm::solver = plssvm::solver_type::cg_explicit);
+    const auto &[calculated_x, calculated_rho, num_iter] = svm.solve_lssvm_system_of_linear_equations(A, B, params, plssvm::epsilon = 0.00001, plssvm::solver = plssvm::solver_type::cg_explicit);
 
     // check the calculated result for correctness
     EXPECT_FLOATING_POINT_MATRIX_NEAR(calculated_x, B);
     for (const auto rho : calculated_rho) {
         EXPECT_FLOATING_POINT_NEAR(std::abs(rho) - std::numeric_limits<plssvm::real_type>::epsilon(), std::numeric_limits<plssvm::real_type>::epsilon());
     }
+    EXPECT_GT(num_iter, 0);
 }
 TYPED_TEST_P(GenericCSVMSolverKernelFunction, solve_lssvm_system_of_linear_equations) {
     GTEST_SKIP() << "Currently not implemented!";
@@ -934,6 +937,9 @@ TYPED_TEST_P(GenericCSVMSolverKernelFunctionClassification, fit) {
     // can't check weights for equality since the SV order after our IO is non-deterministic
     // TODO: the eps factor must be selected WAY too large
     EXPECT_FLOATING_POINT_VECTOR_NEAR_EPS(model.rho(), correct_model.rho(), plssvm::real_type{ 1e12 });
+    EXPECT_EQ(model.get_classification_type(), classification);
+    EXPECT_TRUE(model.num_iters().has_value());
+    EXPECT_EQ(model.num_iters().size(), plssvm::calculate_number_of_classifiers(classification, correct_model.num_classes()));
 }
 
 // clang-format off
