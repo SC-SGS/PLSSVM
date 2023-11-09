@@ -20,7 +20,7 @@
 
 #include "gtest/gtest.h"  // :testing::Test
 
-#include <cstring>      // std::strcpy
+#include <cstring>      // std::memcpy
 #include <string>       // std::string
 #include <string_view>  // std::string_view
 #include <vector>       // std::vector
@@ -45,8 +45,9 @@ class ParameterBase : public ::testing::Test, private redirect_output<> {
         argc_ = static_cast<int>(cmd_line_split.size());
         argv_ = new char *[argc_];
         for (int i = 0; i < argc_; ++i) {
-            argv_[i] = new char[cmd_line_split[i].size() + 1];
-            std::strcpy(argv_[i], cmd_line_split[i].c_str());
+            const std::size_t arg_size = cmd_line_split[i].size() + 1;
+            argv_[i] = new char[arg_size];
+            std::memcpy(argv_[i], cmd_line_split[i].c_str(), arg_size * sizeof(char));
         }
     }
     /**
