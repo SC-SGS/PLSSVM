@@ -36,7 +36,7 @@ using dpcpp_device_ptr_type_gtest = util::combine_test_parameters_gtest_t<util::
 using dpcpp_device_ptr_layout_type_gtest = util::combine_test_parameters_gtest_t<util::cartesian_type_product_t<dpcpp_device_ptr_tuple>, util::layout_type_list>;
 
 // instantiate type-parameterized tests
-INSTANTIATE_TYPED_TEST_SUITE_P(hipSYCLDevicePtr, DevicePtr, dpcpp_device_ptr_type_gtest, naming::test_parameter_to_name);
-INSTANTIATE_TYPED_TEST_SUITE_P(hipSYCLDevicePtr, DevicePtrLayout, dpcpp_device_ptr_layout_type_gtest, naming::test_parameter_to_name);
+INSTANTIATE_TYPED_TEST_SUITE_P(DPCPPDevicePtr, DevicePtr, dpcpp_device_ptr_type_gtest, naming::test_parameter_to_name);
+INSTANTIATE_TYPED_TEST_SUITE_P(DPCPPDevicePtr, DevicePtrLayout, dpcpp_device_ptr_layout_type_gtest, naming::test_parameter_to_name);
 
-INSTANTIATE_TYPED_TEST_SUITE_P(hipSYCLDevicePtrDeathTest, DevicePtrDeathTest, dpcpp_device_ptr_type_gtest, naming::test_parameter_to_name);
+INSTANTIATE_TYPED_TEST_SUITE_P(DPCPPDevicePtrDeathTest, DevicePtrDeathTest, dpcpp_device_ptr_type_gtest, naming::test_parameter_to_name);
