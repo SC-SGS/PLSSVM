@@ -251,7 +251,7 @@ matrix<T, layout_>::matrix(const matrix<T, other_layout_> &other) :
         std::memcpy(data_.data(), other.data(), this->num_entries() * sizeof(T));
     } else {
         // convert AoS -> SoA or SoA -> AoS
-        #pragma omp parallel for collapse(2) default(none) shared(other) firstprivate(num_rows_, num_cols_)
+        #pragma omp parallel for collapse(2)
         for (std::size_t row = 0; row < num_rows_; ++row) {
             for (std::size_t col = 0; col < num_cols_; ++col) {
                 this->operator()(row, col) = other(row, col);
