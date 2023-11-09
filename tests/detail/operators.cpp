@@ -308,11 +308,11 @@ TYPED_TEST(VectorOperations, operator_divide_binary) {
 
     // binary division using two vectors
     {
-        const std::vector<real_type> c = { 1.0 / 1.5, 2.0 / 2.5, 3.0 / 3.5, 4.0 / 4.5, 5.0 / 5.5 };
+        const std::vector<real_type> c = { real_type{ 1.0 / 1.5 }, real_type{ 2.0 / 2.5 }, real_type{ 3.0 / 3.5 }, real_type{ 4.0 / 4.5 }, real_type{ 5.0 / 5.5 } };
         EXPECT_FLOATING_POINT_VECTOR_NEAR(this->get_a() / this->get_b(), c);
     }
     {
-        const std::vector<real_type> c = { 1.5, 2.5 / 2.0, 3.5 / 3.0, 4.5 / 4.0, 5.5 / 5.0 };
+        const std::vector<real_type> c = { 1.5, real_type{ 2.5 / 2.0 }, real_type{ 3.5 / 3.0 }, real_type{ 4.5 / 4.0 }, real_type{ 5.5 / 5.0 } };
         EXPECT_FLOATING_POINT_VECTOR_NEAR(this->get_b() / this->get_a(), c);
     }
 }
@@ -320,7 +320,7 @@ TYPED_TEST(VectorOperations, operator_divide_compound) {
     using real_type = typename TestFixture::fixture_real_type;
 
     // compound division using two vectors
-    const std::vector<real_type> c = { 1.0 / 1.5, 2.0 / 2.5, 3.0 / 3.5, 4.0 / 4.5, 5.0 / 5.5 };
+    const std::vector<real_type> c = { real_type{ 1.0 / 1.5 }, real_type{ 2.0 / 2.5 }, real_type{ 3.0 / 3.5 }, real_type{ 4.0 / 4.5 }, real_type{ 5.0 / 5.5 } };
     EXPECT_FLOATING_POINT_VECTOR_NEAR(this->get_a() /= this->get_b(), c);
 }
 TYPED_TEST(VectorOperations, operator_divide_scalar_binary) {
@@ -328,11 +328,11 @@ TYPED_TEST(VectorOperations, operator_divide_scalar_binary) {
 
     // binary division using a vector and a scalar
     {
-        const std::vector<real_type> c = { 1.0 / 1.5, 2.0 / 1.5, 2.0, 4.0 / 1.5, 5.0 / 1.5 };
+        const std::vector<real_type> c = { real_type{ 1.0 / 1.5 }, real_type{ 2.0 / 1.5 }, 2.0, real_type{ 4.0 / 1.5 }, real_type{ 5.0 / 1.5 } };
         EXPECT_FLOATING_POINT_VECTOR_NEAR(this->get_a() / this->get_scalar(), c);
     }
     {
-        const std::vector<real_type> c = { 1.5, 1.5 / 2.0, 0.5, 1.5 / 4.0, 1.5 / 5.0 };
+        const std::vector<real_type> c = { 1.5, real_type{ 1.5 / 2.0 }, 0.5, real_type{ 1.5 / 4.0 }, real_type{ 1.5 / 5.0 } };
         EXPECT_FLOATING_POINT_VECTOR_NEAR(this->get_scalar() / this->get_a(), c);
     }
 }
@@ -340,7 +340,7 @@ TYPED_TEST(VectorOperations, operator_divide_scalar_compound) {
     using real_type = typename TestFixture::fixture_real_type;
 
     // compound division using a vector and a scalar
-    const std::vector<real_type> c = { 1.0 / 1.5, 2.0 / 1.5, 2.0, 4.0 / 1.5, 5.0 / 1.5 };
+    const std::vector<real_type> c = { real_type{ 1.0 / 1.5 }, real_type{ 2.0 / 1.5 }, 2.0, real_type{ 4.0 / 1.5 }, real_type{ 5.0 / 1.5 } };
     EXPECT_FLOATING_POINT_VECTOR_NEAR(this->get_a() /= this->get_scalar(), c);
 }
 TYPED_TEST(VectorOperations, operator_divide_binary_empty) {

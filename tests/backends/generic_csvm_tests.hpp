@@ -442,7 +442,7 @@ TYPED_TEST_P(GenericCSVMKernelFunction, predict_values) {
     // create parameter struct
     plssvm::parameter params{ plssvm::kernel_type = kernel, plssvm::cost = 2.0 };
     if constexpr (kernel == plssvm::kernel_function_type::polynomial) {
-        params.degree = 1.0;
+        params.degree = 1;
         params.gamma = 1.0;
         params.coef0 = 0.0;
     } else if constexpr (kernel == plssvm::kernel_function_type::rbf) {

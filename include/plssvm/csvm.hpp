@@ -630,7 +630,7 @@ std::vector<label_type> csvm::predict(const model<label_type> &model, const data
             for (std::size_t v = 0; v < class_votes.num_cols(); ++v) {
                 if (max < class_votes(i, v)) {
                     argmax = v;
-                    max = class_votes(i, v);
+                    max = static_cast<real_type>(class_votes(i, v));
                 }
             }
             predicted_labels[i] = model.data_.mapping_->get_label_by_mapped_index(argmax);

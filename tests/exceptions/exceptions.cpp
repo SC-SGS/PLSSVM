@@ -63,8 +63,8 @@ TYPED_TEST(Exceptions, exception_source_location) {
 
     EXPECT_EQ(exc.loc().file_name(), __FILE__);
     EXPECT_THAT(exc.loc().function_name(), ::testing::HasSubstr("dummy"));
-    EXPECT_EQ(exc.loc().line(), 30);   // attention: hardcoded line!
-    EXPECT_EQ(exc.loc().column(), 0);  // attention: always 0!
+    EXPECT_EQ(exc.loc().line(), std::uint_least32_t{ 30 });   // attention: hardcoded line!
+    EXPECT_EQ(exc.loc().column(), std::uint_least32_t{ 0 });  // attention: always 0!
 }
 
 // check whether what message including the source location information is assembled correctly
