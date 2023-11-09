@@ -405,7 +405,7 @@ template <typename label_type>
 
     std::exception_ptr parallel_exception;
 
-    #pragma omp parallel default(none) shared(reader, skipped_lines, data, alpha, parallel_exception, is_oaa, is_oao) firstprivate(num_data_points, num_features, max_num_alpha_values)
+    #pragma omp parallel default(none) shared(reader, skipped_lines, data, alpha, parallel_exception, is_oaa, is_oao) firstprivate(num_data_points, max_num_alpha_values)
     {
         #pragma omp for
         for (std::size_t i = 0; i < num_data_points; ++i) {
