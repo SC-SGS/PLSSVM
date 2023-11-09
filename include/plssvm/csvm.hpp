@@ -731,7 +731,7 @@ std::tuple<aos_matrix<real_type>, std::vector<real_type>, unsigned long long> cs
         // define used safety margin constants
         constexpr detail::memory_size minimal_safety_margin = 512_MiB;
         constexpr long double percentual_safety_margin = 0.05L;
-        const auto reduce_total_memory = [minimal_safety_margin, percentual_safety_margin](const detail::memory_size total_memory) {
+        const auto reduce_total_memory = [=](const detail::memory_size total_memory) {
             return total_memory - std::max(total_memory * percentual_safety_margin, minimal_safety_margin);
         };
 
