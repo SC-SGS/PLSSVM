@@ -811,7 +811,7 @@ TYPED_TEST_P(GenericCSVMKernelFunctionClassification, predict) {
     const std::vector<label_type> calculated = svm.predict(model, test_data);
 
     // use other ground truth for float, linear, OAO since it doesn't converge
-    const std::string file_name = []() {
+    const std::string file_name = [classification, kernel]() {
         if (std::is_same_v<plssvm::real_type, float> && classification == plssvm::classification_type::oao && kernel == plssvm::kernel_function_type::linear) {
             return PLSSVM_TEST_PATH "/data/predict/500x200_float_linear_oao.libsvm.predict";
         } else {
@@ -939,7 +939,7 @@ TYPED_TEST_P(GenericCSVMSolverKernelFunctionClassification, fit) {
     EXPECT_FLOATING_POINT_VECTOR_NEAR_EPS(model.rho(), correct_model.rho(), plssvm::real_type{ 1e12 });
     EXPECT_EQ(model.get_classification_type(), classification);
     EXPECT_TRUE(model.num_iters().has_value());
-    EXPECT_EQ(model.num_iters().size(), plssvm::calculate_number_of_classifiers(classification, correct_model.num_classes()));
+    EXPECT_EQ(model.num_iters().value().size(), (plssvm::calculate_number_of_classifiers(classification, correct_model.num_classes())));
 }
 
 // clang-format off

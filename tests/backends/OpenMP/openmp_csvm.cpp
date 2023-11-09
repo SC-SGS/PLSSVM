@@ -247,7 +247,7 @@ TYPED_TEST(OpenMPCSVMKernelFunctionDeathTest, assemble_kernel_matrix_explicit) {
 #endif
 
     // helper lambda to reduce the amount of needed switches!
-    auto run_assembly = [](const plssvm::parameter &params_p, const std::vector<plssvm::real_type> &q_red_p, std::vector<plssvm::real_type> &kernel_matrix_p, const plssvm::aos_matrix<plssvm::real_type> &data_p, const plssvm::real_type QA_cost_p) {
+    const auto run_assembly = [kernel](const plssvm::parameter &params_p, const std::vector<plssvm::real_type> &q_red_p, std::vector<plssvm::real_type> &kernel_matrix_p, const plssvm::aos_matrix<plssvm::real_type> &data_p, const plssvm::real_type QA_cost_p) {
         switch (kernel) {
             case plssvm::kernel_function_type::linear:
                 plssvm::openmp::device_kernel_assembly_linear(q_red_p, kernel_matrix_p, data_p, QA_cost_p, params_p.cost.value());
