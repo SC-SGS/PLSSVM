@@ -743,7 +743,7 @@ inline void write_libsvm_model_data(const std::string &filename, const plssvm::p
     // initialize volatile array
     auto counts = std::make_unique<volatile int[]>(label_order.size() + 1);
     counts[0] = std::numeric_limits<int>::max();
-    #pragma omp parallel default(none) shared(counts, alpha, format_libsvm_line, label_order, labels, support_vectors, out, index_sets) firstprivate(BLOCK_SIZE, CHARS_PER_BLOCK, num_features, num_classes, num_alpha_per_point, classification)
+    #pragma omp parallel default(none) shared(counts, alpha, format_libsvm_line, label_order, labels, support_vectors, out, index_sets) firstprivate(num_features, num_classes, num_alpha_per_point, classification)
     {
         // preallocate string buffer, only ONE allocation
         std::string out_string;

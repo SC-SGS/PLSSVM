@@ -133,7 +133,7 @@ template <typename label_type>
     bool has_label = false;
     bool has_no_label = false;
 
-    #pragma omp parallel default(none) shared(reader, data, label, parallel_exception, has_label, has_no_label) firstprivate(num_data_points, num_features)
+    #pragma omp parallel default(none) shared(reader, data, label, parallel_exception, has_label, has_no_label) firstprivate(num_data_points)
     {
         #pragma omp for reduction(|| : has_label) reduction(|| : has_no_label)
         for (std::size_t i = 0; i < num_data_points; ++i) {
@@ -291,7 +291,7 @@ inline void write_libsvm_data_impl(const std::string &filename, const aos_matrix
         output.push_back('\n');
     };
 
-    #pragma omp parallel default(none) shared(out, data, label, format_libsvm_line) firstprivate(STRING_BUFFER_SIZE, BLOCK_SIZE, CHARS_PER_BLOCK, num_data_points, num_features)
+    #pragma omp parallel default(none) shared(out, data, label, format_libsvm_line) firstprivate(num_data_points, num_features)
     {
         // all support vectors
         std::string out_string;
