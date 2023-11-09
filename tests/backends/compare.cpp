@@ -309,7 +309,7 @@ template <typename real_type>
                         for (std::size_t f = 0; f < num_features; ++f) {
                             temp = std::fma(support_vectors(j, f), predict_points(i, f), temp);
                         }
-                        temp = std::fma(params.gamma.value(), static_cast<plssvm::real_type>(temp), params.coef0.value());
+                        temp = std::fma(static_cast<real_type>(params.gamma.value()), temp, static_cast<real_type>(params.coef0.value()));
                         temp = weights(c, j) * static_cast<real_type>(std::pow(temp, params.degree.value()));
                         if (j == 0) {
                             temp -= rho[c];
@@ -328,7 +328,7 @@ template <typename real_type>
                             const real_type d = support_vectors(j, f) - predict_points(i, f);
                             temp = std::fma(d, d, temp);
                         }
-                        temp = weights(c, j) * static_cast<real_type>(std::exp(-params.gamma.value() * static_cast<plssvm::real_type>(temp)));
+                        temp = weights(c, j) * static_cast<real_type>(std::exp(static_cast<real_type>(-params.gamma.value()) * temp));
                         if (j == 0) {
                             temp -= rho[c];
                         }
