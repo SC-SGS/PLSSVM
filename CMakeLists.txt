@@ -243,6 +243,8 @@ if (fmt_FOUND)
 else ()
     message(STATUS "Couldn't find package fmt. Building from source ...")  # TODO: change to next release; bug fix commit
     set(PLSSVM_fmt_VERSION d9063baf227882da0f48c761abcbb08247eb1296)
+    set(CMAKE_CXX_FLAGS_DEBUG_OLD "${CMAKE_CXX_FLAGS_DEBUG}")
+    set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -D_GLIBCXX_DEBUG -DLIBCXX_ENABLE_DEBUG_MODE -D_ITERATOR_DEBUG_LEVEL")
     # fetch string formatting library fmt
     FetchContent_Declare(fmt
             GIT_REPOSITORY https://github.com/fmtlib/fmt.git
@@ -265,6 +267,7 @@ else ()
     # append fmt to installed targets if build from source
     list(APPEND PLSSVM_TARGETS_TO_INSTALL "fmt")
     message(STATUS "Installing {fmt} version ${PLSSVM_fmt_VERSION}.")
+    set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG_OLD}")
 endif ()
 target_link_libraries(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC fmt::fmt)
 
