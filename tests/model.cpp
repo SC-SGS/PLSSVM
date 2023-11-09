@@ -301,7 +301,6 @@ TYPED_TEST(Model, get_classification_type) {
 }
 TYPED_TEST(Model, num_iters) {
     using label_type = typename TestFixture::fixture_label_type;
-    constexpr plssvm::classification_type classification = TestFixture::fixture_classification;
 
     // create model
     const plssvm::model<label_type> model{ this->filename };
