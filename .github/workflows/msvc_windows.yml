@@ -4,10 +4,10 @@ jobs:
   MSVC-Test:
     runs-on: windows-latest
     steps:
-      - name: "Install MSVC 17.XX"
+      - name: "Install MSVC 17.0"
         uses: ilammy/msvc-dev-cmd@v1.12.1
         with:
-          toolset: 17.XX
+          toolset: 17.0
       - name: "Install cmake 3.22.2"
         uses: lukka/get-cmake@v3.22.2
       - name: "Clone Step"
