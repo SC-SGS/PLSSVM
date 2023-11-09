@@ -569,7 +569,7 @@ std::vector<label_type> csvm::predict(const model<label_type> &model, const data
                         std::vector<std::size_t> sorted_indices(num_data_points_in_sub_matrix);
                         std::merge(index_sets[i].cbegin(), index_sets[i].cend(), index_sets[j].cbegin(), index_sets[j].cend(), sorted_indices.begin());
                         // copy the support vectors to the binary support vectors
-                        #pragma omp parallel for collapse(2) default(none) shared(sorted_indices, temp, model) firstprivate(num_data_points_in_sub_matrix, num_features)
+                        #pragma omp parallel for collapse(2)
                         for (std::size_t si = 0; si < num_data_points_in_sub_matrix; ++si) {
                             for (std::size_t dim = 0; dim < num_features; ++dim) {
                                 temp(si, dim) = (*model.data_.data_ptr_)(sorted_indices[si], dim);

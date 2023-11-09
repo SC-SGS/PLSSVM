@@ -323,7 +323,7 @@ matrix<T, layout_>::matrix(const std::vector<std::vector<value_type>> &data) {
         num_cols_ = data.front().size();
         data_ = std::vector<value_type>(num_rows_ * num_cols_);
 
-        #pragma omp parallel for collapse(2) shared(data) firstprivate(num_rows_, num_cols_)
+        #pragma omp parallel for collapse(2)
         for (std::size_t row = 0; row < num_rows_; ++row) {
             for (std::size_t col = 0; col < num_cols_; ++col) {
                 (*this)(row, col) = data[row][col];
@@ -383,7 +383,7 @@ auto matrix<T, layout_>::at(const size_type row, const size_type col) -> referen
 template <typename T, layout_type layout_>
 auto matrix<T, layout_>::to_2D_vector() const -> std::vector<std::vector<value_type>> {
     std::vector<std::vector<value_type>> ret(num_rows_, std::vector<value_type>(num_cols_));
-    #pragma omp parallel for collapse(2) shared(ret) firstprivate(num_rows_, num_cols_)
+    #pragma omp parallel for collapse(2)
     for (std::size_t row = 0; row < num_rows_; ++row) {
         for (std::size_t col = 0; col < num_cols_; ++col) {
             ret[row][col] = (*this)(row, col);

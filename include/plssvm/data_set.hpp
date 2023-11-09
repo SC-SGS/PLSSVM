@@ -740,7 +740,7 @@ void data_set<U>::create_mapping(const std::vector<label_type> &classes) {
     // convert input labels to now mapped values
     aos_matrix<real_type> tmp{ mapper.num_mappings(), labels_ptr_->size(), real_type{ -1.0 } };
 
-    #pragma omp parallel for collapse(2) default(none) shared(tmp, labels_ptr_, mapper)
+    #pragma omp parallel for collapse(2)
     for (typename std::vector<std::vector<real_type>>::size_type label = 0; label < tmp.num_rows(); ++label) {
         for (typename std::vector<real_type>::size_type i = 0; i < tmp.num_cols(); ++i) {
             if (label == mapper.get_mapped_index_by_label((*labels_ptr_)[i])) {
