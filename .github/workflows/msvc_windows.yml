@@ -5,7 +5,7 @@ jobs:
     runs-on: windows-latest
     steps:
       - name: "Install MSVC 17.XX"
-        uses: ilammy/msvc-dev-cmd@v1.9.0
+        uses: ilammy/msvc-dev-cmd@v1.12.1
         with:
           toolset: 17.XX
       - name: "Install cmake 3.22.2"
