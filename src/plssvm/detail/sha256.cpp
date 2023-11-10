@@ -112,7 +112,7 @@ void sha256::pack32(const unsigned char *str, std::uint32_t &x) {
         | static_cast<std::uint32_t>(str[0] << 24);
 }
 
-std::uint32_t sha256::rotr32(const std::uint32_t value, unsigned int count) {
+std::uint32_t sha256::rotr32(const std::uint32_t value, int count) {
     // prevent UB if count is 0 or greater than sizeof(std::uint32_t)
     const unsigned int mask = std::numeric_limits<std::uint32_t>::digits - 1;
     count &= mask;
