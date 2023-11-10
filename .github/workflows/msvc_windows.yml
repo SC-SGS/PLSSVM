@@ -24,4 +24,4 @@ jobs:
       - name: "Test Step"
         run: |
           cd PLSSVM/build
-          ctest -j 2 --output-on-failure -C Debug
+          ctest -j 2 --output-on-failure -C Release
