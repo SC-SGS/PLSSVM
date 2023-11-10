@@ -117,13 +117,14 @@ target_compile_definitions(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC
         $<$<COMPILE_LANG_AND_ID:CXX,MSVC>:NOMINMAX>
 )
 
-## enable standard library debug modes if compiled in debug
-if (CMAKE_BUILD_TYPE MATCHES Debug)
+option(PLSSVM_ENABLE_STL_DEBUG_MODE "Enables the debug modes for the STL implementations. Note: changes the ABI!" OFF)
+# GCC standard library (libstdc++): _GLIBCXX_DEBUG
+# LLVM standard library (libc++): LIBCXX_ENABLE_DEBUG_MODE
+# MSVC standard library: _ITERATOR_DEBUG_LEVEL
+set(PLSSVM_STL_DEBUG_MODE_FLAGS "-D_GLIBCXX_DEBUG -DLIBCXX_ENABLE_DEBUG_MODE -D_ITERATOR_DEBUG_LEVEL")
+if (PLSSVM_ENABLE_STL_DEBUG_MODE)
     message(STATUS "Enable standard library debug modes.")
-    # GCC standard library (libstdc++): _GLIBCXX_DEBUG
-    # LLVM standard library (libc++): LIBCXX_ENABLE_DEBUG_MODE
-    # MSVC standard library: _ITERATOR_DEBUG_LEVEL # TODO: re-enable
-    target_compile_definitions(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC _GLIBCXX_DEBUG LIBCXX_ENABLE_DEBUG_MODE)
+    target_compile_definitions(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC ${PLSSVM_STL_DEBUG_MODE_FLAGS})
 endif ()
 
 
@@ -246,8 +247,10 @@ if (fmt_FOUND)
 else ()
     message(STATUS "Couldn't find package fmt. Building from source ...")  # TODO: change to next release; bug fix commit
     set(PLSSVM_fmt_VERSION d9063baf227882da0f48c761abcbb08247eb1296)
-    set(CMAKE_CXX_FLAGS_DEBUG_OLD "${CMAKE_CXX_FLAGS_DEBUG}")
-    set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -D_GLIBCXX_DEBUG -DLIBCXX_ENABLE_DEBUG_MODE")
+    if (PLSSVM_ENABLE_STL_DEBUG_MODE)
+        set(CMAKE_CXX_FLAGS_OLD "${CMAKE_CXX_FLAGS}")
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${PLSSVM_STL_DEBUG_MODE_FLAGS}")
+    endif ()
     # fetch string formatting library fmt
     FetchContent_Declare(fmt
             GIT_REPOSITORY https://github.com/fmtlib/fmt.git
@@ -270,7 +273,9 @@ else ()
     # append fmt to installed targets if build from source
     list(APPEND PLSSVM_TARGETS_TO_INSTALL "fmt")
     message(STATUS "Installing {fmt} version ${PLSSVM_fmt_VERSION}.")
-    set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG_OLD}")
+    if (PLSSVM_ENABLE_STL_DEBUG_MODE)
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS_OLD}")
+    endif ()
 endif ()
 target_link_libraries(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC fmt::fmt)
 
