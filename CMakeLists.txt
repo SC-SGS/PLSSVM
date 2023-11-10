@@ -121,8 +121,8 @@ if (CMAKE_BUILD_TYPE MATCHES Debug)
     message(STATUS "Enable standard library debug modes.")
     # GCC standard library (libstdc++): _GLIBCXX_DEBUG
     # LLVM standard library (libc++): LIBCXX_ENABLE_DEBUG_MODE
-    # MSVC standard library: _ITERATOR_DEBUG_LEVEL
-    target_compile_definitions(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC _GLIBCXX_DEBUG LIBCXX_ENABLE_DEBUG_MODE _ITERATOR_DEBUG_LEVEL)
+    # MSVC standard library: _ITERATOR_DEBUG_LEVEL # TODO: re-enable
+    target_compile_definitions(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC _GLIBCXX_DEBUG LIBCXX_ENABLE_DEBUG_MODE)
 endif ()
 
 
@@ -246,7 +246,7 @@ else ()
     message(STATUS "Couldn't find package fmt. Building from source ...")  # TODO: change to next release; bug fix commit
     set(PLSSVM_fmt_VERSION d9063baf227882da0f48c761abcbb08247eb1296)
     set(CMAKE_CXX_FLAGS_DEBUG_OLD "${CMAKE_CXX_FLAGS_DEBUG}")
-    set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -D_GLIBCXX_DEBUG -DLIBCXX_ENABLE_DEBUG_MODE -D_ITERATOR_DEBUG_LEVEL")
+    set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -D_GLIBCXX_DEBUG -DLIBCXX_ENABLE_DEBUG_MODE")
     # fetch string formatting library fmt
     FetchContent_Declare(fmt
             GIT_REPOSITORY https://github.com/fmtlib/fmt.git
