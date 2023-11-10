@@ -62,7 +62,7 @@ TYPED_TEST(Exceptions, exception_source_location) {
 
     const auto exc = dummy<exception_type>("exception message");
 
-    EXPECT_EQ(exc.loc().file_name(), __FILE__);
+    EXPECT_EQ(exc.loc().file_name(), std::string{ __FILE__ });
     EXPECT_THAT(exc.loc().function_name(), ::testing::HasSubstr("dummy"));
     EXPECT_EQ(exc.loc().line(), std::uint_least32_t{ 31 });   // attention: hardcoded line!
     EXPECT_EQ(exc.loc().column(), std::uint_least32_t{ 0 });  // attention: always 0!
@@ -82,9 +82,9 @@ TYPED_TEST(Exceptions, exception_what_with_source_location) {
     ASSERT_EQ(what_lines.size(), 5);
 
     // check the "what" message content
-    EXPECT_EQ(what_lines[0], "exception message");
+    EXPECT_EQ(what_lines[0], std::string{ "exception message" });
     EXPECT_EQ(what_lines[1], fmt::format("{} thrown:", util::exception_type_name<exception_type>()));
-    EXPECT_EQ(what_lines[2], "  in file      " __FILE__);
+    EXPECT_EQ(what_lines[2], fmt::format("  in file      {}", __FILE__));
     EXPECT_THAT(std::string{ what_lines[3] }, ::testing::ContainsRegex("  in function  .*dummy.*"));
-    EXPECT_EQ(what_lines[4], "  @ line       31");  // attention: hardcoded line!
+    EXPECT_EQ(what_lines[4], std::string{ "  @ line       31" });  // attention: hardcoded line!
 }
