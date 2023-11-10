@@ -421,7 +421,7 @@ class MatrixOperations : public ::testing::Test {
         A_ = plssvm::matrix<fixture_real_type, fixture_layout>{ { { 1, 2, 3 }, { 4, 5, 6 } } };
         B_ = plssvm::matrix<fixture_real_type, fixture_layout>{ { { 1.5, 2.5, 3.5 }, { 4.5, 5.5, 6.5 } } };
         c_ = std::vector<fixture_real_type>{ 1.5, -2.5 };
-        scalar_ = 1.5;
+        scalar_ = fixture_real_type{ 1.5 };
     }
 
     /**
