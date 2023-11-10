@@ -310,13 +310,25 @@ TEST_F(OpenMPCSVMDeathTest, blas_level_3_kernel_explicit) {
     const auto k = static_cast<unsigned long long>(B.num_cols());
 
     // the A matrix must have the correct size
+#if defined(PLSSVM_USE_GEMM)
     EXPECT_DEATH(plssvm::openmp::device_kernel_gemm(m, n, k, alpha, std::vector<plssvm::real_type>{}, B, beta, C), fmt::format("A matrix sizes mismatch!: 0 != {}", kernel_matrix.size()));
+#else
+    EXPECT_DEATH(plssvm::openmp::device_kernel_symm(m, n, k, alpha, std::vector<plssvm::real_type>{}, B, beta, C), fmt::format("A matrix sizes mismatch!: 0 != {}", kernel_matrix.size()));
+#endif
 
     // the B matrix must have the correct shape
     const auto B_wrong = util::generate_random_matrix<plssvm::aos_matrix<plssvm::real_type>>(std::min(0, static_cast<int>(n) - 1), std::min(0, static_cast<int>(k) - 2));
+#if defined(PLSSVM_USE_GEMM)
     EXPECT_DEATH(plssvm::openmp::device_kernel_gemm(m, n, k, alpha, kernel_matrix, B_wrong, beta, C), ::testing::HasSubstr(fmt::format("B matrix sizes mismatch!: [{}, {}] != [{}, {}]", std::min(0, static_cast<int>(n) - 1), std::min(0, static_cast<int>(k) - 2), n, k)));
+#else
+    EXPECT_DEATH(plssvm::openmp::device_kernel_symm(m, n, k, alpha, kernel_matrix, B_wrong, beta, C), ::testing::HasSubstr(fmt::format("B matrix sizes mismatch!: [{}, {}] != [{}, {}]", std::min(0, static_cast<int>(n) - 1), std::min(0, static_cast<int>(k) - 2), n, k)));
+#endif
 
     // the C matrix must have the correct shape
     auto C_wrong = util::generate_random_matrix<plssvm::aos_matrix<plssvm::real_type>>(std::min(0, static_cast<int>(n) - 1), std::min(0, static_cast<int>(m) - 2));
+#if defined(PLSSVM_USE_GEMM)
     EXPECT_DEATH(plssvm::openmp::device_kernel_gemm(m, n, k, alpha, kernel_matrix, B, beta, C_wrong), ::testing::HasSubstr(fmt::format("C matrix sizes mismatch!: [{}, {}] != [{}, {}]", std::min(0, static_cast<int>(n) - 1), std::min(0, static_cast<int>(m) - 2), n, m)));
+#else
+    EXPECT_DEATH(plssvm::openmp::device_kernel_symm(m, n, k, alpha, kernel_matrix, B, beta, C_wrong), ::testing::HasSubstr(fmt::format("C matrix sizes mismatch!: [{}, {}] != [{}, {}]", std::min(0, static_cast<int>(n) - 1), std::min(0, static_cast<int>(m) - 2), n, m)));
+#endif
 }
