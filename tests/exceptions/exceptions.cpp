@@ -13,12 +13,13 @@
 #include "custom_test_macros.hpp"  // EXPECT_THROW_WHAT
 #include "naming.hpp"              // naming::test_parameter_to_name
 #include "types_to_test.hpp"       // util::{combine_test_parameters_gtest_t, cartesian_type_product_t, test_parameter_type_at_t}
-#include "utility.hpp"                // util::exception_type_name
+#include "utility.hpp"             // util::exception_type_name
 
 #include "fmt/core.h"     // fmt::format
 #include "gmock/gmock.h"  // EXPECT_THAT, ::testing::{HasSubstr, ContainsRegex}
 #include "gtest/gtest.h"  // TYPED_TEST, TYPED_TEST_SUITE, EXPECT_EQ, EXPECT_TRUE, ASSERT_EQ, ::testing::Test
 
+#include <cstdint>      // std::uint_least32_t
 #include <string>       // std::string
 #include <string_view>  // std::string_view
 #include <tuple>        // std::tuple
@@ -63,7 +64,7 @@ TYPED_TEST(Exceptions, exception_source_location) {
 
     EXPECT_EQ(exc.loc().file_name(), __FILE__);
     EXPECT_THAT(exc.loc().function_name(), ::testing::HasSubstr("dummy"));
-    EXPECT_EQ(exc.loc().line(), std::uint_least32_t{ 30 });   // attention: hardcoded line!
+    EXPECT_EQ(exc.loc().line(), std::uint_least32_t{ 31 });   // attention: hardcoded line!
     EXPECT_EQ(exc.loc().column(), std::uint_least32_t{ 0 });  // attention: always 0!
 }
 
@@ -85,5 +86,5 @@ TYPED_TEST(Exceptions, exception_what_with_source_location) {
     EXPECT_EQ(what_lines[1], fmt::format("{} thrown:", util::exception_type_name<exception_type>()));
     EXPECT_EQ(what_lines[2], "  in file      " __FILE__);
     EXPECT_THAT(std::string{ what_lines[3] }, ::testing::ContainsRegex("  in function  .*dummy.*"));
-    EXPECT_EQ(what_lines[4], "  @ line       30");
+    EXPECT_EQ(what_lines[4], "  @ line       31");  // attention: hardcoded line!
 }

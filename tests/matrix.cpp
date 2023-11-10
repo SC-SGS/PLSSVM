@@ -213,7 +213,7 @@ TYPED_TEST(Matrix, construct_with_size_and_vector) {
     constexpr plssvm::layout_type layout = TestFixture::fixture_layout;
 
     // construct a matrix with a specific size
-    const std::vector<real_type> data = { 0.1, 0.2, 0.3, 0.4, 0.5, 0.6 };
+    const std::vector<real_type> data = { real_type{ 0.1 }, real_type{ 0.2 }, real_type{ 0.3 }, real_type{ 0.4 }, real_type{ 0.5 }, real_type{ 0.6 } };
     const plssvm::matrix<real_type, layout> matr{ 2, 3, data };
 
     // check content
@@ -259,7 +259,7 @@ TYPED_TEST(Matrix, construct_with_size_and_pointer) {
     constexpr plssvm::layout_type layout = TestFixture::fixture_layout;
 
     // construct a matrix with a specific size
-    const std::vector<real_type> data = { 0.1, 0.2, 0.3, 0.4, 0.5, 0.6 };
+    const std::vector<real_type> data = { real_type{ 0.1 }, real_type{ 0.2 }, real_type{ 0.3 }, real_type{ 0.4 }, real_type{ 0.5 }, real_type{ 0.6 } };
     const plssvm::matrix<real_type, layout> matr{ 2, 3, data.data() };
 
     // check content
