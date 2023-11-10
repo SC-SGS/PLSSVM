@@ -15,7 +15,7 @@ jobs:
       - name: "Install Python dependencies"
         uses: py-actions/py-dependency-install@v4
         with:
-          path: "PLSSVM/install/python_requirements.txt"
+          path: "PLSSVM/.github/workflows/requirements.txt"
       - name: "Configure PLSSVM using CMake"
         run: |
           mkdir PLSSVM/build
