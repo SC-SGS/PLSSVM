@@ -104,7 +104,7 @@ TEST_F(OpenMPCSVM, construct_target_and_named_args) {
 struct openmp_csvm_test_type {
     using mock_csvm_type = mock_openmp_csvm;
     using csvm_type = plssvm::openmp::csvm;
-    using device_ptr_type = const plssvm::aos_matrix<plssvm::real_type> *;
+    using device_ptr_type = const plssvm::soa_matrix<plssvm::real_type> *;
     inline static constexpr auto additional_arguments = std::make_tuple();
 };
 using openmp_csvm_test_tuple = std::tuple<openmp_csvm_test_type>;
@@ -195,11 +195,11 @@ TEST_F(OpenMPCSVM, blas_level_3_kernel_explicit) {
     const std::vector<plssvm::real_type> kernel_matrix = compare::assemble_kernel_matrix_symm(params, data.data(), q_red, QA_cost);
 #endif
 
-    const auto B = util::generate_random_matrix<plssvm::aos_matrix<plssvm::real_type>>(data.num_data_points() - 1, data.num_data_points() - 1);
+    const auto B = util::generate_random_matrix<plssvm::soa_matrix<plssvm::real_type>>(data.num_data_points() - 1, data.num_data_points() - 1);
 
     const plssvm::real_type beta{ 0.5 };
-    auto C = util::generate_random_matrix<plssvm::aos_matrix<plssvm::real_type>>(data.num_data_points() - 1, data.num_data_points() - 1);
-    plssvm::aos_matrix<plssvm::real_type> C_res{ C };
+    auto C = util::generate_random_matrix<plssvm::soa_matrix<plssvm::real_type>>(data.num_data_points() - 1, data.num_data_points() - 1);
+    plssvm::soa_matrix<plssvm::real_type> C_res{ C };
 
     const auto m = static_cast<unsigned long long>(B.num_cols());
     const auto n = static_cast<unsigned long long>(B.num_rows());
@@ -247,7 +247,7 @@ TYPED_TEST(OpenMPCSVMKernelFunctionDeathTest, assemble_kernel_matrix_explicit) {
 #endif
 
     // helper lambda to reduce the amount of needed switches!
-    const auto run_assembly = [=](const plssvm::parameter &params_p, const std::vector<plssvm::real_type> &q_red_p, std::vector<plssvm::real_type> &kernel_matrix_p, const plssvm::aos_matrix<plssvm::real_type> &data_p, const plssvm::real_type QA_cost_p) {
+    const auto run_assembly = [=](const plssvm::parameter &params_p, const std::vector<plssvm::real_type> &q_red_p, std::vector<plssvm::real_type> &kernel_matrix_p, const plssvm::soa_matrix<plssvm::real_type> &data_p, const plssvm::real_type QA_cost_p) {
         switch (kernel) {
             case plssvm::kernel_function_type::linear:
                 plssvm::openmp::device_kernel_assembly_linear(q_red_p, kernel_matrix_p, data_p, QA_cost_p, params_p.cost.value());
@@ -300,10 +300,10 @@ TEST_F(OpenMPCSVMDeathTest, blas_level_3_kernel_explicit) {
     const std::vector<plssvm::real_type> kernel_matrix = compare::assemble_kernel_matrix_symm(params, data.data(), q_red, QA_cost);
 #endif
 
-    const auto B = util::generate_random_matrix<plssvm::aos_matrix<plssvm::real_type>>(data.num_data_points() - 1, data.num_data_points() - 1);
+    const auto B = util::generate_random_matrix<plssvm::soa_matrix<plssvm::real_type>>(data.num_data_points() - 1, data.num_data_points() - 1);
 
     const plssvm::real_type beta{ 0.5 };
-    auto C = util::generate_random_matrix<plssvm::aos_matrix<plssvm::real_type>>(data.num_data_points() - 1, data.num_data_points() - 1);
+    auto C = util::generate_random_matrix<plssvm::soa_matrix<plssvm::real_type>>(data.num_data_points() - 1, data.num_data_points() - 1);
 
     const auto m = static_cast<unsigned long long>(B.num_cols());
     const auto n = static_cast<unsigned long long>(B.num_rows());
@@ -317,7 +317,7 @@ TEST_F(OpenMPCSVMDeathTest, blas_level_3_kernel_explicit) {
 #endif
 
     // the B matrix must have the correct shape
-    const auto B_wrong = util::generate_random_matrix<plssvm::aos_matrix<plssvm::real_type>>(std::min(0, static_cast<int>(n) - 1), std::min(0, static_cast<int>(k) - 2));
+    const auto B_wrong = util::generate_random_matrix<plssvm::soa_matrix<plssvm::real_type>>(std::min(0, static_cast<int>(n) - 1), std::min(0, static_cast<int>(k) - 2));
 #if defined(PLSSVM_USE_GEMM)
     EXPECT_DEATH(plssvm::openmp::device_kernel_gemm(m, n, k, alpha, kernel_matrix, B_wrong, beta, C), ::testing::HasSubstr(fmt::format("B matrix sizes mismatch!: [{}, {}] != [{}, {}]", std::min(0, static_cast<int>(n) - 1), std::min(0, static_cast<int>(k) - 2), n, k)));
 #else
@@ -325,7 +325,7 @@ TEST_F(OpenMPCSVMDeathTest, blas_level_3_kernel_explicit) {
 #endif
 
     // the C matrix must have the correct shape
-    auto C_wrong = util::generate_random_matrix<plssvm::aos_matrix<plssvm::real_type>>(std::min(0, static_cast<int>(n) - 1), std::min(0, static_cast<int>(m) - 2));
+    auto C_wrong = util::generate_random_matrix<plssvm::soa_matrix<plssvm::real_type>>(std::min(0, static_cast<int>(n) - 1), std::min(0, static_cast<int>(m) - 2));
 #if defined(PLSSVM_USE_GEMM)
     EXPECT_DEATH(plssvm::openmp::device_kernel_gemm(m, n, k, alpha, kernel_matrix, B, beta, C_wrong), ::testing::HasSubstr(fmt::format("C matrix sizes mismatch!: [{}, {}] != [{}, {}]", std::min(0, static_cast<int>(n) - 1), std::min(0, static_cast<int>(m) - 2), n, m)));
 #else

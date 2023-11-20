@@ -132,7 +132,7 @@ template <typename real_type>
  * @param[in, out] C the C matrix (also the result matrix)
  */
 template <typename real_type>
-void gemm(real_type alpha, const std::vector<real_type> &A, const plssvm::aos_matrix<real_type> &B, real_type beta, plssvm::aos_matrix<real_type> &C);
+void gemm(real_type alpha, const std::vector<real_type> &A, const plssvm::soa_matrix<real_type> &B, real_type beta, plssvm::soa_matrix<real_type> &C);
 
 /**
  * @brief Compute the `w` vector used to speedup the prediction when using the linear kernel.

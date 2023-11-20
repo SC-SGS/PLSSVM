@@ -208,7 +208,7 @@ TYPED_TEST_P(GenericCSVMSolver, setup_data_on_devices) {
             ASSERT_EQ(data_d.size(), 9);
             std::vector<plssvm::real_type> data(data_d.size());
             data_d.copy_to_host(data);
-            std::vector<plssvm::real_type> correct_data{ input.data(), input.data() + input.num_entries() };
+            const std::vector<plssvm::real_type> correct_data{ input.data(), input.data() + input.num_entries() };
             EXPECT_FLOATING_POINT_VECTOR_EQ(data, correct_data);
         }
     }

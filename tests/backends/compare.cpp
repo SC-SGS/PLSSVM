@@ -237,7 +237,7 @@ template std::vector<float> assemble_kernel_matrix_gemm(const plssvm::parameter 
 template std::vector<double> assemble_kernel_matrix_gemm(const plssvm::parameter &, const plssvm::soa_matrix<double> &, const std::vector<double> &, const double, const std::size_t);
 
 template <typename real_type>
-void gemm(const real_type alpha, const std::vector<real_type> &A, const plssvm::aos_matrix<real_type> &B, const real_type beta, plssvm::aos_matrix<real_type> &C) {
+void gemm(const real_type alpha, const std::vector<real_type> &A, const plssvm::soa_matrix<real_type> &B, const real_type beta, plssvm::soa_matrix<real_type> &C) {
     PLSSVM_ASSERT(A.size() == B.num_cols() * B.num_cols(), "Sizes mismatch!: {} != {}", A.size(), B.num_cols() * B.num_cols());
     PLSSVM_ASSERT(B.shape() == C.shape(), "Shapes mismatch!: [{}] != [{}]", fmt::join(B.shape(), ", "), fmt::join(C.shape(), ", "));
     // A: #data_points - 1 x #data_points - 1
@@ -254,8 +254,8 @@ void gemm(const real_type alpha, const std::vector<real_type> &A, const plssvm::
         }
     }
 }
-template void gemm(const float, const std::vector<float> &, const plssvm::aos_matrix<float> &, const float, plssvm::aos_matrix<float> &);
-template void gemm(const double, const std::vector<double> &, const plssvm::aos_matrix<double> &, const double, plssvm::aos_matrix<double> &);
+template void gemm(const float, const std::vector<float> &, const plssvm::soa_matrix<float> &, const float, plssvm::soa_matrix<float> &);
+template void gemm(const double, const std::vector<double> &, const plssvm::soa_matrix<double> &, const double, plssvm::soa_matrix<double> &);
 
 template <typename real_type>
 plssvm::aos_matrix<real_type> calculate_w(const plssvm::aos_matrix<real_type> &weights, const plssvm::soa_matrix<real_type> &support_vectors) {

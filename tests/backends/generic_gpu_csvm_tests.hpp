@@ -86,12 +86,12 @@ TYPED_TEST_P(GenericGPUCSVM, run_blas_level_3_kernel_explicit) {
     device_ptr_type A_d{ kernel_matrix.size(), device };
     A_d.copy_to_device(kernel_matrix);
 
-    const auto B = util::generate_random_matrix<plssvm::aos_matrix<plssvm::real_type>>(data.num_data_points() - 1, data.num_data_points() - 1);
+    const auto B = util::generate_random_matrix<plssvm::soa_matrix<plssvm::real_type>>(data.num_data_points() - 1, data.num_data_points() - 1);
     device_ptr_type B_d{ B.shape(), device };
     B_d.copy_to_device(B);
 
     const plssvm::real_type beta{ 0.5 };
-    auto C = util::generate_random_matrix<plssvm::aos_matrix<plssvm::real_type>>(data.num_data_points() - 1, data.num_data_points() - 1);
+    auto C = util::generate_random_matrix<plssvm::soa_matrix<plssvm::real_type>>(data.num_data_points() - 1, data.num_data_points() - 1);
     device_ptr_type C_d{ C.shape(), device };
     C_d.copy_to_device(C);
 
@@ -99,7 +99,7 @@ TYPED_TEST_P(GenericGPUCSVM, run_blas_level_3_kernel_explicit) {
     svm.run_blas_level_3_kernel_explicit(B.num_cols(), B.num_rows(), B.num_cols(), alpha, A_d, B_d, beta, C_d);
 
     // retrieve data
-    plssvm::aos_matrix<plssvm::real_type> C_res{ C.num_rows(), C.num_cols() };
+    plssvm::soa_matrix<plssvm::real_type> C_res{ C.num_rows(), C.num_cols() };
     C_d.copy_to_host(C_res);
 
     // calculate correct results
