@@ -61,7 +61,7 @@ if (PLSSVM_GENERATE_TEST_FILE)
     endif ()
     if (NOT EXISTS "${PLSSVM_TEST_FILE}")
         # find necessary Python3 packages to use the test file generator
-        find_package(Python3 REQUIRED)
+        find_package(Python3 REQUIRED COMPONENTS Interpreter Development NumPy)
 
         include(${PROJECT_SOURCE_DIR}/cmake/check_python_libs.cmake)
         set(PLSSVM_TEST_REQUIRED_LIBS argparse sklearn humanize)
