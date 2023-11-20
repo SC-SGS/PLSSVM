@@ -52,7 +52,7 @@ set(PLSSVM_HIP_SOURCES
         ${CMAKE_CURRENT_LIST_DIR}/csvm.hip.cpp
         ${CMAKE_CURRENT_LIST_DIR}/exceptions.cpp
         ${CMAKE_CURRENT_LIST_DIR}/../gpu_device_ptr.cpp
-        )
+)
 
 # set target properties
 set_local_and_parent(PLSSVM_HIP_BACKEND_LIBRARY_NAME plssvm-HIP)

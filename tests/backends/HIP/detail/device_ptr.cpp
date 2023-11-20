@@ -10,12 +10,16 @@
 
 #include "plssvm/backends/HIP/detail/device_ptr.hip.hpp"  // plssvm::hip::detail::device_ptr
 
-#include "../../generic_device_ptr_tests.h"               // generic device pointer tests to instantiate
+#include "backends/generic_device_ptr_tests.h"  // generic device pointer tests to instantiate
+#include "naming.hpp"                           // naming::test_parameter_to_name
+#include "types_to_test.hpp"                    // util::{combine_test_parameters_gtest_t, cartesian_type_product_t, layout_type_list}
 
-#include "gtest/gtest.h"                                  // INSTANTIATE_TYPED_TEST_SUITE_P, ::testing::Types
+#include "gtest/gtest.h"  // INSTANTIATE_TYPED_TEST_SUITE_P
+
+#include <tuple>  // std::tuple
 
 template <typename T>
-struct device_ptr_test_type {
+struct hip_device_ptr_test_type {
     using device_ptr_type = plssvm::hip::detail::device_ptr<T>;
     using queue_type = int;
 
@@ -24,11 +28,14 @@ struct device_ptr_test_type {
         return queue;
     }
 };
+using hip_device_ptr_tuple = std::tuple<hip_device_ptr_test_type<float>, hip_device_ptr_test_type<double>>;
 
-using device_ptr_test_types = ::testing::Types<
-    device_ptr_test_type<float>,
-    device_ptr_test_type<double>>;
+// the tests used in the instantiated GTest test suites
+using hip_device_ptr_type_gtest = util::combine_test_parameters_gtest_t<util::cartesian_type_product_t<hip_device_ptr_tuple>>;
+using hip_device_ptr_layout_type_gtest = util::combine_test_parameters_gtest_t<util::cartesian_type_product_t<hip_device_ptr_tuple>, util::layout_type_list>;
 
 // instantiate type-parameterized tests
-INSTANTIATE_TYPED_TEST_SUITE_P(HIPBackend, DevicePtr, device_ptr_test_types);
-INSTANTIATE_TYPED_TEST_SUITE_P(HIPBackendDeathTest, DevicePtrDeathTest, device_ptr_test_types);
+INSTANTIATE_TYPED_TEST_SUITE_P(HIPDevicePtr, DevicePtr, hip_device_ptr_type_gtest, naming::test_parameter_to_name);
+INSTANTIATE_TYPED_TEST_SUITE_P(HIPDevicePtr, DevicePtrLayout, hip_device_ptr_layout_type_gtest, naming::test_parameter_to_name);
+
+INSTANTIATE_TYPED_TEST_SUITE_P(HIPDevicePtrDeathTest, DevicePtrDeathTest, hip_device_ptr_type_gtest, naming::test_parameter_to_name);

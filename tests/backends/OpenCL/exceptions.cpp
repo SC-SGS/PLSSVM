@@ -10,11 +10,11 @@
 
 #include "plssvm/backends/OpenCL/exceptions.hpp"  // plssvm::opencl::backend_exception
 
-#include "../generic_exceptions_tests.hpp"        // generic exception tests to instantiate
+#include "backends/generic_exceptions_tests.hpp"  // generic exception tests to instantiate
 
-#include "gtest/gtest.h"                          // INSTANTIATE_TYPED_TEST_SUITE_P
+#include "gtest/gtest.h"  // INSTANTIATE_TYPED_TEST_SUITE_P
 
-#include <string_view>                            // std::string_view
+#include <string_view>  // std::string_view
 
 struct exception_test_type {
     using exception_type = plssvm::opencl::backend_exception;
@@ -22,4 +22,4 @@ struct exception_test_type {
 };
 
 // instantiate type-parameterized tests
-INSTANTIATE_TYPED_TEST_SUITE_P(OpenCLBackend, Exception, exception_test_type);
+INSTANTIATE_TYPED_TEST_SUITE_P(OpenCLExceptions, Exception, exception_test_type);

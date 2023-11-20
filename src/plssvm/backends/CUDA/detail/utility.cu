@@ -10,7 +10,7 @@
 
 #include "plssvm/backends/CUDA/exceptions.hpp"  // plssvm::cuda::backend_exception
 
-#include "fmt/format.h"                         // fmt::format
+#include "fmt/format.h"  // fmt::format
 
 namespace plssvm::cuda::detail {
 

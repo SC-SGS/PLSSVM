@@ -8,6 +8,8 @@
 
 #include "plssvm/parameter.hpp"
 
+#include "plssvm/constants.hpp"  // plssvm::real_type
+
 #include "utility.hpp"
 
 #include "fmt/core.h"            // fmt::format
@@ -21,7 +23,7 @@ void init_parameter(py::module_ &m) {
     // bind parameter class
     py::class_<plssvm::parameter>(m, "Parameter")
         .def(py::init<>())
-        .def(py::init<plssvm::kernel_function_type, int, double, double, double>())
+        .def(py::init<plssvm::kernel_function_type, int, plssvm::real_type, plssvm::real_type, plssvm::real_type>())
         .def(py::init([](const py::kwargs &args) {
                  // check for valid keys
                  check_kwargs_for_correctness(args, { "kernel_type", "degree", "gamma", "coef0", "cost" });
@@ -44,19 +46,19 @@ void init_parameter(py::module_ &m) {
         .def_property(
             "gamma",
             [](const plssvm::parameter &self) { return self.gamma.value(); },
-            [](plssvm::parameter &self, const double gamma) { self.gamma = gamma; },
+            [](plssvm::parameter &self, const plssvm::real_type gamma) { self.gamma = gamma; },
             py::return_value_policy::reference,
             "change the gamma parameter for the polynomial and rbf kernel functions")
         .def_property(
             "coef0",
             [](const plssvm::parameter &self) { return self.coef0.value(); },
-            [](plssvm::parameter &self, const double coef0) { self.coef0 = coef0; },
+            [](plssvm::parameter &self, const plssvm::real_type coef0) { self.coef0 = coef0; },
             py::return_value_policy::reference,
             "change the coef0 parameter for the polynomial kernel function")
         .def_property(
             "cost",
             [](const plssvm::parameter &self) { return self.cost.value(); },
-            [](plssvm::parameter &self, const double cost) { self.cost = cost; },
+            [](plssvm::parameter &self, const plssvm::real_type cost) { self.cost = cost; },
             py::return_value_policy::reference,
             "change the cost parameter for the CSVM")
         .def("equivalent", &plssvm::parameter::equivalent, "check whether two parameter objects are equivalent, i.e., the SVM parameter important for the current 'kernel_type' are the same")

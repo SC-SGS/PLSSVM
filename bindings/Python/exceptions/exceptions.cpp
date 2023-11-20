@@ -8,7 +8,7 @@
 
 #include "plssvm/exceptions/exceptions.hpp"
 
-#include "utility.hpp"          // register_py_exception
+#include "utility.hpp"  // register_py_exception
 
 #include "pybind11/pybind11.h"  // py::module_, py::exception
 
@@ -24,4 +24,5 @@ void init_exceptions(py::module_ &m, const py::exception<plssvm::exception> &bas
     register_py_exception<plssvm::unsupported_backend_exception>(m, "UnsupportedBackendError", base_exception);
     register_py_exception<plssvm::unsupported_kernel_type_exception>(m, "UnsupportedKernelTypeError", base_exception);
     register_py_exception<plssvm::gpu_device_ptr_exception>(m, "GPUDevicePtrError", base_exception);
+    register_py_exception<plssvm::matrix_exception>(m, "MatrixError", base_exception);
 }

@@ -16,19 +16,20 @@
 #include "plssvm/backends/SYCL/DPCPP/detail/device_ptr.hpp"  // plssvm::dpcpp::detail::device_ptr
 #include "plssvm/backends/SYCL/DPCPP/detail/queue.hpp"       // plssvm::dpcpp::detail::queue (PImpl)
 
-#include "plssvm/backends/SYCL/kernel_invocation_type.hpp"   // plssvm::sycl::kernel_invocation_type
-#include "plssvm/backends/gpu_csvm.hpp"                      // plssvm::detail::gpu_csvm
-#include "plssvm/constants.hpp"                              // plssvm::real_type
-#include "plssvm/detail/memory_size.hpp"                     // plssvm::detail::memory_size
-#include "plssvm/detail/type_traits.hpp"                     // PLSSVM_REQUIRES, plssvm::detail::remove_cvref_t
-#include "plssvm/parameter.hpp"                              // plssvm::parameter, plssvm::detail::parameter
-#include "plssvm/target_platforms.hpp"                       // plssvm::target_platform
+#include "plssvm/backends/SYCL/kernel_invocation_type.hpp"  // plssvm::sycl::kernel_invocation_type
+#include "plssvm/backends/gpu_csvm.hpp"                     // plssvm::detail::gpu_csvm
+#include "plssvm/constants.hpp"                             // plssvm::real_type
+#include "plssvm/detail/igor_utility.hpp"                   // plssvm::detail::get_value_from_named_parameter
+#include "plssvm/detail/memory_size.hpp"                    // plssvm::detail::memory_size
+#include "plssvm/detail/type_traits.hpp"                    // PLSSVM_REQUIRES, plssvm::detail::remove_cvref_t
+#include "plssvm/parameter.hpp"                             // plssvm::parameter, plssvm::detail::parameter
+#include "plssvm/target_platforms.hpp"                      // plssvm::target_platform
 
-#include "igor/igor.hpp"                                     // igor::parser
+#include "igor/igor.hpp"  // igor::parser
 
-#include <cstddef>                                           // std::size_t
-#include <type_traits>                                       // std::is_same_v, std::true_type
-#include <utility>                                           // std::forward
+#include <cstddef>      // std::size_t
+#include <type_traits>  // std::is_same_v, std::true_type
+#include <utility>      // std::forward
 
 namespace plssvm {
 
@@ -94,8 +95,7 @@ class csvm : public ::plssvm::detail::gpu_csvm<detail::device_ptr, detail::queue
         // check whether a specific SYCL kernel invocation type has been requested
         if constexpr (parser.has(sycl_kernel_invocation_type)) {
             // compile time check: the value must have the correct type
-            static_assert(std::is_same_v<::plssvm::detail::remove_cvref_t<decltype(parser(sycl_kernel_invocation_type))>, sycl::kernel_invocation_type>, "Provided sycl_kernel_invocation_type must be convertible to a plssvm::sycl::kernel_invocation_type!");
-            invocation_type_ = static_cast<sycl::kernel_invocation_type>(parser(sycl_kernel_invocation_type));
+            invocation_type_ = ::plssvm::detail::get_value_from_named_parameter<sycl::kernel_invocation_type>(parser, sycl_kernel_invocation_type);
         }
         this->init(target);
     }
@@ -123,12 +123,12 @@ class csvm : public ::plssvm::detail::gpu_csvm<detail::device_ptr, detail::queue
     ~csvm() override;
 
     /**
-     * @brief Return the kernel invocation type (nd_range or the SYCL specific hierarchical kernel) used in this SYCL SVM.
+     * @brief Return the kernel invocation type used in this SYCL SVM.
      * @return the SYCL kernel invocation type (`[[nodiscard]]`)
      */
     [[nodiscard]] sycl::kernel_invocation_type get_kernel_invocation_type() const noexcept { return invocation_type_; }
 
-  private:
+  protected:
     /**
      * @brief Initialize all important states related to the SYCL backend.
      * @param[in] target the target platform to use
@@ -160,7 +160,7 @@ class csvm : public ::plssvm::detail::gpu_csvm<detail::device_ptr, detail::queue
     /**
      * @copydoc plssvm::detail::gpu_csvm::run_assemble_kernel_matrix_explicit
      */
-    [[nodiscard]] device_ptr_type run_assemble_kernel_matrix_explicit(const parameter &params, const device_ptr_type & data_d, const device_ptr_type &q_red_d, real_type QA_cost) const final;
+    [[nodiscard]] device_ptr_type run_assemble_kernel_matrix_explicit(const parameter &params, const device_ptr_type &data_d, const device_ptr_type &q_red_d, real_type QA_cost) const final;
     /**
      * @copydoc plssvm::detail::gpu_csvm::run_blas_level_3_kernel_explicit
      */
@@ -178,7 +178,7 @@ class csvm : public ::plssvm::detail::gpu_csvm<detail::device_ptr, detail::queue
      */
     [[nodiscard]] device_ptr_type run_predict_kernel(const parameter &params, const device_ptr_type &w_d, const device_ptr_type &alpha_d, const device_ptr_type &rho_d, const device_ptr_type &sv_d, const device_ptr_type &predict_points_d) const final;
 
-    /// The SYCL kernel invocation type for the svm kernel. Either nd_range or hierarchical.
+    /// The SYCL kernel invocation type for the svm kernel.
     sycl::kernel_invocation_type invocation_type_{ sycl::kernel_invocation_type::automatic };
 };
 

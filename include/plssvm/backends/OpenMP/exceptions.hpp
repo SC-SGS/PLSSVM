@@ -16,7 +16,7 @@
 #include "plssvm/exceptions/exceptions.hpp"       // plssvm::exception
 #include "plssvm/exceptions/source_location.hpp"  // plssvm::source_location
 
-#include <string>                                 // std::string
+#include <string>  // std::string
 
 namespace plssvm::openmp {
 

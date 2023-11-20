@@ -20,9 +20,9 @@ namespace plssvm {
 std::ostream &operator<<(std::ostream &out, const layout_type layout) {
     switch (layout) {
         case layout_type::aos:
-            return out << "Array-of-Structs";
+            return out << "aos";
         case layout_type::soa:
-            return out << "Struct-of-Arrays";
+            return out << "soa";
     }
     return out << "unknown";
 }
@@ -40,6 +40,16 @@ std::istream &operator>>(std::istream &in, layout_type &layout) {
         in.setstate(std::ios::failbit);
     }
     return in;
+}
+
+std::string_view layout_type_to_full_string(const layout_type layout) {
+    switch (layout) {
+        case layout_type::aos:
+            return "Array-of-Structs";
+        case layout_type::soa:
+            return "Struct-of-Arrays";
+    }
+    return "unknown";
 }
 
 }  // namespace plssvm

@@ -17,18 +17,17 @@
 #include "plssvm/backends/SYCL/implementation_type.hpp"  // plssvm::sycl::implementation_type
 #include "plssvm/target_platforms.hpp"                   // plssvm::target_platform
 
-#include "fmt/ostream.h"                                 // fmt::formatter, fmt::ostream_formatter
+#include "fmt/ostream.h"  // fmt::formatter, fmt::ostream_formatter
 
-#include <iosfwd>                                        // forward declare std::ostream
-#include <string>                                        // std::string
+#include <iosfwd>  // forward declare std::ostream
+#include <string>  // std::string
 
 namespace plssvm::detail::cmd {
 
 /**
- * @brief Class for encapsulating all necessary parameters for prediction; normally provided through command line arguments.
+ * @brief Struct for encapsulating all necessary parameters for prediction; normally provided through command line arguments.
  */
-class parser_predict {
-  public:
+struct parser_predict {
     /**
      * @brief Parse the command line arguments @p argv using [`cxxopts`](https://github.com/jarro2783/cxxopts) and set the predict parameters accordingly.
      * @details If no output filename is given, uses the input filename and appends a ".predict". The output file is than saved in the current working directory.
@@ -61,14 +60,15 @@ class parser_predict {
 
 /**
  * @brief Output all predict parameters encapsulated by @p params to the given output-stream @p out.
- * @param[in,out] out the output-stream to write the parameters to
- * @param[in] params the parameters
+ * @param[in,out] out the output-stream to write the predict parameters to
+ * @param[in] params the predict parameters
  * @return the output-stream
  */
 std::ostream &operator<<(std::ostream &out, const parser_predict &params);
 
 }  // namespace plssvm::detail::cmd
 
-template <> struct fmt::formatter<plssvm::detail::cmd::parser_predict> : fmt::ostream_formatter {};
+template <>
+struct fmt::formatter<plssvm::detail::cmd::parser_predict> : fmt::ostream_formatter {};
 
 #endif  // PLSSVM_DETAIL_CMD_PARSER_PREDICT_HPP_

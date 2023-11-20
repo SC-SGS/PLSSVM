@@ -17,7 +17,7 @@ void init_performance_tracker([[maybe_unused]] py::module_ &m) {
 
     // use a detail.PerformanceTracker submodule for the performance tracking bindings
     py::module_ detail_module = m.def_submodule("detail", "a module containing detail functionality for the performance tracker");
-    py::module_ performance_tracker_module = detail_module.def_submodule("PerformanceTracker", "whatever");
+    py::module_ performance_tracker_module = detail_module.def_submodule("PerformanceTracker");
 
     // bind the performance tracker functions
     performance_tracker_module

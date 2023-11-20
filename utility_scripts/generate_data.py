@@ -14,12 +14,15 @@ from timeit import default_timer as timer
 import os
 import humanize
 import datetime
+import importlib.util
 
 # data set creation
 from sklearn.datasets import make_classification
 from sklearn.datasets import make_blobs
 from sklearn.datasets import make_gaussian_quantiles
 from sklearn.preprocessing import minmax_scale
+
+has_plssvm_python_bindings = importlib.util.find_spec("plssvm") is not None
 
 # parse command line arguments
 parser = argparse.ArgumentParser()
@@ -78,7 +81,7 @@ minmax_scale(samples, feature_range=(-1, 1), copy=False)
 end_time = timer()
 print("Done in {}ms.".format(int((end_time - start_time) * 1000)))
 
-print("Saving samples... ", end="", flush=True)
+print("Saving samples using {} ... ".format("plssvm::data_set::save" if has_plssvm_python_bindings else "sklearn.datasets.dump_svmlight_file" ), end="", flush=True)
 start_time = timer()
 # set file names
 if args.output is not None:
@@ -94,23 +97,33 @@ test_file = ""
 if args.test_samples > 0:
     test_file = rawfile + "_test." + args.format
 
+# save the files
 if args.format == "libsvm":
-    from sklearn.datasets import dump_svmlight_file
+    if has_plssvm_python_bindings:
+        # save the libsvm file using the "fast" PLSSVM function
+        import plssvm
+        plssvm.set_verbosity(plssvm.VerbosityLevel.QUIET)
 
-    # dump data in libsvm format
-    dump_svmlight_file(samples[:args.samples, :],
-                       labels[:args.samples],
-                       file,
-                       # comment="This training data set has been created at {}\n{}x{}\n".format(
-                       #     datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"), args.samples, args.features),
-                       zero_based=False)
-    if args.test_samples > 0:
-        dump_svmlight_file(samples[args.samples:, :],
-                           labels[args.samples:],
-                           test_file,
-                           # comment="This test data set has been created at {}\n{}x{}\n".format(
-                           #     datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"), args.test_samples, args.features),
+        # dump data in libsvm format
+        data_set = plssvm.DataSet(samples[:args.samples, :], labels[:args.samples])
+        data_set.save(file, plssvm.FileFormatType.LIBSVM)
+        if args.test_samples > 0:
+            test_data_set = plssvm.DataSet(samples[args.samples:, :], labels[args.samples:])
+            test_data_set.save(file, plssvm.FileFormatType.LIBSVM)
+    else:
+        # save the libsvm file using the "slow" sklearn function
+        from sklearn.datasets import dump_svmlight_file
+
+        # dump data in libsvm format
+        dump_svmlight_file(samples[:args.samples, :],
+                           labels[:args.samples],
+                           file,
                            zero_based=False)
+        if args.test_samples > 0:
+            dump_svmlight_file(samples[args.samples:, :],
+                               labels[args.samples:],
+                               test_file,
+                               zero_based=False)
 elif args.format == "arff":
     import numpy
     import arff

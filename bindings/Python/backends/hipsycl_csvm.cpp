@@ -13,12 +13,12 @@
 #include "plssvm/parameter.hpp"         // plssvm::parameter
 #include "plssvm/target_platforms.hpp"  // plssvm::target_platform
 
-#include "../utility.hpp"               // check_kwargs_for_correctness, convert_kwargs_to_parameter, register_py_exception
+#include "../utility.hpp"  // check_kwargs_for_correctness, convert_kwargs_to_parameter, register_py_exception
 
-#include "pybind11/pybind11.h"          // py::module_, py::class_, py::init
-#include "pybind11/stl.h"               // support for STL types
+#include "pybind11/pybind11.h"  // py::module_, py::class_, py::init
+#include "pybind11/stl.h"       // support for STL types
 
-#include <memory>                       // std::make_unique
+#include <memory>  // std::make_unique
 
 namespace py = pybind11;
 
@@ -54,7 +54,8 @@ py::module_ init_hipsycl_csvm(py::module_ &m, const py::exception<plssvm::except
                  return std::make_unique<plssvm::hipsycl::csvm>(target, params, plssvm::sycl_kernel_invocation_type = invoc);
              }),
              "create an SVM with the provided target platform and keyword arguments")
-        .def("get_kernel_invocation_type", &plssvm::hipsycl::csvm::get_kernel_invocation_type, "get the kernel invocation type used in this SYCL SVM");
+        .def("get_kernel_invocation_type", &plssvm::hipsycl::csvm::get_kernel_invocation_type, "get the kernel invocation type used in this SYCL SVM")
+        .def("num_available_devices", &plssvm::hipsycl::csvm::num_available_devices, "the number of available devices");
 
     // register hipSYCL backend specific exceptions
     register_py_exception<plssvm::hipsycl::backend_exception>(hipsycl_module, "BackendError", base_exception);

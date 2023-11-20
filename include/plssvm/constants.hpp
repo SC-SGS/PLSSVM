@@ -13,7 +13,7 @@
 #define PLSSVM_CONSTANTS_HPP_
 #pragma once
 
-#include "plssvm/detail/type_list.hpp"  // plssvm::detail::type_list_contains_v
+#include "plssvm/detail/type_list.hpp"  // plssvm::detail::{supported_real_types, tuple_contains_v}
 
 #include <type_traits>  // std::is_same_v
 
@@ -55,7 +55,7 @@ constexpr unsigned long long OPENMP_BLOCK_SIZE = 64;  // TODO: use again?!
 #endif
 
 // perform sanity checks
-static_assert(detail::type_list_contains_v<real_type, detail::real_type_list>, "Illegal real type provided! See the 'real_type_list' in the type_list.hpp header for a list of the allowed types.");
+static_assert(detail::tuple_contains_v<real_type, detail::supported_real_types>, "Illegal real type provided! See the 'real_type_list' in the type_list.hpp header for a list of the allowed types.");
 static_assert(THREAD_BLOCK_SIZE > 0, "THREAD_BLOCK_SIZE must be greater than 0!");
 static_assert(FEATURE_BLOCK_SIZE > 0, "FEATURE_BLOCK_SIZE must be greater than 0!");
 static_assert(FEATURE_BLOCK_SIZE == 2 * THREAD_BLOCK_SIZE, "Invalid FEATURE_BLOCK_SIZE or THREAD_BLOCK_SIZE!");

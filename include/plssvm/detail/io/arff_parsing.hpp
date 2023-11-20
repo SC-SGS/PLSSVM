@@ -22,22 +22,22 @@
 #include "plssvm/exceptions/exceptions.hpp"     // plssvm::exception::invalid_file_format_exception
 #include "plssvm/matrix.hpp"                    // plssvm::soa_matrix
 
-#include "fmt/format.h"                         // fmt::format, fmt::join
-#include "fmt/os.h"                             // fmt::ostream, fmt::output_file
+#include "fmt/format.h"  // fmt::format, fmt::join
+#include "fmt/os.h"      // fmt::ostream, fmt::output_file
 
-#include <cstddef>                              // std::size_t
-#include <exception>                            // std::exception, std::exception_ptr, std::current_exception, std::rethrow_exception
-#include <set>                                  // std::set
-#include <string>                               // std::string
-#include <string_view>                          // std::string_view
-#include <tuple>                                // std::tuple, std::make_tuple
-#include <utility>                              // std::move
-#include <vector>                               // std::vector
+#include <cstddef>      // std::size_t
+#include <exception>    // std::exception, std::exception_ptr, std::current_exception, std::rethrow_exception
+#include <set>          // std::set
+#include <string>       // std::string
+#include <string_view>  // std::string_view
+#include <tuple>        // std::tuple, std::make_tuple
+#include <utility>      // std::move
+#include <vector>       // std::vector
 
 namespace plssvm::detail::io {
 
 /**
- * @brief Parse the ARFF file header, i.e., determine the number of features, the length of the ARRF header, whether the data set is annotated with labels
+ * @brief Parse the ARFF file header, i.e., determine the number of features, the length of the ARFF header, whether the data set is annotated with labels
  *        and at which position the label is written in the data set.
  * @tparam label_type the type of the labels (any arithmetic type or std::string)
  * @param[in] lines the ARFF header to parse
@@ -255,7 +255,7 @@ template <typename label_type>
 
     std::exception_ptr parallel_exception;
 
-    #pragma omp parallel default(none) shared(reader, data, label, unique_label, parallel_exception) firstprivate(num_header_lines, num_data_points, num_features, num_attributes, has_label, label_idx)
+    #pragma omp parallel default(none) shared(reader, data, label, unique_label, parallel_exception) firstprivate(num_header_lines, num_data_points, num_attributes, has_label, label_idx)
     {
         #pragma omp for
         for (std::size_t i = 0; i < num_data_points; ++i) {
@@ -306,7 +306,7 @@ template <typename label_type>
                                 label[i] = detail::convert_to<label_type, invalid_file_format_exception>(line.substr(pos, next_pos - pos));
                             }
                         } else {
-                            // write feature valuehas a whitespace!
+                            // write feature value has a whitespace!
                             // if the feature index is larger than the label index, the index must be reduced in order to write the feature to the correct data index
                             if (has_label && index > label_idx) {
                                 --index;
@@ -357,8 +357,8 @@ template <typename label_type>
                     throw invalid_file_format_exception{ fmt::format("Found the label \"{}\" which was not specified in the header ({{{}}})!", static_cast<label_type>(label[i]), fmt::join(unique_label, ", ")) };
                 }
             } catch (const std::exception &) {
-                // catch first exception and store it
-                #pragma omp critical
+// catch first exception and store it
+#pragma omp critical
                 {
                     if (!parallel_exception) {
                         parallel_exception = std::current_exception();

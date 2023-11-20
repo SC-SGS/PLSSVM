@@ -16,7 +16,7 @@
 #include "plssvm/detail/arithmetic_type_name.hpp"  // plssvm::detail::arithmetic_type_name_v
 #include "plssvm/detail/string_utility.hpp"        // plssvm::detail::replace_all
 #include "plssvm/detail/type_traits.hpp"           // plssvm::detail::always_false_v
-#include "plssvm/parameter.hpp"                    // plssvm::parameter, plssvm::detail::parameter
+#include "plssvm/parameter.hpp"                    // plssvm::parameter
 
 #include "fmt/core.h"     // fmt::format
 #include "gtest/gtest.h"  // FAIL
@@ -275,17 +275,15 @@ template <typename T>
     // clang-format on
 }
 
-namespace detail {
-
 /**
- * @brief Calculate the label distribution necessary for LIBSVM's model file `num_Sv` field.
+ * @brief Calculate the label distribution necessary for LIBSVM's model file `num_sv` field.
  * @details Example: distinct labels = [ -1, 1 ] and num_labels = 5 would return [ 3, 2 ]
  * @tparam T the type of the labels
  * @param num_labels the total number of labels used in this distribution
  * @return the label distribution (`[[nodiscard]]`)
  */
 template <typename T>
-[[nodiscard]] std::vector<std::size_t> calculate_model_file_label_distribution(const std::size_t num_labels) {
+[[nodiscard]] std::vector<std::size_t> get_correct_model_file_num_sv_per_class(const std::size_t num_labels = 6) {
     // get the distinct labels based on the current label type
     const std::vector<T> labels = util::get_distinct_label<T>();
 
@@ -298,8 +296,6 @@ template <typename T>
     return distribution;
 }
 
-}  // namespace detail
-
 /**
  * @brief Get the label vector that is described in the model template files.
  * @details Works according to the `instantiate_template_file` function.
@@ -307,22 +303,20 @@ template <typename T>
  * @return the correct label vector with respect to the model template files (`[[nodiscard]]``)
  */
 template <typename T>
-[[nodiscard]] inline std::pair<std::vector<T>, std::vector<std::size_t>> get_correct_model_file_labels() {
+[[nodiscard]] inline std::vector<T> get_correct_model_file_labels() {
     // get the distinct labels based on the current label type
     const std::vector<T> labels = util::get_distinct_label<T>();
     // get the label distribution
-    constexpr std::size_t num_labels = 6;
-    const std::vector<std::size_t> num_sv = detail::calculate_model_file_label_distribution<T>(num_labels);
+    const std::vector<std::size_t> num_sv = get_correct_model_file_num_sv_per_class<T>();
 
     std::vector<T> res;
-    res.reserve(num_labels);
     for (std::size_t i = 0; i < labels.size(); ++i) {
         for (std::size_t j = 0; j < num_sv[i]; ++j) {
             res.emplace_back(labels[i]);
         }
     }
 
-    return std::make_pair(res, num_sv);
+    return res;
 }
 
 /**
@@ -349,20 +343,27 @@ template <typename T>
 }
 /**
  * @brief Generate matrix of size @p rows times @p cols filled with random floating point values in the range [@p lower, @p upper].
- * @tparam T the type of the elements in the vector (must be a floating point type)
+ * @tparam matrix_type the type of the elements in the vector (must be a floating point type)
  * @param[in] rows the number of rows in the matrix
  * @param[in] cols the number of columns in the matrix
  * @param[in] lower the lower bound of the random values in the vector
  * @param[in] upper the upper bound of the random values in the vector
  * @return the randomly generated matrix (`[[nodiscard]]`)
  */
-template <typename T>
-[[nodiscard]] inline std::vector<std::vector<T>> generate_random_matrix(const std::size_t rows, const std::size_t cols, const T lower = T{ -1.0 }, const T upper = T{ 1.0 }) {
-    static_assert(std::is_floating_point_v<T>, "Can only meaningfully use a uniform_real_distribution with a floating point type!");
+template <typename matrix_type, typename real_type = typename matrix_type::value_type>
+[[nodiscard]] inline matrix_type generate_random_matrix(const std::size_t rows, const std::size_t cols, const real_type lower = real_type{ -1.0 }, const real_type upper = real_type{ 1.0 }) {
+    static_assert(std::is_floating_point_v<real_type>, "Only floating point types are allowed!");
 
-    std::vector<std::vector<T>> matrix(rows);
+    // create random number generator
+    static std::random_device device;
+    static std::mt19937 gen(device());
+    std::uniform_real_distribution<real_type> dist(lower, upper);
+
+    matrix_type matrix { rows, cols };
     for (std::size_t i = 0; i < rows; ++i) {
-        matrix[i] = generate_random_vector(cols, lower, upper);
+        for (std::size_t j = 0; j < cols; ++j) {
+            matrix(i, j) = dist(gen);
+        }
     }
 
     return matrix;
@@ -371,19 +372,20 @@ template <typename T>
 /**
  * @brief Generate a matrix of size @p rows times @p cols filled with filled with values "row.(col +1)".
  * @details Example for row = 1 and cols = 3 is: [ 1.1, 1.2, 1.3 ].
- * @tparam T the type of the elements in the vector (must be a floating point type)
+ * @tparam matrix_type the type of the elements in the matrix (must be a floating point type)
  * @param[in] rows the number of rows in the matrix
  * @param[in] cols the number of columns in the matrix
  * @return the generated matrix (`[[nodiscard]]`)
  */
-template <typename T>
-[[nodiscard]] inline std::vector<std::vector<T>> generate_specific_matrix(const std::size_t rows, const std::size_t cols) {
-    static_assert(std::is_floating_point_v<T>, "Only floating point types are allowed!");
+template <typename matrix_type>
+[[nodiscard]] inline matrix_type generate_specific_matrix(const std::size_t rows, const std::size_t cols) {
+    using real_type = typename matrix_type::value_type;
+    static_assert(std::is_floating_point_v<real_type>, "Only floating point types are allowed!");
 
-    std::vector<std::vector<T>> matrix(rows, std::vector<T>(cols));
+    matrix_type matrix { rows, cols };
     for (std::size_t i = 0; i < rows; ++i) {
         for (std::size_t j = 1; j <= cols; ++j) {
-            matrix[i][j - 1] = i + j / T{ 10.0 };
+            matrix(i, j - 1) = i + j / real_type{ 10.0 };
         }
     }
 
@@ -393,14 +395,15 @@ template <typename T>
  * @brief Generate a sparse matrix of size @p rows times @p cols filled with filled with values "row.(col +1)".
  *        In each row, approximately 50% of the values are replaced with zeros.
  * @details Example for row = 1 and cols = 3 is: [ 1.1, 0.0, 1.3 ].
- * @tparam T the type of the elements in the vector (must be a floating point type)
+ * @tparam matrix_type the type of the elements in the vector (must be a floating point type)
  * @param[in] rows the number of rows in the matrix
  * @param[in] cols the number of columns in the matrix
  * @return the generated sparse matrix (`[[nodiscard]]`)
  */
-template <typename T>
-[[nodiscard]] inline std::vector<std::vector<T>> generate_specific_sparse_matrix(const std::size_t rows, const std::size_t cols) {
-    static_assert(std::is_floating_point_v<T>, "Only floating point types are allowed!");
+template <typename matrix_type>
+[[nodiscard]] inline matrix_type generate_specific_sparse_matrix(const std::size_t rows, const std::size_t cols) {
+    using real_type = typename matrix_type::value_type;
+    static_assert(std::is_floating_point_v<real_type>, "Only floating point types are allowed!");
 
     // random number generate for range [ 0.0, 1.0 ]
     std::random_device rd;
@@ -408,14 +411,14 @@ template <typename T>
     std::uniform_int_distribution<std::size_t> dis(0, cols - 1);
 
     // generate sparse matrix
-    std::vector<std::vector<T>> matrix(rows, std::vector<T>(cols));
+    matrix_type matrix{ rows, cols };
     for (std::size_t i = 0; i < rows; ++i) {
         for (std::size_t j = 1; j <= cols; ++j) {
-            matrix[i][j - 1] = i + j / T{ 10.0 };
+            matrix(i, j - 1) = i + j / real_type{ 10.0 };
         }
         // remove half of the created values randomly
         for (std::size_t j = 0; j < cols / 2; ++j) {
-            matrix[i][dis(gen)] = T{ 0.0 };
+            matrix(i, dis(gen)) = real_type{ 0.0 };
         }
     }
 
@@ -423,31 +426,48 @@ template <typename T>
 }
 
 /**
+ * @brief Convert the provided 2D vector to a 1D vector.
+ * @tparam T the type in the vector
+ * @param[in] vec_2D the 2D input vector
+ * @return the 1D result vector (`[[nodiscard]]`)
+ */
+template <typename T>
+[[nodiscard]] inline std::vector<T> flatten(const std::vector<std::vector<T>> &vec_2D) {
+    std::vector<T> ret{};
+    for (const std::vector<T> &vec : vec_2D) {
+        ret.insert(ret.end(), vec.begin(), vec.end());
+    }
+    return ret;
+}
+
+
+/**
  * @brief Scale the @p data set to the range [@p lower, @p upper].
  * @tparam T the type of the data that should be scaled (must be a floating point type)
+ * @tparam layout the memory layout used for the plssvm::matrix @p data
  * @param[in] data the data to scale
  * @param[in] lower the lower bound to which the data should be scaled
  * @param[in] upper the upper bound to which the data should be scaled
  * @return a pair consisting of: [the data set scaled to [@p lower, @p upper], the scaling factors used to scale the data] (`[[nodiscard]]`)
  */
-template <typename T>
-[[nodiscard]] inline std::pair<std::vector<std::vector<T>>, std::vector<std::tuple<std::size_t, T, T>>> scale(const std::vector<std::vector<T>> &data, const T lower, const T upper) {
+template <typename T, plssvm::layout_type layout>
+[[nodiscard]] inline std::pair<plssvm::matrix<T, layout>, std::vector<std::tuple<std::size_t, T, T>>> scale(const plssvm::matrix<T, layout> &data, const T lower, const T upper) {
     static_assert(std::is_floating_point_v<T>, "Scaling a data set only makes sense for values with a floating point type!");
 
-    std::vector<std::tuple<std::size_t, T, T>> factors(data.front().size(), std::make_tuple(0, std::numeric_limits<T>::max(), std::numeric_limits<T>::lowest()));
+    std::vector<std::tuple<std::size_t, T, T>> factors(data.num_cols(), std::make_tuple(0, std::numeric_limits<T>::max(), std::numeric_limits<T>::lowest()));
     // calculate the scaling factors
     for (std::size_t i = 0; i < factors.size(); ++i) {
         std::get<0>(factors[i]) = i;
-        for (std::size_t j = 0; j < data.size(); ++j) {
-            std::get<1>(factors[i]) = std::min(std::get<1>(factors[i]), data[j][i]);
-            std::get<2>(factors[i]) = std::max(std::get<2>(factors[i]), data[j][i]);
+        for (std::size_t j = 0; j < data.num_rows(); ++j) {
+            std::get<1>(factors[i]) = std::min(std::get<1>(factors[i]), data(j, i));
+            std::get<2>(factors[i]) = std::max(std::get<2>(factors[i]), data(j, i));
         }
     }
     // scale the data set
-    std::vector<std::vector<T>> ret = data;
-    for (std::size_t i = 0; i < ret.size(); ++i) {
-        for (std::size_t j = 0; j < ret.front().size(); ++j) {
-            ret[i][j] = lower + (upper - lower) * (data[i][j] - std::get<1>(factors[j])) / (std::get<2>(factors[j]) - std::get<1>(factors[j]));
+    plssvm::matrix<T, layout> ret = data;
+    for (std::size_t i = 0; i < ret.num_rows(); ++i) {
+        for (std::size_t j = 0; j < ret.num_cols(); ++j) {
+            ret(i, j) = lower + (upper - lower) * (data(i, j) - std::get<1>(factors[j])) / (std::get<2>(factors[j]) - std::get<1>(factors[j]));
         }
     }
     return std::make_pair(std::move(ret), std::move(factors));
@@ -471,15 +491,14 @@ template <typename T, typename Tuple, size_t... Is>
  * @brief Construct an instance of type @p T using @p params and the values in the std::tuple @p tuple where all values in @p tuple are saved as a std::pair
  *        containing the named-parameter name and value.
  * @tparam T the type to construct
- * @tparam real_type the floating point type used for the SVM parameter
  * @tparam Tuple the tuple type used to construct @p T
  * @param params the SVM parameter used to construct @p T
  * @param tuple the tuple values used to construct @p T
  * @return an instance of type @p T (`[[nodiscard]]`)
  */
-template <typename T, typename real_type, typename Tuple>
-[[nodiscard]] inline T construct_from_tuple(const plssvm::detail::parameter<real_type> &params, Tuple &&tuple) {
-    return construct_from_tuple<T>(static_cast<plssvm::parameter>(params),
+template <typename T, typename Tuple>
+[[nodiscard]] inline T construct_from_tuple(const plssvm::parameter &params, Tuple &&tuple) {
+    return construct_from_tuple<T>(params,
                                    std::forward<Tuple>(tuple),
                                    std::make_index_sequence<std::tuple_size<std::decay_t<Tuple>>::value>{});
 }
