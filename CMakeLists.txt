@@ -85,21 +85,28 @@ target_include_directories(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC
 )
 
 ## set library cxx standard
+if ($ENV{CLION_IDE})
+    # somehow necessary for CLion to detect the C++ standard as 17
+    set(CMAKE_CXX_STANDARD 17)
+endif ()
 target_compile_features(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC cxx_std_17)
 ## additional base library compile options
 target_compile_options(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC
         $<$<COMPILE_LANGUAGE:CXX>:$<$<CXX_COMPILER_ID:GNU,Clang>:-Wall -Wextra -Wdouble-promotion -fno-common -Wshadow -Wcast-qual
-        -Wnull-dereference -Wctor-dtor-privacy -Wnon-virtual-dtor -Wextra-semi -Wunreachable-code -Wuninitialized
+        -Wnull-dereference -Wctor-dtor-privacy -Wnon-virtual-dtor -Wextra-semi -Wunreachable-code -Wuninitialized -Wno-ctor-dtor-privacy
         -fPIC>
         $<$<COMPILE_LANG_AND_ID:CXX,GNU>:-Wsuggest-override -Wstrict-null-sentinel -Wlogical-op -Wduplicated-branches -Wimplicit-fallthrough=5>
         $<$<COMPILE_LANG_AND_ID:CXX,Clang>:-Wdocumentation -Wmost>
-        $<$<COMPILE_LANG_AND_ID:CXX,MSVC>:/W4 /bigobj /wd4459>>
+        $<$<COMPILE_LANG_AND_ID:CXX,MSVC>:/W4 /bigobj /wd4459 /Zc:lambda>>
 )
 
 ## nvcc doesn't recognize -Werror=??? option, so only set it when using a CXX compiler
 target_compile_options(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC
         $<$<COMPILE_LANG_AND_ID:CXX,GNU,Clang>:-Werror=switch -fstrict-enums>
-        $<$<COMPILE_LANG_AND_ID:CXX,MSVC>:/we4062 /wd4005>
+        $<$<COMPILE_LANG_AND_ID:CXX,MSVC>:/we4062 /wd4005 /wd4702 /wd4849 /wd4127>
+        # /wd4702: prevent warning for unreachable code in tests (the tests that currently skip the cg_streaming and cg_implicit tests)
+        # /wd4849: ignore "OpenMP 'reduction' clause ignored in 'simd' directive" -> no SIMD clause currently effective in MSVC
+        # /wd4127: ignore "conditional expression is constant" from {fmt} ranges.h header
 )
 ## enable additional optimization flags only in RELEASE mode
 target_compile_options(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC
@@ -110,13 +117,14 @@ target_compile_definitions(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC
         $<$<COMPILE_LANG_AND_ID:CXX,MSVC>:NOMINMAX>
 )
 
-## enable standard library debug modes if compiled in debug
-if (CMAKE_BUILD_TYPE MATCHES Debug)
+option(PLSSVM_ENABLE_STL_DEBUG_MODE "Enables the debug modes for the STL implementations. Note: changes the ABI!" OFF)
+# GCC standard library (libstdc++): _GLIBCXX_DEBUG
+# LLVM standard library (libc++): LIBCXX_ENABLE_DEBUG_MODE
+# MSVC standard library: _ITERATOR_DEBUG_LEVEL
+set(PLSSVM_STL_DEBUG_MODE_FLAGS "-D_GLIBCXX_DEBUG -DLIBCXX_ENABLE_DEBUG_MODE -D_ITERATOR_DEBUG_LEVEL")
+if (PLSSVM_ENABLE_STL_DEBUG_MODE)
     message(STATUS "Enable standard library debug modes.")
-    # GCC standard library (libstdc++): _GLIBCXX_DEBUG
-    # LLVM standard library (libc++): LIBCXX_ENABLE_DEBUG_MODE
-    # MSVC standard library: _ITERATOR_DEBUG_LEVEL
-    target_compile_definitions(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC _GLIBCXX_DEBUG LIBCXX_ENABLE_DEBUG_MODE _ITERATOR_DEBUG_LEVEL)
+    target_compile_definitions(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC ${PLSSVM_STL_DEBUG_MODE_FLAGS})
 endif ()
 
 
@@ -128,8 +136,9 @@ find_package(OpenMP 4.0 QUIET)
 if (OpenMP_FOUND)
     message(STATUS "Found OpenMP ${OpenMP_CXX_VERSION} to speed-up library utilities (like file parsing).")
     set(PLSSVM_FOUND_OPENMP_FOR_UTILITY "${OpenMP_CXX_VERSION}")
-    target_link_libraries(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC OpenMP::OpenMP_CXX -fopenmp)
-    target_compile_options(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC $<$<COMPILE_LANGUAGE:CXX>:-fopenmp>)
+    target_link_libraries(${PLSSVM_OPENMP_BACKEND_LIBRARY_NAME} PUBLIC $<$<CXX_COMPILER_ID:GNU,Clang>:OpenMP::OpenMP_CXX -fopenmp>)
+    target_compile_options(${PLSSVM_OPENMP_BACKEND_LIBRARY_NAME} PUBLIC $<$<COMPILE_LANG_AND_ID:CXX,GNU,Clang>:-fopenmp>)
+    target_compile_options(${PLSSVM_OPENMP_BACKEND_LIBRARY_NAME} PUBLIC $<$<CXX_COMPILER_ID:MSVC>:-openmp:llvm -openmp:experimental>)
 else ()
     # disable warning for unknown OpenMP pragmas if no OpenMP could be found
     target_compile_options(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC
@@ -233,23 +242,27 @@ else ()
 endif ()
 
 ## try finding fmt
-find_package(fmt 10.0.0 QUIET)
+find_package(fmt 10.1.1 QUIET)
 if (fmt_FOUND)
     message(STATUS "Found package fmt.")
 else ()
-    message(STATUS "Couldn't find package fmt. Building from source ...")
-    set(PLSSVM_fmt_VERSION 10.0.0)
+    message(STATUS "Couldn't find package fmt. Building from source ...")  # TODO: change to next release; bug fix commit
+    set(PLSSVM_fmt_VERSION d9063baf227882da0f48c761abcbb08247eb1296)
+    if (PLSSVM_ENABLE_STL_DEBUG_MODE)
+        set(CMAKE_CXX_FLAGS_OLD "${CMAKE_CXX_FLAGS}")
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${PLSSVM_STL_DEBUG_MODE_FLAGS}")
+    endif ()
     # fetch string formatting library fmt
     FetchContent_Declare(fmt
             GIT_REPOSITORY https://github.com/fmtlib/fmt.git
             GIT_TAG ${PLSSVM_fmt_VERSION}
-            GIT_SHALLOW TRUE
+#            GIT_SHALLOW TRUE
             QUIET
 
-            set (FMT_TEST OFF CACHE BOOL "" FORCE)
-            set (FMT_DOC OFF CACHE BOOL "" FORCE)
-            set (FMT_INSTALL OFF CACHE BOOL "" FORCE)
-            set (FMT_SYSTEM_HEADERS ON CACHE BOOL "" FORCE)
+#            set (FMT_TEST OFF CACHE BOOL "" FORCE)
+#            set (FMT_DOC OFF CACHE BOOL "" FORCE)
+#            set (FMT_INSTALL OFF CACHE BOOL "" FORCE)
+#            set (FMT_SYSTEM_HEADERS ON CACHE BOOL "" FORCE)
     )
     FetchContent_MakeAvailable(fmt)
     set_property(TARGET fmt PROPERTY POSITION_INDEPENDENT_CODE ON)
@@ -261,6 +274,9 @@ else ()
     # append fmt to installed targets if build from source
     list(APPEND PLSSVM_TARGETS_TO_INSTALL "fmt")
     message(STATUS "Installing {fmt} version ${PLSSVM_fmt_VERSION}.")
+    if (PLSSVM_ENABLE_STL_DEBUG_MODE)
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS_OLD}")
+    endif ()
 endif ()
 target_link_libraries(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC fmt::fmt)
 
@@ -674,7 +690,7 @@ choose the SYCL implementation to be used in the SYCL backend: ${PLSSVM_SYCL_BAC
     set(PLSSVM_SYCL_KERNEL_INVOCATION_TYPE_MANPAGE_ENTRY "
 .TP
 .B --sycl_kernel_invocation_type
-choose the kernel invocation type when using SYCL as backend: automatic|nd_range|hierarchical (default: automatic)
+choose the kernel invocation type when using SYCL as backend: automatic|nd_range (default: automatic)
 ")
 endif ()
 set(PLSSVM_SYCL_MANPAGE_ENTRY "${PLSSVM_SYCL_KERNEL_INVOCATION_TYPE_MANPAGE_ENTRY}${PLSSVM_SYCL_IMPLEMENTATION_TYPE_MANPAGE_ENTRY}")

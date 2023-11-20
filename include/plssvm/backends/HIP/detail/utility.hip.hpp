@@ -61,6 +61,7 @@ void device_synchronize(int device);
 
 }  // namespace plssvm::hip::detail
 
-template <> struct fmt::formatter<hipError_t> : fmt::ostream_formatter {};
+template <>
+struct fmt::formatter<hipError_t> : fmt::ostream_formatter {};
 
 #endif  // PLSSVM_BACKENDS_HIP_DETAIL_UTILITY_HPP_

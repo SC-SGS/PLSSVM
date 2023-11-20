@@ -14,15 +14,15 @@
 #include "fmt/core.h"    // fmt::format
 
 #if __has_include(<unistd.h>)
-    #include <unistd.h>             // sysconf, _SC_PHYS_PAGES, _SC_PAGE_SIZE
+    #include <unistd.h>  // sysconf, _SC_PHYS_PAGES, _SC_PAGE_SIZE
     #define PLSSVM_UNIX_AVAILABLE_MEMORY
 #elif __has_include(<windows.h>)
-    #include <windows.h>            //
+    #include <windows.h>  //
     #define PLSSVM_WINDOWS_AVAILABLE_MEMORY
 #endif
 
-#include <ctime>         // std::time
-#include <string>        // std::string
+#include <ctime>   // std::time
+#include <string>  // std::string
 
 namespace plssvm::detail {
 
@@ -44,5 +44,8 @@ memory_size get_system_memory() {
     return memory_size{ 0 };
 #endif
 }
+
+#undef PLSSVM_UNIX_AVAILABLE_MEMORY
+#undef PLSSVM_WINDOWS_AVAILABLE_MEMORY
 
 }  // namespace plssvm::detail

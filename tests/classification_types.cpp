@@ -53,15 +53,19 @@ TEST(ClassificationType, classification_type_to_full_string) {
     EXPECT_EQ(plssvm::classification_type_to_full_string(plssvm::classification_type::oaa), "one vs. all");
     EXPECT_EQ(plssvm::classification_type_to_full_string(plssvm::classification_type::oao), "one vs. one");
 }
+TEST(ClassificationType, classification_type_to_full_string_unknown) {
+    // check conversion from unknown classification_typ to a full string
+    EXPECT_EQ(plssvm::classification_type_to_full_string(static_cast<plssvm::classification_type>(2)), "unknown");
+}
 
 TEST(ClassificationType, calculate_number_of_classifiers) {
     // check whether the number of weights for OAA is correct
-    EXPECT_EQ(calculate_number_of_classifiers(plssvm::classification_type::oaa, 2), 1);
+    EXPECT_EQ(calculate_number_of_classifiers(plssvm::classification_type::oaa, 2), 2);
     EXPECT_EQ(calculate_number_of_classifiers(plssvm::classification_type::oaa, 3), 3);
     EXPECT_EQ(calculate_number_of_classifiers(plssvm::classification_type::oaa, 4), 4);
     EXPECT_EQ(calculate_number_of_classifiers(plssvm::classification_type::oaa, 42), 42);
 
-    // check whether the number of weights for OA= is correct
+    // check whether the number of weights for OAO is correct
     EXPECT_EQ(calculate_number_of_classifiers(plssvm::classification_type::oao, 2), 1);
     EXPECT_EQ(calculate_number_of_classifiers(plssvm::classification_type::oao, 3), 3);
     EXPECT_EQ(calculate_number_of_classifiers(plssvm::classification_type::oao, 4), 6);

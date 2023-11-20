@@ -22,11 +22,10 @@
 #include "plssvm/parameter.hpp"           // plssvm::parameter, plssvm::detail::has_only_parameter_named_args_v
 #include "plssvm/target_platforms.hpp"    // plssvm::target_platform
 
-
-#include <type_traits>                    // std::true_type
-#include <utility>                        // std::forward, std::pair
-#include <vector>                         // std::vector
+#include <type_traits>  // std::true_type
+#include <utility>      // std::forward, std::pair
 #include <variant>
+#include <vector>  // std::vector
 
 namespace plssvm {
 
@@ -101,16 +100,9 @@ class csvm : public ::plssvm::csvm {
     /**
      * @brief Default destructor since the copy and move constructors and copy- and move-assignment operators are defined.
      */
-     ~csvm() override = default;
+    ~csvm() override = default;
 
-  private:
-    /**
-    * @brief Initializes the OpenMP backend and performs some sanity checks.
-    * @param[in] target the target platform to use
-    * @throws plssvm::openmp::backend_exception if the target platform isn't plssvm::target_platform::automatic or plssvm::target_platform::cpu
-    * @throws plssvm::openmp::backend_exception if the plssvm::target_platform::cpu target isn't available
-     */
-    void init(target_platform target);
+  protected:
     /**
      * @copydoc plssvm::csvm::get_device_memory
      */
@@ -130,7 +122,7 @@ class csvm : public ::plssvm::csvm {
     /**
      * @copydoc plssvm::csvm::assemble_kernel_matrix
      */
-    [[nodiscard]] detail::simple_any assemble_kernel_matrix(solver_type solver, const parameter &params, const detail::simple_any &data, const std::vector<real_type> &q_red, const real_type QA_cost) const final;
+    [[nodiscard]] detail::simple_any assemble_kernel_matrix(solver_type solver, const parameter &params, const detail::simple_any &data, const std::vector<real_type> &q_red, real_type QA_cost) const final;
     /**
      * @copydoc plssvm::csvm::blas_level_3
      */
@@ -143,6 +135,15 @@ class csvm : public ::plssvm::csvm {
      * @copydoc plssvm::csvm::predict_values
      */
     [[nodiscard]] aos_matrix<real_type> predict_values(const parameter &params, const aos_matrix<real_type> &support_vectors, const aos_matrix<real_type> &alpha, const std::vector<real_type> &rho, aos_matrix<real_type> &w, const aos_matrix<real_type> &predict_points) const final;
+
+  private:
+    /**
+     * @brief Initializes the OpenMP backend and performs some sanity checks.
+     * @param[in] target the target platform to use
+     * @throws plssvm::openmp::backend_exception if the target platform isn't plssvm::target_platform::automatic or plssvm::target_platform::cpu
+     * @throws plssvm::openmp::backend_exception if the plssvm::target_platform::cpu target isn't available
+     */
+    void init(target_platform target);
 };
 
 }  // namespace openmp

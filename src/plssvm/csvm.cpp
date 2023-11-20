@@ -48,10 +48,12 @@ void csvm::sanity_check_parameter() const {
     // cost: all allowed
 }
 
-aos_matrix<real_type> csvm::conjugate_gradients(const detail::simple_any &A, const aos_matrix<real_type> &B, const real_type eps, const unsigned long long max_cg_iter, const solver_type cg_solver) const {
+std::pair<aos_matrix<real_type>, unsigned long long> csvm::conjugate_gradients(const detail::simple_any &A, const aos_matrix<real_type> &B, const real_type eps, const unsigned long long max_cg_iter, const solver_type cg_solver) const {
     using namespace plssvm::operators;
 
     PLSSVM_ASSERT(!B.empty(), "The right-hand sides may not be empty!");
+    PLSSVM_ASSERT(eps > real_type{ 0.0 }, "The epsilon value must be greater than 0.0!");
+    PLSSVM_ASSERT(max_cg_iter > 0, "The maximum number of iterations must be greater than 0!");
 
     const std::size_t num_rows = B.num_cols();
     const std::size_t num_rhs = B.num_rows();
@@ -71,16 +73,7 @@ aos_matrix<real_type> csvm::conjugate_gradients(const detail::simple_any &A, con
     total_blas_level_3_time += this->run_blas_level_3(cg_solver, real_type{ -1.0 }, A, X, real_type{ 1.0 }, R);
 
     // delta = R.T * R
-    std::vector<real_type> delta(num_rhs);
-    #pragma omp parallel for default(none) shared(R, delta) firstprivate(num_rhs, num_rows)
-    for (std::size_t i = 0; i < num_rhs; ++i) {
-        real_type temp{ 0.0 };
-        #pragma omp simd reduction(+ : temp)
-        for (std::size_t j = 0; j < num_rows; ++j) {
-            temp += R(i, j) * R(i, j);
-        }
-        delta[i] = temp;
-    }
+    std::vector<real_type> delta = rowwise_dot(R, R);
     const std::vector<real_type> delta0(delta);
 
     aos_matrix<real_type> D{ R };
@@ -99,10 +92,7 @@ aos_matrix<real_type> csvm::conjugate_gradients(const detail::simple_any &A, con
     };
     // get the number of rhs that have already been converged
     const auto num_rhs_converged = [eps, &delta, &delta0]() {
-        return static_cast<std::size_t>(std::inner_product(delta.cbegin(), delta.cend(), delta0.cbegin(),
-                                                           real_type{ 0.0 },
-                                                           std::plus<>{},
-                                                           [eps](const real_type d, const real_type d0) { return d <= eps * eps *d0; }));
+        return static_cast<std::size_t>(std::inner_product(delta.cbegin(), delta.cend(), delta0.cbegin(), real_type{ 0.0 }, std::plus<>{}, [eps](const real_type d, const real_type d0) { return d <= eps * eps * d0; }));
     };
 
     unsigned long long iter = 0;
@@ -124,24 +114,10 @@ aos_matrix<real_type> csvm::conjugate_gradients(const detail::simple_any &A, con
         total_blas_level_3_time += this->run_blas_level_3(cg_solver, real_type{ 1.0 }, A, D, real_type{ 0.0 }, Q);
 
         // alpha = delta_new / (D^T * Q))
-        std::vector<real_type> alpha(num_rhs);
-        #pragma omp parallel for default(none) shared(D, Q, alpha, delta) firstprivate(num_rhs, num_rows)
-        for (std::size_t i = 0; i < num_rhs; ++i) {
-            real_type temp{ 0.0 };
-            #pragma omp simd reduction(+ : temp)
-            for (std::size_t dim = 0; dim < num_rows; ++dim) {
-                temp += D(i, dim) * Q(i, dim);
-            }
-            alpha[i] = delta[i] / temp;
-        }
+        const std::vector<real_type> alpha = delta / rowwise_dot(D, Q);
 
         // X = X + alpha * D
-        #pragma omp parallel for collapse(2) default(none) shared(X, alpha, D) firstprivate(num_rhs, num_rows)
-        for (std::size_t i = 0; i < num_rhs; ++i) {
-            for (std::size_t dim = 0; dim < num_rows; ++dim) {
-                X(i, dim) += alpha[i] * D(i, dim);
-            }
-        }
+        X += rowwise_scale(alpha, D);
 
         if (iter % 50 == 49) {
             // explicitly recalculate residual to remove accumulating floating point errors
@@ -150,35 +126,17 @@ aos_matrix<real_type> csvm::conjugate_gradients(const detail::simple_any &A, con
             total_blas_level_3_time += this->run_blas_level_3(cg_solver, real_type{ -1.0 }, A, X, real_type{ 1.0 }, R);
         } else {
             // R = R - alpha * Q
-            #pragma omp parallel for collapse(2) default(none) shared(R, alpha, Q) firstprivate(num_rhs, num_rows)
-            for (std::size_t i = 0; i < num_rhs; ++i) {
-                for (std::size_t dim = 0; dim < num_rows; ++dim) {
-                    R(i, dim) -= alpha[i] * Q(i, dim);
-                }
-            }
+            R -= rowwise_scale(alpha, Q);
         }
 
         // delta = R^T * R
         const std::vector<real_type> delta_old = delta;
-        #pragma omp parallel for default(none) shared(R, delta) firstprivate(num_rhs, num_rows)
-        for (std::size_t col = 0; col < num_rhs; ++col) {
-            real_type temp{ 0.0 };
-            #pragma omp simd reduction(+ : temp)
-            for (std::size_t row = 0; row < num_rows; ++row) {
-                temp += R(col, row) * R(col, row);
-            }
-            delta[col] = temp;
-        }
+        delta = rowwise_dot(R, R);
 
         // beta = delta_new / delta_old
         const std::vector<real_type> beta = delta / delta_old;
         // D = beta * D + R
-        #pragma omp parallel for collapse(2) default(none) shared(D, beta, R) firstprivate(num_rhs, num_rows)
-        for (std::size_t i = 0; i < num_rhs; ++i) {
-            for (std::size_t dim = 0; dim < num_rows; ++dim) {
-                D(i, dim) = beta[i] * D(i, dim) + R(i, dim);
-            }
-        }
+        D = rowwise_scale(beta, D) + R;
 
         const std::chrono::steady_clock::time_point iteration_end_time = std::chrono::steady_clock::now();
         const std::chrono::duration iteration_duration = std::chrono::duration_cast<std::chrono::milliseconds>(iteration_end_time - iteration_start_time);
@@ -209,10 +167,12 @@ aos_matrix<real_type> csvm::conjugate_gradients(const detail::simple_any &A, con
                 "optimization finished, #iter = {}\n",
                 iter);
 
-    return X;
+    return std::make_pair(X, iter);
 }
 
 std::pair<std::vector<real_type>, real_type> csvm::perform_dimensional_reduction(const parameter &params, const aos_matrix<real_type> &A) const {
+    PLSSVM_ASSERT(!A.empty(), "The matrix must not be empty!");
+
     const std::chrono::steady_clock::time_point dimension_reduction_start_time = std::chrono::steady_clock::now();
 
     const std::size_t num_rows_reduced = A.num_rows() - 1;
@@ -249,6 +209,9 @@ std::pair<std::vector<real_type>, real_type> csvm::perform_dimensional_reduction
 }
 
 std::chrono::duration<long, std::milli> csvm::run_blas_level_3(const solver_type cg_solver, const real_type alpha, const detail::simple_any &A, const aos_matrix<real_type> &B, const real_type beta, aos_matrix<real_type> &C) const {
+    PLSSVM_ASSERT(!B.empty(), "The B matrix must not be empty!");
+    PLSSVM_ASSERT(!C.empty(), "The C matrix must not be empty!");
+
     const std::chrono::steady_clock::time_point start_time = std::chrono::steady_clock::now();
 
     this->blas_level_3(cg_solver, alpha, A, B, beta, C);

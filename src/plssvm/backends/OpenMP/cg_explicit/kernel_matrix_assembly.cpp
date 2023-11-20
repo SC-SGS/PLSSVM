@@ -13,9 +13,9 @@
 #include "plssvm/kernel_function_types.hpp"  // plssvm::kernel_function_type, plssvm::kernel_function
 #include "plssvm/matrix.hpp"                 // plssvm::aos_matrix
 
-#include <cstddef>                           // std::size_t
-#include <utility>                           // std::forward
-#include <vector>                            // std::vector
+#include <cstddef>  // std::size_t
+#include <utility>  // std::forward
+#include <vector>   // std::vector
 
 namespace plssvm::openmp {
 

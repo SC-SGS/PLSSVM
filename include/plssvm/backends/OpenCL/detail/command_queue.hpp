@@ -15,9 +15,9 @@
 
 #include "plssvm/backends/OpenCL/detail/kernel.hpp"  // plssvm::opencl::detail::kernel
 
-#include "CL/cl.h"                                   // cl_context, cl_command_queue, cl_device_id
+#include "CL/cl.h"  // cl_context, cl_command_queue, cl_device_id
 
-#include <map>                                       // std::map
+#include <map>  // std::map
 
 namespace plssvm::opencl::detail {
 

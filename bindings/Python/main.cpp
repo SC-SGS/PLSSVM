@@ -8,9 +8,9 @@
 
 #include "plssvm/exceptions/exceptions.hpp"  // plssvm::exception
 
-#include "pybind11/pybind11.h"               // PYBIND11_MODULE, py::module_, py::exception, py::register_exception_translator
+#include "pybind11/pybind11.h"  // PYBIND11_MODULE, py::module_, py::exception, py::register_exception_translator
 
-#include <exception>                         // std::exception_ptr, std::rethrow_exception
+#include <exception>  // std::exception_ptr, std::rethrow_exception
 
 namespace py = pybind11;
 

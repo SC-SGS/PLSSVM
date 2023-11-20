@@ -26,9 +26,7 @@ enum class kernel_invocation_type {
     /** Use the best kernel invocation type for the current SYCL implementation and target hardware platform. */
     automatic,
     /** Use the [`nd_range` invocation type](https://www.khronos.org/registry/SYCL/specs/sycl-2020/html/sycl-2020.html#_parallel_for_invoke). */
-    nd_range,
-    /** Use the SYCL specific [`hierarchical` invocation type](https://www.khronos.org/registry/SYCL/specs/sycl-2020/html/sycl-2020.html#_parallel_for_hierarchical_invoke). */
-    hierarchical
+    nd_range
 };
 
 /**
@@ -49,6 +47,7 @@ std::istream &operator>>(std::istream &in, kernel_invocation_type &invocation);
 
 }  // namespace plssvm::sycl
 
-template <> struct fmt::formatter<plssvm::sycl::kernel_invocation_type> : fmt::ostream_formatter {};
+template <>
+struct fmt::formatter<plssvm::sycl::kernel_invocation_type> : fmt::ostream_formatter {};
 
 #endif  // PLSSVM_BACKENDS_SYCL_KERNEL_INVOCATION_TYPE_HPP_

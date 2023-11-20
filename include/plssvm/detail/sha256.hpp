@@ -59,7 +59,7 @@ class sha256 {
      * @param[in] count the number of bits to rotate
      * @return the rotated 32-bit integer (`[[nodiscard]]`)
      */
-    [[nodiscard]] static std::uint32_t rotr32(std::uint32_t value, unsigned int count);
+    [[nodiscard]] static std::uint32_t rotr32(std::uint32_t value, int count);
 
     /// Number of bytes in the resulting digest.
     static constexpr std::uint32_t DIGEST_SIZE = 256 / 8;

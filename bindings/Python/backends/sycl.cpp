@@ -10,7 +10,7 @@
 #include "plssvm/backends/SYCL/implementation_type.hpp"
 #include "plssvm/backends/SYCL/kernel_invocation_type.hpp"
 
-#include "../utility.hpp"       // register_py_exception
+#include "../utility.hpp"  // register_py_exception
 
 #include "pybind11/pybind11.h"  // py::module_, py::enum_, py::exception
 #include "pybind11/stl.h"       // support for STL types: std:vector
@@ -40,10 +40,9 @@ void init_sycl(py::module_ &m, const py::exception<plssvm::exception> &base_exce
 
     py::enum_<plssvm::sycl::kernel_invocation_type>(sycl_module, "KernelInvocationType")
         .value("AUTOMATIC", plssvm::sycl::kernel_invocation_type::automatic, "use the best kernel invocation type for the current SYCL implementation and target hardware platform")
-        .value("ND_RANGE", plssvm::sycl::kernel_invocation_type::nd_range, "use the nd_range kernel invocation type")
-        .value("HIERARCHICAL", plssvm::sycl::kernel_invocation_type::hierarchical, "use the hierarchical kernel invocation type");
+        .value("ND_RANGE", plssvm::sycl::kernel_invocation_type::nd_range, "use the nd_range kernel invocation type");
 
-// initialize SYCL binding classes
+    // initialize SYCL binding classes
 #if defined(PLSSVM_SYCL_BACKEND_HAS_HIPSYCL)
     const py::module_ hipsycl_module = init_hipsycl_csvm(m, base_exception);
 #endif

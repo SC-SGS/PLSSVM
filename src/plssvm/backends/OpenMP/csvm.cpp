@@ -128,11 +128,13 @@ detail::simple_any csvm::assemble_kernel_matrix(const solver_type solver, const 
 #if defined(PLSSVM_USE_GEMM)
         PLSSVM_ASSERT(num_rows_reduced * num_rows_reduced == kernel_matrix.size(),
                       "The kernel matrix must be a quadratic matrix with num_rows_reduced^2 ({}) entries, but is {}!",
-                      num_rows_reduced * num_rows_reduced, kernel_matrix.size());
+                      num_rows_reduced * num_rows_reduced,
+                      kernel_matrix.size());
 #else
         PLSSVM_ASSERT(num_rows_reduced * (num_rows_reduced + 1) / 2 == kernel_matrix.size(),
                       "The kernel matrix must be a triangular matrix only with num_rows_reduced * (num_rows_reduced + 1) / 2 ({}) entries, but is {}!",
-                      num_rows_reduced * (num_rows_reduced + 1) / 2, kernel_matrix.size());
+                      num_rows_reduced * (num_rows_reduced + 1) / 2,
+                      kernel_matrix.size());
 #endif
 
         return detail::simple_any{ std::move(kernel_matrix) };
@@ -176,8 +178,8 @@ aos_matrix<real_type> csvm::predict_values(const parameter &params, const aos_ma
     PLSSVM_ASSERT(!support_vectors.empty(), "The support vectors must not be empty!");
     PLSSVM_ASSERT(!alpha.empty(), "The alpha vectors (weights) must not be empty!");
     PLSSVM_ASSERT(support_vectors.num_rows() == alpha.num_cols(), "The number of support vectors ({}) and number of weights ({}) must be the same!", support_vectors.num_rows(), alpha.num_cols());
-    PLSSVM_ASSERT(rho.size() == alpha.num_rows(), "The number of rho values ({}) and the number of weights ({}) must be the same!", rho.size(), alpha.num_rows());
-    PLSSVM_ASSERT(w.empty() || support_vectors.num_cols() == w.num_cols(), "Either w must be empty or contain exactly the same number of values as features are present ({})!", support_vectors.num_cols());
+    PLSSVM_ASSERT(rho.size() == alpha.num_rows(), "The number of rho values ({}) and the number of weight vectors ({}) must be the same!", rho.size(), alpha.num_rows());
+    PLSSVM_ASSERT(w.empty() || support_vectors.num_cols() == w.num_cols(), "Either w must be empty or contain exactly the same number of values ({}) as features are present ({})!", w.num_cols(), support_vectors.num_cols());
     PLSSVM_ASSERT(w.empty() || alpha.num_rows() == w.num_rows(), "Either w must be empty or contain exactly the same number of vectors ({}) as the alpha vector ({})!", w.num_rows(), alpha.num_rows());
     PLSSVM_ASSERT(!predict_points.empty(), "The data points to predict must not be empty!");
     PLSSVM_ASSERT(support_vectors.num_cols() == predict_points.num_cols(), "The number of features in the support vectors ({}) must be the same as in the data points to predict ({})!", support_vectors.num_cols(), predict_points.num_cols());
@@ -218,7 +220,7 @@ aos_matrix<real_type> csvm::predict_values(const parameter &params, const aos_ma
                 real_type temp{ 0.0 };
                 #pragma omp simd reduction(+ : temp)
                 for (std::size_t dim = 0; dim < num_features; ++dim) {
-                    temp += w(a, dim) * predict_points(point_index, dim);
+                    temp = std::fma(w(a, dim), predict_points(point_index, dim), temp);
                 }
                 out(point_index, a) = temp - rho[a];
             }
@@ -233,7 +235,7 @@ aos_matrix<real_type> csvm::predict_values(const parameter &params, const aos_ma
             for (std::size_t sv_index = 0; sv_index < num_support_vectors; ++sv_index) {
                 const real_type kernel_func = kernel_function(support_vectors, sv_index, predict_points, point_index, params);
                 for (std::size_t a = 0; a < num_classes; ++a) {
-                    out(point_index, a) += alpha(a, sv_index) * kernel_func;
+                    out(point_index, a) = std::fma(alpha(a, sv_index),  kernel_func, out(point_index, a));
                 }
             }
         }

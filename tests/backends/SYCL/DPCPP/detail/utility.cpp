@@ -11,7 +11,7 @@
 #include "plssvm/backends/SYCL/DPCPP/detail/utility.hpp"  // plssvm::dpcpp::detail::get_device_list
 #include "plssvm/target_platforms.hpp"                    // plssvm::target_platform
 
-#include "gtest/gtest.h"                                  // TEST, EXPECT_NE, EXPECT_FALSE
+#include "gtest/gtest.h"  // TEST, EXPECT_NE, EXPECT_FALSE
 
 TEST(DPCPPUtility, get_device_list) {
     const auto &[queues, actual_target] = plssvm::dpcpp::detail::get_device_list(plssvm::target_platform::automatic);

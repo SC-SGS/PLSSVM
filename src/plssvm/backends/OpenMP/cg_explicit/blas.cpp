@@ -8,9 +8,11 @@
 
 #include "plssvm/backends/OpenMP/cg_explicit/blas.hpp"
 
-#include "plssvm/constants.hpp"  // plssvm::real_type
-#include "plssvm/matrix.hpp"     // plssvm::aos_matrix
+#include "plssvm/constants.hpp"      // plssvm::real_type
+#include "plssvm/detail/assert.hpp"  // PLSSVM_ASSERT
+#include "plssvm/matrix.hpp"         // plssvm::aos_matrix
 
+#include <array>    // std::array
 #include <cstddef>  // std::size_t
 #include <vector>   // std::vector
 
@@ -18,6 +20,10 @@ namespace plssvm::openmp {
 
 void device_kernel_gemm(const unsigned long long m, const unsigned long long n, const unsigned long long k, const real_type alpha, const std::vector<real_type> &A, const aos_matrix<real_type> &B, const real_type beta, aos_matrix<real_type> &C) {
     // compute: C = alpha * A * B + beta * C with A in m x k, B in n x k, and C in n x m, alpha, beta as scalar
+    PLSSVM_ASSERT(A.size() == m * k, "A matrix sizes mismatch!: {} != {}", A.size(), m * k);
+    PLSSVM_ASSERT(B.shape() == (std::array<std::size_t, 2>{ n, k }), "B matrix sizes mismatch!: [{}] != [{}, {}]", fmt::join(B.shape(), ", "), n, k);
+    PLSSVM_ASSERT(C.shape() == (std::array<std::size_t, 2>{ n, m }), "C matrix sizes mismatch!: [{}] != [{}, {}]", fmt::join(C.shape(), ", "), n, m);
+
     #pragma omp parallel for collapse(2) default(none) shared(A, B, C) firstprivate(n, m, k, alpha, beta)
     for (std::size_t rhs = 0; rhs < n; ++rhs) {
         for (std::size_t row = 0; row < m; ++row) {
@@ -33,6 +39,10 @@ void device_kernel_gemm(const unsigned long long m, const unsigned long long n, 
 
 void device_kernel_symm(const unsigned long long m, const unsigned long long n, const unsigned long long k, const real_type alpha, const std::vector<real_type> &A, const aos_matrix<real_type> &B, const real_type beta, aos_matrix<real_type> &C) {
     // compute: C = alpha * A * B + beta * C with A in m x k, B in n x k, and C in n x m, alpha, beta as scalar
+    PLSSVM_ASSERT(A.size() == m * (k + 1) / 2, "A matrix sizes mismatch!: {} != {}", A.size(), m * (k + 1) / 2);
+    PLSSVM_ASSERT(B.shape() == (std::array<std::size_t, 2>{ n, k }), "B matrix sizes mismatch!: [{}] != [{}, {}]", fmt::join(B.shape(), ", "), n, k);
+    PLSSVM_ASSERT(C.shape() == (std::array<std::size_t, 2>{ n, m }), "C matrix sizes mismatch!: [{}] != [{}, {}]", fmt::join(C.shape(), ", "), n, m);
+
     #pragma omp parallel for collapse(2) default(none) shared(A, B, C) firstprivate(n, m, k, alpha, beta)
     for (std::size_t rhs = 0; rhs < n; ++rhs) {
         for (std::size_t row = 0; row < m; ++row) {

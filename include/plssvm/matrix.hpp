@@ -20,13 +20,16 @@
 #include "fmt/core.h"     // fmt::format
 #include "fmt/ostream.h"  // fmt::formatter, fmt::ostream_formatter
 
-#include <algorithm>  // std::equal, std::all_of
-#include <array>      // std::array
-#include <cstddef>    // std::size_t
-#include <iosfwd>     // std::istream forward declaration
-#include <ostream>    // std::ostream
-#include <utility>    // std::swap
-#include <vector>     // std::vector
+#include <algorithm>    // std::equal, std::all_of
+#include <array>        // std::array
+#include <cstddef>      // std::size_t
+#include <cstring>      // std::memcpy
+#include <iosfwd>       // std::istream forward declaration
+#include <ostream>      // std::ostream
+#include <string_view>  // std::string_view
+#include <type_traits>  // std::enable_if, std::is_convertible_v
+#include <utility>      // std::swap
+#include <vector>       // std::vector
 
 namespace plssvm {
 
@@ -55,6 +58,13 @@ std::ostream &operator<<(std::ostream &out, layout_type layout);
  * @return the input-stream
  */
 std::istream &operator>>(std::istream &in, layout_type &layout);
+
+/**
+ * @brief In contrast to operator>> return the full name of the provided @p layout type.
+ * @param[in] layout the layout type
+ * @return the full name of the layout type (`[[nodiscard]]`)
+ */
+[[nodiscard]] std::string_view layout_type_to_full_string(layout_type layout);
 
 /**
  * @brief A matrix class encapsulating a 1D array automatically handling indexing with AoS and SoA.
@@ -89,25 +99,44 @@ class matrix {
     template <layout_type other_layout_>
     explicit matrix(const matrix<T, other_layout_> &other);
     /**
-     * @brief Create a matrix of size @p num_rows x @p num_cols and initialize all entries with the value @p init.
-     * @param[in] num_rows the number of rows in the matrix
-     * @param[in] num_cols the number of columns in the matrix
-     * @param[in] init the value of all entries in the matrix
-     * @throws plssvm::matrix_exception if at least one of @p num_rows or @p num_cols is zero
-     */
-    matrix(size_type num_rows, size_type num_cols, const_reference init);
-    /**
      * @brief Create a matrix of size @p num_rows x @p num_cols.
      * @param[in] num_rows the number of rows in the matrix
      * @param[in] num_cols the number of columns in the matrix
-     * @throws plssvm::matrix_exception if at least one of @p num_rows or @p num_cols is zero
+     * @throws plssvm::matrix_exception if exactly one of @p num_rows or @p num_cols is zero; creates an empty matrix if both are zero
      */
     matrix(const size_type num_rows, const size_type num_cols) :
         matrix{ num_rows, num_cols, value_type{} } {}
     /**
+     * @brief Create a matrix of size @p num_rows x @p num_cols and initialize all entries with the value @p init.
+     * @tparam U the type of the @p init value; must be convertible to @p T
+     * @param[in] num_rows the number of rows in the matrix
+     * @param[in] num_cols the number of columns in the matrix
+     * @param[in] init the value of all entries in the matrix
+     * @throws plssvm::matrix_exception if exactly one of @p num_rows or @p num_cols is zero; creates an empty matrix if both are zero
+     */
+    template <typename U, std::enable_if_t<std::is_convertible_v<U, T>, bool> = true>
+    matrix(size_type num_rows, size_type num_cols, const U &init);
+    /**
+     * @brief Create a matrix of size @p num_rows x @p num_cols and initialize it to the values provided via @p data.
+     * @param[in] num_rows the number of rows in the matrix
+     * @param[in] num_cols the number of cols in the matrix
+     * @param[in] data the data values
+     * @throws plssvm::matrix_exception if exactly one of @p num_rows or @p num_cols is zero; creates an empty matrix if both are zero
+     * @throws plssvm::matrix_exception if @p num_rows times @p num_cols is not equal to the number of values in @p data
+     */
+    matrix(size_type num_rows, size_type num_cols, const std::vector<value_type> &data);
+    /**
+     * @brief Create a matrix of size @p num_rows x @p num_cols and initialize it to the values provided via @p data.
+     * @param[in] num_rows the number of rows in the matrix
+     * @param[in] num_cols the number of cols in the matrix
+     * @param[in] data the pointer to the data values
+     * @throws plssvm::matrix_exception if exactly one of @p num_rows or @p num_cols is zero; creates an empty matrix if both are zero
+     */
+    matrix(size_type num_rows, size_type num_cols, const_pointer data);
+
+    /**
      * @brief Create a matrix from the provided 2D vector @p data.
      * @param[in] data the data used to initialize this matrix
-     * @throws plssvm::matrix_exception if the data vector is empty
      * @throws plssvm::matrix_exception if the data vectors contain different number of values
      * @throws plssvm::matrix_exception if one vector in the data vector is empty
      */
@@ -215,13 +244,14 @@ class matrix {
 
 template <typename T, layout_type layout_>
 template <layout_type other_layout_>
-matrix<T, layout_>::matrix(const matrix<T, other_layout_> &other) : matrix{ other.num_rows(), other.num_cols() } {
+matrix<T, layout_>::matrix(const matrix<T, other_layout_> &other) :
+    matrix{ other.num_rows(), other.num_cols() } {
     if constexpr (layout_ == other_layout_) {
         // same layout -> simply memcpy underlying array
         std::memcpy(data_.data(), other.data(), this->num_entries() * sizeof(T));
     } else {
         // convert AoS -> SoA or SoA -> AoS
-        #pragma omp parallel for collapse(2) default(none) shared(other) firstprivate(num_rows_, num_cols_)
+        #pragma omp parallel for collapse(2)
         for (std::size_t row = 0; row < num_rows_; ++row) {
             for (std::size_t col = 0; col < num_cols_; ++col) {
                 this->operator()(row, col) = other(row, col);
@@ -231,38 +261,76 @@ matrix<T, layout_>::matrix(const matrix<T, other_layout_> &other) : matrix{ othe
 }
 
 template <typename T, layout_type layout_>
-matrix<T, layout_>::matrix(const size_type num_rows, const size_type num_cols, const_reference init) :
-    num_rows_{ num_rows }, num_cols_{ num_cols }, data_(num_rows * num_cols, init) {
-    if (num_rows_ == 0) {
-        throw matrix_exception{ "The number of rows is zero!" };
+template <typename U, std::enable_if_t<std::is_convertible_v<U, T>, bool>>
+matrix<T, layout_>::matrix(const size_type num_rows, const size_type num_cols, const U &init) :
+    num_rows_{ num_rows }, num_cols_{ num_cols }, data_(num_rows * num_cols, static_cast<T>(init)) {
+    if (num_rows_ == 0 && num_cols_ != 0) {
+        throw matrix_exception{ "The number of rows is zero but the number of columns is not!" };
     }
-    if (num_cols_ == 0) {
-        throw matrix_exception{ "The number of columns is zero!" };
+    if (num_rows_ != 0 && num_cols_ == 0) {
+        throw matrix_exception{ "The number of columns is zero but the number of rows is not!" };
+    }
+}
+
+template <typename T, layout_type layout_>
+matrix<T, layout_>::matrix(const size_type num_rows, const size_type num_cols, const std::vector<value_type> &data) :
+    num_rows_{ num_rows }, num_cols_{ num_cols }, data_(num_rows * num_cols) {
+    if (num_rows_ == 0 && num_cols_ != 0) {
+        throw matrix_exception{ "The number of rows is zero but the number of columns is not!" };
+    }
+    if (num_rows_ != 0 && num_cols_ == 0) {
+        throw matrix_exception{ "The number of columns is zero but the number of rows is not!" };
+    }
+    if (this->num_entries() != data.size()) {
+        throw matrix_exception{ fmt::format("The number of entries in the matrix ({}) must be equal to the size of the data ({})!", this->num_entries(), data.size()) };
+    }
+    // memcpy data to matrix
+    std::memcpy(data_.data(), data.data(), this->num_entries() * sizeof(T));
+}
+
+template <typename T, layout_type layout_>
+matrix<T, layout_>::matrix(const size_type num_rows, const size_type num_cols, const_pointer data) :
+    num_rows_{ num_rows }, num_cols_{ num_cols }, data_(num_rows * num_cols) {
+    if (num_rows_ == 0 && num_cols_ != 0) {
+        throw matrix_exception{ "The number of rows is zero but the number of columns is not!" };
+    }
+    if (num_rows_ != 0 && num_cols_ == 0) {
+        throw matrix_exception{ "The number of columns is zero but the number of rows is not!" };
+    }
+    if (this->num_entries() > 0) {
+        // memcpy data to matrix
+        std::memcpy(data_.data(), data, this->num_entries() * sizeof(T));
     }
 }
 
 template <typename T, layout_type layout_>
 matrix<T, layout_>::matrix(const std::vector<std::vector<value_type>> &data) {
     if (data.empty()) {
-        throw matrix_exception{ "The data to create the matrix from may not be empty!" };
-    }
-    if (!std::all_of(data.cbegin(), data.cend(), [&data](const std::vector<value_type> &row) { return row.size() == data.front().size(); })) {
-        throw matrix_exception{ "Each row in the matrix must contain the same amount of columns!" };
-    }
-    if (data.front().empty()) {
-        throw matrix_exception{ "The data to create the matrix must at least have one column!" };
-    }
+        // the provided 2D vector was empty -> set to empty matrix
+        num_rows_ = 0;
+        num_cols_ = 0;
+        data_ = std::vector<value_type>{};
+    } else {
+        if (!std::all_of(data.cbegin(), data.cend(), [&data](const std::vector<value_type> &row) { return row.size() == data.front().size(); })) {
+            throw matrix_exception{ "Each row in the matrix must contain the same amount of columns!" };
+        }
+        if (data.front().empty()) {
+            throw matrix_exception{ "The data to create the matrix must at least have one column!" };
+        }
 
-    num_rows_ = data.size();
-    num_cols_ = data.front().size();
-    data_ = std::vector<value_type>(num_rows_ * num_cols_);
+        // the provided 2D vector contains at least one element -> initialize matrix
+        num_rows_ = data.size();
+        num_cols_ = data.front().size();
+        data_ = std::vector<value_type>(num_rows_ * num_cols_);
 
-    #pragma omp parallel for collapse(2) shared(data) firstprivate(num_rows_, num_cols_)
-    for (std::size_t row = 0; row < num_rows_; ++row) {
-        for (std::size_t col = 0; col < num_cols_; ++col) {
-            (*this)(row, col) = data[row][col];
+        #pragma omp parallel for collapse(2)
+        for (std::size_t row = 0; row < num_rows_; ++row) {
+            for (std::size_t col = 0; col < num_cols_; ++col) {
+                (*this)(row, col) = data[row][col];
+            }
         }
     }
+
 }
 
 template <typename T, layout_type layout_>
@@ -295,7 +363,7 @@ auto matrix<T, layout_>::at(const size_type row, const size_type col) const -> v
         throw matrix_exception{ fmt::format("The current row ({}) must be smaller than the number of rows ({})!", row, num_rows_) };
     }
     if (col >= num_cols_) {
-        throw matrix_exception{ fmt::format("The current column ({}) must be smaller than the number of columns ({})!", row, num_rows_) };
+        throw matrix_exception{ fmt::format("The current column ({}) must be smaller than the number of columns ({})!", col, num_cols_) };
     }
 
     return this->operator()(row, col);
@@ -306,7 +374,7 @@ auto matrix<T, layout_>::at(const size_type row, const size_type col) -> referen
         throw matrix_exception{ fmt::format("The current row ({}) must be smaller than the number of rows ({})!", row, num_rows_) };
     }
     if (col >= num_cols_) {
-        throw matrix_exception{ fmt::format("The current column ({}) must be smaller than the number of columns ({})!", row, num_rows_) };
+        throw matrix_exception{ fmt::format("The current column ({}) must be smaller than the number of columns ({})!", col, num_cols_) };
     }
 
     return this->operator()(row, col);
@@ -315,7 +383,7 @@ auto matrix<T, layout_>::at(const size_type row, const size_type col) -> referen
 template <typename T, layout_type layout_>
 auto matrix<T, layout_>::to_2D_vector() const -> std::vector<std::vector<value_type>> {
     std::vector<std::vector<value_type>> ret(num_rows_, std::vector<value_type>(num_cols_));
-    #pragma omp parallel for collapse(2) shared(ret) firstprivate(num_rows_, num_cols_)
+    #pragma omp parallel for collapse(2)
     for (std::size_t row = 0; row < num_rows_; ++row) {
         for (std::size_t col = 0; col < num_cols_; ++col) {
             ret[row][col] = (*this)(row, col);
@@ -352,7 +420,7 @@ inline void swap(matrix<T, layout> &lhs, matrix<T, layout> &rhs) {
  */
 template <typename T, layout_type layout_>
 [[nodiscard]] inline bool operator==(const matrix<T, layout_> &lhs, const matrix<T, layout_> &rhs) noexcept {
-    return lhs.num_rows_ == rhs.num_rows_ && lhs.num_cols_ == rhs.num_cols_ && std::equal(lhs.data(), lhs.data() + lhs.num_entries(), rhs.data());
+    return lhs.shape() == rhs.shape() && std::equal(lhs.data(), lhs.data() + lhs.num_entries(), rhs.data());
 }
 /**
  * @brief Compares @p lhs and @p rhs for inequality.
@@ -379,9 +447,11 @@ inline std::ostream &operator<<(std::ostream &out, const matrix<T, layout> &matr
     using size_type = typename matrix<T, layout>::size_type;
     for (size_type row = 0; row < matr.num_rows(); ++row) {
         for (size_type col = 0; col < matr.num_cols(); ++col) {
-            out << matr(row, col) << ' ';
+            out << fmt::format("{:.10e} ",  matr(row, col));
         }
-        out << '\n';
+        if (row < matr.num_rows() - 1) {
+            out << '\n';
+        }
     }
     return out;
 }
@@ -397,9 +467,11 @@ using aos_matrix = matrix<T, layout_type::aos>;
 template <typename T>
 using soa_matrix = matrix<T, layout_type::soa>;
 
-}  // namespace plssvm::detail
+}  // namespace plssvm
 
-template <> struct fmt::formatter<plssvm::layout_type> : fmt::ostream_formatter {};
-template <typename T, plssvm::layout_type layout> struct fmt::formatter<plssvm::matrix<T, layout>> : fmt::ostream_formatter {};
+template <>
+struct fmt::formatter<plssvm::layout_type> : fmt::ostream_formatter {};
+template <typename T, plssvm::layout_type layout>
+struct fmt::formatter<plssvm::matrix<T, layout>> : fmt::ostream_formatter {};
 
 #endif  // PLSSVM_DETAIL_MATRIX_HPP_
