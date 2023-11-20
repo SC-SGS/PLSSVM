@@ -25,7 +25,7 @@ namespace plssvm::hip::detail {
 
 template <typename T>
 device_ptr<T>::device_ptr(const size_type size, const queue_type device) :
-    device_ptr{ { size, 1 }, device } { }
+    device_ptr{ { size, 0 }, device } {}
 
 template <typename T>
 device_ptr<T>::device_ptr(const std::array<size_type, 2> extends, const queue_type device) :

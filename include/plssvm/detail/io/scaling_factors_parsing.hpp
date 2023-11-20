@@ -15,10 +15,10 @@
 
 #include "plssvm/constants.hpp"                 // plssvm::real_type
 #include "plssvm/detail/assert.hpp"             // PLSSVM_ASSERT
-#include "plssvm/detail/utility.hpp"            // plssvm:detail::current_date_time
 #include "plssvm/detail/io/file_reader.hpp"     // plssvm::detail::io::file_reader
 #include "plssvm/detail/string_conversion.hpp"  // plssvm::detail::split_as
 #include "plssvm/detail/string_utility.hpp"     // plssvm::detail::trim
+#include "plssvm/detail/utility.hpp"            // plssvm:detail::current_date_time
 #include "plssvm/exceptions/exceptions.hpp"     // plssvm::invalid_file_format_exception
 
 #include "fmt/core.h"  // fmt::format
@@ -149,7 +149,7 @@ inline void write_scaling_factors(const std::string &filename, const std::pair<r
     out.print("{} {}\n", scaling_interval.first, scaling_interval.second);
     // write the scaling factors for each feature, note the one based indexing scheme!
     for (const factors_type &f : scaling_factors) {
-        out.print("{} {} {}\n", f.feature + 1, f.lower, f.upper);
+        out.print("{} {:.10e} {:.10e}\n", f.feature + 1, f.lower, f.upper);
     }
 }
 

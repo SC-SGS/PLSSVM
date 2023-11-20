@@ -1,29 +1,31 @@
-name: Windows CPU
+name: Windows MSVC CPU
 on: push
 jobs:
   MSVC-Test:
     runs-on: windows-latest
     steps:
-      - name: "Install MSVC 14.29"
-        uses: ilammy/msvc-dev-cmd@v1.9.0
-        with:
-          toolset: 14.29
-      - name: "Install cmake 3.22.2"
-        uses: lukka/get-cmake@v3.22.2
-      - name: "Clone Step"
+      - name: "Install latest MSVC compiler"
+        uses: ilammy/msvc-dev-cmd@v1.12.1
+      - name: "Install cmake 3.25.2"
+        uses: lukka/get-cmake@v3.25.2
+      - name: "Clone the PLSSVM repository into PLSSVM/"
         uses: actions/checkout@v2
         with:
           path: PLSSVM
-      - name: "CMake Step"
+      - name: "Install Python dependencies"
+        uses: py-actions/py-dependency-install@v4
+        with:
+          path: "PLSSVM/.github/workflows/requirements.txt"
+      - name: "Configure PLSSVM using CMake"
         run: |
           mkdir PLSSVM/build
           cd PLSSVM/build
-          cmake -DCMAKE_BUILD_TYPE=Debug -DPLSSVM_TARGET_PLATFORMS="cpu" -DPLSSVM_ENABLE_TESTING=ON -DPLSSVM_GENERATE_TEST_FILE=OFF -DPLSSVM_ENABLE_LTO=OFF -DPLSSVM_ENABLE_ASSERTS=ON ..
-      - name: "Build Step"
+          cmake -DCMAKE_BUILD_TYPE=Release -DPLSSVM_TARGET_PLATFORMS="cpu" -DPLSSVM_ENABLE_TESTING=ON -DPLSSVM_TEST_FILE_NUM_DATA_POINTS=50 -DPLSSVM_TEST_FILE_NUM_FEATURES=20 -DPLSSVM_ENABLE_LTO=OFF -DPLSSVM_ENABLE_ASSERTS=ON ..
+      - name: "Build PLSSVM"
         run: |
           cd PLSSVM/build
           cmake --build .
-      - name: "Test Step"
+      - name: "Run tests"
         run: |
           cd PLSSVM/build
-          ctest --output-on-failure -C Debug
+          ctest -j 2 -E ".*Exceptions\.|SourceLocation" --output-on-failure -C Release

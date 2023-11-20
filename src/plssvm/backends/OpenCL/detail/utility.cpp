@@ -23,30 +23,30 @@
 #include "plssvm/exceptions/exceptions.hpp"                 // plssvm::unsupported_kernel_type_exception, plssvm::invalid_file_format_exception
 #include "plssvm/target_platforms.hpp"                      // plssvm::target_platform
 
-#include "CL/cl.h"                                          // cl_program, cl_platform_id, cl_device_id, cl_uint, cl_device_type, cl_context,
-                                                            // CL_DEVICE_NAME, CL_QUEUE_DEVICE, CL_DEVICE_TYPE_ALL, CL_DEVICE_TYPE_CPU, CL_DEVICE_TYPE_GPU, CL_DEVICE_VENDOR, CL_PROGRAM_BUILD_LOG, CL_PROGRAM_BINARY_SIZES, CL_PROGRAM_BINARIES,
-                                                            // clCreateProgramWithSource, clBuildProgram, clGetProgramBuildInfo, clGetProgramInfo, clCreateKernel, clReleaseProgram, clCreateProgramWithBinary,
-                                                            //  clSetKernelArg, clEnqueueNDRangeKernel, clFinish, clGetPlatformIDs, clGetDeviceIDs, clGetDeviceInfo, clCreateContext
-#include "fmt/core.h"                                       // fmt::print, fmt::format
-#include "fmt/ostream.h"                                    // fmt::formatter, fmt::ostream_formatter
-#include "fmt/std.h"                                        // format std::filesystem::path
+#include "CL/cl.h"        // cl_program, cl_platform_id, cl_device_id, cl_uint, cl_device_type, cl_context,
+                          // CL_DEVICE_NAME, CL_QUEUE_DEVICE, CL_DEVICE_TYPE_ALL, CL_DEVICE_TYPE_CPU, CL_DEVICE_TYPE_GPU, CL_DEVICE_VENDOR, CL_PROGRAM_BUILD_LOG, CL_PROGRAM_BINARY_SIZES, CL_PROGRAM_BINARIES,
+                          // clCreateProgramWithSource, clBuildProgram, clGetProgramBuildInfo, clGetProgramInfo, clCreateKernel, clReleaseProgram, clCreateProgramWithBinary,
+                          //  clSetKernelArg, clEnqueueNDRangeKernel, clFinish, clGetPlatformIDs, clGetDeviceIDs, clGetDeviceInfo, clCreateContext
+#include "fmt/core.h"     // fmt::print, fmt::format
+#include "fmt/ostream.h"  // fmt::formatter, fmt::ostream_formatter
+#include "fmt/std.h"      // format std::filesystem::path
 
-#include <algorithm>                                        // std::count_if
-#include <array>                                            // std::array
-#include <cstddef>                                          // std::size_t
-#include <filesystem>                                       // std::filesystem::{path, temp_directory_path, exists, directory_iterator, directory_entry}
-#include <fstream>                                          // std::ifstream, std::ofstream
-#include <functional>                                       // std::hash
-#include <ios>                                              // std::ios_base, std::streamsize
-#include <iostream>                                         // std::cout, std::endl
-#include <iterator>                                         // std::istreambuf_iterator
-#include <limits>                                           // std::numeric_limits
-#include <map>                                              // std::map
-#include <string>                                           // std::string
-#include <string_view>                                      // std::string_view
-#include <tuple>                                            // std::tie
-#include <utility>                                          // std::pair, std::make_pair, std::move
-#include <vector>                                           // std::vector
+#include <algorithm>    // std::count_if
+#include <array>        // std::array
+#include <cstddef>      // std::size_t
+#include <filesystem>   // std::filesystem::{path, temp_directory_path, exists, directory_iterator, directory_entry}
+#include <fstream>      // std::ifstream, std::ofstream
+#include <functional>   // std::hash
+#include <ios>          // std::ios_base, std::streamsize
+#include <iostream>     // std::cout, std::endl
+#include <iterator>     // std::istreambuf_iterator
+#include <limits>       // std::numeric_limits
+#include <map>          // std::map
+#include <string>       // std::string
+#include <string_view>  // std::string_view
+#include <tuple>        // std::tie
+#include <utility>      // std::pair, std::make_pair, std::move
+#include <vector>       // std::vector
 
 namespace plssvm::opencl::detail {
 
@@ -238,7 +238,7 @@ std::vector<command_queue> create_command_queues(const std::vector<context> &con
     ::plssvm::detail::replace_all(kernel_src_string, "FEATURE_BLOCK_SIZE", fmt::format("{}", FEATURE_BLOCK_SIZE));
 
     // append number of device to influence checksum calculation
-    kernel_src_string.append(fmt::format("\n// num_devices: {}\n// OpenCL library: {}", contexts[0].devices.size(), PLSSVM_OPENCL_LIBRARY));
+    kernel_src_string.append(fmt::format("\n// num_devices: {}\n// OpenCL library: {}\n// GEMM: {}", contexts[0].devices.size(), PLSSVM_OPENCL_LIBRARY, PLSSVM_IS_DEFINED(PLSSVM_USE_GEMM)));
 
     // create source code hash
     const std::string checksum = plssvm::detail::sha256{}(kernel_src_string);
@@ -290,7 +290,8 @@ std::vector<command_queue> create_command_queues(const std::vector<context> &con
 
     if (use_cached_binaries != caching_status::success) {
         plssvm::detail::log(verbosity_level::full,
-                            "Building OpenCL kernels from source (reason: {}).\n", caching_status_to_string(use_cached_binaries));
+                            "Building OpenCL kernels from source (reason: {}).\n",
+                            caching_status_to_string(use_cached_binaries));
 
         // create and build program
         cl_program program = clCreateProgramWithSource(contexts[0], 1, &kernel_src_ptr, nullptr, &err);
@@ -335,7 +336,8 @@ std::vector<command_queue> create_command_queues(const std::vector<context> &con
             out.write(reinterpret_cast<char *>(binaries[i]), binary_sizes[i]);
         }
         plssvm::detail::log(verbosity_level::full,
-                            "Cached OpenCL kernel binaries in {}.\n", cache_dir_name);
+                            "Cached OpenCL kernel binaries in {}.\n",
+                            cache_dir_name);
 
         // release resource
         if (program) {
@@ -343,7 +345,8 @@ std::vector<command_queue> create_command_queues(const std::vector<context> &con
         }
     } else {
         plssvm::detail::log(verbosity_level::full,
-                            "Using cached OpenCL kernel binaries from {}.\n", cache_dir_name);
+                            "Using cached OpenCL kernel binaries from {}.\n",
+                            cache_dir_name);
 
         const auto common_read_file = [](const std::filesystem::path &file) -> std::pair<unsigned char *, std::size_t> {
             std::ifstream f{ file };

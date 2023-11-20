@@ -114,7 +114,7 @@ class csvm : public ::plssvm::detail::gpu_csvm<detail::device_ptr, detail::comma
      */
     ~csvm() override;
 
-  private:
+  protected:
     /**
      * @brief Initialize all important states related to the CUDA backend.
      * @param[in] target the target platform to use

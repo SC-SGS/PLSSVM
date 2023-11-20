@@ -12,30 +12,31 @@
 #include "plssvm/backends/SYCL/hipSYCL/detail/queue_impl.hpp"  // plssvm::hipsycl::detail::queue (PImpl implementation)
 #include "plssvm/backends/SYCL/hipSYCL/detail/utility.hpp"     // plssvm::hipsycl::detail::get_device_list, plssvm::hipsycl::device_synchronize
 
-#include "plssvm/backends/SYCL/cg_explicit/blas.hpp"                     // plssvm::sycl::device_kernel_gemm
-#include "plssvm/backends/SYCL/cg_explicit/kernel_matrix_assembly.hpp"   // plssvm::sycl::{device_kernel_assembly_linear, device_kernel_assembly_polynomial, device_kernel_assembly_rbf}
-#include "plssvm/backends/SYCL/exceptions.hpp"                           // plssvm::hipsycl::backend_exception
-#include "plssvm/backends/SYCL/predict_kernel.hpp"                       // plssvm::sycl::detail::{kernel_w, device_kernel_predict_polynomial, device_kernel_predict_rbf}
-#include "plssvm/constants.hpp"                                          // plssvm::real_type
-#include "plssvm/detail/assert.hpp"                                      // PLSSVM_ASSERT
-#include "plssvm/detail/logger.hpp"                                      // plssvm::detail::log, plssvm::verbosity_level
-#include "plssvm/detail/memory_size.hpp"                                 // plssvm::detail::memory_size
-#include "plssvm/detail/performance_tracker.hpp"                         // plssvm::detail::tracking_entry
-#include "plssvm/detail/utility.hpp"                                     // plssvm::detail::get_system_memory
-#include "plssvm/exceptions/exceptions.hpp"                              // plssvm::exception
-#include "plssvm/kernel_function_types.hpp"                              // plssvm::kernel_type
-#include "plssvm/parameter.hpp"                                          // plssvm::parameter, plssvm::detail::parameter
-#include "plssvm/target_platforms.hpp"                                   // plssvm::target_platform
+#include "plssvm/backends/SYCL/cg_explicit/blas.hpp"                    // plssvm::sycl::device_kernel_gemm
+#include "plssvm/backends/SYCL/cg_explicit/kernel_matrix_assembly.hpp"  // plssvm::sycl::{device_kernel_assembly_linear, device_kernel_assembly_polynomial, device_kernel_assembly_rbf}
+#include "plssvm/backends/SYCL/exceptions.hpp"                          // plssvm::hipsycl::backend_exception
+#include "plssvm/backends/SYCL/predict_kernel.hpp"                      // plssvm::sycl::detail::{kernel_w, device_kernel_predict_polynomial, device_kernel_predict_rbf}
+#include "plssvm/constants.hpp"                                         // plssvm::real_type
+#include "plssvm/detail/assert.hpp"                                     // PLSSVM_ASSERT
+#include "plssvm/detail/logger.hpp"                                     // plssvm::detail::log, plssvm::verbosity_level
+#include "plssvm/detail/memory_size.hpp"                                // plssvm::detail::memory_size
+#include "plssvm/detail/performance_tracker.hpp"                        // plssvm::detail::tracking_entry
+#include "plssvm/detail/utility.hpp"                                    // plssvm::detail::get_system_memory
+#include "plssvm/exceptions/exceptions.hpp"                             // plssvm::exception
+#include "plssvm/kernel_function_types.hpp"                             // plssvm::kernel_type
+#include "plssvm/parameter.hpp"                                         // plssvm::parameter, plssvm::detail::parameter
+#include "plssvm/target_platforms.hpp"                                  // plssvm::target_platform
 
-#include "fmt/core.h"                                          // fmt::format
-#include "fmt/ostream.h"                                       // can use fmt using operator<< overloads
-#include "sycl/sycl.hpp"                                       // ::sycl::range, ::sycl::nd_range, ::sycl::handler, ::sycl::info::device
+#include "fmt/color.h"    // fmt::fg, fmt::color::orange
+#include "fmt/core.h"     // fmt::format
+#include "fmt/ostream.h"  // can use fmt using operator<< overloads
+#include "sycl/sycl.hpp"  // ::sycl::range, ::sycl::nd_range, ::sycl::handler, ::sycl::info::device
 
-#include <cstddef>                                             // std::size_t
-#include <exception>                                           // std::terminate
-#include <iostream>                                            // std::cout, std::endl
-#include <tuple>                                               // std::tie
-#include <vector>                                              // std::vector
+#include <cstddef>    // std::size_t
+#include <exception>  // std::terminate
+#include <iostream>   // std::cout, std::endl
+#include <tuple>      // std::tie
+#include <vector>     // std::vector
 
 namespace plssvm::hipsycl {
 
@@ -77,17 +78,21 @@ void csvm::init(const target_platform target) {
     // get all available devices wrt the requested target platform
     std::tie(devices_, target_) = detail::get_device_list(target);
 
+    // currently only single GPU execution is supported
+    if (devices_.size() != 1) {
+        std::clog << fmt::format(fmt::fg(fmt::color::orange), "WARNING: found {} devices, but currently only single GPU execution is supported. Continuing only with device 0!", devices_.size()) << std::endl;
+        devices_.resize(1);
+    }
+
     // set correct kernel invocation type if "automatic" has been provided
     if (invocation_type_ == sycl::kernel_invocation_type::automatic) {
-        if (target_ != target_platform::cpu) {
-            // always use nd_range on GPUs
-            invocation_type_ = sycl::kernel_invocation_type::nd_range;
-        } else {
-            // on CPUs: use hierarchical, except if omp.accelerated is present then also use nd_range
-#if defined(__HIPSYCL_USE_ACCELERATED_CPU__)
-            invocation_type_ = sycl::kernel_invocation_type::nd_range;
-#else
-            invocation_type_ = sycl::kernel_invocation_type::hierarchical;
+        // always use nd_range for hipSYCL (
+        invocation_type_ = sycl::kernel_invocation_type::nd_range;
+        if (target_ == target_platform::cpu) {
+#if !defined(__HIPSYCL_USE_ACCELERATED_CPU__)
+            std::clog << fmt::format(fmt::fg(fmt::color::orange),
+                                     "WARNING: the hipSYCL automatic target for the CPU is set to nd_range, but hipSYCL hasn't been build with the \"omp.accelerated\" compilation flow resulting in major performance losses!")
+                      << std::endl;
 #endif
         }
     }
@@ -98,7 +103,8 @@ void csvm::init(const target_platform target) {
                         plssvm::detail::tracking_entry{ "backend", "sycl_kernel_invocation_type", invocation_type_ });
     if (target == target_platform::automatic) {
         plssvm::detail::log(verbosity_level::full,
-                            "Using {} as automatic target platform.\n", target_);
+                            "Using {} as automatic target platform.\n",
+                            target_);
     }
     PLSSVM_DETAIL_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking_entry{ "backend", "backend", plssvm::backend_type::sycl }));
     PLSSVM_DETAIL_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking_entry{ "backend", "sycl_implementation_type", plssvm::sycl::implementation_type::hipsycl }));
@@ -118,7 +124,9 @@ void csvm::init(const target_platform target) {
     for (typename std::vector<queue_type>::size_type device = 0; device < devices_.size(); ++device) {
         const std::string device_name = devices_[device].impl->sycl_queue.get_device().template get_info<::sycl::info::device::name>();
         plssvm::detail::log(verbosity_level::full,
-                            "  [{}, {}]\n", device, device_name);
+                            "  [{}, {}]\n",
+                            device,
+                            device_name);
         device_names.emplace_back(device_name);
     }
     PLSSVM_DETAIL_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking_entry{ "backend", "device", device_names }));
@@ -234,7 +242,6 @@ void csvm::run_blas_level_3_kernel_explicit(const std::size_t m, const std::size
 #endif
     devices_[0].impl->sycl_queue.wait_and_throw();
 }
-
 
 //***************************************************//
 //                   predict, score                  //

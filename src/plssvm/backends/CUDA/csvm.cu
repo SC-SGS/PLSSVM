@@ -25,17 +25,20 @@
 #include "plssvm/parameter.hpp"                                         // plssvm::parameter
 #include "plssvm/target_platforms.hpp"                                  // plssvm::target_platform
 
-#include "cuda.h"                                      // cuda runtime functions
-#include "cuda_runtime_api.h"                          // cuda runtime functions
+#include "cuda.h"              // cuda runtime functions
+#include "cuda_runtime_api.h"  // cuda runtime functions
 
-#include "fmt/core.h"                                  // fmt::format
-#include "fmt/ostream.h"                               // can use fmt using operator<< overloads
+#include "fmt/color.h"    // fmt::fg, fmt::color::orange
+#include "fmt/core.h"     // fmt::format
+#include "fmt/ostream.h"  // can use fmt using operator<< overloads
 
-#include <cstddef>                                     // std::size_t
-#include <exception>                                   // std::terminate
-#include <iostream>                                    // std::cout, std::endl
-#include <numeric>                                     // std::iota
-#include <utility>                                     // std::pair, std::make_pair
+#include <cmath>      // std::sqrt, std::ceil
+#include <cstddef>    // std::size_t
+#include <exception>  // std::terminate
+#include <iostream>   // std::cout, std::endl
+#include <numeric>    // std::iota
+#include <string>     // std::string
+#include <vector>     // std:vector
 
 namespace plssvm::cuda {
 
@@ -81,6 +84,12 @@ void csvm::init(const target_platform target) {
     devices_.resize(detail::get_device_count());
     std::iota(devices_.begin(), devices_.end(), 0);
 
+    // currently only single GPU execution is supported
+    if (devices_.size() != 1) {
+        std::clog << fmt::format(fmt::fg(fmt::color::orange), "WARNING: found {} devices, but currently only single GPU execution is supported. Continuing only with device 0!", devices_.size()) << std::endl;
+        devices_.resize(1);
+    }
+
     // throw exception if no CUDA devices could be found
     if (devices_.empty()) {
         throw backend_exception{ "CUDA backend selected but no CUDA capable devices were found!" };
@@ -88,14 +97,19 @@ void csvm::init(const target_platform target) {
 
     // print found CUDA devices
     plssvm::detail::log(verbosity_level::full,
-                        "Found {} CUDA device(s):\n", plssvm::detail::tracking_entry{ "backend", "num_devices", devices_.size() });
+                        "Found {} CUDA device(s):\n",
+                        plssvm::detail::tracking_entry{ "backend", "num_devices", devices_.size() });
     std::vector<std::string> device_names;
     device_names.reserve(devices_.size());
     for (const queue_type &device : devices_) {
         cudaDeviceProp prop{};
         cudaGetDeviceProperties(&prop, device);
         plssvm::detail::log(verbosity_level::full,
-                            "  [{}, {}, {}.{}]\n", device, prop.name, prop.major, prop.minor);
+                            "  [{}, {}, {}.{}]\n",
+                            device,
+                            prop.name,
+                            prop.major,
+                            prop.minor);
         device_names.emplace_back(prop.name);
     }
     PLSSVM_DETAIL_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking_entry{ "backend", "device", device_names }));
@@ -141,9 +155,9 @@ auto csvm::run_assemble_kernel_matrix_explicit(const parameter &params, const de
                     static_cast<int>(std::ceil(static_cast<double>(num_rows_reduced) / static_cast<double>(block.y))));
 
 #if defined(PLSSVM_USE_GEMM)
-    device_ptr_type kernel_matrix_d{ num_rows_reduced * num_rows_reduced };  // store full matrix
+    device_ptr_type kernel_matrix_d{ num_rows_reduced * num_rows_reduced, devices_[0] };  // store full matrix
 #else
-    device_ptr_type kernel_matrix_d{ num_rows_reduced * (num_rows_reduced + 1) / 2 };  // only explicitly store the upper triangular matrix
+    device_ptr_type kernel_matrix_d{ num_rows_reduced * (num_rows_reduced + 1) / 2, devices_[0] };  // only explicitly store the upper triangular matrix
 #endif
     const real_type cost_factor = real_type{ 1.0 } / params.cost;
 
@@ -206,7 +220,7 @@ auto csvm::run_w_kernel(const device_ptr_type &alpha_d, const device_ptr_type &s
     const dim3 grid(static_cast<int>(std::ceil(static_cast<double>(num_features) / static_cast<double>(block.x))),
                     static_cast<int>(std::ceil(static_cast<double>(num_classes) / static_cast<double>(block.y))));
 
-    device_ptr_type w_d{ { num_classes, num_features } };
+    device_ptr_type w_d{ { num_classes, num_features }, devices_[0] };
 
     detail::set_device(0);
     cuda::device_kernel_w_linear<<<grid, block>>>(w_d.get(), alpha_d.get(), sv_d.get(), num_classes, num_sv, num_features);
@@ -222,7 +236,7 @@ auto csvm::run_predict_kernel(const parameter &params, const device_ptr_type &w_
     const unsigned long long num_predict_points = predict_points_d.size(0);
     const unsigned long long num_features = predict_points_d.size(1);
 
-    device_ptr_type out_d{ { num_predict_points, num_classes } };
+    device_ptr_type out_d{ { num_predict_points, num_classes }, devices_[0] };
 
     detail::set_device(0);
     if (params.kernel_type == kernel_function_type::linear) {

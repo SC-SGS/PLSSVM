@@ -449,6 +449,7 @@ struct hash<plssvm::default_value<T>> {
 
 }  // namespace std
 
-template <typename T> struct fmt::formatter<plssvm::default_value<T>> : fmt::ostream_formatter {};
+template <typename T>
+struct fmt::formatter<plssvm::default_value<T>> : fmt::ostream_formatter {};
 
 #endif  // PLSSVM_DEFAULT_VALUE_HPP_

@@ -12,12 +12,12 @@
 
 #include "plssvm/detail/utility.hpp"  // plssvm::detail::to_underlying
 
-#include "../custom_test_macros.hpp"  // EXPECT_CONVERSION_TO_STRING, EXPECT_CONVERSION_FROM_STRING
-#include "../utility.hpp"             // util::redirect_output
+#include "custom_test_macros.hpp"  // EXPECT_CONVERSION_TO_STRING, EXPECT_CONVERSION_FROM_STRING
+#include "utility.hpp"             // util::redirect_output
 
-#include "gtest/gtest.h"              // TEST_F, EXPECT_EQ, EXPECT_TRUE, ::testing::Test
+#include "gtest/gtest.h"  // TEST_F, EXPECT_EQ, EXPECT_TRUE, ::testing::Test
 
-#include <sstream>                    // std::istringstream
+#include <sstream>  // std::istringstream
 
 // check whether the plssvm::verbosity_level values are power of twos
 TEST(VerbosityLevel, values) {
@@ -73,7 +73,7 @@ TEST(VerbosityLevel, from_string_concatenation) {
 TEST(VerbosityLevel, from_string_unknown) {
     // foo isn't a valid backend_type
     std::istringstream input{ "foo" };
-    plssvm::verbosity_level verb;
+    plssvm::verbosity_level verb{};
     input >> verb;
     EXPECT_TRUE(input.fail());
 }

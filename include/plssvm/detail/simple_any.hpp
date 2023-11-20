@@ -14,7 +14,7 @@
 #pragma once
 
 #include <memory>   // std::unique_ptr, std::make_unique
-#include <utility>  // std::forward, std::move
+#include <utility>  // std::forward
 
 namespace plssvm::detail {
 
@@ -37,17 +37,12 @@ class simple_any {
     template <typename T>
     struct type_erasure_wrapper : type_erasure_base {
         /**
-         * @brief Copy-construct the type erased object.
-         * @param[in] obj the object to copy-from
+         * @brief Construct type erased object using a forwarding reference.
+         * @param[in,out] obj the object to create the wrapped object
          */
-        explicit type_erasure_wrapper(const T &obj) :
-            wrapped_object_{ obj } {}
-        /**
-         * @brief Move-construct the type erased object.
-         * @param[in,out] obj the object to move-from
-         */
-        explicit type_erasure_wrapper(T &&obj) :
-            wrapped_object_{ std::move(obj) } {}
+        template <typename U>
+        explicit type_erasure_wrapper(U &&obj) :
+            wrapped_object_{ std::forward<U>(obj) } {}
 
         /// The object stored in a type erased manner.
         T wrapped_object_;
@@ -80,6 +75,16 @@ class simple_any {
     template <typename T>
     [[nodiscard]] const T &get() const {
         return dynamic_cast<const type_erasure_wrapper<T> &>(*object_ptr_).wrapped_object_;
+    }
+
+    /**
+     * @brief Access the type erased object and move it out of the simple_any wrapper.
+     * @tparam T the expected type of the type erased object
+     * @return the object as rvalue (`[[nodiscard]]`)
+     */
+    template <typename T>
+    [[nodiscard]] T &&move() {
+        return std::move(dynamic_cast<type_erasure_wrapper<T> &&>(*object_ptr_).wrapped_object_);
     }
 
   private:

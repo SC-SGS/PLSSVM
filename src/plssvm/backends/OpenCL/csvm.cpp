@@ -24,18 +24,19 @@
 #include "plssvm/parameter.hpp"                             // plssvm::parameter, plssvm::detail::parameter
 #include "plssvm/target_platforms.hpp"                      // plssvm::target_platform
 
-#include "fmt/chrono.h"                                     // can directly print std::chrono literals
-#include "fmt/core.h"                                       // fmt::format
-#include "fmt/ostream.h"                                    // can use fmt using operator<< overloads
+#include "fmt/chrono.h"   // can directly print std::chrono literals
+#include "fmt/color.h"    // fmt::fg, fmt::color::orange
+#include "fmt/core.h"     // fmt::format
+#include "fmt/ostream.h"  // can use fmt using operator<< overloads
 
-#include <algorithm>                                        // std::all_of
-#include <chrono>                                           // std::chrono
-#include <exception>                                        // std::terminate
-#include <iostream>                                         // std::cout, std::endl
-#include <string>                                           // std::string
-#include <tuple>                                            // std::tie
-#include <utility>                                          // std::pair, std::make_pair, std::move
-#include <vector>                                           // std::vector
+#include <algorithm>  // std::all_of
+#include <chrono>     // std::chrono
+#include <exception>  // std::terminate
+#include <iostream>   // std::cout, std::endl
+#include <string>     // std::string
+#include <tuple>      // std::tie
+#include <utility>    // std::pair, std::make_pair, std::move
+#include <vector>     // std::vector
 
 namespace plssvm::opencl {
 
@@ -107,7 +108,8 @@ void csvm::init(const target_platform target) {
                         "\nUsing OpenCL as backend.\n");
     if (target == target_platform::automatic) {
         plssvm::detail::log(verbosity_level::full,
-                            "Using {} as automatic target platform.\n", target_);
+                            "Using {} as automatic target platform.\n",
+                            target_);
     }
     PLSSVM_DETAIL_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking_entry{ "backend", "backend", plssvm::backend_type::opencl }));
 
@@ -118,6 +120,12 @@ void csvm::init(const target_platform target) {
     const std::vector<std::pair<detail::compute_kernel_name, std::string>> kernel_names = detail::kernel_type_to_function_names(kernel);
     // compile all kernels for float and double
     devices_ = detail::create_command_queues(contexts_, target_, kernel_names);
+
+    // currently only single GPU execution is supported
+    if (devices_.size() != 1) {
+        std::clog << fmt::format(fmt::fg(fmt::color::orange), "WARNING: found {} devices, but currently only single GPU execution is supported. Continuing only with device 0!", devices_.size()) << std::endl;
+        devices_.resize(1);
+    }
 
     const auto jit_end_time = std::chrono::steady_clock::now();
     plssvm::detail::log(verbosity_level::full | verbosity_level::timing,
@@ -134,7 +142,9 @@ void csvm::init(const target_platform target) {
     for (typename std::vector<queue_type>::size_type device = 0; device < devices_.size(); ++device) {
         const std::string device_name = detail::get_device_name(devices_[device]);
         plssvm::detail::log(verbosity_level::full,
-                            "  [{}, {}]\n", device, device_name);
+                            "  [{}, {}]\n",
+                            device,
+                            device_name);
         device_names.emplace_back(device_name);
     }
     PLSSVM_DETAIL_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking_entry{ "backend", "device", device_names }));

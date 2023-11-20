@@ -13,10 +13,13 @@
 #include "plssvm/backends/OpenCL/detail/context.hpp"        // plssvm::opencl::detail::context
 #include "plssvm/backends/OpenCL/exceptions.hpp"            // plssvm::opencl::backend_exception
 
-#include "../../../custom_test_macros.hpp"                  // EXPECT_THROW_WHAT
+#include "custom_test_macros.hpp"  // EXPECT_THROW_WHAT
 
-#include "CL/cl.h"                                          // CL_SUCCESS, CL_DEVICE_NOT_FOUND
-#include "gtest/gtest.h"                                    // TEST, EXPECT_EQ, EXPECT_NE, EXPECT_NO_THROW, EXPECT_FALSE
+#include "CL/cl.h"        // CL_SUCCESS, CL_DEVICE_NOT_FOUND
+#include "gtest/gtest.h"  // TEST, EXPECT_EQ, EXPECT_NE, EXPECT_NO_THROW, EXPECT_FALSE
+
+#include <string>  // std::string
+#include <vector>  // std::vector
 
 TEST(OpenCLUtility, device_assert) {
     // CL_SUCCESS must not throw
@@ -55,4 +58,11 @@ TEST(OpenCLUtility, get_device_name) {
     // the device name should not be empty
     const std::string name = plssvm::opencl::detail::get_device_name(queue);
     EXPECT_FALSE(name.empty());
+}
+
+TEST(OpenCLUtility, kernel_type_to_function_names) {
+    // retrieve the function names
+    const auto function_name_map = plssvm::opencl::detail::kernel_type_to_function_names(plssvm::kernel_function_type::linear);
+    // the map must not be empty!
+    EXPECT_FALSE(function_name_map.empty());
 }

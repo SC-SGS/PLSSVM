@@ -13,7 +13,6 @@
 #define PLSSVM_KERNEL_FUNCTION_TYPES_HPP_
 #pragma once
 
-#include "plssvm/constants.hpp"              // plssvm::real_type
 #include "plssvm/detail/assert.hpp"          // PLSSVM_ASSERT
 #include "plssvm/detail/operators.hpp"       // dot product, plssvm::squared_euclidean_dist
 #include "plssvm/detail/type_traits.hpp"     // plssvm::detail::always_false_v
@@ -21,12 +20,13 @@
 #include "plssvm/exceptions/exceptions.hpp"  // plssvm::unsupported_kernel_type_exception
 #include "plssvm/matrix.hpp"                 // plssvm::matrix, plssvm::layout_type
 
-#include "fmt/ostream.h"                     // fmt::formatter, fmt::ostream_formatter
+#include "fmt/ostream.h"  // fmt::formatter, fmt::ostream_formatter
 
-#include <cmath>                             // std::pow, std::exp, std::fma
-#include <iosfwd>                            // forward declare std::ostream and std::istream
-#include <string_view>                       // std::string_view
-#include <vector>                            // std::vector
+#include <cmath>        // std::pow, std::exp, std::fma
+#include <cstddef>      // std::size_t
+#include <iosfwd>       // forward declare std::ostream and std::istream
+#include <string_view>  // std::string_view
+#include <vector>       // std::vector
 
 namespace plssvm {
 
@@ -70,47 +70,38 @@ std::istream &operator>>(std::istream &in, kernel_function_type &kernel);
 /**
  * @brief Computes the value of the two vectors @p xi and @p xj using the @p kernel function determined at compile-time.
  * @tparam kernel the type of the kernel
+ * @tparam T the used type to perform the calculations
  * @tparam Args additional parameters used in the respective kernel function
  * @param[in] xi the first vector
  * @param[in] xj the second vector
  * @param[in] args additional parameters
  * @return the value computed by the @p kernel function (`[[nodiscard]]`)
  */
-template <kernel_function_type kernel, typename... Args>
-[[nodiscard]] inline real_type kernel_function(const std::vector<real_type> &xi, const std::vector<real_type> &xj, Args &&...args) {
+template <kernel_function_type kernel, typename T, typename... Args>
+[[nodiscard]] inline T kernel_function(const std::vector<T> &xi, const std::vector<T> &xj, Args... args) {
     using namespace plssvm::operators;
 
     PLSSVM_ASSERT(xi.size() == xj.size(), "Sizes mismatch!: {} != {}", xi.size(), xj.size());
 
     if constexpr (kernel == kernel_function_type::linear) {
+        // get parameters
         static_assert(sizeof...(args) == 0, "Illegal number of additional parameters! Must be 0.");
-        real_type temp{ 0.0 };
-        #pragma omp simd reduction(+ : temp)
-        for (typename std::vector<real_type>::size_type dim = 0; dim < xi.size(); ++dim) {
-            temp += xi[dim] * xj[dim];
-        }
-        return temp;
+        // perform kernel function calculation
+        return transposed{ xi } * xj;
     } else if constexpr (kernel == kernel_function_type::polynomial) {
+        // get parameters
         static_assert(sizeof...(args) == 3, "Illegal number of additional parameters! Must be 3.");
-        const auto degree = static_cast<real_type>(detail::get<0>(args...));
-        const auto gamma = static_cast<real_type>(detail::get<1>(args...));
-        const auto coef0 = static_cast<real_type>(detail::get<2>(args...));
-        real_type temp{ 0.0 };
-        #pragma omp simd reduction(+ : temp)
-        for (typename std::vector<real_type>::size_type dim = 0; dim < xi.size(); ++dim) {
-            temp += xi[dim] * xj[dim];
-        }
-        return std::pow(std::fma(gamma, temp, coef0), degree);
+        const auto degree = static_cast<T>(detail::get<0>(args...));
+        const auto gamma = static_cast<T>(detail::get<1>(args...));
+        const auto coef0 = static_cast<T>(detail::get<2>(args...));
+        // perform kernel function calculation
+        return std::pow(std::fma(gamma, transposed{ xi } * xj, coef0), degree);
     } else if constexpr (kernel == kernel_function_type::rbf) {
+        // get parameters
         static_assert(sizeof...(args) == 1, "Illegal number of additional parameters! Must be 1.");
-        const auto gamma = static_cast<real_type>(detail::get<0>(args...));
-        real_type temp{ 0.0 };
-        #pragma omp simd reduction(+ : temp)
-        for (typename std::vector<real_type>::size_type dim = 0; dim < xi.size(); ++dim) {
-            const real_type diff = xi[dim] - xj[dim];
-            temp += diff * diff;
-        }
-        return std::exp(-gamma * temp);
+        const auto gamma = static_cast<T>(detail::get<0>(args...));
+        // perform kernel function calculation
+        return std::exp(-gamma * squared_euclidean_dist(xi, xj));
     } else {
         static_assert(detail::always_false_v<Args...>, "Unknown kernel type!");
     }
@@ -121,17 +112,20 @@ struct parameter;
 
 /**
  * @brief Computes the value of the two vectors @p xi and @p xj using the kernel function and kernel parameter stored in @p params.
+ * @tparam T the used type to perform the calculations
  * @param[in] xi the first vector
  * @param[in] xj the second vector
  * @param[in] params class encapsulating the kernel type and kernel parameters
  * @throws plssvm::unsupported_kernel_type_exception if the kernel function in @p params is not supported
  * @return the computed kernel function value (`[[nodiscard]]`)
  */
-[[nodiscard]] real_type kernel_function(const std::vector<real_type> &xi, const std::vector<real_type> &xj, const parameter &params);
+template <typename T>
+[[nodiscard]] T kernel_function(const std::vector<T> &xi, const std::vector<T> &xj, const parameter &params);
 
 /**
  * @brief Computes the value of the two matrix rows @p i in @p x and @p j in @p y using the @p kernel function determined at compile-time.
  * @tparam kernel the type of the kernel
+ * @tparam T the used type to perform the calculations
  * @tparam layout the layout type of the two matrices
  * @tparam Args additional parameters used in the respective kernel function
  * @param[in] x the first matrix
@@ -141,38 +135,41 @@ struct parameter;
  * @param[in] args additional parameters
  * @return the value computed by the @p kernel function (`[[nodiscard]]`)
  */
-template <kernel_function_type kernel, layout_type layout, typename... Args>
-[[nodiscard]] real_type kernel_function(const matrix<real_type, layout> &x, const std::size_t i, const matrix<real_type, layout> &y, const std::size_t j, Args &&...args) {
+template <kernel_function_type kernel, typename T, layout_type layout, typename... Args>
+[[nodiscard]] T kernel_function(const matrix<T, layout> &x, const std::size_t i, const matrix<T, layout> &y, const std::size_t j, Args... args) {
     PLSSVM_ASSERT(x.num_cols() == y.num_cols(), "Sizes mismatch!: {} != {}", x.num_cols(), y.num_cols());
-    using size_type = typename matrix<real_type, layout>::size_type;
+    PLSSVM_ASSERT(i < x.num_rows(), "Out-of-bounce access for i and x!: {} < {}", i, x.num_rows());
+    PLSSVM_ASSERT(j < y.num_rows(), "Out-of-bounce access for j and y!: {} < {}", j, y.num_rows());
+
+    using size_type = typename matrix<T, layout>::size_type;
 
     if constexpr (kernel == kernel_function_type::linear) {
         static_assert(sizeof...(args) == 0, "Illegal number of additional parameters! Must be 0.");
-        real_type temp{ 0.0 };
+        T temp{ 0.0 };
         #pragma omp simd reduction(+ : temp)
         for (size_type dim = 0; dim < x.num_cols(); ++dim) {
-            temp += x(i, dim) * y(j, dim);
+            temp = std::fma(x(i, dim), y(j, dim), temp);
         }
         return temp;
     } else if constexpr (kernel == kernel_function_type::polynomial) {
         static_assert(sizeof...(args) == 3, "Illegal number of additional parameters! Must be 3.");
-        const auto degree = static_cast<real_type>(detail::get<0>(args...));
-        const auto gamma = static_cast<real_type>(detail::get<1>(args...));
-        const auto coef0 = static_cast<real_type>(detail::get<2>(args...));
-        real_type temp{ 0.0 };
+        const auto degree = static_cast<T>(detail::get<0>(args...));
+        const auto gamma = static_cast<T>(detail::get<1>(args...));
+        const auto coef0 = static_cast<T>(detail::get<2>(args...));
+        T temp{ 0.0 };
         #pragma omp simd reduction(+ : temp)
         for (size_type dim = 0; dim < x.num_cols(); ++dim) {
-            temp += x(i, dim) * y(j, dim);
+            temp = std::fma(x(i, dim), y(j, dim), temp);
         }
         return std::pow(std::fma(gamma, temp, coef0), degree);
     } else if constexpr (kernel == kernel_function_type::rbf) {
         static_assert(sizeof...(args) == 1, "Illegal number of additional parameters! Must be 1.");
-        const auto gamma = static_cast<real_type>(detail::get<0>(args...));
-        real_type temp{ 0.0 };
+        const auto gamma = static_cast<T>(detail::get<0>(args...));
+        T temp{ 0.0 };
         #pragma omp simd reduction(+ : temp)
         for (size_type dim = 0; dim < x.num_cols(); ++dim) {
-            const real_type diff = x(i, dim) - y(j, dim);
-            temp += diff * diff;
+            const T diff = x(i, dim) - y(j, dim);
+            temp = std::fma(diff, diff, temp);
         }
         return std::exp(-gamma * temp);
     } else {
@@ -182,6 +179,7 @@ template <kernel_function_type kernel, layout_type layout, typename... Args>
 
 /**
  * @brief Computes the value of the two matrix rows @p i in @p x and @p j in @p y using the kernel function and kernel parameter stored in @p params.
+ * @tparam T the used type to perform the calculations
  * @tparam layout the layout type of the two matrices
  * @param[in] x the first matrix
  * @param[in] i the row in the first matrix
@@ -191,12 +189,12 @@ template <kernel_function_type kernel, layout_type layout, typename... Args>
  * @throws plssvm::unsupported_kernel_type_exception if the kernel function in @p params is not supported
  * @return the computed kernel function value (`[[nodiscard]]`)
  */
-template <layout_type layout>
-[[nodiscard]] real_type kernel_function(const matrix<real_type, layout> &x, std::size_t i, const matrix<real_type, layout> &y, std::size_t j, const parameter &params);
-
+template <typename T, layout_type layout>
+[[nodiscard]] T kernel_function(const matrix<T, layout> &x, std::size_t i, const matrix<T, layout> &y, std::size_t j, const parameter &params);
 
 }  // namespace plssvm
 
-template <> struct fmt::formatter<plssvm::kernel_function_type> : fmt::ostream_formatter {};
+template <>
+struct fmt::formatter<plssvm::kernel_function_type> : fmt::ostream_formatter {};
 
 #endif  // PLSSVM_KERNEL_FUNCTION_TYPES_HPP_

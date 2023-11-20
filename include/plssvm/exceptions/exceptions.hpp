@@ -16,9 +16,9 @@
 
 #include "plssvm/exceptions/source_location.hpp"  // plssvm::source_location
 
-#include <stdexcept>                              // std::runtime_error
-#include <string>                                 // std::string
-#include <string_view>                            // std::string_view
+#include <stdexcept>    // std::runtime_error
+#include <string>       // std::string
+#include <string_view>  // std::string_view
 
 namespace plssvm {
 
