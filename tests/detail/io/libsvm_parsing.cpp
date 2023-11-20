@@ -74,7 +74,7 @@ class LIBSVMParseDense : public ::testing::Test, protected util::temporary_file 
      * @brief Return the correct dense data points of the template ARFF file.
      * @return the correct data points (`[[nodiscard]]`)
      */
-    [[nodiscard]] const plssvm::aos_matrix<plssvm::real_type> &get_correct_data() const noexcept { return correct_data_; }
+    [[nodiscard]] const plssvm::soa_matrix<plssvm::real_type> &get_correct_data() const noexcept { return correct_data_; }
     /**
      * @brief Return the correct labels of the template ARFF file.
      * @return the correct labels (`[[nodiscard]]`)
@@ -83,7 +83,7 @@ class LIBSVMParseDense : public ::testing::Test, protected util::temporary_file 
 
   private:
     /// The correct dense data points.
-    plssvm::aos_matrix<plssvm::real_type> correct_data_{ { { plssvm::real_type{ -1.117827500607882 }, plssvm::real_type{ -2.9087188881250993 }, plssvm::real_type{ 0.66638344270039144 }, plssvm::real_type{ 1.0978832703949288 } },
+    plssvm::soa_matrix<plssvm::real_type> correct_data_{ { { plssvm::real_type{ -1.117827500607882 }, plssvm::real_type{ -2.9087188881250993 }, plssvm::real_type{ 0.66638344270039144 }, plssvm::real_type{ 1.0978832703949288 } },
                                                            { plssvm::real_type{ -0.5282118298909262 }, plssvm::real_type{ -0.335880984968183973 }, plssvm::real_type{ 0.51687296029754564 }, plssvm::real_type{ 0.54604461446026 } },
                                                            { plssvm::real_type{ 0.57650218263054642 }, plssvm::real_type{ 1.01405596624706053 }, plssvm::real_type{ 0.13009428079760464 }, plssvm::real_type{ 0.7261913886869387 } },
                                                            { plssvm::real_type{ -0.20981208921241892 }, plssvm::real_type{ 0.60276937379453293 }, plssvm::real_type{ -0.13086851759108944 }, plssvm::real_type{ 0.10805254527169827 } },
@@ -108,7 +108,7 @@ class LIBSVMParseSparse : public ::testing::Test, protected util::temporary_file
      * @brief Return the correct dense data points of the template ARFF file.
      * @return the correct data points (`[[nodiscard]]`)
      */
-    [[nodiscard]] const plssvm::aos_matrix<plssvm::real_type> &get_correct_data() const noexcept { return correct_data_; }
+    [[nodiscard]] const plssvm::soa_matrix<plssvm::real_type> &get_correct_data() const noexcept { return correct_data_; }
     /**
      * @brief Return the correct labels of the template ARFF file.
      * @return the correct labels (`[[nodiscard]]`)
@@ -117,7 +117,7 @@ class LIBSVMParseSparse : public ::testing::Test, protected util::temporary_file
 
   private:
     /// The correct sparse data points.
-    plssvm::aos_matrix<plssvm::real_type> correct_data_{ { { plssvm::real_type{ 0.0 }, plssvm::real_type{ 0.0 }, plssvm::real_type{ 0.0 }, plssvm::real_type{ 0.0 } },
+    plssvm::soa_matrix<plssvm::real_type> correct_data_{ { { plssvm::real_type{ 0.0 }, plssvm::real_type{ 0.0 }, plssvm::real_type{ 0.0 }, plssvm::real_type{ 0.0 } },
                                                            { plssvm::real_type{ 0.0 }, plssvm::real_type{ 0.51687296029754564 }, plssvm::real_type{ 0.0 }, plssvm::real_type{ 0.0 } },
                                                            { plssvm::real_type{ 1.01405596624706053 }, plssvm::real_type{ 0.0 }, plssvm::real_type{ 0.0 }, plssvm::real_type{ 0.0 } },
                                                            { plssvm::real_type{ 0.60276937379453293 }, plssvm::real_type{ 0.0 }, plssvm::real_type{ -0.13086851759108944 }, plssvm::real_type{ 0.0 } },
@@ -183,7 +183,7 @@ TYPED_TEST(LIBSVMParse, read_without_label) {
     ASSERT_EQ(num_features, 2);
 
     // check for correct data
-    const plssvm::aos_matrix<plssvm::real_type> correct_data{ { { plssvm::real_type{ 1.5 }, plssvm::real_type{ -2.9 } },
+    const plssvm::soa_matrix<plssvm::real_type> correct_data{ { { plssvm::real_type{ 1.5 }, plssvm::real_type{ -2.9 } },
                                                                 { plssvm::real_type{ 0.0 }, plssvm::real_type{ -0.3 } },
                                                                 { plssvm::real_type{ 5.5 }, plssvm::real_type{ 0.0 } } } };
     EXPECT_FLOATING_POINT_MATRIX_NEAR(data, correct_data);
@@ -353,7 +353,7 @@ TYPED_TEST(LIBSVMWrite, write_dense_with_label) {
 
     // define data to write
     const std::vector<label_type> label = util::get_correct_data_file_labels<label_type>();
-    const auto data = util::generate_specific_matrix<plssvm::aos_matrix<plssvm::real_type>>(label.size(), 3);
+    const auto data = util::generate_specific_matrix<plssvm::soa_matrix<plssvm::real_type>>(label.size(), 3);
 
     // write the necessary data to the file
     plssvm::detail::io::write_libsvm_data(this->filename, data, label);
@@ -380,7 +380,7 @@ TYPED_TEST(LIBSVMWrite, write_dense_with_label) {
 }
 TYPED_TEST(LIBSVMWrite, write_dense_without_label) {
     // define data to write
-    const auto data = util::generate_specific_matrix<plssvm::aos_matrix<plssvm::real_type>>(3, 3);
+    const auto data = util::generate_specific_matrix<plssvm::soa_matrix<plssvm::real_type>>(3, 3);
 
     // write the necessary data to the file
     plssvm::detail::io::write_libsvm_data(this->filename, data);
@@ -411,7 +411,7 @@ TYPED_TEST(LIBSVMWrite, write_sparse_with_label) {
 
     // define data to write
     const std::vector<label_type> label = util::get_correct_data_file_labels<label_type>();
-    const auto data = util::generate_specific_sparse_matrix<plssvm::aos_matrix<plssvm::real_type>>(label.size(), 3);
+    const auto data = util::generate_specific_sparse_matrix<plssvm::soa_matrix<plssvm::real_type>>(label.size(), 3);
 
     // write the necessary data to the file
     plssvm::detail::io::write_libsvm_data(this->filename, data, label);
@@ -445,7 +445,7 @@ TYPED_TEST(LIBSVMWrite, write_sparse_with_label) {
 }
 TYPED_TEST(LIBSVMWrite, write_sparse_without_label) {
     // define data to write
-    const auto data = util::generate_specific_sparse_matrix<plssvm::aos_matrix<plssvm::real_type>>(3, 3);
+    const auto data = util::generate_specific_sparse_matrix<plssvm::soa_matrix<plssvm::real_type>>(3, 3);
 
     // write the necessary data to the file
     plssvm::detail::io::write_libsvm_data(this->filename, data);
@@ -482,7 +482,7 @@ TYPED_TEST(LIBSVMWrite, empty_data) {
     using label_type = typename TestFixture::fixture_label_type;
 
     // define data to write
-    const plssvm::aos_matrix<plssvm::real_type> data{};
+    const plssvm::soa_matrix<plssvm::real_type> data{};
     const std::vector<label_type> label{};
 
     // write the necessary data to the file
@@ -500,7 +500,7 @@ TYPED_TEST(LIBSVMWriteDeathTest, data_with_provided_empty_labels) {
     using label_type = typename TestFixture::fixture_label_type;
 
     // define data to write
-    const plssvm::aos_matrix<plssvm::real_type> data{ 1, 1, 1 };
+    const plssvm::soa_matrix<plssvm::real_type> data{ 1, 1, 1 };
     const std::vector<label_type> label{};
 
     // try to write the necessary data to the file
@@ -510,7 +510,7 @@ TYPED_TEST(LIBSVMWriteDeathTest, data_and_label_size_mismatch) {
     using label_type = typename TestFixture::fixture_label_type;
 
     // define data to write
-    const plssvm::aos_matrix<plssvm::real_type> data{ 2, 1, 1 };
+    const plssvm::soa_matrix<plssvm::real_type> data{ 2, 1, 1 };
     const std::vector<label_type> label{ util::get_distinct_label<label_type>().front() };
 
     // try to write the necessary data to the file
@@ -521,7 +521,7 @@ TYPED_TEST(LIBSVMWriteDeathTest, labels_provided_but_not_written) {
     using label_type = typename TestFixture::fixture_label_type;
 
     // define data to write
-    const plssvm::aos_matrix<plssvm::real_type> data{ 2, 1, 1 };
+    const plssvm::soa_matrix<plssvm::real_type> data{ 2, 1, 1 };
     const std::vector<label_type> label{ util::get_distinct_label<label_type>().front() };
 
     // try to write the necessary data to the file

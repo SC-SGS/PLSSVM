@@ -37,11 +37,11 @@ class DataSetConstructors : public ::testing::Test, private util::redirect_outpu
      * @brief Return the correct data points according to the ARFF and LIBSVM template files.
      * @return the correct data points (`[[nodiscard]]`)
      */
-    [[nodiscard]] const plssvm::aos_matrix<plssvm::real_type> &get_correct_template_file_data_points() const noexcept { return correct_template_file_data_points_; }
+    [[nodiscard]] const plssvm::soa_matrix<plssvm::real_type> &get_correct_template_file_data_points() const noexcept { return correct_template_file_data_points_; }
 
   private:
     /// The correct data points.
-    plssvm::aos_matrix<plssvm::real_type> correct_template_file_data_points_{ { { plssvm::real_type{ -1.117827500607882 }, plssvm::real_type{ -2.9087188881250993 }, plssvm::real_type{ 0.66638344270039144 }, plssvm::real_type{ 1.0978832703949288 } },
+    plssvm::soa_matrix<plssvm::real_type> correct_template_file_data_points_{ { { plssvm::real_type{ -1.117827500607882 }, plssvm::real_type{ -2.9087188881250993 }, plssvm::real_type{ 0.66638344270039144 }, plssvm::real_type{ 1.0978832703949288 } },
                                                                                 { plssvm::real_type{ -0.5282118298909262 }, plssvm::real_type{ -0.335880984968183973 }, plssvm::real_type{ 0.51687296029754564 }, plssvm::real_type{ 0.54604461446026 } },
                                                                                 { plssvm::real_type{ 0.57650218263054642 }, plssvm::real_type{ 1.01405596624706053 }, plssvm::real_type{ 0.13009428079760464 }, plssvm::real_type{ 0.7261913886869387 } },
                                                                                 { plssvm::real_type{ -0.20981208921241892 }, plssvm::real_type{ 0.60276937379453293 }, plssvm::real_type{ -0.13086851759108944 }, plssvm::real_type{ 0.10805254527169827 } },
@@ -102,7 +102,7 @@ TYPED_TEST(DataSetConstructors, construct_arff_from_file_without_label) {
         { plssvm::real_type{ 0.0 }, plssvm::real_type{ -0.3 } },
         { plssvm::real_type{ 5.5 }, plssvm::real_type{ 0.0 } }
     };
-    EXPECT_FLOATING_POINT_MATRIX_EQ(data.data(), plssvm::aos_matrix<plssvm::real_type>{ correct_data });
+    EXPECT_FLOATING_POINT_MATRIX_EQ(data.data(), plssvm::soa_matrix<plssvm::real_type>{ correct_data });
     EXPECT_FALSE(data.has_labels());
     EXPECT_FALSE(data.labels().has_value());
     EXPECT_FALSE(data.classes().has_value());
@@ -151,7 +151,7 @@ TYPED_TEST(DataSetConstructors, construct_libsvm_from_file_without_label) {
         { plssvm::real_type{ 0.0 }, plssvm::real_type{ -0.3 } },
         { plssvm::real_type{ 5.5 }, plssvm::real_type{ 0.0 } }
     };
-    EXPECT_FLOATING_POINT_MATRIX_EQ(data.data(), plssvm::aos_matrix<plssvm::real_type>{ correct_data });
+    EXPECT_FLOATING_POINT_MATRIX_EQ(data.data(), plssvm::soa_matrix<plssvm::real_type>{ correct_data });
     EXPECT_FALSE(data.has_labels());
     EXPECT_FALSE(data.labels().has_value());
     EXPECT_FALSE(data.classes().has_value());
@@ -230,7 +230,7 @@ TYPED_TEST(DataSetConstructors, construct_scaled_arff_from_file) {
 
     // check values
     const auto [scaled_data_points, scaling_factors] = util::scale(this->get_correct_template_file_data_points(), plssvm::real_type{ -1.0 }, plssvm::real_type{ 1.0 });
-    EXPECT_FLOATING_POINT_MATRIX_NEAR(data.data(), plssvm::aos_matrix<plssvm::real_type>{ scaled_data_points });
+    EXPECT_FLOATING_POINT_MATRIX_NEAR(data.data(), plssvm::soa_matrix<plssvm::real_type>{ scaled_data_points });
     EXPECT_TRUE(data.has_labels());
     ASSERT_TRUE(data.labels().has_value());
     EXPECT_EQ(data.labels().value().get(), correct_labels);
@@ -263,7 +263,7 @@ TYPED_TEST(DataSetConstructors, construct_scaled_libsvm_from_file) {
 
     // check values
     const auto [scaled_data_points, scaling_factors] = util::scale(this->get_correct_template_file_data_points(), plssvm::real_type{ -2.5 }, plssvm::real_type{ 2.5 });
-    EXPECT_FLOATING_POINT_MATRIX_NEAR(data.data(), plssvm::aos_matrix<plssvm::real_type>{ scaled_data_points });
+    EXPECT_FLOATING_POINT_MATRIX_NEAR(data.data(), plssvm::soa_matrix<plssvm::real_type>{ scaled_data_points });
     EXPECT_TRUE(data.has_labels());
     ASSERT_TRUE(data.labels().has_value());
     EXPECT_EQ(data.labels().value().get(), correct_labels);
@@ -297,7 +297,7 @@ TYPED_TEST(DataSetConstructors, construct_scaled_explicit_arff_from_file) {
 
     // check values
     const auto [scaled_data_points, scaling_factors] = util::scale(this->get_correct_template_file_data_points(), plssvm::real_type{ -1.0 }, plssvm::real_type{ 1.0 });
-    EXPECT_FLOATING_POINT_MATRIX_NEAR(data.data(), plssvm::aos_matrix<plssvm::real_type>{ scaled_data_points });
+    EXPECT_FLOATING_POINT_MATRIX_NEAR(data.data(), plssvm::soa_matrix<plssvm::real_type>{ scaled_data_points });
     EXPECT_TRUE(data.has_labels());
     ASSERT_TRUE(data.labels().has_value());
     EXPECT_EQ(data.labels().value().get(), correct_labels);
@@ -330,7 +330,7 @@ TYPED_TEST(DataSetConstructors, construct_scaled_explicit_libsvm_from_file) {
 
     // check values
     const auto [scaled_data_points, scaling_factors] = util::scale(this->get_correct_template_file_data_points(), plssvm::real_type{ -2.5 }, plssvm::real_type{ 2.5 });
-    EXPECT_FLOATING_POINT_MATRIX_NEAR(data.data(), plssvm::aos_matrix<plssvm::real_type>{ scaled_data_points });
+    EXPECT_FLOATING_POINT_MATRIX_NEAR(data.data(), plssvm::soa_matrix<plssvm::real_type>{ scaled_data_points });
     EXPECT_TRUE(data.has_labels());
     ASSERT_TRUE(data.labels().has_value());
     EXPECT_EQ(data.labels().value().get(), correct_labels);
@@ -419,7 +419,7 @@ TYPED_TEST(DataSetConstructors, construct_from_vector_without_label) {
     using label_type = typename TestFixture::fixture_label_type;
 
     // create data points
-    const auto correct_data_points = util::generate_specific_matrix<plssvm::aos_matrix<plssvm::real_type>>(4, 4);
+    const auto correct_data_points = util::generate_specific_matrix<plssvm::soa_matrix<plssvm::real_type>>(4, 4);
 
     // create data set
     const plssvm::data_set<label_type> data{ correct_data_points.to_2D_vector() };
@@ -477,7 +477,7 @@ TYPED_TEST(DataSetConstructors, construct_from_vector_with_label) {
     // create data points and labels
     const std::vector<label_type> different_labels = util::get_distinct_label<label_type>();
     const std::vector<label_type> labels = util::get_correct_data_file_labels<label_type>();
-    const auto correct_data_points = util::generate_specific_matrix<plssvm::aos_matrix<plssvm::real_type>>(labels.size(), 4);
+    const auto correct_data_points = util::generate_specific_matrix<plssvm::soa_matrix<plssvm::real_type>>(labels.size(), 4);
 
     // create data set
     const plssvm::data_set<label_type> data{ correct_data_points.to_2D_vector(), labels };
@@ -516,7 +516,7 @@ TYPED_TEST(DataSetConstructors, construct_scaled_from_vector_without_label) {
     using scaling_type = typename plssvm::data_set<label_type>::scaling;
 
     // create data points
-    const auto data_points = util::generate_specific_matrix<plssvm::aos_matrix<plssvm::real_type>>(4, 4);
+    const auto data_points = util::generate_specific_matrix<plssvm::soa_matrix<plssvm::real_type>>(4, 4);
 
     // create data set
     const plssvm::data_set<label_type> data{ data_points.to_2D_vector(), scaling_type{ plssvm::real_type{ -1.0 }, plssvm::real_type{ 1.0 } } };
@@ -549,7 +549,7 @@ TYPED_TEST(DataSetConstructors, construct_scaled_from_vector_with_label) {
     // create data points and labels
     const std::vector<label_type> different_labels = util::get_distinct_label<label_type>();
     const std::vector<label_type> labels = util::get_correct_data_file_labels<label_type>();
-    const auto correct_data_points = util::generate_specific_matrix<plssvm::aos_matrix<plssvm::real_type>>(labels.size(), 4);
+    const auto correct_data_points = util::generate_specific_matrix<plssvm::soa_matrix<plssvm::real_type>>(labels.size(), 4);
 
     // create data set
     const plssvm::data_set<label_type> data{ correct_data_points.to_2D_vector(), labels, { -1.0, 1.0 } };
@@ -597,7 +597,7 @@ TYPED_TEST(DataSetMatrixConstructors, construct_from_matrix_without_label) {
     const plssvm::data_set<label_type> data{ correct_data_points };
 
     // check values
-    EXPECT_FLOATING_POINT_MATRIX_EQ(data.data(), plssvm::aos_matrix<plssvm::real_type>{ correct_data_points });
+    EXPECT_FLOATING_POINT_MATRIX_EQ(data.data(), plssvm::soa_matrix<plssvm::real_type>{ correct_data_points });
     EXPECT_FALSE(data.has_labels());
     EXPECT_FALSE(data.labels().has_value());
     EXPECT_FALSE(data.classes().has_value());
@@ -632,7 +632,7 @@ TYPED_TEST(DataSetMatrixConstructors, construct_from_matrix_with_label) {
     const plssvm::data_set<label_type> data{ correct_data_points, labels };
 
     // check values
-    EXPECT_FLOATING_POINT_MATRIX_EQ(data.data(), plssvm::aos_matrix<plssvm::real_type>{ correct_data_points });
+    EXPECT_FLOATING_POINT_MATRIX_EQ(data.data(), plssvm::soa_matrix<plssvm::real_type>{ correct_data_points });
     EXPECT_TRUE(data.has_labels());
     ASSERT_TRUE(data.labels().has_value());
     EXPECT_EQ(data.labels().value().get(), labels);
@@ -660,7 +660,7 @@ TYPED_TEST(DataSetMatrixConstructors, construct_scaled_from_matrix_without_label
 
     const auto [correct_data_points_scaled, scaling_factors] = util::scale(data_points, plssvm::real_type{ -1.0 }, plssvm::real_type{ 1.0 });
     // check values
-    EXPECT_FLOATING_POINT_MATRIX_NEAR(data.data(), plssvm::aos_matrix<plssvm::real_type>{ correct_data_points_scaled });
+    EXPECT_FLOATING_POINT_MATRIX_NEAR(data.data(), plssvm::soa_matrix<plssvm::real_type>{ correct_data_points_scaled });
     EXPECT_FALSE(data.has_labels());
     EXPECT_FALSE(data.labels().has_value());
     EXPECT_FALSE(data.classes().has_value());
@@ -694,7 +694,7 @@ TYPED_TEST(DataSetMatrixConstructors, construct_scaled_from_matrix_with_label) {
 
     const auto [correct_data_points_scaled, scaling_factors] = util::scale(correct_data_points, plssvm::real_type{ -1.0 }, plssvm::real_type{ 1.0 });
     // check values
-    EXPECT_FLOATING_POINT_MATRIX_NEAR(data.data(), plssvm::aos_matrix<plssvm::real_type>{ correct_data_points_scaled });
+    EXPECT_FLOATING_POINT_MATRIX_NEAR(data.data(), plssvm::soa_matrix<plssvm::real_type>{ correct_data_points_scaled });
     EXPECT_TRUE(data.has_labels());
     ASSERT_TRUE(data.labels().has_value());
     EXPECT_EQ(data.labels().value().get(), labels);

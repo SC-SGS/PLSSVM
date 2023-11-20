@@ -180,7 +180,7 @@ TYPED_TEST_P(GenericCSVMSolver, setup_data_on_devices) {
     }
 
     // minimal example
-    const auto input = util::generate_specific_matrix<plssvm::aos_matrix<plssvm::real_type>>(3, 3);
+    const auto input = util::generate_specific_matrix<plssvm::soa_matrix<plssvm::real_type>>(3, 3);
 
     // create C-SVM: must be done using the mock class, since plssvm::detail::csvm::setup_data_on_device is protected
     const mock_csvm_type svm = util::construct_from_tuple<mock_csvm_type>(csvm_test_type::additional_arguments);
@@ -208,7 +208,8 @@ TYPED_TEST_P(GenericCSVMSolver, setup_data_on_devices) {
             ASSERT_EQ(data_d.size(), 9);
             std::vector<plssvm::real_type> data(data_d.size());
             data_d.copy_to_host(data);
-            EXPECT_FLOATING_POINT_VECTOR_EQ(data, util::flatten(input.to_2D_vector()));
+            std::vector<plssvm::real_type> correct_data{ input.data(), input.data() + input.num_entries() };
+            EXPECT_FLOATING_POINT_VECTOR_EQ(data, correct_data);
         }
     }
 }
@@ -243,13 +244,13 @@ TYPED_TEST_P(GenericCSVMSolver, blas_level_3_without_C) {
 #endif
     const plssvm::detail::simple_any A{ util::init_matrix<csvm_type, device_ptr_type>(matr_A, svm) };
 
-    const plssvm::aos_matrix<plssvm::real_type> B{ { { plssvm::real_type{ 1.0 }, plssvm::real_type{ 2.0 }, plssvm::real_type{ 3.0 } },
+    const plssvm::soa_matrix<plssvm::real_type> B{ { { plssvm::real_type{ 1.0 }, plssvm::real_type{ 2.0 }, plssvm::real_type{ 3.0 } },
                                                      { plssvm::real_type{ 4.0 }, plssvm::real_type{ 5.0 }, plssvm::real_type{ 6.0 } },
                                                      { plssvm::real_type{ 7.0 }, plssvm::real_type{ 8.0 }, plssvm::real_type{ 9.0 } } } };
 
     [[maybe_unused]] const plssvm::real_type beta{ 0.0 };
-    plssvm::aos_matrix<plssvm::real_type> C{ 3, 3 };
-    plssvm::aos_matrix<plssvm::real_type> C2{ C };
+    plssvm::soa_matrix<plssvm::real_type> C{ 3, 3 };
+    plssvm::soa_matrix<plssvm::real_type> C2{ C };
 
     // automatic solver type not permitted
     if constexpr (solver == plssvm::solver_type::automatic) {
@@ -263,7 +264,7 @@ TYPED_TEST_P(GenericCSVMSolver, blas_level_3_without_C) {
         svm.blas_level_3(solver, alpha, A, B, beta, C);
 
         // check C for correctness
-        const plssvm::aos_matrix<plssvm::real_type> correct_C{ { { plssvm::real_type{ 1.4 }, plssvm::real_type{ 6.5 }, plssvm::real_type{ 9.8 } },
+        const plssvm::soa_matrix<plssvm::real_type> correct_C{ { { plssvm::real_type{ 1.4 }, plssvm::real_type{ 6.5 }, plssvm::real_type{ 9.8 } },
                                                                  { plssvm::real_type{ 3.2 }, plssvm::real_type{ 14.6 }, plssvm::real_type{ 21.5 } },
                                                                  { plssvm::real_type{ 5.0 }, plssvm::real_type{ 22.7 }, plssvm::real_type{ 33.2 } } } };
         EXPECT_FLOATING_POINT_MATRIX_NEAR(C, correct_C);
@@ -303,13 +304,13 @@ TYPED_TEST_P(GenericCSVMSolver, blas_level_3) {
 #endif
     const plssvm::detail::simple_any A{ util::init_matrix<csvm_type, device_ptr_type>(matr_A, svm) };
 
-    const plssvm::aos_matrix<plssvm::real_type> B{ { { plssvm::real_type{ 1.0 }, plssvm::real_type{ 2.0 }, plssvm::real_type{ 3.0 } },
+    const plssvm::soa_matrix<plssvm::real_type> B{ { { plssvm::real_type{ 1.0 }, plssvm::real_type{ 2.0 }, plssvm::real_type{ 3.0 } },
                                                      { plssvm::real_type{ 4.0 }, plssvm::real_type{ 5.0 }, plssvm::real_type{ 6.0 } },
                                                      { plssvm::real_type{ 7.0 }, plssvm::real_type{ 8.0 }, plssvm::real_type{ 9.0 } } } };
 
     [[maybe_unused]] const plssvm::real_type beta{ 0.5 };
-    auto C = util::generate_specific_matrix<plssvm::aos_matrix<plssvm::real_type>>(3, 3);
-    plssvm::aos_matrix<plssvm::real_type> C2{ C };
+    auto C = util::generate_specific_matrix<plssvm::soa_matrix<plssvm::real_type>>(3, 3);
+    plssvm::soa_matrix<plssvm::real_type> C2{ C };
 
     // automatic solver type not permitted
     if constexpr (solver == plssvm::solver_type::automatic) {
@@ -323,7 +324,7 @@ TYPED_TEST_P(GenericCSVMSolver, blas_level_3) {
         svm.blas_level_3(solver, alpha, A, B, beta, C);
 
         // check C for correctness
-        const plssvm::aos_matrix<plssvm::real_type> correct_C{ { { plssvm::real_type{ 1.45 }, plssvm::real_type{ 6.6 }, plssvm::real_type{ 9.95 } },
+        const plssvm::soa_matrix<plssvm::real_type> correct_C{ { { plssvm::real_type{ 1.45 }, plssvm::real_type{ 6.6 }, plssvm::real_type{ 9.95 } },
                                                                  { plssvm::real_type{ 3.75 }, plssvm::real_type{ 15.2 }, plssvm::real_type{ 22.15 } },
                                                                  { plssvm::real_type{ 6.05 }, plssvm::real_type{ 23.8 }, plssvm::real_type{ 34.35 } } } };
         EXPECT_FLOATING_POINT_MATRIX_NEAR(C, correct_C);
@@ -356,7 +357,7 @@ TYPED_TEST_P(GenericCSVMSolver, conjugate_gradients_trivial) {
     const std::vector<plssvm::real_type> matr_A{ plssvm::real_type{ 1.0 }, plssvm::real_type{ 0.0 }, plssvm::real_type{ 0.0 }, plssvm::real_type{ 0.0 }, plssvm::real_type{ 1.0 }, plssvm::real_type{ 0.0 }, plssvm::real_type{ 0.0 }, plssvm::real_type{ 1.0 }, plssvm::real_type{ 0.0 }, plssvm::real_type{ 1.0 } };
 #endif
     const plssvm::detail::simple_any A{ util::init_matrix<csvm_type, device_ptr_type>(matr_A, svm) };
-    const plssvm::aos_matrix<plssvm::real_type> B{ { { plssvm::real_type{ 1.0 }, plssvm::real_type{ -1.0 }, plssvm::real_type{ 1.0 }, plssvm::real_type{ -1.0 } },
+    const plssvm::soa_matrix<plssvm::real_type> B{ { { plssvm::real_type{ 1.0 }, plssvm::real_type{ -1.0 }, plssvm::real_type{ 1.0 }, plssvm::real_type{ -1.0 } },
                                                      { plssvm::real_type{ -1.0 }, plssvm::real_type{ 1.0 }, plssvm::real_type{ -1.0 }, plssvm::real_type{ 1.0 } } } };
 
     // automatic solver type not permitted
@@ -397,9 +398,9 @@ TYPED_TEST_P(GenericCSVMSolver, conjugate_gradients) {
     const std::vector<plssvm::real_type> matr_A{ plssvm::real_type{ 4.0 }, plssvm::real_type{ 1.0 }, plssvm::real_type{ 3.0 } };
 #endif
     const plssvm::detail::simple_any A{ util::init_matrix<csvm_type, device_ptr_type>(matr_A, svm) };
-    const plssvm::aos_matrix<plssvm::real_type> B{ { { plssvm::real_type{ 1.0 }, plssvm::real_type{ 2.0 } },
+    const plssvm::soa_matrix<plssvm::real_type> B{ { { plssvm::real_type{ 1.0 }, plssvm::real_type{ 2.0 } },
                                                      { plssvm::real_type{ 1.0 }, plssvm::real_type{ 2.0 } } } };
-    const plssvm::aos_matrix<plssvm::real_type> correct_X{ { { plssvm::real_type{ 1.0 / 11.0 }, plssvm::real_type{ 7.0 / 11.0 } },
+    const plssvm::soa_matrix<plssvm::real_type> correct_X{ { { plssvm::real_type{ 1.0 / 11.0 }, plssvm::real_type{ 7.0 / 11.0 } },
                                                              { plssvm::real_type{ 1.0 / 11.0 }, plssvm::real_type{ 7.0 / 11.0 } } } };
 
     // automatic solver type not permitted
@@ -450,7 +451,7 @@ TYPED_TEST_P(GenericCSVMKernelFunction, predict_values) {
     }
 
     // create the data that should be used
-    const plssvm::aos_matrix<plssvm::real_type> support_vectors{ { { plssvm::real_type{ 1.0 }, plssvm::real_type{ 0.0 }, plssvm::real_type{ 0.0 }, plssvm::real_type{ 0.0 } },
+    const plssvm::soa_matrix<plssvm::real_type> support_vectors{ { { plssvm::real_type{ 1.0 }, plssvm::real_type{ 0.0 }, plssvm::real_type{ 0.0 }, plssvm::real_type{ 0.0 } },
                                                                    { plssvm::real_type{ 0.0 }, plssvm::real_type{ 1.0 }, plssvm::real_type{ 0.0 }, plssvm::real_type{ 0.0 } },
                                                                    { plssvm::real_type{ 0.0 }, plssvm::real_type{ 0.0 }, plssvm::real_type{ 1.0 }, plssvm::real_type{ 0.0 } },
                                                                    { plssvm::real_type{ 0.0 }, plssvm::real_type{ 0.0 }, plssvm::real_type{ 0.0 }, plssvm::real_type{ 1.0 } } } };
@@ -458,7 +459,7 @@ TYPED_TEST_P(GenericCSVMKernelFunction, predict_values) {
                                                            { plssvm::real_type{ 1.0 }, plssvm::real_type{ -1.0 }, plssvm::real_type{ 1.0 }, plssvm::real_type{ -1.0 } } } };
     const std::vector<plssvm::real_type> rho{ plssvm::real_type{ 0.0 }, plssvm::real_type{ 0.0 } };
     plssvm::aos_matrix<plssvm::real_type> w{};
-    const plssvm::aos_matrix<plssvm::real_type> data{ { { plssvm::real_type{ 1.0 }, plssvm::real_type{ 1.0 }, plssvm::real_type{ 1.0 }, plssvm::real_type{ 1.0 } },
+    const plssvm::soa_matrix<plssvm::real_type> data{ { { plssvm::real_type{ 1.0 }, plssvm::real_type{ 1.0 }, plssvm::real_type{ 1.0 }, plssvm::real_type{ 1.0 } },
                                                         { plssvm::real_type{ 1.0 }, plssvm::real_type{ -1.0 }, plssvm::real_type{ 1.0 }, plssvm::real_type{ -1.0 } } } };
 
     // the correct result
@@ -494,7 +495,7 @@ TYPED_TEST_P(GenericCSVMKernelFunction, predict_values_provided_w) {
         plssvm::parameter params{ plssvm::kernel_type = kernel, plssvm::cost = 2.0 };
 
         // create the data that should be used
-        const plssvm::aos_matrix<plssvm::real_type> support_vectors{ { { plssvm::real_type{ 1.0 }, plssvm::real_type{ 0.0 }, plssvm::real_type{ 0.0 }, plssvm::real_type{ 0.0 } },
+        const plssvm::soa_matrix<plssvm::real_type> support_vectors{ { { plssvm::real_type{ 1.0 }, plssvm::real_type{ 0.0 }, plssvm::real_type{ 0.0 }, plssvm::real_type{ 0.0 } },
                                                                        { plssvm::real_type{ 0.0 }, plssvm::real_type{ 1.0 }, plssvm::real_type{ 0.0 }, plssvm::real_type{ 0.0 } },
                                                                        { plssvm::real_type{ 0.0 }, plssvm::real_type{ 0.0 }, plssvm::real_type{ 1.0 }, plssvm::real_type{ 0.0 } },
                                                                        { plssvm::real_type{ 0.0 }, plssvm::real_type{ 0.0 }, plssvm::real_type{ 0.0 }, plssvm::real_type{ 1.0 } } } };
@@ -504,7 +505,7 @@ TYPED_TEST_P(GenericCSVMKernelFunction, predict_values_provided_w) {
         plssvm::aos_matrix<plssvm::real_type> w{ { { plssvm::real_type{ 1.0 }, plssvm::real_type{ -1.0 }, plssvm::real_type{ 1.0 }, plssvm::real_type{ -1.0 } },
                                                    { plssvm::real_type{ 1.0 }, plssvm::real_type{ -1.0 }, plssvm::real_type{ 1.0 }, plssvm::real_type{ -1.0 } } } };
         const plssvm::aos_matrix<plssvm::real_type> correct_w{ w };
-        const plssvm::aos_matrix<plssvm::real_type> data{ { { plssvm::real_type{ 1.0 }, plssvm::real_type{ 1.0 }, plssvm::real_type{ 1.0 }, plssvm::real_type{ 1.0 } },
+        const plssvm::soa_matrix<plssvm::real_type> data{ { { plssvm::real_type{ 1.0 }, plssvm::real_type{ 1.0 }, plssvm::real_type{ 1.0 }, plssvm::real_type{ 1.0 } },
                                                             { plssvm::real_type{ 1.0 }, plssvm::real_type{ -1.0 }, plssvm::real_type{ 1.0 }, plssvm::real_type{ -1.0 } } } };
 
         // the correct result
@@ -534,7 +535,7 @@ TYPED_TEST_P(GenericCSVMKernelFunction, perform_dimensional_reduction) {
     // create parameter struct
     const plssvm::parameter params{ plssvm::kernel_type = kernel };
 
-    const auto data = util::generate_random_matrix<plssvm::aos_matrix<plssvm::real_type>>(6, 4);
+    const auto data = util::generate_random_matrix<plssvm::soa_matrix<plssvm::real_type>>(6, 4);
 
     // create C-SVM: must be done using the mock class, since plssvm::detail::csvm::perform_dimensional_reduction is protected
     const mock_csvm_type svm = util::construct_from_tuple<mock_csvm_type>(params, csvm_test_type::additional_arguments);
@@ -586,7 +587,7 @@ TYPED_TEST_P(GenericCSVMSolverKernelFunction, solve_lssvm_system_of_linear_equat
 
     // create the data that should be used
     // Matrix with 1-1/cost on main diagonal. Thus, the diagonal entries become one with the additional addition of 1/cost
-    const plssvm::aos_matrix<plssvm::real_type> A{ { { plssvm::real_type{ std::sqrt(plssvm::real_type(1.0) - 1 / params.cost) }, plssvm::real_type{ 0.0 }, plssvm::real_type{ 0.0 }, plssvm::real_type{ 0.0 } },
+    const plssvm::soa_matrix<plssvm::real_type> A{ { { plssvm::real_type{ std::sqrt(plssvm::real_type(1.0) - 1 / params.cost) }, plssvm::real_type{ 0.0 }, plssvm::real_type{ 0.0 }, plssvm::real_type{ 0.0 } },
                                                      { plssvm::real_type{ 0.0 }, plssvm::real_type{ std::sqrt(plssvm::real_type(1.0) - 1 / params.cost) }, plssvm::real_type{ 0.0 }, plssvm::real_type{ 0.0 } },
                                                      { plssvm::real_type{ 0.0 }, plssvm::real_type{ 0.0 }, plssvm::real_type{ std::sqrt(plssvm::real_type(1.0) - 1 / params.cost) }, plssvm::real_type{ 0.0 } },
                                                      { plssvm::real_type{ 0.0 }, plssvm::real_type{ 0.0 }, plssvm::real_type{ 0.0 }, plssvm::real_type{ std::sqrt(plssvm::real_type(1.0) - 1 / params.cost) } } } };
@@ -637,7 +638,7 @@ TYPED_TEST_P(GenericCSVMSolverKernelFunction, assemble_kernel_matrix_minimal) {
     } else if constexpr (kernel == plssvm::kernel_function_type::rbf) {
         params.gamma = 1.0;
     }
-    const plssvm::aos_matrix<plssvm::real_type> data{ { { plssvm::real_type{ 1.0 }, plssvm::real_type{ 2.0 }, plssvm::real_type{ 3.0 } },
+    const plssvm::soa_matrix<plssvm::real_type> data{ { { plssvm::real_type{ 1.0 }, plssvm::real_type{ 2.0 }, plssvm::real_type{ 3.0 } },
                                                         { plssvm::real_type{ 4.0 }, plssvm::real_type{ 5.0 }, plssvm::real_type{ 6.0 } },
                                                         { plssvm::real_type{ 7.0 }, plssvm::real_type{ 8.0 }, plssvm::real_type{ 9.0 } } } };  // 3 x 3 -> assemble 2 x 2 matrix
     [[maybe_unused]] const std::vector<plssvm::real_type> q_red(data.num_cols() - 1, plssvm::real_type{ 0.0 });
@@ -710,7 +711,7 @@ TYPED_TEST_P(GenericCSVMSolverKernelFunction, assemble_kernel_matrix) {
     } else if constexpr (kernel == plssvm::kernel_function_type::rbf) {
         params.gamma = 1.0 / 3.0;
     }
-    const plssvm::aos_matrix<plssvm::real_type> data{ { { plssvm::real_type{ 1.0 }, plssvm::real_type{ 2.0 }, plssvm::real_type{ 3.0 } },
+    const plssvm::soa_matrix<plssvm::real_type> data{ { { plssvm::real_type{ 1.0 }, plssvm::real_type{ 2.0 }, plssvm::real_type{ 3.0 } },
                                                         { plssvm::real_type{ 4.0 }, plssvm::real_type{ 5.0 }, plssvm::real_type{ 6.0 } },
                                                         { plssvm::real_type{ 7.0 }, plssvm::real_type{ 8.0 }, plssvm::real_type{ 9.0 } } } };
     [[maybe_unused]] const std::vector<plssvm::real_type> q_red = { plssvm::real_type{ 3.0 }, plssvm::real_type{ 4.0 } };
@@ -969,7 +970,7 @@ TYPED_TEST_P(GenericCSVMSolverDeathTest, conjugate_gradients_empty_B) {
     const plssvm::detail::simple_any A{ util::init_matrix<csvm_type, device_ptr_type>(matr_A, csvm) };
 
     // create empty matrix
-    const plssvm::aos_matrix<plssvm::real_type> empty_matr{};
+    const plssvm::soa_matrix<plssvm::real_type> empty_matr{};
 
     EXPECT_DEATH(std::ignore = csvm.conjugate_gradients(A, empty_matr, plssvm::real_type{ 0.001 }, 6, solver), "The right-hand sides may not be empty!");
 }
@@ -985,7 +986,7 @@ TYPED_TEST_P(GenericCSVMSolverDeathTest, conjugate_gradients_invalid_eps) {
 
     const std::vector<plssvm::real_type> matr_A(24);
     const plssvm::detail::simple_any A{ util::init_matrix<csvm_type, device_ptr_type>(matr_A, csvm) };
-    const plssvm::aos_matrix<plssvm::real_type> B{ 1, 6 };
+    const plssvm::soa_matrix<plssvm::real_type> B{ 1, 6 };
 
     EXPECT_DEATH(std::ignore = csvm.conjugate_gradients(A, B, 0.0, 6, solver), "The epsilon value must be greater than 0.0!");
     EXPECT_DEATH(std::ignore = csvm.conjugate_gradients(A, B, -0.5, 6, solver), "The epsilon value must be greater than 0.0!");
@@ -1002,7 +1003,7 @@ TYPED_TEST_P(GenericCSVMSolverDeathTest, conjugate_gradients_invalid_max_cg_iter
 
     const std::vector<plssvm::real_type> matr_A(24);
     const plssvm::detail::simple_any A{ util::init_matrix<csvm_type, device_ptr_type>(matr_A, csvm) };
-    const plssvm::aos_matrix<plssvm::real_type> B{ 1, 6 };
+    const plssvm::soa_matrix<plssvm::real_type> B{ 1, 6 };
 
     EXPECT_DEATH(std::ignore = csvm.conjugate_gradients(A, B, plssvm::real_type{ 0.001 }, 0, solver), "The maximum number of iterations must be greater than 0!");
 }
@@ -1019,8 +1020,8 @@ TYPED_TEST_P(GenericCSVMSolverDeathTest, run_blas_level_3_empty_B) {
 
     const std::vector<plssvm::real_type> matr_A(16);
     const plssvm::detail::simple_any A{ util::init_matrix<csvm_type, device_ptr_type>(matr_A, csvm) };
-    const plssvm::aos_matrix<plssvm::real_type> empty_matr{};
-    plssvm::aos_matrix<plssvm::real_type> C{ 4, 4 };
+    const plssvm::soa_matrix<plssvm::real_type> empty_matr{};
+    plssvm::soa_matrix<plssvm::real_type> C{ 4, 4 };
 
     EXPECT_DEATH(std::ignore = csvm.run_blas_level_3(solver, plssvm::real_type{ 1.0 }, A, empty_matr, plssvm::real_type{ 1.0 }, C), "The B matrix must not be empty!");
 }
@@ -1036,8 +1037,8 @@ TYPED_TEST_P(GenericCSVMSolverDeathTest, run_blas_level_3_empty_C) {
 
     const std::vector<plssvm::real_type> matr_A(16);
     const plssvm::detail::simple_any A{ util::init_matrix<csvm_type, device_ptr_type>(matr_A, csvm) };
-    const plssvm::aos_matrix<plssvm::real_type> B{ 4, 4 };
-    plssvm::aos_matrix<plssvm::real_type> empty_matr{};
+    const plssvm::soa_matrix<plssvm::real_type> B{ 4, 4 };
+    plssvm::soa_matrix<plssvm::real_type> empty_matr{};
 
     EXPECT_DEATH(std::ignore = csvm.run_blas_level_3(solver, plssvm::real_type{ 1.0 }, A, B, plssvm::real_type{ 1.0 }, empty_matr), "The C matrix must not be empty!");
 }
@@ -1064,7 +1065,7 @@ TYPED_TEST_P(GenericCSVMKernelFunctionDeathTest, solve_lssvm_system_of_linear_eq
     const mock_csvm_type csvm{};
 
     // create empty matrix
-    const plssvm::aos_matrix<plssvm::real_type> empty_matr{};
+    const plssvm::soa_matrix<plssvm::real_type> empty_matr{};
     const plssvm::aos_matrix<plssvm::real_type> B{ 1, 3 };
 
     EXPECT_DEATH(std::ignore = csvm.solve_lssvm_system_of_linear_equations(empty_matr, B, params), "The A matrix may not be empty!");
@@ -1082,7 +1083,7 @@ TYPED_TEST_P(GenericCSVMKernelFunctionDeathTest, solve_lssvm_system_of_linear_eq
 
     // create empty matrix
     const plssvm::aos_matrix<plssvm::real_type> empty_matr{};
-    const plssvm::aos_matrix<plssvm::real_type> A{ 6, 4 };
+    const plssvm::soa_matrix<plssvm::real_type> A{ 6, 4 };
 
     EXPECT_DEATH(std::ignore = csvm.solve_lssvm_system_of_linear_equations(A, empty_matr, params), "The B matrix may not be empty!");
 }
@@ -1098,7 +1099,7 @@ TYPED_TEST_P(GenericCSVMKernelFunctionDeathTest, solve_lssvm_system_of_linear_eq
     const mock_csvm_type csvm{};
 
     // create empty matrix
-    const plssvm::aos_matrix<plssvm::real_type> A{ 6, 4 };
+    const plssvm::soa_matrix<plssvm::real_type> A{ 6, 4 };
     const plssvm::aos_matrix<plssvm::real_type> B{ 1, 3 };
 
     EXPECT_DEATH(std::ignore = csvm.solve_lssvm_system_of_linear_equations(A, B, params), ::testing::HasSubstr("The number of data points in A (6) and B (3) must be the same!"));
@@ -1116,7 +1117,7 @@ TYPED_TEST_P(GenericCSVMKernelFunctionDeathTest, perform_dimensional_reduction_e
     const mock_csvm_type csvm{};
 
     // create empty matrix
-    const plssvm::aos_matrix<plssvm::real_type> empty_matr{};
+    const plssvm::soa_matrix<plssvm::real_type> empty_matr{};
 
     EXPECT_DEATH(std::ignore = csvm.perform_dimensional_reduction(params, empty_matr), "The matrix must not be empty!");
 }
@@ -1133,21 +1134,22 @@ TYPED_TEST_P(GenericCSVMKernelFunctionDeathTest, predict_values_empty_matrices) 
     const mock_csvm_type csvm{};
 
     // create empty matrix
-    const plssvm::aos_matrix<plssvm::real_type> empty_matr{};
+    const plssvm::aos_matrix<plssvm::real_type> empty_aos_matr{};
+    const plssvm::soa_matrix<plssvm::real_type> empty_soa_matr{};
 
     // create correct input matrices
-    const auto support_vectors = util::generate_random_matrix<plssvm::aos_matrix<plssvm::real_type>>(4, 4);
+    const auto support_vectors = util::generate_random_matrix<plssvm::soa_matrix<plssvm::real_type>>(4, 4);
     const auto weights = util::generate_random_matrix<plssvm::aos_matrix<plssvm::real_type>>(2, 4);
     const std::vector<plssvm::real_type> rho(2);
     plssvm::aos_matrix<plssvm::real_type> w{};
-    const auto data = util::generate_random_matrix<plssvm::aos_matrix<plssvm::real_type>>(2, 4);
+    const auto data = util::generate_random_matrix<plssvm::soa_matrix<plssvm::real_type>>(2, 4);
 
     // support vectors shouldn't be empty
-    EXPECT_DEATH(std::ignore = csvm.predict_values(params, empty_matr, weights, rho, w, data), "The support vectors must not be empty!");
+    EXPECT_DEATH(std::ignore = csvm.predict_values(params, empty_soa_matr, weights, rho, w, data), "The support vectors must not be empty!");
     // weights shouldn't be empty
-    EXPECT_DEATH(std::ignore = csvm.predict_values(params, support_vectors, empty_matr, rho, w, data), ::testing::HasSubstr("The alpha vectors (weights) must not be empty!"));
+    EXPECT_DEATH(std::ignore = csvm.predict_values(params, support_vectors, empty_aos_matr, rho, w, data), ::testing::HasSubstr("The alpha vectors (weights) must not be empty!"));
     // predict points shouldn't be empty
-    EXPECT_DEATH(std::ignore = csvm.predict_values(params, support_vectors, weights, rho, w, empty_matr), ::testing::HasSubstr("The data points to predict must not be empty!"));
+    EXPECT_DEATH(std::ignore = csvm.predict_values(params, support_vectors, weights, rho, w, empty_soa_matr), ::testing::HasSubstr("The data points to predict must not be empty!"));
 }
 TYPED_TEST_P(GenericCSVMKernelFunctionDeathTest, predict_values_sv_alpha_size_mismatch) {
     using csvm_test_type = util::test_parameter_type_at_t<0, TypeParam>;
@@ -1161,11 +1163,11 @@ TYPED_TEST_P(GenericCSVMKernelFunctionDeathTest, predict_values_sv_alpha_size_mi
     const mock_csvm_type csvm{};
 
     // create correct input matrices
-    const auto support_vectors = util::generate_random_matrix<plssvm::aos_matrix<plssvm::real_type>>(3, 4);
+    const auto support_vectors = util::generate_random_matrix<plssvm::soa_matrix<plssvm::real_type>>(3, 4);
     const auto weights = util::generate_random_matrix<plssvm::aos_matrix<plssvm::real_type>>(2, 4);
     const std::vector<plssvm::real_type> rho(2);
     plssvm::aos_matrix<plssvm::real_type> w{};
-    const auto data = util::generate_random_matrix<plssvm::aos_matrix<plssvm::real_type>>(2, 4);
+    const auto data = util::generate_random_matrix<plssvm::soa_matrix<plssvm::real_type>>(2, 4);
 
     // the number of support vectors and weights must be identical
     EXPECT_DEATH(std::ignore = csvm.predict_values(params, support_vectors, weights, rho, w, data), ::testing::HasSubstr("The number of support vectors (3) and number of weights (4) must be the same!"));
@@ -1182,11 +1184,11 @@ TYPED_TEST_P(GenericCSVMKernelFunctionDeathTest, predict_values_rho_alpha_size_m
     const mock_csvm_type csvm{};
 
     // create correct input matrices
-    const auto support_vectors = util::generate_random_matrix<plssvm::aos_matrix<plssvm::real_type>>(4, 4);
+    const auto support_vectors = util::generate_random_matrix<plssvm::soa_matrix<plssvm::real_type>>(4, 4);
     const auto weights = util::generate_random_matrix<plssvm::aos_matrix<plssvm::real_type>>(2, 4);
     const std::vector<plssvm::real_type> rho(1);
     plssvm::aos_matrix<plssvm::real_type> w{};
-    const auto data = util::generate_random_matrix<plssvm::aos_matrix<plssvm::real_type>>(2, 4);
+    const auto data = util::generate_random_matrix<plssvm::soa_matrix<plssvm::real_type>>(2, 4);
 
     // the number of rho values and weight vectors must be identical
     EXPECT_DEATH(std::ignore = csvm.predict_values(params, support_vectors, weights, rho, w, data), ::testing::HasSubstr("The number of rho values (1) and the number of weight vectors (2) must be the same!"));
@@ -1203,10 +1205,10 @@ TYPED_TEST_P(GenericCSVMKernelFunctionDeathTest, predict_values_w_size_mismatch)
     const mock_csvm_type csvm{};
 
     // create correct input matrices
-    const auto support_vectors = util::generate_random_matrix<plssvm::aos_matrix<plssvm::real_type>>(4, 4);
+    const auto support_vectors = util::generate_random_matrix<plssvm::soa_matrix<plssvm::real_type>>(4, 4);
     const auto weights = util::generate_random_matrix<plssvm::aos_matrix<plssvm::real_type>>(2, 4);
     const std::vector<plssvm::real_type> rho(2);
-    const auto data = util::generate_random_matrix<plssvm::aos_matrix<plssvm::real_type>>(2, 4);
+    const auto data = util::generate_random_matrix<plssvm::soa_matrix<plssvm::real_type>>(2, 4);
 
     // the number of features and w values must be identical
     auto w = util::generate_random_matrix<plssvm::aos_matrix<plssvm::real_type>>(2, 3);
@@ -1227,11 +1229,11 @@ TYPED_TEST_P(GenericCSVMKernelFunctionDeathTest, predict_values_num_features_mis
     const mock_csvm_type csvm{};
 
     // create correct input matrices
-    const auto support_vectors = util::generate_random_matrix<plssvm::aos_matrix<plssvm::real_type>>(4, 5);
+    const auto support_vectors = util::generate_random_matrix<plssvm::soa_matrix<plssvm::real_type>>(4, 5);
     const auto weights = util::generate_random_matrix<plssvm::aos_matrix<plssvm::real_type>>(2, 4);
     const std::vector<plssvm::real_type> rho(2);
     plssvm::aos_matrix<plssvm::real_type> w{};
-    const auto data = util::generate_random_matrix<plssvm::aos_matrix<plssvm::real_type>>(2, 4);
+    const auto data = util::generate_random_matrix<plssvm::soa_matrix<plssvm::real_type>>(2, 4);
 
     // the number of features for the support vectors and predict points must be identical
     EXPECT_DEATH(std::ignore = csvm.predict_values(params, support_vectors, weights, rho, w, data), ::testing::HasSubstr("The number of features in the support vectors (5) must be the same as in the data points to predict (4)!"));

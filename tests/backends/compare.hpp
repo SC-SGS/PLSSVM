@@ -93,7 +93,7 @@ template <typename real_type, plssvm::layout_type layout>
  * @return the generated `q` vector (`[[nodiscard]]`)
  */
 template <typename real_type>
-[[nodiscard]] std::vector<real_type> perform_dimensional_reduction(const plssvm::parameter &params, const plssvm::aos_matrix<real_type> &data, std::size_t num_devices = 1);
+[[nodiscard]] std::vector<real_type> perform_dimensional_reduction(const plssvm::parameter &params, const plssvm::soa_matrix<real_type> &data, std::size_t num_devices = 1);
 
 /**
  * @brief Computes the kernel matrix using the kernel function determined by @p params exploiting the kernel matrix's symmetry.
@@ -107,7 +107,7 @@ template <typename real_type>
  * @return the kernel matrix (upper triangle matrix) (`[[nodiscard]]`)
  */
 template <typename real_type>
-[[nodiscard]] std::vector<real_type> assemble_kernel_matrix_symm(const plssvm::parameter &params, const plssvm::aos_matrix<real_type> &data, const std::vector<real_type> &q, real_type QA_cost, std::size_t num_devices = 1);
+[[nodiscard]] std::vector<real_type> assemble_kernel_matrix_symm(const plssvm::parameter &params, const plssvm::soa_matrix<real_type> &data, const std::vector<real_type> &q, real_type QA_cost, std::size_t num_devices = 1);
 /**
  * @brief Computes the kernel matrix using the kernel function determined by @p params.
  * @details Single core execution for a deterministic order of floating point operations.
@@ -120,7 +120,7 @@ template <typename real_type>
  * @return the kernel matrix (`[[nodiscard]]`)
  */
 template <typename real_type>
-[[nodiscard]] std::vector<real_type> assemble_kernel_matrix_gemm(const plssvm::parameter &params, const plssvm::aos_matrix<real_type> &data, const std::vector<real_type> &q, real_type QA_cost, std::size_t num_devices = 1);
+[[nodiscard]] std::vector<real_type> assemble_kernel_matrix_gemm(const plssvm::parameter &params, const plssvm::soa_matrix<real_type> &data, const std::vector<real_type> &q, real_type QA_cost, std::size_t num_devices = 1);
 
 /**
  * @brief Perform a BLAS Level 3 GEMM operator: `C = alpha * A * B + beta * C`
@@ -143,7 +143,7 @@ void gemm(real_type alpha, const std::vector<real_type> &A, const plssvm::aos_ma
  * @return the resulting `w` vector to speedup the prediction when using the linear kernel (`[[nodiscard]]`)
  */
 template <typename real_type>
-[[nodiscard]] plssvm::aos_matrix<real_type> calculate_w(const plssvm::aos_matrix<real_type> &weights, const plssvm::aos_matrix<real_type> &support_vectors);
+[[nodiscard]] plssvm::aos_matrix<real_type> calculate_w(const plssvm::aos_matrix<real_type> &weights, const plssvm::soa_matrix<real_type> &support_vectors);
 
 /**
  * @brief Predict the values for the @p predict_points using the previously learned @p weights and @p support_vectors.
@@ -157,7 +157,7 @@ template <typename real_type>
  * @return the predict values per new predict point and class (`[[nodiscard]]`)
  */
 template <typename real_type>
-[[nodiscard]] plssvm::aos_matrix<real_type> predict_values(const plssvm::parameter &params, const plssvm::aos_matrix<real_type> &w, const plssvm::aos_matrix<real_type> &weights, const std::vector<real_type> &rho, const plssvm::aos_matrix<real_type> &support_vectors, const plssvm::aos_matrix<real_type> &predict_points);
+[[nodiscard]] plssvm::aos_matrix<real_type> predict_values(const plssvm::parameter &params, const plssvm::aos_matrix<real_type> &w, const plssvm::aos_matrix<real_type> &weights, const std::vector<real_type> &rho, const plssvm::soa_matrix<real_type> &support_vectors, const plssvm::soa_matrix<real_type> &predict_points);
 
 }  // namespace compare
 

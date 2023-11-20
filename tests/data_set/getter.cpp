@@ -44,7 +44,7 @@ class DataSetGetter : public ::testing::Test, private util::redirect_output<> {
      * @brief Return the correct data points.
      * @return the correct data points (`[[nodiscard]]`)
      */
-    [[nodiscard]] const plssvm::aos_matrix<plssvm::real_type> &get_data_points() const noexcept { return data_points_; }
+    [[nodiscard]] const plssvm::soa_matrix<plssvm::real_type> &get_data_points() const noexcept { return data_points_; }
 
   private:
     /// The correct, different classes.
@@ -52,7 +52,7 @@ class DataSetGetter : public ::testing::Test, private util::redirect_output<> {
     /// The correct labels.
     std::vector<fixture_label_type> label_{ util::get_correct_data_file_labels<fixture_label_type>() };
     /// The correct data points.
-    plssvm::aos_matrix<plssvm::real_type> data_points_{ util::generate_specific_matrix<plssvm::aos_matrix<plssvm::real_type>>(label_.size(), 4) };
+    plssvm::soa_matrix<plssvm::real_type> data_points_{ util::generate_specific_matrix<plssvm::aos_matrix<plssvm::real_type>>(label_.size(), 4) };
 };
 TYPED_TEST_SUITE(DataSetGetter, util::label_type_gtest, naming::test_parameter_to_name);
 

@@ -692,7 +692,7 @@ inline void write_libsvm_model_data(const std::string &filename, const plssvm::p
     }
 #endif
 
-    const aos_matrix<real_type> &support_vectors = data.data();
+    const soa_matrix<real_type> &support_vectors = data.data();
     const std::vector<label_type> &labels = data.labels().value();
     const std::size_t num_features = data.num_features();
     const std::size_t num_classes = data.num_classes();
