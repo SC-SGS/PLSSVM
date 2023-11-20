@@ -28,29 +28,29 @@
 #include "plssvm/detail/assert.hpp"          // PLSSVM_ASSERT
 #include "plssvm/exceptions/exceptions.hpp"  // plssvm::gpu_device_ptr_exception
 
-#include "fmt/core.h"                        // fmt::format
+#include "fmt/core.h"  // fmt::format
 
-#include <algorithm>                         // std::min
-#include <array>                             // std::array
-#include <memory>                            // std::addressof
-#include <utility>                           // std::exchange, std::swap
-#include <vector>                            // std::vector
+#include <algorithm>  // std::min
+#include <array>      // std::array
+#include <memory>     // std::addressof
+#include <utility>    // std::exchange, std::swap
+#include <vector>     // std::vector
 
 namespace plssvm::detail {
 
 template <typename T, typename queue_t, typename device_pointer_t>
 gpu_device_ptr<T, queue_t, device_pointer_t>::gpu_device_ptr(size_type size, const queue_type queue) :
-    queue_{ queue }, extends_{ { size, 1 } } {}
+    queue_{ queue }, extents_{ { size, 0 } } {}
 
 template <typename T, typename queue_t, typename device_pointer_t>
-gpu_device_ptr<T, queue_t, device_pointer_t>::gpu_device_ptr(std::array<size_type, 2> extends, const queue_type queue) :
-    queue_{ queue }, extends_{ extends } {}
+gpu_device_ptr<T, queue_t, device_pointer_t>::gpu_device_ptr(std::array<size_type, 2> extents, const queue_type queue) :
+    queue_{ queue }, extents_{ extents } {}
 
 template <typename T, typename queue_t, typename device_pointer_t>
 gpu_device_ptr<T, queue_t, device_pointer_t>::gpu_device_ptr(gpu_device_ptr &&other) noexcept :
     queue_{ std::exchange(other.queue_, queue_type{}) },
     data_{ std::exchange(other.data_, device_pointer_type{}) },
-    extends_{ std::exchange(other.extends_, std::array<size_type, 2>{}) } {}
+    extents_{ std::exchange(other.extents_, std::array<size_type, 2>{}) } {}
 
 template <typename T, typename queue_t, typename device_pointer_t>
 auto gpu_device_ptr<T, queue_t, device_pointer_t>::operator=(gpu_device_ptr &&other) noexcept -> gpu_device_ptr & {
@@ -58,7 +58,7 @@ auto gpu_device_ptr<T, queue_t, device_pointer_t>::operator=(gpu_device_ptr &&ot
     if (this != std::addressof(other)) {
         queue_ = std::exchange(other.queue_, queue_type{});
         data_ = std::exchange(other.data_, device_pointer_type{});
-        extends_ = std::exchange(other.extends_, std::array<size_type, 2>{});
+        extents_ = std::exchange(other.extents_, std::array<size_type, 2>{});
     }
     return *this;
 }
@@ -67,7 +67,7 @@ template <typename T, typename queue_t, typename device_pointer_t>
 void gpu_device_ptr<T, queue_t, device_pointer_t>::swap(gpu_device_ptr &other) noexcept {
     std::swap(queue_, other.queue_);
     std::swap(data_, other.data_);
-    std::swap(extends_, other.extends_);
+    std::swap(extents_, other.extents_);
 }
 
 template <typename T, typename queue_t, typename device_pointer_t>

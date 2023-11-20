@@ -1,7 +1,7 @@
 # this is a comment
 svm_type c_svc
 kernel_type linear
-nr_class 3
+nr_class 2
 label 0 0
 total_sv 6
 nr_sv 3 3

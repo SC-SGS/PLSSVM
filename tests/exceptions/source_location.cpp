@@ -10,8 +10,10 @@
 
 #include "plssvm/exceptions/source_location.hpp"  // plssvm::source_location
 
-#include "gmock/gmock.h"                          // EXPECT_THAT, ::testing::HasSubstr
-#include "gtest/gtest.h"                          // TEST, EXPECT_EQ
+#include "gmock/gmock.h"  // EXPECT_THAT, ::testing::HasSubstr
+#include "gtest/gtest.h"  // TEST, EXPECT_EQ
+
+#include <cstdint>  // std::uint_least32_t
 
 // dummy function to be able to specify the function name
 constexpr plssvm::source_location dummy() {
@@ -23,8 +25,8 @@ TEST(SourceLocation, default_construct) {
 
     EXPECT_EQ(loc.file_name(), "unknown");
     EXPECT_EQ(loc.function_name(), "unknown");
-    EXPECT_EQ(loc.line(), 0);
-    EXPECT_EQ(loc.column(), 0);
+    EXPECT_EQ(loc.line(), std::uint_least32_t{ 0 });
+    EXPECT_EQ(loc.column(), std::uint_least32_t{ 0 });
 }
 
 TEST(SourceLocation, current_location) {
@@ -32,6 +34,6 @@ TEST(SourceLocation, current_location) {
 
     EXPECT_EQ(loc.file_name(), __FILE__);
     EXPECT_THAT(loc.function_name(), ::testing::HasSubstr("dummy"));
-    EXPECT_EQ(loc.line(), 18);   // attention: hardcoded line!
-    EXPECT_EQ(loc.column(), 0);  // attention: always 0!
+    EXPECT_EQ(loc.line(), std::uint_least32_t{ 20 });   // attention: hardcoded line!
+    EXPECT_EQ(loc.column(), std::uint_least32_t{ 0 });  // attention: always 0!
 }

@@ -12,17 +12,21 @@
 #include "plssvm/backends/OpenCL/csvm.hpp"         // plssvm::opencl::csvm
 #include "plssvm/backends/OpenCL/exceptions.hpp"   // plssvm::opencl::backend_exception
 #include "plssvm/detail/arithmetic_type_name.hpp"  // plssvm::detail::arithmetic_type_name
+#include "plssvm/detail/type_list.hpp"             // plssvm::detail::label_type_list
 #include "plssvm/kernel_function_types.hpp"        // plssvm::kernel_function_type
 #include "plssvm/parameter.hpp"                    // plssvm::parameter, plssvm::kernel_type, plssvm::cost
 #include "plssvm/target_platforms.hpp"             // plssvm::target_platform
 
-#include "../../custom_test_macros.hpp"            // EXPECT_THROW_WHAT
-#include "../../utility.hpp"                       // util::redirect_output
-#include "../generic_csvm_tests.hpp"               // generic CSVM tests to instantiate
+#include "backends/generic_csvm_tests.hpp"      // generic CSVM tests to instantiate
+#include "backends/generic_gpu_csvm_tests.hpp"  // generic GPU CSVM tests to instantiate
+#include "custom_test_macros.hpp"               // EXPECT_THROW_WHAT
+#include "naming.hpp"                           // naming::test_parameter_to_name
+#include "types_to_test.hpp"                    // util::{cartesian_type_product_t, combine_test_parameters_gtest_t}
+#include "utility.hpp"                          // util::redirect_output
 
-#include "gtest/gtest.h"                           // TEST_F, EXPECT_NO_THROW, TYPED_TEST_SUITE, TYPED_TEST, INSTANTIATE_TYPED_TEST_SUITE_P, ::testing::{Test, Types}
+#include "gtest/gtest.h"  // TEST_F, EXPECT_NO_THROW, INSTANTIATE_TYPED_TEST_SUITE_P, ::testing::Test
 
-#include <tuple>                                   // std::make_tuple
+#include <tuple>  // std::make_tuple, std::tuple
 
 class OpenCLCSVM : public ::testing::Test, private util::redirect_output<> {};
 
@@ -101,36 +105,37 @@ TEST_F(OpenCLCSVM, construct_target_and_named_args) {
 #endif
 }
 
-template <typename T, plssvm::kernel_function_type kernel>
-struct csvm_test_type {
+struct opencl_csvm_test_type {
     using mock_csvm_type = mock_opencl_csvm;
     using csvm_type = plssvm::opencl::csvm;
-    using real_type = T;
-    static constexpr plssvm::kernel_function_type kernel_type = kernel;
-    inline static auto additional_arguments = std::make_tuple();
+    using device_ptr_type = typename csvm_type::device_ptr_type;
+    inline static constexpr auto additional_arguments = std::make_tuple();
 };
+using opencl_csvm_test_tuple = std::tuple<opencl_csvm_test_type>;
+using opencl_csvm_test_label_type_list = util::cartesian_type_product_t<opencl_csvm_test_tuple, plssvm::detail::supported_label_types>;
+using opencl_csvm_test_type_list = util::cartesian_type_product_t<opencl_csvm_test_tuple>;
 
-class csvm_test_type_to_name {
-  public:
-    template <typename T>
-    static std::string GetName(int) {
-        return fmt::format("{}_{}_{}",
-                           plssvm::csvm_to_backend_type_v<typename T::csvm_type>,
-                           plssvm::detail::arithmetic_type_name<typename T::real_type>(),
-                           T::kernel_type);
-    }
-};
-
-using csvm_test_types = ::testing::Types<
-    csvm_test_type<float, plssvm::kernel_function_type::linear>,
-    csvm_test_type<float, plssvm::kernel_function_type::polynomial>,
-    csvm_test_type<float, plssvm::kernel_function_type::rbf>,
-    csvm_test_type<double, plssvm::kernel_function_type::linear>,
-    csvm_test_type<double, plssvm::kernel_function_type::polynomial>,
-    csvm_test_type<double, plssvm::kernel_function_type::rbf>>;
+// the tests used in the instantiated GTest test suites
+using opencl_csvm_test_type_gtest = util::combine_test_parameters_gtest_t<opencl_csvm_test_type_list>;
+using opencl_solver_type_gtest = util::combine_test_parameters_gtest_t<opencl_csvm_test_type_list, util::solver_type_list>;
+using opencl_kernel_function_type_gtest = util::combine_test_parameters_gtest_t<opencl_csvm_test_type_list, util::kernel_function_type_list>;
+using opencl_solver_and_kernel_function_type_gtest = util::combine_test_parameters_gtest_t<opencl_csvm_test_type_list, util::solver_and_kernel_function_type_list>;
+using opencl_label_type_kernel_function_and_classification_type_gtest = util::combine_test_parameters_gtest_t<opencl_csvm_test_label_type_list, util::kernel_function_and_classification_type_list>;
+using opencl_label_type_solver_kernel_function_and_classification_type_gtest = util::combine_test_parameters_gtest_t<opencl_csvm_test_label_type_list, util::solver_and_kernel_function_and_classification_type_list>;
 
 // instantiate type-parameterized tests
-INSTANTIATE_TYPED_TEST_SUITE_P(OpenCLBackend, GenericCSVM, csvm_test_types, csvm_test_type_to_name);
-INSTANTIATE_TYPED_TEST_SUITE_P(OpenCLBackendDeathTest, GenericCSVMDeathTest, csvm_test_types, csvm_test_type_to_name);
-INSTANTIATE_TYPED_TEST_SUITE_P(OpenCLBackend, GenericGPUCSVM, csvm_test_types, csvm_test_type_to_name);
-INSTANTIATE_TYPED_TEST_SUITE_P(OpenCLBackendDeathTest, GenericGPUCSVMDeathTest, csvm_test_types, csvm_test_type_to_name);
+// generic CSVM tests
+INSTANTIATE_TYPED_TEST_SUITE_P(OpenCLCSVM, GenericCSVM, opencl_csvm_test_type_gtest, naming::test_parameter_to_name);
+INSTANTIATE_TYPED_TEST_SUITE_P(OpenCLCSVM, GenericCSVMSolver, opencl_solver_type_gtest, naming::test_parameter_to_name);
+INSTANTIATE_TYPED_TEST_SUITE_P(OpenCLCSVM, GenericCSVMKernelFunction, opencl_kernel_function_type_gtest, naming::test_parameter_to_name);
+INSTANTIATE_TYPED_TEST_SUITE_P(OpenCLCSVM, GenericCSVMSolverKernelFunction, opencl_solver_and_kernel_function_type_gtest, naming::test_parameter_to_name);
+INSTANTIATE_TYPED_TEST_SUITE_P(OpenCLCSVM, GenericCSVMKernelFunctionClassification, opencl_label_type_kernel_function_and_classification_type_gtest, naming::test_parameter_to_name);
+INSTANTIATE_TYPED_TEST_SUITE_P(OpenCLCSVM, GenericCSVMSolverKernelFunctionClassification, opencl_label_type_solver_kernel_function_and_classification_type_gtest, naming::test_parameter_to_name);
+
+// generic CSVM DeathTests
+INSTANTIATE_TYPED_TEST_SUITE_P(OpenCLCSVMDeathTest, GenericCSVMSolverDeathTest, opencl_solver_type_gtest, naming::test_parameter_to_name);
+INSTANTIATE_TYPED_TEST_SUITE_P(OpenCLCSVMDeathTest, GenericCSVMKernelFunctionDeathTest, opencl_kernel_function_type_gtest, naming::test_parameter_to_name);
+
+// generic GPU CSVM tests
+INSTANTIATE_TYPED_TEST_SUITE_P(OpenCLCSVM, GenericGPUCSVM, opencl_csvm_test_type_gtest, naming::test_parameter_to_name);
+INSTANTIATE_TYPED_TEST_SUITE_P(OpenCLCSVM, GenericGPUCSVMKernelFunction, opencl_kernel_function_type_gtest, naming::test_parameter_to_name);

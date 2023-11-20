@@ -19,14 +19,16 @@
 #include "plssvm/parameter.hpp"                             // plssvm::parameter, plssvm::kernel_type, plssvm::cost
 #include "plssvm/target_platforms.hpp"                      // plssvm::target_platform
 
-#include "../../../custom_test_macros.hpp"                  // EXPECT_THROW_WHAT
-#include "../../../utility.hpp"                             // util::redirect_output
-#include "../../generic_csvm_tests.hpp"                     // generic CSVM tests to instantiate
+#include "backends/generic_csvm_tests.hpp"      // generic CSVM tests to instantiate
+#include "backends/generic_gpu_csvm_tests.hpp"  // generic GPU CSVM tests to instantiate
+#include "custom_test_macros.hpp"               // EXPECT_THROW_WHAT
+#include "naming.hpp"                           // naming::test_parameter_to_name
+#include "types_to_test.hpp"                    // util::{cartesian_type_product_t, combine_test_parameters_gtest_t}
+#include "utility.hpp"                          // util::redirect_output
 
-#include "gtest/gtest.h"                                    // TEST_F, EXPECT_NO_THROW, EXPECT_NE, TYPED_TEST_SUITE, TYPED_TEST, INSTANTIATE_TYPED_TEST_SUITE_P, ::testing::{Test, Types}
+#include "gtest/gtest.h"  // TEST_F, EXPECT_NO_THROW, INSTANTIATE_TYPED_TEST_SUITE_P, ::testing::Test
 
-#include <tuple>                                            // std::make_tuple, std::get
-#include <utility>                                          // std::make_pair
+#include <tuple>  // std::make_tuple, std::tuple
 
 class hipSYCLCSVM : public ::testing::Test, private util::redirect_output<> {};
 
@@ -133,44 +135,37 @@ TEST_F(hipSYCLCSVM, get_kernel_invocation_type) {
     EXPECT_NE(svm.get_kernel_invocation_type(), plssvm::sycl::kernel_invocation_type::automatic);
 }
 
-template <typename T, plssvm::kernel_function_type kernel, plssvm::sycl::kernel_invocation_type invocation>
-struct csvm_test_type {
+struct hipsycl_csvm_test_type {
     using mock_csvm_type = mock_hipsycl_csvm;
     using csvm_type = plssvm::hipsycl::csvm;
-    using real_type = T;
-    static constexpr plssvm::kernel_function_type kernel_type = kernel;
-    inline static auto additional_arguments = std::make_tuple(std::make_pair(plssvm::sycl_kernel_invocation_type, invocation));
+    using device_ptr_type = typename csvm_type::device_ptr_type;
+    inline static constexpr auto additional_arguments = std::make_tuple();
 };
+using hipsycl_csvm_test_tuple = std::tuple<hipsycl_csvm_test_type>;
+using hipsycl_csvm_test_label_type_list = util::cartesian_type_product_t<hipsycl_csvm_test_tuple, plssvm::detail::supported_label_types>;
+using hipsycl_csvm_test_type_list = util::cartesian_type_product_t<hipsycl_csvm_test_tuple>;
 
-class csvm_test_type_to_name {
-  public:
-    template <typename T>
-    static std::string GetName(int) {
-        return fmt::format("{}_{}_{}_{}",
-                           plssvm::csvm_to_backend_type_v<typename T::csvm_type>,
-                           plssvm::detail::arithmetic_type_name<typename T::real_type>(),
-                           T::kernel_type,
-                           std::get<0>(T::additional_arguments).second);
-    }
-};
-
-using csvm_test_types = ::testing::Types<
-    csvm_test_type<float, plssvm::kernel_function_type::linear, plssvm::sycl::kernel_invocation_type::nd_range>,
-    csvm_test_type<float, plssvm::kernel_function_type::polynomial, plssvm::sycl::kernel_invocation_type::nd_range>,
-    csvm_test_type<float, plssvm::kernel_function_type::rbf, plssvm::sycl::kernel_invocation_type::nd_range>,
-    csvm_test_type<double, plssvm::kernel_function_type::linear, plssvm::sycl::kernel_invocation_type::nd_range>,
-    csvm_test_type<double, plssvm::kernel_function_type::polynomial, plssvm::sycl::kernel_invocation_type::nd_range>,
-    csvm_test_type<double, plssvm::kernel_function_type::rbf, plssvm::sycl::kernel_invocation_type::nd_range>,
-
-    csvm_test_type<float, plssvm::kernel_function_type::linear, plssvm::sycl::kernel_invocation_type::hierarchical>,
-    csvm_test_type<float, plssvm::kernel_function_type::polynomial, plssvm::sycl::kernel_invocation_type::hierarchical>,
-    csvm_test_type<float, plssvm::kernel_function_type::rbf, plssvm::sycl::kernel_invocation_type::hierarchical>,
-    csvm_test_type<double, plssvm::kernel_function_type::linear, plssvm::sycl::kernel_invocation_type::hierarchical>,
-    csvm_test_type<double, plssvm::kernel_function_type::polynomial, plssvm::sycl::kernel_invocation_type::hierarchical>,
-    csvm_test_type<double, plssvm::kernel_function_type::rbf, plssvm::sycl::kernel_invocation_type::hierarchical>>;
+// the tests used in the instantiated GTest test suites
+using hipsycl_csvm_test_type_gtest = util::combine_test_parameters_gtest_t<hipsycl_csvm_test_type_list>;
+using hipsyclsolver_type_gtest = util::combine_test_parameters_gtest_t<hipsycl_csvm_test_type_list, util::solver_type_list>;
+using hipsyclkernel_function_type_gtest = util::combine_test_parameters_gtest_t<hipsycl_csvm_test_type_list, util::kernel_function_type_list>;
+using hipsyclsolver_and_kernel_function_type_gtest = util::combine_test_parameters_gtest_t<hipsycl_csvm_test_type_list, util::solver_and_kernel_function_type_list>;
+using hipsycllabel_type_kernel_function_and_classification_type_gtest = util::combine_test_parameters_gtest_t<hipsycl_csvm_test_label_type_list, util::kernel_function_and_classification_type_list>;
+using hipsycllabel_type_solver_kernel_function_and_classification_type_gtest = util::combine_test_parameters_gtest_t<hipsycl_csvm_test_label_type_list, util::solver_and_kernel_function_and_classification_type_list>;
 
 // instantiate type-parameterized tests
-INSTANTIATE_TYPED_TEST_SUITE_P(hipSYCLBackend, GenericCSVM, csvm_test_types, csvm_test_type_to_name);
-INSTANTIATE_TYPED_TEST_SUITE_P(hipSYCLBackendDeathTest, GenericCSVMDeathTest, csvm_test_types, csvm_test_type_to_name);
-INSTANTIATE_TYPED_TEST_SUITE_P(hipSYCLBackend, GenericGPUCSVM, csvm_test_types, csvm_test_type_to_name);
-INSTANTIATE_TYPED_TEST_SUITE_P(hipSYCLBackendDeathTest, GenericGPUCSVMDeathTest, csvm_test_types, csvm_test_type_to_name);
+// generic CSVM tests
+INSTANTIATE_TYPED_TEST_SUITE_P(hipSYCLCSVM, GenericCSVM, hipsycl_csvm_test_type_gtest, naming::test_parameter_to_name);
+INSTANTIATE_TYPED_TEST_SUITE_P(hipSYCLCSVM, GenericCSVMSolver, hipsyclsolver_type_gtest, naming::test_parameter_to_name);
+INSTANTIATE_TYPED_TEST_SUITE_P(hipSYCLCSVM, GenericCSVMKernelFunction, hipsyclkernel_function_type_gtest, naming::test_parameter_to_name);
+INSTANTIATE_TYPED_TEST_SUITE_P(hipSYCLCSVM, GenericCSVMSolverKernelFunction, hipsyclsolver_and_kernel_function_type_gtest, naming::test_parameter_to_name);
+INSTANTIATE_TYPED_TEST_SUITE_P(hipSYCLCSVM, GenericCSVMKernelFunctionClassification, hipsycllabel_type_kernel_function_and_classification_type_gtest, naming::test_parameter_to_name);
+INSTANTIATE_TYPED_TEST_SUITE_P(hipSYCLCSVM, GenericCSVMSolverKernelFunctionClassification, hipsycllabel_type_solver_kernel_function_and_classification_type_gtest, naming::test_parameter_to_name);
+
+// generic CSVM DeathTests
+INSTANTIATE_TYPED_TEST_SUITE_P(hipSYCLCSVMDeathTest, GenericCSVMSolverDeathTest, hipsyclsolver_type_gtest, naming::test_parameter_to_name);
+INSTANTIATE_TYPED_TEST_SUITE_P(hipSYCLCSVMDeathTest, GenericCSVMKernelFunctionDeathTest, hipsyclkernel_function_type_gtest, naming::test_parameter_to_name);
+
+// generic GPU CSVM tests
+INSTANTIATE_TYPED_TEST_SUITE_P(hipSYCLCSVM, GenericGPUCSVM, hipsycl_csvm_test_type_gtest, naming::test_parameter_to_name);
+INSTANTIATE_TYPED_TEST_SUITE_P(hipSYCLCSVM, GenericGPUCSVMKernelFunction, hipsyclkernel_function_type_gtest, naming::test_parameter_to_name);

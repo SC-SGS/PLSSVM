@@ -13,12 +13,12 @@
 #include "plssvm/parameter.hpp"         // plssvm::parameter
 #include "plssvm/target_platforms.hpp"  // plssvm::target_platform
 
-#include "../utility.hpp"               // check_kwargs_for_correctness, convert_kwargs_to_parameter, register_py_exception
+#include "../utility.hpp"  // check_kwargs_for_correctness, convert_kwargs_to_parameter, register_py_exception
 
-#include "pybind11/pybind11.h"          // py::module_, py::class_, py::init
-#include "pybind11/stl.h"               // support for STL types
+#include "pybind11/pybind11.h"  // py::module_, py::class_, py::init
+#include "pybind11/stl.h"       // support for STL types
 
-#include <memory>                       // std::make_unique
+#include <memory>  // std::make_unique
 
 namespace py = pybind11;
 
@@ -49,7 +49,8 @@ void init_opencl_csvm(py::module_ &m, const py::exception<plssvm::exception> &ba
                  // create CSVM with the provided target platform
                  return std::make_unique<plssvm::opencl::csvm>(target, params);
              }),
-             "create an SVM with the provided target platform and keyword arguments");
+             "create an SVM with the provided target platform and keyword arguments")
+        .def("num_available_devices", &plssvm::opencl::csvm::num_available_devices, "the number of available devices");
 
     // register OpenCL backend specific exceptions
     register_py_exception<plssvm::opencl::backend_exception>(opencl_module, "BackendError", base_exception);

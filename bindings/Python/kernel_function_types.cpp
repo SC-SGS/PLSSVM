@@ -31,7 +31,7 @@ void init_kernel_function_types(py::module_ &m) {
 
     const plssvm::parameter default_params{};
 
-    m.def("linear_kernel_function", &plssvm::kernel_function<plssvm::kernel_function_type::linear>, "apply the linear kernel function to two vectors");
+    m.def("linear_kernel_function", &plssvm::kernel_function<plssvm::kernel_function_type::linear, plssvm::real_type>, "apply the linear kernel function to two vectors");
     m.def(
         "polynomial_kernel_function", [](const std::vector<plssvm::real_type> &x, const std::vector<plssvm::real_type> &y, const int degree, const std::optional<plssvm::real_type> gamma, const plssvm::real_type coef0) {
             return plssvm::kernel_function<plssvm::kernel_function_type::polynomial>(x, y, degree, gamma.has_value() ? gamma.value() : plssvm::real_type{ 1.0 } / static_cast<plssvm::real_type>(x.size()), coef0);

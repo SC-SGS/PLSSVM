@@ -11,12 +11,12 @@
 #include "plssvm/backends/SYCL/implementation_type.hpp"  // plssvm::sycl::detail::list_available_sycl_implementations
 #include "plssvm/version/git_metadata/git_metadata.hpp"  // plssvm::version::git_metadata::{is_populated, commit_date, remote_url, branch, commit_sha1}
 
-#include "fmt/format.h"                                  // fmt::format, fmt::join
-#include "fmt/ostream.h"                                 // can use fmt using operator<< overloads
+#include "fmt/format.h"   // fmt::format, fmt::join
+#include "fmt/ostream.h"  // can use fmt using operator<< overloads
 
-#include <optional>                                      // std::optional, std::make_optional, std::nullopt
-#include <string>                                        // std::string
-#include <string_view>                                   // std::string_view
+#include <optional>     // std::optional, std::make_optional, std::nullopt
+#include <string>       // std::string
+#include <string_view>  // std::string_view
 
 namespace plssvm::version::detail {
 

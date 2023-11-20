@@ -13,13 +13,14 @@
 #define PLSSVM_BACKENDS_GPU_DEVICE_PTR_HPP_
 #pragma once
 
-#include "plssvm/detail/assert.hpp"     // PLSSVM_ASSERT
-#include "plssvm/detail/type_list.hpp"  // plssvm::detail::{real_type_list, type_list_contains_v}
+#include "plssvm/detail/assert.hpp"          // PLSSVM_ASSERT
+#include "plssvm/detail/type_list.hpp"       // plssvm::detail::{supported_real_types, tuple_contains_v}
+#include "plssvm/exceptions/exceptions.hpp"  // plssvm::gpu_device_ptr_exception
+#include "plssvm/matrix.hpp"                 // plssvm::layout_type, plssvm::matrix
 
-#include <cstddef>      // std::size_t
-#include <type_traits>  // std::is_same_v
-#include <array>      // std::array
-#include <vector>       // std::vector
+#include <array>    // std::array
+#include <cstddef>  // std::size_t
+#include <vector>   // std::vector
 
 namespace plssvm::detail {
 
@@ -32,7 +33,7 @@ namespace plssvm::detail {
 template <typename T, typename queue_t, typename device_pointer_t = T *>
 class gpu_device_ptr {
     // make sure only valid template types are used
-    static_assert(detail::type_list_contains_v<T, detail::real_type_list>, "Illegal real type provided! See the 'real_type_list' in the type_list.hpp header for a list of the allowed types.");
+    static_assert(detail::tuple_contains_v<T, detail::supported_real_types>, "Illegal real type provided! See the 'real_type_list' in the type_list.hpp header for a list of the allowed types.");
 
   public:
     /// The type of the values used in the device_ptr.
@@ -59,11 +60,11 @@ class gpu_device_ptr {
      */
     gpu_device_ptr(size_type size, const queue_type queue);
     /**
-     * @brief Construct a device_ptr for the device managed by @p queue with the extends @p extends.
-     * @param[in] extends the extends of the managed memory; size = extends[0] * extends[1]
+     * @brief Construct a device_ptr for the device managed by @p queue with the extents @p extents.
+     * @param[in] extents the extents of the managed memory; size = extents[0] * extents[1]
      * @param[in] queue the queue (or similar) to manage the device_ptr
      */
-    gpu_device_ptr(std::array<size_type, 2> extends, const queue_type queue);
+    gpu_device_ptr(std::array<size_type, 2> extents, const queue_type queue);
 
     /**
      * @brief Delete copy-constructor to make device_ptr a move only type.
@@ -126,19 +127,27 @@ class gpu_device_ptr {
     }
     /**
      * @brief Get the number of elements in the wrapped device_ptr.
+     * @details Same as: `this->size(0) * this->size(1)`.
      * @return the number of elements (`[[nodiscard]]`)
      */
     [[nodiscard]] size_type size() const noexcept {
-        return extends_[0] * extends_[1];
+        return extents_[0] * std::max(std::size_t{ 1 }, extents_[1]);
     }
     /**
-     * @brief Get the number of elements in the @p extend direction in the wrapped device_ptr.
-     * @param[in] extend the extend to retrieve
-     * @return the number of elements in direction @p extend (`[[nodiscard]]`)
+     * @brief Get the number of elements in the @p extent direction in the wrapped device_ptr.
+     * @param[in] extent the extent to retrieve
+     * @return the number of elements in direction @p extent (`[[nodiscard]]`)
      */
-    [[nodiscard]] size_type size(const size_type extend) const noexcept {
-        PLSSVM_ASSERT(extend < 2, "Only extends 0 and 1 are allowed, but {} was provided!", extend);
-        return extends_[extend];
+    [[nodiscard]] size_type size(const size_type extent) const noexcept {
+        PLSSVM_ASSERT(extent < 2, "Only extents 0 and 1 are allowed, but {} was provided!", extent);
+        return extents_[extent];
+    }
+    /**
+     * @brief Get the number of elements in both directions in the wrapped device_ptr.
+     * @return the number of elements in both directions (`[[nodiscard]]`)
+     */
+    [[nodiscard]] std::array<size_type, 2> extents() const noexcept {
+        return extents_;
     }
     /**
      * @brief Check whether the device_ptr currently maps zero elements.
@@ -192,6 +201,21 @@ class gpu_device_ptr {
 
     /**
      * @brief Copy device_ptr::size() many values from @p data_to_copy to the device.
+     * @tparam layout the layout type of the matrix
+     * @param[in] data_to_copy the data to copy onto the device
+     * @throws plssvm::gpu_device_ptr_exception if @p data_to_copy is too small to satisfy the copy
+     */
+    template <layout_type layout>
+    void copy_to_device(const matrix<value_type, layout> &data_to_copy) {
+        PLSSVM_ASSERT(data_ != nullptr, "Invalid data pointer! Maybe *this has been default constructed?");
+
+        if (data_to_copy.num_entries() < this->size()) {
+            throw gpu_device_ptr_exception{ fmt::format("Too few data to perform copy (needed: {}, provided: {})!", this->size(), data_to_copy.num_entries()) };
+        }
+        this->copy_to_device(data_to_copy.data());
+    }
+    /**
+     * @brief Copy device_ptr::size() many values from @p data_to_copy to the device.
      * @param[in] data_to_copy the data to copy onto the device
      * @throws plssvm::gpu_device_ptr_exception if @p data_to_copy is too small to satisfy the copy
      */
@@ -219,6 +243,21 @@ class gpu_device_ptr {
      */
     virtual void copy_to_device(const_host_pointer_type data_to_copy, size_type pos, size_type count) = 0;
 
+    /**
+     * @brief Copy device_ptr::size() many values from the device to the host buffer @p buffer.
+     * @tparam layout the layout type of the matrix
+     * @param[in] buffer the buffer to copy the data to
+     * @throws plssvm::gpu_device_ptr_exception if @p buffer is too small to satisfy the copy
+     */
+    template <layout_type layout>
+    void copy_to_host(matrix<value_type, layout> &buffer) const {
+        PLSSVM_ASSERT(data_ != nullptr, "Invalid data pointer! Maybe *this has been default constructed?");
+
+        if (buffer.num_entries() < this->size()) {
+            throw gpu_device_ptr_exception{ fmt::format("Buffer too small to perform copy (needed: {}, provided: {})!", this->size(), buffer.num_entries()) };
+        }
+        this->copy_to_host(buffer.data());
+    }
     /**
      * @brief Copy device_ptr::size() many values from the device to the host buffer @p buffer.
      * @param[out] buffer the buffer to copy the data to
@@ -254,7 +293,7 @@ class gpu_device_ptr {
     /// The device pointer pointing to the managed memory.
     device_pointer_type data_{};
     /// The size of the managed memory.
-    std::array<size_type, 2> extends_{ { 0, 0 } };
+    std::array<size_type, 2> extents_{ { 0, 0 } };
 };
 
 }  // namespace plssvm::detail

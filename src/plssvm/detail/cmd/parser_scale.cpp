@@ -8,20 +8,19 @@
 
 #include "plssvm/detail/cmd/parser_scale.hpp"
 
-#include "plssvm/constants.hpp"        // plssvm::real_type
 #include "plssvm/detail/assert.hpp"    // PLSSVM_ASSERT
 #include "plssvm/detail/logger.hpp"    // plssvm::verbosity
 #include "plssvm/version/version.hpp"  // plssvm::version::detail::get_version_info
 
-#include "cxxopts.hpp"                 // cxxopts::{Options, value, ParseResult}
-#include "fmt/core.h"                  // fmt::format, fmt::join
-#include "fmt/ostream.h"               // can use fmt using operator<< overloads
+#include "cxxopts.hpp"    // cxxopts::{Options, value, ParseResult}
+#include "fmt/core.h"     // fmt::format, fmt::join
+#include "fmt/ostream.h"  // can use fmt using operator<< overloads
 
-#include <cstdlib>                     // std::exit, EXIT_SUCCESS, EXIT_FAILURE
-#include <exception>                   // std::exception
-#include <filesystem>                  // std::filesystem::path
-#include <iostream>                    // std::cout, std::cerr, std::clog, std::endl
-#include <type_traits>                 // std::is_same_v
+#include <cstdlib>      // std::exit, EXIT_SUCCESS, EXIT_FAILURE
+#include <exception>    // std::exception
+#include <filesystem>   // std::filesystem::path
+#include <iostream>     // std::cout, std::cerr, std::clog, std::endl
+#include <type_traits>  // std::is_same_v
 
 namespace plssvm::detail::cmd {
 
@@ -50,7 +49,7 @@ parser_scale::parser_scale(int argc, char **argv) {
 #endif
            ("use_strings_as_labels", "use strings as labels instead of plane numbers", cxxopts::value<decltype(strings_as_labels)>()->default_value(fmt::format("{}", strings_as_labels)))
            ("verbosity", fmt::format("choose the level of verbosity: full|timing|libsvm|quiet (default: {})", fmt::format("{}", verbosity)), cxxopts::value<verbosity_level>())
-           ("q,quiet", "quiet mode (no outputs regardless the provided verbosity level!)", cxxopts::value<bool>()->default_value(verbosity == verbosity_level::quiet ? "true" : "false"))
+           ("q,quiet", "quiet mode (no outputs regardless the provided verbosity level!)", cxxopts::value<bool>())
            ("h,help", "print this helper message", cxxopts::value<bool>())
            ("v,version", "print version information", cxxopts::value<bool>())
            ("input", "", cxxopts::value<decltype(input_filename)>(), "input_file")
@@ -168,18 +167,18 @@ std::ostream &operator<<(std::ostream &out, const parser_scale &params) {
     out << fmt::format(
         "lower: {}\n"
         "upper: {}\n"
+        "output file format: {}\n"
         "label_type: {}\n"
         "real_type: {}\n"
-        "output file format: {}\n"
         "input file: '{}'\n"
         "scaled file: '{}'\n"
         "save file (scaling factors): '{}'\n"
         "restore file (scaling factors): '{}'\n",
         params.lower,
         params.upper,
+        params.format,
         params.strings_as_labels ? "std::string" : "int (default)",
         std::is_same_v<real_type, float> ? "float" : "double (default)",
-        params.format,
         params.input_filename,
         params.scaled_filename,
         params.save_filename,

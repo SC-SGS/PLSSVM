@@ -17,16 +17,16 @@
 #include "plssvm/detail/string_utility.hpp"        // plssvm::detail::{trim, trim_left, as_lower_case}
 #include "plssvm/detail/type_traits.hpp"           // PLSSVM_REQUIRES, plssvm::detail::remove_cvref_t
 
-#include "fast_float/fast_float.h"                 // fast_float::from_chars_result, fast_float::from_chars (floating point types)
-#include "fmt/core.h"                              // fmt::format
+#include "fast_float/fast_float.h"  // fast_float::from_chars_result, fast_float::from_chars (floating point types)
+#include "fmt/core.h"               // fmt::format
 
-#include <charconv>                                // std::from_chars_result, std::from_chars (integral types)
-#include <stdexcept>                               // std::runtime_error
-#include <string>                                  // std::string, std::stold
-#include <string_view>                             // std::string_view
-#include <system_error>                            // std:errc
-#include <type_traits>                             // std::is_arithmetic_v, std::is_same_v, std::is_floating_point_v, std::is_integral_v
-#include <vector>                                  // std::vector
+#include <charconv>      // std::from_chars_result, std::from_chars (integral types)
+#include <stdexcept>     // std::runtime_error
+#include <string>        // std::string, std::stold
+#include <string_view>   // std::string_view
+#include <system_error>  // std:errc
+#include <type_traits>   // std::is_arithmetic_v, std::is_same_v, std::is_floating_point_v, std::is_integral_v
+#include <vector>        // std::vector
 
 namespace plssvm::detail {
 

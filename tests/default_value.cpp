@@ -11,18 +11,18 @@
 #include "plssvm/default_value.hpp"
 
 #include "custom_test_macros.hpp"  // EXPECT_CONVERSION_TO_STRING, EXPECT_CONVERSION_FROM_STRING
-#include "naming.hpp"              // naming::label_type_to_name
-#include "types_to_test.hpp"       // util::label_type_gtest
+#include "naming.hpp"              // naming::test_parameter_to_name
+#include "types_to_test.hpp"       // util::[label_type_gtest, test_parameter_type_at_t}
 
-#include "gtest/gtest.h"           // TEST, TYPED_TEST, TEST_P, TYPED_TEST_SUITE, INSTANTIATE_TEST_SUITE_P, EXPECT_EQ, EXPECT_TRUE, EXPECT_FALSE, EXPECT_DOUBLE_EQ
-                                   // ::testing::{Test, WithParamInterface, Values}
+#include "gtest/gtest.h"  // TEST, TYPED_TEST, TEST_P, TYPED_TEST_SUITE, INSTANTIATE_TEST_SUITE_P, EXPECT_EQ, EXPECT_TRUE, EXPECT_FALSE, EXPECT_DOUBLE_EQ
+                          // ::testing::{Test, WithParamInterface, Values}
 
-#include <functional>              // std::hash
-#include <string>                  // std::string
-#include <string_view>             // std::string_view
-#include <tuple>                   // std::tuple, std::make_tuple, std::get
-#include <utility>                 // std::move, std::swap
-#include <vector>                  // std::vector
+#include <functional>   // std::hash
+#include <string>       // std::string
+#include <string_view>  // std::string_view
+#include <tuple>        // std::tuple, std::make_tuple, std::get
+#include <utility>      // std::move, std::swap
+#include <vector>       // std::vector
 
 //*************************************************************************************************************************************//
 //                                                            default_init                                                             //
@@ -30,10 +30,10 @@
 
 template <typename T>
 class DefaultInitDefault : public ::testing::Test {};
-TYPED_TEST_SUITE(DefaultInitDefault, util::label_type_gtest, naming::label_type_to_name);
+TYPED_TEST_SUITE(DefaultInitDefault, util::label_type_gtest, naming::test_parameter_to_name);
 
 TYPED_TEST(DefaultInitDefault, default_construct) {
-    using type = TypeParam;
+    using type = util::test_parameter_type_at_t<0, TypeParam>;
 
     // check for correct default construction
     EXPECT_EQ(plssvm::default_init<type>{}.value, type{});
@@ -400,26 +400,46 @@ using relation_op_func_ptr = bool (*)(const plssvm::default_value<int> &, const 
 class DefaultValueRelational : public ::testing::TestWithParam<std::tuple<relation_op_func_ptr, std::string_view, std::vector<bool>>> {
   protected:
     void SetUp() override {
-        val1 = 42;
+        val1_ = 42;
     }
 
-    plssvm::default_value<int> val1{ plssvm::default_init{ 1 } };
-    plssvm::default_value<int> val2{ plssvm::default_init{ 1 } };
-    plssvm::default_value<int> val3{ plssvm::default_init{ 42 } };
+    /**
+     * @brief Return the first default_value used for the relational operator overloads tests.
+     * @return the default value (`[[nodiscard]]`)
+     */
+    [[nodiscard]] const plssvm::default_value<int> &get_val1() const noexcept { return val1_; }
+    /**
+     * @brief Return the second default_value used for the relational operator overloads tests.
+     * @return the default value (`[[nodiscard]]`)
+     */
+    [[nodiscard]] const plssvm::default_value<int> &get_val2() const noexcept { return val2_; }
+    /**
+     * @brief Return the third default_value used for the relational operator overloads tests.
+     * @return the default value (`[[nodiscard]]`)
+     */
+    [[nodiscard]] const plssvm::default_value<int> &get_val3() const noexcept { return val3_; }
+
+  private:
+    /// A default value used to test the relational operator overloads.
+    plssvm::default_value<int> val1_{ plssvm::default_init{ 1 } };
+    /// A default value used to test the relational operator overloads.
+    plssvm::default_value<int> val2_{ plssvm::default_init{ 1 } };
+    /// A default value used to test the relational operator overloads.
+    plssvm::default_value<int> val3_{ plssvm::default_init{ 42 } };
 };
 
 TEST_P(DefaultValueRelational, relational_operators) {
     auto [op, op_name, booleans] = GetParam();
 
     // perform relational tests
-    EXPECT_EQ(op(this->val1, this->val2), booleans[0]);
-    EXPECT_EQ(op(this->val1, this->val3), booleans[1]);
-    EXPECT_EQ(op(this->val2, this->val3), booleans[2]);
+    EXPECT_EQ(op(this->get_val1(), this->get_val2()), booleans[0]);
+    EXPECT_EQ(op(this->get_val1(), this->get_val3()), booleans[1]);
+    EXPECT_EQ(op(this->get_val2(), this->get_val3()), booleans[2]);
 
     // perform tests for idempotence
-    EXPECT_EQ(op(this->val1, this->val1), booleans[3]);
-    EXPECT_EQ(op(this->val2, this->val2), booleans[4]);
-    EXPECT_EQ(op(this->val3, this->val3), booleans[5]);
+    EXPECT_EQ(op(this->get_val1(), this->get_val1()), booleans[3]);
+    EXPECT_EQ(op(this->get_val2(), this->get_val2()), booleans[4]);
+    EXPECT_EQ(op(this->get_val3(), this->get_val3()), booleans[5]);
 }
 // clang-format off
 INSTANTIATE_TEST_SUITE_P(DefaultValue, DefaultValueRelational, ::testing::Values(

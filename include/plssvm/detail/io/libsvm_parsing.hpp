@@ -21,18 +21,18 @@
 #include "plssvm/exceptions/exceptions.hpp"     // plssvm::invalid_file_format_exception
 #include "plssvm/matrix.hpp"                    // plssvm::os_matrix
 
-#include "fmt/compile.h"                        // FMT_COMPILE
-#include "fmt/format.h"                         // fmt::format, fmt::format_to
-#include "fmt/os.h"                             // fmt::ostream, fmt::output_file
+#include "fmt/compile.h"  // FMT_COMPILE
+#include "fmt/format.h"   // fmt::format, fmt::format_to
+#include "fmt/os.h"       // fmt::ostream, fmt::output_file
 
-#include <algorithm>                            // std::max, std::min
-#include <cstddef>                              // std::size_t
-#include <exception>                            // std::exception, std::exception_ptr, std::current_exception, std::rethrow_exception
-#include <string>                               // std::string
-#include <string_view>                          // std::string_view
-#include <tuple>                                // std::tuple, std::make_tuple
-#include <utility>                              // std::move
-#include <vector>                               // std::vector
+#include <algorithm>    // std::max, std::min
+#include <cstddef>      // std::size_t
+#include <exception>    // std::exception, std::exception_ptr, std::current_exception, std::rethrow_exception
+#include <string>       // std::string
+#include <string_view>  // std::string_view
+#include <tuple>        // std::tuple, std::make_tuple
+#include <utility>      // std::move
+#include <vector>       // std::vector
 
 namespace plssvm::detail::io {
 
@@ -133,12 +133,12 @@ template <typename label_type>
     bool has_label = false;
     bool has_no_label = false;
 
-    #pragma omp parallel default(none) shared(reader, data, label, parallel_exception, has_label, has_no_label) firstprivate(num_data_points, num_features)
+    #pragma omp parallel default(none) shared(reader, data, label, parallel_exception, has_label, has_no_label) firstprivate(num_data_points)
     {
         #pragma omp for reduction(|| : has_label) reduction(|| : has_no_label)
         for (std::size_t i = 0; i < num_data_points; ++i) {
             try {
-                std::string_view line = reader.line(i);
+                const std::string_view line = reader.line(i);
                 unsigned long last_index = 0;
 
                 // check if class labels are present (not necessarily the case for test files)
@@ -256,10 +256,21 @@ inline void write_libsvm_data_impl(const std::string &filename, const soa_matrix
     // note: commented out since the resulting model file cannot be read be LIBSVM
     // out.print("# {}x{}\n", num_data_points, num_features);
 
+    // the maximum size of one formatted LIBSVM entry, e.g., 1234:1.365363e+10
+    // biggest number representable as std::size_t: 18446744073709551615 -> 20 chars
+    // scientific notation: 3 chars (number in front of decimal separator including a sign + decimal separator) + 10 chars (part after the decimal separator, specified during formatting) +
+    //                      5 chars exponent (e + sign + maximum potential exponent (308 -> 3 digits)
+    // separators: 2 chars (: between index and feature + whitespace after feature value)
+    // -> 40 chars in total
+    // -> increased to 48 chars to be on the safe side
+    static constexpr std::size_t CHARS_PER_BLOCK = 48;
+    // results in 48 B * 128 B = 6 KiB stack buffer per thread
+    static constexpr std::size_t BLOCK_SIZE = 128;
+    // use 1 MiB as buffer per thread
+    constexpr std::size_t STRING_BUFFER_SIZE = std::size_t{ 1024 } * std::size_t{ 1024 };
+
     // format one output-line
     auto format_libsvm_line = [num_features](std::string &output, const soa_matrix<real_type> &data_point, const std::size_t row) {
-        static constexpr std::size_t BLOCK_SIZE = 64;
-        static constexpr std::size_t CHARS_PER_BLOCK = 128;
         static constexpr std::size_t BUFFER_SIZE = BLOCK_SIZE * CHARS_PER_BLOCK;
         static std::array<char, BUFFER_SIZE> buffer;
         #pragma omp threadprivate(buffer)
@@ -280,20 +291,30 @@ inline void write_libsvm_data_impl(const std::string &filename, const soa_matrix
         output.push_back('\n');
     };
 
-    #pragma omp parallel default(none) shared(out, data, label, format_libsvm_line, num_data_points, num_features)
+    #pragma omp parallel default(none) shared(out, data, label, format_libsvm_line) firstprivate(num_data_points, num_features)
     {
         // all support vectors
         std::string out_string;
+        out_string.reserve(STRING_BUFFER_SIZE + (num_features + 1) * CHARS_PER_BLOCK);  // oversubscribe buffer that at least one additional line fits into it
+
         #pragma omp for schedule(dynamic) nowait
         for (typename std::vector<real_type>::size_type i = 0; i < num_data_points; ++i) {
             if constexpr (has_label) {
                 out_string.append(fmt::format(FMT_COMPILE("{} "), label[i]));
             }
             format_libsvm_line(out_string, data, i);
-        }
 
-        #pragma omp critical
-        out.print("{}", out_string);
+            if (out_string.size() > STRING_BUFFER_SIZE) {
+                #pragma omp critical
+                out.print("{}", out_string);
+
+                out_string.clear();
+            }
+        }
+        if (!out_string.empty()) {
+            #pragma omp critical
+            out.print("{}", out_string);
+        }
     }
 }
 

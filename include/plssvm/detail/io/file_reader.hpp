@@ -103,16 +103,17 @@ class file_reader {
      */
     void open(const std::filesystem::path &filename);
     /**
-     * @brief Checks whether this file_reader is currently associated with a file.
-     * @return `true` if a file is currently open, `false` otherwise (`[[nodiscard]]`)
-     */
-    [[nodiscard]] bool is_open() const noexcept;
-    /**
      * @brief Closes the associated file.
      * @details If memory mapped IO has been used, unmap the file and close the file descriptor, and delete the allocated buffer.
      *          This function is called by the destructor of file_reader when the object goes out of scope and is not usually invoked directly.
      */
     void close();
+
+    /**
+     * @brief Checks whether this file_reader is currently associated with a file.
+     * @return `true` if a file is currently open, `false` otherwise (`[[nodiscard]]`)
+     */
+    [[nodiscard]] bool is_open() const noexcept;
 
     /**
      * @brief Element-wise swap all contents of `*this` with @p other.

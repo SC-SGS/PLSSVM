@@ -11,10 +11,10 @@
 #include "plssvm/constants.hpp"                    // plssvm::real_type
 #include "plssvm/detail/arithmetic_type_name.hpp"  // plssvm::detail::arithmetic_type_name
 
-#include "fmt/core.h"                              // fmt::format
-#include "fmt/ostream.h"                           // can use fmt using operator<< overloads
+#include "fmt/core.h"     // fmt::format
+#include "fmt/ostream.h"  // can use fmt using operator<< overloads
 
-#include <ostream>                                 // std::ostream
+#include <ostream>  // std::ostream
 
 namespace plssvm {
 
@@ -34,4 +34,4 @@ std::ostream &operator<<(std::ostream &out, const parameter &params) {
                detail::arithmetic_type_name<real_type>());
 }
 
-}  // namespace plssvm::detail
+}  // namespace plssvm

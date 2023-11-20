@@ -10,10 +10,10 @@
 
 #include "plssvm/backends/OpenCL/detail/utility.hpp"  // PLSSVM_OPENCL_ERROR_CHECK
 
-#include "CL/cl.h"                                    // cl_kernel, clReleaseKernel
+#include "CL/cl.h"  // cl_kernel, clReleaseKernel
 
-#include <memory>                                     // std::addressof
-#include <utility>                                    // std::exchange
+#include <memory>   // std::addressof
+#include <utility>  // std::exchange
 
 namespace plssvm::opencl::detail {
 
