@@ -238,7 +238,7 @@ std::vector<command_queue> create_command_queues(const std::vector<context> &con
 //    ::plssvm::detail::replace_all(kernel_src_string, "THREAD_BLOCK_SIZE", fmt::format("{}", THREAD_BLOCK_SIZE));
 
     // append number of device to influence checksum calculation
-    kernel_src_string.append(fmt::format("\n// num_devices: {}\n// OpenCL library: {}", contexts[0].devices.size(), PLSSVM_OPENCL_LIBRARY));
+    kernel_src_string.append(fmt::format("\n// num_devices: {}\n// OpenCL library: {}\n// GEMM: {}", contexts[0].devices.size(), PLSSVM_OPENCL_LIBRARY, PLSSVM_IS_DEFINED(PLSSVM_USE_GEMM)));
 
     // create source code hash
     const std::string checksum = plssvm::detail::sha256{}(kernel_src_string);
