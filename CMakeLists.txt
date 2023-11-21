@@ -70,7 +70,7 @@ set(PLSSVM_BASE_SOURCES
 
 ## create base library: linked against all backend libraries
 set(PLSSVM_BASE_LIBRARY_NAME plssvm-base)
-add_library(${PLSSVM_BASE_LIBRARY_NAME} STATIC ${PLSSVM_BASE_SOURCES})
+add_library(${PLSSVM_BASE_LIBRARY_NAME} SHARED ${PLSSVM_BASE_SOURCES})
 ## create all library: one target against all backends are linked
 set(PLSSVM_ALL_LIBRARY_NAME plssvm-all)
 add_library(${PLSSVM_ALL_LIBRARY_NAME} INTERFACE)
