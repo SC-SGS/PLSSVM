@@ -54,7 +54,7 @@ class gpu_device_ptr {
      */
     gpu_device_ptr() = default;
     /**
-     * @brief Construct a device_ptr for the device managed by @p queue with the extends { @p size, 1 }.
+     * @brief Construct a device_ptr for the device managed by @p queue with the extents { @p size, 1 }.
      * @param[in] size the size of the managed memory
      * @param[in] queue the queue (or similar) to manage the device_ptr
      */
@@ -159,7 +159,7 @@ class gpu_device_ptr {
         return extents_;
     }
     [[nodiscard]] size_type padding(const size_type pad) const noexcept {
-        PLSSVM_ASSERT(pad < 2, "Only extends 0 and 1 are allowed, but {} was provided!", pad);
+        PLSSVM_ASSERT(pad < 2, "Only extents 0 and 1 are allowed, but {} was provided!", pad);
         return padding_[pad];
     }
     /**

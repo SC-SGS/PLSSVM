@@ -68,7 +68,7 @@ class device_ptr : public ::plssvm::detail::gpu_device_ptr<T, int> {
     /**
      * @brief Allocates `(extents[0] + padding[0]) * (extents[1] + padding[1]) * sizeof(T)` bytes on the device with ID @p device.
      * @param[in] extents the number of elements represented by the device_ptr
-     * @param[in] padding the number of padding elements added to the extend values
+     * @param[in] padding the number of padding elements added to the extent values
      * @param[in] device the associated CUDA device
      * @throws plssvm::cuda::backend_exception if the given device ID is smaller than 0 or greater or equal than the available number of devices
      */

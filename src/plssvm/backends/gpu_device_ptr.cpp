@@ -47,8 +47,8 @@ gpu_device_ptr<T, queue_t, device_pointer_t>::gpu_device_ptr(std::array<size_typ
     queue_{ queue }, extents_{ extents } {}
 
 template <typename T, typename queue_t, typename device_pointer_t>
-gpu_device_ptr<T, queue_t, device_pointer_t>::gpu_device_ptr(std::array<size_type, 2> extends, std::array<size_type, 2> padding, const queue_type queue) :
-    queue_{ queue }, extends_{ extends }, padding_{ padding } {}
+gpu_device_ptr<T, queue_t, device_pointer_t>::gpu_device_ptr(std::array<size_type, 2> extents, std::array<size_type, 2> padding, const queue_type queue) :
+    queue_{ queue }, extents_{ extents }, padding_{ padding } {}
 
 template <typename T, typename queue_t, typename device_pointer_t>
 gpu_device_ptr<T, queue_t, device_pointer_t>::gpu_device_ptr(gpu_device_ptr &&other) noexcept :
