@@ -1,0 +1,5 @@
+### required python packages for the Windows MSVC tests
+argparse
+scikit-learn
+numpy
+humanize

@@ -15,7 +15,7 @@
 
 #include "plssvm/exceptions/exceptions.hpp"  // plssvm::{*_exception}
 
-#include <string_view>                       // std::string_view
+#include <string_view>  // std::string_view
 
 /**
  * @def PLSSVM_CREATE_EXCEPTION_TYPE_NAME
@@ -49,6 +49,7 @@ PLSSVM_CREATE_EXCEPTION_TYPE_NAME(invalid_file_format_exception)
 PLSSVM_CREATE_EXCEPTION_TYPE_NAME(unsupported_backend_exception)
 PLSSVM_CREATE_EXCEPTION_TYPE_NAME(unsupported_kernel_type_exception)
 PLSSVM_CREATE_EXCEPTION_TYPE_NAME(gpu_device_ptr_exception)
+PLSSVM_CREATE_EXCEPTION_TYPE_NAME(matrix_exception)
 
 }  // namespace util
 

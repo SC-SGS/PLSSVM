@@ -17,6 +17,7 @@
 #include "plssvm/constants.hpp"                   // plssvm::real_type
 #include "plssvm/data_set.hpp"                    // plssvm::data_set
 #include "plssvm/default_value.hpp"               // plssvm::default_value, plssvm::default_init
+#include "plssvm/detail/igor_utility.hpp"         // plssvm::detail::{get_value_from_named_parameter, has_only_parameter_named_args_v}
 #include "plssvm/detail/logger.hpp"               // plssvm::detail::log, plssvm::verbosity_level
 #include "plssvm/detail/memory_size.hpp"          // plssvm::detail::memory_size
 #include "plssvm/detail/operators.hpp"            // plssvm::operators::sign
@@ -28,22 +29,22 @@
 #include "plssvm/kernel_function_types.hpp"       // plssvm::kernel_function_type
 #include "plssvm/matrix.hpp"                      // plssvm::aos_matrix
 #include "plssvm/model.hpp"                       // plssvm::model
-#include "plssvm/parameter.hpp"                   // plssvm::parameter, plssvm::detail::{get_value_from_named_parameter, has_only_parameter_named_args_v}
+#include "plssvm/parameter.hpp"                   // plssvm::parameter
 #include "plssvm/solver_types.hpp"                // plssvm::solver_type
 #include "plssvm/target_platforms.hpp"            // plssvm::target_platform
 
-#include "fmt/color.h"                            // fmt::fg, fmt::color::orange
-#include "fmt/core.h"                             // fmt::format
-#include "igor/igor.hpp"                          // igor::parser
+#include "fmt/color.h"    // fmt::fg, fmt::color::orange
+#include "fmt/core.h"     // fmt::format
+#include "igor/igor.hpp"  // igor::parser
 
-#include <algorithm>                              // std::max_element
-#include <chrono>                                 // std::chrono::{time_point, steady_clock, duration_cast}
-#include <iostream>                               // std::cout, std::endl
-#include <iterator>                               // std::distance
-#include <tuple>                                  // std::tie
-#include <type_traits>                            // std::enable_if_t, std::is_same_v, std::is_convertible_v, std::false_type
-#include <utility>                                // std::pair, std::forward
-#include <vector>                                 // std::vector
+#include <algorithm>    // std::max_element
+#include <chrono>       // std::chrono::{time_point, steady_clock, duration_cast}
+#include <iostream>     // std::cout, std::endl
+#include <iterator>     // std::distance
+#include <tuple>        // std::tie
+#include <type_traits>  // std::enable_if_t, std::is_same_v, std::is_convertible_v, std::false_type
+#include <utility>      // std::pair, std::forward
+#include <vector>       // std::vector
 
 namespace plssvm {
 
@@ -99,7 +100,7 @@ class csvm {
      * @brief Return the target platform (i.e, CPU or GPU including the vendor) this SVM runs on.
      * @return the target platform (`[[nodiscard]]`)
      */
-    [[nodiscard]] target_platform get_target_platform() const noexcept { return target_;}
+    [[nodiscard]] target_platform get_target_platform() const noexcept { return target_; }
     /**
      * @brief Return the currently used SVM parameter.
      * @return the SVM parameter (`[[nodiscard]]`)
@@ -131,7 +132,7 @@ class csvm {
      * @throws plssvm::invalid_parameter_exception if the provided value for `epsilon` is greater or equal than zero
      * @throws plssvm::invlaid_parameter_exception if the provided maximum number of iterations is less or equal than zero
      * @throws plssvm::invalid_parameter_exception if the training @p data does **not** include labels
-     * @throws plssvm::exception any exception thrown in the respective backend's implementation of `plssvm::csvm::solve_system_of_linear_equations`
+     * @throws plssvm::exception any exception thrown in the respective backend's implementation of `plssvm::csvm::solve_lssvm_system_of_linear_equations`
      * @note For binary classification **always** one vs. all is used regardless of the provided parameter!
      * @return the learned model (`[[nodiscard]]`)
      */
@@ -244,7 +245,8 @@ class csvm {
 
     /// The target platform of this SVM.
     target_platform target_{ plssvm::target_platform::automatic };
-  private:
+
+  protected:  // necessary for tests, would otherwise be private
     /**
      * @brief Perform some sanity checks on the passed SVM parameters.
      * @throws plssvm::invalid_parameter_exception if the kernel function is invalid
@@ -259,10 +261,10 @@ class csvm {
      * @param[in] B the right-hand sides
      * @param[in] params the parameter to create the kernel matrix
      * @param[in] named_args additional parameters for the respective algorithm used to solve the system of linear equations
-     * @return the result matrix `X` and the respective biases (`[[nodiscard]]`)
+     * @return the result matrix `X`, the respective biases, and the number of iterations necessary to solve the system of linear equations (`[[nodiscard]]`)
      */
     template <typename... Args>
-    [[nodiscard]] std::pair<aos_matrix<real_type>, std::vector<real_type>> solve_system_of_linear_equations(const soa_matrix<real_type> &A, const aos_matrix<real_type> &B, const parameter &params, Args&&... named_args) const;
+    [[nodiscard]] std::tuple<aos_matrix<real_type>, std::vector<real_type>, unsigned long long> solve_lssvm_system_of_linear_equations(const soa_matrix<real_type> &A, const aos_matrix<real_type> &B, const parameter &params, Args &&...named_args) const;
     /**
      * @brief Solve the system of linear equations `AX = B` where `A` is the kernel matrix using the Conjugate Gradients (CG) algorithm.
      * @param[in] A the kernel matrix
@@ -270,9 +272,9 @@ class csvm {
      * @param[in] eps the termination criterion for the CG algorithm
      * @param[in] max_cg_iter the maximum number of CG iterations
      * @param[in] cd_solver_variant the variation of the CG algorithm to use, i.e., how the kernel matrix is assembled (currently: explicit, streaming, implicit)
-     * @return the result matrix `X` (`[[nodiscard]]`)
+     * @return the result matrix `X` and the number of CG iterations necessary to solve the system of linear equations (`[[nodiscard]]`)
      */
-    [[nodiscard]] soa_matrix<real_type> conjugate_gradients(const detail::simple_any &A, const soa_matrix<real_type> &B, real_type eps, unsigned long long max_cg_iter, solver_type cd_solver_variant) const;
+    [[nodiscard]] std::pair<soa_matrix<real_type>, unsigned long long> conjugate_gradients(const detail::simple_any &A, const soa_matrix<real_type> &B, real_type eps, unsigned long long max_cg_iter, solver_type cd_solver_variant) const;
     /**
      * @brief Perform a dimensional reduction for the kernel matrix.
      * @details Reduces the resulting dimension by `2` compared to the original LS-SVM formulation.
@@ -288,6 +290,7 @@ class csvm {
      */
     [[nodiscard]] std::chrono::duration<long, std::milli> run_blas_level_3(solver_type cg_solver, real_type alpha, const detail::simple_any &A, const soa_matrix<real_type> &B, real_type beta, soa_matrix<real_type> &C) const;
 
+  private:
     /// The SVM parameter (e.g., cost, degree, gamma, coef0) currently in use.
     parameter params_{};
 };
@@ -373,14 +376,16 @@ model<label_type> csvm::fit(const data_set<label_type> &data, Args &&...named_ar
 
     // create model
     model<label_type> csvm_model{ params, data, used_classification };
-
+    std::vector<unsigned long long> num_iters{};
 
     if (used_classification == plssvm::classification_type::oaa) {
         // use the one vs. all multi-class classification strategy
         // solve the minimization problem
         aos_matrix<real_type> alpha;
-        std::tie(alpha, *csvm_model.rho_ptr_) = solve_system_of_linear_equations(*data.data_ptr_, *data.y_ptr_, params, std::forward<Args>(named_args)...);
+        unsigned long long num_iter{};
+        std::tie(alpha, *csvm_model.rho_ptr_, num_iter) = solve_lssvm_system_of_linear_equations(*data.data_ptr_, *data.y_ptr_, params, std::forward<Args>(named_args)...);
         csvm_model.alpha_ptr_->push_back(std::move(alpha));
+        num_iters.resize(calculate_number_of_classifiers(used_classification, data.num_classes()), num_iter);
     } else if (used_classification == plssvm::classification_type::oao) {
         // use the one vs. one multi-class classification strategy
         const std::size_t num_classes = data.num_classes();
@@ -390,12 +395,12 @@ model<label_type> csvm::fit(const data_set<label_type> &data, Args &&...named_ar
         csvm_model.alpha_ptr_->resize(num_binary_classifications);
         csvm_model.rho_ptr_->resize(num_binary_classifications);
 
-        // create index vector: indices[0] contains the indices of all data points in the big data set with label index 0, and so on
-        std::vector<std::vector<std::size_t>> indices(num_classes);
+        // create index vector: index_sets[0] contains the indices of all data points in the big data set with label index 0, and so on
+        std::vector<std::vector<std::size_t>> index_sets(num_classes);
         {
-            const std::vector<label_type>& labels = data.labels().value();
+            const std::vector<label_type> &labels = data.labels().value();
             for (std::size_t i = 0; i < data.num_data_points(); ++i) {
-                indices[data.mapping_->get_mapped_index_by_label(labels[i])].push_back(i);
+                index_sets[data.mapping_->get_mapped_index_by_label(labels[i])].push_back(i);
             }
         }
 
@@ -405,9 +410,19 @@ model<label_type> csvm::fit(const data_set<label_type> &data, Args &&...named_ar
                         "\nClassifying 0 vs 1 ({} vs {}) (1/1):\n",
                         data.mapping_->get_label_by_mapped_index(0),
                         data.mapping_->get_label_by_mapped_index(1));
-            const auto &[alpha, rho] = solve_system_of_linear_equations(*data.data_ptr_, *data.y_ptr_, params, std::forward<Args>(named_args)...);
+
+            // reduce the size of the rhs (y_ptr)
+            // -> consistent with the multi-class case as well as when reading the model from file in the model class constructor
+            aos_matrix<real_type> reduced_y{ 1, data.y_ptr_->num_cols() };
+            #pragma omp parallel for default(none) shared(data, reduced_y)
+            for (std::size_t col = 0; col < data.y_ptr_->num_cols(); ++col) {
+                reduced_y(0, col) = (*data.y_ptr_)(0, col);
+            }
+
+            const auto &[alpha, rho, num_iter] = solve_lssvm_system_of_linear_equations(*data.data_ptr_, reduced_y, params, std::forward<Args>(named_args)...);
             csvm_model.alpha_ptr_->front() = std::move(alpha);
             csvm_model.rho_ptr_->front() = rho.front();  // prevents std::tie
+            num_iters.push_back(num_iter);
         } else {
             // perform one vs. one classification
             std::size_t pos = 0;
@@ -415,22 +430,22 @@ model<label_type> csvm::fit(const data_set<label_type> &data, Args &&...named_ar
                 for (std::size_t j = i + 1; j < num_classes; ++j) {
                     // TODO: reduce amount of copies!?
                     // assemble one vs. one classification matrix and rhs
-                    const std::size_t num_data_points_in_sub_matrix{ indices[i].size() + indices[j].size() };
+                    const std::size_t num_data_points_in_sub_matrix{ index_sets[i].size() + index_sets[j].size() };
                     soa_matrix<real_type> binary_data{ num_data_points_in_sub_matrix, num_features };
                     aos_matrix<real_type> binary_y{ 1, num_data_points_in_sub_matrix };  // note: the first dimension will always be one, since only one rhs is needed
 
                     // note: if this is changed, it must also be changed in the libsvm_model_parsing.hpp in the calculate_alpha_idx function!!!
                     // order the indices in increasing order
                     std::vector<std::size_t> sorted_indices(num_data_points_in_sub_matrix);
-                    std::merge(indices[i].cbegin(), indices[i].cend(), indices[j].cbegin(), indices[j].cend(), sorted_indices.begin());
+                    std::merge(index_sets[i].cbegin(), index_sets[i].cend(), index_sets[j].cbegin(), index_sets[j].cend(), sorted_indices.begin());
                     // copy the data points to the binary data set
-                    #pragma omp parallel for default(none) shared(sorted_indices, binary_data, binary_y, data, indices) firstprivate(num_data_points_in_sub_matrix, num_features, i)
+                    #pragma omp parallel for default(none) shared(sorted_indices, binary_data, binary_y, data, index_sets) firstprivate(num_data_points_in_sub_matrix, num_features, i)
                     for (std::size_t si = 0; si < num_data_points_in_sub_matrix; ++si) {
                         for (std::size_t dim = 0; dim < num_features; ++dim) {
                             binary_data(si, dim) = (*data.data_ptr_)(sorted_indices[si], dim);
                         }
                         // needs only the check against i, since sorted_indices is guaranteed to only contain indices from i and j
-                        binary_y(0, si) = detail::contains(indices[i], sorted_indices[si]) ? real_type{ 1.0 } : real_type{ -1.0 };
+                        binary_y(0, si) = detail::contains(index_sets[i], sorted_indices[si]) ? real_type{ 1.0 } : real_type{ -1.0 };
                     }
 
                     // solve the minimization problem -> note that only a single rhs is present
@@ -442,9 +457,10 @@ model<label_type> csvm::fit(const data_set<label_type> &data, Args &&...named_ar
                                 data.mapping_->get_label_by_mapped_index(j),
                                 pos + 1,
                                 calculate_number_of_classifiers(classification_type::oao, num_classes));
-                    const auto &[alpha, rho] = solve_system_of_linear_equations(binary_data, binary_y, params, std::forward<Args>(named_args)...);
+                    const auto &[alpha, rho, num_iter] = solve_lssvm_system_of_linear_equations(binary_data, binary_y, params, std::forward<Args>(named_args)...);
                     (*csvm_model.alpha_ptr_)[pos] = std::move(alpha);
                     (*csvm_model.rho_ptr_)[pos] = rho.front();  // prevents std::tie
+                    num_iters.push_back(num_iter);
                     // go to next one vs. one classification
                     ++pos;
                     // order of the alpha value: 0 vs 1, 0 vs 2, 0 vs 3, 1 vs 2, 1 vs 3, 2 vs 3
@@ -452,8 +468,11 @@ model<label_type> csvm::fit(const data_set<label_type> &data, Args &&...named_ar
             }
         }
 
-        csvm_model.indices_ptr_ = std::make_shared<typename decltype(csvm_model.indices_ptr_)::element_type>(std::move(indices));
+        csvm_model.index_sets_ptr_ = std::make_shared<typename decltype(csvm_model.index_sets_ptr_)::element_type>(std::move(index_sets));
     }
+
+    // move number of CG iterations to model
+    csvm_model.num_iters_ = std::make_optional(std::move(num_iters));
 
     const std::chrono::time_point end_time = std::chrono::steady_clock::now();
     detail::log(verbosity_level::full | verbosity_level::timing,
@@ -484,7 +503,7 @@ std::vector<label_type> csvm::predict(const model<label_type> &model, const data
         PLSSVM_ASSERT(model.alpha_ptr_->front().num_cols() == data.num_data_points(), "The number of weights ({}) must be equal to the number of support vectors ({})!", model.alpha_ptr_->front().num_cols(), data.num_data_points());
 
         const soa_matrix<real_type> &sv = *model.data_.data_ptr_;
-        const aos_matrix<real_type> &alpha = model.alpha_ptr_->back();
+        const aos_matrix<real_type> &alpha = model.alpha_ptr_->front();  // num_classes x num_data_points
 
         // predict values using OAA -> num_data_points x num_classes
         const aos_matrix<real_type> votes = predict_values(model.params_, sv, alpha, *model.rho_ptr_, *model.w_ptr_, predict_points);
@@ -506,7 +525,7 @@ std::vector<label_type> csvm::predict(const model<label_type> &model, const data
             predicted_labels[i] = model.data_.mapping_->get_label_by_mapped_index(argmax);
         }
     } else if (model.get_classification_type() == classification_type::oao) {
-        PLSSVM_ASSERT(model.indices_ptr_ != nullptr, "The indices_ptr_ may never be a nullptr!");
+        PLSSVM_ASSERT(model.index_sets_ptr_ != nullptr, "The index_sets_ptr_ may never be a nullptr!");
         PLSSVM_ASSERT(model.alpha_ptr_ != nullptr, "The alpha_ptr_ may never be a nullptr!");
         PLSSVM_ASSERT(model.alpha_ptr_->size() == calculate_number_of_classifiers(classification_type::oao, model.num_classes()), "The alpha vector must contain {} matrices, but it contains {}!", calculate_number_of_classifiers(classification_type::oao, model.num_classes()), model.alpha_ptr_->size());
         PLSSVM_ASSERT(std::all_of(model.alpha_ptr_->cbegin(), model.alpha_ptr_->cend(), [](const aos_matrix<real_type> &matr) { return matr.num_rows() == 1; }), "In case of OAO, each matrix may only contain one row!");
@@ -516,7 +535,7 @@ std::vector<label_type> csvm::predict(const model<label_type> &model, const data
         // predict values using OAO
         const std::size_t num_features = model.num_features();
         const std::size_t num_classes = model.num_classes();
-        const std::vector<std::vector<std::size_t>> &indices = *model.indices_ptr_;
+        const std::vector<std::vector<std::size_t>> &index_sets = *model.index_sets_ptr_;
 
         aos_matrix<std::size_t> class_votes{ data.num_data_points(), num_classes };
 
@@ -534,30 +553,30 @@ std::vector<label_type> csvm::predict(const model<label_type> &model, const data
             for (std::size_t j = i + 1; j < num_classes; ++j) {
                 // TODO: reduce amount of copies!?
                 // assemble one vs. one classification matrix and rhs
-                const std::size_t num_data_points_in_sub_matrix{ indices[i].size() + indices[j].size() };
+                const std::size_t num_data_points_in_sub_matrix{ index_sets[i].size() + index_sets[j].size() };
                 const aos_matrix<real_type> &binary_alpha = (*model.alpha_ptr_)[pos];
                 const std::vector<real_type> binary_rho{ (*model.rho_ptr_)[pos] };
 
                 // create binary support vector matrix, based on the number of classes
                 const soa_matrix<real_type> &binary_sv = [&]() {
-                   if (num_classes == 2) {
-                       // no special assembly needed in binary case
-                       return *model.data_.data_ptr_;
-                   } else {
-                       // note: if this is changed, it must also be changed in the libsvm_model_parsing.hpp in the calculate_alpha_idx function!!!
-                       // order the indices in increasing order
-                       soa_matrix<real_type> temp{ num_data_points_in_sub_matrix, num_features };
-                       std::vector<std::size_t> sorted_indices(num_data_points_in_sub_matrix);
-                       std::merge(indices[i].cbegin(), indices[i].cend(), indices[j].cbegin(), indices[j].cend(), sorted_indices.begin());
-                       // copy the support vectors to the binary support vectors
-                       #pragma omp parallel for collapse(2) default(none) shared(sorted_indices, temp, model) firstprivate(num_data_points_in_sub_matrix, num_features)
-                       for (std::size_t si = 0; si < num_data_points_in_sub_matrix; ++si) {
-                           for (std::size_t dim = 0; dim < num_features; ++dim) {
-                               temp(si, dim) = (*model.data_.data_ptr_)(sorted_indices[si], dim);
-                           }
-                       }
-                       return temp;
-                   }
+                    if (num_classes == 2) {
+                        // no special assembly needed in binary case
+                        return *model.data_.data_ptr_;
+                    } else {
+                        // note: if this is changed, it must also be changed in the libsvm_model_parsing.hpp in the calculate_alpha_idx function!!!
+                        // order the indices in increasing order
+                        soa_matrix<real_type> temp{ num_data_points_in_sub_matrix, num_features };
+                        std::vector<std::size_t> sorted_indices(num_data_points_in_sub_matrix);
+                        std::merge(index_sets[i].cbegin(), index_sets[i].cend(), index_sets[j].cbegin(), index_sets[j].cend(), sorted_indices.begin());
+                        // copy the support vectors to the binary support vectors
+                        #pragma omp parallel for collapse(2)
+                        for (std::size_t si = 0; si < num_data_points_in_sub_matrix; ++si) {
+                            for (std::size_t dim = 0; dim < num_features; ++dim) {
+                                temp(si, dim) = (*model.data_.data_ptr_)(sorted_indices[si], dim);
+                            }
+                        }
+                        return temp;
+                    }
                 }();
 
                 // predict binary pair
@@ -611,7 +630,7 @@ std::vector<label_type> csvm::predict(const model<label_type> &model, const data
             for (std::size_t v = 0; v < class_votes.num_cols(); ++v) {
                 if (max < class_votes(i, v)) {
                     argmax = v;
-                    max = class_votes(i, v);
+                    max = static_cast<real_type>(class_votes(i, v));
                 }
             }
             predicted_labels[i] = model.data_.mapping_->get_label_by_mapped_index(argmax);
@@ -658,7 +677,7 @@ real_type csvm::score(const model<label_type> &model, const data_set<label_type>
 //*************************************************************************************************************************************//
 
 template <typename... Args>
-std::pair<aos_matrix<real_type>, std::vector<real_type>> csvm::solve_system_of_linear_equations(const soa_matrix<real_type> &A, const aos_matrix<real_type> &B, const parameter &params, Args &&...named_args) const {
+std::tuple<aos_matrix<real_type>, std::vector<real_type>, unsigned long long> csvm::solve_lssvm_system_of_linear_equations(const soa_matrix<real_type> &A, const aos_matrix<real_type> &B, const parameter &params, Args &&...named_args) const {
     PLSSVM_ASSERT(!A.empty(), "The A matrix may not be empty!");
     PLSSVM_ASSERT(!B.empty(), "The B matrix may not be empty!");
     PLSSVM_ASSERT(A.num_rows() == B.num_cols(), "The number of data points in A ({}) and B ({}) must be the same!", A.num_rows(), B.num_cols());
@@ -668,7 +687,7 @@ std::pair<aos_matrix<real_type>, std::vector<real_type>> csvm::solve_system_of_l
     // set default values
     // note: if the default values are changed, they must also be changed in the Python bindings!
     real_type used_epsilon{ 0.001 };
-    unsigned long long used_max_iter{ A.num_rows() };
+    unsigned long long used_max_iter{ A.num_rows() - 1 };  // account for later dimensional reduction
     solver_type used_solver{ solver_type::automatic };
 
     // compile time check: only named parameters are permitted
@@ -712,7 +731,7 @@ std::pair<aos_matrix<real_type>, std::vector<real_type>> csvm::solve_system_of_l
         // define used safety margin constants
         constexpr detail::memory_size minimal_safety_margin = 512_MiB;
         constexpr long double percentual_safety_margin = 0.05L;
-        const auto reduce_total_memory = [minimal_safety_margin](const detail::memory_size total_memory) {
+        const auto reduce_total_memory = [=](const detail::memory_size total_memory) {
             return total_memory - std::max(total_memory * percentual_safety_margin, minimal_safety_margin);
         };
 
@@ -765,10 +784,12 @@ std::pair<aos_matrix<real_type>, std::vector<real_type>> csvm::solve_system_of_l
         if (used_solver == solver_type::cg_explicit && max_single_allocation_size > max_mem_alloc_size) {
             detail::log(verbosity_level::full,
                         "The biggest single allocation ({}) exceeds the guaranteed maximum memory allocation size ({}), falling back to solver_type::cg_streaming.\n",
-                        max_single_allocation_size, max_mem_alloc_size);
+                        max_single_allocation_size,
+                        max_mem_alloc_size);
             std::clog << fmt::format(fmt::fg(fmt::color::orange),
                                      "Warning: if you are sure that the guaranteed maximum memory allocation size can be safely ignored on your deivce, "
-                                     "this check can be disabled via \"-DPLSSVM_ENFORCE_MAX_MEM_ALLOC_SIZE=OFF\" during the CMake configuration!") << std::endl;
+                                     "this check can be disabled via \"-DPLSSVM_ENFORCE_MAX_MEM_ALLOC_SIZE=OFF\" during the CMake configuration!")
+                      << std::endl;
             used_solver = solver_type::cg_streaming;
         }
 #endif
@@ -806,10 +827,10 @@ std::pair<aos_matrix<real_type>, std::vector<real_type>> csvm::solve_system_of_l
                 "Assembled the kernel matrix in {}.\n",
                 detail::tracking_entry{ "kernel_matrix", "kernel_matrix_assembly", std::chrono::duration_cast<std::chrono::milliseconds>(assembly_end_time - assembly_start_time) });
 
-
     // choose the correct algorithm based on the (provided) solver type -> currently only CG available
-    const soa_matrix<real_type> X = conjugate_gradients(kernel_matrix, B_red, used_epsilon, used_max_iter, used_solver);  // TODO: q_red for implicit
-
+    soa_matrix<real_type> X;
+    unsigned long long num_iter{};
+    std::tie(X, num_iter) = conjugate_gradients(kernel_matrix, B_red, used_epsilon, used_max_iter, used_solver);  // TODO: q_red for implicit
 
     // calculate bias and undo dimensional reduction
     aos_matrix<real_type> X_ret{ num_rhs, A.num_rows() };
@@ -829,7 +850,7 @@ std::pair<aos_matrix<real_type>, std::vector<real_type>> csvm::solve_system_of_l
         X_ret(i, num_rows_reduced) = -temp_sum;
     }
 
-    return std::make_pair(std::move(X_ret), std::move(bias));
+    return std::make_tuple(std::move(X_ret), std::move(bias), num_iter);
 }
 
 /// @cond Doxygen_suppress

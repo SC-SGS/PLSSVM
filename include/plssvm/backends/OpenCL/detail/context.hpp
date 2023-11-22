@@ -15,7 +15,7 @@
 
 #include "CL/cl.h"  // cl_context, cl_platform_id, cl_device_id
 
-#include <vector>   // std::vector
+#include <vector>  // std::vector
 
 namespace plssvm::opencl::detail {
 

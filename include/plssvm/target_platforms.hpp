@@ -70,6 +70,7 @@ std::istream &operator>>(std::istream &in, target_platform &target);
 
 }  // namespace plssvm
 
-template <> struct fmt::formatter<plssvm::target_platform> : fmt::ostream_formatter {};
+template <>
+struct fmt::formatter<plssvm::target_platform> : fmt::ostream_formatter {};
 
 #endif  // PLSSVM_TARGET_PLATFORMS_HPP_

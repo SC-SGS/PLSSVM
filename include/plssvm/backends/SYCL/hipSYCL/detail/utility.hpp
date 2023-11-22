@@ -16,8 +16,8 @@
 #include "plssvm/backends/SYCL/hipSYCL/detail/queue.hpp"  // plssvm::hipsycl::detail::queue (PImpl)
 #include "plssvm/target_platforms.hpp"                    // plssvm::target_platform
 
-#include <utility>                                        // std::pair
-#include <vector>                                         // std::vector
+#include <utility>  // std::pair
+#include <vector>   // std::vector
 
 namespace plssvm::hipsycl::detail {
 

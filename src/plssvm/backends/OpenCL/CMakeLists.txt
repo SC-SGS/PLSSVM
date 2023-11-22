@@ -32,11 +32,11 @@ set(PLSSVM_OPENCL_SOURCES
         ${CMAKE_CURRENT_LIST_DIR}/csvm.cpp
         ${CMAKE_CURRENT_LIST_DIR}/exceptions.cpp
         ${CMAKE_CURRENT_LIST_DIR}/../gpu_device_ptr.cpp
-        )
+)
 
 # set target properties
 set_local_and_parent(PLSSVM_OPENCL_BACKEND_LIBRARY_NAME plssvm-OpenCL)
-add_library(${PLSSVM_OPENCL_BACKEND_LIBRARY_NAME} STATIC ${PLSSVM_OPENCL_SOURCES})
+add_library(${PLSSVM_OPENCL_BACKEND_LIBRARY_NAME} SHARED ${PLSSVM_OPENCL_SOURCES})
 target_include_directories(${PLSSVM_OPENCL_BACKEND_LIBRARY_NAME} PUBLIC ${OpenCL_INCLUDE_DIRS})
 target_link_libraries(${PLSSVM_OPENCL_BACKEND_LIBRARY_NAME} PUBLIC OpenCL)
 

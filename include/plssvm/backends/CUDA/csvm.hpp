@@ -20,9 +20,9 @@
 #include "plssvm/parameter.hpp"                        // plssvm::parameter
 #include "plssvm/target_platforms.hpp"                 // plssvm::target_platform
 
-#include <cstddef>                                     // std::size_t
-#include <type_traits>                                 // std::true_type
-#include <utility>                                     // std::forward
+#include <cstddef>      // std::size_t
+#include <type_traits>  // std::true_type
+#include <utility>      // std::forward
 
 namespace plssvm {
 
@@ -111,7 +111,7 @@ class csvm : public ::plssvm::detail::gpu_csvm<detail::device_ptr, int> {
      */
     ~csvm() override;
 
-  private:
+  protected:
     /**
      * @brief Initialize all important states related to the CUDA backend.
      * @param[in] target the target platform to use
@@ -144,7 +144,7 @@ class csvm : public ::plssvm::detail::gpu_csvm<detail::device_ptr, int> {
     /**
      * @copydoc plssvm::detail::gpu_csvm::run_assemble_kernel_matrix_explicit
      */
-    [[nodiscard]] device_ptr_type run_assemble_kernel_matrix_explicit(const parameter &params, const device_ptr_type & data_d, const device_ptr_type &q_red_d, real_type QA_cost) const final;
+    [[nodiscard]] device_ptr_type run_assemble_kernel_matrix_explicit(const parameter &params, const device_ptr_type &data_d, const device_ptr_type &q_red_d, real_type QA_cost) const final;
     /**
      * @copydoc plssvm::detail::gpu_csvm::run_blas_level_3_kernel_explicit
      */

@@ -10,21 +10,21 @@
 
 #include "plssvm/backends/SYCL/hipSYCL/detail/queue_impl.hpp"  // plssvm::hipsycl::detail::queue (PImpl implementation)
 
-#include "plssvm/backends/SYCL/exceptions.hpp"                 // plssvm::hipsycl::backend_exception
-#include "plssvm/backends/gpu_device_ptr.hpp"                  // plssvm::detail::gpu_device_ptr
-#include "plssvm/detail/assert.hpp"                            // PLSSVM_ASSERT
+#include "plssvm/backends/SYCL/exceptions.hpp"  // plssvm::hipsycl::backend_exception
+#include "plssvm/backends/gpu_device_ptr.hpp"   // plssvm::detail::gpu_device_ptr
+#include "plssvm/detail/assert.hpp"             // PLSSVM_ASSERT
 
-#include "fmt/core.h"                                          // fmt::format
-#include "sycl/sycl.hpp"                                       // ::sycl::malloc_device, ::sycl::free
+#include "fmt/core.h"     // fmt::format
+#include "sycl/sycl.hpp"  // ::sycl::malloc_device, ::sycl::free
 
-#include <algorithm>                                           // std::min
-#include <array>                                               // std::array
+#include <algorithm>  // std::min
+#include <array>      // std::array
 
 namespace plssvm::hipsycl::detail {
 
 template <typename T>
 device_ptr<T>::device_ptr(const size_type size, const queue &q) :
-    device_ptr{ { size, 1 }, { 0, 0 }, q } {}
+    device_ptr{ { size, 0 }, { 0, 0 }, q } {}
 
 template <typename T>
 device_ptr<T>::device_ptr(const std::array<size_type, 2> extends, const queue &q) :

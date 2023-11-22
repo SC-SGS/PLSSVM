@@ -16,14 +16,14 @@
 
 #include "plssvm/detail/performance_tracker.hpp"  // plssvm::detail::is_tracking_entry_v, PLSSVM_DETAIL_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY
 
-#include "fmt/chrono.h"                           // format std::chrono types
-#include "fmt/format.h"                           // fmt::format
-#include "fmt/ostream.h"                          // fmt::formatter, fmt::ostream_formatter
+#include "fmt/chrono.h"   // format std::chrono types
+#include "fmt/format.h"   // fmt::format
+#include "fmt/ostream.h"  // fmt::formatter, fmt::ostream_formatter
 
-#include <iosfwd>                                 // std::istream, std::ostream
-#include <iostream>                               // std::cout
-#include <string_view>                            // std::string_view
-#include <utility>                                // std::forward
+#include <iosfwd>       // std::istream, std::ostream
+#include <iostream>     // std::cout
+#include <string_view>  // std::string_view
+#include <utility>      // std::forward
 
 namespace plssvm {
 
@@ -126,6 +126,7 @@ void log(const verbosity_level verb, const std::string_view msg, Args &&...args)
 
 }  // namespace plssvm
 
-template <> struct fmt::formatter<plssvm::verbosity_level> : fmt::ostream_formatter {};
+template <>
+struct fmt::formatter<plssvm::verbosity_level> : fmt::ostream_formatter {};
 
 #endif  // PLSSVM_DETAIL_LOGGER_HPP_

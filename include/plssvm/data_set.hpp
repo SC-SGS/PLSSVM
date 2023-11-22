@@ -21,30 +21,30 @@
 #include "plssvm/detail/logger.hpp"                      // plssvm::detail::log, plssvm::verbosity_level
 #include "plssvm/detail/performance_tracker.hpp"         // plssvm::detail::tracking_entry
 #include "plssvm/detail/string_utility.hpp"              // plssvm::detail::ends_with
-#include "plssvm/detail/type_list.hpp"                   // plssvm::detail::{real_type_list, label_type_list, type_list_contains_v}
+#include "plssvm/detail/type_list.hpp"                   // plssvm::detail::{supported_label_types, tuple_contains_v}
 #include "plssvm/detail/utility.hpp"                     // plssvm::detail::contains
 #include "plssvm/exceptions/exceptions.hpp"              // plssvm::data_set_exception
 #include "plssvm/file_format_types.hpp"                  // plssvm::file_format_type
 #include "plssvm/matrix.hpp"                             // plssvm::soa_matrix
 
-#include "fmt/chrono.h"                                  // directly output std::chrono times via fmt
-#include "fmt/core.h"                                    // fmt::format
-#include "fmt/ostream.h"                                 // directly output objects with operator<< overload via fmt
+#include "fmt/chrono.h"   // directly output std::chrono times via fmt
+#include "fmt/core.h"     // fmt::format
+#include "fmt/ostream.h"  // directly output objects with operator<< overload via fmt
 
-#include <algorithm>                                     // std::all_of, std::max, std::min, std::sort, std::adjacent_find
-#include <chrono>                                        // std::chrono::{time_point, steady_clock, duration_cast, millisecond}
-#include <cstddef>                                       // std::size_t
-#include <functional>                                    // std::reference_wrapper, std::cref
-#include <iostream>                                      // std::cout, std::endl
-#include <limits>                                        // std::numeric_limits::{max, lowest}
-#include <map>                                           // std::map
-#include <memory>                                        // std::shared_ptr, std::make_shared
-#include <optional>                                      // std::optional, std::make_optional, std::nullopt
-#include <set>                                           // std::set
-#include <string>                                        // std::string
-#include <tuple>                                         // std::tie
-#include <utility>                                       // std::move, std::pair, std::make_pair
-#include <vector>                                        // std::vector
+#include <algorithm>   // std::all_of, std::max, std::min, std::sort, std::adjacent_find
+#include <chrono>      // std::chrono::{time_point, steady_clock, duration_cast, millisecond}
+#include <cstddef>     // std::size_t
+#include <functional>  // std::reference_wrapper, std::cref
+#include <iostream>    // std::cout, std::endl
+#include <limits>      // std::numeric_limits::{max, lowest}
+#include <map>         // std::map
+#include <memory>      // std::shared_ptr, std::make_shared
+#include <optional>    // std::optional, std::make_optional, std::nullopt
+#include <set>         // std::set
+#include <string>      // std::string
+#include <tuple>       // std::tie
+#include <utility>     // std::move, std::pair, std::make_pair
+#include <vector>      // std::vector
 
 namespace plssvm {
 
@@ -69,7 +69,7 @@ using optional_ref = std::optional<std::reference_wrapper<T>>;
 template <typename U = int>
 class data_set {
     // make sure only valid template types are used
-    static_assert(detail::type_list_contains_v<U, detail::label_type_list>, "Illegal label type provided! See the 'label_type_list' in the type_list.hpp header for a list of the allowed types.");
+    static_assert(detail::tuple_contains_v<U, detail::supported_label_types>, "Illegal label type provided! See the 'label_type_list' in the type_list.hpp header for a list of the allowed types.");
 
     // plssvm::model needs the default constructor
     template <typename>
@@ -125,7 +125,7 @@ class data_set {
     data_set(const std::string &filename, file_format_type format, scaling scale_parameter);
 
     /**
-     * @brief Create a new data set copying the provided @p data_points.
+     * @brief Create a new data set by converting the provided @p data_points to a plssvm::matrix.
      * @details Since no labels are provided, this data set may **not** be used to a call to plssvm::csvm::fit!
      * @param[in] data_points the data points used in this data set
      * @throws plssvm::data_set_exception if the @p data_points vector is empty
@@ -134,7 +134,7 @@ class data_set {
      */
     explicit data_set(const std::vector<std::vector<real_type>> &data_points);
     /**
-     * @brief Create a new data set copying the provided @p data_points and @p labels.
+     * @brief Create a new data set by converting the provided @p data_points to a plssvm::matrix and copying the @p labels.
      * @param[in] data_points the data points used in this data set
      * @param[in] labels the labels used in this data set
      * @throws plssvm::data_set_exception if the @p data_points vector is empty
@@ -144,7 +144,7 @@ class data_set {
      */
     data_set(const std::vector<std::vector<real_type>> &data_points, std::vector<label_type> labels);
     /**
-     * @brief Create a new data set copying the the provided @p data_points and scale them using the provided @p scale_parameter.
+     * @brief Create a new data set  by converting the provided @p data_points to a plssvm::matrix and scale them using the provided @p scale_parameter.
      * @param[in] data_points the data points used in this data set
      * @param[in] scale_parameter the parameters used to scale the data set feature values to a given range
      * @throws plssvm::data_set_exception if the @p data_points vector is empty
@@ -154,7 +154,7 @@ class data_set {
      */
     data_set(const std::vector<std::vector<real_type>> &data_points, scaling scale_parameter);
     /**
-     * @brief Create a new data set copying the the provided @p data_points and @p labels and scale the @p data_points using the provided @p scale_parameter.
+     * @brief Create a new data set  by converting the provided @p data_points to a plssvm::matrix and copying the @p labels and scale the @p data_points using the provided @p scale_parameter.
      * @param[in] data_points the data points used in this data set
      * @param[in] labels the labels used in this data set
      * @param[in] scale_parameter the parameters used to scale the data set feature values to a given range
@@ -565,20 +565,32 @@ data_set<U>::data_set(const std::string &filename, file_format_type format, scal
 }
 
 template <typename U>
-data_set<U>::data_set(const std::vector<std::vector<real_type>> &data_points) :
+data_set<U>::data_set(const std::vector<std::vector<real_type>> &data_points) try :
     data_set{ soa_matrix<real_type>{ data_points } } {}
+    catch (const matrix_exception &e) {
+        throw data_set_exception{ e.what() };
+    }
 
 template <typename U>
-data_set<U>::data_set(const std::vector<std::vector<real_type>> &data_points, std::vector<label_type> labels) :
-    data_set{ soa_matrix<real_type>{ data_points }, std::move(labels) } { }
+data_set<U>::data_set(const std::vector<std::vector<real_type>> &data_points, std::vector<label_type> labels) try :
+    data_set{ soa_matrix<real_type>{ data_points }, std::move(labels) } {}
+    catch (const matrix_exception &e) {
+        throw data_set_exception{ e.what() };
+    }
 
 template <typename U>
-data_set<U>::data_set(const std::vector<std::vector<real_type>> &data_points, scaling scale_parameter) :
+data_set<U>::data_set(const std::vector<std::vector<real_type>> &data_points, scaling scale_parameter) try :
     data_set{ soa_matrix<real_type>{ data_points }, std::move(scale_parameter) } {}
+    catch (const matrix_exception &e) {
+        throw data_set_exception{ e.what() };
+    }
 
 template <typename U>
-data_set<U>::data_set(const std::vector<std::vector<real_type>> &data_points, std::vector<label_type> labels, scaling scale_parameter) :
-    data_set{ soa_matrix<real_type>{ data_points }, std::move(labels), std::move(scale_parameter) } { }
+data_set<U>::data_set(const std::vector<std::vector<real_type>> &data_points, std::vector<label_type> labels, scaling scale_parameter) try :
+    data_set{ soa_matrix<real_type>{ data_points }, std::move(labels), std::move(scale_parameter) } {}
+    catch (const matrix_exception &e) {
+        throw data_set_exception{ e.what() };
+    }
 
 template <typename U>
 template <layout_type layout>
@@ -728,7 +740,7 @@ void data_set<U>::create_mapping(const std::vector<label_type> &classes) {
     // convert input labels to now mapped values
     aos_matrix<real_type> tmp{ mapper.num_mappings(), labels_ptr_->size(), real_type{ -1.0 } };
 
-    #pragma omp parallel for collapse(2) default(none) shared(tmp, labels_ptr_, mapper)
+    #pragma omp parallel for collapse(2)
     for (typename std::vector<std::vector<real_type>>::size_type label = 0; label < tmp.num_rows(); ++label) {
         for (typename std::vector<real_type>::size_type i = 0; i < tmp.num_cols(); ++i) {
             if (label == mapper.get_mapped_index_by_label((*labels_ptr_)[i])) {
@@ -854,7 +866,7 @@ void data_set<U>::read_file(const std::string &filename, file_format_type format
     if (this->has_labels()) {
         std::set<label_type> unique_labels(labels_ptr_->cbegin(), labels_ptr_->cend());
         this->create_mapping(std::vector<label_type>(unique_labels.cbegin(), unique_labels.cend()));
-     }
+    }
 
     const std::chrono::time_point end_time = std::chrono::steady_clock::now();
     detail::log(verbosity_level::full | verbosity_level::timing,
@@ -865,7 +877,6 @@ void data_set<U>::read_file(const std::string &filename, file_format_type format
                 detail::tracking_entry{ "data_set_read", "time", std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time) },
                 detail::tracking_entry{ "data_set_read", "format", format },
                 detail::tracking_entry{ "data_set_read", "filename", filename });
-
 }
 
 }  // namespace plssvm

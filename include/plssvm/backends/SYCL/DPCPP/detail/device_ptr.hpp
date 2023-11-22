@@ -31,7 +31,7 @@ class device_ptr : public ::plssvm::detail::gpu_device_ptr<T, queue> {
 
     using base_type::data_;
     using base_type::queue_;
-    using base_type::extends_;
+    using base_type::extents_;
 
   public:
     // Be able to use overloaded base class functions.
@@ -58,18 +58,18 @@ class device_ptr : public ::plssvm::detail::gpu_device_ptr<T, queue> {
      */
     device_ptr(size_type size, const queue &q);
     /**
-     * @brief Allocates `extends[0] * extends[1] * sizeof(T)` bytes on the device associated with @p q.
-     * @param[in] extends the number of elements represented by the device_ptr
+     * @brief Allocates `extents[0] * extents[1] * sizeof(T)` bytes on the device associated with @p q.
+     * @param[in] extents the number of elements represented by the device_ptr
      * @param[in] q the associated SYCL queue
      */
-    device_ptr(std::array<size_type, 2> extends, const queue &q);
+    device_ptr(std::array<size_type, 2> extents, const queue &q);
     /**
-     * @brief Allocates `(extends[0] + padding[0]) * (extends[1] * padding[1]) * sizeof(T)` bytes on the device associated with @p q.
-     * @param[in] extends the number of elements represented by the device_ptr
+     * @brief Allocates `(extents[0] + padding[0]) * (extents[1] * padding[1]) * sizeof(T)` bytes on the device associated with @p q.
+     * @param[in] extents the number of elements represented by the device_ptr
      * @param[in] padding the number of padding elements added to the extend values
      * @param[in] q the associated SYCL queue
      */
-    device_ptr(std::array<size_type, 2> extends, std::array<size_type, 2> padding, const queue &q);
+    device_ptr(std::array<size_type, 2> extents, std::array<size_type, 2> padding, const queue &q);
 
     /**
      * @copydoc plssvm::detail::gpu_device_ptr::gpu_device_ptr(const plssvm::detail::gpu_device_ptr &)

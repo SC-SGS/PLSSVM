@@ -56,6 +56,7 @@ std::istream &operator>>(std::istream &in, solver_type &solving);
 
 }  // namespace plssvm
 
-template <> struct fmt::formatter<plssvm::solver_type> : fmt::ostream_formatter {};
+template <>
+struct fmt::formatter<plssvm::solver_type> : fmt::ostream_formatter {};
 
 #endif  // PLSSVM_SOLVING_TYPES_HPP_

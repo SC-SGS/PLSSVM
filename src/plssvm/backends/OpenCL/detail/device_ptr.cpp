@@ -15,17 +15,17 @@
 #include "plssvm/backends/gpu_device_ptr.hpp"               // plssvm::detail::gpu_device_ptr
 #include "plssvm/detail/assert.hpp"                         // PLSSVM_ASSERT
 
-#include "CL/cl.h"                                          // CL_MEM_READ_WRITE, CL_TRUE, clFinish, clCreateBuffer, clReleaseMemObject, clEnqueueFillBuffer, clEnqueueWriteBuffer, clEnqueueReadBuffer
-#include "fmt/core.h"                                       // fmt::format
+#include "CL/cl.h"     // CL_MEM_READ_WRITE, CL_TRUE, clFinish, clCreateBuffer, clReleaseMemObject, clEnqueueFillBuffer, clEnqueueWriteBuffer, clEnqueueReadBuffer
+#include "fmt/core.h"  // fmt::format
 
-#include <algorithm>                                        // std::min
-#include <array>                                            // std::array
+#include <algorithm>  // std::min
+#include <array>      // std::array
 
 namespace plssvm::opencl::detail {
 
 template <typename T>
 device_ptr<T>::device_ptr(const size_type size, const command_queue &queue) :
-    device_ptr{ { size, 1 }, { 0, 0 }, queue } { }
+    device_ptr{ { size, 0 }, { 0, 0 }, queue } { }
 
 template <typename T>
 device_ptr<T>::device_ptr(const std::array<size_type, 2> extends, const command_queue &queue) :

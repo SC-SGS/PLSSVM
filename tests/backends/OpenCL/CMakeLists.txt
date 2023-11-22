@@ -14,10 +14,11 @@ set(PLSSVM_OPENCL_TEST_SOURCES
         ${CMAKE_CURRENT_LIST_DIR}/detail/utility.cpp
         ${CMAKE_CURRENT_LIST_DIR}/exceptions.cpp
         ${CMAKE_CURRENT_LIST_DIR}/opencl_csvm.cpp
-        )
+)
 
 # add test executable
 add_executable(${PLSSVM_OPENCL_TEST_NAME} ${CMAKE_CURRENT_LIST_DIR}/../../main.cpp ${PLSSVM_OPENCL_TEST_SOURCES})
+target_include_directories(${PLSSVM_OPENCL_TEST_NAME} PRIVATE ${CMAKE_CURRENT_LIST_DIR}/..)
 
 # link against test library
 target_link_libraries(${PLSSVM_OPENCL_TEST_NAME} PRIVATE ${PLSSVM_BASE_TEST_LIBRARY_NAME})

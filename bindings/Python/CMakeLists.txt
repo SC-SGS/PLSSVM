@@ -14,19 +14,19 @@ if (pybind11_FOUND)
     message(STATUS "Found package pybind11.")
 else ()
     message(STATUS "Couldn't find package pybind11. Building from source ...")
-    set(PLSSVM_pybind11_VERSION v2.10.3)
+    set(PLSSVM_pybind11_VERSION v2.11.1)
     # fetch pybind11 library for creating Python bindings
     FetchContent_Declare(pybind11
             GIT_REPOSITORY https://github.com/pybind/pybind11.git
             GIT_TAG ${PLSSVM_pybind11_VERSION}
             GIT_SHALLOW TRUE
             QUIET
-            )
+    )
     FetchContent_MakeAvailable(pybind11)
     target_include_directories(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC
             $<BUILD_INTERFACE:${pybind11_SOURCE_DIR}/include>
             $<INSTALL_INTERFACE:include>
-            )
+    )
     message(STATUS "Installed pybind11 version ${PLSSVM_pybind11_VERSION}.")
 endif ()
 
@@ -53,7 +53,7 @@ set(PLSSVM_PYTHON_BINDINGS_SOURCES
         ${CMAKE_CURRENT_LIST_DIR}/sklearn.cpp
 
         ${CMAKE_CURRENT_LIST_DIR}/main.cpp
-        )
+)
 # set backends specific source files if the respective backend is used
 if (TARGET ${PLSSVM_OPENMP_BACKEND_LIBRARY_NAME})
     list(APPEND PLSSVM_PYTHON_BINDINGS_SOURCES ${CMAKE_CURRENT_LIST_DIR}/backends/openmp_csvm.cpp)
