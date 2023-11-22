@@ -17,7 +17,7 @@
 #include "types_to_test.hpp"       // util::label_type_gtest
 #include "utility.hpp"             // util::get_num_classes
 
-#include "gtest/gtest.h"  // TYPED_TEST, TYPED_TEST_SUITE
+#include "gtest/gtest.h"  // TYPED_TEST, TYPED_TEST_SUITE, SUCCEED
                           // ::testing::Test
 
 #include <string>  // std::string
@@ -97,7 +97,7 @@ TYPED_TEST(LIBSVMModelHeaderParseInvalid, too_few_rho) {
     using label_type = util::test_parameter_type_at_t<0, TypeParam>;
 
     if (util::get_num_classes<label_type>() == 2) {
-        GTEST_SKIP() << "Test not applicable for the label types with only two distinct classes.";
+        SUCCEED() << "Test not applicable for the label types with only two distinct classes.";
     } else {
         // parse the LIBSVM model file
         const std::string filename = PLSSVM_TEST_PATH "/data/model/invalid/too_few_rho.libsvm.model";
