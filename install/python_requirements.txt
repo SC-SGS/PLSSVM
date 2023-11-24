@@ -1,15 +1,39 @@
 ### optional and required python packages
+
+## for the data set generation
+# LIBSVM
 argparse
 scikit-learn
+humanize
+
+# additionally for generating ARFF files
+numpy
+arff
+pandas
+
+# additionally for generation CSV files
+# numpy
+
+# for plotting the generated data set (only available if #features <= 3)
+matplotlib
+
+
+## for the automatic PLSSVM target platform determination
+# argparse
 py-cpuinfo
 GPUtil
 pyamdgpuinfo
 pylspci
-numpy
-pandas
-arff
-matplotlib
-humanize
+
+
+## for the performance tracker parser
+# argparse
+# matplotlib
 pyyaml
 pint
+
+
+## for the performance analysis
+# argparse
+# scikit-learn
 wrapt-timeout-decorator
