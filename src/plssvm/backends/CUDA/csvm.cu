@@ -159,6 +159,7 @@ auto csvm::run_assemble_kernel_matrix_explicit(const parameter &params, const de
 #else
     device_ptr_type kernel_matrix_d{ (num_rows_reduced + THREAD_BLOCK_PADDING) * (num_rows_reduced + THREAD_BLOCK_PADDING + 1) / 2, devices_[0] };  // only explicitly store the upper triangular matrix
 #endif
+    kernel_matrix_d.memset(0);
     const real_type cost_factor = real_type{ 1.0 } / params.cost;
 
     detail::set_device(0);
