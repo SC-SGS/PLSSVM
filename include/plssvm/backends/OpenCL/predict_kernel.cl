@@ -29,7 +29,7 @@ __kernel void device_kernel_w_linear(__global real_type *w_d, __global const rea
     if (feature_idx < num_features && class_idx < num_classes) {
         real_type temp = 0.0;
         for (ulong sv = 0; sv < num_sv; ++sv) {
-            temp += alpha_d[class_idx * num_sv + sv] * sv_d[feature_idx * num_sv + sv];
+            temp += alpha_d[class_idx * num_sv + sv] * sv_d[feature_idx * (num_sv + THREAD_BLOCK_PADDING) + sv];
         }
         w_d[class_idx * num_features + feature_idx] = temp;
     }
@@ -82,7 +82,7 @@ __kernel void device_kernel_predict_polynomial(__global real_type *out_d, __glob
         real_type temp = 0.0;
         // perform dot product
         for (ulong dim = 0; dim < num_features; ++dim) {
-            temp += sv_d[dim * num_sv + sv_idx] * predict_points_d[dim * (num_predict_points + THREAD_BLOCK_PADDING) + predict_points_idx];
+            temp += sv_d[dim * (num_sv + THREAD_BLOCK_PADDING) + sv_idx] * predict_points_d[dim * (num_predict_points + THREAD_BLOCK_PADDING) + predict_points_idx];
         }
 
         // apply degree, gamma, and coef0, alpha and rho
@@ -117,7 +117,7 @@ __kernel void device_kernel_predict_rbf(__global real_type *out_d, __global cons
         real_type temp = 0.0;
         // perform dist calculation
         for (ulong dim = 0; dim < num_features; ++dim) {
-            const real_type diff = sv_d[dim * num_sv + sv_idx] - predict_points_d[dim * (num_predict_points + THREAD_BLOCK_PADDING) + predict_points_idx];
+            const real_type diff = sv_d[dim * (num_sv + THREAD_BLOCK_PADDING) + sv_idx] - predict_points_d[dim * (num_predict_points + THREAD_BLOCK_PADDING) + predict_points_idx];
             temp += diff * diff;
         }
 
