@@ -14,7 +14,7 @@
 #pragma once
 
 #include "plssvm/classification_types.hpp"      // plssvm::classification_type
-#include "plssvm/constants.hpp"                 // plssvm::real_type
+#include "plssvm/constants.hpp"                 // plssvm::real_type, plssvm::THREAD_BLOCK_PADDING, plssvm::FEATURE_BLOCK_SIZE
 #include "plssvm/data_set.hpp"                  // plssvm::data_set
 #include "plssvm/detail/assert.hpp"             // PLSSVM_ASSERT
 #include "plssvm/detail/io/libsvm_parsing.hpp"  // plssvm::detail::io::parse_libsvm_num_features
@@ -397,7 +397,7 @@ template <typename label_type>
     }
 
     // create vector containing the data and label
-    soa_matrix<real_type> data{ num_data_points, num_features };
+    soa_matrix<real_type> data{ num_data_points, num_features, THREAD_BLOCK_PADDING, FEATURE_BLOCK_SIZE };
     const std::size_t max_num_alpha_values = num_sv_per_class.size();  // OAA needs more alpha values than OAO
     aos_matrix<real_type> alpha{ max_num_alpha_values, num_data_points };
     bool is_oaa{ false };
