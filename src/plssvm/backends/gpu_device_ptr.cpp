@@ -54,7 +54,8 @@ template <typename T, typename queue_t, typename device_pointer_t>
 gpu_device_ptr<T, queue_t, device_pointer_t>::gpu_device_ptr(gpu_device_ptr &&other) noexcept :
     queue_{ std::exchange(other.queue_, queue_type{}) },
     data_{ std::exchange(other.data_, device_pointer_type{}) },
-    extents_{ std::exchange(other.extents_, std::array<size_type, 2>{}) } {}
+    extents_{ std::exchange(other.extents_, std::array<size_type, 2>{}) },
+    padding_{ std::exchange(other.padding_, std::array<size_type, 2>{}) } {}
 
 template <typename T, typename queue_t, typename device_pointer_t>
 auto gpu_device_ptr<T, queue_t, device_pointer_t>::operator=(gpu_device_ptr &&other) noexcept -> gpu_device_ptr & {
@@ -63,6 +64,7 @@ auto gpu_device_ptr<T, queue_t, device_pointer_t>::operator=(gpu_device_ptr &&ot
         queue_ = std::exchange(other.queue_, queue_type{});
         data_ = std::exchange(other.data_, device_pointer_type{});
         extents_ = std::exchange(other.extents_, std::array<size_type, 2>{});
+        padding_ = std::exchange(other.padding_, std::array<size_type, 2>{});
     }
     return *this;
 }
@@ -72,6 +74,7 @@ void gpu_device_ptr<T, queue_t, device_pointer_t>::swap(gpu_device_ptr &other) n
     std::swap(queue_, other.queue_);
     std::swap(data_, other.data_);
     std::swap(extents_, other.extents_);
+    std::swap(padding_, other.padding_);
 }
 
 template <typename T, typename queue_t, typename device_pointer_t>

@@ -222,8 +222,8 @@ class gpu_device_ptr {
     void copy_to_device(const matrix<value_type, layout> &data_to_copy) {
         PLSSVM_ASSERT(data_ != nullptr, "Invalid data pointer! Maybe *this has been default constructed?");
 
-        if (data_to_copy.num_entries() < this->size()) {
-            throw gpu_device_ptr_exception{ fmt::format("Too few data to perform copy (needed: {}, provided: {})!", this->size(), data_to_copy.num_entries()) };
+        if (data_to_copy.num_entries_padded() < this->size()) {
+            throw gpu_device_ptr_exception{ fmt::format("Too few data to perform copy (needed: {}, provided: {})!", this->size(), data_to_copy.num_entries_padded()) };
         }
         this->copy_to_device(data_to_copy.data());
     }
@@ -266,8 +266,8 @@ class gpu_device_ptr {
     void copy_to_host(matrix<value_type, layout> &buffer) const {
         PLSSVM_ASSERT(data_ != nullptr, "Invalid data pointer! Maybe *this has been default constructed?");
 
-        if (buffer.num_entries() < this->size()) {
-            throw gpu_device_ptr_exception{ fmt::format("Buffer too small to perform copy (needed: {}, provided: {})!", this->size(), buffer.num_entries()) };
+        if (buffer.num_entries_padded() < this->size()) {
+            throw gpu_device_ptr_exception{ fmt::format("Buffer too small to perform copy (needed: {}, provided: {})!", this->size(), buffer.num_entries_padded()) };
         }
         this->copy_to_host(buffer.data());
     }
