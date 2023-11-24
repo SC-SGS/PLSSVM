@@ -13,7 +13,8 @@
 #define PLSSVM_DATA_SET_HPP_
 #pragma once
 
-#include "plssvm/constants.hpp"                          // plssvm::real_type
+#include "plssvm/constants.hpp"                          // plssvm::real_type, plssvm::THREAD_BLOCK_PADDING, plssvm::FEATURE_BLOCK_SIZE
+#include "plssvm/detail/assert.hpp"                      // PLSSVM_ASSERT
 #include "plssvm/detail/io/arff_parsing.hpp"             // plssvm::detail::io::{read_libsvm_data, write_libsvm_data}
 #include "plssvm/detail/io/file_reader.hpp"              // plssvm::detail::io::file_reader
 #include "plssvm/detail/io/libsvm_parsing.hpp"           // plssvm::detail::io::{read_arff_data, write_arff_data}
@@ -32,6 +33,7 @@
 #include "fmt/ostream.h"  // directly output objects with operator<< overload via fmt
 
 #include <algorithm>   // std::all_of, std::max, std::min, std::sort, std::adjacent_find
+#include <array>       // std::array
 #include <chrono>      // std::chrono::{time_point, steady_clock, duration_cast, millisecond}
 #include <cstddef>     // std::size_t
 #include <functional>  // std::reference_wrapper, std::cref
@@ -169,9 +171,12 @@ class data_set {
     /**
      * @brief Create a new data set from the provided @p data_points.
      * @details Since no labels are provided, this data set may **not** be used to a call to plssvm::csvm::fit!
+     * @note If the provided matrix isn't padded, adds the necessary padding entries automatically.
      * @tparam layout the layout type of the input matrix
      * @param[in] data_points the data points used in this data set
      * @throws plssvm::data_set_exception if the @p data_points vector is empty
+     * @throws plssvm::data_set_exception if the row-padding is not equal to plssvm::THREAD_BLOCK_PADDING
+     * @throws plssvm::data_set_exception if the column-padding is not equal to plssvm::FEATURE_BLOCK_SIZE
      * @throws plssvm::data_set_exception if the data points in @p data_points have mismatching number of features
      * @throws plssvm::data_set_exception if any @p data_point has no features
      */
@@ -179,10 +184,13 @@ class data_set {
     explicit data_set(matrix<real_type, layout> data_points);
     /**
      * @brief Create a new data set from the provided @p data_points and @p labels.
+     * @note If the provided matrix isn't padded, adds the necessary padding entries automatically.
      * @tparam layout the layout type of the input matrix
      * @param[in] data_points the data points used in this data set
      * @param[in] labels the labels used in this data set
      * @throws plssvm::data_set_exception if the @p data_points vector is empty
+     * @throws plssvm::data_set_exception if the row-padding is not equal to plssvm::THREAD_BLOCK_PADDING
+     * @throws plssvm::data_set_exception if the column-padding is not equal to plssvm::FEATURE_BLOCK_SIZE
      * @throws plssvm::data_set_exception if the data points in @p data_points have mismatching number of features
      * @throws plssvm::data_set_exception if any @p data_point has no features
      * @throws plssvm::data_set_exception if the number of data points in @p data_points and number of @p labels mismatch
@@ -191,10 +199,13 @@ class data_set {
     data_set(matrix<real_type, layout> data_points, std::vector<label_type> labels);
     /**
      * @brief Create a new data set from the the provided @p data_points and scale them using the provided @p scale_parameter.
+     * @note If the provided matrix isn't padded, adds the necessary padding entries automatically.
      * @tparam layout the layout type of the input matrix
      * @param[in] data_points the data points used in this data set
      * @param[in] scale_parameter the parameters used to scale the data set feature values to a given range
      * @throws plssvm::data_set_exception if the @p data_points vector is empty
+     * @throws plssvm::data_set_exception if the row-padding is not equal to plssvm::THREAD_BLOCK_PADDING
+     * @throws plssvm::data_set_exception if the column-padding is not equal to plssvm::FEATURE_BLOCK_SIZE
      * @throws plssvm::data_set_exception if the data points in @p data_points have mismatching number of features
      * @throws plssvm::data_set_exception if any @p data_point has no features
      * @throws plssvm::data_set_exception all exceptions thrown by plssvm::data_set::scale
@@ -203,11 +214,14 @@ class data_set {
     data_set(matrix<real_type, layout> data_points, scaling scale_parameter);
     /**
      * @brief Create a new data set from the the provided @p data_points and @p labels and scale the @p data_points using the provided @p scale_parameter.
+     * @note If the provided matrix isn't padded, adds the necessary padding entries automatically.
      * @tparam layout the layout type of the input matrix
      * @param[in] data_points the data points used in this data set
      * @param[in] labels the labels used in this data set
      * @param[in] scale_parameter the parameters used to scale the data set feature values to a given range
      * @throws plssvm::data_set_exception if the @p data_points vector is empty
+     * @throws plssvm::data_set_exception if the row-padding is not equal to plssvm::THREAD_BLOCK_PADDING
+     * @throws plssvm::data_set_exception if the column-padding is not equal to plssvm::FEATURE_BLOCK_SIZE
      * @throws plssvm::data_set_exception if the data points in @p data_points have mismatching number of features
      * @throws plssvm::data_set_exception if any @p data_point has no features
      * @throws plssvm::data_set_exception if the number of data points in @p data_points and number of @p labels mismatch
@@ -566,28 +580,28 @@ data_set<U>::data_set(const std::string &filename, file_format_type format, scal
 
 template <typename U>
 data_set<U>::data_set(const std::vector<std::vector<real_type>> &data_points) try :
-    data_set{ soa_matrix<real_type>{ data_points } } {}
+    data_set{ soa_matrix<real_type>{ data_points, plssvm::THREAD_BLOCK_PADDING, plssvm::FEATURE_BLOCK_SIZE } } {}
     catch (const matrix_exception &e) {
         throw data_set_exception{ e.what() };
     }
 
 template <typename U>
 data_set<U>::data_set(const std::vector<std::vector<real_type>> &data_points, std::vector<label_type> labels) try :
-    data_set{ soa_matrix<real_type>{ data_points }, std::move(labels) } {}
+    data_set{ soa_matrix<real_type>{ data_points, plssvm::THREAD_BLOCK_PADDING, plssvm::FEATURE_BLOCK_SIZE }, std::move(labels) } {}
     catch (const matrix_exception &e) {
         throw data_set_exception{ e.what() };
     }
 
 template <typename U>
 data_set<U>::data_set(const std::vector<std::vector<real_type>> &data_points, scaling scale_parameter) try :
-    data_set{ soa_matrix<real_type>{ data_points }, std::move(scale_parameter) } {}
+    data_set{ soa_matrix<real_type>{ data_points, plssvm::THREAD_BLOCK_PADDING, plssvm::FEATURE_BLOCK_SIZE }, std::move(scale_parameter) } {}
     catch (const matrix_exception &e) {
         throw data_set_exception{ e.what() };
     }
 
 template <typename U>
 data_set<U>::data_set(const std::vector<std::vector<real_type>> &data_points, std::vector<label_type> labels, scaling scale_parameter) try :
-    data_set{ soa_matrix<real_type>{ data_points }, std::move(labels), std::move(scale_parameter) } {}
+    data_set{ soa_matrix<real_type>{ data_points, plssvm::THREAD_BLOCK_PADDING, plssvm::FEATURE_BLOCK_SIZE }, std::move(labels), std::move(scale_parameter) } {}
     catch (const matrix_exception &e) {
         throw data_set_exception{ e.what() };
     }
@@ -595,13 +609,20 @@ data_set<U>::data_set(const std::vector<std::vector<real_type>> &data_points, st
 template <typename U>
 template <layout_type layout>
 data_set<U>::data_set(matrix<real_type, layout> data_points) :
-    num_data_points_{ data_points.num_rows() }, num_features_{ data_points.num_cols() }, data_ptr_{ std::make_shared<soa_matrix<real_type>>(std::move(data_points)) } {
+    num_data_points_{ data_points.num_rows() }, num_features_{ data_points.num_cols() }, data_ptr_{ std::make_shared<soa_matrix<real_type>>(data_points.is_padded() ? std::move(data_points) : matrix<real_type, layout>{ data_points, plssvm::THREAD_BLOCK_PADDING, plssvm::FEATURE_BLOCK_SIZE }) } {
     // the provided data points vector may not be empty
     if (data_ptr_->num_rows() == 0) {
         throw data_set_exception{ "Data vector is empty!" };
     }
     if (data_ptr_->num_cols() == 0) {
         throw data_set_exception{ "No features provided for the data points!" };
+    }
+    // the padding sizes must match the expected once! (otherwise the backend calculations would result in garbage)
+    if (data_ptr_->padding()[0] != plssvm::THREAD_BLOCK_PADDING) {
+        throw data_set_exception{ fmt::format("Expected {} as row-padding size, but got {}!", plssvm::THREAD_BLOCK_PADDING, data_ptr_->padding()[0]) };
+    }
+    if (data_ptr_->padding()[1] != plssvm::FEATURE_BLOCK_SIZE) {
+        throw data_set_exception{ fmt::format("Expected {} as column-padding size, but got {}!", plssvm::FEATURE_BLOCK_SIZE, data_ptr_->padding()[1]) };
     }
 
     detail::log(verbosity_level::full | verbosity_level::timing,
@@ -763,7 +784,7 @@ void data_set<U>::scale() {
     const real_type lower = scale_parameters_->scaling_interval.first;
     const real_type upper = scale_parameters_->scaling_interval.second;
 
-    // calculate scaling factors if necessary, use provided once otherwise
+    // calculate scaling factors if necessary, use provided ones otherwise
     if (scale_parameters_->scaling_factors.empty()) {
         // calculate feature-wise min/max values for scaling
         for (size_type feature = 0; feature < num_features_; ++feature) {
