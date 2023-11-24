@@ -79,7 +79,14 @@ template <typename T, plssvm::layout_type layout>
     py_array_type py_array({ num_data_points, num_features });
     py::buffer_info buffer = py_array.request();
     T *ptr = static_cast<T *>(buffer.ptr);
-    std::memcpy(ptr, mat.data(), mat.num_entries() * sizeof(T));
+    if (mat.is_padded()) {
+        // must remove padding entries before copying to Python numpy array
+        const plssvm::matrix<T, layout> mat_without_padding{ mat, 0, 0 };
+        std::memcpy(ptr, mat_without_padding.data(), mat.num_entries() * sizeof(T));
+    } else {
+        // can memcpy data directly
+        std::memcpy(ptr, mat.data(), mat.num_entries() * sizeof(T));
+    }
     return py_array;
 }
 
