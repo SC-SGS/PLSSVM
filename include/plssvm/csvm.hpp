@@ -336,6 +336,14 @@ void csvm::set_params(Args &&...named_args) {
 
 template <typename label_type, typename... Args>
 model<label_type> csvm::fit(const data_set<label_type> &data, Args &&...named_args) const {
+    PLSSVM_ASSERT(data.data().is_padded(), "The data points must be padded!");
+    PLSSVM_ASSERT(data.data().padding()[0] == plssvm::THREAD_BLOCK_PADDING && data.data().padding()[1] == plssvm::FEATURE_BLOCK_SIZE,
+                  "The provided matrix must be padded with [{}, {}], but is padded with [{}, {}]!",
+                  plssvm::THREAD_BLOCK_PADDING,
+                  plssvm::FEATURE_BLOCK_SIZE,
+                  data.data().padding()[0],
+                  data.data().padding()[1]);
+
     if (!data.has_labels()) {
         throw invalid_parameter_exception{ "No labels given for training! Maybe the data is only usable for prediction?" };
     }
@@ -431,7 +439,7 @@ model<label_type> csvm::fit(const data_set<label_type> &data, Args &&...named_ar
                     // TODO: reduce amount of copies!?
                     // assemble one vs. one classification matrix and rhs
                     const std::size_t num_data_points_in_sub_matrix{ index_sets[i].size() + index_sets[j].size() };
-                    soa_matrix<real_type> binary_data{ num_data_points_in_sub_matrix, num_features };
+                    soa_matrix<real_type> binary_data{ num_data_points_in_sub_matrix, num_features, plssvm::THREAD_BLOCK_PADDING, plssvm::FEATURE_BLOCK_SIZE };
                     aos_matrix<real_type> binary_y{ 1, num_data_points_in_sub_matrix };  // note: the first dimension will always be one, since only one rhs is needed
 
                     // note: if this is changed, it must also be changed in the libsvm_model_parsing.hpp in the calculate_alpha_idx function!!!
@@ -485,6 +493,22 @@ model<label_type> csvm::fit(const data_set<label_type> &data, Args &&...named_ar
 
 template <typename label_type>
 std::vector<label_type> csvm::predict(const model<label_type> &model, const data_set<label_type> &data) const {
+    PLSSVM_ASSERT(model.support_vectors().is_padded(), "The support vectors must be padded!");
+    PLSSVM_ASSERT(model.support_vectors().padding()[0] == plssvm::THREAD_BLOCK_PADDING && model.support_vectors().padding()[1] == plssvm::FEATURE_BLOCK_SIZE,
+                  "The support vectors must be padded with [{}, {}], but is padded with [{}, {}]!",
+                  plssvm::THREAD_BLOCK_PADDING,
+                  plssvm::FEATURE_BLOCK_SIZE,
+                  model.support_vectors().padding()[0],
+                  model.support_vectors().padding()[1]);
+    PLSSVM_ASSERT(data.data().is_padded(), "The data points must be padded!");
+    PLSSVM_ASSERT(data.data().padding()[0] == plssvm::THREAD_BLOCK_PADDING && data.data().padding()[1] == plssvm::FEATURE_BLOCK_SIZE,
+                  "The provided predict points must be padded with [{}, {}], but is padded with [{}, {}]!",
+                  plssvm::THREAD_BLOCK_PADDING,
+                  plssvm::FEATURE_BLOCK_SIZE,
+                  data.data().padding()[0],
+                  data.data().padding()[1]);
+
+
     if (model.num_features() != data.num_features()) {
         throw invalid_parameter_exception{ fmt::format("Number of features per data point ({}) must match the number of features per support vector of the provided model ({})!", data.num_features(), model.num_features()) };
     }
@@ -657,7 +681,7 @@ real_type csvm::score(const model<label_type> &model, const data_set<label_type>
     }
 
     // predict labels
-    const std::vector<label_type> predicted_labels = predict(model, data);
+    const std::vector<label_type> predicted_labels = this->predict(model, data);
     // correct labels
     const std::vector<label_type> &correct_labels = data.labels().value();
 
@@ -679,6 +703,13 @@ real_type csvm::score(const model<label_type> &model, const data_set<label_type>
 template <typename... Args>
 std::tuple<aos_matrix<real_type>, std::vector<real_type>, unsigned long long> csvm::solve_lssvm_system_of_linear_equations(const soa_matrix<real_type> &A, const aos_matrix<real_type> &B, const parameter &params, Args &&...named_args) const {
     PLSSVM_ASSERT(!A.empty(), "The A matrix may not be empty!");
+    PLSSVM_ASSERT(A.is_padded(), "The A matrix must be padded!");
+    PLSSVM_ASSERT(A.padding()[0] == plssvm::THREAD_BLOCK_PADDING && A.padding()[1] == plssvm::FEATURE_BLOCK_SIZE,
+                  "The provided matrix must be padded with [{}, {}], but is padded with [{}, {}]!",
+                  plssvm::THREAD_BLOCK_PADDING,
+                  plssvm::FEATURE_BLOCK_SIZE,
+                  A.padding()[0],
+                  A.padding()[1]);
     PLSSVM_ASSERT(!B.empty(), "The B matrix may not be empty!");
     PLSSVM_ASSERT(A.num_rows() == B.num_cols(), "The number of data points in A ({}) and B ({}) must be the same!", A.num_rows(), B.num_cols());
 

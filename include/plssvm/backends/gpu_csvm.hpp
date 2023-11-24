@@ -184,11 +184,12 @@ class gpu_csvm : public ::plssvm::csvm {
 template <template <typename> typename device_ptr_t, typename queue_t>
 ::plssvm::detail::simple_any gpu_csvm<device_ptr_t, queue_t>::setup_data_on_devices(const solver_type solver, const soa_matrix<real_type> &A) const {
     PLSSVM_ASSERT(!A.empty(), "The matrix to setup on the devices may not be empty!");
+    PLSSVM_ASSERT(A.is_padded(), "Tha matrix to setup on the devices must be padded!");
     PLSSVM_ASSERT(solver != solver_type::automatic, "An explicit solver type must be provided instead of solver_type::automatic!");
 
     if (solver == solver_type::cg_explicit) {
         // initialize the data on the device
-        device_ptr_type data_d{ A.shape(), A.padding(), devices_[0] };  // TODO: don't copy last data point to device?
+        device_ptr_type data_d{ A.shape(), A.padding(), devices_[0] };
         data_d.copy_to_device(A);
 
         return ::plssvm::detail::simple_any{ std::move(data_d) };
@@ -207,17 +208,15 @@ template <template <typename> typename device_ptr_t, typename queue_t>
         // get the pointer to the data that already is on the device
         const device_ptr_type &data_d = data.get<device_ptr_type>();
         [[maybe_unused]] const std::size_t num_rows_reduced = data_d.size(0) - 1;
-        [[maybe_unused]] const std::size_t num_rows_reduced_padded = num_rows_reduced + THREAD_BLOCK_PADDING;
         [[maybe_unused]] const std::size_t num_features = data_d.size(1);
 
-        // TODO: ASSERTS
         PLSSVM_ASSERT(num_rows_reduced > 0, "At least one row must be given!");
-        PLSSVM_ASSERT(num_rows_reduced_padded >= num_rows_reduced, "The number of rows with padding ({}) must be greater or equal to the number of rows without padding!", num_rows_reduced_padded, num_rows_reduced);
+        PLSSVM_ASSERT(num_rows_reduced + THREAD_BLOCK_PADDING >= num_rows_reduced, "The number of rows with padding ({}) must be greater or equal to the number of rows without padding!", num_rows_reduced + THREAD_BLOCK_PADDING, num_rows_reduced);
         PLSSVM_ASSERT(num_features > 0, "At least one feature must be given!");
-        PLSSVM_ASSERT((num_rows_reduced + 1) * num_features == data_d.size(),
+        PLSSVM_ASSERT((num_rows_reduced + THREAD_BLOCK_PADDING + 1) * (num_features + FEATURE_BLOCK_SIZE) == data_d.size(),
                       "The number of values on the device data array is {}, but the provided sizes are {} ((num_rows_reduced + 1) * num_features)",
                       data_d.size(),
-                      (num_rows_reduced + 1) * num_features);
+                      (num_rows_reduced + THREAD_BLOCK_PADDING + 1) * (num_features + FEATURE_BLOCK_SIZE));
 
         // allocate memory for the values currently not on the device
         device_ptr_type q_red_d{ q_red.size() + THREAD_BLOCK_PADDING, devices_[0] };
@@ -226,14 +225,14 @@ template <template <typename> typename device_ptr_t, typename queue_t>
         device_ptr_type kernel_matrix = this->run_assemble_kernel_matrix_explicit(params, data_d, q_red_d, QA_cost);
 
 #if defined(PLSSVM_USE_GEMM)
-        PLSSVM_ASSERT(num_rows_reduced_padded * num_rows_reduced_padded == kernel_matrix.size(),
+        PLSSVM_ASSERT((num_rows_reduced + THREAD_BLOCK_PADDING) * (num_rows_reduced + THREAD_BLOCK_PADDING) == kernel_matrix.size(),
                       "The kernel matrix must be a quadratic matrix with (num_rows_reduced + THREAD_BLOCK_PADDING)^2 ({}) entries, but is {}!",
-                      num_rows_reduced_padded * num_rows_reduced_padded,
+                      (num_rows_reduced + THREAD_BLOCK_PADDING) * (num_rows_reduced + THREAD_BLOCK_PADDING),
                       kernel_matrix.size());
 #else
-        PLSSVM_ASSERT(num_rows_reduced_padded * (num_rows_reduced_padded + 1) / 2 == kernel_matrix.size(),
+        PLSSVM_ASSERT((num_rows_reduced + THREAD_BLOCK_PADDING) * (num_rows_reduced + THREAD_BLOCK_PADDING + 1) / 2 == kernel_matrix.size(),
                       "The kernel matrix must be a triangular matrix only with (num_rows_reduced + THREAD_BLOCK_PADDING) * (num_rows_reduced + THREAD_BLOCK_PADDING + 1) / 2 ({}) entries, but is {}!",
-                      num_rows_reduced_padded * (num_rows_reduced_padded + 1) / 2,
+                      (num_rows_reduced + THREAD_BLOCK_PADDING) * (num_rows_reduced + THREAD_BLOCK_PADDING + 1) / 2,
                       kernel_matrix.size());
 #endif
 
@@ -247,7 +246,9 @@ template <template <typename> typename device_ptr_t, typename queue_t>
 template <template <typename> typename device_ptr_t, typename queue_t>
 void gpu_csvm<device_ptr_t, queue_t>::blas_level_3(const solver_type solver, const real_type alpha, const ::plssvm::detail::simple_any &A, const soa_matrix<real_type> &B, const real_type beta, soa_matrix<real_type> &C) const {
     PLSSVM_ASSERT(!B.empty(), "The B matrix may not be empty!");
+    PLSSVM_ASSERT(B.is_padded(), "The B matrix must be padded!");
     PLSSVM_ASSERT(!C.empty(), "The C matrix may not be empty!");
+    PLSSVM_ASSERT(C.is_padded(), "The C matrix must be padded!");
     PLSSVM_ASSERT(solver != solver_type::automatic, "An explicit solver type must be provided instead of solver_type::automatic!");
 
     if (solver == solver_type::cg_explicit) {
@@ -258,14 +259,15 @@ void gpu_csvm<device_ptr_t, queue_t>::blas_level_3(const solver_type solver, con
         const std::size_t num_rows = B.num_cols();
 
         // allocate memory on the device
-        device_ptr_type B_d{ B.shape_padded(), devices_[0] };
+        device_ptr_type B_d{ B.shape(), B.padding(), devices_[0] };
         B_d.copy_to_device(B);
-        device_ptr_type C_d{ C.shape_padded(), devices_[0] };
+        device_ptr_type C_d{ C.shape(), C.padding(), devices_[0] };
         C_d.copy_to_device(C);
 
         this->run_blas_level_3_kernel_explicit(num_rows, num_rhs, num_rows, alpha, A_d, B_d, beta, C_d);
 
         C_d.copy_to_host(C);
+        C.restore_padding();
     } else {
         // TODO: implement for other solver types
         throw exception{ fmt::format("The GEMM calculation using the {} CG variation is currently not implemented!", solver) };
@@ -283,12 +285,14 @@ aos_matrix<real_type> gpu_csvm<device_ptr_t, queue_t>::predict_values(const para
                                                                       aos_matrix<real_type> &w,
                                                                       const soa_matrix<real_type> &predict_points) const {
     PLSSVM_ASSERT(!support_vectors.empty(), "The support vectors must not be empty!");
+    PLSSVM_ASSERT(support_vectors.is_padded(), "The support vectors must be padded!");
     PLSSVM_ASSERT(!alpha.empty(), "The alpha vectors (weights) must not be empty!");
     PLSSVM_ASSERT(support_vectors.num_rows() == alpha.num_cols(), "The number of support vectors ({}) and number of weights ({}) must be the same!", support_vectors.num_rows(), alpha.num_cols());
     PLSSVM_ASSERT(rho.size() == alpha.num_rows(), "The number of rho values ({}) and the number of weight vectors ({}) must be the same!", rho.size(), alpha.num_rows());
     PLSSVM_ASSERT(w.empty() || support_vectors.num_cols() == w.num_cols(), "Either w must be empty or contain exactly the same number of values ({}) as features are present ({})!", w.num_cols(), support_vectors.num_cols());
     PLSSVM_ASSERT(w.empty() || alpha.num_rows() == w.num_rows(), "Either w must be empty or contain exactly the same number of vectors ({}) as the alpha vector ({})!", w.num_rows(), alpha.num_rows());
     PLSSVM_ASSERT(!predict_points.empty(), "The data points to predict must not be empty!");
+    PLSSVM_ASSERT(predict_points.is_padded(), "The data points to predict must be padded!");
     PLSSVM_ASSERT(support_vectors.num_cols() == predict_points.num_cols(), "The number of features in the support vectors ({}) must be the same as in the data points to predict ({})!", support_vectors.num_cols(), predict_points.num_cols());
 
     // defined sizes
@@ -296,7 +300,7 @@ aos_matrix<real_type> gpu_csvm<device_ptr_t, queue_t>::predict_values(const para
     const std::size_t num_predict_points = predict_points.num_rows();
     const std::size_t num_features = predict_points.num_cols();
 
-    device_ptr_type sv_d{ support_vectors.shape(), devices_[0] };
+    device_ptr_type sv_d{ support_vectors.shape(), support_vectors.padding(), devices_[0] };
     sv_d.copy_to_device(support_vectors);
     device_ptr_type predict_points_d{ predict_points.shape(), predict_points.padding(), devices_[0] };
     predict_points_d.copy_to_device(predict_points);

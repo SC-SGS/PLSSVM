@@ -92,7 +92,7 @@ detail::simple_any csvm::setup_data_on_devices(const solver_type solver, const s
         return detail::simple_any{ &A };
     } else {
         // TODO: implement for other solver types
-        throw exception{ fmt::format("Assemblying the kernel matrix using the {} CG variation is currently not implemented!", solver) };
+        throw exception{ fmt::format("Assembling the kernel matrix using the {} CG variation is currently not implemented!", solver) };
     }
 }
 
@@ -104,9 +104,8 @@ detail::simple_any csvm::assemble_kernel_matrix(const solver_type solver, const 
     PLSSVM_ASSERT(data_ptr != nullptr, "The data_ptr must not be a nullptr!");
 
     const std::size_t num_rows_reduced = data_ptr->num_rows() - 1;
-    [[maybe_unused]] const std::size_t num_rows_reduced_padded = num_rows_reduced + THREAD_BLOCK_PADDING;
     PLSSVM_ASSERT(num_rows_reduced > 0, "At least one row must be given!");
-    PLSSVM_ASSERT(num_rows_reduced_padded >= num_rows_reduced, "The number of rows with padding ({}) must be greater or equal to the number of rows without padding!", num_rows_reduced_padded, num_rows_reduced);
+    PLSSVM_ASSERT(num_rows_reduced + THREAD_BLOCK_PADDING >= num_rows_reduced, "The number of rows with padding ({}) must be greater or equal to the number of rows without padding!", num_rows_reduced + THREAD_BLOCK_PADDING, num_rows_reduced);
     PLSSVM_ASSERT(data_ptr->num_rows() == num_rows_reduced + 1, "The number of rows in the data matrix must be {}, but is {}!", num_rows_reduced + 1, data_ptr->num_rows());
 
     if (solver == solver_type::cg_explicit) {
@@ -128,21 +127,21 @@ detail::simple_any csvm::assemble_kernel_matrix(const solver_type solver, const 
         }
 
 #if defined(PLSSVM_USE_GEMM)
-        PLSSVM_ASSERT(num_rows_reduced_padded * num_rows_reduced_padded == kernel_matrix.size(),
-                      "The kernel matrix must be a quadratic matrix with (num_rows_reduced + THREAD_BLOCK_PADDING)^2 ({}) entries, but is {}!",
-                      num_rows_reduced_padded * num_rows_reduced_padded,
+        PLSSVM_ASSERT(num_rows_reduced * num_rows_reduced == kernel_matrix.size(),
+                      "The kernel matrix must be a quadratic matrix with num_rows_reduced^2 ({}) entries, but is {}!",
+                      num_rows_reduced * num_rows_reduced,
                       kernel_matrix.size());
 #else
-        PLSSVM_ASSERT(num_rows_reduced_padded * (num_rows_reduced_padded + 1) / 2 == kernel_matrix.size(),
-                      "The kernel matrix must be a triangular matrix only with (num_rows_reduced + THREAD_BLOCK_PADDING) * (num_rows_reduced + THREAD_BLOCK_PADDING + 1) / 2 ({}) entries, but is {}!",
-                      num_rows_reduced_padded * (num_rows_reduced_padded + 1) / 2,
+        PLSSVM_ASSERT(num_rows_reduced * (num_rows_reduced + 1) / 2 == kernel_matrix.size(),
+                      "The kernel matrix must be a triangular matrix only with num_rows_reduced * (num_rows_reduced + 1) / 2 ({}) entries, but is {}!",
+                      num_rows_reduced * (num_rows_reduced + 1) / 2,
                       kernel_matrix.size());
 #endif
 
         return detail::simple_any{ std::move(kernel_matrix) };
     } else {
         // TODO: implement for other solver types
-        throw exception{ fmt::format("Assemblying the kernel matrix using the {} CG variation is currently not implemented!", solver) };
+        throw exception{ fmt::format("Assembling the kernel matrix using the {} CG variation is currently not implemented!", solver) };
     }
 }
 
