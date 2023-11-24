@@ -22,7 +22,6 @@ else ()
     FetchContent_Declare(googletest
             GIT_REPOSITORY https://github.com/google/googletest
             GIT_TAG ${PLSSVM_googletest_VERSION}
-            GIT_SHALLOW TRUE
             QUIET
     )
     # For Windows: Prevent overriding the parent project's compiler/linker settings
@@ -89,7 +88,7 @@ set(PLSSVM_BASE_TEST_LIBRARY_NAME_SOURCES
 )
 
 # create base test library
-add_library(${PLSSVM_BASE_TEST_LIBRARY_NAME} STATIC ${PLSSVM_BASE_TEST_LIBRARY_NAME_SOURCES})
+add_library(${PLSSVM_BASE_TEST_LIBRARY_NAME} SHARED ${PLSSVM_BASE_TEST_LIBRARY_NAME_SOURCES})
 
 # set necessary include directories
 target_include_directories(${PLSSVM_BASE_TEST_LIBRARY_NAME} PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}")

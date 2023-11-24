@@ -32,7 +32,11 @@ void init_performance_tracker([[maybe_unused]] py::module_ &m) {
         .def(
             "resume", []() { plssvm::detail::global_tracker->resume_tracking(); }, "resume performance tracking")
         .def(
-            "save", [](const std::string &filename) { plssvm::detail::global_tracker->save(filename); }, "save the performance tracking results to the specified yaml file");
+            "save", [](const std::string &filename) { plssvm::detail::global_tracker->save(filename); }, "save the performance tracking results to the specified yaml file")
+        .def(
+            "is_tracking", []() { return plssvm::detail::global_tracker->is_tracking(); }, "check whether performance tracking is currently enabled")
+        .def(
+            "clear_tracking_entries", []() { plssvm::detail::global_tracker->clear_tracking_entries(); }, "remove all currently tracked entries from the performance tracker");
 
 #endif
 }
