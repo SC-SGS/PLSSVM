@@ -438,13 +438,6 @@ TYPED_TEST(Matrix, construct_with_size_and_vector_and_padding) {
     const std::vector<real_type> data = { real_type{ 0.1 }, real_type{ 0.2 }, real_type{ 0.3 }, real_type{ 0.4 }, real_type{ 0.5 }, real_type{ 0.6 } };
     const plssvm::matrix<real_type, layout> matr{ 2, 3, data, 4, 5 };
 
-    for (std::size_t row = 0; row < matr.num_rows_padded(); ++row) {
-        for (std::size_t col = 0; col < matr.num_cols_padded(); ++col) {
-            std::cerr << matr(row, col) << " ";
-        }
-        std::cerr << std::endl;
-    }
-
     // check content
     EXPECT_EQ(matr.num_rows(), 2);
     EXPECT_EQ(matr.num_cols(), 3);
