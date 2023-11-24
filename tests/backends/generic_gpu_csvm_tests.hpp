@@ -13,7 +13,7 @@
 #define PLSSVM_TESTS_BACKENDS_GENERIC_GPU_CSVM_TESTS_HPP_
 #pragma once
 
-#include "plssvm/constants.hpp"              // plssvm::real_type
+#include "plssvm/constants.hpp"              // plssvm::real_type, plssvm::THREAD_BLOCK_PADDING, plssvm::FEATURE_BLOCK_SIZE
 #include "plssvm/detail/memory_size.hpp"     // memory size literals
 #include "plssvm/kernel_function_types.hpp"  // plssvm::kernel_function_type
 #include "plssvm/matrix.hpp"                 // plssvm::aos_matrix
@@ -78,35 +78,36 @@ TYPED_TEST_P(GenericGPUCSVM, run_blas_level_3_kernel_explicit) {
     const std::vector<plssvm::real_type> q_red = compare::perform_dimensional_reduction(params, data.data());
     const plssvm::real_type QA_cost = compare::kernel_function(params, data.data(), data.num_data_points() - 1, data.data(), data.num_data_points() - 1);
 #if defined(PLSSVM_USE_GEMM)
-    const std::vector<plssvm::real_type> kernel_matrix = compare::assemble_kernel_matrix_gemm(params, data.data(), q_red, QA_cost);
+    const std::vector<plssvm::real_type> kernel_matrix = compare::assemble_kernel_matrix_gemm(params, data.data(), q_red, QA_cost, plssvm::THREAD_BLOCK_PADDING);
 #else
-    const std::vector<plssvm::real_type> kernel_matrix = compare::assemble_kernel_matrix_symm(params, data.data(), q_red, QA_cost);
+    const std::vector<plssvm::real_type> kernel_matrix = compare::assemble_kernel_matrix_symm(params, data.data(), q_red, QA_cost, plssvm::THREAD_BLOCK_PADDING);
 #endif
 
     device_ptr_type A_d{ kernel_matrix.size(), device };
     A_d.copy_to_device(kernel_matrix);
 
-    const auto B = util::generate_random_matrix<plssvm::soa_matrix<plssvm::real_type>>(data.num_data_points() - 1, data.num_data_points() - 1);
-    device_ptr_type B_d{ B.shape(), device };
+    const auto B = util::generate_random_matrix<plssvm::soa_matrix<plssvm::real_type>>(data.num_data_points() - 1, data.num_data_points() - 1, plssvm::FEATURE_BLOCK_SIZE, plssvm::THREAD_BLOCK_PADDING);
+    device_ptr_type B_d{ B.shape(), B.padding(), device };
     B_d.copy_to_device(B);
 
     const plssvm::real_type beta{ 0.5 };
-    auto C = util::generate_random_matrix<plssvm::soa_matrix<plssvm::real_type>>(data.num_data_points() - 1, data.num_data_points() - 1);
-    device_ptr_type C_d{ C.shape(), device };
+    auto C = util::generate_random_matrix<plssvm::soa_matrix<plssvm::real_type>>(data.num_data_points() - 1, data.num_data_points() - 1, plssvm::THREAD_BLOCK_PADDING, plssvm::THREAD_BLOCK_PADDING);
+    device_ptr_type C_d{ C.shape(), C.padding(), device };
     C_d.copy_to_device(C);
 
     // perform BLAS calculation
     svm.run_blas_level_3_kernel_explicit(B.num_cols(), B.num_rows(), B.num_cols(), alpha, A_d, B_d, beta, C_d);
 
     // retrieve data
-    plssvm::soa_matrix<plssvm::real_type> C_res{ C.num_rows(), C.num_cols() };
+    plssvm::soa_matrix<plssvm::real_type> C_res{ C.num_rows(), C.num_cols(), C.padding()[0], C.padding()[1] };
     C_d.copy_to_host(C_res);
+    C_res.restore_padding();
 
     // calculate correct results
 #if defined(PLSSVM_USE_GEMM)
     compare::gemm(alpha, kernel_matrix, B, beta, C);
 #else
-    const std::vector<plssvm::real_type> kernel_matrix_gemm = compare::assemble_kernel_matrix_gemm(params, data.data(), q_red, QA_cost);
+    const std::vector<plssvm::real_type> kernel_matrix_gemm = compare::assemble_kernel_matrix_gemm(params, data.data(), q_red, QA_cost, plssvm::THREAD_BLOCK_PADDING);
     compare::gemm(alpha, kernel_matrix_gemm, B, beta, C);
 #endif
 
@@ -124,7 +125,7 @@ TYPED_TEST_P(GenericGPUCSVM, run_w_kernel) {
 
     // create support vectors
     const plssvm::data_set data{ PLSSVM_TEST_FILE };
-    device_ptr_type sv_d{ data.data().shape(), device };
+    device_ptr_type sv_d{ data.data().shape(), data.data().padding(),  device };
     sv_d.copy_to_device(data.data());
     // create weights vector
     const auto weights = util::generate_specific_matrix<plssvm::aos_matrix<plssvm::real_type>>(3, data.num_data_points());
@@ -176,12 +177,13 @@ TYPED_TEST_P(GenericGPUCSVMKernelFunction, run_assemble_kernel_matrix_explicit) 
     const mock_csvm_type svm = util::construct_from_tuple<mock_csvm_type>(params, csvm_test_type::additional_arguments);
     auto &device = svm.devices_[0];
 
-    device_ptr_type data_d{ data.data().shape(), device };
+    device_ptr_type data_d{ data.data().shape(), data.data().padding(), device };
     data_d.copy_to_device(data.data());
 
     const std::vector<plssvm::real_type> q_red = compare::perform_dimensional_reduction(params, data.data());
-    device_ptr_type q_red_d{ q_red.size(), device };
-    q_red_d.copy_to_device(q_red);
+    device_ptr_type q_red_d{ q_red.size() + plssvm::THREAD_BLOCK_PADDING, device };
+    q_red_d.memset(0, q_red.size());
+    q_red_d.copy_to_device(q_red, 0, q_red.size());
     const plssvm::real_type QA_cost = compare::kernel_function(params, data.data(), data.num_data_points() - 1, data.data(), data.num_data_points() - 1);
 
     const device_ptr_type kernel_matrix_d = svm.run_assemble_kernel_matrix_explicit(params, data_d, q_red_d, QA_cost);
@@ -192,9 +194,9 @@ TYPED_TEST_P(GenericGPUCSVMKernelFunction, run_assemble_kernel_matrix_explicit) 
 
     // calculate ground truth
 #if defined(PLSSVM_USE_GEMM)
-    const std::vector<plssvm::real_type> correct_kernel_matrix = compare::assemble_kernel_matrix_gemm(params, data.data(), q_red, QA_cost);
+    const std::vector<plssvm::real_type> correct_kernel_matrix = compare::assemble_kernel_matrix_gemm(params, data.data(), q_red, QA_cost, plssvm::THREAD_BLOCK_PADDING);
 #else
-    const std::vector<plssvm::real_type> correct_kernel_matrix = compare::assemble_kernel_matrix_symm(params, data.data(), q_red, QA_cost);
+    const std::vector<plssvm::real_type> correct_kernel_matrix = compare::assemble_kernel_matrix_symm(params, data.data(), q_red, QA_cost, plssvm::THREAD_BLOCK_PADDING);
 #endif
 
     // check for correctness
@@ -215,7 +217,7 @@ TYPED_TEST_P(GenericGPUCSVMKernelFunction, run_predict_kernel) {
 
     // create support vectors
     const plssvm::data_set data{ PLSSVM_TEST_FILE };
-    device_ptr_type sv_d{ data.data().shape(), device };
+    device_ptr_type sv_d{ data.data().shape(), data.data().padding(), device };
     sv_d.copy_to_device(data.data());
     // create weights vector
     const auto weights = util::generate_specific_matrix<plssvm::aos_matrix<plssvm::real_type>>(3, data.data().num_rows());
@@ -227,8 +229,8 @@ TYPED_TEST_P(GenericGPUCSVMKernelFunction, run_predict_kernel) {
         w_d = svm.run_w_kernel(weights_d, sv_d);
     }
     // create predict points
-    const auto predict_points = util::generate_random_matrix<plssvm::soa_matrix<plssvm::real_type>>(data.data().num_rows(), data.data().num_cols());
-    device_ptr_type predict_points_d{ predict_points.shape(), device };
+    const auto predict_points = util::generate_random_matrix<plssvm::soa_matrix<plssvm::real_type>>(data.data().num_rows(), data.data().num_cols(), plssvm::THREAD_BLOCK_PADDING, plssvm::FEATURE_BLOCK_SIZE);
+    device_ptr_type predict_points_d{ predict_points.shape(), predict_points.padding(), device };
     predict_points_d.copy_to_device(predict_points);
     // create rho vector
     const std::vector<plssvm::real_type> rho = util::generate_random_vector<plssvm::real_type>(weights.num_rows());

@@ -10,7 +10,7 @@
 
 #include "plssvm/data_set.hpp"
 
-#include "plssvm/constants.hpp"              // plssvm::real_type
+#include "plssvm/constants.hpp"              // plssvm::real_type, plssvm::THREAD_BLOCK_PADDING, plssvm::FEATURE_BLOCK_SIZE
 #include "plssvm/detail/io/file_reader.hpp"  // plssvm::detail::io::file_reader
 #include "plssvm/detail/string_utility.hpp"  // plssvm::detail::as_lower_case
 #include "plssvm/exceptions/exceptions.hpp"  // plssvm::data_set_exception
@@ -52,7 +52,7 @@ class DataSetSave : public ::testing::Test, private util::redirect_output<>, pro
     /// The correct labels.
     std::vector<fixture_label_type> label_{ util::get_correct_data_file_labels<fixture_label_type>() };
     /// The correct data points.
-    plssvm::aos_matrix<plssvm::real_type> data_points_{ util::generate_specific_matrix<plssvm::aos_matrix<plssvm::real_type>>(label_.size(), 4) };
+    plssvm::aos_matrix<plssvm::real_type> data_points_{ util::generate_specific_matrix<plssvm::aos_matrix<plssvm::real_type>>(label_.size(), 4, plssvm::THREAD_BLOCK_PADDING, plssvm::FEATURE_BLOCK_SIZE) };
 };
 TYPED_TEST_SUITE(DataSetSave, util::label_type_gtest, naming::test_parameter_to_name);
 

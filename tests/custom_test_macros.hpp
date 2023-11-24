@@ -112,8 +112,9 @@ inline void floating_point_2d_vector_eq(const std::vector<std::vector<T>> &val1,
 template <typename matrix_type, bool expect>
 inline void floating_point_matrix_eq(const matrix_type &matr1, const matrix_type &matr2) {
     ASSERT_EQ(matr1.shape(), matr2.shape());
-    for (typename matrix_type::size_type row = 0; row < matr1.num_rows(); ++row) {
-        for (typename matrix_type::size_type col = 0; col < matr1.num_cols(); ++col) {
+    ASSERT_EQ(matr1.padding(), matr2.padding());
+    for (typename matrix_type::size_type row = 0; row < matr1.num_rows_padded(); ++row) {
+        for (typename matrix_type::size_type col = 0; col < matr1.num_cols_padded(); ++col) {
             floating_point_eq<typename matrix_type::value_type, expect>(matr1(row, col), matr2(row, col), fmt::format("values at [{}][{}] are not equal: ", row, col));
         }
     }
@@ -198,8 +199,9 @@ inline void floating_point_2d_vector_near(const std::vector<std::vector<T>> &val
 template <typename matrix_type, bool expect, typename T = typename matrix_type::value_type>
 inline void floating_point_matrix_near(const matrix_type &matr1, const matrix_type &matr2, const T eps_factor = T{ 128.0 }) {
     ASSERT_EQ(matr1.shape(), matr2.shape());
-    for (typename matrix_type::size_type row = 0; row < matr1.num_rows(); ++row) {
-        for (typename matrix_type::size_type col = 0; col < matr2.num_cols(); ++col) {
+    ASSERT_EQ(matr1.padding(), matr2.padding());
+    for (typename matrix_type::size_type row = 0; row < matr1.num_rows_padded(); ++row) {
+        for (typename matrix_type::size_type col = 0; col < matr2.num_cols_padded(); ++col) {
             floating_point_near<T, expect>(matr1(row, col), matr2(row, col), eps_factor, fmt::format("values at [{}][{}] are not equal enough: ", row, col));
         }
     }

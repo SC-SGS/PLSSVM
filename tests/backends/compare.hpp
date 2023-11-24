@@ -103,11 +103,12 @@ template <typename real_type>
  * @param[in] data the data points
  * @param[in] q the `q` vector from the dimensional reduction
  * @param[in] QA_cost the `QA_cost` value from the dimensional reduction
+ * @param[in] padding the padding entries to add to the created kernel matrix
  * @param[in] num_devices used to mimic the floating point operation order in case of multi device execution (`[[maybe_unused]]`)
  * @return the kernel matrix (upper triangle matrix) (`[[nodiscard]]`)
  */
 template <typename real_type>
-[[nodiscard]] std::vector<real_type> assemble_kernel_matrix_symm(const plssvm::parameter &params, const plssvm::soa_matrix<real_type> &data, const std::vector<real_type> &q, real_type QA_cost, std::size_t num_devices = 1);
+[[nodiscard]] std::vector<real_type> assemble_kernel_matrix_symm(const plssvm::parameter &params, const plssvm::soa_matrix<real_type> &data, const std::vector<real_type> &q, real_type QA_cost, std::size_t padding, std::size_t num_devices = 1);
 /**
  * @brief Computes the kernel matrix using the kernel function determined by @p params.
  * @details Single core execution for a deterministic order of floating point operations.
@@ -116,11 +117,12 @@ template <typename real_type>
  * @param[in] data the data points
  * @param[in] q the `q` vector from the dimensional reduction
  * @param[in] QA_cost the `QA_cost` value from the dimensional reduction
+ * @param[in] padding the padding entries to add to the created kernel matrix
  * @param[in] num_devices used to mimic the floating point operation order in case of multi device execution (`[[maybe_unused]]`)
  * @return the kernel matrix (`[[nodiscard]]`)
  */
 template <typename real_type>
-[[nodiscard]] std::vector<real_type> assemble_kernel_matrix_gemm(const plssvm::parameter &params, const plssvm::soa_matrix<real_type> &data, const std::vector<real_type> &q, real_type QA_cost, std::size_t num_devices = 1);
+[[nodiscard]] std::vector<real_type> assemble_kernel_matrix_gemm(const plssvm::parameter &params, const plssvm::soa_matrix<real_type> &data, const std::vector<real_type> &q, real_type QA_cost, std::size_t padding, std::size_t num_devices = 1);
 
 /**
  * @brief Perform a BLAS Level 3 GEMM operator: `C = alpha * A * B + beta * C`

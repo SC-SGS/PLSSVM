@@ -92,6 +92,12 @@ class redirect_output {
         buffer_.flush();
         return buffer_.str();
     }
+    /**
+     * @brief Clear the current capture buffer.
+     */
+    void clear_capture() {
+        buffer_.clear();
+    }
 
   private:
     std::stringstream buffer_{};
@@ -342,22 +348,20 @@ template <typename T>
     return vec;
 }
 /**
- * @brief Generate matrix of size @p rows times @p cols filled with random floating point values in the range [@p lower, @p upper].
+ * @brief Generate matrix of size @p rows times @p cols filled with random floating point values in the range `[-1.0, 1.0)`.
  * @tparam matrix_type the type of the elements in the vector (must be a floating point type)
  * @param[in] rows the number of rows in the matrix
  * @param[in] cols the number of columns in the matrix
- * @param[in] lower the lower bound of the random values in the vector
- * @param[in] upper the upper bound of the random values in the vector
  * @return the randomly generated matrix (`[[nodiscard]]`)
  */
 template <typename matrix_type, typename real_type = typename matrix_type::value_type>
-[[nodiscard]] inline matrix_type generate_random_matrix(const std::size_t rows, const std::size_t cols, const real_type lower = real_type{ -1.0 }, const real_type upper = real_type{ 1.0 }) {
+[[nodiscard]] inline matrix_type generate_random_matrix(const std::size_t rows, const std::size_t cols) {
     static_assert(std::is_floating_point_v<real_type>, "Only floating point types are allowed!");
 
     // create random number generator
     static std::random_device device;
     static std::mt19937 gen(device());
-    std::uniform_real_distribution<real_type> dist(lower, upper);
+    std::uniform_real_distribution<real_type> dist(real_type{ -1.0 }, real_type{ 1.0 });
 
     matrix_type matrix { rows, cols };
     for (std::size_t i = 0; i < rows; ++i) {
@@ -367,6 +371,20 @@ template <typename matrix_type, typename real_type = typename matrix_type::value
     }
 
     return matrix;
+}
+/**
+ * @brief Generate matrix of size (@p rows + @p row_padding) times (@p cols + @p col_padding) filled with random floating point values in the range `[-1.0, 1.0)`.
+ *        The padding entries are set to `0`.
+ * @tparam matrix_type the type of the elements in the vector (must be a floating point type)
+ * @param[in] rows the number of rows in the matrix
+ * @param[in] cols the number of columns in the matrix
+ * @param[in] row_padding the number of padding entries per row in the matrix
+ * @param[in] col_padding the number of padding entries per column in the matrix
+ * @return the randomly generated matrix (`[[nodiscard]]`)
+ */
+template <typename matrix_type, typename real_type = typename matrix_type::value_type>
+[[nodiscard]] inline matrix_type generate_random_matrix(const std::size_t rows, const std::size_t cols, const std::size_t row_padding, const std::size_t col_padding) {
+    return matrix_type{ generate_random_matrix<matrix_type>(rows, cols), row_padding, col_padding };
 }
 
 /**
@@ -392,7 +410,23 @@ template <typename matrix_type>
     return matrix;
 }
 /**
- * @brief Generate a sparse matrix of size @p rows times @p cols filled with filled with values "row.(col +1)".
+ * @brief Generate a matrix of size (@p rows + @p row_padding) times (@p cols + @p col_padding) filled with filled with values "row.(col +1)".
+ *        The padding entries are set to `0`.
+ * @details Example for row = 1 and cols = 3 is: [ 1.1, 1.2, 1.3 ].
+ * @tparam matrix_type the type of the elements in the matrix (must be a floating point type)
+ * @param[in] rows the number of rows in the matrix
+ * @param[in] cols the number of columns in the matrix
+ * @param[in] row_padding the number of padding entries per row in the matrix
+ * @param[in] col_padding the number of padding entries per column in the matrix
+ * @return the generated matrix (`[[nodiscard]]`)
+ */
+template <typename matrix_type>
+[[nodiscard]] inline matrix_type generate_specific_matrix(const std::size_t rows, const std::size_t cols, const std::size_t row_padding, const std::size_t col_padding) {
+    return matrix_type{ generate_specific_matrix<matrix_type>(rows, cols), row_padding, col_padding };
+}
+
+/**
+ * @brief Generate a "sparse" matrix of size @p rows times @p cols filled with filled with values "row.(col +1)".
  *        In each row, approximately 50% of the values are replaced with zeros.
  * @details Example for row = 1 and cols = 3 is: [ 1.1, 0.0, 1.3 ].
  * @tparam matrix_type the type of the elements in the vector (must be a floating point type)
@@ -423,6 +457,21 @@ template <typename matrix_type>
     }
 
     return matrix;
+}
+/**
+ * @brief Generate a "sparse" matrix of size (@p rows + @p row_padding) times (@p cols + @p col_padding) filled with filled with values "row.(col +1)".
+ *        In each row, approximately 50% of the values are replaced with zeros. The padding entries are set to `0`.
+ * @details Example for row = 1 and cols = 3 is: [ 1.1, 0.0, 1.3 ].
+ * @tparam matrix_type the type of the elements in the vector (must be a floating point type)
+ * @param[in] rows the number of rows in the matrix
+ * @param[in] cols the number of columns in the matrix
+ * @param[in] row_padding the number of padding entries per row in the matrix
+ * @param[in] col_padding the number of padding entries per column in the matrix
+ * @return the generated sparse matrix (`[[nodiscard]]`)
+ */
+template <typename matrix_type>
+[[nodiscard]] inline matrix_type generate_specific_sparse_matrix(const std::size_t rows, const std::size_t cols, const std::size_t row_padding, const std::size_t col_padding) {
+    return matrix_type{ generate_specific_sparse_matrix<matrix_type>(rows, cols), row_padding, col_padding };
 }
 
 /**

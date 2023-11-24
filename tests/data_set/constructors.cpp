@@ -10,7 +10,7 @@
 
 #include "plssvm/data_set.hpp"
 
-#include "plssvm/constants.hpp"              // plssvm::real_type
+#include "plssvm/constants.hpp"              // plssvm::real_type, plssvm::THREAD_BLOCK_PADDING, plssvm::FEATURE_BLOCK_SIZE
 #include "plssvm/exceptions/exceptions.hpp"  // plssvm::data_set_exception
 #include "plssvm/file_format_types.hpp"      // plssvm::file_format_type
 #include "plssvm/matrix.hpp"                 // plssvm::matrix, plssvm::layout_type
@@ -46,7 +46,9 @@ class DataSetConstructors : public ::testing::Test, private util::redirect_outpu
                                                                                 { plssvm::real_type{ 0.57650218263054642 }, plssvm::real_type{ 1.01405596624706053 }, plssvm::real_type{ 0.13009428079760464 }, plssvm::real_type{ 0.7261913886869387 } },
                                                                                 { plssvm::real_type{ -0.20981208921241892 }, plssvm::real_type{ 0.60276937379453293 }, plssvm::real_type{ -0.13086851759108944 }, plssvm::real_type{ 0.10805254527169827 } },
                                                                                 { plssvm::real_type{ 1.88494043717792 }, plssvm::real_type{ 1.00518564317278263 }, plssvm::real_type{ 0.298499933047586044 }, plssvm::real_type{ 1.6464627048813514 } },
-                                                                                { plssvm::real_type{ -1.1256816275635 }, plssvm::real_type{ 2.12541534341344414 }, plssvm::real_type{ -0.165126576545454511 }, plssvm::real_type{ 2.5164553141200987 } } } };
+                                                                                { plssvm::real_type{ -1.1256816275635 }, plssvm::real_type{ 2.12541534341344414 }, plssvm::real_type{ -0.165126576545454511 }, plssvm::real_type{ 2.5164553141200987 } } },
+                                                                              plssvm::THREAD_BLOCK_PADDING,
+                                                                              plssvm::FEATURE_BLOCK_SIZE };
 };
 TYPED_TEST_SUITE(DataSetConstructors, util::label_type_gtest, naming::test_parameter_to_name);
 
@@ -102,7 +104,7 @@ TYPED_TEST(DataSetConstructors, construct_arff_from_file_without_label) {
         { plssvm::real_type{ 0.0 }, plssvm::real_type{ -0.3 } },
         { plssvm::real_type{ 5.5 }, plssvm::real_type{ 0.0 } }
     };
-    EXPECT_FLOATING_POINT_MATRIX_EQ(data.data(), plssvm::soa_matrix<plssvm::real_type>{ correct_data });
+    EXPECT_FLOATING_POINT_MATRIX_EQ(data.data(), (plssvm::soa_matrix<plssvm::real_type>{ correct_data, plssvm::THREAD_BLOCK_PADDING, plssvm::FEATURE_BLOCK_SIZE }));
     EXPECT_FALSE(data.has_labels());
     EXPECT_FALSE(data.labels().has_value());
     EXPECT_FALSE(data.classes().has_value());
@@ -151,7 +153,7 @@ TYPED_TEST(DataSetConstructors, construct_libsvm_from_file_without_label) {
         { plssvm::real_type{ 0.0 }, plssvm::real_type{ -0.3 } },
         { plssvm::real_type{ 5.5 }, plssvm::real_type{ 0.0 } }
     };
-    EXPECT_FLOATING_POINT_MATRIX_EQ(data.data(), plssvm::soa_matrix<plssvm::real_type>{ correct_data });
+    EXPECT_FLOATING_POINT_MATRIX_EQ(data.data(), (plssvm::soa_matrix<plssvm::real_type>{ correct_data, plssvm::THREAD_BLOCK_PADDING, plssvm::FEATURE_BLOCK_SIZE }));
     EXPECT_FALSE(data.has_labels());
     EXPECT_FALSE(data.labels().has_value());
     EXPECT_FALSE(data.classes().has_value());
@@ -419,7 +421,7 @@ TYPED_TEST(DataSetConstructors, construct_from_vector_without_label) {
     using label_type = typename TestFixture::fixture_label_type;
 
     // create data points
-    const auto correct_data_points = util::generate_specific_matrix<plssvm::soa_matrix<plssvm::real_type>>(4, 4);
+    const auto correct_data_points = util::generate_specific_matrix<plssvm::soa_matrix<plssvm::real_type>>(4, 4, plssvm::THREAD_BLOCK_PADDING, plssvm::FEATURE_BLOCK_SIZE);
 
     // create data set
     const plssvm::data_set<label_type> data{ correct_data_points.to_2D_vector() };
@@ -477,7 +479,7 @@ TYPED_TEST(DataSetConstructors, construct_from_vector_with_label) {
     // create data points and labels
     const std::vector<label_type> different_labels = util::get_distinct_label<label_type>();
     const std::vector<label_type> labels = util::get_correct_data_file_labels<label_type>();
-    const auto correct_data_points = util::generate_specific_matrix<plssvm::soa_matrix<plssvm::real_type>>(labels.size(), 4);
+    const auto correct_data_points = util::generate_specific_matrix<plssvm::soa_matrix<plssvm::real_type>>(labels.size(), 4, plssvm::THREAD_BLOCK_PADDING, plssvm::FEATURE_BLOCK_SIZE);
 
     // create data set
     const plssvm::data_set<label_type> data{ correct_data_points.to_2D_vector(), labels };
@@ -501,7 +503,7 @@ TYPED_TEST(DataSetConstructors, construct_from_vector_mismatching_num_data_point
     using label_type = typename TestFixture::fixture_label_type;
 
     // create data points and labels
-    const auto correct_data_points = util::generate_specific_matrix<plssvm::aos_matrix<plssvm::real_type>>(4, 4);
+    const auto correct_data_points = util::generate_specific_matrix<plssvm::aos_matrix<plssvm::real_type>>(4, 4, plssvm::THREAD_BLOCK_PADDING, plssvm::FEATURE_BLOCK_SIZE);
     const std::vector<label_type> labels = util::get_correct_data_file_labels<label_type>();
 
     // create data set
@@ -516,7 +518,7 @@ TYPED_TEST(DataSetConstructors, construct_scaled_from_vector_without_label) {
     using scaling_type = typename plssvm::data_set<label_type>::scaling;
 
     // create data points
-    const auto data_points = util::generate_specific_matrix<plssvm::soa_matrix<plssvm::real_type>>(4, 4);
+    const auto data_points = util::generate_specific_matrix<plssvm::soa_matrix<plssvm::real_type>>(4, 4, plssvm::THREAD_BLOCK_PADDING, plssvm::FEATURE_BLOCK_SIZE);
 
     // create data set
     const plssvm::data_set<label_type> data{ data_points.to_2D_vector(), scaling_type{ plssvm::real_type{ -1.0 }, plssvm::real_type{ 1.0 } } };
@@ -549,7 +551,7 @@ TYPED_TEST(DataSetConstructors, construct_scaled_from_vector_with_label) {
     // create data points and labels
     const std::vector<label_type> different_labels = util::get_distinct_label<label_type>();
     const std::vector<label_type> labels = util::get_correct_data_file_labels<label_type>();
-    const auto correct_data_points = util::generate_specific_matrix<plssvm::soa_matrix<plssvm::real_type>>(labels.size(), 4);
+    const auto correct_data_points = util::generate_specific_matrix<plssvm::soa_matrix<plssvm::real_type>>(labels.size(), 4, plssvm::THREAD_BLOCK_PADDING, plssvm::FEATURE_BLOCK_SIZE);
 
     // create data set
     const plssvm::data_set<label_type> data{ correct_data_points.to_2D_vector(), labels, { -1.0, 1.0 } };
@@ -586,12 +588,36 @@ class DataSetMatrixConstructors : public DataSetConstructors<T> {
 };
 TYPED_TEST_SUITE(DataSetMatrixConstructors, util::label_type_layout_type_gtest, naming::test_parameter_to_name);
 
-TYPED_TEST(DataSetMatrixConstructors, construct_from_matrix_without_label) {
+TYPED_TEST(DataSetMatrixConstructors, construct_from_matrix_without_label_no_padding) {
     using label_type = typename TestFixture::fixture_label_type;
     constexpr plssvm::layout_type layout = TestFixture::fixture_layout;
 
     // create data points
     const auto correct_data_points = util::generate_specific_matrix<plssvm::matrix<plssvm::real_type, layout>>(4, 4);
+
+    // create data set
+    const plssvm::data_set<label_type> data{ correct_data_points };
+
+    // check values
+    EXPECT_FLOATING_POINT_MATRIX_EQ(data.data(), (plssvm::soa_matrix<plssvm::real_type>{ correct_data_points, plssvm::THREAD_BLOCK_PADDING, plssvm::FEATURE_BLOCK_SIZE }));
+    EXPECT_TRUE(data.data().is_padded());
+    EXPECT_FALSE(data.has_labels());
+    EXPECT_FALSE(data.labels().has_value());
+    EXPECT_FALSE(data.classes().has_value());
+
+    EXPECT_EQ(data.num_data_points(), correct_data_points.num_rows());
+    EXPECT_EQ(data.num_features(), correct_data_points.num_cols());
+    EXPECT_EQ(data.num_classes(), 0);
+
+    EXPECT_FALSE(data.is_scaled());
+    EXPECT_FALSE(data.scaling_factors().has_value());
+}
+TYPED_TEST(DataSetMatrixConstructors, construct_from_matrix_without_label) {
+    using label_type = typename TestFixture::fixture_label_type;
+    constexpr plssvm::layout_type layout = TestFixture::fixture_layout;
+
+    // create data points
+    const auto correct_data_points = util::generate_specific_matrix<plssvm::matrix<plssvm::real_type, layout>>(4, 4, plssvm::THREAD_BLOCK_PADDING, plssvm::FEATURE_BLOCK_SIZE);
 
     // create data set
     const plssvm::data_set<label_type> data{ correct_data_points };
@@ -609,7 +635,8 @@ TYPED_TEST(DataSetMatrixConstructors, construct_from_matrix_without_label) {
     EXPECT_FALSE(data.is_scaled());
     EXPECT_FALSE(data.scaling_factors().has_value());
 }
-TYPED_TEST(DataSetMatrixConstructors, construct_from_empty_matrix) {
+
+TYPED_TEST(DataSetMatrixConstructors, construct_from_empty_matrix_no_padding) {
     using label_type = typename TestFixture::fixture_label_type;
     constexpr plssvm::layout_type layout = TestFixture::fixture_layout;
 
@@ -618,8 +645,17 @@ TYPED_TEST(DataSetMatrixConstructors, construct_from_empty_matrix) {
                       plssvm::data_set_exception,
                       "Data vector is empty!");
 }
+TYPED_TEST(DataSetMatrixConstructors, construct_from_empty_matrix) {
+    using label_type = typename TestFixture::fixture_label_type;
+    constexpr plssvm::layout_type layout = TestFixture::fixture_layout;
 
-TYPED_TEST(DataSetMatrixConstructors, construct_from_matrix_with_label) {
+    // creating a data set from an empty vector is illegal
+    EXPECT_THROW_WHAT((plssvm::data_set<label_type>{ plssvm::matrix<plssvm::real_type, layout>{ 0, 0, plssvm::THREAD_BLOCK_PADDING, plssvm::FEATURE_BLOCK_SIZE } }),
+                      plssvm::data_set_exception,
+                      "Data vector is empty!");
+}
+
+TYPED_TEST(DataSetMatrixConstructors, construct_from_matrix_with_label_no_padding) {
     using label_type = typename TestFixture::fixture_label_type;
     constexpr plssvm::layout_type layout = TestFixture::fixture_layout;
 
@@ -627,6 +663,34 @@ TYPED_TEST(DataSetMatrixConstructors, construct_from_matrix_with_label) {
     const std::vector<label_type> different_labels = util::get_distinct_label<label_type>();
     const std::vector<label_type> labels = util::get_correct_data_file_labels<label_type>();
     const auto correct_data_points = util::generate_specific_matrix<plssvm::matrix<plssvm::real_type, layout>>(labels.size(), 4);
+
+    // create data set
+    const plssvm::data_set<label_type> data{ correct_data_points, labels };
+
+    // check values
+    EXPECT_FLOATING_POINT_MATRIX_EQ(data.data(), (plssvm::soa_matrix<plssvm::real_type>{ correct_data_points, plssvm::THREAD_BLOCK_PADDING, plssvm::FEATURE_BLOCK_SIZE }));
+    EXPECT_TRUE(data.data().is_padded());
+    EXPECT_TRUE(data.has_labels());
+    ASSERT_TRUE(data.labels().has_value());
+    EXPECT_EQ(data.labels().value().get(), labels);
+    ASSERT_TRUE(data.classes().has_value());
+    EXPECT_EQ(data.classes().value(), different_labels);
+
+    EXPECT_EQ(data.num_data_points(), correct_data_points.num_rows());
+    EXPECT_EQ(data.num_features(), correct_data_points.num_cols());
+    EXPECT_EQ(data.num_classes(), different_labels.size());
+
+    EXPECT_FALSE(data.is_scaled());
+    EXPECT_FALSE(data.scaling_factors().has_value());
+}
+TYPED_TEST(DataSetMatrixConstructors, construct_from_matrix_with_label) {
+    using label_type = typename TestFixture::fixture_label_type;
+    constexpr plssvm::layout_type layout = TestFixture::fixture_layout;
+
+    // create data points and labels
+    const std::vector<label_type> different_labels = util::get_distinct_label<label_type>();
+    const std::vector<label_type> labels = util::get_correct_data_file_labels<label_type>();
+    const auto correct_data_points = util::generate_specific_matrix<plssvm::matrix<plssvm::real_type, layout>>(labels.size(), 4, plssvm::THREAD_BLOCK_PADDING, plssvm::FEATURE_BLOCK_SIZE);
 
     // create data set
     const plssvm::data_set<label_type> data{ correct_data_points, labels };
@@ -647,13 +711,46 @@ TYPED_TEST(DataSetMatrixConstructors, construct_from_matrix_with_label) {
     EXPECT_FALSE(data.scaling_factors().has_value());
 }
 
+TYPED_TEST(DataSetMatrixConstructors, construct_scaled_from_matrix_without_label_no_padding) {
+    using label_type = typename TestFixture::fixture_label_type;
+    constexpr plssvm::layout_type layout = TestFixture::fixture_layout;
+    using scaling_type = typename plssvm::data_set<label_type>::scaling;
+
+    // create data points
+    const auto correct_data_points = util::generate_specific_matrix<plssvm::matrix<plssvm::real_type, layout>>(4, 4);
+
+    // create data set
+    const plssvm::data_set<label_type> data{ correct_data_points, scaling_type{ plssvm::real_type{ -1.0 }, plssvm::real_type{ 1.0 } } };
+
+    const auto [correct_data_points_scaled, scaling_factors] = util::scale(correct_data_points, plssvm::real_type{ -1.0 }, plssvm::real_type{ 1.0 });
+    // check values
+    EXPECT_FLOATING_POINT_MATRIX_NEAR(data.data(), (plssvm::soa_matrix<plssvm::real_type>{ correct_data_points_scaled, plssvm::THREAD_BLOCK_PADDING, plssvm::FEATURE_BLOCK_SIZE }));
+    EXPECT_TRUE(data.data().is_padded());
+    EXPECT_FALSE(data.has_labels());
+    EXPECT_FALSE(data.labels().has_value());
+    EXPECT_FALSE(data.classes().has_value());
+
+    EXPECT_EQ(data.num_data_points(), correct_data_points_scaled.num_rows());
+    EXPECT_EQ(data.num_features(), correct_data_points_scaled.num_cols());
+    EXPECT_EQ(data.num_classes(), 0);
+
+    EXPECT_TRUE(data.is_scaled());
+    EXPECT_TRUE(data.scaling_factors().has_value());
+    ASSERT_EQ(data.scaling_factors().value().get().scaling_factors.size(), scaling_factors.size());
+    for (std::size_t i = 0; i < scaling_factors.size(); ++i) {
+        auto factors = data.scaling_factors().value().get().scaling_factors[i];
+        EXPECT_EQ(factors.feature, std::get<0>(scaling_factors[i]));
+        EXPECT_FLOATING_POINT_NEAR(factors.lower, std::get<1>(scaling_factors[i]));
+        EXPECT_FLOATING_POINT_NEAR(factors.upper, std::get<2>(scaling_factors[i]));
+    }
+}
 TYPED_TEST(DataSetMatrixConstructors, construct_scaled_from_matrix_without_label) {
     using label_type = typename TestFixture::fixture_label_type;
     constexpr plssvm::layout_type layout = TestFixture::fixture_layout;
     using scaling_type = typename plssvm::data_set<label_type>::scaling;
 
     // create data points
-    const auto data_points = util::generate_specific_matrix<plssvm::matrix<plssvm::real_type, layout>>(4, 4);
+    const auto data_points = util::generate_specific_matrix<plssvm::matrix<plssvm::real_type, layout>>(4, 4, plssvm::THREAD_BLOCK_PADDING, plssvm::FEATURE_BLOCK_SIZE);
 
     // create data set
     const plssvm::data_set<label_type> data{ data_points, scaling_type{ plssvm::real_type{ -1.0 }, plssvm::real_type{ 1.0 } } };
@@ -680,7 +777,7 @@ TYPED_TEST(DataSetMatrixConstructors, construct_scaled_from_matrix_without_label
     }
 }
 
-TYPED_TEST(DataSetMatrixConstructors, construct_scaled_from_matrix_with_label) {
+TYPED_TEST(DataSetMatrixConstructors, construct_scaled_from_matrix_with_label_no_padding) {
     using label_type = typename TestFixture::fixture_label_type;
     constexpr plssvm::layout_type layout = TestFixture::fixture_layout;
 
@@ -688,6 +785,42 @@ TYPED_TEST(DataSetMatrixConstructors, construct_scaled_from_matrix_with_label) {
     const std::vector<label_type> different_labels = util::get_distinct_label<label_type>();
     const std::vector<label_type> labels = util::get_correct_data_file_labels<label_type>();
     const auto correct_data_points = util::generate_specific_matrix<plssvm::matrix<plssvm::real_type, layout>>(labels.size(), 4);
+
+    // create data set
+    const plssvm::data_set<label_type> data{ correct_data_points, labels, { -1.0, 1.0 } };
+
+    const auto [correct_data_points_scaled, scaling_factors] = util::scale(correct_data_points, plssvm::real_type{ -1.0 }, plssvm::real_type{ 1.0 });
+    // check values
+    EXPECT_FLOATING_POINT_MATRIX_NEAR(data.data(), (plssvm::soa_matrix<plssvm::real_type>{ correct_data_points_scaled, plssvm::THREAD_BLOCK_PADDING, plssvm::FEATURE_BLOCK_SIZE }));
+    EXPECT_TRUE(data.data().is_padded());
+    EXPECT_TRUE(data.has_labels());
+    ASSERT_TRUE(data.labels().has_value());
+    EXPECT_EQ(data.labels().value().get(), labels);
+    ASSERT_TRUE(data.classes().has_value());
+    EXPECT_EQ(data.classes().value(), different_labels);
+
+    EXPECT_EQ(data.num_data_points(), correct_data_points_scaled.num_rows());
+    EXPECT_EQ(data.num_features(), correct_data_points_scaled.num_cols());
+    EXPECT_EQ(data.num_classes(), different_labels.size());
+
+    EXPECT_TRUE(data.is_scaled());
+    EXPECT_TRUE(data.scaling_factors().has_value());
+    ASSERT_EQ(data.scaling_factors().value().get().scaling_factors.size(), scaling_factors.size());
+    for (std::size_t i = 0; i < scaling_factors.size(); ++i) {
+        auto factors = data.scaling_factors().value().get().scaling_factors[i];
+        EXPECT_EQ(factors.feature, std::get<0>(scaling_factors[i]));
+        EXPECT_FLOATING_POINT_NEAR(factors.lower, std::get<1>(scaling_factors[i]));
+        EXPECT_FLOATING_POINT_NEAR(factors.upper, std::get<2>(scaling_factors[i]));
+    }
+}
+TYPED_TEST(DataSetMatrixConstructors, construct_scaled_from_matrix_with_label) {
+    using label_type = typename TestFixture::fixture_label_type;
+    constexpr plssvm::layout_type layout = TestFixture::fixture_layout;
+
+    // create data points and labels
+    const std::vector<label_type> different_labels = util::get_distinct_label<label_type>();
+    const std::vector<label_type> labels = util::get_correct_data_file_labels<label_type>();
+    const auto correct_data_points = util::generate_specific_matrix<plssvm::matrix<plssvm::real_type, layout>>(labels.size(), 4, plssvm::THREAD_BLOCK_PADDING, plssvm::FEATURE_BLOCK_SIZE);
 
     // create data set
     const plssvm::data_set<label_type> data{ correct_data_points, labels, { -1.0, 1.0 } };
@@ -713,5 +846,77 @@ TYPED_TEST(DataSetMatrixConstructors, construct_scaled_from_matrix_with_label) {
         EXPECT_EQ(factors.feature, std::get<0>(scaling_factors[i]));
         EXPECT_FLOATING_POINT_NEAR(factors.lower, std::get<1>(scaling_factors[i]));
         EXPECT_FLOATING_POINT_NEAR(factors.upper, std::get<2>(scaling_factors[i]));
+    }
+}
+
+TYPED_TEST(DataSetMatrixConstructors, construct_from_matrix_without_label_wrong_padding_sizes) {
+    using label_type = typename TestFixture::fixture_label_type;
+    constexpr plssvm::layout_type layout = TestFixture::fixture_layout;
+
+    {
+        // create data points
+        const auto data_points = util::generate_specific_matrix<plssvm::matrix<plssvm::real_type, layout>>(4, 4, 0, plssvm::FEATURE_BLOCK_SIZE);
+        // create data set
+        EXPECT_THROW_WHAT(plssvm::data_set<label_type>{ data_points }, plssvm::data_set_exception, fmt::format("Expected {} as row-padding size, but got 0!", plssvm::THREAD_BLOCK_PADDING));
+    }
+    {
+        // create data points
+        const auto data_points = util::generate_specific_matrix<plssvm::matrix<plssvm::real_type, layout>>(4, 4, plssvm::THREAD_BLOCK_PADDING, 0);
+        // create data set
+        EXPECT_THROW_WHAT(plssvm::data_set<label_type>{ data_points }, plssvm::data_set_exception, fmt::format("Expected {} as column-padding size, but got 0!", plssvm::FEATURE_BLOCK_SIZE));
+    }
+}
+TYPED_TEST(DataSetMatrixConstructors, construct_from_matrix_with_label_wrong_padding_sizes) {
+    using label_type = typename TestFixture::fixture_label_type;
+    constexpr plssvm::layout_type layout = TestFixture::fixture_layout;
+
+    // create data points and labels
+    const std::vector<label_type> different_labels = util::get_distinct_label<label_type>();
+    const std::vector<label_type> labels = util::get_correct_data_file_labels<label_type>();
+
+    {
+        const auto data_points = util::generate_specific_matrix<plssvm::matrix<plssvm::real_type, layout>>(labels.size(), 4, 0, plssvm::FEATURE_BLOCK_SIZE);
+        // create data set
+        EXPECT_THROW_WHAT((plssvm::data_set<label_type>{ data_points, labels }), plssvm::data_set_exception, fmt::format("Expected {} as row-padding size, but got 0!", plssvm::THREAD_BLOCK_PADDING));
+    }
+    {
+        const auto data_points = util::generate_specific_matrix<plssvm::matrix<plssvm::real_type, layout>>(labels.size(), 4, plssvm::THREAD_BLOCK_PADDING, 0);
+        // create data set
+        EXPECT_THROW_WHAT((plssvm::data_set<label_type>{ data_points, labels }), plssvm::data_set_exception, fmt::format("Expected {} as column-padding size, but got 0!", plssvm::FEATURE_BLOCK_SIZE));
+    }
+}
+TYPED_TEST(DataSetMatrixConstructors, construct_scaled_from_matrix_without_label_wrong_padding_sizes) {
+    using label_type = typename TestFixture::fixture_label_type;
+    constexpr plssvm::layout_type layout = TestFixture::fixture_layout;
+    using scaling_type = typename plssvm::data_set<label_type>::scaling;
+
+    {  // create data points
+        const auto data_points = util::generate_specific_matrix<plssvm::matrix<plssvm::real_type, layout>>(4, 4, 0, plssvm::FEATURE_BLOCK_SIZE);
+        // create data set
+        EXPECT_THROW_WHAT((plssvm::data_set<label_type>{ data_points, scaling_type{ plssvm::real_type{ -1.0 }, plssvm::real_type{ 1.0 } } }), plssvm::data_set_exception, fmt::format("Expected {} as row-padding size, but got 0!", plssvm::THREAD_BLOCK_PADDING));
+    }
+    {  // create data points
+        const auto data_points = util::generate_specific_matrix<plssvm::matrix<plssvm::real_type, layout>>(4, 4, plssvm::THREAD_BLOCK_PADDING, 0);
+        // create data set
+        EXPECT_THROW_WHAT((plssvm::data_set<label_type>{ data_points, scaling_type{ plssvm::real_type{ -1.0 }, plssvm::real_type{ 1.0 } } }), plssvm::data_set_exception, fmt::format("Expected {} as column-padding size, but got 0!", plssvm::FEATURE_BLOCK_SIZE));
+    }
+}
+TYPED_TEST(DataSetMatrixConstructors, construct_scaled_from_matrix_with_label_wrong_padding_sizes) {
+    using label_type = typename TestFixture::fixture_label_type;
+    constexpr plssvm::layout_type layout = TestFixture::fixture_layout;
+
+    // create data points and labels
+    const std::vector<label_type> different_labels = util::get_distinct_label<label_type>();
+    const std::vector<label_type> labels = util::get_correct_data_file_labels<label_type>();
+
+    {
+        const auto data_points = util::generate_specific_matrix<plssvm::matrix<plssvm::real_type, layout>>(labels.size(), 4, 0, plssvm::FEATURE_BLOCK_SIZE);
+        // create data set
+        EXPECT_THROW_WHAT((plssvm::data_set<label_type>{ data_points, labels, { -1.0, 1.0 } }), plssvm::data_set_exception, fmt::format("Expected {} as row-padding size, but got 0!", plssvm::THREAD_BLOCK_PADDING));
+    }
+    {
+        const auto data_points = util::generate_specific_matrix<plssvm::matrix<plssvm::real_type, layout>>(labels.size(), 4, plssvm::THREAD_BLOCK_PADDING, 0);
+        // create data set
+        EXPECT_THROW_WHAT((plssvm::data_set<label_type>{ data_points, labels, { -1.0, 1.0 } }), plssvm::data_set_exception, fmt::format("Expected {} as column-padding size, but got 0!", plssvm::FEATURE_BLOCK_SIZE));
     }
 }

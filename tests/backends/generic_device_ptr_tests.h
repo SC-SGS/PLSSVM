@@ -61,6 +61,9 @@ TYPED_TEST_P(DevicePtr, construct) {
     EXPECT_EQ(ptr.size(), 42);
     EXPECT_EQ(ptr.extents(), (std::array<std::size_t, 2>{ 42, 0 }));
     EXPECT_FALSE(ptr.empty());
+    // check padding
+    EXPECT_EQ(ptr.padding(0), 0);
+    EXPECT_EQ(ptr.padding(1), 0);
 }
 TYPED_TEST_P(DevicePtr, construct_extents) {
     using test_type = typename TestFixture::fixture_test_type;
@@ -77,6 +80,28 @@ TYPED_TEST_P(DevicePtr, construct_extents) {
     EXPECT_EQ(ptr.size(), 42 * 16);
     EXPECT_EQ(ptr.extents(), (std::array<std::size_t, 2>{ 42, 16 }));
     EXPECT_FALSE(ptr.empty());
+    // check padding
+    EXPECT_EQ(ptr.padding(0), 0);
+    EXPECT_EQ(ptr.padding(1), 0);
+}
+TYPED_TEST_P(DevicePtr, construct_extents_and_padding) {
+    using test_type = typename TestFixture::fixture_test_type;
+    using device_ptr_type = typename test_type::device_ptr_type;
+    using queue_type = typename test_type::queue_type;
+    const queue_type &queue = test_type::default_queue();
+
+    // construct device_ptr
+    const device_ptr_type ptr{ { 42, 16 }, { 4, 4 }, queue };
+
+    // check data
+    EXPECT_TRUE(static_cast<bool>(ptr));
+    EXPECT_NE(ptr.get(), nullptr);
+    EXPECT_EQ(ptr.size(), (42 + 4) * (16 + 4));
+    EXPECT_EQ(ptr.extents(), (std::array<std::size_t, 2>{ 42, 16 }));
+    EXPECT_FALSE(ptr.empty());
+    // check padding
+    EXPECT_EQ(ptr.padding(0), 4);
+    EXPECT_EQ(ptr.padding(1), 4);
 }
 TYPED_TEST_P(DevicePtr, move_construct) {
     using test_type = typename TestFixture::fixture_test_type;
@@ -95,6 +120,9 @@ TYPED_TEST_P(DevicePtr, move_construct) {
     EXPECT_EQ(second.size(), 42);
     EXPECT_EQ(second.extents(), (std::array<std::size_t, 2>{ 42, 0 }));
     EXPECT_FALSE(second.empty());
+    // check padding
+    EXPECT_EQ(second.padding(0), 0);
+    EXPECT_EQ(second.padding(1), 0);
 
     // check moved-from data
     EXPECT_FALSE(static_cast<bool>(first));
@@ -102,6 +130,40 @@ TYPED_TEST_P(DevicePtr, move_construct) {
     EXPECT_EQ(first.size(), 0);
     EXPECT_EQ(first.extents(), (std::array<std::size_t, 2>{ 0, 0 }));
     EXPECT_TRUE(first.empty());
+    // check padding
+    EXPECT_EQ(first.padding(0), 0);
+    EXPECT_EQ(first.padding(1), 0);
+}
+TYPED_TEST_P(DevicePtr, move_construct_with_padding) {
+    using test_type = typename TestFixture::fixture_test_type;
+    using device_ptr_type = typename test_type::device_ptr_type;
+    using queue_type = typename test_type::queue_type;
+    const queue_type &queue = test_type::default_queue();
+
+    // construct device_ptr
+    device_ptr_type first{ { 42, 10 }, { 4, 5 }, queue };
+    const device_ptr_type second{ std::move(first) };
+
+    // check data
+    EXPECT_TRUE(static_cast<bool>(second));
+    // EXPECT_EQ(second.queue(), queue);
+    EXPECT_NE(second.get(), nullptr);
+    EXPECT_EQ(second.size(), (42 + 4) * (10 + 5));
+    EXPECT_EQ(second.extents(), (std::array<std::size_t, 2>{ 42, 10 }));
+    EXPECT_FALSE(second.empty());
+    // check padding
+    EXPECT_EQ(second.padding(0), 4);
+    EXPECT_EQ(second.padding(1), 5);
+
+    // check moved-from data
+    EXPECT_FALSE(static_cast<bool>(first));
+    EXPECT_EQ(first.get(), nullptr);
+    EXPECT_EQ(first.size(), 0);
+    EXPECT_EQ(first.extents(), (std::array<std::size_t, 2>{ 0, 0 }));
+    EXPECT_TRUE(first.empty());
+    // check padding
+    EXPECT_EQ(first.padding(0), 0);
+    EXPECT_EQ(first.padding(1), 0);
 }
 TYPED_TEST_P(DevicePtr, move_assign) {
     using test_type = typename TestFixture::fixture_test_type;
@@ -122,6 +184,9 @@ TYPED_TEST_P(DevicePtr, move_assign) {
     EXPECT_EQ(second.size(), 42);
     EXPECT_EQ(second.extents(), (std::array<std::size_t, 2>{ 42, 0 }));
     EXPECT_FALSE(second.empty());
+    // check padding
+    EXPECT_EQ(second.padding(0), 0);
+    EXPECT_EQ(second.padding(1), 0);
 
     // check moved-from data
     EXPECT_FALSE(static_cast<bool>(first));
@@ -129,6 +194,42 @@ TYPED_TEST_P(DevicePtr, move_assign) {
     EXPECT_EQ(first.size(), 0);
     EXPECT_EQ(first.extents(), (std::array<std::size_t, 2>{ 0, 0 }));
     EXPECT_TRUE(first.empty());
+    // check padding
+    EXPECT_EQ(first.padding(0), 0);
+    EXPECT_EQ(first.padding(1), 0);
+}
+TYPED_TEST_P(DevicePtr, move_assign_with_padding) {
+    using test_type = typename TestFixture::fixture_test_type;
+    using device_ptr_type = typename test_type::device_ptr_type;
+    using queue_type = typename test_type::queue_type;
+    const queue_type &queue = test_type::default_queue();
+
+    // construct device_ptr
+    device_ptr_type first{ { 42, 10 }, { 4, 5 }, queue };
+    device_ptr_type second;
+
+    // move assign
+    second = std::move(first);
+
+    // check data
+    EXPECT_TRUE(static_cast<bool>(second));
+    EXPECT_NE(second.get(), nullptr);
+    EXPECT_EQ(second.size(), (42 + 4) * (10 + 5));
+    EXPECT_EQ(second.extents(), (std::array<std::size_t, 2>{ 42, 10 }));
+    EXPECT_FALSE(second.empty());
+    // check padding
+    EXPECT_EQ(second.padding(0), 4);
+    EXPECT_EQ(second.padding(1), 5);
+
+    // check moved-from data
+    EXPECT_FALSE(static_cast<bool>(first));
+    EXPECT_EQ(first.get(), nullptr);
+    EXPECT_EQ(first.size(), 0);
+    EXPECT_EQ(first.extents(), (std::array<std::size_t, 2>{ 0, 0 }));
+    EXPECT_TRUE(first.empty());
+    // check padding
+    EXPECT_EQ(first.padding(0), 0);
+    EXPECT_EQ(first.padding(1), 0);
 }
 
 TYPED_TEST_P(DevicePtr, swap_member_function) {
@@ -150,12 +251,50 @@ TYPED_TEST_P(DevicePtr, swap_member_function) {
     EXPECT_EQ(second.size(), 42);
     EXPECT_EQ(second.extents(), (std::array<std::size_t, 2>{ 42, 0 }));
     EXPECT_FALSE(second.empty());
+    // check padding
+    EXPECT_EQ(second.padding(0), 0);
+    EXPECT_EQ(second.padding(1), 0);
 
     EXPECT_FALSE(static_cast<bool>(first));
     EXPECT_EQ(first.get(), nullptr);
     EXPECT_EQ(first.size(), 0);
     EXPECT_EQ(first.extents(), (std::array<std::size_t, 2>{ 0, 0 }));
     EXPECT_TRUE(first.empty());
+    // check padding
+    EXPECT_EQ(first.padding(0), 0);
+    EXPECT_EQ(first.padding(1), 0);
+}
+TYPED_TEST_P(DevicePtr, swap_member_function_with_padding) {
+    using test_type = typename TestFixture::fixture_test_type;
+    using device_ptr_type = typename test_type::device_ptr_type;
+    using queue_type = typename test_type::queue_type;
+    const queue_type &queue = test_type::default_queue();
+
+    // construct two device_ptr
+    device_ptr_type first{ { 42, 10 }, { 4, 5 }, queue };
+    device_ptr_type second{};
+
+    // swap both device_ptr using the member function
+    first.swap(second);
+
+    // check data
+    EXPECT_TRUE(static_cast<bool>(second));
+    EXPECT_NE(second.get(), nullptr);
+    EXPECT_EQ(second.size(), (42 + 4) * (10 + 5));
+    EXPECT_EQ(second.extents(), (std::array<std::size_t, 2>{ 42, 10 }));
+    EXPECT_FALSE(second.empty());
+    // check padding
+    EXPECT_EQ(second.padding(0), 4);
+    EXPECT_EQ(second.padding(1), 5);
+
+    EXPECT_FALSE(static_cast<bool>(first));
+    EXPECT_EQ(first.get(), nullptr);
+    EXPECT_EQ(first.size(), 0);
+    EXPECT_EQ(first.extents(), (std::array<std::size_t, 2>{ 0, 0 }));
+    EXPECT_TRUE(first.empty());
+    // check padding
+    EXPECT_EQ(first.padding(0), 0);
+    EXPECT_EQ(first.padding(1), 0);
 }
 TYPED_TEST_P(DevicePtr, swap_free_function) {
     using test_type = typename TestFixture::fixture_test_type;
@@ -183,6 +322,39 @@ TYPED_TEST_P(DevicePtr, swap_free_function) {
     EXPECT_EQ(first.size(), 0);
     EXPECT_EQ(first.extents(), (std::array<std::size_t, 2>{ 0, 0 }));
     EXPECT_TRUE(first.empty());
+}
+TYPED_TEST_P(DevicePtr, swap_free_function_with_padding) {
+    using test_type = typename TestFixture::fixture_test_type;
+    using device_ptr_type = typename test_type::device_ptr_type;
+    using queue_type = typename test_type::queue_type;
+    const queue_type &queue = test_type::default_queue();
+
+    // construct two device_ptr
+    device_ptr_type first{ { 42, 10 }, { 4, 5 }, queue };
+    device_ptr_type second;
+
+    // swap both device_ptr using the free function
+    using std::swap;
+    swap(first, second);
+
+    // check data
+    EXPECT_TRUE(static_cast<bool>(second));
+    EXPECT_NE(second.get(), nullptr);
+    EXPECT_EQ(second.size(), (42 + 4) * (10 + 5));
+    EXPECT_EQ(second.extents(), (std::array<std::size_t, 2>{ 42, 10 }));
+    EXPECT_FALSE(second.empty());
+    // check padding
+    EXPECT_EQ(second.padding(0), 4);
+    EXPECT_EQ(second.padding(1), 5);
+
+    EXPECT_FALSE(static_cast<bool>(first));
+    EXPECT_EQ(first.get(), nullptr);
+    EXPECT_EQ(first.size(), 0);
+    EXPECT_EQ(first.extents(), (std::array<std::size_t, 2>{ 0, 0 }));
+    EXPECT_TRUE(first.empty());
+    // check padding
+    EXPECT_EQ(first.padding(0), 0);
+    EXPECT_EQ(first.padding(1), 0);
 }
 
 TYPED_TEST_P(DevicePtr, operator_bool) {
@@ -213,9 +385,13 @@ TYPED_TEST_P(DevicePtr, size) {
     const device_ptr_type ptr2{ { 42, 16 }, queue };
     EXPECT_EQ(ptr2.size(), 42 * 16);
 
+    // construct device_ptr with extents and padding
+    const device_ptr_type ptr3{ { 42, 16 }, { 3, 3 }, queue };
+    EXPECT_EQ(ptr3.size(), (42 + 3) * (16 + 3));
+
     // construct empty device_ptr
-    const device_ptr_type ptr3{};
-    EXPECT_EQ(ptr3.size(), 0);
+    const device_ptr_type ptr4{};
+    EXPECT_EQ(ptr4.size(), 0);
 }
 TYPED_TEST_P(DevicePtr, size_idx) {
     using test_type = typename TestFixture::fixture_test_type;
@@ -256,6 +432,17 @@ TYPED_TEST_P(DevicePtr, extent) {
     const device_ptr_type ptr3{};
     EXPECT_EQ(ptr3.extents(), (std::array<std::size_t, 2>{ 0, 0 }));
 }
+TYPED_TEST_P(DevicePtr, padding) {
+    using test_type = typename TestFixture::fixture_test_type;
+    using device_ptr_type = typename test_type::device_ptr_type;
+    using queue_type = typename test_type::queue_type;
+    const queue_type &queue = test_type::default_queue();
+
+    // construct device_ptr
+    const device_ptr_type ptr{ { 42, 16 }, { 4, 5 }, queue };
+    EXPECT_EQ(ptr.padding(0), 4);
+    EXPECT_EQ(ptr.padding(1), 5);
+}
 TYPED_TEST_P(DevicePtr, empty) {
     using test_type = typename TestFixture::fixture_test_type;
     using device_ptr_type = typename test_type::device_ptr_type;
@@ -266,9 +453,17 @@ TYPED_TEST_P(DevicePtr, empty) {
     const device_ptr_type ptr1{ 42, queue };
     EXPECT_FALSE(ptr1.empty());
 
+    // construct device_ptr
+    const device_ptr_type ptr2{ { 42, 16 }, queue };
+    EXPECT_FALSE(ptr2.empty());
+
+    // construct device_ptr
+    const device_ptr_type ptr3{ { 42, 16 }, { 3, 3 }, queue };
+    EXPECT_FALSE(ptr3.empty());
+
     // construct empty device_ptr
-    const device_ptr_type ptr2{};
-    EXPECT_TRUE(ptr2.empty());
+    const device_ptr_type ptr4{};
+    EXPECT_TRUE(ptr4.empty());
 }
 
 TYPED_TEST_P(DevicePtr, memset) {
@@ -641,9 +836,10 @@ TYPED_TEST_P(DevicePtr, copy_ptr_with_count_copy_to_too_many) {
 
 // clang-format off
 REGISTER_TYPED_TEST_SUITE_P(DevicePtr,
-                            default_construct, construct, construct_extents, move_construct, move_assign,
-                            swap_member_function, swap_free_function,
-                            operator_bool, size, size_idx, extent, empty,
+                            default_construct, construct, construct_extents, construct_extents_and_padding,
+                            move_construct, move_construct_with_padding, move_assign, move_assign_with_padding,
+                            swap_member_function, swap_member_function_with_padding, swap_free_function, swap_free_function_with_padding,
+                            operator_bool, size, size_idx, extent, padding, empty,
                             memset, memset_with_numbytes, memset_invalid_pos,
                             fill, fill_with_count, fill_invalid_pos,
                             copy_vector, copy_vector_with_count_copy_back_all, copy_vector_with_count_copy_back_some, copy_vector_with_count_copy_to_too_many,
@@ -690,6 +886,30 @@ TYPED_TEST_P(DevicePtrLayout, copy_matrix) {
             break;
     }
     EXPECT_FLOATING_POINT_MATRIX_EQ(result, correct_result);
+}
+TYPED_TEST_P(DevicePtrLayout, copy_matrix_with_padding) {
+    using test_type = typename TestFixture::fixture_test_type;
+    using device_ptr_type = typename test_type::device_ptr_type;
+    using value_type = typename device_ptr_type::value_type;
+    using queue_type = typename test_type::queue_type;
+    const queue_type &queue = test_type::default_queue();
+    constexpr plssvm::layout_type layout = util::test_parameter_value_at_v<0, TypeParam>;
+
+    // construct device_ptr
+    device_ptr_type ptr{ { 5, 3 }, { 4, 4 }, queue };
+    ptr.memset(0);
+
+    // create data to copy to the device
+    plssvm::matrix<value_type, layout> data{ 5, 3, value_type{ 42 }, 4, 4 };
+
+    // copy data to the device
+    ptr.copy_to_device(data);
+    // copy data back to the host
+    plssvm::matrix<value_type, layout> result{ 5, 3, value_type{ 0 }, 4, 4 };
+    ptr.copy_to_host(result);
+
+    // check values for correctness
+    EXPECT_FLOATING_POINT_MATRIX_EQ(result, data);
 }
 TYPED_TEST_P(DevicePtrLayout, copy_matrix_different_layouts) {
     using test_type = typename TestFixture::fixture_test_type;
@@ -759,7 +979,7 @@ TYPED_TEST_P(DevicePtrLayout, copy_matrix_too_few_buffer_elements) {
 
 // clang-format off
 REGISTER_TYPED_TEST_SUITE_P(DevicePtrLayout,
-                            copy_matrix, copy_matrix_different_layouts,
+                            copy_matrix, copy_matrix_with_padding, copy_matrix_different_layouts,
                             copy_matrix_too_few_host_elements, copy_matrix_too_few_buffer_elements);
 // clang-format on
 

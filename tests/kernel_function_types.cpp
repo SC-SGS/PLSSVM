@@ -10,8 +10,8 @@
 
 #include "plssvm/kernel_function_types.hpp"
 
-#include "plssvm/detail/utility.hpp"  // plssvm::detail::contains
-#include "plssvm/detail/utility.hpp"  // plssvm::detail::erase_if
+#include "plssvm/constants.hpp"       // plssvm::THREAD_BLOCK_PADDING, plssvm::FEATURE_BLOCK_SIZE
+#include "plssvm/detail/utility.hpp"  // plssvm::detail::{contains, erase_if}
 #include "plssvm/parameter.hpp"       // plssvm::parameter
 
 #include "backends/compare.hpp"    // compare::detail::{linear_kernel, poly_kernel, rbf_kernel}
@@ -288,7 +288,7 @@ TYPED_TEST(KernelFunctionMatrix, linear_kernel_function_variadic) {
         SCOPED_TRACE(fmt::format("size: {}", size));
         // create random matrices with the specified size
         const auto matr1 = util::generate_random_matrix<plssvm::matrix<real_type, layout>>(4, size);
-        const auto matr2 = util::generate_random_matrix<plssvm::matrix<real_type, layout>>(4, size);
+        const auto matr2 = util::generate_random_matrix<plssvm::matrix<real_type, layout>>(4, size, plssvm::THREAD_BLOCK_PADDING, plssvm::FEATURE_BLOCK_SIZE);
 
         for (const auto [degree, gamma, coef0, cost] : this->get_param_values()) {
             SCOPED_TRACE(fmt::format("parameter: [{}, {}, {}, {}]", degree, gamma, coef0, cost));
@@ -319,7 +319,7 @@ TYPED_TEST(KernelFunctionMatrix, linear_kernel_function_parameter) {
     for (const std::size_t size : this->get_sizes()) {
         SCOPED_TRACE(fmt::format("size: {}", size));
         // create random matrices with the specified size
-        const auto matr1 = util::generate_random_matrix<plssvm::matrix<real_type, layout>>(4, size);
+        const auto matr1 = util::generate_random_matrix<plssvm::matrix<real_type, layout>>(4, size, plssvm::THREAD_BLOCK_PADDING, plssvm::FEATURE_BLOCK_SIZE);
         const auto matr2 = util::generate_random_matrix<plssvm::matrix<real_type, layout>>(4, size);
 
         for (const auto [degree, gamma, coef0, cost] : this->get_param_values()) {
@@ -354,7 +354,7 @@ TYPED_TEST(KernelFunctionMatrix, polynomial_kernel_function_variadic) {
         SCOPED_TRACE(fmt::format("size: {}", size));
         // create random matrices with the specified size
         const auto matr1 = util::generate_random_matrix<plssvm::matrix<real_type, layout>>(4, size);
-        const auto matr2 = util::generate_random_matrix<plssvm::matrix<real_type, layout>>(4, size);
+        const auto matr2 = util::generate_random_matrix<plssvm::matrix<real_type, layout>>(4, size, plssvm::THREAD_BLOCK_PADDING, plssvm::FEATURE_BLOCK_SIZE);
 
         for (const auto [degree, gamma, coef0, cost] : this->get_param_values()) {
             SCOPED_TRACE(fmt::format("parameter: [{}, {}, {}, {}]", degree, gamma, coef0, cost));
@@ -388,7 +388,7 @@ TYPED_TEST(KernelFunctionMatrix, polynomial_kernel_function_parameter) {
     for (const std::size_t size : this->get_sizes()) {
         SCOPED_TRACE(fmt::format("size: {}", size));
         // create random matrices with the specified size
-        const auto matr1 = util::generate_random_matrix<plssvm::matrix<real_type, layout>>(4, size);
+        const auto matr1 = util::generate_random_matrix<plssvm::matrix<real_type, layout>>(4, size, plssvm::THREAD_BLOCK_PADDING, plssvm::FEATURE_BLOCK_SIZE);
         const auto matr2 = util::generate_random_matrix<plssvm::matrix<real_type, layout>>(4, size);
 
         for (const auto [degree, gamma, coef0, cost] : this->get_param_values()) {
@@ -425,7 +425,7 @@ TYPED_TEST(KernelFunctionMatrix, rbf_kernel_function_variadic) {
         SCOPED_TRACE(fmt::format("size: {}", size));
         // create random matrices with the specified size
         const auto matr1 = util::generate_random_matrix<plssvm::matrix<real_type, layout>>(4, size);
-        const auto matr2 = util::generate_random_matrix<plssvm::matrix<real_type, layout>>(4, size);
+        const auto matr2 = util::generate_random_matrix<plssvm::matrix<real_type, layout>>(4, size, plssvm::THREAD_BLOCK_PADDING, plssvm::FEATURE_BLOCK_SIZE);
 
         for (const auto [degree, gamma, coef0, cost] : this->get_param_values()) {
             SCOPED_TRACE(fmt::format("parameter: [{}, {}, {}, {}]", degree, gamma, coef0, cost));
@@ -457,7 +457,7 @@ TYPED_TEST(KernelFunctionMatrix, rbf_kernel_function_parameter) {
     for (const std::size_t size : this->get_sizes()) {
         SCOPED_TRACE(fmt::format("size: {}", size));
         // create random matrices with the specified size
-        const auto matr1 = util::generate_random_matrix<plssvm::matrix<real_type, layout>>(4, size);
+        const auto matr1 = util::generate_random_matrix<plssvm::matrix<real_type, layout>>(4, size, plssvm::THREAD_BLOCK_PADDING, plssvm::FEATURE_BLOCK_SIZE);
         const auto matr2 = util::generate_random_matrix<plssvm::matrix<real_type, layout>>(4, size);
 
         for (const auto [degree, gamma, coef0, cost] : this->get_param_values()) {
@@ -492,7 +492,7 @@ TYPED_TEST(KernelFunctionMatrix, unknown_kernel_function_parameter) {
 
     // create two matrices
     const auto matr1 = util::generate_random_matrix<plssvm::matrix<real_type, layout>>(2, 2);
-    const auto matr2 = util::generate_random_matrix<plssvm::matrix<real_type, layout>>(2, 2);
+    const auto matr2 = util::generate_random_matrix<plssvm::matrix<real_type, layout>>(2, 2, plssvm::THREAD_BLOCK_PADDING, plssvm::FEATURE_BLOCK_SIZE);
 
     // create a parameter object with an unknown kernel type
     plssvm::parameter params{};
@@ -514,7 +514,7 @@ TYPED_TEST(KernelFunctionMatrixDeathTest, size_mismatch_kernel_function_variadic
 
     // create two matrices
     const auto matr1 = util::generate_random_matrix<plssvm::matrix<real_type, layout>>(2, 1);
-    const auto matr2 = util::generate_random_matrix<plssvm::matrix<real_type, layout>>(2, 2);
+    const auto matr2 = util::generate_random_matrix<plssvm::matrix<real_type, layout>>(2, 2, plssvm::THREAD_BLOCK_PADDING, plssvm::FEATURE_BLOCK_SIZE);
 
     // test mismatched vector sizes
     EXPECT_DEATH(std::ignore = plssvm::kernel_function<plssvm::kernel_function_type::linear>(matr1, 0, matr2, 0),
@@ -530,7 +530,7 @@ TYPED_TEST(KernelFunctionMatrixDeathTest, invalid_indices_variadic) {
 
     // create two matrices
     const auto matr1 = util::generate_random_matrix<plssvm::matrix<real_type, layout>>(2, 2);
-    const auto matr2 = util::generate_random_matrix<plssvm::matrix<real_type, layout>>(2, 2);
+    const auto matr2 = util::generate_random_matrix<plssvm::matrix<real_type, layout>>(2, 2, plssvm::THREAD_BLOCK_PADDING, plssvm::FEATURE_BLOCK_SIZE);
 
     // test mismatched vector indices
     EXPECT_DEATH(std::ignore = plssvm::kernel_function<plssvm::kernel_function_type::linear>(matr1, 0, matr2, 2),
@@ -547,7 +547,7 @@ TYPED_TEST(KernelFunctionMatrixDeathTest, size_mismatch_kernel_function_paramete
 
     // create two matrices
     const auto matr1 = util::generate_random_matrix<plssvm::matrix<real_type, layout>>(2, 1);
-    const auto matr2 = util::generate_random_matrix<plssvm::matrix<real_type, layout>>(2, 2);
+    const auto matr2 = util::generate_random_matrix<plssvm::matrix<real_type, layout>>(2, 2, plssvm::THREAD_BLOCK_PADDING, plssvm::FEATURE_BLOCK_SIZE);
 
     // test mismatched vector sizes
     EXPECT_DEATH(std::ignore = plssvm::kernel_function(matr1, 0, matr2, 0, plssvm::parameter{}), "Sizes mismatch!: 1 != 2");
@@ -558,7 +558,7 @@ TYPED_TEST(KernelFunctionMatrixDeathTest, invalid_indices_parameter) {
 
     // create two matrices
     const auto matr1 = util::generate_random_matrix<plssvm::matrix<real_type, layout>>(2, 2);
-    const auto matr2 = util::generate_random_matrix<plssvm::matrix<real_type, layout>>(2, 2);
+    const auto matr2 = util::generate_random_matrix<plssvm::matrix<real_type, layout>>(2, 2, plssvm::THREAD_BLOCK_PADDING, plssvm::FEATURE_BLOCK_SIZE);
 
     // test mismatched vector indices
     EXPECT_DEATH(std::ignore = plssvm::kernel_function(matr1, 0, matr2, 2, plssvm::parameter{}),
