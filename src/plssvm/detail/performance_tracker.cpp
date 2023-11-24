@@ -172,8 +172,7 @@ void performance_tracker::save(std::ostream &out) {
         "  gemm:                       {}\n"
         "  enforce_max_mem_alloc_size: {}\n"
         "  PLSSVM_THREAD_BLOCK_SIZE:   {}\n"
-        "  PLSSVM_INTERNAL_BLOCK_SIZE: {}\n"
-        "  PLSSVM_OPENMP_BLOCK_SIZE:   {}\n",
+        "  PLSSVM_INTERNAL_BLOCK_SIZE: {}\n",
         plssvm::detail::current_date_time(),
         version::detail::target_platforms,
         version::git_metadata::commit_sha1().empty() ? "unknown" : version::git_metadata::commit_sha1(),
@@ -186,8 +185,7 @@ void performance_tracker::save(std::ostream &out) {
         use_gemm,
         enforce_max_mem_alloc_size,
         THREAD_BLOCK_SIZE,
-        INTERNAL_BLOCK_SIZE,
-        OPENMP_BLOCK_SIZE);
+        INTERNAL_BLOCK_SIZE);
 
 #if defined(PLSSVM_SYCL_BACKEND_HAS_DPCPP)
     //  check whether DPC++ AOT has been enabled

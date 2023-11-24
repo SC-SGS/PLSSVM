@@ -197,7 +197,6 @@ The `[optional_options]` can be one or multiple of:
 - `PLSSVM_THREAD_BLOCK_SIZE` (default: `32`): set a specific thread block size used in the GPU kernels (for fine-tuning optimizations)
 - `PLSSVM_FEATURE_BLOCK_SIZE` (default: `16`): set a specific feature block size used in the GPU kernels (for fine-tuning optimizations)
 - `PLSSVM_INTERNAL_BLOCK_SIZE` (default: `6`: set a specific internal block size used in the GPU kernels (for fine-tuning optimizations)
-- `PLSSVM_OPENMP_BLOCK_SIZE` (default: `64`): set a specific block size used in the OpenMP kernels
 - `PLSSVM_ENABLE_LTO=ON|OFF` (default: `ON`): enable interprocedural optimization (IPO/LTO) if supported by the compiler
 - `PLSSVM_ENFORCE_MAX_MEM_ALLOC_SIZE=ON|OFF` (default: `ON`): enforce the maximum (device) memory allocation size for the plssvm::solver_type::automatic solver
 - `PLSSVM_ENABLE_DOCUMENTATION=ON|OFF` (default: `OFF`): enable the `doc` target using doxygen

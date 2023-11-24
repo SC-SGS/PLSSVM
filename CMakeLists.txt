@@ -556,20 +556,6 @@ if (DEFINED PLSSVM_INTERNAL_BLOCK_SIZE)
     endif ()
 endif ()
 
-## set specific OpenMP block sizes of requested
-if (DEFINED ENV{PLSSVM_OPENMP_BLOCK_SIZE})
-    set(PLSSVM_OPENMP_BLOCK_SIZE $ENV{PLSSVM_OPENMP_BLOCK_SIZE} CACHE STRING "The used block size for the OpenMP kernel." FORCE)
-endif ()
-if (DEFINED PLSSVM_OPENMP_BLOCK_SIZE)
-    if (PLSSVM_OPENMP_BLOCK_SIZE MATCHES "^[0-9]+$" AND PLSSVM_OPENMP_BLOCK_SIZE GREATER 0)
-        message(STATUS "Set PLSSVM_OPENMP_BLOCK_SIZE to ${PLSSVM_OPENMP_BLOCK_SIZE}.")
-        # add target definition
-        target_compile_definitions(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC PLSSVM_OPENMP_BLOCK_SIZE=${PLSSVM_OPENMP_BLOCK_SIZE})
-    else ()
-        message(SEND_ERROR "PLSSVM_OPENMP_BLOCK_SIZE must be an integer greater than 0 but is \"${PLSSVM_OPENMP_BLOCK_SIZE}\"!")
-    endif ()
-endif ()
-
 ## enable or disable the performance tracker
 option(PLSSVM_ENABLE_PERFORMANCE_TRACKING "Enable performance tracking to YAML files for the PLSSVM executables plssvm-train, plssvm-predict, and plssvm-scale." OFF)
 if (PLSSVM_ENABLE_PERFORMANCE_TRACKING)
