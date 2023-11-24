@@ -306,32 +306,33 @@ export LD_LIBRARY_PATH=${CMAKE_INSTALL_PREFIX}/lib:${LD_LIBRARY_PATH}
 The repository comes with a Python3 script (in the `utility_scripts/` directory) to simply generate arbitrarily large data sets.
 
 In order to use all functionality, the following Python3 modules must be installed:
-[`argparse`](https://docs.python.org/3/library/argparse.html), [`timeit`](https://docs.python.org/3/library/timeit.html),
+[`argparse`](https://docs.python.org/3/library/argparse.html), [`timeit`](https://docs.python.org/3/library/timeit.html), 
 [`numpy`](https://pypi.org/project/numpy/), [`pandas`](https://pypi.org/project/pandas/),
 [`sklearn`](https://scikit-learn.org/stable/), [`arff`](https://pypi.org/project/arff/),
 [`matplotlib`](https://pypi.org/project/matplotlib/), [`mpl_toolkits`](https://pypi.org/project/matplotlib/),
 and [`humanize`](https://pypi.org/project/humanize/).
 
 ```bash
-python3 utility_scripts/generate_data.py --help
-usage: generate_data.py [-h] --output OUTPUT --format FORMAT [--problem PROBLEM] --samples SAMPLES [--test_samples TEST_SAMPLES] --features FEATURES [--plot]
+usage: generate_data.py [-h] [--output OUTPUT] [--format FORMAT] [--problem PROBLEM] --samples SAMPLES [--test_samples TEST_SAMPLES] --features FEATURES [--classes CLASSES] [--plot]
 
-optional arguments:
+options:
   -h, --help            show this help message and exit
   --output OUTPUT       the output file to write the samples to (without extension)
-  --format FORMAT       the file format; either arff or libsvm
-  --problem PROBLEM     the problem to solve; one of: blobs, blobs_merged, planes, planes_merged, ball
+  --format FORMAT       the file format; either arff, libsvm, or csv
+  --problem PROBLEM     the problem to solve; one of: blobs, blobs_merged, planes, ball
   --samples SAMPLES     the number of training samples to generate
   --test_samples TEST_SAMPLES
                         the number of test samples to generate; default: 0
   --features FEATURES   the number of features per data point
+  --classes CLASSES     the number of classes to generate; default: 2
   --plot                plot training samples; only possible if 0 < samples <= 2000 and 1 < features <= 3
 ```
 
-An example invocation generating a data set consisting of blobs with 1000 data points with 200 features each could look like:
+An example invocation generating a data set consisting of blobs with 1000 data points with 200 features each and 
+4 classes could look like:
 
 ```bash
-python3 generate_data.py --output data_file --format libsvm --problem blobs --samples 1000 --features 200
+python3 generate_data.py --output data_file --format libsvm --problem blobs --samples 1000 --features 200 --classes 4
 ```
 
 ### Training
