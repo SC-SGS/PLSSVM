@@ -22,7 +22,6 @@ else ()
     FetchContent_Declare(googletest
             GIT_REPOSITORY https://github.com/google/googletest
             GIT_TAG ${PLSSVM_googletest_VERSION}
-            GIT_SHALLOW TRUE
             QUIET
     )
     # For Windows: Prevent overriding the parent project's compiler/linker settings

@@ -158,15 +158,15 @@ if (cxxopts_FOUND)
 else ()
     message(STATUS "Couldn't find package cxxopts. Building from source ...")
     set(PLSSVM_cxxopts_VERSION v3.1.1)
+    # set options for cxxopts
+    set(CXXOPTS_BUILD_EXAMPLES OFF CACHE INTERNAL "" FORCE)
+    set(CXXOPTS_BUILD_TESTS OFF CACHE INTERNAL "" FORCE)
+    set(CXXOPTS_ENABLE_WARNINGS OFF CACHE INTERNAL "" FORCE)
     # fetch command line parser library cxxopts
     FetchContent_Declare(cxxopts
             GIT_REPOSITORY https://github.com/jarro2783/cxxopts.git
             GIT_TAG ${PLSSVM_cxxopts_VERSION}
-            GIT_SHALLOW TRUE
             QUIET
-
-            set (CXXOPTS_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
-            set (CXXOPTS_BUILD_TESTS OFF CACHE BOOL "" FORCE)
     )
     FetchContent_MakeAvailable(cxxopts)
     add_dependencies(${PLSSVM_BASE_LIBRARY_NAME} cxxopts)
@@ -184,16 +184,15 @@ if (fast_float_FOUND)
     target_include_directories(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC ${fast_float_INCLUDE_DIR})
 else ()
     message(STATUS "Couldn't find package fast_float. Building from source ...")
-    set(PLSSVM_fast_float_VERSION v3.10.0) # TODO: 5.2.0: https://github.com/fastfloat/fast_float/issues/215
+    set(PLSSVM_fast_float_VERSION v3.10.0) # TODO: 5.3.0: https://github.com/fastfloat/fast_float/issues/215
+    # set options for fast_float
+    set(FASTFLOAT_TEST OFF CACHE INTERNAL "" FORCE)
+    set(FASTFLOAT_SANITIZE OFF CACHE INTERNAL "" FORCE)
     # fetch float parsing library fast_float
     FetchContent_Declare(fast_float
             GIT_REPOSITORY https://github.com/fastfloat/fast_float
             GIT_TAG ${PLSSVM_fast_float_VERSION}
-            GIT_SHALLOW TRUE
             QUIET
-
-            set (FASTFLOAT_TEST OFF CACHE BOOL "" FORCE)
-            set (FASTFLOAT_SANITIZE OFF CACHE BOOL "" FORCE)
     )
     FetchContent_GetProperties(fast_float)
     if (NOT fast_float_POPULATED)
@@ -217,14 +216,13 @@ if (igor_FOUND)
 else ()
     message(STATUS "Couldn't find package igor. Building from source ...")
     set(PLSSVM_igor_VERSION a5224c60d266974d3f407191583fe266cbe1c93d)
+    # set options for igor
+    set(IGOR_BUILD_TESTS OFF CACHE INTERNAL "" FORCE)
     # fetch named argument library igor
     FetchContent_Declare(igor
             GIT_REPOSITORY https://github.com/bluescarni/igor
             GIT_TAG ${PLSSVM_igor_VERSION}
-            GIT_SHALLOW TRUE
             QUIET
-
-            set (IGOR_BUILD_TESTS OFF CACHE BOOL "" FORCE)
     )
     FetchContent_GetProperties(igor)
     if (NOT igor_POPULATED)
@@ -247,24 +245,29 @@ if (fmt_FOUND)
 else ()
     message(STATUS "Couldn't find package fmt. Building from source ...")  # TODO: change to next release; bug fix commit
     set(PLSSVM_fmt_VERSION d9063baf227882da0f48c761abcbb08247eb1296)
+    # set options for fmt
     if (PLSSVM_ENABLE_STL_DEBUG_MODE)
         set(CMAKE_CXX_FLAGS_OLD "${CMAKE_CXX_FLAGS}")
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${PLSSVM_STL_DEBUG_MODE_FLAGS}")
     endif ()
+    set(FMT_PEDANTIC OFF CACHE INTERNAL "" FORCE)
+    set(FMT_WERROR OFF CACHE INTERNAL "" FORCE)
+    set(FMT_DOC OFF CACHE INTERNAL "" FORCE)
+    set(FMT_INSTALL OFF CACHE INTERNAL "" FORCE)
+    set(FMT_TEST OFF CACHE INTERNAL "" FORCE)
+    set(FMT_FUZZ OFF CACHE INTERNAL "" FORCE)
+    set(FMT_CUDA_TEST OFF CACHE INTERNAL "" FORCE)
+    set(FMT_MODULE OFF CACHE INTERNAL "" FORCE)
+    set(FMT_SYSTEM_HEADERS ON CACHE INTERNAL "" FORCE)
     # fetch string formatting library fmt
     FetchContent_Declare(fmt
             GIT_REPOSITORY https://github.com/fmtlib/fmt.git
             GIT_TAG ${PLSSVM_fmt_VERSION}
-#            GIT_SHALLOW TRUE
             QUIET
-
-#            set (FMT_TEST OFF CACHE BOOL "" FORCE)
-#            set (FMT_DOC OFF CACHE BOOL "" FORCE)
-#            set (FMT_INSTALL OFF CACHE BOOL "" FORCE)
-#            set (FMT_SYSTEM_HEADERS ON CACHE BOOL "" FORCE)
     )
     FetchContent_MakeAvailable(fmt)
     set_property(TARGET fmt PROPERTY POSITION_INDEPENDENT_CODE ON)
+    target_compile_definitions(fmt PRIVATE FMT_USE_FULL_CACHE_DRAGONBOX)
     add_dependencies(${PLSSVM_BASE_LIBRARY_NAME} fmt)
     target_include_directories(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC
             $<BUILD_INTERFACE:${fmt_SOURCE_DIR}/include>
