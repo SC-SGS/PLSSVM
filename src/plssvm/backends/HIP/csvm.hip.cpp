@@ -150,7 +150,7 @@ auto csvm::run_assemble_kernel_matrix_explicit(const parameter &params, const de
                     static_cast<int>(std::ceil(static_cast<double>(num_rows_reduced) / static_cast<double>(block.y))));
 
 #if defined(PLSSVM_USE_GEMM)
-    device_ptr_type kernel_matrix_d{ num_rows_reduced * num_rows_reduced };  // store full matrix
+    device_ptr_type kernel_matrix_d{ num_rows_reduced * num_rows_reduced, devices_[0] };  // store full matrix
 #else
     device_ptr_type kernel_matrix_d{ num_rows_reduced * (num_rows_reduced + 1) / 2, devices_[0] };  // only explicitly store the upper triangular matrix
 #endif
