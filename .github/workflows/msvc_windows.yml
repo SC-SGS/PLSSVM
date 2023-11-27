@@ -33,4 +33,5 @@ jobs:
       - name: "Run tests"
         run: |
           cd PLSSVM/build
+          set PATH=%PATH%;%CD%
           ctest -j 2 -E ".*Exceptions\.|SourceLocation" --output-on-failure -C Release
