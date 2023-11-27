@@ -3,6 +3,11 @@ on: push
 jobs:
   MSVC-Test:
     runs-on: windows-latest
+    strategy:
+      matrix:
+        float_as_real_type: [ON, OFF]
+        use_gemm: [ON, OFF]
+        build_type: [Debug, Release]
     steps:
       - name: "Install latest MSVC compiler"
         uses: ilammy/msvc-dev-cmd@v1.12.1
@@ -20,7 +25,7 @@ jobs:
         run: |
           mkdir PLSSVM/build
           cd PLSSVM/build
-          cmake -DCMAKE_BUILD_TYPE=Release -DPLSSVM_TARGET_PLATFORMS="cpu" -DPLSSVM_ENABLE_TESTING=ON -DPLSSVM_TEST_FILE_NUM_DATA_POINTS=50 -DPLSSVM_TEST_FILE_NUM_FEATURES=20 -DPLSSVM_ENABLE_LTO=OFF -DPLSSVM_ENABLE_ASSERTS=ON ..
+          cmake -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} -DPLSSVM_TARGET_PLATFORMS="cpu" -DPLSSVM_ENABLE_ASSERTS=ON -DPLSSVM_ENABLE_LANGUAGE_BINDINGS=ON -DPLSSVM_ENABLE_PERFORMANCE_TRACKING=ON -DPLSSVM_ENABLE_TESTING=ON -DPLSSVM_TEST_FILE_NUM_DATA_POINTS=50 -DPLSSVM_TEST_FILE_NUM_FEATURES=20 -DPLSSVM_ENABLE_LTO=OFF -DPLSSVM_USE_FLOAT_AS_REAL_TYPE=${{ matrix.float_as_real_type }} -DPLSSVM_USE_GEMM=${{ matrix.use_gemm }} ..
       - name: "Build PLSSVM"
         run: |
           cd PLSSVM/build
