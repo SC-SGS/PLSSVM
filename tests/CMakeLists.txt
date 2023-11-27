@@ -61,10 +61,10 @@ if (PLSSVM_GENERATE_TEST_FILE)
     endif ()
     if (NOT EXISTS "${PLSSVM_TEST_FILE}")
         # find necessary Python3 packages to use the test file generator
-        find_package(Python3 REQUIRED COMPONENTS Interpreter Development NumPy)
+        find_package(Python3 REQUIRED COMPONENTS Interpreter Development)
 
         include(${PROJECT_SOURCE_DIR}/cmake/check_python_libs.cmake)
-        set(PLSSVM_TEST_REQUIRED_LIBS argparse sklearn humanize)
+        set(PLSSVM_TEST_REQUIRED_LIBS argparse sklearn humanize numpy)
         message(STATUS "Checking required Python3 libraries (${PLSSVM_TEST_REQUIRED_LIBS}) to to generate the test file.")
         check_python_libs("${PLSSVM_TEST_REQUIRED_LIBS}" "or set PLSSVM_GENERATE_TEST_FILE to OFF.")
 
