@@ -6,6 +6,8 @@ jobs:
     steps:
       - name: "Install latest MSVC compiler"
         uses: ilammy/msvc-dev-cmd@v1.12.1
+        with:
+            vsversion: "2023"
       - name: "Install cmake 3.25.2"
         uses: lukka/get-cmake@v3.25.2
       - name: "Clone the PLSSVM repository into PLSSVM/"
