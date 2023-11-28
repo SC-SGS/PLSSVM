@@ -42,31 +42,31 @@ __global__ void device_kernel_predict_linear(real_type *out_d, const real_type *
 __global__ void device_kernel_predict_polynomial(real_type *out_d, const real_type *alpha_d, const real_type *rho_d, const real_type *sv_d, const real_type *predict_points_d, const unsigned long long num_classes, const unsigned long long num_sv, const unsigned long long num_predict_points, const unsigned long long num_features, const int degree, const real_type gamma, const real_type coef0) {
     const unsigned long long sv_idx = blockIdx.x * blockDim.x + threadIdx.x;
     const unsigned long long predict_points_idx = blockIdx.y * blockDim.y + threadIdx.y;
-    const unsigned long long class_idx = blockIdx.z * blockDim.z + threadIdx.z;
 
-    if (sv_idx < num_sv && predict_points_idx < num_predict_points && class_idx < num_classes) {
+    if (sv_idx < num_sv && predict_points_idx < num_predict_points) {
         real_type temp{ 0.0 };
         // perform dot product
         for (unsigned long long dim = 0; dim < num_features; ++dim) {
             temp += sv_d[dim * (num_sv + THREAD_BLOCK_PADDING) + sv_idx] * predict_points_d[dim * (num_predict_points + THREAD_BLOCK_PADDING) + predict_points_idx];
         }
 
-        // apply degree, gamma, and coef0, alpha and rho
-        temp = alpha_d[class_idx * num_sv + sv_idx] * pow(gamma * temp + coef0, degree);
-        if (sv_idx == 0) {
-            temp -= rho_d[class_idx];
-        }
+        for (unsigned long long class_idx = 0; class_idx < num_classes; ++class_idx) {
+            // apply degree, gamma, and coef0, alpha and rho
+            real_type class_temp = alpha_d[class_idx * num_sv + sv_idx] * pow(gamma * temp + coef0, degree);
+            if (sv_idx == 0) {
+                class_temp -= rho_d[class_idx];
+            }
 
-        atomicAdd(&out_d[predict_points_idx * num_classes + class_idx], temp);
+            atomicAdd(&out_d[predict_points_idx * num_classes + class_idx], class_temp);
+        }
     }
 }
 
 __global__ void device_kernel_predict_rbf(real_type *out_d, const real_type *alpha_d, const real_type *rho_d, const real_type *sv_d, const real_type *predict_points_d, const unsigned long long num_classes, const unsigned long long num_sv, const unsigned long long num_predict_points, const unsigned long long num_features, const real_type gamma) {
     const unsigned long long sv_idx = blockIdx.x * blockDim.x + threadIdx.x;
     const unsigned long long predict_points_idx = blockIdx.y * blockDim.y + threadIdx.y;
-    const unsigned long long class_idx = blockIdx.z * blockDim.z + threadIdx.z;
 
-    if (sv_idx < num_sv && predict_points_idx < num_predict_points && class_idx < num_classes) {
+    if (sv_idx < num_sv && predict_points_idx < num_predict_points) {
         real_type temp{ 0.0 };
         // perform dist calculation
         for (unsigned long long dim = 0; dim < num_features; ++dim) {
@@ -74,13 +74,15 @@ __global__ void device_kernel_predict_rbf(real_type *out_d, const real_type *alp
             temp += diff * diff;
         }
 
-        // apply degree, gamma, and coef0, alpha and rho
-        temp = alpha_d[class_idx * num_sv + sv_idx] * exp(-gamma * temp);
-        if (sv_idx == 0) {
-            temp -= rho_d[class_idx];
-        }
+        for (unsigned long long class_idx = 0; class_idx < num_classes; ++class_idx) {
+            // apply degree, gamma, and coef0, alpha and rho
+            real_type class_temp = alpha_d[class_idx * num_sv + sv_idx] * exp(-gamma * temp);
+            if (sv_idx == 0) {
+                class_temp -= rho_d[class_idx];
+            }
 
-        atomicAdd(&out_d[predict_points_idx * num_classes + class_idx], temp);
+            atomicAdd(&out_d[predict_points_idx * num_classes + class_idx], class_temp);
+        }
     }
 }
 

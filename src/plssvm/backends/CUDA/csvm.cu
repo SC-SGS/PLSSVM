@@ -252,11 +252,10 @@ auto csvm::run_predict_kernel(const parameter &params, const device_ptr_type &w_
     } else {
         // define the grid and block sizes
         const std::size_t max_work_group_size = this->get_max_work_group_size();
-        const auto max_work_group_size_3D = static_cast<int>(std::sqrt(static_cast<real_type>(max_work_group_size / 4)));
-        const dim3 block(max_work_group_size_3D, max_work_group_size_3D, 4);
+        const auto max_work_group_size_2D = static_cast<int>(std::sqrt(static_cast<real_type>(max_work_group_size)));
+        const dim3 block(max_work_group_size_2D, max_work_group_size_2D);
         const dim3 grid(static_cast<int>(std::ceil(static_cast<double>(num_sv) / static_cast<double>(block.x))),
-                        static_cast<int>(std::ceil(static_cast<double>(num_predict_points) / static_cast<double>(block.y))),
-                        static_cast<int>(std::ceil(static_cast<double>(num_classes) / static_cast<double>(block.z))));
+                        static_cast<int>(std::ceil(static_cast<double>(num_predict_points) / static_cast<double>(block.y))));
 
         switch (params.kernel_type) {
             case kernel_function_type::linear:
