@@ -33,5 +33,5 @@ jobs:
       - name: "Run tests"
         run: |
           cd PLSSVM/build
-          set PATH=%PATH%;${GITHUB_WORKSPACE}/build
+          set PATH=%PATH%;${GITHUB_WORKSPACE}\build
           ctest -j 2 -E ".*Exceptions\.|SourceLocation" --output-on-failure -C Release
