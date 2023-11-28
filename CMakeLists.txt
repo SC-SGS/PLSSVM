@@ -35,6 +35,12 @@ else ()
     endif ()
 endif ()
 
+## enable shared linkage for Windows
+if (WIN32)
+    set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS TRUE)
+    set(BUILD_SHARED_LIBS TRUE)
+endif ()
+
 
 ########################################################################################################################
 ##                                      create and set necessary base properties                                      ##
@@ -115,6 +121,9 @@ target_compile_options(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC
 )
 target_compile_definitions(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC
         $<$<COMPILE_LANG_AND_ID:CXX,MSVC>:NOMINMAX>
+)
+target_compile_definitions(${PLSSVM_BASE_LIBRARY_NAME} PRIVATE
+        $<$<COMPILE_LANG_AND_ID:CXX,MSVC>:PLSSVM_COMPILE_BASE_LIBRARY>
 )
 
 option(PLSSVM_ENABLE_STL_DEBUG_MODE "Enables the debug modes for the STL implementations. Note: changes the ABI!" OFF)
