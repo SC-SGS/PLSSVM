@@ -7,12 +7,12 @@
 list(APPEND CMAKE_MESSAGE_INDENT "Tests:  ")
 
 ## setup testing wit GoogleTest
-find_package(GTest 1.14.0 QUIET)
+find_package(GTest 1.11.0 QUIET)
 if (GTEST_FOUND)
     message(STATUS "Found package GTest.")
 else ()
     message(STATUS "Couldn't find package GTest. Building from source...")
-    set(PLSSVM_googletest_VERSION v1.14.0)
+    set(PLSSVM_googletest_VERSION release-1.11.0)
     if (PLSSVM_ENABLE_STL_DEBUG_MODE)
         set(CMAKE_CXX_FLAGS_OLD "${CMAKE_CXX_FLAGS}")
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${PLSSVM_STL_DEBUG_MODE_FLAGS}")
@@ -22,10 +22,11 @@ else ()
     FetchContent_Declare(googletest
             GIT_REPOSITORY https://github.com/google/googletest
             GIT_TAG ${PLSSVM_googletest_VERSION}
+            GIT_SHALLOW TRUE
             QUIET
     )
     # For Windows: Prevent overriding the parent project's compiler/linker settings
-#    set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
+    set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
     FetchContent_GetProperties(googletest)
     if (NOT googletest_POPULATED)
         FetchContent_Populate(googletest)
@@ -100,7 +101,7 @@ target_compile_definitions(${PLSSVM_BASE_TEST_LIBRARY_NAME} PUBLIC PLSSVM_TEST_F
 target_link_libraries(${PLSSVM_BASE_TEST_LIBRARY_NAME} PUBLIC ${PLSSVM_ALL_LIBRARY_NAME})
 
 # link against gtest
-target_link_libraries(${PLSSVM_BASE_TEST_LIBRARY_NAME} PUBLIC GTest::gmock)
+target_link_libraries(${PLSSVM_BASE_TEST_LIBRARY_NAME} PUBLIC GTest::gtest_main GTest::gmock)
 
 
 ## create base tests
