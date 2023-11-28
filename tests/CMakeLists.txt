@@ -19,8 +19,6 @@ else ()
     endif ()
     # fetch testing framework GoogleTest
     include(FetchContent)
-    add_definitions(-DGTEST_CREATE_SHARED_LIBRARY=1 -DGTEST_LINKED_AS_SHARED_LIBRARY=1)
-    add_definitions(-DGMOCK_CREATE_SHARED_LIBRARY=1 -DGMOCK_LINKED_AS_SHARED_LIBRARY=1)
     FetchContent_Declare(googletest
             GIT_REPOSITORY https://github.com/google/googletest
             GIT_TAG ${PLSSVM_googletest_VERSION}
@@ -38,7 +36,6 @@ else ()
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS_OLD}")
     endif ()
 endif ()
-
 
 # create larger test files if desired
 option(PLSSVM_GENERATE_TEST_FILE "Generate larger test file" ON)
@@ -90,7 +87,7 @@ set(PLSSVM_BASE_TEST_LIBRARY_NAME_SOURCES
 )
 
 # create base test library
-add_library(${PLSSVM_BASE_TEST_LIBRARY_NAME} SHARED ${PLSSVM_BASE_TEST_LIBRARY_NAME_SOURCES})
+add_library(${PLSSVM_BASE_TEST_LIBRARY_NAME} STATIC ${PLSSVM_BASE_TEST_LIBRARY_NAME_SOURCES})
 
 # set necessary include directories
 target_include_directories(${PLSSVM_BASE_TEST_LIBRARY_NAME} PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}")
