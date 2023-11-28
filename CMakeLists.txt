@@ -109,7 +109,7 @@ target_compile_options(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC
 ## nvcc doesn't recognize -Werror=??? option, so only set it when using a CXX compiler
 target_compile_options(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC
         $<$<COMPILE_LANG_AND_ID:CXX,GNU,Clang>:-Werror=switch -fstrict-enums>
-        $<$<COMPILE_LANG_AND_ID:CXX,MSVC>:/we4062 /wd4005 /wd4702 /wd4849 /wd4127>
+        $<$<COMPILE_LANG_AND_ID:CXX,MSVC>:/we4062 /wd4005 /wd4702 /wd4849 /wd4127 /DEFAULTLIB:${PLSSVM_BASE_LIBRARY_NAME}>
         # /wd4702: prevent warning for unreachable code in tests (the tests that currently skip the cg_streaming and cg_implicit tests)
         # /wd4849: ignore "OpenMP 'reduction' clause ignored in 'simd' directive" -> no SIMD clause currently effective in MSVC
         # /wd4127: ignore "conditional expression is constant" from {fmt} ranges.h header
