@@ -17,8 +17,11 @@ else ()
         set(CMAKE_CXX_FLAGS_OLD "${CMAKE_CXX_FLAGS}")
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${PLSSVM_STL_DEBUG_MODE_FLAGS}")
     endif ()
+
     # fetch testing framework GoogleTest
     include(FetchContent)
+    set_property(GLOBAL PROPERTY WINDOWS_EXPORT_ALL_SYMBOLS YES)
+    set_property()
     FetchContent_Declare(googletest
             GIT_REPOSITORY https://github.com/google/googletest
             GIT_TAG ${PLSSVM_googletest_VERSION}
