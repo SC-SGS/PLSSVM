@@ -120,7 +120,8 @@ are automatically determined using the Python3 `utility_scripts/plssvm_target_pl
 [`GPUtil`](https://pypi.org/project/GPUtil/), [`pyamdgpuinfo`](https://pypi.org/project/pyamdgpuinfo/), and
 [`pylspci`](https://pypi.org/project/pylspci/)).
 
-Note that when using DPC++ only a single architectural specification for `cpu`, `nvidia` or `amd` is allowed.
+Note that when using DPC++ only a single architectural specification for `cpu`, `nvidia` or `amd` is allowed and that
+automatically retrieving AMD GPU information on Windows is currently not supported due to `pyamdgpuinfo` limitations.
 
 
 ```bash
