@@ -229,7 +229,7 @@ TYPED_TEST_P(GenericGPUCSVMKernelFunction, run_predict_kernel) {
         w_d = svm.run_w_kernel(weights_d, sv_d);
     }
     // create predict points
-    const auto predict_points = util::generate_random_matrix<plssvm::soa_matrix<plssvm::real_type>>(data.data().num_rows(), data.data().num_cols(), plssvm::THREAD_BLOCK_PADDING, plssvm::FEATURE_BLOCK_SIZE);
+    const auto predict_points = util::generate_specific_matrix<plssvm::soa_matrix<plssvm::real_type>>(data.data().num_rows(), data.data().num_cols(), plssvm::THREAD_BLOCK_PADDING, plssvm::FEATURE_BLOCK_SIZE);
     device_ptr_type predict_points_d{ predict_points.shape(), predict_points.padding(), device };
     predict_points_d.copy_to_device(predict_points);
     // create rho vector

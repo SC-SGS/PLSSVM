@@ -22,7 +22,7 @@ matplotlib
 # argparse
 py-cpuinfo
 GPUtil
-pyamdgpuinfo
+pyamdgpuinfo; platform_system != "Windows"
 pylspci
 
 
