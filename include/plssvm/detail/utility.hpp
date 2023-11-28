@@ -37,9 +37,9 @@
 
 #if defined(_WIN32)
 #if defined(PLSSVM_COMPILE_BASE_LIBRARY)
-    #define PLSSVM_EXTERN __declspec(dllexport)
+    #define PLSSVM_EXTERN extern "C" __declspec(dllexport)
 #else
-    #define PLSSVM_EXTERN __declspec(dllimport)
+    #define PLSSVM_EXTERN extern "C" __declspec(dllimport)
 #endif
 #else
     #define PLSSVM_EXTERN extern
