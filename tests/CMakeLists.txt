@@ -25,7 +25,7 @@ else ()
             QUIET
     )
     # For Windows: Prevent overriding the parent project's compiler/linker settings
-    set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
+#    set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
     FetchContent_GetProperties(googletest)
     if (NOT googletest_POPULATED)
         FetchContent_Populate(googletest)
@@ -36,7 +36,6 @@ else ()
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS_OLD}")
     endif ()
 endif ()
-
 
 # create larger test files if desired
 option(PLSSVM_GENERATE_TEST_FILE "Generate larger test file" ON)
@@ -88,7 +87,7 @@ set(PLSSVM_BASE_TEST_LIBRARY_NAME_SOURCES
 )
 
 # create base test library
-add_library(${PLSSVM_BASE_TEST_LIBRARY_NAME} SHARED ${PLSSVM_BASE_TEST_LIBRARY_NAME_SOURCES})
+add_library(${PLSSVM_BASE_TEST_LIBRARY_NAME} STATIC ${PLSSVM_BASE_TEST_LIBRARY_NAME_SOURCES})
 
 # set necessary include directories
 target_include_directories(${PLSSVM_BASE_TEST_LIBRARY_NAME} PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}")
