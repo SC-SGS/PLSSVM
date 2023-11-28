@@ -21,6 +21,8 @@ jobs:
         run: |
           py -m pip install --upgrade pip setuptools wheel
           py -m pip install -r PLSSVM/install/python_requirements.txt
+      - name: "Install GoogleTest dependency"
+        uses: MarkusJx/googletest-installer@v1.1.1
       - name: "Configure PLSSVM using CMake"
         run: |
           mkdir PLSSVM/build
