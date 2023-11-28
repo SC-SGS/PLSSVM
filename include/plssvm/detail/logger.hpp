@@ -15,6 +15,7 @@
 #pragma once
 
 #include "plssvm/detail/performance_tracker.hpp"  // plssvm::detail::is_tracking_entry_v, PLSSVM_DETAIL_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY
+#include "plssvm/detail/utility.hpp"              // PLSSVM_EXTERN
 
 #include "fmt/chrono.h"   // format std::chrono types
 #include "fmt/format.h"   // fmt::format
@@ -42,7 +43,7 @@ enum class verbosity_level {
 };
 
 /// The verbosity level used in the logging function. My be changed by the user.
-extern verbosity_level verbosity;
+PLSSVM_EXTERN verbosity_level verbosity;
 
 /**
  * @brief Output the @p verb to the given output-stream @p out.
