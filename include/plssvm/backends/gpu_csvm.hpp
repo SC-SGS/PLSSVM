@@ -306,7 +306,7 @@ aos_matrix<real_type> gpu_csvm<device_ptr_t, queue_t>::predict_values(const para
     predict_points_d.copy_to_device(predict_points);
 
     device_ptr_type w_d;  // only used when predicting linear kernel functions
-    device_ptr_type alpha_d{ alpha.shape(), devices_[0] };
+    device_ptr_type alpha_d{ alpha.shape(), alpha.padding(), devices_[0] };
     alpha_d.copy_to_device(alpha);
     device_ptr_type rho_d{ num_classes, devices_[0] };
     rho_d.copy_to_device(rho);
@@ -331,8 +331,10 @@ aos_matrix<real_type> gpu_csvm<device_ptr_t, queue_t>::predict_values(const para
     const device_ptr_type out_d = this->run_predict_kernel(params, w_d, alpha_d, rho_d, sv_d, predict_points_d);
 
     // copy results back to host
-    aos_matrix<real_type> out_ret{ num_predict_points, num_classes };
+    aos_matrix<real_type> out_ret{ num_predict_points, num_classes, THREAD_BLOCK_PADDING, THREAD_BLOCK_PADDING };
     out_d.copy_to_host(out_ret);
+    out_ret.restore_padding();
+
     return out_ret;
 }
 

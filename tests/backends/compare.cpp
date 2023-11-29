@@ -289,7 +289,7 @@ template <typename real_type>
     const std::size_t num_sv = support_vectors.num_rows();
     const std::size_t num_features = predict_points.num_cols();
 
-    plssvm::aos_matrix<real_type> result{ num_predict_points, num_classes };
+    plssvm::aos_matrix<real_type> result{ num_predict_points, num_classes, plssvm::THREAD_BLOCK_PADDING, plssvm::THREAD_BLOCK_PADDING };
 
     switch (params.kernel_type) {
         case plssvm::kernel_function_type::linear: {

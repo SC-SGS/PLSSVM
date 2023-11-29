@@ -864,7 +864,7 @@ std::tuple<aos_matrix<real_type>, std::vector<real_type>, unsigned long long> cs
     std::tie(X, num_iter) = conjugate_gradients(kernel_matrix, B_red, used_epsilon, used_max_iter, used_solver);  // TODO: q_red for implicit
 
     // calculate bias and undo dimensional reduction
-    aos_matrix<real_type> X_ret{ num_rhs, A.num_rows() };
+    aos_matrix<real_type> X_ret{ num_rhs, A.num_rows(), THREAD_BLOCK_PADDING, THREAD_BLOCK_PADDING };
     std::vector<real_type> bias(num_rhs);
     #pragma omp parallel for default(none) shared(X, q_red, X_ret, bias, b_back_value) firstprivate(num_rhs, num_rows_reduced, QA_cost)
     for (std::size_t i = 0; i < num_rhs; ++i) {

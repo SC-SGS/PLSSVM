@@ -509,8 +509,6 @@ TYPED_TEST_P(GenericCSVMKernelFunction, predict_values) {
         params.degree = 1;
         params.gamma = 1.0;
         params.coef0 = 0.0;
-    } else if constexpr (kernel == plssvm::kernel_function_type::rbf) {
-        GTEST_SKIP() << "predict_values currently doesn't work with the rbf kernel!";
     }
 
     // create the data that should be used
@@ -521,7 +519,9 @@ TYPED_TEST_P(GenericCSVMKernelFunction, predict_values) {
                                                                  plssvm::THREAD_BLOCK_PADDING,
                                                                  plssvm::FEATURE_BLOCK_SIZE };
     const plssvm::aos_matrix<plssvm::real_type> weights{ { { plssvm::real_type{ 1.0 }, plssvm::real_type{ -1.0 }, plssvm::real_type{ 1.0 }, plssvm::real_type{ -1.0 } },
-                                                           { plssvm::real_type{ 1.0 }, plssvm::real_type{ -1.0 }, plssvm::real_type{ 1.0 }, plssvm::real_type{ -1.0 } } } };
+                                                           { plssvm::real_type{ 1.0 }, plssvm::real_type{ -1.0 }, plssvm::real_type{ 1.0 }, plssvm::real_type{ -1.0 } } },
+                                                         plssvm::THREAD_BLOCK_PADDING,
+                                                         plssvm::THREAD_BLOCK_PADDING };
     const std::vector<plssvm::real_type> rho{ plssvm::real_type{ 0.0 }, plssvm::real_type{ 0.0 } };
     plssvm::aos_matrix<plssvm::real_type> w{};
     const plssvm::soa_matrix<plssvm::real_type> data{ { { plssvm::real_type{ 1.0 }, plssvm::real_type{ 1.0 }, plssvm::real_type{ 1.0 }, plssvm::real_type{ 1.0 } },
@@ -529,15 +529,18 @@ TYPED_TEST_P(GenericCSVMKernelFunction, predict_values) {
                                                       plssvm::THREAD_BLOCK_PADDING,
                                                       plssvm::FEATURE_BLOCK_SIZE };
 
-    // the correct result
-    const plssvm::aos_matrix<plssvm::real_type> correct_predict_values{ { { plssvm::real_type{ 0.0 }, plssvm::real_type{ 0.0 } },
-                                                                          { plssvm::real_type{ 4.0 }, plssvm::real_type{ 4.0 } } } };
-
     // create C-SVM: must be done using the mock class, since plssvm::detail::csvm::predict_values is protected
     const mock_csvm_type svm = util::construct_from_tuple<mock_csvm_type>(params, csvm_test_type::additional_arguments);
 
     // predict the values using the previously learned support vectors and weights
     const plssvm::aos_matrix<plssvm::real_type> calculated = svm.predict_values(params, support_vectors, weights, rho, w, data);
+
+    // calculate correct predict values
+    plssvm::aos_matrix<plssvm::real_type> correct_w;
+    if (kernel == plssvm::kernel_function_type::linear) {
+        correct_w = compare::calculate_w(weights, support_vectors);
+    }
+    const plssvm::aos_matrix<plssvm::real_type> correct_predict_values = compare::predict_values(params, correct_w, weights, rho, support_vectors, data);
 
     // check the calculated result for correctness
     ASSERT_EQ(calculated.shape(), correct_predict_values.shape());
@@ -545,7 +548,8 @@ TYPED_TEST_P(GenericCSVMKernelFunction, predict_values) {
     // in case of the linear kernel, the w vector should have been filled
     if (kernel == plssvm::kernel_function_type::linear) {
         EXPECT_EQ(w.num_rows(), rho.size());
-        EXPECT_FLOATING_POINT_MATRIX_NEAR(w, weights);
+        const plssvm::aos_matrix<plssvm::real_type> weights_without_padding{ weights, 0, 0 };
+        EXPECT_FLOATING_POINT_MATRIX_NEAR(w, weights_without_padding);
     } else {
         EXPECT_TRUE(w.empty());
     }
@@ -569,7 +573,9 @@ TYPED_TEST_P(GenericCSVMKernelFunction, predict_values_provided_w) {
                                                                      plssvm::THREAD_BLOCK_PADDING,
                                                                      plssvm::FEATURE_BLOCK_SIZE };
         const plssvm::aos_matrix<plssvm::real_type> weights{ { { plssvm::real_type{ 1.0 }, plssvm::real_type{ -1.0 }, plssvm::real_type{ 1.0 }, plssvm::real_type{ -1.0 } },
-                                                               { plssvm::real_type{ 1.0 }, plssvm::real_type{ -1.0 }, plssvm::real_type{ 1.0 }, plssvm::real_type{ -1.0 } } } };
+                                                               { plssvm::real_type{ 1.0 }, plssvm::real_type{ -1.0 }, plssvm::real_type{ 1.0 }, plssvm::real_type{ -1.0 } } },
+                                                             plssvm::THREAD_BLOCK_PADDING,
+                                                             plssvm::THREAD_BLOCK_PADDING };
         const std::vector<plssvm::real_type> rho{ plssvm::real_type{ 0.0 }, plssvm::real_type{ 0.0 } };
         plssvm::aos_matrix<plssvm::real_type> w{ { { plssvm::real_type{ 1.0 }, plssvm::real_type{ -1.0 }, plssvm::real_type{ 1.0 }, plssvm::real_type{ -1.0 } },
                                                    { plssvm::real_type{ 1.0 }, plssvm::real_type{ -1.0 }, plssvm::real_type{ 1.0 }, plssvm::real_type{ -1.0 } } } };
@@ -581,7 +587,9 @@ TYPED_TEST_P(GenericCSVMKernelFunction, predict_values_provided_w) {
 
         // the correct result
         const plssvm::aos_matrix<plssvm::real_type> correct_predict_values{ { { plssvm::real_type{ 0.0 }, plssvm::real_type{ 0.0 } },
-                                                                              { plssvm::real_type{ 4.0 }, plssvm::real_type{ 4.0 } } } };
+                                                                              { plssvm::real_type{ 4.0 }, plssvm::real_type{ 4.0 } } },
+                                                                            plssvm::THREAD_BLOCK_PADDING,
+                                                                            plssvm::THREAD_BLOCK_PADDING };
 
         // create C-SVM: must be done using the mock class, since plssvm::detail::csvm::predict_values is protected
         const mock_csvm_type svm = util::construct_from_tuple<mock_csvm_type>(params, csvm_test_type::additional_arguments);
@@ -594,7 +602,8 @@ TYPED_TEST_P(GenericCSVMKernelFunction, predict_values_provided_w) {
         EXPECT_FLOATING_POINT_MATRIX_NEAR(calculated, correct_predict_values);
         // in case of the linear kernel, the w vector should not have changed
         EXPECT_EQ(w, correct_w);
-        EXPECT_FLOATING_POINT_MATRIX_NEAR(w, weights);
+        const plssvm::aos_matrix<plssvm::real_type> weights_without_padding{ weights, 0, 0 };
+        EXPECT_FLOATING_POINT_MATRIX_NEAR(w, weights_without_padding);
     }
 }
 
@@ -677,7 +686,7 @@ TYPED_TEST_P(GenericCSVMSolverKernelFunction, solve_lssvm_system_of_linear_equat
     const auto &[calculated_x, calculated_rho, num_iter] = svm.solve_lssvm_system_of_linear_equations(A, B, params, plssvm::epsilon = 0.00001, plssvm::solver = plssvm::solver_type::cg_explicit);
 
     // check the calculated result for correctness
-    EXPECT_FLOATING_POINT_MATRIX_NEAR(calculated_x, B);
+    EXPECT_FLOATING_POINT_MATRIX_NEAR(calculated_x, (plssvm::aos_matrix<plssvm::real_type>{ B, plssvm::THREAD_BLOCK_PADDING, plssvm::THREAD_BLOCK_PADDING }));
     EXPECT_TRUE(std::all_of(calculated_rho.cbegin(), calculated_rho.cend(), [front = calculated_rho.front()](const plssvm::real_type rho) { return rho == front; }));
     for (const auto rho : calculated_rho) {
         EXPECT_FLOATING_POINT_NEAR(std::abs(rho) - std::numeric_limits<plssvm::real_type>::epsilon(), std::numeric_limits<plssvm::real_type>::epsilon());
@@ -936,12 +945,12 @@ TYPED_TEST_P(GenericCSVMKernelFunctionClassification, score_model) {
     const plssvm::real_type calculated = svm.score(model);
 
     // check the calculated result for correctness
-        EXPECT_EQ(calculated, plssvm::real_type{ 1.0 });
+    EXPECT_EQ(calculated, plssvm::real_type{ 1.0 });
 }
 TYPED_TEST_P(GenericCSVMKernelFunctionClassification, score) {
-        // TODO: change from hardcoded file to logic test
+    // TODO: change from hardcoded file to logic test
 
-        using label_type = util::test_parameter_type_at_t<1, TypeParam>;
+    using label_type = util::test_parameter_type_at_t<1, TypeParam>;
     using csvm_test_type = util::test_parameter_type_at_t<0, TypeParam>;
     using csvm_type = typename csvm_test_type::csvm_type;
     constexpr plssvm::kernel_function_type kernel = util::test_parameter_value_at_v<0, TypeParam>;
@@ -1018,7 +1027,7 @@ TYPED_TEST_P(GenericCSVMSolverKernelFunctionClassification, fit) {
     ASSERT_EQ(model.weights().size(), correct_model.weights().size());
     // can't check weights for equality since the SV order after our IO is non-deterministic
     // TODO: the eps factor must be selected WAY too large
-//    EXPECT_FLOATING_POINT_VECTOR_NEAR_EPS(model.rho(), correct_model.rho(), plssvm::real_type{ 1e12 });
+    //    EXPECT_FLOATING_POINT_VECTOR_NEAR_EPS(model.rho(), correct_model.rho(), plssvm::real_type{ 1e12 });
     EXPECT_EQ(model.get_classification_type(), classification);
     EXPECT_TRUE(model.num_iters().has_value());
     EXPECT_EQ(model.num_iters().value().size(), (plssvm::calculate_number_of_classifiers(classification, correct_model.num_classes())));
@@ -1280,7 +1289,7 @@ TYPED_TEST_P(GenericCSVMKernelFunctionDeathTest, predict_values_empty_matrices) 
 
     // create correct input matrices
     const auto support_vectors = util::generate_random_matrix<plssvm::soa_matrix<plssvm::real_type>>(4, 4, plssvm::THREAD_BLOCK_PADDING, plssvm::FEATURE_BLOCK_SIZE);
-    const auto weights = util::generate_random_matrix<plssvm::aos_matrix<plssvm::real_type>>(2, 4);
+    const auto weights = util::generate_random_matrix<plssvm::aos_matrix<plssvm::real_type>>(2, 4, plssvm::THREAD_BLOCK_PADDING, plssvm::THREAD_BLOCK_PADDING);
     const std::vector<plssvm::real_type> rho(2);
     plssvm::aos_matrix<plssvm::real_type> w{};
     const auto data = util::generate_random_matrix<plssvm::soa_matrix<plssvm::real_type>>(2, 4, plssvm::THREAD_BLOCK_PADDING, plssvm::FEATURE_BLOCK_SIZE);
@@ -1305,7 +1314,7 @@ TYPED_TEST_P(GenericCSVMKernelFunctionDeathTest, predict_values_sv_alpha_size_mi
 
     // create correct input matrices
     const auto support_vectors = util::generate_random_matrix<plssvm::soa_matrix<plssvm::real_type>>(3, 4, plssvm::THREAD_BLOCK_PADDING, plssvm::FEATURE_BLOCK_SIZE);
-    const auto weights = util::generate_random_matrix<plssvm::aos_matrix<plssvm::real_type>>(2, 4);
+    const auto weights = util::generate_random_matrix<plssvm::aos_matrix<plssvm::real_type>>(2, 4, plssvm::THREAD_BLOCK_PADDING, plssvm::THREAD_BLOCK_PADDING);
     const std::vector<plssvm::real_type> rho(2);
     plssvm::aos_matrix<plssvm::real_type> w{};
     const auto data = util::generate_random_matrix<plssvm::soa_matrix<plssvm::real_type>>(2, 4, plssvm::THREAD_BLOCK_PADDING, plssvm::FEATURE_BLOCK_SIZE);
@@ -1326,7 +1335,7 @@ TYPED_TEST_P(GenericCSVMKernelFunctionDeathTest, predict_values_rho_alpha_size_m
 
     // create correct input matrices
     const auto support_vectors = util::generate_random_matrix<plssvm::soa_matrix<plssvm::real_type>>(4, 4, plssvm::THREAD_BLOCK_PADDING, plssvm::FEATURE_BLOCK_SIZE);
-    const auto weights = util::generate_random_matrix<plssvm::aos_matrix<plssvm::real_type>>(2, 4);
+    const auto weights = util::generate_random_matrix<plssvm::aos_matrix<plssvm::real_type>>(2, 4, plssvm::THREAD_BLOCK_PADDING, plssvm::THREAD_BLOCK_PADDING);
     const std::vector<plssvm::real_type> rho(1);
     plssvm::aos_matrix<plssvm::real_type> w{};
     const auto data = util::generate_random_matrix<plssvm::soa_matrix<plssvm::real_type>>(2, 4, plssvm::THREAD_BLOCK_PADDING, plssvm::FEATURE_BLOCK_SIZE);
@@ -1347,7 +1356,7 @@ TYPED_TEST_P(GenericCSVMKernelFunctionDeathTest, predict_values_w_size_mismatch)
 
     // create correct input matrices
     const auto support_vectors = util::generate_random_matrix<plssvm::soa_matrix<plssvm::real_type>>(4, 4, plssvm::THREAD_BLOCK_PADDING, plssvm::FEATURE_BLOCK_SIZE);
-    const auto weights = util::generate_random_matrix<plssvm::aos_matrix<plssvm::real_type>>(2, 4);
+    const auto weights = util::generate_random_matrix<plssvm::aos_matrix<plssvm::real_type>>(2, 4, plssvm::THREAD_BLOCK_PADDING, plssvm::THREAD_BLOCK_PADDING);
     const std::vector<plssvm::real_type> rho(2);
     const auto data = util::generate_random_matrix<plssvm::soa_matrix<plssvm::real_type>>(2, 4, plssvm::THREAD_BLOCK_PADDING, plssvm::FEATURE_BLOCK_SIZE);
 
@@ -1371,7 +1380,7 @@ TYPED_TEST_P(GenericCSVMKernelFunctionDeathTest, predict_values_num_features_mis
 
     // create correct input matrices
     const auto support_vectors = util::generate_random_matrix<plssvm::soa_matrix<plssvm::real_type>>(4, 5, plssvm::THREAD_BLOCK_PADDING, plssvm::FEATURE_BLOCK_SIZE);
-    const auto weights = util::generate_random_matrix<plssvm::aos_matrix<plssvm::real_type>>(2, 4);
+    const auto weights = util::generate_random_matrix<plssvm::aos_matrix<plssvm::real_type>>(2, 4, plssvm::THREAD_BLOCK_PADDING, plssvm::THREAD_BLOCK_PADDING);
     const std::vector<plssvm::real_type> rho(2);
     plssvm::aos_matrix<plssvm::real_type> w{};
     const auto data = util::generate_random_matrix<plssvm::soa_matrix<plssvm::real_type>>(2, 4, plssvm::THREAD_BLOCK_PADDING, plssvm::FEATURE_BLOCK_SIZE);

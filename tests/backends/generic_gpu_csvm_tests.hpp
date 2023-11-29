@@ -128,8 +128,8 @@ TYPED_TEST_P(GenericGPUCSVM, run_w_kernel) {
     device_ptr_type sv_d{ data.data().shape(), data.data().padding(),  device };
     sv_d.copy_to_device(data.data());
     // create weights vector
-    const auto weights = util::generate_specific_matrix<plssvm::aos_matrix<plssvm::real_type>>(3, data.num_data_points());
-    device_ptr_type weights_d{ weights.shape(), device };
+    const auto weights = util::generate_specific_matrix<plssvm::aos_matrix<plssvm::real_type>>(3, data.num_data_points(), plssvm::THREAD_BLOCK_PADDING, plssvm::THREAD_BLOCK_PADDING);
+    device_ptr_type weights_d{ weights.shape(), weights.padding(), device };
     weights_d.copy_to_device(weights);
 
     // calculate w
@@ -220,8 +220,8 @@ TYPED_TEST_P(GenericGPUCSVMKernelFunction, run_predict_kernel) {
     device_ptr_type sv_d{ data.data().shape(), data.data().padding(), device };
     sv_d.copy_to_device(data.data());
     // create weights vector
-    const auto weights = util::generate_specific_matrix<plssvm::aos_matrix<plssvm::real_type>>(3, data.data().num_rows());
-    device_ptr_type weights_d{ weights.shape(), device };
+    const auto weights = util::generate_specific_matrix<plssvm::aos_matrix<plssvm::real_type>>(3, data.data().num_rows(), plssvm::THREAD_BLOCK_PADDING, plssvm::THREAD_BLOCK_PADDING);
+    device_ptr_type weights_d{ weights.shape(), weights.padding(), device };
     weights_d.copy_to_device(weights);
     // calculate w if the linear kernel function is used
     device_ptr_type w_d;
@@ -239,11 +239,12 @@ TYPED_TEST_P(GenericGPUCSVMKernelFunction, run_predict_kernel) {
 
     // call predict kernel
     const device_ptr_type out_d = svm.run_predict_kernel(params, w_d, weights_d, rho_d, sv_d, predict_points_d);
-    plssvm::aos_matrix<plssvm::real_type> out{ predict_points.num_rows(), weights.num_rows() };
+    plssvm::aos_matrix<plssvm::real_type> out{ predict_points.num_rows(), weights.num_rows(), plssvm::THREAD_BLOCK_PADDING, plssvm::THREAD_BLOCK_PADDING };
 
     // check sizes
     ASSERT_EQ(out_d.extents(), out.shape());
     out_d.copy_to_host(out);
+    out.restore_padding();
 
     // calculate correct predict values
     plssvm::aos_matrix<plssvm::real_type> correct_w;

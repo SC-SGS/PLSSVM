@@ -237,7 +237,7 @@ auto csvm::run_predict_kernel(const parameter &params, const device_ptr_type &w_
     const unsigned long long num_predict_points = predict_points_d.size(0);
     const unsigned long long num_features = predict_points_d.size(1);
 
-    device_ptr_type out_d{ { num_predict_points, num_classes }, devices_[0] };
+    device_ptr_type out_d{ { num_predict_points, num_classes }, { THREAD_BLOCK_PADDING, THREAD_BLOCK_PADDING }, devices_[0] };
 
     detail::set_device(0);
     if (params.kernel_type == kernel_function_type::linear) {

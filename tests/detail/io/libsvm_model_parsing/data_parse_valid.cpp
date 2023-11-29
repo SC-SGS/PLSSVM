@@ -105,6 +105,7 @@ TYPED_TEST(LIBSVMModelDataParseValid, read) {
         // OAA
         ASSERT_EQ(alpha.size(), 1);
         ASSERT_EQ(alpha.front().shape(), (std::array<std::size_t, 2>{ num_classes_for_label_type, 6 }));
+        ASSERT_EQ(alpha.front().padding(), (std::array<std::size_t, 2>{ plssvm::THREAD_BLOCK_PADDING, plssvm::THREAD_BLOCK_PADDING }));
 
         switch (num_classes_for_label_type) {
             case 2:
@@ -124,7 +125,7 @@ TYPED_TEST(LIBSVMModelDataParseValid, read) {
                 break;
         }
 
-        EXPECT_EQ(alpha.front(), plssvm::aos_matrix<plssvm::real_type>{ this->get_correct_weights() });
+        EXPECT_EQ(alpha.front(), (plssvm::aos_matrix<plssvm::real_type>{ this->get_correct_weights(), plssvm::THREAD_BLOCK_PADDING, plssvm::THREAD_BLOCK_PADDING }));
     } else if constexpr (expected_classification == plssvm::classification_type::oao) {
         // OAO
         ASSERT_EQ(alpha.size(), num_classes_for_label_type * (num_classes_for_label_type - 1) / 2);
@@ -161,6 +162,11 @@ TYPED_TEST(LIBSVMModelDataParseValid, read) {
                 FAIL() << "Unreachable!";
                 break;
         }
+        // add padding to each matrix (theoretically expensive, but matrices are tiny)
+        for (plssvm::aos_matrix<plssvm::real_type> &matr : weights) {
+            matr = plssvm::aos_matrix<plssvm::real_type>{ matr, plssvm::THREAD_BLOCK_PADDING, plssvm::THREAD_BLOCK_PADDING, };
+        }
+
         EXPECT_EQ(alpha, weights);
     } else {
         FAIL() << "unknown classification type";

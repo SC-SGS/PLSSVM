@@ -20,7 +20,7 @@ __global__ void device_kernel_w_linear(real_type *w_d, const real_type *alpha_d,
     if (feature_idx < num_features && class_idx < num_classes) {
         real_type temp{ 0.0 };
         for (unsigned long long sv = 0; sv < num_sv; ++sv) {
-            temp += alpha_d[class_idx * num_sv + sv] * sv_d[feature_idx * (num_sv + THREAD_BLOCK_PADDING) + sv];
+            temp += alpha_d[class_idx * (num_sv + THREAD_BLOCK_PADDING) + sv] * sv_d[feature_idx * (num_sv + THREAD_BLOCK_PADDING) + sv];
         }
         w_d[class_idx * num_features + feature_idx] = temp;
     }
@@ -35,7 +35,7 @@ __global__ void device_kernel_predict_linear(real_type *out_d, const real_type *
         for (unsigned long long dim = 0; dim < num_features; ++dim) {
             temp += w_d[class_idx * num_features + dim] * predict_points_d[dim * (num_predict_points + THREAD_BLOCK_PADDING) + predict_points_idx];
         }
-        out_d[predict_points_idx * num_classes + class_idx] = temp - rho_d[class_idx];
+        out_d[predict_points_idx * (num_classes + THREAD_BLOCK_PADDING) + class_idx] = temp - rho_d[class_idx];
     }
 }
 
@@ -79,17 +79,15 @@ __global__ void device_kernel_predict_polynomial(real_type *out_d, const real_ty
             const unsigned long long global_sv_idx = sv_idx + internal_sv;
             const unsigned long long global_pd_idx = pd_idx + internal_pd;
 
-            if (global_sv_idx < num_sv && global_pd_idx < num_predict_points) {
-                const real_type temp_sv_pd = temp[internal_sv][internal_pd];
-                for (unsigned long long class_idx = 0; class_idx < num_classes; ++class_idx) {
-                    // apply degree, gamma, and coef0, alpha and rho
-                    real_type class_temp = alpha_d[class_idx * num_sv + global_sv_idx] * pow(gamma * temp_sv_pd + coef0, degree);
-                    if (global_sv_idx == 0) {
-                        class_temp -= rho_d[class_idx];
-                    }
-
-                    atomicAdd(&out_d[global_pd_idx * num_classes + class_idx], class_temp);
+            const real_type temp_sv_pd = temp[internal_sv][internal_pd];
+            for (unsigned long long class_idx = 0; class_idx < num_classes; ++class_idx) {
+                // apply degree, gamma, and coef0, alpha and rho
+                real_type class_temp = alpha_d[class_idx * (num_sv + THREAD_BLOCK_PADDING) + global_sv_idx] * pow(gamma * temp_sv_pd + coef0, degree);
+                if (global_sv_idx == 0) {
+                    class_temp -= rho_d[class_idx];
                 }
+
+                atomicAdd(&out_d[global_pd_idx * (num_classes + THREAD_BLOCK_PADDING) + class_idx], class_temp);
             }
         }
     }
@@ -136,17 +134,15 @@ __global__ void device_kernel_predict_rbf(real_type *out_d, const real_type *alp
             const unsigned long long global_sv_idx = sv_idx + internal_sv;
             const unsigned long long global_pd_idx = pd_idx + internal_pd;
 
-            if (global_sv_idx < num_sv && global_pd_idx < num_predict_points) {
-                const real_type temp_sv_pd = temp[internal_sv][internal_pd];
-                for (unsigned long long class_idx = 0; class_idx < num_classes; ++class_idx) {
-                    // apply degree, gamma, and coef0, alpha and rho
-                    real_type class_temp = alpha_d[class_idx * num_sv + global_sv_idx] * exp(-gamma * temp_sv_pd);
-                    if (global_sv_idx == 0) {
-                        class_temp -= rho_d[class_idx];
-                    }
-
-                    atomicAdd(&out_d[global_pd_idx * num_classes + class_idx], class_temp);
+            const real_type temp_sv_pd = temp[internal_sv][internal_pd];
+            for (unsigned long long class_idx = 0; class_idx < num_classes; ++class_idx) {
+                // apply degree, gamma, and coef0, alpha and rho
+                real_type class_temp = alpha_d[class_idx * (num_sv + THREAD_BLOCK_PADDING) + global_sv_idx] * exp(-gamma * temp_sv_pd);
+                if (global_sv_idx == 0) {
+                    class_temp -= rho_d[class_idx];
                 }
+
+                atomicAdd(&out_d[global_pd_idx * (num_classes + THREAD_BLOCK_PADDING) + class_idx], class_temp);
             }
         }
     }
