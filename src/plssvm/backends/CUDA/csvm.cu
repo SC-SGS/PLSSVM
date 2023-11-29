@@ -256,8 +256,8 @@ auto csvm::run_predict_kernel(const parameter &params, const device_ptr_type &w_
             throw kernel_launch_resources{ fmt::format("Not enough work-items allowed for a work-groups of size {}x{}! Try reducing THREAD_BLOCK_SIZE.", THREAD_BLOCK_SIZE, THREAD_BLOCK_SIZE) };
         }
         const dim3 block(THREAD_BLOCK_SIZE, THREAD_BLOCK_SIZE);
-        const dim3 grid(static_cast<int>(std::ceil(static_cast<double>(num_sv) / static_cast<double>(block.x * INTERNAL_BLOCK_SIZE))),
-                        static_cast<int>(std::ceil(static_cast<double>(num_predict_points) / static_cast<double>(block.y * INTERNAL_BLOCK_SIZE))));
+        const dim3 grid(static_cast<int>(std::ceil(static_cast<double>(num_predict_points) / static_cast<double>(block.x * INTERNAL_BLOCK_SIZE))),
+                        static_cast<int>(std::ceil(static_cast<double>(num_sv) / static_cast<double>(block.y * INTERNAL_BLOCK_SIZE))));
 
         switch (params.kernel_type) {
             case kernel_function_type::linear:
