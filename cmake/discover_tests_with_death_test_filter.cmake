@@ -12,12 +12,12 @@ function(discover_tests_with_death_test_filter test_executable_name)
         # assertions are disabled -> disable Google death tests
         gtest_discover_tests(${test_executable_name} TEST_FILTER -*DeathTest* PROPERTIES DISCOVERY_TIMEOUT 600 DISCOVERY_MODE PRE_TEST)
     endif ()
-    if (WIN32)
-        add_custom_command(
-            TARGET ${test_executable_name}
-            POST_BUILD
-            COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_RUNTIME_DLLS:${test_executable_name}> $<TARGET_FILE_DIR:${test_executable_name}>
-            COMMAND_EXPAND_LISTS
-    )
-    endif ()
+#    if (WIN32)
+#        add_custom_command(
+#            TARGET ${test_executable_name}
+#            POST_BUILD
+#            COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_RUNTIME_DLLS:${test_executable_name}> $<TARGET_FILE_DIR:${test_executable_name}>
+#            COMMAND_EXPAND_LISTS
+#    )
+#    endif ()
 endfunction()
