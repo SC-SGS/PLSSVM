@@ -91,8 +91,9 @@ target_include_directories(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC
 )
 
 ## set library cxx standard
-if ($ENV{CLION_IDE})
+if (DEFINED ENV{CLION_IDE} OR CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
     # somehow necessary for CLion to detect the C++ standard as 17
+    # also necessary for MSVC
     set(CMAKE_CXX_STANDARD 17)
 endif ()
 target_compile_features(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC cxx_std_17)
@@ -147,6 +148,7 @@ if (OpenMP_FOUND)
     set(PLSSVM_FOUND_OPENMP_FOR_UTILITY "${OpenMP_CXX_VERSION}")
     target_link_libraries(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC OpenMP::OpenMP_CXX -fopenmp)
     target_compile_options(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC $<$<COMPILE_LANGUAGE:CXX>:-fopenmp>)
+    target_compile_options(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC $<$<CXX_COMPILER_ID:MSVC>:-openmp:llvm -openmp:experimental>)
 else ()
     # disable warning for unknown OpenMP pragmas if no OpenMP could be found
     target_compile_options(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC

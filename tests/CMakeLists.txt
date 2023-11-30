@@ -7,12 +7,12 @@
 list(APPEND CMAKE_MESSAGE_INDENT "Tests:  ")
 
 ## setup testing wit GoogleTest
-find_package(GTest 1.11.0 QUIET)
+find_package(GTest 1.14.0 QUIET)
 if (GTEST_FOUND)
     message(STATUS "Found package GTest.")
 else ()
     message(STATUS "Couldn't find package GTest. Building from source...")
-    set(PLSSVM_googletest_VERSION release-1.11.0)
+    set(PLSSVM_googletest_VERSION v1.14.0)
     if (PLSSVM_ENABLE_STL_DEBUG_MODE)
         set(CMAKE_CXX_FLAGS_OLD "${CMAKE_CXX_FLAGS}")
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${PLSSVM_STL_DEBUG_MODE_FLAGS}")
@@ -20,10 +20,6 @@ else ()
 
     # fetch testing framework GoogleTest
     include(FetchContent)
-    set_property(GLOBAL PROPERTY WINDOWS_EXPORT_ALL_SYMBOLS YES)
-    set_property(GLOBAL PROPERTY GTEST_LINKED_AS_SHARED_LIBRARY 1)
-    set(GTEST_LINKED_AS_SHARED_LIBRARY 1 CACHE INTERNAL "" FORCE)
-    add_definitions(-DGTEST_LINKED_AS_SHARED_LIBRARY=1)
     FetchContent_Declare(googletest
             GIT_REPOSITORY https://github.com/google/googletest
             GIT_TAG ${PLSSVM_googletest_VERSION}
@@ -93,7 +89,7 @@ set(PLSSVM_BASE_TEST_LIBRARY_NAME_SOURCES
 )
 
 # create base test library
-add_library(${PLSSVM_BASE_TEST_LIBRARY_NAME} STATIC ${PLSSVM_BASE_TEST_LIBRARY_NAME_SOURCES})
+add_library(${PLSSVM_BASE_TEST_LIBRARY_NAME} SHARED ${PLSSVM_BASE_TEST_LIBRARY_NAME_SOURCES})
 
 # set necessary include directories
 target_include_directories(${PLSSVM_BASE_TEST_LIBRARY_NAME} PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}")
@@ -106,7 +102,7 @@ target_compile_definitions(${PLSSVM_BASE_TEST_LIBRARY_NAME} PUBLIC PLSSVM_TEST_F
 target_link_libraries(${PLSSVM_BASE_TEST_LIBRARY_NAME} PUBLIC ${PLSSVM_ALL_LIBRARY_NAME})
 
 # link against gtest
-target_link_libraries(${PLSSVM_BASE_TEST_LIBRARY_NAME} PUBLIC GTest::gtest_main GTest::gmock)
+target_link_libraries(${PLSSVM_BASE_TEST_LIBRARY_NAME} PUBLIC GTest::gmock)
 
 
 ## create base tests
@@ -243,5 +239,10 @@ endif ()
 
 # add tests for the available backends
 add_subdirectory(backends)
+
+# fix shared library linker error on Windows
+foreach (target gmock gtest)
+    target_compile_definitions(${target} INTERFACE GTEST_LINKED_AS_SHARED_LIBRARY=1)
+endforeach ()
 
 list(POP_BACK CMAKE_MESSAGE_INDENT)
