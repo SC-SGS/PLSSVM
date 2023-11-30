@@ -21,6 +21,9 @@ else ()
     # fetch testing framework GoogleTest
     include(FetchContent)
     set_property(GLOBAL PROPERTY WINDOWS_EXPORT_ALL_SYMBOLS YES)
+    set_property(GLOBAL PROPERTY GTEST_LINKED_AS_SHARED_LIBRARY 1)
+    set(GTEST_LINKED_AS_SHARED_LIBRARY 1 CACHE INTERNAL "" FORCE)
+    add_definitions(-DGTEST_LINKED_AS_SHARED_LIBRARY=1)
     FetchContent_Declare(googletest
             GIT_REPOSITORY https://github.com/google/googletest
             GIT_TAG ${PLSSVM_googletest_VERSION}
