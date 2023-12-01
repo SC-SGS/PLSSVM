@@ -47,7 +47,7 @@ struct parser_train {
     plssvm::parameter csvm_params{};
 
     /// The error tolerance parameter for the CG algorithm.
-    default_value<real_type> epsilon{ default_init<real_type>{ 0.001 } };
+    default_value<real_type> epsilon{ default_init<real_type>{ plssvm::real_type{ 0.001 } } };
     /// The maximum number of iterations in the CG algorithm.
     default_value<std::size_t> max_iter{ default_init<std::size_t>{ 0 } };
     /// The multi-class classification strategy used.

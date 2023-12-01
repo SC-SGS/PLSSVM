@@ -364,11 +364,11 @@ TYPED_TEST(DataSetConstructors, construct_scaled_too_many_factors) {
     // create (invalid) scaling factors
     scaling_type scaling{ plssvm::real_type{ -1.0 }, plssvm::real_type{ 1.0 } };
     scaling.scaling_factors = std::vector<factors_type>{
-        factors_type{ 0, 0.0, 0.1 },
-        factors_type{ 1, 1.0, 1.1 },
-        factors_type{ 2, 2.0, 2.1 },
-        factors_type{ 3, 3.0, 3.1 },
-        factors_type{ 4, 4.0, 4.1 }
+        factors_type{ 0, plssvm::real_type{ 0.0 }, plssvm::real_type{ 0.1 } },
+        factors_type{ 1, plssvm::real_type{ 1.0 }, plssvm::real_type{ 1.1 } },
+        factors_type{ 2, plssvm::real_type{ 2.0 }, plssvm::real_type{ 2.1 } },
+        factors_type{ 3, plssvm::real_type{ 3.0 }, plssvm::real_type{ 3.1 } },
+        factors_type{ 4, plssvm::real_type{ 4.0 }, plssvm::real_type{ 4.1 } }
     };
 
     // try creating a data set with invalid scaling factors
@@ -386,8 +386,8 @@ TYPED_TEST(DataSetConstructors, construct_scaled_invalid_feature_index) {
     // create (invalid) scaling factors
     scaling_type scaling{ plssvm::real_type{ -1.0 }, plssvm::real_type{ 1.0 } };
     scaling.scaling_factors = std::vector<factors_type>{
-        factors_type{ 4, 4.0, 4.1 },
-        factors_type{ 2, 2.0, 2.1 }
+        factors_type{ 4, plssvm::real_type{ 4.0 }, plssvm::real_type{ 4.1 } },
+        factors_type{ 2, plssvm::real_type{ 2.0 }, plssvm::real_type{ 2.1 } }
     };
 
     // try creating a data set with invalid scaling factors
@@ -405,10 +405,10 @@ TYPED_TEST(DataSetConstructors, construct_scaled_duplicate_feature_index) {
     // create (invalid) scaling factors
     scaling_type scaling{ plssvm::real_type{ -1.0 }, plssvm::real_type{ 1.0 } };
     scaling.scaling_factors = std::vector<factors_type>{
-        factors_type{ 1, 1.0, 1.1 },
-        factors_type{ 2, 2.0, 2.1 },
-        factors_type{ 3, 3.0, 3.1 },
-        factors_type{ 2, 2.0, 2.1 }
+        factors_type{ 1, plssvm::real_type{ 1.0 }, plssvm::real_type{ 1.1 } },
+        factors_type{ 2, plssvm::real_type{ 2.0 }, plssvm::real_type{ 2.1 } },
+        factors_type{ 3, plssvm::real_type{ 3.0 }, plssvm::real_type{ 3.1 } },
+        factors_type{ 2, plssvm::real_type{ 2.0 }, plssvm::real_type{ 2.1 } }
     };
 
     // try creating a data set with invalid scaling factors
