@@ -15,6 +15,7 @@
 #pragma once
 
 #include "plssvm/detail/type_traits.hpp"  // plssvm::detail::remove_cvref_t
+#include "plssvm/detail/utility.hpp"      // PLSSVM_EXTERN
 #include "plssvm/parameter.hpp"           // plssvm::parameter
 
 #include "plssvm/detail/cmd/parser_predict.hpp"  // plssvm::detail::cmd::parser_predict
@@ -272,7 +273,7 @@ void performance_tracker::add_tracking_entry(const tracking_entry<std::vector<T>
 }
 
 /// The global performance tracker instance used for the default tracking.
-extern std::shared_ptr<performance_tracker> global_tracker;
+PLSSVM_EXTERN std::shared_ptr<performance_tracker> global_tracker;
 
 /**
  * @def PLSSVM_DETAIL_PERFORMANCE_TRACKER_PAUSE

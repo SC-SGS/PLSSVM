@@ -149,8 +149,13 @@ std::pair<soa_matrix<real_type>, unsigned long long> csvm::conjugate_gradients(c
         ++iter;
     }
     const std::size_t max_residual_difference_idx = rhs_idx_max_residual_difference();
+#if defined(PLSSVM_USE_GEMM)
+    const std::string_view blas_level_3_type{ "GEMM" };
+#else
+    const std::string_view blas_level_3_type{ "SYMM" };
+#endif
     detail::log(verbosity_level::full | verbosity_level::timing,
-                "Finished after {}/{} iterations with {}/{} converged rhs (max residual {} with target residual {} for rhs {}) and an average iteration time of {} and an average GEMM time of {}.\n",
+                "Finished after {}/{} iterations with {}/{} converged rhs (max residual {} with target residual {} for rhs {}) and an average iteration time of {} and an average {} time of {}.\n",
                 detail::tracking_entry{ "cg", "iterations", iter },
                 detail::tracking_entry{ "cg", "max_iterations", max_cg_iter },
                 detail::tracking_entry{ "cg", "num_converged_rhs", num_rhs_converged() },
@@ -159,6 +164,7 @@ std::pair<soa_matrix<real_type>, unsigned long long> csvm::conjugate_gradients(c
                 eps * eps * delta0[max_residual_difference_idx],
                 max_residual_difference_idx,
                 detail::tracking_entry{ "cg", "avg_iteration_time", total_iteration_time / iter },
+                blas_level_3_type,
                 detail::tracking_entry{ "cg", "avg_blas_level_3_time", total_blas_level_3_time / (1 + iter + iter / 50) });
     PLSSVM_DETAIL_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((detail::tracking_entry{ "cg", "residuals", delta }));
     PLSSVM_DETAIL_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((detail::tracking_entry{ "cg", "target_residuals", eps * eps * delta0 }));

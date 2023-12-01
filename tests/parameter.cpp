@@ -38,7 +38,7 @@ TEST(Parameter, default_construct) {
 }
 TEST(Parameter, construct) {
     // construct a parameter set explicitly overwriting the default values
-    const plssvm::parameter param{ plssvm::kernel_function_type::polynomial, 1, -1.0, 2.5, 0.05 };
+    const plssvm::parameter param{ plssvm::kernel_function_type::polynomial, 1, plssvm::real_type{ -1.0 }, plssvm::real_type{ 2.5 }, plssvm::real_type{ 0.05 } };
 
     // test default values
     EXPECT_FALSE(param.kernel_type.is_default());
@@ -159,10 +159,10 @@ TEST(Parameter, construct_parameter_and_named_args) {
 
 TEST(Parameter, equal) {
     // test whether different parameter sets are equal, i.e., all member variables have the same value
-    const plssvm::parameter params1{ plssvm::kernel_function_type::rbf, 3, 0.02, 1.5, 1.0 };
-    const plssvm::parameter params2{ plssvm::kernel_function_type::rbf, 3, 0.02, 1.5, 1.0 };
-    const plssvm::parameter params3{ plssvm::kernel_function_type::linear, 3, 0.02, 1.5, 1.0 };
-    const plssvm::parameter params4{ plssvm::kernel_function_type::rbf, 2, 0.02, 1.5, 1.0 };
+    const plssvm::parameter params1{ plssvm::kernel_function_type::rbf, 3, plssvm::real_type{ 0.02 }, plssvm::real_type{ 1.5 }, plssvm::real_type{ 1.0 } };
+    const plssvm::parameter params2{ plssvm::kernel_function_type::rbf, 3, plssvm::real_type{ 0.02 }, plssvm::real_type{ 1.5 }, plssvm::real_type{ 1.0 } };
+    const plssvm::parameter params3{ plssvm::kernel_function_type::linear, 3, plssvm::real_type{ 0.02 }, plssvm::real_type{ 1.5 }, plssvm::real_type{ 1.0 } };
+    const plssvm::parameter params4{ plssvm::kernel_function_type::rbf, 2, plssvm::real_type{ 0.02 }, plssvm::real_type{ 1.5 }, plssvm::real_type{ 1.0 } };
 
     // test
     EXPECT_TRUE(params1 == params2);
@@ -181,10 +181,10 @@ TEST(Parameter, equal_default_constructed) {
 
 TEST(Parameter, unequal) {
     // test whether different parameter sets are unequal, i.e., any member variables differ in value
-    const plssvm::parameter params1{ plssvm::kernel_function_type::rbf, 3, 0.02, 1.5, 1.0 };
-    const plssvm::parameter params2{ plssvm::kernel_function_type::rbf, 3, 0.02, 1.5, 1.0 };
-    const plssvm::parameter params3{ plssvm::kernel_function_type::linear, 3, 0.02, 1.5, 1.0 };
-    const plssvm::parameter params4{ plssvm::kernel_function_type::rbf, 2, 0.02, 1.5, 1.0 };
+    const plssvm::parameter params1{ plssvm::kernel_function_type::rbf, 3, plssvm::real_type{ 0.02 }, plssvm::real_type{ 1.5 }, plssvm::real_type{ 1.0 } };
+    const plssvm::parameter params2{ plssvm::kernel_function_type::rbf, 3, plssvm::real_type{ 0.02 }, plssvm::real_type{ 1.5 }, plssvm::real_type{ 1.0 } };
+    const plssvm::parameter params3{ plssvm::kernel_function_type::linear, 3, plssvm::real_type{ 0.02 }, plssvm::real_type{ 1.5 }, plssvm::real_type{ 1.0 } };
+    const plssvm::parameter params4{ plssvm::kernel_function_type::rbf, 2, plssvm::real_type{ 0.02 }, plssvm::real_type{ 1.5 }, plssvm::real_type{ 1.0 } };
 
     // test
     EXPECT_FALSE(params1 != params2);
@@ -203,15 +203,15 @@ TEST(Parameter, unequal_default_constructed) {
 
 TEST(Parameter, equivalent_member_function) {
     // test whether different parameter sets are equivalent, i.e., all member variables IMPORTANT FOR THE KERNEL TYPE have the same value
-    const plssvm::parameter params1{ plssvm::kernel_function_type::rbf, 3, 0.02, 1.5, 1.0 };
-    const plssvm::parameter params2{ plssvm::kernel_function_type::rbf, 3, 0.02, 1.5, 1.0 };
-    const plssvm::parameter params3{ plssvm::kernel_function_type::linear, 3, 0.02, 1.5, 1.0 };
-    const plssvm::parameter params4{ plssvm::kernel_function_type::rbf, 2, 0.02, 1.5, 1.0 };
-    const plssvm::parameter params5{ plssvm::kernel_function_type::linear, 2, -0.02, 0.5, 1.0 };
-    const plssvm::parameter params6{ plssvm::kernel_function_type::polynomial, 2, 0.02, 1.5, 1.0 };
-    const plssvm::parameter params7{ plssvm::kernel_function_type::polynomial, 2, 0.02, 1.5, 1.0 };
-    const plssvm::parameter params8{ static_cast<plssvm::kernel_function_type>(3), 3, 0.2, -1.5, 0.1 };
-    const plssvm::parameter params9{ static_cast<plssvm::kernel_function_type>(3), 3, 0.2, -1.5, 0.1 };
+    const plssvm::parameter params1{ plssvm::kernel_function_type::rbf, 3, plssvm::real_type{ 0.02 }, plssvm::real_type{ 1.5 }, plssvm::real_type{ 1.0 } };
+    const plssvm::parameter params2{ plssvm::kernel_function_type::rbf, 3, plssvm::real_type{ 0.02 }, plssvm::real_type{ 1.5 }, plssvm::real_type{ 1.0 } };
+    const plssvm::parameter params3{ plssvm::kernel_function_type::linear, 3, plssvm::real_type{ 0.02 }, plssvm::real_type{ 1.5 }, plssvm::real_type{ 1.0 } };
+    const plssvm::parameter params4{ plssvm::kernel_function_type::rbf, 2, plssvm::real_type{ 0.02 }, plssvm::real_type{ 1.5 }, plssvm::real_type{ 1.0 } };
+    const plssvm::parameter params5{ plssvm::kernel_function_type::linear, 2, plssvm::real_type{ -0.02 }, plssvm::real_type{ 0.5 }, plssvm::real_type{ 1.0 } };
+    const plssvm::parameter params6{ plssvm::kernel_function_type::polynomial, 2, plssvm::real_type{ 0.02 }, plssvm::real_type{ 1.5 }, plssvm::real_type{ 1.0 } };
+    const plssvm::parameter params7{ plssvm::kernel_function_type::polynomial, 2, plssvm::real_type{ 0.02 }, plssvm::real_type{ 1.5 }, plssvm::real_type{ 1.0 } };
+    const plssvm::parameter params8{ static_cast<plssvm::kernel_function_type>(3), 3, plssvm::real_type{ 0.2 }, plssvm::real_type{ -1.5 }, plssvm::real_type{ 0.1 } };
+    const plssvm::parameter params9{ static_cast<plssvm::kernel_function_type>(3), 3, plssvm::real_type{ 0.2 }, plssvm::real_type{ -1.5 }, plssvm::real_type{ 0.1 } };
 
     // test
     EXPECT_TRUE(params1.equivalent(params2));
@@ -234,15 +234,16 @@ TEST(Parameter, equivalent_member_function_default_constructed) {
 
 TEST(Parameter, equivalent_free_function) {
     // test whether different parameter sets are equivalent, i.e., all member variables IMPORTANT FOR THE KERNEL TYPE have the same value
-    const plssvm::parameter params1{ plssvm::kernel_function_type::rbf, 3, 0.02, 1.5, 1.0 };
-    const plssvm::parameter params2{ plssvm::kernel_function_type::rbf, 3, 0.02, 1.5, 1.0 };
-    const plssvm::parameter params3{ plssvm::kernel_function_type::linear, 3, 0.02, 1.5, 1.0 };
-    const plssvm::parameter params4{ plssvm::kernel_function_type::rbf, 2, 0.02, 1.5, 1.0 };
-    const plssvm::parameter params5{ plssvm::kernel_function_type::linear, 2, -0.02, 0.5, 1.0 };
-    const plssvm::parameter params6{ plssvm::kernel_function_type::polynomial, 2, 0.02, 1.5, 1.0 };
-    const plssvm::parameter params7{ plssvm::kernel_function_type::polynomial, 2, 0.02, 1.5, 1.0 };
-    const plssvm::parameter params8{ static_cast<plssvm::kernel_function_type>(3), 3, 0.2, -1.5, 0.1 };
-    const plssvm::parameter params9{ static_cast<plssvm::kernel_function_type>(3), 3, 0.2, -1.5, 0.1 };
+    const plssvm::parameter params1{ plssvm::kernel_function_type::rbf, 3, plssvm::real_type{ 0.02 }, plssvm::real_type{ 1.5 }, plssvm::real_type{ 1.0 } };
+    const plssvm::parameter params2{ plssvm::kernel_function_type::rbf, 3, plssvm::real_type{ 0.02 }, plssvm::real_type{ 1.5 }, plssvm::real_type{ 1.0 } };
+    const plssvm::parameter params3{ plssvm::kernel_function_type::linear, 3, plssvm::real_type{ 0.02 }, plssvm::real_type{ 1.5 }, plssvm::real_type{ 1.0 } };
+    const plssvm::parameter params4{ plssvm::kernel_function_type::rbf, 2, plssvm::real_type{ 0.02 }, plssvm::real_type{ 1.5 }, plssvm::real_type{ 1.0 } };
+    const plssvm::parameter params5{ plssvm::kernel_function_type::linear, 2, plssvm::real_type{ -0.02 }, plssvm::real_type{ 0.5 }, plssvm::real_type{ 1.0 } };
+    const plssvm::parameter params6{ plssvm::kernel_function_type::polynomial, 2, plssvm::real_type{ 0.02 }, plssvm::real_type{ 1.5 }, plssvm::real_type{ 1.0 } };
+    const plssvm::parameter params7{ plssvm::kernel_function_type::polynomial, 2, plssvm::real_type{ 0.02 }, plssvm::real_type{ 1.5 }, plssvm::real_type{ 1.0 } };
+    const plssvm::parameter params8{ static_cast<plssvm::kernel_function_type>(3), 3, plssvm::real_type{ 0.2 }, plssvm::real_type{ -1.5 }, plssvm::real_type{ 0.1 } };
+    const plssvm::parameter params9{ static_cast<plssvm::kernel_function_type>(3), 3, plssvm::real_type{ 0.2 }, plssvm::real_type{ -1.5 }, plssvm::real_type{ 0.1 } };
+
 
     // test
     EXPECT_TRUE(plssvm::equivalent(params1, params2));
@@ -265,7 +266,7 @@ TEST(Parameter, equivalent_free_function_default_constructed) {
 
 TEST(Parameter, to_string) {
     // check conversions to std::string
-    const plssvm::parameter param{ plssvm::kernel_function_type::linear, 3, 0.0, 0.0, 1.0 };
+    const plssvm::parameter param{ plssvm::kernel_function_type::linear, 3, plssvm::real_type{ 0.0 }, plssvm::real_type{ 0.0 }, plssvm::real_type{ 1.0 } };
     EXPECT_CONVERSION_TO_STRING(param, fmt::format("kernel_type                 linear\n"
                                                    "degree                      3\n"
                                                    "gamma                       0\n"

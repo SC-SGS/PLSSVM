@@ -54,7 +54,7 @@ General dependencies:
 - a C++17 capable compiler (e.g. [`gcc`](https://gcc.gnu.org/) or [`clang`](https://clang.llvm.org/))
 - [CMake](https://cmake.org/) 3.21 or newer
 - [cxxopts ≥ v3.1.1](https://github.com/jarro2783/cxxopts), [fast_float ≥ v3.10.0](https://github.com/fastfloat/fast_float), [{fmt} ≥ v10.1.1](https://github.com/fmtlib/fmt), and [igor](https://github.com/bluescarni/igor) (all four are automatically build during the CMake configuration if they couldn't be found using the respective `find_package` call)
-- [GoogleTest ≥ v1.11.0](https://github.com/google/googletest) if testing is enabled (automatically build during the CMake configuration if `find_package(GTest)` wasn't successful)
+- [GoogleTest ≥ v1.14.0](https://github.com/google/googletest) if testing is enabled (automatically build during the CMake configuration if `find_package(GTest)` wasn't successful)
 - [doxygen](https://www.doxygen.nl/index.html) if documentation generation is enabled
 - [Pybind11 ≥ v2.11.1](https://github.com/pybind/pybind11) if Python bindings are enabled
 - [OpenMP](https://www.openmp.org/) 4.0 or newer (optional) to speed-up library utilities (like file parsing)
@@ -120,7 +120,8 @@ are automatically determined using the Python3 `utility_scripts/plssvm_target_pl
 [`GPUtil`](https://pypi.org/project/GPUtil/), [`pyamdgpuinfo`](https://pypi.org/project/pyamdgpuinfo/), and
 [`pylspci`](https://pypi.org/project/pylspci/)).
 
-Note that when using DPC++ only a single architectural specification for `cpu`, `nvidia` or `amd` is allowed.
+Note that when using DPC++ only a single architectural specification for `cpu`, `nvidia` or `amd` is allowed and that
+automatically retrieving AMD GPU information on Windows is currently not supported due to `pyamdgpuinfo` limitations.
 
 
 ```bash

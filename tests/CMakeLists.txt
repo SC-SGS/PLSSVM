@@ -7,7 +7,7 @@
 list(APPEND CMAKE_MESSAGE_INDENT "Tests:  ")
 
 ## setup testing wit GoogleTest
-find_package(GTest 1.11.0 QUIET)
+find_package(GTest 1.14.0 QUIET)
 if (GTEST_FOUND)
     message(STATUS "Found package GTest.")
 else ()
@@ -17,11 +17,13 @@ else ()
         set(CMAKE_CXX_FLAGS_OLD "${CMAKE_CXX_FLAGS}")
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${PLSSVM_STL_DEBUG_MODE_FLAGS}")
     endif ()
+
     # fetch testing framework GoogleTest
     include(FetchContent)
     FetchContent_Declare(googletest
             GIT_REPOSITORY https://github.com/google/googletest
             GIT_TAG ${PLSSVM_googletest_VERSION}
+            GIT_SHALLOW TRUE
             QUIET
     )
     # For Windows: Prevent overriding the parent project's compiler/linker settings
@@ -36,7 +38,6 @@ else ()
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS_OLD}")
     endif ()
 endif ()
-
 
 # create larger test files if desired
 option(PLSSVM_GENERATE_TEST_FILE "Generate larger test file" ON)
@@ -60,10 +61,10 @@ if (PLSSVM_GENERATE_TEST_FILE)
     endif ()
     if (NOT EXISTS "${PLSSVM_TEST_FILE}")
         # find necessary Python3 packages to use the test file generator
-        find_package(Python3 REQUIRED COMPONENTS Interpreter Development NumPy)
+        find_package(Python3 REQUIRED COMPONENTS Interpreter Development)
 
         include(${PROJECT_SOURCE_DIR}/cmake/check_python_libs.cmake)
-        set(PLSSVM_TEST_REQUIRED_LIBS argparse sklearn humanize)
+        set(PLSSVM_TEST_REQUIRED_LIBS argparse sklearn humanize numpy)
         message(STATUS "Checking required Python3 libraries (${PLSSVM_TEST_REQUIRED_LIBS}) to to generate the test file.")
         check_python_libs("${PLSSVM_TEST_REQUIRED_LIBS}" "or set PLSSVM_GENERATE_TEST_FILE to OFF.")
 
@@ -210,9 +211,9 @@ add_test(NAME MainScale/executable_version COMMAND ${PLSSVM_EXECUTABLE_SCALE_NAM
 # add minimal run test
 add_test(NAME MainTrain/executable_minimal COMMAND ${PLSSVM_EXECUTABLE_TRAIN_NAME} "${PLSSVM_TEST_FILE}" "${CMAKE_CURRENT_BINARY_DIR}/test.libsvm.model")
 add_test(NAME MainPredict/executable_minimal COMMAND ${PLSSVM_EXECUTABLE_PREDICT_NAME}
-        "${CMAKE_CURRENT_LIST_DIR}/data/predict/500x200.libsvm"                          # data file
-        "${CMAKE_CURRENT_LIST_DIR}/data/predict/500x200_double_linear_oaa.libsvm.model"  # model file
-        "${CMAKE_CURRENT_BINARY_DIR}/test.libsvm.predict"                                # predict file (result)
+        "${CMAKE_CURRENT_LIST_DIR}/data/predict/50x20.libsvm"                          # test file
+        "${CMAKE_CURRENT_LIST_DIR}/data/predict/50x20_double_linear_oaa.libsvm.model"  # model file
+        "${CMAKE_CURRENT_BINARY_DIR}/test.libsvm.predict"                              # predict file (result)
 )
 add_test(NAME MainScale/executable_minimal COMMAND ${PLSSVM_EXECUTABLE_SCALE_NAME} "${PLSSVM_TEST_FILE}" "${CMAKE_CURRENT_BINARY_DIR}/scaled.libsvm.model")
 add_test(NAME MainScale/executable_save_scaling_factors COMMAND ${PLSSVM_EXECUTABLE_SCALE_NAME}
@@ -238,5 +239,10 @@ endif ()
 
 # add tests for the available backends
 add_subdirectory(backends)
+
+# fix shared library linker error on Windows
+foreach (target gmock gtest)
+    target_compile_definitions(${target} INTERFACE GTEST_LINKED_AS_SHARED_LIBRARY=1)
+endforeach ()
 
 list(POP_BACK CMAKE_MESSAGE_INDENT)
