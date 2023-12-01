@@ -626,21 +626,25 @@ data_set<U>::data_set(matrix<real_type, layout> data_points) :
     }
 
     detail::log(verbosity_level::full | verbosity_level::timing,
-                "Created a data set with {} data points, {} features, and {} classes.\n",
+                "Created a data set with {} data points and {} features.\n",
                 detail::tracking_entry{ "data_set_create", "num_data_points", num_data_points_ },
-                detail::tracking_entry{ "data_set_create", "num_features", num_features_ },
-                detail::tracking_entry{ "data_set_create", "num_classes", this->num_classes() });
+                detail::tracking_entry{ "data_set_create", "num_features", num_features_ });
 }
 
 template <typename U>
 template <layout_type layout>
 data_set<U>::data_set(matrix<real_type, layout> data_points, std::vector<label_type> labels) :
-    data_set{ std::move(data_points) } {
-    // initialize labels
-    labels_ptr_ = std::make_shared<std::vector<label_type>>(std::move(labels));
+    num_data_points_{ data_points.num_rows() }, num_features_{ data_points.num_cols() }, data_ptr_{ std::make_shared<soa_matrix<real_type>>(data_points.is_padded() ? std::move(data_points) : matrix<real_type, layout>{ data_points, plssvm::THREAD_BLOCK_PADDING, plssvm::FEATURE_BLOCK_SIZE }) }, labels_ptr_{ std::make_shared<std::vector<label_type>>(std::move(labels)) } {
     // the number of labels must be equal to the number of data points!
     if (data_ptr_->num_rows() != labels_ptr_->size()) {
         throw data_set_exception{ fmt::format("Number of labels ({}) must match the number of data points ({})!", labels_ptr_->size(), data_ptr_->num_rows()) };
+    }
+    // the padding sizes must match the expected once! (otherwise the backend calculations would result in garbage)
+    if (data_ptr_->padding()[0] != plssvm::THREAD_BLOCK_PADDING) {
+        throw data_set_exception{ fmt::format("Expected {} as row-padding size, but got {}!", plssvm::THREAD_BLOCK_PADDING, data_ptr_->padding()[0]) };
+    }
+    if (data_ptr_->padding()[1] != plssvm::FEATURE_BLOCK_SIZE) {
+        throw data_set_exception{ fmt::format("Expected {} as column-padding size, but got {}!", plssvm::FEATURE_BLOCK_SIZE, data_ptr_->padding()[1]) };
     }
 
     // create mapping from labels

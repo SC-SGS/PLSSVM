@@ -117,7 +117,7 @@ class csvm : public ::plssvm::csvm {
     /**
      * @copydoc plssvm::csvm::setup_data_on_devices
      */
-    [[nodiscard]] detail::simple_any setup_data_on_devices(const solver_type solver, const soa_matrix<real_type> &A) const final;
+    [[nodiscard]] detail::simple_any setup_data_on_devices(solver_type solver, const soa_matrix<real_type> &A) const final;
     /**
      * @copydoc plssvm::csvm::assemble_kernel_matrix
      */
@@ -125,7 +125,7 @@ class csvm : public ::plssvm::csvm {
     /**
      * @copydoc plssvm::csvm::blas_level_3
      */
-    void blas_level_3(const solver_type solver, const real_type alpha, const detail::simple_any &A, const soa_matrix<real_type> &B, const real_type beta, soa_matrix<real_type> &C) const final;
+    void blas_level_3(solver_type solver, real_type alpha, const detail::simple_any &A, const soa_matrix<real_type> &B, real_type beta, soa_matrix<real_type> &C) const final;
 
     //***************************************************//
     //                   predict, score                  //

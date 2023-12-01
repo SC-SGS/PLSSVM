@@ -37,7 +37,7 @@ typename data_set_type::scaling create_scaling_object(const py::kwargs &args) {
         // try to directly convert it to a plssvm::data_set_type::scaling object
         try {
             scaling = args["scaling"].cast<typename data_set_type::scaling>();
-        } catch (const py::cast_error &e) {
+        } catch (const py::cast_error &) {
             // can't cast to plssvm::data_set_type::scaling
             // -> try a std::array<real_type, 2> instead!
             try {

@@ -7,7 +7,7 @@
 list(APPEND CMAKE_MESSAGE_INDENT "Tests:  ")
 
 ## setup testing wit GoogleTest
-find_package(GTest 1.11.0 QUIET)
+find_package(GTest 1.14.0 QUIET)
 if (GTEST_FOUND)
     message(STATUS "Found package GTest.")
 else ()
@@ -17,11 +17,13 @@ else ()
         set(CMAKE_CXX_FLAGS_OLD "${CMAKE_CXX_FLAGS}")
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${PLSSVM_STL_DEBUG_MODE_FLAGS}")
     endif ()
+
     # fetch testing framework GoogleTest
     include(FetchContent)
     FetchContent_Declare(googletest
             GIT_REPOSITORY https://github.com/google/googletest
             GIT_TAG ${PLSSVM_googletest_VERSION}
+            GIT_SHALLOW TRUE
             QUIET
     )
     # For Windows: Prevent overriding the parent project's compiler/linker settings
@@ -36,7 +38,6 @@ else ()
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS_OLD}")
     endif ()
 endif ()
-
 
 # create larger test files if desired
 option(PLSSVM_GENERATE_TEST_FILE "Generate larger test file" ON)
@@ -238,5 +239,10 @@ endif ()
 
 # add tests for the available backends
 add_subdirectory(backends)
+
+# fix shared library linker error on Windows
+foreach (target gmock gtest)
+    target_compile_definitions(${target} INTERFACE GTEST_LINKED_AS_SHARED_LIBRARY=1)
+endforeach ()
 
 list(POP_BACK CMAKE_MESSAGE_INDENT)
