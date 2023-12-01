@@ -31,7 +31,7 @@ if (PLSSVM_IS_MULTI_CONFIG_GENERATOR)
         # Set the possible values of CMAKE_CONFIGURATION_TYPES for cmake-gui
         set_property(CACHE CMAKE_CONFIGURATION_TYPES PROPERTY STRINGS ${PLSSVM_ALLOWED_BUILD_TYPES})
     else ()
-        foreach (type IN CMAKE_CONFIGURATION_TYPES)
+        foreach (type IN LISTS CMAKE_CONFIGURATION_TYPES)
             if (NOT ${type} IN_LIST PLSSVM_ALLOWED_BUILD_TYPES)
                 message(FATAL_ERROR "Unrecognized build type '${type}' in multi-configuration '${CMAKE_CONFIGURATION_TYPES}'! Allowed build types are: ${PLSSVM_ALLOWED_BUILD_TYPES}")
             endif ()
