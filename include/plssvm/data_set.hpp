@@ -634,7 +634,7 @@ data_set<U>::data_set(matrix<real_type, layout> data_points) :
 template <typename U>
 template <layout_type layout>
 data_set<U>::data_set(matrix<real_type, layout> data_points, std::vector<label_type> labels) :
-    num_data_points_{ data_points.num_rows() }, num_features_{ data_points.num_cols() }, data_ptr_{ std::make_shared<aos_matrix<real_type>>(std::move(data_points)) }, labels_ptr_{ std::make_shared<std::vector<label_type>>(std::move(labels)) } {
+    num_data_points_{ data_points.num_rows() }, num_features_{ data_points.num_cols() }, data_ptr_{ std::make_shared<soa_matrix<real_type>>(std::move(data_points)) }, labels_ptr_{ std::make_shared<std::vector<label_type>>(std::move(labels)) } {
     // the number of labels must be equal to the number of data points!
     if (data_ptr_->num_rows() != labels_ptr_->size()) {
         throw data_set_exception{ fmt::format("Number of labels ({}) must match the number of data points ({})!", labels_ptr_->size(), data_ptr_->num_rows()) };
