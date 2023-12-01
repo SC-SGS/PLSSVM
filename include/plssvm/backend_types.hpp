@@ -18,8 +18,10 @@
 #include "plssvm/detail/type_traits.hpp"                 // plssvm::detail::remove_cvref_t
 #include "plssvm/target_platforms.hpp"                   // plssvm::list_available_target_platforms
 
-#include <iosfwd>                                        // forward declare std::ostream and std::istream
-#include <vector>                                        // std::vector
+#include "fmt/ostream.h"  // fmt::formatter, fmt::ostream_formatter
+
+#include <iosfwd>  // forward declare std::ostream and std::istream
+#include <vector>  // std::vector
 
 namespace plssvm {
 
@@ -167,5 +169,8 @@ template <typename T>
 constexpr backend_type csvm_to_backend_type_v = csvm_to_backend_type<T>::value;
 
 }  // namespace plssvm
+
+template <>
+struct fmt::formatter<plssvm::backend_type> : fmt::ostream_formatter {};
 
 #endif  // PLSSVM_BACKEND_TYPES_HPP_

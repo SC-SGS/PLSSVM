@@ -13,6 +13,8 @@
 #define PLSSVM_BACKENDS_CUDA_DETAIL_UTILITY_HPP_
 #pragma once
 
+#include "fmt/ostream.h"  // fmt::formatter, fmt::ostream_formatter
+
 /**
  * @def PLSSVM_CUDA_ERROR_CHECK
  * @brief Macro used for error checking CUDA runtime functions.
@@ -56,5 +58,8 @@ void peek_at_last_error();
 void device_synchronize(int device);
 
 }  // namespace plssvm::cuda::detail
+
+template <>
+struct fmt::formatter<cudaError_t> : fmt::ostream_formatter {};
 
 #endif  // PLSSVM_BACKENDS_CUDA_DETAIL_UTILITY_HPP_

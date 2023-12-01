@@ -13,7 +13,7 @@
 #include "plssvm/detail/cmd/data_set_variants.hpp"  // plssvm::detail::cmd::data_set_factory
 #include "plssvm/detail/cmd/parser_predict.hpp"     // plssvm::detail::cmd::parser_predict
 #include "plssvm/detail/logger.hpp"                 // plssvm::detail::log, plssvm::verbosity_level
-#include "plssvm/detail/performance_tracker.hpp"    // plssvm::detail::tracking_entry, PLSSVM_DETAIL_PERFORMANCE_TRACKER_SAVE
+#include "plssvm/detail/performance_tracker.hpp"    // plssvm::detail::tracking_entry, PLSSVM_DETAIL_PERFORMANCE_TRACKER_SAVE, PLSSVM_DETAIL_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY
 
 #include "fmt/format.h"                             // fmt::print, fmt::join
 #include "fmt/os.h"                                 // fmt::ostream, fmt::output_file
@@ -40,13 +40,38 @@ int main(int argc, char *argv[]) {
 
         // create data set
         std::visit([&](auto &&data) {
-            using real_type = typename std::remove_reference_t<decltype(data)>::real_type;
             using label_type = typename std::remove_reference_t<decltype(data)>::label_type;
 
             // create model
-            const plssvm::model<real_type, label_type> model{ cmd_parser.model_filename };
+            const plssvm::model<label_type> model{ cmd_parser.model_filename };
+
+            // output parameter used to learn the model
+            {
+                const plssvm::parameter params = model.get_params();
+                plssvm::detail::log(plssvm::verbosity_level::full,
+                                    "Parameter used to train the model:\n"
+                                    "  kernel_type: {} -> {}\n",
+                                    params.kernel_type, plssvm::kernel_function_type_to_math_string(params.kernel_type));
+                switch (params.kernel_type) {
+                    case plssvm::kernel_function_type::linear:
+                        break;
+                    case plssvm::kernel_function_type::polynomial:
+                        plssvm::detail::log(plssvm::verbosity_level::full,
+                                            "  degree: {}\n"
+                                            "  gamma: {}\n"
+                                            "  coef0: {}\n",
+                                            params.degree, params.gamma, params.coef0);
+                        break;
+                    case plssvm::kernel_function_type::rbf:
+                        plssvm::detail::log(plssvm::verbosity_level::full, "  gamma: {}\n", params.gamma);
+                        break;
+                }
+                plssvm::detail::log(plssvm::verbosity_level::full, "  cost: {}\n",  params.cost);
+            }
+
             // create default csvm
-            const auto svm = plssvm::make_csvm(cmd_parser.backend, cmd_parser.target);
+            const std::unique_ptr<plssvm::csvm> svm = (cmd_parser.backend == plssvm::backend_type::sycl) ? plssvm::make_csvm(cmd_parser.backend, cmd_parser.target, plssvm::sycl_implementation_type = cmd_parser.sycl_implementation_type)
+                                                                                                         : plssvm::make_csvm(cmd_parser.backend, cmd_parser.target);
             // predict labels
             const std::vector<label_type> predicted_labels = svm->predict(model, data);
 
@@ -67,20 +92,17 @@ int main(int argc, char *argv[]) {
 
             // print achieved accuracy (if possible)
             if (data.has_labels()) {
+                // generate the classification report
                 const std::vector<label_type> &correct_labels = data.labels().value();
-                std::size_t correct{ 0 };
-                for (typename std::vector<label_type>::size_type i = 0; i < predicted_labels.size(); ++i) {
-                    // check whether prediction is correct
-                    if (predicted_labels[i] == correct_labels[i]) {
-                        ++correct;
-                    }
-                }
-                // print accuracy
-                plssvm::detail::log(plssvm::verbosity_level::full | plssvm::verbosity_level::libsvm,
-                                    "Accuracy = {}% ({}/{}) (classification)\n",
-                                    static_cast<real_type>(correct) / static_cast<real_type>(data.num_data_points()) * real_type{ 100 },
-                                    correct,
-                                    data.num_data_points());
+                const plssvm::classification_report report{ correct_labels, predicted_labels };
+
+                // print complete report
+                plssvm::detail::log(plssvm::verbosity_level::full, "\n{}\n", report);
+                // print only accuracy for LIBSVM conformity
+                plssvm::detail::log(plssvm::verbosity_level::libsvm, "{} (classification)\n", report.accuracy());
+                PLSSVM_DETAIL_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking_entry{ "accuracy", "achieved_accuracy", report.accuracy().achieved_accuracy }));
+                PLSSVM_DETAIL_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking_entry{ "accuracy", "num_correct", report.accuracy().num_correct }));
+                PLSSVM_DETAIL_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking_entry{ "accuracy", "num_total", report.accuracy().num_total }));
             }
         }, plssvm::detail::cmd::data_set_factory(cmd_parser));
 

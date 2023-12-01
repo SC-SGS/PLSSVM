@@ -13,13 +13,13 @@
 #include "plssvm/detail/utility.hpp"                           // plssvm::detail::contains
 #include "plssvm/target_platforms.hpp"                         // plssvm::target_platform, plssvm::determine_default_target_platform
 
-#include "sycl/sycl.hpp"                                       // ::sycl::platform, ::sycl::device, ::sycl::property::queue, ::sycl::info
+#include "sycl/sycl.hpp"  // ::sycl::platform, ::sycl::device, ::sycl::property::queue, ::sycl::info
 
-#include <map>                                                 // std::multimap
-#include <memory>                                              // std::make_shared
-#include <string>                                              // std::string
-#include <utility>                                             // std::pair, std::make_pair, std::move
-#include <vector>                                              // std::vector
+#include <map>      // std::multimap
+#include <memory>   // std::make_shared
+#include <string>   // std::string
+#include <utility>  // std::pair, std::make_pair, std::move
+#include <vector>   // std::vector
 
 namespace plssvm::hipsycl::detail {
 
@@ -50,7 +50,8 @@ namespace plssvm::hipsycl::detail {
                 } else if ((::plssvm::detail::contains(vendor_string, "amd") || ::plssvm::detail::contains(vendor_string, "advanced micro devices"))
                            && ::plssvm::detail::contains(available_target_platforms, target_platform::gpu_amd)) {
                     platform_devices.insert({ target_platform::gpu_amd, device });
-                } else if (::plssvm::detail::contains(vendor_string, "intel") && ::plssvm::detail::contains(available_target_platforms, target_platform::gpu_intel)) {
+                } else if ((::plssvm::detail::contains(vendor_string, "intel") || ::plssvm::detail::contains(vendor_string, "pci:32902"))  // https://pcisig.com/membership/member-companies?combine=&order=field_vendor_id&sort=asc
+                           && ::plssvm::detail::contains(available_target_platforms, target_platform::gpu_intel)) {
                     platform_devices.insert({ target_platform::gpu_intel, device });
                 }
             }

@@ -18,13 +18,16 @@
 #include "plssvm/parameter.hpp"                    // plssvm::parameter, plssvm::kernel_type, plssvm::cost
 #include "plssvm/target_platforms.hpp"             // plssvm::target_platform
 
-#include "../../custom_test_macros.hpp"            // EXPECT_THROW_WHAT
-#include "../../utility.hpp"                       // util::redirect_output
-#include "../generic_csvm_tests.hpp"               // generic CSVM tests to instantiate
+#include "backends/generic_csvm_tests.hpp"      // generic CSVM tests to instantiate
+#include "backends/generic_gpu_csvm_tests.hpp"  // generic GPU CSVM tests to instantiate
+#include "custom_test_macros.hpp"               // EXPECT_THROW_WHAT
+#include "naming.hpp"                           // naming::test_parameter_to_name
+#include "types_to_test.hpp"                    // util::{cartesian_type_product_t, combine_test_parameters_gtest_t}
+#include "utility.hpp"                          // util::redirect_output
 
-#include "gtest/gtest.h"                           // TEST_F, EXPECT_NO_THROW, TYPED_TEST_SUITE, TYPED_TEST, INSTANTIATE_TYPED_TEST_SUITE_P, ::testing::{Test, Types}
+#include "gtest/gtest.h"  // TEST_F, EXPECT_NO_THROW, INSTANTIATE_TYPED_TEST_SUITE_P, ::testing::Test
 
-#include <tuple>                                   // std::make_tuple
+#include <tuple>  // std::make_tuple, std::tuple
 
 class HIPCSVM : public ::testing::Test, private util::redirect_output<> {};
 
@@ -93,36 +96,37 @@ TEST_F(HIPCSVM, construct_target_and_named_args) {
                       "Invalid target platform 'gpu_intel' for the HIP backend!");
 }
 
-template <typename T, plssvm::kernel_function_type kernel>
-struct csvm_test_type {
+struct hip_csvm_test_type {
     using mock_csvm_type = mock_hip_csvm;
     using csvm_type = plssvm::hip::csvm;
-    using real_type = T;
-    static constexpr plssvm::kernel_function_type kernel_type = kernel;
-    inline static auto additional_arguments = std::make_tuple();
+    using device_ptr_type = typename csvm_type::device_ptr_type;
+    inline static constexpr auto additional_arguments = std::make_tuple();
 };
+using hip_csvm_test_tuple = std::tuple<hip_csvm_test_type>;
+using hip_csvm_test_label_type_list = util::cartesian_type_product_t<hip_csvm_test_tuple, plssvm::detail::supported_label_types>;
+using hip_csvm_test_type_list = util::cartesian_type_product_t<hip_csvm_test_tuple>;
 
-class csvm_test_type_to_name {
-  public:
-    template <typename T>
-    static std::string GetName(int) {
-        return fmt::format("{}_{}_{}",
-                           plssvm::csvm_to_backend_type_v<typename T::csvm_type>,
-                           plssvm::detail::arithmetic_type_name<typename T::real_type>(),
-                           T::kernel_type);
-    }
-};
-
-using csvm_test_types = ::testing::Types<
-    csvm_test_type<float, plssvm::kernel_function_type::linear>,
-    csvm_test_type<float, plssvm::kernel_function_type::polynomial>,
-    csvm_test_type<float, plssvm::kernel_function_type::rbf>,
-    csvm_test_type<double, plssvm::kernel_function_type::linear>,
-    csvm_test_type<double, plssvm::kernel_function_type::polynomial>,
-    csvm_test_type<double, plssvm::kernel_function_type::rbf>>;
+// the tests used in the instantiated GTest test suites
+using hip_csvm_test_type_gtest = util::combine_test_parameters_gtest_t<hip_csvm_test_type_list>;
+using hip_solver_type_gtest = util::combine_test_parameters_gtest_t<hip_csvm_test_type_list, util::solver_type_list>;
+using hip_kernel_function_type_gtest = util::combine_test_parameters_gtest_t<hip_csvm_test_type_list, util::kernel_function_type_list>;
+using hip_solver_and_kernel_function_type_gtest = util::combine_test_parameters_gtest_t<hip_csvm_test_type_list, util::solver_and_kernel_function_type_list>;
+using hip_label_type_kernel_function_and_classification_type_gtest = util::combine_test_parameters_gtest_t<hip_csvm_test_label_type_list, util::kernel_function_and_classification_type_list>;
+using hip_label_type_solver_kernel_function_and_classification_type_gtest = util::combine_test_parameters_gtest_t<hip_csvm_test_label_type_list, util::solver_and_kernel_function_and_classification_type_list>;
 
 // instantiate type-parameterized tests
-INSTANTIATE_TYPED_TEST_SUITE_P(HIPBackend, GenericCSVM, csvm_test_types, csvm_test_type_to_name);
-INSTANTIATE_TYPED_TEST_SUITE_P(HIPBackendDeathTest, GenericCSVMDeathTest, csvm_test_types, csvm_test_type_to_name);
-INSTANTIATE_TYPED_TEST_SUITE_P(HIPBackend, GenericGPUCSVM, csvm_test_types, csvm_test_type_to_name);
-INSTANTIATE_TYPED_TEST_SUITE_P(HIPBackendDeathTest, GenericGPUCSVMDeathTest, csvm_test_types, csvm_test_type_to_name);
+// generic CSVM tests
+INSTANTIATE_TYPED_TEST_SUITE_P(HIPCSVM, GenericCSVM, hip_csvm_test_type_gtest, naming::test_parameter_to_name);
+INSTANTIATE_TYPED_TEST_SUITE_P(HIPCSVM, GenericCSVMSolver, hip_solver_type_gtest, naming::test_parameter_to_name);
+INSTANTIATE_TYPED_TEST_SUITE_P(HIPCSVM, GenericCSVMKernelFunction, hip_kernel_function_type_gtest, naming::test_parameter_to_name);
+INSTANTIATE_TYPED_TEST_SUITE_P(HIPCSVM, GenericCSVMSolverKernelFunction, hip_solver_and_kernel_function_type_gtest, naming::test_parameter_to_name);
+INSTANTIATE_TYPED_TEST_SUITE_P(HIPCSVM, GenericCSVMKernelFunctionClassification, hip_label_type_kernel_function_and_classification_type_gtest, naming::test_parameter_to_name);
+INSTANTIATE_TYPED_TEST_SUITE_P(HIPCSVM, GenericCSVMSolverKernelFunctionClassification, hip_label_type_solver_kernel_function_and_classification_type_gtest, naming::test_parameter_to_name);
+
+// generic CSVM DeathTests
+INSTANTIATE_TYPED_TEST_SUITE_P(HIPCSVMDeathTest, GenericCSVMSolverDeathTest, hip_solver_type_gtest, naming::test_parameter_to_name);
+INSTANTIATE_TYPED_TEST_SUITE_P(HIPCSVMDeathTest, GenericCSVMKernelFunctionDeathTest, hip_kernel_function_type_gtest, naming::test_parameter_to_name);
+
+// generic GPU CSVM tests
+INSTANTIATE_TYPED_TEST_SUITE_P(HIPCSVM, GenericGPUCSVM, hip_csvm_test_type_gtest, naming::test_parameter_to_name);
+INSTANTIATE_TYPED_TEST_SUITE_P(HIPCSVM, GenericGPUCSVMKernelFunction, hip_kernel_function_type_gtest, naming::test_parameter_to_name);

@@ -10,26 +10,28 @@
 
 #include "plssvm/backend_types.hpp"                      // plssvm::list_available_backends
 #include "plssvm/backends/SYCL/implementation_type.hpp"  // plssvm::sycl_generic::list_available_sycl_implementations
-#include "plssvm/constants.hpp"                          // plssvm::verbose_default, plssvm::verbose
+#include "plssvm/classification_types.hpp"               // plssvm::classification_type, plssvm::classification_type_to_full_string
+#include "plssvm/constants.hpp"                          // plssvm::real_type
 #include "plssvm/default_value.hpp"                      // plssvm::default_value
-#include "plssvm/detail/arithmetic_type_name.hpp"        // plssvm::detail::arithmetic_type_name
 #include "plssvm/detail/assert.hpp"                      // PLSSVM_ASSERT
 #include "plssvm/detail/logger.hpp"                      // plssvm::verbosity
 #include "plssvm/detail/string_utility.hpp"              // plssvm::detail::as_lower_case
 #include "plssvm/detail/utility.hpp"                     // plssvm::detail::to_underlying
 #include "plssvm/kernel_function_types.hpp"              // plssvm::kernel_type_to_math_string
+#include "plssvm/solver_types.hpp"                       // plssvm::solver_types
 #include "plssvm/target_platforms.hpp"                   // plssvm::list_available_target_platforms
 #include "plssvm/version/version.hpp"                    // plssvm::version::detail::get_version_info
 
-#include "cxxopts.hpp"                                   // cxxopts::Options, cxxopts::value,cxxopts::ParseResult
-#include "fmt/color.h"                                   // fmt::fg, fmt::color::orange
-#include "fmt/core.h"                                    // fmt::format, fmt::join
-#include "fmt/ostream.h"                                 // can use fmt using operator<< overloads
+#include "cxxopts.hpp"    // cxxopts::Options, cxxopts::value,cxxopts::ParseResult
+#include "fmt/color.h"    // fmt::fg, fmt::color::orange
+#include "fmt/core.h"     // fmt::format, fmt::join
+#include "fmt/ostream.h"  // can use fmt using operator<< overloads
 
-#include <cstdlib>                                       // std::exit, EXIT_SUCCESS, EXIT_FAILURE
-#include <exception>                                     // std::exception
-#include <filesystem>                                    // std::filesystem::path
-#include <iostream>                                      // std::cout, std::cerr, std::clog, std::endl
+#include <cstdlib>      // std::exit, EXIT_SUCCESS, EXIT_FAILURE
+#include <exception>    // std::exception
+#include <filesystem>   // std::filesystem::path
+#include <iostream>     // std::cout, std::cerr, std::clog, std::endl
+#include <type_traits>  // std::is_same_v
 
 namespace plssvm::detail::cmd {
 
@@ -54,19 +56,20 @@ parser_train::parser_train(int argc, char **argv) {
            ("c,cost", "set the parameter C", cxxopts::value<typename decltype(csvm_params.cost)::value_type>()->default_value(fmt::format("{}", csvm_params.cost)))
            ("e,epsilon", "set the tolerance of termination criterion", cxxopts::value<typename decltype(epsilon)::value_type>()->default_value(fmt::format("{}", epsilon)))
            ("i,max_iter", "set the maximum number of CG iterations (default: num_features)", cxxopts::value<long long int>())
+           ("l,solver", "choose the solver: automatic|cg_explicit|cg_streaming|cg_implicit", cxxopts::value<decltype(solver)>()->default_value("automatic"))
+           ("a,classification", "the classification strategy to use for multi-class classification: oaa|oao", cxxopts::value<typename decltype(classification)::value_type>()->default_value(fmt::format("{}", classification)))
            ("b,backend", fmt::format("choose the backend: {}", fmt::join(list_available_backends(), "|")), cxxopts::value<decltype(backend)>()->default_value(fmt::format("{}", backend)))
            ("p,target_platform", fmt::format("choose the target platform: {}", fmt::join(list_available_target_platforms(), "|")), cxxopts::value<decltype(target)>()->default_value(fmt::format("{}", target)))
 #if defined(PLSSVM_HAS_SYCL_BACKEND)
-           ("sycl_kernel_invocation_type", "choose the kernel invocation type when using SYCL as backend: automatic|nd_range|hierarchical", cxxopts::value<decltype(sycl_kernel_invocation_type)>()->default_value(fmt::format("{}", sycl_kernel_invocation_type)))
+           ("sycl_kernel_invocation_type", "choose the kernel invocation type when using SYCL as backend: automatic|nd_range", cxxopts::value<decltype(sycl_kernel_invocation_type)>()->default_value(fmt::format("{}", sycl_kernel_invocation_type)))
            ("sycl_implementation_type", fmt::format("choose the SYCL implementation to be used in the SYCL backend: {}", fmt::join(sycl::list_available_sycl_implementations(), "|")), cxxopts::value<decltype(sycl_implementation_type)>()->default_value(fmt::format("{}", sycl_implementation_type)))
 #endif
 #if defined(PLSSVM_PERFORMANCE_TRACKER_ENABLED)
            ("performance_tracking", "the output YAML file where the performance tracking results are written to; if not provided, the results are dumped to stderr", cxxopts::value<decltype(performance_tracking_filename)>())
 #endif
            ("use_strings_as_labels", "use strings as labels instead of plane numbers", cxxopts::value<decltype(strings_as_labels)>()->default_value(fmt::format("{}", strings_as_labels)))
-           ("use_float_as_real_type", "use floats as real types instead of doubles", cxxopts::value<decltype(float_as_real_type)>()->default_value(fmt::format("{}", float_as_real_type)))
            ("verbosity", fmt::format("choose the level of verbosity: full|timing|libsvm|quiet (default: {})", fmt::format("{}", verbosity)), cxxopts::value<verbosity_level>())
-           ("q,quiet", "quiet mode (no outputs regardless the provided verbosity level!)", cxxopts::value<bool>()->default_value(verbosity == verbosity_level::quiet ? "true" : "false"))
+           ("q,quiet", "quiet mode (no outputs regardless the provided verbosity level!)", cxxopts::value<bool>())
            ("h,help", "print this helper message", cxxopts::value<bool>())
            ("v,version", "print version information", cxxopts::value<bool>())
            ("input", "", cxxopts::value<decltype(input_filename)>(), "training_set_file")
@@ -154,17 +157,25 @@ parser_train::parser_train(int argc, char **argv) {
         max_iter = static_cast<typename decltype(max_iter)::value_type>(max_iter_input);
     }
 
+    // parse the classification type
+    if (result.count("classification")) {
+        classification = result["classification"].as<typename decltype(classification)::value_type>();
+    }
+
     // parse backend_type and cast the value to the respective enum
     backend = result["backend"].as<decltype(backend)>();
 
     // parse target_platform and cast the value to the respective enum
     target = result["target_platform"].as<decltype(target)>();
 
+    // parse the solver_type and cast the value to the respective enum
+    solver = result["solver"].as<decltype(solver)>();
+
 #if defined(PLSSVM_HAS_SYCL_BACKEND)
     // parse kernel invocation type when using SYCL as backend
     sycl_kernel_invocation_type = result["sycl_kernel_invocation_type"].as<decltype(sycl_kernel_invocation_type)>();
 
-    // warn if kernel invocation type nd_range or hierarchical are explicitly set but SYCL isn't the current backend
+    // warn if kernel invocation type is explicitly set but SYCL isn't the current backend
     if (backend != backend_type::sycl && sycl_kernel_invocation_type != sycl::kernel_invocation_type::automatic) {
         std::clog << fmt::format(fmt::fg(fmt::color::orange),
                                  "WARNING: explicitly set a SYCL kernel invocation type but the current backend isn't SYCL; ignoring --sycl_kernel_invocation_type={}",
@@ -186,9 +197,6 @@ parser_train::parser_train(int argc, char **argv) {
 
     // parse whether strings should be used as labels
     strings_as_labels = result["use_strings_as_labels"].as<decltype(strings_as_labels)>();
-
-    // parse whether floats should be used as real_type
-    float_as_real_type = result["use_float_as_real_type"].as<decltype(float_as_real_type)>();
 
     // parse whether output is quiet or not
     const bool quiet = result["quiet"].as<bool>();
@@ -262,12 +270,31 @@ std::ostream &operator<<(std::ostream &out, const parser_train &params) {
     }
 
     out << fmt::format(
+        "backend: {}\n"
+        "target platform: {}\n"
+        "solver: {}\n",
+        params.backend,
+        params.target,
+        params.solver);
+
+    if (params.backend == backend_type::sycl || params.backend == backend_type::automatic) {
+        out << fmt::format(
+            "SYCL implementation type: {}\n"
+            "SYCL kernel invocation type: {}\n",
+            params.sycl_implementation_type,
+            params.sycl_kernel_invocation_type);
+    }
+
+    out << fmt::format(
+        "classification_type: {}{}\n"
         "label_type: {}\n"
         "real_type: {}\n"
         "input file (data set): '{}'\n"
         "output file (model): '{}'\n",
+        classification_type_to_full_string(params.classification.value()),
+        params.classification.is_default() ? " (default)" : "",
         params.strings_as_labels ? "std::string" : "int (default)",
-        params.float_as_real_type ? "float" : "double (default)",
+        std::is_same_v<real_type, float> ? "float" : "double (default)",
         params.input_filename,
         params.model_filename);
     if (!params.performance_tracking_filename.empty()) {

@@ -10,11 +10,11 @@
 
 #include "plssvm/exceptions/source_location.hpp"  // plssvm::source_location
 
-#include "fmt/core.h"                             // fmt::format
+#include "fmt/core.h"  // fmt::format
 
-#include <stdexcept>                              // std::runtime_error
-#include <string>                                 // std::string
-#include <string_view>                            // std::string_view
+#include <stdexcept>    // std::runtime_error
+#include <string>       // std::string
+#include <string_view>  // std::string_view
 
 namespace plssvm {
 
@@ -60,5 +60,11 @@ unsupported_kernel_type_exception::unsupported_kernel_type_exception(const std::
 
 gpu_device_ptr_exception::gpu_device_ptr_exception(const std::string &msg, source_location loc) :
     exception{ msg, "gpu_device_ptr_exception", loc } {}
+
+matrix_exception::matrix_exception(const std::string &msg, source_location loc) :
+    exception{ msg, "matrix_exception", loc } {}
+
+kernel_launch_resources::kernel_launch_resources(const std::string &msg, source_location loc) :
+    exception{ msg, "kernel_launch_resources", loc } {}
 
 }  // namespace plssvm

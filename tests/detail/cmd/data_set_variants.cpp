@@ -14,29 +14,28 @@
 #include "plssvm/detail/cmd/parser_scale.hpp"    // plssvm::detail::cmd::parser_scale
 #include "plssvm/detail/cmd/parser_train.hpp"    // plssvm::detail::cmd::parser_train
 
-#include "../../naming.hpp"                      // naming::pretty_print_data_set_factory
-#include "../../utility.hpp"                     // util::{temporary_file, instantiate_template_file}
-#include "utility.hpp"                           // util::ParameterBase
+#include "detail/cmd/cmd_utility.hpp"  // util::ParameterBase
+#include "naming.hpp"                  // naming::pretty_print_data_set_factory
+#include "utility.hpp"                 // util::{temporary_file, instantiate_template_file}
 
-#include "fmt/core.h"                            // fmt::format
-#include "gtest/gtest.h"                         // TEST_P, INSTANTIATE_TEST_SUITE_P, EXPECT_EQ,  ::testing::{WithParamInterface, Values}
+#include "gtest/gtest.h"  // TEST_P, INSTANTIATE_TEST_SUITE_P, EXPECT_EQ,  ::testing::{WithParamInterface, Values}
 
-#include <cstddef>                               // std::size_t
-#include <string>                                // std::string
-#include <tuple>                                 // std::tuple, std::make_tuple
+#include <cstddef>  // std::size_t
+#include <string>   // std::string
+#include <tuple>    // std::tuple, std::make_tuple
 
-// the variant order is: <float, int>, <float, std::string>, <double, int>, <double, std::string>
+// the variant order is: <real_type, int> -> <real_type, std::string>
 
-class DataSetFactory : public util::ParameterBase, public ::testing::WithParamInterface<std::tuple<bool, bool, std::size_t>>, protected util::temporary_file {};
+class DataSetFactory : public util::ParameterBase, public ::testing::WithParamInterface<std::tuple<bool, std::size_t>>, protected util::temporary_file {};
 
 TEST_P(DataSetFactory, data_set_factory_predict) {
     // get parameter
-    const auto [float_as_real_type, strings_as_labels, index] = GetParam();
+    const auto [strings_as_labels, index] = GetParam();
 
     if (strings_as_labels) {
-        util::instantiate_template_file<std::string>(PLSSVM_TEST_PATH "/data/libsvm/5x4_TEMPLATE.libsvm", this->filename);
+        util::instantiate_template_file<std::string>(PLSSVM_TEST_PATH "/data/libsvm/6x4_TEMPLATE.libsvm", this->filename);
     } else {
-        util::instantiate_template_file<int>(PLSSVM_TEST_PATH "/data/libsvm/5x4_TEMPLATE.libsvm", this->filename);
+        util::instantiate_template_file<int>(PLSSVM_TEST_PATH "/data/libsvm/6x4_TEMPLATE.libsvm", this->filename);
     }
 
     // assemble command line strings
@@ -44,15 +43,12 @@ TEST_P(DataSetFactory, data_set_factory_predict) {
     if (strings_as_labels) {
         cmd_args.emplace_back("--use_strings_as_labels");
     }
-    if (float_as_real_type) {
-        cmd_args.emplace_back("--use_float_as_real_type");
-    }
     cmd_args.insert(cmd_args.end(), { this->filename, "data.libsvm.model" });
 
     // create artificial command line arguments in test fixture
     this->CreateCMDArgs(cmd_args);
     // create parameter object
-    const plssvm::detail::cmd::parser_predict parser{ this->argc, this->argv };
+    const plssvm::detail::cmd::parser_predict parser{ this->get_argc(), this->get_argv() };
 
     // test active variant type
     const plssvm::detail::cmd::data_set_variants var = plssvm::detail::cmd::data_set_factory(parser);
@@ -60,12 +56,12 @@ TEST_P(DataSetFactory, data_set_factory_predict) {
 }
 TEST_P(DataSetFactory, data_set_factory_scale) {
     // get parameter
-    const auto [float_as_real_type, strings_as_labels, index] = GetParam();
+    const auto [strings_as_labels, index] = GetParam();
 
     if (strings_as_labels) {
-        util::instantiate_template_file<std::string>(PLSSVM_TEST_PATH "/data/libsvm/5x4_TEMPLATE.libsvm", this->filename);
+        util::instantiate_template_file<std::string>(PLSSVM_TEST_PATH "/data/libsvm/6x4_TEMPLATE.libsvm", this->filename);
     } else {
-        util::instantiate_template_file<int>(PLSSVM_TEST_PATH "/data/libsvm/5x4_TEMPLATE.libsvm", this->filename);
+        util::instantiate_template_file<int>(PLSSVM_TEST_PATH "/data/libsvm/6x4_TEMPLATE.libsvm", this->filename);
     }
 
     // assemble command line strings
@@ -73,15 +69,12 @@ TEST_P(DataSetFactory, data_set_factory_scale) {
     if (strings_as_labels) {
         cmd_args.emplace_back("--use_strings_as_labels");
     }
-    if (float_as_real_type) {
-        cmd_args.emplace_back("--use_float_as_real_type");
-    }
     cmd_args.push_back(this->filename);
 
     // create artificial command line arguments in test fixture
     this->CreateCMDArgs(cmd_args);
     // create parameter object
-    const plssvm::detail::cmd::parser_scale parser{ this->argc, this->argv };
+    const plssvm::detail::cmd::parser_scale parser{ this->get_argc(), this->get_argv() };
 
     // test active variant type
     const plssvm::detail::cmd::data_set_variants var = plssvm::detail::cmd::data_set_factory(parser);
@@ -89,12 +82,12 @@ TEST_P(DataSetFactory, data_set_factory_scale) {
 }
 TEST_P(DataSetFactory, data_set_factory_scale_restore_filename) {
     // get parameter
-    const auto [float_as_real_type, strings_as_labels, index] = GetParam();
+    const auto [strings_as_labels, index] = GetParam();
 
     if (strings_as_labels) {
-        util::instantiate_template_file<std::string>(PLSSVM_TEST_PATH "/data/libsvm/5x4_TEMPLATE.libsvm", this->filename);
+        util::instantiate_template_file<std::string>(PLSSVM_TEST_PATH "/data/libsvm/6x4_TEMPLATE.libsvm", this->filename);
     } else {
-        util::instantiate_template_file<int>(PLSSVM_TEST_PATH "/data/libsvm/5x4_TEMPLATE.libsvm", this->filename);
+        util::instantiate_template_file<int>(PLSSVM_TEST_PATH "/data/libsvm/6x4_TEMPLATE.libsvm", this->filename);
     }
 
     // assemble command line strings
@@ -102,15 +95,12 @@ TEST_P(DataSetFactory, data_set_factory_scale_restore_filename) {
     if (strings_as_labels) {
         cmd_args.emplace_back("--use_strings_as_labels");
     }
-    if (float_as_real_type) {
-        cmd_args.emplace_back("--use_float_as_real_type");
-    }
     cmd_args.push_back(this->filename);
 
     // create artificial command line arguments in test fixture
     this->CreateCMDArgs(cmd_args);
     // create parameter object
-    const plssvm::detail::cmd::parser_scale parser{ this->argc, this->argv };
+    const plssvm::detail::cmd::parser_scale parser{ this->get_argc(), this->get_argv() };
 
     // test active variant type
     const plssvm::detail::cmd::data_set_variants var = plssvm::detail::cmd::data_set_factory(parser);
@@ -118,12 +108,12 @@ TEST_P(DataSetFactory, data_set_factory_scale_restore_filename) {
 }
 TEST_P(DataSetFactory, data_set_factory_train) {
     // get parameter
-    const auto [float_as_real_type, strings_as_labels, index] = GetParam();
+    const auto [strings_as_labels, index] = GetParam();
 
     if (strings_as_labels) {
-        util::instantiate_template_file<std::string>(PLSSVM_TEST_PATH "/data/libsvm/5x4_TEMPLATE.libsvm", this->filename);
+        util::instantiate_template_file<std::string>(PLSSVM_TEST_PATH "/data/libsvm/6x4_TEMPLATE.libsvm", this->filename);
     } else {
-        util::instantiate_template_file<int>(PLSSVM_TEST_PATH "/data/libsvm/5x4_TEMPLATE.libsvm", this->filename);
+        util::instantiate_template_file<int>(PLSSVM_TEST_PATH "/data/libsvm/6x4_TEMPLATE.libsvm", this->filename);
     }
 
     // assemble command line strings
@@ -131,23 +121,22 @@ TEST_P(DataSetFactory, data_set_factory_train) {
     if (strings_as_labels) {
         cmd_args.emplace_back("--use_strings_as_labels");
     }
-    if (float_as_real_type) {
-        cmd_args.emplace_back("--use_float_as_real_type");
-    }
     cmd_args.push_back(this->filename);
 
     // create artificial command line arguments in test fixture
     this->CreateCMDArgs(cmd_args);
     // create parameter object
-    const plssvm::detail::cmd::parser_train parser{ this->argc, this->argv };
+    const plssvm::detail::cmd::parser_train parser{ this->get_argc(), this->get_argv() };
 
     // test active variant type
     const plssvm::detail::cmd::data_set_variants var = plssvm::detail::cmd::data_set_factory(parser);
     EXPECT_EQ(var.index(), index);
 }
+
 // clang-format off
+// get<0>(tuple): whether the command line flag "string_as_labels" is provided (true) or not (false)
+// get<1>(tuple): the active index in the constructed variant
 INSTANTIATE_TEST_SUITE_P(DataSetFactory, DataSetFactory, ::testing::Values(
-                std::make_tuple(false, false, 2), std::make_tuple(false, true, 3),
-                std::make_tuple(true, false, 0), std::make_tuple(true, true, 1)),
+                std::make_tuple(false, 0), std::make_tuple(true, 1)),
                 naming::pretty_print_data_set_factory<DataSetFactory>);
 // clang-format on

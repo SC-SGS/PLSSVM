@@ -15,15 +15,16 @@
 #pragma once
 
 #include "plssvm/detail/performance_tracker.hpp"  // plssvm::detail::is_tracking_entry_v, PLSSVM_DETAIL_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY
+#include "plssvm/detail/utility.hpp"              // PLSSVM_EXTERN
 
-#include "fmt/chrono.h"                           // format std::chrono types
-#include "fmt/format.h"                           // fmt::format
-#include "fmt/ostream.h"                          // format types with an operator<< overload
+#include "fmt/chrono.h"   // format std::chrono types
+#include "fmt/format.h"   // fmt::format
+#include "fmt/ostream.h"  // fmt::formatter, fmt::ostream_formatter
 
-#include <iosfwd>                                 // std::istream, std::ostream
-#include <iostream>                               // std::cout
-#include <string_view>                            // std::string_view
-#include <utility>                                // std::forward
+#include <iosfwd>       // std::istream, std::ostream
+#include <iostream>     // std::cout
+#include <string_view>  // std::string_view
+#include <utility>      // std::forward
 
 namespace plssvm {
 
@@ -42,7 +43,7 @@ enum class verbosity_level {
 };
 
 /// The verbosity level used in the logging function. My be changed by the user.
-extern verbosity_level verbosity;
+PLSSVM_EXTERN verbosity_level verbosity;
 
 /**
  * @brief Output the @p verb to the given output-stream @p out.
@@ -125,5 +126,8 @@ void log(const verbosity_level verb, const std::string_view msg, Args &&...args)
 }  // namespace detail
 
 }  // namespace plssvm
+
+template <>
+struct fmt::formatter<plssvm::verbosity_level> : fmt::ostream_formatter {};
 
 #endif  // PLSSVM_DETAIL_LOGGER_HPP_

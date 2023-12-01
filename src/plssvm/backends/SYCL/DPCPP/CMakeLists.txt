@@ -29,7 +29,7 @@ if (PLSSVM_SYCL_BACKEND_CHECK_FOR_DPCPP_COMPILER)
             ${CMAKE_CURRENT_LIST_DIR}/detail/device_ptr.cpp
             ${CMAKE_CURRENT_LIST_DIR}/detail/utility.cpp
             ${CMAKE_CURRENT_LIST_DIR}/csvm.cpp
-            )
+    )
 
     # set target properties
     set(PLSSVM_SYCL_BACKEND_DPCPP_LIBRARY_NAME plssvm-SYCL_dpcpp CACHE INTERNAL "")
@@ -50,7 +50,7 @@ if (PLSSVM_SYCL_BACKEND_CHECK_FOR_DPCPP_COMPILER)
     target_compile_definitions(${PLSSVM_SYCL_BACKEND_DPCPP_LIBRARY_NAME} PRIVATE PLSSVM_SYCL_BACKEND_COMPILER_NAME="DPC++")
 
     # enable DPC++ SYCL support
-    target_compile_options(${PLSSVM_SYCL_BACKEND_DPCPP_LIBRARY_NAME} PRIVATE -sycl-std=2020 -fsycl)
+    target_compile_options(${PLSSVM_SYCL_BACKEND_DPCPP_LIBRARY_NAME} PRIVATE -sycl-std=2020 -fsycl -fno-sycl-id-queries-fit-in-int)
     target_link_options(${PLSSVM_SYCL_BACKEND_DPCPP_LIBRARY_NAME} PRIVATE -fsycl)
 
     set(PLSSVM_DPCPP_FSYCL_TARGETS "")
@@ -90,6 +90,8 @@ if (PLSSVM_SYCL_BACKEND_CHECK_FOR_DPCPP_COMPILER)
     option(PLSSVM_SYCL_BACKEND_DPCPP_ENABLE_AOT "Enables Ahead-of-Time compilation for DPC++." ON)
     if (PLSSVM_SYCL_BACKEND_DPCPP_ENABLE_AOT)
         message(STATUS "Enabled Ahead-of-Time (AOT) compilation with DPC++.")
+        target_compile_definitions(${PLSSVM_BASE_LIBRARY_NAME} PRIVATE PLSSVM_SYCL_BACKEND_DPCPP_ENABLE_AOT)
+        target_compile_definitions(${PLSSVM_SYCL_BACKEND_DPCPP_LIBRARY_NAME} PUBLIC PLSSVM_SYCL_BACKEND_DPCPP_ENABLE_AOT)
         ## set AOT compiler flags
         # cpu targets
         if (DEFINED PLSSVM_CPU_TARGET_ARCHS)
@@ -117,24 +119,28 @@ if (PLSSVM_SYCL_BACKEND_CHECK_FOR_DPCPP_COMPILER)
         endif ()
     endif ()
 
-    # be able to choose between the Level-Zero and OpenCL DPC++ backend
-    option(PLSSVM_SYCL_BACKEND_DPCPP_USE_LEVEL_ZERO "Enable DPC++'s Level-Zero backend in favor of the OpenCL backend." OFF)
+    # be able to choose between the Level-Zero and OpenCL DPC++ backend for CPUs or Intel GPUs
+    option(PLSSVM_SYCL_BACKEND_DPCPP_USE_LEVEL_ZERO "Enable DPC++'s Level-Zero backend in favor of the OpenCL backend." ON)
     if (PLSSVM_SYCL_BACKEND_DPCPP_USE_LEVEL_ZERO)
         message(STATUS "Using DPC++'s Level-Zero backend.")
-        target_compile_definitions(${PLSSVM_SYCL_BACKEND_DPCPP_LIBRARY_NAME} PRIVATE PLSSVM_SYCL_BACKEND_DPCPP_BACKEND_TYPE="level_zero")
+        target_compile_definitions(${PLSSVM_BASE_LIBRARY_NAME} PRIVATE PLSSVM_SYCL_BACKEND_DPCPP_BACKEND_TYPE="level-zero")
+        target_compile_definitions(${PLSSVM_SYCL_BACKEND_DPCPP_LIBRARY_NAME} PUBLIC PLSSVM_SYCL_BACKEND_DPCPP_BACKEND_TYPE="level-zero")
     else ()
         message(STATUS "Using DPC++'s OpenCL backend.")
-        target_compile_definitions(${PLSSVM_SYCL_BACKEND_DPCPP_LIBRARY_NAME} PRIVATE PLSSVM_SYCL_BACKEND_DPCPP_BACKEND_TYPE="opencl")
+        target_compile_definitions(${PLSSVM_BASE_LIBRARY_NAME} PRIVATE PLSSVM_SYCL_BACKEND_DPCPP_BACKEND_TYPE="opencl")
+        target_compile_definitions(${PLSSVM_SYCL_BACKEND_DPCPP_LIBRARY_NAME} PUBLIC PLSSVM_SYCL_BACKEND_DPCPP_BACKEND_TYPE="opencl")
     endif ()
 
     # be able to choose between the HIP and OpenCL DPC++ backend for AMD GPUs
     option(PLSSVM_SYCL_BACKEND_DPCPP_GPU_AMD_USE_HIP "Enable DPC++'s HIP backend in favor of the OpenCL backend for AMD GPUs." ON)
     if (PLSSVM_SYCL_BACKEND_DPCPP_GPU_AMD_USE_HIP)
         message(STATUS "Using DPC++'s HIP backend for AMD GPUs.")
-        target_compile_definitions(${PLSSVM_SYCL_BACKEND_DPCPP_LIBRARY_NAME} PRIVATE PLSSVM_SYCL_BACKEND_DPCPP_GPU_AMD_BACKEND_TYPE="hip")
+        target_compile_definitions(${PLSSVM_BASE_LIBRARY_NAME} PRIVATE PLSSVM_SYCL_BACKEND_DPCPP_GPU_AMD_BACKEND_TYPE="hip")
+        target_compile_definitions(${PLSSVM_SYCL_BACKEND_DPCPP_LIBRARY_NAME} PUBLIC PLSSVM_SYCL_BACKEND_DPCPP_GPU_AMD_BACKEND_TYPE="hip")
     else ()
         message(STATUS "Using DPC++'s OpenCL backend for AMD GPUs.")
-        target_compile_definitions(${PLSSVM_SYCL_BACKEND_DPCPP_LIBRARY_NAME} PRIVATE PLSSVM_SYCL_BACKEND_DPCPP_GPU_AMD_BACKEND_TYPE="opencl")
+        target_compile_definitions(${PLSSVM_BASE_LIBRARY_NAME} PRIVATE PLSSVM_SYCL_BACKEND_DPCPP_GPU_AMD_BACKEND_TYPE="opencl")
+        target_compile_definitions(${PLSSVM_SYCL_BACKEND_DPCPP_LIBRARY_NAME} PUBLIC PLSSVM_SYCL_BACKEND_DPCPP_GPU_AMD_BACKEND_TYPE="opencl")
     endif ()
 
     target_link_libraries(${PLSSVM_SYCL_BACKEND_DPCPP_LIBRARY_NAME} PUBLIC ${PLSSVM_BASE_LIBRARY_NAME})

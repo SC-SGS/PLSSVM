@@ -14,6 +14,7 @@
 #include "plssvm/detail/cmd/parser_scale.hpp"       // plssvm::detail::cmd::parser_scale
 #include "plssvm/detail/logger.hpp"                 // plssvm::detail::log, plssvm::verbosity_level
 #include "plssvm/detail/performance_tracker.hpp"    // plssvm::detail::tracking_entry,PLSSVM_DETAIL_PERFORMANCE_TRACKER_SAVE
+#include "plssvm/matrix.hpp"                        // plssvm::matrix
 
 #include <chrono>                                   // std::chrono::{steady_clock, duration}
 #include <cstdlib>                                  // std::exit, EXIT_SUCCESS, EXIT_FAILURE
@@ -41,19 +42,18 @@ int main(int argc, char *argv[]) {
                 data.save(cmd_parser.scaled_filename, cmd_parser.format);
             } else {
                 fmt::print("\n");
-                using real_type = typename plssvm::detail::remove_cvref_t<decltype(data)>::real_type;
                 using label_type = typename plssvm::detail::remove_cvref_t<decltype(data)>::label_type;
 
                 // output to console if no output filename is provided
-                const std::vector<std::vector<real_type>> &matrix = data.data();
+                const auto &matrix = data.data();
                 const plssvm::optional_ref<const std::vector<label_type>> label = data.labels();
-                for (std::size_t row = 0; row < matrix.size(); ++row) {
+                for (std::size_t row = 0; row < matrix.num_rows(); ++row) {
                     if (label.has_value()) {
                         fmt::print(FMT_COMPILE("{} "), label.value().get()[row]);
                     }
-                    for (std::size_t col = 0; col < matrix[row].size(); ++col) {
-                        if (matrix[row][col] != real_type{ 0.0 }) {
-                            fmt::print(FMT_COMPILE("{}:{:.10e} "), col + 1, matrix[row][col]);
+                    for (std::size_t col = 0; col < matrix.num_cols(); ++col) {
+                        if (matrix(row, col) != plssvm::real_type{ 0.0 }) {
+                            fmt::print(FMT_COMPILE("{}:{:.10e} "), col + 1, matrix(row, col));
                         }
                     }
                     fmt::print("\n");

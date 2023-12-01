@@ -11,8 +11,8 @@ int main() {
 
         // create two data sets: one with the training data scaled to [-1, 1]
         // and one with the test data scaled like the training data
-        const plssvm::data_set<double> train_data{ "train_file.libsvm", { -1.0, 1.0 } };
-        const plssvm::data_set<double> test_data{ "test_file.libsvm", train_data.scaling_factors()->get() };
+        const plssvm::data_set train_data{ "train_file.libsvm", { -1.0, 1.0 } };
+        const plssvm::data_set test_data{ "test_file.libsvm", train_data.scaling_factors()->get() };
 
         // create C-SVM using the default backend and the previously defined parameter
         const auto svm = plssvm::make_csvm(params);
@@ -25,7 +25,10 @@ int main() {
         std::cout << "model accuracy: " << model_accuracy << std::endl;
 
         // predict the labels
-        const std::vector<int> label = svm->predict(model, test_data);
+        const std::vector<int> predicted_label = svm->predict(model, test_data);
+        // output a more complete classification report
+        const std::vector<int> &correct_label = test_data.labels().value();
+        std::cout << plssvm::classification_report{ correct_label, predicted_label } << std::endl;
 
         // write model file to disk
         model.save("model_file.libsvm");

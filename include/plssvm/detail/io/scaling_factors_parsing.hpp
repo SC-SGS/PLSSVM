@@ -13,11 +13,12 @@
 #define PLSSVM_DETAIL_IO_SCALING_FACTORS_PARSING_HPP_
 #pragma once
 
+#include "plssvm/constants.hpp"                 // plssvm::real_type
 #include "plssvm/detail/assert.hpp"             // PLSSVM_ASSERT
-#include "plssvm/detail/utility.hpp"            // plssvm:detail::current_date_time
 #include "plssvm/detail/io/file_reader.hpp"     // plssvm::detail::io::file_reader
 #include "plssvm/detail/string_conversion.hpp"  // plssvm::detail::split_as
 #include "plssvm/detail/string_utility.hpp"     // plssvm::detail::trim
+#include "plssvm/detail/utility.hpp"            // plssvm:detail::current_date_time
 #include "plssvm/exceptions/exceptions.hpp"     // plssvm::invalid_file_format_exception
 
 #include "fmt/core.h"  // fmt::format
@@ -43,7 +44,6 @@ namespace plssvm::detail::io {
  * 4 0.10805254527169827 1.6464627048813514
  * @endcode
  * Note that the scaling factors are given using an one-based indexing scheme, but are internally stored using zero-based indexing.
- * @tparam real_type the used floating point type
  * @tparam factors_type plssvm::data_set<real_type>::scaling::factors (cannot be forward declared or included)
  * @param[in] reader the file_reader used to read the scaling factors
  * @throws plssvm::invalid_file_format_exception if the header is omitted ('x' and the scaling interval)
@@ -53,7 +53,7 @@ namespace plssvm::detail::io {
  * @throws plssvm::invalid_file_format_exception if the scaling factors feature index is zero-based instead of one-based
  * @return the read scaling interval and factors (`[[nodiscard]]`)
  */
-template <typename real_type, typename factors_type>
+template <typename factors_type>
 [[nodiscard]] inline std::tuple<std::pair<real_type, real_type>, std::vector<factors_type>> parse_scaling_factors(const file_reader &reader) {
     PLSSVM_ASSERT(reader.is_open(), "The file_reader is currently not associated with a file!");
 
@@ -129,13 +129,12 @@ template <typename real_type, typename factors_type>
  * 3 -0.13086851759108944 0.6663834427003914
  * 4 0.10805254527169827 1.6464627048813514
  * @endcode
- * @tparam real_type the used floating point type
  * @tparam factors_type plssvm::data_set<real_type>::scaling::factors (cannot be forward declared or included)
  * @param[in] filename the filename to write the data to
  * @param[in] scaling_interval the valid scaling interval, i.e., [first, second]
  * @param[in] scaling_factors the scaling factor for each feature; given **zero** based, but written to file **one** based!
  */
-template <typename real_type, typename factors_type>
+template <typename factors_type>
 inline void write_scaling_factors(const std::string &filename, const std::pair<real_type, real_type> &scaling_interval, const std::vector<factors_type> &scaling_factors) {
     PLSSVM_ASSERT(scaling_interval.first < scaling_interval.second, "Illegal interval specification: lower ({}) < upper ({}).", scaling_interval.first, scaling_interval.second);
 
@@ -150,7 +149,7 @@ inline void write_scaling_factors(const std::string &filename, const std::pair<r
     out.print("{} {}\n", scaling_interval.first, scaling_interval.second);
     // write the scaling factors for each feature, note the one based indexing scheme!
     for (const factors_type &f : scaling_factors) {
-        out.print("{} {} {}\n", f.feature + 1, f.lower, f.upper);
+        out.print("{} {:.10e} {:.10e}\n", f.feature + 1, f.lower, f.upper);
     }
 }
 

@@ -15,15 +15,16 @@
 #include "plssvm/target_platforms.hpp"                   // plssvm::list_available_target_platforms
 #include "plssvm/version/version.hpp"                    // plssvm::version::detail::get_version_info
 
-#include "cxxopts.hpp"                                   // cxxopts::{Options, value, ParseResult}
-#include "fmt/color.h"                                   // fmt::fg, fmt::color::orange
-#include "fmt/core.h"                                    // fmt::format, fmt::join
-#include "fmt/ostream.h"                                 // can use fmt using operator<< overloads
+#include "cxxopts.hpp"    // cxxopts::{Options, value, ParseResult}
+#include "fmt/color.h"    // fmt::fg, fmt::color::orange
+#include "fmt/core.h"     // fmt::format, fmt::join
+#include "fmt/ostream.h"  // can use fmt using operator<< overloads
 
-#include <cstdlib>                                       // std::exit, EXIT_SUCCESS, EXIT_FAILURE
-#include <exception>                                     // std::exception
-#include <filesystem>                                    // std::filesystem::path
-#include <iostream>                                      // std::cout, std::cerr, std::clog, std::endl
+#include <cstdlib>      // std::exit, EXIT_SUCCESS, EXIT_FAILURE
+#include <exception>    // std::exception
+#include <filesystem>   // std::filesystem::path
+#include <iostream>     // std::cout, std::cerr, std::clog, std::endl
+#include <type_traits>  // std::is_same_v
 
 namespace plssvm::detail::cmd {
 
@@ -51,9 +52,8 @@ parser_predict::parser_predict(int argc, char **argv) {
            ("performance_tracking", "the output YAML file where the performance tracking results are written to; if not provided, the results are dumped to stderr", cxxopts::value<decltype(performance_tracking_filename)>())
 #endif
             ("use_strings_as_labels", "use strings as labels instead of plane numbers", cxxopts::value<decltype(strings_as_labels)>()->default_value(fmt::format("{}", strings_as_labels)))
-            ("use_float_as_real_type", "use floats as real types instead of doubles", cxxopts::value<decltype(float_as_real_type)>()->default_value(fmt::format("{}", float_as_real_type)))
             ("verbosity", fmt::format("choose the level of verbosity: full|timing|libsvm|quiet (default: {})", fmt::format("{}", verbosity)), cxxopts::value<verbosity_level>())
-            ("q,quiet", "quiet mode (no outputs regardless the provided verbosity level!)", cxxopts::value<bool>()->default_value(verbosity == verbosity_level::quiet ? "true" : "false"))
+            ("q,quiet", "quiet mode (no outputs regardless the provided verbosity level!)", cxxopts::value<bool>())
             ("h,help", "print this helper message", cxxopts::value<bool>())
             ("v,version", "print version information", cxxopts::value<bool>())
             ("test", "", cxxopts::value<decltype(input_filename)>(), "test_file")
@@ -113,9 +113,6 @@ parser_predict::parser_predict(int argc, char **argv) {
     // parse whether strings should be used as labels
     strings_as_labels = result["use_strings_as_labels"].as<decltype(strings_as_labels)>();
 
-    // parse whether float should be used as real_type instead of double
-    float_as_real_type = result["use_float_as_real_type"].as<decltype(float_as_real_type)>();
-
     // parse whether output is quiet or not
     const bool quiet = result["quiet"].as<bool>();
 
@@ -167,19 +164,31 @@ parser_predict::parser_predict(int argc, char **argv) {
 
 std::ostream &operator<<(std::ostream &out, const parser_predict &params) {
     out << fmt::format(
+        "backend: {}\n"
+        "target platform: {}\n",
+        params.backend,
+        params.target);
+
+    if (params.backend == backend_type::sycl || params.backend == backend_type::automatic) {
+        out << fmt::format("SYCL implementation type: {}\n", params.sycl_implementation_type);
+    }
+
+    out << fmt::format(
         "label_type: {}\n"
         "real_type: {}\n"
         "input file (data set): '{}'\n"
         "input file (model): '{}'\n"
         "output file (prediction): '{}'\n",
         params.strings_as_labels ? "std::string" : "int (default)",
-        params.float_as_real_type ? "float" : "double (default)",
+        std::is_same_v<real_type, float> ? "float" : "double (default)",
         params.input_filename,
         params.model_filename,
         params.predict_filename);
+
     if (!params.performance_tracking_filename.empty()) {
         out << fmt::format("performance tracking file: '{}'\n", params.performance_tracking_filename);
     }
+
     return out;
 }
 

@@ -10,18 +10,17 @@
 
 #include "plssvm/backends/SYCL/kernel_invocation_type.hpp"  // plssvm::sycl::kernel_invocation_type
 
-#include "../../custom_test_macros.hpp"                     // EXPECT_CONVERSION_TO_STRING, EXPECT_CONVERSION_FROM_STRING
+#include "custom_test_macros.hpp"  // EXPECT_CONVERSION_TO_STRING, EXPECT_CONVERSION_FROM_STRING
 
-#include "gtest/gtest.h"                                    // TEST, EXPECT_TRUE
+#include "gtest/gtest.h"  // TEST, EXPECT_TRUE
 
-#include <sstream>                                          // std::istringstream
+#include <sstream>  // std::istringstream
 
 // check whether the plssvm::sycl::kernel_invocation_type -> std::string conversions are correct
 TEST(SYCLKernelInvocationType, to_string) {
     // check conversions to std::string
     EXPECT_CONVERSION_TO_STRING(plssvm::sycl::kernel_invocation_type::automatic, "automatic");
     EXPECT_CONVERSION_TO_STRING(plssvm::sycl::kernel_invocation_type::nd_range, "nd_range");
-    EXPECT_CONVERSION_TO_STRING(plssvm::sycl::kernel_invocation_type::hierarchical, "hierarchical");
 }
 TEST(SYCLKernelInvocationType, to_string_unknown) {
     // check conversions to std::string from unknown file_format_type
@@ -35,8 +34,6 @@ TEST(SYCLKernelInvocationType, from_string) {
     EXPECT_CONVERSION_FROM_STRING("AUTOMATIC", plssvm::sycl::kernel_invocation_type::automatic);
     EXPECT_CONVERSION_FROM_STRING("nd_range", plssvm::sycl::kernel_invocation_type::nd_range);
     EXPECT_CONVERSION_FROM_STRING("ND_RANGE", plssvm::sycl::kernel_invocation_type::nd_range);
-    EXPECT_CONVERSION_FROM_STRING("hierarchical", plssvm::sycl::kernel_invocation_type::hierarchical);
-    EXPECT_CONVERSION_FROM_STRING("HIERARCHICAL", plssvm::sycl::kernel_invocation_type::hierarchical);
 }
 TEST(SYCLKernelInvocationType, from_string_unknown) {
     // foo isn't a valid file_format_type

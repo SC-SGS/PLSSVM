@@ -18,6 +18,8 @@
 
 #include "CL/cl.h"  // cl_mem
 
+#include <array>  // std::array
+
 namespace plssvm::opencl::detail {
 
 /**
@@ -30,15 +32,15 @@ class device_ptr : public ::plssvm::detail::gpu_device_ptr<T, const command_queu
     using base_type = ::plssvm::detail::gpu_device_ptr<T, const command_queue *, cl_mem>;
 
     using base_type::data_;
+    using base_type::extents_;
     using base_type::queue_;
-    using base_type::size_;
 
   public:
     // Be able to use overloaded base class functions.
-    using base_type::memset;
-    using base_type::fill;
     using base_type::copy_to_device;
     using base_type::copy_to_host;
+    using base_type::fill;
+    using base_type::memset;
 
     using typename base_type::const_host_pointer_type;
     using typename base_type::device_pointer_type;
@@ -52,11 +54,24 @@ class device_ptr : public ::plssvm::detail::gpu_device_ptr<T, const command_queu
      */
     device_ptr() = default;
     /**
-     * @brief Allocates `size * sizeof(T)` bytes on the device with ID @p device.
+     * @brief Allocates `size * sizeof(T)` bytes on the device associated with @p queue.
      * @param[in] size the number of elements represented by the device_ptr
      * @param[in] queue the associated command queue
      */
     device_ptr(size_type size, const command_queue &queue);
+    /**
+     * @brief Allocates `extents[0] * extents[1] * sizeof(T)` bytes on the device associated with @p queue.
+     * @param[in] extents the number of elements represented by the device_ptr
+     * @param[in] queue the associated command queue
+     */
+    device_ptr(std::array<size_type, 2> extents, const command_queue &queue);
+    /**
+     * @brief Allocates `(extents[0] + padding[0]) * (extents[1] + padding[1]) * sizeof(T)` bytes on the device associated with @p queue.
+     * @param[in] extents the number of elements represented by the device_ptr
+     * @param[in] padding the number of padding elements added to the extent values
+     * @param[in] queue the associated command queue
+     */
+    device_ptr(std::array<size_type, 2> extents, std::array<size_type, 2> padding, const command_queue &queue);
 
     /**
      * @copydoc plssvm::detail::gpu_device_ptr::gpu_device_ptr(const plssvm::detail::gpu_device_ptr &)

@@ -15,6 +15,8 @@
 
 #include "plssvm/detail/type_traits.hpp"  // PLSSVM_REQUIRES
 
+#include "fmt/ostream.h"  // fmt::formatter, fmt::ostream_formatter
+
 #include <cstddef>      // std::size_t
 #include <functional>   // std::hash
 #include <istream>      // std::istream
@@ -446,5 +448,8 @@ struct hash<plssvm::default_value<T>> {
 };
 
 }  // namespace std
+
+template <typename T>
+struct fmt::formatter<plssvm::default_value<T>> : fmt::ostream_formatter {};
 
 #endif  // PLSSVM_DEFAULT_VALUE_HPP_

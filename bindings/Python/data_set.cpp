@@ -7,41 +7,41 @@
  */
 
 #include "plssvm/data_set.hpp"
-#include "plssvm/detail/type_list.hpp"  // plssvm::detail::real_type_label_type_combination_list
 
-#include "utility.hpp"                  // check_kwargs_for_correctness, assemble_unique_class_name,
-                                        // pyarray_to_vector, pyarray_to_string_vector, pylist_to_string_vector, pyarray_to_matrix
+#include "plssvm/constants.hpp"         // plssvm::real_type
+#include "plssvm/detail/type_list.hpp"  // plssvm::detail::label_type_list
 
-#include "fmt/core.h"                   // fmt::format
-#include "fmt/format.h"                 // fmt::join
-#include "pybind11/numpy.h"             // py::array_t
-#include "pybind11/pybind11.h"          // py::module_, py::class_, py::init, py::return_value_policy, py::arg, py::kwargs, py::value_error, py::pos_only, py::list
-#include "pybind11/stl.h"               // support for STL types
+#include "utility.hpp"  // check_kwargs_for_correctness, assemble_unique_class_name,
+                        // pyarray_to_vector, pyarray_to_string_vector, pylist_to_string_vector, pyarray_to_matrix
 
-#include <array>                        // std::array
-#include <cstddef>                      // std::size_t
-#include <string>                       // std::string
-#include <tuple>                        // std::tuple_element_t, std::tuple_size_v
-#include <type_traits>                  // std::is_same_v
-#include <utility>                      // std::move, std::integer_sequence, std::make_integer_sequence
+#include "fmt/core.h"           // fmt::format
+#include "fmt/format.h"         // fmt::join
+#include "pybind11/numpy.h"     // py::array_t
+#include "pybind11/pybind11.h"  // py::module_, py::class_, py::init, py::return_value_policy, py::arg, py::kwargs, py::value_error, py::pos_only, py::list
+#include "pybind11/stl.h"       // support for STL types
+
+#include <array>        // std::array
+#include <cstddef>      // std::size_t
+#include <string>       // std::string
+#include <tuple>        // std::tuple_element_t, std::tuple_size_v
+#include <type_traits>  // std::is_same_v
+#include <utility>      // std::move, std::integer_sequence, std::make_integer_sequence
 
 namespace py = pybind11;
 
 template <typename data_set_type>
 typename data_set_type::scaling create_scaling_object(const py::kwargs &args) {
-    using real_type = typename data_set_type::real_type;
-
     if (args.contains("scaling")) {
-        typename data_set_type::scaling scaling{ real_type{ -1.0 }, real_type{ 1.0 } };
+        typename data_set_type::scaling scaling{ plssvm::real_type{ -1.0 }, plssvm::real_type{ 1.0 } };
 
         // try to directly convert it to a plssvm::data_set_type::scaling object
         try {
             scaling = args["scaling"].cast<typename data_set_type::scaling>();
-        } catch (const py::cast_error &e) {
+        } catch (const py::cast_error &) {
             // can't cast to plssvm::data_set_type::scaling
-            // -> try an std::array<real_type, 2> instead!
+            // -> try a std::array<real_type, 2> instead!
             try {
-                const auto interval = args["scaling"].cast<std::array<real_type, 2>>();
+                const auto interval = args["scaling"].cast<std::array<plssvm::real_type, 2>>();
                 scaling = typename data_set_type::scaling{ interval[0], interval[1] };
             } catch (...) {
                 // rethrow exception if this also did not succeed
@@ -54,19 +54,20 @@ typename data_set_type::scaling create_scaling_object(const py::kwargs &args) {
     }
 }
 
-template <typename real_type, typename label_type>
-void instantiate_data_set_bindings(py::module_ &m, plssvm::detail::real_type_label_type_combination<real_type, label_type>) {
-    using data_set_type = plssvm::data_set<real_type, label_type>;
+template <typename label_type>
+void instantiate_data_set_bindings(py::module_ &m, label_type) {
+    using data_set_type = plssvm::data_set<label_type>;
     using size_type = typename data_set_type::size_type;
 
     // create the Python type names based on the provided real_type and label_type
-    const std::string class_name_scaling_factors = assemble_unique_class_name<real_type, label_type>("DataSetScalingFactors");
-    const std::string class_name_scaling = assemble_unique_class_name<real_type, label_type>("DataSetScaling");
-    const std::string class_name = assemble_unique_class_name<real_type, label_type>("DataSet");
+    const std::string class_name_scaling_factors = assemble_unique_class_name<label_type>("DataSetScalingFactors");
+    const std::string class_name_scaling = assemble_unique_class_name<label_type>("DataSetScaling");
+    const std::string class_name = assemble_unique_class_name<label_type>("DataSet");
 
+    PYBIND11_NUMPY_DTYPE(typename data_set_type::scaling::factors, feature, lower, upper);
     // bind the plssvm::data_set::scaling internal "factors" struct
     py::class_<typename data_set_type::scaling::factors>(m, class_name_scaling_factors.c_str())
-        .def(py::init<size_type, real_type, real_type>(), "create a new scaling factor", py::arg("feature"), py::arg("lower"), py::arg("upper"))
+        .def(py::init<size_type, plssvm::real_type, plssvm::real_type>(), "create a new scaling factor", py::arg("feature"), py::arg("lower"), py::arg("upper"))
         .def_readonly("feature", &data_set_type::scaling::factors::feature, "the feature index for which the factors are valid")
         .def_readonly("lower", &data_set_type::scaling::factors::lower, "the lower scaling factor")
         .def_readonly("upper", &data_set_type::scaling::factors::upper, "the upper scaling factor")
@@ -80,8 +81,8 @@ void instantiate_data_set_bindings(py::module_ &m, plssvm::detail::real_type_lab
 
     // bind the plssvm::data_set internal "scaling" struct
     py::class_<typename data_set_type::scaling>(m, class_name_scaling.c_str())
-        .def(py::init<real_type, real_type>(), "create new scaling factors for the range [lower, upper]", py::arg("lower"), py::arg("upper"))
-        .def(py::init([](const std::array<real_type, 2> interval) {
+        .def(py::init<plssvm::real_type, plssvm::real_type>(), "create new scaling factors for the range [lower, upper]", py::arg("lower"), py::arg("upper"))
+        .def(py::init([](const std::array<plssvm::real_type, 2> interval) {
                  return typename data_set_type::scaling{ interval[0], interval[1] };
              }),
              "create new scaling factors for the range [lower, upper]")
@@ -121,7 +122,7 @@ void instantiate_data_set_bindings(py::module_ &m, plssvm::detail::real_type_lab
                     }),
                     "create a new data set from the provided file and additional optional parameters");
     // bind constructor taking only data points without labels
-    py_data_set.def(py::init([](py::array_t<real_type> data, py::kwargs args) {
+    py_data_set.def(py::init([](py::array_t<plssvm::real_type, py::array::c_style | py::array::forcecast> data, py::kwargs args) {
                         // check keyword arguments
                         check_kwargs_for_correctness(args, { "scaling" });
 
@@ -134,7 +135,7 @@ void instantiate_data_set_bindings(py::module_ &m, plssvm::detail::real_type_lab
                     "create a new data set without labels given additional optional parameters");
 
     if constexpr (!std::is_same_v<label_type, std::string>) {
-        py_data_set.def(py::init([](py::array_t<real_type> data, py::array_t<label_type> labels, py::kwargs args) {
+        py_data_set.def(py::init([](py::array_t<plssvm::real_type, py::array::c_style | py::array::forcecast> data, py::array_t<label_type, py::array::c_style | py::array::forcecast> labels, py::kwargs args) {
                             // check keyword arguments
                             check_kwargs_for_correctness(args, { "scaling" });
 
@@ -147,7 +148,7 @@ void instantiate_data_set_bindings(py::module_ &m, plssvm::detail::real_type_lab
                         "create a new data set with labels from a numpy array given additional optional parameters");
     } else {
         // if the requested label_type is std::string, accept numpy arrays with real_type and convert them to a std::string internally
-        py_data_set.def(py::init([](py::array_t<real_type> data, py::array_t<real_type> labels, py::kwargs args) {
+        py_data_set.def(py::init([](py::array_t<plssvm::real_type, py::array::c_style | py::array::forcecast> data, py::array_t<plssvm::real_type, py::array::c_style | py::array::forcecast> labels, py::kwargs args) {
                             // check keyword arguments
                             check_kwargs_for_correctness(args, { "scaling" });
 
@@ -159,7 +160,7 @@ void instantiate_data_set_bindings(py::module_ &m, plssvm::detail::real_type_lab
                         }),
                         "create a new data set with labels from a numpy array given additional optional parameters");
         // if the requested label_type is std::string, accept a python list (which can contain py::str) and convert them to a std::string internally
-        py_data_set.def(py::init([](py::array_t<real_type> data, const py::list &labels, py::kwargs args) {
+        py_data_set.def(py::init([](py::array_t<plssvm::real_type, py::array::c_style | py::array::forcecast> data, const py::list &labels, py::kwargs args) {
                             // check keyword arguments
                             check_kwargs_for_correctness(args, { "scaling" });
 
@@ -176,7 +177,6 @@ void instantiate_data_set_bindings(py::module_ &m, plssvm::detail::real_type_lab
         .def("save", py::overload_cast<const std::string &>(&data_set_type::save, py::const_), "save the data set to a file automatically deriving the file format type from the file extension")
         .def("num_data_points", &data_set_type::num_data_points, "the number of data points in the data set")
         .def("num_features", &data_set_type::num_features, "the number of features per data point")
-        .def("data", &data_set_type::data, py::return_value_policy::reference_internal, "the data saved as 2D vector")
         .def(
             "data", [](const data_set_type &data) {
                 return matrix_to_pyarray(data.data());
@@ -196,20 +196,20 @@ void instantiate_data_set_bindings(py::module_ &m, plssvm::detail::real_type_lab
                 }
             },
             "the labels")
-        .def("num_different_labels", &data_set_type::num_different_labels, "the number of different labels")
+        .def("num_classes", &data_set_type::num_classes, "the number of classes")
         .def(
-            "different_labels", [](const data_set_type &self) {
+            "classes", [](const data_set_type &self) {
                 if (!self.has_labels()) {
-                    throw py::attribute_error{ "'DataSet' object has no function 'different_labels'. Maybe this DataSet was created without labels?" };
+                    throw py::attribute_error{ "'DataSet' object has no function 'classes'. Maybe this DataSet was created without labels?" };
                 } else {
                     if constexpr (std::is_same_v<label_type, std::string>) {
-                        return self.different_labels().value();
+                        return self.classes().value();
                     } else {
-                        return vector_to_pyarray(self.different_labels().value());
+                        return vector_to_pyarray(self.classes().value());
                     }
                 }
             },
-            "the different labels")
+            "the classes")
         .def("is_scaled", &data_set_type::is_scaled, "check whether the original data has been scaled to [lower, upper] bounds")
         .def(
             "scaling_factors", [](const data_set_type &self) {
@@ -224,7 +224,7 @@ void instantiate_data_set_bindings(py::module_ &m, plssvm::detail::real_type_lab
         .def("__repr__", [class_name](const data_set_type &self) {
             std::string optional_repr{};
             if (self.has_labels()) {
-                optional_repr += fmt::format(", labels: [{}]", fmt::join(self.different_labels().value(), ", "));
+                optional_repr += fmt::format(", classes: [{}]", fmt::join(self.classes().value(), ", "));
             }
             if (self.is_scaled()) {
                 optional_repr += fmt::format(", scaling: [{}, {}]",
@@ -251,10 +251,10 @@ void instantiate_data_set_bindings(py::module_ &m) {
 
 void init_data_set(py::module_ &m) {
     // bind all data_set classes
-    instantiate_data_set_bindings<plssvm::detail::real_type_label_type_combination_list>(m);
+    instantiate_data_set_bindings<plssvm::detail::supported_label_types>(m);
 
     // create aliases
-    m.attr("DataSetScalingFactors") = m.attr(assemble_unique_class_name<PLSSVM_PYTHON_BINDINGS_PREFERRED_REAL_TYPE, PLSSVM_PYTHON_BINDINGS_PREFERRED_LABEL_TYPE>("DataSetScalingFactors").c_str());
-    m.attr("DataSetScaling") = m.attr(assemble_unique_class_name<PLSSVM_PYTHON_BINDINGS_PREFERRED_REAL_TYPE, PLSSVM_PYTHON_BINDINGS_PREFERRED_LABEL_TYPE>("DataSetScaling").c_str());
-    m.attr("DataSet") = m.attr(assemble_unique_class_name<PLSSVM_PYTHON_BINDINGS_PREFERRED_REAL_TYPE, PLSSVM_PYTHON_BINDINGS_PREFERRED_LABEL_TYPE>("DataSet").c_str());
+    m.attr("DataSetScalingFactors") = m.attr(assemble_unique_class_name<PLSSVM_PYTHON_BINDINGS_PREFERRED_LABEL_TYPE>("DataSetScalingFactors").c_str());
+    m.attr("DataSetScaling") = m.attr(assemble_unique_class_name<PLSSVM_PYTHON_BINDINGS_PREFERRED_LABEL_TYPE>("DataSetScaling").c_str());
+    m.attr("DataSet") = m.attr(assemble_unique_class_name<PLSSVM_PYTHON_BINDINGS_PREFERRED_LABEL_TYPE>("DataSet").c_str());
 }

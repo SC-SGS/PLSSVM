@@ -16,6 +16,8 @@
 #include "plssvm/backends/SYCL/hipSYCL/detail/queue.hpp"  // plssvm::hipsycl::detail::queue (PImpl)
 #include "plssvm/backends/gpu_device_ptr.hpp"             // plssvm::detail::gpu_device_ptr
 
+#include <array>  // std::array
+
 namespace plssvm::hipsycl::detail {
 
 /**
@@ -28,15 +30,15 @@ class device_ptr : public ::plssvm::detail::gpu_device_ptr<T, queue> {
     using base_type = ::plssvm::detail::gpu_device_ptr<T, queue>;
 
     using base_type::data_;
+    using base_type::extents_;
     using base_type::queue_;
-    using base_type::size_;
 
   public:
     // Be able to use overloaded base class functions.
-    using base_type::memset;
-    using base_type::fill;
     using base_type::copy_to_device;
     using base_type::copy_to_host;
+    using base_type::fill;
+    using base_type::memset;
 
     using typename base_type::const_host_pointer_type;
     using typename base_type::device_pointer_type;
@@ -55,6 +57,19 @@ class device_ptr : public ::plssvm::detail::gpu_device_ptr<T, queue> {
      * @param[in] q the associated SYCL queue
      */
     device_ptr(size_type size, const queue &q);
+    /**
+     * @brief Allocates `extents[0] * extents[1] * sizeof(T)` bytes on the device associated with @p q.
+     * @param[in] extents the number of elements represented by the device_ptr
+     * @param[in] q the associated SYCL queue
+     */
+    device_ptr(std::array<size_type, 2> extents, const queue &q);
+    /**
+     * @brief Allocates `(extents[0] + padding[0]) * (extents[1] * padding[1]) * sizeof(T)` bytes on the device associated with @p q.
+     * @param[in] extents the number of elements represented by the device_ptr
+     * @param[in] padding the number of padding elements added to the extent values
+     * @param[in] q the associated SYCL queue
+     */
+    device_ptr(std::array<size_type, 2> extents, std::array<size_type, 2> padding, const queue &q);
 
     /**
      * @copydoc plssvm::detail::gpu_device_ptr::gpu_device_ptr(const plssvm::detail::gpu_device_ptr &)

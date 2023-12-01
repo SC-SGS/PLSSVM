@@ -12,7 +12,7 @@
 #include "plssvm/detail/string_utility.hpp"  // plssvm::detail::starts_with, plssvm::detail::trim_left
 #include "plssvm/exceptions/exceptions.hpp"  // plssvm::file_not_found_exception, plssvm::invalid_file_format_exception
 
-#include "fmt/core.h"                        // fmt::format
+#include "fmt/core.h"  // fmt::format
 
 // check if memory mapping can be supported
 #if defined(PLSSVM_HAS_MEMORY_MAPPING_UNIX)
@@ -21,9 +21,9 @@
     #include <sys/stat.h>  // fstat
     #include <unistd.h>    // close
 #elif defined(PLSSVM_HAS_MEMORY_MAPPING_WINDOWS)
-    #include <windows.h>   // CreateFile, GetLastError, GetFileSizeEx, CreateFileMapping, MapViewOfFile, UnmapViewOfFile, CloseHandle
-                           // HANDLE, GENERIC_READ, FILE_SHARE_READ, OPEN_EXISTING, FILE_ATTRIBUTE_READONLY,l INVALID_HANDLE_VALUE, ERROR_FILE_NOT_FOUND,
-                           // PAGE_READONLY, FILE_MAP_READ, LARGE_INTEGER
+    #include <windows.h>  // CreateFile, GetLastError, GetFileSizeEx, CreateFileMapping, MapViewOfFile, UnmapViewOfFile, CloseHandle
+                          // HANDLE, GENERIC_READ, FILE_SHARE_READ, OPEN_EXISTING, FILE_ATTRIBUTE_READONLY,l INVALID_HANDLE_VALUE, ERROR_FILE_NOT_FOUND,
+                          // PAGE_READONLY, FILE_MAP_READ, LARGE_INTEGER
 #endif
 
 #if _OPENMP
@@ -199,7 +199,7 @@ const std::vector<std::string_view> &file_reader::read_lines(const std::string_v
         }
 
         // find all newlines - parallel
-        #pragma omp for ordered
+        #pragma omp for
         for (std::size_t i = 0; i < file_content_view.size(); ++i) {
             if (file_content_view[i] == '\n') {
                 per_thread_newlines[omp_get_thread_num()].push_back(i + 1);
@@ -221,13 +221,13 @@ const std::vector<std::string_view> &file_reader::read_lines(const std::string_v
         }
 
         // get lines from newlines - parallel
-        #pragma omp for ordered
+        #pragma omp for
         for (std::size_t i = 0; i < per_thread_newlines.size(); ++i) {
             // reserve lines sizes
             per_thread_lines[i].reserve(per_thread_newlines[i].size());
 
             for (std::size_t l = 0; l < per_thread_newlines[i].size() - 1; ++l) {
-                std::string_view sv = trim_left(std::string_view{ file_content_view.data() + per_thread_newlines[i][l], per_thread_newlines[i][l + 1] - per_thread_newlines[i][l] - 1});
+                std::string_view sv = trim_left(std::string_view{ file_content_view.data() + per_thread_newlines[i][l], per_thread_newlines[i][l + 1] - per_thread_newlines[i][l] - 1 });
                 // remove \r on windows (\r\n)
                 if (ends_with(sv, '\r')) {
                     sv.remove_suffix(1);

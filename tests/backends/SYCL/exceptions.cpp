@@ -8,13 +8,13 @@
  * @brief Tests for the custom exception classes related to the SYCL backends.
  */
 
-#include "plssvm/backends/SYCL/exceptions.hpp"    // plssvm::sycl::backend_exception, plssvm::hipsycl::backend_exception, plssvm::dpcpp::backend_exception
+#include "plssvm/backends/SYCL/exceptions.hpp"  // plssvm::sycl::backend_exception, plssvm::hipsycl::backend_exception, plssvm::dpcpp::backend_exception
 
 #include "backends/generic_exceptions_tests.hpp"  // generic exception tests to instantiate
 
-#include "gtest/gtest.h"                          // INSTANTIATE_TYPED_TEST_SUITE_P
+#include "gtest/gtest.h"  // INSTANTIATE_TYPED_TEST_SUITE_P
 
-#include <string_view>                            // std::string_view
+#include <string_view>  // std::string_view
 
 struct sycl_exception_test_type {
     using exception_type = plssvm::sycl::backend_exception;
@@ -22,7 +22,7 @@ struct sycl_exception_test_type {
 };
 
 // instantiate type-parameterized tests
-INSTANTIATE_TYPED_TEST_SUITE_P(SYCLException, Exception, sycl_exception_test_type);
+INSTANTIATE_TYPED_TEST_SUITE_P(SYCLExceptions, Exception, sycl_exception_test_type);
 
 struct hipsycl_exception_test_type {
     using exception_type = plssvm::hipsycl::backend_exception;
@@ -30,7 +30,7 @@ struct hipsycl_exception_test_type {
 };
 
 // instantiate type-parameterized tests
-INSTANTIATE_TYPED_TEST_SUITE_P(hipSYCLBackend, Exception, hipsycl_exception_test_type);
+INSTANTIATE_TYPED_TEST_SUITE_P(hipSYCLExceptions, Exception, hipsycl_exception_test_type);
 
 struct dpcpp_exception_test_type {
     using exception_type = plssvm::dpcpp::backend_exception;
@@ -38,4 +38,4 @@ struct dpcpp_exception_test_type {
 };
 
 // instantiate type-parameterized tests
-INSTANTIATE_TYPED_TEST_SUITE_P(DPCPPBackend, Exception, dpcpp_exception_test_type);
+INSTANTIATE_TYPED_TEST_SUITE_P(DPCPPExceptions, Exception, dpcpp_exception_test_type);

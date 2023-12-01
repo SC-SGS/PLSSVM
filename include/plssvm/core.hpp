@@ -16,14 +16,19 @@
 #include "plssvm/csvm.hpp"                                  // the base C-SVM every backend is inheriting from
 #include "plssvm/csvm_factory.hpp"                          // a factory function to instantiate a C-SVM using a runtime backend; includes the available backend C-SVMs
 
+#include "plssvm/classification_report.hpp"                 // reports different metrics (precision, recall, f1 score, and support) for the different classes after scoring
+
 #include "plssvm/constants.hpp"                             // verbosity flag und compile-time constants
 #include "plssvm/parameter.hpp"                             // the C-SVM parameter
 
+#include "plssvm/matrix.hpp"                                // a custom matrix class
 #include "plssvm/data_set.hpp"                              // a data set used for training a C-SVM
 #include "plssvm/model.hpp"                                 // the model as a result of training a C-SVM
 
 #include "plssvm/backend_types.hpp"                         // all supported backend types
+#include "plssvm/classification_types.hpp"                  // all supported multi-class classification strategies
 #include "plssvm/kernel_function_types.hpp"                 // all supported kernel function types
+#include "plssvm/solver_types.hpp"                          // all supported solver types (e.g., Conjugate Gradients with explicit, streaming, or implicit kernel matrix generation)
 #include "plssvm/target_platforms.hpp"                      // all supported target platforms
 
 #include "plssvm/backends/SYCL/implementation_type.hpp"     // the SYCL implementation type

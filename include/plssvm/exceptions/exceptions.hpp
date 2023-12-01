@@ -16,9 +16,9 @@
 
 #include "plssvm/exceptions/source_location.hpp"  // plssvm::source_location
 
-#include <stdexcept>                              // std::runtime_error
-#include <string>                                 // std::string
-#include <string_view>                            // std::string_view
+#include <stdexcept>    // std::runtime_error
+#include <string>       // std::string
+#include <string_view>  // std::string_view
 
 namespace plssvm {
 
@@ -158,6 +158,24 @@ class gpu_device_ptr_exception : public exception {
      * @param[in] loc the exception's call side information
      */
     explicit gpu_device_ptr_exception(const std::string &msg, source_location loc = source_location::current());
+};
+
+/**
+ * @brief Exception type thrown if an error in the utility plssvm::detail::matrix_impl class occurred.
+ */
+class matrix_exception : public exception {
+  public:
+    /**
+     * @brief Construct a new exception forwarding the exception message and source location to plssvm::exception.
+     * @param[in] msg the exception's `what()` message
+     * @param[in] loc the exception's call side information
+     */
+    explicit matrix_exception(const std::string &msg, source_location loc = source_location::current());
+};
+
+class kernel_launch_resources : public exception {
+  public:
+    explicit kernel_launch_resources(const std::string &msg, source_location loc = source_location::current());
 };
 
 }  // namespace plssvm

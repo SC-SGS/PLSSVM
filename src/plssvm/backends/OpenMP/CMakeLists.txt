@@ -34,19 +34,19 @@ message(CHECK_PASS "found ")
 set(PLSSVM_OPENMP_SOURCES
         ${CMAKE_CURRENT_LIST_DIR}/csvm.cpp
         ${CMAKE_CURRENT_LIST_DIR}/exceptions.cpp
-        ${CMAKE_CURRENT_LIST_DIR}/q_kernel.cpp
-        ${CMAKE_CURRENT_LIST_DIR}/svm_kernel.cpp
-        )
+        ${CMAKE_CURRENT_LIST_DIR}/cg_explicit/blas.cpp
+        ${CMAKE_CURRENT_LIST_DIR}/cg_explicit/kernel_matrix_assembly.cpp
+)
 
 
 # set target properties
 set_local_and_parent(PLSSVM_OPENMP_BACKEND_LIBRARY_NAME plssvm-OpenMP)
-add_library(${PLSSVM_OPENMP_BACKEND_LIBRARY_NAME} STATIC ${PLSSVM_OPENMP_SOURCES})
-target_link_libraries(${PLSSVM_OPENMP_BACKEND_LIBRARY_NAME} PUBLIC OpenMP::OpenMP_CXX)
+add_library(${PLSSVM_OPENMP_BACKEND_LIBRARY_NAME} SHARED ${PLSSVM_OPENMP_SOURCES})
+target_link_libraries(${PLSSVM_OPENMP_BACKEND_LIBRARY_NAME} PRIVATE $<$<NOT:$<CXX_COMPILER_ID:MSVC>>:OpenMP::OpenMP_CXX>)
 # special command line options for MSVC:
 # -openmp:llvm -> enables unsigned loop indexes in OpenMP parallel for loops
 # -openmp:experimental -> enables OpenMP's SIMD instructions
-target_compile_options(${PLSSVM_OPENMP_BACKEND_LIBRARY_NAME} PUBLIC $<$<CXX_COMPILER_ID:MSVC>:-openmp:llvm -openmp:experimental>)
+target_compile_options(${PLSSVM_OPENMP_BACKEND_LIBRARY_NAME} PRIVATE $<$<CXX_COMPILER_ID:MSVC>:-openmp:llvm -openmp:experimental>)
 
 # link base library against OpenMP library
 target_link_libraries(${PLSSVM_OPENMP_BACKEND_LIBRARY_NAME} PUBLIC ${PLSSVM_BASE_LIBRARY_NAME})

@@ -14,21 +14,24 @@
 #define PLSSVM_DETAIL_PERFORMANCE_TRACKER_HPP_
 #pragma once
 
+#include "plssvm/detail/type_traits.hpp"  // plssvm::detail::remove_cvref_t
+#include "plssvm/detail/utility.hpp"      // PLSSVM_EXTERN
+#include "plssvm/parameter.hpp"           // plssvm::parameter
+
 #include "plssvm/detail/cmd/parser_predict.hpp"  // plssvm::detail::cmd::parser_predict
 #include "plssvm/detail/cmd/parser_scale.hpp"    // plssvm::detail::cmd::parser_scale
 #include "plssvm/detail/cmd/parser_train.hpp"    // plssvm::detail::cmd::parser_train
-#include "plssvm/detail/type_traits.hpp"         // plssvm::detail::remove_cvref_t
 
-#include "fmt/chrono.h"                          // format std::chrono types
-#include "fmt/core.h"                            // fmt::format
-#include "fmt/ostream.h"                         // format types with an operator<< overload
+#include "fmt/chrono.h"  // format std::chrono types
+#include "fmt/format.h"  // fmt::format, fmt::join, fmt::formatter
 
-#include <memory>                                // std::shared_ptr
-#include <string>                                // std::string
-#include <string_view>                           // std::string_view
-#include <type_traits>                           // std::false_type, std::true_type
-#include <unordered_map>                         // std::unordered_multimap
-#include <utility>                               // std::move
+#include <map>          // std::map
+#include <memory>       // std::shared_ptr
+#include <string>       // std::string
+#include <string_view>  // std::string_view
+#include <type_traits>  // std::false_type, std::true_type
+#include <utility>      // std::move
+#include <vector>       // std::vector
 
 namespace plssvm::detail {
 
@@ -50,10 +53,33 @@ struct tracking_entry {
     /// The category to which this tracking entry belongs; used for grouping in the resulting YAML file.
     const std::string entry_category{};
     /// The name of the tracking entry displayed in the YAML file.
-    const std::string_view entry_name{};
+    const std::string entry_name{};
     /// The tracked value in the YAML file.
     const T entry_value{};
 };
+
+}  // namespace plssvm::detail
+
+/**
+ * @brief Custom tracking_entry formatter to be able to use fmt format specifiers for values of type T.
+ * @tparam T the performance tracked type
+ */
+template <typename T>
+struct fmt::formatter<plssvm::detail::tracking_entry<T>> : fmt::formatter<T> {
+    /**
+     * @brief Format the tracking @p entry using the provided format specifier for type T.
+     * @tparam FormatContext the type of the format context
+     * @param[in] entry the tracking entry to format
+     * @param[in,out] context the format context
+     * @return the formatted string
+     */
+    template <typename FormatContext>
+    auto format(const plssvm::detail::tracking_entry<T> &entry, FormatContext &context) {
+        return fmt::formatter<T>::format(entry.entry_value, context);
+    }
+};
+
+namespace plssvm::detail {
 
 /**
  * @brief Output the tracking @p entry to the given output-stream @p out. Only the tracked value is output **excluding** the category and name.
@@ -119,19 +145,20 @@ class performance_tracker {
     template <typename T>
     void add_tracking_entry(const tracking_entry<T> &entry);
     /**
-     * @brief Add a tracking_entry encapsulating a std::string to this performance tracker.
+     * @brief Add a tracking_entry consisting of multiple values stored in a `std::vector` to this performance tracker.
      * @details Saves a string containing the entry name and value in a map with the entry category as key.
-     *          Adds quotes around the entry's value.
-     * @param[in] entry the entry to add
+     * @tparam T the type of the value the tracking_entry @p entry encapsulates
+     * @param[in] entry the `std::vector` entry to add
      */
-    void add_tracking_entry(const tracking_entry<std::string> &entry);
+    template <typename T>
+    void add_tracking_entry(const tracking_entry<std::vector<T>> &entry);
     /**
      * @brief Add a tracking_entry encapsulating a plssvm::parameter to this performance tracker.
      * @details Saves a string containing the entry name and value in a map with the entry category as key.
      *          Adds all values stored in the plssvm::parameter as tracking entries.
      * @param[in] entry the entry to add
      */
-    void add_tracking_entry(const tracking_entry<::plssvm::parameter> &entry);
+    void add_tracking_entry(const tracking_entry<plssvm::parameter> &entry);
     /**
      * @brief Add a tracking_entry encapsulating a plssvm::detail::cmd::parser_train to this performance tracker.
      * @details Saves a string containing the entry name and value in a map with the entry category as key.
@@ -179,17 +206,21 @@ class performance_tracker {
      * @brief Check whether tracking is currently active or paused.
      * @return `true` if tracking is enabled, `false` if it is currently paused (`[[nodiscard]]`)
      */
-    [[nodiscard]] bool is_tracking() noexcept;
+    [[nodiscard]] bool is_tracking() const noexcept;
 
     /**
      * @brief Return the currently available tracking entries.
      * @return the previously added tracking entries (`[[nodiscard]]`)
      */
-    [[nodiscard]] const std::unordered_multimap<std::string, std::string> &get_tracking_entries() noexcept;
+    [[nodiscard]] const std::map<std::string, std::map<std::string, std::vector<std::string>>> &get_tracking_entries() noexcept;
+    /**
+     * @brief Remove all currently saved tracking entries from the performance tracker.
+     */
+    void clear_tracking_entries() noexcept;
 
   private:
     /// All performance statistics grouped by their specified categories.
-    std::unordered_multimap<std::string, std::string> tracking_statistics{};
+    std::map<std::string, std::map<std::string, std::vector<std::string>>> tracking_statistics_{};
     /// The tracking is enabled by default.
     bool is_tracking_{ true };
 };
@@ -197,12 +228,52 @@ class performance_tracker {
 template <typename T>
 void performance_tracker::add_tracking_entry(const tracking_entry<T> &entry) {
     if (is_tracking()) {
-        tracking_statistics.emplace(entry.entry_category, fmt::format("{}{}: {}\n", entry.entry_category.empty() ? "" : "  ", entry.entry_name, entry.entry_value));
+        const std::string entry_value_str = fmt::format(std::is_same_v<T, std::string> ? "\"{}\"" : "{}", entry.entry_value);
+
+        if (detail::contains(tracking_statistics_, entry.entry_category)) {
+            // category already exists -> check if entry already exists
+            if (detail::contains(tracking_statistics_[entry.entry_category], entry.entry_name)) {
+                // entry already exists -> add new value to this entry's list
+                tracking_statistics_[entry.entry_category][entry.entry_name].push_back(entry_value_str);
+            } else {
+                // entry does not exist -> create new entry and add value as initial value to the vector
+                tracking_statistics_[entry.entry_category].emplace(entry.entry_name, std::vector<std::string>{ entry_value_str });
+            }
+        } else {
+            // category does not exist -> create new category with the current entry + entry value
+            tracking_statistics_.emplace(entry.entry_category, std::map<std::string, std::vector<std::string>>{ { entry.entry_name, std::vector<std::string>{ entry_value_str } } });
+        }
+    }
+}
+
+template <typename T>
+void performance_tracker::add_tracking_entry(const tracking_entry<std::vector<T>> &entry) {
+    if (is_tracking()) {
+        std::string entry_value_str;
+        if constexpr (std::is_same_v<T, std::string>) {
+            entry_value_str = fmt::format("[\"{}\"]", fmt::join(entry.entry_value, "\", \""));
+        } else {
+            entry_value_str = fmt::format("[{}]", fmt::join(entry.entry_value, ", "));
+        }
+
+        if (detail::contains(tracking_statistics_, entry.entry_category)) {
+            // category already exists -> check if entry already exists
+            if (detail::contains(tracking_statistics_[entry.entry_category], entry.entry_name)) {
+                // entry already exists -> add new value to this entry's list
+                tracking_statistics_[entry.entry_category][entry.entry_name].push_back(entry_value_str);
+            } else {
+                // entry does not exist -> create new entry and add value as initial value to the vector
+                tracking_statistics_[entry.entry_category].emplace(entry.entry_name, std::vector<std::string>{ entry_value_str });
+            }
+        } else {
+            // category does not exist -> create new category with the current entry + entry value
+            tracking_statistics_.emplace(entry.entry_category, std::map<std::string, std::vector<std::string>>{ { entry.entry_name, std::vector<std::string>{ entry_value_str } } });
+        }
     }
 }
 
 /// The global performance tracker instance used for the default tracking.
-extern std::shared_ptr<performance_tracker> global_tracker;
+PLSSVM_EXTERN std::shared_ptr<performance_tracker> global_tracker;
 
 /**
  * @def PLSSVM_DETAIL_PERFORMANCE_TRACKER_PAUSE
@@ -236,7 +307,7 @@ extern std::shared_ptr<performance_tracker> global_tracker;
         ::plssvm::detail::global_tracker->save(filename)
 
     #define PLSSVM_DETAIL_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY(entry) \
-        ::plssvm::detail::global_tracker->add_tracking_entry(entry);
+        ::plssvm::detail::global_tracker->add_tracking_entry(entry)
 #else
 
     #define PLSSVM_DETAIL_PERFORMANCE_TRACKER_PAUSE()

@@ -7,20 +7,28 @@
 
 message(CHECK_START "Checking for hipSYCL as SYCL implementation")
 
-# reformat PLSSVM_TARGET_PLATFORMS to be usable with HIPSYCL_TARGETS (in case hipSYCL may be available)
-set(HIPSYCL_TARGETS "${PLSSVM_TARGET_PLATFORMS}" CACHE STRING "" FORCE)
-list(TRANSFORM HIPSYCL_TARGETS REPLACE "cpu" "omp")
-list(TRANSFORM HIPSYCL_TARGETS REPLACE "nvidia" "cuda")
-list(TRANSFORM HIPSYCL_TARGETS REPLACE "amd" "hip")
-list(TRANSFORM HIPSYCL_TARGETS REPLACE "intel" "spirv")
-# remove CPU and Intel GPU target architectures since they are not supported when using hipSYCL
-if (DEFINED PLSSVM_CPU_TARGET_ARCHS AND PLSSVM_NUM_CPU_TARGET_ARCHS GREATER 0)
-    string(REPLACE ";" "," PLSSVM_CPU_TARGET_ARCHS_COMMA "${PLSSVM_CPU_TARGET_ARCHS}")
-    string(REPLACE ":${PLSSVM_CPU_TARGET_ARCHS_COMMA}" "" HIPSYCL_TARGETS "${HIPSYCL_TARGETS}")
-endif ()
-if (DEFINED PLSSVM_INTEL_TARGET_ARCHS)
-    string(REPLACE ";" "," PLSSVM_INTEL_TARGET_ARCHS_COMMA "${PLSSVM_INTEL_TARGET_ARCHS}")
-    string(REPLACE ":${PLSSVM_INTEL_TARGET_ARCHS_COMMA}" "" HIPSYCL_TARGETS "${HIPSYCL_TARGETS}")
+option(PLSSVM_SYCL_BACKEND_HIPSYCL_USE_GENERIC_SSCP "Enables the generic SSCP target for new hipSYCL versions." ON)
+
+if (PLSSVM_SYCL_BACKEND_HIPSYCL_USE_GENERIC_SSCP)
+    message(STATUS "Using the new hipSYCL SSCP compilation flow.")
+    set(HIPSYCL_TARGETS "generic" CACHE STRING "" FORCE)
+else ()
+    message(STATUS "Using the old hipSYCL compilation flow.")
+    # reformat PLSSVM_TARGET_PLATFORMS to be usable with HIPSYCL_TARGETS (in case hipSYCL may be available)
+    set(HIPSYCL_TARGETS "${PLSSVM_TARGET_PLATFORMS}" CACHE STRING "" FORCE)
+    list(TRANSFORM HIPSYCL_TARGETS REPLACE "cpu" "omp.accelerated")
+    list(TRANSFORM HIPSYCL_TARGETS REPLACE "nvidia" "cuda")
+    list(TRANSFORM HIPSYCL_TARGETS REPLACE "amd" "hip")
+    list(TRANSFORM HIPSYCL_TARGETS REPLACE "intel" "spirv")
+    # remove CPU and Intel GPU target architectures since they are not supported when using hipSYCL
+    if (DEFINED PLSSVM_CPU_TARGET_ARCHS AND PLSSVM_NUM_CPU_TARGET_ARCHS GREATER 0)
+        string(REPLACE ";" "," PLSSVM_CPU_TARGET_ARCHS_COMMA "${PLSSVM_CPU_TARGET_ARCHS}")
+        string(REPLACE ":${PLSSVM_CPU_TARGET_ARCHS_COMMA}" "" HIPSYCL_TARGETS "${HIPSYCL_TARGETS}")
+    endif ()
+    if (DEFINED PLSSVM_INTEL_TARGET_ARCHS)
+        string(REPLACE ";" "," PLSSVM_INTEL_TARGET_ARCHS_COMMA "${PLSSVM_INTEL_TARGET_ARCHS}")
+        string(REPLACE ":${PLSSVM_INTEL_TARGET_ARCHS_COMMA}" "" HIPSYCL_TARGETS "${HIPSYCL_TARGETS}")
+    endif ()
 endif ()
 
 # check if hipSYCL is used as SYCL compiler
@@ -35,7 +43,7 @@ if (hipSYCL_FOUND)
             ${CMAKE_CURRENT_LIST_DIR}/detail/device_ptr.cpp
             ${CMAKE_CURRENT_LIST_DIR}/detail/utility.cpp
             ${CMAKE_CURRENT_LIST_DIR}/csvm.cpp
-            )
+    )
 
     # set target properties
     set(PLSSVM_SYCL_BACKEND_HIPSYCL_LIBRARY_NAME plssvm-SYCL_hipsycl CACHE INTERNAL "")
@@ -55,13 +63,18 @@ if (hipSYCL_FOUND)
     target_compile_definitions(${PLSSVM_SYCL_BACKEND_HIPSYCL_LIBRARY_NAME} PRIVATE PLSSVM_SYCL_BACKEND_COMPILER=1)
     target_compile_definitions(${PLSSVM_SYCL_BACKEND_HIPSYCL_LIBRARY_NAME} PRIVATE PLSSVM_SYCL_BACKEND_COMPILER_NAME="hipSYCL")
 
+    if (PLSSVM_SYCL_BACKEND_HIPSYCL_USE_GENERIC_SSCP)
+        target_compile_definitions(${PLSSVM_BASE_LIBRARY_NAME} PRIVATE PLSSVM_SYCL_BACKEND_HIPSYCL_USE_GENERIC_SSCP)
+        target_compile_definitions(${PLSSVM_SYCL_BACKEND_HIPSYCL_LIBRARY_NAME} PUBLIC PLSSVM_SYCL_BACKEND_HIPSYCL_USE_GENERIC_SSCP)
+    endif ()
+
     # hipSYCL's way to add SYCL to a target
     add_sycl_to_target(TARGET ${PLSSVM_SYCL_BACKEND_HIPSYCL_LIBRARY_NAME} SOURCES ${PROJECT_SOURCE_DIR}/src/plssvm/backends/hipSYCL/csvm.cpp)
 
     # silence unknown options warnings
     target_compile_options(${PLSSVM_SYCL_BACKEND_HIPSYCL_LIBRARY_NAME} PRIVATE -Wno-unknown-warning-option
             $<$<CXX_COMPILER_ID:GNU>:-Wno-unknown-pragmas>
-            )
+    )
 
     # print note that Intel GPU architecture specifications are ignored when using hipSYCL
     if (DEFINED PLSSVM_INTEL_TARGET_ARCHS)

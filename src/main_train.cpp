@@ -35,18 +35,23 @@ int main(int argc, char *argv[]) {
 
         // create data set
         std::visit([&](auto &&data) {
-            using real_type = typename std::remove_reference_t<decltype(data)>::real_type;
             using label_type = typename std::remove_reference_t<decltype(data)>::label_type;
 
             // create SVM
             const std::unique_ptr<plssvm::csvm> svm = (cmd_parser.backend == plssvm::backend_type::sycl) ? plssvm::make_csvm(cmd_parser.backend, cmd_parser.target, cmd_parser.csvm_params, plssvm::sycl_implementation_type = cmd_parser.sycl_implementation_type, plssvm::sycl_kernel_invocation_type = cmd_parser.sycl_kernel_invocation_type)
                                                                                                          : plssvm::make_csvm(cmd_parser.backend, cmd_parser.target, cmd_parser.csvm_params);
 
-            // learn model
-            if (cmd_parser.max_iter.is_default()) {
-                cmd_parser.max_iter = data.num_data_points();
-            }
-            const plssvm::model<real_type, label_type> model = svm->fit(data, plssvm::epsilon = cmd_parser.epsilon, plssvm::max_iter = cmd_parser.max_iter);
+            // only specify plssvm::max_iter if it isn't its default value
+            const plssvm::model<label_type> model =
+                cmd_parser.max_iter.is_default() ? svm->fit(data,
+                                                            plssvm::epsilon = cmd_parser.epsilon,
+                                                            plssvm::classification = cmd_parser.classification,
+                                                            plssvm::solver = cmd_parser.solver)
+                                                 : svm->fit(data,
+                                                            plssvm::epsilon = cmd_parser.epsilon,
+                                                            plssvm::max_iter = cmd_parser.max_iter,
+                                                            plssvm::classification = cmd_parser.classification,
+                                                            plssvm::solver = cmd_parser.solver);
             // save model to file
             model.save(cmd_parser.model_filename);
         }, plssvm::detail::cmd::data_set_factory(cmd_parser));
