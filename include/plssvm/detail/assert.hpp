@@ -63,7 +63,7 @@ inline void check_assertion(const bool cond, const std::string_view cond_str, co
  * @brief Defines the `PLSSVM_ASSERT_ENABLED` if `PLSSVM_ENABLE_ASSERTS` is defined and `NDEBUG` is **not** defined (in DEBUG mode).
  */
 #if defined(PLSSVM_ENABLE_ASSERTS) || !defined(NDEBUG)
-    #define PLSSVM_ASSERT_ENABLED
+    #define PLSSVM_ASSERT_ENABLED 1
 #endif
 
 /**
