@@ -22,17 +22,42 @@ list(APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake/modules")
 ## set default CMake build type
 set(PLSSVM_DEFAULT_BUILD_TYPE "RelWithDebInfo")
 set(PLSSVM_ALLOWED_BUILD_TYPES "Debug;Release;MinSizeRel;RelWithDebInfo;Coverage")
-if (NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
-    message(STATUS "Setting build type to '${PLSSVM_DEFAULT_BUILD_TYPE}' as none was specified.")
-    set(CMAKE_BUILD_TYPE "${PLSSVM_DEFAULT_BUILD_TYPE}" CACHE STRING "Choose the type of build." FORCE)
-    # Set the possible values of build type for cmake-gui
-    set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS ${PLSSVM_ALLOWED_BUILD_TYPES})
-else ()
-    if ("${CMAKE_BUILD_TYPE}" IN_LIST PLSSVM_ALLOWED_BUILD_TYPES)
-        message(STATUS "The build type is '${CMAKE_BUILD_TYPE}'.")
+get_property(PLSSVM_IS_MULTI_CONFIG_GENERATOR GLOBAL PROPERTY GENERATOR_IS_MULTI_CONFIG)
+if (PLSSVM_IS_MULTI_CONFIG_GENERATOR)
+    message(STATUS "Using a multi-configuration generator.")
+    if (NOT CMAKE_CONFIGURATION_TYPES)
+        message(STATUS "Setting the configuration types to '${PLSSVM_DEFAULT_BUILD_TYPE}' as none was specified.")
+        set(CMAKE_CONFIGURATION_TYPES "${PLSSVM_DEFAULT_BUILD_TYPE}" CACHE STRING "Multi-configuration build types." FORCE)
+        # Set the possible values of CMAKE_CONFIGURATION_TYPES for cmake-gui
+        set_property(CACHE CMAKE_CONFIGURATION_TYPES PROPERTY STRINGS ${PLSSVM_ALLOWED_BUILD_TYPES})
     else ()
-        message(FATAL_ERROR "Unrecognized build type '${CMAKE_BUILD_TYPE}'! Allowed build types are: ${PLSSVM_ALLOWED_BUILD_TYPES}")
+        foreach (type IN LISTS CMAKE_CONFIGURATION_TYPES)
+            if (NOT ${type} IN_LIST PLSSVM_ALLOWED_BUILD_TYPES)
+                message(FATAL_ERROR "Unrecognized build type '${type}' in multi-configuration '${CMAKE_CONFIGURATION_TYPES}'! Allowed build types are: ${PLSSVM_ALLOWED_BUILD_TYPES}")
+            endif ()
+        endforeach ()
+        message(STATUS "The multi-configuration build types are '${CMAKE_CONFIGURATION_TYPES}'.")
     endif ()
+else ()
+    message(STATUS "Using a single-configuration generator.")
+    if (NOT CMAKE_BUILD_TYPE)
+        message(STATUS "Setting the build type to '${PLSSVM_DEFAULT_BUILD_TYPE}' as none was specified.")
+        set(CMAKE_BUILD_TYPE "${PLSSVM_DEFAULT_BUILD_TYPE}" CACHE STRING "Single-configuration build types." FORCE)
+        # Set the possible values of CMAKE_BUILD_TYPE for cmake-gui
+        set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS ${PLSSVM_ALLOWED_BUILD_TYPES})
+    else ()
+        if ("${CMAKE_BUILD_TYPE}" IN_LIST PLSSVM_ALLOWED_BUILD_TYPES)
+            message(STATUS "The single-configuration build type is '${CMAKE_BUILD_TYPE}'.")
+        else ()
+            message(FATAL_ERROR "Unrecognized build type '${CMAKE_BUILD_TYPE}'! Allowed build types are: ${PLSSVM_ALLOWED_BUILD_TYPES}")
+        endif ()
+    endif ()
+endif ()
+
+## enable shared linkage for Windows
+if (WIN32)
+    set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS TRUE)
+    set(BUILD_SHARED_LIBS TRUE)
 endif ()
 
 
@@ -85,8 +110,9 @@ target_include_directories(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC
 )
 
 ## set library cxx standard
-if ($ENV{CLION_IDE})
+if (DEFINED ENV{CLION_IDE} OR CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
     # somehow necessary for CLion to detect the C++ standard as 17
+    # also necessary for MSVC
     set(CMAKE_CXX_STANDARD 17)
 endif ()
 target_compile_features(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC cxx_std_17)
@@ -116,6 +142,9 @@ target_compile_options(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC
 target_compile_definitions(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC
         $<$<COMPILE_LANG_AND_ID:CXX,MSVC>:NOMINMAX>
 )
+target_compile_definitions(${PLSSVM_BASE_LIBRARY_NAME} PRIVATE
+        $<$<COMPILE_LANG_AND_ID:CXX,MSVC>:PLSSVM_COMPILE_BASE_LIBRARY>
+)
 
 option(PLSSVM_ENABLE_STL_DEBUG_MODE "Enables the debug modes for the STL implementations. Note: changes the ABI!" OFF)
 # GCC standard library (libstdc++): _GLIBCXX_DEBUG
@@ -138,6 +167,7 @@ if (OpenMP_FOUND)
     set(PLSSVM_FOUND_OPENMP_FOR_UTILITY "${OpenMP_CXX_VERSION}")
     target_link_libraries(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC OpenMP::OpenMP_CXX -fopenmp)
     target_compile_options(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC $<$<COMPILE_LANGUAGE:CXX>:-fopenmp>)
+    target_compile_options(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC $<$<CXX_COMPILER_ID:MSVC>:-openmp:llvm -openmp:experimental>)
 else ()
     # disable warning for unknown OpenMP pragmas if no OpenMP could be found
     target_compile_options(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC

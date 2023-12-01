@@ -123,6 +123,15 @@ nvidia_compute_capability_mapping = {
 # https://llvm.org/docs/AMDGPUUsage.html
 amd_arch_mapping = {
     # AMD Radeon GPUs
+    "AMD Instinct MI250X": "gfx90a",
+    "AMD Instinct MI250": "gfx90a",
+    "AMD Instinct MI210": "gfx90a",
+    "Radeon RX 7900 XTX": "gfx1101",
+    "Radeon RX 7900 XT": "gfx1101",
+    "Radeon RX 7900 GRE": "gfx1101",
+    "Radeon RX 7800 XT": "gfx1101",
+    "Radeon RX 7700 XT": "gfx1101",
+    "Radeon RX 7600": "gfx1101",
     "Radeon RX 6700 XT": "gfx1031",
     "Radeon RX 6800": "gfx1030",
     "Radeon RX 6800 XT": "gfx1030",

@@ -32,6 +32,8 @@ int main(int argc, char **argv) {
     // prevent problems with fork() in the presence of multiple threads
     // https://github.com/google/googletest/blob/main/docs/advanced.md#death-tests-and-threads
     // NOTE: may reduce performance of the (death) tests
+#if !defined(_WIN32)
     ::testing::GTEST_FLAG(death_test_style) = "threadsafe";
+#endif
     return RUN_ALL_TESTS();
 }

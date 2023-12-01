@@ -35,6 +35,16 @@
  */
 #define PLSSVM_IS_DEFINED(x) (std::string_view{ #x } != std::string_view{ PLSSVM_IS_DEFINED_HELPER(x) })
 
+#if defined(_WIN32)
+#if defined(PLSSVM_COMPILE_BASE_LIBRARY)
+    #define PLSSVM_EXTERN extern "C" __declspec(dllexport)
+#else
+    #define PLSSVM_EXTERN extern "C" __declspec(dllimport)
+#endif
+#else
+    #define PLSSVM_EXTERN extern
+#endif
+
 namespace plssvm::detail {
 
 /**
