@@ -362,13 +362,13 @@ TYPED_TEST_P(GenericCSVMSolver, conjugate_gradients_trivial) {
     // automatic solver type not permitted
     if constexpr (solver == plssvm::solver_type::automatic) {
 #if defined(PLSSVM_ASSERT_ENABLED)
-        EXPECT_DEATH(std::ignore = svm.conjugate_gradients(A, B, 0.00001, 4, solver), "An explicit solver type must be provided instead of solver_type::automatic!");
+        EXPECT_DEATH(std::ignore = svm.conjugate_gradients(A, B, plssvm::real_type{ 0.00001 }, 4, solver), "An explicit solver type must be provided instead of solver_type::automatic!");
 #else
         SUCCEED() << "Solver type is automatic, but assertions are disabled!";
 #endif
     } else {
         // solve AX = B
-        const auto [X, num_iter] = svm.conjugate_gradients(A, B, 0.00001, 4, solver);
+        const auto [X, num_iter] = svm.conjugate_gradients(A, B, plssvm::real_type{ 0.00001 }, 4, solver);
 
         // check result
         EXPECT_FLOATING_POINT_MATRIX_NEAR(X, B);

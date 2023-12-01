@@ -50,7 +50,7 @@ TEST(BaseCSVM, default_construct_from_parameter) {
 }
 TEST(BaseCSVM, construct_from_parameter) {
     // create parameter class
-    const plssvm::parameter params{ plssvm::kernel_function_type::polynomial, 4, 0.2, 0.1, 0.01 };
+    const plssvm::parameter params{ plssvm::kernel_function_type::polynomial, 4, plssvm::real_type{ 0.2 }, plssvm::real_type{ 0.1 }, plssvm::real_type{ 0.01 } };
 
     // create mock_csvm (since plssvm::csvm is pure virtual!)
     const mock_csvm csvm{ params };
@@ -90,7 +90,7 @@ TEST(BaseCSVM, construct_linear_from_named_parameters) {
 }
 TEST(BaseCSVM, construct_polynomial_from_named_parameters) {
     // correct parameters
-    const plssvm::parameter params{ plssvm::kernel_function_type::polynomial, 4, 0.1, 1.2, 0.001 };
+    const plssvm::parameter params{ plssvm::kernel_function_type::polynomial, 4, plssvm::real_type{ 0.1 }, plssvm::real_type{ 1.2 }, plssvm::real_type{ 0.001 } };
 
     // create mock_csvm (since plssvm::csvm is pure virtual!)
     const mock_csvm csvm{ plssvm::kernel_type = params.kernel_type,
@@ -136,7 +136,7 @@ TEST(BaseCSVM, get_target_platforms) {
 }
 TEST(BaseCSVM, get_params) {
     // create parameter class
-    const plssvm::parameter params{ plssvm::kernel_function_type::polynomial, 4, 0.2, 0.1, 0.01 };
+    const plssvm::parameter params{ plssvm::kernel_function_type::polynomial, 4, plssvm::real_type{ 0.2 }, plssvm::real_type{ 0.1 }, plssvm::real_type{ 0.01 } };
 
     // create mock_csvm (since plssvm::csvm is pure virtual!)
     const mock_csvm csvm{ params };
@@ -153,7 +153,7 @@ TEST(BaseCSVM, set_params_from_parameter) {
     ASSERT_EQ(csvm.get_params(), plssvm::parameter{});
 
     // create parameter class
-    const plssvm::parameter params{ plssvm::kernel_function_type::polynomial, 4, 0.2, 0.1, 0.01 };
+    const plssvm::parameter params{ plssvm::kernel_function_type::polynomial, 4, plssvm::real_type{ 0.2 }, plssvm::real_type{ 0.1 }, plssvm::real_type{ 0.01 } };
 
     // set csvm parameter to new values
     csvm.set_params(params);
@@ -167,7 +167,7 @@ TEST(BaseCSVM, set_params_from_named_parameters) {
     ASSERT_EQ(csvm.get_params(), plssvm::parameter{});
 
     // create parameter class
-    const plssvm::parameter params{ plssvm::kernel_function_type::polynomial, 4, 0.2, 0.1, 0.01 };
+    const plssvm::parameter params{ plssvm::kernel_function_type::polynomial, 4, plssvm::real_type{ 0.2 }, plssvm::real_type{ 0.1 }, plssvm::real_type{ 0.01 } };
 
     // set csvm parameter to new values
     csvm.set_params(plssvm::kernel_type = plssvm::kernel_function_type::polynomial,

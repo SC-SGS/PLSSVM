@@ -43,7 +43,10 @@ TEST(ScalingFactorsRead, read) {
     // scaling factors
     // note that the parsed scaling factors are zero-based!
     const std::vector<factors_type> correct_scaling_factors{
-        factors_type{ 0, 0.0, 1.0 }, factors_type{ 1, 1.1, 2.1 }, factors_type{ 3, 3.3, 4.3 }, factors_type{ 4, 4.4, 5.4 }
+        factors_type{ 0, plssvm::real_type{ 0.0 }, plssvm::real_type{ 1.0 } },
+        factors_type{ 1, plssvm::real_type{ 1.1 }, plssvm::real_type{ 2.1 } },
+        factors_type{ 3, plssvm::real_type{ 3.3 }, plssvm::real_type{ 4.3 } },
+        factors_type{ 4, plssvm::real_type{ 4.4 }, plssvm::real_type{ 5.4 } }
     };
     ASSERT_EQ(scaling_factors.size(), correct_scaling_factors.size());
     for (std::size_t i = 0; i < correct_scaling_factors.size(); ++i) {
@@ -160,9 +163,9 @@ TEST_F(ScalingFactorsWrite, write) {
     // define data to write
     const std::pair<plssvm::real_type, plssvm::real_type> interval{ -2.0, 2.0 };
     std::vector<factors_type> scaling_factors{
-        factors_type{ 0, 1.2, 1.2 },
-        factors_type{ 1, 0.5, -1.4 },
-        factors_type{ 2, -1.2, 4.4 }
+        factors_type{ 0, plssvm::real_type{ 1.2 }, plssvm::real_type{ 1.2 } },
+        factors_type{ 1, plssvm::real_type{ 0.5 }, plssvm::real_type{ -1.4 } },
+        factors_type{ 2, plssvm::real_type{ -1.2 }, plssvm::real_type{ 4.4 } }
     };
 
     // write the necessary data to the file
