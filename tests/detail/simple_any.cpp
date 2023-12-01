@@ -36,7 +36,7 @@ TEST(SimpleAny, construct) {
     const plssvm::detail::simple_any a6{ std::vector<int>{ 1, 2, 3 } };
     EXPECT_EQ(a6.get<std::vector<int>>(), (std::vector<int>{ 1, 2, 3 }));
 
-    const plssvm::detail::simple_any a7{ std::make_shared<float>(1.0) };
+    const plssvm::detail::simple_any a7{ std::make_shared<float>(1.0f) };
     EXPECT_EQ(*a7.get<std::shared_ptr<float>>(), 1.0f);
 }
 
