@@ -32,7 +32,7 @@ void instantiate_csvm_functions(py::class_<plssvm::csvm> &c, label_type) {
              // check keyword arguments
              check_kwargs_for_correctness(args, { "epsilon", "max_iter", "classification", "solver" });
 
-             plssvm::real_type epsilon{ 0.001 };
+             auto epsilon{ plssvm::real_type{ 0.001 } };
              if (args.contains("epsilon")) {
                  epsilon = args["epsilon"].cast<plssvm::real_type>();
              }
