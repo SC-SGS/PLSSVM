@@ -117,7 +117,7 @@ class csvm : public ::plssvm::csvm {
     /**
      * @copydoc plssvm::csvm::setup_data_on_devices
      */
-    [[nodiscard]] detail::simple_any setup_data_on_devices(const solver_type solver, const soa_matrix<real_type> &A) const final;
+    [[nodiscard]] detail::simple_any setup_data_on_devices(solver_type solver, const soa_matrix<real_type> &A) const final;
     /**
      * @copydoc plssvm::csvm::assemble_kernel_matrix
      */
