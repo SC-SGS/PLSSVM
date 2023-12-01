@@ -161,7 +161,7 @@ class ScalingFactorsWriteDeathTest : public ScalingFactorsWrite {};
 
 TEST_F(ScalingFactorsWrite, write) {
     // define data to write
-    const std::pair<plssvm::real_type, plssvm::real_type> interval{ -2.0, 2.0 };
+    const std::pair<plssvm::real_type, plssvm::real_type> interval{ plssvm::real_type{ -2.0 }, plssvm::real_type{ 2.0 } };
     std::vector<factors_type> scaling_factors{
         factors_type{ 0, plssvm::real_type{ 1.2 }, plssvm::real_type{ 1.2 } },
         factors_type{ 1, plssvm::real_type{ 0.5 }, plssvm::real_type{ -1.4 } },
@@ -188,7 +188,7 @@ TEST_F(ScalingFactorsWrite, write) {
 }
 TEST_F(ScalingFactorsWrite, write_empty_scaling_factors) {
     // define data to write
-    const std::pair<plssvm::real_type, plssvm::real_type> interval{ -1.5, 1.5 };
+    const std::pair<plssvm::real_type, plssvm::real_type> interval{ plssvm::real_type{ -1.5 }, plssvm::real_type{ 1.5 } };
     const std::vector<factors_type> scaling_factors{};  // write no scaling factors to the file (allowed, but nonsensical)
 
     // try to write the necessary data to the file
@@ -208,7 +208,7 @@ TEST_F(ScalingFactorsWrite, write_empty_scaling_factors) {
 
 TEST_F(ScalingFactorsWriteDeathTest, write_illegal_interval) {
     // define data to write
-    const std::pair<plssvm::real_type, plssvm::real_type> interval{ 1, -1 };  // illegal interval!
+    const std::pair<plssvm::real_type, plssvm::real_type> interval{ plssvm::real_type{ 1 }, plssvm::real_type{ -1 } };  // illegal interval!
     const std::vector<factors_type> scaling_factors(1);
 
     // try to write the necessary data to the file
