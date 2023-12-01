@@ -26,13 +26,9 @@ jobs:
           mkdir PLSSVM/build
           cd PLSSVM/build
           cmake -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} -DPLSSVM_TARGET_PLATFORMS="cpu" -DPLSSVM_ENABLE_ASSERTS=ON -DPLSSVM_ENABLE_LANGUAGE_BINDINGS=ON -DPLSSVM_ENABLE_PERFORMANCE_TRACKING=ON -DPLSSVM_ENABLE_TESTING=ON -DPLSSVM_TEST_FILE_NUM_DATA_POINTS=50 -DPLSSVM_TEST_FILE_NUM_FEATURES=20 -DPLSSVM_ENABLE_LTO=OFF -DPLSSVM_USE_FLOAT_AS_REAL_TYPE=${{ matrix.float_as_real_type }} -DPLSSVM_USE_GEMM=${{ matrix.use_gemm }} ..
-      - name: "Build PLSSVM"
+      - name: "Build PLSSVM and run tests"
         shell: bash
         run: |
           cd PLSSVM/build
           cmake --build .
-          echo "${GITHUB_WORKSPACE}/PLSSVM/build" >> $GITHUB_PATH
-      - name: "Run tests"
-        run: |
-          cd PLSSVM/build
           ctest -j 2 -E ".*Exceptions\.|SourceLocation|.*executable.*" --output-on-failure
