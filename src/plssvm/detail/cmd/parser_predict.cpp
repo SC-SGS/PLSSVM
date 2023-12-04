@@ -10,6 +10,7 @@
 
 #include "plssvm/backend_types.hpp"                      // plssvm::list_available_backends
 #include "plssvm/backends/SYCL/implementation_type.hpp"  // plssvm::sycl::list_available_sycl_implementations
+#include "plssvm/constants.hpp"                          // plssvm::real_type
 #include "plssvm/detail/assert.hpp"                      // PLSSVM_ASSERT
 #include "plssvm/target_platforms.hpp"                   // plssvm::list_available_target_platforms
 #include "plssvm/verbosity_levels.hpp"                   // plssvm::verbosity
