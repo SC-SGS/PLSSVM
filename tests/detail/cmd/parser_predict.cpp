@@ -10,8 +10,8 @@
 
 #include "plssvm/detail/cmd/parser_predict.hpp"
 
-#include "plssvm/constants.hpp"      // plssvm::real_type
-#include "plssvm/detail/logger.hpp"  // plssvm::verbosity
+#include "plssvm/constants.hpp"        // plssvm::real_type
+#include "plssvm/verbosity_levels.hpp"  // plssvm::verbosity
 
 #include "custom_test_macros.hpp"      // EXPECT_CONVERSION_TO_STRING
 #include "detail/cmd/cmd_utility.hpp"  // util::ParameterBase

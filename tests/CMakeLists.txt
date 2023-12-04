@@ -134,7 +134,7 @@ set(PLSSVM_BASE_TEST_SOURCES
 
         ${CMAKE_CURRENT_LIST_DIR}/detail/arithmetic_type_name.cpp
         ${CMAKE_CURRENT_LIST_DIR}/detail/assert.cpp
-        ${CMAKE_CURRENT_LIST_DIR}/detail/logger.cpp
+        ${CMAKE_CURRENT_LIST_DIR}/detail/logging.cpp
         ${CMAKE_CURRENT_LIST_DIR}/detail/memory_size.cpp
         ${CMAKE_CURRENT_LIST_DIR}/detail/operators.cpp
         ${CMAKE_CURRENT_LIST_DIR}/detail/performance_tracker.cpp
@@ -170,6 +170,7 @@ set(PLSSVM_BASE_TEST_SOURCES
         ${CMAKE_CURRENT_LIST_DIR}/parameter.cpp
         ${CMAKE_CURRENT_LIST_DIR}/solver_types.cpp
         ${CMAKE_CURRENT_LIST_DIR}/target_platforms.cpp
+        ${CMAKE_CURRENT_LIST_DIR}/verbosity_levels.cpp
 )
 
 # create test executable

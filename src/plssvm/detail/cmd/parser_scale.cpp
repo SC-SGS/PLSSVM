@@ -9,7 +9,7 @@
 #include "plssvm/detail/cmd/parser_scale.hpp"
 
 #include "plssvm/detail/assert.hpp"    // PLSSVM_ASSERT
-#include "plssvm/detail/logger.hpp"    // plssvm::verbosity
+#include "plssvm/verbosity_levels.hpp"  // plssvm::verbosity
 #include "plssvm/version/version.hpp"  // plssvm::version::detail::get_version_info
 
 #include "cxxopts.hpp"    // cxxopts::{Options, value, ParseResult}

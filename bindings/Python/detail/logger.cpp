@@ -6,7 +6,7 @@
  *          See the LICENSE.md file in the project root for full license information.
  */
 
-#include "plssvm/detail/logger.hpp"
+#include "plssvm/verbosity_levels.hpp"
 
 #include "pybind11/operators.h"  // pybind operator overloading
 #include "pybind11/pybind11.h"   // py::module_

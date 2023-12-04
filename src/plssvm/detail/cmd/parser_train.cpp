@@ -14,12 +14,12 @@
 #include "plssvm/constants.hpp"                          // plssvm::real_type
 #include "plssvm/default_value.hpp"                      // plssvm::default_value
 #include "plssvm/detail/assert.hpp"                      // PLSSVM_ASSERT
-#include "plssvm/detail/logger.hpp"                      // plssvm::verbosity
 #include "plssvm/detail/string_utility.hpp"              // plssvm::detail::as_lower_case
 #include "plssvm/detail/utility.hpp"                     // plssvm::detail::to_underlying
 #include "plssvm/kernel_function_types.hpp"              // plssvm::kernel_type_to_math_string
 #include "plssvm/solver_types.hpp"                       // plssvm::solver_types
 #include "plssvm/target_platforms.hpp"                   // plssvm::list_available_target_platforms
+#include "plssvm/verbosity_levels.hpp"                   // plssvm::verbosity
 #include "plssvm/version/version.hpp"                    // plssvm::version::detail::get_version_info
 
 #include "cxxopts.hpp"    // cxxopts::Options, cxxopts::value,cxxopts::ParseResult

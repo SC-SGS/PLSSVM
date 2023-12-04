@@ -17,13 +17,14 @@
 #include "plssvm/backends/OpenCL/exceptions.hpp"            // plssvm::opencl::backend_exception
 #include "plssvm/constants.hpp"                             // plssvm::real_type
 #include "plssvm/detail/assert.hpp"                         // PLSSVM_ASSERT
-#include "plssvm/detail/logger.hpp"                         // plssvm::detail::log, plssvm::verbosity_level
+#include "plssvm/detail/logging.hpp"                        // plssvm::detail::log
 #include "plssvm/detail/performance_tracker.hpp"            // plssvm::detail::tracking_entry
 #include "plssvm/detail/utility.hpp"                        // plssvm::detail::contains
 #include "plssvm/exceptions/exceptions.hpp"                 // plssvm::exception
 #include "plssvm/kernel_function_types.hpp"                 // plssvm::kernel_function_type
 #include "plssvm/parameter.hpp"                             // plssvm::parameter, plssvm::detail::parameter
 #include "plssvm/target_platforms.hpp"                      // plssvm::target_platform
+#include "plssvm/verbosity_levels.hpp"                      // plssvm::verbosity_level
 
 #include "fmt/chrono.h"   // can directly print std::chrono literals
 #include "fmt/color.h"    // fmt::fg, fmt::color::orange

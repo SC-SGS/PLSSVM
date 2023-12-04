@@ -11,8 +11,8 @@
 #include "plssvm/backend_types.hpp"                      // plssvm::list_available_backends
 #include "plssvm/backends/SYCL/implementation_type.hpp"  // plssvm::sycl::list_available_sycl_implementations
 #include "plssvm/detail/assert.hpp"                      // PLSSVM_ASSERT
-#include "plssvm/detail/logger.hpp"                      // plssvm::verbosity
 #include "plssvm/target_platforms.hpp"                   // plssvm::list_available_target_platforms
+#include "plssvm/verbosity_levels.hpp"                   // plssvm::verbosity
 #include "plssvm/version/version.hpp"                    // plssvm::version::detail::get_version_info
 
 #include "cxxopts.hpp"    // cxxopts::{Options, value, ParseResult}

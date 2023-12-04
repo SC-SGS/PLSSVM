@@ -6,25 +6,17 @@
  * @license This file is part of the PLSSVM project which is released under the MIT license.
  *          See the LICENSE.md file in the project root for full license information.
  *
- * @brief Defines a simple logging function.
- * @details Also used for the plssvm::detail::performance_tracker.
+ * @brief Defines an enumeration holding all possible verbosity levels.
  */
 
-#ifndef PLSSVM_DETAIL_LOGGER_HPP_
-#define PLSSVM_DETAIL_LOGGER_HPP_
-#pragma once
+#ifndef PLSSVM_VERBOSITY_LEVELS_HPP_
+#define PLSSVM_VERBOSITY_LEVELS_HPP_
 
-#include "plssvm/detail/performance_tracker.hpp"  // plssvm::detail::is_tracking_entry_v, PLSSVM_DETAIL_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY
-#include "plssvm/detail/utility.hpp"              // PLSSVM_EXTERN
+#include "plssvm/detail/utility.hpp"  // PLSSVM_EXTERN
 
-#include "fmt/chrono.h"   // format std::chrono types
-#include "fmt/format.h"   // fmt::format
 #include "fmt/ostream.h"  // fmt::formatter, fmt::ostream_formatter
 
-#include <iosfwd>       // std::istream, std::ostream
-#include <iostream>     // std::cout
-#include <string_view>  // std::string_view
-#include <utility>      // std::forward
+#include <iosfwd>  // std::istream, std::ostream
 
 namespace plssvm {
 
@@ -38,7 +30,7 @@ enum class verbosity_level {
     libsvm = 0b001,
     /** Log all messages related to timing information. */
     timing = 0b010,
-    /** Log all messages. */
+    /** Log all messages (i.e., timing, warning, and additional messages). */
     full = 0b100
 };
 
@@ -94,40 +86,9 @@ verbosity_level operator|=(verbosity_level &lhs, verbosity_level rhs);
  */
 verbosity_level operator&=(verbosity_level &lhs, verbosity_level rhs);
 
-namespace detail {
-
-/**
- * @breif Output the message @p msg filling the {fmt} like placeholders with @p args to the standard output stream.
- * @details If a value in @p Args is of type plssvm::detail::tracking_entry and performance tracking is enabled,
- *          this is also added to the plssvm::detail::performance_tracker.
- *          Only logs the message if the verbosity level matches the `plssvm::verbosity` level.
- * @tparam Args the types of the placeholder values
- * @param[in] verb the verbosity level of the message to log; must match the `plssvm::verbosity` level to log the message
- * @param[in] msg the message to print on the standard output stream if requested (i.e., plssvm::verbose is `true`)
- * @param[in] args the values to fill the {fmt}-like placeholders in @p msg
- */
-template <typename... Args>
-void log(const verbosity_level verb, const std::string_view msg, Args &&...args) {
-    // if the verbosity level is quiet, nothing is logged
-    // otherwise verb must contain the bit-flag set by plssvm::verbosity
-    if (verbosity != verbosity_level::quiet && (verb & verbosity) != verbosity_level::quiet) {
-        std::cout << fmt::format(msg, args...);
-    }
-
-    // if performance tracking has been enabled, add tracking entries
-    ([](auto &&arg) {
-        if constexpr (detail::is_tracking_entry_v<decltype(arg)>) {
-            PLSSVM_DETAIL_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY(std::forward<decltype(arg)>(arg));
-        }
-    }(std::forward<Args>(args)),
-     ...);
-}
-
-}  // namespace detail
-
 }  // namespace plssvm
 
 template <>
 struct fmt::formatter<plssvm::verbosity_level> : fmt::ostream_formatter {};
 
-#endif  // PLSSVM_DETAIL_LOGGER_HPP_
+#endif  // PLSSVM_VERBOSITY_LEVELS_HPP_

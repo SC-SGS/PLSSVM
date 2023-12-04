@@ -6,7 +6,7 @@
  *          See the LICENSE.md file in the project root for full license information.
  */
 
-#include "plssvm/detail/logger.hpp"
+#include "plssvm/verbosity_levels.hpp"
 
 #include "plssvm/detail/string_utility.hpp"  // plssvm::detail::{to_lower_case, split, trim}
 #include "plssvm/detail/utility.hpp"         // plssvm::detail::to_underlying
