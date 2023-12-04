@@ -589,7 +589,7 @@ std::vector<label_type> csvm::predict(const model<label_type> &model, const data
                     } else {
                         // note: if this is changed, it must also be changed in the libsvm_model_parsing.hpp in the calculate_alpha_idx function!!!
                         // order the indices in increasing order
-                        soa_matrix<real_type> temp{ num_data_points_in_sub_matrix, num_features };
+                        soa_matrix<real_type> temp{ num_data_points_in_sub_matrix, num_features, plssvm::THREAD_BLOCK_PADDING, plssvm::FEATURE_BLOCK_SIZE };
                         std::vector<std::size_t> sorted_indices(num_data_points_in_sub_matrix);
                         std::merge(index_sets[i].cbegin(), index_sets[i].cend(), index_sets[j].cbegin(), index_sets[j].cend(), sorted_indices.begin());
                         // copy the support vectors to the binary support vectors
