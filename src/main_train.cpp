@@ -19,7 +19,7 @@
 #include <chrono>                                   // std::chrono::{steady_clock, duration}
 #include <cstdlib>                                  // EXIT_SUCCESS, EXIT_FAILURE
 #include <exception>                                // std::exception
-#include <iostream>                                 // std::cerr, std::clog, std::endl
+#include <iostream>                                 // std::cerr, std::endl
 #include <variant>                                  // std::visit
 
 int main(int argc, char *argv[]) {

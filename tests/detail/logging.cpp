@@ -8,7 +8,7 @@
  * @brief Tests for the logging function.
  */
 
-#include "plssvm/detail/logging.hpp"
+#include "plssvm/detail/logging_without_performance_tracking.hpp"
 
 #include "utility.hpp"  // util::redirect_output
 

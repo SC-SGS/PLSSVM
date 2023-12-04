@@ -8,9 +8,10 @@
 
 #include "plssvm/detail/cmd/parser_scale.hpp"
 
-#include "plssvm/detail/assert.hpp"    // PLSSVM_ASSERT
-#include "plssvm/verbosity_levels.hpp"  // plssvm::verbosity
-#include "plssvm/version/version.hpp"  // plssvm::version::detail::get_version_info
+#include "plssvm/detail/assert.hpp"                                // PLSSVM_ASSERT
+#include "plssvm/detail/logging_without_performance_tracking.hpp"  // plssvm::detail::log
+#include "plssvm/verbosity_levels.hpp"                             // plssvm::verbosity, plssvm::verbosity_level
+#include "plssvm/version/version.hpp"                              // plssvm::version::detail::get_version_info
 
 #include "cxxopts.hpp"    // cxxopts::{Options, value, ParseResult}
 #include "fmt/core.h"     // fmt::format, fmt::join
@@ -19,7 +20,7 @@
 #include <cstdlib>      // std::exit, EXIT_SUCCESS, EXIT_FAILURE
 #include <exception>    // std::exception
 #include <filesystem>   // std::filesystem::path
-#include <iostream>     // std::cout, std::cerr, std::clog, std::endl
+#include <iostream>     // std::cout, std::cerr, std::endl
 #include <type_traits>  // std::is_same_v
 
 namespace plssvm::detail::cmd {
@@ -62,7 +63,7 @@ parser_scale::parser_scale(int argc, char **argv) {
         options.parse_positional({ "input", "scaled" });
         result = options.parse(argc, argv);
     } catch (const std::exception &e) {
-        std::cerr << e.what() << std::endl;
+        std::cerr << fmt::format(fmt::fg(fmt::color::red), "ERROR: {}\n", e.what()) << std::endl;
         std::cout << options.help() << std::endl;
         std::exit(EXIT_FAILURE);
     }
@@ -81,7 +82,7 @@ parser_scale::parser_scale(int argc, char **argv) {
 
     // check if the number of positional arguments is not too large
     if (!result.unmatched().empty()) {
-        std::cerr << fmt::format("Only up to two positional options may be given, but {} (\"{}\") additional option(s) where provided!\n", result.unmatched().size(), fmt::join(result.unmatched(), " ")) << std::endl;
+        std::cerr << fmt::format(fmt::fg(fmt::color::red), "ERROR: only up to two positional options may be given, but {} (\"{}\") additional option(s) where provided!\n", result.unmatched().size(), fmt::join(result.unmatched(), " ")) << std::endl;
         std::cout << options.help() << std::endl;
         std::exit(EXIT_FAILURE);
     }
@@ -94,7 +95,7 @@ parser_scale::parser_scale(int argc, char **argv) {
 
     // lower must be strictly less than upper!
     if (lower >= upper) {
-        std::cerr << fmt::format("Error invalid scaling range [lower, upper] with [{}, {}]!", lower, upper) << std::endl;
+        std::cerr << fmt::format(fmt::fg(fmt::color::red), "ERROR: invalid scaling range [lower, upper] with [{}, {}]!\n", lower, upper) << std::endl;
         std::cout << options.help() << std::endl;
         std::exit(EXIT_FAILURE);
     }
@@ -112,10 +113,9 @@ parser_scale::parser_scale(int argc, char **argv) {
     if (result["verbosity"].count()) {
         const verbosity_level verb = result["verbosity"].as<verbosity_level>();
         if (quiet && verb != verbosity_level::quiet) {
-            std::clog << fmt::format(fmt::fg(fmt::color::orange),
-                                     "WARNING: explicitly set the -q/--quiet flag, but the provided verbosity level isn't \"quiet\"; setting --verbosity={} to --verbosity=quiet",
-                                     verb)
-                      << std::endl;
+            detail::log(verbosity_level::full | verbosity_level::warning,
+                        "WARNING: explicitly set the -q/--quiet flag, but the provided verbosity level isn't \"quiet\"; setting --verbosity={} to --verbosity=quiet\n",
+                        verb);
             verbosity = verbosity_level::quiet;
         } else {
             verbosity = verb;
@@ -126,7 +126,7 @@ parser_scale::parser_scale(int argc, char **argv) {
 
     // parse input data filename
     if (!result.count("input")) {
-        std::cerr << "Error missing input file!" << std::endl;
+        std::cerr << fmt::format(fmt::fg(fmt::color::red), "ERROR: missing input file!\n") << std::endl;
         std::cout << options.help() << std::endl;
         std::exit(EXIT_FAILURE);
     }
@@ -139,7 +139,7 @@ parser_scale::parser_scale(int argc, char **argv) {
 
     // can only use one of save_filename or restore_filename
     if (result.count("save_filename") && result.count("restore_filename")) {
-        std::cerr << "Error cannot use -s (--save_filename) and -r (--restore_filename) simultaneously!" << std::endl;
+        std::cerr << fmt::format(fmt::fg(fmt::color::red), "ERROR: cannot use -s (--save_filename) and -r (--restore_filename) simultaneously!\n") << std::endl;
         std::cout << options.help() << std::endl;
         std::exit(EXIT_FAILURE);
     }
@@ -152,7 +152,8 @@ parser_scale::parser_scale(int argc, char **argv) {
     // parse the file name to restore the previously saved weights from
     if (result.count("restore_filename")) {
         if (result.count("lower") || result.count("upper")) {
-            std::clog << "Warning: provided -l (--lower) and/or -u (--upper) together with -r (--restore_filename); ignoring -l/-u" << std::endl;
+            detail::log(verbosity_level::full | verbosity_level::warning,
+                        "WARNING: provided -l (--lower) and/or -u (--upper) together with -r (--restore_filename); ignoring -l/-u\n");
         }
         restore_filename = result["restore_filename"].as<decltype(restore_filename)>();
     }

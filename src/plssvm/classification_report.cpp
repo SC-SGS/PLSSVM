@@ -8,6 +8,7 @@
 
 #include "plssvm/classification_report.hpp"
 
+#include "plssvm/detail/logging.hpp"         // plssvm::detail::log
 #include "plssvm/detail/string_utility.hpp"  // plssvm::detail::to_lower_case
 
 #include "fmt/format.h"  // fmt::format
@@ -32,8 +33,10 @@ double sanitize_nan(const double dividend, const double divisor, const classific
         // handle the correct zero division behavior
         switch (zero_div) {
             case classification_report::zero_division_behavior::warn:
-                std::clog << metric_name << " is ill-defined and is set to 0.0 in labels with no predicted samples. "
-                                            "Use 'plssvm::classification_report::zero_division' parameter to control this behavior.\n";
+                detail::log(verbosity_level::full,
+                            "{} is ill-defined and is set to 0.0 in labels with no predicted samples. "
+                            "Use 'plssvm::classification_report::zero_division' parameter to control this behavior.\n",
+                            metric_name);
                 [[fallthrough]];
             case classification_report::zero_division_behavior::zero:
                 return 0.0;

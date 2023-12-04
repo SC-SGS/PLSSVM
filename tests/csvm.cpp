@@ -30,14 +30,14 @@
 #include "utility.hpp"             // util::{redirect_output, temporary_file, instantiate_template_file, get_num_classes, calculate_number_of_classifiers,
                                    // generate_random_matrix, get_correct_data_file_labels}
 
-#include "gmock/gmock.h"  // EXPECT_CALL, ::testing::{An, Between, Return}
-#include "gtest/gtest.h"  // TEST, TYPED_TEST, TYPED_TEST_SUITE, EXPECT_EQ, EXPECT_TRUE, EXPECT_FALSE, ASSERT_EQ, GTEST_SKIP, ::testing::Test
-
-#include <cstddef>   // std::size_t
-#include <iostream>  // std::clog
-#include <string>    // std::string
-#include <tuple>     // std::ignore
-#include <vector>    // std::vector
+#include "gmock/gmock.h"           // EXPECT_CALL, ::testing::{An, Between, Return}
+#include "gtest/gtest-matchers.h"  // EXPECT_THAT, ::testing::HasSubstr
+#include "gtest/gtest.h"           // TEST, TYPED_TEST, TYPED_TEST_SUITE, EXPECT_EQ, EXPECT_TRUE, EXPECT_FALSE, EXPECT_THAT,
+#include <cstddef>                 // std::size_t
+#include <iostream>                // std::clog
+#include <string>                  // std::string
+#include <tuple>                   // std::ignore
+#include <vector>                  // std::vector
 
 class BaseCSVM : public ::testing::Test {};
 
@@ -248,21 +248,21 @@ TEST_F(BaseCSVMWarning, construct_unused_parameter_warning_degree) {
     [[maybe_unused]] const mock_csvm csvm{ plssvm::kernel_type = plssvm::kernel_function_type::linear, plssvm::degree = 2 };
     // end capture of std::clog
 
-    EXPECT_EQ(this->get_capture(), "degree parameter provided, which is not used in the linear kernel (u'*v)!\n");
+    EXPECT_THAT(this->get_capture(), ::testing::HasSubstr("WARNING: degree parameter provided, which is not used in the linear kernel (u'*v)!"));
 }
 TEST_F(BaseCSVMWarning, construct_unused_parameter_warning_gamma) {
     // start capture of std::clog
     [[maybe_unused]] const mock_csvm csvm{ plssvm::kernel_type = plssvm::kernel_function_type::linear, plssvm::gamma = 0.1 };
     // end capture of std::clog
 
-    EXPECT_EQ(this->get_capture(), "gamma parameter provided, which is not used in the linear kernel (u'*v)!\n");
+    EXPECT_THAT(this->get_capture(), ::testing::HasSubstr("WARNING: gamma parameter provided, which is not used in the linear kernel (u'*v)!"));
 }
 TEST_F(BaseCSVMWarning, construct_unused_parameter_warning_coef0) {
     // start capture of std::clog
     [[maybe_unused]] const mock_csvm csvm{ plssvm::kernel_type = plssvm::kernel_function_type::linear, plssvm::coef0 = 0.1 };
     // end capture of std::clog
 
-    EXPECT_EQ(this->get_capture(), "coef0 parameter provided, which is not used in the linear kernel (u'*v)!\n");
+    EXPECT_THAT(this->get_capture(), ::testing::HasSubstr("WARNING: coef0 parameter provided, which is not used in the linear kernel (u'*v)!"));
 }
 
 template <typename T>

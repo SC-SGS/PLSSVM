@@ -23,7 +23,7 @@
 #include <cstdlib>                                  // EXIT_SUCCESS, EXIT_FAILURE
 #include <exception>                                // std::exception
 #include <fstream>                                  // std::ofstream
-#include <iostream>                                 // std::cerr, std::clog, std::endl
+#include <iostream>                                 // std::cerr, std::endl
 #include <variant>                                  // std::visit
 #include <vector>                                   // std::vector
 

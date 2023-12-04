@@ -818,10 +818,9 @@ std::tuple<aos_matrix<real_type>, std::vector<real_type>, unsigned long long> cs
                         "The biggest single allocation ({}) exceeds the guaranteed maximum memory allocation size ({}), falling back to solver_type::cg_streaming.\n",
                         max_single_allocation_size,
                         max_mem_alloc_size);
-            std::clog << fmt::format(fmt::fg(fmt::color::orange),
-                                     "Warning: if you are sure that the guaranteed maximum memory allocation size can be safely ignored on your deivce, "
-                                     "this check can be disabled via \"-DPLSSVM_ENFORCE_MAX_MEM_ALLOC_SIZE=OFF\" during the CMake configuration!")
-                      << std::endl;
+            plssvm::detail::log(verbosity_level::full | verbosity_level::warning,
+                                "WARNING: if you are sure that the guaranteed maximum memory allocation size can be safely ignored on your device, "
+                                "this check can be disabled via \"-DPLSSVM_ENFORCE_MAX_MEM_ALLOC_SIZE=OFF\" during the CMake configuration!\n");
             used_solver = solver_type::cg_streaming;
         }
 #endif

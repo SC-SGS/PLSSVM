@@ -72,7 +72,9 @@ void csvm::init(const target_platform target) {
 
     // currently only single GPU execution is supported
     if (devices_.size() != 1) {
-        std::clog << fmt::format(fmt::fg(fmt::color::orange), "WARNING: found {} devices, but currently only single GPU execution is supported. Continuing only with device 0!", devices_.size()) << std::endl;
+        plssvm::detail::log(verbosity_level::full | verbosity_level::warning,
+                            "WARNING: found {} devices, but currently only single GPU execution is supported. Continuing only with device 0!\n",
+                            devices_.size());
         devices_.resize(1);
     }
 

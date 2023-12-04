@@ -10,12 +10,15 @@
  * @details Also used for the plssvm::detail::performance_tracker.
  */
 
-#ifndef PLSSVM_DETAIL_LOGGER_HPP_
-#define PLSSVM_DETAIL_LOGGER_HPP_
+#ifndef PLSSVM_DETAIL_LOGGING_HPP_
+#define PLSSVM_DETAIL_LOGGING_HPP_
 #pragma once
 
-#include "plssvm/detail/performance_tracker.hpp"  // plssvm::detail::is_tracking_entry_v, PLSSVM_DETAIL_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY
-#include "plssvm/verbosity_levels.hpp"            // plssvm::verbosity_level, plssvm::verbosity
+#include "plssvm/verbosity_levels.hpp"  // plssvm::verbosity_level, plssvm::verbosity
+
+#if !defined(PLSSVM_LOG_WITHOUT_PERFORMANCE_TRACKING)
+    #include "plssvm/detail/performance_tracker.hpp"  // plssvm::detail::is_tracking_entry_v, PLSSVM_DETAIL_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY
+#endif
 
 #include "fmt/chrono.h"  // format std::chrono types
 #include "fmt/color.h"   // fmt::fg, fmt::color
@@ -42,9 +45,14 @@ void log(const verbosity_level verb, const std::string_view msg, Args &&...args)
     // if the verbosity level is quiet, nothing is logged
     // otherwise verb must contain the bit-flag set by plssvm::verbosity
     if (verbosity != verbosity_level::quiet && (verb & verbosity) != verbosity_level::quiet) {
-        std::cout << fmt::format(msg, args...);
+        if ((verb & verbosity_level::warning) != verbosity_level::quiet) {
+            std::clog << fmt::format(fmt::fg(fmt::color::orange), msg, args...);
+        } else {
+            std::cout << fmt::format(msg, args...);
+        }
     }
 
+#if !defined(PLSSVM_LOG_WITHOUT_PERFORMANCE_TRACKING)
     // if performance tracking has been enabled, add tracking entries
     ([](auto &&arg) {
         if constexpr (detail::is_tracking_entry_v<decltype(arg)>) {
@@ -52,8 +60,9 @@ void log(const verbosity_level verb, const std::string_view msg, Args &&...args)
         }
     }(std::forward<Args>(args)),
      ...);
+#endif
 }
 
 }  // namespace plssvm::detail
 
-#endif  // PLSSVM_DETAIL_LOGGER_HPP_
+#endif  // PLSSVM_DETAIL_LOGGING_HPP_

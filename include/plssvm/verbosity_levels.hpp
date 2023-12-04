@@ -25,13 +25,15 @@ namespace plssvm {
  */
 enum class verbosity_level {
     /** Nothing is logged to the standard output. */
-    quiet = 0b000,
+    quiet = 0b0000,
     /** Log the same messages as LIBSVM (used for better LIBSVM conformity). */
-    libsvm = 0b001,
+    libsvm = 0b0001,
     /** Log all messages related to timing information. */
-    timing = 0b010,
+    timing = 0b0010,
+    /** Log all messages related to warnings. */
+    warning = 0b0100,
     /** Log all messages (i.e., timing, warning, and additional messages). */
-    full = 0b100
+    full = 0b1000
 };
 
 /// The verbosity level used in the logging function. My be changed by the user.

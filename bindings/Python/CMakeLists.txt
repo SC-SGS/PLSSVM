@@ -34,7 +34,6 @@ endif ()
 set(PLSSVM_PYTHON_BINDINGS_SOURCES
         ${CMAKE_CURRENT_LIST_DIR}/exceptions/exceptions.cpp
 
-        ${CMAKE_CURRENT_LIST_DIR}/detail/logger.cpp
         ${CMAKE_CURRENT_LIST_DIR}/detail/performance_tracker.cpp
 
         ${CMAKE_CURRENT_LIST_DIR}/version/version.cpp
@@ -49,6 +48,7 @@ set(PLSSVM_PYTHON_BINDINGS_SOURCES
         ${CMAKE_CURRENT_LIST_DIR}/parameter.cpp
         ${CMAKE_CURRENT_LIST_DIR}/solver_types.cpp
         ${CMAKE_CURRENT_LIST_DIR}/target_platforms.cpp
+        ${CMAKE_CURRENT_LIST_DIR}/verbosity_levels.cpp
 
         ${CMAKE_CURRENT_LIST_DIR}/sklearn.cpp
 

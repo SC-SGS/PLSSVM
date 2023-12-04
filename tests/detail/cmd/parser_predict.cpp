@@ -309,19 +309,19 @@ TEST_F(ParserPredictDeathTest, no_positional_argument) {
     this->CreateCMDArgs({ "./plssvm-predict" });
     EXPECT_EXIT((plssvm::detail::cmd::parser_predict{ this->get_argc(), this->get_argv() }),
                 ::testing::ExitedWithCode(EXIT_FAILURE),
-                ::testing::StartsWith("Error missing test file!"));
+                ::testing::HasSubstr("ERROR: missing test file!"));
 }
 TEST_F(ParserPredictDeathTest, single_positional_argument) {
     this->CreateCMDArgs({ "./plssvm-predict", "data.libsvm" });
     EXPECT_EXIT((plssvm::detail::cmd::parser_predict{ this->get_argc(), this->get_argv() }),
                 ::testing::ExitedWithCode(EXIT_FAILURE),
-                ::testing::StartsWith("Error missing model file!"));
+                ::testing::HasSubstr("ERROR: missing model file!"));
 }
 TEST_F(ParserPredictDeathTest, too_many_positional_arguments) {
     this->CreateCMDArgs({ "./plssvm-predict", "p1", "p2", "p3", "p4" });
     EXPECT_EXIT((plssvm::detail::cmd::parser_predict{ this->get_argc(), this->get_argv() }),
                 ::testing::ExitedWithCode(EXIT_FAILURE),
-                ::testing::HasSubstr(R"(Only up to three positional options may be given, but 1 ("p4") additional option(s) where provided!)"));
+                ::testing::HasSubstr(R"(ERROR: only up to three positional options may be given, but 1 ("p4") additional option(s) where provided!)"));
 }
 
 // test whether nonsensical cmd arguments trigger the assertions
