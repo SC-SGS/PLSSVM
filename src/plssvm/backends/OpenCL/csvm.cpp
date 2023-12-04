@@ -8,6 +8,7 @@
 
 #include "plssvm/backends/OpenCL/csvm.hpp"
 
+#include "plssvm/backend_types.hpp"                         // plssvm::backend_type
 #include "plssvm/backends/OpenCL/detail/command_queue.hpp"  // plssvm::opencl::detail::command_queue
 #include "plssvm/backends/OpenCL/detail/context.hpp"        // plssvm::opencl::detail::context
 #include "plssvm/backends/OpenCL/detail/device_ptr.hpp"     // plssvm::opencl::detail::device_ptr

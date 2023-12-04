@@ -12,6 +12,7 @@
 #include "plssvm/backends/SYCL/DPCPP/detail/queue_impl.hpp"  // plssvm::dpcpp::detail::queue (PImpl implementation)
 #include "plssvm/backends/SYCL/DPCPP/detail/utility.hpp"     // plssvm::dpcpp::detail::get_device_list, plssvm::dpcpp::device_synchronize
 
+#include "plssvm/backend_types.hpp"                                     // plssvm::backend_type
 #include "plssvm/backends/SYCL/cg_explicit/blas.hpp"                    // plssvm::sycl::device_kernel_gemm
 #include "plssvm/backends/SYCL/cg_explicit/kernel_matrix_assembly.hpp"  // plssvm::sycl::{device_kernel_assembly_linear, device_kernel_assembly_polynomial, device_kernel_assembly_rbf}
 #include "plssvm/backends/SYCL/exceptions.hpp"                          // plssvm::dpcpp::backend_exception
