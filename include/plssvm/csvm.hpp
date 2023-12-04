@@ -290,6 +290,12 @@ class csvm {
      */
     [[nodiscard]] std::chrono::duration<long, std::milli> run_blas_level_3(solver_type cg_solver, real_type alpha, const detail::simple_any &A, const soa_matrix<real_type> &B, real_type beta, soa_matrix<real_type> &C) const;
 
+    /**
+     * @copydoc plssvm::csvm::predict_values
+     * @detail Small wrapper around the virtual `plssvm::csvm::predict_values` function to easily track its execution time.
+     */
+    [[nodiscard]] aos_matrix<real_type> run_predict_values(const parameter &params, const soa_matrix<real_type> &support_vectors, const aos_matrix<real_type> &alpha, const std::vector<real_type> &rho, aos_matrix<real_type> &w, const soa_matrix<real_type> &predict_points) const;
+
   private:
     /// The SVM parameter (e.g., cost, degree, gamma, coef0) currently in use.
     parameter params_{};
@@ -530,7 +536,7 @@ std::vector<label_type> csvm::predict(const model<label_type> &model, const data
         const aos_matrix<real_type> &alpha = model.alpha_ptr_->front();  // num_classes x num_data_points
 
         // predict values using OAA -> num_data_points x num_classes
-        const aos_matrix<real_type> votes = predict_values(model.params_, sv, alpha, *model.rho_ptr_, *model.w_ptr_, predict_points);
+        const aos_matrix<real_type> votes = this->run_predict_values(model.params_, sv, alpha, *model.rho_ptr_, *model.w_ptr_, predict_points);
 
         PLSSVM_ASSERT(votes.num_rows() == data.num_data_points(), "The number of votes ({}) must be equal the number of data points ({})!", votes.num_rows(), data.num_data_points());
         PLSSVM_ASSERT(votes.num_cols() == calculate_number_of_classifiers(classification_type::oaa, model.num_classes()), "The votes contain {} values, but must contain {} values!", votes.num_cols(), calculate_number_of_classifiers(classification_type::oaa, model.num_classes()));
@@ -610,7 +616,7 @@ std::vector<label_type> csvm::predict(const model<label_type> &model, const data
                     // the w vector optimization has not been applied yet -> calculate w and store it
                     aos_matrix<real_type> w{};
                     // returned w: 1 x num_features
-                    binary_votes = predict_values(model.params_, binary_sv, binary_alpha, binary_rho, w, predict_points);
+                    binary_votes = this->run_predict_values(model.params_, binary_sv, binary_alpha, binary_rho, w, predict_points);
                     // only in case of the linear kernel, the w vector gets filled -> store it
                     if (params_.kernel_type == kernel_function_type::linear) {
                         #pragma omp parallel for default(none) shared(model, w) firstprivate(num_features, pos)
@@ -625,7 +631,7 @@ std::vector<label_type> csvm::predict(const model<label_type> &model, const data
                     for (std::size_t dim = 0; dim < num_features; ++dim) {
                         binary_w(0, dim) = (*model.w_ptr_)(pos, dim);
                     }
-                    binary_votes = predict_values(model.params_, binary_sv, binary_alpha, binary_rho, binary_w, predict_points);
+                    binary_votes = this->run_predict_values(model.params_, binary_sv, binary_alpha, binary_rho, binary_w, predict_points);
                 }
 
                 PLSSVM_ASSERT(binary_votes.num_rows() == data.num_data_points(), "The number of votes ({}) must be equal the number of data points ({})!", binary_votes.num_rows(), data.num_data_points());

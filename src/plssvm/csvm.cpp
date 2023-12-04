@@ -226,4 +226,20 @@ std::chrono::duration<long, std::milli> csvm::run_blas_level_3(const solver_type
     return std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time);
 }
 
+aos_matrix<real_type> csvm::run_predict_values(const parameter &params, const soa_matrix<real_type> &support_vectors, const aos_matrix<real_type> &alpha, const std::vector<real_type> &rho, aos_matrix<real_type> &w, const soa_matrix<real_type> &predict_points) const {
+    const std::chrono::steady_clock::time_point start_time = std::chrono::steady_clock::now();
+
+    decltype(auto) res = this->predict_values(params, support_vectors, alpha, rho, w, predict_points);
+
+    const std::chrono::steady_clock::time_point end_time = std::chrono::steady_clock::now();
+    detail::log(verbosity_level::full | verbosity_level::timing,
+                "Predicted the values of {} predict points using {} support vectors with {} features each in {}.\n",
+                predict_points.num_rows(),
+                support_vectors.num_rows(),
+                support_vectors.num_cols(),
+                detail::tracking_entry{ "predict_values", "total_runtime", std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time) });
+
+    return res;
+}
+
 }  // namespace plssvm
