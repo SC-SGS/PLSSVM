@@ -66,7 +66,7 @@ std::istream &operator>>(std::istream &in, verbosity_level &verb) {
         if (verb_str == "full") {
             verb |= verbosity_level::full;
         } else if (verb_str == "warning") {
-            verb |= verbosity_level::timing;
+            verb |= verbosity_level::warning;
         } else if (verb_str == "timing") {
             verb |= verbosity_level::timing;
         } else if (verb_str == "libsvm") {

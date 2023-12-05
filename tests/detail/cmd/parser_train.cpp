@@ -578,11 +578,11 @@ TEST_F(ParserTrainDeathTest, too_many_positional_arguments) {
 // test whether nonsensical cmd arguments trigger the assertions
 TEST_F(ParserTrainDeathTest, too_few_argc) {
     EXPECT_DEATH((plssvm::detail::cmd::parser_train{ 0, nullptr }),
-                 ::testing::HasSubstr("ERROR: at least one argument is always given (the executable name), but argc is 0!"));
+                 ::testing::HasSubstr("At least one argument is always given (the executable name), but argc is 0!"));
 }
 TEST_F(ParserTrainDeathTest, nullptr_argv) {
     EXPECT_DEATH((plssvm::detail::cmd::parser_train{ 1, nullptr }),
-                 ::testing::HasSubstr("ERROR: at least one argument is always given (the executable name), but argv is a nullptr!"));
+                 ::testing::HasSubstr("At least one argument is always given (the executable name), but argv is a nullptr!"));
 }
 TEST_F(ParserTrainDeathTest, unrecognized_option) {
     this->CreateCMDArgs({ "./plssvm-train", "--foo", "bar" });
