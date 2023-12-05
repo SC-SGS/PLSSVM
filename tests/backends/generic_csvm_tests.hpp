@@ -548,8 +548,7 @@ TYPED_TEST_P(GenericCSVMKernelFunction, predict_values) {
     // in case of the linear kernel, the w vector should have been filled
     if (kernel == plssvm::kernel_function_type::linear) {
         EXPECT_EQ(w.num_rows(), rho.size());
-        const plssvm::aos_matrix<plssvm::real_type> weights_without_padding{ weights, 0, 0 };
-        EXPECT_FLOATING_POINT_MATRIX_NEAR(w, weights_without_padding);
+        EXPECT_FLOATING_POINT_MATRIX_NEAR(w, weights);
     } else {
         EXPECT_TRUE(w.empty());
     }
@@ -578,7 +577,9 @@ TYPED_TEST_P(GenericCSVMKernelFunction, predict_values_provided_w) {
                                                              plssvm::THREAD_BLOCK_PADDING };
         const std::vector<plssvm::real_type> rho{ plssvm::real_type{ 0.0 }, plssvm::real_type{ 0.0 } };
         plssvm::aos_matrix<plssvm::real_type> w{ { { plssvm::real_type{ 1.0 }, plssvm::real_type{ -1.0 }, plssvm::real_type{ 1.0 }, plssvm::real_type{ -1.0 } },
-                                                   { plssvm::real_type{ 1.0 }, plssvm::real_type{ -1.0 }, plssvm::real_type{ 1.0 }, plssvm::real_type{ -1.0 } } } };
+                                                   { plssvm::real_type{ 1.0 }, plssvm::real_type{ -1.0 }, plssvm::real_type{ 1.0 }, plssvm::real_type{ -1.0 } } },
+                                                 plssvm::THREAD_BLOCK_PADDING,
+                                                 plssvm::THREAD_BLOCK_PADDING };
         const plssvm::aos_matrix<plssvm::real_type> correct_w{ w };
         const plssvm::soa_matrix<plssvm::real_type> data{ { { plssvm::real_type{ 1.0 }, plssvm::real_type{ 1.0 }, plssvm::real_type{ 1.0 }, plssvm::real_type{ 1.0 } },
                                                             { plssvm::real_type{ 1.0 }, plssvm::real_type{ -1.0 }, plssvm::real_type{ 1.0 }, plssvm::real_type{ -1.0 } } },
@@ -602,8 +603,7 @@ TYPED_TEST_P(GenericCSVMKernelFunction, predict_values_provided_w) {
         EXPECT_FLOATING_POINT_MATRIX_NEAR(calculated, correct_predict_values);
         // in case of the linear kernel, the w vector should not have changed
         EXPECT_EQ(w, correct_w);
-        const plssvm::aos_matrix<plssvm::real_type> weights_without_padding{ weights, 0, 0 };
-        EXPECT_FLOATING_POINT_MATRIX_NEAR(w, weights_without_padding);
+        EXPECT_FLOATING_POINT_MATRIX_NEAR(w, weights);
     }
 }
 
@@ -1361,10 +1361,10 @@ TYPED_TEST_P(GenericCSVMKernelFunctionDeathTest, predict_values_w_size_mismatch)
     const auto data = util::generate_random_matrix<plssvm::soa_matrix<plssvm::real_type>>(2, 4, plssvm::THREAD_BLOCK_PADDING, plssvm::FEATURE_BLOCK_SIZE);
 
     // the number of features and w values must be identical
-    auto w = util::generate_random_matrix<plssvm::aos_matrix<plssvm::real_type>>(2, 3);
+    auto w = util::generate_random_matrix<plssvm::aos_matrix<plssvm::real_type>>(2, 3, plssvm::THREAD_BLOCK_PADDING, plssvm::THREAD_BLOCK_PADDING);
     EXPECT_DEATH(std::ignore = csvm.predict_values(params, support_vectors, weights, rho, w, data), ::testing::HasSubstr("Either w must be empty or contain exactly the same number of values (3) as features are present (4)!"));
     // the number of weight and w vectors must be identical
-    w = util::generate_random_matrix<plssvm::aos_matrix<plssvm::real_type>>(3, 4);
+    w = util::generate_random_matrix<plssvm::aos_matrix<plssvm::real_type>>(3, 4, plssvm::THREAD_BLOCK_PADDING, plssvm::THREAD_BLOCK_PADDING);
     EXPECT_DEATH(std::ignore = csvm.predict_values(params, support_vectors, weights, rho, w, data), ::testing::HasSubstr("Either w must be empty or contain exactly the same number of vectors (3) as the alpha vector (2)!"));
 }
 TYPED_TEST_P(GenericCSVMKernelFunctionDeathTest, predict_values_num_features_mismatch) {

@@ -263,7 +263,7 @@ template <typename real_type>
 plssvm::aos_matrix<real_type> calculate_w(const plssvm::aos_matrix<real_type> &weights, const plssvm::soa_matrix<real_type> &support_vectors) {
     PLSSVM_ASSERT(support_vectors.num_rows() == weights.num_cols(), "Sizes mismatch!: {} != {}", support_vectors.num_rows(), weights.num_cols());
 
-    plssvm::aos_matrix<real_type> result{ weights.num_rows(), support_vectors.num_cols() };
+    plssvm::aos_matrix<real_type> result{ weights.num_rows(), support_vectors.num_cols(), plssvm::THREAD_BLOCK_PADDING, plssvm::THREAD_BLOCK_PADDING };
     for (std::size_t c = 0; c < weights.num_rows(); ++c) {
         for (std::size_t i = 0; i < support_vectors.num_cols(); ++i) {
             for (std::size_t j = 0; j < weights.num_cols(); ++j) {

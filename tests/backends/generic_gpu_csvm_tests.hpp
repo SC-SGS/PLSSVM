@@ -134,7 +134,7 @@ TYPED_TEST_P(GenericGPUCSVM, run_w_kernel) {
 
     // calculate w
     const device_ptr_type w_d = svm.run_w_kernel(weights_d, sv_d);
-    plssvm::aos_matrix<plssvm::real_type> w(weights.num_rows(), data.data().num_cols());
+    plssvm::aos_matrix<plssvm::real_type> w(weights.num_rows(), data.data().num_cols(), plssvm::THREAD_BLOCK_PADDING, plssvm::THREAD_BLOCK_PADDING);
 
     // check sizes
     ASSERT_EQ(w_d.extents(), w.shape());

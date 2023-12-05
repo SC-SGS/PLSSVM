@@ -199,8 +199,7 @@ TYPED_TEST(Model, weights) {
                 FAIL() << "Unreachable!";
                 break;
         }
-
-        EXPECT_EQ(model.weights().front(), plssvm::aos_matrix<plssvm::real_type>{ correct_weights });
+        EXPECT_FLOATING_POINT_MATRIX_EQ(model.weights().front(), (plssvm::aos_matrix<plssvm::real_type>{ correct_weights, plssvm::THREAD_BLOCK_PADDING, plssvm::THREAD_BLOCK_PADDING }));
     } else if constexpr (classification == plssvm::classification_type::oao) {
         // OAO
         ASSERT_EQ(model.weights().size(), num_classes_for_label_type * (num_classes_for_label_type - 1) / 2);
@@ -237,7 +236,10 @@ TYPED_TEST(Model, weights) {
                 FAIL() << "Unreachable!";
                 break;
         }
-        EXPECT_EQ(model.weights(), weights);
+        ASSERT_EQ(model.weights().size(), weights.size());
+        for (std::size_t i = 0; i < weights.size(); ++i) {
+            EXPECT_FLOATING_POINT_MATRIX_EQ(model.weights()[i], (plssvm::aos_matrix<plssvm::real_type>{ weights[i], plssvm::THREAD_BLOCK_PADDING, plssvm::THREAD_BLOCK_PADDING }));
+        }
     } else {
         FAIL() << "unknown classification type";
     }
