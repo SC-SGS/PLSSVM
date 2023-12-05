@@ -30,7 +30,6 @@ else ()
         string(REPLACE ":${PLSSVM_INTEL_TARGET_ARCHS_COMMA}" "" ACPP_TARGETS "${ACPP_TARGETS}")
     endif ()
 endif ()
-set(HIPSYCL_TARGETS "${ACPP_TARGETS}" CACHE STRING "" FORCE)
 
 # check if AdaptiveCpp is used as SYCL compiler
 find_package(AdaptiveCpp CONFIG)
