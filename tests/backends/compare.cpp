@@ -9,6 +9,7 @@
 
 #include "backends/compare.hpp"
 
+#include "plssvm/constants.hpp"              // plssvm::THREAD_BLOCK_PADDING
 #include "plssvm/detail/assert.hpp"          // PLSSVM_ASSERT
 #include "plssvm/kernel_function_types.hpp"  // plssvm::kernel_function_type
 #include "plssvm/matrix.hpp"                 // plssvm::matrix, plssvm::layout_type
