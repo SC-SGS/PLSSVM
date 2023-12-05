@@ -252,7 +252,7 @@ auto csvm::run_predict_kernel(const parameter &params, const device_ptr_type &w_
     detail::set_device(0);
     if (params.kernel_type == kernel_function_type::linear) {
         // define the grid sizes
-        const dim3 grid(static_cast<int>(std::ceil(static_cast<double>(num_predict_points) / static_cast<double>(block.x))),
+        const dim3 grid(static_cast<int>(std::ceil(static_cast<double>(num_predict_points) / static_cast<double>(block.x * INTERNAL_BLOCK_SIZE))),
                         static_cast<int>(std::ceil(static_cast<double>(num_classes) / static_cast<double>(block.y))));
 
         cuda::device_kernel_predict_linear<<<grid, block>>>(out_d.get(), w_d.get(), rho_d.get(), predict_points_d.get(), num_classes, num_predict_points, num_features);
