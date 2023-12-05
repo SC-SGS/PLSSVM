@@ -8,8 +8,10 @@ include(${PROJECT_SOURCE_DIR}/cmake/utility_macros.cmake)
 
 message(STATUS "Building Python language bindings for PLSSVM.")
 
+find_package(Python COMPONENTS Interpreter Development)
+
 ## try finding pybind11
-find_package(pybind11 2.10.3 QUIET)
+find_package(pybind11 2.11.1 QUIET)
 if (pybind11_FOUND)
     message(STATUS "Found package pybind11.")
 else ()
@@ -103,11 +105,6 @@ target_compile_definitions(${PLSSVM_PYTHON_BINDINGS_LIBRARY_NAME} PRIVATE PYBIND
 
 # disable clang compiler warning
 target_compile_options(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC $<$<COMPILE_LANG_AND_ID:CXX,Clang>:-Wno-self-assign-overloaded>)
-
-# find required python libraries
-find_package(PythonLibs REQUIRED)
-target_include_directories(${PLSSVM_BASE_LIBRARY_NAME} PRIVATE ${PYTHON_INCLUDE_DIRS})
-target_link_libraries(${PLSSVM_BASE_LIBRARY_NAME} PRIVATE ${GPU_SAMPLER_LIBRARY_NAME})
 
 # append pybind11 bindings library to installed targets
 append_local_and_parent(PLSSVM_TARGETS_TO_INSTALL ${PLSSVM_PYTHON_BINDINGS_LIBRARY_NAME})
