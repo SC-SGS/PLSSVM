@@ -16,7 +16,7 @@
 #include "gtest/gtest.h"  // TEST, TEST_F, EXPECT_EQ, EXPECT_TRUE, EXPECT_FALSE, ::testing::Test
 
 #include <cmath>     // std::isnan
-#include <iostream>  // std::clog
+#include <iostream>  // std::cout
 #include <sstream>   // std::istringstream
 #include <string>    // std::string
 #include <tuple>     // std::ignore
@@ -26,7 +26,7 @@
 //                                                        zero division behavior                                                       //
 //*************************************************************************************************************************************//
 
-class ZeroDivisionBehavior : public ::testing::Test, public util::redirect_output<&std::clog> {};
+class ZeroDivisionBehavior : public ::testing::Test, public util::redirect_output<&std::cout> {};
 
 // check whether the plssvm::classification_report::zero_division_behavior -> std::string conversions are correct
 TEST_F(ZeroDivisionBehavior, to_string) {

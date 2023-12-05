@@ -120,7 +120,11 @@ void parse_provided_params(svc &self, const py::kwargs &args) {
     }
     if (args.contains("verbose")) {
         if (args["verbose"].cast<bool>()) {
-            plssvm::verbosity = plssvm::verbosity_level::full;
+            if (plssvm::verbosity == plssvm::verbosity_level::quiet) {
+                // if current verbosity is quiet, override with full verbosity, since 'verbose=TRUE' should never result in no output
+                plssvm::verbosity = plssvm::verbosity_level::full;
+            }
+            // otherwise: use currently active verbosity level
         } else {
             plssvm::verbosity = plssvm::verbosity_level::quiet;
         }
@@ -217,7 +221,11 @@ void init_sklearn(py::module_ &m) {
                    // to silence constructor messages
                    if (args.contains("verbose")) {
                        if (args["verbose"].cast<bool>()) {
-                           plssvm::verbosity = plssvm::verbosity_level::full;
+                           if (plssvm::verbosity == plssvm::verbosity_level::quiet) {
+                               // if current verbosity is quiet, override with full verbosity, since 'verbose=TRUE' should never result in no output
+                               plssvm::verbosity = plssvm::verbosity_level::full;
+                           }
+                           // otherwise: use currently active verbosity level
                        } else {
                            plssvm::verbosity = plssvm::verbosity_level::quiet;
                        }

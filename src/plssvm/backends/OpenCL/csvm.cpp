@@ -8,6 +8,7 @@
 
 #include "plssvm/backends/OpenCL/csvm.hpp"
 
+#include "plssvm/backend_types.hpp"                         // plssvm::backend_type
 #include "plssvm/backends/OpenCL/detail/command_queue.hpp"  // plssvm::opencl::detail::command_queue
 #include "plssvm/backends/OpenCL/detail/context.hpp"        // plssvm::opencl::detail::context
 #include "plssvm/backends/OpenCL/detail/device_ptr.hpp"     // plssvm::opencl::detail::device_ptr
@@ -16,13 +17,14 @@
 #include "plssvm/backends/OpenCL/exceptions.hpp"            // plssvm::opencl::backend_exception
 #include "plssvm/constants.hpp"                             // plssvm::real_type
 #include "plssvm/detail/assert.hpp"                         // PLSSVM_ASSERT
-#include "plssvm/detail/logger.hpp"                         // plssvm::detail::log, plssvm::verbosity_level
+#include "plssvm/detail/logging.hpp"                        // plssvm::detail::log
 #include "plssvm/detail/performance_tracker.hpp"            // plssvm::detail::tracking_entry
 #include "plssvm/detail/utility.hpp"                        // plssvm::detail::contains
 #include "plssvm/exceptions/exceptions.hpp"                 // plssvm::exception
 #include "plssvm/kernel_function_types.hpp"                 // plssvm::kernel_function_type
 #include "plssvm/parameter.hpp"                             // plssvm::parameter, plssvm::detail::parameter
 #include "plssvm/target_platforms.hpp"                      // plssvm::target_platform
+#include "plssvm/verbosity_levels.hpp"                      // plssvm::verbosity_level
 
 #include "fmt/chrono.h"   // can directly print std::chrono literals
 #include "fmt/color.h"    // fmt::fg, fmt::color::orange
@@ -123,7 +125,9 @@ void csvm::init(const target_platform target) {
 
     // currently only single GPU execution is supported
     if (devices_.size() != 1) {
-        std::clog << fmt::format(fmt::fg(fmt::color::orange), "WARNING: found {} devices, but currently only single GPU execution is supported. Continuing only with device 0!", devices_.size()) << std::endl;
+        plssvm::detail::log(verbosity_level::full | verbosity_level::warning,
+                            "WARNING: found {} devices, but currently only single GPU execution is supported. Continuing only with device 0!\n",
+                            devices_.size());
         devices_.resize(1);
     }
 

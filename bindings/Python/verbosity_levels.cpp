@@ -6,19 +6,20 @@
  *          See the LICENSE.md file in the project root for full license information.
  */
 
-#include "plssvm/detail/logger.hpp"
+#include "plssvm/verbosity_levels.hpp"
 
 #include "pybind11/operators.h"  // pybind operator overloading
 #include "pybind11/pybind11.h"   // py::module_
 
 namespace py = pybind11;
 
-void init_logger(py::module_ &m) {
+void init_verbosity_levels(py::module_ &m) {
     // bind enum class
     py::enum_<plssvm::verbosity_level> verb_enum(m, "VerbosityLevel");
     verb_enum.value("QUIET", plssvm::verbosity_level::quiet, "nothing is logged to the standard output to stdout")
         .value("LIBSVM", plssvm::verbosity_level::libsvm, "log the same messages as LIBSVM (used for better LIBSVM conformity) to stdout")
         .value("TIMING", plssvm::verbosity_level::timing, "log all messages related to timing information to stdout")
+        .value("WARNING", plssvm::verbosity_level::warning, "log all messages related to warning to stdcerr")
         .value("FULL", plssvm::verbosity_level::full, "log all messages to stdout");
 
     // bind the bitwise operations

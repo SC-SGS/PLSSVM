@@ -17,13 +17,14 @@
 #include "plssvm/backends/HIP/predict_kernel.hip.hpp"                      // plssvm::hip::detail::{device_kernel_w_linear, device_kernel_predict_polynomial, device_kernel_predict_rbf}
 #include "plssvm/constants.hpp"                                            // plssvm::real_type
 #include "plssvm/detail/assert.hpp"                                        // PLSSVM_ASSERT
-#include "plssvm/detail/logger.hpp"                                        // plssvm::detail::log, plssvm::verbosity_level
+#include "plssvm/detail/logging.hpp"                                       // plssvm::detail::log
 #include "plssvm/detail/memory_size.hpp"                                   // plssvm::detail::memory_size
 #include "plssvm/detail/performance_tracker.hpp"                           // plssvm::detail::tracking_entry
 #include "plssvm/exceptions/exceptions.hpp"                                // plssvm::exception
 #include "plssvm/kernel_function_types.hpp"                                // plssvm::kernel_function_type
 #include "plssvm/parameter.hpp"                                            // plssvm::parameter, plssvm::detail::parameter
 #include "plssvm/target_platforms.hpp"                                     // plssvm::target_platform
+#include "plssvm/verbosity_levels.hpp"                                     // plssvm::verbosity_level
 
 #include "hip/hip_runtime_api.h"  // HIP runtime functions
 
@@ -71,7 +72,9 @@ void csvm::init(const target_platform target) {
 
     // currently only single GPU execution is supported
     if (devices_.size() != 1) {
-        std::clog << fmt::format(fmt::fg(fmt::color::orange), "WARNING: found {} devices, but currently only single GPU execution is supported. Continuing only with device 0!", devices_.size()) << std::endl;
+        plssvm::detail::log(verbosity_level::full | verbosity_level::warning,
+                            "WARNING: found {} devices, but currently only single GPU execution is supported. Continuing only with device 0!\n",
+                            devices_.size());
         devices_.resize(1);
     }
 

@@ -13,9 +13,11 @@
 #define PLSSVM_DETAIL_MATRIX_HPP_
 #pragma once
 
-#include "plssvm/detail/assert.hpp"          // PLSSVM_ASSERT
-#include "plssvm/detail/utility.hpp"         // plssvm::detail::always_false_v
-#include "plssvm/exceptions/exceptions.hpp"  // plssvm::matrix_exception
+#include "plssvm/detail/assert.hpp"                                // PLSSVM_ASSERT
+#include "plssvm/detail/logging_without_performance_tracking.hpp"  // plssvm::detail::log
+#include "plssvm/detail/utility.hpp"                               // plssvm::detail::always_false_v
+#include "plssvm/exceptions/exceptions.hpp"                        // plssvm::matrix_exception
+#include "plssvm/verbosity_levels.hpp"                             // plssvm::verbosity_level
 
 #include "fmt/color.h"    // fmt::fg, fmt::color::orange
 #include "fmt/core.h"     // fmt::format
@@ -26,7 +28,6 @@
 #include <cstddef>      // std::size_t
 #include <cstring>      // std::memcpy, std::memset
 #include <iosfwd>       // std::istream forward declaration
-#include <iostream>     // std::clog, std::endl
 #include <ostream>      // std::ostream
 #include <string_view>  // std::string_view
 #include <type_traits>  // std::enable_if, std::is_convertible_v, std::is_arithmetic_v
@@ -619,20 +620,18 @@ auto matrix<T, layout_>::at(const size_type row, const size_type col) const -> v
     if (row >= this->num_rows_padded()) {
         throw matrix_exception{ fmt::format("The current row ({}) must be smaller than the number of rows including padding ({} + {})!", row, num_rows_, row_padding_) };
     } else if (row >= this->num_rows()) {
-        std::clog << fmt::format(fmt::fg(fmt::color::orange),
-                                 "WARNING: attempting to access padding row {} (only {} real rows exist)!",
-                                 row,
-                                 num_rows_)
-                  << std::endl;
+        detail::log(verbosity_level::full | verbosity_level::warning,
+                    "WARNING: attempting to access padding row {} (only {} real rows exist)!\n",
+                    row,
+                    num_rows_);
     }
     if (col >= this->num_cols_padded()) {
         throw matrix_exception{ fmt::format("The current column ({}) must be smaller than the number of columns including padding ({} + {})!", col, num_cols_, col_padding_) };
     } else if (col >= this->num_cols()) {
-        std::clog << fmt::format(fmt::fg(fmt::color::orange),
-                                 "WARNING: attempting to access padding column {} (only {} real columns exist)!",
-                                 col,
-                                 num_cols_)
-                  << std::endl;
+        detail::log(verbosity_level::full | verbosity_level::warning,
+                    "WARNING: attempting to access padding column {} (only {} real columns exist)!\n",
+                    col,
+                    num_cols_);
     }
 
     return (*this)(row, col);
@@ -642,20 +641,18 @@ auto matrix<T, layout_>::at(const size_type row, const size_type col) -> referen
     if (row >= this->num_rows_padded()) {
         throw matrix_exception{ fmt::format("The current row ({}) must be smaller than the number of rows including padding ({} + {})!", row, num_rows_, row_padding_) };
     } else if (row >= this->num_rows()) {
-        std::clog << fmt::format(fmt::fg(fmt::color::orange),
-                                 "WARNING: attempting to access padding row {} (only {} real rows exist)!",
-                                 row,
-                                 num_rows_)
-                  << std::endl;
+        detail::log(verbosity_level::full | verbosity_level::warning,
+                    "WARNING: attempting to access padding row {} (only {} real rows exist)!\n",
+                    row,
+                    num_rows_);
     }
     if (col >= this->num_cols_padded()) {
         throw matrix_exception{ fmt::format("The current column ({}) must be smaller than the number of columns including padding ({} + {})!", col, num_cols_, col_padding_) };
     } else if (col >= this->num_cols()) {
-        std::clog << fmt::format(fmt::fg(fmt::color::orange),
-                                 "WARNING: attempting to access padding column {} (only {} real columns exist)!",
-                                 col,
-                                 num_cols_)
-                  << std::endl;
+        detail::log(verbosity_level::full | verbosity_level::warning,
+                    "WARNING: attempting to access padding column {} (only {} real columns exist)!\n",
+                    col,
+                    num_cols_);
     }
 
     return (*this)(row, col);

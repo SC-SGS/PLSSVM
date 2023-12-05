@@ -30,6 +30,7 @@
 #include "plssvm/kernel_function_types.hpp"                 // all supported kernel function types
 #include "plssvm/solver_types.hpp"                          // all supported solver types (e.g., Conjugate Gradients with explicit, streaming, or implicit kernel matrix generation)
 #include "plssvm/target_platforms.hpp"                      // all supported target platforms
+#include "plssvm/verbosity_levels.hpp"                      // all supported verbosity levels
 
 #include "plssvm/backends/SYCL/implementation_type.hpp"     // the SYCL implementation type
 #include "plssvm/backends/SYCL/kernel_invocation_type.hpp"  // the SYCL specific kernel invocation typ

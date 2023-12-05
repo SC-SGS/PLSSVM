@@ -18,11 +18,12 @@
 #include "plssvm/data_set.hpp"                        // plssvm::data_set
 #include "plssvm/detail/assert.hpp"                   // PLSSVM_ASSERT
 #include "plssvm/detail/io/libsvm_model_parsing.hpp"  // plssvm::detail::io::{parse_libsvm_model_header, parse_libsvm_model_data, write_libsvm_model_data}
-#include "plssvm/detail/logger.hpp"                   // plssvm::detail::log, plssvm::verbosity_level
+#include "plssvm/detail/logging.hpp"                  // plssvm::detail::log
 #include "plssvm/detail/performance_tracker.hpp"      // plssvm::detail::tracking_entry
 #include "plssvm/detail/type_list.hpp"                // plssvm::detail::{supported_label_types, tuple_contains_v}
 #include "plssvm/matrix.hpp"                          // plssvm::soa_matrix
 #include "plssvm/parameter.hpp"                       // plssvm::parameter
+#include "plssvm/verbosity_levels.hpp"                // plssvm::verbosity_level
 
 #include "fmt/chrono.h"  // format std::chrono types using fmt
 #include "fmt/core.h"    // fmt::format

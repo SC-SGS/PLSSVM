@@ -8,29 +8,30 @@
 
 #include "plssvm/detail/cmd/parser_train.hpp"
 
-#include "plssvm/backend_types.hpp"                      // plssvm::list_available_backends
-#include "plssvm/backends/SYCL/implementation_type.hpp"  // plssvm::sycl_generic::list_available_sycl_implementations
-#include "plssvm/classification_types.hpp"               // plssvm::classification_type, plssvm::classification_type_to_full_string
-#include "plssvm/constants.hpp"                          // plssvm::real_type
-#include "plssvm/default_value.hpp"                      // plssvm::default_value
-#include "plssvm/detail/assert.hpp"                      // PLSSVM_ASSERT
-#include "plssvm/detail/logger.hpp"                      // plssvm::verbosity
-#include "plssvm/detail/string_utility.hpp"              // plssvm::detail::as_lower_case
-#include "plssvm/detail/utility.hpp"                     // plssvm::detail::to_underlying
-#include "plssvm/kernel_function_types.hpp"              // plssvm::kernel_type_to_math_string
-#include "plssvm/solver_types.hpp"                       // plssvm::solver_types
-#include "plssvm/target_platforms.hpp"                   // plssvm::list_available_target_platforms
-#include "plssvm/version/version.hpp"                    // plssvm::version::detail::get_version_info
+#include "plssvm/backend_types.hpp"                                // plssvm::list_available_backends
+#include "plssvm/backends/SYCL/implementation_type.hpp"            // plssvm::sycl_generic::list_available_sycl_implementations
+#include "plssvm/classification_types.hpp"                         // plssvm::classification_type, plssvm::classification_type_to_full_string
+#include "plssvm/constants.hpp"                                    // plssvm::real_type
+#include "plssvm/default_value.hpp"                                // plssvm::default_value
+#include "plssvm/detail/assert.hpp"                                // PLSSVM_ASSERT
+#include "plssvm/detail/logging_without_performance_tracking.hpp"  // plssvm::detail::log
+#include "plssvm/detail/string_utility.hpp"                        // plssvm::detail::as_lower_case
+#include "plssvm/detail/utility.hpp"                               // plssvm::detail::to_underlying
+#include "plssvm/kernel_function_types.hpp"                        // plssvm::kernel_type_to_math_string
+#include "plssvm/solver_types.hpp"                                 // plssvm::solver_types
+#include "plssvm/target_platforms.hpp"                             // plssvm::list_available_target_platforms
+#include "plssvm/verbosity_levels.hpp"                             // plssvm::verbosity, plssvm::verbosity_level
+#include "plssvm/version/version.hpp"                              // plssvm::version::detail::get_version_info
 
 #include "cxxopts.hpp"    // cxxopts::Options, cxxopts::value,cxxopts::ParseResult
-#include "fmt/color.h"    // fmt::fg, fmt::color::orange
+#include "fmt/color.h"    // fmt::fg, fmt::color::red
 #include "fmt/core.h"     // fmt::format, fmt::join
 #include "fmt/ostream.h"  // can use fmt using operator<< overloads
 
 #include <cstdlib>      // std::exit, EXIT_SUCCESS, EXIT_FAILURE
 #include <exception>    // std::exception
 #include <filesystem>   // std::filesystem::path
-#include <iostream>     // std::cout, std::cerr, std::clog, std::endl
+#include <iostream>     // std::cout, std::cerr, std::endl
 #include <type_traits>  // std::is_same_v
 
 namespace plssvm::detail::cmd {
@@ -82,7 +83,7 @@ parser_train::parser_train(int argc, char **argv) {
         options.parse_positional({ "input", "model" });
         result = options.parse(argc, argv);
     } catch (const std::exception &e) {
-        std::cerr << e.what() << std::endl;
+        std::cerr << fmt::format(fmt::fg(fmt::color::red), "ERROR: {}\n", e.what()) << std::endl;
         std::cout << options.help() << std::endl;
         std::exit(EXIT_FAILURE);
     }
@@ -101,7 +102,7 @@ parser_train::parser_train(int argc, char **argv) {
 
     // check if the number of positional arguments is not too large
     if (!result.unmatched().empty()) {
-        std::cerr << fmt::format("Only up to two positional options may be given, but {} (\"{}\") additional option(s) where provided!\n", result.unmatched().size(), fmt::join(result.unmatched(), " ")) << std::endl;
+        std::cerr << fmt::format(fmt::fg(fmt::color::red), "ERROR: only up to two positional options may be given, but {} (\"{}\") additional option(s) where provided!\n", result.unmatched().size(), fmt::join(result.unmatched(), " ")) << std::endl;
         std::cout << options.help() << std::endl;
         std::exit(EXIT_FAILURE);
     }
@@ -121,7 +122,7 @@ parser_train::parser_train(int argc, char **argv) {
         const typename decltype(csvm_params.gamma)::value_type gamma_input = result["gamma"].as<typename decltype(csvm_params.gamma)::value_type>();
         // check if the provided gamma is legal
         if (gamma_input <= decltype(gamma_input){ 0.0 }) {
-            std::cerr << fmt::format("gamma must be greater than 0.0, but is {}!", gamma_input) << std::endl;
+            std::cerr << fmt::format(fmt::fg(fmt::color::red), "ERROR: gamma must be greater than 0.0, but is {}!\n", gamma_input) << std::endl;
             std::cout << options.help() << std::endl;
             std::exit(EXIT_FAILURE);
         }
@@ -149,7 +150,7 @@ parser_train::parser_train(int argc, char **argv) {
         const auto max_iter_input = result["max_iter"].as<long long int>();
         // check if the provided max_iter is legal
         if (max_iter_input <= decltype(max_iter_input){ 0 }) {
-            std::cerr << fmt::format("max_iter must be greater than 0, but is {}!", max_iter_input) << std::endl;
+            std::cerr << fmt::format(fmt::fg(fmt::color::red), "ERROR: max_iter must be greater than 0, but is {}!\n", max_iter_input) << std::endl;
             std::cout << options.help() << std::endl;
             std::exit(EXIT_FAILURE);
         }
@@ -177,10 +178,9 @@ parser_train::parser_train(int argc, char **argv) {
 
     // warn if kernel invocation type is explicitly set but SYCL isn't the current backend
     if (backend != backend_type::sycl && sycl_kernel_invocation_type != sycl::kernel_invocation_type::automatic) {
-        std::clog << fmt::format(fmt::fg(fmt::color::orange),
-                                 "WARNING: explicitly set a SYCL kernel invocation type but the current backend isn't SYCL; ignoring --sycl_kernel_invocation_type={}",
-                                 sycl_kernel_invocation_type)
-                  << std::endl;
+        detail::log(verbosity_level::full | verbosity_level::warning,
+                    "WARNING: explicitly set a SYCL kernel invocation type but the current backend isn't SYCL; ignoring --sycl_kernel_invocation_type={}\n",
+                    sycl_kernel_invocation_type);
     }
 
     // parse SYCL implementation used in the SYCL backend
@@ -188,10 +188,9 @@ parser_train::parser_train(int argc, char **argv) {
 
     // warn if a SYCL implementation type is explicitly set but SYCL isn't the current backend
     if (backend != backend_type::sycl && sycl_implementation_type != sycl::implementation_type::automatic) {
-        std::clog << fmt::format(fmt::fg(fmt::color::orange),
-                                 "WARNING: explicitly set a SYCL implementation type but the current backend isn't SYCL; ignoring --sycl_implementation_type={}",
-                                 sycl_implementation_type)
-                  << std::endl;
+        detail::log(verbosity_level::full | verbosity_level::warning,
+                    "WARNING: explicitly set a SYCL implementation type but the current backend isn't SYCL; ignoring --sycl_implementation_type={}\n",
+                    sycl_implementation_type);
     }
 #endif
 
@@ -205,10 +204,9 @@ parser_train::parser_train(int argc, char **argv) {
     if (result["verbosity"].count()) {
         const verbosity_level verb = result["verbosity"].as<verbosity_level>();
         if (quiet && verb != verbosity_level::quiet) {
-            std::clog << fmt::format(fmt::fg(fmt::color::orange),
-                                     "WARNING: explicitly set the -q/--quiet flag, but the provided verbosity level isn't \"quiet\"; setting --verbosity={} to --verbosity=quiet",
-                                     verb)
-                      << std::endl;
+            detail::log(verbosity_level::full | verbosity_level::warning,
+                        "WARNING: explicitly set the -q/--quiet flag, but the provided verbosity level isn't \"quiet\"; setting --verbosity={} to --verbosity=quiet\n",
+                        verb);
             verbosity = verbosity_level::quiet;
         } else {
             verbosity = verb;
@@ -219,7 +217,7 @@ parser_train::parser_train(int argc, char **argv) {
 
     // parse input data filename
     if (!result.count("input")) {
-        std::cerr << "Error missing input file!" << std::endl;
+        std::cerr << fmt::format(fmt::fg(fmt::color::red), "ERROR: missing input file!\n") << std::endl;
         std::cout << options.help() << std::endl;
         std::exit(EXIT_FAILURE);
     }
