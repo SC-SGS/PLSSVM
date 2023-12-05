@@ -223,7 +223,7 @@ auto csvm::run_w_kernel(const device_ptr_type &alpha_d, const device_ptr_type &s
     const dim3 grid(static_cast<int>(std::ceil(static_cast<double>(num_features) / static_cast<double>(block.x))),
                     static_cast<int>(std::ceil(static_cast<double>(num_classes) / static_cast<double>(block.y))));
 
-    device_ptr_type w_d{ { num_classes, num_features }, { THREAD_BLOCK_PADDING, THREAD_BLOCK_PADDING }, devices_[0] };
+    device_ptr_type w_d{ { num_classes, num_features }, { THREAD_BLOCK_PADDING, FEATURE_BLOCK_SIZE }, devices_[0] };
 
     detail::set_device(0);
     cuda::device_kernel_w_linear<<<grid, block>>>(w_d.get(), alpha_d.get(), sv_d.get(), num_classes, num_sv, num_features);
@@ -253,7 +253,7 @@ auto csvm::run_predict_kernel(const parameter &params, const device_ptr_type &w_
     if (params.kernel_type == kernel_function_type::linear) {
         // define the grid sizes
         const dim3 grid(static_cast<int>(std::ceil(static_cast<double>(num_predict_points) / static_cast<double>(block.x * INTERNAL_BLOCK_SIZE))),
-                        static_cast<int>(std::ceil(static_cast<double>(num_classes) / static_cast<double>(block.y))));
+                        static_cast<int>(std::ceil(static_cast<double>(num_classes) / static_cast<double>(block.y * INTERNAL_BLOCK_SIZE))));
 
         cuda::device_kernel_predict_linear<<<grid, block>>>(out_d.get(), w_d.get(), rho_d.get(), predict_points_d.get(), num_classes, num_predict_points, num_features);
     } else {

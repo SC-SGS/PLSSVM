@@ -261,10 +261,10 @@ template void gemm(const float, const std::vector<float> &, const plssvm::soa_ma
 template void gemm(const double, const std::vector<double> &, const plssvm::soa_matrix<double> &, const double, plssvm::soa_matrix<double> &);
 
 template <typename real_type>
-plssvm::aos_matrix<real_type> calculate_w(const plssvm::aos_matrix<real_type> &weights, const plssvm::soa_matrix<real_type> &support_vectors) {
+plssvm::soa_matrix<real_type> calculate_w(const plssvm::aos_matrix<real_type> &weights, const plssvm::soa_matrix<real_type> &support_vectors) {
     PLSSVM_ASSERT(support_vectors.num_rows() == weights.num_cols(), "Sizes mismatch!: {} != {}", support_vectors.num_rows(), weights.num_cols());
 
-    plssvm::aos_matrix<real_type> result{ weights.num_rows(), support_vectors.num_cols(), plssvm::THREAD_BLOCK_PADDING, plssvm::THREAD_BLOCK_PADDING };
+    plssvm::soa_matrix<real_type> result{ weights.num_rows(), support_vectors.num_cols(), plssvm::THREAD_BLOCK_PADDING, plssvm::THREAD_BLOCK_PADDING };
     for (std::size_t c = 0; c < weights.num_rows(); ++c) {
         for (std::size_t i = 0; i < support_vectors.num_cols(); ++i) {
             for (std::size_t j = 0; j < weights.num_cols(); ++j) {
@@ -274,11 +274,11 @@ plssvm::aos_matrix<real_type> calculate_w(const plssvm::aos_matrix<real_type> &w
     }
     return result;
 }
-template plssvm::aos_matrix<float> calculate_w(const plssvm::aos_matrix<float> &, const plssvm::soa_matrix<float> &);
-template plssvm::aos_matrix<double> calculate_w(const plssvm::aos_matrix<double> &, const plssvm::soa_matrix<double> &);
+template plssvm::soa_matrix<float> calculate_w(const plssvm::aos_matrix<float> &, const plssvm::soa_matrix<float> &);
+template plssvm::soa_matrix<double> calculate_w(const plssvm::aos_matrix<double> &, const plssvm::soa_matrix<double> &);
 
 template <typename real_type>
-[[nodiscard]] plssvm::aos_matrix<real_type> predict_values(const plssvm::parameter &params, const plssvm::aos_matrix<real_type> &w, const plssvm::aos_matrix<real_type> &weights, const std::vector<real_type> &rho, const plssvm::soa_matrix<real_type> &support_vectors, const plssvm::soa_matrix<real_type> &predict_points) {
+[[nodiscard]] plssvm::aos_matrix<real_type> predict_values(const plssvm::parameter &params, const plssvm::soa_matrix<real_type> &w, const plssvm::aos_matrix<real_type> &weights, const std::vector<real_type> &rho, const plssvm::soa_matrix<real_type> &support_vectors, const plssvm::soa_matrix<real_type> &predict_points) {
     PLSSVM_ASSERT(w.empty() || w.num_rows() == weights.num_rows(), "Sizes mismatch!: {} != {}", w.num_rows(), weights.num_rows());
     PLSSVM_ASSERT(w.empty() || w.num_cols() == support_vectors.num_cols(), "Sizes mismatch!: {} != {}", w.num_cols(), support_vectors.num_cols());
     PLSSVM_ASSERT(weights.num_rows() == rho.size(), "Sizes mismatch!: {} != {}", weights.num_rows(), rho.size());
@@ -345,7 +345,7 @@ template <typename real_type>
     return result;
 }
 
-template plssvm::aos_matrix<float> predict_values(const plssvm::parameter &, const plssvm::aos_matrix<float> &, const plssvm::aos_matrix<float> &, const std::vector<float> &, const plssvm::soa_matrix<float> &, const plssvm::soa_matrix<float> &);
-template plssvm::aos_matrix<double> predict_values(const plssvm::parameter &, const plssvm::aos_matrix<double> &, const plssvm::aos_matrix<double> &, const std::vector<double> &, const plssvm::soa_matrix<double> &, const plssvm::soa_matrix<double> &);
+template plssvm::aos_matrix<float> predict_values(const plssvm::parameter &, const plssvm::soa_matrix<float> &, const plssvm::aos_matrix<float> &, const std::vector<float> &, const plssvm::soa_matrix<float> &, const plssvm::soa_matrix<float> &);
+template plssvm::aos_matrix<double> predict_values(const plssvm::parameter &, const plssvm::soa_matrix<double> &, const plssvm::aos_matrix<double> &, const std::vector<double> &, const plssvm::soa_matrix<double> &, const plssvm::soa_matrix<double> &);
 
 }  // namespace compare

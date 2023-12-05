@@ -193,7 +193,7 @@ class model {
      * @details Will be reused by subsequent calls to `plssvm::csvm::fit`/`plssvm::csvm::score` with the same `plssvm::model`.
      * @note Must be initialized to an empty vector instead of a `nullptr` in order to be passable as const reference.
      */
-    std::shared_ptr<aos_matrix<real_type>> w_ptr_{ std::make_shared<aos_matrix<real_type>>() };
+    std::shared_ptr<soa_matrix<real_type>> w_ptr_{ std::make_shared<soa_matrix<real_type>>() };
 };
 
 template <typename U>

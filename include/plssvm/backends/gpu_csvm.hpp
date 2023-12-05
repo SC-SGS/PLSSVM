@@ -109,7 +109,7 @@ class gpu_csvm : public ::plssvm::csvm {
     /**
      * @copydoc plssvm::csvm::predict_values
      */
-    [[nodiscard]] aos_matrix<real_type> predict_values(const parameter &params, const soa_matrix<real_type> &support_vectors, const aos_matrix<real_type> &alpha, const std::vector<real_type> &rho, aos_matrix<real_type> &w, const soa_matrix<real_type> &predict_points) const final;
+    [[nodiscard]] aos_matrix<real_type> predict_values(const parameter &params, const soa_matrix<real_type> &support_vectors, const aos_matrix<real_type> &alpha, const std::vector<real_type> &rho, soa_matrix<real_type> &w, const soa_matrix<real_type> &predict_points) const final;
 
     //*************************************************************************************************************************************//
     //                                         pure virtual, must be implemented by all subclasses                                         //
@@ -282,7 +282,7 @@ aos_matrix<real_type> gpu_csvm<device_ptr_t, queue_t>::predict_values(const para
                                                                       const soa_matrix<real_type> &support_vectors,
                                                                       const aos_matrix<real_type> &alpha,
                                                                       const std::vector<real_type> &rho,
-                                                                      aos_matrix<real_type> &w,
+                                                                      soa_matrix<real_type> &w,
                                                                       const soa_matrix<real_type> &predict_points) const {
     PLSSVM_ASSERT(!support_vectors.empty(), "The support vectors must not be empty!");
     PLSSVM_ASSERT(support_vectors.is_padded(), "The support vectors must be padded!");
@@ -318,7 +318,7 @@ aos_matrix<real_type> gpu_csvm<device_ptr_t, queue_t>::predict_values(const para
             w_d = this->run_w_kernel(alpha_d, sv_d);
 
             // convert 1D result to aos_matrix out-parameter
-            w = aos_matrix<real_type>{ num_classes, num_features, THREAD_BLOCK_PADDING, THREAD_BLOCK_PADDING };
+            w = soa_matrix<real_type>{ num_classes, num_features, THREAD_BLOCK_PADDING, THREAD_BLOCK_PADDING };
             w_d.copy_to_host(w);
             w.restore_padding();
         } else {

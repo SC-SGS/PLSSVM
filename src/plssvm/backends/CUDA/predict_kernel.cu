@@ -21,40 +21,51 @@ __global__ void device_kernel_w_linear(real_type *w_d, const real_type *alpha_d,
     for (unsigned long long sv = 0; sv < num_sv; ++sv) {
         temp += alpha_d[class_idx * (num_sv + THREAD_BLOCK_PADDING) + sv] * sv_d[feature_idx * (num_sv + THREAD_BLOCK_PADDING) + sv];
     }
-    w_d[class_idx * (num_features + THREAD_BLOCK_PADDING) + feature_idx] = temp;
+    w_d[feature_idx * (num_classes + THREAD_BLOCK_PADDING) + class_idx] = temp;
 }
 
 __global__ void device_kernel_predict_linear(real_type *out_d, const real_type *w_d, const real_type *rho_d, const real_type *predict_points_d, const unsigned long long num_classes, const unsigned long long num_predict_points, const unsigned long long num_features) {
     const unsigned long long pd_idx = (blockIdx.x * blockDim.x + threadIdx.x) * INTERNAL_BLOCK_SIZE;
     const unsigned long long pd_idx_linear = blockIdx.x * blockDim.x * INTERNAL_BLOCK_SIZE + threadIdx.x;
-    const unsigned long long class_idx = blockIdx.y * blockDim.y + threadIdx.y;
+    const unsigned long long class_idx = (blockIdx.y * blockDim.y + threadIdx.y) * INTERNAL_BLOCK_SIZE;
+    const unsigned long long class_cached_idx_linear = blockIdx.y * blockDim.y * INTERNAL_BLOCK_SIZE + threadIdx.x;
 
-    __shared__ real_type data_cache[FEATURE_BLOCK_SIZE][INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE];
+    __shared__ real_type data_cache_pd[FEATURE_BLOCK_SIZE][INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE];
+    __shared__ real_type data_cache_class[FEATURE_BLOCK_SIZE][INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE];
 
-    real_type temp[INTERNAL_BLOCK_SIZE] = { 0.0 };
+    real_type temp[INTERNAL_BLOCK_SIZE][INTERNAL_BLOCK_SIZE] = { 0.0 };
 
     for (unsigned long long dim = 0; dim < num_features; dim += FEATURE_BLOCK_SIZE) {
         // load data into shared memory
         for (unsigned internal = 0; internal < INTERNAL_BLOCK_SIZE; ++internal) {
             const unsigned long long global_pd_idx = pd_idx_linear + internal * THREAD_BLOCK_SIZE;
+            const unsigned long long global_class_idx = class_cached_idx_linear + internal * THREAD_BLOCK_SIZE;
 
-            data_cache[threadIdx.y][internal * THREAD_BLOCK_SIZE + threadIdx.x] = predict_points_d[(dim + threadIdx.y) * (num_predict_points + THREAD_BLOCK_PADDING) + global_pd_idx];
-            data_cache[threadIdx.y + THREAD_BLOCK_SIZE][internal * THREAD_BLOCK_SIZE + threadIdx.x] = predict_points_d[(dim + threadIdx.y + THREAD_BLOCK_SIZE) * (num_predict_points + THREAD_BLOCK_PADDING) + global_pd_idx];
+            data_cache_pd[threadIdx.y][internal * THREAD_BLOCK_SIZE + threadIdx.x] = predict_points_d[(dim + threadIdx.y) * (num_predict_points + THREAD_BLOCK_PADDING) + global_pd_idx];
+            data_cache_pd[threadIdx.y + THREAD_BLOCK_SIZE][internal * THREAD_BLOCK_SIZE + threadIdx.x] = predict_points_d[(dim + threadIdx.y + THREAD_BLOCK_SIZE) * (num_predict_points + THREAD_BLOCK_PADDING) + global_pd_idx];
+            data_cache_class[threadIdx.y][internal * THREAD_BLOCK_SIZE + threadIdx.x] = w_d[(dim + threadIdx.y) * (num_classes + THREAD_BLOCK_PADDING) + global_class_idx];
+            data_cache_class[threadIdx.y + THREAD_BLOCK_SIZE][internal * THREAD_BLOCK_SIZE + threadIdx.x] = w_d[(dim + threadIdx.y + THREAD_BLOCK_SIZE) * (num_classes + THREAD_BLOCK_PADDING) + global_class_idx];
         }
         __syncthreads();
 
         // calculation
         for (unsigned block_dim = 0; block_dim < FEATURE_BLOCK_SIZE; ++block_dim) {
             for (unsigned internal_pd = 0; internal_pd < INTERNAL_BLOCK_SIZE; ++internal_pd) {
-                temp[internal_pd] += w_d[class_idx * (num_features + THREAD_BLOCK_PADDING) + dim + block_dim] * data_cache[block_dim][threadIdx.x * INTERNAL_BLOCK_SIZE + internal_pd];
+                for (unsigned internal_class = 0; internal_class < INTERNAL_BLOCK_SIZE; ++internal_class) {
+                    temp[internal_class][internal_pd] += data_cache_class[block_dim][threadIdx.y * INTERNAL_BLOCK_SIZE + internal_class] * data_cache_pd[block_dim][threadIdx.x * INTERNAL_BLOCK_SIZE + internal_pd];
+                }
             }
         }
         __syncthreads();
     }
 
     for (unsigned internal_pd = 0; internal_pd < INTERNAL_BLOCK_SIZE; ++internal_pd) {
-        const unsigned long long global_pd_idx = pd_idx + internal_pd;
-        out_d[global_pd_idx * (num_classes + THREAD_BLOCK_PADDING) + class_idx] = temp[internal_pd] - rho_d[class_idx];
+        for (unsigned internal_class = 0; internal_class < INTERNAL_BLOCK_SIZE; ++internal_class) {
+            const unsigned long long global_pd_idx = pd_idx + internal_pd;
+            const unsigned long long global_class_idx = class_idx + internal_class;
+
+            out_d[global_pd_idx * (num_classes + THREAD_BLOCK_PADDING) + global_class_idx] = temp[internal_class][internal_pd] - rho_d[global_class_idx];
+        }
     }
 }
 

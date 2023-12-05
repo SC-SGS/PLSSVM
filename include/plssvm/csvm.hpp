@@ -241,7 +241,7 @@ class csvm {
      * @throws plssvm::exception any exception thrown by the backend's implementation
      * @return a vector filled with the predictions (not the actual labels!) (`[[nodiscard]]`)
      */
-    [[nodiscard]] virtual aos_matrix<real_type> predict_values(const parameter &params, const soa_matrix<real_type> &support_vectors, const aos_matrix<real_type> &alpha, const std::vector<real_type> &rho, aos_matrix<real_type> &w, const soa_matrix<real_type> &predict_points) const = 0;
+    [[nodiscard]] virtual aos_matrix<real_type> predict_values(const parameter &params, const soa_matrix<real_type> &support_vectors, const aos_matrix<real_type> &alpha, const std::vector<real_type> &rho, soa_matrix<real_type> &w, const soa_matrix<real_type> &predict_points) const = 0;
 
     /// The target platform of this SVM.
     target_platform target_{ plssvm::target_platform::automatic };
@@ -294,7 +294,7 @@ class csvm {
      * @copydoc plssvm::csvm::predict_values
      * @detail Small wrapper around the virtual `plssvm::csvm::predict_values` function to easily track its execution time.
      */
-    [[nodiscard]] aos_matrix<real_type> run_predict_values(const parameter &params, const soa_matrix<real_type> &support_vectors, const aos_matrix<real_type> &alpha, const std::vector<real_type> &rho, aos_matrix<real_type> &w, const soa_matrix<real_type> &predict_points) const;
+    [[nodiscard]] aos_matrix<real_type> run_predict_values(const parameter &params, const soa_matrix<real_type> &support_vectors, const aos_matrix<real_type> &alpha, const std::vector<real_type> &rho, soa_matrix<real_type> &w, const soa_matrix<real_type> &predict_points) const;
 
   private:
     /// The SVM parameter (e.g., cost, degree, gamma, coef0) currently in use.
@@ -574,7 +574,7 @@ std::vector<label_type> csvm::predict(const model<label_type> &model, const data
             // w is currently empty
             // initialize the w matrix and calculate it later!
             calculate_w = true;
-            (*model.w_ptr_) = aos_matrix<real_type>{ calculate_number_of_classifiers(classification_type::oao, num_classes), num_features };
+            (*model.w_ptr_) = soa_matrix<real_type>{ calculate_number_of_classifiers(classification_type::oao, num_classes), num_features };
         }
 
         // perform one vs. one prediction
@@ -614,7 +614,7 @@ std::vector<label_type> csvm::predict(const model<label_type> &model, const data
                 // don't use the w vector for the polynomial and rbf kernel OR if the w vector hasn't been calculated yet
                 if (params_.kernel_type != kernel_function_type::linear || calculate_w) {
                     // the w vector optimization has not been applied yet -> calculate w and store it
-                    aos_matrix<real_type> w{};
+                    soa_matrix<real_type> w{};
                     // returned w: 1 x num_features
                     binary_votes = this->run_predict_values(model.params_, binary_sv, binary_alpha, binary_rho, w, predict_points);
                     // only in case of the linear kernel, the w vector gets filled -> store it
@@ -626,7 +626,7 @@ std::vector<label_type> csvm::predict(const model<label_type> &model, const data
                     }
                 } else {
                     // use previously calculated w vector
-                    aos_matrix<real_type> binary_w{ 1, num_features };
+                    soa_matrix<real_type> binary_w{ 1, num_features };
                     #pragma omp parallel for default(none) shared(model, binary_w) firstprivate(num_features, pos)
                     for (std::size_t dim = 0; dim < num_features; ++dim) {
                         binary_w(0, dim) = (*model.w_ptr_)(pos, dim);

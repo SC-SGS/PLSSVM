@@ -134,14 +134,14 @@ TYPED_TEST_P(GenericGPUCSVM, run_w_kernel) {
 
     // calculate w
     const device_ptr_type w_d = svm.run_w_kernel(weights_d, sv_d);
-    plssvm::aos_matrix<plssvm::real_type> w(weights.num_rows(), data.data().num_cols(), plssvm::THREAD_BLOCK_PADDING, plssvm::THREAD_BLOCK_PADDING);
+    plssvm::soa_matrix<plssvm::real_type> w(weights.num_rows(), data.data().num_cols(), plssvm::THREAD_BLOCK_PADDING, plssvm::THREAD_BLOCK_PADDING);
 
     // check sizes
     ASSERT_EQ(w_d.extents(), w.shape());
     w_d.copy_to_host(w);
 
     // calculate correct w vector
-    const plssvm::aos_matrix<plssvm::real_type> correct_w = compare::calculate_w(weights, data.data());
+    const plssvm::soa_matrix<plssvm::real_type> correct_w = compare::calculate_w(weights, data.data());
 
     // check w for correctness
     EXPECT_FLOATING_POINT_MATRIX_NEAR(w, correct_w);
@@ -247,7 +247,7 @@ TYPED_TEST_P(GenericGPUCSVMKernelFunction, run_predict_kernel) {
     out.restore_padding();
 
     // calculate correct predict values
-    plssvm::aos_matrix<plssvm::real_type> correct_w;
+    plssvm::soa_matrix<plssvm::real_type> correct_w;
     if (kernel == plssvm::kernel_function_type::linear) {
         correct_w = compare::calculate_w(weights, data.data());
     }
