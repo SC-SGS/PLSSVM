@@ -15,13 +15,14 @@
 #include "plssvm/backends/OpenCL/exceptions.hpp"            // plssvm::opencl::backend_exception
 #include "plssvm/constants.hpp"                             // plssvm::real_type, plssvm::THREAD_BLOCK_SIZE, plssvm::FEATURE_BLOCK_SIZE
 #include "plssvm/detail/arithmetic_type_name.hpp"           // plssvm::detail::arithmetic_type_name
-#include "plssvm/detail/logger.hpp"                         // plssvm::detail::log, plssvm::verbosity_level
+#include "plssvm/detail/logging.hpp"                        // plssvm::detail::log
 #include "plssvm/detail/sha256.hpp"                         // plssvm::detail::sha256
 #include "plssvm/detail/string_conversion.hpp"              // plssvm::detail::extract_first_integer_from_string
 #include "plssvm/detail/string_utility.hpp"                 // plssvm::detail::replace_all, plssvm::detail::to_lower_case, plssvm::detail::contains
 #include "plssvm/detail/utility.hpp"                        // plssvm::detail::erase_if
 #include "plssvm/exceptions/exceptions.hpp"                 // plssvm::unsupported_kernel_type_exception, plssvm::invalid_file_format_exception
 #include "plssvm/target_platforms.hpp"                      // plssvm::target_platform
+#include "plssvm/verbosity_levels.hpp"                      // plssvm::verbosity_level
 
 #include "CL/cl.h"        // cl_program, cl_platform_id, cl_device_id, cl_uint, cl_device_type, cl_context,
                           // CL_DEVICE_NAME, CL_QUEUE_DEVICE, CL_DEVICE_TYPE_ALL, CL_DEVICE_TYPE_CPU, CL_DEVICE_TYPE_GPU, CL_DEVICE_VENDOR, CL_PROGRAM_BUILD_LOG, CL_PROGRAM_BINARY_SIZES, CL_PROGRAM_BINARIES,

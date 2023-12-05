@@ -12,13 +12,14 @@
 #include "plssvm/backends/SYCL/hipSYCL/detail/queue_impl.hpp"  // plssvm::hipsycl::detail::queue (PImpl implementation)
 #include "plssvm/backends/SYCL/hipSYCL/detail/utility.hpp"     // plssvm::hipsycl::detail::get_device_list, plssvm::hipsycl::device_synchronize
 
+#include "plssvm/backend_types.hpp"                                     // plssvm::backend_type
 #include "plssvm/backends/SYCL/cg_explicit/blas.hpp"                    // plssvm::sycl::device_kernel_gemm
 #include "plssvm/backends/SYCL/cg_explicit/kernel_matrix_assembly.hpp"  // plssvm::sycl::{device_kernel_assembly_linear, device_kernel_assembly_polynomial, device_kernel_assembly_rbf}
 #include "plssvm/backends/SYCL/exceptions.hpp"                          // plssvm::hipsycl::backend_exception
 #include "plssvm/backends/SYCL/predict_kernel.hpp"                      // plssvm::sycl::detail::{kernel_w, device_kernel_predict_polynomial, device_kernel_predict_rbf}
 #include "plssvm/constants.hpp"                                         // plssvm::real_type
 #include "plssvm/detail/assert.hpp"                                     // PLSSVM_ASSERT
-#include "plssvm/detail/logger.hpp"                                     // plssvm::detail::log, plssvm::verbosity_level
+#include "plssvm/detail/logging.hpp"                                    // plssvm::detail::log
 #include "plssvm/detail/memory_size.hpp"                                // plssvm::detail::memory_size
 #include "plssvm/detail/performance_tracker.hpp"                        // plssvm::detail::tracking_entry
 #include "plssvm/detail/utility.hpp"                                    // plssvm::detail::get_system_memory
@@ -26,6 +27,7 @@
 #include "plssvm/kernel_function_types.hpp"                             // plssvm::kernel_type
 #include "plssvm/parameter.hpp"                                         // plssvm::parameter, plssvm::detail::parameter
 #include "plssvm/target_platforms.hpp"                                  // plssvm::target_platform
+#include "plssvm/verbosity_levels.hpp"                                  // plssvm::verbosity_level
 
 #include "fmt/color.h"    // fmt::fg, fmt::color::orange
 #include "fmt/core.h"     // fmt::format
@@ -80,7 +82,9 @@ void csvm::init(const target_platform target) {
 
     // currently only single GPU execution is supported
     if (devices_.size() != 1) {
-        std::clog << fmt::format(fmt::fg(fmt::color::orange), "WARNING: found {} devices, but currently only single GPU execution is supported. Continuing only with device 0!", devices_.size()) << std::endl;
+        plssvm::detail::log(verbosity_level::full | verbosity_level::warning,
+                            "WARNING: found {} devices, but currently only single GPU execution is supported. Continuing only with device 0!\n",
+                            devices_.size());
         devices_.resize(1);
     }
 
@@ -90,9 +94,8 @@ void csvm::init(const target_platform target) {
         invocation_type_ = sycl::kernel_invocation_type::nd_range;
         if (target_ == target_platform::cpu) {
 #if !defined(__HIPSYCL_USE_ACCELERATED_CPU__)
-            std::clog << fmt::format(fmt::fg(fmt::color::orange),
-                                     "WARNING: the hipSYCL automatic target for the CPU is set to nd_range, but hipSYCL hasn't been build with the \"omp.accelerated\" compilation flow resulting in major performance losses!")
-                      << std::endl;
+            plssvm::detail::log(verbosity_level::full | verbosity_level::warning,
+                                "WARNING: the hipSYCL automatic target for the CPU is set to nd_range, but hipSYCL hasn't been build with the \"omp.accelerated\" compilation flow resulting in major performance losses!\n");
 #endif
         }
     }
@@ -153,7 +156,8 @@ void csvm::device_synchronize(const queue_type &queue) const {
 ::plssvm::detail::memory_size csvm::get_device_memory() const {
     const ::plssvm::detail::memory_size hipsycl_global_mem_size{ static_cast<unsigned long long>(devices_[0].impl->sycl_queue.get_device().get_info<::sycl::info::device::global_mem_size>()) };
     if (target_ == target_platform::cpu) {
-        std::clog << "Warning: the returned 'global_mem_size' for hipSYCL targeting the CPU is nonsensical ('std::numeric_limits<std::size_t>::max()'). Using 'get_system_memory()' instead." << std::endl;
+        plssvm::detail::log(verbosity_level::full | verbosity_level::warning,
+                            "WARNING: the returned 'global_mem_size' for hipSYCL targeting the CPU is nonsensical ('std::numeric_limits<std::size_t>::max()'). Using 'get_system_memory()' instead.\n");
         return std::min(hipsycl_global_mem_size, ::plssvm::detail::get_system_memory());
     } else {
         return hipsycl_global_mem_size;

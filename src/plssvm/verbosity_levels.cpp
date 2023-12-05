@@ -6,7 +6,7 @@
  *          See the LICENSE.md file in the project root for full license information.
  */
 
-#include "plssvm/detail/logger.hpp"
+#include "plssvm/verbosity_levels.hpp"
 
 #include "plssvm/detail/string_utility.hpp"  // plssvm::detail::{to_lower_case, split, trim}
 #include "plssvm/detail/utility.hpp"         // plssvm::detail::to_underlying
@@ -38,6 +38,9 @@ std::ostream &operator<<(std::ostream &out, const verbosity_level verb) {
     if ((verb & verbosity_level::timing) != verbosity_level::quiet) {
         level_names.emplace_back("timing");
     }
+    if ((verb & verbosity_level::warning) != verbosity_level::quiet) {
+        level_names.emplace_back("warning");
+    }
     if ((verb & verbosity_level::full) != verbosity_level::quiet) {
         level_names.emplace_back("full");
     }
@@ -62,6 +65,8 @@ std::istream &operator>>(std::istream &in, verbosity_level &verb) {
         verb_str = detail::trim(verb_str);
         if (verb_str == "full") {
             verb |= verbosity_level::full;
+        } else if (verb_str == "warning") {
+            verb |= verbosity_level::warning;
         } else if (verb_str == "timing") {
             verb |= verbosity_level::timing;
         } else if (verb_str == "libsvm") {

@@ -19,7 +19,7 @@
 #include "plssvm/detail/io/file_reader.hpp"              // plssvm::detail::io::file_reader
 #include "plssvm/detail/io/libsvm_parsing.hpp"           // plssvm::detail::io::{read_arff_data, write_arff_data}
 #include "plssvm/detail/io/scaling_factors_parsing.hpp"  // plssvm::detail::io::{parse_scaling_factors, read_scaling_factors}
-#include "plssvm/detail/logger.hpp"                      // plssvm::detail::log, plssvm::verbosity_level
+#include "plssvm/detail/logging.hpp"                     // plssvm::detail::log
 #include "plssvm/detail/performance_tracker.hpp"         // plssvm::detail::tracking_entry
 #include "plssvm/detail/string_utility.hpp"              // plssvm::detail::ends_with
 #include "plssvm/detail/type_list.hpp"                   // plssvm::detail::{supported_label_types, tuple_contains_v}
@@ -27,6 +27,7 @@
 #include "plssvm/exceptions/exceptions.hpp"              // plssvm::data_set_exception
 #include "plssvm/file_format_types.hpp"                  // plssvm::file_format_type
 #include "plssvm/matrix.hpp"                             // plssvm::soa_matrix
+#include "plssvm/verbosity_levels.hpp"                   // plssvm::verbosity_level
 
 #include "fmt/chrono.h"   // directly output std::chrono times via fmt
 #include "fmt/core.h"     // fmt::format

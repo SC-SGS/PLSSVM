@@ -18,7 +18,7 @@
 #include "plssvm/data_set.hpp"                    // plssvm::data_set
 #include "plssvm/default_value.hpp"               // plssvm::default_value, plssvm::default_init
 #include "plssvm/detail/igor_utility.hpp"         // plssvm::detail::{get_value_from_named_parameter, has_only_parameter_named_args_v}
-#include "plssvm/detail/logger.hpp"               // plssvm::detail::log, plssvm::verbosity_level
+#include "plssvm/detail/logging.hpp"              // plssvm::detail::log
 #include "plssvm/detail/memory_size.hpp"          // plssvm::detail::memory_size
 #include "plssvm/detail/operators.hpp"            // plssvm::operators::sign
 #include "plssvm/detail/performance_tracker.hpp"  // plssvm::detail::performance_tracker
@@ -32,6 +32,7 @@
 #include "plssvm/parameter.hpp"                   // plssvm::parameter
 #include "plssvm/solver_types.hpp"                // plssvm::solver_type
 #include "plssvm/target_platforms.hpp"            // plssvm::target_platform
+#include "plssvm/verbosity_levels.hpp"            // plssvm::verbosity_level
 
 #include "fmt/color.h"    // fmt::fg, fmt::color::orange
 #include "fmt/core.h"     // fmt::format
@@ -817,10 +818,9 @@ std::tuple<aos_matrix<real_type>, std::vector<real_type>, unsigned long long> cs
                         "The biggest single allocation ({}) exceeds the guaranteed maximum memory allocation size ({}), falling back to solver_type::cg_streaming.\n",
                         max_single_allocation_size,
                         max_mem_alloc_size);
-            std::clog << fmt::format(fmt::fg(fmt::color::orange),
-                                     "Warning: if you are sure that the guaranteed maximum memory allocation size can be safely ignored on your deivce, "
-                                     "this check can be disabled via \"-DPLSSVM_ENFORCE_MAX_MEM_ALLOC_SIZE=OFF\" during the CMake configuration!")
-                      << std::endl;
+            plssvm::detail::log(verbosity_level::full | verbosity_level::warning,
+                                "WARNING: if you are sure that the guaranteed maximum memory allocation size can be safely ignored on your device, "
+                                "this check can be disabled via \"-DPLSSVM_ENFORCE_MAX_MEM_ALLOC_SIZE=OFF\" during the CMake configuration!\n");
             used_solver = solver_type::cg_streaming;
         }
 #endif
