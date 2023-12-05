@@ -78,12 +78,12 @@ using namespace plssvm::sycl;
 /// Namespace containing the C-SVM using the SYCL backend with DPC++ as SYCL implementation. **Should not** directly be used by users.
 namespace plssvm::dpcpp::detail {}
 
-/// Namespace containing the C-SVM using the SYCL backend with hipSYCL as SYCL implementation.
-namespace plssvm::hipsycl {
+/// Namespace containing the C-SVM using the SYCL backend with AdaptiveCpp as SYCL implementation.
+namespace plssvm::adaptivecpp {
 using namespace plssvm::sycl;
 }
-/// Namespace containing the C-SVM using the SYCL backend with hipSYCL as SYCL implementation. **Should not** directly be used by users.
-namespace plssvm::hipsycl::detail {}
+/// Namespace containing the C-SVM using the SYCL backend with AdaptiveCpp as SYCL implementation. **Should not** directly be used by users.
+namespace plssvm::adaptivecpp::detail {}
 
 /// Namespace containing the C-SVM using the SYCL backend with the preferred SYCL implementation.
 namespace plssvm::sycl {

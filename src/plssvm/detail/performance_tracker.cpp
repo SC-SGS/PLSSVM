@@ -203,13 +203,13 @@ void performance_tracker::save(std::ostream &out) {
         PLSSVM_SYCL_BACKEND_DPCPP_GPU_AMD_BACKEND_TYPE,
         dpcpp_aot);
 #endif
-#if defined(PLSSVM_SYCL_BACKEND_HAS_HIPSYCL)
-    // check whether hipSYCL's new SSCP has been enabled
-    constexpr bool hipsycl_sscp = PLSSVM_IS_DEFINED(PLSSVM_SYCL_BACKEND_HIPSYCL_USE_GENERIC_SSCP);
+#if defined(PLSSVM_SYCL_BACKEND_HAS_ADAPTIVECPP)
+    // check whether AdaptiveCpp's new SSCP has been enabled
+    constexpr bool adaptivecpp_sscp = PLSSVM_IS_DEFINED(PLSSVM_SYCL_BACKEND_ADAPTIVECPP_USE_GENERIC_SSCP);
 
     out << fmt::format(
-        "  HIPSYCL_with_generic_SSCP:  {}\n",
-        hipsycl_sscp);
+        "  ADAPTIVECPP_with_generic_SSCP:  {}\n",
+        adaptivecpp_sscp);
 #endif
     out << "\n";
 

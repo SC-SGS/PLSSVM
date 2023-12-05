@@ -23,8 +23,8 @@ std::vector<implementation_type> list_available_sycl_implementations() {
 #if defined(PLSSVM_SYCL_BACKEND_HAS_DPCPP)
     available_sycl_implementations.push_back(implementation_type::dpcpp);
 #endif
-#if defined(PLSSVM_SYCL_BACKEND_HAS_HIPSYCL)
-    available_sycl_implementations.push_back(implementation_type::hipsycl);
+#if defined(PLSSVM_SYCL_BACKEND_HAS_ADAPTIVECPP)
+    available_sycl_implementations.push_back(implementation_type::adaptivecpp);
 #endif
     return available_sycl_implementations;
 }
@@ -35,8 +35,8 @@ std::ostream &operator<<(std::ostream &out, const implementation_type impl) {
             return out << "automatic";
         case implementation_type::dpcpp:
             return out << "dpcpp";
-        case implementation_type::hipsycl:
-            return out << "hipsycl";
+        case implementation_type::adaptivecpp:
+            return out << "adaptivecpp";
     }
     return out << "unknown";
 }
@@ -50,8 +50,8 @@ std::istream &operator>>(std::istream &in, implementation_type &impl) {
         impl = implementation_type::automatic;
     } else if (str == "dpcpp" || str == "dpc++") {
         impl = implementation_type::dpcpp;
-    } else if (str == "hipsycl") {
-        impl = implementation_type::hipsycl;
+    } else if (str == "adaptivecpp" || str == "acpp") {
+        impl = implementation_type::adaptivecpp;
     } else {
         in.setstate(std::ios::failbit);
     }

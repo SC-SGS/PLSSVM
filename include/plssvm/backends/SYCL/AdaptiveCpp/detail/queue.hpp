@@ -9,13 +9,13 @@
  * @brief PImpl class used to hide the "sycl/sycl.hpp" header from the public interface.
  */
 
-#ifndef PLSSVM_BACKENDS_SYCL_HIPSYCL_DETAIL_QUEUE_HPP_
-#define PLSSVM_BACKENDS_SYCL_HIPSYCL_DETAIL_QUEUE_HPP_
+#ifndef PLSSVM_BACKENDS_SYCL_ADAPTIVECPP_DETAIL_QUEUE_HPP_
+#define PLSSVM_BACKENDS_SYCL_ADAPTIVECPP_DETAIL_QUEUE_HPP_
 #pragma once
 
 #include <memory>  // std::shared_ptr
 
-namespace plssvm::hipsycl::detail {
+namespace plssvm::adaptivecpp::detail {
 
 /**
  * @brief PImpl class to hide the SYCL queue class from the public interface (and, therefore, the "sycl/sycl.hpp" header).
@@ -28,6 +28,6 @@ class queue {
     std::shared_ptr<queue_impl> impl{};
 };
 
-}  // namespace plssvm::hipsycl::detail
+}  // namespace plssvm::adaptivecpp::detail
 
-#endif  // PLSSVM_BACKENDS_SYCL_HIPSYCL_DETAIL_QUEUE_HPP_
+#endif  // PLSSVM_BACKENDS_SYCL_ADAPTIVECPP_DETAIL_QUEUE_HPP_

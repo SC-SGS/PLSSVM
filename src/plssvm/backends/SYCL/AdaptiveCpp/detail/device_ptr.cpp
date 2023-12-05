@@ -6,11 +6,11 @@
  *          See the LICENSE.md file in the project root for full license information.
  */
 
-#include "plssvm/backends/SYCL/hipSYCL/detail/device_ptr.hpp"
+#include "plssvm/backends/SYCL/AdaptiveCpp/detail/device_ptr.hpp"
 
-#include "plssvm/backends/SYCL/hipSYCL/detail/queue_impl.hpp"  // plssvm::hipsycl::detail::queue (PImpl implementation)
+#include "plssvm/backends/SYCL/AdaptiveCpp/detail/queue_impl.hpp"  // plssvm::adaptivecpp::detail::queue (PImpl implementation)
 
-#include "plssvm/backends/SYCL/exceptions.hpp"  // plssvm::hipsycl::backend_exception
+#include "plssvm/backends/SYCL/exceptions.hpp"  // plssvm::adaptivecpp::backend_exception
 #include "plssvm/backends/gpu_device_ptr.hpp"   // plssvm::detail::gpu_device_ptr
 #include "plssvm/detail/assert.hpp"             // PLSSVM_ASSERT
 
@@ -20,7 +20,7 @@
 #include <algorithm>  // std::min
 #include <array>      // std::array
 
-namespace plssvm::hipsycl::detail {
+namespace plssvm::adaptivecpp::detail {
 
 template <typename T>
 device_ptr<T>::device_ptr(const size_type size, const queue &q) :
@@ -90,4 +90,4 @@ void device_ptr<T>::copy_to_host(host_pointer_type buffer, const size_type pos, 
 template class device_ptr<float>;
 template class device_ptr<double>;
 
-}  // namespace plssvm::hipsycl::detail
+}  // namespace plssvm::adaptivecpp::detail

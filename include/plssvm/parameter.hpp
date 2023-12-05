@@ -51,7 +51,7 @@ IGOR_MAKE_NAMED_ARGUMENT(max_iter);
 IGOR_MAKE_NAMED_ARGUMENT(solver);
 /// Create a named argument for the classification type used for fitting a model.
 IGOR_MAKE_NAMED_ARGUMENT(classification);
-/// Create a named argument for the SYCL backend specific SYCL implementation type (DPC++ or hipSYCL).
+/// Create a named argument for the SYCL backend specific SYCL implementation type (DPC++ or AdaptiveCpp).
 IGOR_MAKE_NAMED_ARGUMENT(sycl_implementation_type);
 /// Create a named argument for the SYCL backend specific kernel invocation type.
 IGOR_MAKE_NAMED_ARGUMENT(sycl_kernel_invocation_type);

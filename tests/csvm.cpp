@@ -224,20 +224,20 @@ TEST(BaseCSVM, csvm_backend_exists) {
     EXPECT_FALSE(plssvm::csvm_backend_exists_v<plssvm::dpcpp::csvm>);
     EXPECT_FALSE(plssvm::csvm_backend_exists<plssvm::dpcpp::csvm>::value);
     #endif
-    #if defined(PLSSVM_SYCL_BACKEND_HAS_HIPSYCL)
-    EXPECT_TRUE(plssvm::csvm_backend_exists_v<plssvm::hipsycl::csvm>);
-    EXPECT_TRUE(plssvm::csvm_backend_exists<plssvm::hipsycl::csvm>::value);
+    #if defined(PLSSVM_SYCL_BACKEND_HAS_ADAPTIVECPP)
+    EXPECT_TRUE(plssvm::csvm_backend_exists_v<plssvm::adaptivecpp::csvm>);
+    EXPECT_TRUE(plssvm::csvm_backend_exists<plssvm::adaptivecpp::csvm>::value);
     #else
-    EXPECT_FALSE(plssvm::csvm_backend_exists_v<plssvm::hipsycl::csvm>);
-    EXPECT_FALSE(plssvm::csvm_backend_exists<plssvm::hipsycl::csvm>::value);
+    EXPECT_FALSE(plssvm::csvm_backend_exists_v<plssvm::adaptivecpp::csvm>);
+    EXPECT_FALSE(plssvm::csvm_backend_exists<plssvm::adaptivecpp::csvm>::value);
     #endif
 #else
     EXPECT_FALSE(plssvm::csvm_backend_exists_v<plssvm::sycl::csvm>);
     EXPECT_FALSE(plssvm::csvm_backend_exists<plssvm::sycl::csvm>::value);
     EXPECT_FALSE(plssvm::csvm_backend_exists_v<plssvm::dpcpp::csvm>);
     EXPECT_FALSE(plssvm::csvm_backend_exists<plssvm::dpcpp::csvm>::value);
-    EXPECT_FALSE(plssvm::csvm_backend_exists_v<plssvm::hipsycl::csvm>);
-    EXPECT_FALSE(plssvm::csvm_backend_exists<plssvm::hipsycl::csvm>::value);
+    EXPECT_FALSE(plssvm::csvm_backend_exists_v<plssvm::adaptivecpp::csvm>);
+    EXPECT_FALSE(plssvm::csvm_backend_exists<plssvm::adaptivecpp::csvm>::value);
 #endif
 }
 
