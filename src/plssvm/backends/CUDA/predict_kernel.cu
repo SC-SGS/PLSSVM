@@ -107,8 +107,8 @@ __global__ void device_kernel_predict_polynomial(real_type *out_d, const real_ty
     const unsigned long long sv_idx = (blockIdx.y * blockDim.y + threadIdx.y) * INTERNAL_BLOCK_SIZE;
     const unsigned long long sv_cached_idx_linear = blockIdx.y * blockDim.y * INTERNAL_BLOCK_SIZE + threadIdx.x;
 
-    __shared__ real_type data_cache_sv[FEATURE_BLOCK_SIZE][INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE];
     __shared__ real_type data_cache_pd[FEATURE_BLOCK_SIZE][INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE];
+    __shared__ real_type data_cache_sv[FEATURE_BLOCK_SIZE][INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE];
 
     real_type temp[INTERNAL_BLOCK_SIZE][INTERNAL_BLOCK_SIZE] = { 0.0 };
 
@@ -161,8 +161,8 @@ __global__ void device_kernel_predict_rbf(real_type *out_d, const real_type *alp
     const unsigned long long sv_idx = (blockIdx.y * blockDim.y + threadIdx.y) * INTERNAL_BLOCK_SIZE;
     const unsigned long long sv_cached_idx_linear = blockIdx.y * blockDim.y * INTERNAL_BLOCK_SIZE + threadIdx.x;
 
-    __shared__ real_type data_cache_sv[FEATURE_BLOCK_SIZE][INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE];
     __shared__ real_type data_cache_pd[FEATURE_BLOCK_SIZE][INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE];
+    __shared__ real_type data_cache_sv[FEATURE_BLOCK_SIZE][INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE];
 
     real_type temp[INTERNAL_BLOCK_SIZE][INTERNAL_BLOCK_SIZE] = { 0.0 };
 
@@ -198,7 +198,7 @@ __global__ void device_kernel_predict_rbf(real_type *out_d, const real_type *alp
 
             const real_type temp_pd_sv = temp[internal_pd][internal_sv];
             for (unsigned long long class_idx = 0; class_idx < num_classes; ++class_idx) {
-                // apply degree, gamma, and coef0, alpha and rho
+                // apply gamma, alpha and rho
                 real_type class_temp = alpha_d[class_idx * (num_sv + THREAD_BLOCK_PADDING) + global_sv_idx] * exp(-gamma * temp_pd_sv);
                 if (global_sv_idx == 0) {
                     class_temp -= rho_d[class_idx];

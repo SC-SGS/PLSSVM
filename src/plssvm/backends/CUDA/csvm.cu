@@ -241,7 +241,6 @@ auto csvm::run_predict_kernel(const parameter &params, const device_ptr_type &w_
 
     device_ptr_type out_d{ { num_predict_points, num_classes }, { THREAD_BLOCK_PADDING, THREAD_BLOCK_PADDING }, devices_[0] };
 
-
     // define the block sizes
     const std::size_t max_work_group_size = this->get_max_work_group_size();
     if (max_work_group_size < THREAD_BLOCK_SIZE * THREAD_BLOCK_SIZE) {
