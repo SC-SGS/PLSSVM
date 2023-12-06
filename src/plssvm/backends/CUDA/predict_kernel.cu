@@ -14,14 +14,46 @@
 namespace plssvm::cuda {
 
 __global__ void device_kernel_w_linear(real_type *w_d, const real_type *alpha_d, const real_type *sv_d, const unsigned long long num_classes, const unsigned long long num_sv, const unsigned long long num_features) {
-    const unsigned long long feature_idx = blockIdx.x * blockDim.x + threadIdx.x;
-    const unsigned long long class_idx = blockIdx.y * blockDim.y + threadIdx.y;
+    const unsigned long long feature_idx = (blockIdx.x * blockDim.x + threadIdx.x) * INTERNAL_BLOCK_SIZE;
+    const unsigned long long feature_idx_linear = blockIdx.x * blockDim.x * INTERNAL_BLOCK_SIZE + threadIdx.x;
+    const unsigned long long class_idx = (blockIdx.y * blockDim.y + threadIdx.y) * INTERNAL_BLOCK_SIZE;
+    const unsigned long long class_cached_idx_linear = blockIdx.y * blockDim.y * INTERNAL_BLOCK_SIZE + threadIdx.x;
 
-    real_type temp{ 0.0 };
-    for (unsigned long long sv = 0; sv < num_sv; ++sv) {
-        temp += alpha_d[class_idx * (num_sv + THREAD_BLOCK_PADDING) + sv] * sv_d[feature_idx * (num_sv + THREAD_BLOCK_PADDING) + sv];
+    __shared__ real_type data_cache_feature[THREAD_BLOCK_SIZE][INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE];
+    __shared__ real_type data_cache_alpha[THREAD_BLOCK_SIZE][INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE];
+
+    real_type temp[INTERNAL_BLOCK_SIZE][INTERNAL_BLOCK_SIZE] = { 0.0 };
+
+    for (unsigned long long sv = 0; sv < num_sv; sv += THREAD_BLOCK_SIZE) {
+        // load data into shared memory
+        for (unsigned internal = 0; internal < INTERNAL_BLOCK_SIZE; ++internal) {
+            const unsigned long long global_feature_idx = feature_idx_linear + internal * THREAD_BLOCK_SIZE;
+            const unsigned long long global_class_idx = class_cached_idx_linear + internal * THREAD_BLOCK_SIZE;
+
+            data_cache_feature[threadIdx.y][internal * THREAD_BLOCK_SIZE + threadIdx.x] = sv_d[global_feature_idx * (num_sv + THREAD_BLOCK_PADDING) + sv + threadIdx.y];  // SoA
+            data_cache_alpha[threadIdx.y][internal * THREAD_BLOCK_SIZE + threadIdx.x] = alpha_d[global_class_idx * (num_sv + THREAD_BLOCK_PADDING) + sv + threadIdx.y];  // AoS
+        }
+        __syncthreads();
+
+        // calculation
+        for (unsigned block_dim = 0; block_dim < THREAD_BLOCK_SIZE; ++block_dim) {
+            for (unsigned internal_feature = 0; internal_feature < INTERNAL_BLOCK_SIZE; ++internal_feature) {
+                for (unsigned internal_class = 0; internal_class < INTERNAL_BLOCK_SIZE; ++internal_class) {
+                    temp[internal_class][internal_feature] += data_cache_alpha[block_dim][threadIdx.y * INTERNAL_BLOCK_SIZE + internal_class] * data_cache_feature[block_dim][threadIdx.x * INTERNAL_BLOCK_SIZE + internal_feature];
+                }
+            }
+        }
+        __syncthreads();
     }
-    w_d[feature_idx * (num_classes + THREAD_BLOCK_PADDING) + class_idx] = temp;
+
+    for (unsigned internal_feature = 0; internal_feature < INTERNAL_BLOCK_SIZE; ++internal_feature) {
+        for (unsigned internal_class = 0; internal_class < INTERNAL_BLOCK_SIZE; ++internal_class) {
+            const unsigned long long global_feature_idx = feature_idx + internal_feature;
+            const unsigned long long global_class_idx = class_idx + internal_class;
+
+            w_d[global_feature_idx * (num_classes + THREAD_BLOCK_PADDING) + global_class_idx] = temp[internal_class][internal_feature];
+        }
+    }
 }
 
 __global__ void device_kernel_predict_linear(real_type *out_d, const real_type *w_d, const real_type *rho_d, const real_type *predict_points_d, const unsigned long long num_classes, const unsigned long long num_predict_points, const unsigned long long num_features) {

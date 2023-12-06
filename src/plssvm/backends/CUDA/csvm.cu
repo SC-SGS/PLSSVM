@@ -220,8 +220,8 @@ auto csvm::run_w_kernel(const device_ptr_type &alpha_d, const device_ptr_type &s
         throw kernel_launch_resources{ fmt::format("Not enough work-items allowed for a work-groups of size {}x{}! Try reducing THREAD_BLOCK_SIZE.", THREAD_BLOCK_SIZE, THREAD_BLOCK_SIZE) };
     }
     const dim3 block(THREAD_BLOCK_SIZE, THREAD_BLOCK_SIZE);
-    const dim3 grid(static_cast<int>(std::ceil(static_cast<double>(num_features) / static_cast<double>(block.x))),
-                    static_cast<int>(std::ceil(static_cast<double>(num_classes) / static_cast<double>(block.y))));
+    const dim3 grid(static_cast<int>(std::ceil(static_cast<double>(num_features) / static_cast<double>(block.x * INTERNAL_BLOCK_SIZE))),
+                    static_cast<int>(std::ceil(static_cast<double>(num_classes) / static_cast<double>(block.y * INTERNAL_BLOCK_SIZE))));
 
     device_ptr_type w_d{ { num_classes, num_features }, { THREAD_BLOCK_PADDING, FEATURE_BLOCK_SIZE }, devices_[0] };
 

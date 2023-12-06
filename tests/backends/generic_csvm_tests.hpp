@@ -548,7 +548,7 @@ TYPED_TEST_P(GenericCSVMKernelFunction, predict_values) {
     // in case of the linear kernel, the w vector should have been filled
     if (kernel == plssvm::kernel_function_type::linear) {
         EXPECT_EQ(w.num_rows(), rho.size());
-        EXPECT_FLOATING_POINT_MATRIX_NEAR(w, plssvm::soa_matrix<plssvm::real_type>{ weights });
+        EXPECT_FLOATING_POINT_MATRIX_NEAR(w, (plssvm::soa_matrix<plssvm::real_type>{ weights, plssvm::THREAD_BLOCK_PADDING, plssvm::FEATURE_BLOCK_SIZE }));
     } else {
         EXPECT_TRUE(w.empty());
     }
@@ -579,7 +579,7 @@ TYPED_TEST_P(GenericCSVMKernelFunction, predict_values_provided_w) {
         plssvm::soa_matrix<plssvm::real_type> w{ { { plssvm::real_type{ 1.0 }, plssvm::real_type{ -1.0 }, plssvm::real_type{ 1.0 }, plssvm::real_type{ -1.0 } },
                                                    { plssvm::real_type{ 1.0 }, plssvm::real_type{ -1.0 }, plssvm::real_type{ 1.0 }, plssvm::real_type{ -1.0 } } },
                                                  plssvm::THREAD_BLOCK_PADDING,
-                                                 plssvm::THREAD_BLOCK_PADDING };
+                                                 plssvm::FEATURE_BLOCK_SIZE };
         const plssvm::soa_matrix<plssvm::real_type> correct_w{ w };
         const plssvm::soa_matrix<plssvm::real_type> data{ { { plssvm::real_type{ 1.0 }, plssvm::real_type{ 1.0 }, plssvm::real_type{ 1.0 }, plssvm::real_type{ 1.0 } },
                                                             { plssvm::real_type{ 1.0 }, plssvm::real_type{ -1.0 }, plssvm::real_type{ 1.0 }, plssvm::real_type{ -1.0 } } },
@@ -603,7 +603,7 @@ TYPED_TEST_P(GenericCSVMKernelFunction, predict_values_provided_w) {
         EXPECT_FLOATING_POINT_MATRIX_NEAR(calculated, correct_predict_values);
         // in case of the linear kernel, the w vector should not have changed
         EXPECT_FLOATING_POINT_MATRIX_EQ(w, correct_w);
-        EXPECT_FLOATING_POINT_MATRIX_NEAR(w, plssvm::soa_matrix<plssvm::real_type>{ weights });
+        EXPECT_FLOATING_POINT_MATRIX_NEAR(w, (plssvm::soa_matrix<plssvm::real_type>{ weights, plssvm::THREAD_BLOCK_PADDING, plssvm::FEATURE_BLOCK_SIZE }));
     }
 }
 
