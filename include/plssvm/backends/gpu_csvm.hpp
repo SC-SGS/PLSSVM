@@ -318,12 +318,12 @@ aos_matrix<real_type> gpu_csvm<device_ptr_t, queue_t>::predict_values(const para
             w_d = this->run_w_kernel(alpha_d, sv_d);
 
             // convert 1D result to aos_matrix out-parameter
-            w = soa_matrix<real_type>{ num_classes, num_features, THREAD_BLOCK_PADDING, THREAD_BLOCK_PADDING };
+            w = soa_matrix<real_type>{ num_classes, num_features, THREAD_BLOCK_PADDING, FEATURE_BLOCK_SIZE };
             w_d.copy_to_host(w);
             w.restore_padding();
         } else {
             // w already provided -> copy to device
-            w_d = device_ptr_type{ { num_classes, num_features }, { THREAD_BLOCK_PADDING, THREAD_BLOCK_PADDING }, devices_[0] };
+            w_d = device_ptr_type{ { num_classes, num_features }, { THREAD_BLOCK_PADDING, FEATURE_BLOCK_SIZE }, devices_[0] };
             w_d.copy_to_device(w);
         }
     }

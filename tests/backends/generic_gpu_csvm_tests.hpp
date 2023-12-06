@@ -134,11 +134,14 @@ TYPED_TEST_P(GenericGPUCSVM, run_w_kernel) {
 
     // calculate w
     const device_ptr_type w_d = svm.run_w_kernel(weights_d, sv_d);
-    plssvm::soa_matrix<plssvm::real_type> w(weights.num_rows(), data.data().num_cols(), plssvm::THREAD_BLOCK_PADDING, plssvm::THREAD_BLOCK_PADDING);
+    plssvm::soa_matrix<plssvm::real_type> w(weights.num_rows(), data.data().num_cols(), plssvm::THREAD_BLOCK_PADDING, plssvm::FEATURE_BLOCK_SIZE);
 
     // check sizes
     ASSERT_EQ(w_d.extents(), w.shape());
+    ASSERT_EQ(w_d.padding(0), w.padding()[0]);
+    ASSERT_EQ(w_d.padding(1), w.padding()[1]);
     w_d.copy_to_host(w);
+    w.restore_padding();
 
     // calculate correct w vector
     const plssvm::soa_matrix<plssvm::real_type> correct_w = compare::calculate_w(weights, data.data());
