@@ -9,7 +9,7 @@
 #include "plssvm/backends/CUDA/predict_kernel.cuh"
 
 #include "plssvm/backends/CUDA/detail/atomics.cuh"  // atomicAdd for double precision floating point numbers on older CUDA hardware
-#include "plssvm/constants.hpp"                     // plssvm::real_type
+#include "plssvm/constants.hpp"                     // plssvm::real_type, plssvm::THREAD_BLOCK_SIZE, plssvm::FEATURE_BLOCK_SIZE, plssvm::INTERNAL_BLOCK_SIZE, plssvm::THREAD_BLOCK_PADDING
 
 namespace plssvm::cuda {
 
