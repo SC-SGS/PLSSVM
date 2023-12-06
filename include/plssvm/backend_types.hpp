@@ -40,7 +40,7 @@ enum class backend_type {
     hip,
     /** [OpenCL](https://www.khronos.org/opencl/) to target CPUs and GPUs from different vendors. */
     opencl,
-    /** [SYCL](https://www.khronos.org/sycl/) to target CPUs and GPUs from different vendors. Currently tested SYCL implementations are [DPC++](https://github.com/intel/llvm) and [hipSYCL](https://github.com/illuhad/hipSYCL). */
+    /** [SYCL](https://www.khronos.org/sycl/) to target CPUs and GPUs from different vendors. Currently tested SYCL implementations are [DPC++](https://github.com/intel/llvm) and [AdaptiveCpp](https://github.com/AdaptiveCpp/AdaptiveCpp) (formerly known as hipSYCL). */
     sycl
 };
 
@@ -83,7 +83,7 @@ namespace openmp { class csvm; }
 namespace cuda { class csvm; }
 namespace hip { class csvm; }
 namespace opencl { class csvm; }
-namespace hipsycl { class csvm; }
+namespace adaptivecpp { class csvm; }
 namespace dpcpp { class csvm; }
 // clang-format on
 
@@ -128,15 +128,15 @@ struct csvm_to_backend_type<opencl::csvm> {
     static constexpr backend_type value = backend_type::opencl;
 };
 /**
- * @brief Sets the `value` to `plssvm::backend_type::sycl` for the SYCL C-SVM using hipSYCL as SYCL implementation.
- * @details Also sets a member variable `impl` to the value `plssvm::sycl::implementation_type::hipsycl` (only present for SYCL backends!).
+ * @brief Sets the `value` to `plssvm::backend_type::sycl` for the SYCL C-SVM using AdaptiveCpp as SYCL implementation.
+ * @details Also sets a member variable `impl` to the value `plssvm::sycl::implementation_type::adaptivecpp` (only present for SYCL backends!).
  */
 template <>
-struct csvm_to_backend_type<hipsycl::csvm> {
-    /// The enum value representing the SYCL (hipSYCL) backend.
+struct csvm_to_backend_type<adaptivecpp::csvm> {
+    /// The enum value representing the SYCL (AdaptiveCpp) backend.
     static constexpr backend_type value = backend_type::sycl;
-    /// The enum value representing the SYCL implementation for the (hipSYCL) SYCL backend.
-    static constexpr sycl::implementation_type impl = sycl::implementation_type::hipsycl;
+    /// The enum value representing the SYCL implementation for the (AdaptiveCpp) SYCL backend.
+    static constexpr sycl::implementation_type impl = sycl::implementation_type::adaptivecpp;
 };
 /**
  * @brief Sets the `value` to `plssvm::backend_type::sycl` for the SYCL C-SVM using DPC++ as SYCL implementation.

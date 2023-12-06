@@ -20,7 +20,7 @@
 TEST(SYCLImplementationType, to_string) {
     // check conversions to std::string
     EXPECT_CONVERSION_TO_STRING(plssvm::sycl::implementation_type::automatic, "automatic");
-    EXPECT_CONVERSION_TO_STRING(plssvm::sycl::implementation_type::hipsycl, "hipsycl");
+    EXPECT_CONVERSION_TO_STRING(plssvm::sycl::implementation_type::adaptivecpp, "adaptivecpp");
     EXPECT_CONVERSION_TO_STRING(plssvm::sycl::implementation_type::dpcpp, "dpcpp");
 }
 TEST(SYCLImplementationType, to_string_unknown) {
@@ -33,8 +33,9 @@ TEST(SYCLImplementationType, from_string) {
     // check conversion from std::string
     EXPECT_CONVERSION_FROM_STRING("automatic", plssvm::sycl::implementation_type::automatic);
     EXPECT_CONVERSION_FROM_STRING("AUTOMATIC", plssvm::sycl::implementation_type::automatic);
-    EXPECT_CONVERSION_FROM_STRING("hipsycl", plssvm::sycl::implementation_type::hipsycl);
-    EXPECT_CONVERSION_FROM_STRING("hipSYCL", plssvm::sycl::implementation_type::hipsycl);
+    EXPECT_CONVERSION_FROM_STRING("AdaptiveCpp", plssvm::sycl::implementation_type::adaptivecpp);
+    EXPECT_CONVERSION_FROM_STRING("ADAPTIVECPP", plssvm::sycl::implementation_type::adaptivecpp);
+    EXPECT_CONVERSION_FROM_STRING("ACPP", plssvm::sycl::implementation_type::adaptivecpp);
     EXPECT_CONVERSION_FROM_STRING("dpcpp", plssvm::sycl::implementation_type::dpcpp);
     EXPECT_CONVERSION_FROM_STRING("DPCPP", plssvm::sycl::implementation_type::dpcpp);
     EXPECT_CONVERSION_FROM_STRING("dpc++", plssvm::sycl::implementation_type::dpcpp);

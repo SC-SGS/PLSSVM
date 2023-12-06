@@ -25,12 +25,12 @@ backend_exception::backend_exception(const std::string &msg, const std::string_v
 
 }  // namespace sycl
 
-namespace hipsycl {
+namespace adaptivecpp {
 
 backend_exception::backend_exception(const std::string &msg, source_location loc) :
-    sycl::backend_exception{ msg, "hipsycl::backend_exception", loc } {}
+    sycl::backend_exception{ msg, "adaptivecpp::backend_exception", loc } {}
 
-}  // namespace hipsycl
+}  // namespace adaptivecpp
 
 namespace dpcpp {
 

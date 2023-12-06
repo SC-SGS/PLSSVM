@@ -21,7 +21,7 @@ void init_backend_types(py::module_ &m) {
         .value("CUDA", plssvm::backend_type::cuda, "CUDA to target NVIDIA GPUs only")
         .value("HIP", plssvm::backend_type::hip, "HIP to target AMD and NVIDIA GPUs")
         .value("OPENCL", plssvm::backend_type::opencl, "OpenCL to target CPUs and GPUs from different vendors")
-        .value("SYCL", plssvm::backend_type::sycl, "SYCL o target CPUs and GPUs from different vendors; currently tested SYCL implementations are DPC++ and hipSYCL");
+        .value("SYCL", plssvm::backend_type::sycl, "SYCL o target CPUs and GPUs from different vendors; currently tested SYCL implementations are DPC++ and AdaptiveCpp");
 
     // bind free functions
     m.def("list_available_backends", &plssvm::list_available_backends, "list the available backends (as found during CMake configuration)");

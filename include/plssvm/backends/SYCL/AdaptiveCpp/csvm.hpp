@@ -6,15 +6,15 @@
  * @license This file is part of the PLSSVM project which is released under the MIT license.
  *          See the LICENSE.md file in the project root for full license information.
  *
- * @brief Defines a base C-SVM used for the different SYCL backends using hipSYCL as SYCL implementation.
+ * @brief Defines a base C-SVM used for the different SYCL backends using AdaptiveCpp as SYCL implementation.
  */
 
-#ifndef PLSSVM_BACKENDS_SYCL_HIPSYCL_CSVM_HPP_
-#define PLSSVM_BACKENDS_SYCL_HIPSYCL_CSVM_HPP_
+#ifndef PLSSVM_BACKENDS_SYCL_ADAPTIVECPP_CSVM_HPP_
+#define PLSSVM_BACKENDS_SYCL_ADAPTIVECPP_CSVM_HPP_
 #pragma once
 
-#include "plssvm/backends/SYCL/hipSYCL/detail/device_ptr.hpp"  // plssvm::hipsycl::detail::device_ptr
-#include "plssvm/backends/SYCL/hipSYCL/detail/queue.hpp"       // plssvm::hipsycl::detail::queue (PImpl)
+#include "plssvm/backends/SYCL/AdaptiveCpp/detail/device_ptr.hpp"  // plssvm::adaptivecpp::detail::device_ptr
+#include "plssvm/backends/SYCL/AdaptiveCpp/detail/queue.hpp"       // plssvm::adaptivecpp::detail::queue (PImpl)
 
 #include "plssvm/backends/SYCL/kernel_invocation_type.hpp"  // plssvm::sycl::kernel_invocation_type
 #include "plssvm/backends/gpu_csvm.hpp"                     // plssvm::detail::gpu_csvm
@@ -32,15 +32,15 @@
 
 namespace plssvm {
 
-namespace hipsycl {
+namespace adaptivecpp {
 
 /**
- * @brief A C-SVM implementation using hipSYCL as SYCL backend.
+ * @brief A C-SVM implementation using AdaptiveCpp as SYCL backend.
  */
 class csvm : public ::plssvm::detail::gpu_csvm<detail::device_ptr, detail::queue> {
   protected:
     // protected for the test MOCK class
-    /// The template base type of the hipSYCL SYCL C-SVM class.
+    /// The template base type of the AdaptiveCpp SYCL C-SVM class.
     using base_type = ::plssvm::detail::gpu_csvm<detail::device_ptr, detail::queue>;
 
     using base_type::devices_;
@@ -53,8 +53,8 @@ class csvm : public ::plssvm::detail::gpu_csvm<detail::device_ptr, detail::queue
      * @brief Construct a new C-SVM using the SYCL backend with the parameters given through @p params.
      * @param[in] params struct encapsulating all possible parameters
      * @throws plssvm::exception all exceptions thrown in the base class constructor
-     * @throws plssvm::hipsycl::backend_exception if the requested target is not available
-     * @throws plssvm::hipsycl::backend_exception if no device for the requested target was found
+     * @throws plssvm::adaptivecpp::backend_exception if the requested target is not available
+     * @throws plssvm::adaptivecpp::backend_exception if no device for the requested target was found
      */
     explicit csvm(parameter params = {});
     /**
@@ -62,8 +62,8 @@ class csvm : public ::plssvm::detail::gpu_csvm<detail::device_ptr, detail::queue
      * @param[in] target the target platform used for this C-SVM
      * @param[in] params struct encapsulating all possible SVM parameters
      * @throws plssvm::exception all exceptions thrown in the base class constructor
-     * @throws plssvm::hipsycl::backend_exception if the requested target is not available
-     * @throws plssvm::hipsycl::backend_exception if no device for the requested target was found
+     * @throws plssvm::adaptivecpp::backend_exception if the requested target is not available
+     * @throws plssvm::adaptivecpp::backend_exception if no device for the requested target was found
      */
     explicit csvm(target_platform target, parameter params = {});
 
@@ -72,8 +72,8 @@ class csvm : public ::plssvm::detail::gpu_csvm<detail::device_ptr, detail::queue
      * @details Additionally sets the SYCL specific kernel invocation type.
      * @param[in] named_args the additional optional named arguments
      * @throws plssvm::exception all exceptions thrown in the base class constructor
-     * @throws plssvm::hipsycl::backend_exception if the requested target is not available
-     * @throws plssvm::hipsycl::backend_exception if no device for the requested target was found
+     * @throws plssvm::adaptivecpp::backend_exception if the requested target is not available
+     * @throws plssvm::adaptivecpp::backend_exception if no device for the requested target was found
      */
     template <typename... Args, PLSSVM_REQUIRES(::plssvm::detail::has_only_sycl_parameter_named_args_v<Args...>)>
     explicit csvm(Args &&...named_args) :
@@ -84,8 +84,8 @@ class csvm : public ::plssvm::detail::gpu_csvm<detail::device_ptr, detail::queue
      * @param[in] target the target platform used for this C-SVM
      * @param[in] named_args the additional optional named arguments
      * @throws plssvm::exception all exceptions thrown in the base class constructor
-     * @throws plssvm::hipsycl::backend_exception if the requested target is not available
-     * @throws plssvm::hipsycl::backend_exception if no device for the requested target was found
+     * @throws plssvm::adaptivecpp::backend_exception if the requested target is not available
+     * @throws plssvm::adaptivecpp::backend_exception if no device for the requested target was found
      */
     template <typename... Args, PLSSVM_REQUIRES(::plssvm::detail::has_only_sycl_parameter_named_args_v<Args...>)>
     explicit csvm(const target_platform target, Args &&...named_args) :
@@ -133,8 +133,8 @@ class csvm : public ::plssvm::detail::gpu_csvm<detail::device_ptr, detail::queue
     /**
      * @brief Initialize all important states related to the SYCL backend.
      * @param[in] target the target platform to use
-     * @throws plssvm::hipsycl::backend_exception if the requested target is not available
-     * @throws plssvm::hipsycl::backend_exception if no device for the requested target was found
+     * @throws plssvm::adaptivecpp::backend_exception if the requested target is not available
+     * @throws plssvm::adaptivecpp::backend_exception if no device for the requested target was found
      */
     void init(target_platform target);
 
@@ -183,18 +183,18 @@ class csvm : public ::plssvm::detail::gpu_csvm<detail::device_ptr, detail::queue
     sycl::kernel_invocation_type invocation_type_{ sycl::kernel_invocation_type::automatic };
 };
 
-}  // namespace hipsycl
+}  // namespace adaptivecpp
 
 namespace detail {
 
 /**
- * @brief Sets the `value` to `true` since C-SVMs using the SYCL backend with hipSYCL as SYCL implementation are available.
+ * @brief Sets the `value` to `true` since C-SVMs using the SYCL backend with AdaptiveCpp as SYCL implementation are available.
  */
 template <>
-struct csvm_backend_exists<hipsycl::csvm> : std::true_type {};
+struct csvm_backend_exists<adaptivecpp::csvm> : std::true_type {};
 
 }  // namespace detail
 
 }  // namespace plssvm
 
-#endif  // PLSSVM_BACKENDS_SYCL_HIPSYCL_CSVM_HPP_
+#endif  // PLSSVM_BACKENDS_SYCL_ADAPTIVECPP_CSVM_HPP_

@@ -161,10 +161,10 @@ The following table lists all PLSSVM enumerations exposed on the Python side:
 
 If a SYCL implementation is available, additional enumerations are available:
 
-| enumeration            | values                          | description                                                                                                                                                                                                                                               |
-|------------------------|---------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `ImplementationType`   | `AUTOMATIC`, `DPCPP`, `HIPSYCL` | The different supported SYCL implementation types (default: `AUTOMATIC`). If `AUTOMATIC` is provided, determines the used SYCL implementation based on the value of `-DPLSSVM_SYCL_BACKEND_PREFERRED_IMPLEMENTATION` provided during PLSSVM'S build step. |
-| `KernelInvocationType` | `AUTOMATIC`, `ND_RANGE`         | The different supported SYCL kernel invocation types (default: `AUTOMATIC`). If `AUTOMATIC` is provided, simply uses `ND_RANGE` (only implemented to be able to add new invocation types in the future).                                                  |
+| enumeration            | values                              | description                                                                                                                                                                                                                                               |
+|------------------------|-------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `ImplementationType`   | `AUTOMATIC`, `DPCPP`, `ADAPTIVECPP` | The different supported SYCL implementation types (default: `AUTOMATIC`). If `AUTOMATIC` is provided, determines the used SYCL implementation based on the value of `-DPLSSVM_SYCL_BACKEND_PREFERRED_IMPLEMENTATION` provided during PLSSVM'S build step. |
+| `KernelInvocationType` | `AUTOMATIC`, `ND_RANGE`             | The different supported SYCL kernel invocation types (default: `AUTOMATIC`). If `AUTOMATIC` is provided, simply uses `ND_RANGE` (only implemented to be able to add new invocation types in the future).                                                  |
 
 ### Classes and submodules
 
@@ -278,7 +278,7 @@ If the most performant backend should be used, it is sufficient to use `plssvm.C
 | `CSVM(params, [backend, target_platform, plssvm.Parameter kwargs])` | Create a new CSVM with the provided parameters and named arguments; the values in the `plssvm.Parameter` will be overwritten by the keyword arguments. |
 
 **Note**: if the backend type is `plssvm.BackendType.SYCL` two additional named parameters can be provided: 
-`sycl_implementation_type` to choose between DPC++ and hipSYCL as SYCL implementations and `sycl_kernel_invocation_type` to choose between the two different SYCL kernel invocation types.
+`sycl_implementation_type` to choose between DPC++ and AdaptiveCpp as SYCL implementations and `sycl_kernel_invocation_type` to choose between the two different SYCL kernel invocation types.
 
 | methods                                                                                                                                      | description                                                                                                                                                                                                        |
 |----------------------------------------------------------------------------------------------------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
@@ -291,11 +291,11 @@ If the most performant backend should be used, it is sufficient to use `plssvm.C
 | `score(model)`                                                                                                                               | Score the model with respect to itself returning its accuracy.                                                                                                                                                     |
 | `score(model, data_set)`                                                                                                                     | Score the model given the provided data set returning its accuracy.                                                                                                                                                |
 
-#### `plssvm.openmp.CSVM`, `plssvm.cuda.CSVM`, `plssvm.hip.CSVM`, `plssvm.opencl.CSVM`, `plssvm.sycl.CSVM`, `plssvm.dpcpp.CSVM`, `plssvm.hipsycl.CSVM`
+#### `plssvm.openmp.CSVM`, `plssvm.cuda.CSVM`, `plssvm.hip.CSVM`, `plssvm.opencl.CSVM`, `plssvm.sycl.CSVM`, `plssvm.dpcpp.CSVM`, `plssvm.adaptivecpp.CSVM`
 
 These classes represent the backend specific CSVMs.
 **Note**: they are only available if the respective backend has been enabled during PLSSVM's build step.
-**Note**: the `plssvm.sycl.CSVM` is equal to the respective `plssvm.dpcpp.CSVM` or `plssvm.hipsycl.CSVM` if only one SYCL implementation is available or the SYCL implementation defined by `-DPLSSVM_SYCL_BACKEND_PREFERRED_IMPLEMENTATION` during PLSSVM's build step.
+**Note**: the `plssvm.sycl.CSVM` is equal to the respective `plssvm.dpcpp.CSVM` or `plssvm.adaptivecpp.CSVM` if only one SYCL implementation is available or the SYCL implementation defined by `-DPLSSVM_SYCL_BACKEND_PREFERRED_IMPLEMENTATION` during PLSSVM's build step.
 These classes inherit all methods from the base `plssvm.CSVM` class.
 
 | constructors                              | description                                                                                                                                  |
@@ -307,7 +307,7 @@ These classes inherit all methods from the base `plssvm.CSVM` class.
 | `CSVM(target, [plssvm.Parameter kwargs])` | Create a new CSVM with the default the provided target platform. The hyper-parameter values are set ot the provided named parameter values.  |
 | `CSVM(target, params)`                    | Create a new CSVM with the default the provided target platform. The hyper-parameters are explicitly set to the provided `plssvm.Parameter`. |
 
-In case of the SYCL CSVMs (`plssvm.sycl.CSVM`, `plssvm.dpcpp.CSVM`, and `plssvm.hipsycl.CSVM`) the additional named argument `sycl_kernel_invocation_type` to choose between the two different SYCL kernel invocation types can be provided.
+In case of the SYCL CSVMs (`plssvm.sycl.CSVM`, `plssvm.dpcpp.CSVM`, and `plssvm.adaptivecpp.CSVM`) the additional named argument `sycl_kernel_invocation_type` to choose between the two different SYCL kernel invocation types can be provided.
 
 Except for the `plssvm.openmp.CSVM` the following methods are additional available for the backend specific CSVMs.
 
@@ -315,7 +315,7 @@ Except for the `plssvm.openmp.CSVM` the following methods are additional availab
 |----------------------------|---------------------------------------------------------------------------------------------------------------------------------------|
 | `num_available_devices()`  | Return the number of available devices, i.e., if the target platform represents a GPU, this function returns the number of used GPUs. |
 
-In case of the SYCL CSVMs (`plssvm.sycl.CSVM`, `plssvm.dpcpp.CSVM`, and `plssvm.hipsycl.CSVM`) the following methods are additional available for the backend specific CSVMs.
+In case of the SYCL CSVMs (`plssvm.sycl.CSVM`, `plssvm.dpcpp.CSVM`, and `plssvm.adaptivecpp.CSVM`) the following methods are additional available for the backend specific CSVMs.
 
 | methods                        | description                             |
 |--------------------------------|-----------------------------------------|

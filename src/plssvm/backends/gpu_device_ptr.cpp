@@ -20,8 +20,8 @@
     #if defined(PLSSVM_SYCL_BACKEND_HAS_DPCPP)
         #include "plssvm/backends/SYCL/DPCPP/detail/queue.hpp"  // plssvm::dpcpp::detail::queue
     #endif
-    #if defined(PLSSVM_SYCL_BACKEND_HAS_HIPSYCL)
-        #include "plssvm/backends/SYCL/hipSYCL/detail/queue.hpp"  // plssvm::hipsycl::detail::queue
+    #if defined(PLSSVM_SYCL_BACKEND_HAS_ADAPTIVECPP)
+        #include "plssvm/backends/SYCL/AdaptiveCpp/detail/queue.hpp"  // plssvm::adaptivecpp::detail::queue
     #endif
 #endif
 
@@ -153,9 +153,9 @@ template class gpu_device_ptr<double, const ::plssvm::opencl::detail::command_qu
 template class gpu_device_ptr<float, ::plssvm::dpcpp::detail::queue>;
 template class gpu_device_ptr<double, ::plssvm::dpcpp::detail::queue>;
     #endif
-    #if defined(PLSSVM_SYCL_BACKEND_HAS_HIPSYCL)
-template class gpu_device_ptr<float, ::plssvm::hipsycl::detail::queue>;
-template class gpu_device_ptr<double, ::plssvm::hipsycl::detail::queue>;
+    #if defined(PLSSVM_SYCL_BACKEND_HAS_ADAPTIVECPP)
+template class gpu_device_ptr<float, ::plssvm::adaptivecpp::detail::queue>;
+template class gpu_device_ptr<double, ::plssvm::adaptivecpp::detail::queue>;
     #endif
 #endif
 

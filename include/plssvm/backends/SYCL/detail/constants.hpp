@@ -14,9 +14,9 @@
 #pragma once
 
 /**
- * @brief Macro identifying the used SYCL compiler as [hipSYCL](https://github.com/illuhad/hipSYCL).
+ * @brief Macro identifying the used SYCL compiler as AdaptiveCpp.
  */
-#define PLSSVM_SYCL_BACKEND_COMPILER_HIPSYCL 1
+#define PLSSVM_SYCL_BACKEND_COMPILER_ADAPTIVECPP 1
 
 /**
  * @brief Macro identifying the used SYCL compiler as [DPC++](https://github.com/intel/llvm).

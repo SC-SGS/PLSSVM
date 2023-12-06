@@ -6,27 +6,27 @@
  * @license This file is part of the PLSSVM project which is released under the MIT license.
  *          See the LICENSE.md file in the project root for full license information.
  *
- * @brief Small wrapper around a SYCL device pointer for the hipSYCL SYCL implementation.
+ * @brief Small wrapper around a SYCL device pointer for the AdaptiveCpp SYCL implementation.
  */
 
-#ifndef PLSSVM_BACKENDS_SYCL_HIPSYCL_DETAIL_DEVICE_PTR_HPP_
-#define PLSSVM_BACKENDS_SYCL_HIPSYCL_DETAIL_DEVICE_PTR_HPP_
+#ifndef PLSSVM_BACKENDS_SYCL_ADAPTIVECPP_DETAIL_DEVICE_PTR_HPP_
+#define PLSSVM_BACKENDS_SYCL_ADAPTIVECPP_DETAIL_DEVICE_PTR_HPP_
 #pragma once
 
-#include "plssvm/backends/SYCL/hipSYCL/detail/queue.hpp"  // plssvm::hipsycl::detail::queue (PImpl)
-#include "plssvm/backends/gpu_device_ptr.hpp"             // plssvm::detail::gpu_device_ptr
+#include "plssvm/backends/SYCL/AdaptiveCpp/detail/queue.hpp"  // plssvm::adaptivecpp::detail::queue (PImpl)
+#include "plssvm/backends/gpu_device_ptr.hpp"                 // plssvm::detail::gpu_device_ptr
 
 #include <array>  // std::array
 
-namespace plssvm::hipsycl::detail {
+namespace plssvm::adaptivecpp::detail {
 
 /**
- * @brief Small wrapper class around a hipSYCL device pointer together with commonly used device functions.
+ * @brief Small wrapper class around a AdaptiveCpp device pointer together with commonly used device functions.
  * @tparam T the type of the kernel pointer to wrap
  */
 template <typename T>
 class device_ptr : public ::plssvm::detail::gpu_device_ptr<T, queue> {
-    /// The template base type of the hipSYCL device_ptr class.
+    /// The template base type of the AdaptiveCpp device_ptr class.
     using base_type = ::plssvm::detail::gpu_device_ptr<T, queue>;
 
     using base_type::data_;
@@ -115,6 +115,6 @@ class device_ptr : public ::plssvm::detail::gpu_device_ptr<T, queue> {
 extern template class device_ptr<float>;
 extern template class device_ptr<double>;
 
-}  // namespace plssvm::hipsycl::detail
+}  // namespace plssvm::adaptivecpp::detail
 
-#endif  // PLSSVM_BACKENDS_SYCL_HIPSYCL_DETAIL_DEVICE_PTR_HPP_
+#endif  // PLSSVM_BACKENDS_SYCL_ADAPTIVECPP_DETAIL_DEVICE_PTR_HPP_
