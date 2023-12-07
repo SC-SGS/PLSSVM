@@ -39,8 +39,8 @@ __kernel void device_kernel_w_linear(__global real_type *w_d, __global const rea
             const ulong global_feature_idx = feature_idx_linear + internal * THREAD_BLOCK_SIZE;
             const ulong global_class_idx = class_cached_idx_linear + internal * THREAD_BLOCK_SIZE;
 
-            data_cache_feature[get_local_id(1)][internal * THREAD_BLOCK_SIZE + get_local_id(0)] = sv_d[global_feature_idx * (num_sv + THREAD_BLOCK_PADDING) + sv + get_local_id(1)];
-            data_cache_alpha[get_local_id(1)][internal * THREAD_BLOCK_SIZE + get_local_id(0)] = alpha_d[global_class_idx * (num_sv + THREAD_BLOCK_PADDING) + sv + get_local_id(1)];
+            data_cache_feature[get_local_id(1)][internal * THREAD_BLOCK_SIZE + get_local_id(0)] = sv_d[global_feature_idx * (num_sv + PADDING_SIZE) + sv + get_local_id(1)];
+            data_cache_alpha[get_local_id(1)][internal * THREAD_BLOCK_SIZE + get_local_id(0)] = alpha_d[global_class_idx * (num_sv + PADDING_SIZE) + sv + get_local_id(1)];
         }
         barrier(CLK_LOCAL_MEM_FENCE);
 
@@ -60,7 +60,7 @@ __kernel void device_kernel_w_linear(__global real_type *w_d, __global const rea
             const ulong global_feature_idx = feature_idx + internal_feature;
             const ulong global_class_idx = class_idx + internal_class;
 
-            w_d[global_feature_idx * (num_classes + THREAD_BLOCK_PADDING) + global_class_idx] = temp[internal_class][internal_feature];
+            w_d[global_feature_idx * (num_classes + PADDING_SIZE) + global_class_idx] = temp[internal_class][internal_feature];
         }
     }
 }
@@ -92,10 +92,10 @@ __kernel void device_kernel_predict_linear(__global real_type *out_d, __global c
             const ulong global_pd_idx = pd_idx_linear + internal * THREAD_BLOCK_SIZE;
             const ulong global_class_idx = class_cached_idx_linear + internal * THREAD_BLOCK_SIZE;
 
-            data_cache_pd[get_local_id(1)][internal * THREAD_BLOCK_SIZE + get_local_id(0)] = predict_points_d[(dim + get_local_id(1)) * (num_predict_points + THREAD_BLOCK_PADDING) + global_pd_idx];
-            data_cache_pd[get_local_id(1) + THREAD_BLOCK_SIZE][internal * THREAD_BLOCK_SIZE + get_local_id(0)] = predict_points_d[(dim + get_local_id(1) + THREAD_BLOCK_SIZE) * (num_predict_points + THREAD_BLOCK_PADDING) + global_pd_idx];
-            data_cache_class[get_local_id(1)][internal * THREAD_BLOCK_SIZE + get_local_id(0)] = w_d[(dim + get_local_id(1)) * (num_classes + THREAD_BLOCK_PADDING) + global_class_idx];
-            data_cache_class[get_local_id(1) + THREAD_BLOCK_SIZE][internal * THREAD_BLOCK_SIZE + get_local_id(0)] = w_d[(dim + get_local_id(1) + THREAD_BLOCK_SIZE) * (num_classes + THREAD_BLOCK_PADDING) + global_class_idx];
+            data_cache_pd[get_local_id(1)][internal * THREAD_BLOCK_SIZE + get_local_id(0)] = predict_points_d[(dim + get_local_id(1)) * (num_predict_points + PADDING_SIZE) + global_pd_idx];
+            data_cache_pd[get_local_id(1) + THREAD_BLOCK_SIZE][internal * THREAD_BLOCK_SIZE + get_local_id(0)] = predict_points_d[(dim + get_local_id(1) + THREAD_BLOCK_SIZE) * (num_predict_points + PADDING_SIZE) + global_pd_idx];
+            data_cache_class[get_local_id(1)][internal * THREAD_BLOCK_SIZE + get_local_id(0)] = w_d[(dim + get_local_id(1)) * (num_classes + PADDING_SIZE) + global_class_idx];
+            data_cache_class[get_local_id(1) + THREAD_BLOCK_SIZE][internal * THREAD_BLOCK_SIZE + get_local_id(0)] = w_d[(dim + get_local_id(1) + THREAD_BLOCK_SIZE) * (num_classes + PADDING_SIZE) + global_class_idx];
         }
         barrier(CLK_LOCAL_MEM_FENCE);
 
@@ -115,7 +115,7 @@ __kernel void device_kernel_predict_linear(__global real_type *out_d, __global c
             const ulong global_pd_idx = pd_idx + internal_pd;
             const ulong global_class_idx = class_idx + internal_class;
 
-            out_d[global_pd_idx * (num_classes + THREAD_BLOCK_PADDING) + global_class_idx] = temp[internal_class][internal_pd] - rho_d[global_class_idx];
+            out_d[global_pd_idx * (num_classes + PADDING_SIZE) + global_class_idx] = temp[internal_class][internal_pd] - rho_d[global_class_idx];
         }
     }
 }
@@ -152,10 +152,10 @@ __kernel void device_kernel_predict_polynomial(__global real_type *out_d, __glob
             const ulong global_pd_idx = pd_idx_linear + internal * THREAD_BLOCK_SIZE;
             const ulong global_sv_idx = sv_cached_idx_linear + internal * THREAD_BLOCK_SIZE;
 
-            data_cache_pd[get_local_id(1)][internal * THREAD_BLOCK_SIZE + get_local_id(0)] = predict_points_d[(dim + get_local_id(1)) * (num_predict_points + THREAD_BLOCK_PADDING) + global_pd_idx];
-            data_cache_pd[get_local_id(1) + THREAD_BLOCK_SIZE][internal * THREAD_BLOCK_SIZE + get_local_id(0)] = predict_points_d[(dim + get_local_id(1) + THREAD_BLOCK_SIZE) * (num_predict_points + THREAD_BLOCK_PADDING) + global_pd_idx];
-            data_cache_sv[get_local_id(1)][internal * THREAD_BLOCK_SIZE + get_local_id(0)] = sv_d[(dim + get_local_id(1)) * (num_sv + THREAD_BLOCK_PADDING) + global_sv_idx];
-            data_cache_sv[get_local_id(1) + THREAD_BLOCK_SIZE][internal * THREAD_BLOCK_SIZE + get_local_id(0)] = sv_d[(dim + get_local_id(1) + THREAD_BLOCK_SIZE) * (num_sv + THREAD_BLOCK_PADDING) + global_sv_idx];
+            data_cache_pd[get_local_id(1)][internal * THREAD_BLOCK_SIZE + get_local_id(0)] = predict_points_d[(dim + get_local_id(1)) * (num_predict_points + PADDING_SIZE) + global_pd_idx];
+            data_cache_pd[get_local_id(1) + THREAD_BLOCK_SIZE][internal * THREAD_BLOCK_SIZE + get_local_id(0)] = predict_points_d[(dim + get_local_id(1) + THREAD_BLOCK_SIZE) * (num_predict_points + PADDING_SIZE) + global_pd_idx];
+            data_cache_sv[get_local_id(1)][internal * THREAD_BLOCK_SIZE + get_local_id(0)] = sv_d[(dim + get_local_id(1)) * (num_sv + PADDING_SIZE) + global_sv_idx];
+            data_cache_sv[get_local_id(1) + THREAD_BLOCK_SIZE][internal * THREAD_BLOCK_SIZE + get_local_id(0)] = sv_d[(dim + get_local_id(1) + THREAD_BLOCK_SIZE) * (num_sv + PADDING_SIZE) + global_sv_idx];
         }
         barrier(CLK_LOCAL_MEM_FENCE);
 
@@ -178,12 +178,12 @@ __kernel void device_kernel_predict_polynomial(__global real_type *out_d, __glob
             const real_type temp_pd_sv = temp[internal_pd][internal_sv];
             for (ulong class_idx = 0; class_idx < num_classes; ++class_idx) {
                 // apply degree, gamma, and coef0, alpha and rho
-                real_type class_temp = alpha_d[class_idx * (num_sv + THREAD_BLOCK_PADDING) + global_sv_idx] * pow(gamma * temp_pd_sv + coef0, degree);
+                real_type class_temp = alpha_d[class_idx * (num_sv + PADDING_SIZE) + global_sv_idx] * pow(gamma * temp_pd_sv + coef0, degree);
                 if (global_sv_idx == 0) {
                     class_temp -= rho_d[class_idx];
                 }
 
-                atomicAdd(&out_d[global_pd_idx * (num_classes + THREAD_BLOCK_PADDING) + class_idx], class_temp);
+                atomicAdd(&out_d[global_pd_idx * (num_classes + PADDING_SIZE) + class_idx], class_temp);
             }
         }
     }
@@ -219,10 +219,10 @@ __kernel void device_kernel_predict_rbf(__global real_type *out_d, __global cons
             const ulong global_pd_idx = pd_idx_linear + internal * THREAD_BLOCK_SIZE;
             const ulong global_sv_idx = sv_cached_idx_linear + internal * THREAD_BLOCK_SIZE;
 
-            data_cache_pd[get_local_id(1)][internal * THREAD_BLOCK_SIZE + get_local_id(0)] = predict_points_d[(dim + get_local_id(1)) * (num_predict_points + THREAD_BLOCK_PADDING) + global_pd_idx];
-            data_cache_pd[get_local_id(1) + THREAD_BLOCK_SIZE][internal * THREAD_BLOCK_SIZE + get_local_id(0)] = predict_points_d[(dim + get_local_id(1) + THREAD_BLOCK_SIZE) * (num_predict_points + THREAD_BLOCK_PADDING) + global_pd_idx];
-            data_cache_sv[get_local_id(1)][internal * THREAD_BLOCK_SIZE + get_local_id(0)] = sv_d[(dim + get_local_id(1)) * (num_sv + THREAD_BLOCK_PADDING) + global_sv_idx];
-            data_cache_sv[get_local_id(1) + THREAD_BLOCK_SIZE][internal * THREAD_BLOCK_SIZE + get_local_id(0)] = sv_d[(dim + get_local_id(1) + THREAD_BLOCK_SIZE) * (num_sv + THREAD_BLOCK_PADDING) + global_sv_idx];
+            data_cache_pd[get_local_id(1)][internal * THREAD_BLOCK_SIZE + get_local_id(0)] = predict_points_d[(dim + get_local_id(1)) * (num_predict_points + PADDING_SIZE) + global_pd_idx];
+            data_cache_pd[get_local_id(1) + THREAD_BLOCK_SIZE][internal * THREAD_BLOCK_SIZE + get_local_id(0)] = predict_points_d[(dim + get_local_id(1) + THREAD_BLOCK_SIZE) * (num_predict_points + PADDING_SIZE) + global_pd_idx];
+            data_cache_sv[get_local_id(1)][internal * THREAD_BLOCK_SIZE + get_local_id(0)] = sv_d[(dim + get_local_id(1)) * (num_sv + PADDING_SIZE) + global_sv_idx];
+            data_cache_sv[get_local_id(1) + THREAD_BLOCK_SIZE][internal * THREAD_BLOCK_SIZE + get_local_id(0)] = sv_d[(dim + get_local_id(1) + THREAD_BLOCK_SIZE) * (num_sv + PADDING_SIZE) + global_sv_idx];
         }
         barrier(CLK_LOCAL_MEM_FENCE);
 
@@ -246,12 +246,12 @@ __kernel void device_kernel_predict_rbf(__global real_type *out_d, __global cons
             const real_type temp_pd_sv = temp[internal_pd][internal_sv];
             for (ulong class_idx = 0; class_idx < num_classes; ++class_idx) {
                 // apply gamma, alpha and rho
-                real_type class_temp = alpha_d[class_idx * (num_sv + THREAD_BLOCK_PADDING) + global_sv_idx] * exp(-gamma * temp_pd_sv);
+                real_type class_temp = alpha_d[class_idx * (num_sv + PADDING_SIZE) + global_sv_idx] * exp(-gamma * temp_pd_sv);
                 if (global_sv_idx == 0) {
                     class_temp -= rho_d[class_idx];
                 }
 
-                atomicAdd(&out_d[global_pd_idx * (num_classes + THREAD_BLOCK_PADDING) + class_idx], class_temp);
+                atomicAdd(&out_d[global_pd_idx * (num_classes + PADDING_SIZE) + class_idx], class_temp);
             }
         }
     }

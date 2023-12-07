@@ -13,7 +13,7 @@
 #define PLSSVM_BACKENDS_GPU_CSVM_HPP_
 #pragma once
 
-#include "plssvm/constants.hpp"     // plssvm::real_type
+#include "plssvm/constants.hpp"     // plssvm::real_type, plssvm::PADDING_SIZE
 #include "plssvm/csvm.hpp"          // plssvm::csvm
 #include "plssvm/matrix.hpp"        // plssvm::aos_matrix
 #include "plssvm/parameter.hpp"     // plssvm::parameter
@@ -211,28 +211,28 @@ template <template <typename> typename device_ptr_t, typename queue_t>
         [[maybe_unused]] const std::size_t num_features = data_d.size(1);
 
         PLSSVM_ASSERT(num_rows_reduced > 0, "At least one row must be given!");
-        PLSSVM_ASSERT(num_rows_reduced + THREAD_BLOCK_PADDING >= num_rows_reduced, "The number of rows with padding ({}) must be greater or equal to the number of rows without padding!", num_rows_reduced + THREAD_BLOCK_PADDING, num_rows_reduced);
+        PLSSVM_ASSERT(num_rows_reduced + PADDING_SIZE >= num_rows_reduced, "The number of rows with padding ({}) must be greater or equal to the number of rows without padding!", num_rows_reduced + PADDING_SIZE, num_rows_reduced);
         PLSSVM_ASSERT(num_features > 0, "At least one feature must be given!");
-        PLSSVM_ASSERT((num_rows_reduced + THREAD_BLOCK_PADDING + 1) * (num_features + FEATURE_BLOCK_SIZE) == data_d.size(),
+        PLSSVM_ASSERT((num_rows_reduced + PADDING_SIZE + 1) * (num_features + PADDING_SIZE) == data_d.size(),
                       "The number of values on the device data array is {}, but the provided sizes are {} ((num_rows_reduced + 1) * num_features)",
                       data_d.size(),
-                      (num_rows_reduced + THREAD_BLOCK_PADDING + 1) * (num_features + FEATURE_BLOCK_SIZE));
+                      (num_rows_reduced + PADDING_SIZE + 1) * (num_features + PADDING_SIZE));
 
         // allocate memory for the values currently not on the device
-        device_ptr_type q_red_d{ q_red.size() + THREAD_BLOCK_PADDING, devices_[0] };
+        device_ptr_type q_red_d{ q_red.size() + PADDING_SIZE, devices_[0] };
         q_red_d.copy_to_device(q_red, 0, q_red.size());
         q_red_d.memset(0, q_red.size());
         device_ptr_type kernel_matrix = this->run_assemble_kernel_matrix_explicit(params, data_d, q_red_d, QA_cost);
 
 #if defined(PLSSVM_USE_GEMM)
-        PLSSVM_ASSERT((num_rows_reduced + THREAD_BLOCK_PADDING) * (num_rows_reduced + THREAD_BLOCK_PADDING) == kernel_matrix.size(),
-                      "The kernel matrix must be a quadratic matrix with (num_rows_reduced + THREAD_BLOCK_PADDING)^2 ({}) entries, but is {}!",
-                      (num_rows_reduced + THREAD_BLOCK_PADDING) * (num_rows_reduced + THREAD_BLOCK_PADDING),
+        PLSSVM_ASSERT((num_rows_reduced + PADDING_SIZE) * (num_rows_reduced + PADDING_SIZE) == kernel_matrix.size(),
+                      "The kernel matrix must be a quadratic matrix with (num_rows_reduced + PADDING_SIZE)^2 ({}) entries, but is {}!",
+                      (num_rows_reduced + PADDING_SIZE) * (num_rows_reduced + PADDING_SIZE),
                       kernel_matrix.size());
 #else
-        PLSSVM_ASSERT((num_rows_reduced + THREAD_BLOCK_PADDING) * (num_rows_reduced + THREAD_BLOCK_PADDING + 1) / 2 == kernel_matrix.size(),
-                      "The kernel matrix must be a triangular matrix only with (num_rows_reduced + THREAD_BLOCK_PADDING) * (num_rows_reduced + THREAD_BLOCK_PADDING + 1) / 2 ({}) entries, but is {}!",
-                      (num_rows_reduced + THREAD_BLOCK_PADDING) * (num_rows_reduced + THREAD_BLOCK_PADDING + 1) / 2,
+        PLSSVM_ASSERT((num_rows_reduced + PADDING_SIZE) * (num_rows_reduced + PADDING_SIZE + 1) / 2 == kernel_matrix.size(),
+                      "The kernel matrix must be a triangular matrix only with (num_rows_reduced + PADDING_SIZE) * (num_rows_reduced + PADDING_SIZE + 1) / 2 ({}) entries, but is {}!",
+                      (num_rows_reduced + PADDING_SIZE) * (num_rows_reduced + PADDING_SIZE + 1) / 2,
                       kernel_matrix.size());
 #endif
 
@@ -308,8 +308,9 @@ aos_matrix<real_type> gpu_csvm<device_ptr_t, queue_t>::predict_values(const para
     device_ptr_type w_d;  // only used when predicting linear kernel functions
     device_ptr_type alpha_d{ alpha.shape(), alpha.padding(), devices_[0] };
     alpha_d.copy_to_device(alpha);
-    device_ptr_type rho_d{ num_classes, devices_[0] };
-    rho_d.copy_to_device(rho);
+    device_ptr_type rho_d{ num_classes + PADDING_SIZE, devices_[0] };
+    rho_d.copy_to_device(rho, 0, rho.size());
+    rho_d.memset(0, rho.size());
 
     if (params.kernel_type == kernel_function_type::linear) {
         // special optimization for the linear kernel function
@@ -318,12 +319,12 @@ aos_matrix<real_type> gpu_csvm<device_ptr_t, queue_t>::predict_values(const para
             w_d = this->run_w_kernel(alpha_d, sv_d);
 
             // convert 1D result to aos_matrix out-parameter
-            w = soa_matrix<real_type>{ num_classes, num_features, THREAD_BLOCK_PADDING, FEATURE_BLOCK_SIZE };
+            w = soa_matrix<real_type>{ num_classes, num_features, PADDING_SIZE, PADDING_SIZE };
             w_d.copy_to_host(w);
             w.restore_padding();
         } else {
             // w already provided -> copy to device
-            w_d = device_ptr_type{ { num_classes, num_features }, { THREAD_BLOCK_PADDING, FEATURE_BLOCK_SIZE }, devices_[0] };
+            w_d = device_ptr_type{ { num_classes, num_features }, { PADDING_SIZE, PADDING_SIZE }, devices_[0] };
             w_d.copy_to_device(w);
         }
     }
@@ -332,7 +333,7 @@ aos_matrix<real_type> gpu_csvm<device_ptr_t, queue_t>::predict_values(const para
     const device_ptr_type out_d = this->run_predict_kernel(params, w_d, alpha_d, rho_d, sv_d, predict_points_d);
 
     // copy results back to host
-    aos_matrix<real_type> out_ret{ num_predict_points, num_classes, THREAD_BLOCK_PADDING, THREAD_BLOCK_PADDING };
+    aos_matrix<real_type> out_ret{ num_predict_points, num_classes, PADDING_SIZE, PADDING_SIZE };
     out_d.copy_to_host(out_ret);
     out_ret.restore_padding();
 

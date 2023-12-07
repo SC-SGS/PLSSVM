@@ -13,7 +13,7 @@
 #define PLSSVM_BACKENDS_HIP_CG_EXPLICIT_BLAS_HIP_HPP_
 #pragma once
 
-#include "plssvm/constants.hpp"  // plssvm::real_type, plssvm::THREAD_BLOCK_SIZE, plssvm::FEATURE_BLOCK_SIZE
+#include "plssvm/constants.hpp"  // plssvm::{real_type, THREAD_BLOCK_SIZE, INTERNAL_BLOCK_SIZE, FEATURE_BLOCK_SIZE, PADDING_SIZE}
 
 #include "hip/hip_runtime.h"
 #include "hip/hip_runtime_api.h"
@@ -49,11 +49,11 @@ __global__ void device_kernel_gemm([[maybe_unused]] const unsigned long long m, 
             const unsigned long long global_i = i_linear + internal * THREAD_BLOCK_SIZE;
             const unsigned long long global_j = j_cached_idx_linear + internal * THREAD_BLOCK_SIZE;
 
-            A_cache[threadIdx.y][internal * THREAD_BLOCK_SIZE + threadIdx.x] = A[(dim + threadIdx.y) * (k + THREAD_BLOCK_PADDING) + global_j];
-            A_cache[threadIdx.y + THREAD_BLOCK_SIZE][internal * THREAD_BLOCK_SIZE + threadIdx.x] = A[(dim + threadIdx.y + THREAD_BLOCK_SIZE) * (k + THREAD_BLOCK_PADDING) + global_j];
+            A_cache[threadIdx.y][internal * THREAD_BLOCK_SIZE + threadIdx.x] = A[(dim + threadIdx.y) * (k + PADDING_SIZE) + global_j];
+            A_cache[threadIdx.y + THREAD_BLOCK_SIZE][internal * THREAD_BLOCK_SIZE + threadIdx.x] = A[(dim + threadIdx.y + THREAD_BLOCK_SIZE) * (k + PADDING_SIZE) + global_j];
 
-            B_cache[threadIdx.y][internal * THREAD_BLOCK_SIZE + threadIdx.x] = B[(dim + threadIdx.y) * (n + FEATURE_BLOCK_SIZE) + global_i];
-            B_cache[threadIdx.y + THREAD_BLOCK_SIZE][internal * THREAD_BLOCK_SIZE + threadIdx.x] = B[(dim + threadIdx.y + THREAD_BLOCK_SIZE) * (n + FEATURE_BLOCK_SIZE) + global_i];
+            B_cache[threadIdx.y][internal * THREAD_BLOCK_SIZE + threadIdx.x] = B[(dim + threadIdx.y) * (n + PADDING_SIZE) + global_i];
+            B_cache[threadIdx.y + THREAD_BLOCK_SIZE][internal * THREAD_BLOCK_SIZE + threadIdx.x] = B[(dim + threadIdx.y + THREAD_BLOCK_SIZE) * (n + PADDING_SIZE) + global_i];
         }
         __syncthreads();
 
@@ -73,7 +73,7 @@ __global__ void device_kernel_gemm([[maybe_unused]] const unsigned long long m, 
             const unsigned long long global_i = i + internal_i;
             const unsigned long long global_j = j + internal_j;
 
-            C[global_j * (n + THREAD_BLOCK_PADDING) + global_i] = alpha * temp[internal_i][internal_j] + beta * C[global_j * (n + THREAD_BLOCK_PADDING) + global_i];
+            C[global_j * (n + PADDING_SIZE) + global_i] = alpha * temp[internal_i][internal_j] + beta * C[global_j * (n + PADDING_SIZE) + global_i];
         }
     }
 }
@@ -109,19 +109,19 @@ __global__ void device_kernel_symm([[maybe_unused]] const unsigned long long m, 
 
             // determine on which side of the diagonal we are located
             if (dim + threadIdx.y < global_j) {
-                A_cache[threadIdx.y][internal * THREAD_BLOCK_SIZE + threadIdx.x] = A[(dim + threadIdx.y) * (k + THREAD_BLOCK_PADDING) + global_j - (dim + threadIdx.y) * (dim + threadIdx.y + 1) / 2];
+                A_cache[threadIdx.y][internal * THREAD_BLOCK_SIZE + threadIdx.x] = A[(dim + threadIdx.y) * (k + PADDING_SIZE) + global_j - (dim + threadIdx.y) * (dim + threadIdx.y + 1) / 2];
             } else {
-                A_cache[threadIdx.y][internal * THREAD_BLOCK_SIZE + threadIdx.x] = A[global_j * (k + THREAD_BLOCK_PADDING) + dim + threadIdx.y - global_j * (global_j + 1) / 2];
+                A_cache[threadIdx.y][internal * THREAD_BLOCK_SIZE + threadIdx.x] = A[global_j * (k + PADDING_SIZE) + dim + threadIdx.y - global_j * (global_j + 1) / 2];
             }
             // determine on which side of the diagonal we are located
             if (dim + threadIdx.y + THREAD_BLOCK_SIZE < global_j) {
-                A_cache[threadIdx.y + THREAD_BLOCK_SIZE][internal * THREAD_BLOCK_SIZE + threadIdx.x] = A[(dim + threadIdx.y + THREAD_BLOCK_SIZE) * (k + THREAD_BLOCK_PADDING) + global_j - (dim + threadIdx.y + THREAD_BLOCK_SIZE) * (dim + threadIdx.y + THREAD_BLOCK_SIZE + 1) / 2];
+                A_cache[threadIdx.y + THREAD_BLOCK_SIZE][internal * THREAD_BLOCK_SIZE + threadIdx.x] = A[(dim + threadIdx.y + THREAD_BLOCK_SIZE) * (k + PADDING_SIZE) + global_j - (dim + threadIdx.y + THREAD_BLOCK_SIZE) * (dim + threadIdx.y + THREAD_BLOCK_SIZE + 1) / 2];
             } else {
-                A_cache[threadIdx.y + THREAD_BLOCK_SIZE][internal * THREAD_BLOCK_SIZE + threadIdx.x] = A[global_j * (k + THREAD_BLOCK_PADDING) + dim + threadIdx.y + THREAD_BLOCK_SIZE - global_j * (global_j + 1) / 2];
+                A_cache[threadIdx.y + THREAD_BLOCK_SIZE][internal * THREAD_BLOCK_SIZE + threadIdx.x] = A[global_j * (k + PADDING_SIZE) + dim + threadIdx.y + THREAD_BLOCK_SIZE - global_j * (global_j + 1) / 2];
             }
 
-            B_cache[threadIdx.y][internal * THREAD_BLOCK_SIZE + threadIdx.x] = B[(dim + threadIdx.y) * (n + FEATURE_BLOCK_SIZE) + global_i];
-            B_cache[threadIdx.y + THREAD_BLOCK_SIZE][internal * THREAD_BLOCK_SIZE + threadIdx.x] = B[(dim + threadIdx.y + THREAD_BLOCK_SIZE) * (n + FEATURE_BLOCK_SIZE) + global_i];
+            B_cache[threadIdx.y][internal * THREAD_BLOCK_SIZE + threadIdx.x] = B[(dim + threadIdx.y) * (n + PADDING_SIZE) + global_i];
+            B_cache[threadIdx.y + THREAD_BLOCK_SIZE][internal * THREAD_BLOCK_SIZE + threadIdx.x] = B[(dim + threadIdx.y + THREAD_BLOCK_SIZE) * (n + PADDING_SIZE) + global_i];
         }
         __syncthreads();
 
@@ -141,7 +141,7 @@ __global__ void device_kernel_symm([[maybe_unused]] const unsigned long long m, 
             const unsigned long long global_i = i + internal_i;
             const unsigned long long global_j = j + internal_j;
 
-            C[global_j * (n + THREAD_BLOCK_PADDING) + global_i] = alpha * temp[internal_i][internal_j] + beta * C[global_j * (n + THREAD_BLOCK_PADDING) + global_i];
+            C[global_j * (n + PADDING_SIZE) + global_i] = alpha * temp[internal_i][internal_j] + beta * C[global_j * (n + PADDING_SIZE) + global_i];
         }
     }
 }

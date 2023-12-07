@@ -14,7 +14,7 @@
 #pragma once
 
 #include "plssvm/classification_types.hpp"        // plssvm::classification_type, plssvm::classification_type_to_full_string
-#include "plssvm/constants.hpp"                   // plssvm::real_type
+#include "plssvm/constants.hpp"                   // plssvm::real_type, plssvm::PADDING_SIZE
 #include "plssvm/data_set.hpp"                    // plssvm::data_set
 #include "plssvm/default_value.hpp"               // plssvm::default_value, plssvm::default_init
 #include "plssvm/detail/igor_utility.hpp"         // plssvm::detail::{get_value_from_named_parameter, has_only_parameter_named_args_v}
@@ -343,10 +343,10 @@ void csvm::set_params(Args &&...named_args) {
 template <typename label_type, typename... Args>
 model<label_type> csvm::fit(const data_set<label_type> &data, Args &&...named_args) const {
     PLSSVM_ASSERT(data.data().is_padded(), "The data points must be padded!");
-    PLSSVM_ASSERT(data.data().padding()[0] == plssvm::THREAD_BLOCK_PADDING && data.data().padding()[1] == plssvm::FEATURE_BLOCK_SIZE,
+    PLSSVM_ASSERT(data.data().padding()[0] == PADDING_SIZE && data.data().padding()[1] == PADDING_SIZE,
                   "The provided matrix must be padded with [{}, {}], but is padded with [{}, {}]!",
-                  plssvm::THREAD_BLOCK_PADDING,
-                  plssvm::FEATURE_BLOCK_SIZE,
+                  PADDING_SIZE,
+                  PADDING_SIZE,
                   data.data().padding()[0],
                   data.data().padding()[1]);
 
@@ -445,7 +445,7 @@ model<label_type> csvm::fit(const data_set<label_type> &data, Args &&...named_ar
                     // TODO: reduce amount of copies!?
                     // assemble one vs. one classification matrix and rhs
                     const std::size_t num_data_points_in_sub_matrix{ index_sets[i].size() + index_sets[j].size() };
-                    soa_matrix<real_type> binary_data{ num_data_points_in_sub_matrix, num_features, plssvm::THREAD_BLOCK_PADDING, plssvm::FEATURE_BLOCK_SIZE };
+                    soa_matrix<real_type> binary_data{ num_data_points_in_sub_matrix, num_features, PADDING_SIZE, PADDING_SIZE };
                     aos_matrix<real_type> binary_y{ 1, num_data_points_in_sub_matrix };  // note: the first dimension will always be one, since only one rhs is needed
 
                     // note: if this is changed, it must also be changed in the libsvm_model_parsing.hpp in the calculate_alpha_idx function!!!
@@ -500,17 +500,17 @@ model<label_type> csvm::fit(const data_set<label_type> &data, Args &&...named_ar
 template <typename label_type>
 std::vector<label_type> csvm::predict(const model<label_type> &model, const data_set<label_type> &data) const {
     PLSSVM_ASSERT(model.support_vectors().is_padded(), "The support vectors must be padded!");
-    PLSSVM_ASSERT(model.support_vectors().padding()[0] == plssvm::THREAD_BLOCK_PADDING && model.support_vectors().padding()[1] == plssvm::FEATURE_BLOCK_SIZE,
+    PLSSVM_ASSERT(model.support_vectors().padding()[0] == PADDING_SIZE && model.support_vectors().padding()[1] == PADDING_SIZE,
                   "The support vectors must be padded with [{}, {}], but is padded with [{}, {}]!",
-                  plssvm::THREAD_BLOCK_PADDING,
-                  plssvm::FEATURE_BLOCK_SIZE,
+                  PADDING_SIZE,
+                  PADDING_SIZE,
                   model.support_vectors().padding()[0],
                   model.support_vectors().padding()[1]);
     PLSSVM_ASSERT(data.data().is_padded(), "The data points must be padded!");
-    PLSSVM_ASSERT(data.data().padding()[0] == plssvm::THREAD_BLOCK_PADDING && data.data().padding()[1] == plssvm::FEATURE_BLOCK_SIZE,
+    PLSSVM_ASSERT(data.data().padding()[0] == PADDING_SIZE && data.data().padding()[1] == PADDING_SIZE,
                   "The provided predict points must be padded with [{}, {}], but is padded with [{}, {}]!",
-                  plssvm::THREAD_BLOCK_PADDING,
-                  plssvm::FEATURE_BLOCK_SIZE,
+                  PADDING_SIZE,
+                  PADDING_SIZE,
                   data.data().padding()[0],
                   data.data().padding()[1]);
 
@@ -595,7 +595,7 @@ std::vector<label_type> csvm::predict(const model<label_type> &model, const data
                     } else {
                         // note: if this is changed, it must also be changed in the libsvm_model_parsing.hpp in the calculate_alpha_idx function!!!
                         // order the indices in increasing order
-                        soa_matrix<real_type> temp{ num_data_points_in_sub_matrix, num_features, plssvm::THREAD_BLOCK_PADDING, plssvm::FEATURE_BLOCK_SIZE };
+                        soa_matrix<real_type> temp{ num_data_points_in_sub_matrix, num_features, PADDING_SIZE, PADDING_SIZE };
                         std::vector<std::size_t> sorted_indices(num_data_points_in_sub_matrix);
                         std::merge(index_sets[i].cbegin(), index_sets[i].cend(), index_sets[j].cbegin(), index_sets[j].cend(), sorted_indices.begin());
                         // copy the support vectors to the binary support vectors
@@ -710,10 +710,10 @@ template <typename... Args>
 std::tuple<aos_matrix<real_type>, std::vector<real_type>, unsigned long long> csvm::solve_lssvm_system_of_linear_equations(const soa_matrix<real_type> &A, const aos_matrix<real_type> &B, const parameter &params, Args &&...named_args) const {
     PLSSVM_ASSERT(!A.empty(), "The A matrix may not be empty!");
     PLSSVM_ASSERT(A.is_padded(), "The A matrix must be padded!");
-    PLSSVM_ASSERT(A.padding()[0] == plssvm::THREAD_BLOCK_PADDING && A.padding()[1] == plssvm::FEATURE_BLOCK_SIZE,
+    PLSSVM_ASSERT(A.padding()[0] == PADDING_SIZE && A.padding()[1] == PADDING_SIZE,
                   "The provided matrix must be padded with [{}, {}], but is padded with [{}, {}]!",
-                  plssvm::THREAD_BLOCK_PADDING,
-                  plssvm::FEATURE_BLOCK_SIZE,
+                  PADDING_SIZE,
+                  PADDING_SIZE,
                   A.padding()[0],
                   A.padding()[1]);
     PLSSVM_ASSERT(!B.empty(), "The B matrix may not be empty!");
@@ -777,11 +777,11 @@ std::tuple<aos_matrix<real_type>, std::vector<real_type>, unsigned long long> cs
 
         // 4B/8B * (data_set size including padding + explicit kernel matrix size + B and C matrix in GEMM + q_red vector)
 #if defined(PLSSVM_USE_GEMM)
-        const unsigned long long kernel_matrix_size = (num_rows_reduced + THREAD_BLOCK_PADDING) * (num_rows_reduced + THREAD_BLOCK_PADDING);
+        const unsigned long long kernel_matrix_size = (num_rows_reduced + PADDING_SIZE) * (num_rows_reduced + PADDING_SIZE);
 #else
-        const unsigned long long kernel_matrix_size = (num_rows_reduced + THREAD_BLOCK_PADDING) * (num_rows_reduced + THREAD_BLOCK_PADDING + 1) / 2;
+        const unsigned long long kernel_matrix_size = (num_rows_reduced + PADDING_SIZE) * (num_rows_reduced + PADDING_SIZE + 1) / 2;
 #endif
-        const detail::memory_size total_memory_needed{ sizeof(real_type) * ((num_rows + THREAD_BLOCK_PADDING) * (num_features + FEATURE_BLOCK_SIZE) + kernel_matrix_size + 2 * num_rows_reduced * num_rhs + num_features) };
+        const detail::memory_size total_memory_needed{ sizeof(real_type) * ((num_rows + PADDING_SIZE) * (num_features + PADDING_SIZE) + kernel_matrix_size + 2 * num_rows_reduced * num_rhs + num_features) };
 
         detail::log(verbosity_level::full,
                     "Determining the solver type based on the available memory:\n"
@@ -870,7 +870,7 @@ std::tuple<aos_matrix<real_type>, std::vector<real_type>, unsigned long long> cs
     std::tie(X, num_iter) = conjugate_gradients(kernel_matrix, B_red, used_epsilon, used_max_iter, used_solver);  // TODO: q_red for implicit
 
     // calculate bias and undo dimensional reduction
-    aos_matrix<real_type> X_ret{ num_rhs, A.num_rows(), THREAD_BLOCK_PADDING, THREAD_BLOCK_PADDING };
+    aos_matrix<real_type> X_ret{ num_rhs, A.num_rows(), PADDING_SIZE, PADDING_SIZE };
     std::vector<real_type> bias(num_rhs);
     #pragma omp parallel for default(none) shared(X, q_red, X_ret, bias, b_back_value) firstprivate(num_rhs, num_rows_reduced, QA_cost)
     for (std::size_t i = 0; i < num_rhs; ++i) {
