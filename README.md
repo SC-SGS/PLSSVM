@@ -4,6 +4,28 @@
 
 [![Codacy Badge](https://app.codacy.com/project/badge/Grade/e780a63075ce40c29c49d3df4f57c2af)](https://www.codacy.com/gh/SC-SGS/PLSSVM/dashboard?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=SC-SGS/PLSSVM&amp;utm_campaign=Badge_Grade) &ensp; [![Generate documentation](https://github.com/SC-SGS/PLSSVM/actions/workflows/documentation.yml/badge.svg)](https://sc-sgs.github.io/PLSSVM/) 
 
+## Table of Contents
+
+- [Introduction To PLSSVM](#introduction-to-plssvm)
+- [Getting Started](#getting-started)
+  - [Dependencies](#dependencies)
+  - [Building PLSSVM](#building-plssvm)
+  - [Running the Tests](#running-the-tests)
+  - [Generating Test Coverage Results](#generating-test-coverage-results)
+  - [Creating the Documentation](#creating-the-documentation)
+  - [Installing](#installing)
+- [Usage](#usage)
+  - [Generating Artificial Data](#generating-artificial-data)
+  - [Training using `plssvm-train`](#training-using-plssvm-train)
+  - [Predicting using `plssvm-predict`](#predicting-using-plssvm-predict)
+  - [Data Scaling using `plssvm-scale`](#data-scaling-using-plssvm-scale)
+  - [Example Code for PLSSVM Used as a Library](#example-code-for-plssvm-used-as-a-library)
+  - [Example Using the Python Bindings Available For PLSSVM](#example-using-the-python-bindings-available-for-plssvm)
+- [Citing PLSSVM](#citing-plssvm)
+- [License](#license)
+
+## Introduction to PLSSVM
+
 A [Support Vector Machine (SVM)](https://en.wikipedia.org/wiki/Support-vector_machine) is a supervised machine learning model.
 In its basic form SVMs are used for binary classification tasks.
 Their fundamental idea is to learn a hyperplane which separates the two classes best, i.e., where the widest possible margin around its decision boundary is free of data.
@@ -260,7 +282,7 @@ If more than one SYCL implementation is available the environment variables `PLS
 
 - `PLSSVM_SYCL_BACKEND_PREFERRED_IMPLEMENTATION` (`dpcpp`|`adaptivecpp`): specify the preferred SYCL implementation if the `sycl_implementation_type` option is set to `automatic`; additional the specified SYCL implementation is used in the `plssvm::sycl` namespace, the other implementations are available in the `plssvm::dpcpp` and `plssvm::adaptivecpp` namespace respectively
 
-### Running the tests
+### Running the Tests
 
 To run the tests after building the library (with `PLSSVM_ENABLE_TESTING` set to `ON`) use:
 
@@ -268,7 +290,7 @@ To run the tests after building the library (with `PLSSVM_ENABLE_TESTING` set to
 ctest
 ```
 
-### Generating test coverage results
+### Generating Test Coverage Results
 
 To enable the generation of test coverage reports using `locv` the library must be compiled using the custom `Coverage` `CMAKE_BUILD_TYPE`.
 Additionally, it's advisable to use smaller test files to shorten the `ctest` step.
@@ -282,7 +304,7 @@ cmake --build . -- coverage
 
 The resulting `html` coverage report is located in the `coverage` folder in the build directory.
 
-### Creating the documentation
+### Creating the Documentation
 
 If doxygen is installed and `PLSSVM_ENABLE_DOCUMENTATION` is set to `ON` the documentation can be build using
 
@@ -316,7 +338,7 @@ PLSSVM provides three executables: `plssvm-train`, `plssvm-predict`, and `plssvm
 In addition, PLSSVM can also be used as a library in third-party code.
 For more information, see the respective `man` pages which are installed via `cmake --build . -- install`.
 
-### Generating artificial data
+### Generating Artificial Data
 
 The repository comes with a Python3 script (in the `utility_scripts/` directory) to simply generate arbitrarily large data sets.
 
@@ -472,7 +494,7 @@ Another example targeting NVIDIA GPUs using the SYCL backend looks like:
 
 The `--target_platform=automatic` and `--sycl_implementation_type` flags work like in the training (`./plssvm-train`) case.
 
-### Scaling using `plssvm-scale`
+### Data Scaling using `plssvm-scale`
 
 ```bash
 ./plssvm-scale --help
