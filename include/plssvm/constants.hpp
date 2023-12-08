@@ -33,13 +33,6 @@ constexpr unsigned long long THREAD_BLOCK_SIZE = PLSSVM_THREAD_BLOCK_SIZE;
 constexpr unsigned THREAD_BLOCK_SIZE = 8;
 #endif
 
-/// Global compile time constant used for internal feature caching. May be changed during the CMake configuration step.
-#if defined(PLSSVM_FEATURE_BLOCK_SIZE)
-constexpr unsigned long long FEATURE_BLOCK_SIZE = PLSSVM_FEATURE_BLOCK_SIZE;
-#else
-constexpr unsigned FEATURE_BLOCK_SIZE = 16;
-#endif
-
 /// Global compile-time constant used for internal caching. May be changed during the CMake configuration step.
 #if defined(PLSSVM_INTERNAL_BLOCK_SIZE)
 constexpr unsigned long long INTERNAL_BLOCK_SIZE = PLSSVM_INTERNAL_BLOCK_SIZE;
@@ -47,14 +40,15 @@ constexpr unsigned long long INTERNAL_BLOCK_SIZE = PLSSVM_INTERNAL_BLOCK_SIZE;
 constexpr unsigned INTERNAL_BLOCK_SIZE = 4;
 #endif
 
+/// Global compile time constant used for internal feature caching.
+constexpr unsigned FEATURE_BLOCK_SIZE = 2 * THREAD_BLOCK_SIZE;
+
 /// Padding used for the device w_d matrix to prevent out-of-bounce accesses without ifs.
 constexpr unsigned PADDING_SIZE = FEATURE_BLOCK_SIZE > (THREAD_BLOCK_SIZE * INTERNAL_BLOCK_SIZE) ? FEATURE_BLOCK_SIZE : (THREAD_BLOCK_SIZE * INTERNAL_BLOCK_SIZE);
 
 // perform sanity checks
 static_assert(detail::tuple_contains_v<real_type, detail::supported_real_types>, "Illegal real type provided! See the 'real_type_list' in the type_list.hpp header for a list of the allowed types.");
 static_assert(THREAD_BLOCK_SIZE > 0, "THREAD_BLOCK_SIZE must be greater than 0!");
-static_assert(FEATURE_BLOCK_SIZE > 0, "FEATURE_BLOCK_SIZE must be greater than 0!");
-static_assert(FEATURE_BLOCK_SIZE == 2 * THREAD_BLOCK_SIZE, "Invalid FEATURE_BLOCK_SIZE or THREAD_BLOCK_SIZE!");
 static_assert(INTERNAL_BLOCK_SIZE > 0, "INTERNAL_BLOCK_SIZE must be greater than 0!");
 
 }  // namespace plssvm
