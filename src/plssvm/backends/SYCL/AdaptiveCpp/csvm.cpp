@@ -101,7 +101,7 @@ void csvm::init(const target_platform target) {
     }
 
     plssvm::detail::log(verbosity_level::full,
-                        "\nUsing hipSYCL ({}) as SYCL backend with the kernel invocation type \"{}\" for the svm_kernel.\n",
+                        "\nUsing AdaptiveCpp ({}) as SYCL backend with the kernel invocation type \"{}\" for the svm_kernel.\n",
                         plssvm::detail::tracking_entry{ "backend", "version", ::hipsycl::sycl::detail::version_string() },
                         plssvm::detail::tracking_entry{ "backend", "sycl_kernel_invocation_type", invocation_type_ });
     if (target == target_platform::automatic) {
@@ -110,7 +110,7 @@ void csvm::init(const target_platform target) {
                             target_);
     }
     PLSSVM_DETAIL_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking_entry{ "backend", "backend", plssvm::backend_type::sycl }));
-    PLSSVM_DETAIL_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking_entry{ "backend", "sycl_implementation_type", plssvm::sycl::implementation_type::hipsycl }));
+    PLSSVM_DETAIL_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking_entry{ "backend", "sycl_implementation_type", plssvm::sycl::implementation_type::adaptivecpp }));
 
     // throw exception if no devices for the requested target could be found
     if (devices_.empty()) {
