@@ -18,10 +18,11 @@
 #include "plssvm/data_set.hpp"                  // plssvm::data_set
 #include "plssvm/detail/assert.hpp"             // PLSSVM_ASSERT
 #include "plssvm/detail/io/libsvm_parsing.hpp"  // plssvm::detail::io::parse_libsvm_num_features
-#include "plssvm/detail/logger.hpp"             // plssvm::detail::log, plssvm::verbosity_level
+#include "plssvm/detail/logging.hpp"            // plssvm::detail::log
 #include "plssvm/detail/utility.hpp"            // plssvm::detail::current_date_time
 #include "plssvm/matrix.hpp"                    // plssvm::soa_matrix
 #include "plssvm/parameter.hpp"                 // plssvm::parameter
+#include "plssvm/verbosity_levels.hpp"          // plssvm::verbosity_level
 
 #include "fmt/compile.h"  // FMT_COMPILE
 #include "fmt/format.h"   // fmt::format, fmt::format_to

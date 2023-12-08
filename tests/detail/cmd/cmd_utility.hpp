@@ -13,8 +13,8 @@
 #define PLSSVM_TESTS_DETAIL_CMD_UTILITY_HPP_
 #pragma once
 
-#include "plssvm/detail/logger.hpp"             // plssvm::verbosity_level, plssvm::verbosity
 #include "plssvm/detail/string_conversion.hpp"  // plssvm::detail::split_as
+#include "plssvm/verbosity_levels.hpp"          // plssvm::verbosity_level, plssvm::verbosity
 
 #include "utility.hpp"  // util::redirect_output
 

@@ -43,7 +43,7 @@ The currently available frameworks (also called backends in our PLSSVM implement
 - [CUDA](https://developer.nvidia.com/cuda-zone)
 - [HIP](https://github.com/ROCm-Developer-Tools/HIP) (only tested on AMD GPUs)
 - [OpenCL](https://www.khronos.org/opencl/)
-- [SYCL](https://www.khronos.org/sycl/) (tested implementations are [DPC++](https://github.com/intel/llvm) and [hipSYCL](https://github.com/illuhad/hipSYCL); specifically the versions [sycl-nightly/20230110](https://github.com/intel/llvm/tree/sycl-nightly/20230110) and hipSYCL commit [eb67fc4](https://github.com/illuhad/hipSYCL/commit/eb67fc46d6732b5c4f137ce5564f6adfba57eaa1))
+- [SYCL](https://www.khronos.org/sycl/) (tested implementations are [DPC++](https://github.com/intel/llvm) and [AdaptiveCpp](https://github.com/AdaptiveCpp/AdaptiveCpp) (formerly known as hipSYCL); specifically the versions [sycl-nightly/20230110](https://github.com/intel/llvm/tree/sycl-nightly/20230110) and AdaptiveCpp release [v23.10.0](https://github.com/AdaptiveCpp/AdaptiveCpp/releases/tag/v23.10.0))
 
 ## Getting Started
 
@@ -80,7 +80,7 @@ Additional dependencies for the OpenCL backend:
 
 Additional dependencies for the SYCL backend:
 
-- the code must be compiled with a SYCL capable compiler; currently tested with [DPC++](https://github.com/intel/llvm) and [hipSYCL](https://github.com/illuhad/hipSYCL)
+- the code must be compiled with a SYCL capable compiler; currently tested with [DPC++](https://github.com/intel/llvm) and [AdaptiveCpp](https://github.com/AdaptiveCpp/AdaptiveCpp)
 
 Additional dependencies if `PLSSVM_ENABLE_TESTING` and `PLSSVM_GENERATE_TEST_FILE` are both set to `ON`:
 
@@ -221,10 +221,10 @@ If `PLSSVM_ENABLE_PYTHON_BINDINGS` is set to `ON`, the following options can als
 
 If the SYCL backend is available additional options can be set.
 
-- `PLSSVM_ENABLE_SYCL_HIPSYCL_BACKEND=ON|OFF|AUTO` (default: `AUTO`):
-  - `ON`: check for hipSYCL as implementation for the SYCL backend and fail if not available
-  - `AUTO`: check for hipSYCL as implementation for the SYCL backend but **do not** fail if not available
-  - `OFF`: do not check for hipSYCL as implementation for the SYCL backend
+- `PLSSVM_ENABLE_SYCL_ADAPITVECPP_BACKEND=ON|OFF|AUTO` (default: `AUTO`):
+  - `ON`: check for AdaptiveCpp as implementation for the SYCL backend and fail if not available
+  - `AUTO`: check for AdaptiveCpp as implementation for the SYCL backend but **do not** fail if not available
+  - `OFF`: do not check for AdaptiveCpp as implementation for the SYCL backend
 
 - `PLSSVM_ENABLE_SYCL_DPCPP_BACKEND=ON|OFF|AUTO` (default: `AUTO`):
   - `ON`: check for DPC++ as implementation for the SYCL backend and fail if not available
@@ -239,14 +239,14 @@ If the SYCL implementation is DPC++ the following additional options are availab
 - `PLSSVM_SYCL_BACKEND_DPCPP_USE_LEVEL_ZERO` (default: `ON`): use DPC++'s Level-Zero backend instead of its OpenCL backend **(only available if a CPU or Intel GPU is targeted)**
 - `PLSSVM_SYCL_BACKEND_DPCPP_GPU_AMD_USE_HIP` (default: `ON`): use DPC++'s HIP backend instead of its OpenCL backend for AMD GPUs **(only available if an AMD GPU is targeted)**
 
-If the SYCL implementation is hipSYCL the following additional option is available:
+If the SYCL implementation is AdaptiveCpp the following additional option is available:
 
-- `PLSSVM_SYCL_BACKEND_HIPSYCL_USE_GENERIC_SSCP` (default: `ON`): use hipSYCL's new SSCP compilation flow
+- `PLSSVM_SYCL_BACKEND_ADAPTIVECPP_USE_GENERIC_SSCP` (default: `ON`): use AdaptiveCpp's new SSCP compilation flow
 
-If more than one SYCL implementation is available the environment variables `PLSSVM_SYCL_HIPSYCL_INCLUDE_DIR` and `PLSSVM_SYCL_DPCPP_INCLUDE_DIR`
+If more than one SYCL implementation is available the environment variables `PLSSVM_SYCL_ADAPTIVECPP_INCLUDE_DIR` and `PLSSVM_SYCL_DPCPP_INCLUDE_DIR`
 **must** be set to the respective SYCL include paths. Note that those paths **must not** be present in the `CPLUS_INCLUDE_PATH` environment variable or compilation will fail.
 
-- `PLSSVM_SYCL_BACKEND_PREFERRED_IMPLEMENTATION` (`dpcpp`|`hipsycl`): specify the preferred SYCL implementation if the `sycl_implementation_type` option is set to `automatic`; additional the specified SYCL implementation is used in the `plssvm::sycl` namespace, the other implementations are available in the `plssvm::dpcpp` and `plssvm::hipsycl` namespace respectively
+- `PLSSVM_SYCL_BACKEND_PREFERRED_IMPLEMENTATION` (`dpcpp`|`adaptivecpp`): specify the preferred SYCL implementation if the `sycl_implementation_type` option is set to `automatic`; additional the specified SYCL implementation is used in the `plssvm::sycl` namespace, the other implementations are available in the `plssvm::dpcpp` and `plssvm::adaptivecpp` namespace respectively
 
 ### Running the tests
 
@@ -359,7 +359,7 @@ Usage:
       --sycl_kernel_invocation_type arg
                                 choose the kernel invocation type when using SYCL as backend: automatic|nd_range (default: automatic)
       --sycl_implementation_type arg
-                                choose the SYCL implementation to be used in the SYCL backend: automatic|dpcpp|hipsycl (default: automatic)
+                                choose the SYCL implementation to be used in the SYCL backend: automatic|dpcpp|adaptivecpp (default: automatic)
       --performance_tracking arg
                                 the output YAML file where the performance tracking results are written to; if not provided, the results are dumped to stderr
       --use_strings_as_labels   use strings as labels instead of plane numbers
@@ -425,7 +425,7 @@ Usage:
   -b, --backend arg             choose the backend: automatic|openmp|cuda|hip|opencl|sycl (default: automatic)
   -p, --target_platform arg     choose the target platform: automatic|cpu|gpu_nvidia|gpu_amd|gpu_intel (default: automatic)
       --sycl_implementation_type arg
-                                choose the SYCL implementation to be used in the SYCL backend: automatic|dpcpp|hipsycl (default: automatic)
+                                choose the SYCL implementation to be used in the SYCL backend: automatic|dpcpp|adaptivecpp (default: automatic)
       --performance_tracking arg
                                 the output YAML file where the performance tracking results are written to; if not provided, the results are dumped to stderr
       --use_strings_as_labels   use strings as labels instead of plane numbers

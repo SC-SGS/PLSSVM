@@ -8,8 +8,10 @@ include(${PROJECT_SOURCE_DIR}/cmake/utility_macros.cmake)
 
 message(STATUS "Building Python language bindings for PLSSVM.")
 
+find_package(Python COMPONENTS Interpreter Development)
+
 ## try finding pybind11
-find_package(pybind11 2.10.3 QUIET)
+find_package(pybind11 2.11.1 QUIET)
 if (pybind11_FOUND)
     message(STATUS "Found package pybind11.")
 else ()
@@ -34,7 +36,6 @@ endif ()
 set(PLSSVM_PYTHON_BINDINGS_SOURCES
         ${CMAKE_CURRENT_LIST_DIR}/exceptions/exceptions.cpp
 
-        ${CMAKE_CURRENT_LIST_DIR}/detail/logger.cpp
         ${CMAKE_CURRENT_LIST_DIR}/detail/performance_tracker.cpp
 
         ${CMAKE_CURRENT_LIST_DIR}/version/version.cpp
@@ -49,6 +50,7 @@ set(PLSSVM_PYTHON_BINDINGS_SOURCES
         ${CMAKE_CURRENT_LIST_DIR}/parameter.cpp
         ${CMAKE_CURRENT_LIST_DIR}/solver_types.cpp
         ${CMAKE_CURRENT_LIST_DIR}/target_platforms.cpp
+        ${CMAKE_CURRENT_LIST_DIR}/verbosity_levels.cpp
 
         ${CMAKE_CURRENT_LIST_DIR}/sklearn.cpp
 
@@ -70,8 +72,8 @@ endif ()
 if (TARGET ${PLSSVM_SYCL_BACKEND_LIBRARY_NAME})
     list(APPEND PLSSVM_PYTHON_BINDINGS_SOURCES ${CMAKE_CURRENT_LIST_DIR}/backends/sycl.cpp)
 endif ()
-if (TARGET ${PLSSVM_SYCL_BACKEND_HIPSYCL_LIBRARY_NAME})
-    list(APPEND PLSSVM_PYTHON_BINDINGS_SOURCES ${CMAKE_CURRENT_LIST_DIR}/backends/hipsycl_csvm.cpp)
+if (TARGET ${PLSSVM_SYCL_BACKEND_ADAPTIVECPP_LIBRARY_NAME})
+    list(APPEND PLSSVM_PYTHON_BINDINGS_SOURCES ${CMAKE_CURRENT_LIST_DIR}/backends/adaptivecpp_csvm.cpp)
 endif ()
 if (TARGET ${PLSSVM_SYCL_BACKEND_DPCPP_LIBRARY_NAME})
     list(APPEND PLSSVM_PYTHON_BINDINGS_SOURCES ${CMAKE_CURRENT_LIST_DIR}/backends/dpcpp_csvm.cpp)
@@ -103,11 +105,6 @@ target_compile_definitions(${PLSSVM_PYTHON_BINDINGS_LIBRARY_NAME} PRIVATE PYBIND
 
 # disable clang compiler warning
 target_compile_options(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC $<$<COMPILE_LANG_AND_ID:CXX,Clang>:-Wno-self-assign-overloaded>)
-
-# find required python libraries
-find_package(PythonLibs REQUIRED)
-target_include_directories(${PLSSVM_BASE_LIBRARY_NAME} PRIVATE ${PYTHON_INCLUDE_DIRS})
-target_link_libraries(${PLSSVM_BASE_LIBRARY_NAME} PRIVATE ${GPU_SAMPLER_LIBRARY_NAME})
 
 # append pybind11 bindings library to installed targets
 append_local_and_parent(PLSSVM_TARGETS_TO_INSTALL ${PLSSVM_PYTHON_BINDINGS_LIBRARY_NAME})

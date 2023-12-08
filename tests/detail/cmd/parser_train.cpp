@@ -10,8 +10,8 @@
 
 #include "plssvm/detail/cmd/parser_train.hpp"
 
-#include "plssvm/constants.hpp"      // plssvm::real_type
-#include "plssvm/detail/logger.hpp"  // plssvm::verbosity
+#include "plssvm/constants.hpp"        // plssvm::real_type
+#include "plssvm/verbosity_levels.hpp"  // plssvm::verbosity
 
 #include "custom_test_macros.hpp"      // EXPECT_CONVERSION_TO_STRING
 #include "detail/cmd/cmd_utility.hpp"  // util::ParameterBase
@@ -458,7 +458,7 @@ TEST_P(ParserTrainSYCLImplementation, parsing) {
 // clang-format off
 INSTANTIATE_TEST_SUITE_P(ParserTrain, ParserTrainSYCLImplementation, ::testing::Combine(
                 ::testing::Values("--sycl_implementation_type"),
-                ::testing::Values("automatic", "hipSYCL", "DPCPP")),
+                ::testing::Values("automatic", "AdaptiveCpp", "DPCPP")),
                 naming::pretty_print_parameter_flag_and_value<ParserTrainSYCLImplementation>);
 // clang-format on
 
@@ -566,13 +566,13 @@ TEST_F(ParserTrainDeathTest, no_positional_argument) {
     this->CreateCMDArgs({ "./plssvm-train" });
     EXPECT_EXIT((plssvm::detail::cmd::parser_train{ this->get_argc(), this->get_argv() }),
                 ::testing::ExitedWithCode(EXIT_FAILURE),
-                ::testing::StartsWith("Error missing input file!"));
+                ::testing::HasSubstr("ERROR: missing input file!"));
 }
 TEST_F(ParserTrainDeathTest, too_many_positional_arguments) {
     this->CreateCMDArgs({ "./plssvm-train", "p1", "p2", "p3", "p4" });
     EXPECT_EXIT((plssvm::detail::cmd::parser_train{ this->get_argc(), this->get_argv() }),
                 ::testing::ExitedWithCode(EXIT_FAILURE),
-                ::testing::HasSubstr(R"(Only up to two positional options may be given, but 2 ("p3 p4") additional option(s) where provided!)"));
+                ::testing::HasSubstr(R"(ERROR: only up to two positional options may be given, but 2 ("p3 p4") additional option(s) where provided!)"));
 }
 
 // test whether nonsensical cmd arguments trigger the assertions

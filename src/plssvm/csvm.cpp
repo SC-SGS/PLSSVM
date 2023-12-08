@@ -10,7 +10,7 @@
 
 #include "plssvm/constants.hpp"                   // plssvm::real_type, plssvm::PADDING_SIZE
 #include "plssvm/detail/assert.hpp"               // PLSSVM_ASSERT
-#include "plssvm/detail/logger.hpp"               // plssvm::detail::log, plssvm::verbosity_level
+#include "plssvm/detail/logging.hpp"              // plssvm::detail::log
 #include "plssvm/detail/operators.hpp"            // plssvm operator overloads for vectors
 #include "plssvm/detail/performance_tracker.hpp"  // PLSSVM_DETAIL_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY, plssvm::detail::tracking_entry
 #include "plssvm/detail/simple_any.hpp"           // plssvm::detail::simple_any
@@ -19,6 +19,7 @@
 #include "plssvm/matrix.hpp"                      // plssvm::aos_matrix
 #include "plssvm/parameter.hpp"                   // plssvm::parameter
 #include "plssvm/solver_types.hpp"                // plssvm::solver_type
+#include "plssvm/verbosity_levels.hpp"            // plssvm::verbosity_level
 
 #include "fmt/core.h"  // fmt::format
 
@@ -187,19 +188,19 @@ std::pair<std::vector<real_type>, real_type> csvm::perform_dimensional_reduction
     std::vector<real_type> q_red(num_rows_reduced);
     switch (params.kernel_type) {
         case kernel_function_type::linear:
-            #pragma omp parallel for default(none) shared(q_red, A) firstprivate(num_rows_reduced)
+#pragma omp parallel for default(none) shared(q_red, A) firstprivate(num_rows_reduced)
             for (std::size_t i = 0; i < num_rows_reduced; ++i) {
                 q_red[i] = kernel_function<kernel_function_type::linear>(A, i, A, num_rows_reduced);
             }
             break;
         case kernel_function_type::polynomial:
-            #pragma omp parallel for default(none) shared(q_red, A, params) firstprivate(num_rows_reduced)
+#pragma omp parallel for default(none) shared(q_red, A, params) firstprivate(num_rows_reduced)
             for (std::size_t i = 0; i < num_rows_reduced; ++i) {
                 q_red[i] = kernel_function<kernel_function_type::polynomial>(A, i, A, num_rows_reduced, params.degree.value(), params.gamma.value(), params.coef0.value());
             }
             break;
         case kernel_function_type::rbf:
-            #pragma omp parallel for default(none) shared(q_red, A, params) firstprivate(num_rows_reduced)
+#pragma omp parallel for default(none) shared(q_red, A, params) firstprivate(num_rows_reduced)
             for (std::size_t i = 0; i < num_rows_reduced; ++i) {
                 q_red[i] = kernel_function<kernel_function_type::rbf>(A, i, A, num_rows_reduced, params.gamma.value());
             }

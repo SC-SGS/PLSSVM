@@ -40,8 +40,8 @@
     #if defined(PLSSVM_SYCL_BACKEND_HAS_DPCPP)
         #include "plssvm/backends/SYCL/DPCPP/csvm.hpp"  // plssvm::dpcpp::csvm, plssvm::csvm_backend_exists_v
     #endif
-    #if defined(PLSSVM_SYCL_BACKEND_HAS_HIPSYCL)
-        #include "plssvm/backends/SYCL/hipSYCL/csvm.hpp"  // plssvm::hipsycl::csvm, plssvm::csvm_backend_exists_v
+    #if defined(PLSSVM_SYCL_BACKEND_HAS_ADAPTIVECPP)
+        #include "plssvm/backends/SYCL/AdaptiveCpp/csvm.hpp"  // plssvm::adaptivecpp::csvm, plssvm::csvm_backend_exists_v
     #endif
 #endif
 
@@ -106,8 +106,8 @@ template <typename... Args>
             return make_csvm_default_impl<sycl::csvm>(std::forward<Args>(args)...);
         case sycl::implementation_type::dpcpp:
             return make_csvm_default_impl<dpcpp::csvm>(std::forward<Args>(args)...);
-        case sycl::implementation_type::hipsycl:
-            return make_csvm_default_impl<hipsycl::csvm>(std::forward<Args>(args)...);
+        case sycl::implementation_type::adaptivecpp:
+            return make_csvm_default_impl<adaptivecpp::csvm>(std::forward<Args>(args)...);
     }
     throw unsupported_backend_exception{ "No sycl backend available!" };
 }

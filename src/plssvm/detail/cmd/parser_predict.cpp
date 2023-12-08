@@ -8,12 +8,14 @@
 
 #include "plssvm/detail/cmd/parser_predict.hpp"
 
-#include "plssvm/backend_types.hpp"                      // plssvm::list_available_backends
-#include "plssvm/backends/SYCL/implementation_type.hpp"  // plssvm::sycl::list_available_sycl_implementations
-#include "plssvm/detail/assert.hpp"                      // PLSSVM_ASSERT
-#include "plssvm/detail/logger.hpp"                      // plssvm::verbosity
-#include "plssvm/target_platforms.hpp"                   // plssvm::list_available_target_platforms
-#include "plssvm/version/version.hpp"                    // plssvm::version::detail::get_version_info
+#include "plssvm/backend_types.hpp"                                // plssvm::list_available_backends
+#include "plssvm/backends/SYCL/implementation_type.hpp"            // plssvm::sycl::list_available_sycl_implementations
+#include "plssvm/constants.hpp"                                    // plssvm::real_type
+#include "plssvm/detail/assert.hpp"                                // PLSSVM_ASSERT
+#include "plssvm/detail/logging_without_performance_tracking.hpp"  // plssvm::detail::log
+#include "plssvm/target_platforms.hpp"                             // plssvm::list_available_target_platforms
+#include "plssvm/verbosity_levels.hpp"                             // plssvm::verbosity, plssvm::verbosity_level
+#include "plssvm/version/version.hpp"                              // plssvm::version::detail::get_version_info
 
 #include "cxxopts.hpp"    // cxxopts::{Options, value, ParseResult}
 #include "fmt/color.h"    // fmt::fg, fmt::color::orange
@@ -23,7 +25,7 @@
 #include <cstdlib>      // std::exit, EXIT_SUCCESS, EXIT_FAILURE
 #include <exception>    // std::exception
 #include <filesystem>   // std::filesystem::path
-#include <iostream>     // std::cout, std::cerr, std::clog, std::endl
+#include <iostream>     // std::cout, std::cerr, std::endl
 #include <type_traits>  // std::is_same_v
 
 namespace plssvm::detail::cmd {
@@ -67,7 +69,7 @@ parser_predict::parser_predict(int argc, char **argv) {
         options.parse_positional({ "test", "model", "output" });
         result = options.parse(argc, argv);
     } catch (const std::exception &e) {
-        std::cerr << e.what() << std::endl;
+        std::cerr << fmt::format(fmt::fg(fmt::color::red), "ERROR: {}\n", e.what()) << std::endl;
         std::cout << options.help() << std::endl;
         std::exit(EXIT_FAILURE);
     }
@@ -86,7 +88,7 @@ parser_predict::parser_predict(int argc, char **argv) {
 
     // check if the number of positional arguments is not too large
     if (!result.unmatched().empty()) {
-        std::cerr << fmt::format("Only up to three positional options may be given, but {} (\"{}\") additional option(s) where provided!", result.unmatched().size(), fmt::join(result.unmatched(), " ")) << std::endl;
+        std::cerr << fmt::format(fmt::fg(fmt::color::red), "ERROR: only up to three positional options may be given, but {} (\"{}\") additional option(s) where provided!", result.unmatched().size(), fmt::join(result.unmatched(), " ")) << std::endl;
         std::cout << options.help() << std::endl;
         std::exit(EXIT_FAILURE);
     }
@@ -103,10 +105,9 @@ parser_predict::parser_predict(int argc, char **argv) {
 
     // warn if a SYCL implementation type is explicitly set but SYCL isn't the current backend
     if (backend != backend_type::sycl && sycl_implementation_type != sycl::implementation_type::automatic) {
-        std::clog << fmt::format(fmt::fg(fmt::color::orange),
-                                 "WARNING: explicitly set a SYCL implementation type but the current backend isn't SYCL; ignoring --sycl_implementation_type={}",
-                                 sycl_implementation_type)
-                  << std::endl;
+        detail::log(verbosity_level::full | verbosity_level::warning,
+                    "WARNING: explicitly set a SYCL implementation type but the current backend isn't SYCL; ignoring --sycl_implementation_type={}\n",
+                    sycl_implementation_type);
     }
 #endif
 
@@ -120,10 +121,9 @@ parser_predict::parser_predict(int argc, char **argv) {
     if (result["verbosity"].count()) {
         const verbosity_level verb = result["verbosity"].as<verbosity_level>();
         if (quiet && verb != verbosity_level::quiet) {
-            std::clog << fmt::format(fmt::fg(fmt::color::orange),
-                                     "WARNING: explicitly set the -q/--quiet flag, but the provided verbosity level isn't \"quiet\"; setting --verbosity={} to --verbosity=quiet",
-                                     verb)
-                      << std::endl;
+            detail::log(verbosity_level::full | verbosity_level::warning,
+                        "WARNING: explicitly set the -q/--quiet flag, but the provided verbosity level isn't \"quiet\"; setting --verbosity={} to --verbosity=quiet\n",
+                        verb);
             verbosity = verbosity_level::quiet;
         } else {
             verbosity = verb;
@@ -134,7 +134,7 @@ parser_predict::parser_predict(int argc, char **argv) {
 
     // parse test data filename
     if (!result.count("test")) {
-        std::cerr << "Error missing test file!" << std::endl;
+        std::cerr << fmt::format(fmt::fg(fmt::color::red), "ERROR: missing test file!\n") << std::endl;
         std::cout << options.help() << std::endl;
         std::exit(EXIT_FAILURE);
     }
@@ -142,7 +142,7 @@ parser_predict::parser_predict(int argc, char **argv) {
 
     // parse model filename
     if (!result.count("model")) {
-        std::cerr << "Error missing model file!" << std::endl;
+        std::cerr << fmt::format(fmt::fg(fmt::color::red), "ERROR: missing model file!\n") << std::endl;
         std::cout << options.help() << std::endl;
         std::exit(EXIT_FAILURE);
     }

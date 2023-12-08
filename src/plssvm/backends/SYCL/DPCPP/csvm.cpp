@@ -12,19 +12,21 @@
 #include "plssvm/backends/SYCL/DPCPP/detail/queue_impl.hpp"  // plssvm::dpcpp::detail::queue (PImpl implementation)
 #include "plssvm/backends/SYCL/DPCPP/detail/utility.hpp"     // plssvm::dpcpp::detail::get_device_list, plssvm::dpcpp::device_synchronize
 
+#include "plssvm/backend_types.hpp"                                     // plssvm::backend_type
 #include "plssvm/backends/SYCL/cg_explicit/blas.hpp"                    // plssvm::sycl::device_kernel_gemm
 #include "plssvm/backends/SYCL/cg_explicit/kernel_matrix_assembly.hpp"  // plssvm::sycl::{device_kernel_assembly_linear, device_kernel_assembly_polynomial, device_kernel_assembly_rbf}
 #include "plssvm/backends/SYCL/exceptions.hpp"                          // plssvm::dpcpp::backend_exception
 #include "plssvm/backends/SYCL/predict_kernel.hpp"                      // plssvm::sycl::detail::{kernel_w, device_kernel_predict_polynomial, device_kernel_predict_rbf}
 #include "plssvm/constants.hpp"                                         // plssvm::{real_type, THREAD_BLOCK_SIZE, INTERNAL_BLOCK_SIZE, PADDING_SIZE}
 #include "plssvm/detail/assert.hpp"                                     // PLSSVM_ASSERT
-#include "plssvm/detail/logger.hpp"                                     // plssvm::detail::log, plssvm::verbosity_level
+#include "plssvm/detail/logging.hpp"                                    // plssvm::detail::log
 #include "plssvm/detail/memory_size.hpp"                                // plssvm::detail::memory_size
 #include "plssvm/detail/performance_tracker.hpp"                        // plssvm::detail::tracking_entry
 #include "plssvm/exceptions/exceptions.hpp"                             // plssvm::exception
 #include "plssvm/kernel_function_types.hpp"                             // plssvm::kernel_type
 #include "plssvm/parameter.hpp"                                         // plssvm::parameter
 #include "plssvm/target_platforms.hpp"                                  // plssvm::target_platform
+#include "plssvm/verbosity_levels.hpp"                                  // plssvm::verbosity_level
 
 #include "fmt/color.h"    // fmt::fg, fmt::color::orange
 #include "fmt/core.h"     // fmt::format
@@ -79,7 +81,9 @@ void csvm::init(const target_platform target) {
 
     // currently only single GPU execution is supported
     if (devices_.size() != 1) {
-        std::clog << fmt::format(fmt::fg(fmt::color::orange), "WARNING: found {} devices, but currently only single GPU execution is supported. Continuing only with device 0!", devices_.size()) << std::endl;
+        plssvm::detail::log(verbosity_level::full | verbosity_level::warning,
+                            "WARNING: found {} devices, but currently only single GPU execution is supported. Continuing only with device 0!\n",
+                            devices_.size());
         devices_.resize(1);
     }
 

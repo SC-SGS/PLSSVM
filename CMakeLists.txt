@@ -72,7 +72,6 @@ set(PLSSVM_BASE_SOURCES
         ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/detail/cmd/parser_scale.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/detail/cmd/parser_train.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/detail/io/file_reader.cpp
-        ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/detail/logger.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/detail/memory_size.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/detail/performance_tracker.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/detail/sha256.cpp
@@ -91,6 +90,7 @@ set(PLSSVM_BASE_SOURCES
         ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/parameter.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/solver_types.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/target_platforms.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/verbosity_levels.cpp
 )
 
 ## create base library: linked against all backend libraries

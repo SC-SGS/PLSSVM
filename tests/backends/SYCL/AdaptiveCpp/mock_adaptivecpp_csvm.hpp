@@ -6,26 +6,26 @@
  * @license This file is part of the PLSSVM project which is released under the MIT license.
  *          See the LICENSE.md file in the project root for full license information.
  *
- * @brief MOCK class for the C-SVM class using the SYCL backend with hipSYCL as SYCL implementation.
+ * @brief MOCK class for the C-SVM class using the SYCL backend with AdaptiveCpp as SYCL implementation.
  */
 
-#ifndef PLSSVM_TESTS_BACKENDS_SYCL_HIPSYCL_MOCK_HIPSYCL_CSVM_HPP_
-#define PLSSVM_TESTS_BACKENDS_SYCL_HIPSYCL_MOCK_HIPSYCL_CSVM_HPP_
+#ifndef PLSSVM_TESTS_BACKENDS_SYCL_ADAPTIVECPP_MOCK_ADAPTIVECPP_CSVM_HPP_
+#define PLSSVM_TESTS_BACKENDS_SYCL_ADAPTIVECPP_MOCK_ADAPTIVECPP_CSVM_HPP_
 #pragma once
 
-#include "plssvm/backends/SYCL/hipSYCL/csvm.hpp"  // plssvm::hipsycl::csvm
+#include "plssvm/backends/SYCL/AdaptiveCpp/csvm.hpp"  // plssvm::adaptivecpp::csvm
 
 /**
- * @brief GTest mock class for the SYCL CSVM using hipSYCL as SYCL implementation.
+ * @brief GTest mock class for the SYCL CSVM using AdaptiveCpp as SYCL implementation.
  */
-class mock_hipsycl_csvm final : public plssvm::hipsycl::csvm {
-    using base_type = plssvm::hipsycl::csvm;
+class mock_adaptivecpp_csvm final : public plssvm::adaptivecpp::csvm {
+    using base_type = plssvm::adaptivecpp::csvm;
 
   public:
     using base_type::device_ptr_type;
 
     template <typename... Args>
-    explicit mock_hipsycl_csvm(Args &&...args) :
+    explicit mock_adaptivecpp_csvm(Args &&...args) :
         base_type{ std::forward<Args>(args)... } {}
 
     // make protected member functions public
@@ -52,4 +52,4 @@ class mock_hipsycl_csvm final : public plssvm::hipsycl::csvm {
     using base_type::devices_;
 };
 
-#endif  // PLSSVM_TESTS_BACKENDS_SYCL_HIPSYCL_MOCK_HIPSYCL_CSVM_HPP_
+#endif  // PLSSVM_TESTS_BACKENDS_SYCL_ADAPTIVECPP_MOCK_ADAPTIVECPP_CSVM_HPP_

@@ -6,20 +6,20 @@
  * @license This file is part of the PLSSVM project which is released under the MIT license.
  *          See the LICENSE.md file in the project root for full license information.
  *
- * @brief Utility functions specific to the SYCL backend using hipSYCL as SYCL implementation.
+ * @brief Utility functions specific to the SYCL backend using AdaptiveCpp as SYCL implementation.
  */
 
-#ifndef PLSSVM_BACKENDS_SYCL_HIPSYCL_DETAIL_UTILITY_HPP_
-#define PLSSVM_BACKENDS_SYCL_HIPSYCL_DETAIL_UTILITY_HPP_
+#ifndef PLSSVM_BACKENDS_SYCL_ADAPTIVECPP_DETAIL_UTILITY_HPP_
+#define PLSSVM_BACKENDS_SYCL_ADAPTIVECPP_DETAIL_UTILITY_HPP_
 #pragma once
 
-#include "plssvm/backends/SYCL/hipSYCL/detail/queue.hpp"  // plssvm::hipsycl::detail::queue (PImpl)
+#include "plssvm/backends/SYCL/AdaptiveCpp/detail/queue.hpp"  // plssvm::adaptivecpp::detail::queue (PImpl)
 #include "plssvm/target_platforms.hpp"                    // plssvm::target_platform
 
 #include <utility>  // std::pair
 #include <vector>   // std::vector
 
-namespace plssvm::hipsycl::detail {
+namespace plssvm::adaptivecpp::detail {
 
 /**
  * @brief Returns the list devices matching the target platform @p target and the actually used target platform
@@ -48,6 +48,6 @@ void device_synchronize(const queue &q);
  */
 [[nodiscard]] queue get_default_queue();
 
-}  // namespace plssvm::hipsycl::detail
+}  // namespace plssvm::adaptivecpp::detail
 
-#endif  // PLSSVM_BACKENDS_SYCL_HIPSYCL_DETAIL_UTILITY_HPP_
+#endif  // PLSSVM_BACKENDS_SYCL_ADAPTIVECPP_DETAIL_UTILITY_HPP_

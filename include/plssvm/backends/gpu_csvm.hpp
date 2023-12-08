@@ -21,11 +21,10 @@
 
 #include "fmt/core.h"  // fmt::format
 
-#include <algorithm>   // std::min, std::all_of
-#include <cstddef>     // std::size_t
-#include <iostream>    // std::clog, std::endl
-#include <utility>     // std::forward, std::move
-#include <vector>      // std::vector
+#include <algorithm>  // std::min, std::all_of
+#include <cstddef>    // std::size_t
+#include <utility>    // std::forward, std::move
+#include <vector>     // std::vector
 
 namespace plssvm::detail {
 

@@ -20,7 +20,7 @@
 
 namespace py = pybind11;
 
-py::module_ init_hipsycl_csvm(py::module_ &, const py::exception<plssvm::exception> &);
+py::module_ init_adaptivecpp_csvm(py::module_ &, const py::exception<plssvm::exception> &);
 py::module_ init_dpcpp_csvm(py::module_ &, const py::exception<plssvm::exception> &);
 
 void init_sycl(py::module_ &m, const py::exception<plssvm::exception> &base_exception) {
@@ -34,7 +34,7 @@ void init_sycl(py::module_ &m, const py::exception<plssvm::exception> &base_exce
     py::enum_<plssvm::sycl::implementation_type>(sycl_module, "ImplementationType")
         .value("AUTOMATIC", plssvm::sycl::implementation_type::automatic, "use the available SYCL implementation; if more than one implementation is available, the macro PLSSVM_SYCL_BACKEND_PREFERRED_IMPLEMENTATION must be defined during the CMake configuration")
         .value("DPCPP", plssvm::sycl::implementation_type::dpcpp, "use DPC++ as SYCL implementation")
-        .value("HIPSYCL", plssvm::sycl::implementation_type::hipsycl, "use hipSYCL as SYCL implementation");
+        .value("ADAPTIVECPP", plssvm::sycl::implementation_type::adaptivecpp, "use AdaptiveCpp (formerly known as hipSYCL) as SYCL implementation");
 
     sycl_module.def("list_available_sycl_implementations", &plssvm::sycl::list_available_sycl_implementations, "list all available SYCL implementations");
 
@@ -43,13 +43,13 @@ void init_sycl(py::module_ &m, const py::exception<plssvm::exception> &base_exce
         .value("ND_RANGE", plssvm::sycl::kernel_invocation_type::nd_range, "use the nd_range kernel invocation type");
 
     // initialize SYCL binding classes
-#if defined(PLSSVM_SYCL_BACKEND_HAS_HIPSYCL)
-    const py::module_ hipsycl_module = init_hipsycl_csvm(m, base_exception);
+#if defined(PLSSVM_SYCL_BACKEND_HAS_ADAPTIVECPP)
+    const py::module_ adaptivecpp_module = init_adaptivecpp_csvm(m, base_exception);
 #endif
 #if defined(PLSSVM_SYCL_BACKEND_HAS_DPCPP)
     const py::module_ dpcpp_module = init_dpcpp_csvm(m, base_exception);
 #endif
 
-    // "alias" one of the DPC++ or hipSYCL CSVMs to be the default SYCL CSVM
+    // "alias" one of the DPC++ or AdaptiveCpp CSVMs to be the default SYCL CSVM
     sycl_module.attr("CSVM") = PLSSVM_CONCATENATE(PLSSVM_SYCL_BACKEND_PREFERRED_IMPLEMENTATION, _module).attr("CSVM");
 }

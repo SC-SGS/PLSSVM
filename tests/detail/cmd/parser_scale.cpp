@@ -10,8 +10,8 @@
 
 #include "plssvm/detail/cmd/parser_scale.hpp"
 
-#include "plssvm/constants.hpp"      // plssvm::real_type
-#include "plssvm/detail/logger.hpp"  // plssvm::verbosity
+#include "plssvm/constants.hpp"         // plssvm::real_type
+#include "plssvm/verbosity_levels.hpp"  // plssvm::verbosity
 
 #include "custom_test_macros.hpp"      // EXPECT_CONVERSION_TO_STRING
 #include "detail/cmd/cmd_utility.hpp"  // util::ParameterBase
@@ -327,20 +327,27 @@ TEST_F(ParserScaleDeathTest, no_positional_argument) {
     this->CreateCMDArgs({ "./plssvm-scale" });
     EXPECT_EXIT((plssvm::detail::cmd::parser_scale{ this->get_argc(), this->get_argv() }),
                 ::testing::ExitedWithCode(EXIT_FAILURE),
-                ::testing::StartsWith("Error missing input file!"));
+                ::testing::HasSubstr("ERROR: missing input file!"));
 }
 TEST_F(ParserScaleDeathTest, save_and_restore) {
     this->CreateCMDArgs({ "./plssvm-scale", "-s", "data.libsvm.save", "-r", "data.libsvm.restore", "data.libsvm" });
     EXPECT_EXIT((plssvm::detail::cmd::parser_scale{ this->get_argc(), this->get_argv() }),
                 ::testing::ExitedWithCode(EXIT_FAILURE),
-                ::testing::StartsWith("Error cannot use -s (--save_filename) and -r (--restore_filename) simultaneously!"));
+                ::testing::HasSubstr("ERROR: cannot use -s (--save_filename) and -r (--restore_filename) simultaneously!"));
 }
 
 TEST_F(ParserScaleDeathTest, too_many_positional_arguments) {
     this->CreateCMDArgs({ "./plssvm-scale", "p1", "p2", "p3", "p4" });
     EXPECT_EXIT((plssvm::detail::cmd::parser_scale{ this->get_argc(), this->get_argv() }),
                 ::testing::ExitedWithCode(EXIT_FAILURE),
-                ::testing::HasSubstr(R"(Only up to two positional options may be given, but 2 ("p3 p4") additional option(s) where provided!)"));
+                ::testing::HasSubstr(R"(ERROR: only up to two positional options may be given, but 2 ("p3 p4") additional option(s) where provided!)"));
+}
+TEST_F(ParserScaleDeathTest, illegal_scaling_range) {
+    // illegal [lower, upper] bound range
+    this->CreateCMDArgs({ "./plssvm-scale", "-l", "1.0", "-u", "-1.0", "data.libsvm" });
+    EXPECT_EXIT((plssvm::detail::cmd::parser_scale{ this->get_argc(), this->get_argv() }),
+                ::testing::ExitedWithCode(EXIT_FAILURE),
+                ::testing::HasSubstr("ERROR: invalid scaling range [lower, upper] with [1, -1]!"));
 }
 
 // test whether nonsensical cmd arguments trigger the assertions
@@ -351,12 +358,6 @@ TEST_F(ParserScaleDeathTest, too_few_argc) {
 TEST_F(ParserScaleDeathTest, nullptr_argv) {
     EXPECT_DEATH((plssvm::detail::cmd::parser_scale{ 1, nullptr }),
                  ::testing::HasSubstr("At least one argument is always given (the executable name), but argv is a nullptr!"));
-}
-TEST_F(ParserScaleDeathTest, illegal_scaling_range) {
-    // illegal [lower, upper] bound range
-    this->CreateCMDArgs({ "./plssvm-scale", "-l", "1.0", "-u", "-1.0", "data.libsvm" });
-    EXPECT_DEATH((plssvm::detail::cmd::parser_scale{ this->get_argc(), this->get_argv() }),
-                 ::testing::HasSubstr("Error invalid scaling range [lower, upper] with [1, -1]!"));
 }
 TEST_F(ParserScaleDeathTest, unrecognized_option) {
     this->CreateCMDArgs({ "./plssvm-scale", "--foo", "bar" });

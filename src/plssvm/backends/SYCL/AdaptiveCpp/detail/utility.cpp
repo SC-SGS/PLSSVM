@@ -6,12 +6,12 @@
  *          See the LICENSE.md file in the project root for full license information.
  */
 
-#include "plssvm/backends/SYCL/hipSYCL/detail/utility.hpp"
+#include "plssvm/backends/SYCL/AdaptiveCpp/detail/utility.hpp"
 
-#include "plssvm/backends/SYCL/hipSYCL/detail/queue_impl.hpp"  // plssvm::hipsycl::detail::queue (PImpl implementation)
-#include "plssvm/detail/string_utility.hpp"                    // plssvm::detail::{as_lower_case, contains}
-#include "plssvm/detail/utility.hpp"                           // plssvm::detail::contains
-#include "plssvm/target_platforms.hpp"                         // plssvm::target_platform, plssvm::determine_default_target_platform
+#include "plssvm/backends/SYCL/AdaptiveCpp/detail/queue_impl.hpp"  // plssvm::adaptivecpp::detail::queue (PImpl implementation)
+#include "plssvm/detail/string_utility.hpp"                        // plssvm::detail::{as_lower_case, contains}
+#include "plssvm/detail/utility.hpp"                               // plssvm::detail::contains
+#include "plssvm/target_platforms.hpp"                             // plssvm::target_platform, plssvm::determine_default_target_platform
 
 #include "sycl/sycl.hpp"  // ::sycl::platform, ::sycl::device, ::sycl::property::queue, ::sycl::info
 
@@ -21,7 +21,7 @@
 #include <utility>  // std::pair, std::make_pair, std::move
 #include <vector>   // std::vector
 
-namespace plssvm::hipsycl::detail {
+namespace plssvm::adaptivecpp::detail {
 
 [[nodiscard]] std::pair<std::vector<queue>, ::plssvm::target_platform> get_device_list(target_platform target) {
     // iterate over all platforms and save all available devices
@@ -91,4 +91,4 @@ queue get_default_queue() {
     return q;
 }
 
-}  // namespace plssvm::hipsycl::detail
+}  // namespace plssvm::adaptivecpp::detail

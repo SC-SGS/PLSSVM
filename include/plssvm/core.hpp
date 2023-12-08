@@ -30,6 +30,7 @@
 #include "plssvm/kernel_function_types.hpp"                 // all supported kernel function types
 #include "plssvm/solver_types.hpp"                          // all supported solver types (e.g., Conjugate Gradients with explicit, streaming, or implicit kernel matrix generation)
 #include "plssvm/target_platforms.hpp"                      // all supported target platforms
+#include "plssvm/verbosity_levels.hpp"                      // all supported verbosity levels
 
 #include "plssvm/backends/SYCL/implementation_type.hpp"     // the SYCL implementation type
 #include "plssvm/backends/SYCL/kernel_invocation_type.hpp"  // the SYCL specific kernel invocation typ
@@ -78,12 +79,12 @@ using namespace plssvm::sycl;
 /// Namespace containing the C-SVM using the SYCL backend with DPC++ as SYCL implementation. **Should not** directly be used by users.
 namespace plssvm::dpcpp::detail {}
 
-/// Namespace containing the C-SVM using the SYCL backend with hipSYCL as SYCL implementation.
-namespace plssvm::hipsycl {
+/// Namespace containing the C-SVM using the SYCL backend with AdaptiveCpp as SYCL implementation.
+namespace plssvm::adaptivecpp {
 using namespace plssvm::sycl;
 }
-/// Namespace containing the C-SVM using the SYCL backend with hipSYCL as SYCL implementation. **Should not** directly be used by users.
-namespace plssvm::hipsycl::detail {}
+/// Namespace containing the C-SVM using the SYCL backend with AdaptiveCpp as SYCL implementation. **Should not** directly be used by users.
+namespace plssvm::adaptivecpp::detail {}
 
 /// Namespace containing the C-SVM using the SYCL backend with the preferred SYCL implementation.
 namespace plssvm::sycl {

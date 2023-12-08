@@ -7,7 +7,7 @@
  */
 
 #include "plssvm/backends/SYCL/exceptions.hpp"
-#include "plssvm/backends/SYCL/hipSYCL/csvm.hpp"
+#include "plssvm/backends/SYCL/AdaptiveCpp/csvm.hpp"
 
 #include "plssvm/csvm.hpp"              // plssvm::csvm
 #include "plssvm/parameter.hpp"         // plssvm::parameter
@@ -22,12 +22,12 @@
 
 namespace py = pybind11;
 
-py::module_ init_hipsycl_csvm(py::module_ &m, const py::exception<plssvm::exception> &base_exception) {
-    // use its own submodule for the hipSYCL CSVM bindings
-    py::module_ hipsycl_module = m.def_submodule("hipsycl", "a module containing all hipSYCL SYCL backend specific functionality");
+py::module_ init_adaptivecpp_csvm(py::module_ &m, const py::exception<plssvm::exception> &base_exception) {
+    // use its own submodule for the AdaptiveCpp CSVM bindings
+    py::module_ adaptivecpp_module = m.def_submodule("adaptivecpp", "a module containing all AdaptiveCpp SYCL backend specific functionality");
 
-    // bind the CSVM using the hipSYCL backend
-    py::class_<plssvm::hipsycl::csvm, plssvm::csvm>(hipsycl_module, "CSVM")
+    // bind the CSVM using the AdaptiveCpp backend
+    py::class_<plssvm::adaptivecpp::csvm, plssvm::csvm>(adaptivecpp_module, "CSVM")
         .def(py::init<>(), "create an SVM with the automatic target platform and default parameter object")
         .def(py::init<plssvm::parameter>(), "create an SVM with the automatic target platform and provided parameter object")
         .def(py::init<plssvm::target_platform>(), "create an SVM with the provided target platform and default parameter object")
@@ -40,7 +40,7 @@ py::module_ init_hipsycl_csvm(py::module_ &m, const py::exception<plssvm::except
                  // set SYCL kernel invocation type
                  const plssvm::sycl::kernel_invocation_type invoc = args.contains("sycl_kernel_invocation_type") ? args["sycl_kernel_invocation_type"].cast<plssvm::sycl::kernel_invocation_type>() : plssvm::sycl::kernel_invocation_type::automatic;
                  // create CSVM with the default target platform
-                 return std::make_unique<plssvm::hipsycl::csvm>(params, plssvm::sycl_kernel_invocation_type = invoc);
+                 return std::make_unique<plssvm::adaptivecpp::csvm>(params, plssvm::sycl_kernel_invocation_type = invoc);
              }),
              "create an SVM with the default target platform and keyword arguments")
         .def(py::init([](const plssvm::target_platform target, const py::kwargs &args) {
@@ -51,14 +51,14 @@ py::module_ init_hipsycl_csvm(py::module_ &m, const py::exception<plssvm::except
                  // set SYCL kernel invocation type
                  const plssvm::sycl::kernel_invocation_type invoc = args.contains("sycl_kernel_invocation_type") ? args["sycl_kernel_invocation_type"].cast<plssvm::sycl::kernel_invocation_type>() : plssvm::sycl::kernel_invocation_type::automatic;
                  // create CSVM with the default target platform
-                 return std::make_unique<plssvm::hipsycl::csvm>(target, params, plssvm::sycl_kernel_invocation_type = invoc);
+                 return std::make_unique<plssvm::adaptivecpp::csvm>(target, params, plssvm::sycl_kernel_invocation_type = invoc);
              }),
              "create an SVM with the provided target platform and keyword arguments")
-        .def("get_kernel_invocation_type", &plssvm::hipsycl::csvm::get_kernel_invocation_type, "get the kernel invocation type used in this SYCL SVM")
-        .def("num_available_devices", &plssvm::hipsycl::csvm::num_available_devices, "the number of available devices");
+        .def("get_kernel_invocation_type", &plssvm::adaptivecpp::csvm::get_kernel_invocation_type, "get the kernel invocation type used in this SYCL SVM")
+        .def("num_available_devices", &plssvm::adaptivecpp::csvm::num_available_devices, "the number of available devices");
 
-    // register hipSYCL backend specific exceptions
-    register_py_exception<plssvm::hipsycl::backend_exception>(hipsycl_module, "BackendError", base_exception);
+    // register AdaptiveCpp backend specific exceptions
+    register_py_exception<plssvm::adaptivecpp::backend_exception>(adaptivecpp_module, "BackendError", base_exception);
 
-    return hipsycl_module;
+    return adaptivecpp_module;
 }

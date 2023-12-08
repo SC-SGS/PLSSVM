@@ -28,8 +28,8 @@ enum class implementation_type {
     automatic,
     /** Use [DPC++](https://github.com/intel/llvm) as SYCL implementation. */
     dpcpp,
-    /** Use [hipSYCL](https://github.com/illuhad/hipSYCL) as SYCL implementation. */
-    hipsycl
+    /** Use [AdaptiveCpp](https://github.com/AdaptiveCpp/AdaptiveCpp) (formerly known as hipSYCL) as SYCL implementation. */
+    adaptivecpp
 };
 
 /**

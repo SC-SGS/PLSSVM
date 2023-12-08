@@ -13,18 +13,20 @@
 #define PLSSVM_PARAMETER_HPP_
 #pragma once
 
-#include "plssvm/constants.hpp"              // plssvm::real_type
-#include "plssvm/default_value.hpp"          // plssvm::default_value, plssvm::is_default_value_v
-#include "plssvm/detail/igor_utility.hpp"    // plssvm::detail::{has_only_named_args_v, get_value_from_named_parameter}
-#include "plssvm/detail/type_traits.hpp"     // PLSSVM_REQUIRES, plssvm::detail::{remove_cvref_t, always_false_v}
-#include "plssvm/detail/utility.hpp"         // plssvm::detail::unreachable
-#include "plssvm/kernel_function_types.hpp"  // plssvm::kernel_function_type, plssvm::kernel_function_type_to_math_string
+#include "plssvm/constants.hpp"                                    // plssvm::real_type
+#include "plssvm/default_value.hpp"                                // plssvm::default_value, plssvm::is_default_value_v
+#include "plssvm/detail/igor_utility.hpp"                          // plssvm::detail::{has_only_named_args_v, get_value_from_named_parameter}
+#include "plssvm/detail/logging_without_performance_tracking.hpp"  // plssvm::detail::log
+#include "plssvm/detail/type_traits.hpp"                           // PLSSVM_REQUIRES, plssvm::detail::{remove_cvref_t, always_false_v}
+#include "plssvm/detail/utility.hpp"                               // plssvm::detail::unreachable
+#include "plssvm/kernel_function_types.hpp"                        // plssvm::kernel_function_type, plssvm::kernel_function_type_to_math_string
+#include "plssvm/verbosity_levels.hpp"                             // plssvm::verbosity_level, plssvm::verbosity
 
 #include "fmt/core.h"     // fmt::format
 #include "fmt/ostream.h"  // fmt::formatter, fmt::ostream_formatter
 #include "igor/igor.hpp"  // IGOR_MAKE_NAMED_ARGUMENT, igor::parser, igor::has_unnamed_arguments, igor::has_other_than
 
-#include <iostream>     // std::clog, std::endl, std::ostream
+#include <iosfwd>       // forward declare std::ostream and std::istream
 #include <string_view>  // std::string_view
 #include <type_traits>  // std::is_same_v, std::is_convertible_v
 #include <utility>      // std::forward
@@ -51,7 +53,7 @@ IGOR_MAKE_NAMED_ARGUMENT(max_iter);
 IGOR_MAKE_NAMED_ARGUMENT(solver);
 /// Create a named argument for the classification type used for fitting a model.
 IGOR_MAKE_NAMED_ARGUMENT(classification);
-/// Create a named argument for the SYCL backend specific SYCL implementation type (DPC++ or hipSYCL).
+/// Create a named argument for the SYCL backend specific SYCL implementation type (DPC++ or AdaptiveCpp).
 IGOR_MAKE_NAMED_ARGUMENT(sycl_implementation_type);
 /// Create a named argument for the SYCL backend specific kernel invocation type.
 IGOR_MAKE_NAMED_ARGUMENT(sycl_kernel_invocation_type);
@@ -182,7 +184,12 @@ struct parameter {
 
         // shorthand function for emitting a warning if a provided parameter is not used by the current kernel function
         [[maybe_unused]] const auto print_warning = [](const std::string_view param_name, const kernel_function_type kernel) {
-            std::clog << fmt::format("{} parameter provided, which is not used in the {} kernel ({})!", param_name, kernel, kernel_function_type_to_math_string(kernel)) << std::endl;
+            // NOTE: can't use the log function due to circular dependencies
+            detail::log(verbosity_level::full | verbosity_level::warning,
+                        "WARNING: {} parameter provided, which is not used in the {} kernel ({})!\n",
+                        param_name,
+                        kernel,
+                        kernel_function_type_to_math_string(kernel));
         };
 
         // compile time/runtime check: the values must have the correct types

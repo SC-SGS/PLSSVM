@@ -132,8 +132,8 @@ class csvm : public ::plssvm::detail::gpu_csvm<detail::device_ptr, detail::queue
     /**
      * @brief Initialize all important states related to the SYCL backend.
      * @param[in] target the target platform to use
-     * @throws plssvm::hipsycl::backend_exception if the requested target is not available
-     * @throws plssvm::hipsycl::backend_exception if no device for the requested target was found
+     * @throws plssvm::dpcpp::backend_exception if the requested target is not available
+     * @throws plssvm::dpcpp::backend_exception if no device for the requested target was found
      */
     void init(target_platform target);
 
