@@ -22,7 +22,7 @@
 
 #include "fmt/ostream.h"  // fmt::formatter, fmt::ostream_formatter
 
-#include <cmath>        // std::pow, std::exp, std::fma
+#include <cmath>        // std::pow, std::exp
 #include <cstddef>      // std::size_t
 #include <iosfwd>       // forward declare std::ostream and std::istream
 #include <string_view>  // std::string_view
@@ -95,7 +95,7 @@ template <kernel_function_type kernel, typename T, typename... Args>
         const auto gamma = static_cast<T>(detail::get<1>(args...));
         const auto coef0 = static_cast<T>(detail::get<2>(args...));
         // perform kernel function calculation
-        return std::pow(std::fma(gamma, transposed{ xi } * xj, coef0), degree);
+        return std::pow(gamma * (transposed{ xi } * xj) + coef0, degree);
     } else if constexpr (kernel == kernel_function_type::rbf) {
         // get parameters
         static_assert(sizeof...(args) == 1, "Illegal number of additional parameters! Must be 1.");
@@ -148,7 +148,7 @@ template <kernel_function_type kernel, typename T, layout_type layout, typename.
         T temp{ 0.0 };
         #pragma omp simd reduction(+ : temp)
         for (size_type dim = 0; dim < x.num_cols(); ++dim) {
-            temp = std::fma(x(i, dim), y(j, dim), temp);
+            temp += x(i, dim) * y(j, dim);
         }
         return temp;
     } else if constexpr (kernel == kernel_function_type::polynomial) {
@@ -159,9 +159,9 @@ template <kernel_function_type kernel, typename T, layout_type layout, typename.
         T temp{ 0.0 };
         #pragma omp simd reduction(+ : temp)
         for (size_type dim = 0; dim < x.num_cols(); ++dim) {
-            temp = std::fma(x(i, dim), y(j, dim), temp);
+            temp += x(i, dim) * y(j, dim);
         }
-        return std::pow(std::fma(gamma, temp, coef0), degree);
+        return std::pow(gamma * temp + coef0, degree);
     } else if constexpr (kernel == kernel_function_type::rbf) {
         static_assert(sizeof...(args) == 1, "Illegal number of additional parameters! Must be 1.");
         const auto gamma = static_cast<T>(detail::get<0>(args...));
@@ -169,7 +169,7 @@ template <kernel_function_type kernel, typename T, layout_type layout, typename.
         #pragma omp simd reduction(+ : temp)
         for (size_type dim = 0; dim < x.num_cols(); ++dim) {
             const T diff = x(i, dim) - y(j, dim);
-            temp = std::fma(diff, diff, temp);
+            temp += diff * diff;
         }
         return std::exp(-gamma * temp);
     } else {

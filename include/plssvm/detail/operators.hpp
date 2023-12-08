@@ -16,7 +16,6 @@
 #include "plssvm/detail/assert.hpp"  // PLSSVM_ASSERT
 #include "plssvm/matrix.hpp"         // plssvm::matrix
 
-#include <cmath>   // std::fma
 #include <vector>  // std::vector
 
 //*************************************************************************************************************************************//
@@ -127,7 +126,6 @@ transposed(const std::vector<T> &) -> transposed<T>;
 
 /**
  * @brief Calculate the dot product (\f$x^T \cdot y\f$) between both [`std::vector`](https://en.cppreference.com/w/cpp/container/vector).
- * @details Explicitly uses `std::fma` for better performance and accuracy.
  * @tparam T the value type
  * @param[in] lhs the first vector
  * @param[in] rhs the second vector
@@ -140,7 +138,7 @@ template <typename T>
     T val{};
     #pragma omp simd reduction(+ : val)
     for (typename std::vector<T>::size_type i = 0; i < lhs.vec.size(); ++i) {
-        val = std::fma(lhs.vec[i], rhs[i], val);
+        val += lhs.vec[i] * rhs[i];
     }
     return val;
 }
@@ -172,7 +170,6 @@ template <typename T>
 
 /**
  * @brief Calculates the squared Euclidean distance of both vectors: \f$d^2(x, y) = (x_1 - y_1)^2 + (x_2 - y_2)^2 + \dots + (x_n - y_n)^2\f$.
- * @details Explicitly uses `std::fma` for better performance and accuracy.
  * @tparam T the value type
  * @param[in] lhs the first vector
  * @param[in] rhs the second vector
@@ -186,7 +183,7 @@ template <typename T>
     #pragma omp simd reduction(+ : val)
     for (typename std::vector<T>::size_type i = 0; i < lhs.size(); ++i) {
         const T diff = lhs[i] - rhs[i];
-        val = std::fma(diff, diff, val);
+        val += diff * diff;
     }
     return val;
 }
