@@ -8,7 +8,7 @@
 
 #include "plssvm/csvm.hpp"
 
-#include "plssvm/constants.hpp"                   // plssvm::real_type
+#include "plssvm/constants.hpp"                   // plssvm::real_type, plssvm::PADDING_SIZE
 #include "plssvm/detail/assert.hpp"               // PLSSVM_ASSERT
 #include "plssvm/detail/logging.hpp"              // plssvm::detail::log
 #include "plssvm/detail/operators.hpp"            // plssvm operator overloads for vectors
@@ -67,17 +67,17 @@ std::pair<soa_matrix<real_type>, unsigned long long> csvm::conjugate_gradients(c
     // perform Conjugate Gradients (CG) algorithm
     //
 
-    soa_matrix<real_type> X{ num_rhs, num_rows, real_type{ 1.0 }, FEATURE_BLOCK_SIZE, THREAD_BLOCK_PADDING };
+    soa_matrix<real_type> X{ num_rhs, num_rows, real_type{ 1.0 }, PADDING_SIZE, PADDING_SIZE };
 
     // R = B - A * X
-    soa_matrix<real_type> R{ B, THREAD_BLOCK_PADDING, THREAD_BLOCK_PADDING };
+    soa_matrix<real_type> R{ B, PADDING_SIZE, PADDING_SIZE };
     total_blas_level_3_time += this->run_blas_level_3(cg_solver, real_type{ -1.0 }, A, X, real_type{ 1.0 }, R);
 
     // delta = R.T * R
     std::vector<real_type> delta = rowwise_dot(R, R);
     const std::vector<real_type> delta0(delta);
 
-    soa_matrix<real_type> D{ R, FEATURE_BLOCK_SIZE, THREAD_BLOCK_PADDING };
+    soa_matrix<real_type> D{ R, PADDING_SIZE, PADDING_SIZE };
 
     // get the index of the rhs that has the largest residual difference wrt to its target residual
     const auto rhs_idx_max_residual_difference = [&]() {
@@ -111,7 +111,7 @@ std::pair<soa_matrix<real_type>, unsigned long long> csvm::conjugate_gradients(c
         const std::chrono::steady_clock::time_point iteration_start_time = std::chrono::steady_clock::now();
 
         // Q = A * D
-        soa_matrix<real_type> Q{ D.num_rows(), D.num_cols(), THREAD_BLOCK_PADDING, THREAD_BLOCK_PADDING };
+        soa_matrix<real_type> Q{ D.num_rows(), D.num_cols(), PADDING_SIZE, PADDING_SIZE };
         total_blas_level_3_time += this->run_blas_level_3(cg_solver, real_type{ 1.0 }, A, D, real_type{ 0.0 }, Q);
 
         // alpha = delta_new / (D^T * Q))
@@ -123,7 +123,7 @@ std::pair<soa_matrix<real_type>, unsigned long long> csvm::conjugate_gradients(c
         if (iter % 50 == 49) {
             // explicitly recalculate residual to remove accumulating floating point errors
             // R = B - A * X
-            R = soa_matrix<real_type>{ B, THREAD_BLOCK_PADDING, THREAD_BLOCK_PADDING };
+            R = soa_matrix<real_type>{ B, PADDING_SIZE, PADDING_SIZE };
             total_blas_level_3_time += this->run_blas_level_3(cg_solver, real_type{ -1.0 }, A, X, real_type{ 1.0 }, R);
         } else {
             // R = R - alpha * Q
@@ -225,6 +225,22 @@ std::chrono::duration<long, std::milli> csvm::run_blas_level_3(const solver_type
 
     const std::chrono::steady_clock::time_point end_time = std::chrono::steady_clock::now();
     return std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time);
+}
+
+aos_matrix<real_type> csvm::run_predict_values(const parameter &params, const soa_matrix<real_type> &support_vectors, const aos_matrix<real_type> &alpha, const std::vector<real_type> &rho, soa_matrix<real_type> &w, const soa_matrix<real_type> &predict_points) const {
+    const std::chrono::steady_clock::time_point start_time = std::chrono::steady_clock::now();
+
+    decltype(auto) res = this->predict_values(params, support_vectors, alpha, rho, w, predict_points);
+
+    const std::chrono::steady_clock::time_point end_time = std::chrono::steady_clock::now();
+    detail::log(verbosity_level::full | verbosity_level::timing,
+                "Predicted the values of {} predict points using {} support vectors with {} features each in {}.\n",
+                predict_points.num_rows(),
+                support_vectors.num_rows(),
+                support_vectors.num_cols(),
+                detail::tracking_entry{ "predict_values", "total_runtime", std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time) });
+
+    return res;
 }
 
 }  // namespace plssvm

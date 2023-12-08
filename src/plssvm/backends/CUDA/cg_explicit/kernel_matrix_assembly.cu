@@ -8,7 +8,7 @@
 
 #include "plssvm/backends/CUDA/cg_explicit/kernel_matrix_assembly.cuh"
 
-#include "plssvm/constants.hpp"  // plssvm::real_type, plssvm::THREAD_BLOCK_SIZE, plssvm::FEATURE_BLOCK_SIZE
+#include "plssvm/constants.hpp"  // plssvm::{real_type, THREAD_BLOCK_SIZE, INTERNAL_BLOCK_SIZE, FEATURE_BLOCK_SIZE, PADDING_SIZE}
 
 namespace plssvm::cuda {
 
@@ -30,10 +30,10 @@ __global__ void device_kernel_assembly_linear(real_type *ret, const real_type *d
                 const unsigned long long global_i = i_linear + internal * THREAD_BLOCK_SIZE;
                 const unsigned long long global_j = j_cached_idx_linear + internal * THREAD_BLOCK_SIZE;
 
-                data_cache_i[threadIdx.y][internal * THREAD_BLOCK_SIZE + threadIdx.x] = data_d[(dim + threadIdx.y) * (num_rows + 1 + THREAD_BLOCK_PADDING) + global_i];
-                data_cache_i[threadIdx.y + THREAD_BLOCK_SIZE][internal * THREAD_BLOCK_SIZE + threadIdx.x] = data_d[(dim + threadIdx.y + THREAD_BLOCK_SIZE) * (num_rows + 1 + THREAD_BLOCK_PADDING) + global_i];
-                data_cache_j[threadIdx.y][internal * THREAD_BLOCK_SIZE + threadIdx.x] = data_d[(dim + threadIdx.y) * (num_rows + 1 + THREAD_BLOCK_PADDING) + global_j];
-                data_cache_j[threadIdx.y + THREAD_BLOCK_SIZE][internal * THREAD_BLOCK_SIZE + threadIdx.x] = data_d[(dim + threadIdx.y + THREAD_BLOCK_SIZE) * (num_rows + 1 + THREAD_BLOCK_PADDING) + global_j];
+                data_cache_i[threadIdx.y][internal * THREAD_BLOCK_SIZE + threadIdx.x] = data_d[(dim + threadIdx.y) * (num_rows + 1 + PADDING_SIZE) + global_i];
+                data_cache_i[threadIdx.y + THREAD_BLOCK_SIZE][internal * THREAD_BLOCK_SIZE + threadIdx.x] = data_d[(dim + threadIdx.y + THREAD_BLOCK_SIZE) * (num_rows + 1 + PADDING_SIZE) + global_i];
+                data_cache_j[threadIdx.y][internal * THREAD_BLOCK_SIZE + threadIdx.x] = data_d[(dim + threadIdx.y) * (num_rows + 1 + PADDING_SIZE) + global_j];
+                data_cache_j[threadIdx.y + THREAD_BLOCK_SIZE][internal * THREAD_BLOCK_SIZE + threadIdx.x] = data_d[(dim + threadIdx.y + THREAD_BLOCK_SIZE) * (num_rows + 1 + PADDING_SIZE) + global_j];
             }
             __syncthreads();
 
@@ -61,10 +61,10 @@ __global__ void device_kernel_assembly_linear(real_type *ret, const real_type *d
                     }
 
 #if defined(PLSSVM_USE_GEMM)
-                    ret[global_j * (num_rows + THREAD_BLOCK_PADDING) + global_i] = temp_ij;
-                    ret[global_i * (num_rows + THREAD_BLOCK_PADDING) + global_j] = temp_ij;
+                    ret[global_j * (num_rows + PADDING_SIZE) + global_i] = temp_ij;
+                    ret[global_i * (num_rows + PADDING_SIZE) + global_j] = temp_ij;
 #else
-                    ret[global_j * (num_rows + THREAD_BLOCK_PADDING) + global_i - global_j * (global_j + 1) / 2] = temp_ij;
+                    ret[global_j * (num_rows + PADDING_SIZE) + global_i - global_j * (global_j + 1) / 2] = temp_ij;
 #endif
                 }
             }
@@ -90,10 +90,10 @@ __global__ void device_kernel_assembly_polynomial(real_type *ret, const real_typ
                 const unsigned long long global_i = i_linear + internal * THREAD_BLOCK_SIZE;
                 const unsigned long long global_j = j_cached_idx_linear + internal * THREAD_BLOCK_SIZE;
 
-                data_cache_i[threadIdx.y][internal * THREAD_BLOCK_SIZE + threadIdx.x] = data_d[(dim + threadIdx.y) * (num_rows + 1 + THREAD_BLOCK_PADDING) + global_i];
-                data_cache_i[threadIdx.y + THREAD_BLOCK_SIZE][internal * THREAD_BLOCK_SIZE + threadIdx.x] = data_d[(dim + threadIdx.y + THREAD_BLOCK_SIZE) * (num_rows + 1 + THREAD_BLOCK_PADDING) + global_i];
-                data_cache_j[threadIdx.y][internal * THREAD_BLOCK_SIZE + threadIdx.x] = data_d[(dim + threadIdx.y) * (num_rows + 1 + THREAD_BLOCK_PADDING) + global_j];
-                data_cache_j[threadIdx.y + THREAD_BLOCK_SIZE][internal * THREAD_BLOCK_SIZE + threadIdx.x] = data_d[(dim + threadIdx.y + THREAD_BLOCK_SIZE) * (num_rows + 1 + THREAD_BLOCK_PADDING) + global_j];
+                data_cache_i[threadIdx.y][internal * THREAD_BLOCK_SIZE + threadIdx.x] = data_d[(dim + threadIdx.y) * (num_rows + 1 + PADDING_SIZE) + global_i];
+                data_cache_i[threadIdx.y + THREAD_BLOCK_SIZE][internal * THREAD_BLOCK_SIZE + threadIdx.x] = data_d[(dim + threadIdx.y + THREAD_BLOCK_SIZE) * (num_rows + 1 + PADDING_SIZE) + global_i];
+                data_cache_j[threadIdx.y][internal * THREAD_BLOCK_SIZE + threadIdx.x] = data_d[(dim + threadIdx.y) * (num_rows + 1 + PADDING_SIZE) + global_j];
+                data_cache_j[threadIdx.y + THREAD_BLOCK_SIZE][internal * THREAD_BLOCK_SIZE + threadIdx.x] = data_d[(dim + threadIdx.y + THREAD_BLOCK_SIZE) * (num_rows + 1 + PADDING_SIZE) + global_j];
             }
             __syncthreads();
 
@@ -121,10 +121,10 @@ __global__ void device_kernel_assembly_polynomial(real_type *ret, const real_typ
                     }
 
 #if defined(PLSSVM_USE_GEMM)
-                    ret[global_j * (num_rows + THREAD_BLOCK_PADDING) + global_i] = temp_ij;
-                    ret[global_i * (num_rows + THREAD_BLOCK_PADDING) + global_j] = temp_ij;
+                    ret[global_j * (num_rows + PADDING_SIZE) + global_i] = temp_ij;
+                    ret[global_i * (num_rows + PADDING_SIZE) + global_j] = temp_ij;
 #else
-                    ret[global_j * (num_rows + THREAD_BLOCK_PADDING) + global_i - global_j * (global_j + 1) / 2] = temp_ij;
+                    ret[global_j * (num_rows + PADDING_SIZE) + global_i - global_j * (global_j + 1) / 2] = temp_ij;
 #endif
                 }
             }
@@ -150,10 +150,10 @@ __global__ void device_kernel_assembly_rbf(real_type *ret, const real_type *data
                 const unsigned long long global_i = i_linear + internal * THREAD_BLOCK_SIZE;
                 const unsigned long long global_j = j_cached_idx_linear + internal * THREAD_BLOCK_SIZE;
 
-                data_cache_i[threadIdx.y][internal * THREAD_BLOCK_SIZE + threadIdx.x] = data_d[(dim + threadIdx.y) * (num_rows + 1 + THREAD_BLOCK_PADDING) + global_i];
-                data_cache_i[threadIdx.y + THREAD_BLOCK_SIZE][internal * THREAD_BLOCK_SIZE + threadIdx.x] = data_d[(dim + threadIdx.y + THREAD_BLOCK_SIZE) * (num_rows + 1 + THREAD_BLOCK_PADDING) + global_i];
-                data_cache_j[threadIdx.y][internal * THREAD_BLOCK_SIZE + threadIdx.x] = data_d[(dim + threadIdx.y) * (num_rows + 1 + THREAD_BLOCK_PADDING) + global_j];
-                data_cache_j[threadIdx.y + THREAD_BLOCK_SIZE][internal * THREAD_BLOCK_SIZE + threadIdx.x] = data_d[(dim + threadIdx.y + THREAD_BLOCK_SIZE) * (num_rows + 1 + THREAD_BLOCK_PADDING) + global_j];
+                data_cache_i[threadIdx.y][internal * THREAD_BLOCK_SIZE + threadIdx.x] = data_d[(dim + threadIdx.y) * (num_rows + 1 + PADDING_SIZE) + global_i];
+                data_cache_i[threadIdx.y + THREAD_BLOCK_SIZE][internal * THREAD_BLOCK_SIZE + threadIdx.x] = data_d[(dim + threadIdx.y + THREAD_BLOCK_SIZE) * (num_rows + 1 + PADDING_SIZE) + global_i];
+                data_cache_j[threadIdx.y][internal * THREAD_BLOCK_SIZE + threadIdx.x] = data_d[(dim + threadIdx.y) * (num_rows + 1 + PADDING_SIZE) + global_j];
+                data_cache_j[threadIdx.y + THREAD_BLOCK_SIZE][internal * THREAD_BLOCK_SIZE + threadIdx.x] = data_d[(dim + threadIdx.y + THREAD_BLOCK_SIZE) * (num_rows + 1 + PADDING_SIZE) + global_j];
             }
             __syncthreads();
 
@@ -182,10 +182,10 @@ __global__ void device_kernel_assembly_rbf(real_type *ret, const real_type *data
                     }
 
 #if defined(PLSSVM_USE_GEMM)
-                    ret[global_j * (num_rows + THREAD_BLOCK_PADDING) + global_i] = temp_ij;
-                    ret[global_i * (num_rows + THREAD_BLOCK_PADDING) + global_j] = temp_ij;
+                    ret[global_j * (num_rows + PADDING_SIZE) + global_i] = temp_ij;
+                    ret[global_i * (num_rows + PADDING_SIZE) + global_j] = temp_ij;
 #else
-                    ret[global_j * (num_rows + THREAD_BLOCK_PADDING) + global_i - global_j * (global_j + 1) / 2] = temp_ij;
+                    ret[global_j * (num_rows + PADDING_SIZE) + global_i - global_j * (global_j + 1) / 2] = temp_ij;
 #endif
                 }
             }

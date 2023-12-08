@@ -8,7 +8,7 @@
 
 #include "plssvm/detail/performance_tracker.hpp"
 
-#include "plssvm/constants.hpp"                          // plssvm::real_type, plssvm::THREAD_BOCK_SIZE, plssvm::FEATURE_BLOCK_SIZE, plssvm::INTERNAL_BLOCK_SIZE, plssvm::THREAD_BLOCK_PADDING
+#include "plssvm/constants.hpp"                          // plssvm::{real_type, THREAD_BLOCK_SIZE, INTERNAL_BLOCK_SIZE, FEATURE_BLOCK_SIZE, PADDING_SIZE}
 #include "plssvm/detail/arithmetic_type_name.hpp"        // plssvm::detail::arithmetic_type_name
 #include "plssvm/detail/assert.hpp"                      // PLSSVM_ASSERT, PLSSVM_ASSERT_ENABLED
 #include "plssvm/detail/cmd/parser_predict.hpp"          // plssvm::detail::cmd::parser_predict
@@ -174,7 +174,7 @@ void performance_tracker::save(std::ostream &out) {
         "  THREAD_BLOCK_SIZE:          {}\n"
         "  FEATURE_BLOCK_SIZE:         {}\n"
         "  INTERNAL_BLOCK_SIZE:        {}\n"
-        "  THREAD_BLOCK_PADDING:       {}\n",
+        "  PADDING_SIZE:               {}\n",
         plssvm::detail::current_date_time(),
         version::detail::target_platforms,
         version::git_metadata::commit_sha1().empty() ? "unknown" : version::git_metadata::commit_sha1(),
@@ -189,7 +189,7 @@ void performance_tracker::save(std::ostream &out) {
         THREAD_BLOCK_SIZE,
         FEATURE_BLOCK_SIZE,
         INTERNAL_BLOCK_SIZE,
-        THREAD_BLOCK_PADDING);
+        PADDING_SIZE);
 
 #if defined(PLSSVM_SYCL_BACKEND_HAS_DPCPP)
     //  check whether DPC++ AOT has been enabled

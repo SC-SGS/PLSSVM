@@ -15,7 +15,7 @@
 #include "plssvm/backends/CUDA/detail/utility.cuh"                      // plssvm::cuda::detail::{device_synchronize, get_device_count, set_device, peek_at_last_error}
 #include "plssvm/backends/CUDA/exceptions.hpp"                          // plssvm::cuda::backend_exception
 #include "plssvm/backends/CUDA/predict_kernel.cuh"                      // plssvm::cuda::detail::{device_kernel_w_linear, device_kernel_predict_polynomial, device_kernel_predict_rbf}
-#include "plssvm/constants.hpp"                                         // plssvm::real_type
+#include "plssvm/constants.hpp"                                         // plssvm::{real_type, THREAD_BLOCK_SIZE, INTERNAL_BLOCK_SIZE, PADDING_SIZE}
 #include "plssvm/detail/assert.hpp"                                     // PLSSVM_ASSERT
 #include "plssvm/detail/logging.hpp"                                    // plssvm::detail::log
 #include "plssvm/detail/memory_size.hpp"                                // plssvm::detail::memory_size
@@ -158,9 +158,9 @@ auto csvm::run_assemble_kernel_matrix_explicit(const parameter &params, const de
                     static_cast<int>(std::ceil(static_cast<double>(num_rows_reduced) / static_cast<double>(block.y * INTERNAL_BLOCK_SIZE))));
 
 #if defined(PLSSVM_USE_GEMM)
-    device_ptr_type kernel_matrix_d{ (num_rows_reduced + THREAD_BLOCK_PADDING) * (num_rows_reduced + THREAD_BLOCK_PADDING), devices_[0] };  // store full matrix
+    device_ptr_type kernel_matrix_d{ (num_rows_reduced + PADDING_SIZE) * (num_rows_reduced + PADDING_SIZE), devices_[0] };  // store full matrix
 #else
-    device_ptr_type kernel_matrix_d{ (num_rows_reduced + THREAD_BLOCK_PADDING) * (num_rows_reduced + THREAD_BLOCK_PADDING + 1) / 2, devices_[0] };  // only explicitly store the upper triangular matrix
+    device_ptr_type kernel_matrix_d{ (num_rows_reduced + PADDING_SIZE) * (num_rows_reduced + PADDING_SIZE + 1) / 2, devices_[0] };  // only explicitly store the upper triangular matrix
 #endif
     kernel_matrix_d.memset(0);
     const real_type cost_factor = real_type{ 1.0 } / params.cost;
@@ -219,15 +219,17 @@ auto csvm::run_w_kernel(const device_ptr_type &alpha_d, const device_ptr_type &s
 
     // define the grid and block sizes
     const std::size_t max_work_group_size = this->get_max_work_group_size();
-    const auto max_work_group_size_2D = static_cast<int>(max_work_group_size / 4);
-    const dim3 block(max_work_group_size_2D, 4);
-    const dim3 grid(static_cast<int>(std::ceil(static_cast<double>(num_features) / static_cast<double>(block.x))),
-                    static_cast<int>(std::ceil(static_cast<double>(num_classes) / static_cast<double>(block.y))));
+    if (max_work_group_size < THREAD_BLOCK_SIZE * THREAD_BLOCK_SIZE) {
+        throw kernel_launch_resources{ fmt::format("Not enough work-items allowed for a work-groups of size {}x{}! Try reducing THREAD_BLOCK_SIZE.", THREAD_BLOCK_SIZE, THREAD_BLOCK_SIZE) };
+    }
+    const dim3 block(THREAD_BLOCK_SIZE, THREAD_BLOCK_SIZE);
+    const dim3 grid(static_cast<int>(std::ceil(static_cast<double>(num_features) / static_cast<double>(block.x * INTERNAL_BLOCK_SIZE))),
+                    static_cast<int>(std::ceil(static_cast<double>(num_classes) / static_cast<double>(block.y * INTERNAL_BLOCK_SIZE))));
 
-    device_ptr_type w_d{ { num_classes, num_features }, devices_[0] };
+    device_ptr_type w_d{ { num_classes, num_features }, { PADDING_SIZE, PADDING_SIZE }, devices_[0] };
 
     detail::set_device(0);
-    cuda::device_kernel_w_linear<<<grid, block>>>(w_d.get(), alpha_d.get(), sv_d.get(), num_classes, num_sv, num_features);
+    cuda::device_kernel_w_linear<<<grid, block>>>(w_d.get(), alpha_d.get(), sv_d.get(), num_classes, num_sv);
     detail::peek_at_last_error();
     this->device_synchronize(devices_[0]);
 
@@ -240,26 +242,26 @@ auto csvm::run_predict_kernel(const parameter &params, const device_ptr_type &w_
     const unsigned long long num_predict_points = predict_points_d.size(0);
     const unsigned long long num_features = predict_points_d.size(1);
 
-    device_ptr_type out_d{ { num_predict_points, num_classes }, devices_[0] };
+    device_ptr_type out_d{ { num_predict_points, num_classes }, { PADDING_SIZE, PADDING_SIZE }, devices_[0] };
+
+    // define the block sizes
+    const std::size_t max_work_group_size = this->get_max_work_group_size();
+    if (max_work_group_size < THREAD_BLOCK_SIZE * THREAD_BLOCK_SIZE) {
+        throw kernel_launch_resources{ fmt::format("Not enough work-items allowed for a work-groups of size {}x{}! Try reducing THREAD_BLOCK_SIZE.", THREAD_BLOCK_SIZE, THREAD_BLOCK_SIZE) };
+    }
+    const dim3 block(THREAD_BLOCK_SIZE, THREAD_BLOCK_SIZE);
 
     detail::set_device(0);
     if (params.kernel_type == kernel_function_type::linear) {
-        // define the grid and block sizes
-        const std::size_t max_work_group_size = this->get_max_work_group_size();
-        const auto max_work_group_size_2D = static_cast<int>(max_work_group_size / 4);
-        const dim3 block(max_work_group_size_2D, 4);
-        const dim3 grid(static_cast<int>(std::ceil(static_cast<double>(num_predict_points) / static_cast<double>(block.x))),
-                        static_cast<int>(std::ceil(static_cast<double>(num_classes) / static_cast<double>(block.y))));
+        // define the grid sizes
+        const dim3 grid(static_cast<int>(std::ceil(static_cast<double>(num_predict_points) / static_cast<double>(block.x * INTERNAL_BLOCK_SIZE))),
+                        static_cast<int>(std::ceil(static_cast<double>(num_classes) / static_cast<double>(block.y * INTERNAL_BLOCK_SIZE))));
 
         cuda::device_kernel_predict_linear<<<grid, block>>>(out_d.get(), w_d.get(), rho_d.get(), predict_points_d.get(), num_classes, num_predict_points, num_features);
     } else {
-        // define the grid and block sizes
-        const std::size_t max_work_group_size = this->get_max_work_group_size();
-        const auto max_work_group_size_3D = static_cast<int>(std::sqrt(static_cast<real_type>(max_work_group_size / 4)));
-        const dim3 block(max_work_group_size_3D, max_work_group_size_3D, 4);
-        const dim3 grid(static_cast<int>(std::ceil(static_cast<double>(num_sv) / static_cast<double>(block.x))),
-                        static_cast<int>(std::ceil(static_cast<double>(num_predict_points) / static_cast<double>(block.y))),
-                        static_cast<int>(std::ceil(static_cast<double>(num_classes) / static_cast<double>(block.z))));
+        // define the grid sizes
+        const dim3 grid(static_cast<int>(std::ceil(static_cast<double>(num_predict_points) / static_cast<double>(block.x * INTERNAL_BLOCK_SIZE))),
+                        static_cast<int>(std::ceil(static_cast<double>(num_sv) / static_cast<double>(block.y * INTERNAL_BLOCK_SIZE))));
 
         switch (params.kernel_type) {
             case kernel_function_type::linear:

@@ -195,10 +195,10 @@ TEST_F(OpenMPCSVM, blas_level_3_kernel_explicit) {
     const std::vector<plssvm::real_type> kernel_matrix = compare::assemble_kernel_matrix_symm(params, data.data(), q_red, QA_cost, std::size_t{ 0 });
 #endif
 
-    const auto B = util::generate_random_matrix<plssvm::soa_matrix<plssvm::real_type>>(data.num_data_points() - 1, data.num_data_points() - 1, plssvm::FEATURE_BLOCK_SIZE, plssvm::THREAD_BLOCK_PADDING);
+    const auto B = util::generate_random_matrix<plssvm::soa_matrix<plssvm::real_type>>(data.num_data_points() - 1, data.num_data_points() - 1, plssvm::PADDING_SIZE, plssvm::PADDING_SIZE);
 
     const plssvm::real_type beta{ 0.5 };
-    auto C = util::generate_random_matrix<plssvm::soa_matrix<plssvm::real_type>>(data.num_data_points() - 1, data.num_data_points() - 1, plssvm::THREAD_BLOCK_PADDING, plssvm::THREAD_BLOCK_PADDING);
+    auto C = util::generate_random_matrix<plssvm::soa_matrix<plssvm::real_type>>(data.num_data_points() - 1, data.num_data_points() - 1, plssvm::PADDING_SIZE, plssvm::PADDING_SIZE);
     plssvm::soa_matrix<plssvm::real_type> C_res{ C };
 
     const auto m = static_cast<unsigned long long>(B.num_cols());
@@ -211,7 +211,7 @@ TEST_F(OpenMPCSVM, blas_level_3_kernel_explicit) {
 #endif
 
     // calculate correct results
-    const std::vector<plssvm::real_type> kernel_matrix_gemm_padded = compare::assemble_kernel_matrix_gemm(params, data.data(), q_red, QA_cost, plssvm::THREAD_BLOCK_PADDING);
+    const std::vector<plssvm::real_type> kernel_matrix_gemm_padded = compare::assemble_kernel_matrix_gemm(params, data.data(), q_red, QA_cost, plssvm::PADDING_SIZE);
     compare::gemm(alpha, kernel_matrix_gemm_padded, B, beta, C);
 
     // check C for correctness
@@ -293,10 +293,10 @@ TEST_F(OpenMPCSVMDeathTest, blas_level_3_kernel_explicit) {
     const std::vector<plssvm::real_type> kernel_matrix(4 * (4 + 1) / 2);
 #endif
 
-    const auto B = util::generate_random_matrix<plssvm::soa_matrix<plssvm::real_type>>(4, 4, plssvm::FEATURE_BLOCK_SIZE, plssvm::THREAD_BLOCK_PADDING);
+    const auto B = util::generate_random_matrix<plssvm::soa_matrix<plssvm::real_type>>(4, 4, plssvm::PADDING_SIZE, plssvm::PADDING_SIZE);
 
     const plssvm::real_type beta{ 0.5 };
-    auto C = util::generate_random_matrix<plssvm::soa_matrix<plssvm::real_type>>(4, 4, plssvm::THREAD_BLOCK_PADDING, plssvm::THREAD_BLOCK_PADDING);
+    auto C = util::generate_random_matrix<plssvm::soa_matrix<plssvm::real_type>>(4, 4, plssvm::PADDING_SIZE, plssvm::PADDING_SIZE);
 
     const auto m = static_cast<unsigned long long>(B.num_cols());
     const auto n = static_cast<unsigned long long>(B.num_rows());
@@ -310,7 +310,7 @@ TEST_F(OpenMPCSVMDeathTest, blas_level_3_kernel_explicit) {
 #endif
 
     // the B matrix must have the correct shape
-    const auto B_wrong = util::generate_random_matrix<plssvm::soa_matrix<plssvm::real_type>>(std::min(0, static_cast<int>(n) - 1), std::min(0, static_cast<int>(k) - 2), plssvm::FEATURE_BLOCK_SIZE, plssvm::THREAD_BLOCK_PADDING);
+    const auto B_wrong = util::generate_random_matrix<plssvm::soa_matrix<plssvm::real_type>>(std::min(0, static_cast<int>(n) - 1), std::min(0, static_cast<int>(k) - 2), plssvm::PADDING_SIZE, plssvm::PADDING_SIZE);
 #if defined(PLSSVM_USE_GEMM)
     EXPECT_DEATH(plssvm::openmp::device_kernel_gemm(m, n, k, alpha, kernel_matrix, B_wrong, beta, C), ::testing::HasSubstr(fmt::format("B matrix sizes mismatch!: [{}, {}] != [{}, {}]", std::min(0, static_cast<int>(n) - 1), std::min(0, static_cast<int>(k) - 2), n, k)));
 #else
@@ -318,7 +318,7 @@ TEST_F(OpenMPCSVMDeathTest, blas_level_3_kernel_explicit) {
 #endif
 
     // the C matrix must have the correct shape
-    auto C_wrong = util::generate_random_matrix<plssvm::soa_matrix<plssvm::real_type>>(std::min(0, static_cast<int>(n) - 1), std::min(0, static_cast<int>(m) - 2), plssvm::THREAD_BLOCK_PADDING, plssvm::THREAD_BLOCK_PADDING);
+    auto C_wrong = util::generate_random_matrix<plssvm::soa_matrix<plssvm::real_type>>(std::min(0, static_cast<int>(n) - 1), std::min(0, static_cast<int>(m) - 2), plssvm::PADDING_SIZE, plssvm::PADDING_SIZE);
 #if defined(PLSSVM_USE_GEMM)
     EXPECT_DEATH(plssvm::openmp::device_kernel_gemm(m, n, k, alpha, kernel_matrix, B, beta, C_wrong), ::testing::HasSubstr(fmt::format("C matrix sizes mismatch!: [{}, {}] != [{}, {}]", std::min(0, static_cast<int>(n) - 1), std::min(0, static_cast<int>(m) - 2), n, m)));
 #else
