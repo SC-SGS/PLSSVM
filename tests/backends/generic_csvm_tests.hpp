@@ -1299,7 +1299,42 @@ TYPED_TEST_P(GenericCSVMKernelFunctionDeathTest, predict_values_empty_matrices) 
     // weights shouldn't be empty
     EXPECT_DEATH(std::ignore = csvm.predict_values(params, support_vectors, empty_aos_matr, rho, w, data), ::testing::HasSubstr("The alpha vectors (weights) must not be empty!"));
     // predict points shouldn't be empty
-    EXPECT_DEATH(std::ignore = csvm.predict_values(params, support_vectors, weights, rho, w, empty_soa_matr), ::testing::HasSubstr("The data points to predict must not be empty!"));
+    EXPECT_DEATH(std::ignore = csvm.predict_values(params, support_vectors, weights, rho, w, empty_soa_matr), "The data points to predict must not be empty!");
+}
+TYPED_TEST_P(GenericCSVMKernelFunctionDeathTest, predict_values_missing_padding) {
+    using csvm_test_type = util::test_parameter_type_at_t<0, TypeParam>;
+    using mock_csvm_type = typename csvm_test_type::mock_csvm_type;
+    constexpr plssvm::kernel_function_type kernel = util::test_parameter_value_at_v<0, TypeParam>;
+
+    // create parameter
+    const plssvm::parameter params{ plssvm::kernel_type = kernel };
+
+    // create mock_csvm
+    const mock_csvm_type csvm{};
+
+    // create empty matrix
+    const plssvm::aos_matrix<plssvm::real_type> empty_aos_matr{};
+    const plssvm::soa_matrix<plssvm::real_type> empty_soa_matr{};
+
+    // create correct input matrices
+    const auto support_vectors = util::generate_random_matrix<plssvm::soa_matrix<plssvm::real_type>>(4, 4, plssvm::PADDING_SIZE, plssvm::PADDING_SIZE);
+    const auto support_vectors_without_padding = util::generate_random_matrix<plssvm::soa_matrix<plssvm::real_type>>(4, 4);
+    const auto weights = util::generate_random_matrix<plssvm::aos_matrix<plssvm::real_type>>(2, 4, plssvm::PADDING_SIZE, plssvm::PADDING_SIZE);
+    const auto weights_without_padding = util::generate_random_matrix<plssvm::aos_matrix<plssvm::real_type>>(2, 4);
+    const std::vector<plssvm::real_type> rho(2);
+    auto w = util::generate_random_matrix<plssvm::soa_matrix<plssvm::real_type>>(2, 4, plssvm::PADDING_SIZE, plssvm::PADDING_SIZE);
+    auto w_without_padding = util::generate_random_matrix<plssvm::soa_matrix<plssvm::real_type>>(2, 4);
+    const auto data = util::generate_random_matrix<plssvm::soa_matrix<plssvm::real_type>>(2, 4, plssvm::PADDING_SIZE, plssvm::PADDING_SIZE);
+    const auto data_without_padding = util::generate_random_matrix<plssvm::soa_matrix<plssvm::real_type>>(2, 4);
+
+    // support vectors must be padded
+    EXPECT_DEATH(std::ignore = csvm.predict_values(params, support_vectors_without_padding, weights, rho, w, data), "The support vectors must be padded!");
+    // weights must be padded
+    EXPECT_DEATH(std::ignore = csvm.predict_values(params, support_vectors, weights_without_padding, rho, w, data), ::testing::HasSubstr("The alpha vectors (weights) must be padded!"));
+    // w must be padded
+    EXPECT_DEATH(std::ignore = csvm.predict_values(params, support_vectors, weights, rho, w_without_padding, data_without_padding), "Either w must be empty or must be padded!");
+    // predict points must be padded
+    EXPECT_DEATH(std::ignore = csvm.predict_values(params, support_vectors, weights, rho, w, data_without_padding), "The data points to predict must be padded!");
 }
 TYPED_TEST_P(GenericCSVMKernelFunctionDeathTest, predict_values_sv_alpha_size_mismatch) {
     using csvm_test_type = util::test_parameter_type_at_t<0, TypeParam>;
@@ -1393,7 +1428,7 @@ TYPED_TEST_P(GenericCSVMKernelFunctionDeathTest, predict_values_num_features_mis
 REGISTER_TYPED_TEST_SUITE_P(GenericCSVMKernelFunctionDeathTest,
                             solve_lssvm_system_of_linear_equations_empty_A, solve_lssvm_system_of_linear_equations_A_without_padding, solve_lssvm_system_of_linear_equations_A_wrong_padding_sizes, solve_lssvm_system_of_linear_equations_empty_B, solve_lssvm_system_of_linear_equations_size_mismatch,
                             perform_dimensional_reduction_empty_A,
-                            predict_values_empty_matrices, predict_values_sv_alpha_size_mismatch, predict_values_rho_alpha_size_mismatch, predict_values_w_size_mismatch, predict_values_num_features_mismatch);
+                            predict_values_empty_matrices, predict_values_missing_padding, predict_values_sv_alpha_size_mismatch, predict_values_rho_alpha_size_mismatch, predict_values_w_size_mismatch, predict_values_num_features_mismatch);
 // clang-format on
 
 #endif  // PLSSVM_TESTS_BACKENDS_GENERIC_CSVM_TESTS_HPP_
