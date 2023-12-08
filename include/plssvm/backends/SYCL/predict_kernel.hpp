@@ -33,11 +33,10 @@ class device_kernel_w_linear {
      * @param[in] sv_d the support vectors
      * @param[in] num_classes the number of classes
      * @param[in] num_sv the number of support vectors
-     * @param[in] num_features the number of features per support vector
      */
-    device_kernel_w_linear(::sycl::handler &cgh, real_type *w_d, const real_type *alpha_d, const real_type *sv_d, const unsigned long long num_classes, const unsigned long long num_sv, const unsigned long long num_features) :
+    device_kernel_w_linear(::sycl::handler &cgh, real_type *w_d, const real_type *alpha_d, const real_type *sv_d, const unsigned long long num_classes, const unsigned long long num_sv) :
         data_cache_feature_{ ::sycl::range<2>{ THREAD_BLOCK_SIZE, INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE }, cgh }, data_cache_alpha_{ ::sycl::range<2>{ THREAD_BLOCK_SIZE, INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE }, cgh },
-        w_d_{ w_d }, alpha_d_{ alpha_d }, sv_d_{ sv_d }, num_classes_{ num_classes }, num_sv_{ num_sv }, num_features_{ num_features } {}
+        w_d_{ w_d }, alpha_d_{ alpha_d }, sv_d_{ sv_d }, num_classes_{ num_classes }, num_sv_{ num_sv } {}
 
     /**
      * @brief Function call operator overload performing the actual calculation.
@@ -95,7 +94,6 @@ class device_kernel_w_linear {
     const real_type *sv_d_;
     const unsigned long long num_classes_;
     const unsigned long long num_sv_;
-    const unsigned long long num_features_;
     /// @endcond
 };
 

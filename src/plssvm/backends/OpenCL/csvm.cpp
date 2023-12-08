@@ -292,7 +292,7 @@ auto csvm::run_w_kernel(const device_ptr_type &alpha_d, const device_ptr_type &s
 
     device_ptr_type w_d{ { num_classes, num_features }, { PADDING_SIZE, PADDING_SIZE }, devices_[0] };
 
-    detail::run_kernel(devices_[0], devices_[0].get_kernel(detail::compute_kernel_name::w_kernel), grid, block, w_d.get(), alpha_d.get(), sv_d.get(), num_classes, num_sv, num_features);
+    detail::run_kernel(devices_[0], devices_[0].get_kernel(detail::compute_kernel_name::w_kernel), grid, block, w_d.get(), alpha_d.get(), sv_d.get(), num_classes, num_sv);
     this->device_synchronize(devices_[0]);
 
     return w_d;

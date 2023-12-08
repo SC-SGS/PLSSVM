@@ -27,9 +27,8 @@ namespace plssvm::hip {
  * @param[in] sv_d the support vectors
  * @param[in] num_classes the number of classes
  * @param[in] num_sv the number of support vectors
- * @param[in] num_features the number of features per support vector
  */
-__global__ void device_kernel_w_linear(real_type *w_d, const real_type *alpha_d, const real_type *sv_d, const unsigned long long num_classes, const unsigned long long num_sv, const unsigned long long num_features) {
+__global__ void device_kernel_w_linear(real_type *w_d, const real_type *alpha_d, const real_type *sv_d, const unsigned long long num_classes, const unsigned long long num_sv) {
     const unsigned long long feature_idx = (blockIdx.x * blockDim.x + threadIdx.x) * INTERNAL_BLOCK_SIZE;
     const unsigned long long feature_idx_linear = blockIdx.x * blockDim.x * INTERNAL_BLOCK_SIZE + threadIdx.x;
     const unsigned long long class_idx = (blockIdx.y * blockDim.y + threadIdx.y) * INTERNAL_BLOCK_SIZE;
