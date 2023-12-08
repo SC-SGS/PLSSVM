@@ -96,7 +96,7 @@ void csvm::init(const target_platform target) {
     std::tie(contexts_, target_) = detail::get_contexts(target);
 
     // currently, only a single context is allowed
-    if (contexts_.size() != 1) {
+    if (contexts_.size() > 1) {
         throw backend_exception{ fmt::format("Currently only a single OpenCL context is allowed, but {} were given!", contexts_.size()) };
     }
 

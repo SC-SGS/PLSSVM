@@ -71,7 +71,7 @@ void csvm::init(const target_platform target) {
     std::iota(devices_.begin(), devices_.end(), 0);
 
     // currently only single GPU execution is supported
-    if (devices_.size() != 1) {
+    if (devices_.size() > 1) {
         plssvm::detail::log(verbosity_level::full | verbosity_level::warning,
                             "WARNING: found {} devices, but currently only single GPU execution is supported. Continuing only with device 0!\n",
                             devices_.size());
