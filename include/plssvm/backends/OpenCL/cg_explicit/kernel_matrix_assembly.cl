@@ -40,10 +40,10 @@ __kernel void device_kernel_assembly_linear(__global real_type *ret, __global co
                 const ulong global_i = i_linear + internal * THREAD_BLOCK_SIZE;
                 const ulong global_j = j_cached_idx_linear + internal * THREAD_BLOCK_SIZE;
 
-                data_cache_i[get_local_id(1)][internal * THREAD_BLOCK_SIZE + get_local_id(0)] = data_d[(dim + get_local_id(1)) * (num_rows + 1 + THREAD_BLOCK_PADDING) + global_i];
-                data_cache_i[get_local_id(1) + THREAD_BLOCK_SIZE][internal * THREAD_BLOCK_SIZE + get_local_id(0)] = data_d[(dim + get_local_id(1) + THREAD_BLOCK_SIZE) * (num_rows + 1 + THREAD_BLOCK_PADDING) + global_i];
-                data_cache_j[get_local_id(1)][internal * THREAD_BLOCK_SIZE + get_local_id(0)] = data_d[(dim + get_local_id(1)) * (num_rows + 1 + THREAD_BLOCK_PADDING) + global_j];
-                data_cache_j[get_local_id(1) + THREAD_BLOCK_SIZE][internal * THREAD_BLOCK_SIZE + get_local_id(0)] = data_d[(dim + get_local_id(1) + THREAD_BLOCK_SIZE) * (num_rows + 1 + THREAD_BLOCK_PADDING) + global_j];
+                data_cache_i[get_local_id(1)][internal * THREAD_BLOCK_SIZE + get_local_id(0)] = data_d[(dim + get_local_id(1)) * (num_rows + 1 + PADDING_SIZE) + global_i];
+                data_cache_i[get_local_id(1) + THREAD_BLOCK_SIZE][internal * THREAD_BLOCK_SIZE + get_local_id(0)] = data_d[(dim + get_local_id(1) + THREAD_BLOCK_SIZE) * (num_rows + 1 + PADDING_SIZE) + global_i];
+                data_cache_j[get_local_id(1)][internal * THREAD_BLOCK_SIZE + get_local_id(0)] = data_d[(dim + get_local_id(1)) * (num_rows + 1 + PADDING_SIZE) + global_j];
+                data_cache_j[get_local_id(1) + THREAD_BLOCK_SIZE][internal * THREAD_BLOCK_SIZE + get_local_id(0)] = data_d[(dim + get_local_id(1) + THREAD_BLOCK_SIZE) * (num_rows + 1 + PADDING_SIZE) + global_j];
             }
             barrier(CLK_LOCAL_MEM_FENCE);
 
@@ -71,10 +71,10 @@ __kernel void device_kernel_assembly_linear(__global real_type *ret, __global co
                     }
 
 #ifdef PLSSVM_USE_GEMM
-                    ret[global_j * (num_rows + THREAD_BLOCK_PADDING) + global_i] = temp_ij;
-                    ret[global_i * (num_rows + THREAD_BLOCK_PADDING) + global_j] = temp_ij;
+                    ret[global_j * (num_rows + PADDING_SIZE) + global_i] = temp_ij;
+                    ret[global_i * (num_rows + PADDING_SIZE) + global_j] = temp_ij;
 #else
-                    ret[global_j * (num_rows + THREAD_BLOCK_PADDING) + global_i - global_j * (global_j + 1) / 2] = temp_ij;
+                    ret[global_j * (num_rows + PADDING_SIZE) + global_i - global_j * (global_j + 1) / 2] = temp_ij;
 #endif
                 }
             }
@@ -114,10 +114,10 @@ __kernel void device_kernel_assembly_polynomial(__global real_type *ret, __globa
                 const ulong global_i = i_linear + internal * THREAD_BLOCK_SIZE;
                 const ulong global_j = j_cached_idx_linear + internal * THREAD_BLOCK_SIZE;
 
-                data_cache_i[get_local_id(1)][internal * THREAD_BLOCK_SIZE + get_local_id(0)] = data_d[(dim + get_local_id(1)) * (num_rows + 1 + THREAD_BLOCK_PADDING) + global_i];
-                data_cache_i[get_local_id(1) + THREAD_BLOCK_SIZE][internal * THREAD_BLOCK_SIZE + get_local_id(0)] = data_d[(dim + get_local_id(1) + THREAD_BLOCK_SIZE) * (num_rows + 1 + THREAD_BLOCK_PADDING) + global_i];
-                data_cache_j[get_local_id(1)][internal * THREAD_BLOCK_SIZE + get_local_id(0)] = data_d[(dim + get_local_id(1)) * (num_rows + 1 + THREAD_BLOCK_PADDING) + global_j];
-                data_cache_j[get_local_id(1) + THREAD_BLOCK_SIZE][internal * THREAD_BLOCK_SIZE + get_local_id(0)] = data_d[(dim + get_local_id(1) + THREAD_BLOCK_SIZE) * (num_rows + 1 + THREAD_BLOCK_PADDING) + global_j];
+                data_cache_i[get_local_id(1)][internal * THREAD_BLOCK_SIZE + get_local_id(0)] = data_d[(dim + get_local_id(1)) * (num_rows + 1 + PADDING_SIZE) + global_i];
+                data_cache_i[get_local_id(1) + THREAD_BLOCK_SIZE][internal * THREAD_BLOCK_SIZE + get_local_id(0)] = data_d[(dim + get_local_id(1) + THREAD_BLOCK_SIZE) * (num_rows + 1 + PADDING_SIZE) + global_i];
+                data_cache_j[get_local_id(1)][internal * THREAD_BLOCK_SIZE + get_local_id(0)] = data_d[(dim + get_local_id(1)) * (num_rows + 1 + PADDING_SIZE) + global_j];
+                data_cache_j[get_local_id(1) + THREAD_BLOCK_SIZE][internal * THREAD_BLOCK_SIZE + get_local_id(0)] = data_d[(dim + get_local_id(1) + THREAD_BLOCK_SIZE) * (num_rows + 1 + PADDING_SIZE) + global_j];
             }
             barrier(CLK_LOCAL_MEM_FENCE);
 
@@ -145,10 +145,10 @@ __kernel void device_kernel_assembly_polynomial(__global real_type *ret, __globa
                     }
 
 #ifdef PLSSVM_USE_GEMM
-                    ret[global_j * (num_rows + THREAD_BLOCK_PADDING) + global_i] = temp_ij;
-                    ret[global_i * (num_rows + THREAD_BLOCK_PADDING) + global_j] = temp_ij;
+                    ret[global_j * (num_rows + PADDING_SIZE) + global_i] = temp_ij;
+                    ret[global_i * (num_rows + PADDING_SIZE) + global_j] = temp_ij;
 #else
-                    ret[global_j * (num_rows + THREAD_BLOCK_PADDING) + global_i - global_j * (global_j + 1) / 2] = temp_ij;
+                    ret[global_j * (num_rows + PADDING_SIZE) + global_i - global_j * (global_j + 1) / 2] = temp_ij;
 #endif
                 }
             }
@@ -185,10 +185,10 @@ __kernel void device_kernel_assembly_rbf(__global real_type *ret, __global const
                 const ulong global_i = i_linear + internal * THREAD_BLOCK_SIZE;
                 const ulong global_j = j_cached_idx_linear + internal * THREAD_BLOCK_SIZE;
 
-                data_cache_i[get_local_id(1)][internal * THREAD_BLOCK_SIZE + get_local_id(0)] = data_d[(dim + get_local_id(1)) * (num_rows + 1 + THREAD_BLOCK_PADDING) + global_i];
-                data_cache_i[get_local_id(1) + THREAD_BLOCK_SIZE][internal * THREAD_BLOCK_SIZE + get_local_id(0)] = data_d[(dim + get_local_id(1) + THREAD_BLOCK_SIZE) * (num_rows + 1 + THREAD_BLOCK_PADDING) + global_i];
-                data_cache_j[get_local_id(1)][internal * THREAD_BLOCK_SIZE + get_local_id(0)] = data_d[(dim + get_local_id(1)) * (num_rows + 1 + THREAD_BLOCK_PADDING) + global_j];
-                data_cache_j[get_local_id(1) + THREAD_BLOCK_SIZE][internal * THREAD_BLOCK_SIZE + get_local_id(0)] = data_d[(dim + get_local_id(1) + THREAD_BLOCK_SIZE) * (num_rows + 1 + THREAD_BLOCK_PADDING) + global_j];
+                data_cache_i[get_local_id(1)][internal * THREAD_BLOCK_SIZE + get_local_id(0)] = data_d[(dim + get_local_id(1)) * (num_rows + 1 + PADDING_SIZE) + global_i];
+                data_cache_i[get_local_id(1) + THREAD_BLOCK_SIZE][internal * THREAD_BLOCK_SIZE + get_local_id(0)] = data_d[(dim + get_local_id(1) + THREAD_BLOCK_SIZE) * (num_rows + 1 + PADDING_SIZE) + global_i];
+                data_cache_j[get_local_id(1)][internal * THREAD_BLOCK_SIZE + get_local_id(0)] = data_d[(dim + get_local_id(1)) * (num_rows + 1 + PADDING_SIZE) + global_j];
+                data_cache_j[get_local_id(1) + THREAD_BLOCK_SIZE][internal * THREAD_BLOCK_SIZE + get_local_id(0)] = data_d[(dim + get_local_id(1) + THREAD_BLOCK_SIZE) * (num_rows + 1 + PADDING_SIZE) + global_j];
             }
             barrier(CLK_LOCAL_MEM_FENCE);
 
@@ -217,10 +217,10 @@ __kernel void device_kernel_assembly_rbf(__global real_type *ret, __global const
                     }
 
 #ifdef PLSSVM_USE_GEMM
-                    ret[global_j * (num_rows + THREAD_BLOCK_PADDING) + global_i] = temp_ij;
-                    ret[global_i * (num_rows + THREAD_BLOCK_PADDING) + global_j] = temp_ij;
+                    ret[global_j * (num_rows + PADDING_SIZE) + global_i] = temp_ij;
+                    ret[global_i * (num_rows + PADDING_SIZE) + global_j] = temp_ij;
 #else
-                    ret[global_j * (num_rows + THREAD_BLOCK_PADDING) + global_i - global_j * (global_j + 1) / 2] = temp_ij;
+                    ret[global_j * (num_rows + PADDING_SIZE) + global_i - global_j * (global_j + 1) / 2] = temp_ij;
 #endif
                 }
             }

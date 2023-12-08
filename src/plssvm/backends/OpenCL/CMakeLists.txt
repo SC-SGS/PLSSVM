@@ -40,6 +40,16 @@ add_library(${PLSSVM_OPENCL_BACKEND_LIBRARY_NAME} SHARED ${PLSSVM_OPENCL_SOURCES
 target_include_directories(${PLSSVM_OPENCL_BACKEND_LIBRARY_NAME} PUBLIC ${OpenCL_INCLUDE_DIRS})
 target_link_libraries(${PLSSVM_OPENCL_BACKEND_LIBRARY_NAME} PUBLIC OpenCL)
 
+target_sources(${PLSSVM_OPENCL_BACKEND_LIBRARY_NAME} PRIVATE
+        FILE_SET HEADERS
+        BASE_DIRS
+            "${PROJECT_SOURCE_DIR}/include/plssvm/backends/OpenCL"
+        FILES
+            "${PROJECT_SOURCE_DIR}/include/plssvm/backends/OpenCL/cg_explicit/blas.cl"
+            "${PROJECT_SOURCE_DIR}/include/plssvm/backends/OpenCL/cg_explicit/kernel_matrix_assembly.cl"
+            "${PROJECT_SOURCE_DIR}/include/plssvm/backends/OpenCL/predict_kernel.cl"
+)
+
 # link base library against OpenCL library
 target_link_libraries(${PLSSVM_OPENCL_BACKEND_LIBRARY_NAME} PUBLIC ${PLSSVM_BASE_LIBRARY_NAME})
 

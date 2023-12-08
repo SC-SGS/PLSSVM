@@ -17,7 +17,7 @@
 #include "plssvm/backends/SYCL/cg_explicit/kernel_matrix_assembly.hpp"  // plssvm::sycl::{device_kernel_assembly_linear, device_kernel_assembly_polynomial, device_kernel_assembly_rbf}
 #include "plssvm/backends/SYCL/exceptions.hpp"                          // plssvm::dpcpp::backend_exception
 #include "plssvm/backends/SYCL/predict_kernel.hpp"                      // plssvm::sycl::detail::{kernel_w, device_kernel_predict_polynomial, device_kernel_predict_rbf}
-#include "plssvm/constants.hpp"                                         // plssvm::real_type
+#include "plssvm/constants.hpp"                                         // plssvm::{real_type, THREAD_BLOCK_SIZE, INTERNAL_BLOCK_SIZE, PADDING_SIZE}
 #include "plssvm/detail/assert.hpp"                                     // PLSSVM_ASSERT
 #include "plssvm/detail/logging.hpp"                                    // plssvm::detail::log
 #include "plssvm/detail/memory_size.hpp"                                // plssvm::detail::memory_size
@@ -177,9 +177,9 @@ auto csvm::run_assemble_kernel_matrix_explicit(const parameter &params, const de
     const ::sycl::nd_range<2> execution_range{ grid, block };
 
 #if defined(PLSSVM_USE_GEMM)
-    device_ptr_type kernel_matrix_d{ (num_rows_reduced + THREAD_BLOCK_PADDING) * (num_rows_reduced + THREAD_BLOCK_PADDING), devices_[0] };  // store full matrix
+    device_ptr_type kernel_matrix_d{ (num_rows_reduced + PADDING_SIZE) * (num_rows_reduced + PADDING_SIZE), devices_[0] };  // store full matrix
 #else
-    device_ptr_type kernel_matrix_d{ (num_rows_reduced + THREAD_BLOCK_PADDING) * (num_rows_reduced + THREAD_BLOCK_PADDING + 1) / 2, devices_[0] };  // only explicitly store the upper triangular matrix
+    device_ptr_type kernel_matrix_d{ (num_rows_reduced + PADDING_SIZE) * (num_rows_reduced + PADDING_SIZE + 1) / 2, devices_[0] };  // only explicitly store the upper triangular matrix
 #endif
     kernel_matrix_d.memset(0);
     const real_type cost_factor = real_type{ 1.0 } / params.cost;
@@ -243,11 +243,22 @@ auto csvm::run_w_kernel(const device_ptr_type &alpha_d, const device_ptr_type &s
     const unsigned long long num_sv = sv_d.size(0);
     const unsigned long long num_features = sv_d.size(1);
 
-    const ::sycl::range<2> execution_range{ num_features, num_classes };
+    // define grid and block sizes
+    const std::size_t max_work_group_size = this->get_max_work_group_size();
+    if (max_work_group_size < THREAD_BLOCK_SIZE * THREAD_BLOCK_SIZE) {
+        throw kernel_launch_resources{ fmt::format("Not enough work-items allowed for a work-groups of size {}x{}! Try reducing THREAD_BLOCK_SIZE_OLD.", THREAD_BLOCK_SIZE, THREAD_BLOCK_SIZE) };
+    }
+    const ::sycl::range<2> block{ THREAD_BLOCK_SIZE, THREAD_BLOCK_SIZE };
+    const ::sycl::range<2> grid{ static_cast<std::size_t>(std::ceil(static_cast<double>(num_classes) / static_cast<double>(block[0] * INTERNAL_BLOCK_SIZE))) * block[0],
+                                 static_cast<std::size_t>(std::ceil(static_cast<double>(num_features) / static_cast<double>(block[1] * INTERNAL_BLOCK_SIZE))) * block[1] };
+    const ::sycl::nd_range<2> execution_range{ grid, block };
 
-    device_ptr_type w_d{ { num_classes, num_features }, devices_[0] };
+    device_ptr_type w_d{ { num_classes, num_features }, { PADDING_SIZE, PADDING_SIZE }, devices_[0] };
 
-    devices_[0].impl->sycl_queue.parallel_for(execution_range, sycl::detail::device_kernel_w_linear{ w_d.get(), alpha_d.get(), sv_d.get(), num_classes, num_sv, num_features });
+
+    devices_[0].impl->sycl_queue.submit([&](::sycl::handler &cgh) {
+        cgh.parallel_for(execution_range, sycl::detail::device_kernel_w_linear{ cgh, w_d.get(), alpha_d.get(), sv_d.get(), num_classes, num_sv });
+    });
     devices_[0].impl->sycl_queue.wait_and_throw();
 
     return w_d;
@@ -259,24 +270,41 @@ auto csvm::run_predict_kernel(const parameter &params, const device_ptr_type &w_
     const unsigned long long num_predict_points = predict_points_d.size(0);
     const unsigned long long num_features = predict_points_d.size(1);
 
-    device_ptr_type out_d{ { num_predict_points, num_classes }, devices_[0] };
+    device_ptr_type out_d{ { num_predict_points, num_classes }, { PADDING_SIZE, PADDING_SIZE }, devices_[0] };
+
+    // define block sizes
+    const std::size_t max_work_group_size = this->get_max_work_group_size();
+    if (max_work_group_size < THREAD_BLOCK_SIZE * THREAD_BLOCK_SIZE) {
+        throw kernel_launch_resources{ fmt::format("Not enough work-items allowed for a work-groups of size {}x{}! Try reducing THREAD_BLOCK_SIZE_OLD.", THREAD_BLOCK_SIZE, THREAD_BLOCK_SIZE) };
+    }
+    const ::sycl::range<2> block{ THREAD_BLOCK_SIZE, THREAD_BLOCK_SIZE };
 
     if (params.kernel_type == kernel_function_type::linear) {
-        const ::sycl::range<2> execution_range{ num_predict_points, num_classes };
+        const ::sycl::range<2> grid{ static_cast<std::size_t>(std::ceil(static_cast<double>(num_classes) / static_cast<double>(block[0] * INTERNAL_BLOCK_SIZE))) * block[0],
+                                     static_cast<std::size_t>(std::ceil(static_cast<double>(num_predict_points) / static_cast<double>(block[1] * INTERNAL_BLOCK_SIZE))) * block[1] };
+        const ::sycl::nd_range<2> execution_range{ grid, block };
 
-        devices_[0].impl->sycl_queue.parallel_for(execution_range, sycl::detail::device_kernel_predict_linear{ out_d.get(), w_d.get(), rho_d.get(), predict_points_d.get(), num_classes, num_predict_points, num_features });
+        devices_[0].impl->sycl_queue.submit([&](::sycl::handler &cgh) {
+            cgh.parallel_for(execution_range, sycl::detail::device_kernel_predict_linear{ cgh, out_d.get(), w_d.get(), rho_d.get(), predict_points_d.get(), num_classes, num_predict_points, num_features });
+        });
     } else {
-        const ::sycl::range<3> execution_range{ num_sv, num_predict_points, num_classes };
+        const ::sycl::range<2> grid{ static_cast<std::size_t>(std::ceil(static_cast<double>(num_sv) / static_cast<double>(block[0] * INTERNAL_BLOCK_SIZE))) * block[0],
+                                     static_cast<std::size_t>(std::ceil(static_cast<double>(num_predict_points) / static_cast<double>(block[1] * INTERNAL_BLOCK_SIZE))) * block[1] };
+        const ::sycl::nd_range<2> execution_range{ grid, block };
 
         switch (params.kernel_type) {
             case kernel_function_type::linear:
                 // already handled
                 break;
             case kernel_function_type::polynomial:
-                devices_[0].impl->sycl_queue.parallel_for(execution_range, sycl::detail::device_kernel_predict_polynomial{ out_d.get(), alpha_d.get(), rho_d.get(), sv_d.get(), predict_points_d.get(), num_classes, num_sv, num_predict_points, num_features, params.degree.value(), params.gamma.value(), params.coef0.value() });
+                devices_[0].impl->sycl_queue.submit([&](::sycl::handler &cgh) {
+                    cgh.parallel_for(execution_range, sycl::detail::device_kernel_predict_polynomial{ cgh, out_d.get(), alpha_d.get(), rho_d.get(), sv_d.get(), predict_points_d.get(), num_classes, num_sv, num_predict_points, num_features, params.degree.value(), params.gamma.value(), params.coef0.value() });
+                });
                 break;
             case kernel_function_type::rbf:
-                devices_[0].impl->sycl_queue.parallel_for(execution_range, sycl::detail::device_kernel_predict_rbf{ out_d.get(), alpha_d.get(), rho_d.get(), sv_d.get(), predict_points_d.get(), num_classes, num_sv, num_predict_points, num_features, params.gamma.value() });
+                devices_[0].impl->sycl_queue.submit([&](::sycl::handler &cgh) {
+                    cgh.parallel_for(execution_range, sycl::detail::device_kernel_predict_rbf{ cgh, out_d.get(), alpha_d.get(), rho_d.get(), sv_d.get(), predict_points_d.get(), num_classes, num_sv, num_predict_points, num_features, params.gamma.value() });
+                });
                 break;
         }
     }

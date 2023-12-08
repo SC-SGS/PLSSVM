@@ -106,7 +106,7 @@ detail::simple_any csvm::assemble_kernel_matrix(const solver_type solver, const 
 
     const std::size_t num_rows_reduced = data_ptr->num_rows() - 1;
     PLSSVM_ASSERT(num_rows_reduced > 0, "At least one row must be given!");
-    PLSSVM_ASSERT(num_rows_reduced + THREAD_BLOCK_PADDING >= num_rows_reduced, "The number of rows with padding ({}) must be greater or equal to the number of rows without padding!", num_rows_reduced + THREAD_BLOCK_PADDING, num_rows_reduced);
+    PLSSVM_ASSERT(num_rows_reduced + PADDING_SIZE >= num_rows_reduced, "The number of rows with padding ({}) must be greater or equal to the number of rows without padding!", num_rows_reduced + PADDING_SIZE, num_rows_reduced);
     PLSSVM_ASSERT(data_ptr->num_rows() == num_rows_reduced + 1, "The number of rows in the data matrix must be {}, but is {}!", num_rows_reduced + 1, data_ptr->num_rows());
 
     if (solver == solver_type::cg_explicit) {
@@ -176,14 +176,18 @@ void csvm::blas_level_3(const solver_type solver, const real_type alpha, const d
 //                   predict, score                  //
 //***************************************************//
 
-aos_matrix<real_type> csvm::predict_values(const parameter &params, const soa_matrix<real_type> &support_vectors, const aos_matrix<real_type> &alpha, const std::vector<real_type> &rho, aos_matrix<real_type> &w, const soa_matrix<real_type> &predict_points) const {
+aos_matrix<real_type> csvm::predict_values(const parameter &params, const soa_matrix<real_type> &support_vectors, const aos_matrix<real_type> &alpha, const std::vector<real_type> &rho, soa_matrix<real_type> &w, const soa_matrix<real_type> &predict_points) const {
     PLSSVM_ASSERT(!support_vectors.empty(), "The support vectors must not be empty!");
+    PLSSVM_ASSERT(support_vectors.is_padded(), "The support vectors must be padded!");
     PLSSVM_ASSERT(!alpha.empty(), "The alpha vectors (weights) must not be empty!");
+    PLSSVM_ASSERT(alpha.is_padded(), "The alpha vectors (weights) must be padded!");
     PLSSVM_ASSERT(support_vectors.num_rows() == alpha.num_cols(), "The number of support vectors ({}) and number of weights ({}) must be the same!", support_vectors.num_rows(), alpha.num_cols());
     PLSSVM_ASSERT(rho.size() == alpha.num_rows(), "The number of rho values ({}) and the number of weight vectors ({}) must be the same!", rho.size(), alpha.num_rows());
+    PLSSVM_ASSERT(w.empty() || w.is_padded(), "Either w must be empty or must be padded!");
     PLSSVM_ASSERT(w.empty() || support_vectors.num_cols() == w.num_cols(), "Either w must be empty or contain exactly the same number of values ({}) as features are present ({})!", w.num_cols(), support_vectors.num_cols());
     PLSSVM_ASSERT(w.empty() || alpha.num_rows() == w.num_rows(), "Either w must be empty or contain exactly the same number of vectors ({}) as the alpha vector ({})!", w.num_rows(), alpha.num_rows());
     PLSSVM_ASSERT(!predict_points.empty(), "The data points to predict must not be empty!");
+    PLSSVM_ASSERT(predict_points.is_padded(), "The data points to predict must be padded!");
     PLSSVM_ASSERT(support_vectors.num_cols() == predict_points.num_cols(), "The number of features in the support vectors ({}) must be the same as in the data points to predict ({})!", support_vectors.num_cols(), predict_points.num_cols());
 
     using namespace plssvm::operators;
@@ -195,13 +199,13 @@ aos_matrix<real_type> csvm::predict_values(const parameter &params, const soa_ma
     const std::size_t num_features = predict_points.num_cols();
 
     // num_predict_points x num_classes
-    aos_matrix<real_type> out{ num_predict_points, num_classes };
+    aos_matrix<real_type> out{ num_predict_points, num_classes, PADDING_SIZE, PADDING_SIZE };
 
     if (params.kernel_type == kernel_function_type::linear) {
         // special optimization for the linear kernel function
         if (w.empty()) {
             // fill w vector
-            w = aos_matrix<real_type>{ num_classes, num_features };
+            w = soa_matrix<real_type>{ num_classes, num_features, PADDING_SIZE, PADDING_SIZE };
 
             #pragma omp parallel for collapse(2) default(none) shared(w, support_vectors, alpha) firstprivate(num_classes, num_features, num_support_vectors)
             for (std::size_t a = 0; a < num_classes; ++a) {

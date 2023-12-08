@@ -13,7 +13,7 @@
 #define PLSSVM_BACKENDS_SYCL_CG_EXPLICIT_BLAS_HPP_
 #pragma once
 
-#include "plssvm/constants.hpp"  // plssvm::real_type, plssvm::THREAD_BLOCK_SIZE, plssvm::FEATURE_BLOCK_SIZE
+#include "plssvm/constants.hpp"  // plssvm::{real_type, THREAD_BLOCK_SIZE, INTERNAL_BLOCK_SIZE, FEATURE_BLOCK_SIZE, PADDING_SIZE}
 
 #include "sycl/sycl.hpp"  // sycl::nd_item
 
@@ -59,11 +59,11 @@ class device_kernel_gemm {
                 const unsigned long long global_i = i_cached_idx_linear + internal * THREAD_BLOCK_SIZE;
                 const unsigned long long global_j = j_linear + internal * THREAD_BLOCK_SIZE;
 
-                A_cache_[nd_idx.get_local_id(0)][internal * THREAD_BLOCK_SIZE + nd_idx.get_local_id(1)] = A_[(dim + nd_idx.get_local_id(0)) * (k_ + THREAD_BLOCK_PADDING) + global_i];
-                A_cache_[nd_idx.get_local_id(0) + THREAD_BLOCK_SIZE][internal * THREAD_BLOCK_SIZE + nd_idx.get_local_id(1)] = A_[(dim + nd_idx.get_local_id(0) + THREAD_BLOCK_SIZE) * (k_ + THREAD_BLOCK_PADDING) + global_i];
+                A_cache_[nd_idx.get_local_id(0)][internal * THREAD_BLOCK_SIZE + nd_idx.get_local_id(1)] = A_[(dim + nd_idx.get_local_id(0)) * (k_ + PADDING_SIZE) + global_i];
+                A_cache_[nd_idx.get_local_id(0) + THREAD_BLOCK_SIZE][internal * THREAD_BLOCK_SIZE + nd_idx.get_local_id(1)] = A_[(dim + nd_idx.get_local_id(0) + THREAD_BLOCK_SIZE) * (k_ + PADDING_SIZE) + global_i];
 
-                B_cache_[nd_idx.get_local_id(0)][internal * THREAD_BLOCK_SIZE + nd_idx.get_local_id(1)] = B_[(dim + nd_idx.get_local_id(0)) * (n_ + FEATURE_BLOCK_SIZE) + global_j];
-                B_cache_[nd_idx.get_local_id(0) + THREAD_BLOCK_SIZE][internal * THREAD_BLOCK_SIZE + nd_idx.get_local_id(1)] = B_[(dim + nd_idx.get_local_id(0) + THREAD_BLOCK_SIZE) * (n_ + FEATURE_BLOCK_SIZE) + global_j];
+                B_cache_[nd_idx.get_local_id(0)][internal * THREAD_BLOCK_SIZE + nd_idx.get_local_id(1)] = B_[(dim + nd_idx.get_local_id(0)) * (n_ + PADDING_SIZE) + global_j];
+                B_cache_[nd_idx.get_local_id(0) + THREAD_BLOCK_SIZE][internal * THREAD_BLOCK_SIZE + nd_idx.get_local_id(1)] = B_[(dim + nd_idx.get_local_id(0) + THREAD_BLOCK_SIZE) * (n_ + PADDING_SIZE) + global_j];
             }
             nd_idx.barrier();
 
@@ -83,7 +83,7 @@ class device_kernel_gemm {
                 const unsigned long long global_i = i + internal_i;
                 const unsigned long long global_j = j + internal_j;
 
-                C_[global_i * (n_ + THREAD_BLOCK_PADDING) + global_j] = alpha_ * temp[internal_i][internal_j] + beta_ * C_[global_i * (n_ + THREAD_BLOCK_PADDING) + global_j];
+                C_[global_i * (n_ + PADDING_SIZE) + global_j] = alpha_ * temp[internal_i][internal_j] + beta_ * C_[global_i * (n_ + PADDING_SIZE) + global_j];
             }
         }
     }
@@ -148,19 +148,19 @@ class device_kernel_symm {
 
                 // determine on which side of the diagonal we are located
                 if (dim + nd_idx.get_local_id(0) < global_i) {
-                    A_cache_[nd_idx.get_local_id(0)][internal * THREAD_BLOCK_SIZE + nd_idx.get_local_id(1)] = A_[(dim + nd_idx.get_local_id(0)) * (k_ + THREAD_BLOCK_PADDING) + global_i - (dim + nd_idx.get_local_id(0)) * (dim + nd_idx.get_local_id(0) + 1) / 2];
+                    A_cache_[nd_idx.get_local_id(0)][internal * THREAD_BLOCK_SIZE + nd_idx.get_local_id(1)] = A_[(dim + nd_idx.get_local_id(0)) * (k_ + PADDING_SIZE) + global_i - (dim + nd_idx.get_local_id(0)) * (dim + nd_idx.get_local_id(0) + 1) / 2];
                 } else {
-                    A_cache_[nd_idx.get_local_id(0)][internal * THREAD_BLOCK_SIZE + nd_idx.get_local_id(1)] = A_[global_i * (k_ + THREAD_BLOCK_PADDING) + dim + nd_idx.get_local_id(0) - global_i * (global_i + 1) / 2];
+                    A_cache_[nd_idx.get_local_id(0)][internal * THREAD_BLOCK_SIZE + nd_idx.get_local_id(1)] = A_[global_i * (k_ + PADDING_SIZE) + dim + nd_idx.get_local_id(0) - global_i * (global_i + 1) / 2];
                 }
                 // determine on which side of the diagonal we are located
                 if (dim + nd_idx.get_local_id(0) + THREAD_BLOCK_SIZE < global_i) {
-                    A_cache_[nd_idx.get_local_id(0) + THREAD_BLOCK_SIZE][internal * THREAD_BLOCK_SIZE + nd_idx.get_local_id(1)] = A_[(dim + nd_idx.get_local_id(0) + THREAD_BLOCK_SIZE) * (k_ + THREAD_BLOCK_PADDING) + global_i - (dim + nd_idx.get_local_id(0) + THREAD_BLOCK_SIZE) * (dim + nd_idx.get_local_id(0) + THREAD_BLOCK_SIZE + 1) / 2];
+                    A_cache_[nd_idx.get_local_id(0) + THREAD_BLOCK_SIZE][internal * THREAD_BLOCK_SIZE + nd_idx.get_local_id(1)] = A_[(dim + nd_idx.get_local_id(0) + THREAD_BLOCK_SIZE) * (k_ + PADDING_SIZE) + global_i - (dim + nd_idx.get_local_id(0) + THREAD_BLOCK_SIZE) * (dim + nd_idx.get_local_id(0) + THREAD_BLOCK_SIZE + 1) / 2];
                 } else {
-                    A_cache_[nd_idx.get_local_id(0) + THREAD_BLOCK_SIZE][internal * THREAD_BLOCK_SIZE + nd_idx.get_local_id(1)] = A_[global_i * (k_ + THREAD_BLOCK_PADDING) + dim + nd_idx.get_local_id(0) + THREAD_BLOCK_SIZE - global_i * (global_i + 1) / 2];
+                    A_cache_[nd_idx.get_local_id(0) + THREAD_BLOCK_SIZE][internal * THREAD_BLOCK_SIZE + nd_idx.get_local_id(1)] = A_[global_i * (k_ + PADDING_SIZE) + dim + nd_idx.get_local_id(0) + THREAD_BLOCK_SIZE - global_i * (global_i + 1) / 2];
                 }
 
-                B_cache_[nd_idx.get_local_id(0)][internal * THREAD_BLOCK_SIZE + nd_idx.get_local_id(1)] = B_[(dim + nd_idx.get_local_id(0)) * (n_ + FEATURE_BLOCK_SIZE) + global_j];
-                B_cache_[nd_idx.get_local_id(0) + THREAD_BLOCK_SIZE][internal * THREAD_BLOCK_SIZE + nd_idx.get_local_id(1)] = B_[(dim + nd_idx.get_local_id(0) + THREAD_BLOCK_SIZE) * (n_ + FEATURE_BLOCK_SIZE) + global_j];
+                B_cache_[nd_idx.get_local_id(0)][internal * THREAD_BLOCK_SIZE + nd_idx.get_local_id(1)] = B_[(dim + nd_idx.get_local_id(0)) * (n_ + PADDING_SIZE) + global_j];
+                B_cache_[nd_idx.get_local_id(0) + THREAD_BLOCK_SIZE][internal * THREAD_BLOCK_SIZE + nd_idx.get_local_id(1)] = B_[(dim + nd_idx.get_local_id(0) + THREAD_BLOCK_SIZE) * (n_ + PADDING_SIZE) + global_j];
             }
             nd_idx.barrier();
 
@@ -180,7 +180,7 @@ class device_kernel_symm {
                 const unsigned long long global_i = i + internal_i;
                 const unsigned long long global_j = j + internal_j;
 
-                C_[global_i * (n_ + THREAD_BLOCK_PADDING) + global_j] = alpha_ * temp[internal_i][internal_j] + beta_ * C_[global_i * (n_ + THREAD_BLOCK_PADDING) + global_j];
+                C_[global_i * (n_ + PADDING_SIZE) + global_j] = alpha_ * temp[internal_i][internal_j] + beta_ * C_[global_i * (n_ + PADDING_SIZE) + global_j];
             }
         }
     }
