@@ -14,6 +14,7 @@
 #pragma once
 
 #include "plssvm/constants.hpp"              // plssvm::real_type, plssvm::PADDING_SIZE
+#include "plssvm/data_set.hpp"               // plssvm::data_set
 #include "plssvm/detail/memory_size.hpp"     // memory size literals
 #include "plssvm/kernel_function_types.hpp"  // plssvm::kernel_function_type
 #include "plssvm/matrix.hpp"                 // plssvm::aos_matrix
