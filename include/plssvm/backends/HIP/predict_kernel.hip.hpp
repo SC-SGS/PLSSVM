@@ -38,7 +38,7 @@ __global__ void device_kernel_w_linear(real_type *w_d, const real_type *alpha_d,
     __shared__ real_type data_cache_feature[THREAD_BLOCK_SIZE][INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE];
     __shared__ real_type data_cache_alpha[THREAD_BLOCK_SIZE][INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE];
 
-    real_type temp[INTERNAL_BLOCK_SIZE][INTERNAL_BLOCK_SIZE] = { 0.0 };
+    real_type temp[INTERNAL_BLOCK_SIZE][INTERNAL_BLOCK_SIZE] = { { 0.0 } };
 
     for (unsigned long long sv = 0; sv < num_sv; sv += THREAD_BLOCK_SIZE) {
         // load data into shared memory
@@ -91,7 +91,7 @@ __global__ void device_kernel_predict_linear(real_type *out_d, const real_type *
     __shared__ real_type data_cache_pd[FEATURE_BLOCK_SIZE][INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE];
     __shared__ real_type data_cache_class[FEATURE_BLOCK_SIZE][INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE];
 
-    real_type temp[INTERNAL_BLOCK_SIZE][INTERNAL_BLOCK_SIZE] = { 0.0 };
+    real_type temp[INTERNAL_BLOCK_SIZE][INTERNAL_BLOCK_SIZE] = { { 0.0 } };
 
     for (unsigned long long dim = 0; dim < num_features; dim += FEATURE_BLOCK_SIZE) {
         // load data into shared memory
@@ -151,7 +151,7 @@ __global__ void device_kernel_predict_polynomial(real_type *out_d, const real_ty
     __shared__ real_type data_cache_pd[FEATURE_BLOCK_SIZE][INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE];
     __shared__ real_type data_cache_sv[FEATURE_BLOCK_SIZE][INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE];
 
-    real_type temp[INTERNAL_BLOCK_SIZE][INTERNAL_BLOCK_SIZE] = { 0.0 };
+    real_type temp[INTERNAL_BLOCK_SIZE][INTERNAL_BLOCK_SIZE] = { { 0.0 } };
 
     for (unsigned long long dim = 0; dim < num_features; dim += FEATURE_BLOCK_SIZE) {
         // load data into shared memory
@@ -218,7 +218,7 @@ __global__ void device_kernel_predict_rbf(real_type *out_d, const real_type *alp
     __shared__ real_type data_cache_pd[FEATURE_BLOCK_SIZE][INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE];
     __shared__ real_type data_cache_sv[FEATURE_BLOCK_SIZE][INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE];
 
-    real_type temp[INTERNAL_BLOCK_SIZE][INTERNAL_BLOCK_SIZE] = { 0.0 };
+    real_type temp[INTERNAL_BLOCK_SIZE][INTERNAL_BLOCK_SIZE] = { { 0.0 } };
 
     for (unsigned long long dim = 0; dim < num_features; dim += FEATURE_BLOCK_SIZE) {
         // load data into shared memory
