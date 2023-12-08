@@ -13,10 +13,10 @@
 #define PLSSVM_KERNEL_FUNCTION_TYPES_HPP_
 #pragma once
 
-#include "plssvm/detail/assert.hpp"          // PLSSVM_ASSERT
+#include "plssvm/detail/assert.hpp"          // PLSSVM_ASSERT, PLSSVM_ASSERT_ENABLED
 #include "plssvm/detail/operators.hpp"       // dot product, plssvm::squared_euclidean_dist
 #include "plssvm/detail/type_traits.hpp"     // plssvm::detail::always_false_v
-#include "plssvm/detail/utility.hpp"         // plssvm::detail::get
+#include "plssvm/detail/utility.hpp"         // plssvm::detail::get, PLSSVM_IS_DEFINED
 #include "plssvm/exceptions/exceptions.hpp"  // plssvm::unsupported_kernel_type_exception
 #include "plssvm/matrix.hpp"                 // plssvm::matrix, plssvm::layout_type
 
@@ -146,7 +146,7 @@ template <kernel_function_type kernel, typename T, layout_type layout, typename.
     if constexpr (kernel == kernel_function_type::linear) {
         static_assert(sizeof...(args) == 0, "Illegal number of additional parameters! Must be 0.");
         T temp{ 0.0 };
-        #pragma omp simd reduction(+ : temp)
+        #pragma omp simd reduction(+ : temp) if(!PLSSVM_IS_DEFINED(PLSSVM_ASSERT_ENABLED))
         for (size_type dim = 0; dim < x.num_cols(); ++dim) {
             temp += x(i, dim) * y(j, dim);
         }
@@ -157,7 +157,7 @@ template <kernel_function_type kernel, typename T, layout_type layout, typename.
         const auto gamma = static_cast<T>(detail::get<1>(args...));
         const auto coef0 = static_cast<T>(detail::get<2>(args...));
         T temp{ 0.0 };
-        #pragma omp simd reduction(+ : temp)
+        #pragma omp simd reduction(+ : temp) if(!PLSSVM_IS_DEFINED(PLSSVM_ASSERT_ENABLED))
         for (size_type dim = 0; dim < x.num_cols(); ++dim) {
             temp += x(i, dim) * y(j, dim);
         }
@@ -166,7 +166,7 @@ template <kernel_function_type kernel, typename T, layout_type layout, typename.
         static_assert(sizeof...(args) == 1, "Illegal number of additional parameters! Must be 1.");
         const auto gamma = static_cast<T>(detail::get<0>(args...));
         T temp{ 0.0 };
-        #pragma omp simd reduction(+ : temp)
+        #pragma omp simd reduction(+ : temp) if(!PLSSVM_IS_DEFINED(PLSSVM_ASSERT_ENABLED))
         for (size_type dim = 0; dim < x.num_cols(); ++dim) {
             const T diff = x(i, dim) - y(j, dim);
             temp += diff * diff;
