@@ -13,7 +13,7 @@
 #define PLSSVM_BACKENDS_OPENMP_CG_EXPLICIT_BLAS_HPP_
 
 #include "plssvm/constants.hpp"  // plssvm::real_type
-#include "plssvm/matrix.hpp"     // plssvm::soa_matrix
+#include "plssvm/matrix.hpp"     // plssvm::aos_matrix
 
 #include <vector>  // std::vector
 
@@ -30,7 +30,7 @@ namespace plssvm::openmp {
  * @param[in] beta the scalar beta value
  * @param[in,out] C the matrix @p C, also used as result matrix
  */
-void device_kernel_gemm(unsigned long long m, unsigned long long n, unsigned long long k, real_type alpha, const std::vector<real_type> &A, const soa_matrix<real_type> &B, real_type beta, soa_matrix<real_type> &C);
+void device_kernel_gemm(unsigned long long m, unsigned long long n, unsigned long long k, real_type alpha, const std::vector<real_type> &A, const aos_matrix<real_type> &B, real_type beta, aos_matrix<real_type> &C);
 
 /**
  * @brief Perform an explicit BLAS SYMM operation: `C = alpha * A * B + beta * C` where @p A is a `m x k` symmetric matrix (memory optimized), @p B is a `k x n` matrix, @p C is a `m x n` matrix, and @p alpha and @p beta are scalars.
@@ -43,7 +43,7 @@ void device_kernel_gemm(unsigned long long m, unsigned long long n, unsigned lon
  * @param[in] beta the scalar beta value
  * @param[in,out] C the matrix @p C, also used as result matrix
  */
-void device_kernel_symm(unsigned long long m, unsigned long long n, unsigned long long k, real_type alpha, const std::vector<real_type> &A, const soa_matrix<real_type> &B, real_type beta, soa_matrix<real_type> &C);
+void device_kernel_symm(unsigned long long m, unsigned long long n, unsigned long long k, real_type alpha, const std::vector<real_type> &A, const aos_matrix<real_type> &B, real_type beta, aos_matrix<real_type> &C);
 
 }  // namespace plssvm::openmp
 
