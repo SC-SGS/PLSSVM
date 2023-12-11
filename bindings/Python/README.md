@@ -1,5 +1,22 @@
 # The Python3 Bindings
 
+- [Sklearn like API](#sklearn-like-api)
+  - [Parameters](#parameters)
+  - [Attributes](#attributes)
+  - [Methods](#methods)
+- [Bindings close to our C++ API](#bindings-close-to-our-c-api)
+  - [Enumerations](#enumerations)
+  - [Classes and submodules](#classes-and-submodules)
+    - [plssvm.Parameter](#plssvmparameter)
+    - [plssvm.DataSet](#plssvmdataset)
+    - [plssvm.CSVM](#plssvmcsvm)
+    - [plssvm.openmp.CSVM, plssvm.cuda.CSVM, plssvm.hip.CSVM, plssvm.opencl.CSVM, plssvm.sycl.CSVM, plssvm.dpcpp.CSVM, plssvm.adaptivecpp.CSVM](#plssvmopenmpcsvm-plssvmcudacsvm-plssvmhipcsvm-plssvmopenclcsvm-plssvmsyclcsvm-plssvmdpcppcsvm-plssvmadaptivecppcsvm)
+    - [plssvm.Model](#plssvmmodel)
+    - [plssvm.Version](#plssvmversion)
+    - [plssvm.detail.PerformanceTracker](#plssvmdetailperformancetracker)
+  - [Free functions](#free-functions)
+  - [Exceptions](#exceptions)
+
 We currently support two kinds of Python3 bindings, one reflecting the API of [`sklearn.svm.SVC`](https://scikit-learn.org/stable/modules/generated/sklearn.svm.SVC.html) and one extremely closely to our C++ API.
 
 **Note**: this page is solely meant as an API reference and overview. For examples see the top-level [`../../examples/`](/examples) folder.
@@ -264,7 +281,7 @@ If another label type is desired, one can simply use, e.g., `plssvm.DataSetScali
 |-------------------------|----------------------------------------------------------------------------------------------------------------|
 | `print(scaling_factor)` | Overload to print a `plssvm.DataSetScaling` object displaying the feature's index, minimum, and maximum value. |
 
-### `plssvm.CSVM`
+#### `plssvm.CSVM`
 
 The main class responsible for fitting an SVM model and later predicting or scoring new data sets.
 It uses either the provided backend type or the default determined one to create a PLSSVM CSVM of the correct backend type.
@@ -321,7 +338,7 @@ In case of the SYCL CSVMs (`plssvm.sycl.CSVM`, `plssvm.dpcpp.CSVM`, and `plssvm.
 |--------------------------------|-----------------------------------------|
 | `get_kernel_invocation_type()` | Return the SYCL kernel invocation type. |
 
-### `plssvm.Model`
+#### `plssvm.Model`
 
 A class encapsulating a model learned during a call to `plssvm.CSVM.fit()`.
 The label type of `plssvm.Model` corresponds to the value of `-DPLSSVM_PYTHON_BINDINGS_PREFERRED_LABEL_TYPE` as provided during PLSSVM's build step (default: `std::string`).
