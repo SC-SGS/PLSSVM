@@ -50,7 +50,6 @@ void device_kernel_symm(const unsigned long long m, const unsigned long long n, 
             unsigned long long offset{ 0 };
 
             // left of the diagonal -> use symmetrically mirrored values
-            #pragma omp simd reduction(+ : temp) reduction(+ : offset)
             for (unsigned long long dim = 0; dim < row; ++dim) {
                 offset += dim;
                 temp += A[dim * k + row - offset] * B(rhs, dim);
