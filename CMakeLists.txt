@@ -533,6 +533,12 @@ option(PLSSVM_ENABLE_ASSERTS "Enables PLSSVM asserts even if NDEBUG is set." OFF
 if (PLSSVM_ENABLE_ASSERTS)
     message(STATUS "Enable additional debugging assertions.")
     target_compile_definitions(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC PLSSVM_ENABLE_ASSERTS)
+
+    # disable vectorization warning in clang in Release mode
+    # -> loops can't be vectorized due to the PLSSVM_ASSERTs in the matrix::operator() member function
+    target_compile_options(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC
+            $<$<AND:$<OR:$<CONFIG:RELEASE>,$<CONFIG:RELWITHDEBINFO>>,$<COMPILE_LANG_AND_ID:CXX,Clang>>:-Wno-pass-failed>
+    )
 endif ()
 
 ## use float as real_type if requested
