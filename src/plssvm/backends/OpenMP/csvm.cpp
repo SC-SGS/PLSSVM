@@ -104,10 +104,13 @@ detail::simple_any csvm::assemble_kernel_matrix(const solver_type solver, const 
     const soa_matrix<real_type> *data_ptr = data.get<const soa_matrix<real_type> *>();
     PLSSVM_ASSERT(data_ptr != nullptr, "The data_ptr must not be a nullptr!");
 
-    const std::size_t num_rows_reduced = data_ptr->num_rows() - 1;
+    // TODO Hotfix: extreme performance regression when using a soa_matrix -> convert to aos_matrix -> USES 2x the necessary memory!
+    const aos_matrix<real_type> aos_data{ *data_ptr };
+
+    const std::size_t num_rows_reduced = aos_data.num_rows() - 1;
     PLSSVM_ASSERT(num_rows_reduced > 0, "At least one row must be given!");
     PLSSVM_ASSERT(num_rows_reduced + PADDING_SIZE >= num_rows_reduced, "The number of rows with padding ({}) must be greater or equal to the number of rows without padding!", num_rows_reduced + PADDING_SIZE, num_rows_reduced);
-    PLSSVM_ASSERT(data_ptr->num_rows() == num_rows_reduced + 1, "The number of rows in the data matrix must be {}, but is {}!", num_rows_reduced + 1, data_ptr->num_rows());
+    PLSSVM_ASSERT(aos_data.num_rows() == num_rows_reduced + 1, "The number of rows in the data matrix must be {}, but is {}!", num_rows_reduced + 1, aos_data.num_rows());
 
     if (solver == solver_type::cg_explicit) {
 #if defined(PLSSVM_USE_GEMM)
@@ -117,13 +120,13 @@ detail::simple_any csvm::assemble_kernel_matrix(const solver_type solver, const 
 #endif
         switch (params.kernel_type) {
             case kernel_function_type::linear:
-                openmp::device_kernel_assembly_linear(q_red, kernel_matrix, *data_ptr, QA_cost, 1 / params.cost);
+                openmp::device_kernel_assembly_linear(q_red, kernel_matrix, aos_data, QA_cost, 1 / params.cost);
                 break;
             case kernel_function_type::polynomial:
-                openmp::device_kernel_assembly_polynomial(q_red, kernel_matrix, *data_ptr, QA_cost, 1 / params.cost, params.degree.value(), params.gamma.value(), params.coef0.value());
+                openmp::device_kernel_assembly_polynomial(q_red, kernel_matrix, aos_data, QA_cost, 1 / params.cost, params.degree.value(), params.gamma.value(), params.coef0.value());
                 break;
             case kernel_function_type::rbf:
-                openmp::device_kernel_assembly_rbf(q_red, kernel_matrix, *data_ptr, QA_cost, 1 / params.cost, params.gamma.value());
+                openmp::device_kernel_assembly_rbf(q_red, kernel_matrix, aos_data, QA_cost, 1 / params.cost, params.gamma.value());
                 break;
         }
 
@@ -152,6 +155,10 @@ void csvm::blas_level_3(const solver_type solver, const real_type alpha, const d
     PLSSVM_ASSERT(B.num_rows() == C.num_rows(), "The C matrix must have {} rows, but has {}!", B.num_rows(), C.num_rows());
     PLSSVM_ASSERT(solver != solver_type::automatic, "An explicit solver type must be provided instead of solver_type::automatic!");
 
+    // TODO Hotfix: extreme performance regression when using a soa_matrix -> convert to aos_matrix -> USES 2x the necessary memory!
+    const aos_matrix<real_type> aos_B{ B };
+    aos_matrix<real_type> aos_C{ C };
+
     if (solver == solver_type::cg_explicit) {
         const auto &explicit_A = A.get<std::vector<real_type>>();
         PLSSVM_ASSERT(!explicit_A.empty(), "The A matrix may not be empty!");
@@ -162,14 +169,16 @@ void csvm::blas_level_3(const solver_type solver, const real_type alpha, const d
         const auto k_ull = static_cast<unsigned long long>(B.num_cols());
 
 #if defined(PLSSVM_USE_GEMM)
-        openmp::device_kernel_gemm(m_ull, n_ull, k_ull, alpha, explicit_A, B, beta, C);
+        openmp::device_kernel_gemm(m_ull, n_ull, k_ull, alpha, explicit_A, aos_B, beta, aos_C);
 #else
-        openmp::device_kernel_symm(m_ull, n_ull, k_ull, alpha, explicit_A, B, beta, C);
+        openmp::device_kernel_symm(m_ull, n_ull, k_ull, alpha, explicit_A, aos_B, beta, aos_C);
 #endif
     } else {
         // TODO: implement for other solver types
         throw exception{ fmt::format("The GEMM calculation using the {} CG variation is currently not implemented!", solver) };
     }
+
+    C = soa_matrix<real_type>{ aos_C };
 }
 
 //***************************************************//
@@ -198,6 +207,10 @@ aos_matrix<real_type> csvm::predict_values(const parameter &params, const soa_ma
     const std::size_t num_predict_points = predict_points.num_rows();
     const std::size_t num_features = predict_points.num_cols();
 
+    // TODO Hotfix: extreme performance regression when using a soa_matrix -> convert to aos_matrix -> USES 2x the necessary memory!
+    const aos_matrix<real_type> aos_support_vectors{ support_vectors };
+    const aos_matrix<real_type> aos_predict_points{ predict_points };
+
     // num_predict_points x num_classes
     aos_matrix<real_type> out{ num_predict_points, num_classes, PADDING_SIZE, PADDING_SIZE };
 
@@ -207,13 +220,13 @@ aos_matrix<real_type> csvm::predict_values(const parameter &params, const soa_ma
             // fill w vector
             w = soa_matrix<real_type>{ num_classes, num_features, PADDING_SIZE, PADDING_SIZE };
 
-            #pragma omp parallel for collapse(2) default(none) shared(w, support_vectors, alpha) firstprivate(num_classes, num_features, num_support_vectors)
+            #pragma omp parallel for collapse(2) default(none) shared(w, aos_support_vectors, alpha) firstprivate(num_classes, num_features, num_support_vectors)
             for (std::size_t a = 0; a < num_classes; ++a) {
                 for (std::size_t dim = 0; dim < num_features; ++dim) {
                     real_type temp{ 0.0 };
                     #pragma omp simd reduction(+ : temp)
                     for (std::size_t idx = 0; idx < num_support_vectors; ++idx) {
-                        temp = std::fma(alpha(a, idx), support_vectors(idx, dim), temp);
+                        temp = std::fma(alpha(a, idx), aos_support_vectors(idx, dim), temp);
                     }
                     w(a, dim) = temp;
                 }
@@ -233,13 +246,13 @@ aos_matrix<real_type> csvm::predict_values(const parameter &params, const soa_ma
         }
     } else {
         // "default" implementation for the other kernel functions
-        #pragma omp parallel for default(none) shared(alpha, support_vectors, predict_points, rho, params, out) firstprivate(num_predict_points, num_classes, num_support_vectors)
+        #pragma omp parallel for default(none) shared(alpha, aos_support_vectors, aos_predict_points, rho, params, out) firstprivate(num_predict_points, num_classes, num_support_vectors)
         for (std::size_t point_index = 0; point_index < num_predict_points; ++point_index) {
             for (std::size_t a = 0; a < num_classes; ++a) {
                 out(point_index, a) -= rho[a];
             }
             for (std::size_t sv_index = 0; sv_index < num_support_vectors; ++sv_index) {
-                const real_type kernel_func = kernel_function(support_vectors, sv_index, predict_points, point_index, params);
+                const real_type kernel_func = kernel_function(aos_support_vectors, sv_index, aos_predict_points, point_index, params);
                 for (std::size_t a = 0; a < num_classes; ++a) {
                     out(point_index, a) = std::fma(alpha(a, sv_index),  kernel_func, out(point_index, a));
                 }

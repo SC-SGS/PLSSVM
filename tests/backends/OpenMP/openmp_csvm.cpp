@@ -157,15 +157,18 @@ TYPED_TEST(OpenMPCSVMKernelFunction, assemble_kernel_matrix_explicit) {
     std::vector<plssvm::real_type> kernel_matrix(num_rows_reduced * (num_rows_reduced + 1) / 2);  // only explicitly store the upper triangular matrix
 #endif
 
+    // TODO Hotfix: extreme performance regression when using a soa_matrix -> convert to aos_matrix -> USES 2x the necessary memory!
+    const plssvm::aos_matrix<plssvm::real_type> aos_data{ data.data() };
+
     switch (kernel) {
         case plssvm::kernel_function_type::linear:
-            plssvm::openmp::device_kernel_assembly_linear(q_red, kernel_matrix, data.data(), QA_cost, params.cost.value());
+            plssvm::openmp::device_kernel_assembly_linear(q_red, kernel_matrix, aos_data, QA_cost, params.cost.value());
             break;
         case plssvm::kernel_function_type::polynomial:
-            plssvm::openmp::device_kernel_assembly_polynomial(q_red, kernel_matrix, data.data(), QA_cost, params.cost.value(), params.degree.value(), params.gamma.value(), params.coef0.value());
+            plssvm::openmp::device_kernel_assembly_polynomial(q_red, kernel_matrix, aos_data, QA_cost, params.cost.value(), params.degree.value(), params.gamma.value(), params.coef0.value());
             break;
         case plssvm::kernel_function_type::rbf:
-            plssvm::openmp::device_kernel_assembly_rbf(q_red, kernel_matrix, data.data(), QA_cost, params.cost.value(), params.gamma.value());
+            plssvm::openmp::device_kernel_assembly_rbf(q_red, kernel_matrix, aos_data, QA_cost, params.cost.value(), params.gamma.value());
             break;
     }
 
@@ -199,15 +202,18 @@ TEST_F(OpenMPCSVM, blas_level_3_kernel_explicit) {
 
     const plssvm::real_type beta{ 0.5 };
     auto C = util::generate_random_matrix<plssvm::soa_matrix<plssvm::real_type>>(data.num_data_points() - 1, data.num_data_points() - 1, plssvm::PADDING_SIZE, plssvm::PADDING_SIZE);
-    plssvm::soa_matrix<plssvm::real_type> C_res{ C };
+
+    // TODO Hotfix: extreme performance regression when using a soa_matrix -> convert to aos_matrix -> USES 2x the necessary memory!
+    const plssvm::aos_matrix<plssvm::real_type> aos_B{ B };
+    plssvm::aos_matrix<plssvm::real_type> aos_C{ C };
 
     const auto m = static_cast<unsigned long long>(B.num_cols());
     const auto n = static_cast<unsigned long long>(B.num_rows());
     const auto k = static_cast<unsigned long long>(B.num_cols());
 #if defined(PLSSVM_USE_GEMM)
-    plssvm::openmp::device_kernel_gemm(m, n, k, alpha, kernel_matrix, B, beta, C_res);
+    plssvm::openmp::device_kernel_gemm(m, n, k, alpha, kernel_matrix, aos_B, beta, aos_C);
 #else
-    plssvm::openmp::device_kernel_symm(m, n, k, alpha, kernel_matrix, B, beta, C_res);
+    plssvm::openmp::device_kernel_symm(m, n, k, alpha, kernel_matrix, aos_B, beta, aos_C);
 #endif
 
     // calculate correct results
@@ -215,7 +221,7 @@ TEST_F(OpenMPCSVM, blas_level_3_kernel_explicit) {
     compare::gemm(alpha, kernel_matrix_gemm_padded, B, beta, C);
 
     // check C for correctness
-    EXPECT_FLOATING_POINT_MATRIX_NEAR(C_res, C);
+    EXPECT_FLOATING_POINT_MATRIX_NEAR(plssvm::soa_matrix<plssvm::real_type>{ aos_C }, C);
 }
 
 template <typename T>
@@ -244,15 +250,19 @@ TYPED_TEST(OpenMPCSVMKernelFunctionDeathTest, assemble_kernel_matrix_explicit) {
 
     // helper lambda to reduce the amount of needed switches!
     const auto run_assembly = [=](const plssvm::parameter &params_p, const std::vector<plssvm::real_type> &q_red_p, std::vector<plssvm::real_type> &kernel_matrix_p, const plssvm::soa_matrix<plssvm::real_type> &data_p, const plssvm::real_type QA_cost_p) {
+
+        // TODO Hotfix: extreme performance regression when using a soa_matrix -> convert to aos_matrix -> USES 2x the necessary memory!
+        const plssvm::aos_matrix<plssvm::real_type> aos_data_p{ data_p };
+
         switch (kernel) {
             case plssvm::kernel_function_type::linear:
-                plssvm::openmp::device_kernel_assembly_linear(q_red_p, kernel_matrix_p, data_p, QA_cost_p, params_p.cost.value());
+                plssvm::openmp::device_kernel_assembly_linear(q_red_p, kernel_matrix_p, aos_data_p, QA_cost_p, params_p.cost.value());
                 break;
             case plssvm::kernel_function_type::polynomial:
-                plssvm::openmp::device_kernel_assembly_polynomial(q_red_p, kernel_matrix_p, data_p, QA_cost_p, params_p.cost.value(), params_p.degree.value(), params_p.gamma.value(), params_p.coef0.value());
+                plssvm::openmp::device_kernel_assembly_polynomial(q_red_p, kernel_matrix_p, aos_data_p, QA_cost_p, params_p.cost.value(), params_p.degree.value(), params_p.gamma.value(), params_p.coef0.value());
                 break;
             case plssvm::kernel_function_type::rbf:
-                plssvm::openmp::device_kernel_assembly_rbf(q_red_p, kernel_matrix_p, data_p, QA_cost_p, params_p.cost.value(), params_p.gamma.value());
+                plssvm::openmp::device_kernel_assembly_rbf(q_red_p, kernel_matrix_p, aos_data_p, QA_cost_p, params_p.cost.value(), params_p.gamma.value());
                 break;
         }
     };
@@ -293,10 +303,11 @@ TEST_F(OpenMPCSVMDeathTest, blas_level_3_kernel_explicit) {
     const std::vector<plssvm::real_type> kernel_matrix(4 * (4 + 1) / 2);
 #endif
 
-    const auto B = util::generate_random_matrix<plssvm::soa_matrix<plssvm::real_type>>(4, 4, plssvm::PADDING_SIZE, plssvm::PADDING_SIZE);
+    // TODO Hotfix: extreme performance regression when using a soa_matrix -> convert to aos_matrix
+    const auto B = util::generate_random_matrix<plssvm::aos_matrix<plssvm::real_type>>(4, 4, plssvm::PADDING_SIZE, plssvm::PADDING_SIZE);
 
     const plssvm::real_type beta{ 0.5 };
-    auto C = util::generate_random_matrix<plssvm::soa_matrix<plssvm::real_type>>(4, 4, plssvm::PADDING_SIZE, plssvm::PADDING_SIZE);
+    auto C = util::generate_random_matrix<plssvm::aos_matrix<plssvm::real_type>>(4, 4, plssvm::PADDING_SIZE, plssvm::PADDING_SIZE);
 
     const auto m = static_cast<unsigned long long>(B.num_cols());
     const auto n = static_cast<unsigned long long>(B.num_rows());
@@ -310,7 +321,7 @@ TEST_F(OpenMPCSVMDeathTest, blas_level_3_kernel_explicit) {
 #endif
 
     // the B matrix must have the correct shape
-    const auto B_wrong = util::generate_random_matrix<plssvm::soa_matrix<plssvm::real_type>>(std::min(0, static_cast<int>(n) - 1), std::min(0, static_cast<int>(k) - 2), plssvm::PADDING_SIZE, plssvm::PADDING_SIZE);
+    const auto B_wrong = util::generate_random_matrix<plssvm::aos_matrix<plssvm::real_type>>(std::min(0, static_cast<int>(n) - 1), std::min(0, static_cast<int>(k) - 2), plssvm::PADDING_SIZE, plssvm::PADDING_SIZE);
 #if defined(PLSSVM_USE_GEMM)
     EXPECT_DEATH(plssvm::openmp::device_kernel_gemm(m, n, k, alpha, kernel_matrix, B_wrong, beta, C), ::testing::HasSubstr(fmt::format("B matrix sizes mismatch!: [{}, {}] != [{}, {}]", std::min(0, static_cast<int>(n) - 1), std::min(0, static_cast<int>(k) - 2), n, k)));
 #else
@@ -318,7 +329,7 @@ TEST_F(OpenMPCSVMDeathTest, blas_level_3_kernel_explicit) {
 #endif
 
     // the C matrix must have the correct shape
-    auto C_wrong = util::generate_random_matrix<plssvm::soa_matrix<plssvm::real_type>>(std::min(0, static_cast<int>(n) - 1), std::min(0, static_cast<int>(m) - 2), plssvm::PADDING_SIZE, plssvm::PADDING_SIZE);
+    auto C_wrong = util::generate_random_matrix<plssvm::aos_matrix<plssvm::real_type>>(std::min(0, static_cast<int>(n) - 1), std::min(0, static_cast<int>(m) - 2), plssvm::PADDING_SIZE, plssvm::PADDING_SIZE);
 #if defined(PLSSVM_USE_GEMM)
     EXPECT_DEATH(plssvm::openmp::device_kernel_gemm(m, n, k, alpha, kernel_matrix, B, beta, C_wrong), ::testing::HasSubstr(fmt::format("C matrix sizes mismatch!: [{}, {}] != [{}, {}]", std::min(0, static_cast<int>(n) - 1), std::min(0, static_cast<int>(m) - 2), n, m)));
 #else
