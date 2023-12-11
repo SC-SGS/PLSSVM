@@ -87,7 +87,7 @@ template <kernel_function_type kernel, typename T, typename... Args>
         // get parameters
         static_assert(sizeof...(args) == 0, "Illegal number of additional parameters! Must be 0.");
         // perform kernel function calculation
-        return transposed{ xi } * xj;
+        return transposed<T>{ xi } * xj;
     } else if constexpr (kernel == kernel_function_type::polynomial) {
         // get parameters
         static_assert(sizeof...(args) == 3, "Illegal number of additional parameters! Must be 3.");
@@ -95,7 +95,7 @@ template <kernel_function_type kernel, typename T, typename... Args>
         const auto gamma = static_cast<T>(detail::get<1>(args...));
         const auto coef0 = static_cast<T>(detail::get<2>(args...));
         // perform kernel function calculation
-        return std::pow(gamma * (transposed{ xi } * xj) + coef0, degree);
+        return std::pow(gamma * (transposed<T>{ xi } * xj) + coef0, degree);
     } else if constexpr (kernel == kernel_function_type::rbf) {
         // get parameters
         static_assert(sizeof...(args) == 1, "Illegal number of additional parameters! Must be 1.");
