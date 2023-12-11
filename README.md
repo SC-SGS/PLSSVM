@@ -4,6 +4,28 @@
 
 [![Codacy Badge](https://app.codacy.com/project/badge/Grade/e780a63075ce40c29c49d3df4f57c2af)](https://www.codacy.com/gh/SC-SGS/PLSSVM/dashboard?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=SC-SGS/PLSSVM&amp;utm_campaign=Badge_Grade) &ensp; [![Generate documentation](https://github.com/SC-SGS/PLSSVM/actions/workflows/documentation.yml/badge.svg)](https://sc-sgs.github.io/PLSSVM/) 
 
+## Table of Contents
+
+- [Introduction To PLSSVM](#introduction-to-plssvm)
+- [Getting Started](#getting-started)
+  - [Dependencies](#dependencies)
+  - [Building PLSSVM](#building-plssvm)
+  - [Running the Tests](#running-the-tests)
+  - [Generating Test Coverage Results](#generating-test-coverage-results)
+  - [Creating the Documentation](#creating-the-documentation)
+  - [Installing](#installing)
+- [Usage](#usage)
+  - [Generating Artificial Data](#generating-artificial-data)
+  - [Training using `plssvm-train`](#training-using-plssvm-train)
+  - [Predicting using `plssvm-predict`](#predicting-using-plssvm-predict)
+  - [Data Scaling using `plssvm-scale`](#data-scaling-using-plssvm-scale)
+  - [Example Code for PLSSVM Used as a Library](#example-code-for-plssvm-used-as-a-library)
+  - [Example Using the Python Bindings Available For PLSSVM](#example-using-the-python-bindings-available-for-plssvm)
+- [Citing PLSSVM](#citing-plssvm)
+- [License](#license)
+
+## Introduction to PLSSVM
+
 A [Support Vector Machine (SVM)](https://en.wikipedia.org/wiki/Support-vector_machine) is a supervised machine learning model.
 In its basic form SVMs are used for binary classification tasks.
 Their fundamental idea is to learn a hyperplane which separates the two classes best, i.e., where the widest possible margin around its decision boundary is free of data.
@@ -43,7 +65,7 @@ The currently available frameworks (also called backends in our PLSSVM implement
 - [CUDA](https://developer.nvidia.com/cuda-zone)
 - [HIP](https://github.com/ROCm-Developer-Tools/HIP) (only tested on AMD GPUs)
 - [OpenCL](https://www.khronos.org/opencl/)
-- [SYCL](https://www.khronos.org/sycl/) (tested implementations are [DPC++](https://github.com/intel/llvm) and [AdaptiveCpp](https://github.com/AdaptiveCpp/AdaptiveCpp) (formerly known as hipSYCL); specifically the versions [sycl-nightly/20230110](https://github.com/intel/llvm/tree/sycl-nightly/20230110) and AdaptiveCpp release [v23.10.0](https://github.com/AdaptiveCpp/AdaptiveCpp/releases/tag/v23.10.0))
+- [SYCL](https://www.khronos.org/sycl/) (tested implementations are [DPC++](https://github.com/intel/llvm) and [AdaptiveCpp](https://github.com/AdaptiveCpp/AdaptiveCpp) (formerly known as hipSYCL); specifically the versions [sycl-nightly/20231201](https://github.com/intel/llvm/tree/sycl-nightly/20230110) and AdaptiveCpp release [v23.10.0](https://github.com/AdaptiveCpp/AdaptiveCpp/releases/tag/v23.10.0))
 
 ## Getting Started
 
@@ -86,9 +108,16 @@ Additional dependencies if `PLSSVM_ENABLE_TESTING` and `PLSSVM_GENERATE_TEST_FIL
 
 - [Python3](https://www.python.org/) with the [`argparse`](https://docs.python.org/3/library/argparse.html), [`timeit`](https://docs.python.org/3/library/timeit.html), [`sklearn`](https://scikit-learn.org/stable/), and [`humanize`](https://pypi.org/project/humanize/) modules
 
-### Building
+### Building PLSSVM
 
-Download and install all *necessary* Python3 dependencies:
+To download PLSSVM use:
+
+```bash
+git clone https://github.com/SC-SGS/PLSSVM.git
+cd PLSSVM 
+```
+
+We provided a Python3 requirements file to install all *necessary* Python3 dependencies:
 
 ```bash
 pip install -r install/python_requirements.txt
@@ -97,14 +126,12 @@ pip install -r install/python_requirements.txt
 Building the library can be done using the normal CMake approach:
 
 ```bash
-git clone https://github.com/SC-SGS/PLSSVM.git
-cd PLSSVM 
 mkdir build && cd build 
 cmake -DPLSSVM_TARGET_PLATFORMS="..." [optional_options] .. 
 cmake --build . -j
 ```
 
-#### Target Platform Selection
+#### (Automatic) Target Platform Selection
 
 The CMake option `PLSSVM_TARGET_PLATFORMS` is used to determine for which targets the backends should be compiled.
 Valid targets are:
@@ -126,6 +153,8 @@ automatically retrieving AMD GPU information on Windows is currently not support
 
 ```bash
 python3 utility_scripts/plssvm_target_platforms.py --help
+```
+```
 usage: plssvm_target_platforms.py [-h] [--quiet]
 
 optional arguments:
@@ -137,6 +166,8 @@ Example invocation:
 
 ```bash
 python3 utility_scripts/plssvm_target_platforms.py
+```
+```
 Intel(R) Core(TM) i9-10980XE CPU @ 3.00GHz: {'avx512': True, 'avx2': True, 'avx': True, 'sse4_2': True}
 
 Found 1 NVIDIA GPU(s):
@@ -147,11 +178,13 @@ cpu:avx512;nvidia:sm_86
 ```
 
 
-or with the `--quiet` flag given:
+or with the `--quiet` flag provided:
 
 
 ```bash
 python3 utility_scripts/plssvm_target_platforms.py --quiet
+```
+```
 cpu:avx512;intel:dg1
 ```
 
@@ -200,10 +233,10 @@ The `[optional_options]` can be one or multiple of:
 - `PLSSVM_ENABLE_LTO=ON|OFF` (default: `ON`): enable interprocedural optimization (IPO/LTO) if supported by the compiler
 - `PLSSVM_ENFORCE_MAX_MEM_ALLOC_SIZE=ON|OFF` (default: `ON`): enforce the maximum (device) memory allocation size for the plssvm::solver_type::automatic solver
 - `PLSSVM_ENABLE_DOCUMENTATION=ON|OFF` (default: `OFF`): enable the `doc` target using doxygen
-- `PLSSVM_ENABLE_PERFORMANCE_TRACKING`: enable gathering performance characteristics for the three executables using YAML files; example Python3 scripts to perform performance measurements and to process the resulting YAML files can be found in the `utility_scripts/` directory (requires the Python3 modules [wrapt-timeout-decorator](https://pypi.org/project/wrapt-timeout-decorator/), [`pyyaml`](https://pyyaml.org/), and [`pint`](https://pint.readthedocs.io/en/stable/))
+- `PLSSVM_ENABLE_PERFORMANCE_TRACKING=ON|OFF` (default: `OFF`): enable gathering performance characteristics for the three executables using YAML files; example Python3 scripts to perform performance measurements and to process the resulting YAML files can be found in the `utility_scripts/` directory (requires the Python3 modules [wrapt-timeout-decorator](https://pypi.org/project/wrapt-timeout-decorator/), [`pyyaml`](https://pyyaml.org/), and [`pint`](https://pint.readthedocs.io/en/stable/))
 - `PLSSVM_ENABLE_TESTING=ON|OFF` (default: `ON`): enable testing using GoogleTest and ctest
 - `PLSSVM_ENABLE_LANGUAGE_BINDINGS=ON|OFF` (default: `OFF`): enable language bindings
-- `PLSSVM_STL_DEBUG_MODE_FLAGS=ON|OFF` (default: `OFF`): enable STL debug modes (**note**: changes the ABI!)
+- `PLSSVM_STL_DEBUG_MODE_FLAGS=ON|OFF` (default: `OFF`): enable STL debug modes (**note**: changes the resulting library's ABI!)
 
 If `PLSSVM_ENABLE_TESTING` is set to `ON`, the following options can also be set:
 
@@ -231,7 +264,7 @@ If the SYCL backend is available additional options can be set.
   - `AUTO`: check for DPC++ as implementation for the SYCL backend but **do not** fail if not available
   - `OFF`: do not check for DPC++ as implementation for the SYCL backend
 
-To use DPC++ for SYCL simply set the `CMAKE_CXX_COMPILER` to the respective DPC++ clang executable during CMake invocation.
+To use DPC++ for SYCL, simply set the `CMAKE_CXX_COMPILER` to the respective DPC++ clang executable during CMake invocation.
 
 If the SYCL implementation is DPC++ the following additional options are available:
 
@@ -248,7 +281,7 @@ If more than one SYCL implementation is available the environment variables `PLS
 
 - `PLSSVM_SYCL_BACKEND_PREFERRED_IMPLEMENTATION` (`dpcpp`|`adaptivecpp`): specify the preferred SYCL implementation if the `sycl_implementation_type` option is set to `automatic`; additional the specified SYCL implementation is used in the `plssvm::sycl` namespace, the other implementations are available in the `plssvm::dpcpp` and `plssvm::adaptivecpp` namespace respectively
 
-### Running the tests
+### Running the Tests
 
 To run the tests after building the library (with `PLSSVM_ENABLE_TESTING` set to `ON`) use:
 
@@ -256,7 +289,7 @@ To run the tests after building the library (with `PLSSVM_ENABLE_TESTING` set to
 ctest
 ```
 
-### Generating test coverage results
+### Generating Test Coverage Results
 
 To enable the generation of test coverage reports using `locv` the library must be compiled using the custom `Coverage` `CMAKE_BUILD_TYPE`.
 Additionally, it's advisable to use smaller test files to shorten the `ctest` step.
@@ -270,7 +303,7 @@ cmake --build . -- coverage
 
 The resulting `html` coverage report is located in the `coverage` folder in the build directory.
 
-### Creating the documentation
+### Creating the Documentation
 
 If doxygen is installed and `PLSSVM_ENABLE_DOCUMENTATION` is set to `ON` the documentation can be build using
 
@@ -280,7 +313,7 @@ cmake --build . -- doc
 
 The documentation of the current state of the main branch can be found [here](https://sc-sgs.github.io/PLSSVM/).
 
-## Installing
+### Installing
 
 The library supports the `install` target:
 
@@ -300,7 +333,11 @@ export LD_LIBRARY_PATH=${CMAKE_INSTALL_PREFIX}/lib:${LD_LIBRARY_PATH}
 
 ## Usage
 
-### Generating artificial data
+PLSSVM provides three executables: `plssvm-train`, `plssvm-predict`, and `plssvm-scale`.
+In addition, PLSSVM can also be used as a library in third-party code.
+For more information, see the respective `man` pages which are installed via `cmake --build . -- install`.
+
+### Generating Artificial Data
 
 The repository comes with a Python3 script (in the `utility_scripts/` directory) to simply generate arbitrarily large data sets.
 
@@ -311,7 +348,7 @@ In order to use all functionality, the following Python3 modules must be install
 [`matplotlib`](https://pypi.org/project/matplotlib/), [`mpl_toolkits`](https://pypi.org/project/matplotlib/),
 and [`humanize`](https://pypi.org/project/humanize/).
 
-```bash
+```
 usage: generate_data.py [-h] [--output OUTPUT] [--format FORMAT] [--problem PROBLEM] --samples SAMPLES [--test_samples TEST_SAMPLES] --features FEATURES [--classes CLASSES] [--plot]
 
 options:
@@ -334,10 +371,12 @@ An example invocation generating a data set consisting of blobs with 1000 data p
 python3 generate_data.py --output data_file --format libsvm --problem blobs --samples 1000 --features 200 --classes 4
 ```
 
-### Training
+### Training using `plssvm-train`
 
 ```bash
 ./plssvm-train --help
+```
+```
 LS-SVM with multiple (GPU-)backends
 Usage:
   ./plssvm-train [OPTION...] training_set_file [model_file]
@@ -412,12 +451,14 @@ The `--target_platform=automatic` option works for the different backends as fol
 
 The `--sycl_kernel_invocation_type` and `--sycl_implementation_type` flags are only used if the `--backend` is `sycl`, otherwise a warning is emitted on `stderr`.
 If the `--sycl_kernel_invocation_type` is `automatic`, the `nd_range` invocation type is currently always used.
-If the `--sycl_implementation_type` is `automatic`, the used SYCL implementation is determined by the `PLSSVM_SYCL_BACKEND_PREFERRED_IMPLEMENTATION` cmake flag.
+If the `--sycl_implementation_type` is `automatic`, the used SYCL implementation is determined by the `PLSSVM_SYCL_BACKEND_PREFERRED_IMPLEMENTATION` CMake flag.
 
-### Predicting
+### Predicting using `plssvm-predict`
 
 ```bash
 ./plssvm-preidct --help
+```
+```
 LS-SVM with multiple (GPU-)backends
 Usage:
   ./plssvm-preidct [OPTION...] test_file model_file [output_file]
@@ -452,9 +493,12 @@ Another example targeting NVIDIA GPUs using the SYCL backend looks like:
 
 The `--target_platform=automatic` and `--sycl_implementation_type` flags work like in the training (`./plssvm-train`) case.
 
-### Scaling
+### Data Scaling using `plssvm-scale`
 
 ```bash
+./plssvm-scale --help
+```
+```
 LS-SVM with multiple (GPU-)backends
 Usage:
   ./plssvm-scale [OPTION...] input_file [scaled_file]
@@ -488,11 +532,9 @@ An example invocation to scale a train and test file in the same way looks like:
 ./plssvm-scale -r scaling_parameter.txt test_file.libsvm test_file_scaled.libsvm
 ```
 
-For more information see the `man` pages for `plssvm-train`, `plssvm-predict`, and `plssvm-scale` (which are installed via `cmake --build . -- install`).
+### Example Code for PLSSVM Used as a Library
 
-## Example code for usage as library
-
-A simple C++ program (`main.cpp`) using this library could look like:
+A simple C++ program (`main.cpp`) using PLSSVM as library could look like:
 
 ```cpp
 #include "plssvm/core.hpp"
@@ -555,7 +597,7 @@ target_compile_features(prog PUBLIC cxx_std_17)
 target_link_libraries(prog PUBLIC plssvm::plssvm-all)
 ```
 
-### Using the Python bindings
+### Example Using the Python Bindings Available For PLSSVM
 
 Roughly the same can be achieved using our Python bindings with the following Python script (note: needs [`sklearn`](https://scikit-learn.org/stable/)):
 
@@ -596,11 +638,12 @@ except RuntimeError as e:
     print(e)
 ```
 
-**Note:** it may be necessary to set `PYTHONPATH` to the `lib` folder in the PLSSVM install path.
+**Note:** it may be necessary to set the environment variable `PYTHONPATH` to the `lib` folder in the PLSSVM install path.
 
 We also provide Python bindings for a `plssvm.SVC` class that offers the same interface as the [`sklearn.svm.SVC`](https://scikit-learn.org/stable/modules/generated/sklearn.svm.SVC.html) class.
 Note that currently not all functionality has been implemented in PLSSVM.
 The respective functions will throw a Python `AttributeError` if called.
+For a detailed overview of the functions that are currently implemented, see [our API documentation](bindings/Python/README.md).
 
 ## Citing PLSSVM
 
@@ -622,4 +665,4 @@ For a full list of all publications involving PLSSVM see our [Wiki Page](https:/
 
 ## License
 
-The PLSSVM library is distributed under the MIT [license](https://github.com/SC-SGS/PLSSVM/blob/main/LICENSE.md).
+The PLSSVM library is distributed under the [MIT license](https://github.com/SC-SGS/PLSSVM/blob/main/LICENSE.md).
