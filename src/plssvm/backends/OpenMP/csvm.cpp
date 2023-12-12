@@ -98,7 +98,7 @@ detail::simple_any csvm::setup_data_on_devices(const solver_type solver, const s
     }
 }
 
-detail::simple_any csvm::assemble_kernel_matrix(const solver_type solver, const parameter &params, detail::simple_any &data, const std::vector<real_type> &q_red, const real_type QA_cost) const {
+detail::simple_any csvm::assemble_kernel_matrix(const solver_type solver, const parameter &params, const detail::simple_any &data, const std::vector<real_type> &q_red, const real_type QA_cost) const {
     PLSSVM_ASSERT(!q_red.empty(), "The q_red vector may not be empty!");
     PLSSVM_ASSERT(solver != solver_type::automatic, "An explicit solver type must be provided instead of solver_type::automatic!");
 
@@ -106,7 +106,7 @@ detail::simple_any csvm::assemble_kernel_matrix(const solver_type solver, const 
     PLSSVM_ASSERT(data_ptr != nullptr, "The data_ptr must not be a nullptr!");
 
     // TODO Hotfix: extreme performance regression when using a soa_matrix -> convert to aos_matrix -> USES 2x the necessary memory!
-    const aos_matrix<real_type> aos_data{ *data_ptr };
+    aos_matrix<real_type> aos_data{ *data_ptr };
 
     if (solver == solver_type::cg_explicit) {;
         const std::size_t num_rows_reduced = aos_data.num_rows() - 1;

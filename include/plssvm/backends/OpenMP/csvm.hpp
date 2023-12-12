@@ -121,7 +121,7 @@ class csvm : public ::plssvm::csvm {
     /**
      * @copydoc plssvm::csvm::assemble_kernel_matrix
      */
-    [[nodiscard]] detail::simple_any assemble_kernel_matrix(solver_type solver, const parameter &params, detail::simple_any &data, const std::vector<real_type> &q_red, real_type QA_cost) const final;
+    [[nodiscard]] detail::simple_any assemble_kernel_matrix(solver_type solver, const parameter &params, const detail::simple_any &data, const std::vector<real_type> &q_red, real_type QA_cost) const final;
     /**
      * @copydoc plssvm::csvm::blas_level_3
      */
