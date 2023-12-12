@@ -36,6 +36,7 @@ set(PLSSVM_OPENMP_SOURCES
         ${CMAKE_CURRENT_LIST_DIR}/exceptions.cpp
         ${CMAKE_CURRENT_LIST_DIR}/cg_explicit/blas.cpp
         ${CMAKE_CURRENT_LIST_DIR}/cg_explicit/kernel_matrix_assembly.cpp
+        ${CMAKE_CURRENT_LIST_DIR}/cg_implicit/kernel_matrix_assembly_blas.cpp
 )
 
 
