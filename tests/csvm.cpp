@@ -328,7 +328,7 @@ TYPED_TEST(BaseCSVMFit, fit) {
     constexpr plssvm::classification_type classification = TestFixture::fixture_classification;
 
     // skip unimplemented tests
-    if constexpr (solver == plssvm::solver_type::cg_streaming || solver == plssvm::solver_type::cg_implicit) {
+    if constexpr (solver == plssvm::solver_type::cg_streaming) {
         GTEST_SKIP() << "Currently not implemented!";
     }
 
@@ -388,7 +388,7 @@ TYPED_TEST(BaseCSVMFit, fit_named_parameters) {
     constexpr plssvm::classification_type classification = TestFixture::fixture_classification;
 
     // skip unimplemented tests
-    if constexpr (solver == plssvm::solver_type::cg_streaming || solver == plssvm::solver_type::cg_implicit) {
+    if constexpr (solver == plssvm::solver_type::cg_streaming) {
         GTEST_SKIP() << "Currently not implemented!";
     }
 
