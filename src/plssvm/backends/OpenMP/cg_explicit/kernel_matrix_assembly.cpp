@@ -14,7 +14,6 @@
 #include "plssvm/matrix.hpp"                 // plssvm::aos_matrix
 
 #include <cstddef>  // std::size_t
-#include <utility>  // std::forward
 #include <vector>   // std::vector
 
 namespace plssvm::openmp {
@@ -22,7 +21,7 @@ namespace plssvm::openmp {
 namespace detail {
 
 template <kernel_function_type kernel, typename... Args>
-void device_kernel_assembly(const std::vector<real_type> &q, std::vector<real_type> &ret, const aos_matrix<real_type> &data, const real_type QA_cost, const real_type cost, Args &&...args) {
+void device_kernel_assembly(const std::vector<real_type> &q, std::vector<real_type> &ret, const aos_matrix<real_type> &data, const real_type QA_cost, const real_type cost, Args... args) {
     PLSSVM_ASSERT(q.size() == data.num_rows() - 1, "Sizes mismatch!: {} != {}", q.size(), data.num_rows() - 1);
 #if defined(PLSSVM_USE_GEMM)
     PLSSVM_ASSERT(ret.size() == q.size() * q.size(), "Sizes mismatch (GEMM)!: {} != {}", ret.size(), q.size() * q.size());
@@ -36,7 +35,7 @@ void device_kernel_assembly(const std::vector<real_type> &q, std::vector<real_ty
     #pragma omp parallel for schedule(dynamic)
     for (std::size_t row = 0; row < dept; ++row) {
         for (std::size_t col = row + 1; col < dept; ++col) {
-            const real_type temp = kernel_function<kernel>(data, row, data, col, std::forward<Args>(args)...) + QA_cost - q[row] - q[col];
+            const real_type temp = kernel_function<kernel>(data, row, data, col, args...) + QA_cost - q[row] - q[col];
 #if defined(PLSSVM_USE_GEMM)
             ret[row * dept + col] = temp;
             ret[col * dept + row] = temp;
@@ -49,7 +48,7 @@ void device_kernel_assembly(const std::vector<real_type> &q, std::vector<real_ty
     // apply cost to diagonal
     #pragma omp parallel for
     for (std::size_t i = 0; i < dept; ++i) {
-        const real_type temp = kernel_function<kernel>(data, i, data, i, std::forward<Args>(args)...) + cost + QA_cost - q[i] - q[i];
+        const real_type temp = kernel_function<kernel>(data, i, data, i, args...) + cost + QA_cost - q[i] - q[i];
 #if defined(PLSSVM_USE_GEMM)
         ret[i * dept + i] = temp;
 #else
