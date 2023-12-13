@@ -65,7 +65,7 @@ endif ()
 set(PLSSVM_CUDA_SOURCES
         ${CMAKE_CURRENT_LIST_DIR}/cg_explicit/blas.cu
         ${CMAKE_CURRENT_LIST_DIR}/cg_explicit/kernel_matrix_assembly.cu
-#        ${CMAKE_CURRENT_LIST_DIR}/cg_implicit/svm_kernel.cu
+        ${CMAKE_CURRENT_LIST_DIR}/cg_implicit/kernel_matrix_assembly_blas.cu
         ${CMAKE_CURRENT_LIST_DIR}/detail/device_ptr.cu
         ${CMAKE_CURRENT_LIST_DIR}/detail/utility.cu
         ${CMAKE_CURRENT_LIST_DIR}/csvm.cu

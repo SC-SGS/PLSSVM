@@ -215,7 +215,7 @@ class csvm {
      * @param[in] QA_cost the value used in the dimensional reduction
      * @return based on the used solver type (e.g., cg_explicit -> kernel matrix fully stored on the device; cg_implicit -> "nothing") (`[[nodiscard]]`)
      */
-    [[nodiscard]] virtual detail::simple_any assemble_kernel_matrix(solver_type solver, const parameter &params, const ::plssvm::detail::simple_any &data, const std::vector<real_type> &q_red, real_type QA_cost) const = 0;
+    [[nodiscard]] virtual detail::simple_any assemble_kernel_matrix(solver_type solver, const parameter &params, ::plssvm::detail::simple_any &data, const std::vector<real_type> &q_red, real_type QA_cost) const = 0;
 
     /**
      * @brief Perform a BLAS level 3 matrix-matrix multiplication: `C = alpha * A * B + beta * C`.
@@ -854,7 +854,7 @@ std::tuple<aos_matrix<real_type>, std::vector<real_type>, unsigned long long> cs
     }
 
     // setup/allocate necessary data on the device(s)
-    const detail::simple_any data = this->setup_data_on_devices(used_solver, A);
+    detail::simple_any data = this->setup_data_on_devices(used_solver, A);
 
     // assemble explicit kernel matrix
     const std::chrono::steady_clock::time_point assembly_start_time = std::chrono::steady_clock::now();
