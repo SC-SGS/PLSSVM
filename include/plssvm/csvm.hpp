@@ -860,9 +860,14 @@ std::tuple<aos_matrix<real_type>, std::vector<real_type>, unsigned long long> cs
     const std::chrono::steady_clock::time_point assembly_start_time = std::chrono::steady_clock::now();
     const detail::simple_any kernel_matrix = this->assemble_kernel_matrix(used_solver, params, data, q_red, QA_cost);
     const std::chrono::steady_clock::time_point assembly_end_time = std::chrono::steady_clock::now();
-    detail::log(verbosity_level::full | verbosity_level::timing,
-                "Assembled the kernel matrix in {}.\n",
-                detail::tracking_entry{ "kernel_matrix", "kernel_matrix_assembly", std::chrono::duration_cast<std::chrono::milliseconds>(assembly_end_time - assembly_start_time) });
+    const auto assembly_duration = std::chrono::duration_cast<std::chrono::milliseconds>(assembly_end_time - assembly_start_time);
+
+    if (used_solver != solver_type::cg_implicit) {
+        detail::log(verbosity_level::full | verbosity_level::timing,
+                    "Assembled the kernel matrix in {}.\n",
+                    assembly_duration);
+    }
+    PLSSVM_DETAIL_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((detail::tracking_entry{ "kernel_matrix", "kernel_matrix_assembly", assembly_duration }));
 
     // choose the correct algorithm based on the (provided) solver type -> currently only CG available
     soa_matrix<real_type> X;
