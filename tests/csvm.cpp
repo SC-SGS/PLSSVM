@@ -354,7 +354,7 @@ TYPED_TEST(BaseCSVMFit, fit) {
     EXPECT_CALL(csvm, assemble_kernel_matrix(
                             ::testing::An<plssvm::solver_type>(),
                             ::testing::An<const plssvm::parameter &>(),
-                            ::testing::An<const plssvm::detail::simple_any &>(),
+                            ::testing::An<plssvm::detail::simple_any &>(),
                             ::testing::An<const std::vector<plssvm::real_type> &>(),
                             ::testing::An<plssvm::real_type>()))
                         .Times(num_calls)
@@ -415,7 +415,7 @@ TYPED_TEST(BaseCSVMFit, fit_named_parameters) {
     EXPECT_CALL(csvm, assemble_kernel_matrix(
                             ::testing::An<plssvm::solver_type>(),
                             ::testing::An<const plssvm::parameter &>(),
-                            ::testing::An<const plssvm::detail::simple_any &>(),
+                            ::testing::An<plssvm::detail::simple_any &>(),
                             ::testing::An<const std::vector<plssvm::real_type> &>(),
                             ::testing::An<plssvm::real_type>()))
                         .Times(num_calls)
@@ -468,7 +468,7 @@ TYPED_TEST(BaseCSVMFit, fit_named_parameters_invalid_epsilon) {
     EXPECT_CALL(csvm, assemble_kernel_matrix(
                             ::testing::An<plssvm::solver_type>(),
                             ::testing::An<const plssvm::parameter &>(),
-                            ::testing::An<const plssvm::detail::simple_any &>(),
+                            ::testing::An<plssvm::detail::simple_any &>(),
                             ::testing::An<const std::vector<plssvm::real_type> &>(),
                             ::testing::An<plssvm::real_type>()))
                         .Times(0);
@@ -512,7 +512,7 @@ TYPED_TEST(BaseCSVMFit, fit_named_parameters_invalid_max_iter) {
     EXPECT_CALL(csvm, assemble_kernel_matrix(
                             ::testing::An<plssvm::solver_type>(),
                             ::testing::An<const plssvm::parameter &>(),
-                            ::testing::An<const plssvm::detail::simple_any &>(),
+                            ::testing::An<plssvm::detail::simple_any &>(),
                             ::testing::An<const std::vector<plssvm::real_type> &>(),
                             ::testing::An<plssvm::real_type>()))
                         .Times(0);
@@ -556,7 +556,7 @@ TYPED_TEST(BaseCSVMFit, fit_no_label) {
     EXPECT_CALL(csvm, assemble_kernel_matrix(
                             ::testing::An<plssvm::solver_type>(),
                             ::testing::An<const plssvm::parameter &>(),
-                            ::testing::An<const plssvm::detail::simple_any &>(),
+                            ::testing::An<plssvm::detail::simple_any &>(),
                             ::testing::An<const std::vector<plssvm::real_type> &>(),
                             ::testing::An<plssvm::real_type>()))
                         .Times(0);
