@@ -388,7 +388,7 @@ template <typename matrix_type, typename real_type = typename matrix_type::value
 }
 
 /**
- * @brief Generate a matrix of size @p rows times @p cols filled with filled with values "(row + col) / 10.0".
+ * @brief Generate a matrix of size @p rows times @p cols filled with filled with values "row + (col / 10.0)".
  * @tparam matrix_type the type of the elements in the matrix (must be a floating point type)
  * @param[in] rows the number of rows in the matrix
  * @param[in] cols the number of columns in the matrix
