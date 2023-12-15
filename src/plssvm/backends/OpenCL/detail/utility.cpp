@@ -181,6 +181,7 @@ std::vector<std::pair<compute_kernel_name, std::string>> kernel_type_to_function
     // since the correct predict kernel function cannot be determined during construction, add all predict kernels
     std::vector<std::pair<compute_kernel_name, std::string>> kernels{
         std::make_pair(compute_kernel_name::assemble_kernel_matrix_explicit, fmt::format("device_kernel_assembly_{}", kernel)),
+        std::make_pair(compute_kernel_name::assemble_kernel_matrix_implicit_blas, fmt::format("device_kernel_assembly_{}_symm", kernel)),
         std::make_pair(compute_kernel_name::predict_kernel_linear, "device_kernel_predict_linear"),
         std::make_pair(compute_kernel_name::predict_kernel_polynomial, "device_kernel_predict_polynomial"),
         std::make_pair(compute_kernel_name::predict_kernel_rbf, "device_kernel_predict_rbf"),
@@ -226,7 +227,11 @@ std::vector<command_queue> create_command_queues(const std::vector<context> &con
     const std::filesystem::path base_path{ PLSSVM_OPENCL_KERNEL_SOURCE_DIR };
     std::string kernel_src_string{};
     // note: the detail/atomics.cl file must be included first!
-    for (const auto &path : { base_path / "detail/atomics.cl", base_path / "cg_explicit/blas.cl", base_path / "cg_explicit/kernel_matrix_assembly.cl", base_path / "predict_kernel.cl" }) {
+    for (const auto &path : { base_path / "detail/atomics.cl",
+                              base_path / "cg_explicit/blas.cl",
+                              base_path / "cg_explicit/kernel_matrix_assembly.cl",
+                              base_path / "cg_implicit/kernel_matrix_assembly_blas.cl",
+                              base_path / "predict_kernel.cl" }) {
         std::ifstream file{ base_path / path };
         kernel_src_string.append((std::istreambuf_iterator<char>{ file }),
                                  std::istreambuf_iterator<char>{});

@@ -545,7 +545,7 @@ TYPED_TEST_P(GenericCSVMKernelFunction, blas_level_3_assembly_implicit_without_C
     }
 
     // create C-SVM: must be done using the mock class, since plssvm::detail::csvm::blas_level_3 is protected
-    const mock_csvm_type svm = util::construct_from_tuple<mock_csvm_type>(csvm_test_type::additional_arguments);
+    const mock_csvm_type svm = util::construct_from_tuple<mock_csvm_type>(params, csvm_test_type::additional_arguments);
 
     [[maybe_unused]] const plssvm::real_type alpha{ 1.0 };
 
@@ -598,7 +598,7 @@ TYPED_TEST_P(GenericCSVMKernelFunction, blas_level_3_assembly_implicit) {
     }
 
     // create C-SVM: must be done using the mock class, since plssvm::detail::csvm::blas_level_3 is protected
-    const mock_csvm_type svm = util::construct_from_tuple<mock_csvm_type>(csvm_test_type::additional_arguments);
+    const mock_csvm_type svm = util::construct_from_tuple<mock_csvm_type>(params, csvm_test_type::additional_arguments);
 
     [[maybe_unused]] const plssvm::real_type alpha{ 1.0 };
 

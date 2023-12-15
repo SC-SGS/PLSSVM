@@ -47,6 +47,7 @@ target_sources(${PLSSVM_OPENCL_BACKEND_LIBRARY_NAME} PRIVATE
         FILES
             "${PROJECT_SOURCE_DIR}/include/plssvm/backends/OpenCL/cg_explicit/blas.cl"
             "${PROJECT_SOURCE_DIR}/include/plssvm/backends/OpenCL/cg_explicit/kernel_matrix_assembly.cl"
+            "${PROJECT_SOURCE_DIR}/include/plssvm/backends/OpenCL/cg_implicit/kernel_matrix_assembly_blas.cl"
             "${PROJECT_SOURCE_DIR}/include/plssvm/backends/OpenCL/predict_kernel.cl"
 )
 
