@@ -185,21 +185,22 @@ template double kernel_function(const plssvm::parameter &, const plssvm::matrix<
 template double kernel_function(const plssvm::parameter &, const plssvm::matrix<double, plssvm::layout_type::soa> &, const std::size_t, const plssvm::matrix<double, plssvm::layout_type::soa> &, const std::size_t, const std::size_t);
 
 template <typename real_type>
-std::vector<real_type> perform_dimensional_reduction(const plssvm::parameter &params, const plssvm::soa_matrix<real_type> &data, [[maybe_unused]] const std::size_t num_devices) {
+std::pair<std::vector<real_type>, real_type> perform_dimensional_reduction(const plssvm::parameter &params, const plssvm::soa_matrix<real_type> &data, const std::size_t num_devices) {
     std::vector<real_type> result(data.num_rows() - 1);
     for (typename std::vector<std::vector<real_type>>::size_type i = 0; i < result.size(); ++i) {
         result[i] = kernel_function(params, data, data.num_rows() - 1, data, i, num_devices);
     }
-    return result;
+    const real_type QA_cost = kernel_function(params, data, data.num_rows() - 1, data, data.num_rows() - 1, num_devices) + real_type{ 1.0 } / static_cast<real_type>(params.cost);
+    return std::make_pair(std::move(result), QA_cost);
 }
-template std::vector<float> perform_dimensional_reduction(const plssvm::parameter &, const plssvm::soa_matrix<float> &, std::size_t);
-template std::vector<double> perform_dimensional_reduction(const plssvm::parameter &, const plssvm::soa_matrix<double> &, std::size_t);
+template std::pair<std::vector<float>, float> perform_dimensional_reduction(const plssvm::parameter &, const plssvm::soa_matrix<float> &, std::size_t);
+template std::pair<std::vector<double>, double> perform_dimensional_reduction(const plssvm::parameter &, const plssvm::soa_matrix<double> &, std::size_t);
 
 template <typename real_type>
-[[nodiscard]] std::vector<real_type> assemble_kernel_matrix_symm(const plssvm::parameter &params, const plssvm::soa_matrix<real_type> &data, const std::vector<real_type> &q, const real_type QA_cost, const std::size_t padding, const std::size_t num_devices) {
+[[nodiscard]] std::vector<real_type> assemble_kernel_matrix_symm(const plssvm::parameter &params, const plssvm::soa_matrix<real_type> &data, const std::vector<real_type> &q, const real_type QA_cost, const std::size_t num_devices) {
     const std::size_t num_rows_reduced = data.num_rows() - 1;
     std::vector<real_type> result{};
-    result.reserve((num_rows_reduced + padding) * (num_rows_reduced + padding + 1) / 2);
+    result.reserve((num_rows_reduced + plssvm::PADDING_SIZE) * (num_rows_reduced + plssvm::PADDING_SIZE + 1) / 2);
 
     for (std::size_t row = 0; row < num_rows_reduced; ++row) {
         for (std::size_t col = row; col < num_rows_reduced; ++col) {
@@ -208,21 +209,21 @@ template <typename real_type>
                 result.back() += real_type{ 1.0 } / static_cast<real_type>(params.cost);
             }
         }
-        result.insert(result.cend(), padding, real_type{ 0.0 });
+        result.insert(result.cend(), plssvm::PADDING_SIZE, real_type{ 0.0 });
     }
-    result.insert(result.cend(), padding * (padding + 1) / 2, real_type{ 0.0 });
+    result.insert(result.cend(), plssvm::PADDING_SIZE * (plssvm::PADDING_SIZE + 1) / 2, real_type{ 0.0 });
     return result;
 }
-template std::vector<float> assemble_kernel_matrix_symm(const plssvm::parameter &, const plssvm::soa_matrix<float> &, const std::vector<float> &, const float, const std::size_t, const std::size_t);
-template std::vector<double> assemble_kernel_matrix_symm(const plssvm::parameter &, const plssvm::soa_matrix<double> &, const std::vector<double> &, const double, const std::size_t, const std::size_t);
+template std::vector<float> assemble_kernel_matrix_symm(const plssvm::parameter &, const plssvm::soa_matrix<float> &, const std::vector<float> &, const float, const std::size_t);
+template std::vector<double> assemble_kernel_matrix_symm(const plssvm::parameter &, const plssvm::soa_matrix<double> &, const std::vector<double> &, const double, const std::size_t);
 
 template <typename real_type>
-[[nodiscard]] std::vector<real_type> assemble_kernel_matrix_gemm(const plssvm::parameter &params, const plssvm::soa_matrix<real_type> &data, const std::vector<real_type> &q, const real_type QA_cost, const std::size_t padding, const std::size_t num_devices) {
+[[nodiscard]] std::vector<real_type> assemble_kernel_matrix_gemm(const plssvm::parameter &params, const plssvm::soa_matrix<real_type> &data, const std::vector<real_type> &q, const real_type QA_cost, const std::size_t num_devices) {
     PLSSVM_ASSERT(data.num_rows() - 1 == q.size(), "Sizes mismatch!: {} != {}", data.num_rows() - 1, q.size());
 
     const std::size_t num_rows_reduced = data.num_rows() - 1;
     std::vector<real_type> result{};
-    result.reserve((num_rows_reduced + padding) * (num_rows_reduced + padding));
+    result.reserve((num_rows_reduced + plssvm::PADDING_SIZE) * (num_rows_reduced + plssvm::PADDING_SIZE));
 
     for (std::size_t row = 0; row < num_rows_reduced; ++row) {
         for (std::size_t col = 0; col < num_rows_reduced; ++col) {
@@ -231,13 +232,13 @@ template <typename real_type>
                 result.back() += real_type{ 1.0 } / static_cast<real_type>(params.cost);
             }
         }
-        result.insert(result.cend(), padding, real_type{ 0.0 });
+        result.insert(result.cend(), plssvm::PADDING_SIZE, real_type{ 0.0 });
     }
-    result.insert(result.cend(), padding * (num_rows_reduced + padding), real_type{ 0.0 });
+    result.insert(result.cend(), plssvm::PADDING_SIZE * (num_rows_reduced + plssvm::PADDING_SIZE), real_type{ 0.0 });
     return result;
 }
-template std::vector<float> assemble_kernel_matrix_gemm(const plssvm::parameter &, const plssvm::soa_matrix<float> &, const std::vector<float> &, const float, const std::size_t, const std::size_t);
-template std::vector<double> assemble_kernel_matrix_gemm(const plssvm::parameter &, const plssvm::soa_matrix<double> &, const std::vector<double> &, const double, const std::size_t, const std::size_t);
+template std::vector<float> assemble_kernel_matrix_gemm(const plssvm::parameter &, const plssvm::soa_matrix<float> &, const std::vector<float> &, const float, const std::size_t);
+template std::vector<double> assemble_kernel_matrix_gemm(const plssvm::parameter &, const plssvm::soa_matrix<double> &, const std::vector<double> &, const double, const std::size_t);
 
 template <typename real_type>
 void gemm(const real_type alpha, const std::vector<real_type> &A, const plssvm::soa_matrix<real_type> &B, const real_type beta, plssvm::soa_matrix<real_type> &C) {
