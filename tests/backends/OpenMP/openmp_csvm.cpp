@@ -23,7 +23,6 @@
 #include "plssvm/backends/OpenMP/cg_explicit/kernel_matrix_assembly.hpp"
 
 #include "backends/generic_csvm_tests.hpp"      // generic CSVM tests to instantiate
-#include "backends/generic_gpu_csvm_tests.hpp"  // generic GPU CSVM tests to instantiate
 #include "custom_test_macros.hpp"               // EXPECT_THROW_WHAT
 #include "naming.hpp"                           // naming::test_parameter_to_name
 #include "types_to_test.hpp"                    // util::{cartesian_type_product_t, combine_test_parameters_gtest_t}

@@ -98,7 +98,7 @@ detail::simple_any csvm::setup_data_on_devices(const solver_type solver, const s
     }
 }
 
-detail::simple_any csvm::assemble_kernel_matrix(const solver_type solver, const parameter &params, const detail::simple_any &data, const std::vector<real_type> &q_red, const real_type QA_cost) const {
+detail::simple_any csvm::assemble_kernel_matrix(const solver_type solver, const parameter &params, detail::simple_any &data, const std::vector<real_type> &q_red, const real_type QA_cost) const {
     PLSSVM_ASSERT(!q_red.empty(), "The q_red vector may not be empty!");
     PLSSVM_ASSERT(solver != solver_type::automatic, "An explicit solver type must be provided instead of solver_type::automatic!");
 
