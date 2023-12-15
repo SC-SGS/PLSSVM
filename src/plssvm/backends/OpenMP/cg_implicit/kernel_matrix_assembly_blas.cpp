@@ -26,6 +26,7 @@ void device_kernel_assembly_symm(real_type alpha, const std::vector<real_type> &
     PLSSVM_ASSERT(q.size() == data.num_rows() - 1, "Sizes mismatch!: {} != {}", q.size(), data.num_rows() - 1);
     PLSSVM_ASSERT(cost != real_type{ 0.0 }, "cost must not be 0.0 since it is 1 / plssvm::cost!");
     PLSSVM_ASSERT(B.shape() == C.shape(), "The matrices B and C must have the same shape!");
+    PLSSVM_ASSERT(B.num_cols() == q.size(), "The number of columns in B ({}) must be the same as the values in q ({})!", B.num_cols(), q.size());
 
     using namespace operators;
 

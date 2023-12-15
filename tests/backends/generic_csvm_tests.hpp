@@ -20,6 +20,7 @@
 #include "plssvm/detail/memory_size.hpp"        // memory size literals
 #include "plssvm/detail/simple_any.hpp"         // plssvm::detail::simple_any
 #include "plssvm/detail/string_conversion.hpp"  // plssvm::detail::convert_to
+#include "plssvm/detail/utility.hpp"            // plssvm::detail::{unreachable, get}
 #include "plssvm/kernel_function_types.hpp"     // plssvm::csvm_to_backend_type_v, plssvm::backend_type
 #include "plssvm/matrix.hpp"                    // plssvm::aos_matrix, plssvm::layout_type
 #include "plssvm/model.hpp"                     // plssvm::model
@@ -42,7 +43,7 @@
 #include <cmath>    // std::sqrt, std::abs, std::exp, std::pow
 #include <cstddef>  // std::size_t
 #include <limits>   // std::numeric_limits::epsilon
-#include <tuple>    // std::ignore
+#include <tuple>    // std::ignore, std::tuple, std::make_tuple
 #include <utility>  // std::move
 #include <vector>   // std::vector
 
@@ -79,29 +80,120 @@ template <typename plssvm_csvm_type, typename T>
 }
 
 /**
- * @brief Initialize the matrix adding necessary padding entries using the values provided by @p matr based on the @p csvm_type.
- * @details Returns a `plssvm::detail::simple_any` with a value based on the @p csvm_type.
- * @tparam plssvm_csvm_type the PLSSVM CSVM backend type
+ * @brief Convert the upper triangular part of a 2D plssvm::matrix to a 1D vector representing an explicit SYMM kernel matrix.
+ * @tparam matrix_type the type of the matrix
+ * @param[in] matr the matrix from which the upper triangular matrix should be extracted
+ * @return the flattened upper triangular matrix (`[[nodiscard]]`)
+ */
+template <typename matrix_type>
+[[nodiscard]] inline std::vector<typename matrix_type::value_type> matrix_to_symm_kernel_matrix(const matrix_type &matr) {
+    using real_type = typename matrix_type::value_type;
+
+    std::vector<std::vector<real_type>> triangular_matrix = matr.to_2D_vector();
+    for (std::size_t row = 0; row < triangular_matrix.size(); ++row) {
+        triangular_matrix[row].erase(triangular_matrix[row].begin(), triangular_matrix[row].begin() + row);
+    }
+
+    return util::flatten(triangular_matrix);
+}
+
+/**
+ * @brief Initialize the explicit kernel matrix adding necessary padding entries using the values provided by @p matr based on the @p csvm_type.
+ * @tparam csvm_type the PLSSVM CSVM backend type
  * @tparam device_ptr_type the device pointer type; only used if a GPU backend is used
- * @tparam T the type of the values in the matrix
+ * @tparam matrix_type the type of the matrix
  * @tparam used_csvm_type the type of the @p csvm; may also be a Mock CSVM!
- * @param[in] matr the matrix
+ * @tparam Args the types of the additional arguments; none for the explicit matrix
+ * @param[in] matr the matrix to create the explicit kernel matrix from
  * @param[in] csvm the CSVM encapsulating the device on which the matrix should be allocated
- * @param[in] shape the shape of the underlying matrix represented by the 1D @p matr
  * @return a `plssvm::detail::simple_any` with a wrapped value usable in the PLSSVM functions (`[[nodiscard]]`)
  */
-template <typename plssvm_csvm_type, typename device_ptr_type, typename T, typename used_csvm_type>
-[[nodiscard]] inline auto init_matrix(std::vector<T> matr, [[maybe_unused]] used_csvm_type &csvm, [[maybe_unused]] const std::array<std::size_t, 2> shape) {
+template <typename csvm_type, typename device_ptr_type, typename matrix_type, typename used_csvm_type, typename... Args>
+[[nodiscard]] inline plssvm::detail::simple_any init_explicit_matrix(matrix_type matr, [[maybe_unused]] used_csvm_type &csvm) {
+    using real_type = typename matrix_type::value_type;
+
+#if defined(PLSSV_USE_GEMM)
+    std::vector<real_type> flat_matr = util::flatten(matr.to_2D_vector());
+#else
+    std::vector<real_type> flat_matr = matrix_to_symm_kernel_matrix(matr);
+#endif
+
     // create device pointer
-    if constexpr (plssvm::csvm_to_backend_type_v<plssvm_csvm_type> == plssvm::backend_type::openmp) {
-        return plssvm::detail::simple_any{ std::move(matr) };
+    if constexpr (plssvm::csvm_to_backend_type_v<csvm_type> == plssvm::backend_type::openmp) {
+        return plssvm::detail::simple_any{ std::move(flat_matr) };
     } else {
         // add padding
-        matr = pad_1D_vector<plssvm_csvm_type>(std::move(matr), shape);
+        flat_matr = pad_1D_vector<csvm_type>(std::move(flat_matr), matr.shape());
 
-        device_ptr_type ptr{ matr.size(), csvm.devices_[0] };
-        ptr.copy_to_device(matr);
+        device_ptr_type ptr{ flat_matr.size(), csvm.devices_[0] };
+        ptr.copy_to_device(flat_matr);
         return plssvm::detail::simple_any{ std::move(ptr) };
+    }
+}
+
+/**
+ * @brief Initialize the implicit kernel matrix adding necessary padding entries using the values provided by @p matr based on the @p csvm_type.
+ * @tparam csvm_type the PLSSVM CSVM backend type
+ * @tparam device_ptr_type the device pointer type; only used if a GPU backend is used
+ * @tparam matrix_type the type of the matrix
+ * @tparam used_csvm_type the type of the @p csvm; may also be a Mock CSVM!
+ * @tparam Args the types of the additional arguments
+ * @param[in] matr the matrix to create the explicit kernel matrix from
+ * @param[in] csvm the CSVM encapsulating the device on which the matrix should be allocated
+ * @param[in] args the additional arguments
+ * @return a `plssvm::detail::simple_any` with a wrapped value usable in the PLSSVM functions (`[[nodiscard]]`)
+ */
+template <typename csvm_type, typename device_ptr_type, typename matrix_type, typename used_csvm_type, typename... Args>
+[[nodiscard]] inline plssvm::detail::simple_any init_implicit_matrix(matrix_type matr, [[maybe_unused]] used_csvm_type &csvm, Args &&...args) {
+    using real_type = typename matrix_type::value_type;
+
+    // created matrix is different for the OpenMP backend and the GPU backends!
+    if constexpr (plssvm::csvm_to_backend_type_v<csvm_type> == plssvm::backend_type::openmp) {
+        return plssvm::detail::simple_any{ std::make_tuple(plssvm::aos_matrix<real_type>{ matr, plssvm::PADDING_SIZE, plssvm::PADDING_SIZE }, std::forward<Args>(args)...) };
+    } else {
+        const auto params = static_cast<plssvm::parameter>(plssvm::detail::get<0>(args...));
+        const auto q_red = static_cast<std::vector<real_type>>(plssvm::detail::get<1>(args...));
+        const auto QA_cost = static_cast<real_type>(plssvm::detail::get<2>(args...));
+
+        // add padding to matrix
+        matr = matrix_type{ matr, plssvm::PADDING_SIZE, plssvm::PADDING_SIZE };
+
+        // create device pointer
+        device_ptr_type matr_d{ matr.shape(), matr.padding(), csvm.devices_[0] };
+        matr_d.copy_to_device(matr);
+
+        // create device pointer for the q vector
+        device_ptr_type q_d{ q_red.size() + plssvm::PADDING_SIZE, csvm.devices_[0] };
+        q_d.copy_to_device(q_red, 0, q_red.size());
+        q_d.memset(0, q_red.size());
+
+        return plssvm::detail::simple_any{ std::make_tuple(std::move(matr_d), params, std::move(q_d), QA_cost) };
+    }
+}
+
+/**
+ * @brief Initialize the kernel matrix based on the used @p solver type adding necessary padding entries using the values provided by @p matr based on the @p csvm_type.
+ * @tparam csvm_type the PLSSVM CSVM backend type
+ * @tparam device_ptr_type the device pointer type; only used if a GPU backend is used
+ * @tparam matrix_type the type of the matrix
+ * @tparam used_csvm_type the type of the @p csvm; may also be a Mock CSVM!
+ * @tparam Args the types of the additional arguments
+ * @param[in] matr the matrix to create the explicit kernel matrix from
+ * @param[in] solver the used solver type in the CG algorithm
+ * @param[in] csvm the CSVM encapsulating the device on which the matrix should be allocated
+ * @param[in] args the additional arguments
+ * @return a `plssvm::detail::simple_any` with a wrapped value usable in the PLSSVM functions (`[[nodiscard]]`)
+ */
+template <typename csvm_type, typename device_ptr_type, typename matrix_type, typename used_csvm_type, typename... Args>
+[[nodiscard]] inline plssvm::detail::simple_any init_matrix(matrix_type matr, const plssvm::solver_type solver, [[maybe_unused]] used_csvm_type &csvm, Args &&...args) {
+    if (solver == plssvm::solver_type::cg_explicit) {
+        // no additional arguments are used
+        return init_explicit_matrix<csvm_type, device_ptr_type>(std::move(matr), csvm);
+    } else if (solver == plssvm::solver_type::cg_implicit) {
+        // additional arguments are: params, q_red, QA_cost
+        return init_implicit_matrix<csvm_type, device_ptr_type>(std::move(matr), csvm, std::forward<Args>(args)...);
+    } else {
+        plssvm::detail::unreachable();
     }
 }
 
@@ -188,10 +280,175 @@ TYPED_TEST_P(GenericCSVM, get_max_mem_alloc_size) {
     EXPECT_GT(svm.get_max_mem_alloc_size(), 0_B);
 }
 
+TYPED_TEST_P(GenericCSVM, blas_level_3_explicit_without_C) {
+    using csvm_test_type = util::test_parameter_type_at_t<0, TypeParam>;
+    using csvm_type = typename csvm_test_type::csvm_type;
+    using mock_csvm_type = typename csvm_test_type::mock_csvm_type;
+    using device_ptr_type = typename csvm_test_type::device_ptr_type;
+
+    constexpr plssvm::solver_type solver = plssvm::solver_type::cg_explicit;
+
+    // create C-SVM: must be done using the mock class, since plssvm::detail::csvm::blas_level_3 is protected
+    const mock_csvm_type svm = util::construct_from_tuple<mock_csvm_type>(csvm_test_type::additional_arguments);
+
+    [[maybe_unused]] const plssvm::real_type alpha{ 1.0 };
+
+    const plssvm::aos_matrix<plssvm::real_type> matr_A{
+        { { plssvm::real_type{ 0.1 }, plssvm::real_type{ 0.2 }, plssvm::real_type{ 0.3 } },
+          { plssvm::real_type{ 0.2 }, plssvm::real_type{ 1.2 }, plssvm::real_type{ 1.3 } },
+          { plssvm::real_type{ 0.3 }, plssvm::real_type{ 1.3 }, plssvm::real_type{ 2.3 } } }
+    };
+    const plssvm::detail::simple_any A{ util::init_explicit_matrix<csvm_type, device_ptr_type>(matr_A, svm) };
+
+    const plssvm::soa_matrix<plssvm::real_type> B{ { { plssvm::real_type{ 1.0 }, plssvm::real_type{ 2.0 }, plssvm::real_type{ 3.0 } },
+                                                     { plssvm::real_type{ 4.0 }, plssvm::real_type{ 5.0 }, plssvm::real_type{ 6.0 } },
+                                                     { plssvm::real_type{ 7.0 }, plssvm::real_type{ 8.0 }, plssvm::real_type{ 9.0 } } },
+                                                   plssvm::PADDING_SIZE,
+                                                   plssvm::PADDING_SIZE };
+
+    [[maybe_unused]] const plssvm::real_type beta{ 0.0 };
+    plssvm::soa_matrix<plssvm::real_type> C{ 3, 3, plssvm::PADDING_SIZE, plssvm::PADDING_SIZE };
+    plssvm::soa_matrix<plssvm::real_type> C2{ C };
+
+    // automatic solver type not permitted// perform BLAS calculation
+    svm.blas_level_3(solver, alpha, A, B, beta, C);
+
+    // check C for correctness
+    const plssvm::soa_matrix<plssvm::real_type> correct_C{ { { plssvm::real_type{ 1.4 }, plssvm::real_type{ 6.5 }, plssvm::real_type{ 9.8 } },
+                                                             { plssvm::real_type{ 3.2 }, plssvm::real_type{ 14.6 }, plssvm::real_type{ 21.5 } },
+                                                             { plssvm::real_type{ 5.0 }, plssvm::real_type{ 22.7 }, plssvm::real_type{ 33.2 } } },
+                                                           plssvm::PADDING_SIZE,
+                                                           plssvm::PADDING_SIZE };
+    EXPECT_FLOATING_POINT_MATRIX_NEAR(C, correct_C);
+
+    // check wrapper function
+    std::ignore = svm.run_blas_level_3(solver, alpha, A, B, beta, C2);
+    EXPECT_EQ(C2, C);
+}
+TYPED_TEST_P(GenericCSVM, blas_level_3_streaming_without_C) {
+    GTEST_SKIP() << "Currently not implemented!";
+}
+
+TYPED_TEST_P(GenericCSVM, blas_level_3_explicit) {
+    using csvm_test_type = util::test_parameter_type_at_t<0, TypeParam>;
+    using csvm_type = typename csvm_test_type::csvm_type;
+    using mock_csvm_type = typename csvm_test_type::mock_csvm_type;
+    using device_ptr_type = typename csvm_test_type::device_ptr_type;
+
+    constexpr plssvm::solver_type solver = plssvm::solver_type::cg_explicit;
+
+    // create C-SVM: must be done using the mock class, since plssvm::detail::csvm::blas_level_3 is protected
+    const mock_csvm_type svm = util::construct_from_tuple<mock_csvm_type>(csvm_test_type::additional_arguments);
+
+    [[maybe_unused]] const plssvm::real_type alpha{ 1.0 };
+
+    const plssvm::aos_matrix<plssvm::real_type> matr_A{
+        { { plssvm::real_type{ 0.1 }, plssvm::real_type{ 0.2 }, plssvm::real_type{ 0.3 } },
+          { plssvm::real_type{ 0.2 }, plssvm::real_type{ 1.2 }, plssvm::real_type{ 1.3 } },
+          { plssvm::real_type{ 0.3 }, plssvm::real_type{ 1.3 }, plssvm::real_type{ 2.3 } } }
+    };
+    const plssvm::detail::simple_any A{ util::init_explicit_matrix<csvm_type, device_ptr_type>(matr_A, svm) };
+
+    const plssvm::soa_matrix<plssvm::real_type> B{ { { plssvm::real_type{ 1.0 }, plssvm::real_type{ 2.0 }, plssvm::real_type{ 3.0 } },
+                                                     { plssvm::real_type{ 4.0 }, plssvm::real_type{ 5.0 }, plssvm::real_type{ 6.0 } },
+                                                     { plssvm::real_type{ 7.0 }, plssvm::real_type{ 8.0 }, plssvm::real_type{ 9.0 } } },
+                                                   plssvm::PADDING_SIZE,
+                                                   plssvm::PADDING_SIZE };
+
+    [[maybe_unused]] const plssvm::real_type beta{ 0.5 };
+    auto C = util::generate_specific_matrix<plssvm::soa_matrix<plssvm::real_type>>(3, 3, plssvm::PADDING_SIZE, plssvm::PADDING_SIZE);
+    plssvm::soa_matrix<plssvm::real_type> C2{ C };
+
+    // perform BLAS calculation
+    svm.blas_level_3(solver, alpha, A, B, beta, C);
+    std::ignore = svm.run_blas_level_3(solver, alpha, A, B, beta, C2);
+
+    // check C for correctness
+    const plssvm::soa_matrix<plssvm::real_type> correct_C{ { { plssvm::real_type{ 1.45 }, plssvm::real_type{ 6.6 }, plssvm::real_type{ 9.95 } },
+                                                             { plssvm::real_type{ 3.75 }, plssvm::real_type{ 15.2 }, plssvm::real_type{ 22.15 } },
+                                                             { plssvm::real_type{ 6.05 }, plssvm::real_type{ 23.8 }, plssvm::real_type{ 34.35 } } },
+                                                           plssvm::PADDING_SIZE,
+                                                           plssvm::PADDING_SIZE };
+
+    EXPECT_FLOATING_POINT_MATRIX_NEAR(C, correct_C);
+    EXPECT_EQ(C2, C);
+}
+TYPED_TEST_P(GenericCSVM, blas_level_3_streaming) {
+    GTEST_SKIP() << "Currently not implemented!";
+}
+
+TYPED_TEST_P(GenericCSVM, conjugate_gradients_trivial) {
+    using csvm_test_type = util::test_parameter_type_at_t<0, TypeParam>;
+    using csvm_type = typename csvm_test_type::csvm_type;
+    using mock_csvm_type = typename csvm_test_type::mock_csvm_type;
+    using device_ptr_type = typename csvm_test_type::device_ptr_type;
+
+    // solver type doesn't mather since we want to test the surrounding CG algorithm here
+    constexpr plssvm::solver_type solver = plssvm::solver_type::cg_explicit;
+
+    // create C-SVM: must be done using the mock class, since plssvm::detail::csvm::conjugate_gradients is protected
+    const mock_csvm_type svm = util::construct_from_tuple<mock_csvm_type>(csvm_test_type::additional_arguments);
+
+    // create the data that should be used
+    const plssvm::aos_matrix<plssvm::real_type> matr_A{
+        { { plssvm::real_type{ 1.0 }, plssvm::real_type{ 0.0 }, plssvm::real_type{ 0.0 }, plssvm::real_type{ 0.0 } },
+          { plssvm::real_type{ 0.0 }, plssvm::real_type{ 1.0 }, plssvm::real_type{ 0.0 }, plssvm::real_type{ 0.0 } },
+          { plssvm::real_type{ 0.0 }, plssvm::real_type{ 0.0 }, plssvm::real_type{ 1.0 }, plssvm::real_type{ 0.0 } },
+          { plssvm::real_type{ 0.0 }, plssvm::real_type{ 0.0 }, plssvm::real_type{ 0.0 }, plssvm::real_type{ 1.0 } } }
+    };
+    const plssvm::detail::simple_any A{ util::init_explicit_matrix<csvm_type, device_ptr_type>(matr_A, svm) };
+
+    const plssvm::soa_matrix<plssvm::real_type> B{ { { plssvm::real_type{ 1.0 }, plssvm::real_type{ -1.0 }, plssvm::real_type{ 1.0 }, plssvm::real_type{ -1.0 } },
+                                                     { plssvm::real_type{ -1.0 }, plssvm::real_type{ 1.0 }, plssvm::real_type{ -1.0 }, plssvm::real_type{ 1.0 } } } };
+
+    // solve AX = B
+    const auto [X, num_iter] = svm.conjugate_gradients(A, B, plssvm::real_type{ 0.00001 }, 4, solver);
+
+    // check result
+    EXPECT_FLOATING_POINT_MATRIX_NEAR(X, (plssvm::soa_matrix<plssvm::real_type>{ B, plssvm::PADDING_SIZE, plssvm::PADDING_SIZE }));
+    EXPECT_GT(num_iter, 0);
+}
+TYPED_TEST_P(GenericCSVM, conjugate_gradients) {
+    using csvm_test_type = util::test_parameter_type_at_t<0, TypeParam>;
+    using csvm_type = typename csvm_test_type::csvm_type;
+    using mock_csvm_type = typename csvm_test_type::mock_csvm_type;
+    using device_ptr_type = typename csvm_test_type::device_ptr_type;
+
+    // solver type doesn't mather since we want to test the surrounding CG algorithm here
+    constexpr plssvm::solver_type solver = plssvm::solver_type::cg_explicit;
+
+    // create C-SVM: must be done using the mock class, since plssvm::detail::csvm::conjugate_gradients is protected
+    const mock_csvm_type svm = util::construct_from_tuple<mock_csvm_type>(csvm_test_type::additional_arguments);
+
+    // create the data that should be used
+    const plssvm::aos_matrix<plssvm::real_type> matr_A{
+        { { plssvm::real_type{ 4.0 }, plssvm::real_type{ 1.0 } },
+          { plssvm::real_type{ 1.0 }, plssvm::real_type{ 3.0 } } }
+    };
+    const plssvm::detail::simple_any A{ util::init_explicit_matrix<csvm_type, device_ptr_type>(matr_A, svm) };
+
+    const plssvm::soa_matrix<plssvm::real_type> B{ { { plssvm::real_type{ 1.0 }, plssvm::real_type{ 2.0 } },
+                                                     { plssvm::real_type{ 1.0 }, plssvm::real_type{ 2.0 } } } };
+    const plssvm::soa_matrix<plssvm::real_type> correct_X{ { { plssvm::real_type{ 1.0 / 11.0 }, plssvm::real_type{ 7.0 / 11.0 } },
+                                                             { plssvm::real_type{ 1.0 / 11.0 }, plssvm::real_type{ 7.0 / 11.0 } } },
+                                                           plssvm::PADDING_SIZE,
+                                                           plssvm::PADDING_SIZE };
+
+    // solve AX = B
+    const auto [X, num_iters] = svm.conjugate_gradients(A, B, plssvm::real_type{ 0.00001 }, 2, solver);
+
+    // check result
+    EXPECT_FLOATING_POINT_MATRIX_NEAR(X, correct_X);
+    EXPECT_GT(num_iters, 0);
+}
+
 // clang-format off
 REGISTER_TYPED_TEST_SUITE_P(GenericCSVM,
                             move_constructor, move_assignment,
-                            get_target_platform, get_device_memory, get_max_mem_alloc_size);
+                            get_target_platform, get_device_memory, get_max_mem_alloc_size,
+                            blas_level_3_explicit_without_C, blas_level_3_streaming_without_C,
+                            blas_level_3_explicit, blas_level_3_streaming,
+                            conjugate_gradients_trivial, conjugate_gradients);
 // clang-format on
 
 //*************************************************************************************************************************************//
@@ -210,7 +467,7 @@ TYPED_TEST_P(GenericCSVMSolver, setup_data_on_devices) {
     constexpr plssvm::solver_type solver = util::test_parameter_value_at_v<0, TypeParam>;
 
     // skip unimplemented tests
-    if constexpr (solver == plssvm::solver_type::cg_streaming || solver == plssvm::solver_type::cg_implicit) {
+    if constexpr (solver == plssvm::solver_type::cg_streaming) {
         GTEST_SKIP() << "Currently not implemented!";
     }
 
@@ -254,240 +511,9 @@ TYPED_TEST_P(GenericCSVMSolver, setup_data_on_devices) {
     }
 }
 
-TYPED_TEST_P(GenericCSVMSolver, blas_level_3_without_C) {
-    using csvm_test_type = util::test_parameter_type_at_t<0, TypeParam>;
-    using csvm_type = typename csvm_test_type::csvm_type;
-    using mock_csvm_type = typename csvm_test_type::mock_csvm_type;
-    using device_ptr_type = typename csvm_test_type::device_ptr_type;
-    constexpr plssvm::solver_type solver = util::test_parameter_value_at_v<0, TypeParam>;
-
-    // skip unimplemented tests
-    if constexpr (solver == plssvm::solver_type::cg_streaming || solver == plssvm::solver_type::cg_implicit) {
-        GTEST_SKIP() << "Currently not implemented!";
-    }
-
-    // create C-SVM: must be done using the mock class, since plssvm::detail::csvm::blas_level_3 is protected
-    const mock_csvm_type svm = util::construct_from_tuple<mock_csvm_type>(csvm_test_type::additional_arguments);
-
-    [[maybe_unused]] const plssvm::real_type alpha{ 1.0 };
-
-#if defined(PLSSVM_USE_GEMM)
-    // clang-format off
-    std::vector<plssvm::real_type> matr_A{
-        plssvm::real_type{ 0.1 }, plssvm::real_type{ 0.2 }, plssvm::real_type{ 0.3 },
-        plssvm::real_type{ 0.2 }, plssvm::real_type{ 1.2 }, plssvm::real_type{ 1.3 },
-        plssvm::real_type{ 0.3 }, plssvm::real_type{ 1.3 }, plssvm::real_type{ 2.3 }
-    };
-        // clang-format on
-#else
-    std::vector<plssvm::real_type> matr_A = { plssvm::real_type{ 0.1 }, plssvm::real_type{ 0.2 }, plssvm::real_type{ 0.3 }, plssvm::real_type{ 1.2 }, plssvm::real_type{ 1.3 }, plssvm::real_type{ 2.3 } };
-#endif
-
-    const plssvm::detail::simple_any A{ util::init_matrix<csvm_type, device_ptr_type>(matr_A, svm, { 3, 3 }) };
-
-    const plssvm::soa_matrix<plssvm::real_type> B{ { { plssvm::real_type{ 1.0 }, plssvm::real_type{ 2.0 }, plssvm::real_type{ 3.0 } },
-                                                     { plssvm::real_type{ 4.0 }, plssvm::real_type{ 5.0 }, plssvm::real_type{ 6.0 } },
-                                                     { plssvm::real_type{ 7.0 }, plssvm::real_type{ 8.0 }, plssvm::real_type{ 9.0 } } },
-                                                   plssvm::PADDING_SIZE,
-                                                   plssvm::PADDING_SIZE };
-
-    [[maybe_unused]] const plssvm::real_type beta{ 0.0 };
-    plssvm::soa_matrix<plssvm::real_type> C{ 3, 3, plssvm::PADDING_SIZE, plssvm::PADDING_SIZE };
-    plssvm::soa_matrix<plssvm::real_type> C2{ C };
-
-    // automatic solver type not permitted
-    if constexpr (solver == plssvm::solver_type::automatic) {
-#if defined(PLSSVM_ASSERT_ENABLED)
-        EXPECT_DEATH(svm.blas_level_3(solver, alpha, A, B, beta, C), "An explicit solver type must be provided instead of solver_type::automatic!");
-#else
-        SUCCEED() << "Solver type is automatic, but assertions are disabled!";
-#endif
-    } else {
-        // perform BLAS calculation
-        svm.blas_level_3(solver, alpha, A, B, beta, C);
-
-        // check C for correctness
-        const plssvm::soa_matrix<plssvm::real_type> correct_C{ { { plssvm::real_type{ 1.4 }, plssvm::real_type{ 6.5 }, plssvm::real_type{ 9.8 } },
-                                                                 { plssvm::real_type{ 3.2 }, plssvm::real_type{ 14.6 }, plssvm::real_type{ 21.5 } },
-                                                                 { plssvm::real_type{ 5.0 }, plssvm::real_type{ 22.7 }, plssvm::real_type{ 33.2 } } },
-                                                               plssvm::PADDING_SIZE,
-                                                               plssvm::PADDING_SIZE };
-        EXPECT_FLOATING_POINT_MATRIX_NEAR(C, correct_C);
-
-        // check wrapper function
-        std::ignore = svm.run_blas_level_3(solver, alpha, A, B, beta, C2);
-        EXPECT_EQ(C2, C);
-    }
-}
-TYPED_TEST_P(GenericCSVMSolver, blas_level_3) {
-    using csvm_test_type = util::test_parameter_type_at_t<0, TypeParam>;
-    using csvm_type = typename csvm_test_type::csvm_type;
-    using mock_csvm_type = typename csvm_test_type::mock_csvm_type;
-    using device_ptr_type = typename csvm_test_type::device_ptr_type;
-    constexpr plssvm::solver_type solver = util::test_parameter_value_at_v<0, TypeParam>;
-
-    // skip unimplemented tests
-    if constexpr (solver == plssvm::solver_type::cg_streaming || solver == plssvm::solver_type::cg_implicit) {
-        GTEST_SKIP() << "Currently not implemented!";
-    }
-
-    // create C-SVM: must be done using the mock class, since plssvm::detail::csvm::blas_level_3 is protected
-    const mock_csvm_type svm = util::construct_from_tuple<mock_csvm_type>(csvm_test_type::additional_arguments);
-
-    [[maybe_unused]] const plssvm::real_type alpha{ 1.0 };
-
-#if defined(PLSSVM_USE_GEMM)
-    // clang-format off
-    std::vector<plssvm::real_type> matr_A{
-        plssvm::real_type{ 0.1 }, plssvm::real_type{ 0.2 }, plssvm::real_type{ 0.3 },
-        plssvm::real_type{ 0.2 }, plssvm::real_type{ 1.2 }, plssvm::real_type{ 1.3 },
-        plssvm::real_type{ 0.3 }, plssvm::real_type{ 1.3 }, plssvm::real_type{ 2.3 }
-    };
-        // clang-format on
-#else
-    std::vector<plssvm::real_type> matr_A = { plssvm::real_type{ 0.1 }, plssvm::real_type{ 0.2 }, plssvm::real_type{ 0.3 }, plssvm::real_type{ 1.2 }, plssvm::real_type{ 1.3 }, plssvm::real_type{ 2.3 } };
-#endif
-    const plssvm::detail::simple_any A{ util::init_matrix<csvm_type, device_ptr_type>(matr_A, svm, { 3, 3 }) };
-
-    const plssvm::soa_matrix<plssvm::real_type> B{ { { plssvm::real_type{ 1.0 }, plssvm::real_type{ 2.0 }, plssvm::real_type{ 3.0 } },
-                                                     { plssvm::real_type{ 4.0 }, plssvm::real_type{ 5.0 }, plssvm::real_type{ 6.0 } },
-                                                     { plssvm::real_type{ 7.0 }, plssvm::real_type{ 8.0 }, plssvm::real_type{ 9.0 } } },
-                                                   plssvm::PADDING_SIZE,
-                                                   plssvm::PADDING_SIZE };
-
-    [[maybe_unused]] const plssvm::real_type beta{ 0.5 };
-    auto C = util::generate_specific_matrix<plssvm::soa_matrix<plssvm::real_type>>(3, 3, plssvm::PADDING_SIZE, plssvm::PADDING_SIZE);
-    plssvm::soa_matrix<plssvm::real_type> C2{ C };
-
-    // automatic solver type not permitted
-    if constexpr (solver == plssvm::solver_type::automatic) {
-#if defined(PLSSVM_ASSERT_ENABLED)
-        EXPECT_DEATH(svm.blas_level_3(solver, alpha, A, B, beta, C), "An explicit solver type must be provided instead of solver_type::automatic!");
-#else
-        SUCCEED() << "Solver type is automatic, but assertions are disabled!";
-#endif
-    } else {
-        // perform BLAS calculation
-        svm.blas_level_3(solver, alpha, A, B, beta, C);
-
-        // check C for correctness
-        const plssvm::soa_matrix<plssvm::real_type> correct_C{ { { plssvm::real_type{ 1.45 }, plssvm::real_type{ 6.6 }, plssvm::real_type{ 9.95 } },
-                                                                 { plssvm::real_type{ 3.75 }, plssvm::real_type{ 15.2 }, plssvm::real_type{ 22.15 } },
-                                                                 { plssvm::real_type{ 6.05 }, plssvm::real_type{ 23.8 }, plssvm::real_type{ 34.35 } } },
-                                                               plssvm::PADDING_SIZE,
-                                                               plssvm::PADDING_SIZE };
-        EXPECT_FLOATING_POINT_MATRIX_NEAR(C, correct_C);
-
-        // check wrapper function
-        std::ignore = svm.run_blas_level_3(solver, alpha, A, B, beta, C2);
-        EXPECT_EQ(C2, C);
-    }
-}
-
-TYPED_TEST_P(GenericCSVMSolver, conjugate_gradients_trivial) {
-    using csvm_test_type = util::test_parameter_type_at_t<0, TypeParam>;
-    using csvm_type = typename csvm_test_type::csvm_type;
-    using mock_csvm_type = typename csvm_test_type::mock_csvm_type;
-    using device_ptr_type = typename csvm_test_type::device_ptr_type;
-    constexpr plssvm::solver_type solver = util::test_parameter_value_at_v<0, TypeParam>;
-
-    // skip unimplemented tests
-    if constexpr (solver == plssvm::solver_type::cg_streaming || solver == plssvm::solver_type::cg_implicit) {
-        GTEST_SKIP() << "Currently not implemented!";
-    }
-
-    // create C-SVM: must be done using the mock class, since plssvm::detail::csvm::conjugate_gradients is protected
-    const mock_csvm_type svm = util::construct_from_tuple<mock_csvm_type>(csvm_test_type::additional_arguments);
-
-    // create the data that should be used
-#if defined(PLSSVM_USE_GEMM)
-    // clang-format off
-    const std::vector<plssvm::real_type> matr_A{
-        plssvm::real_type{ 1.0 }, plssvm::real_type{ 0.0 }, plssvm::real_type{ 0.0 }, plssvm::real_type{ 0.0 },
-        plssvm::real_type{ 0.0 }, plssvm::real_type{ 1.0 }, plssvm::real_type{ 0.0 }, plssvm::real_type{ 0.0 },
-        plssvm::real_type{ 0.0 }, plssvm::real_type{ 0.0 }, plssvm::real_type{ 1.0 }, plssvm::real_type{ 0.0 },
-        plssvm::real_type{ 0.0 }, plssvm::real_type{ 0.0 }, plssvm::real_type{ 0.0 }, plssvm::real_type{ 1.0 }
-    };
-        // clang-format on
-#else
-    const std::vector<plssvm::real_type> matr_A{ plssvm::real_type{ 1.0 }, plssvm::real_type{ 0.0 }, plssvm::real_type{ 0.0 }, plssvm::real_type{ 0.0 }, plssvm::real_type{ 1.0 }, plssvm::real_type{ 0.0 }, plssvm::real_type{ 0.0 }, plssvm::real_type{ 1.0 }, plssvm::real_type{ 0.0 }, plssvm::real_type{ 1.0 } };
-#endif
-    const plssvm::detail::simple_any A{ util::init_matrix<csvm_type, device_ptr_type>(matr_A, svm, { 4, 4 }) };
-    const plssvm::soa_matrix<plssvm::real_type> B{ { { plssvm::real_type{ 1.0 }, plssvm::real_type{ -1.0 }, plssvm::real_type{ 1.0 }, plssvm::real_type{ -1.0 } },
-                                                     { plssvm::real_type{ -1.0 }, plssvm::real_type{ 1.0 }, plssvm::real_type{ -1.0 }, plssvm::real_type{ 1.0 } } } };
-
-    // automatic solver type not permitted
-    if constexpr (solver == plssvm::solver_type::automatic) {
-#if defined(PLSSVM_ASSERT_ENABLED)
-        EXPECT_DEATH(std::ignore = svm.conjugate_gradients(A, B, plssvm::real_type{ 0.00001 }, 4, solver), "An explicit solver type must be provided instead of solver_type::automatic!");
-#else
-        SUCCEED() << "Solver type is automatic, but assertions are disabled!";
-#endif
-    } else {
-        // solve AX = B
-        const auto [X, num_iter] = svm.conjugate_gradients(A, B, plssvm::real_type{ 0.00001 }, 4, solver);
-
-        // check result
-        EXPECT_FLOATING_POINT_MATRIX_NEAR(X, (plssvm::soa_matrix<plssvm::real_type>{ B, plssvm::PADDING_SIZE, plssvm::PADDING_SIZE }));
-        EXPECT_GT(num_iter, 0);
-    }
-}
-TYPED_TEST_P(GenericCSVMSolver, conjugate_gradients) {
-    using csvm_test_type = util::test_parameter_type_at_t<0, TypeParam>;
-    using csvm_type = typename csvm_test_type::csvm_type;
-    using mock_csvm_type = typename csvm_test_type::mock_csvm_type;
-    using device_ptr_type = typename csvm_test_type::device_ptr_type;
-    constexpr plssvm::solver_type solver = util::test_parameter_value_at_v<0, TypeParam>;
-
-    // skip unimplemented tests
-    if constexpr (solver == plssvm::solver_type::cg_streaming || solver == plssvm::solver_type::cg_implicit) {
-        GTEST_SKIP() << "Currently not implemented!";
-    }
-
-    // create C-SVM: must be done using the mock class, since plssvm::detail::csvm::conjugate_gradients is protected
-    const mock_csvm_type svm = util::construct_from_tuple<mock_csvm_type>(csvm_test_type::additional_arguments);
-
-    // create the data that should be used
-#if defined(PLSSVM_USE_GEMM)
-    // clang-format off
-    const std::vector<plssvm::real_type> matr_A{
-        plssvm::real_type{ 4.0 }, plssvm::real_type{ 1.0 },
-        plssvm::real_type{ 1.0 }, plssvm::real_type{ 3.0 }
-    };
-        // clang-format on
-#else
-    const std::vector<plssvm::real_type> matr_A{ plssvm::real_type{ 4.0 }, plssvm::real_type{ 1.0 }, plssvm::real_type{ 3.0 } };
-#endif
-    const plssvm::detail::simple_any A{ util::init_matrix<csvm_type, device_ptr_type>(matr_A, svm, { 2, 2 }) };
-    const plssvm::soa_matrix<plssvm::real_type> B{ { { plssvm::real_type{ 1.0 }, plssvm::real_type{ 2.0 } },
-                                                     { plssvm::real_type{ 1.0 }, plssvm::real_type{ 2.0 } } } };
-    const plssvm::soa_matrix<plssvm::real_type> correct_X{ { { plssvm::real_type{ 1.0 / 11.0 }, plssvm::real_type{ 7.0 / 11.0 } },
-                                                             { plssvm::real_type{ 1.0 / 11.0 }, plssvm::real_type{ 7.0 / 11.0 } } },
-                                                           plssvm::PADDING_SIZE,
-                                                           plssvm::PADDING_SIZE };
-
-    // automatic solver type not permitted
-    if constexpr (solver == plssvm::solver_type::automatic) {
-#if defined(PLSSVM_ASSERT_ENABLED)
-        EXPECT_DEATH(std::ignore = svm.conjugate_gradients(A, B, plssvm::real_type{ 0.00001 }, 2, solver), "An explicit solver type must be provided instead of solver_type::automatic!");
-#else
-        SUCCEED() << "Solver type is automatic, but assertions are disabled!";
-#endif
-    } else {
-        // solve AX = B
-        const auto [X, num_iters] = svm.conjugate_gradients(A, B, plssvm::real_type{ 0.00001 }, 2, solver);
-
-        // check result
-        EXPECT_FLOATING_POINT_MATRIX_NEAR(X, correct_X);
-        EXPECT_GT(num_iters, 0);
-    }
-}
-
 // clang-format off
 REGISTER_TYPED_TEST_SUITE_P(GenericCSVMSolver,
-                            setup_data_on_devices,
-                            blas_level_3_without_C, blas_level_3,
-                            conjugate_gradients_trivial, conjugate_gradients);
+                            setup_data_on_devices);
 // clang-format on
 
 //*************************************************************************************************************************************//
@@ -497,6 +523,113 @@ REGISTER_TYPED_TEST_SUITE_P(GenericCSVMSolver,
 template <typename T>
 class GenericCSVMKernelFunction : public GenericCSVM<T> {};
 TYPED_TEST_SUITE_P(GenericCSVMKernelFunction);
+
+TYPED_TEST_P(GenericCSVMKernelFunction, blas_level_3_assembly_implicit_without_C) {
+    using csvm_test_type = util::test_parameter_type_at_t<0, TypeParam>;
+    using csvm_type = typename csvm_test_type::csvm_type;
+    using mock_csvm_type = typename csvm_test_type::mock_csvm_type;
+    using device_ptr_type = typename csvm_test_type::device_ptr_type;
+    constexpr plssvm::kernel_function_type kernel = util::test_parameter_value_at_v<0, TypeParam>;
+
+    // set solver type explicitly to cg_implicit
+    constexpr plssvm::solver_type solver = plssvm::solver_type::cg_implicit;
+
+    // create parameter struct
+    plssvm::parameter params{ plssvm::kernel_type = kernel, plssvm::cost = 2.0 };
+    if constexpr (kernel == plssvm::kernel_function_type::polynomial) {
+        params.degree = 1;
+        params.gamma = 1.0;
+        params.coef0 = 0.0;
+    } else if constexpr (kernel == plssvm::kernel_function_type::rbf) {
+        params.gamma = 1.0;
+    }
+
+    // create C-SVM: must be done using the mock class, since plssvm::detail::csvm::blas_level_3 is protected
+    const mock_csvm_type svm = util::construct_from_tuple<mock_csvm_type>(csvm_test_type::additional_arguments);
+
+    [[maybe_unused]] const plssvm::real_type alpha{ 1.0 };
+
+    const auto matr_A = util::generate_specific_matrix<plssvm::soa_matrix<plssvm::real_type>>(4, 4);
+    const auto [q, QA_cost] = compare::perform_dimensional_reduction(params, matr_A);
+
+    const plssvm::detail::simple_any A{ util::init_implicit_matrix<csvm_type, device_ptr_type>(matr_A, svm, params, q, QA_cost) };
+
+    const plssvm::soa_matrix<plssvm::real_type> B{ { { plssvm::real_type{ 1.0 }, plssvm::real_type{ 2.0 }, plssvm::real_type{ 3.0 } },
+                                                     { plssvm::real_type{ 4.0 }, plssvm::real_type{ 5.0 }, plssvm::real_type{ 6.0 } },
+                                                     { plssvm::real_type{ 7.0 }, plssvm::real_type{ 8.0 }, plssvm::real_type{ 9.0 } } },
+                                                   plssvm::PADDING_SIZE,
+                                                   plssvm::PADDING_SIZE };
+
+    const plssvm::real_type beta{ 0.0 };
+    plssvm::soa_matrix<plssvm::real_type> C{ 3, 3, plssvm::real_type{ 0.0 }, plssvm::PADDING_SIZE, plssvm::PADDING_SIZE };
+    plssvm::soa_matrix<plssvm::real_type> C2{ C };
+
+    // perform BLAS calculation
+    svm.blas_level_3(solver, alpha, A, B, beta, C);
+    std::ignore = svm.run_blas_level_3(solver, alpha, A, B, beta, C2);
+
+    // calculate correct results
+    const std::vector<plssvm::real_type> kernel_matrix = compare::assemble_kernel_matrix_gemm(params, matr_A, q, QA_cost);
+    plssvm::soa_matrix<plssvm::real_type> correct_C{ 3, 3, plssvm::real_type{ 0.0 }, plssvm::PADDING_SIZE, plssvm::PADDING_SIZE };
+    compare::gemm(alpha, kernel_matrix, B, beta, correct_C);
+
+    // check for correctness
+    EXPECT_FLOATING_POINT_MATRIX_NEAR(C, correct_C);
+    EXPECT_FLOATING_POINT_MATRIX_NEAR(C2, correct_C);
+}
+TYPED_TEST_P(GenericCSVMKernelFunction, blas_level_3_assembly_implicit) {
+    using csvm_test_type = util::test_parameter_type_at_t<0, TypeParam>;
+    using csvm_type = typename csvm_test_type::csvm_type;
+    using mock_csvm_type = typename csvm_test_type::mock_csvm_type;
+    using device_ptr_type = typename csvm_test_type::device_ptr_type;
+    constexpr plssvm::kernel_function_type kernel = util::test_parameter_value_at_v<0, TypeParam>;
+
+    // set solver type explicitly to cg_implicit
+    constexpr plssvm::solver_type solver = plssvm::solver_type::cg_implicit;
+
+    // create parameter struct
+    plssvm::parameter params{ plssvm::kernel_type = kernel, plssvm::cost = 2.0 };
+    if constexpr (kernel == plssvm::kernel_function_type::polynomial) {
+        params.degree = 1;
+        params.gamma = 1.0;
+        params.coef0 = 0.0;
+    } else if constexpr (kernel == plssvm::kernel_function_type::rbf) {
+        params.gamma = 1.0;
+    }
+
+    // create C-SVM: must be done using the mock class, since plssvm::detail::csvm::blas_level_3 is protected
+    const mock_csvm_type svm = util::construct_from_tuple<mock_csvm_type>(csvm_test_type::additional_arguments);
+
+    [[maybe_unused]] const plssvm::real_type alpha{ 1.0 };
+
+    const auto matr_A = util::generate_specific_matrix<plssvm::soa_matrix<plssvm::real_type>>(4, 4);
+    const auto [q, QA_cost] = compare::perform_dimensional_reduction(params, matr_A);
+
+    const plssvm::detail::simple_any A{ util::init_implicit_matrix<csvm_type, device_ptr_type>(matr_A, svm, params, q, QA_cost) };
+
+    const plssvm::soa_matrix<plssvm::real_type> B{ { { plssvm::real_type{ 1.0 }, plssvm::real_type{ 2.0 }, plssvm::real_type{ 3.0 } },
+                                                     { plssvm::real_type{ 4.0 }, plssvm::real_type{ 5.0 }, plssvm::real_type{ 6.0 } },
+                                                     { plssvm::real_type{ 7.0 }, plssvm::real_type{ 8.0 }, plssvm::real_type{ 9.0 } } },
+                                                   plssvm::PADDING_SIZE,
+                                                   plssvm::PADDING_SIZE };
+
+    const plssvm::real_type beta{ 0.5 };
+    auto C = util::generate_specific_matrix<plssvm::soa_matrix<plssvm::real_type>>(3, 3, plssvm::PADDING_SIZE, plssvm::PADDING_SIZE);
+    plssvm::soa_matrix<plssvm::real_type> C2{ C };
+    plssvm::soa_matrix<plssvm::real_type> correct_C{ C };
+
+    // perform BLAS calculation
+    svm.blas_level_3(solver, alpha, A, B, beta, C);
+    std::ignore = svm.run_blas_level_3(solver, alpha, A, B, beta, C2);
+
+    // calculate correct results
+    const std::vector<plssvm::real_type> kernel_matrix = compare::assemble_kernel_matrix_gemm(params, matr_A, q, QA_cost);
+    compare::gemm(alpha, kernel_matrix, B, beta, correct_C);
+
+    // check for correctness
+    EXPECT_FLOATING_POINT_MATRIX_NEAR(C, correct_C);
+    EXPECT_FLOATING_POINT_MATRIX_NEAR(C2, correct_C);
+}
 
 TYPED_TEST_P(GenericCSVMKernelFunction, predict_values) {
     using csvm_test_type = util::test_parameter_type_at_t<0, TypeParam>;
@@ -624,14 +757,15 @@ TYPED_TEST_P(GenericCSVMKernelFunction, perform_dimensional_reduction) {
     const auto [q_red, QA_cost] = svm.perform_dimensional_reduction(params, data);
 
     // check values for correctness
+    const auto [q_red_correct, QA_cost_correct] = compare::perform_dimensional_reduction(params, data);
     ASSERT_EQ(q_red.size(), data.num_rows() - 1);
-    EXPECT_FLOATING_POINT_VECTOR_NEAR(q_red, compare::perform_dimensional_reduction(params, data));
-    const plssvm::real_type correct_QA_cost = compare::kernel_function(params, data, data.num_rows() - 1, data, data.num_rows() - 1) + plssvm::real_type{ 1.0 } / plssvm::real_type{ params.cost };
-    EXPECT_FLOATING_POINT_NEAR(QA_cost, correct_QA_cost);
+    EXPECT_FLOATING_POINT_VECTOR_NEAR(q_red, q_red_correct);
+    EXPECT_FLOATING_POINT_NEAR(QA_cost, QA_cost_correct);
 }
 
 // clang-format off
 REGISTER_TYPED_TEST_SUITE_P(GenericCSVMKernelFunction,
+                            blas_level_3_assembly_implicit_without_C, blas_level_3_assembly_implicit,
                             predict_values, predict_values_provided_w,
                             perform_dimensional_reduction);
 // clang-format on
@@ -651,7 +785,7 @@ TYPED_TEST_P(GenericCSVMSolverKernelFunction, solve_lssvm_system_of_linear_equat
     constexpr plssvm::kernel_function_type kernel = util::test_parameter_value_at_v<1, TypeParam>;
 
     // skip unimplemented tests
-    if constexpr (solver == plssvm::solver_type::cg_streaming || solver == plssvm::solver_type::cg_implicit) {
+    if constexpr (solver == plssvm::solver_type::cg_streaming) {
         GTEST_SKIP() << "Currently not implemented!";
     }
 
@@ -709,7 +843,7 @@ TYPED_TEST_P(GenericCSVMSolverKernelFunction, assemble_kernel_matrix_minimal) {
     constexpr plssvm::kernel_function_type kernel = util::test_parameter_value_at_v<1, TypeParam>;
 
     // skip unimplemented tests
-    if constexpr (solver == plssvm::solver_type::cg_streaming || solver == plssvm::solver_type::cg_implicit) {
+    if constexpr (solver == plssvm::solver_type::cg_streaming) {
         GTEST_SKIP() << "Currently not implemented!";
     }
 
@@ -739,9 +873,9 @@ TYPED_TEST_P(GenericCSVMSolverKernelFunction, assemble_kernel_matrix_minimal) {
 #else
         SUCCEED() << "Solver type is automatic, but assertions are disabled!";
 #endif
-    } else {
+    } else if constexpr (solver == plssvm::solver_type::cg_explicit) {
         // assemble the kernel matrix
-        const plssvm::detail::simple_any data_d = svm.setup_data_on_devices(solver, data);
+        plssvm::detail::simple_any data_d = svm.setup_data_on_devices(solver, data);
         const plssvm::detail::simple_any kernel_matrix_d = svm.assemble_kernel_matrix(solver, params, data_d, q_red, QA_cost);
 
         // get result based on used backend
@@ -780,6 +914,35 @@ TYPED_TEST_P(GenericCSVMSolverKernelFunction, assemble_kernel_matrix_minimal) {
         }
 
         EXPECT_FLOATING_POINT_VECTOR_NEAR(kernel_matrix, ground_truth);
+    } else if constexpr (solver == plssvm::solver_type::cg_implicit) {
+        // assemble the kernel matrix
+        plssvm::detail::simple_any data_d = svm.setup_data_on_devices(solver, data);
+        const plssvm::detail::simple_any kernel_matrix_d = svm.assemble_kernel_matrix(solver, params, data_d, q_red, QA_cost);
+
+        // implicit doesn't assemble a kernel matrix!
+        if constexpr (plssvm::csvm_to_backend_type_v<csvm_type> == plssvm::backend_type::openmp) {
+            const auto &[data_d_ret, params_ret, q_red_ret, QA_cost_ret] = kernel_matrix_d.get<std::tuple<plssvm::aos_matrix<plssvm::real_type>, plssvm::parameter, std::vector<plssvm::real_type>, plssvm::real_type>>();
+
+            // the values should not have changed! (except the matrix layout)
+            EXPECT_EQ(params_ret, params);
+            EXPECT_FLOATING_POINT_MATRIX_EQ(data_d_ret, plssvm::aos_matrix<plssvm::real_type>{ data });
+            EXPECT_EQ(q_red_ret, q_red);
+            EXPECT_EQ(QA_cost_ret, QA_cost);
+        } else {
+            const auto &[data_d_ret, params_ret, q_red_d_ret, QA_cost_ret] = kernel_matrix_d.get<std::tuple<device_ptr_type, plssvm::parameter, device_ptr_type, plssvm::real_type>>();
+
+            // copy data back to host
+            plssvm::soa_matrix<plssvm::real_type> data_ret{ data };
+            data_d_ret.copy_to_host(data_ret);
+            std::vector<plssvm::real_type> q_red_ret(q_red.size());
+            q_red_d_ret.copy_to_host(q_red_ret, 0, q_red_ret.size());
+
+            // the values should not have changed! (except the matrix layout)
+            EXPECT_EQ(params_ret, params);
+            EXPECT_FLOATING_POINT_MATRIX_EQ(data_ret, data);
+            EXPECT_EQ(q_red_ret, q_red);
+            EXPECT_EQ(QA_cost_ret, QA_cost);
+        }
     }
 }
 TYPED_TEST_P(GenericCSVMSolverKernelFunction, assemble_kernel_matrix) {
@@ -791,7 +954,7 @@ TYPED_TEST_P(GenericCSVMSolverKernelFunction, assemble_kernel_matrix) {
     constexpr plssvm::kernel_function_type kernel = util::test_parameter_value_at_v<1, TypeParam>;
 
     // skip unimplemented tests
-    if constexpr (solver == plssvm::solver_type::cg_streaming || solver == plssvm::solver_type::cg_implicit) {
+    if constexpr (solver == plssvm::solver_type::cg_streaming) {
         GTEST_SKIP() << "Currently not implemented!";
     }
 
@@ -820,9 +983,9 @@ TYPED_TEST_P(GenericCSVMSolverKernelFunction, assemble_kernel_matrix) {
 #else
         SUCCEED() << "Solver type is automatic, but assertions are disabled!";
 #endif
-    } else {
+    } else if constexpr (solver == plssvm::solver_type::cg_explicit) {
         // assemble the kernel matrix
-        const plssvm::detail::simple_any data_d = svm.setup_data_on_devices(solver, data);
+        plssvm::detail::simple_any data_d = svm.setup_data_on_devices(solver, data);
         const plssvm::detail::simple_any kernel_matrix_d = svm.assemble_kernel_matrix(solver, params, data_d, q_red, QA_cost);
 
         // get result based on used backend
@@ -871,6 +1034,35 @@ TYPED_TEST_P(GenericCSVMSolverKernelFunction, assemble_kernel_matrix) {
                 break;
         }
         EXPECT_FLOATING_POINT_VECTOR_NEAR(kernel_matrix, ground_truth);
+    } else if constexpr (solver == plssvm::solver_type::cg_implicit) {
+        // assemble the kernel matrix
+        plssvm::detail::simple_any data_d = svm.setup_data_on_devices(solver, data);
+        const plssvm::detail::simple_any kernel_matrix_d = svm.assemble_kernel_matrix(solver, params, data_d, q_red, QA_cost);
+
+        // implicit doesn't assemble a kernel matrix!
+        if constexpr (plssvm::csvm_to_backend_type_v<csvm_type> == plssvm::backend_type::openmp) {
+            const auto &[data_d_ret, params_ret, q_red_ret, QA_cost_ret] = kernel_matrix_d.get<std::tuple<plssvm::aos_matrix<plssvm::real_type>, plssvm::parameter, std::vector<plssvm::real_type>, plssvm::real_type>>();
+
+            // the values should not have changed! (except the matrix layout)
+            EXPECT_EQ(params_ret, params);
+            EXPECT_FLOATING_POINT_MATRIX_EQ(data_d_ret, plssvm::aos_matrix<plssvm::real_type>{ data });
+            EXPECT_EQ(q_red_ret, q_red);
+            EXPECT_EQ(QA_cost_ret, QA_cost);
+        } else {
+            const auto &[data_d_ret, params_ret, q_red_d_ret, QA_cost_ret] = kernel_matrix_d.get<std::tuple<device_ptr_type, plssvm::parameter, device_ptr_type, plssvm::real_type>>();
+
+            // copy data back to host
+            plssvm::soa_matrix<plssvm::real_type> data_ret{ data };
+            data_d_ret.copy_to_host(data_ret);
+            std::vector<plssvm::real_type> q_red_ret(q_red.size());
+            q_red_d_ret.copy_to_host(q_red_ret, 0, q_red_ret.size());
+
+            // the values should not have changed! (except the matrix layout)
+            EXPECT_EQ(params_ret, params);
+            EXPECT_FLOATING_POINT_MATRIX_EQ(data_ret, data);
+            EXPECT_EQ(q_red_ret, q_red);
+            EXPECT_EQ(QA_cost_ret, QA_cost);
+        }
     }
 }
 
@@ -1000,7 +1192,7 @@ TYPED_TEST_P(GenericCSVMSolverKernelFunctionClassification, fit) {
     constexpr plssvm::classification_type classification = util::test_parameter_value_at_v<2, TypeParam>;
 
     // skip unimplemented tests
-    if constexpr (solver == plssvm::solver_type::cg_streaming || solver == plssvm::solver_type::cg_implicit) {
+    if constexpr (solver == plssvm::solver_type::cg_streaming) {
         GTEST_SKIP() << "Currently not implemented!";
     }
 
@@ -1027,7 +1219,7 @@ TYPED_TEST_P(GenericCSVMSolverKernelFunctionClassification, fit) {
     ASSERT_EQ(model.weights().size(), correct_model.weights().size());
     // can't check weights for equality since the SV order after our IO is non-deterministic
     // TODO: the eps factor must be selected WAY too large
-    //    EXPECT_FLOATING_POINT_VECTOR_NEAR_EPS(model.rho(), correct_model.rho(), plssvm::real_type{ 1e12 });
+    // EXPECT_FLOATING_POINT_VECTOR_NEAR_EPS(model.rho(), correct_model.rho(), plssvm::real_type{ 1e12 });
     EXPECT_EQ(model.get_classification_type(), classification);
     EXPECT_TRUE(model.num_iters().has_value());
     EXPECT_EQ(model.num_iters().value().size(), (plssvm::calculate_number_of_classifiers(classification, correct_model.num_classes())));
@@ -1043,6 +1235,48 @@ REGISTER_TYPED_TEST_SUITE_P(GenericCSVMSolverKernelFunctionClassification,
 //*************************************************************************************************************************************//
 
 template <typename T>
+class GenericCSVMDeathTest : public GenericCSVM<T> {};
+TYPED_TEST_SUITE_P(GenericCSVMDeathTest);
+
+TYPED_TEST_P(GenericCSVMDeathTest, blas_level_3_automatic) {
+    using csvm_test_type = util::test_parameter_type_at_t<0, TypeParam>;
+    using csvm_type = typename csvm_test_type::csvm_type;
+    using mock_csvm_type = typename csvm_test_type::mock_csvm_type;
+    using device_ptr_type = typename csvm_test_type::device_ptr_type;
+
+    constexpr plssvm::solver_type solver = plssvm::solver_type::automatic;
+
+    // create C-SVM: must be done using the mock class, since plssvm::detail::csvm::blas_level_3 is protected
+    const mock_csvm_type svm = util::construct_from_tuple<mock_csvm_type>(csvm_test_type::additional_arguments);
+
+    const plssvm::real_type alpha{ 1.0 };
+
+    const plssvm::aos_matrix<plssvm::real_type> matr_A{
+        { { plssvm::real_type{ 0.1 }, plssvm::real_type{ 0.2 }, plssvm::real_type{ 0.3 } },
+          { plssvm::real_type{ 0.2 }, plssvm::real_type{ 1.2 }, plssvm::real_type{ 1.3 } },
+          { plssvm::real_type{ 0.3 }, plssvm::real_type{ 1.3 }, plssvm::real_type{ 2.3 } } }
+    };
+    const plssvm::detail::simple_any A{ util::init_explicit_matrix<csvm_type, device_ptr_type>(matr_A, svm) };
+
+    const plssvm::soa_matrix<plssvm::real_type> B{ { { plssvm::real_type{ 1.0 }, plssvm::real_type{ 2.0 }, plssvm::real_type{ 3.0 } },
+                                                     { plssvm::real_type{ 4.0 }, plssvm::real_type{ 5.0 }, plssvm::real_type{ 6.0 } },
+                                                     { plssvm::real_type{ 7.0 }, plssvm::real_type{ 8.0 }, plssvm::real_type{ 9.0 } } },
+                                                   plssvm::PADDING_SIZE,
+                                                   plssvm::PADDING_SIZE };
+
+    [[maybe_unused]] const plssvm::real_type beta{ 0.0 };
+    plssvm::soa_matrix<plssvm::real_type> C{ 3, 3, plssvm::PADDING_SIZE, plssvm::PADDING_SIZE };
+
+    // automatic solver type not permitted
+    EXPECT_DEATH(svm.blas_level_3(solver, alpha, A, B, beta, C), "An explicit solver type must be provided instead of solver_type::automatic!");
+}
+
+// clang-format off
+REGISTER_TYPED_TEST_SUITE_P(GenericCSVMDeathTest,
+                            blas_level_3_automatic);
+// clang-format on
+
+template <typename T>
 class GenericCSVMSolverDeathTest : public GenericCSVMSolver<T> {};
 TYPED_TEST_SUITE_P(GenericCSVMSolverDeathTest);
 
@@ -1056,13 +1290,13 @@ TYPED_TEST_P(GenericCSVMSolverDeathTest, conjugate_gradients_empty_B) {
     // create mock_csvm (since plssvm::csvm is pure virtual!)
     const mock_csvm_type csvm{};
 
-    const std::array<std::size_t, 2> shape{ 4, 4 };
-#if defined(PLSSVM_USE_GEMM)
-    const std::vector<plssvm::real_type> matr_A(shape[0] * shape[1]);
-#else
-    const std::vector<plssvm::real_type> matr_A(shape[0] * (shape[1] + 1) / 2);
-#endif
-    const plssvm::detail::simple_any A{ util::init_matrix<csvm_type, device_ptr_type>(matr_A, csvm, shape) };
+    const plssvm::soa_matrix<plssvm::real_type> matr_A{ 4, 4 };
+    // parameter necessary for cg_implicit
+    const plssvm::parameter params{};
+    const std::vector<plssvm::real_type> q_red(matr_A.num_rows() - 1);
+    const plssvm::real_type QA_cost{ 1.0 };
+
+    const plssvm::detail::simple_any A{ util::init_matrix<csvm_type, device_ptr_type>(matr_A, solver, csvm, params, q_red, QA_cost) };
 
     // create empty matrix
     const plssvm::soa_matrix<plssvm::real_type> empty_matr{};
@@ -1079,13 +1313,14 @@ TYPED_TEST_P(GenericCSVMSolverDeathTest, conjugate_gradients_invalid_eps) {
     // create mock_csvm
     const mock_csvm_type csvm{};
 
-    const std::array<std::size_t, 2> shape{ 4, 4 };
-#if defined(PLSSVM_USE_GEMM)
-    const std::vector<plssvm::real_type> matr_A(shape[0] * shape[1]);
-#else
-    const std::vector<plssvm::real_type> matr_A(shape[0] * (shape[1] + 1) / 2);
-#endif
-    const plssvm::detail::simple_any A{ util::init_matrix<csvm_type, device_ptr_type>(matr_A, csvm, shape) };
+    const plssvm::soa_matrix<plssvm::real_type> matr_A{ 4, 4 };
+    // parameter necessary for cg_implicit
+    const plssvm::parameter params{};
+    const std::vector<plssvm::real_type> q_red(matr_A.num_rows() - 1);
+    const plssvm::real_type QA_cost{ 1.0 };
+
+    const plssvm::detail::simple_any A{ util::init_matrix<csvm_type, device_ptr_type>(matr_A, solver, csvm, params, q_red, QA_cost) };
+
     const plssvm::soa_matrix<plssvm::real_type> B{ 1, 6 };
 
     EXPECT_DEATH(std::ignore = csvm.conjugate_gradients(A, B, 0.0, 6, solver), "The epsilon value must be greater than 0.0!");
@@ -1101,13 +1336,14 @@ TYPED_TEST_P(GenericCSVMSolverDeathTest, conjugate_gradients_invalid_max_cg_iter
     // create mock_csvm
     const mock_csvm_type csvm{};
 
-    const std::array<std::size_t, 2> shape{ 4, 4 };
-#if defined(PLSSVM_USE_GEMM)
-    const std::vector<plssvm::real_type> matr_A(shape[0] * shape[1]);
-#else
-    const std::vector<plssvm::real_type> matr_A(shape[0] * (shape[1] + 1) / 2);
-#endif
-    const plssvm::detail::simple_any A{ util::init_matrix<csvm_type, device_ptr_type>(matr_A, csvm, shape) };
+    const plssvm::soa_matrix<plssvm::real_type> matr_A{ 4, 4 };
+    // parameter necessary for cg_implicit
+    const plssvm::parameter params{};
+    const std::vector<plssvm::real_type> q_red(matr_A.num_rows() - 1);
+    const plssvm::real_type QA_cost{ 1.0 };
+
+    const plssvm::detail::simple_any A{ util::init_matrix<csvm_type, device_ptr_type>(matr_A, solver, csvm, params, q_red, QA_cost) };
+
     const plssvm::soa_matrix<plssvm::real_type> B{ 1, 6 };
 
     EXPECT_DEATH(std::ignore = csvm.conjugate_gradients(A, B, plssvm::real_type{ 0.001 }, 0, solver), "The maximum number of iterations must be greater than 0!");
@@ -1123,13 +1359,14 @@ TYPED_TEST_P(GenericCSVMSolverDeathTest, run_blas_level_3_empty_B) {
     // create mock_csvm
     const mock_csvm_type csvm{};
 
-    const std::array<std::size_t, 2> shape{ 4, 4 };
-#if defined(PLSSVM_USE_GEMM)
-    const std::vector<plssvm::real_type> matr_A(shape[0] * shape[1]);
-#else
-    const std::vector<plssvm::real_type> matr_A(shape[0] * (shape[1] + 1) / 2);
-#endif
-    const plssvm::detail::simple_any A{ util::init_matrix<csvm_type, device_ptr_type>(matr_A, csvm, shape) };
+    const plssvm::soa_matrix<plssvm::real_type> matr_A{ 4, 4 };
+    // parameter necessary for cg_implicit
+    const plssvm::parameter params{};
+    const std::vector<plssvm::real_type> q_red(matr_A.num_rows() - 1);
+    const plssvm::real_type QA_cost{ 1.0 };
+
+    const plssvm::detail::simple_any A{ util::init_matrix<csvm_type, device_ptr_type>(matr_A, solver, csvm, params, q_red, QA_cost) };
+
     const plssvm::soa_matrix<plssvm::real_type> empty_matr{};
     plssvm::soa_matrix<plssvm::real_type> C{ 4, 4 };
 
@@ -1145,13 +1382,14 @@ TYPED_TEST_P(GenericCSVMSolverDeathTest, run_blas_level_3_empty_C) {
     // create mock_csvm
     const mock_csvm_type csvm{};
 
-    const std::array<std::size_t, 2> shape{ 4, 4 };
-#if defined(PLSSVM_USE_GEMM)
-    const std::vector<plssvm::real_type> matr_A(shape[0] * shape[1]);
-#else
-    const std::vector<plssvm::real_type> matr_A(shape[0] * (shape[1] + 1) / 2);
-#endif
-    const plssvm::detail::simple_any A{ util::init_matrix<csvm_type, device_ptr_type>(matr_A, csvm, shape) };
+    const plssvm::soa_matrix<plssvm::real_type> matr_A{ 4, 4 };
+    // parameter necessary for cg_implicit
+    const plssvm::parameter params{};
+    const std::vector<plssvm::real_type> q_red(matr_A.num_rows() - 1);
+    const plssvm::real_type QA_cost{ 1.0 };
+
+    const plssvm::detail::simple_any A{ util::init_matrix<csvm_type, device_ptr_type>(matr_A, solver, csvm, params, q_red, QA_cost) };
+
     const plssvm::soa_matrix<plssvm::real_type> B{ 4, 4 };
     plssvm::soa_matrix<plssvm::real_type> empty_matr{};
 
