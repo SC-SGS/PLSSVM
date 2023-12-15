@@ -39,6 +39,7 @@ class mock_hip_csvm final : public plssvm::hip::csvm {
 
     using base_type::conjugate_gradients;
     using base_type::perform_dimensional_reduction;
+    using base_type::run_assemble_kernel_matrix_implicit_blas_level_3;
     using base_type::run_blas_level_3;
     using base_type::solve_lssvm_system_of_linear_equations;
 

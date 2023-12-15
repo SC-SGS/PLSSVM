@@ -124,6 +124,7 @@ INSTANTIATE_TYPED_TEST_SUITE_P(HIPCSVM, GenericCSVMKernelFunctionClassification,
 INSTANTIATE_TYPED_TEST_SUITE_P(HIPCSVM, GenericCSVMSolverKernelFunctionClassification, hip_label_type_solver_kernel_function_and_classification_type_gtest, naming::test_parameter_to_name);
 
 // generic CSVM DeathTests
+INSTANTIATE_TYPED_TEST_SUITE_P(HIPCSVMDeathTest, GenericCSVMDeathTest, hip_csvm_test_type_gtest, naming::test_parameter_to_name);
 INSTANTIATE_TYPED_TEST_SUITE_P(HIPCSVMDeathTest, GenericCSVMSolverDeathTest, hip_solver_type_gtest, naming::test_parameter_to_name);
 INSTANTIATE_TYPED_TEST_SUITE_P(HIPCSVMDeathTest, GenericCSVMKernelFunctionDeathTest, hip_kernel_function_type_gtest, naming::test_parameter_to_name);
 
