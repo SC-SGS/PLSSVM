@@ -68,7 +68,8 @@ TEST_P(StringUtilityTrimLeft, trim_left) {
 INSTANTIATE_TEST_SUITE_P(StringUtility, StringUtilityTrimLeft, ::testing::Values(
                 std::make_tuple("", ""), std::make_tuple("abc", "abc"),
                 std::make_tuple("  abc", "abc"), std::make_tuple("abc   ", "abc   "),
-                std::make_tuple(" abc  ", "abc  "), std::make_tuple(" a b c ", "a b c ")),
+                std::make_tuple(" abc  ", "abc  "), std::make_tuple(" a b c ", "a b c "),
+                std::make_tuple("\t abc  \r\n", "abc  \r\n"), std::make_tuple("\f\v a b c \t", "a b c \t")),
                 naming::pretty_print_escaped_string<StringUtilityTrimLeft>);
 // clang-format on
 
@@ -82,7 +83,8 @@ TEST_P(StringUtilityTrimRight, trim_right) {
 INSTANTIATE_TEST_SUITE_P(StringUtility, StringUtilityTrimRight, ::testing::Values(
                 std::make_tuple("", ""), std::make_tuple("abc", "abc"),
                 std::make_tuple("  abc", "  abc"), std::make_tuple("abc   ", "abc"),
-                std::make_tuple(" abc  ", " abc"), std::make_tuple(" a b c ", " a b c")),
+                std::make_tuple(" abc  ", " abc"), std::make_tuple(" a b c ", " a b c"),
+                std::make_tuple("\t abc  \r\n", "\t abc"), std::make_tuple("\f\v a b c \t", "\f\v a b c")),
                 naming::pretty_print_escaped_string<StringUtilityTrimRight>);
 // clang-format on
 
@@ -96,7 +98,8 @@ TEST_P(StringUtilityTrim, trim) {
 INSTANTIATE_TEST_SUITE_P(StringUtility, StringUtilityTrim, ::testing::Values(
                 std::make_tuple("", ""), std::make_tuple("abc", "abc"),
                 std::make_tuple("  abc", "abc"), std::make_tuple("abc   ", "abc"),
-                std::make_tuple(" abc  ", "abc"), std::make_tuple(" a b c ", "a b c")),
+                std::make_tuple(" abc  ", "abc"), std::make_tuple(" a b c ", "a b c"),
+                std::make_tuple("\t abc  \r\n", "abc"), std::make_tuple("\f\v a b c \t", "a b c")),
                 naming::pretty_print_escaped_string<StringUtilityTrim>);
 // clang-format on
 

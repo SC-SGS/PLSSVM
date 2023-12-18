@@ -36,11 +36,11 @@ bool contains(const std::string_view str, const char c) noexcept {
 }
 
 std::string_view trim_left(const std::string_view str) noexcept {
-    const std::string_view::size_type pos = std::min(str.find_first_not_of(' '), str.size());
+    const std::string_view::size_type pos = std::min(str.find_first_not_of(" \t\v\r\n\f"), str.size());
     return str.substr(pos);
 }
 std::string_view trim_right(const std::string_view str) noexcept {
-    const std::string_view::size_type pos = std::min(str.find_last_not_of(' ') + 1, str.size());
+    const std::string_view::size_type pos = std::min(str.find_last_not_of(" \t\v\r\n\f") + 1, str.size());
     return str.substr(0, pos);
 }
 std::string_view trim(const std::string_view str) noexcept {

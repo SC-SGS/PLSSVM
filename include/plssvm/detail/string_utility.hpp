@@ -63,19 +63,22 @@ namespace plssvm::detail {
 [[nodiscard]] bool contains(std::string_view str, char c) noexcept;
 
 /**
- * @brief Returns a new [`std::string_view`](https://en.cppreference.com/w/cpp/string/basic_string_view) equal to @p str where all leading whitespaces are removed.
+ * @brief Returns a new [`std::string_view`](https://en.cppreference.com/w/cpp/string/basic_string_view) equal to @p str where all leading whitespace characters are removed.
+ * @detail The trimmed characters are: whitespace (`' '`), tab (`'\t'`), vertical tab (`'\v'`), carriage return (`'\r'`), line feed (`'\n'`), and form feed (`'\f'`).
  * @param[in] str the string to remove the leading whitespaces
  * @return the string @p str without leading whitespace (`[[nodiscard]]`)
  */
 [[nodiscard]] std::string_view trim_left(std::string_view str) noexcept;
 /**
- * @brief Returns a new [`std::string_view`](https://en.cppreference.com/w/cpp/string/basic_string_view) equal to @p str where all trailing whitespaces are removed.
+ * @brief Returns a new [`std::string_view`](https://en.cppreference.com/w/cpp/string/basic_string_view) equal to @p str where all trailing whitespace characters are removed.
+ * @detail The trimmed characters are: whitespace (`' '`), tab (`'\t'`), vertical tab (`'\v'`), carriage return (`'\r'`), line feed (`'\n'`), and form feed (`'\f'`).
  * @param[in] str the string to remove the trailing whitespaces
  * @return the string @p str without trailing whitespace (`[[nodiscard]]`)
  */
 [[nodiscard]] std::string_view trim_right(std::string_view str) noexcept;
 /**
- * @brief Returns a new [`std::string_view`](https://en.cppreference.com/w/cpp/string/basic_string_view) equal to @p str where all leading and trailing whitespaces are removed.
+ * @brief Returns a new [`std::string_view`](https://en.cppreference.com/w/cpp/string/basic_string_view) equal to @p str where all leading and trailing whitespace characters are removed.
+ * @detail The trimmed characters are: whitespace (`' '`), tab (`'\t'`), vertical tab (`'\v'`), carriage return (`'\r'`), line feed (`'\n'`), and form feed (`'\f'`).
  * @param[in] str the string to remove the leading and trailing whitespaces
  * @return the string @p str without leading and trailing whitespace (`[[nodiscard]]`)
  */
