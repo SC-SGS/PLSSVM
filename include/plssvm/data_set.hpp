@@ -503,11 +503,9 @@ data_set<U>::data_set::label_mapper::label_mapper(const std::vector<label_type> 
     PLSSVM_ASSERT(std::set(classes.cbegin(), classes.cend()).size() == classes.size(),
                   "The provided labels for the label_mapper must not include duplicated ones!");
     // create mapping
-    std::size_t idx = 0;
-    for (auto it = classes.begin(), end = classes.end(); it != end; ++it) {
-        label_to_index_[*it] = idx;
-        index_to_label_[idx] = *it;
-        ++idx;
+    for (std::size_t idx = 0; idx < classes.size(); ++idx) {
+        label_to_index_[classes[idx]] = idx;
+        index_to_label_[idx] = classes[idx];
     }
 }
 /// @endcond
