@@ -252,7 +252,11 @@ If `PLSSVM_ENABLE_PYTHON_BINDINGS` is set to `ON`, the following options can als
 
 - `PLSSVM_PYTHON_BINDINGS_PREFERRED_LABEL_TYPE` (default: `std::string`): the default `label_type` used if the generic `plssvm.Model` and `plssvm.DataSet` Python classes are used
 
-If the SYCL backend is available additional options can be set.
+If the OpenCL backend is available and NVIDIA GPUs should be targeted, an additional option can be set.
+
+- `PLSSVM_OPENCL_BACKEND_ENABLE_PTX_INLINE_ASSEMBLY` (default: `ON`): enable PTX inline assembly to speed up the FP32/FP64 atomicAdd implementations on NVIDIA GPUs. **Note:** requires `sm_60` or newer!
+
+If the SYCL backend is available, additional options can be set.
 
 - `PLSSVM_ENABLE_SYCL_ADAPITVECPP_BACKEND=ON|OFF|AUTO` (default: `AUTO`):
   - `ON`: check for AdaptiveCpp as implementation for the SYCL backend and fail if not available
