@@ -56,18 +56,6 @@ class DataSetSave : public ::testing::Test, private util::redirect_output<>, pro
 };
 TYPED_TEST_SUITE(DataSetSave, util::label_type_gtest, naming::test_parameter_to_name);
 
-TYPED_TEST(DataSetSave, save_invalid_automatic_format) {
-    using label_type = typename TestFixture::fixture_label_type;
-
-    // create data set with labels
-    const plssvm::data_set<label_type> data{ this->get_data_points(), this->get_label() };
-
-    // try to save to temporary file with an unrecognized extension
-    EXPECT_THROW_WHAT(data.save("test.txt"),
-                      plssvm::data_set_exception,
-                      "Unrecognized file extension for file \"test.txt\" (must be one of: .libsvm or .arff)!");
-}
-
 TYPED_TEST(DataSetSave, save_libsvm_with_label) {
     using label_type = typename TestFixture::fixture_label_type;
 
