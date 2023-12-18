@@ -23,9 +23,8 @@
 #include "fmt/core.h"     // fmt::format
 #include "fmt/ostream.h"  // format types with an operator<< overload
 
-#if __has_include(<unistd.h>) && __has_include(<limits.h>)
-    #include <limits.h>  // HOST_NAME_MAX, LOGIN_NAME_MAX
-    #include <unistd.h>  // gethostname, getlogin_r,
+#if __has_include(<unistd.h>)
+    #include <unistd.h>  // gethostname, getlogin_r, sysconf, _SC_HOST_NAME_MAX, _SC_LOGIN_NAME_MAX
     #define PLSSVM_UNISTD_AVAILABLE
 #endif
 
@@ -137,10 +136,12 @@ void performance_tracker::save(std::ostream &out) {
 
     // get the current host- and username
 #if defined(PLSSVM_UNISTD_AVAILABLE)
-    std::string hostname(HOST_NAME_MAX, '\0');
-    gethostname(hostname.data(), HOST_NAME_MAX);
-    std::string username(LOGIN_NAME_MAX, '\0');
-    getlogin_r(username.data(), LOGIN_NAME_MAX);
+    const auto host_name_max = static_cast<std::size_t>(sysconf(_SC_HOST_NAME_MAX));
+    std::string hostname(host_name_max, '\0');
+    gethostname(hostname.data(), host_name_max);
+    const auto login_name_max = static_cast<std::size_t>(sysconf(_SC_LOGIN_NAME_MAX));
+    std::string username(login_name_max, '\0');
+    getlogin_r(username.data(), login_name_max);
 #else
     constexpr std::string_view hostname{ "not available" };
     constexpr std::string_view username{ "not available" };
@@ -242,9 +243,6 @@ void performance_tracker::save(std::ostream &out) {
         }
         out << '\n';
     }
-
-    // clear tracking statistics
-    this->clear_tracking_entries();
 }
 
 void performance_tracker::pause_tracking() noexcept { is_tracking_ = false; }

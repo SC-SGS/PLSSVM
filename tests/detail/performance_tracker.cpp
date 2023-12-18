@@ -121,6 +121,9 @@ TEST_F(PerformanceTracker, add_entry_macro) {
     ASSERT_EQ(entries.at("").size(), 1);
     ASSERT_EQ(entries.at("").at("foobar").size(), 2);
     EXPECT_EQ(entries.at("").at("foobar"), (std::vector<std::string>{ "a", "b" }));
+
+    // clear tracking entries for next test
+    plssvm::detail::global_tracker->clear_tracking_entries();
 }
 
 TEST_F(PerformanceTracker, save_macro) {
@@ -146,8 +149,11 @@ TEST_F(PerformanceTracker, save_macro) {
     EXPECT_THAT(reader.buffer(), ::testing::HasSubstr("baz: 3.1415"));
     EXPECT_THAT(reader.buffer(), ::testing::HasSubstr("foobar: [a, b]"));
 
-    // the tracking entries must be empty now
-    EXPECT_TRUE(plssvm::detail::global_tracker->get_tracking_entries().empty());
+    // the tracking entries must not have changed
+    EXPECT_EQ(plssvm::detail::global_tracker->get_tracking_entries().size(), 2);
+
+    // clear tracking entries for next test
+    plssvm::detail::global_tracker->clear_tracking_entries();
 }
 
 #endif
@@ -188,6 +194,9 @@ TEST_F(PerformanceTracker, add_generic_tracking_entry) {
     ASSERT_EQ(entries.at("").size(), 1);
     ASSERT_EQ(entries.at("").at("foobar").size(), 2);
     EXPECT_EQ(entries.at("").at("foobar"), (std::vector<std::string>{ "a", "b" }));
+
+    // clear tracking entries for next test
+    plssvm::detail::global_tracker->clear_tracking_entries();
 }
 TEST_F(PerformanceTracker, add_string_tracking_entry) {
     // add a tracking entry
@@ -202,6 +211,9 @@ TEST_F(PerformanceTracker, add_string_tracking_entry) {
     ASSERT_EQ(entries.at("foo").size(), 1);
     ASSERT_EQ(entries.at("foo").at("bar").size(), 1);
     EXPECT_EQ(entries.at("foo").at("bar").front(), "\"baz\"");
+
+    // clear tracking entries for next test
+    plssvm::detail::global_tracker->clear_tracking_entries();
 }
 TEST_F(PerformanceTracker, add_vector_tracking_entry) {
     // add a tracking entry
@@ -217,6 +229,9 @@ TEST_F(PerformanceTracker, add_vector_tracking_entry) {
     ASSERT_EQ(entries.at("foo").size(), 1);
     ASSERT_EQ(entries.at("foo").at("bar").size(), 2);
     EXPECT_EQ(entries.at("foo").at("bar"), (std::vector<std::string>{ "[1, 2, 3]", "[\"a\", \"b\"]" }));
+
+    // clear tracking entries for next test
+    plssvm::detail::global_tracker->clear_tracking_entries();
 }
 TEST_F(PerformanceTracker, add_parameter_tracking_entry) {
     // add a tracking entry
@@ -229,6 +244,9 @@ TEST_F(PerformanceTracker, add_parameter_tracking_entry) {
     EXPECT_EQ(entries.size(), 1);
 
     ASSERT_EQ(entries.at("parameter").size(), 6);
+
+    // clear tracking entries for next test
+    plssvm::detail::global_tracker->clear_tracking_entries();
 }
 TEST_F(PerformanceTracker, add_parser_train_tracking_entry) {
     // create a parameter train object
@@ -247,6 +265,9 @@ TEST_F(PerformanceTracker, add_parser_train_tracking_entry) {
     EXPECT_EQ(entries.size(), 1);
 
     ASSERT_EQ(entries.at("parameter").size(), 17);
+
+    // clear tracking entries for next test
+    plssvm::detail::global_tracker->clear_tracking_entries();
 }
 TEST_F(PerformanceTracker, add_parser_predict_tracking_entry) {
     // create a parameter train object
@@ -265,6 +286,9 @@ TEST_F(PerformanceTracker, add_parser_predict_tracking_entry) {
     EXPECT_EQ(entries.size(), 1);
 
     ASSERT_EQ(entries.at("parameter").size(), 9);
+
+    // clear tracking entries for next test
+    plssvm::detail::global_tracker->clear_tracking_entries();
 }
 TEST_F(PerformanceTracker, add_parser_scale_tracking_entry) {
     // create a parameter train object
@@ -283,6 +307,9 @@ TEST_F(PerformanceTracker, add_parser_scale_tracking_entry) {
     EXPECT_EQ(entries.size(), 1);
 
     ASSERT_EQ(entries.at("parameter").size(), 10);
+
+    // clear tracking entries for next test
+    plssvm::detail::global_tracker->clear_tracking_entries();
 }
 
 TEST_F(PerformanceTracker, save_no_additional_entries) {
@@ -294,8 +321,11 @@ TEST_F(PerformanceTracker, save_no_additional_entries) {
     // the file must not be empty
     EXPECT_FALSE(std::filesystem::is_empty(tmp_file.filename));
 
-    // the tracking entries must be empty now
+    // the tracking entries must be empty
     EXPECT_TRUE(plssvm::detail::global_tracker->get_tracking_entries().empty());
+
+    // clear tracking entries for next test
+    plssvm::detail::global_tracker->clear_tracking_entries();
 }
 TEST_F(PerformanceTracker, save_entries_to_file) {
     // create temporary file
@@ -320,8 +350,11 @@ TEST_F(PerformanceTracker, save_entries_to_file) {
     EXPECT_THAT(reader.buffer(), ::testing::HasSubstr("baz: 3.1415"));
     EXPECT_THAT(reader.buffer(), ::testing::HasSubstr("foobar: [a, b]"));
 
-    // the tracking entries must be empty now
-    EXPECT_TRUE(plssvm::detail::global_tracker->get_tracking_entries().empty());
+    // the tracking entries must not have changed
+    EXPECT_EQ(plssvm::detail::global_tracker->get_tracking_entries().size(), 2);
+
+    // clear tracking entries for next test
+    plssvm::detail::global_tracker->clear_tracking_entries();
 }
 TEST_F(PerformanceTracker, save_entries_empty_file) {
     // save entries to file
@@ -341,8 +374,11 @@ TEST_F(PerformanceTracker, save_entries_empty_file) {
     EXPECT_THAT(this->get_capture(), ::testing::HasSubstr("baz: 3.1415"));
     EXPECT_THAT(this->get_capture(), ::testing::HasSubstr("foobar: [a, b]"));
 
-    // the tracking entries must be empty now
-    EXPECT_TRUE(plssvm::detail::global_tracker->get_tracking_entries().empty());
+    // the tracking entries must not have changed
+    EXPECT_EQ(plssvm::detail::global_tracker->get_tracking_entries().size(), 2);
+
+    // clear tracking entries for next test
+    plssvm::detail::global_tracker->clear_tracking_entries();
 }
 
 TEST_F(PerformanceTracker, get_tracking_entries) {
@@ -366,6 +402,9 @@ TEST_F(PerformanceTracker, get_tracking_entries) {
     // second category
     ASSERT_EQ(entries.at("").size(), 1);
     ASSERT_EQ(entries.at("").at("foobar").size(), 2);
+
+    // clear tracking entries for next test
+    plssvm::detail::global_tracker->clear_tracking_entries();
 }
 
 TEST_F(PerformanceTracker, clear_tracking_entries) {
