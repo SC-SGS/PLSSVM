@@ -46,9 +46,9 @@ void log(const verbosity_level verb, const std::string_view msg, Args &&...args)
     // otherwise verb must contain the bit-flag set by plssvm::verbosity
     if (verbosity != verbosity_level::quiet && (verb & verbosity) != verbosity_level::quiet) {
         if ((verb & verbosity_level::warning) != verbosity_level::quiet) {
-            std::clog << fmt::format(fmt::fg(fmt::color::orange), msg, args...);
+            std::clog << fmt::format(fmt::fg(fmt::color::orange), msg, args...) << std::flush;
         } else {
-            std::cout << fmt::format(msg, args...);
+            std::cout << fmt::format(msg, args...) << std::flush;
         }
     }
 
