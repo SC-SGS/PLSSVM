@@ -15,7 +15,7 @@
 
 #include "plssvm/detail/assert.hpp"                                // PLSSVM_ASSERT
 #include "plssvm/detail/logging_without_performance_tracking.hpp"  // plssvm::detail::log
-#include "plssvm/detail/utility.hpp"                               // plssvm::detail::always_false_v
+#include "plssvm/detail/utility.hpp"                               // plssvm::detail::{always_false_v, unreachable}
 #include "plssvm/exceptions/exceptions.hpp"                        // plssvm::matrix_exception
 #include "plssvm/verbosity_levels.hpp"                             // plssvm::verbosity_level
 
@@ -602,6 +602,7 @@ auto matrix<T, layout_>::operator()(const size_type row, const size_type col) co
     } else {
         static_assert(detail::always_false_v<value_type>, "Unrecognized layout_type!");
     }
+    detail::unreachable();
 }
 template <typename T, layout_type layout_>
 auto matrix<T, layout_>::operator()(const size_type row, const size_type col) -> reference {
@@ -614,6 +615,7 @@ auto matrix<T, layout_>::operator()(const size_type row, const size_type col) ->
     } else {
         static_assert(detail::always_false_v<T>, "Unrecognized layout_type!");
     }
+    detail::unreachable();
 }
 template <typename T, layout_type layout_>
 auto matrix<T, layout_>::at(const size_type row, const size_type col) const -> value_type {

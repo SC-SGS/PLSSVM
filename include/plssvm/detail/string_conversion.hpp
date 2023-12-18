@@ -16,6 +16,7 @@
 #include "plssvm/detail/arithmetic_type_name.hpp"  // plssvm::detail::arithmetic_type_name
 #include "plssvm/detail/string_utility.hpp"        // plssvm::detail::{trim, trim_left, as_lower_case}
 #include "plssvm/detail/type_traits.hpp"           // PLSSVM_REQUIRES, plssvm::detail::remove_cvref_t
+#include "plssvm/detail/utility.hpp"               // plssvm::detail::unreachable
 
 #include "fast_float/fast_float.h"  // fast_float::from_chars_result, fast_float::from_chars (floating point types)
 #include "fmt/core.h"               // fmt::format
@@ -78,9 +79,7 @@ template <typename T, typename Exception = std::runtime_error, PLSSVM_REQUIRES((
                 // convert the string to an integral value
                 return std::from_chars(sv.data(), sv.data() + sv.size(), val);
             }
-            // unreachable, needed to silence a nvcc warning
-            // see also: https://stackoverflow.com/questions/64523302/cuda-missing-return-statement-at-end-of-non-void-function-in-constexpr-if-fun
-            return std::conditional_t<std::is_floating_point_v<T>, fast_float::from_chars_result, std::from_chars_result>{};
+            unreachable();
         };
 
         // remove leading whitespaces
@@ -94,9 +93,7 @@ template <typename T, typename Exception = std::runtime_error, PLSSVM_REQUIRES((
         }
         return val;
     }
-    // unreachable, needed to silence a nvcc warning
-    // see also: https://stackoverflow.com/questions/64523302/cuda-missing-return-statement-at-end-of-non-void-function-in-constexpr-if-fun
-    return T{};
+    unreachable();
 }
 
 /**
