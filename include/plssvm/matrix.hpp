@@ -123,7 +123,7 @@ class matrix {
      * @param[in] init the value of all entries in the matrix
      * @throws plssvm::matrix_exception if exactly one of @p num_rows or @p num_cols is zero; creates an empty matrix if both are zero
      */
-    template <typename U, std::enable_if_t<std::is_convertible_v<U, T>, bool> = true>
+    template <typename U, std::enable_if_t<std::is_convertible_v<U, value_type>, bool> = true>
     matrix(size_type num_rows, size_type num_cols, const U &init);
     /**
      * @brief Create a matrix of size (@p num_rows + @p row_padding) x (@p num_cols + @p col_padding) and initialize all valid entries with the value @p init.
@@ -136,7 +136,7 @@ class matrix {
      * @param[in] col_padding the number of padding values for each column
      * @throws plssvm::matrix_exception if exactly one of @p num_rows or @p num_cols is zero; creates an empty matrix if both are zero
      */
-    template <typename U, std::enable_if_t<std::is_convertible_v<U, T>, bool> = true>
+    template <typename U, std::enable_if_t<std::is_convertible_v<U, value_type>, bool> = true>
     matrix(size_type num_rows, size_type num_cols, const U &init, size_type row_padding, size_type col_padding);
 
     /**
@@ -376,7 +376,7 @@ class matrix {
                 std::memcpy(dest + col * dest_shape[0], source + col * source_shape[0], num_rows_ * sizeof(value_type));
             }
         } else {
-            static_assert(detail::always_false_v<T>, "Unrecognized layout_type!");
+            static_assert(detail::always_false_v<value_type>, "Unrecognized layout_type!");
         }
     }
 
@@ -508,7 +508,7 @@ matrix<T, layout_>::matrix(const matrix<T, other_layout_> &other) :
 
 template <typename T, layout_type layout_>
 template <layout_type other_layout_>
-matrix<T, layout_>::matrix(const matrix<T, other_layout_> &other, size_type row_padding, size_type col_padding) :
+matrix<T, layout_>::matrix(const matrix<value_type, other_layout_> &other, size_type row_padding, size_type col_padding) :
     matrix{ other.num_rows(), other.num_cols(), row_padding, col_padding } {
     if (layout_ == other_layout_ && this->padding() == other.padding()) {
         // same layout and same padding -> simply memcpy underlying array
@@ -587,7 +587,7 @@ void matrix<T, layout_>::restore_padding() noexcept {
         }
         std::memset(this->data() + num_cols_ * this->num_rows_padded(), 0, col_padding_ * this->num_rows_padded() * sizeof(value_type));
     } else {
-        static_assert(detail::always_false_v<T>, "Unrecognized layout_type!");
+        static_assert(detail::always_false_v<value_type>, "Unrecognized layout_type!");
     }
 }
 
@@ -600,7 +600,7 @@ auto matrix<T, layout_>::operator()(const size_type row, const size_type col) co
     } else if constexpr (layout_ == layout_type::soa) {
         return data_[col * this->num_rows_padded() + row];
     } else {
-        static_assert(detail::always_false_v<T>, "Unrecognized layout_type!");
+        static_assert(detail::always_false_v<value_type>, "Unrecognized layout_type!");
     }
 }
 template <typename T, layout_type layout_>
@@ -701,7 +701,7 @@ auto matrix<T, layout_>::to_2D_vector_padded() const -> std::vector<std::vector<
 }
 
 template <typename T, layout_type layout_>
-void matrix<T, layout_>::swap(matrix<T, layout_> &other) noexcept {
+void matrix<T, layout_>::swap(matrix<value_type, layout_> &other) noexcept {
     using std::swap;
     swap(this->num_rows_, other.num_rows_);
     swap(this->row_padding_, other.row_padding_);
