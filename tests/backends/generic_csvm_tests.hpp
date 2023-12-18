@@ -186,14 +186,17 @@ template <typename csvm_type, typename device_ptr_type, typename matrix_type, ty
  */
 template <typename csvm_type, typename device_ptr_type, typename matrix_type, typename used_csvm_type, typename... Args>
 [[nodiscard]] inline plssvm::detail::simple_any init_matrix(matrix_type matr, const plssvm::solver_type solver, [[maybe_unused]] used_csvm_type &csvm, Args &&...args) {
-    if (solver == plssvm::solver_type::cg_explicit) {
-        // no additional arguments are used
-        return init_explicit_matrix<csvm_type, device_ptr_type>(std::move(matr), csvm);
-    } else if (solver == plssvm::solver_type::cg_implicit) {
-        // additional arguments are: params, q_red, QA_cost
-        return init_implicit_matrix<csvm_type, device_ptr_type>(std::move(matr), csvm, std::forward<Args>(args)...);
-    } else {
-        plssvm::detail::unreachable();
+    switch (solver) {
+        case plssvm::solver_type::automatic:
+            return plssvm::detail::simple_any{ std::vector<typename matrix_type::value_type>{} };  // dummy return only necessary for the DeathTests -> VALUE NOT USED!
+        case plssvm::solver_type::cg_explicit:
+            // no additional arguments are used
+            return init_explicit_matrix<csvm_type, device_ptr_type>(std::move(matr), csvm);
+        case plssvm::solver_type::cg_streaming:
+            return plssvm::detail::simple_any{ std::vector<typename matrix_type::value_type>{} };  // dummy return only necessary for the DeathTests -> VALUE NOT USED!
+        case plssvm::solver_type::cg_implicit:
+            // additional arguments are: params, q_red, QA_cost
+            return init_implicit_matrix<csvm_type, device_ptr_type>(std::move(matr), csvm, std::forward<Args>(args)...);
     }
 }
 
