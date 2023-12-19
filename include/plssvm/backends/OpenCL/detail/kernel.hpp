@@ -24,6 +24,8 @@ namespace plssvm::opencl::detail {
 enum class compute_kernel_name {
     /// The kernels to explicitly assemble the kernel matrix.
     assemble_kernel_matrix_explicit,
+    /// The kernels to implicitly assemble the kernel matrix.
+    assemble_kernel_matrix_implicit_blas,
     /// The kernel performing a explicit BLAS GEMM calculation.
     gemm_kernel_explicit,
     /// The kernel performing a explicit BLAS SYMM calculation.

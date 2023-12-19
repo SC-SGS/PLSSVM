@@ -47,6 +47,7 @@ target_sources(${PLSSVM_OPENCL_BACKEND_LIBRARY_NAME} PRIVATE
         FILES
             "${PROJECT_SOURCE_DIR}/include/plssvm/backends/OpenCL/cg_explicit/blas.cl"
             "${PROJECT_SOURCE_DIR}/include/plssvm/backends/OpenCL/cg_explicit/kernel_matrix_assembly.cl"
+            "${PROJECT_SOURCE_DIR}/include/plssvm/backends/OpenCL/cg_implicit/kernel_matrix_assembly_blas.cl"
             "${PROJECT_SOURCE_DIR}/include/plssvm/backends/OpenCL/predict_kernel.cl"
 )
 
@@ -59,6 +60,24 @@ target_compile_definitions(${PLSSVM_OPENCL_BACKEND_LIBRARY_NAME} PRIVATE PLSSVM_
 # set OpenCL library name (concatenated to the full kernel source string, to make sure that different OpenCL libraries
 # are recognized by the sha256 caching algorithm)
 target_compile_definitions(${PLSSVM_OPENCL_BACKEND_LIBRARY_NAME} PRIVATE PLSSVM_OPENCL_LIBRARY="${OpenCL_LIBRARY}")
+
+# option only available if NVIDIA GPUs are requested as target platforms
+if (PLSSVM_NUM_NVIDIA_TARGET_ARCHS GREATER 0)
+    # add option to completely disable PTX inline assembly
+    option(PLSSVM_OPENCL_BACKEND_ENABLE_PTX_INLINE_ASSEMBLY "Enables the usage of PTX inline assembly on NVIDIA GPUs to greatly improve the atomicAdd performance! Only available for sm greater or equal than sm_60." ON)
+    if (PLSSVM_OPENCL_BACKEND_ENABLE_PTX_INLINE_ASSEMBLY)
+        # test whether the requested sm version is new enough
+        list(TRANSFORM PLSSVM_NVIDIA_TARGET_ARCHS REPLACE "sm_" "")
+        foreach (sm_value IN LISTS PLSSVM_NVIDIA_TARGET_ARCHS)
+            if (${sm_value} LESS 60)
+                message(FATAL_ERROR "Requested PTX inline assembly to speed up the FP32/FP64 atomicAdd, but the supplied sm_${sm_value} is too old!")
+            endif ()
+        endforeach ()
+
+        message(STATUS "Enabled PTX inline assembly on NVIDIA GPUs to greatly improve the atomicAdd performance.")
+        target_compile_definitions(${PLSSVM_OPENCL_BACKEND_LIBRARY_NAME} PRIVATE PLSSVM_OPENCL_BACKEND_USE_PTX_INLINE_ASSEMBLY)
+    endif ()
+endif ()
 
 # set OpenCL target version (to silence compiler warnings)
 target_compile_definitions(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC CL_TARGET_OPENCL_VERSION=220)

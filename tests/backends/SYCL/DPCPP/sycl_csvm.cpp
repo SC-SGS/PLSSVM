@@ -163,6 +163,7 @@ INSTANTIATE_TYPED_TEST_SUITE_P(DPCPPCSVM, GenericCSVMKernelFunctionClassificatio
 INSTANTIATE_TYPED_TEST_SUITE_P(DPCPPCSVM, GenericCSVMSolverKernelFunctionClassification, dpcpp_label_type_solver_kernel_function_and_classification_type_gtest, naming::test_parameter_to_name);
 
 // generic CSVM DeathTests
+INSTANTIATE_TYPED_TEST_SUITE_P(DPCPPCSVMDeathTest, GenericCSVMDeathTest, dpcpp_csvm_test_type_gtest, naming::test_parameter_to_name);
 INSTANTIATE_TYPED_TEST_SUITE_P(DPCPPCSVMDeathTest, GenericCSVMSolverDeathTest, dpcpp_solver_type_gtest, naming::test_parameter_to_name);
 INSTANTIATE_TYPED_TEST_SUITE_P(DPCPPCSVMDeathTest, GenericCSVMKernelFunctionDeathTest, dpcpp_kernel_function_type_gtest, naming::test_parameter_to_name);
 

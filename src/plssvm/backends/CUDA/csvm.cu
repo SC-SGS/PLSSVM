@@ -8,23 +8,24 @@
 
 #include "plssvm/backends/CUDA/csvm.hpp"
 
-#include "plssvm/backend_types.hpp"                                     // plssvm::backend_type
-#include "plssvm/backends/CUDA/cg_explicit/blas.cuh"                    // plssvm::cuda::device_kernel_gemm
-#include "plssvm/backends/CUDA/cg_explicit/kernel_matrix_assembly.cuh"  // plssvm::cuda::{device_kernel_assembly_linear, device_kernel_assembly_polynomial, device_kernel_assembly_rbf}
-#include "plssvm/backends/CUDA/detail/device_ptr.cuh"                   // plssvm::cuda::detail::device_ptr
-#include "plssvm/backends/CUDA/detail/utility.cuh"                      // plssvm::cuda::detail::{device_synchronize, get_device_count, set_device, peek_at_last_error}
-#include "plssvm/backends/CUDA/exceptions.hpp"                          // plssvm::cuda::backend_exception
-#include "plssvm/backends/CUDA/predict_kernel.cuh"                      // plssvm::cuda::detail::{device_kernel_w_linear, device_kernel_predict_polynomial, device_kernel_predict_rbf}
-#include "plssvm/constants.hpp"                                         // plssvm::{real_type, THREAD_BLOCK_SIZE, INTERNAL_BLOCK_SIZE, PADDING_SIZE}
-#include "plssvm/detail/assert.hpp"                                     // PLSSVM_ASSERT
-#include "plssvm/detail/logging.hpp"                                    // plssvm::detail::log
-#include "plssvm/detail/memory_size.hpp"                                // plssvm::detail::memory_size
-#include "plssvm/detail/performance_tracker.hpp"                        // plssvm::detail::tracking_entry
-#include "plssvm/exceptions/exceptions.hpp"                             // plssvm::exception
-#include "plssvm/kernel_function_types.hpp"                             // plssvm::kernel_function_type
-#include "plssvm/parameter.hpp"                                         // plssvm::parameter
-#include "plssvm/target_platforms.hpp"                                  // plssvm::target_platform
-#include "plssvm/verbosity_levels.hpp"                                  // plssvm::verbosity_level
+#include "plssvm/backend_types.hpp"                                          // plssvm::backend_type
+#include "plssvm/backends/CUDA/cg_explicit/blas.cuh"                         // plssvm::cuda::device_kernel_gemm
+#include "plssvm/backends/CUDA/cg_explicit/kernel_matrix_assembly.cuh"       // plssvm::cuda::{device_kernel_assembly_linear, device_kernel_assembly_polynomial, device_kernel_assembly_rbf}
+#include "plssvm/backends/CUDA/cg_implicit/kernel_matrix_assembly_blas.cuh"  // plssvm::cuda::device_kernel_assembly_linear_symm, plssvm::cuda::device_kernel_assembly_polynomial_symm, plssvm::cuda::device_kernel_assembly_rbf_symm
+#include "plssvm/backends/CUDA/detail/device_ptr.cuh"                        // plssvm::cuda::detail::device_ptr
+#include "plssvm/backends/CUDA/detail/utility.cuh"                           // plssvm::cuda::detail::{device_synchronize, get_device_count, set_device, peek_at_last_error}
+#include "plssvm/backends/CUDA/exceptions.hpp"                               // plssvm::cuda::backend_exception
+#include "plssvm/backends/CUDA/predict_kernel.cuh"                           // plssvm::cuda::detail::{device_kernel_w_linear, device_kernel_predict_polynomial, device_kernel_predict_rbf}
+#include "plssvm/constants.hpp"                                              // plssvm::{real_type, THREAD_BLOCK_SIZE, INTERNAL_BLOCK_SIZE, PADDING_SIZE}
+#include "plssvm/detail/assert.hpp"                                          // PLSSVM_ASSERT
+#include "plssvm/detail/logging.hpp"                                         // plssvm::detail::log
+#include "plssvm/detail/memory_size.hpp"                                     // plssvm::detail::memory_size
+#include "plssvm/detail/performance_tracker.hpp"                             // plssvm::detail::tracking_entry
+#include "plssvm/exceptions/exceptions.hpp"                                  // plssvm::exception
+#include "plssvm/kernel_function_types.hpp"                                  // plssvm::kernel_function_type
+#include "plssvm/parameter.hpp"                                              // plssvm::parameter
+#include "plssvm/target_platforms.hpp"                                       // plssvm::target_platform
+#include "plssvm/verbosity_levels.hpp"                                       // plssvm::verbosity_level
 
 #include "cuda.h"              // cuda runtime functions
 #include "cuda_runtime_api.h"  // cuda runtime functions
@@ -183,27 +184,57 @@ auto csvm::run_assemble_kernel_matrix_explicit(const parameter &params, const de
     return kernel_matrix_d;
 }
 
-void csvm::run_blas_level_3_kernel_explicit(const std::size_t m, const std::size_t n, const std::size_t k, const real_type alpha, const device_ptr_type &A_d, const device_ptr_type &B_d, const real_type beta, device_ptr_type &C_d) const {
+void csvm::run_blas_level_3_kernel_explicit(const real_type alpha, const device_ptr_type &A_d, const device_ptr_type &B_d, const real_type beta, device_ptr_type &C_d) const {
+    const unsigned long long num_rhs = B_d.size(0);
+    const unsigned long long num_rows = B_d.size(1);
+
     // define the grid and block sizes
     const std::size_t max_work_group_size = this->get_max_work_group_size();
     if (max_work_group_size < THREAD_BLOCK_SIZE * THREAD_BLOCK_SIZE) {
         throw kernel_launch_resources{ fmt::format("Not enough work-items allowed for a work-groups of size {}x{}! Try reducing THREAD_BLOCK_SIZE.", THREAD_BLOCK_SIZE, THREAD_BLOCK_SIZE) };
     }
     const dim3 block(THREAD_BLOCK_SIZE, THREAD_BLOCK_SIZE);
-    const dim3 grid(static_cast<int>(std::ceil(static_cast<double>(n) / static_cast<double>(block.x * INTERNAL_BLOCK_SIZE))),
-                    static_cast<int>(std::ceil(static_cast<double>(m) / static_cast<double>(block.y * INTERNAL_BLOCK_SIZE))));
-
-    // cast to correct type
-    const auto m_ull = static_cast<unsigned long long>(m);
-    const auto n_ull = static_cast<unsigned long long>(n);
-    const auto k_ull = static_cast<unsigned long long>(k);
+    const dim3 grid(static_cast<int>(std::ceil(static_cast<double>(num_rhs) / static_cast<double>(block.x * INTERNAL_BLOCK_SIZE))),
+                    static_cast<int>(std::ceil(static_cast<double>(num_rows) / static_cast<double>(block.y * INTERNAL_BLOCK_SIZE))));
 
     detail::set_device(0);
 #if defined(PLSSVM_USE_GEMM)
-    cuda::device_kernel_gemm<<<grid, block>>>(m_ull, n_ull, k_ull, alpha, A_d.get(), B_d.get(), beta, C_d.get());
+    cuda::device_kernel_gemm<<<grid, block>>>(num_rows, num_rhs, num_rows, alpha, A_d.get(), B_d.get(), beta, C_d.get());
 #else
-    cuda::device_kernel_symm<<<grid, block>>>(m_ull, n_ull, k_ull, alpha, A_d.get(), B_d.get(), beta, C_d.get());
+    cuda::device_kernel_symm<<<grid, block>>>(num_rows, num_rhs, num_rows, alpha, A_d.get(), B_d.get(), beta, C_d.get());
 #endif
+    detail::peek_at_last_error();
+    this->device_synchronize(devices_[0]);
+}
+
+void csvm::run_assemble_kernel_matrix_implicit_blas_level_3(const real_type alpha, const device_ptr_type &A_d, const parameter &params, const device_ptr_type &q_red, const real_type QA_cost, const device_ptr_type &B_d, device_ptr_type &C_d) const {
+    const unsigned long long num_rows_reduced = A_d.size(0) - 1;
+    const unsigned long long num_features = A_d.size(1);
+    const unsigned long long num_classes = B_d.size(0);
+
+    // define the grid and block sizes
+    const std::size_t max_work_group_size = this->get_max_work_group_size();
+    if (max_work_group_size < THREAD_BLOCK_SIZE * THREAD_BLOCK_SIZE) {
+        throw kernel_launch_resources{ fmt::format("Not enough work-items allowed for a work-groups of size {}x{}! Try reducing THREAD_BLOCK_SIZE.", THREAD_BLOCK_SIZE, THREAD_BLOCK_SIZE) };
+    }
+    const dim3 block(THREAD_BLOCK_SIZE, THREAD_BLOCK_SIZE);
+    const dim3 grid(static_cast<int>(std::ceil(static_cast<double>(num_rows_reduced) / static_cast<double>(block.x * INTERNAL_BLOCK_SIZE))),
+                    static_cast<int>(std::ceil(static_cast<double>(num_rows_reduced) / static_cast<double>(block.y * INTERNAL_BLOCK_SIZE))));
+
+    detail::set_device(0);
+    const real_type cost_factor = real_type{ 1.0 } / params.cost;
+
+    switch (params.kernel_type) {
+        case kernel_function_type::linear:
+            cuda::device_kernel_assembly_linear_symm<<<grid, block>>>(alpha, q_red.get(), A_d.get(), num_rows_reduced, num_features, QA_cost, cost_factor, B_d.get(), C_d.get(), num_classes);
+            break;
+        case kernel_function_type::polynomial:
+            cuda::device_kernel_assembly_polynomial_symm<<<grid, block>>>(alpha, q_red.get(), A_d.get(), num_rows_reduced, num_features, QA_cost, cost_factor, params.degree.value(), params.gamma.value(), params.coef0.value(), B_d.get(), C_d.get(), num_classes);
+            break;
+        case kernel_function_type::rbf:
+            cuda::device_kernel_assembly_rbf_symm<<<grid, block>>>(alpha, q_red.get(), A_d.get(), num_rows_reduced, num_features, QA_cost, cost_factor, params.gamma.value(), B_d.get(), C_d.get(), num_classes);
+            break;
+    }
     detail::peek_at_last_error();
     this->device_synchronize(devices_[0]);
 }

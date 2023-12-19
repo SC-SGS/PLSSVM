@@ -6,11 +6,11 @@
  * @license This file is part of the PLSSVM project which is released under the MIT license.
  *          See the LICENSE.md file in the project root for full license information.
  *
- * @brief Functions for explicitly assemblying the kernel matrix using the CUDA backend.
+ * @brief Functions for explicitly assembling the kernel matrix using the CUDA backend.
  */
 
-#ifndef PLSSVM_BACKENDS_CUDA_CG_EXPLICIT_KERNEL_MATRIX_ASSEMBLE_CUH_
-#define PLSSVM_BACKENDS_CUDA_CG_EXPLICIT_KERNEL_MATRIX_ASSEMBLE_CUH_
+#ifndef PLSSVM_BACKENDS_CUDA_CG_EXPLICIT_KERNEL_MATRIX_ASSEMBLY_CUH_
+#define PLSSVM_BACKENDS_CUDA_CG_EXPLICIT_KERNEL_MATRIX_ASSEMBLY_CUH_
 #pragma once
 
 #include "plssvm/constants.hpp"  // plssvm::real_type
@@ -57,4 +57,4 @@ __global__ void device_kernel_assembly_rbf(real_type *ret, const real_type *data
 
 }  // namespace plssvm::cuda
 
-#endif  // PLSSVM_BACKENDS_CUDA_CG_EXPLICIT_KERNEL_MATRIX_ASSEMBLE_CUH_
+#endif  // PLSSVM_BACKENDS_CUDA_CG_EXPLICIT_KERNEL_MATRIX_ASSEMBLY_CUH_

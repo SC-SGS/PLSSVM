@@ -215,7 +215,7 @@ class csvm {
      * @param[in] QA_cost the value used in the dimensional reduction
      * @return based on the used solver type (e.g., cg_explicit -> kernel matrix fully stored on the device; cg_implicit -> "nothing") (`[[nodiscard]]`)
      */
-    [[nodiscard]] virtual detail::simple_any assemble_kernel_matrix(solver_type solver, const parameter &params, const ::plssvm::detail::simple_any &data, const std::vector<real_type> &q_red, real_type QA_cost) const = 0;
+    [[nodiscard]] virtual detail::simple_any assemble_kernel_matrix(solver_type solver, const parameter &params, ::plssvm::detail::simple_any &data, const std::vector<real_type> &q_red, real_type QA_cost) const = 0;
 
     /**
      * @brief Perform a BLAS level 3 matrix-matrix multiplication: `C = alpha * A * B + beta * C`.
@@ -854,20 +854,25 @@ std::tuple<aos_matrix<real_type>, std::vector<real_type>, unsigned long long> cs
     }
 
     // setup/allocate necessary data on the device(s)
-    const detail::simple_any data = this->setup_data_on_devices(used_solver, A);
+    detail::simple_any data = this->setup_data_on_devices(used_solver, A);
 
     // assemble explicit kernel matrix
     const std::chrono::steady_clock::time_point assembly_start_time = std::chrono::steady_clock::now();
     const detail::simple_any kernel_matrix = this->assemble_kernel_matrix(used_solver, params, data, q_red, QA_cost);
     const std::chrono::steady_clock::time_point assembly_end_time = std::chrono::steady_clock::now();
-    detail::log(verbosity_level::full | verbosity_level::timing,
-                "Assembled the kernel matrix in {}.\n",
-                detail::tracking_entry{ "kernel_matrix", "kernel_matrix_assembly", std::chrono::duration_cast<std::chrono::milliseconds>(assembly_end_time - assembly_start_time) });
+    const auto assembly_duration = std::chrono::duration_cast<std::chrono::milliseconds>(assembly_end_time - assembly_start_time);
+
+    if (used_solver != solver_type::cg_implicit) {
+        detail::log(verbosity_level::full | verbosity_level::timing,
+                    "Assembled the kernel matrix in {}.\n",
+                    assembly_duration);
+    }
+    PLSSVM_DETAIL_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((detail::tracking_entry{ "kernel_matrix", "kernel_matrix_assembly", assembly_duration }));
 
     // choose the correct algorithm based on the (provided) solver type -> currently only CG available
     soa_matrix<real_type> X;
     unsigned long long num_iter{};
-    std::tie(X, num_iter) = conjugate_gradients(kernel_matrix, B_red, used_epsilon, used_max_iter, used_solver);  // TODO: q_red for implicit
+    std::tie(X, num_iter) = conjugate_gradients(kernel_matrix, B_red, used_epsilon, used_max_iter, used_solver);
 
     // calculate bias and undo dimensional reduction
     aos_matrix<real_type> X_ret{ num_rhs, A.num_rows(), PADDING_SIZE, PADDING_SIZE };

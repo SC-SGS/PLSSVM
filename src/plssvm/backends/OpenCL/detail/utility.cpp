@@ -16,6 +16,7 @@
 #include "plssvm/constants.hpp"                             // plssvm::{real_type, THREAD_BLOCK_SIZE, INTERNAL_BLOCK_SIZE, FEATURE_BLOCK_SIZE, PADDING_SIZE}
 #include "plssvm/detail/arithmetic_type_name.hpp"           // plssvm::detail::arithmetic_type_name
 #include "plssvm/detail/logging.hpp"                        // plssvm::detail::log
+#include "plssvm/detail/performance_tracker.hpp"            // PLSSVM_DETAIL_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY, plssvm::detail::tracking_entry
 #include "plssvm/detail/sha256.hpp"                         // plssvm::detail::sha256
 #include "plssvm/detail/string_conversion.hpp"              // plssvm::detail::extract_first_integer_from_string
 #include "plssvm/detail/string_utility.hpp"                 // plssvm::detail::replace_all, plssvm::detail::to_lower_case, plssvm::detail::contains
@@ -25,9 +26,9 @@
 #include "plssvm/verbosity_levels.hpp"                      // plssvm::verbosity_level
 
 #include "CL/cl.h"        // cl_program, cl_platform_id, cl_device_id, cl_uint, cl_device_type, cl_context,
-                          // CL_DEVICE_NAME, CL_QUEUE_DEVICE, CL_DEVICE_TYPE_ALL, CL_DEVICE_TYPE_CPU, CL_DEVICE_TYPE_GPU, CL_DEVICE_VENDOR, CL_PROGRAM_BUILD_LOG, CL_PROGRAM_BINARY_SIZES, CL_PROGRAM_BINARIES,
+                          // CL_DEVICE_NAME, CL_QUEUE_DEVICE, CL_DEVICE_TYPE_ALL, CL_DEVICE_TYPE_CPU, CL_DEVICE_TYPE_GPU, CL_DEVICE_VENDOR, CL_PROGRAM_BUILD_LOG, CL_PROGRAM_BINARY_SIZES, CL_PROGRAM_BINARIES, CL_PLATFORM_VENDOR,
                           // clCreateProgramWithSource, clBuildProgram, clGetProgramBuildInfo, clGetProgramInfo, clCreateKernel, clReleaseProgram, clCreateProgramWithBinary,
-                          //  clSetKernelArg, clEnqueueNDRangeKernel, clFinish, clGetPlatformIDs, clGetDeviceIDs, clGetDeviceInfo, clCreateContext
+                          //  clSetKernelArg, clEnqueueNDRangeKernel, clFinish, clGetPlatformIDs, clGetDeviceIDs, clGetDeviceInfo, clCreateContext, clGetPlatformInfo
 #include "fmt/core.h"     // fmt::print, fmt::format
 #include "fmt/ostream.h"  // fmt::formatter, fmt::ostream_formatter
 #include "fmt/std.h"      // format std::filesystem::path
@@ -181,6 +182,7 @@ std::vector<std::pair<compute_kernel_name, std::string>> kernel_type_to_function
     // since the correct predict kernel function cannot be determined during construction, add all predict kernels
     std::vector<std::pair<compute_kernel_name, std::string>> kernels{
         std::make_pair(compute_kernel_name::assemble_kernel_matrix_explicit, fmt::format("device_kernel_assembly_{}", kernel)),
+        std::make_pair(compute_kernel_name::assemble_kernel_matrix_implicit_blas, fmt::format("device_kernel_assembly_{}_symm", kernel)),
         std::make_pair(compute_kernel_name::predict_kernel_linear, "device_kernel_predict_linear"),
         std::make_pair(compute_kernel_name::predict_kernel_polynomial, "device_kernel_predict_polynomial"),
         std::make_pair(compute_kernel_name::predict_kernel_rbf, "device_kernel_predict_rbf"),
@@ -226,7 +228,11 @@ std::vector<command_queue> create_command_queues(const std::vector<context> &con
     const std::filesystem::path base_path{ PLSSVM_OPENCL_KERNEL_SOURCE_DIR };
     std::string kernel_src_string{};
     // note: the detail/atomics.cl file must be included first!
-    for (const auto &path : { base_path / "detail/atomics.cl", base_path / "cg_explicit/blas.cl", base_path / "cg_explicit/kernel_matrix_assembly.cl", base_path / "predict_kernel.cl" }) {
+    for (const auto &path : { base_path / "detail/atomics.cl",
+                              base_path / "cg_explicit/blas.cl",
+                              base_path / "cg_explicit/kernel_matrix_assembly.cl",
+                              base_path / "cg_implicit/kernel_matrix_assembly_blas.cl",
+                              base_path / "predict_kernel.cl" }) {
         std::ifstream file{ base_path / path };
         kernel_src_string.append((std::istreambuf_iterator<char>{ file }),
                                  std::istreambuf_iterator<char>{});
@@ -241,7 +247,11 @@ std::vector<command_queue> create_command_queues(const std::vector<context> &con
     ::plssvm::detail::replace_all(kernel_src_string, "PADDING_SIZE", fmt::format("{}", PADDING_SIZE));
 
     // append number of device to influence checksum calculation
-    kernel_src_string.append(fmt::format("\n// num_devices: {}\n// OpenCL library: {}\n// GEMM: {}", contexts[0].devices.size(), PLSSVM_OPENCL_LIBRARY, PLSSVM_IS_DEFINED(PLSSVM_USE_GEMM)));
+    kernel_src_string.append(fmt::format("\n// num_devices: {}\n// OpenCL library: {}\n// GEMM: {}\n// PTX inline assembly: {}",
+                                         contexts[0].devices.size(),
+                                         PLSSVM_OPENCL_LIBRARY,
+                                         PLSSVM_IS_DEFINED(PLSSVM_USE_GEMM),
+                                         PLSSVM_IS_DEFINED(PLSSVM_OPENCL_BACKEND_USE_PTX_INLINE_ASSEMBLY)));
 
     // create source code hash
     const std::string checksum = plssvm::detail::sha256{}(kernel_src_string);
@@ -299,11 +309,29 @@ std::vector<command_queue> create_command_queues(const std::vector<context> &con
         // create and build program
         cl_program program = clCreateProgramWithSource(contexts[0], 1, &kernel_src_ptr, nullptr, &err);
         PLSSVM_OPENCL_ERROR_CHECK(err, "error creating program from source");
+
+        std::string compile_options{ "-cl-fast-relaxed-math -cl-mad-enable -cl-no-signed-zeros" };
 #if defined(PLSSVM_USE_GEMM)
-        err = clBuildProgram(program, static_cast<cl_uint>(contexts[0].devices.size()), contexts[0].devices.data(), "-cl-fast-relaxed-math -cl-mad-enable -cl-no-signed-zeros -DPLSSVM_USE_GEMM", nullptr, nullptr);
-#else
-        err = clBuildProgram(program, static_cast<cl_uint>(contexts[0].devices.size()), contexts[0].devices.data(), "-cl-fast-relaxed-math -cl-mad-enable -cl-no-signed-zeros", nullptr, nullptr);
+        compile_options += " -DPLSSVM_USE_GEMM";
 #endif
+
+        // only use PTX inline assembly if enabled during CMake configuration
+#if defined(PLSSVM_OPENCL_BACKEND_USE_PTX_INLINE_ASSEMBLY)
+        std::size_t platform_vendor_size{ 0 };
+        clGetPlatformInfo(contexts[0].platform, CL_PLATFORM_VENDOR, 0, nullptr, &platform_vendor_size);
+        std::string platform_vendor(platform_vendor_size, '\0');
+        clGetPlatformInfo(contexts[0].platform, CL_PLATFORM_VENDOR, platform_vendor_size, platform_vendor.data(), nullptr);
+        const bool use_inline_assembly = ::plssvm::detail::contains(::plssvm::detail::as_lower_case(platform_vendor), "nvidia");
+        if (use_inline_assembly) {
+            compile_options += " -DPLSSVM_USE_NVIDIA_PTX_INLINE_ASSEMBLY";
+            plssvm::detail::log(verbosity_level::full,
+                                "Enabling atomicAdd acceleration using PTX inline assembly.\n");
+        }
+        PLSSVM_DETAIL_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking_entry{ "opencl", "use_inline_assembly", use_inline_assembly }));
+#endif
+
+        err = clBuildProgram(program, static_cast<cl_uint>(contexts[0].devices.size()), contexts[0].devices.data(), compile_options.c_str(), nullptr, nullptr);
+
         if (!err) {
             // check all devices for errors
             for (std::vector<context>::size_type device = 0; device < contexts[0].devices.size(); ++device) {

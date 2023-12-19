@@ -156,10 +156,12 @@ void csvm::init(const target_platform target) {
                         "\n");
 
     // sanity checks for the number of the OpenCL kernels
-    PLSSVM_ASSERT(std::all_of(devices_.begin(), devices_.end(), [](const queue_type &queue) { return queue.kernels.size() == 6; }), "Every command queue must have exactly four associated kernels!");
+    PLSSVM_ASSERT(std::all_of(devices_.begin(), devices_.end(), [](const queue_type &queue) { return queue.kernels.size() == 7; }), "Every command queue must have exactly seven associated kernels!");
 
     PLSSVM_ASSERT(std::all_of(devices_.begin(), devices_.end(), [](const queue_type &queue) { return ::plssvm::detail::contains(queue.kernels, detail::compute_kernel_name::assemble_kernel_matrix_explicit); }),
                   "The explicit kernel matrix assembly device kernel is missing!");
+    PLSSVM_ASSERT(std::all_of(devices_.begin(), devices_.end(), [](const queue_type &queue) { return ::plssvm::detail::contains(queue.kernels, detail::compute_kernel_name::assemble_kernel_matrix_implicit_blas); }),
+                  "The implicit kernel matrix assembly device kernel is missing!");
 #if defined(PLSSVM_USE_GEMM)
     PLSSVM_ASSERT(std::all_of(devices_.begin(), devices_.end(), [](const queue_type &queue) { return ::plssvm::detail::contains(queue.kernels, detail::compute_kernel_name::gemm_kernel_explicit); }),
                   "The explicit BLAS GEMM device kernel is missing!");
@@ -254,25 +256,54 @@ auto csvm::run_assemble_kernel_matrix_explicit(const parameter &params, const de
     return kernel_matrix_d;
 }
 
-void csvm::run_blas_level_3_kernel_explicit(const std::size_t m, const std::size_t n, const std::size_t k, const real_type alpha, const device_ptr_type &A_d, const device_ptr_type &B_d, const real_type beta, device_ptr_type &C_d) const {
+void csvm::run_blas_level_3_kernel_explicit(const real_type alpha, const device_ptr_type &A_d, const device_ptr_type &B_d, const real_type beta, device_ptr_type &C_d) const {
+    const cl_ulong num_rhs = B_d.size(0);
+    const cl_ulong num_rows = B_d.size(1);
+
     // define the grid and block sizes
     const std::size_t max_work_group_size = this->get_max_work_group_size();
     if (max_work_group_size < THREAD_BLOCK_SIZE * THREAD_BLOCK_SIZE) {
         throw kernel_launch_resources{ fmt::format("Not enough work-items allowed for a work-groups of size {}x{}! Try reducing THREAD_BLOCK_SIZE.", THREAD_BLOCK_SIZE, THREAD_BLOCK_SIZE) };
     }
     const std::vector<std::size_t> block = { THREAD_BLOCK_SIZE, THREAD_BLOCK_SIZE };
-    const std::vector<std::size_t> grid = { static_cast<std::size_t>(std::ceil(static_cast<double>(n) / static_cast<double>(block[0] * INTERNAL_BLOCK_SIZE))) * block[0],
-                                            static_cast<std::size_t>(std::ceil(static_cast<double>(m) / static_cast<double>(block[1] * INTERNAL_BLOCK_SIZE))) * block[1] };
+    const std::vector<std::size_t> grid = { static_cast<std::size_t>(std::ceil(static_cast<double>(num_rhs) / static_cast<double>(block[0] * INTERNAL_BLOCK_SIZE))) * block[0],
+                                            static_cast<std::size_t>(std::ceil(static_cast<double>(num_rows) / static_cast<double>(block[1] * INTERNAL_BLOCK_SIZE))) * block[1] };
 
-    // cast to correct type
-    const auto m_ull = static_cast<cl_ulong>(m);
-    const auto n_ull = static_cast<cl_ulong>(n);
-    const auto k_ull = static_cast<cl_ulong>(k);
 #if defined(PLSSVM_USE_GEMM)
-    detail::run_kernel(devices_[0], devices_[0].get_kernel(detail::compute_kernel_name::gemm_kernel_explicit), grid, block, m_ull, n_ull, k_ull, alpha, A_d.get(), B_d.get(), beta, C_d.get());
+    detail::run_kernel(devices_[0], devices_[0].get_kernel(detail::compute_kernel_name::gemm_kernel_explicit), grid, block, num_rows, num_rhs, num_rows, alpha, A_d.get(), B_d.get(), beta, C_d.get());
 #else
-    detail::run_kernel(devices_[0], devices_[0].get_kernel(detail::compute_kernel_name::symm_kernel_explicit), grid, block, m_ull, n_ull, k_ull, alpha, A_d.get(), B_d.get(), beta, C_d.get());
+    detail::run_kernel(devices_[0], devices_[0].get_kernel(detail::compute_kernel_name::symm_kernel_explicit), grid, block, num_rows, num_rhs, num_rows, alpha, A_d.get(), B_d.get(), beta, C_d.get());
 #endif
+    this->device_synchronize(devices_[0]);
+}
+
+void csvm::run_assemble_kernel_matrix_implicit_blas_level_3(const real_type alpha, const device_ptr_type &A_d, const parameter &params, const device_ptr_type &q_red, const real_type QA_cost, const device_ptr_type &B_d, device_ptr_type &C_d) const {
+    const cl_ulong num_rows_reduced = A_d.size(0) - 1;
+    const cl_ulong num_features = A_d.size(1);
+    const cl_ulong num_classes = B_d.size(0);
+
+    // define the grid and block sizes
+    const std::size_t max_work_group_size = this->get_max_work_group_size();
+    if (max_work_group_size < THREAD_BLOCK_SIZE * THREAD_BLOCK_SIZE) {
+        throw kernel_launch_resources{ fmt::format("Not enough work-items allowed for a work-groups of size {}x{}! Try reducing THREAD_BLOCK_SIZE.", THREAD_BLOCK_SIZE, THREAD_BLOCK_SIZE) };
+    }
+    const std::vector<std::size_t> block = { THREAD_BLOCK_SIZE, THREAD_BLOCK_SIZE };
+    const std::vector<std::size_t> grid = { static_cast<std::size_t>(std::ceil(static_cast<double>(num_rows_reduced) / static_cast<double>(block[0] * INTERNAL_BLOCK_SIZE))) * block[0],
+                                            static_cast<std::size_t>(std::ceil(static_cast<double>(num_rows_reduced) / static_cast<double>(block[1] * INTERNAL_BLOCK_SIZE))) * block[1] };
+
+    const real_type cost_factor = real_type{ 1.0 } / params.cost;
+
+    switch (params.kernel_type) {
+        case kernel_function_type::linear:
+            detail::run_kernel(devices_[0], devices_[0].get_kernel(detail::compute_kernel_name::assemble_kernel_matrix_implicit_blas), grid, block, alpha, q_red.get(), A_d.get(), num_rows_reduced, num_features, QA_cost, cost_factor, B_d.get(), C_d.get(), num_classes);
+            break;
+        case kernel_function_type::polynomial:
+            detail::run_kernel(devices_[0], devices_[0].get_kernel(detail::compute_kernel_name::assemble_kernel_matrix_implicit_blas), grid, block, alpha, q_red.get(), A_d.get(), num_rows_reduced, num_features, QA_cost, cost_factor, params.degree.value(), params.gamma.value(), params.coef0.value(), B_d.get(), C_d.get(), num_classes);
+            break;
+        case kernel_function_type::rbf:
+            detail::run_kernel(devices_[0], devices_[0].get_kernel(detail::compute_kernel_name::assemble_kernel_matrix_implicit_blas), grid, block, alpha, q_red.get(), A_d.get(), num_rows_reduced, num_features, QA_cost, cost_factor, params.gamma.value(), B_d.get(), C_d.get(), num_classes);
+            break;
+    }
     this->device_synchronize(devices_[0]);
 }
 

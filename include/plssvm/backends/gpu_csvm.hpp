@@ -96,7 +96,7 @@ class gpu_csvm : public ::plssvm::csvm {
     /**
      * @copydoc plssvm::csvm::assemble_kernel_matrix_explicit_impl
      */
-    [[nodiscard]] ::plssvm::detail::simple_any assemble_kernel_matrix(const solver_type solver, const parameter &params, const ::plssvm::detail::simple_any &data, const std::vector<real_type> &q_red, const real_type QA_cost) const final;
+    [[nodiscard]] ::plssvm::detail::simple_any assemble_kernel_matrix(const solver_type solver, const parameter &params, ::plssvm::detail::simple_any &data, const std::vector<real_type> &q_red, const real_type QA_cost) const final;
     /**
      * @copydoc plssvm::csvm::blas_level_3
      */
@@ -139,17 +139,25 @@ class gpu_csvm : public ::plssvm::csvm {
      */
     [[nodiscard]] virtual device_ptr_type run_assemble_kernel_matrix_explicit(const parameter &params, const device_ptr_type &data_d, const device_ptr_type &q_red_d, real_type QA_cost) const = 0;
     /**
-     * @brief Perform an explicit BLAS level 3 operation: `C = alpha * A * B + beta * C` where @p A is a `m x k` matrix, @p B is a `k x n` matrix, @p C is a `m x n` matrix, and @p alpha and @p beta are scalars.
-     * @param[in] m the number of rows in @p A and @p C
-     * @param[in] n the number of columns in @p B and @p C
-     * @param[in] k the number of rows in @p A and number of columns in @p B
+     * @brief Perform an explicit BLAS level 3 operation: `C = alpha * A * B + beta * C` where @p A, @p B, and @p C are matrices, and @p alpha and @p beta are scalars.
      * @param[in] alpha the scalar alpha value
      * @param[in] A the matrix @p A
      * @param[in] B the matrix @p B
      * @param[in] beta the scalar beta value
      * @param[in,out] C the matrix @p C, also used as result matrix
      */
-    virtual void run_blas_level_3_kernel_explicit(std::size_t m, std::size_t n, std::size_t k, real_type alpha, const device_ptr_type &A, const device_ptr_type &B, real_type beta, device_ptr_type &C) const = 0;
+    virtual void run_blas_level_3_kernel_explicit(real_type alpha, const device_ptr_type &A, const device_ptr_type &B, real_type beta, device_ptr_type &C) const = 0;
+    /**
+     * @brief Perform an implicit BLAS level 3 operation: `C = alpha * A * B + beta * C` where @p A is an implicitly constructed kernel matrix, @p B and @p C are matrices and @p alpha is a scalar.
+     * @param[in] alpha the scalar alpha value
+     * @param[in] A the data points to implicitly create the kernel matrix from
+     * @param[in] params the parameters (e.g., kernel function) used to assemble the kernel matrix
+     * @param[in] q_red the vector used in the dimensional reduction of the kernel matrix
+     * @param[in] QA_cost the scalar used in the dimensional reduction of the kernel matrix
+     * @param[in] B the matrix @p B
+     * @param[in,out] C the matrix @p C, also used as result matrix
+     */
+    virtual void run_assemble_kernel_matrix_implicit_blas_level_3(real_type alpha, const device_ptr_type &A, const parameter &params, const device_ptr_type &q_red, real_type QA_cost, const device_ptr_type &B, device_ptr_type &C) const = 0;
 
     //***************************************************//
     //                   predict, score                  //
@@ -186,7 +194,7 @@ template <template <typename> typename device_ptr_t, typename queue_t>
     PLSSVM_ASSERT(A.is_padded(), "Tha matrix to setup on the devices must be padded!");
     PLSSVM_ASSERT(solver != solver_type::automatic, "An explicit solver type must be provided instead of solver_type::automatic!");
 
-    if (solver == solver_type::cg_explicit) {
+    if (solver == solver_type::cg_explicit || solver == solver_type::cg_implicit) {
         // initialize the data on the device
         device_ptr_type data_d{ A.shape(), A.padding(), devices_[0] };
         data_d.copy_to_device(A);
@@ -199,9 +207,14 @@ template <template <typename> typename device_ptr_t, typename queue_t>
 }
 
 template <template <typename> typename device_ptr_t, typename queue_t>
-::plssvm::detail::simple_any gpu_csvm<device_ptr_t, queue_t>::assemble_kernel_matrix(const solver_type solver, const parameter &params, const ::plssvm::detail::simple_any &data, const std::vector<real_type> &q_red, real_type QA_cost) const {
+::plssvm::detail::simple_any gpu_csvm<device_ptr_t, queue_t>::assemble_kernel_matrix(const solver_type solver, const parameter &params, ::plssvm::detail::simple_any &data, const std::vector<real_type> &q_red, real_type QA_cost) const {
     PLSSVM_ASSERT(!q_red.empty(), "The q_red vector may not be empty!");
     PLSSVM_ASSERT(solver != solver_type::automatic, "An explicit solver type must be provided instead of solver_type::automatic!");
+
+    // allocate memory for the values currently not on the device
+    device_ptr_type q_red_d{ q_red.size() + PADDING_SIZE, devices_[0] };
+    q_red_d.copy_to_device(q_red, 0, q_red.size());
+    q_red_d.memset(0, q_red.size());
 
     if (solver == solver_type::cg_explicit) {
         // get the pointer to the data that already is on the device
@@ -217,10 +230,6 @@ template <template <typename> typename device_ptr_t, typename queue_t>
                       data_d.size(),
                       (num_rows_reduced + PADDING_SIZE + 1) * (num_features + PADDING_SIZE));
 
-        // allocate memory for the values currently not on the device
-        device_ptr_type q_red_d{ q_red.size() + PADDING_SIZE, devices_[0] };
-        q_red_d.copy_to_device(q_red, 0, q_red.size());
-        q_red_d.memset(0, q_red.size());
         device_ptr_type kernel_matrix = this->run_assemble_kernel_matrix_explicit(params, data_d, q_red_d, QA_cost);
 
 #if defined(PLSSVM_USE_GEMM)
@@ -236,6 +245,9 @@ template <template <typename> typename device_ptr_t, typename queue_t>
 #endif
 
         return ::plssvm::detail::simple_any{ std::move(kernel_matrix) };
+    } else if (solver == solver_type::cg_implicit) {
+        // simply return data since in implicit we don't assembly the kernel matrix here!
+        return ::plssvm::detail::simple_any{ std::make_tuple(data.move<device_ptr_type>(), params, std::move(q_red_d), QA_cost) };
     } else {
         // TODO: implement for other solver types
         throw exception{ fmt::format("Assembling the kernel matrix using the {} CG variation is currently not implemented!", solver) };
@@ -250,27 +262,35 @@ void gpu_csvm<device_ptr_t, queue_t>::blas_level_3(const solver_type solver, con
     PLSSVM_ASSERT(C.is_padded(), "The C matrix must be padded!");
     PLSSVM_ASSERT(solver != solver_type::automatic, "An explicit solver type must be provided instead of solver_type::automatic!");
 
+    // allocate memory on the device
+    device_ptr_type B_d{ B.shape(), B.padding(), devices_[0] };
+    B_d.copy_to_device(B);
+    device_ptr_type C_d{ C.shape(), C.padding(), devices_[0] };
+    if (solver == solver_type::cg_implicit) {
+        // apply beta to C and copy it afterward to the device
+        using namespace plssvm::operators;
+        C *= beta;
+    }
+    C_d.copy_to_device(C);
+
     if (solver == solver_type::cg_explicit) {
         const device_ptr_type &A_d = A.get<device_ptr_type>();
         PLSSVM_ASSERT(!A_d.empty(), "The A matrix may not be empty!");
 
-        const std::size_t num_rhs = B.num_rows();
-        const std::size_t num_rows = B.num_cols();
+        this->run_blas_level_3_kernel_explicit(alpha, A_d, B_d, beta, C_d);
+    } else if (solver == solver_type::cg_implicit) {
+        const auto &[A_d, params, q_red_d, QA_cost] = A.get<std::tuple<device_ptr_type, parameter, device_ptr_type, real_type>>();
+        PLSSVM_ASSERT(!A_d.empty(), "The A matrix may not be empty!");
+        PLSSVM_ASSERT(!q_red_d.empty(), "The q_red vector may not be empty!");
 
-        // allocate memory on the device
-        device_ptr_type B_d{ B.shape(), B.padding(), devices_[0] };
-        B_d.copy_to_device(B);
-        device_ptr_type C_d{ C.shape(), C.padding(), devices_[0] };
-        C_d.copy_to_device(C);
-
-        this->run_blas_level_3_kernel_explicit(num_rows, num_rhs, num_rows, alpha, A_d, B_d, beta, C_d);
-
-        C_d.copy_to_host(C);
-        C.restore_padding();
+        this->run_assemble_kernel_matrix_implicit_blas_level_3(alpha, A_d, params, q_red_d, QA_cost, B_d, C_d);
     } else {
         // TODO: implement for other solver types
         throw exception{ fmt::format("The GEMM calculation using the {} CG variation is currently not implemented!", solver) };
     }
+
+    C_d.copy_to_host(C);
+    C.restore_padding();
 }
 
 //***************************************************//
