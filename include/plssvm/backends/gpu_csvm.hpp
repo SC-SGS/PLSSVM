@@ -116,11 +116,6 @@ class gpu_csvm : public ::plssvm::csvm {
     // Note: there are two versions of each function (one for float and one for double) since virtual template functions are not allowed in C++!
 
     /**
-     * @brief Synchronize the device denoted by @p queue.
-     * @param[in] queue the queue denoting the device to synchronize
-     */
-    virtual void device_synchronize(const queue_type &queue) const = 0;
-    /**
      * @brief Return the maximum allowed work group size.
      * @return the maximum allowed work group size (`[[nodiscard]]`)
      */

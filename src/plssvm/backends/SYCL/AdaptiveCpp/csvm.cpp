@@ -150,10 +150,6 @@ csvm::~csvm() {
     }
 }
 
-void csvm::device_synchronize(const queue_type &queue) const {
-    detail::device_synchronize(queue);
-}
-
 ::plssvm::detail::memory_size csvm::get_device_memory() const {
     const ::plssvm::detail::memory_size adaptivecpp_global_mem_size{ static_cast<unsigned long long>(devices_[0].impl->sycl_queue.get_device().get_info<::sycl::info::device::global_mem_size>()) };
     if (target_ == target_platform::cpu) {
@@ -216,7 +212,7 @@ auto csvm::run_assemble_kernel_matrix_explicit(const parameter &params, const de
             });
             break;
     }
-    devices_[0].impl->sycl_queue.wait_and_throw();
+    detail::device_synchronize(devices_[0]);
 
     return kernel_matrix_d;
 }
@@ -244,7 +240,7 @@ void csvm::run_blas_level_3_kernel_explicit(const real_type alpha, const device_
         cgh.parallel_for(execution_range, sycl::detail::device_kernel_symm{ cgh, num_rows, num_rhs, num_rows, alpha, A_d.get(), B_d.get(), beta, C_d.get() });
     });
 #endif
-    devices_[0].impl->sycl_queue.wait_and_throw();
+    detail::device_synchronize(devices_[0]);
 }
 
 void csvm::run_assemble_kernel_matrix_implicit_blas_level_3(const real_type alpha, const device_ptr_type &A_d, const parameter &params, const device_ptr_type &q_red, const real_type QA_cost, const device_ptr_type &B_d, device_ptr_type &C_d) const {
@@ -281,7 +277,7 @@ void csvm::run_assemble_kernel_matrix_implicit_blas_level_3(const real_type alph
             });
             break;
     }
-    devices_[0].impl->sycl_queue.wait_and_throw();
+    detail::device_synchronize(devices_[0]);
 }
 
 //***************************************************//
@@ -308,7 +304,7 @@ auto csvm::run_w_kernel(const device_ptr_type &alpha_d, const device_ptr_type &s
     devices_[0].impl->sycl_queue.submit([&](::sycl::handler &cgh) {
         cgh.parallel_for(execution_range, sycl::detail::device_kernel_w_linear{ cgh, w_d.get(), alpha_d.get(), sv_d.get(), num_classes, num_sv });
     });
-    devices_[0].impl->sycl_queue.wait_and_throw();
+    detail::device_synchronize(devices_[0]);
 
     return w_d;
 }
@@ -357,7 +353,7 @@ auto csvm::run_predict_kernel(const parameter &params, const device_ptr_type &w_
                 break;
         }
     }
-    devices_[0].impl->sycl_queue.wait_and_throw();
+    detail::device_synchronize(devices_[0]);
 
     return out_d;
 }

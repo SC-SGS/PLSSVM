@@ -118,10 +118,6 @@ csvm::~csvm() {
     }
 }
 
-void csvm::device_synchronize(const queue_type &queue) const {
-    detail::device_synchronize(queue);
-}
-
 ::plssvm::detail::memory_size csvm::get_device_memory() const {
     hipDeviceProp_t prop{};
     PLSSVM_HIP_ERROR_CHECK(hipGetDeviceProperties(&prop, devices_[0]));
@@ -176,7 +172,7 @@ auto csvm::run_assemble_kernel_matrix_explicit(const parameter &params, const de
             break;
     }
     detail::peek_at_last_error();
-    this->device_synchronize(devices_[0]);
+    detail::device_synchronize(devices_[0]);
 
     return kernel_matrix_d;
 }
@@ -201,7 +197,7 @@ void csvm::run_blas_level_3_kernel_explicit(const real_type alpha, const device_
     hip::device_kernel_symm<<<grid, block>>>(num_rows, num_rhs, num_rows, alpha, A_d.get(), B_d.get(), beta, C_d.get());
 #endif
     detail::peek_at_last_error();
-    this->device_synchronize(devices_[0]);
+    detail::device_synchronize(devices_[0]);
 }
 
 void csvm::run_assemble_kernel_matrix_implicit_blas_level_3(const real_type alpha, const device_ptr_type &A_d, const parameter &params, const device_ptr_type &q_red, const real_type QA_cost, const device_ptr_type &B_d, device_ptr_type &C_d) const {
@@ -233,7 +229,7 @@ void csvm::run_assemble_kernel_matrix_implicit_blas_level_3(const real_type alph
             break;
     }
     detail::peek_at_last_error();
-    this->device_synchronize(devices_[0]);
+    detail::device_synchronize(devices_[0]);
 }
 
 //***************************************************//
@@ -259,7 +255,7 @@ auto csvm::run_w_kernel(const device_ptr_type &alpha_d, const device_ptr_type &s
     detail::set_device(0);
     hip::device_kernel_w_linear<<<grid, block>>>(w_d.get(), alpha_d.get(), sv_d.get(), num_classes, num_sv);
     detail::peek_at_last_error();
-    this->device_synchronize(devices_[0]);
+    detail::device_synchronize(devices_[0]);
 
     return w_d;
 }
@@ -304,7 +300,7 @@ auto csvm::run_predict_kernel(const parameter &params, const device_ptr_type &w_
         }
     }
     detail::peek_at_last_error();
-    this->device_synchronize(devices_[0]);
+    detail::device_synchronize(devices_[0]);
 
     return out_d;
 }

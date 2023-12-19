@@ -125,10 +125,6 @@ class csvm : public ::plssvm::detail::gpu_csvm<detail::device_ptr, detail::comma
     void init(target_platform target);
 
     /**
-     * @copydoc plssvm::detail::gpu_csvm::device_synchronize
-     */
-    void device_synchronize(const queue_type &queue) const final;
-    /**
      * @copydoc plssvm::csvm::get_device_memory
      */
     [[nodiscard]] ::plssvm::detail::memory_size get_device_memory() const final;
