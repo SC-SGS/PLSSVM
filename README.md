@@ -237,6 +237,7 @@ The `[optional_options]` can be one or multiple of:
 - `PLSSVM_ENABLE_TESTING=ON|OFF` (default: `ON`): enable testing using GoogleTest and ctest
 - `PLSSVM_ENABLE_LANGUAGE_BINDINGS=ON|OFF` (default: `OFF`): enable language bindings
 - `PLSSVM_STL_DEBUG_MODE_FLAGS=ON|OFF` (default: `OFF`): enable STL debug modes (**note**: changes the resulting library's ABI!)
+- `PLSSVM_USE_GEMM=ON|OFF` (default: `ON`): use GEMM instead of SYMM calculations in the CG algorithm with the `cg_explicit` solver type (**note**: GEMM increases the necessary device memory by a factor of 2)
 
 If `PLSSVM_ENABLE_TESTING` is set to `ON`, the following options can also be set:
 
@@ -254,7 +255,7 @@ If `PLSSVM_ENABLE_PYTHON_BINDINGS` is set to `ON`, the following options can als
 
 If the OpenCL backend is available and NVIDIA GPUs should be targeted, an additional option can be set.
 
-- `PLSSVM_OPENCL_BACKEND_ENABLE_PTX_INLINE_ASSEMBLY` (default: `ON`): enable PTX inline assembly to speed up the FP32/FP64 atomicAdd implementations on NVIDIA GPUs. **Note:** requires `sm_60` or newer!
+- `PLSSVM_OPENCL_BACKEND_ENABLE_PTX_INLINE_ASSEMBLY=ON|OFF` (default: `ON`): enable PTX inline assembly to speed up the FP32/FP64 atomicAdd implementations on NVIDIA GPUs. **Note:** requires `sm_60` or newer!
 
 If the SYCL backend is available, additional options can be set.
 
