@@ -16,6 +16,7 @@
 #include "plssvm/constants.hpp"                 // plssvm::real_type, plssvm::PADDING_SIZE
 #include "plssvm/detail/assert.hpp"             // PLSSVM_ASSERT
 #include "plssvm/detail/io/file_reader.hpp"     // plssvm::detail::io::file_reader
+#include "plssvm/detail/memory_size.hpp"        // plssvm::memory_size, custom literals
 #include "plssvm/detail/string_conversion.hpp"  // plssvm::detail::convert_to
 #include "plssvm/detail/utility.hpp"            // plssvm::detail::current_date_time
 #include "plssvm/exceptions/exceptions.hpp"     // plssvm::invalid_file_format_exception
@@ -240,6 +241,7 @@ inline void write_libsvm_data_impl(const std::string &filename, const soa_matrix
     } else {
         PLSSVM_ASSERT(label.empty(), "has_label is 'false' but labels were provided!");
     }
+    using namespace literals;
 
     // create output file
     fmt::ostream out = fmt::output_file(filename);
@@ -267,7 +269,7 @@ inline void write_libsvm_data_impl(const std::string &filename, const soa_matrix
     // results in 48 B * 128 B = 6 KiB stack buffer per thread
     static constexpr std::size_t BLOCK_SIZE = 128;
     // use 1 MiB as buffer per thread
-    constexpr std::size_t STRING_BUFFER_SIZE = std::size_t{ 1024 } * std::size_t{ 1024 };
+    constexpr detail::memory_size STRING_BUFFER_SIZE = 1_MiB;
 
     // format one output-line
     auto format_libsvm_line = [num_features](std::string &output, const soa_matrix<real_type> &data_point, const std::size_t row) {
@@ -291,11 +293,11 @@ inline void write_libsvm_data_impl(const std::string &filename, const soa_matrix
         output.push_back('\n');
     };
 
-    #pragma omp parallel default(none) shared(out, data, label, format_libsvm_line) firstprivate(num_data_points, num_features)
+    #pragma omp parallel default(none) shared(out, data, label, format_libsvm_line) firstprivate(STRING_BUFFER_SIZE, num_data_points, num_features)
     {
         // all support vectors
         std::string out_string;
-        out_string.reserve(STRING_BUFFER_SIZE + (num_features + 1) * CHARS_PER_BLOCK);  // oversubscribe buffer that at least one additional line fits into it
+        out_string.reserve(STRING_BUFFER_SIZE.num_bytes() + (num_features + 1) * CHARS_PER_BLOCK);  // oversubscribe buffer that at least one additional line fits into it
 
         #pragma omp for schedule(dynamic) nowait
         for (typename std::vector<real_type>::size_type i = 0; i < num_data_points; ++i) {
@@ -304,7 +306,7 @@ inline void write_libsvm_data_impl(const std::string &filename, const soa_matrix
             }
             format_libsvm_line(out_string, data, i);
 
-            if (out_string.size() > STRING_BUFFER_SIZE) {
+            if (out_string.size() > STRING_BUFFER_SIZE.num_bytes()) {
                 #pragma omp critical
                 out.print("{}", out_string);
 

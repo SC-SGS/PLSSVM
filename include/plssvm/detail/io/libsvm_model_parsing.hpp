@@ -19,6 +19,7 @@
 #include "plssvm/detail/assert.hpp"             // PLSSVM_ASSERT
 #include "plssvm/detail/io/libsvm_parsing.hpp"  // plssvm::detail::io::parse_libsvm_num_features
 #include "plssvm/detail/logging.hpp"            // plssvm::detail::log
+#include "plssvm/detail/memory_size.hpp"        // plssvm::memory_size, custom literals
 #include "plssvm/detail/utility.hpp"            // plssvm::detail::current_date_time
 #include "plssvm/matrix.hpp"                    // plssvm::soa_matrix
 #include "plssvm/parameter.hpp"                 // plssvm::parameter
@@ -692,6 +693,7 @@ inline void write_libsvm_model_data(const std::string &filename, const plssvm::p
             break;
     }
 #endif
+    using namespace literals;
 
     const soa_matrix<real_type> &support_vectors = data.data();
     const std::vector<label_type> &labels = data.labels().value();
@@ -719,7 +721,7 @@ inline void write_libsvm_model_data(const std::string &filename, const plssvm::p
     // results in 48 B * 128 B = 6 KiB stack buffer per thread
     static constexpr std::size_t BLOCK_SIZE = 128;
     // use 1 MiB as buffer per thread
-    constexpr std::size_t STRING_BUFFER_SIZE = std::size_t{ 1024 } * std::size_t{ 1024 };
+    constexpr detail::memory_size STRING_BUFFER_SIZE = 1_MiB;
 
     // format one output-line
     auto format_libsvm_line = [](std::string &output, const std::vector<real_type> &a, const soa_matrix<real_type> &d, const std::size_t point) {
@@ -744,11 +746,11 @@ inline void write_libsvm_model_data(const std::string &filename, const plssvm::p
     // initialize volatile array
     auto counts = std::make_unique<volatile int[]>(label_order.size() + 1);
     counts[0] = std::numeric_limits<int>::max();
-    #pragma omp parallel default(none) shared(counts, alpha, format_libsvm_line, label_order, labels, support_vectors, out, index_sets) firstprivate(num_features, num_classes, num_alpha_per_point, classification)
+    #pragma omp parallel default(none) shared(counts, alpha, format_libsvm_line, label_order, labels, support_vectors, out, index_sets) firstprivate(STRING_BUFFER_SIZE, num_features, num_classes, num_alpha_per_point, classification)
     {
         // preallocate string buffer, only ONE allocation
         std::string out_string;
-        out_string.reserve(STRING_BUFFER_SIZE + (num_features + num_alpha_per_point) * CHARS_PER_BLOCK);  // oversubscribe buffer that at least one additional line fits into it
+        out_string.reserve(STRING_BUFFER_SIZE.num_bytes() + (num_features + num_alpha_per_point) * CHARS_PER_BLOCK);  // oversubscribe buffer that at least one additional line fits into it
         std::vector<real_type> alpha_per_point(num_alpha_per_point);
 
         // loop over all classes, since they must be sorted
@@ -778,7 +780,7 @@ inline void write_libsvm_model_data(const std::string &filename, const plssvm::p
                     format_libsvm_line(out_string, alpha_per_point, support_vectors, i);
 
                     // if the buffer is full, write it to the file
-                    if (out_string.size() > STRING_BUFFER_SIZE) {
+                    if (out_string.size() > STRING_BUFFER_SIZE.num_bytes()) {
                         // wait for all threads to write support vectors for previous class
 #ifdef _OPENMP
                         while (counts[l] < omp_get_num_threads()) {
