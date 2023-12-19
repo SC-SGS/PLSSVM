@@ -229,7 +229,7 @@ The `[optional_options]` can be one or multiple of:
 - `PLSSVM_ENABLE_ASSERTS=ON|OFF` (default: `OFF`): enables custom assertions regardless whether the `DEBUG` macro is defined or not
 - `PLSSVM_USE_FLOAT_AS_REAL_TYPE=ON|OFF` (default: `OFF`): use `float` as real_type instead of `double`
 - `PLSSVM_THREAD_BLOCK_SIZE` (default: `8`): set a specific thread block size used in the GPU kernels (for fine-tuning optimizations)
-- `PLSSVM_INTERNAL_BLOCK_SIZE` (default: `4`: set a specific internal block size used in the GPU kernels (for fine-tuning optimizations)
+- `PLSSVM_INTERNAL_BLOCK_SIZE` (default: `4`): set a specific internal block size used in the GPU kernels (for fine-tuning optimizations)
 - `PLSSVM_ENABLE_LTO=ON|OFF` (default: `ON`): enable interprocedural optimization (IPO/LTO) if supported by the compiler
 - `PLSSVM_ENFORCE_MAX_MEM_ALLOC_SIZE=ON|OFF` (default: `ON`): enforce the maximum (device) memory allocation size for the plssvm::solver_type::automatic solver
 - `PLSSVM_ENABLE_DOCUMENTATION=ON|OFF` (default: `OFF`): enable the `doc` target using doxygen
@@ -459,13 +459,16 @@ If the `--sycl_implementation_type` is `automatic`, the used SYCL implementation
 
 ### Predicting using `plssvm-predict`
 
+Our predict utility is fully conform to LIBSVM's model files. 
+This means that our `plssvm-predict` can be used on model files learned with, e.g., LIBSVM's `svm-train`.
+
 ```bash
-./plssvm-preidct --help
+./plssvm-predict --help
 ```
 ```
 LS-SVM with multiple (GPU-)backends
 Usage:
-  ./plssvm-preidct [OPTION...] test_file model_file [output_file]
+  ./plssvm-predict [OPTION...] test_file model_file [output_file]
 
   -b, --backend arg             choose the backend: automatic|openmp|cuda|hip|opencl|sycl (default: automatic)
   -p, --target_platform arg     choose the target platform: automatic|cpu|gpu_nvidia|gpu_amd|gpu_intel (default: automatic)
@@ -486,13 +489,13 @@ Usage:
 An example invocation could look like:
 
 ```bash
-./plssvm-preidct --backend cuda --test /path/to/test_file --model /path/to/model_file
+./plssvm-predict --backend cuda --test /path/to/test_file --model /path/to/model_file
 ```
 
 Another example targeting NVIDIA GPUs using the SYCL backend looks like:
 
 ```bash
-./plssvm-preidct --backend sycl --target_platform gpu_nvidia --test /path/to/test_file --model /path/to/model_file
+./plssvm-predict --backend sycl --target_platform gpu_nvidia --test /path/to/test_file --model /path/to/model_file
 ```
 
 The `--target_platform=automatic` and `--sycl_implementation_type` flags work like in the training (`./plssvm-train`) case.
