@@ -9,7 +9,7 @@
 #include "plssvm/detail/cmd/parser_scale.hpp"
 
 #include "plssvm/detail/assert.hpp"                                // PLSSVM_ASSERT
-#include "plssvm/detail/logging_without_performance_tracking.hpp"  // plssvm::detail::log
+#include "plssvm/detail/logging_without_performance_tracking.hpp"  // plssvm::detail::log_untracked
 #include "plssvm/verbosity_levels.hpp"                             // plssvm::verbosity, plssvm::verbosity_level
 #include "plssvm/version/version.hpp"                              // plssvm::version::detail::get_version_info
 
@@ -113,9 +113,9 @@ parser_scale::parser_scale(int argc, char **argv) {
     if (result["verbosity"].count()) {
         const verbosity_level verb = result["verbosity"].as<verbosity_level>();
         if (quiet && verb != verbosity_level::quiet) {
-            detail::log(verbosity_level::full | verbosity_level::warning,
-                        "WARNING: explicitly set the -q/--quiet flag, but the provided verbosity level isn't \"quiet\"; setting --verbosity={} to --verbosity=quiet\n",
-                        verb);
+            detail::log_untracked(verbosity_level::full | verbosity_level::warning,
+                                  "WARNING: explicitly set the -q/--quiet flag, but the provided verbosity level isn't \"quiet\"; setting --verbosity={} to --verbosity=quiet\n",
+                                  verb);
             verbosity = verbosity_level::quiet;
         } else {
             verbosity = verb;
@@ -152,8 +152,8 @@ parser_scale::parser_scale(int argc, char **argv) {
     // parse the file name to restore the previously saved weights from
     if (result.count("restore_filename")) {
         if (result.count("lower") || result.count("upper")) {
-            detail::log(verbosity_level::full | verbosity_level::warning,
-                        "WARNING: provided -l (--lower) and/or -u (--upper) together with -r (--restore_filename); ignoring -l/-u\n");
+            detail::log_untracked(verbosity_level::full | verbosity_level::warning,
+                                  "WARNING: provided -l (--lower) and/or -u (--upper) together with -r (--restore_filename); ignoring -l/-u\n");
         }
         restore_filename = result["restore_filename"].as<decltype(restore_filename)>();
     }

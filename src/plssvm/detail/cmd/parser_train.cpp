@@ -14,7 +14,7 @@
 #include "plssvm/constants.hpp"                                    // plssvm::real_type
 #include "plssvm/default_value.hpp"                                // plssvm::default_value
 #include "plssvm/detail/assert.hpp"                                // PLSSVM_ASSERT
-#include "plssvm/detail/logging_without_performance_tracking.hpp"  // plssvm::detail::log
+#include "plssvm/detail/logging_without_performance_tracking.hpp"  // plssvm::detail::log_untracked
 #include "plssvm/detail/string_utility.hpp"                        // plssvm::detail::as_lower_case
 #include "plssvm/detail/utility.hpp"                               // plssvm::detail::to_underlying
 #include "plssvm/kernel_function_types.hpp"                        // plssvm::kernel_type_to_math_string
@@ -178,9 +178,9 @@ parser_train::parser_train(int argc, char **argv) {
 
     // warn if kernel invocation type is explicitly set but SYCL isn't the current backend
     if (backend != backend_type::sycl && sycl_kernel_invocation_type != sycl::kernel_invocation_type::automatic) {
-        detail::log(verbosity_level::full | verbosity_level::warning,
-                    "WARNING: explicitly set a SYCL kernel invocation type but the current backend isn't SYCL; ignoring --sycl_kernel_invocation_type={}\n",
-                    sycl_kernel_invocation_type);
+        detail::log_untracked(verbosity_level::full | verbosity_level::warning,
+                              "WARNING: explicitly set a SYCL kernel invocation type but the current backend isn't SYCL; ignoring --sycl_kernel_invocation_type={}\n",
+                              sycl_kernel_invocation_type);
     }
 
     // parse SYCL implementation used in the SYCL backend
@@ -188,9 +188,9 @@ parser_train::parser_train(int argc, char **argv) {
 
     // warn if a SYCL implementation type is explicitly set but SYCL isn't the current backend
     if (backend != backend_type::sycl && sycl_implementation_type != sycl::implementation_type::automatic) {
-        detail::log(verbosity_level::full | verbosity_level::warning,
-                    "WARNING: explicitly set a SYCL implementation type but the current backend isn't SYCL; ignoring --sycl_implementation_type={}\n",
-                    sycl_implementation_type);
+        detail::log_untracked(verbosity_level::full | verbosity_level::warning,
+                              "WARNING: explicitly set a SYCL implementation type but the current backend isn't SYCL; ignoring --sycl_implementation_type={}\n",
+                              sycl_implementation_type);
     }
 #endif
 
@@ -204,9 +204,9 @@ parser_train::parser_train(int argc, char **argv) {
     if (result["verbosity"].count()) {
         const verbosity_level verb = result["verbosity"].as<verbosity_level>();
         if (quiet && verb != verbosity_level::quiet) {
-            detail::log(verbosity_level::full | verbosity_level::warning,
-                        "WARNING: explicitly set the -q/--quiet flag, but the provided verbosity level isn't \"quiet\"; setting --verbosity={} to --verbosity=quiet\n",
-                        verb);
+            detail::log_untracked(verbosity_level::full | verbosity_level::warning,
+                                  "WARNING: explicitly set the -q/--quiet flag, but the provided verbosity level isn't \"quiet\"; setting --verbosity={} to --verbosity=quiet\n",
+                                  verb);
             verbosity = verbosity_level::quiet;
         } else {
             verbosity = verb;

@@ -16,7 +16,7 @@
 #include "plssvm/constants.hpp"                                    // plssvm::real_type
 #include "plssvm/default_value.hpp"                                // plssvm::default_value, plssvm::is_default_value_v
 #include "plssvm/detail/igor_utility.hpp"                          // plssvm::detail::{has_only_named_args_v, get_value_from_named_parameter}
-#include "plssvm/detail/logging_without_performance_tracking.hpp"  // plssvm::detail::log
+#include "plssvm/detail/logging_without_performance_tracking.hpp"  // plssvm::detail::log_untracked
 #include "plssvm/detail/type_traits.hpp"                           // PLSSVM_REQUIRES, plssvm::detail::{remove_cvref_t, always_false_v}
 #include "plssvm/detail/utility.hpp"                               // plssvm::detail::unreachable
 #include "plssvm/kernel_function_types.hpp"                        // plssvm::kernel_function_type, plssvm::kernel_function_type_to_math_string
@@ -185,11 +185,11 @@ struct parameter {
         // shorthand function for emitting a warning if a provided parameter is not used by the current kernel function
         [[maybe_unused]] const auto print_warning = [](const std::string_view param_name, const kernel_function_type kernel) {
             // NOTE: can't use the log function due to circular dependencies
-            detail::log(verbosity_level::full | verbosity_level::warning,
-                        "WARNING: {} parameter provided, which is not used in the {} kernel ({})!\n",
-                        param_name,
-                        kernel,
-                        kernel_function_type_to_math_string(kernel));
+            detail::log_untracked(verbosity_level::full | verbosity_level::warning,
+                                  "WARNING: {} parameter provided, which is not used in the {} kernel ({})!\n",
+                                  param_name,
+                                  kernel,
+                                  kernel_function_type_to_math_string(kernel));
         };
 
         // compile time/runtime check: the values must have the correct types
