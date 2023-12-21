@@ -16,8 +16,6 @@
 #include <istream>  // std::istream
 #include <ostream>  // std::ostream
 
-#include <iostream>
-
 namespace plssvm::detail {
 
 std::ostream &operator<<(std::ostream &out, const memory_size mem) {
