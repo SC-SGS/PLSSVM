@@ -112,7 +112,7 @@ template <typename csvm_type, typename device_ptr_type, typename matrix_type, ty
 [[nodiscard]] inline plssvm::detail::simple_any init_explicit_matrix(matrix_type matr, [[maybe_unused]] used_csvm_type &csvm) {
     using real_type = typename matrix_type::value_type;
 
-#if defined(PLSSV_USE_GEMM)
+#if defined(PLSSVM_USE_GEMM)
     std::vector<real_type> flat_matr = util::flatten(matr.to_2D_vector());
 #else
     std::vector<real_type> flat_matr = matrix_to_symm_kernel_matrix(matr);
