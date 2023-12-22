@@ -9,8 +9,8 @@
  * @brief Functions used for testing the correctness of the PLSSVM implementation.
  */
 
-#ifndef PLSSVM_TESTS_BACKENDS_COMPARE_HPP_
-#define PLSSVM_TESTS_BACKENDS_COMPARE_HPP_
+#ifndef PLSSVM_TESTS_BACKENDS_GROUND_TRUTH_HPP_
+#define PLSSVM_TESTS_BACKENDS_GROUND_TRUTH_HPP_
 #pragma once
 
 #include "plssvm/matrix.hpp"     // plssvm::matrix, plssvm::layout_type
@@ -19,7 +19,7 @@
 #include <cstddef>  // std::size_t
 #include <vector>   // std::vector
 
-namespace compare {
+namespace ground_truth {
 
 namespace detail {
 
@@ -161,6 +161,6 @@ template <typename real_type>
 template <typename real_type>
 [[nodiscard]] plssvm::aos_matrix<real_type> predict_values(const plssvm::parameter &params, const plssvm::soa_matrix<real_type> &w, const plssvm::aos_matrix<real_type> &weights, const std::vector<real_type> &rho, const plssvm::soa_matrix<real_type> &support_vectors, const plssvm::soa_matrix<real_type> &predict_points);
 
-}  // namespace compare
+}  // namespace ground_truth
 
-#endif  // PLSSVM_TESTS_BACKENDS_COMPARE_HPP_
+#endif  // PLSSVM_TESTS_BACKENDS_GROUND_TRUTH_HPP_

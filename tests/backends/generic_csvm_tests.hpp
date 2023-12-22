@@ -29,10 +29,10 @@
 #include "plssvm/solver_types.hpp"              // plssvm::solver_type
 #include "plssvm/target_platforms.hpp"          // plssvm::target_platform
 
-#include "backends/compare.hpp"    // compare::{kernel_function, perform_dimensional_reduction}
-#include "custom_test_macros.hpp"  // EXPECT_FLOATING_POINT_MATRIX_EQ, EXPECT_FLOATING_POINT_VECTOR_NEAR, EXPECT_FLOATING_POINT_NEAR
-#include "types_to_test.hpp"       // util::{test_parameter_type_at_t, test_parameter_value_at_v}
-#include "utility.hpp"             // util::{redirect_output, generate_specific_matrix, construct_from_tuple, flatten, generate_random_matrix}
+#include "backends/ground_truth.hpp"  // ground_truth::{kernel_function, perform_dimensional_reduction}
+#include "custom_test_macros.hpp"     // EXPECT_FLOATING_POINT_MATRIX_EQ, EXPECT_FLOATING_POINT_VECTOR_NEAR, EXPECT_FLOATING_POINT_NEAR
+#include "types_to_test.hpp"          // util::{test_parameter_type_at_t, test_parameter_value_at_v}
+#include "utility.hpp"                // util::{redirect_output, generate_specific_matrix, construct_from_tuple, flatten, generate_random_matrix}
 
 #include "fmt/format.h"   // fmt::format
 #include "fmt/ostream.h"  // can use fmt using operator<< overloads
@@ -548,7 +548,7 @@ TYPED_TEST_P(GenericCSVMKernelFunction, blas_level_3_assembly_implicit_without_C
     [[maybe_unused]] const plssvm::real_type alpha{ 1.0 };
 
     const auto matr_A = util::generate_specific_matrix<plssvm::soa_matrix<plssvm::real_type>>(plssvm::shape{ 4, 4 });
-    const auto [q, QA_cost] = compare::perform_dimensional_reduction(params, matr_A);
+    const auto [q, QA_cost] = ground_truth::perform_dimensional_reduction(params, matr_A);
 
     const plssvm::detail::simple_any A{ util::init_implicit_matrix<csvm_type, device_ptr_type>(matr_A, svm, params, q, QA_cost) };
 
@@ -566,9 +566,9 @@ TYPED_TEST_P(GenericCSVMKernelFunction, blas_level_3_assembly_implicit_without_C
     std::ignore = svm.run_blas_level_3(solver, alpha, A, B, beta, C2);
 
     // calculate correct results
-    const std::vector<plssvm::real_type> kernel_matrix = compare::assemble_kernel_matrix_gemm(params, matr_A, q, QA_cost);
+    const std::vector<plssvm::real_type> kernel_matrix = ground_truth::assemble_kernel_matrix_gemm(params, matr_A, q, QA_cost);
     plssvm::soa_matrix<plssvm::real_type> correct_C{ plssvm::shape{ 3, 3 }, plssvm::real_type{ 0.0 }, plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE } };
-    compare::gemm(alpha, kernel_matrix, B, beta, correct_C);
+    ground_truth::gemm(alpha, kernel_matrix, B, beta, correct_C);
 
     // check for correctness
     EXPECT_FLOATING_POINT_MATRIX_NEAR(C, correct_C);
@@ -600,7 +600,7 @@ TYPED_TEST_P(GenericCSVMKernelFunction, blas_level_3_assembly_implicit) {
     [[maybe_unused]] const plssvm::real_type alpha{ 1.0 };
 
     const auto matr_A = util::generate_specific_matrix<plssvm::soa_matrix<plssvm::real_type>>(plssvm::shape{ 4, 4 });
-    const auto [q, QA_cost] = compare::perform_dimensional_reduction(params, matr_A);
+    const auto [q, QA_cost] = ground_truth::perform_dimensional_reduction(params, matr_A);
 
     const plssvm::detail::simple_any A{ util::init_implicit_matrix<csvm_type, device_ptr_type>(matr_A, svm, params, q, QA_cost) };
 
@@ -619,8 +619,8 @@ TYPED_TEST_P(GenericCSVMKernelFunction, blas_level_3_assembly_implicit) {
     std::ignore = svm.run_blas_level_3(solver, alpha, A, B, beta, C2);
 
     // calculate correct results
-    const std::vector<plssvm::real_type> kernel_matrix = compare::assemble_kernel_matrix_gemm(params, matr_A, q, QA_cost);
-    compare::gemm(alpha, kernel_matrix, B, beta, correct_C);
+    const std::vector<plssvm::real_type> kernel_matrix = ground_truth::assemble_kernel_matrix_gemm(params, matr_A, q, QA_cost);
+    ground_truth::gemm(alpha, kernel_matrix, B, beta, correct_C);
 
     // check for correctness
     EXPECT_FLOATING_POINT_MATRIX_NEAR(C, correct_C);
@@ -664,9 +664,9 @@ TYPED_TEST_P(GenericCSVMKernelFunction, predict_values) {
     // calculate correct predict values
     plssvm::soa_matrix<plssvm::real_type> correct_w;
     if (kernel == plssvm::kernel_function_type::linear) {
-        correct_w = compare::calculate_w(weights, support_vectors);
+        correct_w = ground_truth::calculate_w(weights, support_vectors);
     }
-    const plssvm::aos_matrix<plssvm::real_type> correct_predict_values = compare::predict_values(params, correct_w, weights, rho, support_vectors, data);
+    const plssvm::aos_matrix<plssvm::real_type> correct_predict_values = ground_truth::predict_values(params, correct_w, weights, rho, support_vectors, data);
 
     // check the calculated result for correctness
     ASSERT_EQ(calculated.shape(), correct_predict_values.shape());
@@ -745,7 +745,7 @@ TYPED_TEST_P(GenericCSVMKernelFunction, perform_dimensional_reduction) {
     const auto [q_red, QA_cost] = svm.perform_dimensional_reduction(params, data);
 
     // check values for correctness
-    const auto [q_red_correct, QA_cost_correct] = compare::perform_dimensional_reduction(params, data);
+    const auto [q_red_correct, QA_cost_correct] = ground_truth::perform_dimensional_reduction(params, data);
     ASSERT_EQ(q_red.size(), data.num_rows() - 1);
     EXPECT_FLOATING_POINT_VECTOR_NEAR(q_red, q_red_correct);
     EXPECT_FLOATING_POINT_NEAR(QA_cost, QA_cost_correct);

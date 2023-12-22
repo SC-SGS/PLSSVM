@@ -7,7 +7,7 @@
  *          See the LICENSE.md file in the project root for full license information.
  */
 
-#include "backends/compare.hpp"
+#include "backends/ground_truth.hpp"
 
 #include "plssvm/constants.hpp"              // plssvm::PADDING_SIZE
 #include "plssvm/detail/assert.hpp"          // PLSSVM_ASSERT
@@ -21,7 +21,7 @@
 #include <cstddef>    // std::size_t
 #include <vector>     // std::vector
 
-namespace compare {
+namespace ground_truth {
 
 namespace detail {
 
@@ -350,4 +350,4 @@ template <typename real_type>
 template plssvm::aos_matrix<float> predict_values(const plssvm::parameter &, const plssvm::soa_matrix<float> &, const plssvm::aos_matrix<float> &, const std::vector<float> &, const plssvm::soa_matrix<float> &, const plssvm::soa_matrix<float> &);
 template plssvm::aos_matrix<double> predict_values(const plssvm::parameter &, const plssvm::soa_matrix<double> &, const plssvm::aos_matrix<double> &, const std::vector<double> &, const plssvm::soa_matrix<double> &, const plssvm::soa_matrix<double> &);
 
-}  // namespace compare
+}  // namespace ground_truth

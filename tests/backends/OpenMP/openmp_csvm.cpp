@@ -25,6 +25,7 @@
 #include "plssvm/backends/OpenMP/cg_implicit/kernel_matrix_assembly_blas.hpp"
 
 #include "backends/generic_csvm_tests.hpp"  // generic CSVM tests to instantiate
+#include "backends/ground_truth.hpp"        // ground_truth::{perform_dimensional_reduction, assemble_kernel_matrix_symm, assemble_kernel_matrix_gemm, gemm}
 #include "custom_test_macros.hpp"           // EXPECT_THROW_WHAT
 #include "naming.hpp"                       // naming::test_parameter_to_name
 #include "types_to_test.hpp"                // util::{cartesian_type_product_t, combine_test_parameters_gtest_t}
@@ -140,11 +141,11 @@ TEST_F(OpenMPCSVM, blas_level_3_kernel_explicit) {
     // create kernel matrix to use in the BLAS calculation
     const plssvm::parameter params{};
     const plssvm::data_set data{ PLSSVM_TEST_FILE };
-    const auto [q_red, QA_cost] = compare::perform_dimensional_reduction(params, data.data());
+    const auto [q_red, QA_cost] = ground_truth::perform_dimensional_reduction(params, data.data());
 #if defined(PLSSVM_USE_GEMM)
-    const std::vector<plssvm::real_type> kernel_matrix = compare::assemble_kernel_matrix_gemm(params, data.data(), q_red, QA_cost, 0);
+    const std::vector<plssvm::real_type> kernel_matrix = ground_truth::assemble_kernel_matrix_gemm(params, data.data(), q_red, QA_cost, 0);
 #else
-    const std::vector<plssvm::real_type> kernel_matrix = compare::assemble_kernel_matrix_symm(params, data.data(), q_red, QA_cost, 0);
+    const std::vector<plssvm::real_type> kernel_matrix = ground_truth::assemble_kernel_matrix_symm(params, data.data(), q_red, QA_cost, 0);
 #endif
 
     const auto B = util::generate_specific_matrix<plssvm::soa_matrix<plssvm::real_type>>(plssvm::shape{ data.num_data_points() - 1, data.num_data_points() - 1 }, plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE });
@@ -166,8 +167,8 @@ TEST_F(OpenMPCSVM, blas_level_3_kernel_explicit) {
 #endif
 
     // calculate correct results
-    const std::vector<plssvm::real_type> kernel_matrix_gemm_padded = compare::assemble_kernel_matrix_gemm(params, data.data(), q_red, QA_cost);
-    compare::gemm(alpha, kernel_matrix_gemm_padded, B, beta, C);
+    const std::vector<plssvm::real_type> kernel_matrix_gemm_padded = ground_truth::assemble_kernel_matrix_gemm(params, data.data(), q_red, QA_cost);
+    ground_truth::gemm(alpha, kernel_matrix_gemm_padded, B, beta, C);
 
     // check C for correctness
     EXPECT_FLOATING_POINT_MATRIX_NEAR(plssvm::soa_matrix<plssvm::real_type>{ aos_C }, C);
@@ -188,7 +189,7 @@ TYPED_TEST(OpenMPCSVMKernelFunction, assemble_kernel_matrix_explicit) {
     }
     const plssvm::data_set data{ PLSSVM_TEST_FILE };
 
-    const auto [q_red, QA_cost] = compare::perform_dimensional_reduction(params, data.data());
+    const auto [q_red, QA_cost] = ground_truth::perform_dimensional_reduction(params, data.data());
 
     const std::size_t num_rows_reduced = data.data().num_rows() - 1;
 #if defined(PLSSVM_USE_GEMM)
@@ -214,9 +215,9 @@ TYPED_TEST(OpenMPCSVMKernelFunction, assemble_kernel_matrix_explicit) {
 
         // calculate ground truth
 #if defined(PLSSVM_USE_GEMM)
-    const std::vector<plssvm::real_type> correct_kernel_matrix = compare::assemble_kernel_matrix_gemm(params, data.data(), q_red, QA_cost, 0);
+    const std::vector<plssvm::real_type> correct_kernel_matrix = ground_truth::assemble_kernel_matrix_gemm(params, data.data(), q_red, QA_cost, 0);
 #else
-    const std::vector<plssvm::real_type> correct_kernel_matrix = compare::assemble_kernel_matrix_symm(params, data.data(), q_red, QA_cost, 0);
+    const std::vector<plssvm::real_type> correct_kernel_matrix = ground_truth::assemble_kernel_matrix_symm(params, data.data(), q_red, QA_cost, 0);
 #endif
 
     // check for correctness
@@ -235,7 +236,7 @@ TYPED_TEST(OpenMPCSVMKernelFunction, blas_level_3_kernel_implicit) {
         params.gamma = plssvm::real_type{ 0.001 };
     }
     const plssvm::data_set data{ PLSSVM_TEST_FILE };
-    const auto [q_red, QA_cost] = compare::perform_dimensional_reduction(params, data.data());
+    const auto [q_red, QA_cost] = ground_truth::perform_dimensional_reduction(params, data.data());
 
     const auto B = util::generate_specific_matrix<plssvm::soa_matrix<plssvm::real_type>>(plssvm::shape{ data.num_data_points() - 1, data.num_data_points() - 1 }, plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE });
 
@@ -260,8 +261,8 @@ TYPED_TEST(OpenMPCSVMKernelFunction, blas_level_3_kernel_implicit) {
     }
 
     // calculate correct results
-    const std::vector<plssvm::real_type> kernel_matrix_gemm_padded = compare::assemble_kernel_matrix_gemm(params, data.data(), q_red, QA_cost);
-    compare::gemm(alpha, kernel_matrix_gemm_padded, B, beta, C);
+    const std::vector<plssvm::real_type> kernel_matrix_gemm_padded = ground_truth::assemble_kernel_matrix_gemm(params, data.data(), q_red, QA_cost);
+    ground_truth::gemm(alpha, kernel_matrix_gemm_padded, B, beta, C);
 
     // check C for correctness
     EXPECT_FLOATING_POINT_MATRIX_NEAR(plssvm::soa_matrix<plssvm::real_type>{ aos_C }, C);
@@ -331,7 +332,7 @@ TYPED_TEST(OpenMPCSVMKernelFunctionDeathTest, assemble_kernel_matrix_explicit) {
     }
     const plssvm::data_set data{ PLSSVM_TEST_FILE };
 
-    const auto [q_red, QA_cost] = compare::perform_dimensional_reduction(params, data.data());
+    const auto [q_red, QA_cost] = ground_truth::perform_dimensional_reduction(params, data.data());
 
     const std::size_t num_rows_reduced = data.data().num_rows() - 1;
 #if defined(PLSSVM_USE_GEMM)
@@ -393,7 +394,7 @@ TYPED_TEST(OpenMPCSVMKernelFunctionDeathTest, blas_level_3_kernel_implicit) {
 
     std::vector<plssvm::real_type> q_red{};
     plssvm::real_type QA_cost{};
-    std::tie(q_red, QA_cost) = compare::perform_dimensional_reduction(params, data.data());
+    std::tie(q_red, QA_cost) = ground_truth::perform_dimensional_reduction(params, data.data());
     const plssvm::real_type alpha{ 1.0 };
     plssvm::aos_matrix<plssvm::real_type> aos_B{ plssvm::shape{ data.num_classes(), data.num_data_points() - 1 } };
     const plssvm::real_type beta{ 1.0 };

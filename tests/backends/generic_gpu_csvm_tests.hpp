@@ -21,10 +21,10 @@
 #include "plssvm/parameter.hpp"              // plssvm::parameter
 #include "plssvm/shape.hpp"                  // plssvm::shape
 
-#include "backends/compare.hpp"    // compare::{perform_dimensional_reduction, kernel_function, assemble_kernel_matrix_gemm, assemble_kernel_matrix_symm, gemm, calculate_w, predict_values}
-#include "custom_test_macros.hpp"  // EXPECT_FLOATING_POINT_MATRIX_NEAR, EXPECT_FLOATING_POINT_VECTOR_NEAR
-#include "types_to_test.hpp"       // util::{test_parameter_type_at_t, test_parameter_value_at_v}
-#include "utility.hpp"             // util::{redirect_output, construct_from_tuple, generate_random_matrix}
+#include "backends/ground_truth.hpp"  // ground_truth::{perform_dimensional_reduction, kernel_function, assemble_kernel_matrix_gemm, assemble_kernel_matrix_symm, gemm, calculate_w, predict_values}
+#include "custom_test_macros.hpp"     // EXPECT_FLOATING_POINT_MATRIX_NEAR, EXPECT_FLOATING_POINT_VECTOR_NEAR
+#include "types_to_test.hpp"          // util::{test_parameter_type_at_t, test_parameter_value_at_v}
+#include "utility.hpp"                // util::{redirect_output, construct_from_tuple, generate_random_matrix}
 
 #include "gtest/gtest.h"  // TYPED_TEST_SUITE_P, TYPED_TEST_P, REGISTER_TYPED_TEST_SUITE_P, EXPECT_GT, EXPECT_GE, ASSERT_EQ, ::testing::Test
 
@@ -77,11 +77,11 @@ TYPED_TEST_P(GenericGPUCSVM, run_blas_level_3_kernel_explicit) {
     // create kernel matrix to use in the BLAS calculation
     const plssvm::parameter params{};
     const plssvm::data_set data{ PLSSVM_TEST_FILE };
-    const auto [q_red, QA_cost] = compare::perform_dimensional_reduction(params, data.data());
+    const auto [q_red, QA_cost] = ground_truth::perform_dimensional_reduction(params, data.data());
 #if defined(PLSSVM_USE_GEMM)
-    const std::vector<plssvm::real_type> kernel_matrix = compare::assemble_kernel_matrix_gemm(params, data.data(), q_red, QA_cost);
+    const std::vector<plssvm::real_type> kernel_matrix = ground_truth::assemble_kernel_matrix_gemm(params, data.data(), q_red, QA_cost);
 #else
-    const std::vector<plssvm::real_type> kernel_matrix = compare::assemble_kernel_matrix_symm(params, data.data(), q_red, QA_cost);
+    const std::vector<plssvm::real_type> kernel_matrix = ground_truth::assemble_kernel_matrix_symm(params, data.data(), q_red, QA_cost);
 #endif
 
     device_ptr_type A_d{ kernel_matrix.size(), device };
@@ -106,10 +106,10 @@ TYPED_TEST_P(GenericGPUCSVM, run_blas_level_3_kernel_explicit) {
 
     // calculate correct results
 #if defined(PLSSVM_USE_GEMM)
-    compare::gemm(alpha, kernel_matrix, B, beta, C);
+    ground_truth::gemm(alpha, kernel_matrix, B, beta, C);
 #else
-    const std::vector<plssvm::real_type> kernel_matrix_gemm = compare::assemble_kernel_matrix_gemm(params, data.data(), q_red, QA_cost);
-    compare::gemm(alpha, kernel_matrix_gemm, B, beta, C);
+    const std::vector<plssvm::real_type> kernel_matrix_gemm = ground_truth::assemble_kernel_matrix_gemm(params, data.data(), q_red, QA_cost);
+    ground_truth::gemm(alpha, kernel_matrix_gemm, B, beta, C);
 #endif
 
     // check C for correctness
@@ -126,7 +126,7 @@ TYPED_TEST_P(GenericGPUCSVM, run_w_kernel) {
 
     // create support vectors
     const plssvm::data_set data{ PLSSVM_TEST_FILE };
-    device_ptr_type sv_d{ data.data().shape(), data.data().padding(),  device };
+    device_ptr_type sv_d{ data.data().shape(), data.data().padding(), device };
     sv_d.copy_to_device(data.data());
     // create weights vector
     const auto weights = util::generate_specific_matrix<plssvm::aos_matrix<plssvm::real_type>>(plssvm::shape{ 3, data.num_data_points() }, plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE });
@@ -144,7 +144,7 @@ TYPED_TEST_P(GenericGPUCSVM, run_w_kernel) {
     w.restore_padding();
 
     // calculate correct w vector
-    const plssvm::soa_matrix<plssvm::real_type> correct_w = compare::calculate_w(weights, data.data());
+    const plssvm::soa_matrix<plssvm::real_type> correct_w = ground_truth::calculate_w(weights, data.data());
 
     // check w for correctness
     EXPECT_FLOATING_POINT_MATRIX_NEAR(w, correct_w);
@@ -183,7 +183,7 @@ TYPED_TEST_P(GenericGPUCSVMKernelFunction, run_assemble_kernel_matrix_explicit) 
     device_ptr_type data_d{ data.data().shape(), data.data().padding(), device };
     data_d.copy_to_device(data.data());
 
-    const auto [q_red, QA_cost] = compare::perform_dimensional_reduction(params, data.data());
+    const auto [q_red, QA_cost] = ground_truth::perform_dimensional_reduction(params, data.data());
     device_ptr_type q_red_d{ q_red.size() + plssvm::PADDING_SIZE, device };
     q_red_d.memset(0);
     q_red_d.copy_to_device(q_red, 0, q_red.size());
@@ -196,9 +196,9 @@ TYPED_TEST_P(GenericGPUCSVMKernelFunction, run_assemble_kernel_matrix_explicit) 
 
     // calculate ground truth
 #if defined(PLSSVM_USE_GEMM)
-    const std::vector<plssvm::real_type> correct_kernel_matrix = compare::assemble_kernel_matrix_gemm(params, data.data(), q_red, QA_cost);
+    const std::vector<plssvm::real_type> correct_kernel_matrix = ground_truth::assemble_kernel_matrix_gemm(params, data.data(), q_red, QA_cost);
 #else
-    const std::vector<plssvm::real_type> correct_kernel_matrix = compare::assemble_kernel_matrix_symm(params, data.data(), q_red, QA_cost);
+    const std::vector<plssvm::real_type> correct_kernel_matrix = ground_truth::assemble_kernel_matrix_symm(params, data.data(), q_red, QA_cost);
 #endif
 
     // check for correctness
@@ -224,7 +224,7 @@ TYPED_TEST_P(GenericGPUCSVMKernelFunction, run_assemble_kernel_matrix_implicit_b
     device_ptr_type data_d{ data.data().shape(), data.data().padding(), device };
     data_d.copy_to_device(data.data());
 
-    const auto [q_red, QA_cost] = compare::perform_dimensional_reduction(params, data.data());
+    const auto [q_red, QA_cost] = ground_truth::perform_dimensional_reduction(params, data.data());
     device_ptr_type q_red_d{ q_red.size() + plssvm::PADDING_SIZE, device };
     q_red_d.memset(0);
     q_red_d.copy_to_device(q_red, 0, q_red.size());
@@ -244,9 +244,9 @@ TYPED_TEST_P(GenericGPUCSVMKernelFunction, run_assemble_kernel_matrix_implicit_b
     C.restore_padding();
 
     // calculate correct result
-    const std::vector<plssvm::real_type> kernel_matrix = compare::assemble_kernel_matrix_gemm(params, data.data(), q_red, QA_cost);
+    const std::vector<plssvm::real_type> kernel_matrix = ground_truth::assemble_kernel_matrix_gemm(params, data.data(), q_red, QA_cost);
     plssvm::soa_matrix<plssvm::real_type> correct_C{ plssvm::shape{ data.num_classes(), data.num_data_points() - 1 }, plssvm::real_type{ 0.0 }, plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE } };
-    compare::gemm(alpha, kernel_matrix, B, plssvm::real_type{ 0.0 }, correct_C);
+    ground_truth::gemm(alpha, kernel_matrix, B, plssvm::real_type{ 0.0 }, correct_C);
 
     // check for correctness
     EXPECT_FLOATING_POINT_MATRIX_NEAR_EPS(C, correct_C, 1e4);
@@ -298,9 +298,9 @@ TYPED_TEST_P(GenericGPUCSVMKernelFunction, run_predict_kernel) {
     // calculate correct predict values
     plssvm::soa_matrix<plssvm::real_type> correct_w;
     if (kernel == plssvm::kernel_function_type::linear) {
-        correct_w = compare::calculate_w(weights, data.data());
+        correct_w = ground_truth::calculate_w(weights, data.data());
     }
-    const plssvm::aos_matrix<plssvm::real_type> correct_out = compare::predict_values(params, correct_w, weights, rho, data.data(), predict_points);
+    const plssvm::aos_matrix<plssvm::real_type> correct_out = ground_truth::predict_values(params, correct_w, weights, rho, data.data(), predict_points);
 
     // check out for correctness
     EXPECT_FLOATING_POINT_MATRIX_NEAR(out, correct_out);

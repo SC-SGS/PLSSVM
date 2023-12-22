@@ -85,7 +85,7 @@ set(PLSSVM_BASE_TEST_LIBRARY_NAME base_tests_lib)
 
 # list all necessary sources
 set(PLSSVM_BASE_TEST_LIBRARY_NAME_SOURCES
-        ${CMAKE_CURRENT_LIST_DIR}/backends/compare.cpp
+        ${CMAKE_CURRENT_LIST_DIR}/backends/ground_truth.cpp
 )
 
 # create base test library
