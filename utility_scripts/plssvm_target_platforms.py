@@ -317,7 +317,12 @@ if nvidia_num_gpus > 0:
     plssvm_target_platforms += ";nvidia:" + ",".join({str(sm) for sm in nvidia_gpu_sm.values()})
 
 # AMD GPU information
-amd_gpu_names = [pyamdgpuinfo.get_gpu(gpu_id).name for gpu_id in range(pyamdgpuinfo.detect_gpus())]
+amd_gpu_names_plain = [pyamdgpuinfo.get_gpu(gpu_id).name for gpu_id in range(pyamdgpuinfo.detect_gpus())]
+amd_gpu_names = list(filter(lambda gpu: gpu is not None, amd_gpu_names_plain))
+if len(amd_gpu_names_plain) > len(amd_gpu_names):
+    cond_print("Found {} AMD GPU(s) but pyamdgpuinfo returned 'None' for {} of them!\n".format(
+        len(amd_gpu_names_plain),
+        len(amd_gpu_names_plain) - len(amd_gpu_names)))
 amd_num_gpus = len(amd_gpu_names)
 
 if amd_num_gpus > 0:
