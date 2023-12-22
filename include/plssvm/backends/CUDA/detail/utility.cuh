@@ -15,6 +15,8 @@
 
 #include "fmt/ostream.h"  // fmt::formatter, fmt::ostream_formatter
 
+#include <string>  // std::string
+
 /**
  * @def PLSSVM_CUDA_ERROR_CHECK
  * @brief Macro used for error checking CUDA runtime functions.
@@ -56,6 +58,13 @@ void peek_at_last_error();
  * @throws plssvm::cuda::backend_exception if the given device ID is smaller than 0 or greater or equal than the available number of devices
  */
 void device_synchronize(int device);
+
+/**
+ * @brief Get the CUDA runtime version as pretty string.
+ * @details Parses the returned integer according to: https://docs.nvidia.com/cuda/cuda-runtime-api/group__CUDART____VERSION.html#group__CUDART____VERSION_1g0e3952c7802fd730432180f1f4a6cdc6
+ * @return the CUDA runtime version (`[[nodiscard]]`)
+ */
+[[nodiscard]] std::string get_runtime_version();
 
 }  // namespace plssvm::cuda::detail
 

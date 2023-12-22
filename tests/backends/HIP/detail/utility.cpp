@@ -18,6 +18,8 @@
 #include "gmock/gmock-matchers.h"  // ::testing::StartsWith
 #include "gtest/gtest.h"           // TEST, EXPECT_GE, EXPECT_NO_THROW
 
+#include <regex>  // std::regex, std::regex::extended, std::regex_match
+
 #if __has_include("hip/hip_runtime.h") && __has_include("hip/hip_runtime_api.h")
 
 #include "hip/hip_runtime.h"
@@ -54,6 +56,11 @@ TEST(HIPUtility, device_synchronize) {
     EXPECT_THROW_WHAT(plssvm::hip::detail::device_synchronize(plssvm::hip::detail::get_device_count()),
                       plssvm::hip::backend_exception,
                       fmt::format("Illegal device ID! Must be in range: [0, {}) but is {}!", plssvm::hip::detail::get_device_count(), plssvm::hip::detail::get_device_count()));
+}
+
+TEST(HIPUtility, get_runtime_version) {
+    const std::regex reg{ "[0-9]+\\.[0-9]+", std::regex::extended };
+    EXPECT_TRUE(std::regex_match(plssvm::hip::detail::get_runtime_version(), reg));
 }
 
 #endif

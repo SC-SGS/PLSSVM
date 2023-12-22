@@ -14,8 +14,9 @@
 #pragma once
 
 #include "plssvm/backends/SYCL/AdaptiveCpp/detail/queue.hpp"  // plssvm::adaptivecpp::detail::queue (PImpl)
-#include "plssvm/target_platforms.hpp"                    // plssvm::target_platform
+#include "plssvm/target_platforms.hpp"                        // plssvm::target_platform
 
+#include <string>   // std::string
 #include <utility>  // std::pair
 #include <vector>   // std::vector
 
@@ -47,6 +48,17 @@ void device_synchronize(const queue &q);
  * @return the default queue (`[[nodiscard]]`)
  */
 [[nodiscard]] queue get_default_queue();
+
+/**
+ * @brief Return the short AdaptiveCpp version, i.e., major.minor.patch.
+ * @return the short AdaptiveCpp version (`[[nodiscard]]`)
+ */
+[[nodiscard]] std::string get_adaptivecpp_version_short();
+/**
+ * @brief Return the full AdaptiveCpp version including git information.
+ * @return the full AdaptiveCpp version (`[[nodiscard]]`)
+ */
+[[nodiscard]] std::string get_adaptivecpp_version();
 
 }  // namespace plssvm::adaptivecpp::detail
 

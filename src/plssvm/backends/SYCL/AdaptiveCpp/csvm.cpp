@@ -10,7 +10,7 @@
 
 #include "plssvm/backends/SYCL/AdaptiveCpp/detail/device_ptr.hpp"  // plssvm::adaptivecpp::detail::::device_ptr
 #include "plssvm/backends/SYCL/AdaptiveCpp/detail/queue_impl.hpp"  // plssvm::adaptivecpp::detail::queue (PImpl implementation)
-#include "plssvm/backends/SYCL/AdaptiveCpp/detail/utility.hpp"     // plssvm::adaptivecpp::detail::get_device_list, plssvm::adaptivecpp::device_synchronize
+#include "plssvm/backends/SYCL/AdaptiveCpp/detail/utility.hpp"     // plssvm::adaptivecpp::detail::{get_device_list, device_synchronize, get_adaptivecpp_version_short, get_adaptivecpp_version}
 
 #include "plssvm/backend_types.hpp"                                          // plssvm::backend_type
 #include "plssvm/backends/SYCL/cg_explicit/blas.hpp"                         // plssvm::sycl::device_kernel_gemm
@@ -104,8 +104,9 @@ void csvm::init(const target_platform target) {
 
     plssvm::detail::log(verbosity_level::full,
                         "\nUsing AdaptiveCpp ({}) as SYCL backend with the kernel invocation type \"{}\" for the svm_kernel.\n",
-                        plssvm::detail::tracking_entry{ "backend", "version", ::hipsycl::sycl::detail::version_string() },
+                        detail::get_adaptivecpp_version_short(),
                         plssvm::detail::tracking_entry{ "backend", "sycl_kernel_invocation_type", invocation_type_ });
+    PLSSVM_DETAIL_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking_entry{ "dependencies", "adaptivecpp_version", detail::get_adaptivecpp_version() }));
     if (target == target_platform::automatic) {
         plssvm::detail::log(verbosity_level::full,
                             "Using {} as automatic target platform.\n",

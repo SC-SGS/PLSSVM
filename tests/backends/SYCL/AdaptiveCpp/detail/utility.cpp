@@ -13,10 +13,23 @@
 
 #include "gtest/gtest.h"  // TEST, EXPECT_NE, EXPECT_FALSE
 
+#include <regex>   // std::regex, std::regex::extended, std::regex_match
+#include <string>  // std::string
+
 TEST(AdaptiveCppUtility, get_device_list) {
     const auto &[queues, actual_target] = plssvm::adaptivecpp::detail::get_device_list(plssvm::target_platform::automatic);
     // at least one queue must be provided
     EXPECT_FALSE(queues.empty());
     // the returned target must not be the automatic one
     EXPECT_NE(actual_target, plssvm::target_platform::automatic);
+}
+
+TEST(AdaptiveCppUtility, get_adaptivecpp_version_short) {
+    const std::regex reg{ "[0-9]+\\.[0-9]+\\.[0-9]+", std::regex::extended };
+    EXPECT_TRUE(std::regex_match(plssvm::adaptivecpp::detail::get_adaptivecpp_version_short(), reg));
+}
+
+TEST(AdaptiveCppUtility, get_adaptivecpp_version) {
+    const std::string version = plssvm::adaptivecpp::detail::get_adaptivecpp_version();
+    EXPECT_FALSE(version.empty());
 }

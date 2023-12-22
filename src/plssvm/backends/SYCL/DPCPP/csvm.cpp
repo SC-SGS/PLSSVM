@@ -10,7 +10,7 @@
 
 #include "plssvm/backends/SYCL/DPCPP/detail/device_ptr.hpp"  // plssvm::dpcpp::detail::::device_ptr
 #include "plssvm/backends/SYCL/DPCPP/detail/queue_impl.hpp"  // plssvm::dpcpp::detail::queue (PImpl implementation)
-#include "plssvm/backends/SYCL/DPCPP/detail/utility.hpp"     // plssvm::dpcpp::detail::get_device_list, plssvm::dpcpp::device_synchronize
+#include "plssvm/backends/SYCL/DPCPP/detail/utility.hpp"     // plssvm::dpcpp::detail::{get_device_list, device_synchronize, get_dpcpp_version}
 
 #include "plssvm/backend_types.hpp"                                          // plssvm::backend_type
 #include "plssvm/backends/SYCL/cg_explicit/blas.hpp"                         // plssvm::sycl::device_kernel_gemm
@@ -96,8 +96,9 @@ void csvm::init(const target_platform target) {
     }
 
     plssvm::detail::log(verbosity_level::full,
-                        "\nUsing DPC++ ({}) as SYCL backend with the kernel invocation type \"{}\" for the svm_kernel.\n",
-                        plssvm::detail::tracking_entry{ "backend", "version", __SYCL_COMPILER_VERSION },
+                        "\nUsing DPC++ ({}; {}) as SYCL backend with the kernel invocation type \"{}\" for the svm_kernel.\n",
+                        plssvm::detail::tracking_entry{ "dependencies", "dpcpp_version", detail::get_dpcpp_version() },
+                        plssvm::detail::tracking_entry{ "dependencies", "dpcpp_timestamp_version", detail::get_dpcpp_timestamp_version() },
                         plssvm::detail::tracking_entry{ "backend", "sycl_kernel_invocation_type", invocation_type_ });
     if (target == target_platform::automatic) {
         plssvm::detail::log(verbosity_level::full,

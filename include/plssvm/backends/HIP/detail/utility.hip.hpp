@@ -17,6 +17,8 @@
 
 #include "hip/hip_runtime_api.h"  // hipError_t
 
+#include <string>  // std::string
+
 /**
  * @def PLSSVM_HIP_ERROR_CHECK
  * @brief Macro used for error checking HIP runtime functions.
@@ -58,6 +60,12 @@ void peek_at_last_error();
  * @throws plssvm::hip::backend_exception if the given device ID is smaller than 0 or greater or equal than the available number of devices
  */
 void device_synchronize(int device);
+
+/**
+ * @brief Get the HIP runtime version as pretty string.
+ * @return the HIP runtime version (`[[nodiscard]]`)
+ */
+[[nodiscard]] std::string get_runtime_version();
 
 }  // namespace plssvm::hip::detail
 

@@ -64,6 +64,19 @@ void device_assert(error_code code, std::string_view msg = "");
 void device_synchronize(const command_queue &queue);
 
 /**
+ * @brief Get the targeted OpenCL version.
+ * @return the prettyfied OpenCL version (`[[nodiscard]]`)
+ */
+[[nodiscard]] std::string get_opencl_target_version();
+
+/**
+ * @brief Get the driver version of the device associated with the OpenCL command queue @p queue.
+ * @param[in] queue the OpenCL command queue
+ * @return a string encapsulating the driver version (`[[nodiscard]]`)
+ */
+[[nodiscard]] std::string get_driver_version(const command_queue &queue);
+
+/**
  * @brief Get the name of the device associated with the OpenCL command queue @p queue.
  * @param[in] queue the OpenCL command queue
  * @return the device name (`[[nodiscard]]`)

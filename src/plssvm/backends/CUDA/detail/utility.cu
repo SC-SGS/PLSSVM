@@ -12,6 +12,8 @@
 
 #include "fmt/format.h"  // fmt::format
 
+#include <string>  // std::string
+
 namespace plssvm::cuda::detail {
 
 void gpu_assert(const cudaError_t code) {
@@ -44,6 +46,16 @@ void device_synchronize(const int device) {
     peek_at_last_error();
     set_device(device);
     PLSSVM_CUDA_ERROR_CHECK(cudaDeviceSynchronize());
+}
+
+std::string get_runtime_version() {
+    // get the CUDA runtime version
+    int runtime_version{};
+    PLSSVM_CUDA_ERROR_CHECK(cudaRuntimeGetVersion(&runtime_version));
+    // parse it to a more useful string
+    int major_version = runtime_version / 1000;
+    int minor_version = runtime_version % 1000 / 10;
+    return fmt::format("{}.{}", major_version, minor_version);
 }
 
 }  // namespace plssvm::cuda::detail

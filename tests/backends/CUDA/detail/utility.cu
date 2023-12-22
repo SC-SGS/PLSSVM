@@ -18,6 +18,8 @@
 #include "gmock/gmock-matchers.h"  // ::testing::StartsWith
 #include "gtest/gtest.h"           // TEST, EXPECT_GE, EXPECT_NO_THROW
 
+#include <regex>  // std::regex, std::regex::extended, std::regex_match
+
 #if __has_include("cuda_runtime.h")
 
 TEST(CUDAUtility, gpu_assert) {
@@ -33,8 +35,6 @@ TEST(CUDAUtility, gpu_assert) {
                               plssvm::cuda::backend_exception,
                               ::testing::StartsWith("CUDA assert 'cudaErrorInvalidValue' (1):"));
 }
-
-#endif
 
 TEST(CUDAUtility, get_device_count) {
     // must not return a negative number
@@ -54,3 +54,10 @@ TEST(CUDAUtility, device_synchronize) {
                       plssvm::cuda::backend_exception,
                       fmt::format("Illegal device ID! Must be in range: [0, {}) but is {}!", plssvm::cuda::detail::get_device_count(), plssvm::cuda::detail::get_device_count()));
 }
+
+TEST(CUDAUtility, get_runtime_version) {
+    const std::regex reg{ "[0-9]+\\.[0-9]+", std::regex::extended };
+    EXPECT_TRUE(std::regex_match(plssvm::cuda::detail::get_runtime_version(), reg));
+}
+
+#endif

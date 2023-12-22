@@ -161,21 +161,21 @@ void performance_tracker::save(std::ostream &out) {
     // output metadata information
     out << fmt::format(
         "meta_data:\n"
-        "  date:                       \"{}\"\n"
-        "  PLSSVM_TARGET_PLATFORMS:    \"{}\"\n"
-        "  commit:                     {}\n"
-        "  version:                    {}\n"
-        "  hostname:                   {}\n"
-        "  user:                       {}\n"
-        "  build_type:                 {}\n"
-        "  LTO:                        {}\n"
-        "  asserts:                    {}\n"
-        "  gemm:                       {}\n"
-        "  enforce_max_mem_alloc_size: {}\n"
-        "  THREAD_BLOCK_SIZE:          {}\n"
-        "  FEATURE_BLOCK_SIZE:         {}\n"
-        "  INTERNAL_BLOCK_SIZE:        {}\n"
-        "  PADDING_SIZE:               {}\n",
+        "  date:                              \"{}\"\n"
+        "  PLSSVM_TARGET_PLATFORMS:           \"{}\"\n"
+        "  commit:                            {}\n"
+        "  version:                           {}\n"
+        "  hostname:                          {}\n"
+        "  user:                              {}\n"
+        "  build_type:                        {}\n"
+        "  LTO:                               {}\n"
+        "  asserts:                           {}\n"
+        "  gemm:                              {}\n"
+        "  enforce_max_mem_alloc_size:        {}\n"
+        "  THREAD_BLOCK_SIZE:                 {}\n"
+        "  FEATURE_BLOCK_SIZE:                {}\n"
+        "  INTERNAL_BLOCK_SIZE:               {}\n"
+        "  PADDING_SIZE:                      {}\n",
         plssvm::detail::current_date_time(),
         version::detail::target_platforms,
         version::git_metadata::commit_sha1().empty() ? "unknown" : version::git_metadata::commit_sha1(),
@@ -197,9 +197,9 @@ void performance_tracker::save(std::ostream &out) {
     constexpr bool dpcpp_aot = PLSSVM_IS_DEFINED(PLSSVM_SYCL_BACKEND_DPCPP_ENABLE_AOT);
 
     out << fmt::format(
-        "  DPCPP_backend_type:         {}\n"
-        "  DPCPP_amd_gpu_backend_type: {}\n"
-        "  DPCPP_with_aot:             {}\n",
+        "  DPCPP_backend_type:                {}\n"
+        "  DPCPP_amd_gpu_backend_type:        {}\n"
+        "  DPCPP_with_aot:                    {}\n",
         PLSSVM_SYCL_BACKEND_DPCPP_BACKEND_TYPE,
         PLSSVM_SYCL_BACKEND_DPCPP_GPU_AMD_BACKEND_TYPE,
         dpcpp_aot);
@@ -207,10 +207,13 @@ void performance_tracker::save(std::ostream &out) {
 #if defined(PLSSVM_SYCL_BACKEND_HAS_ADAPTIVECPP)
     // check whether AdaptiveCpp's new SSCP has been enabled
     constexpr bool adaptivecpp_sscp = PLSSVM_IS_DEFINED(PLSSVM_SYCL_BACKEND_ADAPTIVECPP_USE_GENERIC_SSCP);
+    constexpr bool adaptivecpp_accelerated_cpu = PLSSVM_IS_DEFINED(__HIPSYCL_USE_ACCELERATED_CPU__);
 
     out << fmt::format(
-        "  ADAPTIVECPP_with_generic_SSCP:  {}\n",
-        adaptivecpp_sscp);
+        "  ADAPTIVECPP_with_generic_SSCP:     {}\n"
+        "  ADAPTIVECPP_with_accelerated_CPU:  {}\n",
+        adaptivecpp_sscp,
+        adaptivecpp_accelerated_cpu);
 #endif
     out << "\n";
 

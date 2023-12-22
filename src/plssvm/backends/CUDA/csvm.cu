@@ -13,7 +13,7 @@
 #include "plssvm/backends/CUDA/cg_explicit/kernel_matrix_assembly.cuh"       // plssvm::cuda::{device_kernel_assembly_linear, device_kernel_assembly_polynomial, device_kernel_assembly_rbf}
 #include "plssvm/backends/CUDA/cg_implicit/kernel_matrix_assembly_blas.cuh"  // plssvm::cuda::device_kernel_assembly_linear_symm, plssvm::cuda::device_kernel_assembly_polynomial_symm, plssvm::cuda::device_kernel_assembly_rbf_symm
 #include "plssvm/backends/CUDA/detail/device_ptr.cuh"                        // plssvm::cuda::detail::device_ptr
-#include "plssvm/backends/CUDA/detail/utility.cuh"                           // plssvm::cuda::detail::{device_synchronize, get_device_count, set_device, peek_at_last_error}
+#include "plssvm/backends/CUDA/detail/utility.cuh"                           // plssvm::cuda::detail::{device_synchronize, get_device_count, set_device, peek_at_last_error, get_runtime_version}
 #include "plssvm/backends/CUDA/exceptions.hpp"                               // plssvm::cuda::backend_exception
 #include "plssvm/backends/CUDA/predict_kernel.cuh"                           // plssvm::cuda::detail::{device_kernel_w_linear, device_kernel_predict_polynomial, device_kernel_predict_rbf}
 #include "plssvm/constants.hpp"                                              // plssvm::{real_type, THREAD_BLOCK_SIZE, INTERNAL_BLOCK_SIZE, PADDING_SIZE}
@@ -76,7 +76,8 @@ void csvm::init(const target_platform target) {
     }
 
     plssvm::detail::log(verbosity_level::full,
-                        "\nUsing CUDA as backend.\n");
+                        "\nUsing CUDA ({}) as backend.\n",
+                        plssvm::detail::tracking_entry{ "dependencies", "cuda_runtime_version", detail::get_runtime_version() });
     PLSSVM_DETAIL_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking_entry{ "backend", "backend", plssvm::backend_type::cuda }));
     PLSSVM_DETAIL_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking_entry{ "backend", "target_platform", plssvm::target_platform::gpu_nvidia }));
 

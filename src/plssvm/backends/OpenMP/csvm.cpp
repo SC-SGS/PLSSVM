@@ -12,6 +12,7 @@
 #include "plssvm/backends/OpenMP/cg_explicit/blas.hpp"                         // plssvm::openmp::device_kernel_gemm, plssvm::openmp::device_kernel_symm
 #include "plssvm/backends/OpenMP/cg_explicit/kernel_matrix_assembly.hpp"       // plssvm::openmp::device_kernel_assembly_linear, plssvm::openmp::device_kernel_assembly_polynomial, plssvm::openmp::device_kernel_assembly_rbf
 #include "plssvm/backends/OpenMP/cg_implicit/kernel_matrix_assembly_blas.hpp"  // plssvm::openmp::device_kernel_assembly_linear_symm, plssvm::openmp::device_kernel_assembly_polynomial_symm, plssvm::openmp::device_kernel_assembly_rbf_symm
+#include "plssvm/backends/OpenMP/detail/utility.hpp"                           // plssvm::openmp::detail::{get_num_threads, get_openmp_version}
 #include "plssvm/backends/OpenMP/exceptions.hpp"                               // plssvm::openmp::backend_exception
 #include "plssvm/constants.hpp"                                                // plssvm::real_type
 #include "plssvm/csvm.hpp"                                                     // plssvm::csvm
@@ -57,17 +58,10 @@ void csvm::init(const target_platform target) {
     throw backend_exception{ "Requested target platform 'cpu' that hasn't been enabled using PLSSVM_TARGET_PLATFORMS!" };
 #endif
 
-    // get the number of used OpenMP threads
-    int num_omp_threads = 0;
-    #pragma omp parallel default(none) shared(num_omp_threads)
-    {
-        #pragma omp master
-        num_omp_threads = omp_get_num_threads();
-    }
-
     plssvm::detail::log(verbosity_level::full,
-                        "\nUsing OpenMP as backend with {} threads.\n\n",
-                        plssvm::detail::tracking_entry{ "backend", "num_threads", num_omp_threads });
+                        "\nUsing OpenMP ({}) as backend with {} thread(s).\n\n",
+                        plssvm::detail::tracking_entry{ "dependencies", "openmp_version", detail::get_openmp_version() },
+                        plssvm::detail::tracking_entry{ "backend", "num_threads", detail::get_num_threads() });
     PLSSVM_DETAIL_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking_entry{ "backend", "backend", plssvm::backend_type::openmp }));
     PLSSVM_DETAIL_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking_entry{ "backend", "target_platform", plssvm::target_platform::cpu }));
 
@@ -76,7 +70,7 @@ void csvm::init(const target_platform target) {
 }
 
 ::plssvm::detail::memory_size csvm::get_device_memory() const {
-    return detail::get_system_memory();
+    return ::plssvm::detail::get_system_memory();
 }
 
 ::plssvm::detail::memory_size csvm::get_max_mem_alloc_size() const {
@@ -87,19 +81,19 @@ void csvm::init(const target_platform target) {
 //                        fit                        //
 //***************************************************//
 
-detail::simple_any csvm::setup_data_on_devices(const solver_type solver, const soa_matrix<real_type> &A) const {
+::plssvm::detail::simple_any csvm::setup_data_on_devices(const solver_type solver, const soa_matrix<real_type> &A) const {
     PLSSVM_ASSERT(!A.empty(), "The matrix to setup on the devices may not be empty!");
     PLSSVM_ASSERT(solver != solver_type::automatic, "An explicit solver type must be provided instead of solver_type::automatic!");
 
     if (solver == solver_type::cg_explicit || solver == solver_type::cg_implicit) {
-        return detail::simple_any{ &A };
+        return ::plssvm::detail::simple_any{ &A };
     } else {
         // TODO: implement for other solver types
         throw exception{ fmt::format("Assembling the kernel matrix using the {} CG variation is currently not implemented!", solver) };
     }
 }
 
-detail::simple_any csvm::assemble_kernel_matrix(const solver_type solver, const parameter &params, detail::simple_any &data, const std::vector<real_type> &q_red, const real_type QA_cost) const {
+::plssvm::detail::simple_any csvm::assemble_kernel_matrix(const solver_type solver, const parameter &params, ::plssvm::detail::simple_any &data, const std::vector<real_type> &q_red, const real_type QA_cost) const {
     PLSSVM_ASSERT(!q_red.empty(), "The q_red vector may not be empty!");
     PLSSVM_ASSERT(solver != solver_type::automatic, "An explicit solver type must be provided instead of solver_type::automatic!");
 
@@ -144,7 +138,7 @@ detail::simple_any csvm::assemble_kernel_matrix(const solver_type solver, const 
                       kernel_matrix.size());
 #endif
 
-        return detail::simple_any{ std::move(kernel_matrix) };
+        return ::plssvm::detail::simple_any{ std::move(kernel_matrix) };
     } else if (solver == solver_type::cg_implicit) {
         // simply return data since in implicit we don't assembly the kernel matrix here!
         return ::plssvm::detail::simple_any{ std::make_tuple(std::move(aos_data), params, std::move(q_red), QA_cost) };
@@ -154,7 +148,7 @@ detail::simple_any csvm::assemble_kernel_matrix(const solver_type solver, const 
     }
 }
 
-void csvm::blas_level_3(const solver_type solver, const real_type alpha, const detail::simple_any &A, const soa_matrix<real_type> &B, const real_type beta, soa_matrix<real_type> &C) const {
+void csvm::blas_level_3(const solver_type solver, const real_type alpha, const ::plssvm::detail::simple_any &A, const soa_matrix<real_type> &B, const real_type beta, soa_matrix<real_type> &C) const {
     PLSSVM_ASSERT(!B.empty(), "The B matrix may not be empty!");
     PLSSVM_ASSERT(!C.empty(), "The C matrix may not be empty!");
     PLSSVM_ASSERT(B.num_rows() == C.num_rows(), "The C matrix must have {} rows, but has {}!", B.num_rows(), C.num_rows());

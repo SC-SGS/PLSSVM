@@ -26,7 +26,7 @@
 #include "plssvm/verbosity_levels.hpp"                      // plssvm::verbosity_level
 
 #include "CL/cl.h"        // cl_program, cl_platform_id, cl_device_id, cl_uint, cl_device_type, cl_context,
-                          // CL_DEVICE_NAME, CL_QUEUE_DEVICE, CL_DEVICE_TYPE_ALL, CL_DEVICE_TYPE_CPU, CL_DEVICE_TYPE_GPU, CL_DEVICE_VENDOR, CL_PROGRAM_BUILD_LOG, CL_PROGRAM_BINARY_SIZES, CL_PROGRAM_BINARIES, CL_PLATFORM_VENDOR,
+                          // CL_DEVICE_NAME, CL_QUEUE_DEVICE, CL_DEVICE_TYPE_ALL, CL_DEVICE_TYPE_CPU, CL_DEVICE_TYPE_GPU, CL_DEVICE_VENDOR, CL_PROGRAM_BUILD_LOG, CL_PROGRAM_BINARY_SIZES, CL_PROGRAM_BINARIES, CL_PLATFORM_VENDOR, CL_DRIVER_VERSION,
                           // clCreateProgramWithSource, clBuildProgram, clGetProgramBuildInfo, clGetProgramInfo, clCreateKernel, clReleaseProgram, clCreateProgramWithBinary,
                           //  clSetKernelArg, clEnqueueNDRangeKernel, clFinish, clGetPlatformIDs, clGetDeviceIDs, clGetDeviceInfo, clCreateContext, clGetPlatformInfo
 #include "fmt/core.h"     // fmt::print, fmt::format
@@ -164,6 +164,24 @@ void device_assert(const error_code ec, const std::string_view msg) {
 
 void device_synchronize(const command_queue &queue) {
     PLSSVM_OPENCL_ERROR_CHECK(clFinish(queue));
+}
+
+std::string get_opencl_target_version() {
+    int major_version = CL_TARGET_OPENCL_VERSION / 100;
+    int minor_version = CL_TARGET_OPENCL_VERSION % 100 / 10;
+    return fmt::format("{}.{}", major_version, minor_version);
+}
+
+std::string get_driver_version(const command_queue &queue) {
+    // get device
+    cl_device_id device_id{};
+    PLSSVM_OPENCL_ERROR_CHECK(clGetCommandQueueInfo(queue, CL_QUEUE_DEVICE, sizeof(cl_device_id), &device_id, nullptr), "error obtaining device");
+    // get device driver
+    std::size_t driver_version_length{};
+    PLSSVM_OPENCL_ERROR_CHECK(clGetDeviceInfo(device_id, CL_DRIVER_VERSION, 0, nullptr, &driver_version_length), "error obtaining device driver version size");
+    std::string device_driver_version(driver_version_length - 1, '\0');
+    PLSSVM_OPENCL_ERROR_CHECK(clGetDeviceInfo(device_id, CL_DRIVER_VERSION, driver_version_length, device_driver_version.data(), nullptr), "error obtaining device driver version");
+    return device_driver_version;
 }
 
 std::string get_device_name(const command_queue &queue) {

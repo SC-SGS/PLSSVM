@@ -13,7 +13,7 @@
 #include "plssvm/backends/OpenCL/detail/context.hpp"        // plssvm::opencl::detail::context
 #include "plssvm/backends/OpenCL/detail/device_ptr.hpp"     // plssvm::opencl::detail::device_ptr
 #include "plssvm/backends/OpenCL/detail/kernel.hpp"         // plssvm::opencl::detail::{compute_kernel_name, kernel}
-#include "plssvm/backends/OpenCL/detail/utility.hpp"        // plssvm::opencl::detail::{get_contexts, create_command_queues, run_kernel, kernel_type_to_function_name, device_synchronize}
+#include "plssvm/backends/OpenCL/detail/utility.hpp"        // plssvm::opencl::detail::{get_contexts, create_command_queues, run_kernel, kernel_type_to_function_name, device_synchronize, get_opencl_target_version, get_driver_version}
 #include "plssvm/backends/OpenCL/exceptions.hpp"            // plssvm::opencl::backend_exception
 #include "plssvm/constants.hpp"                             // plssvm::{real_type, THREAD_BLOCK_SIZE, INTERNAL_BLOCK_SIZE, PADDING_SIZE}
 #include "plssvm/detail/assert.hpp"                         // PLSSVM_ASSERT
@@ -108,7 +108,9 @@ void csvm::init(const target_platform target) {
 
     // print OpenCL info
     plssvm::detail::log(verbosity_level::full,
-                        "\nUsing OpenCL as backend.\n");
+                        "\nUsing OpenCL (target version: {}) as backend.\n",
+                        plssvm::detail::tracking_entry{ "dependencies", "opencl_target_version", detail::get_opencl_target_version() });
+    PLSSVM_DETAIL_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking_entry{ "dependencies", "opencl_library", std::string{ PLSSVM_OPENCL_LIBRARY } }));
     if (target == target_platform::automatic) {
         plssvm::detail::log(verbosity_level::full,
                             "Using {} as automatic target platform.\n",
@@ -151,6 +153,10 @@ void csvm::init(const target_platform target) {
                             device,
                             device_name);
         device_names.emplace_back(device_name);
+
+        // get the target platform's driver version
+        const std::string driver_version = detail::get_driver_version(devices_[device]);
+        PLSSVM_DETAIL_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking_entry{ "dependencies", "device_driver_version", driver_version }));
     }
     PLSSVM_DETAIL_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking_entry{ "backend", "device", device_names }));
     plssvm::detail::log(verbosity_level::full | verbosity_level::timing,
