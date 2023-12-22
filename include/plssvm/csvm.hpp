@@ -803,7 +803,10 @@ std::tuple<aos_matrix<real_type>, std::vector<real_type>, unsigned long long> cs
         if (total_memory_needed < total_device_memory) {
             used_solver = solver_type::cg_explicit;
         } else if (total_memory_needed > total_device_memory && total_memory_needed < total_system_memory) {
-            used_solver = solver_type::cg_streaming;
+            detail::log(verbosity_level::full | verbosity_level::warning,
+                        "WARNING: the selected automatic solver_type 'cg_streaming' is currently not implemented! Falling back to 'cg_implicit'.");
+            // used_solver = solver_type::cg_streaming;
+            used_solver = solver_type::cg_implicit;
         } else {
             used_solver = solver_type::cg_implicit;
         }
