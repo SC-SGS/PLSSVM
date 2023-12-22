@@ -179,64 +179,45 @@ std::istream &operator>>(std::istream &in, memory_size &mem);
 //*************************************************************************************************************************************//
 //                                                           custom literals                                                           //
 //*************************************************************************************************************************************//
+/**
+ * @brief Constexpr friendly power function. Computes: `base^exponent`.
+ * @param[in] base the base
+ * @param[in] exponent the exponent
+ * @return the power function (`[[nodiscard]]`)
+ */
+[[nodiscard]] constexpr unsigned long long ipow(const unsigned long long base, const unsigned long long exponent) {
+    return exponent == 0 ? 1ULL : base * ipow(base, exponent - 1);
+}
+
 namespace literals {
 
-/// Convert bytes to bytes.
-constexpr memory_size operator""_B(const long double val) { return memory_size{ static_cast<unsigned long long>(val) }; }
-/// Convert bytes to bytes.
-constexpr memory_size operator""_B(const unsigned long long val) { return memory_size{ val }; }
+/**
+ * @def PLSSVM_DEFINE_MEMORY_SIZE_LITERAL
+ * @brief Defines a macro to create custom literals for different memory sizes for `long double` and `unsigned long long`.
+ * @param[in] name the name of the custom literal
+ * @param[in] factor either `1000` for decimal prefixes (e.g., KB) or `1024` for binary  prefixes (e.g., KiB)
+ * @param[in] power the magnitude, e.g., KB (1) or MB (2)
+ */
+#define PLSSVM_DEFINE_MEMORY_SIZE_LITERAL(name, factor, power)                                                                                           \
+    constexpr memory_size operator""_##name(const long double val) { return memory_size{ static_cast<unsigned long long>(val * ipow(factor, power)) }; } \
+    constexpr memory_size operator""_##name(const unsigned long long val) { return memory_size{ val * ipow(factor, power) }; }
 
-//*************************************************************************************************************************************//
-//                                                    decimal prefix - long double                                                     //
-//*************************************************************************************************************************************//
+// byte
+PLSSVM_DEFINE_MEMORY_SIZE_LITERAL(B, 1000, 0)
 
-/// Convert 1 KB to bytes (factor 1'000).
-constexpr memory_size operator""_KB(const long double val) { return memory_size{ static_cast<unsigned long long>(val * 1000L) }; }
-/// Convert 1 MB to bytes (factor 1'000'000).
-constexpr memory_size operator""_MB(const long double val) { return memory_size{ static_cast<unsigned long long>(val * 1000L * 1000L) }; }
-/// Convert 1 GB to bytes (factor 1'000'000'000).
-constexpr memory_size operator""_GB(const long double val) { return memory_size{ static_cast<unsigned long long>(val * 1000L * 1000L * 1000L) }; }
-/// Convert 1 TB to bytes (factor 1'000'000'000'000).
-constexpr memory_size operator""_TB(const long double val) { return memory_size{ static_cast<unsigned long long>(val * 1000L * 1000L * 1000L * 1000L) }; }
+// decimal prefixes
+PLSSVM_DEFINE_MEMORY_SIZE_LITERAL(KB, 1000, 1)
+PLSSVM_DEFINE_MEMORY_SIZE_LITERAL(MB, 1000, 2)
+PLSSVM_DEFINE_MEMORY_SIZE_LITERAL(GB, 1000, 3)
+PLSSVM_DEFINE_MEMORY_SIZE_LITERAL(TB, 1000, 4)
 
-//*************************************************************************************************************************************//
-//                                                 decimal prefix - unsigned long long                                                 //
-//*************************************************************************************************************************************//
+// binary prefixes
+PLSSVM_DEFINE_MEMORY_SIZE_LITERAL(KiB, 1024, 1)
+PLSSVM_DEFINE_MEMORY_SIZE_LITERAL(MiB, 1024, 2)
+PLSSVM_DEFINE_MEMORY_SIZE_LITERAL(GiB, 1024, 3)
+PLSSVM_DEFINE_MEMORY_SIZE_LITERAL(TiB, 1024, 4)
 
-/// Convert 1 KB to bytes (factor 1'000).
-constexpr memory_size operator""_KB(const unsigned long long val) { return memory_size{ val * 1000ULL }; }
-/// Convert 1 MB to bytes (factor 1'000'000).
-constexpr memory_size operator""_MB(const unsigned long long val) { return memory_size{ val * 1000ULL * 1000ULL }; }
-/// Convert 1 GB to bytes (factor 1'000'000'000).
-constexpr memory_size operator""_GB(const unsigned long long val) { return memory_size{ val * 1000ULL * 1000ULL * 1000ULL }; }
-/// Convert 1 TB to bytes (factor 1'000'000'000'000).
-constexpr memory_size operator""_TB(const unsigned long long val) { return memory_size{ val * 1000ULL * 1000ULL * 1000ULL * 1000ULL }; }
-
-//*************************************************************************************************************************************//
-//                                                     binary prefix - long double                                                     //
-//*************************************************************************************************************************************//
-
-/// Convert 1 KiB to bytes (factor 1'024).
-constexpr memory_size operator""_KiB(const long double val) { return memory_size{ static_cast<unsigned long long>(val * 1024L) }; }
-/// Convert 1 MiB to bytes (factor 1'048'576).
-constexpr memory_size operator""_MiB(const long double val) { return memory_size{ static_cast<unsigned long long>(val * 1024L * 1024L) }; }
-/// Convert 1 GiB to bytes (factor 1'073'741'824).
-constexpr memory_size operator""_GiB(const long double val) { return memory_size{ static_cast<unsigned long long>(val * 1024L * 1024L * 1024L) }; }
-/// Convert 1 TiB to bytes (factor 1'099'511'627'776).
-constexpr memory_size operator""_TiB(const long double val) { return memory_size{ static_cast<unsigned long long>(val * 1024L * 1024L * 1024L * 1024L) }; }
-
-//*************************************************************************************************************************************//
-//                                                 binary prefix - unsigned long long                                                  //
-//*************************************************************************************************************************************//
-
-/// Convert 1 KiB to bytes (factor 1'024).
-constexpr memory_size operator""_KiB(const unsigned long long val) { return memory_size{ val * 1024ULL }; }
-/// Convert 1 MiB to bytes (factor 1'048'576).
-constexpr memory_size operator""_MiB(const unsigned long long val) { return memory_size{ val * 1024ULL * 1024ULL }; }
-/// Convert 1 GiB to bytes (factor 1'073'741'824).
-constexpr memory_size operator""_GiB(const unsigned long long val) { return memory_size{ val * 1024ULL * 1024ULL * 1024ULL }; }
-/// Convert 1 TiB to bytes (factor 1'099'511'627'776).
-constexpr memory_size operator""_TiB(const unsigned long long val) { return memory_size{ val * 1024ULL * 1024ULL * 1024ULL * 1024ULL }; }
+#undef PLSSVM_DEFINE_MEMORY_SIZE_LITERAL
 
 }  // namespace literals
 
