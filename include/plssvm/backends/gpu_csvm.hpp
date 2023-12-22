@@ -17,6 +17,7 @@
 #include "plssvm/csvm.hpp"          // plssvm::csvm
 #include "plssvm/matrix.hpp"        // plssvm::aos_matrix
 #include "plssvm/parameter.hpp"     // plssvm::parameter
+#include "plssvm/shape.hpp"         // plssvm::shape
 #include "plssvm/solver_types.hpp"  // plssvm::solver_type
 
 #include "fmt/core.h"  // fmt::format
@@ -214,29 +215,29 @@ template <template <typename> typename device_ptr_t, typename queue_t>
     if (solver == solver_type::cg_explicit) {
         // get the pointer to the data that already is on the device
         const device_ptr_type &data_d = data.get<device_ptr_type>();
-        [[maybe_unused]] const std::size_t num_rows_reduced = data_d.size(0) - 1;
-        [[maybe_unused]] const std::size_t num_features = data_d.size(1);
+        [[maybe_unused]] const std::size_t num_rows_reduced = data_d.shape().x - 1;
+        [[maybe_unused]] const std::size_t num_features = data_d.shape().y;
 
         PLSSVM_ASSERT(num_rows_reduced > 0, "At least one row must be given!");
         PLSSVM_ASSERT(num_rows_reduced + PADDING_SIZE >= num_rows_reduced, "The number of rows with padding ({}) must be greater or equal to the number of rows without padding!", num_rows_reduced + PADDING_SIZE, num_rows_reduced);
         PLSSVM_ASSERT(num_features > 0, "At least one feature must be given!");
-        PLSSVM_ASSERT((num_rows_reduced + PADDING_SIZE + 1) * (num_features + PADDING_SIZE) == data_d.size(),
+        PLSSVM_ASSERT((num_rows_reduced + PADDING_SIZE + 1) * (num_features + PADDING_SIZE) == data_d.size_padded(),
                       "The number of values on the device data array is {}, but the provided sizes are {} ((num_rows_reduced + 1) * num_features)",
-                      data_d.size(),
+                      data_d.size_padded(),
                       (num_rows_reduced + PADDING_SIZE + 1) * (num_features + PADDING_SIZE));
 
         device_ptr_type kernel_matrix = this->run_assemble_kernel_matrix_explicit(params, data_d, q_red_d, QA_cost);
 
 #if defined(PLSSVM_USE_GEMM)
-        PLSSVM_ASSERT((num_rows_reduced + PADDING_SIZE) * (num_rows_reduced + PADDING_SIZE) == kernel_matrix.size(),
+        PLSSVM_ASSERT((num_rows_reduced + PADDING_SIZE) * (num_rows_reduced + PADDING_SIZE) == kernel_matrix.size_padded(),
                       "The kernel matrix must be a quadratic matrix with (num_rows_reduced + PADDING_SIZE)^2 ({}) entries, but is {}!",
                       (num_rows_reduced + PADDING_SIZE) * (num_rows_reduced + PADDING_SIZE),
-                      kernel_matrix.size());
+                      kernel_matrix.size_padded());
 #else
-        PLSSVM_ASSERT((num_rows_reduced + PADDING_SIZE) * (num_rows_reduced + PADDING_SIZE + 1) / 2 == kernel_matrix.size(),
+        PLSSVM_ASSERT((num_rows_reduced + PADDING_SIZE) * (num_rows_reduced + PADDING_SIZE + 1) / 2 == kernel_matrix.size_padded(),
                       "The kernel matrix must be a triangular matrix only with (num_rows_reduced + PADDING_SIZE) * (num_rows_reduced + PADDING_SIZE + 1) / 2 ({}) entries, but is {}!",
                       (num_rows_reduced + PADDING_SIZE) * (num_rows_reduced + PADDING_SIZE + 1) / 2,
-                      kernel_matrix.size());
+                      kernel_matrix.size_padded());
 #endif
 
         return ::plssvm::detail::simple_any{ std::move(kernel_matrix) };
@@ -335,12 +336,12 @@ aos_matrix<real_type> gpu_csvm<device_ptr_t, queue_t>::predict_values(const para
             w_d = this->run_w_kernel(alpha_d, sv_d);
 
             // convert 1D result to aos_matrix out-parameter
-            w = soa_matrix<real_type>{ num_classes, num_features, PADDING_SIZE, PADDING_SIZE };
+            w = soa_matrix<real_type>{ shape{ num_classes, num_features }, shape{ PADDING_SIZE, PADDING_SIZE } };
             w_d.copy_to_host(w);
             w.restore_padding();
         } else {
             // w already provided -> copy to device
-            w_d = device_ptr_type{ { num_classes, num_features }, { PADDING_SIZE, PADDING_SIZE }, devices_[0] };
+            w_d = device_ptr_type{ shape{ num_classes, num_features }, shape{ PADDING_SIZE, PADDING_SIZE }, devices_[0] };
             w_d.copy_to_device(w);
         }
     }
@@ -349,7 +350,7 @@ aos_matrix<real_type> gpu_csvm<device_ptr_t, queue_t>::predict_values(const para
     const device_ptr_type out_d = this->run_predict_kernel(params, w_d, alpha_d, rho_d, sv_d, predict_points_d);
 
     // copy results back to host
-    aos_matrix<real_type> out_ret{ num_predict_points, num_classes, PADDING_SIZE, PADDING_SIZE };
+    aos_matrix<real_type> out_ret{ shape{ num_predict_points, num_classes }, shape{ PADDING_SIZE, PADDING_SIZE } };
     out_d.copy_to_host(out_ret);
     out_ret.restore_padding();
 

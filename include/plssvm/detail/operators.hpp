@@ -15,6 +15,7 @@
 
 #include "plssvm/detail/assert.hpp"  // PLSSVM_ASSERT
 #include "plssvm/matrix.hpp"         // plssvm::matrix
+#include "plssvm/shape.hpp"          // plssvm::shape
 
 #include <vector>  // std::vector
 
@@ -244,7 +245,7 @@ template <typename T, layout_type layout>
  */
 template <typename T, layout_type layout>
 matrix<T, layout> &operator+=(matrix<T, layout> &lhs, const matrix<T, layout> &rhs) {
-    PLSSVM_ASSERT(lhs.shape() == rhs.shape(), "Error: shapes missmatch! ([{}] != [{}])", fmt::join(lhs.shape(), ", "), fmt::join(rhs.shape(), ", "));
+    PLSSVM_ASSERT(lhs.shape() == rhs.shape(), "Error: shapes missmatch! ({} != {})", lhs.shape(), rhs.shape());
     using size_type = typename matrix<T, layout>::size_type;
 
     #pragma omp parallel for collapse(2) default(none) shared(lhs, rhs)
@@ -279,7 +280,7 @@ template <typename T, layout_type layout>
  */
 template <typename T, layout_type layout>
 matrix<T, layout> &operator-=(matrix<T, layout> &lhs, const matrix<T, layout> &rhs) {
-    PLSSVM_ASSERT(lhs.shape() == rhs.shape(), "Error: shapes missmatch! ([{}] != [{}])", fmt::join(lhs.shape(), ", "), fmt::join(rhs.shape(), ", "));
+    PLSSVM_ASSERT(lhs.shape() == rhs.shape(), "Error: shapes missmatch! ({} != {})", lhs.shape(), rhs.shape());
     using size_type = typename matrix<T, layout>::size_type;
 
     #pragma omp parallel for collapse(2) default(none) shared(lhs, rhs)
@@ -316,7 +317,7 @@ template <typename T, layout_type layout>
 [[nodiscard]] matrix<T, layout> operator*(const matrix<T, layout> &lhs, const matrix<T, layout> &rhs) {
     PLSSVM_ASSERT(lhs.num_cols() == rhs.num_rows(), "Error: shapes missmatch! ({} (num_cols) != {} (num_rows))", lhs.num_cols(), rhs.num_rows());
     using size_type = typename matrix<T, layout>::size_type;
-    matrix<T, layout> res{ lhs.num_rows(), rhs.num_cols() };
+    matrix<T, layout> res{ plssvm::shape{ lhs.num_rows(), rhs.num_cols() } };
 
     #pragma omp parallel for collapse(2) default(none) shared(lhs, rhs, res)
     for (size_type row = 0; row < res.num_rows(); ++row) {
@@ -343,7 +344,7 @@ template <typename T, layout_type layout>
  */
 template <typename T, layout_type layout>
 [[nodiscard]] std::vector<T> rowwise_dot(const matrix<T, layout> &lhs, const matrix<T, layout> &rhs) {
-    PLSSVM_ASSERT(lhs.shape() == rhs.shape(), "Error: shapes missmatch! ([{}] != [{}])", fmt::join(lhs.shape(), ", "), fmt::join(rhs.shape(), ", "));
+    PLSSVM_ASSERT(lhs.shape() == rhs.shape(), "Error: shapes missmatch! ({} != {})", lhs.shape(), rhs.shape());
     using size_type = typename matrix<T, layout>::size_type;
     std::vector<T> res(lhs.num_rows());
 

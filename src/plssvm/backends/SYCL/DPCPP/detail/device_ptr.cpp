@@ -24,16 +24,16 @@ namespace plssvm::dpcpp::detail {
 
 template <typename T>
 device_ptr<T>::device_ptr(const size_type size, const queue &q) :
-    device_ptr{ { size, 0 }, { 0, 0 }, q } {}
+    device_ptr{ plssvm::shape{ size, 1 }, plssvm::shape{ 0, 0 }, q } {}
 
 template <typename T>
-device_ptr<T>::device_ptr(const std::array<size_type, 2> extents, const queue &q) :
-    device_ptr{ extents, { 0, 0 }, q } { }
+device_ptr<T>::device_ptr(const plssvm::shape shape, const queue &q) :
+    device_ptr{ shape, plssvm::shape{ 0, 0 }, q } { }
 
 template <typename T>
-device_ptr<T>::device_ptr(const std::array<size_type, 2> extents, const std::array<size_type, 2> padding, const queue &q) :
-    base_type{ extents, padding, q } {
-    data_ = ::sycl::malloc_device<value_type>(this->size(), queue_.impl->sycl_queue);
+device_ptr<T>::device_ptr(const plssvm::shape shape, plssvm::shape padding, const queue &q) :
+    base_type{ shape, padding, q } {
+    data_ = ::sycl::malloc_device<value_type>(this->size_padded(), queue_.impl->sycl_queue);
 }
 
 template <typename T>
@@ -48,10 +48,10 @@ void device_ptr<T>::memset(const int pattern, const size_type pos, const size_ty
     PLSSVM_ASSERT(data_ != nullptr, "Invalid data pointer! Maybe *this has been default constructed?");
     PLSSVM_ASSERT(queue_.impl != nullptr, "Invalid sycl::queue!");
 
-    if (pos >= this->size()) {
-        throw backend_exception{ fmt::format("Illegal access in memset!: {} >= {}", pos, this->size()) };
+    if (pos >= this->size_padded()) {
+        throw backend_exception{ fmt::format("Illegal access in memset!: {} >= {}", pos, this->size_padded()) };
     }
-    const size_type rnum_bytes = std::min(num_bytes, (this->size() - pos) * sizeof(value_type));
+    const size_type rnum_bytes = std::min(num_bytes, (this->size_padded() - pos) * sizeof(value_type));
     queue_.impl->sycl_queue.memset(static_cast<void *>(data_ + pos), pattern, rnum_bytes).wait();
 }
 
@@ -60,10 +60,10 @@ void device_ptr<T>::fill(const value_type value, const size_type pos, const size
     PLSSVM_ASSERT(data_ != nullptr, "Invalid data pointer! Maybe *this has been default constructed?");
     PLSSVM_ASSERT(queue_.impl != nullptr, "Invalid sycl::queue!");
 
-    if (pos >= this->size()) {
-        throw backend_exception{ fmt::format("Illegal access in fill!: {} >= {}", pos, this->size()) };
+    if (pos >= this->size_padded()) {
+        throw backend_exception{ fmt::format("Illegal access in fill!: {} >= {}", pos, this->size_padded()) };
     }
-    const size_type rcount = std::min(count, this->size() - pos);
+    const size_type rcount = std::min(count, this->size_padded() - pos);
     queue_.impl->sycl_queue.fill(static_cast<void *>(data_ + pos), value, rcount).wait();
 }
 
@@ -73,7 +73,7 @@ void device_ptr<T>::copy_to_device(const_host_pointer_type data_to_copy, const s
     PLSSVM_ASSERT(data_to_copy != nullptr, "Invalid host pointer for the data to copy!");
     PLSSVM_ASSERT(queue_.impl != nullptr, "Invalid sycl::queue!");
 
-    const size_type rcount = std::min(count, this->size() - pos);
+    const size_type rcount = std::min(count, this->size_padded() - pos);
     queue_.impl->sycl_queue.copy(data_to_copy, data_ + pos, rcount).wait();
 }
 
@@ -83,7 +83,7 @@ void device_ptr<T>::copy_to_host(host_pointer_type buffer, const size_type pos, 
     PLSSVM_ASSERT(buffer != nullptr, "Invalid host pointer for the data to copy!");
     PLSSVM_ASSERT(queue_.impl != nullptr, "Invalid sycl::queue!");
 
-    const size_type rcount = std::min(count, this->size() - pos);
+    const size_type rcount = std::min(count, this->size_padded() - pos);
     queue_.impl->sycl_queue.copy(data_ + pos, buffer, rcount).wait();
 }
 

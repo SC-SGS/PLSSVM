@@ -43,7 +43,7 @@ TYPED_TEST(LIBSVMModelHeaderWrite, write_linear) {
     const std::size_t num_rho_values = distinct_label.size() * (distinct_label.size() - 1) / 2;  // OAO -> tests don't change for OAA
     const std::vector<label_type> label = util::get_correct_model_file_labels<label_type>();
     const std::vector<std::size_t> num_sv = util::get_correct_model_file_num_sv_per_class<label_type>(label.size());
-    const auto data = util::generate_specific_matrix<plssvm::aos_matrix<plssvm::real_type>>(label.size(), 3);
+    const auto data = util::generate_specific_matrix<plssvm::aos_matrix<plssvm::real_type>>(plssvm::shape{ label.size(), 3 });
 
     // create necessary parameter
     const plssvm::parameter params{ plssvm::kernel_type = plssvm::kernel_function_type::linear };
@@ -81,7 +81,7 @@ TYPED_TEST(LIBSVMModelHeaderWrite, write_polynomial) {
     const std::size_t num_rho_values = distinct_label.size() * (distinct_label.size() - 1) / 2;  // OAO -> tests don't change for OAA
     const std::vector<label_type> label = util::get_correct_model_file_labels<label_type>();
     const std::vector<std::size_t> num_sv = util::get_correct_model_file_num_sv_per_class<label_type>(label.size());
-    const auto data = util::generate_specific_matrix<plssvm::aos_matrix<plssvm::real_type>>(label.size(), 3);
+    const auto data = util::generate_specific_matrix<plssvm::aos_matrix<plssvm::real_type>>(plssvm::shape{ label.size(), 3 });
 
     // create necessary parameter
     const plssvm::parameter params{ plssvm::kernel_type = plssvm::kernel_function_type::polynomial, plssvm::degree = 3, plssvm::gamma = 2.2, plssvm::coef0 = 4.4 };
@@ -122,7 +122,7 @@ TYPED_TEST(LIBSVMModelHeaderWrite, write_rbf) {
     const std::size_t num_rho_values = distinct_label.size() * (distinct_label.size() - 1) / 2;  // OAO -> tests don't change for OAA
     const std::vector<label_type> label = util::get_correct_model_file_labels<label_type>();
     const std::vector<std::size_t> num_sv = util::get_correct_model_file_num_sv_per_class<label_type>(label.size());
-    const auto data = util::generate_specific_matrix<plssvm::aos_matrix<plssvm::real_type>>(label.size(), 3);
+    const auto data = util::generate_specific_matrix<plssvm::aos_matrix<plssvm::real_type>>(plssvm::shape{ label.size(), 3 });
 
     // create necessary parameter
     const plssvm::parameter params{ plssvm::kernel_type = plssvm::kernel_function_type::rbf, plssvm::gamma = 0.4 };

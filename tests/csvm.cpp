@@ -350,7 +350,7 @@ TYPED_TEST(BaseCSVMFit, fit) {
                             ::testing::An<plssvm::solver_type>(),
                             ::testing::An<const plssvm::soa_matrix<plssvm::real_type> &>()))
                         .Times(num_calls)
-                        .WillRepeatedly([]() { return plssvm::detail::simple_any{ util::generate_random_matrix<plssvm::soa_matrix<plssvm::real_type>>(6, 4, plssvm::PADDING_SIZE, plssvm::PADDING_SIZE) }; });
+                        .WillRepeatedly([]() { return plssvm::detail::simple_any{ util::generate_random_matrix<plssvm::soa_matrix<plssvm::real_type>>(plssvm::shape{ 6, 4 }, plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE }) }; });
     EXPECT_CALL(csvm, assemble_kernel_matrix(
                             ::testing::An<plssvm::solver_type>(),
                             ::testing::An<const plssvm::parameter &>(),
@@ -358,7 +358,7 @@ TYPED_TEST(BaseCSVMFit, fit) {
                             ::testing::An<const std::vector<plssvm::real_type> &>(),
                             ::testing::An<plssvm::real_type>()))
                         .Times(num_calls)
-                        .WillRepeatedly([]() { return plssvm::detail::simple_any{ util::generate_random_matrix<plssvm::soa_matrix<plssvm::real_type>>(5, 5, plssvm::PADDING_SIZE, plssvm::PADDING_SIZE) }; });
+                        .WillRepeatedly([]() { return plssvm::detail::simple_any{ util::generate_random_matrix<plssvm::soa_matrix<plssvm::real_type>>(plssvm::shape{ 5, 5 }, plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE }) }; });
     EXPECT_CALL(csvm, blas_level_3(
                             ::testing::An<plssvm::solver_type>(),
                             ::testing::An<plssvm::real_type>(),
@@ -411,7 +411,7 @@ TYPED_TEST(BaseCSVMFit, fit_named_parameters) {
                             ::testing::An<plssvm::solver_type>(),
                             ::testing::An<const plssvm::soa_matrix<plssvm::real_type> &>()))
                         .Times(num_calls)
-                        .WillRepeatedly([]() { return plssvm::detail::simple_any{ util::generate_random_matrix<plssvm::soa_matrix<plssvm::real_type>>(6, 4) }; });
+                        .WillRepeatedly([]() { return plssvm::detail::simple_any{ util::generate_random_matrix<plssvm::soa_matrix<plssvm::real_type>>(plssvm::shape{ 6, 4 }) }; });
     EXPECT_CALL(csvm, assemble_kernel_matrix(
                             ::testing::An<plssvm::solver_type>(),
                             ::testing::An<const plssvm::parameter &>(),
@@ -419,7 +419,7 @@ TYPED_TEST(BaseCSVMFit, fit_named_parameters) {
                             ::testing::An<const std::vector<plssvm::real_type> &>(),
                             ::testing::An<plssvm::real_type>()))
                         .Times(num_calls)
-                        .WillRepeatedly([]() { return plssvm::detail::simple_any{ util::generate_random_matrix<plssvm::soa_matrix<plssvm::real_type>>(5, 5) }; });
+                        .WillRepeatedly([]() { return plssvm::detail::simple_any{ util::generate_random_matrix<plssvm::soa_matrix<plssvm::real_type>>(plssvm::shape{ 5, 5 }) }; });
     EXPECT_CALL(csvm, blas_level_3(
                             ::testing::An<plssvm::solver_type>(),
                             ::testing::An<plssvm::real_type>(),
@@ -604,7 +604,7 @@ TYPED_TEST(BaseCSVMPredict, predict) {
                             ::testing::An<plssvm::soa_matrix<plssvm::real_type> &>(),
                             ::testing::An<const plssvm::soa_matrix<plssvm::real_type> &>()))
                         .Times(num_calls)
-                        .WillRepeatedly(::testing::Return(util::generate_random_matrix<plssvm::aos_matrix<plssvm::real_type>>(6, num_cols_in_return_matrix)));
+                        .WillRepeatedly(::testing::Return(util::generate_random_matrix<plssvm::aos_matrix<plssvm::real_type>>(plssvm::shape{ 6, num_cols_in_return_matrix })));
     // clang-format on
 
     // create data set and previously learned model
@@ -667,7 +667,7 @@ TYPED_TEST(BaseCSVMScore, score_model) {
                             ::testing::An<plssvm::soa_matrix<plssvm::real_type> &>(),
                             ::testing::An<const plssvm::soa_matrix<plssvm::real_type> &>()))
                         .Times(num_calls)
-                        .WillRepeatedly(::testing::Return(util::generate_random_matrix<plssvm::aos_matrix<plssvm::real_type>>(6, num_cols_in_return_matrix)));
+                        .WillRepeatedly(::testing::Return(util::generate_random_matrix<plssvm::aos_matrix<plssvm::real_type>>(plssvm::shape{ 6, num_cols_in_return_matrix })));
     // clang-format on
 
     // read a previously learned model from a model file
@@ -698,7 +698,7 @@ TYPED_TEST(BaseCSVMScore, score_data_set) {
                             ::testing::An<plssvm::soa_matrix<plssvm::real_type> &>(),
                             ::testing::An<const plssvm::soa_matrix<plssvm::real_type> &>()))
                         .Times(num_calls)
-                        .WillRepeatedly(::testing::Return(util::generate_random_matrix<plssvm::aos_matrix<plssvm::real_type>>(6, num_cols_in_return_matrix)));
+                        .WillRepeatedly(::testing::Return(util::generate_random_matrix<plssvm::aos_matrix<plssvm::real_type>>(plssvm::shape{ 6, num_cols_in_return_matrix })));
     // clang-format on
 
     // create data set and previously learned model
@@ -754,7 +754,7 @@ TYPED_TEST(BaseCSVMScore, score_data_set_num_features_mismatch) {
 
     // create data set
     const std::vector<label_type> labels = util::get_correct_data_file_labels<label_type>();
-    const auto data = util::generate_random_matrix<plssvm::soa_matrix<plssvm::real_type>>(labels.size(), 2);
+    const auto data = util::generate_random_matrix<plssvm::soa_matrix<plssvm::real_type>>(plssvm::shape{ labels.size(), 2 });
     const plssvm::data_set<label_type> data_to_score{ data, labels };
 
     // read a previously learned model from a model file

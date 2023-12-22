@@ -14,6 +14,7 @@
 #pragma once
 
 #include "plssvm/backends/gpu_device_ptr.hpp"  // plssvm::detail::gpu_device_ptr
+#include "plssvm/shape.hpp"                    // plssvm::shape
 
 #include <array>  // std::array
 
@@ -29,7 +30,7 @@ class device_ptr : public ::plssvm::detail::gpu_device_ptr<T, int> {
     using base_type = ::plssvm::detail::gpu_device_ptr<T, int>;
 
     using base_type::data_;
-    using base_type::extents_;
+    using base_type::shape_;
     using base_type::queue_;
 
   public:
@@ -59,20 +60,20 @@ class device_ptr : public ::plssvm::detail::gpu_device_ptr<T, int> {
      */
     explicit device_ptr(size_type size, queue_type device);
     /**
-     * @brief Allocates `extents[0] * extents[1] * sizeof(T)` bytes on the device with ID @p device.
-     * @param[in] extents the number of elements represented by the device_ptr
+     * @brief Allocates `shape.x * shape.y * sizeof(T)` bytes on the device with ID @p device.
+     * @param[in] shape the number of elements represented by the device_ptr
      * @param[in] device the associated CUDA device
      * @throws plssvm::cuda::backend_exception if the given device ID is smaller than 0 or greater or equal than the available number of devices
      */
-    explicit device_ptr(std::array<size_type, 2> extents, queue_type device);
+    explicit device_ptr(plssvm::shape shape, queue_type device);
     /**
-     * @brief Allocates `(extents[0] + padding[0]) * (extents[1] + padding[1]) * sizeof(T)` bytes on the device with ID @p device.
-     * @param[in] extents the number of elements represented by the device_ptr
+     * @brief Allocates `(shape.x + padding.x) * (shape.y + padding.y) * sizeof(T)` bytes on the device with ID @p device.
+     * @param[in] shape the number of elements represented by the device_ptr
      * @param[in] padding the number of padding elements added to the extent values
      * @param[in] device the associated CUDA device
      * @throws plssvm::cuda::backend_exception if the given device ID is smaller than 0 or greater or equal than the available number of devices
      */
-    device_ptr(std::array<size_type, 2> extents, std::array<size_type, 2> padding, queue_type device);
+    device_ptr(plssvm::shape shape, plssvm::shape padding, queue_type device);
 
     /**
      * @copydoc plssvm::detail::gpu_device_ptr::gpu_device_ptr(const plssvm::detail::gpu_device_ptr &)

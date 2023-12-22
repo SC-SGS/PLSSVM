@@ -20,7 +20,8 @@
 #include "plssvm/detail/string_conversion.hpp"  // plssvm::detail::convert_to
 #include "plssvm/detail/utility.hpp"            // plssvm::detail::current_date_time
 #include "plssvm/exceptions/exceptions.hpp"     // plssvm::invalid_file_format_exception
-#include "plssvm/matrix.hpp"                    // plssvm::os_matrix
+#include "plssvm/matrix.hpp"                    // plssvm::soa_matrix
+#include "plssvm/shape.hpp"                     // plssvm::shape
 
 #include "fmt/compile.h"  // FMT_COMPILE
 #include "fmt/format.h"   // fmt::format, fmt::format_to
@@ -127,7 +128,7 @@ template <typename label_type>
     }
 
     // create vector containing the data and label
-    soa_matrix<real_type> data{ num_data_points, num_features, PADDING_SIZE, PADDING_SIZE };
+    soa_matrix<real_type> data{ shape{ num_data_points, num_features }, shape{ PADDING_SIZE, PADDING_SIZE } };
     std::vector<label_type> label(num_data_points);
 
     std::exception_ptr parallel_exception;

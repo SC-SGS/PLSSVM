@@ -16,8 +16,9 @@
 #include "plssvm/detail/simple_any.hpp"           // plssvm::detail::simple_any
 #include "plssvm/exceptions/exceptions.hpp"       // plssvm::invalid_parameter_exception
 #include "plssvm/kernel_function_types.hpp"       // plssvm::kernel_function_type, plssvm::kernel_function
-#include "plssvm/matrix.hpp"                      // plssvm::aos_matrix
+#include "plssvm/matrix.hpp"                      // plssvm::soa_matrix
 #include "plssvm/parameter.hpp"                   // plssvm::parameter
+#include "plssvm/shape.hpp"                       // plssvm::shape
 #include "plssvm/solver_types.hpp"                // plssvm::solver_type
 #include "plssvm/verbosity_levels.hpp"            // plssvm::verbosity_level
 
@@ -67,17 +68,17 @@ std::pair<soa_matrix<real_type>, unsigned long long> csvm::conjugate_gradients(c
     // perform Conjugate Gradients (CG) algorithm
     //
 
-    soa_matrix<real_type> X{ num_rhs, num_rows, real_type{ 1.0 }, PADDING_SIZE, PADDING_SIZE };
+    soa_matrix<real_type> X{ shape{ num_rhs, num_rows }, real_type{ 1.0 }, shape{ PADDING_SIZE, PADDING_SIZE } };
 
     // R = B - A * X
-    soa_matrix<real_type> R{ B, PADDING_SIZE, PADDING_SIZE };
+    soa_matrix<real_type> R{ B, shape{ PADDING_SIZE, PADDING_SIZE } };
     total_blas_level_3_time += this->run_blas_level_3(cg_solver, real_type{ -1.0 }, A, X, real_type{ 1.0 }, R);
 
     // delta = R.T * R
     std::vector<real_type> delta = rowwise_dot(R, R);
     const std::vector<real_type> delta0(delta);
 
-    soa_matrix<real_type> D{ R, PADDING_SIZE, PADDING_SIZE };
+    soa_matrix<real_type> D{ R, shape{ PADDING_SIZE, PADDING_SIZE } };
 
     // get the index of the rhs that has the largest residual difference wrt to its target residual
     const auto rhs_idx_max_residual_difference = [&]() {
@@ -111,7 +112,7 @@ std::pair<soa_matrix<real_type>, unsigned long long> csvm::conjugate_gradients(c
         const std::chrono::steady_clock::time_point iteration_start_time = std::chrono::steady_clock::now();
 
         // Q = A * D
-        soa_matrix<real_type> Q{ D.num_rows(), D.num_cols(), PADDING_SIZE, PADDING_SIZE };
+        soa_matrix<real_type> Q{ shape{ D.num_rows(), D.num_cols() }, shape{ PADDING_SIZE, PADDING_SIZE } };
         total_blas_level_3_time += this->run_blas_level_3(cg_solver, real_type{ 1.0 }, A, D, real_type{ 0.0 }, Q);
 
         // alpha = delta_new / (D^T * Q))
@@ -123,7 +124,7 @@ std::pair<soa_matrix<real_type>, unsigned long long> csvm::conjugate_gradients(c
         if (iter % 50 == 49) {
             // explicitly recalculate residual to remove accumulating floating point errors
             // R = B - A * X
-            R = soa_matrix<real_type>{ B, PADDING_SIZE, PADDING_SIZE };
+            R = soa_matrix<real_type>{ B, shape{ PADDING_SIZE, PADDING_SIZE } };
             total_blas_level_3_time += this->run_blas_level_3(cg_solver, real_type{ -1.0 }, A, X, real_type{ 1.0 }, R);
         } else {
             // R = R - alpha * Q

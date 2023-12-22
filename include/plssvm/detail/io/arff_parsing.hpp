@@ -21,6 +21,7 @@
 #include "plssvm/detail/utility.hpp"            // plssvm::detail::current_date_time
 #include "plssvm/exceptions/exceptions.hpp"     // plssvm::exception::invalid_file_format_exception
 #include "plssvm/matrix.hpp"                    // plssvm::soa_matrix
+#include "plssvm/shape.hpp"                     // plssvm::shape
 
 #include "fmt/format.h"  // fmt::format, fmt::join
 #include "fmt/os.h"      // fmt::ostream, fmt::output_file
@@ -250,7 +251,7 @@ template <typename label_type>
     const std::size_t num_attributes = num_features + static_cast<std::size_t>(has_label);
 
     // create data and label vectors
-    soa_matrix<real_type> data{ num_data_points, num_features, PADDING_SIZE, PADDING_SIZE };
+    soa_matrix<real_type> data{ shape{ num_data_points, num_features }, shape{ PADDING_SIZE, PADDING_SIZE } };
     std::vector<label_type> label(num_data_points);
 
     std::exception_ptr parallel_exception;
@@ -357,8 +358,8 @@ template <typename label_type>
                     throw invalid_file_format_exception{ fmt::format("Found the label \"{}\" which was not specified in the header ({{{}}})!", static_cast<label_type>(label[i]), fmt::join(unique_label, ", ")) };
                 }
             } catch (const std::exception &) {
-// catch first exception and store it
-#pragma omp critical
+                // catch first exception and store it
+                #pragma omp critical
                 {
                     if (!parallel_exception) {
                         parallel_exception = std::current_exception();

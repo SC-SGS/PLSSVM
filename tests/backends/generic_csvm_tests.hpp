@@ -25,6 +25,7 @@
 #include "plssvm/matrix.hpp"                    // plssvm::aos_matrix, plssvm::layout_type
 #include "plssvm/model.hpp"                     // plssvm::model
 #include "plssvm/parameter.hpp"                 // plssvm::parameter
+#include "plssvm/shape.hpp"                     // plssvm::shape
 #include "plssvm/solver_types.hpp"              // plssvm::solver_type
 #include "plssvm/target_platforms.hpp"          // plssvm::target_platform
 
@@ -58,20 +59,20 @@ namespace util {
  * @return the padded matrix (`[[nodiscard]]`)
  */
 template <typename plssvm_csvm_type, typename T>
-[[nodiscard]] inline std::vector<T> pad_1D_vector(std::vector<T> matr, [[maybe_unused]] const std::array<std::size_t, 2> shape) {
+[[nodiscard]] inline std::vector<T> pad_1D_vector(std::vector<T> matr, [[maybe_unused]] const plssvm::shape shape) {
     // the OpenMP backend has no padding!
     if constexpr (plssvm::csvm_to_backend_type_v<plssvm_csvm_type> != plssvm::backend_type::openmp) {
         std::size_t idx{ matr.size() };
-        for (std::size_t i = 0; i < shape[0]; ++i) {
+        for (std::size_t i = 0; i < shape.x; ++i) {
             matr.insert(matr.cbegin() + idx, plssvm::PADDING_SIZE, plssvm::real_type{ 0.0 });
 #if defined(PLSSVM_USE_GEMM)
-            idx -= shape[1];
+            idx -= shape.y;
 #else
             idx -= i + 1;
 #endif
         }
 #if defined(PLSSVM_USE_GEMM)
-        matr.insert(matr.cend(), plssvm::PADDING_SIZE * (shape[1] + plssvm::PADDING_SIZE), plssvm::real_type{ 0.0 });
+        matr.insert(matr.cend(), plssvm::PADDING_SIZE * (shape.y + plssvm::PADDING_SIZE), plssvm::real_type{ 0.0 });
 #else
         matr.insert(matr.cend(), plssvm::PADDING_SIZE * (plssvm::PADDING_SIZE + 1) / 2, plssvm::real_type{ 0.0 });
 #endif
@@ -149,14 +150,14 @@ template <typename csvm_type, typename device_ptr_type, typename matrix_type, ty
 
     // created matrix is different for the OpenMP backend and the GPU backends!
     if constexpr (plssvm::csvm_to_backend_type_v<csvm_type> == plssvm::backend_type::openmp) {
-        return plssvm::detail::simple_any{ std::make_tuple(plssvm::aos_matrix<real_type>{ matr, plssvm::PADDING_SIZE, plssvm::PADDING_SIZE }, std::forward<Args>(args)...) };
+        return plssvm::detail::simple_any{ std::make_tuple(plssvm::aos_matrix<real_type>{ matr, plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE } }, std::forward<Args>(args)...) };
     } else {
         const auto params = static_cast<plssvm::parameter>(plssvm::detail::get<0>(args...));
         const auto q_red = static_cast<std::vector<real_type>>(plssvm::detail::get<1>(args...));
         const auto QA_cost = static_cast<real_type>(plssvm::detail::get<2>(args...));
 
         // add padding to matrix
-        matr = matrix_type{ matr, plssvm::PADDING_SIZE, plssvm::PADDING_SIZE };
+        matr = matrix_type{ matr, plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE } };
 
         // create device pointer
         device_ptr_type matr_d{ matr.shape(), matr.padding(), csvm.devices_[0] };
@@ -306,11 +307,10 @@ TYPED_TEST_P(GenericCSVM, blas_level_3_explicit_without_C) {
     const plssvm::soa_matrix<plssvm::real_type> B{ { { plssvm::real_type{ 1.0 }, plssvm::real_type{ 2.0 }, plssvm::real_type{ 3.0 } },
                                                      { plssvm::real_type{ 4.0 }, plssvm::real_type{ 5.0 }, plssvm::real_type{ 6.0 } },
                                                      { plssvm::real_type{ 7.0 }, plssvm::real_type{ 8.0 }, plssvm::real_type{ 9.0 } } },
-                                                   plssvm::PADDING_SIZE,
-                                                   plssvm::PADDING_SIZE };
+                                                   plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE } };
 
     [[maybe_unused]] const plssvm::real_type beta{ 0.0 };
-    plssvm::soa_matrix<plssvm::real_type> C{ 3, 3, plssvm::PADDING_SIZE, plssvm::PADDING_SIZE };
+    plssvm::soa_matrix<plssvm::real_type> C{ plssvm::shape{ 3, 3 }, plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE } };
     plssvm::soa_matrix<plssvm::real_type> C2{ C };
 
     // automatic solver type not permitted// perform BLAS calculation
@@ -320,8 +320,7 @@ TYPED_TEST_P(GenericCSVM, blas_level_3_explicit_without_C) {
     const plssvm::soa_matrix<plssvm::real_type> correct_C{ { { plssvm::real_type{ 1.4 }, plssvm::real_type{ 6.5 }, plssvm::real_type{ 9.8 } },
                                                              { plssvm::real_type{ 3.2 }, plssvm::real_type{ 14.6 }, plssvm::real_type{ 21.5 } },
                                                              { plssvm::real_type{ 5.0 }, plssvm::real_type{ 22.7 }, plssvm::real_type{ 33.2 } } },
-                                                           plssvm::PADDING_SIZE,
-                                                           plssvm::PADDING_SIZE };
+                                                           plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE } };
     EXPECT_FLOATING_POINT_MATRIX_NEAR(C, correct_C);
 
     // check wrapper function
@@ -355,11 +354,10 @@ TYPED_TEST_P(GenericCSVM, blas_level_3_explicit) {
     const plssvm::soa_matrix<plssvm::real_type> B{ { { plssvm::real_type{ 1.0 }, plssvm::real_type{ 2.0 }, plssvm::real_type{ 3.0 } },
                                                      { plssvm::real_type{ 4.0 }, plssvm::real_type{ 5.0 }, plssvm::real_type{ 6.0 } },
                                                      { plssvm::real_type{ 7.0 }, plssvm::real_type{ 8.0 }, plssvm::real_type{ 9.0 } } },
-                                                   plssvm::PADDING_SIZE,
-                                                   plssvm::PADDING_SIZE };
+                                                   plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE } };
 
     [[maybe_unused]] const plssvm::real_type beta{ 0.5 };
-    auto C = util::generate_specific_matrix<plssvm::soa_matrix<plssvm::real_type>>(3, 3, plssvm::PADDING_SIZE, plssvm::PADDING_SIZE);
+    auto C = util::generate_specific_matrix<plssvm::soa_matrix<plssvm::real_type>>(plssvm::shape{ 3, 3 }, plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE });
     plssvm::soa_matrix<plssvm::real_type> C2{ C };
 
     // perform BLAS calculation
@@ -370,8 +368,7 @@ TYPED_TEST_P(GenericCSVM, blas_level_3_explicit) {
     const plssvm::soa_matrix<plssvm::real_type> correct_C{ { { plssvm::real_type{ 1.45 }, plssvm::real_type{ 6.6 }, plssvm::real_type{ 9.95 } },
                                                              { plssvm::real_type{ 3.75 }, plssvm::real_type{ 15.2 }, plssvm::real_type{ 22.15 } },
                                                              { plssvm::real_type{ 6.05 }, plssvm::real_type{ 23.8 }, plssvm::real_type{ 34.35 } } },
-                                                           plssvm::PADDING_SIZE,
-                                                           plssvm::PADDING_SIZE };
+                                                           plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE } };
 
     EXPECT_FLOATING_POINT_MATRIX_NEAR(C, correct_C);
     EXPECT_EQ(C2, C);
@@ -408,7 +405,7 @@ TYPED_TEST_P(GenericCSVM, conjugate_gradients_trivial) {
     const auto [X, num_iter] = svm.conjugate_gradients(A, B, plssvm::real_type{ 0.00001 }, 4, solver);
 
     // check result
-    EXPECT_FLOATING_POINT_MATRIX_NEAR(X, (plssvm::soa_matrix<plssvm::real_type>{ B, plssvm::PADDING_SIZE, plssvm::PADDING_SIZE }));
+    EXPECT_FLOATING_POINT_MATRIX_NEAR(X, (plssvm::soa_matrix<plssvm::real_type>{ B, plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE } }));
     EXPECT_GT(num_iter, 0);
 }
 TYPED_TEST_P(GenericCSVM, conjugate_gradients) {
@@ -434,8 +431,7 @@ TYPED_TEST_P(GenericCSVM, conjugate_gradients) {
                                                      { plssvm::real_type{ 1.0 }, plssvm::real_type{ 2.0 } } } };
     const plssvm::soa_matrix<plssvm::real_type> correct_X{ { { plssvm::real_type{ 1.0 / 11.0 }, plssvm::real_type{ 7.0 / 11.0 } },
                                                              { plssvm::real_type{ 1.0 / 11.0 }, plssvm::real_type{ 7.0 / 11.0 } } },
-                                                           plssvm::PADDING_SIZE,
-                                                           plssvm::PADDING_SIZE };
+                                                           plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE } };
 
     // solve AX = B
     const auto [X, num_iters] = svm.conjugate_gradients(A, B, plssvm::real_type{ 0.00001 }, 2, solver);
@@ -475,7 +471,7 @@ TYPED_TEST_P(GenericCSVMSolver, setup_data_on_devices) {
     }
 
     // minimal example
-    const auto input = util::generate_specific_matrix<plssvm::soa_matrix<plssvm::real_type>>(3, 3, plssvm::PADDING_SIZE, plssvm::PADDING_SIZE);
+    const auto input = util::generate_specific_matrix<plssvm::soa_matrix<plssvm::real_type>>(plssvm::shape{ 3, 3 }, plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE });
 
     // create C-SVM: must be done using the mock class, since plssvm::detail::csvm::setup_data_on_device is protected
     const mock_csvm_type svm = util::construct_from_tuple<mock_csvm_type>(csvm_test_type::additional_arguments);
@@ -494,21 +490,20 @@ TYPED_TEST_P(GenericCSVMSolver, setup_data_on_devices) {
 
         if constexpr (plssvm::csvm_to_backend_type_v<csvm_type> == plssvm::backend_type::openmp) {
             // OpenMP special case
-            ASSERT_EQ(data_d->shape(), (std::array<std::size_t, 2>{ 3, 3 }));
-            ASSERT_EQ(data_d->num_entries(), 9);
-            ASSERT_TRUE(data_d->is_padded());
-            ASSERT_EQ(data_d->padding()[0], plssvm::PADDING_SIZE);
-            ASSERT_EQ(data_d->padding()[1], plssvm::PADDING_SIZE);
+            ASSERT_EQ(data_d->shape(), (plssvm::shape{ 3, 3 }));
+            ASSERT_EQ(data_d->size(), 9);
+            ASSERT_EQ(data_d->padding(), (plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE }));
+            ASSERT_EQ(data_d->shape_padded(), (plssvm::shape{ 3 + plssvm::PADDING_SIZE, 3 + plssvm::PADDING_SIZE }));
             EXPECT_FLOATING_POINT_MATRIX_EQ(*data_d, input);
         } else {
             // generic GPU case
-            ASSERT_EQ(data_d.extents(), (std::array<std::size_t, 2>{ 3, 3 }));
-            ASSERT_EQ(data_d.size(), (3 + plssvm::PADDING_SIZE) * (3 + plssvm::PADDING_SIZE));
-            ASSERT_EQ(data_d.padding(0), plssvm::PADDING_SIZE);
-            ASSERT_EQ(data_d.padding(1), plssvm::PADDING_SIZE);
-            std::vector<plssvm::real_type> data(data_d.size());
+            ASSERT_EQ(data_d.shape(), (plssvm::shape{ 3, 3 }));
+            ASSERT_EQ(data_d.size(), 9);
+            ASSERT_EQ(data_d.padding(), (plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE }));
+            ASSERT_EQ(data_d.shape_padded(), (plssvm::shape{ 3 + plssvm::PADDING_SIZE, 3 + plssvm::PADDING_SIZE }));
+            std::vector<plssvm::real_type> data(data_d.size_padded());
             data_d.copy_to_host(data);
-            const std::vector<plssvm::real_type> correct_data{ input.data(), input.data() + input.num_entries_padded() };
+            const std::vector<plssvm::real_type> correct_data{ input.data(), input.data() + input.size_padded() };
             EXPECT_FLOATING_POINT_VECTOR_EQ(data, correct_data);
         }
     }
@@ -552,7 +547,7 @@ TYPED_TEST_P(GenericCSVMKernelFunction, blas_level_3_assembly_implicit_without_C
 
     [[maybe_unused]] const plssvm::real_type alpha{ 1.0 };
 
-    const auto matr_A = util::generate_specific_matrix<plssvm::soa_matrix<plssvm::real_type>>(4, 4);
+    const auto matr_A = util::generate_specific_matrix<plssvm::soa_matrix<plssvm::real_type>>(plssvm::shape{ 4, 4 });
     const auto [q, QA_cost] = compare::perform_dimensional_reduction(params, matr_A);
 
     const plssvm::detail::simple_any A{ util::init_implicit_matrix<csvm_type, device_ptr_type>(matr_A, svm, params, q, QA_cost) };
@@ -560,11 +555,10 @@ TYPED_TEST_P(GenericCSVMKernelFunction, blas_level_3_assembly_implicit_without_C
     const plssvm::soa_matrix<plssvm::real_type> B{ { { plssvm::real_type{ 1.0 }, plssvm::real_type{ 2.0 }, plssvm::real_type{ 3.0 } },
                                                      { plssvm::real_type{ 4.0 }, plssvm::real_type{ 5.0 }, plssvm::real_type{ 6.0 } },
                                                      { plssvm::real_type{ 7.0 }, plssvm::real_type{ 8.0 }, plssvm::real_type{ 9.0 } } },
-                                                   plssvm::PADDING_SIZE,
-                                                   plssvm::PADDING_SIZE };
+                                                   plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE } };
 
     const plssvm::real_type beta{ 0.0 };
-    plssvm::soa_matrix<plssvm::real_type> C{ 3, 3, plssvm::real_type{ 0.0 }, plssvm::PADDING_SIZE, plssvm::PADDING_SIZE };
+    plssvm::soa_matrix<plssvm::real_type> C{ plssvm::shape{ 3, 3 }, plssvm::real_type{ 0.0 }, plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE } };
     plssvm::soa_matrix<plssvm::real_type> C2{ C };
 
     // perform BLAS calculation
@@ -573,7 +567,7 @@ TYPED_TEST_P(GenericCSVMKernelFunction, blas_level_3_assembly_implicit_without_C
 
     // calculate correct results
     const std::vector<plssvm::real_type> kernel_matrix = compare::assemble_kernel_matrix_gemm(params, matr_A, q, QA_cost);
-    plssvm::soa_matrix<plssvm::real_type> correct_C{ 3, 3, plssvm::real_type{ 0.0 }, plssvm::PADDING_SIZE, plssvm::PADDING_SIZE };
+    plssvm::soa_matrix<plssvm::real_type> correct_C{ plssvm::shape{ 3, 3 }, plssvm::real_type{ 0.0 }, plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE } };
     compare::gemm(alpha, kernel_matrix, B, beta, correct_C);
 
     // check for correctness
@@ -605,7 +599,7 @@ TYPED_TEST_P(GenericCSVMKernelFunction, blas_level_3_assembly_implicit) {
 
     [[maybe_unused]] const plssvm::real_type alpha{ 1.0 };
 
-    const auto matr_A = util::generate_specific_matrix<plssvm::soa_matrix<plssvm::real_type>>(4, 4);
+    const auto matr_A = util::generate_specific_matrix<plssvm::soa_matrix<plssvm::real_type>>(plssvm::shape{ 4, 4 });
     const auto [q, QA_cost] = compare::perform_dimensional_reduction(params, matr_A);
 
     const plssvm::detail::simple_any A{ util::init_implicit_matrix<csvm_type, device_ptr_type>(matr_A, svm, params, q, QA_cost) };
@@ -613,11 +607,10 @@ TYPED_TEST_P(GenericCSVMKernelFunction, blas_level_3_assembly_implicit) {
     const plssvm::soa_matrix<plssvm::real_type> B{ { { plssvm::real_type{ 1.0 }, plssvm::real_type{ 2.0 }, plssvm::real_type{ 3.0 } },
                                                      { plssvm::real_type{ 4.0 }, plssvm::real_type{ 5.0 }, plssvm::real_type{ 6.0 } },
                                                      { plssvm::real_type{ 7.0 }, plssvm::real_type{ 8.0 }, plssvm::real_type{ 9.0 } } },
-                                                   plssvm::PADDING_SIZE,
-                                                   plssvm::PADDING_SIZE };
+                                                   plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE } };
 
     const plssvm::real_type beta{ 0.5 };
-    auto C = util::generate_specific_matrix<plssvm::soa_matrix<plssvm::real_type>>(3, 3, plssvm::PADDING_SIZE, plssvm::PADDING_SIZE);
+    auto C = util::generate_specific_matrix<plssvm::soa_matrix<plssvm::real_type>>(plssvm::shape{ 3, 3 }, plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE });
     plssvm::soa_matrix<plssvm::real_type> C2{ C };
     plssvm::soa_matrix<plssvm::real_type> correct_C{ C };
 
@@ -652,18 +645,15 @@ TYPED_TEST_P(GenericCSVMKernelFunction, predict_values) {
                                                                    { plssvm::real_type{ 0.0 }, plssvm::real_type{ 1.0 }, plssvm::real_type{ 0.0 }, plssvm::real_type{ 0.0 } },
                                                                    { plssvm::real_type{ 0.0 }, plssvm::real_type{ 0.0 }, plssvm::real_type{ 1.0 }, plssvm::real_type{ 0.0 } },
                                                                    { plssvm::real_type{ 0.0 }, plssvm::real_type{ 0.0 }, plssvm::real_type{ 0.0 }, plssvm::real_type{ 1.0 } } },
-                                                                 plssvm::PADDING_SIZE,
-                                                                 plssvm::PADDING_SIZE };
+                                                                 plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE } };
     const plssvm::aos_matrix<plssvm::real_type> weights{ { { plssvm::real_type{ 1.0 }, plssvm::real_type{ -1.0 }, plssvm::real_type{ 1.0 }, plssvm::real_type{ -1.0 } },
                                                            { plssvm::real_type{ 1.0 }, plssvm::real_type{ -1.0 }, plssvm::real_type{ 1.0 }, plssvm::real_type{ -1.0 } } },
-                                                         plssvm::PADDING_SIZE,
-                                                         plssvm::PADDING_SIZE };
+                                                         plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE } };
     const std::vector<plssvm::real_type> rho{ plssvm::real_type{ 0.0 }, plssvm::real_type{ 0.0 } };
     plssvm::soa_matrix<plssvm::real_type> w{};
     const plssvm::soa_matrix<plssvm::real_type> data{ { { plssvm::real_type{ 1.0 }, plssvm::real_type{ 1.0 }, plssvm::real_type{ 1.0 }, plssvm::real_type{ 1.0 } },
                                                         { plssvm::real_type{ 1.0 }, plssvm::real_type{ -1.0 }, plssvm::real_type{ 1.0 }, plssvm::real_type{ -1.0 } } },
-                                                      plssvm::PADDING_SIZE,
-                                                      plssvm::PADDING_SIZE };
+                                                      plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE } };
 
     // create C-SVM: must be done using the mock class, since plssvm::detail::csvm::predict_values is protected
     const mock_csvm_type svm = util::construct_from_tuple<mock_csvm_type>(params, csvm_test_type::additional_arguments);
@@ -684,7 +674,7 @@ TYPED_TEST_P(GenericCSVMKernelFunction, predict_values) {
     // in case of the linear kernel, the w vector should have been filled
     if (kernel == plssvm::kernel_function_type::linear) {
         EXPECT_EQ(w.num_rows(), rho.size());
-        EXPECT_FLOATING_POINT_MATRIX_NEAR(w, (plssvm::soa_matrix<plssvm::real_type>{ weights, plssvm::PADDING_SIZE, plssvm::PADDING_SIZE }));
+        EXPECT_FLOATING_POINT_MATRIX_NEAR(w, (plssvm::soa_matrix<plssvm::real_type>{ weights, plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE } }));
     } else {
         EXPECT_TRUE(w.empty());
     }
@@ -705,28 +695,23 @@ TYPED_TEST_P(GenericCSVMKernelFunction, predict_values_provided_w) {
                                                                        { plssvm::real_type{ 0.0 }, plssvm::real_type{ 1.0 }, plssvm::real_type{ 0.0 }, plssvm::real_type{ 0.0 } },
                                                                        { plssvm::real_type{ 0.0 }, plssvm::real_type{ 0.0 }, plssvm::real_type{ 1.0 }, plssvm::real_type{ 0.0 } },
                                                                        { plssvm::real_type{ 0.0 }, plssvm::real_type{ 0.0 }, plssvm::real_type{ 0.0 }, plssvm::real_type{ 1.0 } } },
-                                                                     plssvm::PADDING_SIZE,
-                                                                     plssvm::PADDING_SIZE };
+                                                                     plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE } };
         const plssvm::aos_matrix<plssvm::real_type> weights{ { { plssvm::real_type{ 1.0 }, plssvm::real_type{ -1.0 }, plssvm::real_type{ 1.0 }, plssvm::real_type{ -1.0 } },
                                                                { plssvm::real_type{ 1.0 }, plssvm::real_type{ -1.0 }, plssvm::real_type{ 1.0 }, plssvm::real_type{ -1.0 } } },
-                                                             plssvm::PADDING_SIZE,
-                                                             plssvm::PADDING_SIZE };
+                                                             plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE } };
         const std::vector<plssvm::real_type> rho{ plssvm::real_type{ 0.0 }, plssvm::real_type{ 0.0 } };
         plssvm::soa_matrix<plssvm::real_type> w{ { { plssvm::real_type{ 1.0 }, plssvm::real_type{ -1.0 }, plssvm::real_type{ 1.0 }, plssvm::real_type{ -1.0 } },
                                                    { plssvm::real_type{ 1.0 }, plssvm::real_type{ -1.0 }, plssvm::real_type{ 1.0 }, plssvm::real_type{ -1.0 } } },
-                                                 plssvm::PADDING_SIZE,
-                                                 plssvm::PADDING_SIZE };
+                                                 plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE } };
         const plssvm::soa_matrix<plssvm::real_type> correct_w{ w };
         const plssvm::soa_matrix<plssvm::real_type> data{ { { plssvm::real_type{ 1.0 }, plssvm::real_type{ 1.0 }, plssvm::real_type{ 1.0 }, plssvm::real_type{ 1.0 } },
                                                             { plssvm::real_type{ 1.0 }, plssvm::real_type{ -1.0 }, plssvm::real_type{ 1.0 }, plssvm::real_type{ -1.0 } } },
-                                                          plssvm::PADDING_SIZE,
-                                                          plssvm::PADDING_SIZE };
+                                                          plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE } };
 
         // the correct result
         const plssvm::aos_matrix<plssvm::real_type> correct_predict_values{ { { plssvm::real_type{ 0.0 }, plssvm::real_type{ 0.0 } },
                                                                               { plssvm::real_type{ 4.0 }, plssvm::real_type{ 4.0 } } },
-                                                                            plssvm::PADDING_SIZE,
-                                                                            plssvm::PADDING_SIZE };
+                                                                            plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE } };
 
         // create C-SVM: must be done using the mock class, since plssvm::detail::csvm::predict_values is protected
         const mock_csvm_type svm = util::construct_from_tuple<mock_csvm_type>(params, csvm_test_type::additional_arguments);
@@ -739,7 +724,7 @@ TYPED_TEST_P(GenericCSVMKernelFunction, predict_values_provided_w) {
         EXPECT_FLOATING_POINT_MATRIX_NEAR(calculated, correct_predict_values);
         // in case of the linear kernel, the w vector should not have changed
         EXPECT_FLOATING_POINT_MATRIX_EQ(w, correct_w);
-        EXPECT_FLOATING_POINT_MATRIX_NEAR(w, (plssvm::soa_matrix<plssvm::real_type>{ weights, plssvm::PADDING_SIZE, plssvm::PADDING_SIZE }));
+        EXPECT_FLOATING_POINT_MATRIX_NEAR(w, (plssvm::soa_matrix<plssvm::real_type>{ weights, plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE } }));
     }
 }
 
@@ -751,7 +736,7 @@ TYPED_TEST_P(GenericCSVMKernelFunction, perform_dimensional_reduction) {
     // create parameter struct
     const plssvm::parameter params{ plssvm::kernel_type = kernel };
 
-    const auto data = util::generate_random_matrix<plssvm::soa_matrix<plssvm::real_type>>(6, 4, plssvm::PADDING_SIZE, plssvm::PADDING_SIZE);
+    const auto data = util::generate_random_matrix<plssvm::soa_matrix<plssvm::real_type>>(plssvm::shape{ 6, 4 }, plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE });
 
     // create C-SVM: must be done using the mock class, since plssvm::detail::csvm::perform_dimensional_reduction is protected
     const mock_csvm_type svm = util::construct_from_tuple<mock_csvm_type>(params, csvm_test_type::additional_arguments);
@@ -808,8 +793,7 @@ TYPED_TEST_P(GenericCSVMSolverKernelFunction, solve_lssvm_system_of_linear_equat
                                                      { plssvm::real_type{ 0.0 }, plssvm::real_type{ std::sqrt(plssvm::real_type(1.0) - 1 / params.cost) }, plssvm::real_type{ 0.0 }, plssvm::real_type{ 0.0 } },
                                                      { plssvm::real_type{ 0.0 }, plssvm::real_type{ 0.0 }, plssvm::real_type{ std::sqrt(plssvm::real_type(1.0) - 1 / params.cost) }, plssvm::real_type{ 0.0 } },
                                                      { plssvm::real_type{ 0.0 }, plssvm::real_type{ 0.0 }, plssvm::real_type{ 0.0 }, plssvm::real_type{ std::sqrt(plssvm::real_type(1.0) - 1 / params.cost) } } },
-                                                   plssvm::PADDING_SIZE,
-                                                   plssvm::PADDING_SIZE };
+                                                   plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE } };
     const plssvm::aos_matrix<plssvm::real_type> B{ { { plssvm::real_type{ 1.0 }, plssvm::real_type{ -1.0 }, plssvm::real_type{ 1.0 }, plssvm::real_type{ -1.0 } },
                                                      { plssvm::real_type{ 1.0 }, plssvm::real_type{ -1.0 }, plssvm::real_type{ 1.0 }, plssvm::real_type{ -1.0 } } } };
 
@@ -823,7 +807,7 @@ TYPED_TEST_P(GenericCSVMSolverKernelFunction, solve_lssvm_system_of_linear_equat
     const auto &[calculated_x, calculated_rho, num_iter] = svm.solve_lssvm_system_of_linear_equations(A, B, params, plssvm::epsilon = 0.00001, plssvm::solver = plssvm::solver_type::cg_explicit);
 
     // check the calculated result for correctness
-    EXPECT_FLOATING_POINT_MATRIX_NEAR(calculated_x, (plssvm::aos_matrix<plssvm::real_type>{ B, plssvm::PADDING_SIZE, plssvm::PADDING_SIZE }));
+    EXPECT_FLOATING_POINT_MATRIX_NEAR(calculated_x, (plssvm::aos_matrix<plssvm::real_type>{ B, plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE } }));
     EXPECT_TRUE(std::all_of(calculated_rho.cbegin(), calculated_rho.cend(), [front = calculated_rho.front()](const plssvm::real_type rho) { return rho == front; }));
     for (const auto rho : calculated_rho) {
         EXPECT_FLOATING_POINT_NEAR(std::abs(rho) - std::numeric_limits<plssvm::real_type>::epsilon(), std::numeric_limits<plssvm::real_type>::epsilon());
@@ -861,8 +845,7 @@ TYPED_TEST_P(GenericCSVMSolverKernelFunction, assemble_kernel_matrix_minimal) {
     const plssvm::soa_matrix<plssvm::real_type> data{ { { plssvm::real_type{ 1.0 }, plssvm::real_type{ 2.0 }, plssvm::real_type{ 3.0 } },
                                                         { plssvm::real_type{ 4.0 }, plssvm::real_type{ 5.0 }, plssvm::real_type{ 6.0 } },
                                                         { plssvm::real_type{ 7.0 }, plssvm::real_type{ 8.0 }, plssvm::real_type{ 9.0 } } },
-                                                      plssvm::PADDING_SIZE,
-                                                      plssvm::PADDING_SIZE };  // 3 x 3 -> assemble 2 x 2 matrix
+                                                      plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE } };  // 3 x 3 -> assemble 2 x 2 matrix
     [[maybe_unused]] const std::vector<plssvm::real_type> q_red(data.num_cols() - 1, plssvm::real_type{ 0.0 });
     [[maybe_unused]] const plssvm::real_type QA_cost{ 0.0 };
 
@@ -904,15 +887,15 @@ TYPED_TEST_P(GenericCSVMSolverKernelFunction, assemble_kernel_matrix_minimal) {
         std::vector<plssvm::real_type> ground_truth{};
         if constexpr (kernel == plssvm::kernel_function_type::rbf) {
 #if defined(PLSSVM_USE_GEMM)
-            ground_truth = util::pad_1D_vector<csvm_type>(std::vector<plssvm::real_type>{ plssvm::real_type{ 2.0 }, static_cast<plssvm::real_type>(std::exp(-27.0)), static_cast<plssvm::real_type>(std::exp(-27.0)), plssvm::real_type{ 2.0 } }, { 2, 2 });
+            ground_truth = util::pad_1D_vector<csvm_type>(std::vector<plssvm::real_type>{ plssvm::real_type{ 2.0 }, static_cast<plssvm::real_type>(std::exp(-27.0)), static_cast<plssvm::real_type>(std::exp(-27.0)), plssvm::real_type{ 2.0 } }, plssvm::shape{ 2, 2 });
 #else
-            ground_truth = util::pad_1D_vector<csvm_type>(std::vector<plssvm::real_type>{ plssvm::real_type{ 2.0 }, static_cast<plssvm::real_type>(std::exp(-27.0)), plssvm::real_type{ 2.0 } }, { 2, 2 });
+            ground_truth = util::pad_1D_vector<csvm_type>(std::vector<plssvm::real_type>{ plssvm::real_type{ 2.0 }, static_cast<plssvm::real_type>(std::exp(-27.0)), plssvm::real_type{ 2.0 } }, plssvm::shape{ 2, 2 });
 #endif
         } else {
 #if defined(PLSSVM_USE_GEMM)
-            ground_truth = util::pad_1D_vector<csvm_type>(std::vector<plssvm::real_type>{ plssvm::real_type{ 15.0 }, plssvm::real_type{ 32.0 }, plssvm::real_type{ 32.0 }, plssvm::real_type{ 78.0 } }, { 2, 2 });
+            ground_truth = util::pad_1D_vector<csvm_type>(std::vector<plssvm::real_type>{ plssvm::real_type{ 15.0 }, plssvm::real_type{ 32.0 }, plssvm::real_type{ 32.0 }, plssvm::real_type{ 78.0 } }, plssvm::shape{ 2, 2 });
 #else
-            ground_truth = util::pad_1D_vector<csvm_type>(std::vector<plssvm::real_type>{ plssvm::real_type{ 15.0 }, plssvm::real_type{ 32.0 }, plssvm::real_type{ 78.0 } }, { 2, 2 });
+            ground_truth = util::pad_1D_vector<csvm_type>(std::vector<plssvm::real_type>{ plssvm::real_type{ 15.0 }, plssvm::real_type{ 32.0 }, plssvm::real_type{ 78.0 } }, plssvm::shape{ 2, 2 });
 #endif
         }
 
@@ -971,8 +954,7 @@ TYPED_TEST_P(GenericCSVMSolverKernelFunction, assemble_kernel_matrix) {
     const plssvm::soa_matrix<plssvm::real_type> data{ { { plssvm::real_type{ 1.0 }, plssvm::real_type{ 2.0 }, plssvm::real_type{ 3.0 } },
                                                         { plssvm::real_type{ 4.0 }, plssvm::real_type{ 5.0 }, plssvm::real_type{ 6.0 } },
                                                         { plssvm::real_type{ 7.0 }, plssvm::real_type{ 8.0 }, plssvm::real_type{ 9.0 } } },
-                                                      plssvm::PADDING_SIZE,
-                                                      plssvm::PADDING_SIZE };
+                                                      plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE } };
     [[maybe_unused]] const std::vector<plssvm::real_type> q_red = { plssvm::real_type{ 3.0 }, plssvm::real_type{ 4.0 } };
     [[maybe_unused]] const plssvm::real_type QA_cost{ 2.0 };
 
@@ -1015,24 +997,24 @@ TYPED_TEST_P(GenericCSVMSolverKernelFunction, assemble_kernel_matrix) {
         switch (kernel) {
             case plssvm::kernel_function_type::linear:
 #if defined(PLSSVM_USE_GEMM)
-                ground_truth = util::pad_1D_vector<csvm_type>(std::vector<plssvm::real_type>{ plssvm::real_type{ 11.0 }, plssvm::real_type{ 27.0 }, plssvm::real_type{ 27.0 }, plssvm::real_type{ 72.0 } }, { 2, 2 });
+                ground_truth = util::pad_1D_vector<csvm_type>(std::vector<plssvm::real_type>{ plssvm::real_type{ 11.0 }, plssvm::real_type{ 27.0 }, plssvm::real_type{ 27.0 }, plssvm::real_type{ 72.0 } }, plssvm::shape{ 2, 2 });
 #else
-                ground_truth = util::pad_1D_vector<csvm_type>(std::vector<plssvm::real_type>{ plssvm::real_type{ 11.0 }, plssvm::real_type{ 27.0 }, plssvm::real_type{ 72.0 } }, { 2, 2 });
+                ground_truth = util::pad_1D_vector<csvm_type>(std::vector<plssvm::real_type>{ plssvm::real_type{ 11.0 }, plssvm::real_type{ 27.0 }, plssvm::real_type{ 72.0 } }, plssvm::shape{ 2, 2 });
 #endif
                 break;
             case plssvm::kernel_function_type::polynomial:
 #if defined(PLSSVM_USE_GEMM)
-                ground_truth = util::pad_1D_vector<csvm_type>(std::vector<plssvm::real_type>{ static_cast<plssvm::real_type>(std::pow(14.0 / 3.0 + 1.0, 3) - 3.0), static_cast<plssvm::real_type>(std::pow(32.0 / 3.0 + 1.0, 3) - 5.0), static_cast<plssvm::real_type>(std::pow(32.0 / 3.0 + 1.0, 3) - 5.0), static_cast<plssvm::real_type>(std::pow(77.0 / 3.0 + 1.0, 3) + 1.0 - 6.0) }, { 2, 2 });
+                ground_truth = util::pad_1D_vector<csvm_type>(std::vector<plssvm::real_type>{ static_cast<plssvm::real_type>(std::pow(14.0 / 3.0 + 1.0, 3) - 3.0), static_cast<plssvm::real_type>(std::pow(32.0 / 3.0 + 1.0, 3) - 5.0), static_cast<plssvm::real_type>(std::pow(32.0 / 3.0 + 1.0, 3) - 5.0), static_cast<plssvm::real_type>(std::pow(77.0 / 3.0 + 1.0, 3) + 1.0 - 6.0) }, plssvm::shape{ 2, 2 });
 #else
-                ground_truth = util::pad_1D_vector<csvm_type>(std::vector<plssvm::real_type>{ static_cast<plssvm::real_type>(std::pow(14.0 / 3.0 + 1.0, 3) - 3.0), static_cast<plssvm::real_type>(std::pow(32.0 / 3.0 + 1.0, 3) - 5.0), static_cast<plssvm::real_type>(std::pow(77.0 / 3.0 + 1.0, 3) + 1.0 - 6.0) }, { 2, 2 });
+                ground_truth = util::pad_1D_vector<csvm_type>(std::vector<plssvm::real_type>{ static_cast<plssvm::real_type>(std::pow(14.0 / 3.0 + 1.0, 3) - 3.0), static_cast<plssvm::real_type>(std::pow(32.0 / 3.0 + 1.0, 3) - 5.0), static_cast<plssvm::real_type>(std::pow(77.0 / 3.0 + 1.0, 3) + 1.0 - 6.0) }, plssvm::shape{ 2, 2 });
 
 #endif
                 break;
             case plssvm::kernel_function_type::rbf:
 #if defined(PLSSVM_USE_GEMM)
-                ground_truth = util::pad_1D_vector<csvm_type>(std::vector<plssvm::real_type>{ plssvm::real_type{ -2.0 }, static_cast<plssvm::real_type>(std::exp(-9.0) - 5.0), static_cast<plssvm::real_type>(std::exp(-9.0) - 5.0), plssvm::real_type{ -4.0 } }, { 2, 2 });
+                ground_truth = util::pad_1D_vector<csvm_type>(std::vector<plssvm::real_type>{ plssvm::real_type{ -2.0 }, static_cast<plssvm::real_type>(std::exp(-9.0) - 5.0), static_cast<plssvm::real_type>(std::exp(-9.0) - 5.0), plssvm::real_type{ -4.0 } }, plssvm::shape{ 2, 2 });
 #else
-                ground_truth = util::pad_1D_vector<csvm_type>(std::vector<plssvm::real_type>{ plssvm::real_type{ -2.0 }, static_cast<plssvm::real_type>(std::exp(-9.0) - 5.0), plssvm::real_type{ -4.0 } }, { 2, 2 });
+                ground_truth = util::pad_1D_vector<csvm_type>(std::vector<plssvm::real_type>{ plssvm::real_type{ -2.0 }, static_cast<plssvm::real_type>(std::exp(-9.0) - 5.0), plssvm::real_type{ -4.0 } }, plssvm::shape{ 2, 2 });
 #endif
                 break;
         }
@@ -1264,11 +1246,10 @@ TYPED_TEST_P(GenericCSVMDeathTest, blas_level_3_automatic) {
     const plssvm::soa_matrix<plssvm::real_type> B{ { { plssvm::real_type{ 1.0 }, plssvm::real_type{ 2.0 }, plssvm::real_type{ 3.0 } },
                                                      { plssvm::real_type{ 4.0 }, plssvm::real_type{ 5.0 }, plssvm::real_type{ 6.0 } },
                                                      { plssvm::real_type{ 7.0 }, plssvm::real_type{ 8.0 }, plssvm::real_type{ 9.0 } } },
-                                                   plssvm::PADDING_SIZE,
-                                                   plssvm::PADDING_SIZE };
+                                                   plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE } };
 
     [[maybe_unused]] const plssvm::real_type beta{ 0.0 };
-    plssvm::soa_matrix<plssvm::real_type> C{ 3, 3, plssvm::PADDING_SIZE, plssvm::PADDING_SIZE };
+    plssvm::soa_matrix<plssvm::real_type> C{ plssvm::shape{ 3, 3 }, plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE } };
 
     // automatic solver type not permitted
     EXPECT_DEATH(svm.blas_level_3(solver, alpha, A, B, beta, C), "An explicit solver type must be provided instead of solver_type::automatic!");
@@ -1293,7 +1274,7 @@ TYPED_TEST_P(GenericCSVMSolverDeathTest, conjugate_gradients_empty_B) {
     // create mock_csvm (since plssvm::csvm is pure virtual!)
     const mock_csvm_type csvm{};
 
-    const plssvm::soa_matrix<plssvm::real_type> matr_A{ 4, 4 };
+    const plssvm::soa_matrix<plssvm::real_type> matr_A{ plssvm::shape{ 4, 4 } };
     // parameter necessary for cg_implicit
     const plssvm::parameter params{};
     const std::vector<plssvm::real_type> q_red(matr_A.num_rows() - 1);
@@ -1316,7 +1297,7 @@ TYPED_TEST_P(GenericCSVMSolverDeathTest, conjugate_gradients_invalid_eps) {
     // create mock_csvm
     const mock_csvm_type csvm{};
 
-    const plssvm::soa_matrix<plssvm::real_type> matr_A{ 4, 4 };
+    const plssvm::soa_matrix<plssvm::real_type> matr_A{ plssvm::shape{ 4, 4 } };
     // parameter necessary for cg_implicit
     const plssvm::parameter params{};
     const std::vector<plssvm::real_type> q_red(matr_A.num_rows() - 1);
@@ -1324,7 +1305,7 @@ TYPED_TEST_P(GenericCSVMSolverDeathTest, conjugate_gradients_invalid_eps) {
 
     const plssvm::detail::simple_any A{ util::init_matrix<csvm_type, device_ptr_type>(matr_A, solver, csvm, params, q_red, QA_cost) };
 
-    const plssvm::soa_matrix<plssvm::real_type> B{ 1, 6 };
+    const plssvm::soa_matrix<plssvm::real_type> B{ plssvm::shape{ 1, 6 } };
 
     EXPECT_DEATH(std::ignore = csvm.conjugate_gradients(A, B, 0.0, 6, solver), "The epsilon value must be greater than 0.0!");
     EXPECT_DEATH(std::ignore = csvm.conjugate_gradients(A, B, -0.5, 6, solver), "The epsilon value must be greater than 0.0!");
@@ -1339,7 +1320,7 @@ TYPED_TEST_P(GenericCSVMSolverDeathTest, conjugate_gradients_invalid_max_cg_iter
     // create mock_csvm
     const mock_csvm_type csvm{};
 
-    const plssvm::soa_matrix<plssvm::real_type> matr_A{ 4, 4 };
+    const plssvm::soa_matrix<plssvm::real_type> matr_A{ plssvm::shape{ 4, 4 } };
     // parameter necessary for cg_implicit
     const plssvm::parameter params{};
     const std::vector<plssvm::real_type> q_red(matr_A.num_rows() - 1);
@@ -1347,7 +1328,7 @@ TYPED_TEST_P(GenericCSVMSolverDeathTest, conjugate_gradients_invalid_max_cg_iter
 
     const plssvm::detail::simple_any A{ util::init_matrix<csvm_type, device_ptr_type>(matr_A, solver, csvm, params, q_red, QA_cost) };
 
-    const plssvm::soa_matrix<plssvm::real_type> B{ 1, 6 };
+    const plssvm::soa_matrix<plssvm::real_type> B{ plssvm::shape{ 1, 6 } };
 
     EXPECT_DEATH(std::ignore = csvm.conjugate_gradients(A, B, plssvm::real_type{ 0.001 }, 0, solver), "The maximum number of iterations must be greater than 0!");
 }
@@ -1362,7 +1343,7 @@ TYPED_TEST_P(GenericCSVMSolverDeathTest, run_blas_level_3_empty_B) {
     // create mock_csvm
     const mock_csvm_type csvm{};
 
-    const plssvm::soa_matrix<plssvm::real_type> matr_A{ 4, 4 };
+    const plssvm::soa_matrix<plssvm::real_type> matr_A{ plssvm::shape{ 4, 4 } };
     // parameter necessary for cg_implicit
     const plssvm::parameter params{};
     const std::vector<plssvm::real_type> q_red(matr_A.num_rows() - 1);
@@ -1371,7 +1352,7 @@ TYPED_TEST_P(GenericCSVMSolverDeathTest, run_blas_level_3_empty_B) {
     const plssvm::detail::simple_any A{ util::init_matrix<csvm_type, device_ptr_type>(matr_A, solver, csvm, params, q_red, QA_cost) };
 
     const plssvm::soa_matrix<plssvm::real_type> empty_matr{};
-    plssvm::soa_matrix<plssvm::real_type> C{ 4, 4 };
+    plssvm::soa_matrix<plssvm::real_type> C{ plssvm::shape{ 4, 4 } };
 
     EXPECT_DEATH(std::ignore = csvm.run_blas_level_3(solver, plssvm::real_type{ 1.0 }, A, empty_matr, plssvm::real_type{ 1.0 }, C), "The B matrix must not be empty!");
 }
@@ -1385,7 +1366,7 @@ TYPED_TEST_P(GenericCSVMSolverDeathTest, run_blas_level_3_empty_C) {
     // create mock_csvm
     const mock_csvm_type csvm{};
 
-    const plssvm::soa_matrix<plssvm::real_type> matr_A{ 4, 4 };
+    const plssvm::soa_matrix<plssvm::real_type> matr_A{ plssvm::shape{ 4, 4 } };
     // parameter necessary for cg_implicit
     const plssvm::parameter params{};
     const std::vector<plssvm::real_type> q_red(matr_A.num_rows() - 1);
@@ -1393,7 +1374,7 @@ TYPED_TEST_P(GenericCSVMSolverDeathTest, run_blas_level_3_empty_C) {
 
     const plssvm::detail::simple_any A{ util::init_matrix<csvm_type, device_ptr_type>(matr_A, solver, csvm, params, q_red, QA_cost) };
 
-    const plssvm::soa_matrix<plssvm::real_type> B{ 4, 4 };
+    const plssvm::soa_matrix<plssvm::real_type> B{ plssvm::shape{ 4, 4 } };
     plssvm::soa_matrix<plssvm::real_type> empty_matr{};
 
     EXPECT_DEATH(std::ignore = csvm.run_blas_level_3(solver, plssvm::real_type{ 1.0 }, A, B, plssvm::real_type{ 1.0 }, empty_matr), "The C matrix must not be empty!");
@@ -1422,7 +1403,7 @@ TYPED_TEST_P(GenericCSVMKernelFunctionDeathTest, solve_lssvm_system_of_linear_eq
 
     // create empty matrix
     const plssvm::soa_matrix<plssvm::real_type> empty_matr{};
-    const plssvm::aos_matrix<plssvm::real_type> B{ 1, 4 };
+    const plssvm::aos_matrix<plssvm::real_type> B{ plssvm::shape{ 1, 4 } };
 
     EXPECT_DEATH(std::ignore = csvm.solve_lssvm_system_of_linear_equations(empty_matr, B, params), "The A matrix may not be empty!");
 }
@@ -1438,8 +1419,8 @@ TYPED_TEST_P(GenericCSVMKernelFunctionDeathTest, solve_lssvm_system_of_linear_eq
     const mock_csvm_type csvm{};
 
     // create empty matrix
-    const plssvm::soa_matrix<plssvm::real_type> A{ 6, 4 };
-    const plssvm::aos_matrix<plssvm::real_type> B{ 1, 4 };
+    const plssvm::soa_matrix<plssvm::real_type> A{ plssvm::shape{ 6, 4 } };
+    const plssvm::aos_matrix<plssvm::real_type> B{ plssvm::shape{ 1, 4 } };
 
     EXPECT_DEATH(std::ignore = csvm.solve_lssvm_system_of_linear_equations(A, B, params), "The A matrix must be padded!");
 }
@@ -1455,8 +1436,8 @@ TYPED_TEST_P(GenericCSVMKernelFunctionDeathTest, solve_lssvm_system_of_linear_eq
     const mock_csvm_type csvm{};
 
     // create empty matrix
-    const plssvm::soa_matrix<plssvm::real_type> A{ 6, 4, 0, 1 };
-    const plssvm::aos_matrix<plssvm::real_type> B{ 1, 4 };
+    const plssvm::soa_matrix<plssvm::real_type> A{ plssvm::shape{ 6, 4 }, plssvm::shape{ 0, 1 } };
+    const plssvm::aos_matrix<plssvm::real_type> B{ plssvm::shape{ 1, 4 } };
 
     EXPECT_DEATH(std::ignore = csvm.solve_lssvm_system_of_linear_equations(A, B, params),
                  ::testing::HasSubstr(fmt::format("The provided matrix must be padded with [{}, {}], but is padded with [0, 1]!", plssvm::PADDING_SIZE, plssvm::PADDING_SIZE)));
@@ -1474,7 +1455,7 @@ TYPED_TEST_P(GenericCSVMKernelFunctionDeathTest, solve_lssvm_system_of_linear_eq
 
     // create empty matrix
     const plssvm::aos_matrix<plssvm::real_type> empty_matr{};
-    const plssvm::soa_matrix<plssvm::real_type> A{ 6, 4, plssvm::PADDING_SIZE, plssvm::PADDING_SIZE };
+    const plssvm::soa_matrix<plssvm::real_type> A{ plssvm::shape{ 6, 4 }, plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE } };
 
     EXPECT_DEATH(std::ignore = csvm.solve_lssvm_system_of_linear_equations(A, empty_matr, params), "The B matrix may not be empty!");
 }
@@ -1490,8 +1471,8 @@ TYPED_TEST_P(GenericCSVMKernelFunctionDeathTest, solve_lssvm_system_of_linear_eq
     const mock_csvm_type csvm{};
 
     // create empty matrix
-    const plssvm::soa_matrix<plssvm::real_type> A{ 6, 4, plssvm::PADDING_SIZE, plssvm::PADDING_SIZE };
-    const plssvm::aos_matrix<plssvm::real_type> B{ 1, 3 };
+    const plssvm::soa_matrix<plssvm::real_type> A{ plssvm::shape{ 6, 4 }, plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE } };
+    const plssvm::aos_matrix<plssvm::real_type> B{ plssvm::shape{ 1, 3 } };
 
     EXPECT_DEATH(std::ignore = csvm.solve_lssvm_system_of_linear_equations(A, B, params), ::testing::HasSubstr("The number of data points in A (6) and B (3) must be the same!"));
 }
@@ -1529,11 +1510,11 @@ TYPED_TEST_P(GenericCSVMKernelFunctionDeathTest, predict_values_empty_matrices) 
     const plssvm::soa_matrix<plssvm::real_type> empty_soa_matr{};
 
     // create correct input matrices
-    const auto support_vectors = util::generate_random_matrix<plssvm::soa_matrix<plssvm::real_type>>(4, 4, plssvm::PADDING_SIZE, plssvm::PADDING_SIZE);
-    const auto weights = util::generate_random_matrix<plssvm::aos_matrix<plssvm::real_type>>(2, 4, plssvm::PADDING_SIZE, plssvm::PADDING_SIZE);
+    const auto support_vectors = util::generate_random_matrix<plssvm::soa_matrix<plssvm::real_type>>(plssvm::shape{ 4, 4 }, plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE });
+    const auto weights = util::generate_random_matrix<plssvm::aos_matrix<plssvm::real_type>>(plssvm::shape{ 2, 4 }, plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE });
     const std::vector<plssvm::real_type> rho(2);
     plssvm::soa_matrix<plssvm::real_type> w{};
-    const auto data = util::generate_random_matrix<plssvm::soa_matrix<plssvm::real_type>>(2, 4, plssvm::PADDING_SIZE, plssvm::PADDING_SIZE);
+    const auto data = util::generate_random_matrix<plssvm::soa_matrix<plssvm::real_type>>(plssvm::shape{ 2, 4 }, plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE });
 
     // support vectors shouldn't be empty
     EXPECT_DEATH(std::ignore = csvm.predict_values(params, empty_soa_matr, weights, rho, w, data), "The support vectors must not be empty!");
@@ -1558,15 +1539,15 @@ TYPED_TEST_P(GenericCSVMKernelFunctionDeathTest, predict_values_missing_padding)
     const plssvm::soa_matrix<plssvm::real_type> empty_soa_matr{};
 
     // create correct input matrices
-    const auto support_vectors = util::generate_random_matrix<plssvm::soa_matrix<plssvm::real_type>>(4, 4, plssvm::PADDING_SIZE, plssvm::PADDING_SIZE);
-    const auto support_vectors_without_padding = util::generate_random_matrix<plssvm::soa_matrix<plssvm::real_type>>(4, 4);
-    const auto weights = util::generate_random_matrix<plssvm::aos_matrix<plssvm::real_type>>(2, 4, plssvm::PADDING_SIZE, plssvm::PADDING_SIZE);
-    const auto weights_without_padding = util::generate_random_matrix<plssvm::aos_matrix<plssvm::real_type>>(2, 4);
+    const auto support_vectors = util::generate_random_matrix<plssvm::soa_matrix<plssvm::real_type>>(plssvm::shape{ 4, 4 }, plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE });
+    const auto support_vectors_without_padding = util::generate_random_matrix<plssvm::soa_matrix<plssvm::real_type>>(plssvm::shape{ 4, 4 });
+    const auto weights = util::generate_random_matrix<plssvm::aos_matrix<plssvm::real_type>>(plssvm::shape{ 2, 4 }, plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE });
+    const auto weights_without_padding = util::generate_random_matrix<plssvm::aos_matrix<plssvm::real_type>>(plssvm::shape{ 2, 4 });
     const std::vector<plssvm::real_type> rho(2);
-    auto w = util::generate_random_matrix<plssvm::soa_matrix<plssvm::real_type>>(2, 4, plssvm::PADDING_SIZE, plssvm::PADDING_SIZE);
-    auto w_without_padding = util::generate_random_matrix<plssvm::soa_matrix<plssvm::real_type>>(2, 4);
-    const auto data = util::generate_random_matrix<plssvm::soa_matrix<plssvm::real_type>>(2, 4, plssvm::PADDING_SIZE, plssvm::PADDING_SIZE);
-    const auto data_without_padding = util::generate_random_matrix<plssvm::soa_matrix<plssvm::real_type>>(2, 4);
+    auto w = util::generate_random_matrix<plssvm::soa_matrix<plssvm::real_type>>(plssvm::shape{ 2, 4 }, plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE });
+    auto w_without_padding = util::generate_random_matrix<plssvm::soa_matrix<plssvm::real_type>>(plssvm::shape{ 2, 4 });
+    const auto data = util::generate_random_matrix<plssvm::soa_matrix<plssvm::real_type>>(plssvm::shape{ 2, 4 }, plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE });
+    const auto data_without_padding = util::generate_random_matrix<plssvm::soa_matrix<plssvm::real_type>>(plssvm::shape{ 2, 4 });
 
     // support vectors must be padded
     EXPECT_DEATH(std::ignore = csvm.predict_values(params, support_vectors_without_padding, weights, rho, w, data), "The support vectors must be padded!");
@@ -1589,11 +1570,11 @@ TYPED_TEST_P(GenericCSVMKernelFunctionDeathTest, predict_values_sv_alpha_size_mi
     const mock_csvm_type csvm{};
 
     // create correct input matrices
-    const auto support_vectors = util::generate_random_matrix<plssvm::soa_matrix<plssvm::real_type>>(3, 4, plssvm::PADDING_SIZE, plssvm::PADDING_SIZE);
-    const auto weights = util::generate_random_matrix<plssvm::aos_matrix<plssvm::real_type>>(2, 4, plssvm::PADDING_SIZE, plssvm::PADDING_SIZE);
+    const auto support_vectors = util::generate_random_matrix<plssvm::soa_matrix<plssvm::real_type>>(plssvm::shape{ 3, 4 }, plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE });
+    const auto weights = util::generate_random_matrix<plssvm::aos_matrix<plssvm::real_type>>(plssvm::shape{ 2, 4 }, plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE });
     const std::vector<plssvm::real_type> rho(2);
     plssvm::soa_matrix<plssvm::real_type> w{};
-    const auto data = util::generate_random_matrix<plssvm::soa_matrix<plssvm::real_type>>(2, 4, plssvm::PADDING_SIZE, plssvm::PADDING_SIZE);
+    const auto data = util::generate_random_matrix<plssvm::soa_matrix<plssvm::real_type>>(plssvm::shape{ 2, 4 }, plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE });
 
     // the number of support vectors and weights must be identical
     EXPECT_DEATH(std::ignore = csvm.predict_values(params, support_vectors, weights, rho, w, data), ::testing::HasSubstr("The number of support vectors (3) and number of weights (4) must be the same!"));
@@ -1610,11 +1591,11 @@ TYPED_TEST_P(GenericCSVMKernelFunctionDeathTest, predict_values_rho_alpha_size_m
     const mock_csvm_type csvm{};
 
     // create correct input matrices
-    const auto support_vectors = util::generate_random_matrix<plssvm::soa_matrix<plssvm::real_type>>(4, 4, plssvm::PADDING_SIZE, plssvm::PADDING_SIZE);
-    const auto weights = util::generate_random_matrix<plssvm::aos_matrix<plssvm::real_type>>(2, 4, plssvm::PADDING_SIZE, plssvm::PADDING_SIZE);
+    const auto support_vectors = util::generate_random_matrix<plssvm::soa_matrix<plssvm::real_type>>(plssvm::shape{ 4, 4 }, plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE });
+    const auto weights = util::generate_random_matrix<plssvm::aos_matrix<plssvm::real_type>>(plssvm::shape{ 2, 4 }, plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE });
     const std::vector<plssvm::real_type> rho(1);
     plssvm::soa_matrix<plssvm::real_type> w{};
-    const auto data = util::generate_random_matrix<plssvm::soa_matrix<plssvm::real_type>>(2, 4, plssvm::PADDING_SIZE, plssvm::PADDING_SIZE);
+    const auto data = util::generate_random_matrix<plssvm::soa_matrix<plssvm::real_type>>(plssvm::shape{ 2, 4 }, plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE });
 
     // the number of rho values and weight vectors must be identical
     EXPECT_DEATH(std::ignore = csvm.predict_values(params, support_vectors, weights, rho, w, data), ::testing::HasSubstr("The number of rho values (1) and the number of weight vectors (2) must be the same!"));
@@ -1631,16 +1612,16 @@ TYPED_TEST_P(GenericCSVMKernelFunctionDeathTest, predict_values_w_size_mismatch)
     const mock_csvm_type csvm{};
 
     // create correct input matrices
-    const auto support_vectors = util::generate_random_matrix<plssvm::soa_matrix<plssvm::real_type>>(4, 4, plssvm::PADDING_SIZE, plssvm::PADDING_SIZE);
-    const auto weights = util::generate_random_matrix<plssvm::aos_matrix<plssvm::real_type>>(2, 4, plssvm::PADDING_SIZE, plssvm::PADDING_SIZE);
+    const auto support_vectors = util::generate_random_matrix<plssvm::soa_matrix<plssvm::real_type>>(plssvm::shape{ 4, 4 }, plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE });
+    const auto weights = util::generate_random_matrix<plssvm::aos_matrix<plssvm::real_type>>(plssvm::shape{ 2, 4 }, plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE });
     const std::vector<plssvm::real_type> rho(2);
-    const auto data = util::generate_random_matrix<plssvm::soa_matrix<plssvm::real_type>>(2, 4, plssvm::PADDING_SIZE, plssvm::PADDING_SIZE);
+    const auto data = util::generate_random_matrix<plssvm::soa_matrix<plssvm::real_type>>(plssvm::shape{ 2, 4 }, plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE });
 
     // the number of features and w values must be identical
-    auto w = util::generate_random_matrix<plssvm::soa_matrix<plssvm::real_type>>(2, 3, plssvm::PADDING_SIZE, plssvm::PADDING_SIZE);
+    auto w = util::generate_random_matrix<plssvm::soa_matrix<plssvm::real_type>>(plssvm::shape{ 2, 3 }, plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE });
     EXPECT_DEATH(std::ignore = csvm.predict_values(params, support_vectors, weights, rho, w, data), ::testing::HasSubstr("Either w must be empty or contain exactly the same number of values (3) as features are present (4)!"));
     // the number of weight and w vectors must be identical
-    w = util::generate_random_matrix<plssvm::soa_matrix<plssvm::real_type>>(3, 4, plssvm::PADDING_SIZE, plssvm::PADDING_SIZE);
+    w = util::generate_random_matrix<plssvm::soa_matrix<plssvm::real_type>>(plssvm::shape{ 3, 4 }, plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE });
     EXPECT_DEATH(std::ignore = csvm.predict_values(params, support_vectors, weights, rho, w, data), ::testing::HasSubstr("Either w must be empty or contain exactly the same number of vectors (3) as the alpha vector (2)!"));
 }
 TYPED_TEST_P(GenericCSVMKernelFunctionDeathTest, predict_values_num_features_mismatch) {
@@ -1655,11 +1636,11 @@ TYPED_TEST_P(GenericCSVMKernelFunctionDeathTest, predict_values_num_features_mis
     const mock_csvm_type csvm{};
 
     // create correct input matrices
-    const auto support_vectors = util::generate_random_matrix<plssvm::soa_matrix<plssvm::real_type>>(4, 5, plssvm::PADDING_SIZE, plssvm::PADDING_SIZE);
-    const auto weights = util::generate_random_matrix<plssvm::aos_matrix<plssvm::real_type>>(2, 4, plssvm::PADDING_SIZE, plssvm::PADDING_SIZE);
+    const auto support_vectors = util::generate_random_matrix<plssvm::soa_matrix<plssvm::real_type>>(plssvm::shape{ 4, 5 }, plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE });
+    const auto weights = util::generate_random_matrix<plssvm::aos_matrix<plssvm::real_type>>(plssvm::shape{ 2, 4 }, plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE });
     const std::vector<plssvm::real_type> rho(2);
     plssvm::soa_matrix<plssvm::real_type> w{};
-    const auto data = util::generate_random_matrix<plssvm::soa_matrix<plssvm::real_type>>(2, 4, plssvm::PADDING_SIZE, plssvm::PADDING_SIZE);
+    const auto data = util::generate_random_matrix<plssvm::soa_matrix<plssvm::real_type>>(plssvm::shape{ 2, 4 }, plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE });
 
     // the number of features for the support vectors and predict points must be identical
     EXPECT_DEATH(std::ignore = csvm.predict_values(params, support_vectors, weights, rho, w, data), ::testing::HasSubstr("The number of features in the support vectors (5) must be the same as in the data points to predict (4)!"));

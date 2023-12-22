@@ -23,6 +23,7 @@
 #include "plssvm/kernel_function_types.hpp"                                    // plssvm::kernel_function_type
 #include "plssvm/matrix.hpp"                                                   // plssvm::aos_matrix, plssvm::soa_matrix
 #include "plssvm/parameter.hpp"                                                // plssvm::parameter
+#include "plssvm/shape.hpp"                                                    // plssvm::shape
 #include "plssvm/target_platforms.hpp"                                         // plssvm::target_platform
 #include "plssvm/verbosity_levels.hpp"                                         // plssvm::verbosity_level
 
@@ -232,13 +233,13 @@ aos_matrix<real_type> csvm::predict_values(const parameter &params, const soa_ma
     const aos_matrix<real_type> aos_predict_points{ predict_points };
 
     // num_predict_points x num_classes
-    aos_matrix<real_type> out{ num_predict_points, num_classes, PADDING_SIZE, PADDING_SIZE };
+    aos_matrix<real_type> out{ plssvm::shape{ num_predict_points, num_classes }, plssvm::shape{ PADDING_SIZE, PADDING_SIZE } };
 
     if (params.kernel_type == kernel_function_type::linear) {
         // special optimization for the linear kernel function
         if (w.empty()) {
             // fill w vector
-            w = soa_matrix<real_type>{ num_classes, num_features, PADDING_SIZE, PADDING_SIZE };
+            w = soa_matrix<real_type>{ plssvm::shape{ num_classes, num_features }, plssvm::shape{ PADDING_SIZE, PADDING_SIZE } };
 
             #pragma omp parallel for collapse(2) default(none) shared(w, aos_support_vectors, alpha) firstprivate(num_classes, num_features, num_support_vectors)
             for (std::size_t a = 0; a < num_classes; ++a) {

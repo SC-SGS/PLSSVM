@@ -14,6 +14,7 @@
 #include "plssvm/constants.hpp"              // plssvm::real_type, plssvm::PADDING_SIZE, plssvm::PADDING_SIZE
 #include "plssvm/detail/io/file_reader.hpp"  // plssvm::detail::io::file_reader
 #include "plssvm/matrix.hpp"                 // plssvm::aos_matrix
+#include "plssvm/shape.hpp"                  // plssvm::shape
 
 #include "custom_test_macros.hpp"  // EXPECT_FLOATING_POINT_MATRIX_NEAR
 #include "naming.hpp"              // naming::parameter_definition_to_name
@@ -68,8 +69,7 @@ class LIBSVMModelDataParseValid : public ::testing::Test, protected util::tempor
                                                            { plssvm::real_type{ 1.8849404372 }, plssvm::real_type{ 1.0051856432 }, plssvm::real_type{ 0.29849993305 }, plssvm::real_type{ 1.6464627049 } },
                                                            { plssvm::real_type{ -0.20981208921 }, plssvm::real_type{ 0.60276937379 }, plssvm::real_type{ -0.13086851759 }, plssvm::real_type{ 0.10805254527 } },
                                                            { plssvm::real_type{ -1.1256816276 }, plssvm::real_type{ 2.1254153434 }, plssvm::real_type{ -0.16512657655 }, plssvm::real_type{ 2.5164553141 } } },
-                                                         plssvm::PADDING_SIZE,
-                                                         plssvm::PADDING_SIZE };
+                                                         plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE  }};
     /// The correct weights. Might be more than are actually used in a specific test case.
     std::vector<std::vector<plssvm::real_type>> correct_weights_{
         { plssvm::real_type{ -1.8568721894e-01 }, plssvm::real_type{ 9.0116552290e-01 }, plssvm::real_type{ -2.2483112395e-01 }, plssvm::real_type{ 1.4909749921e-02 }, plssvm::real_type{ -4.5666857706e-01 }, plssvm::real_type{ -4.8888352876e-02 } },
@@ -104,8 +104,8 @@ TYPED_TEST(LIBSVMModelDataParseValid, read) {
     if constexpr (expected_classification == plssvm::classification_type::oaa) {
         // OAA
         ASSERT_EQ(alpha.size(), 1);
-        ASSERT_EQ(alpha.front().shape(), (std::array<std::size_t, 2>{ num_classes_for_label_type, 6 }));
-        ASSERT_EQ(alpha.front().padding(), (std::array<std::size_t, 2>{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE }));
+        ASSERT_EQ(alpha.front().shape(), (plssvm::shape{ num_classes_for_label_type, 6 }));
+        ASSERT_EQ(alpha.front().padding(), (plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE }));
 
         switch (num_classes_for_label_type) {
             case 2:
@@ -125,7 +125,7 @@ TYPED_TEST(LIBSVMModelDataParseValid, read) {
                 break;
         }
 
-        EXPECT_EQ(alpha.front(), (plssvm::aos_matrix<plssvm::real_type>{ this->get_correct_weights(), plssvm::PADDING_SIZE, plssvm::PADDING_SIZE }));
+        EXPECT_EQ(alpha.front(), (plssvm::aos_matrix<plssvm::real_type>{ this->get_correct_weights(), plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE } }));
     } else if constexpr (expected_classification == plssvm::classification_type::oao) {
         // OAO
         ASSERT_EQ(alpha.size(), num_classes_for_label_type * (num_classes_for_label_type - 1) / 2);
@@ -164,7 +164,7 @@ TYPED_TEST(LIBSVMModelDataParseValid, read) {
         }
         // add padding to each matrix (theoretically expensive, but matrices are tiny)
         for (plssvm::aos_matrix<plssvm::real_type> &matr : weights) {
-            matr = plssvm::aos_matrix<plssvm::real_type>{ matr, plssvm::PADDING_SIZE, plssvm::PADDING_SIZE, };
+            matr = plssvm::aos_matrix<plssvm::real_type>{ matr, plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE } };
         }
 
         EXPECT_EQ(alpha, weights);

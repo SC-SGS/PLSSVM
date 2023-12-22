@@ -30,6 +30,7 @@
 #include "plssvm/matrix.hpp"                      // plssvm::aos_matrix
 #include "plssvm/model.hpp"                       // plssvm::model
 #include "plssvm/parameter.hpp"                   // plssvm::parameter
+#include "plssvm/shape.hpp"                       // plssvm::shape
 #include "plssvm/solver_types.hpp"                // plssvm::solver_type
 #include "plssvm/target_platforms.hpp"            // plssvm::target_platform
 #include "plssvm/verbosity_levels.hpp"            // plssvm::verbosity_level
@@ -344,12 +345,10 @@ void csvm::set_params(Args &&...named_args) {
 template <typename label_type, typename... Args>
 model<label_type> csvm::fit(const data_set<label_type> &data, Args &&...named_args) const {
     PLSSVM_ASSERT(data.data().is_padded(), "The data points must be padded!");
-    PLSSVM_ASSERT(data.data().padding()[0] == PADDING_SIZE && data.data().padding()[1] == PADDING_SIZE,
-                  "The provided matrix must be padded with [{}, {}], but is padded with [{}, {}]!",
-                  PADDING_SIZE,
-                  PADDING_SIZE,
-                  data.data().padding()[0],
-                  data.data().padding()[1]);
+    PLSSVM_ASSERT((data.data().padding() == shape{ PADDING_SIZE, PADDING_SIZE }),
+                  "The provided matrix must be padded with {}, but is padded with {}!",
+                  shape{ PADDING_SIZE, PADDING_SIZE },
+                  data.data().padding());
 
     if (!data.has_labels()) {
         throw invalid_parameter_exception{ "No labels given for training! Maybe the data is only usable for prediction?" };
@@ -396,7 +395,7 @@ model<label_type> csvm::fit(const data_set<label_type> &data, Args &&...named_ar
     if (used_classification == plssvm::classification_type::oaa) {
         // use the one vs. all multi-class classification strategy
         // solve the minimization problem
-        aos_matrix<real_type> alpha;
+        aos_matrix<real_type> alpha{};
         unsigned long long num_iter{};
         std::tie(alpha, *csvm_model.rho_ptr_, num_iter) = solve_lssvm_system_of_linear_equations(*data.data_ptr_, *data.y_ptr_, params, std::forward<Args>(named_args)...);
         csvm_model.alpha_ptr_->push_back(std::move(alpha));
@@ -428,7 +427,7 @@ model<label_type> csvm::fit(const data_set<label_type> &data, Args &&...named_ar
 
             // reduce the size of the rhs (y_ptr)
             // -> consistent with the multi-class case as well as when reading the model from file in the model class constructor
-            aos_matrix<real_type> reduced_y{ 1, data.y_ptr_->num_cols() };
+            aos_matrix<real_type> reduced_y{ shape{ 1, data.y_ptr_->num_cols() } };
             #pragma omp parallel for default(none) shared(data, reduced_y)
             for (std::size_t col = 0; col < data.y_ptr_->num_cols(); ++col) {
                 reduced_y(0, col) = (*data.y_ptr_)(0, col);
@@ -446,8 +445,8 @@ model<label_type> csvm::fit(const data_set<label_type> &data, Args &&...named_ar
                     // TODO: reduce amount of copies!?
                     // assemble one vs. one classification matrix and rhs
                     const std::size_t num_data_points_in_sub_matrix{ index_sets[i].size() + index_sets[j].size() };
-                    soa_matrix<real_type> binary_data{ num_data_points_in_sub_matrix, num_features, PADDING_SIZE, PADDING_SIZE };
-                    aos_matrix<real_type> binary_y{ 1, num_data_points_in_sub_matrix };  // note: the first dimension will always be one, since only one rhs is needed
+                    soa_matrix<real_type> binary_data{ shape{ num_data_points_in_sub_matrix, num_features }, shape{ PADDING_SIZE, PADDING_SIZE } };
+                    aos_matrix<real_type> binary_y{ shape{ 1, num_data_points_in_sub_matrix } };  // note: the first dimension will always be one, since only one rhs is needed
 
                     // note: if this is changed, it must also be changed in the libsvm_model_parsing.hpp in the calculate_alpha_idx function!!!
                     // order the indices in increasing order
@@ -501,19 +500,15 @@ model<label_type> csvm::fit(const data_set<label_type> &data, Args &&...named_ar
 template <typename label_type>
 std::vector<label_type> csvm::predict(const model<label_type> &model, const data_set<label_type> &data) const {
     PLSSVM_ASSERT(model.support_vectors().is_padded(), "The support vectors must be padded!");
-    PLSSVM_ASSERT(model.support_vectors().padding()[0] == PADDING_SIZE && model.support_vectors().padding()[1] == PADDING_SIZE,
-                  "The support vectors must be padded with [{}, {}], but is padded with [{}, {}]!",
-                  PADDING_SIZE,
-                  PADDING_SIZE,
-                  model.support_vectors().padding()[0],
-                  model.support_vectors().padding()[1]);
+    PLSSVM_ASSERT((model.support_vectors().padding() == shape{ PADDING_SIZE, PADDING_SIZE }),
+                  "The support vectors must be padded with {}, but is padded with {}!",
+                  shape{ PADDING_SIZE, PADDING_SIZE },
+                  model.support_vectors().padding());
     PLSSVM_ASSERT(data.data().is_padded(), "The data points must be padded!");
-    PLSSVM_ASSERT(data.data().padding()[0] == PADDING_SIZE && data.data().padding()[1] == PADDING_SIZE,
-                  "The provided predict points must be padded with [{}, {}], but is padded with [{}, {}]!",
-                  PADDING_SIZE,
-                  PADDING_SIZE,
-                  data.data().padding()[0],
-                  data.data().padding()[1]);
+    PLSSVM_ASSERT((data.data().padding() == shape{ PADDING_SIZE, PADDING_SIZE }),
+                  "The provided predict points must be padded with {}, but is padded with {}!",
+                  shape{ PADDING_SIZE, PADDING_SIZE },
+                  data.data().padding());
 
 
     if (model.num_features() != data.num_features()) {
@@ -568,14 +563,14 @@ std::vector<label_type> csvm::predict(const model<label_type> &model, const data
         const std::size_t num_classes = model.num_classes();
         const std::vector<std::vector<std::size_t>> &index_sets = *model.index_sets_ptr_;
 
-        aos_matrix<std::size_t> class_votes{ data.num_data_points(), num_classes };
+        aos_matrix<std::size_t> class_votes{ shape{ data.num_data_points(), num_classes } };
 
         bool calculate_w{ false };
         if (model.w_ptr_->empty()) {
             // w is currently empty
             // initialize the w matrix and calculate it later!
             calculate_w = true;
-            (*model.w_ptr_) = soa_matrix<real_type>{ calculate_number_of_classifiers(classification_type::oao, num_classes), num_features };
+            (*model.w_ptr_) = soa_matrix<real_type>{ shape{ calculate_number_of_classifiers(classification_type::oao, num_classes), num_features } };
         }
 
         // perform one vs. one prediction
@@ -596,7 +591,7 @@ std::vector<label_type> csvm::predict(const model<label_type> &model, const data
                     } else {
                         // note: if this is changed, it must also be changed in the libsvm_model_parsing.hpp in the calculate_alpha_idx function!!!
                         // order the indices in increasing order
-                        soa_matrix<real_type> temp{ num_data_points_in_sub_matrix, num_features, PADDING_SIZE, PADDING_SIZE };
+                        soa_matrix<real_type> temp{ shape{ num_data_points_in_sub_matrix, num_features }, shape{ PADDING_SIZE, PADDING_SIZE } };
                         std::vector<std::size_t> sorted_indices(num_data_points_in_sub_matrix);
                         std::merge(index_sets[i].cbegin(), index_sets[i].cend(), index_sets[j].cbegin(), index_sets[j].cend(), sorted_indices.begin());
                         // copy the support vectors to the binary support vectors
@@ -627,7 +622,7 @@ std::vector<label_type> csvm::predict(const model<label_type> &model, const data
                     }
                 } else {
                     // use previously calculated w vector
-                    soa_matrix<real_type> binary_w{ 1, num_features };
+                    soa_matrix<real_type> binary_w{ shape{ 1, num_features } };
                     #pragma omp parallel for default(none) shared(model, binary_w) firstprivate(num_features, pos)
                     for (std::size_t dim = 0; dim < num_features; ++dim) {
                         binary_w(0, dim) = (*model.w_ptr_)(pos, dim);
@@ -711,12 +706,10 @@ template <typename... Args>
 std::tuple<aos_matrix<real_type>, std::vector<real_type>, unsigned long long> csvm::solve_lssvm_system_of_linear_equations(const soa_matrix<real_type> &A, const aos_matrix<real_type> &B, const parameter &params, Args &&...named_args) const {
     PLSSVM_ASSERT(!A.empty(), "The A matrix may not be empty!");
     PLSSVM_ASSERT(A.is_padded(), "The A matrix must be padded!");
-    PLSSVM_ASSERT(A.padding()[0] == PADDING_SIZE && A.padding()[1] == PADDING_SIZE,
-                  "The provided matrix must be padded with [{}, {}], but is padded with [{}, {}]!",
-                  PADDING_SIZE,
-                  PADDING_SIZE,
-                  A.padding()[0],
-                  A.padding()[1]);
+    PLSSVM_ASSERT((A.padding() == shape{ PADDING_SIZE, PADDING_SIZE }),
+                  "The provided matrix must be padded with {}, but is padded with {}!",
+                  shape{ PADDING_SIZE, PADDING_SIZE },
+                  A.padding());
     PLSSVM_ASSERT(!B.empty(), "The B matrix may not be empty!");
     PLSSVM_ASSERT(A.num_rows() == B.num_cols(), "The number of data points in A ({}) and B ({}) must be the same!", A.num_rows(), B.num_cols());
 
@@ -844,7 +837,7 @@ std::tuple<aos_matrix<real_type>, std::vector<real_type>, unsigned long long> cs
 
     // update right-hand sides (B)
     std::vector<real_type> b_back_value(num_rhs);
-    soa_matrix<real_type> B_red{ num_rhs, num_rows_reduced };
+    soa_matrix<real_type> B_red{ shape{ num_rhs, num_rows_reduced } };
     #pragma omp parallel for default(none) shared(B, B_red, b_back_value) firstprivate(num_rhs, num_rows_reduced)
     for (std::size_t row = 0; row < num_rhs; ++row) {
         b_back_value[row] = B(row, num_rows_reduced);
@@ -870,12 +863,12 @@ std::tuple<aos_matrix<real_type>, std::vector<real_type>, unsigned long long> cs
     PLSSVM_DETAIL_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((detail::tracking_entry{ "kernel_matrix", "kernel_matrix_assembly", assembly_duration }));
 
     // choose the correct algorithm based on the (provided) solver type -> currently only CG available
-    soa_matrix<real_type> X;
+    soa_matrix<real_type> X{};
     unsigned long long num_iter{};
     std::tie(X, num_iter) = conjugate_gradients(kernel_matrix, B_red, used_epsilon, used_max_iter, used_solver);
 
     // calculate bias and undo dimensional reduction
-    aos_matrix<real_type> X_ret{ num_rhs, A.num_rows(), PADDING_SIZE, PADDING_SIZE };
+    aos_matrix<real_type> X_ret{ shape{ num_rhs, A.num_rows() }, shape{ PADDING_SIZE, PADDING_SIZE } };
     std::vector<real_type> bias(num_rhs);
     #pragma omp parallel for default(none) shared(X, q_red, X_ret, bias, b_back_value) firstprivate(num_rhs, num_rows_reduced, QA_cost)
     for (std::size_t i = 0; i < num_rhs; ++i) {

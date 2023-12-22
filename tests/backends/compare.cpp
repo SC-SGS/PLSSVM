@@ -14,6 +14,7 @@
 #include "plssvm/kernel_function_types.hpp"  // plssvm::kernel_function_type
 #include "plssvm/matrix.hpp"                 // plssvm::matrix, plssvm::layout_type
 #include "plssvm/parameter.hpp"              // plssvm::parameter
+#include "plssvm/shape.hpp"                  // plssvm::shape
 
 #include <algorithm>  // std::min
 #include <cmath>      // std::pow, std::exp, std::fma
@@ -243,7 +244,7 @@ template std::vector<double> assemble_kernel_matrix_gemm(const plssvm::parameter
 template <typename real_type>
 void gemm(const real_type alpha, const std::vector<real_type> &A, const plssvm::soa_matrix<real_type> &B, const real_type beta, plssvm::soa_matrix<real_type> &C) {
     PLSSVM_ASSERT(A.size() == (B.num_cols() + plssvm::PADDING_SIZE) * (B.num_cols() + plssvm::PADDING_SIZE), "Sizes mismatch!: {} != {}", A.size(), (B.num_cols() + plssvm::PADDING_SIZE) * (B.num_cols() + plssvm::PADDING_SIZE));
-    PLSSVM_ASSERT(B.shape() == C.shape(), "Shapes mismatch!: [{}] != [{}]", fmt::join(B.shape(), ", "), fmt::join(C.shape(), ", "));
+    PLSSVM_ASSERT(B.shape() == C.shape(), "Shapes mismatch!: {} != {}", B.shape(), C.shape());
     // A: #data_points - 1 x #data_points - 1
     // B: #classes x #data_points - 1
     // C: #classes x #data_points - 1
@@ -265,7 +266,7 @@ template <typename real_type>
 plssvm::soa_matrix<real_type> calculate_w(const plssvm::aos_matrix<real_type> &weights, const plssvm::soa_matrix<real_type> &support_vectors) {
     PLSSVM_ASSERT(support_vectors.num_rows() == weights.num_cols(), "Sizes mismatch!: {} != {}", support_vectors.num_rows(), weights.num_cols());
 
-    plssvm::soa_matrix<real_type> result{ weights.num_rows(), support_vectors.num_cols(), plssvm::PADDING_SIZE, plssvm::PADDING_SIZE };
+    plssvm::soa_matrix<real_type> result{ plssvm::shape{ weights.num_rows(), support_vectors.num_cols() }, plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE } };
     for (std::size_t c = 0; c < weights.num_rows(); ++c) {
         for (std::size_t i = 0; i < support_vectors.num_cols(); ++i) {
             for (std::size_t j = 0; j < weights.num_cols(); ++j) {
@@ -291,7 +292,7 @@ template <typename real_type>
     const std::size_t num_sv = support_vectors.num_rows();
     const std::size_t num_features = predict_points.num_cols();
 
-    plssvm::aos_matrix<real_type> result{ num_predict_points, num_classes, plssvm::PADDING_SIZE, plssvm::PADDING_SIZE };
+    plssvm::aos_matrix<real_type> result{ plssvm::shape{ num_predict_points, num_classes }, plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE } };
 
     switch (params.kernel_type) {
         case plssvm::kernel_function_type::linear: {

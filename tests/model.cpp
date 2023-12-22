@@ -16,6 +16,7 @@
 #include "plssvm/kernel_function_types.hpp"  // plssvm::kernel_function_type
 #include "plssvm/matrix.hpp"                 // plssvm::aos_matrix
 #include "plssvm/parameter.hpp"              // plssvm::parameter
+#include "plssvm/shape.hpp"                  // plssvm::shape
 
 #include "custom_test_macros.hpp"  // EXPECT_FLOATING_POINT_MATRIX_EQ, EXPECT_FLOATING_POINT_VECTOR_EQ
 #include "naming.hpp"              // naming::test_parameter_to_name
@@ -26,7 +27,6 @@
 #include "gtest/gtest.h"           // TYPED_TEST, TYPED_TEST_SUITE, EXPECT_EQ, EXPECT_TRUE, EXPECT_DEATH, ASSERT_EQ, ASSERT_GT, FAIL,
                                    // ::testing::{Test, StaticAssertTypeEq}
 
-#include <array>        // std::array
 #include <cstddef>      // std::size_t
 #include <regex>        // std::regex, std::regex_match, std::regex::extended
 #include <string>       // std::string
@@ -70,14 +70,14 @@ TYPED_TEST(Model, construct) {
     EXPECT_EQ(model.num_support_vectors(), 6);
     EXPECT_EQ(model.num_features(), 4);
     EXPECT_EQ(model.get_params(), plssvm::parameter{ plssvm::kernel_type = plssvm::kernel_function_type::linear });
-    EXPECT_EQ(model.support_vectors().shape(), (std::array<std::size_t, 2>{ 6, 4 }));
+    EXPECT_EQ(model.support_vectors().shape(), (plssvm::shape{ 6, 4 }));
     EXPECT_EQ(model.labels().size(), 6);
     EXPECT_EQ(model.num_classes(), num_classes_for_label_type);
     EXPECT_EQ(model.classes(), util::get_distinct_label<label_type>());
     if constexpr (classification == plssvm::classification_type::oaa) {
         // OAA
         EXPECT_EQ(model.weights().size(), 1);
-        EXPECT_EQ(model.weights().front().shape(), (std::array<std::size_t, 2>{ num_classes_for_label_type, 6 }));
+        EXPECT_EQ(model.weights().front().shape(), (plssvm::shape{ num_classes_for_label_type, 6 }));
     } else if constexpr (classification == plssvm::classification_type::oao) {
         // OAO
         EXPECT_EQ(model.weights().size(), num_classes_for_label_type * (num_classes_for_label_type - 1) / 2);
@@ -129,8 +129,7 @@ TYPED_TEST(Model, support_vectors) {
                                                                    { plssvm::real_type{ 1.8849404372 }, plssvm::real_type{ 1.0051856432 }, plssvm::real_type{ 0.29849993305 }, plssvm::real_type{ 1.6464627049 } },
                                                                    { plssvm::real_type{ -0.20981208921 }, plssvm::real_type{ 0.60276937379 }, plssvm::real_type{ -0.13086851759 }, plssvm::real_type{ 0.10805254527 } },
                                                                    { plssvm::real_type{ -1.1256816276 }, plssvm::real_type{ 2.1254153434 }, plssvm::real_type{ -0.16512657655 }, plssvm::real_type{ 2.5164553141 } } },
-                                                                 plssvm::PADDING_SIZE,
-                                                                 plssvm::PADDING_SIZE };
+                                                                 plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE } };
     EXPECT_FLOATING_POINT_MATRIX_EQ(model.support_vectors(), support_vectors);
 }
 TYPED_TEST(Model, labels) {
@@ -180,7 +179,7 @@ TYPED_TEST(Model, weights) {
     if constexpr (classification == plssvm::classification_type::oaa) {
         // OAA
         ASSERT_EQ(model.weights().size(), 1);
-        ASSERT_EQ(model.weights().front().shape(), (std::array<std::size_t, 2>{ num_classes_for_label_type, 6 }));
+        ASSERT_EQ(model.weights().front().shape(), (plssvm::shape{ num_classes_for_label_type, 6 }));
 
         switch (num_classes_for_label_type) {
             case 2:
@@ -199,7 +198,7 @@ TYPED_TEST(Model, weights) {
                 FAIL() << "Unreachable!";
                 break;
         }
-        EXPECT_FLOATING_POINT_MATRIX_EQ(model.weights().front(), (plssvm::aos_matrix<plssvm::real_type>{ correct_weights, plssvm::PADDING_SIZE, plssvm::PADDING_SIZE }));
+        EXPECT_FLOATING_POINT_MATRIX_EQ(model.weights().front(), (plssvm::aos_matrix<plssvm::real_type>{ correct_weights, plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE } }));
     } else if constexpr (classification == plssvm::classification_type::oao) {
         // OAO
         ASSERT_EQ(model.weights().size(), num_classes_for_label_type * (num_classes_for_label_type - 1) / 2);
@@ -238,7 +237,7 @@ TYPED_TEST(Model, weights) {
         }
         ASSERT_EQ(model.weights().size(), weights.size());
         for (std::size_t i = 0; i < weights.size(); ++i) {
-            EXPECT_FLOATING_POINT_MATRIX_EQ(model.weights()[i], (plssvm::aos_matrix<plssvm::real_type>{ weights[i], plssvm::PADDING_SIZE, plssvm::PADDING_SIZE }));
+            EXPECT_FLOATING_POINT_MATRIX_EQ(model.weights()[i], (plssvm::aos_matrix<plssvm::real_type>{ weights[i], plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE } }));
         }
     } else {
         FAIL() << "unknown classification type";

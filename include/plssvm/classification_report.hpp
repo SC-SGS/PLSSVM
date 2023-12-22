@@ -17,6 +17,7 @@
 #include "plssvm/detail/igor_utility.hpp"    // plssvm::detail::{has_only_named_args_v, get_value_from_named_parameter}
 #include "plssvm/exceptions/exceptions.hpp"  // plssvm::exception
 #include "plssvm/matrix.hpp"                 // plssvm::aos_matrix
+#include "plssvm/shape.hpp"                  // plssvm::shape
 
 #include "fmt/core.h"     // fmt::format
 #include "fmt/ostream.h"  // fmt::formatter, fmt::ostream_formatter
@@ -228,7 +229,7 @@ classification_report::classification_report(const std::vector<label_type> &corr
     }
 
     // allocate confusion matrx
-    confusion_matrix_ = aos_matrix<unsigned long long>{ distinct_label_vec.size(), distinct_label_vec.size() };
+    confusion_matrix_ = aos_matrix<unsigned long long>{ shape{ distinct_label_vec.size(), distinct_label_vec.size() } };
 
     // function to map a label to its confusion matrix index
     const auto label_to_idx = [&](const label_type &label) -> std::size_t {

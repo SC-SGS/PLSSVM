@@ -17,6 +17,7 @@
 #include "plssvm/kernel_function_types.hpp"  // plssvm::kernel_function_type
 #include "plssvm/matrix.hpp"                 // plssvm::aos_matrix
 #include "plssvm/parameter.hpp"              // plssvm::parameter
+#include "plssvm/shape.hpp"                  // plssvm::shape
 
 #include "naming.hpp"         // naming::parameter_definition_to_name
 #include "types_to_test.hpp"  // util::label_type_classification_type_gtest
@@ -46,7 +47,7 @@ TYPED_TEST(LIBSVMModelDataWrite, write) {
     const std::size_t num_classifiers = plssvm::calculate_number_of_classifiers(classification, classes.size());
     const std::vector<label_type> label = util::get_correct_model_file_labels<label_type>();
     const std::vector<std::size_t> num_sv_per_class = util::get_correct_model_file_num_sv_per_class<label_type>(label.size());
-    const auto data = util::generate_random_matrix<plssvm::aos_matrix<plssvm::real_type>>(label.size(), 3);
+    const auto data = util::generate_random_matrix<plssvm::aos_matrix<plssvm::real_type>>(plssvm::shape{ label.size(), 3 });
 
     // create necessary parameter
     const plssvm::parameter params{ plssvm::kernel_type = plssvm::kernel_function_type::linear };
@@ -78,11 +79,11 @@ TYPED_TEST(LIBSVMModelDataWrite, write) {
     }
     std::vector<plssvm::aos_matrix<plssvm::real_type>> alpha{};
     if constexpr (classification == plssvm::classification_type::oaa) {
-        alpha.emplace_back(util::generate_random_matrix<plssvm::aos_matrix<plssvm::real_type>>(num_classifiers, data.num_rows()));
+        alpha.emplace_back(util::generate_random_matrix<plssvm::aos_matrix<plssvm::real_type>>(plssvm::shape{ num_classifiers, data.num_rows() }));
     } else if constexpr (classification == plssvm::classification_type::oao) {
         for (std::size_t i = 0; i < num_classes; ++i) {
             for (std::size_t j = i + 1; j < num_classes; ++j) {
-                alpha.emplace_back(util::generate_random_matrix<plssvm::aos_matrix<plssvm::real_type>>(1, index_sets[i].size() + index_sets[j].size()));
+                alpha.emplace_back(util::generate_random_matrix<plssvm::aos_matrix<plssvm::real_type>>(plssvm::shape{ 1, index_sets[i].size() + index_sets[j].size() }));
             }
         }
     } else {
@@ -209,25 +210,25 @@ class LIBSVMModelDataWriteDeathTest : public LIBSVMModelDataWrite<T> {
         // create the weight vector based on the classification type and number of classes
         switch (fixture_classification) {
             case plssvm::classification_type::oaa:
-                alpha_.emplace_back(num_classes, 6);
+                alpha_.emplace_back(plssvm::shape{ num_classes, 6 });
                 break;
             case plssvm::classification_type::oao:
                 switch (num_classes) {
                     case 2:
-                        alpha_.emplace_back(1, 6);
+                        alpha_.emplace_back(plssvm::shape{ 1, 6 });
                         break;
                     case 3:
-                        alpha_.emplace_back(1, 4);
-                        alpha_.emplace_back(1, 4);
-                        alpha_.emplace_back(1, 4);
+                        alpha_.emplace_back(plssvm::shape{ 1, 4 });
+                        alpha_.emplace_back(plssvm::shape{ 1, 4 });
+                        alpha_.emplace_back(plssvm::shape{ 1, 4 });
                         break;
                     case 4:
-                        alpha_.emplace_back(1, 4);
-                        alpha_.emplace_back(1, 3);
-                        alpha_.emplace_back(1, 3);
-                        alpha_.emplace_back(1, 3);
-                        alpha_.emplace_back(1, 3);
-                        alpha_.emplace_back(1, 2);
+                        alpha_.emplace_back(plssvm::shape{ 1, 4 });
+                        alpha_.emplace_back(plssvm::shape{ 1, 3 });
+                        alpha_.emplace_back(plssvm::shape{ 1, 3 });
+                        alpha_.emplace_back(plssvm::shape{ 1, 3 });
+                        alpha_.emplace_back(plssvm::shape{ 1, 3 });
+                        alpha_.emplace_back(plssvm::shape{ 1, 2 });
                         break;
                     default:
                         FAIL();
@@ -294,7 +295,7 @@ class LIBSVMModelDataWriteDeathTest : public LIBSVMModelDataWrite<T> {
     /// The index sets indicating which data point is a support vector for which class.
     std::vector<std::vector<std::size_t>> index_sets_{};
     /// The support vectors.
-    plssvm::data_set<fixture_label_type> data_set_{ util::generate_random_matrix<plssvm::aos_matrix<plssvm::real_type>>(6, 2), util::get_correct_model_file_labels<fixture_label_type>() };
+    plssvm::data_set<fixture_label_type> data_set_{ util::generate_random_matrix<plssvm::aos_matrix<plssvm::real_type>>(plssvm::shape{ 6, 2 }), util::get_correct_model_file_labels<fixture_label_type>() };
 };
 TYPED_TEST_SUITE(LIBSVMModelDataWriteDeathTest, util::label_type_classification_type_gtest, naming::test_parameter_to_name);
 
@@ -310,7 +311,7 @@ TYPED_TEST(LIBSVMModelDataWriteDeathTest, missing_labels) {
     constexpr plssvm::classification_type classification = TestFixture::fixture_classification;
 
     // create invalid parameter
-    const plssvm::data_set<label_type> data_set{ util::generate_random_matrix<plssvm::aos_matrix<plssvm::real_type>>(4, 2) };
+    const plssvm::data_set<label_type> data_set{ util::generate_random_matrix<plssvm::aos_matrix<plssvm::real_type>>(plssvm::shape{ 4, 2 }) };
 
     // try writing the LIBSVM model header
     EXPECT_DEATH((plssvm::detail::io::write_libsvm_model_data(this->filename, this->get_params(), classification, this->get_rho(), this->get_alpha(), this->get_index_sets(), data_set)),
@@ -338,13 +339,13 @@ TYPED_TEST(LIBSVMModelDataWriteDeathTest, invalid_alpha_vector) {
         }
         {
             // invalid number of rows in matrix
-            const std::vector<plssvm::aos_matrix<plssvm::real_type>> alpha{ plssvm::aos_matrix<plssvm::real_type>{ 42, 6 } };
+            const std::vector<plssvm::aos_matrix<plssvm::real_type>> alpha{ plssvm::aos_matrix<plssvm::real_type>{ plssvm::shape{ 42, 6 } } };
             EXPECT_DEATH((plssvm::detail::io::write_libsvm_model_data(this->filename, this->get_params(), classification, this->get_rho(), alpha, this->get_index_sets(), this->get_data_set())),
                          fmt::format("The number of rows in the matrix must be {}, but is 42!", this->num_classifiers(), classification));
         }
         {
             // invalid number of columns in matrix
-            const std::vector<plssvm::aos_matrix<plssvm::real_type>> alpha{ plssvm::aos_matrix<plssvm::real_type>{ this->num_classifiers(), 42 } };
+            const std::vector<plssvm::aos_matrix<plssvm::real_type>> alpha{ plssvm::aos_matrix<plssvm::real_type>{ plssvm::shape{ this->num_classifiers(), 42 } } };
             EXPECT_DEATH((plssvm::detail::io::write_libsvm_model_data(this->filename, this->get_params(), classification, this->get_rho(), alpha, this->get_index_sets(), this->get_data_set())),
                          ::testing::HasSubstr("The number of weights (42) must be equal to the number of support vectors (6)!"));
         }
@@ -358,7 +359,7 @@ TYPED_TEST(LIBSVMModelDataWriteDeathTest, invalid_alpha_vector) {
         {
             // invalid matrix shape
             std::vector<plssvm::aos_matrix<plssvm::real_type>> alpha(this->get_alpha());
-            alpha.back() = plssvm::aos_matrix<plssvm::real_type>{ 3, 2 };
+            alpha.back() = plssvm::aos_matrix<plssvm::real_type>{ plssvm::shape{ 3, 2 } };
             EXPECT_DEATH((plssvm::detail::io::write_libsvm_model_data(this->filename, this->get_params(), classification, this->get_rho(), alpha, this->get_index_sets(), this->get_data_set())),
                          "In case of OAO, each matrix may only contain one row!");
         }

@@ -27,6 +27,7 @@
 #include "plssvm/exceptions/exceptions.hpp"                                  // plssvm::exception
 #include "plssvm/kernel_function_types.hpp"                                  // plssvm::kernel_type
 #include "plssvm/parameter.hpp"                                              // plssvm::parameter, plssvm::detail::parameter
+#include "plssvm/shape.hpp"                                                  // plssvm::shape
 #include "plssvm/target_platforms.hpp"                                       // plssvm::target_platform
 #include "plssvm/verbosity_levels.hpp"                                       // plssvm::verbosity_level
 
@@ -174,8 +175,8 @@ std::size_t csvm::get_max_work_group_size() const {
 //***************************************************//
 
 auto csvm::run_assemble_kernel_matrix_explicit(const parameter &params, const device_ptr_type &data_d, const device_ptr_type &q_red_d, real_type QA_cost) const -> device_ptr_type {
-    const unsigned long long num_rows_reduced = data_d.size(0) - 1;
-    const unsigned long long num_features = data_d.size(1);
+    const unsigned long long num_rows_reduced = data_d.shape().x - 1;
+    const unsigned long long num_features = data_d.shape().y;
 
     // define grid and block sizes
     const std::size_t max_work_group_size = this->get_max_work_group_size();
@@ -218,8 +219,8 @@ auto csvm::run_assemble_kernel_matrix_explicit(const parameter &params, const de
 }
 
 void csvm::run_blas_level_3_kernel_explicit(const real_type alpha, const device_ptr_type &A_d, const device_ptr_type &B_d, const real_type beta, device_ptr_type &C_d) const {
-    const unsigned long long num_rhs = B_d.size(0);
-    const unsigned long long num_rows = B_d.size(1);
+    const unsigned long long num_rhs = B_d.shape().x;
+    const unsigned long long num_rows = B_d.shape().y;
 
     // define grid and block sizes
     const std::size_t max_work_group_size = this->get_max_work_group_size();
@@ -244,9 +245,9 @@ void csvm::run_blas_level_3_kernel_explicit(const real_type alpha, const device_
 }
 
 void csvm::run_assemble_kernel_matrix_implicit_blas_level_3(const real_type alpha, const device_ptr_type &A_d, const parameter &params, const device_ptr_type &q_red, const real_type QA_cost, const device_ptr_type &B_d, device_ptr_type &C_d) const {
-    const unsigned long long num_rows_reduced = A_d.size(0) - 1;
-    const unsigned long long num_features = A_d.size(1);
-    const unsigned long long num_classes = B_d.size(0);
+    const unsigned long long num_rows_reduced = A_d.shape().x - 1;
+    const unsigned long long num_features = A_d.shape().y;
+    const unsigned long long num_classes = B_d.shape().x;
 
     // define the grid and block sizes
     const std::size_t max_work_group_size = this->get_max_work_group_size();
@@ -285,9 +286,9 @@ void csvm::run_assemble_kernel_matrix_implicit_blas_level_3(const real_type alph
 //***************************************************//
 
 auto csvm::run_w_kernel(const device_ptr_type &alpha_d, const device_ptr_type &sv_d) const -> device_ptr_type {
-    const unsigned long long num_classes = alpha_d.size(0);
-    const unsigned long long num_sv = sv_d.size(0);
-    const unsigned long long num_features = sv_d.size(1);
+    const unsigned long long num_classes = alpha_d.shape().x;
+    const unsigned long long num_sv = sv_d.shape().x;
+    const unsigned long long num_features = sv_d.shape().y;
 
     // define grid and block sizes
     const std::size_t max_work_group_size = this->get_max_work_group_size();
@@ -299,7 +300,7 @@ auto csvm::run_w_kernel(const device_ptr_type &alpha_d, const device_ptr_type &s
                                  static_cast<std::size_t>(std::ceil(static_cast<double>(num_features) / static_cast<double>(block[1] * INTERNAL_BLOCK_SIZE))) * block[1] };
     const ::sycl::nd_range<2> execution_range{ grid, block };
 
-    device_ptr_type w_d{ { num_classes, num_features }, { PADDING_SIZE, PADDING_SIZE }, devices_[0] };
+    device_ptr_type w_d{ shape{ num_classes, num_features }, shape{ PADDING_SIZE, PADDING_SIZE }, devices_[0] };
 
     devices_[0].impl->sycl_queue.submit([&](::sycl::handler &cgh) {
         cgh.parallel_for(execution_range, sycl::detail::device_kernel_w_linear{ cgh, w_d.get(), alpha_d.get(), sv_d.get(), num_classes, num_sv });
@@ -310,12 +311,12 @@ auto csvm::run_w_kernel(const device_ptr_type &alpha_d, const device_ptr_type &s
 }
 
 auto csvm::run_predict_kernel(const parameter &params, const device_ptr_type &w_d, const device_ptr_type &alpha_d, const device_ptr_type &rho_d, const device_ptr_type &sv_d, const device_ptr_type &predict_points_d) const -> device_ptr_type {
-    const unsigned long long num_classes = alpha_d.size(0);
-    const unsigned long long num_sv = sv_d.size(0);
-    const unsigned long long num_predict_points = predict_points_d.size(0);
-    const unsigned long long num_features = predict_points_d.size(1);
+    const unsigned long long num_classes = alpha_d.shape().x;
+    const unsigned long long num_sv = sv_d.shape().x;
+    const unsigned long long num_predict_points = predict_points_d.shape().x;
+    const unsigned long long num_features = predict_points_d.shape().y;
 
-    device_ptr_type out_d{ { num_predict_points, num_classes }, { PADDING_SIZE, PADDING_SIZE }, devices_[0] };
+    device_ptr_type out_d{ shape{ num_predict_points, num_classes }, shape{ PADDING_SIZE, PADDING_SIZE }, devices_[0] };
 
     // define block sizes
     const std::size_t max_work_group_size = this->get_max_work_group_size();

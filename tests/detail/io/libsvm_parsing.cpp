@@ -14,6 +14,7 @@
 #include "plssvm/detail/io/file_reader.hpp"  // plssvm::detail::io::file_reader
 #include "plssvm/exceptions/exceptions.hpp"  // plssvm::invalid_file_format_exception
 #include "plssvm/matrix.hpp"                 // plssvm::aos_matrix
+#include "plssvm/shape.hpp"                  // plssvm::shape
 
 #include "custom_test_macros.hpp"  // EXPECT_FLOATING_POINT_MATRIX_NEAR, EXPECT_FLOATING_POINT_VECTOR_NEAR, EXPECT_THROW_WHAT
 #include "naming.hpp"              // naming::test_parameter_to_name
@@ -89,8 +90,7 @@ class LIBSVMParseDense : public ::testing::Test, protected util::temporary_file 
                                                            { plssvm::real_type{ -0.20981208921241892 }, plssvm::real_type{ 0.60276937379453293 }, plssvm::real_type{ -0.13086851759108944 }, plssvm::real_type{ 0.10805254527169827 } },
                                                            { plssvm::real_type{ 1.88494043717792 }, plssvm::real_type{ 1.00518564317278263 }, plssvm::real_type{ 0.298499933047586044 }, plssvm::real_type{ 1.6464627048813514 } },
                                                            { plssvm::real_type{ -1.1256816275635 }, plssvm::real_type{ 2.12541534341344414 }, plssvm::real_type{ -0.165126576545454511 }, plssvm::real_type{ 2.5164553141200987 } } },
-                                                         plssvm::PADDING_SIZE,
-                                                         plssvm::PADDING_SIZE };
+                                                         plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE } };
     /// The correct labels.
     std::vector<fixture_label_type> correct_label_{ util::get_correct_data_file_labels<fixture_label_type>() };
 };
@@ -125,8 +125,7 @@ class LIBSVMParseSparse : public ::testing::Test, protected util::temporary_file
                                                            { plssvm::real_type{ 0.60276937379453293 }, plssvm::real_type{ 0.0 }, plssvm::real_type{ -0.13086851759108944 }, plssvm::real_type{ 0.0 } },
                                                            { plssvm::real_type{ 0.0 }, plssvm::real_type{ 0.0 }, plssvm::real_type{ 0.0 }, plssvm::real_type{ 0.298499933047586044 } },
                                                            { plssvm::real_type{ 0.0 }, plssvm::real_type{ -1.615267454510097261 }, plssvm::real_type{ 2.098278675127757651 }, plssvm::real_type{ 0.0 } } },
-                                                         plssvm::PADDING_SIZE,
-                                                         plssvm::PADDING_SIZE };
+                                                         plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE } };
     /// The correct labels.
     std::vector<fixture_label_type> correct_label_{ util::get_correct_data_file_labels<fixture_label_type>() };
 };
@@ -190,8 +189,7 @@ TYPED_TEST(LIBSVMParse, read_without_label) {
     const plssvm::soa_matrix<plssvm::real_type> correct_data{ { { plssvm::real_type{ 1.5 }, plssvm::real_type{ -2.9 } },
                                                                 { plssvm::real_type{ 0.0 }, plssvm::real_type{ -0.3 } },
                                                                 { plssvm::real_type{ 5.5 }, plssvm::real_type{ 0.0 } } },
-                                                              plssvm::PADDING_SIZE,
-                                                              plssvm::PADDING_SIZE };
+                                                              plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE } };
     EXPECT_FLOATING_POINT_MATRIX_NEAR(data, correct_data);
     EXPECT_TRUE(label.empty());
 }
@@ -359,7 +357,7 @@ TYPED_TEST(LIBSVMWrite, write_dense_with_label) {
 
     // define data to write
     const std::vector<label_type> label = util::get_correct_data_file_labels<label_type>();
-    const auto data = util::generate_specific_matrix<plssvm::soa_matrix<plssvm::real_type>>(label.size(), 3);
+    const auto data = util::generate_specific_matrix<plssvm::soa_matrix<plssvm::real_type>>(plssvm::shape{ label.size(), 3 });
 
     // write the necessary data to the file
     plssvm::detail::io::write_libsvm_data(this->filename, data, label);
@@ -386,7 +384,7 @@ TYPED_TEST(LIBSVMWrite, write_dense_with_label) {
 }
 TYPED_TEST(LIBSVMWrite, write_dense_without_label) {
     // define data to write
-    const auto data = util::generate_specific_matrix<plssvm::soa_matrix<plssvm::real_type>>(3, 3);
+    const auto data = util::generate_specific_matrix<plssvm::soa_matrix<plssvm::real_type>>(plssvm::shape{ 3, 3 });
 
     // write the necessary data to the file
     plssvm::detail::io::write_libsvm_data(this->filename, data);
@@ -417,7 +415,7 @@ TYPED_TEST(LIBSVMWrite, write_sparse_with_label) {
 
     // define data to write
     const std::vector<label_type> label = util::get_correct_data_file_labels<label_type>();
-    const auto data = util::generate_specific_sparse_matrix<plssvm::soa_matrix<plssvm::real_type>>(label.size(), 3);
+    const auto data = util::generate_specific_sparse_matrix<plssvm::soa_matrix<plssvm::real_type>>(plssvm::shape{ label.size(), 3 });
 
     // write the necessary data to the file
     plssvm::detail::io::write_libsvm_data(this->filename, data, label);
@@ -451,7 +449,7 @@ TYPED_TEST(LIBSVMWrite, write_sparse_with_label) {
 }
 TYPED_TEST(LIBSVMWrite, write_sparse_without_label) {
     // define data to write
-    const auto data = util::generate_specific_sparse_matrix<plssvm::soa_matrix<plssvm::real_type>>(3, 3);
+    const auto data = util::generate_specific_sparse_matrix<plssvm::soa_matrix<plssvm::real_type>>(plssvm::shape{ 3, 3 });
 
     // write the necessary data to the file
     plssvm::detail::io::write_libsvm_data(this->filename, data);
@@ -506,7 +504,7 @@ TYPED_TEST(LIBSVMWriteDeathTest, data_with_provided_empty_labels) {
     using label_type = typename TestFixture::fixture_label_type;
 
     // define data to write
-    const plssvm::soa_matrix<plssvm::real_type> data{ 1, 1, 1 };
+    const plssvm::soa_matrix<plssvm::real_type> data{ plssvm::shape{ 1, 1 }, 1 };
     const std::vector<label_type> label{};
 
     // try to write the necessary data to the file
@@ -516,7 +514,7 @@ TYPED_TEST(LIBSVMWriteDeathTest, data_and_label_size_mismatch) {
     using label_type = typename TestFixture::fixture_label_type;
 
     // define data to write
-    const plssvm::soa_matrix<plssvm::real_type> data{ 2, 1, 1 };
+    const plssvm::soa_matrix<plssvm::real_type> data{ plssvm::shape{ 2, 1 }, 1 };
     const std::vector<label_type> label{ util::get_distinct_label<label_type>().front() };
 
     // try to write the necessary data to the file
@@ -527,7 +525,7 @@ TYPED_TEST(LIBSVMWriteDeathTest, labels_provided_but_not_written) {
     using label_type = typename TestFixture::fixture_label_type;
 
     // define data to write
-    const plssvm::soa_matrix<plssvm::real_type> data{ 2, 1, 1 };
+    const plssvm::soa_matrix<plssvm::real_type> data{ plssvm::shape{ 2, 1 }, 1 };
     const std::vector<label_type> label{ util::get_distinct_label<label_type>().front() };
 
     // try to write the necessary data to the file
