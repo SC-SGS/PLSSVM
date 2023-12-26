@@ -761,7 +761,75 @@ using soa_matrix = matrix<T, layout_type::soa>;
 
 template <>
 struct fmt::formatter<plssvm::layout_type> : fmt::ostream_formatter {};
+
+/**
+ * @brief Custom {fmt} formatter for a plssvm::matrix. Doesn't print padding entries per default, but introduces the `p` format specifier which enables printing padding entries.
+ * @tparam T the type of the matrix
+ * @tparam layout the layout type provided at compile time (AoS or SoA)
+ */
 template <typename T, plssvm::layout_type layout>
-struct fmt::formatter<plssvm::matrix<T, layout>> : fmt::ostream_formatter {};
+struct fmt::formatter<plssvm::matrix<T, layout>> {
+    /// Save whether padding entries should be printed or not.
+    bool with_padding_{ false };
+
+    /**
+     * @brief Parse the format specifier. If `p` is provided, padding entries will be formatted.
+     * @tparam ParseContext the {fmt} lib parser context
+     * @param[in,out] ctx the format specifiers
+     * @return the iterator pointing past the end of the parsed format specifier
+     */
+    template <typename ParseContext>
+    constexpr auto parse(ParseContext &ctx) {
+        auto it = ctx.begin(), end = ctx.end();
+        if (it == end) return it;
+        // check whether the format specifier p has been provided
+        if (*it == 'p') {
+            with_padding_ = true;
+            ++it;
+        }
+        return it;
+    }
+
+    /**
+     * @brief Format a plssvm::matrix with or without padding according to the provided format specifiers.
+     * @tparam FormatContext the {fmt} lib format context
+     * @param[in] matr the plssvm::matrix to format
+     * @param[in,out] ctx the format specifiers
+     * @return the output iterator to write to
+     */
+    template <typename FormatContext>
+    auto format(const plssvm::matrix<T, layout> &matr, FormatContext &ctx) {
+        using size_type = typename plssvm::matrix<T, layout>::size_type;
+
+        auto it = ctx.out();
+        if (with_padding_) {
+            // if requested, output padding entries
+            // don't format padding entries with scientific notation if the value is 0 (to reduce clutter)!
+            for (size_type row = 0; row < matr.num_rows_padded(); ++row) {
+                for (size_type col = 0; col < matr.num_cols_padded(); ++col) {
+                    if ((row >= matr.num_rows() || col >= matr.num_cols()) && matr(row, col) == T{ 0.0 }) {
+                        it = format_to(it, "0 ");
+                    } else {
+                        it = format_to(it, "{:.10e} ", matr(row, col));
+                    }
+                }
+                if (row < matr.num_rows_padded() - 1) {
+                    it = format_to(it, "\n");
+                }
+            }
+        } else {
+            // output matrix without padding
+            for (size_type row = 0; row < matr.num_rows(); ++row) {
+                for (size_type col = 0; col < matr.num_cols(); ++col) {
+                    it = format_to(it, "{:.10e} ", matr(row, col));
+                }
+                if (row < matr.num_rows() - 1) {
+                    it = format_to(it, "\n");
+                }
+            }
+        }
+        return it;
+    }
+};
 
 #endif  // PLSSVM_DETAIL_MATRIX_HPP_

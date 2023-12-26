@@ -1624,6 +1624,45 @@ TYPED_TEST(Matrix, output_operator_with_padding) {
     EXPECT_CONVERSION_TO_STRING(matr, correct_output);
 }
 
+TYPED_TEST(Matrix, formatter) {
+    using real_type = typename TestFixture::fixture_real_type;
+    constexpr plssvm::layout_type layout = TestFixture::fixture_layout;
+
+    // create data
+    const std::vector<std::vector<real_type>> matr_2D = { { real_type{ 1.0 }, real_type{ 2.0 }, real_type{ 3.0 } },
+                                                          { real_type{ 4.0 }, real_type{ 5.0 }, real_type{ 6.0 } } };
+
+    // create matrix
+    const plssvm::matrix<real_type, layout> matr{ matr_2D };
+
+    // check
+    std::string correct_output{};
+    for (const std::vector<real_type> &row : matr_2D) {
+        correct_output += fmt::format("{:.10e} \n", fmt::join(row, " "));
+    }
+    correct_output.pop_back();  // remove last newline
+    EXPECT_EQ(fmt::format("{}", matr), correct_output);
+}
+TYPED_TEST(Matrix, formatter_with_padding) {
+    using real_type = typename TestFixture::fixture_real_type;
+    constexpr plssvm::layout_type layout = TestFixture::fixture_layout;
+
+    // create data
+    const std::vector<std::vector<real_type>> matr_2D = { { real_type{ 1.0 }, real_type{ 2.0 }, real_type{ 3.0 } },
+                                                          { real_type{ 4.0 }, real_type{ 5.0 }, real_type{ 6.0 } } };
+
+    // create matrix
+    const plssvm::matrix<real_type, layout> matr{ matr_2D, plssvm::shape{ 4, 4 } };
+
+    // check
+    std::string correct_output{};
+    for (const std::vector<real_type> &row : matr_2D) {
+        correct_output += fmt::format("{:.10e} 0 0 0 0 \n", fmt::join(row, " "));
+    }
+    correct_output += "0 0 0 0 0 0 0 \n0 0 0 0 0 0 0 \n0 0 0 0 0 0 0 \n0 0 0 0 0 0 0 ";
+    EXPECT_EQ(fmt::format("{:p}", matr), correct_output);
+}
+
 TYPED_TEST(Matrix, matrix_shorthands) {
     using real_type = typename TestFixture::fixture_real_type;
     constexpr plssvm::layout_type layout = TestFixture::fixture_layout;
