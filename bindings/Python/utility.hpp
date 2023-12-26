@@ -13,10 +13,11 @@
 #define PLSSVM_BINDINGS_PYTHON_UTILITY_HPP_
 #pragma once
 
-#include "plssvm/constants.hpp"       // plssvm::real_type
+#include "plssvm/constants.hpp"       // plssvm::real_type, plssvm::PADDING_SIZE
 #include "plssvm/detail/utility.hpp"  // plssvm::detail::contains
 #include "plssvm/matrix.hpp"          // plssvm::matrix, plssvm::layout_type
 #include "plssvm/parameter.hpp"       // plssvm::parameter
+#include "plssvm/shape.hpp"           // plssvm::shape
 
 #include "fmt/format.h"         // fmt::format
 #include "pybind11/numpy.h"     // py::array_t, py::buffer_info
@@ -81,11 +82,11 @@ template <typename T, plssvm::layout_type layout>
     T *ptr = static_cast<T *>(buffer.ptr);
     if (mat.is_padded()) {
         // must remove padding entries before copying to Python numpy array
-        const plssvm::matrix<T, layout> mat_without_padding{ mat, 0, 0 };
-        std::memcpy(ptr, mat_without_padding.data(), mat.num_entries() * sizeof(T));
+        const plssvm::matrix<T, layout> mat_without_padding{ mat, plssvm::shape{ 0, 0 } };
+        std::memcpy(ptr, mat_without_padding.data(), mat.size() * sizeof(T));
     } else {
         // can memcpy data directly
-        std::memcpy(ptr, mat.data(), mat.num_entries() * sizeof(T));
+        std::memcpy(ptr, mat.data(), mat.size() * sizeof(T));
     }
     return py_array;
 }
@@ -162,7 +163,7 @@ template <typename T>
     // convert py::array to plssvm::matrix<T>
     py::buffer_info buffer = mat.request();
     T *ptr = static_cast<T *>(buffer.ptr);
-    plssvm::aos_matrix<T> tmp{ static_cast<size_type>(mat.shape(0)), static_cast<size_type>(mat.shape(1)), ptr };
+    plssvm::aos_matrix<T> tmp{ plssvm::shape{ static_cast<size_type>(mat.shape(0)), static_cast<size_type>(mat.shape(1)) }, ptr, plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE } };
     return tmp;
 }
 
