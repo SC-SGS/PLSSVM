@@ -242,8 +242,10 @@ endif ()
 add_subdirectory(backends)
 
 # fix shared library linker error on Windows
-foreach (target gmock gtest)
-    target_compile_definitions(${target} INTERFACE GTEST_LINKED_AS_SHARED_LIBRARY=1)
-endforeach ()
+if (NOT GTEST_FOUND)
+    foreach (target gmock gtest)
+        target_compile_definitions(${target} INTERFACE GTEST_LINKED_AS_SHARED_LIBRARY=1)
+    endforeach ()
+endif ()
 
 list(POP_BACK CMAKE_MESSAGE_INDENT)
