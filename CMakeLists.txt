@@ -211,11 +211,13 @@ endif ()
 ## try finding fast_float
 find_package(fast_float QUIET)
 if (fast_float_FOUND)
+    # TODO: get used fast_float version
     message(STATUS "Found package fast_float.")
     target_include_directories(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC ${fast_float_INCLUDE_DIR})
 else ()
     message(STATUS "Couldn't find package fast_float. Building from source ...")
-    set(PLSSVM_fast_float_VERSION v3.10.0) # TODO: 5.3.0: https://github.com/fastfloat/fast_float/issues/215
+    set(PLSSVM_fast_float_VERSION v3.10.0) # TODO: 6.0.0: https://github.com/fastfloat/fast_float/issues/215
+    target_compile_definitions(${PLSSVM_BASE_LIBRARY_NAME} PRIVATE PLSSVM_fast_float_VERSION="${PLSSVM_fast_float_VERSION}")
     # set options for fast_float
     set(FASTFLOAT_TEST OFF CACHE INTERNAL "" FORCE)
     set(FASTFLOAT_SANITIZE OFF CACHE INTERNAL "" FORCE)
@@ -242,11 +244,13 @@ endif ()
 ## try finding igor
 find_package(igor QUIET)
 if (igor_FOUND)
+    # TODO: get used igor version
     message(STATUS "Found package igor.")
     target_include_directories(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC ${igor_INCLUDE_DIR})
 else ()
     message(STATUS "Couldn't find package igor. Building from source ...")
     set(PLSSVM_igor_VERSION a5224c60d266974d3f407191583fe266cbe1c93d)
+    target_compile_definitions(${PLSSVM_BASE_LIBRARY_NAME} PRIVATE PLSSVM_igor_VERSION="${PLSSVM_igor_VERSION}")
     # set options for igor
     set(IGOR_BUILD_TESTS OFF CACHE INTERNAL "" FORCE)
     # fetch named argument library igor

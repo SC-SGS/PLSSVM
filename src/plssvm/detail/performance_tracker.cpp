@@ -19,6 +19,7 @@
 #include "plssvm/version/git_metadata/git_metadata.hpp"  // plssvm::version::git_metadata::commit_sha1
 #include "plssvm/version/version.hpp"                    // plssvm::version::{version, detail::target_platforms}
 
+#include "cxxopts.hpp"    // version macros
 #include "fmt/chrono.h"   // format std::chrono types
 #include "fmt/core.h"     // fmt::format
 #include "fmt/ostream.h"  // format types with an operator<< overload
@@ -134,6 +135,9 @@ void performance_tracker::save(std::ostream &out) {
     // append the current performance statistics to an already existing file if possible
     PLSSVM_ASSERT(out.good(), "Can't write to the provided output stream!");
 
+    //*************************************************************************************************************************************//
+    //                                                              meta-data                                                              //
+    //*************************************************************************************************************************************//
     // get the current host- and username
 #if defined(PLSSVM_UNISTD_AVAILABLE)
     const auto host_name_max = static_cast<std::size_t>(sysconf(_SC_HOST_NAME_MAX));
@@ -217,8 +221,61 @@ void performance_tracker::save(std::ostream &out) {
 #endif
     out << "\n";
 
+    //*************************************************************************************************************************************//
+    //                                                            dependencies                                                             //
+    //*************************************************************************************************************************************//
+    // cxxopts version
+    const std::string cxxopts_version{ fmt::format("{}.{}.{}", CXXOPTS__VERSION_MAJOR, CXXOPTS__VERSION_MINOR, CXXOPTS__VERSION_MINOR) };
+    // {fmt} library
+    constexpr int fmt_version_major = FMT_VERSION / 10000;
+    constexpr int fmt_version_minor = FMT_VERSION % 10000 / 100;
+    constexpr int fmt_version_patch = FMT_VERSION % 10;
+    const std::string fmt_version{ fmt::format("{}.{}.{}", fmt_version_major, fmt_version_minor, fmt_version_patch) };
+    // fast float version
+#if defined(PLSSVM_fast_float_VERSION)
+    const std::string fast_float_version{ PLSSVM_fast_float_VERSION };
+#else
+    const std::string fast_float_version{ "unknown" };
+#endif
+    // igor version
+#if defined(PLSSVM_fast_float_VERSION)
+    const std::string igor_version{ PLSSVM_igor_VERSION };
+#else
+    const std::string igor_version{ "unknown" };
+#endif
+
+    out << fmt::format(
+        "dependencies:\n"
+        "  cxxopts_version:    \"{}\"\n"
+        "  fmt_version:        \"{}\"\n"
+        "  fast_float_version: \"{}\"\n"
+        "  igor_version:       \"{}\"\n",
+        cxxopts_version,
+        fmt_version,
+        fast_float_version,
+        igor_version);
+
+    // output tracked values
+    if (detail::contains(tracking_statistics_, "dependencies")) {
+        for (const auto &[entry_name, entry_value] : tracking_statistics_["dependencies"]) {
+            if (entry_value.size() == 1) {
+                out << fmt::format("  {}: {}\n", entry_name, entry_value.front());
+            } else {
+                out << fmt::format("  {}: [{}]\n", entry_name, fmt::join(entry_value, ", "));
+            }
+        }
+    }
+    out << "\n";
+
+    //*************************************************************************************************************************************//
+    //                                                          other statistics                                                           //
+    //*************************************************************************************************************************************//
     // output the actual (performance) statistics
     for (const auto &[category, category_entries] : tracking_statistics_) {
+        // dependencies category handled separately
+        if (category == "dependencies") {
+            continue;
+        }
         // output the category name if it isn't the empty string
         if (!category.empty()) {
             out << category << ":\n";
