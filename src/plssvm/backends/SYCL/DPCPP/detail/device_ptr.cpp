@@ -8,14 +8,14 @@
 
 #include "plssvm/backends/SYCL/DPCPP/detail/device_ptr.hpp"
 
+#include "plssvm/backends/gpu_device_ptr.hpp"                // plssvm::detail::gpu_device_ptr
 #include "plssvm/backends/SYCL/DPCPP/detail/queue_impl.hpp"  // plssvm::dpcpp::detail::queue (PImpl implementation)
+#include "plssvm/backends/SYCL/exceptions.hpp"               // plssvm::dpcpp::backend_exception
+#include "plssvm/detail/assert.hpp"                          // PLSSVM_ASSERT
 
-#include "plssvm/backends/SYCL/exceptions.hpp"  // plssvm::dpcpp::backend_exception
-#include "plssvm/backends/gpu_device_ptr.hpp"   // plssvm::detail::gpu_device_ptr
-#include "plssvm/detail/assert.hpp"             // PLSSVM_ASSERT
-
-#include "fmt/core.h"     // fmt::format
 #include "sycl/sycl.hpp"  // ::sycl::malloc_device, ::sycl::free
+
+#include "fmt/core.h"  // fmt::format
 
 #include <algorithm>  // std::min
 #include <array>      // std::array
@@ -24,7 +24,7 @@ namespace plssvm::dpcpp::detail {
 
 template <typename T>
 device_ptr<T>::device_ptr(const size_type size, const queue &q) :
-    device_ptr{ plssvm::shape{ size, 1 }, plssvm::shape{ 0, 0 }, q } {}
+    device_ptr{ plssvm::shape{ size, 1 }, plssvm::shape{ 0, 0 }, q } { }
 
 template <typename T>
 device_ptr<T>::device_ptr(const plssvm::shape shape, const queue &q) :

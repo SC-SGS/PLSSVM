@@ -51,10 +51,12 @@ file_reader::file_reader(const char *filename) {
     // open the provided file
     this->open(filename);
 }
+
 file_reader::file_reader(const std::string &filename) {
     // open the provided file
     this->open(filename);
 }
+
 file_reader::file_reader(const std::filesystem::path &filename) {
     // open the provided file
     this->open(filename);
@@ -110,10 +112,12 @@ void file_reader::open(const char *filename) {
 
     is_open_ = true;
 }
+
 void file_reader::open(const std::string &filename) {
     // open the provided file
     this->open(filename.c_str());
 }
+
 void file_reader::open(const std::filesystem::path &filename) {
     // open the provided file
     this->open(filename.string().c_str());
@@ -122,6 +126,7 @@ void file_reader::open(const std::filesystem::path &filename) {
 bool file_reader::is_open() const noexcept {
     return is_open_;
 }
+
 void file_reader::close() {
     if (this->is_open()) {
 #if defined(PLSSVM_HAS_MEMORY_MAPPING_UNIX)
@@ -191,23 +196,23 @@ const std::vector<std::string_view> &file_reader::read_lines(const std::string_v
 
     #pragma omp parallel default(none) shared(per_thread_newlines, per_thread_lines) firstprivate(file_content_view, comment)
     {
-        // resize vector - single threaded
-        #pragma omp single
+    // resize vector - single threaded
+    #pragma omp single
         {
             per_thread_newlines.resize(omp_get_num_threads());
             per_thread_lines.resize(omp_get_num_threads());
         }
 
-        // find all newlines - parallel
-        #pragma omp for
+    // find all newlines - parallel
+    #pragma omp for
         for (std::size_t i = 0; i < file_content_view.size(); ++i) {
             if (file_content_view[i] == '\n') {
                 per_thread_newlines[omp_get_thread_num()].push_back(i + 1);
             }
         }
 
-        // merge per thread newlines into global newlines vector - single threaded
-        #pragma omp single
+    // merge per thread newlines into global newlines vector - single threaded
+    #pragma omp single
         {
             // the first index that no exception for the first thread must be made
             per_thread_newlines[0].push_front(0);
@@ -220,8 +225,8 @@ const std::vector<std::string_view> &file_reader::read_lines(const std::string_v
             per_thread_newlines.back().push_back(file_content_view.size() + 1);
         }
 
-        // get lines from newlines - parallel
-        #pragma omp for
+    // get lines from newlines - parallel
+    #pragma omp for
         for (std::size_t i = 0; i < per_thread_newlines.size(); ++i) {
             // reserve lines sizes
             per_thread_lines[i].reserve(per_thread_newlines[i].size());
@@ -267,6 +272,7 @@ const std::vector<std::string_view> &file_reader::read_lines(const std::string_v
 
     return lines_;
 }
+
 const std::vector<std::string_view> &file_reader::read_lines(const char comment) {
     return this->read_lines(std::string_view{ &comment, 1 });
 }
@@ -274,13 +280,16 @@ const std::vector<std::string_view> &file_reader::read_lines(const char comment)
 typename std::vector<std::string_view>::size_type file_reader::num_lines() const noexcept {
     return lines_.size();
 }
+
 std::string_view file_reader::line(const typename std::vector<std::string_view>::size_type pos) const {
     PLSSVM_ASSERT(pos < this->num_lines(), "Out-of-bounce access!: {} >= {}", pos, this->num_lines());
     return lines_[pos];
 }
+
 const std::vector<std::string_view> &file_reader::lines() const noexcept {
     return lines_;
 }
+
 const char *file_reader::buffer() const noexcept {
     return file_content_;
 }
@@ -289,7 +298,9 @@ void file_reader::open_memory_mapped_file_unix([[maybe_unused]] const char *file
 #if defined(PLSSVM_HAS_MEMORY_MAPPING_UNIX)
     // open the file
     file_descriptor_ = ::open(filename, O_RDONLY);
-    struct stat attr {};
+
+    struct stat attr { };
+
     // check if file could be opened
     if (fstat(file_descriptor_, &attr) == -1) {
         ::close(file_descriptor_);

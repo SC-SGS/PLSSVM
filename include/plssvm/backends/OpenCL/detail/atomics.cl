@@ -21,31 +21,31 @@
  * @param[in,out] source the source value to add @p val to
  * @param[in] val the value to add to @p addr
  */
-inline double __attribute__((overloadable)) atomicAdd(__global double * source, const double val) {
+inline double __attribute__((overloadable)) atomicAdd(__global double *source, const double val) {
     double prev;
 #ifdef PLSSVM_USE_NVIDIA_PTX_INLINE_ASSEMBLY
     asm volatile(
         "atom.global.add.f64 %0, [%1], %2;"
         : "=d"(prev)
-        : "l"(source) , "d"(val)
-        : "memory"
-    );
+        : "l"(source), "d"(val)
+        : "memory");
 #else
     prev = *source;
+
     union {
         ulong intVal;
         double doubleVal;
     } old, t, t1;
+
     old.doubleVal = val;
-    t1.doubleVal = 0.0; // to ensure correct double bit representation of 0
+    t1.doubleVal = 0.0;  // to ensure correct double bit representation of 0
     do {
-        t.intVal = atom_xchg((__global ulong *)source, t1.intVal);
+        t.intVal = atom_xchg((__global ulong *) source, t1.intVal);
         t.doubleVal += old.doubleVal;
-    } while ((old.intVal = atom_xchg((__global ulong *)source, t.intVal)) != t1.intVal);
+    } while ((old.intVal = atom_xchg((__global ulong *) source, t.intVal)) != t1.intVal);
 #endif
     return prev;
 }
-
 
 /**
  * @brief Implementation of an atomic add function for single-precision floating point types.
@@ -53,27 +53,28 @@ inline double __attribute__((overloadable)) atomicAdd(__global double * source, 
  * @param[in,out] addr the source value to add @p val to
  * @param[in] val the value to add to @p addr
  */
-inline float __attribute__((overloadable)) atomicAdd(__global float * source, const float val) {
+inline float __attribute__((overloadable)) atomicAdd(__global float *source, const float val) {
     float prev;
 #ifdef PLSSVM_USE_NVIDIA_PTX_INLINE_ASSEMBLY
     asm volatile(
         "atom.global.add.f32 %0, [%1], %2;"
         : "=f"(prev)
-        : "l"(source) , "f"(val)
-        : "memory"
-    );
+        : "l"(source), "f"(val)
+        : "memory");
 #else
     prev = *source;
+
     union {
         ulong intVal;
         float floatVal;
     } old, t, t1;
+
     old.floatVal = val;
-    t1.floatVal = 0.0; // to ensure correct double bit representation of 0
+    t1.floatVal = 0.0;  // to ensure correct double bit representation of 0
     do {
-        t.intVal = atom_xchg((__global ulong *)source, t1.intVal);
+        t.intVal = atom_xchg((__global ulong *) source, t1.intVal);
         t.floatVal += old.floatVal;
-    } while ((old.intVal = atom_xchg((__global ulong *)source, t.intVal)) != t1.intVal);
+    } while ((old.intVal = atom_xchg((__global ulong *) source, t.intVal)) != t1.intVal);
 #endif
     return prev;
 }

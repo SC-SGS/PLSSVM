@@ -30,7 +30,8 @@ using namespace plssvm::PLSSVM_SYCL_BACKEND_PREFERRED_IMPLEMENTATION;
 }
 #else
 // define dpcpp as default SYCL namespace if no SYCL backend is available (to prevent compiler errors)
-namespace plssvm::dpcpp{ }  // make sure the namespace exists
+namespace plssvm::dpcpp { }  // namespace plssvm::dpcpp
+
 namespace plssvm::sycl {
 using namespace plssvm::dpcpp;
 }

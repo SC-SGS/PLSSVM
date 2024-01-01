@@ -21,7 +21,7 @@
  * @param[in] num_classes the number of classes
  * @param[in] num_sv the number of support vectors
  */
-__kernel void device_kernel_w_linear(__global real_type *w_d, __global const real_type *alpha_d, __global const real_type *sv_d, const ulong num_classes, const ulong num_sv) {
+__kernel void device_kernel_w_linear(__global real_type *w_d, const __global real_type *alpha_d, const __global real_type *sv_d, const ulong num_classes, const ulong num_sv) {
     const ulong feature_idx = get_global_id(0) * INTERNAL_BLOCK_SIZE;
     const ulong feature_idx_linear = get_group_id(0) * get_local_size(0) * INTERNAL_BLOCK_SIZE + get_local_id(0);
     const ulong class_idx = get_global_id(1) * INTERNAL_BLOCK_SIZE;
@@ -74,7 +74,7 @@ __kernel void device_kernel_w_linear(__global real_type *w_d, __global const rea
  * @param[in] num_predict_points the number of data points to predict
  * @param[in] num_features the number of features per data point
  */
-__kernel void device_kernel_predict_linear(__global real_type *out_d, __global const real_type *w_d, __global const real_type *rho_d, __global const real_type *predict_points_d, const ulong num_classes, const ulong num_predict_points, const ulong num_features) {
+__kernel void device_kernel_predict_linear(__global real_type *out_d, const __global real_type *w_d, const __global real_type *rho_d, const __global real_type *predict_points_d, const ulong num_classes, const ulong num_predict_points, const ulong num_features) {
     const ulong pp_idx = get_global_id(0) * INTERNAL_BLOCK_SIZE;
     const ulong pp_idx_linear = get_group_id(0) * get_local_size(0) * INTERNAL_BLOCK_SIZE + get_local_id(0);
     const ulong class_idx = get_global_id(1) * INTERNAL_BLOCK_SIZE;
@@ -134,7 +134,7 @@ __kernel void device_kernel_predict_linear(__global real_type *out_d, __global c
  * @param[in] gamma the parameter in the polynomial kernel function
  * @param[in] coef0 the parameter in the polynomial kernel function
  */
-__kernel void device_kernel_predict_polynomial(__global real_type *out_d, __global const real_type *alpha_d, __global const real_type *rho_d, __global const real_type *sv_d, __global const real_type *predict_points_d, const ulong num_classes, const ulong num_sv, const ulong num_predict_points, const ulong num_features, const int degree, const real_type gamma, const real_type coef0) {
+__kernel void device_kernel_predict_polynomial(__global real_type *out_d, const __global real_type *alpha_d, const __global real_type *rho_d, const __global real_type *sv_d, const __global real_type *predict_points_d, const ulong num_classes, const ulong num_sv, const ulong num_predict_points, const ulong num_features, const int degree, const real_type gamma, const real_type coef0) {
     const ulong pp_idx = get_global_id(0) * INTERNAL_BLOCK_SIZE;
     const ulong pp_idx_linear = get_group_id(0) * get_local_size(0) * INTERNAL_BLOCK_SIZE + get_local_id(0);
     const ulong sv_idx = get_global_id(1) * INTERNAL_BLOCK_SIZE;
@@ -201,7 +201,7 @@ __kernel void device_kernel_predict_polynomial(__global real_type *out_d, __glob
  * @param[in] num_features the number of features per data point
  * @param[in] gamma the parameter in the rbf kernel function
  */
-__kernel void device_kernel_predict_rbf(__global real_type *out_d, __global const real_type *alpha_d, __global const real_type *rho_d, __global const real_type *sv_d, __global const real_type *predict_points_d, const ulong num_classes, const ulong num_sv, const ulong num_predict_points, const ulong num_features, const real_type gamma) {
+__kernel void device_kernel_predict_rbf(__global real_type *out_d, const __global real_type *alpha_d, const __global real_type *rho_d, const __global real_type *sv_d, const __global real_type *predict_points_d, const ulong num_classes, const ulong num_sv, const ulong num_predict_points, const ulong num_features, const real_type gamma) {
     const ulong pp_idx = get_global_id(0) * INTERNAL_BLOCK_SIZE;
     const ulong pp_idx_linear = get_group_id(0) * get_local_size(0) * INTERNAL_BLOCK_SIZE + get_local_id(0);
     const ulong sv_idx = get_global_id(1) * INTERNAL_BLOCK_SIZE;

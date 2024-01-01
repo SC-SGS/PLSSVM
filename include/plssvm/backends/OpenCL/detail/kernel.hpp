@@ -85,6 +85,7 @@ class kernel {
      * @return the wrapped OpenCL cl_kernel (`[[nodiscard]]`)
      */
     [[nodiscard]] operator cl_kernel &() noexcept { return compute_kernel; }
+
     /**
      * @brief Implicitly convert a kernel wrapper to an OpenCL cl_kernel.
      * @return the wrapped OpenCL cl_kernel (`[[nodiscard]]`)

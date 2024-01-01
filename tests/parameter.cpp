@@ -14,10 +14,9 @@
 #include "plssvm/backends/SYCL/kernel_invocation_type.hpp"  // plssvm::sycl::kernel_invocation_type
 #include "plssvm/detail/arithmetic_type_name.hpp"           // plssvm::detail::arithmetic_type_name
 
-#include "custom_test_macros.hpp"  // EXPECT_CONVERSION_TO_STRING, EXPECT_FLOATING_POINT_EQ
+#include "tests/custom_test_macros.hpp"  // EXPECT_CONVERSION_TO_STRING, EXPECT_FLOATING_POINT_EQ
 
-#include "fmt/core.h"  // fmt::format
-
+#include "fmt/core.h"     // fmt::format
 #include "gtest/gtest.h"  // TEST, EXPECT_EQ, EXPECT_FLOAT_EQ, EXPECT_DOUBLE_EQ, EXPECT_TRUE, EXPECT_FALSE
 
 TEST(Parameter, default_construct) {
@@ -36,6 +35,7 @@ TEST(Parameter, default_construct) {
     EXPECT_TRUE(param.cost.is_default());
     EXPECT_FLOATING_POINT_EQ(param.cost.value(), plssvm::real_type{ 1.0 });
 }
+
 TEST(Parameter, construct) {
     // construct a parameter set explicitly overwriting the default values
     const plssvm::parameter param{ plssvm::kernel_function_type::polynomial, 1, plssvm::real_type{ -1.0 }, plssvm::real_type{ 2.5 }, plssvm::real_type{ 0.05 } };
@@ -61,6 +61,7 @@ TEST(Parameter, construct) {
     EXPECT_FLOATING_POINT_EQ(param.cost.value(), plssvm::real_type{ 0.05 });
     EXPECT_FLOATING_POINT_EQ(param.cost.get_default(), plssvm::real_type{ 1.0 });
 }
+
 TEST(Parameter, construct_named_args_all) {
     // construct a parameter set explicitly overwriting all default values using named parameters
     const plssvm::parameter param{
@@ -92,6 +93,7 @@ TEST(Parameter, construct_named_args_all) {
     EXPECT_FLOATING_POINT_EQ(param.cost.value(), plssvm::real_type{ 0.05 });
     EXPECT_FLOATING_POINT_EQ(param.cost.get_default(), plssvm::real_type{ 1.0 });
 }
+
 TEST(Parameter, construct_named_args) {
     // construct a parameter set explicitly overwriting some default values using named parameters
     const plssvm::parameter param{
@@ -121,6 +123,7 @@ TEST(Parameter, construct_named_args) {
     EXPECT_FLOATING_POINT_EQ(param.cost.value(), plssvm::real_type{ 0.05 });
     EXPECT_FLOATING_POINT_EQ(param.cost.get_default(), plssvm::real_type{ 1.0 });
 }
+
 TEST(Parameter, construct_parameter_and_named_args) {
     // construct a parameter set
     const plssvm::parameter param_base{
@@ -170,6 +173,7 @@ TEST(Parameter, equal) {
     EXPECT_FALSE(params1 == params4);
     EXPECT_FALSE(params3 == params4);
 }
+
 TEST(Parameter, equal_default_constructed) {
     // test whether two default constructed parameter sets are equal, i.e., all member variables have the same value
     const plssvm::parameter params1{};
@@ -192,6 +196,7 @@ TEST(Parameter, unequal) {
     EXPECT_TRUE(params1 != params4);
     EXPECT_TRUE(params3 != params4);
 }
+
 TEST(Parameter, unequal_default_constructed) {
     // test whether two default constructed parameter sets are unequal, i.e., any member variables differ in value
     const plssvm::parameter params1{};
@@ -223,6 +228,7 @@ TEST(Parameter, equivalent_member_function) {
     EXPECT_FALSE(params6.equivalent(params8));
     EXPECT_FALSE(params8.equivalent(params9));
 }
+
 TEST(Parameter, equivalent_member_function_default_constructed) {
     // test whether two default constructed parameter sets are equal, i.e., all member variables have the same value
     const plssvm::parameter params1{};
@@ -244,7 +250,6 @@ TEST(Parameter, equivalent_free_function) {
     const plssvm::parameter params8{ static_cast<plssvm::kernel_function_type>(3), 3, plssvm::real_type{ 0.2 }, plssvm::real_type{ -1.5 }, plssvm::real_type{ 0.1 } };
     const plssvm::parameter params9{ static_cast<plssvm::kernel_function_type>(3), 3, plssvm::real_type{ 0.2 }, plssvm::real_type{ -1.5 }, plssvm::real_type{ 0.1 } };
 
-
     // test
     EXPECT_TRUE(plssvm::equivalent(params1, params2));
     EXPECT_FALSE(plssvm::equivalent(params1, params3));
@@ -255,6 +260,7 @@ TEST(Parameter, equivalent_free_function) {
     EXPECT_FALSE(plssvm::equivalent(params6, params8));
     EXPECT_FALSE(plssvm::equivalent(params8, params9));
 }
+
 TEST(Parameter, equivalent_free_function_default_constructed) {
     // test whether two default constructed parameter sets are equal, i.e., all member variables have the same value
     const plssvm::parameter params1{};

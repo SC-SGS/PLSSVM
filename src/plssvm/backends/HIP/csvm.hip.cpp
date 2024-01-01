@@ -24,9 +24,9 @@
 #include "plssvm/exceptions/exceptions.hpp"                                     // plssvm::exception
 #include "plssvm/kernel_function_types.hpp"                                     // plssvm::kernel_function_type
 #include "plssvm/parameter.hpp"                                                 // plssvm::parameter, plssvm::detail::parameter
+#include "plssvm/shape.hpp"                                                     // plssvm::shape
 #include "plssvm/target_platforms.hpp"                                          // plssvm::target_platform
 #include "plssvm/verbosity_levels.hpp"                                          // plssvm::verbosity_level
-#include "plssvm/shape.hpp"                                                     // plssvm::shape
 
 #include "hip/hip_runtime_api.h"  // HIP runtime functions
 
@@ -43,7 +43,7 @@
 namespace plssvm::hip {
 
 csvm::csvm(parameter params) :
-    csvm{ plssvm::target_platform::automatic, params } {}
+    csvm{ plssvm::target_platform::automatic, params } { }
 
 csvm::csvm(target_platform target, parameter params) :
     base_type{ params } {

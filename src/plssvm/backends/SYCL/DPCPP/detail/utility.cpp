@@ -104,6 +104,7 @@ queue get_default_queue() {
 std::string get_dpcpp_version() {
     return fmt::format("{}.{}.{}", __LIBSYCL_MAJOR_VERSION, __LIBSYCL_MINOR_VERSION, __LIBSYCL_PATCH_VERSION);
 }
+
 std::string get_dpcpp_timestamp_version() {
     return fmt::format("{}", __SYCL_COMPILER_VERSION);
 }

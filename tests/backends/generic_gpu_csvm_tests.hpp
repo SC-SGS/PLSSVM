@@ -21,10 +21,10 @@
 #include "plssvm/parameter.hpp"              // plssvm::parameter
 #include "plssvm/shape.hpp"                  // plssvm::shape
 
-#include "backends/ground_truth.hpp"  // ground_truth::{perform_dimensional_reduction, kernel_function, assemble_kernel_matrix_gemm, assemble_kernel_matrix_symm, gemm, calculate_w, predict_values}
-#include "custom_test_macros.hpp"     // EXPECT_FLOATING_POINT_MATRIX_NEAR, EXPECT_FLOATING_POINT_VECTOR_NEAR
-#include "types_to_test.hpp"          // util::{test_parameter_type_at_t, test_parameter_value_at_v}
-#include "utility.hpp"                // util::{redirect_output, construct_from_tuple, generate_random_matrix}
+#include "tests/backends/ground_truth.hpp"  // ground_truth::{perform_dimensional_reduction, kernel_function, assemble_kernel_matrix_gemm, assemble_kernel_matrix_symm, gemm, calculate_w, predict_values}
+#include "tests/custom_test_macros.hpp"     // EXPECT_FLOATING_POINT_MATRIX_NEAR, EXPECT_FLOATING_POINT_VECTOR_NEAR
+#include "tests/types_to_test.hpp"          // util::{test_parameter_type_at_t, test_parameter_value_at_v}
+#include "tests/utility.hpp"                // util::{redirect_output, construct_from_tuple, generate_random_matrix}
 
 #include "gtest/gtest.h"  // TYPED_TEST_SUITE_P, TYPED_TEST_P, REGISTER_TYPED_TEST_SUITE_P, EXPECT_GT, EXPECT_GE, ASSERT_EQ, ::testing::Test
 
@@ -36,7 +36,9 @@
 //*************************************************************************************************************************************//
 
 template <typename T>
-class GenericGPUCSVM : public ::testing::Test, protected util::redirect_output<> {};
+class GenericGPUCSVM : public ::testing::Test,
+                       protected util::redirect_output<> { };
+
 TYPED_TEST_SUITE_P(GenericGPUCSVM);
 
 TYPED_TEST_P(GenericGPUCSVM, get_max_work_group_size) {
@@ -50,6 +52,7 @@ TYPED_TEST_P(GenericGPUCSVM, get_max_work_group_size) {
     // the maximum memory allocation size should be greater than 0!
     EXPECT_GT(svm.get_max_work_group_size(), 0);
 }
+
 TYPED_TEST_P(GenericGPUCSVM, num_available_devices) {
     using namespace plssvm::detail::literals;
     using csvm_test_type = util::test_parameter_type_at_t<0, TypeParam>;
@@ -115,6 +118,7 @@ TYPED_TEST_P(GenericGPUCSVM, run_blas_level_3_kernel_explicit) {
     // check C for correctness
     EXPECT_FLOATING_POINT_MATRIX_NEAR(C_res, C);
 }
+
 TYPED_TEST_P(GenericGPUCSVM, run_w_kernel) {
     using csvm_test_type = util::test_parameter_type_at_t<0, TypeParam>;
     using mock_csvm_type = typename csvm_test_type::mock_csvm_type;
@@ -150,18 +154,19 @@ TYPED_TEST_P(GenericGPUCSVM, run_w_kernel) {
     EXPECT_FLOATING_POINT_MATRIX_NEAR(w, correct_w);
 }
 
-// clang-format off
 REGISTER_TYPED_TEST_SUITE_P(GenericGPUCSVM,
-                            get_max_work_group_size, num_available_devices,
-                            run_blas_level_3_kernel_explicit, run_w_kernel);
-// clang-format on
+                            get_max_work_group_size,
+                            num_available_devices,
+                            run_blas_level_3_kernel_explicit,
+                            run_w_kernel);
 
 //*************************************************************************************************************************************//
 //                                        GPU CSVM tests depending on the kernel function type                                         //
 //*************************************************************************************************************************************//
 
 template <typename T>
-class GenericGPUCSVMKernelFunction : public GenericGPUCSVM<T> {};
+class GenericGPUCSVMKernelFunction : public GenericGPUCSVM<T> { };
+
 TYPED_TEST_SUITE_P(GenericGPUCSVMKernelFunction);
 
 TYPED_TEST_P(GenericGPUCSVMKernelFunction, run_assemble_kernel_matrix_explicit) {
@@ -205,6 +210,7 @@ TYPED_TEST_P(GenericGPUCSVMKernelFunction, run_assemble_kernel_matrix_explicit) 
     ASSERT_EQ(kernel_matrix.size(), correct_kernel_matrix.size());
     EXPECT_FLOATING_POINT_VECTOR_NEAR_EPS(kernel_matrix, correct_kernel_matrix, 1e4);
 }
+
 TYPED_TEST_P(GenericGPUCSVMKernelFunction, run_assemble_kernel_matrix_implicit_blas_level_3) {
     using csvm_test_type = util::test_parameter_type_at_t<0, TypeParam>;
     using mock_csvm_type = typename csvm_test_type::mock_csvm_type;
@@ -251,6 +257,7 @@ TYPED_TEST_P(GenericGPUCSVMKernelFunction, run_assemble_kernel_matrix_implicit_b
     // check for correctness
     EXPECT_FLOATING_POINT_MATRIX_NEAR_EPS(C, correct_C, 1e4);
 }
+
 TYPED_TEST_P(GenericGPUCSVMKernelFunction, run_predict_kernel) {
     using csvm_test_type = util::test_parameter_type_at_t<0, TypeParam>;
     using mock_csvm_type = typename csvm_test_type::mock_csvm_type;
@@ -306,9 +313,9 @@ TYPED_TEST_P(GenericGPUCSVMKernelFunction, run_predict_kernel) {
     EXPECT_FLOATING_POINT_MATRIX_NEAR(out, correct_out);
 }
 
-// clang-format off
 REGISTER_TYPED_TEST_SUITE_P(GenericGPUCSVMKernelFunction,
-                            run_assemble_kernel_matrix_explicit, run_assemble_kernel_matrix_implicit_blas_level_3, run_predict_kernel);
-// clang-format on
+                            run_assemble_kernel_matrix_explicit,
+                            run_assemble_kernel_matrix_implicit_blas_level_3,
+                            run_predict_kernel);
 
 #endif  // PLSSVM_TESTS_BACKENDS_GENERIC_GPU_CSVM_TESTS_HPP_

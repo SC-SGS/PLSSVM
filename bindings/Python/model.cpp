@@ -11,17 +11,17 @@
 #include "plssvm/constants.hpp"         // plssvm::real_type
 #include "plssvm/detail/type_list.hpp"  // plssvm::detail::label_type_list
 
-#include "utility.hpp"                  // assemble_unique_class_name, vector_to_pyarray, matrix_to_pyarray
+#include "bindings/Python/utility.hpp"  // assemble_unique_class_name, vector_to_pyarray, matrix_to_pyarray
 
-#include "fmt/core.h"                   // fmt::format
-#include "pybind11/pybind11.h"          // py::module_, py::class_, py::return_value_policy
-#include "pybind11/stl.h"               // support for STL types: std::vector
+#include "fmt/core.h"           // fmt::format
+#include "pybind11/pybind11.h"  // py::module_, py::class_, py::return_value_policy
+#include "pybind11/stl.h"       // support for STL types: std::vector
 
-#include <cstddef>                      // std::size_t
-#include <string>                       // std::string
-#include <tuple>                        // std::tuple_element_t, std::tuple_size_v
-#include <type_traits>                  // std::is_same_v
-#include <utility>                      // std::integer_sequence, std::make_integer_sequence
+#include <cstddef>      // std::size_t
+#include <string>       // std::string
+#include <tuple>        // std::tuple_element_t, std::tuple_size_v
+#include <type_traits>  // std::is_same_v
+#include <utility>      // std::integer_sequence, std::make_integer_sequence
 
 namespace py = pybind11;
 
@@ -37,53 +37,34 @@ void instantiate_model_bindings(py::module_ &m, label_type) {
         .def("num_support_vectors", &model_type::num_support_vectors, "the number of support vectors (note: all training points become support vectors for LSSVMs)")
         .def("num_features", &model_type::num_features, "the number of features of the support vectors")
         .def("get_params", &model_type::get_params, py::return_value_policy::reference_internal, "the SVM parameter used to learn this model")
-        .def(
-            "support_vectors", [](const model_type &self) {
-                return matrix_to_pyarray(self.support_vectors());
-            },
-            "the support vectors (note: all training points become support vectors for LSSVMs)")
-        .def(
-            "labels", [](const model_type &self) {
+        .def("support_vectors", [](const model_type &self) { return matrix_to_pyarray(self.support_vectors()); }, "the support vectors (note: all training points become support vectors for LSSVMs)")
+        .def("labels", [](const model_type &self) {
                 if constexpr (std::is_same_v<label_type, std::string>) {
                     return self.labels();
                 } else {
                     return vector_to_pyarray(self.labels());
-                }
-            },
-            "the labels")
+                } }, "the labels")
         .def("num_classes", &model_type::num_classes, "the number of classes")
-        .def(
-            "classes", [](const model_type &self) {
+        .def("classes", [](const model_type &self) {
                 if constexpr (std::is_same_v<label_type, std::string>) {
                     return self.classes();
                 } else {
                     return vector_to_pyarray(self.classes());
-                }
-            },
-            "the classes")
-        .def(
-            "weights", []([[maybe_unused]] const model_type &self) {
+                } }, "the classes")
+        .def("weights", []([[maybe_unused]] const model_type &self) {
                 py::list ret{};
                 for (const plssvm::aos_matrix<plssvm::real_type> &matr : self.weights()) {
                     ret.append(matrix_to_pyarray(matr));
                 }
-                return ret;
-            },
-            "the weights learned for each support vector and class")
-        .def("rho", [](const model_type &self) {
-                return vector_to_pyarray(self.rho());
-            }, "the bias value after learning for each class")
-        .def("get_classification_type", [](const model_type &self) {
-            return self.get_classification_type();
-        }, "the classification type used to create this model")
-        .def("__repr__", [class_name](const model_type &self) {
-            return fmt::format("<plssvm.{} with {{ #sv: {}, #features: {}, rho: {}, classification_type: {} }}>",
-                               class_name,
-                               self.num_support_vectors(),
-                               self.num_features(),
-                               fmt::format("[{}]", fmt::join(self.rho(), ",")),
-                               self.get_classification_type());
-        });
+                return ret; }, "the weights learned for each support vector and class")
+        .def("rho", [](const model_type &self) { return vector_to_pyarray(self.rho()); }, "the bias value after learning for each class")
+        .def("get_classification_type", [](const model_type &self) { return self.get_classification_type(); }, "the classification type used to create this model")
+        .def("__repr__", [class_name](const model_type &self) { return fmt::format("<plssvm.{} with {{ #sv: {}, #features: {}, rho: {}, classification_type: {} }}>",
+                                                                                   class_name,
+                                                                                   self.num_support_vectors(),
+                                                                                   self.num_features(),
+                                                                                   fmt::format("[{}]", fmt::join(self.rho(), ",")),
+                                                                                   self.get_classification_type()); });
 }
 
 template <typename T, std::size_t... Idx>

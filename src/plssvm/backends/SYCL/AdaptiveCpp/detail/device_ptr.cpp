@@ -8,15 +8,15 @@
 
 #include "plssvm/backends/SYCL/AdaptiveCpp/detail/device_ptr.hpp"
 
+#include "plssvm/backends/gpu_device_ptr.hpp"                      // plssvm::detail::gpu_device_ptr
 #include "plssvm/backends/SYCL/AdaptiveCpp/detail/queue_impl.hpp"  // plssvm::adaptivecpp::detail::queue (PImpl implementation)
+#include "plssvm/backends/SYCL/exceptions.hpp"                     // plssvm::adaptivecpp::backend_exception
+#include "plssvm/detail/assert.hpp"                                // PLSSVM_ASSERT
+#include "plssvm/shape.hpp"                                        // plssvm::shape
 
-#include "plssvm/backends/gpu_device_ptr.hpp"   // plssvm::detail::gpu_device_ptr
-#include "plssvm/backends/SYCL/exceptions.hpp"  // plssvm::adaptivecpp::backend_exception
-#include "plssvm/detail/assert.hpp"             // PLSSVM_ASSERT
-#include "plssvm/shape.hpp"                     // plssvm::shape
-
-#include "fmt/core.h"     // fmt::format
 #include "sycl/sycl.hpp"  // ::sycl::malloc_device, ::sycl::free
+
+#include "fmt/core.h"  // fmt::format
 
 #include <algorithm>  // std::min
 #include <array>      // std::array
@@ -25,11 +25,11 @@ namespace plssvm::adaptivecpp::detail {
 
 template <typename T>
 device_ptr<T>::device_ptr(const size_type size, const queue &q) :
-    device_ptr{ plssvm::shape{ size, 1 }, plssvm::shape{ 0, 0 }, q } {}
+    device_ptr{ plssvm::shape{ size, 1 }, plssvm::shape{ 0, 0 }, q } { }
 
 template <typename T>
 device_ptr<T>::device_ptr(const plssvm::shape shape, const queue &q) :
-    device_ptr{ shape, plssvm::shape{ 0, 0 }, q } {}
+    device_ptr{ shape, plssvm::shape{ 0, 0 }, q } { }
 
 template <typename T>
 device_ptr<T>::device_ptr(const plssvm::shape shape, const plssvm::shape padding, const queue &q) :

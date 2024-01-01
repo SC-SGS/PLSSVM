@@ -8,19 +8,18 @@
  * @brief Tests for functions related to saving data_set.
  */
 
+#include "plssvm/constants.hpp"  // plssvm::real_type, plssvm::PADDING_SIZE
 #include "plssvm/data_set.hpp"
-
-#include "plssvm/constants.hpp"              // plssvm::real_type, plssvm::PADDING_SIZE
 #include "plssvm/detail/io/file_reader.hpp"  // plssvm::detail::io::file_reader
 #include "plssvm/detail/string_utility.hpp"  // plssvm::detail::as_lower_case
 #include "plssvm/exceptions/exceptions.hpp"  // plssvm::data_set_exception
 #include "plssvm/file_format_types.hpp"      // plssvm::file_format_type
 #include "plssvm/matrix.hpp"                 // plssvm::aos_matrix
 
-#include "custom_test_macros.hpp"  // EXPECT_THROW_WHAT
-#include "naming.hpp"              // naming::test_parameter_to_name
-#include "types_to_test.hpp"       // util::{label_type_gtest, test_parameter_type_at_t}
-#include "utility.hpp"             // util::{redirect_output, temporary_file, get_correct_data_file_labels, generate_specific_matrix}
+#include "tests/custom_test_macros.hpp"  // EXPECT_THROW_WHAT
+#include "tests/naming.hpp"              // naming::test_parameter_to_name
+#include "tests/types_to_test.hpp"       // util::{label_type_gtest, test_parameter_type_at_t}
+#include "tests/utility.hpp"             // util::{redirect_output, temporary_file, get_correct_data_file_labels, generate_specific_matrix}
 
 #include "gmock/gmock-matchers.h"  // EXPECT_THAT, ::testing::{ContainsRegex, StartsWith}
 #include "gtest/gtest.h"           // TYPED_TEST, TYPED_TEST_SUITE, EXPECT_TRUE, ASSERT_EQ, ::testing::Test
@@ -33,7 +32,9 @@
 #include <vector>       // std::vector
 
 template <typename T>
-class DataSetSave : public ::testing::Test, private util::redirect_output<>, protected util::temporary_file {
+class DataSetSave : public ::testing::Test,
+                    private util::redirect_output<>,
+                    protected util::temporary_file {
   protected:
     using fixture_label_type = util::test_parameter_type_at_t<0, T>;
 
@@ -42,6 +43,7 @@ class DataSetSave : public ::testing::Test, private util::redirect_output<>, pro
      * @return the correct label (`[[nodiscard]]`)
      */
     [[nodiscard]] const std::vector<fixture_label_type> &get_label() const noexcept { return label_; }
+
     /**
      * @brief Return the correct data points used to save a data file.
      * @return the data points (`[[nodiscard]]`)
@@ -54,6 +56,7 @@ class DataSetSave : public ::testing::Test, private util::redirect_output<>, pro
     /// The correct data points.
     plssvm::aos_matrix<plssvm::real_type> data_points_{ util::generate_specific_matrix<plssvm::aos_matrix<plssvm::real_type>>(plssvm::shape{ label_.size(), 4 }, plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE }) };
 };
+
 TYPED_TEST_SUITE(DataSetSave, util::label_type_gtest, naming::test_parameter_to_name);
 
 TYPED_TEST(DataSetSave, save_libsvm_with_label) {
@@ -75,6 +78,7 @@ TYPED_TEST(DataSetSave, save_libsvm_with_label) {
         EXPECT_TRUE(std::regex_match(std::string{ line }, reg));
     }
 }
+
 TYPED_TEST(DataSetSave, save_libsvm_without_label) {
     using label_type = typename TestFixture::fixture_label_type;
 
@@ -94,6 +98,7 @@ TYPED_TEST(DataSetSave, save_libsvm_without_label) {
         EXPECT_TRUE(std::regex_match(std::string{ line }, reg));
     }
 }
+
 TYPED_TEST(DataSetSave, save_libsvm_automatic_format) {
     using label_type = typename TestFixture::fixture_label_type;
 
@@ -147,6 +152,7 @@ TYPED_TEST(DataSetSave, save_arff_with_label) {
         EXPECT_TRUE(std::regex_match(std::string{ reader.line(i) }, reg));
     }
 }
+
 TYPED_TEST(DataSetSave, save_arff_without_label) {
     using label_type = typename TestFixture::fixture_label_type;
 
@@ -175,6 +181,7 @@ TYPED_TEST(DataSetSave, save_arff_without_label) {
         EXPECT_TRUE(std::regex_match(std::string{ reader.line(i) }, reg));
     }
 }
+
 TYPED_TEST(DataSetSave, save_arff_automatic_format) {
     using label_type = typename TestFixture::fixture_label_type;
 

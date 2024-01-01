@@ -13,9 +13,9 @@
 #define PLSSVM_BACKENDS_HIP_DETAIL_UTILITY_HPP_
 #pragma once
 
-#include "fmt/ostream.h"  // fmt::formatter, fmt::ostream_formatter
-
 #include "hip/hip_runtime_api.h"  // hipError_t
+
+#include "fmt/ostream.h"  // fmt::formatter, fmt::ostream_formatter
 
 #include <string>  // std::string
 
@@ -70,6 +70,6 @@ void device_synchronize(int device);
 }  // namespace plssvm::hip::detail
 
 template <>
-struct fmt::formatter<hipError_t> : fmt::ostream_formatter {};
+struct fmt::formatter<hipError_t> : fmt::ostream_formatter { };
 
 #endif  // PLSSVM_BACKENDS_HIP_DETAIL_UTILITY_HPP_

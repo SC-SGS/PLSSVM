@@ -9,7 +9,8 @@
  */
 
 #include "plssvm/backends/SYCL/AdaptiveCpp/detail/utility.hpp"  // plssvm::adaptivecpp::detail::get_device_list
-#include "plssvm/target_platforms.hpp"                          // plssvm::target_platform
+
+#include "plssvm/target_platforms.hpp"  // plssvm::target_platform
 
 #include "gtest/gtest.h"  // TEST, EXPECT_NE, EXPECT_FALSE
 

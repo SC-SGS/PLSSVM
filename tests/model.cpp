@@ -18,10 +18,10 @@
 #include "plssvm/parameter.hpp"              // plssvm::parameter
 #include "plssvm/shape.hpp"                  // plssvm::shape
 
-#include "custom_test_macros.hpp"  // EXPECT_FLOATING_POINT_MATRIX_EQ, EXPECT_FLOATING_POINT_VECTOR_EQ
-#include "naming.hpp"              // naming::test_parameter_to_name
-#include "types_to_test.hpp"       // util::{label_type_classification_type_gtest, test_parameter_type_at_t, test_parameter_value_at_v}
-#include "utility.hpp"             // util::{redirect_output, temporary_file, instantiate_template_file, get_num_classes, get_distinct_label, get_correct_model_file_labels}
+#include "tests/custom_test_macros.hpp"  // EXPECT_FLOATING_POINT_MATRIX_EQ, EXPECT_FLOATING_POINT_VECTOR_EQ
+#include "tests/naming.hpp"              // naming::test_parameter_to_name
+#include "tests/types_to_test.hpp"       // util::{label_type_classification_type_gtest, test_parameter_type_at_t, test_parameter_value_at_v}
+#include "tests/utility.hpp"             // util::{redirect_output, temporary_file, instantiate_template_file, get_num_classes, get_distinct_label, get_correct_model_file_labels}
 
 #include "gtest/gtest-matchers.h"  // ::testing::HasSubstr
 #include "gtest/gtest.h"           // TYPED_TEST, TYPED_TEST_SUITE, EXPECT_EQ, EXPECT_TRUE, EXPECT_DEATH, ASSERT_EQ, ASSERT_GT, FAIL,
@@ -34,10 +34,12 @@
 #include <vector>       // std::vector
 
 template <typename T>
-class Model : public ::testing::Test, private util::redirect_output<>, protected util::temporary_file {
+class Model : public ::testing::Test,
+              private util::redirect_output<>,
+              protected util::temporary_file {
   protected:
     using fixture_label_type = util::test_parameter_type_at_t<0, T>;
-    static constexpr plssvm::classification_type fixture_classification = util::test_parameter_value_at_v<0, T>;
+    constexpr static plssvm::classification_type fixture_classification = util::test_parameter_value_at_v<0, T>;
 
     void SetUp() override {
         // create file used in this test fixture by instantiating the template file
@@ -45,6 +47,7 @@ class Model : public ::testing::Test, private util::redirect_output<>, protected
         util::instantiate_template_file<fixture_label_type>(template_filename, this->filename);
     }
 };
+
 TYPED_TEST_SUITE(Model, util::label_type_classification_type_gtest, naming::test_parameter_to_name);
 
 TYPED_TEST(Model, typedefs) {
@@ -98,6 +101,7 @@ TYPED_TEST(Model, num_support_vectors) {
     // test for the correct number of support vectors
     EXPECT_EQ(model.num_support_vectors(), 6);
 }
+
 TYPED_TEST(Model, num_features) {
     using label_type = typename TestFixture::fixture_label_type;
 
@@ -107,6 +111,7 @@ TYPED_TEST(Model, num_features) {
     // test for the correct number of features
     EXPECT_EQ(model.num_features(), 4);
 }
+
 TYPED_TEST(Model, get_params) {
     using label_type = typename TestFixture::fixture_label_type;
 
@@ -116,6 +121,7 @@ TYPED_TEST(Model, get_params) {
     // test for the correct number of features
     EXPECT_EQ(model.get_params(), plssvm::parameter{ plssvm::kernel_type = plssvm::kernel_function_type::linear });
 }
+
 TYPED_TEST(Model, support_vectors) {
     using label_type = typename TestFixture::fixture_label_type;
 
@@ -132,6 +138,7 @@ TYPED_TEST(Model, support_vectors) {
                                                                  plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE } };
     EXPECT_FLOATING_POINT_MATRIX_EQ(model.support_vectors(), support_vectors);
 }
+
 TYPED_TEST(Model, labels) {
     using label_type = typename TestFixture::fixture_label_type;
 
@@ -141,6 +148,7 @@ TYPED_TEST(Model, labels) {
     // check labels getter
     EXPECT_EQ(model.labels(), util::get_correct_model_file_labels<label_type>());
 }
+
 TYPED_TEST(Model, num_classes) {
     using label_type = typename TestFixture::fixture_label_type;
 
@@ -150,6 +158,7 @@ TYPED_TEST(Model, num_classes) {
     // check num_different_labels getter
     EXPECT_EQ(model.num_classes(), util::get_num_classes<label_type>());
 }
+
 TYPED_TEST(Model, classes) {
     using label_type = typename TestFixture::fixture_label_type;
 
@@ -159,6 +168,7 @@ TYPED_TEST(Model, classes) {
     // check different_labels getter
     EXPECT_EQ(model.classes(), util::get_distinct_label<label_type>());
 }
+
 TYPED_TEST(Model, weights) {
     using label_type = typename TestFixture::fixture_label_type;
     constexpr plssvm::classification_type classification = TestFixture::fixture_classification;
@@ -243,6 +253,7 @@ TYPED_TEST(Model, weights) {
         FAIL() << "unknown classification type";
     }
 }
+
 TYPED_TEST(Model, rho) {
     using label_type = typename TestFixture::fixture_label_type;
     constexpr plssvm::classification_type classification = TestFixture::fixture_classification;
@@ -292,6 +303,7 @@ TYPED_TEST(Model, rho) {
         FAIL() << "unknown classification type";
     }
 }
+
 TYPED_TEST(Model, get_classification_type) {
     using label_type = typename TestFixture::fixture_label_type;
     constexpr plssvm::classification_type classification = TestFixture::fixture_classification;
@@ -302,6 +314,7 @@ TYPED_TEST(Model, get_classification_type) {
     // check different_labels getter
     EXPECT_EQ(model.get_classification_type(), classification);
 }
+
 TYPED_TEST(Model, num_iters) {
     using label_type = typename TestFixture::fixture_label_type;
 
@@ -313,11 +326,13 @@ TYPED_TEST(Model, num_iters) {
 }
 
 template <typename T>
-class ModelSave : public ::testing::Test, private util::redirect_output<> {
+class ModelSave : public ::testing::Test,
+                  private util::redirect_output<> {
   protected:
     using fixture_label_type = util::test_parameter_type_at_t<0, T>;
-    static constexpr plssvm::classification_type fixture_classification = util::test_parameter_value_at_v<0, T>;
+    constexpr static plssvm::classification_type fixture_classification = util::test_parameter_value_at_v<0, T>;
 };
+
 TYPED_TEST_SUITE(ModelSave, util::label_type_classification_type_gtest, naming::test_parameter_to_name);
 
 TYPED_TEST(ModelSave, save) {

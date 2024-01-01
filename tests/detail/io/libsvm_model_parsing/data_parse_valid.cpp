@@ -8,18 +8,17 @@
  * @brief Tests for parsing a valid LIBSVM model file data section.
  */
 
-#include "plssvm/detail/io/libsvm_model_parsing.hpp"
-
 #include "plssvm/classification_types.hpp"   // plssvm::classification_type
 #include "plssvm/constants.hpp"              // plssvm::real_type, plssvm::PADDING_SIZE, plssvm::PADDING_SIZE
 #include "plssvm/detail/io/file_reader.hpp"  // plssvm::detail::io::file_reader
-#include "plssvm/matrix.hpp"                 // plssvm::aos_matrix
-#include "plssvm/shape.hpp"                  // plssvm::shape
+#include "plssvm/detail/io/libsvm_model_parsing.hpp"
+#include "plssvm/matrix.hpp"  // plssvm::aos_matrix
+#include "plssvm/shape.hpp"   // plssvm::shape
 
-#include "custom_test_macros.hpp"  // EXPECT_FLOATING_POINT_MATRIX_NEAR
-#include "naming.hpp"              // naming::parameter_definition_to_name
-#include "types_to_test.hpp"       // util::label_type_classification_type_gtest
-#include "utility.hpp"             // util::{temporary_file, get_correct_model_file_labels, get_distinct_label, generate_specific_matrix}
+#include "tests/custom_test_macros.hpp"  // EXPECT_FLOATING_POINT_MATRIX_NEAR
+#include "tests/naming.hpp"              // naming::parameter_definition_to_name
+#include "tests/types_to_test.hpp"       // util::label_type_classification_type_gtest
+#include "tests/utility.hpp"             // util::{temporary_file, get_correct_model_file_labels, get_distinct_label, generate_specific_matrix}
 
 #include "fmt/core.h"     // fmt::format
 #include "gtest/gtest.h"  // TYPED_TEST, TYPED_TEST_SUITE, EXPECT_EQ, ASSERT_EQ, FAIL, ::testing::Test
@@ -31,10 +30,11 @@
 #include <vector>   // std::vector
 
 template <typename T>
-class LIBSVMModelDataParseValid : public ::testing::Test, protected util::temporary_file {
+class LIBSVMModelDataParseValid : public ::testing::Test,
+                                  protected util::temporary_file {
   protected:
     using fixture_label_type = util::test_parameter_type_at_t<0, T>;
-    static constexpr plssvm::classification_type fixture_classification = util::test_parameter_value_at_v<0, T>;
+    constexpr static plssvm::classification_type fixture_classification = util::test_parameter_value_at_v<0, T>;
 
     void SetUp() override {
         // create file used in this test fixture by instantiating the template file
@@ -47,11 +47,13 @@ class LIBSVMModelDataParseValid : public ::testing::Test, protected util::tempor
      * @return the correct data points (`[[nodiscard]]`)
      */
     [[nodiscard]] const plssvm::soa_matrix<plssvm::real_type> &get_correct_data() const noexcept { return correct_data_; }
+
     /**
      * @brief Return all correct weights.
      * @return the correct weights (`[[nodiscard]]`)
      */
     [[nodiscard]] std::vector<std::vector<plssvm::real_type>> &get_correct_weights() noexcept { return correct_weights_; }
+
     /**
      * @brief Return the specific weight at position [@p i][@p j].
      * @details Throws if @p i or @p j are out-of-bounce.
@@ -69,7 +71,7 @@ class LIBSVMModelDataParseValid : public ::testing::Test, protected util::tempor
                                                            { plssvm::real_type{ 1.8849404372 }, plssvm::real_type{ 1.0051856432 }, plssvm::real_type{ 0.29849993305 }, plssvm::real_type{ 1.6464627049 } },
                                                            { plssvm::real_type{ -0.20981208921 }, plssvm::real_type{ 0.60276937379 }, plssvm::real_type{ -0.13086851759 }, plssvm::real_type{ 0.10805254527 } },
                                                            { plssvm::real_type{ -1.1256816276 }, plssvm::real_type{ 2.1254153434 }, plssvm::real_type{ -0.16512657655 }, plssvm::real_type{ 2.5164553141 } } },
-                                                         plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE  }};
+                                                         plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE } };
     /// The correct weights. Might be more than are actually used in a specific test case.
     std::vector<std::vector<plssvm::real_type>> correct_weights_{
         { plssvm::real_type{ -1.8568721894e-01 }, plssvm::real_type{ 9.0116552290e-01 }, plssvm::real_type{ -2.2483112395e-01 }, plssvm::real_type{ 1.4909749921e-02 }, plssvm::real_type{ -4.5666857706e-01 }, plssvm::real_type{ -4.8888352876e-02 } },
@@ -78,6 +80,7 @@ class LIBSVMModelDataParseValid : public ::testing::Test, protected util::tempor
         { plssvm::real_type{ 4.3106819001e-02 }, plssvm::real_type{ -9.1995171877e-02 }, plssvm::real_type{ -1.0648352745e-01 }, plssvm::real_type{ -2.7491435827e-02 }, plssvm::real_type{ -4.3381768383e-02 }, plssvm::real_type{ 2.2624508453e-01 } }
     };
 };
+
 TYPED_TEST_SUITE(LIBSVMModelDataParseValid, util::label_type_classification_type_gtest, naming::test_parameter_to_name);
 
 TYPED_TEST(LIBSVMModelDataParseValid, read) {

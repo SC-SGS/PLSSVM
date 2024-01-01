@@ -11,11 +11,11 @@
 #include "plssvm/constants.hpp"  // plssvm::real_type
 #include "plssvm/parameter.hpp"  // plssvm::parameter
 
-#include "pybind11/pybind11.h"   // py::module_, py::enum_, py::arg, py::pos_only
-#include "pybind11/stl.h"        // support for STL types: std::vector, std::optional
+#include "pybind11/pybind11.h"  // py::module_, py::enum_, py::arg, py::pos_only
+#include "pybind11/stl.h"       // support for STL types: std::vector, std::optional
 
-#include <optional>              // std::optional, std::nullopt
-#include <vector>                // std::vector
+#include <optional>  // std::optional, std::nullopt
+#include <vector>    // std::vector
 
 namespace py = pybind11;
 

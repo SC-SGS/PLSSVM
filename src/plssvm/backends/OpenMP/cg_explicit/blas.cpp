@@ -25,11 +25,11 @@ void device_kernel_gemm(const unsigned long long m, const unsigned long long n, 
     PLSSVM_ASSERT(B.shape() == (plssvm::shape{ n, k }), "B matrix sizes mismatch!: {} != [{}, {}]", B.shape(), n, k);
     PLSSVM_ASSERT(C.shape() == (plssvm::shape{ n, m }), "C matrix sizes mismatch!: {} != [{}, {}]", C.shape(), n, m);
 
-    #pragma omp parallel for collapse(2) default(none) shared(A, B, C) firstprivate(n, m, k, alpha, beta)
+#pragma omp parallel for collapse(2) default(none) shared(A, B, C) firstprivate(n, m, k, alpha, beta)
     for (std::size_t rhs = 0; rhs < n; ++rhs) {
         for (std::size_t row = 0; row < m; ++row) {
             real_type temp{ 0.0 };
-            #pragma omp simd reduction(+ : temp)
+#pragma omp simd reduction(+ : temp)
             for (std::size_t dim = 0; dim < k; ++dim) {
                 temp += A[row * k + dim] * B(rhs, dim);
             }
@@ -44,7 +44,7 @@ void device_kernel_symm(const unsigned long long m, const unsigned long long n, 
     PLSSVM_ASSERT(B.shape() == (plssvm::shape{ n, k }), "B matrix sizes mismatch!: {} != [{}, {}]", B.shape(), n, k);
     PLSSVM_ASSERT(C.shape() == (plssvm::shape{ n, m }), "C matrix sizes mismatch!: {} != [{}, {}]", C.shape(), n, m);
 
-    #pragma omp parallel for collapse(2) default(none) shared(A, B, C) firstprivate(n, m, k, alpha, beta)
+#pragma omp parallel for collapse(2) default(none) shared(A, B, C) firstprivate(n, m, k, alpha, beta)
     for (std::size_t rhs = 0; rhs < n; ++rhs) {
         for (std::size_t row = 0; row < m; ++row) {
             real_type temp{ 0.0 };
@@ -57,7 +57,7 @@ void device_kernel_symm(const unsigned long long m, const unsigned long long n, 
             }
             // diagonal + right of the diagonal -> use contiguous values
             offset += row;
-            #pragma omp simd reduction(+ : temp)
+#pragma omp simd reduction(+ : temp)
             for (unsigned long long dim = row; dim < k; ++dim) {
                 temp += A[row * k + dim - offset] * B(rhs, dim);
             }

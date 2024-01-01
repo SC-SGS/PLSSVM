@@ -46,8 +46,8 @@ set(DOXYGEN_PREDEFINED "__attribute__((x))=;__CUDA_ARCH__=0;PLSSVM_SYCL_BACKEND_
 
 set(DOXYGEN_VERBATIM_VARS DOXYGEN_ALIASES)
 set(DOXYGEN_ALIASES
-        [[license="\par License^^\parblock^^"  ]]
-        )
+    [[license="\par License^^\parblock^^"  ]]
+)
 
 ## add doxygen as target
 doxygen_add_docs(

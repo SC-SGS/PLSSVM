@@ -108,5 +108,4 @@ template float kernel_function(const matrix<float, layout_type::soa> &, const st
 template double kernel_function(const matrix<double, layout_type::aos> &, const std::size_t, const matrix<double, layout_type::aos> &, const std::size_t, const parameter &);
 template double kernel_function(const matrix<double, layout_type::soa> &, const std::size_t, const matrix<double, layout_type::soa> &, const std::size_t, const parameter &);
 
-
 }  // namespace plssvm

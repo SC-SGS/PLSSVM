@@ -52,17 +52,20 @@ class source_location {
      * @return the file name (`[[nodiscard]]`)
      */
     [[nodiscard]] constexpr std::string_view function_name() const noexcept { return function_name_; }
+
     /**
      * @brief Returns the function name without additional signature information (i.e. return type and parameters)
      *        or `"unknown"` if no information could be retrieved.
      * @return the function name (`[[nodiscard]]`)
      */
     [[nodiscard]] constexpr std::string_view file_name() const noexcept { return file_name_; }
+
     /**
      * @brief Returns the line number or `0` if no information could be retrieved.
      * @return the line number (`[[nodiscard]]`)
      */
     [[nodiscard]] constexpr std::uint_least32_t line() const noexcept { return line_; }
+
     /**
      * @brief Returns the column number.
      * @attention Always `0`!

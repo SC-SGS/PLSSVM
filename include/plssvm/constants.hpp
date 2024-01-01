@@ -44,7 +44,7 @@ constexpr unsigned INTERNAL_BLOCK_SIZE = 4;
 constexpr unsigned FEATURE_BLOCK_SIZE = 2 * THREAD_BLOCK_SIZE;
 
 /// Padding used for the device w_d matrix to prevent out-of-bounce accesses without ifs.
-constexpr unsigned PADDING_SIZE = FEATURE_BLOCK_SIZE > (THREAD_BLOCK_SIZE * INTERNAL_BLOCK_SIZE) ? FEATURE_BLOCK_SIZE : (THREAD_BLOCK_SIZE * INTERNAL_BLOCK_SIZE);
+constexpr unsigned PADDING_SIZE = FEATURE_BLOCK_SIZE > (THREAD_BLOCK_SIZE * INTERNAL_BLOCK_SIZE) ? FEATURE_BLOCK_SIZE : (THREAD_BLOCK_SIZE *INTERNAL_BLOCK_SIZE);
 
 // perform sanity checks
 static_assert(detail::tuple_contains_v<real_type, detail::supported_real_types>, "Illegal real type provided! See the 'real_type_list' in the type_list.hpp header for a list of the allowed types.");

@@ -8,11 +8,10 @@
 
 #include "plssvm/backends/SYCL/AdaptiveCpp/csvm.hpp"
 
-#include "plssvm/backends/SYCL/AdaptiveCpp/detail/device_ptr.hpp"  // plssvm::adaptivecpp::detail::::device_ptr
-#include "plssvm/backends/SYCL/AdaptiveCpp/detail/queue_impl.hpp"  // plssvm::adaptivecpp::detail::queue (PImpl implementation)
-#include "plssvm/backends/SYCL/AdaptiveCpp/detail/utility.hpp"     // plssvm::adaptivecpp::detail::{get_device_list, device_synchronize, get_adaptivecpp_version_short, get_adaptivecpp_version}
-
 #include "plssvm/backend_types.hpp"                                          // plssvm::backend_type
+#include "plssvm/backends/SYCL/AdaptiveCpp/detail/device_ptr.hpp"            // plssvm::adaptivecpp::detail::::device_ptr
+#include "plssvm/backends/SYCL/AdaptiveCpp/detail/queue_impl.hpp"            // plssvm::adaptivecpp::detail::queue (PImpl implementation)
+#include "plssvm/backends/SYCL/AdaptiveCpp/detail/utility.hpp"               // plssvm::adaptivecpp::detail::{get_device_list, device_synchronize, get_adaptivecpp_version_short, get_adaptivecpp_version}
 #include "plssvm/backends/SYCL/cg_explicit/blas.hpp"                         // plssvm::sycl::device_kernel_gemm
 #include "plssvm/backends/SYCL/cg_explicit/kernel_matrix_assembly.hpp"       // plssvm::sycl::{device_kernel_assembly_linear, device_kernel_assembly_polynomial, device_kernel_assembly_rbf}
 #include "plssvm/backends/SYCL/cg_implicit/kernel_matrix_assembly_blas.hpp"  // plssvm::sycl::{device_kernel_assembly_linear_symm, device_kernel_assembly_polynomial_symm, device_kernel_assembly_rbf_symm}
@@ -31,10 +30,11 @@
 #include "plssvm/target_platforms.hpp"                                       // plssvm::target_platform
 #include "plssvm/verbosity_levels.hpp"                                       // plssvm::verbosity_level
 
+#include "sycl/sycl.hpp"  // ::sycl::range, ::sycl::nd_range, ::sycl::handler, ::sycl::info::device
+
 #include "fmt/color.h"    // fmt::fg, fmt::color::orange
 #include "fmt/core.h"     // fmt::format
 #include "fmt/ostream.h"  // can use fmt using operator<< overloads
-#include "sycl/sycl.hpp"  // ::sycl::range, ::sycl::nd_range, ::sycl::handler, ::sycl::info::device
 
 #include <cstddef>    // std::size_t
 #include <exception>  // std::terminate
@@ -45,7 +45,7 @@
 namespace plssvm::adaptivecpp {
 
 csvm::csvm(parameter params) :
-    csvm{ plssvm::target_platform::automatic, params } {}
+    csvm{ plssvm::target_platform::automatic, params } { }
 
 csvm::csvm(target_platform target, parameter params) :
     base_type{ params } {

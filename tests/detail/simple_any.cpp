@@ -12,9 +12,9 @@
 
 #include "gtest/gtest.h"  // TEST, EXPECT_EQ, EXPECT_TRUE
 
+#include <memory>  // std::shared_ptr
 #include <string>  // std::string
 #include <vector>  // std::vector
-#include <memory>  // std::shared_ptr
 
 TEST(SimpleAny, construct) {
     // construct simple_any objects
@@ -45,6 +45,7 @@ TEST(SimpleAny, get) {
     plssvm::detail::simple_any a{ 42 };
     EXPECT_EQ(a.get<int>(), 42);
 }
+
 TEST(SimpleAny, get_wrong_type) {
     // construct simple_any object
     plssvm::detail::simple_any a{ 42 };
@@ -58,6 +59,7 @@ TEST(SimpleAny, get_const) {
     const plssvm::detail::simple_any a{ 42 };
     EXPECT_EQ(a.get<int>(), 42);
 }
+
 TEST(SimpleAny, get_const_wrong_type) {
     // construct simple_any object
     const plssvm::detail::simple_any a{ 42 };

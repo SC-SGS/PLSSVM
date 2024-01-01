@@ -16,7 +16,8 @@
 #include "plssvm/detail/assert.hpp"                         // PLSSVM_ASSERT
 #include "plssvm/shape.hpp"                                 // plssvm::shape
 
-#include "CL/cl.h"     // CL_MEM_READ_WRITE, CL_TRUE, clFinish, clCreateBuffer, clReleaseMemObject, clEnqueueFillBuffer, clEnqueueWriteBuffer, clEnqueueReadBuffer
+#include "CL/cl.h"  // CL_MEM_READ_WRITE, CL_TRUE, clFinish, clCreateBuffer, clReleaseMemObject, clEnqueueFillBuffer, clEnqueueWriteBuffer, clEnqueueReadBuffer
+
 #include "fmt/core.h"  // fmt::format
 
 #include <algorithm>  // std::min
@@ -26,11 +27,11 @@ namespace plssvm::opencl::detail {
 
 template <typename T>
 device_ptr<T>::device_ptr(const size_type size, const command_queue &queue) :
-    device_ptr{ plssvm::shape{ size, 1 }, plssvm::shape{ 0, 0 }, queue } {}
+    device_ptr{ plssvm::shape{ size, 1 }, plssvm::shape{ 0, 0 }, queue } { }
 
 template <typename T>
 device_ptr<T>::device_ptr(const plssvm::shape shape, const command_queue &queue) :
-    device_ptr{ shape, plssvm::shape{ 0, 0 }, queue } {}
+    device_ptr{ shape, plssvm::shape{ 0, 0 }, queue } { }
 
 template <typename T>
 device_ptr<T>::device_ptr(const plssvm::shape shape, const plssvm::shape padding, const command_queue &queue) :

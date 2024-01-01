@@ -81,6 +81,7 @@ class classification_report {
         /// The number of times the label associated with this metric occurs in the correct label list.
         unsigned long long support{};
     };
+
     /**
      * @brief Struct encapsulating the different values used for the accuracy metric, i.e., the achieved accuracy (floating point, **not** percent),
      *        the number of correctly predicted labels, and the total number of labels.
@@ -112,11 +113,13 @@ class classification_report {
      * @return the confusion matrix (`[[nodiscard]]`)
      */
     [[nodiscard]] const aos_matrix<unsigned long long> &confusion_matrix() const noexcept { return confusion_matrix_; }
+
     /**
      * @brief Return the achieved accuracy.
      * @return the achieved accuracy (`[[nodiscard]]`)
      */
     [[nodiscard]] accuracy_metric accuracy() const noexcept { return accuracy_; }
+
     /**
      * @brief Get the metrics associated with the provided @p label.
      * @details The metrics are: precision, recall, f1 score, and support.
@@ -310,10 +313,12 @@ std::istream &operator>>(std::istream &in, classification_report::zero_division_
 }  // namespace plssvm
 
 template <>
-struct fmt::formatter<plssvm::classification_report> : fmt::ostream_formatter {};
+struct fmt::formatter<plssvm::classification_report> : fmt::ostream_formatter { };
+
 template <>
-struct fmt::formatter<plssvm::classification_report::accuracy_metric> : fmt::ostream_formatter {};
+struct fmt::formatter<plssvm::classification_report::accuracy_metric> : fmt::ostream_formatter { };
+
 template <>
-struct fmt::formatter<plssvm::classification_report::zero_division_behavior> : fmt::ostream_formatter {};
+struct fmt::formatter<plssvm::classification_report::zero_division_behavior> : fmt::ostream_formatter { };
 
 #endif  // PLSSVM_CLASSIFICATION_REPORT_HPP_

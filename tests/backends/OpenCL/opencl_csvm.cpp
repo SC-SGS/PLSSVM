@@ -6,8 +6,6 @@
  *          See the LICENSE.md file in the project root for full license information.
  */
 
-#include "backends/OpenCL/mock_opencl_csvm.hpp"
-
 #include "plssvm/backend_types.hpp"                // plssvm::csvm_to_backend_type_v
 #include "plssvm/backends/OpenCL/csvm.hpp"         // plssvm::opencl::csvm
 #include "plssvm/backends/OpenCL/exceptions.hpp"   // plssvm::opencl::backend_exception
@@ -17,24 +15,27 @@
 #include "plssvm/parameter.hpp"                    // plssvm::parameter, plssvm::kernel_type, plssvm::cost
 #include "plssvm/target_platforms.hpp"             // plssvm::target_platform
 
-#include "backends/generic_csvm_tests.hpp"      // generic CSVM tests to instantiate
-#include "backends/generic_gpu_csvm_tests.hpp"  // generic GPU CSVM tests to instantiate
-#include "custom_test_macros.hpp"               // EXPECT_THROW_WHAT
-#include "naming.hpp"                           // naming::test_parameter_to_name
-#include "types_to_test.hpp"                    // util::{cartesian_type_product_t, combine_test_parameters_gtest_t}
-#include "utility.hpp"                          // util::redirect_output
+#include "tests/backends/generic_csvm_tests.hpp"       // generic CSVM tests to instantiate
+#include "tests/backends/generic_gpu_csvm_tests.hpp"   // generic GPU CSVM tests to instantiate
+#include "tests/backends/OpenCL/mock_opencl_csvm.hpp"  // mock_opencl_csvm
+#include "tests/custom_test_macros.hpp"                // EXPECT_THROW_WHAT
+#include "tests/naming.hpp"                            // naming::test_parameter_to_name
+#include "tests/types_to_test.hpp"                     // util::{cartesian_type_product_t, combine_test_parameters_gtest_t}
+#include "tests/utility.hpp"                           // util::redirect_output
 
 #include "gtest/gtest.h"  // TEST_F, EXPECT_NO_THROW, INSTANTIATE_TYPED_TEST_SUITE_P, ::testing::Test
 
 #include <tuple>  // std::make_tuple, std::tuple
 
-class OpenCLCSVM : public ::testing::Test, private util::redirect_output<> {};
+class OpenCLCSVM : public ::testing::Test,
+                   private util::redirect_output<> { };
 
 // check whether the constructor correctly fails when using an incompatible target platform
 TEST_F(OpenCLCSVM, construct_parameter) {
     // the automatic target platform must always be available
     EXPECT_NO_THROW(plssvm::opencl::csvm{ plssvm::parameter{} });
 }
+
 TEST_F(OpenCLCSVM, construct_target_and_parameter) {
     // create parameter struct
     const plssvm::parameter params{};
@@ -69,6 +70,7 @@ TEST_F(OpenCLCSVM, construct_target_and_parameter) {
                       "Requested target platform 'gpu_intel' that hasn't been enabled using PLSSVM_TARGET_PLATFORMS!");
 #endif
 }
+
 TEST_F(OpenCLCSVM, construct_target_and_named_args) {
     // every target is allowed for OpenCL
 #if defined(PLSSVM_HAS_CPU_TARGET)
@@ -109,8 +111,9 @@ struct opencl_csvm_test_type {
     using mock_csvm_type = mock_opencl_csvm;
     using csvm_type = plssvm::opencl::csvm;
     using device_ptr_type = typename csvm_type::device_ptr_type;
-    inline static constexpr auto additional_arguments = std::make_tuple();
+    inline constexpr static auto additional_arguments = std::make_tuple();
 };
+
 using opencl_csvm_test_tuple = std::tuple<opencl_csvm_test_type>;
 using opencl_csvm_test_label_type_list = util::cartesian_type_product_t<opencl_csvm_test_tuple, plssvm::detail::supported_label_types>;
 using opencl_csvm_test_type_list = util::cartesian_type_product_t<opencl_csvm_test_tuple>;

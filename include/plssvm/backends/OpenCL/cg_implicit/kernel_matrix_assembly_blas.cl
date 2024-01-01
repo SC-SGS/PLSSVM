@@ -27,7 +27,7 @@
  * @param[in,out] C the matrix @p C
  * @param[in] num_classes the number of classes in the data set
  */
-__kernel void device_kernel_assembly_linear_symm(const real_type alpha, __global const real_type *q, __global const real_type *data_d, const ulong num_rows, const ulong num_features, const real_type QA_cost, const real_type cost, __global const real_type *B, __global real_type *C, const ulong num_classes) {
+__kernel void device_kernel_assembly_linear_symm(const real_type alpha, const __global real_type *q, const __global real_type *data_d, const ulong num_rows, const ulong num_features, const real_type QA_cost, const real_type cost, const __global real_type *B, __global real_type *C, const ulong num_classes) {
     const ulong i = get_global_id(0) * INTERNAL_BLOCK_SIZE;
     const ulong i_linear = get_group_id(0) * get_local_size(0) * INTERNAL_BLOCK_SIZE + get_local_id(0);
     const ulong j = get_global_id(1) * INTERNAL_BLOCK_SIZE;
@@ -105,7 +105,7 @@ __kernel void device_kernel_assembly_linear_symm(const real_type alpha, __global
  * @param[in,out] C the matrix @p C
  * @param[in] num_classes the number of classes in the data set
  */
-__kernel void device_kernel_assembly_polynomial_symm(const real_type alpha, __global const real_type *q, __global const real_type *data_d, const ulong num_rows, const ulong num_features, const real_type QA_cost, const real_type cost, const int degree, const real_type gamma, const real_type coef0, __global const real_type *B, __global real_type *C, const ulong num_classes) {
+__kernel void device_kernel_assembly_polynomial_symm(const real_type alpha, const __global real_type *q, const __global real_type *data_d, const ulong num_rows, const ulong num_features, const real_type QA_cost, const real_type cost, const int degree, const real_type gamma, const real_type coef0, const __global real_type *B, __global real_type *C, const ulong num_classes) {
     const ulong i = get_global_id(0) * INTERNAL_BLOCK_SIZE;
     const ulong i_linear = get_group_id(0) * get_local_size(0) * INTERNAL_BLOCK_SIZE + get_local_id(0);
     const ulong j = get_global_id(1) * INTERNAL_BLOCK_SIZE;
@@ -181,7 +181,7 @@ __kernel void device_kernel_assembly_polynomial_symm(const real_type alpha, __gl
  * @param[in,out] C the matrix @p C
  * @param[in] num_classes the number of classes in the data set
  */
-__kernel void device_kernel_assembly_rbf_symm(const real_type alpha, __global const real_type *q, __global const real_type *data_d, const ulong num_rows, const ulong num_features, const real_type QA_cost, const real_type cost, const real_type gamma, __global const real_type *B, __global real_type *C, const ulong num_classes) {
+__kernel void device_kernel_assembly_rbf_symm(const real_type alpha, const __global real_type *q, const __global real_type *data_d, const ulong num_rows, const ulong num_features, const real_type QA_cost, const real_type cost, const real_type gamma, const __global real_type *B, __global real_type *C, const ulong num_classes) {
     const ulong i = get_global_id(0) * INTERNAL_BLOCK_SIZE;
     const ulong i_linear = get_group_id(0) * get_local_size(0) * INTERNAL_BLOCK_SIZE + get_local_id(0);
     const ulong j = get_global_id(1) * INTERNAL_BLOCK_SIZE;

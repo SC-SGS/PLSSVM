@@ -115,8 +115,7 @@ namespace plssvm::detail::io {
         global_idx = index_sets[i].size() + std::distance(index_sets[j].cbegin(), std::lower_bound(index_sets[j].cbegin(), index_sets[j].cend(), idx_to_find));
     }
 
-    PLSSVM_ASSERT(global_idx < index_sets[i].size() + index_sets[j].size(), "The global index ({}) for the provided index to find ({}) must be smaller than the combined size of both index sets ({} + {})!",
-                  global_idx, idx_to_find, index_sets[i].size(), index_sets[j].size());
+    PLSSVM_ASSERT(global_idx < index_sets[i].size() + index_sets[j].size(), "The global index ({}) for the provided index to find ({}) must be smaller than the combined size of both index sets ({} + {})!", global_idx, idx_to_find, index_sets[i].size(), index_sets[j].size());
 
     return global_idx;
 }
@@ -408,9 +407,9 @@ template <typename label_type>
 
     std::exception_ptr parallel_exception;
 
-    #pragma omp parallel default(none) shared(reader, skipped_lines, data, alpha, parallel_exception, is_oaa, is_oao) firstprivate(num_data_points, max_num_alpha_values)
+#pragma omp parallel default(none) shared(reader, skipped_lines, data, alpha, parallel_exception, is_oaa, is_oao) firstprivate(num_data_points, max_num_alpha_values)
     {
-        #pragma omp for
+#pragma omp for
         for (std::size_t i = 0; i < num_data_points; ++i) {
             try {
                 const std::string_view line = reader.line(skipped_lines + i);
@@ -441,10 +440,10 @@ template <typename label_type>
 
                 // check whether we read a file given OAA classification or OAO classification
                 if (alpha_val == max_num_alpha_values) {
-                    #pragma omp critical
+#pragma omp critical
                     is_oaa = true;
                 } else if (alpha_val == max_num_alpha_values - 1) {
-                    #pragma omp critical
+#pragma omp critical
                     is_oao = true;
                 }
 
@@ -480,8 +479,8 @@ template <typename label_type>
                     pos = next_pos;
                 }
             } catch (const std::exception &) {
-                // catch first exception and store it
-                #pragma omp critical
+// catch first exception and store it
+#pragma omp critical
                 {
                     if (!parallel_exception) {
                         parallel_exception = std::current_exception();
@@ -718,9 +717,9 @@ inline void write_libsvm_model_data(const std::string &filename, const plssvm::p
     // separators: 2 chars (: between index and feature + whitespace after feature value)
     // -> 40 chars in total
     // -> increased to 48 chars to be on the safe side
-    static constexpr std::size_t CHARS_PER_BLOCK = 48;
+    constexpr static std::size_t CHARS_PER_BLOCK = 48;
     // results in 48 B * 128 B = 6 KiB stack buffer per thread
-    static constexpr std::size_t BLOCK_SIZE = 128;
+    constexpr static std::size_t BLOCK_SIZE = 128;
     // use 1 MiB as buffer per thread
     constexpr detail::memory_size STRING_BUFFER_SIZE = 1_MiB;
 
@@ -728,7 +727,7 @@ inline void write_libsvm_model_data(const std::string &filename, const plssvm::p
     auto format_libsvm_line = [](std::string &output, const std::vector<real_type> &a, const soa_matrix<real_type> &d, const std::size_t point) {
         static constexpr std::size_t STACK_BUFFER_SIZE = BLOCK_SIZE * CHARS_PER_BLOCK;
         static std::array<char, STACK_BUFFER_SIZE> buffer{};
-        #pragma omp threadprivate(buffer)
+#pragma omp threadprivate(buffer)
 
         output.append(fmt::format("{:.10e} ", fmt::join(a, " ")));
         for (typename std::vector<real_type>::size_type j = 0; j < d.num_cols(); j += BLOCK_SIZE) {
@@ -747,7 +746,7 @@ inline void write_libsvm_model_data(const std::string &filename, const plssvm::p
     // initialize volatile array
     auto counts = std::make_unique<volatile int[]>(label_order.size() + 1);
     counts[0] = std::numeric_limits<int>::max();
-    #pragma omp parallel default(none) shared(counts, alpha, format_libsvm_line, label_order, labels, support_vectors, out, index_sets) firstprivate(STRING_BUFFER_SIZE, num_features, num_classes, num_alpha_per_point, classification)
+#pragma omp parallel default(none) shared(counts, alpha, format_libsvm_line, label_order, labels, support_vectors, out, index_sets) firstprivate(STRING_BUFFER_SIZE, num_features, num_classes, num_alpha_per_point, classification)
     {
         // preallocate string buffer, only ONE allocation
         std::string out_string;
@@ -756,8 +755,8 @@ inline void write_libsvm_model_data(const std::string &filename, const plssvm::p
 
         // loop over all classes, since they must be sorted
         for (typename std::vector<label_type>::size_type l = 0; l < label_order.size(); ++l) {
-            // the support vectors with the l-th class
-            #pragma omp for nowait
+// the support vectors with the l-th class
+#pragma omp for nowait
             for (typename std::vector<real_type>::size_type i = 0; i < support_vectors.num_rows(); ++i) {
                 if (labels[i] == label_order[l]) {
                     switch (classification) {
@@ -787,7 +786,7 @@ inline void write_libsvm_model_data(const std::string &filename, const plssvm::p
                         while (counts[l] < omp_get_num_threads()) {
                         }
 #endif
-                        #pragma omp critical
+#pragma omp critical
                         {
                             out.print("{}", out_string);
                         }
@@ -802,7 +801,7 @@ inline void write_libsvm_model_data(const std::string &filename, const plssvm::p
             }
 #endif
 
-            #pragma omp critical
+#pragma omp critical
             {
                 if (!out_string.empty()) {
                     out.print("{}", out_string);

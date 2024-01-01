@@ -48,6 +48,6 @@ std::istream &operator>>(std::istream &in, file_format_type &format);
 }  // namespace plssvm
 
 template <>
-struct fmt::formatter<plssvm::file_format_type> : fmt::ostream_formatter {};
+struct fmt::formatter<plssvm::file_format_type> : fmt::ostream_formatter { };
 
 #endif  // PLSSVM_FILE_FORMAT_TYPES_HPP_

@@ -103,6 +103,7 @@ class csvm {
      * @return the target platform (`[[nodiscard]]`)
      */
     [[nodiscard]] target_platform get_target_platform() const noexcept { return target_; }
+
     /**
      * @brief Return the currently used SVM parameter.
      * @return the SVM parameter (`[[nodiscard]]`)
@@ -114,6 +115,7 @@ class csvm {
      * @param[in] params the new SVM parameter to use
      */
     void set_params(parameter params) noexcept { params_ = params; }
+
     /**
      * @brief Override the old SVM parameter with the new ones given as named parameters in @p named_args.
      * @tparam Args the type of the named-parameters
@@ -428,7 +430,7 @@ model<label_type> csvm::fit(const data_set<label_type> &data, Args &&...named_ar
             // reduce the size of the rhs (y_ptr)
             // -> consistent with the multi-class case as well as when reading the model from file in the model class constructor
             aos_matrix<real_type> reduced_y{ shape{ 1, data.y_ptr_->num_cols() } };
-            #pragma omp parallel for default(none) shared(data, reduced_y)
+#pragma omp parallel for default(none) shared(data, reduced_y)
             for (std::size_t col = 0; col < data.y_ptr_->num_cols(); ++col) {
                 reduced_y(0, col) = (*data.y_ptr_)(0, col);
             }
@@ -452,8 +454,8 @@ model<label_type> csvm::fit(const data_set<label_type> &data, Args &&...named_ar
                     // order the indices in increasing order
                     std::vector<std::size_t> sorted_indices(num_data_points_in_sub_matrix);
                     std::merge(index_sets[i].cbegin(), index_sets[i].cend(), index_sets[j].cbegin(), index_sets[j].cend(), sorted_indices.begin());
-                    // copy the data points to the binary data set
-                    #pragma omp parallel for default(none) shared(sorted_indices, binary_data, binary_y, data, index_sets) firstprivate(num_data_points_in_sub_matrix, num_features, i)
+// copy the data points to the binary data set
+#pragma omp parallel for default(none) shared(sorted_indices, binary_data, binary_y, data, index_sets) firstprivate(num_data_points_in_sub_matrix, num_features, i)
                     for (std::size_t si = 0; si < num_data_points_in_sub_matrix; ++si) {
                         for (std::size_t dim = 0; dim < num_features; ++dim) {
                             binary_data(si, dim) = (*data.data_ptr_)(sorted_indices[si], dim);
@@ -510,7 +512,6 @@ std::vector<label_type> csvm::predict(const model<label_type> &model, const data
                   shape{ PADDING_SIZE, PADDING_SIZE },
                   data.data().padding());
 
-
     if (model.num_features() != data.num_features()) {
         throw invalid_parameter_exception{ fmt::format("Number of features per data point ({}) must match the number of features per support vector of the provided model ({})!", data.num_features(), model.num_features()) };
     }
@@ -537,8 +538,8 @@ std::vector<label_type> csvm::predict(const model<label_type> &model, const data
         PLSSVM_ASSERT(votes.num_rows() == data.num_data_points(), "The number of votes ({}) must be equal the number of data points ({})!", votes.num_rows(), data.num_data_points());
         PLSSVM_ASSERT(votes.num_cols() == calculate_number_of_classifiers(classification_type::oaa, model.num_classes()), "The votes contain {} values, but must contain {} values!", votes.num_cols(), calculate_number_of_classifiers(classification_type::oaa, model.num_classes()));
 
-        // use voting
-        #pragma omp parallel for default(none) shared(predicted_labels, votes, model) if (!std::is_same_v<label_type, bool>)
+// use voting
+#pragma omp parallel for default(none) shared(predicted_labels, votes, model) if (!std::is_same_v<label_type, bool>)
         for (typename std::vector<label_type>::size_type i = 0; i < predicted_labels.size(); ++i) {
             std::size_t argmax = 0;
             real_type max = std::numeric_limits<real_type>::lowest();
@@ -594,8 +595,8 @@ std::vector<label_type> csvm::predict(const model<label_type> &model, const data
                         soa_matrix<real_type> temp{ shape{ num_data_points_in_sub_matrix, num_features }, shape{ PADDING_SIZE, PADDING_SIZE } };
                         std::vector<std::size_t> sorted_indices(num_data_points_in_sub_matrix);
                         std::merge(index_sets[i].cbegin(), index_sets[i].cend(), index_sets[j].cbegin(), index_sets[j].cend(), sorted_indices.begin());
-                        // copy the support vectors to the binary support vectors
-                        #pragma omp parallel for collapse(2)
+// copy the support vectors to the binary support vectors
+#pragma omp parallel for collapse(2)
                         for (std::size_t si = 0; si < num_data_points_in_sub_matrix; ++si) {
                             for (std::size_t dim = 0; dim < num_features; ++dim) {
                                 temp(si, dim) = (*model.data_.data_ptr_)(sorted_indices[si], dim);
@@ -615,7 +616,7 @@ std::vector<label_type> csvm::predict(const model<label_type> &model, const data
                     binary_votes = this->run_predict_values(model.params_, binary_sv, binary_alpha, binary_rho, w, predict_points);
                     // only in case of the linear kernel, the w vector gets filled -> store it
                     if (params_.kernel_type == kernel_function_type::linear) {
-                        #pragma omp parallel for default(none) shared(model, w) firstprivate(num_features, pos)
+#pragma omp parallel for default(none) shared(model, w) firstprivate(num_features, pos)
                         for (std::size_t dim = 0; dim < num_features; ++dim) {
                             (*model.w_ptr_)(pos, dim) = w(0, dim);
                         }
@@ -623,7 +624,7 @@ std::vector<label_type> csvm::predict(const model<label_type> &model, const data
                 } else {
                     // use previously calculated w vector
                     soa_matrix<real_type> binary_w{ shape{ 1, num_features } };
-                    #pragma omp parallel for default(none) shared(model, binary_w) firstprivate(num_features, pos)
+#pragma omp parallel for default(none) shared(model, binary_w) firstprivate(num_features, pos)
                     for (std::size_t dim = 0; dim < num_features; ++dim) {
                         binary_w(0, dim) = (*model.w_ptr_)(pos, dim);
                     }
@@ -633,7 +634,7 @@ std::vector<label_type> csvm::predict(const model<label_type> &model, const data
                 PLSSVM_ASSERT(binary_votes.num_rows() == data.num_data_points(), "The number of votes ({}) must be equal the number of data points ({})!", binary_votes.num_rows(), data.num_data_points());
                 PLSSVM_ASSERT(binary_votes.num_cols() == 1, "The votes contain {} values, but must contain one value!", binary_votes.num_cols());
 
-                #pragma omp parallel for default(none) shared(data, binary_votes, class_votes) firstprivate(i, j)
+#pragma omp parallel for default(none) shared(data, binary_votes, class_votes) firstprivate(i, j)
                 for (std::size_t d = 0; d < data.num_data_points(); ++d) {
                     if (binary_votes(d, 0) > real_type{ 0.0 }) {
                         ++class_votes(d, i);
@@ -648,8 +649,8 @@ std::vector<label_type> csvm::predict(const model<label_type> &model, const data
             }
         }
 
-        // map majority vote to predicted class
-        #pragma omp parallel for default(none) shared(predicted_labels, class_votes, model) if (!std::is_same_v<label_type, bool>)
+// map majority vote to predicted class
+#pragma omp parallel for default(none) shared(predicted_labels, class_votes, model) if (!std::is_same_v<label_type, bool>)
         for (typename std::vector<label_type>::size_type i = 0; i < predicted_labels.size(); ++i) {
             std::size_t argmax = 0;
             real_type max = std::numeric_limits<real_type>::lowest();
@@ -689,7 +690,7 @@ real_type csvm::score(const model<label_type> &model, const data_set<label_type>
 
     // calculate the accuracy
     typename std::vector<label_type>::size_type correct{ 0 };
-    #pragma omp parallel for default(none) shared(predicted_labels, correct_labels) reduction(+ : correct)
+#pragma omp parallel for default(none) shared(predicted_labels, correct_labels) reduction(+ : correct)
     for (typename std::vector<label_type>::size_type i = 0; i < predicted_labels.size(); ++i) {
         if (predicted_labels[i] == correct_labels[i]) {
             ++correct;
@@ -841,7 +842,7 @@ std::tuple<aos_matrix<real_type>, std::vector<real_type>, unsigned long long> cs
     // update right-hand sides (B)
     std::vector<real_type> b_back_value(num_rhs);
     soa_matrix<real_type> B_red{ shape{ num_rhs, num_rows_reduced } };
-    #pragma omp parallel for default(none) shared(B, B_red, b_back_value) firstprivate(num_rhs, num_rows_reduced)
+#pragma omp parallel for default(none) shared(B, B_red, b_back_value) firstprivate(num_rhs, num_rows_reduced)
     for (std::size_t row = 0; row < num_rhs; ++row) {
         b_back_value[row] = B(row, num_rows_reduced);
         for (std::size_t col = 0; col < num_rows_reduced; ++col) {
@@ -873,11 +874,11 @@ std::tuple<aos_matrix<real_type>, std::vector<real_type>, unsigned long long> cs
     // calculate bias and undo dimensional reduction
     aos_matrix<real_type> X_ret{ shape{ num_rhs, A.num_rows() }, shape{ PADDING_SIZE, PADDING_SIZE } };
     std::vector<real_type> bias(num_rhs);
-    #pragma omp parallel for default(none) shared(X, q_red, X_ret, bias, b_back_value) firstprivate(num_rhs, num_rows_reduced, QA_cost)
+#pragma omp parallel for default(none) shared(X, q_red, X_ret, bias, b_back_value) firstprivate(num_rhs, num_rows_reduced, QA_cost)
     for (std::size_t i = 0; i < num_rhs; ++i) {
         real_type temp_sum{ 0.0 };
         real_type temp_dot{ 0.0 };
-        #pragma omp simd reduction(+ : temp_sum) reduction(+ : temp_dot)
+#pragma omp simd reduction(+ : temp_sum) reduction(+ : temp_dot)
         for (std::size_t dim = 0; dim < num_rows_reduced; ++dim) {
             temp_sum += X(i, dim);
             temp_dot += q_red[dim] * X(i, dim);
@@ -899,9 +900,10 @@ namespace detail {
  * @tparam T the type of the C-SVM
  */
 template <typename T>
-struct csvm_backend_exists : std::false_type {};
+struct csvm_backend_exists : std::false_type { };
 
 }  // namespace detail
+
 /// @endcond
 
 /**
@@ -909,7 +911,7 @@ struct csvm_backend_exists : std::false_type {};
  * @tparam T the type of the C-SVM
  */
 template <typename T>
-struct csvm_backend_exists : detail::csvm_backend_exists<detail::remove_cvref_t<T>> {};
+struct csvm_backend_exists : detail::csvm_backend_exists<detail::remove_cvref_t<T>> { };
 
 /**
  * @brief Sets the value of the `value` member to `true` if @p T is a C-SVM using an available backend. Ignores any top-level const, volatile, and reference qualifiers.

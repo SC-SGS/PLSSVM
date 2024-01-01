@@ -15,9 +15,9 @@ endif ()
 # try to automatically find the header files in the standard directories
 if (NOT EXISTS "${fast_float_INCLUDE_DIR}")
     find_path(fast_float_INCLUDE_DIR
-            NAMES fast_float.hpp
-            DOC "fast_float header-only library header files"
-            )
+              NAMES fast_float.hpp
+              DOC "fast_float header-only library header files"
+    )
 endif ()
 
 # allow the user to specify the include directory in the CMake call (if provided, used instead of the environment variable)

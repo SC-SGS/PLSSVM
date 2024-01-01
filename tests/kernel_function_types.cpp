@@ -14,11 +14,11 @@
 #include "plssvm/detail/utility.hpp"  // plssvm::detail::{contains, erase_if}
 #include "plssvm/parameter.hpp"       // plssvm::parameter
 
-#include "backends/ground_truth.hpp"  // ground_truth::detail::{linear_kernel, poly_kernel, rbf_kernel}
-#include "custom_test_macros.hpp"     // EXPECT_CONVERSION_TO_STRING, EXPECT_CONVERSION_FROM_STRING, EXPECT_THROW_WHAT, EXPECT_FLOATING_POINT_NEAR, EXPECT_FLOATING_POINT_NEAR_EPS
-#include "naming.hpp"                 // naming::test_parameter_to_name
-#include "types_to_test.hpp"          // util::{real_type_gtest, test_parameter_type_at_t, test_parameter_value_at_v}
-#include "utility.hpp"                // util::{generate_random_vector, generate_random_matrix}
+#include "tests/backends/ground_truth.hpp"  // ground_truth::detail::{linear_kernel, poly_kernel, rbf_kernel}
+#include "tests/custom_test_macros.hpp"     // EXPECT_CONVERSION_TO_STRING, EXPECT_CONVERSION_FROM_STRING, EXPECT_THROW_WHAT, EXPECT_FLOATING_POINT_NEAR, EXPECT_FLOATING_POINT_NEAR_EPS
+#include "tests/naming.hpp"                 // naming::test_parameter_to_name
+#include "tests/types_to_test.hpp"          // util::{real_type_gtest, test_parameter_type_at_t, test_parameter_value_at_v}
+#include "tests/utility.hpp"                // util::{generate_random_vector, generate_random_matrix}
 
 #include "fmt/core.h"     // fmt::format
 #include "gtest/gtest.h"  // TEST, TYPED_TEST, TYPED_TEST_SUITE, EXPECT_EQ, EXPECT_TRUE, EXPECT_FALSE, EXPECT_DEATH, SCOPED_TRACE, ::testing::Test
@@ -36,6 +36,7 @@ TEST(KernelType, to_string) {
     EXPECT_CONVERSION_TO_STRING(plssvm::kernel_function_type::polynomial, "polynomial");
     EXPECT_CONVERSION_TO_STRING(plssvm::kernel_function_type::rbf, "rbf");
 }
+
 TEST(KernelType, to_string_unknown) {
     // check conversions to std::string from unknown kernel_type
     EXPECT_CONVERSION_TO_STRING(static_cast<plssvm::kernel_function_type>(3), "unknown");
@@ -55,6 +56,7 @@ TEST(KernelType, from_string) {
     EXPECT_CONVERSION_FROM_STRING("rBf", plssvm::kernel_function_type::rbf);
     EXPECT_CONVERSION_FROM_STRING("2", plssvm::kernel_function_type::rbf);
 }
+
 TEST(KernelType, from_string_unknown) {
     // foo isn't a valid kernel_type
     std::istringstream input{ "foo" };
@@ -70,6 +72,7 @@ TEST(KernelType, kernel_to_math_string) {
     EXPECT_EQ(plssvm::kernel_function_type_to_math_string(plssvm::kernel_function_type::polynomial), "(gamma*u'*v+coef0)^degree");
     EXPECT_EQ(plssvm::kernel_function_type_to_math_string(plssvm::kernel_function_type::rbf), "exp(-gamma*|u-v|^2)");
 }
+
 TEST(KernelType, kernel_to_math_string_unkown) {
     // check conversion from an unknown plssvm::kernel_function_type to the (non-existing) math string
     EXPECT_EQ(plssvm::kernel_function_type_to_math_string(static_cast<plssvm::kernel_function_type>(3)), "unknown");
@@ -89,6 +92,7 @@ class KernelFunctionVector : public ::testing::Test {
      * @return the vector sizes (`[[nodiscard]]`)
      */
     [[nodiscard]] virtual std::vector<std::size_t> get_sizes() const noexcept { return sizes_; }
+
     /**
      * @brief Return the different parameter values to test.
      * @return the parameter values (`[[nodiscard]]`)
@@ -106,6 +110,7 @@ class KernelFunctionVector : public ::testing::Test {
         std::array{ plssvm::real_type{ 2.0 }, plssvm::real_type{ 0.025 }, plssvm::real_type{ -1.0 }, plssvm::real_type{ 0.5 } },
     };
 };
+
 TYPED_TEST_SUITE(KernelFunctionVector, util::real_type_gtest, naming::test_parameter_to_name);
 
 TYPED_TEST(KernelFunctionVector, linear_kernel_function_variadic) {
@@ -123,6 +128,7 @@ TYPED_TEST(KernelFunctionVector, linear_kernel_function_variadic) {
         }
     }
 }
+
 TYPED_TEST(KernelFunctionVector, linear_kernel_function_parameter) {
     using real_type = typename TestFixture::fixture_real_type;
 
@@ -158,6 +164,7 @@ TYPED_TEST(KernelFunctionVector, polynomial_kernel_function_variadic) {
         }
     }
 }
+
 TYPED_TEST(KernelFunctionVector, polynomial_kernel_function_parameter) {
     using real_type = typename TestFixture::fixture_real_type;
 
@@ -193,6 +200,7 @@ TYPED_TEST(KernelFunctionVector, radial_basis_function_kernel_function_variadic)
         }
     }
 }
+
 TYPED_TEST(KernelFunctionVector, radial_basis_function_kernel_function_parameter) {
     using real_type = typename TestFixture::fixture_real_type;
 
@@ -227,7 +235,8 @@ TYPED_TEST(KernelFunctionVector, unknown_kernel_function_parameter) {
 }
 
 template <typename T>
-class KernelFunctionVectorDeathTest : public KernelFunctionVector<T> {};
+class KernelFunctionVectorDeathTest : public KernelFunctionVector<T> { };
+
 TYPED_TEST_SUITE(KernelFunctionVectorDeathTest, util::real_type_gtest, naming::test_parameter_to_name);
 
 TYPED_TEST(KernelFunctionVectorDeathTest, size_mismatch_kernel_function_variadic) {
@@ -245,6 +254,7 @@ TYPED_TEST(KernelFunctionVectorDeathTest, size_mismatch_kernel_function_variadic
     EXPECT_DEATH(std::ignore = plssvm::kernel_function<plssvm::kernel_function_type::rbf>(x1, x2, real_type{ 0.0 }),
                  "Sizes mismatch!: 1 != 2");
 }
+
 TYPED_TEST(KernelFunctionVectorDeathTest, size_mismatch_kernel_function_parameter) {
     using real_type = typename TestFixture::fixture_real_type;
 
@@ -264,7 +274,7 @@ template <typename T>
 class KernelFunctionMatrix : public KernelFunctionVector<T> {
   protected:
     using typename KernelFunctionVector<T>::fixture_real_type;
-    static constexpr plssvm::layout_type fixture_layout = util::test_parameter_value_at_v<0, T>;
+    constexpr static plssvm::layout_type fixture_layout = util::test_parameter_value_at_v<0, T>;
 
     /**
      * @brief Return the different sizes to test. Removes the zero entry since it is not applicable to the matrix tests.
@@ -278,6 +288,7 @@ class KernelFunctionMatrix : public KernelFunctionVector<T> {
         return sizes;
     }
 };
+
 TYPED_TEST_SUITE(KernelFunctionMatrix, util::real_type_layout_type_gtest, naming::test_parameter_to_name);
 
 TYPED_TEST(KernelFunctionMatrix, linear_kernel_function_variadic) {
@@ -312,6 +323,7 @@ TYPED_TEST(KernelFunctionMatrix, linear_kernel_function_variadic) {
         }
     }
 }
+
 TYPED_TEST(KernelFunctionMatrix, linear_kernel_function_parameter) {
     using real_type = typename TestFixture::fixture_real_type;
     constexpr plssvm::layout_type layout = TestFixture::fixture_layout;
@@ -381,6 +393,7 @@ TYPED_TEST(KernelFunctionMatrix, polynomial_kernel_function_variadic) {
         }
     }
 }
+
 TYPED_TEST(KernelFunctionMatrix, polynomial_kernel_function_parameter) {
     using real_type = typename TestFixture::fixture_real_type;
     constexpr plssvm::layout_type layout = TestFixture::fixture_layout;
@@ -450,6 +463,7 @@ TYPED_TEST(KernelFunctionMatrix, rbf_kernel_function_variadic) {
         }
     }
 }
+
 TYPED_TEST(KernelFunctionMatrix, rbf_kernel_function_parameter) {
     using real_type = typename TestFixture::fixture_real_type;
     constexpr plssvm::layout_type layout = TestFixture::fixture_layout;
@@ -505,7 +519,8 @@ TYPED_TEST(KernelFunctionMatrix, unknown_kernel_function_parameter) {
 }
 
 template <typename T>
-class KernelFunctionMatrixDeathTest : public KernelFunctionMatrix<T> {};
+class KernelFunctionMatrixDeathTest : public KernelFunctionMatrix<T> { };
+
 TYPED_TEST_SUITE(KernelFunctionMatrixDeathTest, util::real_type_layout_type_gtest, naming::test_parameter_to_name);
 
 TYPED_TEST(KernelFunctionMatrixDeathTest, size_mismatch_kernel_function_variadic) {
@@ -524,6 +539,7 @@ TYPED_TEST(KernelFunctionMatrixDeathTest, size_mismatch_kernel_function_variadic
     EXPECT_DEATH(std::ignore = plssvm::kernel_function<plssvm::kernel_function_type::rbf>(matr1, 0, matr2, 0, real_type{ 0.0 }),
                  "Sizes mismatch!: 1 != 2");
 }
+
 TYPED_TEST(KernelFunctionMatrixDeathTest, invalid_indices_variadic) {
     using real_type = typename TestFixture::fixture_real_type;
     constexpr plssvm::layout_type layout = TestFixture::fixture_layout;
@@ -552,6 +568,7 @@ TYPED_TEST(KernelFunctionMatrixDeathTest, size_mismatch_kernel_function_paramete
     // test mismatched vector sizes
     EXPECT_DEATH(std::ignore = plssvm::kernel_function(matr1, 0, matr2, 0, plssvm::parameter{}), "Sizes mismatch!: 1 != 2");
 }
+
 TYPED_TEST(KernelFunctionMatrixDeathTest, invalid_indices_parameter) {
     using real_type = typename TestFixture::fixture_real_type;
     constexpr plssvm::layout_type layout = TestFixture::fixture_layout;

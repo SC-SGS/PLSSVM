@@ -12,8 +12,9 @@
 
 #if defined(PLSSVM_HAS_OPENCL_BACKEND)
     // used for explicitly instantiating the OpenCL backend
-    #include "CL/cl.h"                                          // cl_mem
     #include "plssvm/backends/OpenCL/detail/command_queue.hpp"  // plssvm::opencl::detail::command_queue
+
+    #include "CL/cl.h"  // cl_mem
 #endif
 #if defined(PLSSVM_HAS_SYCL_BACKEND)
     // used for explicitly instantiating the SYCL backend
@@ -41,22 +42,26 @@ namespace plssvm::detail {
 
 template <typename T, typename queue_t, typename device_pointer_t>
 gpu_device_ptr<T, queue_t, device_pointer_t>::gpu_device_ptr(const size_type size, const queue_type queue) :
-    queue_{ queue }, shape_{ plssvm::shape{ size, 1 } } {}
+    queue_{ queue },
+    shape_{ plssvm::shape{ size, 1 } } { }
 
 template <typename T, typename queue_t, typename device_pointer_t>
 gpu_device_ptr<T, queue_t, device_pointer_t>::gpu_device_ptr(const plssvm::shape shape, const queue_type queue) :
-    queue_{ queue }, shape_{ shape } {}
+    queue_{ queue },
+    shape_{ shape } { }
 
 template <typename T, typename queue_t, typename device_pointer_t>
 gpu_device_ptr<T, queue_t, device_pointer_t>::gpu_device_ptr(const plssvm::shape shape, const plssvm::shape padding, const queue_type queue) :
-    queue_{ queue }, shape_{ shape }, padding_{ padding } {}
+    queue_{ queue },
+    shape_{ shape },
+    padding_{ padding } { }
 
 template <typename T, typename queue_t, typename device_pointer_t>
 gpu_device_ptr<T, queue_t, device_pointer_t>::gpu_device_ptr(gpu_device_ptr &&other) noexcept :
     queue_{ std::exchange(other.queue_, queue_type{}) },
     shape_{ std::exchange(other.shape_, plssvm::shape{}) },
     padding_{ std::exchange(other.padding_, plssvm::shape{}) },
-    data_{ std::exchange(other.data_, device_pointer_type{}) } {}
+    data_{ std::exchange(other.data_, device_pointer_type{}) } { }
 
 template <typename T, typename queue_t, typename device_pointer_t>
 auto gpu_device_ptr<T, queue_t, device_pointer_t>::operator=(gpu_device_ptr &&other) noexcept -> gpu_device_ptr & {
@@ -98,6 +103,7 @@ void gpu_device_ptr<T, queue_t, device_pointer_t>::copy_to_device(const std::vec
 
     this->copy_to_device(data_to_copy, 0, this->size_padded());
 }
+
 template <typename T, typename queue_t, typename device_pointer_t>
 void gpu_device_ptr<T, queue_t, device_pointer_t>::copy_to_device(const std::vector<value_type> &data_to_copy, const size_type pos, const size_type count) {
     PLSSVM_ASSERT(data_ != nullptr, "Invalid data pointer! Maybe *this has been default constructed?");
@@ -108,6 +114,7 @@ void gpu_device_ptr<T, queue_t, device_pointer_t>::copy_to_device(const std::vec
     }
     this->copy_to_device(data_to_copy.data(), pos, rcount);
 }
+
 template <typename T, typename queue_t, typename device_pointer_t>
 void gpu_device_ptr<T, queue_t, device_pointer_t>::copy_to_device(const_host_pointer_type data_to_copy) {
     PLSSVM_ASSERT(data_ != nullptr, "Invalid data pointer! Maybe *this has been default constructed?");
@@ -122,6 +129,7 @@ void gpu_device_ptr<T, queue_t, device_pointer_t>::copy_to_host(std::vector<valu
 
     this->copy_to_host(buffer, 0, this->size_padded());
 }
+
 template <typename T, typename queue_t, typename device_pointer_t>
 void gpu_device_ptr<T, queue_t, device_pointer_t>::copy_to_host(std::vector<value_type> &buffer, const size_type pos, const size_type count) const {
     PLSSVM_ASSERT(data_ != nullptr, "Invalid data pointer! Maybe *this has been default constructed?");
@@ -132,6 +140,7 @@ void gpu_device_ptr<T, queue_t, device_pointer_t>::copy_to_host(std::vector<valu
     }
     this->copy_to_host(buffer.data(), pos, rcount);
 }
+
 template <typename T, typename queue_t, typename device_pointer_t>
 void gpu_device_ptr<T, queue_t, device_pointer_t>::copy_to_host(host_pointer_type buffer) const {
     PLSSVM_ASSERT(data_ != nullptr, "Invalid data pointer! Maybe *this has been default constructed?");

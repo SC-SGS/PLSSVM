@@ -7,7 +7,7 @@
  *          See the LICENSE.md file in the project root for full license information.
  */
 
-#include "backends/ground_truth.hpp"
+#include "tests/backends/ground_truth.hpp"
 
 #include "plssvm/constants.hpp"              // plssvm::PADDING_SIZE
 #include "plssvm/detail/assert.hpp"          // PLSSVM_ASSERT
@@ -35,6 +35,7 @@ real_type linear_kernel(const std::vector<real_type> &x, const std::vector<real_
     }
     return result;
 }
+
 template float linear_kernel(const std::vector<float> &, const std::vector<float> &);
 template double linear_kernel(const std::vector<double> &, const std::vector<double> &);
 
@@ -54,6 +55,7 @@ real_type linear_kernel(const std::vector<real_type> &x, const std::vector<real_
     }
     return result;
 }
+
 template float linear_kernel(const std::vector<float> &, const std::vector<float> &, const std::size_t);
 template double linear_kernel(const std::vector<double> &, const std::vector<double> &, const std::size_t);
 
@@ -67,6 +69,7 @@ real_type polynomial_kernel(const std::vector<real_type> &x, const std::vector<r
     }
     return std::pow(std::fma(gamma, result, coef0), static_cast<real_type>(degree));
 }
+
 template float polynomial_kernel(const std::vector<float> &, const std::vector<float> &, int, float, float);
 template double polynomial_kernel(const std::vector<double> &, const std::vector<double> &, int, double, double);
 
@@ -81,6 +84,7 @@ real_type rbf_kernel(const std::vector<real_type> &x, const std::vector<real_typ
     }
     return std::exp(-gamma * result);
 }
+
 template float rbf_kernel(const std::vector<float> &, const std::vector<float> &, float);
 template double rbf_kernel(const std::vector<double> &, const std::vector<double> &, double);
 
@@ -102,6 +106,7 @@ real_type linear_kernel(const plssvm::matrix<real_type, layout> &X, const std::s
     }
     return result;
 }
+
 template float linear_kernel(const plssvm::matrix<float, plssvm::layout_type::aos> &, const std::size_t, const plssvm::matrix<float, plssvm::layout_type::aos> &, const std::size_t, const std::size_t);
 template float linear_kernel(const plssvm::matrix<float, plssvm::layout_type::soa> &, const std::size_t, const plssvm::matrix<float, plssvm::layout_type::soa> &, const std::size_t, const std::size_t);
 template double linear_kernel(const plssvm::matrix<double, plssvm::layout_type::aos> &, const std::size_t, const plssvm::matrix<double, plssvm::layout_type::aos> &, const std::size_t, const std::size_t);
@@ -119,6 +124,7 @@ real_type polynomial_kernel(const plssvm::matrix<real_type, layout> &X, const st
     }
     return std::pow(std::fma(gamma, result, coef0), static_cast<real_type>(degree));
 }
+
 template float polynomial_kernel(const plssvm::matrix<float, plssvm::layout_type::aos> &, const std::size_t, const plssvm::matrix<float, plssvm::layout_type::aos> &, const std::size_t, const int, const float, const float);
 template float polynomial_kernel(const plssvm::matrix<float, plssvm::layout_type::soa> &, const std::size_t, const plssvm::matrix<float, plssvm::layout_type::soa> &, const std::size_t, const int, const float, const float);
 template double polynomial_kernel(const plssvm::matrix<double, plssvm::layout_type::aos> &, const std::size_t, const plssvm::matrix<double, plssvm::layout_type::aos> &, const std::size_t, const int, const double, const double);
@@ -137,6 +143,7 @@ real_type rbf_kernel(const plssvm::matrix<real_type, layout> &X, const std::size
     }
     return std::exp(-gamma * result);
 }
+
 template float rbf_kernel(const plssvm::matrix<float, plssvm::layout_type::aos> &, const std::size_t, const plssvm::matrix<float, plssvm::layout_type::aos> &, const std::size_t, const float);
 template float rbf_kernel(const plssvm::matrix<float, plssvm::layout_type::soa> &, const std::size_t, const plssvm::matrix<float, plssvm::layout_type::soa> &, const std::size_t, const float);
 template double rbf_kernel(const plssvm::matrix<double, plssvm::layout_type::aos> &, const std::size_t, const plssvm::matrix<double, plssvm::layout_type::aos> &, const std::size_t, const double);
@@ -159,6 +166,7 @@ real_type kernel_function(const plssvm::parameter &params, const std::vector<rea
     // unreachable
     return real_type{};
 }
+
 template float kernel_function(const plssvm::parameter &, const std::vector<float> &, const std::vector<float> &, std::size_t);
 template double kernel_function(const plssvm::parameter &, const std::vector<double> &, const std::vector<double> &, std::size_t);
 
@@ -194,6 +202,7 @@ std::pair<std::vector<real_type>, real_type> perform_dimensional_reduction(const
     const real_type QA_cost = kernel_function(params, data, data.num_rows() - 1, data, data.num_rows() - 1, num_devices) + real_type{ 1.0 } / static_cast<real_type>(params.cost);
     return std::make_pair(std::move(result), QA_cost);
 }
+
 template std::pair<std::vector<float>, float> perform_dimensional_reduction(const plssvm::parameter &, const plssvm::soa_matrix<float> &, std::size_t);
 template std::pair<std::vector<double>, double> perform_dimensional_reduction(const plssvm::parameter &, const plssvm::soa_matrix<double> &, std::size_t);
 
@@ -215,6 +224,7 @@ template <typename real_type>
     result.insert(result.cend(), padding * (padding + 1) / 2, real_type{ 0.0 });
     return result;
 }
+
 template std::vector<float> assemble_kernel_matrix_symm(const plssvm::parameter &, const plssvm::soa_matrix<float> &, const std::vector<float> &, const float, const std::size_t, const std::size_t);
 template std::vector<double> assemble_kernel_matrix_symm(const plssvm::parameter &, const plssvm::soa_matrix<double> &, const std::vector<double> &, const double, const std::size_t, const std::size_t);
 
@@ -238,6 +248,7 @@ template <typename real_type>
     result.insert(result.cend(), padding * (num_rows_reduced + padding), real_type{ 0.0 });
     return result;
 }
+
 template std::vector<float> assemble_kernel_matrix_gemm(const plssvm::parameter &, const plssvm::soa_matrix<float> &, const std::vector<float> &, const float, const std::size_t, const std::size_t);
 template std::vector<double> assemble_kernel_matrix_gemm(const plssvm::parameter &, const plssvm::soa_matrix<double> &, const std::vector<double> &, const double, const std::size_t, const std::size_t);
 
@@ -259,6 +270,7 @@ void gemm(const real_type alpha, const std::vector<real_type> &A, const plssvm::
         }
     }
 }
+
 template void gemm(const float, const std::vector<float> &, const plssvm::soa_matrix<float> &, const float, plssvm::soa_matrix<float> &);
 template void gemm(const double, const std::vector<double> &, const plssvm::soa_matrix<double> &, const double, plssvm::soa_matrix<double> &);
 
@@ -276,6 +288,7 @@ plssvm::soa_matrix<real_type> calculate_w(const plssvm::aos_matrix<real_type> &w
     }
     return result;
 }
+
 template plssvm::soa_matrix<float> calculate_w(const plssvm::aos_matrix<float> &, const plssvm::soa_matrix<float> &);
 template plssvm::soa_matrix<double> calculate_w(const plssvm::aos_matrix<double> &, const plssvm::soa_matrix<double> &);
 
@@ -295,53 +308,59 @@ template <typename real_type>
     plssvm::aos_matrix<real_type> result{ plssvm::shape{ num_predict_points, num_classes }, plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE } };
 
     switch (params.kernel_type) {
-        case plssvm::kernel_function_type::linear: {
-            for (std::size_t c = 0; c < num_classes; ++c) {
-                for (std::size_t i = 0; i < num_predict_points; ++i) {
-                    real_type temp{ 0.0 };
-                    for (std::size_t f = 0; f < num_features; ++f) {
-                        temp = std::fma(w(c, f), predict_points(i, f), temp);
-                    }
-                    result(i, c) = temp - rho[c];
-                }
-            }
-        } break;
-        case plssvm::kernel_function_type::polynomial: {
-            for (std::size_t c = 0; c < num_classes; ++c) {
-                for (std::size_t i = 0; i < num_predict_points; ++i) {
-                    for (std::size_t j = 0; j < num_sv; ++j) {
+        case plssvm::kernel_function_type::linear:
+            {
+                for (std::size_t c = 0; c < num_classes; ++c) {
+                    for (std::size_t i = 0; i < num_predict_points; ++i) {
                         real_type temp{ 0.0 };
                         for (std::size_t f = 0; f < num_features; ++f) {
-                            temp = std::fma(support_vectors(j, f), predict_points(i, f), temp);
+                            temp = std::fma(w(c, f), predict_points(i, f), temp);
                         }
-                        temp = std::fma(static_cast<real_type>(params.gamma.value()), temp, static_cast<real_type>(params.coef0.value()));
-                        temp = weights(c, j) * static_cast<real_type>(std::pow(temp, params.degree.value()));
-                        if (j == 0) {
-                            temp -= rho[c];
-                        }
-                        result(i, c) += temp;
+                        result(i, c) = temp - rho[c];
                     }
                 }
             }
-        } break;
-        case plssvm::kernel_function_type::rbf: {
-            for (std::size_t c = 0; c < num_classes; ++c) {
-                for (std::size_t i = 0; i < num_predict_points; ++i) {
-                    for (std::size_t j = 0; j < num_sv; ++j) {
-                        real_type temp{ 0.0 };
-                        for (std::size_t f = 0; f < num_features; ++f) {
-                            const real_type d = support_vectors(j, f) - predict_points(i, f);
-                            temp = std::fma(d, d, temp);
+            break;
+        case plssvm::kernel_function_type::polynomial:
+            {
+                for (std::size_t c = 0; c < num_classes; ++c) {
+                    for (std::size_t i = 0; i < num_predict_points; ++i) {
+                        for (std::size_t j = 0; j < num_sv; ++j) {
+                            real_type temp{ 0.0 };
+                            for (std::size_t f = 0; f < num_features; ++f) {
+                                temp = std::fma(support_vectors(j, f), predict_points(i, f), temp);
+                            }
+                            temp = std::fma(static_cast<real_type>(params.gamma.value()), temp, static_cast<real_type>(params.coef0.value()));
+                            temp = weights(c, j) * static_cast<real_type>(std::pow(temp, params.degree.value()));
+                            if (j == 0) {
+                                temp -= rho[c];
+                            }
+                            result(i, c) += temp;
                         }
-                        temp = weights(c, j) * static_cast<real_type>(std::exp(static_cast<real_type>(-params.gamma.value()) * temp));
-                        if (j == 0) {
-                            temp -= rho[c];
-                        }
-                        result(i, c) += temp;
                     }
                 }
             }
-        } break;
+            break;
+        case plssvm::kernel_function_type::rbf:
+            {
+                for (std::size_t c = 0; c < num_classes; ++c) {
+                    for (std::size_t i = 0; i < num_predict_points; ++i) {
+                        for (std::size_t j = 0; j < num_sv; ++j) {
+                            real_type temp{ 0.0 };
+                            for (std::size_t f = 0; f < num_features; ++f) {
+                                const real_type d = support_vectors(j, f) - predict_points(i, f);
+                                temp = std::fma(d, d, temp);
+                            }
+                            temp = weights(c, j) * static_cast<real_type>(std::exp(static_cast<real_type>(-params.gamma.value()) * temp));
+                            if (j == 0) {
+                                temp -= rho[c];
+                            }
+                            result(i, c) += temp;
+                        }
+                    }
+                }
+            }
+            break;
     }
 
     return result;

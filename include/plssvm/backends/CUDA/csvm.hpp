@@ -73,7 +73,8 @@ class csvm : public ::plssvm::detail::gpu_csvm<detail::device_ptr, int> {
      */
     template <typename... Args, PLSSVM_REQUIRES(::plssvm::detail::has_only_parameter_named_args_v<Args...>)>
     explicit csvm(Args &&...named_args) :
-        csvm{ plssvm::target_platform::automatic, std::forward<Args>(named_args)... } {}
+        csvm{ plssvm::target_platform::automatic, std::forward<Args>(named_args)... } { }
+
     /**
      * @brief Construct a new C-SVM using the CUDA backend on the @p target platform and the optionally provided @p named_args.
      * @param[in] target the target platform used for this C-SVM
@@ -171,7 +172,7 @@ namespace detail {
  * @brief Sets the `value` to `true` since C-SVMs using the CUDA backend are available.
  */
 template <>
-struct csvm_backend_exists<cuda::csvm> : std::true_type {};
+struct csvm_backend_exists<cuda::csvm> : std::true_type { };
 
 }  // namespace detail
 

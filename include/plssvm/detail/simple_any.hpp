@@ -42,7 +42,7 @@ class simple_any {
          */
         template <typename U>
         explicit type_erasure_wrapper(U &&obj) :
-            wrapped_object_{ std::forward<U>(obj) } {}
+            wrapped_object_{ std::forward<U>(obj) } { }
 
         /// The object stored in a type erased manner.
         T wrapped_object_;
@@ -56,7 +56,7 @@ class simple_any {
      */
     template <typename T>
     explicit simple_any(T &&obj) :
-        object_ptr_{ std::make_unique<type_erasure_wrapper<T>>(std::forward<T>(obj)) } {}
+        object_ptr_{ std::make_unique<type_erasure_wrapper<T>>(std::forward<T>(obj)) } { }
 
     /**
      * @brief Access the type erased object. Returns `nullptr` if the type erased object isn not of type `T`.
@@ -67,6 +67,7 @@ class simple_any {
     [[nodiscard]] T &get() {
         return dynamic_cast<type_erasure_wrapper<T> &>(*object_ptr_).wrapped_object_;
     }
+
     /**
      * @brief Access the type erased object. Returns `nullptr` if the type erased object isn not of type `T`.
      * @tparam T the expected type of the type erased object

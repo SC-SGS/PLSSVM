@@ -14,7 +14,7 @@
 
 #include "fmt/core.h"  // fmt::format
 
-#include <string> // std::string
+#include <string>  // std::string
 
 namespace plssvm::hip::detail {
 
@@ -56,8 +56,8 @@ std::string get_runtime_version() {
     PLSSVM_HIP_ERROR_CHECK(hipRuntimeGetVersion(&runtime_version));
     // TODO: may be different on the CUDA platform
     // parse it to a more useful string
-    int major_version = runtime_version / 10000000;
-    int minor_version = runtime_version % 10000000 / 100000;
+    int major_version = runtime_version / 10'000'000;
+    int minor_version = runtime_version % 10'000'000 / 100'000;
     return fmt::format("{}.{}", major_version, minor_version);
 }
 

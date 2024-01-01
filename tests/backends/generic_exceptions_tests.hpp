@@ -15,7 +15,7 @@
 
 #include "plssvm/detail/string_utility.hpp"  // plssvm::detail::split
 
-#include "custom_test_macros.hpp"  // EXPECT_THROW_WHAT
+#include "tests/custom_test_macros.hpp"  // EXPECT_THROW_WHAT
 
 #include "fmt/core.h"              // fmt::format
 #include "gmock/gmock-matchers.h"  // ::testing::{HasSubstr, ContainsRegex}
@@ -33,7 +33,8 @@ ExceptionType dummy(const std::string &msg) {
 }
 
 template <typename T>
-class Exception : public ::testing::Test {};
+class Exception : public ::testing::Test { };
+
 TYPED_TEST_SUITE_P(Exception);
 
 // check whether throwing exceptions works as intended
@@ -79,9 +80,9 @@ TYPED_TEST_P(Exception, exception_what_with_source_location) {
     EXPECT_EQ(what_lines[4], "  @ line       32");
 }
 
-// clang-format off
 REGISTER_TYPED_TEST_SUITE_P(Exception,
-                            throwing_excpetion, exception_source_location, exception_what_with_source_location);
-// clang-format on
+                            throwing_excpetion,
+                            exception_source_location,
+                            exception_what_with_source_location);
 
 #endif  // PLSSVM_TESTS_BACKENDS_GENERIC_EXCEPTIONS_TESTS_HPP_

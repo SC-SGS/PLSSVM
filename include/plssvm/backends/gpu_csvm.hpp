@@ -47,7 +47,8 @@ class gpu_csvm : public ::plssvm::csvm {
      * @copydoc plssvm::csvm::csvm()
      */
     explicit gpu_csvm(parameter params = {}) :
-        ::plssvm::csvm{ params } {}
+        ::plssvm::csvm{ params } { }
+
     /**
      * @brief Construct a C-SVM forwarding all parameters @p args to the plssvm::parameter constructor.
      * @tparam Args the type of the (named-)parameters
@@ -55,7 +56,7 @@ class gpu_csvm : public ::plssvm::csvm {
      */
     template <typename... Args>
     explicit gpu_csvm(Args &&...args) :
-        ::plssvm::csvm{ std::forward<Args>(args)... } {}
+        ::plssvm::csvm{ std::forward<Args>(args)... } { }
 
     /**
      * @copydoc plssvm::csvm::csvm(const plssvm::csvm &)

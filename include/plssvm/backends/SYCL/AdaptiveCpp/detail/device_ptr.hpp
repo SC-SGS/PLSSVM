@@ -31,8 +31,8 @@ class device_ptr : public ::plssvm::detail::gpu_device_ptr<T, queue> {
     using base_type = ::plssvm::detail::gpu_device_ptr<T, queue>;
 
     using base_type::data_;
-    using base_type::shape_;
     using base_type::queue_;
+    using base_type::shape_;
 
   public:
     // Be able to use overloaded base class functions.

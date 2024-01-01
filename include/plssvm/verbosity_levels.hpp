@@ -91,6 +91,6 @@ verbosity_level operator&=(verbosity_level &lhs, verbosity_level rhs);
 }  // namespace plssvm
 
 template <>
-struct fmt::formatter<plssvm::verbosity_level> : fmt::ostream_formatter {};
+struct fmt::formatter<plssvm::verbosity_level> : fmt::ostream_formatter { };
 
 #endif  // PLSSVM_VERBOSITY_LEVELS_HPP_

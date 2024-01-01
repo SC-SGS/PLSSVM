@@ -16,9 +16,9 @@
 #include "plssvm/backends/OpenMP/exceptions.hpp"                               // plssvm::openmp::backend_exception
 #include "plssvm/constants.hpp"                                                // plssvm::real_type
 #include "plssvm/csvm.hpp"                                                     // plssvm::csvm
+#include "plssvm/deta^il/memory_size.hpp"                                      // plssvm::detail::memory_size
 #include "plssvm/detail/assert.hpp"                                            // PLSSVM_ASSERT
 #include "plssvm/detail/logging.hpp"                                           // plssvm::detail::log
-#include "plssvm/detail/memory_size.hpp"                                       // plssvm::detail::memory_size
 #include "plssvm/detail/operators.hpp"                                         // various operator overloads for std::vector and scalars
 #include "plssvm/detail/performance_tracker.hpp"                               // plssvm::detail::tracking_entry, PLSSVM_DETAIL_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY
 #include "plssvm/kernel_function_types.hpp"                                    // plssvm::kernel_function_type
@@ -41,7 +41,7 @@
 namespace plssvm::openmp {
 
 csvm::csvm(parameter params) :
-    csvm{ plssvm::target_platform::automatic, params } {}
+    csvm{ plssvm::target_platform::automatic, params } { }
 
 csvm::csvm(const target_platform target, parameter params) :
     ::plssvm::csvm{ params } {
@@ -103,7 +103,7 @@ void csvm::init(const target_platform target) {
     // TODO Hotfix: extreme performance regression when using a soa_matrix -> convert to aos_matrix -> USES 2x the necessary memory!
     aos_matrix<real_type> aos_data{ *data_ptr };
 
-    if (solver == solver_type::cg_explicit) {;
+    if (solver == solver_type::cg_explicit) {
         const std::size_t num_rows_reduced = aos_data.num_rows() - 1;
         PLSSVM_ASSERT(num_rows_reduced > 0, "At least one row must be given!");
         PLSSVM_ASSERT(num_rows_reduced + PADDING_SIZE >= num_rows_reduced, "The number of rows with padding ({}) must be greater or equal to the number of rows without padding!", num_rows_reduced + PADDING_SIZE, num_rows_reduced);
@@ -235,11 +235,11 @@ aos_matrix<real_type> csvm::predict_values(const parameter &params, const soa_ma
             // fill w vector
             w = soa_matrix<real_type>{ plssvm::shape{ num_classes, num_features }, plssvm::shape{ PADDING_SIZE, PADDING_SIZE } };
 
-            #pragma omp parallel for collapse(2) default(none) shared(w, aos_support_vectors, alpha) firstprivate(num_classes, num_features, num_support_vectors)
+#pragma omp parallel for collapse(2) default(none) shared(w, aos_support_vectors, alpha) firstprivate(num_classes, num_features, num_support_vectors)
             for (std::size_t a = 0; a < num_classes; ++a) {
                 for (std::size_t dim = 0; dim < num_features; ++dim) {
                     real_type temp{ 0.0 };
-                    #pragma omp simd reduction(+ : temp)
+#pragma omp simd reduction(+ : temp)
                     for (std::size_t idx = 0; idx < num_support_vectors; ++idx) {
                         temp = std::fma(alpha(a, idx), aos_support_vectors(idx, dim), temp);
                     }
@@ -247,12 +247,12 @@ aos_matrix<real_type> csvm::predict_values(const parameter &params, const soa_ma
                 }
             }
         }
-        // predict the values using the w vector
-        #pragma omp parallel for collapse(2) default(none) shared(out, w, rho, alpha, predict_points) firstprivate(num_classes, num_features, num_predict_points)
+// predict the values using the w vector
+#pragma omp parallel for collapse(2) default(none) shared(out, w, rho, alpha, predict_points) firstprivate(num_classes, num_features, num_predict_points)
         for (std::size_t point_index = 0; point_index < num_predict_points; ++point_index) {
             for (std::size_t a = 0; a < num_classes; ++a) {
                 real_type temp{ 0.0 };
-                #pragma omp simd reduction(+ : temp)
+#pragma omp simd reduction(+ : temp)
                 for (std::size_t dim = 0; dim < num_features; ++dim) {
                     temp = std::fma(w(a, dim), predict_points(point_index, dim), temp);
                 }
@@ -260,8 +260,8 @@ aos_matrix<real_type> csvm::predict_values(const parameter &params, const soa_ma
             }
         }
     } else {
-        // "default" implementation for the other kernel functions
-        #pragma omp parallel for default(none) shared(alpha, aos_support_vectors, aos_predict_points, rho, params, out) firstprivate(num_predict_points, num_classes, num_support_vectors)
+// "default" implementation for the other kernel functions
+#pragma omp parallel for default(none) shared(alpha, aos_support_vectors, aos_predict_points, rho, params, out) firstprivate(num_predict_points, num_classes, num_support_vectors)
         for (std::size_t point_index = 0; point_index < num_predict_points; ++point_index) {
             for (std::size_t a = 0; a < num_classes; ++a) {
                 out(point_index, a) -= rho[a];
@@ -269,7 +269,7 @@ aos_matrix<real_type> csvm::predict_values(const parameter &params, const soa_ma
             for (std::size_t sv_index = 0; sv_index < num_support_vectors; ++sv_index) {
                 const real_type kernel_func = kernel_function(aos_support_vectors, sv_index, aos_predict_points, point_index, params);
                 for (std::size_t a = 0; a < num_classes; ++a) {
-                    out(point_index, a) = std::fma(alpha(a, sv_index),  kernel_func, out(point_index, a));
+                    out(point_index, a) = std::fma(alpha(a, sv_index), kernel_func, out(point_index, a));
                 }
             }
         }

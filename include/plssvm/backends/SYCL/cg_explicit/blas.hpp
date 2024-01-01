@@ -37,8 +37,16 @@ class device_kernel_gemm {
      * @param[in,out] C the matrix @p C, also used as result matrix
      */
     device_kernel_gemm(::sycl::handler &cgh, const unsigned long long m, const unsigned long long n, const unsigned long long k, const real_type alpha, const real_type *A, const real_type *B, const real_type beta, real_type *C) :
-        A_cache_{ ::sycl::range<2>{ FEATURE_BLOCK_SIZE, INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE }, cgh }, B_cache_{ ::sycl::range<2>{ FEATURE_BLOCK_SIZE, INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE }, cgh },
-        m_{ m }, n_{ n }, k_{ k }, alpha_{ alpha }, A_{ A }, B_{ B }, beta_{ beta }, C_{ C } {}
+        A_cache_{ ::sycl::range<2>{ FEATURE_BLOCK_SIZE, INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE }, cgh },
+        B_cache_{ ::sycl::range<2>{ FEATURE_BLOCK_SIZE, INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE }, cgh },
+        m_{ m },
+        n_{ n },
+        k_{ k },
+        alpha_{ alpha },
+        A_{ A },
+        B_{ B },
+        beta_{ beta },
+        C_{ C } { }
 
     /**
      * @brief Function call operator overload performing the actual calculation.
@@ -124,8 +132,16 @@ class device_kernel_symm {
      * @param[in,out] C the matrix @p C, also used as result matrix
      */
     device_kernel_symm(::sycl::handler &cgh, const unsigned long long m, const unsigned long long n, const unsigned long long k, const real_type alpha, const real_type *A, const real_type *B, const real_type beta, real_type *C) :
-        A_cache_{ ::sycl::range<2>{ FEATURE_BLOCK_SIZE, INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE }, cgh }, B_cache_{ ::sycl::range<2>{ FEATURE_BLOCK_SIZE, INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE }, cgh },
-        m_{ m }, n_{ n }, k_{ k }, alpha_{ alpha }, A_{ A }, B_{ B }, beta_{ beta }, C_{ C } {}
+        A_cache_{ ::sycl::range<2>{ FEATURE_BLOCK_SIZE, INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE }, cgh },
+        B_cache_{ ::sycl::range<2>{ FEATURE_BLOCK_SIZE, INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE }, cgh },
+        m_{ m },
+        n_{ n },
+        k_{ k },
+        alpha_{ alpha },
+        A_{ A },
+        B_{ B },
+        beta_{ beta },
+        C_{ C } { }
 
     /**
      * @brief Function call operator overload performing the actual calculation.

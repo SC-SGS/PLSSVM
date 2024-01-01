@@ -94,6 +94,7 @@ queue get_default_queue() {
 std::string get_adaptivecpp_version_short() {
     return fmt::format("{}.{}.{}", ACPP_VERSION_MAJOR, ACPP_VERSION_MINOR, ACPP_VERSION_PATCH);
 }
+
 std::string get_adaptivecpp_version() {
     return ::hipsycl::sycl::detail::version_string();
 }

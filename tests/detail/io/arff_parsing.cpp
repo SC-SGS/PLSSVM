@@ -16,10 +16,10 @@
 #include "plssvm/matrix.hpp"                 // plssvm::aos_matrix
 #include "plssvm/shape.hpp"                  // plssvm::shape
 
-#include "custom_test_macros.hpp"  // EXPECT_FLOATING_POINT_MATRIX_NEAR, EXPECT_THROW_WHAT
-#include "naming.hpp"              // naming::test_parameter_to_name
-#include "types_to_test.hpp"       // util::label_type_gtest, util::test_parameter_type_at_t
-#include "utility.hpp"             // util::{temporary_file, instantiate_template_file, get_correct_data_file_labels, get_distinct_label, generate_specific_matrix}
+#include "tests/custom_test_macros.hpp"  // EXPECT_FLOATING_POINT_MATRIX_NEAR, EXPECT_THROW_WHAT
+#include "tests/naming.hpp"              // naming::test_parameter_to_name
+#include "tests/types_to_test.hpp"       // util::label_type_gtest, util::test_parameter_type_at_t
+#include "tests/utility.hpp"             // util::{temporary_file, instantiate_template_file, get_correct_data_file_labels, get_distinct_label, generate_specific_matrix}
 
 #include "fmt/core.h"              // fmt::format
 #include "gmock/gmock-matchers.h"  // ::testing::HasSubstr
@@ -33,8 +33,10 @@
 #include <type_traits>  // std::is_same_v
 #include <vector>       // std::vector
 
-class ARFFParseHeader : public ::testing::Test {};
-class ARFFParseHeaderValid : public ::testing::TestWithParam<std::tuple<std::string, std::size_t, std::size_t, bool, std::size_t>> {};
+class ARFFParseHeader : public ::testing::Test { };
+
+class ARFFParseHeaderValid : public ::testing::TestWithParam<std::tuple<std::string, std::size_t, std::size_t, bool, std::size_t>> { };
+
 TEST_P(ARFFParseHeaderValid, header) {
     const auto &[filename_part, num_features, header_skip, has_label, label_idx] = GetParam();
 
@@ -53,6 +55,7 @@ TEST_P(ARFFParseHeaderValid, header) {
     }
     EXPECT_EQ(parsed_label_idx, label_idx);
 }
+
 // clang-format off
 INSTANTIATE_TEST_SUITE_P(ARFFParse, ARFFParseHeaderValid, ::testing::Values(
                                                      std::make_tuple("/data/arff/5x4.arff", 4, 7, true, 4),
@@ -69,6 +72,7 @@ TEST(ARFFParseHeader, class_unquoted_nominal_attribute) {
                       plssvm::invalid_file_format_exception,
                       R"(The "@ATTRIBUTE class    0,1" nominal attribute must be enclosed with {}!)");
 }
+
 TEST(ARFFParseHeader, class_with_wrong_label) {
     // parse the ARFF file
     const std::string filename = PLSSVM_TEST_PATH "/data/arff/invalid/class_with_wrong_label.arff";
@@ -78,6 +82,7 @@ TEST(ARFFParseHeader, class_with_wrong_label) {
                       plssvm::invalid_file_format_exception,
                       R"(May not use the combination of the reserved name "class" and attribute type NUMERIC!)");
 }
+
 TEST(ARFFParseHeader, class_without_label) {
     // parse the ARFF file
     const std::string filename = PLSSVM_TEST_PATH "/data/arff/invalid/class_without_label.arff";
@@ -87,6 +92,7 @@ TEST(ARFFParseHeader, class_without_label) {
                       plssvm::invalid_file_format_exception,
                       R"(The "@ATTRIBUTE class" field must contain class labels!)");
 }
+
 TEST(ARFFParseHeader, multiple_classes) {
     // parse the ARFF file
     const std::string filename = PLSSVM_TEST_PATH "/data/arff/invalid/multiple_classes.arff";
@@ -96,6 +102,7 @@ TEST(ARFFParseHeader, multiple_classes) {
                       plssvm::invalid_file_format_exception,
                       "A nominal attribute with the name CLASS may only be provided once!");
 }
+
 TEST(ARFFParseHeader, no_features) {
     // parse the ARFF file
     const std::string filename = PLSSVM_TEST_PATH "/data/arff/invalid/no_features.arff";
@@ -105,6 +112,7 @@ TEST(ARFFParseHeader, no_features) {
                       plssvm::invalid_file_format_exception,
                       "Can't parse file: no feature ATTRIBUTES are defined!");
 }
+
 TEST(ARFFParseHeader, no_data_attribute) {
     // parse the ARFF file
     const std::string filename = PLSSVM_TEST_PATH "/data/arff/invalid/no_data_attribute.arff";
@@ -114,6 +122,7 @@ TEST(ARFFParseHeader, no_data_attribute) {
                       plssvm::invalid_file_format_exception,
                       "Can't parse file: @DATA is missing!");
 }
+
 TEST(ARFFParseHeader, nominal_attribute_with_wrong_name) {
     // parse the ARFF file
     const std::string filename = PLSSVM_TEST_PATH "/data/arff/invalid/nominal_attribute_with_wrong_name.arff";
@@ -123,6 +132,7 @@ TEST(ARFFParseHeader, nominal_attribute_with_wrong_name) {
                       plssvm::invalid_file_format_exception,
                       R"(Read an invalid header entry: "@ATTRIBUTE foo    {0,1}"!)");
 }
+
 TEST(ARFFParseHeader, numeric_unquoted) {
     // parse the ARFF file
     const std::string filename = PLSSVM_TEST_PATH "/data/arff/invalid/numeric_unquoted.arff";
@@ -132,6 +142,7 @@ TEST(ARFFParseHeader, numeric_unquoted) {
                       plssvm::invalid_file_format_exception,
                       R"(A "@ATTRIBUTE second entry   numeric" name that contains a whitespace must be quoted!)");
 }
+
 TEST(ARFFParseHeader, numeric_without_name) {
     // parse the ARFF file
     const std::string filename = PLSSVM_TEST_PATH "/data/arff/invalid/numeric_without_name.arff";
@@ -141,6 +152,7 @@ TEST(ARFFParseHeader, numeric_without_name) {
                       plssvm::invalid_file_format_exception,
                       R"(The "@ATTRIBUTE   numeric" field must contain a name!)");
 }
+
 TEST(ARFFParseHeader, relation_not_at_beginning) {
     // parse the ARFF file
     const std::string filename = PLSSVM_TEST_PATH "/data/arff/invalid/relation_not_at_beginning.arff";
@@ -150,6 +162,7 @@ TEST(ARFFParseHeader, relation_not_at_beginning) {
                       plssvm::invalid_file_format_exception,
                       "The @RELATION attribute must be set before any other @ATTRIBUTE!");
 }
+
 TEST(ARFFParseHeader, relation_unquoted) {
     // parse the ARFF file
     const std::string filename = PLSSVM_TEST_PATH "/data/arff/invalid/relation_unquoted.arff";
@@ -159,6 +172,7 @@ TEST(ARFFParseHeader, relation_unquoted) {
                       plssvm::invalid_file_format_exception,
                       R"(A "@RELATION  name with whitespaces" name that contains a whitespace must be quoted!)");
 }
+
 TEST(ARFFParseHeader, relation_without_name) {
     // parse the ARFF file
     const std::string filename = PLSSVM_TEST_PATH "/data/arff/invalid/relation_without_name.arff";
@@ -168,6 +182,7 @@ TEST(ARFFParseHeader, relation_without_name) {
                       plssvm::invalid_file_format_exception,
                       R"(The "@RELATION" field must contain a name!)");
 }
+
 TEST(ARFFParseHeader, wrong_line) {
     // parse the ARFF file
     const std::string filename = PLSSVM_TEST_PATH "/data/arff/invalid/wrong_line.arff";
@@ -177,6 +192,7 @@ TEST(ARFFParseHeader, wrong_line) {
                       plssvm::invalid_file_format_exception,
                       R"(Read an invalid header entry: "@THIS IS NOT A CORRECT LINE!"!)");
 }
+
 TEST(ARFFParseHeader, empty) {
     // parse the ARFF file
     const std::string filename = PLSSVM_TEST_PATH "/data/empty.txt";
@@ -192,10 +208,12 @@ class ARFFParse : public ::testing::Test {
   protected:
     using fixture_label_type = util::test_parameter_type_at_t<0, T>;
 };
+
 TYPED_TEST_SUITE(ARFFParse, util::label_type_gtest, naming::test_parameter_to_name);
 
 template <typename T>
-class ARFFParseDense : public ARFFParse<T>, protected util::temporary_file {
+class ARFFParseDense : public ARFFParse<T>,
+                       protected util::temporary_file {
   protected:
     using typename ARFFParse<T>::fixture_label_type;
 
@@ -209,6 +227,7 @@ class ARFFParseDense : public ARFFParse<T>, protected util::temporary_file {
      * @return the correct data points (`[[nodiscard]]`)
      */
     [[nodiscard]] const plssvm::soa_matrix<plssvm::real_type> &get_correct_data() const noexcept { return correct_data_; }
+
     /**
      * @brief Return the correct labels of the template ARFF file.
      * @return the correct labels (`[[nodiscard]]`)
@@ -227,10 +246,12 @@ class ARFFParseDense : public ARFFParse<T>, protected util::temporary_file {
     /// The correct labels.
     std::vector<fixture_label_type> correct_label_{ util::get_correct_data_file_labels<fixture_label_type>() };
 };
+
 TYPED_TEST_SUITE(ARFFParseDense, util::label_type_gtest, naming::test_parameter_to_name);
 
 template <typename T>
-class ARFFParseSparse : public ARFFParse<T>, protected util::temporary_file {
+class ARFFParseSparse : public ARFFParse<T>,
+                        protected util::temporary_file {
   protected:
     using typename ARFFParse<T>::fixture_label_type;
 
@@ -244,6 +265,7 @@ class ARFFParseSparse : public ARFFParse<T>, protected util::temporary_file {
      * @return the correct data points (`[[nodiscard]]`)
      */
     [[nodiscard]] const plssvm::soa_matrix<plssvm::real_type> &get_correct_data() const noexcept { return correct_data; }
+
     /**
      * @brief Return the correct labels of the template ARFF file.
      * @return the correct labels (`[[nodiscard]]`)
@@ -262,6 +284,7 @@ class ARFFParseSparse : public ARFFParse<T>, protected util::temporary_file {
     /// The correct labels.
     std::vector<fixture_label_type> correct_label{ util::get_correct_data_file_labels<fixture_label_type>() };
 };
+
 TYPED_TEST_SUITE(ARFFParseSparse, util::label_type_gtest, naming::test_parameter_to_name);
 
 TYPED_TEST(ARFFParseDense, read) {
@@ -281,6 +304,7 @@ TYPED_TEST(ARFFParseDense, read) {
     EXPECT_FLOATING_POINT_MATRIX_NEAR(data, this->get_correct_data());
     EXPECT_EQ(label, this->get_correct_label());
 }
+
 TYPED_TEST(ARFFParseSparse, read) {
     using label_type = typename TestFixture::fixture_label_type;
 
@@ -331,6 +355,7 @@ TYPED_TEST(ARFFParse, at_inside_data_section) {
                       plssvm::invalid_file_format_exception,
                       R"(Read @ inside data section!: "@ATTRIBUTE invalid numeric"!)");
 }
+
 TYPED_TEST(ARFFParse, sparse_missing_closing_brace) {
     using label_type = typename TestFixture::fixture_label_type;
 
@@ -342,6 +367,7 @@ TYPED_TEST(ARFFParse, sparse_missing_closing_brace) {
                       plssvm::invalid_file_format_exception,
                       R"(Missing closing '}' for sparse data point "{2 0.51687296029754564,3 0.54604461446026,4 1" description!)");
 }
+
 TYPED_TEST(ARFFParse, sparse_missing_opening_brace) {
     using label_type = typename TestFixture::fixture_label_type;
 
@@ -353,6 +379,7 @@ TYPED_TEST(ARFFParse, sparse_missing_opening_brace) {
                       plssvm::invalid_file_format_exception,
                       R"(Missing opening '{' for sparse data point "1 0.60276937379453293,2 -0.13086851759108944,4 0}" description!)");
 }
+
 TYPED_TEST(ARFFParse, sparse_invalid_feature_index) {
     using label_type = typename TestFixture::fixture_label_type;
 
@@ -364,6 +391,7 @@ TYPED_TEST(ARFFParse, sparse_invalid_feature_index) {
                       plssvm::invalid_file_format_exception,
                       "Trying to add feature/label at index 5 but the maximum index is 4!");
 }
+
 TYPED_TEST(ARFFParse, sparse_missing_label) {
     using label_type = typename TestFixture::fixture_label_type;
 
@@ -387,6 +415,7 @@ TYPED_TEST(ARFFParse, dense_missing_value) {
                       plssvm::invalid_file_format_exception,
                       "Invalid number of features and labels! Found 3 but should be 5!");
 }
+
 TYPED_TEST(ARFFParse, dense_too_many_values) {
     using label_type = typename TestFixture::fixture_label_type;
 
@@ -398,6 +427,7 @@ TYPED_TEST(ARFFParse, dense_too_many_values) {
                       plssvm::invalid_file_format_exception,
                       "Invalid number of features and labels! Found 6 but should be 5!");
 }
+
 TYPED_TEST(ARFFParse, class_same_label_multiple_times) {
     using label_type = typename TestFixture::fixture_label_type;
 
@@ -409,6 +439,7 @@ TYPED_TEST(ARFFParse, class_same_label_multiple_times) {
                       plssvm::invalid_file_format_exception,
                       "Provided 2 labels but only 1 of them was/where unique!");
 }
+
 TYPED_TEST(ARFFParse, class_with_only_one_label) {
     using label_type = typename TestFixture::fixture_label_type;
 
@@ -420,6 +451,7 @@ TYPED_TEST(ARFFParse, class_with_only_one_label) {
                       plssvm::invalid_file_format_exception,
                       "Only a single label has been provided!");
 }
+
 TYPED_TEST(ARFFParse, usage_of_undefined_label) {
     using label_type = typename TestFixture::fixture_label_type;
 
@@ -436,6 +468,7 @@ TYPED_TEST(ARFFParse, usage_of_undefined_label) {
         SUCCEED() << "By definition boolean labels do only support two different labels and, therefore, no third undefined one can be used.";
     }
 }
+
 TYPED_TEST(ARFFParse, string_label_with_whitespace) {
     using label_type = typename TestFixture::fixture_label_type;
 
@@ -452,6 +485,7 @@ TYPED_TEST(ARFFParse, string_label_with_whitespace) {
         SUCCEED() << "By definition non-string labels cannot contain a whitespace.";
     }
 }
+
 TYPED_TEST(ARFFParse, libsvm_file) {
     using label_type = typename TestFixture::fixture_label_type;
 
@@ -463,7 +497,8 @@ TYPED_TEST(ARFFParse, libsvm_file) {
 }
 
 template <typename T>
-class ARFFParseDeathTest : public ::testing::Test {};
+class ARFFParseDeathTest : public ::testing::Test { };
+
 TYPED_TEST_SUITE(ARFFParseDeathTest, util::label_type_gtest, naming::test_parameter_to_name);
 
 TYPED_TEST(ARFFParseDeathTest, invalid_file_reader) {
@@ -476,14 +511,17 @@ TYPED_TEST(ARFFParseDeathTest, invalid_file_reader) {
 }
 
 template <typename T>
-class ARFFWrite : public ::testing::Test, protected util::temporary_file {
+class ARFFWrite : public ::testing::Test,
+                  protected util::temporary_file {
   protected:
     using fixture_label_type = util::test_parameter_type_at_t<0, T>;
 };
+
 TYPED_TEST_SUITE(ARFFWrite, util::label_type_gtest, naming::test_parameter_to_name);
 
 template <typename T>
-class ARFFWriteDeathTest : public ARFFWrite<T> {};
+class ARFFWriteDeathTest : public ARFFWrite<T> { };
+
 TYPED_TEST_SUITE(ARFFWriteDeathTest, util::label_type_gtest, naming::test_parameter_to_name);
 
 TYPED_TEST(ARFFWrite, write_with_label) {
@@ -586,6 +624,7 @@ TYPED_TEST(ARFFWriteDeathTest, data_with_provided_empty_labels) {
     // try to write the necessary data to the file
     EXPECT_DEATH(plssvm::detail::io::write_arff_data(this->filename, data, label), "has_label is 'true' but no labels were provided!");
 }
+
 TYPED_TEST(ARFFWriteDeathTest, data_and_label_size_mismatch) {
     using label_type = typename TestFixture::fixture_label_type;
 
@@ -597,6 +636,7 @@ TYPED_TEST(ARFFWriteDeathTest, data_and_label_size_mismatch) {
     EXPECT_DEATH(plssvm::detail::io::write_arff_data(this->filename, data, label),
                  ::testing::HasSubstr("Number of data points (2) and number of labels (1) mismatch!"));
 }
+
 TYPED_TEST(ARFFWriteDeathTest, labels_provided_but_not_written) {
     using label_type = typename TestFixture::fixture_label_type;
 

@@ -69,6 +69,6 @@ std::ostream &operator<<(std::ostream &out, const parser_predict &params);
 }  // namespace plssvm::detail::cmd
 
 template <>
-struct fmt::formatter<plssvm::detail::cmd::parser_predict> : fmt::ostream_formatter {};
+struct fmt::formatter<plssvm::detail::cmd::parser_predict> : fmt::ostream_formatter { };
 
 #endif  // PLSSVM_DETAIL_CMD_PARSER_PREDICT_HPP_

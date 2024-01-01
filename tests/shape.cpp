@@ -10,7 +10,7 @@
 
 #include "plssvm/shape.hpp"
 
-#include "custom_test_macros.hpp"  // EXPECT_CONVERSION_TO_STRING, EXPECT_CONVERSION_FROM_STRING
+#include "tests/custom_test_macros.hpp"  // EXPECT_CONVERSION_TO_STRING, EXPECT_CONVERSION_FROM_STRING
 
 #include "gtest/gtest.h"  // TEST, EXPECT_TRUE, EXPECT_FALSE
 
@@ -27,6 +27,7 @@ TEST(Shape, default_construct) {
     EXPECT_EQ(s.x, 0);
     EXPECT_EQ(s.y, 0);
 }
+
 TEST(Shape, construct) {
     // construct a shape with values
     const plssvm::shape s{ 4, 5 };
@@ -68,6 +69,7 @@ TEST(Shape, from_string) {
     EXPECT_CONVERSION_FROM_STRING("0 5", (plssvm::shape{ 0, 5 }));
     EXPECT_CONVERSION_FROM_STRING("4 5", (plssvm::shape{ 4, 5 }));
 }
+
 TEST(Shape, from_string_unknown) {
     // foo isn't a valid solver_type
     std::istringstream input{ "foo" };
@@ -103,6 +105,7 @@ TEST(Shape, equal) {
     EXPECT_FALSE(s1 == s3);
     EXPECT_TRUE(s2 == s3);
 }
+
 TEST(Shape, unequal) {
     // construct shape objects
     plssvm::shape s1{ 4, 5 };

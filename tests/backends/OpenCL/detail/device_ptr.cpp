@@ -8,14 +8,15 @@
  * @brief Tests for the OpenCL backend device pointer.
  */
 
-#include "plssvm/backends/OpenCL/detail/device_ptr.hpp"     // plssvm::opencl::detail::device_ptr
+#include "plssvm/backends/OpenCL/detail/device_ptr.hpp"  // plssvm::opencl::detail::device_ptr
+
 #include "plssvm/backends/OpenCL/detail/command_queue.hpp"  // plssvm::opencl::detail::command_queue
 #include "plssvm/backends/OpenCL/detail/context.hpp"        // plssvm::opencl::detail::context
 #include "plssvm/backends/OpenCL/detail/utility.hpp"        // plssvm::opencl::detail::get_contexts
 
-#include "backends/generic_device_ptr_tests.h"  // generic device pointer tests to instantiate
-#include "naming.hpp"                           // naming::test_parameter_to_name
-#include "types_to_test.hpp"                    // util::{combine_test_parameters_gtest_t, cartesian_type_product_t, layout_type_list}
+#include "tests/backends/generic_device_ptr_tests.h"  // generic device pointer tests to instantiate
+#include "tests/naming.hpp"                           // naming::test_parameter_to_name
+#include "tests/types_to_test.hpp"                    // util::{combine_test_parameters_gtest_t, cartesian_type_product_t, layout_type_list}
 
 #include "gtest/gtest.h"  // INSTANTIATE_TYPED_TEST_SUITE_P
 
@@ -33,6 +34,7 @@ struct opencl_device_ptr_test_type {
         return queue;
     }
 };
+
 using opencl_device_ptr_tuple = std::tuple<opencl_device_ptr_test_type<float>, opencl_device_ptr_test_type<double>>;
 
 // the tests used in the instantiated GTest test suites

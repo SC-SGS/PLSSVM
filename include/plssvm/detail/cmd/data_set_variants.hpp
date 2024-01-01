@@ -38,6 +38,7 @@ template <typename label_type = typename data_set<>::label_type>
 [[nodiscard]] inline data_set_variants data_set_factory_impl(const cmd::parser_train &cmd_parser) {
     return data_set_variants{ plssvm::data_set<label_type>{ cmd_parser.input_filename } };
 }
+
 /**
  * @brief Return the correct data set type based on the plssvm::detail::cmd::parser_predict command line options.
  * @tparam label_type the type of the labels
@@ -48,6 +49,7 @@ template <typename label_type = typename data_set<>::label_type>
 [[nodiscard]] inline data_set_variants data_set_factory_impl(const cmd::parser_predict &cmd_parser) {
     return data_set_variants{ plssvm::data_set<label_type>{ cmd_parser.input_filename } };
 }
+
 /**
  * @brief Return the correct data set type based on the plssvm::detail::cmd::parser_scale command line options.
  * @tparam label_type the type of the labels

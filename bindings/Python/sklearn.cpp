@@ -6,11 +6,10 @@
  *          See the LICENSE.md file in the project root for full license information.
  */
 
+#include "plssvm/constants.hpp"  // plssvm::real_type
 #include "plssvm/core.hpp"
 
-#include "plssvm/constants.hpp"  // plssvm::real_type
-
-#include "utility.hpp"  // check_kwargs_for_correctness, assemble_unique_class_name, pyarray_to_vector, pyarray_to_matrix
+#include "bindings/Python/utility.hpp"  // check_kwargs_for_correctness, assemble_unique_class_name, pyarray_to_vector, pyarray_to_matrix
 
 #include "fmt/core.h"            // fmt::format
 #include "pybind11/numpy.h"      // support for STL types
@@ -257,63 +256,41 @@ void init_sklearn(py::module_ &m) {
                   return py_array;
               }
           })
-        .def_property_readonly(
-            "classes_", [](const svc &self) {
+        .def_property_readonly("classes_", [](const svc &self) {
                 if (self.model_ == nullptr) {
                     throw py::attribute_error{ "'SVC' object has no attribute 'classes_'" };
                 } else {
                     return vector_to_pyarray(self.data_->classes().value());
-                }
-            },
-            "The classes labels. ndarray of shape (n_classes,)")
-        .def_property_readonly("coef_", [](const svc &) {
-            throw py::attribute_error{ "'SVC' object has no attribute 'coef_' (not implemented)" };
-        })
-        .def_property_readonly("dual_coef_", [](const svc &) {
-            throw py::attribute_error{ "'SVC' object has no attribute 'dual_coef_' (not implemented)" };
-        })
-        .def_property_readonly(
-            "fit_status_", [](const svc &self) {
+                } }, "The classes labels. ndarray of shape (n_classes,)")
+        .def_property_readonly("coef_", [](const svc &) { throw py::attribute_error{ "'SVC' object has no attribute 'coef_' (not implemented)" }; })
+        .def_property_readonly("dual_coef_", [](const svc &) { throw py::attribute_error{ "'SVC' object has no attribute 'dual_coef_' (not implemented)" }; })
+        .def_property_readonly("fit_status_", [](const svc &self) {
                 if (self.model_ == nullptr) {
                     throw py::attribute_error{ "'SVC' object has no attribute 'fit_status_'" };
                 } else {
                     return 0;
-                }
-            },
-            "0 if correctly fitted, 1 otherwise (will raise exception). int")
-        .def_property_readonly("intercept_", [](const svc &) {
-            throw py::attribute_error{ "'SVC' object has no attribute 'intercept_' (not implemented)" };
-        })
-        .def_property_readonly(
-            "n_features_in_", [](const svc &self) {
+                } }, "0 if correctly fitted, 1 otherwise (will raise exception). int")
+        .def_property_readonly("intercept_", [](const svc &) { throw py::attribute_error{ "'SVC' object has no attribute 'intercept_' (not implemented)" }; })
+        .def_property_readonly("n_features_in_", [](const svc &self) {
                 if (self.model_ == nullptr) {
                     throw py::attribute_error{ "'SVC' object has no attribute 'n_features_in_'" };
                 } else {
                     return static_cast<int>(self.data_->num_features());
-                }
-            },
-            "Number of features seen during fit. int")
-        .def_property_readonly("feature_names_in_", [](const svc &) {
-            throw py::attribute_error{ "'SVC' object has no attribute 'feature_names_in_' (not implemented)" };
-        })
+                } }, "Number of features seen during fit. int")
+        .def_property_readonly("feature_names_in_", [](const svc &) { throw py::attribute_error{ "'SVC' object has no attribute 'feature_names_in_' (not implemented)" }; })
         .def_property_readonly("n_iter_", [](const svc &self) {
             if (self.model_ == nullptr) {
                 throw py::attribute_error{ "'SVC' object has no attribute 'support_'" };
             } else {
                 return vector_to_pyarray(self.model_->num_iters().value());
-            }
-        })
-        .def_property_readonly(
-            "support_", [](const svc &self) {
+            } })
+        .def_property_readonly("support_", [](const svc &self) {
                 if (self.model_ == nullptr) {
                     throw py::attribute_error{ "'SVC' object has no attribute 'support_'" };
                 } else {
                     return vector_to_pyarray(calculate_sv_indices_per_class(self));
-                }
-            },
-            "Indices of support vectors. ndarray of shape (n_SV)")
-        .def_property_readonly(
-            "support_vectors_", [](const svc &self) {
+                } }, "Indices of support vectors. ndarray of shape (n_SV)")
+        .def_property_readonly("support_vectors_", [](const svc &self) {
                 if (self.model_ == nullptr) {
                     throw py::attribute_error{ "'SVC' object has no attribute 'support_vectors_'" };
                 } else {
@@ -331,11 +308,8 @@ void init_sklearn(py::module_ &m) {
 
                     // convert 2D vector back to plssvm::matrix
                     return matrix_to_pyarray(plssvm::aos_matrix<plssvm::real_type>{ std::move(sorted_sv) });
-                }
-            },
-            "Support vectors. ndarray of shape (n_SV, n_features)")
-        .def_property_readonly(
-            "n_support_", [](const svc &self) {
+                } }, "Support vectors. ndarray of shape (n_SV, n_features)")
+        .def_property_readonly("n_support_", [](const svc &self) {
                 if (self.model_ == nullptr) {
                     throw py::attribute_error{ "'SVC' object has no attribute 'n_support_'" };
                 } else {
@@ -356,24 +330,15 @@ void init_sklearn(py::module_ &m) {
                     }
                     // convert to Numpy array
                     return vector_to_pyarray(n_support);
-                }
-            },
-            "Number of support vectors for each class. ndarray of shape (n_classes,), dtype=int32")
-        .def_property_readonly("probA_", [](const svc &) {
-            throw py::attribute_error{ "'SVC' object has no attribute 'probA_' (not implemented)" };
-        })
-        .def_property_readonly("probB_", [](const svc &) {
-            throw py::attribute_error{ "'SVC' object has no attribute 'probB_' (not implemented)" };
-        })
-        .def_property_readonly(
-            "shape_fit_", [](const svc &self) {
+                } }, "Number of support vectors for each class. ndarray of shape (n_classes,), dtype=int32")
+        .def_property_readonly("probA_", [](const svc &) { throw py::attribute_error{ "'SVC' object has no attribute 'probA_' (not implemented)" }; })
+        .def_property_readonly("probB_", [](const svc &) { throw py::attribute_error{ "'SVC' object has no attribute 'probB_' (not implemented)" }; })
+        .def_property_readonly("shape_fit_", [](const svc &self) {
                 if (self.model_ == nullptr) {
                     throw py::attribute_error{ "'SVC' object has no attribute 'shape_fit_'" };
                 } else {
                     return std::make_tuple(static_cast<int>(self.data_->num_data_points()), static_cast<int>(self.data_->num_features()));
-                }
-            },
-            "Array dimensions of training vector X. tuple of int of shape (n_dimensions_of_X,)");
+                } }, "Array dimensions of training vector X. tuple of int of shape (n_dimensions_of_X,)");
 
     //*************************************************************************************************************************************//
     //                                                               METHODS                                                               //
@@ -418,8 +383,7 @@ void init_sklearn(py::module_ &m) {
               py::pos_only(),
               py::arg("sample_weight") = std::nullopt,
               py::return_value_policy::reference)
-        .def(
-            "fit", [](svc &self, py::array_t<typename svc::real_type, py::array::c_style | py::array::forcecast> data, const py::list &labels, const std::optional<std::vector<typename svc::real_type>> &sample_weight) -> svc & {
+        .def("fit", [](svc &self, py::array_t<typename svc::real_type, py::array::c_style | py::array::forcecast> data, const py::list &labels, const std::optional<std::vector<typename svc::real_type>> &sample_weight) -> svc & {
                 if (sample_weight.has_value()) {
                     throw py::attribute_error{ "The 'sample_weight' parameter for a call to 'fit' is not implemented yet!" };
                 }
@@ -427,14 +391,7 @@ void init_sklearn(py::module_ &m) {
                 // fit the model using potentially provided keyword arguments
                 self.data_ = std::make_unique<typename svc::data_set_type>(pyarray_to_matrix(data), pylist_to_string_vector(labels));
                 fit(self);
-                return self;
-            },
-            "Fit the SVM model according to the given training data.",
-            py::arg("X"),
-            py::arg("y"),
-            py::pos_only(),
-            py::arg("sample_weight") = std::nullopt,
-            py::return_value_policy::reference);
+                return self; }, "Fit the SVM model according to the given training data.", py::arg("X"), py::arg("y"), py::pos_only(), py::arg("sample_weight") = std::nullopt, py::return_value_policy::reference);
 #endif
     py_svc.def(
               "get_params", [](const svc &self, const bool) {
@@ -467,22 +424,15 @@ void init_sklearn(py::module_ &m) {
               },
               "Get parameters for this estimator.",
               py::arg("depp") = true)
-        .def(
-            "predict", [](svc &self, py::array_t<typename svc::real_type, py::array::c_style | py::array::forcecast> data) {
+        .def("predict", [](svc &self, py::array_t<typename svc::real_type, py::array::c_style | py::array::forcecast> data) {
                 if (self.model_ == nullptr) {
                     throw py::attribute_error{ "This SVC instance is not fitted yet. Call 'fit' with appropriate arguments before using this estimator." };
                 } else {
                     const typename svc::data_set_type data_to_predict{ pyarray_to_matrix(data) };
                     return vector_to_pyarray(self.svm_->predict(*self.model_, data_to_predict));
-                }
-            },
-            "Perform classification on samples in X.")
-        .def("predict_log_proba", [](const svc &, py::array_t<typename svc::real_type>) {
-            throw py::attribute_error{ "'SVC' object has no function 'predict_log_proba' (not implemented)" };
-        })
-        .def("predict_proba", [](const svc &, py::array_t<typename svc::real_type>) {
-            throw py::attribute_error{ "'SVC' object has no function 'predict_proba' (not implemented)" };
-        });
+                } }, "Perform classification on samples in X.")
+        .def("predict_log_proba", [](const svc &, py::array_t<typename svc::real_type>) { throw py::attribute_error{ "'SVC' object has no function 'predict_log_proba' (not implemented)" }; })
+        .def("predict_proba", [](const svc &, py::array_t<typename svc::real_type>) { throw py::attribute_error{ "'SVC' object has no function 'predict_proba' (not implemented)" }; });
 #if !defined(PLSSVM_PYTHON_BINDINGS_LABEL_TYPE_IS_STRING)
     py_svc.def(
         "score", [](svc &self, py::array_t<typename svc::real_type, py::array::c_style | py::array::forcecast> data, py::array_t<typename svc::label_type, py::array::c_style | py::array::forcecast> labels, std::optional<std::vector<typename svc::real_type>> sample_weight) {
@@ -521,8 +471,7 @@ void init_sklearn(py::module_ &m) {
               py::arg("y"),
               py::pos_only(),
               py::arg("sample_weight") = std::nullopt)
-        .def(
-            "score", [](svc &self, py::array_t<typename svc::real_type, py::array::c_style | py::array::forcecast> data, py::list labels, const std::optional<std::vector<typename svc::real_type>> &sample_weight) {
+        .def("score", [](svc &self, py::array_t<typename svc::real_type, py::array::c_style | py::array::forcecast> data, py::list labels, const std::optional<std::vector<typename svc::real_type>> &sample_weight) {
                 if (sample_weight.has_value()) {
                     throw py::attribute_error{ "The 'sample_weight' parameter for a call to 'fit' is not implemented yet!" };
                 }
@@ -532,13 +481,7 @@ void init_sklearn(py::module_ &m) {
                 } else {
                     const typename svc::data_set_type data_to_score{ pyarray_to_matrix(data), pylist_to_string_vector(labels) };
                     return self.svm_->score(*self.model_, data_to_score);
-                }
-            },
-            "Return the mean accuracy on the given test data and labels.",
-            py::arg("X"),
-            py::arg("y"),
-            py::pos_only(),
-            py::arg("sample_weight") = std::nullopt);
+                } }, "Return the mean accuracy on the given test data and labels.", py::arg("X"), py::arg("y"), py::pos_only(), py::arg("sample_weight") = std::nullopt);
 #endif
     py_svc.def(
         "set_params", [](svc &self, const py::kwargs &args) -> svc & {

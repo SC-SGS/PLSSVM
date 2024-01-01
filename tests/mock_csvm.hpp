@@ -48,10 +48,8 @@ class mock_csvm final : public plssvm::csvm {
   private:
     void fake_functions() const {
         using namespace plssvm::detail::literals;
-        // clang-format off
         ON_CALL(*this, get_device_memory()).WillByDefault(::testing::Return(1_GiB));
         ON_CALL(*this, get_max_mem_alloc_size()).WillByDefault(::testing::Return(512_MiB));
-        // clang-format on
     }
 };
 

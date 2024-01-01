@@ -35,7 +35,8 @@ command_queue::command_queue(cl_context context, cl_device_id device) {
 }
 
 command_queue::command_queue(command_queue &&other) noexcept :
-    queue{ std::exchange(other.queue, nullptr) }, kernels{ std::move(other.kernels) } {}
+    queue{ std::exchange(other.queue, nullptr) },
+    kernels{ std::move(other.kernels) } { }
 
 command_queue &command_queue::operator=(command_queue &&other) noexcept {
     if (this != std::addressof(other)) {

@@ -197,7 +197,7 @@ void performance_tracker::save(std::ostream &out) {
         PADDING_SIZE);
 
 #if defined(PLSSVM_SYCL_BACKEND_HAS_DPCPP)
-    //  check whether DPC++ AOT has been enabled
+    // check whether DPC++ AOT has been enabled
     constexpr bool dpcpp_aot = PLSSVM_IS_DEFINED(PLSSVM_SYCL_BACKEND_DPCPP_ENABLE_AOT);
 
     out << fmt::format(
@@ -227,8 +227,8 @@ void performance_tracker::save(std::ostream &out) {
     // cxxopts version
     const std::string cxxopts_version{ fmt::format("{}.{}.{}", CXXOPTS__VERSION_MAJOR, CXXOPTS__VERSION_MINOR, CXXOPTS__VERSION_MINOR) };
     // {fmt} library
-    constexpr int fmt_version_major = FMT_VERSION / 10000;
-    constexpr int fmt_version_minor = FMT_VERSION % 10000 / 100;
+    constexpr int fmt_version_major = FMT_VERSION / 10'000;
+    constexpr int fmt_version_minor = FMT_VERSION % 10'000 / 100;
     constexpr int fmt_version_patch = FMT_VERSION % 10;
     const std::string fmt_version{ fmt::format("{}.{}.{}", fmt_version_major, fmt_version_minor, fmt_version_patch) };
     // fast float version
@@ -306,9 +306,13 @@ void performance_tracker::save(std::ostream &out) {
 }
 
 void performance_tracker::pause_tracking() noexcept { is_tracking_ = false; }
+
 void performance_tracker::resume_tracking() noexcept { is_tracking_ = true; }
+
 bool performance_tracker::is_tracking() const noexcept { return is_tracking_; }
+
 const std::map<std::string, std::map<std::string, std::vector<std::string>>> &performance_tracker::get_tracking_entries() noexcept { return tracking_statistics_; }
+
 void performance_tracker::clear_tracking_entries() noexcept { tracking_statistics_.clear(); }
 
 std::shared_ptr<performance_tracker> global_tracker = std::make_shared<performance_tracker>();

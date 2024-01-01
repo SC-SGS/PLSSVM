@@ -60,6 +60,7 @@ class redirect_output {
         // capture the output from the out stream
         out->rdbuf(buffer_.rdbuf());
     }
+
     /**
      * @brief Copy-construction is unnecessary.
      */
@@ -76,6 +77,7 @@ class redirect_output {
      * @brief Move-assignment is unnecessary.
      */
     redirect_output &operator=(redirect_output &&) = delete;
+
     /**
      * @brief Restore the original output location of @p out.
      */
@@ -84,6 +86,7 @@ class redirect_output {
         out->rdbuf(sbuf_);
         sbuf_ = nullptr;
     }
+
     /**
      * @brief Return the captured content.
      * @return the captured content (`[[nodiscard]]`)
@@ -93,6 +96,7 @@ class redirect_output {
         buffer_.flush();
         return buffer_.str();
     }
+
     /**
      * @brief Clear the current capture buffer.
      */
@@ -139,6 +143,7 @@ class temporary_file {
         std::ofstream{ filename };
 #endif
     }
+
     /**
      * @brief Copy-construction is unnecessary.
      */
@@ -155,6 +160,7 @@ class temporary_file {
      * @brief Move-assignment is unnecessary.
      */
     temporary_file &operator=(temporary_file &&) = delete;
+
     /**
      * @brief Remove the temporary file if it exists.
      */
@@ -263,6 +269,7 @@ inline void instantiate_template_file(const std::string &template_filename, cons
     std::ofstream out{ output_filename };
     out << str;
 }
+
 /**
  * @brief Get the label vector that is described in the input data template files.
  * @details Works according to the `instantiate_template_file` function.
@@ -348,6 +355,7 @@ template <typename T>
 
     return vec;
 }
+
 /**
  * @brief Generate matrix of size @p shape filled with random floating point values in the range `[-1.0, 1.0)`.
  * @tparam matrix_type the type of the elements in the vector (must be a floating point type)
@@ -363,7 +371,7 @@ template <typename matrix_type, typename real_type = typename matrix_type::value
     static std::mt19937 gen(device());
     std::uniform_real_distribution<real_type> dist(real_type{ -1.0 }, real_type{ 1.0 });
 
-    matrix_type matrix { shape };
+    matrix_type matrix{ shape };
     for (std::size_t i = 0; i < matrix.num_rows(); ++i) {
         for (std::size_t j = 0; j < matrix.num_cols(); ++j) {
             matrix(i, j) = dist(gen);
@@ -372,6 +380,7 @@ template <typename matrix_type, typename real_type = typename matrix_type::value
 
     return matrix;
 }
+
 /**
  * @brief Generate matrix of size (@p shape.x + @p padding.x) times (@p shape.y + @p padding.y) filled with random floating point values in the range `[-1.0, 1.0)`.
  *        The padding entries are set to `0`.
@@ -396,7 +405,7 @@ template <typename matrix_type>
     using real_type = typename matrix_type::value_type;
     static_assert(std::is_floating_point_v<real_type>, "Only floating point types are allowed!");
 
-    matrix_type matrix { shape };
+    matrix_type matrix{ shape };
     for (std::size_t i = 0; i < matrix.num_rows(); ++i) {
         for (std::size_t j = 1; j <= matrix.num_cols(); ++j) {
             matrix(i, j - 1) = i + j / real_type{ 10.0 };
@@ -405,6 +414,7 @@ template <typename matrix_type>
 
     return matrix;
 }
+
 /**
  * @brief Generate a matrix of size (@p shape.x + @p padding.x) times (@p shape.y + @p padding.y) filled with filled with values "row.(col +1)".
  *        The padding entries are set to `0`.
@@ -451,6 +461,7 @@ template <typename matrix_type>
 
     return matrix;
 }
+
 /**
  * @brief Generate a "sparse" matrix of size (@p shape.x + @p padding.x) times (@p shape.y + @p padding.y) filled with filled with values "row.(col +1)".
  *        In each row, approximately 50% of the values are replaced with zeros. The padding entries are set to `0`.
@@ -479,7 +490,6 @@ template <typename T>
     }
     return ret;
 }
-
 
 /**
  * @brief Scale the @p data set to the range [@p lower, @p upper].
@@ -527,6 +537,7 @@ template <typename T, typename Tuple, size_t... Is>
 [[nodiscard]] inline T construct_from_tuple(const plssvm::parameter &params, Tuple &&tuple, std::index_sequence<Is...>) {
     return T{ params, (std::get<Is>(tuple).first = std::get<Is>(tuple).second)... };
 }
+
 /**
  * @brief Construct an instance of type @p T using @p params and the values in the std::tuple @p tuple where all values in @p tuple are saved as a std::pair
  *        containing the named-parameter name and value.
@@ -556,6 +567,7 @@ template <typename T, typename Tuple, size_t... Is>
 [[nodiscard]] inline T construct_from_tuple(Tuple &&tuple, std::index_sequence<Is...>) {
     return T{ (std::get<Is>(tuple).first = std::get<Is>(tuple).second)... };
 }
+
 /**
  * @brief Construct an instance of type @p T using the values in the std::tuple @p tuple where all values in @p tuple are saved as a std::pair
  *        containing the named-parameter name and value.

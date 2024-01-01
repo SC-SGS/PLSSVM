@@ -29,10 +29,7 @@ void init_verbosity_levels(py::module_ &m) {
         .def(py::self &= py::self);
 
     // enable or disable verbose output
-    m.def(
-        "quiet", []() { plssvm::verbosity = plssvm::verbosity_level::quiet; }, "no command line output is made during calls to PLSSVM functions");
-    m.def(
-        "get_verbosity", []() { return plssvm::verbosity; }, "get the currently set verbosity level for all PLSSVM outputs to stdout");
-    m.def(
-        "set_verbosity", [](const plssvm::verbosity_level verb) { plssvm::verbosity = verb; }, "set the verbosity level for all PLSSVM outputs to stdout");
+    m.def("quiet", []() { plssvm::verbosity = plssvm::verbosity_level::quiet; }, "no command line output is made during calls to PLSSVM functions");
+    m.def("get_verbosity", []() { return plssvm::verbosity; }, "get the currently set verbosity level for all PLSSVM outputs to stdout");
+    m.def("set_verbosity", [](const plssvm::verbosity_level verb) { plssvm::verbosity = verb; }, "set the verbosity level for all PLSSVM outputs to stdout");
 }

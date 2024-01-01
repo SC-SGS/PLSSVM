@@ -13,19 +13,19 @@
 #define PLSSVM_BACKENDS_OPENCL_CSVM_HPP_
 #pragma once
 
+#include "plssvm/backends/gpu_csvm.hpp"                     // plssvm::detail::gpu_csvm
 #include "plssvm/backends/OpenCL/detail/command_queue.hpp"  // plssvm::opencl::detail::command_queue
 #include "plssvm/backends/OpenCL/detail/context.hpp"        // plssvm::opencl::detail::context
 #include "plssvm/backends/OpenCL/detail/device_ptr.hpp"     // plssvm::opencl::detail::device_ptr
-#include "plssvm/backends/gpu_csvm.hpp"                     // plssvm::detail::gpu_csvm
 #include "plssvm/constants.hpp"                             // plssvm::real_type
 #include "plssvm/detail/memory_size.hpp"                    // plssvm::detail::memory_size
 #include "plssvm/parameter.hpp"                             // plssvm::parameter, plssvm::detail::parameter
 #include "plssvm/target_platforms.hpp"                      // plssvm::target_platform
 
-#include <cstddef>                                          // std::size_t
-#include <type_traits>                                      // std::true_type
-#include <utility>                                          // std::forward
-#include <vector>                                           // std::vector
+#include <cstddef>      // std::size_t
+#include <type_traits>  // std::true_type
+#include <utility>      // std::forward
+#include <vector>       // std::vector
 
 namespace plssvm {
 
@@ -76,7 +76,8 @@ class csvm : public ::plssvm::detail::gpu_csvm<detail::device_ptr, detail::comma
      */
     template <typename... Args, PLSSVM_REQUIRES(::plssvm::detail::has_only_parameter_named_args_v<Args...>)>
     explicit csvm(Args &&...named_args) :
-        csvm{ plssvm::target_platform::automatic, std::forward<Args>(named_args)... } {}
+        csvm{ plssvm::target_platform::automatic, std::forward<Args>(named_args)... } { }
+
     /**
      * @brief Construct a new C-SVM using the OpenCL backend on the @p target platform and the optionally provided @p named_args.
      * @param[in] target the target platform used for this C-SVM
@@ -143,7 +144,7 @@ class csvm : public ::plssvm::detail::gpu_csvm<detail::device_ptr, detail::comma
     /**
      * @copydoc plssvm::detail::gpu_csvm::run_assemble_kernel_matrix_explicit
      */
-    [[nodiscard]] device_ptr_type run_assemble_kernel_matrix_explicit(const parameter &params, const device_ptr_type & data_d, const device_ptr_type &q_red_d, real_type QA_cost) const final;
+    [[nodiscard]] device_ptr_type run_assemble_kernel_matrix_explicit(const parameter &params, const device_ptr_type &data_d, const device_ptr_type &q_red_d, real_type QA_cost) const final;
     /**
      * @copydoc plssvm::detail::gpu_csvm::run_blas_level_3_kernel_explicit
      */
@@ -177,7 +178,7 @@ namespace detail {
  * @brief Sets the `value` to `true` since C-SVMs using the OpenCL backend are available.
  */
 template <>
-struct csvm_backend_exists<opencl::csvm> : std::true_type {};
+struct csvm_backend_exists<opencl::csvm> : std::true_type { };
 
 }  // namespace detail
 

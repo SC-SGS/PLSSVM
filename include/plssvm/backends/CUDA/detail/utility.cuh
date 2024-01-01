@@ -69,6 +69,6 @@ void device_synchronize(int device);
 }  // namespace plssvm::cuda::detail
 
 template <>
-struct fmt::formatter<cudaError_t> : fmt::ostream_formatter {};
+struct fmt::formatter<cudaError_t> : fmt::ostream_formatter { };
 
 #endif  // PLSSVM_BACKENDS_CUDA_DETAIL_UTILITY_HPP_

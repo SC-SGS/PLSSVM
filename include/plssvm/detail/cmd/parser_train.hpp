@@ -88,6 +88,6 @@ std::ostream &operator<<(std::ostream &out, const parser_train &params);
 }  // namespace plssvm::detail::cmd
 
 template <>
-struct fmt::formatter<plssvm::detail::cmd::parser_train> : fmt::ostream_formatter {};
+struct fmt::formatter<plssvm::detail::cmd::parser_train> : fmt::ostream_formatter { };
 
 #endif  // PLSSVM_DETAIL_CMD_PARSER_TRAIN_HPP_

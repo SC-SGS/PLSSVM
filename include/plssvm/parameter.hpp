@@ -57,6 +57,7 @@ IGOR_MAKE_NAMED_ARGUMENT(classification);
 IGOR_MAKE_NAMED_ARGUMENT(sycl_implementation_type);
 /// Create a named argument for the SYCL backend specific kernel invocation type.
 IGOR_MAKE_NAMED_ARGUMENT(sycl_kernel_invocation_type);
+
 /// @endcond
 
 namespace detail {
@@ -88,6 +89,7 @@ struct parameter {
      * @brief Default construct a parameter set, i.e., each SVM parameter has its default value.
      */
     constexpr parameter() noexcept = default;
+
     /**
      * @brief Construct a parameter set by explicitly overwriting the SVM parameters' default values.
      * @param[in] kernel_p the kernel type: linear, polynomial, or radial-basis functions (rbf)
@@ -238,6 +240,7 @@ struct parameter {
 [[nodiscard]] constexpr bool operator==(const parameter &lhs, const parameter &rhs) noexcept {
     return lhs.kernel_type == rhs.kernel_type && lhs.degree == rhs.degree && lhs.gamma == rhs.gamma && lhs.coef0 == rhs.coef0 && lhs.cost == rhs.cost;
 }
+
 /**
  * @brief Compares the two parameter sets @p lhs and @p rhs for inequality.
  * @details Two parameter sets are unequal if **any** of the SVM parameters are unequal.
@@ -273,6 +276,6 @@ std::ostream &operator<<(std::ostream &out, const parameter &params);
 }  // namespace plssvm
 
 template <>
-struct fmt::formatter<plssvm::parameter> : fmt::ostream_formatter {};
+struct fmt::formatter<plssvm::parameter> : fmt::ostream_formatter { };
 
 #endif  // PLSSVM_PARAMETER_HPP_

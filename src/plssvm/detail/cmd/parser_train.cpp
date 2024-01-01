@@ -242,15 +242,17 @@ std::ostream &operator<<(std::ostream &out, const parser_train &params) {
     switch (params.csvm_params.kernel_type) {
         case kernel_function_type::linear:
             break;
-        case kernel_function_type::polynomial: {
-            if (params.csvm_params.gamma.is_default()) {
-                out << "gamma: 1 / num_features (default)\n";
-            } else {
-                out << fmt::format("gamma: {}\n", params.csvm_params.gamma.value());
+        case kernel_function_type::polynomial:
+            {
+                if (params.csvm_params.gamma.is_default()) {
+                    out << "gamma: 1 / num_features (default)\n";
+                } else {
+                    out << fmt::format("gamma: {}\n", params.csvm_params.gamma.value());
+                }
+                out << fmt::format("coef0: {}{}\n", params.csvm_params.coef0.value(), params.csvm_params.coef0.is_default() ? " (default)" : "");
+                out << fmt::format("degree: {}{}\n", params.csvm_params.degree.value(), params.csvm_params.degree.is_default() ? " (default)" : "");
             }
-            out << fmt::format("coef0: {}{}\n", params.csvm_params.coef0.value(), params.csvm_params.coef0.is_default() ? " (default)" : "");
-            out << fmt::format("degree: {}{}\n", params.csvm_params.degree.value(), params.csvm_params.degree.is_default() ? " (default)" : "");
-        } break;
+            break;
         case kernel_function_type::rbf:
             if (params.csvm_params.gamma.is_default()) {
                 out << "gamma: 1 / num_features (default)\n";

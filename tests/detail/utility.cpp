@@ -12,8 +12,8 @@
 
 #include "plssvm/default_value.hpp"  // plssvm::default_value
 
-#include "naming.hpp"         // naming::{test_parameter_to_name}
-#include "types_to_test.hpp"  // util::{combine_test_parameters_gtest_t, cartesian_type_product_t, test_parameter_type_at_t}
+#include "tests/naming.hpp"         // naming::{test_parameter_to_name}
+#include "tests/types_to_test.hpp"  // util::{combine_test_parameters_gtest_t, cartesian_type_product_t, test_parameter_type_at_t}
 
 #include "gmock/gmock-matchers.h"  // EXPECT_THAT, ::testing::HasSubstr
 #include "gtest/gtest.h"           // TEST, EXPECT_EQ, EXPECT_TRUE, EXPECT_FALSE, ::testing::Test
@@ -110,6 +110,7 @@ class UtilityMapContainer : public ::testing::Test {
         // initialize map
         map_ = { { 0, 0 }, { 1, 1 } };
     }
+
     /**
      * @brief Return the encapsulated map.
      * @return the map (`[[nodiscard]]`)
@@ -119,6 +120,7 @@ class UtilityMapContainer : public ::testing::Test {
   private:
     map_type map_;
 };
+
 TYPED_TEST_SUITE(UtilityMapContainer, map_types_gtest, naming::test_parameter_to_name);
 
 TYPED_TEST(UtilityMapContainer, erase_if) {
@@ -129,6 +131,7 @@ TYPED_TEST(UtilityMapContainer, erase_if) {
     EXPECT_EQ(plssvm::detail::erase_if(this->get_map(), [](const typename TestFixture::map_type::value_type value) { return value.second % 2 == 1; }), 1);
     EXPECT_TRUE(this->get_map().empty());
 }
+
 TYPED_TEST(UtilityMapContainer, contains) {
     EXPECT_TRUE(plssvm::detail::contains(this->get_map(), 0));
     EXPECT_TRUE(plssvm::detail::contains(this->get_map(), 1));
@@ -155,6 +158,7 @@ class UtilitySetContainer : public ::testing::Test {
         // initialize set
         set_ = { 0, 1 };
     }
+
     /**
      * @brief Return the encapsulated set.
      * @return the set (`[[nodiscard]]`)
@@ -164,6 +168,7 @@ class UtilitySetContainer : public ::testing::Test {
   private:
     set_type set_;
 };
+
 TYPED_TEST_SUITE(UtilitySetContainer, set_types_gtest, naming::test_parameter_to_name);
 
 TYPED_TEST(UtilitySetContainer, erase_if) {
@@ -174,6 +179,7 @@ TYPED_TEST(UtilitySetContainer, erase_if) {
     EXPECT_EQ(plssvm::detail::erase_if(this->get_set(), [](const typename TestFixture::set_type::value_type value) { return value % 2 == 1; }), 1);
     EXPECT_TRUE(this->get_set().empty());
 }
+
 TYPED_TEST(UtilitySetContainer, contains) {
     EXPECT_TRUE(plssvm::detail::contains(this->get_set(), 0));
     EXPECT_TRUE(plssvm::detail::contains(this->get_set(), 1));
@@ -200,6 +206,7 @@ class UtilityVectorContainer : public ::testing::Test {
         // initialize vector
         vec_ = { 0, 1 };
     }
+
     /**
      * @brief Return the encapsulated vector.
      * @return the set (`[[nodiscard]]`)
@@ -220,6 +227,7 @@ TYPED_TEST(UtilityVectorContainer, erase_if) {
     EXPECT_EQ(plssvm::detail::erase_if(this->get_vector(), [](const typename TestFixture::vector_type::value_type value) { return value % 2 == 1; }), 1);
     EXPECT_TRUE(this->get_vector().empty());
 }
+
 TYPED_TEST(UtilityVectorContainer, contains) {
     EXPECT_TRUE(plssvm::detail::contains(this->get_vector(), 0));
     EXPECT_TRUE(plssvm::detail::contains(this->get_vector(), 1));

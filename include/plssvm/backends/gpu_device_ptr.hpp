@@ -107,6 +107,7 @@ class gpu_device_ptr {
      * @param[in,out] other the other device_ptr
      */
     void swap(gpu_device_ptr &other) noexcept;
+
     /**
      * @brief Swap the contents of @p lhs and @p rhs.
      * @param[in,out] lhs a device_ptr
@@ -122,6 +123,7 @@ class gpu_device_ptr {
     [[nodiscard]] explicit operator bool() const noexcept {
         return data_ != device_pointer_type{};
     }
+
     /**
      * @brief Access the underlying device pointer.
      * @return the device pointer (`[[nodiscard]]`)
@@ -129,12 +131,14 @@ class gpu_device_ptr {
     [[nodiscard]] device_pointer_type get() noexcept {
         return data_;
     }
+
     /**
      * @copydoc plssvm::detail::gpu_device_ptr::get()
      */
     [[nodiscard]] device_pointer_type get() const noexcept {
         return data_;
     }
+
     /**
      * @brief Get the number of elements in the wrapped device_ptr.
      * @details Same as: `this->size(0) * this->size(1)`.
@@ -143,6 +147,7 @@ class gpu_device_ptr {
     [[nodiscard]] size_type size() const noexcept {
         return shape_.x * shape_.y;
     }
+
     /**
      * @brief Get the number of elements in both dimensions in the wrapped device_ptr.
      * @return the number of elements in both directions (`[[nodiscard]]`)
@@ -167,6 +172,7 @@ class gpu_device_ptr {
     [[nodiscard]] plssvm::shape padding() const noexcept {
         return padding_;
     }
+
     /**
      * @brief Get the number of values **including** padding in the wrapped device_ptr.
      * @return the number of elements (`[[nodiscard]]`)
@@ -174,6 +180,7 @@ class gpu_device_ptr {
     [[nodiscard]] size_type size_padded() const noexcept {
         return (shape_.x + padding_.x) * (shape_.y + padding_.y);
     }
+
     /**
      * @brief Get the number of values in both dimensions **including** padding in the wrapped device_ptr.
      * @return the number of elements in both directions (`[[nodiscard]]`)
@@ -181,6 +188,7 @@ class gpu_device_ptr {
     [[nodiscard]] plssvm::shape shape_padded() const noexcept {
         return plssvm::shape{ shape_.x + padding_.x, shape_.y + padding_.y };
     }
+
     /**
      * @brief Checks whether the wrapped device_ptr contains any padding entries.
      * @return `true` if the wrapped device_ptr is padded, `false` otherwise (`[[nodiscard]]`)
@@ -246,6 +254,7 @@ class gpu_device_ptr {
         }
         this->copy_to_device(data_to_copy.data());
     }
+
     /**
      * @brief Copy device_ptr::size() many values from @p data_to_copy to the device.
      * @param[in] data_to_copy the data to copy onto the device
@@ -290,6 +299,7 @@ class gpu_device_ptr {
         }
         this->copy_to_host(buffer.data());
     }
+
     /**
      * @brief Copy device_ptr::size() many values from the device to the host buffer @p buffer.
      * @param[out] buffer the buffer to copy the data to

@@ -16,7 +16,8 @@
 namespace plssvm {
 
 shape::shape(const std::size_t x_p, const std::size_t y_p) :
-    x{ x_p }, y{ y_p } {}
+    x{ x_p },
+    y{ y_p } { }
 
 void shape::swap(shape &other) noexcept {
     using std::swap;
@@ -39,6 +40,7 @@ void swap(shape &lhs, shape &rhs) noexcept {
 bool operator==(shape lhs, shape rhs) noexcept {
     return lhs.x == rhs.x && lhs.y == rhs.y;
 }
+
 bool operator!=(shape lhs, shape rhs) noexcept {
     return !(lhs == rhs);
 }

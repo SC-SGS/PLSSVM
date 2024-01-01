@@ -13,17 +13,16 @@
 #define PLSSVM_BACKENDS_SYCL_DPCPP_CSVM_HPP_
 #pragma once
 
+#include "plssvm/backends/gpu_csvm.hpp"                      // plssvm::detail::gpu_csvm
 #include "plssvm/backends/SYCL/DPCPP/detail/device_ptr.hpp"  // plssvm::dpcpp::detail::device_ptr
 #include "plssvm/backends/SYCL/DPCPP/detail/queue.hpp"       // plssvm::dpcpp::detail::queue (PImpl)
-
-#include "plssvm/backends/SYCL/kernel_invocation_type.hpp"  // plssvm::sycl::kernel_invocation_type
-#include "plssvm/backends/gpu_csvm.hpp"                     // plssvm::detail::gpu_csvm
-#include "plssvm/constants.hpp"                             // plssvm::real_type
-#include "plssvm/detail/igor_utility.hpp"                   // plssvm::detail::get_value_from_named_parameter
-#include "plssvm/detail/memory_size.hpp"                    // plssvm::detail::memory_size
-#include "plssvm/detail/type_traits.hpp"                    // PLSSVM_REQUIRES, plssvm::detail::remove_cvref_t
-#include "plssvm/parameter.hpp"                             // plssvm::parameter, plssvm::detail::parameter
-#include "plssvm/target_platforms.hpp"                      // plssvm::target_platform
+#include "plssvm/backends/SYCL/kernel_invocation_type.hpp"   // plssvm::sycl::kernel_invocation_type
+#include "plssvm/constants.hpp"                              // plssvm::real_type
+#include "plssvm/detail/igor_utility.hpp"                    // plssvm::detail::get_value_from_named_parameter
+#include "plssvm/detail/memory_size.hpp"                     // plssvm::detail::memory_size
+#include "plssvm/detail/type_traits.hpp"                     // PLSSVM_REQUIRES, plssvm::detail::remove_cvref_t
+#include "plssvm/parameter.hpp"                              // plssvm::parameter, plssvm::detail::parameter
+#include "plssvm/target_platforms.hpp"                       // plssvm::target_platform
 
 #include "igor/igor.hpp"  // igor::parser
 
@@ -77,7 +76,8 @@ class csvm : public ::plssvm::detail::gpu_csvm<detail::device_ptr, detail::queue
      */
     template <typename... Args, PLSSVM_REQUIRES(::plssvm::detail::has_only_sycl_parameter_named_args_v<Args...>)>
     explicit csvm(Args &&...named_args) :
-        csvm{ plssvm::target_platform::automatic, std::forward<Args>(named_args)... } {}
+        csvm{ plssvm::target_platform::automatic, std::forward<Args>(named_args)... } { }
+
     /**
      * @brief Construct a new C-SVM using the SYCL backend on the @p target platform and the optionally provided @p named_args.
      * @param[in] target the target platform used for this C-SVM
@@ -190,7 +190,7 @@ namespace detail {
  * @brief Sets the `value` to `true` since C-SVMs using the SYCL backend with DPC++ as SYCL implementation are available.
  */
 template <>
-struct csvm_backend_exists<dpcpp::csvm> : std::true_type {};
+struct csvm_backend_exists<dpcpp::csvm> : std::true_type { };
 
 }  // namespace detail
 

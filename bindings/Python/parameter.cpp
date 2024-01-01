@@ -10,7 +10,7 @@
 
 #include "plssvm/constants.hpp"  // plssvm::real_type
 
-#include "utility.hpp"
+#include "bindings/Python/utility.hpp"
 
 #include "fmt/core.h"            // fmt::format
 #include "pybind11/operators.h"  // support for operators

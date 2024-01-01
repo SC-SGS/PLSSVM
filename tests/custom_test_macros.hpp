@@ -36,10 +36,12 @@ template <typename T>
 struct get_value_type {
     using type = T;
 };
+
 template <typename T>
 struct get_value_type<std::vector<T>> {
     using type = typename get_value_type<T>::type;
 };
+
 template <typename T>
 using get_value_type_t = typename get_value_type<T>::type;
 
@@ -85,6 +87,7 @@ inline void floating_point_vector_eq(const std::vector<T> &val1, const std::vect
         floating_point_eq<T, expect>(val1[col], val2[col], fmt::format("values at [{}] are not equal: ", col));
     }
 }
+
 /**
  * @brief Compares the two 2D vectors of floating point values @p val1 and @p val2.
  * @tparam T the floating point type
@@ -102,6 +105,7 @@ inline void floating_point_2d_vector_eq(const std::vector<std::vector<T>> &val1,
         }
     }
 }
+
 /**
  * @brief Compares the two matrices of floating point values @p matr1 and @p matr2.
  * @tparam matrix_type the matrix type (AoS vs SoA)
@@ -169,6 +173,7 @@ inline void floating_point_vector_near(const std::vector<T> &val1, const std::ve
         floating_point_near<T, expect>(val1[col], val2[col], eps_factor, fmt::format("values at [{}] are not equal enough: ", col));
     }
 }
+
 /**
  * @brief Compares the two 2D vectors of floating point values @p val1 and @p val2 using a mixture of relative and absolute mode.
  * @tparam T the floating point type
@@ -187,6 +192,7 @@ inline void floating_point_2d_vector_near(const std::vector<std::vector<T>> &val
         }
     }
 }
+
 /**
  * @brief Compares the two matrices @p matr1 and @p matr2 using a mixture of relative and absolute mode.
  * @tparam matrix_type the matrix type (AoS vs SoA)
@@ -230,6 +236,7 @@ inline void convert_to_string(const T &value, const std::string_view expected_st
         ASSERT_EQ(output.str(), expected_str);
     }
 }
+
 /**
  * @brief Tries to convert the string @p str to a value of type T using std::istringstream. If it succeeds, compares the value to @p expected_value.
  * @tparam T the type to which the string should be converted

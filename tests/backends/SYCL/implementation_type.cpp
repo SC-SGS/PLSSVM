@@ -10,7 +10,7 @@
 
 #include "plssvm/backends/SYCL/implementation_type.hpp"  // plssvm::sycl::implementation_type
 
-#include "custom_test_macros.hpp"  // EXPECT_CONVERSION_TO_STRING, EXPECT_CONVERSION_FROM_STRING
+#include "tests/custom_test_macros.hpp"  // EXPECT_CONVERSION_TO_STRING, EXPECT_CONVERSION_FROM_STRING
 
 #include "gtest/gtest.h"  // TEST, EXPECT_TRUE
 
@@ -23,6 +23,7 @@ TEST(SYCLImplementationType, to_string) {
     EXPECT_CONVERSION_TO_STRING(plssvm::sycl::implementation_type::adaptivecpp, "adaptivecpp");
     EXPECT_CONVERSION_TO_STRING(plssvm::sycl::implementation_type::dpcpp, "dpcpp");
 }
+
 TEST(SYCLImplementationType, to_string_unknown) {
     // check conversions to std::string from unknown file_format_type
     EXPECT_CONVERSION_TO_STRING(static_cast<plssvm::sycl::implementation_type>(3), "unknown");
@@ -41,6 +42,7 @@ TEST(SYCLImplementationType, from_string) {
     EXPECT_CONVERSION_FROM_STRING("dpc++", plssvm::sycl::implementation_type::dpcpp);
     EXPECT_CONVERSION_FROM_STRING("DPC++", plssvm::sycl::implementation_type::dpcpp);
 }
+
 TEST(SYCLImplementationType, from_string_unknown) {
     // foo isn't a valid file_format_type
     std::istringstream input{ "foo" };

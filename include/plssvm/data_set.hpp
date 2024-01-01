@@ -243,11 +243,13 @@ class data_set {
      * @return the data points (`[[nodiscard]]`)
      */
     [[nodiscard]] const soa_matrix<real_type> &data() const { return *data_ptr_; }
+
     /**
      * @brief Returns whether this data set contains labels or not.
      * @return `true` if this data set contains labels, `false` otherwise (`[[nodiscard]]`)
      */
     [[nodiscard]] bool has_labels() const noexcept { return labels_ptr_ != nullptr; }
+
     /**
      * @brief Returns an optional reference to the labels in this data set.
      * @details If the labels are present, they can be retrieved as `std::vector` using: `dataset.labels()->%get()`.
@@ -267,11 +269,13 @@ class data_set {
      * @return the number of data points (`[[nodiscard]]`)
      */
     [[nodiscard]] size_type num_data_points() const noexcept { return num_data_points_; }
+
     /**
      * @brief Returns the number of features in this data set.
      * @return the number of features (`[[nodiscard]]`)
      */
     [[nodiscard]] size_type num_features() const noexcept { return num_features_; }
+
     /**
      * @brief Returns the number of classes in this data set.
      * @details If the data set contains the labels `std::vector<int>{ -1, 1, 1, -1, -1, 1 }`, this function returns `2`.
@@ -286,6 +290,7 @@ class data_set {
      * @return `true` if this data set has been scaled, `false` otherwise (`[[nodiscard]]`)
      */
     [[nodiscard]] bool is_scaled() const noexcept { return scale_parameters_ != nullptr; }
+
     /**
      * @brief Returns the scaling factors as an optional reference used to scale the data points in this data set.
      * @details Can be used to scale another data set in the same way (e.g., a test data set).
@@ -299,7 +304,7 @@ class data_set {
      * @brief Default construct an empty data set.
      */
     data_set() :
-        data_ptr_{ std::make_shared<soa_matrix<real_type>>() } {}
+        data_ptr_{ std::make_shared<soa_matrix<real_type>>() } { }
 
     /**
      * @brief Create the mapping between the provided labels and the internally used indices.
@@ -362,6 +367,7 @@ class data_set<U>::scaling {
          * @brief Default construct new scaling factors.
          */
         factors() = default;
+
         /**
          * @brief Construct new scaling factors struct with the provided values.
          * @param[in] feature_index the feature index for which the bounds are valid
@@ -369,7 +375,9 @@ class data_set<U>::scaling {
          * @param[in] upper_bound the maximum value of the feature @p feature_index for all data points
          */
         factors(const size_type feature_index, const real_type lower_bound, const real_type upper_bound) :
-            feature{ feature_index }, lower{ lower_bound }, upper{ upper_bound } {}
+            feature{ feature_index },
+            lower{ lower_bound },
+            upper{ upper_bound } { }
 
         /// The feature index for which the scaling factors are valid.
         size_type feature{};
@@ -501,6 +509,7 @@ data_set<U>::data_set::label_mapper::label_mapper(const std::vector<label_type> 
         index_to_label_[idx] = classes[idx];
     }
 }
+
 /// @endcond
 
 template <typename U>
@@ -570,6 +579,7 @@ data_set<U>::data_set(const std::string &filename, file_format_type format, scal
     this->scale();
 }
 
+// clang-format off
 template <typename U>
 data_set<U>::data_set(const std::vector<std::vector<real_type>> &data_points) try :
     data_set{ soa_matrix<real_type>{ data_points, shape{ PADDING_SIZE, PADDING_SIZE } } } {}
@@ -598,10 +608,14 @@ data_set<U>::data_set(const std::vector<std::vector<real_type>> &data_points, st
         throw data_set_exception{ e.what() };
     }
 
+// clang-format on
+
 template <typename U>
 template <layout_type layout>
 data_set<U>::data_set(const matrix<real_type, layout> &data_points) :
-    num_data_points_{ data_points.num_rows() }, num_features_{ data_points.num_cols() }, data_ptr_{ std::make_shared<soa_matrix<real_type>>(data_points, shape{ PADDING_SIZE, PADDING_SIZE }) } {
+    num_data_points_{ data_points.num_rows() },
+    num_features_{ data_points.num_cols() },
+    data_ptr_{ std::make_shared<soa_matrix<real_type>>(data_points, shape{ PADDING_SIZE, PADDING_SIZE }) } {
     // the provided data points vector may not be empty
     if (data_ptr_->num_rows() == 0) {
         throw data_set_exception{ "Data vector is empty!" };
@@ -619,7 +633,10 @@ data_set<U>::data_set(const matrix<real_type, layout> &data_points) :
 template <typename U>
 template <layout_type layout>
 data_set<U>::data_set(const matrix<real_type, layout> &data_points, std::vector<label_type> labels) :
-    num_data_points_{ data_points.num_rows() }, num_features_{ data_points.num_cols() }, data_ptr_{ std::make_shared<soa_matrix<real_type>>(data_points, shape{ PADDING_SIZE, PADDING_SIZE}) }, labels_ptr_{ std::make_shared<std::vector<label_type>>(std::move(labels)) } {
+    num_data_points_{ data_points.num_rows() },
+    num_features_{ data_points.num_cols() },
+    data_ptr_{ std::make_shared<soa_matrix<real_type>>(data_points, shape{ PADDING_SIZE, PADDING_SIZE }) },
+    labels_ptr_{ std::make_shared<std::vector<label_type>>(std::move(labels)) } {
     // the number of labels must be equal to the number of data points!
     if (data_ptr_->num_rows() != labels_ptr_->size()) {
         throw data_set_exception{ fmt::format("Number of labels ({}) must match the number of data points ({})!", labels_ptr_->size(), data_ptr_->num_rows()) };
@@ -741,7 +758,7 @@ void data_set<U>::create_mapping(const std::vector<label_type> &classes) {
     // convert input labels to now mapped values
     aos_matrix<real_type> tmp{ shape{ mapper.num_mappings(), labels_ptr_->size() }, real_type{ -1.0 } };
 
-    #pragma omp parallel for collapse(2)
+#pragma omp parallel for collapse(2)
     for (typename std::vector<std::vector<real_type>>::size_type label = 0; label < tmp.num_rows(); ++label) {
         for (typename std::vector<real_type>::size_type i = 0; i < tmp.num_cols(); ++i) {
             if (label == mapper.get_mapped_index_by_label((*labels_ptr_)[i])) {
@@ -771,8 +788,8 @@ void data_set<U>::scale() {
             real_type min_value = std::numeric_limits<real_type>::max();
             real_type max_value = std::numeric_limits<real_type>::lowest();
 
-            // calculate min/max values of all data points at the specific feature
-            #pragma omp parallel for default(shared) firstprivate(feature) reduction(min : min_value) reduction(max : max_value)
+// calculate min/max values of all data points at the specific feature
+#pragma omp parallel for default(shared) firstprivate(feature) reduction(min : min_value) reduction(max : max_value)
             for (size_type data_point = 0; data_point < num_data_points_; ++data_point) {
                 min_value = std::min(min_value, (*data_ptr_)(data_point, feature));
                 max_value = std::max(max_value, (*data_ptr_)(data_point, feature));
@@ -803,8 +820,8 @@ void data_set<U>::scale() {
         }
     }
 
-    // scale values
-    #pragma omp parallel for default(shared) firstprivate(lower, upper)
+// scale values
+#pragma omp parallel for default(shared) firstprivate(lower, upper)
     for (size_type i = 0; i < scale_parameters_->scaling_factors.size(); ++i) {
         // extract feature-wise min and max values
         const typename scaling::factors factor = scale_parameters_->scaling_factors[i];

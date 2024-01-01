@@ -12,13 +12,12 @@ message(CHECK_START "Checking for SYCL backend")
 
 # explicitly set sources shared between all SYCL implementations
 set(PLSSVM_SYCL_SOURCES
-        ${CMAKE_CURRENT_LIST_DIR}/exceptions.cpp
-        ${CMAKE_CURRENT_LIST_DIR}/../gpu_device_ptr.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/exceptions.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/../gpu_device_ptr.cpp
 )
 
 # list of found SYCL implementations
 set(PLSSVM_SYCL_BACKEND_FOUND_IMPLEMENTATIONS "")
-
 
 # check if SYCL can be enabled
 ## add AdaptiveCpp
@@ -34,7 +33,6 @@ if (PLSSVM_ENABLE_SYCL_DPCPP_BACKEND MATCHES "AUTO" OR PLSSVM_ENABLE_SYCL_DPCPP_
     add_subdirectory(DPCPP)
 endif ()
 
-
 ## check if ANY SYCL implementation has been found
 if (NOT PLSSVM_SYCL_BACKEND_FOUND_IMPLEMENTATIONS)
     message(CHECK_FAIL "not found")
@@ -47,7 +45,6 @@ if (NOT PLSSVM_SYCL_BACKEND_FOUND_IMPLEMENTATIONS)
     endif ()
     return()
 endif ()
-
 
 # set target properties
 set_local_and_parent(PLSSVM_SYCL_BACKEND_LIBRARY_NAME plssvm-SYCL)
@@ -71,7 +68,6 @@ if (PLSSVM_SYCL_BACKEND_NUM_FOUND_IMPLEMENTATIONS GREATER 1)
     endif ()
 endif ()
 message(CHECK_PASS "found")
-
 
 # set the preferred SYCL implementation
 if (DEFINED PLSSVM_SYCL_BACKEND_PREFERRED_IMPLEMENTATION)
@@ -103,14 +99,11 @@ if (TARGET ${PLSSVM_SYCL_BACKEND_DPCPP_LIBRARY_NAME})
     target_compile_definitions(${PLSSVM_SYCL_BACKEND_DPCPP_LIBRARY_NAME} PRIVATE PLSSVM_SYCL_BACKEND_PREFERRED_IMPLEMENTATION=${PLSSVM_SYCL_BACKEND_PREFERRED_IMPLEMENTATION})
 endif ()
 
-
 # link against interface library
 target_link_libraries(${PLSSVM_ALL_LIBRARY_NAME} INTERFACE ${PLSSVM_SYCL_BACKEND_LIBRARY_NAME})
 
-
 # the SYCL backend is available
 target_compile_definitions(${PLSSVM_BASE_LIBRARY_NAME} PRIVATE PLSSVM_HAS_SYCL_BACKEND)
-
 
 # mark backend library as install target
 list(APPEND PLSSVM_TARGETS_TO_INSTALL "${PLSSVM_SYCL_BACKEND_LIBRARY_NAME}")
@@ -118,7 +111,6 @@ set(PLSSVM_TARGETS_TO_INSTALL ${PLSSVM_TARGETS_TO_INSTALL} PARENT_SCOPE)
 
 # set manpage string
 set_local_and_parent(PLSSVM_SYCL_BACKEND_NAME_LIST "automatic;${PLSSVM_SYCL_BACKEND_FOUND_IMPLEMENTATIONS}")
-
 
 # generate summary string
 include(${PROJECT_SOURCE_DIR}/cmake/assemble_summary_string.cmake)
@@ -129,24 +121,24 @@ foreach (SYCL_IMPLEMENTATION ${PLSSVM_SYCL_BACKEND_FOUND_IMPLEMENTATIONS})
     if ("${PLSSVM_SYCL_BACKEND_LIBRARY_NAME_COMPILE_DEFINITIONS}" MATCHES ".*${SYCL_IMPLEMENTATION}.*")
         set(SYCL_IMPLEMENTATION "${SYCL_IMPLEMENTATION}*")
     endif ()
-
+    
     assemble_summary_string(PLSSVM_SYCL_BACKEND_SUMMARY_STRING_ARCHS)
     # do not print CPU and Intel GPU target architectures when using AdaptiveCpp
     if ("${SYCL_IMPLEMENTATION}" MATCHES "^adaptivecpp")
         if (PLSSVM_SYCL_BACKEND_ADAPTIVECPP_USE_GENERIC_SSCP)
-
+            
             assemble_summary_string(PLSSVM_SYCL_BACKEND_SUMMARY_STRING_ARCHS)
             # do not print any special target architecture information
             string(REPLACE " (${PLSSVM_CPU_TARGET_ARCHS})" "" PLSSVM_SYCL_BACKEND_SUMMARY_STRING_ARCHS "${PLSSVM_SYCL_BACKEND_SUMMARY_STRING_ARCHS}")
             string(REPLACE " (${PLSSVM_NVIDIA_TARGET_ARCHS})" "" PLSSVM_SYCL_BACKEND_SUMMARY_STRING_ARCHS "${PLSSVM_SYCL_BACKEND_SUMMARY_STRING_ARCHS}")
             string(REPLACE " (${PLSSVM_AMD_TARGET_ARCHS})" "" PLSSVM_SYCL_BACKEND_SUMMARY_STRING_ARCHS "${PLSSVM_SYCL_BACKEND_SUMMARY_STRING_ARCHS}")
             string(REPLACE " (${PLSSVM_INTEL_TARGET_ARCHS})" "" PLSSVM_SYCL_BACKEND_SUMMARY_STRING_ARCHS "${PLSSVM_SYCL_BACKEND_SUMMARY_STRING_ARCHS}")
-
+            
             # remove first whitespace from string
             string(LENGTH "${PLSSVM_SYCL_BACKEND_SUMMARY_STRING_ARCHS}" PLSSVM_SYCL_BACKEND_SUMMARY_STRING_ARCHS_LENGTH)
             MATH(EXPR PLSSVM_SYCL_BACKEND_SUMMARY_STRING_ARCHS_LENGTH "${PLSSVM_SYCL_BACKEND_SUMMARY_STRING_ARCHS_LENGTH} - 1")
             string(SUBSTRING "${PLSSVM_SYCL_BACKEND_SUMMARY_STRING_ARCHS}" 1 ${PLSSVM_SYCL_BACKEND_SUMMARY_STRING_ARCHS_LENGTH} PLSSVM_SYCL_BACKEND_SUMMARY_STRING_ARCHS)
-
+            
             set(PLSSVM_SYCL_BACKEND_SUMMARY_STRING_ARCHS " generic (${PLSSVM_SYCL_BACKEND_SUMMARY_STRING_ARCHS})")
         else ()
             string(REPLACE " (${PLSSVM_CPU_TARGET_ARCHS})" "" PLSSVM_SYCL_BACKEND_SUMMARY_STRING_ARCHS "${PLSSVM_SYCL_BACKEND_SUMMARY_STRING_ARCHS}")

@@ -16,6 +16,6 @@
 namespace plssvm::hip {
 
 backend_exception::backend_exception(const std::string &msg, source_location loc) :
-    ::plssvm::exception{ msg, "hip::backend_exception", loc } {}
+    ::plssvm::exception{ msg, "hip::backend_exception", loc } { }
 
 }  // namespace plssvm::hip

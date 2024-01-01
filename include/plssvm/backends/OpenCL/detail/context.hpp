@@ -67,6 +67,7 @@ class context {
      * @return the wrapped OpenCL cl_context (`[[nodiscard]]`)
      */
     [[nodiscard]] operator cl_context &() noexcept { return device_context; }
+
     /**
      * @brief Implicitly convert a context wrapper to an OpenCL cl_context.
      * @return the wrapped OpenCL cl_context (`[[nodiscard]]`)

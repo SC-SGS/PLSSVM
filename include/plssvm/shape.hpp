@@ -120,6 +120,6 @@ struct hash<plssvm::shape> {
 }  // namespace std
 
 template <>
-struct fmt::formatter<plssvm::shape> : fmt::ostream_formatter {};
+struct fmt::formatter<plssvm::shape> : fmt::ostream_formatter { };
 
 #endif  // PLSSVM_SHAPE_HPP_

@@ -1,13 +1,13 @@
 /**
-* @file
-* @author Alexander Van Craen
-* @author Marcel Breyer
-* @copyright 2018-today The PLSSVM project - All Rights Reserved
-* @license This file is part of the PLSSVM project which is released under the MIT license.
-*          See the LICENSE.md file in the project root for full license information.
-*
-* @brief Functions for implicitly assembling the kernel matrix using the CUDA backend.
-*/
+ * @file
+ * @author Alexander Van Craen
+ * @author Marcel Breyer
+ * @copyright 2018-today The PLSSVM project - All Rights Reserved
+ * @license This file is part of the PLSSVM project which is released under the MIT license.
+ *          See the LICENSE.md file in the project root for full license information.
+ *
+ * @brief Functions for implicitly assembling the kernel matrix using the CUDA backend.
+ */
 
 #ifndef PLSSVM_BACKENDS_CUDA_CG_IMPLICIT_KERNEL_MATRIX_ASSEMBLY_BLAS_CUH_
 #define PLSSVM_BACKENDS_CUDA_CG_IMPLICIT_KERNEL_MATRIX_ASSEMBLY_BLAS_CUH_
@@ -68,7 +68,6 @@ __global__ void device_kernel_assembly_polynomial_symm(const real_type alpha, co
  * @param[in] num_classes the number of classes in the data set
  */
 __global__ void device_kernel_assembly_rbf_symm(const real_type alpha, const real_type *q, const real_type *data_d, const unsigned long long num_rows, const unsigned long long num_features, const real_type QA_cost, const real_type cost, const real_type gamma, const real_type *B, real_type *C, const unsigned long long num_classes);
-
 
 }  // namespace plssvm::cuda
 

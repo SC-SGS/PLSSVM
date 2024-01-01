@@ -10,9 +10,9 @@
 
 #include "plssvm/backends/HIP/detail/device_ptr.hip.hpp"  // plssvm::hip::detail::device_ptr
 
-#include "backends/generic_device_ptr_tests.h"  // generic device pointer tests to instantiate
-#include "naming.hpp"                           // naming::test_parameter_to_name
-#include "types_to_test.hpp"                    // util::{combine_test_parameters_gtest_t, cartesian_type_product_t, layout_type_list}
+#include "tests/backends/generic_device_ptr_tests.h"  // generic device pointer tests to instantiate
+#include "tests/naming.hpp"                           // naming::test_parameter_to_name
+#include "tests/types_to_test.hpp"                    // util::{combine_test_parameters_gtest_t, cartesian_type_product_t, layout_type_list}
 
 #include "gtest/gtest.h"  // INSTANTIATE_TYPED_TEST_SUITE_P
 
@@ -28,6 +28,7 @@ struct hip_device_ptr_test_type {
         return queue;
     }
 };
+
 using hip_device_ptr_tuple = std::tuple<hip_device_ptr_test_type<float>, hip_device_ptr_test_type<double>>;
 
 // the tests used in the instantiated GTest test suites

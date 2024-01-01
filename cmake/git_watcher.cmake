@@ -4,7 +4,6 @@
 # Released under the MIT License.
 # https://raw.githubusercontent.com/andrew-hardin/cmake-git-version-tracking/master/LICENSE
 
-
 # This file defines a target that monitors the state of a git repo.
 # If the state changes (e.g. a commit is made), then a file gets reconfigured.
 # Here are the primary variables that control script behavior:
@@ -93,24 +92,22 @@ if (NOT DEFINED GIT_EXECUTABLE)
 endif ()
 CHECK_REQUIRED_VARIABLE(GIT_EXECUTABLE)
 
-
 set(_state_variable_names
-        GIT_RETRIEVED_STATE
-        GIT_HEAD_SHA1
-        GIT_IS_DIRTY
-        GIT_AUTHOR_NAME
-        GIT_AUTHOR_EMAIL
-        GIT_COMMIT_DATE_ISO8601
-        GIT_COMMIT_SUBJECT
-        GIT_COMMIT_BODY
-        GIT_DESCRIBE
-        GIT_BRANCH
-        # >>>
-        # 1. Add the name of the additional git variable you're interested in monitoring
-        #    to this list.
-        GIT_REMOTE_URL
-        )
-
+    GIT_RETRIEVED_STATE
+    GIT_HEAD_SHA1
+    GIT_IS_DIRTY
+    GIT_AUTHOR_NAME
+    GIT_AUTHOR_EMAIL
+    GIT_COMMIT_DATE_ISO8601
+    GIT_COMMIT_SUBJECT
+    GIT_COMMIT_BODY
+    GIT_DESCRIBE
+    GIT_BRANCH
+    # >>>
+    # 1. Add the name of the additional git variable you're interested in monitoring
+    #    to this list.
+    GIT_REMOTE_URL
+)
 
 # Macro: RunGitCommand
 # Description: short-hand macro for calling a git function. Outputs are the
@@ -119,15 +116,15 @@ set(_state_variable_names
 #              with caution.
 macro(RunGitCommand)
     execute_process(COMMAND
-            "${GIT_EXECUTABLE}" ${ARGV}
-            WORKING_DIRECTORY "${_working_dir}"
-            RESULT_VARIABLE exit_code
-            OUTPUT_VARIABLE output
-            ERROR_VARIABLE stderr
-            OUTPUT_STRIP_TRAILING_WHITESPACE)
+                    "${GIT_EXECUTABLE}" ${ARGV}
+                    WORKING_DIRECTORY "${_working_dir}"
+                    RESULT_VARIABLE exit_code
+                    OUTPUT_VARIABLE output
+                    ERROR_VARIABLE stderr
+                    OUTPUT_STRIP_TRAILING_WHITESPACE)
     if (NOT exit_code EQUAL 0 AND NOT _permit_git_failure)
         set(ENV{GIT_RETRIEVED_STATE} "false")
-
+        
         # Issue 26: git info not properly set
         #
         # Check if we should fail if any of the exit codes are non-zero.
@@ -141,17 +138,16 @@ macro(RunGitCommand)
     endif ()
 endmacro()
 
-
 # Function: GetGitState
 # Description: gets the current state of the git repo.
 # Args:
 #   _working_dir (in)  string; the directory from which git commands will be executed.
 function(GetGitState _working_dir)
-
+    
     # This is an error code that'll be set to FALSE if the
     # RunGitCommand ever returns a non-zero exit code.
     set(ENV{GIT_RETRIEVED_STATE} "true")
-
+    
     # Get whether or not the working tree is dirty.
     if (GIT_IGNORE_UNTRACKED)
         set(untracked_flag "-uno")
@@ -168,29 +164,29 @@ function(GetGitState _working_dir)
             set(ENV{GIT_IS_DIRTY} "false")
         endif ()
     endif ()
-
+    
     # There's a long list of attributes grabbed from git show.
     set(object HEAD)
     RunGitCommand(show -s "--format=%H" ${object})
     if (exit_code EQUAL 0)
         set(ENV{GIT_HEAD_SHA1} ${output})
     endif ()
-
+    
     RunGitCommand(show -s "--format=%an" ${object})
     if (exit_code EQUAL 0)
         set(ENV{GIT_AUTHOR_NAME} "${output}")
     endif ()
-
+    
     RunGitCommand(show -s "--format=%ae" ${object})
     if (exit_code EQUAL 0)
         set(ENV{GIT_AUTHOR_EMAIL} "${output}")
     endif ()
-
+    
     RunGitCommand(show -s "--format=%ci" ${object})
     if (exit_code EQUAL 0)
         set(ENV{GIT_COMMIT_DATE_ISO8601} "${output}")
     endif ()
-
+    
     RunGitCommand(show -s "--format=%s" ${object})
     if (exit_code EQUAL 0)
         # Escape \
@@ -199,7 +195,7 @@ function(GetGitState _working_dir)
         string(REPLACE "\"" "\\\"" output "${output}")
         set(ENV{GIT_COMMIT_SUBJECT} "${output}")
     endif ()
-
+    
     RunGitCommand(show -s "--format=%b" ${object})
     if (exit_code EQUAL 0)
         if (output)
@@ -221,7 +217,7 @@ function(GetGitState _working_dir)
     else ()
         set(ENV{GIT_COMMIT_BODY} "") # empty string.
     endif ()
-
+    
     # Get output of git describe
     RunGitCommand(describe --always ${object})
     if (NOT exit_code EQUAL 0)
@@ -229,7 +225,7 @@ function(GetGitState _working_dir)
     else ()
         set(ENV{GIT_DESCRIBE} "${output}")
     endif ()
-
+    
     # Convert HEAD to a symbolic ref. This can fail, in which case we just
     # set that variable to HEAD.
     set(_permit_git_failure ON)
@@ -240,7 +236,7 @@ function(GetGitState _working_dir)
     else ()
         set(ENV{GIT_BRANCH} "${output}")
     endif ()
-
+    
     # >>>
     # 2. Additional git properties can be added here via the
     #    "execute_process()" command. Be sure to set them in
@@ -255,7 +251,6 @@ function(GetGitState _working_dir)
 
 endfunction()
 
-
 # Function: GitStateChangedAction
 # Description: this function is executed when the state of the git
 #              repository changes (e.g. a commit is made).
@@ -265,7 +260,6 @@ function(GitStateChangedAction)
     endforeach ()
     configure_file("${PRE_CONFIGURE_FILE}" "${POST_CONFIGURE_FILE}" @ONLY)
 endfunction()
-
 
 # Function: HashGitState
 # Description: loop through the git state variables and compute a unique hash.
@@ -279,21 +273,20 @@ function(HashGitState _state)
     set(${_state} ${ans} PARENT_SCOPE)
 endfunction()
 
-
 # Function: CheckGit
 # Description: check if the git repo has changed. If so, update the state file.
 # Args:
 #   _working_dir    (in)  string; the directory from which git commands will be ran.
 #   _state_changed (out)    bool; whether or no the state of the repo has changed.
 function(CheckGit _working_dir _state_changed)
-
+    
     # Get the current state of the repo.
     GetGitState("${_working_dir}")
-
+    
     # Convert that state into a hash that we can compare against
     # the hash stored on-disk.
     HashGitState(state)
-
+    
     # Issue 14: post-configure file isn't being regenerated.
     #
     # Update the state to include the SHA256 for the pre-configure file.
@@ -301,7 +294,7 @@ function(CheckGit _working_dir _state_changed)
     # pre-configure file has changed.
     file(SHA256 ${PRE_CONFIGURE_FILE} preconfig_hash)
     string(SHA256 state "${preconfig_hash}${state}")
-
+    
     # Check if the state has changed compared to the backup on disk.
     if (EXISTS "${GIT_STATE_FILE}")
         file(READ "${GIT_STATE_FILE}" OLD_HEAD_CONTENTS)
@@ -311,7 +304,7 @@ function(CheckGit _working_dir _state_changed)
             return()
         endif ()
     endif ()
-
+    
     # The state has changed.
     # We need to update the state file on disk.
     # Future builds will compare their state to this file.
@@ -319,32 +312,30 @@ function(CheckGit _working_dir _state_changed)
     set(${_state_changed} "true" PARENT_SCOPE)
 endfunction()
 
-
 # Function: SetupGitMonitoring
 # Description: this function sets up custom commands that make the build system
 #              check the state of git before every build. If the state has
 #              changed, then a file is configured.
 function(SetupGitMonitoring)
     add_custom_target(check_git
-            ALL
-            DEPENDS ${PRE_CONFIGURE_FILE}
-            BYPRODUCTS
-            ${POST_CONFIGURE_FILE}
-            ${GIT_STATE_FILE}
-            COMMENT "Checking the git repository for changes..."
-            COMMAND
-            ${CMAKE_COMMAND}
-            -D_BUILD_TIME_CHECK_GIT=TRUE
-            -DGIT_WORKING_DIR=${GIT_WORKING_DIR}
-            -DGIT_EXECUTABLE=${GIT_EXECUTABLE}
-            -DGIT_STATE_FILE=${GIT_STATE_FILE}
-            -DPRE_CONFIGURE_FILE=${PRE_CONFIGURE_FILE}
-            -DPOST_CONFIGURE_FILE=${POST_CONFIGURE_FILE}
-            -DGIT_FAIL_IF_NONZERO_EXIT=${GIT_FAIL_IF_NONZERO_EXIT}
-            -DGIT_IGNORE_UNTRACKED=${GIT_IGNORE_UNTRACKED}
-            -P "${CMAKE_CURRENT_LIST_FILE}")
+                      ALL
+                      DEPENDS ${PRE_CONFIGURE_FILE}
+                      BYPRODUCTS
+                      ${POST_CONFIGURE_FILE}
+                      ${GIT_STATE_FILE}
+                      COMMENT "Checking the git repository for changes..."
+                      COMMAND
+                      ${CMAKE_COMMAND}
+                      -D_BUILD_TIME_CHECK_GIT=TRUE
+                      -DGIT_WORKING_DIR=${GIT_WORKING_DIR}
+                      -DGIT_EXECUTABLE=${GIT_EXECUTABLE}
+                      -DGIT_STATE_FILE=${GIT_STATE_FILE}
+                      -DPRE_CONFIGURE_FILE=${PRE_CONFIGURE_FILE}
+                      -DPOST_CONFIGURE_FILE=${POST_CONFIGURE_FILE}
+                      -DGIT_FAIL_IF_NONZERO_EXIT=${GIT_FAIL_IF_NONZERO_EXIT}
+                      -DGIT_IGNORE_UNTRACKED=${GIT_IGNORE_UNTRACKED}
+                      -P "${CMAKE_CURRENT_LIST_FILE}")
 endfunction()
-
 
 # Function: Main
 # Description: primary entry-point to the script. Functions are selected based

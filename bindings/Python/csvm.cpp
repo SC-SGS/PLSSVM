@@ -13,7 +13,7 @@
 #include "plssvm/constants.hpp"  // plssvm::real_type
 #include "plssvm/csvm_factory.hpp"
 
-#include "utility.hpp"  // check_kwargs_for_correctness, convert_kwargs_to_parameter
+#include "bindings/Python/utility.hpp"  // check_kwargs_for_correctness, convert_kwargs_to_parameter
 
 #include "pybind11/pybind11.h"  // py::module_, py::class_, py::kwargs, py::overload_cast, py::const_
 
@@ -63,15 +63,12 @@ void instantiate_csvm_functions(py::class_<plssvm::csvm> &c, label_type) {
              }
          },
          "fit a model using the current SVM on the provided data")
-        .def(
-            "predict", [](const plssvm::csvm &self, const plssvm::model<label_type> &model, const plssvm::data_set<label_type> &data) {
+        .def("predict", [](const plssvm::csvm &self, const plssvm::model<label_type> &model, const plssvm::data_set<label_type> &data) {
                 if constexpr (std::is_same_v<label_type, std::string>) {
                     return self.predict<label_type>(model, data);
                 } else {
                     return vector_to_pyarray(self.predict<label_type>(model, data));
-                }
-            },
-            "predict the labels for a data set using a previously learned model")
+                } }, "predict the labels for a data set using a previously learned model")
         .def("score", py::overload_cast<const plssvm::model<label_type> &>(&plssvm::csvm::score<label_type>, py::const_), "calculate the accuracy of the model")
         .def("score", py::overload_cast<const plssvm::model<label_type> &, const plssvm::data_set<label_type> &>(&plssvm::csvm::score<label_type>, py::const_), "calculate the accuracy of a data set using the model");
 }
@@ -144,14 +141,11 @@ void init_csvm(py::module_ &m) {
                 self.set_params(params);
             },
             "update the parameter used for this SVM using a plssvm.Parameter object")
-        .def(
-            "set_params", [](plssvm::csvm &self, const py::kwargs &args) {
+        .def("set_params", [](plssvm::csvm &self, const py::kwargs &args) {
                 // check keyword arguments
                 check_kwargs_for_correctness(args, { "kernel_type", "degree", "gamma", "coef0", "cost" });
                 // convert kwargs to parameter and update csvm internal parameter
-                self.set_params(convert_kwargs_to_parameter(args, self.get_params()));
-            },
-            "update the parameter used for this SVM using keyword arguments")
+                self.set_params(convert_kwargs_to_parameter(args, self.get_params())); }, "update the parameter used for this SVM using keyword arguments")
         .def("get_target_platform", &plssvm::csvm::get_target_platform, "get the actual target platform this SVM runs on");
 
     // instantiate all functions using all available label_type

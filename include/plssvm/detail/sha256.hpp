@@ -46,6 +46,7 @@ class sha256 {
             str[i] = static_cast<unsigned char>(x >> ((sizeof(T) - i - 1) * 8));
         }
     }
+
     /**
      * @brief Pack four byte of the @p str into the 32-bit unsigned integer @p x.
      * @param[in] str the string to pack
@@ -62,15 +63,15 @@ class sha256 {
     [[nodiscard]] static std::uint32_t rotr32(std::uint32_t value, int count);
 
     /// Number of bytes in the resulting digest.
-    static constexpr std::uint32_t DIGEST_SIZE = 256 / 8;
+    constexpr static std::uint32_t DIGEST_SIZE = 256 / 8;
     /// NUmber of bytes processed in one round (chunk).
-    static constexpr std::uint32_t CHUNK_SIZE = 512 / 8;
+    constexpr static std::uint32_t CHUNK_SIZE = 512 / 8;
 
     /**
      * @brief Array of the sha256 round constants
      * @details First 32 bits of the fractional parts of the cube roots of the first 64 primes 2..311.
      */
-    static constexpr std::array<std::uint32_t, 64> k_{
+    constexpr static std::array<std::uint32_t, 64> k_{
         // clang-format off
         0x428a2f98, 0x71374491, 0xb5c0fbcf, 0xe9b5dba5, 0x3956c25b, 0x59f111f1, 0x923f82a4, 0xab1c5ed5,
         0xd807aa98, 0x12835b01, 0x243185be, 0x550c7dc3, 0x72be5d74, 0x80deb1fe, 0x9bdc06a7, 0xc19bf174,

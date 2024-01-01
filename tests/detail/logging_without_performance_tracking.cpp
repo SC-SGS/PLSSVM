@@ -10,11 +10,12 @@
 
 #include "plssvm/detail/logging_without_performance_tracking.hpp"
 
-#include "utility.hpp"  // util::redirect_output
+#include "tests/utility.hpp"  // util::redirect_output
 
 #include "gtest/gtest.h"  // TEST_F, EXPECT_EQ, EXPECT_TRUE, ::testing::Test
 
-class LoggerUntracked : public ::testing::Test, public util::redirect_output<> {};
+class LoggerUntracked : public ::testing::Test,
+                        public util::redirect_output<> { };
 
 TEST_F(LoggerUntracked, enabled_logging) {
     // explicitly enable logging
@@ -26,6 +27,7 @@ TEST_F(LoggerUntracked, enabled_logging) {
     // check captured output
     EXPECT_EQ(this->get_capture(), "Hello, World!");
 }
+
 TEST_F(LoggerUntracked, enabled_logging_with_args) {
     // explicitly enable logging
     plssvm::verbosity = plssvm::verbosity_level::full;
@@ -47,6 +49,7 @@ TEST_F(LoggerUntracked, disabled_logging) {
     // since logging has been disabled, nothing should have been captured
     EXPECT_TRUE(this->get_capture().empty());
 }
+
 TEST_F(LoggerUntracked, disabled_logging_with_args) {
     // explicitly disable logging
     plssvm::verbosity = plssvm::verbosity_level::quiet;

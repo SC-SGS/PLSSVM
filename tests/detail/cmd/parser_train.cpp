@@ -10,13 +10,13 @@
 
 #include "plssvm/detail/cmd/parser_train.hpp"
 
-#include "plssvm/constants.hpp"        // plssvm::real_type
+#include "plssvm/constants.hpp"         // plssvm::real_type
 #include "plssvm/verbosity_levels.hpp"  // plssvm::verbosity
 
-#include "custom_test_macros.hpp"      // EXPECT_CONVERSION_TO_STRING
-#include "detail/cmd/cmd_utility.hpp"  // util::ParameterBase
-#include "naming.hpp"                  // naming::{pretty_print_parameter_flag_and_value, pretty_print_parameter_flag}
-#include "utility.hpp"                 // util::{convert_from_string, redirect_output}
+#include "tests/custom_test_macros.hpp"      // EXPECT_CONVERSION_TO_STRING
+#include "tests/detail/cmd/cmd_utility.hpp"  // util::ParameterBase
+#include "tests/naming.hpp"                  // naming::{pretty_print_parameter_flag_and_value, pretty_print_parameter_flag}
+#include "tests/utility.hpp"                 // util::{convert_from_string, redirect_output}
 
 #include "fmt/core.h"              // fmt::format
 #include "gmock/gmock-matchers.h"  // ::testing::{StartsWith, HasSubstr}
@@ -30,8 +30,9 @@
 #include <tuple>        // std::tuple
 #include <type_traits>  // std::is_same_v
 
-class ParserTrain : public util::ParameterBase {};
-class ParserTrainDeathTest : public ParserTrain {};
+class ParserTrain : public util::ParameterBase { };
+
+class ParserTrainDeathTest : public ParserTrain { };
 
 TEST_F(ParserTrain, minimal) {
     // create artificial command line arguments in test fixture
@@ -59,6 +60,7 @@ TEST_F(ParserTrain, minimal) {
 
     EXPECT_EQ(plssvm::verbosity, plssvm::verbosity_level::full);
 }
+
 TEST_F(ParserTrain, minimal_output) {
     // create artificial command line arguments in test fixture
     this->CreateCMDArgs({ "./plssvm-train", "data.libsvm" });
@@ -136,6 +138,7 @@ TEST_F(ParserTrain, all_arguments) {
 
     EXPECT_EQ(plssvm::verbosity, plssvm::verbosity_level::libsvm);
 }
+
 TEST_F(ParserTrain, all_arguments_output) {
     // create artificial command line arguments in test fixture
     std::vector<std::string> cmd_args = { "./plssvm-train", "--kernel_type", "1", "--degree", "2", "--gamma", "1.5", "--coef0", "-1.5", "--cost", "2", "--epsilon", "1e-10", "--max_iter", "100", "--classification", "oao", "--solver", "cg_implicit", "--backend", "sycl", "--target_platform", "gpu_nvidia", "--use_strings_as_labels", "--verbosity", "libsvm" };
@@ -186,7 +189,9 @@ TEST_F(ParserTrain, all_arguments_output) {
 }
 
 // test all command line parameter separately
-class ParserTrainKernel : public ParserTrain, public ::testing::WithParamInterface<std::tuple<std::string, std::string>> {};
+class ParserTrainKernel : public ParserTrain,
+                          public ::testing::WithParamInterface<std::tuple<std::string, std::string>> { };
+
 TEST_P(ParserTrainKernel, parsing) {
     const auto &[flag, value] = GetParam();
     // convert string to kernel_type
@@ -199,6 +204,7 @@ TEST_P(ParserTrainKernel, parsing) {
     EXPECT_FALSE(parser.csvm_params.kernel_type.is_default());
     EXPECT_EQ(parser.csvm_params.kernel_type, kernel_type);
 }
+
 // clang-format off
 INSTANTIATE_TEST_SUITE_P(ParserTrain, ParserTrainKernel, ::testing::Combine(
                 ::testing::Values("-t", "--kernel_type"),
@@ -206,7 +212,9 @@ INSTANTIATE_TEST_SUITE_P(ParserTrain, ParserTrainKernel, ::testing::Combine(
                 naming::pretty_print_parameter_flag_and_value<ParserTrainKernel>);
 // clang-format on
 
-class ParserTrainDegree : public ParserTrain, public ::testing::WithParamInterface<std::tuple<std::string, int>> {};
+class ParserTrainDegree : public ParserTrain,
+                          public ::testing::WithParamInterface<std::tuple<std::string, int>> { };
+
 TEST_P(ParserTrainDegree, parsing) {
     const auto &[flag, degree] = GetParam();
     // create artificial command line arguments in test fixture
@@ -218,6 +226,7 @@ TEST_P(ParserTrainDegree, parsing) {
     EXPECT_FALSE(parser.csvm_params.degree.is_default());
     EXPECT_EQ(parser.csvm_params.degree, degree);
 }
+
 // clang-format off
 INSTANTIATE_TEST_SUITE_P(ParserTrain, ParserTrainDegree, ::testing::Combine(
                 ::testing::Values("-d", "--degree"),
@@ -225,7 +234,9 @@ INSTANTIATE_TEST_SUITE_P(ParserTrain, ParserTrainDegree, ::testing::Combine(
                 naming::pretty_print_parameter_flag_and_value<ParserTrainDegree>);
 // clang-format on
 
-class ParserTrainGamma : public ParserTrain, public ::testing::WithParamInterface<std::tuple<std::string, plssvm::real_type>> {};
+class ParserTrainGamma : public ParserTrain,
+                         public ::testing::WithParamInterface<std::tuple<std::string, plssvm::real_type>> { };
+
 TEST_P(ParserTrainGamma, parsing) {
     const auto &[flag, gamma] = GetParam();
     // create artificial command line arguments in test fixture
@@ -236,6 +247,7 @@ TEST_P(ParserTrainGamma, parsing) {
     EXPECT_FALSE(parser.csvm_params.gamma.is_default());
     EXPECT_FLOATING_POINT_EQ(parser.csvm_params.gamma.value(), gamma);
 }
+
 // clang-format off
 INSTANTIATE_TEST_SUITE_P(ParserTrain, ParserTrainGamma,
                 ::testing::Combine(::testing::Values("-g", "--gamma"),
@@ -243,7 +255,9 @@ INSTANTIATE_TEST_SUITE_P(ParserTrain, ParserTrainGamma,
                 naming::pretty_print_parameter_flag_and_value<ParserTrainGamma>);
 // clang-format on
 
-class ParserTrainGammaDeathTest : public ParserTrain, public ::testing::WithParamInterface<std::tuple<std::string, plssvm::real_type>> {};
+class ParserTrainGammaDeathTest : public ParserTrain,
+                                  public ::testing::WithParamInterface<std::tuple<std::string, plssvm::real_type>> { };
+
 TEST_P(ParserTrainGammaDeathTest, gamma_explicit_less_or_equal_to_zero) {
     const auto &[flag, gamma] = GetParam();
     // create artificial command line arguments in test fixture
@@ -251,6 +265,7 @@ TEST_P(ParserTrainGammaDeathTest, gamma_explicit_less_or_equal_to_zero) {
     // create parser_train object
     EXPECT_DEATH((plssvm::detail::cmd::parser_train{ this->get_argc(), this->get_argv() }), ::testing::HasSubstr(fmt::format("gamma must be greater than 0.0, but is {}!", gamma)));
 }
+
 // clang-format off
 INSTANTIATE_TEST_SUITE_P(ParserTrainDeathTest, ParserTrainGammaDeathTest, ::testing::Combine(
                 ::testing::Values("-g", "--gamma"),
@@ -258,7 +273,9 @@ INSTANTIATE_TEST_SUITE_P(ParserTrainDeathTest, ParserTrainGammaDeathTest, ::test
                 naming::pretty_print_parameter_flag_and_value<ParserTrainGammaDeathTest>);
 // clang-format on
 
-class ParserTrainCoef0 : public ParserTrain, public ::testing::WithParamInterface<std::tuple<std::string, plssvm::real_type>> {};
+class ParserTrainCoef0 : public ParserTrain,
+                         public ::testing::WithParamInterface<std::tuple<std::string, plssvm::real_type>> { };
+
 TEST_P(ParserTrainCoef0, parsing) {
     const auto &[flag, coef0] = GetParam();
     // create artificial command line arguments in test fixture
@@ -269,6 +286,7 @@ TEST_P(ParserTrainCoef0, parsing) {
     EXPECT_FALSE(parser.csvm_params.coef0.is_default());
     EXPECT_FLOATING_POINT_EQ(parser.csvm_params.coef0.value(), coef0);
 }
+
 // clang-format off
 INSTANTIATE_TEST_SUITE_P(ParserTrain, ParserTrainCoef0, ::testing::Combine(
                 ::testing::Values("-r", "--coef0"),
@@ -278,7 +296,9 @@ INSTANTIATE_TEST_SUITE_P(ParserTrain, ParserTrainCoef0, ::testing::Combine(
                 naming::pretty_print_parameter_flag_and_value<ParserTrainCoef0>);
 // clang-format on
 
-class ParserTrainCost : public ParserTrain, public ::testing::WithParamInterface<std::tuple<std::string, plssvm::real_type>> {};
+class ParserTrainCost : public ParserTrain,
+                        public ::testing::WithParamInterface<std::tuple<std::string, plssvm::real_type>> { };
+
 TEST_P(ParserTrainCost, parsing) {
     const auto &[flag, cost] = GetParam();
     // create artificial command line arguments in test fixture
@@ -289,6 +309,7 @@ TEST_P(ParserTrainCost, parsing) {
     EXPECT_FALSE(parser.csvm_params.cost.is_default());
     EXPECT_FLOATING_POINT_EQ(parser.csvm_params.cost.value(), cost);
 }
+
 // clang-format off
 INSTANTIATE_TEST_SUITE_P(ParserTrain, ParserTrainCost, ::testing::Combine(
                 ::testing::Values("-c", "--cost"),
@@ -296,7 +317,9 @@ INSTANTIATE_TEST_SUITE_P(ParserTrain, ParserTrainCost, ::testing::Combine(
                 naming::pretty_print_parameter_flag_and_value<ParserTrainCost>);
 // clang-format on
 
-class ParserTrainEpsilon : public ParserTrain, public ::testing::WithParamInterface<std::tuple<std::string, plssvm::real_type>> {};
+class ParserTrainEpsilon : public ParserTrain,
+                           public ::testing::WithParamInterface<std::tuple<std::string, plssvm::real_type>> { };
+
 TEST_P(ParserTrainEpsilon, parsing) {
     const auto &[flag, eps] = GetParam();
     // create artificial command line arguments in test fixture
@@ -307,6 +330,7 @@ TEST_P(ParserTrainEpsilon, parsing) {
     EXPECT_FALSE(parser.epsilon.is_default());
     EXPECT_FLOATING_POINT_EQ(parser.epsilon.value(), eps);
 }
+
 // clang-format off
 INSTANTIATE_TEST_SUITE_P(ParserTrain, ParserTrainEpsilon, ::testing::Combine(
                 ::testing::Values("-e", "--epsilon"),
@@ -315,7 +339,9 @@ INSTANTIATE_TEST_SUITE_P(ParserTrain, ParserTrainEpsilon, ::testing::Combine(
                 naming::pretty_print_parameter_flag_and_value<ParserTrainEpsilon>);
 // clang-format on
 
-class ParserTrainMaxIter : public ParserTrain, public ::testing::WithParamInterface<std::tuple<std::string, std::size_t>> {};
+class ParserTrainMaxIter : public ParserTrain,
+                           public ::testing::WithParamInterface<std::tuple<std::string, std::size_t>> { };
+
 TEST_P(ParserTrainMaxIter, parsing) {
     const auto &[flag, max_iter] = GetParam();
     // create artificial command line arguments in test fixture
@@ -326,6 +352,7 @@ TEST_P(ParserTrainMaxIter, parsing) {
     EXPECT_FALSE(parser.max_iter.is_default());
     EXPECT_EQ(parser.max_iter, max_iter);
 }
+
 // clang-format off
 INSTANTIATE_TEST_SUITE_P(ParserTrain, ParserTrainMaxIter, ::testing::Combine(
                 ::testing::Values("-i", "--max_iter"),
@@ -333,7 +360,9 @@ INSTANTIATE_TEST_SUITE_P(ParserTrain, ParserTrainMaxIter, ::testing::Combine(
                 naming::pretty_print_parameter_flag_and_value<ParserTrainMaxIter>);
 // clang-format on
 
-class ParserTrainSolver : public ParserTrain, public ::testing::WithParamInterface<std::tuple<std::string, plssvm::solver_type>> {};
+class ParserTrainSolver : public ParserTrain,
+                          public ::testing::WithParamInterface<std::tuple<std::string, plssvm::solver_type>> { };
+
 TEST_P(ParserTrainSolver, parsing) {
     const auto &[flag, solver] = GetParam();
     // create artificial command line arguments in test fixture
@@ -343,6 +372,7 @@ TEST_P(ParserTrainSolver, parsing) {
     // test for correctness
     EXPECT_EQ(parser.solver, solver);
 }
+
 // clang-format off
 INSTANTIATE_TEST_SUITE_P(ParserTrain, ParserTrainSolver, ::testing::Combine(
                 ::testing::Values("-l", "--solver"),
@@ -351,7 +381,9 @@ INSTANTIATE_TEST_SUITE_P(ParserTrain, ParserTrainSolver, ::testing::Combine(
                 naming::pretty_print_parameter_flag_and_value<ParserTrainSolver>);
 // clang-format on
 
-class ParserTrainMaxIterDeathTest : public ParserTrain, public ::testing::WithParamInterface<std::tuple<std::string, long long int>> {};
+class ParserTrainMaxIterDeathTest : public ParserTrain,
+                                    public ::testing::WithParamInterface<std::tuple<std::string, long long int>> { };
+
 TEST_P(ParserTrainMaxIterDeathTest, max_iter_explicit_less_or_equal_to_zero) {
     const auto &[flag, max_iter] = GetParam();
     // create artificial command line arguments in test fixture
@@ -359,6 +391,7 @@ TEST_P(ParserTrainMaxIterDeathTest, max_iter_explicit_less_or_equal_to_zero) {
     // create parameter object
     EXPECT_DEATH((plssvm::detail::cmd::parser_train{ this->get_argc(), this->get_argv() }), ::testing::HasSubstr(fmt::format("max_iter must be greater than 0, but is {}!", max_iter)));
 }
+
 // clang-format off
 INSTANTIATE_TEST_SUITE_P(ParserTrainDeathTest, ParserTrainMaxIterDeathTest, ::testing::Combine(
                 ::testing::Values("-i", "--max_iter"),
@@ -366,7 +399,9 @@ INSTANTIATE_TEST_SUITE_P(ParserTrainDeathTest, ParserTrainMaxIterDeathTest, ::te
                 naming::pretty_print_parameter_flag_and_value<ParserTrainMaxIterDeathTest>);
 // clang-format on
 
-class ParserTrainClassification : public ParserTrain, public ::testing::WithParamInterface<std::tuple<std::string, plssvm::classification_type>> {};
+class ParserTrainClassification : public ParserTrain,
+                                  public ::testing::WithParamInterface<std::tuple<std::string, plssvm::classification_type>> { };
+
 TEST_P(ParserTrainClassification, parsing) {
     const auto &[flag, classification] = GetParam();
     // create artificial command line arguments in test fixture
@@ -377,6 +412,7 @@ TEST_P(ParserTrainClassification, parsing) {
     EXPECT_FALSE(parser.classification.is_default());
     EXPECT_EQ(parser.classification, classification);
 }
+
 // clang-format off
 INSTANTIATE_TEST_SUITE_P(ParserTrain, ParserTrainClassification, ::testing::Combine(
                 ::testing::Values("-a", "--classification"),
@@ -384,7 +420,9 @@ INSTANTIATE_TEST_SUITE_P(ParserTrain, ParserTrainClassification, ::testing::Comb
                 naming::pretty_print_parameter_flag_and_value<ParserTrainClassification>);
 // clang-format on
 
-class ParserTrainBackend : public ParserTrain, public ::testing::WithParamInterface<std::tuple<std::string, std::string>> {};
+class ParserTrainBackend : public ParserTrain,
+                           public ::testing::WithParamInterface<std::tuple<std::string, std::string>> { };
+
 TEST_P(ParserTrainBackend, parsing) {
     const auto &[flag, value] = GetParam();
     // convert string to backend
@@ -396,6 +434,7 @@ TEST_P(ParserTrainBackend, parsing) {
     // test for correctness
     EXPECT_EQ(parser.backend, backend);
 }
+
 // clang-format off
 INSTANTIATE_TEST_SUITE_P(ParserTrain, ParserTrainBackend, ::testing::Combine(
                 ::testing::Values("-b", "--backend"),
@@ -403,7 +442,9 @@ INSTANTIATE_TEST_SUITE_P(ParserTrain, ParserTrainBackend, ::testing::Combine(
                 naming::pretty_print_parameter_flag_and_value<ParserTrainBackend>);
 // clang-format on
 
-class ParserTrainTargetPlatform : public ParserTrain, public ::testing::WithParamInterface<std::tuple<std::string, std::string>> {};
+class ParserTrainTargetPlatform : public ParserTrain,
+                                  public ::testing::WithParamInterface<std::tuple<std::string, std::string>> { };
+
 TEST_P(ParserTrainTargetPlatform, parsing) {
     const auto &[flag, value] = GetParam();
     // convert string to target_platform
@@ -415,6 +456,7 @@ TEST_P(ParserTrainTargetPlatform, parsing) {
     // test for correctness
     EXPECT_EQ(parser.target, target_platform);
 }
+
 // clang-format off
 INSTANTIATE_TEST_SUITE_P(ParserTrain, ParserTrainTargetPlatform, ::testing::Combine(
                 ::testing::Values("-p", "--target_platform"),
@@ -424,7 +466,9 @@ INSTANTIATE_TEST_SUITE_P(ParserTrain, ParserTrainTargetPlatform, ::testing::Comb
 
 #if defined(PLSSVM_HAS_SYCL_BACKEND)
 
-class ParserTrainSYCLKernelInvocation : public ParserTrain, public ::testing::WithParamInterface<std::tuple<std::string, std::string>> {};
+class ParserTrainSYCLKernelInvocation : public ParserTrain,
+                                        public ::testing::WithParamInterface<std::tuple<std::string, std::string>> { };
+
 TEST_P(ParserTrainSYCLKernelInvocation, parsing) {
     const auto &[flag, value] = GetParam();
     // convert string to sycl::kernel_invocation_type
@@ -436,6 +480,7 @@ TEST_P(ParserTrainSYCLKernelInvocation, parsing) {
     // test for correctness
     EXPECT_EQ(parser.sycl_kernel_invocation_type, sycl_kernel_invocation_type);
 }
+
 // clang-format off
 INSTANTIATE_TEST_SUITE_P(ParserTrain, ParserTrainSYCLKernelInvocation, ::testing::Combine(
                 ::testing::Values("--sycl_kernel_invocation_type"),
@@ -443,7 +488,9 @@ INSTANTIATE_TEST_SUITE_P(ParserTrain, ParserTrainSYCLKernelInvocation, ::testing
                 naming::pretty_print_parameter_flag_and_value<ParserTrainSYCLKernelInvocation>);
 // clang-format on
 
-class ParserTrainSYCLImplementation : public ParserTrain, public ::testing::WithParamInterface<std::tuple<std::string, std::string>> {};
+class ParserTrainSYCLImplementation : public ParserTrain,
+                                      public ::testing::WithParamInterface<std::tuple<std::string, std::string>> { };
+
 TEST_P(ParserTrainSYCLImplementation, parsing) {
     const auto &[flag, value] = GetParam();
     // convert string to sycl::implementation_type
@@ -455,6 +502,7 @@ TEST_P(ParserTrainSYCLImplementation, parsing) {
     // test for correctness
     EXPECT_EQ(parser.sycl_implementation_type, sycl_implementation_type);
 }
+
 // clang-format off
 INSTANTIATE_TEST_SUITE_P(ParserTrain, ParserTrainSYCLImplementation, ::testing::Combine(
                 ::testing::Values("--sycl_implementation_type"),
@@ -466,7 +514,9 @@ INSTANTIATE_TEST_SUITE_P(ParserTrain, ParserTrainSYCLImplementation, ::testing::
 
 #if defined(PLSSVM_PERFORMANCE_TRACKER_ENABLED)
 
-class ParserTrainPerformanceTrackingFilename : public ParserTrain, public ::testing::WithParamInterface<std::tuple<std::string, std::string>> {};
+class ParserTrainPerformanceTrackingFilename : public ParserTrain,
+                                               public ::testing::WithParamInterface<std::tuple<std::string, std::string>> { };
+
 TEST_P(ParserTrainPerformanceTrackingFilename, parsing) {
     const auto &[flag, value] = GetParam();
     // create artificial command line arguments in test fixture
@@ -476,6 +526,7 @@ TEST_P(ParserTrainPerformanceTrackingFilename, parsing) {
     // test for correctness
     EXPECT_EQ(parser.performance_tracking_filename, value);
 }
+
 // clang-format off
 INSTANTIATE_TEST_SUITE_P(ParserTrain, ParserTrainPerformanceTrackingFilename, ::testing::Combine(
                 ::testing::Values("--performance_tracking"),
@@ -485,7 +536,9 @@ INSTANTIATE_TEST_SUITE_P(ParserTrain, ParserTrainPerformanceTrackingFilename, ::
 
 #endif  // PLSSVM_PERFORMANCE_TRACKER_ENABLED
 
-class ParserTrainUseStringsAsLabels : public ParserTrain, public ::testing::WithParamInterface<std::tuple<std::string, bool>> {};
+class ParserTrainUseStringsAsLabels : public ParserTrain,
+                                      public ::testing::WithParamInterface<std::tuple<std::string, bool>> { };
+
 TEST_P(ParserTrainUseStringsAsLabels, parsing) {
     const auto &[flag, value] = GetParam();
     // create artificial command line arguments in test fixture
@@ -495,6 +548,7 @@ TEST_P(ParserTrainUseStringsAsLabels, parsing) {
     // test for correctness
     EXPECT_EQ(parser.strings_as_labels, value);
 }
+
 // clang-format off
 INSTANTIATE_TEST_SUITE_P(ParserTrain, ParserTrainUseStringsAsLabels, ::testing::Combine(
                 ::testing::Values("--use_strings_as_labels"),
@@ -502,7 +556,9 @@ INSTANTIATE_TEST_SUITE_P(ParserTrain, ParserTrainUseStringsAsLabels, ::testing::
                 naming::pretty_print_parameter_flag_and_value<ParserTrainUseStringsAsLabels>);
 // clang-format on
 
-class ParserTrainVerbosity : public ParserTrain, public ::testing::WithParamInterface<std::tuple<std::string, std::string>> {};
+class ParserTrainVerbosity : public ParserTrain,
+                             public ::testing::WithParamInterface<std::tuple<std::string, std::string>> { };
+
 TEST_P(ParserTrainVerbosity, parsing) {
     const auto &[flag, value] = GetParam();
     // create artificial command line arguments in test fixture
@@ -512,6 +568,7 @@ TEST_P(ParserTrainVerbosity, parsing) {
     // test for correctness
     EXPECT_EQ(fmt::format("{}", plssvm::verbosity), value);
 }
+
 // clang-format off
 INSTANTIATE_TEST_SUITE_P(ParserTrain, ParserTrainVerbosity, ::testing::Combine(
                 ::testing::Values("--verbosity"),
@@ -519,7 +576,9 @@ INSTANTIATE_TEST_SUITE_P(ParserTrain, ParserTrainVerbosity, ::testing::Combine(
                 naming::pretty_print_parameter_flag_and_value<ParserTrainVerbosity>);
 // clang-format on
 
-class ParserTrainQuiet : public ParserTrain, public ::testing::WithParamInterface<std::string> {};
+class ParserTrainQuiet : public ParserTrain,
+                         public ::testing::WithParamInterface<std::string> { };
+
 TEST_P(ParserTrainQuiet, parsing) {
     const plssvm::verbosity_level old_verbosity = plssvm::verbosity;
     const std::string &flag = GetParam();
@@ -530,9 +589,12 @@ TEST_P(ParserTrainQuiet, parsing) {
     // test for correctness
     EXPECT_EQ(plssvm::verbosity, flag.empty() ? old_verbosity : plssvm::verbosity_level::quiet);
 }
+
 INSTANTIATE_TEST_SUITE_P(ParserTrain, ParserTrainQuiet, ::testing::Values("-q", "--quiet", ""), naming::pretty_print_parameter_flag<ParserTrainQuiet>);
 
-class ParserTrainVerbosityAndQuiet : public ParserTrain, private util::redirect_output<&std::clog> {};
+class ParserTrainVerbosityAndQuiet : public ParserTrain,
+                                     private util::redirect_output<&std::clog> { };
+
 TEST_F(ParserTrainVerbosityAndQuiet, parsing) {
     // create artificial command line arguments in test fixture
     this->CreateCMDArgs({ "./plssvm-train", "--quiet", "--verbosity", "full", "data.libsvm" });
@@ -542,7 +604,9 @@ TEST_F(ParserTrainVerbosityAndQuiet, parsing) {
     EXPECT_EQ(plssvm::verbosity, plssvm::verbosity_level::quiet);
 }
 
-class ParserTrainHelp : public ParserTrain, public ::testing::WithParamInterface<std::string> {};
+class ParserTrainHelp : public ParserTrain,
+                        public ::testing::WithParamInterface<std::string> { };
+
 TEST_P(ParserTrainHelp, parsing) {
     const std::string &flag = GetParam();
     // create artificial command line arguments in test fixture
@@ -550,9 +614,12 @@ TEST_P(ParserTrainHelp, parsing) {
     // create parameter object
     EXPECT_EXIT((plssvm::detail::cmd::parser_train{ this->get_argc(), this->get_argv() }), ::testing::ExitedWithCode(EXIT_SUCCESS), "");
 }
+
 INSTANTIATE_TEST_SUITE_P(ParserTrain, ParserTrainHelp, ::testing::Values("-h", "--help"), naming::pretty_print_parameter_flag<ParserTrainHelp>);
 
-class ParserTrainVersion : public ParserTrain, public ::testing::WithParamInterface<std::string> {};
+class ParserTrainVersion : public ParserTrain,
+                           public ::testing::WithParamInterface<std::string> { };
+
 TEST_P(ParserTrainVersion, parsing) {
     const std::string &flag = GetParam();
     // create artificial command line arguments in test fixture
@@ -560,6 +627,7 @@ TEST_P(ParserTrainVersion, parsing) {
     // create parameter object
     EXPECT_EXIT((plssvm::detail::cmd::parser_train{ this->get_argc(), this->get_argv() }), ::testing::ExitedWithCode(EXIT_SUCCESS), "");
 }
+
 INSTANTIATE_TEST_SUITE_P(ParserTrain, ParserTrainVersion, ::testing::Values("-v", "--version"), naming::pretty_print_parameter_flag<ParserTrainVersion>);
 
 TEST_F(ParserTrainDeathTest, no_positional_argument) {
@@ -568,6 +636,7 @@ TEST_F(ParserTrainDeathTest, no_positional_argument) {
                 ::testing::ExitedWithCode(EXIT_FAILURE),
                 ::testing::HasSubstr("ERROR: missing input file!"));
 }
+
 TEST_F(ParserTrainDeathTest, too_many_positional_arguments) {
     this->CreateCMDArgs({ "./plssvm-train", "p1", "p2", "p3", "p4" });
     EXPECT_EXIT((plssvm::detail::cmd::parser_train{ this->get_argc(), this->get_argv() }),
@@ -580,10 +649,12 @@ TEST_F(ParserTrainDeathTest, too_few_argc) {
     EXPECT_DEATH((plssvm::detail::cmd::parser_train{ 0, nullptr }),
                  ::testing::HasSubstr("At least one argument is always given (the executable name), but argc is 0!"));
 }
+
 TEST_F(ParserTrainDeathTest, nullptr_argv) {
     EXPECT_DEATH((plssvm::detail::cmd::parser_train{ 1, nullptr }),
                  ::testing::HasSubstr("At least one argument is always given (the executable name), but argv is a nullptr!"));
 }
+
 TEST_F(ParserTrainDeathTest, unrecognized_option) {
     this->CreateCMDArgs({ "./plssvm-train", "--foo", "bar" });
     EXPECT_DEATH((plssvm::detail::cmd::parser_train{ this->get_argc(), this->get_argv() }), "");

@@ -31,12 +31,13 @@ class memory_size {
      * @brief Construct a new memory size with zero bytes.
      */
     constexpr memory_size() = default;
+
     /**
      * @brief Construct a new memory size representing @p val bytes.
      * @param[in] val the number of bytes
      */
     explicit constexpr memory_size(const unsigned long long val) noexcept :
-        size_in_bytes_{ val } {}
+        size_in_bytes_{ val } { }
 
     /**
      * @brief Return the number of bytes stored in this memory size object.
@@ -60,6 +61,7 @@ class memory_size {
 [[nodiscard]] constexpr memory_size operator+(const memory_size lhs, const memory_size rhs) {
     return memory_size{ lhs.num_bytes() + rhs.num_bytes() };
 }
+
 /**
  * @brief Subtract two memory sizes from each other.
  * @details The users has to take care, that rhs < lhs, since negative values can't be represented in a plssvm::detail::memory_size.
@@ -70,6 +72,7 @@ class memory_size {
 [[nodiscard]] constexpr memory_size operator-(const memory_size lhs, const memory_size rhs) {
     return memory_size{ lhs.num_bytes() - rhs.num_bytes() };
 }
+
 /**
  * @brief Scale the provided memory size by the given @p factor.
  * @param[in] mem the memory size
@@ -79,18 +82,21 @@ class memory_size {
 [[nodiscard]] constexpr memory_size operator*(const memory_size mem, long double factor) {
     return memory_size{ static_cast<unsigned long long>(mem.num_bytes() * factor) };
 }
+
 /**
  * @copydoc plssvm::detail::operator*(const memory_size, long double)
  */
 [[nodiscard]] constexpr memory_size operator*(long double factor, const memory_size mem) {
     return memory_size{ static_cast<unsigned long long>(mem.num_bytes() * factor) };
 }
+
 /**
  * @copydoc plssvm::detail::operator*(const memory_size, long double)
  */
 [[nodiscard]] constexpr memory_size operator/(const memory_size mem, long double factor) {
     return memory_size{ static_cast<unsigned long long>(mem.num_bytes() / factor) };
 }
+
 /**
  * @brief Calculate the fraction between two memory sizes.
  * @param[in] lhs the first memory size
@@ -110,6 +116,7 @@ class memory_size {
 constexpr bool operator==(const memory_size lhs, const memory_size rhs) {
     return lhs.num_bytes() == rhs.num_bytes();
 }
+
 /**
  * @brief Compare two memory sizes for inequality.
  * @param[in] lhs the first memory size
@@ -129,6 +136,7 @@ constexpr bool operator!=(const memory_size lhs, const memory_size rhs) {
 constexpr bool operator<(const memory_size lhs, const memory_size rhs) {
     return lhs.num_bytes() < rhs.num_bytes();
 }
+
 /**
  * @brief Check whether the memory size @p lhs is greater than @p rhs.
  * @param[in] lhs the first memory size
@@ -138,6 +146,7 @@ constexpr bool operator<(const memory_size lhs, const memory_size rhs) {
 constexpr bool operator>(const memory_size lhs, const memory_size rhs) {
     return lhs.num_bytes() > rhs.num_bytes();
 }
+
 /**
  * @brief Check whether the memory size @p lhs is less or equal than @p rhs.
  * @param[in] lhs the first memory size
@@ -147,6 +156,7 @@ constexpr bool operator>(const memory_size lhs, const memory_size rhs) {
 constexpr bool operator<=(const memory_size lhs, const memory_size rhs) {
     return !(lhs > rhs);
 }
+
 /**
  * @brief Check whether the memory size @p lhs is greater or equal than @p rhs.
  * @param[in] lhs the first memory size
@@ -224,6 +234,6 @@ PLSSVM_DEFINE_MEMORY_SIZE_LITERAL(TiB, 1024, 4)
 }  // namespace plssvm::detail
 
 template <>
-struct fmt::formatter<plssvm::detail::memory_size> : fmt::ostream_formatter {};
+struct fmt::formatter<plssvm::detail::memory_size> : fmt::ostream_formatter { };
 
 #endif  // PLSSVM_DETAIL_MEMORY_SIZE_HPP_

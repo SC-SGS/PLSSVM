@@ -8,19 +8,18 @@
  * @brief Tests for writing a LIBSVM model file header.
  */
 
-#include "plssvm/detail/io/libsvm_model_parsing.hpp"
-
 #include "plssvm/constants.hpp"              // plssvm::real_type
 #include "plssvm/data_set.hpp"               // plssvm::data_set
 #include "plssvm/detail/io/file_reader.hpp"  // plssvm::detail::io::file_reader
+#include "plssvm/detail/io/libsvm_model_parsing.hpp"
 #include "plssvm/kernel_function_types.hpp"  // plssvm::kernel_function_type
 #include "plssvm/matrix.hpp"                 // plssvm::aos_matrix
 #include "plssvm/parameter.hpp"              // plssvm::parameter
 
-#include "naming.hpp"         // naming::label_type_to_name
-#include "types_to_test.hpp"  // util::label_type_gtest
-#include "utility.hpp"        // util::{temporary_file, get_distinct_label, get_correct_model_file_labels, get_correct_model_file_num_sv_per_class,
-                              // generate_specific_matrix, get_num_classes}
+#include "tests/naming.hpp"         // naming::label_type_to_name
+#include "tests/types_to_test.hpp"  // util::label_type_gtest
+#include "tests/utility.hpp"        // util::{temporary_file, get_distinct_label, get_correct_model_file_labels, get_correct_model_file_num_sv_per_class,
+                                    // generate_specific_matrix, get_num_classes}
 
 #include "fmt/format.h"            // fmt::format, fmt::join
 #include "fmt/os.h"                // fmt::ostream, fmt::output_file
@@ -32,7 +31,9 @@
 #include <vector>   // std::vector
 
 template <typename T>
-class LIBSVMModelHeaderWrite : public ::testing::Test, protected util::temporary_file {};
+class LIBSVMModelHeaderWrite : public ::testing::Test,
+                               protected util::temporary_file { };
+
 TYPED_TEST_SUITE(LIBSVMModelHeaderWrite, util::label_type_gtest, naming::test_parameter_to_name);
 
 TYPED_TEST(LIBSVMModelHeaderWrite, write_linear) {
@@ -73,6 +74,7 @@ TYPED_TEST(LIBSVMModelHeaderWrite, write_linear) {
     EXPECT_EQ(reader.line(6), fmt::format("rho {:.10e}", fmt::join(rho, " ")));
     EXPECT_EQ(reader.line(7), "SV");
 }
+
 TYPED_TEST(LIBSVMModelHeaderWrite, write_polynomial) {
     using label_type = util::test_parameter_type_at_t<0, TypeParam>;
 
@@ -114,6 +116,7 @@ TYPED_TEST(LIBSVMModelHeaderWrite, write_polynomial) {
     EXPECT_EQ(reader.line(9), fmt::format("rho {:.10e}", fmt::join(rho, " ")));
     EXPECT_EQ(reader.line(10), "SV");
 }
+
 TYPED_TEST(LIBSVMModelHeaderWrite, write_rbf) {
     using label_type = util::test_parameter_type_at_t<0, TypeParam>;
 
@@ -155,7 +158,9 @@ TYPED_TEST(LIBSVMModelHeaderWrite, write_rbf) {
 }
 
 template <typename T>
-class LIBSVMModelHeaderWriteDeathTest : public LIBSVMModelHeaderWrite<T>, private util::redirect_output<> {};
+class LIBSVMModelHeaderWriteDeathTest : public LIBSVMModelHeaderWrite<T>,
+                                        private util::redirect_output<> { };
+
 TYPED_TEST_SUITE(LIBSVMModelHeaderWriteDeathTest, util::label_type_gtest, naming::test_parameter_to_name);
 
 TYPED_TEST(LIBSVMModelHeaderWriteDeathTest, write_header_without_label) {
@@ -174,6 +179,7 @@ TYPED_TEST(LIBSVMModelHeaderWriteDeathTest, write_header_without_label) {
     EXPECT_DEATH(std::ignore = (plssvm::detail::io::write_libsvm_model_header(out, params, rho, data_set)),
                  "Cannot write a model file that does not include labels!");
 }
+
 TYPED_TEST(LIBSVMModelHeaderWriteDeathTest, write_header_invalid_number_of_rho_values) {
     using label_type = util::test_parameter_type_at_t<0, TypeParam>;
 

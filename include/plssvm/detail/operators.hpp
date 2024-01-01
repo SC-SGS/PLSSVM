@@ -119,6 +119,7 @@ struct transposed {
     /// The encapsulated vector.
     const std::vector<T> &vec;
 };
+
 /**
  * @brief Deduction guide for the plssvm::operators::transposed struct needed for C++17.
  */
@@ -137,7 +138,7 @@ template <typename T>
     PLSSVM_ASSERT(lhs.vec.size() == rhs.size(), "Sizes mismatch!: {} != {}", lhs.vec.size(), rhs.size());
 
     T val{};
-    #pragma omp simd reduction(+ : val)
+#pragma omp simd reduction(+ : val)
     for (typename std::vector<T>::size_type i = 0; i < lhs.vec.size(); ++i) {
         val += lhs.vec[i] * rhs[i];
     }
@@ -162,7 +163,7 @@ template <typename T>
 template <typename T>
 [[nodiscard]] inline T sum(const std::vector<T> &vec) {
     T val{};
-    #pragma omp simd reduction(+ : val)
+#pragma omp simd reduction(+ : val)
     for (typename std::vector<T>::size_type i = 0; i < vec.size(); ++i) {
         val += vec[i];
     }
@@ -181,7 +182,7 @@ template <typename T>
     PLSSVM_ASSERT(lhs.size() == rhs.size(), "Sizes mismatch!: {} != {}", lhs.size(), rhs.size());
 
     T val{};
-    #pragma omp simd reduction(+ : val)
+#pragma omp simd reduction(+ : val)
     for (typename std::vector<T>::size_type i = 0; i < lhs.size(); ++i) {
         const T diff = lhs[i] - rhs[i];
         val += diff * diff;
@@ -206,7 +207,7 @@ template <typename T, layout_type layout>
 matrix<T, layout> &operator*=(matrix<T, layout> &matr, const T scale) {
     using size_type = typename matrix<T, layout>::size_type;
 
-    #pragma omp parallel for collapse(2) default(none) shared(matr) firstprivate(scale)
+#pragma omp parallel for collapse(2) default(none) shared(matr) firstprivate(scale)
     for (size_type row = 0; row < matr.num_rows(); ++row) {
         for (size_type col = 0; col < matr.num_cols(); ++col) {
             matr(row, col) *= scale;
@@ -214,6 +215,7 @@ matrix<T, layout> &operator*=(matrix<T, layout> &matr, const T scale) {
     }
     return matr;
 }
+
 /**
  * @brief Return a new matrix equal to @p matr where all elements are scaled by @p scale.
  * @tparam T the value type of the matrix
@@ -227,6 +229,7 @@ template <typename T, layout_type layout>
     matr *= scale;
     return matr;
 }
+
 /**
  * @copydoc operator*(const T, matrix<T, layout>)
  */
@@ -248,7 +251,7 @@ matrix<T, layout> &operator+=(matrix<T, layout> &lhs, const matrix<T, layout> &r
     PLSSVM_ASSERT(lhs.shape() == rhs.shape(), "Error: shapes missmatch! ({} != {})", lhs.shape(), rhs.shape());
     using size_type = typename matrix<T, layout>::size_type;
 
-    #pragma omp parallel for collapse(2) default(none) shared(lhs, rhs)
+#pragma omp parallel for collapse(2) default(none) shared(lhs, rhs)
     for (size_type row = 0; row < lhs.num_rows(); ++row) {
         for (size_type col = 0; col < lhs.num_cols(); ++col) {
             lhs(row, col) += rhs(row, col);
@@ -256,6 +259,7 @@ matrix<T, layout> &operator+=(matrix<T, layout> &lhs, const matrix<T, layout> &r
     }
     return lhs;
 }
+
 /**
  * @brief Return a new matrix with the values being the sum of @p lhs and @p rhs.
  * @tparam T the value type of the matrix
@@ -283,7 +287,7 @@ matrix<T, layout> &operator-=(matrix<T, layout> &lhs, const matrix<T, layout> &r
     PLSSVM_ASSERT(lhs.shape() == rhs.shape(), "Error: shapes missmatch! ({} != {})", lhs.shape(), rhs.shape());
     using size_type = typename matrix<T, layout>::size_type;
 
-    #pragma omp parallel for collapse(2) default(none) shared(lhs, rhs)
+#pragma omp parallel for collapse(2) default(none) shared(lhs, rhs)
     for (size_type row = 0; row < lhs.num_rows(); ++row) {
         for (size_type col = 0; col < lhs.num_cols(); ++col) {
             lhs(row, col) -= rhs(row, col);
@@ -291,6 +295,7 @@ matrix<T, layout> &operator-=(matrix<T, layout> &lhs, const matrix<T, layout> &r
     }
     return lhs;
 }
+
 /**
  * @brief Return a new matrix with the values being the difference of @p lhs and @p rhs.
  * @tparam T the value type of the matrix
@@ -319,11 +324,11 @@ template <typename T, layout_type layout>
     using size_type = typename matrix<T, layout>::size_type;
     matrix<T, layout> res{ plssvm::shape{ lhs.num_rows(), rhs.num_cols() } };
 
-    #pragma omp parallel for collapse(2) default(none) shared(lhs, rhs, res)
+#pragma omp parallel for collapse(2) default(none) shared(lhs, rhs, res)
     for (size_type row = 0; row < res.num_rows(); ++row) {
         for (size_type col = 0; col < res.num_cols(); ++col) {
             T temp{ 0.0 };
-            #pragma omp simd reduction(+ : temp)
+#pragma omp simd reduction(+ : temp)
             for (size_type dim = 0; dim < lhs.num_cols(); ++dim) {
                 temp += lhs(row, dim) * rhs(dim, col);
             }
@@ -348,10 +353,10 @@ template <typename T, layout_type layout>
     using size_type = typename matrix<T, layout>::size_type;
     std::vector<T> res(lhs.num_rows());
 
-    #pragma omp parallel for default(none) shared(res, lhs, rhs)
+#pragma omp parallel for default(none) shared(res, lhs, rhs)
     for (size_type row = 0; row < res.size(); ++row) {
         T temp{ 0.0 };
-        #pragma omp simd reduction(+ : temp)
+#pragma omp simd reduction(+ : temp)
         for (size_type col = 0; col < lhs.num_cols(); ++col) {
             temp += lhs(row, col) * rhs(row, col);
         }
@@ -373,7 +378,7 @@ template <typename T, layout_type layout>
     PLSSVM_ASSERT(scale.size() == matr.num_rows(), "Error: shapes missmatch! ({} != {} (num_rows))", scale.size(), matr.num_rows());
     using size_type = typename matrix<T, layout>::size_type;
 
-    #pragma omp parallel for collapse(2) default(none) shared(matr, scale)
+#pragma omp parallel for collapse(2) default(none) shared(matr, scale)
     for (size_type row = 0; row < matr.num_rows(); ++row) {
         for (size_type col = 0; col < matr.num_cols(); ++col) {
             matr(row, col) *= scale[row];

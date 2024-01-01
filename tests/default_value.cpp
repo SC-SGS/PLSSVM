@@ -10,9 +10,9 @@
 
 #include "plssvm/default_value.hpp"
 
-#include "custom_test_macros.hpp"  // EXPECT_CONVERSION_TO_STRING, EXPECT_CONVERSION_FROM_STRING
-#include "naming.hpp"              // naming::test_parameter_to_name
-#include "types_to_test.hpp"       // util::[label_type_gtest, test_parameter_type_at_t}
+#include "tests/custom_test_macros.hpp"  // EXPECT_CONVERSION_TO_STRING, EXPECT_CONVERSION_FROM_STRING
+#include "tests/naming.hpp"              // naming::test_parameter_to_name
+#include "tests/types_to_test.hpp"       // util::[label_type_gtest, test_parameter_type_at_t}
 
 #include "gtest/gtest.h"  // TEST, TYPED_TEST, TEST_P, TYPED_TEST_SUITE, INSTANTIATE_TEST_SUITE_P, EXPECT_EQ, EXPECT_TRUE, EXPECT_FALSE, EXPECT_DOUBLE_EQ
                           // ::testing::{Test, WithParamInterface, Values}
@@ -29,7 +29,8 @@
 //*************************************************************************************************************************************//
 
 template <typename T>
-class DefaultInitDefault : public ::testing::Test {};
+class DefaultInitDefault : public ::testing::Test { };
+
 TYPED_TEST_SUITE(DefaultInitDefault, util::label_type_gtest, naming::test_parameter_to_name);
 
 TYPED_TEST(DefaultInitDefault, default_construct) {
@@ -39,32 +40,42 @@ TYPED_TEST(DefaultInitDefault, default_construct) {
     EXPECT_EQ(plssvm::default_init<type>{}.value, type{});
 }
 
-class DefaultInitExplicit : public ::testing::Test {};
-class DefaultInitIntegral : public DefaultInitExplicit, public ::testing::WithParamInterface<int> {};
+class DefaultInitExplicit : public ::testing::Test { };
+
+class DefaultInitIntegral : public DefaultInitExplicit,
+                            public ::testing::WithParamInterface<int> { };
+
 TEST_P(DefaultInitIntegral, explicit_construct) {
     const auto val = GetParam();
 
     // check for correct construction
     EXPECT_EQ(plssvm::default_init{ val }.value, val);
 }
+
 INSTANTIATE_TEST_SUITE_P(DefaultInitExplicit, DefaultInitIntegral, ::testing::Values(0, 1, 2, 3, 42, -1, -5), naming::pretty_print_escaped_string<DefaultInitIntegral>);
 
-class DefaultInitFloatingPoint : public DefaultInitExplicit, public ::testing::WithParamInterface<double> {};
+class DefaultInitFloatingPoint : public DefaultInitExplicit,
+                                 public ::testing::WithParamInterface<double> { };
+
 TEST_P(DefaultInitFloatingPoint, explicit_construct) {
     const auto val = GetParam();
 
     // check for correct construction
     EXPECT_EQ(plssvm::default_init{ val }.value, val);
 }
+
 INSTANTIATE_TEST_SUITE_P(DefaultInitExplicit, DefaultInitFloatingPoint, ::testing::Values(0.0, 1.2, 2.5, 3.38748, 42.1, -1, -5.22), naming::pretty_print_escaped_string<DefaultInitFloatingPoint>);
 
-class DefaultInitString : public DefaultInitExplicit, public ::testing::WithParamInterface<std::string> {};
+class DefaultInitString : public DefaultInitExplicit,
+                          public ::testing::WithParamInterface<std::string> { };
+
 TEST_P(DefaultInitString, explicit_construct) {
     const auto val = GetParam();
 
     // check for correct construction
     EXPECT_EQ(plssvm::default_init{ val }.value, val);
 }
+
 INSTANTIATE_TEST_SUITE_P(DefaultInitExplicit, DefaultInitString, ::testing::Values("", "foo", "bar", "baz", "Hello World"), naming::pretty_print_escaped_string<DefaultInitString>);
 
 //*************************************************************************************************************************************//
@@ -112,6 +123,7 @@ TEST(DefaultValue, copy_construct_default) {
     EXPECT_EQ(val1.value(), 3.1415);
     EXPECT_EQ(val1.get_default(), 3.1415);
 }
+
 TEST(DefaultValue, copy_construct_non_default) {
     // create first default_value
     plssvm::default_value<double> val1{};
@@ -142,6 +154,7 @@ TEST(DefaultValue, move_construct_default) {
     EXPECT_EQ(val2.value(), "Hello, World!");
     EXPECT_EQ(val2.get_default(), "Hello, World!");
 }
+
 TEST(DefaultValue, move_construct_non_default) {
     // create first default_value
     plssvm::default_value<std::string> val1{};
@@ -173,6 +186,7 @@ TEST(DefaultValue, copy_assign_default) {
     EXPECT_DOUBLE_EQ(val1.value(), 3.1415);
     EXPECT_DOUBLE_EQ(val1.get_default(), 3.1415);
 }
+
 TEST(DefaultValue, copy_assign_non_default) {
     // create two default_values
     plssvm::default_value val1{ plssvm::default_init{ 3.1415 } };
@@ -205,6 +219,7 @@ TEST(DefaultValue, move_assign_default) {
     EXPECT_EQ(val2.value(), "AAA");
     EXPECT_EQ(val2.get_default(), "AAA");
 }
+
 TEST(DefaultValue, move_assign_non_default) {
     // create two default_values
     plssvm::default_value val1{ plssvm::default_init<std::string>{ "AAA" } };
@@ -227,6 +242,7 @@ TEST(DefaultValue, value_default) {
     // check for correct value
     EXPECT_EQ(val.value(), 42);
 }
+
 TEST(DefaultValue, value_non_default) {
     // create default_value
     plssvm::default_value val{ plssvm::default_init<std::string>{ "AAA" } };
@@ -243,6 +259,7 @@ TEST(DefaultValue, implicit_conversion_default) {
     // check for correct value
     EXPECT_EQ(static_cast<int>(val), 42);
 }
+
 TEST(DefaultValue, implicit_conversion_non_default) {
     // create default_value
     plssvm::default_value val{ plssvm::default_init<std::string>{ "AAA" } };
@@ -259,6 +276,7 @@ TEST(DefaultValue, get_default_default) {
     // default_init -> must be default
     EXPECT_EQ(val.get_default(), 42);
 }
+
 TEST(DefaultValue, get_default_non_default) {
     // create default_value
     plssvm::default_value val{ plssvm::default_init<std::string>{ "Hello, World!" } };
@@ -275,6 +293,7 @@ TEST(DefaultValue, is_default_default) {
     // default_init -> must be default
     EXPECT_TRUE(val.is_default());
 }
+
 TEST(DefaultValue, is_default_non_default) {
     // create default_value
     plssvm::default_value val{ plssvm::default_init{ "Hello, World!" } };
@@ -322,6 +341,7 @@ TEST(DefaultValue, reset_default) {
     EXPECT_EQ(val.value(), 42);
     EXPECT_EQ(val.get_default(), 42);
 }
+
 TEST(DefaultValue, reset_non_default) {
     // create default_value
     plssvm::default_value val{ plssvm::default_init{ 42 } };
@@ -343,6 +363,7 @@ TEST(DefaultValue, to_string) {
     EXPECT_CONVERSION_TO_STRING(plssvm::default_value{ plssvm::default_init{ -4 } }, "-4");
     EXPECT_CONVERSION_TO_STRING(plssvm::default_value{ plssvm::default_init{ "Hello World" } }, "Hello World");
 }
+
 TEST(DefaultValue, from_string) {
     // check conversion from std::string
     plssvm::default_value<int> val1{};
@@ -397,6 +418,7 @@ TEST(DefaultValue, swap_free_function) {
 }
 
 using relation_op_func_ptr = bool (*)(const plssvm::default_value<int> &, const plssvm::default_value<int> &);
+
 class DefaultValueRelational : public ::testing::TestWithParam<std::tuple<relation_op_func_ptr, std::string_view, std::vector<bool>>> {
   protected:
     void SetUp() override {
@@ -408,11 +430,13 @@ class DefaultValueRelational : public ::testing::TestWithParam<std::tuple<relati
      * @return the default value (`[[nodiscard]]`)
      */
     [[nodiscard]] const plssvm::default_value<int> &get_val1() const noexcept { return val1_; }
+
     /**
      * @brief Return the second default_value used for the relational operator overloads tests.
      * @return the default value (`[[nodiscard]]`)
      */
     [[nodiscard]] const plssvm::default_value<int> &get_val2() const noexcept { return val2_; }
+
     /**
      * @brief Return the third default_value used for the relational operator overloads tests.
      * @return the default value (`[[nodiscard]]`)
@@ -441,6 +465,7 @@ TEST_P(DefaultValueRelational, relational_operators) {
     EXPECT_EQ(op(this->get_val2(), this->get_val2()), booleans[4]);
     EXPECT_EQ(op(this->get_val3(), this->get_val3()), booleans[5]);
 }
+
 // clang-format off
 INSTANTIATE_TEST_SUITE_P(DefaultValue, DefaultValueRelational, ::testing::Values(
                 std::make_tuple<relation_op_func_ptr, std::string_view, std::vector<bool>>(&plssvm::operator==, "Equal", { false, true, false, true, true, true }),

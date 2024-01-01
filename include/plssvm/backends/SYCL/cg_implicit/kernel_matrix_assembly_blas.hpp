@@ -40,8 +40,18 @@ class device_kernel_assembly_linear_symm {
      * @param[in] num_classes the number of classes in the data set
      */
     device_kernel_assembly_linear_symm(::sycl::handler &cgh, const real_type alpha, const real_type *q, const real_type *data_d, const unsigned long long num_rows, const unsigned long long num_features, const real_type QA_cost, const real_type cost, const real_type *B, real_type *C, const unsigned long long num_classes) :
-        data_cache_i_{ ::sycl::range<2>{ FEATURE_BLOCK_SIZE, INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE }, cgh }, data_cache_j_{ ::sycl::range<2>{ FEATURE_BLOCK_SIZE, INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE }, cgh },
-        alpha_{ alpha },  q_{ q }, data_d_{ data_d }, num_rows_{ num_rows }, num_features_{ num_features }, QA_cost_{ QA_cost }, cost_{ cost }, B_{ B }, C_{ C }, num_classes_{ num_classes } {}
+        data_cache_i_{ ::sycl::range<2>{ FEATURE_BLOCK_SIZE, INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE }, cgh },
+        data_cache_j_{ ::sycl::range<2>{ FEATURE_BLOCK_SIZE, INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE }, cgh },
+        alpha_{ alpha },
+        q_{ q },
+        data_d_{ data_d },
+        num_rows_{ num_rows },
+        num_features_{ num_features },
+        QA_cost_{ QA_cost },
+        cost_{ cost },
+        B_{ B },
+        C_{ C },
+        num_classes_{ num_classes } { }
 
     /**
      * @brief Function call operator overload performing the actual calculation.
@@ -147,8 +157,21 @@ class device_kernel_assembly_polynomial_symm {
      * @param[in] num_classes the number of classes in the data set
      */
     device_kernel_assembly_polynomial_symm(::sycl::handler &cgh, const real_type alpha, const real_type *q, const real_type *data_d, const unsigned long long num_rows, const unsigned long long num_features, const real_type QA_cost, const real_type cost, const int degree, const real_type gamma, const real_type coef0, const real_type *B, real_type *C, const unsigned long long num_classes) :
-        data_cache_i_{ ::sycl::range<2>{ FEATURE_BLOCK_SIZE, INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE }, cgh }, data_cache_j_{ ::sycl::range<2>{ FEATURE_BLOCK_SIZE, INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE }, cgh },
-        alpha_{ alpha },  q_{ q }, data_d_{ data_d }, num_rows_{ num_rows }, num_features_{ num_features }, QA_cost_{ QA_cost }, cost_{ cost }, degree_{ degree }, gamma_{ gamma }, coef0_{ coef0 }, B_{ B }, C_{ C }, num_classes_{ num_classes } {}
+        data_cache_i_{ ::sycl::range<2>{ FEATURE_BLOCK_SIZE, INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE }, cgh },
+        data_cache_j_{ ::sycl::range<2>{ FEATURE_BLOCK_SIZE, INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE }, cgh },
+        alpha_{ alpha },
+        q_{ q },
+        data_d_{ data_d },
+        num_rows_{ num_rows },
+        num_features_{ num_features },
+        QA_cost_{ QA_cost },
+        cost_{ cost },
+        degree_{ degree },
+        gamma_{ gamma },
+        coef0_{ coef0 },
+        B_{ B },
+        C_{ C },
+        num_classes_{ num_classes } { }
 
     /**
      * @brief Function call operator overload performing the actual calculation.
@@ -239,7 +262,6 @@ class device_kernel_assembly_polynomial_symm {
  */
 class device_kernel_assembly_rbf_symm {
   public:
-
     /**
      * @brief Initialize the SYCL kernel function object.
      * @param[in] cgh the SYCL handler used to allocate the local memory
@@ -256,8 +278,19 @@ class device_kernel_assembly_rbf_symm {
      * @param[in] num_classes the number of classes in the data set
      */
     device_kernel_assembly_rbf_symm(::sycl::handler &cgh, const real_type alpha, const real_type *q, const real_type *data_d, const unsigned long long num_rows, const unsigned long long num_features, const real_type QA_cost, const real_type cost, const real_type gamma, const real_type *B, real_type *C, const unsigned long long num_classes) :
-        data_cache_i_{ ::sycl::range<2>{ FEATURE_BLOCK_SIZE, INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE }, cgh }, data_cache_j_{ ::sycl::range<2>{ FEATURE_BLOCK_SIZE, INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE }, cgh },
-        alpha_{ alpha },  q_{ q }, data_d_{ data_d }, num_rows_{ num_rows }, num_features_{ num_features }, QA_cost_{ QA_cost }, cost_{ cost }, gamma_{ gamma }, B_{ B }, C_{ C }, num_classes_{ num_classes } {}
+        data_cache_i_{ ::sycl::range<2>{ FEATURE_BLOCK_SIZE, INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE }, cgh },
+        data_cache_j_{ ::sycl::range<2>{ FEATURE_BLOCK_SIZE, INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE }, cgh },
+        alpha_{ alpha },
+        q_{ q },
+        data_d_{ data_d },
+        num_rows_{ num_rows },
+        num_features_{ num_features },
+        QA_cost_{ QA_cost },
+        cost_{ cost },
+        gamma_{ gamma },
+        B_{ B },
+        C_{ C },
+        num_classes_{ num_classes } { }
 
     /**
      * @brief Function call operator overload performing the actual calculation.

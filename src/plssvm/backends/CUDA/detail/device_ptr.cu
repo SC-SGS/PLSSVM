@@ -24,11 +24,11 @@ namespace plssvm::cuda::detail {
 
 template <typename T>
 device_ptr<T>::device_ptr(const size_type size, const queue_type device) :
-    device_ptr{ plssvm::shape{ size, 1 }, plssvm::shape{ 0, 0 }, device } {}
+    device_ptr{ plssvm::shape{ size, 1 }, plssvm::shape{ 0, 0 }, device } { }
 
 template <typename T>
 device_ptr<T>::device_ptr(const plssvm::shape shape, const queue_type device) :
-    device_ptr{ shape, plssvm::shape{ 0, 0 }, device } {}
+    device_ptr{ shape, plssvm::shape{ 0, 0 }, device } { }
 
 template <typename T>
 device_ptr<T>::device_ptr(const plssvm::shape shape, const plssvm::shape padding, const queue_type device) :

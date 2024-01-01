@@ -35,8 +35,8 @@ void device_kernel_assembly_symm(real_type alpha, const std::vector<real_type> &
     // alpha * A * B + beta * C
     C *= beta;
 
-    // loop over all rows in the IMPLICIT kernel matrix
-    #pragma omp parallel for schedule(dynamic)
+// loop over all rows in the IMPLICIT kernel matrix
+#pragma omp parallel for schedule(dynamic)
     for (std::size_t km_row = 0; km_row < dept; ++km_row) {
         // loop over all columns in the IMPLICIT kernel matrix
         // half number of computations by exploiting symmetry
@@ -47,16 +47,16 @@ void device_kernel_assembly_symm(real_type alpha, const std::vector<real_type> &
 
             // calculate the values of alpha * A * B
             for (std::size_t row = 0; row < B.num_rows(); ++row) {
-                #pragma omp atomic
+#pragma omp atomic
                 C(row, km_row) += alpha * temp * B(row, km_col);
-                // symmetry
-                #pragma omp atomic
+// symmetry
+#pragma omp atomic
                 C(row, km_col) += alpha * temp * B(row, km_row);
             }
         }
     }
-    // handle diagonal
-    #pragma omp parallel for
+// handle diagonal
+#pragma omp parallel for
     for (std::size_t i = 0; i < dept; ++i) {
         const real_type temp = kernel_function<kernel>(data, i, data, i, args...) + cost + QA_cost - q[i] - q[i];
 

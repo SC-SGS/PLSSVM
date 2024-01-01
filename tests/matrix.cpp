@@ -13,10 +13,10 @@
 #include "plssvm/exceptions/exceptions.hpp"  // plssvm::matrix_exception
 #include "plssvm/shape.hpp"                  // plssvm::shape
 
-#include "custom_test_macros.hpp"  // EXPECT_CONVERSION_TO_STRING, EXPECT_CONVERSION_FROM_STRING, EXPECT_THROW_WHAT
-#include "naming.hpp"              // naming::test_parameter_to_name
-#include "types_to_test.hpp"       // util::{real_type_layout_type_gtest, test_parameter_type_at_t, test_parameter_value_at_v}
-#include "utility.hpp"             // util::{generate_random_matrix, redirect_output}
+#include "tests/custom_test_macros.hpp"  // EXPECT_CONVERSION_TO_STRING, EXPECT_CONVERSION_FROM_STRING, EXPECT_THROW_WHAT
+#include "tests/naming.hpp"              // naming::test_parameter_to_name
+#include "tests/types_to_test.hpp"       // util::{real_type_layout_type_gtest, test_parameter_type_at_t, test_parameter_value_at_v}
+#include "tests/utility.hpp"             // util::{generate_random_matrix, redirect_output}
 
 #include "gtest/gtest-matchers.h"  // EXPECT_THAT, ::testing::HasSubstr
 #include "gtest/gtest.h"           // TEST, TYPED_TEST, TYPED_TEST_SUITE, EXPECT_EQ, EXPECT_TRUE, EXPECT_FALSE, EXPECT_DEATH, ASSERT_EQ, SCOPED_TRACE, FAIL,
@@ -37,6 +37,7 @@ TEST(LayoutType, to_string) {
     EXPECT_CONVERSION_TO_STRING(plssvm::layout_type::aos, "aos");
     EXPECT_CONVERSION_TO_STRING(plssvm::layout_type::soa, "soa");
 }
+
 TEST(LayoutType, to_string_unknown) {
     // check conversions to std::string from unknown layout_type
     EXPECT_CONVERSION_TO_STRING(static_cast<plssvm::layout_type>(2), "unknown");
@@ -52,6 +53,7 @@ TEST(LayoutType, from_string) {
     EXPECT_CONVERSION_FROM_STRING("SoA", plssvm::layout_type::soa);
     EXPECT_CONVERSION_FROM_STRING("Struct-of-Arrays", plssvm::layout_type::soa);
 }
+
 TEST(LayoutType, from_string_unknown) {
     // foo isn't a valid layout_type
     std::istringstream input{ "foo" };
@@ -65,17 +67,20 @@ TEST(LayoutType, layout_type_to_full_string) {
     EXPECT_EQ(plssvm::layout_type_to_full_string(plssvm::layout_type::aos), "Array-of-Structs");
     EXPECT_EQ(plssvm::layout_type_to_full_string(plssvm::layout_type::soa), "Struct-of-Arrays");
 }
+
 TEST(LayoutType, layout_type_to_full_string_unknown) {
     // check conversion from unknown classification_typ to a full string
     EXPECT_EQ(plssvm::layout_type_to_full_string(static_cast<plssvm::layout_type>(2)), "unknown");
 }
 
 template <typename T>
-class Matrix : public ::testing::Test, public util::redirect_output<&std::clog> {
+class Matrix : public ::testing::Test,
+               public util::redirect_output<&std::clog> {
   protected:
     using fixture_real_type = util::test_parameter_type_at_t<0, T>;
-    static constexpr plssvm::layout_type fixture_layout = util::test_parameter_value_at_v<0, T>;
+    constexpr static plssvm::layout_type fixture_layout = util::test_parameter_value_at_v<0, T>;
 };
+
 TYPED_TEST_SUITE(Matrix, util::real_type_layout_type_gtest, naming::test_parameter_to_name);
 
 TYPED_TEST(Matrix, construct_default) {
@@ -107,6 +112,7 @@ TYPED_TEST(Matrix, construct_with_size) {
     EXPECT_EQ(matr.padding(), (plssvm::shape{ 0, 0 }));
     EXPECT_EQ(matr.shape_padded(), (plssvm::shape{ 3, 2 }));
 }
+
 TYPED_TEST(Matrix, construct_with_size_empty) {
     using real_type = typename TestFixture::fixture_real_type;
     constexpr plssvm::layout_type layout = TestFixture::fixture_layout;
@@ -120,6 +126,7 @@ TYPED_TEST(Matrix, construct_with_size_empty) {
     EXPECT_EQ(matr.padding(), (plssvm::shape{ 0, 0 }));
     EXPECT_EQ(matr.shape_padded(), (plssvm::shape{ 0, 0 }));
 }
+
 TYPED_TEST(Matrix, construct_with_size_zero_num_rows) {
     using real_type = typename TestFixture::fixture_real_type;
     constexpr plssvm::layout_type layout = TestFixture::fixture_layout;
@@ -129,6 +136,7 @@ TYPED_TEST(Matrix, construct_with_size_zero_num_rows) {
                       plssvm::matrix_exception,
                       "The number of rows is zero but the number of columns is not!");
 }
+
 TYPED_TEST(Matrix, construct_with_size_zero_num_cols) {
     using real_type = typename TestFixture::fixture_real_type;
     constexpr plssvm::layout_type layout = TestFixture::fixture_layout;
@@ -155,6 +163,7 @@ TYPED_TEST(Matrix, construct_with_size_and_padding) {
     ASSERT_EQ(matr.size_padded(), 49);
     EXPECT_TRUE(std::all_of(matr.data(), matr.data() + matr.size_padded(), [](const real_type val) { return val == real_type{}; }));
 }
+
 TYPED_TEST(Matrix, construct_with_size_empty_and_padding) {
     using real_type = typename TestFixture::fixture_real_type;
     constexpr plssvm::layout_type layout = TestFixture::fixture_layout;
@@ -172,6 +181,7 @@ TYPED_TEST(Matrix, construct_with_size_empty_and_padding) {
     ASSERT_EQ(matr.size_padded(), 20);
     EXPECT_TRUE(std::all_of(matr.data(), matr.data() + matr.size_padded(), [](const real_type val) { return val == real_type{}; }));
 }
+
 TYPED_TEST(Matrix, construct_with_size_empty_and_zero_padding) {
     using real_type = typename TestFixture::fixture_real_type;
     constexpr plssvm::layout_type layout = TestFixture::fixture_layout;
@@ -185,6 +195,7 @@ TYPED_TEST(Matrix, construct_with_size_empty_and_zero_padding) {
     EXPECT_EQ(matr.padding(), (plssvm::shape{ 0, 0 }));
     EXPECT_EQ(matr.shape_padded(), (plssvm::shape{ 0, 0 }));
 }
+
 TYPED_TEST(Matrix, construct_with_size_zero_num_rows_and_padding) {
     using real_type = typename TestFixture::fixture_real_type;
     constexpr plssvm::layout_type layout = TestFixture::fixture_layout;
@@ -194,6 +205,7 @@ TYPED_TEST(Matrix, construct_with_size_zero_num_rows_and_padding) {
                       plssvm::matrix_exception,
                       "The number of rows is zero but the number of columns is not!");
 }
+
 TYPED_TEST(Matrix, construct_with_size_zero_num_cols_and_padding) {
     using real_type = typename TestFixture::fixture_real_type;
     constexpr plssvm::layout_type layout = TestFixture::fixture_layout;
@@ -219,6 +231,7 @@ TYPED_TEST(Matrix, construct_with_size_and_default_value) {
     EXPECT_EQ(matr.padding(), (plssvm::shape{ 0, 0 }));
     EXPECT_EQ(matr.shape_padded(), (plssvm::shape{ 2, 3 }));
 }
+
 TYPED_TEST(Matrix, construct_with_size_and_default_value_empty) {
     using real_type = typename TestFixture::fixture_real_type;
     constexpr plssvm::layout_type layout = TestFixture::fixture_layout;
@@ -232,6 +245,7 @@ TYPED_TEST(Matrix, construct_with_size_and_default_value_empty) {
     EXPECT_EQ(matr.padding(), (plssvm::shape{ 0, 0 }));
     EXPECT_EQ(matr.shape_padded(), (plssvm::shape{ 0, 0 }));
 }
+
 TYPED_TEST(Matrix, construct_with_size_and_default_value_zero_num_rows) {
     using real_type = typename TestFixture::fixture_real_type;
     constexpr plssvm::layout_type layout = TestFixture::fixture_layout;
@@ -241,6 +255,7 @@ TYPED_TEST(Matrix, construct_with_size_and_default_value_zero_num_rows) {
                       plssvm::matrix_exception,
                       "The number of rows is zero but the number of columns is not!");
 }
+
 TYPED_TEST(Matrix, construct_with_size_and_default_value_zero_num_cols) {
     using real_type = typename TestFixture::fixture_real_type;
     constexpr plssvm::layout_type layout = TestFixture::fixture_layout;
@@ -277,6 +292,7 @@ TYPED_TEST(Matrix, construct_with_size_and_default_value_and_padding) {
         }
     }
 }
+
 TYPED_TEST(Matrix, construct_with_size_and_default_value_empty_and_padding) {
     using real_type = typename TestFixture::fixture_real_type;
     constexpr plssvm::layout_type layout = TestFixture::fixture_layout;
@@ -294,6 +310,7 @@ TYPED_TEST(Matrix, construct_with_size_and_default_value_empty_and_padding) {
     ASSERT_EQ(matr.size_padded(), 20);
     EXPECT_TRUE(std::all_of(matr.data(), matr.data() + matr.size_padded(), [](const real_type val) { return val == real_type{ 0.0 }; }));
 }
+
 TYPED_TEST(Matrix, construct_with_size_and_default_value_empty_and_zero_padding) {
     using real_type = typename TestFixture::fixture_real_type;
     constexpr plssvm::layout_type layout = TestFixture::fixture_layout;
@@ -307,6 +324,7 @@ TYPED_TEST(Matrix, construct_with_size_and_default_value_empty_and_zero_padding)
     EXPECT_EQ(matr.padding(), (plssvm::shape{ 0, 0 }));
     EXPECT_EQ(matr.shape_padded(), (plssvm::shape{ 0, 0 }));
 }
+
 TYPED_TEST(Matrix, construct_with_size_and_default_value_zero_num_rows_and_padding) {
     using real_type = typename TestFixture::fixture_real_type;
     constexpr plssvm::layout_type layout = TestFixture::fixture_layout;
@@ -316,6 +334,7 @@ TYPED_TEST(Matrix, construct_with_size_and_default_value_zero_num_rows_and_paddi
                       plssvm::matrix_exception,
                       "The number of rows is zero but the number of columns is not!");
 }
+
 TYPED_TEST(Matrix, construct_with_size_and_default_value_zero_num_cols_and_padding) {
     using real_type = typename TestFixture::fixture_real_type;
     constexpr plssvm::layout_type layout = TestFixture::fixture_layout;
@@ -344,6 +363,7 @@ TYPED_TEST(Matrix, construct_with_size_and_vector) {
     EXPECT_EQ(matr.padding(), (plssvm::shape{ 0, 0 }));
     EXPECT_EQ(matr.shape_padded(), (plssvm::shape{ 2, 3 }));
 }
+
 TYPED_TEST(Matrix, construct_with_size_and_vector_empty) {
     using real_type = typename TestFixture::fixture_real_type;
     constexpr plssvm::layout_type layout = TestFixture::fixture_layout;
@@ -357,6 +377,7 @@ TYPED_TEST(Matrix, construct_with_size_and_vector_empty) {
     EXPECT_EQ(matr.padding(), (plssvm::shape{ 0, 0 }));
     EXPECT_EQ(matr.shape_padded(), (plssvm::shape{ 0, 0 }));
 }
+
 TYPED_TEST(Matrix, construct_with_size_and_vector_value_zero_num_rows) {
     using real_type = typename TestFixture::fixture_real_type;
     constexpr plssvm::layout_type layout = TestFixture::fixture_layout;
@@ -366,6 +387,7 @@ TYPED_TEST(Matrix, construct_with_size_and_vector_value_zero_num_rows) {
                       plssvm::matrix_exception,
                       "The number of rows is zero but the number of columns is not!");
 }
+
 TYPED_TEST(Matrix, construct_with_size_and_vector_zero_num_cols) {
     using real_type = typename TestFixture::fixture_real_type;
     constexpr plssvm::layout_type layout = TestFixture::fixture_layout;
@@ -375,6 +397,7 @@ TYPED_TEST(Matrix, construct_with_size_and_vector_zero_num_cols) {
                       plssvm::matrix_exception,
                       "The number of columns is zero but the number of rows is not!");
 }
+
 TYPED_TEST(Matrix, construct_with_size_and_vector_size_mismatch) {
     using real_type = typename TestFixture::fixture_real_type;
     constexpr plssvm::layout_type layout = TestFixture::fixture_layout;
@@ -413,6 +436,7 @@ TYPED_TEST(Matrix, construct_with_size_and_vector_and_padding) {
         }
     }
 }
+
 TYPED_TEST(Matrix, construct_with_size_and_vector_empty_and_padding) {
     using real_type = typename TestFixture::fixture_real_type;
     constexpr plssvm::layout_type layout = TestFixture::fixture_layout;
@@ -430,6 +454,7 @@ TYPED_TEST(Matrix, construct_with_size_and_vector_empty_and_padding) {
     ASSERT_EQ(matr.size_padded(), 20);
     EXPECT_TRUE(std::all_of(matr.data(), matr.data() + matr.size_padded(), [](const real_type val) { return val == real_type{ 0.0 }; }));
 }
+
 TYPED_TEST(Matrix, construct_with_size_and_vector_empty_and_zero_padding) {
     using real_type = typename TestFixture::fixture_real_type;
     constexpr plssvm::layout_type layout = TestFixture::fixture_layout;
@@ -443,6 +468,7 @@ TYPED_TEST(Matrix, construct_with_size_and_vector_empty_and_zero_padding) {
     EXPECT_EQ(matr.padding(), (plssvm::shape{ 0, 0 }));
     EXPECT_EQ(matr.shape_padded(), (plssvm::shape{ 0, 0 }));
 }
+
 TYPED_TEST(Matrix, construct_with_size_and_vector_value_zero_num_rows_and_padding) {
     using real_type = typename TestFixture::fixture_real_type;
     constexpr plssvm::layout_type layout = TestFixture::fixture_layout;
@@ -452,6 +478,7 @@ TYPED_TEST(Matrix, construct_with_size_and_vector_value_zero_num_rows_and_paddin
                       plssvm::matrix_exception,
                       "The number of rows is zero but the number of columns is not!");
 }
+
 TYPED_TEST(Matrix, construct_with_size_and_vector_zero_num_cols_and_padding) {
     using real_type = typename TestFixture::fixture_real_type;
     constexpr plssvm::layout_type layout = TestFixture::fixture_layout;
@@ -461,6 +488,7 @@ TYPED_TEST(Matrix, construct_with_size_and_vector_zero_num_cols_and_padding) {
                       plssvm::matrix_exception,
                       "The number of columns is zero but the number of rows is not!");
 }
+
 TYPED_TEST(Matrix, construct_with_size_and_vector_size_mismatch_and_padding) {
     using real_type = typename TestFixture::fixture_real_type;
     constexpr plssvm::layout_type layout = TestFixture::fixture_layout;
@@ -489,6 +517,7 @@ TYPED_TEST(Matrix, construct_with_size_and_pointer) {
     EXPECT_EQ(matr.padding(), (plssvm::shape{ 0, 0 }));
     EXPECT_EQ(matr.shape_padded(), (plssvm::shape{ 2, 3 }));
 }
+
 TYPED_TEST(Matrix, construct_with_size_and_ptr_empty) {
     using real_type = typename TestFixture::fixture_real_type;
     constexpr plssvm::layout_type layout = TestFixture::fixture_layout;
@@ -503,6 +532,7 @@ TYPED_TEST(Matrix, construct_with_size_and_ptr_empty) {
     EXPECT_EQ(matr.padding(), (plssvm::shape{ 0, 0 }));
     EXPECT_EQ(matr.shape_padded(), (plssvm::shape{ 0, 0 }));
 }
+
 TYPED_TEST(Matrix, construct_with_size_and_ptr_value_zero_num_rows) {
     using real_type = typename TestFixture::fixture_real_type;
     constexpr plssvm::layout_type layout = TestFixture::fixture_layout;
@@ -513,6 +543,7 @@ TYPED_TEST(Matrix, construct_with_size_and_ptr_value_zero_num_rows) {
                       plssvm::matrix_exception,
                       "The number of rows is zero but the number of columns is not!");
 }
+
 TYPED_TEST(Matrix, construct_with_size_and_ptr_zero_num_cols) {
     using real_type = typename TestFixture::fixture_real_type;
     constexpr plssvm::layout_type layout = TestFixture::fixture_layout;
@@ -552,6 +583,7 @@ TYPED_TEST(Matrix, construct_with_size_and_pointer_and_padding) {
         }
     }
 }
+
 TYPED_TEST(Matrix, construct_with_size_and_ptr_empty_and_padding) {
     using real_type = typename TestFixture::fixture_real_type;
     constexpr plssvm::layout_type layout = TestFixture::fixture_layout;
@@ -570,6 +602,7 @@ TYPED_TEST(Matrix, construct_with_size_and_ptr_empty_and_padding) {
     ASSERT_EQ(matr.size_padded(), 20);
     EXPECT_TRUE(std::all_of(matr.data(), matr.data() + matr.size_padded(), [](const real_type val) { return val == real_type{ 0.0 }; }));
 }
+
 TYPED_TEST(Matrix, construct_with_size_and_ptr_empty_and_zero_padding) {
     using real_type = typename TestFixture::fixture_real_type;
     constexpr plssvm::layout_type layout = TestFixture::fixture_layout;
@@ -584,6 +617,7 @@ TYPED_TEST(Matrix, construct_with_size_and_ptr_empty_and_zero_padding) {
     EXPECT_EQ(matr.padding(), (plssvm::shape{ 0, 0 }));
     EXPECT_EQ(matr.shape_padded(), (plssvm::shape{ 0, 0 }));
 }
+
 TYPED_TEST(Matrix, construct_with_size_and_ptr_value_zero_num_rows_and_padding) {
     using real_type = typename TestFixture::fixture_real_type;
     constexpr plssvm::layout_type layout = TestFixture::fixture_layout;
@@ -594,6 +628,7 @@ TYPED_TEST(Matrix, construct_with_size_and_ptr_value_zero_num_rows_and_padding) 
                       plssvm::matrix_exception,
                       "The number of rows is zero but the number of columns is not!");
 }
+
 TYPED_TEST(Matrix, construct_with_size_and_ptr_zero_num_cols_and_padding) {
     using real_type = typename TestFixture::fixture_real_type;
     constexpr plssvm::layout_type layout = TestFixture::fixture_layout;
@@ -618,6 +653,7 @@ TYPED_TEST(Matrix, construct_from_same_matrix_layout) {
     // both matrices should be identical
     EXPECT_EQ(new_matr, matr);
 }
+
 TYPED_TEST(Matrix, construct_from_other_matrix_layout) {
     using real_type = typename TestFixture::fixture_real_type;
     constexpr plssvm::layout_type layout = TestFixture::fixture_layout;
@@ -662,6 +698,7 @@ TYPED_TEST(Matrix, construct_from_same_matrix_layout_and_same_padding) {
     // both matrices should be identical
     EXPECT_EQ(new_matr, matr);
 }
+
 TYPED_TEST(Matrix, construct_from_same_matrix_layout_and_different_padding) {
     using real_type = typename TestFixture::fixture_real_type;
     constexpr plssvm::layout_type layout = TestFixture::fixture_layout;
@@ -694,6 +731,7 @@ TYPED_TEST(Matrix, construct_from_same_matrix_layout_and_different_padding) {
         }
     }
 }
+
 TYPED_TEST(Matrix, construct_from_other_matrix_layout_and_padding) {
     using real_type = typename TestFixture::fixture_real_type;
     constexpr plssvm::layout_type layout = TestFixture::fixture_layout;
@@ -754,6 +792,7 @@ TYPED_TEST(Matrix, construct_from_2D_vector) {
     EXPECT_EQ(matr.padding(), (plssvm::shape{ 0, 0 }));
     EXPECT_EQ(matr.shape_padded(), (plssvm::shape{ matr_2D.size(), matr_2D.front().size() }));
 }
+
 TYPED_TEST(Matrix, construct_from_2D_vector_empty) {
     using real_type = typename TestFixture::fixture_real_type;
     constexpr plssvm::layout_type layout = TestFixture::fixture_layout;
@@ -767,6 +806,7 @@ TYPED_TEST(Matrix, construct_from_2D_vector_empty) {
     EXPECT_EQ(matr.padding(), (plssvm::shape{ 0, 0 }));
     EXPECT_EQ(matr.shape_padded(), (plssvm::shape{ 0, 0 }));
 }
+
 TYPED_TEST(Matrix, construct_from_2D_vector_invalid_columns) {
     using real_type = typename TestFixture::fixture_real_type;
     constexpr plssvm::layout_type layout = TestFixture::fixture_layout;
@@ -777,6 +817,7 @@ TYPED_TEST(Matrix, construct_from_2D_vector_invalid_columns) {
                       plssvm::matrix_exception,
                       "Each row in the matrix must contain the same amount of columns!");
 }
+
 TYPED_TEST(Matrix, construct_from_2D_vector_empty_columns) {
     using real_type = typename TestFixture::fixture_real_type;
     constexpr plssvm::layout_type layout = TestFixture::fixture_layout;
@@ -820,6 +861,7 @@ TYPED_TEST(Matrix, construct_from_2D_vector_and_padding) {
     EXPECT_EQ(matr.padding(), (plssvm::shape{ 4, 5 }));
     EXPECT_EQ(matr.shape_padded(), (plssvm::shape{ 6, 7 }));
 }
+
 TYPED_TEST(Matrix, construct_from_2D_vector_empty_and_padding) {
     using real_type = typename TestFixture::fixture_real_type;
     constexpr plssvm::layout_type layout = TestFixture::fixture_layout;
@@ -838,6 +880,7 @@ TYPED_TEST(Matrix, construct_from_2D_vector_empty_and_padding) {
     ASSERT_EQ(matr.size_padded(), 20);
     EXPECT_TRUE(std::all_of(matr.data(), matr.data() + matr.size_padded(), [](const real_type val) { return val == real_type{ 0.0 }; }));
 }
+
 TYPED_TEST(Matrix, construct_from_2D_vector_invalid_columns_and_padding) {
     using real_type = typename TestFixture::fixture_real_type;
     constexpr plssvm::layout_type layout = TestFixture::fixture_layout;
@@ -849,6 +892,7 @@ TYPED_TEST(Matrix, construct_from_2D_vector_invalid_columns_and_padding) {
                       plssvm::matrix_exception,
                       "Each row in the matrix must contain the same amount of columns!");
 }
+
 TYPED_TEST(Matrix, construct_from_2D_vector_empty_columns_and_padding) {
     using real_type = typename TestFixture::fixture_real_type;
     constexpr plssvm::layout_type layout = TestFixture::fixture_layout;
@@ -868,6 +912,7 @@ TYPED_TEST(Matrix, size) {
     // check getter
     EXPECT_EQ(matr.size(), 168);
 }
+
 TYPED_TEST(Matrix, size_with_padding) {
     using real_type = typename TestFixture::fixture_real_type;
     constexpr plssvm::layout_type layout = TestFixture::fixture_layout;
@@ -877,6 +922,7 @@ TYPED_TEST(Matrix, size_with_padding) {
     // check getter
     EXPECT_EQ(matr.size(), 168);
 }
+
 TYPED_TEST(Matrix, shape) {
     using real_type = typename TestFixture::fixture_real_type;
     constexpr plssvm::layout_type layout = TestFixture::fixture_layout;
@@ -886,6 +932,7 @@ TYPED_TEST(Matrix, shape) {
     // check getter
     EXPECT_EQ(matr.shape(), (plssvm::shape{ 42, 4 }));
 }
+
 TYPED_TEST(Matrix, shape_with_padding) {
     using real_type = typename TestFixture::fixture_real_type;
     constexpr plssvm::layout_type layout = TestFixture::fixture_layout;
@@ -895,6 +942,7 @@ TYPED_TEST(Matrix, shape_with_padding) {
     // check getter
     EXPECT_EQ(matr.shape(), (plssvm::shape{ 42, 4 }));
 }
+
 TYPED_TEST(Matrix, num_rows) {
     using real_type = typename TestFixture::fixture_real_type;
     constexpr plssvm::layout_type layout = TestFixture::fixture_layout;
@@ -904,6 +952,7 @@ TYPED_TEST(Matrix, num_rows) {
     // check getter
     EXPECT_EQ(matr.num_rows(), 42);
 }
+
 TYPED_TEST(Matrix, num_rows_with_padding) {
     using real_type = typename TestFixture::fixture_real_type;
     constexpr plssvm::layout_type layout = TestFixture::fixture_layout;
@@ -913,6 +962,7 @@ TYPED_TEST(Matrix, num_rows_with_padding) {
     // check getter
     EXPECT_EQ(matr.num_rows(), 42);
 }
+
 TYPED_TEST(Matrix, num_cols) {
     using real_type = typename TestFixture::fixture_real_type;
     constexpr plssvm::layout_type layout = TestFixture::fixture_layout;
@@ -922,6 +972,7 @@ TYPED_TEST(Matrix, num_cols) {
     // check getter
     EXPECT_EQ(matr.num_cols(), 4);
 }
+
 TYPED_TEST(Matrix, num_cols_with_padding) {
     using real_type = typename TestFixture::fixture_real_type;
     constexpr plssvm::layout_type layout = TestFixture::fixture_layout;
@@ -931,6 +982,7 @@ TYPED_TEST(Matrix, num_cols_with_padding) {
     // check getter
     EXPECT_EQ(matr.num_cols(), 4);
 }
+
 TYPED_TEST(Matrix, empty) {
     using real_type = typename TestFixture::fixture_real_type;
     constexpr plssvm::layout_type layout = TestFixture::fixture_layout;
@@ -941,6 +993,7 @@ TYPED_TEST(Matrix, empty) {
     EXPECT_FALSE(matr.empty());
     EXPECT_TRUE((plssvm::matrix<real_type, layout>{}).empty());
 }
+
 TYPED_TEST(Matrix, empty_with_padding) {
     using real_type = typename TestFixture::fixture_real_type;
     constexpr plssvm::layout_type layout = TestFixture::fixture_layout;
@@ -965,6 +1018,7 @@ TYPED_TEST(Matrix, padding) {
     // check getter
     EXPECT_EQ(matr.padding(), (plssvm::shape{ 0, 0 }));
 }
+
 TYPED_TEST(Matrix, padding_with_padding) {
     using real_type = typename TestFixture::fixture_real_type;
     constexpr plssvm::layout_type layout = TestFixture::fixture_layout;
@@ -974,6 +1028,7 @@ TYPED_TEST(Matrix, padding_with_padding) {
     // check getter
     EXPECT_EQ(matr.padding(), (plssvm::shape{ 4, 5 }));
 }
+
 TYPED_TEST(Matrix, shape_padded) {
     using real_type = typename TestFixture::fixture_real_type;
     constexpr plssvm::layout_type layout = TestFixture::fixture_layout;
@@ -983,6 +1038,7 @@ TYPED_TEST(Matrix, shape_padded) {
     // check getter
     EXPECT_EQ(matr.shape_padded(), (plssvm::shape{ 42, 4 }));
 }
+
 TYPED_TEST(Matrix, shape_padded_with_padding) {
     using real_type = typename TestFixture::fixture_real_type;
     constexpr plssvm::layout_type layout = TestFixture::fixture_layout;
@@ -992,6 +1048,7 @@ TYPED_TEST(Matrix, shape_padded_with_padding) {
     // check getter
     EXPECT_EQ(matr.shape_padded(), (plssvm::shape{ 46, 9 }));
 }
+
 TYPED_TEST(Matrix, num_rows_padded) {
     using real_type = typename TestFixture::fixture_real_type;
     constexpr plssvm::layout_type layout = TestFixture::fixture_layout;
@@ -1001,6 +1058,7 @@ TYPED_TEST(Matrix, num_rows_padded) {
     // check getter
     EXPECT_EQ(matr.num_rows_padded(), 42);
 }
+
 TYPED_TEST(Matrix, num_rows_padded_with_padding) {
     using real_type = typename TestFixture::fixture_real_type;
     constexpr plssvm::layout_type layout = TestFixture::fixture_layout;
@@ -1010,6 +1068,7 @@ TYPED_TEST(Matrix, num_rows_padded_with_padding) {
     // check getter
     EXPECT_EQ(matr.num_rows_padded(), 46);
 }
+
 TYPED_TEST(Matrix, num_cols_padded) {
     using real_type = typename TestFixture::fixture_real_type;
     constexpr plssvm::layout_type layout = TestFixture::fixture_layout;
@@ -1019,6 +1078,7 @@ TYPED_TEST(Matrix, num_cols_padded) {
     // check getter
     EXPECT_EQ(matr.num_cols_padded(), 4);
 }
+
 TYPED_TEST(Matrix, num_cols_padded_with_padding) {
     using real_type = typename TestFixture::fixture_real_type;
     constexpr plssvm::layout_type layout = TestFixture::fixture_layout;
@@ -1028,6 +1088,7 @@ TYPED_TEST(Matrix, num_cols_padded_with_padding) {
     // check getter
     EXPECT_EQ(matr.num_cols_padded(), 9);
 }
+
 TYPED_TEST(Matrix, size_padded) {
     using real_type = typename TestFixture::fixture_real_type;
     constexpr plssvm::layout_type layout = TestFixture::fixture_layout;
@@ -1037,6 +1098,7 @@ TYPED_TEST(Matrix, size_padded) {
     // check getter
     EXPECT_EQ(matr.size_padded(), 168);
 }
+
 TYPED_TEST(Matrix, size_padded_with_padding) {
     using real_type = typename TestFixture::fixture_real_type;
     constexpr plssvm::layout_type layout = TestFixture::fixture_layout;
@@ -1046,6 +1108,7 @@ TYPED_TEST(Matrix, size_padded_with_padding) {
     // check getter
     EXPECT_EQ(matr.size_padded(), 414);
 }
+
 TYPED_TEST(Matrix, is_padded) {
     using real_type = typename TestFixture::fixture_real_type;
     constexpr plssvm::layout_type layout = TestFixture::fixture_layout;
@@ -1063,6 +1126,7 @@ TYPED_TEST(Matrix, is_padded) {
         EXPECT_FALSE(matr.is_padded());
     }
 }
+
 TYPED_TEST(Matrix, is_padded_with_padding) {
     using real_type = typename TestFixture::fixture_real_type;
     constexpr plssvm::layout_type layout = TestFixture::fixture_layout;
@@ -1096,6 +1160,7 @@ TYPED_TEST(Matrix, restore_padding) {
     // nothing should have changed since no padding entries are present!
     EXPECT_EQ(matr, ground_truth);
 }
+
 TYPED_TEST(Matrix, restore_padding_empty) {
     using real_type = typename TestFixture::fixture_real_type;
     constexpr plssvm::layout_type layout = TestFixture::fixture_layout;
@@ -1135,6 +1200,7 @@ TYPED_TEST(Matrix, restore_padding_with_padding) {
     // the matrix should look like at the beginning!
     EXPECT_EQ(matr, ground_truth);
 }
+
 TYPED_TEST(Matrix, restore_padding_empty_with_padding) {
     using real_type = typename TestFixture::fixture_real_type;
     constexpr plssvm::layout_type layout = TestFixture::fixture_layout;
@@ -1182,6 +1248,7 @@ TYPED_TEST(Matrix, function_call_operator) {
         }
     }
 }
+
 TYPED_TEST(Matrix, function_call_operator_with_padding) {
     using real_type = typename TestFixture::fixture_real_type;
     constexpr plssvm::layout_type layout = TestFixture::fixture_layout;
@@ -1208,6 +1275,7 @@ TYPED_TEST(Matrix, function_call_operator_with_padding) {
         }
     }
 }
+
 TYPED_TEST(Matrix, function_call_operator_const) {
     using real_type = typename TestFixture::fixture_real_type;
     constexpr plssvm::layout_type layout = TestFixture::fixture_layout;
@@ -1228,6 +1296,7 @@ TYPED_TEST(Matrix, function_call_operator_const) {
         }
     }
 }
+
 TYPED_TEST(Matrix, function_call_operator_const_with_padding) {
     using real_type = typename TestFixture::fixture_real_type;
     constexpr plssvm::layout_type layout = TestFixture::fixture_layout;
@@ -1253,6 +1322,7 @@ TYPED_TEST(Matrix, function_call_operator_const_with_padding) {
         }
     }
 }
+
 TYPED_TEST(Matrix, at) {
     using real_type = typename TestFixture::fixture_real_type;
     constexpr plssvm::layout_type layout = TestFixture::fixture_layout;
@@ -1273,6 +1343,7 @@ TYPED_TEST(Matrix, at) {
         }
     }
 }
+
 TYPED_TEST(Matrix, at_with_padding) {
     using real_type = typename TestFixture::fixture_real_type;
     constexpr plssvm::layout_type layout = TestFixture::fixture_layout;
@@ -1305,6 +1376,7 @@ TYPED_TEST(Matrix, at_with_padding) {
         }
     }
 }
+
 TYPED_TEST(Matrix, at_out_of_bounce) {
     using real_type = typename TestFixture::fixture_real_type;
     constexpr plssvm::layout_type layout = TestFixture::fixture_layout;
@@ -1316,6 +1388,7 @@ TYPED_TEST(Matrix, at_out_of_bounce) {
     EXPECT_THROW_WHAT(std::ignore = matr.at(3, 0), plssvm::matrix_exception, "The current row (3) must be smaller than the number of rows including padding (2 + 0)!");
     EXPECT_THROW_WHAT(std::ignore = matr.at(0, 2), plssvm::matrix_exception, "The current column (2) must be smaller than the number of columns including padding (2 + 0)!");
 }
+
 TYPED_TEST(Matrix, at_out_of_bounce_with_padding) {
     using real_type = typename TestFixture::fixture_real_type;
     constexpr plssvm::layout_type layout = TestFixture::fixture_layout;
@@ -1327,6 +1400,7 @@ TYPED_TEST(Matrix, at_out_of_bounce_with_padding) {
     EXPECT_THROW_WHAT(std::ignore = matr.at(6, 0), plssvm::matrix_exception, "The current row (6) must be smaller than the number of rows including padding (2 + 3)!");
     EXPECT_THROW_WHAT(std::ignore = matr.at(0, 10), plssvm::matrix_exception, "The current column (10) must be smaller than the number of columns including padding (2 + 3)!");
 }
+
 TYPED_TEST(Matrix, at_const) {
     using real_type = typename TestFixture::fixture_real_type;
     constexpr plssvm::layout_type layout = TestFixture::fixture_layout;
@@ -1347,6 +1421,7 @@ TYPED_TEST(Matrix, at_const) {
         }
     }
 }
+
 TYPED_TEST(Matrix, at_const_with_padding) {
     using real_type = typename TestFixture::fixture_real_type;
     constexpr plssvm::layout_type layout = TestFixture::fixture_layout;
@@ -1379,6 +1454,7 @@ TYPED_TEST(Matrix, at_const_with_padding) {
         }
     }
 }
+
 TYPED_TEST(Matrix, at_const_out_of_bounce) {
     using real_type = typename TestFixture::fixture_real_type;
     constexpr plssvm::layout_type layout = TestFixture::fixture_layout;
@@ -1390,6 +1466,7 @@ TYPED_TEST(Matrix, at_const_out_of_bounce) {
     EXPECT_THROW_WHAT(std::ignore = matr.at(3, 0), plssvm::matrix_exception, "The current row (3) must be smaller than the number of rows including padding (2 + 0)!");
     EXPECT_THROW_WHAT(std::ignore = matr.at(0, 2), plssvm::matrix_exception, "The current column (2) must be smaller than the number of columns including padding (2 + 0)!");
 }
+
 TYPED_TEST(Matrix, at_const_out_of_bounce_with_padding) {
     using real_type = typename TestFixture::fixture_real_type;
     constexpr plssvm::layout_type layout = TestFixture::fixture_layout;
@@ -1416,6 +1493,7 @@ TYPED_TEST(Matrix, to_2D_vector) {
     // check content
     EXPECT_EQ(matr.to_2D_vector(), matr_2D);
 }
+
 TYPED_TEST(Matrix, to_2D_vector_with_padding) {
     using real_type = typename TestFixture::fixture_real_type;
     constexpr plssvm::layout_type layout = TestFixture::fixture_layout;
@@ -1444,6 +1522,7 @@ TYPED_TEST(Matrix, to_2D_vector_padded) {
     // check content
     EXPECT_EQ(matr.to_2D_vector_padded(), matr_2D);
 }
+
 TYPED_TEST(Matrix, to_2D_vector_padded_with_padding) {
     using real_type = typename TestFixture::fixture_real_type;
     constexpr plssvm::layout_type layout = TestFixture::fixture_layout;
@@ -1497,6 +1576,7 @@ TYPED_TEST(Matrix, swap_member_function) {
     EXPECT_EQ(matr2.padding(), (plssvm::shape{ 0, 0 }));
     ASSERT_EQ(matr2.shape_padded(), (plssvm::shape{ 2, 3 }));
 }
+
 TYPED_TEST(Matrix, swap_free_function) {
     using real_type = typename TestFixture::fixture_real_type;
     constexpr plssvm::layout_type layout = TestFixture::fixture_layout;
@@ -1558,6 +1638,7 @@ TYPED_TEST(Matrix, operator_equal) {
     EXPECT_FALSE(matr6 == matr7);
     EXPECT_TRUE(matr7 == matr8);
 }
+
 TYPED_TEST(Matrix, operator_unequal) {
     using real_type = typename TestFixture::fixture_real_type;
     constexpr plssvm::layout_type layout = TestFixture::fixture_layout;
@@ -1605,6 +1686,7 @@ TYPED_TEST(Matrix, output_operator) {
     correct_output.pop_back();  // remove last newline
     EXPECT_CONVERSION_TO_STRING(matr, correct_output);
 }
+
 TYPED_TEST(Matrix, output_operator_with_padding) {
     using real_type = typename TestFixture::fixture_real_type;
     constexpr plssvm::layout_type layout = TestFixture::fixture_layout;
@@ -1643,6 +1725,7 @@ TYPED_TEST(Matrix, formatter) {
     correct_output.pop_back();  // remove last newline
     EXPECT_EQ(fmt::format("{}", matr), correct_output);
 }
+
 TYPED_TEST(Matrix, formatter_with_padding) {
     using real_type = typename TestFixture::fixture_real_type;
     constexpr plssvm::layout_type layout = TestFixture::fixture_layout;
@@ -1677,7 +1760,8 @@ TYPED_TEST(Matrix, matrix_shorthands) {
 }
 
 template <typename T>
-class MatrixDeathTest : public Matrix<T> {};
+class MatrixDeathTest : public Matrix<T> { };
+
 TYPED_TEST_SUITE(MatrixDeathTest, util::real_type_layout_type_gtest, naming::test_parameter_to_name);
 
 TYPED_TEST(MatrixDeathTest, function_call_operator_out_of_bounce) {
@@ -1691,6 +1775,7 @@ TYPED_TEST(MatrixDeathTest, function_call_operator_out_of_bounce) {
     EXPECT_DEATH(std::ignore = matr(3, 0), ::testing::HasSubstr("The current row (3) must be smaller than the number of padded rows (2)!"));
     EXPECT_DEATH(std::ignore = matr(0, 2), ::testing::HasSubstr("The current column (2) must be smaller than the number of padded columns (2)!"));
 }
+
 TYPED_TEST(MatrixDeathTest, function_call_operator_out_of_bounce_with_padding) {
     using real_type = typename TestFixture::fixture_real_type;
     constexpr plssvm::layout_type layout = TestFixture::fixture_layout;
@@ -1702,6 +1787,7 @@ TYPED_TEST(MatrixDeathTest, function_call_operator_out_of_bounce_with_padding) {
     EXPECT_DEATH(std::ignore = matr(6, 0), ::testing::HasSubstr("The current row (6) must be smaller than the number of padded rows (5)!"));
     EXPECT_DEATH(std::ignore = matr(0, 10), ::testing::HasSubstr("The current column (10) must be smaller than the number of padded columns (5)!"));
 }
+
 TYPED_TEST(MatrixDeathTest, function_call_operator_const_out_of_bounce) {
     using real_type = typename TestFixture::fixture_real_type;
     constexpr plssvm::layout_type layout = TestFixture::fixture_layout;
@@ -1713,6 +1799,7 @@ TYPED_TEST(MatrixDeathTest, function_call_operator_const_out_of_bounce) {
     EXPECT_DEATH(std::ignore = matr(3, 0), ::testing::HasSubstr("The current row (3) must be smaller than the number of padded rows (2)!"));
     EXPECT_DEATH(std::ignore = matr(0, 2), ::testing::HasSubstr("The current column (2) must be smaller than the number of padded columns (2)!"));
 }
+
 TYPED_TEST(MatrixDeathTest, function_call_operator_const_out_of_bounce_with_padding) {
     using real_type = typename TestFixture::fixture_real_type;
     constexpr plssvm::layout_type layout = TestFixture::fixture_layout;

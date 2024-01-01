@@ -28,7 +28,7 @@ class mock_cuda_csvm final : public plssvm::cuda::csvm {
 
     template <typename... Args>
     explicit mock_cuda_csvm(Args &&...args) :
-        base_type{ std::forward<Args>(args)... } {}
+        base_type{ std::forward<Args>(args)... } { }
 
     // make protected member functions public
     using base_type::assemble_kernel_matrix;

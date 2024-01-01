@@ -10,7 +10,7 @@
 
 #include "plssvm/file_format_types.hpp"
 
-#include "custom_test_macros.hpp"  // EXPECT_CONVERSION_TO_STRING, EXPECT_CONVERSION_FROM_STRING
+#include "tests/custom_test_macros.hpp"  // EXPECT_CONVERSION_TO_STRING, EXPECT_CONVERSION_FROM_STRING
 
 #include "gtest/gtest.h"  // TEST, EXPECT_EQ, EXPECT_TRUE
 
@@ -22,6 +22,7 @@ TEST(FileFormatType, to_string) {
     EXPECT_CONVERSION_TO_STRING(plssvm::file_format_type::libsvm, "libsvm");
     EXPECT_CONVERSION_TO_STRING(plssvm::file_format_type::arff, "arff");
 }
+
 TEST(FileFormatType, to_string_unknown) {
     // check conversions to std::string from unknown file_format_type
     EXPECT_CONVERSION_TO_STRING(static_cast<plssvm::file_format_type>(2), "unknown");
@@ -35,6 +36,7 @@ TEST(FileFormatType, from_string) {
     EXPECT_CONVERSION_FROM_STRING("ARFF", plssvm::file_format_type::arff);
     EXPECT_CONVERSION_FROM_STRING("arff", plssvm::file_format_type::arff);
 }
+
 TEST(FileFormatType, from_string_unknown) {
     // foo isn't a valid file_format_type
     std::istringstream input{ "foo" };

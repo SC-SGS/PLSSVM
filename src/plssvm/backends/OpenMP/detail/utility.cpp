@@ -20,9 +20,9 @@ namespace plssvm::openmp::detail {
 int get_num_threads() {
     // get the number of used OpenMP threads
     int num_omp_threads = 0;
-    #pragma omp parallel default(none) shared(num_omp_threads)
+#pragma omp parallel default(none) shared(num_omp_threads)
     {
-        #pragma omp master
+#pragma omp master
         num_omp_threads = omp_get_num_threads();
     }
     return num_omp_threads;
@@ -30,18 +30,20 @@ int get_num_threads() {
 
 std::string get_openmp_version() {
     // create version map according to https://stackoverflow.com/questions/1304363/how-to-check-the-version-of-openmp-on-linux
+    // clang-format off
     static const std::unordered_map<unsigned, std::string> version_map{
-        { 199810, "1.0" },
-        { 200203, "2.0" },
-        { 200505, "2.5" },
-        { 200805, "3.0" },
-        { 201107, "3.1" },
-        { 201307, "4.0" },
-        { 201511, "4.5" },
-        { 201811, "5.0" },
-        { 202011, "5.1" },
-        { 202111, "5.2" }
+        { 1998'10, "1.0" },
+        { 2002'03, "2.0" },
+        { 2005'05, "2.5" },
+        { 2008'05, "3.0" },
+        { 2011'07, "3.1" },
+        { 2013'07, "4.0" },
+        { 2015'11, "4.5" },
+        { 2018'11, "5.0" },
+        { 2020'11, "5.1" },
+        { 2021'11, "5.2" }
     };
+    // clang-format on
 
     // return sanitized version or plain _OPENMP if the version isn't found
     if (::plssvm::detail::contains(version_map, _OPENMP)) {

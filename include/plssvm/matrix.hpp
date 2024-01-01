@@ -211,16 +211,19 @@ class matrix {
      * @return the number of entries **without** padding (`[[nodiscard]]`)
      */
     [[nodiscard]] size_type size() const noexcept { return shape_.x * shape_.y; }
+
     /**
      * @brief Returns the shape of the matrix, i.e., the number of rows and columns **without** padding.
      * @return the shape of the matrix (`[[nodiscard]]`)
      */
     [[nodiscard]] plssvm::shape shape() const noexcept { return shape_; }
+
     /**
      * @brief Return the number of rows in the matrix **without** padding.
      * @return the number of rows (`[[nodiscard]]`)
      */
     [[nodiscard]] size_type num_rows() const noexcept { return shape_.x; }
+
     /**
      * @brief Return the number of columns in the matrix **without** padding.
      * @return the number of columns (`[[nodiscard]]`)
@@ -240,27 +243,32 @@ class matrix {
      * @return the padding sizes (`[[nodiscard]]`)
      */
     [[nodiscard]] plssvm::shape padding() const noexcept { return padding_; }
+
     /**
      * @brief Return the number of entries in the matrix **including** padding.
      * @details It holds: `size_padded() == shape_padded().x * shape_padded().y`.
      * @return the number of entries **including** padding (`[[nodiscard]]`)
      */
     [[nodiscard]] size_type size_padded() const noexcept { return (shape_.x + padding_.x) * (shape_.y + padding_.y); }
+
     /**
      * @brief Returns the shape of the matrix **including** padding, i.e., the number of rows + row padding and columns + column padding.
      * @return the shape of the matrix **including** padding (`[[nodiscard]]`)
      */
     [[nodiscard]] plssvm::shape shape_padded() const noexcept { return plssvm::shape{ shape_.x + padding_.x, shape_.y + padding_.y }; }
+
     /**
      * @brief Return the number of rows in the matrix **including** padding.
      * @return the number of rows + row padding (`[[nodiscard]]`)
      */
     [[nodiscard]] size_type num_rows_padded() const noexcept { return shape_.x + padding_.x; }
+
     /**
      * @brief Return the number of columns in the matrix **including** padding.
      * @return the number of columns + column padding (`[[nodiscard]]`)
      */
     [[nodiscard]] size_type num_cols_padded() const noexcept { return shape_.y + padding_.y; }
+
     /**
      * @brief Checks whether this matrix contains any padding entries.
      * @return `true` if this matrix is padded, `false` otherwise (`[[nodiscard]]`)
@@ -317,11 +325,13 @@ class matrix {
      * @return the one-dimensional data (`[[nodiscard]]`)
      */
     [[nodiscard]] pointer data() noexcept { return data_.data(); }
+
     /**
      * @brief Return a pointer to the underlying one-dimensional data structure.
      * @return the one-dimensional data (`[[nodiscard]]`)
      */
     [[nodiscard]] const_pointer data() const noexcept { return data_.data(); }
+
     /**
      * @brief Return the data as a 2D vector.
      * @return the two-dimensional data (`[[nodiscard]]`)
@@ -349,14 +359,14 @@ class matrix {
      */
     void opt_mismatched_padding_copy(pointer dest, const plssvm::shape dest_shape, const_pointer source, const plssvm::shape source_shape) {
         if constexpr (layout_ == layout_type::aos) {
-            // copy row-wise
-            #pragma omp parallel for
+// copy row-wise
+#pragma omp parallel for
             for (size_type row = 0; row < this->num_rows(); ++row) {
                 std::memcpy(dest + row * dest_shape.y, source + row * source_shape.y, this->num_cols() * sizeof(value_type));
             }
         } else if constexpr (layout_ == layout_type::soa) {
-            // copy column-wise
-            #pragma omp parallel for
+// copy column-wise
+#pragma omp parallel for
             for (size_type col = 0; col < this->num_cols(); ++col) {
                 std::memcpy(dest + col * dest_shape.x, source + col * source_shape.x, this->num_rows() * sizeof(value_type));
             }
@@ -364,7 +374,6 @@ class matrix {
             static_assert(detail::always_false_v<value_type>, "Unrecognized layout_type!");
         }
     }
-
 
     /// The shape of the matrix.
     plssvm::shape shape_{};
@@ -376,11 +385,13 @@ class matrix {
 
 template <typename T, layout_type layout_>
 matrix<T, layout_>::matrix(const plssvm::shape shape) :
-    matrix{ shape, value_type{} } {}
+    matrix{ shape, value_type{} } { }
 
 template <typename T, layout_type layout_>
 matrix<T, layout_>::matrix(const plssvm::shape shape, const plssvm::shape padding) :
-    shape_{ shape }, padding_{ padding }, data_(this->size_padded(), value_type{}) {
+    shape_{ shape },
+    padding_{ padding },
+    data_(this->size_padded(), value_type{}) {
     if (this->num_rows() == 0 && this->num_cols() != 0) {
         throw matrix_exception{ "The number of rows is zero but the number of columns is not!" };
     }
@@ -392,7 +403,9 @@ matrix<T, layout_>::matrix(const plssvm::shape shape, const plssvm::shape paddin
 template <typename T, layout_type layout_>
 template <typename U, std::enable_if_t<std::is_convertible_v<U, T>, bool>>
 matrix<T, layout_>::matrix(const plssvm::shape shape, const U &init) :
-    shape_{ shape }, padding_{ 0, 0 }, data_(this->size(), static_cast<value_type>(init)) {
+    shape_{ shape },
+    padding_{ 0, 0 },
+    data_(this->size(), static_cast<value_type>(init)) {
     if (this->num_rows() == 0 && this->num_cols() != 0) {
         throw matrix_exception{ "The number of rows is zero but the number of columns is not!" };
     }
@@ -404,7 +417,9 @@ matrix<T, layout_>::matrix(const plssvm::shape shape, const U &init) :
 template <typename T, layout_type layout_>
 template <typename U, std::enable_if_t<std::is_convertible_v<U, T>, bool>>
 matrix<T, layout_>::matrix(const plssvm::shape shape, const U &init, const plssvm::shape padding) :
-    shape_{ shape }, padding_{ padding }, data_(this->size_padded(), static_cast<value_type>(0.0)) {
+    shape_{ shape },
+    padding_{ padding },
+    data_(this->size_padded(), static_cast<value_type>(0.0)) {
     if (this->num_rows() == 0 && this->num_cols() != 0) {
         throw matrix_exception{ "The number of rows is zero but the number of columns is not!" };
     }
@@ -413,14 +428,14 @@ matrix<T, layout_>::matrix(const plssvm::shape shape, const U &init, const plssv
     }
 
     if constexpr (layout_ == layout_type::aos) {
-        // fill rows with values, respecting padding entries
-        #pragma omp parallel for
+// fill rows with values, respecting padding entries
+#pragma omp parallel for
         for (size_type row = 0; row < this->num_rows(); ++row) {
             std::fill_n(this->data() + row * this->num_cols_padded(), this->num_cols(), static_cast<value_type>(init));
         }
     } else if constexpr (layout_ == layout_type::soa) {
-        // fill columns with values, respecting padding entries
-        #pragma omp parallel for
+// fill columns with values, respecting padding entries
+#pragma omp parallel for
         for (size_type col = 0; col < this->num_cols(); ++col) {
             std::fill_n(this->data() + col * this->num_rows_padded(), this->num_rows(), static_cast<value_type>(init));
         }
@@ -477,8 +492,8 @@ matrix<T, layout_>::matrix(const matrix<T, other_layout_> &other) :
         // same layout -> simply memcpy underlying array
         std::memcpy(this->data(), other.data(), this->size_padded() * sizeof(value_type));
     } else {
-        // convert AoS -> SoA or SoA -> AoS
-        #pragma omp parallel for collapse(2)
+// convert AoS -> SoA or SoA -> AoS
+#pragma omp parallel for collapse(2)
         for (size_type row = 0; row < this->num_rows(); ++row) {
             for (size_type col = 0; col < this->num_cols(); ++col) {
                 (*this)(row, col) = other(row, col);
@@ -498,8 +513,8 @@ matrix<T, layout_>::matrix(const matrix<value_type, other_layout_> &other, const
         // same layout but different padding -> memcpy each row separately
         this->opt_mismatched_padding_copy(this->data(), this->shape_padded(), other.data(), other.shape_padded());
     } else {
-        // convert AoS -> SoA or SoA -> AoS or manual copy because of mismatching padding sizes
-        #pragma omp parallel for collapse(2)
+// convert AoS -> SoA or SoA -> AoS or manual copy because of mismatching padding sizes
+#pragma omp parallel for collapse(2)
         for (size_type row = 0; row < this->num_rows(); ++row) {
             for (size_type col = 0; col < this->num_cols(); ++col) {
                 (*this)(row, col) = other(row, col);
@@ -510,7 +525,7 @@ matrix<T, layout_>::matrix(const matrix<value_type, other_layout_> &other, const
 
 template <typename T, layout_type layout_>
 matrix<T, layout_>::matrix(const std::vector<std::vector<value_type>> &data) :
-    matrix{ data, plssvm::shape{ 0, 0 } } {}
+    matrix{ data, plssvm::shape{ 0, 0 } } { }
 
 template <typename T, layout_type layout_>
 matrix<T, layout_>::matrix(const std::vector<std::vector<value_type>> &data, const plssvm::shape padding) :
@@ -532,14 +547,14 @@ matrix<T, layout_>::matrix(const std::vector<std::vector<value_type>> &data, con
         data_ = std::vector<value_type>(this->size_padded(), value_type{});
 
         if constexpr (layout_ == layout_type::aos) {
-            // in case of AoS layout speed up conversion by using a simple memcpy over each row
-            #pragma omp parallel for
+// in case of AoS layout speed up conversion by using a simple memcpy over each row
+#pragma omp parallel for
             for (size_type row = 0; row < this->num_rows(); ++row) {
                 std::memcpy(this->data() + row * this->num_cols_padded(), data[row].data(), this->num_cols() * sizeof(value_type));
             }
         } else {
-            // explicitly iterate all elements otherwise
-            #pragma omp parallel for collapse(2)
+// explicitly iterate all elements otherwise
+#pragma omp parallel for collapse(2)
             for (size_type row = 0; row < this->num_rows(); ++row) {
                 for (size_type col = 0; col < this->num_cols(); ++col) {
                     (*this)(row, col) = data[row][col];
@@ -552,15 +567,15 @@ matrix<T, layout_>::matrix(const std::vector<std::vector<value_type>> &data, con
 template <typename T, layout_type layout_>
 void matrix<T, layout_>::restore_padding() noexcept {
     if constexpr (layout_ == layout_type::aos) {
-        // restore padding row-wise
-        #pragma omp parallel for
+// restore padding row-wise
+#pragma omp parallel for
         for (size_type row = 0; row < this->num_rows(); ++row) {
             std::memset(this->data() + (row + 1) * this->num_cols_padded() - padding_.y, 0, padding_.y * sizeof(value_type));
         }
         std::memset(this->data() + this->num_rows() * this->num_cols_padded(), 0, padding_.x * this->num_cols_padded() * sizeof(value_type));
     } else if constexpr (layout_ == layout_type::soa) {
-        // restore padding column-wise
-        #pragma omp parallel for
+// restore padding column-wise
+#pragma omp parallel for
         for (size_type col = 0; col < this->num_cols(); ++col) {
             std::memset(this->data() + (col + 1) * this->num_rows_padded() - padding_.x, 0, padding_.x * sizeof(value_type));
         }
@@ -583,6 +598,7 @@ auto matrix<T, layout_>::operator()(const size_type row, const size_type col) co
     }
     detail::unreachable();
 }
+
 template <typename T, layout_type layout_>
 auto matrix<T, layout_>::operator()(const size_type row, const size_type col) -> reference {
     PLSSVM_ASSERT(row < this->num_rows_padded(), fmt::format("The current row ({}) must be smaller than the number of padded rows ({})!", row, this->num_rows_padded()));
@@ -596,6 +612,7 @@ auto matrix<T, layout_>::operator()(const size_type row, const size_type col) ->
     }
     detail::unreachable();
 }
+
 template <typename T, layout_type layout_>
 auto matrix<T, layout_>::at(const size_type row, const size_type col) const -> value_type {
     if (row >= this->num_rows_padded()) {
@@ -617,6 +634,7 @@ auto matrix<T, layout_>::at(const size_type row, const size_type col) const -> v
 
     return (*this)(row, col);
 }
+
 template <typename T, layout_type layout_>
 auto matrix<T, layout_>::at(const size_type row, const size_type col) -> reference {
     if (row >= this->num_rows_padded()) {
@@ -643,14 +661,14 @@ template <typename T, layout_type layout_>
 auto matrix<T, layout_>::to_2D_vector() const -> std::vector<std::vector<value_type>> {
     std::vector<std::vector<value_type>> ret(this->num_rows(), std::vector<value_type>(this->num_cols()));
     if constexpr (layout_ == layout_type::aos) {
-        // in case of AoS layout speed up conversion by using a simple memcpy over each row
-        #pragma omp parallel for
+// in case of AoS layout speed up conversion by using a simple memcpy over each row
+#pragma omp parallel for
         for (size_type row = 0; row < this->num_rows(); ++row) {
             std::memcpy(ret[row].data(), this->data() + row * this->num_cols_padded(), this->num_cols() * sizeof(value_type));
         }
     } else {
-        // explicitly iterate all elements otherwise
-        #pragma omp parallel for collapse(2)
+// explicitly iterate all elements otherwise
+#pragma omp parallel for collapse(2)
         for (size_type row = 0; row < this->num_rows(); ++row) {
             for (size_type col = 0; col < this->num_cols(); ++col) {
                 ret[row][col] = (*this)(row, col);
@@ -664,14 +682,14 @@ template <typename T, layout_type layout_>
 auto matrix<T, layout_>::to_2D_vector_padded() const -> std::vector<std::vector<value_type>> {
     std::vector<std::vector<value_type>> ret(this->num_rows_padded(), std::vector<value_type>(this->num_cols_padded(), value_type{}));
     if constexpr (layout_ == layout_type::aos) {
-        // in case of AoS layout speed up conversion by using a simple memcpy over each row
-        #pragma omp parallel for
+// in case of AoS layout speed up conversion by using a simple memcpy over each row
+#pragma omp parallel for
         for (size_type row = 0; row < this->num_rows_padded(); ++row) {
             std::memcpy(ret[row].data(), this->data() + row * this->num_cols_padded(), this->num_cols_padded() * sizeof(value_type));
         }
     } else {
-        // explicitly iterate all elements otherwise
-        #pragma omp parallel for collapse(2)
+// explicitly iterate all elements otherwise
+#pragma omp parallel for collapse(2)
         for (size_type row = 0; row < this->num_rows(); ++row) {
             for (size_type col = 0; col < this->num_cols(); ++col) {
                 ret[row][col] = (*this)(row, col);
@@ -688,6 +706,7 @@ void matrix<T, layout_>::swap(matrix<value_type, layout_> &other) noexcept {
     swap(this->padding_, other.padding_);
     swap(this->data_, other.data_);
 }
+
 /**
  * @brief Swap the contents of @p lhs with the contents of @p rhs.
  * @tparam T the type of the matrix
@@ -711,6 +730,7 @@ template <typename T, layout_type layout_>
 [[nodiscard]] inline bool operator==(const matrix<T, layout_> &lhs, const matrix<T, layout_> &rhs) noexcept {
     return lhs.shape() == rhs.shape() && lhs.padding() == rhs.padding() && std::equal(lhs.data(), lhs.data() + lhs.size_padded(), rhs.data());
 }
+
 /**
  * @brief Compares @p lhs and @p rhs for inequality.
  * @details Comparing matrices with the same elements but different shapes, will return `true`.
@@ -760,7 +780,7 @@ using soa_matrix = matrix<T, layout_type::soa>;
 }  // namespace plssvm
 
 template <>
-struct fmt::formatter<plssvm::layout_type> : fmt::ostream_formatter {};
+struct fmt::formatter<plssvm::layout_type> : fmt::ostream_formatter { };
 
 /**
  * @brief Custom {fmt} formatter for a plssvm::matrix. Doesn't print padding entries per default, but introduces the `p` format specifier which enables printing padding entries.
@@ -781,7 +801,9 @@ struct fmt::formatter<plssvm::matrix<T, layout>> {
     template <typename ParseContext>
     constexpr auto parse(ParseContext &ctx) {
         auto it = ctx.begin(), end = ctx.end();
-        if (it == end) return it;
+        if (it == end) {
+            return it;
+        }
         // check whether the format specifier p has been provided
         if (*it == 'p') {
             with_padding_ = true;

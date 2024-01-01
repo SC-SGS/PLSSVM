@@ -8,15 +8,14 @@
  * @brief Tests for the data_set getter member functions.
  */
 
-#include "plssvm/data_set.hpp"
-
 #include "plssvm/constants.hpp"  // plssvm::real_type, plssvm::PADDING_SIZE
-#include "plssvm/matrix.hpp"     // plssvm::aos_matrix
+#include "plssvm/data_set.hpp"
+#include "plssvm/matrix.hpp"  // plssvm::aos_matrix
 
-#include "custom_test_macros.hpp"  // EXPECT_FLOATING_POINT_MATRIX_EQ, EXPECT_FLOATING_POINT_EQ, EXPECT_FLOATING_POINT_NEAR
-#include "naming.hpp"              // naming::test_parameter_to_name
-#include "types_to_test.hpp"       // util::{label_type_gtest, test_parameter_type_at_t}
-#include "utility.hpp"             // util::{redirect_output, scale}
+#include "tests/custom_test_macros.hpp"  // EXPECT_FLOATING_POINT_MATRIX_EQ, EXPECT_FLOATING_POINT_EQ, EXPECT_FLOATING_POINT_NEAR
+#include "tests/naming.hpp"              // naming::test_parameter_to_name
+#include "tests/types_to_test.hpp"       // util::{label_type_gtest, test_parameter_type_at_t}
+#include "tests/utility.hpp"             // util::{redirect_output, scale}
 
 #include "gmock/gmock-matchers.h"  // EXPECT_THAT, ::testing::{ContainsRegex, StartsWith}
 #include "gtest/gtest.h"           // TYPED_TEST, TYPED_TEST_SUITE, EXPECT_TRUE, EXPECT_FALSE, EXPECT_EQ, ASSERT_TRUE, ::testing::Test
@@ -26,7 +25,8 @@
 #include <vector>   // std::vector
 
 template <typename T>
-class DataSetGetter : public ::testing::Test, private util::redirect_output<> {
+class DataSetGetter : public ::testing::Test,
+                      private util::redirect_output<> {
   protected:
     using fixture_label_type = util::test_parameter_type_at_t<0, T>;
 
@@ -35,11 +35,13 @@ class DataSetGetter : public ::testing::Test, private util::redirect_output<> {
      * @return the classes (`[[nodiscard]]`)
      */
     [[nodiscard]] const std::vector<fixture_label_type> &get_classes() const noexcept { return classes_; }
+
     /**
      * @brief Return the correct labels.
      * @return the correct labels (`[[nodiscard]]`)
      */
     [[nodiscard]] const std::vector<fixture_label_type> &get_label() const noexcept { return label_; }
+
     /**
      * @brief Return the correct data points.
      * @return the correct data points (`[[nodiscard]]`)
@@ -54,6 +56,7 @@ class DataSetGetter : public ::testing::Test, private util::redirect_output<> {
     /// The correct data points.
     plssvm::soa_matrix<plssvm::real_type> data_points_{ util::generate_specific_matrix<plssvm::aos_matrix<plssvm::real_type>>(plssvm::shape{ label_.size(), 4 }, plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE }) };
 };
+
 TYPED_TEST_SUITE(DataSetGetter, util::label_type_gtest, naming::test_parameter_to_name);
 
 TYPED_TEST(DataSetGetter, data) {
@@ -64,6 +67,7 @@ TYPED_TEST(DataSetGetter, data) {
     // check data getter
     EXPECT_FLOATING_POINT_MATRIX_EQ(data.data(), this->get_data_points());
 }
+
 TYPED_TEST(DataSetGetter, has_labels) {
     using label_type = typename TestFixture::fixture_label_type;
 
@@ -76,6 +80,7 @@ TYPED_TEST(DataSetGetter, has_labels) {
     // check has_labels getter
     EXPECT_TRUE(data_with_labels.has_labels());
 }
+
 TYPED_TEST(DataSetGetter, labels) {
     using label_type = typename TestFixture::fixture_label_type;
 
@@ -89,6 +94,7 @@ TYPED_TEST(DataSetGetter, labels) {
     ASSERT_TRUE(data_with_labels.labels().has_value());
     EXPECT_EQ(data_with_labels.labels().value().get(), this->get_label());
 }
+
 TYPED_TEST(DataSetGetter, classes) {
     using label_type = typename TestFixture::fixture_label_type;
 
@@ -111,6 +117,7 @@ TYPED_TEST(DataSetGetter, num_data_points) {
     // check num_data_points getter
     EXPECT_EQ(data.num_data_points(), this->get_data_points().num_rows());
 }
+
 TYPED_TEST(DataSetGetter, num_features) {
     using label_type = typename TestFixture::fixture_label_type;
 
@@ -119,6 +126,7 @@ TYPED_TEST(DataSetGetter, num_features) {
     // check num_features getter
     EXPECT_EQ(data.num_features(), this->get_data_points().num_cols());
 }
+
 TYPED_TEST(DataSetGetter, num_classes) {
     using label_type = typename TestFixture::fixture_label_type;
 
@@ -147,6 +155,7 @@ TYPED_TEST(DataSetGetter, is_scaled) {
     // check is_scaled getter
     EXPECT_TRUE(data_scaled.is_scaled());
 }
+
 TYPED_TEST(DataSetGetter, scaling_factors) {
     using label_type = typename TestFixture::fixture_label_type;
     using scaling_type = typename plssvm::data_set<label_type>::scaling;

@@ -66,6 +66,7 @@ class csvm : public ::plssvm::csvm {
         // the default target is the automatic one
         this->init(plssvm::target_platform::automatic);
     }
+
     /**
      * @brief Construct a new C-SVM using the OpenMP backend on the @p target platform and the optionally provided @p named_args.
      * @param[in] target the target platform used for this C-SVM
@@ -153,7 +154,7 @@ namespace detail {
  * @brief Sets the `value` to `true` since C-SVMs using the OpenMP backend are available.
  */
 template <>
-struct csvm_backend_exists<openmp::csvm> : std::true_type {};
+struct csvm_backend_exists<openmp::csvm> : std::true_type { };
 
 }  // namespace detail
 

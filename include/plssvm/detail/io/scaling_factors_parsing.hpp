@@ -78,9 +78,9 @@ template <typename factors_type>
     // parse scaling factors
     std::exception_ptr parallel_exception;
     std::vector<factors_type> scaling_factors(reader.num_lines() - 2);
-    #pragma omp parallel default(none) shared(parallel_exception, scaling_factors, reader)
+#pragma omp parallel default(none) shared(parallel_exception, scaling_factors, reader)
     {
-        #pragma omp for
+#pragma omp for
         for (typename std::vector<factors_type>::size_type i = 0; i < scaling_factors.size(); ++i) {
             try {
                 // parse the current line
@@ -100,8 +100,8 @@ template <typename factors_type>
                 scaling_factors[i].lower = values[1];
                 scaling_factors[i].upper = values[2];
             } catch (const std::exception &) {
-                // catch first exception and store it
-                #pragma omp critical
+// catch first exception and store it
+#pragma omp critical
                 {
                     if (!parallel_exception) {
                         parallel_exception = std::current_exception();

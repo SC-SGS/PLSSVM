@@ -22,6 +22,7 @@ TEST(TypeList, TypeListContains) {
     EXPECT_TRUE((plssvm::detail::tuple_contains<float, types>::value));
     EXPECT_TRUE((plssvm::detail::tuple_contains<double, types>::value));
 }
+
 TEST(TypeList, TypeListContainsV) {
     using types = std::tuple<int, float, double>;
 
@@ -38,6 +39,7 @@ TEST(TypeList, TypeListContainsNot) {
     EXPECT_FALSE((plssvm::detail::tuple_contains<char, types>::value));
     EXPECT_FALSE((plssvm::detail::tuple_contains<const double, types>::value));
 }
+
 TEST(TypeList, TypeListContainsVNot) {
     using types = std::tuple<int, float, double>;
 

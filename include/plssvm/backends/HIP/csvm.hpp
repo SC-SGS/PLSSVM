@@ -13,8 +13,8 @@
 #define PLSSVM_BACKENDS_HIP_CSVM_HPP_
 #pragma once
 
-#include "plssvm/backends/HIP/detail/device_ptr.hip.hpp"  // plssvm::hip::detail::device_ptr
 #include "plssvm/backends/gpu_csvm.hpp"                   // plssvm::detail::gpu_csvm
+#include "plssvm/backends/HIP/detail/device_ptr.hip.hpp"  // plssvm::hip::detail::device_ptr
 #include "plssvm/constants.hpp"                           // plssvm::real_type
 #include "plssvm/detail/memory_size.hpp"                  // plssvm::detail::memory_size
 #include "plssvm/parameter.hpp"                           // plssvm::parameter, plssvm::detail::parameter
@@ -83,7 +83,8 @@ class csvm : public ::plssvm::detail::gpu_csvm<detail::device_ptr, int> {
      */
     template <typename... Args, PLSSVM_REQUIRES(::plssvm::detail::has_only_parameter_named_args_v<Args...>)>
     explicit csvm(Args &&...named_args) :
-        csvm{ plssvm::target_platform::automatic, std::forward<Args>(named_args)... } {}
+        csvm{ plssvm::target_platform::automatic, std::forward<Args>(named_args)... } { }
+
     /**
      * @brief Construct a new C-SVM using the HIP backend on the @p target platform and the optionally provided @p named_args.
      * @details Currently only tested with AMD GPUs.
@@ -182,7 +183,7 @@ namespace detail {
  * @brief Sets the `value` to `true` since C-SVMs using the HIP backend are available.
  */
 template <>
-struct csvm_backend_exists<hip::csvm> : std::true_type {};
+struct csvm_backend_exists<hip::csvm> : std::true_type { };
 
 }  // namespace detail
 

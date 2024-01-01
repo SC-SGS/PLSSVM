@@ -256,9 +256,9 @@ template <typename label_type>
 
     std::exception_ptr parallel_exception;
 
-    #pragma omp parallel default(none) shared(reader, data, label, unique_label, parallel_exception) firstprivate(num_header_lines, num_data_points, num_attributes, has_label, label_idx)
+#pragma omp parallel default(none) shared(reader, data, label, unique_label, parallel_exception) firstprivate(num_header_lines, num_data_points, num_attributes, has_label, label_idx)
     {
-        #pragma omp for
+#pragma omp for
         for (std::size_t i = 0; i < num_data_points; ++i) {
             try {
                 std::string_view line = reader.line(i + num_header_lines);
@@ -300,8 +300,8 @@ template <typename label_type>
                             // write label value
                             is_class_set = true;
                             if constexpr (std::is_same_v<label_type, bool>) {
-                                // the std::vector<bool> template specialization is per C++ standard NOT thread safe
-                                #pragma omp critical
+// the std::vector<bool> template specialization is per C++ standard NOT thread safe
+#pragma omp critical
                                 label[i] = detail::convert_to<label_type, invalid_file_format_exception>(line.substr(pos, next_pos - pos));
                             } else {
                                 label[i] = detail::convert_to<label_type, invalid_file_format_exception>(line.substr(pos, next_pos - pos));
@@ -340,8 +340,8 @@ template <typename label_type>
                             // found a label
 
                             if constexpr (std::is_same_v<label_type, bool>) {
-                                // the std::vector<bool> template specialization is per C++ standard NOT thread safe
-                                #pragma omp critical
+// the std::vector<bool> template specialization is per C++ standard NOT thread safe
+#pragma omp critical
                                 label[i] = detail::convert_to<label_type, invalid_file_format_exception>(line_split[j]);
                             } else {
                                 label[i] = detail::convert_to<label_type, invalid_file_format_exception>(line_split[j]);
@@ -358,8 +358,8 @@ template <typename label_type>
                     throw invalid_file_format_exception{ fmt::format("Found the label \"{}\" which was not specified in the header ({{{}}})!", static_cast<label_type>(label[i]), fmt::join(unique_label, ", ")) };
                 }
             } catch (const std::exception &) {
-                // catch first exception and store it
-                #pragma omp critical
+// catch first exception and store it
+#pragma omp critical
                 {
                     if (!parallel_exception) {
                         parallel_exception = std::current_exception();
@@ -439,12 +439,12 @@ inline void write_arff_data_impl(const std::string &filename, const soa_matrix<r
     }
     out.print("@DATA\n");
 
-    // write arff data
-    #pragma omp parallel default(none) shared(out, data, label) firstprivate(num_data_points, num_features)
+// write arff data
+#pragma omp parallel default(none) shared(out, data, label) firstprivate(num_data_points, num_features)
     {
         // all support vectors
         std::string out_string;
-        #pragma omp for schedule(dynamic) nowait
+#pragma omp for schedule(dynamic) nowait
         for (std::size_t i = 0; i < num_data_points; ++i) {
             // output data points
             for (std::size_t j = 0; j < num_features - 1; ++j) {
@@ -459,7 +459,7 @@ inline void write_arff_data_impl(const std::string &filename, const soa_matrix<r
             out_string.push_back('\n');
         }
 
-        #pragma omp critical
+#pragma omp critical
         out.print("{}", out_string);
     }
 }

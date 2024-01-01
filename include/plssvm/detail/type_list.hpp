@@ -40,13 +40,13 @@ struct tuple_contains;
  * @tparam Types the types in the tuple
  */
 template <typename T, typename... Types>
-struct tuple_contains<T, std::tuple<Types...>> : std::disjunction<std::is_same<T, Types>...> {};
+struct tuple_contains<T, std::tuple<Types...>> : std::disjunction<std::is_same<T, Types>...> { };
 
 /**
  * @brief Checks whether the type @p T is present in the @p Tuple.
  */
 template <typename T, typename TypeList>
-constexpr inline bool tuple_contains_v = tuple_contains<T, TypeList>::value;
+inline constexpr bool tuple_contains_v = tuple_contains<T, TypeList>::value;
 
 }  // namespace plssvm::detail
 

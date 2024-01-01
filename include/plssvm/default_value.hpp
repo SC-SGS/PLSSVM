@@ -41,12 +41,13 @@ struct default_init {
      * @brief Default construct the default initialization value.
      */
     constexpr default_init() noexcept(std::is_nothrow_default_constructible_v<T>) = default;
+
     /**
      * @brief Set the initialization value to @p val.
      * @param[in] val the explicit default initialization value
      */
     constexpr explicit default_init(T val) noexcept(std::is_nothrow_move_constructible_v<T>) :
-        value{ std::move_if_noexcept(val) } {}
+        value{ std::move_if_noexcept(val) } { }
 
     /// The explicit default initialization value.
     T value{};
@@ -81,7 +82,8 @@ class default_value {
      * @param[in] default_val set the default value of this default_value wrapper
      */
     constexpr explicit default_value(default_init<value_type> default_val = default_init<value_type>{}) noexcept(std::is_nothrow_move_constructible_v<value_type>) :
-        default_init_{ std::move_if_noexcept(default_val) } {}
+        default_init_{ std::move_if_noexcept(default_val) } { }
+
     /**
      * @brief **Override** the previously provided default value with the new, non-default value.
      * @details Afterward, `is_default()` will return `false`!
@@ -104,7 +106,8 @@ class default_value {
     constexpr explicit default_value(const default_value<U> &other) noexcept(std::is_nothrow_copy_constructible_v<U>) :
         value_{ static_cast<value_type>(other.value_) },
         use_default_init_{ other.use_default_init_ },
-        default_init_{ static_cast<value_type>(other.default_init_.value) } {}
+        default_init_{ static_cast<value_type>(other.default_init_.value) } { }
+
     /**
      * @brief Move-construct a new default_value_from a possibly other type.
      * @tparam U the type of the other default_value wrapper
@@ -115,7 +118,8 @@ class default_value {
     constexpr explicit default_value(default_value<U> &&other) noexcept(std::is_nothrow_move_constructible_v<U>) :
         value_{ static_cast<value_type>(std::move_if_noexcept(other.value_)) },
         use_default_init_{ other.use_default_init_ },
-        default_init_{ static_cast<value_type>(std::move_if_noexcept(other.default_init_.value)) } {}
+        default_init_{ static_cast<value_type>(std::move_if_noexcept(other.default_init_.value)) } { }
+
     /**
      * @brief Copy-assign a new default_value from a possible other type.
      * @tparam U the type of the other default_value wrapper
@@ -130,6 +134,7 @@ class default_value {
         default_init_ = default_init<value_type>{ static_cast<value_type>(other.default_init_.value) };
         return *this;
     }
+
     /**
      * @brief Move-assign a new default_value from a possible other type.
      * @tparam U the type of the other default_value wrapper
@@ -152,12 +157,14 @@ class default_value {
     [[nodiscard]] constexpr const value_type &value() const noexcept {
         return this->is_default() ? default_init_.value : value_;
     }
+
     /**
      * @copydoc plssvm::default_value::value()
      */
     [[nodiscard]] constexpr operator const value_type &() const noexcept {
         return this->value();
     }
+
     /**
      * @brief Get the default value even if it has already been overwritten by the user.
      * @return the active value (`[[nodiscard]]`)
@@ -165,6 +172,7 @@ class default_value {
     [[nodiscard]] constexpr const value_type &get_default() const noexcept {
         return default_init_.value;
     }
+
     /**
      * @brief Check whether the currently active value is the default value.
      * @return `true` if the default value is currently active, `false` otherwise (`[[nodiscard]]`)
@@ -183,6 +191,7 @@ class default_value {
         swap(use_default_init_, other.use_default_init_);
         swap(default_init_, other.default_init_);
     }
+
     /**
      * @brief Set the current active value back to the default value.
      */
@@ -210,6 +219,7 @@ template <typename T>
 inline std::ostream &operator<<(std::ostream &out, const default_value<T> &val) {
     return out << val.value();
 }
+
 /**
  * @brief Use the input-stream @p in to initialize the default_value @p val.
  * @details Sets the user defined value, i.e., `plssvm::default_value::is_default()` will return `false` and the default value will **not** be used.
@@ -246,6 +256,7 @@ template <typename T>
 [[nodiscard]] constexpr bool operator==(const default_value<T> &lhs, const default_value<T> &rhs) noexcept {
     return lhs.value() == rhs.value();
 }
+
 /**
  * @copydoc operator==(const default_value<T> &, const default_value<T> &)
  */
@@ -253,6 +264,7 @@ template <typename T>
 [[nodiscard]] constexpr bool operator==(const default_value<T> &lhs, const T &rhs) noexcept {
     return lhs.value() == rhs;
 }
+
 /**
  * @copydoc operator==(const default_value<T> &, const default_value<T> &)
  */
@@ -272,6 +284,7 @@ template <typename T>
 [[nodiscard]] constexpr bool operator!=(const default_value<T> &lhs, const default_value<T> &rhs) noexcept {
     return !(lhs == rhs);
 }
+
 /**
  * @copydoc operator!=(const default_value<T> &, const default_value<T> &)
  */
@@ -279,6 +292,7 @@ template <typename T>
 [[nodiscard]] constexpr bool operator!=(const default_value<T> &lhs, const T &rhs) noexcept {
     return !(lhs == rhs);
 }
+
 /**
  * @copydoc operator!=(const default_value<T> &, const default_value<T> &)
  */
@@ -298,6 +312,7 @@ template <typename T>
 [[nodiscard]] constexpr bool operator<(const default_value<T> &lhs, const default_value<T> &rhs) noexcept {
     return lhs.value() < rhs.value();
 }
+
 /**
  * @copydoc operator<(const default_value<T> &, const default_value<T> &)
  */
@@ -305,6 +320,7 @@ template <typename T>
 [[nodiscard]] constexpr bool operator<(const default_value<T> &lhs, const T &rhs) noexcept {
     return lhs.value() < rhs;
 }
+
 /**
  * @copydoc operator<(const default_value<T> &, const default_value<T> &)
  */
@@ -352,6 +368,7 @@ template <typename T>
 [[nodiscard]] constexpr bool operator<=(const default_value<T> &lhs, const default_value<T> &rhs) noexcept {
     return !(lhs > rhs);
 }
+
 /**
  * @copydoc operator<=(const default_value<T> &, const default_value<T> &)
  */
@@ -359,6 +376,7 @@ template <typename T>
 [[nodiscard]] constexpr bool operator<=(const default_value<T> &lhs, const T &rhs) noexcept {
     return !(lhs.value() > rhs);
 }
+
 /**
  * @copydoc operator<=(const default_value<T> &, const default_value<T> &)
  */
@@ -378,6 +396,7 @@ template <typename T>
 [[nodiscard]] constexpr bool operator>=(const default_value<T> &lhs, const default_value<T> &rhs) noexcept {
     return !(lhs < rhs);
 }
+
 /**
  * @copydoc operator>=(const default_value<T> &, const default_value<T> &)
  */
@@ -385,6 +404,7 @@ template <typename T>
 [[nodiscard]] constexpr bool operator>=(const default_value<T> &lhs, const T &rhs) noexcept {
     return !(lhs.value() < rhs);
 }
+
 /**
  * @copydoc operator>=(const default_value<T> &, const default_value<T> &)
  */
@@ -402,16 +422,18 @@ namespace detail {
  * @tparam T the type to check whether it is a `plssvm::default_value`
  */
 template <typename T>
-struct is_default_value : std::false_type {};
+struct is_default_value : std::false_type { };
+
 /**
  * @brief Test whether the given type @p T is of type `plssvm::default_value` (represents the `true` case).
  * @details Inherits from `std::true_type`.
  * @tparam T the type to check whether it is a `plssvm::default_value`
  */
 template <typename T>
-struct is_default_value<default_value<T>> : std::true_type {};
+struct is_default_value<default_value<T>> : std::true_type { };
 
 }  // namespace detail
+
 /// @endcond
 
 /**
@@ -419,7 +441,8 @@ struct is_default_value<default_value<T>> : std::true_type {};
  * @tparam T the type to check whether it is a `plssvm::default_value`
  */
 template <typename T>
-struct is_default_value : detail::is_default_value<std::remove_cv_t<std::remove_reference_t<T>>> {};  // can't use detail::remove_cvref_t because of circular dependencies
+struct is_default_value : detail::is_default_value<std::remove_cv_t<std::remove_reference_t<T>>> { };  // can't use detail::remove_cvref_t because of circular dependencies
+
 /**
  * @brief Test whether the given type @p T is of type `plssvm::default_value` ignoring all top-level const, volatile, and reference qualifiers.
  */
@@ -450,6 +473,6 @@ struct hash<plssvm::default_value<T>> {
 }  // namespace std
 
 template <typename T>
-struct fmt::formatter<plssvm::default_value<T>> : fmt::ostream_formatter {};
+struct fmt::formatter<plssvm::default_value<T>> : fmt::ostream_formatter { };
 
 #endif  // PLSSVM_DEFAULT_VALUE_HPP_

@@ -189,19 +189,19 @@ std::pair<std::vector<real_type>, real_type> csvm::perform_dimensional_reduction
     std::vector<real_type> q_red(num_rows_reduced);
     switch (params.kernel_type.value()) {
         case kernel_function_type::linear:
-            #pragma omp parallel for default(none) shared(q_red, A) firstprivate(num_rows_reduced)
+#pragma omp parallel for default(none) shared(q_red, A) firstprivate(num_rows_reduced)
             for (std::size_t i = 0; i < num_rows_reduced; ++i) {
                 q_red[i] = kernel_function<kernel_function_type::linear>(A, i, A, num_rows_reduced);
             }
             break;
         case kernel_function_type::polynomial:
-            #pragma omp parallel for default(none) shared(q_red, A, params) firstprivate(num_rows_reduced)
+#pragma omp parallel for default(none) shared(q_red, A, params) firstprivate(num_rows_reduced)
             for (std::size_t i = 0; i < num_rows_reduced; ++i) {
                 q_red[i] = kernel_function<kernel_function_type::polynomial>(A, i, A, num_rows_reduced, params.degree.value(), params.gamma.value(), params.coef0.value());
             }
             break;
         case kernel_function_type::rbf:
-            #pragma omp parallel for default(none) shared(q_red, A, params) firstprivate(num_rows_reduced)
+#pragma omp parallel for default(none) shared(q_red, A, params) firstprivate(num_rows_reduced)
             for (std::size_t i = 0; i < num_rows_reduced; ++i) {
                 q_red[i] = kernel_function<kernel_function_type::rbf>(A, i, A, num_rows_reduced, params.gamma.value());
             }

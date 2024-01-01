@@ -10,13 +10,13 @@
 #include "plssvm/backends/SYCL/implementation_type.hpp"
 #include "plssvm/backends/SYCL/kernel_invocation_type.hpp"
 
-#include "../utility.hpp"  // register_py_exception
+#include "bindings/Python/utility.hpp"  // register_py_exception
 
 #include "pybind11/pybind11.h"  // py::module_, py::enum_, py::exception
 #include "pybind11/stl.h"       // support for STL types: std:vector
 
 #define PLSSVM_CONCATENATE_DETAIL(x, y) x##y
-#define PLSSVM_CONCATENATE(x, y)        PLSSVM_CONCATENATE_DETAIL(x, y)
+#define PLSSVM_CONCATENATE(x, y) PLSSVM_CONCATENATE_DETAIL(x, y)
 
 namespace py = pybind11;
 

@@ -10,10 +10,10 @@
 
 #include "plssvm/exceptions/exceptions.hpp"  // plssvm::{*_exception}
 
-#include "custom_test_macros.hpp"  // EXPECT_THROW_WHAT
-#include "naming.hpp"              // naming::test_parameter_to_name
-#include "types_to_test.hpp"       // util::{combine_test_parameters_gtest_t, cartesian_type_product_t, test_parameter_type_at_t}
-#include "utility.hpp"             // util::exception_type_name
+#include "tests/custom_test_macros.hpp"  // EXPECT_THROW_WHAT
+#include "tests/naming.hpp"              // naming::test_parameter_to_name
+#include "tests/types_to_test.hpp"       // util::{combine_test_parameters_gtest_t, cartesian_type_product_t, test_parameter_type_at_t}
+#include "tests/utility.hpp"             // util::exception_type_name
 
 #include "fmt/core.h"     // fmt::format
 #include "gmock/gmock.h"  // EXPECT_THAT, ::testing::{HasSubstr, ContainsRegex}
@@ -45,6 +45,7 @@ class Exceptions : public ::testing::Test {
   protected:
     using fixture_exception_type = util::test_parameter_type_at_t<0, T>;
 };
+
 TYPED_TEST_SUITE(Exceptions, exception_types_gtest, naming::test_parameter_to_name);
 
 // check whether throwing exceptions works as intended

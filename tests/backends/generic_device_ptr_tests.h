@@ -16,8 +16,8 @@
 #include "plssvm/exceptions/exceptions.hpp"  // plssvm::gpu_device_ptr_exception
 #include "plssvm/shape.hpp"                  // plssvm::shape
 
-#include "custom_test_macros.hpp"  // EXPECT_THROW_WHAT, EXPECT_FLOATING_POINT_MATRIX_EQ
-#include "types_to_test.hpp"       // util::test_parameter_type_at_t
+#include "tests/custom_test_macros.hpp"  // EXPECT_THROW_WHAT, EXPECT_FLOATING_POINT_MATRIX_EQ
+#include "tests/types_to_test.hpp"       // util::test_parameter_type_at_t
 
 #include "gtest//gtest.h"  // TYPED_TEST_SUITE_P, TYPED_TEST_P, REGISTER_TYPED_TEST_SUITE_P, EXPECT_TRUE, EXPECT_FALSE, EXPECT_EQ, EXPECT_NE, EXPECT_DEATH
                            // ::testing::{Test, hasSubstr}
@@ -31,6 +31,7 @@ class DevicePtr : public ::testing::Test {
   protected:
     using fixture_test_type = util::test_parameter_type_at_t<0, T>;
 };
+
 TYPED_TEST_SUITE_P(DevicePtr);
 
 TYPED_TEST_P(DevicePtr, default_construct) {
@@ -47,6 +48,7 @@ TYPED_TEST_P(DevicePtr, default_construct) {
     EXPECT_EQ(ptr.shape(), (plssvm::shape{ 0, 0 }));
     EXPECT_TRUE(ptr.empty());
 }
+
 TYPED_TEST_P(DevicePtr, construct_size) {
     using test_type = typename TestFixture::fixture_test_type;
     using device_ptr_type = typename test_type::device_ptr_type;
@@ -64,6 +66,7 @@ TYPED_TEST_P(DevicePtr, construct_size) {
     EXPECT_EQ(ptr.padding(), (plssvm::shape{ 0, 0 }));
     EXPECT_EQ(ptr.shape_padded(), (plssvm::shape{ 42, 1 }));
 }
+
 TYPED_TEST_P(DevicePtr, construct_shape) {
     using test_type = typename TestFixture::fixture_test_type;
     using device_ptr_type = typename test_type::device_ptr_type;
@@ -81,6 +84,7 @@ TYPED_TEST_P(DevicePtr, construct_shape) {
     EXPECT_EQ(ptr.padding(), (plssvm::shape{ 0, 0 }));
     EXPECT_EQ(ptr.shape_padded(), (plssvm::shape{ 42, 16 }));
 }
+
 TYPED_TEST_P(DevicePtr, construct_shape_and_padding) {
     using test_type = typename TestFixture::fixture_test_type;
     using device_ptr_type = typename test_type::device_ptr_type;
@@ -98,6 +102,7 @@ TYPED_TEST_P(DevicePtr, construct_shape_and_padding) {
     EXPECT_EQ(ptr.padding(), (plssvm::shape{ 4, 4 }));
     EXPECT_EQ(ptr.shape_padded(), (plssvm::shape{ 46, 20 }));
 }
+
 TYPED_TEST_P(DevicePtr, move_construct) {
     using test_type = typename TestFixture::fixture_test_type;
     using device_ptr_type = typename test_type::device_ptr_type;
@@ -125,6 +130,7 @@ TYPED_TEST_P(DevicePtr, move_construct) {
     EXPECT_EQ(first.padding(), (plssvm::shape{ 0, 0 }));
     EXPECT_EQ(first.shape_padded(), (plssvm::shape{ 0, 0 }));
 }
+
 TYPED_TEST_P(DevicePtr, move_construct_with_padding) {
     using test_type = typename TestFixture::fixture_test_type;
     using device_ptr_type = typename test_type::device_ptr_type;
@@ -152,6 +158,7 @@ TYPED_TEST_P(DevicePtr, move_construct_with_padding) {
     EXPECT_EQ(first.padding(), (plssvm::shape{ 0, 0 }));
     EXPECT_EQ(first.shape_padded(), (plssvm::shape{ 0, 0 }));
 }
+
 TYPED_TEST_P(DevicePtr, move_assign) {
     using test_type = typename TestFixture::fixture_test_type;
     using device_ptr_type = typename test_type::device_ptr_type;
@@ -181,6 +188,7 @@ TYPED_TEST_P(DevicePtr, move_assign) {
     EXPECT_EQ(first.padding(), (plssvm::shape{ 0, 0 }));
     EXPECT_EQ(first.shape_padded(), (plssvm::shape{ 0, 0 }));
 }
+
 TYPED_TEST_P(DevicePtr, move_assign_with_padding) {
     using test_type = typename TestFixture::fixture_test_type;
     using device_ptr_type = typename test_type::device_ptr_type;
@@ -239,6 +247,7 @@ TYPED_TEST_P(DevicePtr, swap_member_function) {
     EXPECT_EQ(first.padding(), (plssvm::shape{ 0, 0 }));
     EXPECT_EQ(first.shape_padded(), (plssvm::shape{ 0, 0 }));
 }
+
 TYPED_TEST_P(DevicePtr, swap_member_function_with_padding) {
     using test_type = typename TestFixture::fixture_test_type;
     using device_ptr_type = typename test_type::device_ptr_type;
@@ -267,6 +276,7 @@ TYPED_TEST_P(DevicePtr, swap_member_function_with_padding) {
     EXPECT_EQ(first.padding(), (plssvm::shape{ 0, 0 }));
     EXPECT_EQ(first.shape_padded(), (plssvm::shape{ 0, 0 }));
 }
+
 TYPED_TEST_P(DevicePtr, swap_free_function) {
     using test_type = typename TestFixture::fixture_test_type;
     using device_ptr_type = typename test_type::device_ptr_type;
@@ -296,6 +306,7 @@ TYPED_TEST_P(DevicePtr, swap_free_function) {
     EXPECT_EQ(first.padding(), (plssvm::shape{ 0, 0 }));
     EXPECT_EQ(first.shape_padded(), (plssvm::shape{ 0, 0 }));
 }
+
 TYPED_TEST_P(DevicePtr, swap_free_function_with_padding) {
     using test_type = typename TestFixture::fixture_test_type;
     using device_ptr_type = typename test_type::device_ptr_type;
@@ -340,6 +351,7 @@ TYPED_TEST_P(DevicePtr, operator_bool) {
     const device_ptr_type ptr2{};
     EXPECT_FALSE(static_cast<bool>(ptr2));
 }
+
 TYPED_TEST_P(DevicePtr, size) {
     using test_type = typename TestFixture::fixture_test_type;
     using device_ptr_type = typename test_type::device_ptr_type;
@@ -362,6 +374,7 @@ TYPED_TEST_P(DevicePtr, size) {
     const device_ptr_type ptr4{};
     EXPECT_EQ(ptr4.size(), 0);
 }
+
 TYPED_TEST_P(DevicePtr, shape) {
     using test_type = typename TestFixture::fixture_test_type;
     using device_ptr_type = typename test_type::device_ptr_type;
@@ -384,6 +397,7 @@ TYPED_TEST_P(DevicePtr, shape) {
     const device_ptr_type ptr4{};
     EXPECT_EQ(ptr4.shape(), (plssvm::shape{ 0, 0 }));
 }
+
 TYPED_TEST_P(DevicePtr, empty) {
     using test_type = typename TestFixture::fixture_test_type;
     using device_ptr_type = typename test_type::device_ptr_type;
@@ -410,6 +424,7 @@ TYPED_TEST_P(DevicePtr, empty) {
     const device_ptr_type ptr5{};
     EXPECT_TRUE(ptr5.empty());
 }
+
 TYPED_TEST_P(DevicePtr, padding) {
     using test_type = typename TestFixture::fixture_test_type;
     using device_ptr_type = typename test_type::device_ptr_type;
@@ -418,8 +433,10 @@ TYPED_TEST_P(DevicePtr, padding) {
 
     // construct device_ptr
     const device_ptr_type ptr{ plssvm::shape{ 42, 16 }, plssvm::shape{ 4, 5 }, queue };
-    EXPECT_EQ(ptr.padding(), (plssvm::shape{ 4, 5 }));;
+    EXPECT_EQ(ptr.padding(), (plssvm::shape{ 4, 5 }));
+    ;
 }
+
 TYPED_TEST_P(DevicePtr, size_padded) {
     using test_type = typename TestFixture::fixture_test_type;
     using device_ptr_type = typename test_type::device_ptr_type;
@@ -430,6 +447,7 @@ TYPED_TEST_P(DevicePtr, size_padded) {
     const device_ptr_type ptr{ plssvm::shape{ 42, 16 }, plssvm::shape{ 4, 5 }, queue };
     EXPECT_EQ(ptr.size_padded(), (42 + 4) * (16 + 5));
 }
+
 TYPED_TEST_P(DevicePtr, shape_padded) {
     using test_type = typename TestFixture::fixture_test_type;
     using device_ptr_type = typename test_type::device_ptr_type;
@@ -452,6 +470,7 @@ TYPED_TEST_P(DevicePtr, shape_padded) {
     const device_ptr_type ptr4{};
     EXPECT_EQ(ptr4.shape_padded(), (plssvm::shape{ 0, 0 }));
 }
+
 TYPED_TEST_P(DevicePtr, is_padded) {
     using test_type = typename TestFixture::fixture_test_type;
     using device_ptr_type = typename test_type::device_ptr_type;
@@ -506,6 +525,7 @@ TYPED_TEST_P(DevicePtr, memset) {
     std::memset(correct.data() + 2, 1, (correct.size() - 2) * sizeof(value_type));
     EXPECT_EQ(result, correct);
 }
+
 TYPED_TEST_P(DevicePtr, memset_with_numbytes) {
     using test_type = typename TestFixture::fixture_test_type;
     using device_ptr_type = typename test_type::device_ptr_type;
@@ -529,6 +549,7 @@ TYPED_TEST_P(DevicePtr, memset_with_numbytes) {
     std::memset(correct.data() + 2, 1, 4 * sizeof(value_type));
     EXPECT_EQ(result, correct);
 }
+
 TYPED_TEST_P(DevicePtr, memset_invalid_pos) {
     using test_type = typename TestFixture::fixture_test_type;
     using device_ptr_type = typename test_type::device_ptr_type;
@@ -568,6 +589,7 @@ TYPED_TEST_P(DevicePtr, fill) {
     correct[0] = correct[1] = value_type{ 0.0 };
     EXPECT_EQ(result, correct);
 }
+
 TYPED_TEST_P(DevicePtr, fill_with_count) {
     using test_type = typename TestFixture::fixture_test_type;
     using device_ptr_type = typename test_type::device_ptr_type;
@@ -591,6 +613,7 @@ TYPED_TEST_P(DevicePtr, fill_with_count) {
     correct[2] = correct[3] = correct[4] = correct[5] = value_type{ 42.0 };
     EXPECT_EQ(result, correct);
 }
+
 TYPED_TEST_P(DevicePtr, fill_invalid_pos) {
     using test_type = typename TestFixture::fixture_test_type;
     using device_ptr_type = typename test_type::device_ptr_type;
@@ -631,6 +654,7 @@ TYPED_TEST_P(DevicePtr, copy_vector) {
     // check values for correctness
     EXPECT_EQ(result, std::vector<value_type>(10, 42));
 }
+
 TYPED_TEST_P(DevicePtr, copy_vector_with_count_copy_back_all) {
     using test_type = typename TestFixture::fixture_test_type;
     using device_ptr_type = typename test_type::device_ptr_type;
@@ -654,6 +678,7 @@ TYPED_TEST_P(DevicePtr, copy_vector_with_count_copy_back_all) {
     // check values for correctness
     EXPECT_EQ(result, (std::vector<value_type>{ value_type{ 0.0 }, value_type{ 42.0 }, value_type{ 42.0 }, value_type{ 42.0 }, value_type{ 0.0 }, value_type{ 0.0 } }));
 }
+
 TYPED_TEST_P(DevicePtr, copy_vector_with_count_copy_back_some) {
     using test_type = typename TestFixture::fixture_test_type;
     using device_ptr_type = typename test_type::device_ptr_type;
@@ -677,6 +702,7 @@ TYPED_TEST_P(DevicePtr, copy_vector_with_count_copy_back_some) {
     // check values for correctness
     EXPECT_EQ(result, (std::vector<value_type>{ value_type{ 42.0 }, value_type{ 42.0 }, value_type{ 0.0 } }));
 }
+
 TYPED_TEST_P(DevicePtr, copy_vector_with_count_copy_to_too_many) {
     using test_type = typename TestFixture::fixture_test_type;
     using device_ptr_type = typename test_type::device_ptr_type;
@@ -715,6 +741,7 @@ TYPED_TEST_P(DevicePtr, copy_vector_too_few_host_elements) {
     std::vector<value_type> data(8, 42);
     EXPECT_THROW_WHAT(ptr.copy_to_device(data), plssvm::gpu_device_ptr_exception, "Too few data to perform copy (needed: 10, provided: 8)!");
 }
+
 TYPED_TEST_P(DevicePtr, copy_vector_too_few_buffer_elements) {
     using test_type = typename TestFixture::fixture_test_type;
     using device_ptr_type = typename test_type::device_ptr_type;
@@ -729,6 +756,7 @@ TYPED_TEST_P(DevicePtr, copy_vector_too_few_buffer_elements) {
     std::vector<value_type> buffer(8);
     EXPECT_THROW_WHAT(ptr.copy_to_host(buffer), plssvm::gpu_device_ptr_exception, "Buffer too small to perform copy (needed: 10, provided: 8)!");
 }
+
 TYPED_TEST_P(DevicePtr, copy_vector_with_count_too_few_host_elements) {
     using test_type = typename TestFixture::fixture_test_type;
     using device_ptr_type = typename test_type::device_ptr_type;
@@ -743,6 +771,7 @@ TYPED_TEST_P(DevicePtr, copy_vector_with_count_too_few_host_elements) {
     std::vector<value_type> data(4, 42);
     EXPECT_THROW_WHAT(ptr.copy_to_device(data, 1, 7), plssvm::gpu_device_ptr_exception, "Too few data to perform copy (needed: 7, provided: 4)!");
 }
+
 TYPED_TEST_P(DevicePtr, copy_vector_with_count_too_few_buffer_elements) {
     using test_type = typename TestFixture::fixture_test_type;
     using device_ptr_type = typename test_type::device_ptr_type;
@@ -781,6 +810,7 @@ TYPED_TEST_P(DevicePtr, copy_ptr) {
     // check values for correctness
     EXPECT_EQ(result, std::vector<value_type>(10, 42));
 }
+
 TYPED_TEST_P(DevicePtr, copy_ptr_with_count_copy_back_all) {
     using test_type = typename TestFixture::fixture_test_type;
     using device_ptr_type = typename test_type::device_ptr_type;
@@ -804,6 +834,7 @@ TYPED_TEST_P(DevicePtr, copy_ptr_with_count_copy_back_all) {
     // check values for correctness
     EXPECT_EQ(result, (std::vector<value_type>{ value_type{ 0.0 }, value_type{ 42.0 }, value_type{ 42.0 }, value_type{ 42.0 }, value_type{ 0.0 }, value_type{ 0.0 } }));
 }
+
 TYPED_TEST_P(DevicePtr, copy_ptr_with_count_copy_back_some) {
     using test_type = typename TestFixture::fixture_test_type;
     using device_ptr_type = typename test_type::device_ptr_type;
@@ -827,6 +858,7 @@ TYPED_TEST_P(DevicePtr, copy_ptr_with_count_copy_back_some) {
     // check values for correctness
     EXPECT_EQ(result, (std::vector<value_type>{ value_type{ 42.0 }, value_type{ 42.0 }, value_type{ 0.0 } }));
 }
+
 TYPED_TEST_P(DevicePtr, copy_ptr_with_count_copy_to_too_many) {
     using test_type = typename TestFixture::fixture_test_type;
     using device_ptr_type = typename test_type::device_ptr_type;
@@ -851,24 +883,52 @@ TYPED_TEST_P(DevicePtr, copy_ptr_with_count_copy_to_too_many) {
     EXPECT_EQ(result, (std::vector<value_type>{ value_type{ 0.0 }, value_type{ 0.0 }, value_type{ 42.0 }, value_type{ 42.0 }, value_type{ 42.0 }, value_type{ 42.0 } }));
 }
 
-// clang-format off
 REGISTER_TYPED_TEST_SUITE_P(DevicePtr,
-                            default_construct, construct_size, construct_shape, construct_shape_and_padding,
-                            move_construct, move_construct_with_padding, move_assign, move_assign_with_padding,
-                            swap_member_function, swap_member_function_with_padding, swap_free_function, swap_free_function_with_padding,
-                            operator_bool, size, shape, empty, padding, size_padded, shape_padded, is_padded,
-                            memset, memset_with_numbytes, memset_invalid_pos,
-                            fill, fill_with_count, fill_invalid_pos,
-                            copy_vector, copy_vector_with_count_copy_back_all, copy_vector_with_count_copy_back_some, copy_vector_with_count_copy_to_too_many,
-                            copy_vector_too_few_host_elements, copy_vector_too_few_buffer_elements, copy_vector_with_count_too_few_host_elements, copy_vector_with_count_too_few_buffer_elements,
-                            copy_ptr, copy_ptr_with_count_copy_back_all, copy_ptr_with_count_copy_back_some, copy_ptr_with_count_copy_to_too_many);
-// clang-format on
+                            default_construct,
+                            construct_size,
+                            construct_shape,
+                            construct_shape_and_padding,
+                            move_construct,
+                            move_construct_with_padding,
+                            move_assign,
+                            move_assign_with_padding,
+                            swap_member_function,
+                            swap_member_function_with_padding,
+                            swap_free_function,
+                            swap_free_function_with_padding,
+                            operator_bool,
+                            size,
+                            shape,
+                            empty,
+                            padding,
+                            size_padded,
+                            shape_padded,
+                            is_padded,
+                            memset,
+                            memset_with_numbytes,
+                            memset_invalid_pos,
+                            fill,
+                            fill_with_count,
+                            fill_invalid_pos,
+                            copy_vector,
+                            copy_vector_with_count_copy_back_all,
+                            copy_vector_with_count_copy_back_some,
+                            copy_vector_with_count_copy_to_too_many,
+                            copy_vector_too_few_host_elements,
+                            copy_vector_too_few_buffer_elements,
+                            copy_vector_with_count_too_few_host_elements,
+                            copy_vector_with_count_too_few_buffer_elements,
+                            copy_ptr,
+                            copy_ptr_with_count_copy_back_all,
+                            copy_ptr_with_count_copy_back_some,
+                            copy_ptr_with_count_copy_to_too_many);
 
 template <typename T>
 class DevicePtrLayout : public DevicePtr<T> {
   protected:
     using typename DevicePtr<T>::fixture_test_type;
 };
+
 TYPED_TEST_SUITE_P(DevicePtrLayout);
 
 TYPED_TEST_P(DevicePtrLayout, copy_matrix) {
@@ -904,6 +964,7 @@ TYPED_TEST_P(DevicePtrLayout, copy_matrix) {
     }
     EXPECT_FLOATING_POINT_MATRIX_EQ(result, correct_result);
 }
+
 TYPED_TEST_P(DevicePtrLayout, copy_matrix_with_padding) {
     using test_type = typename TestFixture::fixture_test_type;
     using device_ptr_type = typename test_type::device_ptr_type;
@@ -928,6 +989,7 @@ TYPED_TEST_P(DevicePtrLayout, copy_matrix_with_padding) {
     // check values for correctness
     EXPECT_FLOATING_POINT_MATRIX_EQ(result, data);
 }
+
 TYPED_TEST_P(DevicePtrLayout, copy_matrix_different_layouts) {
     using test_type = typename TestFixture::fixture_test_type;
     using device_ptr_type = typename test_type::device_ptr_type;
@@ -978,6 +1040,7 @@ TYPED_TEST_P(DevicePtrLayout, copy_matrix_too_few_host_elements) {
     plssvm::matrix<value_type, layout> data{ plssvm::shape{ 2, 4 }, value_type{ 42 } };
     EXPECT_THROW_WHAT(ptr.copy_to_device(data), plssvm::gpu_device_ptr_exception, "Too few data to perform copy (needed: 10, provided: 8)!");
 }
+
 TYPED_TEST_P(DevicePtrLayout, copy_matrix_too_few_buffer_elements) {
     using test_type = typename TestFixture::fixture_test_type;
     using device_ptr_type = typename test_type::device_ptr_type;
@@ -994,14 +1057,16 @@ TYPED_TEST_P(DevicePtrLayout, copy_matrix_too_few_buffer_elements) {
     EXPECT_THROW_WHAT(ptr.copy_to_host(buffer), plssvm::gpu_device_ptr_exception, "Buffer too small to perform copy (needed: 10, provided: 8)!");
 }
 
-// clang-format off
 REGISTER_TYPED_TEST_SUITE_P(DevicePtrLayout,
-                            copy_matrix, copy_matrix_with_padding, copy_matrix_different_layouts,
-                            copy_matrix_too_few_host_elements, copy_matrix_too_few_buffer_elements);
-// clang-format on
+                            copy_matrix,
+                            copy_matrix_with_padding,
+                            copy_matrix_different_layouts,
+                            copy_matrix_too_few_host_elements,
+                            copy_matrix_too_few_buffer_elements);
 
 template <typename T>
-class DevicePtrDeathTest : public DevicePtr<T> {};
+class DevicePtrDeathTest : public DevicePtr<T> { };
+
 TYPED_TEST_SUITE_P(DevicePtrDeathTest);
 
 TYPED_TEST_P(DevicePtrDeathTest, memset) {
@@ -1042,6 +1107,7 @@ TYPED_TEST_P(DevicePtrDeathTest, copy_ptr_invalid_host_ptr) {
     EXPECT_DEATH(ptr.copy_to_device(nullptr), ::testing::HasSubstr("Invalid host pointer for the data to copy!"));
     EXPECT_DEATH(ptr.copy_to_host(nullptr), ::testing::HasSubstr("Invalid host pointer for the data to copy!"));
 }
+
 TYPED_TEST_P(DevicePtrDeathTest, copy_ptr_invalid_device_ptr) {
     using test_type = typename TestFixture::fixture_test_type;
     using device_ptr_type = typename test_type::device_ptr_type;
@@ -1074,6 +1140,7 @@ TYPED_TEST_P(DevicePtrDeathTest, copy_ptr_with_count_invalid_host_ptr) {
     EXPECT_DEATH(ptr.copy_to_device(nullptr, 0, 10), ::testing::HasSubstr("Invalid host pointer for the data to copy!"));
     EXPECT_DEATH(ptr.copy_to_host(nullptr, 0, 10), ::testing::HasSubstr("Invalid host pointer for the data to copy!"));
 }
+
 TYPED_TEST_P(DevicePtrDeathTest, copy_ptr_with_count_invalid_device_ptr) {
     using test_type = typename TestFixture::fixture_test_type;
     using device_ptr_type = typename test_type::device_ptr_type;
@@ -1090,11 +1157,12 @@ TYPED_TEST_P(DevicePtrDeathTest, copy_ptr_with_count_invalid_device_ptr) {
     EXPECT_DEATH(def.copy_to_host(data, 0, 0), ::testing::HasSubstr("Invalid data pointer! Maybe *this has been default constructed?"));
 }
 
-// clang-format off
 REGISTER_TYPED_TEST_SUITE_P(DevicePtrDeathTest,
-                            memset, fill,
-                            copy_ptr_invalid_host_ptr, copy_ptr_invalid_device_ptr,
-                            copy_ptr_with_count_invalid_host_ptr, copy_ptr_with_count_invalid_device_ptr);
-// clang-format on
+                            memset,
+                            fill,
+                            copy_ptr_invalid_host_ptr,
+                            copy_ptr_invalid_device_ptr,
+                            copy_ptr_with_count_invalid_host_ptr,
+                            copy_ptr_with_count_invalid_device_ptr);
 
 #endif  // PLSSVM_TESTS_BACKENDS_GENERIC_DEVICE_PTR_TESTS_HPP_

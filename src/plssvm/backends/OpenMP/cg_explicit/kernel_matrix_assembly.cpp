@@ -32,7 +32,7 @@ void device_kernel_assembly(const std::vector<real_type> &q, std::vector<real_ty
 
     const std::size_t dept = q.size();
 
-    #pragma omp parallel for schedule(dynamic)
+#pragma omp parallel for schedule(dynamic)
     for (std::size_t row = 0; row < dept; ++row) {
         for (std::size_t col = row + 1; col < dept; ++col) {
             const real_type temp = kernel_function<kernel>(data, row, data, col, args...) + QA_cost - q[row] - q[col];
@@ -45,8 +45,8 @@ void device_kernel_assembly(const std::vector<real_type> &q, std::vector<real_ty
         }
     }
 
-    // apply cost to diagonal
-    #pragma omp parallel for
+// apply cost to diagonal
+#pragma omp parallel for
     for (std::size_t i = 0; i < dept; ++i) {
         const real_type temp = kernel_function<kernel>(data, i, data, i, args...) + cost + QA_cost - q[i] - q[i];
 #if defined(PLSSVM_USE_GEMM)

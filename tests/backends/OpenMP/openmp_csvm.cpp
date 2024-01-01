@@ -8,9 +8,10 @@
  * @brief Tests for the functionality related to the OpenMP backend.
  */
 
-#include "backends/OpenMP/mock_openmp_csvm.hpp"
-
-#include "plssvm/backend_types.hpp"                // plssvm::csvm_to_backend_type_v
+#include "plssvm/backend_types.hpp"  // plssvm::csvm_to_backend_type_v
+#include "plssvm/backends/OpenMP/cg_explicit/blas.hpp"
+#include "plssvm/backends/OpenMP/cg_explicit/kernel_matrix_assembly.hpp"
+#include "plssvm/backends/OpenMP/cg_implicit/kernel_matrix_assembly_blas.hpp"
 #include "plssvm/backends/OpenMP/csvm.hpp"         // plssvm::openmp::csvm
 #include "plssvm/backends/OpenMP/exceptions.hpp"   // plssvm::openmp::backend_exception
 #include "plssvm/data_set.hpp"                     // plssvm::data_set
@@ -20,23 +21,21 @@
 #include "plssvm/shape.hpp"                        // plssvm::shape
 #include "plssvm/target_platforms.hpp"             // plssvm::target_platform
 
-#include "plssvm/backends/OpenMP/cg_explicit/blas.hpp"
-#include "plssvm/backends/OpenMP/cg_explicit/kernel_matrix_assembly.hpp"
-#include "plssvm/backends/OpenMP/cg_implicit/kernel_matrix_assembly_blas.hpp"
-
-#include "backends/generic_csvm_tests.hpp"  // generic CSVM tests to instantiate
-#include "backends/ground_truth.hpp"        // ground_truth::{perform_dimensional_reduction, assemble_kernel_matrix_symm, assemble_kernel_matrix_gemm, gemm}
-#include "custom_test_macros.hpp"           // EXPECT_THROW_WHAT
-#include "naming.hpp"                       // naming::test_parameter_to_name
-#include "types_to_test.hpp"                // util::{cartesian_type_product_t, combine_test_parameters_gtest_t}
-#include "utility.hpp"                      // util::redirect_output
+#include "tests/backends/generic_csvm_tests.hpp"       // generic CSVM tests to instantiate
+#include "tests/backends/ground_truth.hpp"             // ground_truth::{perform_dimensional_reduction, assemble_kernel_matrix_symm, assemble_kernel_matrix_gemm, gemm}
+#include "tests/backends/OpenMP/mock_openmp_csvm.hpp"  // mock_openmp_csvm
+#include "tests/custom_test_macros.hpp"                // EXPECT_THROW_WHAT
+#include "tests/naming.hpp"                            // naming::test_parameter_to_name
+#include "tests/types_to_test.hpp"                     // util::{cartesian_type_product_t, combine_test_parameters_gtest_t}
+#include "tests/utility.hpp"                           // util::redirect_output
 
 #include "gtest/gtest.h"  // TEST_F, EXPECT_NO_THROW, INSTANTIATE_TYPED_TEST_SUITE_P, ::testing::Test
 
 #include <tuple>   // std::make_tuple, std::tuple
 #include <vector>  // std::vector
 
-class OpenMPCSVM : public ::testing::Test, private util::redirect_output<> {};
+class OpenMPCSVM : public ::testing::Test,
+                   private util::redirect_output<> { };
 
 // check whether the constructor correctly fails when using an incompatible target platform
 TEST_F(OpenMPCSVM, construct_parameter) {
@@ -49,6 +48,7 @@ TEST_F(OpenMPCSVM, construct_parameter) {
                       "Requested target platform 'cpu' that hasn't been enabled using PLSSVM_TARGET_PLATFORMS!");
 #endif
 }
+
 TEST_F(OpenMPCSVM, construct_target_and_parameter) {
     // create parameter struct
     const plssvm::parameter params{};
@@ -77,6 +77,7 @@ TEST_F(OpenMPCSVM, construct_target_and_parameter) {
                       plssvm::openmp::backend_exception,
                       "Invalid target platform 'gpu_intel' for the OpenMP backend!");
 }
+
 TEST_F(OpenMPCSVM, construct_target_and_named_args) {
 #if defined(PLSSVM_HAS_CPU_TARGET)
     // only automatic or cpu are allowed as target platform for the OpenMP backend
@@ -107,8 +108,9 @@ struct openmp_csvm_test_type {
     using mock_csvm_type = mock_openmp_csvm;
     using csvm_type = plssvm::openmp::csvm;
     using device_ptr_type = const plssvm::soa_matrix<plssvm::real_type> *;
-    inline static constexpr auto additional_arguments = std::make_tuple();
+    inline constexpr static auto additional_arguments = std::make_tuple();
 };
+
 using openmp_csvm_test_tuple = std::tuple<openmp_csvm_test_type>;
 using openmp_csvm_test_label_type_list = util::cartesian_type_product_t<openmp_csvm_test_tuple, plssvm::detail::supported_label_types>;
 using openmp_csvm_test_type_list = util::cartesian_type_product_t<openmp_csvm_test_tuple>;
@@ -177,7 +179,8 @@ TEST_F(OpenMPCSVM, blas_level_3_kernel_explicit) {
 using kernel_function_type_list_gtest = util::combine_test_parameters_gtest_t<util::kernel_function_type_list>;
 
 template <typename T>
-class OpenMPCSVMKernelFunction : public OpenMPCSVM {};
+class OpenMPCSVMKernelFunction : public OpenMPCSVM { };
+
 TYPED_TEST_SUITE(OpenMPCSVMKernelFunction, kernel_function_type_list_gtest, naming::test_parameter_to_name);
 
 TYPED_TEST(OpenMPCSVMKernelFunction, assemble_kernel_matrix_explicit) {
@@ -272,7 +275,7 @@ TYPED_TEST(OpenMPCSVMKernelFunction, blas_level_3_kernel_implicit) {
 //                                                           CSVM DeathTests                                                           //
 //*************************************************************************************************************************************//
 
-class OpenMPCSVMDeathTest : public OpenMPCSVM {};
+class OpenMPCSVMDeathTest : public OpenMPCSVM { };
 
 TEST_F(OpenMPCSVMDeathTest, blas_level_3_kernel_explicit) {
     const plssvm::real_type alpha{ 1.0 };
@@ -319,7 +322,8 @@ TEST_F(OpenMPCSVMDeathTest, blas_level_3_kernel_explicit) {
 }
 
 template <typename T>
-class OpenMPCSVMKernelFunctionDeathTest : public OpenMPCSVM {};
+class OpenMPCSVMKernelFunctionDeathTest : public OpenMPCSVM { };
+
 TYPED_TEST_SUITE(OpenMPCSVMKernelFunctionDeathTest, kernel_function_type_list_gtest, naming::test_parameter_to_name);
 
 TYPED_TEST(OpenMPCSVMKernelFunctionDeathTest, assemble_kernel_matrix_explicit) {

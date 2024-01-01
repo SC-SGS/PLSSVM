@@ -80,6 +80,7 @@ class model {
      * @return the number of support vectors (`[[nodiscard]]`)
      */
     [[nodiscard]] size_type num_support_vectors() const noexcept { return num_support_vectors_; }
+
     /**
      * @brief The number of features of the support vectors used in this model.
      * @return the number of features (`[[nodiscard]]`)
@@ -91,6 +92,7 @@ class model {
      * @return the SVM parameter (`[[nodiscard]]`)
      */
     [[nodiscard]] const parameter &get_params() const noexcept { return params_; }
+
     /**
      * @brief The support vectors representing the learned model.
      * @details The support vectors are of dimension `num_support_vectors()` x `num_features()`.
@@ -104,6 +106,7 @@ class model {
      * @return the labels (`[[nodiscard]]`)
      */
     [[nodiscard]] const std::vector<label_type> &labels() const noexcept { return data_.labels()->get(); }
+
     /**
      * @brief Returns the number of classes in this model.
      * @details If the data set contains the labels `std::vector<int>{ -1, 1, 1, -1, -1, 1 }`, this function returns `2`.
@@ -111,6 +114,7 @@ class model {
      * @return the number of classes (`[[nodiscard]]`)
      */
     [[nodiscard]] size_type num_classes() const noexcept { return data_.num_classes(); }
+
     /**
      * @brief Returns the classes of the support vectors.
      * @details If the support vectors contain the labels `std::vector<int>{ -1, 1, 1, -1, -1, 1 }`, this function returns the classes `{ -1, 1 }`.
@@ -127,6 +131,7 @@ class model {
         PLSSVM_ASSERT(alpha_ptr_ != nullptr, "The alpha_ptr may never be a nullptr!");
         return *alpha_ptr_;
     }
+
     /**
      * @brief The bias values for the different classes after learning.
      * @return the bias `rho` (`[[nodiscard]]`)
@@ -135,11 +140,13 @@ class model {
         PLSSVM_ASSERT(rho_ptr_ != nullptr, "The rho_ptr may never be a nullptr!");
         return *rho_ptr_;
     }
+
     /**
      * @brief Returns the multi-class classification strategy used to ft this model.
      * @return the multi-class classification strategy (`[[nodiscard]]`)
      */
     [[nodiscard]] classification_type get_classification_type() const noexcept { return classification_strategy_; }
+
     /**
      * @brief Returns the number of CG iterations to learn the classifiers used for this model.
      * @details Equal to `std::nullopt` if the model has been read from a model file.
@@ -199,7 +206,11 @@ class model {
 
 template <typename U>
 model<U>::model(parameter params, data_set<label_type> data, const classification_type classification_strategy) :
-    params_{ std::move(params) }, classification_strategy_{ classification_strategy }, data_{ std::move(data) }, num_support_vectors_{ data_.num_data_points() }, num_features_{ data_.num_features() } {}
+    params_{ std::move(params) },
+    classification_strategy_{ classification_strategy },
+    data_{ std::move(data) },
+    num_support_vectors_{ data_.num_data_points() },
+    num_features_{ data_.num_features() } { }
 
 template <typename U>
 model<U>::model(const std::string &filename) {
@@ -227,16 +238,18 @@ model<U>::model(const std::string &filename) {
             // empty index set for the OAA classification
             index_sets_ptr_ = std::make_shared<std::vector<std::vector<std::size_t>>>();
             break;
-        case classification_type::oao: {
-            // fill index_sets -> support vectors are sorted!
-            index_sets_ptr_ = std::make_shared<std::vector<std::vector<std::size_t>>>(unique_labels.size());
-            std::size_t running_idx{ 0 };
-            for (std::size_t i = 0; i < num_sv_per_class.size(); ++i) {
-                (*index_sets_ptr_)[i] = std::vector<std::size_t>(num_sv_per_class[i]);
-                std::iota((*index_sets_ptr_)[i].begin(), (*index_sets_ptr_)[i].end(), running_idx);
-                running_idx += num_sv_per_class[i];
+        case classification_type::oao:
+            {
+                // fill index_sets -> support vectors are sorted!
+                index_sets_ptr_ = std::make_shared<std::vector<std::vector<std::size_t>>>(unique_labels.size());
+                std::size_t running_idx{ 0 };
+                for (std::size_t i = 0; i < num_sv_per_class.size(); ++i) {
+                    (*index_sets_ptr_)[i] = std::vector<std::size_t>(num_sv_per_class[i]);
+                    std::iota((*index_sets_ptr_)[i].begin(), (*index_sets_ptr_)[i].end(), running_idx);
+                    running_idx += num_sv_per_class[i];
+                }
             }
-        } break;
+            break;
     }
 
     // create data set

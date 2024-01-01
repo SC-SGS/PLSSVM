@@ -13,8 +13,8 @@
 #include "plssvm/backends/SYCL/detail/constants.hpp"  // namespace plssvm::sycl
 #include "plssvm/detail/utility.hpp"                  // plssvm::detail::contains
 
-#include "custom_test_macros.hpp"  // EXPECT_CONVERSION_TO_STRING, EXPECT_CONVERSION_FROM_STRING, EXPECT_THROW_WHAT
-#include "naming.hpp"              // naming::{pretty_print_unsupported_backend_combination, pretty_print_supported_backend_combination}
+#include "tests/custom_test_macros.hpp"  // EXPECT_CONVERSION_TO_STRING, EXPECT_CONVERSION_FROM_STRING, EXPECT_THROW_WHAT
+#include "tests/naming.hpp"              // naming::{pretty_print_unsupported_backend_combination, pretty_print_supported_backend_combination}
 
 #include "fmt/core.h"     // fmt::format
 #include "gmock/gmock.h"  // EXPECT_THAT, ::testing::Contains
@@ -35,6 +35,7 @@ TEST(BackendType, to_string) {
     EXPECT_CONVERSION_TO_STRING(plssvm::backend_type::opencl, "opencl");
     EXPECT_CONVERSION_TO_STRING(plssvm::backend_type::sycl, "sycl");
 }
+
 TEST(BackendType, to_string_unknown) {
     // check conversions to std::string from unknown backend_type
     EXPECT_CONVERSION_TO_STRING(static_cast<plssvm::backend_type>(6), "unknown");
@@ -56,6 +57,7 @@ TEST(BackendType, from_string) {
     EXPECT_CONVERSION_FROM_STRING("sycl", plssvm::backend_type::sycl);
     EXPECT_CONVERSION_FROM_STRING("SYCL", plssvm::backend_type::sycl);
 }
+
 TEST(BackendType, from_string_unknown) {
     // foo isn't a valid backend_type
     std::istringstream input{ "foo" };
@@ -81,7 +83,8 @@ TEST(BackendType, determine_default_backend_type) {
 }
 
 using unsupported_combination_type = std::pair<std::vector<plssvm::backend_type>, std::vector<plssvm::target_platform>>;
-class BackendTypeUnsupportedCombination : public ::testing::TestWithParam<unsupported_combination_type> {};
+
+class BackendTypeUnsupportedCombination : public ::testing::TestWithParam<unsupported_combination_type> { };
 
 TEST_P(BackendTypeUnsupportedCombination, unsupported_backend_target_platform_combinations) {
     const auto &[available_backends, available_target_platforms] = GetParam();
@@ -89,6 +92,7 @@ TEST_P(BackendTypeUnsupportedCombination, unsupported_backend_target_platform_co
                       plssvm::unsupported_backend_exception,
                       fmt::format("Error: unsupported backend and target platform combination: [{}]x[{}]!", fmt::join(available_backends, ", "), fmt::join(available_target_platforms, ", ")));
 }
+
 // clang-format off
 INSTANTIATE_TEST_SUITE_P(BackendType, BackendTypeUnsupportedCombination, ::testing::Values(
          unsupported_combination_type{ { plssvm::backend_type::cuda, plssvm::backend_type::hip }, { plssvm::target_platform::cpu } },
@@ -99,12 +103,14 @@ INSTANTIATE_TEST_SUITE_P(BackendType, BackendTypeUnsupportedCombination, ::testi
 // clang-format on
 
 using supported_combination_type = std::tuple<std::vector<plssvm::backend_type>, std::vector<plssvm::target_platform>, plssvm::backend_type>;
-class BackendTypeSupportedCombination : public ::testing::TestWithParam<supported_combination_type> {};
+
+class BackendTypeSupportedCombination : public ::testing::TestWithParam<supported_combination_type> { };
 
 TEST_P(BackendTypeSupportedCombination, supported_backend_target_platform_combinations) {
     const auto &[available_backends, available_target_platforms, result_backend] = GetParam();
     EXPECT_EQ(plssvm::determine_default_backend(available_backends, available_target_platforms), result_backend);
 }
+
 // clang-format off
 INSTANTIATE_TEST_SUITE_P(BackendType, BackendTypeSupportedCombination, ::testing::Values(
          supported_combination_type{ { plssvm::backend_type::openmp }, { plssvm::target_platform::cpu, plssvm::target_platform::gpu_nvidia, plssvm::target_platform::gpu_amd, plssvm::target_platform::gpu_intel }, plssvm::backend_type::openmp },
@@ -132,6 +138,7 @@ TEST(BackendType, csvm_to_backend_type) {
     EXPECT_EQ(plssvm::csvm_to_backend_type<plssvm::adaptivecpp::csvm>::impl, plssvm::sycl::implementation_type::adaptivecpp);
     EXPECT_EQ(plssvm::csvm_to_backend_type<plssvm::dpcpp::csvm>::impl, plssvm::sycl::implementation_type::dpcpp);
 }
+
 TEST(BackendType, csvm_to_backend_type_v) {
     // test the type_trait
     EXPECT_EQ(plssvm::csvm_to_backend_type_v<plssvm::openmp::csvm>, plssvm::backend_type::openmp);

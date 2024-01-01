@@ -10,8 +10,8 @@
 
 #include "plssvm/backends/HIP/detail/fill_kernel.hip.hpp"
 
-#include "naming.hpp"         // util::test_parameter_to_name
-#include "types_to_test.hpp"  // util::{real_type_gtest, test_parameter_type_at_t}
+#include "tests/naming.hpp"         // util::test_parameter_to_name
+#include "tests/types_to_test.hpp"  // util::{real_type_gtest, test_parameter_type_at_t}
 
 #include "gtest/gtest.h"  // TYPED_TEST, TYPED_TEST_SUITE, EXPECT_TRUE, ::testing::test
 
@@ -23,14 +23,15 @@
 
 #if __has_include("hip/hip_runtime.h") && __has_include("hip/hip_runtime_api.h")
 
-#include "hip/hip_runtime.h"
-#include "hip/hip_runtime_api.h"
+    #include "hip/hip_runtime.h"
+    #include "hip/hip_runtime_api.h"
 
 template <typename T>
 class HIPFillUtility : public ::testing::Test {
   protected:
     using fixture_real_type = util::test_parameter_type_at_t<0, T>;
 };
+
 TYPED_TEST_SUITE(HIPFillUtility, util::real_type_gtest, naming::test_parameter_to_name);
 
 TYPED_TEST(HIPFillUtility, fill_kernel) {

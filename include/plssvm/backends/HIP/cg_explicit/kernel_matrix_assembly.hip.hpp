@@ -235,6 +235,6 @@ __global__ void device_kernel_assembly_rbf(real_type *ret, const real_type *data
     }
 }
 
-}
+}  // namespace plssvm::hip
 
 #endif  // PLSSVM_BACKENDS_HIP_CG_EXPLICIT_KERNEL_MATRIX_ASSEMBLY_HIP_HPP_

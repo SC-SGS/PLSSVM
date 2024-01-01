@@ -14,13 +14,12 @@
 #define PLSSVM_DETAIL_PERFORMANCE_TRACKER_HPP_
 #pragma once
 
-#include "plssvm/detail/type_traits.hpp"  // plssvm::detail::remove_cvref_t
-#include "plssvm/detail/utility.hpp"      // PLSSVM_EXTERN
-#include "plssvm/parameter.hpp"           // plssvm::parameter
-
 #include "plssvm/detail/cmd/parser_predict.hpp"  // plssvm::detail::cmd::parser_predict
 #include "plssvm/detail/cmd/parser_scale.hpp"    // plssvm::detail::cmd::parser_scale
 #include "plssvm/detail/cmd/parser_train.hpp"    // plssvm::detail::cmd::parser_train
+#include "plssvm/detail/type_traits.hpp"         // plssvm::detail::remove_cvref_t
+#include "plssvm/detail/utility.hpp"             // PLSSVM_EXTERN
+#include "plssvm/parameter.hpp"                  // plssvm::parameter
 
 #include "fmt/chrono.h"  // format std::chrono types
 #include "fmt/format.h"  // fmt::format, fmt::join, fmt::formatter
@@ -48,7 +47,9 @@ struct tracking_entry {
      * @param[in] value the tracked value
      */
     tracking_entry(const std::string_view category, const std::string_view name, T value) :
-        entry_category{ category }, entry_name{ name }, entry_value{ std::move(value) } {}
+        entry_category{ category },
+        entry_name{ name },
+        entry_value{ std::move(value) } { }
 
     /// The category to which this tracking entry belongs; used for grouping in the resulting YAML file.
     const std::string entry_category{};
@@ -99,12 +100,13 @@ namespace impl {
  * @brief Sets the `value` to `false` since it **isn't** a tracking entry.
  */
 template <typename T>
-struct is_tracking_entry : std::false_type {};
+struct is_tracking_entry : std::false_type { };
+
 /**
  * @brief Sets the `value` to `true` since it **is** a tracking entry.
  */
 template <typename T>
-struct is_tracking_entry<tracking_entry<T>> : std::true_type {};
+struct is_tracking_entry<tracking_entry<T>> : std::true_type { };
 
 }  // namespace impl
 
@@ -113,7 +115,8 @@ struct is_tracking_entry<tracking_entry<T>> : std::true_type {};
  * @tparam T the type to check whether it is a tracking entry or not
  */
 template <typename T>
-struct is_tracking_entry : impl::is_tracking_entry<detail::remove_cvref_t<T>> {};
+struct is_tracking_entry : impl::is_tracking_entry<detail::remove_cvref_t<T>> { };
+
 /**
  * @copydoc plssvm::is_tracking_entry
  * @details A shorthand for `plssvm::is_tracking_entry::value`.

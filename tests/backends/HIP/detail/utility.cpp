@@ -9,10 +9,9 @@
  */
 
 #include "plssvm/backends/HIP/detail/utility.hip.hpp"  // PLSSVM_HIP_ERROR_CHECK, plssvm::hip::detail::{gpu_assert, get_device_count, set_device, device_synchronize}
+#include "plssvm/backends/HIP/exceptions.hpp"          // plssvm::hip::backend_exception
 
-#include "plssvm/backends/HIP/exceptions.hpp"  // plssvm::hip::backend_exception
-
-#include "custom_test_macros.hpp"  // EXPECT_THROW_WHAT, EXPECT_THROW_WHAT_MATCHER
+#include "tests/custom_test_macros.hpp"  // EXPECT_THROW_WHAT, EXPECT_THROW_WHAT_MATCHER
 
 #include "fmt/core.h"              // fmt::format
 #include "gmock/gmock-matchers.h"  // ::testing::StartsWith
@@ -22,8 +21,8 @@
 
 #if __has_include("hip/hip_runtime.h") && __has_include("hip/hip_runtime_api.h")
 
-#include "hip/hip_runtime.h"
-#include "hip/hip_runtime_api.h"
+    #include "hip/hip_runtime.h"
+    #include "hip/hip_runtime_api.h"
 
 TEST(HIPUtility, gpu_assert) {
     // hipSuccess must not throw

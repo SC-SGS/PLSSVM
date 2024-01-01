@@ -13,7 +13,7 @@
 #define PLSSVM_BACKENDS_OPENMP_DETAIL_UTILITY_HPP_
 #pragma once
 
-#include <string> // std::string
+#include <string>  // std::string
 
 namespace plssvm::openmp::detail {
 
@@ -29,6 +29,6 @@ namespace plssvm::openmp::detail {
  */
 [[nodiscard]] std::string get_openmp_version();
 
-}
+}  // namespace plssvm::openmp::detail
 
 #endif  // PLSSVM_BACKENDS_OPENMP_DETAIL_UTILITY_HPP_

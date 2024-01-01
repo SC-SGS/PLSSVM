@@ -8,15 +8,15 @@ function(discover_tests_with_death_test_filter test_executable_name)
     if (PLSSVM_ENABLE_DEATH_TESTS)
         # assertions are enabled -> enable Google death tests
         gtest_discover_tests(${test_executable_name} PROPERTIES
-                DISCOVERY_TIMEOUT 600
-                DISCOVERY_MODE PRE_TEST
-                WORKING_DIRECTORY $<TARGET_FILE_DIR:${test_executable_name}>)
+                             DISCOVERY_TIMEOUT 600
+                             DISCOVERY_MODE PRE_TEST
+                             WORKING_DIRECTORY $<TARGET_FILE_DIR:${test_executable_name}>)
     else ()
         # assertions are disabled -> disable Google death tests
         gtest_discover_tests(${test_executable_name} TEST_FILTER -*DeathTest* PROPERTIES
-                DISCOVERY_TIMEOUT 600
-                DISCOVERY_MODE PRE_TEST
-                WORKING_DIRECTORY $<TARGET_FILE_DIR:${test_executable_name}>)
+                             DISCOVERY_TIMEOUT 600
+                             DISCOVERY_MODE PRE_TEST
+                             WORKING_DIRECTORY $<TARGET_FILE_DIR:${test_executable_name}>)
     endif ()
     if (WIN32)
         add_custom_command(

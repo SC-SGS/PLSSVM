@@ -18,7 +18,7 @@
 #include "plssvm/detail/string_utility.hpp"        // plssvm::detail::replace_all
 #include "plssvm/detail/type_traits.hpp"           // plssvm::detail::{always_false_v, is_map_v, is_unordered_map_v, is_set_v, is_unordered_set_v, is_vector_v}
 
-#include "exceptions/utility.hpp"  // util::exception_type_name
+#include "tests/exceptions/utility.hpp"  // util::exception_type_name
 
 #include "fmt/format.h"   // fmt::format, fmt::join
 #include "fmt/ostream.h"  // directly output types with an operator<< overload using fmt
@@ -43,12 +43,14 @@ namespace detail {
  * @tparam T the type to check
  */
 template <typename T>
-struct is_tuple : std::false_type {};
+struct is_tuple : std::false_type { };
+
 /**
  * @copybrief naming::detail::is_tuple
  */
 template <typename... Args>
-struct is_tuple<std::tuple<Args...>> : std::true_type {};
+struct is_tuple<std::tuple<Args...>> : std::true_type { };
+
 /**
  * @copybrief naming::detail::is_tuple
  */
@@ -64,6 +66,7 @@ template <typename T, typename R = void>
 struct enable_if_typedef_exists {
     using type = R;
 };
+
 /**
  * @brief naming::detail::enable_if_typedef_exists
  */
@@ -73,12 +76,12 @@ using enable_if_typedef_exists_t = typename enable_if_typedef_exists<T>::type;
 /**
  * @brief A macro to create type traits for testing whether a type has a typedef called @p def.
  */
-#define PLSSVM_CREATE_HAS_MEMBER_TYPEDEF_TYPE_TRAIT(def)                                                   \
-    template <typename T, typename Enable = void>                                                          \
-    struct has_##def##_member_typedef : std::false_type {};                                                \
-    template <typename T>                                                                                  \
-    struct has_##def##_member_typedef<T, enable_if_typedef_exists_t<typename T::def>> : std::true_type {}; \
-    template <typename T>                                                                                  \
+#define PLSSVM_CREATE_HAS_MEMBER_TYPEDEF_TYPE_TRAIT(def)                                                    \
+    template <typename T, typename Enable = void>                                                           \
+    struct has_##def##_member_typedef : std::false_type { };                                                \
+    template <typename T>                                                                                   \
+    struct has_##def##_member_typedef<T, enable_if_typedef_exists_t<typename T::def>> : std::true_type { }; \
+    template <typename T>                                                                                   \
     constexpr bool has_##def##_member_typedef_v = has_##def##_member_typedef<T>::value;
 
 PLSSVM_CREATE_HAS_MEMBER_TYPEDEF_TYPE_TRAIT(csvm_type)
@@ -180,6 +183,7 @@ struct assemble_tuple_type_string_impl {
         return name;
     }
 };
+
 /**
  * @brief Return a string containing all type names in the provided std::tuple.
  * @details Returns an empty string if no types in the std::tuple are present.
@@ -268,6 +272,7 @@ template <typename T>
     auto [flag, value] = param_info.param;
     return detail::escape_string(fmt::format("{}__{}", plssvm::detail::replace_all(flag, "-", ""), value));
 }
+
 /**
  * @brief Generate a test case name using a command line flag.
  * @details Replaces all "-" in a flag with "".
@@ -337,6 +342,7 @@ template <typename T>
     const auto &[backends, target_platforms] = param_info.param;
     return detail::escape_string(fmt::format("{}__AND__{}", fmt::join(backends, "__"), fmt::join(target_platforms, "__")));
 }
+
 // backend.cpp -> BackendTypeSupportedCombination
 /**
  * @brief Generate a test case name using the supported backend type combinations together with the expected result.
