@@ -13,10 +13,13 @@
 #define PLSSVM_DETAIL_SHA256_HPP_
 #pragma once
 
+#include "plssvm/detail/type_traits.hpp"  // PLSSVM_REQUIRES
+
 #include <array>        // std::array
+#include <cstddef>      // std::size_t
 #include <cstdint>      // std::uint32_t
 #include <string>       // std::string
-#include <type_traits>  // std::enable_if_t, std::is_unsigned_v
+#include <type_traits>  // std::is_unsigned_v
 
 namespace plssvm::detail {
 
@@ -40,7 +43,7 @@ class sha256 {
      * @param[in] x the integer representing the bits to unpack
      * @param[out] str the string to unpack the bits to
      */
-    template <typename T, std::enable_if_t<std::is_unsigned_v<T>, bool> = true>
+    template <typename T, PLSSVM_REQUIRES(std::is_unsigned_v<T>)>
     static void unpack(const T x, unsigned char *str) {
         for (std::size_t i = 0; i < sizeof(T); ++i) {
             str[i] = static_cast<unsigned char>(x >> ((sizeof(T) - i - 1) * 8));
@@ -64,12 +67,12 @@ class sha256 {
 
     /// Number of bytes in the resulting digest.
     constexpr static std::uint32_t DIGEST_SIZE = 256 / 8;
-    /// NUmber of bytes processed in one round (chunk).
+    /// Number of bytes processed in one round (chunk).
     constexpr static std::uint32_t CHUNK_SIZE = 512 / 8;
 
     /**
-     * @brief Array of the sha256 round constants
-     * @details First 32 bits of the fractional parts of the cube roots of the first 64 primes 2..311.
+     * @brief Array of the sha256 round constants.
+     * @details First 32 bits of the fractional parts of the cube roots of the first 64 primes [2, ..., 311].
      */
     constexpr static std::array<std::uint32_t, 64> k_{
         // clang-format off

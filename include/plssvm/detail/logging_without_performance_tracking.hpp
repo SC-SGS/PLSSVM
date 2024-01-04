@@ -13,13 +13,13 @@
 #define PLSSVM_DETAIL_LOGGING_WITHOUT_PERFORMANCE_TRACKING_HPP_
 #pragma once
 
-#include "plssvm/verbosity_levels.hpp"  // plssvm::verbosity_level, plssvm::verbosity
+#include "plssvm/verbosity_levels.hpp"  // plssvm::verbosity_level, plssvm::verbosity, bitwise-operators on plssvm::verbosity_level
 
 #include "fmt/chrono.h"  // format std::chrono types
 #include "fmt/color.h"   // fmt::fg, fmt::color
 #include "fmt/format.h"  // fmt::format
 
-#include <iostream>     // std::cout, std::clog
+#include <iostream>     // std::cout, std::clog, std::flush
 #include <string_view>  // std::string_view
 #include <utility>      // std::forward
 
@@ -27,12 +27,10 @@ namespace plssvm::detail {
 
 /**
  * @breif Output the message @p msg filling the {fmt} like placeholders with @p args to the standard output stream.
- * @details If a value in @p Args is of type plssvm::detail::tracking_entry and performance tracking is enabled,
- *          this is also added to the plssvm::detail::performance_tracker.
- *          Only logs the message if the verbosity level matches the `plssvm::verbosity` level.
+ * @details Only logs the message if the verbosity level matches the `plssvm::verbosity` level.
  * @tparam Args the types of the placeholder values
  * @param[in] verb the verbosity level of the message to log; must match the `plssvm::verbosity` level to log the message
- * @param[in] msg the message to print on the standard output stream if requested (i.e., plssvm::verbose is `true`)
+ * @param[in] msg the message to print on the standard output stream if requested (i.e., `plssvm::verbosity` isn't `plssvm::verbosity_level::quiet`)
  * @param[in] args the values to fill the {fmt}-like placeholders in @p msg
  */
 template <typename... Args>

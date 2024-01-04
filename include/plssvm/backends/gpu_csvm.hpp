@@ -13,12 +13,13 @@
 #define PLSSVM_BACKENDS_GPU_CSVM_HPP_
 #pragma once
 
-#include "plssvm/constants.hpp"     // plssvm::real_type, plssvm::PADDING_SIZE
-#include "plssvm/csvm.hpp"          // plssvm::csvm
-#include "plssvm/matrix.hpp"        // plssvm::aos_matrix
-#include "plssvm/parameter.hpp"     // plssvm::parameter
-#include "plssvm/shape.hpp"         // plssvm::shape
-#include "plssvm/solver_types.hpp"  // plssvm::solver_type
+#include "plssvm/constants.hpp"         // plssvm::real_type, plssvm::PADDING_SIZE
+#include "plssvm/csvm.hpp"              // plssvm::csvm
+#include "plssvm/detail/operators.hpp"  // operator namespace
+#include "plssvm/matrix.hpp"            // plssvm::aos_matrix
+#include "plssvm/parameter.hpp"         // plssvm::parameter
+#include "plssvm/shape.hpp"             // plssvm::shape
+#include "plssvm/solver_types.hpp"      // plssvm::solver_type
 
 #include "fmt/core.h"  // fmt::format
 
@@ -265,7 +266,6 @@ void gpu_csvm<device_ptr_t, queue_t>::blas_level_3(const solver_type solver, con
     device_ptr_type C_d{ C.shape(), C.padding(), devices_[0] };
     if (solver == solver_type::cg_implicit) {
         // apply beta to C and copy it afterward to the device
-        using namespace plssvm::operators;
         C *= beta;
     }
     C_d.copy_to_device(C);

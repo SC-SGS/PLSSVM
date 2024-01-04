@@ -27,17 +27,17 @@ namespace plssvm::detail {
 
 /**
  * @brief Function called by the `PLSSVM_ASSERT` macro. Checks the assertion condition. If the condition evaluates to `false`,
- *        prints the assertion condition together with additional information (e.g., plssvm::source_location information) and aborts the program.
+ *        prints the assertion condition together with additional information (e.g., `plssvm::source_location` information) and aborts the program.
  * @tparam Args the placeholder types
  * @param[in] cond the assertion condition, aborts the program if evaluated to `false`
  * @param[in] cond_str the assertion condition as string
  * @param[in] loc the source location where the assertion appeared
  * @param[in] msg the custom assertion message
- * @param[in] args the placeholder values
+ * @param[in] args the placeholder values for the custom assertion message
  */
 template <typename... Args>
 inline void check_assertion(const bool cond, const std::string_view cond_str, const source_location &loc, const std::string_view msg, Args &&...args) {
-    // check if assertion holds
+    // check if the assertion holds
     if (!cond) {
         // print assertion error message
         std::cerr << fmt::format(
@@ -60,7 +60,7 @@ inline void check_assertion(const bool cond, const std::string_view cond_str, co
 
 /**
  * @def PLSSVM_ASSERT_ENABLED
- * @brief Defines the `PLSSVM_ASSERT_ENABLED` if `PLSSVM_ENABLE_ASSERTS` is defined and `NDEBUG` is **not** defined (in DEBUG mode).
+ * @brief Defines the `PLSSVM_ASSERT_ENABLED` macro if `PLSSVM_ENABLE_ASSERTS` is defined and `NDEBUG` is **not** defined (in DEBUG mode).
  */
 #if defined(PLSSVM_ENABLE_ASSERTS) || !defined(NDEBUG)
     #define PLSSVM_ASSERT_ENABLED 1
@@ -68,7 +68,7 @@ inline void check_assertion(const bool cond, const std::string_view cond_str, co
 
 /**
  * @def PLSSVM_ASSERT
- * @brief Defines the `PLSSVM_ASSERT` macro if `PLSSVM_ASSERT_ENABLED` is defined.
+ * @brief Defines the `PLSSVM_ASSERT` macro if `PLSSVM_ASSERT_ENABLED` is defined, does nothing otherwise.
  */
 #if defined(PLSSVM_ASSERT_ENABLED)
     #define PLSSVM_ASSERT(cond, msg, ...) plssvm::detail::check_assertion((cond), (#cond), plssvm::source_location::current(), (msg), ##__VA_ARGS__)

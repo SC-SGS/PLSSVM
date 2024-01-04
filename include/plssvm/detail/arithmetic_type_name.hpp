@@ -6,7 +6,7 @@
  * @license This file is part of the PLSSVM project which is released under the MIT license.
  *          See the LICENSE.md file in the project root for full license information.
  *
- * @brief Implements conversion functions from arithmetic types to their name as string representation.
+ * @brief Implements a conversion functions from arithmetic types, including const and volatile qualifiers, to their name as string representation.
  */
 
 #ifndef PLSSVM_DETAIL_ARITHMETIC_TYPE_NAME_HPP_
@@ -18,6 +18,7 @@
 /**
  * @def PLSSVM_CREATE_ARITHMETIC_TYPE_NAME
  * @brief Defines a macro to create all possible conversion functions from arithmetic types to their name as string representation.
+ * @details Also supports `const` and/or `volatile` qualifiers.
  * @param[in] type the data type to convert to a string
  */
 #define PLSSVM_CREATE_ARITHMETIC_TYPE_NAME(type)                                                                        \
@@ -33,7 +34,7 @@
 namespace plssvm::detail {
 
 /**
- * @brief Tries to convert the given type to its name as string representation including possible const and/or volatile qualifiers.
+ * @brief Tries to convert the given type to its name as string representation including possible `const` and/or `volatile` qualifiers.
  * @details The definition is marked as **deleted** if `T` isn't an [arithmetic type](https://en.cppreference.com/w/cpp/types/is_arithmetic).
  * @tparam T the type to convert to a string
  * @return the name of `T` (`[[nodiscard]]`)
