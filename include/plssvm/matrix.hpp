@@ -766,6 +766,202 @@ inline std::ostream &operator<<(std::ostream &out, const matrix<T, layout> &matr
     return out;
 }
 
+//*************************************************************************************************************************************//
+//                                                      plssvm::matrix operations                                                      //
+//*************************************************************************************************************************************//
+/**
+ * @brief Scale all elements in the matrix @p matr by @p scale.
+ * @tparam T the value type of the matrix
+ * @tparam layout the memory layout of the matrix
+ * @param[in,out] matr the matrix to scale
+ * @param[in] scale the scaling factor
+ * @return reference to the scaled matrix
+ */
+template <typename T, layout_type layout>
+matrix<T, layout> &operator*=(matrix<T, layout> &matr, const T scale) {
+    using size_type = typename matrix<T, layout>::size_type;
+
+#pragma omp parallel for collapse(2) default(none) shared(matr) firstprivate(scale)
+    for (size_type row = 0; row < matr.num_rows(); ++row) {
+        for (size_type col = 0; col < matr.num_cols(); ++col) {
+            matr(row, col) *= scale;
+        }
+    }
+    return matr;
+}
+
+/**
+ * @brief Return a new matrix equal to @p matr where all elements are scaled by @p scale.
+ * @tparam T the value type of the matrix
+ * @tparam layout the memory layout of the matrix
+ * @param[in] matr the value used for scaling
+ * @param[in] scale the scaling factor
+ * @return the scaled matrix (`[[nodiscard]]`)
+ */
+template <typename T, layout_type layout>
+[[nodiscard]] matrix<T, layout> operator*(matrix<T, layout> matr, const T scale) {
+    matr *= scale;
+    return matr;
+}
+
+/**
+ * @copydoc operator*(matrix<T, layout>, const T)
+ */
+template <typename T, layout_type layout>
+[[nodiscard]] matrix<T, layout> operator*(const T scale, matrix<T, layout> matr) {
+    return matr * scale;
+}
+
+/**
+ * @brief Add the values of the matrix @p rhs to the matrix @p lhs.
+ * @tparam T the value type of the matrix
+ * @tparam layout the memory layout of the matrix
+ * @param[in] lhs the matrix to add the values of @p rhs to
+ * @param[in] rhs the values to add to @p lhs
+ * @return reference to @p lhs
+ */
+template <typename T, layout_type layout>
+matrix<T, layout> &operator+=(matrix<T, layout> &lhs, const matrix<T, layout> &rhs) {
+    PLSSVM_ASSERT(lhs.shape() == rhs.shape(), "Error: shapes missmatch! ({} != {})", lhs.shape(), rhs.shape());
+    using size_type = typename matrix<T, layout>::size_type;
+
+#pragma omp parallel for collapse(2) default(none) shared(lhs, rhs)
+    for (size_type row = 0; row < lhs.num_rows(); ++row) {
+        for (size_type col = 0; col < lhs.num_cols(); ++col) {
+            lhs(row, col) += rhs(row, col);
+        }
+    }
+    return lhs;
+}
+
+/**
+ * @brief Return a new matrix with the values being the sum of @p lhs and @p rhs.
+ * @tparam T the value type of the matrix
+ * @tparam layout the memory layout of the matrix
+ * @param[in] lhs the first matrix
+ * @param[in] rhs the second matrix
+ * @return the matrix sum (`[[nodiscard]]`)
+ */
+template <typename T, layout_type layout>
+[[nodiscard]] matrix<T, layout> operator+(matrix<T, layout> lhs, const matrix<T, layout> &rhs) {
+    lhs += rhs;
+    return lhs;
+}
+
+/**
+ * @brief Subtract the values of the matrix @p rhs from the matrix @p lhs.
+ * @tparam T the value type of the matrix
+ * @tparam layout the memory layout of the matrix
+ * @param[in] lhs the matrix to subtract the values of @p rhs from
+ * @param[in] rhs the values to subtract from @p lhs
+ * @return reference to @p lhs
+ */
+template <typename T, layout_type layout>
+matrix<T, layout> &operator-=(matrix<T, layout> &lhs, const matrix<T, layout> &rhs) {
+    PLSSVM_ASSERT(lhs.shape() == rhs.shape(), "Error: shapes missmatch! ({} != {})", lhs.shape(), rhs.shape());
+    using size_type = typename matrix<T, layout>::size_type;
+
+#pragma omp parallel for collapse(2) default(none) shared(lhs, rhs)
+    for (size_type row = 0; row < lhs.num_rows(); ++row) {
+        for (size_type col = 0; col < lhs.num_cols(); ++col) {
+            lhs(row, col) -= rhs(row, col);
+        }
+    }
+    return lhs;
+}
+
+/**
+ * @brief Return a new matrix with the values being the difference of @p lhs and @p rhs.
+ * @tparam T the value type of the matrix
+ * @tparam layout the memory layout of the matrix
+ * @param[in] lhs the first matrix
+ * @param[in] rhs the second matrix
+ * @return the matrix difference (`[[nodiscard]]`)
+ */
+template <typename T, layout_type layout>
+[[nodiscard]] matrix<T, layout> operator-(matrix<T, layout> lhs, const matrix<T, layout> &rhs) {
+    lhs -= rhs;
+    return lhs;
+}
+
+/**
+ * @brief Perform a matrix-matrix multiplication between @p lhs and @p rhs.
+ * @tparam T the value type of the matrix
+ * @tparam layout the memory layout of the matrix
+ * @param[in] lhs the first matrix
+ * @param[in] rhs the second matrix
+ * @return the matrix product (`[[nodiscard]]`)
+ */
+template <typename T, layout_type layout>
+[[nodiscard]] matrix<T, layout> operator*(const matrix<T, layout> &lhs, const matrix<T, layout> &rhs) {
+    PLSSVM_ASSERT(lhs.num_cols() == rhs.num_rows(), "Error: shapes missmatch! ({} (num_cols) != {} (num_rows))", lhs.num_cols(), rhs.num_rows());
+    using size_type = typename matrix<T, layout>::size_type;
+    matrix<T, layout> res{ plssvm::shape{ lhs.num_rows(), rhs.num_cols() } };
+
+#pragma omp parallel for collapse(2) default(none) shared(lhs, rhs, res)
+    for (size_type row = 0; row < res.num_rows(); ++row) {
+        for (size_type col = 0; col < res.num_cols(); ++col) {
+            T temp{ 0.0 };
+#pragma omp simd reduction(+ : temp)
+            for (size_type dim = 0; dim < lhs.num_cols(); ++dim) {
+                temp += lhs(row, dim) * rhs(dim, col);
+            }
+            res(row, col) = temp;
+        }
+    }
+    return res;
+}
+
+/**
+ * @brief Perform a rowwise dot product between @p lhs and @p rhs.
+ * @details Essentially performs dot(@p lhs[i], @p rhs[i]).
+ * @tparam T the value type of the matrix
+ * @tparam layout the memory layout of the matrix
+ * @param[in] lhs the first matrix
+ * @param[in] rhs the second matrix
+ * @return a vector containing the rowwise dot products (`[[nodiscard]]`)
+ */
+template <typename T, layout_type layout>
+[[nodiscard]] std::vector<T> rowwise_dot(const matrix<T, layout> &lhs, const matrix<T, layout> &rhs) {
+    PLSSVM_ASSERT(lhs.shape() == rhs.shape(), "Error: shapes missmatch! ({} != {})", lhs.shape(), rhs.shape());
+    using size_type = typename matrix<T, layout>::size_type;
+    std::vector<T> res(lhs.num_rows());
+
+#pragma omp parallel for default(none) shared(res, lhs, rhs)
+    for (size_type row = 0; row < res.size(); ++row) {
+        T temp{ 0.0 };
+#pragma omp simd reduction(+ : temp)
+        for (size_type col = 0; col < lhs.num_cols(); ++col) {
+            temp += lhs(row, col) * rhs(row, col);
+        }
+        res[row] = temp;
+    }
+    return res;
+}
+
+/**
+ * @brief Return a new matrix that is the rowwise scale of the matrix @p matr with @p scale, i.e., row `i` of @p matr is scaled by @p scale[i].
+ * @tparam T the value type of the matrix
+ * @tparam layout the memory layout of the matrix
+ * @param[in] scale the scaling values
+ * @param[in] matr the matrix to scale
+ * @return the newly scaled matrix (`[[nodiscard]]`)
+ */
+template <typename T, layout_type layout>
+[[nodiscard]] matrix<T, layout> rowwise_scale(const std::vector<T> &scale, matrix<T, layout> matr) {
+    PLSSVM_ASSERT(scale.size() == matr.num_rows(), "Error: shapes missmatch! ({} != {} (num_rows))", scale.size(), matr.num_rows());
+    using size_type = typename matrix<T, layout>::size_type;
+
+#pragma omp parallel for collapse(2) default(none) shared(matr, scale)
+    for (size_type row = 0; row < matr.num_rows(); ++row) {
+        for (size_type col = 0; col < matr.num_cols(); ++col) {
+            matr(row, col) *= scale[row];
+        }
+    }
+    return matr;
+}
+
+
 /**
  * @brief Typedef for a matrix in Array-of-Struct (AoS) layout.
  */
