@@ -10,153 +10,233 @@
 
 #include "plssvm/detail/memory_size.hpp"  // plssvm::detail::memory_size
 
-#include "plssvm/exceptions/exceptions.hpp"  // plssvm::exception
-
-#include "tests/custom_test_macros.hpp"  // EXPECT_THROW_WHAT, EXPECT_CONVERSION_TO_STRING
+#include "tests/custom_test_macros.hpp"  // EXPECT_CONVERSION_FROM_STRING, EXPECT_CONVERSION_TO_STRING
 
 #include "gtest/gtest.h"  // TEST, EXPECT_EQ, EXPECT_TRUE, EXPECT_FALSE
 
+#include <algorithm>   // std::swap
+#include <cstddef>     // std::size_t
+#include <functional>  // std::hash
+#include <sstream>     // std::istringstream
+#include <string>      // std::string
+
 TEST(MemorySize, default_construct) {
     // default construct a memory size object
-    const plssvm::detail::memory_size ms{};
+    const plssvm::detail::memory_size mem{};
 
     // 0 bytes should be reported
-    EXPECT_EQ(ms.num_bytes(), 0ULL);
+    EXPECT_EQ(mem.num_bytes(), 0ULL);
 }
 
 TEST(MemorySize, construct_from_ull) {
     // construct a memory size object using an unsigned long long
-    const plssvm::detail::memory_size ms{ 1024ULL };
-    EXPECT_EQ(ms.num_bytes(), 1024ULL);
+    const plssvm::detail::memory_size mem{ 1024ULL };
+    EXPECT_EQ(mem.num_bytes(), 1024ULL);
 }
 
 TEST(MemorySize, num_bytes) {
     // create memory size object
-    const plssvm::detail::memory_size ms{ 512 };
+    const plssvm::detail::memory_size mem{ 512 };
     // check getter
-    EXPECT_EQ(ms.num_bytes(), 512ULL);
+    EXPECT_EQ(mem.num_bytes(), 512ULL);
+}
+
+TEST(MemorySize, member_swap) {
+    // construct two memory sizes
+    plssvm::detail::memory_size mem1{ 1024ULL };
+    plssvm::detail::memory_size mem2{ 500ULL };
+
+    // swap both memory sizes
+    mem1.swap(mem2);
+
+    // check whether the contents have been swapped correctly
+    EXPECT_EQ(mem1.num_bytes(), 500ULL);
+    EXPECT_EQ(mem2.num_bytes(), 1024ULL);
+}
+
+TEST(MemorySize, free_swap) {
+    // construct two memory sizes
+    plssvm::detail::memory_size mem1{ 1024ULL };
+    plssvm::detail::memory_size mem2{ 500ULL };
+
+    // swap both memory sizes
+    using std::swap;
+    swap(mem1, mem2);
+
+    // check whether the contents have been swapped correctly
+    EXPECT_EQ(mem1.num_bytes(), 500ULL);
+    EXPECT_EQ(mem2.num_bytes(), 1024ULL);
+}
+
+TEST(MemorySize, operator_compound_add) {
+    // create two memory size objects
+    plssvm::detail::memory_size mem1{ 1024ULL };
+    const plssvm::detail::memory_size mem2{ 512ULL };
+
+    // check addition
+    mem1 += mem2;
+    EXPECT_EQ(mem1.num_bytes(), 1536ULL);
+    // mem2 should not have changed
+    EXPECT_EQ(mem2.num_bytes(), 512ULL);
 }
 
 TEST(MemorySize, operator_add) {
     // create two memory size objects
-    const plssvm::detail::memory_size ms1{ 1024 };
-    const plssvm::detail::memory_size ms2{ 512 };
+    const plssvm::detail::memory_size mem1{ 1024ULL };
+    const plssvm::detail::memory_size mem2{ 512ULL };
 
     // check addition
-    const plssvm::detail::memory_size ms = ms1 + ms2;
-    EXPECT_EQ(ms.num_bytes(), 1536);
+    const plssvm::detail::memory_size mem = mem1 + mem2;
+    EXPECT_EQ(mem.num_bytes(), 1536ULL);
+    EXPECT_EQ(mem1.num_bytes(), 1024ULL);
+    EXPECT_EQ(mem2.num_bytes(), 512ULL);
+}
+
+TEST(MemorySize, operator_compound_subtract) {
+    // create two memory size objects
+    plssvm::detail::memory_size mem1{ 1024ULL };
+    const plssvm::detail::memory_size mem2{ 512ULL };
+
+    // check addition
+    mem1 -= mem2;
+    EXPECT_EQ(mem1.num_bytes(), 512ULL);
+    // mem2 should not have changed
+    EXPECT_EQ(mem2.num_bytes(), 512ULL);
 }
 
 TEST(MemorySize, operator_subtract) {
     // create two memory size objects
-    const plssvm::detail::memory_size ms1{ 1024 };
-    const plssvm::detail::memory_size ms2{ 512 };
+    const plssvm::detail::memory_size mem1{ 1024ULL };
+    const plssvm::detail::memory_size mem2{ 512ULL };
 
     // check subtraction
-    const plssvm::detail::memory_size ms = ms1 - ms2;
-    EXPECT_EQ(ms.num_bytes(), 512);
+    const plssvm::detail::memory_size mem = mem1 - mem2;
+    EXPECT_EQ(mem.num_bytes(), 512ULL);
+    EXPECT_EQ(mem1.num_bytes(), 1024ULL);
+    EXPECT_EQ(mem2.num_bytes(), 512ULL);
+}
+
+TEST(MemorySize, operator_compound_scale_mul) {
+    // create a memory size object
+    plssvm::detail::memory_size mem{ 1024ULL };
+
+    // check scale via multiplication
+    mem *= 0.5L;
+    EXPECT_EQ(mem.num_bytes(), 512ULL);
 }
 
 TEST(MemorySize, operator_scale_mul) {
-    // create two memory size objects
-    const plssvm::detail::memory_size ms1{ 1024 };
+    // create a memory size object
+    const plssvm::detail::memory_size mem{ 1024ULL };
 
     // check scale via multiplication
-    const plssvm::detail::memory_size ms_r1 = ms1 * 0.5L;
-    EXPECT_EQ(ms_r1.num_bytes(), 512);
-    const plssvm::detail::memory_size ms_r2 = 0.5L * ms1;
-    EXPECT_EQ(ms_r2.num_bytes(), 512);
+    const plssvm::detail::memory_size mem_r1 = mem * 0.5L;
+    EXPECT_EQ(mem_r1.num_bytes(), 512ULL);
+    EXPECT_EQ(mem.num_bytes(), 1024ULL);
+    const plssvm::detail::memory_size mem_r2 = 0.5L * mem;
+    EXPECT_EQ(mem_r2.num_bytes(), 512ULL);
+    EXPECT_EQ(mem.num_bytes(), 1024ULL);
+}
+
+TEST(MemorySize, operator_compound_scale_div) {
+    // create a memory size object
+    plssvm::detail::memory_size mem{ 1024ULL };
+
+    // check scale via division
+    mem /= 2.0L;
+    EXPECT_EQ(mem.num_bytes(), 512ULL);
 }
 
 TEST(MemorySize, operator_scale_div) {
-    // create two memory size objects
-    const plssvm::detail::memory_size ms1{ 1024 };
+    // create a memory size object
+    const plssvm::detail::memory_size mem{ 1024ULL };
 
-    // check addition via division
-    const plssvm::detail::memory_size ms = ms1 / 2.0L;
-    EXPECT_EQ(ms.num_bytes(), 512);
+    // check scale via division
+    const plssvm::detail::memory_size mem_r1 = mem / 2.0L;
+    EXPECT_EQ(mem_r1.num_bytes(), 512ULL);
+    EXPECT_EQ(mem.num_bytes(), 1024ULL);
 }
 
 TEST(MemorySize, operator_factor) {
     // create two memory size objects
-    const plssvm::detail::memory_size ms1{ 1024 };
-    const plssvm::detail::memory_size ms2{ 512 };
+    const plssvm::detail::memory_size mem1{ 1024ULL };
+    const plssvm::detail::memory_size mem2{ 512ULL };
 
-    // check addition via division
-    const long double factor = ms1 / ms2;
+    // check factor calculation
+    const long double factor = mem1 / mem2;
     EXPECT_EQ(factor, 2.0L);
 }
 
 TEST(MemorySize, relational_equal) {
     // create memory objects
-    const plssvm::detail::memory_size ms1{ 1024 };
-    const plssvm::detail::memory_size ms2{ 512 };
-    const plssvm::detail::memory_size ms3{ 512 };
+    const plssvm::detail::memory_size mem1{ 1024ULL };
+    const plssvm::detail::memory_size mem2{ 512ULL };
+    const plssvm::detail::memory_size mem3{ 512ULL };
 
     // check for equality
-    EXPECT_FALSE(ms1 == ms2);
-    EXPECT_TRUE(ms2 == ms3);
-    EXPECT_FALSE(ms3 == ms1);
+    EXPECT_FALSE(mem1 == mem2);
+    EXPECT_TRUE(mem2 == mem3);
+    EXPECT_FALSE(mem3 == mem1);
 }
 
 TEST(MemorySize, relational_inequal) {
     // create memory objects
-    const plssvm::detail::memory_size ms1{ 1024 };
-    const plssvm::detail::memory_size ms2{ 512 };
-    const plssvm::detail::memory_size ms3{ 512 };
+    const plssvm::detail::memory_size mem1{ 1024ULL };
+    const plssvm::detail::memory_size mem2{ 512ULL };
+    const plssvm::detail::memory_size mem3{ 512ULL };
 
     // check for equality
-    EXPECT_TRUE(ms1 != ms2);
-    EXPECT_FALSE(ms2 != ms3);
-    EXPECT_TRUE(ms3 != ms1);
+    EXPECT_TRUE(mem1 != mem2);
+    EXPECT_FALSE(mem2 != mem3);
+    EXPECT_TRUE(mem3 != mem1);
 }
 
 TEST(MemorySize, relational_less) {
     // create memory objects
-    const plssvm::detail::memory_size ms1{ 1024 };
-    const plssvm::detail::memory_size ms2{ 512 };
-    const plssvm::detail::memory_size ms3{ 512 };
+    const plssvm::detail::memory_size mem1{ 1024ULL };
+    const plssvm::detail::memory_size mem2{ 512ULL };
+    const plssvm::detail::memory_size mem3{ 512ULL };
 
     // check for equality
-    EXPECT_FALSE(ms1 < ms2);
-    EXPECT_FALSE(ms2 < ms3);
-    EXPECT_TRUE(ms3 < ms1);
+    EXPECT_FALSE(mem1 < mem2);
+    EXPECT_FALSE(mem2 < mem3);
+    EXPECT_TRUE(mem3 < mem1);
 }
 
 TEST(MemorySize, relational_greater) {
     // create memory objects
-    const plssvm::detail::memory_size ms1{ 1024 };
-    const plssvm::detail::memory_size ms2{ 512 };
-    const plssvm::detail::memory_size ms3{ 512 };
+    const plssvm::detail::memory_size mem1{ 1024ULL };
+    const plssvm::detail::memory_size mem2{ 512ULL };
+    const plssvm::detail::memory_size mem3{ 512ULL };
 
     // check for equality
-    EXPECT_TRUE(ms1 > ms2);
-    EXPECT_FALSE(ms2 > ms3);
-    EXPECT_FALSE(ms3 > ms1);
+    EXPECT_TRUE(mem1 > mem2);
+    EXPECT_FALSE(mem2 > mem3);
+    EXPECT_FALSE(mem3 > mem1);
 }
 
 TEST(MemorySize, relational_less_or_equal) {
     // create memory objects
-    const plssvm::detail::memory_size ms1{ 1024 };
-    const plssvm::detail::memory_size ms2{ 512 };
-    const plssvm::detail::memory_size ms3{ 512 };
+    const plssvm::detail::memory_size mem1{ 1024ULL };
+    const plssvm::detail::memory_size mem2{ 512ULL };
+    const plssvm::detail::memory_size mem3{ 512ULL };
 
     // check for equality
-    EXPECT_FALSE(ms1 <= ms2);
-    EXPECT_TRUE(ms2 <= ms3);
-    EXPECT_TRUE(ms3 <= ms1);
+    EXPECT_FALSE(mem1 <= mem2);
+    EXPECT_TRUE(mem2 <= mem3);
+    EXPECT_TRUE(mem3 <= mem1);
 }
 
 TEST(MemorySize, relational_greater_or_equal) {
     // create memory objects
-    const plssvm::detail::memory_size ms1{ 1024 };
-    const plssvm::detail::memory_size ms2{ 512 };
-    const plssvm::detail::memory_size ms3{ 512 };
+    const plssvm::detail::memory_size mem1{ 1024ULL };
+    const plssvm::detail::memory_size mem2{ 512ULL };
+    const plssvm::detail::memory_size mem3{ 512ULL };
 
     // check for equality
-    EXPECT_TRUE(ms1 >= ms2);
-    EXPECT_TRUE(ms2 >= ms3);
-    EXPECT_FALSE(ms3 >= ms1);
+    EXPECT_TRUE(mem1 >= mem2);
+    EXPECT_TRUE(mem2 >= mem3);
+    EXPECT_FALSE(mem3 >= mem1);
 }
 
 TEST(MemorySize, to_string) {
@@ -191,9 +271,29 @@ TEST(MemorySize, from_string) {
 TEST(MemorySize, from_string_unknown) {
     // foo isn't a valid backend_type
     std::istringstream input{ "0Bit" };
-    plssvm::detail::memory_size ms{};
-    input >> ms;
+    plssvm::detail::memory_size mem{};
+    input >> mem;
     EXPECT_TRUE(input.fail());
+}
+
+TEST(MemorySize, constexpr_pow) {
+    // check custom constexpr power function
+    EXPECT_EQ(plssvm::detail::constexpr_pow(0, 1), 0);
+    EXPECT_EQ(plssvm::detail::constexpr_pow(2, 0), 1);
+    EXPECT_EQ(plssvm::detail::constexpr_pow(2, 3), 8);
+    EXPECT_EQ(plssvm::detail::constexpr_pow(1024, 2), 1'048'576);
+}
+
+TEST(MemorySize, hash) {
+    // hash a memory size
+    const plssvm::detail::memory_size mem{ 1024ULL };
+    const std::size_t hash_value = std::hash<plssvm::detail::memory_size>{}(mem);
+
+    // hash the same value as unsigned long
+    const std::size_t correct_hash_value = std::hash<unsigned long long>{}(mem.num_bytes());
+
+    // check hash values
+    EXPECT_EQ(hash_value, correct_hash_value);
 }
 
 //*************************************************************************************************************************************//
