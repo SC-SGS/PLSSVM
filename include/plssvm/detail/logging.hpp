@@ -50,12 +50,14 @@ void log(const verbosity_level verb, const std::string_view msg, Args &&...args)
     }
 
     // if performance tracking has been enabled, add tracking entries
+#if defined(PLSSVM_PERFORMANCE_TRACKER_ENABLED)
     ([](auto &&arg) {
         if constexpr (detail::is_tracking_entry_v<decltype(arg)>) {
             PLSSVM_DETAIL_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY(std::forward<decltype(arg)>(arg));
         }
     }(std::forward<Args>(args)),
      ...);
+#endif
 }
 
 }  // namespace plssvm::detail
