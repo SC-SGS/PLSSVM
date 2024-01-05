@@ -13,14 +13,14 @@
 #define PLSSVM_BACKENDS_OPENMP_CSVM_HPP_
 #pragma once
 
-#include "plssvm/constants.hpp"           // plssvm::real_type
-#include "plssvm/csvm.hpp"                // plssvm::csvm
-#include "plssvm/detail/memory_size.hpp"  // plssvm::detail::memory_size
-#include "plssvm/detail/simple_any.hpp"   // plssvm::detail::simple_any
-#include "plssvm/detail/type_traits.hpp"  // PLSSVM_REQUIRES
-#include "plssvm/matrix.hpp"              // plssvm::aos_matrix
-#include "plssvm/parameter.hpp"           // plssvm::parameter, plssvm::detail::has_only_parameter_named_args_v
-#include "plssvm/target_platforms.hpp"    // plssvm::target_platform
+#include "plssvm/constants.hpp"             // plssvm::real_type
+#include "plssvm/csvm.hpp"                  // plssvm::csvm
+#include "plssvm/detail/memory_size.hpp"    // plssvm::detail::memory_size
+#include "plssvm/detail/move_only_any.hpp"  // plssvm::detail::move_only_any
+#include "plssvm/detail/type_traits.hpp"    // PLSSVM_REQUIRES
+#include "plssvm/matrix.hpp"                // plssvm::aos_matrix
+#include "plssvm/parameter.hpp"             // plssvm::parameter, plssvm::detail::has_only_parameter_named_args_v
+#include "plssvm/target_platforms.hpp"      // plssvm::target_platform
 
 #include <type_traits>  // std::true_type
 #include <utility>      // std::forward, std::pair
@@ -118,15 +118,15 @@ class csvm : public ::plssvm::csvm {
     /**
      * @copydoc plssvm::csvm::setup_data_on_devices
      */
-    [[nodiscard]] detail::simple_any setup_data_on_devices(solver_type solver, const soa_matrix<real_type> &A) const final;
+    [[nodiscard]] detail::move_only_any setup_data_on_devices(solver_type solver, const soa_matrix<real_type> &A) const final;
     /**
      * @copydoc plssvm::csvm::assemble_kernel_matrix
      */
-    [[nodiscard]] detail::simple_any assemble_kernel_matrix(solver_type solver, const parameter &params, detail::simple_any &data, const std::vector<real_type> &q_red, real_type QA_cost) const final;
+    [[nodiscard]] detail::move_only_any assemble_kernel_matrix(solver_type solver, const parameter &params, detail::move_only_any &data, const std::vector<real_type> &q_red, real_type QA_cost) const final;
     /**
      * @copydoc plssvm::csvm::blas_level_3
      */
-    void blas_level_3(solver_type solver, real_type alpha, const detail::simple_any &A, const soa_matrix<real_type> &B, real_type beta, soa_matrix<real_type> &C) const final;
+    void blas_level_3(solver_type solver, real_type alpha, const detail::move_only_any &A, const soa_matrix<real_type> &B, real_type beta, soa_matrix<real_type> &C) const final;
 
     //***************************************************//
     //                   predict, score                  //

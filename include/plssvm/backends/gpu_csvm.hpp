@@ -13,13 +13,14 @@
 #define PLSSVM_BACKENDS_GPU_CSVM_HPP_
 #pragma once
 
-#include "plssvm/constants.hpp"         // plssvm::real_type, plssvm::PADDING_SIZE
-#include "plssvm/csvm.hpp"              // plssvm::csvm
-#include "plssvm/detail/operators.hpp"  // operator namespace
-#include "plssvm/matrix.hpp"            // plssvm::aos_matrix
-#include "plssvm/parameter.hpp"         // plssvm::parameter
-#include "plssvm/shape.hpp"             // plssvm::shape
-#include "plssvm/solver_types.hpp"      // plssvm::solver_type
+#include "plssvm/constants.hpp"             // plssvm::real_type, plssvm::PADDING_SIZE
+#include "plssvm/csvm.hpp"                  // plssvm::csvm
+#include "plssvm/detail/move_only_any.hpp"  // plssvm::detail::{move_only_any, move_only_any_cast}
+#include "plssvm/detail/operators.hpp"      // operator namespace
+#include "plssvm/matrix.hpp"                // plssvm::aos_matrix
+#include "plssvm/parameter.hpp"             // plssvm::parameter
+#include "plssvm/shape.hpp"                 // plssvm::shape
+#include "plssvm/solver_types.hpp"          // plssvm::solver_type
 
 #include "fmt/core.h"  // fmt::format
 
@@ -95,15 +96,15 @@ class gpu_csvm : public ::plssvm::csvm {
     /**
      * @copydoc plssvm::csvm::setup_data_on_devices
      */
-    [[nodiscard]] ::plssvm::detail::simple_any setup_data_on_devices(const solver_type solver, const soa_matrix<real_type> &A) const final;
+    [[nodiscard]] ::plssvm::detail::move_only_any setup_data_on_devices(const solver_type solver, const soa_matrix<real_type> &A) const final;
     /**
      * @copydoc plssvm::csvm::assemble_kernel_matrix_explicit_impl
      */
-    [[nodiscard]] ::plssvm::detail::simple_any assemble_kernel_matrix(const solver_type solver, const parameter &params, ::plssvm::detail::simple_any &data, const std::vector<real_type> &q_red, const real_type QA_cost) const final;
+    [[nodiscard]] ::plssvm::detail::move_only_any assemble_kernel_matrix(const solver_type solver, const parameter &params, ::plssvm::detail::move_only_any &data, const std::vector<real_type> &q_red, const real_type QA_cost) const final;
     /**
      * @copydoc plssvm::csvm::blas_level_3
      */
-    void blas_level_3(const solver_type solver, const real_type alpha, const ::plssvm::detail::simple_any &A, const soa_matrix<real_type> &B, const real_type beta, soa_matrix<real_type> &C) const final;
+    void blas_level_3(const solver_type solver, const real_type alpha, const ::plssvm::detail::move_only_any &A, const soa_matrix<real_type> &B, const real_type beta, soa_matrix<real_type> &C) const final;
 
     //***************************************************//
     //                   predict, score                  //
@@ -187,7 +188,7 @@ class gpu_csvm : public ::plssvm::csvm {
 //                        fit                        //
 //***************************************************//
 template <template <typename> typename device_ptr_t, typename queue_t>
-::plssvm::detail::simple_any gpu_csvm<device_ptr_t, queue_t>::setup_data_on_devices(const solver_type solver, const soa_matrix<real_type> &A) const {
+::plssvm::detail::move_only_any gpu_csvm<device_ptr_t, queue_t>::setup_data_on_devices(const solver_type solver, const soa_matrix<real_type> &A) const {
     PLSSVM_ASSERT(!A.empty(), "The matrix to setup on the devices may not be empty!");
     PLSSVM_ASSERT(A.is_padded(), "Tha matrix to setup on the devices must be padded!");
     PLSSVM_ASSERT(solver != solver_type::automatic, "An explicit solver type must be provided instead of solver_type::automatic!");
@@ -197,7 +198,7 @@ template <template <typename> typename device_ptr_t, typename queue_t>
         device_ptr_type data_d{ A.shape(), A.padding(), devices_[0] };
         data_d.copy_to_device(A);
 
-        return ::plssvm::detail::simple_any{ std::move(data_d) };
+        return ::plssvm::detail::move_only_any{ std::move(data_d) };
     } else {
         // TODO: implement for other solver types
         throw exception{ fmt::format("Assembling the kernel matrix using the {} CG variation is currently not implemented!", solver) };
@@ -205,7 +206,7 @@ template <template <typename> typename device_ptr_t, typename queue_t>
 }
 
 template <template <typename> typename device_ptr_t, typename queue_t>
-::plssvm::detail::simple_any gpu_csvm<device_ptr_t, queue_t>::assemble_kernel_matrix(const solver_type solver, const parameter &params, ::plssvm::detail::simple_any &data, const std::vector<real_type> &q_red, real_type QA_cost) const {
+::plssvm::detail::move_only_any gpu_csvm<device_ptr_t, queue_t>::assemble_kernel_matrix(const solver_type solver, const parameter &params, ::plssvm::detail::move_only_any &data, const std::vector<real_type> &q_red, real_type QA_cost) const {
     PLSSVM_ASSERT(!q_red.empty(), "The q_red vector may not be empty!");
     PLSSVM_ASSERT(solver != solver_type::automatic, "An explicit solver type must be provided instead of solver_type::automatic!");
 
@@ -216,7 +217,7 @@ template <template <typename> typename device_ptr_t, typename queue_t>
 
     if (solver == solver_type::cg_explicit) {
         // get the pointer to the data that already is on the device
-        const device_ptr_type &data_d = data.get<device_ptr_type>();
+        const auto &data_d = detail::move_only_any_cast<const device_ptr_type &>(data);
         [[maybe_unused]] const std::size_t num_rows_reduced = data_d.shape().x - 1;
         [[maybe_unused]] const std::size_t num_features = data_d.shape().y;
 
@@ -242,10 +243,10 @@ template <template <typename> typename device_ptr_t, typename queue_t>
                       kernel_matrix.size_padded());
 #endif
 
-        return ::plssvm::detail::simple_any{ std::move(kernel_matrix) };
+        return ::plssvm::detail::move_only_any{ std::move(kernel_matrix) };
     } else if (solver == solver_type::cg_implicit) {
         // simply return data since in implicit we don't assembly the kernel matrix here!
-        return ::plssvm::detail::simple_any{ std::make_tuple(data.move<device_ptr_type>(), params, std::move(q_red_d), QA_cost) };
+        return ::plssvm::detail::move_only_any{ std::make_tuple(detail::move_only_any_cast<device_ptr_type &&>(std::move(data)), params, std::move(q_red_d), QA_cost) };
     } else {
         // TODO: implement for other solver types
         throw exception{ fmt::format("Assembling the kernel matrix using the {} CG variation is currently not implemented!", solver) };
@@ -253,7 +254,7 @@ template <template <typename> typename device_ptr_t, typename queue_t>
 }
 
 template <template <typename> typename device_ptr_t, typename queue_t>
-void gpu_csvm<device_ptr_t, queue_t>::blas_level_3(const solver_type solver, const real_type alpha, const ::plssvm::detail::simple_any &A, const soa_matrix<real_type> &B, const real_type beta, soa_matrix<real_type> &C) const {
+void gpu_csvm<device_ptr_t, queue_t>::blas_level_3(const solver_type solver, const real_type alpha, const ::plssvm::detail::move_only_any &A, const soa_matrix<real_type> &B, const real_type beta, soa_matrix<real_type> &C) const {
     PLSSVM_ASSERT(!B.empty(), "The B matrix may not be empty!");
     PLSSVM_ASSERT(B.is_padded(), "The B matrix must be padded!");
     PLSSVM_ASSERT(!C.empty(), "The C matrix may not be empty!");
@@ -271,12 +272,12 @@ void gpu_csvm<device_ptr_t, queue_t>::blas_level_3(const solver_type solver, con
     C_d.copy_to_device(C);
 
     if (solver == solver_type::cg_explicit) {
-        const device_ptr_type &A_d = A.get<device_ptr_type>();
+        const auto &A_d = detail::move_only_any_cast<const device_ptr_type &>(A);
         PLSSVM_ASSERT(!A_d.empty(), "The A matrix may not be empty!");
 
         this->run_blas_level_3_kernel_explicit(alpha, A_d, B_d, beta, C_d);
     } else if (solver == solver_type::cg_implicit) {
-        const auto &[A_d, params, q_red_d, QA_cost] = A.get<std::tuple<device_ptr_type, parameter, device_ptr_type, real_type>>();
+        const auto &[A_d, params, q_red_d, QA_cost] = detail::move_only_any_cast<const std::tuple<device_ptr_type, parameter, device_ptr_type, real_type> &>(A);
         PLSSVM_ASSERT(!A_d.empty(), "The A matrix may not be empty!");
         PLSSVM_ASSERT(!q_red_d.empty(), "The q_red vector may not be empty!");
 

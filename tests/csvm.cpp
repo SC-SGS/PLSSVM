@@ -14,7 +14,7 @@
 #include "plssvm/constants.hpp"              // plssvm::real_type, plssvm::PADDING_SIZE
 #include "plssvm/core.hpp"                   // necessary for type_traits, plssvm::csvm_backend_exists, plssvm::csvm_backend_exists_v
 #include "plssvm/data_set.hpp"               // plssvm::data_set
-#include "plssvm/detail/simple_any.hpp"      // plssvm::detail::simple_any
+#include "plssvm/detail/move_only_any.hpp"   // plssvm::detail::move_only_any
 #include "plssvm/exceptions/exceptions.hpp"  // plssvm::invalid_parameter_exception
 #include "plssvm/kernel_function_types.hpp"  // plssvm::kernel_function_type
 #include "plssvm/matrix.hpp"                 // plssvm::aos_matrix
@@ -365,19 +365,19 @@ TYPED_TEST(BaseCSVMFit, fit) {
                             ::testing::An<plssvm::solver_type>(),
                             ::testing::An<const plssvm::soa_matrix<plssvm::real_type> &>()))
                         .Times(num_calls)
-                        .WillRepeatedly([]() { return plssvm::detail::simple_any{ util::generate_random_matrix<plssvm::soa_matrix<plssvm::real_type>>(plssvm::shape{ 6, 4 }, plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE }) }; });
+                        .WillRepeatedly(::testing::Invoke([]() { return plssvm::detail::move_only_any{ util::generate_random_matrix<plssvm::soa_matrix<plssvm::real_type>>(plssvm::shape{ 6, 4 }, plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE }) }; }));
     EXPECT_CALL(csvm, assemble_kernel_matrix(
                             ::testing::An<plssvm::solver_type>(),
                             ::testing::An<const plssvm::parameter &>(),
-                            ::testing::An<plssvm::detail::simple_any &>(),
+                            ::testing::An<plssvm::detail::move_only_any &>(),
                             ::testing::An<const std::vector<plssvm::real_type> &>(),
                             ::testing::An<plssvm::real_type>()))
                         .Times(num_calls)
-                        .WillRepeatedly([]() { return plssvm::detail::simple_any{ util::generate_random_matrix<plssvm::soa_matrix<plssvm::real_type>>(plssvm::shape{ 5, 5 }, plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE }) }; });
+                        .WillRepeatedly(::testing::Invoke([]() { return plssvm::detail::move_only_any{ util::generate_random_matrix<plssvm::soa_matrix<plssvm::real_type>>(plssvm::shape{ 5, 5 }, plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE }) }; }));
     EXPECT_CALL(csvm, blas_level_3(
                             ::testing::An<plssvm::solver_type>(),
                             ::testing::An<plssvm::real_type>(),
-                            ::testing::An<const plssvm::detail::simple_any &>(),
+                            ::testing::An<const plssvm::detail::move_only_any &>(),
                             ::testing::An<const plssvm::soa_matrix<plssvm::real_type> &>(),
                             ::testing::An<plssvm::real_type>(),
                             ::testing::An<plssvm::soa_matrix<plssvm::real_type> &>()))
@@ -427,19 +427,19 @@ TYPED_TEST(BaseCSVMFit, fit_named_parameters) {
                             ::testing::An<plssvm::solver_type>(),
                             ::testing::An<const plssvm::soa_matrix<plssvm::real_type> &>()))
                         .Times(num_calls)
-                        .WillRepeatedly([]() { return plssvm::detail::simple_any{ util::generate_random_matrix<plssvm::soa_matrix<plssvm::real_type>>(plssvm::shape{ 6, 4 }) }; });
+                        .WillRepeatedly(::testing::Invoke([]() { return plssvm::detail::move_only_any{ util::generate_random_matrix<plssvm::soa_matrix<plssvm::real_type>>(plssvm::shape{ 6, 4 }) }; }));
     EXPECT_CALL(csvm, assemble_kernel_matrix(
                             ::testing::An<plssvm::solver_type>(),
                             ::testing::An<const plssvm::parameter &>(),
-                            ::testing::An<plssvm::detail::simple_any &>(),
+                            ::testing::An<plssvm::detail::move_only_any &>(),
                             ::testing::An<const std::vector<plssvm::real_type> &>(),
                             ::testing::An<plssvm::real_type>()))
                         .Times(num_calls)
-                        .WillRepeatedly([]() { return plssvm::detail::simple_any{ util::generate_random_matrix<plssvm::soa_matrix<plssvm::real_type>>(plssvm::shape{ 5, 5 }) }; });
+                        .WillRepeatedly(::testing::Invoke([]() { return plssvm::detail::move_only_any{ util::generate_random_matrix<plssvm::soa_matrix<plssvm::real_type>>(plssvm::shape{ 5, 5 }) }; }));
     EXPECT_CALL(csvm, blas_level_3(
                             ::testing::An<plssvm::solver_type>(),
                             ::testing::An<plssvm::real_type>(),
-                            ::testing::An<const plssvm::detail::simple_any &>(),
+                            ::testing::An<const plssvm::detail::move_only_any &>(),
                             ::testing::An<const plssvm::soa_matrix<plssvm::real_type> &>(),
                             ::testing::An<plssvm::real_type>(),
                             ::testing::An<plssvm::soa_matrix<plssvm::real_type> &>()))
@@ -485,14 +485,14 @@ TYPED_TEST(BaseCSVMFit, fit_named_parameters_invalid_epsilon) {
     EXPECT_CALL(csvm, assemble_kernel_matrix(
                             ::testing::An<plssvm::solver_type>(),
                             ::testing::An<const plssvm::parameter &>(),
-                            ::testing::An<plssvm::detail::simple_any &>(),
+                            ::testing::An<plssvm::detail::move_only_any &>(),
                             ::testing::An<const std::vector<plssvm::real_type> &>(),
                             ::testing::An<plssvm::real_type>()))
                         .Times(0);
     EXPECT_CALL(csvm, blas_level_3(
                             ::testing::An<plssvm::solver_type>(),
                             ::testing::An<plssvm::real_type>(),
-                            ::testing::An<const plssvm::detail::simple_any &>(),
+                            ::testing::An<const plssvm::detail::move_only_any &>(),
                             ::testing::An<const plssvm::soa_matrix<plssvm::real_type> &>(),
                             ::testing::An<plssvm::real_type>(),
                             ::testing::An<plssvm::soa_matrix<plssvm::real_type> &>()))
@@ -530,14 +530,14 @@ TYPED_TEST(BaseCSVMFit, fit_named_parameters_invalid_max_iter) {
     EXPECT_CALL(csvm, assemble_kernel_matrix(
                             ::testing::An<plssvm::solver_type>(),
                             ::testing::An<const plssvm::parameter &>(),
-                            ::testing::An<plssvm::detail::simple_any &>(),
+                            ::testing::An<plssvm::detail::move_only_any &>(),
                             ::testing::An<const std::vector<plssvm::real_type> &>(),
                             ::testing::An<plssvm::real_type>()))
                         .Times(0);
     EXPECT_CALL(csvm, blas_level_3(
                             ::testing::An<plssvm::solver_type>(),
                             ::testing::An<plssvm::real_type>(),
-                            ::testing::An<const plssvm::detail::simple_any &>(),
+                            ::testing::An<const plssvm::detail::move_only_any &>(),
                             ::testing::An<const plssvm::soa_matrix<plssvm::real_type> &>(),
                             ::testing::An<plssvm::real_type>(),
                             ::testing::An<plssvm::soa_matrix<plssvm::real_type> &>()))
@@ -575,14 +575,14 @@ TYPED_TEST(BaseCSVMFit, fit_no_label) {
     EXPECT_CALL(csvm, assemble_kernel_matrix(
                             ::testing::An<plssvm::solver_type>(),
                             ::testing::An<const plssvm::parameter &>(),
-                            ::testing::An<plssvm::detail::simple_any &>(),
+                            ::testing::An<plssvm::detail::move_only_any &>(),
                             ::testing::An<const std::vector<plssvm::real_type> &>(),
                             ::testing::An<plssvm::real_type>()))
                         .Times(0);
     EXPECT_CALL(csvm, blas_level_3(
                             ::testing::An<plssvm::solver_type>(),
                             ::testing::An<plssvm::real_type>(),
-                            ::testing::An<const plssvm::detail::simple_any &>(),
+                            ::testing::An<const plssvm::detail::move_only_any &>(),
                             ::testing::An<const plssvm::soa_matrix<plssvm::real_type> &>(),
                             ::testing::An<plssvm::real_type>(),
                             ::testing::An<plssvm::soa_matrix<plssvm::real_type> &>()))

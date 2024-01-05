@@ -20,9 +20,9 @@
 #include "plssvm/detail/igor_utility.hpp"         // plssvm::detail::{get_value_from_named_parameter, has_only_parameter_named_args_v}
 #include "plssvm/detail/logging.hpp"              // plssvm::detail::log
 #include "plssvm/detail/memory_size.hpp"          // plssvm::detail::memory_size
+#include "plssvm/detail/move_only_any.hpp"        // plssvm::detail::move_only_any
 #include "plssvm/detail/operators.hpp"            // plssvm::operators::sign
 #include "plssvm/detail/performance_tracker.hpp"  // plssvm::detail::performance_tracker
-#include "plssvm/detail/simple_any.hpp"           // plssvm::detail::simple_any
 #include "plssvm/detail/type_traits.hpp"          // PLSSVM_REQUIRES, plssvm::detail::remove_cvref_t
 #include "plssvm/detail/utility.hpp"              // plssvm::detail::to_underlying
 #include "plssvm/exceptions/exceptions.hpp"       // plssvm::invalid_parameter_exception
@@ -207,7 +207,7 @@ class csvm {
      * @param[in] A the data to setup
      * @return the backend specific setup data, e.g., pointer to GPU memory for the GPU related backends (`[[nodiscard]]`)
      */
-    [[nodiscard]] virtual detail::simple_any setup_data_on_devices(solver_type solver, const soa_matrix<real_type> &A) const = 0;
+    [[nodiscard]] virtual detail::move_only_any setup_data_on_devices(solver_type solver, const soa_matrix<real_type> &A) const = 0;
 
     /**
      * @brief Explicitly assemble the kernel matrix. Backend specific!
@@ -218,7 +218,7 @@ class csvm {
      * @param[in] QA_cost the value used in the dimensional reduction
      * @return based on the used solver type (e.g., cg_explicit -> kernel matrix fully stored on the device; cg_implicit -> "nothing") (`[[nodiscard]]`)
      */
-    [[nodiscard]] virtual detail::simple_any assemble_kernel_matrix(solver_type solver, const parameter &params, ::plssvm::detail::simple_any &data, const std::vector<real_type> &q_red, real_type QA_cost) const = 0;
+    [[nodiscard]] virtual detail::move_only_any assemble_kernel_matrix(solver_type solver, const parameter &params, ::plssvm::detail::move_only_any &data, const std::vector<real_type> &q_red, real_type QA_cost) const = 0;
 
     /**
      * @brief Perform a BLAS level 3 matrix-matrix multiplication: `C = alpha * A * B + beta * C`.
@@ -229,7 +229,7 @@ class csvm {
      * @param[in] beta the value to scale the matrix o add with
      * @param[in,out] C the result matrix and the matrix to add (inplace)
      */
-    virtual void blas_level_3(solver_type solver, real_type alpha, const detail::simple_any &A, const soa_matrix<real_type> &B, real_type beta, soa_matrix<real_type> &C) const = 0;
+    virtual void blas_level_3(solver_type solver, real_type alpha, const detail::move_only_any &A, const soa_matrix<real_type> &B, real_type beta, soa_matrix<real_type> &C) const = 0;
 
     //***************************************************//
     //                   predict, score                  //
@@ -278,7 +278,7 @@ class csvm {
      * @param[in] cd_solver_variant the variation of the CG algorithm to use, i.e., how the kernel matrix is assembled (currently: explicit, streaming, implicit)
      * @return the result matrix `X` and the number of CG iterations necessary to solve the system of linear equations (`[[nodiscard]]`)
      */
-    [[nodiscard]] std::pair<soa_matrix<real_type>, unsigned long long> conjugate_gradients(const detail::simple_any &A, const soa_matrix<real_type> &B, real_type eps, unsigned long long max_cg_iter, solver_type cd_solver_variant) const;
+    [[nodiscard]] std::pair<soa_matrix<real_type>, unsigned long long> conjugate_gradients(const detail::move_only_any &A, const soa_matrix<real_type> &B, real_type eps, unsigned long long max_cg_iter, solver_type cd_solver_variant) const;
     /**
      * @brief Perform a dimensional reduction for the kernel matrix.
      * @details Reduces the resulting dimension by `2` compared to the original LS-SVM formulation.
@@ -292,7 +292,7 @@ class csvm {
      * @copydoc plssvm::csvm::blas_level_3
      * @detail Small wrapper around the virtual `plssvm::csvm::blas_level_3` function to easily track its execution time.
      */
-    [[nodiscard]] std::chrono::duration<long, std::milli> run_blas_level_3(solver_type cg_solver, real_type alpha, const detail::simple_any &A, const soa_matrix<real_type> &B, real_type beta, soa_matrix<real_type> &C) const;
+    [[nodiscard]] std::chrono::duration<long, std::milli> run_blas_level_3(solver_type cg_solver, real_type alpha, const detail::move_only_any &A, const soa_matrix<real_type> &B, real_type beta, soa_matrix<real_type> &C) const;
 
     /**
      * @copydoc plssvm::csvm::predict_values
@@ -851,11 +851,11 @@ std::tuple<aos_matrix<real_type>, std::vector<real_type>, unsigned long long> cs
     }
 
     // setup/allocate necessary data on the device(s)
-    detail::simple_any data = this->setup_data_on_devices(used_solver, A);
+    detail::move_only_any data = this->setup_data_on_devices(used_solver, A);
 
     // assemble explicit kernel matrix
     const std::chrono::steady_clock::time_point assembly_start_time = std::chrono::steady_clock::now();
-    const detail::simple_any kernel_matrix = this->assemble_kernel_matrix(used_solver, params, data, q_red, QA_cost);
+    const detail::move_only_any kernel_matrix = this->assemble_kernel_matrix(used_solver, params, data, q_red, QA_cost);
     const std::chrono::steady_clock::time_point assembly_end_time = std::chrono::steady_clock::now();
     const auto assembly_duration = std::chrono::duration_cast<std::chrono::milliseconds>(assembly_end_time - assembly_start_time);
 

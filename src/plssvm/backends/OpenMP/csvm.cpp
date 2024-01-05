@@ -16,9 +16,10 @@
 #include "plssvm/backends/OpenMP/exceptions.hpp"                               // plssvm::openmp::backend_exception
 #include "plssvm/constants.hpp"                                                // plssvm::real_type
 #include "plssvm/csvm.hpp"                                                     // plssvm::csvm
-#include "plssvm/deta^il/memory_size.hpp"                                      // plssvm::detail::memory_size
 #include "plssvm/detail/assert.hpp"                                            // PLSSVM_ASSERT
 #include "plssvm/detail/logging.hpp"                                           // plssvm::detail::log
+#include "plssvm/detail/memory_size.hpp"                                       // plssvm::detail::memory_size
+#include "plssvm/detail/move_only_any.hpp"                                     // plssvm::detail::{move_only_any, move_only_any_cast}
 #include "plssvm/detail/operators.hpp"                                         // various operator overloads for std::vector and scalars
 #include "plssvm/detail/performance_tracker.hpp"                               // plssvm::detail::tracking_entry, PLSSVM_DETAIL_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY
 #include "plssvm/kernel_function_types.hpp"                                    // plssvm::kernel_function_type
@@ -81,23 +82,23 @@ void csvm::init(const target_platform target) {
 //                        fit                        //
 //***************************************************//
 
-::plssvm::detail::simple_any csvm::setup_data_on_devices(const solver_type solver, const soa_matrix<real_type> &A) const {
+::plssvm::detail::move_only_any csvm::setup_data_on_devices(const solver_type solver, const soa_matrix<real_type> &A) const {
     PLSSVM_ASSERT(!A.empty(), "The matrix to setup on the devices may not be empty!");
     PLSSVM_ASSERT(solver != solver_type::automatic, "An explicit solver type must be provided instead of solver_type::automatic!");
 
     if (solver == solver_type::cg_explicit || solver == solver_type::cg_implicit) {
-        return ::plssvm::detail::simple_any{ &A };
+        return ::plssvm::detail::move_only_any{ &A };
     } else {
         // TODO: implement for other solver types
         throw exception{ fmt::format("Assembling the kernel matrix using the {} CG variation is currently not implemented!", solver) };
     }
 }
 
-::plssvm::detail::simple_any csvm::assemble_kernel_matrix(const solver_type solver, const parameter &params, ::plssvm::detail::simple_any &data, const std::vector<real_type> &q_red, const real_type QA_cost) const {
+::plssvm::detail::move_only_any csvm::assemble_kernel_matrix(const solver_type solver, const parameter &params, ::plssvm::detail::move_only_any &data, const std::vector<real_type> &q_red, const real_type QA_cost) const {
     PLSSVM_ASSERT(!q_red.empty(), "The q_red vector may not be empty!");
     PLSSVM_ASSERT(solver != solver_type::automatic, "An explicit solver type must be provided instead of solver_type::automatic!");
 
-    const soa_matrix<real_type> *data_ptr = data.get<const soa_matrix<real_type> *>();
+    const auto data_ptr = ::plssvm::detail::move_only_any_cast<const soa_matrix<real_type> *>(data);
     PLSSVM_ASSERT(data_ptr != nullptr, "The data_ptr must not be a nullptr!");
 
     // TODO Hotfix: extreme performance regression when using a soa_matrix -> convert to aos_matrix -> USES 2x the necessary memory!
@@ -138,17 +139,17 @@ void csvm::init(const target_platform target) {
                       kernel_matrix.size());
 #endif
 
-        return ::plssvm::detail::simple_any{ std::move(kernel_matrix) };
+        return ::plssvm::detail::move_only_any{ std::move(kernel_matrix) };
     } else if (solver == solver_type::cg_implicit) {
         // simply return data since in implicit we don't assembly the kernel matrix here!
-        return ::plssvm::detail::simple_any{ std::make_tuple(std::move(aos_data), params, std::move(q_red), QA_cost) };
+        return ::plssvm::detail::move_only_any{ std::make_tuple(std::move(aos_data), params, std::move(q_red), QA_cost) };
     } else {
         // TODO: implement for other solver types
         throw exception{ fmt::format("Assembling the kernel matrix using the {} CG variation is currently not implemented!", solver) };
     }
 }
 
-void csvm::blas_level_3(const solver_type solver, const real_type alpha, const ::plssvm::detail::simple_any &A, const soa_matrix<real_type> &B, const real_type beta, soa_matrix<real_type> &C) const {
+void csvm::blas_level_3(const solver_type solver, const real_type alpha, const ::plssvm::detail::move_only_any &A, const soa_matrix<real_type> &B, const real_type beta, soa_matrix<real_type> &C) const {
     PLSSVM_ASSERT(!B.empty(), "The B matrix may not be empty!");
     PLSSVM_ASSERT(!C.empty(), "The C matrix may not be empty!");
     PLSSVM_ASSERT(B.num_rows() == C.num_rows(), "The C matrix must have {} rows, but has {}!", B.num_rows(), C.num_rows());
@@ -164,7 +165,7 @@ void csvm::blas_level_3(const solver_type solver, const real_type alpha, const :
     aos_matrix<real_type> aos_C{ C };
 
     if (solver == solver_type::cg_explicit) {
-        const auto &explicit_A = A.get<std::vector<real_type>>();
+        const auto &explicit_A = ::plssvm::detail::move_only_any_cast<const std::vector<real_type> &>(A);
         PLSSVM_ASSERT(!explicit_A.empty(), "The A matrix may not be empty!");
 
 #if defined(PLSSVM_USE_GEMM)
@@ -173,7 +174,7 @@ void csvm::blas_level_3(const solver_type solver, const real_type alpha, const :
         openmp::device_kernel_symm(m_ull, n_ull, k_ull, alpha, explicit_A, aos_B, beta, aos_C);
 #endif
     } else if (solver == solver_type::cg_implicit) {
-        const auto &[aos_matr_A, params, q_red, QA_cost] = A.get<std::tuple<aos_matrix<real_type>, parameter, std::vector<real_type>, real_type>>();
+        const auto &[aos_matr_A, params, q_red, QA_cost] = ::plssvm::detail::move_only_any_cast<const std::tuple<aos_matrix<real_type>, parameter, std::vector<real_type>, real_type> &>(A);
         PLSSVM_ASSERT(!aos_matr_A.empty(), "The A matrix may not be empty!");
         PLSSVM_ASSERT(!q_red.empty(), "The q_red vector may not be empty!");
 

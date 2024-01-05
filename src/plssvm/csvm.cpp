@@ -11,9 +11,9 @@
 #include "plssvm/constants.hpp"                   // plssvm::real_type, plssvm::PADDING_SIZE
 #include "plssvm/detail/assert.hpp"               // PLSSVM_ASSERT
 #include "plssvm/detail/logging.hpp"              // plssvm::detail::log
+#include "plssvm/detail/move_only_any.hpp"        // plssvm::detail::move_only_any
 #include "plssvm/detail/operators.hpp"            // plssvm operator overloads for vectors
 #include "plssvm/detail/performance_tracker.hpp"  // PLSSVM_DETAIL_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY, plssvm::detail::tracking_entry
-#include "plssvm/detail/simple_any.hpp"           // plssvm::detail::simple_any
 #include "plssvm/exceptions/exceptions.hpp"       // plssvm::invalid_parameter_exception
 #include "plssvm/kernel_function_types.hpp"       // plssvm::kernel_function_type, plssvm::kernel_function
 #include "plssvm/matrix.hpp"                      // plssvm::soa_matrix
@@ -50,7 +50,7 @@ void csvm::sanity_check_parameter() const {
     // cost: all allowed
 }
 
-std::pair<soa_matrix<real_type>, unsigned long long> csvm::conjugate_gradients(const detail::simple_any &A, const soa_matrix<real_type> &B, const real_type eps, const unsigned long long max_cg_iter, const solver_type cg_solver) const {
+std::pair<soa_matrix<real_type>, unsigned long long> csvm::conjugate_gradients(const detail::move_only_any &A, const soa_matrix<real_type> &B, const real_type eps, const unsigned long long max_cg_iter, const solver_type cg_solver) const {
     using namespace plssvm::operators;
 
     PLSSVM_ASSERT(!B.empty(), "The right-hand sides may not be empty!");
@@ -216,7 +216,7 @@ std::pair<std::vector<real_type>, real_type> csvm::perform_dimensional_reduction
     return std::make_pair(std::move(q_red), QA_cost);
 }
 
-std::chrono::duration<long, std::milli> csvm::run_blas_level_3(const solver_type cg_solver, const real_type alpha, const detail::simple_any &A, const soa_matrix<real_type> &B, const real_type beta, soa_matrix<real_type> &C) const {
+std::chrono::duration<long, std::milli> csvm::run_blas_level_3(const solver_type cg_solver, const real_type alpha, const detail::move_only_any &A, const soa_matrix<real_type> &B, const real_type beta, soa_matrix<real_type> &C) const {
     PLSSVM_ASSERT(!B.empty(), "The B matrix must not be empty!");
     PLSSVM_ASSERT(!C.empty(), "The C matrix must not be empty!");
 
