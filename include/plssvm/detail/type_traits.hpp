@@ -19,11 +19,11 @@
 #include <list>           // std::list
 #include <map>            // std::map, std::multimap
 #include <set>            // std::set, std::multiset
-#include <type_traits>    // std::remove_cv_t, std::remove_reference_t, std::false_type, std::true_type
-#include <type_traits>    // std::enable_if_t
+#include <string>         // std::basic_string
+#include <type_traits>    // std::enable_if_t, std::remove_cv_t, std::remove_reference_t, std::false_type, std::true_type
 #include <unordered_map>  // std::unordered_map, std::unordered_multimap
 #include <unordered_set>  // std::unordered_set, std::unordered_multiset
-#include <vector>         // std:.vector
+#include <vector>         // std::vector
 
 namespace plssvm::detail {
 
@@ -44,6 +44,25 @@ constexpr bool always_false_v = false;
  */
 template <typename T>
 using remove_cvref_t = std::remove_cv_t<std::remove_reference_t<T>>;
+
+/**
+ * @brief Type trait to check whether @p T is a `std::string`.
+ * @tparam T the type to check
+ */
+template <typename T>
+struct is_string : std::false_type { };
+
+/**
+ * @copybrief plssvm::detail::is_string
+ */
+template <typename CharT>
+struct is_string<std::basic_string<CharT>> : std::true_type { };
+
+/**
+ * @copybrief plssvm::detail::is_string
+ */
+template <typename T>
+constexpr bool is_string_v = is_string<T>::value;
 
 /**
  * @brief Type trait to check whether @p T is a `std::array`.
@@ -82,6 +101,12 @@ struct is_vector<std::vector<T>> : std::true_type { };
  */
 template <typename T>
 constexpr bool is_vector_v = is_vector<T>::value;
+
+/**
+ * @brief Type trait to check whether @p T is a contiguous container according to https://en.cppreference.com/w/cpp/named_req/ContiguousContainer.
+ */
+template <typename T>
+constexpr bool is_contiguous_container_v = is_string_v<T> || is_array_v<T> || is_vector_v<T>;
 
 /**
  * @brief Type trait to check whether @p T is a `std::deque`.
@@ -141,10 +166,10 @@ template <typename T>
 constexpr bool is_list_v = is_list<T>::value;
 
 /**
- * @brief Type trait to check whether @p T is a sequence container.
+ * @brief Type trait to check whether @p T is a sequence container according to https://en.cppreference.com/w/cpp/named_req/SequenceContainer.
  */
 template <typename T>
-constexpr bool is_sequence_container_v = is_array_v<T> || is_vector_v<T> || is_deque_v<T> || is_forward_list_v<T> || is_list_v<T>;
+constexpr bool is_sequence_container_v = is_string_v<T> || is_array_v<T> || is_vector_v<T> || is_deque_v<T> || is_forward_list_v<T> || is_list_v<T>;
 
 /**
  * @brief Type trait to check whether @p T is a `std::set`.
@@ -223,7 +248,7 @@ template <typename T>
 constexpr bool is_multimap_v = is_multimap<T>::value;
 
 /**
- * @brief Type trait to check whether @p T is a associative container.
+ * @brief Type trait to check whether @p T is a associative container according to https://en.cppreference.com/w/cpp/named_req/AssociativeContainer.
  */
 template <typename T>
 constexpr bool is_associative_container_v = is_set_v<T> || is_map_v<T> || is_multimap_v<T> || is_multiset_v<T>;
@@ -305,13 +330,13 @@ template <typename T>
 constexpr bool is_unordered_multimap_v = is_unordered_multimap<T>::value;
 
 /**
- * @brief Type trait to check whether @p T is a unordered associative container.
+ * @brief Type trait to check whether @p T is a unordered associative container according to https://en.cppreference.com/w/cpp/named_req/UnorderedAssociativeContainer.
  */
 template <typename T>
 constexpr bool is_unordered_associative_container_v = is_unordered_set_v<T> || is_unordered_map_v<T> || is_unordered_multimap_v<T> || is_unordered_multiset_v<T>;
 
 /**
- * @brief Type trait to check whether @p T is a container.
+ * @brief Type trait to check whether @p T is a container according to https://en.cppreference.com/w/cpp/named_req/Container.
  */
 template <typename T>
 constexpr bool is_container_v = is_sequence_container_v<T> || is_associative_container_v<T> || is_unordered_associative_container_v<T>;
