@@ -89,20 +89,20 @@ namespace plssvm::detail {
  * @param[in,out] str the string to replace the values
  * @param[in] what the string to replace
  * @param[in] with the string to replace with
- * @return the replaced string
+ * @return a reference to the replaced string
  */
 std::string &replace_all(std::string &str, std::string_view what, std::string_view with);
 
 /**
  * @brief Convert the string @p str to its all lower case representation.
  * @param[in,out] str the string to transform
- * @return the transformed string
+ * @return a reference to the transformed string
  */
 std::string &to_lower_case(std::string &str);
 
 /**
  * @brief Return a new string with the same content as @p str but all lower case.
- * @details In contrast to to_lower_case(std::string&) this function does not change the input string @p str.
+ * @details In contrast to `plssvm::detail::to_lower_case(std::string&)` this function does not change the input string @p str.
  * @param[in] str the string to use in the transformation
  * @return the transformed string (`[[nodiscard]]`)
  */
@@ -111,13 +111,13 @@ std::string &to_lower_case(std::string &str);
 /**
  * @brief Convert the string @p str to its all upper case representation.
  * @param[in,out] str the string to transform
- * @return the transformed string
+ * @return a reference to the transformed string
  */
 std::string &to_upper_case(std::string &str);
 
 /**
  * @brief Return a new string with the same content as @p str but all upper case.
- * @details In contrast to to_upper_case(std::string&) this function does not change the input string @p str.
+ * @details In contrast to `plssvm::detail::to_upper_case(std::string&)` this function does not change the input string @p str.
  * @param[in] str the string to use in the transformation
  * @return the transformed string (`[[nodiscard]]`)
  */
