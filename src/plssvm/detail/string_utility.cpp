@@ -67,24 +67,24 @@ std::string &replace_all(std::string &str, const std::string_view what, const st
 }
 
 std::string &to_lower_case(std::string &str) {
-    std::transform(str.begin(), str.end(), str.begin(), [](const unsigned char c) { return static_cast<char>(std::tolower(c)); });
+    std::transform(str.begin(), str.end(), str.begin(), [](const unsigned char c) { return static_cast<char>(std::tolower(static_cast<int>(c))); });
     return str;
 }
 
 std::string as_lower_case(const std::string_view str) {
     std::string lowercase_str{ str };
-    std::transform(str.begin(), str.end(), lowercase_str.begin(), [](const unsigned char c) { return static_cast<char>(std::tolower(c)); });
+    std::transform(str.begin(), str.end(), lowercase_str.begin(), [](const unsigned char c) { return static_cast<char>(std::tolower(static_cast<int>(c))); });
     return lowercase_str;
 }
 
 std::string &to_upper_case(std::string &str) {
-    std::transform(str.begin(), str.end(), str.begin(), [](const unsigned char c) { return static_cast<char>(std::toupper(c)); });
+    std::transform(str.begin(), str.end(), str.begin(), [](const unsigned char c) { return static_cast<char>(std::toupper(static_cast<int>(c))); });
     return str;
 }
 
 std::string as_upper_case(const std::string_view str) {
     std::string uppercase_str{ str };
-    std::transform(str.begin(), str.end(), uppercase_str.begin(), [](const unsigned char c) { return static_cast<char>(std::toupper(c)); });
+    std::transform(str.begin(), str.end(), uppercase_str.begin(), [](const unsigned char c) { return static_cast<char>(std::toupper(static_cast<int>(c))); });
     return uppercase_str;
 }
 
