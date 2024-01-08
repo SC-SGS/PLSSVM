@@ -401,7 +401,7 @@ Usage:
   -b, --backend arg             choose the backend: automatic|openmp|cuda|hip|opencl|sycl (default: automatic)
   -p, --target_platform arg     choose the target platform: automatic|cpu|gpu_nvidia|gpu_amd|gpu_intel (default: automatic)
       --sycl_kernel_invocation_type arg
-                                choose the kernel invocation type when using SYCL as backend: automatic|nd_range (default: automatic)
+                                choose the kernel invocation type when using SYCL as backend: automatic|nd_range|hierarchical|scoped (default: automatic)
       --sycl_implementation_type arg
                                 choose the SYCL implementation to be used in the SYCL backend: automatic|dpcpp|adaptivecpp (default: automatic)
       --performance_tracking arg

@@ -26,7 +26,11 @@ enum class kernel_invocation_type {
     /** Use the best kernel invocation type for the current SYCL implementation and target hardware platform. */
     automatic,
     /** Use the [`nd_range` invocation type](https://www.khronos.org/registry/SYCL/specs/sycl-2020/html/sycl-2020.html#_parallel_for_invoke). */
-    nd_range
+    nd_range,
+    /** Use the [`hierarchical` invocation type](https://registry.khronos.org/SYCL/specs/sycl-2020/html/sycl-2020.html#_parallel_for_hierarchical_invoke). **Note:** deprecated in newer SYCL version, will be replaced with a "better" version in future SYCL specifications. */
+    hierarchical,
+    /** Use the AdaptiveCpp specific [`scoped` parallelism](https://github.com/AdaptiveCpp/AdaptiveCpp/blob/develop/doc/scoped-parallelism.md). */
+    scoped
 };
 
 /**
