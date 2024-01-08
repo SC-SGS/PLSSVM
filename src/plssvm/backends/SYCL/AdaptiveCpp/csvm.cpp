@@ -8,27 +8,30 @@
 
 #include "plssvm/backends/SYCL/AdaptiveCpp/csvm.hpp"
 
-#include "plssvm/backend_types.hpp"                                          // plssvm::backend_type
-#include "plssvm/backends/SYCL/AdaptiveCpp/detail/device_ptr.hpp"            // plssvm::adaptivecpp::detail::::device_ptr
-#include "plssvm/backends/SYCL/AdaptiveCpp/detail/queue_impl.hpp"            // plssvm::adaptivecpp::detail::queue (PImpl implementation)
-#include "plssvm/backends/SYCL/AdaptiveCpp/detail/utility.hpp"               // plssvm::adaptivecpp::detail::{get_device_list, device_synchronize, get_adaptivecpp_version_short, get_adaptivecpp_version}
-#include "plssvm/backends/SYCL/cg_explicit/blas.hpp"                         // plssvm::sycl::device_kernel_gemm
-#include "plssvm/backends/SYCL/cg_explicit/kernel_matrix_assembly.hpp"       // plssvm::sycl::{device_kernel_assembly_linear, device_kernel_assembly_polynomial, device_kernel_assembly_rbf}
-#include "plssvm/backends/SYCL/cg_implicit/kernel_matrix_assembly_blas.hpp"  // plssvm::sycl::{device_kernel_assembly_linear_symm, device_kernel_assembly_polynomial_symm, device_kernel_assembly_rbf_symm}
-#include "plssvm/backends/SYCL/exceptions.hpp"                               // plssvm::adaptivecpp::backend_exception
-#include "plssvm/backends/SYCL/predict_kernel.hpp"                           // plssvm::sycl::detail::{kernel_w, device_kernel_predict_polynomial, device_kernel_predict_rbf}
-#include "plssvm/constants.hpp"                                              // plssvm::{real_type, THREAD_BLOCK_SIZE, INTERNAL_BLOCK_SIZE, PADDING_SIZE}
-#include "plssvm/detail/assert.hpp"                                          // PLSSVM_ASSERT
-#include "plssvm/detail/logging.hpp"                                         // plssvm::detail::log
-#include "plssvm/detail/memory_size.hpp"                                     // plssvm::detail::memory_size
-#include "plssvm/detail/performance_tracker.hpp"                             // plssvm::detail::tracking_entry
-#include "plssvm/detail/utility.hpp"                                         // plssvm::detail::get_system_memory
-#include "plssvm/exceptions/exceptions.hpp"                                  // plssvm::exception
-#include "plssvm/kernel_function_types.hpp"                                  // plssvm::kernel_type
-#include "plssvm/parameter.hpp"                                              // plssvm::parameter, plssvm::detail::parameter
-#include "plssvm/shape.hpp"                                                  // plssvm::shape
-#include "plssvm/target_platforms.hpp"                                       // plssvm::target_platform
-#include "plssvm/verbosity_levels.hpp"                                       // plssvm::verbosity_level
+#include "plssvm/backend_types.hpp"                                                  // plssvm::backend_type
+#include "plssvm/backends/SYCL/AdaptiveCpp/detail/device_ptr.hpp"                    // plssvm::adaptivecpp::detail::::device_ptr
+#include "plssvm/backends/SYCL/AdaptiveCpp/detail/queue_impl.hpp"                    // plssvm::adaptivecpp::detail::queue (PImpl implementation)
+#include "plssvm/backends/SYCL/AdaptiveCpp/detail/utility.hpp"                       // plssvm::adaptivecpp::detail::{get_device_list, device_synchronize, get_adaptivecpp_version_short, get_adaptivecpp_version}
+#include "plssvm/backends/SYCL/cg_explicit/blas.hpp"                                 // plssvm::sycl::device_kernel_gemm
+#include "plssvm/backends/SYCL/cg_explicit/kernel_matrix_assembly_hierarchical.hpp"  // plssvm::sycl::detail::hierarchical::{device_kernel_assembly_linear, device_kernel_assembly_polynomial, device_kernel_assembly_rbf}
+#include "plssvm/backends/SYCL/cg_explicit/kernel_matrix_assembly_nd_range.hpp"      // plssvm::sycl::detail::nd_range::{device_kernel_assembly_linear, device_kernel_assembly_polynomial, device_kernel_assembly_rbf}
+#include "plssvm/backends/SYCL/cg_explicit/kernel_matrix_assembly_scoped.hpp"        // plssvm::sycl::detail::scoped::{device_kernel_assembly_linear, device_kernel_assembly_polynomial, device_kernel_assembly_rbf}
+#include "plssvm/backends/SYCL/cg_implicit/kernel_matrix_assembly_blas.hpp"          // plssvm::sycl::{device_kernel_assembly_linear_symm, device_kernel_assembly_polynomial_symm, device_kernel_assembly_rbf_symm}
+#include "plssvm/backends/SYCL/detail/utility.hpp"                                   // plssvm::sycl::detail::calculate_execution_range
+#include "plssvm/backends/SYCL/exceptions.hpp"                                       // plssvm::adaptivecpp::backend_exception
+#include "plssvm/backends/SYCL/predict_kernel.hpp"                                   // plssvm::sycl::detail::{kernel_w, device_kernel_predict_polynomial, device_kernel_predict_rbf}
+#include "plssvm/constants.hpp"                                                      // plssvm::{real_type, THREAD_BLOCK_SIZE, INTERNAL_BLOCK_SIZE, PADDING_SIZE}
+#include "plssvm/detail/assert.hpp"                                                  // PLSSVM_ASSERT
+#include "plssvm/detail/logging.hpp"                                                 // plssvm::detail::log
+#include "plssvm/detail/memory_size.hpp"                                             // plssvm::detail::memory_size
+#include "plssvm/detail/performance_tracker.hpp"                                     // plssvm::detail::tracking_entry
+#include "plssvm/detail/utility.hpp"                                                 // plssvm::detail::get_system_memory
+#include "plssvm/exceptions/exceptions.hpp"                                          // plssvm::exception
+#include "plssvm/kernel_function_types.hpp"                                          // plssvm::kernel_type
+#include "plssvm/parameter.hpp"                                                      // plssvm::parameter, plssvm::detail::parameter
+#include "plssvm/shape.hpp"                                                          // plssvm::shape
+#include "plssvm/target_platforms.hpp"                                               // plssvm::target_platform
+#include "plssvm/verbosity_levels.hpp"                                               // plssvm::verbosity_level
 
 #include "sycl/sycl.hpp"  // ::sycl::range, ::sycl::nd_range, ::sycl::handler, ::sycl::info::device
 
@@ -184,10 +187,7 @@ auto csvm::run_assemble_kernel_matrix_explicit(const parameter &params, const de
     if (max_work_group_size < THREAD_BLOCK_SIZE * THREAD_BLOCK_SIZE) {
         throw kernel_launch_resources{ fmt::format("Not enough work-items allowed for a work-groups of size {}x{}! Try reducing THREAD_BLOCK_SIZE_OLD.", THREAD_BLOCK_SIZE, THREAD_BLOCK_SIZE) };
     }
-    const ::sycl::range<2> block{ THREAD_BLOCK_SIZE, THREAD_BLOCK_SIZE };
-    const ::sycl::range<2> grid{ static_cast<std::size_t>(std::ceil(static_cast<double>(num_rows_reduced) / static_cast<double>(block[0] * INTERNAL_BLOCK_SIZE))) * block[0],
-                                 static_cast<std::size_t>(std::ceil(static_cast<double>(num_rows_reduced) / static_cast<double>(block[1] * INTERNAL_BLOCK_SIZE))) * block[1] };
-    const ::sycl::nd_range<2> execution_range{ grid, block };
+    const ::sycl::nd_range<2> execution_range = sycl::detail::calculate_execution_range(::sycl::range<2>{ num_rows_reduced, num_rows_reduced }, invocation_type_);
 
 #if defined(PLSSVM_USE_GEMM)
     device_ptr_type kernel_matrix_d{ (num_rows_reduced + PADDING_SIZE) * (num_rows_reduced + PADDING_SIZE), devices_[0] };  // store full matrix
@@ -200,17 +200,53 @@ auto csvm::run_assemble_kernel_matrix_explicit(const parameter &params, const de
     switch (params.kernel_type) {
         case kernel_function_type::linear:
             devices_[0].impl->sycl_queue.submit([&](::sycl::handler &cgh) {
-                cgh.parallel_for(execution_range, sycl::detail::device_kernel_assembly_linear{ cgh, kernel_matrix_d.get(), data_d.get(), num_rows_reduced, num_features, q_red_d.get(), QA_cost, cost_factor });
+                switch (invocation_type_) {
+                    case sycl::kernel_invocation_type::automatic:
+                        throw exception{ "Can't determine the sycl::kernel_invocation_type!" };
+                    case sycl::kernel_invocation_type::nd_range:
+                        cgh.parallel_for(execution_range, sycl::detail::nd_range::device_kernel_assembly_linear{ cgh, kernel_matrix_d.get(), data_d.get(), num_rows_reduced, num_features, q_red_d.get(), QA_cost, cost_factor });
+                        break;
+                    case sycl::kernel_invocation_type::hierarchical:
+                        cgh.parallel_for_work_group(execution_range.get_global_range(), execution_range.get_local_range(), sycl::detail::hierarchical::device_kernel_assembly_linear{ kernel_matrix_d.get(), data_d.get(), num_rows_reduced, num_features, q_red_d.get(), QA_cost, cost_factor });
+                        break;
+                    case sycl::kernel_invocation_type::scoped:
+                        cgh.parallel(execution_range.get_global_range(), execution_range.get_local_range(), sycl::detail::scoped::device_kernel_assembly_linear{ kernel_matrix_d.get(), data_d.get(), num_rows_reduced, num_features, q_red_d.get(), QA_cost, cost_factor });
+                        break;
+                }
             });
             break;
         case kernel_function_type::polynomial:
             devices_[0].impl->sycl_queue.submit([&](::sycl::handler &cgh) {
-                cgh.parallel_for(execution_range, sycl::detail::device_kernel_assembly_polynomial{ cgh, kernel_matrix_d.get(), data_d.get(), num_rows_reduced, num_features, q_red_d.get(), QA_cost, cost_factor, params.degree.value(), params.gamma.value(), params.coef0.value() });
+                switch (invocation_type_) {
+                    case sycl::kernel_invocation_type::automatic:
+                        throw exception{ "Can't determine the sycl::kernel_invocation_type!" };
+                    case sycl::kernel_invocation_type::nd_range:
+                        cgh.parallel_for(execution_range, sycl::detail::nd_range::device_kernel_assembly_polynomial{ cgh, kernel_matrix_d.get(), data_d.get(), num_rows_reduced, num_features, q_red_d.get(), QA_cost, cost_factor, params.degree.value(), params.gamma.value(), params.coef0.value() });
+                        break;
+                    case sycl::kernel_invocation_type::hierarchical:
+                        cgh.parallel_for_work_group(execution_range.get_global_range(), execution_range.get_local_range(), sycl::detail::hierarchical::device_kernel_assembly_polynomial{ kernel_matrix_d.get(), data_d.get(), num_rows_reduced, num_features, q_red_d.get(), QA_cost, cost_factor, params.degree.value(), params.gamma.value(), params.coef0.value() });
+                        break;
+                    case sycl::kernel_invocation_type::scoped:
+                        cgh.parallel(execution_range.get_global_range(), execution_range.get_local_range(), sycl::detail::scoped::device_kernel_assembly_polynomial{ kernel_matrix_d.get(), data_d.get(), num_rows_reduced, num_features, q_red_d.get(), QA_cost, cost_factor, params.degree.value(), params.gamma.value(), params.coef0.value() });
+                        break;
+                }
             });
             break;
         case kernel_function_type::rbf:
             devices_[0].impl->sycl_queue.submit([&](::sycl::handler &cgh) {
-                cgh.parallel_for(execution_range, sycl::detail::device_kernel_assembly_rbf{ cgh, kernel_matrix_d.get(), data_d.get(), num_rows_reduced, num_features, q_red_d.get(), QA_cost, cost_factor, params.gamma.value() });
+                switch (invocation_type_) {
+                    case sycl::kernel_invocation_type::automatic:
+                        throw exception{ "Can't determine the sycl::kernel_invocation_type!" };
+                    case sycl::kernel_invocation_type::nd_range:
+                        cgh.parallel_for(execution_range, sycl::detail::nd_range::device_kernel_assembly_rbf{ cgh, kernel_matrix_d.get(), data_d.get(), num_rows_reduced, num_features, q_red_d.get(), QA_cost, cost_factor, params.gamma.value() });
+                        break;
+                    case sycl::kernel_invocation_type::hierarchical:
+                        cgh.parallel_for_work_group(execution_range.get_global_range(), execution_range.get_local_range(), sycl::detail::hierarchical::device_kernel_assembly_rbf{ kernel_matrix_d.get(), data_d.get(), num_rows_reduced, num_features, q_red_d.get(), QA_cost, cost_factor, params.gamma.value() });
+                        break;
+                    case sycl::kernel_invocation_type::scoped:
+                        cgh.parallel(execution_range.get_global_range(), execution_range.get_local_range(), sycl::detail::scoped::device_kernel_assembly_rbf{ kernel_matrix_d.get(), data_d.get(), num_rows_reduced, num_features, q_red_d.get(), QA_cost, cost_factor, params.gamma.value() });
+                        break;
+                }
             });
             break;
     }

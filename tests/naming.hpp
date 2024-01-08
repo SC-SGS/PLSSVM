@@ -151,7 +151,14 @@ template <typename T>
     } else if constexpr (std::is_base_of_v<plssvm::exception, T>) {
         return std::string{ util::exception_type_name<T>() };
     } else if constexpr (has_csvm_type_member_typedef_v<T>) {
-        return fmt::format("{}", plssvm::csvm_to_backend_type_v<typename T::csvm_type>);
+        // format a test name containing a CSVM
+        constexpr plssvm::backend_type backend = plssvm::csvm_to_backend_type_v<typename T::csvm_type>;
+        if constexpr (backend != plssvm::backend_type::sycl) {
+            return fmt::format("{}", backend);
+        } else {
+            // for SYCL, we also have to take into account the kernel invocation type!
+            return fmt::format("{}_{}", backend, std::get<0>(T::additional_arguments).second);
+        }
     } else if constexpr (has_device_ptr_type_member_typedef_v<T>) {
         using device_ptr_type = typename T::device_ptr_type;
         return fmt::format("{}", plssvm::detail::arithmetic_type_name<typename device_ptr_type::value_type>());
@@ -396,17 +403,18 @@ template <typename T>
     return detail::escape_string(fmt::format("{}__AND__{}__WITH__{}__RESULT_IDX__{}", i, j, idx_to_find, expected_global_idx));
 }
 
-// kernel_function_types -> KernelFunction
+// execution ranges for the SYCL backends -> AdaptiveCppDetailUtility, DPCPPDetailUtility
 /**
- * @brief Generate a test case name for the LIBSVM model parsing utility function `plssvm::detail::io::calculate_alpha_idx` tests.
+ * @brief Generate a test case name for the execution_range tests.
  * @tparam T the test suite type
  * @param param_info the parameters to aggregate
  * @return the test case name (`[[nodiscard]]`)
  */
-// template <typename T>
-//[[nodiscard]] inline std::string pretty_print_kernel_function(const ::testing::TestParamInfo<typename T::ParamType> &param_info) {
-//     return detail::escape_string(fmt::format("{}__{}", std::get<0>(param_info.param), fmt::join(std::get<1>(param_info.param), "__")));
-// }
+template <typename T>
+[[nodiscard]] inline std::string pretty_print_execution_range(const ::testing::TestParamInfo<typename T::ParamType> &param_info) {
+    const auto &[iteration_range, invocation, result] = param_info.param;
+    return detail::escape_string(fmt::format("{}x{}__AND__{}__RESULT__{}x{}_{}x{}", iteration_range[0], iteration_range[1], invocation, result.get_global_range()[0], result.get_global_range()[1], result.get_local_range()[0], result.get_local_range()[1]));
+}
 
 }  // namespace naming
 

@@ -6,18 +6,18 @@
  * @license This file is part of the PLSSVM project which is released under the MIT license.
  *          See the LICENSE.md file in the project root for full license information.
  *
- * @brief Functions for explicitly assembling the kernel matrix using the SYCL backend.
+ * @brief Functions for explicitly assembling the kernel matrix using the SYCL backend with nd_range kernels.
  */
 
-#ifndef PLSSVM_BACKENDS_SYCL_CG_EXPLICIT_KERNEL_MATRIX_ASSEMBLY_HPP_
-#define PLSSVM_BACKENDS_SYCL_CG_EXPLICIT_KERNEL_MATRIX_ASSEMBLY_HPP_
+#ifndef PLSSVM_BACKENDS_SYCL_CG_EXPLICIT_KERNEL_MATRIX_ASSEMBLY_ND_RANGE_HPP_
+#define PLSSVM_BACKENDS_SYCL_CG_EXPLICIT_KERNEL_MATRIX_ASSEMBLY_ND_RANGE_HPP_
 #pragma once
 
 #include "plssvm/constants.hpp"  // plssvm::{real_type, THREAD_BLOCK_SIZE, INTERNAL_BLOCK_SIZE, FEATURE_BLOCK_SIZE, PADDING_SIZE}
 
-#include "sycl/sycl.hpp"  // sycl::nd_item, sycl::pown, sycl::exp
+#include "sycl/sycl.hpp"  // sycl::handler, sycl::nd_item, sycl::pown, sycl::exp
 
-namespace plssvm::sycl::detail {
+namespace plssvm::sycl::detail::nd_range {
 
 /**
  * @brief Create the explicit kernel matrix using the linear kernel function (\f$\vec{u}^T \cdot \vec{v}\f$).
@@ -344,6 +344,6 @@ class device_kernel_assembly_rbf {
     /// @endcond
 };
 
-}  // namespace plssvm::sycl::detail
+}  // namespace plssvm::sycl::detail::nd_range
 
-#endif  // PLSSVM_BACKENDS_SYCL_CG_EXPLICIT_KERNEL_MATRIX_ASSEMBLY_HPP_
+#endif  // PLSSVM_BACKENDS_SYCL_CG_EXPLICIT_KERNEL_MATRIX_ASSEMBLY_ND_RANGE_HPP_

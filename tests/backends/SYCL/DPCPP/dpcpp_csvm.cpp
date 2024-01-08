@@ -137,14 +137,17 @@ TEST_F(DPCPPCSVM, get_kernel_invocation_type) {
     EXPECT_NE(svm.get_kernel_invocation_type(), plssvm::sycl::kernel_invocation_type::automatic);
 }
 
+template <plssvm::sycl::kernel_invocation_type invocation_type>
 struct dpcpp_csvm_test_type {
     using mock_csvm_type = mock_dpcpp_csvm;
     using csvm_type = plssvm::dpcpp::csvm;
     using device_ptr_type = typename csvm_type::device_ptr_type;
-    inline static auto additional_arguments = std::make_tuple();
+inline constexpr static auto additional_arguments = std::make_tuple(std::make_pair(plssvm::sycl_kernel_invocation_type, invocation_type));
 };
 
-using dpcpp_csvm_test_tuple = std::tuple<dpcpp_csvm_test_type>;
+// TODO: fatal error: recursive template instantiation exceeded maximum depth of 1024
+using dpcpp_csvm_test_tuple = std::tuple<dpcpp_csvm_test_type<plssvm::sycl::kernel_invocation_type::nd_range>,
+                                         dpcpp_csvm_test_type<plssvm::sycl::kernel_invocation_type::hierarchical>>;
 using dpcpp_csvm_test_label_type_list = util::cartesian_type_product_t<dpcpp_csvm_test_tuple, plssvm::detail::supported_label_types>;
 using dpcpp_csvm_test_type_list = util::cartesian_type_product_t<dpcpp_csvm_test_tuple>;
 

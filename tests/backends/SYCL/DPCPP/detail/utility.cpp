@@ -10,12 +10,19 @@
 
 #include "plssvm/backends/SYCL/DPCPP/detail/utility.hpp"  // plssvm::dpcpp::detail::get_device_list
 
-#include "plssvm/target_platforms.hpp"  // plssvm::target_platform
+#include "plssvm/backends/SYCL/detail/utility.hpp"          // plssvm::sycl::detail::calculate_execution_range
+#include "plssvm/backends/SYCL/kernel_invocation_type.hpp"  // plssvm::sycl::kernel_invocation_type
+#include "plssvm/target_platforms.hpp"                      // plssvm::target_platform
 
-#include "gtest/gtest.h"  // TEST, EXPECT_NE, EXPECT_FALSE
+#include "sycl/sycl.hpp"  // sycl::range, sycl::nd_range
+
+#include "tests/naming.hpp"  // naming::pretty_print_execution_range
+
+#include "gtest/gtest.h"  // TEST, EXPECT_NE, EXPECT_FALSE, TEST_P, INSTANTIATE_TEST_SUITE_P, ::testing::TestWithParam, ::testing::Values
 
 #include <regex>   // std::regex, std::regex::extended, std::regex_match
 #include <string>  // std::string
+#include <tuple>   // std::tuple, std::make_tuple
 
 TEST(DPCPPUtility, get_device_list) {
     const auto &[queues, actual_target] = plssvm::dpcpp::detail::get_device_list(plssvm::target_platform::automatic);
@@ -25,12 +32,64 @@ TEST(DPCPPUtility, get_device_list) {
     EXPECT_NE(actual_target, plssvm::target_platform::automatic);
 }
 
-TEST(AdaptiveCppUtility, get_dpcpp_version) {
+TEST(DPCPPUtility, get_dpcpp_version) {
     const std::regex reg{ "[0-9]+\\.[0-9]+\\.[0-9]+", std::regex::extended };
     EXPECT_TRUE(std::regex_match(plssvm::dpcpp::detail::get_dpcpp_version(), reg));
 }
 
-TEST(AdaptiveCppUtility, get_dpcpp_timestamp_version) {
+TEST(DPCPPUtility, get_dpcpp_timestamp_version) {
     const std::string version = plssvm::dpcpp::detail::get_dpcpp_timestamp_version();
     EXPECT_FALSE(version.empty());
 }
+
+class DPCPPDetailUtility : public ::testing::TestWithParam<std::tuple<::sycl::range<2>, plssvm::sycl::kernel_invocation_type, ::sycl::nd_range<2>>> {
+  public:
+    /**
+     * @brief The correct block size equals a two-dimensional sycl::range of size `plssvm::THREAD_BLOCK_SIZE`.
+     * @return the correct SYCL block size (`[[nodiscard]]`)
+     */
+    [[nodiscard]] static ::sycl::range<2> correct_block() {
+        return { plssvm::THREAD_BLOCK_SIZE, plssvm::THREAD_BLOCK_SIZE };
+    }
+
+    /**
+     * @brief The correct grid size when using nd_range kernels.
+     * @return the correct SYCL grid size (`[[nodiscard]]`)
+     */
+    [[nodiscard]] static ::sycl::range<2> correct_grid_nd_range(const unsigned long long x, const unsigned long long y) {
+        const auto block = DPCPPDetailUtility::correct_block();
+        return { static_cast<std::size_t>(std::ceil(static_cast<double>(x) / static_cast<double>(block[0] * plssvm::INTERNAL_BLOCK_SIZE))) * block[0],
+                 static_cast<std::size_t>(std::ceil(static_cast<double>(y) / static_cast<double>(block[1] * plssvm::INTERNAL_BLOCK_SIZE))) * block[1] };
+    }
+
+    /**
+     * @brief The correct block size when using hierarchical kernels.
+     * @return the correct SYCL grid size (`[[nodiscard]]`)
+     */
+    [[nodiscard]] static ::sycl::range<2> correct_grid(const unsigned long long x, const unsigned long long y) {
+        const auto block = DPCPPDetailUtility::correct_block();
+        return { static_cast<std::size_t>(std::ceil(static_cast<double>(x) / static_cast<double>(block[0] * plssvm::INTERNAL_BLOCK_SIZE))),
+                 static_cast<std::size_t>(std::ceil(static_cast<double>(y) / static_cast<double>(block[1] * plssvm::INTERNAL_BLOCK_SIZE))) };
+    }
+};
+
+TEST_P(DPCPPDetailUtility, calculate_execution_range) {
+    // get generated parameter
+    const auto &[iteration_range, invocation, result] = GetParam();
+
+    // calculate execution_range
+    const ::sycl::nd_range<2> execution_range = plssvm::sycl::detail::calculate_execution_range(iteration_range, invocation);
+
+    // check values for correctness
+    EXPECT_EQ(execution_range.get_global_range()[0], result.get_global_range()[0]);
+    EXPECT_EQ(execution_range.get_global_range()[1], result.get_global_range()[1]);
+    EXPECT_EQ(execution_range.get_local_range()[0], result.get_local_range()[0]);
+    EXPECT_EQ(execution_range.get_local_range()[1], result.get_local_range()[1]);
+}
+
+// clang-format off
+INSTANTIATE_TEST_SUITE_P(DPCPPDetailUtility, DPCPPDetailUtility, ::testing::Values(
+        std::make_tuple(::sycl::range<2>{ 42, 42 }, plssvm::sycl::kernel_invocation_type::nd_range, ::sycl::nd_range<2>{ DPCPPDetailUtility::correct_grid_nd_range(42, 42), DPCPPDetailUtility::correct_block() }),
+        std::make_tuple(::sycl::range<2>{ 42, 42 }, plssvm::sycl::kernel_invocation_type::hierarchical, ::sycl::nd_range<2>{ DPCPPDetailUtility::correct_grid(42, 42), DPCPPDetailUtility::correct_block() })),
+        naming::pretty_print_execution_range<DPCPPDetailUtility>);
+// clang-format on

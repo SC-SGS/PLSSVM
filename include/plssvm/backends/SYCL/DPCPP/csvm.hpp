@@ -21,6 +21,7 @@
 #include "plssvm/detail/igor_utility.hpp"                    // plssvm::detail::get_value_from_named_parameter
 #include "plssvm/detail/memory_size.hpp"                     // plssvm::detail::memory_size
 #include "plssvm/detail/type_traits.hpp"                     // PLSSVM_REQUIRES, plssvm::detail::remove_cvref_t
+#include "plssvm/exceptions/exceptions.hpp"                  // plssvm::invalid_parameter_exception
 #include "plssvm/parameter.hpp"                              // plssvm::parameter, plssvm::detail::parameter
 #include "plssvm/target_platforms.hpp"                       // plssvm::target_platform
 
@@ -83,6 +84,7 @@ class csvm : public ::plssvm::detail::gpu_csvm<detail::device_ptr, detail::queue
      * @param[in] target the target platform used for this C-SVM
      * @param[in] named_args the additional optional named arguments
      * @throws plssvm::exception all exceptions thrown in the base class constructor
+     * @throws plssvm::invalid_parameter_exception the provided SYCL kernel invocation type is "scoped"
      * @throws plssvm::dpcpp::backend_exception if the requested target is not available
      * @throws plssvm::dpcpp::backend_exception if no device for the requested target was found
      */
@@ -96,6 +98,10 @@ class csvm : public ::plssvm::detail::gpu_csvm<detail::device_ptr, detail::queue
         if constexpr (parser.has(sycl_kernel_invocation_type)) {
             // compile time check: the value must have the correct type
             invocation_type_ = ::plssvm::detail::get_value_from_named_parameter<sycl::kernel_invocation_type>(parser, sycl_kernel_invocation_type);
+            // the invocation type "scoped" isn't supported by DPC++
+            if (invocation_type_ == sycl::kernel_invocation_type::scoped) {
+                throw ::plssvm::invalid_parameter_exception{ "The provided sycl::kernel_invocation_type::scoped isn't supported by DPC++!" };
+            }
         }
         this->init(target);
     }
