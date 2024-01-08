@@ -95,7 +95,7 @@ TEST_F(ParserTrain, all_arguments) {
     // create artificial command line arguments in test fixture
     std::vector<std::string> cmd_args = { "./plssvm-train", "--kernel_type", "1", "--degree", "2", "--gamma", "1.5", "--coef0", "-1.5", "--cost", "2", "--epsilon", "1e-10", "--max_iter", "100", "--classification", "oao", "--solver", "cg_implicit", "--backend", "cuda", "--target_platform", "gpu_nvidia", "--use_strings_as_labels", "--verbosity", "libsvm" };
 #if defined(PLSSVM_HAS_SYCL_BACKEND)
-    cmd_args.insert(cmd_args.end(), { "--sycl_kernel_invocation_type", "nd_range", "--sycl_implementation_type", "dpcpp" });
+    cmd_args.insert(cmd_args.end(), { "--sycl_kernel_invocation_type", "work_group", "--sycl_implementation_type", "dpcpp" });
 #endif
 #if defined(PLSSVM_PERFORMANCE_TRACKER_ENABLED)
     cmd_args.insert(cmd_args.end(), { "--performance_tracking", "tracking.yaml" });
@@ -123,7 +123,7 @@ TEST_F(ParserTrain, all_arguments) {
     EXPECT_EQ(parser.target, plssvm::target_platform::gpu_nvidia);
     EXPECT_EQ(parser.solver, plssvm::solver_type::cg_implicit);
 #if defined(PLSSVM_HAS_SYCL_BACKEND)
-    EXPECT_EQ(parser.sycl_kernel_invocation_type, plssvm::sycl::kernel_invocation_type::nd_range);
+    EXPECT_EQ(parser.sycl_kernel_invocation_type, plssvm::sycl::kernel_invocation_type::work_group);
     EXPECT_EQ(parser.sycl_implementation_type, plssvm::sycl::implementation_type::dpcpp);
 #else
     EXPECT_EQ(parser.sycl_kernel_invocation_type, plssvm::sycl::kernel_invocation_type::automatic);
@@ -143,7 +143,7 @@ TEST_F(ParserTrain, all_arguments_output) {
     // create artificial command line arguments in test fixture
     std::vector<std::string> cmd_args = { "./plssvm-train", "--kernel_type", "1", "--degree", "2", "--gamma", "1.5", "--coef0", "-1.5", "--cost", "2", "--epsilon", "1e-10", "--max_iter", "100", "--classification", "oao", "--solver", "cg_implicit", "--backend", "sycl", "--target_platform", "gpu_nvidia", "--use_strings_as_labels", "--verbosity", "libsvm" };
 #if defined(PLSSVM_HAS_SYCL_BACKEND)
-    cmd_args.insert(cmd_args.end(), { "--sycl_kernel_invocation_type", "nd_range", "--sycl_implementation_type", "dpcpp" });
+    cmd_args.insert(cmd_args.end(), { "--sycl_kernel_invocation_type", "work_group", "--sycl_implementation_type", "dpcpp" });
 #endif
 #if defined(PLSSVM_PERFORMANCE_TRACKER_ENABLED)
     cmd_args.insert(cmd_args.end(), { "--performance_tracking", "tracking.yaml" });
@@ -168,7 +168,7 @@ TEST_F(ParserTrain, all_arguments_output) {
         "solver: cg_implicit\n";
 #if defined(PLSSVM_HAS_SYCL_BACKEND)
     correct += "SYCL implementation type: dpcpp\n"
-               "SYCL kernel invocation type: nd_range\n";
+               "SYCL kernel invocation type: work_group\n";
 #else
     correct += "SYCL implementation type: automatic\n"
                "SYCL kernel invocation type: automatic\n";
@@ -484,7 +484,7 @@ TEST_P(ParserTrainSYCLKernelInvocation, parsing) {
 // clang-format off
 INSTANTIATE_TEST_SUITE_P(ParserTrain, ParserTrainSYCLKernelInvocation, ::testing::Combine(
                 ::testing::Values("--sycl_kernel_invocation_type"),
-                ::testing::Values("automatic", "nd_range", "ND_RANGE")),
+                ::testing::Values("automatic", "basic", "BASIC", "work_group", "WORK_GROUP", "hierarchical", "HIERARCHICAL", "scoped", "SCOPED")),
                 naming::pretty_print_parameter_flag_and_value<ParserTrainSYCLKernelInvocation>);
 // clang-format on
 

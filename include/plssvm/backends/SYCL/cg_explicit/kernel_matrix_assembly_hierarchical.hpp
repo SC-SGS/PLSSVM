@@ -6,7 +6,7 @@
  * @license This file is part of the PLSSVM project which is released under the MIT license.
  *          See the LICENSE.md file in the project root for full license information.
  *
- * @brief Functions for explicitly assembling the kernel matrix using the SYCL backend with hierarchical kernels.
+ * @brief Functions for explicitly assembling the kernel matrix using the SYCL backend with hierarchical data parallel kernels.
  */
 
 #ifndef PLSSVM_BACKENDS_SYCL_CG_EXPLICIT_KERNEL_MATRIX_ASSEMBLY_HIERARCHICAL_HPP_

@@ -53,10 +53,10 @@ class DPCPPDetailUtility : public ::testing::TestWithParam<std::tuple<::sycl::ra
     }
 
     /**
-     * @brief The correct grid size when using nd_range kernels.
+     * @brief The correct grid size when using work-group data parallel kernels.
      * @return the correct SYCL grid size (`[[nodiscard]]`)
      */
-    [[nodiscard]] static ::sycl::range<2> correct_grid_nd_range(const unsigned long long x, const unsigned long long y) {
+    [[nodiscard]] static ::sycl::range<2> correct_grid_work_group(const unsigned long long x, const unsigned long long y) {
         const auto block = DPCPPDetailUtility::correct_block();
         return { static_cast<std::size_t>(std::ceil(static_cast<double>(x) / static_cast<double>(block[0] * plssvm::INTERNAL_BLOCK_SIZE))) * block[0],
                  static_cast<std::size_t>(std::ceil(static_cast<double>(y) / static_cast<double>(block[1] * plssvm::INTERNAL_BLOCK_SIZE))) * block[1] };
@@ -89,7 +89,7 @@ TEST_P(DPCPPDetailUtility, calculate_execution_range) {
 
 // clang-format off
 INSTANTIATE_TEST_SUITE_P(DPCPPDetailUtility, DPCPPDetailUtility, ::testing::Values(
-        std::make_tuple(::sycl::range<2>{ 42, 42 }, plssvm::sycl::kernel_invocation_type::nd_range, ::sycl::nd_range<2>{ DPCPPDetailUtility::correct_grid_nd_range(42, 42), DPCPPDetailUtility::correct_block() }),
+        std::make_tuple(::sycl::range<2>{ 42, 42 }, plssvm::sycl::kernel_invocation_type::work_group, ::sycl::nd_range<2>{ DPCPPDetailUtility::correct_grid_work_group(42, 42), DPCPPDetailUtility::correct_block() }),
         std::make_tuple(::sycl::range<2>{ 42, 42 }, plssvm::sycl::kernel_invocation_type::hierarchical, ::sycl::nd_range<2>{ DPCPPDetailUtility::correct_grid(42, 42), DPCPPDetailUtility::correct_block() })),
         naming::pretty_print_execution_range<DPCPPDetailUtility>);
 // clang-format on

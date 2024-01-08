@@ -120,7 +120,7 @@ try:
                 if sycl_impl == plssvm.sycl.ImplementationType.AUTOMATIC:
                     continue
                 available_backends.append((backend, {"sycl_implementation_type": sycl_impl,
-                                                     "sycl_kernel_invocation_type": plssvm.sycl.KernelInvocationType.ND_RANGE}))
+                                                     "sycl_kernel_invocation_type": plssvm.sycl.KernelInvocationType.WORK_GROUP}))
         else:
             available_backends.append((backend, {}))
 

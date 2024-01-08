@@ -34,7 +34,7 @@ namespace plssvm::sycl::detail {
                            static_cast<std::size_t>(std::ceil(static_cast<double>(iteration_range[1]) / static_cast<double>(block[1] * INTERNAL_BLOCK_SIZE))) };
 
     // for the nd_range kernels, the total number of work-items per dimension must be used
-    if (invocation == kernel_invocation_type::nd_range) {
+    if (invocation == kernel_invocation_type::work_group) {
         grid[0] *= block[0];
         grid[1] *= block[1];
     }

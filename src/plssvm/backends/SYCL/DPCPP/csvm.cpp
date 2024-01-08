@@ -10,8 +10,9 @@
 
 #include "plssvm/backend_types.hpp"                                                  // plssvm::backend_type
 #include "plssvm/backends/SYCL/cg_explicit/blas.hpp"                                 // plssvm::sycl::device_kernel_gemm
+#include "plssvm/backends/SYCL/cg_explicit/kernel_matrix_assembly_basic.hpp"         // plssvm::sycl::detail::basic::{device_kernel_assembly_linear, device_kernel_assembly_polynomial, device_kernel_assembly_rbf}
 #include "plssvm/backends/SYCL/cg_explicit/kernel_matrix_assembly_hierarchical.hpp"  // plssvm::sycl::detail::hierarchical::{device_kernel_assembly_linear, device_kernel_assembly_polynomial, device_kernel_assembly_rbf}
-#include "plssvm/backends/SYCL/cg_explicit/kernel_matrix_assembly_nd_range.hpp"      // plssvm::sycl::detail::nd_range::{device_kernel_assembly_linear, device_kernel_assembly_polynomial, device_kernel_assembly_rbf}
+#include "plssvm/backends/SYCL/cg_explicit/kernel_matrix_assembly_work_group.hpp"    // plssvm::sycl::detail::work_group::{device_kernel_assembly_linear, device_kernel_assembly_polynomial, device_kernel_assembly_rbf}
 #include "plssvm/backends/SYCL/cg_implicit/kernel_matrix_assembly_blas.hpp"          // plssvm::sycl::{device_kernel_assembly_linear_symm, device_kernel_assembly_polynomial_symm, device_kernel_assembly_rbf_symm}
 #include "plssvm/backends/SYCL/detail/utility.hpp"                                   // plssvm::sycl::detail::calculate_execution_range
 #include "plssvm/backends/SYCL/DPCPP/detail/device_ptr.hpp"                          // plssvm::dpcpp::detail::::device_ptr
@@ -93,8 +94,8 @@ void csvm::init(const target_platform target) {
 
     // set correct kernel invocation type if "automatic" has been provided
     if (invocation_type_ == sycl::kernel_invocation_type::automatic) {
-        // always use nd_range for DPC++
-        invocation_type_ = sycl::kernel_invocation_type::nd_range;
+        // always use work_group for DPC++
+        invocation_type_ = sycl::kernel_invocation_type::work_group;
     }
 
     plssvm::detail::log(verbosity_level::full,
@@ -182,57 +183,59 @@ auto csvm::run_assemble_kernel_matrix_explicit(const parameter &params, const de
     kernel_matrix_d.memset(0);
     const real_type cost_factor = real_type{ 1.0 } / params.cost;
 
-    switch (params.kernel_type) {
-        case kernel_function_type::linear:
+    switch (invocation_type_) {
+        case sycl::kernel_invocation_type::automatic:
+            throw exception{ "Can't determine the sycl::kernel_invocation_type!" };
+        case sycl::kernel_invocation_type::basic:
+            // basic data parallel kernels
             devices_[0].impl->sycl_queue.submit([&](::sycl::handler &cgh) {
-                switch (invocation_type_) {
-                    case sycl::kernel_invocation_type::automatic:
-                        throw exception{ "Can't determine the sycl::kernel_invocation_type!" };
-                    case sycl::kernel_invocation_type::nd_range:
-                        cgh.parallel_for(execution_range, sycl::detail::nd_range::device_kernel_assembly_linear{ cgh, kernel_matrix_d.get(), data_d.get(), num_rows_reduced, num_features, q_red_d.get(), QA_cost, cost_factor });
+                switch (params.kernel_type.value()) {
+                    case kernel_function_type::linear:
+                        cgh.parallel_for(::sycl::range<2>{ num_rows_reduced, num_rows_reduced }, sycl::detail::basic::device_kernel_assembly_linear{ kernel_matrix_d.get(), data_d.get(), num_rows_reduced, num_features, q_red_d.get(), QA_cost, cost_factor });
                         break;
-                    case sycl::kernel_invocation_type::hierarchical:
+                    case kernel_function_type::polynomial:
+                        cgh.parallel_for(::sycl::range<2>{ num_rows_reduced, num_rows_reduced }, sycl::detail::basic::device_kernel_assembly_polynomial{ kernel_matrix_d.get(), data_d.get(), num_rows_reduced, num_features, q_red_d.get(), QA_cost, cost_factor, params.degree.value(), params.gamma.value(), params.coef0.value() });
+                        break;
+                    case kernel_function_type::rbf:
+                        cgh.parallel_for(::sycl::range<2>{ num_rows_reduced, num_rows_reduced }, sycl::detail::basic::device_kernel_assembly_rbf{ kernel_matrix_d.get(), data_d.get(), num_rows_reduced, num_features, q_red_d.get(), QA_cost, cost_factor, params.gamma.value() });
+                        break;
+                }
+            });
+            break;
+        case sycl::kernel_invocation_type::work_group:
+            // work-group data parallel kernels
+            devices_[0].impl->sycl_queue.submit([&](::sycl::handler &cgh) {
+                switch (params.kernel_type.value()) {
+                    case kernel_function_type::linear:
+                        cgh.parallel_for(execution_range, sycl::detail::work_group::device_kernel_assembly_linear{ cgh, kernel_matrix_d.get(), data_d.get(), num_rows_reduced, num_features, q_red_d.get(), QA_cost, cost_factor });
+                        break;
+                    case kernel_function_type::polynomial:
+                        cgh.parallel_for(execution_range, sycl::detail::work_group::device_kernel_assembly_polynomial{ cgh, kernel_matrix_d.get(), data_d.get(), num_rows_reduced, num_features, q_red_d.get(), QA_cost, cost_factor, params.degree.value(), params.gamma.value(), params.coef0.value() });
+                        break;
+                    case kernel_function_type::rbf:
+                        cgh.parallel_for(execution_range, sycl::detail::work_group::device_kernel_assembly_rbf{ cgh, kernel_matrix_d.get(), data_d.get(), num_rows_reduced, num_features, q_red_d.get(), QA_cost, cost_factor, params.gamma.value() });
+                        break;
+                }
+            });
+            break;
+        case sycl::kernel_invocation_type::hierarchical:
+            // hierarchical data parallel kernels
+            devices_[0].impl->sycl_queue.submit([&](::sycl::handler &cgh) {
+                switch (params.kernel_type.value()) {
+                    case kernel_function_type::linear:
                         cgh.parallel_for_work_group(execution_range.get_global_range(), execution_range.get_local_range(), sycl::detail::hierarchical::device_kernel_assembly_linear{ kernel_matrix_d.get(), data_d.get(), num_rows_reduced, num_features, q_red_d.get(), QA_cost, cost_factor });
                         break;
-                    case sycl::kernel_invocation_type::scoped:
-                        throw exception{ "Can't use the sycl::kernel_invocation_type::scoped together with DPC++!" };
-                        break;
-                }
-            });
-            break;
-        case kernel_function_type::polynomial:
-            devices_[0].impl->sycl_queue.submit([&](::sycl::handler &cgh) {
-                switch (invocation_type_) {
-                    case sycl::kernel_invocation_type::automatic:
-                        throw exception{ "Can't determine the sycl::kernel_invocation_type!" };
-                    case sycl::kernel_invocation_type::nd_range:
-                        cgh.parallel_for(execution_range, sycl::detail::nd_range::device_kernel_assembly_polynomial{ cgh, kernel_matrix_d.get(), data_d.get(), num_rows_reduced, num_features, q_red_d.get(), QA_cost, cost_factor, params.degree.value(), params.gamma.value(), params.coef0.value() });
-                        break;
-                    case sycl::kernel_invocation_type::hierarchical:
+                    case kernel_function_type::polynomial:
                         cgh.parallel_for_work_group(execution_range.get_global_range(), execution_range.get_local_range(), sycl::detail::hierarchical::device_kernel_assembly_polynomial{ kernel_matrix_d.get(), data_d.get(), num_rows_reduced, num_features, q_red_d.get(), QA_cost, cost_factor, params.degree.value(), params.gamma.value(), params.coef0.value() });
                         break;
-                    case sycl::kernel_invocation_type::scoped:
-                        throw exception{ "Can't use the sycl::kernel_invocation_type::scoped together with DPC++!" };
+                    case kernel_function_type::rbf:
+                        cgh.parallel_for_work_group(execution_range.get_global_range(), execution_range.get_local_range(), sycl::detail::hierarchical::device_kernel_assembly_rbf{ kernel_matrix_d.get(), data_d.get(), num_rows_reduced, num_features, q_red_d.get(), QA_cost, cost_factor, params.gamma.value() });
                         break;
                 }
             });
             break;
-        case kernel_function_type::rbf:
-            devices_[0].impl->sycl_queue.submit([&](::sycl::handler &cgh) {
-                switch (invocation_type_) {
-                    case sycl::kernel_invocation_type::automatic:
-                        throw exception{ "Can't determine the sycl::kernel_invocation_type!" };
-                    case sycl::kernel_invocation_type::nd_range:
-                        cgh.parallel_for(execution_range, sycl::detail::nd_range::device_kernel_assembly_rbf{ cgh, kernel_matrix_d.get(), data_d.get(), num_rows_reduced, num_features, q_red_d.get(), QA_cost, cost_factor, params.gamma.value() });
-                        break;
-                    case sycl::kernel_invocation_type::hierarchical:
-                        cgh.parallel_for_work_group(execution_range.get_global_range(), execution_range.get_local_range(), sycl::detail::hierarchical::device_kernel_assembly_rbf{ kernel_matrix_d.get(), data_d.get(), num_rows_reduced, num_features, q_red_d.get(), QA_cost, cost_factor, params.gamma.value() });
-                        break;
-                    case sycl::kernel_invocation_type::scoped:
-                        throw exception{ "Can't use the sycl::kernel_invocation_type::scoped together with DPC++!" };
-                        break;
-                }
-            });
+        case sycl::kernel_invocation_type::scoped:
+            throw exception{ "Can't use the sycl::kernel_invocation_type::scoped together with DPC++!" };
             break;
     }
     detail::device_synchronize(devices_[0]);

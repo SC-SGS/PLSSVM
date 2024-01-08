@@ -178,10 +178,10 @@ The following table lists all PLSSVM enumerations exposed on the Python side:
 
 If a SYCL implementation is available, additional enumerations are available:
 
-| enumeration            | values                              | description                                                                                                                                                                                                                                               |
-|------------------------|-------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `ImplementationType`   | `AUTOMATIC`, `DPCPP`, `ADAPTIVECPP` | The different supported SYCL implementation types (default: `AUTOMATIC`). If `AUTOMATIC` is provided, determines the used SYCL implementation based on the value of `-DPLSSVM_SYCL_BACKEND_PREFERRED_IMPLEMENTATION` provided during PLSSVM'S build step. |
-| `KernelInvocationType` | `AUTOMATIC`, `ND_RANGE`             | The different supported SYCL kernel invocation types (default: `AUTOMATIC`). If `AUTOMATIC` is provided, simply uses `ND_RANGE` (only implemented to be able to add new invocation types in the future).                                                  |
+| enumeration            | values                                                       | description                                                                                                                                                                                                                                               |
+|------------------------|--------------------------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `ImplementationType`   | `AUTOMATIC`, `DPCPP`, `ADAPTIVECPP`                          | The different supported SYCL implementation types (default: `AUTOMATIC`). If `AUTOMATIC` is provided, determines the used SYCL implementation based on the value of `-DPLSSVM_SYCL_BACKEND_PREFERRED_IMPLEMENTATION` provided during PLSSVM'S build step. |
+| `KernelInvocationType` | `AUTOMATIC`, `BAISC`, `WORK_GROUP`, `HIERARCHICAL`, `SCOPED` | The different supported SYCL kernel invocation types (default: `AUTOMATIC`). If `AUTOMATIC` is provided, simply uses `WORK_GROUP`.                                                                                                                        |
 
 ### Classes and submodules
 

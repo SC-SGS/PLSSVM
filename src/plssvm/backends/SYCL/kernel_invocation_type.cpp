@@ -21,8 +21,10 @@ std::ostream &operator<<(std::ostream &out, const kernel_invocation_type target)
     switch (target) {
         case kernel_invocation_type::automatic:
             return out << "automatic";
-        case kernel_invocation_type::nd_range:
-            return out << "nd_range";
+        case kernel_invocation_type::basic:
+            return out << "basic";
+        case kernel_invocation_type::work_group:
+            return out << "work_group";
         case kernel_invocation_type::hierarchical:
             return out << "hierarchical";
         case kernel_invocation_type::scoped:
@@ -38,8 +40,10 @@ std::istream &operator>>(std::istream &in, kernel_invocation_type &target) {
 
     if (str == "automatic") {
         target = kernel_invocation_type::automatic;
-    } else if (str == "nd_range") {
-        target = kernel_invocation_type::nd_range;
+    } else if (str == "basic") {
+        target = kernel_invocation_type::basic;
+    } else if (str == "work_group") {
+        target = kernel_invocation_type::work_group;
     } else if (str == "hierarchical") {
         target = kernel_invocation_type::hierarchical;
     } else if (str == "scoped") {

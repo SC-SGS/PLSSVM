@@ -45,33 +45,33 @@ TEST_F(DPCPPCSVM, construct_target_and_parameter) {
     // every target is allowed for SYCL
 #if defined(PLSSVM_HAS_CPU_TARGET)
     EXPECT_NO_THROW((plssvm::dpcpp::csvm{ plssvm::target_platform::cpu, params }));
-    EXPECT_NO_THROW((plssvm::dpcpp::csvm{ plssvm::target_platform::cpu, params, plssvm::sycl_kernel_invocation_type = plssvm::sycl::kernel_invocation_type::nd_range }));
+    EXPECT_NO_THROW((plssvm::dpcpp::csvm{ plssvm::target_platform::cpu, params, plssvm::sycl_kernel_invocation_type = plssvm::sycl::kernel_invocation_type::work_group }));
 #else
-    EXPECT_THROW_WHAT((plssvm::dpcpp::csvm{ plssvm::target_platform::cpu, params, plssvm::sycl_kernel_invocation_type = plssvm::sycl::kernel_invocation_type::nd_range }),
+    EXPECT_THROW_WHAT((plssvm::dpcpp::csvm{ plssvm::target_platform::cpu, params, plssvm::sycl_kernel_invocation_type = plssvm::sycl::kernel_invocation_type::work_group }),
                       plssvm::dpcpp::backend_exception,
                       "Requested target platform 'cpu' that hasn't been enabled using PLSSVM_TARGET_PLATFORMS!");
 #endif
 #if defined(PLSSVM_HAS_NVIDIA_TARGET)
     EXPECT_NO_THROW((plssvm::dpcpp::csvm{ plssvm::target_platform::gpu_nvidia, params }));
-    EXPECT_NO_THROW((plssvm::dpcpp::csvm{ plssvm::target_platform::gpu_nvidia, params, plssvm::sycl_kernel_invocation_type = plssvm::sycl::kernel_invocation_type::nd_range }));
+    EXPECT_NO_THROW((plssvm::dpcpp::csvm{ plssvm::target_platform::gpu_nvidia, params, plssvm::sycl_kernel_invocation_type = plssvm::sycl::kernel_invocation_type::work_group }));
 #else
-    EXPECT_THROW_WHAT((plssvm::dpcpp::csvm{ plssvm::target_platform::gpu_nvidia, params, plssvm::sycl_kernel_invocation_type = plssvm::sycl::kernel_invocation_type::nd_range }),
+    EXPECT_THROW_WHAT((plssvm::dpcpp::csvm{ plssvm::target_platform::gpu_nvidia, params, plssvm::sycl_kernel_invocation_type = plssvm::sycl::kernel_invocation_type::work_group }),
                       plssvm::dpcpp::backend_exception,
                       "Requested target platform 'gpu_nvidia' that hasn't been enabled using PLSSVM_TARGET_PLATFORMS!");
 #endif
 #if defined(PLSSVM_HAS_AMD_TARGET)
     EXPECT_NO_THROW((plssvm::dpcpp::csvm{ plssvm::target_platform::gpu_amd, params }));
-    EXPECT_NO_THROW((plssvm::dpcpp::csvm{ plssvm::target_platform::gpu_amd, params, plssvm::sycl_kernel_invocation_type = plssvm::sycl::kernel_invocation_type::nd_range }));
+    EXPECT_NO_THROW((plssvm::dpcpp::csvm{ plssvm::target_platform::gpu_amd, params, plssvm::sycl_kernel_invocation_type = plssvm::sycl::kernel_invocation_type::work_group }));
 #else
-    EXPECT_THROW_WHAT((plssvm::dpcpp::csvm{ plssvm::target_platform::gpu_amd, params, plssvm::sycl_kernel_invocation_type = plssvm::sycl::kernel_invocation_type::nd_range }),
+    EXPECT_THROW_WHAT((plssvm::dpcpp::csvm{ plssvm::target_platform::gpu_amd, params, plssvm::sycl_kernel_invocation_type = plssvm::sycl::kernel_invocation_type::work_group }),
                       plssvm::dpcpp::backend_exception,
                       "Requested target platform 'gpu_amd' that hasn't been enabled using PLSSVM_TARGET_PLATFORMS!");
 #endif
 #if defined(PLSSVM_HAS_INTEL_TARGET)
     EXPECT_NO_THROW((plssvm::dpcpp::csvm{ plssvm::target_platform::gpu_intel, params }));
-    EXPECT_NO_THROW((plssvm::dpcpp::csvm{ plssvm::target_platform::gpu_intel, params, plssvm::sycl_kernel_invocation_type = plssvm::sycl::kernel_invocation_type::nd_range }));
+    EXPECT_NO_THROW((plssvm::dpcpp::csvm{ plssvm::target_platform::gpu_intel, params, plssvm::sycl_kernel_invocation_type = plssvm::sycl::kernel_invocation_type::work_group }));
 #else
-    EXPECT_THROW_WHAT((plssvm::dpcpp::csvm{ plssvm::target_platform::gpu_intel, params, plssvm::sycl_kernel_invocation_type = plssvm::sycl::kernel_invocation_type::nd_range }),
+    EXPECT_THROW_WHAT((plssvm::dpcpp::csvm{ plssvm::target_platform::gpu_intel, params, plssvm::sycl_kernel_invocation_type = plssvm::sycl::kernel_invocation_type::work_group }),
                       plssvm::dpcpp::backend_exception,
                       "Requested target platform 'gpu_intel' that hasn't been enabled using PLSSVM_TARGET_PLATFORMS!");
 #endif
@@ -82,48 +82,48 @@ TEST_F(DPCPPCSVM, construct_target_and_named_args) {
 #if defined(PLSSVM_HAS_CPU_TARGET)
     EXPECT_NO_THROW((plssvm::dpcpp::csvm{ plssvm::target_platform::cpu, plssvm::kernel_type = plssvm::kernel_function_type::linear, plssvm::cost = 2.0 }));
     EXPECT_NO_THROW((plssvm::dpcpp::csvm{ plssvm::target_platform::cpu, plssvm::cost = 2.0 }));
-    EXPECT_NO_THROW((plssvm::dpcpp::csvm{ plssvm::target_platform::cpu, plssvm::sycl_kernel_invocation_type = plssvm::sycl::kernel_invocation_type::nd_range }));
+    EXPECT_NO_THROW((plssvm::dpcpp::csvm{ plssvm::target_platform::cpu, plssvm::sycl_kernel_invocation_type = plssvm::sycl::kernel_invocation_type::work_group }));
 #else
     EXPECT_THROW_WHAT((plssvm::dpcpp::csvm{ plssvm::target_platform::cpu,
                                             plssvm::kernel_type = plssvm::kernel_function_type::linear,
                                             plssvm::cost = 2.0,
-                                            plssvm::sycl_kernel_invocation_type = plssvm::sycl::kernel_invocation_type::nd_range }),
+                                            plssvm::sycl_kernel_invocation_type = plssvm::sycl::kernel_invocation_type::work_group }),
                       plssvm::dpcpp::backend_exception,
                       "Requested target platform 'cpu' that hasn't been enabled using PLSSVM_TARGET_PLATFORMS!");
 #endif
 #if defined(PLSSVM_HAS_NVIDIA_TARGET)
     EXPECT_NO_THROW((plssvm::dpcpp::csvm{ plssvm::target_platform::gpu_nvidia, plssvm::kernel_type = plssvm::kernel_function_type::linear, plssvm::cost = 2.0 }));
     EXPECT_NO_THROW((plssvm::dpcpp::csvm{ plssvm::target_platform::gpu_nvidia, plssvm::cost = 2.0 }));
-    EXPECT_NO_THROW((plssvm::dpcpp::csvm{ plssvm::target_platform::gpu_nvidia, plssvm::sycl_kernel_invocation_type = plssvm::sycl::kernel_invocation_type::nd_range }));
+    EXPECT_NO_THROW((plssvm::dpcpp::csvm{ plssvm::target_platform::gpu_nvidia, plssvm::sycl_kernel_invocation_type = plssvm::sycl::kernel_invocation_type::work_group }));
 #else
     EXPECT_THROW_WHAT((plssvm::dpcpp::csvm{ plssvm::target_platform::gpu_nvidia,
                                             plssvm::kernel_type = plssvm::kernel_function_type::linear,
                                             plssvm::cost = 2.0,
-                                            plssvm::sycl_kernel_invocation_type = plssvm::sycl::kernel_invocation_type::nd_range }),
+                                            plssvm::sycl_kernel_invocation_type = plssvm::sycl::kernel_invocation_type::work_group }),
                       plssvm::dpcpp::backend_exception,
                       "Requested target platform 'gpu_nvidia' that hasn't been enabled using PLSSVM_TARGET_PLATFORMS!");
 #endif
 #if defined(PLSSVM_HAS_AMD_TARGET)
     EXPECT_NO_THROW((plssvm::dpcpp::csvm{ plssvm::target_platform::gpu_amd, plssvm::kernel_type = plssvm::kernel_function_type::linear, plssvm::cost = 2.0 }));
     EXPECT_NO_THROW((plssvm::dpcpp::csvm{ plssvm::target_platform::gpu_amd, plssvm::cost = 2.0 }));
-    EXPECT_NO_THROW((plssvm::dpcpp::csvm{ plssvm::target_platform::gpu_amd, plssvm::sycl_kernel_invocation_type = plssvm::sycl::kernel_invocation_type::nd_range }));
+    EXPECT_NO_THROW((plssvm::dpcpp::csvm{ plssvm::target_platform::gpu_amd, plssvm::sycl_kernel_invocation_type = plssvm::sycl::kernel_invocation_type::work_group }));
 #else
     EXPECT_THROW_WHAT((plssvm::dpcpp::csvm{ plssvm::target_platform::gpu_amd,
                                             plssvm::kernel_type = plssvm::kernel_function_type::linear,
                                             plssvm::cost = 2.0,
-                                            plssvm::sycl_kernel_invocation_type = plssvm::sycl::kernel_invocation_type::nd_range }),
+                                            plssvm::sycl_kernel_invocation_type = plssvm::sycl::kernel_invocation_type::work_group }),
                       plssvm::dpcpp::backend_exception,
                       "Requested target platform 'gpu_amd' that hasn't been enabled using PLSSVM_TARGET_PLATFORMS!");
 #endif
 #if defined(PLSSVM_HAS_INTEL_TARGET)
     EXPECT_NO_THROW((plssvm::dpcpp::csvm{ plssvm::target_platform::gpu_intel, plssvm::kernel_type = plssvm::kernel_function_type::linear, plssvm::cost = 2.0 }));
     EXPECT_NO_THROW((plssvm::dpcpp::csvm{ plssvm::target_platform::gpu_intel, plssvm::cost = 2.0 }));
-    EXPECT_NO_THROW((plssvm::dpcpp::csvm{ plssvm::target_platform::gpu_intel, plssvm::sycl_kernel_invocation_type = plssvm::sycl::kernel_invocation_type::nd_range }));
+    EXPECT_NO_THROW((plssvm::dpcpp::csvm{ plssvm::target_platform::gpu_intel, plssvm::sycl_kernel_invocation_type = plssvm::sycl::kernel_invocation_type::work_group }));
 #else
     EXPECT_THROW_WHAT((plssvm::dpcpp::csvm{ plssvm::target_platform::gpu_intel,
                                             plssvm::kernel_type = plssvm::kernel_function_type::linear,
                                             plssvm::cost = 2.0,
-                                            plssvm::sycl_kernel_invocation_type = plssvm::sycl::kernel_invocation_type::nd_range }),
+                                            plssvm::sycl_kernel_invocation_type = plssvm::sycl::kernel_invocation_type::work_group }),
                       plssvm::dpcpp::backend_exception,
                       "Requested target platform 'gpu_intel' that hasn't been enabled using PLSSVM_TARGET_PLATFORMS!");
 #endif
@@ -142,11 +142,12 @@ struct dpcpp_csvm_test_type {
     using mock_csvm_type = mock_dpcpp_csvm;
     using csvm_type = plssvm::dpcpp::csvm;
     using device_ptr_type = typename csvm_type::device_ptr_type;
-inline constexpr static auto additional_arguments = std::make_tuple(std::make_pair(plssvm::sycl_kernel_invocation_type, invocation_type));
+    inline constexpr static auto additional_arguments = std::make_tuple(std::make_pair(plssvm::sycl_kernel_invocation_type, invocation_type));
 };
 
 // TODO: fatal error: recursive template instantiation exceeded maximum depth of 1024
-using dpcpp_csvm_test_tuple = std::tuple<dpcpp_csvm_test_type<plssvm::sycl::kernel_invocation_type::nd_range>,
+using dpcpp_csvm_test_tuple = std::tuple<dpcpp_csvm_test_type<plssvm::sycl::kernel_invocation_type::basic>,
+                                         dpcpp_csvm_test_type<plssvm::sycl::kernel_invocation_type::work_group>,
                                          dpcpp_csvm_test_type<plssvm::sycl::kernel_invocation_type::hierarchical>>;
 using dpcpp_csvm_test_label_type_list = util::cartesian_type_product_t<dpcpp_csvm_test_tuple, plssvm::detail::supported_label_types>;
 using dpcpp_csvm_test_type_list = util::cartesian_type_product_t<dpcpp_csvm_test_tuple>;
