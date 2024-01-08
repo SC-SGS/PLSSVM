@@ -17,7 +17,7 @@
     #include <unistd.h>  // sysconf, _SC_PHYS_PAGES, _SC_PAGE_SIZE
     #define PLSSVM_UNIX_AVAILABLE_MEMORY
 #elif __has_include(<windows.h>)
-    #include <windows.h>  //
+    #include <windows.h>  // MEMORYSTATUSEX, GlobalMemoryStatusEx
     #define PLSSVM_WINDOWS_AVAILABLE_MEMORY
 #endif
 
