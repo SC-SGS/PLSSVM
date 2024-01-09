@@ -59,7 +59,6 @@ class device_kernel_assembly_linear {
         ::sycl::private_memory<unsigned long long, 2> private_j{ group };
         ::sycl::private_memory<unsigned long long, 2> private_j_linear{ group };
         ::sycl::private_memory<real_type[INTERNAL_BLOCK_SIZE][INTERNAL_BLOCK_SIZE], 2> private_temp{ group };
-        ::sycl::private_memory<bool, 2> private_cond{ group };
 
         // initialize private and local variables
         group.parallel_for_work_item([&](::sycl::h_item<2> idx) {
@@ -68,9 +67,8 @@ class device_kernel_assembly_linear {
             private_i_cached_idx_linear(idx) = group[0] * group.get_local_range(0) * INTERNAL_BLOCK_SIZE + idx.get_local_id(1);
             private_j(idx) = (group[1] * group.get_local_range(1) + idx.get_local_id(1)) * INTERNAL_BLOCK_SIZE;
             private_j_linear(idx) = group[1] * group.get_local_range(1) * INTERNAL_BLOCK_SIZE + idx.get_local_id(1);
-            private_cond(idx) = group[0] >= group[1];
 
-            // matrix
+            // initialize private temp matrix to zero
             for (unsigned i = 0; i < INTERNAL_BLOCK_SIZE; ++i) {
                 for (unsigned j = 0; j < INTERNAL_BLOCK_SIZE; ++j) {
                     private_temp(idx)[i][j] = real_type{ 0.0 };
@@ -80,10 +78,11 @@ class device_kernel_assembly_linear {
 
         // implicit group barrier
 
-        for (unsigned long long dim = 0; dim < num_features_; dim += FEATURE_BLOCK_SIZE) {
-            // load data into shared memory
-            group.parallel_for_work_item([&](::sycl::h_item<2> idx) {
-                if (private_cond(idx)) {
+        // exploit symmetry
+        if (group[0] >= group[1]) {
+            for (unsigned long long dim = 0; dim < num_features_; dim += FEATURE_BLOCK_SIZE) {
+                // load data into shared memory
+                group.parallel_for_work_item([&](::sycl::h_item<2> idx) {
                     for (unsigned internal = 0; internal < INTERNAL_BLOCK_SIZE; ++internal) {
                         const unsigned long long global_i = private_i_cached_idx_linear(idx) + internal * THREAD_BLOCK_SIZE;
                         const unsigned long long global_j = private_j_linear(idx) + internal * THREAD_BLOCK_SIZE;
@@ -93,14 +92,12 @@ class device_kernel_assembly_linear {
                         data_cache_j[idx.get_local_id(0)][internal * THREAD_BLOCK_SIZE + idx.get_local_id(1)] = data_d_[(dim + idx.get_local_id(0)) * (num_rows_ + 1 + PADDING_SIZE) + global_j];
                         data_cache_j[idx.get_local_id(0) + THREAD_BLOCK_SIZE][internal * THREAD_BLOCK_SIZE + idx.get_local_id(1)] = data_d_[(dim + idx.get_local_id(0) + THREAD_BLOCK_SIZE) * (num_rows_ + 1 + PADDING_SIZE) + global_j];
                     }
-                }
-            });
+                });
 
-            // implicit group barrier
+                // implicit group barrier
 
-            // perform calculations
-            group.parallel_for_work_item([&](::sycl::h_item<2> idx) {
-                if (private_cond(idx)) {
+                // perform calculations
+                group.parallel_for_work_item([&](::sycl::h_item<2> idx) {
                     for (unsigned block_dim = 0; block_dim < FEATURE_BLOCK_SIZE; ++block_dim) {
                         for (unsigned internal_i = 0; internal_i < INTERNAL_BLOCK_SIZE; ++internal_i) {
                             for (unsigned internal_j = 0; internal_j < INTERNAL_BLOCK_SIZE; ++internal_j) {
@@ -108,14 +105,12 @@ class device_kernel_assembly_linear {
                             }
                         }
                     }
-                }
-            });
+                });
 
-            // implicit barrier
-        }
+                // implicit barrier
+            }
 
-        group.parallel_for_work_item([&](::sycl::h_item<2> idx) {
-            if (private_cond(idx)) {
+            group.parallel_for_work_item([&](::sycl::h_item<2> idx) {
                 for (unsigned internal_i = 0; internal_i < INTERNAL_BLOCK_SIZE; ++internal_i) {
                     for (unsigned internal_j = 0; internal_j < INTERNAL_BLOCK_SIZE; ++internal_j) {
                         const unsigned long long global_i = private_i(idx) + internal_i;
@@ -137,8 +132,8 @@ class device_kernel_assembly_linear {
                         }
                     }
                 }
-            }
-        });
+            });
+        }
     }
 
   private:
@@ -199,7 +194,6 @@ class device_kernel_assembly_polynomial {
         ::sycl::private_memory<unsigned long long, 2> private_j{ group };
         ::sycl::private_memory<unsigned long long, 2> private_j_linear{ group };
         ::sycl::private_memory<real_type[INTERNAL_BLOCK_SIZE][INTERNAL_BLOCK_SIZE], 2> private_temp{ group };
-        ::sycl::private_memory<bool, 2> private_cond{ group };
 
         // initialize private and local variables
         group.parallel_for_work_item([&](::sycl::h_item<2> idx) {
@@ -208,9 +202,8 @@ class device_kernel_assembly_polynomial {
             private_i_cached_idx_linear(idx) = group[0] * group.get_local_range(0) * INTERNAL_BLOCK_SIZE + idx.get_local_id(1);
             private_j(idx) = (group[1] * group.get_local_range(1) + idx.get_local_id(1)) * INTERNAL_BLOCK_SIZE;
             private_j_linear(idx) = group[1] * group.get_local_range(1) * INTERNAL_BLOCK_SIZE + idx.get_local_id(1);
-            private_cond(idx) = group[0] >= group[1];
 
-            // matrix
+            // initialize private temp matrix to zero
             for (unsigned i = 0; i < INTERNAL_BLOCK_SIZE; ++i) {
                 for (unsigned j = 0; j < INTERNAL_BLOCK_SIZE; ++j) {
                     private_temp(idx)[i][j] = real_type{ 0.0 };
@@ -220,10 +213,11 @@ class device_kernel_assembly_polynomial {
 
         // implicit group barrier
 
-        for (unsigned long long dim = 0; dim < num_features_; dim += FEATURE_BLOCK_SIZE) {
-            // load data into shared memory
-            group.parallel_for_work_item([&](::sycl::h_item<2> idx) {
-                if (private_cond(idx)) {
+        // exploit symmetry
+        if (group[0] >= group[1]) {
+            for (unsigned long long dim = 0; dim < num_features_; dim += FEATURE_BLOCK_SIZE) {
+                // load data into shared memory
+                group.parallel_for_work_item([&](::sycl::h_item<2> idx) {
                     for (unsigned internal = 0; internal < INTERNAL_BLOCK_SIZE; ++internal) {
                         const unsigned long long global_i = private_i_cached_idx_linear(idx) + internal * THREAD_BLOCK_SIZE;
                         const unsigned long long global_j = private_j_linear(idx) + internal * THREAD_BLOCK_SIZE;
@@ -233,14 +227,12 @@ class device_kernel_assembly_polynomial {
                         data_cache_j[idx.get_local_id(0)][internal * THREAD_BLOCK_SIZE + idx.get_local_id(1)] = data_d_[(dim + idx.get_local_id(0)) * (num_rows_ + 1 + PADDING_SIZE) + global_j];
                         data_cache_j[idx.get_local_id(0) + THREAD_BLOCK_SIZE][internal * THREAD_BLOCK_SIZE + idx.get_local_id(1)] = data_d_[(dim + idx.get_local_id(0) + THREAD_BLOCK_SIZE) * (num_rows_ + 1 + PADDING_SIZE) + global_j];
                     }
-                }
-            });
+                });
 
-            // implicit group barrier
+                // implicit group barrier
 
-            // perform calculations
-            group.parallel_for_work_item([&](::sycl::h_item<2> idx) {
-                if (private_cond(idx)) {
+                // perform calculations
+                group.parallel_for_work_item([&](::sycl::h_item<2> idx) {
                     for (unsigned block_dim = 0; block_dim < FEATURE_BLOCK_SIZE; ++block_dim) {
                         for (unsigned internal_i = 0; internal_i < INTERNAL_BLOCK_SIZE; ++internal_i) {
                             for (unsigned internal_j = 0; internal_j < INTERNAL_BLOCK_SIZE; ++internal_j) {
@@ -248,14 +240,12 @@ class device_kernel_assembly_polynomial {
                             }
                         }
                     }
-                }
-            });
+                });
 
-            // implicit barrier
-        }
+                // implicit barrier
+            }
 
-        group.parallel_for_work_item([&](::sycl::h_item<2> idx) {
-            if (private_cond(idx)) {
+            group.parallel_for_work_item([&](::sycl::h_item<2> idx) {
                 for (unsigned internal_i = 0; internal_i < INTERNAL_BLOCK_SIZE; ++internal_i) {
                     for (unsigned internal_j = 0; internal_j < INTERNAL_BLOCK_SIZE; ++internal_j) {
                         const unsigned long long global_i = private_i(idx) + internal_i;
@@ -277,8 +267,8 @@ class device_kernel_assembly_polynomial {
                         }
                     }
                 }
-            }
-        });
+            });
+        }
     }
 
   private:
@@ -338,7 +328,6 @@ class device_kernel_assembly_rbf {
         ::sycl::private_memory<unsigned long long, 2> private_j{ group };
         ::sycl::private_memory<unsigned long long, 2> private_j_linear{ group };
         ::sycl::private_memory<real_type[INTERNAL_BLOCK_SIZE][INTERNAL_BLOCK_SIZE], 2> private_temp{ group };
-        ::sycl::private_memory<bool, 2> private_cond{ group };
 
         // initialize private and local variables
         group.parallel_for_work_item([&](::sycl::h_item<2> idx) {
@@ -347,9 +336,8 @@ class device_kernel_assembly_rbf {
             private_i_cached_idx_linear(idx) = group[0] * group.get_local_range(0) * INTERNAL_BLOCK_SIZE + idx.get_local_id(1);
             private_j(idx) = (group[1] * group.get_local_range(1) + idx.get_local_id(1)) * INTERNAL_BLOCK_SIZE;
             private_j_linear(idx) = group[1] * group.get_local_range(1) * INTERNAL_BLOCK_SIZE + idx.get_local_id(1);
-            private_cond(idx) = group[0] >= group[1];
 
-            // matrix
+            // initialize private temp matrix to zero
             for (unsigned i = 0; i < INTERNAL_BLOCK_SIZE; ++i) {
                 for (unsigned j = 0; j < INTERNAL_BLOCK_SIZE; ++j) {
                     private_temp(idx)[i][j] = real_type{ 0.0 };
@@ -359,10 +347,11 @@ class device_kernel_assembly_rbf {
 
         // implicit group barrier
 
-        for (unsigned long long dim = 0; dim < num_features_; dim += FEATURE_BLOCK_SIZE) {
-            // load data into shared memory
-            group.parallel_for_work_item([&](::sycl::h_item<2> idx) {
-                if (private_cond(idx)) {
+        // exploit symmetry
+        if (group[0] >= group[1]) {
+            for (unsigned long long dim = 0; dim < num_features_; dim += FEATURE_BLOCK_SIZE) {
+                // load data into shared memory
+                group.parallel_for_work_item([&](::sycl::h_item<2> idx) {
                     for (unsigned internal = 0; internal < INTERNAL_BLOCK_SIZE; ++internal) {
                         const unsigned long long global_i = private_i_cached_idx_linear(idx) + internal * THREAD_BLOCK_SIZE;
                         const unsigned long long global_j = private_j_linear(idx) + internal * THREAD_BLOCK_SIZE;
@@ -372,14 +361,12 @@ class device_kernel_assembly_rbf {
                         data_cache_j[idx.get_local_id(0)][internal * THREAD_BLOCK_SIZE + idx.get_local_id(1)] = data_d_[(dim + idx.get_local_id(0)) * (num_rows_ + 1 + PADDING_SIZE) + global_j];
                         data_cache_j[idx.get_local_id(0) + THREAD_BLOCK_SIZE][internal * THREAD_BLOCK_SIZE + idx.get_local_id(1)] = data_d_[(dim + idx.get_local_id(0) + THREAD_BLOCK_SIZE) * (num_rows_ + 1 + PADDING_SIZE) + global_j];
                     }
-                }
-            });
+                });
 
-            // implicit group barrier
+                // implicit group barrier
 
-            // perform calculations
-            group.parallel_for_work_item([&](::sycl::h_item<2> idx) {
-                if (private_cond(idx)) {
+                // perform calculations
+                group.parallel_for_work_item([&](::sycl::h_item<2> idx) {
                     for (unsigned block_dim = 0; block_dim < FEATURE_BLOCK_SIZE; ++block_dim) {
                         for (unsigned internal_i = 0; internal_i < INTERNAL_BLOCK_SIZE; ++internal_i) {
                             for (unsigned internal_j = 0; internal_j < INTERNAL_BLOCK_SIZE; ++internal_j) {
@@ -388,14 +375,12 @@ class device_kernel_assembly_rbf {
                             }
                         }
                     }
-                }
-            });
+                });
 
-            // implicit barrier
-        }
+                // implicit barrier
+            }
 
-        group.parallel_for_work_item([&](::sycl::h_item<2> idx) {
-            if (private_cond(idx)) {
+            group.parallel_for_work_item([&](::sycl::h_item<2> idx) {
                 for (unsigned internal_i = 0; internal_i < INTERNAL_BLOCK_SIZE; ++internal_i) {
                     for (unsigned internal_j = 0; internal_j < INTERNAL_BLOCK_SIZE; ++internal_j) {
                         const unsigned long long global_i = private_i(idx) + internal_i;
@@ -417,8 +402,8 @@ class device_kernel_assembly_rbf {
                         }
                     }
                 }
-            }
-        });
+            });
+        }
     }
 
   private:

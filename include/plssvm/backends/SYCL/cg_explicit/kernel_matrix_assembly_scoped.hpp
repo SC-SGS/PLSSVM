@@ -58,9 +58,8 @@ class device_kernel_assembly_linear {
                                    ::sycl::require_private_mem<unsigned long long>(),
                                    ::sycl::require_private_mem<unsigned long long>(),
                                    ::sycl::require_private_mem<unsigned long long>(),
-                                   ::sycl::require_private_mem<bool>(),
                                    ::sycl::require_private_mem<real_type[INTERNAL_BLOCK_SIZE][INTERNAL_BLOCK_SIZE]>(),
-                                   [&](auto &data_cache_i, auto &data_cache_j, auto &i, auto &i_cached_idx_linear, auto &j, auto &j_linear, auto &cond, auto &temp) {
+                                   [&](auto &data_cache_i, auto &data_cache_j, auto &i, auto &i_cached_idx_linear, auto &j, auto &j_linear, auto &temp) {
                                        // initialize private and local variables
                                        ::sycl::distribute_items_and_wait(group, [&](::sycl::s_item<2> idx) {
                                            // indices and diagonal condition
@@ -68,9 +67,8 @@ class device_kernel_assembly_linear {
                                            i_cached_idx_linear(idx) = group[0] * group.get_logical_local_range(0) * INTERNAL_BLOCK_SIZE + idx.get_local_id(group, 1);
                                            j(idx) = (group[1] * group.get_logical_local_range(1) + idx.get_local_id(group, 1)) * INTERNAL_BLOCK_SIZE;
                                            j_linear(idx) = group[1] * group.get_logical_local_range(1) * INTERNAL_BLOCK_SIZE + idx.get_local_id(group, 1);
-                                           cond(idx) = group[0] >= group[1];
 
-                                           // matrix
+                                           // initialize private temp matrix to zero
                                            for (unsigned i = 0; i < INTERNAL_BLOCK_SIZE; ++i) {
                                                for (unsigned j = 0; j < INTERNAL_BLOCK_SIZE; ++j) {
                                                    temp(idx)[i][j] = real_type{ 0.0 };
@@ -78,10 +76,11 @@ class device_kernel_assembly_linear {
                                            }
                                        });
 
-                                       for (unsigned long long dim = 0; dim < num_features_; dim += FEATURE_BLOCK_SIZE) {
-                                           // load data into shared memory
-                                           ::sycl::distribute_items_and_wait(group, [&](::sycl::s_item<2> idx) {
-                                               if (cond(idx)) {
+                                       // exploit symmetry
+                                       if (group[0] >= group[1]) {
+                                           for (unsigned long long dim = 0; dim < num_features_; dim += FEATURE_BLOCK_SIZE) {
+                                               // load data into shared memory
+                                               ::sycl::distribute_items_and_wait(group, [&](::sycl::s_item<2> idx) {
                                                    for (unsigned internal = 0; internal < INTERNAL_BLOCK_SIZE; ++internal) {
                                                        const unsigned long long global_i = i_cached_idx_linear(idx) + internal * THREAD_BLOCK_SIZE;
                                                        const unsigned long long global_j = j_linear(idx) + internal * THREAD_BLOCK_SIZE;
@@ -91,12 +90,10 @@ class device_kernel_assembly_linear {
                                                        data_cache_j[idx.get_local_id(group, 0)][internal * THREAD_BLOCK_SIZE + idx.get_local_id(group, 1)] = data_d_[(dim + idx.get_local_id(group, 0)) * (num_rows_ + 1 + PADDING_SIZE) + global_j];
                                                        data_cache_j[idx.get_local_id(group, 0) + THREAD_BLOCK_SIZE][internal * THREAD_BLOCK_SIZE + idx.get_local_id(group, 1)] = data_d_[(dim + idx.get_local_id(group, 0) + THREAD_BLOCK_SIZE) * (num_rows_ + 1 + PADDING_SIZE) + global_j];
                                                    }
-                                               }
-                                           });
+                                               });
 
-                                           // perform calculations
-                                           ::sycl::distribute_items_and_wait(group, [&](::sycl::s_item<2> idx) {
-                                               if (cond(idx)) {
+                                               // perform calculations
+                                               ::sycl::distribute_items_and_wait(group, [&](::sycl::s_item<2> idx) {
                                                    for (unsigned block_dim = 0; block_dim < FEATURE_BLOCK_SIZE; ++block_dim) {
                                                        for (unsigned internal_i = 0; internal_i < INTERNAL_BLOCK_SIZE; ++internal_i) {
                                                            for (unsigned internal_j = 0; internal_j < INTERNAL_BLOCK_SIZE; ++internal_j) {
@@ -104,12 +101,10 @@ class device_kernel_assembly_linear {
                                                            }
                                                        }
                                                    }
-                                               }
-                                           });
-                                       }
+                                               });
+                                           }
 
-                                       ::sycl::distribute_items_and_wait(group, [&](::sycl::s_item<2> idx) {
-                                           if (cond(idx)) {
+                                           ::sycl::distribute_items_and_wait(group, [&](::sycl::s_item<2> idx) {
                                                for (unsigned internal_i = 0; internal_i < INTERNAL_BLOCK_SIZE; ++internal_i) {
                                                    for (unsigned internal_j = 0; internal_j < INTERNAL_BLOCK_SIZE; ++internal_j) {
                                                        const unsigned long long global_i = i(idx) + internal_i;
@@ -131,8 +126,8 @@ class device_kernel_assembly_linear {
                                                        }
                                                    }
                                                }
-                                           }
-                                       });
+                                           });
+                                       }
                                    });
     }
 
@@ -192,9 +187,8 @@ class device_kernel_assembly_polynomial {
                                    ::sycl::require_private_mem<unsigned long long>(),
                                    ::sycl::require_private_mem<unsigned long long>(),
                                    ::sycl::require_private_mem<unsigned long long>(),
-                                   ::sycl::require_private_mem<bool>(),
                                    ::sycl::require_private_mem<real_type[INTERNAL_BLOCK_SIZE][INTERNAL_BLOCK_SIZE]>(),
-                                   [&](auto &data_cache_i, auto &data_cache_j, auto &i, auto &i_cached_idx_linear, auto &j, auto &j_linear, auto &cond, auto &temp) {
+                                   [&](auto &data_cache_i, auto &data_cache_j, auto &i, auto &i_cached_idx_linear, auto &j, auto &j_linear, auto &temp) {
                                        // initialize private and local variables
                                        ::sycl::distribute_items_and_wait(group, [&](::sycl::s_item<2> idx) {
                                            // indices and diagonal condition
@@ -202,9 +196,8 @@ class device_kernel_assembly_polynomial {
                                            i_cached_idx_linear(idx) = group[0] * group.get_logical_local_range(0) * INTERNAL_BLOCK_SIZE + idx.get_local_id(group, 1);
                                            j(idx) = (group[1] * group.get_logical_local_range(1) + idx.get_local_id(group, 1)) * INTERNAL_BLOCK_SIZE;
                                            j_linear(idx) = group[1] * group.get_logical_local_range(1) * INTERNAL_BLOCK_SIZE + idx.get_local_id(group, 1);
-                                           cond(idx) = group[0] >= group[1];
 
-                                           // matrix
+                                           // initialize private temp matrix to zero
                                            for (unsigned i = 0; i < INTERNAL_BLOCK_SIZE; ++i) {
                                                for (unsigned j = 0; j < INTERNAL_BLOCK_SIZE; ++j) {
                                                    temp(idx)[i][j] = real_type{ 0.0 };
@@ -212,10 +205,11 @@ class device_kernel_assembly_polynomial {
                                            }
                                        });
 
-                                       for (unsigned long long dim = 0; dim < num_features_; dim += FEATURE_BLOCK_SIZE) {
-                                           // load data into shared memory
-                                           ::sycl::distribute_items_and_wait(group, [&](::sycl::s_item<2> idx) {
-                                               if (cond(idx)) {
+                                       // exploit symmetry
+                                       if (group[0] >= group[1]) {
+                                           for (unsigned long long dim = 0; dim < num_features_; dim += FEATURE_BLOCK_SIZE) {
+                                               // load data into shared memory
+                                               ::sycl::distribute_items_and_wait(group, [&](::sycl::s_item<2> idx) {
                                                    for (unsigned internal = 0; internal < INTERNAL_BLOCK_SIZE; ++internal) {
                                                        const unsigned long long global_i = i_cached_idx_linear(idx) + internal * THREAD_BLOCK_SIZE;
                                                        const unsigned long long global_j = j_linear(idx) + internal * THREAD_BLOCK_SIZE;
@@ -225,12 +219,10 @@ class device_kernel_assembly_polynomial {
                                                        data_cache_j[idx.get_local_id(group, 0)][internal * THREAD_BLOCK_SIZE + idx.get_local_id(group, 1)] = data_d_[(dim + idx.get_local_id(group, 0)) * (num_rows_ + 1 + PADDING_SIZE) + global_j];
                                                        data_cache_j[idx.get_local_id(group, 0) + THREAD_BLOCK_SIZE][internal * THREAD_BLOCK_SIZE + idx.get_local_id(group, 1)] = data_d_[(dim + idx.get_local_id(group, 0) + THREAD_BLOCK_SIZE) * (num_rows_ + 1 + PADDING_SIZE) + global_j];
                                                    }
-                                               }
-                                           });
+                                               });
 
-                                           // perform calculations
-                                           ::sycl::distribute_items_and_wait(group, [&](::sycl::s_item<2> idx) {
-                                               if (cond(idx)) {
+                                               // perform calculations
+                                               ::sycl::distribute_items_and_wait(group, [&](::sycl::s_item<2> idx) {
                                                    for (unsigned block_dim = 0; block_dim < FEATURE_BLOCK_SIZE; ++block_dim) {
                                                        for (unsigned internal_i = 0; internal_i < INTERNAL_BLOCK_SIZE; ++internal_i) {
                                                            for (unsigned internal_j = 0; internal_j < INTERNAL_BLOCK_SIZE; ++internal_j) {
@@ -238,12 +230,10 @@ class device_kernel_assembly_polynomial {
                                                            }
                                                        }
                                                    }
-                                               }
-                                           });
-                                       }
+                                               });
+                                           }
 
-                                       ::sycl::distribute_items_and_wait(group, [&](::sycl::s_item<2> idx) {
-                                           if (cond(idx)) {
+                                           ::sycl::distribute_items_and_wait(group, [&](::sycl::s_item<2> idx) {
                                                for (unsigned internal_i = 0; internal_i < INTERNAL_BLOCK_SIZE; ++internal_i) {
                                                    for (unsigned internal_j = 0; internal_j < INTERNAL_BLOCK_SIZE; ++internal_j) {
                                                        const unsigned long long global_i = i(idx) + internal_i;
@@ -265,8 +255,8 @@ class device_kernel_assembly_polynomial {
                                                        }
                                                    }
                                                }
-                                           }
-                                       });
+                                           });
+                                       }
                                    });
     }
 
@@ -325,9 +315,8 @@ class device_kernel_assembly_rbf {
                                    ::sycl::require_private_mem<unsigned long long>(),
                                    ::sycl::require_private_mem<unsigned long long>(),
                                    ::sycl::require_private_mem<unsigned long long>(),
-                                   ::sycl::require_private_mem<bool>(),
                                    ::sycl::require_private_mem<real_type[INTERNAL_BLOCK_SIZE][INTERNAL_BLOCK_SIZE]>(),
-                                   [&](auto &data_cache_i, auto &data_cache_j, auto &i, auto &i_cached_idx_linear, auto &j, auto &j_linear, auto &cond, auto &temp) {
+                                   [&](auto &data_cache_i, auto &data_cache_j, auto &i, auto &i_cached_idx_linear, auto &j, auto &j_linear, auto &temp) {
                                        // initialize private and local variables
                                        ::sycl::distribute_items_and_wait(group, [&](::sycl::s_item<2> idx) {
                                            // indices and diagonal condition
@@ -335,9 +324,8 @@ class device_kernel_assembly_rbf {
                                            i_cached_idx_linear(idx) = group[0] * group.get_logical_local_range(0) * INTERNAL_BLOCK_SIZE + idx.get_local_id(group, 1);
                                            j(idx) = (group[1] * group.get_logical_local_range(1) + idx.get_local_id(group, 1)) * INTERNAL_BLOCK_SIZE;
                                            j_linear(idx) = group[1] * group.get_logical_local_range(1) * INTERNAL_BLOCK_SIZE + idx.get_local_id(group, 1);
-                                           cond(idx) = group[0] >= group[1];
 
-                                           // matrix
+                                           // initialize private temp matrix to zero
                                            for (unsigned i = 0; i < INTERNAL_BLOCK_SIZE; ++i) {
                                                for (unsigned j = 0; j < INTERNAL_BLOCK_SIZE; ++j) {
                                                    temp(idx)[i][j] = real_type{ 0.0 };
@@ -345,10 +333,11 @@ class device_kernel_assembly_rbf {
                                            }
                                        });
 
-                                       for (unsigned long long dim = 0; dim < num_features_; dim += FEATURE_BLOCK_SIZE) {
-                                           // load data into shared memory
-                                           ::sycl::distribute_items_and_wait(group, [&](::sycl::s_item<2> idx) {
-                                               if (cond(idx)) {
+                                       // exploit symmetry
+                                       if (group[0] >= group[1]) {
+                                           for (unsigned long long dim = 0; dim < num_features_; dim += FEATURE_BLOCK_SIZE) {
+                                               // load data into shared memory
+                                               ::sycl::distribute_items_and_wait(group, [&](::sycl::s_item<2> idx) {
                                                    for (unsigned internal = 0; internal < INTERNAL_BLOCK_SIZE; ++internal) {
                                                        const unsigned long long global_i = i_cached_idx_linear(idx) + internal * THREAD_BLOCK_SIZE;
                                                        const unsigned long long global_j = j_linear(idx) + internal * THREAD_BLOCK_SIZE;
@@ -358,12 +347,10 @@ class device_kernel_assembly_rbf {
                                                        data_cache_j[idx.get_local_id(group, 0)][internal * THREAD_BLOCK_SIZE + idx.get_local_id(group, 1)] = data_d_[(dim + idx.get_local_id(group, 0)) * (num_rows_ + 1 + PADDING_SIZE) + global_j];
                                                        data_cache_j[idx.get_local_id(group, 0) + THREAD_BLOCK_SIZE][internal * THREAD_BLOCK_SIZE + idx.get_local_id(group, 1)] = data_d_[(dim + idx.get_local_id(group, 0) + THREAD_BLOCK_SIZE) * (num_rows_ + 1 + PADDING_SIZE) + global_j];
                                                    }
-                                               }
-                                           });
+                                               });
 
-                                           // perform calculations
-                                           ::sycl::distribute_items_and_wait(group, [&](::sycl::s_item<2> idx) {
-                                               if (cond(idx)) {
+                                               // perform calculations
+                                               ::sycl::distribute_items_and_wait(group, [&](::sycl::s_item<2> idx) {
                                                    for (unsigned block_dim = 0; block_dim < FEATURE_BLOCK_SIZE; ++block_dim) {
                                                        for (unsigned internal_i = 0; internal_i < INTERNAL_BLOCK_SIZE; ++internal_i) {
                                                            for (unsigned internal_j = 0; internal_j < INTERNAL_BLOCK_SIZE; ++internal_j) {
@@ -372,12 +359,10 @@ class device_kernel_assembly_rbf {
                                                            }
                                                        }
                                                    }
-                                               }
-                                           });
-                                       }
+                                               });
+                                           }
 
-                                       ::sycl::distribute_items_and_wait(group, [&](::sycl::s_item<2> idx) {
-                                           if (cond(idx)) {
+                                           ::sycl::distribute_items_and_wait(group, [&](::sycl::s_item<2> idx) {
                                                for (unsigned internal_i = 0; internal_i < INTERNAL_BLOCK_SIZE; ++internal_i) {
                                                    for (unsigned internal_j = 0; internal_j < INTERNAL_BLOCK_SIZE; ++internal_j) {
                                                        const unsigned long long global_i = i(idx) + internal_i;
@@ -399,8 +384,8 @@ class device_kernel_assembly_rbf {
                                                        }
                                                    }
                                                }
-                                           }
-                                       });
+                                           });
+                                       }
                                    });
     }
 
