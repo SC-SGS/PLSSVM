@@ -18,6 +18,8 @@
 #include "sycl/sycl.hpp"  // sycl::pown, sycl::exp
                           // sycl::memory_environment, sycl::require_local_mem, sycl::require_private_mem, sycl::distribute_items_and_wait, sycl::s_item
 
+#include <array>  // std::array
+
 namespace plssvm::sycl::detail::scoped {
 
 /**
@@ -58,7 +60,7 @@ class device_kernel_assembly_linear {
                                    ::sycl::require_private_mem<unsigned long long>(),
                                    ::sycl::require_private_mem<unsigned long long>(),
                                    ::sycl::require_private_mem<unsigned long long>(),
-                                   ::sycl::require_private_mem<real_type[INTERNAL_BLOCK_SIZE][INTERNAL_BLOCK_SIZE]>(),
+                                   ::sycl::require_private_mem<std::array<std::array<real_type, INTERNAL_BLOCK_SIZE>, INTERNAL_BLOCK_SIZE>>({}),
                                    [&](auto &data_cache_i, auto &data_cache_j, auto &i, auto &i_cached_idx_linear, auto &j, auto &j_linear, auto &temp) {
                                        // initialize private and local variables
                                        ::sycl::distribute_items_and_wait(group, [&](::sycl::s_item<2> idx) {
@@ -67,13 +69,6 @@ class device_kernel_assembly_linear {
                                            i_cached_idx_linear(idx) = group[0] * group.get_logical_local_range(0) * INTERNAL_BLOCK_SIZE + idx.get_local_id(group, 1);
                                            j(idx) = (group[1] * group.get_logical_local_range(1) + idx.get_local_id(group, 1)) * INTERNAL_BLOCK_SIZE;
                                            j_linear(idx) = group[1] * group.get_logical_local_range(1) * INTERNAL_BLOCK_SIZE + idx.get_local_id(group, 1);
-
-                                           // initialize private temp matrix to zero
-                                           for (unsigned i = 0; i < INTERNAL_BLOCK_SIZE; ++i) {
-                                               for (unsigned j = 0; j < INTERNAL_BLOCK_SIZE; ++j) {
-                                                   temp(idx)[i][j] = real_type{ 0.0 };
-                                               }
-                                           }
                                        });
 
                                        // exploit symmetry
@@ -187,7 +182,7 @@ class device_kernel_assembly_polynomial {
                                    ::sycl::require_private_mem<unsigned long long>(),
                                    ::sycl::require_private_mem<unsigned long long>(),
                                    ::sycl::require_private_mem<unsigned long long>(),
-                                   ::sycl::require_private_mem<real_type[INTERNAL_BLOCK_SIZE][INTERNAL_BLOCK_SIZE]>(),
+                                   ::sycl::require_private_mem<std::array<std::array<real_type, INTERNAL_BLOCK_SIZE>, INTERNAL_BLOCK_SIZE>>({}),
                                    [&](auto &data_cache_i, auto &data_cache_j, auto &i, auto &i_cached_idx_linear, auto &j, auto &j_linear, auto &temp) {
                                        // initialize private and local variables
                                        ::sycl::distribute_items_and_wait(group, [&](::sycl::s_item<2> idx) {
@@ -196,13 +191,6 @@ class device_kernel_assembly_polynomial {
                                            i_cached_idx_linear(idx) = group[0] * group.get_logical_local_range(0) * INTERNAL_BLOCK_SIZE + idx.get_local_id(group, 1);
                                            j(idx) = (group[1] * group.get_logical_local_range(1) + idx.get_local_id(group, 1)) * INTERNAL_BLOCK_SIZE;
                                            j_linear(idx) = group[1] * group.get_logical_local_range(1) * INTERNAL_BLOCK_SIZE + idx.get_local_id(group, 1);
-
-                                           // initialize private temp matrix to zero
-                                           for (unsigned i = 0; i < INTERNAL_BLOCK_SIZE; ++i) {
-                                               for (unsigned j = 0; j < INTERNAL_BLOCK_SIZE; ++j) {
-                                                   temp(idx)[i][j] = real_type{ 0.0 };
-                                               }
-                                           }
                                        });
 
                                        // exploit symmetry
@@ -315,7 +303,7 @@ class device_kernel_assembly_rbf {
                                    ::sycl::require_private_mem<unsigned long long>(),
                                    ::sycl::require_private_mem<unsigned long long>(),
                                    ::sycl::require_private_mem<unsigned long long>(),
-                                   ::sycl::require_private_mem<real_type[INTERNAL_BLOCK_SIZE][INTERNAL_BLOCK_SIZE]>(),
+                                   ::sycl::require_private_mem<std::array<std::array<real_type, INTERNAL_BLOCK_SIZE>, INTERNAL_BLOCK_SIZE>>({}),
                                    [&](auto &data_cache_i, auto &data_cache_j, auto &i, auto &i_cached_idx_linear, auto &j, auto &j_linear, auto &temp) {
                                        // initialize private and local variables
                                        ::sycl::distribute_items_and_wait(group, [&](::sycl::s_item<2> idx) {
@@ -324,13 +312,6 @@ class device_kernel_assembly_rbf {
                                            i_cached_idx_linear(idx) = group[0] * group.get_logical_local_range(0) * INTERNAL_BLOCK_SIZE + idx.get_local_id(group, 1);
                                            j(idx) = (group[1] * group.get_logical_local_range(1) + idx.get_local_id(group, 1)) * INTERNAL_BLOCK_SIZE;
                                            j_linear(idx) = group[1] * group.get_logical_local_range(1) * INTERNAL_BLOCK_SIZE + idx.get_local_id(group, 1);
-
-                                           // initialize private temp matrix to zero
-                                           for (unsigned i = 0; i < INTERNAL_BLOCK_SIZE; ++i) {
-                                               for (unsigned j = 0; j < INTERNAL_BLOCK_SIZE; ++j) {
-                                                   temp(idx)[i][j] = real_type{ 0.0 };
-                                               }
-                                           }
                                        });
 
                                        // exploit symmetry
