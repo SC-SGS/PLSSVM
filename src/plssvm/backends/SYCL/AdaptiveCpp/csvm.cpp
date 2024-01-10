@@ -12,7 +12,10 @@
 #include "plssvm/backends/SYCL/AdaptiveCpp/detail/device_ptr.hpp"                    // plssvm::adaptivecpp::detail::::device_ptr
 #include "plssvm/backends/SYCL/AdaptiveCpp/detail/queue_impl.hpp"                    // plssvm::adaptivecpp::detail::queue (PImpl implementation)
 #include "plssvm/backends/SYCL/AdaptiveCpp/detail/utility.hpp"                       // plssvm::adaptivecpp::detail::{get_device_list, device_synchronize, get_adaptivecpp_version_short, get_adaptivecpp_version}
-#include "plssvm/backends/SYCL/cg_explicit/blas.hpp"                                 // plssvm::sycl::device_kernel_gemm
+#include "plssvm/backends/SYCL/cg_explicit/blas_basic.hpp"                           // plssvm::sycl::detail::basic::{device_kernel_gemm, device_kernel_symm}
+#include "plssvm/backends/SYCL/cg_explicit/blas_hierarchical.hpp"                    // plssvm::sycl::detail::hierarchical::{device_kernel_gemm, device_kernel_symm}
+#include "plssvm/backends/SYCL/cg_explicit/blas_scoped.hpp"                          // plssvm::sycl::detail::scoped::{device_kernel_gemm, device_kernel_symm}
+#include "plssvm/backends/SYCL/cg_explicit/blas_work_group.hpp"                      // plssvm::sycl::detail::work_group::{device_kernel_gemm, device_kernel_symm}
 #include "plssvm/backends/SYCL/cg_explicit/kernel_matrix_assembly_basic.hpp"         // plssvm::sycl::detail::basic::{device_kernel_assembly_linear, device_kernel_assembly_polynomial, device_kernel_assembly_rbf}
 #include "plssvm/backends/SYCL/cg_explicit/kernel_matrix_assembly_hierarchical.hpp"  // plssvm::sycl::detail::hierarchical::{device_kernel_assembly_linear, device_kernel_assembly_polynomial, device_kernel_assembly_rbf}
 #include "plssvm/backends/SYCL/cg_explicit/kernel_matrix_assembly_scoped.hpp"        // plssvm::sycl::detail::scoped::{device_kernel_assembly_linear, device_kernel_assembly_polynomial, device_kernel_assembly_rbf}
@@ -280,19 +283,66 @@ void csvm::run_blas_level_3_kernel_explicit(const real_type alpha, const device_
     if (max_work_group_size < THREAD_BLOCK_SIZE * THREAD_BLOCK_SIZE) {
         throw kernel_launch_resources{ fmt::format("Not enough work-items allowed for a work-groups of size {}x{}! Try reducing THREAD_BLOCK_SIZE_OLD.", THREAD_BLOCK_SIZE, THREAD_BLOCK_SIZE) };
     }
-    const ::sycl::range<2> block{ THREAD_BLOCK_SIZE, THREAD_BLOCK_SIZE };
-    const ::sycl::range<2> grid{ static_cast<std::size_t>(std::ceil(static_cast<double>(num_rows) / static_cast<double>(block[0] * INTERNAL_BLOCK_SIZE))) * block[0],
-                                 static_cast<std::size_t>(std::ceil(static_cast<double>(num_rhs) / static_cast<double>(block[1] * INTERNAL_BLOCK_SIZE))) * block[1] };
-    const ::sycl::nd_range<2> execution_range{ grid, block };
+    const ::sycl::nd_range<2> execution_range = sycl::detail::calculate_execution_range(::sycl::range<2>{ num_rows, num_rhs }, invocation_type_);
 
 #if defined(PLSSVM_USE_GEMM)
-    devices_[0].impl->sycl_queue.submit([&](::sycl::handler &cgh) {
-        cgh.parallel_for(execution_range, sycl::detail::device_kernel_gemm{ cgh, num_rows, num_rhs, num_rows, alpha, A_d.get(), B_d.get(), beta, C_d.get() });
-    });
+    switch (invocation_type_) {
+        case sycl::kernel_invocation_type::automatic:
+            throw exception{ "Can't determine the sycl::kernel_invocation_type!" };
+        case sycl::kernel_invocation_type::basic:
+            // basic data parallel kernels
+            devices_[0].impl->sycl_queue.submit([&](::sycl::handler &cgh) {
+                cgh.parallel_for(::sycl::range<2>{ num_rows, num_rhs }, sycl::detail::basic::device_kernel_gemm{ num_rows, num_rhs, num_rows, alpha, A_d.get(), B_d.get(), beta, C_d.get() });
+            });
+            break;
+        case sycl::kernel_invocation_type::work_group:
+            // work-group data parallel kernels
+            devices_[0].impl->sycl_queue.submit([&](::sycl::handler &cgh) {
+                cgh.parallel_for(execution_range, sycl::detail::work_group::device_kernel_gemm{ cgh, num_rows, num_rhs, num_rows, alpha, A_d.get(), B_d.get(), beta, C_d.get() });
+            });
+            break;
+        case sycl::kernel_invocation_type::hierarchical:
+            // hierarchical data parallel kernels
+            devices_[0].impl->sycl_queue.submit([&](::sycl::handler &cgh) {
+                cgh.parallel_for_work_group(execution_range.get_global_range(), execution_range.get_local_range(), sycl::detail::hierarchical::device_kernel_gemm{ num_rows, num_rhs, num_rows, alpha, A_d.get(), B_d.get(), beta, C_d.get() });
+            });
+            break;
+        case sycl::kernel_invocation_type::scoped:
+            // AdaptiveCpp's scoped parallelism
+            devices_[0].impl->sycl_queue.submit([&](::sycl::handler &cgh) {
+                cgh.parallel(execution_range.get_global_range(), execution_range.get_local_range(), sycl::detail::scoped::device_kernel_gemm{ num_rows, num_rhs, num_rows, alpha, A_d.get(), B_d.get(), beta, C_d.get() });
+            });
+            break;
+    }
 #else
-    devices_[0].impl->sycl_queue.submit([&](::sycl::handler &cgh) {
-        cgh.parallel_for(execution_range, sycl::detail::device_kernel_symm{ cgh, num_rows, num_rhs, num_rows, alpha, A_d.get(), B_d.get(), beta, C_d.get() });
-    });
+    switch (invocation_type_) {
+        case sycl::kernel_invocation_type::automatic:
+            throw exception{ "Can't determine the sycl::kernel_invocation_type!" };
+        case sycl::kernel_invocation_type::basic:
+            // basic data parallel kernels
+            devices_[0].impl->sycl_queue.submit([&](::sycl::handler &cgh) {
+                cgh.parallel_for(::sycl::range<2>{ num_rows, num_rhs }, sycl::detail::basic::device_kernel_symm{ num_rows, num_rhs, num_rows, alpha, A_d.get(), B_d.get(), beta, C_d.get() });
+            });
+            break;
+        case sycl::kernel_invocation_type::work_group:
+            // work-group data parallel kernels
+            devices_[0].impl->sycl_queue.submit([&](::sycl::handler &cgh) {
+                cgh.parallel_for(execution_range, sycl::detail::work_group::device_kernel_symm{ cgh, num_rows, num_rhs, num_rows, alpha, A_d.get(), B_d.get(), beta, C_d.get() });
+            });
+            break;
+        case sycl::kernel_invocation_type::hierarchical:
+            // hierarchical data parallel kernels
+            devices_[0].impl->sycl_queue.submit([&](::sycl::handler &cgh) {
+                cgh.parallel_for_work_group(execution_range.get_global_range(), execution_range.get_local_range(), sycl::detail::hierarchical::device_kernel_symm{ num_rows, num_rhs, num_rows, alpha, A_d.get(), B_d.get(), beta, C_d.get() });
+            });
+            break;
+        case sycl::kernel_invocation_type::scoped:
+            // AdaptiveCpp's scoped parallelism
+            devices_[0].impl->sycl_queue.submit([&](::sycl::handler &cgh) {
+                cgh.parallel(execution_range.get_global_range(), execution_range.get_local_range(), sycl::detail::scoped::device_kernel_symm{ num_rows, num_rhs, num_rows, alpha, A_d.get(), B_d.get(), beta, C_d.get() });
+            });
+            break;
+    }
 #endif
     detail::device_synchronize(devices_[0]);
 }

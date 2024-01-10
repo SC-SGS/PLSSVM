@@ -6,18 +6,18 @@
  * @license This file is part of the PLSSVM project which is released under the MIT license.
  *          See the LICENSE.md file in the project root for full license information.
  *
- * @brief Functions for explicitly performing a BLAS GEMM like matrix-matrix multiplication using the SYCL backend.
+ * @brief Functions for explicitly performing a BLAS GEMM like matrix-matrix multiplication using the SYCL backend with work-group data parallel kernels.
  */
 
-#ifndef PLSSVM_BACKENDS_SYCL_CG_EXPLICIT_BLAS_HPP_
-#define PLSSVM_BACKENDS_SYCL_CG_EXPLICIT_BLAS_HPP_
+#ifndef PLSSVM_BACKENDS_SYCL_CG_EXPLICIT_BLAS_WORK_GROUP_HPP_
+#define PLSSVM_BACKENDS_SYCL_CG_EXPLICIT_BLAS_WORK_GROUP_HPP_
 #pragma once
 
 #include "plssvm/constants.hpp"  // plssvm::{real_type, THREAD_BLOCK_SIZE, INTERNAL_BLOCK_SIZE, FEATURE_BLOCK_SIZE, PADDING_SIZE}
 
 #include "sycl/sycl.hpp"  // sycl::nd_item
 
-namespace plssvm::sycl::detail {
+namespace plssvm::sycl::detail::work_group {
 
 /**
  * @brief Perform an explicit BLAS GEMM operation: `C = alpha * A * B + beta * C` where A is a `m x k` matrix, B is a `k x n` matrix, C is a `m x n` matrix, and alpha and beta are scalars.
@@ -219,6 +219,6 @@ class device_kernel_symm {
     /// @endcond
 };
 
-}  // namespace plssvm::sycl::detail
+}  // namespace plssvm::sycl::detail::work_group
 
-#endif  // PLSSVM_BACKENDS_SYCL_CG_EXPLICIT_BLAS_HPP_
+#endif  // PLSSVM_BACKENDS_SYCL_CG_EXPLICIT_BLAS_WORK_GROUP_HPP_
