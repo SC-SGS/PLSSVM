@@ -54,13 +54,11 @@ class device_kernel_gemm {
         const unsigned long long i = idx.get_id(0);
         const unsigned long long j = idx.get_id(1);
 
-        if (i < m_ && j < n_) {
-            real_type temp{ 0.0 };
-            for (unsigned long long dim = 0; dim < k_; ++dim) {
-                temp += A_[dim * (k_ + PADDING_SIZE) + i] * B_[dim * (k_ + PADDING_SIZE) + j];
-            }
-            C_[i * (n_ + PADDING_SIZE) + j] = alpha_ * temp + beta_ * C_[i * (n_ + PADDING_SIZE) + j];
+        real_type temp{ 0.0 };
+        for (unsigned long long dim = 0; dim < k_; ++dim) {
+            temp += A_[dim * (k_ + PADDING_SIZE) + i] * B_[dim * (n_ + PADDING_SIZE) + j];
         }
+        C_[i * (n_ + PADDING_SIZE) + j] = alpha_ * temp + beta_ * C_[i * (n_ + PADDING_SIZE) + j];
     }
 
   private:
@@ -111,21 +109,19 @@ class device_kernel_symm {
         const unsigned long long i = idx.get_id(0);
         const unsigned long long j = idx.get_id(1);
 
-        if (i < m_ && j < n_) {
-            real_type temp{ 0.0 };
-            unsigned long long offset = 0;
-            // left of the diagonal -> use symmetrically mirrored values
-            for (unsigned long long dim = 0; dim < i; ++dim) {
-                offset += dim;
-                temp += A_[dim * (k_ + PADDING_SIZE) + i - offset] * B_[dim * (k_ + PADDING_SIZE) + j];
-            }
-            // diagonal + right of the diagonal -> use contiguous values
-            offset += i;
-            for (unsigned long long dim = i; dim < k_; ++dim) {
-                temp += A_[i * (k_ + PADDING_SIZE) + dim - offset] * B_[dim * (k_ + PADDING_SIZE) + j];
-            }
-            C_[i * (n_ + PADDING_SIZE) + j] = alpha_ * temp + beta_ * C_[i * (n_ + PADDING_SIZE) + j];
+        real_type temp{ 0.0 };
+        unsigned long long offset = 0;
+        // left of the diagonal -> use symmetrically mirrored values
+        for (unsigned long long dim = 0; dim < i; ++dim) {
+            offset += dim;
+            temp += A_[dim * (k_ + PADDING_SIZE) + i - offset] * B_[dim * (n_ + PADDING_SIZE) + j];
         }
+        // diagonal + right of the diagonal -> use contiguous values
+        offset += i;
+        for (unsigned long long dim = i; dim < k_; ++dim) {
+            temp += A_[i * (k_ + PADDING_SIZE) + dim - offset] * B_[dim * (n_ + PADDING_SIZE) + j];
+        }
+        C_[i * (n_ + PADDING_SIZE) + j] = alpha_ * temp + beta_ * C_[i * (n_ + PADDING_SIZE) + j];
     }
 
   private:
