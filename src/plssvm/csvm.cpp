@@ -164,7 +164,7 @@ std::pair<soa_matrix<real_type>, unsigned long long> csvm::conjugate_gradients(c
                 delta[max_residual_difference_idx],
                 eps * eps * delta0[max_residual_difference_idx],
                 max_residual_difference_idx,
-                detail::tracking_entry{ "cg", "avg_iteration_time", total_iteration_time / iter },
+                detail::tracking_entry{ "cg", "avg_iteration_time", total_iteration_time / std::max(iter, 1ULL) },
                 blas_level_3_type,
                 detail::tracking_entry{ "cg", "avg_blas_level_3_time", total_blas_level_3_time / (1 + iter + iter / 50) });
     PLSSVM_DETAIL_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((detail::tracking_entry{ "cg", "residuals", delta }));
