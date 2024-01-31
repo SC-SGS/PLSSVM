@@ -9,7 +9,7 @@
 #include "plssvm/detail/io/file_reader.hpp"
 
 #include "plssvm/detail/assert.hpp"          // PLSSVM_ASSERT
-#include "plssvm/detail/string_utility.hpp"  // plssvm::detail::starts_with, plssvm::detail::trim_left
+#include "plssvm/detail/string_utility.hpp"  // plssvm::detail::{starts_with, trim_left}
 #include "plssvm/exceptions/exceptions.hpp"  // plssvm::file_not_found_exception, plssvm::invalid_file_format_exception
 
 #include "fmt/core.h"  // fmt::format
@@ -33,6 +33,7 @@
 #include <algorithm>    // std::min
 #include <climits>      // INT32_MAX
 #include <cmath>        // std::ceil
+#include <cstddef>      // std::size_t
 #include <deque>        // std::deque
 #include <filesystem>   // std::filesystem::path
 #include <fstream>      // std::ifstream
@@ -165,7 +166,7 @@ void file_reader::close() {
     }
 }
 
-void file_reader::swap(file_reader &other) {
+void file_reader::swap(file_reader &other) noexcept {
     using std::swap;
 #if defined(PLSSVM_HAS_MEMORY_MAPPING)
     #if defined(PLSSVM_HAS_MEMORY_MAPPING_UNIX)
@@ -189,6 +190,7 @@ const std::vector<std::string_view> &file_reader::read_lines(const std::string_v
     // create view from buffer
     const std::string_view file_content_view{ file_content_, static_cast<std::string_view::size_type>(num_bytes_) };
 
+    // parse lines in parallel if OpenMP is available, otherwise use serial fallback
 #if _OPENMP
     // per thread temporaries
     std::vector<std::deque<std::size_t>> per_thread_newlines;
@@ -205,7 +207,7 @@ const std::vector<std::string_view> &file_reader::read_lines(const std::string_v
 
     // find all newlines - parallel
     #pragma omp for
-        for (std::size_t i = 0; i < file_content_view.size(); ++i) {
+        for (std::string_view::size_type i = 0; i < file_content_view.size(); ++i) {
             if (file_content_view[i] == '\n') {
                 per_thread_newlines[omp_get_thread_num()].push_back(i + 1);
             }
@@ -217,7 +219,7 @@ const std::vector<std::string_view> &file_reader::read_lines(const std::string_v
             // the first index that no exception for the first thread must be made
             per_thread_newlines[0].push_front(0);
 
-            for (std::size_t i = 1; i < per_thread_newlines.size(); ++i) {
+            for (std::vector<std::deque<std::size_t>>::size_type i = 1; i < per_thread_newlines.size(); ++i) {
                 per_thread_newlines[i].push_front(per_thread_newlines[i - 1].back());
             }
 
@@ -227,11 +229,11 @@ const std::vector<std::string_view> &file_reader::read_lines(const std::string_v
 
     // get lines from newlines - parallel
     #pragma omp for
-        for (std::size_t i = 0; i < per_thread_newlines.size(); ++i) {
+        for (std::vector<std::deque<std::size_t>>::size_type i = 0; i < per_thread_newlines.size(); ++i) {
             // reserve lines sizes
             per_thread_lines[i].reserve(per_thread_newlines[i].size());
 
-            for (std::size_t l = 0; l < per_thread_newlines[i].size() - 1; ++l) {
+            for (std::vector<std::deque<std::size_t>>::size_type l = 0; l < per_thread_newlines[i].size() - 1; ++l) {
                 std::string_view sv = trim_left(std::string_view{ file_content_view.data() + per_thread_newlines[i][l], per_thread_newlines[i][l + 1] - per_thread_newlines[i][l] - 1 });
                 // remove \r on windows (\r\n)
                 if (ends_with(sv, '\r')) {
@@ -403,7 +405,7 @@ void file_reader::open_file(const char *filename) {
         // allocate the necessary buffer
         file_content_ = new char[num_bytes_];
         for (std::streamsize i = 0; i < static_cast<std::streamsize>(std::ceil(static_cast<double>(num_bytes_) / INT32_MAX)); ++i) {
-            // read the whole file in chunks of up to INT32_MAX byte at once
+            // read the whole file in chunks of up to INT32_MAX bytes at once
             if (!f.read(file_content_ + i * INT32_MAX, std::min<std::streamsize>(INT32_MAX, num_bytes_ - i * INT32_MAX))) {
                 throw invalid_file_format_exception{ fmt::format("Error while reading file: '{}'!", filename) };
             }
@@ -411,7 +413,7 @@ void file_reader::open_file(const char *filename) {
     }
 }
 
-void swap(file_reader &lhs, file_reader &rhs) {
+void swap(file_reader &lhs, file_reader &rhs) noexcept {
     lhs.swap(rhs);
 }
 

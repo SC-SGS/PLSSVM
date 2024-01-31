@@ -88,7 +88,7 @@ class file_reader {
 
     /**
      * @brief Associates the current file_reader with the file denoted by @p filename, i.e., opens the file @p filename (possible memory mapping it).
-     * @details This function is called by the constructor of file_reader accepting a std::string and is not usually invoked directly.
+     * @details This function is called by the constructor of file_reader and is not usually invoked directly.
      * @param[in] filename the file to open
      * @throws plssvm::file_reader_exception if the file_reader has already opened another file
      * @throws plssvm::file_not_found_exception if the @p filename couldn't be found
@@ -119,10 +119,11 @@ class file_reader {
      * @brief Element-wise swap all contents of `*this` with @p other.
      * @param[in,out] other the other file_reader to swap the contents with
      */
-    void swap(file_reader &other);
+    void swap(file_reader &other) noexcept;
 
     /**
      * @brief Read the content of the associated file and split it into lines, ignoring empty lines and lines starting with the @p comment.
+     * @details Per default, @p comment is set to ignore all newlines.
      * @param[in] comment a character (sequence) at the beginning of a line that causes this line to be ignored (used to filter comments)
      * @throws plssvm::file_reader_exception if no file is currently associated to this file_reader
      * @return the split lines, ignoring empty lines and lines starting with the @p comment
@@ -141,19 +142,19 @@ class file_reader {
     [[nodiscard]] typename std::vector<std::string_view>::size_type num_lines() const noexcept;
     /**
      * @brief Return the @p pos line of the parsed file.
-     * @details Returns `0` if no file is currently associated with this file_reader or the read_lines() function has not been called yet.
      * @param[in] pos the line to return
      * @return the line without leading whitespaces (`[[nodiscard]]`)
      */
     [[nodiscard]] std::string_view line(typename std::vector<std::string_view>::size_type pos) const;
     /**
      * @brief Return all lines present after the preprocessing.
-     * @details Returns `0` if no file is currently associated with this file_reader or the read_lines() function has not been called yet.
+     * @details Returns an empty vector if no file is currently associated with this file_reader or the read_lines() function has not been called yet.
      * @return all lines after preprocessing (`[[nodiscard]]`)
      */
     [[nodiscard]] const std::vector<std::string_view> &lines() const noexcept;
     /**
      * @brief Return the underlying file content as one large string.
+     * @details Returns a nullptr if no file is currently associated with this file_reader.
      * @return the file content (`[[nodiscard]]`)
      */
     [[nodiscard]] const char *buffer() const noexcept;
@@ -211,7 +212,7 @@ class file_reader {
  * @param[in,out] lhs the first file_reader
  * @param[in,out] rhs the second file_reader
  */
-void swap(file_reader &lhs, file_reader &rhs);
+void swap(file_reader &lhs, file_reader &rhs) noexcept;
 
 }  // namespace plssvm::detail::io
 
