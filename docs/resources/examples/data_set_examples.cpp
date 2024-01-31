@@ -17,7 +17,7 @@ int main() {
     // create a data set from a file with int labels
     plssvm::data_set data1{ "path/to/train/file.libsvm" };
     // create a data set from a file with std::string labels
-    plssvm::data_set std::string > data2{ "path/to/train/file_string_labels.libsvm" };
+    plssvm::data_set<std::string> data2{ "path/to/train/file_string_labels.libsvm" };
 
     // create a data set from a std::vector with labels
     std::vector<std::vector<double>> data_vector{ { 1, 2, 3 }, { 4, 5, 6 }, { 7, 8, 9 } };
