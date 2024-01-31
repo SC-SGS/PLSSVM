@@ -26,7 +26,7 @@
 namespace plssvm::detail {
 
 /**
- * @breif Output the message @p msg filling the {fmt} like placeholders with @p args to the standard output stream.
+ * @brief Output the message @p msg filling the {fmt} like placeholders with @p args to the standard output stream.
  * @details Only logs the message if the verbosity level matches the `plssvm::verbosity` level.
  * @tparam Args the types of the placeholder values
  * @param[in] verb the verbosity level of the message to log; must match the `plssvm::verbosity` level to log the message

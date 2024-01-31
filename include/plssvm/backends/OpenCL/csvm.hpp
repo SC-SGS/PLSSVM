@@ -152,7 +152,7 @@ class csvm : public ::plssvm::detail::gpu_csvm<detail::device_ptr, detail::comma
     /**
      * @copydoc plssvm::detail::gpu_csvm::run_assemble_kernel_matrix_implicit_blas_level_3
      */
-    void run_assemble_kernel_matrix_implicit_blas_level_3(real_type alpha, const device_ptr_type &A_d, const parameter &params, const device_ptr_type &q_red, real_type QA_cost, const device_ptr_type &B_d, device_ptr_type &C_d) const final;
+    void run_assemble_kernel_matrix_implicit_blas_level_3(real_type alpha, const device_ptr_type &A_d, const parameter &params, const device_ptr_type &q_red_d, real_type QA_cost, const device_ptr_type &B_d, device_ptr_type &C_d) const final;
 
     //***************************************************//
     //                   predict, score                  //

@@ -28,7 +28,7 @@
 namespace plssvm::detail {
 
 /**
- * @breif Output the message @p msg filling the {fmt} like placeholders with @p args to the standard output stream.
+ * @brief Output the message @p msg filling the {fmt} like placeholders with @p args to the standard output stream.
  * @details If a value in @p args is of type plssvm::detail::tracking_entry and performance tracking is enabled,
  *          this is also added to the `plssvm::detail::performance_tracker`.
  *          Only logs the message if the verbosity level matches the `plssvm::verbosity` level.

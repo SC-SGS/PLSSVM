@@ -98,7 +98,7 @@ class gpu_csvm : public ::plssvm::csvm {
      */
     [[nodiscard]] ::plssvm::detail::move_only_any setup_data_on_devices(solver_type solver, const soa_matrix<real_type> &A) const final;
     /**
-     * @copydoc plssvm::csvm::assemble_kernel_matrix_explicit_impl
+     * @copydoc plssvm::csvm::assemble_kernel_matrix
      */
     [[nodiscard]] ::plssvm::detail::move_only_any assemble_kernel_matrix(solver_type solver, const parameter &params, ::plssvm::detail::move_only_any &data, const std::vector<real_type> &q_red, real_type QA_cost) const final;
     /**
@@ -140,23 +140,23 @@ class gpu_csvm : public ::plssvm::csvm {
     /**
      * @brief Perform an explicit BLAS level 3 operation: `C = alpha * A * B + beta * C` where @p A, @p B, and @p C are matrices, and @p alpha and @p beta are scalars.
      * @param[in] alpha the scalar alpha value
-     * @param[in] A the matrix @p A
-     * @param[in] B the matrix @p B
+     * @param[in] A_d the matrix @p A
+     * @param[in] B_d the matrix @p B
      * @param[in] beta the scalar beta value
-     * @param[in,out] C the matrix @p C, also used as result matrix
+     * @param[in,out] C_d the matrix @p C, also used as result matrix
      */
-    virtual void run_blas_level_3_kernel_explicit(real_type alpha, const device_ptr_type &A, const device_ptr_type &B, real_type beta, device_ptr_type &C) const = 0;
+    virtual void run_blas_level_3_kernel_explicit(real_type alpha, const device_ptr_type &A_d, const device_ptr_type &B_d, real_type beta, device_ptr_type &C_d) const = 0;
     /**
      * @brief Perform an implicit BLAS level 3 operation: `C = alpha * A * B + beta * C` where @p A is an implicitly constructed kernel matrix, @p B and @p C are matrices and @p alpha is a scalar.
      * @param[in] alpha the scalar alpha value
-     * @param[in] A the data points to implicitly create the kernel matrix from
+     * @param[in] A_d the data points to implicitly create the kernel matrix from
      * @param[in] params the parameters (e.g., kernel function) used to assemble the kernel matrix
-     * @param[in] q_red the vector used in the dimensional reduction of the kernel matrix
+     * @param[in] q_red_d the vector used in the dimensional reduction of the kernel matrix
      * @param[in] QA_cost the scalar used in the dimensional reduction of the kernel matrix
-     * @param[in] B the matrix @p B
-     * @param[in,out] C the matrix @p C, also used as result matrix
+     * @param[in] B_d the matrix @p B
+     * @param[in,out] C_d the matrix @p C, also used as result matrix
      */
-    virtual void run_assemble_kernel_matrix_implicit_blas_level_3(real_type alpha, const device_ptr_type &A, const parameter &params, const device_ptr_type &q_red, real_type QA_cost, const device_ptr_type &B, device_ptr_type &C) const = 0;
+    virtual void run_assemble_kernel_matrix_implicit_blas_level_3(real_type alpha, const device_ptr_type &A_d, const parameter &params, const device_ptr_type &q_red_d, real_type QA_cost, const device_ptr_type &B_d, device_ptr_type &C_d) const = 0;
 
     //***************************************************//
     //                   predict, score                  //
@@ -171,14 +171,14 @@ class gpu_csvm : public ::plssvm::csvm {
     /**
      * @brief Predict the values of the new @p predict_points_d using the previously learned weights @p alpha_d, biases @p rho_d, and support vectors @p sv_d.
      * @param[in] params the parameter used to predict the values (e.g., the used kernel function)
-     * @param[in] w the `w` used to speedup the linear kernel prediction (only used in the linear kernel case)
+     * @param[in] w_d the `w` used to speedup the linear kernel prediction (only used in the linear kernel case)
      * @param[in] alpha_d the previously learned weights
      * @param[in] rho_d the previously calculated biases
      * @param[in] sv_d the previously learned support vectors
      * @param[in] predict_points_d the new data points to predict
      * @return the predicted values (`[[nodiscard]]`)
      */
-    [[nodiscard]] virtual device_ptr_type run_predict_kernel(const parameter &params, const device_ptr_type &w, const device_ptr_type &alpha_d, const device_ptr_type &rho_d, const device_ptr_type &sv_d, const device_ptr_type &predict_points_d) const = 0;
+    [[nodiscard]] virtual device_ptr_type run_predict_kernel(const parameter &params, const device_ptr_type &w_d, const device_ptr_type &alpha_d, const device_ptr_type &rho_d, const device_ptr_type &sv_d, const device_ptr_type &predict_points_d) const = 0;
 
     /// The available/used backend devices.
     std::vector<queue_type> devices_{};

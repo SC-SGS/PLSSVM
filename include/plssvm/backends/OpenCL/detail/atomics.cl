@@ -20,6 +20,7 @@
  * @details Uses the atomic compare-exchange idiom.
  * @param[in,out] source the source value to add @p val to
  * @param[in] val the value to add to @p addr
+ * @return the old value retrieved before the atomic add
  */
 inline double __attribute__((overloadable)) atomicAdd(__global double *source, const double val) {
     double prev;
@@ -50,8 +51,9 @@ inline double __attribute__((overloadable)) atomicAdd(__global double *source, c
 /**
  * @brief Implementation of an atomic add function for single-precision floating point types.
  * @details Uses the atomic compare-exchange idiom.
- * @param[in,out] addr the source value to add @p val to
+ * @param[in,out] source the source value to add @p val to
  * @param[in] val the value to add to @p addr
+ * @return the old value retrieved before the atomic add
  */
 inline float __attribute__((overloadable)) atomicAdd(__global float *source, const float val) {
     float prev;

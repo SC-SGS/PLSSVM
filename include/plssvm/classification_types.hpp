@@ -21,6 +21,9 @@
 
 namespace plssvm {
 
+/**
+ * @brief Enum class for all implemented classification strategies.
+ */
 enum class classification_type {
     /** Use the one vs. all classification strategy for the multi-class SVM (default). */
     oaa,

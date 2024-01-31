@@ -117,7 +117,7 @@ template <typename T>
 struct is_tracking_entry : impl::is_tracking_entry<detail::remove_cvref_t<T>> { };
 
 /**
- * @copydoc plssvm::is_tracking_entry
+ * @copydoc plssvm::detail::is_tracking_entry
  * @details A shorthand for `plssvm::is_tracking_entry::value`.
  */
 template <typename T>
@@ -130,23 +130,25 @@ constexpr bool is_tracking_entry_v = is_tracking_entry<T>::value;
 class performance_tracker {
   public:
     /**
-     * @breif Default constructor. **Must** be implemented in .cpp file.
+     * @brief Default constructor. **Must** be implemented in .cpp file.
      */
     performance_tracker();
     /**
-     * @breif Default copy-constructor. **Must** be implemented in .cpp file.
+     * @brief Default copy-constructor. **Must** be implemented in .cpp file.
      */
     performance_tracker(const performance_tracker &);
     /**
-     * @breif Default move-constructor. **Must** be implemented in .cpp file.
+     * @brief Default move-constructor. **Must** be implemented in .cpp file.
      */
     performance_tracker(performance_tracker &&) noexcept;
     /**
-     * @breif Default copy-assignment operator. **Must** be implemented in .cpp file.
+     * @brief Default copy-assignment operator. **Must** be implemented in .cpp file.
+     * @return `*this`
      */
     performance_tracker &operator=(const performance_tracker &);
     /**
-     * @breif Default move-assignment operator. **Must** be implemented in .cpp file.
+     * @brief Default move-assignment operator. **Must** be implemented in .cpp file.
+     * @return `*this`
      */
     performance_tracker &operator=(performance_tracker &&) noexcept;
     /**

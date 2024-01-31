@@ -290,13 +290,14 @@ class csvm {
 
     /**
      * @copydoc plssvm::csvm::blas_level_3
-     * @detail Small wrapper around the virtual `plssvm::csvm::blas_level_3` function to easily track its execution time.
+     * @details Small wrapper around the virtual `plssvm::csvm::blas_level_3` function to easily track its execution time.
+     * @returns the duration of the BLAS routine in milliseconds (`[[nodiscard]]`)
      */
-    [[nodiscard]] std::chrono::duration<long, std::milli> run_blas_level_3(solver_type cg_solver, real_type alpha, const detail::move_only_any &A, const soa_matrix<real_type> &B, real_type beta, soa_matrix<real_type> &C) const;
+    [[nodiscard]] std::chrono::duration<long, std::milli> run_blas_level_3(solver_type solver, real_type alpha, const detail::move_only_any &A, const soa_matrix<real_type> &B, real_type beta, soa_matrix<real_type> &C) const;
 
     /**
      * @copydoc plssvm::csvm::predict_values
-     * @detail Small wrapper around the virtual `plssvm::csvm::predict_values` function to easily track its execution time.
+     * @details Small wrapper around the virtual `plssvm::csvm::predict_values` function to easily track its execution time.
      */
     [[nodiscard]] aos_matrix<real_type> run_predict_values(const parameter &params, const soa_matrix<real_type> &support_vectors, const aos_matrix<real_type> &alpha, const std::vector<real_type> &rho, soa_matrix<real_type> &w, const soa_matrix<real_type> &predict_points) const;
 

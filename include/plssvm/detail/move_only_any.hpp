@@ -6,7 +6,7 @@
  * @license This file is part of the PLSSVM project which is released under the MIT license.
  *          See the LICENSE.md file in the project root for full license information.
  *
- * @brief Implements a `move_only_any` class based on [`std::any](https://en.cppreference.com/w/cpp/utility/any) that works with move-only types.
+ * @brief Implements a `move_only_any` class based on [`std::any`](https://en.cppreference.com/w/cpp/utility/any) that works with move-only types.
  */
 
 #ifndef PLSSVM_DETAIL_move_only_any_HPP_
@@ -64,19 +64,21 @@ class move_only_any {
     struct type_erasure_base {
         type_erasure_base() = default;
         /**
-         * @breif Default copy-constructor.
+         * @brief Default copy-constructor.
          */
         type_erasure_base(const type_erasure_base &) = default;
         /**
-         * @breif Default move-constructor.
+         * @brief Default move-constructor.
          */
         type_erasure_base(type_erasure_base &&) noexcept = default;
         /**
-         * @breif Default copy-assignment operator.
+         * @brief Default copy-assignment operator.
+         * @return `*this`
          */
         type_erasure_base &operator=(const type_erasure_base &) = default;
         /**
-         * @breif Default move-assignment operator.
+         * @brief Default move-assignment operator.
+         * @return `*this`
          */
         type_erasure_base &operator=(type_erasure_base &&) noexcept = default;
 
@@ -171,6 +173,7 @@ class move_only_any {
     move_only_any &operator=(const move_only_any &) = delete;
     /**
      * @brief Default the move-assignment operator.
+     * @return `*this`
      */
     move_only_any &operator=(move_only_any &&) noexcept = default;
 
@@ -210,6 +213,7 @@ class move_only_any {
      * @tparam U the types in the `std::initializer_list`
      * @tparam Args the types used to construct @p ValueType
      * @param[in] il the `std::initializer_list` to construct an object of type @p ValueType
+     * @param[in] args the values used to construct @p ValueType
      * @return a reference to the newly constructed object
      */
     template <typename ValueType, typename U, typename... Args, PLSSVM_REQUIRES(std::is_constructible_v<std::decay_t<ValueType>, std::initializer_list<U>, Args...>)>

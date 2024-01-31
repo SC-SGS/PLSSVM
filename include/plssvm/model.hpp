@@ -188,7 +188,7 @@ class model {
 
     /**
      * @brief For each class, holds the indices of all data points in the support vectors.
-     * @detalis Unused for one vs. all classification.
+     * @details Unused for one vs. all classification.
      * @note Must be initialized to an empty vector instead of a `nullptr`.
      */
     std::shared_ptr<std::vector<std::vector<std::size_t>>> index_sets_ptr_{ std::make_shared<std::vector<std::vector<std::size_t>>>() };

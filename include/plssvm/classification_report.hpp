@@ -41,12 +41,15 @@ namespace plssvm {
  */
 class classification_report {
   public:
+    /// @cond Doxygen_suppress
+    // create named arguments
     /// Create a named argument for the number of floating point digits printed in the classification report.
     static IGOR_MAKE_NAMED_ARGUMENT(digits);
     /// Create a named argument for the zero division behavior: warn (and set to 0.0), 0.0, 1.0, or NaN.
     static IGOR_MAKE_NAMED_ARGUMENT(zero_division);
     /// Create a named argument for the displayed target names in the classification report as `std::vector<std::string>`. Must have the same number of names as there are labels.
     static IGOR_MAKE_NAMED_ARGUMENT(target_names);
+    /// @endcond
 
     /**
      * @brief Enum class for all possible zero division behaviors when calculating the precision, recall, or F1-score.
