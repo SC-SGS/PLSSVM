@@ -26,8 +26,22 @@ namespace plssvm::openmp {
 
 namespace detail {
 
+/**
+ * @brief Perform an implicit BLAS SYMM-like operation: `C = alpha * A * B + C` where `A` is the implicitly calculated kernel matrix using the @p kernel function (never actually stored, reducing the amount of needed global memory), @p B and @p C are matrices, and @p alpha is a scalar.
+ * @tparam kernel the compile-time kernel function to use
+ * @tparam Args the types of the potential additional arguments for the @p kernel function
+ * @param alpha the scalar alpha value
+ * @param[in] q the `q` vector
+ * @param[in] data the data matrix
+ * @param[in] QA_cost he bottom right matrix entry multiplied by cost
+ * @param[in] cost 1 / the cost parameter in the C-SVM
+ * @param[in] B the matrix @p B
+ * @param[in] beta the beta alpha value
+ * @param[in,out] C the matrix @p C
+ * @param args the potential additional arguments for the @p kernel function
+ */
 template <kernel_function_type kernel, typename... Args>
-void device_kernel_assembly_symm(real_type alpha, const std::vector<real_type> &q, const aos_matrix<real_type> &data, real_type QA_cost, real_type cost, const aos_matrix<real_type> &B, real_type beta, aos_matrix<real_type> &C, Args... args) {
+void device_kernel_assembly_symm(const real_type alpha, const std::vector<real_type> &q, const aos_matrix<real_type> &data, const real_type QA_cost, const real_type cost, const aos_matrix<real_type> &B, const real_type beta, aos_matrix<real_type> &C, Args... args) {
     PLSSVM_ASSERT(q.size() == data.num_rows() - 1, "Sizes mismatch!: {} != {}", q.size(), data.num_rows() - 1);
     PLSSVM_ASSERT(cost != real_type{ 0.0 }, "cost must not be 0.0 since it is 1 / plssvm::cost!");
     PLSSVM_ASSERT(B.shape() == C.shape(), "The matrices B and C must have the same shape!");
@@ -74,17 +88,54 @@ void device_kernel_assembly_symm(real_type alpha, const std::vector<real_type> &
 
 }  // namespace detail
 
-void device_kernel_assembly_linear_symm(real_type alpha, const std::vector<real_type> &q, const aos_matrix<real_type> &data, real_type QA_cost, real_type cost, const aos_matrix<real_type> &B, real_type beta, aos_matrix<real_type> &C) {
+/**
+ * @brief Perform an implicit BLAS SYMM-like operation: `C = alpha * A * B + C` where `A` is the implicitly calculated kernel matrix using the linear kernel function \f$\vec{u}^T \cdot \vec{v}\f$ (never actually stored, reducing the amount of needed global memory), @p B and @p C are matrices, and @p alpha is a scalar.
+ * @param alpha the scalar alpha value
+ * @param[in] q the `q` vector
+ * @param[in] data the data matrix
+ * @param[in] QA_cost he bottom right matrix entry multiplied by cost
+ * @param[in] cost 1 / the cost parameter in the C-SVM
+ * @param[in] B the matrix @p B
+ * @param[in] beta the beta alpha value
+ * @param[in,out] C the matrix @p C
+ */
+void device_kernel_assembly_linear_symm(const real_type alpha, const std::vector<real_type> &q, const aos_matrix<real_type> &data, const real_type QA_cost, const real_type cost, const aos_matrix<real_type> &B, const real_type beta, aos_matrix<real_type> &C) {
     detail::device_kernel_assembly_symm<kernel_function_type::linear>(alpha, q, data, QA_cost, cost, B, beta, C);
 }
 
-void device_kernel_assembly_polynomial_symm(real_type alpha, const std::vector<real_type> &q, const aos_matrix<real_type> &data, real_type QA_cost, real_type cost, const int degree, const real_type gamma, const real_type coef0, const aos_matrix<real_type> &B, real_type beta, aos_matrix<real_type> &C) {
+/**
+ * @brief Perform an implicit BLAS SYMM-like operation: `C = alpha * A * B + C` where `A` is the implicitly calculated kernel matrix using the polynomial kernel function \f$(gamma \cdot \vec{u}^T \cdot \vec{v} + coef0)^{degree}\f$ (never actually stored, reducing the amount of needed global memory), @p B and @p C are matrices, and @p alpha is a scalar.
+ * @param alpha the scalar alpha value
+ * @param[in] q the `q` vector
+ * @param[in] data the data matrix
+ * @param[in] QA_cost he bottom right matrix entry multiplied by cost
+ * @param[in] cost 1 / the cost parameter in the C-SVM
+ * @param[in] degree the degree parameter used in the polynomial kernel function
+ * @param[in] gamma the gamma parameter used in the polynomial kernel function
+ * @param[in] coef0 the coef0 parameter used in the polynomial kernel function
+ * @param[in] B the matrix @p B
+ * @param[in] beta the beta alpha value
+ * @param[in,out] C the matrix @p C
+ */
+void device_kernel_assembly_polynomial_symm(const real_type alpha, const std::vector<real_type> &q, const aos_matrix<real_type> &data, const real_type QA_cost, const real_type cost, const int degree, const real_type gamma, const real_type coef0, const aos_matrix<real_type> &B, const real_type beta, aos_matrix<real_type> &C) {
     PLSSVM_ASSERT(gamma > real_type{ 0.0 }, "gamma must be greater than 0, but is {}!", gamma);
 
     detail::device_kernel_assembly_symm<kernel_function_type::polynomial>(alpha, q, data, QA_cost, cost, B, beta, C, degree, gamma, coef0);
 }
 
-void device_kernel_assembly_rbf_symm(real_type alpha, const std::vector<real_type> &q, const aos_matrix<real_type> &data, real_type QA_cost, real_type cost, const real_type gamma, const aos_matrix<real_type> &B, real_type beta, aos_matrix<real_type> &C) {
+/**
+ * @brief Perform an implicit BLAS SYMM-like operation: `C = alpha * A * B + C` where `A` is the implicitly calculated kernel matrix using the rbf kernel function \f$e^{(-gamma \cdot |\vec{u} - \vec{v}|^2)}\f$ (never actually stored, reducing the amount of needed global memory), @p B and @p C are matrices, and @p alpha is a scalar.
+ * @param alpha the scalar alpha value
+ * @param[in] q the `q` vector
+ * @param[in] data the data matrix
+ * @param[in] QA_cost he bottom right matrix entry multiplied by cost
+ * @param[in] cost 1 / the cost parameter in the C-SVM
+ * @param[in] gamma the gamma parameter used in the polynomial kernel function
+ * @param[in] B the matrix @p B
+ * @param[in] beta the beta alpha value
+ * @param[in,out] C the matrix @p C
+ */
+void device_kernel_assembly_rbf_symm(const real_type alpha, const std::vector<real_type> &q, const aos_matrix<real_type> &data, const real_type QA_cost, const real_type cost, const real_type gamma, const aos_matrix<real_type> &B, const real_type beta, aos_matrix<real_type> &C) {
     PLSSVM_ASSERT(gamma > real_type{ 0.0 }, "gamma must be greater than 0, but is {}!", gamma);
 
     detail::device_kernel_assembly_symm<kernel_function_type::rbf>(alpha, q, data, QA_cost, cost, B, beta, C, gamma);

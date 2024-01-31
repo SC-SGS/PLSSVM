@@ -26,6 +26,17 @@ namespace plssvm::openmp {
 
 namespace detail {
 
+/**
+ * @brief Assemble the kernel matrix using the @p kernel function.
+ * @tparam kernel the compile-time kernel function to use
+ * @tparam Args the types of the potential additional arguments for the @p kernel function
+ * @param[in] q the `q` vector
+ * @param[out] ret the resulting kernel matrix
+ * @param[in] data the data matrix
+ * @param[in] QA_cost he bottom right matrix entry multiplied by cost
+ * @param[in] cost 1 / the cost parameter in the C-SVM
+ * @param args the potential additional arguments for the @p kernel function
+ */
 template <kernel_function_type kernel, typename... Args>
 void device_kernel_assembly(const std::vector<real_type> &q, std::vector<real_type> &ret, const aos_matrix<real_type> &data, const real_type QA_cost, const real_type cost, Args... args) {
     PLSSVM_ASSERT(q.size() == data.num_rows() - 1, "Sizes mismatch!: {} != {}", q.size(), data.num_rows() - 1);
