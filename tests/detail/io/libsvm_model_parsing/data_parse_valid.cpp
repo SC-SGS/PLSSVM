@@ -93,11 +93,11 @@ TYPED_TEST(LIBSVMModelDataParseValid, read) {
     // skip the first 8 lines, i.e., the model file header using the linear kernel function
     const std::size_t num_classes_for_label_type = util::get_num_classes<label_type>();
     const std::vector<std::size_t> num_sv_per_class = util::get_correct_model_file_num_sv_per_class<label_type>();
-    const auto [num_data_points, num_features, data, alpha, classification] = plssvm::detail::io::parse_libsvm_model_data(reader, num_sv_per_class, 8);
+    const auto [data, alpha, classification] = plssvm::detail::io::parse_libsvm_model_data(reader, num_sv_per_class, 8);
 
     // check for correct sizes
-    ASSERT_EQ(num_data_points, 6);
-    ASSERT_EQ(num_features, 4);
+    ASSERT_EQ(data.num_rows(), 6);
+    ASSERT_EQ(data.num_cols(), 4);
     EXPECT_EQ(classification, expected_classification);
 
     // check for correct data

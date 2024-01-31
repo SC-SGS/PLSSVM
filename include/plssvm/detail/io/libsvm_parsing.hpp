@@ -18,7 +18,6 @@
 #include "plssvm/detail/io/file_reader.hpp"     // plssvm::detail::io::file_reader
 #include "plssvm/detail/memory_size.hpp"        // plssvm::memory_size, custom literals
 #include "plssvm/detail/string_conversion.hpp"  // plssvm::detail::convert_to
-#include "plssvm/detail/utility.hpp"            // plssvm::detail::current_date_time
 #include "plssvm/exceptions/exceptions.hpp"     // plssvm::invalid_file_format_exception
 #include "plssvm/matrix.hpp"                    // plssvm::soa_matrix
 #include "plssvm/shape.hpp"                     // plssvm::shape
@@ -52,6 +51,7 @@ namespace plssvm::detail::io {
     std::size_t num_features = 0;
     std::exception_ptr parallel_exception;
 
+    // loop over all lines potential skipping the first ones
 #pragma omp parallel for default(none) shared(lines, parallel_exception) firstprivate(skipped_lines) reduction(max : num_features)
     for (std::size_t i = skipped_lines; i < lines.size(); ++i) {
         try {
@@ -111,7 +111,7 @@ namespace plssvm::detail::io {
  * @throws plssvm::invalid_file_format_exception if the provided LIBSVM file uses zero-based indexing (LIBSVM mandates one-based indices)
  * @throws plssvm::invalid_file_format_exception if the feature (indices) are not given in a strictly increasing order
  * @throws plssvm::invalid_file_format_exception if only **some** data points are annotated with labels
- * @return a std::tuple containing: [the number of data points, the number of features per data point, the data points, the labels (optional)] (`[[nodiscard]]`)
+ * @return [the number of data points; the number of features per data point; the data points, the labels (optional)] (`[[nodiscard]]`)
  */
 template <typename label_type>
 [[nodiscard]] inline std::tuple<std::size_t, std::size_t, soa_matrix<real_type>, std::vector<label_type>> parse_libsvm_data(const file_reader &reader) {
@@ -157,6 +157,7 @@ template <typename label_type>
                         label[i] = detail::convert_to<label_type, invalid_file_format_exception>(line.substr(0, pos));
                     }
                 } else {
+                    // no class/label found for the current data point
                     has_no_label = true;
                     pos = 0;
                 }
@@ -208,7 +209,7 @@ template <typename label_type>
         std::rethrow_exception(parallel_exception);
     }
     if (has_label && has_no_label) {
-        // some data points where given with labels, BUT some data pints where given without labels
+        // some data points where given with labels, BUT also some data pints where given without labels
         throw invalid_file_format_exception{ "Inconsistent label specification found (some data points are labeled, others are not)!" };
     }
 
@@ -246,9 +247,6 @@ inline void write_libsvm_data_impl(const std::string &filename, const soa_matrix
 
     // create output file
     fmt::ostream out = fmt::output_file(filename);
-    // write timestamp as current date time
-    // note: commented out since the resulting model file cannot be read be LIBSVM
-    // out.print("# This data set has been created at {}\n", detail::current_date_time());
 
     const std::size_t num_data_points = data.num_rows();
     if (num_data_points == 0) {
@@ -256,8 +254,6 @@ inline void write_libsvm_data_impl(const std::string &filename, const soa_matrix
         return;
     }
     const std::size_t num_features = data.num_cols();
-    // note: commented out since the resulting model file cannot be read be LIBSVM
-    // out.print("# {}x{}\n", num_data_points, num_features);
 
     // the maximum size of one formatted LIBSVM entry, e.g., 1234:1.365363e+10
     // biggest number representable as std::size_t: 18446744073709551615 -> 20 chars
@@ -269,7 +265,7 @@ inline void write_libsvm_data_impl(const std::string &filename, const soa_matrix
     constexpr static std::size_t CHARS_PER_BLOCK = 48;
     // results in 48 B * 128 B = 6 KiB stack buffer per thread
     constexpr static std::size_t BLOCK_SIZE = 128;
-    // use 1 MiB as buffer per thread
+    // use 1 MiB as buffer per thread before the contents are dumped to the file
     constexpr detail::memory_size STRING_BUFFER_SIZE = 1_MiB;
 
     // format one output-line

@@ -22,11 +22,11 @@
 
 class LIBSVMModelUtilityXvsY : public ::testing::TestWithParam<std::tuple<std::size_t, std::size_t, std::size_t, std::size_t>> { };
 
-TEST_P(LIBSVMModelUtilityXvsY, x_vs_y_to_idx) {
+TEST_P(LIBSVMModelUtilityXvsY, oao_x_vs_y_to_idx) {
     const auto [x, y, num_classes, expected_idx] = GetParam();
 
-    EXPECT_EQ(plssvm::detail::io::x_vs_y_to_idx(x, y, num_classes), expected_idx);
-    EXPECT_EQ(plssvm::detail::io::x_vs_y_to_idx(y, x, num_classes), expected_idx);
+    EXPECT_EQ(plssvm::detail::io::oao_x_vs_y_to_idx(x, y, num_classes), expected_idx);
+    EXPECT_EQ(plssvm::detail::io::oao_x_vs_y_to_idx(y, x, num_classes), expected_idx);
 }
 
 // clang-format off
@@ -38,19 +38,19 @@ INSTANTIATE_TEST_SUITE_P(LIBSVMModelUtilityXvsY, LIBSVMModelUtilityXvsY, ::testi
 // clang-format on
 
 TEST(LIBSVMModelUtilityXvsYDeathTest, x_equal_to_y) {
-    EXPECT_DEATH(std::ignore = plssvm::detail::io::x_vs_y_to_idx(0, 0, 2), "Can't compute the index for the binary classification of 0vs0!");
+    EXPECT_DEATH(std::ignore = plssvm::detail::io::oao_x_vs_y_to_idx(0, 0, 2), "Can't compute the index for the binary classification of 0vs0!");
 }
 
 TEST(LIBSVMModelUtilityXvsYDeathTest, too_few_classes) {
-    EXPECT_DEATH(std::ignore = plssvm::detail::io::x_vs_y_to_idx(0, 1, 1), "There must be at least two classes!");
+    EXPECT_DEATH(std::ignore = plssvm::detail::io::oao_x_vs_y_to_idx(0, 1, 1), "There must be at least two classes!");
 }
 
 TEST(LIBSVMModelUtilityXvsYDeathTest, x_greater_or_equal_than_num_classes) {
-    EXPECT_DEATH(std::ignore = plssvm::detail::io::x_vs_y_to_idx(3, 0, 2), ::testing::HasSubstr("The class x (3) must be smaller than the total number of classes (2)!"));
+    EXPECT_DEATH(std::ignore = plssvm::detail::io::oao_x_vs_y_to_idx(3, 0, 2), ::testing::HasSubstr("The class x (3) must be smaller than the total number of classes (2)!"));
 }
 
 TEST(LIBSVMModelUtilityXvsYDeathTest, y_greater_or_equal_than_num_classes) {
-    EXPECT_DEATH(std::ignore = plssvm::detail::io::x_vs_y_to_idx(0, 3, 3), ::testing::HasSubstr("The class y (3) must be smaller than the total number of classes (3)!"));
+    EXPECT_DEATH(std::ignore = plssvm::detail::io::oao_x_vs_y_to_idx(0, 3, 3), ::testing::HasSubstr("The class y (3) must be smaller than the total number of classes (3)!"));
 }
 
 class LIBSVMModelUtilityAlphaIdx : public ::testing::TestWithParam<std::tuple<std::size_t, std::size_t, std::size_t, std::size_t>> {

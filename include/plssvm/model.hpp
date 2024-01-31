@@ -231,7 +231,9 @@ model<U>::model(const std::string &filename) {
     soa_matrix<real_type> support_vectors{};
 
     // parse libsvm model data
-    std::tie(num_support_vectors_, num_features_, support_vectors, *alpha_ptr_, classification_strategy_) = detail::io::parse_libsvm_model_data(reader, num_sv_per_class, num_header_lines);
+    std::tie(support_vectors, *alpha_ptr_, classification_strategy_) = detail::io::parse_libsvm_model_data(reader, num_sv_per_class, num_header_lines);
+    num_support_vectors_ = support_vectors.num_rows();
+    num_features_ = support_vectors.num_cols();
 
     switch (classification_strategy_) {
         case classification_type::oaa:
