@@ -19,7 +19,7 @@ namespace plssvm::openmp::detail {
 
 int get_num_threads() {
     // get the number of used OpenMP threads
-    int num_omp_threads = 0;
+    int num_omp_threads;
 #pragma omp parallel default(none) shared(num_omp_threads)
     {
 #pragma omp master

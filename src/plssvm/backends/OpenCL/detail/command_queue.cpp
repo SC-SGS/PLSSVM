@@ -57,7 +57,7 @@ void command_queue::add_kernel(compute_kernel_name name, kernel &&compute_kernel
     kernels.insert_or_assign(name, std::move(compute_kernel));
 }
 
-[[nodiscard]] const kernel &command_queue::get_kernel(compute_kernel_name name) const {
+const kernel &command_queue::get_kernel(compute_kernel_name name) const {
     return kernels.at(name);
 }
 

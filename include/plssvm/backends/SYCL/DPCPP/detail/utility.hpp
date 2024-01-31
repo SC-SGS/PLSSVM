@@ -49,7 +49,15 @@ void device_synchronize(const queue &q);
  */
 [[nodiscard]] queue get_default_queue();
 
+/**
+ * @brief Get the DPC++ version as pretty string.
+ * @return the DPC++ version (`[[nodiscard]]`)
+ */
 [[nodiscard]] std::string get_dpcpp_version();
+/**
+ * @brief Get the time (version) when the used DPC++ version was built.
+ * @return the DPC++ built date (`[[nodiscard]]`)
+ */
 [[nodiscard]] std::string get_dpcpp_timestamp_version();
 
 }  // namespace plssvm::dpcpp::detail

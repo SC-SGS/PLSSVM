@@ -9,7 +9,7 @@
 #include "plssvm/backends/SYCL/DPCPP/csvm.hpp"
 
 #include "plssvm/backend_types.hpp"                                          // plssvm::backend_type
-#include "plssvm/backends/SYCL/cg_explicit/blas.hpp"                         // plssvm::sycl::device_kernel_gemm
+#include "plssvm/backends/SYCL/cg_explicit/blas.hpp"                         // plssvm::sycl::{device_kernel_gemm, device_kernel_symm}
 #include "plssvm/backends/SYCL/cg_explicit/kernel_matrix_assembly.hpp"       // plssvm::sycl::{device_kernel_assembly_linear, device_kernel_assembly_polynomial, device_kernel_assembly_rbf}
 #include "plssvm/backends/SYCL/cg_implicit/kernel_matrix_assembly_blas.hpp"  // plssvm::sycl::{device_kernel_assembly_linear_symm, device_kernel_assembly_polynomial_symm, device_kernel_assembly_rbf_symm}
 #include "plssvm/backends/SYCL/DPCPP/detail/device_ptr.hpp"                  // plssvm::dpcpp::detail::::device_ptr

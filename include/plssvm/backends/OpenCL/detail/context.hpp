@@ -55,7 +55,7 @@ class context {
      * @param[in,out] other the context to move the resources from
      * @return `*this`
      */
-    context &operator=(context &&other);
+    context &operator=(context &&other) noexcept;
 
     /**
      * @brief Release the context resources on destruction.

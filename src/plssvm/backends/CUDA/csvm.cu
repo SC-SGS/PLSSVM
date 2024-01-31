@@ -11,7 +11,7 @@
 #include "plssvm/backend_types.hpp"                                          // plssvm::backend_type
 #include "plssvm/backends/CUDA/cg_explicit/blas.cuh"                         // plssvm::cuda::device_kernel_gemm
 #include "plssvm/backends/CUDA/cg_explicit/kernel_matrix_assembly.cuh"       // plssvm::cuda::{device_kernel_assembly_linear, device_kernel_assembly_polynomial, device_kernel_assembly_rbf}
-#include "plssvm/backends/CUDA/cg_implicit/kernel_matrix_assembly_blas.cuh"  // plssvm::cuda::device_kernel_assembly_linear_symm, plssvm::cuda::device_kernel_assembly_polynomial_symm, plssvm::cuda::device_kernel_assembly_rbf_symm
+#include "plssvm/backends/CUDA/cg_implicit/kernel_matrix_assembly_blas.cuh"  // plssvm::cuda::{device_kernel_assembly_linear_symm, device_kernel_assembly_polynomial_symm, device_kernel_assembly_rbf_symm}
 #include "plssvm/backends/CUDA/detail/device_ptr.cuh"                        // plssvm::cuda::detail::device_ptr
 #include "plssvm/backends/CUDA/detail/utility.cuh"                           // plssvm::cuda::detail::{device_synchronize, get_device_count, set_device, peek_at_last_error, get_runtime_version}
 #include "plssvm/backends/CUDA/exceptions.hpp"                               // plssvm::cuda::backend_exception
@@ -31,7 +31,6 @@
 #include "cuda.h"              // cuda runtime functions
 #include "cuda_runtime_api.h"  // cuda runtime functions
 
-#include "fmt/color.h"    // fmt::fg, fmt::color::orange
 #include "fmt/core.h"     // fmt::format
 #include "fmt/ostream.h"  // can use fmt using operator<< overloads
 

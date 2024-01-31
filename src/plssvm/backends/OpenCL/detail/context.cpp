@@ -26,7 +26,7 @@ context::context(context &&other) noexcept :
     platform{ std::exchange(other.platform, nullptr) },
     devices{ std::move(other.devices) } { }
 
-context &context::operator=(context &&other) {
+context &context::operator=(context &&other)noexcept {
     if (this != std::addressof(other)) {
         other.device_context = std::exchange(other.device_context, nullptr);
         platform = std::exchange(other.platform, nullptr);

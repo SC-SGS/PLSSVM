@@ -9,9 +9,9 @@
 #include "plssvm/backends/OpenMP/csvm.hpp"
 
 #include "plssvm/backend_types.hpp"                                            // plssvm::backend_type
-#include "plssvm/backends/OpenMP/cg_explicit/blas.hpp"                         // plssvm::openmp::device_kernel_gemm, plssvm::openmp::device_kernel_symm
-#include "plssvm/backends/OpenMP/cg_explicit/kernel_matrix_assembly.hpp"       // plssvm::openmp::device_kernel_assembly_linear, plssvm::openmp::device_kernel_assembly_polynomial, plssvm::openmp::device_kernel_assembly_rbf
-#include "plssvm/backends/OpenMP/cg_implicit/kernel_matrix_assembly_blas.hpp"  // plssvm::openmp::device_kernel_assembly_linear_symm, plssvm::openmp::device_kernel_assembly_polynomial_symm, plssvm::openmp::device_kernel_assembly_rbf_symm
+#include "plssvm/backends/OpenMP/cg_explicit/blas.hpp"                         // plssvm::openmp::{device_kernel_gemm, device_kernel_symm}
+#include "plssvm/backends/OpenMP/cg_explicit/kernel_matrix_assembly.hpp"       // plssvm::openmp::{device_kernel_assembly_linear, device_kernel_assembly_polynomial, device_kernel_assembly_rbf}
+#include "plssvm/backends/OpenMP/cg_implicit/kernel_matrix_assembly_blas.hpp"  // plssvm::openmp::{device_kernel_assembly_linear_symm, device_kernel_assembly_polynomial_symm, device_kernel_assembly_rbf_symm}
 #include "plssvm/backends/OpenMP/detail/utility.hpp"                           // plssvm::openmp::detail::{get_num_threads, get_openmp_version}
 #include "plssvm/backends/OpenMP/exceptions.hpp"                               // plssvm::openmp::backend_exception
 #include "plssvm/constants.hpp"                                                // plssvm::real_type
