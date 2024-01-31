@@ -263,11 +263,11 @@ TEST_F(ClassificationReport, construct_target_names) {
 TEST_F(ClassificationReport, construct_target_names_size_mismatch) {
     // too few new target names
     EXPECT_THROW_WHAT((plssvm::classification_report{ this->get_correct_label(), this->get_predicted_label(), plssvm::classification_report::target_names = std::vector<std::string>{ "Foo", "Bar" } }),
-                      plssvm::exception,
+                      plssvm::classification_report_exception,
                       "Provided 2 target names, but found 3 distinct labels!");
     // too many new target names
     EXPECT_THROW_WHAT((plssvm::classification_report{ this->get_correct_label(), this->get_predicted_label(), plssvm::classification_report::target_names = std::vector<std::string>{ "Foo", "Bar", "Baz", "Bat" } }),
-                      plssvm::exception,
+                      plssvm::classification_report_exception,
                       "Provided 4 target names, but found 3 distinct labels!");
 }
 
@@ -305,28 +305,28 @@ TEST_F(ClassificationReport, construct_zero_division_behavior) {
 TEST_F(ClassificationReport, construct_digits_negative) {
     // too few new target names
     EXPECT_THROW_WHAT((plssvm::classification_report{ this->get_correct_label(), this->get_predicted_label(), plssvm::classification_report::digits = -1 }),
-                      plssvm::exception,
+                      plssvm::classification_report_exception,
                       "Invalid number of output digits provided! Number of digits must be greater than zero but is -1!");
 }
 
 TEST_F(ClassificationReport, construct_empty_correct_label) {
     // the correct labels vector must not be empty
     EXPECT_THROW_WHAT((plssvm::classification_report{ std::vector<int>{}, this->get_predicted_label() }),
-                      plssvm::exception,
+                      plssvm::classification_report_exception,
                       "The correct labels list must not be empty!");
 }
 
 TEST_F(ClassificationReport, construct_empty_predicted_label) {
     // the predicted labels vector must not be empty
     EXPECT_THROW_WHAT((plssvm::classification_report{ this->get_correct_label(), std::vector<int>{} }),
-                      plssvm::exception,
+                      plssvm::classification_report_exception,
                       "The predicted labels list must not be empty!");
 }
 
 TEST_F(ClassificationReport, construct_label_size_mismatch) {
     // constructing a classification report with different number of correct and predicted labels must throw
     EXPECT_THROW_WHAT((plssvm::classification_report{ std::vector<int>{ 0, 0, 0 }, std::vector<int>{ 0, 0 } }),
-                      plssvm::exception,
+                      plssvm::classification_report_exception,
                       "The number of correct labels (3) and predicted labels (2) must be the same!");
 }
 
@@ -391,8 +391,8 @@ TEST_F(ClassificationReport, metric_for_invalid_class) {
     const plssvm::classification_report report{ this->get_correct_label(), this->get_predicted_label() };
 
     // try checking for an illegal class
-    EXPECT_THROW_WHAT(std::ignore = report.metric_for_class(-1), plssvm::exception, "Couldn't find the label \"-1\"!");
-    EXPECT_THROW_WHAT(std::ignore = report.metric_for_class("foo"), plssvm::exception, "Couldn't find the label \"foo\"!");
+    EXPECT_THROW_WHAT(std::ignore = report.metric_for_class(-1), plssvm::classification_report_exception, "Couldn't find the label \"-1\"!");
+    EXPECT_THROW_WHAT(std::ignore = report.metric_for_class("foo"), plssvm::classification_report_exception, "Couldn't find the label \"foo\"!");
 }
 
 TEST_F(ClassificationReport, classification_report) {

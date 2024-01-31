@@ -186,6 +186,19 @@ class kernel_launch_resources : public exception {
     explicit kernel_launch_resources(const std::string &msg, source_location loc = source_location::current());
 };
 
+/**
+ * @brief Exception type thrown if something during the creation of the classification report goes wrong.
+ */
+class classification_report_exception : public exception {
+  public:
+    /**
+     * @brief Construct a new exception forwarding the exception message and source location to `plssvm::exception`.
+     * @param[in] msg the exception's `what()` message
+     * @param[in] loc the exception's call side information
+     */
+    explicit classification_report_exception(const std::string &msg, source_location loc = source_location::current());
+};
+
 }  // namespace plssvm
 
 #endif  // PLSSVM_EXCEPTIONS_EXCEPTIONS_HPP_

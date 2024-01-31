@@ -69,4 +69,7 @@ matrix_exception::matrix_exception(const std::string &msg, source_location loc) 
 kernel_launch_resources::kernel_launch_resources(const std::string &msg, source_location loc) :
     exception{ msg, "kernel_launch_resources", loc } { }
 
+classification_report_exception::classification_report_exception(const std::string &msg, source_location loc) :
+    exception{ msg, "classification_report_exception", loc } { }
+
 }  // namespace plssvm

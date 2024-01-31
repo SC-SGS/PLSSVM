@@ -36,7 +36,7 @@ Exception dummy(const std::string &msg) {
 using exception_types_list = std::tuple<plssvm::exception, plssvm::invalid_parameter_exception, plssvm::file_reader_exception,
                                         plssvm::data_set_exception, plssvm::file_not_found_exception, plssvm::invalid_file_format_exception,
                                         plssvm::unsupported_backend_exception, plssvm::unsupported_kernel_type_exception, plssvm::gpu_device_ptr_exception,
-                                        plssvm::matrix_exception>;
+                                        plssvm::matrix_exception, plssvm::kernel_launch_resources, plssvm::classification_report_exception>;
 using exception_types_gtest = util::combine_test_parameters_gtest_t<util::cartesian_type_product_t<exception_types_list>>;
 // clang-format on
 

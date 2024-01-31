@@ -15,7 +15,7 @@
 
 #include "plssvm/detail/assert.hpp"          // PLSSVM_ASSERT
 #include "plssvm/detail/igor_utility.hpp"    // plssvm::detail::{has_only_named_args_v, get_value_from_named_parameter}
-#include "plssvm/exceptions/exceptions.hpp"  // plssvm::exception
+#include "plssvm/exceptions/exceptions.hpp"  // plssvm::classification_report_exception
 #include "plssvm/matrix.hpp"                 // plssvm::aos_matrix
 #include "plssvm/shape.hpp"                  // plssvm::shape
 
@@ -101,9 +101,9 @@ class classification_report {
      * @param[in] correct_label the list of correct labels
      * @param[in] predicted_label the list of predicted labels
      * @param[in] named_args the potential name arguments (digits, zero_division, target_names)
-     * @throws plssvm::exception if the @p correct_label or @p predicted_label are empty
-     * @throws plssvm::exception if the @p correct_label and @p predicted_label sizes mismatch
-     * @throws plssvm::exception if the number of digits to print has been provided but is less or equal to 0
+     * @throws plssvm::classification_report_exception if the @p correct_label or @p predicted_label are empty
+     * @throws plssvm::classification_report_exception if the @p correct_label and @p predicted_label sizes mismatch
+     * @throws plssvm::classification_report_exception if the number of digits to print has been provided but is less or equal to 0
      */
     template <typename label_type, typename... Args>
     classification_report(const std::vector<label_type> &correct_label, const std::vector<label_type> &predicted_label, Args &&...named_args);
@@ -125,14 +125,14 @@ class classification_report {
      * @details The metrics are: precision, recall, f1 score, and support.
      * @tparam label_type the type of the label
      * @param[in] label the label to query the metrics for
-     * @throws plssvm::exception if the @p label couldn't be found
+     * @throws plssvm::classification_report_exception if the @p label couldn't be found
      * @return the classification report for the specific label (`[[nodiscard]]`)
      */
     template <typename label_type>
     [[nodiscard]] metric metric_for_class(const label_type &label) const {
         const auto it = std::find_if(metrics_.cbegin(), metrics_.cend(), [label_str = fmt::format("{}", label)](const auto &p) { return p.first == label_str; });
         if (it == metrics_.cend()) {
-            throw exception{ fmt::format("Couldn't find the label \"{}\"!", label) };
+            throw classification_report_exception{ fmt::format("Couldn't find the label \"{}\"!", label) };
         }
         return it->second;
     }
@@ -180,13 +180,13 @@ template <typename label_type, typename... Args>
 classification_report::classification_report(const std::vector<label_type> &correct_label, const std::vector<label_type> &predicted_label, Args &&...named_args) {
     // sanity check for input correct sizes
     if (correct_label.empty()) {
-        throw exception{ "The correct labels list must not be empty!" };
+        throw classification_report_exception{ "The correct labels list must not be empty!" };
     }
     if (predicted_label.empty()) {
-        throw exception{ "The predicted labels list must not be empty!" };
+        throw classification_report_exception{ "The predicted labels list must not be empty!" };
     }
     if (correct_label.size() != predicted_label.size()) {
-        throw exception{ fmt::format("The number of correct labels ({}) and predicted labels ({}) must be the same!", correct_label.size(), predicted_label.size()) };
+        throw classification_report_exception{ fmt::format("The number of correct labels ({}) and predicted labels ({}) must be the same!", correct_label.size(), predicted_label.size()) };
     }
 
     igor::parser parser{ std::forward<Args>(named_args)... };
@@ -205,7 +205,7 @@ classification_report::classification_report(const std::vector<label_type> &corr
         output_digits_ = detail::get_value_from_named_parameter<decltype(output_digits_)>(parser, plssvm::classification_report::digits);
         // runtime check: the number of digits must be greater than zero!
         if (output_digits_ <= 0) {
-            throw exception{ fmt::format("Invalid number of output digits provided! Number of digits must be greater than zero but is {}!", output_digits_) };
+            throw classification_report_exception{ fmt::format("Invalid number of output digits provided! Number of digits must be greater than zero but is {}!", output_digits_) };
         }
     }
 
@@ -227,7 +227,7 @@ classification_report::classification_report(const std::vector<label_type> &corr
         display_names = detail::get_value_from_named_parameter<decltype(display_names)>(parser, plssvm::classification_report::target_names);
         // the number of display names must match the number of distinct labels
         if (display_names.size() != distinct_label_vec.size()) {
-            throw plssvm::exception{ fmt::format("Provided {} target names, but found {} distinct labels!", display_names.size(), distinct_label_vec.size()) };
+            throw classification_report_exception{ fmt::format("Provided {} target names, but found {} distinct labels!", display_names.size(), distinct_label_vec.size()) };
         }
     }
 

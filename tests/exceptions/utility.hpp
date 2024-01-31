@@ -50,6 +50,8 @@ PLSSVM_CREATE_EXCEPTION_TYPE_NAME(unsupported_backend_exception)
 PLSSVM_CREATE_EXCEPTION_TYPE_NAME(unsupported_kernel_type_exception)
 PLSSVM_CREATE_EXCEPTION_TYPE_NAME(gpu_device_ptr_exception)
 PLSSVM_CREATE_EXCEPTION_TYPE_NAME(matrix_exception)
+PLSSVM_CREATE_EXCEPTION_TYPE_NAME(kernel_launch_resources)
+PLSSVM_CREATE_EXCEPTION_TYPE_NAME(classification_report_exception)
 
 }  // namespace util
 
