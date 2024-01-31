@@ -13,8 +13,6 @@
 #include "plssvm/detail/cmd/parser_scale.hpp"       // plssvm::detail::cmd::parser_scale
 #include "plssvm/detail/logging.hpp"                // plssvm::detail::log
 #include "plssvm/detail/performance_tracker.hpp"    // plssvm::detail::tracking_entry,PLSSVM_DETAIL_PERFORMANCE_TRACKER_SAVE
-#include "plssvm/matrix.hpp"                        // plssvm::matrix
-#include "plssvm/verbosity_levels.hpp"              // plssvm::verbosity_level
 
 #include <chrono>     // std::chrono::{steady_clock, duration}
 #include <cstdlib>    // std::exit, EXIT_SUCCESS, EXIT_FAILURE

@@ -13,7 +13,6 @@
 #include "plssvm/detail/cmd/parser_predict.hpp"     // plssvm::detail::cmd::parser_predict
 #include "plssvm/detail/logging.hpp"                // plssvm::detail::log
 #include "plssvm/detail/performance_tracker.hpp"    // plssvm::detail::tracking_entry, PLSSVM_DETAIL_PERFORMANCE_TRACKER_SAVE, PLSSVM_DETAIL_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY
-#include "plssvm/verbosity_levels.hpp"              // plssvm::verbosity_level
 
 #include "fmt/format.h"  // fmt::print, fmt::join
 #include "fmt/os.h"      // fmt::ostream, fmt::output_file
@@ -53,7 +52,7 @@ int main(int argc, char *argv[]) {
                                     "  kernel_type: {} -> {}\n",
                                     params.kernel_type,
                                     plssvm::kernel_function_type_to_math_string(params.kernel_type));
-                switch (params.kernel_type) {
+                switch (params.kernel_type.value()) {
                     case plssvm::kernel_function_type::linear:
                         break;
                     case plssvm::kernel_function_type::polynomial:
