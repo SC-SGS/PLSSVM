@@ -15,7 +15,8 @@
 #include "plssvm/detail/operators.hpp"            // plssvm operator overloads for vectors
 #include "plssvm/detail/performance_tracker.hpp"  // PLSSVM_DETAIL_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY, plssvm::detail::tracking_entry
 #include "plssvm/exceptions/exceptions.hpp"       // plssvm::invalid_parameter_exception
-#include "plssvm/kernel_function_types.hpp"       // plssvm::kernel_function_type, plssvm::kernel_function
+#include "plssvm/kernel_function_types.hpp"       // plssvm::kernel_function_type
+#include "plssvm/kernel_functions.hpp"            // plssvm::kernel_function
 #include "plssvm/matrix.hpp"                      // plssvm::soa_matrix
 #include "plssvm/parameter.hpp"                   // plssvm::parameter
 #include "plssvm/shape.hpp"                       // plssvm::shape

@@ -26,6 +26,7 @@
 #include "plssvm/exceptions/exceptions.hpp"                 // exception hierarchy
 #include "plssvm/file_format_types.hpp"                     // all supported file format types
 #include "plssvm/kernel_function_types.hpp"                 // all supported kernel function types
+#include "plssvm/kernel_functions.hpp"                      // implementation of all supported kernel functions
 #include "plssvm/matrix.hpp"                                // a custom matrix class
 #include "plssvm/model.hpp"                                 // the model as a result of training a C-SVM
 #include "plssvm/parameter.hpp"                             // the C-SVM parameter
@@ -49,6 +50,9 @@ namespace plssvm::detail::io { }
 
 /// Namespace containing implementation details for the command line interface functionality. **Should not** directly be used by users.
 namespace plssvm::detail::cmd { }
+
+/// Namespace containing implementation details for the custom literals representing memory sizes. **Should not** directly be used by users.
+namespace plssvm::detail::literals { }
 
 /// Namespace containing operator overloads for [std::vector](https://en.cppreference.com/w/cpp/container/vector) and other mathematical functions on vectors.
 namespace plssvm::operators { }

@@ -164,6 +164,7 @@ set(PLSSVM_BASE_TEST_SOURCES
     ${CMAKE_CURRENT_LIST_DIR}/default_value.cpp
     ${CMAKE_CURRENT_LIST_DIR}/file_format_types.cpp
     ${CMAKE_CURRENT_LIST_DIR}/kernel_function_types.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/kernel_functions.cpp
     ${CMAKE_CURRENT_LIST_DIR}/matrix.cpp
     ${CMAKE_CURRENT_LIST_DIR}/model.cpp
     ${CMAKE_CURRENT_LIST_DIR}/parameter.cpp

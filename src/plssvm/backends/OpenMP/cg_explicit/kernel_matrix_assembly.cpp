@@ -10,7 +10,8 @@
 
 #include "plssvm/constants.hpp"              // plssvm::real_type
 #include "plssvm/detail/assert.hpp"          // PLSSVM_ASSERT
-#include "plssvm/kernel_function_types.hpp"  // plssvm::kernel_function_type, plssvm::kernel_function
+#include "plssvm/kernel_function_types.hpp"  // plssvm::kernel_function_type
+#include "plssvm/kernel_functions.hpp"       // plssvm::kernel_function
 #include "plssvm/matrix.hpp"                 // plssvm::aos_matrix
 
 #include <cstddef>  // std::size_t

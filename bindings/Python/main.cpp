@@ -23,6 +23,7 @@ void init_backend_types(py::module_ &);
 void init_classification_types(py::module_ &);
 void init_file_format_types(py::module_ &);
 void init_kernel_function_types(py::module_ &);
+void init_kernel_functions(py::module_ &);
 void init_parameter(py::module_ &);
 void init_model(py::module_ &);
 void init_data_set(py::module_ &);
@@ -60,6 +61,7 @@ PYBIND11_MODULE(plssvm, m) {
     init_classification_types(m);
     init_file_format_types(m);
     init_kernel_function_types(m);
+    init_kernel_functions(m);
     init_parameter(m);
     init_model(m);
     init_data_set(m);

@@ -11,7 +11,8 @@
 #include "plssvm/constants.hpp"              // plssvm::real_type
 #include "plssvm/detail/assert.hpp"          // PLSSVM_ASSERT
 #include "plssvm/detail/operators.hpp"       // overloaded arithmetic operations for a plssvm::matrix
-#include "plssvm/kernel_function_types.hpp"  // plssvm::kernel_function_type, plssvm::kernel_function
+#include "plssvm/kernel_function_types.hpp"  // plssvm::kernel_function_type
+#include "plssvm/kernel_functions.hpp"       // plssvm::kernel_function
 #include "plssvm/matrix.hpp"                 // aos_matrix
 
 #include <cstddef>  // std::size_t

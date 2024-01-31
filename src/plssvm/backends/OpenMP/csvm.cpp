@@ -23,6 +23,7 @@
 #include "plssvm/detail/operators.hpp"                                         // various operator overloads for std::vector and scalars
 #include "plssvm/detail/performance_tracker.hpp"                               // plssvm::detail::tracking_entry, PLSSVM_DETAIL_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY
 #include "plssvm/kernel_function_types.hpp"                                    // plssvm::kernel_function_type
+#include "plssvm/kernel_functions.hpp"                                         // plssvm::kernel_function
 #include "plssvm/matrix.hpp"                                                   // plssvm::aos_matrix, plssvm::soa_matrix
 #include "plssvm/parameter.hpp"                                                // plssvm::parameter
 #include "plssvm/shape.hpp"                                                    // plssvm::shape
