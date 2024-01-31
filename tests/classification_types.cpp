@@ -34,12 +34,19 @@ TEST(ClassificationType, from_string) {
     // check conversion from std::string
     EXPECT_CONVERSION_FROM_STRING("oaa", plssvm::classification_type::oaa);
     EXPECT_CONVERSION_FROM_STRING("OAA", plssvm::classification_type::oaa);
-    EXPECT_CONVERSION_FROM_STRING("one_vs_all", plssvm::classification_type::oaa);
     EXPECT_CONVERSION_FROM_STRING("One_Against_All", plssvm::classification_type::oaa);
+    EXPECT_CONVERSION_FROM_STRING("ova", plssvm::classification_type::oaa);
+    EXPECT_CONVERSION_FROM_STRING("OVA", plssvm::classification_type::oaa);
+    EXPECT_CONVERSION_FROM_STRING("one_vs_all", plssvm::classification_type::oaa);
+    EXPECT_CONVERSION_FROM_STRING("ovr", plssvm::classification_type::oaa);
+    EXPECT_CONVERSION_FROM_STRING("OVR", plssvm::classification_type::oaa);
+    EXPECT_CONVERSION_FROM_STRING("one_vs_rest", plssvm::classification_type::oaa);
     EXPECT_CONVERSION_FROM_STRING("oao", plssvm::classification_type::oao);
     EXPECT_CONVERSION_FROM_STRING("OAO", plssvm::classification_type::oao);
-    EXPECT_CONVERSION_FROM_STRING("one_vs_one", plssvm::classification_type::oao);
     EXPECT_CONVERSION_FROM_STRING("One_Against_One", plssvm::classification_type::oao);
+    EXPECT_CONVERSION_FROM_STRING("ovo", plssvm::classification_type::oao);
+    EXPECT_CONVERSION_FROM_STRING("OVO", plssvm::classification_type::oao);
+    EXPECT_CONVERSION_FROM_STRING("one_vs_one", plssvm::classification_type::oao);
 }
 
 TEST(ClassificationType, from_string_unknown) {

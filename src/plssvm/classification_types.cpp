@@ -35,9 +35,9 @@ std::istream &operator>>(std::istream &in, classification_type &classification) 
     in >> str;
     detail::to_lower_case(str);
 
-    if (str == "oaa" || str == "one_vs_all" || str == "one_against_all") {
+    if (str == "oaa" || str == "one_against_all" || str == "ova" || str == "one_vs_all" || str == "ovr" || str == "one_vs_rest") {
         classification = classification_type::oaa;
-    } else if (str == "oao" || str == "one_vs_one" || str == "one_against_one") {
+    } else if (str == "oao" || str == "one_against_one" || str == "ovo" || str == "one_vs_one") {
         classification = classification_type::oao;
     } else {
         in.setstate(std::ios::failbit);
