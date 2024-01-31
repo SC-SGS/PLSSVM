@@ -60,7 +60,7 @@ class csvm : public ::plssvm::csvm {
      * @throws plssvm::openmp::backend_exception if the target platform isn't plssvm::target_platform::automatic or plssvm::target_platform::cpu
      * @throws plssvm::openmp::backend_exception if the plssvm::target_platform::cpu target isn't available
      */
-    template <typename... Args, PLSSVM_REQUIRES(detail::has_only_parameter_named_args_v<Args...>)>
+    template <typename... Args, PLSSVM_REQUIRES(::plssvm::detail::has_only_parameter_named_args_v<Args...>)>
     explicit csvm(Args &&...named_args) :
         ::plssvm::csvm{ std::forward<Args>(named_args)... } {
         // the default target is the automatic one
@@ -75,7 +75,7 @@ class csvm : public ::plssvm::csvm {
      * @throws plssvm::openmp::backend_exception if the target platform isn't plssvm::target_platform::automatic or plssvm::target_platform::cpu
      * @throws plssvm::openmp::backend_exception if the plssvm::target_platform::cpu target isn't available
      */
-    template <typename... Args, PLSSVM_REQUIRES(detail::has_only_parameter_named_args_v<Args...>)>
+    template <typename... Args, PLSSVM_REQUIRES(::plssvm::detail::has_only_parameter_named_args_v<Args...>)>
     explicit csvm(const target_platform target, Args &&...named_args) :
         ::plssvm::csvm{ std::forward<Args>(named_args)... } {
         this->init(target);
@@ -118,15 +118,15 @@ class csvm : public ::plssvm::csvm {
     /**
      * @copydoc plssvm::csvm::setup_data_on_devices
      */
-    [[nodiscard]] detail::move_only_any setup_data_on_devices(solver_type solver, const soa_matrix<real_type> &A) const final;
+    [[nodiscard]] ::plssvm::detail::move_only_any setup_data_on_devices(solver_type solver, const soa_matrix<real_type> &A) const final;
     /**
      * @copydoc plssvm::csvm::assemble_kernel_matrix
      */
-    [[nodiscard]] detail::move_only_any assemble_kernel_matrix(solver_type solver, const parameter &params, detail::move_only_any &data, const std::vector<real_type> &q_red, real_type QA_cost) const final;
+    [[nodiscard]] ::plssvm::detail::move_only_any assemble_kernel_matrix(solver_type solver, const parameter &params, ::plssvm::detail::move_only_any &data, const std::vector<real_type> &q_red, real_type QA_cost) const final;
     /**
      * @copydoc plssvm::csvm::blas_level_3
      */
-    void blas_level_3(solver_type solver, real_type alpha, const detail::move_only_any &A, const soa_matrix<real_type> &B, real_type beta, soa_matrix<real_type> &C) const final;
+    void blas_level_3(solver_type solver, real_type alpha, const ::plssvm::detail::move_only_any &A, const soa_matrix<real_type> &B, real_type beta, soa_matrix<real_type> &C) const final;
 
     //***************************************************//
     //                   predict, score                  //
