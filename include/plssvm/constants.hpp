@@ -28,14 +28,14 @@ using real_type = double;
 
 /// Global compile-time constant used for internal thread block caching. May be changed during the CMake configuration step.
 #if defined(PLSSVM_THREAD_BLOCK_SIZE)
-constexpr unsigned long long THREAD_BLOCK_SIZE = PLSSVM_THREAD_BLOCK_SIZE;
+constexpr unsigned THREAD_BLOCK_SIZE = PLSSVM_THREAD_BLOCK_SIZE;
 #else
 constexpr unsigned THREAD_BLOCK_SIZE = 8;
 #endif
 
 /// Global compile-time constant used for internal caching. May be changed during the CMake configuration step.
 #if defined(PLSSVM_INTERNAL_BLOCK_SIZE)
-constexpr unsigned long long INTERNAL_BLOCK_SIZE = PLSSVM_INTERNAL_BLOCK_SIZE;
+constexpr unsigned INTERNAL_BLOCK_SIZE = PLSSVM_INTERNAL_BLOCK_SIZE;
 #else
 constexpr unsigned INTERNAL_BLOCK_SIZE = 4;
 #endif

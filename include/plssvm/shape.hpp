@@ -29,14 +29,14 @@ struct [[nodiscard]] shape {
     /**
      * @brief Default construct a shape of size 0x0.
      */
-    shape() = default;
+    shape() noexcept = default;
     /**
      * @brief Construct a shape of size @p x_p x @p y_p.
      * @details Explicit to prevent conversions from `{ 2, 2 }` to a `plssvm::shape`.
      * @param[in] x_p the shape in x-dimension
      * @param[in] y_p the shape in y-dimension
      */
-    explicit shape(std::size_t x_p, std::size_t y_p);
+    explicit shape(std::size_t x_p, std::size_t y_p) noexcept;
 
     /**
      * @brief Swap the shape dimensions of `*this* with the ones of @p other.

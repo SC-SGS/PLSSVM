@@ -52,7 +52,7 @@ enum class backend_type {
 [[nodiscard]] std::vector<backend_type> list_available_backends();
 
 /**
- * @brief Returns the default backend (if plssvm::backend_type::automatic is used) given the backend and target platform lists.
+ * @brief Returns the default backend given the backend and target platform lists.
  * @param[in] available_backends list of backends; if no backends are provided, queries all available backends
  * @param[in] available_target_platforms list of target platforms; if no target platforms are provided, queries all available target platforms
  * @return the default backend given the backend and target platform lists (`[[nodiscard]]`)

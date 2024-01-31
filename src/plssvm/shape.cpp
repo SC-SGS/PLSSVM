@@ -15,7 +15,7 @@
 
 namespace plssvm {
 
-shape::shape(const std::size_t x_p, const std::size_t y_p) :
+shape::shape(const std::size_t x_p, const std::size_t y_p) noexcept :
     x{ x_p },
     y{ y_p } { }
 

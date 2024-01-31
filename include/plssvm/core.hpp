@@ -22,11 +22,14 @@
 #include "plssvm/csvm.hpp"                                  // the base C-SVM every backend is inheriting from
 #include "plssvm/csvm_factory.hpp"                          // a factory function to instantiate a C-SVM using a runtime backend; includes the available backend C-SVMs
 #include "plssvm/data_set.hpp"                              // a data set used for training a C-SVM
+#include "plssvm/default_value.hpp"                         // a small wrapper around default values
 #include "plssvm/exceptions/exceptions.hpp"                 // exception hierarchy
+#include "plssvm/file_format_types.hpp"                     // all supported file format types
 #include "plssvm/kernel_function_types.hpp"                 // all supported kernel function types
 #include "plssvm/matrix.hpp"                                // a custom matrix class
 #include "plssvm/model.hpp"                                 // the model as a result of training a C-SVM
 #include "plssvm/parameter.hpp"                             // the C-SVM parameter
+#include "plssvm/shape.hpp"                                 // shape for a matrix or device pointer
 #include "plssvm/solver_types.hpp"                          // all supported solver types (e.g., Conjugate Gradients with explicit, streaming, or implicit kernel matrix generation)
 #include "plssvm/target_platforms.hpp"                      // all supported target platforms
 #include "plssvm/verbosity_levels.hpp"                      // all supported verbosity levels

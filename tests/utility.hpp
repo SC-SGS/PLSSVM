@@ -16,6 +16,7 @@
 #include "plssvm/detail/arithmetic_type_name.hpp"  // plssvm::detail::arithmetic_type_name_v
 #include "plssvm/detail/string_utility.hpp"        // plssvm::detail::replace_all
 #include "plssvm/detail/type_traits.hpp"           // plssvm::detail::always_false_v
+#include "plssvm/matrix.hpp"                       // plssvm::layout_type, plssvm::matrix
 #include "plssvm/parameter.hpp"                    // plssvm::parameter
 #include "plssvm/shape.hpp"                        // plssvm::shape
 
