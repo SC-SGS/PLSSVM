@@ -54,7 +54,7 @@ struct parser_predict {
     /// The name of the file to write the predicted labels to.
     std::string predict_filename{};
 
-    /// If performance tracking has been enabled, provides the name of the file where the performance tracking results are saved to. If the filename is empty, the results are dumped to stdout instead.
+    /// If performance tracking has been enabled, provides the name of the file where the performance tracking results are saved to. If the filename is empty, the results are dumped using std::clog instead.
     std::string performance_tracking_filename{};
 };
 

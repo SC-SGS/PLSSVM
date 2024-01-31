@@ -18,7 +18,7 @@
 #include "plssvm/backends/SYCL/kernel_invocation_type.hpp"  // plssvm::sycl::kernel_invocation_type
 #include "plssvm/classification_types.hpp"                  // plssvm::classification_type
 #include "plssvm/constants.hpp"                             // plssvm::real_type
-#include "plssvm/default_value.hpp"                         // plssvm::default_value
+#include "plssvm/default_value.hpp"                         // plssvm::default_value, plssvm::default_init
 #include "plssvm/parameter.hpp"                             // plssvm::parameter
 #include "plssvm/solver_types.hpp"                          // plssvm::solving_type
 #include "plssvm/target_platforms.hpp"                      // plssvm::target_platform
@@ -47,7 +47,7 @@ struct parser_train {
     plssvm::parameter csvm_params{};
 
     /// The error tolerance parameter for the CG algorithm.
-    default_value<real_type> epsilon{ default_init<real_type>{ plssvm::real_type{ 0.001 } } };
+    default_value<real_type> epsilon{ default_init<real_type>{ plssvm::real_type{ 1e-3 } } };
     /// The maximum number of iterations in the CG algorithm.
     default_value<std::size_t> max_iter{ default_init<std::size_t>{ 0 } };
     /// The multi-class classification strategy used.
@@ -73,7 +73,7 @@ struct parser_train {
     /// The name of the model file to write the learned support vectors to/to parse the saved model from.
     std::string model_filename{};
 
-    /// If performance tracking has been enabled, provides the name of the file where the performance tracking results are saved to. If the filename is empty, the results are dumped to stdout instead.
+    /// If performance tracking has been enabled, provides the name of the file where the performance tracking results are saved to. If the filename is empty, the results are dumped using std::clog instead.
     std::string performance_tracking_filename{};
 };
 
