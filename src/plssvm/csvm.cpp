@@ -217,13 +217,13 @@ std::pair<std::vector<real_type>, real_type> csvm::perform_dimensional_reduction
     return std::make_pair(std::move(q_red), QA_cost);
 }
 
-std::chrono::duration<long, std::milli> csvm::run_blas_level_3(const solver_type solver, const real_type alpha, const detail::move_only_any &A, const soa_matrix<real_type> &B, const real_type beta, soa_matrix<real_type> &C) const {
+std::chrono::duration<long, std::milli> csvm::run_blas_level_3(const solver_type cg_solver, const real_type alpha, const detail::move_only_any &A, const soa_matrix<real_type> &B, const real_type beta, soa_matrix<real_type> &C) const {
     PLSSVM_ASSERT(!B.empty(), "The B matrix must not be empty!");
     PLSSVM_ASSERT(!C.empty(), "The C matrix must not be empty!");
 
     const std::chrono::steady_clock::time_point start_time = std::chrono::steady_clock::now();
 
-    this->blas_level_3(solver, alpha, A, B, beta, C);
+    this->blas_level_3(cg_solver, alpha, A, B, beta, C);
 
     const std::chrono::steady_clock::time_point end_time = std::chrono::steady_clock::now();
     return std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time);
