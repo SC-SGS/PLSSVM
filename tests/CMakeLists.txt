@@ -110,8 +110,8 @@ set(PLSSVM_BASE_TEST_NAME Base_tests)
 set(PLSSVM_BASE_TEST_SOURCES
     ## since the SYCL implementation_type and kernel_invocation_type enumerations are used even if no SYCL backend
     ## is available these are also tested in the base library
-    ${CMAKE_CURRENT_LIST_DIR}/backends/SYCL/implementation_type.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/backends/SYCL/kernel_invocation_type.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/backends/SYCL/implementation_types.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/backends/SYCL/kernel_invocation_types.cpp
     
     ${CMAKE_CURRENT_LIST_DIR}/detail/cmd/data_set_variants.cpp
     ${CMAKE_CURRENT_LIST_DIR}/detail/cmd/parser_predict.cpp

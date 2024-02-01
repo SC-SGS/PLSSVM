@@ -14,8 +14,8 @@
 #pragma once
 
 #include "plssvm/backend_types.hpp"                         // plssvm::backend_type
-#include "plssvm/backends/SYCL/implementation_type.hpp"     // plssvm::sycl::implementation_type
-#include "plssvm/backends/SYCL/kernel_invocation_type.hpp"  // plssvm::sycl::kernel_invocation_type
+#include "plssvm/backends/SYCL/implementation_types.hpp"    // plssvm::sycl::implementation_type
+#include "plssvm/backends/SYCL/kernel_invocation_types.hpp"  // plssvm::sycl::kernel_invocation_type
 #include "plssvm/classification_types.hpp"                  // plssvm::classification_type
 #include "plssvm/constants.hpp"                             // plssvm::real_type
 #include "plssvm/default_value.hpp"                         // plssvm::default_value, plssvm::default_init

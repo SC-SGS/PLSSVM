@@ -14,7 +14,7 @@
 #pragma once
 
 #include "plssvm/backend_types.hpp"                      // plssvm::backend_type
-#include "plssvm/backends/SYCL/implementation_type.hpp"  // plssvm::sycl::implementation_type
+#include "plssvm/backends/SYCL/implementation_types.hpp"  // plssvm::sycl::implementation_type
 #include "plssvm/target_platforms.hpp"                   // plssvm::target_platform
 
 #include "fmt/ostream.h"  // fmt::formatter, fmt::ostream_formatter

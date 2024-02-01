@@ -8,18 +8,18 @@
 
 #include "plssvm/csvm.hpp"  // plssvm::csvm
 
-#include "plssvm/backend_types.hpp"                         // plssvm::backend_type, plssvm::determine_default_backend, plssvm::list_available_backends
-#include "plssvm/backends/SYCL/implementation_type.hpp"     // plssvm::sycl::implementation_type
-#include "plssvm/backends/SYCL/kernel_invocation_type.hpp"  // plssvm::sycl::kernel_invocation_type
-#include "plssvm/classification_types.hpp"                  // plssvm::classification_type
-#include "plssvm/constants.hpp"                             // plssvm::real_type
-#include "plssvm/csvm_factory.hpp"                          // plssvm::make_csvm
-#include "plssvm/data_set.hpp"                              // plssvm::data_set
-#include "plssvm/detail/type_list.hpp"                      // plssvm::detail::supported_label_types
-#include "plssvm/model.hpp"                                 // plssvm::model
-#include "plssvm/parameter.hpp"                             // plssvm::parameter, named parameters
-#include "plssvm/solver_types.hpp"                          // plssvm::solver_type
-#include "plssvm/target_platforms.hpp"                      // plssvm::target_platform, plssvm::determine_default_target_platform, plssvm::list_available_target_platforms
+#include "plssvm/backend_types.hpp"                          // plssvm::backend_type, plssvm::determine_default_backend, plssvm::list_available_backends
+#include "plssvm/backends/SYCL/implementation_types.hpp"     // plssvm::sycl::implementation_type
+#include "plssvm/backends/SYCL/kernel_invocation_types.hpp"  // plssvm::sycl::kernel_invocation_type
+#include "plssvm/classification_types.hpp"                   // plssvm::classification_type
+#include "plssvm/constants.hpp"                              // plssvm::real_type
+#include "plssvm/csvm_factory.hpp"                           // plssvm::make_csvm
+#include "plssvm/data_set.hpp"                               // plssvm::data_set
+#include "plssvm/detail/type_list.hpp"                       // plssvm::detail::supported_label_types
+#include "plssvm/model.hpp"                                  // plssvm::model
+#include "plssvm/parameter.hpp"                              // plssvm::parameter, named parameters
+#include "plssvm/solver_types.hpp"                           // plssvm::solver_type
+#include "plssvm/target_platforms.hpp"                       // plssvm::target_platform, plssvm::determine_default_target_platform, plssvm::list_available_target_platforms
 
 #include "bindings/Python/utility.hpp"  // check_kwargs_for_correctness, convert_kwargs_to_parameter
 

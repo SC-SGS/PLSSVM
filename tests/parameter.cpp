@@ -10,9 +10,9 @@
 
 #include "plssvm/parameter.hpp"
 
-#include "plssvm/backends/SYCL/implementation_type.hpp"     // plssvm::sycl::implementation_type
-#include "plssvm/backends/SYCL/kernel_invocation_type.hpp"  // plssvm::sycl::kernel_invocation_type
-#include "plssvm/detail/arithmetic_type_name.hpp"           // plssvm::detail::arithmetic_type_name
+#include "plssvm/backends/SYCL/implementation_types.hpp"     // plssvm::sycl::implementation_type
+#include "plssvm/backends/SYCL/kernel_invocation_types.hpp"  // plssvm::sycl::kernel_invocation_type
+#include "plssvm/detail/arithmetic_type_name.hpp"            // plssvm::detail::arithmetic_type_name
 
 #include "tests/custom_test_macros.hpp"  // EXPECT_CONVERSION_TO_STRING, EXPECT_FLOATING_POINT_EQ
 

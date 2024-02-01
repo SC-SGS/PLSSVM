@@ -14,9 +14,9 @@
 #define PLSSVM_BACKEND_TYPES_HPP_
 #pragma once
 
-#include "plssvm/backends/SYCL/implementation_type.hpp"  // plssvm::sycl::implementation_type
-#include "plssvm/detail/type_traits.hpp"                 // plssvm::detail::remove_cvref_t
-#include "plssvm/target_platforms.hpp"                   // plssvm::list_available_target_platforms
+#include "plssvm/backends/SYCL/implementation_types.hpp"  // plssvm::sycl::implementation_type
+#include "plssvm/detail/type_traits.hpp"                  // plssvm::detail::remove_cvref_t
+#include "plssvm/target_platforms.hpp"                    // plssvm::list_available_target_platforms
 
 #include "fmt/ostream.h"  // fmt::formatter, fmt::ostream_formatter
 

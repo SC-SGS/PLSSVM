@@ -6,7 +6,7 @@
  *          See the LICENSE.md file in the project root for full license information.
  */
 
-#include "plssvm/backends/SYCL/kernel_invocation_type.hpp"
+#include "plssvm/backends/SYCL/kernel_invocation_types.hpp"
 
 #include "plssvm/detail/string_utility.hpp"  // plssvm::detail::to_lower_case
 

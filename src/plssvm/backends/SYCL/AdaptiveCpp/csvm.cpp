@@ -16,6 +16,7 @@
 #include "plssvm/backends/SYCL/cg_explicit/kernel_matrix_assembly.hpp"       // plssvm::sycl::{device_kernel_assembly_linear, device_kernel_assembly_polynomial, device_kernel_assembly_rbf}
 #include "plssvm/backends/SYCL/cg_implicit/kernel_matrix_assembly_blas.hpp"  // plssvm::sycl::{device_kernel_assembly_linear_symm, device_kernel_assembly_polynomial_symm, device_kernel_assembly_rbf_symm}
 #include "plssvm/backends/SYCL/exceptions.hpp"                               // plssvm::adaptivecpp::backend_exception
+#include "plssvm/backends/SYCL/kernel_invocation_types.hpp"                  // plssvm::kernel_invocation_type
 #include "plssvm/backends/SYCL/predict_kernel.hpp"                           // plssvm::sycl::detail::{kernel_w, device_kernel_predict_polynomial, device_kernel_predict_rbf}
 #include "plssvm/constants.hpp"                                              // plssvm::{real_type, THREAD_BLOCK_SIZE, INTERNAL_BLOCK_SIZE, PADDING_SIZE}
 #include "plssvm/detail/assert.hpp"                                          // PLSSVM_ASSERT

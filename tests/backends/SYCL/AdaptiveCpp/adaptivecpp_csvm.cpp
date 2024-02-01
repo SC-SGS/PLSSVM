@@ -8,14 +8,14 @@
  * @brief Tests for the functionality related to the SYCL backend using AdaptiveCpp as SYCL implementation.
  */
 
-#include "plssvm/backend_types.hpp"                         // plssvm::csvm_to_backend_type_v
-#include "plssvm/backends/SYCL/AdaptiveCpp/csvm.hpp"        // plssvm::adaptivecpp::csvm
-#include "plssvm/backends/SYCL/exceptions.hpp"              // plssvm::adaptivecpp::backend_exception
-#include "plssvm/backends/SYCL/kernel_invocation_type.hpp"  // plssvm::sycl::kernel_invocation_type
-#include "plssvm/detail/arithmetic_type_name.hpp"           // plssvm::detail::arithmetic_type_name
-#include "plssvm/kernel_function_types.hpp"                 // plssvm::kernel_function_type
-#include "plssvm/parameter.hpp"                             // plssvm::parameter, plssvm::kernel_type, plssvm::cost
-#include "plssvm/target_platforms.hpp"                      // plssvm::target_platform
+#include "plssvm/backend_types.hpp"                          // plssvm::csvm_to_backend_type_v
+#include "plssvm/backends/SYCL/AdaptiveCpp/csvm.hpp"         // plssvm::adaptivecpp::csvm
+#include "plssvm/backends/SYCL/exceptions.hpp"               // plssvm::adaptivecpp::backend_exception
+#include "plssvm/backends/SYCL/kernel_invocation_types.hpp"  // plssvm::sycl::kernel_invocation_type
+#include "plssvm/detail/arithmetic_type_name.hpp"            // plssvm::detail::arithmetic_type_name
+#include "plssvm/kernel_function_types.hpp"                  // plssvm::kernel_function_type
+#include "plssvm/parameter.hpp"                              // plssvm::parameter, plssvm::kernel_type, plssvm::cost
+#include "plssvm/target_platforms.hpp"                       // plssvm::target_platform
 
 #include "tests/backends/generic_csvm_tests.hpp"                      // generic CSVM tests to instantiate
 #include "tests/backends/generic_gpu_csvm_tests.hpp"                  // generic GPU CSVM tests to instantiate

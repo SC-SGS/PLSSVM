@@ -9,7 +9,7 @@
 #include "plssvm/detail/cmd/parser_predict.hpp"
 
 #include "plssvm/backend_types.hpp"                                // plssvm::list_available_backends
-#include "plssvm/backends/SYCL/implementation_type.hpp"            // plssvm::sycl::list_available_sycl_implementations
+#include "plssvm/backends/SYCL/implementation_types.hpp"           // plssvm::sycl::list_available_sycl_implementations
 #include "plssvm/constants.hpp"                                    // plssvm::real_type
 #include "plssvm/detail/assert.hpp"                                // PLSSVM_ASSERT
 #include "plssvm/detail/logging_without_performance_tracking.hpp"  // plssvm::detail::log_untracked

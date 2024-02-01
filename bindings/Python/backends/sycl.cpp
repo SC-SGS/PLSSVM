@@ -6,10 +6,10 @@
  *          See the LICENSE.md file in the project root for full license information.
  */
 
-#include "plssvm/backends/SYCL/exceptions.hpp"              // plssvm::sycl::backend_exception
-#include "plssvm/backends/SYCL/implementation_type.hpp"     // plssvm::sycl::{implementation_type, list_available_sycl_implementations}
-#include "plssvm/backends/SYCL/kernel_invocation_type.hpp"  // plssvm::sycl::kernel_invocation_type
-#include "plssvm/exceptions/exceptions.hpp"                 // plssvm::exception
+#include "plssvm/backends/SYCL/exceptions.hpp"               // plssvm::sycl::backend_exception
+#include "plssvm/backends/SYCL/implementation_types.hpp"     // plssvm::sycl::{implementation_type, list_available_sycl_implementations}
+#include "plssvm/backends/SYCL/kernel_invocation_types.hpp"  // plssvm::sycl::kernel_invocation_type
+#include "plssvm/exceptions/exceptions.hpp"                  // plssvm::exception
 
 #include "bindings/Python/utility.hpp"  // register_py_exception
 

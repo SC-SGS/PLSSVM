@@ -9,7 +9,7 @@
 #include "plssvm/detail/cmd/parser_train.hpp"
 
 #include "plssvm/backend_types.hpp"                                // plssvm::list_available_backends
-#include "plssvm/backends/SYCL/implementation_type.hpp"            // plssvm::sycl_generic::list_available_sycl_implementations
+#include "plssvm/backends/SYCL/implementation_types.hpp"           // plssvm::sycl_generic::list_available_sycl_implementations
 #include "plssvm/classification_types.hpp"                         // plssvm::classification_type, plssvm::classification_type_to_full_string
 #include "plssvm/constants.hpp"                                    // plssvm::real_type
 #include "plssvm/default_value.hpp"                                // plssvm::default_value

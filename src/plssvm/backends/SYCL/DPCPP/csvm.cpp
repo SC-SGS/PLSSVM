@@ -16,6 +16,7 @@
 #include "plssvm/backends/SYCL/DPCPP/detail/queue_impl.hpp"                  // plssvm::dpcpp::detail::queue (PImpl implementation)
 #include "plssvm/backends/SYCL/DPCPP/detail/utility.hpp"                     // plssvm::dpcpp::detail::{get_device_list, device_synchronize, get_dpcpp_version}
 #include "plssvm/backends/SYCL/exceptions.hpp"                               // plssvm::dpcpp::backend_exception
+#include "plssvm/backends/SYCL/kernel_invocation_types.hpp"                  // plssvm::kernel_invocation_type
 #include "plssvm/backends/SYCL/predict_kernel.hpp"                           // plssvm::sycl::detail::{kernel_w, device_kernel_predict_polynomial, device_kernel_predict_rbf}
 #include "plssvm/constants.hpp"                                              // plssvm::{real_type, THREAD_BLOCK_SIZE, INTERNAL_BLOCK_SIZE, PADDING_SIZE}
 #include "plssvm/detail/assert.hpp"                                          // PLSSVM_ASSERT

@@ -16,7 +16,7 @@
 #include "plssvm/backends/gpu_csvm.hpp"                            // plssvm::detail::gpu_csvm
 #include "plssvm/backends/SYCL/AdaptiveCpp/detail/device_ptr.hpp"  // plssvm::adaptivecpp::detail::device_ptr
 #include "plssvm/backends/SYCL/AdaptiveCpp/detail/queue.hpp"       // plssvm::adaptivecpp::detail::queue (PImpl)
-#include "plssvm/backends/SYCL/kernel_invocation_type.hpp"         // plssvm::sycl::kernel_invocation_type
+#include "plssvm/backends/SYCL/kernel_invocation_types.hpp"        // plssvm::sycl::kernel_invocation_type
 #include "plssvm/constants.hpp"                                    // plssvm::real_type
 #include "plssvm/detail/memory_size.hpp"                           // plssvm::detail::memory_size
 #include "plssvm/detail/type_traits.hpp"                           // PLSSVM_REQUIRES, plssvm::detail::remove_cvref_t
