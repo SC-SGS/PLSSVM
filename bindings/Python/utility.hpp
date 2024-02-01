@@ -177,7 +177,7 @@ template <typename T>
 inline void check_kwargs_for_correctness(const py::kwargs &args, const std::vector<std::string_view> &valid_named_args) {
     for (const auto &[key, value] : args) {
         if (!plssvm::detail::contains(valid_named_args, key.cast<std::string_view>())) {
-            throw py::value_error(fmt::format("Invalid argument \"{}={}\" provided!", key.cast<std::string_view>(), value.cast<std::string_view>()));
+            throw py::value_error(fmt::format("got an unexpected keyword argument '{}'", key.cast<std::string_view>()));
         }
     }
 }
