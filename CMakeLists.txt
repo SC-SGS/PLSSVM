@@ -271,12 +271,12 @@ else ()
 endif ()
 
 ## try finding fmt
-find_package(fmt 10.1.1 QUIET)
+find_package(fmt 10.2.1 QUIET)
 if (fmt_FOUND)
     message(STATUS "Found package fmt.")
 else ()
-    message(STATUS "Couldn't find package fmt. Building from source ...")  # TODO: change to next release; bug fix commit
-    set(PLSSVM_fmt_VERSION d9063baf227882da0f48c761abcbb08247eb1296)
+    message(STATUS "Couldn't find package fmt. Building from source ...")
+    set(PLSSVM_fmt_VERSION 10.2.1)
     # set options for fmt
     if (PLSSVM_ENABLE_STL_DEBUG_MODE)
         set(CMAKE_CXX_FLAGS_OLD "${CMAKE_CXX_FLAGS}")
