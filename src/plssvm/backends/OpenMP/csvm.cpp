@@ -116,7 +116,7 @@ void csvm::init(const target_platform target) {
 #else
         std::vector<real_type> kernel_matrix(num_rows_reduced * (num_rows_reduced + 1) / 2);  // only explicitly store the upper triangular matrix
 #endif
-        switch (params.kernel_type) {
+        switch (params.kernel_type.value()) {
             case kernel_function_type::linear:
                 openmp::device_kernel_assembly_linear(q_red, kernel_matrix, aos_data, QA_cost, 1 / params.cost);
                 break;

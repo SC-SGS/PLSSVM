@@ -198,7 +198,7 @@ auto csvm::run_assemble_kernel_matrix_explicit(const parameter &params, const de
     kernel_matrix_d.memset(0);
     const real_type cost_factor = real_type{ 1.0 } / params.cost;
 
-    switch (params.kernel_type) {
+    switch (params.kernel_type.value()) {
         case kernel_function_type::linear:
             devices_[0].impl->sycl_queue.submit([&](::sycl::handler &cgh) {
                 cgh.parallel_for(execution_range, sycl::detail::device_kernel_assembly_linear{ cgh, kernel_matrix_d.get(), data_d.get(), num_rows_reduced, num_features, q_red_d.get(), QA_cost, cost_factor });
@@ -263,7 +263,7 @@ void csvm::run_assemble_kernel_matrix_implicit_blas_level_3(const real_type alph
 
     const real_type cost_factor = real_type{ 1.0 } / params.cost;
 
-    switch (params.kernel_type) {
+    switch (params.kernel_type.value()) {
         case kernel_function_type::linear:
             devices_[0].impl->sycl_queue.submit([&](::sycl::handler &cgh) {
                 cgh.parallel_for(execution_range, sycl::detail::device_kernel_assembly_linear_symm{ cgh, alpha, q_red.get(), A_d.get(), num_rows_reduced, num_features, QA_cost, cost_factor, B_d.get(), C_d.get(), num_classes });
@@ -340,7 +340,7 @@ auto csvm::run_predict_kernel(const parameter &params, const device_ptr_type &w_
                                      static_cast<std::size_t>(std::ceil(static_cast<double>(num_predict_points) / static_cast<double>(block[1] * INTERNAL_BLOCK_SIZE))) * block[1] };
         const ::sycl::nd_range<2> execution_range{ grid, block };
 
-        switch (params.kernel_type) {
+        switch (params.kernel_type.value()) {
             case kernel_function_type::linear:
                 // already handled
                 break;

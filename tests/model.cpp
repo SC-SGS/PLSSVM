@@ -362,7 +362,7 @@ TYPED_TEST(ModelSave, save) {
         std::vector<std::string> regex_patterns;
         regex_patterns.emplace_back("svm_type c_svc");
         regex_patterns.emplace_back(fmt::format("kernel_type {}", model.get_params().kernel_type));
-        switch (model.get_params().kernel_type) {
+        switch (model.get_params().kernel_type.value()) {
             case plssvm::kernel_function_type::linear:
                 break;
             case plssvm::kernel_function_type::polynomial:
