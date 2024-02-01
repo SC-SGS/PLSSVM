@@ -271,7 +271,7 @@ inline void convert_from_string(const std::string &str, const T &expected_value)
  * @param[in] val2 the second value to compare (the expected value)
  */
 #define EXPECT_FLOATING_POINT_EQ(val1, val2) \
-    detail::floating_point_eq<decltype(val1), true>(val1, val2)
+    ::detail::floating_point_eq<decltype(val1), true>(val1, val2)
 /**
  * @brief Check whether the two floating point values @p val1 and @p val2 are "equal".
  * @details Other tests in the test case are aborted if this test fails.
@@ -279,7 +279,7 @@ inline void convert_from_string(const std::string &str, const T &expected_value)
  * @param[in] val2 the second value to compare (the expected value)
  */
 #define ASSERT_FLOATING_POINT_EQ(val1, val2) \
-    detail::floating_point_eq<decltype(val1), false>(val1, val2)
+    ::detail::floating_point_eq<decltype(val1), false>(val1, val2)
 
 /**
  * @brief Check whether the floating point values in the vectors @p val1 and @p val2 are "equal".
@@ -288,7 +288,7 @@ inline void convert_from_string(const std::string &str, const T &expected_value)
  * @param[in] val2 the second value to compare (the expected value)
  */
 #define EXPECT_FLOATING_POINT_VECTOR_EQ(val1, val2) \
-    detail::floating_point_vector_eq<detail::get_value_type_t<plssvm::detail::remove_cvref_t<decltype(val1)>>, true>(val1, val2)
+    ::detail::floating_point_vector_eq<detail::get_value_type_t<plssvm::detail::remove_cvref_t<decltype(val1)>>, true>(val1, val2)
 /**
  * @brief Check whether the floating point values in the vectors @p val1 and @p val2 are "equal".
  * @details Other tests in the test case are aborted if this test fails.
@@ -296,7 +296,7 @@ inline void convert_from_string(const std::string &str, const T &expected_value)
  * @param[in] val2 the second value to compare (the expected value)
  */
 #define ASSERT_FLOATING_POINT_VECTOR_EQ(val1, val2) \
-    detail::floating_point_vector_eq<detail::get_value_type_t<plssvm::detail::remove_cvref_t<decltype(val1)>>, false>(val1, val2)
+    ::detail::floating_point_vector_eq<detail::get_value_type_t<plssvm::detail::remove_cvref_t<decltype(val1)>>, false>(val1, val2)
 
 /**
  * @brief Check whether the floating point values in the 2D vectors @p val1 and @p val2 are "equal".
@@ -305,7 +305,7 @@ inline void convert_from_string(const std::string &str, const T &expected_value)
  * @param[in] val2 the second value to compare (the expected value)
  */
 #define EXPECT_FLOATING_POINT_2D_VECTOR_EQ(val1, val2) \
-    detail::floating_point_2d_vector_eq<detail::get_value_type_t<plssvm::detail::remove_cvref_t<decltype(val1)>>, true>(val1, val2)
+    ::detail::floating_point_2d_vector_eq<detail::get_value_type_t<plssvm::detail::remove_cvref_t<decltype(val1)>>, true>(val1, val2)
 /**
  * @brief Check whether the floating point values in the 2D vectors @p val1 and @p val2 are "equal".
  * @details Other tests in the test case are aborted if this test fails.
@@ -313,7 +313,7 @@ inline void convert_from_string(const std::string &str, const T &expected_value)
  * @param[in] val2 the second value to compare (the expected value)
  */
 #define ASSERT_FLOATING_POINT_2D_VECTOR_EQ(val1, val2) \
-    detail::floating_point_2d_vector_eq<detail::get_value_type_t<plssvm::detail::remove_cvref_t<decltype(val1)>>, false>(val1, val2)
+    ::detail::floating_point_2d_vector_eq<detail::get_value_type_t<plssvm::detail::remove_cvref_t<decltype(val1)>>, false>(val1, val2)
 
 /**
  * @brief Check whether the floating point values in the matrix @p val1 and @p val2 are "equal".
@@ -322,7 +322,7 @@ inline void convert_from_string(const std::string &str, const T &expected_value)
  * @param[in] val2 the second value to compare (the expected value)
  */
 #define EXPECT_FLOATING_POINT_MATRIX_EQ(val1, val2) \
-    detail::floating_point_matrix_eq<plssvm::detail::remove_cvref_t<decltype(val1)>, true>(val1, val2)
+    ::detail::floating_point_matrix_eq<plssvm::detail::remove_cvref_t<decltype(val1)>, true>(val1, val2)
 /**
  * @brief Check whether the floating point values in the matrix @p val1 and @p val2 are "equal".
  * @details Other tests in the test case are aborted if this test fails.
@@ -330,7 +330,7 @@ inline void convert_from_string(const std::string &str, const T &expected_value)
  * @param[in] val2 the second value to compare (the expected value)
  */
 #define ASSERT_FLOATING_POINT_MATRIX_EQ(val1, val2) \
-    detail::floating_point_matrix_eq<plssvm::detail::remove_cvref_t<decltype(val1)>, false>(val1, val2)
+    ::detail::floating_point_matrix_eq<plssvm::detail::remove_cvref_t<decltype(val1)>, false>(val1, val2)
 
 /**
  * @brief Check whether the two floating point values @p val1 and @p val2 are "equal enough" with respect to a mixture of a relative and absolute mode.
@@ -339,7 +339,7 @@ inline void convert_from_string(const std::string &str, const T &expected_value)
  * @param[in] val2 the second value to compare (the expected value)
  */
 #define EXPECT_FLOATING_POINT_NEAR(val1, val2) \
-    detail::floating_point_near<decltype(val1), true>(val1, val2)
+    ::detail::floating_point_near<decltype(val1), true>(val1, val2)
 /**
  * @brief Check whether the two floating point values @p val1 and @p val2 are "equal enough" with respect to a mixture of a relative and absolute mode.
  * @details Other tests in the test case are aborted if this test fails.
@@ -347,7 +347,7 @@ inline void convert_from_string(const std::string &str, const T &expected_value)
  * @param[in] val2 the second value to compare (the expected value)
  */
 #define ASSERT_FLOATING_POINT_NEAR(val1, val2) \
-    detail::floating_point_near<decltype(val1), false>(val1, val2)
+    ::detail::floating_point_near<decltype(val1), false>(val1, val2)
 
 /**
  * @brief Check whether the floating point values in the vectors @p val1 and @p val2 are "equal enough" with respect to a mixture of a relative and absolute mode.
@@ -356,7 +356,7 @@ inline void convert_from_string(const std::string &str, const T &expected_value)
  * @param[in] val2 the second value to compare (the expected value)
  */
 #define EXPECT_FLOATING_POINT_VECTOR_NEAR(val1, val2) \
-    detail::floating_point_vector_near<detail::get_value_type_t<plssvm::detail::remove_cvref_t<decltype(val1)>>, true>(val1, val2)
+    ::detail::floating_point_vector_near<detail::get_value_type_t<plssvm::detail::remove_cvref_t<decltype(val1)>>, true>(val1, val2)
 /**
  * @brief Check whether the floating point values in the vectors @p val1 and @p val2 are "equal enough" with respect to a mixture of a relative and absolute mode.
  * @details Other tests in the test case are aborted if this test fails.
@@ -364,7 +364,7 @@ inline void convert_from_string(const std::string &str, const T &expected_value)
  * @param[in] val2 the second value to compare (the expected value)
  */
 #define ASSERT_FLOATING_POINT_VECTOR_NEAR(val1, val2) \
-    detail::floating_point_vector_near<detail::get_value_type_t<plssvm::detail::remove_cvref_t<decltype(val1)>>, false>(val1, val2)
+    ::detail::floating_point_vector_near<detail::get_value_type_t<plssvm::detail::remove_cvref_t<decltype(val1)>>, false>(val1, val2)
 
 /**
  * @brief Check whether the floating point values in the 2D vectors @p val1 and @p val2 are "equal enough" with respect to a mixture of a relative and absolute mode.
@@ -373,7 +373,7 @@ inline void convert_from_string(const std::string &str, const T &expected_value)
  * @param[in] val2 the second value to compare (the expected value)
  */
 #define EXPECT_FLOATING_POINT_2D_VECTOR_NEAR(val1, val2) \
-    detail::floating_point_2d_vector_near<detail::get_value_type_t<plssvm::detail::remove_cvref_t<decltype(val1)>>, true>(val1, val2)
+    ::detail::floating_point_2d_vector_near<detail::get_value_type_t<plssvm::detail::remove_cvref_t<decltype(val1)>>, true>(val1, val2)
 
 /**
  * @brief Check whether the floating point values in the 2D vectors @p val1 and @p val2 are "equal enough" with respect to a mixture of a relative and absolute mode.
@@ -382,7 +382,7 @@ inline void convert_from_string(const std::string &str, const T &expected_value)
  * @param[in] val2 the second value to compare (the expected value)
  */
 #define ASSERT_FLOATING_POINT_2D_VECTOR_NEAR(val1, val2) \
-    detail::floating_point_2d_vector_near<detail::get_value_type_t<plssvm::detail::remove_cvref_t<decltype(val1)>>, false>(val1, val2)
+    ::detail::floating_point_2d_vector_near<detail::get_value_type_t<plssvm::detail::remove_cvref_t<decltype(val1)>>, false>(val1, val2)
 
 /**
  * @brief Check whether the floating point values in the plssvm::matrix @p val1 and @p val2 are "equal enough" with respect to a mixture of a relative and absolute mode.
@@ -391,7 +391,7 @@ inline void convert_from_string(const std::string &str, const T &expected_value)
  * @param[in] val2 the second value to compare (the expected value)
  */
 #define EXPECT_FLOATING_POINT_MATRIX_NEAR(val1, val2) \
-    detail::floating_point_matrix_near<plssvm::detail::remove_cvref_t<decltype(val1)>, true>(val1, val2)
+    ::detail::floating_point_matrix_near<plssvm::detail::remove_cvref_t<decltype(val1)>, true>(val1, val2)
 /**
  * @brief Check whether the floating point values in the plssvm::matrix @p val1 and @p val2 are "equal enough" with respect to a mixture of a relative and absolute mode.
  * @details Other tests in the test case are aborted if this test fails.
@@ -399,7 +399,7 @@ inline void convert_from_string(const std::string &str, const T &expected_value)
  * @param[in] val2 the second value to compare (the expected value)
  */
 #define ASSERT_FLOATING_POINT_MATRIX_NEAR(val1, val2) \
-    detail::floating_point_matrix_near<plssvm::detail::remove_cvref_t<decltype(val1)>, false>(val1, val2)
+    ::detail::floating_point_matrix_near<plssvm::detail::remove_cvref_t<decltype(val1)>, false>(val1, val2)
 
 /**
  * @brief Check whether the two floating point values @p val1 and @p val2 are "equal enough" with respect to a mixture of a relative and absolute mode.
@@ -409,7 +409,7 @@ inline void convert_from_string(const std::string &str, const T &expected_value)
  * @param[in] eps_factor a scaling factor in the floating point near calculation
  */
 #define EXPECT_FLOATING_POINT_NEAR_EPS(val1, val2, eps_factor) \
-    detail::floating_point_near<decltype(val1), true>(val1, val2, eps_factor)
+    ::detail::floating_point_near<decltype(val1), true>(val1, val2, eps_factor)
 /**
  * @brief Check whether the two floating point values @p val1 and @p val2 are "equal enough" with respect to a mixture of a relative and absolute mode.
  * @details Other tests in the test case are aborted if this test fails.
@@ -418,7 +418,7 @@ inline void convert_from_string(const std::string &str, const T &expected_value)
  * @param[in] eps_factor a scaling factor in the floating point near calculation
  */
 #define ASSERT_FLOATING_POINT_NEAR_EPS(val1, val2, eps_factor) \
-    detail::floating_point_near<decltype(val1), false>(val1, val2, eps_factor)
+    ::detail::floating_point_near<decltype(val1), false>(val1, val2, eps_factor)
 
 /**
  * @brief Check whether the floating point values in the vectors @p val1 and @p val2 are "equal enough" with respect to a mixture of a relative and absolute mode.
@@ -428,7 +428,7 @@ inline void convert_from_string(const std::string &str, const T &expected_value)
  * @param[in] eps_factor a scaling factor in the floating point near calculation
  */
 #define EXPECT_FLOATING_POINT_VECTOR_NEAR_EPS(val1, val2, eps_factor) \
-    detail::floating_point_vector_near<detail::get_value_type_t<plssvm::detail::remove_cvref_t<decltype(val1)>>, true>(val1, val2, eps_factor)
+    ::detail::floating_point_vector_near<detail::get_value_type_t<plssvm::detail::remove_cvref_t<decltype(val1)>>, true>(val1, val2, eps_factor)
 /**
  * @brief Check whether the floating point values in the vectors @p val1 and @p val2 are "equal enough" with respect to a mixture of a relative and absolute mode.
  * @details Other tests in the test case are aborted if this test fails.
@@ -437,7 +437,7 @@ inline void convert_from_string(const std::string &str, const T &expected_value)
  * @param[in] eps_factor a scaling factor in the floating point near calculation
  */
 #define ASSERT_FLOATING_POINT_VECTOR_NEAR_EPS(val1, val2, eps_factor) \
-    detail::floating_point_vector_near<detail::get_value_type_t<plssvm::detail::remove_cvref_t<decltype(val1)>>, false>(val1, val2, eps_factor)
+    ::detail::floating_point_vector_near<detail::get_value_type_t<plssvm::detail::remove_cvref_t<decltype(val1)>>, false>(val1, val2, eps_factor)
 
 /**
  * @brief Check whether the floating point values in the 2D vectors @p val1 and @p val2 are "equal enough" with respect to a mixture of a relative and absolute mode.
@@ -447,7 +447,7 @@ inline void convert_from_string(const std::string &str, const T &expected_value)
  * @param[in] eps_factor a scaling factor in the floating point near calculation
  */
 #define EXPECT_FLOATING_POINT_2D_VECTOR_NEAR_EPS(val1, val2, eps_factor) \
-    detail::floating_point_2d_vector_near<detail::get_value_type_t<plssvm::detail::remove_cvref_t<decltype(val1)>>, true>(val1, val2, eps_factor)
+    ::detail::floating_point_2d_vector_near<detail::get_value_type_t<plssvm::detail::remove_cvref_t<decltype(val1)>>, true>(val1, val2, eps_factor)
 /**
  * @brief Check whether the floating point values in the 2D vectors @p val1 and @p val2 are "equal enough" with respect to a mixture of a relative and absolute mode.
  * @details Other tests in the test case are aborted if this test fails.
@@ -456,7 +456,7 @@ inline void convert_from_string(const std::string &str, const T &expected_value)
  * @param[in] eps_factor a scaling factor in the floating point near calculation
  */
 #define ASSERT_FLOATING_POINT_2D_VECTOR_NEAR_EPS(val1, val2, eps_factor) \
-    detail::floating_point_2d_vector_near<detail::get_value_type_t<plssvm::detail::remove_cvref_t<decltype(val1)>>, false>(val1, val2, eps_factor)
+    ::detail::floating_point_2d_vector_near<detail::get_value_type_t<plssvm::detail::remove_cvref_t<decltype(val1)>>, false>(val1, val2, eps_factor)
 
 /**
  * @brief Check whether the floating point values in the plssvm::matrix @p val1 and @p val2 are "equal enough" with respect to a mixture of a relative and absolute mode.
@@ -466,7 +466,7 @@ inline void convert_from_string(const std::string &str, const T &expected_value)
  * @param[in] eps_factor a scaling factor in the floating point near calculation
  */
 #define EXPECT_FLOATING_POINT_MATRIX_NEAR_EPS(val1, val2, eps_factor) \
-    detail::floating_point_matrix_near<plssvm::detail::remove_cvref_t<decltype(val1)>, true>(val1, val2, eps_factor)
+    ::detail::floating_point_matrix_near<plssvm::detail::remove_cvref_t<decltype(val1)>, true>(val1, val2, eps_factor)
 /**
  * @brief Check whether the floating point values in the plssvm::matrix @p val1 and @p val2 are "equal enough" with respect to a mixture of a relative and absolute mode.
  * @details Other tests in the test case are aborted if this test fails.
@@ -475,7 +475,7 @@ inline void convert_from_string(const std::string &str, const T &expected_value)
  * @param[in] eps_factor a scaling factor in the floating point near calculation
  */
 #define ASSERT_FLOATING_POINT_MATRIX_NEAR_EPS(val1, val2, eps_factor) \
-    detail::floating_point_matrix_near<plssvm::detail::remove_cvref_t<decltype(val1)>, false>(val1, val2, eps_factor)
+    ::detail::floating_point_matrix_near<plssvm::detail::remove_cvref_t<decltype(val1)>, false>(val1, val2, eps_factor)
 
 /**
  * @brief Tries to convert the @p val to a string. If it succeeds, compares the value to @p str.
@@ -484,7 +484,7 @@ inline void convert_from_string(const std::string &str, const T &expected_value)
  * @param[in] str the expected string representation of @p value
  */
 #define EXPECT_CONVERSION_TO_STRING(val, str) \
-    detail::convert_to_string<decltype(val), true>(val, str)
+    ::detail::convert_to_string<decltype(val), true>(val, str)
 /**
  * @brief Tries to convert the @p val to a string. If it succeeds, compares the value to @p str.
  * @details Other tests in the test case are aborted if this test fails.
@@ -492,7 +492,7 @@ inline void convert_from_string(const std::string &str, const T &expected_value)
  * @param[in] str the expected string representation of @p value
  */
 #define ASSERT_CONVERSION_TO_STRING(val, str) \
-    detail::convert_to_string<decltype(val), false>(val, str)
+    ::detail::convert_to_string<decltype(val), false>(val, str)
 
 /**
  * @brief Tries to convert the string @p str to a value of type `decltype(T)`. If it succeeds, compares the value to @p val.
@@ -501,7 +501,7 @@ inline void convert_from_string(const std::string &str, const T &expected_value)
  * @param[in] val the expected value after conversion
  */
 #define EXPECT_CONVERSION_FROM_STRING(str, val) \
-    detail::convert_from_string<decltype(val), true>(str, val)
+    ::detail::convert_from_string<decltype(val), true>(str, val)
 /**
  * @brief Tries to convert the string @p str to a value of type `decltype(T)`. If it succeeds, compares the value to @p val.
  * @details Other tests in the test case are aborted if this test fails.
@@ -509,7 +509,7 @@ inline void convert_from_string(const std::string &str, const T &expected_value)
  * @param[in] val the expected value after conversion
  */
 #define ASSERT_CONVERSION_FROM_STRING(str, val) \
-    detail::convert_from_string<decltype(val), false>(str, val)
+    ::detail::convert_from_string<decltype(val), false>(str, val)
 
 /**
  * @brief Check whether @p statement throws an exception of type @p expected_exception and the exception's `what()` message matches the GTest @p matcher.
