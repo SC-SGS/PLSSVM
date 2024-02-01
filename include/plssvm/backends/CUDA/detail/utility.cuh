@@ -13,25 +13,26 @@
 #define PLSSVM_BACKENDS_CUDA_DETAIL_UTILITY_HPP_
 #pragma once
 
+#include "plssvm/backends/CUDA/exceptions.hpp"  // plssvm::cuda::backend_exception
+
+#include "fmt/core.h"     // fmt::format
 #include "fmt/ostream.h"  // fmt::formatter, fmt::ostream_formatter
 
 #include <string>  // std::string
 
 /**
  * @def PLSSVM_CUDA_ERROR_CHECK
- * @brief Macro used for error checking CUDA runtime functions.
- */
-#define PLSSVM_CUDA_ERROR_CHECK(err) plssvm::cuda::detail::gpu_assert((err))
-
-namespace plssvm::cuda::detail {
-
-/**
  * @brief Check the CUDA error @p code. If @p code signals an error, throw a plssvm::cuda::backend_exception.
  * @details The exception contains the following message: "CUDA assert 'CUDA_ERROR_NAME' (CUDA_ERROR_CODE): CUDA_ERROR_STRING".
  * @param[in] code the CUDA error code to check
  * @throws plssvm::cuda::backend_exception if the error code signals a failure
  */
-void gpu_assert(cudaError_t code);
+#define PLSSVM_CUDA_ERROR_CHECK(err)                                                                                              \
+    if (err != cudaSuccess) {                                                                                                     \
+        throw backend_exception{ fmt::format("CUDA assert '{}' ({}): {}", cudaGetErrorName(err), err, cudaGetErrorString(err)) }; \
+    }
+
+namespace plssvm::cuda::detail {
 
 /**
  * @brief Returns the number of available CUDA devices.

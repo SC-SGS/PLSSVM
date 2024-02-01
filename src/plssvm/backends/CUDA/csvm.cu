@@ -13,7 +13,7 @@
 #include "plssvm/backends/CUDA/cg_explicit/kernel_matrix_assembly.cuh"       // plssvm::cuda::{device_kernel_assembly_linear, device_kernel_assembly_polynomial, device_kernel_assembly_rbf}
 #include "plssvm/backends/CUDA/cg_implicit/kernel_matrix_assembly_blas.cuh"  // plssvm::cuda::{device_kernel_assembly_linear_symm, device_kernel_assembly_polynomial_symm, device_kernel_assembly_rbf_symm}
 #include "plssvm/backends/CUDA/detail/device_ptr.cuh"                        // plssvm::cuda::detail::device_ptr
-#include "plssvm/backends/CUDA/detail/utility.cuh"                           // plssvm::cuda::detail::{device_synchronize, get_device_count, set_device, peek_at_last_error, get_runtime_version}
+#include "plssvm/backends/CUDA/detail/utility.cuh"                           // PLSSVM_CUDA_ERROR_CHECK, plssvm::cuda::detail::{device_synchronize, get_device_count, set_device, peek_at_last_error, get_runtime_version}
 #include "plssvm/backends/CUDA/exceptions.hpp"                               // plssvm::cuda::backend_exception
 #include "plssvm/backends/CUDA/predict_kernel.cuh"                           // plssvm::cuda::detail::{device_kernel_w_linear, device_kernel_predict_polynomial, device_kernel_predict_rbf}
 #include "plssvm/constants.hpp"                                              // plssvm::{real_type, THREAD_BLOCK_SIZE, INTERNAL_BLOCK_SIZE, PADDING_SIZE}
@@ -108,7 +108,7 @@ void csvm::init(const target_platform target) {
     device_names.reserve(devices_.size());
     for (const queue_type &device : devices_) {
         cudaDeviceProp prop{};
-        cudaGetDeviceProperties(&prop, device);
+        PLSSVM_CUDA_ERROR_CHECK(cudaGetDeviceProperties(&prop, device))
         plssvm::detail::log(verbosity_level::full,
                             "  [{}, {}, {}.{}]\n",
                             device,
@@ -124,7 +124,7 @@ void csvm::init(const target_platform target) {
 
 ::plssvm::detail::memory_size csvm::get_device_memory() const {
     cudaDeviceProp prop{};
-    cudaGetDeviceProperties(&prop, devices_[0]);
+    PLSSVM_CUDA_ERROR_CHECK(cudaGetDeviceProperties(&prop, devices_[0]))
     return ::plssvm::detail::memory_size{ static_cast<unsigned long long>(prop.totalGlobalMem) };
 }
 
@@ -134,7 +134,7 @@ void csvm::init(const target_platform target) {
 
 std::size_t csvm::get_max_work_group_size() const {
     cudaDeviceProp prop{};
-    cudaGetDeviceProperties(&prop, devices_[0]);
+    PLSSVM_CUDA_ERROR_CHECK(cudaGetDeviceProperties(&prop, devices_[0]))
     return static_cast<std::size_t>(prop.maxThreadsPerBlock);
 }
 
