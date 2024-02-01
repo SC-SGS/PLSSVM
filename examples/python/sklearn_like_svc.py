@@ -8,7 +8,7 @@ samples, labels = make_classification(n_samples=num_samples, n_features=num_feat
                                       n_informative=2, n_clusters_per_class=1)
 
 # create C-SVM
-svc = plssvm.SVC(kernel='linear', C=1.0, tol=10e-3, verbose=False)
+svc = plssvm.SVC(kernel='linear', C=1.0, tol=1e-3, verbose=False)
 
 # fit the model
 svc.fit(samples, labels)
