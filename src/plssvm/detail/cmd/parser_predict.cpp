@@ -103,8 +103,12 @@ parser_predict::parser_predict(int argc, char **argv) {
     // parse SYCL implementation used in the SYCL backend
     sycl_implementation_type = result["sycl_implementation_type"].as<decltype(sycl_implementation_type)>();
 
-    // warn if a SYCL implementation type is explicitly set but SYCL isn't the current backend
-    if (backend != backend_type::sycl && sycl_implementation_type != sycl::implementation_type::automatic) {
+    // assembly warning condition
+    const std::vector<plssvm::target_platform> target_platforms = { target == target_platform::automatic ? determine_default_target_platform() : target };
+    const bool sycl_backend_is_used = backend == backend_type::sycl || (backend == backend_type::automatic && determine_default_backend(list_available_backends(), target_platforms) == backend_type::sycl);
+
+    // warn if a SYCL implementation type is explicitly set but SYCL isn't the current (automatic) backend
+    if (!sycl_backend_is_used && sycl_implementation_type != sycl::implementation_type::automatic) {
         detail::log_untracked(verbosity_level::full | verbosity_level::warning,
                               "WARNING: explicitly set a SYCL implementation type but the current backend isn't SYCL; ignoring --sycl_implementation_type={}\n",
                               sycl_implementation_type);
