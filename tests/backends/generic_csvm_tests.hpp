@@ -20,7 +20,7 @@
 #include "plssvm/detail/memory_size.hpp"        // memory size literals
 #include "plssvm/detail/move_only_any.hpp"      // plssvm::detail::move_only_any
 #include "plssvm/detail/string_conversion.hpp"  // plssvm::detail::convert_to
-#include "plssvm/detail/utility.hpp"            // plssvm::detail::{unreachable, get}
+#include "plssvm/detail/utility.hpp"            // plssvm::detail::{unreachable, get, unreachable}
 #include "plssvm/kernel_function_types.hpp"     // plssvm::csvm_to_backend_type_v, plssvm::backend_type
 #include "plssvm/matrix.hpp"                    // plssvm::aos_matrix, plssvm::layout_type
 #include "plssvm/model.hpp"                     // plssvm::model
@@ -199,6 +199,8 @@ template <typename csvm_type, typename device_ptr_type, typename matrix_type, ty
             // additional arguments are: params, q_red, QA_cost
             return init_implicit_matrix<csvm_type, device_ptr_type>(std::move(matr), csvm, std::forward<Args>(args)...);
     }
+    // should never be reached!
+    plssvm::detail::unreachable();
 }
 
 }  // namespace util

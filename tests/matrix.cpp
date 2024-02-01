@@ -823,7 +823,8 @@ TYPED_TEST(Matrix, construct_from_2D_vector_empty_columns) {
     constexpr plssvm::layout_type layout = TestFixture::fixture_layout;
 
     // try constructing a matrix from an empty 2D vector with empty columns
-    EXPECT_THROW_WHAT((plssvm::matrix<real_type, layout>{ { {}, {} } }),
+    const std::vector<std::vector<real_type>> matr{ {}, {} };
+    EXPECT_THROW_WHAT((plssvm::matrix<real_type, layout>{ matr }),
                       plssvm::matrix_exception,
                       "The data to create the matrix must at least have one column!");
 }
@@ -898,7 +899,8 @@ TYPED_TEST(Matrix, construct_from_2D_vector_empty_columns_and_padding) {
     constexpr plssvm::layout_type layout = TestFixture::fixture_layout;
 
     // try constructing a matrix from an empty 2D vector with empty columns
-    EXPECT_THROW_WHAT((plssvm::matrix<real_type, layout>{ { {}, {} }, plssvm::shape{ 4, 5 } }),
+    const std::vector<std::vector<real_type>> matr{ {}, {} };
+    EXPECT_THROW_WHAT((plssvm::matrix<real_type, layout>{ matr, plssvm::shape{ 4, 5 } }),
                       plssvm::matrix_exception,
                       "The data to create the matrix must at least have one column!");
 }

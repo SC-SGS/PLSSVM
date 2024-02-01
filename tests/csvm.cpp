@@ -612,7 +612,7 @@ TYPED_TEST(BaseCSVMPredict, predict) {
 
     // determine the EXPECT_CALL values for the current classification type
     const int num_calls = classification == plssvm::classification_type::oaa ? 1 : static_cast<int>(util::calculate_number_of_classifiers(plssvm::classification_type::oao, util::get_num_classes<label_type>()));
-    const int num_cols_in_return_matrix = classification == plssvm::classification_type::oaa ? static_cast<int>(util::get_num_classes<label_type>()) : 1;
+    const std::size_t num_cols_in_return_matrix = classification == plssvm::classification_type::oaa ? util::get_num_classes<label_type>() : std::size_t{ 1 };
 
     // mock the predict_values function
     // clang-format off
@@ -677,7 +677,7 @@ TYPED_TEST(BaseCSVMScore, score_model) {
 
     // determine the EXPECT_CALL values for the current classification type
     const int num_calls = classification == plssvm::classification_type::oaa ? 1 : static_cast<int>(util::calculate_number_of_classifiers(plssvm::classification_type::oao, util::get_num_classes<label_type>()));
-    const int num_cols_in_return_matrix = classification == plssvm::classification_type::oaa ? static_cast<int>(util::get_num_classes<label_type>()) : 1;
+    const std::size_t num_cols_in_return_matrix = classification == plssvm::classification_type::oaa ? util::get_num_classes<label_type>() : std::size_t{ 1 };
 
     // mock the predict_values function
     // clang-format off
@@ -709,7 +709,7 @@ TYPED_TEST(BaseCSVMScore, score_data_set) {
 
     // determine the EXPECT_CALL values for the current classification type
     const int num_calls = classification == plssvm::classification_type::oaa ? 1 : static_cast<int>(util::calculate_number_of_classifiers(plssvm::classification_type::oao, util::get_num_classes<label_type>()));
-    const int num_cols_in_return_matrix = classification == plssvm::classification_type::oaa ? static_cast<int>(util::get_num_classes<label_type>()) : 1;
+    const std::size_t num_cols_in_return_matrix = classification == plssvm::classification_type::oaa ? util::get_num_classes<label_type>() : std::size_t{ 1 };
 
     // mock the predict_values function
     // clang-format off
