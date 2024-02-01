@@ -168,7 +168,7 @@ auto csvm::run_assemble_kernel_matrix_explicit(const parameter &params, const de
 
     // define grid and block sizes
     const std::size_t max_work_group_size = this->get_max_work_group_size();
-    if (max_work_group_size < THREAD_BLOCK_SIZE * THREAD_BLOCK_SIZE) {
+    if (max_work_group_size < std::size_t{ THREAD_BLOCK_SIZE } * std::size_t{ THREAD_BLOCK_SIZE }) {
         throw kernel_launch_resources{ fmt::format("Not enough work-items allowed for a work-groups of size {}x{}! Try reducing THREAD_BLOCK_SIZE.", THREAD_BLOCK_SIZE, THREAD_BLOCK_SIZE) };
     }
     const ::sycl::range<2> block{ THREAD_BLOCK_SIZE, THREAD_BLOCK_SIZE };
@@ -212,7 +212,7 @@ void csvm::run_blas_level_3_kernel_explicit(const real_type alpha, const device_
 
     // define grid and block sizes
     const std::size_t max_work_group_size = this->get_max_work_group_size();
-    if (max_work_group_size < THREAD_BLOCK_SIZE * THREAD_BLOCK_SIZE) {
+    if (max_work_group_size < std::size_t{ THREAD_BLOCK_SIZE } * std::size_t{ THREAD_BLOCK_SIZE }) {
         throw kernel_launch_resources{ fmt::format("Not enough work-items allowed for a work-groups of size {}x{}! Try reducing THREAD_BLOCK_SIZE.", THREAD_BLOCK_SIZE, THREAD_BLOCK_SIZE) };
     }
     const ::sycl::range<2> block{ THREAD_BLOCK_SIZE, THREAD_BLOCK_SIZE };
@@ -239,7 +239,7 @@ void csvm::run_assemble_kernel_matrix_implicit_blas_level_3(const real_type alph
 
     // define the grid and block sizes
     const std::size_t max_work_group_size = this->get_max_work_group_size();
-    if (max_work_group_size < THREAD_BLOCK_SIZE * THREAD_BLOCK_SIZE) {
+    if (max_work_group_size < std::size_t{ THREAD_BLOCK_SIZE } * std::size_t{ THREAD_BLOCK_SIZE }) {
         throw kernel_launch_resources{ fmt::format("Not enough work-items allowed for a work-groups of size {}x{}! Try reducing THREAD_BLOCK_SIZE.", THREAD_BLOCK_SIZE, THREAD_BLOCK_SIZE) };
     }
     const ::sycl::range<2> block{ THREAD_BLOCK_SIZE, THREAD_BLOCK_SIZE };
@@ -280,7 +280,7 @@ auto csvm::run_w_kernel(const device_ptr_type &alpha_d, const device_ptr_type &s
 
     // define grid and block sizes
     const std::size_t max_work_group_size = this->get_max_work_group_size();
-    if (max_work_group_size < THREAD_BLOCK_SIZE * THREAD_BLOCK_SIZE) {
+    if (max_work_group_size < std::size_t{ THREAD_BLOCK_SIZE } * std::size_t{ THREAD_BLOCK_SIZE }) {
         throw kernel_launch_resources{ fmt::format("Not enough work-items allowed for a work-groups of size {}x{}! Try reducing THREAD_BLOCK_SIZE.", THREAD_BLOCK_SIZE, THREAD_BLOCK_SIZE) };
     }
     const ::sycl::range<2> block{ THREAD_BLOCK_SIZE, THREAD_BLOCK_SIZE };
@@ -308,7 +308,7 @@ auto csvm::run_predict_kernel(const parameter &params, const device_ptr_type &w_
 
     // define block sizes
     const std::size_t max_work_group_size = this->get_max_work_group_size();
-    if (max_work_group_size < THREAD_BLOCK_SIZE * THREAD_BLOCK_SIZE) {
+    if (max_work_group_size < std::size_t{ THREAD_BLOCK_SIZE } * std::size_t{ THREAD_BLOCK_SIZE }) {
         throw kernel_launch_resources{ fmt::format("Not enough work-items allowed for a work-groups of size {}x{}! Try reducing THREAD_BLOCK_SIZE.", THREAD_BLOCK_SIZE, THREAD_BLOCK_SIZE) };
     }
     const ::sycl::range<2> block{ THREAD_BLOCK_SIZE, THREAD_BLOCK_SIZE };
