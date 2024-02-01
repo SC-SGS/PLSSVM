@@ -21,6 +21,8 @@
 
 #include <algorithm>  // std::min
 #include <array>      // std::array
+#include <exception>  // std::terminate
+#include <iostream>   // std::cerr, std::endl
 
 namespace plssvm::hip::detail {
 
