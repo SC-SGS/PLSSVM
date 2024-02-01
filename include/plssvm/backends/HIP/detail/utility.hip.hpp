@@ -13,7 +13,9 @@
 #define PLSSVM_BACKENDS_HIP_DETAIL_UTILITY_HPP_
 #pragma once
 
-#include "hip/hip_runtime_api.h"  // hipError_t
+#include "plssvm/backends/HIP/exceptions.hpp"  // plssvm::hip::backend_exception
+
+#include "hip/hip_runtime_api.h"  // hipError_t, hipSuccess, hipGetErrorName, hipGetErrorString
 
 #include "fmt/ostream.h"  // fmt::formatter, fmt::ostream_formatter
 
@@ -21,19 +23,17 @@
 
 /**
  * @def PLSSVM_HIP_ERROR_CHECK
- * @brief Macro used for error checking HIP runtime functions.
- */
-#define PLSSVM_HIP_ERROR_CHECK(err) plssvm::hip::detail::gpu_assert((err))
-
-namespace plssvm::hip::detail {
-
-/**
  * @brief Check the HIP error @p code. If @p code signals an error, throw a plssvm::hip::backend_exception.
  * @details The exception contains the following message: "HIP assert 'HIP_ERROR_NAME' (HIP_ERROR_CODE): HIP_ERROR_STRING".
  * @param[in] code the HIP error code to check
  * @throws plssvm::hip::backend_exception if the error code signals a failure
  */
-void gpu_assert(hipError_t code);
+#define PLSSVM_HIP_ERROR_CHECK(err)                                                                                            \
+    if (err != hipSuccess) {                                                                                                   \
+        throw backend_exception{ fmt::format("HIP assert '{}' ({}): {}", hipGetErrorName(err), err, hipGetErrorString(err)) }; \
+    }
+
+namespace plssvm::hip::detail {
 
 /**
  * @brief Returns the number of available HIP devices.

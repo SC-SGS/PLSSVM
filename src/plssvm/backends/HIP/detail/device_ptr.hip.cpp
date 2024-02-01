@@ -39,13 +39,19 @@ device_ptr<T>::device_ptr(const plssvm::shape shape, const plssvm::shape padding
         throw backend_exception{ fmt::format("Illegal device ID! Must be in range: [0, {}) but is {}.", get_device_count(), queue_) };
     }
     detail::set_device(queue_);
-    PLSSVM_HIP_ERROR_CHECK(hipMalloc(reinterpret_cast<void **>(&data_), this->size_padded() * sizeof(value_type)));
+    PLSSVM_HIP_ERROR_CHECK(hipMalloc(&data_, this->size_padded() * sizeof(value_type)))
 }
 
 template <typename T>
 device_ptr<T>::~device_ptr() {
-    detail::set_device(queue_);
-    PLSSVM_HIP_ERROR_CHECK(hipFree(data_));
+    // avoid compiler warnings
+    try {
+        detail::set_device(queue_);
+        PLSSVM_HIP_ERROR_CHECK(hipFree(data_))
+    } catch (const plssvm::exception &e) {
+        std::cout << e.what_with_loc() << std::endl;
+        std::terminate();
+    }
 }
 
 template <typename T>
@@ -58,7 +64,7 @@ void device_ptr<T>::memset(const int pattern, const size_type pos, const size_ty
 
     detail::set_device(queue_);
     const size_type rnum_bytes = std::min(num_bytes, (this->size_padded() - pos) * sizeof(value_type));
-    PLSSVM_HIP_ERROR_CHECK(hipMemset(data_ + pos, pattern, rnum_bytes));
+    PLSSVM_HIP_ERROR_CHECK(hipMemset(data_ + pos, pattern, rnum_bytes))
 }
 
 template <typename T>
@@ -88,7 +94,7 @@ void device_ptr<T>::copy_to_device(const_host_pointer_type data_to_copy, const s
 
     detail::set_device(queue_);
     const size_type rcount = std::min(count, this->size_padded() - pos);
-    PLSSVM_HIP_ERROR_CHECK(hipMemcpy(data_ + pos, data_to_copy, rcount * sizeof(value_type), hipMemcpyHostToDevice));
+    PLSSVM_HIP_ERROR_CHECK(hipMemcpy(data_ + pos, data_to_copy, rcount * sizeof(value_type), hipMemcpyHostToDevice))
 }
 
 template <typename T>
@@ -98,7 +104,7 @@ void device_ptr<T>::copy_to_host(host_pointer_type buffer, const size_type pos, 
 
     detail::set_device(queue_);
     const size_type rcount = std::min(count, this->size_padded() - pos);
-    PLSSVM_HIP_ERROR_CHECK(hipMemcpy(buffer, data_ + pos, rcount * sizeof(value_type), hipMemcpyDeviceToHost));
+    PLSSVM_HIP_ERROR_CHECK(hipMemcpy(buffer, data_ + pos, rcount * sizeof(value_type), hipMemcpyDeviceToHost))
 }
 
 template class device_ptr<float>;

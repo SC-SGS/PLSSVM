@@ -13,7 +13,7 @@
 #include "plssvm/backends/HIP/cg_explicit/kernel_matrix_assembly.hip.hpp"       // plssvm::hip::{device_kernel_assembly_linear, device_kernel_assembly_polynomial, device_kernel_assembly_rbf}
 #include "plssvm/backends/HIP/cg_implicit/kernel_matrix_assembly_blas.hip.hpp"  // plssvm::hip::{device_kernel_assembly_linear_symm, device_kernel_assembly_polynomial_symm, device_kernel_assembly_rbf_symm}
 #include "plssvm/backends/HIP/detail/device_ptr.hip.hpp"                        // plssvm::hip::detail::device_ptr
-#include "plssvm/backends/HIP/detail/utility.hip.hpp"                           // plssvm::hip::detail::{device_synchronize, get_device_count, set_device, peek_at_last_error, get_runtime_version}
+#include "plssvm/backends/HIP/detail/utility.hip.hpp"                           // PLSSVM_HIP_ERROR_CHECK, plssvm::hip::detail::{device_synchronize, get_device_count, set_device, peek_at_last_error, get_runtime_version}
 #include "plssvm/backends/HIP/exceptions.hpp"                                   // plssvm::hip::backend_exception
 #include "plssvm/backends/HIP/predict_kernel.hip.hpp"                           // plssvm::hip::detail::{device_kernel_w_linear, device_kernel_predict_polynomial, device_kernel_predict_rbf}
 #include "plssvm/constants.hpp"                                                 // plssvm::{real_type, THREAD_BLOCK_SIZE, INTERNAL_BLOCK_SIZE, PADDING_SIZE}
@@ -94,7 +94,7 @@ void csvm::init(const target_platform target) {
     device_names.reserve(devices_.size());
     for (const queue_type &device : devices_) {
         hipDeviceProp_t prop{};
-        PLSSVM_HIP_ERROR_CHECK(hipGetDeviceProperties(&prop, device));
+        PLSSVM_HIP_ERROR_CHECK(hipGetDeviceProperties(&prop, device))
         plssvm::detail::log(verbosity_level::full,
                             "  [{}, {}, {}.{}]\n",
                             device,
@@ -122,7 +122,7 @@ csvm::~csvm() {
 
 ::plssvm::detail::memory_size csvm::get_device_memory() const {
     hipDeviceProp_t prop{};
-    PLSSVM_HIP_ERROR_CHECK(hipGetDeviceProperties(&prop, devices_[0]));
+    PLSSVM_HIP_ERROR_CHECK(hipGetDeviceProperties(&prop, devices_[0]))
     return ::plssvm::detail::memory_size{ static_cast<unsigned long long>(prop.totalGlobalMem) };
 }
 
@@ -132,7 +132,7 @@ csvm::~csvm() {
 
 std::size_t csvm::get_max_work_group_size() const {
     hipDeviceProp_t prop{};
-    PLSSVM_HIP_ERROR_CHECK(hipGetDeviceProperties(&prop, devices_[0]));
+    PLSSVM_HIP_ERROR_CHECK(hipGetDeviceProperties(&prop, devices_[0]))
     return static_cast<std::size_t>(prop.maxThreadsPerBlock);
 }
 
