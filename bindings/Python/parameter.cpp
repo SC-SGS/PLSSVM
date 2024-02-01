@@ -6,9 +6,10 @@
  *          See the LICENSE.md file in the project root for full license information.
  */
 
-#include "plssvm/parameter.hpp"
+#include "plssvm/parameter.hpp"  // plssvm::parameter, plssvm::equivalent
 
-#include "plssvm/constants.hpp"  // plssvm::real_type
+#include "plssvm/constants.hpp"              // plssvm::real_type
+#include "plssvm/kernel_function_types.hpp"  // plssvm::kernel_function_type
 
 #include "bindings/Python/utility.hpp"
 

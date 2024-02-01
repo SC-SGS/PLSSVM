@@ -6,7 +6,7 @@
  *          See the LICENSE.md file in the project root for full license information.
  */
 
-#include "plssvm/target_platforms.hpp"
+#include "plssvm/target_platforms.hpp"  // plssvm::target_platform, plssvm::list_available_target_platforms, plssvm::determine_default_target_platform
 
 #include "pybind11/pybind11.h"  // py::module_, py::enum_
 #include "pybind11/stl.h"       // support for STL types: std::vector

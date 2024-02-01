@@ -6,7 +6,7 @@
  *          See the LICENSE.md file in the project root for full license information.
  */
 
-#include "plssvm/kernel_functions.hpp"
+#include "plssvm/kernel_functions.hpp"  // plssvm::kernel_function
 
 #include "plssvm/constants.hpp"              // plssvm::real_type
 #include "plssvm/kernel_function_types.hpp"  // plssvm::kernel_function_type

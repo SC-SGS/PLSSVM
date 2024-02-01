@@ -6,10 +6,11 @@
  *          See the LICENSE.md file in the project root for full license information.
  */
 
-#include "plssvm/model.hpp"
+#include "plssvm/model.hpp"  // plssvm::model
 
 #include "plssvm/constants.hpp"         // plssvm::real_type
 #include "plssvm/detail/type_list.hpp"  // plssvm::detail::label_type_list
+#include "plssvm/matrix.hpp"            // plssvm::aos_matrix
 
 #include "bindings/Python/utility.hpp"  // assemble_unique_class_name, vector_to_pyarray, matrix_to_pyarray
 

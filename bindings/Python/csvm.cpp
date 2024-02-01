@@ -6,18 +6,28 @@
  *          See the LICENSE.md file in the project root for full license information.
  */
 
-#include "plssvm/csvm.hpp"
+#include "plssvm/csvm.hpp"  // plssvm::csvm
 
-#include "plssvm/backends/SYCL/implementation_type.hpp"
-#include "plssvm/backends/SYCL/kernel_invocation_type.hpp"
-#include "plssvm/constants.hpp"  // plssvm::real_type
-#include "plssvm/csvm_factory.hpp"
+#include "plssvm/backend_types.hpp"                         // plssvm::backend_type, plssvm::determine_default_backend, plssvm::list_available_backends
+#include "plssvm/backends/SYCL/implementation_type.hpp"     // plssvm::sycl::implementation_type
+#include "plssvm/backends/SYCL/kernel_invocation_type.hpp"  // plssvm::sycl::kernel_invocation_type
+#include "plssvm/classification_types.hpp"                  // plssvm::classification_type
+#include "plssvm/constants.hpp"                             // plssvm::real_type
+#include "plssvm/csvm_factory.hpp"                          // plssvm::make_csvm
+#include "plssvm/data_set.hpp"                              // plssvm::data_set
+#include "plssvm/detail/type_list.hpp"                      // plssvm::detail::supported_label_types
+#include "plssvm/model.hpp"                                 // plssvm::model
+#include "plssvm/parameter.hpp"                             // plssvm::parameter, named parameters
+#include "plssvm/solver_types.hpp"                          // plssvm::solver_type
+#include "plssvm/target_platforms.hpp"                      // plssvm::target_platform, plssvm::determine_default_target_platform, plssvm::list_available_target_platforms
 
 #include "bindings/Python/utility.hpp"  // check_kwargs_for_correctness, convert_kwargs_to_parameter
 
 #include "pybind11/pybind11.h"  // py::module_, py::class_, py::kwargs, py::overload_cast, py::const_
 
 #include <cstddef>      // std::size_t
+#include <memory>       // std::unique_ptr
+#include <sstream>      // std::istringstream
 #include <string>       // std::string
 #include <tuple>        // std::tuple_element_t, std::tuple_size_v
 #include <type_traits>  // std::is_same_v

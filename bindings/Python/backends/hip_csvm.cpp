@@ -6,11 +6,12 @@
  *          See the LICENSE.md file in the project root for full license information.
  */
 
-#include "plssvm/backends/HIP/csvm.hpp"
-#include "plssvm/backends/HIP/exceptions.hpp"
-#include "plssvm/csvm.hpp"              // plssvm::csvm
-#include "plssvm/parameter.hpp"         // plssvm::parameter
-#include "plssvm/target_platforms.hpp"  // plssvm::target_platform
+#include "plssvm/backends/HIP/csvm.hpp"        // plssvm::hip::csvm
+#include "plssvm/backends/HIP/exceptions.hpp"  // plssvm::hip::backend_exception
+#include "plssvm/csvm.hpp"                     // plssvm::csvm
+#include "plssvm/exceptions/exceptions.hpp"    // plssvm::exception
+#include "plssvm/parameter.hpp"                // plssvm::parameter
+#include "plssvm/target_platforms.hpp"         // plssvm::target_platform
 
 #include "bindings/Python/utility.hpp"  // check_kwargs_for_correctness, convert_kwargs_to_parameter, register_py_exception
 

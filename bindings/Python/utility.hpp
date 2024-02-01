@@ -28,6 +28,7 @@
 #include <exception>    // std::exception_ptr, std::rethrow_exception
 #include <string>       // std::string
 #include <string_view>  // std::string_view
+#include <type_traits>  // std::is_same_v, std::conditional_t
 #include <vector>       // std::vector
 
 namespace py = pybind11;

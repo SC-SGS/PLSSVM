@@ -6,9 +6,11 @@
  *          See the LICENSE.md file in the project root for full license information.
  */
 
-#include "plssvm/detail/performance_tracker.hpp"
+#include "plssvm/detail/performance_tracker.hpp"  // plssvm::detail::{global_tracker, tracking_entry}
 
 #include "pybind11/pybind11.h"  // py::module_
+
+#include <string>  // std::string
 
 namespace py = pybind11;
 

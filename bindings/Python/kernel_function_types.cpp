@@ -6,7 +6,7 @@
  *          See the LICENSE.md file in the project root for full license information.
  */
 
-#include "plssvm/kernel_function_types.hpp"
+#include "plssvm/kernel_function_types.hpp"  // plssvm::kernel_function_type
 
 #include "pybind11/pybind11.h"  // py::module_, py::enum_
 

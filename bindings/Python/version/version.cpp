@@ -6,7 +6,7 @@
  *          See the LICENSE.md file in the project root for full license information.
  */
 
-#include "plssvm/version/version.hpp"
+#include "plssvm/version/version.hpp"  // plssvm::version::{name, version, major, minor, patch}
 
 #include "pybind11/pybind11.h"  // py::module_, py::class_, py::object
 #include "pybind11/stl.h"       // support for STL types: std::string

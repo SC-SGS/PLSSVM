@@ -6,7 +6,7 @@
  *          See the LICENSE.md file in the project root for full license information.
  */
 
-#include "plssvm/solver_types.hpp"
+#include "plssvm/solver_types.hpp"  // plssvm::solver_type
 
 #include "pybind11/pybind11.h"  // py::module_, py::enum_
 

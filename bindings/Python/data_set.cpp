@@ -6,10 +6,11 @@
  *          See the LICENSE.md file in the project root for full license information.
  */
 
-#include "plssvm/data_set.hpp"
+#include "plssvm/data_set.hpp"  // plssvm::data_set
 
-#include "plssvm/constants.hpp"         // plssvm::real_type
-#include "plssvm/detail/type_list.hpp"  // plssvm::detail::label_type_list
+#include "plssvm/constants.hpp"          // plssvm::real_type
+#include "plssvm/detail/type_list.hpp"   // plssvm::detail::supported_label_types
+#include "plssvm/file_format_types.hpp"  // plssvm::file_format_type
 
 #include "bindings/Python/utility.hpp"  // check_kwargs_for_correctness, assemble_unique_class_name,
                                         // pyarray_to_vector, pyarray_to_string_vector, pylist_to_string_vector, pyarray_to_matrix
@@ -25,7 +26,7 @@
 #include <string>       // std::string
 #include <tuple>        // std::tuple_element_t, std::tuple_size_v
 #include <type_traits>  // std::is_same_v
-#include <utility>      // std::move, std::integer_sequence, std::make_integer_sequence
+#include <utility>      // std::integer_sequence, std::make_integer_sequence
 
 namespace py = pybind11;
 
