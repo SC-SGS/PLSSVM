@@ -22,16 +22,12 @@
 
 #if __has_include("cuda_runtime.h")
 
-TEST(CUDAUtility, gpu_assert) {
+TEST(CUDAUtility, error_check) {
     // cudaSuccess must not throw
     EXPECT_NO_THROW(PLSSVM_CUDA_ERROR_CHECK(cudaSuccess));
-    EXPECT_NO_THROW(plssvm::cuda::detail::gpu_assert(cudaSuccess));
 
     // any other code must throw
     EXPECT_THROW_WHAT_MATCHER(PLSSVM_CUDA_ERROR_CHECK(cudaErrorInvalidValue),
-                              plssvm::cuda::backend_exception,
-                              ::testing::StartsWith("CUDA assert 'cudaErrorInvalidValue' (1):"));
-    EXPECT_THROW_WHAT_MATCHER(plssvm::cuda::detail::gpu_assert(cudaErrorInvalidValue),
                               plssvm::cuda::backend_exception,
                               ::testing::StartsWith("CUDA assert 'cudaErrorInvalidValue' (1):"));
 }

@@ -24,16 +24,12 @@
     #include "hip/hip_runtime.h"
     #include "hip/hip_runtime_api.h"
 
-TEST(HIPUtility, gpu_assert) {
+TEST(HIPUtility, error_check) {
     // hipSuccess must not throw
     EXPECT_NO_THROW(PLSSVM_HIP_ERROR_CHECK(hipSuccess));
-    EXPECT_NO_THROW(plssvm::hip::detail::gpu_assert(hipSuccess));
 
     // any other code must throw
     EXPECT_THROW_WHAT_MATCHER(PLSSVM_HIP_ERROR_CHECK(hipErrorInvalidValue),
-                              plssvm::hip::backend_exception,
-                              ::testing::StartsWith("HIP assert 'hipErrorInvalidValue' (1):"));
-    EXPECT_THROW_WHAT_MATCHER(plssvm::hip::detail::gpu_assert(hipErrorInvalidValue),
                               plssvm::hip::backend_exception,
                               ::testing::StartsWith("HIP assert 'hipErrorInvalidValue' (1):"));
 }

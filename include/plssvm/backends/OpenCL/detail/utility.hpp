@@ -40,9 +40,9 @@
  * @param[in] msg optional message printed if the error code check failed
  * @throws plssvm::opencl::backend_exception if the error code signals a failure
  */
-#define PLSSVM_OPENCL_ERROR_CHECK(err, additional_msg)                                                                                \
-    if (plssvm::opencl::detail::error_code err_code{ err }; !err_code) {                                                              \
-        throw backend_exception{ fmt::format("OpenCL assert '{}' ({}): {}!", err_code.message(), err_code.value(), additional_msg) }; \
+#define PLSSVM_OPENCL_ERROR_CHECK(err, additional_msg)                                                                                                \
+    if (plssvm::opencl::detail::error_code err_code{ err }; !err_code) {                                                                              \
+        throw plssvm::opencl::backend_exception{ fmt::format("OpenCL assert '{}' ({}): {}!", err_code.message(), err_code.value(), additional_msg) }; \
     }
 
 namespace plssvm::opencl::detail {

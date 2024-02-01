@@ -27,9 +27,9 @@
  * @param[in] code the CUDA error code to check
  * @throws plssvm::cuda::backend_exception if the error code signals a failure
  */
-#define PLSSVM_CUDA_ERROR_CHECK(err)                                                                                              \
-    if (err != cudaSuccess) {                                                                                                     \
-        throw backend_exception{ fmt::format("CUDA assert '{}' ({}): {}", cudaGetErrorName(err), err, cudaGetErrorString(err)) }; \
+#define PLSSVM_CUDA_ERROR_CHECK(err)                                                                                                            \
+    if (err != cudaSuccess) {                                                                                                                   \
+        throw plssvm::cuda::backend_exception{ fmt::format("CUDA assert '{}' ({}): {}", cudaGetErrorName(err), err, cudaGetErrorString(err)) }; \
     }
 
 namespace plssvm::cuda::detail {

@@ -28,9 +28,9 @@
  * @param[in] code the HIP error code to check
  * @throws plssvm::hip::backend_exception if the error code signals a failure
  */
-#define PLSSVM_HIP_ERROR_CHECK(err)                                                                                            \
-    if (err != hipSuccess) {                                                                                                   \
-        throw backend_exception{ fmt::format("HIP assert '{}' ({}): {}", hipGetErrorName(err), err, hipGetErrorString(err)) }; \
+#define PLSSVM_HIP_ERROR_CHECK(err)                                                                                                         \
+    if (err != hipSuccess) {                                                                                                                \
+        throw plssvm::hip::backend_exception{ fmt::format("HIP assert '{}' ({}): {}", hipGetErrorName(err), err, hipGetErrorString(err)) }; \
     }
 
 namespace plssvm::hip::detail {

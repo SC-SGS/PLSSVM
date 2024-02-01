@@ -24,24 +24,12 @@
 #include <string>  // std::string
 #include <vector>  // std::vector
 
-TEST(OpenCLUtility, device_assert) {
+TEST(OpenCLUtility, error_check) {
     // CL_SUCCESS must not throw
-    EXPECT_NO_THROW(PLSSVM_OPENCL_ERROR_CHECK(CL_SUCCESS));
     EXPECT_NO_THROW(PLSSVM_OPENCL_ERROR_CHECK(CL_SUCCESS, "success!"));
-    EXPECT_NO_THROW(plssvm::opencl::detail::device_assert(CL_SUCCESS));
-    EXPECT_NO_THROW(plssvm::opencl::detail::device_assert(CL_SUCCESS, "success!"));
 
     // any other code must throw
-    EXPECT_THROW_WHAT(PLSSVM_OPENCL_ERROR_CHECK(CL_DEVICE_NOT_FOUND),
-                      plssvm::opencl::backend_exception,
-                      "OpenCL assert 'CL_DEVICE_NOT_FOUND' (-1)!");
     EXPECT_THROW_WHAT(PLSSVM_OPENCL_ERROR_CHECK(CL_DEVICE_NOT_FOUND, "error"),
-                      plssvm::opencl::backend_exception,
-                      "OpenCL assert 'CL_DEVICE_NOT_FOUND' (-1): error!");
-    EXPECT_THROW_WHAT(plssvm::opencl::detail::device_assert(CL_DEVICE_NOT_FOUND),
-                      plssvm::opencl::backend_exception,
-                      "OpenCL assert 'CL_DEVICE_NOT_FOUND' (-1)!");
-    EXPECT_THROW_WHAT(plssvm::opencl::detail::device_assert(CL_DEVICE_NOT_FOUND, "error"),
                       plssvm::opencl::backend_exception,
                       "OpenCL assert 'CL_DEVICE_NOT_FOUND' (-1): error!");
 }
