@@ -38,15 +38,21 @@ device_ptr<T>::device_ptr(const plssvm::shape shape, const plssvm::shape padding
     base_type{ shape, padding, &queue } {
     error_code err{};
     cl_context cont{};
-    PLSSVM_OPENCL_ERROR_CHECK(clGetCommandQueueInfo(queue_->queue, CL_QUEUE_CONTEXT, sizeof(cl_context), &cont, nullptr));
+    PLSSVM_OPENCL_ERROR_CHECK(clGetCommandQueueInfo(queue_->queue, CL_QUEUE_CONTEXT, sizeof(cl_context), &cont, nullptr), "error retrieving the command queue context")
     data_ = clCreateBuffer(cont, CL_MEM_READ_WRITE, this->size_padded() * sizeof(value_type), nullptr, &err);
-    PLSSVM_OPENCL_ERROR_CHECK(err);
+    PLSSVM_OPENCL_ERROR_CHECK(err, "error creating the buffer")
 }
 
 template <typename T>
 device_ptr<T>::~device_ptr() {
-    if (data_ != nullptr) {
-        PLSSVM_OPENCL_ERROR_CHECK(clReleaseMemObject(data_));
+    // avoid compiler warnings
+    try {
+        if (data_ != nullptr) {
+            PLSSVM_OPENCL_ERROR_CHECK(clReleaseMemObject(data_), "error releasing the buffer")
+        }
+    } catch (const plssvm::exception &e) {
+        std::cout << e.what_with_loc() << std::endl;
+        std::terminate();
     }
 }
 
@@ -61,8 +67,8 @@ void device_ptr<T>::memset(const int pattern, const size_type pos, const size_ty
     error_code err;
     const auto correct_value = static_cast<unsigned char>(pattern);
     err = clEnqueueFillBuffer(queue_->queue, data_, &correct_value, sizeof(unsigned char), pos * sizeof(value_type), rnum_bytes, 0, nullptr, nullptr);
-    PLSSVM_OPENCL_ERROR_CHECK(err);
-    PLSSVM_OPENCL_ERROR_CHECK(clFinish(queue_->queue));
+    PLSSVM_OPENCL_ERROR_CHECK(err, "error filling the buffer via memset")
+    device_synchronize(*queue_);
 }
 
 template <typename T>
@@ -77,8 +83,8 @@ void device_ptr<T>::fill(const value_type value, const size_type pos, const size
     const size_type rcount = std::min(count, this->size_padded() - pos);
     error_code err;
     err = clEnqueueFillBuffer(queue_->queue, data_, &value, sizeof(value_type), pos * sizeof(value_type), rcount * sizeof(value_type), 0, nullptr, nullptr);
-    PLSSVM_OPENCL_ERROR_CHECK(err);
-    PLSSVM_OPENCL_ERROR_CHECK(clFinish(queue_->queue));
+    PLSSVM_OPENCL_ERROR_CHECK(err, "error filling the buffer via fill")
+    device_synchronize(*queue_);
 }
 
 template <typename T>
@@ -89,8 +95,8 @@ void device_ptr<T>::copy_to_device(const_host_pointer_type data_to_copy, const s
     const size_type rcount = std::min(count, this->size_padded() - pos);
     error_code err;
     err = clEnqueueWriteBuffer(queue_->queue, data_, CL_TRUE, pos * sizeof(value_type), rcount * sizeof(value_type), data_to_copy, 0, nullptr, nullptr);
-    PLSSVM_OPENCL_ERROR_CHECK(err);
-    PLSSVM_OPENCL_ERROR_CHECK(clFinish(queue_->queue));
+    PLSSVM_OPENCL_ERROR_CHECK(err, "error copying the data to the device buffer")
+    device_synchronize(*queue_);
 }
 
 template <typename T>
@@ -101,8 +107,8 @@ void device_ptr<T>::copy_to_host(host_pointer_type buffer, const size_type pos, 
     const size_type rcount = std::min(count, this->size_padded() - pos);
     error_code err;
     err = clEnqueueReadBuffer(queue_->queue, data_, CL_TRUE, pos * sizeof(value_type), rcount * sizeof(value_type), buffer, 0, nullptr, nullptr);
-    PLSSVM_OPENCL_ERROR_CHECK(err);
-    PLSSVM_OPENCL_ERROR_CHECK(clFinish(queue_->queue));
+    PLSSVM_OPENCL_ERROR_CHECK(err, "error copying the data from the device buffer")
+    device_synchronize(*queue_);
 }
 
 template class device_ptr<float>;

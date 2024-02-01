@@ -16,6 +16,8 @@
 
 #include "CL/cl.h"  // cl_context, cl_command_queue, cl_device_id, clCreateCommandQueueWithProperties, clCreateCommandQueue, clReleaseCommandQueue
 
+#include <exception>  // std::terminate
+#include <iostream>   // std::cerr, std::endl
 #include <memory>       // std::addressof
 #include <type_traits>  // std::is_same_v
 #include <utility>      // std::exchange, std::move
@@ -31,7 +33,7 @@ command_queue::command_queue(cl_context context, cl_device_id device) {
     // use old clCreateCommandQueue function (deprecated in newer OpenCL versions)
     queue = clCreateCommandQueue(context, device, 0, &err);
 #endif
-    PLSSVM_OPENCL_ERROR_CHECK(err, "error creating the OpenCL command queue");
+    PLSSVM_OPENCL_ERROR_CHECK(err, "error creating the OpenCL command queue")
 }
 
 command_queue::command_queue(command_queue &&other) noexcept :
@@ -47,8 +49,14 @@ command_queue &command_queue::operator=(command_queue &&other) noexcept {
 }
 
 command_queue::~command_queue() {
-    if (queue) {
-        PLSSVM_OPENCL_ERROR_CHECK(clReleaseCommandQueue(queue), "error releasing cl_command_queue");
+    // avoid compiler warnings
+    try {
+        if (queue) {
+            PLSSVM_OPENCL_ERROR_CHECK(clReleaseCommandQueue(queue), "error releasing cl_command_queue")
+        }
+    } catch (const plssvm::exception &e) {
+        std::cout << e.what_with_loc() << std::endl;
+        std::terminate();
     }
 }
 

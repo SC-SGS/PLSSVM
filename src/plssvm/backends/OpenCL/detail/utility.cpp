@@ -53,16 +53,6 @@
 
 namespace plssvm::opencl::detail {
 
-void device_assert(const error_code ec, const std::string_view msg) {
-    if (!ec) {
-        if (msg.empty()) {
-            throw backend_exception{ fmt::format("OpenCL assert '{}' ({})!", ec.message(), ec.value()) };
-        } else {
-            throw backend_exception{ fmt::format("OpenCL assert '{}' ({}): {}!", ec.message(), ec.value(), msg) };
-        }
-    }
-}
-
 [[nodiscard]] std::pair<std::vector<context>, target_platform> get_contexts(target_platform target) {
     error_code err;
 
@@ -80,10 +70,10 @@ void device_assert(const error_code ec, const std::string_view msg) {
     std::map<std::pair<cl_platform_id, target_platform>, std::vector<cl_device_id>> platform_devices;
     // get number of platforms
     cl_uint num_platforms{};
-    PLSSVM_OPENCL_ERROR_CHECK(clGetPlatformIDs(0, nullptr, &num_platforms), "error retrieving the number of available platforms");
+    PLSSVM_OPENCL_ERROR_CHECK(clGetPlatformIDs(0, nullptr, &num_platforms), "error retrieving the number of available platforms")
     // get platforms
     std::vector<cl_platform_id> platform_ids(num_platforms);
-    PLSSVM_OPENCL_ERROR_CHECK(clGetPlatformIDs(num_platforms, platform_ids.data(), nullptr), "error retrieving platform IDs");
+    PLSSVM_OPENCL_ERROR_CHECK(clGetPlatformIDs(num_platforms, platform_ids.data(), nullptr), "error retrieving platform IDs")
 
     // get the available target_platforms
     const std::vector<target_platform> available_target_platforms = list_available_target_platforms();
@@ -92,15 +82,15 @@ void device_assert(const error_code ec, const std::string_view msg) {
     for (const cl_platform_id &platform : platform_ids) {
         // get devices associated with current platform
         cl_uint num_devices{};
-        PLSSVM_OPENCL_ERROR_CHECK(clGetDeviceIDs(platform, CL_DEVICE_TYPE_ALL, 0, nullptr, &num_devices), "error retrieving the number of devices");
+        PLSSVM_OPENCL_ERROR_CHECK(clGetDeviceIDs(platform, CL_DEVICE_TYPE_ALL, 0, nullptr, &num_devices), "error retrieving the number of devices")
         // get devices
         std::vector<cl_device_id> device_ids(num_devices);
-        PLSSVM_OPENCL_ERROR_CHECK(clGetDeviceIDs(platform, CL_DEVICE_TYPE_ALL, num_devices, device_ids.data(), nullptr), "error retrieving device IDs");
+        PLSSVM_OPENCL_ERROR_CHECK(clGetDeviceIDs(platform, CL_DEVICE_TYPE_ALL, num_devices, device_ids.data(), nullptr), "error retrieving device IDs")
 
         for (const cl_device_id &device : device_ids) {
             // get device type
             cl_device_type device_type{};
-            PLSSVM_OPENCL_ERROR_CHECK(clGetDeviceInfo(device, CL_DEVICE_TYPE, sizeof(cl_device_type), &device_type, nullptr), "error retrieving the device type");
+            PLSSVM_OPENCL_ERROR_CHECK(clGetDeviceInfo(device, CL_DEVICE_TYPE, sizeof(cl_device_type), &device_type, nullptr), "error retrieving the device type")
 
             if (device_type == CL_DEVICE_TYPE_CPU) {
                 // the current device is a CPU
@@ -112,9 +102,9 @@ void device_assert(const error_code ec, const std::string_view msg) {
                 // the current device is a GPU
                 // get vendor string
                 std::size_t vendor_string_size{};
-                PLSSVM_OPENCL_ERROR_CHECK(clGetDeviceInfo(device, CL_DEVICE_VENDOR, 0, nullptr, &vendor_string_size), "error retrieving device vendor name size");
+                PLSSVM_OPENCL_ERROR_CHECK(clGetDeviceInfo(device, CL_DEVICE_VENDOR, 0, nullptr, &vendor_string_size), "error retrieving device vendor name size")
                 std::string vendor_string(vendor_string_size, '\0');
-                PLSSVM_OPENCL_ERROR_CHECK(clGetDeviceInfo(device, CL_DEVICE_VENDOR, vendor_string_size, vendor_string.data(), nullptr), "error retrieving device vendor name");
+                PLSSVM_OPENCL_ERROR_CHECK(clGetDeviceInfo(device, CL_DEVICE_VENDOR, vendor_string_size, vendor_string.data(), nullptr), "error retrieving device vendor name")
                 // convert vendor name to lower case
                 ::plssvm::detail::to_lower_case(vendor_string);
 
@@ -153,9 +143,9 @@ void device_assert(const error_code ec, const std::string_view msg) {
     std::vector<context> contexts;
     for (auto &[platform, devices] : platform_devices) {
         // create context and associated OpenCL platform with it
-        std::array<cl_context_properties, 3> context_properties = { CL_CONTEXT_PLATFORM, (cl_context_properties) platform.first, 0 };
+        std::array<cl_context_properties, 3> context_properties = { CL_CONTEXT_PLATFORM, reinterpret_cast<cl_context_properties>(platform.first), 0 };
         cl_context cont = clCreateContext(context_properties.data(), static_cast<cl_uint>(devices.size()), devices.data(), nullptr, nullptr, &err);
-        PLSSVM_OPENCL_ERROR_CHECK(err, "error creating the OpenCL context");
+        PLSSVM_OPENCL_ERROR_CHECK(err, "error creating the OpenCL context")
         // add OpenCL context to vector of context wrappers
         contexts.emplace_back(cont, platform.first, std::move(devices));
     }
@@ -164,7 +154,7 @@ void device_assert(const error_code ec, const std::string_view msg) {
 }
 
 void device_synchronize(const command_queue &queue) {
-    PLSSVM_OPENCL_ERROR_CHECK(clFinish(queue));
+    PLSSVM_OPENCL_ERROR_CHECK(clFinish(queue), "error synchronizing the device");
 }
 
 std::string get_opencl_target_version() {
@@ -176,24 +166,24 @@ std::string get_opencl_target_version() {
 std::string get_driver_version(const command_queue &queue) {
     // get device
     cl_device_id device_id{};
-    PLSSVM_OPENCL_ERROR_CHECK(clGetCommandQueueInfo(queue, CL_QUEUE_DEVICE, sizeof(cl_device_id), &device_id, nullptr), "error obtaining device");
+    PLSSVM_OPENCL_ERROR_CHECK(clGetCommandQueueInfo(queue, CL_QUEUE_DEVICE, sizeof(cl_device_id), &device_id, nullptr), "error obtaining device")
     // get device driver
     std::size_t driver_version_length{};
-    PLSSVM_OPENCL_ERROR_CHECK(clGetDeviceInfo(device_id, CL_DRIVER_VERSION, 0, nullptr, &driver_version_length), "error obtaining device driver version size");
+    PLSSVM_OPENCL_ERROR_CHECK(clGetDeviceInfo(device_id, CL_DRIVER_VERSION, 0, nullptr, &driver_version_length), "error obtaining device driver version size")
     std::string device_driver_version(driver_version_length - 1, '\0');
-    PLSSVM_OPENCL_ERROR_CHECK(clGetDeviceInfo(device_id, CL_DRIVER_VERSION, driver_version_length, device_driver_version.data(), nullptr), "error obtaining device driver version");
+    PLSSVM_OPENCL_ERROR_CHECK(clGetDeviceInfo(device_id, CL_DRIVER_VERSION, driver_version_length, device_driver_version.data(), nullptr), "error obtaining device driver version")
     return device_driver_version;
 }
 
 std::string get_device_name(const command_queue &queue) {
     // get device
     cl_device_id device_id{};
-    PLSSVM_OPENCL_ERROR_CHECK(clGetCommandQueueInfo(queue, CL_QUEUE_DEVICE, sizeof(cl_device_id), &device_id, nullptr), "error obtaining device");
+    PLSSVM_OPENCL_ERROR_CHECK(clGetCommandQueueInfo(queue, CL_QUEUE_DEVICE, sizeof(cl_device_id), &device_id, nullptr), "error obtaining device")
     // get device name
     std::size_t name_length{};
-    PLSSVM_OPENCL_ERROR_CHECK(clGetDeviceInfo(device_id, CL_DEVICE_NAME, 0, nullptr, &name_length), "error obtaining device name size");
+    PLSSVM_OPENCL_ERROR_CHECK(clGetDeviceInfo(device_id, CL_DEVICE_NAME, 0, nullptr, &name_length), "error obtaining device name size")
     std::string device_name(name_length - 1, '\0');
-    PLSSVM_OPENCL_ERROR_CHECK(clGetDeviceInfo(device_id, CL_DEVICE_NAME, name_length, device_name.data(), nullptr), "error obtaining device name");
+    PLSSVM_OPENCL_ERROR_CHECK(clGetDeviceInfo(device_id, CL_DEVICE_NAME, name_length, device_name.data(), nullptr), "error obtaining device name")
     return device_name;
 }
 
@@ -227,12 +217,12 @@ std::vector<command_queue> create_command_queues(const std::vector<context> &con
     const auto cl_build_program_error_message = [](cl_program prog, cl_device_id device, const std::size_t device_idx) {
         // determine the size of the log
         std::size_t log_size{};
-        PLSSVM_OPENCL_ERROR_CHECK(clGetProgramBuildInfo(prog, device, CL_PROGRAM_BUILD_LOG, 0, nullptr, &log_size), "error retrieving the program build log size");
+        PLSSVM_OPENCL_ERROR_CHECK(clGetProgramBuildInfo(prog, device, CL_PROGRAM_BUILD_LOG, 0, nullptr, &log_size), "error retrieving the program build log size")
         if (log_size > 0) {
             // allocate memory for the log
             std::string log(log_size, ' ');
             // get the log
-            PLSSVM_OPENCL_ERROR_CHECK(clGetProgramBuildInfo(prog, device, CL_PROGRAM_BUILD_LOG, log_size, log.data(), nullptr), "error retrieving the program build log");
+            PLSSVM_OPENCL_ERROR_CHECK(clGetProgramBuildInfo(prog, device, CL_PROGRAM_BUILD_LOG, log_size, log.data(), nullptr), "error retrieving the program build log")
             // print the log
             std::cerr << fmt::format("error building OpenCL program on device {}:\n{}", device_idx, log) << std::endl;
         }
@@ -327,7 +317,7 @@ std::vector<command_queue> create_command_queues(const std::vector<context> &con
 
         // create and build program
         cl_program program = clCreateProgramWithSource(contexts[0], 1, &kernel_src_ptr, nullptr, &err);
-        PLSSVM_OPENCL_ERROR_CHECK(err, "error creating program from source");
+        PLSSVM_OPENCL_ERROR_CHECK(err, "error creating program from source")
 
         std::string compile_options{ "-cl-fast-relaxed-math -cl-mad-enable -cl-no-signed-zeros" };
 #if defined(PLSSVM_USE_GEMM)
@@ -360,14 +350,14 @@ std::vector<command_queue> create_command_queues(const std::vector<context> &con
 
         // get sizes of binaries
         err = clGetProgramInfo(program, CL_PROGRAM_BINARY_SIZES, contexts[0].devices.size() * sizeof(std::size_t), binary_sizes.data(), nullptr);
-        PLSSVM_OPENCL_ERROR_CHECK(err, "error retrieving the kernel (binary) kernel sizes");
+        PLSSVM_OPENCL_ERROR_CHECK(err, "error retrieving the kernel (binary) kernel sizes")
         for (std::vector<unsigned char *>::size_type i = 0; i < binaries.size(); ++i) {
             binaries[i] = new unsigned char[binary_sizes[i]];
         }
 
         // get binaries
         err = clGetProgramInfo(program, CL_PROGRAM_BINARIES, contexts[0].devices.size() * sizeof(unsigned char *), binaries.data(), nullptr);
-        PLSSVM_OPENCL_ERROR_CHECK(err, "error retrieving the kernel binaries");
+        PLSSVM_OPENCL_ERROR_CHECK(err, "error retrieving the kernel binaries")
 
         // write binaries to file
         if (!std::filesystem::exists(cache_dir_name)) {
@@ -391,7 +381,7 @@ std::vector<command_queue> create_command_queues(const std::vector<context> &con
 
         // release resource
         if (program) {
-            PLSSVM_OPENCL_ERROR_CHECK(clReleaseProgram(program), "error releasing OpenCL program resources");
+            PLSSVM_OPENCL_ERROR_CHECK(clReleaseProgram(program), "error releasing OpenCL program resources")
         }
     } else {
         plssvm::detail::log(verbosity_level::full,
@@ -429,8 +419,8 @@ std::vector<command_queue> create_command_queues(const std::vector<context> &con
 
     // build from binaries
     cl_program binary_program = clCreateProgramWithBinary(contexts[0], static_cast<cl_uint>(contexts[0].devices.size()), contexts[0].devices.data(), binary_sizes.data(), const_cast<const unsigned char **>(binaries.data()), &err_bin, &err);
-    PLSSVM_OPENCL_ERROR_CHECK(err_bin, "error loading binaries");
-    PLSSVM_OPENCL_ERROR_CHECK(err, "error creating binary program");
+    PLSSVM_OPENCL_ERROR_CHECK(err_bin, "error loading binaries")
+    PLSSVM_OPENCL_ERROR_CHECK(err, "error creating binary program")
     err = clBuildProgram(binary_program, static_cast<cl_uint>(contexts[0].devices.size()), contexts[0].devices.data(), nullptr, nullptr, nullptr);
     if (!err) {
         // check all devices for errors
@@ -444,13 +434,13 @@ std::vector<command_queue> create_command_queues(const std::vector<context> &con
         for (std::vector<std::vector<kernel>>::size_type i = 0; i < kernel_names.size(); ++i) {
             // create kernel
             queues[device].add_kernel(kernel_names[i].first, kernel{ clCreateKernel(binary_program, kernel_names[i].second.c_str(), &err) });
-            PLSSVM_OPENCL_ERROR_CHECK(err, fmt::format("error creating OpenCL kernel {} for device {}", kernel_names[i].second, device));
+            PLSSVM_OPENCL_ERROR_CHECK(err, fmt::format("error creating OpenCL kernel {} for device {}", kernel_names[i].second, device))
         }
     }
 
     // release resource
     if (binary_program) {
-        PLSSVM_OPENCL_ERROR_CHECK(clReleaseProgram(binary_program), "error releasing OpenCL binary program resources");
+        PLSSVM_OPENCL_ERROR_CHECK(clReleaseProgram(binary_program), "error releasing OpenCL binary program resources")
     }
     for (unsigned char *binary : binaries) {
         delete[] binary;

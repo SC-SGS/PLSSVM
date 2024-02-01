@@ -12,8 +12,10 @@
 
 #include "CL/cl.h"  // cl_kernel, clReleaseKernel
 
-#include <memory>   // std::addressof
-#include <utility>  // std::exchange
+#include <exception>  // std::terminate
+#include <iostream>   // std::cerr, std::endl
+#include <memory>     // std::addressof
+#include <utility>    // std::exchange
 
 namespace plssvm::opencl::detail {
 
@@ -31,8 +33,14 @@ kernel &kernel::operator=(kernel &&other) noexcept {
 }
 
 kernel::~kernel() {
-    if (compute_kernel) {
-        PLSSVM_OPENCL_ERROR_CHECK(clReleaseKernel(compute_kernel), "error releasing cl_kernel");
+    // avoid compiler warnings
+    try {
+        if (compute_kernel) {
+            PLSSVM_OPENCL_ERROR_CHECK(clReleaseKernel(compute_kernel), "error releasing cl_kernel")
+        }
+    } catch (const plssvm::exception &e) {
+        std::cout << e.what_with_loc() << std::endl;
+        std::terminate();
     }
 }
 
