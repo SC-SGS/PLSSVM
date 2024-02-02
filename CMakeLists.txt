@@ -285,7 +285,7 @@ else ()
     set(FMT_PEDANTIC OFF CACHE INTERNAL "" FORCE)
     set(FMT_WERROR OFF CACHE INTERNAL "" FORCE)
     set(FMT_DOC OFF CACHE INTERNAL "" FORCE)
-    set(FMT_INSTALL OFF CACHE INTERNAL "" FORCE)
+    set(FMT_INSTALL ON CACHE INTERNAL "" FORCE) # let {fmt} handle the install target
     set(FMT_TEST OFF CACHE INTERNAL "" FORCE)
     set(FMT_FUZZ OFF CACHE INTERNAL "" FORCE)
     set(FMT_CUDA_TEST OFF CACHE INTERNAL "" FORCE)
@@ -306,7 +306,6 @@ else ()
                                $<INSTALL_INTERFACE:include>
     )
     # append fmt to installed targets if build from source
-    list(APPEND PLSSVM_TARGETS_TO_INSTALL "fmt")
     message(STATUS "Installing {fmt} version ${PLSSVM_fmt_VERSION}.")
     if (PLSSVM_ENABLE_STL_DEBUG_MODE)
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS_OLD}")
@@ -748,7 +747,6 @@ install(TARGETS ${PLSSVM_TARGETS_TO_INSTALL}
         ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}  # all files that are neither executables, shared lib or headers
         LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}  # all shared lib files
         RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}  # all executables
-        PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
 )
 
 ## mark header to install via 'make install'
@@ -762,12 +760,6 @@ install(DIRECTORY "${fast_float_SOURCE_DIR}/include/"
 install(DIRECTORY "${igor_SOURCE_DIR}/include/"
         DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}"
 )
-## only mark fmt headers to install if build via FetchContent
-if (NOT fmt_FOUND)
-    install(DIRECTORY "${fmt_SOURCE_DIR}/include/"
-            DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}"
-    )
-endif ()
 ## mark man pages to install
 install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/docs/plssvm-train.1
         ${CMAKE_CURRENT_SOURCE_DIR}/docs/plssvm-predict.1
