@@ -200,7 +200,6 @@ template <template <typename> typename device_ptr_t, typename queue_t>
 
         return ::plssvm::detail::move_only_any{ std::move(data_d) };
     } else {
-        // TODO: implement for other solver types
         throw exception{ fmt::format("Assembling the kernel matrix using the {} CG variation is currently not implemented!", solver) };
     }
 }
@@ -248,7 +247,6 @@ template <template <typename> typename device_ptr_t, typename queue_t>
         // simply return data since in implicit we don't assembly the kernel matrix here!
         return ::plssvm::detail::move_only_any{ std::make_tuple(detail::move_only_any_cast<device_ptr_type &&>(std::move(data)), params, std::move(q_red_d), QA_cost) };
     } else {
-        // TODO: implement for other solver types
         throw exception{ fmt::format("Assembling the kernel matrix using the {} CG variation is currently not implemented!", solver) };
     }
 }
@@ -283,7 +281,6 @@ void gpu_csvm<device_ptr_t, queue_t>::blas_level_3(const solver_type solver, con
 
         this->run_assemble_kernel_matrix_implicit_blas_level_3(alpha, A_d, params, q_red_d, QA_cost, B_d, C_d);
     } else {
-        // TODO: implement for other solver types
         throw exception{ fmt::format("The GEMM calculation using the {} CG variation is currently not implemented!", solver) };
     }
 

@@ -90,7 +90,6 @@ void csvm::init(const target_platform target) {
     if (solver == solver_type::cg_explicit || solver == solver_type::cg_implicit) {
         return ::plssvm::detail::move_only_any{ &A };
     } else {
-        // TODO: implement for other solver types
         throw exception{ fmt::format("Assembling the kernel matrix using the {} CG variation is currently not implemented!", solver) };
     }
 }
@@ -145,7 +144,6 @@ void csvm::init(const target_platform target) {
         // simply return data since in implicit we don't assembly the kernel matrix here!
         return ::plssvm::detail::move_only_any{ std::make_tuple(std::move(aos_data), params, std::move(q_red), QA_cost) };
     } else {
-        // TODO: implement for other solver types
         throw exception{ fmt::format("Assembling the kernel matrix using the {} CG variation is currently not implemented!", solver) };
     }
 }
@@ -191,7 +189,6 @@ void csvm::blas_level_3(const solver_type solver, const real_type alpha, const :
                 break;
         }
     } else {
-        // TODO: implement for other solver types
         throw exception{ fmt::format("The GEMM calculation using the {} CG variation is currently not implemented!", solver) };
     }
 
