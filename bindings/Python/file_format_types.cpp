@@ -6,7 +6,7 @@
  *          See the LICENSE.md file in the project root for full license information.
  */
 
-#include "plssvm/file_format_types.hpp"
+#include "plssvm/file_format_types.hpp"  // plssvm::file_format_type
 
 #include "pybind11/pybind11.h"  // py::module_, py::enum_
 

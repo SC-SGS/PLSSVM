@@ -20,6 +20,7 @@ TEST(PLSSVMAssert, assert_true) {
     // must not trigger an assertion
     PLSSVM_ASSERT(true, "TRUE");
 }
+
 TEST(PLSSVMAssert, assert_false) {
     ASSERT_DEATH(PLSSVM_ASSERT(false, "FALSE"), ::testing::ContainsRegex("Assertion '.*false.*' failed!"));
 }
@@ -31,6 +32,7 @@ TEST(PLSSVMAssert, check_assertion_true) {
     // calling check assertion with true shouldn't do anything
     plssvm::detail::check_assertion(true, "", plssvm::source_location::current(), "");
 }
+
 TEST(PLSSVMAssert, check_assertion_false) {
     // calling check assertion with false should abort
     EXPECT_DEATH(plssvm::detail::check_assertion(false, "cond", plssvm::source_location::current(), "msg {}", 1), "cond");

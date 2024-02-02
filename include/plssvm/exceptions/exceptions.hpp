@@ -62,7 +62,7 @@ class exception : public std::runtime_error {
 class invalid_parameter_exception : public exception {
   public:
     /**
-     * @brief Construct a new exception forwarding the exception message and source location to plssvm::exception.
+     * @brief Construct a new exception forwarding the exception message and source location to `plssvm::exception`.
      * @param[in] msg the exception's `what()` message
      * @param[in] loc the exception's call side information
      */
@@ -70,12 +70,12 @@ class invalid_parameter_exception : public exception {
 };
 
 /**
- * @brief Exception type thrown if the file_reader is used inappropriately (e.g., if two files should be opened at the same time).
+ * @brief Exception type thrown if the `plssvm::detail::file_reader` is used inappropriately (e.g., if two files should be opened at the same time).
  */
 class file_reader_exception : public exception {
   public:
     /**
-     * @brief Construct a new exception forwarding the exception message and source location to plssvm::exception.
+     * @brief Construct a new exception forwarding the exception message and source location to `plssvm::exception`.
      * @param[in] msg the exception's `what()` message
      * @param[in] loc the exception's call side information
      */
@@ -83,12 +83,12 @@ class file_reader_exception : public exception {
 };
 
 /**
- * @brief Exception type thrown if a data_set is used inappropriately.
+ * @brief Exception type thrown if a `plssvm::data_set` is used inappropriately.
  */
 class data_set_exception : public exception {
   public:
     /**
-     * @brief Construct a new exception forwarding the exception message and source location to plssvm::exception.
+     * @brief Construct a new exception forwarding the exception message and source location to `plssvm::exception`.
      * @param[in] msg the exception's `what()` message
      * @param[in] loc the exception's call side information
      */
@@ -101,7 +101,7 @@ class data_set_exception : public exception {
 class file_not_found_exception : public exception {
   public:
     /**
-     * @brief Construct a new exception forwarding the exception message and source location to plssvm::exception.
+     * @brief Construct a new exception forwarding the exception message and source location to `plssvm::exception`.
      * @param[in] msg the exception's `what()` message
      * @param[in] loc the exception's call side information
      */
@@ -109,12 +109,12 @@ class file_not_found_exception : public exception {
 };
 
 /**
- * @brief Exception type thrown if the provided file has an invalid format for the selected parser (e.g. if the arff parser tries to parse a LIBSVM file).
+ * @brief Exception type thrown if the provided file has an invalid format for the selected parser (e.g., if the arff parser tries to parse a LIBSVM file).
  */
 class invalid_file_format_exception : public exception {
   public:
     /**
-     * @brief Construct a new exception forwarding the exception message and source location to plssvm::exception.
+     * @brief Construct a new exception forwarding the exception message and source location to `plssvm::exception`.
      * @param[in] msg the exception's `what()` message
      * @param[in] loc the exception's call side information
      */
@@ -127,7 +127,7 @@ class invalid_file_format_exception : public exception {
 class unsupported_backend_exception : public exception {
   public:
     /**
-     * @brief Construct a new exception forwarding the exception message and source location to plssvm::exception.
+     * @brief Construct a new exception forwarding the exception message and source location to `plssvm::exception`.
      * @param[in] msg the exception's `what()` message
      * @param[in] loc the exception's call side information
      */
@@ -140,7 +140,7 @@ class unsupported_backend_exception : public exception {
 class unsupported_kernel_type_exception : public exception {
   public:
     /**
-     * @brief Construct a new exception forwarding the exception message and source location to plssvm::exception.
+     * @brief Construct a new exception forwarding the exception message and source location to `plssvm::exception`.
      * @param[in] msg the exception's `what()` message
      * @param[in] loc the exception's call side information
      */
@@ -148,12 +148,12 @@ class unsupported_kernel_type_exception : public exception {
 };
 
 /**
- * @brief Exception type thrown if an error in the generic plssvm::detail::gpu_device_ptr occurred.
+ * @brief Exception type thrown if an error in the generic `plssvm::detail::gpu_device_ptr` occurred.
  */
 class gpu_device_ptr_exception : public exception {
   public:
     /**
-     * @brief Construct a new exception forwarding the exception message and source location to plssvm::exception.
+     * @brief Construct a new exception forwarding the exception message and source location to `plssvm::exception`.
      * @param[in] msg the exception's `what()` message
      * @param[in] loc the exception's call side information
      */
@@ -161,21 +161,42 @@ class gpu_device_ptr_exception : public exception {
 };
 
 /**
- * @brief Exception type thrown if an error in the utility plssvm::detail::matrix_impl class occurred.
+ * @brief Exception type thrown if an error in the utility `plssvm::detail::matrix` class occurred.
  */
 class matrix_exception : public exception {
   public:
     /**
-     * @brief Construct a new exception forwarding the exception message and source location to plssvm::exception.
+     * @brief Construct a new exception forwarding the exception message and source location to `plssvm::exception`.
      * @param[in] msg the exception's `what()` message
      * @param[in] loc the exception's call side information
      */
     explicit matrix_exception(const std::string &msg, source_location loc = source_location::current());
 };
 
+/**
+ * @brief Exception type thrown if a kernel launch requests more resources than are available in any of our backends.
+ */
 class kernel_launch_resources : public exception {
   public:
+    /**
+     * @brief Construct a new exception forwarding the exception message and source location to `plssvm::exception`.
+     * @param[in] msg the exception's `what()` message
+     * @param[in] loc the exception's call side information
+     */
     explicit kernel_launch_resources(const std::string &msg, source_location loc = source_location::current());
+};
+
+/**
+ * @brief Exception type thrown if something during the creation of the classification report goes wrong.
+ */
+class classification_report_exception : public exception {
+  public:
+    /**
+     * @brief Construct a new exception forwarding the exception message and source location to `plssvm::exception`.
+     * @param[in] msg the exception's `what()` message
+     * @param[in] loc the exception's call side information
+     */
+    explicit classification_report_exception(const std::string &msg, source_location loc = source_location::current());
 };
 
 }  // namespace plssvm

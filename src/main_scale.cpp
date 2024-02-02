@@ -9,20 +9,17 @@
  */
 
 #include "plssvm/core.hpp"
-
 #include "plssvm/detail/cmd/data_set_variants.hpp"  // plssvm::detail::cmd::data_set_factory
 #include "plssvm/detail/cmd/parser_scale.hpp"       // plssvm::detail::cmd::parser_scale
 #include "plssvm/detail/logging.hpp"                // plssvm::detail::log
 #include "plssvm/detail/performance_tracker.hpp"    // plssvm::detail::tracking_entry,PLSSVM_DETAIL_PERFORMANCE_TRACKER_SAVE
-#include "plssvm/matrix.hpp"                        // plssvm::matrix
-#include "plssvm/verbosity_levels.hpp"              // plssvm::verbosity_level
 
-#include <chrono>                                   // std::chrono::{steady_clock, duration}
-#include <cstdlib>                                  // std::exit, EXIT_SUCCESS, EXIT_FAILURE
-#include <exception>                                // std::exception
-#include <iostream>                                 // std::cerr, std::endl
-#include <utility>                                  // std::pair
-#include <variant>                                  // std::visit
+#include <chrono>     // std::chrono::{steady_clock, duration}
+#include <cstdlib>    // std::exit, EXIT_SUCCESS, EXIT_FAILURE
+#include <exception>  // std::exception
+#include <iostream>   // std::cerr, std::endl
+#include <utility>    // std::pair
+#include <variant>    // std::visit
 
 int main(int argc, char *argv[]) {
     try {
@@ -37,7 +34,7 @@ int main(int argc, char *argv[]) {
                             plssvm::detail::tracking_entry{ "parameter", "", cmd_parser });
 
         // create data set and scale
-        std::visit([&](auto &&data) {
+        const auto data_set_visitor = [&](auto &&data) {
             // write scaled data to output file
             if (!cmd_parser.scaled_filename.empty()) {
                 data.save(cmd_parser.scaled_filename, cmd_parser.format);
@@ -65,7 +62,8 @@ int main(int argc, char *argv[]) {
             if (!cmd_parser.save_filename.empty() && data.scaling_factors().has_value()) {
                 data.scaling_factors()->get().save(cmd_parser.save_filename);
             }
-        }, plssvm::detail::cmd::data_set_factory(cmd_parser));
+        };
+        std::visit(data_set_visitor, plssvm::detail::cmd::data_set_factory(cmd_parser));
 
         const std::chrono::steady_clock::time_point end_time = std::chrono::steady_clock::now();
         plssvm::detail::log(plssvm::verbosity_level::full | plssvm::verbosity_level::timing,

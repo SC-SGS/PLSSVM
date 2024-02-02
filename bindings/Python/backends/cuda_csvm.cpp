@@ -6,14 +6,14 @@
  *          See the LICENSE.md file in the project root for full license information.
  */
 
-#include "plssvm/backends/CUDA/csvm.hpp"
-#include "plssvm/backends/CUDA/exceptions.hpp"
+#include "plssvm/backends/CUDA/csvm.hpp"        // plssvm::cuda::csvm
+#include "plssvm/backends/CUDA/exceptions.hpp"  // plssvm::cuda::backend_exception
+#include "plssvm/csvm.hpp"                      // plssvm::csvm
+#include "plssvm/exceptions/exceptions.hpp"     // plssvm::exception
+#include "plssvm/parameter.hpp"                 // plssvm::parameter
+#include "plssvm/target_platforms.hpp"          // plssvm::target_platform
 
-#include "plssvm/csvm.hpp"              // plssvm::csvm
-#include "plssvm/parameter.hpp"         // plssvm::parameter
-#include "plssvm/target_platforms.hpp"  // plssvm::target_platform
-
-#include "../utility.hpp"  // check_kwargs_for_correctness, convert_kwargs_to_parameter, register_py_exception
+#include "bindings/Python//utility.hpp"  // check_kwargs_for_correctness, convert_kwargs_to_parameter, register_py_exception
 
 #include "pybind11/pybind11.h"  // py::module_, py::class_, py::init
 #include "pybind11/stl.h"       // support for STL types

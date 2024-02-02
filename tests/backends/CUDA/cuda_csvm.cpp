@@ -8,8 +8,6 @@
  * @brief Tests for the functionality related to the CUDA backend.
  */
 
-#include "backends/CUDA/mock_cuda_csvm.hpp"
-
 #include "plssvm/backends/CUDA/csvm.hpp"        // plssvm::cuda::csvm
 #include "plssvm/backends/CUDA/exceptions.hpp"  // plssvm::cuda::backend_exception
 #include "plssvm/detail/type_list.hpp"          // plssvm::detail::label_type_list
@@ -17,18 +15,20 @@
 #include "plssvm/parameter.hpp"                 // plssvm::parameter
 #include "plssvm/target_platforms.hpp"          // plssvm::target_platform
 
-#include "backends/generic_csvm_tests.hpp"      // generic CSVM tests to instantiate
-#include "backends/generic_gpu_csvm_tests.hpp"  // generic GPU CSVM tests to instantiate
-#include "custom_test_macros.hpp"               // EXPECT_THROW_WHAT
-#include "naming.hpp"                           // naming::test_parameter_to_name
-#include "types_to_test.hpp"                    // util::{cartesian_type_product_t, combine_test_parameters_gtest_t}
-#include "utility.hpp"                          // util::redirect_output
+#include "tests/backends/CUDA/mock_cuda_csvm.hpp"
+#include "tests/backends/generic_csvm_tests.hpp"      // generic CSVM tests to instantiate
+#include "tests/backends/generic_gpu_csvm_tests.hpp"  // generic GPU CSVM tests to instantiate
+#include "tests/custom_test_macros.hpp"               // EXPECT_THROW_WHAT
+#include "tests/naming.hpp"                           // naming::test_parameter_to_name
+#include "tests/types_to_test.hpp"                    // util::{cartesian_type_product_t, combine_test_parameters_gtest_t}
+#include "tests/utility.hpp"                          // util::redirect_output
 
 #include "gtest/gtest.h"  // TEST_F, EXPECT_NO_THROW, INSTANTIATE_TYPED_TEST_SUITE_P, ::testing::Test
 
 #include <tuple>  // std::make_tuple, std::tuple
 
-class CUDACSVM : public ::testing::Test, private util::redirect_output<> {};
+class CUDACSVM : public ::testing::Test,
+                 private util::redirect_output<> { };
 
 // check whether the constructor correctly fails when using an incompatible target platform
 TEST_F(CUDACSVM, construct_parameter) {
@@ -41,6 +41,7 @@ TEST_F(CUDACSVM, construct_parameter) {
                       "Requested target platform 'gpu_nvidia' that hasn't been enabled using PLSSVM_TARGET_PLATFORMS!");
 #endif
 }
+
 TEST_F(CUDACSVM, construct_target_and_parameter) {
     // create parameter struct
     const plssvm::parameter params{};
@@ -69,6 +70,7 @@ TEST_F(CUDACSVM, construct_target_and_parameter) {
                       plssvm::cuda::backend_exception,
                       "Invalid target platform 'gpu_intel' for the CUDA backend!");
 }
+
 TEST_F(CUDACSVM, construct_named_args) {
 #if defined(PLSSVM_HAS_NVIDIA_TARGET)
     // only automatic or gpu_nvidia are allowed as target platform for the CUDA backend
@@ -80,6 +82,7 @@ TEST_F(CUDACSVM, construct_named_args) {
                       "Requested target platform 'gpu_nvidia' that hasn't been enabled using PLSSVM_TARGET_PLATFORMS!");
 #endif
 }
+
 TEST_F(CUDACSVM, construct_target_and_named_args) {
 #if defined(PLSSVM_HAS_NVIDIA_TARGET)
     // only automatic or gpu_nvidia are allowed as target platform for the CUDA backend
@@ -110,8 +113,9 @@ struct cuda_csvm_test_type {
     using mock_csvm_type = mock_cuda_csvm;
     using csvm_type = plssvm::cuda::csvm;
     using device_ptr_type = typename csvm_type::device_ptr_type;
-    inline static constexpr auto additional_arguments = std::make_tuple();
+    inline constexpr static auto additional_arguments = std::make_tuple();
 };
+
 using cuda_csvm_test_tuple = std::tuple<cuda_csvm_test_type>;
 using cuda_csvm_test_label_type_list = util::cartesian_type_product_t<cuda_csvm_test_tuple, plssvm::detail::supported_label_types>;
 using cuda_csvm_test_type_list = util::cartesian_type_product_t<cuda_csvm_test_tuple>;
@@ -134,6 +138,7 @@ INSTANTIATE_TYPED_TEST_SUITE_P(CUDACSVM, GenericCSVMKernelFunctionClassification
 INSTANTIATE_TYPED_TEST_SUITE_P(CUDACSVM, GenericCSVMSolverKernelFunctionClassification, cuda_label_type_solver_kernel_function_and_classification_type_gtest, naming::test_parameter_to_name);
 
 // generic CSVM DeathTests
+INSTANTIATE_TYPED_TEST_SUITE_P(CUDACSVMDeathTest, GenericCSVMDeathTest, cuda_csvm_test_type_gtest, naming::test_parameter_to_name);
 INSTANTIATE_TYPED_TEST_SUITE_P(CUDACSVMDeathTest, GenericCSVMSolverDeathTest, cuda_solver_type_gtest, naming::test_parameter_to_name);
 INSTANTIATE_TYPED_TEST_SUITE_P(CUDACSVMDeathTest, GenericCSVMKernelFunctionDeathTest, cuda_kernel_function_type_gtest, naming::test_parameter_to_name);
 

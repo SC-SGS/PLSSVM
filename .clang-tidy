@@ -7,6 +7,7 @@ mpi-*,
 cppcoreguidelines-*,
 -cppcoreguidelines-avoid-magic-numbers,
 -cppcoreguidelines-pro-bounds-pointer-arithmetic,
+-cppcoreguidelines-pro-bounds-constant-array-index,
 google-default-arguments,
 google-runtime-operator,
 google-explicit-constructor,
@@ -42,6 +43,4 @@ readability-*,
 -readability-identifier-naming,
 bugprone-*'
 
-CheckOptions:
-  - key:    misc-non-private-member-variables-in-classes.IgnoreClassesWithAllMemberVariablesBeingPublic
-    value:  true
+CheckOptions: { misc-non-private-member-variables-in-classes.IgnoreClassesWithAllMemberVariablesBeingPublic: true }

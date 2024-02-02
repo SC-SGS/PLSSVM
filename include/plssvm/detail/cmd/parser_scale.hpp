@@ -54,7 +54,7 @@ struct parser_scale {
     /// The name of the file from which the scaling factors should be restored.
     std::string restore_filename{};
 
-    /// If performance tracking has been enabled, provides the name of the file where the performance tracking results are saved to. If the filename is empty, the results are dumped to stdout instead.
+    /// If performance tracking has been enabled, provides the name of the file where the performance tracking results are saved to. If the filename is empty, the results are dumped using std::clog instead.
     std::string performance_tracking_filename{};
 };
 
@@ -69,6 +69,6 @@ std::ostream &operator<<(std::ostream &out, const parser_scale &params);
 }  // namespace plssvm::detail::cmd
 
 template <>
-struct fmt::formatter<plssvm::detail::cmd::parser_scale> : fmt::ostream_formatter {};
+struct fmt::formatter<plssvm::detail::cmd::parser_scale> : fmt::ostream_formatter { };
 
 #endif  // PLSSVM_DETAIL_CMD_PARSER_SCALE_HPP_

@@ -26,7 +26,7 @@ class mock_dpcpp_csvm final : public plssvm::dpcpp::csvm {
 
     template <typename... Args>
     explicit mock_dpcpp_csvm(Args &&...args) :
-        base_type{ std::forward<Args>(args)... } {}
+        base_type{ std::forward<Args>(args)... } { }
 
     // make protected member functions public
     using base_type::assemble_kernel_matrix;
@@ -39,6 +39,7 @@ class mock_dpcpp_csvm final : public plssvm::dpcpp::csvm {
 
     using base_type::conjugate_gradients;
     using base_type::perform_dimensional_reduction;
+    using base_type::run_assemble_kernel_matrix_implicit_blas_level_3;
     using base_type::run_blas_level_3;
     using base_type::solve_lssvm_system_of_linear_equations;
 

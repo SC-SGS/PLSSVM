@@ -16,7 +16,7 @@
 #include "plssvm/constants.hpp"                                    // plssvm::real_type
 #include "plssvm/default_value.hpp"                                // plssvm::default_value, plssvm::is_default_value_v
 #include "plssvm/detail/igor_utility.hpp"                          // plssvm::detail::{has_only_named_args_v, get_value_from_named_parameter}
-#include "plssvm/detail/logging_without_performance_tracking.hpp"  // plssvm::detail::log
+#include "plssvm/detail/logging_without_performance_tracking.hpp"  // plssvm::detail::log_untracked
 #include "plssvm/detail/type_traits.hpp"                           // PLSSVM_REQUIRES, plssvm::detail::{remove_cvref_t, always_false_v}
 #include "plssvm/detail/utility.hpp"                               // plssvm::detail::unreachable
 #include "plssvm/kernel_function_types.hpp"                        // plssvm::kernel_function_type, plssvm::kernel_function_type_to_math_string
@@ -88,6 +88,7 @@ struct parameter {
      * @brief Default construct a parameter set, i.e., each SVM parameter has its default value.
      */
     constexpr parameter() noexcept = default;
+
     /**
      * @brief Construct a parameter set by explicitly overwriting the SVM parameters' default values.
      * @param[in] kernel_p the kernel type: linear, polynomial, or radial-basis functions (rbf)
@@ -185,11 +186,11 @@ struct parameter {
         // shorthand function for emitting a warning if a provided parameter is not used by the current kernel function
         [[maybe_unused]] const auto print_warning = [](const std::string_view param_name, const kernel_function_type kernel) {
             // NOTE: can't use the log function due to circular dependencies
-            detail::log(verbosity_level::full | verbosity_level::warning,
-                        "WARNING: {} parameter provided, which is not used in the {} kernel ({})!\n",
-                        param_name,
-                        kernel,
-                        kernel_function_type_to_math_string(kernel));
+            detail::log_untracked(verbosity_level::full | verbosity_level::warning,
+                                  "WARNING: {} parameter provided, which is not used in the {} kernel ({})!\n",
+                                  param_name,
+                                  kernel,
+                                  kernel_function_type_to_math_string(kernel));
         };
 
         // compile time/runtime check: the values must have the correct types
@@ -238,6 +239,7 @@ struct parameter {
 [[nodiscard]] constexpr bool operator==(const parameter &lhs, const parameter &rhs) noexcept {
     return lhs.kernel_type == rhs.kernel_type && lhs.degree == rhs.degree && lhs.gamma == rhs.gamma && lhs.coef0 == rhs.coef0 && lhs.cost == rhs.cost;
 }
+
 /**
  * @brief Compares the two parameter sets @p lhs and @p rhs for inequality.
  * @details Two parameter sets are unequal if **any** of the SVM parameters are unequal.
@@ -273,6 +275,6 @@ std::ostream &operator<<(std::ostream &out, const parameter &params);
 }  // namespace plssvm
 
 template <>
-struct fmt::formatter<plssvm::parameter> : fmt::ostream_formatter {};
+struct fmt::formatter<plssvm::parameter> : fmt::ostream_formatter { };
 
 #endif  // PLSSVM_PARAMETER_HPP_

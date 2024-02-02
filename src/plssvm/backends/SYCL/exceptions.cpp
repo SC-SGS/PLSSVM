@@ -18,24 +18,24 @@ namespace plssvm {
 namespace sycl {
 
 backend_exception::backend_exception(const std::string &msg, source_location loc) :
-    ::plssvm::exception{ msg, "sycl::backend_exception", loc } {}
+    ::plssvm::exception{ msg, "sycl::backend_exception", loc } { }
 
 backend_exception::backend_exception(const std::string &msg, const std::string_view class_name, source_location loc) :
-    ::plssvm::exception{ msg, class_name, loc } {}
+    ::plssvm::exception{ msg, class_name, loc } { }
 
 }  // namespace sycl
 
 namespace adaptivecpp {
 
 backend_exception::backend_exception(const std::string &msg, source_location loc) :
-    sycl::backend_exception{ msg, "adaptivecpp::backend_exception", loc } {}
+    sycl::backend_exception{ msg, "adaptivecpp::backend_exception", loc } { }
 
 }  // namespace adaptivecpp
 
 namespace dpcpp {
 
 backend_exception::backend_exception(const std::string &msg, source_location loc) :
-    sycl::backend_exception{ msg, "dpcpp::backend_exception", loc } {}
+    sycl::backend_exception{ msg, "dpcpp::backend_exception", loc } { }
 
 }  // namespace dpcpp
 

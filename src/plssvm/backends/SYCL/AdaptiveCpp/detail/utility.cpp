@@ -91,4 +91,12 @@ queue get_default_queue() {
     return q;
 }
 
+std::string get_adaptivecpp_version_short() {
+    return fmt::format("{}.{}.{}", ACPP_VERSION_MAJOR, ACPP_VERSION_MINOR, ACPP_VERSION_PATCH);
+}
+
+std::string get_adaptivecpp_version() {
+    return ::hipsycl::sycl::detail::version_string();
+}
+
 }  // namespace plssvm::adaptivecpp::detail

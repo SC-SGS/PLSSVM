@@ -8,17 +8,16 @@
  * @brief Tests for functions related to the data_set scaling used for learning an SVM model.
  */
 
+#include "plssvm/constants.hpp"  // plssvm::real_type
 #include "plssvm/data_set.hpp"
-
-#include "plssvm/constants.hpp"                 // plssvm::real_type
 #include "plssvm/detail/io/file_reader.hpp"     // plssvm::detail::io::file_reader
 #include "plssvm/detail/string_conversion.hpp"  // plssvm::detail::convert_to
 #include "plssvm/exceptions/exceptions.hpp"     // plssvm::data_set_exception
 
-#include "custom_test_macros.hpp"  // EXPECT_FLOATING_POINT_EQ, EXPECT_THROW_WHAT
-#include "naming.hpp"              // naming::test_parameter_to_name
-#include "types_to_test.hpp"       // util::{label_type_gtest, test_parameter_type_at_t}
-#include "utility.hpp"             // util::{temporary_file, redirect_output}
+#include "tests/custom_test_macros.hpp"  // EXPECT_FLOATING_POINT_EQ, EXPECT_THROW_WHAT
+#include "tests/naming.hpp"              // naming::test_parameter_to_name
+#include "tests/types_to_test.hpp"       // util::{label_type_gtest, test_parameter_type_at_t}
+#include "tests/utility.hpp"             // util::{temporary_file, redirect_output}
 
 #include "gtest/gtest.h"  // TYPED_TEST, TYPED_TEST_SUITE, EXPECT_EQ, EXPECT_TRUE, ASSERT_EQ, ASSERT_GE , ::testing::Test
 
@@ -27,10 +26,12 @@
 #include <vector>   // std::vector
 
 template <typename T>
-class DataSetScaling : public ::testing::Test, private util::redirect_output<> {
+class DataSetScaling : public ::testing::Test,
+                       private util::redirect_output<> {
   protected:
     using fixture_label_type = util::test_parameter_type_at_t<0, T>;
 };
+
 TYPED_TEST_SUITE(DataSetScaling, util::label_type_gtest, naming::test_parameter_to_name);
 
 TYPED_TEST(DataSetScaling, default_construct_factor) {
@@ -46,6 +47,7 @@ TYPED_TEST(DataSetScaling, default_construct_factor) {
     EXPECT_FLOATING_POINT_EQ(factor.lower, plssvm::real_type{});
     EXPECT_FLOATING_POINT_EQ(factor.upper, plssvm::real_type{});
 }
+
 TYPED_TEST(DataSetScaling, construct_factor) {
     using label_type = typename TestFixture::fixture_label_type;
     using scaling_type = typename plssvm::data_set<label_type>::scaling;
@@ -72,6 +74,7 @@ TYPED_TEST(DataSetScaling, construct_interval) {
     EXPECT_FLOATING_POINT_EQ(scale.scaling_interval.second, plssvm::real_type{ 1.0 });
     EXPECT_TRUE(scale.scaling_factors.empty());
 }
+
 TYPED_TEST(DataSetScaling, construct_invalid_interval) {
     using label_type = typename TestFixture::fixture_label_type;
     using scaling_type = typename plssvm::data_set<label_type>::scaling;
@@ -81,6 +84,7 @@ TYPED_TEST(DataSetScaling, construct_invalid_interval) {
                       plssvm::data_set_exception,
                       "Inconsistent scaling interval specification: lower (1) must be less than upper (-1)!");
 }
+
 TYPED_TEST(DataSetScaling, construct_from_file) {
     using label_type = typename TestFixture::fixture_label_type;
     using scaling_type = typename plssvm::data_set<label_type>::scaling;
@@ -132,6 +136,7 @@ TYPED_TEST(DataSetScaling, save) {
         EXPECT_TRUE(std::regex_match(std::string{ reader.line(i) }, reg));
     }
 }
+
 TYPED_TEST(DataSetScaling, save_empty_scaling_factors) {
     using label_type = typename TestFixture::fixture_label_type;
     using scaling_type = typename plssvm::data_set<label_type>::scaling;

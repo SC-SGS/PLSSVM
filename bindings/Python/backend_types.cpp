@@ -6,10 +6,12 @@
  *          See the LICENSE.md file in the project root for full license information.
  */
 
-#include "plssvm/backend_types.hpp"
+#include "plssvm/backend_types.hpp"  // plssvm::backend_type, plssvm::list_available_backends, plssvm::determine_default_backend
 
 #include "pybind11/pybind11.h"  // py::module_, py::enum_
 #include "pybind11/stl.h"       // support for STL types: std::vector
+
+#include <vector>  // std::vector
 
 namespace py = pybind11;
 

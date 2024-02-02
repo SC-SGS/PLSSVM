@@ -42,12 +42,12 @@ set(DOXYGEN_ENABLE_PREPROCESSING "YES")
 set(DOXYGEN_MACRO_EXPANSION "YES")
 set(DOXYGEN_EXPAND_ONLY_PREDEF "YES")
 set(DOXYGEN_EXPAND_AS_DEFINED "YES")
-set(DOXYGEN_PREDEFINED "__attribute__((x))=;__CUDA_ARCH__=0;PLSSVM_SYCL_BACKEND_NAMESPACE_NAME=sycl")
+set(DOXYGEN_PREDEFINED "__attribute__((x))=;__CUDA_ARCH__=0")
 
 set(DOXYGEN_VERBATIM_VARS DOXYGEN_ALIASES)
 set(DOXYGEN_ALIASES
-        [[license="\par License^^\parblock^^"  ]]
-        )
+    [[license="\par License^^\parblock^^"  ]]
+)
 
 ## add doxygen as target
 doxygen_add_docs(

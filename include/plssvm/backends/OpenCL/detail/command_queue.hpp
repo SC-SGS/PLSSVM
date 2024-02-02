@@ -68,6 +68,7 @@ class command_queue {
      * @return the wrapped OpenCL cl_command_queue (`[[nodiscard]]`)
      */
     [[nodiscard]] operator cl_command_queue &() noexcept { return queue; }
+
     /**
      * @brief Implicitly convert a command_queue wrapper to an OpenCL cl_command_queue.
      * @return the wrapped OpenCL cl_command_queue (`[[nodiscard]]`)

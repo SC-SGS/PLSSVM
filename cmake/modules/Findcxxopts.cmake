@@ -15,9 +15,9 @@ endif ()
 # try to automatically find the header files in the standard directories
 if (NOT EXISTS "${cxxopts_INCLUDE_DIR}")
     find_path(cxxopts_INCLUDE_DIR
-            NAMES cxxopts.hpp
-            DOC "cxxopts header-only library header files"
-            )
+              NAMES cxxopts.hpp
+              DOC "cxxopts header-only library header files"
+    )
 endif ()
 
 # allow the user to specify the include directory in the CMake call (if provided, used instead of the environment variable)

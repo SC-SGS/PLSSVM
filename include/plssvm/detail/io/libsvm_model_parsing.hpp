@@ -19,9 +19,10 @@
 #include "plssvm/detail/assert.hpp"             // PLSSVM_ASSERT
 #include "plssvm/detail/io/libsvm_parsing.hpp"  // plssvm::detail::io::parse_libsvm_num_features
 #include "plssvm/detail/logging.hpp"            // plssvm::detail::log
-#include "plssvm/detail/utility.hpp"            // plssvm::detail::current_date_time
+#include "plssvm/detail/memory_size.hpp"        // plssvm::memory_size, custom literals
 #include "plssvm/matrix.hpp"                    // plssvm::soa_matrix
 #include "plssvm/parameter.hpp"                 // plssvm::parameter
+#include "plssvm/shape.hpp"                     // plssvm::shape
 #include "plssvm/verbosity_levels.hpp"          // plssvm::verbosity_level
 
 #include "fmt/compile.h"  // FMT_COMPILE
@@ -39,9 +40,9 @@
 #include <limits>       // std::numeric_limits::max
 #include <map>          // std::map
 #include <memory>       // std::unique_ptr, std::make_unique
-#include <numeric>      // std::accumulate
+#include <numeric>      // std::accumulate, std::reduce
 #include <set>          // std::set
-#include <sstream>      // std::stringstream
+#include <sstream>      // std::istringstream
 #include <string>       // std::string
 #include <string_view>  // std::string_view
 #include <tuple>        // std::tuple, std::make_tuple
@@ -53,14 +54,14 @@ namespace plssvm::detail::io {
 /**
  * @brief Calculates the one-dimensional index in the alpha vector given two classes for the binary one vs. one classifier.
  * @details The binary classifiers for four classes are: 0v1, 0vs2, 0vs3, 1vs2, 1vs3, and 2vs3.
- *          Example function calls with the respective results are: `x_vs_y_to_idx(1, 2, 4) == 3` or `x_vs_y_to_idx(3, 1, 4) == 4`.
+ *          Example function calls with the respective results are: `oao_x_vs_y_to_idx(1, 2, 4) == 3` or `oao_x_vs_y_to_idx(3, 1, 4) == 4`.
  * @note If `x > y` swaps the to values since, e.g., `3vs2` isn't defined and will be mapped to `2vs3`.
  * @param[in] x the first class of the binary classifier
  * @param[in] y the second class if the binary classifier
  * @param[in] num_classes the number of different classes
  * @return the one-dimensional index of the classification pair (`[[nodiscard]]`)
  */
-[[nodiscard]] inline std::size_t x_vs_y_to_idx(std::size_t x, std::size_t y, const std::size_t num_classes) {
+[[nodiscard]] inline std::size_t oao_x_vs_y_to_idx(std::size_t x, std::size_t y, const std::size_t num_classes) {
     PLSSVM_ASSERT(x != y, "Can't compute the index for the binary classification of {}vs{}!", x, y);
     PLSSVM_ASSERT(num_classes > 1, "There must be at least two classes!");
     PLSSVM_ASSERT(x < num_classes, "The class x ({}) must be smaller than the total number of classes ({})!", x, num_classes);
@@ -113,15 +114,14 @@ namespace plssvm::detail::io {
         global_idx = index_sets[i].size() + std::distance(index_sets[j].cbegin(), std::lower_bound(index_sets[j].cbegin(), index_sets[j].cend(), idx_to_find));
     }
 
-    PLSSVM_ASSERT(global_idx < index_sets[i].size() + index_sets[j].size(), "The global index ({}) for the provided index to find ({}) must be smaller than the combined size of both index sets ({} + {})!",
-                  global_idx, idx_to_find, index_sets[i].size(), index_sets[j].size());
+    PLSSVM_ASSERT(global_idx < index_sets[i].size() + index_sets[j].size(), "The global index ({}) for the provided index to find ({}) must be smaller than the combined size of both index sets ({} + {})!", global_idx, idx_to_find, index_sets[i].size(), index_sets[j].size());
 
     return global_idx;
 }
 
 /**
  * @brief Parse the modified LIBSVM model file header.
- * @details An example modified LIBSVM model file header for the linear kernel and three labels could look like
+ * @details An example modified LIBSVM model file header for the linear kernel and three labels classified via one vs. all, could look like
  * @code
  * svm_type c_svc
  * kernel_type linear
@@ -133,8 +133,8 @@ namespace plssvm::detail::io {
  * SV
  * @endcode
  * @tparam label_type the type of the labels (any arithmetic type, except bool, or std::string)
- * @param[in] lines the LIBSVM model file header to parse>
- * @throws plssvm::invalid_file_format_exception if an invalid 'svm_type' has been provided, i.e., 'svm_type' is not 'c_csc'
+ * @param[in] lines the LIBSVM model file header to parse
+ * @throws plssvm::invalid_file_format_exception if an invalid 'svm_type' has been provided, i.e., 'svm_type' is not 'c_svc'
  * @throws plssvm::invalid_file_format_exception if an invalid 'kernel_type has been provided
  * @throws plssvm::invalid_file_format_exception if the number of support vectors ('total_sv') is zero
  * @throws plssvm::invalid_file_format_exception if less than two rho values have been provided
@@ -154,7 +154,7 @@ namespace plssvm::detail::io {
  * @throws plssvm::invalid_file_format_exception if the number of sum of all number of support vectors per class is not the same as the value of 'total_sv'
  * @throws plssvm::invalid_file_format_exception if no support vectors have been provided in the data section
  * @attention The PLSSVM model file is only compatible with LIBSVM for the one vs. one classification type.
- * @return the necessary header information: [the SVM parameter; the values of rho; the labels; the different classes; the number of support vectors per class; num_header_lines] (`[[nodiscard]]`)
+ * @return [the SVM parameter; the values of rho; the labels for each data point; the different classes; the number of support vectors per class; the number of header lines] (`[[nodiscard]]`)
  */
 template <typename label_type>
 [[nodiscard]] inline std::tuple<plssvm::parameter, std::vector<real_type>, std::vector<label_type>, std::vector<label_type>, std::vector<std::size_t>, std::size_t> parse_libsvm_model_header(const std::vector<std::string_view> &lines) {
@@ -275,7 +275,7 @@ template <typename label_type>
         throw invalid_file_format_exception{ "Missing kernel_type!" };
     }
     // check provided values based on kernel_type
-    switch (params.kernel_type) {
+    switch (params.kernel_type.value()) {
         case plssvm::kernel_function_type::linear:
             if (!params.degree.is_default()) {
                 throw invalid_file_format_exception{ "Explicitly provided a value for the degree parameter which is not used in the linear kernel!" };
@@ -376,10 +376,11 @@ template <typename label_type>
  * @throws plssvm::invalid_file_format_exception if a feature value couldn't be converted to the provided @p real_type
  * @throws plssvm::invalid_file_format_exception if the provided LIBSVM file uses zero-based indexing (LIBSVM mandates one-based indices)
  * @throws plssvm::invalid_file_format_exception if the feature (indices) are not given in a strictly increasing order
+ * @throws plssvm::invalid_file_format_exception if the classification type can't be unambiguously defined
  * @attention The PLSSVM model file is only compatible with LIBSVM for the one vs. one classification type.
- * @return a std::tuple containing: [num_data_points, num_features, data_points, labels, classification type] (`[[nodiscard]]`)
+ * @return [the data points; the weights; the classification type used to create the model] (`[[nodiscard]]`)
  */
-[[nodiscard]] inline std::tuple<std::size_t, std::size_t, soa_matrix<real_type>, std::vector<aos_matrix<real_type>>, classification_type> parse_libsvm_model_data(const file_reader &reader, const std::vector<std::size_t> &num_sv_per_class, const std::size_t skipped_lines) {
+[[nodiscard]] inline std::tuple<soa_matrix<real_type>, std::vector<aos_matrix<real_type>>, classification_type> parse_libsvm_model_data(const file_reader &reader, const std::vector<std::size_t> &num_sv_per_class, const std::size_t skipped_lines) {
     PLSSVM_ASSERT(reader.is_open(), "The file_reader is currently not associated with a file!");
     PLSSVM_ASSERT(num_sv_per_class.size() > 1, "At least two classes must be present!");
     PLSSVM_ASSERT(skipped_lines <= reader.num_lines(), "Tried to skipp {} lines, but only {} are present!", skipped_lines, reader.num_lines());
@@ -398,17 +399,17 @@ template <typename label_type>
     }
 
     // create vector containing the data and label
-    soa_matrix<real_type> data{ num_data_points, num_features, PADDING_SIZE, PADDING_SIZE };
+    soa_matrix<real_type> data{ shape{ num_data_points, num_features }, shape{ PADDING_SIZE, PADDING_SIZE } };
     const std::size_t max_num_alpha_values = num_sv_per_class.size();  // OAA needs more alpha values than OAO
-    aos_matrix<real_type> alpha{ max_num_alpha_values, num_data_points, PADDING_SIZE, PADDING_SIZE };
+    aos_matrix<real_type> alpha{ shape{ max_num_alpha_values, num_data_points }, shape{ PADDING_SIZE, PADDING_SIZE } };
     bool is_oaa{ false };
     bool is_oao{ false };
 
     std::exception_ptr parallel_exception;
 
-    #pragma omp parallel default(none) shared(reader, skipped_lines, data, alpha, parallel_exception, is_oaa, is_oao) firstprivate(num_data_points, max_num_alpha_values)
+#pragma omp parallel default(none) shared(reader, skipped_lines, data, alpha, parallel_exception, is_oaa, is_oao) firstprivate(num_data_points, max_num_alpha_values)
     {
-        #pragma omp for
+#pragma omp for
         for (std::size_t i = 0; i < num_data_points; ++i) {
             try {
                 const std::string_view line = reader.line(skipped_lines + i);
@@ -439,10 +440,10 @@ template <typename label_type>
 
                 // check whether we read a file given OAA classification or OAO classification
                 if (alpha_val == max_num_alpha_values) {
-                    #pragma omp critical
+#pragma omp critical
                     is_oaa = true;
                 } else if (alpha_val == max_num_alpha_values - 1) {
-                    #pragma omp critical
+#pragma omp critical
                     is_oao = true;
                 }
 
@@ -478,8 +479,8 @@ template <typename label_type>
                     pos = next_pos;
                 }
             } catch (const std::exception &) {
-                // catch first exception and store it
-                #pragma omp critical
+// catch first exception and store it
+#pragma omp critical
                 {
                     if (!parallel_exception) {
                         parallel_exception = std::current_exception();
@@ -500,19 +501,23 @@ template <typename label_type>
         // invalid model file
         throw invalid_file_format_exception{ "Can't distinguish between OAA and OAO in the given model file!" };
     } else if (is_oaa) {
+        // every class has the same number of weights
+        // -> use a vector with one entry containing a matrix with all weights!
         classification = classification_type::oaa;
         alpha_vec = std::vector<aos_matrix<real_type>>{ std::move(alpha) };
     } else if (is_oao) {
+        // every class has potentially different number of weights
+        // -> create a vector entry for each binary classification containing a matrix with the respective weights
         classification = classification_type::oao;
         // last vector entry must be ignored!
         // remap alpha vector from the read one to 01 02 03 12 13 23 etc.
         const std::size_t num_classes = num_sv_per_class.size();
 
-        // resize all alpha vectors to the correct, final size
+        // create all weight matrices with the correct number of weights for the respective binary classification
         alpha_vec.resize(calculate_number_of_classifiers(classification_type::oao, num_classes));
         for (std::size_t i = 0; i < num_classes; ++i) {
             for (std::size_t j = i + 1; j < num_classes; ++j) {
-                alpha_vec[x_vs_y_to_idx(i, j, num_classes)] = aos_matrix<real_type>{ 1, num_sv_per_class[i] + num_sv_per_class[j], plssvm::PADDING_SIZE, plssvm::PADDING_SIZE };
+                alpha_vec[oao_x_vs_y_to_idx(i, j, num_classes)] = aos_matrix<real_type>{ shape{ 1, num_sv_per_class[i] + num_sv_per_class[j] }, shape{ PADDING_SIZE, PADDING_SIZE } };
             }
         }
         std::vector<std::size_t> oao_alpha_indices(alpha_vec.size(), 0);
@@ -535,7 +540,7 @@ template <typename label_type>
                     // get the current alpha value
                     const real_type alpha_val = alpha(a, running_idx);
                     // calculate to which alpha vector the alpha value should be added to
-                    const std::size_t idx = x_vs_y_to_idx(nr_sv, running_a, num_classes);
+                    const std::size_t idx = oao_x_vs_y_to_idx(nr_sv, running_a, num_classes);
                     // add the alpha value
                     alpha_vec[idx](0, oao_alpha_indices[idx]++) = alpha_val;
                     ++running_a;
@@ -546,12 +551,12 @@ template <typename label_type>
         }
     }
 
-    return std::make_tuple(num_data_points, num_features, std::move(data), std::move(alpha_vec), classification);
+    return std::make_tuple(std::move(data), std::move(alpha_vec), classification);
 }
 
 /**
  * @brief Write the modified LIBSVM model file header to @p out.
- * @details An example modified LIBSVM model file header for the linear kernel and three labels could look like
+ * @details An example modified LIBSVM model file header for the linear kernel and three labels classified via one vs. all, could look like
  * @code
  * svm_type c_svc
  * kernel_type linear
@@ -578,7 +583,7 @@ template <typename label_type>
     // save model file header
     std::string out_string = fmt::format("svm_type c_svc\nkernel_type {}\n", params.kernel_type);
     // save the SVM parameter information based on the used kernel_type
-    switch (params.kernel_type) {
+    switch (params.kernel_type.value()) {
         case kernel_function_type::linear:
             break;
         case kernel_function_type::polynomial:
@@ -623,7 +628,7 @@ template <typename label_type>
 
 /**
  * @brief Write the modified LIBSVM model to the file @p filename.
- * @details An example modified LIBSVM model file for the linear kernel and three labels could look like
+ * @details An example modified LIBSVM model file for the linear kernel and three labels classified via one vs. all, could look like
  * @code
  * svm_type c_svc
  * kernel_type linear
@@ -692,6 +697,7 @@ inline void write_libsvm_model_data(const std::string &filename, const plssvm::p
             break;
     }
 #endif
+    using namespace literals;
 
     const soa_matrix<real_type> &support_vectors = data.data();
     const std::vector<label_type> &labels = data.labels().value();
@@ -701,9 +707,6 @@ inline void write_libsvm_model_data(const std::string &filename, const plssvm::p
 
     // create file
     fmt::ostream out = fmt::output_file(filename);
-    // write timestamp for current date time
-    // note: commented out since the resulting model file cannot be read be LIBSVM
-    //    out.print("# This model file has been created at {}\n", detail::current_date_time());
 
     // write header information
     const std::vector<label_type> label_order = write_libsvm_model_header(out, params, rho, data);
@@ -715,17 +718,17 @@ inline void write_libsvm_model_data(const std::string &filename, const plssvm::p
     // separators: 2 chars (: between index and feature + whitespace after feature value)
     // -> 40 chars in total
     // -> increased to 48 chars to be on the safe side
-    static constexpr std::size_t CHARS_PER_BLOCK = 48;
+    constexpr static std::size_t CHARS_PER_BLOCK = 48;
     // results in 48 B * 128 B = 6 KiB stack buffer per thread
-    static constexpr std::size_t BLOCK_SIZE = 128;
+    constexpr static std::size_t BLOCK_SIZE = 128;
     // use 1 MiB as buffer per thread
-    constexpr std::size_t STRING_BUFFER_SIZE = std::size_t{ 1024 } * std::size_t{ 1024 };
+    constexpr detail::memory_size STRING_BUFFER_SIZE = 1_MiB;
 
     // format one output-line
     auto format_libsvm_line = [](std::string &output, const std::vector<real_type> &a, const soa_matrix<real_type> &d, const std::size_t point) {
         static constexpr std::size_t STACK_BUFFER_SIZE = BLOCK_SIZE * CHARS_PER_BLOCK;
         static std::array<char, STACK_BUFFER_SIZE> buffer{};
-        #pragma omp threadprivate(buffer)
+#pragma omp threadprivate(buffer)
 
         output.append(fmt::format("{:.10e} ", fmt::join(a, " ")));
         for (typename std::vector<real_type>::size_type j = 0; j < d.num_cols(); j += BLOCK_SIZE) {
@@ -744,17 +747,17 @@ inline void write_libsvm_model_data(const std::string &filename, const plssvm::p
     // initialize volatile array
     auto counts = std::make_unique<volatile int[]>(label_order.size() + 1);
     counts[0] = std::numeric_limits<int>::max();
-    #pragma omp parallel default(none) shared(counts, alpha, format_libsvm_line, label_order, labels, support_vectors, out, index_sets) firstprivate(num_features, num_classes, num_alpha_per_point, classification)
+#pragma omp parallel default(none) shared(counts, alpha, format_libsvm_line, label_order, labels, support_vectors, out, index_sets) firstprivate(STRING_BUFFER_SIZE, num_features, num_classes, num_alpha_per_point, classification)
     {
         // preallocate string buffer, only ONE allocation
         std::string out_string;
-        out_string.reserve(STRING_BUFFER_SIZE + (num_features + num_alpha_per_point) * CHARS_PER_BLOCK);  // oversubscribe buffer that at least one additional line fits into it
+        out_string.reserve(STRING_BUFFER_SIZE.num_bytes() + (num_features + num_alpha_per_point) * CHARS_PER_BLOCK);  // oversubscribe buffer that at least one additional line fits into it
         std::vector<real_type> alpha_per_point(num_alpha_per_point);
 
         // loop over all classes, since they must be sorted
         for (typename std::vector<label_type>::size_type l = 0; l < label_order.size(); ++l) {
-            // the support vectors with the l-th class
-            #pragma omp for nowait
+// the support vectors with the l-th class
+#pragma omp for nowait
             for (typename std::vector<real_type>::size_type i = 0; i < support_vectors.num_rows(); ++i) {
                 if (labels[i] == label_order[l]) {
                     switch (classification) {
@@ -766,7 +769,7 @@ inline void write_libsvm_model_data(const std::string &filename, const plssvm::p
                         case classification_type::oao:
                             for (std::size_t j = 0, pos = 0; j < num_classes; ++j) {
                                 if (l != j) {
-                                    const std::size_t idx = x_vs_y_to_idx(l, j, num_classes);
+                                    const std::size_t idx = oao_x_vs_y_to_idx(l, j, num_classes);
                                     const aos_matrix<real_type> &alpha_vec = alpha[idx];
                                     const std::size_t sv_idx = calculate_alpha_idx(l, j, index_sets, i);
                                     alpha_per_point[pos] = alpha_vec(0, sv_idx);
@@ -778,13 +781,13 @@ inline void write_libsvm_model_data(const std::string &filename, const plssvm::p
                     format_libsvm_line(out_string, alpha_per_point, support_vectors, i);
 
                     // if the buffer is full, write it to the file
-                    if (out_string.size() > STRING_BUFFER_SIZE) {
+                    if (out_string.size() > STRING_BUFFER_SIZE.num_bytes()) {
                         // wait for all threads to write support vectors for previous class
 #ifdef _OPENMP
                         while (counts[l] < omp_get_num_threads()) {
                         }
 #endif
-                        #pragma omp critical
+#pragma omp critical
                         {
                             out.print("{}", out_string);
                         }
@@ -799,7 +802,7 @@ inline void write_libsvm_model_data(const std::string &filename, const plssvm::p
             }
 #endif
 
-            #pragma omp critical
+#pragma omp critical
             {
                 if (!out_string.empty()) {
                     out.print("{}", out_string);

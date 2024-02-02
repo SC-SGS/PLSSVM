@@ -24,9 +24,10 @@
 #include "fmt/core.h"  // fmt::format
 #include "fmt/os.h"    // fmt::ostream, fmt::output_file
 
-#include <exception>    // std::exception_ptr, std::exception, std::rethrow_exception
+#include <exception>    // std::exception_ptr, std::exception, std::current_exception, std::rethrow_exception
 #include <string>       // std::string
 #include <string_view>  // std::string_view
+#include <tuple>        // std::tuple, std::make_tuple
 #include <utility>      // std::pair, std::make_pair
 #include <vector>       // std::vector
 
@@ -47,11 +48,12 @@ namespace plssvm::detail::io {
  * @tparam factors_type plssvm::data_set<real_type>::scaling::factors (cannot be forward declared or included)
  * @param[in] reader the file_reader used to read the scaling factors
  * @throws plssvm::invalid_file_format_exception if the header is omitted ('x' and the scaling interval)
- * @throws plssvm::invalid_file_format_exception if the first line doesn't only contain `x`
+ * @throws plssvm::invalid_file_format_exception if the first "real" line, i.e. omitting comments, doesn't only contain `x`
  * @throws plssvm::invalid_file_format_exception if the scaling interval is provided with more or less than two values
+ * @throws plssvm::invalid_file_format_exception if the scaling interval is invalid, i.e., the first value is greater or equal than the second value
  * @throws plssvm::invalid_file_format_exception if the scaling factors are provided with more or less than three values
  * @throws plssvm::invalid_file_format_exception if the scaling factors feature index is zero-based instead of one-based
- * @return the read scaling interval and factors (`[[nodiscard]]`)
+ * @return [the read scaling interval; the read scaling factors] (`[[nodiscard]]`)
  */
 template <typename factors_type>
 [[nodiscard]] inline std::tuple<std::pair<real_type, real_type>, std::vector<factors_type>> parse_scaling_factors(const file_reader &reader) {
@@ -78,9 +80,9 @@ template <typename factors_type>
     // parse scaling factors
     std::exception_ptr parallel_exception;
     std::vector<factors_type> scaling_factors(reader.num_lines() - 2);
-    #pragma omp parallel default(none) shared(parallel_exception, scaling_factors, reader)
+#pragma omp parallel default(none) shared(parallel_exception, scaling_factors, reader)
     {
-        #pragma omp for
+#pragma omp for
         for (typename std::vector<factors_type>::size_type i = 0; i < scaling_factors.size(); ++i) {
             try {
                 // parse the current line
@@ -100,8 +102,8 @@ template <typename factors_type>
                 scaling_factors[i].lower = values[1];
                 scaling_factors[i].upper = values[2];
             } catch (const std::exception &) {
-                // catch first exception and store it
-                #pragma omp critical
+// catch first exception and store it
+#pragma omp critical
                 {
                     if (!parallel_exception) {
                         parallel_exception = std::current_exception();
@@ -145,7 +147,7 @@ inline void write_scaling_factors(const std::string &filename, const std::pair<r
 
     // x must always be outputted
     out.print("x\n");
-    // write the requested scaling interval
+    // write the scaling interval
     out.print("{} {}\n", scaling_interval.first, scaling_interval.second);
     // write the scaling factors for each feature, note the one based indexing scheme!
     for (const factors_type &f : scaling_factors) {

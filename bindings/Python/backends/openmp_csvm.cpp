@@ -6,19 +6,19 @@
  *          See the LICENSE.md file in the project root for full license information.
  */
 
-#include "plssvm/backends/OpenMP/csvm.hpp"
-#include "plssvm/backends/OpenMP/exceptions.hpp"
+#include "plssvm/backends/OpenMP/csvm.hpp"        // plssvm::openmp::csvm
+#include "plssvm/backends/OpenMP/exceptions.hpp"  // plssvm::openmp::backend_exception
+#include "plssvm/csvm.hpp"                        // plssvm::csvm
+#include "plssvm/exceptions/exceptions.hpp"       // plssvm::exception
+#include "plssvm/parameter.hpp"                   // plssvm::parameter
+#include "plssvm/target_platforms.hpp"            // plssvm::target_platform
 
-#include "plssvm/csvm.hpp"              // plssvm::csvm
-#include "plssvm/parameter.hpp"         // plssvm::parameter
-#include "plssvm/target_platforms.hpp"  // plssvm::target_platform
+#include "bindings/Python/utility.hpp"  // check_kwargs_for_correctness, convert_kwargs_to_parameter, register_py_exception
 
-#include "../utility.hpp"               // check_kwargs_for_correctness, convert_kwargs_to_parameter, register_py_exception
+#include "pybind11/pybind11.h"  // py::module_, py::class_, py::init
+#include "pybind11/stl.h"       // support for STL types
 
-#include "pybind11/pybind11.h"          // py::module_, py::class_, py::init
-#include "pybind11/stl.h"               // support for STL types
-
-#include <memory>                       // std::make_unique
+#include <memory>  // std::make_unique
 
 namespace py = pybind11;
 

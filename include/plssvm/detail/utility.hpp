@@ -35,12 +35,16 @@
  */
 #define PLSSVM_IS_DEFINED(x) (std::string_view{ #x } != std::string_view{ PLSSVM_IS_DEFINED_HELPER(x) })
 
+/**
+ * @def PLSSVM_EXTERN
+ * @brief Defines the `PLSSVM_EXTERN` macro necessary for correct compilation and linking under Windows when using global variables.
+ */
 #if defined(_WIN32)
-#if defined(PLSSVM_COMPILE_BASE_LIBRARY)
-    #define PLSSVM_EXTERN extern "C" __declspec(dllexport)
-#else
-    #define PLSSVM_EXTERN extern "C" __declspec(dllimport)
-#endif
+    #if defined(PLSSVM_COMPILE_BASE_LIBRARY)
+        #define PLSSVM_EXTERN extern "C" __declspec(dllexport)
+    #else
+        #define PLSSVM_EXTERN extern "C" __declspec(dllimport)
+    #endif
 #else
     #define PLSSVM_EXTERN extern
 #endif
@@ -88,9 +92,9 @@ template <typename Enum>
 }
 
 /**
- * @brief Converts an enumeration wrapped in a plssvm::default_value to its underlying type.
+ * @brief Converts an enumeration wrapped in a `plssvm::default_value` to its underlying type.
  * @tparam Enum the enumeration type
- * @param[in] e enumeration value to convert wrapped in a plssvm::default_value
+ * @param[in] e enumeration value to convert wrapped in a `plssvm::default_value`
  * @return the integer value of the underlying type of `Enum`, converted from @p e (`[[nodiscard]]`)
  */
 template <typename Enum>
@@ -131,13 +135,13 @@ inline typename Container::size_type erase_if(Container &c, Pred pred) {
 
 /**
  * @brief Check whether the Container @p c contains the value @p val.
- * @tparam Container the container type
+ * @tparam Container the container type; for `std::string` use the `contains` implementation in the string_utility header
  * @tparam T the type of the value to check
  * @param[in] c the container to check if it contains the value @p val
  * @param[in] val the value to check
  * @return `true` if the @p val exists in the container @p c, otherwise `false` (`[[nodiscard]]`)
  */
-template <typename Container, typename T, PLSSVM_REQUIRES(is_container_v<Container>)>
+template <typename Container, typename T, PLSSVM_REQUIRES(is_container_v<Container> && !is_string_v<Container>)>
 [[nodiscard]] inline bool contains(const Container &c, const T &val) {
     if constexpr (is_sequence_container_v<Container>) {
         // use std::find for sequence containers
@@ -155,7 +159,8 @@ template <typename Container, typename T, PLSSVM_REQUIRES(is_container_v<Contain
 [[nodiscard]] std::string current_date_time();
 
 /**
- * @brief Returns the available total system memory.
+ * @brief Return the available total system memory.
+ * @details Returns `0` if the available total system memory couldn't be queried.
  * @return the total system memory in bytes (`[[nodiscard]]`)
  */
 [[nodiscard]] memory_size get_system_memory();

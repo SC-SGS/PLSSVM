@@ -13,8 +13,8 @@
 #define PLSSVM_BACKENDS_HIP_CSVM_HPP_
 #pragma once
 
-#include "plssvm/backends/HIP/detail/device_ptr.hip.hpp"  // plssvm::hip::detail::device_ptr
 #include "plssvm/backends/gpu_csvm.hpp"                   // plssvm::detail::gpu_csvm
+#include "plssvm/backends/HIP/detail/device_ptr.hip.hpp"  // plssvm::hip::detail::device_ptr
 #include "plssvm/constants.hpp"                           // plssvm::real_type
 #include "plssvm/detail/memory_size.hpp"                  // plssvm::detail::memory_size
 #include "plssvm/parameter.hpp"                           // plssvm::parameter, plssvm::detail::parameter
@@ -83,7 +83,8 @@ class csvm : public ::plssvm::detail::gpu_csvm<detail::device_ptr, int> {
      */
     template <typename... Args, PLSSVM_REQUIRES(::plssvm::detail::has_only_parameter_named_args_v<Args...>)>
     explicit csvm(Args &&...named_args) :
-        csvm{ plssvm::target_platform::automatic, std::forward<Args>(named_args)... } {}
+        csvm{ plssvm::target_platform::automatic, std::forward<Args>(named_args)... } { }
+
     /**
      * @brief Construct a new C-SVM using the HIP backend on the @p target platform and the optionally provided @p named_args.
      * @details Currently only tested with AMD GPUs.
@@ -133,10 +134,6 @@ class csvm : public ::plssvm::detail::gpu_csvm<detail::device_ptr, int> {
     void init(target_platform target);
 
     /**
-     * @copydoc plssvm::detail::gpu_csvm::device_synchronize
-     */
-    void device_synchronize(const queue_type &queue) const final;
-    /**
      * @copydoc plssvm::csvm::get_device_memory
      */
     [[nodiscard]] ::plssvm::detail::memory_size get_device_memory() const final;
@@ -159,7 +156,11 @@ class csvm : public ::plssvm::detail::gpu_csvm<detail::device_ptr, int> {
     /**
      * @copydoc plssvm::detail::gpu_csvm::run_blas_level_3_kernel_explicit
      */
-    void run_blas_level_3_kernel_explicit(std::size_t m, std::size_t n, std::size_t k, real_type alpha, const device_ptr_type &A_d, const device_ptr_type &B_d, const real_type beta, device_ptr_type &C_d) const final;
+    void run_blas_level_3_kernel_explicit(real_type alpha, const device_ptr_type &A_d, const device_ptr_type &B_d, real_type beta, device_ptr_type &C_d) const final;
+    /**
+     * @copydoc plssvm::detail::gpu_csvm::run_assemble_kernel_matrix_implicit_blas_level_3
+     */
+    void run_assemble_kernel_matrix_implicit_blas_level_3(real_type alpha, const device_ptr_type &A_d, const parameter &params, const device_ptr_type &q_red_d, real_type QA_cost, const device_ptr_type &B_d, device_ptr_type &C_d) const final;
 
     //***************************************************//
     //                   predict, score                  //
@@ -182,7 +183,7 @@ namespace detail {
  * @brief Sets the `value` to `true` since C-SVMs using the HIP backend are available.
  */
 template <>
-struct csvm_backend_exists<hip::csvm> : std::true_type {};
+struct csvm_backend_exists<hip::csvm> : std::true_type { };
 
 }  // namespace detail
 

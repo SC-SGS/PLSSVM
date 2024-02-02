@@ -10,10 +10,10 @@
 
 #include "plssvm/exceptions/exceptions.hpp"  // plssvm::{*_exception}
 
-#include "custom_test_macros.hpp"  // EXPECT_THROW_WHAT
-#include "naming.hpp"              // naming::test_parameter_to_name
-#include "types_to_test.hpp"       // util::{combine_test_parameters_gtest_t, cartesian_type_product_t, test_parameter_type_at_t}
-#include "utility.hpp"             // util::exception_type_name
+#include "tests/custom_test_macros.hpp"  // EXPECT_THROW_WHAT
+#include "tests/naming.hpp"              // naming::test_parameter_to_name
+#include "tests/types_to_test.hpp"       // util::{combine_test_parameters_gtest_t, cartesian_type_product_t, test_parameter_type_at_t}
+#include "tests/utility.hpp"             // util::exception_type_name
 
 #include "fmt/core.h"     // fmt::format
 #include "gmock/gmock.h"  // EXPECT_THAT, ::testing::{HasSubstr, ContainsRegex}
@@ -36,7 +36,7 @@ Exception dummy(const std::string &msg) {
 using exception_types_list = std::tuple<plssvm::exception, plssvm::invalid_parameter_exception, plssvm::file_reader_exception,
                                         plssvm::data_set_exception, plssvm::file_not_found_exception, plssvm::invalid_file_format_exception,
                                         plssvm::unsupported_backend_exception, plssvm::unsupported_kernel_type_exception, plssvm::gpu_device_ptr_exception,
-                                        plssvm::matrix_exception>;
+                                        plssvm::matrix_exception, plssvm::kernel_launch_resources, plssvm::classification_report_exception>;
 using exception_types_gtest = util::combine_test_parameters_gtest_t<util::cartesian_type_product_t<exception_types_list>>;
 // clang-format on
 
@@ -45,6 +45,7 @@ class Exceptions : public ::testing::Test {
   protected:
     using fixture_exception_type = util::test_parameter_type_at_t<0, T>;
 };
+
 TYPED_TEST_SUITE(Exceptions, exception_types_gtest, naming::test_parameter_to_name);
 
 // check whether throwing exceptions works as intended
@@ -64,7 +65,7 @@ TYPED_TEST(Exceptions, exception_source_location) {
 
     EXPECT_EQ(exc.loc().file_name(), std::string{ __FILE__ });
     EXPECT_THAT(exc.loc().function_name(), ::testing::HasSubstr("dummy"));
-    EXPECT_EQ(exc.loc().line(), std::uint_least32_t{ 31 });   // attention: hardcoded line!
+    EXPECT_GT(exc.loc().line(), std::uint_least32_t{ 0 });    // attention: some line must be given, hardcoded value not feasible
     EXPECT_EQ(exc.loc().column(), std::uint_least32_t{ 0 });  // attention: always 0!
 }
 
@@ -86,5 +87,5 @@ TYPED_TEST(Exceptions, exception_what_with_source_location) {
     EXPECT_EQ(what_lines[1], fmt::format("{} thrown:", util::exception_type_name<exception_type>()));
     EXPECT_EQ(what_lines[2], fmt::format("  in file      {}", __FILE__));
     EXPECT_THAT(std::string{ what_lines[3] }, ::testing::ContainsRegex("  in function  .*dummy.*"));
-    EXPECT_EQ(what_lines[4], std::string{ "  @ line       31" });  // attention: hardcoded line!
+    EXPECT_THAT(std::string{ what_lines[4] }, ::testing::StartsWith("  @ line       "));  // attention: some line must be given, hardcoded value not feasible
 }

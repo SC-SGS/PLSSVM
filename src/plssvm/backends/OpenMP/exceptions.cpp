@@ -16,6 +16,6 @@
 namespace plssvm::openmp {
 
 backend_exception::backend_exception(const std::string &msg, source_location loc) :
-    ::plssvm::exception{ msg, "openmp::backend_exception", loc } {}
+    ::plssvm::exception{ msg, "openmp::backend_exception", loc } { }
 
 }  // namespace plssvm::openmp

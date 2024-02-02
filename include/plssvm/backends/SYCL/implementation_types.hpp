@@ -58,6 +58,6 @@ std::istream &operator>>(std::istream &in, implementation_type &impl);
 }  // namespace plssvm::sycl
 
 template <>
-struct fmt::formatter<plssvm::sycl::implementation_type> : fmt::ostream_formatter {};
+struct fmt::formatter<plssvm::sycl::implementation_type> : fmt::ostream_formatter { };
 
 #endif  // PLSSVM_BACKENDS_SYCL_IMPLEMENTATION_TYPE_HPP_

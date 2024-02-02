@@ -27,6 +27,7 @@
 #include "plssvm/exceptions/exceptions.hpp"              // plssvm::data_set_exception
 #include "plssvm/file_format_types.hpp"                  // plssvm::file_format_type
 #include "plssvm/matrix.hpp"                             // plssvm::soa_matrix
+#include "plssvm/shape.hpp"                              // plssvm::shape
 #include "plssvm/verbosity_levels.hpp"                   // plssvm::verbosity_level
 
 #include "fmt/chrono.h"   // directly output std::chrono times via fmt
@@ -176,13 +177,11 @@ class data_set {
      * @tparam layout the layout type of the input matrix
      * @param[in] data_points the data points used in this data set
      * @throws plssvm::data_set_exception if the @p data_points vector is empty
-     * @throws plssvm::data_set_exception if the row-padding is not equal to plssvm::PADDING_SIZE
-     * @throws plssvm::data_set_exception if the column-padding is not equal to plssvm::PADDING_SIZE
      * @throws plssvm::data_set_exception if the data points in @p data_points have mismatching number of features
      * @throws plssvm::data_set_exception if any @p data_point has no features
      */
     template <layout_type layout>
-    explicit data_set(matrix<real_type, layout> data_points);
+    explicit data_set(const matrix<real_type, layout> &data_points);
     /**
      * @brief Create a new data set from the provided @p data_points and @p labels.
      * @note If the provided matrix isn't padded, adds the necessary padding entries automatically.
@@ -190,14 +189,12 @@ class data_set {
      * @param[in] data_points the data points used in this data set
      * @param[in] labels the labels used in this data set
      * @throws plssvm::data_set_exception if the @p data_points vector is empty
-     * @throws plssvm::data_set_exception if the row-padding is not equal to plssvm::PADDING_SIZE
-     * @throws plssvm::data_set_exception if the column-padding is not equal to plssvm::PADDING_SIZE
      * @throws plssvm::data_set_exception if the data points in @p data_points have mismatching number of features
      * @throws plssvm::data_set_exception if any @p data_point has no features
      * @throws plssvm::data_set_exception if the number of data points in @p data_points and number of @p labels mismatch
      */
     template <layout_type layout>
-    data_set(matrix<real_type, layout> data_points, std::vector<label_type> labels);
+    data_set(const matrix<real_type, layout> &data_points, std::vector<label_type> labels);
     /**
      * @brief Create a new data set from the the provided @p data_points and scale them using the provided @p scale_parameter.
      * @note If the provided matrix isn't padded, adds the necessary padding entries automatically.
@@ -205,14 +202,12 @@ class data_set {
      * @param[in] data_points the data points used in this data set
      * @param[in] scale_parameter the parameters used to scale the data set feature values to a given range
      * @throws plssvm::data_set_exception if the @p data_points vector is empty
-     * @throws plssvm::data_set_exception if the row-padding is not equal to plssvm::PADDING_SIZE
-     * @throws plssvm::data_set_exception if the column-padding is not equal to plssvm::PADDING_SIZE
      * @throws plssvm::data_set_exception if the data points in @p data_points have mismatching number of features
      * @throws plssvm::data_set_exception if any @p data_point has no features
      * @throws plssvm::data_set_exception all exceptions thrown by plssvm::data_set::scale
      */
     template <layout_type layout>
-    data_set(matrix<real_type, layout> data_points, scaling scale_parameter);
+    data_set(const matrix<real_type, layout> &data_points, scaling scale_parameter);
     /**
      * @brief Create a new data set from the the provided @p data_points and @p labels and scale the @p data_points using the provided @p scale_parameter.
      * @note If the provided matrix isn't padded, adds the necessary padding entries automatically.
@@ -221,15 +216,13 @@ class data_set {
      * @param[in] labels the labels used in this data set
      * @param[in] scale_parameter the parameters used to scale the data set feature values to a given range
      * @throws plssvm::data_set_exception if the @p data_points vector is empty
-     * @throws plssvm::data_set_exception if the row-padding is not equal to plssvm::PADDING_SIZE
-     * @throws plssvm::data_set_exception if the column-padding is not equal to plssvm::PADDING_SIZE
      * @throws plssvm::data_set_exception if the data points in @p data_points have mismatching number of features
      * @throws plssvm::data_set_exception if any @p data_point has no features
      * @throws plssvm::data_set_exception if the number of data points in @p data_points and number of @p labels mismatch
      * @throws plssvm::data_set_exception all exceptions thrown by plssvm::data_set::scale
      */
     template <layout_type layout>
-    data_set(matrix<real_type, layout> data_points, std::vector<label_type> labels, scaling scale_parameter);
+    data_set(const matrix<real_type, layout> &data_points, std::vector<label_type> labels, scaling scale_parameter);
 
     /**
      * @brief Save the data points and potential labels of this data set to the file @p filename using the file @p format type.
@@ -239,9 +232,9 @@ class data_set {
     void save(const std::string &filename, file_format_type format) const;
     /**
      * @brief Save the data points and potential labels of this data set to the file @p filename.
-     *        Automatically determines the plssvm::file_format_type based on the file extension.
+     * @details Automatically determines the plssvm::file_format_type based on the file extension.
+     *          If the file extension isn't `.arff`, saves the data as `.libsvm` file.
      * @param[in] filename the file to save the data points and labels to
-     * @throws plssvm::data_set_exception if the file extension isn't one of `libsvm` or `arff`
      */
     void save(const std::string &filename) const;
 
@@ -250,11 +243,13 @@ class data_set {
      * @return the data points (`[[nodiscard]]`)
      */
     [[nodiscard]] const soa_matrix<real_type> &data() const { return *data_ptr_; }
+
     /**
      * @brief Returns whether this data set contains labels or not.
      * @return `true` if this data set contains labels, `false` otherwise (`[[nodiscard]]`)
      */
     [[nodiscard]] bool has_labels() const noexcept { return labels_ptr_ != nullptr; }
+
     /**
      * @brief Returns an optional reference to the labels in this data set.
      * @details If the labels are present, they can be retrieved as `std::vector` using: `dataset.labels()->%get()`.
@@ -274,11 +269,13 @@ class data_set {
      * @return the number of data points (`[[nodiscard]]`)
      */
     [[nodiscard]] size_type num_data_points() const noexcept { return num_data_points_; }
+
     /**
      * @brief Returns the number of features in this data set.
      * @return the number of features (`[[nodiscard]]`)
      */
     [[nodiscard]] size_type num_features() const noexcept { return num_features_; }
+
     /**
      * @brief Returns the number of classes in this data set.
      * @details If the data set contains the labels `std::vector<int>{ -1, 1, 1, -1, -1, 1 }`, this function returns `2`.
@@ -293,6 +290,7 @@ class data_set {
      * @return `true` if this data set has been scaled, `false` otherwise (`[[nodiscard]]`)
      */
     [[nodiscard]] bool is_scaled() const noexcept { return scale_parameters_ != nullptr; }
+
     /**
      * @brief Returns the scaling factors as an optional reference used to scale the data points in this data set.
      * @details Can be used to scale another data set in the same way (e.g., a test data set).
@@ -306,7 +304,7 @@ class data_set {
      * @brief Default construct an empty data set.
      */
     data_set() :
-        data_ptr_{ std::make_shared<soa_matrix<real_type>>() } {}
+        data_ptr_{ std::make_shared<soa_matrix<real_type>>() } { }
 
     /**
      * @brief Create the mapping between the provided labels and the internally used indices.
@@ -369,6 +367,7 @@ class data_set<U>::scaling {
          * @brief Default construct new scaling factors.
          */
         factors() = default;
+
         /**
          * @brief Construct new scaling factors struct with the provided values.
          * @param[in] feature_index the feature index for which the bounds are valid
@@ -376,7 +375,9 @@ class data_set<U>::scaling {
          * @param[in] upper_bound the maximum value of the feature @p feature_index for all data points
          */
         factors(const size_type feature_index, const real_type lower_bound, const real_type upper_bound) :
-            feature{ feature_index }, lower{ lower_bound }, upper{ upper_bound } {}
+            feature{ feature_index },
+            lower{ lower_bound },
+            upper{ upper_bound } { }
 
         /// The feature index for which the scaling factors are valid.
         size_type feature{};
@@ -503,13 +504,12 @@ data_set<U>::data_set::label_mapper::label_mapper(const std::vector<label_type> 
     PLSSVM_ASSERT(std::set(classes.cbegin(), classes.cend()).size() == classes.size(),
                   "The provided labels for the label_mapper must not include duplicated ones!");
     // create mapping
-    std::size_t idx = 0;
-    for (auto it = classes.begin(), end = classes.end(); it != end; ++it) {
-        label_to_index_[*it] = idx;
-        index_to_label_[idx] = *it;
-        ++idx;
+    for (std::size_t idx = 0; idx < classes.size(); ++idx) {
+        label_to_index_[classes[idx]] = idx;
+        index_to_label_[idx] = classes[idx];
     }
 }
+
 /// @endcond
 
 template <typename U>
@@ -579,51 +579,49 @@ data_set<U>::data_set(const std::string &filename, file_format_type format, scal
     this->scale();
 }
 
+// clang-format off
 template <typename U>
 data_set<U>::data_set(const std::vector<std::vector<real_type>> &data_points) try :
-    data_set{ soa_matrix<real_type>{ data_points, plssvm::PADDING_SIZE, plssvm::PADDING_SIZE } } {}
+    data_set{ soa_matrix<real_type>{ data_points, shape{ PADDING_SIZE, PADDING_SIZE } } } {}
     catch (const matrix_exception &e) {
         throw data_set_exception{ e.what() };
     }
 
 template <typename U>
 data_set<U>::data_set(const std::vector<std::vector<real_type>> &data_points, std::vector<label_type> labels) try :
-    data_set{ soa_matrix<real_type>{ data_points, plssvm::PADDING_SIZE, plssvm::PADDING_SIZE }, std::move(labels) } {}
+    data_set{ soa_matrix<real_type>{ data_points, shape{ PADDING_SIZE, PADDING_SIZE } }, std::move(labels) } {}
     catch (const matrix_exception &e) {
         throw data_set_exception{ e.what() };
     }
 
 template <typename U>
 data_set<U>::data_set(const std::vector<std::vector<real_type>> &data_points, scaling scale_parameter) try :
-    data_set{ soa_matrix<real_type>{ data_points, plssvm::PADDING_SIZE, plssvm::PADDING_SIZE }, std::move(scale_parameter) } {}
+    data_set{ soa_matrix<real_type>{ data_points, shape{ PADDING_SIZE, PADDING_SIZE } }, std::move(scale_parameter) } {}
     catch (const matrix_exception &e) {
         throw data_set_exception{ e.what() };
     }
 
 template <typename U>
 data_set<U>::data_set(const std::vector<std::vector<real_type>> &data_points, std::vector<label_type> labels, scaling scale_parameter) try :
-    data_set{ soa_matrix<real_type>{ data_points, plssvm::PADDING_SIZE, plssvm::PADDING_SIZE }, std::move(labels), std::move(scale_parameter) } {}
+    data_set{ soa_matrix<real_type>{ data_points, shape{ PADDING_SIZE, PADDING_SIZE } }, std::move(labels), std::move(scale_parameter) } {}
     catch (const matrix_exception &e) {
         throw data_set_exception{ e.what() };
     }
 
+// clang-format on
+
 template <typename U>
 template <layout_type layout>
-data_set<U>::data_set(matrix<real_type, layout> data_points) :
-    num_data_points_{ data_points.num_rows() }, num_features_{ data_points.num_cols() }, data_ptr_{ std::make_shared<soa_matrix<real_type>>(data_points.is_padded() ? std::move(data_points) : matrix<real_type, layout>{ data_points, plssvm::PADDING_SIZE, plssvm::PADDING_SIZE }) } {
+data_set<U>::data_set(const matrix<real_type, layout> &data_points) :
+    num_data_points_{ data_points.num_rows() },
+    num_features_{ data_points.num_cols() },
+    data_ptr_{ std::make_shared<soa_matrix<real_type>>(data_points, shape{ PADDING_SIZE, PADDING_SIZE }) } {
     // the provided data points vector may not be empty
     if (data_ptr_->num_rows() == 0) {
         throw data_set_exception{ "Data vector is empty!" };
     }
     if (data_ptr_->num_cols() == 0) {
         throw data_set_exception{ "No features provided for the data points!" };
-    }
-    // the padding sizes must match the expected once! (otherwise the backend calculations would result in garbage)
-    if (data_ptr_->padding()[0] != plssvm::PADDING_SIZE) {
-        throw data_set_exception{ fmt::format("Expected {} as row-padding size, but got {}!", plssvm::PADDING_SIZE, data_ptr_->padding()[0]) };
-    }
-    if (data_ptr_->padding()[1] != plssvm::PADDING_SIZE) {
-        throw data_set_exception{ fmt::format("Expected {} as column-padding size, but got {}!", plssvm::PADDING_SIZE, data_ptr_->padding()[1]) };
     }
 
     detail::log(verbosity_level::full | verbosity_level::timing,
@@ -634,18 +632,14 @@ data_set<U>::data_set(matrix<real_type, layout> data_points) :
 
 template <typename U>
 template <layout_type layout>
-data_set<U>::data_set(matrix<real_type, layout> data_points, std::vector<label_type> labels) :
-    num_data_points_{ data_points.num_rows() }, num_features_{ data_points.num_cols() }, data_ptr_{ std::make_shared<soa_matrix<real_type>>(data_points.is_padded() ? std::move(data_points) : matrix<real_type, layout>{ data_points, plssvm::PADDING_SIZE, plssvm::PADDING_SIZE }) }, labels_ptr_{ std::make_shared<std::vector<label_type>>(std::move(labels)) } {
+data_set<U>::data_set(const matrix<real_type, layout> &data_points, std::vector<label_type> labels) :
+    num_data_points_{ data_points.num_rows() },
+    num_features_{ data_points.num_cols() },
+    data_ptr_{ std::make_shared<soa_matrix<real_type>>(data_points, shape{ PADDING_SIZE, PADDING_SIZE }) },
+    labels_ptr_{ std::make_shared<std::vector<label_type>>(std::move(labels)) } {
     // the number of labels must be equal to the number of data points!
     if (data_ptr_->num_rows() != labels_ptr_->size()) {
         throw data_set_exception{ fmt::format("Number of labels ({}) must match the number of data points ({})!", labels_ptr_->size(), data_ptr_->num_rows()) };
-    }
-    // the padding sizes must match the expected once! (otherwise the backend calculations would result in garbage)
-    if (data_ptr_->padding()[0] != plssvm::PADDING_SIZE) {
-        throw data_set_exception{ fmt::format("Expected {} as row-padding size, but got {}!", plssvm::PADDING_SIZE, data_ptr_->padding()[0]) };
-    }
-    if (data_ptr_->padding()[1] != plssvm::PADDING_SIZE) {
-        throw data_set_exception{ fmt::format("Expected {} as column-padding size, but got {}!", plssvm::PADDING_SIZE, data_ptr_->padding()[1]) };
     }
 
     // create mapping from labels
@@ -661,7 +655,7 @@ data_set<U>::data_set(matrix<real_type, layout> data_points, std::vector<label_t
 
 template <typename U>
 template <layout_type layout>
-data_set<U>::data_set(matrix<real_type, layout> data_points, scaling scale_parameter) :
+data_set<U>::data_set(const matrix<real_type, layout> &data_points, scaling scale_parameter) :
     data_set{ std::move(data_points) } {
     // initialize scaling
     scale_parameters_ = std::make_shared<scaling>(std::move(scale_parameter));
@@ -671,7 +665,7 @@ data_set<U>::data_set(matrix<real_type, layout> data_points, scaling scale_param
 
 template <typename U>
 template <layout_type layout>
-data_set<U>::data_set(matrix<real_type, layout> data_points, std::vector<label_type> labels, scaling scale_parameter) :
+data_set<U>::data_set(const matrix<real_type, layout> &data_points, std::vector<label_type> labels, scaling scale_parameter) :
     data_set{ std::move(data_points), std::move(labels) } {
     // initialize scaling
     scale_parameters_ = std::make_shared<scaling>(std::move(scale_parameter));
@@ -719,12 +713,10 @@ void data_set<U>::save(const std::string &filename, const file_format_type forma
 
 template <typename U>
 void data_set<U>::save(const std::string &filename) const {
-    if (detail::ends_with(filename, ".libsvm")) {
-        this->save(filename, file_format_type::libsvm);
-    } else if (detail::ends_with(filename, ".arff")) {
+    if (detail::ends_with(filename, ".arff")) {
         this->save(filename, file_format_type::arff);
     } else {
-        throw data_set_exception(fmt::format("Unrecognized file extension for file \"{}\" (must be one of: .libsvm or .arff)!", filename));
+        this->save(filename, file_format_type::libsvm);
     }
 }
 
@@ -764,9 +756,9 @@ void data_set<U>::create_mapping(const std::vector<label_type> &classes) {
     label_mapper mapper{ classes };
 
     // convert input labels to now mapped values
-    aos_matrix<real_type> tmp{ mapper.num_mappings(), labels_ptr_->size(), real_type{ -1.0 } };
+    aos_matrix<real_type> tmp{ shape{ mapper.num_mappings(), labels_ptr_->size() }, real_type{ -1.0 } };
 
-    #pragma omp parallel for collapse(2)
+#pragma omp parallel for collapse(2)
     for (typename std::vector<std::vector<real_type>>::size_type label = 0; label < tmp.num_rows(); ++label) {
         for (typename std::vector<real_type>::size_type i = 0; i < tmp.num_cols(); ++i) {
             if (label == mapper.get_mapped_index_by_label((*labels_ptr_)[i])) {
@@ -796,8 +788,8 @@ void data_set<U>::scale() {
             real_type min_value = std::numeric_limits<real_type>::max();
             real_type max_value = std::numeric_limits<real_type>::lowest();
 
-            // calculate min/max values of all data points at the specific feature
-            #pragma omp parallel for default(shared) firstprivate(feature) reduction(min : min_value) reduction(max : max_value)
+// calculate min/max values of all data points at the specific feature
+#pragma omp parallel for default(shared) firstprivate(feature) reduction(min : min_value) reduction(max : max_value)
             for (size_type data_point = 0; data_point < num_data_points_; ++data_point) {
                 min_value = std::min(min_value, (*data_ptr_)(data_point, feature));
                 max_value = std::max(max_value, (*data_ptr_)(data_point, feature));
@@ -828,8 +820,8 @@ void data_set<U>::scale() {
         }
     }
 
-    // scale values
-    #pragma omp parallel for default(shared) firstprivate(lower, upper)
+// scale values
+#pragma omp parallel for default(shared) firstprivate(lower, upper)
     for (size_type i = 0; i < scale_parameters_->scaling_factors.size(); ++i) {
         // extract feature-wise min and max values
         const typename scaling::factors factor = scale_parameters_->scaling_factors[i];

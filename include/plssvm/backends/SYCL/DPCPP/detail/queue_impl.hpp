@@ -32,7 +32,7 @@ struct queue::queue_impl {
      */
     template <typename... Args>
     explicit queue_impl(Args... args) :
-        sycl_queue{ std::forward<Args>(args)... } {}
+        sycl_queue{ std::forward<Args>(args)... } { }
 
     /// The wrapped SYCL queue.
     ::sycl::queue sycl_queue;

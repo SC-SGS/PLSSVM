@@ -35,7 +35,13 @@ class device_kernel_w_linear {
      * @param[in] num_sv the number of support vectors
      */
     device_kernel_w_linear(::sycl::handler &cgh, real_type *w_d, const real_type *alpha_d, const real_type *sv_d, const unsigned long long num_classes, const unsigned long long num_sv) :
-        data_cache_feature_{ ::sycl::range<2>{ THREAD_BLOCK_SIZE, INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE }, cgh }, data_cache_alpha_{ ::sycl::range<2>{ THREAD_BLOCK_SIZE, INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE }, cgh }, w_d_{ w_d }, alpha_d_{ alpha_d }, sv_d_{ sv_d }, num_classes_{ num_classes }, num_sv_{ num_sv } {}
+        data_cache_feature_{ ::sycl::range<2>{ THREAD_BLOCK_SIZE, INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE }, cgh },
+        data_cache_alpha_{ ::sycl::range<2>{ THREAD_BLOCK_SIZE, INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE }, cgh },
+        w_d_{ w_d },
+        alpha_d_{ alpha_d },
+        sv_d_{ sv_d },
+        num_classes_{ num_classes },
+        num_sv_{ num_sv } { }
 
     /**
      * @brief Function call operator overload performing the actual calculation.
@@ -113,7 +119,15 @@ class device_kernel_predict_linear {
      * @param[in] num_features the number of features per data point
      */
     device_kernel_predict_linear(::sycl::handler &cgh, real_type *out_d, const real_type *w_d, const real_type *rho_d, const real_type *predict_points_d, const unsigned long long num_classes, const unsigned long long num_predict_points, const unsigned long long num_features) :
-        data_cache_pp_{ ::sycl::range<2>{ FEATURE_BLOCK_SIZE, INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE }, cgh }, data_cache_w_{ ::sycl::range<2>{ FEATURE_BLOCK_SIZE, INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE }, cgh }, out_d_{ out_d }, w_d_{ w_d }, rho_d_{ rho_d }, predict_points_d_{ predict_points_d }, num_classes_{ num_classes }, num_predict_points_{ num_predict_points }, num_features_{ num_features } {}
+        data_cache_pp_{ ::sycl::range<2>{ FEATURE_BLOCK_SIZE, INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE }, cgh },
+        data_cache_w_{ ::sycl::range<2>{ FEATURE_BLOCK_SIZE, INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE }, cgh },
+        out_d_{ out_d },
+        w_d_{ w_d },
+        rho_d_{ rho_d },
+        predict_points_d_{ predict_points_d },
+        num_classes_{ num_classes },
+        num_predict_points_{ num_predict_points },
+        num_features_{ num_features } { }
 
     /**
      * @brief Function call operator overload performing the actual calculation.
@@ -200,7 +214,20 @@ class device_kernel_predict_polynomial {
      * @param[in] coef0 the parameter in the polynomial kernel function
      */
     device_kernel_predict_polynomial(::sycl::handler &cgh, real_type *out_d, const real_type *alpha_d, const real_type *rho_d, const real_type *sv_d, const real_type *predict_points_d, const unsigned long long num_classes, const unsigned long long num_sv, const unsigned long long num_predict_points, const unsigned long long num_features, const int degree, const real_type gamma, const real_type coef0) :
-        data_cache_pp_{ ::sycl::range<2>{ FEATURE_BLOCK_SIZE, INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE }, cgh }, data_cache_sv_{ ::sycl::range<2>{ FEATURE_BLOCK_SIZE, INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE }, cgh }, out_d_{ out_d }, alpha_d_{ alpha_d }, rho_d_{ rho_d }, sv_d_{ sv_d }, predict_points_d_{ predict_points_d }, num_classes_{ num_classes }, num_sv_{ num_sv }, num_predict_points_{ num_predict_points }, num_features_{ num_features }, degree_{ degree }, gamma_{ gamma }, coef0_{ coef0 } {}
+        data_cache_pp_{ ::sycl::range<2>{ FEATURE_BLOCK_SIZE, INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE }, cgh },
+        data_cache_sv_{ ::sycl::range<2>{ FEATURE_BLOCK_SIZE, INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE }, cgh },
+        out_d_{ out_d },
+        alpha_d_{ alpha_d },
+        rho_d_{ rho_d },
+        sv_d_{ sv_d },
+        predict_points_d_{ predict_points_d },
+        num_classes_{ num_classes },
+        num_sv_{ num_sv },
+        num_predict_points_{ num_predict_points },
+        num_features_{ num_features },
+        degree_{ degree },
+        gamma_{ gamma },
+        coef0_{ coef0 } { }
 
     /**
      * @brief Function call operator overload performing the actual calculation.
@@ -299,7 +326,18 @@ class device_kernel_predict_rbf {
      * @param[in] gamma the parameter in the rbf kernel function
      */
     device_kernel_predict_rbf(::sycl::handler &cgh, real_type *out_d, const real_type *alpha_d, const real_type *rho_d, const real_type *sv_d, const real_type *predict_points_d, const unsigned long long num_classes, const unsigned long long num_sv, const unsigned long long num_predict_points, const unsigned long long num_features, const real_type gamma) :
-        data_cache_pp_{ ::sycl::range<2>{ FEATURE_BLOCK_SIZE, INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE }, cgh }, data_cache_sv_{ ::sycl::range<2>{ FEATURE_BLOCK_SIZE, INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE }, cgh }, out_d_{ out_d }, alpha_d_{ alpha_d }, rho_d_{ rho_d }, sv_d_{ sv_d }, predict_points_d_{ predict_points_d }, num_classes_{ num_classes }, num_sv_{ num_sv }, num_predict_points_{ num_predict_points }, num_features_{ num_features }, gamma_{ gamma } {}
+        data_cache_pp_{ ::sycl::range<2>{ FEATURE_BLOCK_SIZE, INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE }, cgh },
+        data_cache_sv_{ ::sycl::range<2>{ FEATURE_BLOCK_SIZE, INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE }, cgh },
+        out_d_{ out_d },
+        alpha_d_{ alpha_d },
+        rho_d_{ rho_d },
+        sv_d_{ sv_d },
+        predict_points_d_{ predict_points_d },
+        num_classes_{ num_classes },
+        num_sv_{ num_sv },
+        num_predict_points_{ num_predict_points },
+        num_features_{ num_features },
+        gamma_{ gamma } { }
 
     /**
      * @brief Function call operator overload performing the actual calculation.

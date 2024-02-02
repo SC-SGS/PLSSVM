@@ -22,7 +22,7 @@
  * @param[in] beta the scalar beta value
  * @param[in,out] C the matrix @p C, also used as result matrix
  */
-__kernel void device_kernel_gemm(const ulong m, const ulong n, const ulong k, const real_type alpha, __global const real_type *A, __global const real_type *B, const real_type beta, __global real_type *C) {
+__kernel void device_kernel_gemm(const ulong m, const ulong n, const ulong k, const real_type alpha, const __global real_type *A, const __global real_type *B, const real_type beta, __global real_type *C) {
     // compute: C = alpha * A * B + beta * C with A in m x k, B in n x k, and C in n x m, alpha, beta as scalar
     const ulong i = get_global_id(0) * INTERNAL_BLOCK_SIZE;  // # rhs
     const ulong i_linear = get_group_id(0) * get_local_size(0) * INTERNAL_BLOCK_SIZE + get_local_id(0);
@@ -80,7 +80,7 @@ __kernel void device_kernel_gemm(const ulong m, const ulong n, const ulong k, co
  * @param[in] beta the scalar beta value
  * @param[in,out] C the matrix @p C, also used as result matrix
  */
-__kernel void device_kernel_symm(const ulong m, const ulong n, const ulong k, const real_type alpha, __global const real_type *A, __global const real_type *B, const real_type beta, __global real_type *C) {
+__kernel void device_kernel_symm(const ulong m, const ulong n, const ulong k, const real_type alpha, const __global real_type *A, const __global real_type *B, const real_type beta, __global real_type *C) {
     // compute: C = alpha * A * B + beta * C with A in m x k, B in n x k, and C in n x m, alpha, beta as scalar
     const ulong i = get_global_id(0) * INTERNAL_BLOCK_SIZE;  // # rhs
     const ulong i_linear = get_group_id(0) * get_local_size(0) * INTERNAL_BLOCK_SIZE + get_local_id(0);

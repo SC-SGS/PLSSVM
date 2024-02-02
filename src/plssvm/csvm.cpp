@@ -11,13 +11,15 @@
 #include "plssvm/constants.hpp"                   // plssvm::real_type, plssvm::PADDING_SIZE
 #include "plssvm/detail/assert.hpp"               // PLSSVM_ASSERT
 #include "plssvm/detail/logging.hpp"              // plssvm::detail::log
+#include "plssvm/detail/move_only_any.hpp"        // plssvm::detail::move_only_any
 #include "plssvm/detail/operators.hpp"            // plssvm operator overloads for vectors
 #include "plssvm/detail/performance_tracker.hpp"  // PLSSVM_DETAIL_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY, plssvm::detail::tracking_entry
-#include "plssvm/detail/simple_any.hpp"           // plssvm::detail::simple_any
 #include "plssvm/exceptions/exceptions.hpp"       // plssvm::invalid_parameter_exception
-#include "plssvm/kernel_function_types.hpp"       // plssvm::kernel_function_type, plssvm::kernel_function
-#include "plssvm/matrix.hpp"                      // plssvm::aos_matrix
+#include "plssvm/kernel_function_types.hpp"       // plssvm::kernel_function_type
+#include "plssvm/kernel_functions.hpp"            // plssvm::kernel_function
+#include "plssvm/matrix.hpp"                      // plssvm::soa_matrix
 #include "plssvm/parameter.hpp"                   // plssvm::parameter
+#include "plssvm/shape.hpp"                       // plssvm::shape
 #include "plssvm/solver_types.hpp"                // plssvm::solver_type
 #include "plssvm/verbosity_levels.hpp"            // plssvm::verbosity_level
 
@@ -49,7 +51,7 @@ void csvm::sanity_check_parameter() const {
     // cost: all allowed
 }
 
-std::pair<soa_matrix<real_type>, unsigned long long> csvm::conjugate_gradients(const detail::simple_any &A, const soa_matrix<real_type> &B, const real_type eps, const unsigned long long max_cg_iter, const solver_type cg_solver) const {
+std::pair<soa_matrix<real_type>, unsigned long long> csvm::conjugate_gradients(const detail::move_only_any &A, const soa_matrix<real_type> &B, const real_type eps, const unsigned long long max_cg_iter, const solver_type cg_solver) const {
     using namespace plssvm::operators;
 
     PLSSVM_ASSERT(!B.empty(), "The right-hand sides may not be empty!");
@@ -67,17 +69,17 @@ std::pair<soa_matrix<real_type>, unsigned long long> csvm::conjugate_gradients(c
     // perform Conjugate Gradients (CG) algorithm
     //
 
-    soa_matrix<real_type> X{ num_rhs, num_rows, real_type{ 1.0 }, PADDING_SIZE, PADDING_SIZE };
+    soa_matrix<real_type> X{ shape{ num_rhs, num_rows }, real_type{ 1.0 }, shape{ PADDING_SIZE, PADDING_SIZE } };
 
     // R = B - A * X
-    soa_matrix<real_type> R{ B, PADDING_SIZE, PADDING_SIZE };
+    soa_matrix<real_type> R{ B, shape{ PADDING_SIZE, PADDING_SIZE } };
     total_blas_level_3_time += this->run_blas_level_3(cg_solver, real_type{ -1.0 }, A, X, real_type{ 1.0 }, R);
 
     // delta = R.T * R
     std::vector<real_type> delta = rowwise_dot(R, R);
     const std::vector<real_type> delta0(delta);
 
-    soa_matrix<real_type> D{ R, PADDING_SIZE, PADDING_SIZE };
+    soa_matrix<real_type> D{ R, shape{ PADDING_SIZE, PADDING_SIZE } };
 
     // get the index of the rhs that has the largest residual difference wrt to its target residual
     const auto rhs_idx_max_residual_difference = [&]() {
@@ -111,7 +113,7 @@ std::pair<soa_matrix<real_type>, unsigned long long> csvm::conjugate_gradients(c
         const std::chrono::steady_clock::time_point iteration_start_time = std::chrono::steady_clock::now();
 
         // Q = A * D
-        soa_matrix<real_type> Q{ D.num_rows(), D.num_cols(), PADDING_SIZE, PADDING_SIZE };
+        soa_matrix<real_type> Q{ shape{ D.num_rows(), D.num_cols() }, shape{ PADDING_SIZE, PADDING_SIZE } };
         total_blas_level_3_time += this->run_blas_level_3(cg_solver, real_type{ 1.0 }, A, D, real_type{ 0.0 }, Q);
 
         // alpha = delta_new / (D^T * Q))
@@ -123,7 +125,7 @@ std::pair<soa_matrix<real_type>, unsigned long long> csvm::conjugate_gradients(c
         if (iter % 50 == 49) {
             // explicitly recalculate residual to remove accumulating floating point errors
             // R = B - A * X
-            R = soa_matrix<real_type>{ B, PADDING_SIZE, PADDING_SIZE };
+            R = soa_matrix<real_type>{ B, shape{ PADDING_SIZE, PADDING_SIZE } };
             total_blas_level_3_time += this->run_blas_level_3(cg_solver, real_type{ -1.0 }, A, X, real_type{ 1.0 }, R);
         } else {
             // R = R - alpha * Q
@@ -188,19 +190,19 @@ std::pair<std::vector<real_type>, real_type> csvm::perform_dimensional_reduction
     std::vector<real_type> q_red(num_rows_reduced);
     switch (params.kernel_type.value()) {
         case kernel_function_type::linear:
-            #pragma omp parallel for default(none) shared(q_red, A) firstprivate(num_rows_reduced)
+#pragma omp parallel for default(none) shared(q_red, A) firstprivate(num_rows_reduced)
             for (std::size_t i = 0; i < num_rows_reduced; ++i) {
                 q_red[i] = kernel_function<kernel_function_type::linear>(A, i, A, num_rows_reduced);
             }
             break;
         case kernel_function_type::polynomial:
-            #pragma omp parallel for default(none) shared(q_red, A, params) firstprivate(num_rows_reduced)
+#pragma omp parallel for default(none) shared(q_red, A, params) firstprivate(num_rows_reduced)
             for (std::size_t i = 0; i < num_rows_reduced; ++i) {
                 q_red[i] = kernel_function<kernel_function_type::polynomial>(A, i, A, num_rows_reduced, params.degree.value(), params.gamma.value(), params.coef0.value());
             }
             break;
         case kernel_function_type::rbf:
-            #pragma omp parallel for default(none) shared(q_red, A, params) firstprivate(num_rows_reduced)
+#pragma omp parallel for default(none) shared(q_red, A, params) firstprivate(num_rows_reduced)
             for (std::size_t i = 0; i < num_rows_reduced; ++i) {
                 q_red[i] = kernel_function<kernel_function_type::rbf>(A, i, A, num_rows_reduced, params.gamma.value());
             }
@@ -215,7 +217,7 @@ std::pair<std::vector<real_type>, real_type> csvm::perform_dimensional_reduction
     return std::make_pair(std::move(q_red), QA_cost);
 }
 
-std::chrono::duration<long, std::milli> csvm::run_blas_level_3(const solver_type cg_solver, const real_type alpha, const detail::simple_any &A, const soa_matrix<real_type> &B, const real_type beta, soa_matrix<real_type> &C) const {
+std::chrono::duration<long, std::milli> csvm::run_blas_level_3(const solver_type cg_solver, const real_type alpha, const detail::move_only_any &A, const soa_matrix<real_type> &B, const real_type beta, soa_matrix<real_type> &C) const {
     PLSSVM_ASSERT(!B.empty(), "The B matrix must not be empty!");
     PLSSVM_ASSERT(!C.empty(), "The C matrix must not be empty!");
 

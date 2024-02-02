@@ -6,7 +6,7 @@
  * @license This file is part of the PLSSVM project which is released under the MIT license.
  *          See the LICENSE.md file in the project root for full license information.
  *
- * @brief Functions for explicitly assemblying the kernel matrix using the SYCL backend.
+ * @brief Functions for explicitly assembling the kernel matrix using the SYCL backend.
  */
 
 #ifndef PLSSVM_BACKENDS_SYCL_CG_EXPLICIT_KERNEL_MATRIX_ASSEMBLY_HPP_
@@ -36,8 +36,15 @@ class device_kernel_assembly_linear {
      * @param[in] cost the cost factor the diagonal is scaled with
      */
     device_kernel_assembly_linear(::sycl::handler &cgh, real_type *ret, const real_type *data_d, const unsigned long long num_rows, const unsigned long long num_features, const real_type *q, const real_type QA_cost, const real_type cost) :
-        data_cache_i_{ ::sycl::range<2>{ FEATURE_BLOCK_SIZE, INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE }, cgh }, data_cache_j_{ ::sycl::range<2>{ FEATURE_BLOCK_SIZE, INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE }, cgh },
-        ret_{ ret }, data_d_{ data_d }, num_rows_{ num_rows }, num_features_{ num_features }, q_{ q }, QA_cost_{ QA_cost }, cost_{ cost } {}
+        data_cache_i_{ ::sycl::range<2>{ FEATURE_BLOCK_SIZE, INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE }, cgh },
+        data_cache_j_{ ::sycl::range<2>{ FEATURE_BLOCK_SIZE, INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE }, cgh },
+        ret_{ ret },
+        data_d_{ data_d },
+        num_rows_{ num_rows },
+        num_features_{ num_features },
+        q_{ q },
+        QA_cost_{ QA_cost },
+        cost_{ cost } { }
 
     /**
      * @brief Function call operator overload performing the actual calculation.
@@ -136,8 +143,18 @@ class device_kernel_assembly_polynomial {
      * @param[in] coef0 parameter used in the polynomial kernel function
      */
     device_kernel_assembly_polynomial(::sycl::handler &cgh, real_type *ret, const real_type *data_d, const unsigned long long num_rows, const unsigned long long num_features, const real_type *q, const real_type QA_cost, const real_type cost, const int degree, const real_type gamma, const real_type coef0) :
-        data_cache_i_{ ::sycl::range<2>{ FEATURE_BLOCK_SIZE, INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE }, cgh }, data_cache_j_{ ::sycl::range<2>{ FEATURE_BLOCK_SIZE, INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE }, cgh },
-        ret_{ ret }, data_d_{ data_d }, num_rows_{ num_rows }, num_features_{ num_features }, q_{ q }, QA_cost_{ QA_cost }, cost_{ cost }, degree_{ degree }, gamma_{ gamma }, coef0_{ coef0 } {}
+        data_cache_i_{ ::sycl::range<2>{ FEATURE_BLOCK_SIZE, INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE }, cgh },
+        data_cache_j_{ ::sycl::range<2>{ FEATURE_BLOCK_SIZE, INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE }, cgh },
+        ret_{ ret },
+        data_d_{ data_d },
+        num_rows_{ num_rows },
+        num_features_{ num_features },
+        q_{ q },
+        QA_cost_{ QA_cost },
+        cost_{ cost },
+        degree_{ degree },
+        gamma_{ gamma },
+        coef0_{ coef0 } { }
 
     /**
      * @brief Function call operator overload performing the actual calculation.
@@ -237,8 +254,16 @@ class device_kernel_assembly_rbf {
      * @param[in] gamma parameter used in the rbf kernel function
      */
     device_kernel_assembly_rbf(::sycl::handler &cgh, real_type *ret, const real_type *data_d, const unsigned long long num_rows, const unsigned long long num_features, const real_type *q, const real_type QA_cost, const real_type cost, const real_type gamma) :
-        data_cache_i_{ ::sycl::range<2>{ FEATURE_BLOCK_SIZE, INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE }, cgh }, data_cache_j_{ ::sycl::range<2>{ FEATURE_BLOCK_SIZE, INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE }, cgh },
-        ret_{ ret }, data_d_{ data_d }, num_rows_{ num_rows }, num_features_{ num_features }, q_{ q }, QA_cost_{ QA_cost }, cost_{ cost }, gamma_{ gamma } {}
+        data_cache_i_{ ::sycl::range<2>{ FEATURE_BLOCK_SIZE, INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE }, cgh },
+        data_cache_j_{ ::sycl::range<2>{ FEATURE_BLOCK_SIZE, INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE }, cgh },
+        ret_{ ret },
+        data_d_{ data_d },
+        num_rows_{ num_rows },
+        num_features_{ num_features },
+        q_{ q },
+        QA_cost_{ QA_cost },
+        cost_{ cost },
+        gamma_{ gamma } { }
 
     /**
      * @brief Function call operator overload performing the actual calculation.

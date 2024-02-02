@@ -21,12 +21,11 @@
  * @param[in] QA_cost the scalar used in the dimensional reduction
  * @param[in] cost the cost factor the diagonal is scaled with
  */
-__kernel void device_kernel_assembly_linear(__global real_type *ret, __global const real_type *data_d, const ulong num_rows, const ulong num_features, __global const real_type *q, const real_type QA_cost, const real_type cost) {
+__kernel void device_kernel_assembly_linear(__global real_type *ret, const __global real_type *data_d, const ulong num_rows, const ulong num_features, const __global real_type *q, const real_type QA_cost, const real_type cost) {
     const ulong i = get_global_id(0) * INTERNAL_BLOCK_SIZE;
     const ulong i_linear = get_group_id(0) * get_local_size(0) * INTERNAL_BLOCK_SIZE + get_local_id(0);
     const ulong j = get_global_id(1) * INTERNAL_BLOCK_SIZE;
     const ulong j_cached_idx_linear = get_group_id(1) * get_local_size(1) * INTERNAL_BLOCK_SIZE + get_local_id(0);
-
 
     __local real_type data_cache_i[FEATURE_BLOCK_SIZE][INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE];
     __local real_type data_cache_j[FEATURE_BLOCK_SIZE][INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE];
@@ -51,7 +50,7 @@ __kernel void device_kernel_assembly_linear(__global real_type *ret, __global co
             for (uint block_dim = 0; block_dim < FEATURE_BLOCK_SIZE; ++block_dim) {
                 for (uint internal_i = 0; internal_i < INTERNAL_BLOCK_SIZE; ++internal_i) {
                     for (uint internal_j = 0; internal_j < INTERNAL_BLOCK_SIZE; ++internal_j) {
-                        temp[internal_i][internal_j] +=  data_cache_i[block_dim][get_local_id(0) * INTERNAL_BLOCK_SIZE + internal_i] * data_cache_j[block_dim][get_local_id(1) * INTERNAL_BLOCK_SIZE + internal_j];
+                        temp[internal_i][internal_j] += data_cache_i[block_dim][get_local_id(0) * INTERNAL_BLOCK_SIZE + internal_i] * data_cache_j[block_dim][get_local_id(1) * INTERNAL_BLOCK_SIZE + internal_j];
                     }
                 }
             }
@@ -95,12 +94,11 @@ __kernel void device_kernel_assembly_linear(__global real_type *ret, __global co
  * @param[in] gamma parameter used in the polynomial kernel function
  * @param[in] coef0 parameter used in the polynomial kernel function
  */
-__kernel void device_kernel_assembly_polynomial(__global real_type *ret, __global const real_type *data_d, const ulong num_rows, const ulong num_features, __global const real_type *q, const real_type QA_cost, const real_type cost, const int degree, const real_type gamma, const real_type coef0) {
+__kernel void device_kernel_assembly_polynomial(__global real_type *ret, const __global real_type *data_d, const ulong num_rows, const ulong num_features, const __global real_type *q, const real_type QA_cost, const real_type cost, const int degree, const real_type gamma, const real_type coef0) {
     const ulong i = get_global_id(0) * INTERNAL_BLOCK_SIZE;
     const ulong i_linear = get_group_id(0) * get_local_size(0) * INTERNAL_BLOCK_SIZE + get_local_id(0);
     const ulong j = get_global_id(1) * INTERNAL_BLOCK_SIZE;
     const ulong j_cached_idx_linear = get_group_id(1) * get_local_size(1) * INTERNAL_BLOCK_SIZE + get_local_id(0);
-
 
     __local real_type data_cache_i[FEATURE_BLOCK_SIZE][INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE];
     __local real_type data_cache_j[FEATURE_BLOCK_SIZE][INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE];
@@ -125,7 +123,7 @@ __kernel void device_kernel_assembly_polynomial(__global real_type *ret, __globa
             for (uint block_dim = 0; block_dim < FEATURE_BLOCK_SIZE; ++block_dim) {
                 for (uint internal_i = 0; internal_i < INTERNAL_BLOCK_SIZE; ++internal_i) {
                     for (uint internal_j = 0; internal_j < INTERNAL_BLOCK_SIZE; ++internal_j) {
-                        temp[internal_i][internal_j] +=  data_cache_i[block_dim][get_local_id(0) * INTERNAL_BLOCK_SIZE + internal_i] * data_cache_j[block_dim][get_local_id(1) * INTERNAL_BLOCK_SIZE + internal_j];
+                        temp[internal_i][internal_j] += data_cache_i[block_dim][get_local_id(0) * INTERNAL_BLOCK_SIZE + internal_i] * data_cache_j[block_dim][get_local_id(1) * INTERNAL_BLOCK_SIZE + internal_j];
                     }
                 }
             }
@@ -167,7 +165,7 @@ __kernel void device_kernel_assembly_polynomial(__global real_type *ret, __globa
  * @param[in] cost the cost factor the diagonal is scaled with
  * @param[in] gamma parameter used in the rbf kernel function
  */
-__kernel void device_kernel_assembly_rbf(__global real_type *ret, __global const real_type *data_d, const ulong num_rows, const ulong num_features, __global const real_type *q, const real_type QA_cost, const real_type cost, const real_type gamma) {
+__kernel void device_kernel_assembly_rbf(__global real_type *ret, const __global real_type *data_d, const ulong num_rows, const ulong num_features, const __global real_type *q, const real_type QA_cost, const real_type cost, const real_type gamma) {
     const ulong i = get_global_id(0) * INTERNAL_BLOCK_SIZE;
     const ulong i_linear = get_group_id(0) * get_local_size(0) * INTERNAL_BLOCK_SIZE + get_local_id(0);
     const ulong j = get_global_id(1) * INTERNAL_BLOCK_SIZE;

@@ -15,9 +15,9 @@ endif ()
 # try to automatically find the header files in the standard directories
 if (NOT EXISTS "${igor_INCLUDE_DIR}")
     find_path(igor_INCLUDE_DIR
-            NAMES igor.hpp
-            DOC "igor header-only library header files"
-            )
+              NAMES igor.hpp
+              DOC "igor header-only library header files"
+    )
 endif ()
 
 # allow the user to specify the include directory in the CMake call (if provided, used instead of the environment variable)

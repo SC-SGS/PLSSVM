@@ -13,7 +13,7 @@
 #include "plssvm/backends/OpenCL/detail/context.hpp"        // plssvm::opencl::detail::context
 #include "plssvm/backends/OpenCL/detail/device_ptr.hpp"     // plssvm::opencl::detail::device_ptr
 #include "plssvm/backends/OpenCL/detail/kernel.hpp"         // plssvm::opencl::detail::{compute_kernel_name, kernel}
-#include "plssvm/backends/OpenCL/detail/utility.hpp"        // plssvm::opencl::detail::{get_contexts, create_command_queues, run_kernel, kernel_type_to_function_name, device_synchronize}
+#include "plssvm/backends/OpenCL/detail/utility.hpp"        // PLSSVM_OPENCL_ERROR_CHECK, plssvm::opencl::detail::{get_contexts, create_command_queues, run_kernel, kernel_type_to_function_name, device_synchronize, get_opencl_target_version, get_driver_version}
 #include "plssvm/backends/OpenCL/exceptions.hpp"            // plssvm::opencl::backend_exception
 #include "plssvm/constants.hpp"                             // plssvm::{real_type, THREAD_BLOCK_SIZE, INTERNAL_BLOCK_SIZE, PADDING_SIZE}
 #include "plssvm/detail/assert.hpp"                         // PLSSVM_ASSERT
@@ -23,6 +23,7 @@
 #include "plssvm/exceptions/exceptions.hpp"                 // plssvm::exception
 #include "plssvm/kernel_function_types.hpp"                 // plssvm::kernel_function_type
 #include "plssvm/parameter.hpp"                             // plssvm::parameter, plssvm::detail::parameter
+#include "plssvm/shape.hpp"                                 // plssvm::shape
 #include "plssvm/target_platforms.hpp"                      // plssvm::target_platform
 #include "plssvm/verbosity_levels.hpp"                      // plssvm::verbosity_level
 
@@ -43,7 +44,7 @@
 namespace plssvm::opencl {
 
 csvm::csvm(parameter params) :
-    csvm{ plssvm::target_platform::automatic, params } {}
+    csvm{ plssvm::target_platform::automatic, params } { }
 
 csvm::csvm(target_platform target, parameter params) :
     base_type{ params } {
@@ -107,7 +108,9 @@ void csvm::init(const target_platform target) {
 
     // print OpenCL info
     plssvm::detail::log(verbosity_level::full,
-                        "\nUsing OpenCL as backend.\n");
+                        "\nUsing OpenCL (target version: {}) as backend.\n",
+                        plssvm::detail::tracking_entry{ "dependencies", "opencl_target_version", detail::get_opencl_target_version() });
+    PLSSVM_DETAIL_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking_entry{ "dependencies", "opencl_library", std::string{ PLSSVM_OPENCL_LIBRARY } }));
     if (target == target_platform::automatic) {
         plssvm::detail::log(verbosity_level::full,
                             "Using {} as automatic target platform.\n",
@@ -150,16 +153,22 @@ void csvm::init(const target_platform target) {
                             device,
                             device_name);
         device_names.emplace_back(device_name);
+
+        // get the target platform's driver version
+        const std::string driver_version = detail::get_driver_version(devices_[device]);
+        PLSSVM_DETAIL_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking_entry{ "dependencies", "device_driver_version", driver_version }));
     }
     PLSSVM_DETAIL_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking_entry{ "backend", "device", device_names }));
     plssvm::detail::log(verbosity_level::full | verbosity_level::timing,
                         "\n");
 
     // sanity checks for the number of the OpenCL kernels
-    PLSSVM_ASSERT(std::all_of(devices_.begin(), devices_.end(), [](const queue_type &queue) { return queue.kernels.size() == 6; }), "Every command queue must have exactly four associated kernels!");
+    PLSSVM_ASSERT(std::all_of(devices_.begin(), devices_.end(), [](const queue_type &queue) { return queue.kernels.size() == 7; }), "Every command queue must have exactly seven associated kernels!");
 
     PLSSVM_ASSERT(std::all_of(devices_.begin(), devices_.end(), [](const queue_type &queue) { return ::plssvm::detail::contains(queue.kernels, detail::compute_kernel_name::assemble_kernel_matrix_explicit); }),
                   "The explicit kernel matrix assembly device kernel is missing!");
+    PLSSVM_ASSERT(std::all_of(devices_.begin(), devices_.end(), [](const queue_type &queue) { return ::plssvm::detail::contains(queue.kernels, detail::compute_kernel_name::assemble_kernel_matrix_implicit_blas); }),
+                  "The implicit kernel matrix assembly device kernel is missing!");
 #if defined(PLSSVM_USE_GEMM)
     PLSSVM_ASSERT(std::all_of(devices_.begin(), devices_.end(), [](const queue_type &queue) { return ::plssvm::detail::contains(queue.kernels, detail::compute_kernel_name::gemm_kernel_explicit); }),
                   "The explicit BLAS GEMM device kernel is missing!");
@@ -177,39 +186,35 @@ void csvm::init(const target_platform target) {
                   "The predict_kernel_rbf device kernel is missing!");
 }
 
-void csvm::device_synchronize(const queue_type &queue) const {
-    detail::device_synchronize(queue);
-}
-
 ::plssvm::detail::memory_size csvm::get_device_memory() const {
     // get device
     cl_device_id device_id{};
-    PLSSVM_OPENCL_ERROR_CHECK(clGetCommandQueueInfo(devices_[0], CL_QUEUE_DEVICE, sizeof(cl_device_id), &device_id, nullptr), "error obtaining device");
+    PLSSVM_OPENCL_ERROR_CHECK(clGetCommandQueueInfo(devices_[0], CL_QUEUE_DEVICE, sizeof(cl_device_id), &device_id, nullptr), "error obtaining device")
 
     // get device global memory size
     cl_ulong total_device_memory{};
-    PLSSVM_OPENCL_ERROR_CHECK(clGetDeviceInfo(device_id, CL_DEVICE_GLOBAL_MEM_SIZE, sizeof(cl_ulong), &total_device_memory, nullptr), "error obtaining device's global memory size");
+    PLSSVM_OPENCL_ERROR_CHECK(clGetDeviceInfo(device_id, CL_DEVICE_GLOBAL_MEM_SIZE, sizeof(cl_ulong), &total_device_memory, nullptr), "error obtaining device's global memory size")
     return ::plssvm::detail::memory_size{ static_cast<unsigned long long>(total_device_memory) };
 }
 
 ::plssvm::detail::memory_size csvm::get_max_mem_alloc_size() const {
     // get device
     cl_device_id device_id{};
-    PLSSVM_OPENCL_ERROR_CHECK(clGetCommandQueueInfo(devices_[0], CL_QUEUE_DEVICE, sizeof(cl_device_id), &device_id, nullptr), "error obtaining device");
+    PLSSVM_OPENCL_ERROR_CHECK(clGetCommandQueueInfo(devices_[0], CL_QUEUE_DEVICE, sizeof(cl_device_id), &device_id, nullptr), "error obtaining device")
 
     // get maximum allocation size
     cl_ulong max_alloc_size{};
-    PLSSVM_OPENCL_ERROR_CHECK(clGetDeviceInfo(device_id, CL_DEVICE_MAX_MEM_ALLOC_SIZE, sizeof(cl_ulong), &max_alloc_size, nullptr), "error obtaining device's maximum allocation size");
+    PLSSVM_OPENCL_ERROR_CHECK(clGetDeviceInfo(device_id, CL_DEVICE_MAX_MEM_ALLOC_SIZE, sizeof(cl_ulong), &max_alloc_size, nullptr), "error obtaining device's maximum allocation size")
     return ::plssvm::detail::memory_size{ static_cast<unsigned long long>(max_alloc_size) };
 }
 
 std::size_t csvm::get_max_work_group_size() const {
     // get device
     cl_device_id device_id{};
-    PLSSVM_OPENCL_ERROR_CHECK(clGetCommandQueueInfo(devices_[0], CL_QUEUE_DEVICE, sizeof(cl_device_id), &device_id, nullptr), "error obtaining device");
+    PLSSVM_OPENCL_ERROR_CHECK(clGetCommandQueueInfo(devices_[0], CL_QUEUE_DEVICE, sizeof(cl_device_id), &device_id, nullptr), "error obtaining device")
     // get maximum work group size
     cl_ulong max_work_group_size{};
-    PLSSVM_OPENCL_ERROR_CHECK(clGetDeviceInfo(device_id, CL_DEVICE_MAX_WORK_GROUP_SIZE, sizeof(cl_ulong), &max_work_group_size, nullptr), "error obtaining device's global memory size");
+    PLSSVM_OPENCL_ERROR_CHECK(clGetDeviceInfo(device_id, CL_DEVICE_MAX_WORK_GROUP_SIZE, sizeof(cl_ulong), &max_work_group_size, nullptr), "error obtaining device's global memory size")
     return static_cast<std::size_t>(max_work_group_size);
 }
 
@@ -218,12 +223,12 @@ std::size_t csvm::get_max_work_group_size() const {
 //***************************************************//
 
 auto csvm::run_assemble_kernel_matrix_explicit(const parameter &params, const device_ptr_type &data_d, const device_ptr_type &q_red_d, real_type QA_cost) const -> device_ptr_type {
-    const cl_ulong num_rows_reduced = data_d.size(0) - 1;
-    const cl_ulong num_features = data_d.size(1);
+    const cl_ulong num_rows_reduced = data_d.shape().x - 1;
+    const cl_ulong num_features = data_d.shape().y;
 
     // define grid and block sizes
     const std::size_t max_work_group_size = this->get_max_work_group_size();
-    if (max_work_group_size < THREAD_BLOCK_SIZE * THREAD_BLOCK_SIZE) {
+    if (max_work_group_size < std::size_t{ THREAD_BLOCK_SIZE } * std::size_t{ THREAD_BLOCK_SIZE }) {
         throw kernel_launch_resources{ fmt::format("Not enough work-items allowed for a work-groups of size {}x{}! Try reducing THREAD_BLOCK_SIZE.", THREAD_BLOCK_SIZE, THREAD_BLOCK_SIZE) };
     }
     const std::vector<std::size_t> block = { THREAD_BLOCK_SIZE, THREAD_BLOCK_SIZE };
@@ -238,7 +243,7 @@ auto csvm::run_assemble_kernel_matrix_explicit(const parameter &params, const de
     kernel_matrix_d.memset(0);
     const real_type cost_factor = real_type{ 1.0 } / params.cost;
 
-    switch (params.kernel_type) {
+    switch (params.kernel_type.value()) {
         case kernel_function_type::linear:
             detail::run_kernel(devices_[0], devices_[0].get_kernel(detail::compute_kernel_name::assemble_kernel_matrix_explicit), grid, block, kernel_matrix_d.get(), data_d.get(), num_rows_reduced, num_features, q_red_d.get(), QA_cost, cost_factor);
             break;
@@ -249,31 +254,60 @@ auto csvm::run_assemble_kernel_matrix_explicit(const parameter &params, const de
             detail::run_kernel(devices_[0], devices_[0].get_kernel(detail::compute_kernel_name::assemble_kernel_matrix_explicit), grid, block, kernel_matrix_d.get(), data_d.get(), num_rows_reduced, num_features, q_red_d.get(), QA_cost, cost_factor, params.gamma.value());
             break;
     }
-    this->device_synchronize(devices_[0]);
+    detail::device_synchronize(devices_[0]);
 
     return kernel_matrix_d;
 }
 
-void csvm::run_blas_level_3_kernel_explicit(const std::size_t m, const std::size_t n, const std::size_t k, const real_type alpha, const device_ptr_type &A_d, const device_ptr_type &B_d, const real_type beta, device_ptr_type &C_d) const {
+void csvm::run_blas_level_3_kernel_explicit(const real_type alpha, const device_ptr_type &A_d, const device_ptr_type &B_d, const real_type beta, device_ptr_type &C_d) const {
+    const cl_ulong num_rhs = B_d.shape().x;
+    const cl_ulong num_rows = B_d.shape().y;
+
     // define the grid and block sizes
     const std::size_t max_work_group_size = this->get_max_work_group_size();
-    if (max_work_group_size < THREAD_BLOCK_SIZE * THREAD_BLOCK_SIZE) {
+    if (max_work_group_size < std::size_t{ THREAD_BLOCK_SIZE } * std::size_t{ THREAD_BLOCK_SIZE }) {
         throw kernel_launch_resources{ fmt::format("Not enough work-items allowed for a work-groups of size {}x{}! Try reducing THREAD_BLOCK_SIZE.", THREAD_BLOCK_SIZE, THREAD_BLOCK_SIZE) };
     }
     const std::vector<std::size_t> block = { THREAD_BLOCK_SIZE, THREAD_BLOCK_SIZE };
-    const std::vector<std::size_t> grid = { static_cast<std::size_t>(std::ceil(static_cast<double>(n) / static_cast<double>(block[0] * INTERNAL_BLOCK_SIZE))) * block[0],
-                                            static_cast<std::size_t>(std::ceil(static_cast<double>(m) / static_cast<double>(block[1] * INTERNAL_BLOCK_SIZE))) * block[1] };
+    const std::vector<std::size_t> grid = { static_cast<std::size_t>(std::ceil(static_cast<double>(num_rhs) / static_cast<double>(block[0] * INTERNAL_BLOCK_SIZE))) * block[0],
+                                            static_cast<std::size_t>(std::ceil(static_cast<double>(num_rows) / static_cast<double>(block[1] * INTERNAL_BLOCK_SIZE))) * block[1] };
 
-    // cast to correct type
-    const auto m_ull = static_cast<cl_ulong>(m);
-    const auto n_ull = static_cast<cl_ulong>(n);
-    const auto k_ull = static_cast<cl_ulong>(k);
 #if defined(PLSSVM_USE_GEMM)
-    detail::run_kernel(devices_[0], devices_[0].get_kernel(detail::compute_kernel_name::gemm_kernel_explicit), grid, block, m_ull, n_ull, k_ull, alpha, A_d.get(), B_d.get(), beta, C_d.get());
+    detail::run_kernel(devices_[0], devices_[0].get_kernel(detail::compute_kernel_name::gemm_kernel_explicit), grid, block, num_rows, num_rhs, num_rows, alpha, A_d.get(), B_d.get(), beta, C_d.get());
 #else
-    detail::run_kernel(devices_[0], devices_[0].get_kernel(detail::compute_kernel_name::symm_kernel_explicit), grid, block, m_ull, n_ull, k_ull, alpha, A_d.get(), B_d.get(), beta, C_d.get());
+    detail::run_kernel(devices_[0], devices_[0].get_kernel(detail::compute_kernel_name::symm_kernel_explicit), grid, block, num_rows, num_rhs, num_rows, alpha, A_d.get(), B_d.get(), beta, C_d.get());
 #endif
-    this->device_synchronize(devices_[0]);
+    detail::device_synchronize(devices_[0]);
+}
+
+void csvm::run_assemble_kernel_matrix_implicit_blas_level_3(const real_type alpha, const device_ptr_type &A_d, const parameter &params, const device_ptr_type &q_red, const real_type QA_cost, const device_ptr_type &B_d, device_ptr_type &C_d) const {
+    const cl_ulong num_rows_reduced = A_d.shape().x - 1;
+    const cl_ulong num_features = A_d.shape().y;
+    const cl_ulong num_classes = B_d.shape().x;
+
+    // define the grid and block sizes
+    const std::size_t max_work_group_size = this->get_max_work_group_size();
+    if (max_work_group_size < std::size_t{ THREAD_BLOCK_SIZE } * std::size_t{ THREAD_BLOCK_SIZE }) {
+        throw kernel_launch_resources{ fmt::format("Not enough work-items allowed for a work-groups of size {}x{}! Try reducing THREAD_BLOCK_SIZE.", THREAD_BLOCK_SIZE, THREAD_BLOCK_SIZE) };
+    }
+    const std::vector<std::size_t> block = { THREAD_BLOCK_SIZE, THREAD_BLOCK_SIZE };
+    const std::vector<std::size_t> grid = { static_cast<std::size_t>(std::ceil(static_cast<double>(num_rows_reduced) / static_cast<double>(block[0] * INTERNAL_BLOCK_SIZE))) * block[0],
+                                            static_cast<std::size_t>(std::ceil(static_cast<double>(num_rows_reduced) / static_cast<double>(block[1] * INTERNAL_BLOCK_SIZE))) * block[1] };
+
+    const real_type cost_factor = real_type{ 1.0 } / params.cost;
+
+    switch (params.kernel_type.value()) {
+        case kernel_function_type::linear:
+            detail::run_kernel(devices_[0], devices_[0].get_kernel(detail::compute_kernel_name::assemble_kernel_matrix_implicit_blas), grid, block, alpha, q_red.get(), A_d.get(), num_rows_reduced, num_features, QA_cost, cost_factor, B_d.get(), C_d.get(), num_classes);
+            break;
+        case kernel_function_type::polynomial:
+            detail::run_kernel(devices_[0], devices_[0].get_kernel(detail::compute_kernel_name::assemble_kernel_matrix_implicit_blas), grid, block, alpha, q_red.get(), A_d.get(), num_rows_reduced, num_features, QA_cost, cost_factor, params.degree.value(), params.gamma.value(), params.coef0.value(), B_d.get(), C_d.get(), num_classes);
+            break;
+        case kernel_function_type::rbf:
+            detail::run_kernel(devices_[0], devices_[0].get_kernel(detail::compute_kernel_name::assemble_kernel_matrix_implicit_blas), grid, block, alpha, q_red.get(), A_d.get(), num_rows_reduced, num_features, QA_cost, cost_factor, params.gamma.value(), B_d.get(), C_d.get(), num_classes);
+            break;
+    }
+    detail::device_synchronize(devices_[0]);
 }
 
 //***************************************************//
@@ -281,38 +315,38 @@ void csvm::run_blas_level_3_kernel_explicit(const std::size_t m, const std::size
 //***************************************************//
 
 auto csvm::run_w_kernel(const device_ptr_type &alpha_d, const device_ptr_type &sv_d) const -> device_ptr_type {
-    const cl_ulong num_classes = alpha_d.size(0);
-    const cl_ulong num_sv = sv_d.size(0);
-    const cl_ulong num_features = sv_d.size(1);
+    const cl_ulong num_classes = alpha_d.shape().x;
+    const cl_ulong num_sv = sv_d.shape().x;
+    const cl_ulong num_features = sv_d.shape().y;
 
     // define the grid and block sizes
     const std::size_t max_work_group_size = this->get_max_work_group_size();
-    if (max_work_group_size < THREAD_BLOCK_SIZE * THREAD_BLOCK_SIZE) {
+    if (max_work_group_size < std::size_t{ THREAD_BLOCK_SIZE } * std::size_t{ THREAD_BLOCK_SIZE }) {
         throw kernel_launch_resources{ fmt::format("Not enough work-items allowed for a work-groups of size {}x{}! Try reducing THREAD_BLOCK_SIZE.", THREAD_BLOCK_SIZE, THREAD_BLOCK_SIZE) };
     }
     const std::vector<std::size_t> block = { THREAD_BLOCK_SIZE, THREAD_BLOCK_SIZE };
     const std::vector<std::size_t> grid = { static_cast<std::size_t>(std::ceil(static_cast<double>(num_features) / static_cast<double>(block[0] * INTERNAL_BLOCK_SIZE))) * block[0],
                                             static_cast<std::size_t>(std::ceil(static_cast<double>(num_classes) / static_cast<double>(block[1] * INTERNAL_BLOCK_SIZE))) * block[1] };
 
-    device_ptr_type w_d{ { num_classes, num_features }, { PADDING_SIZE, PADDING_SIZE }, devices_[0] };
+    device_ptr_type w_d{ shape{ num_classes, num_features }, shape{ PADDING_SIZE, PADDING_SIZE }, devices_[0] };
 
     detail::run_kernel(devices_[0], devices_[0].get_kernel(detail::compute_kernel_name::w_kernel), grid, block, w_d.get(), alpha_d.get(), sv_d.get(), num_classes, num_sv);
-    this->device_synchronize(devices_[0]);
+    detail::device_synchronize(devices_[0]);
 
     return w_d;
 }
 
 auto csvm::run_predict_kernel(const parameter &params, const device_ptr_type &w_d, const device_ptr_type &alpha_d, const device_ptr_type &rho_d, const device_ptr_type &sv_d, const device_ptr_type &predict_points_d) const -> device_ptr_type {
-    const cl_ulong num_classes = alpha_d.size(0);
-    const cl_ulong num_sv = sv_d.size(0);
-    const cl_ulong num_predict_points = predict_points_d.size(0);
-    const cl_ulong num_features = predict_points_d.size(1);
+    const cl_ulong num_classes = alpha_d.shape().x;
+    const cl_ulong num_sv = sv_d.shape().x;
+    const cl_ulong num_predict_points = predict_points_d.shape().x;
+    const cl_ulong num_features = predict_points_d.shape().y;
 
-    device_ptr_type out_d{ { num_predict_points, num_classes }, { PADDING_SIZE, PADDING_SIZE }, devices_[0] };
+    device_ptr_type out_d{ shape{ num_predict_points, num_classes }, shape{ PADDING_SIZE, PADDING_SIZE }, devices_[0] };
 
     // define the block sizes
     const std::size_t max_work_group_size = this->get_max_work_group_size();
-    if (max_work_group_size < THREAD_BLOCK_SIZE * THREAD_BLOCK_SIZE) {
+    if (max_work_group_size < std::size_t{ THREAD_BLOCK_SIZE } * std::size_t{ THREAD_BLOCK_SIZE }) {
         throw kernel_launch_resources{ fmt::format("Not enough work-items allowed for a work-groups of size {}x{}! Try reducing THREAD_BLOCK_SIZE.", THREAD_BLOCK_SIZE, THREAD_BLOCK_SIZE) };
     }
     const std::vector<std::size_t> block = { THREAD_BLOCK_SIZE, THREAD_BLOCK_SIZE };
@@ -328,7 +362,7 @@ auto csvm::run_predict_kernel(const parameter &params, const device_ptr_type &w_
         const std::vector<std::size_t> grid = { static_cast<std::size_t>(std::ceil(static_cast<double>(num_predict_points) / static_cast<double>(block[0] * INTERNAL_BLOCK_SIZE))) * block[0],
                                                 static_cast<std::size_t>(std::ceil(static_cast<double>(num_sv) / static_cast<double>(block[1] * INTERNAL_BLOCK_SIZE))) * block[1] };
 
-        switch (params.kernel_type) {
+        switch (params.kernel_type.value()) {
             case kernel_function_type::linear:
                 // already handled
                 break;
@@ -340,7 +374,7 @@ auto csvm::run_predict_kernel(const parameter &params, const device_ptr_type &w_
                 break;
         }
     }
-    this->device_synchronize(devices_[0]);
+    detail::device_synchronize(devices_[0]);
 
     return out_d;
 }

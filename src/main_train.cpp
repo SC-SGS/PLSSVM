@@ -9,18 +9,16 @@
  */
 
 #include "plssvm/core.hpp"
-
 #include "plssvm/detail/cmd/data_set_variants.hpp"  // plssvm::detail::cmd::data_set_factory
 #include "plssvm/detail/cmd/parser_train.hpp"       // plssvm::detail::cmd::parser_train
 #include "plssvm/detail/logging.hpp"                // plssvm::detail::log
 #include "plssvm/detail/performance_tracker.hpp"    // plssvm::detail::tracking_entry, PLSSVM_DETAIL_PERFORMANCE_TRACKER_SAVE
-#include "plssvm/verbosity_levels.hpp"              // plssvm::verbosity_level
 
-#include <chrono>                                   // std::chrono::{steady_clock, duration}
-#include <cstdlib>                                  // EXIT_SUCCESS, EXIT_FAILURE
-#include <exception>                                // std::exception
-#include <iostream>                                 // std::cerr, std::endl
-#include <variant>                                  // std::visit
+#include <chrono>     // std::chrono::{steady_clock, duration}
+#include <cstdlib>    // EXIT_SUCCESS, EXIT_FAILURE
+#include <exception>  // std::exception
+#include <iostream>   // std::cerr, std::endl
+#include <variant>    // std::visit
 
 int main(int argc, char *argv[]) {
     try {
@@ -35,7 +33,7 @@ int main(int argc, char *argv[]) {
                             plssvm::detail::tracking_entry{ "parameter", "", cmd_parser });
 
         // create data set
-        std::visit([&](auto &&data) {
+        const auto data_set_visitor = [&](auto &&data) {
             using label_type = typename std::remove_reference_t<decltype(data)>::label_type;
 
             // create SVM
@@ -55,7 +53,8 @@ int main(int argc, char *argv[]) {
                                                             plssvm::solver = cmd_parser.solver);
             // save model to file
             model.save(cmd_parser.model_filename);
-        }, plssvm::detail::cmd::data_set_factory(cmd_parser));
+        };
+        std::visit(data_set_visitor, plssvm::detail::cmd::data_set_factory(cmd_parser));
 
         const std::chrono::steady_clock::time_point end_time = std::chrono::steady_clock::now();
         plssvm::detail::log(plssvm::verbosity_level::full,

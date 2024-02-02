@@ -9,30 +9,27 @@
  */
 
 #include "plssvm/backends/HIP/detail/utility.hip.hpp"  // PLSSVM_HIP_ERROR_CHECK, plssvm::hip::detail::{gpu_assert, get_device_count, set_device, device_synchronize}
+#include "plssvm/backends/HIP/exceptions.hpp"          // plssvm::hip::backend_exception
 
-#include "plssvm/backends/HIP/exceptions.hpp"  // plssvm::hip::backend_exception
-
-#include "custom_test_macros.hpp"  // EXPECT_THROW_WHAT, EXPECT_THROW_WHAT_MATCHER
+#include "tests/custom_test_macros.hpp"  // EXPECT_THROW_WHAT, EXPECT_THROW_WHAT_MATCHER
 
 #include "fmt/core.h"              // fmt::format
 #include "gmock/gmock-matchers.h"  // ::testing::StartsWith
 #include "gtest/gtest.h"           // TEST, EXPECT_GE, EXPECT_NO_THROW
 
+#include <regex>  // std::regex, std::regex::extended, std::regex_match
+
 #if __has_include("hip/hip_runtime.h") && __has_include("hip/hip_runtime_api.h")
 
-#include "hip/hip_runtime.h"
-#include "hip/hip_runtime_api.h"
+    #include "hip/hip_runtime.h"
+    #include "hip/hip_runtime_api.h"
 
-TEST(HIPUtility, gpu_assert) {
+TEST(HIPUtility, error_check) {
     // hipSuccess must not throw
     EXPECT_NO_THROW(PLSSVM_HIP_ERROR_CHECK(hipSuccess));
-    EXPECT_NO_THROW(plssvm::hip::detail::gpu_assert(hipSuccess));
 
     // any other code must throw
     EXPECT_THROW_WHAT_MATCHER(PLSSVM_HIP_ERROR_CHECK(hipErrorInvalidValue),
-                              plssvm::hip::backend_exception,
-                              ::testing::StartsWith("HIP assert 'hipErrorInvalidValue' (1):"));
-    EXPECT_THROW_WHAT_MATCHER(plssvm::hip::detail::gpu_assert(hipErrorInvalidValue),
                               plssvm::hip::backend_exception,
                               ::testing::StartsWith("HIP assert 'hipErrorInvalidValue' (1):"));
 }
@@ -54,6 +51,11 @@ TEST(HIPUtility, device_synchronize) {
     EXPECT_THROW_WHAT(plssvm::hip::detail::device_synchronize(plssvm::hip::detail::get_device_count()),
                       plssvm::hip::backend_exception,
                       fmt::format("Illegal device ID! Must be in range: [0, {}) but is {}!", plssvm::hip::detail::get_device_count(), plssvm::hip::detail::get_device_count()));
+}
+
+TEST(HIPUtility, get_runtime_version) {
+    const std::regex reg{ "[0-9]+\\.[0-9]+", std::regex::extended };
+    EXPECT_TRUE(std::regex_match(plssvm::hip::detail::get_runtime_version(), reg));
 }
 
 #endif

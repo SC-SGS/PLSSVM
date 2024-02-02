@@ -36,7 +36,6 @@ message(CHECK_PASS "found")
 enable_language(HIP)
 find_package(HIP REQUIRED)
 
-
 ## set necessary flags
 set(CMAKE_HIP_STANDARD 17)
 set(CMAKE_HIP_STANDARD_REQUIRED ON)
@@ -47,11 +46,11 @@ set(CMAKE_HIP_FLAGS_RELEASE "${CMAKE_HIP_FLAGS_RELEASE} -O3 -ffast-math")
 
 # explicitly set sources
 set(PLSSVM_HIP_SOURCES
-        ${CMAKE_CURRENT_LIST_DIR}/detail/device_ptr.hip.cpp
-        ${CMAKE_CURRENT_LIST_DIR}/detail/utility.hip.cpp
-        ${CMAKE_CURRENT_LIST_DIR}/csvm.hip.cpp
-        ${CMAKE_CURRENT_LIST_DIR}/exceptions.cpp
-        ${CMAKE_CURRENT_LIST_DIR}/../gpu_device_ptr.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/detail/device_ptr.hip.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/detail/utility.hip.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/csvm.hip.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/exceptions.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/../gpu_device_ptr.cpp
 )
 
 # set target properties
@@ -79,7 +78,6 @@ target_link_libraries(${PLSSVM_ALL_LIBRARY_NAME} INTERFACE ${PLSSVM_HIP_BACKEND_
 # mark backend library as install target
 list(APPEND PLSSVM_TARGETS_TO_INSTALL "${PLSSVM_HIP_BACKEND_LIBRARY_NAME}")
 set(PLSSVM_TARGETS_TO_INSTALL ${PLSSVM_TARGETS_TO_INSTALL} PARENT_SCOPE)
-
 
 # generate summary string
 set(PLSSVM_HIP_BACKEND_SUMMARY_STRING " - HIP: amd (${PLSSVM_AMD_TARGET_ARCHS})" PARENT_SCOPE)

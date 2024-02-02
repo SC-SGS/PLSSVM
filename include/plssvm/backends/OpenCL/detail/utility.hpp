@@ -17,6 +17,7 @@
 #include "plssvm/backends/OpenCL/detail/context.hpp"        // plssvm::opencl::detail::context
 #include "plssvm/backends/OpenCL/detail/error_code.hpp"     // plssvm::opencl::detail::error_code
 #include "plssvm/backends/OpenCL/detail/kernel.hpp"         // plssvm::opencl::detail::compute_kernel_name
+#include "plssvm/backends/OpenCL/exceptions.hpp"            // plssvm::opencl::backend_exception
 #include "plssvm/detail/assert.hpp"                         // PLSSVM_ASSERT
 #include "plssvm/kernel_function_types.hpp"                 // plssvm::kernel_function_type
 #include "plssvm/target_platforms.hpp"                      // plssvm::target_platform
@@ -33,20 +34,18 @@
 
 /**
  * @def PLSSVM_OPENCL_ERROR_CHECK
- * @brief Macro used for error checking OpenCL runtime functions.
- */
-#define PLSSVM_OPENCL_ERROR_CHECK(err, ...) plssvm::opencl::detail::device_assert((err), ##__VA_ARGS__)
-
-namespace plssvm::opencl::detail {
-
-/**
  * @brief Check the OpenCL error @p code. If @p code signals an error, throw a plssvm::opencl::backend_exception.
  * @details The exception contains the following message: "OpenCL assert 'OPENCL_ERROR_NAME' (OPENCL_ERROR_CODE): OPTIONAL_OPENCL_ERROR_STRING".
  * @param[in] code the OpenCL error code to check
  * @param[in] msg optional message printed if the error code check failed
  * @throws plssvm::opencl::backend_exception if the error code signals a failure
  */
-void device_assert(error_code code, std::string_view msg = "");
+#define PLSSVM_OPENCL_ERROR_CHECK(err, additional_msg)                                                                                                \
+    if (plssvm::opencl::detail::error_code err_code{ err }; !err_code) {                                                                              \
+        throw plssvm::opencl::backend_exception{ fmt::format("OpenCL assert '{}' ({}): {}!", err_code.message(), err_code.value(), additional_msg) }; \
+    }
+
+namespace plssvm::opencl::detail {
 
 /**
  * @brief Returns the context listing all devices matching the target platform @p target and the actually used target platform
@@ -62,6 +61,19 @@ void device_assert(error_code code, std::string_view msg = "");
  * @param[in] queue the command queue to synchronize
  */
 void device_synchronize(const command_queue &queue);
+
+/**
+ * @brief Get the targeted OpenCL version.
+ * @return the prettyfied OpenCL version (`[[nodiscard]]`)
+ */
+[[nodiscard]] std::string get_opencl_target_version();
+
+/**
+ * @brief Get the driver version of the device associated with the OpenCL command queue @p queue.
+ * @param[in] queue the OpenCL command queue
+ * @return a string encapsulating the driver version (`[[nodiscard]]`)
+ */
+[[nodiscard]] std::string get_driver_version(const command_queue &queue);
 
 /**
  * @brief Get the name of the device associated with the OpenCL command queue @p queue.
@@ -111,7 +123,7 @@ inline void set_kernel_args(cl_kernel kernel, Args... args) {
     // iterate over parameter pack and set OpenCL kernel
     ([&](auto &arg) {
         const error_code ec = clSetKernelArg(kernel, i++, sizeof(decltype(arg)), &arg);
-        PLSSVM_OPENCL_ERROR_CHECK(ec, fmt::format("error setting OpenCL kernel argument {}", i - 1));
+        PLSSVM_OPENCL_ERROR_CHECK(ec, fmt::format("error setting OpenCL kernel argument {}", i - 1))
     }(args),
      ...);
 }
@@ -136,7 +148,7 @@ inline void run_kernel(const command_queue &queue, cl_kernel kernel, const std::
     // enqueue kernel in command queue
     PLSSVM_OPENCL_ERROR_CHECK(clEnqueueNDRangeKernel(queue, kernel, static_cast<cl_int>(grid_size.size()), nullptr, grid_size.data(), block_size.data(), 0, nullptr, nullptr), "error enqueuing OpenCL kernel");
     // wait until kernel computation finished
-    PLSSVM_OPENCL_ERROR_CHECK(clFinish(queue), "error running OpenCL kernel");
+    PLSSVM_OPENCL_ERROR_CHECK(clFinish(queue), "error running OpenCL kernel")
 }
 
 /**

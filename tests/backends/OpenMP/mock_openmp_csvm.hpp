@@ -24,13 +24,13 @@ class mock_openmp_csvm final : public plssvm::openmp::csvm {
   public:
     template <typename... Args>
     explicit mock_openmp_csvm(Args &&...args) :
-        base_type{ std::forward<Args>(args)... } {}
+        base_type{ std::forward<Args>(args)... } { }
 
     // make protected member functions public
     using base_type::assemble_kernel_matrix;
     using base_type::blas_level_3;
     using base_type::get_device_memory;
-//    using base_type::get_max_work_group_size;
+    // using base_type::get_max_work_group_size;
     using base_type::setup_data_on_devices;
 
     using base_type::predict_values;

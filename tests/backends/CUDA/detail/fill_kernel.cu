@@ -10,8 +10,8 @@
 
 #include "plssvm/backends/CUDA/detail/fill_kernel.cuh"
 
-#include "naming.hpp"         // util::test_parameter_to_name
-#include "types_to_test.hpp"  // util::{real_type_gtest, test_parameter_type_at_t}
+#include "tests/naming.hpp"         // util::test_parameter_to_name
+#include "tests/types_to_test.hpp"  // util::{real_type_gtest, test_parameter_type_at_t}
 
 #include "gtest/gtest.h"  // TYPED_TEST, TYPED_TEST_SUITE, EXPECT_TRUE, ::testing::test
 
@@ -27,6 +27,7 @@ class CUDAFillUtility : public ::testing::Test {
   protected:
     using fixture_real_type = util::test_parameter_type_at_t<0, T>;
 };
+
 TYPED_TEST_SUITE(CUDAFillUtility, util::real_type_gtest, naming::test_parameter_to_name);
 
 TYPED_TEST(CUDAFillUtility, fill_kernel) {

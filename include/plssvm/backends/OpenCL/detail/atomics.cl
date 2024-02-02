@@ -12,44 +12,71 @@
 #pragma OPENCL EXTENSION cl_khr_fp64 : enable
 #pragma OPENCL EXTENSION cl_khr_int64_base_atomics : enable
 
+// general implementation based on: https://community.khronos.org/t/roadmap-for-atomic-floating-point-support/7619/5
+// inline assembly based on: https://stackoverflow.com/questions/72044986/atomic-addition-to-floating-point-values-in-opencl-for-nvidia-gpus
+
 /**
  * @brief Implementation of an atomic add function for double-precision floating point types.
  * @details Uses the atomic compare-exchange idiom.
- * @param[in,out] addr the source value to add @p val to
+ * @param[in,out] source the source value to add @p val to
  * @param[in] val the value to add to @p addr
+ * @return the old value retrieved before the atomic add
  */
-inline void __attribute__((overloadable)) atomicAdd(__global const double *addr, const double val) {
+inline double __attribute__((overloadable)) atomicAdd(__global double *source, const double val) {
+    double prev;
+#ifdef PLSSVM_USE_NVIDIA_PTX_INLINE_ASSEMBLY
+    asm volatile(
+        "atom.global.add.f64 %0, [%1], %2;"
+        : "=d"(prev)
+        : "l"(source), "d"(val)
+        : "memory");
+#else
+    prev = *source;
+
     union {
-        ulong u64;
-        double f64;
-    } next, expected, current;
-    current.f64 = *addr;
+        ulong intVal;
+        double doubleVal;
+    } old, t, t1;
+
+    old.doubleVal = val;
+    t1.doubleVal = 0.0;  // to ensure correct double bit representation of 0
     do {
-        expected.f64 = current.f64;
-        next.f64 = expected.f64 + val;
-        current.u64 = atom_cmpxchg((volatile __global ulong *) addr,
-                                   expected.u64,
-                                   next.u64);
-    } while (current.u64 != expected.u64);
+        t.intVal = atom_xchg((__global ulong *) source, t1.intVal);
+        t.doubleVal += old.doubleVal;
+    } while ((old.intVal = atom_xchg((__global ulong *) source, t.intVal)) != t1.intVal);
+#endif
+    return prev;
 }
 
 /**
  * @brief Implementation of an atomic add function for single-precision floating point types.
  * @details Uses the atomic compare-exchange idiom.
- * @param[in,out] addr the source value to add @p val to
+ * @param[in,out] source the source value to add @p val to
  * @param[in] val the value to add to @p addr
+ * @return the old value retrieved before the atomic add
  */
-inline void __attribute__((overloadable)) atomicAdd(__global const float *addr, const float val) {
+inline float __attribute__((overloadable)) atomicAdd(__global float *source, const float val) {
+    float prev;
+#ifdef PLSSVM_USE_NVIDIA_PTX_INLINE_ASSEMBLY
+    asm volatile(
+        "atom.global.add.f32 %0, [%1], %2;"
+        : "=f"(prev)
+        : "l"(source), "f"(val)
+        : "memory");
+#else
+    prev = *source;
+
     union {
-        unsigned int u32;
-        float f32;
-    } next, expected, current;
-    current.f32 = *addr;
+        ulong intVal;
+        float floatVal;
+    } old, t, t1;
+
+    old.floatVal = val;
+    t1.floatVal = 0.0;  // to ensure correct double bit representation of 0
     do {
-        expected.f32 = current.f32;
-        next.f32 = expected.f32 + val;
-        current.u32 = atomic_cmpxchg((volatile __global unsigned int *) addr,
-                                     expected.u32,
-                                     next.u32);
-    } while (current.u32 != expected.u32);
+        t.intVal = atom_xchg((__global ulong *) source, t1.intVal);
+        t.floatVal += old.floatVal;
+    } while ((old.intVal = atom_xchg((__global ulong *) source, t.intVal)) != t1.intVal);
+#endif
+    return prev;
 }

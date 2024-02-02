@@ -21,6 +21,9 @@
 
 namespace plssvm {
 
+/**
+ * @brief Enum class for all implemented classification strategies.
+ */
 enum class classification_type {
     /** Use the one vs. all classification strategy for the multi-class SVM (default). */
     oaa,
@@ -62,6 +65,6 @@ std::istream &operator>>(std::istream &in, classification_type &classification);
 }  // namespace plssvm
 
 template <>
-struct fmt::formatter<plssvm::classification_type> : fmt::ostream_formatter {};
+struct fmt::formatter<plssvm::classification_type> : fmt::ostream_formatter { };
 
 #endif  // PLSSVM_CLASSIFICATION_TYPES_HPP_

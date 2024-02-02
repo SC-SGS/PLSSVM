@@ -16,10 +16,11 @@
 #include "plssvm/constants.hpp"                 // plssvm::real_type, plssvm::PADDING_SIZE
 #include "plssvm/detail/assert.hpp"             // PLSSVM_ASSERT
 #include "plssvm/detail/io/file_reader.hpp"     // plssvm::detail::io::file_reader
+#include "plssvm/detail/memory_size.hpp"        // plssvm::memory_size, custom literals
 #include "plssvm/detail/string_conversion.hpp"  // plssvm::detail::convert_to
-#include "plssvm/detail/utility.hpp"            // plssvm::detail::current_date_time
 #include "plssvm/exceptions/exceptions.hpp"     // plssvm::invalid_file_format_exception
-#include "plssvm/matrix.hpp"                    // plssvm::os_matrix
+#include "plssvm/matrix.hpp"                    // plssvm::soa_matrix
+#include "plssvm/shape.hpp"                     // plssvm::shape
 
 #include "fmt/compile.h"  // FMT_COMPILE
 #include "fmt/format.h"   // fmt::format, fmt::format_to
@@ -50,7 +51,8 @@ namespace plssvm::detail::io {
     std::size_t num_features = 0;
     std::exception_ptr parallel_exception;
 
-    #pragma omp parallel for default(none) shared(lines, parallel_exception) firstprivate(skipped_lines) reduction(max : num_features)
+    // loop over all lines potential skipping the first ones
+#pragma omp parallel for default(none) shared(lines, parallel_exception) firstprivate(skipped_lines) reduction(max : num_features)
     for (std::size_t i = skipped_lines; i < lines.size(); ++i) {
         try {
             const std::string_view line = lines[i];
@@ -70,8 +72,8 @@ namespace plssvm::detail::io {
             const auto index = detail::convert_to<unsigned long, invalid_file_format_exception>(line.substr(pos_whitespace, pos_colon - pos_whitespace));
             num_features = std::max<std::size_t>(num_features, index);
         } catch (const std::exception &) {
-            // catch first exception and store it
-            #pragma omp critical
+// catch first exception and store it
+#pragma omp critical
             {
                 if (!parallel_exception) {
                     parallel_exception = std::current_exception();
@@ -109,7 +111,7 @@ namespace plssvm::detail::io {
  * @throws plssvm::invalid_file_format_exception if the provided LIBSVM file uses zero-based indexing (LIBSVM mandates one-based indices)
  * @throws plssvm::invalid_file_format_exception if the feature (indices) are not given in a strictly increasing order
  * @throws plssvm::invalid_file_format_exception if only **some** data points are annotated with labels
- * @return a std::tuple containing: [the number of data points, the number of features per data point, the data points, the labels (optional)] (`[[nodiscard]]`)
+ * @return [the number of data points; the number of features per data point; the data points, the labels (optional)] (`[[nodiscard]]`)
  */
 template <typename label_type>
 [[nodiscard]] inline std::tuple<std::size_t, std::size_t, soa_matrix<real_type>, std::vector<label_type>> parse_libsvm_data(const file_reader &reader) {
@@ -126,16 +128,16 @@ template <typename label_type>
     }
 
     // create vector containing the data and label
-    soa_matrix<real_type> data{ num_data_points, num_features, PADDING_SIZE, PADDING_SIZE };
+    soa_matrix<real_type> data{ shape{ num_data_points, num_features }, shape{ PADDING_SIZE, PADDING_SIZE } };
     std::vector<label_type> label(num_data_points);
 
     std::exception_ptr parallel_exception;
     bool has_label = false;
     bool has_no_label = false;
 
-    #pragma omp parallel default(none) shared(reader, data, label, parallel_exception, has_label, has_no_label) firstprivate(num_data_points)
+#pragma omp parallel default(none) shared(reader, data, label, parallel_exception, has_label, has_no_label) firstprivate(num_data_points)
     {
-        #pragma omp for reduction(|| : has_label) reduction(|| : has_no_label)
+#pragma omp for reduction(|| : has_label) reduction(|| : has_no_label)
         for (std::size_t i = 0; i < num_data_points; ++i) {
             try {
                 const std::string_view line = reader.line(i);
@@ -148,13 +150,14 @@ template <typename label_type>
                     // get class or alpha
                     has_label = true;
                     if constexpr (std::is_same_v<label_type, bool>) {
-                        // the std::vector<bool> template specialization is per C++ standard NOT thread safe
-                        #pragma omp critical
+// the std::vector<bool> template specialization is per C++ standard NOT thread safe
+#pragma omp critical
                         label[i] = detail::convert_to<bool, invalid_file_format_exception>(line.substr(0, pos));
                     } else {
                         label[i] = detail::convert_to<label_type, invalid_file_format_exception>(line.substr(0, pos));
                     }
                 } else {
+                    // no class/label found for the current data point
                     has_no_label = true;
                     pos = 0;
                 }
@@ -190,8 +193,8 @@ template <typename label_type>
                     pos = next_pos;
                 }
             } catch (const std::exception &) {
-                // catch first exception and store it
-                #pragma omp critical
+// catch first exception and store it
+#pragma omp critical
                 {
                     if (!parallel_exception) {
                         parallel_exception = std::current_exception();
@@ -206,7 +209,7 @@ template <typename label_type>
         std::rethrow_exception(parallel_exception);
     }
     if (has_label && has_no_label) {
-        // some data points where given with labels, BUT some data pints where given without labels
+        // some data points where given with labels, BUT also some data pints where given without labels
         throw invalid_file_format_exception{ "Inconsistent label specification found (some data points are labeled, others are not)!" };
     }
 
@@ -240,12 +243,10 @@ inline void write_libsvm_data_impl(const std::string &filename, const soa_matrix
     } else {
         PLSSVM_ASSERT(label.empty(), "has_label is 'false' but labels were provided!");
     }
+    using namespace literals;
 
     // create output file
     fmt::ostream out = fmt::output_file(filename);
-    // write timestamp as current date time
-    // note: commented out since the resulting model file cannot be read be LIBSVM
-    // out.print("# This data set has been created at {}\n", detail::current_date_time());
 
     const std::size_t num_data_points = data.num_rows();
     if (num_data_points == 0) {
@@ -253,8 +254,6 @@ inline void write_libsvm_data_impl(const std::string &filename, const soa_matrix
         return;
     }
     const std::size_t num_features = data.num_cols();
-    // note: commented out since the resulting model file cannot be read be LIBSVM
-    // out.print("# {}x{}\n", num_data_points, num_features);
 
     // the maximum size of one formatted LIBSVM entry, e.g., 1234:1.365363e+10
     // biggest number representable as std::size_t: 18446744073709551615 -> 20 chars
@@ -263,17 +262,17 @@ inline void write_libsvm_data_impl(const std::string &filename, const soa_matrix
     // separators: 2 chars (: between index and feature + whitespace after feature value)
     // -> 40 chars in total
     // -> increased to 48 chars to be on the safe side
-    static constexpr std::size_t CHARS_PER_BLOCK = 48;
+    constexpr static std::size_t CHARS_PER_BLOCK = 48;
     // results in 48 B * 128 B = 6 KiB stack buffer per thread
-    static constexpr std::size_t BLOCK_SIZE = 128;
-    // use 1 MiB as buffer per thread
-    constexpr std::size_t STRING_BUFFER_SIZE = std::size_t{ 1024 } * std::size_t{ 1024 };
+    constexpr static std::size_t BLOCK_SIZE = 128;
+    // use 1 MiB as buffer per thread before the contents are dumped to the file
+    constexpr detail::memory_size STRING_BUFFER_SIZE = 1_MiB;
 
     // format one output-line
     auto format_libsvm_line = [num_features](std::string &output, const soa_matrix<real_type> &data_point, const std::size_t row) {
         static constexpr std::size_t BUFFER_SIZE = BLOCK_SIZE * CHARS_PER_BLOCK;
         static std::array<char, BUFFER_SIZE> buffer;
-        #pragma omp threadprivate(buffer)
+#pragma omp threadprivate(buffer)
 
         for (typename std::vector<real_type>::size_type j = 0; j < num_features; j += BLOCK_SIZE) {
             char *ptr = buffer.data();
@@ -291,28 +290,28 @@ inline void write_libsvm_data_impl(const std::string &filename, const soa_matrix
         output.push_back('\n');
     };
 
-    #pragma omp parallel default(none) shared(out, data, label, format_libsvm_line) firstprivate(num_data_points, num_features)
+#pragma omp parallel default(none) shared(out, data, label, format_libsvm_line) firstprivate(STRING_BUFFER_SIZE, num_data_points, num_features)
     {
         // all support vectors
         std::string out_string;
-        out_string.reserve(STRING_BUFFER_SIZE + (num_features + 1) * CHARS_PER_BLOCK);  // oversubscribe buffer that at least one additional line fits into it
+        out_string.reserve(STRING_BUFFER_SIZE.num_bytes() + (num_features + 1) * CHARS_PER_BLOCK);  // oversubscribe buffer that at least one additional line fits into it
 
-        #pragma omp for schedule(dynamic) nowait
+#pragma omp for schedule(dynamic) nowait
         for (typename std::vector<real_type>::size_type i = 0; i < num_data_points; ++i) {
             if constexpr (has_label) {
                 out_string.append(fmt::format(FMT_COMPILE("{} "), label[i]));
             }
             format_libsvm_line(out_string, data, i);
 
-            if (out_string.size() > STRING_BUFFER_SIZE) {
-                #pragma omp critical
+            if (out_string.size() > STRING_BUFFER_SIZE.num_bytes()) {
+#pragma omp critical
                 out.print("{}", out_string);
 
                 out_string.clear();
             }
         }
         if (!out_string.empty()) {
-            #pragma omp critical
+#pragma omp critical
             out.print("{}", out_string);
         }
     }

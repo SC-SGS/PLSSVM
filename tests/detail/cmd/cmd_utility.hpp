@@ -16,7 +16,7 @@
 #include "plssvm/detail/string_conversion.hpp"  // plssvm::detail::split_as
 #include "plssvm/verbosity_levels.hpp"          // plssvm::verbosity_level, plssvm::verbosity
 
-#include "utility.hpp"  // util::redirect_output
+#include "tests/utility.hpp"  // util::redirect_output
 
 #include "gtest/gtest.h"  // :testing::Test
 
@@ -30,12 +30,14 @@ namespace util {
 /**
  * @brief Fixture class for testing the parameter_* classes' implementation.
  */
-class ParameterBase : public ::testing::Test, private redirect_output<> {
+class ParameterBase : public ::testing::Test,
+                      private redirect_output<> {
   protected:
     void SetUp() override {
         // save the current verbosity state
         verbosity_save_ = plssvm::verbosity;
     }
+
     /**
      * @brief Create artificial argc and argv from the given command line string.
      * @param[in] cmd_line_split the command line argument to create the argc and argv from
@@ -50,6 +52,7 @@ class ParameterBase : public ::testing::Test, private redirect_output<> {
             std::memcpy(argv_[i], cmd_line_split[i].c_str(), arg_size * sizeof(char));
         }
     }
+
     /**
      * @brief Free memory used for argv; automatically called at the end of a test.
      */
@@ -68,6 +71,7 @@ class ParameterBase : public ::testing::Test, private redirect_output<> {
      * @return the number of cmd arguments (`[[nodiscard]]`)
      */
     [[nodiscard]] int get_argc() const noexcept { return argc_; }
+
     /**
      * @brief The command line arguments encapsulated in this class.
      * @return the cmd arguments (`[[nodiscard]])

@@ -14,9 +14,9 @@
 #include "plssvm/detail/cmd/parser_scale.hpp"    // plssvm::detail::cmd::parser_scale
 #include "plssvm/detail/cmd/parser_train.hpp"    // plssvm::detail::cmd::parser_train
 
-#include "detail/cmd/cmd_utility.hpp"  // util::ParameterBase
-#include "naming.hpp"                  // naming::pretty_print_data_set_factory
-#include "utility.hpp"                 // util::{temporary_file, instantiate_template_file}
+#include "tests/detail/cmd/cmd_utility.hpp"  // util::ParameterBase
+#include "tests/naming.hpp"                  // naming::pretty_print_data_set_factory
+#include "tests/utility.hpp"                 // util::{temporary_file, instantiate_template_file}
 
 #include "gtest/gtest.h"  // TEST_P, INSTANTIATE_TEST_SUITE_P, EXPECT_EQ,  ::testing::{WithParamInterface, Values}
 
@@ -26,7 +26,9 @@
 
 // the variant order is: <real_type, int> -> <real_type, std::string>
 
-class DataSetFactory : public util::ParameterBase, public ::testing::WithParamInterface<std::tuple<bool, std::size_t>>, protected util::temporary_file {};
+class DataSetFactory : public util::ParameterBase,
+                       public ::testing::WithParamInterface<std::tuple<bool, std::size_t>>,
+                       protected util::temporary_file { };
 
 TEST_P(DataSetFactory, data_set_factory_predict) {
     // get parameter
@@ -54,6 +56,7 @@ TEST_P(DataSetFactory, data_set_factory_predict) {
     const plssvm::detail::cmd::data_set_variants var = plssvm::detail::cmd::data_set_factory(parser);
     EXPECT_EQ(var.index(), index);
 }
+
 TEST_P(DataSetFactory, data_set_factory_scale) {
     // get parameter
     const auto [strings_as_labels, index] = GetParam();
@@ -80,6 +83,7 @@ TEST_P(DataSetFactory, data_set_factory_scale) {
     const plssvm::detail::cmd::data_set_variants var = plssvm::detail::cmd::data_set_factory(parser);
     EXPECT_EQ(var.index(), index);
 }
+
 TEST_P(DataSetFactory, data_set_factory_scale_restore_filename) {
     // get parameter
     const auto [strings_as_labels, index] = GetParam();
@@ -106,6 +110,7 @@ TEST_P(DataSetFactory, data_set_factory_scale_restore_filename) {
     const plssvm::detail::cmd::data_set_variants var = plssvm::detail::cmd::data_set_factory(parser);
     EXPECT_EQ(var.index(), index);
 }
+
 TEST_P(DataSetFactory, data_set_factory_train) {
     // get parameter
     const auto [strings_as_labels, index] = GetParam();

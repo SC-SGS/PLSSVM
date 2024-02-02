@@ -34,6 +34,7 @@ std::string sha256::operator()(std::string input) const {
     const std::uint32_t K = CHUNK_SIZE - (L + 1 + 8) % CHUNK_SIZE;
     input.resize(L + 1 + K + 8);
 
+    // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast): cast necessary to use the correct character type for the sha256 algorithm
     auto *input_unsigned_ptr = reinterpret_cast<unsigned char *>(input.data());
 
     // append L as an 8-byte big-endian integer, making the total post-processed length a multiple of 64 byte

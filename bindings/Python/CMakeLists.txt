@@ -19,42 +19,43 @@ else ()
     set(PLSSVM_pybind11_VERSION v2.11.1)
     # fetch pybind11 library for creating Python bindings
     FetchContent_Declare(pybind11
-            GIT_REPOSITORY https://github.com/pybind/pybind11.git
-            GIT_TAG ${PLSSVM_pybind11_VERSION}
-            GIT_SHALLOW TRUE
-            QUIET
+                         GIT_REPOSITORY https://github.com/pybind/pybind11.git
+                         GIT_TAG ${PLSSVM_pybind11_VERSION}
+                         GIT_SHALLOW TRUE
+                         QUIET
     )
     FetchContent_MakeAvailable(pybind11)
     target_include_directories(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC
-            $<BUILD_INTERFACE:${pybind11_SOURCE_DIR}/include>
-            $<INSTALL_INTERFACE:include>
+                               $<BUILD_INTERFACE:${pybind11_SOURCE_DIR}/include>
+                               $<INSTALL_INTERFACE:include>
     )
     message(STATUS "Installed pybind11 version ${PLSSVM_pybind11_VERSION}.")
 endif ()
 
 # set source files that are always used
 set(PLSSVM_PYTHON_BINDINGS_SOURCES
-        ${CMAKE_CURRENT_LIST_DIR}/exceptions/exceptions.cpp
-
-        ${CMAKE_CURRENT_LIST_DIR}/detail/performance_tracker.cpp
-
-        ${CMAKE_CURRENT_LIST_DIR}/version/version.cpp
-
-        ${CMAKE_CURRENT_LIST_DIR}/backend_types.cpp
-        ${CMAKE_CURRENT_LIST_DIR}/classification_types.cpp
-        ${CMAKE_CURRENT_LIST_DIR}/csvm.cpp
-        ${CMAKE_CURRENT_LIST_DIR}/data_set.cpp
-        ${CMAKE_CURRENT_LIST_DIR}/file_format_types.cpp
-        ${CMAKE_CURRENT_LIST_DIR}/kernel_function_types.cpp
-        ${CMAKE_CURRENT_LIST_DIR}/model.cpp
-        ${CMAKE_CURRENT_LIST_DIR}/parameter.cpp
-        ${CMAKE_CURRENT_LIST_DIR}/solver_types.cpp
-        ${CMAKE_CURRENT_LIST_DIR}/target_platforms.cpp
-        ${CMAKE_CURRENT_LIST_DIR}/verbosity_levels.cpp
-
-        ${CMAKE_CURRENT_LIST_DIR}/sklearn.cpp
-
-        ${CMAKE_CURRENT_LIST_DIR}/main.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/exceptions/exceptions.cpp
+    
+    ${CMAKE_CURRENT_LIST_DIR}/detail/performance_tracker.cpp
+    
+    ${CMAKE_CURRENT_LIST_DIR}/version/version.cpp
+    
+    ${CMAKE_CURRENT_LIST_DIR}/backend_types.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/classification_types.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/csvm.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/data_set.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/file_format_types.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/kernel_function_types.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/kernel_functions.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/model.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/parameter.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/solver_types.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/target_platforms.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/verbosity_levels.cpp
+    
+    ${CMAKE_CURRENT_LIST_DIR}/sklearn.cpp
+    
+    ${CMAKE_CURRENT_LIST_DIR}/main.cpp
 )
 # set backends specific source files if the respective backend is used
 if (TARGET ${PLSSVM_OPENMP_BACKEND_LIBRARY_NAME})
@@ -99,7 +100,7 @@ if (PLSSVM_PYTHON_BINDINGS_PREFERRED_LABEL_TYPE STREQUAL "std::string")
 endif ()
 
 # add necessary compile options
-target_include_directories(${PLSSVM_PYTHON_BINDINGS_LIBRARY_NAME} PRIVATE ${CMAKE_CURRENT_LIST_DIR})
+target_include_directories(${PLSSVM_PYTHON_BINDINGS_LIBRARY_NAME} PRIVATE ${CMAKE_CURRENT_LIST_DIR}/../..)
 target_link_libraries(${PLSSVM_PYTHON_BINDINGS_LIBRARY_NAME} PRIVATE ${PLSSVM_ALL_LIBRARY_NAME})
 target_compile_definitions(${PLSSVM_PYTHON_BINDINGS_LIBRARY_NAME} PRIVATE PYBIND11_DETAILED_ERROR_MESSAGES)
 

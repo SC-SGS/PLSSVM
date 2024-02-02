@@ -10,7 +10,7 @@
 
 #include "plssvm/backends/OpenMP/exceptions.hpp"  // plssvm::openmp::backend_exception
 
-#include "backends/generic_exceptions_tests.hpp"  // generic exception tests to instantiate
+#include "tests/backends/generic_exceptions_tests.hpp"  // generic exception tests to instantiate
 
 #include "gtest/gtest.h"  // INSTANTIATE_TYPED_TEST_SUITE_P
 
@@ -18,7 +18,7 @@
 
 struct exception_test_type {
     using exception_type = plssvm::openmp::backend_exception;
-    static constexpr std::string_view name = "openmp::backend_exception";
+    constexpr static std::string_view name = "openmp::backend_exception";
 };
 
 // instantiate type-parameterized tests

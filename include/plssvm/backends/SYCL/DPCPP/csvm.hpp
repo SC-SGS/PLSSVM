@@ -13,17 +13,16 @@
 #define PLSSVM_BACKENDS_SYCL_DPCPP_CSVM_HPP_
 #pragma once
 
+#include "plssvm/backends/gpu_csvm.hpp"                      // plssvm::detail::gpu_csvm
 #include "plssvm/backends/SYCL/DPCPP/detail/device_ptr.hpp"  // plssvm::dpcpp::detail::device_ptr
 #include "plssvm/backends/SYCL/DPCPP/detail/queue.hpp"       // plssvm::dpcpp::detail::queue (PImpl)
-
-#include "plssvm/backends/SYCL/kernel_invocation_type.hpp"  // plssvm::sycl::kernel_invocation_type
-#include "plssvm/backends/gpu_csvm.hpp"                     // plssvm::detail::gpu_csvm
-#include "plssvm/constants.hpp"                             // plssvm::real_type
-#include "plssvm/detail/igor_utility.hpp"                   // plssvm::detail::get_value_from_named_parameter
-#include "plssvm/detail/memory_size.hpp"                    // plssvm::detail::memory_size
-#include "plssvm/detail/type_traits.hpp"                    // PLSSVM_REQUIRES, plssvm::detail::remove_cvref_t
-#include "plssvm/parameter.hpp"                             // plssvm::parameter, plssvm::detail::parameter
-#include "plssvm/target_platforms.hpp"                      // plssvm::target_platform
+#include "plssvm/backends/SYCL/kernel_invocation_types.hpp"  // plssvm::sycl::kernel_invocation_type
+#include "plssvm/constants.hpp"                              // plssvm::real_type
+#include "plssvm/detail/igor_utility.hpp"                    // plssvm::detail::get_value_from_named_parameter
+#include "plssvm/detail/memory_size.hpp"                     // plssvm::detail::memory_size
+#include "plssvm/detail/type_traits.hpp"                     // PLSSVM_REQUIRES, plssvm::detail::remove_cvref_t
+#include "plssvm/parameter.hpp"                              // plssvm::parameter, plssvm::detail::parameter
+#include "plssvm/target_platforms.hpp"                       // plssvm::target_platform
 
 #include "igor/igor.hpp"  // igor::parser
 
@@ -77,7 +76,8 @@ class csvm : public ::plssvm::detail::gpu_csvm<detail::device_ptr, detail::queue
      */
     template <typename... Args, PLSSVM_REQUIRES(::plssvm::detail::has_only_sycl_parameter_named_args_v<Args...>)>
     explicit csvm(Args &&...named_args) :
-        csvm{ plssvm::target_platform::automatic, std::forward<Args>(named_args)... } {}
+        csvm{ plssvm::target_platform::automatic, std::forward<Args>(named_args)... } { }
+
     /**
      * @brief Construct a new C-SVM using the SYCL backend on the @p target platform and the optionally provided @p named_args.
      * @param[in] target the target platform used for this C-SVM
@@ -138,10 +138,6 @@ class csvm : public ::plssvm::detail::gpu_csvm<detail::device_ptr, detail::queue
     void init(target_platform target);
 
     /**
-     * @copydoc plssvm::detail::gpu_csvm::device_synchronize
-     */
-    void device_synchronize(const queue_type &queue) const final;
-    /**
      * @copydoc plssvm::csvm::get_device_memory
      */
     [[nodiscard]] ::plssvm::detail::memory_size get_device_memory() const final;
@@ -164,7 +160,11 @@ class csvm : public ::plssvm::detail::gpu_csvm<detail::device_ptr, detail::queue
     /**
      * @copydoc plssvm::detail::gpu_csvm::run_blas_level_3_kernel_explicit
      */
-    void run_blas_level_3_kernel_explicit(std::size_t m, std::size_t n, std::size_t k, real_type alpha, const device_ptr_type &A_d, const device_ptr_type &B_d, const real_type beta, device_ptr_type &C_d) const final;
+    void run_blas_level_3_kernel_explicit(real_type alpha, const device_ptr_type &A_d, const device_ptr_type &B_d, real_type beta, device_ptr_type &C_d) const final;
+    /**
+     * @copydoc plssvm::detail::gpu_csvm::run_assemble_kernel_matrix_implicit_blas_level_3
+     */
+    void run_assemble_kernel_matrix_implicit_blas_level_3(real_type alpha, const device_ptr_type &A_d, const parameter &params, const device_ptr_type &q_red_d, real_type QA_cost, const device_ptr_type &B_d, device_ptr_type &C_d) const final;
 
     //***************************************************//
     //                   predict, score                  //
@@ -190,7 +190,7 @@ namespace detail {
  * @brief Sets the `value` to `true` since C-SVMs using the SYCL backend with DPC++ as SYCL implementation are available.
  */
 template <>
-struct csvm_backend_exists<dpcpp::csvm> : std::true_type {};
+struct csvm_backend_exists<dpcpp::csvm> : std::true_type { };
 
 }  // namespace detail
 

@@ -6,9 +6,10 @@
  *          See the LICENSE.md file in the project root for full license information.
  */
 
-#include "plssvm/version/version.hpp"                    // plssvm::version::{name, version}, plssvm::version::detail::{target_platform, target_platform}
+#include "plssvm/version/version.hpp"  // plssvm::version::{name, version}, plssvm::version::detail::{target_platform, target_platform}
+
 #include "plssvm/backend_types.hpp"                      // plssvm::list_available_backends
-#include "plssvm/backends/SYCL/implementation_type.hpp"  // plssvm::sycl::detail::list_available_sycl_implementations
+#include "plssvm/backends/SYCL/implementation_types.hpp"  // plssvm::sycl::detail::list_available_sycl_implementations
 #include "plssvm/version/git_metadata/git_metadata.hpp"  // plssvm::version::git_metadata::{is_populated, commit_date, remote_url, branch, commit_sha1}
 
 #include "fmt/format.h"   // fmt::format, fmt::join

@@ -12,9 +12,9 @@
 
 #include "plssvm/detail/arithmetic_type_name.hpp"  // plssvm::detail::arithmetic_type_name
 
-#include "custom_test_macros.hpp"  // EXPECT_THROW_WHAT
-#include "naming.hpp"              // naming::{real_type_to_name, pretty_print_escaped_string}
-#include "types_to_test.hpp"       // util::{combine_test_parameters_gtest_t, cartesian_type_product_t, test_parameter_type_at_t}
+#include "tests/custom_test_macros.hpp"  // EXPECT_THROW_WHAT
+#include "tests/naming.hpp"              // naming::{real_type_to_name, pretty_print_escaped_string}
+#include "tests/types_to_test.hpp"       // util::{combine_test_parameters_gtest_t, cartesian_type_product_t, test_parameter_type_at_t}
 
 #include "fmt/format.h"   // fmt::format
 #include "gtest/gtest.h"  // TEST, ASSERT_EQ, EXPECT_EQ, EXPECT_TRUE, TYPED_TEST, TYPED_TEST_SUITE, TEST_P, INSTANTIATE_TEST_SUITE_P
@@ -98,6 +98,7 @@ class StringConversionException : public ::testing::Test {
   protected:
     using fixture_type = util::test_parameter_type_at_t<0, T>;
 };
+
 TYPED_TEST_SUITE(StringConversionException, string_conversion_exception_types_gtest, naming::test_parameter_to_name);
 
 TYPED_TEST(StringConversionException, string_conversion_exception) {
@@ -113,6 +114,7 @@ TYPED_TEST(StringConversionException, string_conversion_exception) {
                       std::invalid_argument,
                       fmt::format("Can't convert 'a' to a value of type {}!", plssvm::detail::arithmetic_type_name<type>()));
 }
+
 TEST(StringConversionException, string_conversion_exception_bool) {
     EXPECT_THROW_WHAT(std::ignore = plssvm::detail::convert_to<bool>("a"),
                       std::runtime_error,
@@ -124,6 +126,7 @@ TEST(StringConversionException, string_conversion_exception_bool) {
                       std::invalid_argument,
                       "Can't convert 'a' to a value of type long long!");
 }
+
 TEST(StringConversionException, string_conversion_exception_char) {
     EXPECT_THROW_WHAT(std::ignore = plssvm::detail::convert_to<char>("42"),
                       std::runtime_error,
@@ -136,11 +139,13 @@ TEST(StringConversionException, string_conversion_exception_char) {
                       "Can't convert '' to a value of type char!");
 }
 
-class StringConversionExtract : public ::testing::TestWithParam<std::tuple<std::string_view, int>> {};
+class StringConversionExtract : public ::testing::TestWithParam<std::tuple<std::string_view, int>> { };
+
 TEST_P(StringConversionExtract, extract_first_integer_from_string) {
     auto [input, output] = GetParam();
     EXPECT_EQ(plssvm::detail::extract_first_integer_from_string<int>(input), output);
 }
+
 // clang-format off
 INSTANTIATE_TEST_SUITE_P(StringUtility, StringConversionExtract, ::testing::Values(
                 std::make_tuple("111", 111), std::make_tuple("111 222", 111),
@@ -164,6 +169,7 @@ class StringConversionSplitAs : public ::testing::Test {
   protected:
     using fixture_type = util::test_parameter_type_at_t<0, T>;
 };
+
 TYPED_TEST_SUITE(StringConversionSplitAs, split_as_types_gtest, naming::test_parameter_to_name);
 
 TYPED_TEST(StringConversionSplitAs, split_default_delimiter) {
@@ -179,6 +185,7 @@ TYPED_TEST(StringConversionSplitAs, split_default_delimiter) {
         EXPECT_EQ(split[i], split_correct[i]) << fmt::format("pos: {}, split: {}, correct: {}", i, split[i], split_correct[i]);
     }
 }
+
 TYPED_TEST(StringConversionSplitAs, split_custom_delimiter) {
     using type = typename TestFixture::fixture_type;
 
@@ -192,6 +199,7 @@ TYPED_TEST(StringConversionSplitAs, split_custom_delimiter) {
         EXPECT_EQ(split[i], split_correct[i]) << fmt::format("pos: {}, split: {}, correct: {}", i, split[i], split_correct[i]);
     }
 }
+
 TYPED_TEST(StringConversionSplitAs, split_single_value) {
     using type = typename TestFixture::fixture_type;
 
@@ -200,6 +208,7 @@ TYPED_TEST(StringConversionSplitAs, split_single_value) {
     ASSERT_EQ(split.size(), 1);
     EXPECT_EQ(split.front(), static_cast<type>(42)) << fmt::format("split: {}, correct: {}", split.front(), static_cast<type>(42));
 }
+
 TYPED_TEST(StringConversionSplitAs, split_empty_string) {
     using type = typename TestFixture::fixture_type;
 
