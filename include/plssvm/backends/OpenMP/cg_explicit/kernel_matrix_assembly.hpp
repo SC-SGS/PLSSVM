@@ -38,7 +38,7 @@ namespace detail {
  * @param args the potential additional arguments for the @p kernel function
  */
 template <kernel_function_type kernel, typename... Args>
-inline void device_kernel_assembly(const std::vector<real_type> &q, std::vector<real_type> &ret, const aos_matrix<real_type> &data, const real_type QA_cost, const real_type cost, Args... args) {
+void device_kernel_assembly(const std::vector<real_type> &q, std::vector<real_type> &ret, const aos_matrix<real_type> &data, const real_type QA_cost, const real_type cost, Args... args) {
     PLSSVM_ASSERT(q.size() == data.num_rows() - 1, "Sizes mismatch!: {} != {}", q.size(), data.num_rows() - 1);
 #if defined(PLSSVM_USE_GEMM)
     PLSSVM_ASSERT(ret.size() == q.size() * q.size(), "Sizes mismatch (GEMM)!: {} != {}", ret.size(), q.size() * q.size());
@@ -49,28 +49,37 @@ inline void device_kernel_assembly(const std::vector<real_type> &q, std::vector<
 
     const std::size_t dept = q.size();
 
-#pragma omp parallel for schedule(dynamic)
-    for (std::size_t row = 0; row < dept; ++row) {
-        for (std::size_t col = row + 1; col < dept; ++col) {
-            const real_type temp = kernel_function<kernel>(data, row, data, col, args...) + QA_cost - q[row] - q[col];
-#if defined(PLSSVM_USE_GEMM)
-            ret[row * dept + col] = temp;
-            ret[col * dept + row] = temp;
-#else
-            ret[row * dept + col - row * (row + 1) / 2] = temp;
-#endif
-        }
-    }
+    constexpr std::size_t OPENMP_BLOCK_SIZE = 64;
 
-// apply cost to diagonal
-#pragma omp parallel for
-    for (std::size_t i = 0; i < dept; ++i) {
-        const real_type temp = kernel_function<kernel>(data, i, data, i, args...) + cost + QA_cost - q[i] - q[i];
+#pragma omp parallel for collapse(2) schedule(dynamic)
+    for (std::size_t row = 0; row < dept; row += OPENMP_BLOCK_SIZE) {
+        for (std::size_t col = 0; col < dept; col += OPENMP_BLOCK_SIZE) {
+
+            for (std::size_t row_block = 0; row_block < OPENMP_BLOCK_SIZE && row + row_block < dept; ++row_block) {
+                for (std::size_t col_block = 0; col_block < OPENMP_BLOCK_SIZE && col + col_block < dept; ++col_block) {
+                    const std::size_t row_idx = row + row_block;
+                    const std::size_t col_idx = col + col_block;
+
+                    // use symmetry and only calculate upper triangular matrix
+                    if (row_idx <= col_idx) {
+                        real_type temp = kernel_function<kernel>(data, row_idx, data, col_idx, args...) + QA_cost - q[row_idx] - q[col_idx];
+
+                        // apply cost to diagonal
+                        if (row_idx == col_idx) {
+                            temp += cost;
+                        }
+
 #if defined(PLSSVM_USE_GEMM)
-        ret[i * dept + i] = temp;
+                        ret[row_idx * dept + col_idx] = temp;
+                        ret[col_idx * dept + row_idx] = temp;
 #else
-        ret[i * dept + i - i * (i + 1) / 2] = temp;
+                        ret[row_idx * dept + col_idx - row_idx * (row_idx + 1) / 2] = temp;
 #endif
+                    }
+                }
+            }
+
+        }
     }
 }
 
