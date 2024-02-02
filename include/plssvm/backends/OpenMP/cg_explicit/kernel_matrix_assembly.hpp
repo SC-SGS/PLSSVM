@@ -6,14 +6,14 @@
  * @license This file is part of the PLSSVM project which is released under the MIT license.
  *          See the LICENSE.md file in the project root for full license information.
  *
- * @brief Functions for explicitly assemblying the kernel matrix using the OpenMP backend.
+ * @brief Functions for explicitly assembling the kernel matrix using the OpenMP backend.
  */
 
 #ifndef PLSSVM_BACKENDS_OPENMP_CG_EXPLICIT_KERNEL_MATRIX_ASSEMBLY_HPP_
 #define PLSSVM_BACKENDS_OPENMP_CG_EXPLICIT_KERNEL_MATRIX_ASSEMBLY_HPP_
 #pragma once
 
-#include "plssvm/constants.hpp"              // plssvm::real_type
+#include "plssvm/constants.hpp"              // plssvm::real_type, plssvm::OPENMP_BLOCK_SIZE
 #include "plssvm/detail/assert.hpp"          // PLSSVM_ASSERT
 #include "plssvm/kernel_function_types.hpp"  // plssvm::kernel_function_type
 #include "plssvm/kernel_functions.hpp"       // plssvm::kernel_function
@@ -49,19 +49,17 @@ void device_kernel_assembly(const std::vector<real_type> &q, std::vector<real_ty
 
     const std::size_t dept = q.size();
 
-    constexpr std::size_t OPENMP_BLOCK_SIZE = 64;
-
 #pragma omp parallel for collapse(2) schedule(dynamic)
     for (std::size_t row = 0; row < dept; row += OPENMP_BLOCK_SIZE) {
         for (std::size_t col = 0; col < dept; col += OPENMP_BLOCK_SIZE) {
-
-            for (std::size_t row_block = 0; row_block < OPENMP_BLOCK_SIZE && row + row_block < dept; ++row_block) {
-                for (std::size_t col_block = 0; col_block < OPENMP_BLOCK_SIZE && col + col_block < dept; ++col_block) {
+            // perform operations on the current block
+            for (std::size_t row_block = 0; row_block < OPENMP_BLOCK_SIZE; ++row_block) {
+                for (std::size_t col_block = 0; col_block < OPENMP_BLOCK_SIZE; ++col_block) {
                     const std::size_t row_idx = row + row_block;
                     const std::size_t col_idx = col + col_block;
 
                     // use symmetry and only calculate upper triangular matrix
-                    if (row_idx <= col_idx) {
+                    if (row_idx < dept && col_idx < dept && row_idx <= col_idx) {
                         real_type temp = kernel_function<kernel>(data, row_idx, data, col_idx, args...) + QA_cost - q[row_idx] - q[col_idx];
 
                         // apply cost to diagonal
@@ -78,7 +76,6 @@ void device_kernel_assembly(const std::vector<real_type> &q, std::vector<real_ty
                     }
                 }
             }
-
         }
     }
 }
