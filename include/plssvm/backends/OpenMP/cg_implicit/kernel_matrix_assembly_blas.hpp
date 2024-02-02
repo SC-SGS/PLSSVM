@@ -41,7 +41,7 @@ namespace detail {
  * @param args the potential additional arguments for the @p kernel function
  */
 template <kernel_function_type kernel, typename... Args>
-void device_kernel_assembly_symm(const real_type alpha, const std::vector<real_type> &q, const aos_matrix<real_type> &data, const real_type QA_cost, const real_type cost, const aos_matrix<real_type> &B, const real_type beta, aos_matrix<real_type> &C, Args... args) {
+inline void device_kernel_assembly_symm(const real_type alpha, const std::vector<real_type> &q, const aos_matrix<real_type> &data, const real_type QA_cost, const real_type cost, const aos_matrix<real_type> &B, const real_type beta, aos_matrix<real_type> &C, Args... args) {
     PLSSVM_ASSERT(q.size() == data.num_rows() - 1, "Sizes mismatch!: {} != {}", q.size(), data.num_rows() - 1);
     PLSSVM_ASSERT(cost != real_type{ 0.0 }, "cost must not be 0.0 since it is 1 / plssvm::cost!");
     PLSSVM_ASSERT(B.shape() == C.shape(), "The matrices B and C must have the same shape!");
@@ -99,7 +99,7 @@ void device_kernel_assembly_symm(const real_type alpha, const std::vector<real_t
  * @param[in] beta the beta alpha value
  * @param[in,out] C the matrix @p C
  */
-void device_kernel_assembly_linear_symm(const real_type alpha, const std::vector<real_type> &q, const aos_matrix<real_type> &data, const real_type QA_cost, const real_type cost, const aos_matrix<real_type> &B, const real_type beta, aos_matrix<real_type> &C) {
+inline void device_kernel_assembly_linear_symm(const real_type alpha, const std::vector<real_type> &q, const aos_matrix<real_type> &data, const real_type QA_cost, const real_type cost, const aos_matrix<real_type> &B, const real_type beta, aos_matrix<real_type> &C) {
     detail::device_kernel_assembly_symm<kernel_function_type::linear>(alpha, q, data, QA_cost, cost, B, beta, C);
 }
 
@@ -117,7 +117,7 @@ void device_kernel_assembly_linear_symm(const real_type alpha, const std::vector
  * @param[in] beta the beta alpha value
  * @param[in,out] C the matrix @p C
  */
-void device_kernel_assembly_polynomial_symm(const real_type alpha, const std::vector<real_type> &q, const aos_matrix<real_type> &data, const real_type QA_cost, const real_type cost, const int degree, const real_type gamma, const real_type coef0, const aos_matrix<real_type> &B, const real_type beta, aos_matrix<real_type> &C) {
+inline void device_kernel_assembly_polynomial_symm(const real_type alpha, const std::vector<real_type> &q, const aos_matrix<real_type> &data, const real_type QA_cost, const real_type cost, const int degree, const real_type gamma, const real_type coef0, const aos_matrix<real_type> &B, const real_type beta, aos_matrix<real_type> &C) {
     PLSSVM_ASSERT(gamma > real_type{ 0.0 }, "gamma must be greater than 0, but is {}!", gamma);
 
     detail::device_kernel_assembly_symm<kernel_function_type::polynomial>(alpha, q, data, QA_cost, cost, B, beta, C, degree, gamma, coef0);
@@ -135,7 +135,7 @@ void device_kernel_assembly_polynomial_symm(const real_type alpha, const std::ve
  * @param[in] beta the beta alpha value
  * @param[in,out] C the matrix @p C
  */
-void device_kernel_assembly_rbf_symm(const real_type alpha, const std::vector<real_type> &q, const aos_matrix<real_type> &data, const real_type QA_cost, const real_type cost, const real_type gamma, const aos_matrix<real_type> &B, const real_type beta, aos_matrix<real_type> &C) {
+inline void device_kernel_assembly_rbf_symm(const real_type alpha, const std::vector<real_type> &q, const aos_matrix<real_type> &data, const real_type QA_cost, const real_type cost, const real_type gamma, const aos_matrix<real_type> &B, const real_type beta, aos_matrix<real_type> &C) {
     PLSSVM_ASSERT(gamma > real_type{ 0.0 }, "gamma must be greater than 0, but is {}!", gamma);
 
     detail::device_kernel_assembly_symm<kernel_function_type::rbf>(alpha, q, data, QA_cost, cost, B, beta, C, gamma);
