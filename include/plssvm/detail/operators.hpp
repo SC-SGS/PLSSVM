@@ -15,6 +15,7 @@
 
 #include "plssvm/detail/assert.hpp"  // PLSSVM_ASSERT
 
+#include <cmath>   // std::fma
 #include <vector>  // std::vector
 
 //*************************************************************************************************************************************//
@@ -138,9 +139,8 @@ template <typename T>
     PLSSVM_ASSERT(lhs.vec.size() == rhs.size(), "Sizes mismatch!: {} != {}", lhs.vec.size(), rhs.size());
 
     T val{};
-#pragma omp simd reduction(+ : val)
     for (typename std::vector<T>::size_type i = 0; i < lhs.vec.size(); ++i) {
-        val += lhs.vec[i] * rhs[i];
+        val = std::fma(lhs.vec[i], rhs[i], val);
     }
     return val;
 }
@@ -181,10 +181,9 @@ template <typename T>
     PLSSVM_ASSERT(lhs.size() == rhs.size(), "Sizes mismatch!: {} != {}", lhs.size(), rhs.size());
 
     T val{};
-#pragma omp simd reduction(+ : val)
     for (typename std::vector<T>::size_type i = 0; i < lhs.size(); ++i) {
         const T diff = lhs[i] - rhs[i];
-        val += diff * diff;
+        val = std::fma(diff, diff, val);
     }
     return val;
 }

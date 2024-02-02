@@ -902,9 +902,8 @@ template <typename T, layout_type layout>
     for (size_type row = 0; row < res.num_rows(); ++row) {
         for (size_type col = 0; col < res.num_cols(); ++col) {
             T temp{ 0.0 };
-#pragma omp simd reduction(+ : temp)
             for (size_type dim = 0; dim < lhs.num_cols(); ++dim) {
-                temp += lhs(row, dim) * rhs(dim, col);
+                temp = std::fma(lhs(row, dim), rhs(dim, col), temp);
             }
             res(row, col) = temp;
         }
@@ -930,9 +929,8 @@ template <typename T, layout_type layout>
 #pragma omp parallel for default(none) shared(res, lhs, rhs)
     for (size_type row = 0; row < res.size(); ++row) {
         T temp{ 0.0 };
-#pragma omp simd reduction(+ : temp)
         for (size_type col = 0; col < lhs.num_cols(); ++col) {
-            temp += lhs(row, col) * rhs(row, col);
+            temp = std::fma(lhs(row, col), rhs(row, col), temp);
         }
         res[row] = temp;
     }

@@ -24,7 +24,7 @@
 
 #include "fmt/ostream.h"  // fmt::formatter, fmt::ostream_formatter
 
-#include <cmath>    // std::pow, std::exp
+#include <cmath>    // std::pow, std::exp, std::fma
 #include <cstddef>  // std::size_t
 #include <vector>   // std::vector
 
@@ -58,7 +58,7 @@ template <kernel_function_type kernel, typename T, typename... Args>
         const auto gamma_arg = static_cast<T>(detail::get<1>(args...));
         const auto coef0_arg = static_cast<T>(detail::get<2>(args...));
         // perform kernel function calculation
-        return std::pow(gamma_arg * (transposed<T>{ xi } * xj) + coef0_arg, degree_arg);
+        return std::pow(std::fma(gamma_arg, (transposed<T>{ xi } * xj), coef0_arg), degree_arg);
     } else if constexpr (kernel == kernel_function_type::rbf) {
         // get parameters
         static_assert(sizeof...(args) == 1, "Illegal number of additional parameters! Must be 1.");
@@ -118,9 +118,8 @@ template <kernel_function_type kernel, typename T, layout_type layout, typename.
     if constexpr (kernel == kernel_function_type::linear) {
         static_assert(sizeof...(args) == 0, "Illegal number of additional parameters! Must be 0.");
         T temp{ 0.0 };
-#pragma omp simd reduction(+ : temp)
         for (size_type dim = 0; dim < x.num_cols(); ++dim) {
-            temp += x(i, dim) * y(j, dim);
+            temp = std::fma(x(i, dim), y(j, dim), temp);
         }
         return temp;
     } else if constexpr (kernel == kernel_function_type::polynomial) {
@@ -129,19 +128,17 @@ template <kernel_function_type kernel, typename T, layout_type layout, typename.
         const auto gamma_arg = static_cast<T>(detail::get<1>(args...));
         const auto coef0_arg = static_cast<T>(detail::get<2>(args...));
         T temp{ 0.0 };
-#pragma omp simd reduction(+ : temp)
         for (size_type dim = 0; dim < x.num_cols(); ++dim) {
-            temp += x(i, dim) * y(j, dim);
+            temp = std::fma(x(i, dim), y(j, dim), temp);
         }
-        return std::pow(gamma_arg * temp + coef0_arg, degree_arg);
+        return std::pow(std::fma(gamma_arg, temp, coef0_arg), degree_arg);
     } else if constexpr (kernel == kernel_function_type::rbf) {
         static_assert(sizeof...(args) == 1, "Illegal number of additional parameters! Must be 1.");
         const auto gamma_arg = static_cast<T>(detail::get<0>(args...));
         T temp{ 0.0 };
-#pragma omp simd reduction(+ : temp)
         for (size_type dim = 0; dim < x.num_cols(); ++dim) {
             const T diff = x(i, dim) - y(j, dim);
-            temp += diff * diff;
+            temp = std::fma(diff, diff, temp);
         }
         return std::exp(-gamma_arg * temp);
     } else {
