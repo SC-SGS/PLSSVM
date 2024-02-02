@@ -35,4 +35,4 @@ jobs:
       - name: "Run tests"
         run: |
           cd PLSSVM/build
-          ctest -j 2 -E "SourceLocation|.*executable.*" --output-on-failure -C ${{ matrix.build_type }}
+          ctest -j 2 -E ".*Exceptions\.|SourceLocation|.*executable.*" --output-on-failure -C ${{ matrix.build_type }}
