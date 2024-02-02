@@ -118,7 +118,6 @@ template <kernel_function_type kernel, typename T, layout_type layout, typename.
     if constexpr (kernel == kernel_function_type::linear) {
         static_assert(sizeof...(args) == 0, "Illegal number of additional parameters! Must be 0.");
         T temp{ 0.0 };
-#pragma omp simd reduction(+ : temp)
         for (size_type dim = 0; dim < x.num_cols(); ++dim) {
             temp = std::fma(x(i, dim), y(j, dim), temp);
         }
@@ -129,7 +128,6 @@ template <kernel_function_type kernel, typename T, layout_type layout, typename.
         const auto gamma_arg = static_cast<T>(detail::get<1>(args...));
         const auto coef0_arg = static_cast<T>(detail::get<2>(args...));
         T temp{ 0.0 };
-#pragma omp simd reduction(+ : temp)
         for (size_type dim = 0; dim < x.num_cols(); ++dim) {
             temp = std::fma(x(i, dim), y(j, dim), temp);
         }
@@ -138,7 +136,6 @@ template <kernel_function_type kernel, typename T, layout_type layout, typename.
         static_assert(sizeof...(args) == 1, "Illegal number of additional parameters! Must be 1.");
         const auto gamma_arg = static_cast<T>(detail::get<0>(args...));
         T temp{ 0.0 };
-#pragma omp simd reduction(+ : temp)
         for (size_type dim = 0; dim < x.num_cols(); ++dim) {
             const T diff = x(i, dim) - y(j, dim);
             temp = std::fma(diff, diff, temp);
