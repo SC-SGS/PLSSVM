@@ -12,7 +12,7 @@
 #ifndef PLSSVM_BACKENDS_OPENMP_CG_IMPLICIT_KERNEL_MATRIX_ASSEMBLY_BLAS_HPP_
 #define PLSSVM_BACKENDS_OPENMP_CG_IMPLICIT_KERNEL_MATRIX_ASSEMBLY_BLAS_HPP_
 
-#include "plssvm/constants.hpp"              // plssvm::real_type
+#include "plssvm/constants.hpp"              // plssvm::real_type, plssvm::OPENMP_BLOCK_SIZE
 #include "plssvm/detail/assert.hpp"          // PLSSVM_ASSERT
 #include "plssvm/detail/operators.hpp"       // overloaded arithmetic operations for a plssvm::matrix
 #include "plssvm/kernel_function_types.hpp"  // plssvm::kernel_function_type
@@ -41,7 +41,7 @@ namespace detail {
  * @param args the potential additional arguments for the @p kernel function
  */
 template <kernel_function_type kernel, typename... Args>
-void device_kernel_assembly_symm(const real_type alpha, const std::vector<real_type> &q, const aos_matrix<real_type> &data, const real_type QA_cost, const real_type cost, const aos_matrix<real_type> &B, const real_type beta, aos_matrix<real_type> &C, Args... args) {
+inline void device_kernel_assembly_symm(const real_type alpha, const std::vector<real_type> &q, const aos_matrix<real_type> &data, const real_type QA_cost, const real_type cost, const aos_matrix<real_type> &B, const real_type beta, aos_matrix<real_type> &C, Args... args) {
     PLSSVM_ASSERT(q.size() == data.num_rows() - 1, "Sizes mismatch!: {} != {}", q.size(), data.num_rows() - 1);
     PLSSVM_ASSERT(cost != real_type{ 0.0 }, "cost must not be 0.0 since it is 1 / plssvm::cost!");
     PLSSVM_ASSERT(B.shape() == C.shape(), "The matrices B and C must have the same shape!");
@@ -55,33 +55,41 @@ void device_kernel_assembly_symm(const real_type alpha, const std::vector<real_t
     C *= beta;
 
 // loop over all rows in the IMPLICIT kernel matrix
-#pragma omp parallel for schedule(dynamic)
-    for (std::size_t km_row = 0; km_row < dept; ++km_row) {
+#pragma omp parallel for collapse(2) schedule(dynamic)
+    for (std::size_t km_row = 0; km_row < dept; km_row += OPENMP_BLOCK_SIZE) {
         // loop over all columns in the IMPLICIT kernel matrix
-        // half number of computations by exploiting symmetry
-        // NOTE: diagonal NOT included!
-        for (std::size_t km_col = km_row + 1; km_col < dept; ++km_col) {
-            // calculate kernel matrix entry
-            const real_type temp = kernel_function<kernel>(data, km_row, data, km_col, args...) + QA_cost - q[km_row] - q[km_col];
+        for (std::size_t km_col = 0; km_col < dept; km_col += OPENMP_BLOCK_SIZE) {
+            // perform operations on the current block
+            for (std::size_t km_row_block = 0; km_row_block < OPENMP_BLOCK_SIZE; ++km_row_block) {
+                for (std::size_t km_col_block = 0; km_col_block < OPENMP_BLOCK_SIZE; ++km_col_block) {
+                    const std::size_t km_row_idx = km_row + km_row_block;
+                    const std::size_t km_col_idx = km_col + km_col_block;
 
-            // calculate the values of alpha * A * B
-            for (std::size_t row = 0; row < B.num_rows(); ++row) {
+                    // half number of computations by exploiting symmetry
+                    if (km_row_idx < dept && km_col_idx < dept && km_row_idx <= km_col_idx) {
+                        real_type temp = kernel_function<kernel>(data, km_row_idx, data, km_col_idx, args...) + QA_cost - q[km_row_idx] - q[km_col_idx];
+
+                        // apply cost to diagonal
+                        if (km_row_idx == km_col_idx) {
+                            temp += cost;
+                            // calculate the values of alpha * A * B
+                            for (std::size_t row = 0; row < B.num_rows(); ++row) {
 #pragma omp atomic
-                C(row, km_row) += alpha * temp * B(row, km_col);
+                                C(row, km_row_idx) += alpha * temp * B(row, km_row_idx);
+                            }
+                        } else {
+                            // calculate the values of alpha * A * B
+                            for (std::size_t row = 0; row < B.num_rows(); ++row) {
+#pragma omp atomic
+                                C(row, km_row_idx) += alpha * temp * B(row, km_col_idx);
 // symmetry
 #pragma omp atomic
-                C(row, km_col) += alpha * temp * B(row, km_row);
+                                C(row, km_col_idx) += alpha * temp * B(row, km_row_idx);
+                            }
+                        }
+                    }
+                }
             }
-        }
-    }
-// handle diagonal
-#pragma omp parallel for
-    for (std::size_t i = 0; i < dept; ++i) {
-        const real_type temp = kernel_function<kernel>(data, i, data, i, args...) + cost + QA_cost - q[i] - q[i];
-
-        // calculate the values of alpha * A * B
-        for (std::size_t row = 0; row < B.num_rows(); ++row) {
-            C(row, i) += alpha * temp * B(row, i);
         }
     }
 }
@@ -99,7 +107,7 @@ void device_kernel_assembly_symm(const real_type alpha, const std::vector<real_t
  * @param[in] beta the beta alpha value
  * @param[in,out] C the matrix @p C
  */
-void device_kernel_assembly_linear_symm(const real_type alpha, const std::vector<real_type> &q, const aos_matrix<real_type> &data, const real_type QA_cost, const real_type cost, const aos_matrix<real_type> &B, const real_type beta, aos_matrix<real_type> &C) {
+inline void device_kernel_assembly_linear_symm(const real_type alpha, const std::vector<real_type> &q, const aos_matrix<real_type> &data, const real_type QA_cost, const real_type cost, const aos_matrix<real_type> &B, const real_type beta, aos_matrix<real_type> &C) {
     detail::device_kernel_assembly_symm<kernel_function_type::linear>(alpha, q, data, QA_cost, cost, B, beta, C);
 }
 
@@ -117,7 +125,7 @@ void device_kernel_assembly_linear_symm(const real_type alpha, const std::vector
  * @param[in] beta the beta alpha value
  * @param[in,out] C the matrix @p C
  */
-void device_kernel_assembly_polynomial_symm(const real_type alpha, const std::vector<real_type> &q, const aos_matrix<real_type> &data, const real_type QA_cost, const real_type cost, const int degree, const real_type gamma, const real_type coef0, const aos_matrix<real_type> &B, const real_type beta, aos_matrix<real_type> &C) {
+inline void device_kernel_assembly_polynomial_symm(const real_type alpha, const std::vector<real_type> &q, const aos_matrix<real_type> &data, const real_type QA_cost, const real_type cost, const int degree, const real_type gamma, const real_type coef0, const aos_matrix<real_type> &B, const real_type beta, aos_matrix<real_type> &C) {
     PLSSVM_ASSERT(gamma > real_type{ 0.0 }, "gamma must be greater than 0, but is {}!", gamma);
 
     detail::device_kernel_assembly_symm<kernel_function_type::polynomial>(alpha, q, data, QA_cost, cost, B, beta, C, degree, gamma, coef0);
@@ -135,7 +143,7 @@ void device_kernel_assembly_polynomial_symm(const real_type alpha, const std::ve
  * @param[in] beta the beta alpha value
  * @param[in,out] C the matrix @p C
  */
-void device_kernel_assembly_rbf_symm(const real_type alpha, const std::vector<real_type> &q, const aos_matrix<real_type> &data, const real_type QA_cost, const real_type cost, const real_type gamma, const aos_matrix<real_type> &B, const real_type beta, aos_matrix<real_type> &C) {
+inline void device_kernel_assembly_rbf_symm(const real_type alpha, const std::vector<real_type> &q, const aos_matrix<real_type> &data, const real_type QA_cost, const real_type cost, const real_type gamma, const aos_matrix<real_type> &B, const real_type beta, aos_matrix<real_type> &C) {
     PLSSVM_ASSERT(gamma > real_type{ 0.0 }, "gamma must be greater than 0, but is {}!", gamma);
 
     detail::device_kernel_assembly_symm<kernel_function_type::rbf>(alpha, q, data, QA_cost, cost, B, beta, C, gamma);

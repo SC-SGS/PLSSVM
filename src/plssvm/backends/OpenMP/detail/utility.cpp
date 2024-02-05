@@ -8,7 +8,7 @@
 
 #include "plssvm/detail/utility.hpp"  // plssvm::detail::contains
 
-#include "omp.h"
+#include "omp.h"  // omp_get_num_threads, _OPENMP
 
 #include "fmt/core.h"  // fmt::format
 
@@ -19,7 +19,7 @@ namespace plssvm::openmp::detail {
 
 int get_num_threads() {
     // get the number of used OpenMP threads
-    int num_omp_threads;
+    int num_omp_threads{};
 #pragma omp parallel default(none) shared(num_omp_threads)
     {
 #pragma omp master

@@ -6,14 +6,14 @@
  * @license This file is part of the PLSSVM project which is released under the MIT license.
  *          See the LICENSE.md file in the project root for full license information.
  *
- * @brief Functions for explicitly assemblying the kernel matrix using the OpenMP backend.
+ * @brief Functions for explicitly assembling the kernel matrix using the OpenMP backend.
  */
 
 #ifndef PLSSVM_BACKENDS_OPENMP_CG_EXPLICIT_KERNEL_MATRIX_ASSEMBLY_HPP_
 #define PLSSVM_BACKENDS_OPENMP_CG_EXPLICIT_KERNEL_MATRIX_ASSEMBLY_HPP_
 #pragma once
 
-#include "plssvm/constants.hpp"              // plssvm::real_type
+#include "plssvm/constants.hpp"              // plssvm::real_type, plssvm::OPENMP_BLOCK_SIZE
 #include "plssvm/detail/assert.hpp"          // PLSSVM_ASSERT
 #include "plssvm/kernel_function_types.hpp"  // plssvm::kernel_function_type
 #include "plssvm/kernel_functions.hpp"       // plssvm::kernel_function
@@ -49,28 +49,34 @@ void device_kernel_assembly(const std::vector<real_type> &q, std::vector<real_ty
 
     const std::size_t dept = q.size();
 
-#pragma omp parallel for schedule(dynamic)
-    for (std::size_t row = 0; row < dept; ++row) {
-        for (std::size_t col = row + 1; col < dept; ++col) {
-            const real_type temp = kernel_function<kernel>(data, row, data, col, args...) + QA_cost - q[row] - q[col];
-#if defined(PLSSVM_USE_GEMM)
-            ret[row * dept + col] = temp;
-            ret[col * dept + row] = temp;
-#else
-            ret[row * dept + col - row * (row + 1) / 2] = temp;
-#endif
-        }
-    }
+#pragma omp parallel for collapse(2) schedule(dynamic)
+    for (std::size_t row = 0; row < dept; row += OPENMP_BLOCK_SIZE) {
+        for (std::size_t col = 0; col < dept; col += OPENMP_BLOCK_SIZE) {
+            // perform operations on the current block
+            for (std::size_t row_block = 0; row_block < OPENMP_BLOCK_SIZE; ++row_block) {
+                for (std::size_t col_block = 0; col_block < OPENMP_BLOCK_SIZE; ++col_block) {
+                    const std::size_t row_idx = row + row_block;
+                    const std::size_t col_idx = col + col_block;
 
-// apply cost to diagonal
-#pragma omp parallel for
-    for (std::size_t i = 0; i < dept; ++i) {
-        const real_type temp = kernel_function<kernel>(data, i, data, i, args...) + cost + QA_cost - q[i] - q[i];
+                    // use symmetry and only calculate upper triangular matrix
+                    if (row_idx < dept && col_idx < dept && row_idx <= col_idx) {
+                        real_type temp = kernel_function<kernel>(data, row_idx, data, col_idx, args...) + QA_cost - q[row_idx] - q[col_idx];
+
+                        // apply cost to diagonal
+                        if (row_idx == col_idx) {
+                            temp += cost;
+                        }
+
 #if defined(PLSSVM_USE_GEMM)
-        ret[i * dept + i] = temp;
+                        ret[row_idx * dept + col_idx] = temp;
+                        ret[col_idx * dept + row_idx] = temp;
 #else
-        ret[i * dept + i - i * (i + 1) / 2] = temp;
+                        ret[row_idx * dept + col_idx - row_idx * (row_idx + 1) / 2] = temp;
 #endif
+                    }
+                }
+            }
+        }
     }
 }
 
@@ -84,7 +90,7 @@ void device_kernel_assembly(const std::vector<real_type> &q, std::vector<real_ty
  * @param[in] QA_cost he bottom right matrix entry multiplied by cost
  * @param[in] cost 1 / the cost parameter in the C-SVM
  */
-void device_kernel_assembly_linear(const std::vector<real_type> &q, std::vector<real_type> &ret, const aos_matrix<real_type> &data, const real_type QA_cost, const real_type cost) {
+inline void device_kernel_assembly_linear(const std::vector<real_type> &q, std::vector<real_type> &ret, const aos_matrix<real_type> &data, const real_type QA_cost, const real_type cost) {
     detail::device_kernel_assembly<kernel_function_type::linear>(q, ret, data, QA_cost, cost);
 }
 
@@ -99,7 +105,7 @@ void device_kernel_assembly_linear(const std::vector<real_type> &q, std::vector<
  * @param[in] gamma the gamma parameter used in the polynomial kernel function
  * @param[in] coef0 the coef0 parameter used in the polynomial kernel function
  */
-void device_kernel_assembly_polynomial(const std::vector<real_type> &q, std::vector<real_type> &ret, const aos_matrix<real_type> &data, const real_type QA_cost, const real_type cost, const int degree, const real_type gamma, const real_type coef0) {
+inline void device_kernel_assembly_polynomial(const std::vector<real_type> &q, std::vector<real_type> &ret, const aos_matrix<real_type> &data, const real_type QA_cost, const real_type cost, const int degree, const real_type gamma, const real_type coef0) {
     PLSSVM_ASSERT(gamma > real_type{ 0.0 }, "gamma must be greater than 0, but is {}!", gamma);
 
     detail::device_kernel_assembly<kernel_function_type::polynomial>(q, ret, data, QA_cost, cost, degree, gamma, coef0);
@@ -114,7 +120,7 @@ void device_kernel_assembly_polynomial(const std::vector<real_type> &q, std::vec
  * @param[in] cost 1 / the cost parameter in the C-SVM
  * @param[in] gamma the gamma parameter used in the rbf kernel function
  */
-void device_kernel_assembly_rbf(const std::vector<real_type> &q, std::vector<real_type> &ret, const aos_matrix<real_type> &data, const real_type QA_cost, const real_type cost, const real_type gamma) {
+inline void device_kernel_assembly_rbf(const std::vector<real_type> &q, std::vector<real_type> &ret, const aos_matrix<real_type> &data, const real_type QA_cost, const real_type cost, const real_type gamma) {
     PLSSVM_ASSERT(gamma > real_type{ 0.0 }, "gamma must be greater than 0, but is {}!", gamma);
 
     detail::device_kernel_assembly<kernel_function_type::rbf>(q, ret, data, QA_cost, cost, gamma);

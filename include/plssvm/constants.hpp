@@ -43,6 +43,9 @@ constexpr unsigned INTERNAL_BLOCK_SIZE = 4;
 /// Global compile time constant used for internal feature caching.
 constexpr unsigned FEATURE_BLOCK_SIZE = 2 * THREAD_BLOCK_SIZE;
 
+/// Global compile time constant used for OpenMP specific caching.
+constexpr unsigned OPENMP_BLOCK_SIZE = THREAD_BLOCK_SIZE * INTERNAL_BLOCK_SIZE;
+
 /// Padding used for the device w_d matrix to prevent out-of-bounce accesses without ifs.
 constexpr unsigned PADDING_SIZE = FEATURE_BLOCK_SIZE > (THREAD_BLOCK_SIZE * INTERNAL_BLOCK_SIZE) ? FEATURE_BLOCK_SIZE : (THREAD_BLOCK_SIZE *INTERNAL_BLOCK_SIZE);
 

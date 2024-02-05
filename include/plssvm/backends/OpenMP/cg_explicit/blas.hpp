@@ -34,7 +34,7 @@ namespace plssvm::openmp {
  * @param[in] beta the scalar beta value
  * @param[in,out] C the matrix @p C, also used as result matrix
  */
-void device_kernel_gemm(const unsigned long long m, const unsigned long long n, const unsigned long long k, const real_type alpha, const std::vector<real_type> &A, const aos_matrix<real_type> &B, const real_type beta, aos_matrix<real_type> &C) {
+inline void device_kernel_gemm(const unsigned long long m, const unsigned long long n, const unsigned long long k, const real_type alpha, const std::vector<real_type> &A, const aos_matrix<real_type> &B, const real_type beta, aos_matrix<real_type> &C) {
     // compute: C = alpha * A * B + beta * C with A in m x k, B in n x k, and C in n x m, alpha, beta as scalar
     PLSSVM_ASSERT(A.size() == m * k, "A matrix sizes mismatch!: {} != {}", A.size(), m * k);
     PLSSVM_ASSERT(B.shape() == (plssvm::shape{ n, k }), "B matrix sizes mismatch!: {} != [{}, {}]", B.shape(), n, k);
@@ -64,7 +64,7 @@ void device_kernel_gemm(const unsigned long long m, const unsigned long long n, 
  * @param[in] beta the scalar beta value
  * @param[in,out] C the matrix @p C, also used as result matrix
  */
-void device_kernel_symm(const unsigned long long m, const unsigned long long n, const unsigned long long k, const real_type alpha, const std::vector<real_type> &A, const aos_matrix<real_type> &B, const real_type beta, aos_matrix<real_type> &C) {
+inline void device_kernel_symm(const unsigned long long m, const unsigned long long n, const unsigned long long k, const real_type alpha, const std::vector<real_type> &A, const aos_matrix<real_type> &B, const real_type beta, aos_matrix<real_type> &C) {
     // compute: C = alpha * A * B + beta * C with A in m x k, B in n x k, and C in n x m, alpha, beta as scalar
     PLSSVM_ASSERT(A.size() == m * (k + 1) / 2, "A matrix sizes mismatch!: {} != {}", A.size(), m * (k + 1) / 2);
     PLSSVM_ASSERT(B.shape() == (plssvm::shape{ n, k }), "B matrix sizes mismatch!: {} != [{}, {}]", B.shape(), n, k);

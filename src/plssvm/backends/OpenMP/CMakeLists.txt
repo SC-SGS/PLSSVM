@@ -46,6 +46,19 @@ target_link_libraries(${PLSSVM_OPENMP_BACKEND_LIBRARY_NAME} PRIVATE $<$<NOT:$<CX
 # -openmp:experimental -> enables OpenMP's SIMD instructions
 target_compile_options(${PLSSVM_OPENMP_BACKEND_LIBRARY_NAME} PRIVATE $<$<CXX_COMPILER_ID:MSVC>:-openmp:llvm -openmp:experimental>)
 
+# work-around since hipcc doesn't define _OPENMP
+if (${CMAKE_CXX_COMPILER_ID} MATCHES "Clang")
+    # hipcc must be clang
+    execute_process(
+            COMMAND ${CMAKE_CXX_COMPILER} --version
+            OUTPUT_VARIABLE PLSSVM_CLANG_VERSION_OUTPUT)
+    # check if version message contains hipcc specific values
+    if ("${PLSSVM_CLANG_VERSION_OUTPUT}" MATCHES ".*HIP.*" AND "${PLSSVM_CLANG_VERSION_OUTPUT}" MATCHES ".*AMD clang.*")
+        message(STATUS "Add compiler options \"-x c++\" as workaround for hipcc (https://docs.amd.com/projects/HIP/en/docs-5.2.0/user_guide/faq.html#why-openmp-is-undefined-when-compiling-with-fopenmp).")
+        target_compile_options(${PLSSVM_OPENMP_BACKEND_LIBRARY_NAME} PRIVATE -x c++)
+    endif ()
+endif ()
+
 # link base library against OpenMP library
 target_link_libraries(${PLSSVM_OPENMP_BACKEND_LIBRARY_NAME} PUBLIC ${PLSSVM_BASE_LIBRARY_NAME})
 
