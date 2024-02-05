@@ -32,7 +32,7 @@ namespace plssvm::cuda {
  * @param[in,out] C the matrix @p C
  * @param[in] num_classes the number of classes in the data set
  */
-__global__ void device_kernel_assembly_linear_symm(const real_type alpha, const real_type *q, const real_type *data_d, const unsigned long long num_rows, const unsigned long long num_features, const real_type QA_cost, const real_type cost, const real_type *B, real_type *C, const unsigned long long num_classes) {
+__global__ void device_kernel_assembly_linear_symm(const real_type alpha, const real_type *q, const real_type *data_d, const unsigned long long num_rows, const unsigned long long num_features, const real_type QA_cost, const real_type cost, const real_type *B, real_type *C, const unsigned long long num_classes, const unsigned long long offset) {
     const unsigned long long i = (blockIdx.x * blockDim.x + threadIdx.x) * INTERNAL_BLOCK_SIZE;
     const unsigned long long i_linear = blockIdx.x * blockDim.x * INTERNAL_BLOCK_SIZE + threadIdx.x;
     const unsigned long long j = (blockIdx.y * blockDim.y + threadIdx.y) * INTERNAL_BLOCK_SIZE;
@@ -47,8 +47,8 @@ __global__ void device_kernel_assembly_linear_symm(const real_type alpha, const 
         for (unsigned long long dim = 0; dim < num_features; dim += FEATURE_BLOCK_SIZE) {
             // load data into shared memory
             for (unsigned internal = 0; internal < INTERNAL_BLOCK_SIZE; ++internal) {
-                const unsigned long long global_i = i_linear + internal * THREAD_BLOCK_SIZE;
-                const unsigned long long global_j = j_cached_idx_linear + internal * THREAD_BLOCK_SIZE;
+                const unsigned long long global_i = offset + i_linear + internal * THREAD_BLOCK_SIZE;
+                const unsigned long long global_j = offset + j_cached_idx_linear + internal * THREAD_BLOCK_SIZE;
 
                 data_cache_i[threadIdx.y][internal * THREAD_BLOCK_SIZE + threadIdx.x] = data_d[(dim + threadIdx.y) * (num_rows + 1 + PADDING_SIZE) + global_i];
                 data_cache_i[threadIdx.y + THREAD_BLOCK_SIZE][internal * THREAD_BLOCK_SIZE + threadIdx.x] = data_d[(dim + threadIdx.y + THREAD_BLOCK_SIZE) * (num_rows + 1 + PADDING_SIZE) + global_i];
@@ -70,8 +70,8 @@ __global__ void device_kernel_assembly_linear_symm(const real_type alpha, const 
 
         for (unsigned internal_i = 0; internal_i < INTERNAL_BLOCK_SIZE; ++internal_i) {
             for (unsigned internal_j = 0; internal_j < INTERNAL_BLOCK_SIZE; ++internal_j) {
-                const unsigned long long global_i = i + internal_i;
-                const unsigned long long global_j = j + internal_j;
+                const unsigned long long global_i = offset + i + internal_i;
+                const unsigned long long global_j = offset + j + internal_j;
 
                 if (global_i < num_rows && global_j < num_rows && global_i >= global_j) {
                     real_type temp_ij = temp[internal_i][internal_j];
@@ -110,7 +110,7 @@ __global__ void device_kernel_assembly_linear_symm(const real_type alpha, const 
  * @param[in,out] C the matrix @p C
  * @param[in] num_classes the number of classes in the data set
  */
-__global__ void device_kernel_assembly_polynomial_symm(const real_type alpha, const real_type *q, const real_type *data_d, const unsigned long long num_rows, const unsigned long long num_features, const real_type QA_cost, const real_type cost, const int degree, const real_type gamma, const real_type coef0, const real_type *B, real_type *C, const unsigned long long num_classes) {
+__global__ void device_kernel_assembly_polynomial_symm(const real_type alpha, const real_type *q, const real_type *data_d, const unsigned long long num_rows, const unsigned long long num_features, const real_type QA_cost, const real_type cost, const int degree, const real_type gamma, const real_type coef0, const real_type *B, real_type *C, const unsigned long long num_classes, const unsigned long long offset) {
     const unsigned long long i = (blockIdx.x * blockDim.x + threadIdx.x) * INTERNAL_BLOCK_SIZE;
     const unsigned long long i_linear = blockIdx.x * blockDim.x * INTERNAL_BLOCK_SIZE + threadIdx.x;
     const unsigned long long j = (blockIdx.y * blockDim.y + threadIdx.y) * INTERNAL_BLOCK_SIZE;
@@ -125,8 +125,8 @@ __global__ void device_kernel_assembly_polynomial_symm(const real_type alpha, co
         for (unsigned long long dim = 0; dim < num_features; dim += FEATURE_BLOCK_SIZE) {
             // load data into shared memory
             for (unsigned internal = 0; internal < INTERNAL_BLOCK_SIZE; ++internal) {
-                const unsigned long long global_i = i_linear + internal * THREAD_BLOCK_SIZE;
-                const unsigned long long global_j = j_cached_idx_linear + internal * THREAD_BLOCK_SIZE;
+                const unsigned long long global_i = offset + i_linear + internal * THREAD_BLOCK_SIZE;
+                const unsigned long long global_j = offset + j_cached_idx_linear + internal * THREAD_BLOCK_SIZE;
 
                 data_cache_i[threadIdx.y][internal * THREAD_BLOCK_SIZE + threadIdx.x] = data_d[(dim + threadIdx.y) * (num_rows + 1 + PADDING_SIZE) + global_i];
                 data_cache_i[threadIdx.y + THREAD_BLOCK_SIZE][internal * THREAD_BLOCK_SIZE + threadIdx.x] = data_d[(dim + threadIdx.y + THREAD_BLOCK_SIZE) * (num_rows + 1 + PADDING_SIZE) + global_i];
@@ -148,8 +148,8 @@ __global__ void device_kernel_assembly_polynomial_symm(const real_type alpha, co
 
         for (unsigned internal_i = 0; internal_i < INTERNAL_BLOCK_SIZE; ++internal_i) {
             for (unsigned internal_j = 0; internal_j < INTERNAL_BLOCK_SIZE; ++internal_j) {
-                const unsigned long long global_i = i + internal_i;
-                const unsigned long long global_j = j + internal_j;
+                const unsigned long long global_i = offset + i + internal_i;
+                const unsigned long long global_j = offset + j + internal_j;
 
                 if (global_i < num_rows && global_j < num_rows && global_i >= global_j) {
                     real_type temp_ij = temp[internal_i][internal_j];
@@ -186,7 +186,7 @@ __global__ void device_kernel_assembly_polynomial_symm(const real_type alpha, co
  * @param[in,out] C the matrix @p C
  * @param[in] num_classes the number of classes in the data set
  */
-__global__ void device_kernel_assembly_rbf_symm(const real_type alpha, const real_type *q, const real_type *data_d, const unsigned long long num_rows, const unsigned long long num_features, const real_type QA_cost, const real_type cost, const real_type gamma, const real_type *B, real_type *C, const unsigned long long num_classes) {
+__global__ void device_kernel_assembly_rbf_symm(const real_type alpha, const real_type *q, const real_type *data_d, const unsigned long long num_rows, const unsigned long long num_features, const real_type QA_cost, const real_type cost, const real_type gamma, const real_type *B, real_type *C, const unsigned long long num_classes, const unsigned long long offset) {
     const unsigned long long i = (blockIdx.x * blockDim.x + threadIdx.x) * INTERNAL_BLOCK_SIZE;
     const unsigned long long i_linear = blockIdx.x * blockDim.x * INTERNAL_BLOCK_SIZE + threadIdx.x;
     const unsigned long long j = (blockIdx.y * blockDim.y + threadIdx.y) * INTERNAL_BLOCK_SIZE;
@@ -201,8 +201,8 @@ __global__ void device_kernel_assembly_rbf_symm(const real_type alpha, const rea
         for (unsigned long long dim = 0; dim < num_features; dim += FEATURE_BLOCK_SIZE) {
             // load data into shared memory
             for (unsigned internal = 0; internal < INTERNAL_BLOCK_SIZE; ++internal) {
-                const unsigned long long global_i = i_linear + internal * THREAD_BLOCK_SIZE;
-                const unsigned long long global_j = j_cached_idx_linear + internal * THREAD_BLOCK_SIZE;
+                const unsigned long long global_i = offset + i_linear + internal * THREAD_BLOCK_SIZE;
+                const unsigned long long global_j = offset + j_cached_idx_linear + internal * THREAD_BLOCK_SIZE;
 
                 data_cache_i[threadIdx.y][internal * THREAD_BLOCK_SIZE + threadIdx.x] = data_d[(dim + threadIdx.y) * (num_rows + 1 + PADDING_SIZE) + global_i];
                 data_cache_i[threadIdx.y + THREAD_BLOCK_SIZE][internal * THREAD_BLOCK_SIZE + threadIdx.x] = data_d[(dim + threadIdx.y + THREAD_BLOCK_SIZE) * (num_rows + 1 + PADDING_SIZE) + global_i];
@@ -225,8 +225,8 @@ __global__ void device_kernel_assembly_rbf_symm(const real_type alpha, const rea
 
         for (unsigned internal_i = 0; internal_i < INTERNAL_BLOCK_SIZE; ++internal_i) {
             for (unsigned internal_j = 0; internal_j < INTERNAL_BLOCK_SIZE; ++internal_j) {
-                const unsigned long long global_i = i + internal_i;
-                const unsigned long long global_j = j + internal_j;
+                const unsigned long long global_i = offset + i + internal_i;
+                const unsigned long long global_j = offset + j + internal_j;
 
                 if (global_i < num_rows && global_j < num_rows && global_i >= global_j) {
                     real_type temp_ij = temp[internal_i][internal_j];

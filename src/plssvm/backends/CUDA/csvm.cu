@@ -44,6 +44,10 @@
 
 namespace plssvm::cuda {
 
+// TODO: PUT WHERE?
+constexpr int MAX_Y_GRID_DIMENSIONS = 65'535;
+
+
 csvm::csvm(parameter params) :
     csvm{ plssvm::target_platform::automatic, params } { }
 
@@ -152,8 +156,25 @@ auto csvm::run_assemble_kernel_matrix_explicit(const parameter &params, const de
         throw kernel_launch_resources{ fmt::format("Not enough work-items allowed for a work-groups of size {}x{}! Try reducing THREAD_BLOCK_SIZE.", THREAD_BLOCK_SIZE, THREAD_BLOCK_SIZE) };
     }
     const dim3 block(THREAD_BLOCK_SIZE, THREAD_BLOCK_SIZE);
-    const dim3 grid(static_cast<int>(std::ceil(static_cast<double>(num_rows_reduced) / static_cast<double>(block.x * INTERNAL_BLOCK_SIZE))),
-                    static_cast<int>(std::ceil(static_cast<double>(num_rows_reduced) / static_cast<double>(block.y * INTERNAL_BLOCK_SIZE))));
+    const int grid_x = static_cast<int>(std::ceil(static_cast<double>(num_rows_reduced) / static_cast<double>(block.x * INTERNAL_BLOCK_SIZE)));
+    const int grid_y = static_cast<int>(std::ceil(static_cast<double>(num_rows_reduced) / static_cast<double>(block.y * INTERNAL_BLOCK_SIZE)));
+
+    std::vector<dim3> grids{};
+    if (grid_y <= MAX_Y_GRID_DIMENSIONS) {
+        // size not exceed -> one call enough
+        grids.emplace_back(grid_x, grid_y);
+    } else {
+        // y-grid dimension exceed -> split kernel into multiple ones
+        const int num_kernels = grid_y / MAX_Y_GRID_DIMENSIONS;
+        for (int i = 0; i < num_kernels; ++i) {
+            grids.emplace_back(grid_x, MAX_Y_GRID_DIMENSIONS);
+        }
+        // add remaining entries
+        const int remaining = grid_y % MAX_Y_GRID_DIMENSIONS;
+        if (remaining > 0) {
+            grids.emplace_back(grid_x, remaining);
+        }
+    }
 
 #if defined(PLSSVM_USE_GEMM)
     device_ptr_type kernel_matrix_d{ (num_rows_reduced + PADDING_SIZE) * (num_rows_reduced + PADDING_SIZE), devices_[0] };  // store full matrix
@@ -164,16 +185,20 @@ auto csvm::run_assemble_kernel_matrix_explicit(const parameter &params, const de
     const real_type cost_factor = real_type{ 1.0 } / params.cost;
 
     detail::set_device(0);
-    switch (params.kernel_type.value()) {
-        case kernel_function_type::linear:
-            cuda::device_kernel_assembly_linear<<<grid, block>>>(kernel_matrix_d.get(), data_d.get(), num_rows_reduced, num_features, q_red_d.get(), QA_cost, cost_factor);
-            break;
-        case kernel_function_type::polynomial:
-            cuda::device_kernel_assembly_polynomial<<<grid, block>>>(kernel_matrix_d.get(), data_d.get(), num_rows_reduced, num_features, q_red_d.get(), QA_cost, cost_factor, params.degree.value(), params.gamma.value(), params.coef0.value());
-            break;
-        case kernel_function_type::rbf:
-            cuda::device_kernel_assembly_rbf<<<grid, block>>>(kernel_matrix_d.get(), data_d.get(), num_rows_reduced, num_features, q_red_d.get(), QA_cost, cost_factor, params.gamma.value());
-            break;
+    for (std::size_t i = 0; i < grids.size(); ++i) {
+        const unsigned long long offset = i * MAX_Y_GRID_DIMENSIONS;
+        const dim3 grid = grids[i];
+        switch (params.kernel_type.value()) {
+            case kernel_function_type::linear:
+                cuda::device_kernel_assembly_linear<<<grid, block>>>(kernel_matrix_d.get(), data_d.get(), num_rows_reduced, num_features, q_red_d.get(), QA_cost, cost_factor, offset);
+                break;
+            case kernel_function_type::polynomial:
+                cuda::device_kernel_assembly_polynomial<<<grid, block>>>(kernel_matrix_d.get(), data_d.get(), num_rows_reduced, num_features, q_red_d.get(), QA_cost, cost_factor, params.degree.value(), params.gamma.value(), params.coef0.value(), offset);
+                break;
+            case kernel_function_type::rbf:
+                cuda::device_kernel_assembly_rbf<<<grid, block>>>(kernel_matrix_d.get(), data_d.get(), num_rows_reduced, num_features, q_red_d.get(), QA_cost, cost_factor, params.gamma.value(), offset);
+                break;
+        }
     }
     detail::peek_at_last_error();
     detail::device_synchronize(devices_[0]);
@@ -215,22 +240,42 @@ void csvm::run_assemble_kernel_matrix_implicit_blas_level_3(const real_type alph
         throw kernel_launch_resources{ fmt::format("Not enough work-items allowed for a work-groups of size {}x{}! Try reducing THREAD_BLOCK_SIZE.", THREAD_BLOCK_SIZE, THREAD_BLOCK_SIZE) };
     }
     const dim3 block(THREAD_BLOCK_SIZE, THREAD_BLOCK_SIZE);
-    const dim3 grid(static_cast<int>(std::ceil(static_cast<double>(num_rows_reduced) / static_cast<double>(block.x * INTERNAL_BLOCK_SIZE))),
-                    static_cast<int>(std::ceil(static_cast<double>(num_rows_reduced) / static_cast<double>(block.y * INTERNAL_BLOCK_SIZE))));
+    const int grid_x = static_cast<int>(std::ceil(static_cast<double>(num_rows_reduced) / static_cast<double>(block.x * INTERNAL_BLOCK_SIZE)));
+    const int grid_y = static_cast<int>(std::ceil(static_cast<double>(num_rows_reduced) / static_cast<double>(block.y * INTERNAL_BLOCK_SIZE)));
+
+    std::vector<dim3> grids{};
+    if (grid_y <= MAX_Y_GRID_DIMENSIONS) {
+        // size not exceed -> one call enough
+        grids.emplace_back(grid_x, grid_y);
+    } else {
+        // y-grid dimension exceed -> split kernel into multiple ones
+        const int num_kernels = grid_y / MAX_Y_GRID_DIMENSIONS;
+        for (int i = 0; i < num_kernels; ++i) {
+            grids.emplace_back(grid_x, MAX_Y_GRID_DIMENSIONS);
+        }
+        // add remaining entries
+        const int remaining = grid_y % MAX_Y_GRID_DIMENSIONS;
+        if (remaining > 0) {
+            grids.emplace_back(grid_x, remaining);
+        }
+    }
 
     detail::set_device(0);
     const real_type cost_factor = real_type{ 1.0 } / params.cost;
-
-    switch (params.kernel_type.value()) {
-        case kernel_function_type::linear:
-            cuda::device_kernel_assembly_linear_symm<<<grid, block>>>(alpha, q_red.get(), A_d.get(), num_rows_reduced, num_features, QA_cost, cost_factor, B_d.get(), C_d.get(), num_classes);
-            break;
-        case kernel_function_type::polynomial:
-            cuda::device_kernel_assembly_polynomial_symm<<<grid, block>>>(alpha, q_red.get(), A_d.get(), num_rows_reduced, num_features, QA_cost, cost_factor, params.degree.value(), params.gamma.value(), params.coef0.value(), B_d.get(), C_d.get(), num_classes);
-            break;
-        case kernel_function_type::rbf:
-            cuda::device_kernel_assembly_rbf_symm<<<grid, block>>>(alpha, q_red.get(), A_d.get(), num_rows_reduced, num_features, QA_cost, cost_factor, params.gamma.value(), B_d.get(), C_d.get(), num_classes);
-            break;
+    for (std::size_t i = 0; i < grids.size(); ++i) {
+        const unsigned long long offset = i * MAX_Y_GRID_DIMENSIONS;
+        const dim3 grid = grids[i];
+        switch (params.kernel_type.value()) {
+            case kernel_function_type::linear:
+                cuda::device_kernel_assembly_linear_symm<<<grid, block>>>(alpha, q_red.get(), A_d.get(), num_rows_reduced, num_features, QA_cost, cost_factor, B_d.get(), C_d.get(), num_classes, offset);
+                break;
+            case kernel_function_type::polynomial:
+                cuda::device_kernel_assembly_polynomial_symm<<<grid, block>>>(alpha, q_red.get(), A_d.get(), num_rows_reduced, num_features, QA_cost, cost_factor, params.degree.value(), params.gamma.value(), params.coef0.value(), B_d.get(), C_d.get(), num_classes, offset);
+                break;
+            case kernel_function_type::rbf:
+                cuda::device_kernel_assembly_rbf_symm<<<grid, block>>>(alpha, q_red.get(), A_d.get(), num_rows_reduced, num_features, QA_cost, cost_factor, params.gamma.value(), B_d.get(), C_d.get(), num_classes, offset);
+                break;
+        }
     }
     detail::peek_at_last_error();
     detail::device_synchronize(devices_[0]);
