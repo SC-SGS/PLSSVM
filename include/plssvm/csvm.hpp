@@ -795,11 +795,11 @@ std::tuple<aos_matrix<real_type>, std::vector<real_type>, unsigned long long> cs
                     detail::tracking_entry{ "solver", "needed_memory", total_memory_needed });
 
         // select solver type based on the available memory
-        if (total_memory_needed < total_device_memory) {
+        if (total_memory_needed < reduce_total_memory(total_device_memory)) {
             used_solver = solver_type::cg_explicit;
-        } else if (total_memory_needed > total_device_memory && total_memory_needed < total_system_memory) {
+        } else if (total_memory_needed > reduce_total_memory(total_device_memory) && total_memory_needed < reduce_total_memory(total_system_memory)) {
             detail::log(verbosity_level::full | verbosity_level::warning,
-                        "WARNING: the selected automatic solver_type 'cg_streaming' is currently not implemented! Falling back to 'cg_implicit'.");
+                        "WARNING: the selected automatic solver_type 'cg_streaming' is currently not implemented! Falling back to 'cg_implicit'.\n");
             // used_solver = solver_type::cg_streaming;
             used_solver = solver_type::cg_implicit;
         } else {
