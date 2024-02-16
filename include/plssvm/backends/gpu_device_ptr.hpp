@@ -329,6 +329,33 @@ class gpu_device_ptr {
      */
     virtual void copy_to_host(host_pointer_type buffer, size_type pos, size_type count) const = 0;
 
+    /**
+     * @brief Copy device_ptr::size() many values from the device to the device_ptr @p target (possibly located on another device).
+     * @param[in] target the data to copy onto the device (possibly located on another device)
+     */
+    void copy_to_other_device(gpu_device_ptr &target);
+    /**
+     * @brief Copy up-to @p count many values from the device to the device_ptr @p target (possibly located on another device) starting at device pointer position @p pos.
+     * @details Copies `[pos, rcount)` values where `rcount` is the smaller value of @p count and `device_ptr::size() - pos`.
+     * @param target the data to copy onto the device (possibly located on another device)
+     * @param pos the starting position for the copying in the device pointer
+     * @param count the number of elements to copy
+     */
+    void copy_to_other_device(gpu_device_ptr &target, size_type pos, size_type count);
+    /**
+     * @brief Copy device_ptr::size() many values from the device to @p target (possibly located on another device).
+     * @param[in] target the data to copy onto the device (possibly located on another device)
+     */
+    void copy_to_other_device(device_pointer_type target);
+    /**
+     * @brief Copy up-to @p count many values from the device to @p target (possibly located on another device) starting at device pointer position @p pos.
+     * @details Copies `[pos, rcount)` values where `rcount` is the smaller value of @p count and `device_ptr::size() - pos`.
+     * @param target the data to copy onto the device (possibly located on another device)
+     * @param pos the starting position for the copying in the device pointer
+     * @param count the number of elements to copy
+     */
+    virtual void copy_to_other_device(device_pointer_type target, size_type pos, size_type count) = 0;
+
   protected:
     /// The device queue used to manage the device memory associated with this device pointer.
     queue_type queue_{};

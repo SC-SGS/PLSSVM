@@ -17,6 +17,7 @@
 #include "plssvm/constants.hpp"                   // plssvm::real_type, plssvm::PADDING_SIZE
 #include "plssvm/data_set.hpp"                    // plssvm::data_set
 #include "plssvm/default_value.hpp"               // plssvm::default_value, plssvm::default_init
+#include "plssvm/detail/data_distribution.hpp"    // plssvm::detail::{calculate_data_distribution, calculate_maximum_explicit_kernel_matrix_memory_needed_per_place, calculate_explicit_kernel_matrix_num_entries_padded}
 #include "plssvm/detail/igor_utility.hpp"         // plssvm::detail::{get_value_from_named_parameter, has_only_parameter_named_args_v}
 #include "plssvm/detail/logging.hpp"              // plssvm::detail::log
 #include "plssvm/detail/memory_size.hpp"          // plssvm::detail::memory_size
@@ -43,6 +44,7 @@
 #include <chrono>       // std::chrono::{time_point, steady_clock, duration_cast}
 #include <iostream>     // std::cout, std::endl
 #include <iterator>     // std::distance
+#include <optional>     // std::optional, std::make_optional, std::nullopt
 #include <tuple>        // std::tie
 #include <type_traits>  // std::enable_if_t, std::is_same_v, std::is_convertible_v, std::false_type
 #include <utility>      // std::pair, std::forward
@@ -191,45 +193,42 @@ class csvm {
     //                        fit                        //
     //***************************************************//
     /**
-     * @brief Calculate the total available device memory based on the used backend.
-     * @return the total device memory (`[[nodiscard]]`)
+     * @brief Calculate the total available device memory for all devices based on the used backend.
+     * @return the total device memory per device (`[[nodiscard]]`)
      */
-    [[nodiscard]] virtual detail::memory_size get_device_memory() const = 0;
+    [[nodiscard]] virtual std::vector<detail::memory_size> get_device_memory() const = 0;
     /**
-     * @brief Return the maximum allocation size possible in a single allocation.
-     * @return the maximum (single) allocation size (`[[nodiscard]]`)
+     * @brief Return the maximum allocation size possible in a single allocation for all devices.
+     * @return the maximum (single) allocation size per device (`[[nodiscard]]`)
      */
-    [[nodiscard]] virtual detail::memory_size get_max_mem_alloc_size() const = 0;
+    [[nodiscard]] virtual std::vector<detail::memory_size> get_max_mem_alloc_size() const = 0;
+    /**
+     * @brief Return the number of available devices.
+     * @return the number of available devices (`[[nodiscard]]`)
+     */
+    [[nodiscard]] virtual std::size_t num_available_devices() const = 0;
 
     /**
-     * @brief Setup all necessary data on the device(s). Backend specific!
-     * @param[in] solver the used solver type
-     * @param[in] A the data to setup
-     * @return the backend specific setup data, e.g., pointer to GPU memory for the GPU related backends (`[[nodiscard]]`)
-     */
-    [[nodiscard]] virtual detail::move_only_any setup_data_on_devices(solver_type solver, const soa_matrix<real_type> &A) const = 0;
-
-    /**
-     * @brief Explicitly assemble the kernel matrix. Backend specific!
+     * @brief Explicitly assemble the kernel matrix using potentially multiple devices. Backend specific!
      * @param[in] solver the used solver type, determines the return type
      * @param[in] params the parameters used to assemble the kernel matrix (e.g., the used kernel function)
-     * @param[in] data the data used to assemble the kernel matrix; fully stored on the device
+     * @param[in] A the data to assemble the kernel matrix from
      * @param[in] q_red the vector used in the dimensional reduction
      * @param[in] QA_cost the value used in the dimensional reduction
-     * @return based on the used solver type (e.g., cg_explicit -> kernel matrix fully stored on the device; cg_implicit -> "nothing") (`[[nodiscard]]`)
+     * @return based on the used solver type (e.g., cg_explicit -> kernel matrix fully stored on the device (distributed across the devices); cg_implicit -> "nothing") (`[[nodiscard]]`)
      */
-    [[nodiscard]] virtual detail::move_only_any assemble_kernel_matrix(solver_type solver, const parameter &params, ::plssvm::detail::move_only_any &data, const std::vector<real_type> &q_red, real_type QA_cost) const = 0;
+    [[nodiscard]] virtual std::vector<detail::move_only_any> assemble_kernel_matrix(solver_type solver, const parameter &params, const soa_matrix<real_type> &A, const std::vector<real_type> &q_red, real_type QA_cost) const = 0;
 
     /**
      * @brief Perform a BLAS level 3 matrix-matrix multiplication: `C = alpha * A * B + beta * C`.
      * @param[in] solver the used solver type, determines the type of @p A
      * @param[in] alpha the value to scale the result of the matrix-matrix multiplication
-     * @param[in] A a matrix depending on the used solver type (e.g., cg_explicit -> the kernel matrix fully stored on the device; cg_implicit -> the input data set used to implicitly perfom the matrix-matrix multiplication)
+     * @param[in] A a matrix depending on the used solver type (e.g., cg_explicit -> the kernel matrix fully stored on the device (distributed across the devices); cg_implicit -> the input data set used to implicitly perform the matrix-matrix multiplication)
      * @param[in] B the other matrix to multiply the kernel matrix with
      * @param[in] beta the value to scale the matrix o add with
      * @param[in,out] C the result matrix and the matrix to add (inplace)
      */
-    virtual void blas_level_3(solver_type solver, real_type alpha, const detail::move_only_any &A, const soa_matrix<real_type> &B, real_type beta, soa_matrix<real_type> &C) const = 0;
+    virtual void blas_level_3(solver_type solver, real_type alpha, const std::vector<detail::move_only_any> &A, const soa_matrix<real_type> &B, real_type beta, soa_matrix<real_type> &C) const = 0;
 
     //***************************************************//
     //                   predict, score                  //
@@ -271,14 +270,14 @@ class csvm {
     [[nodiscard]] std::tuple<aos_matrix<real_type>, std::vector<real_type>, unsigned long long> solve_lssvm_system_of_linear_equations(const soa_matrix<real_type> &A, const aos_matrix<real_type> &B, const parameter &params, Args &&...named_args) const;
     /**
      * @brief Solve the system of linear equations `AX = B` where `A` is the kernel matrix using the Conjugate Gradients (CG) algorithm.
-     * @param[in] A the kernel matrix
+     * @param[in] A the kernel matrix; potentially distributed across multiple devices
      * @param[in] B the right-hand sides
      * @param[in] eps the termination criterion for the CG algorithm
      * @param[in] max_cg_iter the maximum number of CG iterations
      * @param[in] cd_solver_variant the variation of the CG algorithm to use, i.e., how the kernel matrix is assembled (currently: explicit, streaming, implicit)
      * @return the result matrix `X` and the number of CG iterations necessary to solve the system of linear equations (`[[nodiscard]]`)
      */
-    [[nodiscard]] std::pair<soa_matrix<real_type>, unsigned long long> conjugate_gradients(const detail::move_only_any &A, const soa_matrix<real_type> &B, real_type eps, unsigned long long max_cg_iter, solver_type cd_solver_variant) const;
+    [[nodiscard]] std::pair<soa_matrix<real_type>, unsigned long long> conjugate_gradients(const std::vector<detail::move_only_any> &A, const soa_matrix<real_type> &B, real_type eps, unsigned long long max_cg_iter, solver_type cd_solver_variant) const;
     /**
      * @brief Perform a dimensional reduction for the kernel matrix.
      * @details Reduces the resulting dimension by `2` compared to the original LS-SVM formulation.
@@ -293,7 +292,7 @@ class csvm {
      * @details Small wrapper around the virtual `plssvm::csvm::blas_level_3` function to easily track its execution time.
      * @returns the duration of the BLAS routine in milliseconds (`[[nodiscard]]`)
      */
-    [[nodiscard]] std::chrono::duration<long, std::milli> run_blas_level_3(solver_type solver, real_type alpha, const detail::move_only_any &A, const soa_matrix<real_type> &B, real_type beta, soa_matrix<real_type> &C) const;
+    [[nodiscard]] std::chrono::duration<long, std::milli> run_blas_level_3(solver_type solver, real_type alpha, const std::vector<detail::move_only_any> &A, const soa_matrix<real_type> &B, real_type beta, soa_matrix<real_type> &C) const;
 
     /**
      * @copydoc plssvm::csvm::predict_values
@@ -768,64 +767,137 @@ std::tuple<aos_matrix<real_type>, std::vector<real_type>, unsigned long long> cs
             return total_memory - std::max(total_memory * percentual_safety_margin, minimal_safety_margin);
         };
 
+        // get the total and usable system memory (i.e., RAM)
         const detail::memory_size total_system_memory = detail::get_system_memory();
-        const detail::memory_size total_device_memory = this->get_device_memory();
+        const detail::memory_size usable_system_memory = reduce_total_memory(total_system_memory);
 
-        // 4B/8B * (data_set size including padding + explicit kernel matrix size + B and C matrix in GEMM + q_red vector)
-#if defined(PLSSVM_USE_GEMM)
-        const unsigned long long kernel_matrix_size = (num_rows_reduced + PADDING_SIZE) * (num_rows_reduced + PADDING_SIZE);
-#else
-        const unsigned long long kernel_matrix_size = (num_rows_reduced + PADDING_SIZE) * (num_rows_reduced + PADDING_SIZE + 1) / 2;
-#endif
-        const detail::memory_size total_memory_needed{ sizeof(real_type) * ((num_rows + PADDING_SIZE) * (num_features + PADDING_SIZE) + kernel_matrix_size + 2 * num_rows_reduced * num_rhs + num_features) };
+        // get the total and usable device memory per device (i.e., VRAM)
+        const std::vector<detail::memory_size> total_device_memory_per_device = this->get_device_memory();
+        const std::vector<detail::memory_size> usable_device_memory_per_device = [&]() {
+            std::vector<detail::memory_size> res(total_device_memory_per_device.size());
+            for (std::size_t device_id = 0; device_id < res.size(); ++device_id) {
+                res[device_id] = reduce_total_memory(total_device_memory_per_device[device_id]);
+            }
+            return res;
+        }();
 
+        // calculate the maximum total memory needed for the explicit and implicit kernel matrix per device
+        const std::vector<std::size_t> data_distribution = detail::calculate_data_distribution(num_rows_reduced, this->num_available_devices());
+        const std::vector<detail::memory_size> total_memory_needed_explicit_per_device = detail::calculate_maximum_explicit_kernel_matrix_memory_needed_per_place(num_rows, num_features, num_rhs, data_distribution);
+        const std::vector<detail::memory_size> total_memory_needed_implicit_per_device = detail::calculate_maximum_implicit_kernel_matrix_memory_needed_per_place(num_rows, num_features, num_rhs, data_distribution);
+
+        // format a vector differentiating between it containing only a single entry or multiple
+        const auto format_vector = [](const auto &vec) -> std::string {
+            if (vec.size() == 1) {
+                return fmt::format("{}", vec.front());
+            } else {
+                return fmt::format("[{}]", fmt::join(vec, ", "));
+            }
+        };
+
+        // output the necessary information on the console
         detail::log(verbosity_level::full,
                     "Determining the solver type based on the available memory:\n"
-                    "  - total system memory: {}\n"
-                    "  - usable system memory: {} = {}\n"
-                    "  - total device memory: {}\n"
-                    "  - usable device memory: {} = {}\n"
-                    "  - memory needed: {}\n",
+                    "  - total system memory: {2}\n"
+                    "  - usable system memory (with safety margin of min({0} %, {1}): {3}\n"
+                    "  - total device memory: {4}\n"
+                    "  - usable device memory (with safety margin of min({0} %, {1}): {5}\n"
+                    "  - maximum memory needed (cg_explicit): {6}\n"
+                    "  - maximum memory needed (cg_implicit): {7}\n",
+                    percentual_safety_margin * 100.0L,
+                    minimal_safety_margin,
                     detail::tracking_entry{ "solver", "system_memory", total_system_memory },
-                    fmt::format("{} {}", total_system_memory, total_system_memory * percentual_safety_margin > minimal_safety_margin ? "* 0.95" : "- 512 MiB"),
-                    detail::tracking_entry{ "solver", "available_system_memory", reduce_total_memory(total_system_memory) },
-                    detail::tracking_entry{ "solver", "device_memory", total_device_memory },
-                    fmt::format("{} {}", total_device_memory, total_device_memory * percentual_safety_margin > minimal_safety_margin ? "* 0.95" : "- 512 MiB"),
-                    detail::tracking_entry{ "solver", "available_device_memory", reduce_total_memory(total_device_memory) },
-                    detail::tracking_entry{ "solver", "needed_memory", total_memory_needed });
+                    detail::tracking_entry{ "solver", "usable_system_memory_with_safety_margin", usable_system_memory },
+                    format_vector(total_device_memory_per_device),
+                    format_vector(usable_device_memory_per_device),
+                    format_vector(total_memory_needed_explicit_per_device),
+                    format_vector(total_memory_needed_implicit_per_device));
+        PLSSVM_DETAIL_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((detail::tracking_entry{ "solver", "device_memory", total_device_memory_per_device }));
+        PLSSVM_DETAIL_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((detail::tracking_entry{ "solver", "usable_device_memory_with_safety_margin", usable_device_memory_per_device }));
+        PLSSVM_DETAIL_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((detail::tracking_entry{ "solver", "needed_device_memory_cg_explicit", total_memory_needed_explicit_per_device }));
+        PLSSVM_DETAIL_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((detail::tracking_entry{ "solver", "needed_device_memory_cg_implicit", total_memory_needed_implicit_per_device }));
+
+        // helper function to check whether ALL devices fulfill the requested memory constraint for the specific solver type
+        const auto check_sizes = [](const auto &needed_memory_per_device, const auto &memory_constraint) -> std::vector<std::size_t> {
+            PLSSVM_ASSERT(needed_memory_per_device.size() == memory_constraint.size(), "Can't check sizes due to device number mismatch! {} != {}", needed_memory_per_device.size(), memory_constraint.size());
+            std::vector<std::size_t> failed_constraints{};
+            for (std::size_t device_id = 0; device_id < needed_memory_per_device.size(); ++device_id) {
+                if (needed_memory_per_device[device_id] > memory_constraint[device_id]) {
+                    failed_constraints.push_back(device_id);
+                }
+            }
+            return failed_constraints;
+        };
 
         // select solver type based on the available memory
-        if (total_memory_needed < reduce_total_memory(total_device_memory)) {
+        // check whether the explicit (partial) kernel matrix can fit into each device memory
+        if (const std::vector<std::size_t> failed_cg_explicit_constraints = check_sizes(total_memory_needed_explicit_per_device, usable_device_memory_per_device); failed_cg_explicit_constraints.empty()) {
+            // use the explicit solver type
             used_solver = solver_type::cg_explicit;
-        } else if (total_memory_needed > reduce_total_memory(total_device_memory) && total_memory_needed < reduce_total_memory(total_system_memory)) {
-            detail::log(verbosity_level::full | verbosity_level::warning,
-                        "WARNING: the selected automatic solver_type 'cg_streaming' is currently not implemented! Falling back to 'cg_implicit'.\n");
-            // used_solver = solver_type::cg_streaming;
-            used_solver = solver_type::cg_implicit;
         } else {
-            used_solver = solver_type::cg_implicit;
+            detail::log(verbosity_level::full, "Cannot use cg_explicit due to memory constraints on device(s) {}!\n", format_vector(failed_cg_explicit_constraints));
+
+            // check whether the explicit kernel matrix can fit into the system memory
+            // TODO: implement condition after cg_streaming has been implemented
+            if (false) {
+                // use the streaming solver type
+                used_solver = solver_type::cg_streaming;
+            } else {
+                // detail::log(verbosity_level::full, "Cannot use cg_streaming due to system memory constraints!\n");
+
+                // check whether there is enough memory available for cg_implicit
+                if (const std::vector<std::size_t> failed_cg_implicit_constraints = check_sizes(total_memory_needed_implicit_per_device, usable_device_memory_per_device); failed_cg_implicit_constraints.empty()) {
+                    // use the implicit solver type
+                    used_solver = solver_type::cg_explicit;
+                } else {
+                    // not enough device memory available for the implicit case
+                    throw kernel_launch_resources{ fmt::format("Not enough device memory available on device(s) {} even for the cg_implicit solver!", format_vector(failed_cg_implicit_constraints)) };
+                }
+            }
         }
 
-#if defined(PLSSVM_ENFORCE_MAX_MEM_ALLOC_SIZE)
         // enforce max mem alloc size if requested
-        const detail::memory_size max_mem_alloc_size = this->get_max_mem_alloc_size();
-        // maximum of data set and kernel matrix
-        const detail::memory_size max_single_allocation_size{ sizeof(real_type) * std::max<unsigned long long>(num_rows * num_features, kernel_matrix_size) };
-        detail::log(verbosity_level::full,
-                    "  - max. memory allocation size: {}\n",
-                    detail::tracking_entry{ "solver", "device_max_mem_alloc_size", max_mem_alloc_size });
+#if defined(PLSSVM_ENFORCE_MAX_MEM_ALLOC_SIZE)
+        // get the maximum possible memory allocation size per device
+        const std::vector<detail::memory_size> max_mem_alloc_size_per_device = this->get_max_mem_alloc_size();
 
-        // note: only cg_explicit currently implemented
-        // TODO: also implement logic for cg_streaming and cg_implicit
-        if (used_solver == solver_type::cg_explicit && max_single_allocation_size > max_mem_alloc_size) {
+        // get the maximum single allocation size per device
+        const std::vector<detail::memory_size> max_single_allocation_cg_explicit_size_per_device = detail::calculate_maximum_explicit_kernel_matrix_memory_allocation_size_per_place(num_rows, num_features, num_rhs, data_distribution);
+        const std::vector<detail::memory_size> max_single_allocation_cg_implicit_size_per_device = detail::calculate_maximum_implicit_kernel_matrix_memory_allocation_size_per_place(num_rows, num_features, num_rhs, data_distribution);
+
+        // output the maximum memory allocation size per device
+        detail::log(verbosity_level::full,
+                    "  - maximum supported single memory allocation size: {}\n"
+                    "  - maximum needed single memory allocation size (cg_explicit): {}\n"
+                    "  - maximum needed single memory allocation size (cg_implicit): {}\n",
+                    format_vector(max_mem_alloc_size_per_device),
+                    format_vector(max_single_allocation_cg_explicit_size_per_device),
+                    format_vector(max_single_allocation_cg_implicit_size_per_device));
+        PLSSVM_DETAIL_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((detail::tracking_entry{ "solver", "device_max_single_mem_alloc_size", max_mem_alloc_size_per_device }));
+        PLSSVM_DETAIL_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((detail::tracking_entry{ "solver", "device_max_mem_alloc_size_cg_explicit", max_single_allocation_cg_explicit_size_per_device }));
+        PLSSVM_DETAIL_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((detail::tracking_entry{ "solver", "device_max_mem_alloc_size_cg_implicit", max_single_allocation_cg_implicit_size_per_device }));
+
+        // check whether the maximum single memory allocation sizes per device can be satisfied
+        // check whether the maximum single cg_explicit memory allocation size can be satisfied
+        if (const std::vector<std::size_t> failed_cg_explicit_constraints = check_sizes(max_single_allocation_cg_explicit_size_per_device, max_mem_alloc_size_per_device);
+            used_solver == solver_type::cg_explicit && !failed_cg_explicit_constraints.empty()) {
+            // max mem alloc size constraints not fulfilled
             detail::log(verbosity_level::full,
-                        "The biggest single allocation ({}) exceeds the guaranteed maximum memory allocation size ({}), falling back to solver_type::cg_streaming.\n",
-                        max_single_allocation_size,
-                        max_mem_alloc_size);
+                        "Cannot use cg_explicit due to maximum single memory allocation constraints on device(s) {}! Falling back to cg_implicit.\n",
+                        format_vector(failed_cg_explicit_constraints));
+            // can't use cg_explicit
+            // TODO: switch to cg_streaming if implemented
+            // used_solver = solver_type::cg_streaming;
+            used_solver = solver_type::cg_implicit;
+        }
+        // TODO: implement logic for cg_streaming
+        if (const std::vector<std::size_t> failed_cg_implicit_constraints = check_sizes(max_single_allocation_cg_implicit_size_per_device, max_mem_alloc_size_per_device);
+            used_solver == solver_type::cg_implicit && !failed_cg_implicit_constraints.empty()) {
+            // can't fulfill maximum single memory allocation size even for cg_implicit
             plssvm::detail::log(verbosity_level::full | verbosity_level::warning,
                                 "WARNING: if you are sure that the guaranteed maximum memory allocation size can be safely ignored on your device, "
                                 "this check can be disabled via \"-DPLSSVM_ENFORCE_MAX_MEM_ALLOC_SIZE=OFF\" during the CMake configuration!\n");
-            used_solver = solver_type::cg_streaming;
+            throw kernel_launch_resources{ fmt::format("Can't fulfill maximum single memory allocation constraint for device(s) {} even for the cg_implicit solver!", format_vector(failed_cg_implicit_constraints)) };
         }
 #endif
     }
@@ -851,12 +923,9 @@ std::tuple<aos_matrix<real_type>, std::vector<real_type>, unsigned long long> cs
         }
     }
 
-    // setup/allocate necessary data on the device(s)
-    detail::move_only_any data = this->setup_data_on_devices(used_solver, A);
-
     // assemble explicit kernel matrix
     const std::chrono::steady_clock::time_point assembly_start_time = std::chrono::steady_clock::now();
-    const detail::move_only_any kernel_matrix = this->assemble_kernel_matrix(used_solver, params, data, q_red, QA_cost);
+    const std::vector<detail::move_only_any> kernel_matrix = this->assemble_kernel_matrix(used_solver, params, A, q_red, QA_cost);
     const std::chrono::steady_clock::time_point assembly_end_time = std::chrono::steady_clock::now();
     const auto assembly_duration = std::chrono::duration_cast<std::chrono::milliseconds>(assembly_end_time - assembly_start_time);
 
@@ -870,7 +939,7 @@ std::tuple<aos_matrix<real_type>, std::vector<real_type>, unsigned long long> cs
     // choose the correct algorithm based on the (provided) solver type -> currently only CG available
     soa_matrix<real_type> X{};
     unsigned long long num_iter{};
-    std::tie(X, num_iter) = conjugate_gradients(kernel_matrix, B_red, used_epsilon, used_max_iter, used_solver);
+    std::tie(X, num_iter) = this->conjugate_gradients(kernel_matrix, B_red, used_epsilon, used_max_iter, used_solver);
 
     // calculate bias and undo dimensional reduction
     aos_matrix<real_type> X_ret{ shape{ num_rhs, A.num_rows() }, shape{ PADDING_SIZE, PADDING_SIZE } };

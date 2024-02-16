@@ -149,6 +149,34 @@ void gpu_device_ptr<T, queue_t, device_pointer_t>::copy_to_host(host_pointer_typ
     this->copy_to_host(buffer, 0, this->size_padded());
 }
 
+template <typename T, typename queue_t, typename device_pointer_t>
+void gpu_device_ptr<T, queue_t, device_pointer_t>::copy_to_other_device(gpu_device_ptr<T, queue_t, device_pointer_t> &target) {
+    PLSSVM_ASSERT(data_ != nullptr, "Invalid data pointer! Maybe *this has been default constructed?");
+    PLSSVM_ASSERT(target.data_ != nullptr, "Invalid target pointer! Maybe target has been default constructed?");
+
+    this->copy_to_other_device(target, 0, this->size_padded());
+}
+
+template <typename T, typename queue_t, typename device_pointer_t>
+void gpu_device_ptr<T, queue_t, device_pointer_t>::copy_to_other_device(gpu_device_ptr<T, queue_t, device_pointer_t> &target, const size_type pos, const size_type count) {
+    PLSSVM_ASSERT(data_ != nullptr, "Invalid data pointer! Maybe *this has been default constructed?");
+    PLSSVM_ASSERT(target.data_ != nullptr, "Invalid target pointer! Maybe target has been default constructed?");
+
+    const size_type rcount = std::min(count, this->size_padded() - pos);
+    if (target.size_padded() < rcount) {
+        throw gpu_device_ptr_exception{ fmt::format("Buffer too small to perform copy (needed: {}, provided: {})!", rcount, target.size_padded()) };
+    }
+    this->copy_to_other_device(target.get(), pos, rcount);
+}
+
+template <typename T, typename queue_t, typename device_pointer_t>
+void gpu_device_ptr<T, queue_t, device_pointer_t>::copy_to_other_device(device_pointer_type target) {
+    PLSSVM_ASSERT(data_ != nullptr, "Invalid data pointer! Maybe *this has been default constructed?");
+    PLSSVM_ASSERT(target != nullptr, "Invalid target pointer! Maybe target has been default constructed?");
+
+    this->copy_to_other_device(target, 0, this->size_padded());
+}
+
 // explicitly instantiate template class depending on available backends
 #if defined(PLSSVM_HAS_CUDA_BACKEND) || defined(PLSSVM_HAS_HIP_BACKEND)
 template class gpu_device_ptr<float, int>;

@@ -107,6 +107,16 @@ void device_ptr<T>::copy_to_host(host_pointer_type buffer, const size_type pos, 
     PLSSVM_CUDA_ERROR_CHECK(cudaMemcpy(buffer, data_ + pos, rcount * sizeof(value_type), cudaMemcpyDeviceToHost))
 }
 
+template <typename T>
+void device_ptr<T>::copy_to_other_device(device_pointer_type target, const size_type pos, const size_type count) {
+    PLSSVM_ASSERT(data_ != nullptr, "Invalid data pointer! Maybe *this has been default constructed?");
+    PLSSVM_ASSERT(target != nullptr, "Invalid target pointer! Maybe target has been default constructed?");
+
+    detail::set_device(queue_);
+    const size_type rcount = std::min(count, this->size_padded() - pos);
+    PLSSVM_CUDA_ERROR_CHECK(cudaMemcpy(target, data_ + pos, rcount * sizeof(value_type), cudaMemcpyDeviceToDevice))
+}
+
 template class device_ptr<float>;
 template class device_ptr<double>;
 

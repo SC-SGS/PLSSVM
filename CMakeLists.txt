@@ -70,6 +70,7 @@ set(PLSSVM_BASE_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/detail/cmd/parser_scale.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/detail/cmd/parser_train.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/detail/io/file_reader.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/detail/data_distribution.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/detail/memory_size.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/detail/performance_tracker.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/detail/sha256.cpp
@@ -582,14 +583,6 @@ if (PLSSVM_ENABLE_PERFORMANCE_TRACKING)
     message(STATUS "Enabled performance tracking to YAML files for the PLSSVM executables plssvm-train, plssvm-predict, and plssvm-scale.")
     # add target definitions
     target_compile_definitions(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC PLSSVM_PERFORMANCE_TRACKER_ENABLED)
-endif ()
-
-## use GEMM kernel (full kernel matrix) instead of SYMM (triangular matrix only)
-option(PLSSVM_USE_GEMM "Use the GEMM kernel (full matrix -> needs more memory) instead of the SYMM kernel (triangular matrix -> less memory)." OFF)
-if (PLSSVM_USE_GEMM)
-    message(STATUS "Use the GEMM kernel instead of the SYMM kernel.")
-    # add target definition
-    target_compile_definitions(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC PLSSVM_USE_GEMM)
 endif ()
 
 ## enforce maximum device memory allocation sizes for the automatic solver type

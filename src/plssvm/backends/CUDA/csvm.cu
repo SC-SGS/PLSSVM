@@ -18,6 +18,7 @@
 #include "plssvm/backends/CUDA/predict_kernel.cuh"                           // plssvm::cuda::detail::{device_kernel_w_linear, device_kernel_predict_polynomial, device_kernel_predict_rbf}
 #include "plssvm/constants.hpp"                                              // plssvm::{real_type, THREAD_BLOCK_SIZE, INTERNAL_BLOCK_SIZE, PADDING_SIZE}
 #include "plssvm/detail/assert.hpp"                                          // PLSSVM_ASSERT
+#include "plssvm/detail/data_distribution.hpp"                               // plssvm::detail::{get_place_specific_num_rows, get_place_row_offset, calculate_explicit_kernel_matrix_num_entries_padded}
 #include "plssvm/detail/logging.hpp"                                         // plssvm::detail::log
 #include "plssvm/detail/memory_size.hpp"                                     // plssvm::detail::memory_size
 #include "plssvm/detail/performance_tracker.hpp"                             // plssvm::detail::tracking_entry
@@ -86,14 +87,7 @@ void csvm::init(const target_platform target) {
     // get all available devices wrt the requested target platform
     devices_.resize(detail::get_device_count());
     std::iota(devices_.begin(), devices_.end(), 0);
-
-    // currently only single GPU execution is supported
-    if (devices_.size() > 1) {
-        plssvm::detail::log(verbosity_level::full | verbosity_level::warning,
-                            "WARNING: found {} devices, but currently only single GPU execution is supported. Continuing only with device 0!\n",
-                            devices_.size());
-        devices_.resize(1);
-    }
+    devices_ = { 0, 0 };
 
     // throw exception if no CUDA devices could be found
     if (devices_.empty()) {
@@ -122,19 +116,24 @@ void csvm::init(const target_platform target) {
                         "\n");
 }
 
-::plssvm::detail::memory_size csvm::get_device_memory() const {
+std::vector<::plssvm::detail::memory_size> csvm::get_device_memory() const {
     cudaDeviceProp prop{};
-    PLSSVM_CUDA_ERROR_CHECK(cudaGetDeviceProperties(&prop, devices_[0]))
-    return ::plssvm::detail::memory_size{ static_cast<unsigned long long>(prop.totalGlobalMem) };
+    std::vector<::plssvm::detail::memory_size> res(this->num_available_devices());
+    for (std::size_t device_id = 0; device_id < this->num_available_devices(); ++device_id) {
+        PLSSVM_CUDA_ERROR_CHECK(cudaGetDeviceProperties(&prop, devices_[device_id]))
+        res[device_id] = ::plssvm::detail::memory_size{ static_cast<unsigned long long>(prop.totalGlobalMem) };
+    }
+    return res;
 }
 
-::plssvm::detail::memory_size csvm::get_max_mem_alloc_size() const {
+std::vector<::plssvm::detail::memory_size> csvm::get_max_mem_alloc_size() const {
     return this->get_device_memory();
 }
 
-std::size_t csvm::get_max_work_group_size() const {
+std::size_t csvm::get_max_work_group_size(const std::size_t device_id) const {
+    PLSSVM_ASSERT(device_id < this->num_available_devices(), "Invalid device {} requested!", device_id);
     cudaDeviceProp prop{};
-    PLSSVM_CUDA_ERROR_CHECK(cudaGetDeviceProperties(&prop, devices_[0]))
+    PLSSVM_CUDA_ERROR_CHECK(cudaGetDeviceProperties(&prop, devices_[device_id]))
     return static_cast<std::size_t>(prop.maxThreadsPerBlock);
 }
 
@@ -142,98 +141,167 @@ std::size_t csvm::get_max_work_group_size() const {
 //                        fit                        //
 //***************************************************//
 
-auto csvm::run_assemble_kernel_matrix_explicit(const parameter &params, const device_ptr_type &data_d, const device_ptr_type &q_red_d, real_type QA_cost) const -> device_ptr_type {
+auto csvm::run_assemble_kernel_matrix_explicit(const std::size_t device_id, const parameter &params, const device_ptr_type &data_d, const device_ptr_type &q_red_d, real_type QA_cost) const -> device_ptr_type {
     const unsigned long long num_rows_reduced = data_d.shape().x - 1;
     const unsigned long long num_features = data_d.shape().y;
+    const queue_type &device = devices_[device_id];
+
+    // calculate the number of data points this device is responsible for
+    const unsigned long long device_specific_num_rows = ::plssvm::detail::get_place_specific_num_rows(device_id, data_distribution_);
+
+    // get the offset of the data points this device is responsible for
+    const unsigned long long row_offset = ::plssvm::detail::get_place_row_offset(device_id, data_distribution_);
 
     // define grid and block sizes
-    const std::size_t max_work_group_size = this->get_max_work_group_size();
+    const std::size_t max_work_group_size = this->get_max_work_group_size(device_id);
     if (max_work_group_size < std::size_t{ THREAD_BLOCK_SIZE } * std::size_t{ THREAD_BLOCK_SIZE }) {
         throw kernel_launch_resources{ fmt::format("Not enough work-items allowed for a work-groups of size {}x{}! Try reducing THREAD_BLOCK_SIZE.", THREAD_BLOCK_SIZE, THREAD_BLOCK_SIZE) };
     }
     const dim3 block(THREAD_BLOCK_SIZE, THREAD_BLOCK_SIZE);
-    const dim3 grid(static_cast<int>(std::ceil(static_cast<double>(num_rows_reduced) / static_cast<double>(block.x * INTERNAL_BLOCK_SIZE))),
-                    static_cast<int>(std::ceil(static_cast<double>(num_rows_reduced) / static_cast<double>(block.y * INTERNAL_BLOCK_SIZE))));
+    const dim3 grid(static_cast<int>(std::ceil(static_cast<double>(num_rows_reduced - row_offset) / static_cast<double>(block.x * INTERNAL_BLOCK_SIZE))),
+                    static_cast<int>(std::ceil(static_cast<double>(device_specific_num_rows) / static_cast<double>(block.y * INTERNAL_BLOCK_SIZE))));
 
-#if defined(PLSSVM_USE_GEMM)
-    device_ptr_type kernel_matrix_d{ (num_rows_reduced + PADDING_SIZE) * (num_rows_reduced + PADDING_SIZE), devices_[0] };  // store full matrix
-#else
-    device_ptr_type kernel_matrix_d{ (num_rows_reduced + PADDING_SIZE) * (num_rows_reduced + PADDING_SIZE + 1) / 2, devices_[0] };  // only explicitly store the upper triangular matrix
-#endif
+    // calculate the number of matrix entries
+    const std::size_t num_entries_padded = ::plssvm::detail::calculate_explicit_kernel_matrix_num_entries_padded(num_rows_reduced, device_id, data_distribution_);
+
+    device_ptr_type kernel_matrix_d{ num_entries_padded, device };  // only explicitly store the upper triangular matrix
     kernel_matrix_d.memset(0);
     const real_type cost_factor = real_type{ 1.0 } / params.cost;
 
-    detail::set_device(0);
+    detail::set_device(device);
     switch (params.kernel_type.value()) {
         case kernel_function_type::linear:
-            cuda::device_kernel_assembly_linear<<<grid, block>>>(kernel_matrix_d.get(), data_d.get(), num_rows_reduced, num_features, q_red_d.get(), QA_cost, cost_factor);
+            cuda::device_kernel_assembly_linear<<<grid, block>>>(kernel_matrix_d.get(), data_d.get(), num_rows_reduced, device_specific_num_rows, row_offset, num_features, q_red_d.get(), QA_cost, cost_factor);
             break;
         case kernel_function_type::polynomial:
-            cuda::device_kernel_assembly_polynomial<<<grid, block>>>(kernel_matrix_d.get(), data_d.get(), num_rows_reduced, num_features, q_red_d.get(), QA_cost, cost_factor, params.degree.value(), params.gamma.value(), params.coef0.value());
+            cuda::device_kernel_assembly_polynomial<<<grid, block>>>(kernel_matrix_d.get(), data_d.get(), num_rows_reduced, device_specific_num_rows, row_offset, num_features, q_red_d.get(), QA_cost, cost_factor, params.degree.value(), params.gamma.value(), params.coef0.value());
             break;
         case kernel_function_type::rbf:
-            cuda::device_kernel_assembly_rbf<<<grid, block>>>(kernel_matrix_d.get(), data_d.get(), num_rows_reduced, num_features, q_red_d.get(), QA_cost, cost_factor, params.gamma.value());
+            cuda::device_kernel_assembly_rbf<<<grid, block>>>(kernel_matrix_d.get(), data_d.get(), num_rows_reduced, device_specific_num_rows, row_offset, num_features, q_red_d.get(), QA_cost, cost_factor, params.gamma.value());
             break;
     }
     detail::peek_at_last_error();
-    detail::device_synchronize(devices_[0]);
+    detail::device_synchronize(device);
 
     return kernel_matrix_d;
 }
 
-void csvm::run_blas_level_3_kernel_explicit(const real_type alpha, const device_ptr_type &A_d, const device_ptr_type &B_d, const real_type beta, device_ptr_type &C_d) const {
+void csvm::run_blas_level_3_kernel_explicit(const std::size_t device_id, const real_type alpha, const device_ptr_type &A_d, const device_ptr_type &B_d, const real_type beta, device_ptr_type &C_d) const {
     const unsigned long long num_rhs = B_d.shape().x;
     const unsigned long long num_rows = B_d.shape().y;
+    const queue_type &device = devices_[device_id];
+
+    // calculate the number of data points this device is responsible for
+    const unsigned long long device_specific_num_rows = ::plssvm::detail::get_place_specific_num_rows(device_id, data_distribution_);
+    // get the offset of the data points this device is responsible for
+    const unsigned long long row_offset = ::plssvm::detail::get_place_row_offset(device_id, data_distribution_);
 
     // define the grid and block sizes
-    const std::size_t max_work_group_size = this->get_max_work_group_size();
+    const std::size_t max_work_group_size = this->get_max_work_group_size(device_id);
+    if (max_work_group_size < std::size_t{ THREAD_BLOCK_SIZE } * std::size_t{ THREAD_BLOCK_SIZE }) {
+        throw kernel_launch_resources{ fmt::format("Not enough work-items allowed for a work-groups of size {}x{}! Try reducing THREAD_BLOCK_SIZE.", THREAD_BLOCK_SIZE, THREAD_BLOCK_SIZE) };
+    }
+
+    detail::set_device(device);
+    {
+        const dim3 block(THREAD_BLOCK_SIZE, THREAD_BLOCK_SIZE);
+        const dim3 grid(static_cast<int>(std::ceil(static_cast<double>(num_rhs) / static_cast<double>(block.x * INTERNAL_BLOCK_SIZE))),
+                        static_cast<int>(std::ceil(static_cast<double>(device_specific_num_rows) / static_cast<double>(block.y * INTERNAL_BLOCK_SIZE))));
+
+        cuda::device_kernel_symm<<<grid, block>>>(num_rows, num_rhs, device_specific_num_rows, row_offset, alpha, A_d.get(), B_d.get(), beta, C_d.get());
+    }
+
+    {
+        const unsigned long long num_mirror_rows = num_rows - row_offset - device_specific_num_rows;
+
+        if (num_mirror_rows > 0) {
+            const dim3 block(THREAD_BLOCK_SIZE, THREAD_BLOCK_SIZE);
+            const dim3 grid(static_cast<int>(std::ceil(static_cast<double>(num_rhs) / static_cast<double>(block.x * INTERNAL_BLOCK_SIZE))),
+                            static_cast<int>(std::ceil(static_cast<double>(num_mirror_rows) / static_cast<double>(block.y * INTERNAL_BLOCK_SIZE))));
+
+            cuda::device_kernel_symm_mirror<<<grid, block>>>(num_rows, num_rhs, num_mirror_rows, device_specific_num_rows, row_offset, alpha, A_d.get(), B_d.get(), beta, C_d.get());
+        }
+    }
+    detail::peek_at_last_error();
+    detail::device_synchronize(device);
+}
+
+void csvm::run_inplace_matrix_addition(const std::size_t device_id, device_ptr_type &lhs_d, const device_ptr_type &rhs_d) const {
+    const unsigned long long num_rhs = lhs_d.shape().x;
+    const unsigned long long num_rows = lhs_d.shape().y;
+    const queue_type &device = devices_[device_id];
+
+    // define the grid and block sizes
+    const std::size_t max_work_group_size = this->get_max_work_group_size(device_id);
     if (max_work_group_size < std::size_t{ THREAD_BLOCK_SIZE } * std::size_t{ THREAD_BLOCK_SIZE }) {
         throw kernel_launch_resources{ fmt::format("Not enough work-items allowed for a work-groups of size {}x{}! Try reducing THREAD_BLOCK_SIZE.", THREAD_BLOCK_SIZE, THREAD_BLOCK_SIZE) };
     }
     const dim3 block(THREAD_BLOCK_SIZE, THREAD_BLOCK_SIZE);
-    const dim3 grid(static_cast<int>(std::ceil(static_cast<double>(num_rhs) / static_cast<double>(block.x * INTERNAL_BLOCK_SIZE))),
-                    static_cast<int>(std::ceil(static_cast<double>(num_rows) / static_cast<double>(block.y * INTERNAL_BLOCK_SIZE))));
+    const dim3 grid(static_cast<int>(std::ceil(static_cast<double>(num_rhs) / static_cast<double>(block.x))),
+                    static_cast<int>(std::ceil(static_cast<double>(num_rows) / static_cast<double>(block.y))));
 
-    detail::set_device(0);
-#if defined(PLSSVM_USE_GEMM)
-    cuda::device_kernel_gemm<<<grid, block>>>(num_rows, num_rhs, num_rows, alpha, A_d.get(), B_d.get(), beta, C_d.get());
-#else
-    cuda::device_kernel_symm<<<grid, block>>>(num_rows, num_rhs, num_rows, alpha, A_d.get(), B_d.get(), beta, C_d.get());
-#endif
+    detail::set_device(device);
+    cuda::device_kernel_inplace_matrix_add<<<grid, block>>>(num_rows, num_rhs, lhs_d.get(), rhs_d.get());
     detail::peek_at_last_error();
-    detail::device_synchronize(devices_[0]);
+    detail::device_synchronize(device);
 }
 
-void csvm::run_assemble_kernel_matrix_implicit_blas_level_3(const real_type alpha, const device_ptr_type &A_d, const parameter &params, const device_ptr_type &q_red, const real_type QA_cost, const device_ptr_type &B_d, device_ptr_type &C_d) const {
+void csvm::run_inplace_matrix_scale(const std::size_t device_id, device_ptr_type &lhs_d, const real_type scale) const {
+    const unsigned long long num_rhs = lhs_d.shape().x;
+    const unsigned long long num_rows = lhs_d.shape().y;
+    const queue_type &device = devices_[device_id];
+
+    // define the grid and block sizes
+    const std::size_t max_work_group_size = this->get_max_work_group_size(device_id);
+    if (max_work_group_size < std::size_t{ THREAD_BLOCK_SIZE } * std::size_t{ THREAD_BLOCK_SIZE }) {
+        throw kernel_launch_resources{ fmt::format("Not enough work-items allowed for a work-groups of size {}x{}! Try reducing THREAD_BLOCK_SIZE.", THREAD_BLOCK_SIZE, THREAD_BLOCK_SIZE) };
+    }
+    const dim3 block(THREAD_BLOCK_SIZE, THREAD_BLOCK_SIZE);
+    const dim3 grid(static_cast<int>(std::ceil(static_cast<double>(num_rhs) / static_cast<double>(block.x))),
+                    static_cast<int>(std::ceil(static_cast<double>(num_rows) / static_cast<double>(block.y))));
+
+    detail::set_device(device);
+    cuda::device_kernel_inplace_matrix_scale<<<grid, block>>>(num_rows, num_rhs, lhs_d.get(), scale);
+    detail::peek_at_last_error();
+    detail::device_synchronize(device);
+}
+
+void csvm::run_assemble_kernel_matrix_implicit_blas_level_3(const std::size_t device_id, const real_type alpha, const device_ptr_type &A_d, const parameter &params, const device_ptr_type &q_red, const real_type QA_cost, const device_ptr_type &B_d, device_ptr_type &C_d) const {
     const unsigned long long num_rows_reduced = A_d.shape().x - 1;
     const unsigned long long num_features = A_d.shape().y;
     const unsigned long long num_classes = B_d.shape().x;
+    const queue_type &device = devices_[device_id];
+
+    // calculate the number of data points this device is responsible for
+    const unsigned long long device_specific_num_rows = ::plssvm::detail::get_place_specific_num_rows(device_id, data_distribution_);
+    // get the offset of the data points this device is responsible for
+    const unsigned long long row_offset = ::plssvm::detail::get_place_row_offset(device_id, data_distribution_);
 
     // define the grid and block sizes
-    const std::size_t max_work_group_size = this->get_max_work_group_size();
+    const std::size_t max_work_group_size = this->get_max_work_group_size(device_id);
     if (max_work_group_size < std::size_t{ THREAD_BLOCK_SIZE } * std::size_t{ THREAD_BLOCK_SIZE }) {
         throw kernel_launch_resources{ fmt::format("Not enough work-items allowed for a work-groups of size {}x{}! Try reducing THREAD_BLOCK_SIZE.", THREAD_BLOCK_SIZE, THREAD_BLOCK_SIZE) };
     }
     const dim3 block(THREAD_BLOCK_SIZE, THREAD_BLOCK_SIZE);
-    const dim3 grid(static_cast<int>(std::ceil(static_cast<double>(num_rows_reduced) / static_cast<double>(block.x * INTERNAL_BLOCK_SIZE))),
-                    static_cast<int>(std::ceil(static_cast<double>(num_rows_reduced) / static_cast<double>(block.y * INTERNAL_BLOCK_SIZE))));
+    const dim3 grid(static_cast<int>(std::ceil(static_cast<double>(num_rows_reduced - row_offset) / static_cast<double>(block.x * INTERNAL_BLOCK_SIZE))),
+                    static_cast<int>(std::ceil(static_cast<double>(device_specific_num_rows) / static_cast<double>(block.y * INTERNAL_BLOCK_SIZE))));
 
-    detail::set_device(0);
+    detail::set_device(device);
     const real_type cost_factor = real_type{ 1.0 } / params.cost;
 
     switch (params.kernel_type.value()) {
         case kernel_function_type::linear:
-            cuda::device_kernel_assembly_linear_symm<<<grid, block>>>(alpha, q_red.get(), A_d.get(), num_rows_reduced, num_features, QA_cost, cost_factor, B_d.get(), C_d.get(), num_classes);
+            cuda::device_kernel_assembly_linear_symm<<<grid, block>>>(alpha, q_red.get(), A_d.get(), num_rows_reduced, device_specific_num_rows, row_offset, num_features, QA_cost, cost_factor, B_d.get(), C_d.get(), num_classes);
             break;
         case kernel_function_type::polynomial:
-            cuda::device_kernel_assembly_polynomial_symm<<<grid, block>>>(alpha, q_red.get(), A_d.get(), num_rows_reduced, num_features, QA_cost, cost_factor, params.degree.value(), params.gamma.value(), params.coef0.value(), B_d.get(), C_d.get(), num_classes);
+            cuda::device_kernel_assembly_polynomial_symm<<<grid, block>>>(alpha, q_red.get(), A_d.get(), num_rows_reduced, device_specific_num_rows, row_offset, num_features, QA_cost, cost_factor, params.degree.value(), params.gamma.value(), params.coef0.value(), B_d.get(), C_d.get(), num_classes);
             break;
         case kernel_function_type::rbf:
-            cuda::device_kernel_assembly_rbf_symm<<<grid, block>>>(alpha, q_red.get(), A_d.get(), num_rows_reduced, num_features, QA_cost, cost_factor, params.gamma.value(), B_d.get(), C_d.get(), num_classes);
+            cuda::device_kernel_assembly_rbf_symm<<<grid, block>>>(alpha, q_red.get(), A_d.get(), num_rows_reduced, device_specific_num_rows, row_offset, num_features, QA_cost, cost_factor, params.gamma.value(), B_d.get(), C_d.get(), num_classes);
             break;
     }
     detail::peek_at_last_error();
-    detail::device_synchronize(devices_[0]);
+    detail::device_synchronize(device);
 }
 
 //***************************************************//
@@ -246,7 +314,7 @@ auto csvm::run_w_kernel(const device_ptr_type &alpha_d, const device_ptr_type &s
     const unsigned long long num_features = sv_d.shape().y;
 
     // define the grid and block sizes
-    const std::size_t max_work_group_size = this->get_max_work_group_size();
+    const std::size_t max_work_group_size = this->get_max_work_group_size(0);
     if (max_work_group_size < std::size_t{ THREAD_BLOCK_SIZE } * std::size_t{ THREAD_BLOCK_SIZE }) {
         throw kernel_launch_resources{ fmt::format("Not enough work-items allowed for a work-groups of size {}x{}! Try reducing THREAD_BLOCK_SIZE.", THREAD_BLOCK_SIZE, THREAD_BLOCK_SIZE) };
     }
@@ -273,7 +341,7 @@ auto csvm::run_predict_kernel(const parameter &params, const device_ptr_type &w_
     device_ptr_type out_d{ shape{ num_predict_points, num_classes }, shape{ PADDING_SIZE, PADDING_SIZE }, devices_[0] };
 
     // define the block sizes
-    const std::size_t max_work_group_size = this->get_max_work_group_size();
+    const std::size_t max_work_group_size = this->get_max_work_group_size(0);
     if (max_work_group_size < std::size_t{ THREAD_BLOCK_SIZE } * std::size_t{ THREAD_BLOCK_SIZE }) {
         throw kernel_launch_resources{ fmt::format("Not enough work-items allowed for a work-groups of size {}x{}! Try reducing THREAD_BLOCK_SIZE.", THREAD_BLOCK_SIZE, THREAD_BLOCK_SIZE) };
     }

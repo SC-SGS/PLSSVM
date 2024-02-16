@@ -13,19 +13,23 @@
 #define PLSSVM_BACKENDS_GPU_CSVM_HPP_
 #pragma once
 
-#include "plssvm/constants.hpp"             // plssvm::real_type, plssvm::PADDING_SIZE
-#include "plssvm/csvm.hpp"                  // plssvm::csvm
-#include "plssvm/detail/move_only_any.hpp"  // plssvm::detail::{move_only_any, move_only_any_cast}
-#include "plssvm/detail/operators.hpp"      // operator namespace
-#include "plssvm/matrix.hpp"                // plssvm::aos_matrix
-#include "plssvm/parameter.hpp"             // plssvm::parameter
-#include "plssvm/shape.hpp"                 // plssvm::shape
-#include "plssvm/solver_types.hpp"          // plssvm::solver_type
+#include "plssvm/constants.hpp"                 // plssvm::real_type, plssvm::PADDING_SIZE
+#include "plssvm/csvm.hpp"                      // plssvm::csvm
+#include "plssvm/detail/assert.hpp"             // PLSSVM_ASSERT
+#include "plssvm/detail/data_distribution.hpp"  // plssvm::detail::calculate_data_distribution
+#include "plssvm/detail/move_only_any.hpp"      // plssvm::detail::{move_only_any, move_only_any_cast}
+#include "plssvm/detail/operators.hpp"          // operator namespace
+#include "plssvm/kernel_function_types.hpp"     // plssvm::kernel_function_type
+#include "plssvm/matrix.hpp"                    // plssvm::aos_matrix
+#include "plssvm/parameter.hpp"                 // plssvm::parameter
+#include "plssvm/shape.hpp"                     // plssvm::shape
+#include "plssvm/solver_types.hpp"              // plssvm::solver_type
 
 #include "fmt/core.h"  // fmt::format
 
 #include <algorithm>  // std::min, std::all_of
 #include <cstddef>    // std::size_t
+#include <tuple>      // std::tuple
 #include <utility>    // std::forward, std::move
 #include <vector>     // std::vector
 
@@ -82,10 +86,9 @@ class gpu_csvm : public ::plssvm::csvm {
     ~gpu_csvm() override = default;
 
     /**
-     * @brief Return the number of available devices for the current backend.
-     * @return the number of available devices (`[[nodiscard]]`)
+     * plssvm::csvm::num_available_devices
      */
-    [[nodiscard]] std::size_t num_available_devices() const noexcept {
+    [[nodiscard]] std::size_t num_available_devices() const noexcept override {
         return devices_.size();
     }
 
@@ -94,17 +97,13 @@ class gpu_csvm : public ::plssvm::csvm {
     //                        fit                        //
     //***************************************************//
     /**
-     * @copydoc plssvm::csvm::setup_data_on_devices
-     */
-    [[nodiscard]] ::plssvm::detail::move_only_any setup_data_on_devices(solver_type solver, const soa_matrix<real_type> &A) const final;
-    /**
      * @copydoc plssvm::csvm::assemble_kernel_matrix
      */
-    [[nodiscard]] ::plssvm::detail::move_only_any assemble_kernel_matrix(solver_type solver, const parameter &params, ::plssvm::detail::move_only_any &data, const std::vector<real_type> &q_red, real_type QA_cost) const final;
+    [[nodiscard]] std::vector<::plssvm::detail::move_only_any> assemble_kernel_matrix(solver_type solver, const parameter &params, const soa_matrix<real_type> &A, const std::vector<real_type> &q_red, real_type QA_cost) const final;
     /**
      * @copydoc plssvm::csvm::blas_level_3
      */
-    void blas_level_3(solver_type solver, const real_type alpha, const ::plssvm::detail::move_only_any &A, const soa_matrix<real_type> &B, real_type beta, soa_matrix<real_type> &C) const final;
+    void blas_level_3(solver_type solver, real_type alpha, const std::vector<::plssvm::detail::move_only_any> &A, const soa_matrix<real_type> &B, real_type beta, soa_matrix<real_type> &C) const final;
 
     //***************************************************//
     //                   predict, score                  //
@@ -120,34 +119,37 @@ class gpu_csvm : public ::plssvm::csvm {
     // Note: there are two versions of each function (one for float and one for double) since virtual template functions are not allowed in C++!
 
     /**
-     * @brief Return the maximum allowed work group size.
+     * @brief Return the maximum allowed work group size for the specified device.
      * @return the maximum allowed work group size (`[[nodiscard]]`)
      */
-    [[nodiscard]] virtual std::size_t get_max_work_group_size() const = 0;
+    [[nodiscard]] virtual std::size_t get_max_work_group_size(std::size_t device_id) const = 0;
 
     //***************************************************//
     //                        fit                        //
     //***************************************************//
     /**
-     * @brief Explicitly assemble the kernel matrix on the device.
+     * @brief Explicitly assemble the kernel matrix on the device with @p device_id.
+     * @param[in] device_id the device to run the kernel on
      * @param[in] params the parameters (e.g., kernel function) used to assemble the kernel matrix
      * @param[in] data_d the data set to create the kernel matrix from
      * @param[in] q_red_d the vector used in the dimensional reduction
      * @param[in] QA_cost the scalar used in the dimensional reduction
      * @return the explicit kernel matrix stored on the device (`[[nodiscard]]`)
      */
-    [[nodiscard]] virtual device_ptr_type run_assemble_kernel_matrix_explicit(const parameter &params, const device_ptr_type &data_d, const device_ptr_type &q_red_d, real_type QA_cost) const = 0;
+    [[nodiscard]] virtual device_ptr_type run_assemble_kernel_matrix_explicit(std::size_t device_id, const parameter &params, const device_ptr_type &data_d, const device_ptr_type &q_red_d, real_type QA_cost) const = 0;
     /**
      * @brief Perform an explicit BLAS level 3 operation: `C = alpha * A * B + beta * C` where @p A, @p B, and @p C are matrices, and @p alpha and @p beta are scalars.
+     * @param[in] device_id the device to run the kernel on
      * @param[in] alpha the scalar alpha value
      * @param[in] A_d the matrix @p A
      * @param[in] B_d the matrix @p B
      * @param[in] beta the scalar beta value
      * @param[in,out] C_d the matrix @p C, also used as result matrix
      */
-    virtual void run_blas_level_3_kernel_explicit(real_type alpha, const device_ptr_type &A_d, const device_ptr_type &B_d, real_type beta, device_ptr_type &C_d) const = 0;
+    virtual void run_blas_level_3_kernel_explicit(std::size_t device_id, real_type alpha, const device_ptr_type &A_d, const device_ptr_type &B_d, real_type beta, device_ptr_type &C_d) const = 0;
     /**
      * @brief Perform an implicit BLAS level 3 operation: `C = alpha * A * B + beta * C` where @p A is an implicitly constructed kernel matrix, @p B and @p C are matrices and @p alpha is a scalar.
+     * @param[in] device_id the device to run the kernel on
      * @param[in] alpha the scalar alpha value
      * @param[in] A_d the data points to implicitly create the kernel matrix from
      * @param[in] params the parameters (e.g., kernel function) used to assemble the kernel matrix
@@ -156,7 +158,21 @@ class gpu_csvm : public ::plssvm::csvm {
      * @param[in] B_d the matrix @p B
      * @param[in,out] C_d the matrix @p C, also used as result matrix
      */
-    virtual void run_assemble_kernel_matrix_implicit_blas_level_3(real_type alpha, const device_ptr_type &A_d, const parameter &params, const device_ptr_type &q_red_d, real_type QA_cost, const device_ptr_type &B_d, device_ptr_type &C_d) const = 0;
+    virtual void run_assemble_kernel_matrix_implicit_blas_level_3(std::size_t device_id, real_type alpha, const device_ptr_type &A_d, const parameter &params, const device_ptr_type &q_red_d, real_type QA_cost, const device_ptr_type &B_d, device_ptr_type &C_d) const = 0;
+    /**
+     * @brief Perform a simple inplace matrix addition adding the contents of @p rhs_d to @p lhs_d.
+     * @param[in] device_id the device to run the kernel on
+     * @param[in,out] lhs_d the matrix to add the values of @p rhs_d to
+     * @param[in] rhs_d the matrix to add to @p lhs_d
+     */
+    virtual void run_inplace_matrix_addition(std::size_t device_id, device_ptr_type &lhs_d, const device_ptr_type &rhs_d) const = 0;
+    /**
+     * @brief Perform a simple inplace matrix scale: @p lhs_d *= @p scale.
+     * @param[in] device_id the device to run the kernel on
+     * @param[in,out] lhs_d the matrix to @p scale
+     * @param[in] scale the scaling value
+     */
+    virtual void run_inplace_matrix_scale(std::size_t device_id, device_ptr_type &lhs_d, real_type scale) const = 0;
 
     //***************************************************//
     //                   predict, score                  //
@@ -182,109 +198,134 @@ class gpu_csvm : public ::plssvm::csvm {
 
     /// The available/used backend devices.
     std::vector<queue_type> devices_{};
+    /// The data distribution on the available devices.
+    mutable std::vector<std::size_t> data_distribution_{};
 };
 
 //***************************************************//
 //                        fit                        //
 //***************************************************//
 template <template <typename> typename device_ptr_t, typename queue_t>
-::plssvm::detail::move_only_any gpu_csvm<device_ptr_t, queue_t>::setup_data_on_devices(const solver_type solver, const soa_matrix<real_type> &A) const {
+std::vector<::plssvm::detail::move_only_any> gpu_csvm<device_ptr_t, queue_t>::assemble_kernel_matrix(const solver_type solver, const parameter &params, const soa_matrix<real_type> &A, const std::vector<real_type> &q_red, real_type QA_cost) const {
     PLSSVM_ASSERT(!A.empty(), "The matrix to setup on the devices may not be empty!");
     PLSSVM_ASSERT(A.is_padded(), "Tha matrix to setup on the devices must be padded!");
-    PLSSVM_ASSERT(solver != solver_type::automatic, "An explicit solver type must be provided instead of solver_type::automatic!");
-
-    if (solver == solver_type::cg_explicit || solver == solver_type::cg_implicit) {
-        // initialize the data on the device
-        device_ptr_type data_d{ A.shape(), A.padding(), devices_[0] };
-        data_d.copy_to_device(A);
-
-        return ::plssvm::detail::move_only_any{ std::move(data_d) };
-    } else {
-        throw exception{ fmt::format("Assembling the kernel matrix using the {} CG variation is currently not implemented!", solver) };
-    }
-}
-
-template <template <typename> typename device_ptr_t, typename queue_t>
-::plssvm::detail::move_only_any gpu_csvm<device_ptr_t, queue_t>::assemble_kernel_matrix(const solver_type solver, const parameter &params, ::plssvm::detail::move_only_any &data, const std::vector<real_type> &q_red, real_type QA_cost) const {
     PLSSVM_ASSERT(!q_red.empty(), "The q_red vector may not be empty!");
     PLSSVM_ASSERT(solver != solver_type::automatic, "An explicit solver type must be provided instead of solver_type::automatic!");
 
-    // allocate memory for the values currently not on the device
-    device_ptr_type q_red_d{ q_red.size() + PADDING_SIZE, devices_[0] };
-    q_red_d.copy_to_device(q_red, 0, q_red.size());
-    q_red_d.memset(0, q_red.size());
+    // update the data distribution -> account for the dimensional reduction
+    data_distribution_ = detail::calculate_data_distribution(A.num_rows() - 1, this->num_available_devices());
 
-    if (solver == solver_type::cg_explicit) {
-        // get the pointer to the data that already is on the device
-        const auto &data_d = detail::move_only_any_cast<const device_ptr_type &>(data);
-        [[maybe_unused]] const std::size_t num_rows_reduced = data_d.shape().x - 1;
-        [[maybe_unused]] const std::size_t num_features = data_d.shape().y;
+    std::vector<::plssvm::detail::move_only_any> kernel_matrices_parts(this->num_available_devices());
+#pragma omp parallel for
+    for (std::size_t device_id = 0; device_id < this->num_available_devices(); ++device_id) {
+        // check whether the current device is responsible for at least one data point!
+        if (::plssvm::detail::get_place_specific_num_rows(device_id, data_distribution_) == 0) continue;
 
-        PLSSVM_ASSERT(num_rows_reduced > 0, "At least one row must be given!");
-        PLSSVM_ASSERT(num_rows_reduced + PADDING_SIZE >= num_rows_reduced, "The number of rows with padding ({}) must be greater or equal to the number of rows without padding!", num_rows_reduced + PADDING_SIZE, num_rows_reduced);
-        PLSSVM_ASSERT(num_features > 0, "At least one feature must be given!");
-        PLSSVM_ASSERT((num_rows_reduced + PADDING_SIZE + 1) * (num_features + PADDING_SIZE) == data_d.size_padded(),
-                      "The number of values on the device data array is {}, but the provided sizes are {} ((num_rows_reduced + 1) * num_features)",
-                      data_d.size_padded(),
-                      (num_rows_reduced + PADDING_SIZE + 1) * (num_features + PADDING_SIZE));
+        // assign parts to calculate to each available device
+        const queue_type &device = devices_[device_id];
 
-        device_ptr_type kernel_matrix = this->run_assemble_kernel_matrix_explicit(params, data_d, q_red_d, QA_cost);
+        // initialize the data on the device
+        device_ptr_type data_d{ A.shape(), A.padding(), device };
+        data_d.copy_to_device(A);
 
-#if defined(PLSSVM_USE_GEMM)
-        PLSSVM_ASSERT((num_rows_reduced + PADDING_SIZE) * (num_rows_reduced + PADDING_SIZE) == kernel_matrix.size_padded(),
-                      "The kernel matrix must be a quadratic matrix with (num_rows_reduced + PADDING_SIZE)^2 ({}) entries, but is {}!",
-                      (num_rows_reduced + PADDING_SIZE) * (num_rows_reduced + PADDING_SIZE),
-                      kernel_matrix.size_padded());
-#else
-        PLSSVM_ASSERT((num_rows_reduced + PADDING_SIZE) * (num_rows_reduced + PADDING_SIZE + 1) / 2 == kernel_matrix.size_padded(),
-                      "The kernel matrix must be a triangular matrix only with (num_rows_reduced + PADDING_SIZE) * (num_rows_reduced + PADDING_SIZE + 1) / 2 ({}) entries, but is {}!",
-                      (num_rows_reduced + PADDING_SIZE) * (num_rows_reduced + PADDING_SIZE + 1) / 2,
-                      kernel_matrix.size_padded());
-#endif
+        // allocate memory for the values currently not on the device for each device -> stored on each device
+        device_ptr_type q_red_d{ q_red.size() + PADDING_SIZE, device };
+        q_red_d.copy_to_device(q_red, 0, q_red.size());
+        q_red_d.memset(0, q_red.size());
 
-        return ::plssvm::detail::move_only_any{ std::move(kernel_matrix) };
-    } else if (solver == solver_type::cg_implicit) {
-        // simply return data since in implicit we don't assembly the kernel matrix here!
-        return ::plssvm::detail::move_only_any{ std::make_tuple(detail::move_only_any_cast<device_ptr_type &&>(std::move(data)), params, std::move(q_red_d), QA_cost) };
-    } else {
-        throw exception{ fmt::format("Assembling the kernel matrix using the {} CG variation is currently not implemented!", solver) };
+        if (solver == solver_type::cg_explicit) {
+            // get the pointer to the data that already is on the device
+            [[maybe_unused]] const std::size_t num_rows_reduced = data_d.shape().x - 1;
+            [[maybe_unused]] const std::size_t num_features = data_d.shape().y;
+
+            PLSSVM_ASSERT(num_rows_reduced > 0, "At least one row must be given!");
+            PLSSVM_ASSERT(num_features > 0, "At least one feature must be given!");
+            PLSSVM_ASSERT(data_d.is_padded(), "The data matrix must be padded!");
+            PLSSVM_ASSERT((num_rows_reduced + PADDING_SIZE + 1) * (num_features + PADDING_SIZE) == data_d.size_padded(),
+                          "The number of values on the device data array is {}, but the provided sizes are {} ((num_rows_reduced + PADDING_SIZE + 1) * (num_features + PADDING_SIZE))",
+                          data_d.size_padded(),
+                          (num_rows_reduced + PADDING_SIZE + 1) * (num_features + PADDING_SIZE));
+
+            // run explicit matrix assembly kernel on the current device using the respective backend
+            device_ptr_type kernel_matrix = this->run_assemble_kernel_matrix_explicit(device_id, params, data_d, q_red_d, QA_cost);
+
+            kernel_matrices_parts[device_id] = ::plssvm::detail::move_only_any{ std::move(kernel_matrix) };
+        } else if (solver == solver_type::cg_implicit) {
+            // simply return data since in implicit we don't assembly the kernel matrix here!
+            kernel_matrices_parts[device_id] = ::plssvm::detail::move_only_any{ std::make_tuple(std::move(data_d), params, std::move(q_red_d), QA_cost) };
+        } else {
+            throw exception{ fmt::format("Assembling the kernel matrix using the {} CG variation is currently not implemented!", solver) };
+        }
     }
+
+    return kernel_matrices_parts;
 }
 
 template <template <typename> typename device_ptr_t, typename queue_t>
-void gpu_csvm<device_ptr_t, queue_t>::blas_level_3(const solver_type solver, const real_type alpha, const ::plssvm::detail::move_only_any &A, const soa_matrix<real_type> &B, const real_type beta, soa_matrix<real_type> &C) const {
+void gpu_csvm<device_ptr_t, queue_t>::blas_level_3(const solver_type solver, const real_type alpha, const std::vector<::plssvm::detail::move_only_any> &A, const soa_matrix<real_type> &B, const real_type beta, soa_matrix<real_type> &C) const {
     PLSSVM_ASSERT(!B.empty(), "The B matrix may not be empty!");
     PLSSVM_ASSERT(B.is_padded(), "The B matrix must be padded!");
     PLSSVM_ASSERT(!C.empty(), "The C matrix may not be empty!");
     PLSSVM_ASSERT(C.is_padded(), "The C matrix must be padded!");
     PLSSVM_ASSERT(solver != solver_type::automatic, "An explicit solver type must be provided instead of solver_type::automatic!");
 
-    // allocate memory on the device
-    device_ptr_type B_d{ B.shape(), B.padding(), devices_[0] };
-    B_d.copy_to_device(B);
-    device_ptr_type C_d{ C.shape(), C.padding(), devices_[0] };
-    if (solver == solver_type::cg_implicit) {
-        // apply beta to C and copy it afterward to the device
-        C *= beta;
-    }
-    C_d.copy_to_device(C);
-
-    if (solver == solver_type::cg_explicit) {
-        const auto &A_d = detail::move_only_any_cast<const device_ptr_type &>(A);
-        PLSSVM_ASSERT(!A_d.empty(), "The A matrix may not be empty!");
-
-        this->run_blas_level_3_kernel_explicit(alpha, A_d, B_d, beta, C_d);
-    } else if (solver == solver_type::cg_implicit) {
-        const auto &[A_d, params, q_red_d, QA_cost] = detail::move_only_any_cast<const std::tuple<device_ptr_type, parameter, device_ptr_type, real_type> &>(A);
-        PLSSVM_ASSERT(!A_d.empty(), "The A matrix may not be empty!");
-        PLSSVM_ASSERT(!q_red_d.empty(), "The q_red vector may not be empty!");
-
-        this->run_assemble_kernel_matrix_implicit_blas_level_3(alpha, A_d, params, q_red_d, QA_cost, B_d, C_d);
-    } else {
-        throw exception{ fmt::format("The GEMM calculation using the {} CG variation is currently not implemented!", solver) };
+    // the partial C results from all devices
+    std::vector<device_ptr_type> device_C_d(this->num_available_devices());
+    // the partial C result from a specific device later stored on device 0 to perform the C reduction (inplace matrix addition)
+    device_ptr_type partial_C_d{};
+    if (this->num_available_devices() > 1) {
+        partial_C_d = device_ptr_type{ C.shape(), C.padding(), devices_[0] };
     }
 
-    C_d.copy_to_host(C);
+#pragma omp parallel for ordered
+    for (std::size_t device_id = 0; device_id < this->num_available_devices(); ++device_id) {
+        // check whether the current device is responsible for at least one data point!
+        if (::plssvm::detail::get_place_specific_num_rows(device_id, data_distribution_) == 0) continue;
+
+        // perform the BLAS (like) operation on each device
+        const queue_type &device = devices_[device_id];
+        device_ptr_type &C_d = device_C_d[device_id];
+
+        // allocate memory on the device
+        device_ptr_type B_d{ B.shape(), B.padding(), device };
+        B_d.copy_to_device(B);
+        C_d = device_ptr_type{ C.shape(), C.padding(), device };
+        // device 0 always touches all values in C -> it is sufficient that only device 0 gets the actual C matrix
+        // all other devices get a matrix filled with zeros only
+        if (device_id == 0) {
+            C_d.copy_to_device(C);
+            if (solver == solver_type::cg_implicit) {
+                this->run_inplace_matrix_scale(0, C_d, beta);
+            }
+        } else {
+            C_d.memset(0);
+        }
+
+        if (solver == solver_type::cg_explicit) {
+            const auto &A_d = detail::move_only_any_cast<const device_ptr_type &>(A[device_id]);
+            PLSSVM_ASSERT(!A_d.empty(), "The A matrix may not be empty!");
+
+            this->run_blas_level_3_kernel_explicit(device_id, alpha, A_d, B_d, beta, C_d);
+        } else if (solver == solver_type::cg_implicit) {
+            const auto &[A_d, params, q_red_d, QA_cost] = detail::move_only_any_cast<const std::tuple<device_ptr_type, parameter, device_ptr_type, real_type> &>(A[device_id]);
+            PLSSVM_ASSERT(!A_d.empty(), "The A matrix may not be empty!");
+            PLSSVM_ASSERT(!q_red_d.empty(), "The q_red vector may not be empty!");
+
+            this->run_assemble_kernel_matrix_implicit_blas_level_3(device_id, alpha, A_d, params, q_red_d, QA_cost, B_d, C_d);
+        } else {
+            throw exception{ fmt::format("The GEMM calculation using the {} CG variation is currently not implemented!", solver) };
+        }
+
+        // reduce the partial C matrices to the final C matrix on device 0
+#pragma omp ordered
+        if (device_id != 0) {
+            C_d.copy_to_other_device(partial_C_d);
+            // always reduce on device 0!!!
+            this->run_inplace_matrix_addition(0, device_C_d[0], partial_C_d);
+        }
+    }
+
+    device_C_d[0].copy_to_host(C);
     C.restore_padding();
 }
 

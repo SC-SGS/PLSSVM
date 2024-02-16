@@ -237,7 +237,6 @@ The `[optional_options]` can be one or multiple of:
 - `PLSSVM_ENABLE_TESTING=ON|OFF` (default: `ON`): enable testing using GoogleTest and ctest
 - `PLSSVM_ENABLE_LANGUAGE_BINDINGS=ON|OFF` (default: `OFF`): enable language bindings
 - `PLSSVM_STL_DEBUG_MODE_FLAGS=ON|OFF` (default: `OFF`): enable STL debug modes (**note**: changes the resulting library's ABI!)
-- `PLSSVM_USE_GEMM=ON|OFF` (default: `ON`): use GEMM instead of SYMM calculations in the CG algorithm with the `cg_explicit` solver type (**note**: GEMM increases the necessary device memory by a factor of 2)
 
 If `PLSSVM_ENABLE_TESTING` is set to `ON`, the following options can also be set:
 
