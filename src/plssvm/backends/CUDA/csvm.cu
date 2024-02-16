@@ -8,26 +8,26 @@
 
 #include "plssvm/backends/CUDA/csvm.hpp"
 
-#include "plssvm/backend_types.hpp"                                          // plssvm::backend_type
-#include "plssvm/backends/CUDA/cg_explicit/blas.cuh"                         // plssvm::cuda::device_kernel_gemm
-#include "plssvm/backends/CUDA/cg_explicit/kernel_matrix_assembly.cuh"       // plssvm::cuda::{device_kernel_assembly_linear, device_kernel_assembly_polynomial, device_kernel_assembly_rbf}
-#include "plssvm/backends/CUDA/cg_implicit/kernel_matrix_assembly_blas.cuh"  // plssvm::cuda::{device_kernel_assembly_linear_symm, device_kernel_assembly_polynomial_symm, device_kernel_assembly_rbf_symm}
-#include "plssvm/backends/CUDA/detail/device_ptr.cuh"                        // plssvm::cuda::detail::device_ptr
-#include "plssvm/backends/CUDA/detail/utility.cuh"                           // PLSSVM_CUDA_ERROR_CHECK, plssvm::cuda::detail::{device_synchronize, get_device_count, set_device, peek_at_last_error, get_runtime_version}
-#include "plssvm/backends/CUDA/exceptions.hpp"                               // plssvm::cuda::backend_exception
-#include "plssvm/backends/CUDA/predict_kernel.cuh"                           // plssvm::cuda::detail::{device_kernel_w_linear, device_kernel_predict_polynomial, device_kernel_predict_rbf}
-#include "plssvm/constants.hpp"                                              // plssvm::{real_type, THREAD_BLOCK_SIZE, INTERNAL_BLOCK_SIZE, PADDING_SIZE}
-#include "plssvm/detail/assert.hpp"                                          // PLSSVM_ASSERT
-#include "plssvm/detail/data_distribution.hpp"                               // plssvm::detail::{get_place_specific_num_rows, get_place_row_offset, calculate_explicit_kernel_matrix_num_entries_padded}
-#include "plssvm/detail/logging.hpp"                                         // plssvm::detail::log
-#include "plssvm/detail/memory_size.hpp"                                     // plssvm::detail::memory_size
-#include "plssvm/detail/performance_tracker.hpp"                             // plssvm::detail::tracking_entry
-#include "plssvm/exceptions/exceptions.hpp"                                  // plssvm::exception
-#include "plssvm/kernel_function_types.hpp"                                  // plssvm::kernel_function_type
-#include "plssvm/parameter.hpp"                                              // plssvm::parameter
-#include "plssvm/shape.hpp"                                                  // plssvm::shape
-#include "plssvm/target_platforms.hpp"                                       // plssvm::target_platform
-#include "plssvm/verbosity_levels.hpp"                                       // plssvm::verbosity_level
+#include "plssvm/backend_types.hpp"                                                 // plssvm::backend_type
+#include "plssvm/backends/CUDA/detail/device_ptr.cuh"                               // plssvm::cuda::detail::device_ptr
+#include "plssvm/backends/CUDA/detail/utility.cuh"                                  // PLSSVM_CUDA_ERROR_CHECK, plssvm::cuda::detail::{device_synchronize, get_device_count, set_device, peek_at_last_error, get_runtime_version}
+#include "plssvm/backends/CUDA/exceptions.hpp"                                      // plssvm::cuda::backend_exception
+#include "plssvm/backends/CUDA/kernel/cg_explicit/blas.cuh"                         // plssvm::cuda::device_kernel_gemm
+#include "plssvm/backends/CUDA/kernel/cg_explicit/kernel_matrix_assembly.cuh"       // plssvm::cuda::device_kernel_assembly
+#include "plssvm/backends/CUDA/kernel/cg_implicit/kernel_matrix_assembly_blas.cuh"  // plssvm::cuda::device_kernel_assembly_symm
+#include "plssvm/backends/CUDA/kernel/predict_kernel.cuh"                           // plssvm::cuda::detail::{device_kernel_w_linear, device_kernel_predict_linear, device_kernel_predict}
+#include "plssvm/constants.hpp"                                                     // plssvm::{real_type, THREAD_BLOCK_SIZE, INTERNAL_BLOCK_SIZE, PADDING_SIZE}
+#include "plssvm/detail/assert.hpp"                                                 // PLSSVM_ASSERT
+#include "plssvm/detail/data_distribution.hpp"                                      // plssvm::detail::{get_place_specific_num_rows, get_place_row_offset, calculate_explicit_kernel_matrix_num_entries_padded}
+#include "plssvm/detail/logging.hpp"                                                // plssvm::detail::log
+#include "plssvm/detail/memory_size.hpp"                                            // plssvm::detail::memory_size
+#include "plssvm/detail/performance_tracker.hpp"                                    // plssvm::detail::tracking_entry
+#include "plssvm/exceptions/exceptions.hpp"                                         // plssvm::exception
+#include "plssvm/kernel_function_types.hpp"                                         // plssvm::kernel_function_type
+#include "plssvm/parameter.hpp"                                                     // plssvm::parameter
+#include "plssvm/shape.hpp"                                                         // plssvm::shape
+#include "plssvm/target_platforms.hpp"                                              // plssvm::target_platform
+#include "plssvm/verbosity_levels.hpp"                                              // plssvm::verbosity_level
 
 #include "cuda.h"              // cuda runtime functions
 #include "cuda_runtime_api.h"  // cuda runtime functions
@@ -170,13 +170,13 @@ auto csvm::run_assemble_kernel_matrix_explicit(const std::size_t device_id, cons
     detail::set_device(device);
     switch (params.kernel_type.value()) {
         case kernel_function_type::linear:
-            cuda::device_kernel_assembly_linear<<<grid, block>>>(kernel_matrix_d.get(), data_d.get(), num_rows_reduced, device_specific_num_rows, row_offset, num_features, q_red_d.get(), QA_cost, cost_factor);
+            cuda::device_kernel_assembly<kernel_function_type::linear><<<grid, block>>>(kernel_matrix_d.get(), data_d.get(), num_rows_reduced, device_specific_num_rows, row_offset, num_features, q_red_d.get(), QA_cost, cost_factor);
             break;
         case kernel_function_type::polynomial:
-            cuda::device_kernel_assembly_polynomial<<<grid, block>>>(kernel_matrix_d.get(), data_d.get(), num_rows_reduced, device_specific_num_rows, row_offset, num_features, q_red_d.get(), QA_cost, cost_factor, params.degree.value(), params.gamma.value(), params.coef0.value());
+            cuda::device_kernel_assembly<kernel_function_type::polynomial><<<grid, block>>>(kernel_matrix_d.get(), data_d.get(), num_rows_reduced, device_specific_num_rows, row_offset, num_features, q_red_d.get(), QA_cost, cost_factor, params.degree.value(), params.gamma.value(), params.coef0.value());
             break;
         case kernel_function_type::rbf:
-            cuda::device_kernel_assembly_rbf<<<grid, block>>>(kernel_matrix_d.get(), data_d.get(), num_rows_reduced, device_specific_num_rows, row_offset, num_features, q_red_d.get(), QA_cost, cost_factor, params.gamma.value());
+            cuda::device_kernel_assembly<kernel_function_type::rbf><<<grid, block>>>(kernel_matrix_d.get(), data_d.get(), num_rows_reduced, device_specific_num_rows, row_offset, num_features, q_red_d.get(), QA_cost, cost_factor, params.gamma.value());
             break;
     }
     detail::peek_at_last_error();
@@ -290,13 +290,13 @@ void csvm::run_assemble_kernel_matrix_implicit_blas_level_3(const std::size_t de
 
     switch (params.kernel_type.value()) {
         case kernel_function_type::linear:
-            cuda::device_kernel_assembly_linear_symm<<<grid, block>>>(alpha, q_red.get(), A_d.get(), num_rows_reduced, device_specific_num_rows, row_offset, num_features, QA_cost, cost_factor, B_d.get(), C_d.get(), num_classes);
+            cuda::device_kernel_assembly_symm<kernel_function_type::linear><<<grid, block>>>(alpha, q_red.get(), A_d.get(), num_rows_reduced, device_specific_num_rows, row_offset, num_features, QA_cost, cost_factor, B_d.get(), C_d.get(), num_classes);
             break;
         case kernel_function_type::polynomial:
-            cuda::device_kernel_assembly_polynomial_symm<<<grid, block>>>(alpha, q_red.get(), A_d.get(), num_rows_reduced, device_specific_num_rows, row_offset, num_features, QA_cost, cost_factor, params.degree.value(), params.gamma.value(), params.coef0.value(), B_d.get(), C_d.get(), num_classes);
+            cuda::device_kernel_assembly_symm<kernel_function_type::polynomial><<<grid, block>>>(alpha, q_red.get(), A_d.get(), num_rows_reduced, device_specific_num_rows, row_offset, num_features, QA_cost, cost_factor, B_d.get(), C_d.get(), num_classes, params.degree.value(), params.gamma.value(), params.coef0.value());
             break;
         case kernel_function_type::rbf:
-            cuda::device_kernel_assembly_rbf_symm<<<grid, block>>>(alpha, q_red.get(), A_d.get(), num_rows_reduced, device_specific_num_rows, row_offset, num_features, QA_cost, cost_factor, params.gamma.value(), B_d.get(), C_d.get(), num_classes);
+            cuda::device_kernel_assembly_symm<kernel_function_type::rbf><<<grid, block>>>(alpha, q_red.get(), A_d.get(), num_rows_reduced, device_specific_num_rows, row_offset, num_features, QA_cost, cost_factor, B_d.get(), C_d.get(), num_classes, params.gamma.value());
             break;
     }
     detail::peek_at_last_error();
@@ -363,10 +363,10 @@ auto csvm::run_predict_kernel(const parameter &params, const device_ptr_type &w_
                 // already handled
                 break;
             case kernel_function_type::polynomial:
-                cuda::device_kernel_predict_polynomial<<<grid, block>>>(out_d.get(), alpha_d.get(), rho_d.get(), sv_d.get(), predict_points_d.get(), num_classes, num_sv, num_predict_points, num_features, params.degree.value(), params.gamma.value(), params.coef0.value());
+                cuda::device_kernel_predict<kernel_function_type::polynomial><<<grid, block>>>(out_d.get(), alpha_d.get(), rho_d.get(), sv_d.get(), predict_points_d.get(), num_classes, num_sv, num_predict_points, num_features, params.degree.value(), params.gamma.value(), params.coef0.value());
                 break;
             case kernel_function_type::rbf:
-                cuda::device_kernel_predict_rbf<<<grid, block>>>(out_d.get(), alpha_d.get(), rho_d.get(), sv_d.get(), predict_points_d.get(), num_classes, num_sv, num_predict_points, num_features, params.gamma.value());
+                cuda::device_kernel_predict<kernel_function_type::rbf><<<grid, block>>>(out_d.get(), alpha_d.get(), rho_d.get(), sv_d.get(), predict_points_d.get(), num_classes, num_sv, num_predict_points, num_features, params.gamma.value());
                 break;
         }
     }

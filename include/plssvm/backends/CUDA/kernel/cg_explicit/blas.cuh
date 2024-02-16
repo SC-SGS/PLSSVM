@@ -9,8 +9,8 @@
  * @brief Functions for explicitly performing a BLAS GEMM like matrix-matrix multiplication using the CUDA backend.
  */
 
-#ifndef PLSSVM_BACKENDS_CUDA_CG_EXPLICIT_BLAS_CUH_
-#define PLSSVM_BACKENDS_CUDA_CG_EXPLICIT_BLAS_CUH_
+#ifndef PLSSVM_BACKENDS_CUDA_KERNEL_CG_EXPLICIT_BLAS_CUH_
+#define PLSSVM_BACKENDS_CUDA_KERNEL_CG_EXPLICIT_BLAS_CUH_
 #pragma once
 
 #include "plssvm/constants.hpp"  // plssvm::{real_type, THREAD_BLOCK_SIZE, INTERNAL_BLOCK_SIZE, FEATURE_BLOCK_SIZE, PADDING_SIZE}
@@ -188,4 +188,4 @@ __global__ void device_kernel_inplace_matrix_scale(const unsigned long long num_
 
 }  // namespace plssvm::cuda
 
-#endif  // PLSSVM_BACKENDS_CUDA_CG_EXPLICIT_BLAS_CUH_
+#endif  // PLSSVM_BACKENDS_CUDA_KERNEL_CG_EXPLICIT_BLAS_CUH_

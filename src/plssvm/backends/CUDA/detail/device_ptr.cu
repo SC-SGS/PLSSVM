@@ -8,12 +8,12 @@
 
 #include "plssvm/backends/CUDA/detail/device_ptr.cuh"
 
-#include "plssvm/backends/CUDA/detail/fill_kernel.cuh"  // plssvm::cuda::detail::fill_array
-#include "plssvm/backends/CUDA/detail/utility.cuh"      // PLSSVM_CUDA_ERROR_CHECK, plssvm::cuda::detail::{set_device, peek_at_last_error, device_synchronize, get_device_count}
-#include "plssvm/backends/CUDA/exceptions.hpp"          // plssvm::cuda::backend_exception
-#include "plssvm/backends/gpu_device_ptr.hpp"           // plssvm::detail::gpu_device_ptr
-#include "plssvm/detail/assert.hpp"                     // PLSSVM_ASSERT
-#include "plssvm/shape.hpp"                             // plssvm::shape
+#include "plssvm/backends/CUDA/detail/utility.cuh"             // PLSSVM_CUDA_ERROR_CHECK, plssvm::cuda::detail::{set_device, peek_at_last_error, device_synchronize, get_device_count}
+#include "plssvm/backends/CUDA/exceptions.hpp"                 // plssvm::cuda::backend_exception
+#include "plssvm/backends/CUDA/kernel/detail/fill_kernel.cuh"  // plssvm::cuda::detail::fill_array
+#include "plssvm/backends/gpu_device_ptr.hpp"                  // plssvm::detail::gpu_device_ptr
+#include "plssvm/detail/assert.hpp"                            // PLSSVM_ASSERT
+#include "plssvm/shape.hpp"                                    // plssvm::shape
 
 #include "fmt/core.h"  // fmt::format
 
