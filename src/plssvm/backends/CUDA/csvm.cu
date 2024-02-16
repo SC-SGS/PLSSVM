@@ -87,7 +87,6 @@ void csvm::init(const target_platform target) {
     // get all available devices wrt the requested target platform
     devices_.resize(detail::get_device_count());
     std::iota(devices_.begin(), devices_.end(), 0);
-    devices_ = { 0, 0 };
 
     // throw exception if no CUDA devices could be found
     if (devices_.empty()) {
