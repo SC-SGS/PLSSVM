@@ -848,7 +848,7 @@ std::tuple<aos_matrix<real_type>, std::vector<real_type>, unsigned long long> cs
                 // check whether there is enough memory available for cg_implicit
                 if (const std::vector<std::size_t> failed_cg_implicit_constraints = check_sizes(total_memory_needed_implicit_per_device, usable_device_memory_per_device); failed_cg_implicit_constraints.empty()) {
                     // use the implicit solver type
-                    used_solver = solver_type::cg_explicit;
+                    used_solver = solver_type::cg_implicit;
                 } else {
                     // not enough device memory available for the implicit case
                     throw kernel_launch_resources{ fmt::format("Not enough device memory available on device(s) {} even for the cg_implicit solver!", format_vector(failed_cg_implicit_constraints)) };
