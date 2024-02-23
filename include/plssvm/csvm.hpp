@@ -627,7 +627,7 @@ std::vector<label_type> csvm::predict(const model<label_type> &model, const data
                     }
                 } else {
                     // use previously calculated w vector
-                    soa_matrix<real_type> binary_w{ 1, num_features };
+                    soa_matrix<real_type> binary_w{ 1, num_features, PADDING_SIZE, PADDING_SIZE };
                     #pragma omp parallel for default(none) shared(model, binary_w) firstprivate(num_features, pos)
                     for (std::size_t dim = 0; dim < num_features; ++dim) {
                         binary_w(0, dim) = (*model.w_ptr_)(pos, dim);
