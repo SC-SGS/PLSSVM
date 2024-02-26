@@ -16,7 +16,7 @@
 #include "plssvm/constants.hpp"                 // plssvm::real_type, plssvm::PADDING_SIZE
 #include "plssvm/csvm.hpp"                      // plssvm::csvm
 #include "plssvm/detail/assert.hpp"             // PLSSVM_ASSERT
-#include "plssvm/detail/data_distribution.hpp"  // plssvm::detail::calculate_data_distribution
+#include "plssvm/detail/data_distribution.hpp"  // plssvm::detail::{calculate_data_distribution_triangular, calculate_data_distribution_rectangular}
 #include "plssvm/detail/move_only_any.hpp"      // plssvm::detail::{move_only_any, move_only_any_cast}
 #include "plssvm/detail/operators.hpp"          // operator namespace
 #include "plssvm/kernel_function_types.hpp"     // plssvm::kernel_function_type
@@ -179,22 +179,23 @@ class gpu_csvm : public ::plssvm::csvm {
     //***************************************************//
     /**
      * @brief Calculate the `w` vector used to speedup the linear kernel prediction.
+     * @param[in] device_id the device to run the kernel on
      * @param[in] alpha_d the support vector weights
      * @param[in] sv_d the support vectors
      * @return the `w` vector (`[[nodiscard]]`)
      */
-    [[nodiscard]] virtual device_ptr_type run_w_kernel(const device_ptr_type &alpha_d, const device_ptr_type &sv_d) const = 0;
+    [[nodiscard]] virtual device_ptr_type run_w_kernel(std::size_t device_id, const device_ptr_type &alpha_d, const device_ptr_type &sv_d) const = 0;
     /**
      * @brief Predict the values of the new @p predict_points_d using the previously learned weights @p alpha_d, biases @p rho_d, and support vectors @p sv_d.
+     * @param[in] device_id the device to run the kernel on
      * @param[in] params the parameter used to predict the values (e.g., the used kernel function)
-     * @param[in] w_d the `w` used to speedup the linear kernel prediction (only used in the linear kernel case)
      * @param[in] alpha_d the previously learned weights
      * @param[in] rho_d the previously calculated biases
-     * @param[in] sv_d the previously learned support vectors
+     * @param[in] sv_or_w_d the previously learned support vectors or the `w` used to speedup the linear kernel prediction (only used in the linear kernel case)
      * @param[in] predict_points_d the new data points to predict
      * @return the predicted values (`[[nodiscard]]`)
      */
-    [[nodiscard]] virtual device_ptr_type run_predict_kernel(const parameter &params, const device_ptr_type &w_d, const device_ptr_type &alpha_d, const device_ptr_type &rho_d, const device_ptr_type &sv_d, const device_ptr_type &predict_points_d) const = 0;
+    [[nodiscard]] virtual device_ptr_type run_predict_kernel(std::size_t device_id, const parameter &params, const device_ptr_type &alpha_d, const device_ptr_type &rho_d, const device_ptr_type &sv_or_w_d, const device_ptr_type &predict_points_d) const = 0;
 
     /// The available/used backend devices.
     std::vector<queue_type> devices_{};
@@ -213,13 +214,15 @@ std::vector<::plssvm::detail::move_only_any> gpu_csvm<device_ptr_t, queue_t>::as
     PLSSVM_ASSERT(solver != solver_type::automatic, "An explicit solver type must be provided instead of solver_type::automatic!");
 
     // update the data distribution -> account for the dimensional reduction
-    data_distribution_ = detail::calculate_data_distribution(A.num_rows() - 1, this->num_available_devices());
+    data_distribution_ = detail::calculate_data_distribution_triangular(A.num_rows() - 1, this->num_available_devices());
 
     std::vector<::plssvm::detail::move_only_any> kernel_matrices_parts(this->num_available_devices());
 #pragma omp parallel for
     for (std::size_t device_id = 0; device_id < this->num_available_devices(); ++device_id) {
         // check whether the current device is responsible for at least one data point!
-        if (::plssvm::detail::get_place_specific_num_rows(device_id, data_distribution_) == 0) continue;
+        if (::plssvm::detail::get_place_specific_num_rows(device_id, data_distribution_) == 0) {
+            continue;
+        }
 
         // assign parts to calculate to each available device
         const queue_type &device = devices_[device_id];
@@ -280,7 +283,9 @@ void gpu_csvm<device_ptr_t, queue_t>::blas_level_3(const solver_type solver, con
 #pragma omp parallel for ordered
     for (std::size_t device_id = 0; device_id < this->num_available_devices(); ++device_id) {
         // check whether the current device is responsible for at least one data point!
-        if (::plssvm::detail::get_place_specific_num_rows(device_id, data_distribution_) == 0) continue;
+        if (::plssvm::detail::get_place_specific_num_rows(device_id, data_distribution_) == 0) {
+            continue;
+        }
 
         // perform the BLAS (like) operation on each device
         const queue_type &device = devices_[device_id];
@@ -357,43 +362,106 @@ aos_matrix<real_type> gpu_csvm<device_ptr_t, queue_t>::predict_values(const para
     const std::size_t num_predict_points = predict_points.num_rows();
     const std::size_t num_features = predict_points.num_cols();
 
-    device_ptr_type sv_d{ support_vectors.shape(), support_vectors.padding(), devices_[0] };
-    sv_d.copy_to_device(support_vectors);
-    device_ptr_type predict_points_d{ predict_points.shape(), predict_points.padding(), devices_[0] };
-    predict_points_d.copy_to_device(predict_points);
+    // update the data distribution
+    data_distribution_ = detail::calculate_data_distribution_rectangular(num_predict_points, this->num_available_devices());
 
-    device_ptr_type w_d;  // only used when predicting linear kernel functions
-    device_ptr_type alpha_d{ alpha.shape(), alpha.padding(), devices_[0] };
-    alpha_d.copy_to_device(alpha);
-    device_ptr_type rho_d{ num_classes + PADDING_SIZE, devices_[0] };
-    rho_d.copy_to_device(rho, 0, rho.size());
-    rho_d.memset(0, rho.size());
+    // result matrix
+    aos_matrix<real_type> out_ret{ shape{ num_predict_points, num_classes }, shape{ PADDING_SIZE, PADDING_SIZE } };
 
+    // the support vectors or w vector for each device
+    std::vector<device_ptr_type> sv_or_w_d(this->num_available_devices());
+
+    // the support vector weights for each device
+    std::vector<device_ptr_type> alpha_d(this->num_available_devices());
+#pragma omp parallel for
+    for (std::size_t device_id = 0; device_id < this->num_available_devices(); ++device_id) {
+        const queue_type &device = devices_[device_id];
+
+        alpha_d[device_id] = device_ptr_type{ alpha.shape(), alpha.padding(), device };
+        alpha_d[device_id].copy_to_device(alpha);
+    }
+
+    // special case for the linear kernel function: calculate or reuse the w vector to sped up prediction
     if (params.kernel_type == kernel_function_type::linear) {
-        // special optimization for the linear kernel function
         if (w.empty()) {
-            // fill w vector
-            w_d = this->run_w_kernel(alpha_d, sv_d);
+            // the partial w result from a specific device later stored on device 0 to perform the w reduction (inplace matrix addition)
+            std::vector<device_ptr_type> w_d(this->num_available_devices());
+            device_ptr_type partial_w_d{};  // always on device 0!
+            if (this->num_available_devices() > 1) {
+                partial_w_d = device_ptr_type{ shape{ num_classes, num_features }, shape{ PADDING_SIZE, PADDING_SIZE }, devices_[0] };
+            }
 
-            // convert 1D result to aos_matrix out-parameter
+#pragma omp parallel for ordered
+            for (std::size_t device_id = 0; device_id < this->num_available_devices(); ++device_id) {
+                const queue_type &device = devices_[device_id];
+                device_ptr_type &device_w_d = w_d[device_id];
+
+                // setup support vectors partially on the respective device
+                device_ptr_type sv_d{ shape{ get_place_specific_num_rows(device_id, data_distribution_), num_features }, support_vectors.padding(), device };
+                sv_d.copy_to_device_strided(support_vectors, get_place_row_offset(device_id, data_distribution_), get_place_specific_num_rows(device_id, data_distribution_));
+
+                // calculate the partial w vector
+                device_w_d = this->run_w_kernel(device_id, alpha_d[device_id], sv_d);
+
+                // reduce the partial w vectors on device 0
+#pragma omp ordered
+                if (device_id != 0) {
+                    device_w_d.copy_to_other_device(partial_w_d);
+                    // always reduce on device 0!!!
+                    this->run_inplace_matrix_addition(0, w_d[0], partial_w_d);
+                }
+            }
+
+            // w_d[0] contains the final w vector
             w = soa_matrix<real_type>{ shape{ num_classes, num_features }, shape{ PADDING_SIZE, PADDING_SIZE } };
-            w_d.copy_to_host(w);
+            w_d[0].copy_to_host(w);
             w.restore_padding();
-        } else {
-            // w already provided -> copy to device
-            w_d = device_ptr_type{ shape{ num_classes, num_features }, shape{ PADDING_SIZE, PADDING_SIZE }, devices_[0] };
-            w_d.copy_to_device(w);
+        }
+
+        // upload the w vector to all devices
+#pragma omp parallel for
+        for (std::size_t device_id = 0; device_id < this->num_available_devices(); ++device_id) {
+            const queue_type &device = devices_[device_id];
+
+            sv_or_w_d[device_id] = device_ptr_type{ shape{ num_classes, num_features }, shape{ PADDING_SIZE, PADDING_SIZE }, device };
+            sv_or_w_d[device_id].copy_to_device(w);
+        }
+    } else {
+        // use the support vectors for all other kernel functions
+#pragma omp parallel for
+        for (std::size_t device_id = 0; device_id < this->num_available_devices(); ++device_id) {
+            const queue_type &device = devices_[device_id];
+
+            sv_or_w_d[device_id] = device_ptr_type{ support_vectors.shape(), support_vectors.padding(), device };
+            sv_or_w_d[device_id].copy_to_device(support_vectors);
         }
     }
 
-    // predict
-    const device_ptr_type out_d = this->run_predict_kernel(params, w_d, alpha_d, rho_d, sv_d, predict_points_d);
+#pragma omp parallel for
+    for (std::size_t device_id = 0; device_id < this->num_available_devices(); ++device_id) {
+        const queue_type &device = devices_[device_id];
+        const std::size_t device_specific_num_rows = get_place_specific_num_rows(device_id, data_distribution_);
+        const std::size_t row_offset = get_place_row_offset(device_id, data_distribution_);
 
-    // copy results back to host
-    aos_matrix<real_type> out_ret{ shape{ num_predict_points, num_classes }, shape{ PADDING_SIZE, PADDING_SIZE } };
-    out_d.copy_to_host(out_ret);
+        device_ptr_type out_d{};
+
+        // setup predict points for each device
+        device_ptr_type predict_points_d{ shape{ device_specific_num_rows, num_features }, predict_points.padding(), device };
+        predict_points_d.copy_to_device_strided(predict_points, row_offset, device_specific_num_rows);
+        // setup the bias values for all devices
+        device_ptr_type rho_d{ num_classes + PADDING_SIZE, device };
+        rho_d.copy_to_device(rho, 0, rho.size());
+        rho_d.memset(0, rho.size());
+
+        // predict
+        out_d = this->run_predict_kernel(device_id, params, alpha_d[device_id], rho_d, sv_or_w_d[device_id], predict_points_d);
+
+        // copy results back to host, combining them into one result matrix
+#pragma omp critical
+        out_d.copy_to_host(out_ret.data() + row_offset * (num_classes + PADDING_SIZE), 0, device_specific_num_rows * (num_classes + PADDING_SIZE));
+    }
+
     out_ret.restore_padding();
-
     return out_ret;
 }
 

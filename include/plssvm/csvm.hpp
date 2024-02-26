@@ -17,7 +17,7 @@
 #include "plssvm/constants.hpp"                   // plssvm::real_type, plssvm::PADDING_SIZE
 #include "plssvm/data_set.hpp"                    // plssvm::data_set
 #include "plssvm/default_value.hpp"               // plssvm::default_value, plssvm::default_init
-#include "plssvm/detail/data_distribution.hpp"    // plssvm::detail::{calculate_data_distribution, calculate_maximum_explicit_kernel_matrix_memory_needed_per_place, calculate_explicit_kernel_matrix_num_entries_padded}
+#include "plssvm/detail/data_distribution.hpp"    // plssvm::detail::{calculate_data_distribution_triangular, calculate_maximum_explicit_kernel_matrix_memory_needed_per_place, calculate_explicit_kernel_matrix_num_entries_padded}
 #include "plssvm/detail/igor_utility.hpp"         // plssvm::detail::{get_value_from_named_parameter, has_only_parameter_named_args_v}
 #include "plssvm/detail/logging.hpp"              // plssvm::detail::log
 #include "plssvm/detail/memory_size.hpp"          // plssvm::detail::memory_size
@@ -782,7 +782,7 @@ std::tuple<aos_matrix<real_type>, std::vector<real_type>, unsigned long long> cs
         }();
 
         // calculate the maximum total memory needed for the explicit and implicit kernel matrix per device
-        const std::vector<std::size_t> data_distribution = detail::calculate_data_distribution(num_rows_reduced, this->num_available_devices());
+        const std::vector<std::size_t> data_distribution = detail::calculate_data_distribution_triangular(num_rows_reduced, this->num_available_devices());
         const std::vector<detail::memory_size> total_memory_needed_explicit_per_device = detail::calculate_maximum_explicit_kernel_matrix_memory_needed_per_place(num_rows, num_features, num_rhs, data_distribution);
         const std::vector<detail::memory_size> total_memory_needed_implicit_per_device = detail::calculate_maximum_implicit_kernel_matrix_memory_needed_per_place(num_rows, num_features, num_rhs, data_distribution);
 

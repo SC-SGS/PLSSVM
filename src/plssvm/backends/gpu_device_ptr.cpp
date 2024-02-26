@@ -124,6 +124,14 @@ void gpu_device_ptr<T, queue_t, device_pointer_t>::copy_to_device(const_host_poi
 }
 
 template <typename T, typename queue_t, typename device_pointer_t>
+void gpu_device_ptr<T, queue_t, device_pointer_t>::copy_to_device_strided(const std::vector<value_type> &data_to_copy, std::size_t spitch, std::size_t width, std::size_t height) {
+    PLSSVM_ASSERT(data_ != nullptr, "Invalid data pointer! Maybe *this has been default constructed?");
+    PLSSVM_ASSERT(width <= spitch, "Invalid width and spitch combination specified!");
+
+    this->copy_to_device_strided(data_to_copy.data(), spitch, width, height);
+}
+
+template <typename T, typename queue_t, typename device_pointer_t>
 void gpu_device_ptr<T, queue_t, device_pointer_t>::copy_to_host(std::vector<value_type> &buffer) const {
     PLSSVM_ASSERT(data_ != nullptr, "Invalid data pointer! Maybe *this has been default constructed?");
 

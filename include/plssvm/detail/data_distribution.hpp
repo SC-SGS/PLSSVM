@@ -19,6 +19,7 @@
 #include <vector>   // std::vector
 
 namespace plssvm::detail {
+// TODO: maybe as class?
 
 /**
  * @brief Calculate the data distribution (i.e., the number of rows in the kernel matrix a *place* is responsible for) such that each *place* has
@@ -46,7 +47,16 @@ namespace plssvm::detail {
  * @param[in] num_places the number of places, i.e., different devices to distribute the data to
  * @return the distribution, e.g., device 0 is responsible for all kernel matrix rows starting from res[0] up-to res[1] (`[[nodiscard]]``)
  */
-[[nodiscard]] std::vector<std::size_t> calculate_data_distribution(std::size_t num_rows_reduced, std::size_t num_places);
+[[nodiscard]] std::vector<std::size_t> calculate_data_distribution_triangular(std::size_t num_rows_reduced, std::size_t num_places);
+
+/**
+ * @brief Calculate the data distribution (i.e., the number of rows in the kernel matrix a *place* is responsible for) such that each *place* has
+ *        approximately the same number of data points it is responsible for.
+ * @param[in] num_rows the number of data points to distribute
+ * @param[in] num_places the number of places, i.e., different devices to distribute the data to
+ * @return the distribution, e.g., device 0 is responsible for all kernel matrix rows starting from res[0] up-to res[1] (`[[nodiscard]]``)
+ */
+[[nodiscard]] std::vector<std::size_t> calculate_data_distribution_rectangular(std::size_t num_rows, std::size_t num_places);
 
 /**
  * @brief Given the @p data_distribution, returns the number of rows in the kernel matrix the @p place is responsible for.

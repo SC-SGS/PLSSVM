@@ -168,11 +168,11 @@ class csvm : public ::plssvm::detail::gpu_csvm<detail::device_ptr, int> {
     /**
      * @copydoc plssvm::detail::gpu_csvm::run_w_kernel
      */
-    [[nodiscard]] device_ptr_type run_w_kernel(const device_ptr_type &alpha_d, const device_ptr_type &sv_d) const final;
+    [[nodiscard]] device_ptr_type run_w_kernel(std::size_t device_id, const device_ptr_type &alpha_d, const device_ptr_type &sv_d) const final;
     /**
      * @copydoc plssvm::detail::gpu_csvm::run_predict_kernel
      */
-    [[nodiscard]] device_ptr_type run_predict_kernel(const parameter &params, const device_ptr_type &w_d, const device_ptr_type &alpha_d, const device_ptr_type &rho_d, const device_ptr_type &sv_d, const device_ptr_type &predict_points_d) const final;
+    [[nodiscard]] device_ptr_type run_predict_kernel(std::size_t device_id, const parameter &params, const device_ptr_type &alpha_d, const device_ptr_type &rho_d, const device_ptr_type &sv_or_w_d, const device_ptr_type &predict_points_d) const final;
 };
 
 }  // namespace cuda

@@ -117,6 +117,16 @@ void device_ptr<T>::copy_to_other_device(device_pointer_type target, const size_
     PLSSVM_CUDA_ERROR_CHECK(cudaMemcpy(target, data_ + pos, rcount * sizeof(value_type), cudaMemcpyDeviceToDevice))
 }
 
+template <typename T>
+void device_ptr<T>::copy_to_device_strided(const_host_pointer_type data_to_copy, const std::size_t spitch, const std::size_t width, const std::size_t height) {
+    PLSSVM_ASSERT(data_ != nullptr, "Invalid data pointer! Maybe *this has been default constructed?");
+    PLSSVM_ASSERT(data_to_copy != nullptr, "Invalid host pointer for the data to copy!");
+    PLSSVM_ASSERT(width <= spitch, "Invalid width and spitch combination specified!");
+
+    detail::set_device(queue_);
+    PLSSVM_CUDA_ERROR_CHECK(cudaMemcpy2D(data_, this->shape_padded().x * sizeof(value_type), data_to_copy, spitch * sizeof(value_type), width * sizeof(value_type), height, cudaMemcpyHostToDevice));
+}
+
 template class device_ptr<float>;
 template class device_ptr<double>;
 

@@ -307,10 +307,15 @@ void csvm::run_assemble_kernel_matrix_implicit_blas_level_3(const std::size_t de
 //                   predict, score                  //
 //***************************************************//
 
-auto csvm::run_w_kernel(const device_ptr_type &alpha_d, const device_ptr_type &sv_d) const -> device_ptr_type {
+auto csvm::run_w_kernel(const std::size_t device_id, const device_ptr_type &alpha_d, const device_ptr_type &sv_d) const -> device_ptr_type {
     const unsigned long long num_classes = alpha_d.shape().x;
-    const unsigned long long num_sv = sv_d.shape().x;
+    const unsigned long long num_sv = alpha_d.shape().y;
+    const unsigned long long device_specific_num_sv = sv_d.shape().x;
     const unsigned long long num_features = sv_d.shape().y;
+    const queue_type &device = devices_[device_id];
+
+    // get the offset of the data points this device is responsible for
+    const unsigned long long sv_offset = ::plssvm::detail::get_place_row_offset(device_id, data_distribution_);
 
     // define the grid and block sizes
     const std::size_t max_work_group_size = this->get_max_work_group_size(0);
@@ -321,23 +326,23 @@ auto csvm::run_w_kernel(const device_ptr_type &alpha_d, const device_ptr_type &s
     const dim3 grid(static_cast<int>(std::ceil(static_cast<double>(num_features) / static_cast<double>(block.x * INTERNAL_BLOCK_SIZE))),
                     static_cast<int>(std::ceil(static_cast<double>(num_classes) / static_cast<double>(block.y * INTERNAL_BLOCK_SIZE))));
 
-    device_ptr_type w_d{ shape{ num_classes, num_features }, shape{ PADDING_SIZE, PADDING_SIZE }, devices_[0] };
+    device_ptr_type w_d{ shape{ num_classes, num_features }, shape{ PADDING_SIZE, PADDING_SIZE }, device };
 
-    detail::set_device(0);
-    cuda::device_kernel_w_linear<<<grid, block>>>(w_d.get(), alpha_d.get(), sv_d.get(), num_classes, num_sv);
+    detail::set_device(device);
+    cuda::device_kernel_w_linear<<<grid, block>>>(w_d.get(), alpha_d.get(), sv_d.get(), num_classes, num_sv, device_specific_num_sv, sv_offset);
     detail::peek_at_last_error();
-    detail::device_synchronize(devices_[0]);
+    detail::device_synchronize(device);
 
     return w_d;
 }
 
-auto csvm::run_predict_kernel(const parameter &params, const device_ptr_type &w_d, const device_ptr_type &alpha_d, const device_ptr_type &rho_d, const device_ptr_type &sv_d, const device_ptr_type &predict_points_d) const -> device_ptr_type {
+auto csvm::run_predict_kernel(const std::size_t device_id, const parameter &params, const device_ptr_type &alpha_d, const device_ptr_type &rho_d, const device_ptr_type &sv_or_w_d, const device_ptr_type &predict_points_d) const -> device_ptr_type {
     const unsigned long long num_classes = alpha_d.shape().x;
-    const unsigned long long num_sv = sv_d.shape().x;
-    const unsigned long long num_predict_points = predict_points_d.shape().x;
+    const unsigned long long num_predict_points = predict_points_d.shape().x;  // = device_specific_num_rows
     const unsigned long long num_features = predict_points_d.shape().y;
+    const queue_type &device = devices_[device_id];
 
-    device_ptr_type out_d{ shape{ num_predict_points, num_classes }, shape{ PADDING_SIZE, PADDING_SIZE }, devices_[0] };
+    device_ptr_type out_d{ shape{ num_predict_points, num_classes }, shape{ PADDING_SIZE, PADDING_SIZE }, device };
 
     // define the block sizes
     const std::size_t max_work_group_size = this->get_max_work_group_size(0);
@@ -346,14 +351,16 @@ auto csvm::run_predict_kernel(const parameter &params, const device_ptr_type &w_
     }
     const dim3 block(THREAD_BLOCK_SIZE, THREAD_BLOCK_SIZE);
 
-    detail::set_device(0);
+    detail::set_device(device);
     if (params.kernel_type == kernel_function_type::linear) {
         // define the grid sizes
         const dim3 grid(static_cast<int>(std::ceil(static_cast<double>(num_predict_points) / static_cast<double>(block.x * INTERNAL_BLOCK_SIZE))),
                         static_cast<int>(std::ceil(static_cast<double>(num_classes) / static_cast<double>(block.y * INTERNAL_BLOCK_SIZE))));
 
-        cuda::device_kernel_predict_linear<<<grid, block>>>(out_d.get(), w_d.get(), rho_d.get(), predict_points_d.get(), num_classes, num_predict_points, num_features);
+        cuda::device_kernel_predict_linear<<<grid, block>>>(out_d.get(), sv_or_w_d.get(), rho_d.get(), predict_points_d.get(), num_classes, num_predict_points, num_features);
     } else {
+        const unsigned long long num_sv = sv_or_w_d.shape().x;
+
         // define the grid sizes
         const dim3 grid(static_cast<int>(std::ceil(static_cast<double>(num_predict_points) / static_cast<double>(block.x * INTERNAL_BLOCK_SIZE))),
                         static_cast<int>(std::ceil(static_cast<double>(num_sv) / static_cast<double>(block.y * INTERNAL_BLOCK_SIZE))));
@@ -363,15 +370,15 @@ auto csvm::run_predict_kernel(const parameter &params, const device_ptr_type &w_
                 // already handled
                 break;
             case kernel_function_type::polynomial:
-                cuda::device_kernel_predict<kernel_function_type::polynomial><<<grid, block>>>(out_d.get(), alpha_d.get(), rho_d.get(), sv_d.get(), predict_points_d.get(), num_classes, num_sv, num_predict_points, num_features, params.degree.value(), params.gamma.value(), params.coef0.value());
+                cuda::device_kernel_predict<kernel_function_type::polynomial><<<grid, block>>>(out_d.get(), alpha_d.get(), rho_d.get(), sv_or_w_d.get(), predict_points_d.get(), num_classes, num_sv, num_predict_points, num_features, params.degree.value(), params.gamma.value(), params.coef0.value());
                 break;
             case kernel_function_type::rbf:
-                cuda::device_kernel_predict<kernel_function_type::rbf><<<grid, block>>>(out_d.get(), alpha_d.get(), rho_d.get(), sv_d.get(), predict_points_d.get(), num_classes, num_sv, num_predict_points, num_features, params.gamma.value());
+                cuda::device_kernel_predict<kernel_function_type::rbf><<<grid, block>>>(out_d.get(), alpha_d.get(), rho_d.get(), sv_or_w_d.get(), predict_points_d.get(), num_classes, num_sv, num_predict_points, num_features, params.gamma.value());
                 break;
         }
     }
     detail::peek_at_last_error();
-    detail::device_synchronize(devices_[0]);
+    detail::device_synchronize(device);
 
     return out_d;
 }

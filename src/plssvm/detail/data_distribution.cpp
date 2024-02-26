@@ -32,7 +32,7 @@ namespace plssvm::detail {
 
 using namespace literals;
 
-std::vector<std::size_t> calculate_data_distribution(const std::size_t num_rows_reduced, const std::size_t num_places) {
+std::vector<std::size_t> calculate_data_distribution_triangular(const std::size_t num_rows_reduced, const std::size_t num_places) {
     PLSSVM_ASSERT(num_rows_reduced > 0, "At least one row must be present!");
     PLSSVM_ASSERT(num_places > 0, "At least one place must be present!");
 
@@ -59,6 +59,18 @@ std::vector<std::size_t> calculate_data_distribution(const std::size_t num_rows_
     }
 
     return range;
+}
+
+std::vector<std::size_t> calculate_data_distribution_rectangular(const std::size_t num_rows, const std::size_t num_places) {
+    PLSSVM_ASSERT(num_rows > 0, "At least one row must be present!");
+    PLSSVM_ASSERT(num_places > 0, "At least one place must be present!");
+
+    std::vector<std::size_t> res(num_places + 1, num_rows);
+    const std::size_t balanced = num_rows / num_places;
+    for (std::size_t device_id = 0; device_id < num_places; ++device_id) {
+        res[device_id] = balanced * device_id;
+    }
+    return res;
 }
 
 std::size_t get_place_specific_num_rows(const std::size_t place, const std::vector<std::size_t> &data_distribution) {
