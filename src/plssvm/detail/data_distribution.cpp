@@ -73,7 +73,7 @@ std::size_t get_place_row_offset(const std::size_t place, const std::vector<std:
 
 std::size_t calculate_explicit_kernel_matrix_num_entries_padded(const std::size_t num_rows_reduced, const std::size_t place, const std::vector<std::size_t> &data_distribution) {
     PLSSVM_ASSERT(num_rows_reduced > 0, "At least one row must be present!");
-    PLSSVM_ASSERT(place > 0, "At least one place must be present!");
+    PLSSVM_ASSERT(place < data_distribution.size() - 1, "The queried place can at most be {}, but is {}!", data_distribution.size() - 1, place);
     PLSSVM_ASSERT(data_distribution.size() >= 2, "Invalid data distribution!");
 
     /*
