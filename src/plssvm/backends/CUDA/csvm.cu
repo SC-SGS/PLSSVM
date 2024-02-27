@@ -18,7 +18,7 @@
 #include "plssvm/backends/CUDA/kernel/predict_kernel.cuh"                           // plssvm::cuda::detail::{device_kernel_w_linear, device_kernel_predict_linear, device_kernel_predict}
 #include "plssvm/constants.hpp"                                                     // plssvm::{real_type, THREAD_BLOCK_SIZE, INTERNAL_BLOCK_SIZE, PADDING_SIZE}
 #include "plssvm/detail/assert.hpp"                                                 // PLSSVM_ASSERT
-#include "plssvm/detail/data_distribution.hpp"                                      // plssvm::detail::{get_place_specific_num_rows, get_place_row_offset, calculate_explicit_kernel_matrix_num_entries_padded}
+#include "plssvm/detail/data_distribution.hpp"                                      // plssvm::detail::{data_distribution, triangular_data_distribution, rectangular_data_distribution}
 #include "plssvm/detail/logging.hpp"                                                // plssvm::detail::log
 #include "plssvm/detail/memory_size.hpp"                                            // plssvm::detail::memory_size
 #include "plssvm/detail/performance_tracker.hpp"                                    // plssvm::detail::tracking_entry
@@ -146,10 +146,10 @@ auto csvm::run_assemble_kernel_matrix_explicit(const std::size_t device_id, cons
     const queue_type &device = devices_[device_id];
 
     // calculate the number of data points this device is responsible for
-    const unsigned long long device_specific_num_rows = ::plssvm::detail::get_place_specific_num_rows(device_id, data_distribution_);
+    const unsigned long long device_specific_num_rows = data_distribution_->place_specific_num_rows(device_id);
 
     // get the offset of the data points this device is responsible for
-    const unsigned long long row_offset = ::plssvm::detail::get_place_row_offset(device_id, data_distribution_);
+    const unsigned long long row_offset = data_distribution_->place_row_offset(device_id);
 
     // define grid and block sizes
     const std::size_t max_work_group_size = this->get_max_work_group_size(device_id);
@@ -161,7 +161,8 @@ auto csvm::run_assemble_kernel_matrix_explicit(const std::size_t device_id, cons
                     static_cast<int>(std::ceil(static_cast<double>(device_specific_num_rows) / static_cast<double>(block.y * INTERNAL_BLOCK_SIZE))));
 
     // calculate the number of matrix entries
-    const std::size_t num_entries_padded = ::plssvm::detail::calculate_explicit_kernel_matrix_num_entries_padded(num_rows_reduced, device_id, data_distribution_);
+    const ::plssvm::detail::triangular_data_distribution &dist = dynamic_cast<::plssvm::detail::triangular_data_distribution &>(*data_distribution_.get());
+    const std::size_t num_entries_padded = dist.calculate_explicit_kernel_matrix_num_entries_padded(device_id);
 
     device_ptr_type kernel_matrix_d{ num_entries_padded, device };  // only explicitly store the upper triangular matrix
     kernel_matrix_d.memset(0);
@@ -191,9 +192,9 @@ void csvm::run_blas_level_3_kernel_explicit(const std::size_t device_id, const r
     const queue_type &device = devices_[device_id];
 
     // calculate the number of data points this device is responsible for
-    const unsigned long long device_specific_num_rows = ::plssvm::detail::get_place_specific_num_rows(device_id, data_distribution_);
+    const unsigned long long device_specific_num_rows = data_distribution_->place_specific_num_rows(device_id);
     // get the offset of the data points this device is responsible for
-    const unsigned long long row_offset = ::plssvm::detail::get_place_row_offset(device_id, data_distribution_);
+    const unsigned long long row_offset = data_distribution_->place_row_offset(device_id);
 
     // define the grid and block sizes
     const std::size_t max_work_group_size = this->get_max_work_group_size(device_id);
@@ -272,9 +273,9 @@ void csvm::run_assemble_kernel_matrix_implicit_blas_level_3(const std::size_t de
     const queue_type &device = devices_[device_id];
 
     // calculate the number of data points this device is responsible for
-    const unsigned long long device_specific_num_rows = ::plssvm::detail::get_place_specific_num_rows(device_id, data_distribution_);
+    const unsigned long long device_specific_num_rows = data_distribution_->place_specific_num_rows(device_id);
     // get the offset of the data points this device is responsible for
-    const unsigned long long row_offset = ::plssvm::detail::get_place_row_offset(device_id, data_distribution_);
+    const unsigned long long row_offset = data_distribution_->place_row_offset(device_id);
 
     // define the grid and block sizes
     const std::size_t max_work_group_size = this->get_max_work_group_size(device_id);
@@ -315,7 +316,7 @@ auto csvm::run_w_kernel(const std::size_t device_id, const device_ptr_type &alph
     const queue_type &device = devices_[device_id];
 
     // get the offset of the data points this device is responsible for
-    const unsigned long long sv_offset = ::plssvm::detail::get_place_row_offset(device_id, data_distribution_);
+    const unsigned long long sv_offset = data_distribution_->place_row_offset(device_id);
 
     // define the grid and block sizes
     const std::size_t max_work_group_size = this->get_max_work_group_size(0);

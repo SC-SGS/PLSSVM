@@ -132,6 +132,7 @@ set(PLSSVM_BASE_TEST_SOURCES
     
     ${CMAKE_CURRENT_LIST_DIR}/detail/arithmetic_type_name.cpp
     ${CMAKE_CURRENT_LIST_DIR}/detail/assert.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/detail/data_distribution.cpp
     ${CMAKE_CURRENT_LIST_DIR}/detail/logging.cpp
     ${CMAKE_CURRENT_LIST_DIR}/detail/logging_without_performance_tracking.cpp
     ${CMAKE_CURRENT_LIST_DIR}/detail/memory_size.cpp

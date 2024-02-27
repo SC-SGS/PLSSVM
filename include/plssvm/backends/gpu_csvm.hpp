@@ -16,7 +16,7 @@
 #include "plssvm/constants.hpp"                 // plssvm::real_type, plssvm::PADDING_SIZE
 #include "plssvm/csvm.hpp"                      // plssvm::csvm
 #include "plssvm/detail/assert.hpp"             // PLSSVM_ASSERT
-#include "plssvm/detail/data_distribution.hpp"  // plssvm::detail::{calculate_data_distribution_triangular, calculate_data_distribution_rectangular}
+#include "plssvm/detail/data_distribution.hpp"  // plssvm::detail::{data_distribution, triangular_data_distribution, rectangular_data_distribution}
 #include "plssvm/detail/move_only_any.hpp"      // plssvm::detail::{move_only_any, move_only_any_cast}
 #include "plssvm/detail/operators.hpp"          // operator namespace
 #include "plssvm/kernel_function_types.hpp"     // plssvm::kernel_function_type
@@ -29,6 +29,7 @@
 
 #include <algorithm>  // std::min, std::all_of
 #include <cstddef>    // std::size_t
+#include <memory>     // std::unique_ptr, std::make_unique
 #include <tuple>      // std::tuple
 #include <utility>    // std::forward, std::move
 #include <vector>     // std::vector
@@ -200,7 +201,7 @@ class gpu_csvm : public ::plssvm::csvm {
     /// The available/used backend devices.
     std::vector<queue_type> devices_{};
     /// The data distribution on the available devices.
-    mutable std::vector<std::size_t> data_distribution_{};
+    mutable std::unique_ptr<detail::data_distribution> data_distribution_{};
 };
 
 //***************************************************//
@@ -214,13 +215,13 @@ std::vector<::plssvm::detail::move_only_any> gpu_csvm<device_ptr_t, queue_t>::as
     PLSSVM_ASSERT(solver != solver_type::automatic, "An explicit solver type must be provided instead of solver_type::automatic!");
 
     // update the data distribution -> account for the dimensional reduction
-    data_distribution_ = detail::calculate_data_distribution_triangular(A.num_rows() - 1, this->num_available_devices());
+    data_distribution_ = std::make_unique<detail::triangular_data_distribution>(A.num_rows() - 1, this->num_available_devices());
 
     std::vector<::plssvm::detail::move_only_any> kernel_matrices_parts(this->num_available_devices());
 #pragma omp parallel for
     for (std::size_t device_id = 0; device_id < this->num_available_devices(); ++device_id) {
         // check whether the current device is responsible for at least one data point!
-        if (::plssvm::detail::get_place_specific_num_rows(device_id, data_distribution_) == 0) {
+        if (data_distribution_->place_specific_num_rows(device_id) == 0) {
             continue;
         }
 
@@ -283,7 +284,7 @@ void gpu_csvm<device_ptr_t, queue_t>::blas_level_3(const solver_type solver, con
 #pragma omp parallel for ordered
     for (std::size_t device_id = 0; device_id < this->num_available_devices(); ++device_id) {
         // check whether the current device is responsible for at least one data point!
-        if (::plssvm::detail::get_place_specific_num_rows(device_id, data_distribution_) == 0) {
+        if (data_distribution_->place_specific_num_rows(device_id) == 0) {
             continue;
         }
 
@@ -363,7 +364,7 @@ aos_matrix<real_type> gpu_csvm<device_ptr_t, queue_t>::predict_values(const para
     const std::size_t num_features = predict_points.num_cols();
 
     // update the data distribution
-    data_distribution_ = detail::calculate_data_distribution_rectangular(num_predict_points, this->num_available_devices());
+    data_distribution_ = std::make_unique<detail::rectangular_data_distribution>(num_predict_points, this->num_available_devices());
 
     // result matrix
     aos_matrix<real_type> out_ret{ shape{ num_predict_points, num_classes }, shape{ PADDING_SIZE, PADDING_SIZE } };
@@ -397,8 +398,8 @@ aos_matrix<real_type> gpu_csvm<device_ptr_t, queue_t>::predict_values(const para
                 device_ptr_type &device_w_d = w_d[device_id];
 
                 // setup support vectors partially on the respective device
-                device_ptr_type sv_d{ shape{ get_place_specific_num_rows(device_id, data_distribution_), num_features }, support_vectors.padding(), device };
-                sv_d.copy_to_device_strided(support_vectors, get_place_row_offset(device_id, data_distribution_), get_place_specific_num_rows(device_id, data_distribution_));
+                device_ptr_type sv_d{ shape{ data_distribution_->place_specific_num_rows(device_id), num_features }, support_vectors.padding(), device };
+                sv_d.copy_to_device_strided(support_vectors, data_distribution_->place_row_offset(device_id), data_distribution_->place_specific_num_rows(device_id));
 
                 // calculate the partial w vector
                 device_w_d = this->run_w_kernel(device_id, alpha_d[device_id], sv_d);
@@ -440,8 +441,8 @@ aos_matrix<real_type> gpu_csvm<device_ptr_t, queue_t>::predict_values(const para
 #pragma omp parallel for
     for (std::size_t device_id = 0; device_id < this->num_available_devices(); ++device_id) {
         const queue_type &device = devices_[device_id];
-        const std::size_t device_specific_num_rows = get_place_specific_num_rows(device_id, data_distribution_);
-        const std::size_t row_offset = get_place_row_offset(device_id, data_distribution_);
+        const std::size_t device_specific_num_rows = data_distribution_->place_specific_num_rows(device_id);
+        const std::size_t row_offset = data_distribution_->place_row_offset(device_id);
 
         device_ptr_type out_d{};
 
