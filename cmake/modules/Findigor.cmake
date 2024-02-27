@@ -12,10 +12,14 @@ if (DEFINED ENV{igor_INCLUDE_DIR} AND NOT EXISTS "${igor_INCLUDE_DIR}")
     set(igor_INCLUDE_DIR $ENV{igor_INCLUDE_DIR})
 endif ()
 
+message(STATUS "igor_INCLUDE_DIR: ${igor_INCLUDE_DIR}")
+message(STATUS "env igor: $ENV{igor_INCLUDE_DIR}")
+
 # try to automatically find the header files in the standard directories
 if (NOT EXISTS "${igor_INCLUDE_DIR}")
     find_path(igor_INCLUDE_DIR
               NAMES igor.hpp
+              PATH_SUFFIXES include/igor
               DOC "igor header-only library header files"
     )
 endif ()
