@@ -16,6 +16,7 @@ endif ()
 if (NOT EXISTS "${fast_float_INCLUDE_DIR}")
     find_path(fast_float_INCLUDE_DIR
               NAMES fast_float.hpp
+              PATH_SUFFIXES include/fast_float
               DOC "fast_float header-only library header files"
     )
 endif ()
