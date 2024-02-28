@@ -90,6 +90,8 @@ set_property(TARGET ${PLSSVM_CUDA_BACKEND_LIBRARY_NAME} PROPERTY CUDA_ARCHITECTU
 
 # link base library against CUDA library
 target_link_libraries(${PLSSVM_CUDA_BACKEND_LIBRARY_NAME} PUBLIC ${PLSSVM_BASE_LIBRARY_NAME})
+#get include directories form base
+target_include_directories(${PLSSVM_CUDA_BACKEND_LIBRARY_NAME} PUBLIC $<TARGET_PROPERTY:${PLSSVM_BASE_LIBRARY_NAME},INTERFACE_INCLUDE_DIRECTORIES>)
 
 # set compile definition that the CUDA backend is available
 target_compile_definitions(${PLSSVM_BASE_LIBRARY_NAME} PRIVATE PLSSVM_HAS_CUDA_BACKEND)
