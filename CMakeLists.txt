@@ -210,7 +210,9 @@ find_package(fast_float QUIET)
 if (fast_float_FOUND)
     # TODO: get used fast_float version
     message(STATUS "Found package fast_float.")
-    target_include_directories(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC ${fast_float_INCLUDE_DIR})
+#    target_include_directories(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC ${fast_float_INCLUDE_DIR})
+    include_directories(${fast_float_INCLUDE_DIR})
+
 else ()
     message(STATUS "Couldn't find package fast_float. Building from source ...")
     set(PLSSVM_fast_float_VERSION v3.10.0) # TODO: 6.0.0: https://github.com/fastfloat/fast_float/issues/215
