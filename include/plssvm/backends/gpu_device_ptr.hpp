@@ -287,31 +287,35 @@ class gpu_device_ptr {
     /**
      * @brief Copy the sub-matrix starting at @p row with @p num_rows to the device.
      * @details If the @p layout is AoS, uses a simple linear copy to the device (no strides needed)
+     * @note The device_ptr must be constructed with an two-dimensional shape in order to use this function!
      * @tparam layout the layout type of the matrix
      * @param[in] data_to_copy the data to copy the sub-matrix from onto the device
-     * @param[in] row the first row of the sub-matrix
+     * @param[in] start_row the first row of the sub-matrix
      * @param[in] num_rows the number of rows in the sub-matrix
      */
     template <layout_type layout>
-    void copy_to_device_strided(const matrix<value_type, layout> &data_to_copy, const std::size_t row, const std::size_t num_rows) {
+    void copy_to_device_strided(const matrix<value_type, layout> &data_to_copy, const std::size_t start_row, const std::size_t num_rows) {
         PLSSVM_ASSERT(data_ != nullptr, "Invalid data pointer! Maybe *this has been default constructed?");
-        PLSSVM_ASSERT(row + num_rows <= data_to_copy.num_rows(), "Tried to copy line {} to the device, but the matrix has only {} lines!", row + num_rows, data_to_copy.num_rows());
 
+        if (start_row + num_rows > data_to_copy.num_rows()) {
+            throw gpu_device_ptr_exception{ fmt::format("Tried to copy lines {}-{} (zero-based index) to the device, but the matrix has only {} lines!", start_row, start_row + num_rows - 1, data_to_copy.num_rows()) };
+        }
         if (num_rows * data_to_copy.num_cols() < this->size()) {
             throw gpu_device_ptr_exception{ fmt::format("Too few data to perform copy (needed: {}, provided: {})!", this->size(), num_rows * data_to_copy.num_cols()) };
         }
 
         if constexpr (layout == layout_type::aos) {
             // data is laid out linearly in memory -> no strides necessary -> directly copy to device
-            this->copy_to_device(data_to_copy.data(), row * data_to_copy.num_cols_padded(), num_rows * data_to_copy.num_cols_padded());
+            this->copy_to_device(data_to_copy.data() + start_row * data_to_copy.num_cols_padded(), 0, num_rows * data_to_copy.num_cols_padded());
         } else {
             // data NOT laid out linearly in memory -> strides necessary
-            this->copy_to_device_strided(data_to_copy.data() + row, data_to_copy.num_rows_padded(), num_rows, data_to_copy.num_cols_padded());
+            this->copy_to_device_strided(data_to_copy.data() + start_row, data_to_copy.num_rows_padded(), num_rows, data_to_copy.num_cols_padded());
         }
     }
 
     /**
      * @brief Copy a matrix (@p height rows of @p width) from @p data_to_copy to the device.
+     * @note The device_ptr must be constructed with an two-dimensional shape in order to use this function!
      * @param[in] data_to_copy the data to copy onto the device
      * @param[in] spitch the stride length
      * @param[in] width the width of the 2D matrix to copy
@@ -321,6 +325,7 @@ class gpu_device_ptr {
 
     /**
      * @brief Copy a matrix (@p height rows of @p width) from @p data_to_copy to the device.
+     * @note The device_ptr must be constructed with an two-dimensional shape in order to use this function!
      * @param[in] data_to_copy the data to copy onto the device
      * @param[in] spitch the stride length
      * @param[in] width the width of the 2D matrix to copy

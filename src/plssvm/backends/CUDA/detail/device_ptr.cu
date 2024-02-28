@@ -80,7 +80,7 @@ void device_ptr<T>::fill(const value_type value, const size_type pos, const size
     // run GPU kernel
     const size_type rcount = std::min(count, this->size_padded() - pos);
     constexpr int block_size = 512;
-    int grid_size = (rcount + block_size - 1) / block_size;
+    const int grid_size = (rcount + block_size - 1) / block_size;
     detail::fill_array<<<grid_size, block_size>>>(data_, value, pos, rcount);
 
     detail::peek_at_last_error();
@@ -95,6 +95,19 @@ void device_ptr<T>::copy_to_device(const_host_pointer_type data_to_copy, const s
     detail::set_device(queue_);
     const size_type rcount = std::min(count, this->size_padded() - pos);
     PLSSVM_CUDA_ERROR_CHECK(cudaMemcpy(data_ + pos, data_to_copy, rcount * sizeof(value_type), cudaMemcpyHostToDevice))
+}
+
+template <typename T>
+void device_ptr<T>::copy_to_device_strided(const_host_pointer_type data_to_copy, const std::size_t spitch, const std::size_t width, const std::size_t height) {
+    PLSSVM_ASSERT(data_ != nullptr, "Invalid data pointer! Maybe *this has been default constructed?");
+    PLSSVM_ASSERT(data_to_copy != nullptr, "Invalid host pointer for the data to copy!");
+
+    if (width > spitch) {
+        throw backend_exception{ fmt::format("Invalid width and spitch combination specified (width: {} <= spitch: {})!", width, spitch) };
+    }
+
+    detail::set_device(queue_);
+    PLSSVM_CUDA_ERROR_CHECK(cudaMemcpy2D(data_, this->shape_padded().x * sizeof(value_type), data_to_copy, spitch * sizeof(value_type), width * sizeof(value_type), height, cudaMemcpyHostToDevice));
 }
 
 template <typename T>
@@ -115,16 +128,6 @@ void device_ptr<T>::copy_to_other_device(device_pointer_type target, const size_
     detail::set_device(queue_);
     const size_type rcount = std::min(count, this->size_padded() - pos);
     PLSSVM_CUDA_ERROR_CHECK(cudaMemcpy(target, data_ + pos, rcount * sizeof(value_type), cudaMemcpyDeviceToDevice))
-}
-
-template <typename T>
-void device_ptr<T>::copy_to_device_strided(const_host_pointer_type data_to_copy, const std::size_t spitch, const std::size_t width, const std::size_t height) {
-    PLSSVM_ASSERT(data_ != nullptr, "Invalid data pointer! Maybe *this has been default constructed?");
-    PLSSVM_ASSERT(data_to_copy != nullptr, "Invalid host pointer for the data to copy!");
-    PLSSVM_ASSERT(width <= spitch, "Invalid width and spitch combination specified!");
-
-    detail::set_device(queue_);
-    PLSSVM_CUDA_ERROR_CHECK(cudaMemcpy2D(data_, this->shape_padded().x * sizeof(value_type), data_to_copy, spitch * sizeof(value_type), width * sizeof(value_type), height, cudaMemcpyHostToDevice));
 }
 
 template class device_ptr<float>;
