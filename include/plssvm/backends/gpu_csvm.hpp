@@ -361,10 +361,8 @@ aos_matrix<real_type> gpu_csvm<device_ptr_t, queue_t>::predict_values(const para
     // defined sizes
     const std::size_t num_classes = alpha.num_rows();
     const std::size_t num_predict_points = predict_points.num_rows();
+    const std::size_t num_support_vectors = support_vectors.num_rows();
     const std::size_t num_features = predict_points.num_cols();
-
-    // update the data distribution
-    data_distribution_ = std::make_unique<detail::rectangular_data_distribution>(num_predict_points, this->num_available_devices());
 
     // result matrix
     aos_matrix<real_type> out_ret{ shape{ num_predict_points, num_classes }, shape{ PADDING_SIZE, PADDING_SIZE } };
@@ -391,6 +389,9 @@ aos_matrix<real_type> gpu_csvm<device_ptr_t, queue_t>::predict_values(const para
             if (this->num_available_devices() > 1) {
                 partial_w_d = device_ptr_type{ shape{ num_classes, num_features }, shape{ PADDING_SIZE, PADDING_SIZE }, devices_[0] };
             }
+
+            // update the data distribution to account for the support vectors
+            data_distribution_ = std::make_unique<detail::rectangular_data_distribution>(num_support_vectors, this->num_available_devices());
 
 #pragma omp parallel for ordered
             for (std::size_t device_id = 0; device_id < this->num_available_devices(); ++device_id) {
@@ -437,6 +438,9 @@ aos_matrix<real_type> gpu_csvm<device_ptr_t, queue_t>::predict_values(const para
             sv_or_w_d[device_id].copy_to_device(support_vectors);
         }
     }
+
+    // update the data distribution to account for the predict points
+    data_distribution_ = std::make_unique<detail::rectangular_data_distribution>(num_predict_points, this->num_available_devices());
 
 #pragma omp parallel for
     for (std::size_t device_id = 0; device_id < this->num_available_devices(); ++device_id) {
