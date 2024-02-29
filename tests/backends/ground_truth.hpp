@@ -13,8 +13,9 @@
 #define PLSSVM_TESTS_BACKENDS_GROUND_TRUTH_HPP_
 #pragma once
 
-#include "plssvm/matrix.hpp"     // plssvm::matrix, plssvm::layout_type
-#include "plssvm/parameter.hpp"  // plssvm::parameter
+#include "plssvm/detail/data_distribution.hpp"  // plssvm::detail::triangular_data_distribution
+#include "plssvm/matrix.hpp"                    // plssvm::matrix, plssvm::layout_type
+#include "plssvm/parameter.hpp"                 // plssvm::parameter
 
 #include <cstddef>  // std::size_t
 #include <vector>   // std::vector
@@ -108,7 +109,8 @@ template <typename real_type>
  * @return the kernel matrix (upper triangle matrix) (`[[nodiscard]]`)
  */
 template <typename real_type>
-[[nodiscard]] std::vector<real_type> assemble_kernel_matrix_symm(const plssvm::parameter &params, const plssvm::soa_matrix<real_type> &data, const std::vector<real_type> &q, real_type QA_cost, std::size_t padding = plssvm::PADDING_SIZE, std::size_t num_devices = 1);
+[[nodiscard]] std::vector<real_type> assemble_kernel_matrix(const plssvm::parameter &params, const plssvm::soa_matrix<real_type> &data, const std::vector<real_type> &q, real_type QA_cost, const plssvm::detail::data_distribution &dist, std::size_t device_id);
+
 /**
  * @brief Computes the kernel matrix using the kernel function determined by @p params.
  * @details Single core execution for a deterministic order of floating point operations.
@@ -136,6 +138,9 @@ template <typename real_type>
 template <typename real_type>
 void gemm(real_type alpha, const std::vector<real_type> &A, const plssvm::soa_matrix<real_type> &B, real_type beta, plssvm::soa_matrix<real_type> &C);
 
+template <typename real_type>
+void symm(real_type alpha, const std::vector<real_type> &A, const plssvm::soa_matrix<real_type> &B, plssvm::soa_matrix<real_type> &C, const plssvm::detail::data_distribution &dist, std::size_t device_id);
+
 /**
  * @brief Compute the `w` vector used to speedup the prediction when using the linear kernel.
  * @details Single core execution for a deterministic order of floating point operations.
@@ -146,6 +151,9 @@ void gemm(real_type alpha, const std::vector<real_type> &A, const plssvm::soa_ma
  */
 template <typename real_type>
 [[nodiscard]] plssvm::soa_matrix<real_type> calculate_w(const plssvm::aos_matrix<real_type> &weights, const plssvm::soa_matrix<real_type> &support_vectors);
+
+template <typename real_type>
+[[nodiscard]] plssvm::soa_matrix<real_type> calculate_partial_w(const plssvm::aos_matrix<real_type> &weights, const plssvm::soa_matrix<real_type> &support_vectors, const plssvm::detail::data_distribution &dist, std::size_t device_id);
 
 /**
  * @brief Predict the values for the @p predict_points using the previously learned @p weights and @p support_vectors.
