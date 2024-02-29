@@ -46,11 +46,10 @@ set(CMAKE_HIP_FLAGS_RELEASE "${CMAKE_HIP_FLAGS_RELEASE} -O3 -ffast-math")
 
 # explicitly set sources
 set(PLSSVM_HIP_SOURCES
-    ${CMAKE_CURRENT_LIST_DIR}/detail/device_ptr.hip.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/detail/utility.hip.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/csvm.hip.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/exceptions.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/../gpu_device_ptr.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/detail/device_ptr.hip
+    ${CMAKE_CURRENT_LIST_DIR}/detail/utility.hip
+    ${CMAKE_CURRENT_LIST_DIR}/csvm.hip
+    ${CMAKE_CURRENT_LIST_DIR}/exceptions.hip
 )
 
 # set target properties
@@ -66,7 +65,8 @@ target_compile_options(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC -Wno-sign-compare)
 set_property(TARGET ${PLSSVM_HIP_BACKEND_LIBRARY_NAME} PROPERTY HIP_ARCHITECTURES ${PLSSVM_AMD_TARGET_ARCHS})
 
 # link base library against HIP library
-target_link_libraries(${PLSSVM_HIP_BACKEND_LIBRARY_NAME} PUBLIC ${PLSSVM_BASE_LIBRARY_NAME} hip::device hip::host)
+target_link_libraries(${PLSSVM_HIP_BACKEND_LIBRARY_NAME} PRIVATE hip::device hip::host)
+target_link_libraries(${PLSSVM_HIP_BACKEND_LIBRARY_NAME} PUBLIC ${PLSSVM_BASE_LIBRARY_NAME})
 
 # set compile definition that the HIP backend is available
 target_compile_definitions(${PLSSVM_BASE_LIBRARY_NAME} PRIVATE PLSSVM_HAS_HIP_BACKEND)
@@ -83,3 +83,7 @@ set(PLSSVM_TARGETS_TO_INSTALL ${PLSSVM_TARGETS_TO_INSTALL} PARENT_SCOPE)
 set(PLSSVM_HIP_BACKEND_SUMMARY_STRING " - HIP: amd (${PLSSVM_AMD_TARGET_ARCHS})" PARENT_SCOPE)
 
 list(POP_BACK CMAKE_MESSAGE_INDENT)
+
+set_target_properties(${PLSSVM_HIP_BACKEND_LIBRARY_NAME} PROPERTIES LINKER_LANGUAGE HIP)
+
+

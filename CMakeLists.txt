@@ -163,9 +163,15 @@ find_package(OpenMP 4.0 QUIET)
 if (OpenMP_FOUND)
     message(STATUS "Found OpenMP ${OpenMP_CXX_VERSION} to speed-up library utilities (like file parsing).")
     set(PLSSVM_FOUND_OPENMP_FOR_UTILITY "${OpenMP_CXX_VERSION}")
-    target_link_libraries(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC OpenMP::OpenMP_CXX -fopenmp)
-    target_compile_options(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC $<$<COMPILE_LANGUAGE:CXX>:-fopenmp>)
+    # target_link_libraries(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC OpenMP::OpenMP_CXX -fopenmp)
+    # target_compile_options(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC $<$<COMPILE_LANGUAGE:CXX>:-fopenmp>)
+    # target_compile_options(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC $<$<CXX_COMPILER_ID:MSVC>:-openmp:llvm -openmp:experimental>)
+    target_link_libraries(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC $<$<NOT:$<CXX_COMPILER_ID:MSVC>>:OpenMP::OpenMP_CXX>)
+    # special command line options for MSVC:
+    # -openmp:llvm -> enables unsigned loop indexes in OpenMP parallel for loops
+    # -openmp:experimental -> enables OpenMP's SIMD instructions
     target_compile_options(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC $<$<CXX_COMPILER_ID:MSVC>:-openmp:llvm -openmp:experimental>)
+
 else ()
     # disable warning for unknown OpenMP pragmas if no OpenMP could be found
     target_compile_options(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC
@@ -353,9 +359,9 @@ if (uppercase_CMAKE_BUILD_TYPE MATCHES "COVERAGE")
     # assertions must be available for a coverage analysis
     message(STATUS "Enabling assertions since they are necessary for the coverage analysis.")
     set(PLSSVM_ENABLE_ASSERTS ON CACHE BOOL "" FORCE)
-    
+
     message(STATUS "Enable code coverage analysis using lcov.")
-    
+
     # Create the coverage target. Run coverage tests with 'make coverage'
     add_custom_target(coverage
                       COMMAND lcov --zerocounters --directory .
@@ -369,12 +375,12 @@ if (uppercase_CMAKE_BUILD_TYPE MATCHES "COVERAGE")
                       BYPRODUCTS ${CMAKE_BINARY_DIR}/test_base.info ${CMAKE_BINARY_DIR}/test_test.info ${CMAKE_BINARY_DIR}/test_total.info ${CMAKE_BINARY_DIR}/test_clean.info ${CMAKE_BINARY_DIR}/coverage
                       WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
     )
-    
+
     # add executables as coverage target
     add_dependencies(coverage ${PLSSVM_EXECUTABLE_TRAIN_NAME})
     add_dependencies(coverage ${PLSSVM_EXECUTABLE_PREDICT_NAME})
     add_dependencies(coverage ${PLSSVM_EXECUTABLE_SCALE_NAME})
-    
+
     # add custom target `make clean_coverage` which calls `make clean` and also removes all generate *.gcda and *.gcno files
     add_custom_target(clean_coverage)
     add_custom_command(
@@ -401,20 +407,20 @@ else ()
     if (NOT Python3_FOUND)
         message(FATAL_ERROR "Can't find Python3. Please manually specify PLSSVM_TARGET_PLATFORMS (e.g. -DPLSSVM_TARGET_PLATFORMS=\"cpu;nvidia:sm_70,sm_86;amd:gfx906;intel:skl\"!")
     endif ()
-    
+
     include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/check_python_libs.cmake)
     set(PLSSVM_TARGET_PLATFORMS_PYTHON_SCRIPT_REQUIRED_LIBS cpuinfo GPUtil pyamdgpuinfo pylspci)
     message(STATUS "Checking required Python3 libraries (${PLSSVM_TARGET_PLATFORMS_PYTHON_SCRIPT_REQUIRED_LIBS}) to automatically determine the PLSSVM_TARGET_PLATFORMS.")
     set(PLSSVM_TARGET_PLATFORMS_PYTHON_SCRIPT_REQUIRED_LIBS_ERROR_MESSAGE "or manually define PLSSVM_TARGET_PLATFORMS (e.g. -DPLSSVM_TARGET_PLATFORMS=\"cpu;nvidia:sm_70,sm_86;amd:gfx906;intel:skl\"!")
     check_python_libs(${PLSSVM_TARGET_PLATFORMS_PYTHON_SCRIPT_REQUIRED_LIBS} ${PLSSVM_TARGET_PLATFORMS_PYTHON_SCRIPT_REQUIRED_LIBS_ERROR_MESSAGE})
-    
+
     # run our `plssvm_target_platforms.py` script to determine the PLSSVM_TARGET_PLATFORMS string
     execute_process(
             COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/utility_scripts/plssvm_target_platforms.py" "--quiet"
             RESULT_VARIABLE PLSSVM_PYTHON_TARGET_PLATFORMS_EXIT_CODE
             OUTPUT_VARIABLE PLSSVM_PYTHON_TARGET_PLATFORMS_OUTPUT
     )
-    
+
     # an error occurred when running our python script
     if (NOT ${PLSSVM_PYTHON_TARGET_PLATFORMS_EXIT_CODE} EQUAL 0)
         message(FATAL_ERROR
@@ -422,7 +428,7 @@ else ()
                 "Please manually specify PLSSVM_TARGET_PLATFORMS (e.g. -DPLSSVM_TARGET_PLATFORMS=\"cpu;nvidia:sm_70,sm_86;amd:gfx906;intel:skl\"!"
         )
     endif ()
-    
+
     # set PLSSVM_TARGET_PLATFORMS
     string(STRIP "${PLSSVM_PYTHON_TARGET_PLATFORMS_OUTPUT}" PLSSVM_TARGET_PLATFORMS)
     message(STATUS "Automatically derived PLSSVM_TARGET_PLATFORMS=\"${PLSSVM_TARGET_PLATFORMS}\".")
@@ -533,7 +539,7 @@ option(PLSSVM_ENABLE_ASSERTS "Enables PLSSVM asserts even if NDEBUG is set." OFF
 if (PLSSVM_ENABLE_ASSERTS)
     message(STATUS "Enable additional debugging assertions.")
     target_compile_definitions(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC PLSSVM_ENABLE_ASSERTS)
-    
+
     # disable vectorization warning in clang in Release mode
     # -> loops can't be vectorized due to the PLSSVM_ASSERTs in the matrix::operator() member function
     # target_compile_options(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC
@@ -803,3 +809,4 @@ install(FILES "${PROJECT_BINARY_DIR}/plssvmConfig.cmake"
         "${PROJECT_BINARY_DIR}/plssvmConfigVersion.cmake"
         DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/plssvm/cmake
 )
+
