@@ -16,6 +16,7 @@
 #include "plssvm/classification_types.hpp"      // plssvm::classification_type
 #include "plssvm/constants.hpp"                 // plssvm::real_type, plssvm::PADDING_SIZE
 #include "plssvm/data_set.hpp"                  // plssvm::data_set
+#include "plssvm/detail/data_distribution.hpp"  // plssvm::detail::{triangular_data_distribution, rectangular_data_distribution}
 #include "plssvm/detail/io/file_reader.hpp"     // plssvm::detail::io::file_reader
 #include "plssvm/detail/memory_size.hpp"        // memory size literals
 #include "plssvm/detail/move_only_any.hpp"      // plssvm::detail::move_only_any
@@ -44,6 +45,7 @@
 #include <cmath>    // std::sqrt, std::abs, std::exp, std::pow
 #include <cstddef>  // std::size_t
 #include <limits>   // std::numeric_limits::epsilon
+#include <memory>   // std::unique_ptr, std::make_unique
 #include <tuple>    // std::ignore, std::tuple, std::make_tuple
 #include <utility>  // std::move
 #include <vector>   // std::vector
@@ -65,17 +67,9 @@ template <typename plssvm_csvm_type, typename T>
         std::size_t idx{ matr.size() };
         for (std::size_t i = 0; i < shape.x; ++i) {
             matr.insert(matr.cbegin() + idx, plssvm::PADDING_SIZE, plssvm::real_type{ 0.0 });
-#if defined(PLSSVM_USE_GEMM)
-            idx -= shape.y;
-#else
             idx -= i + 1;
-#endif
         }
-#if defined(PLSSVM_USE_GEMM)
-        matr.insert(matr.cend(), plssvm::PADDING_SIZE * (shape.y + plssvm::PADDING_SIZE), plssvm::real_type{ 0.0 });
-#else
         matr.insert(matr.cend(), plssvm::PADDING_SIZE * (plssvm::PADDING_SIZE + 1) / 2, plssvm::real_type{ 0.0 });
-#endif
     }
     return matr;
 }
@@ -110,26 +104,25 @@ template <typename matrix_type>
  * @return a `plssvm::detail::simple_any` with a wrapped value usable in the PLSSVM functions (`[[nodiscard]]`)
  */
 template <typename csvm_type, typename device_ptr_type, typename matrix_type, typename used_csvm_type, typename... Args>
-[[nodiscard]] inline plssvm::detail::move_only_any init_explicit_matrix(matrix_type matr, [[maybe_unused]] used_csvm_type &csvm) {
+[[nodiscard]] inline std::vector<plssvm::detail::move_only_any> init_explicit_matrix(matrix_type matr, [[maybe_unused]] used_csvm_type &csvm) {
     using real_type = typename matrix_type::value_type;
+    std::vector<plssvm::detail::move_only_any> result;
 
-#if defined(PLSSVM_USE_GEMM)
-    std::vector<real_type> flat_matr = util::flatten(matr.to_2D_vector());
-#else
     std::vector<real_type> flat_matr = matrix_to_symm_kernel_matrix(matr);
-#endif
 
     // create device pointer
     if constexpr (plssvm::csvm_to_backend_type_v<csvm_type> == plssvm::backend_type::openmp) {
-        return plssvm::detail::move_only_any{ std::move(flat_matr) };
+        result.push_back(plssvm::detail::move_only_any{ std::move(flat_matr) });
     } else {
         // add padding
         flat_matr = pad_1D_vector<csvm_type>(std::move(flat_matr), matr.shape());
 
         device_ptr_type ptr{ flat_matr.size(), csvm.devices_[0] };
         ptr.copy_to_device(flat_matr);
-        return plssvm::detail::move_only_any{ std::move(ptr) };
+        result.push_back(plssvm::detail::move_only_any{ std::move(ptr) });
     }
+
+    return result;
 }
 
 /**
@@ -145,12 +138,13 @@ template <typename csvm_type, typename device_ptr_type, typename matrix_type, ty
  * @return a `plssvm::detail::simple_any` with a wrapped value usable in the PLSSVM functions (`[[nodiscard]]`)
  */
 template <typename csvm_type, typename device_ptr_type, typename matrix_type, typename used_csvm_type, typename... Args>
-[[nodiscard]] inline plssvm::detail::move_only_any init_implicit_matrix(matrix_type matr, [[maybe_unused]] used_csvm_type &csvm, Args &&...args) {
+[[nodiscard]] inline std::vector<plssvm::detail::move_only_any> init_implicit_matrix(matrix_type matr, [[maybe_unused]] used_csvm_type &csvm, Args &&...args) {
     using real_type = typename matrix_type::value_type;
+    std::vector<plssvm::detail::move_only_any> result;
 
     // created matrix is different for the OpenMP backend and the GPU backends!
     if constexpr (plssvm::csvm_to_backend_type_v<csvm_type> == plssvm::backend_type::openmp) {
-        return plssvm::detail::move_only_any{ std::make_tuple(plssvm::aos_matrix<real_type>{ matr, plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE } }, std::forward<Args>(args)...) };
+        result.push_back(plssvm::detail::move_only_any{ std::make_tuple(plssvm::aos_matrix<real_type>{ matr, plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE } }, std::forward<Args>(args)...) });
     } else {
         const auto params = static_cast<plssvm::parameter>(plssvm::detail::get<0>(args...));
         const auto q_red = static_cast<std::vector<real_type>>(plssvm::detail::get<1>(args...));
@@ -168,8 +162,10 @@ template <typename csvm_type, typename device_ptr_type, typename matrix_type, ty
         q_d.copy_to_device(q_red, 0, q_red.size());
         q_d.memset(0, q_red.size());
 
-        return plssvm::detail::move_only_any{ std::make_tuple(std::move(matr_d), params, std::move(q_d), QA_cost) };
+        result.push_back(plssvm::detail::move_only_any{ std::make_tuple(std::move(matr_d), params, std::move(q_d), QA_cost) });
     }
+
+    return result;
 }
 
 /**
@@ -186,15 +182,23 @@ template <typename csvm_type, typename device_ptr_type, typename matrix_type, ty
  * @return a `plssvm::detail::simple_any` with a wrapped value usable in the PLSSVM functions (`[[nodiscard]]`)
  */
 template <typename csvm_type, typename device_ptr_type, typename matrix_type, typename used_csvm_type, typename... Args>
-[[nodiscard]] inline plssvm::detail::move_only_any init_matrix(matrix_type matr, const plssvm::solver_type solver, [[maybe_unused]] used_csvm_type &csvm, Args &&...args) {
+[[nodiscard]] inline std::vector<plssvm::detail::move_only_any> init_matrix(matrix_type matr, const plssvm::solver_type solver, [[maybe_unused]] used_csvm_type &csvm, Args &&...args) {
     switch (solver) {
         case plssvm::solver_type::automatic:
-            return plssvm::detail::move_only_any{ std::vector<typename matrix_type::value_type>{} };  // dummy return only necessary for the DeathTests -> VALUE NOT USED!
+            {
+                std::vector<plssvm::detail::move_only_any> result;
+                result.push_back(plssvm::detail::move_only_any{ std::vector<typename matrix_type::value_type>{} });
+                return result;  // dummy return only necessary for the DeathTests -> VALUE NOT USED!
+            }
         case plssvm::solver_type::cg_explicit:
             // no additional arguments are used
             return init_explicit_matrix<csvm_type, device_ptr_type>(std::move(matr), csvm);
         case plssvm::solver_type::cg_streaming:
-            return plssvm::detail::move_only_any{ std::vector<typename matrix_type::value_type>{} };  // dummy return only necessary for the DeathTests -> VALUE NOT USED!
+            {
+                std::vector<plssvm::detail::move_only_any> result;
+                result.push_back(plssvm::detail::move_only_any{ std::vector<typename matrix_type::value_type>{} });
+                return result;  // dummy return only necessary for the DeathTests -> VALUE NOT USED!
+            }
         case plssvm::solver_type::cg_implicit:
             // additional arguments are: params, q_red, QA_cost
             return init_implicit_matrix<csvm_type, device_ptr_type>(std::move(matr), csvm, std::forward<Args>(args)...);
@@ -276,7 +280,11 @@ TYPED_TEST_P(GenericCSVM, get_device_memory) {
 
     // the available device memory should be greater than 0!
     using namespace plssvm::detail::literals;
-    EXPECT_GT(svm.get_device_memory(), 0_B);
+    const std::vector<plssvm::detail::memory_size> mem = svm.get_device_memory();
+    EXPECT_GE(mem.size(), 1);
+    for (const plssvm::detail::memory_size ms : mem) {
+        EXPECT_GT(ms, 0_B);
+    }
 }
 
 TYPED_TEST_P(GenericCSVM, get_max_mem_alloc_size) {
@@ -288,7 +296,23 @@ TYPED_TEST_P(GenericCSVM, get_max_mem_alloc_size) {
 
     // the maximum memory allocation size should be greater than 0!
     using namespace plssvm::detail::literals;
-    EXPECT_GT(svm.get_max_mem_alloc_size(), 0_B);
+    const std::vector<plssvm::detail::memory_size> mem = svm.get_max_mem_alloc_size();
+    EXPECT_GE(mem.size(), 1);
+    for (const plssvm::detail::memory_size ms : mem) {
+        EXPECT_GT(ms, 0_B);
+    }
+}
+
+TYPED_TEST_P(GenericCSVM, num_available_devices) {
+    using csvm_test_type = util::test_parameter_type_at_t<0, TypeParam>;
+    using mock_csvm_type = typename csvm_test_type::mock_csvm_type;
+
+    // create C-SVM
+    const mock_csvm_type svm = util::construct_from_tuple<mock_csvm_type>(csvm_test_type::additional_arguments);
+
+    // the maximum memory allocation size should be greater than 0!
+    using namespace plssvm::detail::literals;
+    EXPECT_GE(svm.num_available_devices(), 1);
 }
 
 TYPED_TEST_P(GenericCSVM, blas_level_3_explicit_without_C) {
@@ -300,7 +324,7 @@ TYPED_TEST_P(GenericCSVM, blas_level_3_explicit_without_C) {
     constexpr plssvm::solver_type solver = plssvm::solver_type::cg_explicit;
 
     // create C-SVM: must be done using the mock class, since plssvm::detail::csvm::blas_level_3 is protected
-    const mock_csvm_type svm = util::construct_from_tuple<mock_csvm_type>(csvm_test_type::additional_arguments);
+    mock_csvm_type svm = util::construct_from_tuple<mock_csvm_type>(csvm_test_type::additional_arguments);
 
     [[maybe_unused]] const plssvm::real_type alpha{ 1.0 };
 
@@ -309,7 +333,7 @@ TYPED_TEST_P(GenericCSVM, blas_level_3_explicit_without_C) {
           { plssvm::real_type{ 0.2 }, plssvm::real_type{ 1.2 }, plssvm::real_type{ 1.3 } },
           { plssvm::real_type{ 0.3 }, plssvm::real_type{ 1.3 }, plssvm::real_type{ 2.3 } } }
     };
-    const plssvm::detail::move_only_any A{ util::init_explicit_matrix<csvm_type, device_ptr_type>(matr_A, svm) };
+    const std::vector<plssvm::detail::move_only_any> A{ std::move(util::init_explicit_matrix<csvm_type, device_ptr_type>(matr_A, svm)) };
 
     const plssvm::soa_matrix<plssvm::real_type> B{ { { plssvm::real_type{ 1.0 }, plssvm::real_type{ 2.0 }, plssvm::real_type{ 3.0 } },
                                                      { plssvm::real_type{ 4.0 }, plssvm::real_type{ 5.0 }, plssvm::real_type{ 6.0 } },
@@ -319,6 +343,10 @@ TYPED_TEST_P(GenericCSVM, blas_level_3_explicit_without_C) {
     [[maybe_unused]] const plssvm::real_type beta{ 0.0 };
     plssvm::soa_matrix<plssvm::real_type> C{ plssvm::shape{ 3, 3 }, plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE } };
     plssvm::soa_matrix<plssvm::real_type> C2{ C };
+
+    // make sure that the tests are run single GPU only!
+    svm.devices_.resize(1);
+    svm.data_distribution_ = std::make_unique<plssvm::detail::triangular_data_distribution>(matr_A.num_rows(), 1);
 
     // automatic solver type not permitted// perform BLAS calculation
     svm.blas_level_3(solver, alpha, A, B, beta, C);
@@ -348,7 +376,7 @@ TYPED_TEST_P(GenericCSVM, blas_level_3_explicit) {
     constexpr plssvm::solver_type solver = plssvm::solver_type::cg_explicit;
 
     // create C-SVM: must be done using the mock class, since plssvm::detail::csvm::blas_level_3 is protected
-    const mock_csvm_type svm = util::construct_from_tuple<mock_csvm_type>(csvm_test_type::additional_arguments);
+    mock_csvm_type svm = util::construct_from_tuple<mock_csvm_type>(csvm_test_type::additional_arguments);
 
     [[maybe_unused]] const plssvm::real_type alpha{ 1.0 };
 
@@ -357,7 +385,7 @@ TYPED_TEST_P(GenericCSVM, blas_level_3_explicit) {
           { plssvm::real_type{ 0.2 }, plssvm::real_type{ 1.2 }, plssvm::real_type{ 1.3 } },
           { plssvm::real_type{ 0.3 }, plssvm::real_type{ 1.3 }, plssvm::real_type{ 2.3 } } }
     };
-    const plssvm::detail::move_only_any A{ util::init_explicit_matrix<csvm_type, device_ptr_type>(matr_A, svm) };
+    const std::vector<plssvm::detail::move_only_any> A{ util::init_explicit_matrix<csvm_type, device_ptr_type>(matr_A, svm) };
 
     const plssvm::soa_matrix<plssvm::real_type> B{ { { plssvm::real_type{ 1.0 }, plssvm::real_type{ 2.0 }, plssvm::real_type{ 3.0 } },
                                                      { plssvm::real_type{ 4.0 }, plssvm::real_type{ 5.0 }, plssvm::real_type{ 6.0 } },
@@ -367,6 +395,10 @@ TYPED_TEST_P(GenericCSVM, blas_level_3_explicit) {
     [[maybe_unused]] const plssvm::real_type beta{ 0.5 };
     auto C = util::generate_specific_matrix<plssvm::soa_matrix<plssvm::real_type>>(plssvm::shape{ 3, 3 }, plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE });
     plssvm::soa_matrix<plssvm::real_type> C2{ C };
+
+    // make sure that the tests are run single GPU only!
+    svm.devices_.resize(1);
+    svm.data_distribution_ = std::make_unique<plssvm::detail::triangular_data_distribution>(matr_A.num_rows(), 1);
 
     // perform BLAS calculation
     svm.blas_level_3(solver, alpha, A, B, beta, C);
@@ -396,7 +428,7 @@ TYPED_TEST_P(GenericCSVM, conjugate_gradients_trivial) {
     constexpr plssvm::solver_type solver = plssvm::solver_type::cg_explicit;
 
     // create C-SVM: must be done using the mock class, since plssvm::detail::csvm::conjugate_gradients is protected
-    const mock_csvm_type svm = util::construct_from_tuple<mock_csvm_type>(csvm_test_type::additional_arguments);
+    mock_csvm_type svm = util::construct_from_tuple<mock_csvm_type>(csvm_test_type::additional_arguments);
 
     // create the data that should be used
     const plssvm::aos_matrix<plssvm::real_type> matr_A{
@@ -405,10 +437,14 @@ TYPED_TEST_P(GenericCSVM, conjugate_gradients_trivial) {
           { plssvm::real_type{ 0.0 }, plssvm::real_type{ 0.0 }, plssvm::real_type{ 1.0 }, plssvm::real_type{ 0.0 } },
           { plssvm::real_type{ 0.0 }, plssvm::real_type{ 0.0 }, plssvm::real_type{ 0.0 }, plssvm::real_type{ 1.0 } } }
     };
-    const plssvm::detail::move_only_any A{ util::init_explicit_matrix<csvm_type, device_ptr_type>(matr_A, svm) };
+    const std::vector<plssvm::detail::move_only_any> A{ util::init_explicit_matrix<csvm_type, device_ptr_type>(matr_A, svm) };
 
     const plssvm::soa_matrix<plssvm::real_type> B{ { { plssvm::real_type{ 1.0 }, plssvm::real_type{ -1.0 }, plssvm::real_type{ 1.0 }, plssvm::real_type{ -1.0 } },
                                                      { plssvm::real_type{ -1.0 }, plssvm::real_type{ 1.0 }, plssvm::real_type{ -1.0 }, plssvm::real_type{ 1.0 } } } };
+
+    // make sure that the tests are run single GPU only!
+    svm.devices_.resize(1);
+    svm.data_distribution_ = std::make_unique<plssvm::detail::triangular_data_distribution>(matr_A.num_rows(), 1);
 
     // solve AX = B
     const auto [X, num_iter] = svm.conjugate_gradients(A, B, plssvm::real_type{ 0.00001 }, 4, solver);
@@ -428,20 +464,24 @@ TYPED_TEST_P(GenericCSVM, conjugate_gradients) {
     constexpr plssvm::solver_type solver = plssvm::solver_type::cg_explicit;
 
     // create C-SVM: must be done using the mock class, since plssvm::detail::csvm::conjugate_gradients is protected
-    const mock_csvm_type svm = util::construct_from_tuple<mock_csvm_type>(csvm_test_type::additional_arguments);
+    mock_csvm_type svm = util::construct_from_tuple<mock_csvm_type>(csvm_test_type::additional_arguments);
 
     // create the data that should be used
     const plssvm::aos_matrix<plssvm::real_type> matr_A{
         { { plssvm::real_type{ 4.0 }, plssvm::real_type{ 1.0 } },
           { plssvm::real_type{ 1.0 }, plssvm::real_type{ 3.0 } } }
     };
-    const plssvm::detail::move_only_any A{ util::init_explicit_matrix<csvm_type, device_ptr_type>(matr_A, svm) };
+    const std::vector<plssvm::detail::move_only_any> A = util::init_explicit_matrix<csvm_type, device_ptr_type>(matr_A, svm);
 
     const plssvm::soa_matrix<plssvm::real_type> B{ { { plssvm::real_type{ 1.0 }, plssvm::real_type{ 2.0 } },
                                                      { plssvm::real_type{ 1.0 }, plssvm::real_type{ 2.0 } } } };
     const plssvm::soa_matrix<plssvm::real_type> correct_X{ { { plssvm::real_type{ 1.0 / 11.0 }, plssvm::real_type{ 7.0 / 11.0 } },
                                                              { plssvm::real_type{ 1.0 / 11.0 }, plssvm::real_type{ 7.0 / 11.0 } } },
                                                            plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE } };
+
+    // make sure that the tests are run single GPU only!
+    svm.devices_.resize(1);
+    svm.data_distribution_ = std::make_unique<plssvm::detail::triangular_data_distribution>(matr_A.num_rows(), 1);
 
     // solve AX = B
     const auto [X, num_iters] = svm.conjugate_gradients(A, B, plssvm::real_type{ 0.00001 }, 2, solver);
@@ -457,75 +497,13 @@ REGISTER_TYPED_TEST_SUITE_P(GenericCSVM,
                             get_target_platform,
                             get_device_memory,
                             get_max_mem_alloc_size,
+                            num_available_devices,
                             blas_level_3_explicit_without_C,
                             blas_level_3_streaming_without_C,
                             blas_level_3_explicit,
                             blas_level_3_streaming,
                             conjugate_gradients_trivial,
                             conjugate_gradients);
-
-//*************************************************************************************************************************************//
-//                                               CSVM tests depending on the solver type                                               //
-//*************************************************************************************************************************************//
-
-template <typename T>
-class GenericCSVMSolver : public GenericCSVM<T> { };
-
-TYPED_TEST_SUITE_P(GenericCSVMSolver);
-
-TYPED_TEST_P(GenericCSVMSolver, setup_data_on_devices) {
-    using csvm_test_type = util::test_parameter_type_at_t<0, TypeParam>;
-    using csvm_type = typename csvm_test_type::csvm_type;
-    using mock_csvm_type = typename csvm_test_type::mock_csvm_type;
-    using device_ptr_type = typename csvm_test_type::device_ptr_type;
-    constexpr plssvm::solver_type solver = util::test_parameter_value_at_v<0, TypeParam>;
-
-    // skip unimplemented tests
-    if constexpr (solver == plssvm::solver_type::cg_streaming) {
-        GTEST_SKIP() << "Currently not implemented!";
-    }
-
-    // minimal example
-    const auto input = util::generate_specific_matrix<plssvm::soa_matrix<plssvm::real_type>>(plssvm::shape{ 3, 3 }, plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE });
-
-    // create C-SVM: must be done using the mock class, since plssvm::detail::csvm::setup_data_on_device is protected
-    const mock_csvm_type svm = util::construct_from_tuple<mock_csvm_type>(csvm_test_type::additional_arguments);
-
-    // automatic solver type not permitted
-    if constexpr (solver == plssvm::solver_type::automatic) {
-#if defined(PLSSVM_ASSERT_ENABLED)
-        EXPECT_DEATH(std::ignore = svm.setup_data_on_devices(solver, input), "An explicit solver type must be provided instead of solver_type::automatic!");
-#else
-        SUCCEED() << "Solver type is automatic, but assertions are disabled!";
-#endif
-    } else {
-        // perform data setup on the device
-        const plssvm::detail::move_only_any s_data_d = svm.setup_data_on_devices(solver, input);
-        const auto &data_d = plssvm::detail::move_only_any_cast<const device_ptr_type  &>(s_data_d);
-
-        if constexpr (plssvm::csvm_to_backend_type_v<csvm_type> == plssvm::backend_type::openmp) {
-            // OpenMP special case
-            ASSERT_EQ(data_d->shape(), (plssvm::shape{ 3, 3 }));
-            ASSERT_EQ(data_d->size(), 9);
-            ASSERT_EQ(data_d->padding(), (plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE }));
-            ASSERT_EQ(data_d->shape_padded(), (plssvm::shape{ 3 + plssvm::PADDING_SIZE, 3 + plssvm::PADDING_SIZE }));
-            EXPECT_FLOATING_POINT_MATRIX_EQ(*data_d, input);
-        } else {
-            // generic GPU case
-            ASSERT_EQ(data_d.shape(), (plssvm::shape{ 3, 3 }));
-            ASSERT_EQ(data_d.size(), 9);
-            ASSERT_EQ(data_d.padding(), (plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE }));
-            ASSERT_EQ(data_d.shape_padded(), (plssvm::shape{ 3 + plssvm::PADDING_SIZE, 3 + plssvm::PADDING_SIZE }));
-            std::vector<plssvm::real_type> data(data_d.size_padded());
-            data_d.copy_to_host(data);
-            const std::vector<plssvm::real_type> correct_data{ input.data(), input.data() + input.size_padded() };
-            EXPECT_FLOATING_POINT_VECTOR_EQ(data, correct_data);
-        }
-    }
-}
-
-REGISTER_TYPED_TEST_SUITE_P(GenericCSVMSolver,
-                            setup_data_on_devices);
 
 //*************************************************************************************************************************************//
 //                                           CSVM tests depending on the kernel function type                                          //
@@ -557,14 +535,14 @@ TYPED_TEST_P(GenericCSVMKernelFunction, blas_level_3_assembly_implicit_without_C
     }
 
     // create C-SVM: must be done using the mock class, since plssvm::detail::csvm::blas_level_3 is protected
-    const mock_csvm_type svm = util::construct_from_tuple<mock_csvm_type>(params, csvm_test_type::additional_arguments);
+    mock_csvm_type svm = util::construct_from_tuple<mock_csvm_type>(params, csvm_test_type::additional_arguments);
 
     [[maybe_unused]] const plssvm::real_type alpha{ 1.0 };
 
     const auto matr_A = util::generate_specific_matrix<plssvm::soa_matrix<plssvm::real_type>>(plssvm::shape{ 4, 4 });
     const auto [q, QA_cost] = ground_truth::perform_dimensional_reduction(params, matr_A);
 
-    const plssvm::detail::move_only_any A{ util::init_implicit_matrix<csvm_type, device_ptr_type>(matr_A, svm, params, q, QA_cost) };
+    const std::vector<plssvm::detail::move_only_any> A{ util::init_implicit_matrix<csvm_type, device_ptr_type>(matr_A, svm, params, q, QA_cost) };
 
     const plssvm::soa_matrix<plssvm::real_type> B{ { { plssvm::real_type{ 1.0 }, plssvm::real_type{ 2.0 }, plssvm::real_type{ 3.0 } },
                                                      { plssvm::real_type{ 4.0 }, plssvm::real_type{ 5.0 }, plssvm::real_type{ 6.0 } },
@@ -574,6 +552,10 @@ TYPED_TEST_P(GenericCSVMKernelFunction, blas_level_3_assembly_implicit_without_C
     const plssvm::real_type beta{ 0.0 };
     plssvm::soa_matrix<plssvm::real_type> C{ plssvm::shape{ 3, 3 }, plssvm::real_type{ 0.0 }, plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE } };
     plssvm::soa_matrix<plssvm::real_type> C2{ C };
+
+    // make sure that the tests are run single GPU only!
+    svm.devices_.resize(1);
+    svm.data_distribution_ = std::make_unique<plssvm::detail::triangular_data_distribution>(matr_A.num_rows(), 1);
 
     // perform BLAS calculation
     svm.blas_level_3(solver, alpha, A, B, beta, C);
@@ -610,14 +592,14 @@ TYPED_TEST_P(GenericCSVMKernelFunction, blas_level_3_assembly_implicit) {
     }
 
     // create C-SVM: must be done using the mock class, since plssvm::detail::csvm::blas_level_3 is protected
-    const mock_csvm_type svm = util::construct_from_tuple<mock_csvm_type>(params, csvm_test_type::additional_arguments);
+    mock_csvm_type svm = util::construct_from_tuple<mock_csvm_type>(params, csvm_test_type::additional_arguments);
 
     [[maybe_unused]] const plssvm::real_type alpha{ 1.0 };
 
     const auto matr_A = util::generate_specific_matrix<plssvm::soa_matrix<plssvm::real_type>>(plssvm::shape{ 4, 4 });
     const auto [q, QA_cost] = ground_truth::perform_dimensional_reduction(params, matr_A);
 
-    const plssvm::detail::move_only_any A{ util::init_implicit_matrix<csvm_type, device_ptr_type>(matr_A, svm, params, q, QA_cost) };
+    const std::vector<plssvm::detail::move_only_any> A{ util::init_implicit_matrix<csvm_type, device_ptr_type>(matr_A, svm, params, q, QA_cost) };
 
     const plssvm::soa_matrix<plssvm::real_type> B{ { { plssvm::real_type{ 1.0 }, plssvm::real_type{ 2.0 }, plssvm::real_type{ 3.0 } },
                                                      { plssvm::real_type{ 4.0 }, plssvm::real_type{ 5.0 }, plssvm::real_type{ 6.0 } },
@@ -628,6 +610,10 @@ TYPED_TEST_P(GenericCSVMKernelFunction, blas_level_3_assembly_implicit) {
     auto C = util::generate_specific_matrix<plssvm::soa_matrix<plssvm::real_type>>(plssvm::shape{ 3, 3 }, plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE });
     plssvm::soa_matrix<plssvm::real_type> C2{ C };
     plssvm::soa_matrix<plssvm::real_type> correct_C{ C };
+
+    // make sure that the tests are run single GPU only!
+    svm.devices_.resize(1);
+    svm.data_distribution_ = std::make_unique<plssvm::detail::triangular_data_distribution>(matr_A.num_rows(), 1);
 
     // perform BLAS calculation
     svm.blas_level_3(solver, alpha, A, B, beta, C);
@@ -671,7 +657,11 @@ TYPED_TEST_P(GenericCSVMKernelFunction, predict_values) {
                                                       plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE } };
 
     // create C-SVM: must be done using the mock class, since plssvm::detail::csvm::predict_values is protected
-    const mock_csvm_type svm = util::construct_from_tuple<mock_csvm_type>(params, csvm_test_type::additional_arguments);
+    mock_csvm_type svm = util::construct_from_tuple<mock_csvm_type>(params, csvm_test_type::additional_arguments);
+
+    // make sure that the tests are run single GPU only!
+    svm.devices_.resize(1);
+    svm.data_distribution_ = std::make_unique<plssvm::detail::rectangular_data_distribution>(data.num_rows(), 1);
 
     // predict the values using the previously learned support vectors and weights
     const plssvm::aos_matrix<plssvm::real_type> calculated = svm.predict_values(params, support_vectors, weights, rho, w, data);
@@ -730,7 +720,11 @@ TYPED_TEST_P(GenericCSVMKernelFunction, predict_values_provided_w) {
                                                                             plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE } };
 
         // create C-SVM: must be done using the mock class, since plssvm::detail::csvm::predict_values is protected
-        const mock_csvm_type svm = util::construct_from_tuple<mock_csvm_type>(params, csvm_test_type::additional_arguments);
+        mock_csvm_type svm = util::construct_from_tuple<mock_csvm_type>(params, csvm_test_type::additional_arguments);
+
+        // make sure that the tests are run single GPU only!
+        svm.devices_.resize(1);
+        svm.data_distribution_ = std::make_unique<plssvm::detail::rectangular_data_distribution>(data.num_rows(), 1);
 
         // predict the values using the previously learned support vectors and weights
         const plssvm::aos_matrix<plssvm::real_type> calculated = svm.predict_values(params, support_vectors, weights, rho, w, data);
@@ -869,64 +863,54 @@ TYPED_TEST_P(GenericCSVMSolverKernelFunction, assemble_kernel_matrix_minimal) {
     [[maybe_unused]] const plssvm::real_type QA_cost{ 0.0 };
 
     // create C-SVM: must be done using the mock class, since plssvm::detail::csvm::assemble_kernel_matrix is protected
-    const mock_csvm_type svm = util::construct_from_tuple<mock_csvm_type>(params, csvm_test_type::additional_arguments);
+    mock_csvm_type svm = util::construct_from_tuple<mock_csvm_type>(params, csvm_test_type::additional_arguments);
+
+    // make sure that the tests are run single GPU only!
+    svm.devices_.resize(1);
+    svm.data_distribution_ = std::make_unique<plssvm::detail::triangular_data_distribution>(data.num_rows() - 1, 1);
 
     // automatic solver type not permitted
     if constexpr (solver == plssvm::solver_type::automatic) {
 #if defined(PLSSVM_ASSERT_ENABLED)
-        EXPECT_DEATH(std::ignore = svm.setup_data_on_devices(solver, data), "An explicit solver type must be provided instead of solver_type::automatic!");
+        EXPECT_DEATH(std::ignore = svm.assemble_kernel_matrix(solver, params, data, q_red, QA_cost), "An explicit solver type must be provided instead of solver_type::automatic!");
 #else
         SUCCEED() << "Solver type is automatic, but assertions are disabled!";
 #endif
     } else if constexpr (solver == plssvm::solver_type::cg_explicit) {
         // assemble the kernel matrix
-        plssvm::detail::move_only_any data_d = svm.setup_data_on_devices(solver, data);
-        const plssvm::detail::move_only_any kernel_matrix_d = svm.assemble_kernel_matrix(solver, params, data_d, q_red, QA_cost);
+        const std::vector<plssvm::detail::move_only_any> kernel_matrix_d = svm.assemble_kernel_matrix(solver, params, data, q_red, QA_cost);
+        // we enforce single GPU execution -> the returned vector must only contain a single entry!
+        ASSERT_EQ(kernel_matrix_d.size(), 1);
 
         // get result based on used backend
         std::vector<plssvm::real_type> kernel_matrix{};
         if constexpr (plssvm::csvm_to_backend_type_v<csvm_type> == plssvm::backend_type::openmp) {
-            kernel_matrix = plssvm::detail::move_only_any_cast<std::vector<plssvm::real_type>>(kernel_matrix_d);  // std::vector
-#if defined(PLSSVM_USE_GEMM)
-            ASSERT_EQ(kernel_matrix.size(), 4);
-#else
+            kernel_matrix = plssvm::detail::move_only_any_cast<std::vector<plssvm::real_type>>(kernel_matrix_d.front());  // std::vector
             ASSERT_EQ(kernel_matrix.size(), 3);
-#endif
         } else {
-            const auto &kernel_matrix_d_ptr = plssvm::detail::move_only_any_cast<const device_ptr_type &>(kernel_matrix_d);  // device_ptr -> convert it to a std::vector
+            const auto &kernel_matrix_d_ptr = plssvm::detail::move_only_any_cast<const device_ptr_type &>(kernel_matrix_d.front());  // device_ptr -> convert it to a std::vector
             kernel_matrix.resize(kernel_matrix_d_ptr.size());
             kernel_matrix_d_ptr.copy_to_host(kernel_matrix);
-#if defined(PLSSVM_USE_GEMM)
-            ASSERT_EQ(kernel_matrix.size(), (2 + plssvm::PADDING_SIZE) * (2 + plssvm::PADDING_SIZE));
-#else
             ASSERT_EQ(kernel_matrix.size(), (2 + plssvm::PADDING_SIZE) * (2 + plssvm::PADDING_SIZE + 1) / 2);
-#endif
         }
 
         std::vector<plssvm::real_type> ground_truth{};
         if constexpr (kernel == plssvm::kernel_function_type::rbf) {
-#if defined(PLSSVM_USE_GEMM)
-            ground_truth = util::pad_1D_vector<csvm_type>(std::vector<plssvm::real_type>{ plssvm::real_type{ 2.0 }, static_cast<plssvm::real_type>(std::exp(-27.0)), static_cast<plssvm::real_type>(std::exp(-27.0)), plssvm::real_type{ 2.0 } }, plssvm::shape{ 2, 2 });
-#else
             ground_truth = util::pad_1D_vector<csvm_type>(std::vector<plssvm::real_type>{ plssvm::real_type{ 2.0 }, static_cast<plssvm::real_type>(std::exp(-27.0)), plssvm::real_type{ 2.0 } }, plssvm::shape{ 2, 2 });
-#endif
         } else {
-#if defined(PLSSVM_USE_GEMM)
-            ground_truth = util::pad_1D_vector<csvm_type>(std::vector<plssvm::real_type>{ plssvm::real_type{ 15.0 }, plssvm::real_type{ 32.0 }, plssvm::real_type{ 32.0 }, plssvm::real_type{ 78.0 } }, plssvm::shape{ 2, 2 });
-#else
             ground_truth = util::pad_1D_vector<csvm_type>(std::vector<plssvm::real_type>{ plssvm::real_type{ 15.0 }, plssvm::real_type{ 32.0 }, plssvm::real_type{ 78.0 } }, plssvm::shape{ 2, 2 });
-#endif
         }
 
         EXPECT_FLOATING_POINT_VECTOR_NEAR(kernel_matrix, ground_truth);
     } else if constexpr (solver == plssvm::solver_type::cg_implicit) {
         // assemble the kernel matrix
-        plssvm::detail::move_only_any data_d = svm.setup_data_on_devices(solver, data);
-        const plssvm::detail::move_only_any kernel_matrix_d = svm.assemble_kernel_matrix(solver, params, data_d, q_red, QA_cost);
+        const std::vector<plssvm::detail::move_only_any> kernel_matrix_d = svm.assemble_kernel_matrix(solver, params, data, q_red, QA_cost);
+        // we enforce single GPU execution -> the returned vector must only contain a single entry!
+        ASSERT_EQ(kernel_matrix_d.size(), 1);
 
         // implicit doesn't assemble a kernel matrix!
         if constexpr (plssvm::csvm_to_backend_type_v<csvm_type> == plssvm::backend_type::openmp) {
-            const auto &[data_d_ret, params_ret, q_red_ret, QA_cost_ret] = plssvm::detail::move_only_any_cast<const std::tuple<plssvm::aos_matrix<plssvm::real_type>, plssvm::parameter, std::vector<plssvm::real_type>, plssvm::real_type> &>(kernel_matrix_d);
+            const auto &[data_d_ret, params_ret, q_red_ret, QA_cost_ret] = plssvm::detail::move_only_any_cast<const std::tuple<plssvm::aos_matrix<plssvm::real_type>, plssvm::parameter, std::vector<plssvm::real_type>, plssvm::real_type> &>(kernel_matrix_d.front());
 
             // the values should not have changed! (except the matrix layout)
             EXPECT_EQ(params_ret, params);
@@ -934,7 +918,7 @@ TYPED_TEST_P(GenericCSVMSolverKernelFunction, assemble_kernel_matrix_minimal) {
             EXPECT_EQ(q_red_ret, q_red);
             EXPECT_EQ(QA_cost_ret, QA_cost);
         } else {
-            const auto &[data_d_ret, params_ret, q_red_d_ret, QA_cost_ret] = plssvm::detail::move_only_any_cast<const std::tuple<device_ptr_type, plssvm::parameter, device_ptr_type, plssvm::real_type> &>(kernel_matrix_d);
+            const auto &[data_d_ret, params_ret, q_red_d_ret, QA_cost_ret] = plssvm::detail::move_only_any_cast<const std::tuple<device_ptr_type, plssvm::parameter, device_ptr_type, plssvm::real_type> &>(kernel_matrix_d.front());
 
             // copy data back to host
             plssvm::soa_matrix<plssvm::real_type> data_ret{ data };
@@ -979,74 +963,59 @@ TYPED_TEST_P(GenericCSVMSolverKernelFunction, assemble_kernel_matrix) {
     [[maybe_unused]] const plssvm::real_type QA_cost{ 2.0 };
 
     // create C-SVM: must be done using the mock class, since plssvm::detail::csvm::assemble_kernel_matrix is protected
-    const mock_csvm_type svm = util::construct_from_tuple<mock_csvm_type>(params, csvm_test_type::additional_arguments);
+    mock_csvm_type svm = util::construct_from_tuple<mock_csvm_type>(params, csvm_test_type::additional_arguments);
+
+    // make sure that the tests are run single GPU only!
+    svm.devices_.resize(1);
+    svm.data_distribution_ = std::make_unique<plssvm::detail::triangular_data_distribution>(data.num_rows() - 1, 1);
 
     // automatic solver type not permitted
     if constexpr (solver == plssvm::solver_type::automatic) {
 #if defined(PLSSVM_ASSERT_ENABLED)
-        EXPECT_DEATH(std::ignore = svm.setup_data_on_devices(solver, data), "An explicit solver type must be provided instead of solver_type::automatic!");
+        EXPECT_DEATH(std::ignore = svm.assemble_kernel_matrix(solver, params, data, q_red, QA_cost), "An explicit solver type must be provided instead of solver_type::automatic!");
 #else
         SUCCEED() << "Solver type is automatic, but assertions are disabled!";
 #endif
     } else if constexpr (solver == plssvm::solver_type::cg_explicit) {
         // assemble the kernel matrix
-        plssvm::detail::move_only_any data_d = svm.setup_data_on_devices(solver, data);
-        const plssvm::detail::move_only_any kernel_matrix_d = svm.assemble_kernel_matrix(solver, params, data_d, q_red, QA_cost);
+        const std::vector<plssvm::detail::move_only_any> kernel_matrix_d = svm.assemble_kernel_matrix(solver, params, data, q_red, QA_cost);
+        // we enforce single GPU execution -> the returned vector must only contain a single entry!
+        ASSERT_EQ(kernel_matrix_d.size(), 1);
 
         // get result based on used backend
         std::vector<plssvm::real_type> kernel_matrix{};
         if constexpr (plssvm::csvm_to_backend_type_v<csvm_type> == plssvm::backend_type::openmp) {
-            kernel_matrix = plssvm::detail::move_only_any_cast<std::vector<plssvm::real_type>>(kernel_matrix_d);  // std::vector
-#if defined(PLSSVM_USE_GEMM)
-            ASSERT_EQ(kernel_matrix.size(), 4);
-#else
+            kernel_matrix = plssvm::detail::move_only_any_cast<std::vector<plssvm::real_type>>(kernel_matrix_d.front());  // std::vector
             ASSERT_EQ(kernel_matrix.size(), 3);
-#endif
         } else {
-            const auto &kernel_matrix_d_ptr = plssvm::detail::move_only_any_cast<const device_ptr_type &>(kernel_matrix_d);  // device_ptr -> convert it to a std::vector
+            const auto &kernel_matrix_d_ptr = plssvm::detail::move_only_any_cast<const device_ptr_type &>(kernel_matrix_d.front());  // device_ptr -> convert it to a std::vector
             kernel_matrix.resize(kernel_matrix_d_ptr.size());
             kernel_matrix_d_ptr.copy_to_host(kernel_matrix);
-#if defined(PLSSVM_USE_GEMM)
-            ASSERT_EQ(kernel_matrix.size(), (2 + plssvm::PADDING_SIZE) * (2 + plssvm::PADDING_SIZE));
-#else
             ASSERT_EQ(kernel_matrix.size(), (2 + plssvm::PADDING_SIZE) * (2 + plssvm::PADDING_SIZE + 1) / 2);
-#endif
         }
 
         std::vector<plssvm::real_type> ground_truth{};
         switch (kernel) {
             case plssvm::kernel_function_type::linear:
-#if defined(PLSSVM_USE_GEMM)
-                ground_truth = util::pad_1D_vector<csvm_type>(std::vector<plssvm::real_type>{ plssvm::real_type{ 11.0 }, plssvm::real_type{ 27.0 }, plssvm::real_type{ 27.0 }, plssvm::real_type{ 72.0 } }, plssvm::shape{ 2, 2 });
-#else
                 ground_truth = util::pad_1D_vector<csvm_type>(std::vector<plssvm::real_type>{ plssvm::real_type{ 11.0 }, plssvm::real_type{ 27.0 }, plssvm::real_type{ 72.0 } }, plssvm::shape{ 2, 2 });
-#endif
                 break;
             case plssvm::kernel_function_type::polynomial:
-#if defined(PLSSVM_USE_GEMM)
-                ground_truth = util::pad_1D_vector<csvm_type>(std::vector<plssvm::real_type>{ static_cast<plssvm::real_type>(std::pow(14.0 / 3.0 + 1.0, 3) - 3.0), static_cast<plssvm::real_type>(std::pow(32.0 / 3.0 + 1.0, 3) - 5.0), static_cast<plssvm::real_type>(std::pow(32.0 / 3.0 + 1.0, 3) - 5.0), static_cast<plssvm::real_type>(std::pow(77.0 / 3.0 + 1.0, 3) + 1.0 - 6.0) }, plssvm::shape{ 2, 2 });
-#else
                 ground_truth = util::pad_1D_vector<csvm_type>(std::vector<plssvm::real_type>{ static_cast<plssvm::real_type>(std::pow(14.0 / 3.0 + 1.0, 3) - 3.0), static_cast<plssvm::real_type>(std::pow(32.0 / 3.0 + 1.0, 3) - 5.0), static_cast<plssvm::real_type>(std::pow(77.0 / 3.0 + 1.0, 3) + 1.0 - 6.0) }, plssvm::shape{ 2, 2 });
-
-#endif
                 break;
             case plssvm::kernel_function_type::rbf:
-#if defined(PLSSVM_USE_GEMM)
-                ground_truth = util::pad_1D_vector<csvm_type>(std::vector<plssvm::real_type>{ plssvm::real_type{ -2.0 }, static_cast<plssvm::real_type>(std::exp(-9.0) - 5.0), static_cast<plssvm::real_type>(std::exp(-9.0) - 5.0), plssvm::real_type{ -4.0 } }, plssvm::shape{ 2, 2 });
-#else
                 ground_truth = util::pad_1D_vector<csvm_type>(std::vector<plssvm::real_type>{ plssvm::real_type{ -2.0 }, static_cast<plssvm::real_type>(std::exp(-9.0) - 5.0), plssvm::real_type{ -4.0 } }, plssvm::shape{ 2, 2 });
-#endif
                 break;
         }
         EXPECT_FLOATING_POINT_VECTOR_NEAR(kernel_matrix, ground_truth);
     } else if constexpr (solver == plssvm::solver_type::cg_implicit) {
         // assemble the kernel matrix
-        plssvm::detail::move_only_any data_d = svm.setup_data_on_devices(solver, data);
-        const plssvm::detail::move_only_any kernel_matrix_d = svm.assemble_kernel_matrix(solver, params, data_d, q_red, QA_cost);
+        const std::vector<plssvm::detail::move_only_any> kernel_matrix_d = svm.assemble_kernel_matrix(solver, params, data, q_red, QA_cost);
+        // we enforce single GPU execution -> the returned vector must only contain a single entry!
+        ASSERT_EQ(kernel_matrix_d.size(), 1);
 
         // implicit doesn't assemble a kernel matrix!
         if constexpr (plssvm::csvm_to_backend_type_v<csvm_type> == plssvm::backend_type::openmp) {
-            const auto &[data_d_ret, params_ret, q_red_ret, QA_cost_ret] = plssvm::detail::move_only_any_cast<const std::tuple<plssvm::aos_matrix<plssvm::real_type>, plssvm::parameter, std::vector<plssvm::real_type>, plssvm::real_type> &>(kernel_matrix_d);
+            const auto &[data_d_ret, params_ret, q_red_ret, QA_cost_ret] = plssvm::detail::move_only_any_cast<const std::tuple<plssvm::aos_matrix<plssvm::real_type>, plssvm::parameter, std::vector<plssvm::real_type>, plssvm::real_type> &>(kernel_matrix_d.front());
 
             // the values should not have changed! (except the matrix layout)
             EXPECT_EQ(params_ret, params);
@@ -1054,7 +1023,7 @@ TYPED_TEST_P(GenericCSVMSolverKernelFunction, assemble_kernel_matrix) {
             EXPECT_EQ(q_red_ret, q_red);
             EXPECT_EQ(QA_cost_ret, QA_cost);
         } else {
-            const auto &[data_d_ret, params_ret, q_red_d_ret, QA_cost_ret] = plssvm::detail::move_only_any_cast<const std::tuple<device_ptr_type, plssvm::parameter, device_ptr_type, plssvm::real_type> &>(kernel_matrix_d);
+            const auto &[data_d_ret, params_ret, q_red_d_ret, QA_cost_ret] = plssvm::detail::move_only_any_cast<const std::tuple<device_ptr_type, plssvm::parameter, device_ptr_type, plssvm::real_type> &>(kernel_matrix_d.front());
 
             // copy data back to host
             plssvm::soa_matrix<plssvm::real_type> data_ret{ data };
@@ -1256,7 +1225,7 @@ TYPED_TEST_P(GenericCSVMDeathTest, blas_level_3_automatic) {
     constexpr plssvm::solver_type solver = plssvm::solver_type::automatic;
 
     // create C-SVM: must be done using the mock class, since plssvm::detail::csvm::blas_level_3 is protected
-    const mock_csvm_type svm = util::construct_from_tuple<mock_csvm_type>(csvm_test_type::additional_arguments);
+    mock_csvm_type svm = util::construct_from_tuple<mock_csvm_type>(csvm_test_type::additional_arguments);
 
     const plssvm::real_type alpha{ 1.0 };
 
@@ -1265,7 +1234,7 @@ TYPED_TEST_P(GenericCSVMDeathTest, blas_level_3_automatic) {
           { plssvm::real_type{ 0.2 }, plssvm::real_type{ 1.2 }, plssvm::real_type{ 1.3 } },
           { plssvm::real_type{ 0.3 }, plssvm::real_type{ 1.3 }, plssvm::real_type{ 2.3 } } }
     };
-    const plssvm::detail::move_only_any A{ util::init_explicit_matrix<csvm_type, device_ptr_type>(matr_A, svm) };
+    const std::vector<plssvm::detail::move_only_any> A{ util::init_explicit_matrix<csvm_type, device_ptr_type>(matr_A, svm) };
 
     const plssvm::soa_matrix<plssvm::real_type> B{ { { plssvm::real_type{ 1.0 }, plssvm::real_type{ 2.0 }, plssvm::real_type{ 3.0 } },
                                                      { plssvm::real_type{ 4.0 }, plssvm::real_type{ 5.0 }, plssvm::real_type{ 6.0 } },
@@ -1275,6 +1244,10 @@ TYPED_TEST_P(GenericCSVMDeathTest, blas_level_3_automatic) {
     [[maybe_unused]] const plssvm::real_type beta{ 0.0 };
     plssvm::soa_matrix<plssvm::real_type> C{ plssvm::shape{ 3, 3 }, plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE } };
 
+    // make sure that the tests are run single GPU only!
+    svm.devices_.resize(1);
+    svm.data_distribution_ = std::make_unique<plssvm::detail::triangular_data_distribution>(matr_A.num_rows(), 1);
+
     // automatic solver type not permitted
     EXPECT_DEATH(svm.blas_level_3(solver, alpha, A, B, beta, C), "An explicit solver type must be provided instead of solver_type::automatic!");
 }
@@ -1283,7 +1256,7 @@ REGISTER_TYPED_TEST_SUITE_P(GenericCSVMDeathTest,
                             blas_level_3_automatic);
 
 template <typename T>
-class GenericCSVMSolverDeathTest : public GenericCSVMSolver<T> { };
+class GenericCSVMSolverDeathTest : public GenericCSVM<T> { };
 
 TYPED_TEST_SUITE_P(GenericCSVMSolverDeathTest);
 
@@ -1295,7 +1268,7 @@ TYPED_TEST_P(GenericCSVMSolverDeathTest, conjugate_gradients_empty_B) {
     constexpr plssvm::solver_type solver = util::test_parameter_value_at_v<0, TypeParam>;
 
     // create mock_csvm (since plssvm::csvm is pure virtual!)
-    const mock_csvm_type csvm{};
+    mock_csvm_type svm{};
 
     const plssvm::soa_matrix<plssvm::real_type> matr_A{ plssvm::shape{ 4, 4 } };
     // parameter necessary for cg_implicit
@@ -1303,12 +1276,16 @@ TYPED_TEST_P(GenericCSVMSolverDeathTest, conjugate_gradients_empty_B) {
     const std::vector<plssvm::real_type> q_red(matr_A.num_rows() - 1);
     const plssvm::real_type QA_cost{ 1.0 };
 
-    const plssvm::detail::move_only_any A{ util::init_matrix<csvm_type, device_ptr_type>(matr_A, solver, csvm, params, q_red, QA_cost) };
+    const std::vector<plssvm::detail::move_only_any> A{ util::init_matrix<csvm_type, device_ptr_type>(matr_A, solver, svm, params, q_red, QA_cost) };
 
     // create empty matrix
     const plssvm::soa_matrix<plssvm::real_type> empty_matr{};
 
-    EXPECT_DEATH(std::ignore = csvm.conjugate_gradients(A, empty_matr, plssvm::real_type{ 0.001 }, 6, solver), "The right-hand sides may not be empty!");
+    // make sure that the tests are run single GPU only!
+    svm.devices_.resize(1);
+    svm.data_distribution_ = std::make_unique<plssvm::detail::triangular_data_distribution>(matr_A.num_rows(), 1);
+
+    EXPECT_DEATH(std::ignore = svm.conjugate_gradients(A, empty_matr, plssvm::real_type{ 0.001 }, 6, solver), "The right-hand sides may not be empty!");
 }
 
 TYPED_TEST_P(GenericCSVMSolverDeathTest, conjugate_gradients_invalid_eps) {
@@ -1319,7 +1296,7 @@ TYPED_TEST_P(GenericCSVMSolverDeathTest, conjugate_gradients_invalid_eps) {
     constexpr plssvm::solver_type solver = util::test_parameter_value_at_v<0, TypeParam>;
 
     // create mock_csvm
-    const mock_csvm_type csvm{};
+    mock_csvm_type svm{};
 
     const plssvm::soa_matrix<plssvm::real_type> matr_A{ plssvm::shape{ 4, 4 } };
     // parameter necessary for cg_implicit
@@ -1327,12 +1304,16 @@ TYPED_TEST_P(GenericCSVMSolverDeathTest, conjugate_gradients_invalid_eps) {
     const std::vector<plssvm::real_type> q_red(matr_A.num_rows() - 1);
     const plssvm::real_type QA_cost{ 1.0 };
 
-    const plssvm::detail::move_only_any A{ util::init_matrix<csvm_type, device_ptr_type>(matr_A, solver, csvm, params, q_red, QA_cost) };
+    const std::vector<plssvm::detail::move_only_any> A{ util::init_matrix<csvm_type, device_ptr_type>(matr_A, solver, svm, params, q_red, QA_cost) };
 
     const plssvm::soa_matrix<plssvm::real_type> B{ plssvm::shape{ 1, 6 } };
 
-    EXPECT_DEATH(std::ignore = csvm.conjugate_gradients(A, B, 0.0, 6, solver), "The epsilon value must be greater than 0.0!");
-    EXPECT_DEATH(std::ignore = csvm.conjugate_gradients(A, B, -0.5, 6, solver), "The epsilon value must be greater than 0.0!");
+    // make sure that the tests are run single GPU only!
+    svm.devices_.resize(1);
+    svm.data_distribution_ = std::make_unique<plssvm::detail::triangular_data_distribution>(matr_A.num_rows(), 1);
+
+    EXPECT_DEATH(std::ignore = svm.conjugate_gradients(A, B, 0.0, 6, solver), "The epsilon value must be greater than 0.0!");
+    EXPECT_DEATH(std::ignore = svm.conjugate_gradients(A, B, -0.5, 6, solver), "The epsilon value must be greater than 0.0!");
 }
 
 TYPED_TEST_P(GenericCSVMSolverDeathTest, conjugate_gradients_invalid_max_cg_iter) {
@@ -1343,7 +1324,7 @@ TYPED_TEST_P(GenericCSVMSolverDeathTest, conjugate_gradients_invalid_max_cg_iter
     constexpr plssvm::solver_type solver = util::test_parameter_value_at_v<0, TypeParam>;
 
     // create mock_csvm
-    const mock_csvm_type csvm{};
+    mock_csvm_type svm{};
 
     const plssvm::soa_matrix<plssvm::real_type> matr_A{ plssvm::shape{ 4, 4 } };
     // parameter necessary for cg_implicit
@@ -1351,11 +1332,15 @@ TYPED_TEST_P(GenericCSVMSolverDeathTest, conjugate_gradients_invalid_max_cg_iter
     const std::vector<plssvm::real_type> q_red(matr_A.num_rows() - 1);
     const plssvm::real_type QA_cost{ 1.0 };
 
-    const plssvm::detail::move_only_any A{ util::init_matrix<csvm_type, device_ptr_type>(matr_A, solver, csvm, params, q_red, QA_cost) };
+    const std::vector<plssvm::detail::move_only_any> A{ util::init_matrix<csvm_type, device_ptr_type>(matr_A, solver, svm, params, q_red, QA_cost) };
 
     const plssvm::soa_matrix<plssvm::real_type> B{ plssvm::shape{ 1, 6 } };
 
-    EXPECT_DEATH(std::ignore = csvm.conjugate_gradients(A, B, plssvm::real_type{ 0.001 }, 0, solver), "The maximum number of iterations must be greater than 0!");
+    // make sure that the tests are run single GPU only!
+    svm.devices_.resize(1);
+    svm.data_distribution_ = std::make_unique<plssvm::detail::triangular_data_distribution>(matr_A.num_rows(), 1);
+
+    EXPECT_DEATH(std::ignore = svm.conjugate_gradients(A, B, plssvm::real_type{ 0.001 }, 0, solver), "The maximum number of iterations must be greater than 0!");
 }
 
 TYPED_TEST_P(GenericCSVMSolverDeathTest, run_blas_level_3_empty_B) {
@@ -1366,7 +1351,7 @@ TYPED_TEST_P(GenericCSVMSolverDeathTest, run_blas_level_3_empty_B) {
     constexpr plssvm::solver_type solver = util::test_parameter_value_at_v<0, TypeParam>;
 
     // create mock_csvm
-    const mock_csvm_type csvm{};
+    mock_csvm_type svm{};
 
     const plssvm::soa_matrix<plssvm::real_type> matr_A{ plssvm::shape{ 4, 4 } };
     // parameter necessary for cg_implicit
@@ -1374,12 +1359,16 @@ TYPED_TEST_P(GenericCSVMSolverDeathTest, run_blas_level_3_empty_B) {
     const std::vector<plssvm::real_type> q_red(matr_A.num_rows() - 1);
     const plssvm::real_type QA_cost{ 1.0 };
 
-    const plssvm::detail::move_only_any A{ util::init_matrix<csvm_type, device_ptr_type>(matr_A, solver, csvm, params, q_red, QA_cost) };
+    const std::vector<plssvm::detail::move_only_any> A{ util::init_matrix<csvm_type, device_ptr_type>(matr_A, solver, svm, params, q_red, QA_cost) };
 
     const plssvm::soa_matrix<plssvm::real_type> empty_matr{};
     plssvm::soa_matrix<plssvm::real_type> C{ plssvm::shape{ 4, 4 } };
 
-    EXPECT_DEATH(std::ignore = csvm.run_blas_level_3(solver, plssvm::real_type{ 1.0 }, A, empty_matr, plssvm::real_type{ 1.0 }, C), "The B matrix must not be empty!");
+    // make sure that the tests are run single GPU only!
+    svm.devices_.resize(1);
+    svm.data_distribution_ = std::make_unique<plssvm::detail::triangular_data_distribution>(matr_A.num_rows(), 1);
+
+    EXPECT_DEATH(std::ignore = svm.run_blas_level_3(solver, plssvm::real_type{ 1.0 }, A, empty_matr, plssvm::real_type{ 1.0 }, C), "The B matrix must not be empty!");
 }
 
 TYPED_TEST_P(GenericCSVMSolverDeathTest, run_blas_level_3_empty_C) {
@@ -1390,7 +1379,7 @@ TYPED_TEST_P(GenericCSVMSolverDeathTest, run_blas_level_3_empty_C) {
     constexpr plssvm::solver_type solver = util::test_parameter_value_at_v<0, TypeParam>;
 
     // create mock_csvm
-    const mock_csvm_type csvm{};
+    mock_csvm_type svm{};
 
     const plssvm::soa_matrix<plssvm::real_type> matr_A{ plssvm::shape{ 4, 4 } };
     // parameter necessary for cg_implicit
@@ -1398,12 +1387,16 @@ TYPED_TEST_P(GenericCSVMSolverDeathTest, run_blas_level_3_empty_C) {
     const std::vector<plssvm::real_type> q_red(matr_A.num_rows() - 1);
     const plssvm::real_type QA_cost{ 1.0 };
 
-    const plssvm::detail::move_only_any A{ util::init_matrix<csvm_type, device_ptr_type>(matr_A, solver, csvm, params, q_red, QA_cost) };
+    const std::vector<plssvm::detail::move_only_any> A{ util::init_matrix<csvm_type, device_ptr_type>(matr_A, solver, svm, params, q_red, QA_cost) };
 
     const plssvm::soa_matrix<plssvm::real_type> B{ plssvm::shape{ 4, 4 } };
     plssvm::soa_matrix<plssvm::real_type> empty_matr{};
 
-    EXPECT_DEATH(std::ignore = csvm.run_blas_level_3(solver, plssvm::real_type{ 1.0 }, A, B, plssvm::real_type{ 1.0 }, empty_matr), "The C matrix must not be empty!");
+    // make sure that the tests are run single GPU only!
+    svm.devices_.resize(1);
+    svm.data_distribution_ = std::make_unique<plssvm::detail::triangular_data_distribution>(matr_A.num_rows(), 1);
+
+    EXPECT_DEATH(std::ignore = svm.run_blas_level_3(solver, plssvm::real_type{ 1.0 }, A, B, plssvm::real_type{ 1.0 }, empty_matr), "The C matrix must not be empty!");
 }
 
 REGISTER_TYPED_TEST_SUITE_P(GenericCSVMSolverDeathTest,
@@ -1427,13 +1420,16 @@ TYPED_TEST_P(GenericCSVMKernelFunctionDeathTest, solve_lssvm_system_of_linear_eq
     const plssvm::parameter params{ plssvm::kernel_type = kernel };
 
     // create mock_csvm
-    const mock_csvm_type csvm{};
+    mock_csvm_type svm{};
+
+    // make sure that the tests are run single GPU only!
+    svm.devices_.resize(1);
 
     // create empty matrix
     const plssvm::soa_matrix<plssvm::real_type> empty_matr{};
     const plssvm::aos_matrix<plssvm::real_type> B{ plssvm::shape{ 1, 4 } };
 
-    EXPECT_DEATH(std::ignore = csvm.solve_lssvm_system_of_linear_equations(empty_matr, B, params), "The A matrix may not be empty!");
+    EXPECT_DEATH(std::ignore = svm.solve_lssvm_system_of_linear_equations(empty_matr, B, params), "The A matrix may not be empty!");
 }
 
 TYPED_TEST_P(GenericCSVMKernelFunctionDeathTest, solve_lssvm_system_of_linear_equations_A_without_padding) {
@@ -1445,13 +1441,17 @@ TYPED_TEST_P(GenericCSVMKernelFunctionDeathTest, solve_lssvm_system_of_linear_eq
     const plssvm::parameter params{ plssvm::kernel_type = kernel };
 
     // create mock_csvm
-    const mock_csvm_type csvm{};
+    mock_csvm_type svm{};
 
     // create empty matrix
     const plssvm::soa_matrix<plssvm::real_type> A{ plssvm::shape{ 6, 4 } };
     const plssvm::aos_matrix<plssvm::real_type> B{ plssvm::shape{ 1, 4 } };
 
-    EXPECT_DEATH(std::ignore = csvm.solve_lssvm_system_of_linear_equations(A, B, params), "The A matrix must be padded!");
+    // make sure that the tests are run single GPU only!
+    svm.devices_.resize(1);
+    svm.data_distribution_ = std::make_unique<plssvm::detail::triangular_data_distribution>(A.num_rows(), 1);
+
+    EXPECT_DEATH(std::ignore = svm.solve_lssvm_system_of_linear_equations(A, B, params), "The A matrix must be padded!");
 }
 
 TYPED_TEST_P(GenericCSVMKernelFunctionDeathTest, solve_lssvm_system_of_linear_equations_A_wrong_padding_sizes) {
@@ -1463,13 +1463,17 @@ TYPED_TEST_P(GenericCSVMKernelFunctionDeathTest, solve_lssvm_system_of_linear_eq
     const plssvm::parameter params{ plssvm::kernel_type = kernel };
 
     // create mock_csvm
-    const mock_csvm_type csvm{};
+    mock_csvm_type svm{};
 
     // create empty matrix
     const plssvm::soa_matrix<plssvm::real_type> A{ plssvm::shape{ 6, 4 }, plssvm::shape{ 0, 1 } };
     const plssvm::aos_matrix<plssvm::real_type> B{ plssvm::shape{ 1, 4 } };
 
-    EXPECT_DEATH(std::ignore = csvm.solve_lssvm_system_of_linear_equations(A, B, params),
+    // make sure that the tests are run single GPU only!
+    svm.devices_.resize(1);
+    svm.data_distribution_ = std::make_unique<plssvm::detail::triangular_data_distribution>(A.num_rows(), 1);
+
+    EXPECT_DEATH(std::ignore = svm.solve_lssvm_system_of_linear_equations(A, B, params),
                  ::testing::HasSubstr(fmt::format("The provided matrix must be padded with [{}, {}], but is padded with [0, 1]!", plssvm::PADDING_SIZE, plssvm::PADDING_SIZE)));
 }
 
@@ -1482,13 +1486,17 @@ TYPED_TEST_P(GenericCSVMKernelFunctionDeathTest, solve_lssvm_system_of_linear_eq
     const plssvm::parameter params{ plssvm::kernel_type = kernel };
 
     // create mock_csvm
-    const mock_csvm_type csvm{};
+    mock_csvm_type svm{};
 
     // create empty matrix
     const plssvm::aos_matrix<plssvm::real_type> empty_matr{};
     const plssvm::soa_matrix<plssvm::real_type> A{ plssvm::shape{ 6, 4 }, plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE } };
 
-    EXPECT_DEATH(std::ignore = csvm.solve_lssvm_system_of_linear_equations(A, empty_matr, params), "The B matrix may not be empty!");
+    // make sure that the tests are run single GPU only!
+    svm.devices_.resize(1);
+    svm.data_distribution_ = std::make_unique<plssvm::detail::triangular_data_distribution>(A.num_rows(), 1);
+
+    EXPECT_DEATH(std::ignore = svm.solve_lssvm_system_of_linear_equations(A, empty_matr, params), "The B matrix may not be empty!");
 }
 
 TYPED_TEST_P(GenericCSVMKernelFunctionDeathTest, solve_lssvm_system_of_linear_equations_size_mismatch) {
@@ -1500,13 +1508,17 @@ TYPED_TEST_P(GenericCSVMKernelFunctionDeathTest, solve_lssvm_system_of_linear_eq
     const plssvm::parameter params{ plssvm::kernel_type = kernel };
 
     // create mock_csvm
-    const mock_csvm_type csvm{};
+    mock_csvm_type svm{};
 
     // create empty matrix
     const plssvm::soa_matrix<plssvm::real_type> A{ plssvm::shape{ 6, 4 }, plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE } };
     const plssvm::aos_matrix<plssvm::real_type> B{ plssvm::shape{ 1, 3 } };
 
-    EXPECT_DEATH(std::ignore = csvm.solve_lssvm_system_of_linear_equations(A, B, params), ::testing::HasSubstr("The number of data points in A (6) and B (3) must be the same!"));
+    // make sure that the tests are run single GPU only!
+    svm.devices_.resize(1);
+    svm.data_distribution_ = std::make_unique<plssvm::detail::triangular_data_distribution>(A.num_rows(), 1);
+
+    EXPECT_DEATH(std::ignore = svm.solve_lssvm_system_of_linear_equations(A, B, params), ::testing::HasSubstr("The number of data points in A (6) and B (3) must be the same!"));
 }
 
 TYPED_TEST_P(GenericCSVMKernelFunctionDeathTest, perform_dimensional_reduction_empty_A) {
@@ -1518,12 +1530,12 @@ TYPED_TEST_P(GenericCSVMKernelFunctionDeathTest, perform_dimensional_reduction_e
     const plssvm::parameter params{ plssvm::kernel_type = kernel };
 
     // create mock_csvm
-    const mock_csvm_type csvm{};
+    const mock_csvm_type svm{};
 
     // create empty matrix
     const plssvm::soa_matrix<plssvm::real_type> empty_matr{};
 
-    EXPECT_DEATH(std::ignore = csvm.perform_dimensional_reduction(params, empty_matr), "The matrix must not be empty!");
+    EXPECT_DEATH(std::ignore = svm.perform_dimensional_reduction(params, empty_matr), "The matrix must not be empty!");
 }
 
 TYPED_TEST_P(GenericCSVMKernelFunctionDeathTest, predict_values_empty_matrices) {
@@ -1535,7 +1547,7 @@ TYPED_TEST_P(GenericCSVMKernelFunctionDeathTest, predict_values_empty_matrices) 
     const plssvm::parameter params{ plssvm::kernel_type = kernel };
 
     // create mock_csvm
-    const mock_csvm_type csvm{};
+    mock_csvm_type svm{};
 
     // create empty matrix
     const plssvm::aos_matrix<plssvm::real_type> empty_aos_matr{};
@@ -1548,12 +1560,16 @@ TYPED_TEST_P(GenericCSVMKernelFunctionDeathTest, predict_values_empty_matrices) 
     plssvm::soa_matrix<plssvm::real_type> w{};
     const auto data = util::generate_random_matrix<plssvm::soa_matrix<plssvm::real_type>>(plssvm::shape{ 2, 4 }, plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE });
 
+    // make sure that the tests are run single GPU only!
+    svm.devices_.resize(1);
+    svm.data_distribution_ = std::make_unique<plssvm::detail::triangular_data_distribution>(data.num_rows(), 1);
+
     // support vectors shouldn't be empty
-    EXPECT_DEATH(std::ignore = csvm.predict_values(params, empty_soa_matr, weights, rho, w, data), "The support vectors must not be empty!");
+    EXPECT_DEATH(std::ignore = svm.predict_values(params, empty_soa_matr, weights, rho, w, data), "The support vectors must not be empty!");
     // weights shouldn't be empty
-    EXPECT_DEATH(std::ignore = csvm.predict_values(params, support_vectors, empty_aos_matr, rho, w, data), ::testing::HasSubstr("The alpha vectors (weights) must not be empty!"));
+    EXPECT_DEATH(std::ignore = svm.predict_values(params, support_vectors, empty_aos_matr, rho, w, data), ::testing::HasSubstr("The alpha vectors (weights) must not be empty!"));
     // predict points shouldn't be empty
-    EXPECT_DEATH(std::ignore = csvm.predict_values(params, support_vectors, weights, rho, w, empty_soa_matr), "The data points to predict must not be empty!");
+    EXPECT_DEATH(std::ignore = svm.predict_values(params, support_vectors, weights, rho, w, empty_soa_matr), "The data points to predict must not be empty!");
 }
 
 TYPED_TEST_P(GenericCSVMKernelFunctionDeathTest, predict_values_missing_padding) {
@@ -1565,7 +1581,7 @@ TYPED_TEST_P(GenericCSVMKernelFunctionDeathTest, predict_values_missing_padding)
     const plssvm::parameter params{ plssvm::kernel_type = kernel };
 
     // create mock_csvm
-    const mock_csvm_type csvm{};
+    mock_csvm_type svm{};
 
     // create empty matrix
     const plssvm::aos_matrix<plssvm::real_type> empty_aos_matr{};
@@ -1582,14 +1598,18 @@ TYPED_TEST_P(GenericCSVMKernelFunctionDeathTest, predict_values_missing_padding)
     const auto data = util::generate_random_matrix<plssvm::soa_matrix<plssvm::real_type>>(plssvm::shape{ 2, 4 }, plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE });
     const auto data_without_padding = util::generate_random_matrix<plssvm::soa_matrix<plssvm::real_type>>(plssvm::shape{ 2, 4 });
 
+    // make sure that the tests are run single GPU only!
+    svm.devices_.resize(1);
+    svm.data_distribution_ = std::make_unique<plssvm::detail::triangular_data_distribution>(data.num_rows(), 1);
+
     // support vectors must be padded
-    EXPECT_DEATH(std::ignore = csvm.predict_values(params, support_vectors_without_padding, weights, rho, w, data), "The support vectors must be padded!");
+    EXPECT_DEATH(std::ignore = svm.predict_values(params, support_vectors_without_padding, weights, rho, w, data), "The support vectors must be padded!");
     // weights must be padded
-    EXPECT_DEATH(std::ignore = csvm.predict_values(params, support_vectors, weights_without_padding, rho, w, data), ::testing::HasSubstr("The alpha vectors (weights) must be padded!"));
+    EXPECT_DEATH(std::ignore = svm.predict_values(params, support_vectors, weights_without_padding, rho, w, data), ::testing::HasSubstr("The alpha vectors (weights) must be padded!"));
     // w must be padded
-    EXPECT_DEATH(std::ignore = csvm.predict_values(params, support_vectors, weights, rho, w_without_padding, data_without_padding), "Either w must be empty or must be padded!");
+    EXPECT_DEATH(std::ignore = svm.predict_values(params, support_vectors, weights, rho, w_without_padding, data_without_padding), "Either w must be empty or must be padded!");
     // predict points must be padded
-    EXPECT_DEATH(std::ignore = csvm.predict_values(params, support_vectors, weights, rho, w, data_without_padding), "The data points to predict must be padded!");
+    EXPECT_DEATH(std::ignore = svm.predict_values(params, support_vectors, weights, rho, w, data_without_padding), "The data points to predict must be padded!");
 }
 
 TYPED_TEST_P(GenericCSVMKernelFunctionDeathTest, predict_values_sv_alpha_size_mismatch) {
@@ -1601,7 +1621,7 @@ TYPED_TEST_P(GenericCSVMKernelFunctionDeathTest, predict_values_sv_alpha_size_mi
     const plssvm::parameter params{ plssvm::kernel_type = kernel };
 
     // create mock_csvm
-    const mock_csvm_type csvm{};
+    mock_csvm_type svm{};
 
     // create correct input matrices
     const auto support_vectors = util::generate_random_matrix<plssvm::soa_matrix<plssvm::real_type>>(plssvm::shape{ 3, 4 }, plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE });
@@ -1610,8 +1630,12 @@ TYPED_TEST_P(GenericCSVMKernelFunctionDeathTest, predict_values_sv_alpha_size_mi
     plssvm::soa_matrix<plssvm::real_type> w{};
     const auto data = util::generate_random_matrix<plssvm::soa_matrix<plssvm::real_type>>(plssvm::shape{ 2, 4 }, plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE });
 
+    // make sure that the tests are run single GPU only!
+    svm.devices_.resize(1);
+    svm.data_distribution_ = std::make_unique<plssvm::detail::triangular_data_distribution>(data.num_rows(), 1);
+
     // the number of support vectors and weights must be identical
-    EXPECT_DEATH(std::ignore = csvm.predict_values(params, support_vectors, weights, rho, w, data), ::testing::HasSubstr("The number of support vectors (3) and number of weights (4) must be the same!"));
+    EXPECT_DEATH(std::ignore = svm.predict_values(params, support_vectors, weights, rho, w, data), ::testing::HasSubstr("The number of support vectors (3) and number of weights (4) must be the same!"));
 }
 
 TYPED_TEST_P(GenericCSVMKernelFunctionDeathTest, predict_values_rho_alpha_size_mismatch) {
@@ -1623,7 +1647,7 @@ TYPED_TEST_P(GenericCSVMKernelFunctionDeathTest, predict_values_rho_alpha_size_m
     const plssvm::parameter params{ plssvm::kernel_type = kernel };
 
     // create mock_csvm
-    const mock_csvm_type csvm{};
+    mock_csvm_type svm{};
 
     // create correct input matrices
     const auto support_vectors = util::generate_random_matrix<plssvm::soa_matrix<plssvm::real_type>>(plssvm::shape{ 4, 4 }, plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE });
@@ -1632,8 +1656,12 @@ TYPED_TEST_P(GenericCSVMKernelFunctionDeathTest, predict_values_rho_alpha_size_m
     plssvm::soa_matrix<plssvm::real_type> w{};
     const auto data = util::generate_random_matrix<plssvm::soa_matrix<plssvm::real_type>>(plssvm::shape{ 2, 4 }, plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE });
 
+    // make sure that the tests are run single GPU only!
+    svm.devices_.resize(1);
+    svm.data_distribution_ = std::make_unique<plssvm::detail::triangular_data_distribution>(data.num_rows(), 1);
+
     // the number of rho values and weight vectors must be identical
-    EXPECT_DEATH(std::ignore = csvm.predict_values(params, support_vectors, weights, rho, w, data), ::testing::HasSubstr("The number of rho values (1) and the number of weight vectors (2) must be the same!"));
+    EXPECT_DEATH(std::ignore = svm.predict_values(params, support_vectors, weights, rho, w, data), ::testing::HasSubstr("The number of rho values (1) and the number of weight vectors (2) must be the same!"));
 }
 
 TYPED_TEST_P(GenericCSVMKernelFunctionDeathTest, predict_values_w_size_mismatch) {
@@ -1645,7 +1673,7 @@ TYPED_TEST_P(GenericCSVMKernelFunctionDeathTest, predict_values_w_size_mismatch)
     const plssvm::parameter params{ plssvm::kernel_type = kernel };
 
     // create mock_csvm
-    const mock_csvm_type csvm{};
+    mock_csvm_type svm{};
 
     // create correct input matrices
     const auto support_vectors = util::generate_random_matrix<plssvm::soa_matrix<plssvm::real_type>>(plssvm::shape{ 4, 4 }, plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE });
@@ -1653,12 +1681,16 @@ TYPED_TEST_P(GenericCSVMKernelFunctionDeathTest, predict_values_w_size_mismatch)
     const std::vector<plssvm::real_type> rho(2);
     const auto data = util::generate_random_matrix<plssvm::soa_matrix<plssvm::real_type>>(plssvm::shape{ 2, 4 }, plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE });
 
+    // make sure that the tests are run single GPU only!
+    svm.devices_.resize(1);
+    svm.data_distribution_ = std::make_unique<plssvm::detail::triangular_data_distribution>(data.num_rows(), 1);
+
     // the number of features and w values must be identical
     auto w = util::generate_random_matrix<plssvm::soa_matrix<plssvm::real_type>>(plssvm::shape{ 2, 3 }, plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE });
-    EXPECT_DEATH(std::ignore = csvm.predict_values(params, support_vectors, weights, rho, w, data), ::testing::HasSubstr("Either w must be empty or contain exactly the same number of values (3) as features are present (4)!"));
+    EXPECT_DEATH(std::ignore = svm.predict_values(params, support_vectors, weights, rho, w, data), ::testing::HasSubstr("Either w must be empty or contain exactly the same number of values (3) as features are present (4)!"));
     // the number of weight and w vectors must be identical
     w = util::generate_random_matrix<plssvm::soa_matrix<plssvm::real_type>>(plssvm::shape{ 3, 4 }, plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE });
-    EXPECT_DEATH(std::ignore = csvm.predict_values(params, support_vectors, weights, rho, w, data), ::testing::HasSubstr("Either w must be empty or contain exactly the same number of vectors (3) as the alpha vector (2)!"));
+    EXPECT_DEATH(std::ignore = svm.predict_values(params, support_vectors, weights, rho, w, data), ::testing::HasSubstr("Either w must be empty or contain exactly the same number of vectors (3) as the alpha vector (2)!"));
 }
 
 TYPED_TEST_P(GenericCSVMKernelFunctionDeathTest, predict_values_num_features_mismatch) {
@@ -1670,7 +1702,7 @@ TYPED_TEST_P(GenericCSVMKernelFunctionDeathTest, predict_values_num_features_mis
     const plssvm::parameter params{ plssvm::kernel_type = kernel };
 
     // create mock_csvm
-    const mock_csvm_type csvm{};
+    mock_csvm_type svm{};
 
     // create correct input matrices
     const auto support_vectors = util::generate_random_matrix<plssvm::soa_matrix<plssvm::real_type>>(plssvm::shape{ 4, 5 }, plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE });
@@ -1679,8 +1711,12 @@ TYPED_TEST_P(GenericCSVMKernelFunctionDeathTest, predict_values_num_features_mis
     plssvm::soa_matrix<plssvm::real_type> w{};
     const auto data = util::generate_random_matrix<plssvm::soa_matrix<plssvm::real_type>>(plssvm::shape{ 2, 4 }, plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE });
 
+    // make sure that the tests are run single GPU only!
+    svm.devices_.resize(1);
+    svm.data_distribution_ = std::make_unique<plssvm::detail::triangular_data_distribution>(data.num_rows(), 1);
+
     // the number of features for the support vectors and predict points must be identical
-    EXPECT_DEATH(std::ignore = csvm.predict_values(params, support_vectors, weights, rho, w, data), ::testing::HasSubstr("The number of features in the support vectors (5) must be the same as in the data points to predict (4)!"));
+    EXPECT_DEATH(std::ignore = svm.predict_values(params, support_vectors, weights, rho, w, data), ::testing::HasSubstr("The number of features in the support vectors (5) must be the same as in the data points to predict (4)!"));
 }
 
 REGISTER_TYPED_TEST_SUITE_P(GenericCSVMKernelFunctionDeathTest,

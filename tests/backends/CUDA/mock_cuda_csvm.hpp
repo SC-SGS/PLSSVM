@@ -35,7 +35,7 @@ class mock_cuda_csvm final : public plssvm::cuda::csvm {
     using base_type::blas_level_3;
     using base_type::get_device_memory;
     using base_type::get_max_work_group_size;
-    using base_type::setup_data_on_devices;
+    using base_type::num_available_devices;
 
     using base_type::predict_values;
 
@@ -53,6 +53,7 @@ class mock_cuda_csvm final : public plssvm::cuda::csvm {
     using base_type::run_w_kernel;
 
     using base_type::devices_;
+    using base_type::data_distribution_;
 };
 
 #endif  // PLSSVM_TESTS_BACKENDS_CUDA_MOCK_CUDA_CSVM_HPP_
