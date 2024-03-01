@@ -30,7 +30,6 @@ set(PLSSVM_OPENCL_SOURCES
     ${CMAKE_CURRENT_LIST_DIR}/detail/utility.cpp
     ${CMAKE_CURRENT_LIST_DIR}/csvm.cpp
     ${CMAKE_CURRENT_LIST_DIR}/exceptions.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/../gpu_device_ptr.cpp
 )
 
 # set target properties
@@ -73,7 +72,7 @@ if (PLSSVM_NUM_NVIDIA_TARGET_ARCHS GREATER 0)
                 message(FATAL_ERROR "Requested PTX inline assembly to speed up the FP32/FP64 atomicAdd, but the supplied sm_${sm_value} is too old!")
             endif ()
         endforeach ()
-        
+
         message(STATUS "Enabled PTX inline assembly on NVIDIA GPUs to greatly improve the atomicAdd performance.")
         target_compile_definitions(${PLSSVM_OPENCL_BACKEND_LIBRARY_NAME} PRIVATE PLSSVM_OPENCL_BACKEND_USE_PTX_INLINE_ASSEMBLY)
     endif ()
