@@ -20,6 +20,7 @@
 #include <algorithm>  // std::min
 #include <cmath>      // std::pow, std::exp, std::fma
 #include <cstddef>    // std::size_t
+#include <utility>    // std::pair
 #include <vector>     // std::vector
 
 namespace ground_truth {
@@ -39,26 +40,6 @@ real_type linear_kernel(const std::vector<real_type> &x, const std::vector<real_
 
 template float linear_kernel(const std::vector<float> &, const std::vector<float> &);
 template double linear_kernel(const std::vector<double> &, const std::vector<double> &);
-
-template <typename real_type>
-real_type linear_kernel(const std::vector<real_type> &x, const std::vector<real_type> &y, const std::size_t num_devices) {
-    PLSSVM_ASSERT(x.size() == y.size(), "Sizes mismatch!: {} != {}", x.size(), y.size());
-    PLSSVM_ASSERT(num_devices > 0, "At least one device must be available!");
-
-    const std::size_t block_size = x.size() / num_devices;
-    real_type result{ 0.0 };
-    for (std::size_t d = 0; d < num_devices; ++d) {
-        real_type tmp{ 0.0 };
-        for (std::size_t i = d * block_size; i < std::min(x.size(), (d + 1) * block_size); ++i) {
-            tmp = std::fma(x[i], y[i], tmp);
-        }
-        result += tmp;
-    }
-    return result;
-}
-
-template float linear_kernel(const std::vector<float> &, const std::vector<float> &, const std::size_t);
-template double linear_kernel(const std::vector<double> &, const std::vector<double> &, const std::size_t);
 
 template <typename real_type>
 real_type polynomial_kernel(const std::vector<real_type> &x, const std::vector<real_type> &y, const int degree, const real_type gamma, const real_type coef0) {
@@ -90,28 +71,22 @@ template float rbf_kernel(const std::vector<float> &, const std::vector<float> &
 template double rbf_kernel(const std::vector<double> &, const std::vector<double> &, double);
 
 template <typename real_type, plssvm::layout_type layout>
-real_type linear_kernel(const plssvm::matrix<real_type, layout> &X, const std::size_t i, const plssvm::matrix<real_type, layout> &Y, const std::size_t j, const std::size_t num_devices) {
+real_type linear_kernel(const plssvm::matrix<real_type, layout> &X, const std::size_t i, const plssvm::matrix<real_type, layout> &Y, const std::size_t j) {
     PLSSVM_ASSERT(X.num_cols() == Y.num_cols(), "Sizes mismatch!: {} != {}", X.num_cols(), Y.num_cols());
     PLSSVM_ASSERT(i < X.num_rows(), "Out-of-bounce access!: {} < {}", i, X.num_rows());
     PLSSVM_ASSERT(j < Y.num_rows(), "Out-of-bounce access!: {} < {}", j, Y.num_rows());
-    PLSSVM_ASSERT(num_devices > 0, "At least one device must be available!");
 
-    const std::size_t block_size = X.num_cols() / num_devices;
     real_type result{ 0.0 };
-    for (std::size_t d = 0; d < num_devices; ++d) {
-        real_type tmp{ 0.0 };
-        for (std::size_t bd = d * block_size; bd < std::min(X.num_cols(), (d + 1) * block_size); ++bd) {
-            tmp = std::fma(X(i, bd), Y(j, bd), tmp);
-        }
-        result += tmp;
+    for (typename std::vector<real_type>::size_type dim = 0; dim < X.num_cols(); ++dim) {
+        result = std::fma(X(i, dim), Y(j, dim), result);
     }
     return result;
 }
 
-template float linear_kernel(const plssvm::matrix<float, plssvm::layout_type::aos> &, const std::size_t, const plssvm::matrix<float, plssvm::layout_type::aos> &, const std::size_t, const std::size_t);
-template float linear_kernel(const plssvm::matrix<float, plssvm::layout_type::soa> &, const std::size_t, const plssvm::matrix<float, plssvm::layout_type::soa> &, const std::size_t, const std::size_t);
-template double linear_kernel(const plssvm::matrix<double, plssvm::layout_type::aos> &, const std::size_t, const plssvm::matrix<double, plssvm::layout_type::aos> &, const std::size_t, const std::size_t);
-template double linear_kernel(const plssvm::matrix<double, plssvm::layout_type::soa> &, const std::size_t, const plssvm::matrix<double, plssvm::layout_type::soa> &, const std::size_t, const std::size_t);
+template float linear_kernel(const plssvm::matrix<float, plssvm::layout_type::aos> &, const std::size_t, const plssvm::matrix<float, plssvm::layout_type::aos> &, const std::size_t);
+template float linear_kernel(const plssvm::matrix<float, plssvm::layout_type::soa> &, const std::size_t, const plssvm::matrix<float, plssvm::layout_type::soa> &, const std::size_t);
+template double linear_kernel(const plssvm::matrix<double, plssvm::layout_type::aos> &, const std::size_t, const plssvm::matrix<double, plssvm::layout_type::aos> &, const std::size_t);
+template double linear_kernel(const plssvm::matrix<double, plssvm::layout_type::soa> &, const std::size_t, const plssvm::matrix<double, plssvm::layout_type::soa> &, const std::size_t);
 
 template <typename real_type, plssvm::layout_type layout>
 real_type polynomial_kernel(const plssvm::matrix<real_type, layout> &X, const std::size_t i, const plssvm::matrix<real_type, layout> &Y, const std::size_t j, const int degree, const real_type gamma, const real_type coef0) {
@@ -153,12 +128,12 @@ template double rbf_kernel(const plssvm::matrix<double, plssvm::layout_type::soa
 }  // namespace detail
 
 template <typename real_type>
-real_type kernel_function(const plssvm::parameter &params, const std::vector<real_type> &x, const std::vector<real_type> &y, [[maybe_unused]] const std::size_t num_devices) {
+real_type kernel_function(const plssvm::parameter &params, const std::vector<real_type> &x, const std::vector<real_type> &y) {
     PLSSVM_ASSERT(x.size() == y.size(), "Sizes mismatch!: {} != {}", x.size(), y.size());
 
-    switch (params.kernel_type) {
+    switch (params.kernel_type.value()) {
         case plssvm::kernel_function_type::linear:
-            return detail::linear_kernel(x, y, num_devices);
+            return detail::linear_kernel(x, y);
         case plssvm::kernel_function_type::polynomial:
             return detail::polynomial_kernel(x, y, params.degree.value(), static_cast<real_type>(params.gamma.value()), static_cast<real_type>(params.coef0.value()));
         case plssvm::kernel_function_type::rbf:
@@ -168,18 +143,18 @@ real_type kernel_function(const plssvm::parameter &params, const std::vector<rea
     return real_type{};
 }
 
-template float kernel_function(const plssvm::parameter &, const std::vector<float> &, const std::vector<float> &, std::size_t);
-template double kernel_function(const plssvm::parameter &, const std::vector<double> &, const std::vector<double> &, std::size_t);
+template float kernel_function(const plssvm::parameter &, const std::vector<float> &, const std::vector<float> &);
+template double kernel_function(const plssvm::parameter &, const std::vector<double> &, const std::vector<double> &);
 
 template <typename real_type, plssvm::layout_type layout>
-real_type kernel_function(const plssvm::parameter &params, const plssvm::matrix<real_type, layout> &X, const std::size_t i, const plssvm::matrix<real_type, layout> &Y, const std::size_t j, [[maybe_unused]] const std::size_t num_devices) {
+real_type kernel_function(const plssvm::parameter &params, const plssvm::matrix<real_type, layout> &X, const std::size_t i, const plssvm::matrix<real_type, layout> &Y, const std::size_t j) {
     PLSSVM_ASSERT(X.num_cols() == Y.num_cols(), "Sizes mismatch!: {} != {}", X.num_cols(), Y.num_cols());
     PLSSVM_ASSERT(i < X.num_rows(), "Out-of-bounce access!: {} < {}", i, X.num_rows());
     PLSSVM_ASSERT(j < Y.num_rows(), "Out-of-bounce access!: {} < {}", j, Y.num_rows());
 
-    switch (params.kernel_type) {
+    switch (params.kernel_type.value()) {
         case plssvm::kernel_function_type::linear:
-            return detail::linear_kernel(X, i, Y, j, num_devices);
+            return detail::linear_kernel(X, i, Y, j);
         case plssvm::kernel_function_type::polynomial:
             return detail::polynomial_kernel(X, i, Y, j, params.degree.value(), static_cast<real_type>(params.gamma.value()), static_cast<real_type>(params.coef0.value()));
         case plssvm::kernel_function_type::rbf:
@@ -189,26 +164,26 @@ real_type kernel_function(const plssvm::parameter &params, const plssvm::matrix<
     return real_type{};
 }
 
-template float kernel_function(const plssvm::parameter &, const plssvm::matrix<float, plssvm::layout_type::aos> &, const std::size_t, const plssvm::matrix<float, plssvm::layout_type::aos> &, const std::size_t, const std::size_t);
-template float kernel_function(const plssvm::parameter &, const plssvm::matrix<float, plssvm::layout_type::soa> &, const std::size_t, const plssvm::matrix<float, plssvm::layout_type::soa> &, const std::size_t, const std::size_t);
-template double kernel_function(const plssvm::parameter &, const plssvm::matrix<double, plssvm::layout_type::aos> &, const std::size_t, const plssvm::matrix<double, plssvm::layout_type::aos> &, const std::size_t, const std::size_t);
-template double kernel_function(const plssvm::parameter &, const plssvm::matrix<double, plssvm::layout_type::soa> &, const std::size_t, const plssvm::matrix<double, plssvm::layout_type::soa> &, const std::size_t, const std::size_t);
+template float kernel_function(const plssvm::parameter &, const plssvm::matrix<float, plssvm::layout_type::aos> &, const std::size_t, const plssvm::matrix<float, plssvm::layout_type::aos> &, const std::size_t);
+template float kernel_function(const plssvm::parameter &, const plssvm::matrix<float, plssvm::layout_type::soa> &, const std::size_t, const plssvm::matrix<float, plssvm::layout_type::soa> &, const std::size_t);
+template double kernel_function(const plssvm::parameter &, const plssvm::matrix<double, plssvm::layout_type::aos> &, const std::size_t, const plssvm::matrix<double, plssvm::layout_type::aos> &, const std::size_t);
+template double kernel_function(const plssvm::parameter &, const plssvm::matrix<double, plssvm::layout_type::soa> &, const std::size_t, const plssvm::matrix<double, plssvm::layout_type::soa> &, const std::size_t);
 
 template <typename real_type>
-std::pair<std::vector<real_type>, real_type> perform_dimensional_reduction(const plssvm::parameter &params, const plssvm::soa_matrix<real_type> &data, const std::size_t num_devices) {
+std::pair<std::vector<real_type>, real_type> perform_dimensional_reduction(const plssvm::parameter &params, const plssvm::soa_matrix<real_type> &data) {
     std::vector<real_type> result(data.num_rows() - 1);
     for (typename std::vector<std::vector<real_type>>::size_type i = 0; i < result.size(); ++i) {
-        result[i] = kernel_function(params, data, data.num_rows() - 1, data, i, num_devices);
+        result[i] = kernel_function(params, data, data.num_rows() - 1, data, i);
     }
-    const real_type QA_cost = kernel_function(params, data, data.num_rows() - 1, data, data.num_rows() - 1, num_devices) + real_type{ 1.0 } / static_cast<real_type>(params.cost);
+    const real_type QA_cost = kernel_function(params, data, data.num_rows() - 1, data, data.num_rows() - 1) + real_type{ 1.0 } / static_cast<real_type>(params.cost);
     return std::make_pair(std::move(result), QA_cost);
 }
 
-template std::pair<std::vector<float>, float> perform_dimensional_reduction(const plssvm::parameter &, const plssvm::soa_matrix<float> &, std::size_t);
-template std::pair<std::vector<double>, double> perform_dimensional_reduction(const plssvm::parameter &, const plssvm::soa_matrix<double> &, std::size_t);
+template std::pair<std::vector<float>, float> perform_dimensional_reduction(const plssvm::parameter &, const plssvm::soa_matrix<float> &);
+template std::pair<std::vector<double>, double> perform_dimensional_reduction(const plssvm::parameter &, const plssvm::soa_matrix<double> &);
 
 template <typename real_type>
-[[nodiscard]] std::vector<real_type> assemble_kernel_matrix(const plssvm::parameter &params, const plssvm::soa_matrix<real_type> &data, const std::vector<real_type> &q, const real_type QA_cost, const plssvm::detail::data_distribution &dist, const std::size_t device_id) {
+std::vector<real_type> assemble_device_specific_kernel_matrix(const plssvm::parameter &params, const plssvm::soa_matrix<real_type> &data, const std::vector<real_type> &q, const real_type QA_cost, const plssvm::detail::data_distribution &dist, const std::size_t device_id) {
     const auto &tri_dist = dynamic_cast<const plssvm::detail::triangular_data_distribution &>(dist);
     std::vector<real_type> result{};
     result.reserve(tri_dist.calculate_explicit_kernel_matrix_num_entries_padded(device_id));
@@ -216,7 +191,7 @@ template <typename real_type>
 
     for (std::size_t row = tri_dist.place_row_offset(device_id); row < tri_dist.place_row_offset(device_id) + tri_dist.place_specific_num_rows(device_id); ++row) {
         for (std::size_t col = row; col < num_rows_reduced; ++col) {
-            result.push_back(kernel_function(params, data, row, data, col, 1) + QA_cost - q[row] - q[col]);
+            result.push_back(kernel_function(params, data, row, data, col) + QA_cost - q[row] - q[col]);
             if (row == col) {
                 result.back() += real_type{ 1.0 } / static_cast<real_type>(params.cost);
             }
@@ -226,41 +201,39 @@ template <typename real_type>
     const std::size_t remaining_rows = num_rows_reduced - (tri_dist.place_row_offset(device_id) + tri_dist.place_specific_num_rows(device_id));
     const std::size_t remaining_rows_without_padding = remaining_rows - plssvm::PADDING_SIZE;
     const std::size_t num_padding_entries = (remaining_rows * (remaining_rows + 1) / 2) - (remaining_rows_without_padding * (remaining_rows_without_padding + 1) / 2);
-    result.insert(result.cend(), num_padding_entries + plssvm::PADDING_SIZE * plssvm::PADDING_SIZE, real_type{ 0.0 });
+    result.insert(result.cend(), num_padding_entries + static_cast<std::size_t>(plssvm::PADDING_SIZE * plssvm::PADDING_SIZE), real_type{ 0.0 });
 
     return result;
 }
 
-template std::vector<float> assemble_kernel_matrix(const plssvm::parameter &, const plssvm::soa_matrix<float> &, const std::vector<float> &, const float, const plssvm::detail::data_distribution &, const std::size_t);
-template std::vector<double> assemble_kernel_matrix(const plssvm::parameter &, const plssvm::soa_matrix<double> &, const std::vector<double> &, const double, const plssvm::detail::data_distribution &, const std::size_t);
+template std::vector<float> assemble_device_specific_kernel_matrix(const plssvm::parameter &, const plssvm::soa_matrix<float> &, const std::vector<float> &, const float, const plssvm::detail::data_distribution &, const std::size_t);
+template std::vector<double> assemble_device_specific_kernel_matrix(const plssvm::parameter &, const plssvm::soa_matrix<double> &, const std::vector<double> &, const double, const plssvm::detail::data_distribution &, const std::size_t);
 
 template <typename real_type>
-[[nodiscard]] std::vector<real_type> assemble_kernel_matrix_gemm(const plssvm::parameter &params, const plssvm::soa_matrix<real_type> &data, const std::vector<real_type> &q, const real_type QA_cost, const std::size_t padding, const std::size_t num_devices) {
+plssvm::aos_matrix<real_type> assemble_full_kernel_matrix(const plssvm::parameter &params, const plssvm::soa_matrix<real_type> &data, const std::vector<real_type> &q, const real_type QA_cost, const std::size_t padding) {
     PLSSVM_ASSERT(data.num_rows() - 1 == q.size(), "Sizes mismatch!: {} != {}", data.num_rows() - 1, q.size());
 
     const std::size_t num_rows_reduced = data.num_rows() - 1;
-    std::vector<real_type> result{};
-    result.reserve((num_rows_reduced + padding) * (num_rows_reduced + padding));
+    plssvm::aos_matrix<real_type> result{ plssvm::shape{ num_rows_reduced, num_rows_reduced }, plssvm::shape{ padding, padding } };  // TODO: padding
 
     for (std::size_t row = 0; row < num_rows_reduced; ++row) {
-        for (std::size_t col = 0; col < num_rows_reduced; ++col) {
-            result.push_back(kernel_function(params, data, row, data, col, num_devices) + QA_cost - q[row] - q[col]);
+        for (std::size_t col = row; col < num_rows_reduced; ++col) {
+            result(row, col) = kernel_function(params, data, row, data, col) + QA_cost - q[row] - q[col];
+            result(col, row) = result(row, col);
             if (row == col) {
-                result.back() += real_type{ 1.0 } / static_cast<real_type>(params.cost);
+                result(row, col) += real_type{ 1.0 } / static_cast<real_type>(params.cost);
             }
         }
-        result.insert(result.cend(), padding, real_type{ 0.0 });
     }
-    result.insert(result.cend(), padding * (num_rows_reduced + padding), real_type{ 0.0 });
     return result;
 }
 
-template std::vector<float> assemble_kernel_matrix_gemm(const plssvm::parameter &, const plssvm::soa_matrix<float> &, const std::vector<float> &, const float, const std::size_t, const std::size_t);
-template std::vector<double> assemble_kernel_matrix_gemm(const plssvm::parameter &, const plssvm::soa_matrix<double> &, const std::vector<double> &, const double, const std::size_t, const std::size_t);
+template plssvm::aos_matrix<float> assemble_full_kernel_matrix(const plssvm::parameter &, const plssvm::soa_matrix<float> &, const std::vector<float> &, const float, const std::size_t);
+template plssvm::aos_matrix<double> assemble_full_kernel_matrix(const plssvm::parameter &, const plssvm::soa_matrix<double> &, const std::vector<double> &, const double, const std::size_t);
 
 template <typename real_type>
-void gemm(const real_type alpha, const std::vector<real_type> &A, const plssvm::soa_matrix<real_type> &B, const real_type beta, plssvm::soa_matrix<real_type> &C) {
-    PLSSVM_ASSERT(A.size() == (B.num_cols() + plssvm::PADDING_SIZE) * (B.num_cols() + plssvm::PADDING_SIZE), "Sizes mismatch!: {} != {}", A.size(), (B.num_cols() + plssvm::PADDING_SIZE) * (B.num_cols() + plssvm::PADDING_SIZE));
+void gemm(const real_type alpha, const plssvm::aos_matrix<real_type> &A, const plssvm::soa_matrix<real_type> &B, const real_type beta, plssvm::soa_matrix<real_type> &C) {
+    PLSSVM_ASSERT(A.shape() == (plssvm::shape{ B.num_cols(), B.num_cols() }), "Shapes mismatch!: {} != {}", A.shape(), (plssvm::shape{ B.num_cols(), B.num_cols() }));
     PLSSVM_ASSERT(B.shape() == C.shape(), "Shapes mismatch!: {} != {}", B.shape(), C.shape());
     // A: #data_points - 1 x #data_points - 1
     // B: #classes x #data_points - 1
@@ -270,21 +243,21 @@ void gemm(const real_type alpha, const std::vector<real_type> &A, const plssvm::
         for (std::size_t col = 0; col < C.num_cols(); ++col) {
             real_type temp{ 0.0 };
             for (std::size_t k = 0; k < B.num_cols(); ++k) {
-                temp = std::fma(A[col * C.num_cols_padded() + k], B(row, k), temp);
+                temp = std::fma(A(col, k), B(row, k), temp);
             }
             C(row, col) = alpha * temp + beta * C(row, col);
         }
     }
 }
 
-template void gemm(const float, const std::vector<float> &, const plssvm::soa_matrix<float> &, const float, plssvm::soa_matrix<float> &);
-template void gemm(const double, const std::vector<double> &, const plssvm::soa_matrix<double> &, const double, plssvm::soa_matrix<double> &);
+template void gemm(const float, const plssvm::aos_matrix<float> &, const plssvm::soa_matrix<float> &, const float, plssvm::soa_matrix<float> &);
+template void gemm(const double, const plssvm::aos_matrix<double> &, const plssvm::soa_matrix<double> &, const double, plssvm::soa_matrix<double> &);
 
 template <typename real_type>
-void symm(const real_type alpha, const std::vector<real_type> &A, const plssvm::soa_matrix<real_type> &B, plssvm::soa_matrix<real_type> &C, const plssvm::detail::data_distribution &dist, std::size_t device_id) {
-    PLSSVM_ASSERT(A.size() == (B.num_cols() + plssvm::PADDING_SIZE) * (B.num_cols() + plssvm::PADDING_SIZE), "Sizes mismatch!: {} != {}", A.size(), (B.num_cols() + plssvm::PADDING_SIZE) * (B.num_cols() + plssvm::PADDING_SIZE));
+void device_specific_gemm(const real_type alpha, const plssvm::aos_matrix<real_type> &A, const plssvm::soa_matrix<real_type> &B, plssvm::soa_matrix<real_type> &C, const plssvm::detail::data_distribution &dist, std::size_t device_id) {
+    PLSSVM_ASSERT(A.shape() == (plssvm::shape{ B.num_cols(), B.num_cols() }), "Shapes mismatch!: {} != {}", A.shape(), (plssvm::shape{ B.num_cols(), B.num_cols() }));
     PLSSVM_ASSERT(B.shape() == C.shape(), "Shapes mismatch!: {} != {}", B.shape(), C.shape());
-    // A: #data_points - 1 x #data_points - 1
+    // A: #data_points - 1 x #data_points - 1 -> memory optimized to only hold the upper triangular matrix!
     // B: #classes x #data_points - 1
     // C: #classes x #data_points - 1
 
@@ -297,7 +270,7 @@ void symm(const real_type alpha, const std::vector<real_type> &A, const plssvm::
         for (std::size_t col = tri_dist.place_row_offset(device_id); col < tri_dist.place_row_offset(device_id) + tri_dist.place_specific_num_rows(device_id); ++col) {
             real_type temp{ 0.0 };
             for (std::size_t k = tri_dist.place_row_offset(device_id); k < num_rows_reduced; ++k) {
-                temp = std::fma(A[col * (num_rows_reduced + plssvm::PADDING_SIZE) + k], B(row, k), temp);
+                temp = std::fma(A(col, k), B(row, k), temp);
             }
             C(row, col) += alpha * temp;
         }
@@ -308,15 +281,15 @@ void symm(const real_type alpha, const std::vector<real_type> &A, const plssvm::
         for (std::size_t col = tri_dist.place_row_offset(device_id) + tri_dist.place_specific_num_rows(device_id); col < num_rows_reduced; ++col) {
             real_type temp{ 0.0 };
             for (std::size_t k = tri_dist.place_row_offset(device_id); k < tri_dist.place_row_offset(device_id) + tri_dist.place_specific_num_rows(device_id); ++k) {
-                temp = std::fma(A[col * (num_rows_reduced + plssvm::PADDING_SIZE) + k], B(row, k), temp);
+                temp = std::fma(A(col, k), B(row, k), temp);
             }
             C(row, col) += alpha * temp;
         }
     }
 }
 
-template void symm(const float, const std::vector<float> &, const plssvm::soa_matrix<float> &, plssvm::soa_matrix<float> &, const plssvm::detail::data_distribution &, const std::size_t);
-template void symm(const double, const std::vector<double> &, const plssvm::soa_matrix<double> &, plssvm::soa_matrix<double> &, const plssvm::detail::data_distribution &, const std::size_t);
+template void device_specific_gemm(const float, const plssvm::aos_matrix<float> &, const plssvm::soa_matrix<float> &, plssvm::soa_matrix<float> &, const plssvm::detail::data_distribution &, const std::size_t);
+template void device_specific_gemm(const double, const plssvm::aos_matrix<double> &, const plssvm::soa_matrix<double> &, plssvm::soa_matrix<double> &, const plssvm::detail::data_distribution &, const std::size_t);
 
 template <typename real_type>
 plssvm::soa_matrix<real_type> calculate_w(const plssvm::aos_matrix<real_type> &weights, const plssvm::soa_matrix<real_type> &support_vectors) {
@@ -337,7 +310,7 @@ template plssvm::soa_matrix<float> calculate_w(const plssvm::aos_matrix<float> &
 template plssvm::soa_matrix<double> calculate_w(const plssvm::aos_matrix<double> &, const plssvm::soa_matrix<double> &);
 
 template <typename real_type>
-plssvm::soa_matrix<real_type> calculate_partial_w(const plssvm::aos_matrix<real_type> &weights, const plssvm::soa_matrix<real_type> &support_vectors, const plssvm::detail::data_distribution &dist, const std::size_t device_id) {
+plssvm::soa_matrix<real_type> calculate_device_specific_w(const plssvm::aos_matrix<real_type> &weights, const plssvm::soa_matrix<real_type> &support_vectors, const plssvm::detail::data_distribution &dist, const std::size_t device_id) {
     PLSSVM_ASSERT(support_vectors.num_rows() == weights.num_cols(), "Sizes mismatch!: {} != {}", support_vectors.num_rows(), weights.num_cols());
     // weights:         #num_classes x #num_data_points - 1
     // support_vectors: #num_data_points - 1 x #num_features
@@ -356,11 +329,11 @@ plssvm::soa_matrix<real_type> calculate_partial_w(const plssvm::aos_matrix<real_
     return result;
 }
 
-template plssvm::soa_matrix<float> calculate_partial_w(const plssvm::aos_matrix<float> &, const plssvm::soa_matrix<float> &, const plssvm::detail::data_distribution &, const std::size_t);
-template plssvm::soa_matrix<double> calculate_partial_w(const plssvm::aos_matrix<double> &, const plssvm::soa_matrix<double> &, const plssvm::detail::data_distribution &, const std::size_t);
+template plssvm::soa_matrix<float> calculate_device_specific_w(const plssvm::aos_matrix<float> &, const plssvm::soa_matrix<float> &, const plssvm::detail::data_distribution &, const std::size_t);
+template plssvm::soa_matrix<double> calculate_device_specific_w(const plssvm::aos_matrix<double> &, const plssvm::soa_matrix<double> &, const plssvm::detail::data_distribution &, const std::size_t);
 
 template <typename real_type>
-[[nodiscard]] plssvm::aos_matrix<real_type> predict_values(const plssvm::parameter &params, const plssvm::soa_matrix<real_type> &w, const plssvm::aos_matrix<real_type> &weights, const std::vector<real_type> &rho, const plssvm::soa_matrix<real_type> &support_vectors, const plssvm::soa_matrix<real_type> &predict_points) {
+plssvm::aos_matrix<real_type> predict_values(const plssvm::parameter &params, const plssvm::soa_matrix<real_type> &w, const plssvm::aos_matrix<real_type> &weights, const std::vector<real_type> &rho, const plssvm::soa_matrix<real_type> &support_vectors, const plssvm::soa_matrix<real_type> &predict_points) {
     PLSSVM_ASSERT(w.empty() || w.num_rows() == weights.num_rows(), "Sizes mismatch!: {} != {}", w.num_rows(), weights.num_rows());
     PLSSVM_ASSERT(w.empty() || w.num_cols() == support_vectors.num_cols(), "Sizes mismatch!: {} != {}", w.num_cols(), support_vectors.num_cols());
     PLSSVM_ASSERT(weights.num_rows() == rho.size(), "Sizes mismatch!: {} != {}", weights.num_rows(), rho.size());
@@ -374,7 +347,7 @@ template <typename real_type>
 
     plssvm::aos_matrix<real_type> result{ plssvm::shape{ num_predict_points, num_classes }, plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE } };
 
-    switch (params.kernel_type) {
+    switch (params.kernel_type.value()) {
         case plssvm::kernel_function_type::linear:
             {
                 for (std::size_t c = 0; c < num_classes; ++c) {
@@ -435,5 +408,86 @@ template <typename real_type>
 
 template plssvm::aos_matrix<float> predict_values(const plssvm::parameter &, const plssvm::soa_matrix<float> &, const plssvm::aos_matrix<float> &, const std::vector<float> &, const plssvm::soa_matrix<float> &, const plssvm::soa_matrix<float> &);
 template plssvm::aos_matrix<double> predict_values(const plssvm::parameter &, const plssvm::soa_matrix<double> &, const plssvm::aos_matrix<double> &, const std::vector<double> &, const plssvm::soa_matrix<double> &, const plssvm::soa_matrix<double> &);
+
+template <typename real_type>
+[[nodiscard]] plssvm::aos_matrix<real_type> predict_device_specific_values(const plssvm::parameter &params, const plssvm::soa_matrix<real_type> &w, const plssvm::aos_matrix<real_type> &weights, const std::vector<real_type> &rho, const plssvm::soa_matrix<real_type> &support_vectors, const plssvm::soa_matrix<real_type> &predict_points, const plssvm::detail::data_distribution &dist, const std::size_t device_id) {
+    PLSSVM_ASSERT(w.empty() || w.num_rows() == weights.num_rows(), "Sizes mismatch!: {} != {}", w.num_rows(), weights.num_rows());
+    PLSSVM_ASSERT(w.empty() || w.num_cols() == support_vectors.num_cols(), "Sizes mismatch!: {} != {}", w.num_cols(), support_vectors.num_cols());
+    PLSSVM_ASSERT(weights.num_rows() == rho.size(), "Sizes mismatch!: {} != {}", weights.num_rows(), rho.size());
+    PLSSVM_ASSERT(weights.num_cols() == support_vectors.num_rows(), "Sizes mismatch!: {} != {}", weights.num_cols(), support_vectors.num_rows());
+    PLSSVM_ASSERT(support_vectors.num_cols() == predict_points.num_cols(), "Sizes mismatch!: {} != {}", support_vectors.num_cols(), predict_points.num_cols());
+
+    const std::size_t num_classes = weights.num_rows();
+    const std::size_t num_sv = support_vectors.num_rows();
+    const std::size_t num_features = predict_points.num_cols();
+
+    const auto &rect_dist = dynamic_cast<const plssvm::detail::rectangular_data_distribution &>(dist);
+
+    const std::size_t device_specific_num_predict_points = rect_dist.place_specific_num_rows(device_id);
+    const std::size_t row_offset = rect_dist.place_row_offset(device_id);
+
+    plssvm::aos_matrix<real_type> result{ plssvm::shape{ device_specific_num_predict_points, num_classes }, plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE } };
+
+    switch (params.kernel_type.value()) {
+        case plssvm::kernel_function_type::linear:
+            {
+                for (std::size_t c = 0; c < num_classes; ++c) {
+                    for (std::size_t i = row_offset; i < row_offset + device_specific_num_predict_points; ++i) {
+                        real_type temp{ 0.0 };
+                        for (std::size_t f = 0; f < num_features; ++f) {
+                            temp = std::fma(w(c, f), predict_points(i, f), temp);
+                        }
+                        result(i - row_offset, c) = temp - rho[c];
+                    }
+                }
+            }
+            break;
+        case plssvm::kernel_function_type::polynomial:
+            {
+                for (std::size_t c = 0; c < num_classes; ++c) {
+                    for (std::size_t i = row_offset; i < row_offset + device_specific_num_predict_points; ++i) {
+                        for (std::size_t j = 0; j < num_sv; ++j) {
+                            real_type temp{ 0.0 };
+                            for (std::size_t f = 0; f < num_features; ++f) {
+                                temp = std::fma(support_vectors(j, f), predict_points(i, f), temp);
+                            }
+                            temp = std::fma(static_cast<real_type>(params.gamma.value()), temp, static_cast<real_type>(params.coef0.value()));
+                            temp = weights(c, j) * static_cast<real_type>(std::pow(temp, params.degree.value()));
+                            if (j == 0) {
+                                temp -= rho[c];
+                            }
+                            result(i - row_offset, c) += temp;
+                        }
+                    }
+                }
+            }
+            break;
+        case plssvm::kernel_function_type::rbf:
+            {
+                for (std::size_t c = 0; c < num_classes; ++c) {
+                    for (std::size_t i = row_offset; i < row_offset + device_specific_num_predict_points; ++i) {
+                        for (std::size_t j = 0; j < num_sv; ++j) {
+                            real_type temp{ 0.0 };
+                            for (std::size_t f = 0; f < num_features; ++f) {
+                                const real_type d = support_vectors(j, f) - predict_points(i, f);
+                                temp = std::fma(d, d, temp);
+                            }
+                            temp = weights(c, j) * static_cast<real_type>(std::exp(static_cast<real_type>(-params.gamma.value()) * temp));
+                            if (j == 0) {
+                                temp -= rho[c];
+                            }
+                            result(i - row_offset, c) += temp;
+                        }
+                    }
+                }
+            }
+            break;
+    }
+
+    return result;
+}
+
+template plssvm::aos_matrix<float> predict_device_specific_values(const plssvm::parameter &, const plssvm::soa_matrix<float> &, const plssvm::aos_matrix<float> &, const std::vector<float> &, const plssvm::soa_matrix<float> &, const plssvm::soa_matrix<float> &, const plssvm::detail::data_distribution &, const std::size_t);
+template plssvm::aos_matrix<double> predict_device_specific_values(const plssvm::parameter &, const plssvm::soa_matrix<double> &, const plssvm::aos_matrix<double> &, const std::vector<double> &, const plssvm::soa_matrix<double> &, const plssvm::soa_matrix<double> &, const plssvm::detail::data_distribution &, const std::size_t);
 
 }  // namespace ground_truth

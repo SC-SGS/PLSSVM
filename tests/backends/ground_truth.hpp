@@ -18,25 +18,29 @@
 #include "plssvm/parameter.hpp"                 // plssvm::parameter
 
 #include <cstddef>  // std::size_t
+#include <utility>  // std::pair
 #include <vector>   // std::vector
 
 namespace ground_truth {
 
+//*************************************************************************************************************************************//
+//                                                          kernel functions                                                           //
+//*************************************************************************************************************************************//
+
 namespace detail {
 
 /**
- * @brief Compute the value of te two vectors @p x and @p y using the linear kernel function: \f$\vec{x}^T \cdot \vec{y}\f$.
+ * @brief Compute the value of the two vectors @p x and @p y using the linear kernel function: \f$\vec{x}^T \cdot \vec{y}\f$.
  * @details Adds the final results in a block scheme to mimic the calculations done in the respective backends.
  * @tparam real_type the type of the data
  * @param[in] x the first vector
  * @param[in] y the second vector
- * @param[in] num_devices used to mimic the floating point operation order in case of multi device execution
  * @return the result after applying the kernel function (`[[nodiscard]]`)
  */
 template <typename real_type>
-[[nodiscard]] real_type linear_kernel(const std::vector<real_type> &x, const std::vector<real_type> &y, std::size_t num_devices = 1);
+[[nodiscard]] real_type linear_kernel(const std::vector<real_type> &x, const std::vector<real_type> &y);
 /**
- * @brief Compute the value of te two vectors @p x and @p y using the polynomial kernel function: \f$(gamma \cdot \vec{x}^T \cdot \vec{y} + coef0)^{degree}\f$.
+ * @brief Compute the value of the two vectors @p x and @p y using the polynomial kernel function: \f$(gamma \cdot \vec{x}^T \cdot \vec{y} + coef0)^{degree}\f$.
  * @tparam real_type the type of the data
  * @param[in] x the first vector
  * @param[in] y the second vector
@@ -48,7 +52,7 @@ template <typename real_type>
 template <typename real_type>
 [[nodiscard]] real_type polynomial_kernel(const std::vector<real_type> &x, const std::vector<real_type> &y, int degree, real_type gamma, real_type coef0);
 /**
- * @brief Compute the value of te two vectors @p x and @p y using the radial basis function kernel function: \f$e^{(-gamma \cdot |\vec{x} - \vec{y}|^2)}\f$.
+ * @brief Compute the value of the two vectors @p x and @p y using the radial basis function kernel function: \f$e^{(-gamma \cdot |\vec{x} - \vec{y}|^2)}\f$.
  * @tparam real_type the type of the data
  * @param[in] x the first vector
  * @param[in] y the second vector
@@ -58,12 +62,42 @@ template <typename real_type>
 template <typename real_type>
 [[nodiscard]] real_type rbf_kernel(const std::vector<real_type> &x, const std::vector<real_type> &y, real_type gamma);
 
+/**
+ * @brief Compute the value of the two matrices @p X and @p Y at rows @p i and @p j respectively using the linear kernel function: \f$\vec{x}^T \cdot \vec{y}\f$.
+ * @details Adds the final results in a block scheme to mimic the calculations done in the respective backends.
+ * @tparam real_type the type of the data
+ * @param[in] X the first matrix
+ * @param[in] i the row used in the first matrix
+ * @param[in] Y the second matrix
+ * @param[in] j the row used in the second matrix
+ * @return the result after applying the kernel function (`[[nodiscard]]`)
+ */
 template <typename real_type, plssvm::layout_type layout>
-[[nodiscard]] real_type linear_kernel(const plssvm::matrix<real_type, layout> &X, std::size_t i, const plssvm::matrix<real_type, layout> &Y, std::size_t j, std::size_t num_devices = 1);
-
+[[nodiscard]] real_type linear_kernel(const plssvm::matrix<real_type, layout> &X, std::size_t i, const plssvm::matrix<real_type, layout> &Y, std::size_t j);
+/**
+ * @brief Compute the value of the two matrices @p X and @p Y at rows @p i and @p j respectively using the polynomial kernel function: \f$(gamma \cdot \vec{x}^T \cdot \vec{y} + coef0)^{degree}\f$.
+ * @tparam real_type the type of the data
+ * @param[in] X the first matrix
+ * @param[in] i the row used in the first matrix
+ * @param[in] Y the second matrix
+ * @param[in] j the row used in the second matrix
+ * @param[in] degree parameter in the polynomial kernel function
+ * @param[in] gamma parameter in the polynomial kernel function
+ * @param[in] coef0 parameter in the polynomial kernel function
+ * @return the result after applying the kernel function (`[[nodiscard]]`)
+ */
 template <typename real_type, plssvm::layout_type layout>
 [[nodiscard]] real_type polynomial_kernel(const plssvm::matrix<real_type, layout> &X, std::size_t i, const plssvm::matrix<real_type, layout> &Y, std::size_t j, int degree, real_type gamma, real_type coef0);
-
+/**
+ * @brief Compute the value of the two matrices @p X and @p Y at rows @p i and @p j respectively using the radial basis function kernel function: \f$e^{(-gamma \cdot |\vec{x} - \vec{y}|^2)}\f$.
+ * @tparam real_type the type of the data
+ * @param[in] X the first matrix
+ * @param[in] i the row used in the first matrix
+ * @param[in] Y the second matrix
+ * @param[in] j the row used in the second matrix
+ * @param[in] gamma parameter in the kernel function
+ * @return the result after applying the rbf kernel function (`[[nodiscard]]`)
+ */
 template <typename real_type, plssvm::layout_type layout>
 [[nodiscard]] real_type rbf_kernel(const plssvm::matrix<real_type, layout> &X, std::size_t i, const plssvm::matrix<real_type, layout> &Y, std::size_t j, real_type gamma);
 
@@ -76,13 +110,27 @@ template <typename real_type, plssvm::layout_type layout>
  * @param[in] params the parameter used in the kernel function
  * @param[in] x the first vector
  * @param[in] y the second vector
- * @param[in] num_devices used to mimic the floating point operation order in case of multi device execution (`[[maybe_unused]]`)
  * @return the result after applying the kernel function (`[[nodiscard]]`)
  */
 template <typename real_type>
-[[nodiscard]] real_type kernel_function(const plssvm::parameter &params, const std::vector<real_type> &x, const std::vector<real_type> &y, std::size_t num_devices = 1);
+[[nodiscard]] real_type kernel_function(const plssvm::parameter &params, const std::vector<real_type> &x, const std::vector<real_type> &y);
+/**
+ * @brief Computes the value of the two matrices @p X and @p Y at rows @p i and @p j respectively using the parameters @p params.
+ * @details Single core execution for a deterministic order of floating point operations.
+ * @tparam real_type the type of the data
+ * @param[in] params the parameter used in the kernel function
+ * @param[in] X the first matrix
+ * @param[in] i the row used in the first matrix
+ * @param[in] Y the second matrix
+ * @param[in] j the row used in the second matrix
+ * @return the result after applying the kernel function (`[[nodiscard]]`)
+ */
 template <typename real_type, plssvm::layout_type layout>
-[[nodiscard]] real_type kernel_function(const plssvm::parameter &params, const plssvm::matrix<real_type, layout> &X, std::size_t i, const plssvm::matrix<real_type, layout> &Y, std::size_t j, std::size_t num_devices = 1);
+[[nodiscard]] real_type kernel_function(const plssvm::parameter &params, const plssvm::matrix<real_type, layout> &X, std::size_t i, const plssvm::matrix<real_type, layout> &Y, std::size_t j);
+
+//*************************************************************************************************************************************//
+//                                                                 fit                                                                 //
+//*************************************************************************************************************************************//
 
 /**
  * @brief Computes the `q` vector, a subvector of the least-squares matrix equation, using the kernel function determined by @p params for the dimensional reduction.
@@ -90,29 +138,28 @@ template <typename real_type, plssvm::layout_type layout>
  * @tparam real_type the type of the data
  * @param[in] params the parameter used in the kernel function
  * @param[in] data the data points
- * @param[in] num_devices used to mimic the floating point operation order in case of multi device execution (`[[maybe_unused]]`)
  * @return the generated `q` vector (`[[nodiscard]]`)
  */
 template <typename real_type>
-[[nodiscard]] std::pair<std::vector<real_type>, real_type> perform_dimensional_reduction(const plssvm::parameter &params, const plssvm::soa_matrix<real_type> &data, std::size_t num_devices = 1);
+[[nodiscard]] std::pair<std::vector<real_type>, real_type> perform_dimensional_reduction(const plssvm::parameter &params, const plssvm::soa_matrix<real_type> &data);
 
 /**
- * @brief Computes the kernel matrix using the kernel function determined by @p params exploiting the kernel matrix's symmetry.
+ * @brief Computes the @p device_id specific kernel matrix using the kernel function determined by @p params exploiting the kernel matrix's symmetry.
  * @details Single core execution for a deterministic order of floating point operations.
  * @tparam real_type the type of the data
  * @param[in] params the parameter used in the kernel function
  * @param[in] data the data points
  * @param[in] q the `q` vector from the dimensional reduction
  * @param[in] QA_cost the `QA_cost` value from the dimensional reduction
- * @param[in] padding the number of padding entries added to the resulting kernel matrix
- * @param[in] num_devices used to mimic the floating point operation order in case of multi device execution (`[[maybe_unused]]`)
+ * @param[in] dist the data distribution
+ * @param[in] device_id the device to emulate
  * @return the kernel matrix (upper triangle matrix) (`[[nodiscard]]`)
  */
 template <typename real_type>
-[[nodiscard]] std::vector<real_type> assemble_kernel_matrix(const plssvm::parameter &params, const plssvm::soa_matrix<real_type> &data, const std::vector<real_type> &q, real_type QA_cost, const plssvm::detail::data_distribution &dist, std::size_t device_id);
+[[nodiscard]] std::vector<real_type> assemble_device_specific_kernel_matrix(const plssvm::parameter &params, const plssvm::soa_matrix<real_type> &data, const std::vector<real_type> &q, real_type QA_cost, const plssvm::detail::data_distribution &dist, std::size_t device_id);
 
 /**
- * @brief Computes the kernel matrix using the kernel function determined by @p params.
+ * @brief Computes the **full** kernel matrix using the kernel function determined by @p params.
  * @details Single core execution for a deterministic order of floating point operations.
  * @tparam real_type the type of the data
  * @param[in] params the parameter used in the kernel function
@@ -120,14 +167,13 @@ template <typename real_type>
  * @param[in] q the `q` vector from the dimensional reduction
  * @param[in] QA_cost the `QA_cost` value from the dimensional reduction
  * @param[in] padding the number of padding entries added to the resulting kernel matrix
- * @param[in] num_devices used to mimic the floating point operation order in case of multi device execution (`[[maybe_unused]]`)
  * @return the kernel matrix (`[[nodiscard]]`)
  */
 template <typename real_type>
-[[nodiscard]] std::vector<real_type> assemble_kernel_matrix_gemm(const plssvm::parameter &params, const plssvm::soa_matrix<real_type> &data, const std::vector<real_type> &q, real_type QA_cost, std::size_t padding = plssvm::PADDING_SIZE, std::size_t num_devices = 1);
+[[nodiscard]] plssvm::aos_matrix<real_type> assemble_full_kernel_matrix(const plssvm::parameter &params, const plssvm::soa_matrix<real_type> &data, const std::vector<real_type> &q, real_type QA_cost, std::size_t padding = plssvm::PADDING_SIZE);
 
 /**
- * @brief Perform a BLAS Level 3 GEMM operator: `C = alpha * A * B + beta * C`
+ * @brief Perform a BLAS Level 3 GEMM operation: `C = alpha * A * B + beta * C`
  * @tparam real_type the type of the data
  * @param[in] alpha the scaling factor for the result of `A * B`
  * @param[in] A the A matrix
@@ -136,10 +182,24 @@ template <typename real_type>
  * @param[in, out] C the C matrix (also the result matrix)
  */
 template <typename real_type>
-void gemm(real_type alpha, const std::vector<real_type> &A, const plssvm::soa_matrix<real_type> &B, real_type beta, plssvm::soa_matrix<real_type> &C);
+void gemm(real_type alpha, const plssvm::aos_matrix<real_type> &A, const plssvm::soa_matrix<real_type> &B, real_type beta, plssvm::soa_matrix<real_type> &C);
 
+/**
+ * @brief Perform a @p device_id specific BLAS Level 3 GEMM operation: `C = alpha * A * B + beta * C`
+ * @tparam real_type the type of the data
+ * @param[in] alpha the scaling factor for the result of `A * B`
+ * @param[in] A the A matrix
+ * @param[in] B the B matrix
+ * @param[in] dist the data distribution
+ * @param[in] device_id the device to emulate
+ * @param[in, out] C the C matrix (also the partial result matrix)
+ */
 template <typename real_type>
-void symm(real_type alpha, const std::vector<real_type> &A, const plssvm::soa_matrix<real_type> &B, plssvm::soa_matrix<real_type> &C, const plssvm::detail::data_distribution &dist, std::size_t device_id);
+void device_specific_gemm(real_type alpha, const plssvm::aos_matrix<real_type> &A, const plssvm::soa_matrix<real_type> &B, plssvm::soa_matrix<real_type> &C, const plssvm::detail::data_distribution &dist, std::size_t device_id);
+
+//*************************************************************************************************************************************//
+//                                                               predict                                                               //
+//*************************************************************************************************************************************//
 
 /**
  * @brief Compute the `w` vector used to speedup the prediction when using the linear kernel.
@@ -152,22 +212,48 @@ void symm(real_type alpha, const std::vector<real_type> &A, const plssvm::soa_ma
 template <typename real_type>
 [[nodiscard]] plssvm::soa_matrix<real_type> calculate_w(const plssvm::aos_matrix<real_type> &weights, const plssvm::soa_matrix<real_type> &support_vectors);
 
+/**
+ * @brief Compute the partial `w` vector for the device with @p device_id used to speedup the prediction when using the linear kernel.
+ * @details Single core execution for a deterministic order of floating point operations.
+ * @tparam real_type the type of the data
+ * @param[in] weights the previously learned weights
+ * @param[in] support_vectors the previously learned support vectors
+ * @param[in] dist the data distribution
+ * @param[in] device_id the device to emulate
+ * @return the resulting partial `w` vector to speedup the prediction when using the linear kernel (`[[nodiscard]]`)
+ */
 template <typename real_type>
-[[nodiscard]] plssvm::soa_matrix<real_type> calculate_partial_w(const plssvm::aos_matrix<real_type> &weights, const plssvm::soa_matrix<real_type> &support_vectors, const plssvm::detail::data_distribution &dist, std::size_t device_id);
+[[nodiscard]] plssvm::soa_matrix<real_type> calculate_device_specific_w(const plssvm::aos_matrix<real_type> &weights, const plssvm::soa_matrix<real_type> &support_vectors, const plssvm::detail::data_distribution &dist, std::size_t device_id);
 
 /**
  * @brief Predict the values for the @p predict_points using the previously learned @p weights and @p support_vectors.
  * @tparam real_type the type of the data
- * @param params the parameters used in the kernel function
- * @param w the `w` vector to speed up the linear kernel function prediction
- * @param weights the previously learned weights
- * @param rho the previous learned bias
- * @param support_vectors the previously learned support vectors
- * @param predict_points the new points to predict
+ * @param[in] params the parameters used in the kernel function
+ * @param[in] w the `w` vector to speed up the linear kernel function prediction
+ * @param[in] weights the previously learned weights
+ * @param[in] rho the previous learned bias
+ * @param[in] support_vectors the previously learned support vectors
+ * @param[in] predict_points the new points to predict
  * @return the predict values per new predict point and class (`[[nodiscard]]`)
  */
 template <typename real_type>
 [[nodiscard]] plssvm::aos_matrix<real_type> predict_values(const plssvm::parameter &params, const plssvm::soa_matrix<real_type> &w, const plssvm::aos_matrix<real_type> &weights, const std::vector<real_type> &rho, const plssvm::soa_matrix<real_type> &support_vectors, const plssvm::soa_matrix<real_type> &predict_points);
+
+/**
+ * @brief Predict the values for the @p device_id specific @p predict_points according to @p dist using the previously learned @p weights and @p support_vectors.
+ * @tparam real_type the type of the data
+ * @param[in] params the parameters used in the kernel function
+ * @param[in] w the `w` vector to speed up the linear kernel function prediction
+ * @param[in] weights the previously learned weights
+ * @param[in] rho the previous learned bias
+ * @param[in] support_vectors the previously learned support vectors
+ * @param[in] predict_points the new points to predict (only the device specific points are really used)
+ * @param[in] dist the data distribution
+ * @param[in] device_id the device to emulate
+ * @return the predict values per @p device_id specific predict point and class (`[[nodiscard]]`)
+ */
+template <typename real_type>
+[[nodiscard]] plssvm::aos_matrix<real_type> predict_device_specific_values(const plssvm::parameter &params, const plssvm::soa_matrix<real_type> &w, const plssvm::aos_matrix<real_type> &weights, const std::vector<real_type> &rho, const plssvm::soa_matrix<real_type> &support_vectors, const plssvm::soa_matrix<real_type> &predict_points, const plssvm::detail::data_distribution &dist, std::size_t device_id);
 
 }  // namespace ground_truth
 
