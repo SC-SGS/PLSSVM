@@ -395,6 +395,11 @@ aos_matrix<real_type> gpu_csvm<device_ptr_t, queue_t>::predict_values(const para
 
 #pragma omp parallel for ordered
             for (std::size_t device_id = 0; device_id < this->num_available_devices(); ++device_id) {
+                // check whether the current device is responsible for at least one data point!
+                if (data_distribution_->place_specific_num_rows(device_id) == 0) {
+                    continue;
+                }
+
                 const queue_type &device = devices_[device_id];
                 device_ptr_type &device_w_d = w_d[device_id];
 
@@ -444,6 +449,11 @@ aos_matrix<real_type> gpu_csvm<device_ptr_t, queue_t>::predict_values(const para
 
 #pragma omp parallel for
     for (std::size_t device_id = 0; device_id < this->num_available_devices(); ++device_id) {
+        // check whether the current device is responsible for at least one data point!
+        if (data_distribution_->place_specific_num_rows(device_id) == 0) {
+            continue;
+        }
+
         const queue_type &device = devices_[device_id];
         const std::size_t device_specific_num_rows = data_distribution_->place_specific_num_rows(device_id);
         const std::size_t row_offset = data_distribution_->place_row_offset(device_id);
