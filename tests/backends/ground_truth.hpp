@@ -13,8 +13,8 @@
 #define PLSSVM_TESTS_BACKENDS_GROUND_TRUTH_HPP_
 #pragma once
 
-#include "plssvm/detail/data_distribution.hpp"  // plssvm::detail::triangular_data_distribution
-#include "plssvm/matrix.hpp"                    // plssvm::matrix, plssvm::layout_type
+#include "plssvm/detail/data_distribution.hpp"  // plssvm::detail::data_distribution
+#include "plssvm/matrix.hpp"                    // plssvm::matrix, plssvm::aos_matrix, plssvm::soa_matrix, plssvm::layout_type
 #include "plssvm/parameter.hpp"                 // plssvm::parameter
 
 #include <cstddef>  // std::size_t
@@ -101,6 +101,23 @@ template <typename real_type, plssvm::layout_type layout>
 template <typename real_type, plssvm::layout_type layout>
 [[nodiscard]] real_type rbf_kernel(const plssvm::matrix<real_type, layout> &X, std::size_t i, const plssvm::matrix<real_type, layout> &Y, std::size_t j, real_type gamma);
 
+/**
+ * @brief Predict the values for the @p predict_points (starting at @p row_offset using @p device_specific_num_rows number of predict points) using the previously learned @p weights and @p support_vectors.
+ * @tparam real_type the type of the data
+ * @param[in] params the parameters used in the kernel function
+ * @param[in] w the `w` vector to speed up the linear kernel function prediction
+ * @param[in] weights the previously learned weights
+ * @param[in] rho the previous learned bias
+ * @param[in] support_vectors the previously learned support vectors
+ * @param[in] predict_points the new points to predict
+ * @param[in] row_offset the first predict points to consider
+ * @param[in] device_specific_num_rows the number of predict points to calculate the predict values for
+ * @return the predict values per new predict point and class (`[[nodiscard]]`)
+ */
+template <typename real_type>
+[[nodiscard]] plssvm::aos_matrix<real_type> predict_values(const plssvm::parameter &params, const plssvm::soa_matrix<real_type> &w, const plssvm::aos_matrix<real_type> &weights, const std::vector<real_type> &rho, const plssvm::soa_matrix<real_type> &support_vectors, const plssvm::soa_matrix<real_type> &predict_points, std::size_t row_offset, std::size_t device_specific_num_rows);
+
+
 }  // namespace detail
 
 /**
@@ -166,11 +183,10 @@ template <typename real_type>
  * @param[in] data the data points
  * @param[in] q the `q` vector from the dimensional reduction
  * @param[in] QA_cost the `QA_cost` value from the dimensional reduction
- * @param[in] padding the number of padding entries added to the resulting kernel matrix
  * @return the kernel matrix (`[[nodiscard]]`)
  */
 template <typename real_type>
-[[nodiscard]] plssvm::aos_matrix<real_type> assemble_full_kernel_matrix(const plssvm::parameter &params, const plssvm::soa_matrix<real_type> &data, const std::vector<real_type> &q, real_type QA_cost, std::size_t padding = plssvm::PADDING_SIZE);
+[[nodiscard]] plssvm::aos_matrix<real_type> assemble_full_kernel_matrix(const plssvm::parameter &params, const plssvm::soa_matrix<real_type> &data, const std::vector<real_type> &q, real_type QA_cost);
 
 /**
  * @brief Perform a BLAS Level 3 GEMM operation: `C = alpha * A * B + beta * C`
