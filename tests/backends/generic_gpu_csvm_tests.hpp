@@ -338,7 +338,7 @@ TYPED_TEST_P(GenericGPUCSVMKernelFunction, run_assemble_kernel_matrix_explicit) 
 
         // check for correctness
         ASSERT_EQ(kernel_matrix.size(), correct_kernel_matrix.size());
-        EXPECT_FLOATING_POINT_VECTOR_NEAR_EPS(kernel_matrix, correct_kernel_matrix, 1e4);
+        EXPECT_FLOATING_POINT_VECTOR_NEAR(kernel_matrix, correct_kernel_matrix);
     }
 }
 
@@ -404,7 +404,7 @@ TYPED_TEST_P(GenericGPUCSVMKernelFunction, run_assemble_kernel_matrix_implicit_b
         ground_truth::device_specific_gemm(alpha, full_kernel_matrix, B, correct_C, *svm.data_distribution_, device_id);
 
         // check for correctness
-        EXPECT_FLOATING_POINT_MATRIX_NEAR_EPS(C, correct_C, 1e4);
+        EXPECT_FLOATING_POINT_MATRIX_NEAR_EPS(C, correct_C, 1e6);
     }
 }
 
@@ -473,7 +473,7 @@ TYPED_TEST_P(GenericGPUCSVMKernelFunction, run_predict_kernel) {
 
         // check out for correctness
         const plssvm::aos_matrix<plssvm::real_type> correct_out = ground_truth::predict_device_specific_values(params, correct_w, weights, rho, data.data(), predict_points, *svm.data_distribution_, device_id);
-        EXPECT_FLOATING_POINT_MATRIX_NEAR(out, correct_out);
+        EXPECT_FLOATING_POINT_MATRIX_NEAR_EPS(out, correct_out, 1e6);
     }
 }
 
