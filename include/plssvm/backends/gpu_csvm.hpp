@@ -365,7 +365,7 @@ aos_matrix<real_type> gpu_csvm<device_ptr_t, queue_t>::predict_values(const para
     const std::size_t num_features = predict_points.num_cols();
 
     // result matrix
-    aos_matrix<real_type> out_ret{ shape{ num_predict_points, num_classes }, shape{ PADDING_SIZE, PADDING_SIZE } };
+    aos_matrix<real_type> out_ret{ shape{ num_predict_points, num_classes }, real_type{ 0.0 }, shape{ PADDING_SIZE, PADDING_SIZE } };
 
     // the support vectors or w vector for each device
     std::vector<device_ptr_type> sv_or_w_d(this->num_available_devices());
@@ -458,8 +458,6 @@ aos_matrix<real_type> gpu_csvm<device_ptr_t, queue_t>::predict_values(const para
         const std::size_t device_specific_num_rows = data_distribution_->place_specific_num_rows(device_id);
         const std::size_t row_offset = data_distribution_->place_row_offset(device_id);
 
-        device_ptr_type out_d{};
-
         // setup predict points for each device
         device_ptr_type predict_points_d{ shape{ device_specific_num_rows, num_features }, predict_points.padding(), device };
         predict_points_d.copy_to_device_strided(predict_points, row_offset, device_specific_num_rows);
@@ -469,7 +467,7 @@ aos_matrix<real_type> gpu_csvm<device_ptr_t, queue_t>::predict_values(const para
         rho_d.memset(0, rho.size());
 
         // predict
-        out_d = this->run_predict_kernel(device_id, params, alpha_d[device_id], rho_d, sv_or_w_d[device_id], predict_points_d);
+        const device_ptr_type out_d = this->run_predict_kernel(device_id, params, alpha_d[device_id], rho_d, sv_or_w_d[device_id], predict_points_d);
 
         // copy results back to host, combining them into one result matrix
 #pragma omp critical

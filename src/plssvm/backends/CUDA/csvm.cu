@@ -344,6 +344,7 @@ auto csvm::run_predict_kernel(const std::size_t device_id, const parameter &para
     const queue_type &device = devices_[device_id];
 
     device_ptr_type out_d{ shape{ num_predict_points, num_classes }, shape{ PADDING_SIZE, PADDING_SIZE }, device };
+    out_d.memset(0);
 
     // define the block sizes
     const std::size_t max_work_group_size = this->get_max_work_group_size(0);
