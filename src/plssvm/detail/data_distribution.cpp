@@ -14,7 +14,7 @@
 
 #include "fmt/format.h"  // fmt::format, fmt::join
 
-#include <algorithm>  // std::max
+#include <algorithm>  // std::max, std::fill
 #include <cstddef>    // std::size_t
 #include <ostream>    // std::ostream
 #include <vector>     // std::vector
@@ -34,7 +34,7 @@
 namespace plssvm::detail {
 
 data_distribution::data_distribution(const std::size_t num_rows, const std::size_t num_places) :
-    distribution_(num_places + 1, num_rows),
+    distribution_(num_places + 1),
     num_rows_{ num_rows },
     num_places_{ num_places } {
     PLSSVM_ASSERT(num_rows_ > 0, "At least one row must be present!");
@@ -78,6 +78,9 @@ using namespace literals;
 
 triangular_data_distribution::triangular_data_distribution(const std::size_t num_rows, const std::size_t num_places) :
     data_distribution{ num_rows, num_places } {
+    // set all distribution values to "num_rows"
+    std::fill(distribution_.begin(), distribution_.end(), num_rows);
+
     if (!distribution_.empty()) {  // necessary to silence GCC "potential null pointer dereference [-Wnull-dereference]" warning
         distribution_.front() = 0;
     }
@@ -265,10 +268,23 @@ std::vector<memory_size> triangular_data_distribution::calculate_maximum_implici
 
 rectangular_data_distribution::rectangular_data_distribution(const std::size_t num_rows, const std::size_t num_places) :
     data_distribution{ num_rows, num_places } {
+    // uniform distribution
     const std::size_t balanced = num_rows / num_places;
     for (std::size_t device_id = 0; device_id < num_places; ++device_id) {
         distribution_[device_id] = balanced * device_id;
     }
+
+    // fill remaining values into distribution starting at device 0
+    const std::size_t remaining = num_rows - num_places * balanced;
+    std::size_t running = 0;
+    for (std::size_t device_id = 1; device_id <= num_places; ++device_id) {
+        distribution_[device_id] += running;
+        if (device_id - 1 < remaining) {
+            distribution_[device_id] += 1;
+            ++running;
+        }
+    }
+    distribution_.back() = num_rows;
 
     PLSSVM_ASSERT(std::is_sorted(distribution_.cbegin(), distribution_.cend()), "The distribution must be sorted in an ascending order!");
 }
