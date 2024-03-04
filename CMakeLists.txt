@@ -149,6 +149,7 @@ if (PLSSVM_ENABLE_FAST_MATH)
                            $<$<COMPILE_LANG_AND_ID:CXX,GNU,Clang>:-ffast-math>
                            $<$<COMPILE_LANG_AND_ID:CXX,MSVC>:/fp:fast>
     )
+    target_compile_definitions(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC PLSSVM_USE_FAST_MATH)
 endif ()
 ## set march native flag based on target architecture
 if (${CMAKE_SYSTEM_PROCESSOR} MATCHES "ppc64le")
