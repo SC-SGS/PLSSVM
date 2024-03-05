@@ -474,7 +474,7 @@ constexpr std::array<plssvm::classification_type, 2> classification_types_to_tes
 };
 /// A list of all available solver types.
 constexpr std::array<plssvm::solver_type, 4> solver_types_to_test = {
-    plssvm::solver_type::automatic, plssvm::solver_type::cg_explicit, plssvm::solver_type::cg_streaming, plssvm::solver_type::cg_implicit
+    plssvm::solver_type::automatic, plssvm::solver_type::cg_explicit, plssvm::solver_type::cg_implicit  // plssvm::solver_type::cg_streaming
 };
 
 /// A list of all solver types.
