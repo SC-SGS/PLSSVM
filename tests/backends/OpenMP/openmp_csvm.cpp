@@ -213,7 +213,7 @@ TYPED_TEST(OpenMPCSVMKernelFunction, assemble_kernel_matrix_explicit) {
 
     // check for correctness
     ASSERT_EQ(kernel_matrix.size(), correct_kernel_matrix.size());
-    EXPECT_FLOATING_POINT_VECTOR_NEAR_EPS(kernel_matrix, correct_kernel_matrix, 1e6);
+    EXPECT_FLOATING_POINT_VECTOR_NEAR(kernel_matrix, correct_kernel_matrix);
 }
 
 TYPED_TEST(OpenMPCSVMKernelFunction, blas_level_3_kernel_implicit) {
