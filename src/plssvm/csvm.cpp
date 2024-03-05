@@ -54,7 +54,7 @@ void csvm::sanity_check_parameter() const {
 std::pair<soa_matrix<real_type>, unsigned long long> csvm::conjugate_gradients(const std::vector<detail::move_only_any> &A, const soa_matrix<real_type> &B, const real_type eps, const unsigned long long max_cg_iter, const solver_type cg_solver) const {
     using namespace plssvm::operators;
 
-    PLSSVM_ASSERT(!B.empty(), "The right-hand sides may not be empty!");
+    PLSSVM_ASSERT(!B.empty(), "The right-hand sides must not be empty!");
     PLSSVM_ASSERT(eps > real_type{ 0.0 }, "The epsilon value must be greater than 0.0!");
     PLSSVM_ASSERT(max_cg_iter > 0, "The maximum number of iterations must be greater than 0!");
 

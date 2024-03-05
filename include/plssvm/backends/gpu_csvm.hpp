@@ -208,10 +208,11 @@ class gpu_csvm : public ::plssvm::csvm {
 //                        fit                        //
 //***************************************************//
 template <template <typename> typename device_ptr_t, typename queue_t>
-std::vector<::plssvm::detail::move_only_any> gpu_csvm<device_ptr_t, queue_t>::assemble_kernel_matrix(const solver_type solver, const parameter &params, const soa_matrix<real_type> &A, const std::vector<real_type> &q_red, real_type QA_cost) const {
-    PLSSVM_ASSERT(!A.empty(), "The matrix to setup on the devices may not be empty!");
+std::vector<::plssvm::detail::move_only_any> gpu_csvm<device_ptr_t, queue_t>::assemble_kernel_matrix(const solver_type solver, const parameter &params, const soa_matrix<real_type> &A, const std::vector<real_type> &q_red, const real_type QA_cost) const {
+    PLSSVM_ASSERT(!A.empty(), "The matrix to setup on the devices must not be empty!");
     PLSSVM_ASSERT(A.is_padded(), "Tha matrix to setup on the devices must be padded!");
-    PLSSVM_ASSERT(!q_red.empty(), "The q_red vector may not be empty!");
+    PLSSVM_ASSERT(!q_red.empty(), "The q_red vector must not be empty!");
+    PLSSVM_ASSERT(q_red.size() == A.num_rows() - 1, "The q_red size ({}) mismatches the number of data points after dimensional reduction ({})!", q_red.size(), A.num_rows() - 1);
     PLSSVM_ASSERT(solver != solver_type::automatic, "An explicit solver type must be provided instead of solver_type::automatic!");
 
     // update the data distribution -> account for the dimensional reduction
@@ -267,9 +268,9 @@ std::vector<::plssvm::detail::move_only_any> gpu_csvm<device_ptr_t, queue_t>::as
 
 template <template <typename> typename device_ptr_t, typename queue_t>
 void gpu_csvm<device_ptr_t, queue_t>::blas_level_3(const solver_type solver, const real_type alpha, const std::vector<::plssvm::detail::move_only_any> &A, const soa_matrix<real_type> &B, const real_type beta, soa_matrix<real_type> &C) const {
-    PLSSVM_ASSERT(!B.empty(), "The B matrix may not be empty!");
+    PLSSVM_ASSERT(!B.empty(), "The B matrix must not be empty!");
     PLSSVM_ASSERT(B.is_padded(), "The B matrix must be padded!");
-    PLSSVM_ASSERT(!C.empty(), "The C matrix may not be empty!");
+    PLSSVM_ASSERT(!C.empty(), "The C matrix must not be empty!");
     PLSSVM_ASSERT(C.is_padded(), "The C matrix must be padded!");
     PLSSVM_ASSERT(solver != solver_type::automatic, "An explicit solver type must be provided instead of solver_type::automatic!");
 
@@ -309,13 +310,13 @@ void gpu_csvm<device_ptr_t, queue_t>::blas_level_3(const solver_type solver, con
 
         if (solver == solver_type::cg_explicit) {
             const auto &A_d = detail::move_only_any_cast<const device_ptr_type &>(A[device_id]);
-            PLSSVM_ASSERT(!A_d.empty(), "The A matrix may not be empty!");
+            PLSSVM_ASSERT(!A_d.empty(), "The A matrix must not be empty!");
 
             this->run_blas_level_3_kernel_explicit(device_id, alpha, A_d, B_d, beta, C_d);
         } else if (solver == solver_type::cg_implicit) {
             const auto &[A_d, params, q_red_d, QA_cost] = detail::move_only_any_cast<const std::tuple<device_ptr_type, parameter, device_ptr_type, real_type> &>(A[device_id]);
-            PLSSVM_ASSERT(!A_d.empty(), "The A matrix may not be empty!");
-            PLSSVM_ASSERT(!q_red_d.empty(), "The q_red vector may not be empty!");
+            PLSSVM_ASSERT(!A_d.empty(), "The A matrix must not be empty!");
+            PLSSVM_ASSERT(!q_red_d.empty(), "The q_red vector must not be empty!");
 
             this->run_assemble_kernel_matrix_implicit_blas_level_3(device_id, alpha, A_d, params, q_red_d, QA_cost, B_d, C_d);
         } else {

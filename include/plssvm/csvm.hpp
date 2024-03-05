@@ -705,13 +705,13 @@ real_type csvm::score(const model<label_type> &model, const data_set<label_type>
 
 template <typename... Args>
 std::tuple<aos_matrix<real_type>, std::vector<real_type>, unsigned long long> csvm::solve_lssvm_system_of_linear_equations(const soa_matrix<real_type> &A, const aos_matrix<real_type> &B, const parameter &params, Args &&...named_args) const {
-    PLSSVM_ASSERT(!A.empty(), "The A matrix may not be empty!");
+    PLSSVM_ASSERT(!A.empty(), "The A matrix must not be empty!");
     PLSSVM_ASSERT(A.is_padded(), "The A matrix must be padded!");
     PLSSVM_ASSERT((A.padding() == shape{ PADDING_SIZE, PADDING_SIZE }),
                   "The provided matrix must be padded with {}, but is padded with {}!",
                   shape{ PADDING_SIZE, PADDING_SIZE },
                   A.padding());
-    PLSSVM_ASSERT(!B.empty(), "The B matrix may not be empty!");
+    PLSSVM_ASSERT(!B.empty(), "The B matrix must not be empty!");
     PLSSVM_ASSERT(A.num_rows() == B.num_cols(), "The number of data points in A ({}) and B ({}) must be the same!", A.num_rows(), B.num_cols());
 
     igor::parser parser{ std::forward<Args>(named_args)... };
