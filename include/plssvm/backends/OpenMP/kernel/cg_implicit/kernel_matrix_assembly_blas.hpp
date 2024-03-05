@@ -9,8 +9,8 @@
  * @brief Functions for performing a matrix-matrix multiplication using an implicit kernel matrix.
  */
 
-#ifndef PLSSVM_BACKENDS_OPENMP_CG_IMPLICIT_KERNEL_MATRIX_ASSEMBLY_BLAS_HPP_
-#define PLSSVM_BACKENDS_OPENMP_CG_IMPLICIT_KERNEL_MATRIX_ASSEMBLY_BLAS_HPP_
+#ifndef PLSSVM_BACKENDS_OPENMP_KERNEL_CG_IMPLICIT_KERNEL_MATRIX_ASSEMBLY_BLAS_HPP_
+#define PLSSVM_BACKENDS_OPENMP_KERNEL_CG_IMPLICIT_KERNEL_MATRIX_ASSEMBLY_BLAS_HPP_
 
 #include "plssvm/constants.hpp"              // plssvm::real_type, plssvm::OPENMP_BLOCK_SIZE
 #include "plssvm/detail/assert.hpp"          // PLSSVM_ASSERT
@@ -151,4 +151,4 @@ inline void device_kernel_assembly_rbf_symm(const real_type alpha, const std::ve
 
 }  // namespace plssvm::openmp
 
-#endif  // PLSSVM_BACKENDS_OPENMP_CG_IMPLICIT_KERNEL_MATRIX_ASSEMBLY_BLAS_HPP_
+#endif  // PLSSVM_BACKENDS_OPENMP_KERNEL_CG_IMPLICIT_KERNEL_MATRIX_ASSEMBLY_BLAS_HPP_

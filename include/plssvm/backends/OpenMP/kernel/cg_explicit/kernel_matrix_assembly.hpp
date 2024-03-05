@@ -9,8 +9,8 @@
  * @brief Functions for explicitly assembling the kernel matrix using the OpenMP backend.
  */
 
-#ifndef PLSSVM_BACKENDS_OPENMP_CG_EXPLICIT_KERNEL_MATRIX_ASSEMBLY_HPP_
-#define PLSSVM_BACKENDS_OPENMP_CG_EXPLICIT_KERNEL_MATRIX_ASSEMBLY_HPP_
+#ifndef PLSSVM_BACKENDS_OPENMP_KERNEL_CG_EXPLICIT_KERNEL_MATRIX_ASSEMBLY_HPP_
+#define PLSSVM_BACKENDS_OPENMP_KERNEL_CG_EXPLICIT_KERNEL_MATRIX_ASSEMBLY_HPP_
 #pragma once
 
 #include "plssvm/constants.hpp"              // plssvm::real_type, plssvm::OPENMP_BLOCK_SIZE
@@ -40,11 +40,7 @@ namespace detail {
 template <kernel_function_type kernel, typename... Args>
 void device_kernel_assembly(const std::vector<real_type> &q, std::vector<real_type> &ret, const aos_matrix<real_type> &data, const real_type QA_cost, const real_type cost, Args... args) {
     PLSSVM_ASSERT(q.size() == data.num_rows() - 1, "Sizes mismatch!: {} != {}", q.size(), data.num_rows() - 1);
-#if defined(PLSSVM_USE_GEMM)
-    PLSSVM_ASSERT(ret.size() == q.size() * q.size(), "Sizes mismatch (GEMM)!: {} != {}", ret.size(), q.size() * q.size());
-#else
-    PLSSVM_ASSERT(ret.size() == q.size() * (q.size() + 1) / 2, "Sizes mismatch (SYMM)!: {} != {}", ret.size(), q.size() * (q.size() + 1) / 2);
-#endif
+    PLSSVM_ASSERT(ret.size() == (q.size() + PADDING_SIZE) * (q.size() + PADDING_SIZE + 1) / 2, "Sizes mismatch (SYMM)!: {} != {}", ret.size(), (q.size() + PADDING_SIZE) * (q.size() + PADDING_SIZE + 1) / 2);
     PLSSVM_ASSERT(cost != real_type{ 0.0 }, "cost must not be 0.0 since it is 1 / plssvm::cost!");
 
     const std::size_t dept = q.size();
@@ -66,13 +62,7 @@ void device_kernel_assembly(const std::vector<real_type> &q, std::vector<real_ty
                         if (row_idx == col_idx) {
                             temp += cost;
                         }
-
-#if defined(PLSSVM_USE_GEMM)
-                        ret[row_idx * dept + col_idx] = temp;
-                        ret[col_idx * dept + row_idx] = temp;
-#else
-                        ret[row_idx * dept + col_idx - row_idx * (row_idx + 1) / 2] = temp;
-#endif
+                        ret[row_idx * (dept + PADDING_SIZE) + col_idx - row_idx * (row_idx + 1) / 2] = temp;
                     }
                 }
             }
@@ -128,4 +118,4 @@ inline void device_kernel_assembly_rbf(const std::vector<real_type> &q, std::vec
 
 }  // namespace plssvm::openmp
 
-#endif  // PLSSVM_BACKENDS_OPENMP_CG_EXPLICIT_KERNEL_MATRIX_ASSEMBLY_HPP_
+#endif  // PLSSVM_BACKENDS_OPENMP_KERNEL_CG_EXPLICIT_KERNEL_MATRIX_ASSEMBLY_HPP_

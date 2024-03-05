@@ -63,19 +63,6 @@ TYPED_TEST_P(GenericGPUCSVM, get_max_work_group_size) {
     }
 }
 
-TYPED_TEST_P(GenericGPUCSVM, num_available_devices) {
-    using namespace plssvm::detail::literals;
-    using csvm_test_type = util::test_parameter_type_at_t<0, TypeParam>;
-    using mock_csvm_type = typename csvm_test_type::mock_csvm_type;
-
-    // create C-SVM: must be done using the mock class
-    const mock_csvm_type svm = util::construct_from_tuple<mock_csvm_type>(csvm_test_type::additional_arguments);
-
-    // test the number of available devices
-    ASSERT_EQ(svm.num_available_devices(), svm.devices_.size());
-    EXPECT_GE(svm.num_available_devices(), 1);
-}
-
 TYPED_TEST_P(GenericGPUCSVM, run_blas_level_3_kernel_explicit) {
     using csvm_test_type = util::test_parameter_type_at_t<0, TypeParam>;
     using mock_csvm_type = typename csvm_test_type::mock_csvm_type;
@@ -273,7 +260,6 @@ TYPED_TEST_P(GenericGPUCSVM, run_inplace_matrix_scale) {
 
 REGISTER_TYPED_TEST_SUITE_P(GenericGPUCSVM,
                             get_max_work_group_size,
-                            num_available_devices,
                             run_blas_level_3_kernel_explicit,
                             run_w_kernel,
                             run_inplace_matrix_addition,

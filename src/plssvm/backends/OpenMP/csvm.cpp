@@ -8,27 +8,28 @@
 
 #include "plssvm/backends/OpenMP/csvm.hpp"
 
-#include "plssvm/backend_types.hpp"                                            // plssvm::backend_type
-#include "plssvm/backends/OpenMP/cg_explicit/blas.hpp"                         // plssvm::openmp::{device_kernel_gemm, device_kernel_symm}
-#include "plssvm/backends/OpenMP/cg_explicit/kernel_matrix_assembly.hpp"       // plssvm::openmp::{device_kernel_assembly_linear, device_kernel_assembly_polynomial, device_kernel_assembly_rbf}
-#include "plssvm/backends/OpenMP/cg_implicit/kernel_matrix_assembly_blas.hpp"  // plssvm::openmp::{device_kernel_assembly_linear_symm, device_kernel_assembly_polynomial_symm, device_kernel_assembly_rbf_symm}
-#include "plssvm/backends/OpenMP/detail/utility.hpp"                           // plssvm::openmp::detail::{get_num_threads, get_openmp_version}
-#include "plssvm/backends/OpenMP/exceptions.hpp"                               // plssvm::openmp::backend_exception
-#include "plssvm/constants.hpp"                                                // plssvm::real_type
-#include "plssvm/csvm.hpp"                                                     // plssvm::csvm
-#include "plssvm/detail/assert.hpp"                                            // PLSSVM_ASSERT
-#include "plssvm/detail/logging.hpp"                                           // plssvm::detail::log
-#include "plssvm/detail/memory_size.hpp"                                       // plssvm::detail::memory_size
-#include "plssvm/detail/move_only_any.hpp"                                     // plssvm::detail::{move_only_any, move_only_any_cast}
-#include "plssvm/detail/operators.hpp"                                         // various operator overloads for std::vector and scalars
-#include "plssvm/detail/performance_tracker.hpp"                               // plssvm::detail::tracking_entry, PLSSVM_DETAIL_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY
-#include "plssvm/kernel_function_types.hpp"                                    // plssvm::kernel_function_type
-#include "plssvm/kernel_functions.hpp"                                         // plssvm::kernel_function
-#include "plssvm/matrix.hpp"                                                   // plssvm::aos_matrix, plssvm::soa_matrix
-#include "plssvm/parameter.hpp"                                                // plssvm::parameter
-#include "plssvm/shape.hpp"                                                    // plssvm::shape
-#include "plssvm/target_platforms.hpp"                                         // plssvm::target_platform
-#include "plssvm/verbosity_levels.hpp"                                         // plssvm::verbosity_level
+#include "plssvm/backend_types.hpp"                                                   // plssvm::backend_type
+#include "plssvm/backends/OpenMP/detail/utility.hpp"                                  // plssvm::openmp::detail::{get_num_threads, get_openmp_version}
+#include "plssvm/backends/OpenMP/exceptions.hpp"                                      // plssvm::openmp::backend_exception
+#include "plssvm/backends/OpenMP/kernel/cg_explicit/blas.hpp"                         // plssvm::openmp::{device_kernel_gemm, device_kernel_symm}
+#include "plssvm/backends/OpenMP/kernel/cg_explicit/kernel_matrix_assembly.hpp"       // plssvm::openmp::{device_kernel_assembly_linear, device_kernel_assembly_polynomial, device_kernel_assembly_rbf}
+#include "plssvm/backends/OpenMP/kernel/cg_implicit/kernel_matrix_assembly_blas.hpp"  // plssvm::openmp::{device_kernel_assembly_linear_symm, device_kernel_assembly_polynomial_symm, device_kernel_assembly_rbf_symm}
+#include "plssvm/constants.hpp"                                                       // plssvm::real_type
+#include "plssvm/detail/data_distribution.hpp"  // plssvm::detail::{data_distribution, triangular_data_distribution, rectangular_data_distribution}
+#include "plssvm/csvm.hpp"                                                            // plssvm::csvm
+#include "plssvm/detail/assert.hpp"                                                   // PLSSVM_ASSERT
+#include "plssvm/detail/logging.hpp"                                                  // plssvm::detail::log
+#include "plssvm/detail/memory_size.hpp"                                              // plssvm::detail::memory_size
+#include "plssvm/detail/move_only_any.hpp"                                            // plssvm::detail::{move_only_any, move_only_any_cast}
+#include "plssvm/detail/operators.hpp"                                                // various operator overloads for std::vector and scalars
+#include "plssvm/detail/performance_tracker.hpp"                                      // plssvm::detail::tracking_entry, PLSSVM_DETAIL_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY
+#include "plssvm/kernel_function_types.hpp"                                           // plssvm::kernel_function_type
+#include "plssvm/kernel_functions.hpp"                                                // plssvm::kernel_function
+#include "plssvm/matrix.hpp"                                                          // plssvm::aos_matrix, plssvm::soa_matrix
+#include "plssvm/parameter.hpp"                                                       // plssvm::parameter
+#include "plssvm/shape.hpp"                                                           // plssvm::shape
+#include "plssvm/target_platforms.hpp"                                                // plssvm::target_platform
+#include "plssvm/verbosity_levels.hpp"                                                // plssvm::verbosity_level
 
 #include "fmt/chrono.h"   // directly print std::chrono literals with fmt
 #include "fmt/core.h"     // fmt::format
@@ -71,11 +72,11 @@ void csvm::init(const target_platform target) {
     target_ = plssvm::target_platform::cpu;
 }
 
-::plssvm::detail::memory_size csvm::get_device_memory() const {
-    return ::plssvm::detail::get_system_memory();
+std::vector<::plssvm::detail::memory_size> csvm::get_device_memory() const {
+    return { ::plssvm::detail::get_system_memory() };
 }
 
-::plssvm::detail::memory_size csvm::get_max_mem_alloc_size() const {
+std::vector<::plssvm::detail::memory_size> csvm::get_max_mem_alloc_size() const {
     return this->get_device_memory();
 }
 
@@ -83,38 +84,21 @@ void csvm::init(const target_platform target) {
 //                        fit                        //
 //***************************************************//
 
-::plssvm::detail::move_only_any csvm::setup_data_on_devices(const solver_type solver, const soa_matrix<real_type> &A) const {
-    PLSSVM_ASSERT(!A.empty(), "The matrix to setup on the devices may not be empty!");
+std::vector<::plssvm::detail::move_only_any> csvm::assemble_kernel_matrix(const solver_type solver, const parameter &params, const soa_matrix<real_type> &A, const std::vector<real_type> &q_red, const real_type QA_cost) const {
     PLSSVM_ASSERT(solver != solver_type::automatic, "An explicit solver type must be provided instead of solver_type::automatic!");
-
-    if (solver == solver_type::cg_explicit || solver == solver_type::cg_implicit) {
-        return ::plssvm::detail::move_only_any{ &A };
-    } else {
-        throw exception{ fmt::format("Assembling the kernel matrix using the {} CG variation is currently not implemented!", solver) };
-    }
-}
-
-::plssvm::detail::move_only_any csvm::assemble_kernel_matrix(const solver_type solver, const parameter &params, ::plssvm::detail::move_only_any &data, const std::vector<real_type> &q_red, const real_type QA_cost) const {
-    PLSSVM_ASSERT(!q_red.empty(), "The q_red vector may not be empty!");
-    PLSSVM_ASSERT(solver != solver_type::automatic, "An explicit solver type must be provided instead of solver_type::automatic!");
-
-    const auto data_ptr = ::plssvm::detail::move_only_any_cast<const soa_matrix<real_type> *>(data);
-    PLSSVM_ASSERT(data_ptr != nullptr, "The data_ptr must not be a nullptr!");
+    PLSSVM_ASSERT(!A.empty(), "The matrix to setup on the devices must not be empty!");
+    PLSSVM_ASSERT(A.is_padded(), "The matrix to setup on the devices must be padded!");
+    PLSSVM_ASSERT(!q_red.empty(), "The q_red vector must not be empty!");
+    PLSSVM_ASSERT(q_red.size() == A.num_rows() - 1, "The q_red size ({}) mismatches the number of data points after dimensional reduction ({})!", q_red.size(), A.num_rows() - 1);
 
     // TODO Hotfix: extreme performance regression when using a soa_matrix -> convert to aos_matrix -> USES 2x the necessary memory!
-    aos_matrix<real_type> aos_data{ *data_ptr };
+    const aos_matrix<real_type> aos_data{ A };
+
+    std::vector<::plssvm::detail::move_only_any> kernel_matrices_parts(this->num_available_devices());
 
     if (solver == solver_type::cg_explicit) {
-        const std::size_t num_rows_reduced = aos_data.num_rows() - 1;
-        PLSSVM_ASSERT(num_rows_reduced > 0, "At least one row must be given!");
-        PLSSVM_ASSERT(num_rows_reduced + PADDING_SIZE >= num_rows_reduced, "The number of rows with padding ({}) must be greater or equal to the number of rows without padding!", num_rows_reduced + PADDING_SIZE, num_rows_reduced);
-        PLSSVM_ASSERT(aos_data.num_rows() == num_rows_reduced + 1, "The number of rows in the data matrix must be {}, but is {}!", num_rows_reduced + 1, aos_data.num_rows());
-
-#if defined(PLSSVM_USE_GEMM)
-        std::vector<real_type> kernel_matrix(num_rows_reduced * num_rows_reduced);  // store full matrix
-#else
-        std::vector<real_type> kernel_matrix(num_rows_reduced * (num_rows_reduced + 1) / 2);  // only explicitly store the upper triangular matrix
-#endif
+        const plssvm::detail::triangular_data_distribution dist{ A.num_rows() - 1, this->num_available_devices() };
+        std::vector<real_type> kernel_matrix(dist.calculate_explicit_kernel_matrix_num_entries_padded(0));  // only explicitly store the upper triangular matrix
         switch (params.kernel_type.value()) {
             case kernel_function_type::linear:
                 openmp::device_kernel_assembly_linear(q_red, kernel_matrix, aos_data, QA_cost, 1 / params.cost);
@@ -127,32 +111,26 @@ void csvm::init(const target_platform target) {
                 break;
         }
 
-#if defined(PLSSVM_USE_GEMM)
-        PLSSVM_ASSERT(num_rows_reduced * num_rows_reduced == kernel_matrix.size(),
-                      "The kernel matrix must be a quadratic matrix with num_rows_reduced^2 ({}) entries, but is {}!",
-                      num_rows_reduced * num_rows_reduced,
-                      kernel_matrix.size());
-#else
-        PLSSVM_ASSERT(num_rows_reduced * (num_rows_reduced + 1) / 2 == kernel_matrix.size(),
-                      "The kernel matrix must be a triangular matrix only with num_rows_reduced * (num_rows_reduced + 1) / 2 ({}) entries, but is {}!",
-                      num_rows_reduced * (num_rows_reduced + 1) / 2,
-                      kernel_matrix.size());
-#endif
-
-        return ::plssvm::detail::move_only_any{ std::move(kernel_matrix) };
+        kernel_matrices_parts[0] = ::plssvm::detail::move_only_any{ std::move(kernel_matrix) };
     } else if (solver == solver_type::cg_implicit) {
         // simply return data since in implicit we don't assembly the kernel matrix here!
-        return ::plssvm::detail::move_only_any{ std::make_tuple(std::move(aos_data), params, std::move(q_red), QA_cost) };
+        kernel_matrices_parts[0] = ::plssvm::detail::move_only_any{ std::make_tuple(std::move(aos_data), params, std::move(q_red), QA_cost) };
     } else {
         throw exception{ fmt::format("Assembling the kernel matrix using the {} CG variation is currently not implemented!", solver) };
     }
+
+    return kernel_matrices_parts;
 }
 
-void csvm::blas_level_3(const solver_type solver, const real_type alpha, const ::plssvm::detail::move_only_any &A, const soa_matrix<real_type> &B, const real_type beta, soa_matrix<real_type> &C) const {
-    PLSSVM_ASSERT(!B.empty(), "The B matrix may not be empty!");
-    PLSSVM_ASSERT(!C.empty(), "The C matrix may not be empty!");
-    PLSSVM_ASSERT(B.num_rows() == C.num_rows(), "The C matrix must have {} rows, but has {}!", B.num_rows(), C.num_rows());
+void csvm::blas_level_3(const solver_type solver, const real_type alpha, const std::vector<::plssvm::detail::move_only_any> &A, const soa_matrix<real_type> &B, const real_type beta, soa_matrix<real_type> &C) const {
     PLSSVM_ASSERT(solver != solver_type::automatic, "An explicit solver type must be provided instead of solver_type::automatic!");
+    PLSSVM_ASSERT(A.size() == 1, "Not enough kernel matrix parts ({}) for the available number of devices (1)!", A.size());
+    PLSSVM_ASSERT(!B.empty(), "The B matrix must not be empty!");
+    PLSSVM_ASSERT(B.is_padded(), "The B matrix must be padded!");
+    PLSSVM_ASSERT(!C.empty(), "The C matrix must not be empty!");
+    PLSSVM_ASSERT(C.is_padded(), "The C matrix must be padded!");
+    PLSSVM_ASSERT(B.shape() == C.shape(), "The B ({}) and C ({}) matrices must have the same shape!", B.shape(), C.shape());
+    PLSSVM_ASSERT(B.padding() == C.padding(), "The B ({}) and C ({}) matrices must have the same padding!", B.padding(), C.padding());
 
     // cast to correct type
     const auto m_ull = static_cast<unsigned long long>(B.num_cols());
@@ -164,18 +142,14 @@ void csvm::blas_level_3(const solver_type solver, const real_type alpha, const :
     aos_matrix<real_type> aos_C{ C };
 
     if (solver == solver_type::cg_explicit) {
-        const auto &explicit_A = ::plssvm::detail::move_only_any_cast<const std::vector<real_type> &>(A);
-        PLSSVM_ASSERT(!explicit_A.empty(), "The A matrix may not be empty!");
+        const auto &explicit_A = ::plssvm::detail::move_only_any_cast<const std::vector<real_type> &>(A.front());
+        PLSSVM_ASSERT(!explicit_A.empty(), "The A matrix must not be empty!");
 
-#if defined(PLSSVM_USE_GEMM)
-        openmp::device_kernel_gemm(m_ull, n_ull, k_ull, alpha, explicit_A, aos_B, beta, aos_C);
-#else
         openmp::device_kernel_symm(m_ull, n_ull, k_ull, alpha, explicit_A, aos_B, beta, aos_C);
-#endif
     } else if (solver == solver_type::cg_implicit) {
-        const auto &[aos_matr_A, params, q_red, QA_cost] = ::plssvm::detail::move_only_any_cast<const std::tuple<aos_matrix<real_type>, parameter, std::vector<real_type>, real_type> &>(A);
-        PLSSVM_ASSERT(!aos_matr_A.empty(), "The A matrix may not be empty!");
-        PLSSVM_ASSERT(!q_red.empty(), "The q_red vector may not be empty!");
+        const auto &[aos_matr_A, params, q_red, QA_cost] = ::plssvm::detail::move_only_any_cast<const std::tuple<aos_matrix<real_type>, parameter, std::vector<real_type>, real_type> &>(A.front());
+        PLSSVM_ASSERT(!aos_matr_A.empty(), "The A matrix must not be empty!");
+        PLSSVM_ASSERT(!q_red.empty(), "The q_red vector must not be empty!");
 
         switch (params.kernel_type.value()) {
             case kernel_function_type::linear:

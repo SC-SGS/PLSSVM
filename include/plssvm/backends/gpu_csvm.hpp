@@ -200,8 +200,6 @@ class gpu_csvm : public ::plssvm::csvm {
 
     /// The available/used backend devices.
     std::vector<queue_type> devices_{};
-    /// The data distribution on the available devices.
-    mutable std::unique_ptr<detail::data_distribution> data_distribution_{};
 };
 
 //***************************************************//
@@ -209,11 +207,11 @@ class gpu_csvm : public ::plssvm::csvm {
 //***************************************************//
 template <template <typename> typename device_ptr_t, typename queue_t>
 std::vector<::plssvm::detail::move_only_any> gpu_csvm<device_ptr_t, queue_t>::assemble_kernel_matrix(const solver_type solver, const parameter &params, const soa_matrix<real_type> &A, const std::vector<real_type> &q_red, const real_type QA_cost) const {
+    PLSSVM_ASSERT(solver != solver_type::automatic, "An explicit solver type must be provided instead of solver_type::automatic!");
     PLSSVM_ASSERT(!A.empty(), "The matrix to setup on the devices must not be empty!");
-    PLSSVM_ASSERT(A.is_padded(), "Tha matrix to setup on the devices must be padded!");
+    PLSSVM_ASSERT(A.is_padded(), "The matrix to setup on the devices must be padded!");
     PLSSVM_ASSERT(!q_red.empty(), "The q_red vector must not be empty!");
     PLSSVM_ASSERT(q_red.size() == A.num_rows() - 1, "The q_red size ({}) mismatches the number of data points after dimensional reduction ({})!", q_red.size(), A.num_rows() - 1);
-    PLSSVM_ASSERT(solver != solver_type::automatic, "An explicit solver type must be provided instead of solver_type::automatic!");
 
     // update the data distribution -> account for the dimensional reduction
     data_distribution_ = std::make_unique<detail::triangular_data_distribution>(A.num_rows() - 1, this->num_available_devices());
@@ -239,18 +237,6 @@ std::vector<::plssvm::detail::move_only_any> gpu_csvm<device_ptr_t, queue_t>::as
         q_red_d.memset(0, q_red.size());
 
         if (solver == solver_type::cg_explicit) {
-            // get the pointer to the data that already is on the device
-            [[maybe_unused]] const std::size_t num_rows_reduced = data_d.shape().x - 1;
-            [[maybe_unused]] const std::size_t num_features = data_d.shape().y;
-
-            PLSSVM_ASSERT(num_rows_reduced > 0, "At least one row must be given!");
-            PLSSVM_ASSERT(num_features > 0, "At least one feature must be given!");
-            PLSSVM_ASSERT(data_d.is_padded(), "The data matrix must be padded!");
-            PLSSVM_ASSERT((num_rows_reduced + PADDING_SIZE + 1) * (num_features + PADDING_SIZE) == data_d.size_padded(),
-                          "The number of values on the device data array is {}, but the provided sizes are {} ((num_rows_reduced + PADDING_SIZE + 1) * (num_features + PADDING_SIZE))",
-                          data_d.size_padded(),
-                          (num_rows_reduced + PADDING_SIZE + 1) * (num_features + PADDING_SIZE));
-
             // run explicit matrix assembly kernel on the current device using the respective backend
             device_ptr_type kernel_matrix = this->run_assemble_kernel_matrix_explicit(device_id, params, data_d, q_red_d, QA_cost);
 
@@ -268,11 +254,14 @@ std::vector<::plssvm::detail::move_only_any> gpu_csvm<device_ptr_t, queue_t>::as
 
 template <template <typename> typename device_ptr_t, typename queue_t>
 void gpu_csvm<device_ptr_t, queue_t>::blas_level_3(const solver_type solver, const real_type alpha, const std::vector<::plssvm::detail::move_only_any> &A, const soa_matrix<real_type> &B, const real_type beta, soa_matrix<real_type> &C) const {
+    PLSSVM_ASSERT(solver != solver_type::automatic, "An explicit solver type must be provided instead of solver_type::automatic!");
+    PLSSVM_ASSERT(A.size() == this->num_available_devices(), "Not enough kernel matrix parts ({}) for the available number of devices ({})!", A.size(), this->num_available_devices());
     PLSSVM_ASSERT(!B.empty(), "The B matrix must not be empty!");
     PLSSVM_ASSERT(B.is_padded(), "The B matrix must be padded!");
     PLSSVM_ASSERT(!C.empty(), "The C matrix must not be empty!");
     PLSSVM_ASSERT(C.is_padded(), "The C matrix must be padded!");
-    PLSSVM_ASSERT(solver != solver_type::automatic, "An explicit solver type must be provided instead of solver_type::automatic!");
+    PLSSVM_ASSERT(B.shape() == C.shape(), "The B ({}) and C ({}) matrices must have the same shape!", B.shape(), C.shape());
+    PLSSVM_ASSERT(B.padding() == C.padding(), "The B ({}) and C ({}) matrices must have the same padding!", B.padding(), C.padding());
 
     // the partial C results from all devices
     std::vector<device_ptr_type> device_C_d(this->num_available_devices());

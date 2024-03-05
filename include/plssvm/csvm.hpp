@@ -18,6 +18,7 @@
 #include "plssvm/data_set.hpp"                    // plssvm::data_set
 #include "plssvm/default_value.hpp"               // plssvm::default_value, plssvm::default_init
 #include "plssvm/detail/data_distribution.hpp"    // plssvm::detail::triangular_data_distribution
+#include "plssvm/detail/data_distribution.hpp"    // plssvm::detail::data_distribution
 #include "plssvm/detail/igor_utility.hpp"         // plssvm::detail::{get_value_from_named_parameter, has_only_parameter_named_args_v}
 #include "plssvm/detail/logging.hpp"              // plssvm::detail::log
 #include "plssvm/detail/memory_size.hpp"          // plssvm::detail::memory_size
@@ -44,6 +45,7 @@
 #include <chrono>       // std::chrono::{time_point, steady_clock, duration_cast}
 #include <iostream>     // std::cout, std::endl
 #include <iterator>     // std::distance
+#include <memory>       // std::unique_ptr
 #include <optional>     // std::optional, std::make_optional, std::nullopt
 #include <tuple>        // std::tie
 #include <type_traits>  // std::enable_if_t, std::is_same_v, std::is_convertible_v, std::false_type
@@ -248,6 +250,8 @@ class csvm {
 
     /// The target platform of this SVM.
     target_platform target_{ plssvm::target_platform::automatic };
+    /// The data distribution on the available devices.
+    mutable std::unique_ptr<detail::data_distribution> data_distribution_{};
 
   protected:  // necessary for tests, would otherwise be private
     /**
