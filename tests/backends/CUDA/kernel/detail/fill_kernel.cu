@@ -8,7 +8,7 @@
  * @brief Tests for the utility function to fill a array with a specific value.
  */
 
-#include "plssvm/backends/CUDA/detail/fill_kernel.cuh"
+#include "plssvm/backends/CUDA/kernel/detail/fill_kernel.cuh"
 
 #include "tests/naming.hpp"         // util::test_parameter_to_name
 #include "tests/types_to_test.hpp"  // util::{real_type_gtest, test_parameter_type_at_t}
