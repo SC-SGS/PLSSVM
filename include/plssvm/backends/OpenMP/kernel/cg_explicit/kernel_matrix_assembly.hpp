@@ -24,21 +24,20 @@
 
 namespace plssvm::openmp {
 
-namespace detail {
-
 /**
  * @brief Assemble the kernel matrix using the @p kernel function.
  * @tparam kernel the compile-time kernel function to use
+ * @tparam layout the compile-time layout type for the data matrix
  * @tparam Args the types of the potential additional arguments for the @p kernel function
  * @param[in] q the `q` vector
  * @param[out] ret the resulting kernel matrix
  * @param[in] data the data matrix
  * @param[in] QA_cost he bottom right matrix entry multiplied by cost
  * @param[in] cost 1 / the cost parameter in the C-SVM
- * @param args the potential additional arguments for the @p kernel function
+ * @param[in] args the potential additional arguments for the @p kernel function
  */
-template <kernel_function_type kernel, typename... Args>
-void device_kernel_assembly(const std::vector<real_type> &q, std::vector<real_type> &ret, const aos_matrix<real_type> &data, const real_type QA_cost, const real_type cost, Args... args) {
+template <kernel_function_type kernel, layout_type layout, typename... Args>
+void device_kernel_assembly(const std::vector<real_type> &q, std::vector<real_type> &ret, const matrix<real_type, layout> &data, const real_type QA_cost, const real_type cost, Args... args) {
     PLSSVM_ASSERT(q.size() == data.num_rows() - 1, "Sizes mismatch!: {} != {}", q.size(), data.num_rows() - 1);
     PLSSVM_ASSERT(ret.size() == (q.size() + PADDING_SIZE) * (q.size() + PADDING_SIZE + 1) / 2, "Sizes mismatch (SYMM)!: {} != {}", ret.size(), (q.size() + PADDING_SIZE) * (q.size() + PADDING_SIZE + 1) / 2);
     PLSSVM_ASSERT(cost != real_type{ 0.0 }, "cost must not be 0.0 since it is 1 / plssvm::cost!");
@@ -68,52 +67,6 @@ void device_kernel_assembly(const std::vector<real_type> &q, std::vector<real_ty
             }
         }
     }
-}
-
-}  // namespace detail
-
-/**
- * @brief Assemble the kernel matrix using the linear kernel function.
- * @param[in] q the `q` vector
- * @param[out] ret the resulting kernel matrix
- * @param[in] data the data matrix
- * @param[in] QA_cost he bottom right matrix entry multiplied by cost
- * @param[in] cost 1 / the cost parameter in the C-SVM
- */
-inline void device_kernel_assembly_linear(const std::vector<real_type> &q, std::vector<real_type> &ret, const aos_matrix<real_type> &data, const real_type QA_cost, const real_type cost) {
-    detail::device_kernel_assembly<kernel_function_type::linear>(q, ret, data, QA_cost, cost);
-}
-
-/**
- * @brief Assemble the kernel matrix using the polynomial kernel function.
- * @param[in] q the `q` vector
- * @param[out] ret the resulting kernel matrix
- * @param[in] data the data matrix
- * @param[in] QA_cost the bottom right matrix entry multiplied by cost
- * @param[in] cost 1 / the cost parameter in the C-SVM
- * @param[in] degree the degree parameter used in the polynomial kernel function
- * @param[in] gamma the gamma parameter used in the polynomial kernel function
- * @param[in] coef0 the coef0 parameter used in the polynomial kernel function
- */
-inline void device_kernel_assembly_polynomial(const std::vector<real_type> &q, std::vector<real_type> &ret, const aos_matrix<real_type> &data, const real_type QA_cost, const real_type cost, const int degree, const real_type gamma, const real_type coef0) {
-    PLSSVM_ASSERT(gamma > real_type{ 0.0 }, "gamma must be greater than 0, but is {}!", gamma);
-
-    detail::device_kernel_assembly<kernel_function_type::polynomial>(q, ret, data, QA_cost, cost, degree, gamma, coef0);
-}
-
-/**
- * @brief Assemble the kernel matrix using the radial basis function kernel function.
- * @param[in] q the `q` vector
- * @param[out] ret the resulting kernel matrix
- * @param[in] data the data matrix
- * @param[in] QA_cost he bottom right matrix entry multiplied by cost
- * @param[in] cost 1 / the cost parameter in the C-SVM
- * @param[in] gamma the gamma parameter used in the rbf kernel function
- */
-inline void device_kernel_assembly_rbf(const std::vector<real_type> &q, std::vector<real_type> &ret, const aos_matrix<real_type> &data, const real_type QA_cost, const real_type cost, const real_type gamma) {
-    PLSSVM_ASSERT(gamma > real_type{ 0.0 }, "gamma must be greater than 0, but is {}!", gamma);
-
-    detail::device_kernel_assembly<kernel_function_type::rbf>(q, ret, data, QA_cost, cost, gamma);
 }
 
 }  // namespace plssvm::openmp

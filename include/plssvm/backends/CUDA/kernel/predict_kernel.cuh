@@ -21,8 +21,8 @@
 namespace plssvm::cuda {
 
 /**
- * @brief Calculate the `q` vector used to speedup the prediction using the linear kernel function.
- * @param[in,out] w_d the vector to speedup the linear prediction
+ * @brief Calculate the `w` vector used to speedup the prediction using the linear kernel function.
+ * @param[out] w_d the vector to speedup the linear prediction
  * @param[in] alpha_d the previously learned weights
  * @param[in] sv_d the support vectors
  * @param[in] num_classes the number of classes
