@@ -213,21 +213,23 @@ std::vector<::plssvm::detail::move_only_any> gpu_csvm<device_ptr_t, queue_t>::as
     PLSSVM_ASSERT(!q_red.empty(), "The q_red vector must not be empty!");
     PLSSVM_ASSERT(q_red.size() == A.num_rows() - 1, "The q_red size ({}) mismatches the number of data points after dimensional reduction ({})!", q_red.size(), A.num_rows() - 1);
 
-    // update the data distribution -> account for the dimensional reduction
+    // update the data distribution: only the upper triangular kernel matrix is used
+    // note: account for the dimensional reduction
     data_distribution_ = std::make_unique<detail::triangular_data_distribution>(A.num_rows() - 1, this->num_available_devices());
 
+    // the final kernel matrix; multiple parts in case of multi-device execution
     std::vector<::plssvm::detail::move_only_any> kernel_matrices_parts(this->num_available_devices());
+    // the input data and dimensional reduction vector; completely stored on each device
     std::vector<device_ptr_type> data_d(this->num_available_devices());
     std::vector<device_ptr_type> q_red_d(this->num_available_devices());
 
-    // split memory allocation and memory copy!
+    // split memory allocation and memory copy! (necessary to remove locks on some systems and setups)
 #pragma omp parallel for
     for (std::size_t device_id = 0; device_id < this->num_available_devices(); ++device_id) {
         // check whether the current device is responsible for at least one data point!
         if (data_distribution_->place_specific_num_rows(device_id) == 0) {
             continue;
         }
-        // assign parts to calculate to each available device
         const queue_type &device = devices_[device_id];
 
         // allocate memory on the device
@@ -248,15 +250,14 @@ std::vector<::plssvm::detail::move_only_any> gpu_csvm<device_ptr_t, queue_t>::as
         q_red_d[device_id].memset(0, q_red.size());
 
         if (solver == solver_type::cg_explicit) {
-            // run explicit matrix assembly kernel on the current device using the respective backend
+            // explicitly assemble the (potential partial) kernel matrix
             device_ptr_type kernel_matrix = this->run_assemble_kernel_matrix_explicit(device_id, params, data_d[device_id], q_red_d[device_id], QA_cost);
-
             kernel_matrices_parts[device_id] = ::plssvm::detail::move_only_any{ std::move(kernel_matrix) };
         } else if (solver == solver_type::cg_implicit) {
-            // simply return data since in implicit we don't assembly the kernel matrix here!
+            // simply return the data since in cg_implicit we don't assemble the kernel matrix here!
             kernel_matrices_parts[device_id] = ::plssvm::detail::move_only_any{ std::make_tuple(std::move(data_d[device_id]), params, std::move(q_red_d[device_id]), QA_cost) };
         } else {
-            throw exception{ fmt::format("Assembling the kernel matrix using the {} CG variation is currently not implemented!", solver) };
+            throw exception{ fmt::format("Assembling the kernel matrix using the {} CG solver_type is currently not implemented!", solver) };
         }
     }
 
@@ -274,9 +275,10 @@ void gpu_csvm<device_ptr_t, queue_t>::blas_level_3(const solver_type solver, con
     PLSSVM_ASSERT(B.shape() == C.shape(), "The B ({}) and C ({}) matrices must have the same shape!", B.shape(), C.shape());
     PLSSVM_ASSERT(B.padding() == C.padding(), "The B ({}) and C ({}) matrices must have the same padding!", B.padding(), C.padding());
 
+    // the C and B matrices; completely stored on each device
     std::vector<device_ptr_type> B_d(this->num_available_devices());
-    // the partial C results from all devices
     std::vector<device_ptr_type> C_d(this->num_available_devices());
+
     // the partial C result from a specific device later stored on device 0 to perform the C reduction (inplace matrix addition)
     device_ptr_type partial_C_d{};
     if (this->num_available_devices() > 1) {
@@ -290,7 +292,6 @@ void gpu_csvm<device_ptr_t, queue_t>::blas_level_3(const solver_type solver, con
         if (data_distribution_->place_specific_num_rows(device_id) == 0) {
             continue;
         }
-        // assign parts to calculate to each available device
         const queue_type &device = devices_[device_id];
 
         // allocate memory on the device
@@ -307,14 +308,16 @@ void gpu_csvm<device_ptr_t, queue_t>::blas_level_3(const solver_type solver, con
 
         // copy data to the device
         B_d[device_id].copy_to_device(B);
-        // device 0 always touches all values in C -> it is sufficient that only device 0 gets the actual C matrix
-        // all other devices get a matrix filled with zeros only
         if (device_id == 0) {
+            // device 0 always touches all values in C -> it is sufficient that only device 0 gets the actual C matrix
             C_d[device_id].copy_to_device(C);
+            // we do not perform the beta scale in C in the cg_implicit device kernel
+            // -> calculate it using a separate kernel (always on device 0!)
             if (solver == solver_type::cg_implicit) {
                 this->run_inplace_matrix_scale(0, C_d[device_id], beta);
             }
         } else {
+            // all other devices get a matrix filled with zeros only
             C_d[device_id].memset(0);
         }
 
@@ -330,7 +333,7 @@ void gpu_csvm<device_ptr_t, queue_t>::blas_level_3(const solver_type solver, con
 
             this->run_assemble_kernel_matrix_implicit_blas_level_3(device_id, alpha, A_d, params, q_red_d, QA_cost, B_d[device_id], C_d[device_id]);
         } else {
-            throw exception{ fmt::format("The GEMM calculation using the {} CG variation is currently not implemented!", solver) };
+            throw exception{ fmt::format("The BLAS calculation using the {} CG solver_type is currently not implemented!", solver) };
         }
 
         // reduce the partial C matrices to the final C matrix on device 0
@@ -342,6 +345,7 @@ void gpu_csvm<device_ptr_t, queue_t>::blas_level_3(const solver_type solver, con
         }
     }
 
+    // device 0 contains the final, reduced results
     C_d[0].copy_to_host(C);
     C.restore_padding();
 }
@@ -369,21 +373,20 @@ aos_matrix<real_type> gpu_csvm<device_ptr_t, queue_t>::predict_values(const para
     PLSSVM_ASSERT(predict_points.is_padded(), "The data points to predict must be padded!");
     PLSSVM_ASSERT(support_vectors.num_cols() == predict_points.num_cols(), "The number of features in the support vectors ({}) must be the same as in the data points to predict ({})!", support_vectors.num_cols(), predict_points.num_cols());
 
-    // defined sizes
+    // define necessary sizes
     const std::size_t num_classes = alpha.num_rows();
     const std::size_t num_predict_points = predict_points.num_rows();
     const std::size_t num_support_vectors = support_vectors.num_rows();
     const std::size_t num_features = predict_points.num_cols();
 
-    // result matrix
+    // the result matrix
     aos_matrix<real_type> out_ret{ shape{ num_predict_points, num_classes }, real_type{ 0.0 }, shape{ PADDING_SIZE, PADDING_SIZE } };
 
-    // the support vectors or w vector for each device
+    // the support vectors or w vector and weights; fully stored on each device
     std::vector<device_ptr_type> sv_or_w_d(this->num_available_devices());
-
-    // the support vector weights for each device
-    // split memory allocation and memory copy!
     std::vector<device_ptr_type> alpha_d(this->num_available_devices());
+
+    // split memory allocation and memory copy!
 #pragma omp parallel for
     for (std::size_t device_id = 0; device_id < this->num_available_devices(); ++device_id) {
         const queue_type &device = devices_[device_id];
@@ -397,7 +400,7 @@ aos_matrix<real_type> gpu_csvm<device_ptr_t, queue_t>::predict_values(const para
         alpha_d[device_id].copy_to_device(alpha);
     }
 
-    // special case for the linear kernel function: calculate or reuse the w vector to sped up prediction
+    // special case for the linear kernel function: calculate or reuse the w vector to speed up the prediction
     if (params.kernel_type == kernel_function_type::linear) {
         if (w.empty()) {
             // the partial w result from a specific device later stored on device 0 to perform the w reduction (inplace matrix addition)
@@ -486,22 +489,25 @@ aos_matrix<real_type> gpu_csvm<device_ptr_t, queue_t>::predict_values(const para
     // update the data distribution to account for the predict points
     data_distribution_ = std::make_unique<detail::rectangular_data_distribution>(num_predict_points, this->num_available_devices());
 
+    // the predict points; partial stored on each device
     std::vector<device_ptr_type> predict_points_d(this->num_available_devices());
+    // the biases; completely stored on each device
     std::vector<device_ptr_type> rho_d(this->num_available_devices());
+
     // split memory allocation and memory copy!
 #pragma omp parallel for
-        for (std::size_t device_id = 0; device_id < this->num_available_devices(); ++device_id) {
-            // check whether the current device is responsible for at least one data point!
-            if (data_distribution_->place_specific_num_rows(device_id) == 0) {
-                continue;
-            }
-            const queue_type &device = devices_[device_id];
-            const std::size_t device_specific_num_rows = data_distribution_->place_specific_num_rows(device_id);
-
-            // allocate memory on the device
-            predict_points_d[device_id] = device_ptr_type{ shape{ device_specific_num_rows, num_features }, predict_points.padding(), device };
-            rho_d[device_id] = device_ptr_type{ num_classes + PADDING_SIZE, device };
+    for (std::size_t device_id = 0; device_id < this->num_available_devices(); ++device_id) {
+        // check whether the current device is responsible for at least one data point!
+        if (data_distribution_->place_specific_num_rows(device_id) == 0) {
+            continue;
         }
+        const queue_type &device = devices_[device_id];
+        const std::size_t device_specific_num_rows = data_distribution_->place_specific_num_rows(device_id);
+
+        // allocate memory on the device
+        predict_points_d[device_id] = device_ptr_type{ shape{ device_specific_num_rows, num_features }, predict_points.padding(), device };
+        rho_d[device_id] = device_ptr_type{ num_classes + PADDING_SIZE, device };
+    }
 
 #pragma omp parallel for
     for (std::size_t device_id = 0; device_id < this->num_available_devices(); ++device_id) {
