@@ -169,7 +169,7 @@ template <typename csvm_type, typename device_ptr_type, typename matrix_type, ty
  * @return a std::vector of `plssvm::detail::move_only_any` with a wrapped value usable in the PLSSVM functions (`[[nodiscard]]`)
  */
 template <typename csvm_type, typename device_ptr_type, typename matrix_type, typename used_csvm_type, typename... Args>
-[[nodiscard]] inline std::vector<plssvm::detail::move_only_any> init_matrices(matrix_type matr, const plssvm::solver_type solver, [[maybe_unused]] used_csvm_type &csvm, Args &&...args) {
+[[nodiscard]] inline std::vector<plssvm::detail::move_only_any> init_matrices(matrix_type matr, const plssvm::solver_type solver, used_csvm_type &csvm, Args &&...args) {
     switch (solver) {
         case plssvm::solver_type::automatic:
             {
@@ -214,7 +214,7 @@ TYPED_TEST_P(GenericCSVM, move_constructor) {
     using csvm_test_type = util::test_parameter_type_at_t<0, TypeParam>;
     using csvm_type = typename csvm_test_type::csvm_type;
 
-    // create default CSVM
+    // create normal C-SVM
     csvm_type svm{};
 
     // get current state
@@ -233,7 +233,7 @@ TYPED_TEST_P(GenericCSVM, move_assignment) {
     using csvm_test_type = util::test_parameter_type_at_t<0, TypeParam>;
     using csvm_type = typename csvm_test_type::csvm_type;
 
-    // create default CSVM
+    // create normal C-SVM
     csvm_type svm{};
 
     // get current state
@@ -255,22 +255,38 @@ TYPED_TEST_P(GenericCSVM, get_target_platform) {
     using csvm_test_type = util::test_parameter_type_at_t<0, TypeParam>;
     using csvm_type = typename csvm_test_type::csvm_type;
 
-    // create C-SVM
+    // create normal C-SVM
     const csvm_type svm = util::construct_from_tuple<csvm_type>(csvm_test_type::additional_arguments);
 
     // after construction: get_target_platform must refer to a plssvm::target_platform that is not automatic
     EXPECT_NE(svm.get_target_platform(), plssvm::target_platform::automatic);
 }
 
+TYPED_TEST_P(GenericCSVM, num_available_devices) {
+    using namespace plssvm::detail::literals;
+    using csvm_test_type = util::test_parameter_type_at_t<0, TypeParam>;
+    using csvm_type = typename csvm_test_type::csvm_type;
+
+    // create normal C-SVM
+    const csvm_type svm = util::construct_from_tuple<csvm_type>(csvm_test_type::additional_arguments);
+
+    // the maximum memory allocation size should be greater than 0!
+    if constexpr (plssvm::csvm_to_backend_type_v<csvm_type> == plssvm::backend_type::openmp) {
+        EXPECT_EQ(svm.num_available_devices(), 1);
+    } else {
+        EXPECT_GE(svm.num_available_devices(), 1);
+    }
+}
+
 TYPED_TEST_P(GenericCSVM, get_device_memory) {
+    using namespace plssvm::detail::literals;
     using csvm_test_type = util::test_parameter_type_at_t<0, TypeParam>;
     using mock_csvm_type = typename csvm_test_type::mock_csvm_type;
 
-    // create C-SVM
+    // create C-SVM: must be done using the mock class since the member function to test is private or protected
     const mock_csvm_type svm = util::construct_from_tuple<mock_csvm_type>(csvm_test_type::additional_arguments);
 
     // the available device memory should be greater than 0!
-    using namespace plssvm::detail::literals;
     const std::vector<plssvm::detail::memory_size> mem = svm.get_device_memory();
     EXPECT_GE(mem.size(), 1);
     for (const plssvm::detail::memory_size ms : mem) {
@@ -279,36 +295,18 @@ TYPED_TEST_P(GenericCSVM, get_device_memory) {
 }
 
 TYPED_TEST_P(GenericCSVM, get_max_mem_alloc_size) {
+    using namespace plssvm::detail::literals;
     using csvm_test_type = util::test_parameter_type_at_t<0, TypeParam>;
     using mock_csvm_type = typename csvm_test_type::mock_csvm_type;
 
-    // create C-SVM
+    // create C-SVM: must be done using the mock class since the member function to test is private or protected
     const mock_csvm_type svm = util::construct_from_tuple<mock_csvm_type>(csvm_test_type::additional_arguments);
 
     // the maximum memory allocation size should be greater than 0!
-    using namespace plssvm::detail::literals;
     const std::vector<plssvm::detail::memory_size> mem = svm.get_max_mem_alloc_size();
     EXPECT_GE(mem.size(), 1);
     for (const plssvm::detail::memory_size ms : mem) {
         EXPECT_GT(ms, 0_B);
-    }
-}
-
-TYPED_TEST_P(GenericCSVM, num_available_devices) {
-    using csvm_test_type = util::test_parameter_type_at_t<0, TypeParam>;
-    using mock_csvm_type = typename csvm_test_type::mock_csvm_type;
-    using csvm_type = typename csvm_test_type::csvm_type;
-
-    // create C-SVM
-    const mock_csvm_type svm = util::construct_from_tuple<mock_csvm_type>(csvm_test_type::additional_arguments);
-
-    // the maximum memory allocation size should be greater than 0!
-    using namespace plssvm::detail::literals;
-
-    if constexpr (plssvm::csvm_to_backend_type_v<csvm_type> == plssvm::backend_type::openmp) {
-        EXPECT_EQ(svm.num_available_devices(), 1);
-    } else {
-        EXPECT_GE(svm.num_available_devices(), 1);
     }
 }
 
@@ -320,11 +318,10 @@ TYPED_TEST_P(GenericCSVM, blas_level_3_explicit_without_C) {
 
     constexpr plssvm::solver_type solver = plssvm::solver_type::cg_explicit;
 
-    // create C-SVM: must be done using the mock class, since plssvm::detail::csvm::blas_level_3 is protected
+    // create C-SVM: must be done using the mock class since the member function to test is private or protected
     const mock_csvm_type svm = util::construct_from_tuple<mock_csvm_type>(csvm_test_type::additional_arguments);
 
-    [[maybe_unused]] const plssvm::real_type alpha{ 1.0 };
-
+    const plssvm::real_type alpha{ 1.0 };
     const plssvm::aos_matrix<plssvm::real_type> matr_A{
         { { plssvm::real_type{ 0.1 }, plssvm::real_type{ 0.2 }, plssvm::real_type{ 0.3 } },
           { plssvm::real_type{ 0.2 }, plssvm::real_type{ 1.2 }, plssvm::real_type{ 1.3 } },
@@ -339,7 +336,7 @@ TYPED_TEST_P(GenericCSVM, blas_level_3_explicit_without_C) {
                                                      { plssvm::real_type{ 7.0 }, plssvm::real_type{ 8.0 }, plssvm::real_type{ 9.0 } } },
                                                    plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE } };
 
-    [[maybe_unused]] const plssvm::real_type beta{ 0.0 };
+    const plssvm::real_type beta{ 0.0 };
     plssvm::soa_matrix<plssvm::real_type> C{ plssvm::shape{ 3, 3 }, plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE } };
     plssvm::soa_matrix<plssvm::real_type> C2{ C };
 
@@ -355,7 +352,7 @@ TYPED_TEST_P(GenericCSVM, blas_level_3_explicit_without_C) {
 
     // check wrapper function
     std::ignore = svm.run_blas_level_3(solver, alpha, A, B, beta, C2);
-    EXPECT_EQ(C2, C);
+    EXPECT_FLOATING_POINT_MATRIX_EQ(C2, C);
 }
 
 TYPED_TEST_P(GenericCSVM, blas_level_3_streaming_without_C) {
@@ -370,10 +367,10 @@ TYPED_TEST_P(GenericCSVM, blas_level_3_explicit) {
 
     constexpr plssvm::solver_type solver = plssvm::solver_type::cg_explicit;
 
-    // create C-SVM: must be done using the mock class, since plssvm::detail::csvm::blas_level_3 is protected
+    // create C-SVM: must be done using the mock class since the member function to test is private or protected
     const mock_csvm_type svm = util::construct_from_tuple<mock_csvm_type>(csvm_test_type::additional_arguments);
 
-    [[maybe_unused]] const plssvm::real_type alpha{ 1.0 };
+    const plssvm::real_type alpha{ 1.0 };
 
     const plssvm::aos_matrix<plssvm::real_type> matr_A{
         { { plssvm::real_type{ 0.1 }, plssvm::real_type{ 0.2 }, plssvm::real_type{ 0.3 } },
@@ -389,7 +386,7 @@ TYPED_TEST_P(GenericCSVM, blas_level_3_explicit) {
                                                      { plssvm::real_type{ 7.0 }, plssvm::real_type{ 8.0 }, plssvm::real_type{ 9.0 } } },
                                                    plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE } };
 
-    [[maybe_unused]] const plssvm::real_type beta{ 0.5 };
+    const plssvm::real_type beta{ 0.5 };
     auto C = util::generate_specific_matrix<plssvm::soa_matrix<plssvm::real_type>>(plssvm::shape{ 3, 3 }, plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE });
     plssvm::soa_matrix<plssvm::real_type> C2{ C };
 
@@ -404,7 +401,7 @@ TYPED_TEST_P(GenericCSVM, blas_level_3_explicit) {
                                                            plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE } };
 
     EXPECT_FLOATING_POINT_MATRIX_NEAR(C, correct_C);
-    EXPECT_EQ(C2, C);
+    EXPECT_FLOATING_POINT_MATRIX_EQ(C2, C);
 }
 
 TYPED_TEST_P(GenericCSVM, blas_level_3_streaming) {
@@ -420,7 +417,7 @@ TYPED_TEST_P(GenericCSVM, conjugate_gradients_trivial) {
     // solver type doesn't mather since we want to test the surrounding CG algorithm here
     constexpr plssvm::solver_type solver = plssvm::solver_type::cg_explicit;
 
-    // create C-SVM: must be done using the mock class, since plssvm::detail::csvm::conjugate_gradients is protected
+    // create C-SVM: must be done using the mock class since the member function to test is private or protected
     const mock_csvm_type svm = util::construct_from_tuple<mock_csvm_type>(csvm_test_type::additional_arguments);
 
     // create the data that should be used
@@ -454,7 +451,7 @@ TYPED_TEST_P(GenericCSVM, conjugate_gradients) {
     // solver type doesn't mather since we want to test the surrounding CG algorithm here
     constexpr plssvm::solver_type solver = plssvm::solver_type::cg_explicit;
 
-    // create C-SVM: must be done using the mock class, since plssvm::detail::csvm::conjugate_gradients is protected
+    // create C-SVM: must be done using the mock class since the member function to test is private or protected
     const mock_csvm_type svm = util::construct_from_tuple<mock_csvm_type>(csvm_test_type::additional_arguments);
 
     // create the data that should be used
@@ -523,10 +520,10 @@ TYPED_TEST_P(GenericCSVMKernelFunction, blas_level_3_assembly_implicit_without_C
         params.gamma = 1.0;
     }
 
-    // create C-SVM: must be done using the mock class, since plssvm::detail::csvm::blas_level_3 is protected
-    mock_csvm_type svm = util::construct_from_tuple<mock_csvm_type>(params, csvm_test_type::additional_arguments);
+    // create C-SVM: must be done using the mock class since the member function to test is private or protected
+    const mock_csvm_type svm = util::construct_from_tuple<mock_csvm_type>(params, csvm_test_type::additional_arguments);
 
-    [[maybe_unused]] const plssvm::real_type alpha{ 1.0 };
+    const plssvm::real_type alpha{ 1.0 };
 
     const auto matr_A = util::generate_specific_matrix<plssvm::soa_matrix<plssvm::real_type>>(plssvm::shape{ 4, 4 });
     const auto [q, QA_cost] = ground_truth::perform_dimensional_reduction(params, matr_A);
@@ -555,7 +552,7 @@ TYPED_TEST_P(GenericCSVMKernelFunction, blas_level_3_assembly_implicit_without_C
 
     // check for correctness
     EXPECT_FLOATING_POINT_MATRIX_NEAR(C, correct_C);
-    EXPECT_FLOATING_POINT_MATRIX_NEAR(C2, correct_C);
+    EXPECT_FLOATING_POINT_MATRIX_EQ(C, C2);
 }
 
 TYPED_TEST_P(GenericCSVMKernelFunction, blas_level_3_assembly_implicit) {
@@ -578,10 +575,10 @@ TYPED_TEST_P(GenericCSVMKernelFunction, blas_level_3_assembly_implicit) {
         params.gamma = 1.0;
     }
 
-    // create C-SVM: must be done using the mock class, since plssvm::detail::csvm::blas_level_3 is protected
+    // create C-SVM: must be done using the mock class since the member function to test is private or protected
     const mock_csvm_type svm = util::construct_from_tuple<mock_csvm_type>(params, csvm_test_type::additional_arguments);
 
-    [[maybe_unused]] const plssvm::real_type alpha{ 1.0 };
+    const plssvm::real_type alpha{ 1.0 };
 
     const auto matr_A = util::generate_specific_matrix<plssvm::soa_matrix<plssvm::real_type>>(plssvm::shape{ 4, 4 });
     const auto [q, QA_cost] = ground_truth::perform_dimensional_reduction(params, matr_A);
@@ -610,7 +607,7 @@ TYPED_TEST_P(GenericCSVMKernelFunction, blas_level_3_assembly_implicit) {
 
     // check for correctness
     EXPECT_FLOATING_POINT_MATRIX_NEAR(C, correct_C);
-    EXPECT_FLOATING_POINT_MATRIX_NEAR(C2, correct_C);
+    EXPECT_FLOATING_POINT_MATRIX_EQ(C, C2);
 }
 
 TYPED_TEST_P(GenericCSVMKernelFunction, predict_values) {
@@ -641,7 +638,7 @@ TYPED_TEST_P(GenericCSVMKernelFunction, predict_values) {
                                                         { plssvm::real_type{ 1.0 }, plssvm::real_type{ -1.0 }, plssvm::real_type{ 1.0 }, plssvm::real_type{ -1.0 } } },
                                                       plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE } };
 
-    // create C-SVM: must be done using the mock class, since plssvm::detail::csvm::predict_values is protected
+    // create C-SVM: must be done using the mock class since the member function to test is private or protected
     const mock_csvm_type svm = util::construct_from_tuple<mock_csvm_type>(params, csvm_test_type::additional_arguments);
 
     // be sure to use the correct data distribution
@@ -703,7 +700,7 @@ TYPED_TEST_P(GenericCSVMKernelFunction, predict_values_provided_w) {
                                                                               { plssvm::real_type{ 4.0 }, plssvm::real_type{ 4.0 } } },
                                                                             plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE } };
 
-        // create C-SVM: must be done using the mock class, since plssvm::detail::csvm::predict_values is protected
+        // create C-SVM: must be done using the mock class since the member function to test is private or protected
         const mock_csvm_type svm = util::construct_from_tuple<mock_csvm_type>(params, csvm_test_type::additional_arguments);
 
         // be sure to use the correct data distribution
@@ -731,7 +728,7 @@ TYPED_TEST_P(GenericCSVMKernelFunction, perform_dimensional_reduction) {
 
     const auto data = util::generate_random_matrix<plssvm::soa_matrix<plssvm::real_type>>(plssvm::shape{ 6, 4 }, plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE });
 
-    // create C-SVM: must be done using the mock class, since plssvm::detail::csvm::perform_dimensional_reduction is protected
+    // create C-SVM: must be done using the mock class since the member function to test is private or protected
     const mock_csvm_type svm = util::construct_from_tuple<mock_csvm_type>(params, csvm_test_type::additional_arguments);
 
     // perform dimensional reduction
@@ -791,7 +788,7 @@ TYPED_TEST_P(GenericCSVMSolverKernelFunction, solve_lssvm_system_of_linear_equat
     const plssvm::aos_matrix<plssvm::real_type> B{ { { plssvm::real_type{ 1.0 }, plssvm::real_type{ -1.0 }, plssvm::real_type{ 1.0 }, plssvm::real_type{ -1.0 } },
                                                      { plssvm::real_type{ 1.0 }, plssvm::real_type{ -1.0 }, plssvm::real_type{ 1.0 }, plssvm::real_type{ -1.0 } } } };
 
-    // create C-SVM: must be done using the mock class, since plssvm::detail::csvm::solve_lssvm_system_of_linear_equations is protected
+    // create C-SVM: must be done using the mock class since the member function to test is private or protected
     const mock_csvm_type svm = util::construct_from_tuple<mock_csvm_type>(params, csvm_test_type::additional_arguments);
 
     // solve the system of linear equations using the CG algorithm:
@@ -845,7 +842,7 @@ TYPED_TEST_P(GenericCSVMSolverKernelFunction, assemble_kernel_matrix_minimal) {
     [[maybe_unused]] const std::vector<plssvm::real_type> q_red(data.num_cols() - 1, plssvm::real_type{ 0.0 });
     [[maybe_unused]] const plssvm::real_type QA_cost{ 0.0 };
 
-    // create C-SVM: must be done using the mock class, since plssvm::detail::csvm::assemble_kernel_matrix is protected
+    // create C-SVM: must be done using the mock class since the member function to test is private or protected
     const mock_csvm_type svm = util::construct_from_tuple<mock_csvm_type>(params, csvm_test_type::additional_arguments);
     const std::size_t num_devices = svm.num_available_devices();
     // be sure to use the correct data distribution
@@ -960,7 +957,7 @@ TYPED_TEST_P(GenericCSVMSolverKernelFunction, assemble_kernel_matrix) {
     [[maybe_unused]] const std::vector<plssvm::real_type> q_red = { plssvm::real_type{ 3.0 }, plssvm::real_type{ 4.0 } };
     [[maybe_unused]] const plssvm::real_type QA_cost{ 2.0 };
 
-    // create C-SVM: must be done using the mock class, since plssvm::detail::csvm::assemble_kernel_matrix is protected
+    // create C-SVM: must be done using the mock class since the member function to test is private or protected
     const mock_csvm_type svm = util::construct_from_tuple<mock_csvm_type>(params, csvm_test_type::additional_arguments);
     const std::size_t num_devices = svm.num_available_devices();
     // be sure to use the correct data distribution
@@ -1082,7 +1079,7 @@ TYPED_TEST_P(GenericCSVMKernelFunctionClassification, predict) {
     // read the previously learned model
     const plssvm::model<label_type> model{ fmt::format(PLSSVM_TEST_PATH "/data/predict/50x20_{}_{}_{}.libsvm.model", plssvm::detail::arithmetic_type_name<plssvm::real_type>(), kernel, classification) };
 
-    // create C-SVM
+    // create normal C-SVM
     const csvm_type svm = util::construct_from_tuple<csvm_type>(params, csvm_test_type::additional_arguments);
 
     // predict label
@@ -1115,7 +1112,7 @@ TYPED_TEST_P(GenericCSVMKernelFunctionClassification, score_model) {
     // read the previously learned model
     const plssvm::model<label_type> model{ fmt::format(PLSSVM_TEST_PATH "/data/predict/50x20_{}_{}_{}.libsvm.model", plssvm::detail::arithmetic_type_name<plssvm::real_type>(), kernel, classification) };
 
-    // create C-SVM
+    // create normal C-SVM
     const csvm_type svm = util::construct_from_tuple<csvm_type>(params, csvm_test_type::additional_arguments);
 
     // score model
@@ -1143,7 +1140,7 @@ TYPED_TEST_P(GenericCSVMKernelFunctionClassification, score) {
     // read the previously learned model
     const plssvm::model<label_type> model{ fmt::format(PLSSVM_TEST_PATH "/data/predict/50x20_{}_{}_{}.libsvm.model", plssvm::detail::arithmetic_type_name<plssvm::real_type>(), kernel, classification) };
 
-    // create C-SVM
+    // create normal C-SVM
     const csvm_type svm = util::construct_from_tuple<csvm_type>(params, csvm_test_type::additional_arguments);
 
     // score the test data using the learned model
@@ -1192,7 +1189,7 @@ TYPED_TEST_P(GenericCSVMSolverKernelFunctionClassification, fit) {
     // read the previously learned model
     const plssvm::model<label_type> correct_model{ fmt::format(PLSSVM_TEST_PATH "/data/predict/50x20_{}_{}_{}.libsvm.model", plssvm::detail::arithmetic_type_name<plssvm::real_type>(), kernel, classification) };
 
-    // create C-SVM
+    // create normal C-SVM
     const csvm_type svm = util::construct_from_tuple<csvm_type>(params, csvm_test_type::additional_arguments);
 
     // call fit
@@ -1232,7 +1229,7 @@ TYPED_TEST_P(GenericCSVMDeathTest, blas_level_3_automatic) {
 
     constexpr plssvm::solver_type solver = plssvm::solver_type::automatic;
 
-    // create C-SVM: must be done using the mock class, since plssvm::detail::csvm::blas_level_3 is protected
+    // create C-SVM: must be done using the mock class since the member function to test is private or protected
     const mock_csvm_type svm = util::construct_from_tuple<mock_csvm_type>(csvm_test_type::additional_arguments);
 
     const plssvm::real_type alpha{ 1.0 };
@@ -1251,7 +1248,7 @@ TYPED_TEST_P(GenericCSVMDeathTest, blas_level_3_automatic) {
                                                      { plssvm::real_type{ 7.0 }, plssvm::real_type{ 8.0 }, plssvm::real_type{ 9.0 } } },
                                                    plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE } };
 
-    [[maybe_unused]] const plssvm::real_type beta{ 0.0 };
+    const plssvm::real_type beta{ 0.0 };
     plssvm::soa_matrix<plssvm::real_type> C{ plssvm::shape{ 3, 3 }, plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE } };
 
     // automatic solver type not permitted
@@ -1273,7 +1270,7 @@ TYPED_TEST_P(GenericCSVMSolverDeathTest, conjugate_gradients_empty_B) {
     using device_ptr_type = typename csvm_test_type::device_ptr_type;
     constexpr plssvm::solver_type solver = util::test_parameter_value_at_v<0, TypeParam>;
 
-    // create mock_csvm (since plssvm::csvm is pure virtual!)
+    // create C-SVM: must be done using the mock class since the member function to test is private or protected
     const mock_csvm_type svm{};
 
     const plssvm::soa_matrix<plssvm::real_type> matr_A{ plssvm::shape{ 4, 4 } };
@@ -1299,7 +1296,7 @@ TYPED_TEST_P(GenericCSVMSolverDeathTest, conjugate_gradients_invalid_eps) {
     using device_ptr_type = typename csvm_test_type::device_ptr_type;
     constexpr plssvm::solver_type solver = util::test_parameter_value_at_v<0, TypeParam>;
 
-    // create mock_csvm
+    // create C-SVM: must be done using the mock class since the member function to test is private or protected
     const mock_csvm_type svm{};
 
     const plssvm::soa_matrix<plssvm::real_type> matr_A{ plssvm::shape{ 4, 4 } };
@@ -1325,7 +1322,7 @@ TYPED_TEST_P(GenericCSVMSolverDeathTest, conjugate_gradients_invalid_max_cg_iter
     using device_ptr_type = typename csvm_test_type::device_ptr_type;
     constexpr plssvm::solver_type solver = util::test_parameter_value_at_v<0, TypeParam>;
 
-    // create mock_csvm
+    // create C-SVM: must be done using the mock class since the member function to test is private or protected
     const mock_csvm_type svm{};
 
     const plssvm::soa_matrix<plssvm::real_type> matr_A{ plssvm::shape{ 4, 4 } };
@@ -1353,7 +1350,7 @@ TYPED_TEST_P(GenericCSVMSolverDeathTest, run_blas_level_3_wrong_number_of_kernel
     if constexpr (solver == plssvm::solver_type::automatic) {
         SUCCEED() << "Test not applicable for the automatic solver type!";
     } else {
-        // create mock_csvm
+        // create C-SVM: must be done using the mock class since the member function to test is private or protected
         const mock_csvm_type svm{};
 
         const plssvm::soa_matrix<plssvm::real_type> matr_A{ plssvm::shape{ 4, 4 } };
@@ -1385,7 +1382,7 @@ TYPED_TEST_P(GenericCSVMSolverDeathTest, blas_level_3_empty_matrices) {
     if constexpr (solver == plssvm::solver_type::automatic) {
         SUCCEED() << "Test not applicable for the automatic solver type!";
     } else {
-        // create mock_csvm
+        // create C-SVM: must be done using the mock class since the member function to test is private or protected
         const mock_csvm_type svm{};
 
         const plssvm::soa_matrix<plssvm::real_type> matr_A{ plssvm::shape{ 4, 4 } };
@@ -1416,7 +1413,7 @@ TYPED_TEST_P(GenericCSVMSolverDeathTest, blas_level_3_missing_padding) {
     if constexpr (solver == plssvm::solver_type::automatic) {
         SUCCEED() << "Test not applicable for the automatic solver type!";
     } else {
-        // create mock_csvm
+        // create C-SVM: must be done using the mock class since the member function to test is private or protected
         const mock_csvm_type svm{};
 
         const plssvm::soa_matrix<plssvm::real_type> matr_A{ plssvm::shape{ 4, 4 } };
@@ -1447,7 +1444,7 @@ TYPED_TEST_P(GenericCSVMSolverDeathTest, blas_level_3_matrix_shape_mismatch) {
     if constexpr (solver == plssvm::solver_type::automatic) {
         SUCCEED() << "Test not applicable for the automatic solver type!";
     } else {
-        // create mock_csvm
+        // create C-SVM: must be done using the mock class since the member function to test is private or protected
         const mock_csvm_type svm{};
 
         const plssvm::soa_matrix<plssvm::real_type> matr_A{ plssvm::shape{ 4, 4 } };
@@ -1478,7 +1475,7 @@ TYPED_TEST_P(GenericCSVMSolverDeathTest, blas_level_3_matrix_padding_mismatch) {
     if constexpr (solver == plssvm::solver_type::automatic) {
         SUCCEED() << "Test not applicable for the automatic solver type!";
     } else {
-        // create mock_csvm
+        // create C-SVM: must be done using the mock class since the member function to test is private or protected
         const mock_csvm_type svm{};
 
         const plssvm::soa_matrix<plssvm::real_type> matr_A{ plssvm::shape{ 4, 4 } };
@@ -1522,7 +1519,7 @@ TYPED_TEST_P(GenericCSVMKernelFunctionDeathTest, solve_lssvm_system_of_linear_eq
     // create parameter
     const plssvm::parameter params{ plssvm::kernel_type = kernel };
 
-    // create mock_csvm
+    // create C-SVM: must be done using the mock class since the member function to test is private or protected
     const mock_csvm_type svm{};
 
     // create empty matrix
@@ -1540,7 +1537,7 @@ TYPED_TEST_P(GenericCSVMKernelFunctionDeathTest, solve_lssvm_system_of_linear_eq
     // create parameter
     const plssvm::parameter params{ plssvm::kernel_type = kernel };
 
-    // create mock_csvm
+    // create C-SVM: must be done using the mock class since the member function to test is private or protected
     const mock_csvm_type svm{};
 
     // create empty matrix
@@ -1558,7 +1555,7 @@ TYPED_TEST_P(GenericCSVMKernelFunctionDeathTest, solve_lssvm_system_of_linear_eq
     // create parameter
     const plssvm::parameter params{ plssvm::kernel_type = kernel };
 
-    // create mock_csvm
+    // create C-SVM: must be done using the mock class since the member function to test is private or protected
     const mock_csvm_type svm{};
 
     // create empty matrix
@@ -1577,7 +1574,7 @@ TYPED_TEST_P(GenericCSVMKernelFunctionDeathTest, solve_lssvm_system_of_linear_eq
     // create parameter
     const plssvm::parameter params{ plssvm::kernel_type = kernel };
 
-    // create mock_csvm
+    // create C-SVM: must be done using the mock class since the member function to test is private or protected
     const mock_csvm_type svm{};
 
     // create empty matrix
@@ -1595,7 +1592,7 @@ TYPED_TEST_P(GenericCSVMKernelFunctionDeathTest, solve_lssvm_system_of_linear_eq
     // create parameter
     const plssvm::parameter params{ plssvm::kernel_type = kernel };
 
-    // create mock_csvm
+    // create C-SVM: must be done using the mock class since the member function to test is private or protected
     const mock_csvm_type svm{};
 
     // create empty matrix
@@ -1613,7 +1610,7 @@ TYPED_TEST_P(GenericCSVMKernelFunctionDeathTest, perform_dimensional_reduction_e
     // create parameter
     const plssvm::parameter params{ plssvm::kernel_type = kernel };
 
-    // create mock_csvm
+    // create C-SVM: must be done using the mock class since the member function to test is private or protected
     const mock_csvm_type svm{};
 
     // create empty matrix
@@ -1630,7 +1627,7 @@ TYPED_TEST_P(GenericCSVMKernelFunctionDeathTest, assemble_kernel_matrix_automati
     // create parameter
     const plssvm::parameter params{ plssvm::kernel_type = kernel };
 
-    // create mock_csvm
+    // create C-SVM: must be done using the mock class since the member function to test is private or protected
     const mock_csvm_type svm{};
 
     // create correct input matrices
@@ -1653,7 +1650,7 @@ TYPED_TEST_P(GenericCSVMKernelFunctionDeathTest, predict_values_empty_matrices) 
     // create parameter
     const plssvm::parameter params{ plssvm::kernel_type = kernel };
 
-    // create mock_csvm
+    // create C-SVM: must be done using the mock class since the member function to test is private or protected
     const mock_csvm_type svm{};
 
     // create empty matrix
@@ -1686,7 +1683,7 @@ TYPED_TEST_P(GenericCSVMKernelFunctionDeathTest, predict_values_missing_padding)
     // create parameter
     const plssvm::parameter params{ plssvm::kernel_type = kernel };
 
-    // create mock_csvm
+    // create C-SVM: must be done using the mock class since the member function to test is private or protected
     const mock_csvm_type svm{};
 
     // create empty matrix
@@ -1725,7 +1722,7 @@ TYPED_TEST_P(GenericCSVMKernelFunctionDeathTest, predict_values_sv_alpha_size_mi
     // create parameter
     const plssvm::parameter params{ plssvm::kernel_type = kernel };
 
-    // create mock_csvm
+    // create C-SVM: must be done using the mock class since the member function to test is private or protected
     const mock_csvm_type svm{};
 
     // create correct input matrices
@@ -1750,7 +1747,7 @@ TYPED_TEST_P(GenericCSVMKernelFunctionDeathTest, predict_values_rho_alpha_size_m
     // create parameter
     const plssvm::parameter params{ plssvm::kernel_type = kernel };
 
-    // create mock_csvm
+    // create C-SVM: must be done using the mock class since the member function to test is private or protected
     const mock_csvm_type svm{};
 
     // create correct input matrices
@@ -1775,7 +1772,7 @@ TYPED_TEST_P(GenericCSVMKernelFunctionDeathTest, predict_values_w_size_mismatch)
     // create parameter
     const plssvm::parameter params{ plssvm::kernel_type = kernel };
 
-    // create mock_csvm
+    // create C-SVM: must be done using the mock class since the member function to test is private or protected
     const mock_csvm_type svm{};
 
     // create correct input matrices
@@ -1803,7 +1800,7 @@ TYPED_TEST_P(GenericCSVMKernelFunctionDeathTest, predict_values_num_features_mis
     // create parameter
     const plssvm::parameter params{ plssvm::kernel_type = kernel };
 
-    // create mock_csvm
+    // create C-SVM: must be done using the mock class since the member function to test is private or protected
     const mock_csvm_type svm{};
 
     // create correct input matrices
@@ -1852,7 +1849,7 @@ TYPED_TEST_P(GenericCSVMSolverKernelFunctionDeathTest, assemble_kernel_matrix_em
         // create parameter
         const plssvm::parameter params{ plssvm::kernel_type = kernel };
 
-        // create mock_csvm
+        // create C-SVM: must be done using the mock class since the member function to test is private or protected
         const mock_csvm_type svm{};
 
         // create correct input matrices
@@ -1885,7 +1882,7 @@ TYPED_TEST_P(GenericCSVMSolverKernelFunctionDeathTest, assemble_kernel_matrix_A_
         // create parameter
         const plssvm::parameter params{ plssvm::kernel_type = kernel };
 
-        // create mock_csvm
+        // create C-SVM: must be done using the mock class since the member function to test is private or protected
         const mock_csvm_type svm{};
 
         // create correct input matrices
@@ -1913,7 +1910,7 @@ TYPED_TEST_P(GenericCSVMSolverKernelFunctionDeathTest, assemble_kernel_matrix_si
         // create parameter
         const plssvm::parameter params{ plssvm::kernel_type = kernel };
 
-        // create mock_csvm
+        // create C-SVM: must be done using the mock class since the member function to test is private or protected
         const mock_csvm_type svm{};
 
         // create correct input matrices

@@ -41,7 +41,7 @@ class mock_csvm final : public plssvm::csvm {
     // mock pure virtual functions
     MOCK_METHOD((std::vector<plssvm::detail::memory_size>), get_device_memory, (), (const, override));
     MOCK_METHOD((std::vector<plssvm::detail::memory_size>), get_max_mem_alloc_size, (), (const, override));
-    MOCK_METHOD((std::size_t), num_available_devices, (), (const, override));
+    MOCK_METHOD((std::size_t), num_available_devices, (), (const, noexcept, override));
     MOCK_METHOD((std::vector<plssvm::detail::move_only_any>), assemble_kernel_matrix, (plssvm::solver_type, const plssvm::parameter &, const plssvm::soa_matrix<plssvm::real_type> &, const std::vector<plssvm::real_type> &, plssvm::real_type), (const, override));
     MOCK_METHOD((void), blas_level_3, (plssvm::solver_type, plssvm::real_type, const std::vector<plssvm::detail::move_only_any> &, const plssvm::soa_matrix<plssvm::real_type> &, plssvm::real_type, plssvm::soa_matrix<plssvm::real_type> &), (const, override));
     MOCK_METHOD((plssvm::aos_matrix<plssvm::real_type>), predict_values, (const plssvm::parameter &, const plssvm::soa_matrix<plssvm::real_type> &, const plssvm::aos_matrix<plssvm::real_type> &, const std::vector<plssvm::real_type> &, plssvm::soa_matrix<plssvm::real_type> &, const plssvm::soa_matrix<plssvm::real_type> &), (const, override));

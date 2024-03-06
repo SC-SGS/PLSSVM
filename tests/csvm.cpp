@@ -43,7 +43,7 @@
 class BaseCSVM : public ::testing::Test { };
 
 TEST(BaseCSVM, default_construct_from_parameter) {
-    // create mock_csvm using the default parameter (since plssvm::csvm is pure virtual!)
+    // create C-SVM: must be done using the mock class since the csvm base class is pure virtual
     const mock_csvm csvm{};
 
     // check whether the parameters have been set correctly
@@ -51,10 +51,10 @@ TEST(BaseCSVM, default_construct_from_parameter) {
 }
 
 TEST(BaseCSVM, construct_from_parameter) {
-    // create parameter class
+    // create parameter
     const plssvm::parameter params{ plssvm::kernel_function_type::polynomial, 4, plssvm::real_type{ 0.2 }, plssvm::real_type{ 0.1 }, plssvm::real_type{ 0.01 } };
 
-    // create mock_csvm (since plssvm::csvm is pure virtual!)
+    // create C-SVM: must be done using the mock class since the csvm base class is pure virtual
     const mock_csvm csvm{ params };
 
     // check whether the parameters have been set correctly
@@ -62,30 +62,30 @@ TEST(BaseCSVM, construct_from_parameter) {
 }
 
 TEST(BaseCSVM, construct_from_parameter_invalid_kernel_type) {
-    // create parameter class
+    // create parameter
     const plssvm::parameter params{ plssvm::kernel_type = static_cast<plssvm::kernel_function_type>(3) };
 
-    // creating a mock_csvm (since plssvm::csvm is pure virtual!) with an invalid kernel type must throw
+    // create C-SVM: must be done using the mock class since the csvm base class is pure virtual
     EXPECT_THROW_WHAT(mock_csvm{ params },
                       plssvm::invalid_parameter_exception,
                       "Invalid kernel function 3 given!");
 }
 
 TEST(BaseCSVM, construct_from_parameter_invalid_gamma) {
-    // create parameter class
+    // create parameter
     const plssvm::parameter params{ plssvm::kernel_type = plssvm::kernel_function_type::polynomial, plssvm::gamma = -1.0 };
 
-    // creating a mock_csvm (since plssvm::csvm is pure virtual!) with an invalid value for gamma must throw
+    // create C-SVM: must be done using the mock class since the csvm base class is pure virtual
     EXPECT_THROW_WHAT(mock_csvm{ params },
                       plssvm::invalid_parameter_exception,
                       "gamma must be greater than 0.0, but is -1!");
 }
 
 TEST(BaseCSVM, construct_linear_from_named_parameters) {
-    // correct parameters
+    // correct parameter
     const plssvm::parameter params{ plssvm::kernel_type = plssvm::kernel_function_type::linear, plssvm::cost = 2.0 };
 
-    // create mock_csvm (since plssvm::csvm is pure virtual!)
+    // create C-SVM: must be done using the mock class since the csvm base class is pure virtual
     const mock_csvm csvm{ plssvm::kernel_type = params.kernel_type, plssvm::cost = params.cost };
 
     // check whether the parameters have been set correctly
@@ -93,10 +93,10 @@ TEST(BaseCSVM, construct_linear_from_named_parameters) {
 }
 
 TEST(BaseCSVM, construct_polynomial_from_named_parameters) {
-    // correct parameters
+    // correct parameter
     const plssvm::parameter params{ plssvm::kernel_function_type::polynomial, 4, plssvm::real_type{ 0.1 }, plssvm::real_type{ 1.2 }, plssvm::real_type{ 0.001 } };
 
-    // create mock_csvm (since plssvm::csvm is pure virtual!)
+    // create C-SVM: must be done using the mock class since the csvm base class is pure virtual
     const mock_csvm csvm{ plssvm::kernel_type = params.kernel_type,
                           plssvm::degree = params.degree,
                           plssvm::gamma = params.gamma,
@@ -108,10 +108,10 @@ TEST(BaseCSVM, construct_polynomial_from_named_parameters) {
 }
 
 TEST(BaseCSVM, construct_rbf_from_named_parameters) {
-    // correct parameters
+    // correct parameter
     const plssvm::parameter params{ plssvm::kernel_type = plssvm::kernel_function_type::rbf, plssvm::gamma = 0.00001, plssvm::cost = 10.0 };
 
-    // create mock_csvm (since plssvm::csvm is pure virtual!)
+    // create C-SVM: must be done using the mock class since the csvm base class is pure virtual
     const mock_csvm csvm{ plssvm::kernel_type = params.kernel_type,
                           plssvm::gamma = params.gamma,
                           plssvm::cost = params.cost };
@@ -121,31 +121,31 @@ TEST(BaseCSVM, construct_rbf_from_named_parameters) {
 }
 
 TEST(BaseCSVM, construct_from_named_parameters_invalid_kernel_type) {
-    // creating a mock_csvm (since plssvm::csvm is pure virtual!) with an invalid kernel type must throw
+    // create C-SVM: must be done using the mock class since the csvm base class is pure virtual
     EXPECT_THROW_WHAT(mock_csvm{ plssvm::kernel_type = static_cast<plssvm::kernel_function_type>(3) },
                       plssvm::invalid_parameter_exception,
                       "Invalid kernel function 3 given!");
 }
 
 TEST(BaseCSVM, construct_from_named_parameters_invalid_gamma) {
-    // creating a mock_csvm (since plssvm::csvm is pure virtual!) with an invalid value for gamma must throw
+    // create C-SVM: must be done using the mock class since the csvm base class is pure virtual
     EXPECT_THROW_WHAT((mock_csvm{ plssvm::kernel_type = plssvm::kernel_function_type::polynomial, plssvm::gamma = -1.0 }),
                       plssvm::invalid_parameter_exception,
                       "gamma must be greater than 0.0, but is -1!");
 }
 
 TEST(BaseCSVM, get_target_platforms) {
-    // create mock_csvm (since plssvm::csvm is pure virtual!)
+    // create C-SVM: must be done using the mock class since the csvm base class is pure virtual
     const mock_csvm csvm{};
 
     EXPECT_EQ(csvm.get_target_platform(), plssvm::target_platform::automatic);
 }
 
 TEST(BaseCSVM, get_params) {
-    // create parameter class
+    // create parameter
     const plssvm::parameter params{ plssvm::kernel_function_type::polynomial, 4, plssvm::real_type{ 0.2 }, plssvm::real_type{ 0.1 }, plssvm::real_type{ 0.01 } };
 
-    // create mock_csvm (since plssvm::csvm is pure virtual!)
+    // create C-SVM: must be done using the mock class since the csvm base class is pure virtual
     const mock_csvm csvm{ params };
 
     // check whether the parameters have been set correctly
@@ -155,11 +155,11 @@ TEST(BaseCSVM, get_params) {
 }
 
 TEST(BaseCSVM, set_params_from_parameter) {
-    // create mock_csvm (since plssvm::csvm is pure virtual!)
+    // create C-SVM: must be done using the mock class since the csvm base class is pure virtual
     mock_csvm csvm{};
     ASSERT_EQ(csvm.get_params(), plssvm::parameter{});
 
-    // create parameter class
+    // create parameter
     const plssvm::parameter params{ plssvm::kernel_function_type::polynomial, 4, plssvm::real_type{ 0.2 }, plssvm::real_type{ 0.1 }, plssvm::real_type{ 0.01 } };
 
     // set csvm parameter to new values
@@ -170,11 +170,11 @@ TEST(BaseCSVM, set_params_from_parameter) {
 }
 
 TEST(BaseCSVM, set_params_from_named_parameters) {
-    // create mock_csvm (since plssvm::csvm is pure virtual!)
+    // create C-SVM: must be done using the mock class since the csvm base class is pure virtual
     mock_csvm csvm{};
     ASSERT_EQ(csvm.get_params(), plssvm::parameter{});
 
-    // create parameter class
+    // create parameter
     const plssvm::parameter params{ plssvm::kernel_function_type::polynomial, 4, plssvm::real_type{ 0.2 }, plssvm::real_type{ 0.1 }, plssvm::real_type{ 0.01 } };
 
     // set csvm parameter to new values
@@ -254,6 +254,7 @@ class BaseCSVMWarning : public BaseCSVM,
 
 TEST_F(BaseCSVMWarning, construct_unused_parameter_warning_degree) {
     // start capture of std::clog
+    // create C-SVM: must be done using the mock class since the csvm base class is pure virtual
     [[maybe_unused]] const mock_csvm csvm{ plssvm::kernel_type = plssvm::kernel_function_type::linear, plssvm::degree = 2 };
     // end capture of std::clog
 
@@ -262,6 +263,7 @@ TEST_F(BaseCSVMWarning, construct_unused_parameter_warning_degree) {
 
 TEST_F(BaseCSVMWarning, construct_unused_parameter_warning_gamma) {
     // start capture of std::clog
+    // create C-SVM: must be done using the mock class since the csvm base class is pure virtual
     [[maybe_unused]] const mock_csvm csvm{ plssvm::kernel_type = plssvm::kernel_function_type::linear, plssvm::gamma = 0.1 };
     // end capture of std::clog
 
@@ -270,6 +272,7 @@ TEST_F(BaseCSVMWarning, construct_unused_parameter_warning_gamma) {
 
 TEST_F(BaseCSVMWarning, construct_unused_parameter_warning_coef0) {
     // start capture of std::clog
+    // create C-SVM: must be done using the mock class since the csvm base class is pure virtual
     [[maybe_unused]] const mock_csvm csvm{ plssvm::kernel_type = plssvm::kernel_function_type::linear, plssvm::coef0 = 0.1 };
     // end capture of std::clog
 
@@ -347,14 +350,13 @@ TYPED_TEST(BaseCSVMFit, fit) {
         GTEST_SKIP() << "Currently not implemented!";
     }
 
-    // create mock_csvm (since plssvm::csvm is pure virtual!)
+    // create C-SVM: must be done using the mock class since the csvm base class is pure virtual
     const mock_csvm csvm{ plssvm::parameter{ plssvm::kernel_type = kernel } };
     const std::size_t num_devices = csvm.num_available_devices();
 
     // determine the EXPECT_CALL values for the current classification type
     const int num_calls = classification == plssvm::classification_type::oaa ? 1 : static_cast<int>(util::calculate_number_of_classifiers(plssvm::classification_type::oao, util::get_num_classes<label_type>()));
 
-    // mock the solve_lssvm_system_of_linear_equations function
     // clang-format off
     if constexpr (solver == plssvm::solver_type::automatic) {
         EXPECT_CALL(csvm, get_device_memory()).Times(num_calls);
@@ -373,8 +375,8 @@ TYPED_TEST(BaseCSVMFit, fit) {
                         .WillRepeatedly(::testing::Invoke([num_devices]() {
                             std::vector<plssvm::detail::move_only_any> res(num_devices);
                             for (std::size_t device_id = 0; device_id < num_devices; ++device_id) {
-                                res[device_id] = plssvm::detail::move_only_any{ util::generate_random_matrix<plssvm::soa_matrix<plssvm::real_type>>(plssvm::shape{ 5, 5 },
-                                                                                                                                                    plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE }) };
+                                auto matr = util::generate_random_matrix<plssvm::soa_matrix<plssvm::real_type>>(plssvm::shape{ 5, 5 }, plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE });
+                                res[device_id] = plssvm::detail::move_only_any{ std::move(matr) };
                             }
                             return res; }));
     EXPECT_CALL(csvm, blas_level_3(
@@ -411,7 +413,7 @@ TYPED_TEST(BaseCSVMFit, fit_named_parameters) {
         GTEST_SKIP() << "Currently not implemented!";
     }
 
-    // create mock_csvm (since plssvm::csvm is pure virtual!)
+    // create C-SVM: must be done using the mock class since the csvm base class is pure virtual
     const mock_csvm csvm{ plssvm::parameter{ plssvm::kernel_type = kernel } };
     const std::size_t num_devices = csvm.num_available_devices();
 
@@ -419,7 +421,6 @@ TYPED_TEST(BaseCSVMFit, fit_named_parameters) {
     const int num_calls = classification == plssvm::classification_type::oaa ? 1 : static_cast<int>(util::calculate_number_of_classifiers(plssvm::classification_type::oao, util::get_num_classes<label_type>()));
     const int max_iter = 20;
 
-    // mock the solve_lssvm_system_of_linear_equations function
     // clang-format off
     if constexpr (solver == plssvm::solver_type::automatic) {
         EXPECT_CALL(csvm, get_device_memory()).Times(num_calls);
@@ -478,7 +479,7 @@ TYPED_TEST(BaseCSVMFit, fit_named_parameters_invalid_epsilon) {
     // create mock_csvm (since plssvm::csvm is pure virtual!)
     const mock_csvm csvm{ plssvm::parameter{ plssvm::kernel_type = kernel } };
 
-    // mock the solve_lssvm_system_of_linear_equations function -> since an exception should be triggered, the mocked function should never be called
+    // since an exception should be triggered, the mocked function should never be called
     // clang-format off
     EXPECT_CALL(csvm, get_device_memory()).Times(0);
     EXPECT_CALL(csvm, num_available_devices()).Times(0);
@@ -517,10 +518,10 @@ TYPED_TEST(BaseCSVMFit, fit_named_parameters_invalid_max_iter) {
     constexpr plssvm::kernel_function_type kernel = TestFixture::fixture_kernel;
     constexpr plssvm::classification_type classification = TestFixture::fixture_classification;
 
-    // create mock_csvm (since plssvm::csvm is pure virtual!)
+    // create C-SVM: must be done using the mock class since the csvm base class is pure virtual
     const mock_csvm csvm{ plssvm::parameter{ plssvm::kernel_type = kernel } };
 
-    // mock the solve_lssvm_system_of_linear_equations function -> since an exception should be triggered, the mocked function should never be called
+    // since an exception should be triggered, the mocked function should never be called
     // clang-format off
     EXPECT_CALL(csvm, get_device_memory()).Times(0);
     EXPECT_CALL(csvm, num_available_devices()).Times(0);
@@ -559,10 +560,10 @@ TYPED_TEST(BaseCSVMFit, fit_no_label) {
     constexpr plssvm::kernel_function_type kernel = TestFixture::fixture_kernel;
     constexpr plssvm::classification_type classification = TestFixture::fixture_classification;
 
-    // create mock_csvm (since plssvm::csvm is pure virtual!)
+    // create C-SVM: must be done using the mock class since the csvm base class is pure virtual
     const mock_csvm csvm{ plssvm::parameter{ plssvm::kernel_type = kernel } };
 
-    // mock the solve_lssvm_system_of_linear_equations function -> since an exception should be triggered, the mocked function should never be called
+    // since an exception should be triggered, the mocked function should never be called
     // clang-format off
     EXPECT_CALL(csvm, get_device_memory()).Times(0);
     EXPECT_CALL(csvm, num_available_devices()).Times(0);
@@ -604,7 +605,7 @@ TYPED_TEST(BaseCSVMPredict, predict) {
     using label_type = typename TestFixture::fixture_label_type;
     constexpr plssvm::classification_type classification = TestFixture::fixture_classification;
 
-    // create mock_csvm (since plssvm::csvm is pure virtual!)
+    // create C-SVM: must be done using the mock class since the csvm base class is pure virtual
     const mock_csvm csvm{};
 
     // determine the EXPECT_CALL values for the current classification type
@@ -636,7 +637,7 @@ TYPED_TEST(BaseCSVMPredict, predict) {
 TYPED_TEST(BaseCSVMPredict, predict_num_feature_mismatch) {
     using label_type = typename TestFixture::fixture_label_type;
 
-    // create mock_csvm (since plssvm::csvm is pure virtual!)
+    // create C-SVM: must be done using the mock class since the csvm base class is pure virtual
     const mock_csvm csvm{};
 
     // mock the predict_values function -> since an exception should be triggered, the mocked function should never be called
@@ -669,7 +670,7 @@ TYPED_TEST(BaseCSVMScore, score_model) {
     using label_type = typename TestFixture::fixture_label_type;
     constexpr plssvm::classification_type classification = TestFixture::fixture_classification;
 
-    // create mock_csvm (since plssvm::csvm is pure virtual!)
+    // create C-SVM: must be done using the mock class since the csvm base class is pure virtual
     const mock_csvm csvm{};
 
     // determine the EXPECT_CALL values for the current classification type
@@ -701,7 +702,7 @@ TYPED_TEST(BaseCSVMScore, score_data_set) {
     using label_type = typename TestFixture::fixture_label_type;
     constexpr plssvm::classification_type classification = TestFixture::fixture_classification;
 
-    // create mock_csvm (since plssvm::csvm is pure virtual!)
+    // create C-SVM: must be done using the mock class since the csvm base class is pure virtual
     const mock_csvm csvm{};
 
     // determine the EXPECT_CALL values for the current classification type
@@ -733,7 +734,7 @@ TYPED_TEST(BaseCSVMScore, score_data_set) {
 TYPED_TEST(BaseCSVMScore, score_data_set_no_label) {
     using label_type = typename TestFixture::fixture_label_type;
 
-    // create mock_csvm (since plssvm::csvm is pure virtual!)
+    // create C-SVM: must be done using the mock class since the csvm base class is pure virtual
     const mock_csvm csvm{};
 
     // mock the predict_values function -> since an exception should be triggered, the mocked function should never be called
@@ -759,7 +760,7 @@ TYPED_TEST(BaseCSVMScore, score_data_set_no_label) {
 TYPED_TEST(BaseCSVMScore, score_data_set_num_features_mismatch) {
     using label_type = typename TestFixture::fixture_label_type;
 
-    // create mock_csvm (since plssvm::csvm is pure virtual!)
+    // create C-SVM: must be done using the mock class since the csvm base class is pure virtual
     const mock_csvm csvm{};
 
     // mock the predict_values function -> since an exception should be triggered, the mocked function should never be called

@@ -36,9 +36,6 @@
 #include <memory>   // std::unique_ptr, std::make_unique
 #include <vector>   // std::vector
 
-using namespace plssvm::detail::literals;
-using namespace plssvm::operators;
-
 //*************************************************************************************************************************************//
 //                                                 GPU CSVM tests depending on nothing                                                 //
 //*************************************************************************************************************************************//
@@ -50,11 +47,10 @@ class GenericGPUCSVM : public ::testing::Test,
 TYPED_TEST_SUITE_P(GenericGPUCSVM);
 
 TYPED_TEST_P(GenericGPUCSVM, get_max_work_group_size) {
-    using namespace plssvm::detail::literals;
     using csvm_test_type = util::test_parameter_type_at_t<0, TypeParam>;
     using mock_csvm_type = typename csvm_test_type::mock_csvm_type;
 
-    // create C-SVM: must be done using the mock class
+    // create C-SVM: must be done using the mock class since the member function to test is private or protected
     const mock_csvm_type svm = util::construct_from_tuple<mock_csvm_type>(csvm_test_type::additional_arguments);
 
     // the maximum allowed work-group size should be greater than 0!
@@ -71,9 +67,10 @@ TYPED_TEST_P(GenericGPUCSVM, run_blas_level_3_kernel_explicit) {
     const plssvm::parameter params{};
     const plssvm::data_set data{ PLSSVM_TEST_FILE };
 
-    // create C-SVM: must be done using the mock class
+    // create C-SVM: must be done using the mock class since the member function to test is private or protected
     const mock_csvm_type svm = util::construct_from_tuple<mock_csvm_type>(csvm_test_type::additional_arguments);
     const std::size_t num_devices = svm.num_available_devices();
+    // be sure to use the correct data distribution
     svm.data_distribution_ = std::make_unique<plssvm::detail::triangular_data_distribution>(data.num_data_points() - 1, num_devices);
 
     const plssvm::real_type alpha{ 1.0 };
@@ -86,11 +83,11 @@ TYPED_TEST_P(GenericGPUCSVM, run_blas_level_3_kernel_explicit) {
 
     for (std::size_t device_id = 0; device_id < num_devices; ++device_id) {
         SCOPED_TRACE(fmt::format("device_id {} ({}/{})", device_id, device_id + 1, num_devices));
+
         // check whether the current device is responsible for at least one data point!
         if (svm.data_distribution_->place_specific_num_rows(device_id) == 0) {
             continue;
         }
-
         auto &device = svm.devices_[device_id];
 
         // create kernel matrix to use in the BLAS calculation
@@ -138,9 +135,10 @@ TYPED_TEST_P(GenericGPUCSVM, run_w_kernel) {
     // the weights (i.e., alpha values) for all support vectors
     const auto weights = util::generate_specific_matrix<plssvm::aos_matrix<plssvm::real_type>>(plssvm::shape{ 3, data.num_data_points() }, plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE });
 
-    // create C-SVM
+    // create C-SVM: must be done using the mock class since the member function to test is private or protected
     const mock_csvm_type svm = util::construct_from_tuple<mock_csvm_type>(csvm_test_type::additional_arguments);
     const std::size_t num_devices = svm.num_available_devices();
+    // be sure to use the correct data distribution
     svm.data_distribution_ = std::make_unique<plssvm::detail::rectangular_data_distribution>(data.num_data_points(), num_devices);
 
     for (std::size_t device_id = 0; device_id < num_devices; ++device_id) {
@@ -150,7 +148,6 @@ TYPED_TEST_P(GenericGPUCSVM, run_w_kernel) {
         if (svm.data_distribution_->place_specific_num_rows(device_id) == 0) {
             continue;
         }
-
         auto &device = svm.devices_[device_id];
         const std::size_t device_specific_num_rows = svm.data_distribution_->place_specific_num_rows(device_id);
         const std::size_t row_offset = svm.data_distribution_->place_row_offset(device_id);
@@ -182,7 +179,7 @@ TYPED_TEST_P(GenericGPUCSVM, run_w_kernel) {
 }
 
 TYPED_TEST_P(GenericGPUCSVM, run_inplace_matrix_addition) {
-    using namespace plssvm::detail::literals;
+    using namespace plssvm::operators;
     using csvm_test_type = util::test_parameter_type_at_t<0, TypeParam>;
     using mock_csvm_type = typename csvm_test_type::mock_csvm_type;
     using device_ptr_type = typename csvm_test_type::device_ptr_type;
@@ -190,7 +187,7 @@ TYPED_TEST_P(GenericGPUCSVM, run_inplace_matrix_addition) {
     const plssvm::data_set data{ PLSSVM_TEST_FILE };
     const plssvm::soa_matrix<plssvm::real_type> &matr = data.data();
 
-    // create C-SVM
+    // create C-SVM: must be done using the mock class since the member function to test is private or protected
     const mock_csvm_type svm = util::construct_from_tuple<mock_csvm_type>(csvm_test_type::additional_arguments);
     const std::size_t num_devices = svm.num_available_devices();
 
@@ -221,7 +218,7 @@ TYPED_TEST_P(GenericGPUCSVM, run_inplace_matrix_addition) {
 }
 
 TYPED_TEST_P(GenericGPUCSVM, run_inplace_matrix_scale) {
-    using namespace plssvm::detail::literals;
+    using namespace plssvm::operators;
     using csvm_test_type = util::test_parameter_type_at_t<0, TypeParam>;
     using mock_csvm_type = typename csvm_test_type::mock_csvm_type;
     using device_ptr_type = typename csvm_test_type::device_ptr_type;
@@ -230,7 +227,7 @@ TYPED_TEST_P(GenericGPUCSVM, run_inplace_matrix_scale) {
     const plssvm::soa_matrix<plssvm::real_type> &matr = data.data();
     const plssvm::real_type scaling_factor = 3.1415;
 
-    // create C-SVM
+    // create C-SVM: must be done using the mock class since the member function to test is private or protected
     const mock_csvm_type svm = util::construct_from_tuple<mock_csvm_type>(csvm_test_type::additional_arguments);
     const std::size_t num_devices = svm.num_available_devices();
 
@@ -286,9 +283,10 @@ TYPED_TEST_P(GenericGPUCSVMKernelFunction, run_assemble_kernel_matrix_explicit) 
     }
     const plssvm::data_set data{ PLSSVM_TEST_FILE };
 
-    // create C-SVM: must be done using the mock class, since plssvm::detail::gpu_csvm::setup_data_on_device is protected
+    // create C-SVM: must be done using the mock class since the member function to test is private or protected
     const mock_csvm_type svm = util::construct_from_tuple<mock_csvm_type>(params, csvm_test_type::additional_arguments);
     const std::size_t num_devices = svm.num_available_devices();
+    // be sure to use the correct data distribution
     svm.data_distribution_ = std::make_unique<plssvm::detail::triangular_data_distribution>(data.num_data_points() - 1, num_devices);
 
     // perform dimensional reduction
@@ -301,7 +299,6 @@ TYPED_TEST_P(GenericGPUCSVMKernelFunction, run_assemble_kernel_matrix_explicit) 
         if (svm.data_distribution_->place_specific_num_rows(device_id) == 0) {
             continue;
         }
-
         auto &device = svm.devices_[device_id];
 
         // upload complete A and q_red to each device
@@ -315,7 +312,7 @@ TYPED_TEST_P(GenericGPUCSVMKernelFunction, run_assemble_kernel_matrix_explicit) 
         // calculate the current part of the kernel matrix
         const device_ptr_type kernel_matrix_d = svm.run_assemble_kernel_matrix_explicit(device_id, params, data_d, q_red_d, QA_cost);
 
-        // copy the kernel matrix to the CPU
+        // copy the kernel matrix back to the host
         std::vector<plssvm::real_type> kernel_matrix(kernel_matrix_d.size());
         kernel_matrix_d.copy_to_host(kernel_matrix);
 
@@ -340,9 +337,10 @@ TYPED_TEST_P(GenericGPUCSVMKernelFunction, run_assemble_kernel_matrix_implicit_b
     }
     const plssvm::data_set data{ PLSSVM_TEST_FILE };
 
-    // create C-SVM: must be done using the mock class, since plssvm::detail::gpu_csvm::setup_data_on_device is protected
+    // create C-SVM: must be done using the mock class since the member function to test is private or protected
     const mock_csvm_type svm = util::construct_from_tuple<mock_csvm_type>(params, csvm_test_type::additional_arguments);
     const std::size_t num_devices = svm.num_available_devices();
+    // be sure to use the correct data distribution
     svm.data_distribution_ = std::make_unique<plssvm::detail::triangular_data_distribution>(data.num_data_points() - 1, num_devices);
 
     // perform dimensional reduction
@@ -360,8 +358,8 @@ TYPED_TEST_P(GenericGPUCSVMKernelFunction, run_assemble_kernel_matrix_implicit_b
         if (svm.data_distribution_->place_specific_num_rows(device_id) == 0) {
             continue;
         }
-
         auto &device = svm.devices_[device_id];
+
         plssvm::soa_matrix<plssvm::real_type> C{ plssvm::shape{ data.num_classes(), data.num_data_points() - 1 }, plssvm::real_type{ 0.0 }, plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE } };
 
         // upload complete A and q_red to each device
@@ -408,9 +406,10 @@ TYPED_TEST_P(GenericGPUCSVMKernelFunction, run_predict_kernel) {
     const std::vector<plssvm::real_type> rho = util::generate_random_vector<plssvm::real_type>(weights.num_rows());
     const plssvm::soa_matrix<plssvm::real_type> correct_w = ground_truth::calculate_w(weights, data.data());
 
-    // create C-SVM: must be done using the mock class, since plssvm::detail::gpu_csvm::setup_data_on_device is protected
+    // create C-SVM: must be done using the mock class since the member function to test is private or protected
     const mock_csvm_type svm = util::construct_from_tuple<mock_csvm_type>(params, csvm_test_type::additional_arguments);
     const std::size_t num_devices = svm.num_available_devices();
+    // be sure to use the correct data distribution
     svm.data_distribution_ = std::make_unique<plssvm::detail::rectangular_data_distribution>(predict_points.num_rows(), num_devices);
 
     for (std::size_t device_id = 0; device_id < num_devices; ++device_id) {
@@ -420,7 +419,6 @@ TYPED_TEST_P(GenericGPUCSVMKernelFunction, run_predict_kernel) {
         if (svm.data_distribution_->place_specific_num_rows(device_id) == 0) {
             continue;
         }
-
         auto &device = svm.devices_[device_id];
         const std::size_t device_specific_num_rows = svm.data_distribution_->place_specific_num_rows(device_id);
         const std::size_t row_offset = svm.data_distribution_->place_row_offset(device_id);

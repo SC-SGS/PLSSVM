@@ -109,6 +109,12 @@ class csvm {
     [[nodiscard]] target_platform get_target_platform() const noexcept { return target_; }
 
     /**
+     * @brief Return the number of available devices.
+     * @return the number of available devices (`[[nodiscard]]`)
+     */
+    [[nodiscard]] virtual std::size_t num_available_devices() const noexcept = 0;
+
+    /**
      * @brief Return the currently used SVM parameter.
      * @return the SVM parameter (`[[nodiscard]]`)
      */
@@ -204,11 +210,6 @@ class csvm {
      * @return the maximum (single) allocation size per device (`[[nodiscard]]`)
      */
     [[nodiscard]] virtual std::vector<detail::memory_size> get_max_mem_alloc_size() const = 0;
-    /**
-     * @brief Return the number of available devices.
-     * @return the number of available devices (`[[nodiscard]]`)
-     */
-    [[nodiscard]] virtual std::size_t num_available_devices() const = 0;
 
     /**
      * @brief Explicitly assemble the kernel matrix using potentially multiple devices. Backend specific!

@@ -38,7 +38,7 @@ class Exception : public ::testing::Test { };
 TYPED_TEST_SUITE_P(Exception);
 
 // check whether throwing exceptions works as intended
-TYPED_TEST_P(Exception, throwing_excpetion) {
+TYPED_TEST_P(Exception, throwing_exception) {
     using exception_type = typename TypeParam::exception_type;
 
     // throw the specified exception
@@ -81,7 +81,7 @@ TYPED_TEST_P(Exception, exception_what_with_source_location) {
 }
 
 REGISTER_TYPED_TEST_SUITE_P(Exception,
-                            throwing_excpetion,
+                            throwing_exception,
                             exception_source_location,
                             exception_what_with_source_location);
 
