@@ -23,6 +23,7 @@
 
 #include "gmock/gmock.h"  // MOCK_METHOD, ON_CALL, ::testing::Return
 
+#include <cstddef>  // std::size_t
 #include <utility>  // std::forward
 #include <vector>   // std::vector
 
@@ -38,18 +39,19 @@ class mock_csvm final : public plssvm::csvm {
     }
 
     // mock pure virtual functions
-    MOCK_METHOD((plssvm::detail::memory_size), get_device_memory, (), (const, override));
-    MOCK_METHOD((plssvm::detail::memory_size), get_max_mem_alloc_size, (), (const, override));
-    MOCK_METHOD((plssvm::detail::move_only_any), setup_data_on_devices, (plssvm::solver_type, const plssvm::soa_matrix<plssvm::real_type> &), (const, override));
-    MOCK_METHOD((plssvm::detail::move_only_any), assemble_kernel_matrix, (plssvm::solver_type, const plssvm::parameter &, plssvm::detail::move_only_any &, const std::vector<plssvm::real_type> &, plssvm::real_type), (const, override));
-    MOCK_METHOD((void), blas_level_3, (plssvm::solver_type, plssvm::real_type, const plssvm::detail::move_only_any &, const plssvm::soa_matrix<plssvm::real_type> &, plssvm::real_type, plssvm::soa_matrix<plssvm::real_type> &), (const, override));
+    MOCK_METHOD((std::vector<plssvm::detail::memory_size>), get_device_memory, (), (const, override));
+    MOCK_METHOD((std::vector<plssvm::detail::memory_size>), get_max_mem_alloc_size, (), (const, override));
+    MOCK_METHOD((std::size_t), num_available_devices, (), (const, noexcept, override));
+    MOCK_METHOD((std::vector<plssvm::detail::move_only_any>), assemble_kernel_matrix, (plssvm::solver_type, const plssvm::parameter &, const plssvm::soa_matrix<plssvm::real_type> &, const std::vector<plssvm::real_type> &, plssvm::real_type), (const, override));
+    MOCK_METHOD((void), blas_level_3, (plssvm::solver_type, plssvm::real_type, const std::vector<plssvm::detail::move_only_any> &, const plssvm::soa_matrix<plssvm::real_type> &, plssvm::real_type, plssvm::soa_matrix<plssvm::real_type> &), (const, override));
     MOCK_METHOD((plssvm::aos_matrix<plssvm::real_type>), predict_values, (const plssvm::parameter &, const plssvm::soa_matrix<plssvm::real_type> &, const plssvm::aos_matrix<plssvm::real_type> &, const std::vector<plssvm::real_type> &, plssvm::soa_matrix<plssvm::real_type> &, const plssvm::soa_matrix<plssvm::real_type> &), (const, override));
 
   private:
     void fake_functions() const {
         using namespace plssvm::detail::literals;
-        ON_CALL(*this, get_device_memory()).WillByDefault(::testing::Return(1_GiB));
-        ON_CALL(*this, get_max_mem_alloc_size()).WillByDefault(::testing::Return(512_MiB));
+        ON_CALL(*this, get_device_memory()).WillByDefault(::testing::Return(std::vector<plssvm::detail::memory_size>{ 1_GiB, 1_GiB }));
+        ON_CALL(*this, get_max_mem_alloc_size()).WillByDefault(::testing::Return(std::vector<plssvm::detail::memory_size>{ 512_MiB, 256_MiB }));
+        ON_CALL(*this, num_available_devices()).WillByDefault(::testing::Return(2));
     }
 };
 

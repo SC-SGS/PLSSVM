@@ -11,6 +11,7 @@
 #include "plssvm/detail/performance_tracker.hpp"
 
 #include "plssvm/detail/io/file_reader.hpp"  // plssvm::detail::io::file_reader
+#include "plssvm/detail/memory_size.hpp"     // plssvm::detail::memory_size (literals)
 
 #include "tests/naming.hpp"         // naming::test_parameter_to_name
 #include "tests/types_to_test.hpp"  // util::{label_type_gtest, test_parameter_type_at_t}
@@ -20,8 +21,12 @@
 #include "gmock/gmock-matchers.h"  // EXPECT_THAT, ::testing::{HasSubstr}
 #include "gtest/gtest.h"           // TEST, TYPED_TEST_SUITE, TYPED_TEST, EXPECT_EQ, EXPECT_TRUE, EXPECT_FALSE, ::testing::Test
 
-#include <iostream>  // std::cout, std::clog
-#include <string>    // std::string
+#include <filesystem>  // std::filesystem::is_empty
+#include <iostream>    // std::cout, std::clog
+#include <map>         // std::map
+#include <string>      // std::string
+
+using namespace plssvm::detail::literals;
 
 template <typename T>
 class TrackingEntry : public ::testing::Test,
@@ -106,6 +111,7 @@ TEST_F(PerformanceTracker, add_entry_macro) {
     // add different tracking entries
     PLSSVM_DETAIL_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking_entry{ "foo", "bar", 42 }));
     PLSSVM_DETAIL_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking_entry{ "foo", "baz", 3.1415 }));
+    PLSSVM_DETAIL_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking_entry{ "foo", "mem", 1_KiB }));
     PLSSVM_DETAIL_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking_entry{ "", "foobar", 'a' }));
     PLSSVM_DETAIL_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking_entry{ "", "foobar", 'b' }));
 
@@ -116,11 +122,13 @@ TEST_F(PerformanceTracker, add_entry_macro) {
     EXPECT_EQ(entries.size(), 2);
 
     // first category
-    ASSERT_EQ(entries.at("foo").size(), 2);
+    ASSERT_EQ(entries.at("foo").size(), 3);
     ASSERT_EQ(entries.at("foo").at("bar").size(), 1);
     EXPECT_EQ(entries.at("foo").at("bar").front(), "42");
     ASSERT_EQ(entries.at("foo").at("baz").size(), 1);
     EXPECT_EQ(entries.at("foo").at("baz").front(), "3.1415");
+    ASSERT_EQ(entries.at("foo").at("mem").size(), 1);
+    EXPECT_EQ(entries.at("foo").at("mem").front(), "1024");
 
     // second category
     ASSERT_EQ(entries.at("").size(), 1);
@@ -137,6 +145,7 @@ TEST_F(PerformanceTracker, save_macro) {
     // save entries to file
     plssvm::detail::global_tracker->add_tracking_entry(plssvm::detail::tracking_entry{ "foo", "bar", 42 });
     plssvm::detail::global_tracker->add_tracking_entry(plssvm::detail::tracking_entry{ "foo", "baz", 3.1415 });
+    plssvm::detail::global_tracker->add_tracking_entry(plssvm::detail::tracking_entry{ "foo", "mem", 1_KiB });
     plssvm::detail::global_tracker->add_tracking_entry(plssvm::detail::tracking_entry{ "", "foobar", 'a' });
     plssvm::detail::global_tracker->add_tracking_entry(plssvm::detail::tracking_entry{ "", "foobar", 'b' });
     PLSSVM_DETAIL_PERFORMANCE_TRACKER_SAVE(tmp_file.filename);
@@ -152,6 +161,7 @@ TEST_F(PerformanceTracker, save_macro) {
     EXPECT_THAT(reader.buffer(), ::testing::HasSubstr("foo:"));
     EXPECT_THAT(reader.buffer(), ::testing::HasSubstr("bar: 42"));
     EXPECT_THAT(reader.buffer(), ::testing::HasSubstr("baz: 3.1415"));
+    EXPECT_THAT(reader.buffer(), ::testing::HasSubstr("mem: 1024"));
     EXPECT_THAT(reader.buffer(), ::testing::HasSubstr("foobar: [a, b]"));
 
     // the tracking entries must not have changed
@@ -180,6 +190,7 @@ TEST_F(PerformanceTracker, add_generic_tracking_entry) {
     // add different tracking entries
     plssvm::detail::global_tracker->add_tracking_entry(plssvm::detail::tracking_entry{ "foo", "bar", 42 });
     plssvm::detail::global_tracker->add_tracking_entry(plssvm::detail::tracking_entry{ "foo", "baz", 3.1415 });
+    plssvm::detail::global_tracker->add_tracking_entry(plssvm::detail::tracking_entry{ "foo", "mem", 1_KiB });
     plssvm::detail::global_tracker->add_tracking_entry(plssvm::detail::tracking_entry{ "", "foobar", 'a' });
     plssvm::detail::global_tracker->add_tracking_entry(plssvm::detail::tracking_entry{ "", "foobar", 'b' });
 
@@ -190,11 +201,13 @@ TEST_F(PerformanceTracker, add_generic_tracking_entry) {
     EXPECT_EQ(entries.size(), 2);
 
     // first category
-    ASSERT_EQ(entries.at("foo").size(), 2);
+    ASSERT_EQ(entries.at("foo").size(), 3);
     ASSERT_EQ(entries.at("foo").at("bar").size(), 1);
     EXPECT_EQ(entries.at("foo").at("bar").front(), "42");
     ASSERT_EQ(entries.at("foo").at("baz").size(), 1);
     EXPECT_EQ(entries.at("foo").at("baz").front(), "3.1415");
+    ASSERT_EQ(entries.at("foo").at("mem").size(), 1);
+    EXPECT_EQ(entries.at("foo").at("mem").front(), "1024");
 
     // second category
     ASSERT_EQ(entries.at("").size(), 1);
@@ -346,6 +359,7 @@ TEST_F(PerformanceTracker, save_entries_to_file) {
     // save entries to file
     plssvm::detail::global_tracker->add_tracking_entry(plssvm::detail::tracking_entry{ "foo", "bar", 42 });
     plssvm::detail::global_tracker->add_tracking_entry(plssvm::detail::tracking_entry{ "foo", "baz", 3.1415 });
+    plssvm::detail::global_tracker->add_tracking_entry(plssvm::detail::tracking_entry{ "foo", "mem", 1_KiB });
     plssvm::detail::global_tracker->add_tracking_entry(plssvm::detail::tracking_entry{ "", "foobar", 'a' });
     plssvm::detail::global_tracker->add_tracking_entry(plssvm::detail::tracking_entry{ "", "foobar", 'b' });
     plssvm::detail::global_tracker->save(tmp_file.filename);
@@ -361,6 +375,7 @@ TEST_F(PerformanceTracker, save_entries_to_file) {
     EXPECT_THAT(reader.buffer(), ::testing::HasSubstr("foo:"));
     EXPECT_THAT(reader.buffer(), ::testing::HasSubstr("bar: 42"));
     EXPECT_THAT(reader.buffer(), ::testing::HasSubstr("baz: 3.1415"));
+    EXPECT_THAT(reader.buffer(), ::testing::HasSubstr("mem: 1024"));
     EXPECT_THAT(reader.buffer(), ::testing::HasSubstr("foobar: [a, b]"));
 
     // the tracking entries must not have changed
@@ -374,6 +389,7 @@ TEST_F(PerformanceTracker, save_entries_empty_file) {
     // save entries to file
     plssvm::detail::global_tracker->add_tracking_entry(plssvm::detail::tracking_entry{ "foo", "bar", 42 });
     plssvm::detail::global_tracker->add_tracking_entry(plssvm::detail::tracking_entry{ "foo", "baz", 3.1415 });
+    plssvm::detail::global_tracker->add_tracking_entry(plssvm::detail::tracking_entry{ "foo", "mem", 1_KiB });
     plssvm::detail::global_tracker->add_tracking_entry(plssvm::detail::tracking_entry{ "", "foobar", 'a' });
     plssvm::detail::global_tracker->add_tracking_entry(plssvm::detail::tracking_entry{ "", "foobar", 'b' });
     // save to empty file, i.e., dump the performance tracking entries to std::clog
@@ -386,6 +402,7 @@ TEST_F(PerformanceTracker, save_entries_empty_file) {
     EXPECT_THAT(this->get_capture(), ::testing::HasSubstr("foo:"));
     EXPECT_THAT(this->get_capture(), ::testing::HasSubstr("bar: 42"));
     EXPECT_THAT(this->get_capture(), ::testing::HasSubstr("baz: 3.1415"));
+    EXPECT_THAT(this->get_capture(), ::testing::HasSubstr("mem: 1024"));
     EXPECT_THAT(this->get_capture(), ::testing::HasSubstr("foobar: [a, b]"));
 
     // the tracking entries must not have changed
@@ -399,6 +416,7 @@ TEST_F(PerformanceTracker, get_tracking_entries) {
     // add different tracking entries
     plssvm::detail::global_tracker->add_tracking_entry(plssvm::detail::tracking_entry{ "foo", "bar", 42 });
     plssvm::detail::global_tracker->add_tracking_entry(plssvm::detail::tracking_entry{ "foo", "baz", 3.1415 });
+    plssvm::detail::global_tracker->add_tracking_entry(plssvm::detail::tracking_entry{ "foo", "mem", 1_KiB });
     plssvm::detail::global_tracker->add_tracking_entry(plssvm::detail::tracking_entry{ "", "foobar", 'a' });
     plssvm::detail::global_tracker->add_tracking_entry(plssvm::detail::tracking_entry{ "", "foobar", 'b' });
 
@@ -409,9 +427,10 @@ TEST_F(PerformanceTracker, get_tracking_entries) {
     EXPECT_EQ(entries.size(), 2);
 
     // first category
-    ASSERT_EQ(entries.at("foo").size(), 2);
+    ASSERT_EQ(entries.at("foo").size(), 3);
     ASSERT_EQ(entries.at("foo").at("bar").size(), 1);
     ASSERT_EQ(entries.at("foo").at("baz").size(), 1);
+    ASSERT_EQ(entries.at("foo").at("mem").size(), 1);
 
     // second category
     ASSERT_EQ(entries.at("").size(), 1);
@@ -425,6 +444,7 @@ TEST_F(PerformanceTracker, clear_tracking_entries) {
     // add different tracking entries
     plssvm::detail::global_tracker->add_tracking_entry(plssvm::detail::tracking_entry{ "foo", "bar", 42 });
     plssvm::detail::global_tracker->add_tracking_entry(plssvm::detail::tracking_entry{ "foo", "baz", 3.1415 });
+    plssvm::detail::global_tracker->add_tracking_entry(plssvm::detail::tracking_entry{ "foo", "mem", 1_KiB });
     plssvm::detail::global_tracker->add_tracking_entry(plssvm::detail::tracking_entry{ "", "foobar", 'a' });
     plssvm::detail::global_tracker->add_tracking_entry(plssvm::detail::tracking_entry{ "", "foobar", 'b' });
 

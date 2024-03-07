@@ -14,10 +14,12 @@
 #pragma once
 
 #include "plssvm/exceptions/exceptions.hpp"  // plssvm::gpu_device_ptr_exception
+#include "plssvm/matrix.hpp"                 // plssvm::matrix
 #include "plssvm/shape.hpp"                  // plssvm::shape
 
 #include "tests/custom_test_macros.hpp"  // EXPECT_THROW_WHAT, EXPECT_FLOATING_POINT_MATRIX_EQ
 #include "tests/types_to_test.hpp"       // util::test_parameter_type_at_t
+#include "tests/utility.hpp"
 
 #include "gtest//gtest.h"  // TYPED_TEST_SUITE_P, TYPED_TEST_P, REGISTER_TYPED_TEST_SUITE_P, EXPECT_TRUE, EXPECT_FALSE, EXPECT_EQ, EXPECT_NE, EXPECT_DEATH
                            // ::testing::{Test, hasSubstr}
@@ -787,6 +789,68 @@ TYPED_TEST_P(DevicePtr, copy_vector_with_count_too_few_buffer_elements) {
     EXPECT_THROW_WHAT(ptr.copy_to_host(buffer, 1, 7), plssvm::gpu_device_ptr_exception, "Buffer too small to perform copy (needed: 5, provided: 4)!");
 }
 
+TYPED_TEST_P(DevicePtr, copy_vector_strided) {
+    using test_type = typename TestFixture::fixture_test_type;
+    using device_ptr_type = typename test_type::device_ptr_type;
+    using value_type = typename device_ptr_type::value_type;
+    using queue_type = typename test_type::queue_type;
+    const queue_type &queue = test_type::default_queue();
+
+    // construct device_ptr
+    device_ptr_type ptr{ plssvm::shape{ 2, 2 }, queue };
+    ptr.memset(0);
+
+    // create data to copy to the device
+    std::vector<value_type> data(20);  // 5 x 4
+    std::iota(data.begin(), data.end(), value_type{ 0.0 });
+
+    // copy data to the device
+    ptr.copy_to_device_strided(data, 5, 2, 2);
+    // copy data back to the host
+    std::vector<value_type> result(ptr.size());
+    ptr.copy_to_host(result);
+
+    // check values for correctness
+    const std::vector<value_type> correct_result = { 0.0, 1.0, 5.0, 6.0 };
+    EXPECT_EQ(result, correct_result);
+}
+
+TYPED_TEST_P(DevicePtr, copy_vector_strided_invalid_spitch_width_combination) {
+    using test_type = typename TestFixture::fixture_test_type;
+    using device_ptr_type = typename test_type::device_ptr_type;
+    using value_type = typename device_ptr_type::value_type;
+    using queue_type = typename test_type::queue_type;
+    const queue_type &queue = test_type::default_queue();
+
+    // construct device_ptr
+    device_ptr_type ptr{ plssvm::shape{ 2, 2 }, queue };
+    ptr.memset(0);
+
+    // create data to copy to the device
+    std::vector<value_type> data(20);  // 5 x 4
+
+    // copy data to the device
+    EXPECT_THROW_WHAT(ptr.copy_to_device_strided(data, 5, 6, 2), plssvm::gpu_device_ptr_exception, "Invalid width and spitch combination specified (width: 6 <= spitch: 5)!");
+}
+
+TYPED_TEST_P(DevicePtr, copy_vector_strided_submatrix_too_big) {
+    using test_type = typename TestFixture::fixture_test_type;
+    using device_ptr_type = typename test_type::device_ptr_type;
+    using value_type = typename device_ptr_type::value_type;
+    using queue_type = typename test_type::queue_type;
+    const queue_type &queue = test_type::default_queue();
+
+    // construct device_ptr
+    device_ptr_type ptr{ plssvm::shape{ 2, 2 }, queue };
+    ptr.memset(0);
+
+    // create data to copy to the device
+    std::vector<value_type> data(20);  // 5 x 4
+
+    // copy data to the device
+    EXPECT_THROW_WHAT(ptr.copy_to_device_strided(data, 5, 5, 5), plssvm::gpu_device_ptr_exception, "The sub-matrix (5x5) to copy is to big (20)!");
+}
+
 TYPED_TEST_P(DevicePtr, copy_ptr) {
     using test_type = typename TestFixture::fixture_test_type;
     using device_ptr_type = typename test_type::device_ptr_type;
@@ -883,6 +947,188 @@ TYPED_TEST_P(DevicePtr, copy_ptr_with_count_copy_to_too_many) {
     EXPECT_EQ(result, (std::vector<value_type>{ value_type{ 0.0 }, value_type{ 0.0 }, value_type{ 42.0 }, value_type{ 42.0 }, value_type{ 42.0 }, value_type{ 42.0 } }));
 }
 
+TYPED_TEST_P(DevicePtr, copy_ptr_strided) {
+    using test_type = typename TestFixture::fixture_test_type;
+    using device_ptr_type = typename test_type::device_ptr_type;
+    using value_type = typename device_ptr_type::value_type;
+    using queue_type = typename test_type::queue_type;
+    const queue_type &queue = test_type::default_queue();
+
+    // construct device_ptr
+    device_ptr_type ptr{ plssvm::shape{ 2, 2 }, queue };
+    ptr.memset(0);
+
+    // create data to copy to the device
+    std::vector<value_type> data(20);  // 5 x 4
+    std::iota(data.begin(), data.end(), value_type{ 0.0 });
+
+    // copy data to the device
+    ptr.copy_to_device_strided(data.data(), 5, 2, 2);
+    // copy data back to the host
+    std::vector<value_type> result(ptr.size());
+    ptr.copy_to_host(result);
+
+    // check values for correctness
+    const std::vector<value_type> correct_result = { 0.0, 1.0, 5.0, 6.0 };
+    EXPECT_EQ(result, correct_result);
+}
+
+TYPED_TEST_P(DevicePtr, copy_ptr_strided_invalid_spitch_width_combination) {
+    using test_type = typename TestFixture::fixture_test_type;
+    using device_ptr_type = typename test_type::device_ptr_type;
+    using value_type = typename device_ptr_type::value_type;
+    using queue_type = typename test_type::queue_type;
+    const queue_type &queue = test_type::default_queue();
+
+    // construct device_ptr
+    device_ptr_type ptr{ plssvm::shape{ 2, 2 }, queue };
+    ptr.memset(0);
+
+    // create data to copy to the device
+    std::vector<value_type> data(20);  // 5 x 4
+
+    // copy data to the device
+    EXPECT_THROW_WHAT(ptr.copy_to_device_strided(data.data(), 5, 6, 2), plssvm::exception, "Invalid width and spitch combination specified (width: 6 <= spitch: 5)!");
+}
+
+TYPED_TEST_P(DevicePtr, copy_device_ptr_to_other_device) {
+    using test_type = typename TestFixture::fixture_test_type;
+    using device_ptr_type = typename test_type::device_ptr_type;
+    using value_type = typename device_ptr_type::value_type;
+    using queue_type = typename test_type::queue_type;
+    const queue_type &queue = test_type::default_queue();
+
+    // construct device_ptr
+    device_ptr_type ptr{ 10, queue };
+    ptr.memset(0);
+
+    // create data to copy to the device
+    std::vector<value_type> data(14, 42);
+
+    // copy data to the device
+    ptr.copy_to_device(data);
+
+    // other device_ptr
+    device_ptr_type other_ptr{ 10, queue };
+    ptr.copy_to_other_device(other_ptr);
+
+    // copy data back to the host
+    std::vector<value_type> result(other_ptr.size());
+    other_ptr.copy_to_host(result);
+
+    // check values for correctness
+    EXPECT_EQ(result, std::vector<value_type>(10, 42));
+}
+
+TYPED_TEST_P(DevicePtr, copy_device_ptr_to_other_device_too_few_device_elements) {
+    using test_type = typename TestFixture::fixture_test_type;
+    using device_ptr_type = typename test_type::device_ptr_type;
+    using value_type = typename device_ptr_type::value_type;
+    using queue_type = typename test_type::queue_type;
+    const queue_type &queue = test_type::default_queue();
+
+    // construct device_ptr
+    device_ptr_type ptr{ 10, queue };
+    ptr.memset(0);
+
+    // create data to copy to the device
+    std::vector<value_type> data(14, 42);
+
+    // copy data to the device
+    ptr.copy_to_device(data);
+
+    // other device_ptr
+    device_ptr_type other_ptr{ 5, queue };
+    EXPECT_THROW_WHAT(ptr.copy_to_other_device(other_ptr), plssvm::gpu_device_ptr_exception, "Buffer too small to perform copy (needed: 10, provided: 5)!");
+}
+
+TYPED_TEST_P(DevicePtr, copy_device_ptr_to_other_device_with_count) {
+    using test_type = typename TestFixture::fixture_test_type;
+    using device_ptr_type = typename test_type::device_ptr_type;
+    using value_type = typename device_ptr_type::value_type;
+    using queue_type = typename test_type::queue_type;
+    const queue_type &queue = test_type::default_queue();
+
+    // construct device_ptr
+    device_ptr_type ptr{ 10, queue };
+    ptr.memset(0);
+
+    // create data to copy to the device
+    std::vector<value_type> data(14, 42);
+
+    // copy data to the device
+    ptr.copy_to_device(data);
+
+    // other device_ptr
+    device_ptr_type other_ptr{ 5, queue };
+    ptr.copy_to_other_device(other_ptr, 1, 5);
+
+    // copy data back to the host
+    std::vector<value_type> result(other_ptr.size());
+    other_ptr.copy_to_host(result);
+
+    // check values for correctness
+    EXPECT_EQ(result, std::vector<value_type>(5, 42));
+}
+
+TYPED_TEST_P(DevicePtr, copy_ptr_to_other_device) {
+    using test_type = typename TestFixture::fixture_test_type;
+    using device_ptr_type = typename test_type::device_ptr_type;
+    using value_type = typename device_ptr_type::value_type;
+    using queue_type = typename test_type::queue_type;
+    const queue_type &queue = test_type::default_queue();
+
+    // construct device_ptr
+    device_ptr_type ptr{ 10, queue };
+    ptr.memset(0);
+
+    // create data to copy to the device
+    std::vector<value_type> data(14, 42);
+
+    // copy data to the device
+    ptr.copy_to_device(data);
+
+    // other device_ptr
+    device_ptr_type other_ptr{ 10, queue };
+    ptr.copy_to_other_device(other_ptr.get());
+
+    // copy data back to the host
+    std::vector<value_type> result(other_ptr.size());
+    other_ptr.copy_to_host(result);
+
+    // check values for correctness
+    EXPECT_EQ(result, std::vector<value_type>(10, 42));
+}
+
+TYPED_TEST_P(DevicePtr, copy_ptr_to_other_device_with_count) {
+    using test_type = typename TestFixture::fixture_test_type;
+    using device_ptr_type = typename test_type::device_ptr_type;
+    using value_type = typename device_ptr_type::value_type;
+    using queue_type = typename test_type::queue_type;
+    const queue_type &queue = test_type::default_queue();
+
+    // construct device_ptr
+    device_ptr_type ptr{ 10, queue };
+    ptr.memset(0);
+
+    // create data to copy to the device
+    std::vector<value_type> data(14, 42);
+
+    // copy data to the device
+    ptr.copy_to_device(data);
+
+    // other device_ptr
+    device_ptr_type other_ptr{ 5, queue };
+    ptr.copy_to_other_device(other_ptr.get(), 1, 5);
+
+    // copy data back to the host
+    std::vector<value_type> result(other_ptr.size());
+    other_ptr.copy_to_host(result);
+
+    // check values for correctness
+    EXPECT_EQ(result, std::vector<value_type>(5, 42));
+}
+
 REGISTER_TYPED_TEST_SUITE_P(DevicePtr,
                             default_construct,
                             construct_size,
@@ -918,10 +1164,20 @@ REGISTER_TYPED_TEST_SUITE_P(DevicePtr,
                             copy_vector_too_few_buffer_elements,
                             copy_vector_with_count_too_few_host_elements,
                             copy_vector_with_count_too_few_buffer_elements,
+                            copy_vector_strided,
+                            copy_vector_strided_invalid_spitch_width_combination,
+                            copy_vector_strided_submatrix_too_big,
                             copy_ptr,
                             copy_ptr_with_count_copy_back_all,
                             copy_ptr_with_count_copy_back_some,
-                            copy_ptr_with_count_copy_to_too_many);
+                            copy_ptr_with_count_copy_to_too_many,
+                            copy_ptr_strided,
+                            copy_ptr_strided_invalid_spitch_width_combination,
+                            copy_device_ptr_to_other_device,
+                            copy_device_ptr_to_other_device_too_few_device_elements,
+                            copy_device_ptr_to_other_device_with_count,
+                            copy_ptr_to_other_device,
+                            copy_ptr_to_other_device_with_count);
 
 template <typename T>
 class DevicePtrLayout : public DevicePtr<T> {
@@ -944,7 +1200,7 @@ TYPED_TEST_P(DevicePtrLayout, copy_matrix) {
     ptr.memset(0);
 
     // create data to copy to the device
-    plssvm::matrix<value_type, layout> data{ plssvm::shape{ 5, 3 }, value_type{ 42 } };
+    const plssvm::matrix<value_type, layout> data{ plssvm::shape{ 5, 3 }, value_type{ 42 } };
 
     // copy data to the device
     ptr.copy_to_device(data);
@@ -978,7 +1234,7 @@ TYPED_TEST_P(DevicePtrLayout, copy_matrix_with_padding) {
     ptr.memset(0);
 
     // create data to copy to the device
-    plssvm::matrix<value_type, layout> data{ plssvm::shape{ 5, 3 }, value_type{ 42 }, plssvm::shape{ 4, 4 } };
+    const plssvm::matrix<value_type, layout> data{ plssvm::shape{ 5, 3 }, value_type{ 42 }, plssvm::shape{ 4, 4 } };
 
     // copy data to the device
     ptr.copy_to_device(data);
@@ -1004,7 +1260,7 @@ TYPED_TEST_P(DevicePtrLayout, copy_matrix_different_layouts) {
     ptr.memset(0);
 
     // create data to copy to the device
-    plssvm::matrix<value_type, layout> data{ plssvm::shape{ 5, 3 }, value_type{ 42 } };
+    const plssvm::matrix<value_type, layout> data{ plssvm::shape{ 5, 3 }, value_type{ 42 } };
 
     // copy data to the device
     ptr.copy_to_device(data);
@@ -1057,12 +1313,168 @@ TYPED_TEST_P(DevicePtrLayout, copy_matrix_too_few_buffer_elements) {
     EXPECT_THROW_WHAT(ptr.copy_to_host(buffer), plssvm::gpu_device_ptr_exception, "Buffer too small to perform copy (needed: 10, provided: 8)!");
 }
 
+TYPED_TEST_P(DevicePtrLayout, copy_matrix_strided) {
+    using test_type = typename TestFixture::fixture_test_type;
+    using device_ptr_type = typename test_type::device_ptr_type;
+    using value_type = typename device_ptr_type::value_type;
+    using queue_type = typename test_type::queue_type;
+    const queue_type &queue = test_type::default_queue();
+    constexpr plssvm::layout_type layout = util::test_parameter_value_at_v<0, TypeParam>;
+
+    // construct device_ptr
+    device_ptr_type ptr{ plssvm::shape(2, 3), queue };
+    ptr.memset(0);
+
+    // create data to copy to the device
+    const auto data = util::generate_specific_matrix<plssvm::matrix<value_type, layout>>(plssvm::shape{ 5, 3 });
+
+    // copy data to the device (strided)
+    ptr.copy_to_device_strided(data, 1, 2);
+    // copy data back to the host
+    plssvm::matrix<value_type, layout> result{ plssvm::shape{ 2, 3 }, value_type{ 0 } };
+    ptr.copy_to_host(result);
+
+    // check values for correctness
+    plssvm::matrix<value_type, layout> correct_result{ { { 1.1, 1.2, 1.3 }, { 2.1, 2.2, 2.3 } } };
+    EXPECT_FLOATING_POINT_MATRIX_EQ(result, correct_result);
+}
+
+TYPED_TEST_P(DevicePtrLayout, copy_matrix_strided_with_padding) {
+    using test_type = typename TestFixture::fixture_test_type;
+    using device_ptr_type = typename test_type::device_ptr_type;
+    using value_type = typename device_ptr_type::value_type;
+    using queue_type = typename test_type::queue_type;
+    const queue_type &queue = test_type::default_queue();
+    constexpr plssvm::layout_type layout = util::test_parameter_value_at_v<0, TypeParam>;
+
+    // construct device_ptr
+    device_ptr_type ptr{ plssvm::shape{ 3, 3 }, plssvm::shape{ 4, 4 }, queue };
+    ptr.memset(0);
+
+    // create data to copy to the device
+    const auto data = util::generate_specific_matrix<plssvm::matrix<value_type, layout>>(plssvm::shape{ 5, 3 }, plssvm::shape{ 4, 4 });
+
+    // copy data to the device
+    ptr.copy_to_device_strided(data, 2, 3);
+    // copy data back to the host
+    plssvm::matrix<value_type, layout> result{ plssvm::shape{ 3, 3 }, value_type{ 0 }, plssvm::shape{ 4, 4 } };
+    ptr.copy_to_host(result);
+
+    // check values for correctness
+    plssvm::matrix<value_type, layout> correct_result{ { { 2.1, 2.2, 2.3 },
+                                                         { 3.1, 3.2, 3.3 },
+                                                         { 4.1, 4.2, 4.3 } },
+                                                       plssvm::shape{ 4, 4 } };
+
+    EXPECT_FLOATING_POINT_MATRIX_EQ(result, correct_result);
+}
+
+TYPED_TEST_P(DevicePtrLayout, copy_matrix_strided_different_layouts) {
+    using test_type = typename TestFixture::fixture_test_type;
+    using device_ptr_type = typename test_type::device_ptr_type;
+    using value_type = typename device_ptr_type::value_type;
+    using queue_type = typename test_type::queue_type;
+    const queue_type &queue = test_type::default_queue();
+    constexpr plssvm::layout_type layout = util::test_parameter_value_at_v<0, TypeParam>;
+    constexpr plssvm::layout_type other_layout = layout == plssvm::layout_type::aos ? plssvm::layout_type::soa : plssvm::layout_type::aos;
+
+    // construct device_ptr
+    device_ptr_type ptr{ plssvm::shape{ 2, 3 }, queue };
+    ptr.memset(0);
+
+    // create data to copy to the device
+    const auto data = util::generate_specific_matrix<plssvm::matrix<value_type, layout>>(plssvm::shape{ 5, 3 });
+
+    // copy data to the device
+    ptr.copy_to_device_strided(data, 0, 2);
+    // copy data back to the host
+    plssvm::matrix<value_type, other_layout> result{ plssvm::shape{ 2, 3 }, value_type{ 0 } };
+    ptr.copy_to_host(result);
+
+    // check values for correctness
+    plssvm::matrix<value_type, other_layout> correct_result{};
+    switch (other_layout) {
+        case plssvm::layout_type::aos:
+            correct_result = plssvm::matrix<value_type, other_layout>{ { { 0.1, 1.1, 0.2 }, { 1.2, 0.3, 1.3 } } };
+            break;
+        case plssvm::layout_type::soa:
+            correct_result = plssvm::matrix<value_type, other_layout>{ { { 0.1, 0.3, 1.2 }, { 0.2, 1.1, 1.3 } } };
+            break;
+    }
+
+    EXPECT_FLOATING_POINT_MATRIX_EQ(result, correct_result);
+}
+
+TYPED_TEST_P(DevicePtrLayout, copy_full_matrix_strided) {
+    using test_type = typename TestFixture::fixture_test_type;
+    using device_ptr_type = typename test_type::device_ptr_type;
+    using value_type = typename device_ptr_type::value_type;
+    using queue_type = typename test_type::queue_type;
+    const queue_type &queue = test_type::default_queue();
+    constexpr plssvm::layout_type layout = util::test_parameter_value_at_v<0, TypeParam>;
+
+    // construct device_ptr
+    device_ptr_type ptr{ plssvm::shape(5, 3), queue };
+    ptr.memset(0);
+
+    // create data to copy to the device
+    const auto data = util::generate_specific_matrix<plssvm::matrix<value_type, layout>>(plssvm::shape{ 5, 3 });
+
+    // copy data to the device (strided)
+    ptr.copy_to_device_strided(data, 0, 5);
+    // copy data back to the host
+    plssvm::matrix<value_type, layout> result{ plssvm::shape{ 5, 3 }, value_type{ 0 } };
+    ptr.copy_to_host(result);
+
+    // check values for correctness
+    EXPECT_FLOATING_POINT_MATRIX_EQ(result, data);
+}
+
+TYPED_TEST_P(DevicePtrLayout, copy_matrix_strided_too_few_host_elements) {
+    using test_type = typename TestFixture::fixture_test_type;
+    using device_ptr_type = typename test_type::device_ptr_type;
+    using value_type = typename device_ptr_type::value_type;
+    using queue_type = typename test_type::queue_type;
+    const queue_type &queue = test_type::default_queue();
+    constexpr plssvm::layout_type layout = util::test_parameter_value_at_v<0, TypeParam>;
+
+    // construct device_ptr
+    device_ptr_type ptr{ plssvm::shape{ 2, 5 }, queue };
+
+    // try copying data to the device with too few elements
+    plssvm::matrix<value_type, layout> data{ plssvm::shape{ 2, 4 }, value_type{ 42 } };
+    EXPECT_THROW_WHAT(ptr.copy_to_device_strided(data, 1, 1), plssvm::gpu_device_ptr_exception, "Too few data to perform copy (needed: 10, provided: 4)!");
+}
+
+TYPED_TEST_P(DevicePtrLayout, copy_matrix_strided_invalid_submatrix) {
+    using test_type = typename TestFixture::fixture_test_type;
+    using device_ptr_type = typename test_type::device_ptr_type;
+    using value_type = typename device_ptr_type::value_type;
+    using queue_type = typename test_type::queue_type;
+    const queue_type &queue = test_type::default_queue();
+    constexpr plssvm::layout_type layout = util::test_parameter_value_at_v<0, TypeParam>;
+
+    // construct device_ptr
+    device_ptr_type ptr{ plssvm::shape{ 2, 5 }, queue };
+
+    // try copying data to the device with too few elements
+    plssvm::matrix<value_type, layout> data{ plssvm::shape{ 4, 5 }, value_type{ 42 } };
+    EXPECT_THROW_WHAT(ptr.copy_to_device_strided(data, 4, 1), plssvm::gpu_device_ptr_exception, "Tried to copy lines 4-4 (zero-based index) to the device, but the matrix has only 4 lines!");
+    EXPECT_THROW_WHAT(ptr.copy_to_device_strided(data, 3, 3), plssvm::gpu_device_ptr_exception, "Tried to copy lines 3-5 (zero-based index) to the device, but the matrix has only 4 lines!");
+}
+
 REGISTER_TYPED_TEST_SUITE_P(DevicePtrLayout,
                             copy_matrix,
                             copy_matrix_with_padding,
                             copy_matrix_different_layouts,
                             copy_matrix_too_few_host_elements,
-                            copy_matrix_too_few_buffer_elements);
+                            copy_matrix_too_few_buffer_elements,
+                            copy_matrix_strided,
+                            copy_matrix_strided_with_padding,
+                            copy_matrix_strided_different_layouts,
+                            copy_full_matrix_strided,
+                            copy_matrix_strided_too_few_host_elements,
+                            copy_matrix_strided_invalid_submatrix);
 
 template <typename T>
 class DevicePtrDeathTest : public DevicePtr<T> { };
@@ -1094,7 +1506,7 @@ TYPED_TEST_P(DevicePtrDeathTest, fill) {
     EXPECT_DEATH(ptr.fill(value_type{ 1.0 }, 2, 4), ::testing::HasSubstr("Invalid data pointer! Maybe *this has been default constructed?"));
 }
 
-TYPED_TEST_P(DevicePtrDeathTest, copy_ptr_invalid_host_ptr) {
+TYPED_TEST_P(DevicePtrDeathTest, copy_invalid_host_ptr) {
     using test_type = typename TestFixture::fixture_test_type;
     using device_ptr_type = typename test_type::device_ptr_type;
     using queue_type = typename test_type::queue_type;
@@ -1108,7 +1520,7 @@ TYPED_TEST_P(DevicePtrDeathTest, copy_ptr_invalid_host_ptr) {
     EXPECT_DEATH(ptr.copy_to_host(nullptr), ::testing::HasSubstr("Invalid host pointer for the data to copy!"));
 }
 
-TYPED_TEST_P(DevicePtrDeathTest, copy_ptr_invalid_device_ptr) {
+TYPED_TEST_P(DevicePtrDeathTest, copy_invalid_device_ptr) {
     using test_type = typename TestFixture::fixture_test_type;
     using device_ptr_type = typename test_type::device_ptr_type;
     using value_type = typename device_ptr_type::value_type;
@@ -1127,7 +1539,7 @@ TYPED_TEST_P(DevicePtrDeathTest, copy_ptr_invalid_device_ptr) {
     EXPECT_DEATH(def.copy_to_host(data), ::testing::HasSubstr("Invalid data pointer! Maybe *this has been default constructed?"));
 }
 
-TYPED_TEST_P(DevicePtrDeathTest, copy_ptr_with_count_invalid_host_ptr) {
+TYPED_TEST_P(DevicePtrDeathTest, copy_with_count_invalid_host_ptr) {
     using test_type = typename TestFixture::fixture_test_type;
     using device_ptr_type = typename test_type::device_ptr_type;
     using queue_type = typename test_type::queue_type;
@@ -1141,7 +1553,7 @@ TYPED_TEST_P(DevicePtrDeathTest, copy_ptr_with_count_invalid_host_ptr) {
     EXPECT_DEATH(ptr.copy_to_host(nullptr, 0, 10), ::testing::HasSubstr("Invalid host pointer for the data to copy!"));
 }
 
-TYPED_TEST_P(DevicePtrDeathTest, copy_ptr_with_count_invalid_device_ptr) {
+TYPED_TEST_P(DevicePtrDeathTest, copy_with_count_invalid_device_ptr) {
     using test_type = typename TestFixture::fixture_test_type;
     using device_ptr_type = typename test_type::device_ptr_type;
     using value_type = typename device_ptr_type::value_type;
@@ -1157,12 +1569,77 @@ TYPED_TEST_P(DevicePtrDeathTest, copy_ptr_with_count_invalid_device_ptr) {
     EXPECT_DEATH(def.copy_to_host(data, 0, 0), ::testing::HasSubstr("Invalid data pointer! Maybe *this has been default constructed?"));
 }
 
+TYPED_TEST_P(DevicePtrDeathTest, copy_strided_invalid_host_ptr) {
+    using test_type = typename TestFixture::fixture_test_type;
+    using device_ptr_type = typename test_type::device_ptr_type;
+    using queue_type = typename test_type::queue_type;
+    const queue_type &queue = test_type::default_queue();
+
+    // construct device_ptr
+    device_ptr_type ptr{ 1, queue };
+
+    // copy with invalid data pointer
+    EXPECT_DEATH(ptr.copy_to_device_strided(nullptr, 0, 0, 0), ::testing::HasSubstr("Invalid host pointer for the data to copy!"));
+}
+
+TYPED_TEST_P(DevicePtrDeathTest, copy_strided_invalid_device_ptr) {
+    using test_type = typename TestFixture::fixture_test_type;
+    using device_ptr_type = typename test_type::device_ptr_type;
+    using value_type = typename device_ptr_type::value_type;
+
+    // construct default device_ptr
+    device_ptr_type def{};
+
+    // copy with invalid device pointer
+    std::vector<value_type> data(def.size());
+    EXPECT_DEATH(def.copy_to_device_strided(data.data(), 0, 0, 0), ::testing::HasSubstr("Invalid data pointer! Maybe *this has been default constructed?"));
+    EXPECT_DEATH(def.copy_to_device_strided(data, 0, 0, 0), ::testing::HasSubstr("Invalid data pointer! Maybe *this has been default constructed?"));
+}
+
+TYPED_TEST_P(DevicePtrDeathTest, copy_to_other_device_invalid_device_ptr) {
+    using test_type = typename TestFixture::fixture_test_type;
+    using device_ptr_type = typename test_type::device_ptr_type;
+    using queue_type = typename test_type::queue_type;
+    const queue_type &queue = test_type::default_queue();
+
+    // construct default device_ptr
+    device_ptr_type def{};
+    device_ptr_type ptr{ 2, queue };
+
+    // copy with invalid device pointer
+    EXPECT_DEATH(def.copy_to_other_device(ptr), ::testing::HasSubstr("Invalid data pointer! Maybe *this has been default constructed?"));
+    EXPECT_DEATH(def.copy_to_other_device(ptr.get()), ::testing::HasSubstr("Invalid data pointer! Maybe *this has been default constructed?"));
+    EXPECT_DEATH(ptr.copy_to_other_device(def), ::testing::HasSubstr("Invalid target pointer! Maybe target has been default constructed?"));
+    EXPECT_DEATH(ptr.copy_to_other_device(def.get()), ::testing::HasSubstr("Invalid target pointer! Maybe target has been default constructed?"));
+}
+
+TYPED_TEST_P(DevicePtrDeathTest, copy_to_other_device_with_count_invalid_device_ptr) {
+    using test_type = typename TestFixture::fixture_test_type;
+    using device_ptr_type = typename test_type::device_ptr_type;
+    using queue_type = typename test_type::queue_type;
+    const queue_type &queue = test_type::default_queue();
+
+    // construct default device_ptr
+    device_ptr_type def{};
+    device_ptr_type ptr{ 10, queue };
+
+    // copy with invalid device pointer
+    EXPECT_DEATH(def.copy_to_other_device(ptr, 0, 10), ::testing::HasSubstr("Invalid data pointer! Maybe *this has been default constructed?"));
+    EXPECT_DEATH(def.copy_to_other_device(ptr.get(), 0, 10), ::testing::HasSubstr("Invalid data pointer! Maybe *this has been default constructed?"));
+    EXPECT_DEATH(ptr.copy_to_other_device(def, 0, 10), ::testing::HasSubstr("Invalid target pointer! Maybe target has been default constructed?"));
+    EXPECT_DEATH(ptr.copy_to_other_device(def.get(), 0, 10), ::testing::HasSubstr("Invalid target pointer! Maybe target has been default constructed?"));
+}
+
 REGISTER_TYPED_TEST_SUITE_P(DevicePtrDeathTest,
                             memset,
                             fill,
-                            copy_ptr_invalid_host_ptr,
-                            copy_ptr_invalid_device_ptr,
-                            copy_ptr_with_count_invalid_host_ptr,
-                            copy_ptr_with_count_invalid_device_ptr);
+                            copy_invalid_host_ptr,
+                            copy_invalid_device_ptr,
+                            copy_with_count_invalid_host_ptr,
+                            copy_with_count_invalid_device_ptr,
+                            copy_strided_invalid_host_ptr,
+                            copy_strided_invalid_device_ptr,
+                            copy_to_other_device_invalid_device_ptr,
+                            copy_to_other_device_with_count_invalid_device_ptr);
 
 #endif  // PLSSVM_TESTS_BACKENDS_GENERIC_DEVICE_PTR_TESTS_HPP_

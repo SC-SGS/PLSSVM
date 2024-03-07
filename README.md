@@ -226,6 +226,7 @@ The `[optional_options]` can be one or multiple of:
 
 **Attention:** at least one backend must be enabled and available!
 
+- `PLSSVM_ENABLE_FAST_MATH=ON|OFF` (default depending on `CMAKE_BUILD_TYPE`: `ON` for Release or RelWithDebInfo, `OFF` otherwise): enable `fast-math` compiler flags for all backends
 - `PLSSVM_ENABLE_ASSERTS=ON|OFF` (default: `OFF`): enables custom assertions regardless whether the `DEBUG` macro is defined or not
 - `PLSSVM_USE_FLOAT_AS_REAL_TYPE=ON|OFF` (default: `OFF`): use `float` as real_type instead of `double`
 - `PLSSVM_THREAD_BLOCK_SIZE` (default: `8`): set a specific thread block size used in the GPU kernels (for fine-tuning optimizations)
@@ -237,7 +238,6 @@ The `[optional_options]` can be one or multiple of:
 - `PLSSVM_ENABLE_TESTING=ON|OFF` (default: `ON`): enable testing using GoogleTest and ctest
 - `PLSSVM_ENABLE_LANGUAGE_BINDINGS=ON|OFF` (default: `OFF`): enable language bindings
 - `PLSSVM_STL_DEBUG_MODE_FLAGS=ON|OFF` (default: `OFF`): enable STL debug modes (**note**: changes the resulting library's ABI!)
-- `PLSSVM_USE_GEMM=ON|OFF` (default: `ON`): use GEMM instead of SYMM calculations in the CG algorithm with the `cg_explicit` solver type (**note**: GEMM increases the necessary device memory by a factor of 2)
 
 If `PLSSVM_ENABLE_TESTING` is set to `ON`, the following options can also be set:
 
@@ -293,6 +293,8 @@ To run the tests after building the library (with `PLSSVM_ENABLE_TESTING` set to
 ```bash
 ctest
 ```
+
+**Note:** due to floating point inaccuracies, it is advisable to disable `PLSSVM_ENABLE_FAST_MATH` for testing.
 
 ### Generating Test Coverage Results
 

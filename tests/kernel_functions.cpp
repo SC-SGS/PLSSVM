@@ -15,7 +15,7 @@
 #include "plssvm/parameter.hpp"       // plssvm::parameter
 
 #include "tests/backends/ground_truth.hpp"  // ground_truth::detail::{linear_kernel, poly_kernel, rbf_kernel}
-#include "tests/custom_test_macros.hpp"     // EXPECT_CONVERSION_TO_STRING, EXPECT_CONVERSION_FROM_STRING, EXPECT_THROW_WHAT, EXPECT_FLOATING_POINT_NEAR, EXPECT_FLOATING_POINT_NEAR_EPS
+#include "tests/custom_test_macros.hpp"     // EXPECT_CONVERSION_TO_STRING, EXPECT_CONVERSION_FROM_STRING, EXPECT_THROW_WHAT, EXPECT_FLOATING_POINT_NEAR
 #include "tests/naming.hpp"                 // naming::test_parameter_to_name
 #include "tests/types_to_test.hpp"          // util::{real_type_gtest, test_parameter_type_at_t, test_parameter_value_at_v}
 #include "tests/utility.hpp"                // util::{generate_random_vector, generate_random_matrix}
@@ -74,7 +74,7 @@ TYPED_TEST(KernelFunctionVector, linear_kernel_function_variadic) {
 
         for (const auto [degree, gamma, coef0, cost] : this->get_param_values()) {
             SCOPED_TRACE(fmt::format("parameter: [{}, {}, {}, {}]", degree, gamma, coef0, cost));
-            EXPECT_FLOATING_POINT_NEAR_EPS(plssvm::kernel_function<plssvm::kernel_function_type::linear>(x1, x2), ground_truth::detail::linear_kernel(x1, x2), real_type{ 1e4 });
+            EXPECT_FLOATING_POINT_NEAR(plssvm::kernel_function<plssvm::kernel_function_type::linear>(x1, x2), ground_truth::detail::linear_kernel(x1, x2));
         }
     }
 }
@@ -91,7 +91,7 @@ TYPED_TEST(KernelFunctionVector, linear_kernel_function_parameter) {
         for (const auto [degree, gamma, coef0, cost] : this->get_param_values()) {
             SCOPED_TRACE(fmt::format("parameter: [{}, {}, {}, {}]", degree, gamma, coef0, cost));
             const plssvm::parameter params{ plssvm::kernel_function_type::linear, static_cast<int>(degree), gamma, coef0, cost };
-            EXPECT_FLOATING_POINT_NEAR_EPS(plssvm::kernel_function(x1, x2, params), ground_truth::detail::linear_kernel(x1, x2), real_type{ 1e5 });
+            EXPECT_FLOATING_POINT_NEAR(plssvm::kernel_function(x1, x2, params), ground_truth::detail::linear_kernel(x1, x2));
         }
     }
 }
@@ -110,7 +110,7 @@ TYPED_TEST(KernelFunctionVector, polynomial_kernel_function_variadic) {
             const auto degree_p = static_cast<int>(degree);
             const auto gamma_p = static_cast<real_type>(gamma);
             const auto coef0_p = static_cast<real_type>(coef0);
-            EXPECT_FLOATING_POINT_NEAR_EPS(plssvm::kernel_function<plssvm::kernel_function_type::polynomial>(x1, x2, degree_p, gamma_p, coef0_p), ground_truth::detail::polynomial_kernel(x1, x2, degree_p, gamma_p, coef0_p), real_type{ 1e5 });
+            EXPECT_FLOATING_POINT_NEAR(plssvm::kernel_function<plssvm::kernel_function_type::polynomial>(x1, x2, degree_p, gamma_p, coef0_p), ground_truth::detail::polynomial_kernel(x1, x2, degree_p, gamma_p, coef0_p));
         }
     }
 }
@@ -127,9 +127,8 @@ TYPED_TEST(KernelFunctionVector, polynomial_kernel_function_parameter) {
         for (const auto [degree, gamma, coef0, cost] : this->get_param_values()) {
             SCOPED_TRACE(fmt::format("parameter: [{}, {}, {}, {}]", degree, gamma, coef0, cost));
             const plssvm::parameter params{ plssvm::kernel_function_type::polynomial, static_cast<int>(degree), gamma, coef0, cost };
-            EXPECT_FLOATING_POINT_NEAR_EPS(plssvm::kernel_function(x1, x2, params),
-                                           ground_truth::detail::polynomial_kernel(x1, x2, params.degree.value(), static_cast<real_type>(params.gamma.value()), static_cast<real_type>(params.coef0.value())),
-                                           real_type{ 1e5 });
+            EXPECT_FLOATING_POINT_NEAR(plssvm::kernel_function(x1, x2, params),
+                                           ground_truth::detail::polynomial_kernel(x1, x2, params.degree.value(), static_cast<real_type>(params.gamma.value()), static_cast<real_type>(params.coef0.value())));
         }
     }
 }
@@ -146,7 +145,7 @@ TYPED_TEST(KernelFunctionVector, radial_basis_function_kernel_function_variadic)
         for (const auto [degree, gamma, coef0, cost] : this->get_param_values()) {
             SCOPED_TRACE(fmt::format("parameter: [{}, {}, {}, {}]", degree, gamma, coef0, cost));
             const auto gamma_p = static_cast<real_type>(gamma);
-            EXPECT_FLOATING_POINT_NEAR_EPS(plssvm::kernel_function<plssvm::kernel_function_type::rbf>(x1, x2, gamma_p), ground_truth::detail::rbf_kernel(x1, x2, gamma_p), real_type{ 1e5 });
+            EXPECT_FLOATING_POINT_NEAR(plssvm::kernel_function<plssvm::kernel_function_type::rbf>(x1, x2, gamma_p), ground_truth::detail::rbf_kernel(x1, x2, gamma_p));
         }
     }
 }
@@ -163,7 +162,7 @@ TYPED_TEST(KernelFunctionVector, radial_basis_function_kernel_function_parameter
         for (const auto [degree, gamma, coef0, cost] : this->get_param_values()) {
             SCOPED_TRACE(fmt::format("parameter: [{}, {}, {}, {}]", degree, gamma, coef0, cost));
             const plssvm::parameter params{ plssvm::kernel_function_type::rbf, static_cast<int>(degree), gamma, coef0, cost };
-            EXPECT_FLOATING_POINT_NEAR_EPS(plssvm::kernel_function(x1, x2, params), ground_truth::detail::rbf_kernel(x1, x2, static_cast<real_type>(params.gamma.value())), real_type{ 1e5 });
+            EXPECT_FLOATING_POINT_NEAR(plssvm::kernel_function(x1, x2, params), ground_truth::detail::rbf_kernel(x1, x2, static_cast<real_type>(params.gamma.value())));
         }
     }
 }
@@ -267,7 +266,7 @@ TYPED_TEST(KernelFunctionMatrix, linear_kernel_function_variadic) {
                         x2[dim] = matr2(j, dim);
                     }
 
-                    EXPECT_FLOATING_POINT_NEAR_EPS(plssvm::kernel_function<plssvm::kernel_function_type::linear>(matr1, i, matr2, j), ground_truth::detail::linear_kernel(x1, x2), real_type{ 1e5 });
+                    EXPECT_FLOATING_POINT_NEAR(plssvm::kernel_function<plssvm::kernel_function_type::linear>(matr1, i, matr2, j), ground_truth::detail::linear_kernel(x1, x2));
                 }
             }
         }
@@ -301,7 +300,7 @@ TYPED_TEST(KernelFunctionMatrix, linear_kernel_function_parameter) {
                     }
 
                     const plssvm::parameter params{ plssvm::kernel_function_type::linear, static_cast<int>(degree), gamma, coef0, cost };
-                    EXPECT_FLOATING_POINT_NEAR_EPS(plssvm::kernel_function(matr1, i, matr2, j, params), ground_truth::detail::linear_kernel(x1, x2), real_type{ 1e5 });
+                    EXPECT_FLOATING_POINT_NEAR(plssvm::kernel_function(matr1, i, matr2, j, params), ground_truth::detail::linear_kernel(x1, x2));
                 }
             }
         }
@@ -337,7 +336,7 @@ TYPED_TEST(KernelFunctionMatrix, polynomial_kernel_function_variadic) {
                     const auto degree_p = static_cast<int>(degree);
                     const auto gamma_p = static_cast<real_type>(gamma);
                     const auto coef0_p = static_cast<real_type>(coef0);
-                    EXPECT_FLOATING_POINT_NEAR_EPS(plssvm::kernel_function<plssvm::kernel_function_type::polynomial>(matr1, i, matr2, j, degree_p, gamma_p, coef0_p), ground_truth::detail::polynomial_kernel(x1, x2, degree_p, gamma_p, coef0_p), real_type{ 1e5 });
+                    EXPECT_FLOATING_POINT_NEAR(plssvm::kernel_function<plssvm::kernel_function_type::polynomial>(matr1, i, matr2, j, degree_p, gamma_p, coef0_p), ground_truth::detail::polynomial_kernel(x1, x2, degree_p, gamma_p, coef0_p));
                 }
             }
         }
@@ -371,9 +370,8 @@ TYPED_TEST(KernelFunctionMatrix, polynomial_kernel_function_parameter) {
                     }
 
                     const plssvm::parameter params{ plssvm::kernel_function_type::polynomial, static_cast<int>(degree), gamma, coef0, cost };
-                    EXPECT_FLOATING_POINT_NEAR_EPS(plssvm::kernel_function(matr1, i, matr2, j, params),
-                                                   ground_truth::detail::polynomial_kernel(x1, x2, params.degree.value(), static_cast<real_type>(params.gamma.value()), static_cast<real_type>(params.coef0.value())),
-                                                   real_type{ 1e5 });
+                    EXPECT_FLOATING_POINT_NEAR(plssvm::kernel_function(matr1, i, matr2, j, params),
+                                                   ground_truth::detail::polynomial_kernel(x1, x2, params.degree.value(), static_cast<real_type>(params.gamma.value()), static_cast<real_type>(params.coef0.value())));
                 }
             }
         }
@@ -407,7 +405,7 @@ TYPED_TEST(KernelFunctionMatrix, rbf_kernel_function_variadic) {
                     }
 
                     const auto gamma_p = static_cast<real_type>(gamma);
-                    EXPECT_FLOATING_POINT_NEAR_EPS(plssvm::kernel_function<plssvm::kernel_function_type::rbf>(matr1, i, matr2, j, gamma_p), ground_truth::detail::rbf_kernel(x1, x2, gamma_p), real_type{ 1e5 });
+                    EXPECT_FLOATING_POINT_NEAR(plssvm::kernel_function<plssvm::kernel_function_type::rbf>(matr1, i, matr2, j, gamma_p), ground_truth::detail::rbf_kernel(x1, x2, gamma_p));
                 }
             }
         }
@@ -441,9 +439,8 @@ TYPED_TEST(KernelFunctionMatrix, rbf_kernel_function_parameter) {
                     }
 
                     const plssvm::parameter params{ plssvm::kernel_function_type::rbf, static_cast<int>(degree), gamma, coef0, cost };
-                    EXPECT_FLOATING_POINT_NEAR_EPS(plssvm::kernel_function(matr1, i, matr2, j, params),
-                                                   ground_truth::detail::rbf_kernel(x1, x2, static_cast<real_type>(params.gamma.value())),
-                                                   real_type{ 1e5 });
+                    EXPECT_FLOATING_POINT_NEAR(plssvm::kernel_function(matr1, i, matr2, j, params),
+                                                   ground_truth::detail::rbf_kernel(x1, x2, static_cast<real_type>(params.gamma.value())));
                 }
             }
         }

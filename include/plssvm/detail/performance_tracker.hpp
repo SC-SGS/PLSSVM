@@ -17,6 +17,7 @@
 #include "plssvm/detail/cmd/parser_predict.hpp"  // plssvm::detail::cmd::parser_predict
 #include "plssvm/detail/cmd/parser_scale.hpp"    // plssvm::detail::cmd::parser_scale
 #include "plssvm/detail/cmd/parser_train.hpp"    // plssvm::detail::cmd::parser_train
+#include "plssvm/detail/memory_size.hpp"         // plssvm::detail::memory_size
 #include "plssvm/detail/type_traits.hpp"         // plssvm::detail::remove_cvref_t
 #include "plssvm/detail/utility.hpp"             // PLSSVM_EXTERN
 #include "plssvm/parameter.hpp"                  // plssvm::parameter
@@ -252,8 +253,16 @@ template <typename T>
 void performance_tracker::add_tracking_entry(const tracking_entry<T> &entry) {
     // check whether entries should currently be tracked
     if (this->is_tracking()) {
-        // escape strings with "" since they may contain whitespaces
-        std::string entry_value_str = fmt::format(std::is_same_v<T, std::string> ? "\"{}\"" : "{}", entry.entry_value);
+        std::string entry_value_str{};
+        if constexpr (std::is_same_v<T, std::string>) {
+            // escape strings with "" since they may contain whitespaces
+            entry_value_str = fmt::format("\"{}\"", entry.entry_value);
+        } else if constexpr (std::is_same_v<T, detail::memory_size>) {
+            // dump the memory size in BYTES to the file (to get rid of the hard to parse memory_size units)
+            entry_value_str = fmt::format("{}", entry.entry_value.num_bytes());
+        } else {
+            entry_value_str = fmt::format("{}", entry.entry_value);
+        }
 
         if (detail::contains(tracking_entries_, entry.entry_category)) {
             // category already exists -> check if entry already exists
@@ -275,10 +284,18 @@ template <typename T>
 void performance_tracker::add_tracking_entry(const tracking_entry<std::vector<T>> &entry) {
     // check whether entries should currently be tracked
     if (this->is_tracking()) {
-        std::string entry_value_str;
-        // escape strings with "" since they may contain whitespaces
+        std::string entry_value_str{};
         if constexpr (std::is_same_v<T, std::string>) {
+            // escape strings with "" since they may contain whitespaces
             entry_value_str = fmt::format("[\"{}\"]", fmt::join(entry.entry_value, "\", \""));
+        } else if constexpr (std::is_same_v<T, detail::memory_size>) {
+            // dump all memory sizes in BYTES to the file (to get rid of the hard to parse memory_size units)
+            std::vector<unsigned long long> byte_values{};
+            byte_values.reserve(entry.entry_value.size());
+            for (const memory_size mem : entry.entry_value) {
+                byte_values.push_back(mem.num_bytes());
+            }
+            entry_value_str = fmt::format("[{}]", fmt::join(byte_values, ", "));
         } else {
             entry_value_str = fmt::format("[{}]", fmt::join(entry.entry_value, ", "));
         }

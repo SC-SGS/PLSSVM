@@ -163,8 +163,6 @@ void performance_tracker::save(std::ostream &out) {
     constexpr bool assert_enabled = PLSSVM_IS_DEFINED(PLSSVM_ASSERT_ENABLED);
     // check whether LTO has been enabled
     constexpr bool lto_enabled = PLSSVM_IS_DEFINED(PLSSVM_LTO_SUPPORTED);
-    // check whether GEMM has been used instead of SYMM
-    constexpr bool use_gemm = PLSSVM_IS_DEFINED(PLSSVM_USE_GEMM);
     // check whether the maximum allocatable memory size should be enforced
     constexpr bool enforce_max_mem_alloc_size = PLSSVM_IS_DEFINED(PLSSVM_ENFORCE_MAX_MEM_ALLOC_SIZE);
 
@@ -183,7 +181,6 @@ void performance_tracker::save(std::ostream &out) {
         "  build_type:                        {}\n"
         "  LTO:                               {}\n"
         "  asserts:                           {}\n"
-        "  gemm:                              {}\n"
         "  enforce_max_mem_alloc_size:        {}\n"
         "  THREAD_BLOCK_SIZE:                 {}\n"
         "  FEATURE_BLOCK_SIZE:                {}\n"
@@ -198,7 +195,6 @@ void performance_tracker::save(std::ostream &out) {
         PLSSVM_BUILD_TYPE,
         lto_enabled,
         assert_enabled,
-        use_gemm,
         enforce_max_mem_alloc_size,
         THREAD_BLOCK_SIZE,
         FEATURE_BLOCK_SIZE,

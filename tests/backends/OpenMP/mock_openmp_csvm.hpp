@@ -30,8 +30,7 @@ class mock_openmp_csvm final : public plssvm::openmp::csvm {
     using base_type::assemble_kernel_matrix;
     using base_type::blas_level_3;
     using base_type::get_device_memory;
-    // using base_type::get_max_work_group_size;
-    using base_type::setup_data_on_devices;
+    using base_type::num_available_devices;
 
     using base_type::predict_values;
 
@@ -41,6 +40,8 @@ class mock_openmp_csvm final : public plssvm::openmp::csvm {
     using base_type::solve_lssvm_system_of_linear_equations;
 
     using base_type::get_max_mem_alloc_size;
+
+    using base_type::data_distribution_;
 };
 
 #endif  // PLSSVM_TESTS_BACKENDS_OPENMP_MOCK_OPENMP_CSVM_HPP_

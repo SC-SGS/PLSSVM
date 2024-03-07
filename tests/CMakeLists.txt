@@ -79,6 +79,11 @@ else ()
     set(PLSSVM_TEST_FILE "${PROJECT_SOURCE_DIR}/tests/data/libsvm/500x200.libsvm" CACHE STRING "Path including name of the test file")
 endif ()
 
+## warn if PLSSVM_ENABLE_FAST_MATH is set and tests are enabled
+if (PLSSVM_ENABLE_FAST_MATH)
+    message(WARNING "PLSSVM_ENABLE_FAST_MATH is set while also testing is enabled. This may result in tests failing due to increased floating point inaccuracies.")
+endif ()
+
 ## create base test library
 set(PLSSVM_BASE_TEST_LIBRARY_NAME base_tests_lib)
 
@@ -112,12 +117,12 @@ set(PLSSVM_BASE_TEST_SOURCES
     ## is available these are also tested in the base library
     ${CMAKE_CURRENT_LIST_DIR}/backends/SYCL/implementation_types.cpp
     ${CMAKE_CURRENT_LIST_DIR}/backends/SYCL/kernel_invocation_types.cpp
-    
+
     ${CMAKE_CURRENT_LIST_DIR}/detail/cmd/data_set_variants.cpp
     ${CMAKE_CURRENT_LIST_DIR}/detail/cmd/parser_predict.cpp
     ${CMAKE_CURRENT_LIST_DIR}/detail/cmd/parser_scale.cpp
     ${CMAKE_CURRENT_LIST_DIR}/detail/cmd/parser_train.cpp
-    
+
     ${CMAKE_CURRENT_LIST_DIR}/detail/io/libsvm_model_parsing/data_parse_valid.cpp
     ${CMAKE_CURRENT_LIST_DIR}/detail/io/libsvm_model_parsing/data_parse_invalid.cpp
     ${CMAKE_CURRENT_LIST_DIR}/detail/io/libsvm_model_parsing/data_write.cpp
@@ -129,9 +134,10 @@ set(PLSSVM_BASE_TEST_SOURCES
     ${CMAKE_CURRENT_LIST_DIR}/detail/io/file_reader.cpp
     ${CMAKE_CURRENT_LIST_DIR}/detail/io/libsvm_parsing.cpp
     ${CMAKE_CURRENT_LIST_DIR}/detail/io/scaling_factors_parsing.cpp
-    
+
     ${CMAKE_CURRENT_LIST_DIR}/detail/arithmetic_type_name.cpp
     ${CMAKE_CURRENT_LIST_DIR}/detail/assert.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/detail/data_distribution.cpp
     ${CMAKE_CURRENT_LIST_DIR}/detail/logging.cpp
     ${CMAKE_CURRENT_LIST_DIR}/detail/logging_without_performance_tracking.cpp
     ${CMAKE_CURRENT_LIST_DIR}/detail/memory_size.cpp
@@ -144,13 +150,13 @@ set(PLSSVM_BASE_TEST_SOURCES
     ${CMAKE_CURRENT_LIST_DIR}/detail/type_list.cpp
     ${CMAKE_CURRENT_LIST_DIR}/detail/type_traits.cpp
     ${CMAKE_CURRENT_LIST_DIR}/detail/utility.cpp
-    
+
     ${CMAKE_CURRENT_LIST_DIR}/exceptions/exceptions.cpp
     ${CMAKE_CURRENT_LIST_DIR}/exceptions/source_location.cpp
-    
+
     ${CMAKE_CURRENT_LIST_DIR}/version/git_metadata/git_metadata.cpp
     ${CMAKE_CURRENT_LIST_DIR}/version/version.cpp
-    
+
     ${CMAKE_CURRENT_LIST_DIR}/backend_types.cpp
     ${CMAKE_CURRENT_LIST_DIR}/classification_report.cpp
     ${CMAKE_CURRENT_LIST_DIR}/classification_types.cpp

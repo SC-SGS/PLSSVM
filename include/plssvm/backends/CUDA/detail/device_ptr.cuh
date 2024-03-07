@@ -37,8 +37,10 @@ class device_ptr : public ::plssvm::detail::gpu_device_ptr<T, int> {
     // Be able to use overloaded base class functions.
     using base_type::copy_to_device;
     using base_type::copy_to_host;
+    using base_type::copy_to_other_device;
     using base_type::fill;
     using base_type::memset;
+    using base_type::copy_to_device_strided;
 
     using typename base_type::const_host_pointer_type;
     using typename base_type::device_pointer_type;
@@ -114,6 +116,12 @@ class device_ptr : public ::plssvm::detail::gpu_device_ptr<T, int> {
      * @copydoc plssvm::detail::gpu_device_ptr::copy_to_host(host_pointer_type, size_type, size_type) const
      */
     void copy_to_host(host_pointer_type buffer, size_type pos, size_type count) const override;
+    /**
+     * @copydoc plssvm::detail::gpu_device_ptr::copy_to_other_device(device_pointer_type &, size_type, size_type) const
+     */
+    void copy_to_other_device(device_pointer_type target, size_type pos, size_type count) override;
+
+    void copy_to_device_strided(const_host_pointer_type data_to_copy, std::size_t spitch, std::size_t width, std::size_t height) override;
 };
 
 extern template class device_ptr<float>;

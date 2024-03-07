@@ -52,6 +52,14 @@ else ()
         endif ()
     endif ()
 endif ()
+string(TOUPPER "${CMAKE_BUILD_TYPE}" uppercase_CMAKE_BUILD_TYPE)
+
+## add option to enable or disable fast-math in all backends (mainly used for tests)
+if (uppercase_CMAKE_BUILD_TYPE MATCHES RELEASE OR uppercase_CMAKE_BUILD_TYPE MATCHES RELWITHDEBINFO)
+    option(PLSSVM_ENABLE_FAST_MATH "Enables fast-math options for different targets. Default ON iff CMAKE_BUILD_TYPE=Release|RelWithDebInfo, else OFF." ON)
+else ()
+    option(PLSSVM_ENABLE_FAST_MATH "Enables fast-math options for different targets. Default ON iff CMAKE_BUILD_TYPE=Release|RelWithDebInfo, else OFF." OFF)
+endif ()
 
 ## enable shared linkage for Windows
 if (WIN32)
@@ -70,6 +78,7 @@ set(PLSSVM_BASE_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/detail/cmd/parser_scale.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/detail/cmd/parser_train.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/detail/io/file_reader.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/detail/data_distribution.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/detail/memory_size.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/detail/performance_tracker.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/detail/sha256.cpp
@@ -133,11 +142,24 @@ target_compile_options(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC
                        # /wd4849: ignore "OpenMP 'reduction' clause ignored in 'simd' directive" -> no SIMD clause currently effective in MSVC
                        # /wd4127: ignore "conditional expression is constant" from {fmt} ranges.h header
 )
-## enable additional optimization flags only in RELEASE mode
-target_compile_options(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC
-                       $<$<AND:$<OR:$<CONFIG:RELEASE>,$<CONFIG:RELWITHDEBINFO>>,$<COMPILE_LANG_AND_ID:CXX,GNU,Clang>>:-ffast-math -march=native>
-                       $<$<AND:$<OR:$<CONFIG:RELEASE>,$<CONFIG:RELWITHDEBINFO>>,$<COMPILE_LANG_AND_ID:CXX,MSVC>>:/fp:fast>
-)
+## enable fast-math if requested
+if (PLSSVM_ENABLE_FAST_MATH)
+    message(STATUS "Enabling fast-math flags.")
+    target_compile_options(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC
+                           $<$<COMPILE_LANG_AND_ID:CXX,GNU,Clang>:-ffast-math>
+                           $<$<COMPILE_LANG_AND_ID:CXX,MSVC>:/fp:fast>
+    )
+    target_compile_definitions(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC PLSSVM_USE_FAST_MATH)
+endif ()
+## set march native flag based on target architecture
+if (${CMAKE_SYSTEM_PROCESSOR} MATCHES "ppc64le")
+    message(STATUS "Compiling for ppc64le: setting -mcpu=native")
+    target_compile_options(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC $<$<AND:$<OR:$<CONFIG:RELEASE>,$<CONFIG:RELWITHDEBINFO>>,$<COMPILE_LANG_AND_ID:CXX,GNU,Clang>>:-mcpu=native>)
+elseif (${CMAKE_SYSTEM_PROCESSOR} MATCHES "x86_64")
+    message(STATUS "Compiling for x86_64: setting -march=native")
+    target_compile_options(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC $<$<AND:$<OR:$<CONFIG:RELEASE>,$<CONFIG:RELWITHDEBINFO>>,$<COMPILE_LANG_AND_ID:CXX,GNU,Clang>>:-march=native>)
+endif ()
+
 target_compile_definitions(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC
                            $<$<COMPILE_LANG_AND_ID:CXX,MSVC>:NOMINMAX>
 )
@@ -343,8 +365,7 @@ list(APPEND PLSSVM_TARGETS_TO_INSTALL ${PLSSVM_EXECUTABLE_TRAIN_NAME} ${PLSSVM_E
 ##                                            setup code coverage analysis                                            ##
 ########################################################################################################################
 ## coverage analysis only possible with the Coverage CMAKE_BUILD_TYPE
-string(TOUPPER "${CMAKE_BUILD_TYPE}" uppercase_CMAKE_BUILD_TYPE)
-if (uppercase_CMAKE_BUILD_TYPE MATCHES "COVERAGE")
+if (uppercase_CMAKE_BUILD_TYPE MATCHES COVERAGE)
     # must be linux
     if (WIN32 OR APPLE)
         message(FATAL_ERROR "Only Linux is supported for the coverage analysis.")
@@ -590,14 +611,6 @@ if (PLSSVM_ENABLE_PERFORMANCE_TRACKING)
     message(STATUS "Enabled performance tracking to YAML files for the PLSSVM executables plssvm-train, plssvm-predict, and plssvm-scale.")
     # add target definitions
     target_compile_definitions(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC PLSSVM_PERFORMANCE_TRACKER_ENABLED)
-endif ()
-
-## use GEMM kernel (full kernel matrix) instead of SYMM (triangular matrix only)
-option(PLSSVM_USE_GEMM "Use the GEMM kernel (full matrix -> needs more memory) instead of the SYMM kernel (triangular matrix -> less memory)." OFF)
-if (PLSSVM_USE_GEMM)
-    message(STATUS "Use the GEMM kernel instead of the SYMM kernel.")
-    # add target definition
-    target_compile_definitions(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC PLSSVM_USE_GEMM)
 endif ()
 
 ## enforce maximum device memory allocation sizes for the automatic solver type

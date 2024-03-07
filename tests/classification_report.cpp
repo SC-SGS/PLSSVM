@@ -86,7 +86,7 @@ TEST_F(ZeroDivisionBehavior, sanitize_nan_one) {
 
 TEST_F(ZeroDivisionBehavior, sanitize_nan_nan) {
     // sanitize NaN using nan
-#if !defined(NDEBUG) || defined(_MSC_VER)
+#if !defined(PLSSVM_USE_FAST_MATH) || defined(_MSC_VER)
     // ATTENTION: MSVC doesn't optimize out the NaN check even if fast math is used
     EXPECT_TRUE(std::isnan(plssvm::detail::sanitize_nan(42.0, 0.0, plssvm::classification_report::zero_division_behavior::nan, "Foo")));
 #else
