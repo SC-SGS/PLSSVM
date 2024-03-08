@@ -6,15 +6,14 @@ jobs:
     strategy:
       matrix:
         float_as_real_type: [ON, OFF]
-        use_gemm: [ON, OFF]
         build_type: [Debug, Release]
     steps:
       - name: "Install latest MSVC compiler"
-        uses: ilammy/msvc-dev-cmd@v1.12.1
-      - name: "Install cmake 3.25.2"
-        uses: lukka/get-cmake@v3.25.2
+        uses: ilammy/msvc-dev-cmd@v1.13.0
+      - name: "Install cmake 3.28.3"
+        uses: lukka/get-cmake@v3.28.3
       - name: "Clone the PLSSVM repository into PLSSVM/"
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4.1.1
         with:
           path: PLSSVM
       - name: "Install Python dependencies"
@@ -25,7 +24,7 @@ jobs:
         run: |
           mkdir PLSSVM/build
           cd PLSSVM/build
-          cmake -DCMAKE_CONFIGURATION_TYPES=${{ matrix.build_type }} -DPLSSVM_TARGET_PLATFORMS="cpu" -DPLSSVM_ENABLE_ASSERTS=ON -DPLSSVM_ENABLE_LANGUAGE_BINDINGS=ON -DPLSSVM_ENABLE_PERFORMANCE_TRACKING=ON -DPLSSVM_ENABLE_TESTING=ON -DPLSSVM_TEST_FILE_NUM_DATA_POINTS=50 -DPLSSVM_TEST_FILE_NUM_FEATURES=20 -DPLSSVM_ENABLE_LTO=OFF -DPLSSVM_USE_FLOAT_AS_REAL_TYPE=${{ matrix.float_as_real_type }} -DPLSSVM_USE_GEMM=${{ matrix.use_gemm }} ..
+          cmake -DCMAKE_CONFIGURATION_TYPES=${{ matrix.build_type }} -DPLSSVM_TARGET_PLATFORMS="cpu" -DPLSSVM_ENABLE_ASSERTS=ON -DPLSSVM_ENABLE_LANGUAGE_BINDINGS=ON -DPLSSVM_ENABLE_PERFORMANCE_TRACKING=ON -DPLSSVM_ENABLE_TESTING=ON -DPLSSVM_TEST_FILE_NUM_DATA_POINTS=50 -DPLSSVM_TEST_FILE_NUM_FEATURES=20 -DPLSSVM_ENABLE_LTO=OFF -DPLSSVM_USE_FLOAT_AS_REAL_TYPE=${{ matrix.float_as_real_type }} -DPLSSVM_ENABLE_FAST_MATH=OFF ..
       - name: "Build PLSSVM"
         shell: bash
         run: |
@@ -35,4 +34,4 @@ jobs:
       - name: "Run tests"
         run: |
           cd PLSSVM/build
-          ctest -j 2 -E ".*Exceptions\.|SourceLocation|.*executable.*" --output-on-failure -C ${{ matrix.build_type }}
+          ctest -j 2 -E ".*executable.*" --output-on-failure -C ${{ matrix.build_type }}
