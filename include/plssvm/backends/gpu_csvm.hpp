@@ -41,14 +41,17 @@ namespace plssvm::detail {
  * @details Implements all virtual functions defined in plssvm::csvm. The GPU backends only have to implement the actual kernel (launches).
  * @tparam device_ptr_t the type of the device pointer (dependent on the used backend)
  * @tparam queue_t the type of the device queue (dependent on the used backend)
+ * @tparam pinned_memory_t the type of the pinned memory wrapper (dependent on the used backend)
  */
-template <template <typename> typename device_ptr_t, typename queue_t>
+template <template <typename> typename device_ptr_t, typename queue_t, template <typename> typename pinned_memory_t>
 class gpu_csvm : public ::plssvm::csvm {
   public:
     /// The type of the device pointer (dependent on the used backend).
     using device_ptr_type = device_ptr_t<real_type>;
     /// The type of the device queue (dependent on the used backend).
     using queue_type = queue_t;
+    /// The type of the pinned memory (dependent on the used backend).
+    using pinned_memory_type = pinned_memory_t<real_type>;
 
     /**
      * @copydoc plssvm::csvm::csvm()
@@ -205,8 +208,8 @@ class gpu_csvm : public ::plssvm::csvm {
 //***************************************************//
 //                        fit                        //
 //***************************************************//
-template <template <typename> typename device_ptr_t, typename queue_t>
-std::vector<::plssvm::detail::move_only_any> gpu_csvm<device_ptr_t, queue_t>::assemble_kernel_matrix(const solver_type solver, const parameter &params, const soa_matrix<real_type> &A, const std::vector<real_type> &q_red, const real_type QA_cost) const {
+template <template <typename> typename device_ptr_t, typename queue_t, template <typename> typename pinned_memory_t>
+std::vector<::plssvm::detail::move_only_any> gpu_csvm<device_ptr_t, queue_t, pinned_memory_t>::assemble_kernel_matrix(const solver_type solver, const parameter &params, const soa_matrix<real_type> &A, const std::vector<real_type> &q_red, const real_type QA_cost) const {
     PLSSVM_ASSERT(solver != solver_type::automatic, "An explicit solver type must be provided instead of solver_type::automatic!");
     PLSSVM_ASSERT(!A.empty(), "The matrix to setup on the devices must not be empty!");
     PLSSVM_ASSERT(A.is_padded(), "The matrix to setup on the devices must be padded!");
@@ -237,6 +240,9 @@ std::vector<::plssvm::detail::move_only_any> gpu_csvm<device_ptr_t, queue_t>::as
         q_red_d[device_id] = device_ptr_type{ q_red.size() + PADDING_SIZE, device };
     }
 
+    // pin the data matrix
+    const pinned_memory_type pm{ A };
+
 #pragma omp parallel for
     for (std::size_t device_id = 0; device_id < this->num_available_devices(); ++device_id) {
         // check whether the current device is responsible for at least one data point!
@@ -264,8 +270,8 @@ std::vector<::plssvm::detail::move_only_any> gpu_csvm<device_ptr_t, queue_t>::as
     return kernel_matrices_parts;
 }
 
-template <template <typename> typename device_ptr_t, typename queue_t>
-void gpu_csvm<device_ptr_t, queue_t>::blas_level_3(const solver_type solver, const real_type alpha, const std::vector<::plssvm::detail::move_only_any> &A, const soa_matrix<real_type> &B, const real_type beta, soa_matrix<real_type> &C) const {
+template <template <typename> typename device_ptr_t, typename queue_t, template <typename> typename pinned_memory_t>
+void gpu_csvm<device_ptr_t, queue_t, pinned_memory_t>::blas_level_3(const solver_type solver, const real_type alpha, const std::vector<::plssvm::detail::move_only_any> &A, const soa_matrix<real_type> &B, const real_type beta, soa_matrix<real_type> &C) const {
     PLSSVM_ASSERT(solver != solver_type::automatic, "An explicit solver type must be provided instead of solver_type::automatic!");
     PLSSVM_ASSERT(A.size() == this->num_available_devices(), "Not enough kernel matrix parts ({}) for the available number of devices ({})!", A.size(), this->num_available_devices());
     PLSSVM_ASSERT(!B.empty(), "The B matrix must not be empty!");
@@ -353,13 +359,13 @@ void gpu_csvm<device_ptr_t, queue_t>::blas_level_3(const solver_type solver, con
 //***************************************************//
 //                   predict, score                  //
 //***************************************************//
-template <template <typename> typename device_ptr_t, typename queue_t>
-aos_matrix<real_type> gpu_csvm<device_ptr_t, queue_t>::predict_values(const parameter &params,
-                                                                      const soa_matrix<real_type> &support_vectors,
-                                                                      const aos_matrix<real_type> &alpha,
-                                                                      const std::vector<real_type> &rho,
-                                                                      soa_matrix<real_type> &w,
-                                                                      const soa_matrix<real_type> &predict_points) const {
+template <template <typename> typename device_ptr_t, typename queue_t, template <typename> typename pinned_memory_t>
+aos_matrix<real_type> gpu_csvm<device_ptr_t, queue_t, pinned_memory_t>::predict_values(const parameter &params,
+                                                                                       const soa_matrix<real_type> &support_vectors,
+                                                                                       const aos_matrix<real_type> &alpha,
+                                                                                       const std::vector<real_type> &rho,
+                                                                                       soa_matrix<real_type> &w,
+                                                                                       const soa_matrix<real_type> &predict_points) const {
     PLSSVM_ASSERT(!support_vectors.empty(), "The support vectors must not be empty!");
     PLSSVM_ASSERT(support_vectors.is_padded(), "The support vectors must be padded!");
     PLSSVM_ASSERT(!alpha.empty(), "The alpha vectors (weights) must not be empty!");
