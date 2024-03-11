@@ -224,7 +224,7 @@ std::vector<::plssvm::detail::move_only_any> gpu_csvm<device_ptr_t, queue_t>::as
     std::vector<device_ptr_type> q_red_d(this->num_available_devices());
 
     // split memory allocation and memory copy! (necessary to remove locks on some systems and setups)
-#pragma omp parallel for
+#pragma omp parallel for num_threads(this->num_available_devices())
     for (std::size_t device_id = 0; device_id < this->num_available_devices(); ++device_id) {
         // check whether the current device is responsible for at least one data point!
         if (data_distribution_->place_specific_num_rows(device_id) == 0) {
@@ -237,7 +237,7 @@ std::vector<::plssvm::detail::move_only_any> gpu_csvm<device_ptr_t, queue_t>::as
         q_red_d[device_id] = device_ptr_type{ q_red.size() + PADDING_SIZE, device };
     }
 
-#pragma omp parallel for
+#pragma omp parallel for num_threads(this->num_available_devices())
     for (std::size_t device_id = 0; device_id < this->num_available_devices(); ++device_id) {
         // check whether the current device is responsible for at least one data point!
         if (data_distribution_->place_specific_num_rows(device_id) == 0) {
@@ -286,7 +286,7 @@ void gpu_csvm<device_ptr_t, queue_t>::blas_level_3(const solver_type solver, con
     }
 
     // split memory allocation and memory copy!
-#pragma omp parallel for
+#pragma omp parallel for num_threads(this->num_available_devices())
     for (std::size_t device_id = 0; device_id < this->num_available_devices(); ++device_id) {
         // check whether the current device is responsible for at least one data point!
         if (data_distribution_->place_specific_num_rows(device_id) == 0) {
@@ -299,7 +299,7 @@ void gpu_csvm<device_ptr_t, queue_t>::blas_level_3(const solver_type solver, con
         C_d[device_id] = device_ptr_type{ C.shape(), C.padding(), device };
     }
 
-#pragma omp parallel for ordered
+#pragma omp parallel for ordered num_threads(this->num_available_devices())
     for (std::size_t device_id = 0; device_id < this->num_available_devices(); ++device_id) {
         // check whether the current device is responsible for at least one data point!
         if (data_distribution_->place_specific_num_rows(device_id) == 0) {
@@ -387,14 +387,14 @@ aos_matrix<real_type> gpu_csvm<device_ptr_t, queue_t>::predict_values(const para
     std::vector<device_ptr_type> alpha_d(this->num_available_devices());
 
     // split memory allocation and memory copy!
-#pragma omp parallel for
+#pragma omp parallel for num_threads(this->num_available_devices())
     for (std::size_t device_id = 0; device_id < this->num_available_devices(); ++device_id) {
         const queue_type &device = devices_[device_id];
 
         // allocate memory on the device
         alpha_d[device_id] = device_ptr_type{ alpha.shape(), alpha.padding(), device };
     }
-#pragma omp parallel for
+#pragma omp parallel for num_threads(this->num_available_devices())
     for (std::size_t device_id = 0; device_id < this->num_available_devices(); ++device_id) {
         // copy data to the device
         alpha_d[device_id].copy_to_device(alpha);
@@ -415,7 +415,7 @@ aos_matrix<real_type> gpu_csvm<device_ptr_t, queue_t>::predict_values(const para
 
             std::vector<device_ptr_type> sv_d(this->num_available_devices());
             // split memory allocation and memory copy!
-#pragma omp parallel for
+#pragma omp parallel for num_threads(this->num_available_devices())
             for (std::size_t device_id = 0; device_id < this->num_available_devices(); ++device_id) {
                 // check whether the current device is responsible for at least one data point!
                 if (data_distribution_->place_specific_num_rows(device_id) == 0) {
@@ -457,14 +457,14 @@ aos_matrix<real_type> gpu_csvm<device_ptr_t, queue_t>::predict_values(const para
 
         // upload the w vector to all devices
         // split memory allocation and memory copy!
-#pragma omp parallel for
+#pragma omp parallel for num_threads(this->num_available_devices())
         for (std::size_t device_id = 0; device_id < this->num_available_devices(); ++device_id) {
             const queue_type &device = devices_[device_id];
 
             // allocate memory on the device
             sv_or_w_d[device_id] = device_ptr_type{ shape{ num_classes, num_features }, shape{ PADDING_SIZE, PADDING_SIZE }, device };
         }
-#pragma omp parallel for
+#pragma omp parallel for num_threads(this->num_available_devices())
         for (std::size_t device_id = 0; device_id < this->num_available_devices(); ++device_id) {
             // copy data to the device
             sv_or_w_d[device_id].copy_to_device(w);
@@ -472,14 +472,14 @@ aos_matrix<real_type> gpu_csvm<device_ptr_t, queue_t>::predict_values(const para
     } else {
         // use the support vectors for all other kernel functions
         // split memory allocation and memory copy!
-#pragma omp parallel for
+#pragma omp parallel for num_threads(this->num_available_devices())
         for (std::size_t device_id = 0; device_id < this->num_available_devices(); ++device_id) {
             const queue_type &device = devices_[device_id];
 
             // allocate memory on the device
             sv_or_w_d[device_id] = device_ptr_type{ support_vectors.shape(), support_vectors.padding(), device };
         }
-#pragma omp parallel for
+#pragma omp parallel for num_threads(this->num_available_devices())
         for (std::size_t device_id = 0; device_id < this->num_available_devices(); ++device_id) {
             // copy data to the device
             sv_or_w_d[device_id].copy_to_device(support_vectors);
@@ -495,7 +495,7 @@ aos_matrix<real_type> gpu_csvm<device_ptr_t, queue_t>::predict_values(const para
     std::vector<device_ptr_type> rho_d(this->num_available_devices());
 
     // split memory allocation and memory copy!
-#pragma omp parallel for
+#pragma omp parallel for num_threads(this->num_available_devices())
     for (std::size_t device_id = 0; device_id < this->num_available_devices(); ++device_id) {
         // check whether the current device is responsible for at least one data point!
         if (data_distribution_->place_specific_num_rows(device_id) == 0) {
@@ -509,7 +509,7 @@ aos_matrix<real_type> gpu_csvm<device_ptr_t, queue_t>::predict_values(const para
         rho_d[device_id] = device_ptr_type{ num_classes + PADDING_SIZE, device };
     }
 
-#pragma omp parallel for
+#pragma omp parallel for num_threads(this->num_available_devices())
     for (std::size_t device_id = 0; device_id < this->num_available_devices(); ++device_id) {
         // check whether the current device is responsible for at least one data point!
         if (data_distribution_->place_specific_num_rows(device_id) == 0) {
