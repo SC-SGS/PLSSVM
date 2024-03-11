@@ -10,9 +10,9 @@
 
 #include "plssvm/backends/HIP/detail/device_ptr.hip.hpp"  // plssvm::hip::detail::device_ptr
 
-#include "tests/backends/generic_device_ptr_tests.h"  // generic device pointer tests to instantiate
-#include "tests/naming.hpp"                           // naming::test_parameter_to_name
-#include "tests/types_to_test.hpp"                    // util::{combine_test_parameters_gtest_t, cartesian_type_product_t, layout_type_list}
+#include "tests/backends/generic_device_ptr_tests.hpp"  // generic device pointer tests to instantiate
+#include "tests/naming.hpp"                             // naming::test_parameter_to_name
+#include "tests/types_to_test.hpp"                      // util::{combine_test_parameters_gtest_t, cartesian_type_product_t, layout_type_list}
 
 #include "gtest/gtest.h"  // INSTANTIATE_TYPED_TEST_SUITE_P
 
