@@ -319,7 +319,7 @@ auto csvm::run_w_kernel(const std::size_t device_id, const device_ptr_type &alph
     const unsigned long long sv_offset = data_distribution_->place_row_offset(device_id);
 
     // define the grid and block sizes
-    const std::size_t max_work_group_size = this->get_max_work_group_size(0);
+    const std::size_t max_work_group_size = this->get_max_work_group_size(device_id);
     if (max_work_group_size < std::size_t{ THREAD_BLOCK_SIZE } * std::size_t{ THREAD_BLOCK_SIZE }) {
         throw kernel_launch_resources{ fmt::format("Not enough work-items allowed for a work-groups of size {}x{}! Try reducing THREAD_BLOCK_SIZE.", THREAD_BLOCK_SIZE, THREAD_BLOCK_SIZE) };
     }
@@ -347,7 +347,7 @@ auto csvm::run_predict_kernel(const std::size_t device_id, const parameter &para
     out_d.memset(0);
 
     // define the block sizes
-    const std::size_t max_work_group_size = this->get_max_work_group_size(0);
+    const std::size_t max_work_group_size = this->get_max_work_group_size(device_id);
     if (max_work_group_size < std::size_t{ THREAD_BLOCK_SIZE } * std::size_t{ THREAD_BLOCK_SIZE }) {
         throw kernel_launch_resources{ fmt::format("Not enough work-items allowed for a work-groups of size {}x{}! Try reducing THREAD_BLOCK_SIZE.", THREAD_BLOCK_SIZE, THREAD_BLOCK_SIZE) };
     }
