@@ -62,14 +62,13 @@ class host_pinned_memory {
     /**
      * @brief Register the memory managed by the pointer @p ptr with @p size to use pinned memory.
      * @param[in] ptr the memory to pin
-     * @param[in] size the number of elements in the memory region to pin (**not** bytes!)
      */
-    host_pinned_memory(const T *ptr, std::size_t size);
+    explicit host_pinned_memory(const T *ptr);
 
     /**
      * @brief Unregister the pinned memory.
      */
-    virtual ~host_pinned_memory();
+    virtual ~host_pinned_memory() = 0;
 
     /**
      * @brief Return whether the memory could be pinned or not.
@@ -95,16 +94,12 @@ class host_pinned_memory {
 };
 
 template <typename T>
-host_pinned_memory<T>::host_pinned_memory(const T *ptr, const std::size_t size) :
+host_pinned_memory<T>::host_pinned_memory(const T *ptr) :
     ptr_{ ptr } {
 }
 
 template <typename T>
-host_pinned_memory<T>::~host_pinned_memory() {
-    if (is_pinned_ && ptr_ != nullptr) {
-        this->unpin_memory();
-    }
-}
+host_pinned_memory<T>::~host_pinned_memory() = default;
 
 template <typename T>
 void host_pinned_memory<T>::pin_memory(const std::size_t) {

@@ -26,7 +26,7 @@ namespace plssvm::cuda::detail {
  * @tparam T the type of the data array that should be pinned
  */
 template <typename T>
-class [[nodiscard]] pinned_memory : public ::plssvm::detail::host_pinned_memory<T> {
+class [[nodiscard]] pinned_memory final : public ::plssvm::detail::host_pinned_memory<T> {
     /// The template base type of the CUDA pinned_memory class.
     using base_type = ::plssvm::detail::host_pinned_memory<T>;
 
@@ -34,7 +34,7 @@ class [[nodiscard]] pinned_memory : public ::plssvm::detail::host_pinned_memory<
     using base_type::ptr_;
 
   public:
-    using base_type::value_type;
+    using typename base_type::value_type;
 
     /**
      * @brief Register the memory managed by the matrix @p matr to use pinned memory.
@@ -44,6 +44,7 @@ class [[nodiscard]] pinned_memory : public ::plssvm::detail::host_pinned_memory<
     template <layout_type layout>
     explicit pinned_memory(const matrix<T, layout> &matr) :
         pinned_memory{ matr.data(), matr.size_padded() } { }
+
     /**
      * @brief Register the memory managed by the vector @p vec to use pinned memory.
      * @param[in] vec the memory to pin
@@ -55,6 +56,11 @@ class [[nodiscard]] pinned_memory : public ::plssvm::detail::host_pinned_memory<
      * @param[in] size the number of elements in the memory region to pin (**not** bytes!)
      */
     pinned_memory(const T *ptr, std::size_t size);
+    /**
+     * @brief Unregister the memory managed by this object.
+     */
+    ~pinned_memory() override;
+
   private:
     /**
      * @copydetails plssvm::detail::host_pinned_memory::pin_memory
@@ -65,6 +71,9 @@ class [[nodiscard]] pinned_memory : public ::plssvm::detail::host_pinned_memory<
      */
     void unpin_memory() override;
 };
+
+extern template class pinned_memory<float>;
+extern template class pinned_memory<double>;
 
 }  // namespace plssvm::cuda::detail
 

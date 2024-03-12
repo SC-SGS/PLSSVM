@@ -10,14 +10,17 @@
 
 #include "plssvm/backends/CUDA/detail/utility.cuh"  // PLSSVM_CUDA_ERROR_CHECK
 #include "plssvm/backends/host_pinned_memory.hpp"   // plssvm::detail::host_pinned_memory
+#include "plssvm/detail/assert.hpp"                 // PLSSVM_ASSERT
 #include "plssvm/detail/performance_tracker.hpp"    // PLSSVM_DETAIL_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY
-#include "plssvm/detail/assert.hpp" // PLSSVM_ASSERT
+#include "plssvm/exceptions/exceptions.hpp"         // plssvm::exception
 
 #include "cuda_runtime_api.h"  // cudaHostRegister
 
 #include "driver_types.h"  // cudaHostRegisterDefault
 #include <chrono>          // std::chrono::steady_clock::{now, time_point}, std::chrono::duration_cast
 #include <cstddef>         // std::size_t
+#include <exception>       // std::terminate
+#include <iostream>        // std::cerr, std::endl
 #include <vector>          // std::vector
 
 namespace plssvm::cuda::detail {
@@ -28,8 +31,20 @@ pinned_memory<T>::pinned_memory(const std::vector<T> &vec) :
 
 template <typename T>
 pinned_memory<T>::pinned_memory(const T *ptr, const std::size_t size) :
-    ::plssvm::detail::host_pinned_memory<T>{ ptr, size } {
+    ::plssvm::detail::host_pinned_memory<T>{ ptr } {
     this->pin_memory(size * sizeof(T));
+}
+
+template <typename T>
+pinned_memory<T>::~pinned_memory() {
+    try {
+        if (is_pinned_ && ptr_ != nullptr) {
+            this->unpin_memory();
+        }
+    } catch (const plssvm::exception &e) {
+        std::cerr << e.what_with_loc() << std::endl;
+        std::terminate();
+    }
 }
 
 template <typename T>
