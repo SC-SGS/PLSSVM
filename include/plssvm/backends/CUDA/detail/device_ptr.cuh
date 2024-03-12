@@ -16,8 +16,6 @@
 #include "plssvm/backends/gpu_device_ptr.hpp"  // plssvm::detail::gpu_device_ptr
 #include "plssvm/shape.hpp"                    // plssvm::shape
 
-#include <array>  // std::array
-
 namespace plssvm::cuda::detail {
 
 /**
@@ -25,9 +23,9 @@ namespace plssvm::cuda::detail {
  * @tparam T the type of the kernel pointer to wrap
  */
 template <typename T>
-class device_ptr : public ::plssvm::detail::gpu_device_ptr<T, int> {
+class device_ptr : public ::plssvm::detail::gpu_device_ptr<T, int, T *, device_ptr<T>> {
     /// The template base type of the CUDA device_ptr class.
-    using base_type = ::plssvm::detail::gpu_device_ptr<T, int>;
+    using base_type = ::plssvm::detail::gpu_device_ptr<T, int, T *, device_ptr<T>>;
 
     using base_type::data_;
     using base_type::queue_;
@@ -123,7 +121,7 @@ class device_ptr : public ::plssvm::detail::gpu_device_ptr<T, int> {
     /**
      * @copydoc plssvm::detail::gpu_device_ptr::copy_to_other_device(device_pointer_type &, size_type, size_type)
      */
-    void copy_to_other_device(device_pointer_type target, size_type pos, size_type count) override;
+    void copy_to_other_device(device_ptr &target, size_type pos, size_type count) override;
 };
 
 extern template class device_ptr<float>;

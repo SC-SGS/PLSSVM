@@ -1071,64 +1071,6 @@ TYPED_TEST_P(DevicePtr, copy_device_ptr_to_other_device_with_count) {
     EXPECT_EQ(result, std::vector<value_type>(5, 42));
 }
 
-TYPED_TEST_P(DevicePtr, copy_ptr_to_other_device) {
-    using test_type = typename TestFixture::fixture_test_type;
-    using device_ptr_type = typename test_type::device_ptr_type;
-    using value_type = typename device_ptr_type::value_type;
-    using queue_type = typename test_type::queue_type;
-    const queue_type &queue = test_type::default_queue();
-
-    // construct device_ptr
-    device_ptr_type ptr{ 10, queue };
-    ptr.memset(0);
-
-    // create data to copy to the device
-    std::vector<value_type> data(14, 42);
-
-    // copy data to the device
-    ptr.copy_to_device(data);
-
-    // other device_ptr
-    device_ptr_type other_ptr{ 10, queue };
-    ptr.copy_to_other_device(other_ptr.get());
-
-    // copy data back to the host
-    std::vector<value_type> result(other_ptr.size());
-    other_ptr.copy_to_host(result);
-
-    // check values for correctness
-    EXPECT_EQ(result, std::vector<value_type>(10, 42));
-}
-
-TYPED_TEST_P(DevicePtr, copy_ptr_to_other_device_with_count) {
-    using test_type = typename TestFixture::fixture_test_type;
-    using device_ptr_type = typename test_type::device_ptr_type;
-    using value_type = typename device_ptr_type::value_type;
-    using queue_type = typename test_type::queue_type;
-    const queue_type &queue = test_type::default_queue();
-
-    // construct device_ptr
-    device_ptr_type ptr{ 10, queue };
-    ptr.memset(0);
-
-    // create data to copy to the device
-    std::vector<value_type> data(14, 42);
-
-    // copy data to the device
-    ptr.copy_to_device(data);
-
-    // other device_ptr
-    device_ptr_type other_ptr{ 5, queue };
-    ptr.copy_to_other_device(other_ptr.get(), 1, 5);
-
-    // copy data back to the host
-    std::vector<value_type> result(other_ptr.size());
-    other_ptr.copy_to_host(result);
-
-    // check values for correctness
-    EXPECT_EQ(result, std::vector<value_type>(5, 42));
-}
-
 REGISTER_TYPED_TEST_SUITE_P(DevicePtr,
                             default_construct,
                             construct_size,
@@ -1175,9 +1117,7 @@ REGISTER_TYPED_TEST_SUITE_P(DevicePtr,
                             copy_ptr_strided_invalid_spitch_width_combination,
                             copy_device_ptr_to_other_device,
                             copy_device_ptr_to_other_device_too_few_device_elements,
-                            copy_device_ptr_to_other_device_with_count,
-                            copy_ptr_to_other_device,
-                            copy_ptr_to_other_device_with_count);
+                            copy_device_ptr_to_other_device_with_count);
 
 template <typename T>
 class DevicePtrLayout : public DevicePtr<T> {
@@ -1608,9 +1548,7 @@ TYPED_TEST_P(DevicePtrDeathTest, copy_to_other_device_invalid_device_ptr) {
 
     // copy with invalid device pointer
     EXPECT_DEATH(def.copy_to_other_device(ptr), ::testing::HasSubstr("Invalid data pointer! Maybe *this has been default constructed?"));
-    EXPECT_DEATH(def.copy_to_other_device(ptr.get()), ::testing::HasSubstr("Invalid data pointer! Maybe *this has been default constructed?"));
     EXPECT_DEATH(ptr.copy_to_other_device(def), ::testing::HasSubstr("Invalid target pointer! Maybe target has been default constructed?"));
-    EXPECT_DEATH(ptr.copy_to_other_device(def.get()), ::testing::HasSubstr("Invalid target pointer! Maybe target has been default constructed?"));
 }
 
 TYPED_TEST_P(DevicePtrDeathTest, copy_to_other_device_with_count_invalid_device_ptr) {
@@ -1625,9 +1563,7 @@ TYPED_TEST_P(DevicePtrDeathTest, copy_to_other_device_with_count_invalid_device_
 
     // copy with invalid device pointer
     EXPECT_DEATH(def.copy_to_other_device(ptr, 0, 10), ::testing::HasSubstr("Invalid data pointer! Maybe *this has been default constructed?"));
-    EXPECT_DEATH(def.copy_to_other_device(ptr.get(), 0, 10), ::testing::HasSubstr("Invalid data pointer! Maybe *this has been default constructed?"));
     EXPECT_DEATH(ptr.copy_to_other_device(def, 0, 10), ::testing::HasSubstr("Invalid target pointer! Maybe target has been default constructed?"));
-    EXPECT_DEATH(ptr.copy_to_other_device(def.get(), 0, 10), ::testing::HasSubstr("Invalid target pointer! Maybe target has been default constructed?"));
 }
 
 REGISTER_TYPED_TEST_SUITE_P(DevicePtrDeathTest,
