@@ -237,11 +237,11 @@ void csvm::run_inplace_matrix_addition(const std::size_t device_id, device_ptr_t
         throw kernel_launch_resources{ fmt::format("Not enough work-items allowed for a work-groups of size {}x{}! Try reducing THREAD_BLOCK_SIZE.", THREAD_BLOCK_SIZE, THREAD_BLOCK_SIZE) };
     }
     const dim3 block(THREAD_BLOCK_SIZE, THREAD_BLOCK_SIZE);
-    const dim3 grid(static_cast<int>(std::ceil(static_cast<double>(num_rhs) / static_cast<double>(block.x))),
-                    static_cast<int>(std::ceil(static_cast<double>(num_rows) / static_cast<double>(block.y))));
+    const dim3 grid(static_cast<int>(std::ceil(static_cast<double>(num_rows) / static_cast<double>(block.x * INTERNAL_BLOCK_SIZE))),
+                    static_cast<int>(std::ceil(static_cast<double>(num_rhs) / static_cast<double>(block.y * INTERNAL_BLOCK_SIZE))));
 
     detail::set_device(device);
-    cuda::device_kernel_inplace_matrix_add<<<grid, block>>>(num_rows, num_rhs, lhs_d.get(), rhs_d.get());
+    cuda::device_kernel_inplace_matrix_add<<<grid, block>>>(num_rhs, lhs_d.get(), rhs_d.get());
     detail::peek_at_last_error();
     detail::device_synchronize(device);
 }
@@ -257,11 +257,11 @@ void csvm::run_inplace_matrix_scale(const std::size_t device_id, device_ptr_type
         throw kernel_launch_resources{ fmt::format("Not enough work-items allowed for a work-groups of size {}x{}! Try reducing THREAD_BLOCK_SIZE.", THREAD_BLOCK_SIZE, THREAD_BLOCK_SIZE) };
     }
     const dim3 block(THREAD_BLOCK_SIZE, THREAD_BLOCK_SIZE);
-    const dim3 grid(static_cast<int>(std::ceil(static_cast<double>(num_rhs) / static_cast<double>(block.x))),
-                    static_cast<int>(std::ceil(static_cast<double>(num_rows) / static_cast<double>(block.y))));
+    const dim3 grid(static_cast<int>(std::ceil(static_cast<double>(num_rows) / static_cast<double>(block.x * INTERNAL_BLOCK_SIZE))),
+                    static_cast<int>(std::ceil(static_cast<double>(num_rhs) / static_cast<double>(block.y * INTERNAL_BLOCK_SIZE))));
 
     detail::set_device(device);
-    cuda::device_kernel_inplace_matrix_scale<<<grid, block>>>(num_rows, num_rhs, lhs_d.get(), scale);
+    cuda::device_kernel_inplace_matrix_scale<<<grid, block>>>(num_rhs, lhs_d.get(), scale);
     detail::peek_at_last_error();
     detail::device_synchronize(device);
 }
