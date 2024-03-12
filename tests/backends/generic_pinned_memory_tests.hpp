@@ -21,6 +21,7 @@
 
 #include "gtest//gtest.h"  // TYPED_TEST_SUITE_P, TYPED_TEST_P, REGISTER_TYPED_TEST_SUITE_P, EXPECT_EQ, EXPECT_DEATH
 
+#include <tuple>   // std::ignore
 #include <vector>  // std::vector
 
 template <typename T>
@@ -120,7 +121,7 @@ TYPED_TEST_P(PinnedMemoryDeathTest, construct_empty_vector) {
     const std::vector<real_type> vec{};
 
     // try pinning empty memory doesn't work
-    EXPECT_DEATH(pinned_memory_type{ vec }, "Can't pin a 0 B memory!");
+    EXPECT_DEATH(std::ignore = pinned_memory_type{ vec }, "Can't pin a 0 B memory!");
 }
 
 TYPED_TEST_P(PinnedMemoryDeathTest, construct_empty_pointer_and_size) {
@@ -131,7 +132,7 @@ TYPED_TEST_P(PinnedMemoryDeathTest, construct_empty_pointer_and_size) {
     const std::vector<real_type> vec{};
 
     // try pinning empty memory doesn't work
-    EXPECT_DEATH((pinned_memory_type{ vec.data(), vec.size() }), "Can't pin a 0 B memory!");
+    EXPECT_DEATH((std::ignore = pinned_memory_type{ vec.data(), vec.size() }), "Can't pin a 0 B memory!");
 }
 
 TYPED_TEST_P(PinnedMemoryDeathTest, construct_nullptr) {
@@ -139,9 +140,8 @@ TYPED_TEST_P(PinnedMemoryDeathTest, construct_nullptr) {
     using pinned_memory_type = typename test_type::pinned_memory_type;
 
     // try pinning empty memory doesn't work
-    EXPECT_DEATH((pinned_memory_type{ nullptr, 1 }), "ptr_ may not be the nullptr!");
+    EXPECT_DEATH((std::ignore = pinned_memory_type{ nullptr, 1 }), "ptr_ may not be the nullptr!");
 }
-
 
 REGISTER_TYPED_TEST_SUITE_P(PinnedMemoryDeathTest, construct_empty_vector, construct_empty_pointer_and_size, construct_nullptr);
 
@@ -162,7 +162,7 @@ TYPED_TEST_P(PinnedMemoryLayoutDeathTest, construct_empty_matrix) {
     const plssvm::matrix<real_type, layout> matr{};
 
     // try pinning empty memory doesn't work
-    EXPECT_DEATH((pinned_memory_type{ matr }), "Can't pin a 0 B memory!");
+    EXPECT_DEATH(std::ignore = pinned_memory_type{ matr }, "Can't pin a 0 B memory!");
 }
 
 REGISTER_TYPED_TEST_SUITE_P(PinnedMemoryLayoutDeathTest, construct_empty_matrix);

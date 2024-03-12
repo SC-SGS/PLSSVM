@@ -8,7 +8,7 @@
  * @brief Tests for the utility function to fill a array with a specific value.
  */
 
-#include "plssvm/backends/HIP/detail/fill_kernel.hip.hpp"
+#include "plssvm/backends/HIP/kernel/detail/fill_kernel.hip.hpp"
 
 #include "tests/naming.hpp"         // util::test_parameter_to_name
 #include "tests/types_to_test.hpp"  // util::{real_type_gtest, test_parameter_type_at_t}

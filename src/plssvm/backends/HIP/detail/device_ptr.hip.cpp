@@ -8,12 +8,12 @@
 
 #include "plssvm/backends/HIP/detail/device_ptr.hip.hpp"
 
-#include "plssvm/backends/gpu_device_ptr.hpp"              // plssvm::detail::gpu_device_ptr
-#include "plssvm/backends/HIP/detail/fill_kernel.hip.hpp"  // plssvm::hip::detail::fill_array
-#include "plssvm/backends/HIP/detail/utility.hip.hpp"      // PLSSVM_HIP_ERROR_CHECK, plssvm::hip::detail::get_device_count
-#include "plssvm/backends/HIP/exceptions.hpp"              // plssvm::hip::backend_exception
-#include "plssvm/detail/assert.hpp"                        // PLSSVM_ASSERT
-#include "plssvm/shape.hpp"                                // plssvm::shape
+#include "plssvm/backends/gpu_device_ptr.hpp"                     // plssvm::detail::gpu_device_ptr
+#include "plssvm/backends/HIP/detail/utility.hip.hpp"             // PLSSVM_HIP_ERROR_CHECK, plssvm::hip::detail::get_device_count
+#include "plssvm/backends/HIP/exceptions.hpp"                     // plssvm::hip::backend_exception
+#include "plssvm/backends/HIP/kernel/detail/fill_kernel.hip.hpp"  // plssvm::hip::detail::fill_array
+#include "plssvm/detail/assert.hpp"                               // PLSSVM_ASSERT
+#include "plssvm/shape.hpp"                                       // plssvm::shape
 
 #include "hip/hip_runtime_api.h"  // HIP runtime functions
 
@@ -100,6 +100,19 @@ void device_ptr<T>::copy_to_device(const_host_pointer_type data_to_copy, const s
 }
 
 template <typename T>
+void device_ptr<T>::copy_to_device_strided(const_host_pointer_type data_to_copy, const std::size_t spitch, const std::size_t width, const std::size_t height) {
+    PLSSVM_ASSERT(data_ != nullptr, "Invalid data pointer! Maybe *this has been default constructed?");
+    PLSSVM_ASSERT(data_to_copy != nullptr, "Invalid host pointer for the data to copy!");
+
+    if (width > spitch) {
+        throw backend_exception{ fmt::format("Invalid width and spitch combination specified (width: {} <= spitch: {})!", width, spitch) };
+    }
+
+    detail::set_device(queue_);
+    PLSSVM_HIP_ERROR_CHECK(hipMemcpy2D(data_, this->shape_padded().x * sizeof(value_type), data_to_copy, spitch * sizeof(value_type), width * sizeof(value_type), height, hipMemcpyHostToDevice));
+}
+
+template <typename T>
 void device_ptr<T>::copy_to_host(host_pointer_type buffer, const size_type pos, const size_type count) const {
     PLSSVM_ASSERT(data_ != nullptr, "Invalid data pointer! Maybe *this has been default constructed?");
     PLSSVM_ASSERT(buffer != nullptr, "Invalid host pointer for the data to copy!");
@@ -107,6 +120,16 @@ void device_ptr<T>::copy_to_host(host_pointer_type buffer, const size_type pos, 
     detail::set_device(queue_);
     const size_type rcount = std::min(count, this->size_padded() - pos);
     PLSSVM_HIP_ERROR_CHECK(hipMemcpy(buffer, data_ + pos, rcount * sizeof(value_type), hipMemcpyDeviceToHost))
+}
+
+template <typename T>
+void device_ptr<T>::copy_to_other_device(device_pointer_type target, const size_type pos, const size_type count) {
+    PLSSVM_ASSERT(data_ != nullptr, "Invalid data pointer! Maybe *this has been default constructed?");
+    PLSSVM_ASSERT(target != nullptr, "Invalid target pointer! Maybe target has been default constructed?");
+
+    detail::set_device(queue_);
+    const size_type rcount = std::min(count, this->size_padded() - pos);
+    PLSSVM_HIP_ERROR_CHECK(hipMemcpy(target, data_ + pos, rcount * sizeof(value_type), hipMemcpyDeviceToDevice))
 }
 
 template class device_ptr<float>;
