@@ -117,30 +117,39 @@ TYPED_TEST_P(PinnedMemoryDeathTest, construct_empty_vector) {
     using test_type = typename TestFixture::fixture_test_type;
     using pinned_memory_type = typename test_type::pinned_memory_type;
     using real_type = typename pinned_memory_type::value_type;
+    constexpr bool can_pin = test_type::can_pin;
 
     const std::vector<real_type> vec{};
 
-    // try pinning empty memory doesn't work
-    EXPECT_DEATH(std::ignore = pinned_memory_type{ vec }, "Can't pin a 0 B memory!");
+    // try pinning empty memory doesn't work -> only if pinning is possible!
+    if constexpr (can_pin) {
+        EXPECT_DEATH(std::ignore = pinned_memory_type{ vec }, "Can't pin a 0 B memory!");
+    }
 }
 
 TYPED_TEST_P(PinnedMemoryDeathTest, construct_empty_pointer_and_size) {
     using test_type = typename TestFixture::fixture_test_type;
     using pinned_memory_type = typename test_type::pinned_memory_type;
     using real_type = typename pinned_memory_type::value_type;
+    constexpr bool can_pin = test_type::can_pin;
 
     const std::vector<real_type> vec{};
 
-    // try pinning empty memory doesn't work
-    EXPECT_DEATH((std::ignore = pinned_memory_type{ vec.data(), vec.size() }), "Can't pin a 0 B memory!");
+    // try pinning empty memory doesn't work -> only if pinning is possible!
+    if constexpr (can_pin) {
+        EXPECT_DEATH((std::ignore = pinned_memory_type{ vec.data(), vec.size() }), "Can't pin a 0 B memory!");
+    }
 }
 
 TYPED_TEST_P(PinnedMemoryDeathTest, construct_nullptr) {
     using test_type = typename TestFixture::fixture_test_type;
     using pinned_memory_type = typename test_type::pinned_memory_type;
+    constexpr bool can_pin = test_type::can_pin;
 
-    // try pinning empty memory doesn't work
-    EXPECT_DEATH((std::ignore = pinned_memory_type{ nullptr, 1 }), "ptr_ may not be the nullptr!");
+    // try pinning empty memory doesn't work -> only if pinning is possible!
+    if constexpr (can_pin) {
+        EXPECT_DEATH((std::ignore = pinned_memory_type{ nullptr, 1 }), "ptr_ may not be the nullptr!");
+    }
 }
 
 REGISTER_TYPED_TEST_SUITE_P(PinnedMemoryDeathTest, construct_empty_vector, construct_empty_pointer_and_size, construct_nullptr);
@@ -158,11 +167,14 @@ TYPED_TEST_P(PinnedMemoryLayoutDeathTest, construct_empty_matrix) {
     using pinned_memory_type = typename test_type::pinned_memory_type;
     using real_type = typename pinned_memory_type::value_type;
     constexpr plssvm::layout_type layout = util::test_parameter_value_at_v<0, TypeParam>;
+    constexpr bool can_pin = test_type::can_pin;
 
     const plssvm::matrix<real_type, layout> matr{};
 
-    // try pinning empty memory doesn't work
-    EXPECT_DEATH(std::ignore = pinned_memory_type{ matr }, "Can't pin a 0 B memory!");
+    // try pinning empty memory doesn't work -> only if pinning is possible!
+    if constexpr (can_pin) {
+        EXPECT_DEATH(std::ignore = pinned_memory_type{ matr }, "Can't pin a 0 B memory!");
+    }
 }
 
 REGISTER_TYPED_TEST_SUITE_P(PinnedMemoryLayoutDeathTest, construct_empty_matrix);

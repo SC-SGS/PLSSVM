@@ -159,7 +159,6 @@ using adaptivecpp_label_type_solver_kernel_function_and_classification_type_gtes
 // instantiate type-parameterized tests
 // generic CSVM tests
 INSTANTIATE_TYPED_TEST_SUITE_P(AdaptiveCppCSVM, GenericCSVM, adaptivecpp_csvm_test_type_gtest, naming::test_parameter_to_name);
-INSTANTIATE_TYPED_TEST_SUITE_P(AdaptiveCppCSVM, GenericCSVMSolver, adaptivecpp_solver_type_gtest, naming::test_parameter_to_name);
 INSTANTIATE_TYPED_TEST_SUITE_P(AdaptiveCppCSVM, GenericCSVMKernelFunction, adaptivecpp_kernel_function_type_gtest, naming::test_parameter_to_name);
 INSTANTIATE_TYPED_TEST_SUITE_P(AdaptiveCppCSVM, GenericCSVMSolverKernelFunction, adaptivecpp_solver_and_kernel_function_type_gtest, naming::test_parameter_to_name);
 INSTANTIATE_TYPED_TEST_SUITE_P(AdaptiveCppCSVM, GenericCSVMKernelFunctionClassification, adaptivecpp_label_type_kernel_function_and_classification_type_gtest, naming::test_parameter_to_name);
@@ -169,6 +168,7 @@ INSTANTIATE_TYPED_TEST_SUITE_P(AdaptiveCppCSVM, GenericCSVMSolverKernelFunctionC
 INSTANTIATE_TYPED_TEST_SUITE_P(AdaptiveCppCSVMDeathTest, GenericCSVMDeathTest, adaptivecpp_csvm_test_type_gtest, naming::test_parameter_to_name);
 INSTANTIATE_TYPED_TEST_SUITE_P(AdaptiveCppCSVMDeathTest, GenericCSVMSolverDeathTest, adaptivecpp_solver_type_gtest, naming::test_parameter_to_name);
 INSTANTIATE_TYPED_TEST_SUITE_P(AdaptiveCppCSVMDeathTest, GenericCSVMKernelFunctionDeathTest, adaptivecpp_kernel_function_type_gtest, naming::test_parameter_to_name);
+INSTANTIATE_TYPED_TEST_SUITE_P(AdaptiveCppCSVMDeathTest, GenericCSVMSolverKernelFunctionDeathTest, adaptivecpp_solver_and_kernel_function_type_gtest, naming::test_parameter_to_name);
 
 // generic GPU CSVM tests
 INSTANTIATE_TYPED_TEST_SUITE_P(AdaptiveCppCSVM, GenericGPUCSVM, adaptivecpp_csvm_test_type_gtest, naming::test_parameter_to_name);

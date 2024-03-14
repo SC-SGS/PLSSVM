@@ -12,6 +12,7 @@
 #include "plssvm/backends/SYCL/AdaptiveCpp/detail/queue_impl.hpp"  // plssvm::adaptivecpp::detail::queue (PImpl implementation)
 #include "plssvm/backends/SYCL/exceptions.hpp"                     // plssvm::adaptivecpp::backend_exception
 #include "plssvm/detail/assert.hpp"                                // PLSSVM_ASSERT
+#include "plssvm/matrix.hpp"                                       // plssvm::aos_matrix
 #include "plssvm/shape.hpp"                                        // plssvm::shape
 
 #include "sycl/sycl.hpp"  // ::sycl::malloc_device, ::sycl::free
@@ -20,6 +21,7 @@
 
 #include <algorithm>  // std::min
 #include <array>      // std::array
+#include <vector>     // std::vector
 
 namespace plssvm::adaptivecpp::detail {
 
@@ -79,6 +81,25 @@ void device_ptr<T>::copy_to_device(const_host_pointer_type data_to_copy, const s
 }
 
 template <typename T>
+void device_ptr<T>::copy_to_device_strided(const_host_pointer_type data_to_copy, const std::size_t spitch, const std::size_t width, const std::size_t height) {
+    PLSSVM_ASSERT(data_ != nullptr, "Invalid data pointer! Maybe *this has been default constructed?");
+    PLSSVM_ASSERT(data_to_copy != nullptr, "Invalid host pointer for the data to copy!");
+
+    if (width > spitch) {
+        throw backend_exception{ fmt::format("Invalid width and spitch combination specified (width: {} <= spitch: {})!", width, spitch) };
+    }
+
+    // TODO: strided copy to device in AdaptiveCpp currently not possible
+    std::vector<value_type> temp(this->shape_padded().x * height, value_type{ 0.0 });
+    value_type *pos = temp.data();
+    for (std::size_t row = 0; row < height; ++row) {
+        std::memcpy(pos, data_to_copy + row * spitch, width * sizeof(value_type));
+        pos += this->shape_padded().x;
+    }
+    this->copy_to_device(temp);
+}
+
+template <typename T>
 void device_ptr<T>::copy_to_host(host_pointer_type buffer, const size_type pos, const size_type count) const {
     PLSSVM_ASSERT(data_ != nullptr, "Invalid data pointer! Maybe *this has been default constructed?");
     PLSSVM_ASSERT(buffer != nullptr, "Invalid host pointer for the data to copy!");
@@ -86,6 +107,22 @@ void device_ptr<T>::copy_to_host(host_pointer_type buffer, const size_type pos, 
 
     const size_type rcount = std::min(count, this->size_padded() - pos);
     queue_.impl->sycl_queue.copy(data_ + pos, buffer, rcount).wait();
+}
+
+template <typename T>
+void device_ptr<T>::copy_to_other_device(device_ptr &target, const size_type pos, const size_type count) {
+    PLSSVM_ASSERT(data_ != nullptr, "Invalid data pointer! Maybe *this has been default constructed?");
+    PLSSVM_ASSERT(target.get() != nullptr, "Invalid target pointer! Maybe target has been default constructed?");
+
+    const size_type rcount = std::min(count, this->size_padded() - pos);
+    if (target.size_padded() < rcount) {
+        throw gpu_device_ptr_exception{ fmt::format("Buffer too small to perform copy (needed: {}, provided: {})!", rcount, target.size_padded()) };
+    }
+
+    // TODO: direct copy between devices in AdaptiveCpp currently not possible
+    std::vector<value_type> temp(rcount);
+    this->copy_to_host(temp, pos, rcount);
+    target.copy_to_device(temp);
 }
 
 template class device_ptr<float>;

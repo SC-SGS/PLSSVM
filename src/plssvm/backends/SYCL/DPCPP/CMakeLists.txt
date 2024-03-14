@@ -30,6 +30,7 @@ if (PLSSVM_SYCL_BACKEND_CHECK_FOR_DPCPP_COMPILER)
     # set DPC++ specific targets
     set(PLSSVM_SYCL_DPCPP_SOURCES
         ${CMAKE_CURRENT_LIST_DIR}/detail/device_ptr.cpp
+        ${CMAKE_CURRENT_LIST_DIR}/detail/pinned_memory.cpp
         ${CMAKE_CURRENT_LIST_DIR}/detail/utility.cpp
         ${CMAKE_CURRENT_LIST_DIR}/csvm.cpp
     )
