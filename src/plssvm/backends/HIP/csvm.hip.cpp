@@ -73,14 +73,6 @@ void csvm::init(const target_platform target) {
     devices_.resize(detail::get_device_count());
     std::iota(devices_.begin(), devices_.end(), 0);
 
-    // currently only single GPU execution is supported
-    if (devices_.size() > 1) {
-        plssvm::detail::log(verbosity_level::full | verbosity_level::warning,
-                            "WARNING: found {} devices, but currently only single GPU execution is supported. Continuing only with device 0!\n",
-                            devices_.size());
-        devices_.resize(1);
-    }
-
     // throw exception if no HIP devices could be found
     if (devices_.empty()) {
         throw backend_exception{ "HIP backend selected but no HIP capable devices were found!" };
