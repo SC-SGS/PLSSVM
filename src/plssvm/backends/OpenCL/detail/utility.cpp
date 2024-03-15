@@ -187,27 +187,29 @@ std::string get_device_name(const command_queue &queue) {
     return device_name;
 }
 
-std::vector<std::pair<compute_kernel_name, std::string>> kernel_type_to_function_names(const kernel_function_type kernel) {
+std::vector<std::pair<compute_kernel_name, std::string>> kernel_type_to_function_names() {
     // since the correct predict kernel function cannot be determined during construction, add all predict kernels
     std::vector<std::pair<compute_kernel_name, std::string>> kernels{
-        std::make_pair(compute_kernel_name::assemble_kernel_matrix_explicit, fmt::format("device_kernel_assembly_{}", kernel)),
-        std::make_pair(compute_kernel_name::assemble_kernel_matrix_implicit_blas, fmt::format("device_kernel_assembly_{}_symm", kernel)),
+        // kernel_matrix_assembly.cl
+        std::make_pair(compute_kernel_name::assemble_kernel_matrix_explicit, "device_kernel_assembly"),
+        // blas.cl
+        std::make_pair(compute_kernel_name::symm_kernel_explicit, "device_kernel_symm"),
+        std::make_pair(compute_kernel_name::mirror_symm_kernel_explicit, "device_kernel_symm_mirror"),
+        std::make_pair(compute_kernel_name::inplace_matrix_add_kernel, "device_kernel_inplace_matrix_add"),
+        std::make_pair(compute_kernel_name::inplace_matrix_scale_kernel, "device_kernel_inplace_matrix_scale"),
+        // kernel_matrix_assembly_blas.cl
+        std::make_pair(compute_kernel_name::assemble_kernel_matrix_implicit_blas, "device_kernel_assembly_symm"),
+        // predict_kernel.cl
+        std::make_pair(compute_kernel_name::w_kernel, "device_kernel_w_linear"),
         std::make_pair(compute_kernel_name::predict_kernel_linear, "device_kernel_predict_linear"),
         std::make_pair(compute_kernel_name::predict_kernel_polynomial, "device_kernel_predict_polynomial"),
-        std::make_pair(compute_kernel_name::predict_kernel_rbf, "device_kernel_predict_rbf"),
-        std::make_pair(compute_kernel_name::w_kernel, "device_kernel_w_linear")
+        std::make_pair(compute_kernel_name::predict_kernel_rbf, "device_kernel_predict_rbf")
     };
-
-#if defined(PLSSVM_USE_GEMM)
-    kernels.emplace_back(compute_kernel_name::gemm_kernel_explicit, "device_kernel_gemm");
-#else
-    kernels.emplace_back(compute_kernel_name::symm_kernel_explicit, "device_kernel_symm");
-#endif
 
     return kernels;
 }
 
-std::vector<command_queue> create_command_queues(const std::vector<context> &contexts, const target_platform target, const std::vector<std::pair<compute_kernel_name, std::string>> &kernel_names) {
+std::vector<command_queue> create_command_queues(const std::vector<context> &contexts, const target_platform target, const kernel_function_type kernel_function, const std::vector<std::pair<compute_kernel_name, std::string>> &kernel_names) {
     std::vector<command_queue> queues;
     for (std::vector<cl_device_id>::size_type device = 0; device < contexts[0].devices.size(); ++device) {
         queues.emplace_back(contexts[0], contexts[0].devices[device]);
@@ -238,17 +240,62 @@ std::vector<command_queue> create_command_queues(const std::vector<context> &con
     std::string kernel_src_string{};
     // note: the detail/atomics.cl file must be included first!
     for (const auto &path : { base_path / "detail/atomics.cl",
+                              base_path / "kernel_functions.cl",
                               base_path / "cg_explicit/blas.cl",
                               base_path / "cg_explicit/kernel_matrix_assembly.cl",
                               base_path / "cg_implicit/kernel_matrix_assembly_blas.cl",
-                              base_path / "predict_kernel.cl" }) {
+                              base_path / "predict_kernel_linear.cl" }) {
         std::ifstream file{ base_path / path };
         kernel_src_string.append((std::istreambuf_iterator<char>{ file }),
                                  std::istreambuf_iterator<char>{});
     }
 
+    // helper function to replace the placeholders
+    const auto replace_kernel_function_type_placeholders = [](std::string &src, const kernel_function_type kernel_func) {
+        switch (kernel_func) {
+            case kernel_function_type::linear:
+                ::plssvm::detail::replace_all(src, "PLSSVM_OPENCL_KERNEL_FUNCTION_PARAMETER_LIST", "");                     // no additional kernel parameters
+                ::plssvm::detail::replace_all(src, "PLSSVM_OPENCL_KERNEL_FUNCTION_PARAMETER", "");                          // no additional kernel parameters
+                ::plssvm::detail::replace_all(src, "PLSSVM_OPENCL_FEATURE_REDUCE_FUNCTION", "feature_reduce_dot");          // use dot product to reduce the features
+                ::plssvm::detail::replace_all(src, "PLSSVM_OPENCL_APPLY_KERNEL_FUNCTION", "apply_linear_kernel_function");  // use the linear kernel function
+                break;
+            case kernel_function_type::polynomial:
+                ::plssvm::detail::replace_all(src, "PLSSVM_OPENCL_KERNEL_FUNCTION_PARAMETER_LIST", ", const int degree, const real_type gamma, const real_type coef0");  // three additional parameters
+                ::plssvm::detail::replace_all(src, "PLSSVM_OPENCL_KERNEL_FUNCTION_PARAMETER", ", degree, gamma, coef0");                                                 // three additional parameters
+                ::plssvm::detail::replace_all(src, "PLSSVM_OPENCL_FEATURE_REDUCE_FUNCTION", "feature_reduce_dot");                                                       // use dot product to reduce the features
+                ::plssvm::detail::replace_all(src, "PLSSVM_OPENCL_APPLY_KERNEL_FUNCTION", "apply_polynomial_kernel_function");                                           // use the polynomial kernel function
+                break;
+            case kernel_function_type::rbf:
+                ::plssvm::detail::replace_all(src, "PLSSVM_OPENCL_KERNEL_FUNCTION_PARAMETER_LIST", ", const real_type gamma");  // one additional parameter
+                ::plssvm::detail::replace_all(src, "PLSSVM_OPENCL_KERNEL_FUNCTION_PARAMETER", ", gamma");                       // one additional parameter
+                ::plssvm::detail::replace_all(src, "PLSSVM_OPENCL_FEATURE_REDUCE_FUNCTION", "feature_reduce_euclidean_dist");   // use the Euclidean distance product to reduce the features
+                ::plssvm::detail::replace_all(src, "PLSSVM_OPENCL_APPLY_KERNEL_FUNCTION", "apply_rbf_kernel_function");         // use the rbf kernel function
+                break;
+        }
+    };
+
+    // replace the generic strings in the kernel_src_string
+    replace_kernel_function_type_placeholders(kernel_src_string, kernel_function);
+
+    // read generic predict kernel
+    std::ifstream predict_file{ base_path / "predict_kernel.cl" };
+    std::string predict_kernel_src_string{};
+    predict_kernel_src_string.append((std::istreambuf_iterator<char>{ predict_file }),
+                                     std::istreambuf_iterator<char>{});
+    // duplicate predict kernel -> currently 2 necessary
+    for (const kernel_function_type predict_kernel_functions : { plssvm::kernel_function_type::polynomial, plssvm::kernel_function_type::rbf }) {
+        std::string temp{ predict_kernel_src_string };
+        // replace necessary values in for the generic predict kernel
+        ::plssvm::detail::replace_all(temp, "PLSSVM_DEVICE_KERNEL_PREDICT_NAME", fmt::format("device_kernel_predict_{}", predict_kernel_functions));  // the correct name
+        replace_kernel_function_type_placeholders(temp, predict_kernel_functions);
+
+        // append correct kernel sources to final string
+        kernel_src_string.append(std::move(temp));
+    }
+
     // replace types in kernel_src_string
     ::plssvm::detail::replace_all(kernel_src_string, "real_type", ::plssvm::detail::arithmetic_type_name<real_type>());
+
     // replace constants in kernel_src_string
     ::plssvm::detail::replace_all(kernel_src_string, "THREAD_BLOCK_SIZE", fmt::format("{}", THREAD_BLOCK_SIZE));
     ::plssvm::detail::replace_all(kernel_src_string, "FEATURE_BLOCK_SIZE", fmt::format("{}", FEATURE_BLOCK_SIZE));
@@ -431,7 +478,7 @@ std::vector<command_queue> create_command_queues(const std::vector<context> &con
 
     // build all kernels, one for each device
     for (std::vector<cl_device_id>::size_type device = 0; device < contexts[0].devices.size(); ++device) {
-        for (std::vector<std::vector<kernel>>::size_type i = 0; i < kernel_names.size(); ++i) {
+        for (std::vector<std::vector<std::pair<compute_kernel_name, std::string>>>::size_type i = 0; i < kernel_names.size(); ++i) {
             // create kernel
             queues[device].add_kernel(kernel_names[i].first, kernel{ clCreateKernel(binary_program, kernel_names[i].second.c_str(), &err) });
             PLSSVM_OPENCL_ERROR_CHECK(err, fmt::format("error creating OpenCL kernel {} for device {}", kernel_names[i].second, device))

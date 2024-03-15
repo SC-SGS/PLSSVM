@@ -100,6 +100,30 @@ void device_ptr<T>::copy_to_device(const_host_pointer_type data_to_copy, const s
 }
 
 template <typename T>
+void device_ptr<T>::copy_to_device_strided(const_host_pointer_type data_to_copy, const std::size_t spitch, const std::size_t width, const std::size_t height) {
+    PLSSVM_ASSERT(data_ != nullptr, "Invalid data pointer! Maybe *this has been default constructed?");
+    PLSSVM_ASSERT(data_to_copy != nullptr, "Invalid host pointer for the data to copy!");
+
+    if (width > spitch) {
+        throw backend_exception{ fmt::format("Invalid width and spitch combination specified (width: {} <= spitch: {})!", width, spitch) };
+    }
+
+    const std::array<std::size_t, 3> buffer_origin{ 0, 0, 0 };
+    const std::array<std::size_t, 3> host_origin{ 0, 0, 0 };
+    const std::array<std::size_t, 3> region{ width * sizeof(value_type), height, 1 };
+    const std::size_t buffer_row_pitch = this->shape_padded().x * sizeof(value_type);
+    const std::size_t buffer_slice_pitch = 0;
+    const std::size_t host_row_pitch = spitch * sizeof(value_type);
+    const std::size_t host_slice_pitch = 0;
+
+    error_code err;
+    err = clEnqueueWriteBufferRect(queue_->queue, data_, CL_TRUE, buffer_origin.data(), host_origin.data(), region.data(),
+                                   buffer_row_pitch, buffer_slice_pitch, host_row_pitch, host_slice_pitch, data_to_copy, 0, nullptr, nullptr);
+    PLSSVM_OPENCL_ERROR_CHECK(err, "error copying the strided data to the device buffer")
+    device_synchronize(*queue_);
+}
+
+template <typename T>
 void device_ptr<T>::copy_to_host(host_pointer_type buffer, const size_type pos, const size_type count) const {
     PLSSVM_ASSERT(data_ != nullptr, "Invalid data pointer! Maybe *this has been default constructed?");
     PLSSVM_ASSERT(buffer != nullptr, "Invalid host pointer for the data to copy!");
@@ -109,6 +133,22 @@ void device_ptr<T>::copy_to_host(host_pointer_type buffer, const size_type pos, 
     err = clEnqueueReadBuffer(queue_->queue, data_, CL_TRUE, pos * sizeof(value_type), rcount * sizeof(value_type), buffer, 0, nullptr, nullptr);
     PLSSVM_OPENCL_ERROR_CHECK(err, "error copying the data from the device buffer")
     device_synchronize(*queue_);
+}
+
+template <typename T>
+void device_ptr<T>::copy_to_other_device(device_ptr &target, const size_type pos, const size_type count) {
+    PLSSVM_ASSERT(data_ != nullptr, "Invalid data pointer! Maybe *this has been default constructed?");
+    PLSSVM_ASSERT(target.get() != nullptr, "Invalid target pointer! Maybe target has been default constructed?");
+
+    const size_type rcount = std::min(count, this->size_padded() - pos);
+    if (target.size_padded() < rcount) {
+        throw gpu_device_ptr_exception{ fmt::format("Buffer too small to perform copy (needed: {}, provided: {})!", rcount, target.size_padded()) };
+    }
+
+    // TODO: direct copy between devices in OpenCL currently not possible
+    std::vector<value_type> temp(rcount);
+    this->copy_to_host(temp, pos, rcount);
+    target.copy_to_device(temp);
 }
 
 template class device_ptr<float>;

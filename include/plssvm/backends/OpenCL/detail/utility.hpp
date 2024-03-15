@@ -83,11 +83,10 @@ void device_synchronize(const command_queue &queue);
 [[nodiscard]] std::string get_device_name(const command_queue &queue);
 
 /**
- * @brief Convert the kernel type @p kernel to the device function names and return the plssvm::opencl::detail::compute_kernel_name identifier.
- * @param[in] kernel the kernel type
+ * @brief Return the device function names and the plssvm::opencl::detail::compute_kernel_name identifier.
  * @return the kernel function names with the respective plssvm::opencl::detail::compute_kernel_name identifier (`[[nodiscard]]`)
  */
-[[nodiscard]] std::vector<std::pair<compute_kernel_name, std::string>> kernel_type_to_function_names(kernel_function_type kernel);
+[[nodiscard]] std::vector<std::pair<compute_kernel_name, std::string>> kernel_type_to_function_names();
 
 /**
  * @brief Create command queues for all devices in the OpenCL @p contexts with respect to @p target given and
@@ -105,11 +104,12 @@ void device_synchronize(const command_queue &queue);
  *
  * @param[in] contexts the used OpenCL contexts
  * @param[in] target the target platform
+ * @param[in] kernel_function the kernel function
  * @param[in] kernel_names all kernel name for which an OpenCL cl_kernel should be build
  * @throws plssvm::invalid_file_format_exception if the file couldn't be read using [`std::ifstream::read`](https://en.cppreference.com/w/cpp/io/basic_istream/read)
  * @return the command queues with all necessary kernels (`[[nodiscard]]`)
  */
-[[nodiscard]] std::vector<command_queue> create_command_queues(const std::vector<context> &contexts, target_platform target, const std::vector<std::pair<compute_kernel_name, std::string>> &kernel_names);
+[[nodiscard]] std::vector<command_queue> create_command_queues(const std::vector<context> &contexts, target_platform target, kernel_function_type kernel_function, const std::vector<std::pair<compute_kernel_name, std::string>> &kernel_names);
 
 /**
  * @brief Set all arguments in the parameter pack @p args for the kernel @p kernel.

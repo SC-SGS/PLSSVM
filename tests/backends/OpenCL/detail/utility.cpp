@@ -67,7 +67,7 @@ TEST(OpenCLUtility, get_device_name) {
 
 TEST(OpenCLUtility, kernel_type_to_function_names) {
     // retrieve the function names
-    const auto function_name_map = plssvm::opencl::detail::kernel_type_to_function_names(plssvm::kernel_function_type::linear);
+    const auto function_name_map = plssvm::opencl::detail::kernel_type_to_function_names();
     // the map must not be empty!
     EXPECT_FALSE(function_name_map.empty());
 }

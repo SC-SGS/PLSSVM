@@ -129,7 +129,6 @@ using opencl_label_type_solver_kernel_function_and_classification_type_gtest = u
 // instantiate type-parameterized tests
 // generic CSVM tests
 INSTANTIATE_TYPED_TEST_SUITE_P(OpenCLCSVM, GenericCSVM, opencl_csvm_test_type_gtest, naming::test_parameter_to_name);
-INSTANTIATE_TYPED_TEST_SUITE_P(OpenCLCSVM, GenericCSVMSolver, opencl_solver_type_gtest, naming::test_parameter_to_name);
 INSTANTIATE_TYPED_TEST_SUITE_P(OpenCLCSVM, GenericCSVMKernelFunction, opencl_kernel_function_type_gtest, naming::test_parameter_to_name);
 INSTANTIATE_TYPED_TEST_SUITE_P(OpenCLCSVM, GenericCSVMSolverKernelFunction, opencl_solver_and_kernel_function_type_gtest, naming::test_parameter_to_name);
 INSTANTIATE_TYPED_TEST_SUITE_P(OpenCLCSVM, GenericCSVMKernelFunctionClassification, opencl_label_type_kernel_function_and_classification_type_gtest, naming::test_parameter_to_name);
@@ -139,6 +138,7 @@ INSTANTIATE_TYPED_TEST_SUITE_P(OpenCLCSVM, GenericCSVMSolverKernelFunctionClassi
 INSTANTIATE_TYPED_TEST_SUITE_P(OpenCLCSVMDeathTest, GenericCSVMDeathTest, opencl_csvm_test_type_gtest, naming::test_parameter_to_name);
 INSTANTIATE_TYPED_TEST_SUITE_P(OpenCLCSVMDeathTest, GenericCSVMSolverDeathTest, opencl_solver_type_gtest, naming::test_parameter_to_name);
 INSTANTIATE_TYPED_TEST_SUITE_P(OpenCLCSVMDeathTest, GenericCSVMKernelFunctionDeathTest, opencl_kernel_function_type_gtest, naming::test_parameter_to_name);
+INSTANTIATE_TYPED_TEST_SUITE_P(OpenCLCSVMDeathTest, GenericCSVMSolverKernelFunctionDeathTest, opencl_solver_and_kernel_function_type_gtest, naming::test_parameter_to_name);
 
 // generic GPU CSVM tests
 INSTANTIATE_TYPED_TEST_SUITE_P(OpenCLCSVM, GenericGPUCSVM, opencl_csvm_test_type_gtest, naming::test_parameter_to_name);

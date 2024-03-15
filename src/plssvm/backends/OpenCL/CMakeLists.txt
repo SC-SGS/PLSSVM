@@ -27,10 +27,10 @@ set(PLSSVM_OPENCL_SOURCES
     ${CMAKE_CURRENT_LIST_DIR}/detail/device_ptr.cpp
     ${CMAKE_CURRENT_LIST_DIR}/detail/error_code.cpp
     ${CMAKE_CURRENT_LIST_DIR}/detail/kernel.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/detail/pinned_memory.cpp
     ${CMAKE_CURRENT_LIST_DIR}/detail/utility.cpp
     ${CMAKE_CURRENT_LIST_DIR}/csvm.cpp
     ${CMAKE_CURRENT_LIST_DIR}/exceptions.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/../gpu_device_ptr.cpp
 )
 
 # set target properties
@@ -42,19 +42,21 @@ target_link_libraries(${PLSSVM_OPENCL_BACKEND_LIBRARY_NAME} PUBLIC OpenCL)
 target_sources(${PLSSVM_OPENCL_BACKEND_LIBRARY_NAME} PRIVATE
                FILE_SET HEADERS
                BASE_DIRS
-               "${PROJECT_SOURCE_DIR}/include/plssvm/backends/OpenCL"
+               "${PROJECT_SOURCE_DIR}/include/plssvm/backends/OpenCL/kernel"
                FILES
-               "${PROJECT_SOURCE_DIR}/include/plssvm/backends/OpenCL/cg_explicit/blas.cl"
-               "${PROJECT_SOURCE_DIR}/include/plssvm/backends/OpenCL/cg_explicit/kernel_matrix_assembly.cl"
-               "${PROJECT_SOURCE_DIR}/include/plssvm/backends/OpenCL/cg_implicit/kernel_matrix_assembly_blas.cl"
-               "${PROJECT_SOURCE_DIR}/include/plssvm/backends/OpenCL/predict_kernel.cl"
+               "${PROJECT_SOURCE_DIR}/include/plssvm/backends/OpenCL/kernel/cg_explicit/blas.cl"
+               "${PROJECT_SOURCE_DIR}/include/plssvm/backends/OpenCL/kernel/cg_explicit/kernel_matrix_assembly.cl"
+               "${PROJECT_SOURCE_DIR}/include/plssvm/backends/OpenCL/kernel/cg_implicit/kernel_matrix_assembly_blas.cl"
+               "${PROJECT_SOURCE_DIR}/include/plssvm/backends/OpenCL/kernel/kernel_functions.cl"
+               "${PROJECT_SOURCE_DIR}/include/plssvm/backends/OpenCL/kernel/predict_kernel.cl"
+               "${PROJECT_SOURCE_DIR}/include/plssvm/backends/OpenCL/kernel/predict_kernel_linear.cl"
 )
 
 # link base library against OpenCL library
 target_link_libraries(${PLSSVM_OPENCL_BACKEND_LIBRARY_NAME} PUBLIC ${PLSSVM_BASE_LIBRARY_NAME})
 
 # set OpenCL include path to the *.cl files
-set(PLSSVM_OPENCL_KERNEL_SOURCE_DIRECTORY "${PROJECT_SOURCE_DIR}/include/plssvm/backends/OpenCL")
+set(PLSSVM_OPENCL_KERNEL_SOURCE_DIRECTORY "${PROJECT_SOURCE_DIR}/include/plssvm/backends/OpenCL/kernel")
 target_compile_definitions(${PLSSVM_OPENCL_BACKEND_LIBRARY_NAME} PRIVATE PLSSVM_OPENCL_KERNEL_SOURCE_DIR="${PLSSVM_OPENCL_KERNEL_SOURCE_DIRECTORY}")
 
 # set OpenCL library name (concatenated to the full kernel source string, to make sure that different OpenCL libraries
