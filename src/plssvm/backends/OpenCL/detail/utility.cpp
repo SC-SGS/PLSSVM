@@ -365,9 +365,9 @@ std::vector<command_queue> create_command_queues(const std::vector<context> &con
         cl_program program = clCreateProgramWithSource(contexts[0], 1, &kernel_src_ptr, nullptr, &err);
         PLSSVM_OPENCL_ERROR_CHECK(err, "error creating program from source")
 
-        std::string compile_options{ "-cl-fast-relaxed-math -cl-mad-enable -cl-no-signed-zeros" };
-#if defined(PLSSVM_USE_GEMM)
-        compile_options += " -DPLSSVM_USE_GEMM";
+        std::string compile_options{ "-cl-mad-enable -cl-no-signed-zeros" };
+#if defined(PLSSVM_ENABLE_FAST_MATH)
+        compile_options += " -cl-fast-relaxed-math";
 #endif
 
         // only use PTX inline assembly if enabled during CMake configuration

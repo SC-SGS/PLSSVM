@@ -71,6 +71,11 @@ if (AdaptiveCpp_FOUND)
     # AdaptiveCpp's way to add SYCL to a target
     add_sycl_to_target(TARGET ${PLSSVM_SYCL_BACKEND_ADAPTIVECPP_LIBRARY_NAME} SOURCES ${PROJECT_SOURCE_DIR}/src/plssvm/backends/AdaptiveCpp/csvm.cpp)
     
+    # set whether the kernels should be compiled with fast math enabled or not
+    if (PLSSVM_ENABLE_FAST_MATH)
+        target_compile_options(${PLSSVM_SYCL_BACKEND_ADAPTIVECPP_LIBRARY_NAME} PRIVATE -ffast-math)
+    endif ()
+    
     # silence unknown options warnings
     target_compile_options(${PLSSVM_SYCL_BACKEND_ADAPTIVECPP_LIBRARY_NAME} PRIVATE -Wno-unknown-warning-option
                            $<$<CXX_COMPILER_ID:GNU>:-Wno-unknown-pragmas>

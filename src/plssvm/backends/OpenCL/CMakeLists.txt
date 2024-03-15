@@ -87,6 +87,12 @@ target_compile_definitions(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC CL_TARGET_OPENCL_V
 # set current CMAKE_BUILD_TYPE included in the temp folder where the kernels are compiled to
 target_compile_definitions(${PLSSVM_OPENCL_BACKEND_LIBRARY_NAME} PRIVATE PLSSVM_CMAKE_BUILD_TYPE="${CMAKE_BUILD_TYPE}")
 
+# set whether the kernel source should be compiled with fast math enabled or not
+if (PLSSVM_ENABLE_FAST_MATH)
+    target_compile_definitions(${PLSSVM_OPENCL_BACKEND_LIBRARY_NAME} PRIVATE PLSSVM_ENABLE_FAST_MATH)
+    message(WARNING "USE FAST MATH")
+endif ()
+
 # needed to link the OpenCL backend to a third-party executable
 target_compile_options(${PLSSVM_OPENCL_BACKEND_LIBRARY_NAME} PRIVATE -fPIE)
 
