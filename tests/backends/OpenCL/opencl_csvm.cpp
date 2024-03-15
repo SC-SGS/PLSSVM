@@ -143,3 +143,6 @@ INSTANTIATE_TYPED_TEST_SUITE_P(OpenCLCSVMDeathTest, GenericCSVMSolverKernelFunct
 // generic GPU CSVM tests
 INSTANTIATE_TYPED_TEST_SUITE_P(OpenCLCSVM, GenericGPUCSVM, opencl_csvm_test_type_gtest, naming::test_parameter_to_name);
 INSTANTIATE_TYPED_TEST_SUITE_P(OpenCLCSVM, GenericGPUCSVMKernelFunction, opencl_kernel_function_type_gtest, naming::test_parameter_to_name);
+
+// generic GPU CSVM DeathTests
+INSTANTIATE_TYPED_TEST_SUITE_P(OpenCLCSVMDeathTest, GenericGPUCSVMDeathTest, opencl_csvm_test_type_gtest, naming::test_parameter_to_name);

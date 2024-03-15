@@ -34,6 +34,7 @@
 #include <cmath>    // std::pow, std::exp
 #include <cstddef>  // std::size_t
 #include <memory>   // std::unique_ptr, std::make_unique
+#include <tuple>    // std::ignore
 #include <vector>   // std::vector
 
 //*************************************************************************************************************************************//
@@ -465,5 +466,25 @@ REGISTER_TYPED_TEST_SUITE_P(GenericGPUCSVMKernelFunction,
                             run_assemble_kernel_matrix_explicit,
                             run_assemble_kernel_matrix_implicit_blas_level_3,
                             run_predict_kernel);
+
+template <typename T>
+class GenericGPUCSVMDeathTest : public GenericGPUCSVM<T> { };
+
+TYPED_TEST_SUITE_P(GenericGPUCSVMDeathTest);
+
+TYPED_TEST_P(GenericGPUCSVMDeathTest, get_max_work_group_size_out_of_range) {
+    using csvm_test_type = util::test_parameter_type_at_t<0, TypeParam>;
+    using mock_csvm_type = typename csvm_test_type::mock_csvm_type;
+
+    // create C-SVM: must be done using the mock class since the member function to test is private or protected
+    const mock_csvm_type svm = util::construct_from_tuple<mock_csvm_type>(csvm_test_type::additional_arguments);
+    const std::size_t num_devices = svm.num_available_devices();
+
+    // try querying an invalid device_id
+    EXPECT_DEATH(std::ignore = svm.get_max_work_group_size(num_devices), fmt::format("Invalid device {} requested!", num_devices));
+}
+
+REGISTER_TYPED_TEST_SUITE_P(GenericGPUCSVMDeathTest,
+                            get_max_work_group_size_out_of_range);
 
 #endif  // PLSSVM_TESTS_BACKENDS_GENERIC_GPU_CSVM_TESTS_HPP_
