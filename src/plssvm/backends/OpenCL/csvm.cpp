@@ -124,7 +124,7 @@ void csvm::init(const target_platform target) {
     // get kernel names
     const std::vector<std::pair<detail::compute_kernel_name, std::string>> kernel_names = detail::kernel_type_to_function_names();
     // compile all kernels for float and double
-    devices_ = detail::create_command_queues(contexts_, target_, kernel, kernel_names);
+    devices_ = detail::create_command_queues(contexts_, kernel, kernel_names);
 
     const auto jit_end_time = std::chrono::steady_clock::now();
     plssvm::detail::log(verbosity_level::full | verbosity_level::timing,
@@ -171,7 +171,7 @@ void csvm::init(const target_platform target) {
                   "The inplace matrix add kernel is missing!");
     PLSSVM_ASSERT(std::all_of(devices_.begin(), devices_.end(), [](const queue_type &queue) { return ::plssvm::detail::contains(queue.kernels, detail::compute_kernel_name::inplace_matrix_scale_kernel); }),
                   "The inplace matrix scale kernel is missing!");
-    
+
     PLSSVM_ASSERT(std::all_of(devices_.begin(), devices_.end(), [](const queue_type &queue) { return ::plssvm::detail::contains(queue.kernels, detail::compute_kernel_name::w_kernel); }),
                   "The w_kernel device kernel is missing!");
     PLSSVM_ASSERT(std::all_of(devices_.begin(), devices_.end(), [](const queue_type &queue) { return ::plssvm::detail::contains(queue.kernels, detail::compute_kernel_name::predict_kernel_linear); }),

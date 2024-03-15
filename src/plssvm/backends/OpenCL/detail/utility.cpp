@@ -209,7 +209,7 @@ std::vector<std::pair<compute_kernel_name, std::string>> kernel_type_to_function
     return kernels;
 }
 
-std::vector<command_queue> create_command_queues(const std::vector<context> &contexts, const target_platform target, const kernel_function_type kernel_function, const std::vector<std::pair<compute_kernel_name, std::string>> &kernel_names) {
+std::vector<command_queue> create_command_queues(const std::vector<context> &contexts, const kernel_function_type kernel_function, const std::vector<std::pair<compute_kernel_name, std::string>> &kernel_names) {
     std::vector<command_queue> queues;
     for (std::vector<cl_device_id>::size_type device = 0; device < contexts[0].devices.size(); ++device) {
         queues.emplace_back(contexts[0], contexts[0].devices[device]);
@@ -229,6 +229,27 @@ std::vector<command_queue> create_command_queues(const std::vector<context> &con
             std::cerr << fmt::format("error building OpenCL program on device {}:\n{}", device_idx, log) << std::endl;
         }
     };
+
+    // determine OpenCL compile options
+    std::string compile_options{ "-cl-mad-enable -cl-no-signed-zeros" };
+#if defined(PLSSVM_ENABLE_FAST_MATH)
+    compile_options += " -cl-fast-relaxed-math";
+#endif
+
+    // only use PTX inline assembly if enabled during CMake configuration
+#if defined(PLSSVM_OPENCL_BACKEND_USE_PTX_INLINE_ASSEMBLY)
+    std::size_t platform_vendor_size{ 0 };
+    clGetPlatformInfo(contexts[0].platform, CL_PLATFORM_VENDOR, 0, nullptr, &platform_vendor_size);
+    std::string platform_vendor(platform_vendor_size, '\0');
+    clGetPlatformInfo(contexts[0].platform, CL_PLATFORM_VENDOR, platform_vendor_size, platform_vendor.data(), nullptr);
+    const bool use_inline_assembly = ::plssvm::detail::contains(::plssvm::detail::as_lower_case(platform_vendor), "nvidia");
+    if (use_inline_assembly) {
+        compile_options += " -DPLSSVM_USE_NVIDIA_PTX_INLINE_ASSEMBLY";
+        plssvm::detail::log(verbosity_level::full,
+                            "Enabling atomicAdd acceleration using PTX inline assembly.\n");
+    }
+    PLSSVM_DETAIL_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking_entry{ "opencl", "use_inline_assembly", use_inline_assembly }));
+#endif
 
     error_code err, err_bin;
 
@@ -302,11 +323,29 @@ std::vector<command_queue> create_command_queues(const std::vector<context> &con
     ::plssvm::detail::replace_all(kernel_src_string, "INTERNAL_BLOCK_SIZE", fmt::format("{}", INTERNAL_BLOCK_SIZE));
     ::plssvm::detail::replace_all(kernel_src_string, "PADDING_SIZE", fmt::format("{}", PADDING_SIZE));
 
+    // get all device names
+    std::vector<std::string> device_names(contexts[0].devices.size());
+    for (typename std::vector<std::string>::size_type device_id = 0; device_id < device_names.size(); ++device_id) {
+        // get device name
+        std::size_t name_length{};
+        PLSSVM_OPENCL_ERROR_CHECK(clGetDeviceInfo(contexts[0].devices[device_id], CL_DEVICE_NAME, 0, nullptr, &name_length), "error obtaining device name size")
+        std::string device_name(name_length - 1, '\0');
+        PLSSVM_OPENCL_ERROR_CHECK(clGetDeviceInfo(contexts[0].devices[device_id], CL_DEVICE_NAME, name_length, device_name.data(), nullptr), "error obtaining device name")
+        device_names[device_id] = std::move(device_name);
+    }
+
     // append number of device to influence checksum calculation
-    kernel_src_string.append(fmt::format("\n// num_devices: {}\n// OpenCL library: {}\n// PTX inline assembly: {}",
-                                         contexts[0].devices.size(),
+    kernel_src_string.append(fmt::format("\n\n"
+                                         "// devices: [{}]\n"
+                                         "// OpenCL library: \"{}\"\n"
+                                         "// OpenCL target version: {}\n"
+                                         "// CMAKE_BUILD_TYPE: {}\n"
+                                         "// compile_options: \"{}\"\n",
+                                         fmt::join(device_names, ", "),
                                          PLSSVM_OPENCL_LIBRARY,
-                                         PLSSVM_IS_DEFINED(PLSSVM_OPENCL_BACKEND_USE_PTX_INLINE_ASSEMBLY)));
+                                         CL_TARGET_OPENCL_VERSION,
+                                         PLSSVM_CMAKE_BUILD_TYPE,
+                                         compile_options));
 
     // create source code hash
     const std::string checksum = plssvm::detail::sha256{}(kernel_src_string);
@@ -319,7 +358,7 @@ std::vector<command_queue> create_command_queues(const std::vector<context> &con
     std::vector<unsigned char *> binaries(contexts[0].devices.size());
 
     // create caching folder in the temporary directory and change the permissions such that everybody has read/write access
-    const std::filesystem::path cache_dir_name = std::filesystem::temp_directory_path() / "plssvm_opencl_cache" / fmt::format("{}_{}_{}_{}", checksum, target, PLSSVM_CMAKE_BUILD_TYPE, ::plssvm::detail::arithmetic_type_name<real_type>());
+    const std::filesystem::path cache_dir_name = std::filesystem::temp_directory_path() / "plssvm_opencl_cache" / checksum;
 
     // potential reasons why OpenCL caching could fail
     enum class caching_status {
@@ -350,8 +389,8 @@ std::vector<command_queue> create_command_queues(const std::vector<context> &con
     if (use_cached_binaries == caching_status::success) {
         // get directory iterator
         auto dirIter = std::filesystem::directory_iterator(cache_dir_name);
-        // get files in directory
-        if (static_cast<std::size_t>(std::count_if(begin(dirIter), end(dirIter), [](const auto &entry) { return entry.is_regular_file(); })) != contexts[0].devices.size()) {
+        // get files in directory -> account for stored preprocessed source file
+        if (static_cast<std::size_t>(std::count_if(begin(dirIter), end(dirIter), [](const auto &entry) { return entry.is_regular_file(); })) != contexts[0].devices.size() + 1) {
             use_cached_binaries = caching_status::error_invalid_number_of_cached_files;
         }
     }
@@ -364,26 +403,6 @@ std::vector<command_queue> create_command_queues(const std::vector<context> &con
         // create and build program
         cl_program program = clCreateProgramWithSource(contexts[0], 1, &kernel_src_ptr, nullptr, &err);
         PLSSVM_OPENCL_ERROR_CHECK(err, "error creating program from source")
-
-        std::string compile_options{ "-cl-mad-enable -cl-no-signed-zeros" };
-#if defined(PLSSVM_ENABLE_FAST_MATH)
-        compile_options += " -cl-fast-relaxed-math";
-#endif
-
-        // only use PTX inline assembly if enabled during CMake configuration
-#if defined(PLSSVM_OPENCL_BACKEND_USE_PTX_INLINE_ASSEMBLY)
-        std::size_t platform_vendor_size{ 0 };
-        clGetPlatformInfo(contexts[0].platform, CL_PLATFORM_VENDOR, 0, nullptr, &platform_vendor_size);
-        std::string platform_vendor(platform_vendor_size, '\0');
-        clGetPlatformInfo(contexts[0].platform, CL_PLATFORM_VENDOR, platform_vendor_size, platform_vendor.data(), nullptr);
-        const bool use_inline_assembly = ::plssvm::detail::contains(::plssvm::detail::as_lower_case(platform_vendor), "nvidia");
-        if (use_inline_assembly) {
-            compile_options += " -DPLSSVM_USE_NVIDIA_PTX_INLINE_ASSEMBLY";
-            plssvm::detail::log(verbosity_level::full,
-                                "Enabling atomicAdd acceleration using PTX inline assembly.\n");
-        }
-        PLSSVM_DETAIL_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking_entry{ "opencl", "use_inline_assembly", use_inline_assembly }));
-#endif
 
         err = clBuildProgram(program, static_cast<cl_uint>(contexts[0].devices.size()), contexts[0].devices.data(), compile_options.c_str(), nullptr, nullptr);
 
@@ -421,6 +440,11 @@ std::vector<command_queue> create_command_queues(const std::vector<context> &con
             PLSSVM_ASSERT(out.good(), fmt::format("couldn't create binary cache file ({}) for device {}", cache_dir_name / fmt::format("device_{}.bin", i), i));
             out.write(reinterpret_cast<char *>(binaries[i]), binary_sizes[i]);
         }
+        {
+            // save preprocessed source string in temporary directory
+            std::ofstream out{ cache_dir_name / "processed_source.cl" };
+            out << kernel_src_string;
+        }
         plssvm::detail::log(verbosity_level::full,
                             "Cached OpenCL kernel binaries in {}.\n",
                             cache_dir_name);
@@ -456,7 +480,8 @@ std::vector<command_queue> create_command_queues(const std::vector<context> &con
         // iterate over directory and read kernels into binary file
         auto dirIter = std::filesystem::directory_iterator(cache_dir_name);
         for (const std::filesystem::directory_entry &entry : dirIter) {
-            if (entry.is_regular_file()) {
+            // ignore the processed source file
+            if (entry.is_regular_file() && entry.path().filename().string() != "processed_source.cl") {
                 const auto i = ::plssvm::detail::extract_first_integer_from_string<std::size_t>(entry.path().filename().string());
                 std::tie(binaries[i], binary_sizes[i]) = common_read_file(entry.path());
             }

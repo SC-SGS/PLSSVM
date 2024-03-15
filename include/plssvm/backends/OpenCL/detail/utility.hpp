@@ -103,13 +103,12 @@ void device_synchronize(const command_queue &queue);
  *          changes in the used OpenCL implementation and trigger a kernel rebuild.
  *
  * @param[in] contexts the used OpenCL contexts
- * @param[in] target the target platform
  * @param[in] kernel_function the kernel function
  * @param[in] kernel_names all kernel name for which an OpenCL cl_kernel should be build
  * @throws plssvm::invalid_file_format_exception if the file couldn't be read using [`std::ifstream::read`](https://en.cppreference.com/w/cpp/io/basic_istream/read)
  * @return the command queues with all necessary kernels (`[[nodiscard]]`)
  */
-[[nodiscard]] std::vector<command_queue> create_command_queues(const std::vector<context> &contexts, target_platform target, kernel_function_type kernel_function, const std::vector<std::pair<compute_kernel_name, std::string>> &kernel_names);
+[[nodiscard]] std::vector<command_queue> create_command_queues(const std::vector<context> &contexts, kernel_function_type kernel_function, const std::vector<std::pair<compute_kernel_name, std::string>> &kernel_names);
 
 /**
  * @brief Set all arguments in the parameter pack @p args for the kernel @p kernel.
