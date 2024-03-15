@@ -303,10 +303,9 @@ std::vector<command_queue> create_command_queues(const std::vector<context> &con
     ::plssvm::detail::replace_all(kernel_src_string, "PADDING_SIZE", fmt::format("{}", PADDING_SIZE));
 
     // append number of device to influence checksum calculation
-    kernel_src_string.append(fmt::format("\n// num_devices: {}\n// OpenCL library: {}\n// GEMM: {}\n// PTX inline assembly: {}",
+    kernel_src_string.append(fmt::format("\n// num_devices: {}\n// OpenCL library: {}\n// PTX inline assembly: {}",
                                          contexts[0].devices.size(),
                                          PLSSVM_OPENCL_LIBRARY,
-                                         PLSSVM_IS_DEFINED(PLSSVM_USE_GEMM),
                                          PLSSVM_IS_DEFINED(PLSSVM_OPENCL_BACKEND_USE_PTX_INLINE_ASSEMBLY)));
 
     // create source code hash
