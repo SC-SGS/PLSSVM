@@ -103,8 +103,6 @@ host_pinned_memory<T>::~host_pinned_memory() = default;
 
 template <typename T>
 void host_pinned_memory<T>::pin_memory(const std::size_t) {
-    detail::log_untracked(verbosity_level::full | verbosity_level::warning,
-                          "WARNING: can't register pinned memory. This may degrade performance!\n");
     // explicitly set flag
     is_pinned_ = false;
 }
