@@ -137,7 +137,7 @@ void device_ptr<T>::copy_to_host(host_pointer_type buffer, const size_type pos, 
 }
 
 template <typename T>
-void device_ptr<T>::copy_to_other_device(device_ptr &target, const size_type pos, const size_type count) {
+void device_ptr<T>::copy_to_other_device(device_ptr &target, const size_type pos, const size_type count) const {
     PLSSVM_ASSERT(data_ != nullptr, "Invalid data pointer! Maybe *this has been default constructed?");
     PLSSVM_ASSERT(target.get() != nullptr, "Invalid target pointer! Maybe target has been default constructed?");
 
