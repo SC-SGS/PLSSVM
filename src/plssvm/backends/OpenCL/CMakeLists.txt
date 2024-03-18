@@ -90,7 +90,6 @@ target_compile_definitions(${PLSSVM_OPENCL_BACKEND_LIBRARY_NAME} PRIVATE PLSSVM_
 # set whether the kernel source should be compiled with fast math enabled or not
 if (PLSSVM_ENABLE_FAST_MATH)
     target_compile_definitions(${PLSSVM_OPENCL_BACKEND_LIBRARY_NAME} PRIVATE PLSSVM_ENABLE_FAST_MATH)
-    message(WARNING "USE FAST MATH")
 endif ()
 
 # needed to link the OpenCL backend to a third-party executable
