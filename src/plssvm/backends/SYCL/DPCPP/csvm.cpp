@@ -372,7 +372,7 @@ auto csvm::run_w_kernel(const std::size_t device_id, const device_ptr_type &alph
     device.impl->sycl_queue.submit([&](::sycl::handler &cgh) {
         cgh.parallel_for(execution_range, sycl::device_kernel_w_linear{ cgh, w_d.get(), alpha_d.get(), sv_d.get(), num_classes, num_sv, device_specific_num_sv, sv_offset });
     });
-    detail::device_synchronize(devices_[0]);
+    detail::device_synchronize(device);
 
     return w_d;
 }
