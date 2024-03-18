@@ -49,14 +49,14 @@ void pinned_memory<T>::pin_memory(const std::size_t num_bytes) {
     PLSSVM_ASSERT(num_bytes > 0, "Can't pin a 0 B memory!");
     PLSSVM_ASSERT(ptr_ != nullptr, "ptr_ may not be the nullptr!");
 
-    const std::chrono::steady_clock::time_point start_time = std::chrono::steady_clock::now();
+    [[maybe_unused]] const std::chrono::steady_clock::time_point start_time = std::chrono::steady_clock::now();
 
     // register memory to be pinned
     PLSSVM_HIP_ERROR_CHECK(hipHostRegister((void *) ptr_, num_bytes, hipHostRegisterDefault));
     // set flag
     is_pinned_ = true;
 
-    const std::chrono::steady_clock::time_point end_time = std::chrono::steady_clock::now();
+    [[maybe_unused]] const std::chrono::steady_clock::time_point end_time = std::chrono::steady_clock::now();
     PLSSVM_DETAIL_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking_entry{ "kernel_matrix", "pin_memory_runtime", std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time) }));
 }
 
