@@ -34,10 +34,10 @@
 
 /**
  * @def PLSSVM_OPENCL_ERROR_CHECK
- * @brief Check the OpenCL error @p code. If @p code signals an error, throw a plssvm::opencl::backend_exception.
+ * @brief Check the OpenCL error @p err. If @p err signals an error, throw a plssvm::opencl::backend_exception.
  * @details The exception contains the following message: "OpenCL assert 'OPENCL_ERROR_NAME' (OPENCL_ERROR_CODE): OPTIONAL_OPENCL_ERROR_STRING".
- * @param[in] code the OpenCL error code to check
- * @param[in] msg optional message printed if the error code check failed
+ * @param[in] err the OpenCL error code to check
+ * @param[in] additional_msg optional message printed if the error code check failed
  * @throws plssvm::opencl::backend_exception if the error code signals a failure
  */
 #define PLSSVM_OPENCL_ERROR_CHECK(err, additional_msg)                                                                                                \

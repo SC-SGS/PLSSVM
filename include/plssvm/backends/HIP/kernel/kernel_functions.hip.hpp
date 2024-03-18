@@ -50,6 +50,7 @@ template <>
 
 /**
  * @brief Unimplemented base-template for all kernel functions.
+ * @return the result value (`[[nodiscard]]`)
  */
 template <kernel_function_type, typename... Args>
 [[nodiscard]] __device__ __forceinline__ real_type apply_kernel_function(real_type, Args...);

@@ -152,7 +152,7 @@ class csvm : public ::plssvm::detail::gpu_csvm<detail::device_ptr, detail::queue
     /**
      * @copydoc plssvm::detail::gpu_csvm::get_max_work_group_size
      */
-    [[nodiscard]] std::size_t get_max_work_group_size(std::size_t) const final;
+    [[nodiscard]] std::size_t get_max_work_group_size(std::size_t device_id) const final;
 
     //***************************************************//
     //                        fit                        //

@@ -119,7 +119,7 @@ class device_ptr : public ::plssvm::detail::gpu_device_ptr<T, int, T *, device_p
      */
     void copy_to_host(host_pointer_type buffer, size_type pos, size_type count) const override;
     /**
-     * @copydoc plssvm::detail::gpu_device_ptr::copy_to_other_device(device_ptr &, size_type, size_type) const
+     * @copydoc plssvm::detail::gpu_device_ptr::copy_to_other_device(derived_gpu_device_ptr &, size_type, size_type) const
      */
     void copy_to_other_device(device_ptr &target, size_type pos, size_type count) const override;
 };

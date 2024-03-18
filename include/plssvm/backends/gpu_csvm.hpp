@@ -90,7 +90,7 @@ class gpu_csvm : public ::plssvm::csvm {
     ~gpu_csvm() override = default;
 
     /**
-     * plssvm::csvm::num_available_devices
+     * @copydoc plssvm::csvm::num_available_devices
      */
     [[nodiscard]] std::size_t num_available_devices() const noexcept override {
         return devices_.size();
@@ -124,6 +124,7 @@ class gpu_csvm : public ::plssvm::csvm {
 
     /**
      * @brief Return the maximum allowed work group size for the specified device.
+     * @param[in] device_id the device_id to query the max work group size from
      * @return the maximum allowed work group size (`[[nodiscard]]`)
      */
     [[nodiscard]] virtual std::size_t get_max_work_group_size(std::size_t device_id) const = 0;

@@ -33,7 +33,29 @@
  */
 
 /**
- * @dir include/plssvm/backends/CUDA/cg_explicit
+ * @dir include/plssvm/backends/CUDA/detail
+ * @author Alexander Van Craen
+ * @author Marcel Breyer
+ * @copyright 2018-today The PLSSVM project - All Rights Reserved
+ * @license This file is part of the PLSSVM project which is released under the MIT license.
+ *          See the LICENSE.md file in the project root for full license information.
+ *
+ * @brief Directory containing implementation details for the CUDA backend.
+ */
+
+/**
+ * @dir include/plssvm/backends/CUDA/kernel
+ * @author Alexander Van Craen
+ * @author Marcel Breyer
+ * @copyright 2018-today The PLSSVM project - All Rights Reserved
+ * @license This file is part of the PLSSVM project which is released under the MIT license.
+ *          See the LICENSE.md file in the project root for full license information.
+ *
+ * @brief Directory containing all kernels for the CUDA backend.
+ */
+
+/**
+ * @dir include/plssvm/backends/CUDA/kernel/cg_explicit
  * @author Alexander Van Craen
  * @author Marcel Breyer
  * @copyright 2018-today The PLSSVM project - All Rights Reserved
@@ -44,7 +66,7 @@
  */
 
 /**
- * @dir include/plssvm/backends/CUDA/cg_implicit
+ * @dir include/plssvm/backends/CUDA/kernel/cg_implicit
  * @author Alexander Van Craen
  * @author Marcel Breyer
  * @copyright 2018-today The PLSSVM project - All Rights Reserved
@@ -55,14 +77,14 @@
  */
 
 /**
- * @dir include/plssvm/backends/CUDA/detail
+ * @dir include/plssvm/backends/CUDA/kernel/detail
  * @author Alexander Van Craen
  * @author Marcel Breyer
  * @copyright 2018-today The PLSSVM project - All Rights Reserved
  * @license This file is part of the PLSSVM project which is released under the MIT license.
  *          See the LICENSE.md file in the project root for full license information.
  *
- * @brief Directory containing implementation details for the CUDA backend.
+ * @brief Directory containing kernel implementations for utility functions using the CUDA backend.
  */
 
 /**
@@ -77,7 +99,29 @@
  */
 
 /**
- * @dir include/plssvm/backends/HIP/cg_explicit
+ * @dir include/plssvm/backends/HIP/detail
+ * @author Alexander Van Craen
+ * @author Marcel Breyer
+ * @copyright 2018-today The PLSSVM project - All Rights Reserved
+ * @license This file is part of the PLSSVM project which is released under the MIT license.
+ *          See the LICENSE.md file in the project root for full license information.
+ *
+ * @brief Directory containing implementation details for the HIP backend.
+ */
+
+/**
+ * @dir include/plssvm/backends/HIP/kernel
+ * @author Alexander Van Craen
+ * @author Marcel Breyer
+ * @copyright 2018-today The PLSSVM project - All Rights Reserved
+ * @license This file is part of the PLSSVM project which is released under the MIT license.
+ *          See the LICENSE.md file in the project root for full license information.
+ *
+ * @brief Directory containing all kernels for the HIP backend.
+ */
+
+/**
+ * @dir include/plssvm/backends/HIP/kernel/cg_explicit
  * @author Alexander Van Craen
  * @author Marcel Breyer
  * @copyright 2018-today The PLSSVM project - All Rights Reserved
@@ -88,7 +132,7 @@
  */
 
 /**
- * @dir include/plssvm/backends/HIP/cg_implicit
+ * @dir include/plssvm/backends/HIP/kernel/cg_implicit
  * @author Alexander Van Craen
  * @author Marcel Breyer
  * @copyright 2018-today The PLSSVM project - All Rights Reserved
@@ -99,14 +143,14 @@
  */
 
 /**
- * @dir include/plssvm/backends/HIP/detail
+ * @dir include/plssvm/backends/HIP/kernel/detail
  * @author Alexander Van Craen
  * @author Marcel Breyer
  * @copyright 2018-today The PLSSVM project - All Rights Reserved
  * @license This file is part of the PLSSVM project which is released under the MIT license.
  *          See the LICENSE.md file in the project root for full license information.
  *
- * @brief Directory containing implementation details for the HIP backend.
+ * @brief Directory containing kernel implementations for utility functions using the HIP backend.
  */
 
 /**
@@ -121,7 +165,29 @@
  */
 
 /**
- * @dir include/plssvm/backends/OpenCL/cg_explicit
+ * @dir include/plssvm/backends/OpenCL/detail
+ * @author Alexander Van Craen
+ * @author Marcel Breyer
+ * @copyright 2018-today The PLSSVM project - All Rights Reserved
+ * @license This file is part of the PLSSVM project which is released under the MIT license.
+ *          See the LICENSE.md file in the project root for full license information.
+ *
+ * @brief Directory containing implementation details for the OpenCL backend.
+ */
+
+/**
+ * @dir include/plssvm/backends/OpenCL/kernel
+ * @author Alexander Van Craen
+ * @author Marcel Breyer
+ * @copyright 2018-today The PLSSVM project - All Rights Reserved
+ * @license This file is part of the PLSSVM project which is released under the MIT license.
+ *          See the LICENSE.md file in the project root for full license information.
+ *
+ * @brief Directory containing all kernels for the OpenCL backend.
+ */
+
+/**
+ * @dir include/plssvm/backends/OpenCL/kernel/cg_explicit
  * @author Alexander Van Craen
  * @author Marcel Breyer
  * @copyright 2018-today The PLSSVM project - All Rights Reserved
@@ -132,7 +198,7 @@
  */
 
 /**
- * @dir include/plssvm/backends/OpenCL/cg_implicit
+ * @dir include/plssvm/backends/OpenCL/kernel/cg_implicit
  * @author Alexander Van Craen
  * @author Marcel Breyer
  * @copyright 2018-today The PLSSVM project - All Rights Reserved
@@ -143,14 +209,14 @@
  */
 
 /**
- * @dir include/plssvm/backends/OpenCL/detail
+ * @dir include/plssvm/backends/OpenCL/kernel/detail
  * @author Alexander Van Craen
  * @author Marcel Breyer
  * @copyright 2018-today The PLSSVM project - All Rights Reserved
  * @license This file is part of the PLSSVM project which is released under the MIT license.
  *          See the LICENSE.md file in the project root for full license information.
  *
- * @brief Directory containing implementation details for the OpenCL backend.
+ * @brief Directory containing kernel implementations for utility functions using the OpenCL backend.
  */
 
 /**
@@ -165,7 +231,29 @@
  */
 
 /**
- * @dir include/plssvm/backends/OpenMP/cg_explicit
+ * @dir include/plssvm/backends/OpenMP/detail
+ * @author Alexander Van Craen
+ * @author Marcel Breyer
+ * @copyright 2018-today The PLSSVM project - All Rights Reserved
+ * @license This file is part of the PLSSVM project which is released under the MIT license.
+ *          See the LICENSE.md file in the project root for full license information.
+ *
+ * @brief Directory containing implementation details for the OpenMP backend.
+ */
+
+/**
+ * @dir include/plssvm/backends/OpenMP/kernel
+ * @author Alexander Van Craen
+ * @author Marcel Breyer
+ * @copyright 2018-today The PLSSVM project - All Rights Reserved
+ * @license This file is part of the PLSSVM project which is released under the MIT license.
+ *          See the LICENSE.md file in the project root for full license information.
+ *
+ * @brief Directory containing all kernels for the OpenMP backend.
+ */
+
+/**
+ * @dir include/plssvm/backends/OpenMP/kernel/cg_explicit
  * @author Alexander Van Craen
  * @author Marcel Breyer
  * @copyright 2018-today The PLSSVM project - All Rights Reserved
@@ -176,7 +264,7 @@
  */
 
 /**
- * @dir include/plssvm/backends/OpenMP/cg_implicit
+ * @dir include/plssvm/backends/OpenMP/kernel/cg_implicit
  * @author Alexander Van Craen
  * @author Marcel Breyer
  * @copyright 2018-today The PLSSVM project - All Rights Reserved
@@ -184,17 +272,6 @@
  *          See the LICENSE.md file in the project root for full license information.
  *
  * @brief Directory containing kernel implementations for the implicit CG algorithm using the OpenMP backend.
- */
-
-/**
- * @dir include/plssvm/backends/OpenMP/detail
- * @author Alexander Van Craen
- * @author Marcel Breyer
- * @copyright 2018-today The PLSSVM project - All Rights Reserved
- * @license This file is part of the PLSSVM project which is released under the MIT license.
- *          See the LICENSE.md file in the project root for full license information.
- *
- * @brief Directory containing implementation details for the OpenMP backend.
  */
 
 /**
@@ -209,7 +286,29 @@
  */
 
 /**
- * @dir include/plssvm/backends/SYCL/cg_explicit
+ * @dir include/plssvm/backends/SYCL/detail
+ * @author Alexander Van Craen
+ * @author Marcel Breyer
+ * @copyright 2018-today The PLSSVM project - All Rights Reserved
+ * @license This file is part of the PLSSVM project which is released under the MIT license.
+ *          See the LICENSE.md file in the project root for full license information.
+ *
+ * @brief Directory containing implementation details for the SYCL backend.
+ */
+
+/**
+ * @dir include/plssvm/backends/SYCL/kernel
+ * @author Alexander Van Craen
+ * @author Marcel Breyer
+ * @copyright 2018-today The PLSSVM project - All Rights Reserved
+ * @license This file is part of the PLSSVM project which is released under the MIT license.
+ *          See the LICENSE.md file in the project root for full license information.
+ *
+ * @brief Directory containing all kernels for the SYCL backend.
+ */
+
+/**
+ * @dir include/plssvm/backends/SYCL/kernel/cg_explicit
  * @author Alexander Van Craen
  * @author Marcel Breyer
  * @copyright 2018-today The PLSSVM project - All Rights Reserved
@@ -220,7 +319,7 @@
  */
 
 /**
- * @dir include/plssvm/backends/SYCL/cg_implicit
+ * @dir include/plssvm/backends/SYCL/kernel/cg_implicit
  * @author Alexander Van Craen
  * @author Marcel Breyer
  * @copyright 2018-today The PLSSVM project - All Rights Reserved
@@ -228,17 +327,6 @@
  *          See the LICENSE.md file in the project root for full license information.
  *
  * @brief Directory containing kernel implementations for the implicit CG algorithm using the SYCL backend.
- */
-
-/**
- * @dir include/plssvm/backends/SYCL/detail
- * @author Alexander Van Craen
- * @author Marcel Breyer
- * @copyright 2018-today The PLSSVM project - All Rights Reserved
- * @license This file is part of the PLSSVM project which is released under the MIT license.
- *          See the LICENSE.md file in the project root for full license information.
- *
- * @brief Directory containing implementation details for the SYCL backend.
  */
 
 /**

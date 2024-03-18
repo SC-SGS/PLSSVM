@@ -23,9 +23,9 @@
 
 /**
  * @def PLSSVM_HIP_ERROR_CHECK
- * @brief Check the HIP error @p code. If @p code signals an error, throw a plssvm::hip::backend_exception.
+ * @brief Check the HIP error @p err. If @p err signals an error, throw a plssvm::hip::backend_exception.
  * @details The exception contains the following message: "HIP assert 'HIP_ERROR_NAME' (HIP_ERROR_CODE): HIP_ERROR_STRING".
- * @param[in] code the HIP error code to check
+ * @param[in] err the HIP error code to check
  * @throws plssvm::hip::backend_exception if the error code signals a failure
  */
 #define PLSSVM_HIP_ERROR_CHECK(err)                                                                                                         \

@@ -98,6 +98,7 @@ __global__ void device_kernel_symm(const unsigned long long num_rows, const unsi
  * @details In a multi-GPU setting, this function is responsible for mirroring down the columns this device is responsible for!
  * @param[in] num_rows the number of rows in @p A and @p C
  * @param[in] num_rhs the number of columns in @p B and @p C
+ * @param[in] num_mirror_rows the number of rows to mirror down
  * @param[in] device_specific_num_rows the number of rows in @p A and number of rows in @p B; thr rows in @p A are potentially distributed across multiple devices
  * @param[in] row_offset the first row this device is responsible for
  * @param[in] alpha the scalar alpha value

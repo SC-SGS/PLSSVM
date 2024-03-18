@@ -38,10 +38,12 @@ class data_distribution {
     data_distribution(data_distribution &&) noexcept = default;
     /**
      * @brief Default copy-assignment operator. Necessary due to the defaulted pure virtual destructor.
+     * @return `*this`
      */
     data_distribution &operator=(const data_distribution &) = default;
     /**
      * @brief Default move-assignment operator. Necessary due to the defaulted pure virtual destructor.
+     * @return `*this`
      */
     data_distribution &operator=(data_distribution &&) noexcept = default;
     /**
@@ -140,6 +142,7 @@ class triangular_data_distribution : public data_distribution {
 
     /**
      * @brief Calculate the number of entries in the explicit kernel matrix for the current number of rows and @p place.
+     * @param[in] place the place (e.g., device) for which the number of matrix entries should be calculated
      * @return the total number of entries, i.e., values to allocate on the @p place (`[[nodiscard]]`)
      */
     [[nodiscard]] std::size_t calculate_explicit_kernel_matrix_num_entries_padded(std::size_t place) const noexcept;

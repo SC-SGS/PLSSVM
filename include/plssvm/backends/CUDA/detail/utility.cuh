@@ -22,9 +22,9 @@
 
 /**
  * @def PLSSVM_CUDA_ERROR_CHECK
- * @brief Check the CUDA error @p code. If @p code signals an error, throw a plssvm::cuda::backend_exception.
+ * @brief Check the CUDA error @p err. If @p err signals an error, throw a plssvm::cuda::backend_exception.
  * @details The exception contains the following message: "CUDA assert 'CUDA_ERROR_NAME' (CUDA_ERROR_CODE): CUDA_ERROR_STRING".
- * @param[in] code the CUDA error code to check
+ * @param[in] err the CUDA error code to check
  * @throws plssvm::cuda::backend_exception if the error code signals a failure
  */
 #define PLSSVM_CUDA_ERROR_CHECK(err)                                                                                                            \
