@@ -11,10 +11,10 @@
 #include "plssvm/backend_types.hpp"                                                   // plssvm::backend_type
 #include "plssvm/backends/OpenMP/detail/utility.hpp"                                  // plssvm::openmp::detail::{get_num_threads, get_openmp_version}
 #include "plssvm/backends/OpenMP/exceptions.hpp"                                      // plssvm::openmp::backend_exception
-#include "plssvm/backends/OpenMP/kernel/cg_explicit/blas.hpp"                         // plssvm::openmp::{device_kernel_gemm, device_kernel_symm}
-#include "plssvm/backends/OpenMP/kernel/cg_explicit/kernel_matrix_assembly.hpp"       // plssvm::openmp::device_kernel_assembly
-#include "plssvm/backends/OpenMP/kernel/cg_implicit/kernel_matrix_assembly_blas.hpp"  // plssvm::openmp::device_kernel_assembly_symm
-#include "plssvm/backends/OpenMP/kernel/predict_kernel.hpp"                           // plssvm::openmp::{device_kernel_w_linear, device_kernel_predict_linear, device_kernel_predict}
+#include "plssvm/backends/OpenMP/kernel/cg_explicit/blas.hpp"                         // plssvm::openmp::detail::device_kernel_symm
+#include "plssvm/backends/OpenMP/kernel/cg_explicit/kernel_matrix_assembly.hpp"       // plssvm::openmp::detail::device_kernel_assembly
+#include "plssvm/backends/OpenMP/kernel/cg_implicit/kernel_matrix_assembly_blas.hpp"  // plssvm::openmp::detail::device_kernel_assembly_symm
+#include "plssvm/backends/OpenMP/kernel/predict_kernel.hpp"                           // plssvm::openmp::detail::{device_kernel_w_linear, device_kernel_predict_linear, device_kernel_predict}
 #include "plssvm/constants.hpp"                                                       // plssvm::real_type
 #include "plssvm/csvm.hpp"                                                            // plssvm::csvm
 #include "plssvm/detail/assert.hpp"                                                   // PLSSVM_ASSERT
@@ -103,13 +103,13 @@ std::vector<::plssvm::detail::move_only_any> csvm::assemble_kernel_matrix(const 
         std::vector<real_type> kernel_matrix(dist.calculate_explicit_kernel_matrix_num_entries_padded(0));  // only explicitly store the upper triangular matrix
         switch (params.kernel_type.value()) {
             case kernel_function_type::linear:
-                openmp::device_kernel_assembly<kernel_function_type::linear>(q_red, kernel_matrix, aos_data, QA_cost, cost);
+                detail::device_kernel_assembly<kernel_function_type::linear>(q_red, kernel_matrix, aos_data, QA_cost, cost);
                 break;
             case kernel_function_type::polynomial:
-                openmp::device_kernel_assembly<kernel_function_type::polynomial>(q_red, kernel_matrix, aos_data, QA_cost, cost, params.degree.value(), params.gamma.value(), params.coef0.value());
+                detail::device_kernel_assembly<kernel_function_type::polynomial>(q_red, kernel_matrix, aos_data, QA_cost, cost, params.degree.value(), params.gamma.value(), params.coef0.value());
                 break;
             case kernel_function_type::rbf:
-                openmp::device_kernel_assembly<kernel_function_type::rbf>(q_red, kernel_matrix, aos_data, QA_cost, cost, params.gamma.value());
+                detail::device_kernel_assembly<kernel_function_type::rbf>(q_red, kernel_matrix, aos_data, QA_cost, cost, params.gamma.value());
                 break;
         }
 
@@ -147,7 +147,7 @@ void csvm::blas_level_3(const solver_type solver, const real_type alpha, const s
         const auto &explicit_A = ::plssvm::detail::move_only_any_cast<const std::vector<real_type> &>(A.front());
         PLSSVM_ASSERT(!explicit_A.empty(), "The A matrix must not be empty!");
 
-        openmp::device_kernel_symm(m_ull, n_ull, k_ull, alpha, explicit_A, aos_B, beta, aos_C);
+        detail::device_kernel_symm(m_ull, n_ull, k_ull, alpha, explicit_A, aos_B, beta, aos_C);
     } else if (solver == solver_type::cg_implicit) {
         const auto &[aos_matr_A, params, q_red, QA_cost] = ::plssvm::detail::move_only_any_cast<const std::tuple<aos_matrix<real_type>, parameter, std::vector<real_type>, real_type> &>(A.front());
         PLSSVM_ASSERT(!aos_matr_A.empty(), "The A matrix must not be empty!");
@@ -156,13 +156,13 @@ void csvm::blas_level_3(const solver_type solver, const real_type alpha, const s
 
         switch (params.kernel_type.value()) {
             case kernel_function_type::linear:
-                openmp::device_kernel_assembly_symm<kernel_function_type::linear>(alpha, q_red, aos_matr_A, QA_cost, cost, aos_B, beta, aos_C);
+                detail::device_kernel_assembly_symm<kernel_function_type::linear>(alpha, q_red, aos_matr_A, QA_cost, cost, aos_B, beta, aos_C);
                 break;
             case kernel_function_type::polynomial:
-                openmp::device_kernel_assembly_symm<kernel_function_type::polynomial>(alpha, q_red, aos_matr_A, QA_cost, cost, aos_B, beta, aos_C, params.degree.value(), params.gamma.value(), params.coef0.value());
+                detail::device_kernel_assembly_symm<kernel_function_type::polynomial>(alpha, q_red, aos_matr_A, QA_cost, cost, aos_B, beta, aos_C, params.degree.value(), params.gamma.value(), params.coef0.value());
                 break;
             case kernel_function_type::rbf:
-                openmp::device_kernel_assembly_symm<kernel_function_type::rbf>(alpha, q_red, aos_matr_A, QA_cost, cost, aos_B, beta, aos_C, params.gamma.value());
+                detail::device_kernel_assembly_symm<kernel_function_type::rbf>(alpha, q_red, aos_matr_A, QA_cost, cost, aos_B, beta, aos_C, params.gamma.value());
                 break;
         }
     } else {
@@ -212,7 +212,7 @@ aos_matrix<real_type> csvm::predict_values(const parameter &params,
         if (w.empty()) {
             // fill w vector
             w = soa_matrix<real_type>{ plssvm::shape{ num_classes, num_features }, plssvm::shape{ PADDING_SIZE, PADDING_SIZE } };
-            openmp::device_kernel_w_linear(w, alpha, aos_support_vectors);
+            detail::device_kernel_w_linear(w, alpha, aos_support_vectors);
         }
     }
 
@@ -220,13 +220,13 @@ aos_matrix<real_type> csvm::predict_values(const parameter &params,
     switch (params.kernel_type.value()) {
         case kernel_function_type::linear:
             // predict the values using the w vector
-            openmp::device_kernel_predict_linear(out, w, rho, predict_points);
+            detail::device_kernel_predict_linear(out, w, rho, predict_points);
             break;
         case kernel_function_type::polynomial:
-            openmp::device_kernel_predict<kernel_function_type::polynomial>(out, alpha, rho, support_vectors, predict_points, params.degree.value(), params.gamma.value(), params.coef0.value());
+            detail::device_kernel_predict<kernel_function_type::polynomial>(out, alpha, rho, support_vectors, predict_points, params.degree.value(), params.gamma.value(), params.coef0.value());
             break;
         case kernel_function_type::rbf:
-            openmp::device_kernel_predict<kernel_function_type::rbf>(out, alpha, rho, support_vectors, predict_points, params.gamma.value());
+            detail::device_kernel_predict<kernel_function_type::rbf>(out, alpha, rho, support_vectors, predict_points, params.gamma.value());
             break;
     }
 

@@ -20,7 +20,7 @@
 #include "hip/hip_runtime.h"
 #include "hip/hip_runtime_api.h"
 
-namespace plssvm::hip {
+namespace plssvm::hip::detail {
 
 /**
  * @brief Perform an implicit BLAS SYMM-like operation: `C = alpha * A * B + C` where `A` is the implicitly calculated kernel matrix using the @p kernel_function (never actually stored, reducing the amount of needed global memory), @p B and @p C are matrices, and @p alpha is a scalar.
@@ -191,6 +191,6 @@ __global__ void device_kernel_assembly_symm(const real_type alpha, const real_ty
     }
 }
 
-}  // namespace plssvm::hip
+}  // namespace plssvm::hip::detail
 
 #endif  // PLSSVM_BACKENDS_HIP_CG_IMPLICIT_KERNEL_MATRIX_ASSEMBLY_BLAS_HIP_HPP_

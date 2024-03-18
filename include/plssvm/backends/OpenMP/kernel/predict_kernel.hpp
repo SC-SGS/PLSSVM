@@ -23,7 +23,7 @@
 #include <cstddef>  // std::size_t
 #include <vector>   // std::vector
 
-namespace plssvm::openmp {
+namespace plssvm::openmp::detail {
 
 /**
  * @brief Calculate the `w` vector used to speedup the prediction using the linear kernel function.
@@ -122,6 +122,6 @@ inline void device_kernel_predict(aos_matrix<real_type> &out, const aos_matrix<r
     }
 }
 
-}  // namespace plssvm::openmp
+}  // namespace plssvm::openmp::detail
 
 #endif  // PLSSVM_BACKENDS_OPENMP_KERNEL_PREDICT_KERNEL_HPP_

@@ -12,10 +12,10 @@
 #include "plssvm/backends/HIP/detail/device_ptr.hip.hpp"                               // plssvm::hip::detail::device_ptr
 #include "plssvm/backends/HIP/detail/utility.hip.hpp"                                  // PLSSVM_HIP_ERROR_CHECK, plssvm::hip::detail::{device_synchronize, get_device_count, set_device, peek_at_last_error, get_runtime_version}
 #include "plssvm/backends/HIP/exceptions.hpp"                                          // plssvm::hip::backend_exception
-#include "plssvm/backends/HIP/kernel/cg_explicit/blas.hip.hpp"                         // plssvm::hip::device_kernel_gemm
-#include "plssvm/backends/HIP/kernel/cg_explicit/kernel_matrix_assembly.hip.hpp"       // plssvm::hip::{device_kernel_assembly_linear, device_kernel_assembly_polynomial, device_kernel_assembly_rbf}
-#include "plssvm/backends/HIP/kernel/cg_implicit/kernel_matrix_assembly_blas.hip.hpp"  // plssvm::hip::{device_kernel_assembly_linear_symm, device_kernel_assembly_polynomial_symm, device_kernel_assembly_rbf_symm}
-#include "plssvm/backends/HIP/kernel/predict_kernel.hip.hpp"                           // plssvm::hip::detail::{device_kernel_w_linear, device_kernel_predict_polynomial, device_kernel_predict_rbf}
+#include "plssvm/backends/HIP/kernel/cg_explicit/blas.hip.hpp"                         // plssvm::hip::detail::{device_kernel_symm, device_kernel_symm_mirror, device_kernel_inplace_matrix_add, device_kernel_inplace_matrix_scale}
+#include "plssvm/backends/HIP/kernel/cg_explicit/kernel_matrix_assembly.hip.hpp"       // plssvm::hip::detail::device_kernel_assembly
+#include "plssvm/backends/HIP/kernel/cg_implicit/kernel_matrix_assembly_blas.hip.hpp"  // plssvm::hip::detail::device_kernel_assembly_symm
+#include "plssvm/backends/HIP/kernel/predict_kernel.hip.hpp"                           // plssvm::hip::detail::{device_kernel_w_linear, device_kernel_predict_linear, device_kernel_predict}
 #include "plssvm/constants.hpp"                                                        // plssvm::{real_type, THREAD_BLOCK_SIZE, INTERNAL_BLOCK_SIZE, PADDING_SIZE}
 #include "plssvm/detail/assert.hpp"                                                    // PLSSVM_ASSERT
 #include "plssvm/detail/logging.hpp"                                                   // plssvm::detail::log
@@ -168,13 +168,13 @@ auto csvm::run_assemble_kernel_matrix_explicit(const std::size_t device_id, cons
     detail::set_device(device);
     switch (params.kernel_type.value()) {
         case kernel_function_type::linear:
-            hip::device_kernel_assembly<kernel_function_type::linear><<<grid, block>>>(kernel_matrix_d.get(), data_d.get(), num_rows_reduced, device_specific_num_rows, row_offset, num_features, q_red_d.get(), QA_cost, cost_factor);
+            detail::device_kernel_assembly<kernel_function_type::linear><<<grid, block>>>(kernel_matrix_d.get(), data_d.get(), num_rows_reduced, device_specific_num_rows, row_offset, num_features, q_red_d.get(), QA_cost, cost_factor);
             break;
         case kernel_function_type::polynomial:
-            hip::device_kernel_assembly<kernel_function_type::polynomial><<<grid, block>>>(kernel_matrix_d.get(), data_d.get(), num_rows_reduced, device_specific_num_rows, row_offset, num_features, q_red_d.get(), QA_cost, cost_factor, params.degree.value(), params.gamma.value(), params.coef0.value());
+            detail::device_kernel_assembly<kernel_function_type::polynomial><<<grid, block>>>(kernel_matrix_d.get(), data_d.get(), num_rows_reduced, device_specific_num_rows, row_offset, num_features, q_red_d.get(), QA_cost, cost_factor, params.degree.value(), params.gamma.value(), params.coef0.value());
             break;
         case kernel_function_type::rbf:
-            hip::device_kernel_assembly<kernel_function_type::rbf><<<grid, block>>>(kernel_matrix_d.get(), data_d.get(), num_rows_reduced, device_specific_num_rows, row_offset, num_features, q_red_d.get(), QA_cost, cost_factor, params.gamma.value());
+            detail::device_kernel_assembly<kernel_function_type::rbf><<<grid, block>>>(kernel_matrix_d.get(), data_d.get(), num_rows_reduced, device_specific_num_rows, row_offset, num_features, q_red_d.get(), QA_cost, cost_factor, params.gamma.value());
             break;
     }
     detail::peek_at_last_error();
@@ -205,7 +205,7 @@ void csvm::run_blas_level_3_kernel_explicit(const std::size_t device_id, const r
         const dim3 grid(static_cast<int>(std::ceil(static_cast<double>(num_rhs) / static_cast<double>(block.x * INTERNAL_BLOCK_SIZE))),
                         static_cast<int>(std::ceil(static_cast<double>(device_specific_num_rows) / static_cast<double>(block.y * INTERNAL_BLOCK_SIZE))));
 
-        hip::device_kernel_symm<<<grid, block>>>(num_rows, num_rhs, device_specific_num_rows, row_offset, alpha, A_d.get(), B_d.get(), beta, C_d.get());
+        detail::device_kernel_symm<<<grid, block>>>(num_rows, num_rhs, device_specific_num_rows, row_offset, alpha, A_d.get(), B_d.get(), beta, C_d.get());
     }
 
     {
@@ -216,7 +216,7 @@ void csvm::run_blas_level_3_kernel_explicit(const std::size_t device_id, const r
             const dim3 grid(static_cast<int>(std::ceil(static_cast<double>(num_rhs) / static_cast<double>(block.x * INTERNAL_BLOCK_SIZE))),
                             static_cast<int>(std::ceil(static_cast<double>(num_mirror_rows) / static_cast<double>(block.y * INTERNAL_BLOCK_SIZE))));
 
-            hip::device_kernel_symm_mirror<<<grid, block>>>(num_rows, num_rhs, num_mirror_rows, device_specific_num_rows, row_offset, alpha, A_d.get(), B_d.get(), beta, C_d.get());
+            detail::device_kernel_symm_mirror<<<grid, block>>>(num_rows, num_rhs, num_mirror_rows, device_specific_num_rows, row_offset, alpha, A_d.get(), B_d.get(), beta, C_d.get());
         }
     }
     detail::peek_at_last_error();
@@ -238,7 +238,7 @@ void csvm::run_inplace_matrix_addition(const std::size_t device_id, device_ptr_t
                     static_cast<int>(std::ceil(static_cast<double>(num_rhs) / static_cast<double>(block.y * INTERNAL_BLOCK_SIZE))));
 
     detail::set_device(device);
-    hip::device_kernel_inplace_matrix_add<<<grid, block>>>(num_rhs, lhs_d.get(), rhs_d.get());
+    detail::device_kernel_inplace_matrix_add<<<grid, block>>>(num_rhs, lhs_d.get(), rhs_d.get());
     detail::peek_at_last_error();
     detail::device_synchronize(device);
 }
@@ -258,7 +258,7 @@ void csvm::run_inplace_matrix_scale(const std::size_t device_id, device_ptr_type
                     static_cast<int>(std::ceil(static_cast<double>(num_rhs) / static_cast<double>(block.y * INTERNAL_BLOCK_SIZE))));
 
     detail::set_device(device);
-    hip::device_kernel_inplace_matrix_scale<<<grid, block>>>(num_rhs, lhs_d.get(), scale);
+    detail::device_kernel_inplace_matrix_scale<<<grid, block>>>(num_rhs, lhs_d.get(), scale);
     detail::peek_at_last_error();
     detail::device_synchronize(device);
 }
@@ -288,13 +288,13 @@ void csvm::run_assemble_kernel_matrix_implicit_blas_level_3(const std::size_t de
 
     switch (params.kernel_type.value()) {
         case kernel_function_type::linear:
-            hip::device_kernel_assembly_symm<kernel_function_type::linear><<<grid, block>>>(alpha, q_red.get(), A_d.get(), num_rows_reduced, device_specific_num_rows, row_offset, num_features, QA_cost, cost_factor, B_d.get(), C_d.get(), num_classes);
+            detail::device_kernel_assembly_symm<kernel_function_type::linear><<<grid, block>>>(alpha, q_red.get(), A_d.get(), num_rows_reduced, device_specific_num_rows, row_offset, num_features, QA_cost, cost_factor, B_d.get(), C_d.get(), num_classes);
             break;
         case kernel_function_type::polynomial:
-            hip::device_kernel_assembly_symm<kernel_function_type::polynomial><<<grid, block>>>(alpha, q_red.get(), A_d.get(), num_rows_reduced, device_specific_num_rows, row_offset, num_features, QA_cost, cost_factor, B_d.get(), C_d.get(), num_classes, params.degree.value(), params.gamma.value(), params.coef0.value());
+            detail::device_kernel_assembly_symm<kernel_function_type::polynomial><<<grid, block>>>(alpha, q_red.get(), A_d.get(), num_rows_reduced, device_specific_num_rows, row_offset, num_features, QA_cost, cost_factor, B_d.get(), C_d.get(), num_classes, params.degree.value(), params.gamma.value(), params.coef0.value());
             break;
         case kernel_function_type::rbf:
-            hip::device_kernel_assembly_symm<kernel_function_type::rbf><<<grid, block>>>(alpha, q_red.get(), A_d.get(), num_rows_reduced, device_specific_num_rows, row_offset, num_features, QA_cost, cost_factor, B_d.get(), C_d.get(), num_classes, params.gamma.value());
+            detail::device_kernel_assembly_symm<kernel_function_type::rbf><<<grid, block>>>(alpha, q_red.get(), A_d.get(), num_rows_reduced, device_specific_num_rows, row_offset, num_features, QA_cost, cost_factor, B_d.get(), C_d.get(), num_classes, params.gamma.value());
             break;
     }
     detail::peek_at_last_error();
@@ -327,7 +327,7 @@ auto csvm::run_w_kernel(const std::size_t device_id, const device_ptr_type &alph
     device_ptr_type w_d{ shape{ num_classes, num_features }, shape{ PADDING_SIZE, PADDING_SIZE }, device };
 
     detail::set_device(device);
-    hip::device_kernel_w_linear<<<grid, block>>>(w_d.get(), alpha_d.get(), sv_d.get(), num_classes, num_sv, device_specific_num_sv, sv_offset);
+    detail::device_kernel_w_linear<<<grid, block>>>(w_d.get(), alpha_d.get(), sv_d.get(), num_classes, num_sv, device_specific_num_sv, sv_offset);
     detail::peek_at_last_error();
     detail::device_synchronize(device);
 
@@ -356,7 +356,7 @@ auto csvm::run_predict_kernel(const std::size_t device_id, const parameter &para
         const dim3 grid(static_cast<int>(std::ceil(static_cast<double>(num_predict_points) / static_cast<double>(block.x * INTERNAL_BLOCK_SIZE))),
                         static_cast<int>(std::ceil(static_cast<double>(num_classes) / static_cast<double>(block.y * INTERNAL_BLOCK_SIZE))));
 
-        hip::device_kernel_predict_linear<<<grid, block>>>(out_d.get(), sv_or_w_d.get(), rho_d.get(), predict_points_d.get(), num_classes, num_predict_points, num_features);
+        detail::device_kernel_predict_linear<<<grid, block>>>(out_d.get(), sv_or_w_d.get(), rho_d.get(), predict_points_d.get(), num_classes, num_predict_points, num_features);
     } else {
         const unsigned long long num_sv = sv_or_w_d.shape().x;
 
@@ -369,10 +369,10 @@ auto csvm::run_predict_kernel(const std::size_t device_id, const parameter &para
                 // already handled
                 break;
             case kernel_function_type::polynomial:
-                hip::device_kernel_predict<kernel_function_type::polynomial><<<grid, block>>>(out_d.get(), alpha_d.get(), rho_d.get(), sv_or_w_d.get(), predict_points_d.get(), num_classes, num_sv, num_predict_points, num_features, params.degree.value(), params.gamma.value(), params.coef0.value());
+                detail::device_kernel_predict<kernel_function_type::polynomial><<<grid, block>>>(out_d.get(), alpha_d.get(), rho_d.get(), sv_or_w_d.get(), predict_points_d.get(), num_classes, num_sv, num_predict_points, num_features, params.degree.value(), params.gamma.value(), params.coef0.value());
                 break;
             case kernel_function_type::rbf:
-                hip::device_kernel_predict<kernel_function_type::rbf><<<grid, block>>>(out_d.get(), alpha_d.get(), rho_d.get(), sv_or_w_d.get(), predict_points_d.get(), num_classes, num_sv, num_predict_points, num_features, params.gamma.value());
+                detail::device_kernel_predict<kernel_function_type::rbf><<<grid, block>>>(out_d.get(), alpha_d.get(), rho_d.get(), sv_or_w_d.get(), predict_points_d.get(), num_classes, num_sv, num_predict_points, num_features, params.gamma.value());
                 break;
         }
     }

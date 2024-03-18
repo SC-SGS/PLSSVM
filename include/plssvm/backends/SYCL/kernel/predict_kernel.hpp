@@ -21,7 +21,7 @@
 
 #include "sycl/sycl.hpp"  // sycl::item
 
-namespace plssvm::sycl {
+namespace plssvm::sycl::detail {
 
 /**
  * @brief Calculate the `q` vector used to speedup the prediction using the linear kernel function.
@@ -348,6 +348,6 @@ class device_kernel_predict {
     /// @endcond
 };
 
-}  // namespace plssvm::sycl
+}  // namespace plssvm::sycl::detail
 
 #endif  // PLSSVM_BACKENDS_SYCL_PREDICT_KERNEL_HPP_

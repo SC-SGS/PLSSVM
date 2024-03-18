@@ -17,7 +17,7 @@
 #include "plssvm/constants.hpp"                              // plssvm::{real_type, THREAD_BLOCK_SIZE, INTERNAL_BLOCK_SIZE, FEATURE_BLOCK_SIZE, PADDING_SIZE}
 #include "plssvm/kernel_function_types.hpp"                  // plssvm::kernel_function_type
 
-namespace plssvm::cuda {
+namespace plssvm::cuda::detail {
 
 /**
  * @brief Create the explicit kernel matrix using the @p kernel_function.
@@ -92,6 +92,6 @@ __global__ void device_kernel_assembly(real_type *ret, const real_type *data_d, 
     }
 }
 
-}  // namespace plssvm::cuda
+}  // namespace plssvm::cuda::detail
 
 #endif  // PLSSVM_BACKENDS_CUDA_KERNEL_CG_EXPLICIT_KERNEL_MATRIX_ASSEMBLY_CUH_

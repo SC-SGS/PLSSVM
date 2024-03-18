@@ -20,7 +20,7 @@
 
 #include "sycl/sycl.hpp"  // sycl::nd_item
 
-namespace plssvm::sycl {
+namespace plssvm::sycl::detail {
 
 /**
  * @brief Create the explicit kernel matrix using the @p kernel_function.
@@ -137,6 +137,6 @@ class device_kernel_assembly {
     /// @endcond
 };
 
-}  // namespace plssvm::sycl
+}  // namespace plssvm::sycl::detail
 
 #endif  // PLSSVM_BACKENDS_SYCL_CG_EXPLICIT_KERNEL_MATRIX_ASSEMBLY_HPP_

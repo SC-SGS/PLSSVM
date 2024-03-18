@@ -15,7 +15,7 @@
 
 #include "plssvm/constants.hpp"  // plssvm::{real_type, THREAD_BLOCK_SIZE, INTERNAL_BLOCK_SIZE, FEATURE_BLOCK_SIZE, PADDING_SIZE}
 
-namespace plssvm::cuda {
+namespace plssvm::cuda::detail {
 
 /**
  * @brief Perform an explicit BLAS SYMM operation: `C = alpha * A * B + beta * C` where @p A is a `m x k` symmetric matrix (memory optimized), @p B is a `k x n` matrix, @p C is a `m x n` matrix, and @p alpha and @p beta are scalars.
@@ -192,6 +192,6 @@ __global__ void device_kernel_inplace_matrix_scale(const unsigned long long num_
     }
 }
 
-}  // namespace plssvm::cuda
+}  // namespace plssvm::cuda::detail
 
 #endif  // PLSSVM_BACKENDS_CUDA_KERNEL_CG_EXPLICIT_BLAS_CUH_

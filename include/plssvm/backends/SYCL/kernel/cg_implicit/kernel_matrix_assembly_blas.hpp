@@ -21,7 +21,7 @@
 
 #include "sycl/sycl.hpp"  // sycl::nd_item
 
-namespace plssvm::sycl {
+namespace plssvm::sycl::detail {
 
 /**
  * @brief Perform an implicit BLAS SYMM-like operation: `C = alpha * A * B + C` where `A` is the implicitly calculated kernel matrix using the @p kernel_function (never actually stored, reducing the amount of needed global memory), @p B and @p C are matrices, and @p alpha is a scalar.
@@ -126,8 +126,8 @@ class device_kernel_assembly_symm {
 
             // calculate C += alpha * temp * B for the UPPER triangular matrix
             {
-                auto &B_cache = data_cache_i_;// [INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE][FEATURE_BLOCK_SIZE]
-                auto &C_out_cache = data_cache_j_;// [INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE][FEATURE_BLOCK_SIZE]
+                auto &B_cache = data_cache_i_;      // [INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE][FEATURE_BLOCK_SIZE]
+                auto &C_out_cache = data_cache_j_;  // [INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE][FEATURE_BLOCK_SIZE]
 
                 for (unsigned long long dim = 0; dim < num_classes_; dim += FEATURE_BLOCK_SIZE) {
                     // load data into shared memory
@@ -239,6 +239,6 @@ class device_kernel_assembly_symm {
     /// @endcond
 };
 
-}  // namespace plssvm::sycl
+}  // namespace plssvm::sycl::detail
 
 #endif  // PLSSVM_BACKENDS_SYCL_CG_IMPLICIT_KERNEL_MATRIX_ASSEMBLY_BLAS_HPP_

@@ -18,7 +18,7 @@
 #include "plssvm/constants.hpp"                              // plssvm::{real_type, THREAD_BLOCK_SIZE, INTERNAL_BLOCK_SIZE, FEATURE_BLOCK_SIZE, PADDING_SIZE}
 #include "plssvm/kernel_function_types.hpp"                  // plssvm::kernel_function_type
 
-namespace plssvm::cuda {
+namespace plssvm::cuda::detail {
 
 /**
  * @brief Calculate the `w` vector used to speedup the prediction using the linear kernel function.
@@ -234,6 +234,6 @@ __global__ void device_kernel_predict(real_type *out_d, const real_type *alpha_d
     }
 }
 
-}  // namespace plssvm::cuda
+}  // namespace plssvm::cuda::detail
 
 #endif  // PLSSVM_BACKENDS_CUDA_KERNEL_PREDICT_KERNEL_HPP_

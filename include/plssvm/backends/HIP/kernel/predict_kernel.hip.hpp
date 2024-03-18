@@ -20,7 +20,7 @@
 #include "hip/hip_runtime.h"
 #include "hip/hip_runtime_api.h"
 
-namespace plssvm::hip {
+namespace plssvm::hip::detail {
 
 /**
  * @brief Calculate the `w` vector used to speedup the prediction using the linear kernel function.
@@ -236,6 +236,6 @@ __global__ void device_kernel_predict(real_type *out_d, const real_type *alpha_d
     }
 }
 
-}  // namespace plssvm::hip
+}  // namespace plssvm::hip::detail
 
 #endif  // PLSSVM_BACKENDS_HIP_PREDICT_KERNEL_HIP_HPP_

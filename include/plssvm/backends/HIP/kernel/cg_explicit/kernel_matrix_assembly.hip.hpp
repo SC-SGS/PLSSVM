@@ -20,7 +20,7 @@
 #include "hip/hip_runtime.h"
 #include "hip/hip_runtime_api.h"
 
-namespace plssvm::hip {
+namespace plssvm::hip::detail {
 
 /**
  * @brief Create the explicit kernel matrix using the @p kernel_function.
@@ -95,6 +95,6 @@ __global__ void device_kernel_assembly(real_type *ret, const real_type *data_d, 
     }
 }
 
-}  // namespace plssvm::hip
+}  // namespace plssvm::hip::detail
 
 #endif  // PLSSVM_BACKENDS_HIP_CG_EXPLICIT_KERNEL_MATRIX_ASSEMBLY_HIP_HPP_

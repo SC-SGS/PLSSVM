@@ -13,10 +13,10 @@
 #include "plssvm/backends/SYCL/AdaptiveCpp/detail/queue_impl.hpp"                   // plssvm::adaptivecpp::detail::queue (PImpl implementation)
 #include "plssvm/backends/SYCL/AdaptiveCpp/detail/utility.hpp"                      // plssvm::adaptivecpp::detail::{get_device_list, device_synchronize, get_adaptivecpp_version_short, get_adaptivecpp_version}
 #include "plssvm/backends/SYCL/exceptions.hpp"                                      // plssvm::adaptivecpp::backend_exception
-#include "plssvm/backends/SYCL/kernel/cg_explicit/blas.hpp"                         // plssvm::sycl::{device_kernel_symm, device_kernel_symm_mirror, device_kernel_inplace_matrix_add, device_kernel_inplace_matrix_scale}
-#include "plssvm/backends/SYCL/kernel/cg_explicit/kernel_matrix_assembly.hpp"       // plssvm::sycl::device_kernel_assembly
-#include "plssvm/backends/SYCL/kernel/cg_implicit/kernel_matrix_assembly_blas.hpp"  // plssvm::sycl::device_kernel_assembly_symm
-#include "plssvm/backends/SYCL/kernel/predict_kernel.hpp"                           // plssvm::sycl::{device_kernel_w_linear, device_kernel_predict_linear, device_kernel_predict}
+#include "plssvm/backends/SYCL/kernel/cg_explicit/blas.hpp"                         // plssvm::sycl::detail::{device_kernel_symm, device_kernel_symm_mirror, device_kernel_inplace_matrix_add, device_kernel_inplace_matrix_scale}
+#include "plssvm/backends/SYCL/kernel/cg_explicit/kernel_matrix_assembly.hpp"       // plssvm::sycl::detail::device_kernel_assembly
+#include "plssvm/backends/SYCL/kernel/cg_implicit/kernel_matrix_assembly_blas.hpp"  // plssvm::sycl::detail::device_kernel_assembly_symm
+#include "plssvm/backends/SYCL/kernel/predict_kernel.hpp"                           // plssvm::sycl::detail::{device_kernel_w_linear, device_kernel_predict_linear, device_kernel_predict}
 #include "plssvm/backends/SYCL/kernel_invocation_types.hpp"                         // plssvm::kernel_invocation_type
 #include "plssvm/constants.hpp"                                                     // plssvm::{real_type, THREAD_BLOCK_SIZE, INTERNAL_BLOCK_SIZE, PADDING_SIZE}
 #include "plssvm/detail/assert.hpp"                                                 // PLSSVM_ASSERT
@@ -210,18 +210,18 @@ auto csvm::run_assemble_kernel_matrix_explicit(const std::size_t device_id, cons
     switch (params.kernel_type.value()) {
         case kernel_function_type::linear:
             device.impl->sycl_queue.submit([&](::sycl::handler &cgh) {
-                cgh.parallel_for(execution_range, sycl::device_kernel_assembly<kernel_function_type::linear>{ cgh, kernel_matrix_d.get(), data_d.get(), num_rows_reduced, device_specific_num_rows, row_offset, num_features, q_red_d.get(), QA_cost, cost_factor });
+                cgh.parallel_for(execution_range, sycl::detail::device_kernel_assembly<kernel_function_type::linear>{ cgh, kernel_matrix_d.get(), data_d.get(), num_rows_reduced, device_specific_num_rows, row_offset, num_features, q_red_d.get(), QA_cost, cost_factor });
             });
             break;
         case kernel_function_type::polynomial:
             device.impl->sycl_queue.submit([&](::sycl::handler &cgh) {
-                using functor_type = sycl::device_kernel_assembly<kernel_function_type::polynomial, typename decltype(params.degree)::value_type, typename decltype(params.gamma)::value_type, typename decltype(params.coef0)::value_type>;
+                using functor_type = sycl::detail::device_kernel_assembly<kernel_function_type::polynomial, typename decltype(params.degree)::value_type, typename decltype(params.gamma)::value_type, typename decltype(params.coef0)::value_type>;
                 cgh.parallel_for(execution_range, functor_type{ cgh, kernel_matrix_d.get(), data_d.get(), num_rows_reduced, device_specific_num_rows, row_offset, num_features, q_red_d.get(), QA_cost, cost_factor, params.degree.value(), params.gamma.value(), params.coef0.value() });
             });
             break;
         case kernel_function_type::rbf:
             device.impl->sycl_queue.submit([&](::sycl::handler &cgh) {
-                using functor_type = sycl::device_kernel_assembly<kernel_function_type::rbf, typename decltype(params.gamma)::value_type>;
+                using functor_type = sycl::detail::device_kernel_assembly<kernel_function_type::rbf, typename decltype(params.gamma)::value_type>;
                 cgh.parallel_for(execution_range, functor_type{ cgh, kernel_matrix_d.get(), data_d.get(), num_rows_reduced, device_specific_num_rows, row_offset, num_features, q_red_d.get(), QA_cost, cost_factor, params.gamma.value() });
             });
             break;
@@ -254,7 +254,7 @@ void csvm::run_blas_level_3_kernel_explicit(const std::size_t device_id, const r
         const ::sycl::nd_range<2> execution_range{ grid, block };
 
         device.impl->sycl_queue.submit([&](::sycl::handler &cgh) {
-            cgh.parallel_for(execution_range, sycl::device_kernel_symm{ cgh, num_rows, num_rhs, device_specific_num_rows, row_offset, alpha, A_d.get(), B_d.get(), beta, C_d.get() });
+            cgh.parallel_for(execution_range, sycl::detail::device_kernel_symm{ cgh, num_rows, num_rhs, device_specific_num_rows, row_offset, alpha, A_d.get(), B_d.get(), beta, C_d.get() });
         });
     }
 
@@ -268,7 +268,7 @@ void csvm::run_blas_level_3_kernel_explicit(const std::size_t device_id, const r
             const ::sycl::nd_range<2> execution_range{ grid, block };
 
             device.impl->sycl_queue.submit([&](::sycl::handler &cgh) {
-                cgh.parallel_for(execution_range, sycl::device_kernel_symm_mirror{ cgh, num_rows, num_rhs, num_mirror_rows, device_specific_num_rows, row_offset, alpha, A_d.get(), B_d.get(), beta, C_d.get() });
+                cgh.parallel_for(execution_range, sycl::detail::device_kernel_symm_mirror{ cgh, num_rows, num_rhs, num_mirror_rows, device_specific_num_rows, row_offset, alpha, A_d.get(), B_d.get(), beta, C_d.get() });
             });
         }
     }
@@ -290,7 +290,7 @@ void csvm::run_inplace_matrix_addition(const std::size_t device_id, device_ptr_t
                                  static_cast<std::size_t>(std::ceil(static_cast<double>(num_rows) / static_cast<double>(block[1] * INTERNAL_BLOCK_SIZE))) * block[1] };
     const ::sycl::nd_range<2> execution_range{ grid, block };
 
-    device.impl->sycl_queue.parallel_for(execution_range, sycl::device_kernel_inplace_matrix_add{ num_rhs, lhs_d.get(), rhs_d.get() });
+    device.impl->sycl_queue.parallel_for(execution_range, sycl::detail::device_kernel_inplace_matrix_add{ num_rhs, lhs_d.get(), rhs_d.get() });
     detail::device_synchronize(device);
 }
 
@@ -309,7 +309,7 @@ void csvm::run_inplace_matrix_scale(const std::size_t device_id, device_ptr_type
                                  static_cast<std::size_t>(std::ceil(static_cast<double>(num_rows) / static_cast<double>(block[1] * INTERNAL_BLOCK_SIZE))) * block[1] };
     const ::sycl::nd_range<2> execution_range{ grid, block };
 
-    device.impl->sycl_queue.parallel_for(execution_range, sycl::device_kernel_inplace_matrix_scale{ num_rhs, lhs_d.get(), scale });
+    device.impl->sycl_queue.parallel_for(execution_range, sycl::detail::device_kernel_inplace_matrix_scale{ num_rhs, lhs_d.get(), scale });
     detail::device_synchronize(device);
 }
 
@@ -339,18 +339,18 @@ void csvm::run_assemble_kernel_matrix_implicit_blas_level_3(const std::size_t de
     switch (params.kernel_type.value()) {
         case kernel_function_type::linear:
             device.impl->sycl_queue.submit([&](::sycl::handler &cgh) {
-                cgh.parallel_for(execution_range, sycl::device_kernel_assembly_symm<kernel_function_type::linear>{ cgh, alpha, q_red.get(), A_d.get(), num_rows_reduced, device_specific_num_rows, row_offset, num_features, QA_cost, cost_factor, B_d.get(), C_d.get(), num_classes });
+                cgh.parallel_for(execution_range, sycl::detail::device_kernel_assembly_symm<kernel_function_type::linear>{ cgh, alpha, q_red.get(), A_d.get(), num_rows_reduced, device_specific_num_rows, row_offset, num_features, QA_cost, cost_factor, B_d.get(), C_d.get(), num_classes });
             });
             break;
         case kernel_function_type::polynomial:
             device.impl->sycl_queue.submit([&](::sycl::handler &cgh) {
-                using functor_type = sycl::device_kernel_assembly_symm<kernel_function_type::polynomial, typename decltype(params.degree)::value_type, typename decltype(params.gamma)::value_type, typename decltype(params.coef0)::value_type>;
+                using functor_type = sycl::detail::device_kernel_assembly_symm<kernel_function_type::polynomial, typename decltype(params.degree)::value_type, typename decltype(params.gamma)::value_type, typename decltype(params.coef0)::value_type>;
                 cgh.parallel_for(execution_range, functor_type{ cgh, alpha, q_red.get(), A_d.get(), num_rows_reduced, device_specific_num_rows, row_offset, num_features, QA_cost, cost_factor, B_d.get(), C_d.get(), num_classes, params.degree.value(), params.gamma.value(), params.coef0.value() });
             });
             break;
         case kernel_function_type::rbf:
             device.impl->sycl_queue.submit([&](::sycl::handler &cgh) {
-                using functor_type = sycl::device_kernel_assembly_symm<kernel_function_type::rbf, typename decltype(params.gamma)::value_type>;
+                using functor_type = sycl::detail::device_kernel_assembly_symm<kernel_function_type::rbf, typename decltype(params.gamma)::value_type>;
                 cgh.parallel_for(execution_range, functor_type{ cgh, alpha, q_red.get(), A_d.get(), num_rows_reduced, device_specific_num_rows, row_offset, num_features, QA_cost, cost_factor, B_d.get(), C_d.get(), num_classes, params.gamma.value() });
             });
             break;
@@ -385,7 +385,7 @@ auto csvm::run_w_kernel(const std::size_t device_id, const device_ptr_type &alph
     device_ptr_type w_d{ shape{ num_classes, num_features }, shape{ PADDING_SIZE, PADDING_SIZE }, device };
 
     device.impl->sycl_queue.submit([&](::sycl::handler &cgh) {
-        cgh.parallel_for(execution_range, sycl::device_kernel_w_linear{ cgh, w_d.get(), alpha_d.get(), sv_d.get(), num_classes, num_sv, device_specific_num_sv, sv_offset });
+        cgh.parallel_for(execution_range, sycl::detail::device_kernel_w_linear{ cgh, w_d.get(), alpha_d.get(), sv_d.get(), num_classes, num_sv, device_specific_num_sv, sv_offset });
     });
     detail::device_synchronize(devices_[0]);
 
@@ -414,7 +414,7 @@ auto csvm::run_predict_kernel(const std::size_t device_id, const parameter &para
         const ::sycl::nd_range<2> execution_range{ grid, block };
 
         device.impl->sycl_queue.submit([&](::sycl::handler &cgh) {
-            cgh.parallel_for(execution_range, sycl::device_kernel_predict_linear{ cgh, out_d.get(), sv_or_w_d.get(), rho_d.get(), predict_points_d.get(), num_classes, num_predict_points, num_features });
+            cgh.parallel_for(execution_range, sycl::detail::device_kernel_predict_linear{ cgh, out_d.get(), sv_or_w_d.get(), rho_d.get(), predict_points_d.get(), num_classes, num_predict_points, num_features });
         });
     } else {
         const unsigned long long num_sv = sv_or_w_d.shape().x;
@@ -429,13 +429,13 @@ auto csvm::run_predict_kernel(const std::size_t device_id, const parameter &para
                 break;
             case kernel_function_type::polynomial:
                 device.impl->sycl_queue.submit([&](::sycl::handler &cgh) {
-                    using functor_type = sycl::device_kernel_predict<kernel_function_type::polynomial, typename decltype(params.degree)::value_type, typename decltype(params.gamma)::value_type, typename decltype(params.coef0)::value_type>;
+                    using functor_type = sycl::detail::device_kernel_predict<kernel_function_type::polynomial, typename decltype(params.degree)::value_type, typename decltype(params.gamma)::value_type, typename decltype(params.coef0)::value_type>;
                     cgh.parallel_for(execution_range, functor_type{ cgh, out_d.get(), alpha_d.get(), rho_d.get(), sv_or_w_d.get(), predict_points_d.get(), num_classes, num_sv, num_predict_points, num_features, params.degree.value(), params.gamma.value(), params.coef0.value() });
                 });
                 break;
             case kernel_function_type::rbf:
                 device.impl->sycl_queue.submit([&](::sycl::handler &cgh) {
-                    using functor_type = sycl::device_kernel_predict<kernel_function_type::rbf, typename decltype(params.gamma)::value_type>;
+                    using functor_type = sycl::detail::device_kernel_predict<kernel_function_type::rbf, typename decltype(params.gamma)::value_type>;
                     cgh.parallel_for(execution_range, functor_type{ cgh, out_d.get(), alpha_d.get(), rho_d.get(), sv_or_w_d.get(), predict_points_d.get(), num_classes, num_sv, num_predict_points, num_features, params.gamma.value() });
                 });
                 break;
