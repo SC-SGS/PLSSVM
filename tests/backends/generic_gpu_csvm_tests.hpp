@@ -307,7 +307,6 @@ TYPED_TEST_P(GenericGPUCSVMKernelFunction, run_assemble_kernel_matrix_explicit) 
         data_d.copy_to_device(data.data());
 
         device_ptr_type q_red_d{ q_red.size() + plssvm::PADDING_SIZE, device };
-        q_red_d.memset(0);
         q_red_d.copy_to_device(q_red, 0, q_red.size());
 
         // calculate the current part of the kernel matrix
@@ -368,7 +367,6 @@ TYPED_TEST_P(GenericGPUCSVMKernelFunction, run_assemble_kernel_matrix_implicit_b
         data_d.copy_to_device(data.data());
 
         device_ptr_type q_red_d{ q_red.size() + plssvm::PADDING_SIZE, device };
-        q_red_d.memset(0);
         q_red_d.copy_to_device(q_red, 0, q_red.size());
 
         // upload complete BLAS B and C matrices to each device

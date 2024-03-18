@@ -204,7 +204,6 @@ auto csvm::run_assemble_kernel_matrix_explicit(const std::size_t device_id, cons
     const std::size_t num_entries_padded = dist.calculate_explicit_kernel_matrix_num_entries_padded(device_id);
 
     device_ptr_type kernel_matrix_d{ num_entries_padded, device };  // only explicitly store the upper triangular matrix
-    kernel_matrix_d.memset(0);
     const real_type cost_factor = real_type{ 1.0 } / params.cost;
 
     switch (params.kernel_type.value()) {
@@ -399,7 +398,6 @@ auto csvm::run_predict_kernel(const std::size_t device_id, const parameter &para
     const queue_type &device = devices_[device_id];
 
     device_ptr_type out_d{ shape{ num_predict_points, num_classes }, shape{ PADDING_SIZE, PADDING_SIZE }, device };
-    out_d.memset(0);
 
     // define block sizes
     const std::size_t max_work_group_size = this->get_max_work_group_size(device_id);

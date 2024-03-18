@@ -513,7 +513,6 @@ TYPED_TEST_P(DevicePtr, memset) {
 
     // construct device_ptr
     device_ptr_type ptr{ 10, queue };
-    ptr.memset(0);
 
     // memset values to all ones
     ptr.memset(1, 2);
@@ -537,7 +536,6 @@ TYPED_TEST_P(DevicePtr, memset_with_numbytes) {
 
     // construct device_ptr
     device_ptr_type ptr{ 10, queue };
-    ptr.memset(0);
 
     // memset values to all ones
     ptr.memset(1, 2, 4 * sizeof(value_type));
@@ -560,7 +558,6 @@ TYPED_TEST_P(DevicePtr, memset_invalid_pos) {
 
     // construct device_ptr
     device_ptr_type ptr{ 10, queue };
-    ptr.memset(0);
 
     // perform invalid memset
     EXPECT_THROW_WHAT(ptr.memset(0, 10, 1),
@@ -577,7 +574,6 @@ TYPED_TEST_P(DevicePtr, fill) {
 
     // construct device_ptr
     device_ptr_type ptr{ 10, queue };
-    ptr.memset(0);
 
     // fill values with a specific value
     ptr.fill(value_type{ 42.0 }, 2);
@@ -601,7 +597,6 @@ TYPED_TEST_P(DevicePtr, fill_with_count) {
 
     // construct device_ptr
     device_ptr_type ptr{ 10, queue };
-    ptr.memset(0);
 
     // fill values with a specific value
     ptr.fill(value_type{ 42.0 }, 2, 4);
@@ -625,7 +620,6 @@ TYPED_TEST_P(DevicePtr, fill_invalid_pos) {
 
     // construct device_ptr
     device_ptr_type ptr{ 10, queue };
-    ptr.memset(0);
 
     // perform invalid fill
     EXPECT_THROW_WHAT(ptr.fill(value_type{ 42.0 }, 10, 1),
@@ -642,7 +636,6 @@ TYPED_TEST_P(DevicePtr, copy_vector) {
 
     // construct device_ptr
     device_ptr_type ptr{ 10, queue };
-    ptr.memset(0);
 
     // create data to copy to the device
     std::vector<value_type> data(14, 42);
@@ -666,7 +659,6 @@ TYPED_TEST_P(DevicePtr, copy_vector_with_count_copy_back_all) {
 
     // construct device_ptr
     device_ptr_type ptr{ 6, queue };
-    ptr.memset(0);
 
     // create data to copy to the device
     std::vector<value_type> data(6, 42);
@@ -690,7 +682,6 @@ TYPED_TEST_P(DevicePtr, copy_vector_with_count_copy_back_some) {
 
     // construct device_ptr
     device_ptr_type ptr{ 6, queue };
-    ptr.memset(0);
 
     // create data to copy to the device
     std::vector<value_type> data(6, 42);
@@ -714,7 +705,6 @@ TYPED_TEST_P(DevicePtr, copy_vector_with_count_copy_to_too_many) {
 
     // construct device_ptr
     device_ptr_type ptr{ 6, queue };
-    ptr.memset(0);
 
     // create data to copy to the device
     std::vector<value_type> data(6, 42);
@@ -798,7 +788,6 @@ TYPED_TEST_P(DevicePtr, copy_vector_strided) {
 
     // construct device_ptr
     device_ptr_type ptr{ plssvm::shape{ 2, 2 }, queue };
-    ptr.memset(0);
 
     // create data to copy to the device
     std::vector<value_type> data(20);  // 5 x 4
@@ -824,7 +813,6 @@ TYPED_TEST_P(DevicePtr, copy_vector_strided_invalid_spitch_width_combination) {
 
     // construct device_ptr
     device_ptr_type ptr{ plssvm::shape{ 2, 2 }, queue };
-    ptr.memset(0);
 
     // create data to copy to the device
     std::vector<value_type> data(20);  // 5 x 4
@@ -842,7 +830,6 @@ TYPED_TEST_P(DevicePtr, copy_vector_strided_submatrix_too_big) {
 
     // construct device_ptr
     device_ptr_type ptr{ plssvm::shape{ 2, 2 }, queue };
-    ptr.memset(0);
 
     // create data to copy to the device
     std::vector<value_type> data(20);  // 5 x 4
@@ -860,7 +847,6 @@ TYPED_TEST_P(DevicePtr, copy_ptr) {
 
     // construct device_ptr
     device_ptr_type ptr{ 10, queue };
-    ptr.memset(0);
 
     // create data to copy to the device
     std::vector<value_type> data(14, 42);
@@ -884,7 +870,6 @@ TYPED_TEST_P(DevicePtr, copy_ptr_with_count_copy_back_all) {
 
     // construct device_ptr
     device_ptr_type ptr{ 6, queue };
-    ptr.memset(0);
 
     // create data to copy to the device
     std::vector<value_type> data(6, 42);
@@ -908,7 +893,6 @@ TYPED_TEST_P(DevicePtr, copy_ptr_with_count_copy_back_some) {
 
     // construct device_ptr
     device_ptr_type ptr{ 6, queue };
-    ptr.memset(0);
 
     // create data to copy to the device
     std::vector<value_type> data(6, 42);
@@ -932,7 +916,6 @@ TYPED_TEST_P(DevicePtr, copy_ptr_with_count_copy_to_too_many) {
 
     // construct device_ptr
     device_ptr_type ptr{ 6, queue };
-    ptr.memset(0);
 
     // create data to copy to the device
     std::vector<value_type> data(6, 42);
@@ -956,7 +939,6 @@ TYPED_TEST_P(DevicePtr, copy_ptr_strided) {
 
     // construct device_ptr
     device_ptr_type ptr{ plssvm::shape{ 2, 2 }, queue };
-    ptr.memset(0);
 
     // create data to copy to the device
     std::vector<value_type> data(20);  // 5 x 4
@@ -982,7 +964,6 @@ TYPED_TEST_P(DevicePtr, copy_ptr_strided_invalid_spitch_width_combination) {
 
     // construct device_ptr
     device_ptr_type ptr{ plssvm::shape{ 2, 2 }, queue };
-    ptr.memset(0);
 
     // create data to copy to the device
     std::vector<value_type> data(20);  // 5 x 4
@@ -1000,7 +981,6 @@ TYPED_TEST_P(DevicePtr, copy_device_ptr_to_other_device) {
 
     // construct device_ptr
     device_ptr_type ptr{ 10, queue };
-    ptr.memset(0);
 
     // create data to copy to the device
     std::vector<value_type> data(14, 42);
@@ -1029,7 +1009,6 @@ TYPED_TEST_P(DevicePtr, copy_device_ptr_to_other_device_too_few_device_elements)
 
     // construct device_ptr
     device_ptr_type ptr{ 10, queue };
-    ptr.memset(0);
 
     // create data to copy to the device
     std::vector<value_type> data(14, 42);
@@ -1051,7 +1030,6 @@ TYPED_TEST_P(DevicePtr, copy_device_ptr_to_other_device_with_count) {
 
     // construct device_ptr
     device_ptr_type ptr{ 10, queue };
-    ptr.memset(0);
 
     // create data to copy to the device
     std::vector<value_type> data(14, 42);
@@ -1137,7 +1115,6 @@ TYPED_TEST_P(DevicePtrLayout, copy_matrix) {
 
     // construct device_ptr
     device_ptr_type ptr{ 10, queue };
-    ptr.memset(0);
 
     // create data to copy to the device
     const plssvm::matrix<value_type, layout> data{ plssvm::shape{ 5, 3 }, value_type{ 42 } };
@@ -1171,7 +1148,6 @@ TYPED_TEST_P(DevicePtrLayout, copy_matrix_with_padding) {
 
     // construct device_ptr
     device_ptr_type ptr{ plssvm::shape{ 5, 3 }, plssvm::shape{ 4, 4 }, queue };
-    ptr.memset(0);
 
     // create data to copy to the device
     const plssvm::matrix<value_type, layout> data{ plssvm::shape{ 5, 3 }, value_type{ 42 }, plssvm::shape{ 4, 4 } };
@@ -1197,7 +1173,6 @@ TYPED_TEST_P(DevicePtrLayout, copy_matrix_different_layouts) {
 
     // construct device_ptr
     device_ptr_type ptr{ 10, queue };
-    ptr.memset(0);
 
     // create data to copy to the device
     const plssvm::matrix<value_type, layout> data{ plssvm::shape{ 5, 3 }, value_type{ 42 } };
@@ -1263,7 +1238,6 @@ TYPED_TEST_P(DevicePtrLayout, copy_matrix_strided) {
 
     // construct device_ptr
     device_ptr_type ptr{ plssvm::shape(2, 3), queue };
-    ptr.memset(0);
 
     // create data to copy to the device
     const auto data = util::generate_specific_matrix<plssvm::matrix<value_type, layout>>(plssvm::shape{ 5, 3 });
@@ -1289,7 +1263,6 @@ TYPED_TEST_P(DevicePtrLayout, copy_matrix_strided_with_padding) {
 
     // construct device_ptr
     device_ptr_type ptr{ plssvm::shape{ 3, 3 }, plssvm::shape{ 4, 4 }, queue };
-    ptr.memset(0);
 
     // create data to copy to the device
     const auto data = util::generate_specific_matrix<plssvm::matrix<value_type, layout>>(plssvm::shape{ 5, 3 }, plssvm::shape{ 4, 4 });
@@ -1320,7 +1293,6 @@ TYPED_TEST_P(DevicePtrLayout, copy_matrix_strided_different_layouts) {
 
     // construct device_ptr
     device_ptr_type ptr{ plssvm::shape{ 2, 3 }, queue };
-    ptr.memset(0);
 
     // create data to copy to the device
     const auto data = util::generate_specific_matrix<plssvm::matrix<value_type, layout>>(plssvm::shape{ 5, 3 });
@@ -1355,7 +1327,6 @@ TYPED_TEST_P(DevicePtrLayout, copy_full_matrix_strided) {
 
     // construct device_ptr
     device_ptr_type ptr{ plssvm::shape(5, 3), queue };
-    ptr.memset(0);
 
     // create data to copy to the device
     const auto data = util::generate_specific_matrix<plssvm::matrix<value_type, layout>>(plssvm::shape{ 5, 3 });

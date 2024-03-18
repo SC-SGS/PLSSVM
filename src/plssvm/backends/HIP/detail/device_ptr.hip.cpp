@@ -42,6 +42,7 @@ device_ptr<T>::device_ptr(const plssvm::shape shape, const plssvm::shape padding
     }
     detail::set_device(queue_);
     PLSSVM_HIP_ERROR_CHECK(hipMalloc(&data_, this->size_padded() * sizeof(value_type)))
+    this->memset(0);
 }
 
 template <typename T>

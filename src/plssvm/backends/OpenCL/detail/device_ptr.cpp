@@ -41,6 +41,7 @@ device_ptr<T>::device_ptr(const plssvm::shape shape, const plssvm::shape padding
     PLSSVM_OPENCL_ERROR_CHECK(clGetCommandQueueInfo(queue_->queue, CL_QUEUE_CONTEXT, sizeof(cl_context), &cont, nullptr), "error retrieving the command queue context")
     data_ = clCreateBuffer(cont, CL_MEM_READ_WRITE, this->size_padded() * sizeof(value_type), nullptr, &err);
     PLSSVM_OPENCL_ERROR_CHECK(err, "error creating the buffer")
+    this->memset(0);
 }
 
 template <typename T>

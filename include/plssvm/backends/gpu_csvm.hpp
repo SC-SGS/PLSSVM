@@ -322,9 +322,6 @@ void gpu_csvm<device_ptr_t, queue_t, pinned_memory_t>::blas_level_3(const solver
             if (solver == solver_type::cg_implicit) {
                 this->run_inplace_matrix_scale(0, C_d[device_id], beta);
             }
-        } else {
-            // all other devices get a matrix filled with zeros only
-            C_d[device_id].memset(0);
         }
 
         if (solver == solver_type::cg_explicit) {

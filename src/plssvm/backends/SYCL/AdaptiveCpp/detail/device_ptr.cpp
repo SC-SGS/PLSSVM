@@ -37,6 +37,7 @@ template <typename T>
 device_ptr<T>::device_ptr(const plssvm::shape shape, const plssvm::shape padding, const queue &q) :
     base_type{ shape, padding, q } {
     data_ = ::sycl::malloc_device<value_type>(this->size_padded(), queue_.impl->sycl_queue);
+    this->memset(0);
 }
 
 template <typename T>
