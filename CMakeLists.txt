@@ -756,9 +756,9 @@ include(GNUInstallDirs)
 ## install all necessary library targets
 install(TARGETS ${PLSSVM_TARGETS_TO_INSTALL}
         EXPORT plssvm_Targets
-        ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}  # all files that are neither executables, shared lib or headers
-        LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}  # all shared lib files
-        RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}  # all executables
+        ARCHIVE DESTINATION "${CMAKE_INSTALL_LIBDIR}"  # all files that are neither executables, shared lib or headers
+        LIBRARY DESTINATION "${CMAKE_INSTALL_LIBDIR}"  # all shared lib files
+        RUNTIME DESTINATION "${CMAKE_INSTALL_BINDIR}"  # all executables
 )
 
 ## mark header to install via 'make install'
