@@ -22,7 +22,6 @@ TEST(SolverType, to_string) {
     // check conversions to std::string
     EXPECT_CONVERSION_TO_STRING(plssvm::solver_type::automatic, "automatic");
     EXPECT_CONVERSION_TO_STRING(plssvm::solver_type::cg_explicit, "cg_explicit");
-    EXPECT_CONVERSION_TO_STRING(plssvm::solver_type::cg_streaming, "cg_streaming");
     EXPECT_CONVERSION_TO_STRING(plssvm::solver_type::cg_implicit, "cg_implicit");
 }
 
@@ -38,8 +37,6 @@ TEST(SolverType, from_string) {
     EXPECT_CONVERSION_FROM_STRING("AUTOmatic", plssvm::solver_type::automatic);
     EXPECT_CONVERSION_FROM_STRING("cg_explicit", plssvm::solver_type::cg_explicit);
     EXPECT_CONVERSION_FROM_STRING("CG_Explicit", plssvm::solver_type::cg_explicit);
-    EXPECT_CONVERSION_FROM_STRING("cg_streaming", plssvm::solver_type::cg_streaming);
-    EXPECT_CONVERSION_FROM_STRING("CG_Streaming", plssvm::solver_type::cg_streaming);
     EXPECT_CONVERSION_FROM_STRING("cg_implicit", plssvm::solver_type::cg_implicit);
     EXPECT_CONVERSION_FROM_STRING("CG_Implicit", plssvm::solver_type::cg_implicit);
 }

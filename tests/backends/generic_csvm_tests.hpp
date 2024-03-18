@@ -182,14 +182,6 @@ template <typename csvm_type, typename device_ptr_type, typename matrix_type, ty
         case plssvm::solver_type::cg_explicit:
             // no additional arguments are used
             return init_explicit_matrices<csvm_type, device_ptr_type>(std::move(matr), csvm);
-        case plssvm::solver_type::cg_streaming:
-            {
-                std::vector<plssvm::detail::move_only_any> result;
-                for (std::size_t device_id = 0; device_id < csvm.num_available_devices(); ++device_id) {
-                    result.push_back(plssvm::detail::move_only_any{ std::vector<typename matrix_type::value_type>{} });
-                }
-                return result;  // dummy return only necessary for the DeathTests -> VALUE NOT USED!
-            }
         case plssvm::solver_type::cg_implicit:
             // additional arguments are: params, q_red, QA_cost
             return init_implicit_matrices<csvm_type, device_ptr_type>(std::move(matr), csvm, std::forward<Args>(args)...);
@@ -763,11 +755,6 @@ TYPED_TEST_P(GenericCSVMSolverKernelFunction, solve_lssvm_system_of_linear_equat
     constexpr plssvm::solver_type solver = util::test_parameter_value_at_v<0, TypeParam>;
     constexpr plssvm::kernel_function_type kernel = util::test_parameter_value_at_v<1, TypeParam>;
 
-    // skip unimplemented tests
-    if constexpr (solver == plssvm::solver_type::cg_streaming) {
-        GTEST_SKIP() << "Currently not implemented!";
-    }
-
     // create parameter struct
     plssvm::parameter params{ plssvm::kernel_type = kernel, plssvm::cost = 2.0 };
     if constexpr (kernel == plssvm::kernel_function_type::polynomial) {
@@ -821,11 +808,6 @@ TYPED_TEST_P(GenericCSVMSolverKernelFunction, assemble_kernel_matrix_minimal) {
     using device_ptr_type = typename csvm_test_type::device_ptr_type;
     constexpr plssvm::solver_type solver = util::test_parameter_value_at_v<0, TypeParam>;
     constexpr plssvm::kernel_function_type kernel = util::test_parameter_value_at_v<1, TypeParam>;
-
-    // skip unimplemented tests
-    if constexpr (solver == plssvm::solver_type::cg_streaming) {
-        GTEST_SKIP() << "Currently not implemented!";
-    }
 
     plssvm::parameter params{ plssvm::kernel_type = kernel, plssvm::cost = 1.0 };
     if constexpr (kernel == plssvm::kernel_function_type::polynomial) {
@@ -937,11 +919,6 @@ TYPED_TEST_P(GenericCSVMSolverKernelFunction, assemble_kernel_matrix) {
     using device_ptr_type = typename csvm_test_type::device_ptr_type;
     constexpr plssvm::solver_type solver = util::test_parameter_value_at_v<0, TypeParam>;
     constexpr plssvm::kernel_function_type kernel = util::test_parameter_value_at_v<1, TypeParam>;
-
-    // skip unimplemented tests
-    if constexpr (solver == plssvm::solver_type::cg_streaming) {
-        GTEST_SKIP() << "Currently not implemented!";
-    }
 
     plssvm::parameter params{ plssvm::kernel_type = kernel };
     if constexpr (kernel == plssvm::kernel_function_type::polynomial) {
@@ -1174,11 +1151,6 @@ TYPED_TEST_P(GenericCSVMSolverKernelFunctionClassification, fit) {
     constexpr plssvm::solver_type solver = util::test_parameter_value_at_v<0, TypeParam>;
     constexpr plssvm::kernel_function_type kernel = util::test_parameter_value_at_v<1, TypeParam>;
     constexpr plssvm::classification_type classification = util::test_parameter_value_at_v<2, TypeParam>;
-
-    // skip unimplemented tests
-    if constexpr (solver == plssvm::solver_type::cg_streaming) {
-        GTEST_SKIP() << "Currently not implemented!";
-    }
 
     // create parameter struct
     const plssvm::parameter params{ plssvm::kernel_type = kernel };

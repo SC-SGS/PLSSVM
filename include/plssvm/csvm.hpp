@@ -842,22 +842,13 @@ std::tuple<aos_matrix<real_type>, std::vector<real_type>, unsigned long long> cs
         } else {
             detail::log(verbosity_level::full, "Cannot use cg_explicit due to memory constraints on device(s) {}!\n", format_vector(failed_cg_explicit_constraints));
 
-            // check whether the explicit kernel matrix can fit into the system memory
-            // TODO: implement condition after cg_streaming has been implemented
-            if (false) {
-                // use the streaming solver type
-                used_solver = solver_type::cg_streaming;
+            // check whether there is enough memory available for cg_implicit
+            if (const std::vector<std::size_t> failed_cg_implicit_constraints = check_sizes(total_memory_needed_implicit_per_device, usable_device_memory_per_device); failed_cg_implicit_constraints.empty()) {
+                // use the implicit solver type
+                used_solver = solver_type::cg_implicit;
             } else {
-                // detail::log(verbosity_level::full, "Cannot use cg_streaming due to system memory constraints!\n");
-
-                // check whether there is enough memory available for cg_implicit
-                if (const std::vector<std::size_t> failed_cg_implicit_constraints = check_sizes(total_memory_needed_implicit_per_device, usable_device_memory_per_device); failed_cg_implicit_constraints.empty()) {
-                    // use the implicit solver type
-                    used_solver = solver_type::cg_implicit;
-                } else {
-                    // not enough device memory available for the implicit case
-                    throw kernel_launch_resources{ fmt::format("Not enough device memory available on device(s) {} even for the cg_implicit solver!", format_vector(failed_cg_implicit_constraints)) };
-                }
+                // not enough device memory available for the implicit case
+                throw kernel_launch_resources{ fmt::format("Not enough device memory available on device(s) {} even for the cg_implicit solver!", format_vector(failed_cg_implicit_constraints)) };
             }
         }
 
@@ -891,11 +882,8 @@ std::tuple<aos_matrix<real_type>, std::vector<real_type>, unsigned long long> cs
                         "Cannot use cg_explicit due to maximum single memory allocation constraints on device(s) {}! Falling back to cg_implicit.\n",
                         format_vector(failed_cg_explicit_constraints));
             // can't use cg_explicit
-            // TODO: switch to cg_streaming if implemented
-            // used_solver = solver_type::cg_streaming;
             used_solver = solver_type::cg_implicit;
         }
-        // TODO: implement logic for cg_streaming
         if (const std::vector<std::size_t> failed_cg_implicit_constraints = check_sizes(max_single_allocation_cg_implicit_size_per_device, max_mem_alloc_size_per_device);
             used_solver == solver_type::cg_implicit && !failed_cg_implicit_constraints.empty()) {
             // can't fulfill maximum single memory allocation size even for cg_implicit

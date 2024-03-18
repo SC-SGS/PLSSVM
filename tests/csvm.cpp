@@ -345,11 +345,6 @@ TYPED_TEST(BaseCSVMFit, fit) {
     constexpr plssvm::kernel_function_type kernel = TestFixture::fixture_kernel;
     constexpr plssvm::classification_type classification = TestFixture::fixture_classification;
 
-    // skip unimplemented tests
-    if constexpr (solver == plssvm::solver_type::cg_streaming) {
-        GTEST_SKIP() << "Currently not implemented!";
-    }
-
     // create C-SVM: must be done using the mock class since the csvm base class is pure virtual
     const mock_csvm csvm{ plssvm::parameter{ plssvm::kernel_type = kernel } };
     const std::size_t num_devices = csvm.num_available_devices();
@@ -407,11 +402,6 @@ TYPED_TEST(BaseCSVMFit, fit_named_parameters) {
     constexpr plssvm::solver_type solver = TestFixture::fixture_solver;
     constexpr plssvm::kernel_function_type kernel = TestFixture::fixture_kernel;
     constexpr plssvm::classification_type classification = TestFixture::fixture_classification;
-
-    // skip unimplemented tests
-    if constexpr (solver == plssvm::solver_type::cg_streaming) {
-        GTEST_SKIP() << "Currently not implemented!";
-    }
 
     // create C-SVM: must be done using the mock class since the csvm base class is pure virtual
     const mock_csvm csvm{ plssvm::parameter{ plssvm::kernel_type = kernel } };

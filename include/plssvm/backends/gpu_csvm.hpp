@@ -255,15 +255,23 @@ std::vector<::plssvm::detail::move_only_any> gpu_csvm<device_ptr_t, queue_t, pin
         q_red_d[device_id].copy_to_device(q_red, 0, q_red.size());
         q_red_d[device_id].memset(0, q_red.size());
 
-        if (solver == solver_type::cg_explicit) {
-            // explicitly assemble the (potential partial) kernel matrix
-            device_ptr_type kernel_matrix = this->run_assemble_kernel_matrix_explicit(device_id, params, data_d[device_id], q_red_d[device_id], QA_cost);
-            kernel_matrices_parts[device_id] = ::plssvm::detail::move_only_any{ std::move(kernel_matrix) };
-        } else if (solver == solver_type::cg_implicit) {
-            // simply return the data since in cg_implicit we don't assemble the kernel matrix here!
-            kernel_matrices_parts[device_id] = ::plssvm::detail::move_only_any{ std::make_tuple(std::move(data_d[device_id]), params, std::move(q_red_d[device_id]), QA_cost) };
-        } else {
-            throw exception{ fmt::format("Assembling the kernel matrix using the {} CG solver_type is currently not implemented!", solver) };
+        switch (solver) {
+            case solver_type::automatic:
+                // unreachable
+                break;
+            case solver_type::cg_explicit:
+                {
+                    // explicitly assemble the (potential partial) kernel matrix
+                    device_ptr_type kernel_matrix = this->run_assemble_kernel_matrix_explicit(device_id, params, data_d[device_id], q_red_d[device_id], QA_cost);
+                    kernel_matrices_parts[device_id] = ::plssvm::detail::move_only_any{ std::move(kernel_matrix) };
+                }
+                break;
+            case solver_type::cg_implicit:
+                {
+                    // simply return the data since in cg_implicit we don't assemble the kernel matrix here!
+                    kernel_matrices_parts[device_id] = ::plssvm::detail::move_only_any{ std::make_tuple(std::move(data_d[device_id]), params, std::move(q_red_d[device_id]), QA_cost) };
+                }
+                break;
         }
     }
 
@@ -324,19 +332,27 @@ void gpu_csvm<device_ptr_t, queue_t, pinned_memory_t>::blas_level_3(const solver
             }
         }
 
-        if (solver == solver_type::cg_explicit) {
-            const auto &A_d = detail::move_only_any_cast<const device_ptr_type &>(A[device_id]);
-            PLSSVM_ASSERT(!A_d.empty(), "The A matrix must not be empty!");
+        switch (solver) {
+            case solver_type::automatic:
+                // unreachable
+                break;
+            case solver_type::cg_explicit:
+                {
+                    const auto &A_d = detail::move_only_any_cast<const device_ptr_type &>(A[device_id]);
+                    PLSSVM_ASSERT(!A_d.empty(), "The A matrix must not be empty!");
 
-            this->run_blas_level_3_kernel_explicit(device_id, alpha, A_d, B_d[device_id], beta, C_d[device_id]);
-        } else if (solver == solver_type::cg_implicit) {
-            const auto &[A_d, params, q_red_d, QA_cost] = detail::move_only_any_cast<const std::tuple<device_ptr_type, parameter, device_ptr_type, real_type> &>(A[device_id]);
-            PLSSVM_ASSERT(!A_d.empty(), "The A matrix must not be empty!");
-            PLSSVM_ASSERT(!q_red_d.empty(), "The q_red vector must not be empty!");
+                    this->run_blas_level_3_kernel_explicit(device_id, alpha, A_d, B_d[device_id], beta, C_d[device_id]);
+                }
+                break;
+            case solver_type::cg_implicit:
+                {
+                    const auto &[A_d, params, q_red_d, QA_cost] = detail::move_only_any_cast<const std::tuple<device_ptr_type, parameter, device_ptr_type, real_type> &>(A[device_id]);
+                    PLSSVM_ASSERT(!A_d.empty(), "The A matrix must not be empty!");
+                    PLSSVM_ASSERT(!q_red_d.empty(), "The q_red vector must not be empty!");
 
-            this->run_assemble_kernel_matrix_implicit_blas_level_3(device_id, alpha, A_d, params, q_red_d, QA_cost, B_d[device_id], C_d[device_id]);
-        } else {
-            throw exception{ fmt::format("The BLAS calculation using the {} CG solver_type is currently not implemented!", solver) };
+                    this->run_assemble_kernel_matrix_implicit_blas_level_3(device_id, alpha, A_d, params, q_red_d, QA_cost, B_d[device_id], C_d[device_id]);
+                }
+                break;
         }
 
         // reduce the partial C matrices to the final C matrix on device 0

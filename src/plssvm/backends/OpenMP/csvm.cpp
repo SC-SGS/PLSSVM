@@ -98,27 +98,35 @@ std::vector<::plssvm::detail::move_only_any> csvm::assemble_kernel_matrix(const 
     std::vector<::plssvm::detail::move_only_any> kernel_matrices_parts(this->num_available_devices());
     const real_type cost = real_type{ 1.0 } / params.cost;
 
-    if (solver == solver_type::cg_explicit) {
-        const plssvm::detail::triangular_data_distribution dist{ A.num_rows() - 1, this->num_available_devices() };
-        std::vector<real_type> kernel_matrix(dist.calculate_explicit_kernel_matrix_num_entries_padded(0));  // only explicitly store the upper triangular matrix
-        switch (params.kernel_type.value()) {
-            case kernel_function_type::linear:
-                detail::device_kernel_assembly<kernel_function_type::linear>(q_red, kernel_matrix, aos_data, QA_cost, cost);
-                break;
-            case kernel_function_type::polynomial:
-                detail::device_kernel_assembly<kernel_function_type::polynomial>(q_red, kernel_matrix, aos_data, QA_cost, cost, params.degree.value(), params.gamma.value(), params.coef0.value());
-                break;
-            case kernel_function_type::rbf:
-                detail::device_kernel_assembly<kernel_function_type::rbf>(q_red, kernel_matrix, aos_data, QA_cost, cost, params.gamma.value());
-                break;
-        }
+    switch (solver) {
+        case solver_type::automatic:
+            // unreachable
+            break;
+        case solver_type::cg_explicit:
+            {
+                const plssvm::detail::triangular_data_distribution dist{ A.num_rows() - 1, this->num_available_devices() };
+                std::vector<real_type> kernel_matrix(dist.calculate_explicit_kernel_matrix_num_entries_padded(0));  // only explicitly store the upper triangular matrix
+                switch (params.kernel_type.value()) {
+                    case kernel_function_type::linear:
+                        detail::device_kernel_assembly<kernel_function_type::linear>(q_red, kernel_matrix, aos_data, QA_cost, cost);
+                        break;
+                    case kernel_function_type::polynomial:
+                        detail::device_kernel_assembly<kernel_function_type::polynomial>(q_red, kernel_matrix, aos_data, QA_cost, cost, params.degree.value(), params.gamma.value(), params.coef0.value());
+                        break;
+                    case kernel_function_type::rbf:
+                        detail::device_kernel_assembly<kernel_function_type::rbf>(q_red, kernel_matrix, aos_data, QA_cost, cost, params.gamma.value());
+                        break;
+                }
 
-        kernel_matrices_parts[0] = ::plssvm::detail::move_only_any{ std::move(kernel_matrix) };
-    } else if (solver == solver_type::cg_implicit) {
-        // simply return data since in implicit we don't assembly the kernel matrix here!
-        kernel_matrices_parts[0] = ::plssvm::detail::move_only_any{ std::make_tuple(std::move(aos_data), params, std::move(q_red), QA_cost) };
-    } else {
-        throw exception{ fmt::format("Assembling the kernel matrix using the {} CG variation is currently not implemented!", solver) };
+                kernel_matrices_parts[0] = ::plssvm::detail::move_only_any{ std::move(kernel_matrix) };
+            }
+            break;
+        case solver_type::cg_implicit:
+            {
+                // simply return data since in implicit we don't assembly the kernel matrix here!
+                kernel_matrices_parts[0] = ::plssvm::detail::move_only_any{ std::make_tuple(std::move(aos_data), params, std::move(q_red), QA_cost) };
+            }
+            break;
     }
 
     return kernel_matrices_parts;
@@ -143,30 +151,38 @@ void csvm::blas_level_3(const solver_type solver, const real_type alpha, const s
     const aos_matrix<real_type> aos_B{ B };
     aos_matrix<real_type> aos_C{ C };
 
-    if (solver == solver_type::cg_explicit) {
-        const auto &explicit_A = ::plssvm::detail::move_only_any_cast<const std::vector<real_type> &>(A.front());
-        PLSSVM_ASSERT(!explicit_A.empty(), "The A matrix must not be empty!");
+    switch (solver) {
+        case solver_type::automatic:
+            // unreachable
+            break;
+        case solver_type::cg_explicit:
+            {
+                const auto &explicit_A = ::plssvm::detail::move_only_any_cast<const std::vector<real_type> &>(A.front());
+                PLSSVM_ASSERT(!explicit_A.empty(), "The A matrix must not be empty!");
 
-        detail::device_kernel_symm(m_ull, n_ull, k_ull, alpha, explicit_A, aos_B, beta, aos_C);
-    } else if (solver == solver_type::cg_implicit) {
-        const auto &[aos_matr_A, params, q_red, QA_cost] = ::plssvm::detail::move_only_any_cast<const std::tuple<aos_matrix<real_type>, parameter, std::vector<real_type>, real_type> &>(A.front());
-        PLSSVM_ASSERT(!aos_matr_A.empty(), "The A matrix must not be empty!");
-        PLSSVM_ASSERT(!q_red.empty(), "The q_red vector must not be empty!");
-        const real_type cost = real_type{ 1.0 } / params.cost;
+                detail::device_kernel_symm(m_ull, n_ull, k_ull, alpha, explicit_A, aos_B, beta, aos_C);
+            }
+            break;
+        case solver_type::cg_implicit:
+            {
+                const auto &[aos_matr_A, params, q_red, QA_cost] = ::plssvm::detail::move_only_any_cast<const std::tuple<aos_matrix<real_type>, parameter, std::vector<real_type>, real_type> &>(A.front());
+                PLSSVM_ASSERT(!aos_matr_A.empty(), "The A matrix must not be empty!");
+                PLSSVM_ASSERT(!q_red.empty(), "The q_red vector must not be empty!");
+                const real_type cost = real_type{ 1.0 } / params.cost;
 
-        switch (params.kernel_type.value()) {
-            case kernel_function_type::linear:
-                detail::device_kernel_assembly_symm<kernel_function_type::linear>(alpha, q_red, aos_matr_A, QA_cost, cost, aos_B, beta, aos_C);
-                break;
-            case kernel_function_type::polynomial:
-                detail::device_kernel_assembly_symm<kernel_function_type::polynomial>(alpha, q_red, aos_matr_A, QA_cost, cost, aos_B, beta, aos_C, params.degree.value(), params.gamma.value(), params.coef0.value());
-                break;
-            case kernel_function_type::rbf:
-                detail::device_kernel_assembly_symm<kernel_function_type::rbf>(alpha, q_red, aos_matr_A, QA_cost, cost, aos_B, beta, aos_C, params.gamma.value());
-                break;
-        }
-    } else {
-        throw exception{ fmt::format("The GEMM calculation using the {} CG variation is currently not implemented!", solver) };
+                switch (params.kernel_type.value()) {
+                    case kernel_function_type::linear:
+                        detail::device_kernel_assembly_symm<kernel_function_type::linear>(alpha, q_red, aos_matr_A, QA_cost, cost, aos_B, beta, aos_C);
+                        break;
+                    case kernel_function_type::polynomial:
+                        detail::device_kernel_assembly_symm<kernel_function_type::polynomial>(alpha, q_red, aos_matr_A, QA_cost, cost, aos_B, beta, aos_C, params.degree.value(), params.gamma.value(), params.coef0.value());
+                        break;
+                    case kernel_function_type::rbf:
+                        detail::device_kernel_assembly_symm<kernel_function_type::rbf>(alpha, q_red, aos_matr_A, QA_cost, cost, aos_B, beta, aos_C, params.gamma.value());
+                        break;
+                }
+            }
+            break;
     }
 
     C = soa_matrix<real_type>{ aos_C };
