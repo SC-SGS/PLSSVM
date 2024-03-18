@@ -244,6 +244,7 @@ If `PLSSVM_ENABLE_TESTING` is set to `ON`, the following options can also be set
 - `PLSSVM_GENERATE_TEST_FILE=ON|OFF` (default: `ON`): automatically generate test files
   - `PLSSVM_TEST_FILE_NUM_DATA_POINTS` (default: `5000`): the number of data points in the test file
   - `PLSSVM_TEST_FILE_NUM_FEATURES` (default: `2000`): the number of features per data point in the test file
+  - `PLSSVM_TEST_FILE_NUM_CLASSES` (default: `4`): the number of classes in the test file
 
 If `PLSSVM_ENABLE_LANGUAGE_BINDINGS` is set to `ON`, the following option can also be set:
 

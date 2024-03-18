@@ -40,14 +40,15 @@ else ()
 endif ()
 
 # create larger test files if desired
-option(PLSSVM_GENERATE_TEST_FILE "Generate larger test file" ON)
+option(PLSSVM_GENERATE_TEST_FILE "Generate test file with user defined sizes." ON)
 if (PLSSVM_GENERATE_TEST_FILE)
     # set default sizes
     set(PLSSVM_TEST_FILE_NUM_DATA_POINTS "5000" CACHE STRING "Number of data points for the test file generator")
     set(PLSSVM_TEST_FILE_NUM_FEATURES "2000" CACHE STRING "Number of features for each data point for the test file generator")
+    set(PLSSVM_TEST_FILE_NUM_CLASSES "4" CACHE STRING "number of classes for the test file generator")
     
     # set test file name based on requested sizes
-    set(PLSSVM_TEST_FILE "${PROJECT_SOURCE_DIR}/tests/data/${PLSSVM_TEST_FILE_NUM_DATA_POINTS}x${PLSSVM_TEST_FILE_NUM_FEATURES}.libsvm" CACHE STRING "Path including name of the test file" FORCE)
+    set(PLSSVM_TEST_FILE "${PROJECT_SOURCE_DIR}/tests/data/${PLSSVM_TEST_FILE_NUM_DATA_POINTS}x${PLSSVM_TEST_FILE_NUM_FEATURES}_${PLSSVM_TEST_FILE_NUM_CLASSES}.libsvm" CACHE STRING "Path including name of the test file" FORCE)
     
     # check if the requested test file already exists and is not zero based indexed (otherwise create new test file)
     if (EXISTS "${PLSSVM_TEST_FILE}")
@@ -71,12 +72,12 @@ if (PLSSVM_GENERATE_TEST_FILE)
         # generate test file
         message(STATUS "Generating test file: ${PLSSVM_TEST_FILE}.")
         execute_process(
-                COMMAND ${Python3_EXECUTABLE} "${PROJECT_SOURCE_DIR}/utility_scripts/generate_data.py" "--output" "${PLSSVM_TEST_FILE}" "--format" "libsvm" "--samples" "${PLSSVM_TEST_FILE_NUM_DATA_POINTS}" "--features" "${PLSSVM_TEST_FILE_NUM_FEATURES}"
+                COMMAND ${Python3_EXECUTABLE} "${PROJECT_SOURCE_DIR}/utility_scripts/generate_data.py" "--output" "${PLSSVM_TEST_FILE}" "--format" "libsvm" "--samples" "${PLSSVM_TEST_FILE_NUM_DATA_POINTS}" "--features" "${PLSSVM_TEST_FILE_NUM_FEATURES}" "--classes" "${PLSSVM_TEST_FILE_NUM_CLASSES}"
                 OUTPUT_QUIET)
     endif ()
 else ()
     # set test file to default test file
-    set(PLSSVM_TEST_FILE "${PROJECT_SOURCE_DIR}/tests/data/libsvm/500x200.libsvm" CACHE STRING "Path including name of the test file")
+    set(PLSSVM_TEST_FILE "${PROJECT_SOURCE_DIR}/tests/data/libsvm/500x200_4.libsvm" CACHE STRING "Path including name of the test file")
 endif ()
 
 ## warn if PLSSVM_ENABLE_FAST_MATH is set and tests are enabled
