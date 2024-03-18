@@ -53,6 +53,7 @@ set(DOXYGEN_ALIASES
 doxygen_add_docs(
         doc
         "${PROJECT_SOURCE_DIR}/include;${PROJECT_SOURCE_DIR}/docs/resources;${PROJECT_SOURCE_DIR}/README.md"
+        ALL  # add to the default build target
         WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}"
         COMMENT "Generating API documentation with Doxygen"
 )
@@ -63,6 +64,15 @@ add_custom_command(
         POST_BUILD
         COMMAND ${CMAKE_COMMAND} -P "${PROJECT_SOURCE_DIR}/cmake/create_documentation_shortcut.cmake"
         WORKING_DIRECTORY "${CMAKE_CURRENT_LIST_DIR}"
+)
+
+## install targets for the documentation
+include(GNUInstallDirs)
+install(DIRECTORY "${PROJECT_SOURCE_DIR}/docs/html"
+        DESTINATION "${CMAKE_INSTALL_DOCDIR}"
+)
+install(FILES "${CMAKE_CURRENT_LIST_DIR}/documentation.html"
+        DESTINATION "${CMAKE_INSTALL_DOCDIR}"
 )
 
 list(POP_BACK CMAKE_MESSAGE_INDENT)
