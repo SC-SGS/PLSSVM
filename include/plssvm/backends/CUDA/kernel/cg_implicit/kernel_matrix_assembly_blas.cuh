@@ -18,7 +18,7 @@
 #include "plssvm/constants.hpp"                              // plssvm::{real_type, THREAD_BLOCK_SIZE, INTERNAL_BLOCK_SIZE, FEATURE_BLOCK_SIZE, PADDING_SIZE}
 #include "plssvm/kernel_function_types.hpp"                  // plssvm::kernel_function_type
 
-namespace plssvm::cuda {
+namespace plssvm::cuda::detail {
 
 /**
  * @brief Perform an implicit BLAS SYMM-like operation: `C = alpha * A * B + C` where `A` is the implicitly calculated kernel matrix using the @p kernel_function (never actually stored, reducing the amount of needed global memory), @p B and @p C are matrices, and @p alpha is a scalar.
@@ -189,6 +189,6 @@ __global__ void device_kernel_assembly_symm(const real_type alpha, const real_ty
     }
 }
 
-}  // namespace plssvm::cuda
+}  // namespace plssvm::cuda::detail
 
 #endif  // PLSSVM_BACKENDS_CUDA_KERNEL_CG_IMPLICIT_KERNEL_MATRIX_ASSEMBLY_BLAS_CUH_

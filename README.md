@@ -55,7 +55,7 @@ We decided to use the [Conjugate Gradient (CG)](https://en.wikipedia.org/wiki/Co
 
 We support multi-class classification using the one vs. all (also one vs. rest or OAA).
 Therefore, our CG algorithm solves multiple right-hand sides simultaneously. 
-This has the implication that, except for binary classification, our model file isn't LIBSVM conform, since for each support vector #classes many weights must be saved instead of only #classes - 1.
+This has the implication that, except for binary classification, our model file isn't LIBSVM conform, since for each support vector number of classes many weights must be saved instead of only number of classes - 1.
 
 Since one of our main goals was performance, we parallelized the implicit matrix-vector multiplication inside the CG algorithm.
 To do so, we use multiple different frameworks to be able to target a broad variety of different hardware platforms.
@@ -244,6 +244,7 @@ If `PLSSVM_ENABLE_TESTING` is set to `ON`, the following options can also be set
 - `PLSSVM_GENERATE_TEST_FILE=ON|OFF` (default: `ON`): automatically generate test files
   - `PLSSVM_TEST_FILE_NUM_DATA_POINTS` (default: `5000`): the number of data points in the test file
   - `PLSSVM_TEST_FILE_NUM_FEATURES` (default: `2000`): the number of features per data point in the test file
+  - `PLSSVM_TEST_FILE_NUM_CLASSES` (default: `4`): the number of classes in the test file
 
 If `PLSSVM_ENABLE_LANGUAGE_BINDINGS` is set to `ON`, the following option can also be set:
 
@@ -399,7 +400,7 @@ Usage:
   -c, --cost arg                set the parameter C (default: 1)
   -e, --epsilon arg             set the tolerance of termination criterion (default: 0.001)
   -i, --max_iter arg            set the maximum number of CG iterations (default: num_features)
-  -l, --solver arg              choose the solver: automatic|cg_explicit|cg_streaming|cg_implicit (default: automatic)
+  -l, --solver arg              choose the solver: automatic|cg_explicit|cg_implicit (default: automatic)
   -a, --classification arg      the classification strategy to use for multi-class classification: oaa|oao (default: oaa)
   -b, --backend arg             choose the backend: automatic|openmp|cuda|hip|opencl|sycl (default: automatic)
   -p, --target_platform arg     choose the target platform: automatic|cpu|gpu_nvidia|gpu_amd|gpu_intel (default: automatic)

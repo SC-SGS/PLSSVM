@@ -22,7 +22,7 @@
 #include <cstddef>  // std::size_t
 #include <vector>   // std::vector
 
-namespace plssvm::openmp {
+namespace plssvm::openmp::detail {
 
 /**
  * @brief Assemble the kernel matrix using the @p kernel function.
@@ -69,6 +69,6 @@ void device_kernel_assembly(const std::vector<real_type> &q, std::vector<real_ty
     }
 }
 
-}  // namespace plssvm::openmp
+}  // namespace plssvm::openmp::detail
 
 #endif  // PLSSVM_BACKENDS_OPENMP_KERNEL_CG_EXPLICIT_KERNEL_MATRIX_ASSEMBLY_HPP_

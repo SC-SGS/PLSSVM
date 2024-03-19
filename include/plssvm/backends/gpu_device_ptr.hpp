@@ -19,7 +19,6 @@
 #include "plssvm/matrix.hpp"                 // plssvm::layout_type, plssvm::matrix
 #include "plssvm/shape.hpp"                  // plssvm::shape
 
-#include <array>    // std::array
 #include <cstddef>  // std::size_t
 #include <vector>   // std::vector
 
@@ -27,14 +26,13 @@ namespace plssvm::detail {
 
 /**
  * @brief Small wrapper class around a GPU device pointer together with commonly used device functions for all GPU backends to reduce code duplication.
- * @tparam T the type of the data
- * @tparam queue_t the type of the device queue (dependent on the used backend)
- * @tparam device_pointer_t the type of the device pointer (dependent on the used backend; default: `T*`)
+ * @tparam derived_gpu_device_ptr the type of the derived device ptr (using CRTP)
  */
-template <typename T, typename queue_t, typename device_pointer_t = T *>
+template <typename T, typename queue_t, typename device_pointer_t, typename derived_gpu_device_ptr>
 class gpu_device_ptr {
     // make sure only valid template types are used
-    static_assert(detail::tuple_contains_v<T, detail::supported_real_types>, "Illegal real type provided! See the 'real_type_list' in the type_list.hpp header for a list of the allowed types.");
+    static_assert(detail::tuple_contains_v<T, detail::supported_real_types>,
+        "Illegal real type provided! See the 'real_type_list' in the type_list.hpp header for a list of the allowed types.");
 
   public:
     /// The type of the values used in the device_ptr.
@@ -246,14 +244,7 @@ class gpu_device_ptr {
      * @throws plssvm::gpu_device_ptr_exception if @p data_to_copy is too small to satisfy the copy
      */
     template <layout_type layout>
-    void copy_to_device(const matrix<value_type, layout> &data_to_copy) {
-        PLSSVM_ASSERT(data_ != nullptr, "Invalid data pointer! Maybe *this has been default constructed?");
-
-        if (data_to_copy.size_padded() < this->size_padded()) {
-            throw gpu_device_ptr_exception{ fmt::format("Too few data to perform copy (needed: {}, provided: {})!", this->size_padded(), data_to_copy.size_padded()) };
-        }
-        this->copy_to_device(data_to_copy.data());
-    }
+    void copy_to_device(const matrix<value_type, layout> &data_to_copy);
 
     /**
      * @brief Copy device_ptr::size() many values from @p data_to_copy to the device.
@@ -294,24 +285,7 @@ class gpu_device_ptr {
      * @param[in] num_rows the number of rows in the sub-matrix
      */
     template <layout_type layout>
-    void copy_to_device_strided(const matrix<value_type, layout> &data_to_copy, const std::size_t start_row, const std::size_t num_rows) {
-        PLSSVM_ASSERT(data_ != nullptr, "Invalid data pointer! Maybe *this has been default constructed?");
-
-        if (start_row + num_rows > data_to_copy.num_rows()) {
-            throw gpu_device_ptr_exception{ fmt::format("Tried to copy lines {}-{} (zero-based index) to the device, but the matrix has only {} lines!", start_row, start_row + num_rows - 1, data_to_copy.num_rows()) };
-        }
-        if (num_rows * data_to_copy.num_cols() < this->size()) {
-            throw gpu_device_ptr_exception{ fmt::format("Too few data to perform copy (needed: {}, provided: {})!", this->size(), num_rows * data_to_copy.num_cols()) };
-        }
-
-        if constexpr (layout == layout_type::aos) {
-            // data is laid out linearly in memory -> no strides necessary -> directly copy to device
-            this->copy_to_device(data_to_copy.data() + start_row * data_to_copy.num_cols_padded(), 0, num_rows * data_to_copy.num_cols_padded());
-        } else {
-            // data NOT laid out linearly in memory -> strides necessary
-            this->copy_to_device_strided(data_to_copy.data() + start_row, data_to_copy.num_rows_padded(), num_rows, data_to_copy.num_cols_padded());
-        }
-    }
+    void copy_to_device_strided(const matrix<value_type, layout> &data_to_copy, std::size_t start_row, std::size_t num_rows);
 
     /**
      * @brief Copy a matrix (@p height rows of @p width) from @p data_to_copy to the device.
@@ -340,14 +314,7 @@ class gpu_device_ptr {
      * @throws plssvm::gpu_device_ptr_exception if @p buffer is too small to satisfy the copy
      */
     template <layout_type layout>
-    void copy_to_host(matrix<value_type, layout> &buffer) const {
-        PLSSVM_ASSERT(data_ != nullptr, "Invalid data pointer! Maybe *this has been default constructed?");
-
-        if (buffer.size_padded() < this->size_padded()) {
-            throw gpu_device_ptr_exception{ fmt::format("Buffer too small to perform copy (needed: {}, provided: {})!", this->size_padded(), buffer.size_padded()) };
-        }
-        this->copy_to_host(buffer.data());
-    }
+    void copy_to_host(matrix<value_type, layout> &buffer) const;
 
     /**
      * @brief Copy device_ptr::size() many values from the device to the host buffer @p buffer.
@@ -382,7 +349,7 @@ class gpu_device_ptr {
      * @brief Copy device_ptr::size() many values from the device to the device_ptr @p target (possibly located on another device).
      * @param[in] target the data to copy onto the device (possibly located on another device)
      */
-    void copy_to_other_device(gpu_device_ptr &target);
+    void copy_to_other_device(derived_gpu_device_ptr &target) const;
     /**
      * @brief Copy up-to @p count many values from the device to the device_ptr @p target (possibly located on another device) starting at device pointer position @p pos.
      * @details Copies `[pos, rcount)` values where `rcount` is the smaller value of @p count and `device_ptr::size() - pos`.
@@ -390,20 +357,7 @@ class gpu_device_ptr {
      * @param pos the starting position for the copying in the device pointer
      * @param count the number of elements to copy
      */
-    void copy_to_other_device(gpu_device_ptr &target, size_type pos, size_type count);
-    /**
-     * @brief Copy device_ptr::size() many values from the device to @p target (possibly located on another device).
-     * @param[in] target the data to copy onto the device (possibly located on another device)
-     */
-    void copy_to_other_device(device_pointer_type target);
-    /**
-     * @brief Copy up-to @p count many values from the device to @p target (possibly located on another device) starting at device pointer position @p pos.
-     * @details Copies `[pos, rcount)` values where `rcount` is the smaller value of @p count and `device_ptr::size() - pos`.
-     * @param target the data to copy onto the device (possibly located on another device)
-     * @param pos the starting position for the copying in the device pointer
-     * @param count the number of elements to copy
-     */
-    virtual void copy_to_other_device(device_pointer_type target, size_type pos, size_type count) = 0;
+    virtual void copy_to_other_device(derived_gpu_device_ptr &target, size_type pos, size_type count) const = 0;
 
   protected:
     /// The device queue used to manage the device memory associated with this device pointer.
@@ -416,31 +370,32 @@ class gpu_device_ptr {
     device_pointer_type data_{};
 };
 
-template <typename T, typename queue_t, typename device_pointer_t>
-gpu_device_ptr<T, queue_t, device_pointer_t>::gpu_device_ptr(const size_type size, const queue_type queue) :
+
+template <typename T, typename queue_t, typename device_pointer_t, typename derived_gpu_device_ptr>
+gpu_device_ptr<T, queue_t, device_pointer_t, derived_gpu_device_ptr>::gpu_device_ptr(const size_type size, const queue_type queue) :
     queue_{ queue },
     shape_{ plssvm::shape{ size, 1 } } { }
 
-template <typename T, typename queue_t, typename device_pointer_t>
-gpu_device_ptr<T, queue_t, device_pointer_t>::gpu_device_ptr(const plssvm::shape shape, const queue_type queue) :
+template <typename T, typename queue_t, typename device_pointer_t, typename derived_gpu_device_ptr>
+gpu_device_ptr<T, queue_t, device_pointer_t, derived_gpu_device_ptr>::gpu_device_ptr(const plssvm::shape shape, const queue_type queue) :
     queue_{ queue },
     shape_{ shape } { }
 
-template <typename T, typename queue_t, typename device_pointer_t>
-gpu_device_ptr<T, queue_t, device_pointer_t>::gpu_device_ptr(const plssvm::shape shape, const plssvm::shape padding, const queue_type queue) :
+template <typename T, typename queue_t, typename device_pointer_t, typename derived_gpu_device_ptr>
+gpu_device_ptr<T, queue_t, device_pointer_t, derived_gpu_device_ptr>::gpu_device_ptr(const plssvm::shape shape, const plssvm::shape padding, const queue_type queue) :
     queue_{ queue },
     shape_{ shape },
     padding_{ padding } { }
 
-template <typename T, typename queue_t, typename device_pointer_t>
-gpu_device_ptr<T, queue_t, device_pointer_t>::gpu_device_ptr(gpu_device_ptr &&other) noexcept :
+template <typename T, typename queue_t, typename device_pointer_t, typename derived_gpu_device_ptr>
+gpu_device_ptr<T, queue_t, device_pointer_t, derived_gpu_device_ptr>::gpu_device_ptr(gpu_device_ptr &&other) noexcept :
     queue_{ std::exchange(other.queue_, queue_type{}) },
     shape_{ std::exchange(other.shape_, plssvm::shape{}) },
     padding_{ std::exchange(other.padding_, plssvm::shape{}) },
     data_{ std::exchange(other.data_, device_pointer_type{}) } { }
 
-template <typename T, typename queue_t, typename device_pointer_t>
-auto gpu_device_ptr<T, queue_t, device_pointer_t>::operator=(gpu_device_ptr &&other) noexcept -> gpu_device_ptr & {
+template <typename T, typename queue_t, typename device_pointer_t, typename derived_gpu_device_ptr>
+auto gpu_device_ptr<T, queue_t, device_pointer_t, derived_gpu_device_ptr>::operator=(gpu_device_ptr &&other) noexcept -> gpu_device_ptr & {
     // guard against self-assignment
     if (this != std::addressof(other)) {
         queue_ = std::exchange(other.queue_, queue_type{});
@@ -451,37 +406,48 @@ auto gpu_device_ptr<T, queue_t, device_pointer_t>::operator=(gpu_device_ptr &&ot
     return *this;
 }
 
-template <typename T, typename queue_t, typename device_pointer_t>
-void gpu_device_ptr<T, queue_t, device_pointer_t>::swap(gpu_device_ptr &other) noexcept {
+template <typename T, typename queue_t, typename device_pointer_t, typename derived_gpu_device_ptr>
+void gpu_device_ptr<T, queue_t, device_pointer_t, derived_gpu_device_ptr>::swap(gpu_device_ptr &other) noexcept {
     std::swap(queue_, other.queue_);
     std::swap(shape_, other.shape_);
     std::swap(padding_, other.padding_);
     std::swap(data_, other.data_);
 }
 
-template <typename T, typename queue_t, typename device_pointer_t>
-void gpu_device_ptr<T, queue_t, device_pointer_t>::memset(const int pattern, const size_type pos) {
+template <typename T, typename queue_t, typename device_pointer_t, typename derived_gpu_device_ptr>
+void gpu_device_ptr<T, queue_t, device_pointer_t, derived_gpu_device_ptr>::memset(const int pattern, const size_type pos) {
     PLSSVM_ASSERT(data_ != nullptr, "Invalid data pointer! Maybe *this has been default constructed?");
 
     this->memset(pattern, pos, this->size_padded() * sizeof(value_type));
 }
 
-template <typename T, typename queue_t, typename device_pointer_t>
-void gpu_device_ptr<T, queue_t, device_pointer_t>::fill(const value_type value, const size_type pos) {
+template <typename T, typename queue_t, typename device_pointer_t, typename derived_gpu_device_ptr>
+void gpu_device_ptr<T, queue_t, device_pointer_t, derived_gpu_device_ptr>::fill(const value_type value, const size_type pos) {
     PLSSVM_ASSERT(data_ != nullptr, "Invalid data pointer! Maybe *this has been default constructed?");
 
     this->fill(value, pos, this->size_padded());
 }
 
-template <typename T, typename queue_t, typename device_pointer_t>
-void gpu_device_ptr<T, queue_t, device_pointer_t>::copy_to_device(const std::vector<value_type> &data_to_copy) {
+template <typename T, typename queue_t, typename device_pointer_t, typename derived_gpu_device_ptr>
+template <layout_type layout>
+void gpu_device_ptr<T, queue_t, device_pointer_t, derived_gpu_device_ptr>::copy_to_device(const matrix<value_type, layout> &data_to_copy) {
+    PLSSVM_ASSERT(data_ != nullptr, "Invalid data pointer! Maybe *this has been default constructed?");
+
+    if (data_to_copy.size_padded() < this->size_padded()) {
+        throw gpu_device_ptr_exception{ fmt::format("Too few data to perform copy (needed: {}, provided: {})!", this->size_padded(), data_to_copy.size_padded()) };
+    }
+    this->copy_to_device(data_to_copy.data());
+}
+
+template <typename T, typename queue_t, typename device_pointer_t, typename derived_gpu_device_ptr>
+void gpu_device_ptr<T, queue_t, device_pointer_t, derived_gpu_device_ptr>::copy_to_device(const std::vector<value_type> &data_to_copy) {
     PLSSVM_ASSERT(data_ != nullptr, "Invalid data pointer! Maybe *this has been default constructed?");
 
     this->copy_to_device(data_to_copy, 0, this->size_padded());
 }
 
-template <typename T, typename queue_t, typename device_pointer_t>
-void gpu_device_ptr<T, queue_t, device_pointer_t>::copy_to_device(const std::vector<value_type> &data_to_copy, const size_type pos, const size_type count) {
+template <typename T, typename queue_t, typename device_pointer_t, typename derived_gpu_device_ptr>
+void gpu_device_ptr<T, queue_t, device_pointer_t, derived_gpu_device_ptr>::copy_to_device(const std::vector<value_type> &data_to_copy, const size_type pos, const size_type count) {
     PLSSVM_ASSERT(data_ != nullptr, "Invalid data pointer! Maybe *this has been default constructed?");
 
     const size_type rcount = std::min(count, this->size_padded() - pos);
@@ -491,16 +457,37 @@ void gpu_device_ptr<T, queue_t, device_pointer_t>::copy_to_device(const std::vec
     this->copy_to_device(data_to_copy.data(), pos, rcount);
 }
 
-template <typename T, typename queue_t, typename device_pointer_t>
-void gpu_device_ptr<T, queue_t, device_pointer_t>::copy_to_device(const_host_pointer_type data_to_copy) {
+template <typename T, typename queue_t, typename device_pointer_t, typename derived_gpu_device_ptr>
+void gpu_device_ptr<T, queue_t, device_pointer_t, derived_gpu_device_ptr>::copy_to_device(const_host_pointer_type data_to_copy) {
     PLSSVM_ASSERT(data_ != nullptr, "Invalid data pointer! Maybe *this has been default constructed?");
     PLSSVM_ASSERT(data_to_copy != nullptr, "Invalid host pointer for the data to copy!");
 
     this->copy_to_device(data_to_copy, 0, this->size_padded());
 }
 
-template <typename T, typename queue_t, typename device_pointer_t>
-void gpu_device_ptr<T, queue_t, device_pointer_t>::copy_to_device_strided(const std::vector<value_type> &data_to_copy, std::size_t spitch, std::size_t width, std::size_t height) {
+template <typename T, typename queue_t, typename device_pointer_t, typename derived_gpu_device_ptr>
+template <layout_type layout>
+void gpu_device_ptr<T, queue_t, device_pointer_t, derived_gpu_device_ptr>::copy_to_device_strided(const matrix<value_type, layout> &data_to_copy, const std::size_t start_row, const std::size_t num_rows) {
+    PLSSVM_ASSERT(data_ != nullptr, "Invalid data pointer! Maybe *this has been default constructed?");
+
+    if (start_row + num_rows > data_to_copy.num_rows()) {
+        throw gpu_device_ptr_exception{ fmt::format("Tried to copy lines {}-{} (zero-based index) to the device, but the matrix has only {} lines!", start_row, start_row + num_rows - 1, data_to_copy.num_rows()) };
+    }
+    if (num_rows * data_to_copy.num_cols() < this->size()) {
+        throw gpu_device_ptr_exception{ fmt::format("Too few data to perform copy (needed: {}, provided: {})!", this->size(), num_rows * data_to_copy.num_cols()) };
+    }
+
+    if constexpr (layout == layout_type::aos) {
+        // data is laid out linearly in memory -> no strides necessary -> directly copy to device
+        this->copy_to_device(data_to_copy.data() + start_row * data_to_copy.num_cols_padded(), 0, num_rows * data_to_copy.num_cols_padded());
+    } else {
+        // data NOT laid out linearly in memory -> strides necessary
+        this->copy_to_device_strided(data_to_copy.data() + start_row, data_to_copy.num_rows_padded(), num_rows, data_to_copy.num_cols_padded());
+    }
+}
+
+template <typename T, typename queue_t, typename device_pointer_t, typename derived_gpu_device_ptr>
+void gpu_device_ptr<T, queue_t, device_pointer_t, derived_gpu_device_ptr>::copy_to_device_strided(const std::vector<value_type> &data_to_copy, std::size_t spitch, std::size_t width, std::size_t height) {
     PLSSVM_ASSERT(data_ != nullptr, "Invalid data pointer! Maybe *this has been default constructed?");
 
     if (width > spitch) {
@@ -513,15 +500,26 @@ void gpu_device_ptr<T, queue_t, device_pointer_t>::copy_to_device_strided(const 
     this->copy_to_device_strided(data_to_copy.data(), spitch, width, height);
 }
 
-template <typename T, typename queue_t, typename device_pointer_t>
-void gpu_device_ptr<T, queue_t, device_pointer_t>::copy_to_host(std::vector<value_type> &buffer) const {
+template <typename T, typename queue_t, typename device_pointer_t, typename derived_gpu_device_ptr>
+template <layout_type layout>
+void gpu_device_ptr<T, queue_t, device_pointer_t, derived_gpu_device_ptr>::copy_to_host(matrix<value_type, layout> &buffer) const {
+    PLSSVM_ASSERT(data_ != nullptr, "Invalid data pointer! Maybe *this has been default constructed?");
+
+    if (buffer.size_padded() < this->size_padded()) {
+        throw gpu_device_ptr_exception{ fmt::format("Buffer too small to perform copy (needed: {}, provided: {})!", this->size_padded(), buffer.size_padded()) };
+    }
+    this->copy_to_host(buffer.data());
+}
+
+template <typename T, typename queue_t, typename device_pointer_t, typename derived_gpu_device_ptr>
+void gpu_device_ptr<T, queue_t, device_pointer_t, derived_gpu_device_ptr>::copy_to_host(std::vector<value_type> &buffer) const {
     PLSSVM_ASSERT(data_ != nullptr, "Invalid data pointer! Maybe *this has been default constructed?");
 
     this->copy_to_host(buffer, 0, this->size_padded());
 }
 
-template <typename T, typename queue_t, typename device_pointer_t>
-void gpu_device_ptr<T, queue_t, device_pointer_t>::copy_to_host(std::vector<value_type> &buffer, const size_type pos, const size_type count) const {
+template <typename T, typename queue_t, typename device_pointer_t, typename derived_gpu_device_ptr>
+void gpu_device_ptr<T, queue_t, device_pointer_t, derived_gpu_device_ptr>::copy_to_host(std::vector<value_type> &buffer, const size_type pos, const size_type count) const {
     PLSSVM_ASSERT(data_ != nullptr, "Invalid data pointer! Maybe *this has been default constructed?");
 
     const size_type rcount = std::min(count, this->size_padded() - pos);
@@ -531,61 +529,21 @@ void gpu_device_ptr<T, queue_t, device_pointer_t>::copy_to_host(std::vector<valu
     this->copy_to_host(buffer.data(), pos, rcount);
 }
 
-template <typename T, typename queue_t, typename device_pointer_t>
-void gpu_device_ptr<T, queue_t, device_pointer_t>::copy_to_host(host_pointer_type buffer) const {
+template <typename T, typename queue_t, typename device_pointer_t, typename derived_gpu_device_ptr>
+void gpu_device_ptr<T, queue_t, device_pointer_t, derived_gpu_device_ptr>::copy_to_host(host_pointer_type buffer) const {
     PLSSVM_ASSERT(data_ != nullptr, "Invalid data pointer! Maybe *this has been default constructed?");
     PLSSVM_ASSERT(buffer != nullptr, "Invalid host pointer for the data to copy!");
 
     this->copy_to_host(buffer, 0, this->size_padded());
 }
 
-template <typename T, typename queue_t, typename device_pointer_t>
-void gpu_device_ptr<T, queue_t, device_pointer_t>::copy_to_other_device(gpu_device_ptr<T, queue_t, device_pointer_t> &target) {
+template <typename T, typename queue_t, typename device_pointer_t, typename derived_gpu_device_ptr>
+void gpu_device_ptr<T, queue_t, device_pointer_t, derived_gpu_device_ptr>::copy_to_other_device(derived_gpu_device_ptr &target) const {
     PLSSVM_ASSERT(data_ != nullptr, "Invalid data pointer! Maybe *this has been default constructed?");
-    PLSSVM_ASSERT(target.data_ != nullptr, "Invalid target pointer! Maybe target has been default constructed?");
+    PLSSVM_ASSERT(target.get() != nullptr, "Invalid target pointer! Maybe target has been default constructed?");
 
     this->copy_to_other_device(target, 0, this->size_padded());
 }
-
-template <typename T, typename queue_t, typename device_pointer_t>
-void gpu_device_ptr<T, queue_t, device_pointer_t>::copy_to_other_device(gpu_device_ptr<T, queue_t, device_pointer_t> &target, const size_type pos, const size_type count) {
-    PLSSVM_ASSERT(data_ != nullptr, "Invalid data pointer! Maybe *this has been default constructed?");
-    PLSSVM_ASSERT(target.data_ != nullptr, "Invalid target pointer! Maybe target has been default constructed?");
-
-    const size_type rcount = std::min(count, this->size_padded() - pos);
-    if (target.size_padded() < rcount) {
-        throw gpu_device_ptr_exception{ fmt::format("Buffer too small to perform copy (needed: {}, provided: {})!", rcount, target.size_padded()) };
-    }
-    this->copy_to_other_device(target.get(), pos, rcount);
-}
-
-template <typename T, typename queue_t, typename device_pointer_t>
-void gpu_device_ptr<T, queue_t, device_pointer_t>::copy_to_other_device(device_pointer_type target) {
-    PLSSVM_ASSERT(data_ != nullptr, "Invalid data pointer! Maybe *this has been default constructed?");
-    PLSSVM_ASSERT(target != nullptr, "Invalid target pointer! Maybe target has been default constructed?");
-
-    this->copy_to_other_device(target, 0, this->size_padded());
-}
-
-// explicitly instantiate template class depending on available backends
-#if defined(PLSSVM_HAS_CUDA_BACKEND) || defined(PLSSVM_HAS_HIP_BACKEND)
-template class gpu_device_ptr<float, int>;
-template class gpu_device_ptr<double, int>;
-#endif
-#if defined(PLSSVM_HAS_OPENCL_BACKEND)
-template class gpu_device_ptr<float, const ::plssvm::opencl::detail::command_queue *, cl_mem>;
-template class gpu_device_ptr<double, const ::plssvm::opencl::detail::command_queue *, cl_mem>;
-#endif
-#if defined(PLSSVM_HAS_SYCL_BACKEND)
-    #if defined(PLSSVM_SYCL_BACKEND_HAS_DPCPP)
-template class gpu_device_ptr<float, ::plssvm::dpcpp::detail::queue>;
-template class gpu_device_ptr<double, ::plssvm::dpcpp::detail::queue>;
-    #endif
-    #if defined(PLSSVM_SYCL_BACKEND_HAS_ADAPTIVECPP)
-template class gpu_device_ptr<float, ::plssvm::adaptivecpp::detail::queue>;
-template class gpu_device_ptr<double, ::plssvm::adaptivecpp::detail::queue>;
-    #endif
-#endif
 
 }  // namespace plssvm::detail
 

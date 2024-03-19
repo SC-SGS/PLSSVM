@@ -13,13 +13,14 @@
 #define PLSSVM_BACKENDS_CUDA_CSVM_HPP_
 #pragma once
 
-#include "plssvm/backends/CUDA/detail/device_ptr.cuh"  // plssvm::cuda::detail::device_ptr
-#include "plssvm/backends/gpu_csvm.hpp"                // plssvm::detail::gpu_csvm
-#include "plssvm/constants.hpp"                        // plssvm::real_type
-#include "plssvm/detail/memory_size.hpp"               // plssvm::detail::memory_size
-#include "plssvm/detail/type_list.hpp"                 // PLSSVM_REQUIRES
-#include "plssvm/parameter.hpp"                        // plssvm::parameter
-#include "plssvm/target_platforms.hpp"                 // plssvm::target_platform
+#include "plssvm/backends/CUDA/detail/device_ptr.cuh"     // plssvm::cuda::detail::device_ptr
+#include "plssvm/backends/CUDA/detail/pinned_memory.cuh"  // plssvm::cuda::detail::pinned_memory
+#include "plssvm/backends/gpu_csvm.hpp"                   // plssvm::detail::gpu_csvm
+#include "plssvm/constants.hpp"                           // plssvm::real_type
+#include "plssvm/detail/memory_size.hpp"                  // plssvm::detail::memory_size
+#include "plssvm/detail/type_list.hpp"                    // PLSSVM_REQUIRES
+#include "plssvm/parameter.hpp"                           // plssvm::parameter
+#include "plssvm/target_platforms.hpp"                    // plssvm::target_platform
 
 #include <cstddef>      // std::size_t
 #include <type_traits>  // std::true_type
@@ -33,17 +34,18 @@ namespace cuda {
 /**
  * @brief A C-SVM implementation using CUDA as backend.
  */
-class csvm : public ::plssvm::detail::gpu_csvm<detail::device_ptr, int> {
+class csvm : public ::plssvm::detail::gpu_csvm<detail::device_ptr, int, detail::pinned_memory> {
   protected:
     // protected for the test mock class
     /// The template base type of the CUDA C-SVM class.
-    using base_type = ::plssvm::detail::gpu_csvm<detail::device_ptr, int>;
+    using base_type = ::plssvm::detail::gpu_csvm<detail::device_ptr, int, detail::pinned_memory>;
 
     using base_type::data_distribution_;
     using base_type::devices_;
 
   public:
     using base_type::device_ptr_type;
+    using typename base_type::pinned_memory_type;
     using typename base_type::queue_type;
 
     /**

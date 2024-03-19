@@ -34,10 +34,10 @@
 
 /**
  * @def PLSSVM_OPENCL_ERROR_CHECK
- * @brief Check the OpenCL error @p code. If @p code signals an error, throw a plssvm::opencl::backend_exception.
+ * @brief Check the OpenCL error @p err. If @p err signals an error, throw a plssvm::opencl::backend_exception.
  * @details The exception contains the following message: "OpenCL assert 'OPENCL_ERROR_NAME' (OPENCL_ERROR_CODE): OPTIONAL_OPENCL_ERROR_STRING".
- * @param[in] code the OpenCL error code to check
- * @param[in] msg optional message printed if the error code check failed
+ * @param[in] err the OpenCL error code to check
+ * @param[in] additional_msg optional message printed if the error code check failed
  * @throws plssvm::opencl::backend_exception if the error code signals a failure
  */
 #define PLSSVM_OPENCL_ERROR_CHECK(err, additional_msg)                                                                                                \
@@ -83,11 +83,10 @@ void device_synchronize(const command_queue &queue);
 [[nodiscard]] std::string get_device_name(const command_queue &queue);
 
 /**
- * @brief Convert the kernel type @p kernel to the device function names and return the plssvm::opencl::detail::compute_kernel_name identifier.
- * @param[in] kernel the kernel type
+ * @brief Return the device function names and the plssvm::opencl::detail::compute_kernel_name identifier.
  * @return the kernel function names with the respective plssvm::opencl::detail::compute_kernel_name identifier (`[[nodiscard]]`)
  */
-[[nodiscard]] std::vector<std::pair<compute_kernel_name, std::string>> kernel_type_to_function_names(kernel_function_type kernel);
+[[nodiscard]] std::vector<std::pair<compute_kernel_name, std::string>> kernel_type_to_function_names();
 
 /**
  * @brief Create command queues for all devices in the OpenCL @p contexts with respect to @p target given and
@@ -104,12 +103,12 @@ void device_synchronize(const command_queue &queue);
  *          changes in the used OpenCL implementation and trigger a kernel rebuild.
  *
  * @param[in] contexts the used OpenCL contexts
- * @param[in] target the target platform
+ * @param[in] kernel_function the kernel function
  * @param[in] kernel_names all kernel name for which an OpenCL cl_kernel should be build
  * @throws plssvm::invalid_file_format_exception if the file couldn't be read using [`std::ifstream::read`](https://en.cppreference.com/w/cpp/io/basic_istream/read)
  * @return the command queues with all necessary kernels (`[[nodiscard]]`)
  */
-[[nodiscard]] std::vector<command_queue> create_command_queues(const std::vector<context> &contexts, target_platform target, const std::vector<std::pair<compute_kernel_name, std::string>> &kernel_names);
+[[nodiscard]] std::vector<command_queue> create_command_queues(const std::vector<context> &contexts, kernel_function_type kernel_function, const std::vector<std::pair<compute_kernel_name, std::string>> &kernel_names);
 
 /**
  * @brief Set all arguments in the parameter pack @p args for the kernel @p kernel.

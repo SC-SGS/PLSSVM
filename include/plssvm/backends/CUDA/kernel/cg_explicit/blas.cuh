@@ -15,7 +15,7 @@
 
 #include "plssvm/constants.hpp"  // plssvm::{real_type, THREAD_BLOCK_SIZE, INTERNAL_BLOCK_SIZE, FEATURE_BLOCK_SIZE, PADDING_SIZE}
 
-namespace plssvm::cuda {
+namespace plssvm::cuda::detail {
 
 /**
  * @brief Perform an explicit BLAS SYMM operation: `C = alpha * A * B + beta * C` where @p A is a `m x k` symmetric matrix (memory optimized), @p B is a `k x n` matrix, @p C is a `m x n` matrix, and @p alpha and @p beta are scalars.
@@ -95,6 +95,7 @@ __global__ void device_kernel_symm(const unsigned long long num_rows, const unsi
  * @details In a multi-GPU setting, this function is responsible for mirroring down the columns this device is responsible for!
  * @param[in] num_rows the number of rows in @p A and @p C
  * @param[in] num_rhs the number of columns in @p B and @p C
+ * @param[in] num_mirror_rows the number of rows to mirror down
  * @param[in] device_specific_num_rows the number of rows in @p A and number of rows in @p B; thr rows in @p A are potentially distributed across multiple devices
  * @param[in] row_offset the first row this device is responsible for
  * @param[in] alpha the scalar alpha value
@@ -154,38 +155,44 @@ __global__ void device_kernel_symm_mirror(const unsigned long long num_rows, con
 
 /**
  * @brief Perform a simple inplace matrix addition: lhs += rhs.
- * @param[in] num_rows the number of rows in both matrices
  * @param[in] num_cols the number of columns in both matrices
  * @param[in,out] lhs the first matrix (updated inplace)
  * @param[in] rhs the second matrix
  */
-__global__ void device_kernel_inplace_matrix_add(const unsigned long long num_rows, const unsigned long long num_cols, real_type *lhs, const real_type *rhs) {
-    const unsigned long long i = blockIdx.x * blockDim.x + threadIdx.x;  // # rhs
-    const unsigned long long j = blockIdx.y * blockDim.y + threadIdx.y;  // # num_rows
-    // TODO: optimize?
+__global__ void device_kernel_inplace_matrix_add(const unsigned long long num_cols, real_type *lhs, const real_type *rhs) {
+    const unsigned long long i = (blockIdx.x * blockDim.x + threadIdx.x) * INTERNAL_BLOCK_SIZE;  // # num_rows
+    const unsigned long long j = (blockIdx.y * blockDim.y + threadIdx.y) * INTERNAL_BLOCK_SIZE;  // # num_rhs
 
-    if (i < num_cols && j < num_rows) {
-        lhs[j * (num_cols + PADDING_SIZE) + i] += rhs[j * (num_cols + PADDING_SIZE) + i];
+    for (unsigned internal_i = 0; internal_i < INTERNAL_BLOCK_SIZE; ++internal_i) {
+        for (unsigned internal_j = 0; internal_j < INTERNAL_BLOCK_SIZE; ++internal_j) {
+            const unsigned long long global_i = i + internal_i;
+            const unsigned long long global_j = j + internal_j;
+
+            lhs[global_i * (num_cols + PADDING_SIZE) + global_j] += rhs[global_i * (num_cols + PADDING_SIZE) + global_j];
+        }
     }
 }
 
 /**
  * @brief Perform a simple inplace matrix scale: lhs *= scalar.
- * @param[in] num_rows the number of rows in the matrix
  * @param[in] num_cols the number of columns in the matrix
  * @param[in,out] lhs the matrix (updated inplace)
  * @param[in] scale the value to scale
  */
-__global__ void device_kernel_inplace_matrix_scale(const unsigned long long num_rows, const unsigned long long num_cols, real_type *lhs, const real_type scale) {
-    const unsigned long long i = blockIdx.x * blockDim.x + threadIdx.x;  // # rhs
-    const unsigned long long j = blockIdx.y * blockDim.y + threadIdx.y;  // # num_rows
-    // TODO: optimize?
+__global__ void device_kernel_inplace_matrix_scale(const unsigned long long num_cols, real_type *lhs, const real_type scale) {
+    const unsigned long long i = (blockIdx.x * blockDim.x + threadIdx.x) * INTERNAL_BLOCK_SIZE;  // # num_rows
+    const unsigned long long j = (blockIdx.y * blockDim.y + threadIdx.y) * INTERNAL_BLOCK_SIZE;  // # num_rhs
 
-    if (i < num_cols && j < num_rows) {
-        lhs[j * (num_cols + PADDING_SIZE) + i] *= scale;
+    for (unsigned internal_i = 0; internal_i < INTERNAL_BLOCK_SIZE; ++internal_i) {
+        for (unsigned internal_j = 0; internal_j < INTERNAL_BLOCK_SIZE; ++internal_j) {
+            const unsigned long long global_i = i + internal_i;
+            const unsigned long long global_j = j + internal_j;
+
+            lhs[global_i * (num_cols + PADDING_SIZE) + global_j] *= scale;
+        }
     }
 }
 
-}  // namespace plssvm::cuda
+}  // namespace plssvm::cuda::detail
 
 #endif  // PLSSVM_BACKENDS_CUDA_KERNEL_CG_EXPLICIT_BLAS_CUH_

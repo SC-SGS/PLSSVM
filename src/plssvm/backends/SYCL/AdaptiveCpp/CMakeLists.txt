@@ -40,6 +40,7 @@ if (AdaptiveCpp_FOUND)
     # set AdaptiveCpp specific targets
     set(PLSSVM_SYCL_ADAPTIVECPP_SOURCES
         ${CMAKE_CURRENT_LIST_DIR}/detail/device_ptr.cpp
+        ${CMAKE_CURRENT_LIST_DIR}/detail/pinned_memory.cpp
         ${CMAKE_CURRENT_LIST_DIR}/detail/utility.cpp
         ${CMAKE_CURRENT_LIST_DIR}/csvm.cpp
     )
@@ -69,6 +70,11 @@ if (AdaptiveCpp_FOUND)
     
     # AdaptiveCpp's way to add SYCL to a target
     add_sycl_to_target(TARGET ${PLSSVM_SYCL_BACKEND_ADAPTIVECPP_LIBRARY_NAME} SOURCES ${PROJECT_SOURCE_DIR}/src/plssvm/backends/AdaptiveCpp/csvm.cpp)
+    
+    # set whether the kernels should be compiled with fast math enabled or not
+    if (PLSSVM_ENABLE_FAST_MATH)
+        target_compile_options(${PLSSVM_SYCL_BACKEND_ADAPTIVECPP_LIBRARY_NAME} PRIVATE -ffast-math)
+    endif ()
     
     # silence unknown options warnings
     target_compile_options(${PLSSVM_SYCL_BACKEND_ADAPTIVECPP_LIBRARY_NAME} PRIVATE -Wno-unknown-warning-option

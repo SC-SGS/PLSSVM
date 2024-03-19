@@ -4,10 +4,10 @@
 ##          See the LICENSE.md file in the project root for full license information.
 ########################################################################################################################
 
-cmake_minimum_required(VERSION 3.21)
+cmake_minimum_required(VERSION 3.23)
 
 project("PLSSVM - Parallel Least Squares Support Vector Machine"
-        VERSION 2.0.0
+        VERSION 3.0.0
         LANGUAGES CXX
         DESCRIPTION "A Least Squares Support Vector Machine implementation using different backends.")
 
@@ -138,7 +138,6 @@ target_compile_options(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC
 target_compile_options(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC
                        $<$<COMPILE_LANG_AND_ID:CXX,GNU,Clang>:-Werror=switch -fstrict-enums>
                        $<$<COMPILE_LANG_AND_ID:CXX,MSVC>:/we4062 /wd4005 /wd4702 /wd4849 /wd4127>
-                       # /wd4702: prevent warning for unreachable code in tests (the tests that currently skip the cg_streaming and cg_implicit tests)
                        # /wd4849: ignore "OpenMP 'reduction' clause ignored in 'simd' directive" -> no SIMD clause currently effective in MSVC
                        # /wd4127: ignore "conditional expression is constant" from {fmt} ranges.h header
 )
@@ -765,9 +764,9 @@ include(GNUInstallDirs)
 ## install all necessary library targets
 install(TARGETS ${PLSSVM_TARGETS_TO_INSTALL}
         EXPORT plssvm_Targets
-        ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}  # all files that are neither executables, shared lib or headers
-        LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}  # all shared lib files
-        RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}  # all executables
+        ARCHIVE DESTINATION "${CMAKE_INSTALL_LIBDIR}"  # all files that are neither executables, shared lib or headers
+        LIBRARY DESTINATION "${CMAKE_INSTALL_LIBDIR}"  # all shared lib files
+        RUNTIME DESTINATION "${CMAKE_INSTALL_BINDIR}"  # all executables
 )
 
 ## mark header to install via 'make install'

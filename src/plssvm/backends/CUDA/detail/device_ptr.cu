@@ -40,6 +40,7 @@ device_ptr<T>::device_ptr(const plssvm::shape shape, const plssvm::shape padding
     }
     detail::set_device(queue_);
     PLSSVM_CUDA_ERROR_CHECK(cudaMalloc(&data_, this->size_padded() * sizeof(value_type)))
+    this->memset(0);
 }
 
 template <typename T>
@@ -121,13 +122,16 @@ void device_ptr<T>::copy_to_host(host_pointer_type buffer, const size_type pos, 
 }
 
 template <typename T>
-void device_ptr<T>::copy_to_other_device(device_pointer_type target, const size_type pos, const size_type count) {
+void device_ptr<T>::copy_to_other_device(device_ptr &target, const size_type pos, const size_type count) const {
     PLSSVM_ASSERT(data_ != nullptr, "Invalid data pointer! Maybe *this has been default constructed?");
-    PLSSVM_ASSERT(target != nullptr, "Invalid target pointer! Maybe target has been default constructed?");
+    PLSSVM_ASSERT(target.get() != nullptr, "Invalid target pointer! Maybe target has been default constructed?");
 
     detail::set_device(queue_);
     const size_type rcount = std::min(count, this->size_padded() - pos);
-    PLSSVM_CUDA_ERROR_CHECK(cudaMemcpy(target, data_ + pos, rcount * sizeof(value_type), cudaMemcpyDeviceToDevice))
+    if (target.size_padded() < rcount) {
+        throw gpu_device_ptr_exception{ fmt::format("Buffer too small to perform copy (needed: {}, provided: {})!", rcount, target.size_padded()) };
+    }
+    PLSSVM_CUDA_ERROR_CHECK(cudaMemcpy(target.get(), data_ + pos, rcount * sizeof(value_type), cudaMemcpyDeviceToDevice))
 }
 
 template class device_ptr<float>;

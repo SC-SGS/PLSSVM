@@ -22,7 +22,7 @@
 #include <cstddef>  // std::size_t
 #include <vector>   // std::vector
 
-namespace plssvm::openmp {
+namespace plssvm::openmp::detail {
 
 /**
  * @brief Perform an implicit BLAS SYMM-like operation: `C = alpha * A * B + C` where `A` is the implicitly calculated kernel matrix using the @p kernel function (never actually stored, reducing the amount of needed global memory), @p B and @p C are matrices, and @p alpha is a scalar.
@@ -93,6 +93,6 @@ inline void device_kernel_assembly_symm(const real_type alpha, const std::vector
     }
 }
 
-}  // namespace plssvm::openmp
+}  // namespace plssvm::openmp::detail
 
 #endif  // PLSSVM_BACKENDS_OPENMP_KERNEL_CG_IMPLICIT_KERNEL_MATRIX_ASSEMBLY_BLAS_HPP_

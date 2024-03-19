@@ -30,6 +30,7 @@ if (PLSSVM_SYCL_BACKEND_CHECK_FOR_DPCPP_COMPILER)
     # set DPC++ specific targets
     set(PLSSVM_SYCL_DPCPP_SOURCES
         ${CMAKE_CURRENT_LIST_DIR}/detail/device_ptr.cpp
+        ${CMAKE_CURRENT_LIST_DIR}/detail/pinned_memory.cpp
         ${CMAKE_CURRENT_LIST_DIR}/detail/utility.cpp
         ${CMAKE_CURRENT_LIST_DIR}/csvm.cpp
     )
@@ -51,6 +52,14 @@ if (PLSSVM_SYCL_BACKEND_CHECK_FOR_DPCPP_COMPILER)
     target_compile_definitions(${PLSSVM_SYCL_BACKEND_DPCPP_LIBRARY_NAME} PUBLIC PLSSVM_SYCL_BACKEND_HAS_DPCPP)
     target_compile_definitions(${PLSSVM_SYCL_BACKEND_DPCPP_LIBRARY_NAME} PRIVATE PLSSVM_SYCL_BACKEND_COMPILER=0)
     target_compile_definitions(${PLSSVM_SYCL_BACKEND_DPCPP_LIBRARY_NAME} PRIVATE PLSSVM_SYCL_BACKEND_COMPILER_NAME="DPC++")
+    
+    # set whether the kernels should be compiled with fast math enabled or not
+    if (PLSSVM_ENABLE_FAST_MATH)
+        target_compile_options(${PLSSVM_SYCL_BACKEND_DPCPP_LIBRARY_NAME} PRIVATE -ffast-math)
+    else ()
+        # DPC++ does compile with fast-math by default -> explicitly disable it if not requested otherwise!
+        target_compile_options(${PLSSVM_SYCL_BACKEND_DPCPP_LIBRARY_NAME} PRIVATE -fno-fast-math)
+    endif ()
     
     # enable DPC++ SYCL support
     target_compile_options(${PLSSVM_SYCL_BACKEND_DPCPP_LIBRARY_NAME} PRIVATE -sycl-std=2020 -fsycl -fno-sycl-id-queries-fit-in-int)

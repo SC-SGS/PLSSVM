@@ -86,6 +86,7 @@ using enable_if_typedef_exists_t = typename enable_if_typedef_exists<T>::type;
 
 PLSSVM_CREATE_HAS_MEMBER_TYPEDEF_TYPE_TRAIT(csvm_type)
 PLSSVM_CREATE_HAS_MEMBER_TYPEDEF_TYPE_TRAIT(device_ptr_type)
+PLSSVM_CREATE_HAS_MEMBER_TYPEDEF_TYPE_TRAIT(pinned_memory_type)
 
 #undef PLSSVM_CREATE_HAS_MEMBER_TYPEDEF_TYPE_TRAIT
 
@@ -155,6 +156,9 @@ template <typename T>
     } else if constexpr (has_device_ptr_type_member_typedef_v<T>) {
         using device_ptr_type = typename T::device_ptr_type;
         return fmt::format("{}", plssvm::detail::arithmetic_type_name<typename device_ptr_type::value_type>());
+    } else if constexpr (has_pinned_memory_type_member_typedef_v<T>) {
+        using pinned_memory_type = typename T::pinned_memory_type;
+        return fmt::format("{}", plssvm::detail::arithmetic_type_name<typename pinned_memory_type::value_type>());
     } else {
         static_assert(plssvm::detail::always_false_v<T>, "Can't convert the type 'T' to a std::string!");
     }

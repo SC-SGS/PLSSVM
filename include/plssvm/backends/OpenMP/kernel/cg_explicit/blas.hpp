@@ -21,7 +21,7 @@
 #include <cstddef>  // std::size_t
 #include <vector>   // std::vector
 
-namespace plssvm::openmp {
+namespace plssvm::openmp::detail {
 
 /**
  * @brief Perform an explicit BLAS SYMM operation: `C = alpha * A * B + beta * C` where @p A is a `m x k` symmetric matrix (memory optimized), @p B is a `k x n` matrix, @p C is a `m x n` matrix, and @p alpha and @p beta are scalars.
@@ -63,6 +63,6 @@ inline void device_kernel_symm(const unsigned long long m, const unsigned long l
     }
 }
 
-}  // namespace plssvm::openmp
+}  // namespace plssvm::openmp::detail
 
 #endif  // PLSSVM_BACKENDS_OPENMP_KERNEL_CG_EXPLICIT_BLAS_HPP_

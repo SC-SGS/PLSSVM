@@ -23,8 +23,6 @@ std::ostream &operator<<(std::ostream &out, const solver_type solving) {
             return out << "automatic";
         case solver_type::cg_explicit:
             return out << "cg_explicit";
-        case solver_type::cg_streaming:
-            return out << "cg_streaming";
         case solver_type::cg_implicit:
             return out << "cg_implicit";
     }
@@ -40,8 +38,6 @@ std::istream &operator>>(std::istream &in, solver_type &solving) {
         solving = solver_type::automatic;
     } else if (str == "cg_explicit") {
         solving = solver_type::cg_explicit;
-    } else if (str == "cg_streaming") {
-        solving = solver_type::cg_streaming;
     } else if (str == "cg_implicit") {
         solving = solver_type::cg_implicit;
     } else {

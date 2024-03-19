@@ -41,12 +41,17 @@ set(CMAKE_HIP_STANDARD 17)
 set(CMAKE_HIP_STANDARD_REQUIRED ON)
 
 set(CMAKE_HIP_FLAGS "${CMAKE_HIP_FLAGS} -std=c++17")
-set(CMAKE_HIP_FLAGS_RELWITHDEBINFO "${CMAKE_HIP_FLAGS_RELWITHDEBINFO} -O2 -ffast-math")
-set(CMAKE_HIP_FLAGS_RELEASE "${CMAKE_HIP_FLAGS_RELEASE} -O3 -ffast-math")
+# set fast-math if requested
+if (PLSSVM_ENABLE_FAST_MATH)
+    set(CMAKE_HIP_FLAGS "${CMAKE_HIP_FLAGS}  -ffast-math")
+endif ()
+set(CMAKE_HIP_FLAGS_RELWITHDEBINFO "${CMAKE_HIP_FLAGS_RELWITHDEBINFO} -O2")
+set(CMAKE_HIP_FLAGS_RELEASE "${CMAKE_HIP_FLAGS_RELEASE} -O3")
 
 # explicitly set sources
 set(PLSSVM_HIP_SOURCES
     ${CMAKE_CURRENT_LIST_DIR}/detail/device_ptr.hip
+    ${CMAKE_CURRENT_LIST_DIR}/detail/pinned_memory.hip
     ${CMAKE_CURRENT_LIST_DIR}/detail/utility.hip
     ${CMAKE_CURRENT_LIST_DIR}/csvm.hip
     ${CMAKE_CURRENT_LIST_DIR}/exceptions.hip

@@ -41,14 +41,17 @@ namespace plssvm::detail {
  * @details Implements all virtual functions defined in plssvm::csvm. The GPU backends only have to implement the actual kernel (launches).
  * @tparam device_ptr_t the type of the device pointer (dependent on the used backend)
  * @tparam queue_t the type of the device queue (dependent on the used backend)
+ * @tparam pinned_memory_t the type of the pinned memory wrapper (dependent on the used backend)
  */
-template <template <typename> typename device_ptr_t, typename queue_t>
+template <template <typename> typename device_ptr_t, typename queue_t, template <typename> typename pinned_memory_t>
 class gpu_csvm : public ::plssvm::csvm {
   public:
     /// The type of the device pointer (dependent on the used backend).
     using device_ptr_type = device_ptr_t<real_type>;
     /// The type of the device queue (dependent on the used backend).
     using queue_type = queue_t;
+    /// The type of the pinned memory (dependent on the used backend).
+    using pinned_memory_type = pinned_memory_t<real_type>;
 
     /**
      * @copydoc plssvm::csvm::csvm()
@@ -87,7 +90,7 @@ class gpu_csvm : public ::plssvm::csvm {
     ~gpu_csvm() override = default;
 
     /**
-     * plssvm::csvm::num_available_devices
+     * @copydoc plssvm::csvm::num_available_devices
      */
     [[nodiscard]] std::size_t num_available_devices() const noexcept override {
         return devices_.size();
@@ -121,6 +124,7 @@ class gpu_csvm : public ::plssvm::csvm {
 
     /**
      * @brief Return the maximum allowed work group size for the specified device.
+     * @param[in] device_id the device_id to query the max work group size from
      * @return the maximum allowed work group size (`[[nodiscard]]`)
      */
     [[nodiscard]] virtual std::size_t get_max_work_group_size(std::size_t device_id) const = 0;
@@ -205,8 +209,8 @@ class gpu_csvm : public ::plssvm::csvm {
 //***************************************************//
 //                        fit                        //
 //***************************************************//
-template <template <typename> typename device_ptr_t, typename queue_t>
-std::vector<::plssvm::detail::move_only_any> gpu_csvm<device_ptr_t, queue_t>::assemble_kernel_matrix(const solver_type solver, const parameter &params, const soa_matrix<real_type> &A, const std::vector<real_type> &q_red, const real_type QA_cost) const {
+template <template <typename> typename device_ptr_t, typename queue_t, template <typename> typename pinned_memory_t>
+std::vector<::plssvm::detail::move_only_any> gpu_csvm<device_ptr_t, queue_t, pinned_memory_t>::assemble_kernel_matrix(const solver_type solver, const parameter &params, const soa_matrix<real_type> &A, const std::vector<real_type> &q_red, const real_type QA_cost) const {
     PLSSVM_ASSERT(solver != solver_type::automatic, "An explicit solver type must be provided instead of solver_type::automatic!");
     PLSSVM_ASSERT(!A.empty(), "The matrix to setup on the devices must not be empty!");
     PLSSVM_ASSERT(A.is_padded(), "The matrix to setup on the devices must be padded!");
@@ -237,6 +241,9 @@ std::vector<::plssvm::detail::move_only_any> gpu_csvm<device_ptr_t, queue_t>::as
         q_red_d[device_id] = device_ptr_type{ q_red.size() + PADDING_SIZE, device };
     }
 
+    // pin the data matrix
+    const pinned_memory_type pm{ A };
+
 #pragma omp parallel for
     for (std::size_t device_id = 0; device_id < this->num_available_devices(); ++device_id) {
         // check whether the current device is responsible for at least one data point!
@@ -249,23 +256,31 @@ std::vector<::plssvm::detail::move_only_any> gpu_csvm<device_ptr_t, queue_t>::as
         q_red_d[device_id].copy_to_device(q_red, 0, q_red.size());
         q_red_d[device_id].memset(0, q_red.size());
 
-        if (solver == solver_type::cg_explicit) {
-            // explicitly assemble the (potential partial) kernel matrix
-            device_ptr_type kernel_matrix = this->run_assemble_kernel_matrix_explicit(device_id, params, data_d[device_id], q_red_d[device_id], QA_cost);
-            kernel_matrices_parts[device_id] = ::plssvm::detail::move_only_any{ std::move(kernel_matrix) };
-        } else if (solver == solver_type::cg_implicit) {
-            // simply return the data since in cg_implicit we don't assemble the kernel matrix here!
-            kernel_matrices_parts[device_id] = ::plssvm::detail::move_only_any{ std::make_tuple(std::move(data_d[device_id]), params, std::move(q_red_d[device_id]), QA_cost) };
-        } else {
-            throw exception{ fmt::format("Assembling the kernel matrix using the {} CG solver_type is currently not implemented!", solver) };
+        switch (solver) {
+            case solver_type::automatic:
+                // unreachable
+                break;
+            case solver_type::cg_explicit:
+                {
+                    // explicitly assemble the (potential partial) kernel matrix
+                    device_ptr_type kernel_matrix = this->run_assemble_kernel_matrix_explicit(device_id, params, data_d[device_id], q_red_d[device_id], QA_cost);
+                    kernel_matrices_parts[device_id] = ::plssvm::detail::move_only_any{ std::move(kernel_matrix) };
+                }
+                break;
+            case solver_type::cg_implicit:
+                {
+                    // simply return the data since in cg_implicit we don't assemble the kernel matrix here!
+                    kernel_matrices_parts[device_id] = ::plssvm::detail::move_only_any{ std::make_tuple(std::move(data_d[device_id]), params, std::move(q_red_d[device_id]), QA_cost) };
+                }
+                break;
         }
     }
 
     return kernel_matrices_parts;
 }
 
-template <template <typename> typename device_ptr_t, typename queue_t>
-void gpu_csvm<device_ptr_t, queue_t>::blas_level_3(const solver_type solver, const real_type alpha, const std::vector<::plssvm::detail::move_only_any> &A, const soa_matrix<real_type> &B, const real_type beta, soa_matrix<real_type> &C) const {
+template <template <typename> typename device_ptr_t, typename queue_t, template <typename> typename pinned_memory_t>
+void gpu_csvm<device_ptr_t, queue_t, pinned_memory_t>::blas_level_3(const solver_type solver, const real_type alpha, const std::vector<::plssvm::detail::move_only_any> &A, const soa_matrix<real_type> &B, const real_type beta, soa_matrix<real_type> &C) const {
     PLSSVM_ASSERT(solver != solver_type::automatic, "An explicit solver type must be provided instead of solver_type::automatic!");
     PLSSVM_ASSERT(A.size() == this->num_available_devices(), "Not enough kernel matrix parts ({}) for the available number of devices ({})!", A.size(), this->num_available_devices());
     PLSSVM_ASSERT(!B.empty(), "The B matrix must not be empty!");
@@ -316,24 +331,29 @@ void gpu_csvm<device_ptr_t, queue_t>::blas_level_3(const solver_type solver, con
             if (solver == solver_type::cg_implicit) {
                 this->run_inplace_matrix_scale(0, C_d[device_id], beta);
             }
-        } else {
-            // all other devices get a matrix filled with zeros only
-            C_d[device_id].memset(0);
         }
 
-        if (solver == solver_type::cg_explicit) {
-            const auto &A_d = detail::move_only_any_cast<const device_ptr_type &>(A[device_id]);
-            PLSSVM_ASSERT(!A_d.empty(), "The A matrix must not be empty!");
+        switch (solver) {
+            case solver_type::automatic:
+                // unreachable
+                break;
+            case solver_type::cg_explicit:
+                {
+                    const auto &A_d = detail::move_only_any_cast<const device_ptr_type &>(A[device_id]);
+                    PLSSVM_ASSERT(!A_d.empty(), "The A matrix must not be empty!");
 
-            this->run_blas_level_3_kernel_explicit(device_id, alpha, A_d, B_d[device_id], beta, C_d[device_id]);
-        } else if (solver == solver_type::cg_implicit) {
-            const auto &[A_d, params, q_red_d, QA_cost] = detail::move_only_any_cast<const std::tuple<device_ptr_type, parameter, device_ptr_type, real_type> &>(A[device_id]);
-            PLSSVM_ASSERT(!A_d.empty(), "The A matrix must not be empty!");
-            PLSSVM_ASSERT(!q_red_d.empty(), "The q_red vector must not be empty!");
+                    this->run_blas_level_3_kernel_explicit(device_id, alpha, A_d, B_d[device_id], beta, C_d[device_id]);
+                }
+                break;
+            case solver_type::cg_implicit:
+                {
+                    const auto &[A_d, params, q_red_d, QA_cost] = detail::move_only_any_cast<const std::tuple<device_ptr_type, parameter, device_ptr_type, real_type> &>(A[device_id]);
+                    PLSSVM_ASSERT(!A_d.empty(), "The A matrix must not be empty!");
+                    PLSSVM_ASSERT(!q_red_d.empty(), "The q_red vector must not be empty!");
 
-            this->run_assemble_kernel_matrix_implicit_blas_level_3(device_id, alpha, A_d, params, q_red_d, QA_cost, B_d[device_id], C_d[device_id]);
-        } else {
-            throw exception{ fmt::format("The BLAS calculation using the {} CG solver_type is currently not implemented!", solver) };
+                    this->run_assemble_kernel_matrix_implicit_blas_level_3(device_id, alpha, A_d, params, q_red_d, QA_cost, B_d[device_id], C_d[device_id]);
+                }
+                break;
         }
 
         // reduce the partial C matrices to the final C matrix on device 0
@@ -353,13 +373,13 @@ void gpu_csvm<device_ptr_t, queue_t>::blas_level_3(const solver_type solver, con
 //***************************************************//
 //                   predict, score                  //
 //***************************************************//
-template <template <typename> typename device_ptr_t, typename queue_t>
-aos_matrix<real_type> gpu_csvm<device_ptr_t, queue_t>::predict_values(const parameter &params,
-                                                                      const soa_matrix<real_type> &support_vectors,
-                                                                      const aos_matrix<real_type> &alpha,
-                                                                      const std::vector<real_type> &rho,
-                                                                      soa_matrix<real_type> &w,
-                                                                      const soa_matrix<real_type> &predict_points) const {
+template <template <typename> typename device_ptr_t, typename queue_t, template <typename> typename pinned_memory_t>
+aos_matrix<real_type> gpu_csvm<device_ptr_t, queue_t, pinned_memory_t>::predict_values(const parameter &params,
+                                                                                       const soa_matrix<real_type> &support_vectors,
+                                                                                       const aos_matrix<real_type> &alpha,
+                                                                                       const std::vector<real_type> &rho,
+                                                                                       soa_matrix<real_type> &w,
+                                                                                       const soa_matrix<real_type> &predict_points) const {
     PLSSVM_ASSERT(!support_vectors.empty(), "The support vectors must not be empty!");
     PLSSVM_ASSERT(support_vectors.is_padded(), "The support vectors must be padded!");
     PLSSVM_ASSERT(!alpha.empty(), "The alpha vectors (weights) must not be empty!");

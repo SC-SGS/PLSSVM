@@ -12,9 +12,9 @@
 #include "plssvm/backends/CUDA/detail/device_ptr.cuh"                               // plssvm::cuda::detail::device_ptr
 #include "plssvm/backends/CUDA/detail/utility.cuh"                                  // PLSSVM_CUDA_ERROR_CHECK, plssvm::cuda::detail::{device_synchronize, get_device_count, set_device, peek_at_last_error, get_runtime_version}
 #include "plssvm/backends/CUDA/exceptions.hpp"                                      // plssvm::cuda::backend_exception
-#include "plssvm/backends/CUDA/kernel/cg_explicit/blas.cuh"                         // plssvm::cuda::device_kernel_gemm
-#include "plssvm/backends/CUDA/kernel/cg_explicit/kernel_matrix_assembly.cuh"       // plssvm::cuda::device_kernel_assembly
-#include "plssvm/backends/CUDA/kernel/cg_implicit/kernel_matrix_assembly_blas.cuh"  // plssvm::cuda::device_kernel_assembly_symm
+#include "plssvm/backends/CUDA/kernel/cg_explicit/blas.cuh"                         // plssvm::cuda::detail::{device_kernel_symm, device_kernel_symm_mirror, device_kernel_inplace_matrix_add, device_kernel_inplace_matrix_scale}
+#include "plssvm/backends/CUDA/kernel/cg_explicit/kernel_matrix_assembly.cuh"       // plssvm::cuda::detail::device_kernel_assembly
+#include "plssvm/backends/CUDA/kernel/cg_implicit/kernel_matrix_assembly_blas.cuh"  // plssvm::cuda::detail::device_kernel_assembly_symm
 #include "plssvm/backends/CUDA/kernel/predict_kernel.cuh"                           // plssvm::cuda::detail::{device_kernel_w_linear, device_kernel_predict_linear, device_kernel_predict}
 #include "plssvm/constants.hpp"                                                     // plssvm::{real_type, THREAD_BLOCK_SIZE, INTERNAL_BLOCK_SIZE, PADDING_SIZE}
 #include "plssvm/detail/assert.hpp"                                                 // PLSSVM_ASSERT
@@ -165,19 +165,18 @@ auto csvm::run_assemble_kernel_matrix_explicit(const std::size_t device_id, cons
     const std::size_t num_entries_padded = dist.calculate_explicit_kernel_matrix_num_entries_padded(device_id);
 
     device_ptr_type kernel_matrix_d{ num_entries_padded, device };  // only explicitly store the upper triangular matrix
-    kernel_matrix_d.memset(0);
     const real_type cost_factor = real_type{ 1.0 } / params.cost;
 
     detail::set_device(device);
     switch (params.kernel_type.value()) {
         case kernel_function_type::linear:
-            cuda::device_kernel_assembly<kernel_function_type::linear><<<grid, block>>>(kernel_matrix_d.get(), data_d.get(), num_rows_reduced, device_specific_num_rows, row_offset, num_features, q_red_d.get(), QA_cost, cost_factor);
+            detail::device_kernel_assembly<kernel_function_type::linear><<<grid, block>>>(kernel_matrix_d.get(), data_d.get(), num_rows_reduced, device_specific_num_rows, row_offset, num_features, q_red_d.get(), QA_cost, cost_factor);
             break;
         case kernel_function_type::polynomial:
-            cuda::device_kernel_assembly<kernel_function_type::polynomial><<<grid, block>>>(kernel_matrix_d.get(), data_d.get(), num_rows_reduced, device_specific_num_rows, row_offset, num_features, q_red_d.get(), QA_cost, cost_factor, params.degree.value(), params.gamma.value(), params.coef0.value());
+            detail::device_kernel_assembly<kernel_function_type::polynomial><<<grid, block>>>(kernel_matrix_d.get(), data_d.get(), num_rows_reduced, device_specific_num_rows, row_offset, num_features, q_red_d.get(), QA_cost, cost_factor, params.degree.value(), params.gamma.value(), params.coef0.value());
             break;
         case kernel_function_type::rbf:
-            cuda::device_kernel_assembly<kernel_function_type::rbf><<<grid, block>>>(kernel_matrix_d.get(), data_d.get(), num_rows_reduced, device_specific_num_rows, row_offset, num_features, q_red_d.get(), QA_cost, cost_factor, params.gamma.value());
+            detail::device_kernel_assembly<kernel_function_type::rbf><<<grid, block>>>(kernel_matrix_d.get(), data_d.get(), num_rows_reduced, device_specific_num_rows, row_offset, num_features, q_red_d.get(), QA_cost, cost_factor, params.gamma.value());
             break;
     }
     detail::peek_at_last_error();
@@ -208,7 +207,7 @@ void csvm::run_blas_level_3_kernel_explicit(const std::size_t device_id, const r
         const dim3 grid(static_cast<int>(std::ceil(static_cast<double>(num_rhs) / static_cast<double>(block.x * INTERNAL_BLOCK_SIZE))),
                         static_cast<int>(std::ceil(static_cast<double>(device_specific_num_rows) / static_cast<double>(block.y * INTERNAL_BLOCK_SIZE))));
 
-        cuda::device_kernel_symm<<<grid, block>>>(num_rows, num_rhs, device_specific_num_rows, row_offset, alpha, A_d.get(), B_d.get(), beta, C_d.get());
+        detail::device_kernel_symm<<<grid, block>>>(num_rows, num_rhs, device_specific_num_rows, row_offset, alpha, A_d.get(), B_d.get(), beta, C_d.get());
     }
 
     {
@@ -219,7 +218,7 @@ void csvm::run_blas_level_3_kernel_explicit(const std::size_t device_id, const r
             const dim3 grid(static_cast<int>(std::ceil(static_cast<double>(num_rhs) / static_cast<double>(block.x * INTERNAL_BLOCK_SIZE))),
                             static_cast<int>(std::ceil(static_cast<double>(num_mirror_rows) / static_cast<double>(block.y * INTERNAL_BLOCK_SIZE))));
 
-            cuda::device_kernel_symm_mirror<<<grid, block>>>(num_rows, num_rhs, num_mirror_rows, device_specific_num_rows, row_offset, alpha, A_d.get(), B_d.get(), beta, C_d.get());
+            detail::device_kernel_symm_mirror<<<grid, block>>>(num_rows, num_rhs, num_mirror_rows, device_specific_num_rows, row_offset, alpha, A_d.get(), B_d.get(), beta, C_d.get());
         }
     }
     detail::peek_at_last_error();
@@ -237,11 +236,11 @@ void csvm::run_inplace_matrix_addition(const std::size_t device_id, device_ptr_t
         throw kernel_launch_resources{ fmt::format("Not enough work-items allowed for a work-groups of size {}x{}! Try reducing THREAD_BLOCK_SIZE.", THREAD_BLOCK_SIZE, THREAD_BLOCK_SIZE) };
     }
     const dim3 block(THREAD_BLOCK_SIZE, THREAD_BLOCK_SIZE);
-    const dim3 grid(static_cast<int>(std::ceil(static_cast<double>(num_rhs) / static_cast<double>(block.x))),
-                    static_cast<int>(std::ceil(static_cast<double>(num_rows) / static_cast<double>(block.y))));
+    const dim3 grid(static_cast<int>(std::ceil(static_cast<double>(num_rows) / static_cast<double>(block.x * INTERNAL_BLOCK_SIZE))),
+                    static_cast<int>(std::ceil(static_cast<double>(num_rhs) / static_cast<double>(block.y * INTERNAL_BLOCK_SIZE))));
 
     detail::set_device(device);
-    cuda::device_kernel_inplace_matrix_add<<<grid, block>>>(num_rows, num_rhs, lhs_d.get(), rhs_d.get());
+    detail::device_kernel_inplace_matrix_add<<<grid, block>>>(num_rhs, lhs_d.get(), rhs_d.get());
     detail::peek_at_last_error();
     detail::device_synchronize(device);
 }
@@ -257,11 +256,11 @@ void csvm::run_inplace_matrix_scale(const std::size_t device_id, device_ptr_type
         throw kernel_launch_resources{ fmt::format("Not enough work-items allowed for a work-groups of size {}x{}! Try reducing THREAD_BLOCK_SIZE.", THREAD_BLOCK_SIZE, THREAD_BLOCK_SIZE) };
     }
     const dim3 block(THREAD_BLOCK_SIZE, THREAD_BLOCK_SIZE);
-    const dim3 grid(static_cast<int>(std::ceil(static_cast<double>(num_rhs) / static_cast<double>(block.x))),
-                    static_cast<int>(std::ceil(static_cast<double>(num_rows) / static_cast<double>(block.y))));
+    const dim3 grid(static_cast<int>(std::ceil(static_cast<double>(num_rows) / static_cast<double>(block.x * INTERNAL_BLOCK_SIZE))),
+                    static_cast<int>(std::ceil(static_cast<double>(num_rhs) / static_cast<double>(block.y * INTERNAL_BLOCK_SIZE))));
 
     detail::set_device(device);
-    cuda::device_kernel_inplace_matrix_scale<<<grid, block>>>(num_rows, num_rhs, lhs_d.get(), scale);
+    detail::device_kernel_inplace_matrix_scale<<<grid, block>>>(num_rhs, lhs_d.get(), scale);
     detail::peek_at_last_error();
     detail::device_synchronize(device);
 }
@@ -291,13 +290,13 @@ void csvm::run_assemble_kernel_matrix_implicit_blas_level_3(const std::size_t de
 
     switch (params.kernel_type.value()) {
         case kernel_function_type::linear:
-            cuda::device_kernel_assembly_symm<kernel_function_type::linear><<<grid, block>>>(alpha, q_red.get(), A_d.get(), num_rows_reduced, device_specific_num_rows, row_offset, num_features, QA_cost, cost_factor, B_d.get(), C_d.get(), num_classes);
+            detail::device_kernel_assembly_symm<kernel_function_type::linear><<<grid, block>>>(alpha, q_red.get(), A_d.get(), num_rows_reduced, device_specific_num_rows, row_offset, num_features, QA_cost, cost_factor, B_d.get(), C_d.get(), num_classes);
             break;
         case kernel_function_type::polynomial:
-            cuda::device_kernel_assembly_symm<kernel_function_type::polynomial><<<grid, block>>>(alpha, q_red.get(), A_d.get(), num_rows_reduced, device_specific_num_rows, row_offset, num_features, QA_cost, cost_factor, B_d.get(), C_d.get(), num_classes, params.degree.value(), params.gamma.value(), params.coef0.value());
+            detail::device_kernel_assembly_symm<kernel_function_type::polynomial><<<grid, block>>>(alpha, q_red.get(), A_d.get(), num_rows_reduced, device_specific_num_rows, row_offset, num_features, QA_cost, cost_factor, B_d.get(), C_d.get(), num_classes, params.degree.value(), params.gamma.value(), params.coef0.value());
             break;
         case kernel_function_type::rbf:
-            cuda::device_kernel_assembly_symm<kernel_function_type::rbf><<<grid, block>>>(alpha, q_red.get(), A_d.get(), num_rows_reduced, device_specific_num_rows, row_offset, num_features, QA_cost, cost_factor, B_d.get(), C_d.get(), num_classes, params.gamma.value());
+            detail::device_kernel_assembly_symm<kernel_function_type::rbf><<<grid, block>>>(alpha, q_red.get(), A_d.get(), num_rows_reduced, device_specific_num_rows, row_offset, num_features, QA_cost, cost_factor, B_d.get(), C_d.get(), num_classes, params.gamma.value());
             break;
     }
     detail::peek_at_last_error();
@@ -319,7 +318,7 @@ auto csvm::run_w_kernel(const std::size_t device_id, const device_ptr_type &alph
     const unsigned long long sv_offset = data_distribution_->place_row_offset(device_id);
 
     // define the grid and block sizes
-    const std::size_t max_work_group_size = this->get_max_work_group_size(0);
+    const std::size_t max_work_group_size = this->get_max_work_group_size(device_id);
     if (max_work_group_size < std::size_t{ THREAD_BLOCK_SIZE } * std::size_t{ THREAD_BLOCK_SIZE }) {
         throw kernel_launch_resources{ fmt::format("Not enough work-items allowed for a work-groups of size {}x{}! Try reducing THREAD_BLOCK_SIZE.", THREAD_BLOCK_SIZE, THREAD_BLOCK_SIZE) };
     }
@@ -330,7 +329,7 @@ auto csvm::run_w_kernel(const std::size_t device_id, const device_ptr_type &alph
     device_ptr_type w_d{ shape{ num_classes, num_features }, shape{ PADDING_SIZE, PADDING_SIZE }, device };
 
     detail::set_device(device);
-    cuda::device_kernel_w_linear<<<grid, block>>>(w_d.get(), alpha_d.get(), sv_d.get(), num_classes, num_sv, device_specific_num_sv, sv_offset);
+    detail::device_kernel_w_linear<<<grid, block>>>(w_d.get(), alpha_d.get(), sv_d.get(), num_classes, num_sv, device_specific_num_sv, sv_offset);
     detail::peek_at_last_error();
     detail::device_synchronize(device);
 
@@ -344,10 +343,9 @@ auto csvm::run_predict_kernel(const std::size_t device_id, const parameter &para
     const queue_type &device = devices_[device_id];
 
     device_ptr_type out_d{ shape{ num_predict_points, num_classes }, shape{ PADDING_SIZE, PADDING_SIZE }, device };
-    out_d.memset(0);
 
     // define the block sizes
-    const std::size_t max_work_group_size = this->get_max_work_group_size(0);
+    const std::size_t max_work_group_size = this->get_max_work_group_size(device_id);
     if (max_work_group_size < std::size_t{ THREAD_BLOCK_SIZE } * std::size_t{ THREAD_BLOCK_SIZE }) {
         throw kernel_launch_resources{ fmt::format("Not enough work-items allowed for a work-groups of size {}x{}! Try reducing THREAD_BLOCK_SIZE.", THREAD_BLOCK_SIZE, THREAD_BLOCK_SIZE) };
     }
@@ -359,7 +357,7 @@ auto csvm::run_predict_kernel(const std::size_t device_id, const parameter &para
         const dim3 grid(static_cast<int>(std::ceil(static_cast<double>(num_predict_points) / static_cast<double>(block.x * INTERNAL_BLOCK_SIZE))),
                         static_cast<int>(std::ceil(static_cast<double>(num_classes) / static_cast<double>(block.y * INTERNAL_BLOCK_SIZE))));
 
-        cuda::device_kernel_predict_linear<<<grid, block>>>(out_d.get(), sv_or_w_d.get(), rho_d.get(), predict_points_d.get(), num_classes, num_predict_points, num_features);
+        detail::device_kernel_predict_linear<<<grid, block>>>(out_d.get(), sv_or_w_d.get(), rho_d.get(), predict_points_d.get(), num_classes, num_predict_points, num_features);
     } else {
         const unsigned long long num_sv = sv_or_w_d.shape().x;
 
@@ -372,10 +370,10 @@ auto csvm::run_predict_kernel(const std::size_t device_id, const parameter &para
                 // already handled
                 break;
             case kernel_function_type::polynomial:
-                cuda::device_kernel_predict<kernel_function_type::polynomial><<<grid, block>>>(out_d.get(), alpha_d.get(), rho_d.get(), sv_or_w_d.get(), predict_points_d.get(), num_classes, num_sv, num_predict_points, num_features, params.degree.value(), params.gamma.value(), params.coef0.value());
+                detail::device_kernel_predict<kernel_function_type::polynomial><<<grid, block>>>(out_d.get(), alpha_d.get(), rho_d.get(), sv_or_w_d.get(), predict_points_d.get(), num_classes, num_sv, num_predict_points, num_features, params.degree.value(), params.gamma.value(), params.coef0.value());
                 break;
             case kernel_function_type::rbf:
-                cuda::device_kernel_predict<kernel_function_type::rbf><<<grid, block>>>(out_d.get(), alpha_d.get(), rho_d.get(), sv_or_w_d.get(), predict_points_d.get(), num_classes, num_sv, num_predict_points, num_features, params.gamma.value());
+                detail::device_kernel_predict<kernel_function_type::rbf><<<grid, block>>>(out_d.get(), alpha_d.get(), rho_d.get(), sv_or_w_d.get(), predict_points_d.get(), num_classes, num_sv, num_predict_points, num_features, params.gamma.value());
                 break;
         }
     }

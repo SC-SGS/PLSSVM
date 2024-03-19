@@ -49,7 +49,7 @@ INSTANTIATE_TEST_SUITE_P(LIBSVMParse, LIBSVMParseNumFeatures, ::testing::Values(
                                                       std::make_pair("/data/libsvm/5x4.libsvm", 4),
                                                       std::make_pair("/data/libsvm/5x4_sparse.libsvm", 4),
                                                       std::make_pair("/data/libsvm/3x2_without_label.libsvm", 2),
-                                                      std::make_pair("/data/libsvm/500x200.libsvm", 200),
+                                                      std::make_pair("/data/libsvm/500x200_4.libsvm", 200),
                                                       std::make_pair("/data/empty.txt", 0)));
 // clang-format on
 

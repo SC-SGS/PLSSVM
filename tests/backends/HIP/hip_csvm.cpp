@@ -120,7 +120,6 @@ using hip_label_type_solver_kernel_function_and_classification_type_gtest = util
 // instantiate type-parameterized tests
 // generic CSVM tests
 INSTANTIATE_TYPED_TEST_SUITE_P(HIPCSVM, GenericCSVM, hip_csvm_test_type_gtest, naming::test_parameter_to_name);
-INSTANTIATE_TYPED_TEST_SUITE_P(HIPCSVM, GenericCSVMSolver, hip_solver_type_gtest, naming::test_parameter_to_name);
 INSTANTIATE_TYPED_TEST_SUITE_P(HIPCSVM, GenericCSVMKernelFunction, hip_kernel_function_type_gtest, naming::test_parameter_to_name);
 INSTANTIATE_TYPED_TEST_SUITE_P(HIPCSVM, GenericCSVMSolverKernelFunction, hip_solver_and_kernel_function_type_gtest, naming::test_parameter_to_name);
 INSTANTIATE_TYPED_TEST_SUITE_P(HIPCSVM, GenericCSVMKernelFunctionClassification, hip_label_type_kernel_function_and_classification_type_gtest, naming::test_parameter_to_name);
@@ -130,7 +129,11 @@ INSTANTIATE_TYPED_TEST_SUITE_P(HIPCSVM, GenericCSVMSolverKernelFunctionClassific
 INSTANTIATE_TYPED_TEST_SUITE_P(HIPCSVMDeathTest, GenericCSVMDeathTest, hip_csvm_test_type_gtest, naming::test_parameter_to_name);
 INSTANTIATE_TYPED_TEST_SUITE_P(HIPCSVMDeathTest, GenericCSVMSolverDeathTest, hip_solver_type_gtest, naming::test_parameter_to_name);
 INSTANTIATE_TYPED_TEST_SUITE_P(HIPCSVMDeathTest, GenericCSVMKernelFunctionDeathTest, hip_kernel_function_type_gtest, naming::test_parameter_to_name);
+INSTANTIATE_TYPED_TEST_SUITE_P(HIPCSVMDeathTest, GenericCSVMSolverKernelFunctionDeathTest, hip_solver_and_kernel_function_type_gtest, naming::test_parameter_to_name);
 
 // generic GPU CSVM tests
 INSTANTIATE_TYPED_TEST_SUITE_P(HIPCSVM, GenericGPUCSVM, hip_csvm_test_type_gtest, naming::test_parameter_to_name);
 INSTANTIATE_TYPED_TEST_SUITE_P(HIPCSVM, GenericGPUCSVMKernelFunction, hip_kernel_function_type_gtest, naming::test_parameter_to_name);
+
+// generic GPU CSVM DeathTests
+INSTANTIATE_TYPED_TEST_SUITE_P(HIPCSVMDeathTest, GenericGPUCSVMDeathTest, hip_csvm_test_type_gtest, naming::test_parameter_to_name);

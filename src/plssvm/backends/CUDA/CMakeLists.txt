@@ -72,6 +72,7 @@ endif ()
 # explicitly set sources
 set(PLSSVM_CUDA_SOURCES
     ${CMAKE_CURRENT_LIST_DIR}/detail/device_ptr.cu
+    ${CMAKE_CURRENT_LIST_DIR}/detail/pinned_memory.cu
     ${CMAKE_CURRENT_LIST_DIR}/detail/utility.cu
     ${CMAKE_CURRENT_LIST_DIR}/csvm.cu
     ${CMAKE_CURRENT_LIST_DIR}/exceptions.cpp

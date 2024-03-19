@@ -29,5 +29,5 @@ repository-code: 'https://github.com/SC-SGS/PLSSVM'
 url: 'https://sc-sgs.github.io/PLSSVM/'
 repository: 'https://github.com/SC-SGS/PLSSVM'
 license: MIT
-version: v2.0.0
+version: v3.0.0
 date-released: '2023-05-12'

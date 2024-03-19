@@ -24,12 +24,16 @@ namespace plssvm::opencl::detail {
 enum class compute_kernel_name {
     /// The kernels to explicitly assemble the kernel matrix.
     assemble_kernel_matrix_explicit,
-    /// The kernels to implicitly assemble the kernel matrix.
-    assemble_kernel_matrix_implicit_blas,
-    /// The kernel performing a explicit BLAS GEMM calculation.
-    gemm_kernel_explicit,
     /// The kernel performing a explicit BLAS SYMM calculation.
     symm_kernel_explicit,
+    /// The kernel performing a explicit BLAS SYMM mirroring the values on a multi device setting.
+    mirror_symm_kernel_explicit,
+    /// The kernel used to inplace add two matrices: lhs += rhs.
+    inplace_matrix_add_kernel,
+    /// The kernel used to inplace scale a matrix: lhs *= scale.
+    inplace_matrix_scale_kernel,
+    /// The kernels to implicitly assemble the kernel matrix.
+    assemble_kernel_matrix_implicit_blas,
     /// The kernel to speed up the linear kernel function prediction.
     w_kernel,
     /// The predict kernel for the linear kernel function.
