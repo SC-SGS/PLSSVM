@@ -347,10 +347,6 @@ TYPED_TEST_P(GenericCSVM, blas_level_3_explicit_without_C) {
     EXPECT_FLOATING_POINT_MATRIX_EQ(C2, C);
 }
 
-TYPED_TEST_P(GenericCSVM, blas_level_3_streaming_without_C) {
-    GTEST_SKIP() << "Currently not implemented!";
-}
-
 TYPED_TEST_P(GenericCSVM, blas_level_3_explicit) {
     using csvm_test_type = util::test_parameter_type_at_t<0, TypeParam>;
     using csvm_type = typename csvm_test_type::csvm_type;
@@ -394,10 +390,6 @@ TYPED_TEST_P(GenericCSVM, blas_level_3_explicit) {
 
     EXPECT_FLOATING_POINT_MATRIX_NEAR(C, correct_C);
     EXPECT_FLOATING_POINT_MATRIX_EQ(C2, C);
-}
-
-TYPED_TEST_P(GenericCSVM, blas_level_3_streaming) {
-    GTEST_SKIP() << "Currently not implemented!";
 }
 
 TYPED_TEST_P(GenericCSVM, conjugate_gradients_trivial) {
@@ -477,9 +469,7 @@ REGISTER_TYPED_TEST_SUITE_P(GenericCSVM,
                             get_max_mem_alloc_size,
                             num_available_devices,
                             blas_level_3_explicit_without_C,
-                            blas_level_3_streaming_without_C,
                             blas_level_3_explicit,
-                            blas_level_3_streaming,
                             conjugate_gradients_trivial,
                             conjugate_gradients);
 
