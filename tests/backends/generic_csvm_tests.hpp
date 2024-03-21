@@ -494,12 +494,14 @@ TYPED_TEST_P(GenericCSVMKernelFunction, blas_level_3_assembly_implicit_without_C
 
     // create parameter struct
     plssvm::parameter params{ plssvm::kernel_type = kernel, plssvm::cost = 2.0 };
+    if constexpr (kernel != plssvm::kernel_function_type::linear) {
+        params.gamma = 1.0;
+    }
     if constexpr (kernel == plssvm::kernel_function_type::polynomial) {
         params.degree = 1;
-        params.gamma = 1.0;
+    }
+    if constexpr (kernel == plssvm::kernel_function_type::polynomial || kernel == plssvm::kernel_function_type::sigmoid) {
         params.coef0 = 0.0;
-    } else if constexpr (kernel == plssvm::kernel_function_type::rbf) {
-        params.gamma = 1.0;
     }
 
     // create C-SVM: must be done using the mock class since the member function to test is private or protected
@@ -549,12 +551,14 @@ TYPED_TEST_P(GenericCSVMKernelFunction, blas_level_3_assembly_implicit) {
 
     // create parameter struct
     plssvm::parameter params{ plssvm::kernel_type = kernel, plssvm::cost = 2.0 };
+    if constexpr (kernel != plssvm::kernel_function_type::linear) {
+        params.gamma = 1.0;
+    }
     if constexpr (kernel == plssvm::kernel_function_type::polynomial) {
         params.degree = 1;
-        params.gamma = 1.0;
+    }
+    if constexpr (kernel == plssvm::kernel_function_type::polynomial || kernel == plssvm::kernel_function_type::sigmoid) {
         params.coef0 = 0.0;
-    } else if constexpr (kernel == plssvm::kernel_function_type::rbf) {
-        params.gamma = 1.0;
     }
 
     // create C-SVM: must be done using the mock class since the member function to test is private or protected
@@ -599,9 +603,13 @@ TYPED_TEST_P(GenericCSVMKernelFunction, predict_values) {
 
     // create parameter struct
     plssvm::parameter params{ plssvm::kernel_type = kernel, plssvm::cost = 2.0 };
+    if constexpr (kernel != plssvm::kernel_function_type::linear) {
+        params.gamma = 1.0;
+    }
     if constexpr (kernel == plssvm::kernel_function_type::polynomial) {
         params.degree = 1;
-        params.gamma = 1.0;
+    }
+    if constexpr (kernel == plssvm::kernel_function_type::polynomial || kernel == plssvm::kernel_function_type::sigmoid) {
         params.coef0 = 0.0;
     }
 
@@ -617,7 +625,7 @@ TYPED_TEST_P(GenericCSVMKernelFunction, predict_values) {
     const std::vector<plssvm::real_type> rho{ plssvm::real_type{ 0.0 }, plssvm::real_type{ 0.0 } };
     plssvm::soa_matrix<plssvm::real_type> w{};
     const plssvm::soa_matrix<plssvm::real_type> data{ { { plssvm::real_type{ 1.0 }, plssvm::real_type{ 1.0 }, plssvm::real_type{ 1.0 }, plssvm::real_type{ 1.0 } },
-                                                        { plssvm::real_type{ 1.0 }, plssvm::real_type{ -1.0 }, plssvm::real_type{ 1.0 }, plssvm::real_type{ -1.0 } } },
+                                                        { plssvm::real_type{ 1.0 }, plssvm::real_type{ 2.0 }, plssvm::real_type{ 1.0 }, plssvm::real_type{ 2.0 } } },
                                                       plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE } };
 
     // create C-SVM: must be done using the mock class since the member function to test is private or protected
@@ -708,7 +716,7 @@ TYPED_TEST_P(GenericCSVMKernelFunction, perform_dimensional_reduction) {
     // create parameter struct
     const plssvm::parameter params{ plssvm::kernel_type = kernel };
 
-    const auto data = util::generate_random_matrix<plssvm::soa_matrix<plssvm::real_type>>(plssvm::shape{ 6, 4 }, plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE });
+    const auto data = util::generate_specific_matrix<plssvm::soa_matrix<plssvm::real_type>>(plssvm::shape{ 6, 4 }, plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE });
 
     // create C-SVM: must be done using the mock class since the member function to test is private or protected
     const mock_csvm_type svm = util::construct_from_tuple<mock_csvm_type>(params, csvm_test_type::additional_arguments);
@@ -731,29 +739,23 @@ REGISTER_TYPED_TEST_SUITE_P(GenericCSVMKernelFunction,
                             perform_dimensional_reduction);
 
 //*************************************************************************************************************************************//
-//                                     CSVM tests depending on the solver and kernel function type                                     //
+//                                               CSVM tests depending on the solver type                                               //
 //*************************************************************************************************************************************//
 
 template <typename T>
-class GenericCSVMSolverKernelFunction : public GenericCSVM<T> { };
+class GenericCSVMSolver : public GenericCSVM<T> { };
 
-TYPED_TEST_SUITE_P(GenericCSVMSolverKernelFunction);
+TYPED_TEST_SUITE_P(GenericCSVMSolver);
 
-TYPED_TEST_P(GenericCSVMSolverKernelFunction, solve_lssvm_system_of_linear_equations_trivial) {
+TYPED_TEST_P(GenericCSVMSolver, solve_lssvm_system_of_linear_equations_trivial) {
     using csvm_test_type = util::test_parameter_type_at_t<0, TypeParam>;
     using mock_csvm_type = typename csvm_test_type::mock_csvm_type;
     constexpr plssvm::solver_type solver = util::test_parameter_value_at_v<0, TypeParam>;
-    constexpr plssvm::kernel_function_type kernel = util::test_parameter_value_at_v<1, TypeParam>;
+
+    constexpr plssvm::kernel_function_type kernel = plssvm::kernel_function_type::linear;
 
     // create parameter struct
     plssvm::parameter params{ plssvm::kernel_type = kernel, plssvm::cost = 2.0 };
-    if constexpr (kernel == plssvm::kernel_function_type::polynomial) {
-        params.degree = 1;
-        params.gamma = 1.0;
-        params.coef0 = 0.0;
-    } else if constexpr (kernel == plssvm::kernel_function_type::rbf) {
-        GTEST_SKIP() << "solve_lssvm_system_of_linear_equations_trivial_cg_explicit currently doesn't work with the rbf kernel!";
-    }
 
     // create the data that should be used
     // Matrix with 1-1/cost on main diagonal. Thus, the diagonal entries become one with the additional addition of 1/cost
@@ -763,33 +765,76 @@ TYPED_TEST_P(GenericCSVMSolverKernelFunction, solve_lssvm_system_of_linear_equat
                                                      { plssvm::real_type{ 0.0 }, plssvm::real_type{ 0.0 }, plssvm::real_type{ 0.0 }, plssvm::real_type{ std::sqrt(plssvm::real_type(1.0) - 1 / params.cost) } } },
                                                    plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE } };
     const plssvm::aos_matrix<plssvm::real_type> B{ { { plssvm::real_type{ 1.0 }, plssvm::real_type{ -1.0 }, plssvm::real_type{ 1.0 }, plssvm::real_type{ -1.0 } },
-                                                     { plssvm::real_type{ 1.0 }, plssvm::real_type{ -1.0 }, plssvm::real_type{ 1.0 }, plssvm::real_type{ -1.0 } } } };
+                                                     { plssvm::real_type{ -1.0 }, plssvm::real_type{ 1.0 }, plssvm::real_type{ -1.0 }, plssvm::real_type{ 1.0 } } },
+                                                   plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE } };
 
     // create C-SVM: must be done using the mock class since the member function to test is private or protected
     const mock_csvm_type svm = util::construct_from_tuple<mock_csvm_type>(params, csvm_test_type::additional_arguments);
 
     // solve the system of linear equations using the CG algorithm:
-    // | Q  1 |  *  | a |  =  | y |
+    // | Q  1 |  *  | x |  =  | y |
     // | 1  0 |     | b |     | 0 |
     // with Q = A^TA
     const auto &[calculated_x, calculated_rho, num_iter] = svm.solve_lssvm_system_of_linear_equations(A, B, params, plssvm::epsilon = 0.00001, plssvm::solver = solver);
 
     // check the calculated result for correctness
     EXPECT_FLOATING_POINT_MATRIX_NEAR(calculated_x, (plssvm::aos_matrix<plssvm::real_type>{ B, plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE } }));
-    EXPECT_TRUE(std::all_of(calculated_rho.cbegin(), calculated_rho.cend(), [front = calculated_rho.front()](const plssvm::real_type rho) { return rho == front; }));
+    EXPECT_TRUE(std::all_of(calculated_rho.cbegin(), calculated_rho.cend(), [front = std::abs(calculated_rho.front())](const plssvm::real_type rho) { return std::abs(rho) == front; }));
     for (const auto rho : calculated_rho) {
         EXPECT_FLOATING_POINT_NEAR(std::abs(rho) - std::numeric_limits<plssvm::real_type>::epsilon(), std::numeric_limits<plssvm::real_type>::epsilon());
     }
     EXPECT_GT(num_iter, 0);
 }
 
-TYPED_TEST_P(GenericCSVMSolverKernelFunction, solve_lssvm_system_of_linear_equations) {
-    GTEST_SKIP() << "Currently not implemented!";
+TYPED_TEST_P(GenericCSVMSolver, solve_lssvm_system_of_linear_equations) {
+    using csvm_test_type = util::test_parameter_type_at_t<0, TypeParam>;
+    using mock_csvm_type = typename csvm_test_type::mock_csvm_type;
+    constexpr plssvm::solver_type solver = util::test_parameter_value_at_v<0, TypeParam>;
+
+    constexpr plssvm::kernel_function_type kernel = plssvm::kernel_function_type::linear;
+
+    // create parameter struct
+    plssvm::parameter params{ plssvm::kernel_type = kernel, plssvm::cost = 1.0 };
+
+    // create the data that should be used
+    const auto A = util::generate_specific_matrix<plssvm::soa_matrix<plssvm::real_type>>(plssvm::shape{ 4, 4 }, plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE });
+    const plssvm::aos_matrix<plssvm::real_type> B{ { { plssvm::real_type{ 1.0 }, plssvm::real_type{ -1.0 }, plssvm::real_type{ 1.0 }, plssvm::real_type{ -1.0 } },
+                                                     { plssvm::real_type{ -1.0 }, plssvm::real_type{ 1.0 }, plssvm::real_type{ -1.0 }, plssvm::real_type{ 1.0 } } },
+                                                   plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE } };
+
+    // create C-SVM: must be done using the mock class since the member function to test is private or protected
+    const mock_csvm_type svm = util::construct_from_tuple<mock_csvm_type>(params, csvm_test_type::additional_arguments);
+
+    // solve the system of linear equations using the CG algorithm:
+    // | Q  1 |  *  | x |  =  | y |
+    // | 1  0 |     | b |     | 0 |
+    // with Q = A^TA
+    const auto &[calculated_x, calculated_rho, num_iter] = svm.solve_lssvm_system_of_linear_equations(A, B, params, plssvm::epsilon = 0.00001, plssvm::solver = solver);
+
+    plssvm::aos_matrix<plssvm::real_type> correct_x{ { { plssvm::real_type{ 0.4285714285714278 }, plssvm::real_type{ -1.1904761904761898 }, plssvm::real_type{ 1.1904761904761898 }, plssvm::real_type{ -0.4285714285714278 } },
+                                                       { plssvm::real_type{ -0.4285714285714278 }, plssvm::real_type{ 1.1904761904761898 }, plssvm::real_type{ -1.1904761904761898 }, plssvm::real_type{ 0.4285714285714278 } } },
+                                                     plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE } };
+
+    // check the calculated result for correctness
+    EXPECT_FLOATING_POINT_MATRIX_NEAR_EPS(calculated_x, correct_x, 1e6);  // due to hand provided results
+    for (const auto rho : calculated_rho) {
+        EXPECT_FLOATING_POINT_NEAR_EPS(std::abs(rho), std::abs(calculated_rho.front()), 1e6);  // due to hand provided results
+    }
+    EXPECT_GT(num_iter, 0);
 }
 
-TYPED_TEST_P(GenericCSVMSolverKernelFunction, solve_lssvm_system_of_linear_equations_with_correction) {
-    GTEST_SKIP() << "Currently not implemented!";
-}
+REGISTER_TYPED_TEST_SUITE_P(GenericCSVMSolver,
+                            solve_lssvm_system_of_linear_equations_trivial,
+                            solve_lssvm_system_of_linear_equations);
+
+//*************************************************************************************************************************************//
+//                                     CSVM tests depending on the solver and kernel function type                                     //
+//*************************************************************************************************************************************//
+
+template <typename T>
+class GenericCSVMSolverKernelFunction : public GenericCSVM<T> { };
+
+TYPED_TEST_SUITE_P(GenericCSVMSolverKernelFunction);
 
 TYPED_TEST_P(GenericCSVMSolverKernelFunction, assemble_kernel_matrix_minimal) {
     using csvm_test_type = util::test_parameter_type_at_t<0, TypeParam>;
@@ -800,12 +845,14 @@ TYPED_TEST_P(GenericCSVMSolverKernelFunction, assemble_kernel_matrix_minimal) {
     constexpr plssvm::kernel_function_type kernel = util::test_parameter_value_at_v<1, TypeParam>;
 
     plssvm::parameter params{ plssvm::kernel_type = kernel, plssvm::cost = 1.0 };
+    if constexpr (kernel != plssvm::kernel_function_type::linear) {
+        params.gamma = 1.0;
+    }
     if constexpr (kernel == plssvm::kernel_function_type::polynomial) {
         params.degree = 1;
-        params.gamma = 1.0;
+    }
+    if constexpr (kernel == plssvm::kernel_function_type::polynomial || kernel == plssvm::kernel_function_type::sigmoid) {
         params.coef0 = 0.0;
-    } else if constexpr (kernel == plssvm::kernel_function_type::rbf) {
-        params.gamma = 1.0;
     }
     const plssvm::soa_matrix<plssvm::real_type> data{ { { plssvm::real_type{ 1.0 }, plssvm::real_type{ 2.0 }, plssvm::real_type{ 3.0 } },
                                                         { plssvm::real_type{ 4.0 }, plssvm::real_type{ 5.0 }, plssvm::real_type{ 6.0 } },
@@ -911,11 +958,11 @@ TYPED_TEST_P(GenericCSVMSolverKernelFunction, assemble_kernel_matrix) {
     constexpr plssvm::kernel_function_type kernel = util::test_parameter_value_at_v<1, TypeParam>;
 
     plssvm::parameter params{ plssvm::kernel_type = kernel };
-    if constexpr (kernel == plssvm::kernel_function_type::polynomial) {
+    if constexpr (kernel != plssvm::kernel_function_type::linear) {
         params.gamma = plssvm::real_type{ 1.0 / 3.0 };
+    }
+    if constexpr (kernel == plssvm::kernel_function_type::polynomial || kernel == plssvm::kernel_function_type::sigmoid) {
         params.coef0 = 1.0;
-    } else if constexpr (kernel == plssvm::kernel_function_type::rbf) {
-        params.gamma = plssvm::real_type{ 1.0 / 3.0 };
     }
     const plssvm::soa_matrix<plssvm::real_type> data{ { { plssvm::real_type{ 1.0 }, plssvm::real_type{ 2.0 }, plssvm::real_type{ 3.0 } },
                                                         { plssvm::real_type{ 4.0 }, plssvm::real_type{ 5.0 }, plssvm::real_type{ 6.0 } },
@@ -1013,9 +1060,6 @@ TYPED_TEST_P(GenericCSVMSolverKernelFunction, assemble_kernel_matrix) {
 }
 
 REGISTER_TYPED_TEST_SUITE_P(GenericCSVMSolverKernelFunction,
-                            solve_lssvm_system_of_linear_equations_trivial,
-                            solve_lssvm_system_of_linear_equations,
-                            solve_lssvm_system_of_linear_equations_with_correction,
                             assemble_kernel_matrix_minimal,
                             assemble_kernel_matrix);
 
@@ -1029,8 +1073,6 @@ class GenericCSVMKernelFunctionClassification : public GenericCSVM<T> { };
 TYPED_TEST_SUITE_P(GenericCSVMKernelFunctionClassification);
 
 TYPED_TEST_P(GenericCSVMKernelFunctionClassification, predict) {
-    // TODO: change from hardcoded file to logic test
-
     using label_type = util::test_parameter_type_at_t<1, TypeParam>;
     using csvm_test_type = util::test_parameter_type_at_t<0, TypeParam>;
     using csvm_type = typename csvm_test_type::csvm_type;
@@ -1040,33 +1082,23 @@ TYPED_TEST_P(GenericCSVMKernelFunctionClassification, predict) {
     // create parameter struct
     const plssvm::parameter params{ plssvm::kernel_type = kernel };
 
-    // create data set to be used
-    const plssvm::data_set<label_type> test_data{ PLSSVM_TEST_PATH "/data/predict/50x20.libsvm" };
-
-    // read the previously learned model
-    const plssvm::model<label_type> model{ fmt::format(PLSSVM_TEST_PATH "/data/predict/50x20_{}_{}_{}.libsvm.model", plssvm::detail::arithmetic_type_name<plssvm::real_type>(), kernel, classification) };
+    // create data set that is always classifiable
+    const plssvm::data_set<label_type> test_data = util::generate_trivially_solvable_data_set<label_type>();
 
     // create normal C-SVM
     const csvm_type svm = util::construct_from_tuple<csvm_type>(params, csvm_test_type::additional_arguments);
 
-    // predict label
+    // fitting the test data will ALWAYS score 100% accuracy
+    const plssvm::model<label_type> model = svm.fit(test_data, plssvm::epsilon = 1e-16, plssvm::classification = classification);
+
+    // actual TEST: predict label
     const std::vector<label_type> calculated = svm.predict(model, test_data);
 
-    // read ground truth from file
-    plssvm::detail::io::file_reader reader{ PLSSVM_TEST_PATH "/data/predict/50x20.libsvm.predict" };
-    reader.read_lines();
-    std::vector<label_type> ground_truth(reader.num_lines());
-    for (std::size_t i = 0; i < reader.num_lines(); ++i) {
-        ground_truth[i] = plssvm::detail::convert_to<label_type>(reader.line(i));
-    }
-
     // check the calculated result for correctness
-    EXPECT_EQ(calculated, ground_truth);
+    EXPECT_EQ(calculated, test_data.labels().value().get());
 }
 
 TYPED_TEST_P(GenericCSVMKernelFunctionClassification, score_model) {
-    // TODO: change from hardcoded file to logic test
-
     using label_type = util::test_parameter_type_at_t<1, TypeParam>;
     using csvm_test_type = util::test_parameter_type_at_t<0, TypeParam>;
     using csvm_type = typename csvm_test_type::csvm_type;
@@ -1076,13 +1108,16 @@ TYPED_TEST_P(GenericCSVMKernelFunctionClassification, score_model) {
     // create parameter struct
     plssvm::parameter params{ plssvm::kernel_type = kernel };
 
-    // read the previously learned model
-    const plssvm::model<label_type> model{ fmt::format(PLSSVM_TEST_PATH "/data/predict/50x20_{}_{}_{}.libsvm.model", plssvm::detail::arithmetic_type_name<plssvm::real_type>(), kernel, classification) };
+    // create data set that is always classifiable
+    const plssvm::data_set<label_type> test_data = util::generate_trivially_solvable_data_set<label_type>();
 
     // create normal C-SVM
     const csvm_type svm = util::construct_from_tuple<csvm_type>(params, csvm_test_type::additional_arguments);
 
-    // score model
+    // fitting the test data will ALWAYS score 100% accuracy
+    const plssvm::model<label_type> model = svm.fit(test_data, plssvm::epsilon = 1e-16, plssvm::classification = classification);
+
+    // actual TEST: score model
     const plssvm::real_type calculated = svm.score(model);
 
     // check the calculated result for correctness
@@ -1090,8 +1125,6 @@ TYPED_TEST_P(GenericCSVMKernelFunctionClassification, score_model) {
 }
 
 TYPED_TEST_P(GenericCSVMKernelFunctionClassification, score) {
-    // TODO: change from hardcoded file to logic test
-
     using label_type = util::test_parameter_type_at_t<1, TypeParam>;
     using csvm_test_type = util::test_parameter_type_at_t<0, TypeParam>;
     using csvm_type = typename csvm_test_type::csvm_type;
@@ -1101,20 +1134,19 @@ TYPED_TEST_P(GenericCSVMKernelFunctionClassification, score) {
     // create parameter struct
     plssvm::parameter params{ plssvm::kernel_type = kernel };
 
-    // create data set to be used
-    const plssvm::data_set<label_type> test_data{ PLSSVM_TEST_PATH "/data/predict/50x20.libsvm" };
-
-    // read the previously learned model
-    const plssvm::model<label_type> model{ fmt::format(PLSSVM_TEST_PATH "/data/predict/50x20_{}_{}_{}.libsvm.model", plssvm::detail::arithmetic_type_name<plssvm::real_type>(), kernel, classification) };
+    // create data set that is always classifiable
+    const plssvm::data_set<label_type> test_data = util::generate_trivially_solvable_data_set<label_type>();
 
     // create normal C-SVM
     const csvm_type svm = util::construct_from_tuple<csvm_type>(params, csvm_test_type::additional_arguments);
 
-    // score the test data using the learned model
+    // fitting the test data will ALWAYS score 100% accuracy
+    const plssvm::model<label_type> model = svm.fit(test_data, plssvm::epsilon = 1e-16, plssvm::classification = classification);
+
+    // actual TEST:: score the test data using the learned model
     const plssvm::real_type calculated = svm.score(model, test_data);
 
     // check the calculated result for correctness
-    // it doesn't converge for float, linear, OAO
     EXPECT_EQ(calculated, plssvm::real_type{ 1.0 });
 }
 
@@ -1133,8 +1165,7 @@ class GenericCSVMSolverKernelFunctionClassification : public GenericCSVM<T> { };
 TYPED_TEST_SUITE_P(GenericCSVMSolverKernelFunctionClassification);
 
 TYPED_TEST_P(GenericCSVMSolverKernelFunctionClassification, fit) {
-    // TODO: change from hardcoded file to logic test
-
+    // note: only quantitative tests, doesn't check the real weights and rho values
     using label_type = util::test_parameter_type_at_t<1, TypeParam>;
     using csvm_test_type = util::test_parameter_type_at_t<0, TypeParam>;
     using csvm_type = typename csvm_test_type::csvm_type;
@@ -1148,9 +1179,6 @@ TYPED_TEST_P(GenericCSVMSolverKernelFunctionClassification, fit) {
     // create data set to be used
     const plssvm::data_set<label_type> test_data{ PLSSVM_TEST_PATH "/data/predict/50x20.libsvm" };
 
-    // read the previously learned model
-    const plssvm::model<label_type> correct_model{ fmt::format(PLSSVM_TEST_PATH "/data/predict/50x20_{}_{}_{}.libsvm.model", plssvm::detail::arithmetic_type_name<plssvm::real_type>(), kernel, classification) };
-
     // create normal C-SVM
     const csvm_type svm = util::construct_from_tuple<csvm_type>(params, csvm_test_type::additional_arguments);
 
@@ -1158,17 +1186,23 @@ TYPED_TEST_P(GenericCSVMSolverKernelFunctionClassification, fit) {
     const plssvm::model<label_type> model = svm.fit(test_data, plssvm::epsilon = 1e-10, plssvm::solver = solver, plssvm::classification = classification);
 
     // check the calculated result for correctness
-    ASSERT_EQ(model.num_support_vectors(), correct_model.num_support_vectors());
-    ASSERT_EQ(model.num_features(), correct_model.num_features());
-    ASSERT_EQ(model.num_classes(), correct_model.num_classes());
-    // can't check support vectors for equality since the SV order after our IO is non-deterministic
-    ASSERT_EQ(model.weights().size(), correct_model.weights().size());
-    // can't check weights for equality since the SV order after our IO is non-deterministic
-    // TODO: the eps factor must be selected WAY too large
-    // EXPECT_FLOATING_POINT_VECTOR_NEAR_EPS(model.rho(), correct_model.rho(), plssvm::real_type{ 1e12 });
+    EXPECT_EQ(model.num_support_vectors(), test_data.num_data_points());
+    EXPECT_EQ(model.num_features(), test_data.num_features());
+    EXPECT_EQ(model.get_params(), (plssvm::parameter{ params, plssvm::gamma = plssvm::real_type{ 1.0 } / static_cast<plssvm::real_type>(test_data.num_features()) }));
+    EXPECT_EQ(model.support_vectors(), test_data.data());
+    EXPECT_EQ(model.labels(), test_data.labels().value().get());
+    EXPECT_EQ(model.num_classes(), test_data.num_classes());
+    EXPECT_EQ(model.classes(), test_data.classes().value());
+    if constexpr (classification == plssvm::classification_type::oaa) {
+        EXPECT_EQ(model.weights().size(), 1);
+        EXPECT_EQ(model.rho().size(), test_data.num_classes());
+    } else {
+        EXPECT_EQ(model.weights().size(), plssvm::calculate_number_of_classifiers(classification, test_data.num_classes()));
+        EXPECT_EQ(model.rho().size(), plssvm::calculate_number_of_classifiers(classification, test_data.num_classes()));
+    }
     EXPECT_EQ(model.get_classification_type(), classification);
     EXPECT_TRUE(model.num_iters().has_value());
-    EXPECT_EQ(model.num_iters().value().size(), (plssvm::calculate_number_of_classifiers(classification, correct_model.num_classes())));
+    EXPECT_EQ(model.num_iters().value().size(), (plssvm::calculate_number_of_classifiers(classification, test_data.num_classes())));
 }
 
 REGISTER_TYPED_TEST_SUITE_P(GenericCSVMSolverKernelFunctionClassification,

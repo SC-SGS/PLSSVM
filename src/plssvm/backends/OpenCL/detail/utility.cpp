@@ -203,7 +203,10 @@ std::vector<std::pair<compute_kernel_name, std::string>> kernel_type_to_function
         std::make_pair(compute_kernel_name::w_kernel, "device_kernel_w_linear"),
         std::make_pair(compute_kernel_name::predict_kernel_linear, "device_kernel_predict_linear"),
         std::make_pair(compute_kernel_name::predict_kernel_polynomial, "device_kernel_predict_polynomial"),
-        std::make_pair(compute_kernel_name::predict_kernel_rbf, "device_kernel_predict_rbf")
+        std::make_pair(compute_kernel_name::predict_kernel_rbf, "device_kernel_predict_rbf"),
+        std::make_pair(compute_kernel_name::predict_kernel_sigmoid, "device_kernel_predict_sigmoid"),
+        std::make_pair(compute_kernel_name::predict_kernel_laplacian, "device_kernel_predict_laplacian"),
+        std::make_pair(compute_kernel_name::predict_kernel_chi_squared, "device_kernel_predict_chi_squared")
     };
 
     return kernels;
@@ -292,6 +295,24 @@ std::vector<command_queue> create_command_queues(const std::vector<context> &con
                 ::plssvm::detail::replace_all(src, "PLSSVM_OPENCL_FEATURE_REDUCE_FUNCTION", "feature_reduce_euclidean_dist");   // use the Euclidean distance product to reduce the features
                 ::plssvm::detail::replace_all(src, "PLSSVM_OPENCL_APPLY_KERNEL_FUNCTION", "apply_rbf_kernel_function");         // use the rbf kernel function
                 break;
+            case kernel_function_type::sigmoid:
+                ::plssvm::detail::replace_all(src, "PLSSVM_OPENCL_KERNEL_FUNCTION_PARAMETER_LIST", ", const real_type gamma, const real_type coef0");  // two additional parameters
+                ::plssvm::detail::replace_all(src, "PLSSVM_OPENCL_KERNEL_FUNCTION_PARAMETER", ", gamma, coef0");                                       // one additional parameters
+                ::plssvm::detail::replace_all(src, "PLSSVM_OPENCL_FEATURE_REDUCE_FUNCTION", "feature_reduce_dot");                                     // use dot product to reduce the features
+                ::plssvm::detail::replace_all(src, "PLSSVM_OPENCL_APPLY_KERNEL_FUNCTION", "apply_sigmoid_kernel_function");                            // use the sigmoid kernel function
+                break;
+            case kernel_function_type::laplacian:
+                ::plssvm::detail::replace_all(src, "PLSSVM_OPENCL_KERNEL_FUNCTION_PARAMETER_LIST", ", const real_type gamma");  // one additional parameter
+                ::plssvm::detail::replace_all(src, "PLSSVM_OPENCL_KERNEL_FUNCTION_PARAMETER", ", gamma");                       // one additional parameter
+                ::plssvm::detail::replace_all(src, "PLSSVM_OPENCL_FEATURE_REDUCE_FUNCTION", "feature_reduce_manhattan_dist");   // use the Manhattan distance product to reduce the features
+                ::plssvm::detail::replace_all(src, "PLSSVM_OPENCL_APPLY_KERNEL_FUNCTION", "apply_laplacian_kernel_function");   // use the laplacian kernel function
+                break;
+            case kernel_function_type::chi_squared:
+                ::plssvm::detail::replace_all(src, "PLSSVM_OPENCL_KERNEL_FUNCTION_PARAMETER_LIST", ", const real_type gamma");   // one additional parameter
+                ::plssvm::detail::replace_all(src, "PLSSVM_OPENCL_KERNEL_FUNCTION_PARAMETER", ", gamma");                        // one additional parameter
+                ::plssvm::detail::replace_all(src, "PLSSVM_OPENCL_FEATURE_REDUCE_FUNCTION", "feature_reduce_chi_squared");       // use the chi-squared function to reduce the features
+                ::plssvm::detail::replace_all(src, "PLSSVM_OPENCL_APPLY_KERNEL_FUNCTION", "apply_chi_squared_kernel_function");  // use the chi-squared kernel function
+                break;
         }
     };
 
@@ -304,7 +325,7 @@ std::vector<command_queue> create_command_queues(const std::vector<context> &con
     predict_kernel_src_string.append((std::istreambuf_iterator<char>{ predict_file }),
                                      std::istreambuf_iterator<char>{});
     // duplicate predict kernel -> currently 2 necessary
-    for (const kernel_function_type predict_kernel_functions : { plssvm::kernel_function_type::polynomial, plssvm::kernel_function_type::rbf }) {
+    for (const kernel_function_type predict_kernel_functions : { plssvm::kernel_function_type::polynomial, plssvm::kernel_function_type::rbf, plssvm::kernel_function_type::sigmoid, plssvm::kernel_function_type::laplacian, plssvm::kernel_function_type::chi_squared }) {
         std::string temp{ predict_kernel_src_string };
         // replace necessary values in for the generic predict kernel
         ::plssvm::detail::replace_all(temp, "PLSSVM_DEVICE_KERNEL_PREDICT_NAME", fmt::format("device_kernel_predict_{}", predict_kernel_functions));  // the correct name

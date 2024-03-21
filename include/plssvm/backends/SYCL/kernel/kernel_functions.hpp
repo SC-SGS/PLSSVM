@@ -51,6 +51,35 @@ template <>
     return d * d;
 }
 
+/**
+ * @brief Compute the feature reduction for the laplacian kernel function, i.e., the Manhattan distance.
+ * @param[in] val1 the first feature value
+ * @param[in] val2 the second feature value
+ * @return the reduced value (`[[nodiscard]]`)
+ */
+template <>
+[[nodiscard]] inline real_type feature_reduce<kernel_function_type::laplacian>(const real_type val1, const real_type val2) {
+    return abs(val1 - val2);
+}
+
+/**
+ * @brief Compute the feature reduction for the chi-squared kernel function.
+ * @note Be sure that the denominator isn't 0.0 which may be the case for padding values.
+ * @param[in] val1 the first feature value
+ * @param[in] val2 the second feature value
+ * @return the reduced value (`[[nodiscard]]`)
+ */
+template <>
+[[nodiscard]] inline real_type feature_reduce<kernel_function_type::chi_squared>(const real_type val1, const real_type val2) {
+    const real_type s = val1 + val2;
+    if (s == real_type{ 0.0 }) {
+        return real_type{ 0.0 };
+    } else {
+        const real_type d = val1 - val2;
+        return (d * d) / s;
+    }
+}
+
 //***************************************************//
 //                  kernel functions                 //
 //***************************************************//
@@ -70,6 +99,12 @@ template <kernel_function_type kernel_function, typename... Args>
     } else if constexpr (kernel_function == kernel_function_type::polynomial) {
         return ::sycl::pown(detail::get<1>(params) * value + detail::get<2>(params), detail::get<0>(params));
     } else if constexpr (kernel_function == kernel_function_type::rbf) {
+        return ::sycl::exp(-detail::get<0>(params) * value);
+    } else if constexpr (kernel_function == kernel_function_type::sigmoid) {
+        return ::sycl::tanh(detail::get<0>(params) * value + detail::get<1>(params));
+    } else if constexpr (kernel_function == kernel_function_type::laplacian) {
+        return ::sycl::exp(-detail::get<0>(params) * value);
+    } else if constexpr (kernel_function == kernel_function_type::chi_squared) {
         return ::sycl::exp(-detail::get<0>(params) * value);
     } else {
         static_assert(::plssvm::detail::always_false_v<Args...>, "Unsupported kernel function!");

@@ -167,6 +167,109 @@ TYPED_TEST(KernelFunctionVector, radial_basis_function_kernel_function_parameter
     }
 }
 
+TYPED_TEST(KernelFunctionVector, sigmoid_kernel_function_variadic) {
+    using real_type = typename TestFixture::fixture_real_type;
+
+    for (const std::size_t size : this->get_sizes()) {
+        SCOPED_TRACE(fmt::format("size: {}", size));
+        // create random vector with the specified size
+        const std::vector<real_type> x1 = util::generate_random_vector<real_type>(size);
+        const std::vector<real_type> x2 = util::generate_random_vector<real_type>(size);
+
+        for (const auto [degree, gamma, coef0, cost] : this->get_param_values()) {
+            SCOPED_TRACE(fmt::format("parameter: [{}, {}, {}, {}]", degree, gamma, coef0, cost));
+            const auto gamma_p = static_cast<real_type>(gamma);
+            const auto coef0_p = static_cast<real_type>(coef0);
+            EXPECT_FLOATING_POINT_NEAR(plssvm::kernel_function<plssvm::kernel_function_type::sigmoid>(x1, x2, gamma_p, coef0_p), ground_truth::detail::sigmoid_kernel(x1, x2, gamma_p, coef0_p));
+        }
+    }
+}
+
+TYPED_TEST(KernelFunctionVector, sigmoid_kernel_function_parameter) {
+    using real_type = typename TestFixture::fixture_real_type;
+
+    for (const std::size_t size : this->get_sizes()) {
+        SCOPED_TRACE(fmt::format("size: {}", size));
+        // create random vector with the specified size
+        const std::vector<real_type> x1 = util::generate_random_vector<real_type>(size);
+        const std::vector<real_type> x2 = util::generate_random_vector<real_type>(size);
+
+        for (const auto [degree, gamma, coef0, cost] : this->get_param_values()) {
+            SCOPED_TRACE(fmt::format("parameter: [{}, {}, {}, {}]", degree, gamma, coef0, cost));
+            const plssvm::parameter params{ plssvm::kernel_function_type::sigmoid, static_cast<int>(degree), gamma, coef0, cost };
+            EXPECT_FLOATING_POINT_NEAR(plssvm::kernel_function(x1, x2, params), ground_truth::detail::sigmoid_kernel(x1, x2, static_cast<real_type>(params.gamma.value()), static_cast<real_type>(params.coef0.value())));
+        }
+    }
+}
+
+TYPED_TEST(KernelFunctionVector, laplacian_kernel_function_variadic) {
+    using real_type = typename TestFixture::fixture_real_type;
+
+    for (const std::size_t size : this->get_sizes()) {
+        SCOPED_TRACE(fmt::format("size: {}", size));
+        // create random vector with the specified size
+        const std::vector<real_type> x1 = util::generate_random_vector<real_type>(size);
+        const std::vector<real_type> x2 = util::generate_random_vector<real_type>(size);
+
+        for (const auto [degree, gamma, coef0, cost] : this->get_param_values()) {
+            SCOPED_TRACE(fmt::format("parameter: [{}, {}, {}, {}]", degree, gamma, coef0, cost));
+            const auto gamma_p = static_cast<real_type>(gamma);
+            EXPECT_FLOATING_POINT_NEAR(plssvm::kernel_function<plssvm::kernel_function_type::laplacian>(x1, x2, gamma_p), ground_truth::detail::laplacian_kernel(x1, x2, gamma_p));
+        }
+    }
+}
+
+TYPED_TEST(KernelFunctionVector, laplacian_kernel_function_parameter) {
+    using real_type = typename TestFixture::fixture_real_type;
+
+    for (const std::size_t size : this->get_sizes()) {
+        SCOPED_TRACE(fmt::format("size: {}", size));
+        // create random vector with the specified size
+        const std::vector<real_type> x1 = util::generate_random_vector<real_type>(size);
+        const std::vector<real_type> x2 = util::generate_random_vector<real_type>(size);
+
+        for (const auto [degree, gamma, coef0, cost] : this->get_param_values()) {
+            SCOPED_TRACE(fmt::format("parameter: [{}, {}, {}, {}]", degree, gamma, coef0, cost));
+            const plssvm::parameter params{ plssvm::kernel_function_type::laplacian, static_cast<int>(degree), gamma, coef0, cost };
+            EXPECT_FLOATING_POINT_NEAR(plssvm::kernel_function(x1, x2, params), ground_truth::detail::laplacian_kernel(x1, x2, static_cast<real_type>(params.gamma.value())));
+        }
+    }
+}
+
+TYPED_TEST(KernelFunctionVector, chi_squared_kernel_function_variadic) {
+    using real_type = typename TestFixture::fixture_real_type;
+
+    for (const std::size_t size : this->get_sizes()) {
+        SCOPED_TRACE(fmt::format("size: {}", size));
+        // create random vector with the specified size
+        const std::vector<real_type> x1 = util::generate_random_vector<real_type>(size, { real_type{ 0.0 }, real_type{ 1.0 } });
+        const std::vector<real_type> x2 = util::generate_random_vector<real_type>(size, { real_type{ 0.0 }, real_type{ 1.0 } });
+
+        for (const auto [degree, gamma, coef0, cost] : this->get_param_values()) {
+            SCOPED_TRACE(fmt::format("parameter: [{}, {}, {}, {}]", degree, gamma, coef0, cost));
+            const auto gamma_p = static_cast<real_type>(gamma);
+            EXPECT_FLOATING_POINT_NEAR(plssvm::kernel_function<plssvm::kernel_function_type::chi_squared>(x1, x2, gamma_p), ground_truth::detail::chi_squared_kernel(x1, x2, gamma_p));
+        }
+    }
+}
+
+TYPED_TEST(KernelFunctionVector, chi_squared_kernel_function_parameter) {
+    using real_type = typename TestFixture::fixture_real_type;
+
+    for (const std::size_t size : this->get_sizes()) {
+        SCOPED_TRACE(fmt::format("size: {}", size));
+        // create random vector with the specified size
+        const std::vector<real_type> x1 = util::generate_random_vector<real_type>(size, { real_type{ 0.0 }, real_type{ 1.0 } });
+        const std::vector<real_type> x2 = util::generate_random_vector<real_type>(size, { real_type{ 0.0 }, real_type{ 1.0 } });
+
+        for (const auto [degree, gamma, coef0, cost] : this->get_param_values()) {
+            SCOPED_TRACE(fmt::format("parameter: [{}, {}, {}, {}]", degree, gamma, coef0, cost));
+            const plssvm::parameter params{ plssvm::kernel_function_type::chi_squared, static_cast<int>(degree), gamma, coef0, cost };
+            EXPECT_FLOATING_POINT_NEAR(plssvm::kernel_function(x1, x2, params), ground_truth::detail::chi_squared_kernel(x1, x2, static_cast<real_type>(params.gamma.value())));
+        }
+    }
+}
+
 TYPED_TEST(KernelFunctionVector, unknown_kernel_function_parameter) {
     using real_type = typename TestFixture::fixture_real_type;
 
@@ -175,12 +278,12 @@ TYPED_TEST(KernelFunctionVector, unknown_kernel_function_parameter) {
     const std::vector<real_type> x2 = { real_type{ 1.0 } };
     // create a parameter object with an unknown kernel type
     plssvm::parameter params{};
-    params.kernel_type = static_cast<plssvm::kernel_function_type>(3);
+    params.kernel_type = static_cast<plssvm::kernel_function_type>(6);
 
     // using an unknown kernel type must throw
     EXPECT_THROW_WHAT(std::ignore = plssvm::kernel_function(x1, x2, params),
                       plssvm::unsupported_kernel_type_exception,
-                      "Unknown kernel type (value: 3)!");
+                      "Unknown kernel type (value: 6)!");
 }
 
 template <typename T>
@@ -201,6 +304,12 @@ TYPED_TEST(KernelFunctionVectorDeathTest, size_mismatch_kernel_function_variadic
     EXPECT_DEATH(std::ignore = plssvm::kernel_function<plssvm::kernel_function_type::polynomial>(x1, x2, 0, real_type{ 0.0 }, real_type{ 0.0 }),
                  "Sizes mismatch!: 1 != 2");
     EXPECT_DEATH(std::ignore = plssvm::kernel_function<plssvm::kernel_function_type::rbf>(x1, x2, real_type{ 0.0 }),
+                 "Sizes mismatch!: 1 != 2");
+    EXPECT_DEATH(std::ignore = plssvm::kernel_function<plssvm::kernel_function_type::sigmoid>(x1, x2, real_type{ 0.0 }, real_type{ 0.0 }),
+                 "Sizes mismatch!: 1 != 2");
+    EXPECT_DEATH(std::ignore = plssvm::kernel_function<plssvm::kernel_function_type::laplacian>(x1, x2, real_type{ 0.0 }),
+                 "Sizes mismatch!: 1 != 2");
+    EXPECT_DEATH(std::ignore = plssvm::kernel_function<plssvm::kernel_function_type::chi_squared>(x1, x2, real_type{ 0.0 }),
                  "Sizes mismatch!: 1 != 2");
 }
 
@@ -447,6 +556,212 @@ TYPED_TEST(KernelFunctionMatrix, rbf_kernel_function_parameter) {
     }
 }
 
+TYPED_TEST(KernelFunctionMatrix, sigmoid_kernel_function_variadic) {
+    using real_type = typename TestFixture::fixture_real_type;
+    constexpr plssvm::layout_type layout = TestFixture::fixture_layout;
+
+    for (const std::size_t size : this->get_sizes()) {
+        SCOPED_TRACE(fmt::format("size: {}", size));
+        // create random matrices with the specified size
+        const auto matr1 = util::generate_random_matrix<plssvm::matrix<real_type, layout>>(plssvm::shape{ 4, size });
+        const auto matr2 = util::generate_random_matrix<plssvm::matrix<real_type, layout>>(plssvm::shape{ 4, size }, plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE });
+
+        for (const auto [degree, gamma, coef0, cost] : this->get_param_values()) {
+            SCOPED_TRACE(fmt::format("parameter: [{}, {}, {}, {}]", degree, gamma, coef0, cost));
+            ASSERT_EQ(matr1.shape(), matr2.shape());
+
+            for (std::size_t i = 0; i < matr1.num_rows(); ++i) {
+                for (std::size_t j = 0; j < matr1.num_rows(); ++j) {
+                    SCOPED_TRACE(fmt::format("i: {}; j: {}", i, j));
+
+                    // create vectors for ground truth calculation
+                    std::vector<real_type> x1(matr1.num_cols());
+                    std::vector<real_type> x2(matr2.num_cols());
+                    for (std::size_t dim = 0; dim < matr1.num_cols(); ++dim) {
+                        x1[dim] = matr1(i, dim);
+                        x2[dim] = matr2(j, dim);
+                    }
+
+                    const auto gamma_p = static_cast<real_type>(gamma);
+                    const auto coef0_p = static_cast<real_type>(coef0);
+                    EXPECT_FLOATING_POINT_NEAR(plssvm::kernel_function<plssvm::kernel_function_type::sigmoid>(matr1, i, matr2, j, gamma_p, coef0_p), ground_truth::detail::sigmoid_kernel(x1, x2, gamma_p, coef0_p));
+                }
+            }
+        }
+    }
+}
+
+TYPED_TEST(KernelFunctionMatrix, sigmoid_kernel_function_parameter) {
+    using real_type = typename TestFixture::fixture_real_type;
+    constexpr plssvm::layout_type layout = TestFixture::fixture_layout;
+
+    for (const std::size_t size : this->get_sizes()) {
+        SCOPED_TRACE(fmt::format("size: {}", size));
+        // create random matrices with the specified size
+        const auto matr1 = util::generate_random_matrix<plssvm::matrix<real_type, layout>>(plssvm::shape{ 4, size }, plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE });
+        const auto matr2 = util::generate_random_matrix<plssvm::matrix<real_type, layout>>(plssvm::shape{ 4, size });
+
+        for (const auto [degree, gamma, coef0, cost] : this->get_param_values()) {
+            SCOPED_TRACE(fmt::format("parameter: [{}, {}, {}, {}]", degree, gamma, coef0, cost));
+            ASSERT_EQ(matr1.shape(), matr2.shape());
+
+            for (std::size_t i = 0; i < matr1.num_rows(); ++i) {
+                for (std::size_t j = 0; j < matr1.num_rows(); ++j) {
+                    SCOPED_TRACE(fmt::format("i: {}; j: {}", i, j));
+
+                    // create vectors for ground truth calculation
+                    std::vector<real_type> x1(matr1.num_cols());
+                    std::vector<real_type> x2(matr2.num_cols());
+                    for (std::size_t dim = 0; dim < matr1.num_cols(); ++dim) {
+                        x1[dim] = matr1(i, dim);
+                        x2[dim] = matr2(j, dim);
+                    }
+
+                    const plssvm::parameter params{ plssvm::kernel_function_type::sigmoid, static_cast<int>(degree), gamma, coef0, cost };
+                    EXPECT_FLOATING_POINT_NEAR(plssvm::kernel_function(matr1, i, matr2, j, params),
+                                               ground_truth::detail::sigmoid_kernel(x1, x2, static_cast<real_type>(params.gamma.value()), static_cast<real_type>(params.coef0.value())));
+                }
+            }
+        }
+    }
+}
+
+TYPED_TEST(KernelFunctionMatrix, laplacian_kernel_function_variadic) {
+    using real_type = typename TestFixture::fixture_real_type;
+    constexpr plssvm::layout_type layout = TestFixture::fixture_layout;
+
+    for (const std::size_t size : this->get_sizes()) {
+        SCOPED_TRACE(fmt::format("size: {}", size));
+        // create random matrices with the specified size
+        const auto matr1 = util::generate_random_matrix<plssvm::matrix<real_type, layout>>(plssvm::shape{ 4, size });
+        const auto matr2 = util::generate_random_matrix<plssvm::matrix<real_type, layout>>(plssvm::shape{ 4, size }, plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE });
+
+        for (const auto [degree, gamma, coef0, cost] : this->get_param_values()) {
+            SCOPED_TRACE(fmt::format("parameter: [{}, {}, {}, {}]", degree, gamma, coef0, cost));
+            ASSERT_EQ(matr1.shape(), matr2.shape());
+
+            for (std::size_t i = 0; i < matr1.num_rows(); ++i) {
+                for (std::size_t j = 0; j < matr1.num_rows(); ++j) {
+                    SCOPED_TRACE(fmt::format("i: {}; j: {}", i, j));
+
+                    // create vectors for ground truth calculation
+                    std::vector<real_type> x1(matr1.num_cols());
+                    std::vector<real_type> x2(matr2.num_cols());
+                    for (std::size_t dim = 0; dim < matr1.num_cols(); ++dim) {
+                        x1[dim] = matr1(i, dim);
+                        x2[dim] = matr2(j, dim);
+                    }
+
+                    const auto gamma_p = static_cast<real_type>(gamma);
+                    EXPECT_FLOATING_POINT_NEAR(plssvm::kernel_function<plssvm::kernel_function_type::laplacian>(matr1, i, matr2, j, gamma_p), ground_truth::detail::laplacian_kernel(x1, x2, gamma_p));
+                }
+            }
+        }
+    }
+}
+
+TYPED_TEST(KernelFunctionMatrix, laplacian_kernel_function_parameter) {
+    using real_type = typename TestFixture::fixture_real_type;
+    constexpr plssvm::layout_type layout = TestFixture::fixture_layout;
+
+    for (const std::size_t size : this->get_sizes()) {
+        SCOPED_TRACE(fmt::format("size: {}", size));
+        // create random matrices with the specified size
+        const auto matr1 = util::generate_random_matrix<plssvm::matrix<real_type, layout>>(plssvm::shape{ 4, size }, plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE });
+        const auto matr2 = util::generate_random_matrix<plssvm::matrix<real_type, layout>>(plssvm::shape{ 4, size });
+
+        for (const auto [degree, gamma, coef0, cost] : this->get_param_values()) {
+            SCOPED_TRACE(fmt::format("parameter: [{}, {}, {}, {}]", degree, gamma, coef0, cost));
+            ASSERT_EQ(matr1.shape(), matr2.shape());
+
+            for (std::size_t i = 0; i < matr1.num_rows(); ++i) {
+                for (std::size_t j = 0; j < matr1.num_rows(); ++j) {
+                    SCOPED_TRACE(fmt::format("i: {}; j: {}", i, j));
+
+                    // create vectors for ground truth calculation
+                    std::vector<real_type> x1(matr1.num_cols());
+                    std::vector<real_type> x2(matr2.num_cols());
+                    for (std::size_t dim = 0; dim < matr1.num_cols(); ++dim) {
+                        x1[dim] = matr1(i, dim);
+                        x2[dim] = matr2(j, dim);
+                    }
+
+                    const plssvm::parameter params{ plssvm::kernel_function_type::laplacian, static_cast<int>(degree), gamma, coef0, cost };
+                    EXPECT_FLOATING_POINT_NEAR(plssvm::kernel_function(matr1, i, matr2, j, params),
+                                               ground_truth::detail::laplacian_kernel(x1, x2, static_cast<real_type>(params.gamma.value())));
+                }
+            }
+        }
+    }
+}TYPED_TEST(KernelFunctionMatrix, chi_squared_kernel_function_variadic) {
+    using real_type = typename TestFixture::fixture_real_type;
+    constexpr plssvm::layout_type layout = TestFixture::fixture_layout;
+
+    for (const std::size_t size : this->get_sizes()) {
+        SCOPED_TRACE(fmt::format("size: {}", size));
+        // create random matrices with the specified size
+        auto matr1 = util::generate_random_matrix<plssvm::matrix<real_type, layout>>(plssvm::shape{ 4, size }, { real_type{ 0.0 }, real_type{ 1.0 } });
+        auto matr2 = util::generate_random_matrix<plssvm::matrix<real_type, layout>>(plssvm::shape{ 4, size }, plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE }, { real_type{ 0.0 }, real_type{ 1.0 } });
+
+        for (const auto [degree, gamma, coef0, cost] : this->get_param_values()) {
+            SCOPED_TRACE(fmt::format("parameter: [{}, {}, {}, {}]", degree, gamma, coef0, cost));
+            ASSERT_EQ(matr1.shape(), matr2.shape());
+
+            for (std::size_t i = 0; i < matr1.num_rows(); ++i) {
+                for (std::size_t j = 0; j < matr1.num_rows(); ++j) {
+                    SCOPED_TRACE(fmt::format("i: {}; j: {}", i, j));
+
+                    // create vectors for ground truth calculation
+                    std::vector<real_type> x1(matr1.num_cols());
+                    std::vector<real_type> x2(matr2.num_cols());
+                    for (std::size_t dim = 0; dim < matr1.num_cols(); ++dim) {
+                        x1[dim] = matr1(i, dim);
+                        x2[dim] = matr2(j, dim);
+                    }
+
+                    const auto gamma_p = static_cast<real_type>(gamma);
+                    EXPECT_FLOATING_POINT_NEAR(plssvm::kernel_function<plssvm::kernel_function_type::chi_squared>(matr1, i, matr2, j, gamma_p), ground_truth::detail::chi_squared_kernel(x1, x2, gamma_p));
+                }
+            }
+        }
+    }
+}
+
+TYPED_TEST(KernelFunctionMatrix, chi_squared_kernel_function_parameter) {
+    using real_type = typename TestFixture::fixture_real_type;
+    constexpr plssvm::layout_type layout = TestFixture::fixture_layout;
+
+    for (const std::size_t size : this->get_sizes()) {
+        SCOPED_TRACE(fmt::format("size: {}", size));
+        // create random matrices with the specified size
+        const auto matr1 = util::generate_random_matrix<plssvm::matrix<real_type, layout>>(plssvm::shape{ 4, size }, plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE }, { real_type{ 0.0 }, real_type{ 1.0 } });
+        const auto matr2 = util::generate_random_matrix<plssvm::matrix<real_type, layout>>(plssvm::shape{ 4, size }, { real_type{ 0.0 }, real_type{ 1.0 } });
+
+        for (const auto [degree, gamma, coef0, cost] : this->get_param_values()) {
+            SCOPED_TRACE(fmt::format("parameter: [{}, {}, {}, {}]", degree, gamma, coef0, cost));
+            ASSERT_EQ(matr1.shape(), matr2.shape());
+
+            for (std::size_t i = 0; i < matr1.num_rows(); ++i) {
+                for (std::size_t j = 0; j < matr1.num_rows(); ++j) {
+                    SCOPED_TRACE(fmt::format("i: {}; j: {}", i, j));
+
+                    // create vectors for ground truth calculation
+                    std::vector<real_type> x1(matr1.num_cols());
+                    std::vector<real_type> x2(matr2.num_cols());
+                    for (std::size_t dim = 0; dim < matr1.num_cols(); ++dim) {
+                        x1[dim] = matr1(i, dim);
+                        x2[dim] = matr2(j, dim);
+                    }
+
+                    const plssvm::parameter params{ plssvm::kernel_function_type::chi_squared, static_cast<int>(degree), gamma, coef0, cost };
+                    EXPECT_FLOATING_POINT_NEAR(plssvm::kernel_function(matr1, i, matr2, j, params),
+                                               ground_truth::detail::chi_squared_kernel(x1, x2, static_cast<real_type>(params.gamma.value())));
+                }
+            }
+        }
+    }
+}
+
 TYPED_TEST(KernelFunctionMatrix, unknown_kernel_function_parameter) {
     using real_type = typename TestFixture::fixture_real_type;
     constexpr plssvm::layout_type layout = TestFixture::fixture_layout;
@@ -457,12 +772,12 @@ TYPED_TEST(KernelFunctionMatrix, unknown_kernel_function_parameter) {
 
     // create a parameter object with an unknown kernel type
     plssvm::parameter params{};
-    params.kernel_type = static_cast<plssvm::kernel_function_type>(3);
+    params.kernel_type = static_cast<plssvm::kernel_function_type>(6);
 
     // using an unknown kernel type must throw
     EXPECT_THROW_WHAT(std::ignore = plssvm::kernel_function(matr1, 0, matr2, 0, params),
                       plssvm::unsupported_kernel_type_exception,
-                      "Unknown kernel type (value: 3)!");
+                      "Unknown kernel type (value: 6)!");
 }
 
 template <typename T>
@@ -485,6 +800,12 @@ TYPED_TEST(KernelFunctionMatrixDeathTest, size_mismatch_kernel_function_variadic
                  "Sizes mismatch!: 1 != 2");
     EXPECT_DEATH(std::ignore = plssvm::kernel_function<plssvm::kernel_function_type::rbf>(matr1, 0, matr2, 0, real_type{ 0.0 }),
                  "Sizes mismatch!: 1 != 2");
+    EXPECT_DEATH(std::ignore = plssvm::kernel_function<plssvm::kernel_function_type::sigmoid>(matr1, 0, matr2, 0, real_type{ 0.0 }, real_type{ 0.0 }),
+                 "Sizes mismatch!: 1 != 2");
+    EXPECT_DEATH(std::ignore = plssvm::kernel_function<plssvm::kernel_function_type::laplacian>(matr1, 0, matr2, 0, real_type{ 0.0 }),
+                 "Sizes mismatch!: 1 != 2");
+    EXPECT_DEATH(std::ignore = plssvm::kernel_function<plssvm::kernel_function_type::chi_squared>(matr1, 0, matr2, 0, real_type{ 0.0 }),
+                 "Sizes mismatch!: 1 != 2");
 }
 
 TYPED_TEST(KernelFunctionMatrixDeathTest, invalid_indices_variadic) {
@@ -501,6 +822,12 @@ TYPED_TEST(KernelFunctionMatrixDeathTest, invalid_indices_variadic) {
     EXPECT_DEATH(std::ignore = plssvm::kernel_function<plssvm::kernel_function_type::polynomial>(matr1, 0, matr2, 3, 0, real_type{ 0.0 }, real_type{ 0.0 }),
                  "Out-of-bounce access for j and y!: 3 < 2");
     EXPECT_DEATH(std::ignore = plssvm::kernel_function<plssvm::kernel_function_type::rbf>(matr1, 2, matr2, 0, real_type{ 0.0 }),
+                 "Out-of-bounce access for i and x!: 2 < 2");
+    EXPECT_DEATH(std::ignore = plssvm::kernel_function<plssvm::kernel_function_type::sigmoid>(matr1, 2, matr2, 0, real_type{ 0.0 }, real_type{ 0.0 }),
+                 "Out-of-bounce access for i and x!: 2 < 2");
+    EXPECT_DEATH(std::ignore = plssvm::kernel_function<plssvm::kernel_function_type::laplacian>(matr1, 2, matr2, 0, real_type{ 0.0 }),
+                 "Out-of-bounce access for i and x!: 2 < 2");
+    EXPECT_DEATH(std::ignore = plssvm::kernel_function<plssvm::kernel_function_type::chi_squared>(matr1, 2, matr2, 0, real_type{ 0.0 }),
                  "Out-of-bounce access for i and x!: 2 < 2");
 }
 

@@ -51,8 +51,8 @@ real_type polynomial_kernel(const std::vector<real_type> &x, const std::vector<r
     return std::pow(std::fma(gamma, result, coef0), static_cast<real_type>(degree));
 }
 
-template float polynomial_kernel(const std::vector<float> &, const std::vector<float> &, int, float, float);
-template double polynomial_kernel(const std::vector<double> &, const std::vector<double> &, int, double, double);
+template float polynomial_kernel(const std::vector<float> &, const std::vector<float> &, const int, const float, const float);
+template double polynomial_kernel(const std::vector<double> &, const std::vector<double> &, const int, const double, const double);
 
 template <typename real_type>
 real_type rbf_kernel(const std::vector<real_type> &x, const std::vector<real_type> &y, const real_type gamma) {
@@ -66,8 +66,52 @@ real_type rbf_kernel(const std::vector<real_type> &x, const std::vector<real_typ
     return std::exp(-gamma * result);
 }
 
-template float rbf_kernel(const std::vector<float> &, const std::vector<float> &, float);
-template double rbf_kernel(const std::vector<double> &, const std::vector<double> &, double);
+template float rbf_kernel(const std::vector<float> &, const std::vector<float> &, const float);
+template double rbf_kernel(const std::vector<double> &, const std::vector<double> &, const double);
+
+template <typename real_type>
+real_type sigmoid_kernel(const std::vector<real_type> &x, const std::vector<real_type> &y, const real_type gamma, const real_type coef0) {
+    PLSSVM_ASSERT(x.size() == y.size(), "Sizes mismatch!: {} != {}", x.size(), y.size());
+
+    real_type result{ 0.0 };
+    for (typename std::vector<real_type>::size_type i = 0; i < x.size(); ++i) {
+        result = std::fma(x[i], y[i], result);
+    }
+    return std::tanh(std::fma(gamma, result, coef0));
+}
+
+template float sigmoid_kernel(const std::vector<float> &, const std::vector<float> &, const float, const float);
+template double sigmoid_kernel(const std::vector<double> &, const std::vector<double> &, const double, const double);
+
+template <typename real_type>
+real_type laplacian_kernel(const std::vector<real_type> &x, const std::vector<real_type> &y, const real_type gamma) {
+    PLSSVM_ASSERT(x.size() == y.size(), "Sizes mismatch!: {} != {}", x.size(), y.size());
+
+    real_type result{ 0.0 };
+    for (typename std::vector<real_type>::size_type i = 0; i < x.size(); ++i) {
+        result += std::abs(x[i] - y[i]);
+    }
+    return std::exp(-gamma * result);
+}
+
+template float laplacian_kernel(const std::vector<float> &, const std::vector<float> &, const float);
+template double laplacian_kernel(const std::vector<double> &, const std::vector<double> &, const double);
+
+template <typename real_type>
+real_type chi_squared_kernel(const std::vector<real_type> &x, const std::vector<real_type> &y, const real_type gamma) {
+    PLSSVM_ASSERT(x.size() == y.size(), "Sizes mismatch!: {} != {}", x.size(), y.size());
+
+    real_type result{ 0.0 };
+    for (typename std::vector<real_type>::size_type i = 0; i < x.size(); ++i) {
+        const real_type diff = x[i] - y[i];
+        result += (diff * diff) / (x[i] + y[i]);
+    }
+    return std::exp(-gamma * result);
+}
+
+template float chi_squared_kernel(const std::vector<float> &, const std::vector<float> &, const float);
+template double chi_squared_kernel(const std::vector<double> &, const std::vector<double> &, const double);
+
 
 template <typename real_type, plssvm::layout_type layout>
 real_type linear_kernel(const plssvm::matrix<real_type, layout> &X, const std::size_t i, const plssvm::matrix<real_type, layout> &Y, const std::size_t j) {
@@ -123,6 +167,61 @@ template float rbf_kernel(const plssvm::matrix<float, plssvm::layout_type::aos> 
 template float rbf_kernel(const plssvm::matrix<float, plssvm::layout_type::soa> &, const std::size_t, const plssvm::matrix<float, plssvm::layout_type::soa> &, const std::size_t, const float);
 template double rbf_kernel(const plssvm::matrix<double, plssvm::layout_type::aos> &, const std::size_t, const plssvm::matrix<double, plssvm::layout_type::aos> &, const std::size_t, const double);
 template double rbf_kernel(const plssvm::matrix<double, plssvm::layout_type::soa> &, const std::size_t, const plssvm::matrix<double, plssvm::layout_type::soa> &, const std::size_t, const double);
+
+template <typename real_type, plssvm::layout_type layout>
+real_type sigmoid_kernel(const plssvm::matrix<real_type, layout> &X, const std::size_t i, const plssvm::matrix<real_type, layout> &Y, const std::size_t j, const real_type gamma, const real_type coef0) {
+    PLSSVM_ASSERT(X.num_cols() == Y.num_cols(), "Sizes mismatch!: {} != {}", X.num_cols(), Y.num_cols());
+    PLSSVM_ASSERT(i < X.num_rows(), "Out-of-bounce access!: {} < {}", i, X.num_rows());
+    PLSSVM_ASSERT(j < Y.num_rows(), "Out-of-bounce access!: {} < {}", j, Y.num_rows());
+
+    real_type result{ 0.0 };
+    for (typename std::vector<real_type>::size_type dim = 0; dim < X.num_cols(); ++dim) {
+        result = std::fma(X(i, dim), Y(j, dim), result);
+    }
+    return std::tanh(std::fma(gamma, result, coef0));
+}
+
+template float sigmoid_kernel(const plssvm::matrix<float, plssvm::layout_type::aos> &, const std::size_t, const plssvm::matrix<float, plssvm::layout_type::aos> &, const std::size_t, const float, const float);
+template float sigmoid_kernel(const plssvm::matrix<float, plssvm::layout_type::soa> &, const std::size_t, const plssvm::matrix<float, plssvm::layout_type::soa> &, const std::size_t, const float, const float);
+template double sigmoid_kernel(const plssvm::matrix<double, plssvm::layout_type::aos> &, const std::size_t, const plssvm::matrix<double, plssvm::layout_type::aos> &, const std::size_t, const double, const double);
+template double sigmoid_kernel(const plssvm::matrix<double, plssvm::layout_type::soa> &, const std::size_t, const plssvm::matrix<double, plssvm::layout_type::soa> &, const std::size_t, const double, const double);
+
+template <typename real_type, plssvm::layout_type layout>
+real_type laplacian_kernel(const plssvm::matrix<real_type, layout> &X, const std::size_t i, const plssvm::matrix<real_type, layout> &Y, const std::size_t j, const real_type gamma) {
+    PLSSVM_ASSERT(X.num_cols() == Y.num_cols(), "Sizes mismatch!: {} != {}", X.num_cols(), Y.num_cols());
+    PLSSVM_ASSERT(i < X.num_rows(), "Out-of-bounce access!: {} < {}", i, X.num_rows());
+    PLSSVM_ASSERT(j < Y.num_rows(), "Out-of-bounce access!: {} < {}", j, Y.num_rows());
+
+    real_type result{ 0.0 };
+    for (typename std::vector<real_type>::size_type dim = 0; dim < X.num_cols(); ++dim) {
+        result += std::abs(X(i, dim) - Y(j, dim));
+    }
+    return std::exp(-gamma * result);
+}
+
+template float laplacian_kernel(const plssvm::matrix<float, plssvm::layout_type::aos> &, const std::size_t, const plssvm::matrix<float, plssvm::layout_type::aos> &, const std::size_t, const float);
+template float laplacian_kernel(const plssvm::matrix<float, plssvm::layout_type::soa> &, const std::size_t, const plssvm::matrix<float, plssvm::layout_type::soa> &, const std::size_t, const float);
+template double laplacian_kernel(const plssvm::matrix<double, plssvm::layout_type::aos> &, const std::size_t, const plssvm::matrix<double, plssvm::layout_type::aos> &, const std::size_t, const double);
+template double laplacian_kernel(const plssvm::matrix<double, plssvm::layout_type::soa> &, const std::size_t, const plssvm::matrix<double, plssvm::layout_type::soa> &, const std::size_t, const double);
+
+template <typename real_type, plssvm::layout_type layout>
+real_type chi_squared_kernel(const plssvm::matrix<real_type, layout> &X, const std::size_t i, const plssvm::matrix<real_type, layout> &Y, const std::size_t j, const real_type gamma) {
+    PLSSVM_ASSERT(X.num_cols() == Y.num_cols(), "Sizes mismatch!: {} != {}", X.num_cols(), Y.num_cols());
+    PLSSVM_ASSERT(i < X.num_rows(), "Out-of-bounce access!: {} < {}", i, X.num_rows());
+    PLSSVM_ASSERT(j < Y.num_rows(), "Out-of-bounce access!: {} < {}", j, Y.num_rows());
+
+    real_type result{ 0.0 };
+    for (typename std::vector<real_type>::size_type dim = 0; dim < X.num_cols(); ++dim) {
+        const real_type diff = X(i, dim) - Y(j, dim);
+        result += (diff * diff) / (X(i, dim) + Y(j, dim));
+    }
+    return std::exp(-gamma * result);
+}
+
+template float chi_squared_kernel(const plssvm::matrix<float, plssvm::layout_type::aos> &, const std::size_t, const plssvm::matrix<float, plssvm::layout_type::aos> &, const std::size_t, const float);
+template float chi_squared_kernel(const plssvm::matrix<float, plssvm::layout_type::soa> &, const std::size_t, const plssvm::matrix<float, plssvm::layout_type::soa> &, const std::size_t, const float);
+template double chi_squared_kernel(const plssvm::matrix<double, plssvm::layout_type::aos> &, const std::size_t, const plssvm::matrix<double, plssvm::layout_type::aos> &, const std::size_t, const double);
+template double chi_squared_kernel(const plssvm::matrix<double, plssvm::layout_type::soa> &, const std::size_t, const plssvm::matrix<double, plssvm::layout_type::soa> &, const std::size_t, const double);
 
 template <typename real_type>
 plssvm::aos_matrix<real_type> predict_values(const plssvm::parameter &params, const plssvm::soa_matrix<real_type> &w, const plssvm::aos_matrix<real_type> &weights, const std::vector<real_type> &rho, const plssvm::soa_matrix<real_type> &support_vectors, const plssvm::soa_matrix<real_type> &predict_points, const std::size_t row_offset, const std::size_t device_specific_num_rows) {
@@ -192,6 +291,64 @@ plssvm::aos_matrix<real_type> predict_values(const plssvm::parameter &params, co
                 }
             }
             break;
+        case plssvm::kernel_function_type::sigmoid:
+            {
+                for (std::size_t c = 0; c < num_classes; ++c) {
+                    for (std::size_t i = row_offset; i < row_offset + device_specific_num_rows; ++i) {
+                        for (std::size_t j = 0; j < num_sv; ++j) {
+                            real_type temp{ 0.0 };
+                            for (std::size_t f = 0; f < num_features; ++f) {
+                                temp = std::fma(support_vectors(j, f), predict_points(i, f), temp);
+                            }
+                            temp = weights(c, j) * static_cast<real_type>(std::tanh(static_cast<real_type>(params.gamma.value()) * temp + static_cast<real_type>(params.coef0.value())));
+                            if (j == 0) {
+                                temp -= rho[c];
+                            }
+                            result(i - row_offset, c) += temp;
+                        }
+                    }
+                }
+            }
+            break;
+        case plssvm::kernel_function_type::laplacian:
+            {
+                for (std::size_t c = 0; c < num_classes; ++c) {
+                    for (std::size_t i = row_offset; i < row_offset + device_specific_num_rows; ++i) {
+                        for (std::size_t j = 0; j < num_sv; ++j) {
+                            real_type temp{ 0.0 };
+                            for (std::size_t f = 0; f < num_features; ++f) {
+                                temp += std::abs(support_vectors(j, f) - predict_points(i, f));
+                            }
+                            temp = weights(c, j) * static_cast<real_type>(std::exp(static_cast<real_type>(-params.gamma.value()) * temp));
+                            if (j == 0) {
+                                temp -= rho[c];
+                            }
+                            result(i - row_offset, c) += temp;
+                        }
+                    }
+                }
+            }
+            break;
+        case plssvm::kernel_function_type::chi_squared:
+            {
+                for (std::size_t c = 0; c < num_classes; ++c) {
+                    for (std::size_t i = row_offset; i < row_offset + device_specific_num_rows; ++i) {
+                        for (std::size_t j = 0; j < num_sv; ++j) {
+                            real_type temp{ 0.0 };
+                            for (std::size_t f = 0; f < num_features; ++f) {
+                                const real_type diff = support_vectors(j, f) - predict_points(i, f);
+                                temp += (diff * diff) / (support_vectors(j, f) + predict_points(i, f));
+                            }
+                            temp = weights(c, j) * static_cast<real_type>(std::exp(static_cast<real_type>(-params.gamma.value()) * temp));
+                            if (j == 0) {
+                                temp -= rho[c];
+                            }
+                            result(i - row_offset, c) += temp;
+                        }
+                    }
+                }
+            }
+            break;
     }
 
     return result;
@@ -214,6 +371,12 @@ real_type kernel_function(const plssvm::parameter &params, const std::vector<rea
             return detail::polynomial_kernel(x, y, params.degree.value(), static_cast<real_type>(params.gamma.value()), static_cast<real_type>(params.coef0.value()));
         case plssvm::kernel_function_type::rbf:
             return detail::rbf_kernel(x, y, static_cast<real_type>(params.gamma.value()));
+        case plssvm::kernel_function_type::sigmoid:
+            return detail::sigmoid_kernel(x, y, static_cast<real_type>(params.gamma.value()), static_cast<real_type>(params.coef0.value()));
+        case plssvm::kernel_function_type::laplacian:
+            return detail::laplacian_kernel(x, y, static_cast<real_type>(params.gamma.value()));
+        case plssvm::kernel_function_type::chi_squared:
+            return detail::chi_squared_kernel(x, y, static_cast<real_type>(params.gamma.value()));
     }
     // unreachable
     return real_type{};
@@ -235,6 +398,12 @@ real_type kernel_function(const plssvm::parameter &params, const plssvm::matrix<
             return detail::polynomial_kernel(X, i, Y, j, params.degree.value(), static_cast<real_type>(params.gamma.value()), static_cast<real_type>(params.coef0.value()));
         case plssvm::kernel_function_type::rbf:
             return detail::rbf_kernel(X, i, Y, j, static_cast<real_type>(params.gamma.value()));
+        case plssvm::kernel_function_type::sigmoid:
+            return detail::sigmoid_kernel(X, i, Y, j, static_cast<real_type>(params.gamma.value()), static_cast<real_type>(params.coef0.value()));
+        case plssvm::kernel_function_type::laplacian:
+            return detail::laplacian_kernel(X, i, Y, j, static_cast<real_type>(params.gamma.value()));
+        case plssvm::kernel_function_type::chi_squared:
+            return detail::chi_squared_kernel(X, i, Y, j, static_cast<real_type>(params.gamma.value()));
     }
     // unreachable
     return real_type{};

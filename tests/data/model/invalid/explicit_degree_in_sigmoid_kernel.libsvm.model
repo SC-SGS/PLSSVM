@@ -1,5 +1,6 @@
 svm_type c_svc
-kernel_type rbf
+kernel_type sigmoid
+degree 2
 gamma 0.001
 coef0 1.5
 nr_class 2

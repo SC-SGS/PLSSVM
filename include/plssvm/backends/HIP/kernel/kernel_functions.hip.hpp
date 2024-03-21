@@ -44,6 +44,35 @@ template <>
     return d * d;
 }
 
+/**
+ * @brief Compute the feature reduction for the laplacian kernel function, i.e., the Manhattan distance.
+ * @param[in] val1 the first feature value
+ * @param[in] val2 the second feature value
+ * @return the reduced value (`[[nodiscard]]`)
+ */
+template <>
+[[nodiscard]] __device__ __forceinline__ real_type feature_reduce<kernel_function_type::laplacian>(const real_type val1, const real_type val2) {
+    return abs(val1 - val2);
+}
+
+/**
+ * @brief Compute the feature reduction for the chi-squared kernel function.
+ * @note Be sure that the denominator isn't 0.0 which may be the case for padding values.
+ * @param[in] val1 the first feature value
+ * @param[in] val2 the second feature value
+ * @return the reduced value (`[[nodiscard]]`)
+ */
+template <>
+[[nodiscard]] __device__ __forceinline__ real_type feature_reduce<kernel_function_type::chi_squared>(const real_type val1, const real_type val2) {
+    const real_type s = val1 + val2;
+    if (s == real_type{ 0.0 }) {
+        return real_type{ 0.0 };
+    } else {
+        const real_type d = val1 - val2;
+        return (d * d) / s;
+    }
+}
+
 //***************************************************//
 //                  kernel functions                 //
 //***************************************************//
@@ -86,6 +115,40 @@ template <>
  */
 template <>
 [[nodiscard]] __device__ __forceinline__ real_type apply_kernel_function<kernel_function_type::rbf>(const real_type value, const real_type gamma) {
+    return exp(-gamma * value);
+}
+
+/**
+ * @brief Compute the sigmoid kernel function using @p value.
+ * @param[in] value the value to apply the sigmoid kernel function to
+ * @param[in] gamma the gamma parameter of the kernel kernel function
+ * @param[in] coef0 the coef0 parameter of the kernel kernel function
+ * @return the result value (`[[nodiscard]]`)
+ */
+template <>
+[[nodiscard]] __device__ __forceinline__ real_type apply_kernel_function<kernel_function_type::sigmoid>(const real_type value, const real_type gamma, const real_type coef0) {
+    return tanh(gamma * value + coef0);
+}
+
+/**
+ * @brief Compute the laplacian function kernel function using @p value.
+ * @param[in] value the value to apply the laplacian kernel function to
+ * @param[in] gamma the gamma parameter of the laplacian kernel function
+ * @return the result value (`[[nodiscard]]`)
+ */
+template <>
+[[nodiscard]] __device__ __forceinline__ real_type apply_kernel_function<kernel_function_type::laplacian>(const real_type value, const real_type gamma) {
+    return exp(-gamma * value);
+}
+
+/**
+ * @brief Compute the chi-squared function kernel function using @p value.
+ * @param[in] value the value to apply the chi-squared kernel function to
+ * @param[in] gamma the gamma parameter of the chi-squared kernel function
+ * @return the result value (`[[nodiscard]]`)
+ */
+template <>
+[[nodiscard]] __device__ __forceinline__ real_type apply_kernel_function<kernel_function_type::chi_squared>(const real_type value, const real_type gamma) {
     return exp(-gamma * value);
 }
 

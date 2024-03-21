@@ -22,11 +22,14 @@ TEST(KernelType, to_string) {
     EXPECT_CONVERSION_TO_STRING(plssvm::kernel_function_type::linear, "linear");
     EXPECT_CONVERSION_TO_STRING(plssvm::kernel_function_type::polynomial, "polynomial");
     EXPECT_CONVERSION_TO_STRING(plssvm::kernel_function_type::rbf, "rbf");
+    EXPECT_CONVERSION_TO_STRING(plssvm::kernel_function_type::sigmoid, "sigmoid");
+    EXPECT_CONVERSION_TO_STRING(plssvm::kernel_function_type::laplacian, "laplacian");
+    EXPECT_CONVERSION_TO_STRING(plssvm::kernel_function_type::chi_squared, "chi_squared");
 }
 
 TEST(KernelType, to_string_unknown) {
     // check conversions to std::string from unknown kernel_type
-    EXPECT_CONVERSION_TO_STRING(static_cast<plssvm::kernel_function_type>(3), "unknown");
+    EXPECT_CONVERSION_TO_STRING(static_cast<plssvm::kernel_function_type>(6), "unknown");
 }
 
 // check whether the std::string -> plssvm::kernel_function_type conversions are correct
@@ -42,6 +45,15 @@ TEST(KernelType, from_string) {
     EXPECT_CONVERSION_FROM_STRING("rbf", plssvm::kernel_function_type::rbf);
     EXPECT_CONVERSION_FROM_STRING("rBf", plssvm::kernel_function_type::rbf);
     EXPECT_CONVERSION_FROM_STRING("2", plssvm::kernel_function_type::rbf);
+    EXPECT_CONVERSION_FROM_STRING("sigmoid", plssvm::kernel_function_type::sigmoid);
+    EXPECT_CONVERSION_FROM_STRING("SIGMOID", plssvm::kernel_function_type::sigmoid);
+    EXPECT_CONVERSION_FROM_STRING("3", plssvm::kernel_function_type::sigmoid);
+    EXPECT_CONVERSION_FROM_STRING("laplacian", plssvm::kernel_function_type::laplacian);
+    EXPECT_CONVERSION_FROM_STRING("Laplacian", plssvm::kernel_function_type::laplacian);
+    EXPECT_CONVERSION_FROM_STRING("4", plssvm::kernel_function_type::laplacian);
+    EXPECT_CONVERSION_FROM_STRING("chi_squared", plssvm::kernel_function_type::chi_squared);
+    EXPECT_CONVERSION_FROM_STRING("CHI-squared", plssvm::kernel_function_type::chi_squared);
+    EXPECT_CONVERSION_FROM_STRING("5", plssvm::kernel_function_type::chi_squared);
 }
 
 TEST(KernelType, from_string_unknown) {
@@ -58,9 +70,12 @@ TEST(KernelType, kernel_to_math_string) {
     EXPECT_EQ(plssvm::kernel_function_type_to_math_string(plssvm::kernel_function_type::linear), "u'*v");
     EXPECT_EQ(plssvm::kernel_function_type_to_math_string(plssvm::kernel_function_type::polynomial), "(gamma*u'*v+coef0)^degree");
     EXPECT_EQ(plssvm::kernel_function_type_to_math_string(plssvm::kernel_function_type::rbf), "exp(-gamma*|u-v|^2)");
+    EXPECT_EQ(plssvm::kernel_function_type_to_math_string(plssvm::kernel_function_type::sigmoid), "tanh(gamma*u'*v+coef0)");
+    EXPECT_EQ(plssvm::kernel_function_type_to_math_string(plssvm::kernel_function_type::laplacian), "exp(-gamma*|u-v|_1)");
+    EXPECT_EQ(plssvm::kernel_function_type_to_math_string(plssvm::kernel_function_type::chi_squared), "exp(-gamma*sum_i((x[i]-y[i])^2/(x[i]+y[i])))");
 }
 
 TEST(KernelType, kernel_to_math_string_unkown) {
     // check conversion from an unknown plssvm::kernel_function_type to the (non-existing) math string
-    EXPECT_EQ(plssvm::kernel_function_type_to_math_string(static_cast<plssvm::kernel_function_type>(3)), "unknown");
+    EXPECT_EQ(plssvm::kernel_function_type_to_math_string(static_cast<plssvm::kernel_function_type>(6)), "unknown");
 }

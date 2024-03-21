@@ -1,7 +1,7 @@
+# this is a comment
 svm_type c_svc
-kernel_type rbf
-gamma 0.001
-coef0 1.5
+kernel_type chi_squared
+gamma 0.025
 nr_class 2
 label 0 1
 total_sv 6

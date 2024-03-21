@@ -175,6 +175,15 @@ auto csvm::run_assemble_kernel_matrix_explicit(const std::size_t device_id, cons
         case kernel_function_type::rbf:
             detail::device_kernel_assembly<kernel_function_type::rbf><<<grid, block>>>(kernel_matrix_d.get(), data_d.get(), num_rows_reduced, device_specific_num_rows, row_offset, num_features, q_red_d.get(), QA_cost, cost_factor, params.gamma.value());
             break;
+        case kernel_function_type::sigmoid:
+            detail::device_kernel_assembly<kernel_function_type::sigmoid><<<grid, block>>>(kernel_matrix_d.get(), data_d.get(), num_rows_reduced, device_specific_num_rows, row_offset, num_features, q_red_d.get(), QA_cost, cost_factor, params.gamma.value(), params.coef0.value());
+            break;
+        case kernel_function_type::laplacian:
+            detail::device_kernel_assembly<kernel_function_type::laplacian><<<grid, block>>>(kernel_matrix_d.get(), data_d.get(), num_rows_reduced, device_specific_num_rows, row_offset, num_features, q_red_d.get(), QA_cost, cost_factor, params.gamma.value());
+            break;
+        case kernel_function_type::chi_squared:
+            detail::device_kernel_assembly<kernel_function_type::chi_squared><<<grid, block>>>(kernel_matrix_d.get(), data_d.get(), num_rows_reduced, device_specific_num_rows, row_offset, num_features, q_red_d.get(), QA_cost, cost_factor, params.gamma.value());
+            break;
     }
     detail::peek_at_last_error();
     detail::device_synchronize(device);
@@ -295,6 +304,15 @@ void csvm::run_assemble_kernel_matrix_implicit_blas_level_3(const std::size_t de
         case kernel_function_type::rbf:
             detail::device_kernel_assembly_symm<kernel_function_type::rbf><<<grid, block>>>(alpha, q_red.get(), A_d.get(), num_rows_reduced, device_specific_num_rows, row_offset, num_features, QA_cost, cost_factor, B_d.get(), C_d.get(), num_classes, params.gamma.value());
             break;
+        case kernel_function_type::sigmoid:
+            detail::device_kernel_assembly_symm<kernel_function_type::sigmoid><<<grid, block>>>(alpha, q_red.get(), A_d.get(), num_rows_reduced, device_specific_num_rows, row_offset, num_features, QA_cost, cost_factor, B_d.get(), C_d.get(), num_classes, params.gamma.value(), params.coef0.value());
+            break;
+        case kernel_function_type::laplacian:
+            detail::device_kernel_assembly_symm<kernel_function_type::laplacian><<<grid, block>>>(alpha, q_red.get(), A_d.get(), num_rows_reduced, device_specific_num_rows, row_offset, num_features, QA_cost, cost_factor, B_d.get(), C_d.get(), num_classes, params.gamma.value());
+            break;
+        case kernel_function_type::chi_squared:
+            detail::device_kernel_assembly_symm<kernel_function_type::chi_squared><<<grid, block>>>(alpha, q_red.get(), A_d.get(), num_rows_reduced, device_specific_num_rows, row_offset, num_features, QA_cost, cost_factor, B_d.get(), C_d.get(), num_classes, params.gamma.value());
+            break;
     }
     detail::peek_at_last_error();
     detail::device_synchronize(device);
@@ -371,6 +389,15 @@ auto csvm::run_predict_kernel(const std::size_t device_id, const parameter &para
                 break;
             case kernel_function_type::rbf:
                 detail::device_kernel_predict<kernel_function_type::rbf><<<grid, block>>>(out_d.get(), alpha_d.get(), rho_d.get(), sv_or_w_d.get(), predict_points_d.get(), num_classes, num_sv, num_predict_points, num_features, params.gamma.value());
+                break;
+            case kernel_function_type::sigmoid:
+                detail::device_kernel_predict<kernel_function_type::sigmoid><<<grid, block>>>(out_d.get(), alpha_d.get(), rho_d.get(), sv_or_w_d.get(), predict_points_d.get(), num_classes, num_sv, num_predict_points, num_features, params.gamma.value(), params.coef0.value());
+                break;
+            case kernel_function_type::laplacian:
+                detail::device_kernel_predict<kernel_function_type::laplacian><<<grid, block>>>(out_d.get(), alpha_d.get(), rho_d.get(), sv_or_w_d.get(), predict_points_d.get(), num_classes, num_sv, num_predict_points, num_features, params.gamma.value());
+                break;
+            case kernel_function_type::chi_squared:
+                detail::device_kernel_predict<kernel_function_type::chi_squared><<<grid, block>>>(out_d.get(), alpha_d.get(), rho_d.get(), sv_or_w_d.get(), predict_points_d.get(), num_classes, num_sv, num_predict_points, num_features, params.gamma.value());
                 break;
         }
     }
