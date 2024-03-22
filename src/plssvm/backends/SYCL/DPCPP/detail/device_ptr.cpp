@@ -91,13 +91,18 @@ void device_ptr<T>::copy_to_device_strided(const_host_pointer_type data_to_copy,
 #if defined(SYCL_EXT_ONEAPI_MEMCPY2D)
     queue_.impl->sycl_queue.ext_oneapi_copy2d(data_to_copy, spitch, data_, this->shape_padded().x, width, height);
 #else
-    std::vector<value_type> temp(this->shape_padded().x * height, value_type{ 0.0 });
-    value_type *pos = temp.data();
-    for (std::size_t row = 0; row < height; ++row) {
-        std::memcpy(pos, data_to_copy + row * spitch, width * sizeof(value_type));
-        pos += this->shape_padded().x;
+    if (spitch == width) {
+        // can use normal copy since we have no line strides
+        this->copy_to_device(data_to_copy, 0, width * height);
+    } else {
+        std::vector<value_type> temp(this->shape_padded().x * height, value_type{ 0.0 });
+        value_type *pos = temp.data();
+        for (std::size_t row = 0; row < height; ++row) {
+            std::memcpy(pos, data_to_copy + row * spitch, width * sizeof(value_type));
+            pos += this->shape_padded().x;
+        }
+        this->copy_to_device(temp);
     }
-    this->copy_to_device(temp);
 #endif
 }
 
