@@ -128,13 +128,13 @@ struct parameter {
         this->set_named_arguments(std::forward<Args>(named_args)...);
     }
 
-    /// The used kernel function: linear, polynomial, or radial basis functions (rbf).
+    /// The used kernel function: linear, polynomial, radial basis functions (rbf), sigmoid, laplacian, or chi-squared.
     default_value<kernel_function_type> kernel_type{ default_init<kernel_function_type>{ kernel_function_type::rbf } };
     /// The degree parameter used in the polynomial kernel function.
     default_value<int> degree{ default_init<int>{ 3 } };
-    /// The gamma parameter used in the polynomial and rbf kernel functions.
+    /// The gamma parameter used in the polynomial, rbf, sigmoid, laplacian, or chi-squared kernel functions.
     default_value<real_type> gamma{ default_init<real_type>{ 0.0 } };
-    /// The coef0 parameter used in the polynomial kernel function.
+    /// The coef0 parameter used in the polynomial or sigmoid kernel functions.
     default_value<real_type> coef0{ default_init<real_type>{ 0.0 } };
     /// The cost parameter in the C-SVM.
     default_value<real_type> cost{ default_init<real_type>{ 1.0 } };
@@ -160,7 +160,11 @@ struct parameter {
             case kernel_function_type::polynomial:
                 return degree == other.degree && gamma == other.gamma && coef0 == other.coef0 && cost == other.cost;
             case kernel_function_type::rbf:
+            case kernel_function_type::laplacian:
+            case kernel_function_type::chi_squared:
                 return gamma == other.gamma && cost == other.cost;
+            case kernel_function_type::sigmoid:
+                return gamma == other.gamma && coef0 == other.coef0 && cost == other.cost;
         }
         return false;
     }
@@ -210,7 +214,7 @@ struct parameter {
             // get the value of the provided named parameter
             degree = detail::get_value_from_named_parameter<typename decltype(degree)::value_type>(parser, plssvm::degree);
             // runtime check: the value may only be used with a specific kernel type
-            if (kernel_type == kernel_function_type::linear || kernel_type == kernel_function_type::rbf) {
+            if (kernel_type != kernel_function_type::polynomial) {
                 print_warning("degree", kernel_type);
             }
         }
@@ -218,7 +222,7 @@ struct parameter {
             // get the value of the provided named parameter
             coef0 = detail::get_value_from_named_parameter<typename decltype(coef0)::value_type>(parser, plssvm::coef0);
             // runtime check: the value may only be used with a specific kernel type
-            if (kernel_type == kernel_function_type::linear || kernel_type == kernel_function_type::rbf) {
+            if (kernel_type != kernel_function_type::polynomial && kernel_type != kernel_function_type::sigmoid) {
                 print_warning("coef0", kernel_type);
             }
         }

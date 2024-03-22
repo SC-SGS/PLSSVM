@@ -24,12 +24,18 @@ namespace plssvm {
  * @brief Enum class for all implemented kernel functions.
  */
 enum class kernel_function_type {
-    /** Linear kernel function: \f$\vec{u}^T \cdot \vec{v}\f$. */
+    /** Linear kernel function: \f$\vec{u}^T \cdot \vec{v}\f$ */
     linear = 0,
-    /** Polynomial kernel function: \f$(gamma \cdot \vec{u}^T \cdot \vec{v} + coef0)^{degree}\f$. */
+    /** Polynomial kernel function: \f$(gamma \cdot \vec{u}^T \cdot \vec{v} + coef0)^{degree}\f$ */
     polynomial = 1,
-    /** Radial basis function: \f$e^{(-gamma \cdot |\vec{u} - \vec{v}|^2)}\f$. */
-    rbf = 2
+    /** Radial basis function: \f$\exp(-gamma \cdot |\vec{u} - \vec{v}|^2)\f$ */
+    rbf = 2,
+    /** Sigmoid kernel function: \f$\tanh(gamma \cdot \vec{u}^T \cdot \vec{v} + coef0)\f$ */
+    sigmoid = 3,
+    /** Laplacian kernel function: \f$\exp(-gamma \cdot |\vec{u} - \vec{v}|_1)\f$ */
+    laplacian = 4,
+    /** Chi-squared kernel function (only well-defined for values > 0): \f$\exp(-gamma \cdot \sum_i \frac{(x[i] - y[i])^2}{x[i] + y[i]})\f$ */
+    chi_squared = 5
 };
 
 /**

@@ -157,7 +157,8 @@ void csvm::init(const target_platform target) {
                         "\n");
 
     // sanity checks for the number of the OpenCL kernels
-    PLSSVM_ASSERT(std::all_of(devices_.begin(), devices_.end(), [](const queue_type &queue) { return queue.kernels.size() == 10; }), "Every command queue must have exactly seven associated kernels!");
+    PLSSVM_ASSERT(std::all_of(devices_.begin(), devices_.end(), [](const queue_type &queue) { return queue.kernels.size() == 13; }),
+                  "Every command queue must have exactly thirteen associated kernels!");
 
     PLSSVM_ASSERT(std::all_of(devices_.begin(), devices_.end(), [](const queue_type &queue) { return ::plssvm::detail::contains(queue.kernels, detail::compute_kernel_name::assemble_kernel_matrix_explicit); }),
                   "The explicit kernel matrix assembly device kernel is missing!");
@@ -182,6 +183,12 @@ void csvm::init(const target_platform target) {
                   "The predict_kernel_polynomial device kernel is missing!");
     PLSSVM_ASSERT(std::all_of(devices_.begin(), devices_.end(), [](const queue_type &queue) { return ::plssvm::detail::contains(queue.kernels, detail::compute_kernel_name::predict_kernel_rbf); }),
                   "The predict_kernel_rbf device kernel is missing!");
+    PLSSVM_ASSERT(std::all_of(devices_.begin(), devices_.end(), [](const queue_type &queue) { return ::plssvm::detail::contains(queue.kernels, detail::compute_kernel_name::predict_kernel_sigmoid); }),
+                  "The predict_kernel_sigmoid device kernel is missing!");
+    PLSSVM_ASSERT(std::all_of(devices_.begin(), devices_.end(), [](const queue_type &queue) { return ::plssvm::detail::contains(queue.kernels, detail::compute_kernel_name::predict_kernel_laplacian); }),
+                  "The predict_kernel_laplacian device kernel is missing!");
+    PLSSVM_ASSERT(std::all_of(devices_.begin(), devices_.end(), [](const queue_type &queue) { return ::plssvm::detail::contains(queue.kernels, detail::compute_kernel_name::predict_kernel_chi_squared); }),
+                  "The predict_kernel_chi_squared device kernel is missing!");
 }
 
 std::vector<::plssvm::detail::memory_size> csvm::get_device_memory() const {
@@ -264,6 +271,15 @@ auto csvm::run_assemble_kernel_matrix_explicit(const std::size_t device_id, cons
             detail::run_kernel(device, device.get_kernel(detail::compute_kernel_name::assemble_kernel_matrix_explicit), grid, block, kernel_matrix_d.get(), data_d.get(), num_rows_reduced, device_specific_num_rows, row_offset, num_features, q_red_d.get(), QA_cost, cost_factor, params.degree.value(), params.gamma.value(), params.coef0.value());
             break;
         case kernel_function_type::rbf:
+            detail::run_kernel(device, device.get_kernel(detail::compute_kernel_name::assemble_kernel_matrix_explicit), grid, block, kernel_matrix_d.get(), data_d.get(), num_rows_reduced, device_specific_num_rows, row_offset, num_features, q_red_d.get(), QA_cost, cost_factor, params.gamma.value());
+            break;
+        case kernel_function_type::sigmoid:
+            detail::run_kernel(device, device.get_kernel(detail::compute_kernel_name::assemble_kernel_matrix_explicit), grid, block, kernel_matrix_d.get(), data_d.get(), num_rows_reduced, device_specific_num_rows, row_offset, num_features, q_red_d.get(), QA_cost, cost_factor, params.gamma.value(), params.coef0.value());
+            break;
+        case kernel_function_type::laplacian:
+            detail::run_kernel(device, device.get_kernel(detail::compute_kernel_name::assemble_kernel_matrix_explicit), grid, block, kernel_matrix_d.get(), data_d.get(), num_rows_reduced, device_specific_num_rows, row_offset, num_features, q_red_d.get(), QA_cost, cost_factor, params.gamma.value());
+            break;
+        case kernel_function_type::chi_squared:
             detail::run_kernel(device, device.get_kernel(detail::compute_kernel_name::assemble_kernel_matrix_explicit), grid, block, kernel_matrix_d.get(), data_d.get(), num_rows_reduced, device_specific_num_rows, row_offset, num_features, q_red_d.get(), QA_cost, cost_factor, params.gamma.value());
             break;
     }
@@ -378,6 +394,15 @@ void csvm::run_assemble_kernel_matrix_implicit_blas_level_3(const std::size_t de
         case kernel_function_type::rbf:
             detail::run_kernel(device, device.get_kernel(detail::compute_kernel_name::assemble_kernel_matrix_implicit_blas), grid, block, alpha, q_red.get(), A_d.get(), num_rows_reduced, device_specific_num_rows, row_offset, num_features, QA_cost, cost_factor, B_d.get(), C_d.get(), num_classes, params.gamma.value());
             break;
+        case kernel_function_type::sigmoid:
+            detail::run_kernel(device, device.get_kernel(detail::compute_kernel_name::assemble_kernel_matrix_implicit_blas), grid, block, alpha, q_red.get(), A_d.get(), num_rows_reduced, device_specific_num_rows, row_offset, num_features, QA_cost, cost_factor, B_d.get(), C_d.get(), num_classes, params.gamma.value(), params.coef0.value());
+            break;
+        case kernel_function_type::laplacian:
+            detail::run_kernel(device, device.get_kernel(detail::compute_kernel_name::assemble_kernel_matrix_implicit_blas), grid, block, alpha, q_red.get(), A_d.get(), num_rows_reduced, device_specific_num_rows, row_offset, num_features, QA_cost, cost_factor, B_d.get(), C_d.get(), num_classes, params.gamma.value());
+            break;
+        case kernel_function_type::chi_squared:
+            detail::run_kernel(device, device.get_kernel(detail::compute_kernel_name::assemble_kernel_matrix_implicit_blas), grid, block, alpha, q_red.get(), A_d.get(), num_rows_reduced, device_specific_num_rows, row_offset, num_features, QA_cost, cost_factor, B_d.get(), C_d.get(), num_classes, params.gamma.value());
+            break;
     }
     detail::device_synchronize(device);
 }
@@ -450,6 +475,15 @@ auto csvm::run_predict_kernel(const std::size_t device_id, const parameter &para
                 break;
             case kernel_function_type::rbf:
                 detail::run_kernel(device, device.get_kernel(detail::compute_kernel_name::predict_kernel_rbf), grid, block, out_d.get(), alpha_d.get(), rho_d.get(), sv_or_w_d.get(), predict_points_d.get(), num_classes, num_sv, num_predict_points, num_features, params.gamma.value());
+                break;
+            case kernel_function_type::sigmoid:
+                detail::run_kernel(device, device.get_kernel(detail::compute_kernel_name::predict_kernel_sigmoid), grid, block, out_d.get(), alpha_d.get(), rho_d.get(), sv_or_w_d.get(), predict_points_d.get(), num_classes, num_sv, num_predict_points, num_features, params.gamma.value(), params.coef0.value());
+                break;
+            case kernel_function_type::laplacian:
+                detail::run_kernel(device, device.get_kernel(detail::compute_kernel_name::predict_kernel_laplacian), grid, block, out_d.get(), alpha_d.get(), rho_d.get(), sv_or_w_d.get(), predict_points_d.get(), num_classes, num_sv, num_predict_points, num_features, params.gamma.value());
+                break;
+            case kernel_function_type::chi_squared:
+                detail::run_kernel(device, device.get_kernel(detail::compute_kernel_name::predict_kernel_chi_squared), grid, block, out_d.get(), alpha_d.get(), rho_d.get(), sv_or_w_d.get(), predict_points_d.get(), num_classes, num_sv, num_predict_points, num_features, params.gamma.value());
                 break;
         }
     }

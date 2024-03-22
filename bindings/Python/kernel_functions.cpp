@@ -44,6 +44,34 @@ void init_kernel_functions(py::module_ &m) {
         py::arg("y"),
         py::pos_only(),
         py::arg("gamma") = std::nullopt);
+    m.def(
+        "sigmoid_kernel_function", [](const std::vector<plssvm::real_type> &x, const std::vector<plssvm::real_type> &y, const std::optional<plssvm::real_type> gamma, const plssvm::real_type coef0) {
+            return plssvm::kernel_function<plssvm::kernel_function_type::sigmoid>(x, y, gamma.has_value() ? gamma.value() : plssvm::real_type{ 1.0 } / static_cast<plssvm::real_type>(x.size()), coef0);
+        },
+        "apply the sigmoid kernel function to two vectors",
+        py::arg("x"),
+        py::arg("y"),
+        py::pos_only(),
+        py::arg("gamma") = std::nullopt,
+        py::arg("coef0") = default_params.coef0.value());
+    m.def(
+        "laplacian_kernel_function", [](const std::vector<plssvm::real_type> &x, const std::vector<plssvm::real_type> &y, const std::optional<plssvm::real_type> gamma) {
+            return plssvm::kernel_function<plssvm::kernel_function_type::laplacian>(x, y, gamma.has_value() ? gamma.value() : plssvm::real_type{ 1.0 } / static_cast<plssvm::real_type>(x.size()));
+        },
+        "apply the laplacian kernel function to two vectors",
+        py::arg("x"),
+        py::arg("y"),
+        py::pos_only(),
+        py::arg("gamma") = std::nullopt);
+    m.def(
+        "chi_squared_kernel_function", [](const std::vector<plssvm::real_type> &x, const std::vector<plssvm::real_type> &y, const std::optional<plssvm::real_type> gamma) {
+            return plssvm::kernel_function<plssvm::kernel_function_type::chi_squared>(x, y, gamma.has_value() ? gamma.value() : plssvm::real_type{ 1.0 } / static_cast<plssvm::real_type>(x.size()));
+        },
+        "apply the chi-squared kernel function to two vectors",
+        py::arg("x"),
+        py::arg("y"),
+        py::pos_only(),
+        py::arg("gamma") = std::nullopt);
 
     m.def(
         "kernel_function", [](const std::vector<plssvm::real_type> &x, const std::vector<plssvm::real_type> &y, plssvm::parameter params) {

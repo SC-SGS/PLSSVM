@@ -455,3 +455,14 @@ TYPED_TEST(VectorOperationsDeathTest, operator_squared_euclidean_dist) {
     EXPECT_DEATH(std::ignore = squared_euclidean_dist(this->get_a(), this->get_b()), "Sizes mismatch!: 4 != 2");
     EXPECT_DEATH(std::ignore = squared_euclidean_dist(this->get_b(), this->get_a()), "Sizes mismatch!: 2 != 4");
 }
+
+TYPED_TEST(VectorOperations, operator_manhattan_dist) {
+    // calculate the Manhattan distance between two vectors
+    EXPECT_FLOATING_POINT_NEAR(manhattan_dist(this->get_a(), this->get_b()), 2.5);
+}
+
+TYPED_TEST(VectorOperationsDeathTest, operator_manhattan_dist) {
+    // try to calculate the Manhattan distance between two vectors with different distance
+    EXPECT_DEATH(std::ignore = manhattan_dist(this->get_a(), this->get_b()), "Sizes mismatch!: 4 != 2");
+    EXPECT_DEATH(std::ignore = manhattan_dist(this->get_b(), this->get_a()), "Sizes mismatch!: 2 != 4");
+}

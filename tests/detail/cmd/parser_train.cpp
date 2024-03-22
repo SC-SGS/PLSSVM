@@ -208,7 +208,7 @@ TEST_P(ParserTrainKernel, parsing) {
 // clang-format off
 INSTANTIATE_TEST_SUITE_P(ParserTrain, ParserTrainKernel, ::testing::Combine(
                 ::testing::Values("-t", "--kernel_type"),
-                ::testing::Values("linear", "0", "polynomial", "1", "rbf", "2")),
+                ::testing::Values("linear", "0", "polynomial", "1", "rbf", "2", "sigmoid", "3", "laplacian", "4", "chi-squared", "5")),
                 naming::pretty_print_parameter_flag_and_value<ParserTrainKernel>);
 // clang-format on
 

@@ -63,12 +63,12 @@ TEST(BaseCSVM, construct_from_parameter) {
 
 TEST(BaseCSVM, construct_from_parameter_invalid_kernel_type) {
     // create parameter
-    const plssvm::parameter params{ plssvm::kernel_type = static_cast<plssvm::kernel_function_type>(3) };
+    const plssvm::parameter params{ plssvm::kernel_type = static_cast<plssvm::kernel_function_type>(6) };
 
     // create C-SVM: must be done using the mock class since the csvm base class is pure virtual
     EXPECT_THROW_WHAT(mock_csvm{ params },
                       plssvm::invalid_parameter_exception,
-                      "Invalid kernel function 3 given!");
+                      "Invalid kernel function with value 6 given!");
 }
 
 TEST(BaseCSVM, construct_from_parameter_invalid_gamma) {
@@ -122,9 +122,9 @@ TEST(BaseCSVM, construct_rbf_from_named_parameters) {
 
 TEST(BaseCSVM, construct_from_named_parameters_invalid_kernel_type) {
     // create C-SVM: must be done using the mock class since the csvm base class is pure virtual
-    EXPECT_THROW_WHAT(mock_csvm{ plssvm::kernel_type = static_cast<plssvm::kernel_function_type>(3) },
+    EXPECT_THROW_WHAT(mock_csvm{ plssvm::kernel_type = static_cast<plssvm::kernel_function_type>(6) },
                       plssvm::invalid_parameter_exception,
-                      "Invalid kernel function 3 given!");
+                      "Invalid kernel function with value 6 given!");
 }
 
 TEST(BaseCSVM, construct_from_named_parameters_invalid_gamma) {
@@ -288,7 +288,7 @@ class BaseCSVMMemberBase : public BaseCSVM,
 
     void SetUp() override {
         util::instantiate_template_file<fixture_label_type>(PLSSVM_TEST_PATH "/data/libsvm/6x4_TEMPLATE.libsvm", data_set_file_.filename);
-        const std::string model_template_file = fmt::format(PLSSVM_TEST_PATH "/data/model/{}_classes/6x4_linear_{}_TEMPLATE.libsvm.model",
+        const std::string model_template_file = fmt::format(PLSSVM_TEST_PATH "/data/model/6x4_{}_{}_TEMPLATE.libsvm.model",
                                                             util::get_num_classes<fixture_label_type>(),
                                                             fixture_classification);
         util::instantiate_template_file<fixture_label_type>(model_template_file, model_file_.filename);

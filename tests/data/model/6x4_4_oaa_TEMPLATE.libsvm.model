@@ -1,8 +1,5 @@
 svm_type c_svc
-kernel_type polynomial
-degree 2
-gamma 0.25
-coef0 1.5
+KERNEL_TYPE_PLACEHOLDER
 nr_class 4
 label LABEL_1_PLACEHOLDER LABEL_2_PLACEHOLDER LABEL_3_PLACEHOLDER LABEL_4_PLACEHOLDER
 total_sv 6

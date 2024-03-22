@@ -116,6 +116,15 @@ std::vector<::plssvm::detail::move_only_any> csvm::assemble_kernel_matrix(const 
                     case kernel_function_type::rbf:
                         detail::device_kernel_assembly<kernel_function_type::rbf>(q_red, kernel_matrix, aos_data, QA_cost, cost, params.gamma.value());
                         break;
+                    case kernel_function_type::sigmoid:
+                        detail::device_kernel_assembly<kernel_function_type::sigmoid>(q_red, kernel_matrix, aos_data, QA_cost, cost, params.gamma.value(), params.coef0.value());
+                        break;
+                    case kernel_function_type::laplacian:
+                        detail::device_kernel_assembly<kernel_function_type::laplacian>(q_red, kernel_matrix, aos_data, QA_cost, cost, params.gamma.value());
+                        break;
+                    case kernel_function_type::chi_squared:
+                        detail::device_kernel_assembly<kernel_function_type::chi_squared>(q_red, kernel_matrix, aos_data, QA_cost, cost, params.gamma.value());
+                        break;
                 }
 
                 kernel_matrices_parts[0] = ::plssvm::detail::move_only_any{ std::move(kernel_matrix) };
@@ -180,6 +189,15 @@ void csvm::blas_level_3(const solver_type solver, const real_type alpha, const s
                     case kernel_function_type::rbf:
                         detail::device_kernel_assembly_symm<kernel_function_type::rbf>(alpha, q_red, aos_matr_A, QA_cost, cost, aos_B, beta, aos_C, params.gamma.value());
                         break;
+                    case kernel_function_type::sigmoid:
+                        detail::device_kernel_assembly_symm<kernel_function_type::sigmoid>(alpha, q_red, aos_matr_A, QA_cost, cost, aos_B, beta, aos_C, params.gamma.value(), params.coef0.value());
+                        break;
+                    case kernel_function_type::laplacian:
+                        detail::device_kernel_assembly_symm<kernel_function_type::laplacian>(alpha, q_red, aos_matr_A, QA_cost, cost, aos_B, beta, aos_C, params.gamma.value());
+                        break;
+                    case kernel_function_type::chi_squared:
+                        detail::device_kernel_assembly_symm<kernel_function_type::chi_squared>(alpha, q_red, aos_matr_A, QA_cost, cost, aos_B, beta, aos_C, params.gamma.value());
+                        break;
                 }
             }
             break;
@@ -243,6 +261,15 @@ aos_matrix<real_type> csvm::predict_values(const parameter &params,
             break;
         case kernel_function_type::rbf:
             detail::device_kernel_predict<kernel_function_type::rbf>(out, alpha, rho, support_vectors, predict_points, params.gamma.value());
+            break;
+        case kernel_function_type::sigmoid:
+            detail::device_kernel_predict<kernel_function_type::sigmoid>(out, alpha, rho, support_vectors, predict_points, params.gamma.value(), params.coef0.value());
+            break;
+        case kernel_function_type::laplacian:
+            detail::device_kernel_predict<kernel_function_type::laplacian>(out, alpha, rho, support_vectors, predict_points, params.gamma.value());
+            break;
+        case kernel_function_type::chi_squared:
+            detail::device_kernel_predict<kernel_function_type::chi_squared>(out, alpha, rho, support_vectors, predict_points, params.gamma.value());
             break;
     }
 

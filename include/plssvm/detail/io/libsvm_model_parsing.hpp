@@ -290,12 +290,18 @@ template <typename label_type>
         case plssvm::kernel_function_type::polynomial:
             break;
         case plssvm::kernel_function_type::rbf:
-
+        case plssvm::kernel_function_type::laplacian:
+        case plssvm::kernel_function_type::chi_squared:
             if (!params.degree.is_default()) {
-                throw invalid_file_format_exception{ "Explicitly provided a value for the degree parameter which is not used in the radial basis function kernel!" };
+                throw invalid_file_format_exception{ fmt::format("Explicitly provided a value for the degree parameter which is not used in the {} kernel!", params.kernel_type.value()) };
             }
             if (!params.coef0.is_default()) {
-                throw invalid_file_format_exception{ "Explicitly provided a value for the coef0 parameter which is not used in the radial basis function kernel!" };
+                throw invalid_file_format_exception{ fmt::format("Explicitly provided a value for the coef0 parameter which is not used in the {} kernel!", params.kernel_type.value()) };
+            }
+            break;
+        case plssvm::kernel_function_type::sigmoid:
+            if (!params.degree.is_default()) {
+                throw invalid_file_format_exception{ "Explicitly provided a value for the degree parameter which is not used in the sigmoid kernel!" };
             }
             break;
     }
@@ -590,7 +596,12 @@ template <typename label_type>
             out_string += fmt::format("degree {}\ngamma {}\ncoef0 {}\n", params.degree, params.gamma, params.coef0);
             break;
         case kernel_function_type::rbf:
+        case kernel_function_type::laplacian:
+        case kernel_function_type::chi_squared:
             out_string += fmt::format("gamma {}\n", params.gamma);
+            break;
+        case kernel_function_type::sigmoid:
+            out_string += fmt::format("\ngamma {}\ncoef0 {}\n", params.gamma, params.coef0);
             break;
     }
 

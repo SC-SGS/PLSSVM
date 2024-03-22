@@ -461,8 +461,9 @@ using combine_test_parameters_gtest_t = typename combine_test_parameters_gtest<T
 //*************************************************************************************************************************************//
 
 /// A list of all available kernel function types.
-constexpr std::array<plssvm::kernel_function_type, 3> kernel_functions_to_test{
-    plssvm::kernel_function_type::linear, plssvm::kernel_function_type::polynomial, plssvm::kernel_function_type::rbf
+constexpr std::array<plssvm::kernel_function_type, 6> kernel_functions_to_test{
+    plssvm::kernel_function_type::linear, plssvm::kernel_function_type::polynomial, plssvm::kernel_function_type::rbf,
+    plssvm::kernel_function_type::sigmoid, plssvm::kernel_function_type::laplacian, plssvm::kernel_function_type::chi_squared
 };
 /// A list of all available layout types.
 constexpr std::array<plssvm::layout_type, 2> layout_types_to_test{
@@ -507,6 +508,8 @@ using real_type_layout_type_gtest = combine_test_parameters_gtest_t<real_type_li
 using label_type_classification_type_gtest = combine_test_parameters_gtest_t<label_type_list, classification_type_list>;
 /// A list of a combination of all supported label types and layout types wrapped in a Google test type.
 using label_type_layout_type_gtest = combine_test_parameters_gtest_t<label_type_list, layout_type_list>;
+/// A list of a combination of all supported label types, kernel function and classification types wrapped in a Google test type.
+using label_type_kernel_function_and_classification_type_gtest = combine_test_parameters_gtest_t<label_type_list, kernel_function_and_classification_type_list>;
 /// A list of a combination of all supported label types and classification, kernel function, and solver types wrapped in a Google test type.
 using label_type_solver_and_kernel_function_and_classification_type_gtest = combine_test_parameters_gtest_t<label_type_list, solver_and_kernel_function_and_classification_type_list>;
 

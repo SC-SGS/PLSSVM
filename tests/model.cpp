@@ -43,7 +43,7 @@ class Model : public ::testing::Test,
 
     void SetUp() override {
         // create file used in this test fixture by instantiating the template file
-        const std::string template_filename = fmt::format(PLSSVM_TEST_PATH "/data/model/{}_classes/6x4_linear_{}_TEMPLATE.libsvm.model", util::get_num_classes<fixture_label_type>(), fixture_classification);
+        const std::string template_filename = fmt::format(PLSSVM_TEST_PATH "/data/model/6x4_{}_{}_TEMPLATE.libsvm.model", util::get_num_classes<fixture_label_type>(), fixture_classification);
         util::instantiate_template_file<fixture_label_type>(template_filename, this->filename);
     }
 };
@@ -343,8 +343,8 @@ TYPED_TEST(ModelSave, save) {
         const std::size_t num_classes = util::get_num_classes<label_type>();
 
         const util::temporary_file model_file;
-        const std::string template_file_name = fmt::format(PLSSVM_TEST_PATH "/data/model/{}_classes/6x4_{}_{}_TEMPLATE.libsvm.model", util::get_num_classes<label_type>(), kernel_function, classification);
-        util::instantiate_template_file<label_type>(template_file_name, model_file.filename);
+        const std::string template_file_name = fmt::format(PLSSVM_TEST_PATH "/data/model/6x4_{}_{}_TEMPLATE.libsvm.model", util::get_num_classes<label_type>(), classification);
+        util::instantiate_template_file<label_type>(template_file_name, model_file.filename, kernel_function);
 
         // create a model using an existing LIBSVM model file
         const plssvm::model<label_type> model{ model_file.filename };
@@ -371,7 +371,13 @@ TYPED_TEST(ModelSave, save) {
                 regex_patterns.emplace_back("coef0 [-+]?[0-9]*.?[0-9]+([eE][-+]?[0-9]+)?");
                 break;
             case plssvm::kernel_function_type::rbf:
+            case plssvm::kernel_function_type::laplacian:
+            case plssvm::kernel_function_type::chi_squared:
                 regex_patterns.emplace_back("gamma [-+]?[0-9]*.?[0-9]+([eE][-+]?[0-9]+)?");
+                break;
+            case plssvm::kernel_function_type::sigmoid:
+                regex_patterns.emplace_back("gamma [-+]?[0-9]*.?[0-9]+([eE][-+]?[0-9]+)?");
+                regex_patterns.emplace_back("coef0 [-+]?[0-9]*.?[0-9]+([eE][-+]?[0-9]+)?");
                 break;
         }
         regex_patterns.emplace_back("nr_class [0-9]+");

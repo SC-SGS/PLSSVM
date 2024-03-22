@@ -127,7 +127,7 @@ TEST(Parameter, construct_named_args) {
 TEST(Parameter, construct_parameter_and_named_args) {
     // construct a parameter set
     const plssvm::parameter param_base{
-        plssvm::kernel_type = plssvm::kernel_function_type::polynomial,
+        plssvm::kernel_type = plssvm::kernel_function_type::laplacian,
         plssvm::cost = 0.05,
         plssvm::gamma = -1.0
     };
@@ -215,8 +215,11 @@ TEST(Parameter, equivalent_member_function) {
     const plssvm::parameter params5{ plssvm::kernel_function_type::linear, 2, plssvm::real_type{ -0.02 }, plssvm::real_type{ 0.5 }, plssvm::real_type{ 1.0 } };
     const plssvm::parameter params6{ plssvm::kernel_function_type::polynomial, 2, plssvm::real_type{ 0.02 }, plssvm::real_type{ 1.5 }, plssvm::real_type{ 1.0 } };
     const plssvm::parameter params7{ plssvm::kernel_function_type::polynomial, 2, plssvm::real_type{ 0.02 }, plssvm::real_type{ 1.5 }, plssvm::real_type{ 1.0 } };
-    const plssvm::parameter params8{ static_cast<plssvm::kernel_function_type>(3), 3, plssvm::real_type{ 0.2 }, plssvm::real_type{ -1.5 }, plssvm::real_type{ 0.1 } };
-    const plssvm::parameter params9{ static_cast<plssvm::kernel_function_type>(3), 3, plssvm::real_type{ 0.2 }, plssvm::real_type{ -1.5 }, plssvm::real_type{ 0.1 } };
+    const plssvm::parameter params8{ plssvm::kernel_function_type::sigmoid, 0, plssvm::real_type{ 0.2 }, plssvm::real_type{ -1.5 }, plssvm::real_type{ 0.2 } };
+    const plssvm::parameter params9{ plssvm::kernel_function_type::laplacian, 0, plssvm::real_type{ 0.1 }, plssvm::real_type{ 1.5 }, plssvm::real_type{ 0.1 } };
+    const plssvm::parameter params10{ plssvm::kernel_function_type::chi_squared, 1, plssvm::real_type{ 0.02 }, plssvm::real_type{ 0.5 }, plssvm::real_type{ 1.0 } };
+    const plssvm::parameter params11{ static_cast<plssvm::kernel_function_type>(6), 3, plssvm::real_type{ 0.2 }, plssvm::real_type{ -1.5 }, plssvm::real_type{ 0.1 } };
+    const plssvm::parameter params12{ static_cast<plssvm::kernel_function_type>(6), 3, plssvm::real_type{ 0.2 }, plssvm::real_type{ -1.5 }, plssvm::real_type{ 0.1 } };
 
     // test
     EXPECT_TRUE(params1.equivalent(params2));
@@ -227,6 +230,9 @@ TEST(Parameter, equivalent_member_function) {
     EXPECT_TRUE(params6.equivalent(params7));
     EXPECT_FALSE(params6.equivalent(params8));
     EXPECT_FALSE(params8.equivalent(params9));
+    EXPECT_FALSE(params4.equivalent(params10));
+    EXPECT_FALSE(params6.equivalent(params11));
+    EXPECT_FALSE(params8.equivalent(params12));
 }
 
 TEST(Parameter, equivalent_member_function_default_constructed) {
@@ -247,8 +253,11 @@ TEST(Parameter, equivalent_free_function) {
     const plssvm::parameter params5{ plssvm::kernel_function_type::linear, 2, plssvm::real_type{ -0.02 }, plssvm::real_type{ 0.5 }, plssvm::real_type{ 1.0 } };
     const plssvm::parameter params6{ plssvm::kernel_function_type::polynomial, 2, plssvm::real_type{ 0.02 }, plssvm::real_type{ 1.5 }, plssvm::real_type{ 1.0 } };
     const plssvm::parameter params7{ plssvm::kernel_function_type::polynomial, 2, plssvm::real_type{ 0.02 }, plssvm::real_type{ 1.5 }, plssvm::real_type{ 1.0 } };
-    const plssvm::parameter params8{ static_cast<plssvm::kernel_function_type>(3), 3, plssvm::real_type{ 0.2 }, plssvm::real_type{ -1.5 }, plssvm::real_type{ 0.1 } };
-    const plssvm::parameter params9{ static_cast<plssvm::kernel_function_type>(3), 3, plssvm::real_type{ 0.2 }, plssvm::real_type{ -1.5 }, plssvm::real_type{ 0.1 } };
+    const plssvm::parameter params8{ plssvm::kernel_function_type::sigmoid, 0, plssvm::real_type{ 0.2 }, plssvm::real_type{ -1.5 }, plssvm::real_type{ 0.2 } };
+    const plssvm::parameter params9{ plssvm::kernel_function_type::laplacian, 0, plssvm::real_type{ 0.1 }, plssvm::real_type{ 1.5 }, plssvm::real_type{ 1.0 } };
+    const plssvm::parameter params10{ plssvm::kernel_function_type::chi_squared, 1, plssvm::real_type{ 0.02 }, plssvm::real_type{ 0.5 }, plssvm::real_type{ 0.1 } };
+    const plssvm::parameter params11{ static_cast<plssvm::kernel_function_type>(6), 3, plssvm::real_type{ 0.2 }, plssvm::real_type{ -1.5 }, plssvm::real_type{ 0.1 } };
+    const plssvm::parameter params12{ static_cast<plssvm::kernel_function_type>(6), 3, plssvm::real_type{ 0.2 }, plssvm::real_type{ -1.5 }, plssvm::real_type{ 0.1 } };
 
     // test
     EXPECT_TRUE(plssvm::equivalent(params1, params2));
@@ -259,6 +268,9 @@ TEST(Parameter, equivalent_free_function) {
     EXPECT_TRUE(plssvm::equivalent(params6, params7));
     EXPECT_FALSE(plssvm::equivalent(params6, params8));
     EXPECT_FALSE(plssvm::equivalent(params8, params9));
+    EXPECT_FALSE(plssvm::equivalent(params4, params10));
+    EXPECT_FALSE(plssvm::equivalent(params6, params11));
+    EXPECT_FALSE(plssvm::equivalent(params8, params12));
 }
 
 TEST(Parameter, equivalent_free_function_default_constructed) {

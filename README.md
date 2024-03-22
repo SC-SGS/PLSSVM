@@ -392,8 +392,11 @@ Usage:
 
   -t, --kernel_type arg         set type of kernel function. 
                                          0 -- linear: u'*v
-                                         1 -- polynomial: (gamma*u'*v + coef0)^degree 
-                                         2 -- radial basis function: exp(-gamma*|u-v|^2) (default: 0)
+                                         1 -- polynomial: (gamma*u'*v+coef0)^degree
+                                         2 -- rbf: exp(-gamma*|u-v|^2)
+                                         3 -- sigmoid: tanh(gamma*u'*v+coef0)
+                                         4 -- laplacian: exp(-gamma*|u-v|_1)
+                                         5 -- chi_squared: exp(-gamma*sum_i((x[i]-y[i])^2/(x[i]+y[i]))) (default: 2)
   -d, --degree arg              set degree in kernel function (default: 3)
   -g, --gamma arg               set gamma in kernel function (default: 1 / num_features)
   -r, --coef0 arg               set coef0 in kernel function (default: 0)

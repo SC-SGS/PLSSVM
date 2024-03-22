@@ -283,6 +283,11 @@ TYPED_TEST_P(GenericGPUCSVMKernelFunction, run_assemble_kernel_matrix_explicit) 
         params.gamma = plssvm::real_type{ 0.001 };
     }
     const plssvm::data_set data{ PLSSVM_TEST_FILE };
+    auto data_matr{ data.data() };
+    if constexpr (kernel == plssvm::kernel_function_type::chi_squared) {
+        // chi-squared is well-defined for positive values only
+        data_matr = util::matrix_abs(data_matr);
+    }
 
     // create C-SVM: must be done using the mock class since the member function to test is private or protected
     const mock_csvm_type svm = util::construct_from_tuple<mock_csvm_type>(params, csvm_test_type::additional_arguments);
@@ -291,7 +296,7 @@ TYPED_TEST_P(GenericGPUCSVMKernelFunction, run_assemble_kernel_matrix_explicit) 
     svm.data_distribution_ = std::make_unique<plssvm::detail::triangular_data_distribution>(data.num_data_points() - 1, num_devices);
 
     // perform dimensional reduction
-    const auto [q_red, QA_cost] = ground_truth::perform_dimensional_reduction(params, data.data());
+    const auto [q_red, QA_cost] = ground_truth::perform_dimensional_reduction(params, data_matr);
 
     for (std::size_t device_id = 0; device_id < num_devices; ++device_id) {
         SCOPED_TRACE(fmt::format("device_id {} ({}/{})", device_id, device_id + 1, num_devices));
@@ -303,8 +308,8 @@ TYPED_TEST_P(GenericGPUCSVMKernelFunction, run_assemble_kernel_matrix_explicit) 
         auto &device = svm.devices_[device_id];
 
         // upload complete A and q_red to each device
-        device_ptr_type data_d{ data.data().shape(), data.data().padding(), device };
-        data_d.copy_to_device(data.data());
+        device_ptr_type data_d{ data_matr.shape(), data_matr.padding(), device };
+        data_d.copy_to_device(data_matr);
 
         device_ptr_type q_red_d{ q_red.size() + plssvm::PADDING_SIZE, device };
         q_red_d.copy_to_device(q_red, 0, q_red.size());
@@ -317,7 +322,7 @@ TYPED_TEST_P(GenericGPUCSVMKernelFunction, run_assemble_kernel_matrix_explicit) 
         kernel_matrix_d.copy_to_host(kernel_matrix);
 
         // calculate ground truth
-        const std::vector<plssvm::real_type> correct_kernel_matrix = ground_truth::assemble_device_specific_kernel_matrix(params, data.data(), q_red, QA_cost, *svm.data_distribution_, device_id);
+        const std::vector<plssvm::real_type> correct_kernel_matrix = ground_truth::assemble_device_specific_kernel_matrix(params, data_matr, q_red, QA_cost, *svm.data_distribution_, device_id);
 
         // check for correctness
         ASSERT_EQ(kernel_matrix.size(), correct_kernel_matrix.size());
@@ -336,6 +341,11 @@ TYPED_TEST_P(GenericGPUCSVMKernelFunction, run_assemble_kernel_matrix_implicit_b
         params.gamma = plssvm::real_type{ 0.001 };
     }
     const plssvm::data_set data{ PLSSVM_TEST_FILE };
+    auto data_matr{ data.data() };
+    if constexpr (kernel == plssvm::kernel_function_type::chi_squared) {
+        // chi-squared is well-defined for positive values only
+        data_matr = util::matrix_abs(data_matr);
+    }
 
     // create C-SVM: must be done using the mock class since the member function to test is private or protected
     const mock_csvm_type svm = util::construct_from_tuple<mock_csvm_type>(params, csvm_test_type::additional_arguments);
@@ -344,12 +354,12 @@ TYPED_TEST_P(GenericGPUCSVMKernelFunction, run_assemble_kernel_matrix_implicit_b
     svm.data_distribution_ = std::make_unique<plssvm::detail::triangular_data_distribution>(data.num_data_points() - 1, num_devices);
 
     // perform dimensional reduction
-    const auto [q_red, QA_cost] = ground_truth::perform_dimensional_reduction(params, data.data());
+    const auto [q_red, QA_cost] = ground_truth::perform_dimensional_reduction(params, data_matr);
     const plssvm::real_type alpha{ 1.0 };
     const auto B = util::generate_random_matrix<plssvm::soa_matrix<plssvm::real_type>>(plssvm::shape{ data.num_classes(), data.num_data_points() - 1 }, plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE });
     // note: beta not applied inside the cg_implicit kernel!
 
-    const plssvm::aos_matrix<plssvm::real_type> full_kernel_matrix = ground_truth::assemble_full_kernel_matrix(params, data.data(), q_red, QA_cost);
+    const plssvm::aos_matrix<plssvm::real_type> full_kernel_matrix = ground_truth::assemble_full_kernel_matrix(params, data_matr, q_red, QA_cost);
 
     for (std::size_t device_id = 0; device_id < num_devices; ++device_id) {
         SCOPED_TRACE(fmt::format("device_id {} ({}/{})", device_id, device_id + 1, num_devices));
@@ -363,8 +373,8 @@ TYPED_TEST_P(GenericGPUCSVMKernelFunction, run_assemble_kernel_matrix_implicit_b
         plssvm::soa_matrix<plssvm::real_type> C{ plssvm::shape{ data.num_classes(), data.num_data_points() - 1 }, plssvm::real_type{ 0.0 }, plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE } };
 
         // upload complete A and q_red to each device
-        device_ptr_type data_d{ data.data().shape(), data.data().padding(), device };
-        data_d.copy_to_device(data.data());
+        device_ptr_type data_d{ data_matr.shape(), data_matr.padding(), device };
+        data_d.copy_to_device(data_matr);
 
         device_ptr_type q_red_d{ q_red.size() + plssvm::PADDING_SIZE, device };
         q_red_d.copy_to_device(q_red, 0, q_red.size());
@@ -399,11 +409,16 @@ TYPED_TEST_P(GenericGPUCSVMKernelFunction, run_predict_kernel) {
 
     const plssvm::parameter params{ plssvm::kernel_type = kernel };
     const plssvm::data_set data{ PLSSVM_TEST_FILE };
+    auto data_matr{ data.data() };
+    if constexpr (kernel == plssvm::kernel_function_type::chi_squared) {
+        // chi-squared is well-defined for positive values only
+        data_matr = util::matrix_abs(data_matr);
+    }
 
-    const auto weights = util::generate_specific_matrix<plssvm::aos_matrix<plssvm::real_type>>(plssvm::shape{ data.num_classes(), data.data().num_rows() }, plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE });
-    const auto predict_points = util::generate_specific_matrix<plssvm::soa_matrix<plssvm::real_type>>(plssvm::shape{ data.data().num_rows(), data.data().num_cols() }, plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE });
+    const auto weights = util::generate_specific_matrix<plssvm::aos_matrix<plssvm::real_type>>(plssvm::shape{ data.num_classes(), data_matr.num_rows() }, plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE });
+    const auto predict_points = util::generate_specific_matrix<plssvm::soa_matrix<plssvm::real_type>>(plssvm::shape{ data_matr.num_rows(), data_matr.num_cols() }, plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE });
     const std::vector<plssvm::real_type> rho = util::generate_random_vector<plssvm::real_type>(weights.num_rows());
-    const plssvm::soa_matrix<plssvm::real_type> correct_w = ground_truth::calculate_w(weights, data.data());
+    const plssvm::soa_matrix<plssvm::real_type> correct_w = ground_truth::calculate_w(weights, data_matr);
 
     // create C-SVM: must be done using the mock class since the member function to test is private or protected
     const mock_csvm_type svm = util::construct_from_tuple<mock_csvm_type>(params, csvm_test_type::additional_arguments);
@@ -428,8 +443,8 @@ TYPED_TEST_P(GenericGPUCSVMKernelFunction, run_predict_kernel) {
             sv_or_w_d = device_ptr_type{ plssvm::shape{ data.num_classes(), data.num_features() }, plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE }, device };
             sv_or_w_d.copy_to_device(correct_w);
         } else {
-            sv_or_w_d = device_ptr_type{ data.data().shape(), data.data().padding(), device };
-            sv_or_w_d.copy_to_device(data.data());
+            sv_or_w_d = device_ptr_type{ data_matr.shape(), data_matr.padding(), device };
+            sv_or_w_d.copy_to_device(data_matr);
         }
 
         // load weights to device
@@ -455,7 +470,7 @@ TYPED_TEST_P(GenericGPUCSVMKernelFunction, run_predict_kernel) {
         out.restore_padding();
 
         // check out for correctness
-        const plssvm::aos_matrix<plssvm::real_type> correct_out = ground_truth::predict_device_specific_values(params, correct_w, weights, rho, data.data(), predict_points, *svm.data_distribution_, device_id);
+        const plssvm::aos_matrix<plssvm::real_type> correct_out = ground_truth::predict_device_specific_values(params, correct_w, weights, rho, data_matr, predict_points, *svm.data_distribution_, device_id);
         EXPECT_FLOATING_POINT_MATRIX_NEAR_EPS(out, correct_out, 1e6);
     }
 }

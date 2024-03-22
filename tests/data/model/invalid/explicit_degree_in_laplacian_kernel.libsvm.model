@@ -1,7 +1,7 @@
 svm_type c_svc
-kernel_type rbf
+kernel_type laplacian
+degree 2
 gamma 0.001
-coef0 1.5
 nr_class 2
 label 0 1
 total_sv 6

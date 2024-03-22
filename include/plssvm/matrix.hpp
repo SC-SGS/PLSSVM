@@ -959,6 +959,30 @@ template <typename T, layout_type layout>
     return matr;
 }
 
+/**
+ * @brief Return a new matrix that is the rowwise scale of the matrix @p matr with @p scale, i.e., row `i` of @p matr is scaled by @p scale[i] if @p mask[i] is `true`.
+ * @tparam T the value type of the matrix
+ * @tparam layout the memory layout of the matrix
+ * @param[in] mask the mask
+ * @param[in] scale the scaling values
+ * @param[in] matr the matrix to scale
+ * @return the newly scaled matrix (`[[nodiscard]]`)
+ */
+template <typename T, layout_type layout>
+[[nodiscard]] matrix<T, layout> masked_rowwise_scale(const std::vector<int> &mask, const std::vector<T> &scale, matrix<T, layout> matr) {
+    PLSSVM_ASSERT(scale.size() == matr.num_rows(), "Error: shapes missmatch! ({} != {} (num_rows))", scale.size(), matr.num_rows());
+    PLSSVM_ASSERT(mask.size() == matr.num_rows(), "Error: shapes missmatch! ({} != {} (num_rows))", mask.size(), matr.num_rows());
+    using size_type = typename matrix<T, layout>::size_type;
+
+    std::vector<T> masked_scale{ scale };
+#pragma omp parallel for default(none) shared(mask, scale, masked_scale)
+    for (size_type row = 0; row < scale.size(); ++row) {
+        if (mask[row] == 0) {
+            masked_scale[row] = T{ 0.0 };
+        }
+    }
+    return rowwise_scale(masked_scale, std::move(matr));
+}
 
 /**
  * @brief Typedef for a matrix in Array-of-Struct (AoS) layout.
@@ -1014,7 +1038,7 @@ struct fmt::formatter<plssvm::matrix<T, layout>> {
      * @return the output iterator to write to
      */
     template <typename FormatContext>
-    auto format(const plssvm::matrix<T, layout> &matr, FormatContext &ctx) {
+    auto format(const plssvm::matrix<T, layout> &matr, FormatContext &ctx) const {
         using size_type = typename plssvm::matrix<T, layout>::size_type;
 
         auto it = ctx.out();

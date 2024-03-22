@@ -13,6 +13,8 @@
 #define PLSSVM_TESTS_UTILITY_HPP_
 #pragma once
 
+#include "plssvm/constants.hpp"                    // plssvm::real_type
+#include "plssvm/data_set.hpp"                     // plssvm::data_set
 #include "plssvm/detail/arithmetic_type_name.hpp"  // plssvm::detail::arithmetic_type_name_v
 #include "plssvm/detail/string_utility.hpp"        // plssvm::detail::replace_all
 #include "plssvm/detail/type_traits.hpp"           // plssvm::detail::always_false_v
@@ -248,7 +250,7 @@ template <typename T>
  * @param[in] output_filename the file to save the instantiate template to
  */
 template <typename T>
-inline void instantiate_template_file(const std::string &template_filename, const std::string &output_filename) {
+inline void instantiate_template_file(const std::string &template_filename, const std::string &output_filename, const plssvm::kernel_function_type kernel = plssvm::kernel_function_type::linear) {
     // check whether the template_file exists
     if (!std::filesystem::exists(template_filename)) {
         FAIL() << fmt::format("The template file {} does not exist!", template_filename);
@@ -265,6 +267,25 @@ inline void instantiate_template_file(const std::string &template_filename, cons
     plssvm::detail::replace_all(str, "LABEL_2_PLACEHOLDER", fmt::format("{}", labels[std::min<std::size_t>(1, labels.size() - 1)]));
     plssvm::detail::replace_all(str, "LABEL_3_PLACEHOLDER", fmt::format("{}", labels[std::min<std::size_t>(2, labels.size() - 1)]));
     plssvm::detail::replace_all(str, "LABEL_4_PLACEHOLDER", fmt::format("{}", labels[std::min<std::size_t>(3, labels.size() - 1)]));
+
+    // replace the potential kernel type placeholder
+    std::string kernel_type_replacement = fmt::format("kernel_type {}", kernel);
+    switch (kernel) {
+        case plssvm::kernel_function_type::linear:
+            break;
+        case plssvm::kernel_function_type::polynomial:
+            kernel_type_replacement += fmt::format("\ndegree 2\ngamma 0.25\ncoef0 1.5");
+            break;
+        case plssvm::kernel_function_type::rbf:
+        case plssvm::kernel_function_type::laplacian:
+        case plssvm::kernel_function_type::chi_squared:
+            kernel_type_replacement += fmt::format("\ngamma 0.25");
+            break;
+        case plssvm::kernel_function_type::sigmoid:
+            kernel_type_replacement += fmt::format("\ngamma 0.25\ncoef0 1.5");
+            break;
+    }
+    plssvm::detail::replace_all(str, "KERNEL_TYPE_PLACEHOLDER", kernel_type_replacement);
 
     // write the data set with the correct labels to the temporary file
     std::ofstream out{ output_filename };
@@ -335,42 +356,43 @@ template <typename T>
 }
 
 /**
- * @brief Generate a vector of @p size filled with random floating point values in the range [@p lower, @p upper].
- * @tparam T the type of the elements in the vector (must be a floating point type)
+ * @brief Generate a vector of @p size filled with random floating point values in the @p range.
+ * @tparam real_type the type of the elements in the vector (must be a floating point type)
  * @param[in] size the size of the vector
- * @param[in] lower the lower bound of the random values in the vector
- * @param[in] upper the upper bound of the random values in the vector
+ * @param[in] range a pair containing the lower and upper bound of the random values in the vector
  * @return the randomly generated vector (`[[nodiscard]]`)
  */
-template <typename T>
-[[nodiscard]] inline std::vector<T> generate_random_vector(const std::size_t size, const T lower = T{ -1.0 }, const T upper = T{ 1.0 }) {
-    static_assert(std::is_floating_point_v<T>, "Can only meaningfully use a uniform_real_distribution with a floating point type!");
+template <typename real_type>
+[[nodiscard]] inline std::vector<real_type> generate_random_vector(const std::size_t size, const std::pair<real_type, real_type> range = { real_type{ -1.0 }, real_type{ 1.0 } }) {
+    static_assert(std::is_floating_point_v<real_type>, "Can only meaningfully use a uniform_real_distribution with a floating point type!");
 
-    std::vector<T> vec(size);
+    std::vector<real_type> vec(size);
 
     // fill vectors with random values
     static std::random_device device;
     static std::mt19937 gen(device());
-    std::uniform_real_distribution<T> dist(lower, upper);
+    std::uniform_real_distribution<real_type> dist(range.first, range.second);
     std::generate(vec.begin(), vec.end(), [&]() { return dist(gen); });
 
     return vec;
 }
 
 /**
- * @brief Generate matrix of size @p shape filled with random floating point values in the range `[-1.0, 1.0)`.
- * @tparam matrix_type the type of the elements in the vector (must be a floating point type)
+ * @brief Generate matrix of size @p shape filled with random floating point values in the @p range.
+ * @tparam matrix_type the type of the elements in the matrix (must be a floating point type)
+ * @tparam real_type the type of the elements in the matrix (must be a floating point type)
  * @param[in] shape the shape of the matrix to generate
+ * @param[in] range a pair containing the lower and upper bound of the random values in the matrix
  * @return the randomly generated matrix (`[[nodiscard]]`)
  */
 template <typename matrix_type, typename real_type = typename matrix_type::value_type>
-[[nodiscard]] inline matrix_type generate_random_matrix(const plssvm::shape shape) {
+[[nodiscard]] inline matrix_type generate_random_matrix(const plssvm::shape shape, const std::pair<real_type, real_type> range = { real_type{ -1.0 }, real_type{ 1.0 } }) {
     static_assert(std::is_floating_point_v<real_type>, "Only floating point types are allowed!");
 
     // create random number generator
     static std::random_device device;
     static std::mt19937 gen(device());
-    std::uniform_real_distribution<real_type> dist(real_type{ -1.0 }, real_type{ 1.0 });
+    std::uniform_real_distribution<real_type> dist(range.first, range.second);
 
     matrix_type matrix{ shape };
     for (std::size_t i = 0; i < matrix.num_rows(); ++i) {
@@ -383,16 +405,17 @@ template <typename matrix_type, typename real_type = typename matrix_type::value
 }
 
 /**
- * @brief Generate matrix of size (@p shape.x + @p padding.x) times (@p shape.y + @p padding.y) filled with random floating point values in the range `[-1.0, 1.0)`.
- *        The padding entries are set to `0`.
- * @tparam matrix_type the type of the elements in the vector (must be a floating point type)
+ * @brief Generate matrix of size (@p shape.x + @p padding.x) times (@p shape.y + @p padding.y) filled with random floating point values in the @p range. The padding entries are set to `0`.
+ * @tparam matrix_type the type of the elements in the matrix (must be a floating point type)
+ * @tparam real_type the type of the elements in the matrix (must be a floating point type)
  * @param[in] shape the shape of the matrix to generate
  * @param[in] padding the padding of the matrix
+ * @param[in] range a pair containing the lower and upper bound of the random values in the matrix
  * @return the randomly generated matrix (`[[nodiscard]]`)
  */
 template <typename matrix_type, typename real_type = typename matrix_type::value_type>
-[[nodiscard]] inline matrix_type generate_random_matrix(const plssvm::shape shape, const plssvm::shape padding) {
-    return matrix_type{ generate_random_matrix<matrix_type>(shape), padding };
+[[nodiscard]] inline matrix_type generate_random_matrix(const plssvm::shape shape, const plssvm::shape padding, const std::pair<real_type, real_type> range = { real_type{ -1.0 }, real_type{ 1.0 } }) {
+    return matrix_type{ generate_random_matrix<matrix_type>(shape, range), padding };
 }
 
 /**
@@ -478,6 +501,49 @@ template <typename matrix_type>
 }
 
 /**
+ * @brief Construct an artificial data set that is trivially solvable and should always yield 100% accuracy.
+ * @details Up to three classes are supported. The classes are placed on the three coordinate axis with small random pertubations.
+ * @tparam label_type the label type
+ * @param[in] num_data_points the number of data points **per** class
+ * @return the trivially solvable data set (`[[nodiscard]]`)
+ */
+template <typename label_type>
+[[nodiscard]] inline plssvm::data_set<label_type> generate_trivially_solvable_data_set(const std::size_t num_data_points = std::size_t{ 20 }) {
+    const std::vector<label_type> different_labels = util::get_distinct_label<label_type>();
+    const std::size_t num_labels = std::min(different_labels.size(), std::size_t{ 3 });  // at most 3 labels permitted in these tests
+
+    // the data
+    std::vector<std::vector<plssvm::real_type>> data{};
+    data.reserve(num_labels * num_data_points);
+    std::vector<label_type> label{};
+    label.reserve(num_labels * num_data_points);
+
+    static std::random_device device;
+    static std::mt19937 gen(device());
+    std::uniform_real_distribution<plssvm::real_type> dist(plssvm::real_type{ 0.0001 }, plssvm::real_type{ 0.01 });
+
+    for (std::size_t l = 0; l < num_labels; ++l) {
+        for (std::size_t i = 0; i < num_data_points; ++i) {
+            switch (l) {
+                case 0:
+                    data.push_back({ plssvm::real_type{ 10.0 } + dist(gen), plssvm::real_type{ 0.01 }, plssvm::real_type{ 0.01 } });
+                    break;
+                case 1:
+                    data.push_back({ plssvm::real_type{ 0.01 }, plssvm::real_type{ 10.0 } + dist(gen), plssvm::real_type{ 0.01 } });
+                    break;
+                case 2:
+                    data.push_back({ plssvm::real_type{ 0.01 }, plssvm::real_type{ 0.01 }, plssvm::real_type{ 10.0 } + dist(gen) });
+                    break;
+            }
+
+            label.emplace_back(different_labels[l]);
+        }
+    }
+
+    return plssvm::data_set{ std::move(data), std::move(label) };
+}
+
+/**
  * @brief Convert the provided 2D vector to a 1D vector.
  * @tparam T the type in the vector
  * @param[in] vec_2D the 2D input vector
@@ -490,6 +556,20 @@ template <typename T>
         ret.insert(ret.end(), vec.begin(), vec.end());
     }
     return ret;
+}
+
+template <typename matrix_type, typename real_type = typename matrix_type::value_type>
+[[nodiscard]] inline matrix_type matrix_abs(const matrix_type &matr) {
+    static_assert(std::is_floating_point_v<real_type>, "Only floating point types are allowed!");
+
+    matrix_type res{ matr.shape(), matr.padding() };
+    for (std::size_t row = 0; row < matr.num_rows(); ++row) {
+        for (std::size_t col = 0; col < matr.num_cols(); ++col) {
+            res(row, col) = std::abs(matr(row, col));
+        }
+    }
+
+    return res;
 }
 
 /**

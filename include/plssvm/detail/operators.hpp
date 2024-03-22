@@ -15,7 +15,7 @@
 
 #include "plssvm/detail/assert.hpp"  // PLSSVM_ASSERT
 
-#include <cmath>   // std::fma
+#include <cmath>   // std::fma, std::abs
 #include <vector>  // std::vector
 
 //*************************************************************************************************************************************//
@@ -174,7 +174,7 @@ template <typename T>
  * @tparam T the value type
  * @param[in] lhs the first vector
  * @param[in] rhs the second vector
- * @return the squared euclidean distance (`[[nodiscard]]`)
+ * @return the squared Euclidean distance (`[[nodiscard]]`)
  */
 template <typename T>
 [[nodiscard]] inline T squared_euclidean_dist(const std::vector<T> &lhs, const std::vector<T> &rhs) {
@@ -184,6 +184,24 @@ template <typename T>
     for (typename std::vector<T>::size_type i = 0; i < lhs.size(); ++i) {
         const T diff = lhs[i] - rhs[i];
         val = std::fma(diff, diff, val);
+    }
+    return val;
+}
+
+/**
+ * @brief Calculates the Manhattan distance of both vectors: \f$d(x, y) = abs(x_1 - y_1) + abs(x_2 - y_2) + \dots + abs(x_n - y_n)\f$.
+ * @tparam T the value type
+ * @param[in] lhs the first vector
+ * @param[in] rhs the second vector
+ * @return the Manhattan distance (`[[nodiscard]]`)
+ */
+template <typename T>
+[[nodiscard]] inline T manhattan_dist(const std::vector<T> &lhs, const std::vector<T> &rhs) {
+    PLSSVM_ASSERT(lhs.size() == rhs.size(), "Sizes mismatch!: {} != {}", lhs.size(), rhs.size());
+
+    T val{};
+    for (typename std::vector<T>::size_type i = 0; i < lhs.size(); ++i) {
+        val += std::abs(lhs[i] - rhs[i]);
     }
     return val;
 }
