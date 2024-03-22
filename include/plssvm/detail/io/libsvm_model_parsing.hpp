@@ -103,15 +103,9 @@ namespace plssvm::detail::io {
         std::swap(i, j);
     }
 
-    std::size_t global_idx{ 0 };
     const auto i_it = std::lower_bound(index_sets[i].cbegin(), index_sets[i].cend(), idx_to_find);
-    if (i_it != index_sets[i].cend() && *i_it == idx_to_find) {
-        // index found
-        global_idx = std::distance(index_sets[i].cbegin(), i_it);
-    } else {
-        // index not yet found
-        global_idx = index_sets[i].size() + std::distance(index_sets[j].cbegin(), std::lower_bound(index_sets[j].cbegin(), index_sets[j].cend(), idx_to_find));
-    }
+    const auto j_it = std::lower_bound(index_sets[j].cbegin(), index_sets[j].cend(), idx_to_find);
+    const std::size_t global_idx = std::distance(index_sets[i].cbegin(), i_it) + std::distance(index_sets[j].cbegin(), j_it);
 
     PLSSVM_ASSERT(global_idx < index_sets[i].size() + index_sets[j].size(), "The global index ({}) for the provided index to find ({}) must be smaller than the combined size of both index sets ({} + {})!",
                   global_idx, idx_to_find, index_sets[i].size(), index_sets[j].size());
