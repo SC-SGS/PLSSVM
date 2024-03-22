@@ -196,7 +196,7 @@ TYPED_TEST(LIBSVMModelHeaderParseInvalid, explicit_degree_in_rbf_kernel) {
     reader.read_lines('#');
     EXPECT_THROW_WHAT(std::ignore = (plssvm::detail::io::parse_libsvm_model_header<label_type>(reader.lines())),
                       plssvm::invalid_file_format_exception,
-                      "Explicitly provided a value for the degree parameter which is not used in the radial basis function kernel!");
+                      "Explicitly provided a value for the degree parameter which is not used in the rbf kernel!");
 }
 
 TYPED_TEST(LIBSVMModelHeaderParseInvalid, explicit_coef0_in_rbf_kernel) {
@@ -208,7 +208,67 @@ TYPED_TEST(LIBSVMModelHeaderParseInvalid, explicit_coef0_in_rbf_kernel) {
     reader.read_lines('#');
     EXPECT_THROW_WHAT(std::ignore = (plssvm::detail::io::parse_libsvm_model_header<label_type>(reader.lines())),
                       plssvm::invalid_file_format_exception,
-                      "Explicitly provided a value for the coef0 parameter which is not used in the radial basis function kernel!");
+                      "Explicitly provided a value for the coef0 parameter which is not used in the rbf kernel!");
+}
+
+TYPED_TEST(LIBSVMModelHeaderParseInvalid, explicit_degree_in_sigmoid_kernel) {
+    using label_type = util::test_parameter_type_at_t<0, TypeParam>;
+
+    // parse the LIBSVM model file
+    const std::string filename = PLSSVM_TEST_PATH "/data/model/invalid/explicit_degree_in_sigmoid_kernel.libsvm.model";
+    plssvm::detail::io::file_reader reader{ filename };
+    reader.read_lines('#');
+    EXPECT_THROW_WHAT(std::ignore = (plssvm::detail::io::parse_libsvm_model_header<label_type>(reader.lines())),
+                      plssvm::invalid_file_format_exception,
+                      "Explicitly provided a value for the degree parameter which is not used in the sigmoid kernel!");
+}
+
+TYPED_TEST(LIBSVMModelHeaderParseInvalid, explicit_degree_in_laplacian_kernel) {
+    using label_type = util::test_parameter_type_at_t<0, TypeParam>;
+
+    // parse the LIBSVM model file
+    const std::string filename = PLSSVM_TEST_PATH "/data/model/invalid/explicit_degree_in_laplacian_kernel.libsvm.model";
+    plssvm::detail::io::file_reader reader{ filename };
+    reader.read_lines('#');
+    EXPECT_THROW_WHAT(std::ignore = (plssvm::detail::io::parse_libsvm_model_header<label_type>(reader.lines())),
+                      plssvm::invalid_file_format_exception,
+                      "Explicitly provided a value for the degree parameter which is not used in the laplacian kernel!");
+}
+
+TYPED_TEST(LIBSVMModelHeaderParseInvalid, explicit_coef0_in_laplacian_kernel) {
+    using label_type = util::test_parameter_type_at_t<0, TypeParam>;
+
+    // parse the LIBSVM model file
+    const std::string filename = PLSSVM_TEST_PATH "/data/model/invalid/explicit_coef0_in_laplacian_kernel.libsvm.model";
+    plssvm::detail::io::file_reader reader{ filename };
+    reader.read_lines('#');
+    EXPECT_THROW_WHAT(std::ignore = (plssvm::detail::io::parse_libsvm_model_header<label_type>(reader.lines())),
+                      plssvm::invalid_file_format_exception,
+                      "Explicitly provided a value for the coef0 parameter which is not used in the laplacian kernel!");
+}
+
+TYPED_TEST(LIBSVMModelHeaderParseInvalid, explicit_degree_in_chi_squared_kernel) {
+    using label_type = util::test_parameter_type_at_t<0, TypeParam>;
+
+    // parse the LIBSVM model file
+    const std::string filename = PLSSVM_TEST_PATH "/data/model/invalid/explicit_degree_in_chi_squared_kernel.libsvm.model";
+    plssvm::detail::io::file_reader reader{ filename };
+    reader.read_lines('#');
+    EXPECT_THROW_WHAT(std::ignore = (plssvm::detail::io::parse_libsvm_model_header<label_type>(reader.lines())),
+                      plssvm::invalid_file_format_exception,
+                      "Explicitly provided a value for the degree parameter which is not used in the chi_squared kernel!");
+}
+
+TYPED_TEST(LIBSVMModelHeaderParseInvalid, explicit_coef0_in_chi_squared_kernel) {
+    using label_type = util::test_parameter_type_at_t<0, TypeParam>;
+
+    // parse the LIBSVM model file
+    const std::string filename = PLSSVM_TEST_PATH "/data/model/invalid/explicit_coef0_in_chi_squared_kernel.libsvm.model";
+    plssvm::detail::io::file_reader reader{ filename };
+    reader.read_lines('#');
+    EXPECT_THROW_WHAT(std::ignore = (plssvm::detail::io::parse_libsvm_model_header<label_type>(reader.lines())),
+                      plssvm::invalid_file_format_exception,
+                      "Explicitly provided a value for the coef0 parameter which is not used in the chi_squared kernel!");
 }
 
 TYPED_TEST(LIBSVMModelHeaderParseInvalid, missing_nr_class) {

@@ -532,7 +532,6 @@ std::vector<label_type> csvm::predict(const model<label_type> &model, const data
         PLSSVM_ASSERT(model.alpha_ptr_ != nullptr, "The alpha_ptr_ may never be a nullptr!");
         PLSSVM_ASSERT(model.alpha_ptr_->size() == 1, "For OAA, the alpha vector must only contain a single aos_matrix of size {}x{}!", model.num_classes(), model.num_support_vectors());
         PLSSVM_ASSERT(model.alpha_ptr_->front().num_rows() == calculate_number_of_classifiers(classification_type::oaa, data.num_classes()), "The number of rows in the matrix must be {}, but is {}!", model.alpha_ptr_->front().num_rows(), calculate_number_of_classifiers(classification_type::oaa, data.num_classes()));
-        PLSSVM_ASSERT(model.alpha_ptr_->front().num_cols() == data.num_data_points(), "The number of weights ({}) must be equal to the number of support vectors ({})!", model.alpha_ptr_->front().num_cols(), data.num_data_points());
 
         const soa_matrix<real_type> &sv = *model.data_.data_ptr_;
         const aos_matrix<real_type> &alpha = model.alpha_ptr_->front();  // num_classes x num_data_points
@@ -628,7 +627,7 @@ std::vector<label_type> csvm::predict(const model<label_type> &model, const data
                     }
                 } else {
                     // use previously calculated w vector
-                    soa_matrix<real_type> binary_w{ shape{ 1, num_features } };
+                    soa_matrix<real_type> binary_w{ shape{ 1, num_features }, shape{ PADDING_SIZE, PADDING_SIZE } };
 #pragma omp parallel for default(none) shared(model, binary_w) firstprivate(num_features, pos)
                     for (std::size_t dim = 0; dim < num_features; ++dim) {
                         binary_w(0, dim) = (*model.w_ptr_)(pos, dim);

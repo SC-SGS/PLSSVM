@@ -84,8 +84,8 @@ TEST_P(LIBSVMModelUtilityAlphaIdx, calculate_alpha_idx) {
 
 // clang-format off
 INSTANTIATE_TEST_SUITE_P(LIBSVMModelUtilityAlphaIdx, LIBSVMModelUtilityAlphaIdx, ::testing::Values(
-        std::make_tuple(0, 2, 4, 2), std::make_tuple(0, 2, 10, 5), std::make_tuple(0, 1, 1, 3), std::make_tuple(0, 1, 0, 0),
-        std::make_tuple(0, 3, 7, 3), std::make_tuple(0, 3, 9, 4), std::make_tuple(3, 2, 8, 1), std::make_tuple(3, 2, 9, 4),
+        std::make_tuple(0, 2, 4, 2), std::make_tuple(0, 2, 10, 5), std::make_tuple(0, 1, 1, 1), std::make_tuple(0, 1, 0, 0),
+        std::make_tuple(0, 3, 7, 3), std::make_tuple(0, 3, 9, 4), std::make_tuple(3, 2, 8, 2), std::make_tuple(3, 2, 9, 3),
         std::make_tuple(1, 2, 3, 1), std::make_tuple(2, 1, 3, 1)),
         naming::pretty_print_calc_alpha_idx<LIBSVMModelUtilityAlphaIdx>);
 // clang-format on

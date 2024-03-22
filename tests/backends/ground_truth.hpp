@@ -52,7 +52,7 @@ template <typename real_type>
 template <typename real_type>
 [[nodiscard]] real_type polynomial_kernel(const std::vector<real_type> &x, const std::vector<real_type> &y, int degree, real_type gamma, real_type coef0);
 /**
- * @brief Compute the value of the two vectors @p x and @p y using the radial basis function kernel function: \f$e^{(-gamma \cdot |\vec{x} - \vec{y}|^2)}\f$.
+ * @brief Compute the value of the two vectors @p x and @p y using the radial basis function kernel function: \f$\exp(-gamma \cdot |\vec{x} - \vec{y}|^2)\f$.
  * @tparam real_type the type of the data
  * @param[in] x the first vector
  * @param[in] y the second vector
@@ -61,6 +61,37 @@ template <typename real_type>
  */
 template <typename real_type>
 [[nodiscard]] real_type rbf_kernel(const std::vector<real_type> &x, const std::vector<real_type> &y, real_type gamma);
+/**
+ * @brief Compute the value of the two vectors @p x and @p y using the sigmoid kernel function: \f$\tanh(gamma \cdot \vec{x}^T \cdot \vec{y} + coef0)\f$.
+ * @tparam real_type the type of the data
+ * @param[in] x the first vector
+ * @param[in] y the second vector
+ * @param[in] gamma parameter in the kernel function
+ * @param[in] coef0 parameter in the kernel function
+ * @return the result after applying the sigmoid kernel function (`[[nodiscard]]`)
+ */
+template <typename real_type>
+[[nodiscard]] real_type sigmoid_kernel(const std::vector<real_type> &x, const std::vector<real_type> &y, real_type gamma, real_type coef0);
+/**
+ * @brief Compute the value of the two vectors @p x and @p y using the laplacian kernel function: \f$\exp(-gamma \cdot |\vec{x} - \vec{y}|_1)\f$.
+ * @tparam real_type the type of the data
+ * @param[in] x the first vector
+ * @param[in] y the second vector
+ * @param[in] gamma parameter in the kernel function
+ * @return the result after applying the laplacian kernel function (`[[nodiscard]]`)
+ */
+template <typename real_type>
+[[nodiscard]] real_type laplacian_kernel(const std::vector<real_type> &x, const std::vector<real_type> &y, real_type gamma);
+/**
+ * @brief Compute the value of the two vectors @p x and @p y using the chi-squared kernel function: \f$\exp(-gamma \cdot \sum_i \frac{(x[i] - y[i])^2}{x[i] + y[i]})\f$.
+ * @tparam real_type the type of the data
+ * @param[in] x the first vector
+ * @param[in] y the second vector
+ * @param[in] gamma parameter in the kernel function
+ * @return the result after applying the chi-squared kernel function (`[[nodiscard]]`)
+ */
+template <typename real_type>
+[[nodiscard]] real_type chi_squared_kernel(const std::vector<real_type> &x, const std::vector<real_type> &y, real_type gamma);
 
 /**
  * @brief Compute the value of the two matrices @p X and @p Y at rows @p i and @p j respectively using the linear kernel function: \f$\vec{x}^T \cdot \vec{y}\f$.
@@ -100,6 +131,43 @@ template <typename real_type, plssvm::layout_type layout>
  */
 template <typename real_type, plssvm::layout_type layout>
 [[nodiscard]] real_type rbf_kernel(const plssvm::matrix<real_type, layout> &X, std::size_t i, const plssvm::matrix<real_type, layout> &Y, std::size_t j, real_type gamma);
+/**
+ * @brief Compute the value of the two matrices @p X and @p Y at rows @p i and @p j respectively using the sigmoid kernel function: \f$\tanh(gamma \cdot \vec{x}^T \cdot \vec{y} + coef0)\f$.
+ * @tparam real_type the type of the data
+ * @param[in] X the first matrix
+ * @param[in] i the row used in the first matrix
+ * @param[in] Y the second matrix
+ * @param[in] j the row used in the second matrix
+ * @param[in] gamma parameter in the kernel function
+ * @param[in] coef0 parameter in the kernel function
+ * @return the result after applying the rbf kernel function (`[[nodiscard]]`)
+ */
+template <typename real_type, plssvm::layout_type layout>
+[[nodiscard]] real_type sigmoid_kernel(const plssvm::matrix<real_type, layout> &X, std::size_t i, const plssvm::matrix<real_type, layout> &Y, std::size_t j, real_type gamma, real_type coef0);
+/**
+ * @brief Compute the value of the two matrices @p X and @p Y at rows @p i and @p j respectively using the laplacian kernel function: \f$\exp(-gamma \cdot |\vec{x} - \vec{y}|_1)\f$.
+ * @tparam real_type the type of the data
+ * @param[in] X the first matrix
+ * @param[in] i the row used in the first matrix
+ * @param[in] Y the second matrix
+ * @param[in] j the row used in the second matrix
+ * @param[in] gamma parameter in the kernel function
+ * @return the result after applying the rbf kernel function (`[[nodiscard]]`)
+ */
+template <typename real_type, plssvm::layout_type layout>
+[[nodiscard]] real_type laplacian_kernel(const plssvm::matrix<real_type, layout> &X, std::size_t i, const plssvm::matrix<real_type, layout> &Y, std::size_t j, real_type gamma);
+/**
+ * @brief Compute the value of the two matrices @p X and @p Y at rows @p i and @p j respectively using the chi-squared kernel function: \f$\exp(-gamma \cdot \sum_i \frac{(x[i] - y[i])^2}{x[i] + y[i]})\f$.
+ * @tparam real_type the type of the data
+ * @param[in] X the first matrix
+ * @param[in] i the row used in the first matrix
+ * @param[in] Y the second matrix
+ * @param[in] j the row used in the second matrix
+ * @param[in] gamma parameter in the kernel function
+ * @return the result after applying the rbf kernel function (`[[nodiscard]]`)
+ */
+template <typename real_type, plssvm::layout_type layout>
+[[nodiscard]] real_type chi_squared_kernel(const plssvm::matrix<real_type, layout> &X, std::size_t i, const plssvm::matrix<real_type, layout> &Y, std::size_t j, real_type gamma);
 
 /**
  * @brief Predict the values for the @p predict_points (starting at @p row_offset using @p device_specific_num_rows number of predict points) using the previously learned @p weights and @p support_vectors.

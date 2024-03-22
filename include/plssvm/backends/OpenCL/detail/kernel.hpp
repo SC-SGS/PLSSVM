@@ -41,7 +41,13 @@ enum class compute_kernel_name {
     /// The predict kernel for the polynomial kernel function.
     predict_kernel_polynomial,
     /// The predict kernel for the radial basis function kernel function.
-    predict_kernel_rbf
+    predict_kernel_rbf,
+    /// The predict kernel for the sigmoid kernel function.
+    predict_kernel_sigmoid,
+    /// The predict kernel for the laplacian kernel function.
+    predict_kernel_laplacian,
+    /// The predict kernel for the chi-squared kernel function.
+    predict_kernel_chi_squared
 };
 
 /**

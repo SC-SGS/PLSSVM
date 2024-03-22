@@ -41,6 +41,16 @@ parser_train::parser_train(int argc, char **argv) {
     PLSSVM_ASSERT(argc >= 1, fmt::format("At least one argument is always given (the executable name), but argc is {}!", argc));
     PLSSVM_ASSERT(argv != nullptr, "At least one argument is always given (the executable name), but argv is a nullptr!");
 
+    // create the help message for the kernel function type
+    const auto kernel_type_to_help_entry = [](const kernel_function_type kernel) {
+        return fmt::format("\t {} -- {}: {}\n", detail::to_underlying(kernel), kernel, kernel_function_type_to_math_string(kernel));
+    };
+    std::string kernel_type_help{ "set type of kernel function. \n" };
+    for (const kernel_function_type kernel : { kernel_function_type::linear, kernel_function_type::polynomial, kernel_function_type::rbf, kernel_function_type::sigmoid, kernel_function_type::laplacian, kernel_function_type::chi_squared }) {
+        kernel_type_help += kernel_type_to_help_entry(kernel);
+    }
+    kernel_type_help.pop_back();  // remove last newline character
+
     cxxopts::Options options(argv[0], "LS-SVM with multiple (GPU-)backends");
     options
         .positional_help("training_set_file [model_file]")
@@ -50,7 +60,7 @@ parser_train::parser_train(int argc, char **argv) {
         .set_tab_expansion()
         // clang-format off
        .add_options()
-           ("t,kernel_type", "set type of kernel function. \n\t 0 -- linear: u'*v\n\t 1 -- polynomial: (gamma*u'*v + coef0)^degree \n\t 2 -- radial basis function: exp(-gamma*|u-v|^2)", cxxopts::value<typename decltype(csvm_params.kernel_type)::value_type>()->default_value(fmt::format("{}", detail::to_underlying(csvm_params.kernel_type))))
+           ("t,kernel_type", kernel_type_help, cxxopts::value<typename decltype(csvm_params.kernel_type)::value_type>()->default_value(fmt::format("{}", detail::to_underlying(csvm_params.kernel_type))))
            ("d,degree", "set degree in kernel function", cxxopts::value<typename decltype(csvm_params.degree)::value_type>()->default_value(fmt::format("{}", csvm_params.degree)))
            ("g,gamma", "set gamma in kernel function (default: 1 / num_features)", cxxopts::value<typename decltype(csvm_params.gamma)::value_type>())
            ("r,coef0", "set coef0 in kernel function", cxxopts::value<typename decltype(csvm_params.coef0)::value_type>()->default_value(fmt::format("{}", csvm_params.coef0)))
@@ -258,10 +268,22 @@ std::ostream &operator<<(std::ostream &out, const parser_train &params) {
             }
             break;
         case kernel_function_type::rbf:
+        case kernel_function_type::laplacian:
+        case kernel_function_type::chi_squared:
             if (params.csvm_params.gamma.is_default()) {
                 out << "gamma: 1 / num_features (default)\n";
             } else {
                 out << fmt::format("gamma: {}\n", params.csvm_params.gamma.value());
+            }
+            break;
+        case kernel_function_type::sigmoid:
+            {
+                if (params.csvm_params.gamma.is_default()) {
+                    out << "gamma: 1 / num_features (default)\n";
+                } else {
+                    out << fmt::format("gamma: {}\n", params.csvm_params.gamma.value());
+                }
+                out << fmt::format("coef0: {}{}\n", params.csvm_params.coef0.value(), params.csvm_params.coef0.is_default() ? " (default)" : "");
             }
             break;
     }

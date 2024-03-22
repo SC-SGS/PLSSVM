@@ -121,6 +121,7 @@ using hip_label_type_solver_kernel_function_and_classification_type_gtest = util
 // generic CSVM tests
 INSTANTIATE_TYPED_TEST_SUITE_P(HIPCSVM, GenericCSVM, hip_csvm_test_type_gtest, naming::test_parameter_to_name);
 INSTANTIATE_TYPED_TEST_SUITE_P(HIPCSVM, GenericCSVMKernelFunction, hip_kernel_function_type_gtest, naming::test_parameter_to_name);
+INSTANTIATE_TYPED_TEST_SUITE_P(HIPCSVM, GenericCSVMSolver, hip_solver_type_gtest, naming::test_parameter_to_name);
 INSTANTIATE_TYPED_TEST_SUITE_P(HIPCSVM, GenericCSVMSolverKernelFunction, hip_solver_and_kernel_function_type_gtest, naming::test_parameter_to_name);
 INSTANTIATE_TYPED_TEST_SUITE_P(HIPCSVM, GenericCSVMKernelFunctionClassification, hip_label_type_kernel_function_and_classification_type_gtest, naming::test_parameter_to_name);
 INSTANTIATE_TYPED_TEST_SUITE_P(HIPCSVM, GenericCSVMSolverKernelFunctionClassification, hip_label_type_solver_kernel_function_and_classification_type_gtest, naming::test_parameter_to_name);

@@ -104,15 +104,9 @@ namespace plssvm::detail::io {
         std::swap(i, j);
     }
 
-    std::size_t global_idx{ 0 };
     const auto i_it = std::lower_bound(index_sets[i].cbegin(), index_sets[i].cend(), idx_to_find);
-    if (i_it != index_sets[i].cend() && *i_it == idx_to_find) {
-        // index found
-        global_idx = std::distance(index_sets[i].cbegin(), i_it);
-    } else {
-        // index not yet found
-        global_idx = index_sets[i].size() + std::distance(index_sets[j].cbegin(), std::lower_bound(index_sets[j].cbegin(), index_sets[j].cend(), idx_to_find));
-    }
+    const auto j_it = std::lower_bound(index_sets[j].cbegin(), index_sets[j].cend(), idx_to_find);
+    const std::size_t global_idx = std::distance(index_sets[i].cbegin(), i_it) + std::distance(index_sets[j].cbegin(), j_it);
 
     PLSSVM_ASSERT(global_idx < index_sets[i].size() + index_sets[j].size(), "The global index ({}) for the provided index to find ({}) must be smaller than the combined size of both index sets ({} + {})!", global_idx, idx_to_find, index_sets[i].size(), index_sets[j].size());
 
@@ -290,12 +284,18 @@ template <typename label_type>
         case plssvm::kernel_function_type::polynomial:
             break;
         case plssvm::kernel_function_type::rbf:
-
+        case plssvm::kernel_function_type::laplacian:
+        case plssvm::kernel_function_type::chi_squared:
             if (!params.degree.is_default()) {
-                throw invalid_file_format_exception{ "Explicitly provided a value for the degree parameter which is not used in the radial basis function kernel!" };
+                throw invalid_file_format_exception{ fmt::format("Explicitly provided a value for the degree parameter which is not used in the {} kernel!", params.kernel_type.value()) };
             }
             if (!params.coef0.is_default()) {
-                throw invalid_file_format_exception{ "Explicitly provided a value for the coef0 parameter which is not used in the radial basis function kernel!" };
+                throw invalid_file_format_exception{ fmt::format("Explicitly provided a value for the coef0 parameter which is not used in the {} kernel!", params.kernel_type.value()) };
+            }
+            break;
+        case plssvm::kernel_function_type::sigmoid:
+            if (!params.degree.is_default()) {
+                throw invalid_file_format_exception{ "Explicitly provided a value for the degree parameter which is not used in the sigmoid kernel!" };
             }
             break;
     }
@@ -590,7 +590,12 @@ template <typename label_type>
             out_string += fmt::format("degree {}\ngamma {}\ncoef0 {}\n", params.degree, params.gamma, params.coef0);
             break;
         case kernel_function_type::rbf:
+        case kernel_function_type::laplacian:
+        case kernel_function_type::chi_squared:
             out_string += fmt::format("gamma {}\n", params.gamma);
+            break;
+        case kernel_function_type::sigmoid:
+            out_string += fmt::format("\ngamma {}\ncoef0 {}\n", params.gamma, params.coef0);
             break;
     }
 

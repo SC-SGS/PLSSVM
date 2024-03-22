@@ -38,12 +38,13 @@ namespace plssvm {
 
 void csvm::sanity_check_parameter() const {
     // kernel: valid kernel function
-    if (params_.kernel_type != kernel_function_type::linear && params_.kernel_type != kernel_function_type::polynomial && params_.kernel_type != kernel_function_type::rbf) {
-        throw invalid_parameter_exception{ fmt::format("Invalid kernel function {} given!", detail::to_underlying(params_.kernel_type)) };
+    const auto kernel_type_value = detail::to_underlying(params_.kernel_type);
+    if (kernel_type_value < 0 || kernel_type_value >= 6) {
+        throw invalid_parameter_exception{ fmt::format("Invalid kernel function with value {} given!", kernel_type_value) };
     }
 
-    // gamma: must be greater than 0 IF explicitly provided, but only in the polynomial and rbf kernel
-    if ((params_.kernel_type == kernel_function_type::polynomial || params_.kernel_type == kernel_function_type::rbf) && !params_.gamma.is_default() && params_.gamma.value() <= real_type{ 0.0 }) {
+    // gamma: must be greater than 0 IF explicitly provided (not for the linear kernel
+    if (params_.kernel_type != kernel_function_type::linear && !params_.gamma.is_default() && params_.gamma.value() <= real_type{ 0.0 }) {
         throw invalid_parameter_exception{ fmt::format("gamma must be greater than 0.0, but is {}!", params_.gamma) };
     }
     // degree: all allowed
@@ -119,8 +120,20 @@ std::pair<soa_matrix<real_type>, unsigned long long> csvm::conjugate_gradients(c
         // alpha = delta_new / (D^T * Q))
         const std::vector<real_type> alpha = delta / rowwise_dot(D, Q);
 
+        // create mask for the residual -> can't update X if the residual is already 0
+        std::vector<int> mask(alpha.size(), 0);
+#pragma omp parallel for shared(R, mask)
+        for (std::size_t row = 0; row < R.num_rows(); ++row) {
+            for (std::size_t col = 0; col < R.num_cols(); ++col) {
+                if (R(row, col) != real_type{ 0.0 }) {
+                    mask[row] = 1;
+                    break;
+                }
+            }
+        }
+
         // X = X + alpha * D
-        X += rowwise_scale(alpha, D);
+        X += masked_rowwise_scale(mask, alpha, D);
 
         if (iter % 50 == 49) {
             // explicitly recalculate residual to remove accumulating floating point errors
@@ -161,7 +174,8 @@ std::pair<soa_matrix<real_type>, unsigned long long> csvm::conjugate_gradients(c
                 delta[max_residual_difference_idx],
                 eps * eps * delta0[max_residual_difference_idx],
                 max_residual_difference_idx,
-                detail::tracking_entry{ "cg", "avg_iteration_time", total_iteration_time / iter },
+                detail::tracking_entry{ "cg", "avg_iteration_time", total_iteration_time / std::max(iter, 1ULL) },
+                blas_level_3_type,
                 detail::tracking_entry{ "cg", "avg_blas_level_3_time", total_blas_level_3_time / (1 + iter + iter / 50) });
     PLSSVM_DETAIL_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((detail::tracking_entry{ "cg", "residuals", delta }));
     PLSSVM_DETAIL_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((detail::tracking_entry{ "cg", "target_residuals", eps * eps * delta0 }));
@@ -199,6 +213,24 @@ std::pair<std::vector<real_type>, real_type> csvm::perform_dimensional_reduction
 #pragma omp parallel for default(none) shared(q_red, A, params) firstprivate(num_rows_reduced)
             for (std::size_t i = 0; i < num_rows_reduced; ++i) {
                 q_red[i] = kernel_function<kernel_function_type::rbf>(A, i, A, num_rows_reduced, params.gamma.value());
+            }
+            break;
+        case kernel_function_type::sigmoid:
+#pragma omp parallel for default(none) shared(q_red, A, params) firstprivate(num_rows_reduced)
+            for (std::size_t i = 0; i < num_rows_reduced; ++i) {
+                q_red[i] = kernel_function<kernel_function_type::sigmoid>(A, i, A, num_rows_reduced, params.gamma.value(), params.coef0.value());
+            }
+            break;
+        case kernel_function_type::laplacian:
+#pragma omp parallel for default(none) shared(q_red, A, params) firstprivate(num_rows_reduced)
+            for (std::size_t i = 0; i < num_rows_reduced; ++i) {
+                q_red[i] = kernel_function<kernel_function_type::laplacian>(A, i, A, num_rows_reduced, params.gamma.value());
+            }
+            break;
+        case kernel_function_type::chi_squared:
+#pragma omp parallel for default(none) shared(q_red, A, params) firstprivate(num_rows_reduced)
+            for (std::size_t i = 0; i < num_rows_reduced; ++i) {
+                q_red[i] = kernel_function<kernel_function_type::chi_squared>(A, i, A, num_rows_reduced, params.gamma.value());
             }
             break;
     }

@@ -65,7 +65,16 @@ int main(int argc, char *argv[]) {
                                             params.coef0);
                         break;
                     case plssvm::kernel_function_type::rbf:
+                    case plssvm::kernel_function_type::laplacian:
+                    case plssvm::kernel_function_type::chi_squared:
                         plssvm::detail::log(plssvm::verbosity_level::full, "  gamma: {}\n", params.gamma);
+                        break;
+                    case plssvm::kernel_function_type::sigmoid:
+                        plssvm::detail::log(plssvm::verbosity_level::full,
+                                            "  gamma: {}\n"
+                                            "  coef0: {}\n",
+                                            params.gamma,
+                                            params.coef0);
                         break;
                 }
                 plssvm::detail::log(plssvm::verbosity_level::full, "  cost: {}\n", params.cost);
