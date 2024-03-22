@@ -165,6 +165,16 @@ class temporary_file {
     temporary_file &operator=(temporary_file &&) = delete;
 
     /**
+     * @brief Append @p filename_suffix to the current temporary file.
+     * @param[in] filename_suffix the suffix to append (e.g., special file extension)
+     */
+    void append_to_filename(const std::string &filename_suffix) {
+        std::string new_filename{ filename + filename_suffix };
+        std::filesystem::rename(filename, new_filename);
+        filename = std::move(new_filename);
+    }
+
+    /**
      * @brief Remove the temporary file if it exists.
      */
     virtual ~temporary_file() {

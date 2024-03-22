@@ -70,7 +70,7 @@ TYPED_TEST(DataSetConstructors, construct_arff_from_file_with_label) {
     using label_type = typename TestFixture::fixture_label_type;
 
     // must append .arff to filename so that the correct function is called in the data_set constructor
-    this->filename.append(".arff");
+    this->append_to_filename(".arff");
 
     // create data set
     util::instantiate_template_file<label_type>(PLSSVM_TEST_PATH "/data/arff/6x4_TEMPLATE.arff", this->filename);
@@ -227,7 +227,7 @@ TYPED_TEST(DataSetConstructors, construct_scaled_arff_from_file) {
     using label_type = typename TestFixture::fixture_label_type;
 
     // must append .arff to filename so that the correct function is called in the data_set constructor
-    this->filename.append(".arff");
+    this->append_to_filename(".arff");
 
     // create data set
     util::instantiate_template_file<label_type>(PLSSVM_TEST_PATH "/data/arff/6x4_TEMPLATE.arff", this->filename);
