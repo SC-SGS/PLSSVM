@@ -89,7 +89,7 @@ void device_ptr<T>::copy_to_device_strided(const_host_pointer_type data_to_copy,
 
     // if available, use the DPC++ ext_oneapi_copy2d extension, otherwise fallback to a temporary
 #if defined(SYCL_EXT_ONEAPI_MEMCPY2D)
-    queue_.impl->sycl_queue.ext_oneapi_copy2d(data_to_copy, spitch, data_, this->shape_padded().x, width, height);
+    queue_.impl->sycl_queue.ext_oneapi_copy2d(data_to_copy, spitch, data_, this->shape_padded().x, width, height).wait();
 #else
     if (spitch == width) {
         // can use normal copy since we have no line strides
