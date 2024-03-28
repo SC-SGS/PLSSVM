@@ -118,12 +118,12 @@ set(PLSSVM_BASE_TEST_SOURCES
     ## is available these are also tested in the base library
     ${CMAKE_CURRENT_LIST_DIR}/backends/SYCL/implementation_types.cpp
     ${CMAKE_CURRENT_LIST_DIR}/backends/SYCL/kernel_invocation_types.cpp
-
+    
     ${CMAKE_CURRENT_LIST_DIR}/detail/cmd/data_set_variants.cpp
     ${CMAKE_CURRENT_LIST_DIR}/detail/cmd/parser_predict.cpp
     ${CMAKE_CURRENT_LIST_DIR}/detail/cmd/parser_scale.cpp
     ${CMAKE_CURRENT_LIST_DIR}/detail/cmd/parser_train.cpp
-
+    
     ${CMAKE_CURRENT_LIST_DIR}/detail/io/libsvm_model_parsing/data_parse_valid.cpp
     ${CMAKE_CURRENT_LIST_DIR}/detail/io/libsvm_model_parsing/data_parse_invalid.cpp
     ${CMAKE_CURRENT_LIST_DIR}/detail/io/libsvm_model_parsing/data_write.cpp
@@ -135,7 +135,7 @@ set(PLSSVM_BASE_TEST_SOURCES
     ${CMAKE_CURRENT_LIST_DIR}/detail/io/file_reader.cpp
     ${CMAKE_CURRENT_LIST_DIR}/detail/io/libsvm_parsing.cpp
     ${CMAKE_CURRENT_LIST_DIR}/detail/io/scaling_factors_parsing.cpp
-
+    
     ${CMAKE_CURRENT_LIST_DIR}/detail/arithmetic_type_name.cpp
     ${CMAKE_CURRENT_LIST_DIR}/detail/assert.cpp
     ${CMAKE_CURRENT_LIST_DIR}/detail/data_distribution.cpp
@@ -151,13 +151,13 @@ set(PLSSVM_BASE_TEST_SOURCES
     ${CMAKE_CURRENT_LIST_DIR}/detail/type_list.cpp
     ${CMAKE_CURRENT_LIST_DIR}/detail/type_traits.cpp
     ${CMAKE_CURRENT_LIST_DIR}/detail/utility.cpp
-
+    
     ${CMAKE_CURRENT_LIST_DIR}/exceptions/exceptions.cpp
     ${CMAKE_CURRENT_LIST_DIR}/exceptions/source_location.cpp
-
+    
     ${CMAKE_CURRENT_LIST_DIR}/version/git_metadata/git_metadata.cpp
     ${CMAKE_CURRENT_LIST_DIR}/version/version.cpp
-
+    
     ${CMAKE_CURRENT_LIST_DIR}/backend_types.cpp
     ${CMAKE_CURRENT_LIST_DIR}/classification_report.cpp
     ${CMAKE_CURRENT_LIST_DIR}/classification_types.cpp
@@ -246,8 +246,10 @@ endif ()
 add_subdirectory(backends)
 
 # fix shared library linker error on Windows
-foreach (target gmock gtest)
-    target_compile_definitions(${target} INTERFACE GTEST_LINKED_AS_SHARED_LIBRARY=1)
-endforeach ()
+if (NOT GTEST_FOUND)
+    foreach (target gmock gtest)
+        target_compile_definitions(${target} INTERFACE GTEST_LINKED_AS_SHARED_LIBRARY=1)
+    endforeach ()
+endif ()
 
 list(POP_BACK CMAKE_MESSAGE_INDENT)
