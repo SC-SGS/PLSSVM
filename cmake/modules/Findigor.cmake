@@ -15,7 +15,8 @@ endif ()
 # try to automatically find the header files in the standard directories
 if (NOT EXISTS "${igor_INCLUDE_DIR}")
     find_path(igor_INCLUDE_DIR
-              NAMES igor.hpp
+              NAMES igor/igor.hpp
+              PATH_SUFFIXES include
               DOC "igor header-only library header files"
     )
 endif ()
