@@ -17,7 +17,7 @@
 #include "plssvm/backends/SYCL/DPCPP/detail/queue.hpp"  // plssvm::sycl::detail::queue (PImpl)
 #include "plssvm/shape.hpp"                             // plssvm::shape
 
-#include <array>  // std::array
+#include <cstddef>  // std::size_t
 
 namespace plssvm::dpcpp::detail {
 

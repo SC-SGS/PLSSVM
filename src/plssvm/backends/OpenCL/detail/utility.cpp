@@ -12,44 +12,45 @@
 #include "plssvm/backends/OpenCL/detail/context.hpp"        // plssvm::opencl::detail::context
 #include "plssvm/backends/OpenCL/detail/error_code.hpp"     // plssvm::opencl::detail::error_code
 #include "plssvm/backends/OpenCL/detail/kernel.hpp"         // plssvm::opencl::detail::compute_kernel_name, plssvm::opencl::detail::kernel
-#include "plssvm/backends/OpenCL/exceptions.hpp"            // plssvm::opencl::backend_exception
 #include "plssvm/constants.hpp"                             // plssvm::{real_type, THREAD_BLOCK_SIZE, INTERNAL_BLOCK_SIZE, FEATURE_BLOCK_SIZE, PADDING_SIZE}
 #include "plssvm/detail/arithmetic_type_name.hpp"           // plssvm::detail::arithmetic_type_name
+#include "plssvm/detail/assert.hpp"                         // PLSSVM_ASSERT
 #include "plssvm/detail/logging.hpp"                        // plssvm::detail::log
 #include "plssvm/detail/performance_tracker.hpp"            // PLSSVM_DETAIL_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY, plssvm::detail::tracking_entry
 #include "plssvm/detail/sha256.hpp"                         // plssvm::detail::sha256
 #include "plssvm/detail/string_conversion.hpp"              // plssvm::detail::extract_first_integer_from_string
 #include "plssvm/detail/string_utility.hpp"                 // plssvm::detail::replace_all, plssvm::detail::to_lower_case, plssvm::detail::contains
 #include "plssvm/detail/utility.hpp"                        // plssvm::detail::erase_if
-#include "plssvm/exceptions/exceptions.hpp"                 // plssvm::unsupported_kernel_type_exception, plssvm::invalid_file_format_exception
+#include "plssvm/kernel_function_types.hpp"                 // plssvm::kernel_function_type
 #include "plssvm/target_platforms.hpp"                      // plssvm::target_platform
 #include "plssvm/verbosity_levels.hpp"                      // plssvm::verbosity_level
 
-#include "CL/cl.h"  // cl_program, cl_platform_id, cl_device_id, cl_uint, cl_device_type, cl_context,
-                    // CL_DEVICE_NAME, CL_QUEUE_DEVICE, CL_DEVICE_TYPE_ALL, CL_DEVICE_TYPE_CPU, CL_DEVICE_TYPE_GPU, CL_DEVICE_VENDOR, CL_PROGRAM_BUILD_LOG, CL_PROGRAM_BINARY_SIZES, CL_PROGRAM_BINARIES, CL_PLATFORM_VENDOR, CL_DRIVER_VERSION,
-                    // clCreateProgramWithSource, clBuildProgram, clGetProgramBuildInfo, clGetProgramInfo, clCreateKernel, clReleaseProgram, clCreateProgramWithBinary,
-                    //  clSetKernelArg, clEnqueueNDRangeKernel, clFinish, clGetPlatformIDs, clGetDeviceIDs, clGetDeviceInfo, clCreateContext, clGetPlatformInfo
+#include "CL/cl.h"           // cl_program, cl_platform_id, cl_device_id, cl_uint, cl_device_type, cl_context,
+                             // CL_DEVICE_NAME, CL_QUEUE_DEVICE, CL_DEVICE_TYPE_ALL, CL_DEVICE_TYPE_CPU, CL_DEVICE_TYPE_GPU, CL_DEVICE_VENDOR, CL_PROGRAM_BUILD_LOG, CL_PROGRAM_BINARY_SIZES, CL_PROGRAM_BINARIES, CL_PLATFORM_VENDOR, CL_DRIVER_VERSION,
+                             // clCreateProgramWithSource, clBuildProgram, clGetProgramBuildInfo, clGetProgramInfo, clCreateKernel, clReleaseProgram, clCreateProgramWithBinary,
+                             // clSetKernelArg, clEnqueueNDRangeKernel, clFinish, clGetPlatformIDs, clGetDeviceIDs, clGetDeviceInfo, clCreateContext, clGetPlatformInfo
+#include "CL/cl_platform.h"  // cl_uint
 
-#include "fmt/core.h"     // fmt::print, fmt::format
-#include "fmt/ostream.h"  // fmt::formatter, fmt::ostream_formatter
-#include "fmt/std.h"      // format std::filesystem::path
+#include "fmt/core.h"    // fmt::format
+#include "fmt/format.h"  // fmt::join
+#include "fmt/std.h"     // format std::filesystem::path
 
-#include <algorithm>    // std::count_if
-#include <array>        // std::array
-#include <cstddef>      // std::size_t
-#include <filesystem>   // std::filesystem::{path, temp_directory_path, exists, directory_iterator, directory_entry}
-#include <fstream>      // std::ifstream, std::ofstream
-#include <functional>   // std::hash
-#include <ios>          // std::ios_base, std::streamsize
-#include <iostream>     // std::cout, std::endl
-#include <iterator>     // std::istreambuf_iterator
-#include <limits>       // std::numeric_limits
-#include <map>          // std::map
-#include <string>       // std::string
-#include <string_view>  // std::string_view
-#include <tuple>        // std::tie
-#include <utility>      // std::pair, std::make_pair, std::move
-#include <vector>       // std::vector
+#include <algorithm>     // std::count_if
+#include <array>         // std::array
+#include <cstddef>       // std::size_t
+#include <filesystem>    // std::filesystem::{path, temp_directory_path, exists, directory_iterator, directory_entry, begin, end}
+#include <fstream>       // std::ifstream, std::ofstream
+#include <ios>           // std::ios_base, std::streamsize
+#include <iostream>      // std::cout, std::endl
+#include <iterator>      // std::istreambuf_iterator
+#include <limits>        // std::numeric_limits
+#include <map>           // std::map
+#include <string>        // std::string
+#include <string_view>   // std::string_view
+#include <system_error>  // std::error_code
+#include <tuple>         // std::tie
+#include <utility>       // std::pair, std::make_pair, std::move
+#include <vector>        // std::vector
 
 namespace plssvm::opencl::detail {
 
@@ -166,7 +167,7 @@ std::string get_opencl_target_version() {
 std::string get_driver_version(const command_queue &queue) {
     // get device
     cl_device_id device_id{};
-    PLSSVM_OPENCL_ERROR_CHECK(clGetCommandQueueInfo(queue, CL_QUEUE_DEVICE, sizeof(cl_device_id), &device_id, nullptr), "error obtaining device")
+    PLSSVM_OPENCL_ERROR_CHECK(clGetCommandQueueInfo(queue, CL_QUEUE_DEVICE, sizeof(cl_device_id), static_cast<void *>(&device_id), nullptr), "error obtaining device")
     // get device driver
     std::size_t driver_version_length{};
     PLSSVM_OPENCL_ERROR_CHECK(clGetDeviceInfo(device_id, CL_DRIVER_VERSION, 0, nullptr, &driver_version_length), "error obtaining device driver version size")
@@ -178,7 +179,7 @@ std::string get_driver_version(const command_queue &queue) {
 std::string get_device_name(const command_queue &queue) {
     // get device
     cl_device_id device_id{};
-    PLSSVM_OPENCL_ERROR_CHECK(clGetCommandQueueInfo(queue, CL_QUEUE_DEVICE, sizeof(cl_device_id), &device_id, nullptr), "error obtaining device")
+    PLSSVM_OPENCL_ERROR_CHECK(clGetCommandQueueInfo(queue, CL_QUEUE_DEVICE, sizeof(cl_device_id), static_cast<void *>(&device_id), nullptr), "error obtaining device")
     // get device name
     std::size_t name_length{};
     PLSSVM_OPENCL_ERROR_CHECK(clGetDeviceInfo(device_id, CL_DEVICE_NAME, 0, nullptr, &name_length), "error obtaining device name size")
@@ -376,7 +377,8 @@ std::vector<command_queue> create_command_queues(const std::vector<context> &con
 
     // data to build the final OpenCL program
     std::vector<std::size_t> binary_sizes(contexts[0].devices.size());
-    std::vector<unsigned char *> binaries(contexts[0].devices.size());
+    std::vector<std::vector<unsigned char>> binaries(contexts[0].devices.size());
+    std::vector<unsigned char *> binaries_ptr(binaries.size());
 
     // create caching folder in the temporary directory and change the permissions such that everybody has read/write access
     const std::filesystem::path cache_dir_name = std::filesystem::temp_directory_path() / "plssvm_opencl_cache" / checksum;
@@ -411,7 +413,7 @@ std::vector<command_queue> create_command_queues(const std::vector<context> &con
         // get directory iterator
         auto dirIter = std::filesystem::directory_iterator(cache_dir_name);
         // get files in directory -> account for stored preprocessed source file
-        if (static_cast<std::size_t>(std::count_if(begin(dirIter), end(dirIter), [](const auto &entry) { return entry.is_regular_file(); })) != contexts[0].devices.size() + 1) {
+        if (static_cast<std::size_t>(std::count_if(std::filesystem::begin(dirIter), std::filesystem::end(dirIter), [](const auto &entry) { return entry.is_regular_file(); })) != contexts[0].devices.size() + 1) {
             use_cached_binaries = caching_status::error_invalid_number_of_cached_files;
         }
     }
@@ -437,12 +439,13 @@ std::vector<command_queue> create_command_queues(const std::vector<context> &con
         // get sizes of binaries
         err = clGetProgramInfo(program, CL_PROGRAM_BINARY_SIZES, contexts[0].devices.size() * sizeof(std::size_t), binary_sizes.data(), nullptr);
         PLSSVM_OPENCL_ERROR_CHECK(err, "error retrieving the kernel (binary) kernel sizes")
-        for (std::vector<unsigned char *>::size_type i = 0; i < binaries.size(); ++i) {
-            binaries[i] = new unsigned char[binary_sizes[i]];
+        for (std::vector<std::vector<unsigned char>>::size_type i = 0; i < binaries.size(); ++i) {
+            binaries[i] = std::vector<unsigned char>(binary_sizes[i]);
+            binaries_ptr[i] = binaries[i].data();  // only necessary for OpenCL's void ** calls!
         }
 
         // get binaries
-        err = clGetProgramInfo(program, CL_PROGRAM_BINARIES, contexts[0].devices.size() * sizeof(unsigned char *), binaries.data(), nullptr);
+        err = clGetProgramInfo(program, CL_PROGRAM_BINARIES, contexts[0].devices.size() * sizeof(unsigned char *), binaries_ptr.data(), nullptr);
         PLSSVM_OPENCL_ERROR_CHECK(err, "error retrieving the kernel binaries")
 
         // write binaries to file
@@ -459,7 +462,7 @@ std::vector<command_queue> create_command_queues(const std::vector<context> &con
         for (std::vector<std::size_t>::size_type i = 0; i < binary_sizes.size(); ++i) {
             std::ofstream out{ cache_dir_name / fmt::format("device_{}.bin", i) };
             PLSSVM_ASSERT(out.good(), fmt::format("couldn't create binary cache file ({}) for device {}", cache_dir_name / fmt::format("device_{}.bin", i), i));
-            out.write(reinterpret_cast<char *>(binaries[i]), binary_sizes[i]);
+            out.write(reinterpret_cast<char *>(binaries_ptr[i]), static_cast<std::streamsize>(binary_sizes[i]));
         }
         {
             // save preprocessed source string in temporary directory
@@ -479,7 +482,7 @@ std::vector<command_queue> create_command_queues(const std::vector<context> &con
                             "Using cached OpenCL kernel binaries from {}.\n",
                             cache_dir_name);
 
-        const auto common_read_file = [](const std::filesystem::path &file) -> std::pair<unsigned char *, std::size_t> {
+        const auto common_read_file = [](const std::filesystem::path &file) -> std::pair<std::vector<unsigned char>, std::size_t> {
             std::ifstream f{ file };
 
             // touch all characters in file
@@ -492,10 +495,10 @@ std::vector<command_queue> create_command_queues(const std::vector<context> &con
             f.seekg(0, std::ios_base::beg);
 
             // allocate the necessary buffer
-            char *file_content = new char[num_bytes];
+            std::vector<unsigned char> file_content(num_bytes);
             // read the whole file in one go
-            f.read(file_content, num_bytes);
-            return std::make_pair(reinterpret_cast<unsigned char *>(file_content), static_cast<std::size_t>(num_bytes));
+            f.read(reinterpret_cast<char *>(file_content.data()), num_bytes);
+            return std::make_pair(file_content, static_cast<std::size_t>(num_bytes));
         };
 
         // iterate over directory and read kernels into binary file
@@ -505,12 +508,13 @@ std::vector<command_queue> create_command_queues(const std::vector<context> &con
             if (entry.is_regular_file() && entry.path().filename().string() != "processed_source.cl") {
                 const auto i = ::plssvm::detail::extract_first_integer_from_string<std::size_t>(entry.path().filename().string());
                 std::tie(binaries[i], binary_sizes[i]) = common_read_file(entry.path());
+                binaries_ptr[i] = binaries[i].data();  // only necessary for OpenCL's void ** calls!
             }
         }
     }
 
     // build from binaries
-    cl_program binary_program = clCreateProgramWithBinary(contexts[0], static_cast<cl_uint>(contexts[0].devices.size()), contexts[0].devices.data(), binary_sizes.data(), const_cast<const unsigned char **>(binaries.data()), &err_bin, &err);
+    cl_program binary_program = clCreateProgramWithBinary(contexts[0], static_cast<cl_uint>(contexts[0].devices.size()), contexts[0].devices.data(), binary_sizes.data(), const_cast<const unsigned char **>(binaries_ptr.data()), &err_bin, &err);
     PLSSVM_OPENCL_ERROR_CHECK(err_bin, "error loading binaries")
     PLSSVM_OPENCL_ERROR_CHECK(err, "error creating binary program")
     err = clBuildProgram(binary_program, static_cast<cl_uint>(contexts[0].devices.size()), contexts[0].devices.data(), nullptr, nullptr, nullptr);
@@ -523,19 +527,16 @@ std::vector<command_queue> create_command_queues(const std::vector<context> &con
 
     // build all kernels, one for each device
     for (std::vector<cl_device_id>::size_type device = 0; device < contexts[0].devices.size(); ++device) {
-        for (std::vector<std::vector<std::pair<compute_kernel_name, std::string>>>::size_type i = 0; i < kernel_names.size(); ++i) {
+        for (const std::pair<compute_kernel_name, std::string> &name : kernel_names) {
             // create kernel
-            queues[device].add_kernel(kernel_names[i].first, kernel{ clCreateKernel(binary_program, kernel_names[i].second.c_str(), &err) });
-            PLSSVM_OPENCL_ERROR_CHECK(err, fmt::format("error creating OpenCL kernel {} for device {}", kernel_names[i].second, device))
+            queues[device].add_kernel(name.first, kernel{ clCreateKernel(binary_program, name.second.c_str(), &err) });
+            PLSSVM_OPENCL_ERROR_CHECK(err, fmt::format("error creating OpenCL kernel {} for device {}", name.second, device))
         }
     }
 
     // release resource
     if (binary_program) {
         PLSSVM_OPENCL_ERROR_CHECK(clReleaseProgram(binary_program), "error releasing OpenCL binary program resources")
-    }
-    for (unsigned char *binary : binaries) {
-        delete[] binary;
     }
 
     return queues;

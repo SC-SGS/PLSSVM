@@ -23,7 +23,7 @@
 #include "plssvm/target_platforms.hpp"                                                // plssvm::target_platform
 
 #include "tests/backends/generic_csvm_tests.hpp"       // generic CSVM tests to instantiate
-#include "tests/backends/ground_truth.hpp"             // ground_truth::{perform_dimensional_reduction, assemble_kernel_matrix_symm, assemble_kernel_matrix_gemm, gemm}
+#include "tests/backends/ground_truth.hpp"             // ground_truth::{perform_dimensional_reduction, assemble_device_specific_kernel_matrix, assemble_full_kernel_matrix, gemm, calculate_w}
 #include "tests/backends/OpenMP/mock_openmp_csvm.hpp"  // mock_openmp_csvm
 #include "tests/custom_test_macros.hpp"                // EXPECT_THROW_WHAT
 #include "tests/naming.hpp"                            // naming::test_parameter_to_name

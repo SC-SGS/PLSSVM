@@ -17,6 +17,7 @@
 #include "plssvm/detail/arithmetic_type_name.hpp"  // plssvm::detail::arithmetic_type_name
 #include "plssvm/detail/string_utility.hpp"        // plssvm::detail::replace_all
 #include "plssvm/detail/type_traits.hpp"           // plssvm::detail::{always_false_v, is_map_v, is_unordered_map_v, is_set_v, is_unordered_set_v, is_vector_v}
+#include "plssvm/exceptions/exceptions.hpp"        // plssvm::exception
 
 #include "tests/exceptions/utility.hpp"  // util::exception_type_name
 

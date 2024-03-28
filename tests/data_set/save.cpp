@@ -21,8 +21,8 @@
 #include "tests/types_to_test.hpp"       // util::{label_type_gtest, test_parameter_type_at_t}
 #include "tests/utility.hpp"             // util::{redirect_output, temporary_file, get_correct_data_file_labels, generate_specific_matrix}
 
-#include "gmock/gmock-matchers.h"  // EXPECT_THAT, ::testing::{ContainsRegex, StartsWith}
-#include "gtest/gtest.h"           // TYPED_TEST, TYPED_TEST_SUITE, EXPECT_TRUE, ASSERT_EQ, ::testing::Test
+#include "gmock/gmock.h"  // EXPECT_THAT, ::testing::{ContainsRegex, StartsWith}
+#include "gtest/gtest.h"  // TYPED_TEST, TYPED_TEST_SUITE, EXPECT_TRUE, ASSERT_EQ, ::testing::Test
 
 #include <cstddef>      // std::size_t
 #include <filesystem>   // std::filesystem::rename

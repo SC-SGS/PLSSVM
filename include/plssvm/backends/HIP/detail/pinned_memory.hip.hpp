@@ -61,6 +61,29 @@ class [[nodiscard]] pinned_memory final : public ::plssvm::detail::host_pinned_m
      */
     ~pinned_memory() override;
 
+    /**
+     * @brief Must provide a memory that should be pinned.
+     */
+    pinned_memory() = delete;
+    /**
+     * @brief Delete the copy-constructor.
+     */
+    pinned_memory(const pinned_memory &) = delete;
+    /**
+     * @brief Delete the move-constructor.
+     */
+    pinned_memory(pinned_memory &&) noexcept = delete;
+    /**
+     * @brief Delete the copy-assignment operator.
+     * @return `*this`
+     */
+    pinned_memory &operator=(const pinned_memory &) = delete;
+    /**
+     * @brief Delete the move-assignment operator.
+     * @return `*this`
+     */
+    pinned_memory &operator=(pinned_memory &&) noexcept = delete;
+
   private:
     /**
      * @copydetails plssvm::detail::host_pinned_memory::pin_memory

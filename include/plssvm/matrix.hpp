@@ -25,7 +25,6 @@
 #include "fmt/ostream.h"  // fmt::formatter, fmt::ostream_formatter
 
 #include <algorithm>    // std::equal, std::all_of, std::fill_n
-#include <array>        // std::array
 #include <cstddef>      // std::size_t
 #include <cstring>      // std::memcpy, std::memset
 #include <iosfwd>       // std::istream forward declaration

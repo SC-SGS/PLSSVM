@@ -17,16 +17,21 @@
 #include "plssvm/constants.hpp"                 // plssvm::real_type, plssvm::PADDING_SIZE
 #include "plssvm/data_set.hpp"                  // plssvm::data_set
 #include "plssvm/detail/assert.hpp"             // PLSSVM_ASSERT
+#include "plssvm/detail/io/file_reader.hpp"     // plssvm::detail::io::file_reader
 #include "plssvm/detail/io/libsvm_parsing.hpp"  // plssvm::detail::io::parse_libsvm_num_features
 #include "plssvm/detail/logging.hpp"            // plssvm::detail::log
 #include "plssvm/detail/memory_size.hpp"        // plssvm::memory_size, custom literals
+#include "plssvm/detail/string_conversion.hpp"  // plssvm::detail::{convert_to, split_as}
+#include "plssvm/detail/string_utility.hpp"     // plssvm::detail::{trim, trim_left, to_lower_case}
+#include "plssvm/kernel_function_types.hpp"     // plssvm::kernel_function_type
 #include "plssvm/matrix.hpp"                    // plssvm::soa_matrix
 #include "plssvm/parameter.hpp"                 // plssvm::parameter
 #include "plssvm/shape.hpp"                     // plssvm::shape
 #include "plssvm/verbosity_levels.hpp"          // plssvm::verbosity_level
 
 #include "fmt/compile.h"  // FMT_COMPILE
-#include "fmt/format.h"   // fmt::format, fmt::format_to
+#include "fmt/core.h"     // fmt::format
+#include "fmt/format.h"   // fmt::format_to
 #include "fmt/os.h"       // fmt::ostream, fmt::output_file
 #ifdef _OPENMP
     #include <omp.h>  // omp_get_num_threads
@@ -705,7 +710,7 @@ inline void write_libsvm_model_data(const std::string &filename, const plssvm::p
     using namespace literals;
 
     const soa_matrix<real_type> &support_vectors = data.data();
-    const std::vector<label_type> &labels = data.labels().value();
+    const std::vector<label_type> &labels = *data.labels();
     const std::size_t num_features = data.num_features();
     const std::size_t num_classes = data.num_classes();
     const std::size_t num_alpha_per_point = classification == classification_type::oaa ? num_classes : num_classes - 1;

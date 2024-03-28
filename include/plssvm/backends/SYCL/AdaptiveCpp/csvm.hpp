@@ -19,8 +19,10 @@
 #include "plssvm/backends/SYCL/AdaptiveCpp/detail/queue.hpp"          // plssvm::adaptivecpp::detail::queue (PImpl)
 #include "plssvm/backends/SYCL/kernel_invocation_types.hpp"           // plssvm::sycl::kernel_invocation_type
 #include "plssvm/constants.hpp"                                       // plssvm::real_type
+#include "plssvm/csvm.hpp"                                            // plssvm::detail::csvm_backend_exists
+#include "plssvm/detail/igor_utility.hpp"                             // plssvm::detail::get_value_from_named_parameter
 #include "plssvm/detail/memory_size.hpp"                              // plssvm::detail::memory_size
-#include "plssvm/detail/type_traits.hpp"                              // PLSSVM_REQUIRES, plssvm::detail::remove_cvref_t
+#include "plssvm/detail/type_traits.hpp"                              // PLSSVM_REQUIRES
 #include "plssvm/parameter.hpp"                                       // plssvm::parameter, plssvm::detail::parameter
 #include "plssvm/target_platforms.hpp"                                // plssvm::target_platform
 

@@ -15,8 +15,8 @@
 
 #include "plssvm/backends/CUDA/exceptions.hpp"  // plssvm::cuda::backend_exception
 
-#include "fmt/core.h"     // fmt::format
-#include "fmt/ostream.h"  // fmt::formatter, fmt::ostream_formatter
+#include "fmt/core.h"     // fmt::format, fmt::formatter
+#include "fmt/ostream.h"  // fmt::ostream_formatter
 
 #include <string>  // std::string
 
@@ -28,7 +28,7 @@
  * @throws plssvm::cuda::backend_exception if the error code signals a failure
  */
 #define PLSSVM_CUDA_ERROR_CHECK(err)                                                                                                            \
-    if (err != cudaSuccess) {                                                                                                                   \
+    if ((err) != cudaSuccess) {                                                                                                                 \
         throw plssvm::cuda::backend_exception{ fmt::format("CUDA assert '{}' ({}): {}", cudaGetErrorName(err), err, cudaGetErrorString(err)) }; \
     }
 

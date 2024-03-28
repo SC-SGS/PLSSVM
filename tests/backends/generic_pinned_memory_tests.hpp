@@ -15,9 +15,7 @@
 
 #include "plssvm/matrix.hpp"  // plssvm::matrix, plssvm::layout_type
 
-#include "tests/custom_test_macros.hpp"  // EXPECT_THROW_WHAT, EXPECT_FLOATING_POINT_MATRIX_EQ
-#include "tests/types_to_test.hpp"       // util::test_parameter_type_at_t
-#include "tests/utility.hpp"
+#include "tests/types_to_test.hpp"  // util::test_parameter_type_at_t
 
 #include "gtest//gtest.h"  // TYPED_TEST_SUITE_P, TYPED_TEST_P, REGISTER_TYPED_TEST_SUITE_P, EXPECT_EQ, EXPECT_DEATH
 

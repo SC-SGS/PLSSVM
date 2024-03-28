@@ -13,9 +13,9 @@
 
 #include "tests/custom_test_macros.hpp"  // EXPECT_THROW_WHAT, EXPECT_THROW_WHAT_MATCHER
 
-#include "fmt/core.h"              // fmt::format
-#include "gmock/gmock-matchers.h"  // ::testing::StartsWith
-#include "gtest/gtest.h"           // TEST, EXPECT_GE, EXPECT_NO_THROW
+#include "fmt/core.h"     // fmt::format
+#include "gmock/gmock.h"  // ::testing::StartsWith
+#include "gtest/gtest.h"  // TEST, EXPECT_GE, EXPECT_NO_THROW
 
 #include <regex>  // std::regex, std::regex::extended, std::regex_match
 

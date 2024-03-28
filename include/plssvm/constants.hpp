@@ -15,8 +15,6 @@
 
 #include "plssvm/detail/type_list.hpp"  // plssvm::detail::{supported_real_types, tuple_contains_v}
 
-#include <type_traits>  // std::is_same_v
-
 namespace plssvm {
 
 /// The used floating point type. May be changed during the CMake configuration step.

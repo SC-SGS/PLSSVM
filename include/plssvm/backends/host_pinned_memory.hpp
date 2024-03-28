@@ -13,13 +13,9 @@
 #define PLSSVM_BACKENDS_HOST_PINNED_MEMORY_HPP_
 #pragma once
 
-#include "plssvm/detail/logging_without_performance_tracking.hpp"  // plssvm::detail::log_untracked
-#include "plssvm/detail/type_list.hpp"                             // plssvm::detail::{supported_real_types, tuple_contains_v}
-#include "plssvm/matrix.hpp"                                       // plssvm::matrix, plssvm::layout_type
-#include "plssvm/verbosity_levels.hpp"                             // plssvm::verbosity_level
+#include "plssvm/detail/type_list.hpp"  // plssvm::detail::{supported_real_types, tuple_contains_v}
 
 #include <cstddef>  // std::size_t
-#include <vector>   // std::vector
 
 namespace plssvm::detail {
 

@@ -15,7 +15,8 @@
 
 #include "plssvm/detail/memory_size.hpp"  // plssvm:detail::memory_size
 
-#include "fmt/ostream.h"  // fmt::formatter, fmt::ostream_formatter
+#include "fmt/core.h"     // fmt::formatter
+#include "fmt/ostream.h"  // fmt::ostream_formatter
 
 #include <cstddef>  // std::size_t
 #include <iosfwd>   // std::ostream forward declaration
@@ -178,7 +179,6 @@ class triangular_data_distribution : public data_distribution {
      * @return the theoretical maximum single memory allocation size per place for cg_implicit (`[[nodiscard]]`)
      */
     [[nodiscard]] std::vector<memory_size> calculate_maximum_implicit_kernel_matrix_memory_allocation_size_per_place(std::size_t num_features, std::size_t num_classes) const;
-
 };
 
 /**

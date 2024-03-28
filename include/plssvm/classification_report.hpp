@@ -13,14 +13,13 @@
 #define PLSSVM_CLASSIFICATION_REPORT_HPP_
 #pragma once
 
-#include "plssvm/detail/assert.hpp"          // PLSSVM_ASSERT
 #include "plssvm/detail/igor_utility.hpp"    // plssvm::detail::{has_only_named_args_v, get_value_from_named_parameter}
 #include "plssvm/exceptions/exceptions.hpp"  // plssvm::classification_report_exception
 #include "plssvm/matrix.hpp"                 // plssvm::aos_matrix
 #include "plssvm/shape.hpp"                  // plssvm::shape
 
-#include "fmt/core.h"     // fmt::format
-#include "fmt/ostream.h"  // fmt::formatter, fmt::ostream_formatter
+#include "fmt/core.h"     // fmt::format,fmt::formatter
+#include "fmt/ostream.h"  // fmt::ostream_formatter
 #include "igor/igor.hpp"  // IGOR_MAKE_NAMED_ARGUMENT, igor::parser, igor::has_unnamed_arguments, igor::has_other_than
 
 #include <algorithm>    // std::find, std::find_if, std::count, std::sort, std::any_of

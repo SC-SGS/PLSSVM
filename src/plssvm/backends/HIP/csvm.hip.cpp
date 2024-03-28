@@ -18,6 +18,7 @@
 #include "plssvm/backends/HIP/kernel/predict_kernel.hip.hpp"                           // plssvm::hip::detail::{device_kernel_w_linear, device_kernel_predict_linear, device_kernel_predict}
 #include "plssvm/constants.hpp"                                                        // plssvm::{real_type, THREAD_BLOCK_SIZE, INTERNAL_BLOCK_SIZE, PADDING_SIZE}
 #include "plssvm/detail/assert.hpp"                                                    // PLSSVM_ASSERT
+#include "plssvm/detail/data_distribution.hpp"                                         // plssvm::detail::{data_distribution, triangular_data_distribution, rectangular_data_distribution}
 #include "plssvm/detail/logging.hpp"                                                   // plssvm::detail::log
 #include "plssvm/detail/memory_size.hpp"                                               // plssvm::detail::memory_size
 #include "plssvm/detail/performance_tracker.hpp"                                       // plssvm::detail::tracking_entry
@@ -30,15 +31,16 @@
 
 #include "hip/hip_runtime_api.h"  // HIP runtime functions
 
-#include "fmt/color.h"    // fmt::fg, fmt::color::orange
 #include "fmt/core.h"     // fmt::format
 #include "fmt/ostream.h"  // can use fmt using operator<< overloads
 
+#include <cmath>      // std::ceil
 #include <cstddef>    // std::size_t
 #include <exception>  // std::terminate
 #include <iostream>   // std::cout, std::endl
 #include <numeric>    // std::iota
-#include <utility>    // std::pair, std::make_pair
+#include <string>     // std::string
+#include <vector>     // std::vector
 
 namespace plssvm::hip {
 
@@ -158,7 +160,7 @@ auto csvm::run_assemble_kernel_matrix_explicit(const std::size_t device_id, cons
                     static_cast<int>(std::ceil(static_cast<double>(device_specific_num_rows) / static_cast<double>(block.y * INTERNAL_BLOCK_SIZE))));
 
     // calculate the number of matrix entries
-    const ::plssvm::detail::triangular_data_distribution &dist = dynamic_cast<::plssvm::detail::triangular_data_distribution &>(*data_distribution_.get());
+    const ::plssvm::detail::triangular_data_distribution &dist = dynamic_cast<::plssvm::detail::triangular_data_distribution &>(*data_distribution_);
     const std::size_t num_entries_padded = dist.calculate_explicit_kernel_matrix_num_entries_padded(device_id);
 
     device_ptr_type kernel_matrix_d{ num_entries_padded, device };  // only explicitly store the upper triangular matrix

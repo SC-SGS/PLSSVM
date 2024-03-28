@@ -23,10 +23,12 @@
 #include "plssvm/shape.hpp"                     // plssvm::shape
 
 #include "fmt/compile.h"  // FMT_COMPILE
-#include "fmt/format.h"   // fmt::format, fmt::format_to
+#include "fmt/core.h"     // fmt::format
+#include "fmt/format.h"   // fmt::format_to
 #include "fmt/os.h"       // fmt::ostream, fmt::output_file
 
 #include <algorithm>    // std::max, std::min
+#include <array>        // std::array
 #include <cstddef>      // std::size_t
 #include <exception>    // std::exception, std::exception_ptr, std::current_exception, std::rethrow_exception
 #include <string>       // std::string

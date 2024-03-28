@@ -8,7 +8,7 @@
 
 #include "plssvm/backends/CUDA/detail/utility.cuh"
 
-#include "fmt/format.h"  // fmt::format
+#include "fmt/core.h"  // fmt::format
 
 #include <string>  // std::string
 

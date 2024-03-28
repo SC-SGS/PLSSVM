@@ -8,12 +8,12 @@
  * @brief Tests for parsing a valid LIBSVM model file data section.
  */
 
-#include "plssvm/classification_types.hpp"   // plssvm::classification_type
-#include "plssvm/constants.hpp"              // plssvm::real_type, plssvm::PADDING_SIZE, plssvm::PADDING_SIZE
-#include "plssvm/detail/io/file_reader.hpp"  // plssvm::detail::io::file_reader
-#include "plssvm/detail/io/libsvm_model_parsing.hpp"
-#include "plssvm/matrix.hpp"  // plssvm::aos_matrix
-#include "plssvm/shape.hpp"   // plssvm::shape
+#include "plssvm/classification_types.hpp"            // plssvm::classification_type
+#include "plssvm/constants.hpp"                       // plssvm::real_type, plssvm::PADDING_SIZE, plssvm::PADDING_SIZE
+#include "plssvm/detail/io/file_reader.hpp"           // plssvm::detail::io::file_reader
+#include "plssvm/detail/io/libsvm_model_parsing.hpp"  // functions to test
+#include "plssvm/matrix.hpp"                          // plssvm::aos_matrix
+#include "plssvm/shape.hpp"                           // plssvm::shape
 
 #include "tests/custom_test_macros.hpp"  // EXPECT_FLOATING_POINT_MATRIX_NEAR
 #include "tests/naming.hpp"              // naming::parameter_definition_to_name

@@ -21,8 +21,9 @@
 #include "tests/types_to_test.hpp"       // util::test_parameter_type_at_t
 #include "tests/utility.hpp"
 
+#include "gmock/gmock.h"   // ::testing::HasSubstr
 #include "gtest//gtest.h"  // TYPED_TEST_SUITE_P, TYPED_TEST_P, REGISTER_TYPED_TEST_SUITE_P, EXPECT_TRUE, EXPECT_FALSE, EXPECT_EQ, EXPECT_NE, EXPECT_DEATH
-                           // ::testing::{Test, hasSubstr}
+                           // ::testing::Test
 
 #include <cstring>  // std::memset
 #include <utility>  // std::move, std::swap
@@ -1018,7 +1019,7 @@ TYPED_TEST_P(DevicePtr, copy_device_ptr_to_other_device_too_few_device_elements)
 
     // other device_ptr
     device_ptr_type other_ptr{ 5, queue };
-    EXPECT_THROW_WHAT(ptr.copy_to_other_device(other_ptr), plssvm::gpu_device_ptr_exception, "Buffer too small to perform copy (needed: 10, provided: 5)!");
+    EXPECT_THROW_WHAT(ptr.copy_to_other_device(other_ptr), plssvm::exception, "Buffer too small to perform copy (needed: 10, provided: 5)!");
 }
 
 TYPED_TEST_P(DevicePtr, copy_device_ptr_to_other_device_with_count) {

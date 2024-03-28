@@ -12,9 +12,9 @@
 
 #include "tests/naming.hpp"  // naming::{pretty_print_x_vs_y, pretty_print_calc_alpha_idx}
 
-#include "gmock/gmock-matchers.h"  // ::testing::HasSubstr
-#include "gtest/gtest.h"           // TEST, TEST_P, INSTANTIATE_TEST_SUITE_P, EXPECT_EQ, EXPECT_DEATH
-                                   // ::testing::{TestWithParam, Values}
+#include "gmock/gmock.h"  // ::testing::HasSubstr
+#include "gtest/gtest.h"  // TEST, TEST_P, INSTANTIATE_TEST_SUITE_P, EXPECT_EQ, EXPECT_DEATH
+                          // ::testing::{TestWithParam, Values}
 
 #include <cstddef>  // std::size_t
 #include <tuple>    // std::tuple, std::make_tuple, std::ignore

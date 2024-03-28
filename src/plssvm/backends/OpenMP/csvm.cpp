@@ -22,25 +22,23 @@
 #include "plssvm/detail/logging.hpp"                                                  // plssvm::detail::log
 #include "plssvm/detail/memory_size.hpp"                                              // plssvm::detail::memory_size
 #include "plssvm/detail/move_only_any.hpp"                                            // plssvm::detail::{move_only_any, move_only_any_cast}
-#include "plssvm/detail/operators.hpp"                                                // various operator overloads for std::vector and scalars
 #include "plssvm/detail/performance_tracker.hpp"                                      // plssvm::detail::tracking_entry, PLSSVM_DETAIL_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY
+#include "plssvm/detail/utility.hpp"                                                  // plssvm::detail::get_system_memory
 #include "plssvm/kernel_function_types.hpp"                                           // plssvm::kernel_function_type
-#include "plssvm/kernel_functions.hpp"                                                // plssvm::kernel_function
 #include "plssvm/matrix.hpp"                                                          // plssvm::aos_matrix, plssvm::soa_matrix
 #include "plssvm/parameter.hpp"                                                       // plssvm::parameter
 #include "plssvm/shape.hpp"                                                           // plssvm::shape
+#include "plssvm/solver_types.hpp"                                                    // plssvm::solver_type
 #include "plssvm/target_platforms.hpp"                                                // plssvm::target_platform
 #include "plssvm/verbosity_levels.hpp"                                                // plssvm::verbosity_level
 
-#include "fmt/chrono.h"   // directly print std::chrono literals with fmt
-#include "fmt/core.h"     // fmt::format
-#include "fmt/ostream.h"  // can use fmt using operator<< overloads
+#include "fmt/core.h"  // fmt::format
 
-#include <algorithm>  // std::fill, std::all_of, std::min
-#include <chrono>     // std::chrono::{milliseconds, steady_clock, time_point, duration_cast}
-#include <cmath>      // std::fma
-#include <utility>    // std::pair, std::make_pair, std::move
-#include <vector>     // std::vector
+#include <cmath>    // std::fma
+#include <cstddef>  // std::size_t
+#include <tuple>    // std::tuple, std::make_tuple
+#include <utility>  // std::pair, std::make_pair, std::move
+#include <vector>   // std::vector
 
 namespace plssvm::openmp {
 

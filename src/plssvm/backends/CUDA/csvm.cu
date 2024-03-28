@@ -29,11 +29,11 @@
 #include "plssvm/target_platforms.hpp"                                              // plssvm::target_platform
 #include "plssvm/verbosity_levels.hpp"                                              // plssvm::verbosity_level
 
-#include "cuda.h"              // cuda runtime functions
+#include "cuda.h"              // cuda runtime
+#include "cuda_runtime.h"      // cuda runtime
 #include "cuda_runtime_api.h"  // cuda runtime functions
 
-#include "fmt/core.h"     // fmt::format
-#include "fmt/ostream.h"  // can use fmt using operator<< overloads
+#include "fmt/core.h"  // fmt::format
 
 #include <cmath>      // std::sqrt, std::ceil
 #include <cstddef>    // std::size_t
@@ -161,7 +161,7 @@ auto csvm::run_assemble_kernel_matrix_explicit(const std::size_t device_id, cons
                     static_cast<int>(std::ceil(static_cast<double>(device_specific_num_rows) / static_cast<double>(block.y * INTERNAL_BLOCK_SIZE))));
 
     // calculate the number of matrix entries
-    const ::plssvm::detail::triangular_data_distribution &dist = dynamic_cast<::plssvm::detail::triangular_data_distribution &>(*data_distribution_.get());
+    const ::plssvm::detail::triangular_data_distribution &dist = dynamic_cast<::plssvm::detail::triangular_data_distribution &>(*data_distribution_);
     const std::size_t num_entries_padded = dist.calculate_explicit_kernel_matrix_num_entries_padded(device_id);
 
     device_ptr_type kernel_matrix_d{ num_entries_padded, device };  // only explicitly store the upper triangular matrix

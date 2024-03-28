@@ -15,7 +15,8 @@
 
 #include "plssvm/detail/type_traits.hpp"  // PLSSVM_REQUIRES
 
-#include "fmt/ostream.h"  // fmt::formatter, fmt::ostream_formatter
+#include "fmt/core.h"     // fmt::formatter
+#include "fmt/ostream.h"  // fmt::ostream_formatter
 
 #include <cstddef>      // std::size_t
 #include <functional>   // std::hash

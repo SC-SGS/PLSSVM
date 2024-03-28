@@ -17,13 +17,13 @@
 #include "plssvm/constants.hpp"                   // plssvm::real_type, plssvm::PADDING_SIZE
 #include "plssvm/data_set.hpp"                    // plssvm::data_set
 #include "plssvm/default_value.hpp"               // plssvm::default_value, plssvm::default_init
+#include "plssvm/detail/assert.hpp"               // PLSSVM_ASSERT
 #include "plssvm/detail/data_distribution.hpp"    // plssvm::detail::triangular_data_distribution
 #include "plssvm/detail/data_distribution.hpp"    // plssvm::detail::data_distribution
 #include "plssvm/detail/igor_utility.hpp"         // plssvm::detail::{get_value_from_named_parameter, has_only_parameter_named_args_v}
 #include "plssvm/detail/logging.hpp"              // plssvm::detail::log
 #include "plssvm/detail/memory_size.hpp"          // plssvm::detail::memory_size
 #include "plssvm/detail/move_only_any.hpp"        // plssvm::detail::move_only_any
-#include "plssvm/detail/operators.hpp"            // plssvm::operators::sign
 #include "plssvm/detail/performance_tracker.hpp"  // plssvm::detail::performance_tracker
 #include "plssvm/detail/type_traits.hpp"          // PLSSVM_REQUIRES, plssvm::detail::remove_cvref_t
 #include "plssvm/detail/utility.hpp"              // plssvm::detail::to_underlying
@@ -43,10 +43,11 @@
 
 #include <algorithm>    // std::max_element
 #include <chrono>       // std::chrono::{time_point, steady_clock, duration_cast}
-#include <iostream>     // std::cout, std::endl
-#include <iterator>     // std::distance
+#include <cstddef>      // std::size_t
+#include <limits>       // std::numeric_limits::lowest
 #include <memory>       // std::unique_ptr
 #include <optional>     // std::optional, std::make_optional, std::nullopt
+#include <ratio>        // std::milli
 #include <tuple>        // std::tie
 #include <type_traits>  // std::enable_if_t, std::is_same_v, std::is_convertible_v, std::false_type
 #include <utility>      // std::pair, std::forward
@@ -279,10 +280,10 @@ class csvm {
      * @param[in] B the right-hand sides
      * @param[in] eps the termination criterion for the CG algorithm
      * @param[in] max_cg_iter the maximum number of CG iterations
-     * @param[in] cd_solver_variant the variation of the CG algorithm to use, i.e., how the kernel matrix is assembled (currently: explicit, streaming, implicit)
+     * @param[in] cg_solver the variation of the CG algorithm to use, i.e., how the kernel matrix is assembled (currently: explicit, streaming, implicit)
      * @return the result matrix `X` and the number of CG iterations necessary to solve the system of linear equations (`[[nodiscard]]`)
      */
-    [[nodiscard]] std::pair<soa_matrix<real_type>, unsigned long long> conjugate_gradients(const std::vector<detail::move_only_any> &A, const soa_matrix<real_type> &B, real_type eps, unsigned long long max_cg_iter, solver_type cd_solver_variant) const;
+    [[nodiscard]] std::pair<soa_matrix<real_type>, unsigned long long> conjugate_gradients(const std::vector<detail::move_only_any> &A, const soa_matrix<real_type> &B, real_type eps, unsigned long long max_cg_iter, solver_type cg_solver) const;
     /**
      * @brief Perform a dimensional reduction for the kernel matrix.
      * @details Reduces the resulting dimension by `2` compared to the original LS-SVM formulation.
@@ -419,7 +420,7 @@ model<label_type> csvm::fit(const data_set<label_type> &data, Args &&...named_ar
         // create index vector: index_sets[0] contains the indices of all data points in the big data set with label index 0, and so on
         std::vector<std::vector<std::size_t>> index_sets(num_classes);
         {
-            const std::vector<label_type> &labels = data.labels().value();
+            const std::vector<label_type> &labels = *data.labels();
             for (std::size_t i = 0; i < data.num_data_points(); ++i) {
                 index_sets[data.mapping_->get_mapped_index_by_label(labels[i])].push_back(i);
             }
@@ -690,7 +691,7 @@ real_type csvm::score(const model<label_type> &model, const data_set<label_type>
     // predict labels
     const std::vector<label_type> predicted_labels = this->predict(model, data);
     // correct labels
-    const std::vector<label_type> &correct_labels = data.labels().value();
+    const std::vector<label_type> &correct_labels = *data.labels();
 
     // calculate the accuracy
     typename std::vector<label_type>::size_type correct{ 0 };

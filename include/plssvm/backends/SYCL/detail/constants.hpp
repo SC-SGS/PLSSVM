@@ -13,16 +13,6 @@
 #define PLSSVM_BACKENDS_SYCL_DETAIL_CONSTANTS_HPP_
 #pragma once
 
-/**
- * @brief Macro identifying the used SYCL compiler as AdaptiveCpp.
- */
-#define PLSSVM_SYCL_BACKEND_COMPILER_ADAPTIVECPP 1
-
-/**
- * @brief Macro identifying the used SYCL compiler as [DPC++](https://github.com/intel/llvm).
- */
-#define PLSSVM_SYCL_BACKEND_COMPILER_DPCPP 0
-
 #if defined(PLSSVM_HAS_SYCL_BACKEND)
 // define the default used SYCL implementation
 namespace plssvm::sycl {

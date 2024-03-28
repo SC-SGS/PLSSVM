@@ -22,8 +22,9 @@
 #include "plssvm/detail/utility.hpp"             // PLSSVM_EXTERN
 #include "plssvm/parameter.hpp"                  // plssvm::parameter
 
-#include "fmt/chrono.h"  // format std::chrono types
-#include "fmt/format.h"  // fmt::format, fmt::join, fmt::formatter, fmt::ostream_formatter
+#include "fmt/chrono.h"   // format std::chrono types
+#include "fmt/format.h"   // fmt::format, fmt::join, fmt::formatter
+#include "fmt/ostream.h"  // fmt::ostream_formatter
 
 #include <map>          // std::map
 #include <memory>       // std::shared_ptr

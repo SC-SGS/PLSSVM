@@ -8,8 +8,9 @@
  * @brief Tests for parsing a LIBSVM model file with an invalid header.
  */
 
-#include "plssvm/detail/io/libsvm_model_parsing.hpp"
-#include "plssvm/exceptions/exceptions.hpp"  // plssvm::invalid_file_format_exception
+#include "plssvm/detail/io/file_reader.hpp"           // plssvm::detail::io::file_reader
+#include "plssvm/detail/io/libsvm_model_parsing.hpp"  // functions to test
+#include "plssvm/exceptions/exceptions.hpp"           // plssvm::invalid_file_format_exception
 
 #include "tests/custom_test_macros.hpp"  // EXPECT_THROW_WHAT
 #include "tests/naming.hpp"              // naming::label_type_to_name

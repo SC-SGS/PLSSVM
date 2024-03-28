@@ -13,6 +13,7 @@
 #include "plssvm/detail/cmd/parser_predict.hpp"     // plssvm::detail::cmd::parser_predict
 #include "plssvm/detail/logging.hpp"                // plssvm::detail::log
 #include "plssvm/detail/performance_tracker.hpp"    // plssvm::detail::tracking_entry, PLSSVM_DETAIL_PERFORMANCE_TRACKER_SAVE, PLSSVM_DETAIL_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY
+#include "plssvm/verbosity_levels.hpp"              // plssvm::verbosity_level
 
 #include "fmt/format.h"  // fmt::print, fmt::join
 #include "fmt/os.h"      // fmt::ostream, fmt::output_file
@@ -104,7 +105,7 @@ int main(int argc, char *argv[]) {
             // print achieved accuracy (if possible)
             if (data.has_labels()) {
                 // generate the classification report
-                const std::vector<label_type> &correct_labels = data.labels().value();
+                const std::vector<label_type> &correct_labels = *data.labels();
                 const plssvm::classification_report report{ correct_labels, predicted_labels };
 
                 // print complete report

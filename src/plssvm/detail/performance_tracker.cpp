@@ -22,6 +22,7 @@
 #include "cxxopts.hpp"    // CXXOPTS__VERSION_MAJOR, CXXOPTS__VERSION_MINOR, CXXOPTS__VERSION_MINOR
 #include "fmt/chrono.h"   // format std::chrono types
 #include "fmt/core.h"     // fmt::format, FMT_VERSION
+#include "fmt/format.h"   // fmt::join
 #include "fmt/ostream.h"  // format types with an operator<< overload
 
 #if __has_include(<unistd.h>)

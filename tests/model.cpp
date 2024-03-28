@@ -23,9 +23,8 @@
 #include "tests/types_to_test.hpp"       // util::{label_type_classification_type_gtest, test_parameter_type_at_t, test_parameter_value_at_v}
 #include "tests/utility.hpp"             // util::{redirect_output, temporary_file, instantiate_template_file, get_num_classes, get_distinct_label, get_correct_model_file_labels}
 
-#include "gtest/gtest-matchers.h"  // ::testing::HasSubstr
-#include "gtest/gtest.h"           // TYPED_TEST, TYPED_TEST_SUITE, EXPECT_EQ, EXPECT_TRUE, EXPECT_DEATH, ASSERT_EQ, ASSERT_GT, FAIL,
-                                   // ::testing::{Test, StaticAssertTypeEq}
+#include "gtest/gtest.h"  // TYPED_TEST, TYPED_TEST_SUITE, EXPECT_EQ, EXPECT_TRUE, EXPECT_DEATH, ASSERT_EQ, ASSERT_GT, FAIL,
+                          // ::testing::{Test, StaticAssertTypeEq}
 
 #include <cstddef>      // std::size_t
 #include <regex>        // std::regex, std::regex_match, std::regex::extended
