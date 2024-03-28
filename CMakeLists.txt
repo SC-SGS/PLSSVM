@@ -200,13 +200,13 @@ include(FetchContent)
 list(APPEND CMAKE_MESSAGE_INDENT "Dependencies:  ")
 
 ## try finding cxxopts
-find_package(cxxopts 3.1.1 QUIET)
+find_package(cxxopts 3.2.0 QUIET)
 if (cxxopts_FOUND)
     message(STATUS "Found package cxxopts.")
     target_include_directories(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC ${cxxopts_INCLUDE_DIR})
 else ()
     message(STATUS "Couldn't find package cxxopts. Building from source ...")
-    set(PLSSVM_cxxopts_VERSION v3.1.1)
+    set(PLSSVM_cxxopts_VERSION v3.2.0)
     # set options for cxxopts
     set(CXXOPTS_BUILD_EXAMPLES OFF CACHE INTERNAL "" FORCE)
     set(CXXOPTS_BUILD_TESTS OFF CACHE INTERNAL "" FORCE)
