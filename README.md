@@ -63,11 +63,11 @@ The main highlights of our SVM implementations are:
    - [SYCL](https://www.khronos.org/sycl/) (supported implementations are [DPC++](https://github.com/intel/llvm) and [AdaptiveCpp](https://github.com/AdaptiveCpp/AdaptiveCpp) (formerly known as hipSYCL); specifically the versions [sycl-nightly/20231201](https://github.com/intel/llvm/tree/sycl-nightly/20230110) and AdaptiveCpp release [v23.10.0](https://github.com/AdaptiveCpp/AdaptiveCpp/releases/tag/v23.10.0))
 3. Six different kernel functions to be able to classify a large variaty of different problems:
    - linear: $\vec{u}^T \cdot \vec{v}$
-   - polynomial: $(gamma \cdot \vec{u}^T \cdot \vec{v} + coef0)^{degree}$
-   - radial basis function (rbf): $\exp(-gamma \cdot |\vec{u} - \vec{v}|^2)$
-   - sigmoid: $\tanh(gamma \cdot \vec{u}^T \cdot \vec{v} + coef0)$
-   - laplacian: $\exp(-gamma \cdot |\vec{u} - \vec{v}|_1)$
-   - chi-squared (only well-defined for values > 0): $\exp(-gamma \cdot \sum_i \frac{(x[i] - y[i])^2}{x[i] + y[i]})$
+   - polynomial: $(\gamma \cdot \vec{u}^T \cdot \vec{v} + coef0)^{d}$
+   - radial basis function (rbf): $\exp(-\gamma \cdot |\vec{u} - \vec{v}|^2)$
+   - sigmoid: $\tanh(\gamma \cdot \vec{u}^T \cdot \vec{v} + coef0)$
+   - laplacian: $\exp(-\gamma \cdot |\vec{u} - \vec{v}|_1)$
+   - chi-squared (only well-defined for values > 0): $\exp(-\gamma \cdot \sum_i \frac{(x[i] - y[i])^2}{x[i] + y[i]})$
 4. Two different solver types for a trade-off between memory footprint and runtime:
    - `cg_explicit`: large memory overhead but very fast
    - `cg_implicit`: slower but requires drastically less memory
