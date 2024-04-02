@@ -9,30 +9,31 @@
 #include "plssvm/detail/cmd/parser_train.hpp"
 
 #include "plssvm/backend_types.hpp"                                // plssvm::list_available_backends, plssvm::determine_default_backend
-#include "plssvm/backends/SYCL/implementation_types.hpp"           // plssvm::sycl_generic::list_available_sycl_implementations
+#include "plssvm/backends/SYCL/implementation_types.hpp"           // plssvm::sycl::{list_available_sycl_implementations, implementation_type}
+#include "plssvm/backends/SYCL/kernel_invocation_types.hpp"        // plssvm::sycl::kernel_invocation_type
 #include "plssvm/classification_types.hpp"                         // plssvm::classification_type, plssvm::classification_type_to_full_string
 #include "plssvm/constants.hpp"                                    // plssvm::real_type
 #include "plssvm/default_value.hpp"                                // plssvm::default_value
 #include "plssvm/detail/assert.hpp"                                // PLSSVM_ASSERT
 #include "plssvm/detail/logging_without_performance_tracking.hpp"  // plssvm::detail::log_untracked
-#include "plssvm/detail/string_utility.hpp"                        // plssvm::detail::as_lower_case
 #include "plssvm/detail/utility.hpp"                               // plssvm::detail::to_underlying
 #include "plssvm/kernel_function_types.hpp"                        // plssvm::kernel_type_to_math_string
-#include "plssvm/solver_types.hpp"                                 // plssvm::solver_types
 #include "plssvm/target_platforms.hpp"                             // plssvm::list_available_target_platforms
 #include "plssvm/verbosity_levels.hpp"                             // plssvm::verbosity, plssvm::verbosity_level
 #include "plssvm/version/version.hpp"                              // plssvm::version::detail::get_version_info
 
-#include "cxxopts.hpp"    // cxxopts::Options, cxxopts::value,cxxopts::ParseResult
-#include "fmt/color.h"    // fmt::fg, fmt::color::red
-#include "fmt/core.h"     // fmt::format, fmt::join
-#include "fmt/ostream.h"  // can use fmt using operator<< overloads
+#include "cxxopts.hpp"   // cxxopts::Options, cxxopts::value,cxxopts::ParseResult
+#include "fmt/color.h"   // fmt::fg, fmt::color::red
+#include "fmt/core.h"    // fmt::format
+#include "fmt/format.h"  // fmt::join
 
 #include <cstdlib>      // std::exit, EXIT_SUCCESS, EXIT_FAILURE
 #include <exception>    // std::exception
 #include <filesystem>   // std::filesystem::path
 #include <iostream>     // std::cout, std::cerr, std::endl
+#include <string>       // std::string
 #include <type_traits>  // std::is_same_v
+#include <vector>       // std::vector
 
 namespace plssvm::detail::cmd {
 
@@ -51,7 +52,7 @@ parser_train::parser_train(int argc, char **argv) {
     }
     kernel_type_help.pop_back();  // remove last newline character
 
-    cxxopts::Options options(argv[0], "LS-SVM with multiple (GPU-)backends");
+    cxxopts::Options options("plssvm-train", "LS-SVM with multiple (GPU-)backends");
     options
         .positional_help("training_set_file [model_file]")
         .show_positional_help();

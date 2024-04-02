@@ -184,13 +184,7 @@ find_package(OpenMP 4.0 QUIET)
 if (OpenMP_FOUND)
     message(STATUS "Found OpenMP ${OpenMP_CXX_VERSION} to speed-up library utilities (like file parsing).")
     set(PLSSVM_FOUND_OPENMP_FOR_UTILITY "${OpenMP_CXX_VERSION}")
-    # target_link_libraries(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC OpenMP::OpenMP_CXX -fopenmp)
-    # target_compile_options(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC $<$<COMPILE_LANGUAGE:CXX>:-fopenmp>)
-    # target_compile_options(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC $<$<CXX_COMPILER_ID:MSVC>:-openmp:llvm -openmp:experimental>)
     target_link_libraries(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC $<$<NOT:$<CXX_COMPILER_ID:MSVC>>:OpenMP::OpenMP_CXX>)
-    # special command line options for MSVC:
-    # -openmp:llvm -> enables unsigned loop indexes in OpenMP parallel for loops
-    # -openmp:experimental -> enables OpenMP's SIMD instructions
     target_compile_options(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC $<$<CXX_COMPILER_ID:MSVC>:-openmp:llvm -openmp:experimental>)
 
 else ()
@@ -206,13 +200,13 @@ include(FetchContent)
 list(APPEND CMAKE_MESSAGE_INDENT "Dependencies:  ")
 
 ## try finding cxxopts
-find_package(cxxopts 3.1.1 QUIET)
+find_package(cxxopts 3.2.0 QUIET)
 if (cxxopts_FOUND)
     message(STATUS "Found package cxxopts.")
     target_include_directories(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC ${cxxopts_INCLUDE_DIR})
 else ()
     message(STATUS "Couldn't find package cxxopts. Building from source ...")
-    set(PLSSVM_cxxopts_VERSION v3.1.1)
+    set(PLSSVM_cxxopts_VERSION v3.2.0)
     # set options for cxxopts
     set(CXXOPTS_BUILD_EXAMPLES OFF CACHE INTERNAL "" FORCE)
     set(CXXOPTS_BUILD_TESTS OFF CACHE INTERNAL "" FORCE)
@@ -738,13 +732,11 @@ if (NOT fast_float_FOUND)
             DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}"
     )
 endif ()
-
 if (NOT igor_FOUND)
     install(DIRECTORY "${igor_SOURCE_DIR}/include/"
             DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}"
     )
 endif ()
-
 ## mark man pages to install
 install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/docs/plssvm-train.1
         ${CMAKE_CURRENT_SOURCE_DIR}/docs/plssvm-predict.1

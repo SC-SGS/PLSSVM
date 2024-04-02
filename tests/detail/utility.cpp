@@ -15,8 +15,8 @@
 #include "tests/naming.hpp"         // naming::{test_parameter_to_name}
 #include "tests/types_to_test.hpp"  // util::{combine_test_parameters_gtest_t, cartesian_type_product_t, test_parameter_type_at_t}
 
-#include "gmock/gmock-matchers.h"  // EXPECT_THAT, ::testing::HasSubstr
-#include "gtest/gtest.h"           // TEST, EXPECT_EQ, EXPECT_TRUE, EXPECT_FALSE, ::testing::Test
+#include "gmock/gmock.h"  // EXPECT_THAT, ::testing::HasSubstr
+#include "gtest/gtest.h"  // TEST, EXPECT_EQ, EXPECT_TRUE, EXPECT_FALSE, ::testing::Test
 
 #include <map>            // std::map
 #include <regex>          // std::regex, std::regex::extended, std::regex_match

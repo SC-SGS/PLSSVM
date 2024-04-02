@@ -141,11 +141,11 @@ TEST(MoveOnlyAny, swap_member_function) {
 
 TEST(MoveOnlyAny, has_value) {
     // create move_only_any object that should contain an object
-    plssvm::detail::move_only_any a1{ 42 };
+    const plssvm::detail::move_only_any a1{ 42 };
     EXPECT_TRUE(a1.has_value());
 
     // default constructed move_only_any should not contain an object
-    plssvm::detail::move_only_any a2{};
+    const plssvm::detail::move_only_any a2{};
     EXPECT_FALSE(a2.has_value());
 }
 

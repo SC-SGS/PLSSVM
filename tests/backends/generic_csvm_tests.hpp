@@ -13,14 +13,13 @@
 #define PLSSVM_TESTS_BACKENDS_GENERIC_CSVM_TESTS_HPP_
 #pragma once
 
+#include "plssvm/backend_types.hpp"             // plssvm::backend_type
 #include "plssvm/classification_types.hpp"      // plssvm::classification_type
 #include "plssvm/constants.hpp"                 // plssvm::real_type, plssvm::PADDING_SIZE
 #include "plssvm/data_set.hpp"                  // plssvm::data_set
 #include "plssvm/detail/data_distribution.hpp"  // plssvm::detail::{triangular_data_distribution, rectangular_data_distribution}
-#include "plssvm/detail/io/file_reader.hpp"     // plssvm::detail::io::file_reader
 #include "plssvm/detail/memory_size.hpp"        // memory size literals
 #include "plssvm/detail/move_only_any.hpp"      // plssvm::detail::move_only_any
-#include "plssvm/detail/string_conversion.hpp"  // plssvm::detail::convert_to
 #include "plssvm/detail/utility.hpp"            // plssvm::detail::{unreachable, get, unreachable}
 #include "plssvm/kernel_function_types.hpp"     // plssvm::csvm_to_backend_type_v, plssvm::backend_type
 #include "plssvm/matrix.hpp"                    // plssvm::aos_matrix, plssvm::layout_type
@@ -35,13 +34,11 @@
 #include "tests/types_to_test.hpp"          // util::{test_parameter_type_at_t, test_parameter_value_at_v}
 #include "tests/utility.hpp"                // util::{redirect_output, generate_specific_matrix, construct_from_tuple, flatten, generate_random_matrix}
 
-#include "fmt/format.h"   // fmt::format
-#include "fmt/ostream.h"  // can use fmt using operator<< overloads
+#include "fmt/core.h"     // fmt::format
 #include "gmock/gmock.h"  // ::testing::HasSubstr
 #include "gtest/gtest.h"  // TYPED_TEST_SUITE_P, TYPED_TEST_P, REGISTER_TYPED_TEST_SUITE_P, EXPECT_EQ, EXPECT_NE, EXPECT_GT, EXPECT_TRUE, EXPECT_DEATH,
                           // ASSERT_EQ, GTEST_SKIP, SUCCEED, ::testing::Test
 
-#include <array>    // std::array
 #include <cmath>    // std::sqrt, std::abs, std::exp, std::pow
 #include <cstddef>  // std::size_t
 #include <limits>   // std::numeric_limits::epsilon
@@ -321,7 +318,7 @@ TYPED_TEST_P(GenericCSVM, blas_level_3_explicit_without_C) {
     };
     // be sure to use the correct data distribution
     svm.data_distribution_ = std::make_unique<plssvm::detail::triangular_data_distribution>(matr_A.num_rows(), svm.num_available_devices());
-    const std::vector<plssvm::detail::move_only_any> A{ std::move(util::init_explicit_matrices<csvm_type, device_ptr_type>(matr_A, svm)) };
+    const std::vector<plssvm::detail::move_only_any> A{ util::init_explicit_matrices<csvm_type, device_ptr_type>(matr_A, svm) };
 
     const plssvm::soa_matrix<plssvm::real_type> B{ { { plssvm::real_type{ 1.0 }, plssvm::real_type{ 2.0 }, plssvm::real_type{ 3.0 } },
                                                      { plssvm::real_type{ 4.0 }, plssvm::real_type{ 5.0 }, plssvm::real_type{ 6.0 } },

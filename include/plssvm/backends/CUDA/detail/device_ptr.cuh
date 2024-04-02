@@ -16,6 +16,8 @@
 #include "plssvm/backends/gpu_device_ptr.hpp"  // plssvm::detail::gpu_device_ptr
 #include "plssvm/shape.hpp"                    // plssvm::shape
 
+#include <cstddef>  // std::size_t
+
 namespace plssvm::cuda::detail {
 
 /**

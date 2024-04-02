@@ -8,24 +8,24 @@
  * @brief Tests for writing LIBSVM model file data section.
  */
 
-#include "plssvm/classification_types.hpp"   // plssvm::classification_type, plssvm::calculate_number_of_classifiers
-#include "plssvm/constants.hpp"              // plssvm::real_type
-#include "plssvm/data_set.hpp"               // plssvm::data_set
-#include "plssvm/detail/io/file_reader.hpp"  // plssvm::detail::io::file_reader
-#include "plssvm/detail/io/libsvm_model_parsing.hpp"
-#include "plssvm/kernel_function_types.hpp"  // plssvm::kernel_function_type
-#include "plssvm/matrix.hpp"                 // plssvm::aos_matrix
-#include "plssvm/parameter.hpp"              // plssvm::parameter
-#include "plssvm/shape.hpp"                  // plssvm::shape
+#include "plssvm/classification_types.hpp"            // plssvm::classification_type, plssvm::calculate_number_of_classifiers
+#include "plssvm/constants.hpp"                       // plssvm::real_type
+#include "plssvm/data_set.hpp"                        // plssvm::data_set
+#include "plssvm/detail/io/file_reader.hpp"           // plssvm::detail::io::file_reader
+#include "plssvm/detail/io/libsvm_model_parsing.hpp"  // functions to test
+#include "plssvm/kernel_function_types.hpp"           // plssvm::kernel_function_type
+#include "plssvm/matrix.hpp"                          // plssvm::aos_matrix
+#include "plssvm/parameter.hpp"                       // plssvm::parameter
+#include "plssvm/shape.hpp"                           // plssvm::shape
 
 #include "tests/naming.hpp"         // naming::parameter_definition_to_name
 #include "tests/types_to_test.hpp"  // util::label_type_classification_type_gtest
 #include "tests/utility.hpp"        // util::{get_distinct_label, get_correct_model_file_labels, get_correct_model_file_num_sv_per_class,
                                     // generate_random_matrix, get_num_classes, generate_random_vector}
 
-#include "fmt/format.h"            // fmt::format, fmt::join
-#include "gmock/gmock-matchers.h"  // ::testing::HasSubstr
-#include "gtest/gtest.h"           // TYPED_TEST, TYPED_TEST_SUITE, EXPECT_EQ, EXPECT_DEATH, ASSERT_EQ, FAIL, SUCCEED, ::testing::Test
+#include "fmt/format.h"   // fmt::format, fmt::join
+#include "gmock/gmock.h"  // ::testing::HasSubstr
+#include "gtest/gtest.h"  // TYPED_TEST, TYPED_TEST_SUITE, EXPECT_EQ, EXPECT_DEATH, ASSERT_EQ, FAIL, SUCCEED, ::testing::Test
 
 #include <cstddef>      // std::size_t
 #include <string>       // std::string

@@ -10,8 +10,8 @@
 
 #include "plssvm/detail/assert.hpp"
 
-#include "gmock/gmock-matchers.h"  // ::testing::ContainsRegex
-#include "gtest/gtest.h"           // TEST, ASSERT_DEATH, EXPECT_DEATH
+#include "gmock/gmock.h"  // ::testing::ContainsRegex
+#include "gtest/gtest.h"  // TEST, ASSERT_DEATH, EXPECT_DEATH
 
 // only test if assertions are enabled
 #if defined(PLSSVM_ASSERT_ENABLED)

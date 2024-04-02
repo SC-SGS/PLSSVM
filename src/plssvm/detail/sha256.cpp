@@ -8,7 +8,8 @@
 
 #include "plssvm/detail/sha256.hpp"
 
-#include "fmt/format.h"  // fmt::format, fmt::join
+#include "fmt/core.h"    // fmt::format
+#include "fmt/format.h"  // fmt::join
 
 #include <array>    // std::array
 #include <cstdint>  // std::uint32_t, std::uint64_t

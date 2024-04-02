@@ -11,6 +11,7 @@
 
 #ifndef PLSSVM_DETAIL_IGOR_UTILITY_HPP_
 #define PLSSVM_DETAIL_IGOR_UTILITY_HPP_
+#pragma once
 
 #include "plssvm/default_value.hpp"       // plssvm::is_default_value
 #include "plssvm/detail/type_traits.hpp"  // plssvm::detail::{remove_cvref_t, always_false_v}

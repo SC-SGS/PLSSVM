@@ -26,7 +26,7 @@
                           // PAGE_READONLY, FILE_MAP_READ, LARGE_INTEGER
 #endif
 
-#if _OPENMP
+#ifdef _OPENMP
     #include "omp.h"
 #endif
 
@@ -34,6 +34,7 @@
 #include <climits>      // INT32_MAX
 #include <cmath>        // std::ceil
 #include <cstddef>      // std::size_t
+#include <cstdint>      // INT_MAX
 #include <deque>        // std::deque
 #include <filesystem>   // std::filesystem::path
 #include <fstream>      // std::ifstream
@@ -138,7 +139,6 @@ void file_reader::close() {
             ::close(file_descriptor_);
         }
         file_descriptor_ = 0;
-        file_content_ = nullptr;
         must_unmap_file_ = false;
 #elif defined(PLSSVM_HAS_MEMORY_MAPPING_WINDOWS)
         if (must_unmap_file_) {
@@ -151,11 +151,8 @@ void file_reader::close() {
         }
         file_ = HANDLE{};
         mapped_file_ = HANDLE{};
-        file_content_ = nullptr;
         must_unmap_file_ = false;
 #endif
-        // delete allocated buffer (deleting nullptr is a no-op)
-        delete[] file_content_;
         file_content_ = nullptr;
         num_bytes_ = 0;
 
@@ -191,7 +188,7 @@ const std::vector<std::string_view> &file_reader::read_lines(const std::string_v
     const std::string_view file_content_view{ file_content_, static_cast<std::string_view::size_type>(num_bytes_) };
 
     // parse lines in parallel if OpenMP is available, otherwise use serial fallback
-#if _OPENMP
+#ifdef _OPENMP
     // per thread temporaries
     std::vector<std::deque<std::size_t>> per_thread_newlines;
     std::vector<std::vector<std::string_view>> per_thread_lines;
@@ -402,14 +399,16 @@ void file_reader::open_file(const char *filename) {
     f.seekg(0, std::ios_base::beg);
 
     if (num_bytes_ > 0) {
-        // allocate the necessary buffer
-        file_content_ = new char[num_bytes_];
+        // allocate the necessary buffer -> use std::string for automatic memory management
+        fallback_file_content_.resize(num_bytes_);
         for (std::streamsize i = 0; i < static_cast<std::streamsize>(std::ceil(static_cast<double>(num_bytes_) / INT32_MAX)); ++i) {
             // read the whole file in chunks of up to INT32_MAX bytes at once
-            if (!f.read(file_content_ + i * INT32_MAX, std::min<std::streamsize>(INT32_MAX, num_bytes_ - i * INT32_MAX))) {
+            if (!f.read(fallback_file_content_.data() + i * INT32_MAX, std::min<std::streamsize>(INT32_MAX, num_bytes_ - i * INT32_MAX))) {
                 throw invalid_file_format_exception{ fmt::format("Error while reading file: '{}'!", filename) };
             }
         }
+        // let the file_content_ ptr point to the std::string values
+        file_content_ = fallback_file_content_.data();
     }
 }
 

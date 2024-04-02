@@ -11,10 +11,12 @@
 
 #ifndef PLSSVM_VERBOSITY_LEVELS_HPP_
 #define PLSSVM_VERBOSITY_LEVELS_HPP_
+#pragma once
 
 #include "plssvm/detail/utility.hpp"  // PLSSVM_EXTERN
 
-#include "fmt/ostream.h"  // fmt::formatter, fmt::ostream_formatter
+#include "fmt/core.h"     // fmt::formatter
+#include "fmt/ostream.h"  // fmt::ostream_formatter
 
 #include <iosfwd>  // std::istream, std::ostream
 

@@ -73,6 +73,7 @@ class LIBSVMModelHeaderParseValid : public ::testing::Test {
             case plssvm::kernel_function_type::sigmoid:
                 return 10;
         }
+        return 0;
     }
 };
 

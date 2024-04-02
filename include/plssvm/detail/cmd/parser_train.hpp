@@ -13,17 +13,18 @@
 #define PLSSVM_DETAIL_CMD_PARSER_TRAIN_HPP_
 #pragma once
 
-#include "plssvm/backend_types.hpp"                         // plssvm::backend_type
-#include "plssvm/backends/SYCL/implementation_types.hpp"    // plssvm::sycl::implementation_type
+#include "plssvm/backend_types.hpp"                          // plssvm::backend_type
+#include "plssvm/backends/SYCL/implementation_types.hpp"     // plssvm::sycl::implementation_type
 #include "plssvm/backends/SYCL/kernel_invocation_types.hpp"  // plssvm::sycl::kernel_invocation_type
-#include "plssvm/classification_types.hpp"                  // plssvm::classification_type
-#include "plssvm/constants.hpp"                             // plssvm::real_type
-#include "plssvm/default_value.hpp"                         // plssvm::default_value, plssvm::default_init
-#include "plssvm/parameter.hpp"                             // plssvm::parameter
-#include "plssvm/solver_types.hpp"                          // plssvm::solving_type
-#include "plssvm/target_platforms.hpp"                      // plssvm::target_platform
+#include "plssvm/classification_types.hpp"                   // plssvm::classification_type
+#include "plssvm/constants.hpp"                              // plssvm::real_type
+#include "plssvm/default_value.hpp"                          // plssvm::default_value, plssvm::default_init
+#include "plssvm/parameter.hpp"                              // plssvm::parameter
+#include "plssvm/solver_types.hpp"                           // plssvm::solving_type
+#include "plssvm/target_platforms.hpp"                       // plssvm::target_platform
 
-#include "fmt/ostream.h"  // fmt::formatter, fmt::ostream_formatter
+#include "fmt/core.h"     // fmt::formatter
+#include "fmt/ostream.h"  // mt::ostream_formatter
 
 #include <cstddef>  // std::size_t
 #include <iosfwd>   // forward declare std::ostream

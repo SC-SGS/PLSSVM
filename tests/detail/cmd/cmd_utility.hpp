@@ -13,17 +13,15 @@
 #define PLSSVM_TESTS_DETAIL_CMD_UTILITY_HPP_
 #pragma once
 
-#include "plssvm/detail/string_conversion.hpp"  // plssvm::detail::split_as
-#include "plssvm/verbosity_levels.hpp"          // plssvm::verbosity_level, plssvm::verbosity
+#include "plssvm/verbosity_levels.hpp"  // plssvm::verbosity_level, plssvm::verbosity
 
 #include "tests/utility.hpp"  // util::redirect_output
 
 #include "gtest/gtest.h"  // :testing::Test
 
-#include <cstring>      // std::memcpy
-#include <string>       // std::string
-#include <string_view>  // std::string_view
-#include <vector>       // std::vector
+#include <string>   // std::string
+#include <utility>  // std::move
+#include <vector>   // std::vector
 
 namespace util {
 
@@ -42,26 +40,19 @@ class ParameterBase : public ::testing::Test,
      * @brief Create artificial argc and argv from the given command line string.
      * @param[in] cmd_line_split the command line argument to create the argc and argv from
      */
-    void CreateCMDArgs(const std::vector<std::string> &cmd_line_split) {
+    void CreateCMDArgs(std::vector<std::string> cmd_line_split) {
         // create argc and argv from a std::string
-        argc_ = static_cast<int>(cmd_line_split.size());
-        argv_ = new char *[argc_];
-        for (int i = 0; i < argc_; ++i) {
-            const std::size_t arg_size = cmd_line_split[i].size() + 1;
-            argv_[i] = new char[arg_size];
-            std::memcpy(argv_[i], cmd_line_split[i].c_str(), arg_size * sizeof(char));
+        cmd_options_ = std::move(cmd_line_split);
+        cmd_argv_.reserve(cmd_options_.size());
+        for (std::vector<std::string>::size_type i = 0; i < cmd_options_.size(); ++i) {
+            cmd_argv_.push_back(cmd_options_[i].data());
         }
     }
 
     /**
-     * @brief Free memory used for argv; automatically called at the end of a test.
+     * @brief Reset the verbosity level; automatically called at the end of a test.
      */
     void TearDown() override {
-        // free memory at the end
-        for (int i = 0; i < argc_; ++i) {
-            delete[] argv_[i];
-        }
-        delete[] argv_;
         // restore verbosity state
         plssvm::verbosity = verbosity_save_;
     }
@@ -70,19 +61,19 @@ class ParameterBase : public ::testing::Test,
      * @brief Return the number of command line arguments encapsulated in this class.
      * @return the number of cmd arguments (`[[nodiscard]]`)
      */
-    [[nodiscard]] int get_argc() const noexcept { return argc_; }
+    [[nodiscard]] int get_argc() const noexcept { return cmd_argv_.size(); }
 
     /**
      * @brief The command line arguments encapsulated in this class.
      * @return the cmd arguments (`[[nodiscard]])
      */
-    [[nodiscard]] char **get_argv() const noexcept { return argv_; }
+    [[nodiscard]] char **get_argv() const noexcept { return cmd_argv_.data(); }
 
   private:
-    /// The number of the artificial command line arguments.
-    int argc_{ 0 };
-    /// The artificial command line arguments.
-    char **argv_{ nullptr };
+    /// The provided command line options.
+    mutable std::vector<std::string> cmd_options_{};
+    /// The command line options cast to a char *.
+    mutable std::vector<char *> cmd_argv_{};
     /// The verbosity level at the time of the test start.
     plssvm::verbosity_level verbosity_save_{};
 };

@@ -18,18 +18,16 @@
 #include "plssvm/detail/assert.hpp"             // PLSSVM_ASSERT
 #include "plssvm/detail/data_distribution.hpp"  // plssvm::detail::{data_distribution, triangular_data_distribution, rectangular_data_distribution}
 #include "plssvm/detail/move_only_any.hpp"      // plssvm::detail::{move_only_any, move_only_any_cast}
-#include "plssvm/detail/operators.hpp"          // operator namespace
 #include "plssvm/kernel_function_types.hpp"     // plssvm::kernel_function_type
-#include "plssvm/matrix.hpp"                    // plssvm::aos_matrix
+#include "plssvm/matrix.hpp"                    // plssvm::aos_matrix, plssvm::soa_matrix
 #include "plssvm/parameter.hpp"                 // plssvm::parameter
 #include "plssvm/shape.hpp"                     // plssvm::shape
 #include "plssvm/solver_types.hpp"              // plssvm::solver_type
 
 #include "fmt/core.h"  // fmt::format
 
-#include <algorithm>  // std::min, std::all_of
 #include <cstddef>    // std::size_t
-#include <memory>     // std::unique_ptr, std::make_unique
+#include <memory>     // std::make_unique
 #include <tuple>      // std::tuple
 #include <utility>    // std::forward, std::move
 #include <vector>     // std::vector

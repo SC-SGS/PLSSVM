@@ -17,7 +17,9 @@
 #include "plssvm/backends/OpenCL/exceptions.hpp"            // plssvm::opencl::backend_exception
 #include "plssvm/constants.hpp"                             // plssvm::{real_type, THREAD_BLOCK_SIZE, INTERNAL_BLOCK_SIZE, PADDING_SIZE}
 #include "plssvm/detail/assert.hpp"                         // PLSSVM_ASSERT
+#include "plssvm/detail/data_distribution.hpp"              // plssvm::detail::{data_distribution, triangular_data_distribution, rectangular_data_distribution}
 #include "plssvm/detail/logging.hpp"                        // plssvm::detail::log
+#include "plssvm/detail/memory_size.hpp"                    // plssvm::detail::memory_size
 #include "plssvm/detail/performance_tracker.hpp"            // plssvm::detail::tracking_entry
 #include "plssvm/detail/utility.hpp"                        // plssvm::detail::contains
 #include "plssvm/exceptions/exceptions.hpp"                 // plssvm::exception
@@ -27,13 +29,16 @@
 #include "plssvm/target_platforms.hpp"                      // plssvm::target_platform
 #include "plssvm/verbosity_levels.hpp"                      // plssvm::verbosity_level
 
-#include "fmt/chrono.h"   // can directly print std::chrono literals
-#include "fmt/color.h"    // fmt::fg, fmt::color::orange
-#include "fmt/core.h"     // fmt::format
-#include "fmt/ostream.h"  // can use fmt using operator<< overloads
+#include "CL/cl.h"           // CL_QUEUE_DEVICE, CL_DEVICE_GLOBAL_MEM_SIZE, CL_DEVICE_MAX_MEM_ALLOC_SIZE, CL_DEVICE_MAX_WORK_GROUP_SIZE
+                             // clGetCommandQueueInfo, clGetDeviceInfo, cl_device_id
+#include "CL/cl_platform.h"  // cl_ulong
+
+#include "fmt/core.h"  // fmt::format
 
 #include <algorithm>  // std::all_of
 #include <chrono>     // std::chrono
+#include <cmath>      // std::ceil
+#include <cstddef>    // std::size_t
 #include <exception>  // std::terminate
 #include <iostream>   // std::cout, std::endl
 #include <string>     // std::string
@@ -196,7 +201,7 @@ std::vector<::plssvm::detail::memory_size> csvm::get_device_memory() const {
     for (std::size_t device_id = 0; device_id < this->num_available_devices(); ++device_id) {
         // get device
         cl_device_id device{};
-        PLSSVM_OPENCL_ERROR_CHECK(clGetCommandQueueInfo(devices_[device_id], CL_QUEUE_DEVICE, sizeof(cl_device_id), &device, nullptr), "error obtaining device")
+        PLSSVM_OPENCL_ERROR_CHECK(clGetCommandQueueInfo(devices_[device_id], CL_QUEUE_DEVICE, sizeof(cl_device_id), static_cast<void *>(&device), nullptr), "error obtaining device")
 
         // get device global memory size
         cl_ulong total_device_memory{};
@@ -211,7 +216,7 @@ std::vector<::plssvm::detail::memory_size> csvm::get_max_mem_alloc_size() const 
     for (std::size_t device_id = 0; device_id < this->num_available_devices(); ++device_id) {
         // get device
         cl_device_id device{};
-        PLSSVM_OPENCL_ERROR_CHECK(clGetCommandQueueInfo(devices_[device_id], CL_QUEUE_DEVICE, sizeof(cl_device_id), &device, nullptr), "error obtaining device")
+        PLSSVM_OPENCL_ERROR_CHECK(clGetCommandQueueInfo(devices_[device_id], CL_QUEUE_DEVICE, sizeof(cl_device_id), static_cast<void *>(&device), nullptr), "error obtaining device")
 
         // get maximum allocation size
         cl_ulong max_alloc_size{};
@@ -225,7 +230,7 @@ std::size_t csvm::get_max_work_group_size(const std::size_t device_id) const {
     PLSSVM_ASSERT(device_id < this->num_available_devices(), "Invalid device {} requested!", device_id);
     // get device
     cl_device_id device{};
-    PLSSVM_OPENCL_ERROR_CHECK(clGetCommandQueueInfo(devices_[device_id], CL_QUEUE_DEVICE, sizeof(cl_device_id), &device, nullptr), "error obtaining device")
+    PLSSVM_OPENCL_ERROR_CHECK(clGetCommandQueueInfo(devices_[device_id], CL_QUEUE_DEVICE, sizeof(cl_device_id), static_cast<void *>(&device), nullptr), "error obtaining device")
     // get maximum work group size
     cl_ulong max_work_group_size{};
     PLSSVM_OPENCL_ERROR_CHECK(clGetDeviceInfo(device, CL_DEVICE_MAX_WORK_GROUP_SIZE, sizeof(cl_ulong), &max_work_group_size, nullptr), "error obtaining device's global memory size")
@@ -257,7 +262,7 @@ auto csvm::run_assemble_kernel_matrix_explicit(const std::size_t device_id, cons
                                             static_cast<std::size_t>(std::ceil(static_cast<double>(device_specific_num_rows) / static_cast<double>(block[1] * INTERNAL_BLOCK_SIZE))) * block[1] };
 
     // calculate the number of matrix entries
-    const ::plssvm::detail::triangular_data_distribution &dist = dynamic_cast<::plssvm::detail::triangular_data_distribution &>(*data_distribution_.get());
+    const ::plssvm::detail::triangular_data_distribution &dist = dynamic_cast<::plssvm::detail::triangular_data_distribution &>(*data_distribution_);
     const std::size_t num_entries_padded = dist.calculate_explicit_kernel_matrix_num_entries_padded(device_id);
 
     device_ptr_type kernel_matrix_d{ num_entries_padded, device };  // only explicitly store the upper triangular matrix

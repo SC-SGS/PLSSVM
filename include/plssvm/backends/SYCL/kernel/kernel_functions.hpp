@@ -11,6 +11,7 @@
 
 #ifndef PLSSVM_BACKENDS_SYCL_KERNEL_KERNEL_FUNCTIONS_HPP_
 #define PLSSVM_BACKENDS_SYCL_KERNEL_KERNEL_FUNCTIONS_HPP_
+#pragma once
 
 #include "plssvm/backends/SYCL/detail/standard_layout_tuple.hpp"  // plssvm::sycl::detail::standard_layout_tuple
 #include "plssvm/constants.hpp"                                   // plssvm::real_type

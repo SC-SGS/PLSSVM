@@ -28,10 +28,10 @@ command_queue::command_queue(cl_context context, cl_device_id device) {
     error_code err;
 #ifdef CL_VERSION_2_0
     // use new clCreateCommandQueueWithProperties function
-    queue = clCreateCommandQueueWithProperties(context, device, 0, &err);
+    queue = clCreateCommandQueueWithProperties(context, device, nullptr, &err);
 #else
     // use old clCreateCommandQueue function (deprecated in newer OpenCL versions)
-    queue = clCreateCommandQueue(context, device, 0, &err);
+    queue = clCreateCommandQueue(context, device, nullptr, &err);
 #endif
     PLSSVM_OPENCL_ERROR_CHECK(err, "error creating the OpenCL command queue")
 }

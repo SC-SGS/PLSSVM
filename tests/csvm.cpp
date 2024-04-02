@@ -30,9 +30,8 @@
 #include "tests/utility.hpp"             // util::{redirect_output, temporary_file, instantiate_template_file, get_num_classes, calculate_number_of_classifiers,
                                          // generate_random_matrix, get_correct_data_file_labels}
 
-#include "gmock/gmock.h"           // EXPECT_CALL, ::testing::{An, Between, Return}
-#include "gtest/gtest-matchers.h"  // EXPECT_THAT, ::testing::HasSubstr
-#include "gtest/gtest.h"           // TEST, TYPED_TEST, TYPED_TEST_SUITE, EXPECT_EQ, EXPECT_TRUE, EXPECT_FALSE, EXPECT_THAT,
+#include "gmock/gmock.h"  // EXPECT_CALL, EXPECT_THAT, ::testing::{An, Between, Return, HasSubstr}
+#include "gtest/gtest.h"  // TEST, TYPED_TEST, TYPED_TEST_SUITE, EXPECT_EQ, EXPECT_TRUE, EXPECT_FALSE, EXPECT_THAT,
 
 #include <cstddef>   // std::size_t
 #include <iostream>  // std::clog

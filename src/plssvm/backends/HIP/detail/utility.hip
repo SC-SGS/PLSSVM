@@ -8,8 +8,6 @@
 
 #include "plssvm/backends/HIP/detail/utility.hip.hpp"
 
-
-
 #include "hip/hip_runtime_api.h"  // hipGetDeviceCount, hipSetDevice, hipPeekAtLastError, hipDeviceSynchronize, hipRuntimeGetVersion
 
 #include "fmt/core.h"  // fmt::format
@@ -19,7 +17,7 @@
 namespace plssvm::hip::detail {
 
 [[nodiscard]] int get_device_count() {
-    int count;
+    int count{};
     PLSSVM_HIP_ERROR_CHECK(hipGetDeviceCount(&count))
     return count;
 }

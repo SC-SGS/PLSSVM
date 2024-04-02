@@ -10,21 +10,22 @@
 
 #include "plssvm/detail/io/libsvm_parsing.hpp"
 
-#include "plssvm/constants.hpp"              // plssvm::real_type, plssvm::PADDING_SIZE
-#include "plssvm/detail/io/file_reader.hpp"  // plssvm::detail::io::file_reader
-#include "plssvm/exceptions/exceptions.hpp"  // plssvm::invalid_file_format_exception
-#include "plssvm/matrix.hpp"                 // plssvm::aos_matrix
-#include "plssvm/shape.hpp"                  // plssvm::shape
+#include "plssvm/constants.hpp"                    // plssvm::real_type, plssvm::PADDING_SIZE
+#include "plssvm/detail/arithmetic_type_name.hpp"  // plssvm::detail::arithmetic_type_name
+#include "plssvm/detail/io/file_reader.hpp"        // plssvm::detail::io::file_reader
+#include "plssvm/exceptions/exceptions.hpp"        // plssvm::invalid_file_format_exception
+#include "plssvm/matrix.hpp"                       // plssvm::aos_matrix
+#include "plssvm/shape.hpp"                        // plssvm::shape
 
 #include "tests/custom_test_macros.hpp"  // EXPECT_FLOATING_POINT_MATRIX_NEAR, EXPECT_FLOATING_POINT_VECTOR_NEAR, EXPECT_THROW_WHAT
 #include "tests/naming.hpp"              // naming::test_parameter_to_name
 #include "tests/types_to_test.hpp"       // util::{label_type_gtest, test_parameter_type_at_t}
 #include "tests/utility.hpp"             // util::{temporary_file, instantiate_template_file, get_correct_data_file_labels, get_distinct_label, generate_specific_matrix, generate_specific_sparse_matrix}
 
-#include "fmt/core.h"              // fmt::format
-#include "gmock/gmock-matchers.h"  // ::testing::HasSubstr
-#include "gtest/gtest.h"           // TEST, TEST_P, TYPED_TEST, TYPED_TEST_SUITE, INSTANTIATE_TEST_SUITE_P, EXPECT_EQ, EXPECT_TRUE, EXPECT_DEATH, ASSERT_EQ, FAIL
-                                   // ::testing::{Test, TestWithParam, Values}
+#include "fmt/core.h"     // fmt::format
+#include "gmock/gmock.h"  // ::testing::HasSubstr
+#include "gtest/gtest.h"  // TEST, TEST_P, TYPED_TEST, TYPED_TEST_SUITE, INSTANTIATE_TEST_SUITE_P, EXPECT_EQ, EXPECT_TRUE, EXPECT_DEATH, ASSERT_EQ, FAIL
+                          // ::testing::{Test, TestWithParam, Values}
 
 #include <cstddef>  // std::size_t
 #include <string>   // std::string

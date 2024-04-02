@@ -18,17 +18,15 @@
 #include "plssvm/detail/igor_utility.hpp"                          // plssvm::detail::{has_only_named_args_v, get_value_from_named_parameter}
 #include "plssvm/detail/logging_without_performance_tracking.hpp"  // plssvm::detail::log_untracked
 #include "plssvm/detail/type_traits.hpp"                           // PLSSVM_REQUIRES, plssvm::detail::{remove_cvref_t, always_false_v}
-#include "plssvm/detail/utility.hpp"                               // plssvm::detail::unreachable
 #include "plssvm/kernel_function_types.hpp"                        // plssvm::kernel_function_type, plssvm::kernel_function_type_to_math_string
 #include "plssvm/verbosity_levels.hpp"                             // plssvm::verbosity_level, plssvm::verbosity
 
-#include "fmt/core.h"     // fmt::format
-#include "fmt/ostream.h"  // fmt::formatter, fmt::ostream_formatter
+#include "fmt/core.h"     // fmt::format, fmt::formatter
+#include "fmt/ostream.h"  // fmt::ostream_formatter
 #include "igor/igor.hpp"  // IGOR_MAKE_NAMED_ARGUMENT, igor::parser, igor::has_unnamed_arguments, igor::has_other_than
 
 #include <iosfwd>       // forward declare std::ostream and std::istream
 #include <string_view>  // std::string_view
-#include <type_traits>  // std::is_same_v, std::is_convertible_v
 #include <utility>      // std::forward
 
 namespace plssvm {
@@ -57,6 +55,7 @@ IGOR_MAKE_NAMED_ARGUMENT(classification);
 IGOR_MAKE_NAMED_ARGUMENT(sycl_implementation_type);
 /// Create a named argument for the SYCL backend specific kernel invocation type.
 IGOR_MAKE_NAMED_ARGUMENT(sycl_kernel_invocation_type);
+
 /// @endcond
 
 namespace detail {

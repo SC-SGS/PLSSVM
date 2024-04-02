@@ -11,6 +11,7 @@
 
 #ifndef PLSSVM_BACKENDS_OPENMP_KERNEL_CG_EXPLICIT_BLAS_HPP_
 #define PLSSVM_BACKENDS_OPENMP_KERNEL_CG_EXPLICIT_BLAS_HPP_
+#pragma once
 
 #include "plssvm/constants.hpp"      // plssvm::real_type
 #include "plssvm/detail/assert.hpp"  // PLSSVM_ASSERT

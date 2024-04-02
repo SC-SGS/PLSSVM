@@ -96,9 +96,9 @@ TEST(Shape, swap_free_function) {
 
 TEST(Shape, equal) {
     // construct shape objects
-    plssvm::shape s1{ 4, 5 };
-    plssvm::shape s2{};
-    plssvm::shape s3{ 0, 0 };
+    const plssvm::shape s1{ 4, 5 };
+    const plssvm::shape s2{};
+    const plssvm::shape s3{ 0, 0 };
 
     // check shapes for equality
     EXPECT_FALSE(s1 == s2);
@@ -108,9 +108,9 @@ TEST(Shape, equal) {
 
 TEST(Shape, unequal) {
     // construct shape objects
-    plssvm::shape s1{ 4, 5 };
-    plssvm::shape s2{};
-    plssvm::shape s3{ 0, 0 };
+    const plssvm::shape s1{ 4, 5 };
+    const plssvm::shape s2{};
+    const plssvm::shape s3{ 0, 0 };
 
     // check shapes for equality
     EXPECT_TRUE(s1 != s2);
@@ -120,7 +120,7 @@ TEST(Shape, unequal) {
 
 TEST(Shape, hash) {
     // create a shape object
-    plssvm::shape s{ 2, 3 };
+    const plssvm::shape s{ 2, 3 };
 
     // hash shape
     const std::size_t hash_value1 = std::hash<plssvm::shape>{}(s);

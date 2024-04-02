@@ -14,6 +14,7 @@
 #include "plssvm/backends/OpenCL/detail/utility.hpp"        // PLSSVM_OPENCL_ERROR_CHECK
 #include "plssvm/backends/OpenCL/exceptions.hpp"            // plssvm::opencl::backend_exception
 #include "plssvm/detail/assert.hpp"                         // PLSSVM_ASSERT
+#include "plssvm/exceptions/exceptions.hpp"                 // plssvm::exception
 #include "plssvm/shape.hpp"                                 // plssvm::shape
 
 #include "CL/cl.h"  // CL_MEM_READ_WRITE, CL_TRUE, clFinish, clCreateBuffer, clReleaseMemObject, clEnqueueFillBuffer, clEnqueueWriteBuffer, clEnqueueReadBuffer
@@ -22,6 +23,10 @@
 
 #include <algorithm>  // std::min
 #include <array>      // std::array
+#include <cstddef>    // std::size_t
+#include <exception>  // std::terminate
+#include <iostream>   // std::cerr, std::endl
+#include <vector>     // std::vector
 
 namespace plssvm::opencl::detail {
 
@@ -38,7 +43,7 @@ device_ptr<T>::device_ptr(const plssvm::shape shape, const plssvm::shape padding
     base_type{ shape, padding, &queue } {
     error_code err{};
     cl_context cont{};
-    PLSSVM_OPENCL_ERROR_CHECK(clGetCommandQueueInfo(queue_->queue, CL_QUEUE_CONTEXT, sizeof(cl_context), &cont, nullptr), "error retrieving the command queue context")
+    PLSSVM_OPENCL_ERROR_CHECK(clGetCommandQueueInfo(queue_->queue, CL_QUEUE_CONTEXT, sizeof(cl_context), static_cast<void *>(&cont), nullptr), "error retrieving the command queue context")
     data_ = clCreateBuffer(cont, CL_MEM_READ_WRITE, this->size_padded() * sizeof(value_type), nullptr, &err);
     PLSSVM_OPENCL_ERROR_CHECK(err, "error creating the buffer")
     this->memset(0);
@@ -118,8 +123,7 @@ void device_ptr<T>::copy_to_device_strided(const_host_pointer_type data_to_copy,
     const std::size_t host_slice_pitch = 0;
 
     error_code err;
-    err = clEnqueueWriteBufferRect(queue_->queue, data_, CL_TRUE, buffer_origin.data(), host_origin.data(), region.data(),
-                                   buffer_row_pitch, buffer_slice_pitch, host_row_pitch, host_slice_pitch, data_to_copy, 0, nullptr, nullptr);
+    err = clEnqueueWriteBufferRect(queue_->queue, data_, CL_TRUE, buffer_origin.data(), host_origin.data(), region.data(), buffer_row_pitch, buffer_slice_pitch, host_row_pitch, host_slice_pitch, data_to_copy, 0, nullptr, nullptr);
     PLSSVM_OPENCL_ERROR_CHECK(err, "error copying the strided data to the device buffer")
     device_synchronize(*queue_);
 }
@@ -143,7 +147,7 @@ void device_ptr<T>::copy_to_other_device(device_ptr &target, const size_type pos
 
     const size_type rcount = std::min(count, this->size_padded() - pos);
     if (target.size_padded() < rcount) {
-        throw gpu_device_ptr_exception{ fmt::format("Buffer too small to perform copy (needed: {}, provided: {})!", rcount, target.size_padded()) };
+        throw backend_exception{ fmt::format("Buffer too small to perform copy (needed: {}, provided: {})!", rcount, target.size_padded()) };
     }
 
     // TODO: direct copy between devices in OpenCL currently not possible

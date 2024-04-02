@@ -18,12 +18,12 @@
 #include "tests/types_to_test.hpp"       // util::{real_type_layout_type_gtest, test_parameter_type_at_t, test_parameter_value_at_v}
 #include "tests/utility.hpp"             // util::{generate_random_matrix, redirect_output}
 
-#include "gtest/gtest-matchers.h"  // EXPECT_THAT, ::testing::HasSubstr
-#include "gtest/gtest.h"           // TEST, TYPED_TEST, TYPED_TEST_SUITE, EXPECT_EQ, EXPECT_TRUE, EXPECT_FALSE, EXPECT_DEATH, ASSERT_EQ, SCOPED_TRACE, FAIL,
-                                   // ::testing::{Test, StaticAssertTypeEq}
+#include "gmock/gmock.h"  // EXPECT_THAT, ::testing::HasSubstr
+#include "gtest/gtest.h"  // TEST, TYPED_TEST, TYPED_TEST_SUITE, EXPECT_EQ, EXPECT_TRUE, EXPECT_FALSE, EXPECT_DEATH, ASSERT_EQ, SCOPED_TRACE, FAIL,
+                          // ::testing::{Test, StaticAssertTypeEq}
+#include "fmt/core.h"     // fmt::format
 
 #include <algorithm>  // std::swap
-#include <array>      // std::array
 #include <cstddef>    // std::size_t
 #include <iostream>   // std::clog
 #include <sstream>    // std::istringstream, std::ostringstream
@@ -778,7 +778,7 @@ TYPED_TEST(Matrix, construct_from_2D_vector) {
     // check content
     EXPECT_EQ(matr.shape(), (plssvm::shape{ 2, 2 }));
     ASSERT_EQ(matr.size_padded(), 4);
-    real_type val{ 0.1 };
+    auto val = static_cast<real_type>(0.1);
     for (std::size_t row = 0; row < matr.num_rows(); ++row) {
         for (std::size_t col = 0; col < matr.num_cols(); ++col) {
             SCOPED_TRACE(fmt::format("row: {}; col: {}", row, col));
@@ -844,7 +844,7 @@ TYPED_TEST(Matrix, construct_from_2D_vector_and_padding) {
     EXPECT_EQ(matr.shape(), (plssvm::shape{ 2, 2 }));
     ASSERT_EQ(matr.size_padded(), 42);
     // check content while paying attention to padding!
-    real_type val{ 0.1 };
+    auto val = static_cast<real_type>(0.1);
     for (std::size_t row = 0; row < matr.num_rows_padded(); ++row) {
         for (std::size_t col = 0; col < matr.num_cols_padded(); ++col) {
             SCOPED_TRACE(fmt::format("row: {}; col: {}", row, col));
@@ -868,7 +868,7 @@ TYPED_TEST(Matrix, construct_from_2D_vector_empty_and_padding) {
     constexpr plssvm::layout_type layout = TestFixture::fixture_layout;
 
     // construct a matrix from a std::vector<std::vector<>>
-    std::vector<std::vector<real_type>> empty{};
+    const std::vector<std::vector<real_type>> empty{};
     const plssvm::matrix<real_type, layout> matr{ empty, plssvm::shape{ 4, 5 } };
 
     // check content
@@ -2089,7 +2089,6 @@ TYPED_TEST(MatrixOperationsDeathTest, operator_masked_rowwise_scale) {
     EXPECT_DEATH(std::ignore = masked_rowwise_scale(std::vector<int>{}, scale, this->get_A()), ::testing::HasSubstr("Error: shapes missmatch! (0 != 2 (num_rows))"));
     EXPECT_DEATH(std::ignore = masked_rowwise_scale(std::vector<int>{ 1, 0, 1 }, scale, this->get_A()), ::testing::HasSubstr("Error: shapes missmatch! (3 != 2 (num_rows))"));
 }
-
 
 TYPED_TEST(Matrix, matrix_shorthands) {
     using real_type = typename TestFixture::fixture_real_type;

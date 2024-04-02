@@ -21,6 +21,7 @@
 #include "gtest/gtest.h"  // TEST, TEST_P, TYPED_TEST, EXPECT_EQ, EXPECT_NE, EXPECT_TRUE, EXPECT_FALSE, ASSERT_TRUE, ASSERT_FALSE, TYPED_TEST_SUITE, INSTANTIATE_TEST_SUITE_P
                           // ::testing::{Test, Types, TestWithParam, ValuesIn}
 
+#include <array>        // std::array
 #include <cstddef>      // std::size_t
 #include <filesystem>   // std::filesystem::path
 #include <string>       // std::string

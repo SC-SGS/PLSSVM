@@ -17,8 +17,9 @@
 #include "plssvm/backends/CUDA/detail/pinned_memory.cuh"  // plssvm::cuda::detail::pinned_memory
 #include "plssvm/backends/gpu_csvm.hpp"                   // plssvm::detail::gpu_csvm
 #include "plssvm/constants.hpp"                           // plssvm::real_type
+#include "plssvm/csvm.hpp"                                // plssvm::detail::csvm_backend_exists
 #include "plssvm/detail/memory_size.hpp"                  // plssvm::detail::memory_size
-#include "plssvm/detail/type_list.hpp"                    // PLSSVM_REQUIRES
+#include "plssvm/detail/type_traits.hpp"                  // PLSSVM_REQUIRES
 #include "plssvm/parameter.hpp"                           // plssvm::parameter
 #include "plssvm/target_platforms.hpp"                    // plssvm::target_platform
 
