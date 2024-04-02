@@ -8,6 +8,117 @@ include(CMakeDependentOption)
 
 list(APPEND CMAKE_MESSAGE_INDENT "SYCL:  ")
 
+
+message(CHECK_START "Checking for OpenCL platforms")
+########################################################################################################################
+##                                         parse target platform information                                          ##
+########################################################################################################################
+if (DEFINED PLSSVM_SYCL_TARGET_PLATFORMS)
+    set(PLSSVM_SYCL_TARGET_PLATFORMS ${PLSSVM_SYCL_TARGET_PLATFORMS} CACHE STRING "The SYCL target platforms to compile for." FORCE)
+elseif (DEFINED ENV{PLSSVM_SYCL_TARGET_PLATFORMS})
+    set(PLSSVM_SYCL_TARGET_PLATFORMS $ENV{PLSSVM_SYCL_TARGET_PLATFORMS} CACHE STRING "The SYCL target platforms to compile for." FORCE)
+elseif (DEFINED PLSSVM_TARGET_PLATFORMS)
+    set(PLSSVM_SYCL_TARGET_PLATFORMS ${PLSSVM_TARGET_PLATFORMS} CACHE STRING "The SYCL target platforms to compile for." FORCE)
+elseif (DEFINED ENV{PLSSVM_TARGET_PLATFORMS})
+    set(PLSSVM_SYCL_TARGET_PLATFORMS $ENV{PLSSVM_TARGET_PLATFORMS} CACHE STRING "The SYCL target platforms to compile for." FORCE)
+endif ()
+
+## PLSSVM_TARGET_PLATFORMS must not be empty
+if (PLSSVM_SYCL_TARGET_PLATFORMS STREQUAL "")
+    message(FATAL_ERROR "Eather PLSSVM_TARGET_PLATFORMS or PLSSVM_SYCL_TARGET_PLATFORMS must not be empty to compile with the SYCL backend!")
+endif ()
+
+## parse provided target platforms
+include(${CMAKE_CURRENT_SOURCE_DIR}/../../../../cmake/parse_architecture_info.cmake)
+set(PLSSVM_PLATFORM_NAME_LIST "automatic")
+foreach (PLSSVM_PLATFORM ${PLSSVM_TARGET_PLATFORMS})
+    if (PLSSVM_PLATFORM MATCHES "^cpu")
+        # parse provided CPU architectures
+        parse_architecture_info(${PLSSVM_PLATFORM} PLSSVM_CPU_TARGET_ARCHS PLSSVM_NUM_CPU_TARGET_ARCHS)
+        if (PLSSVM_NUM_CPU_TARGET_ARCHS GREATER 1)
+            message(FATAL_ERROR "Target platform \"cpu\" must at most have one architecture specification!")
+        endif ()
+        target_compile_definitions(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC PLSSVM_HAS_CPU_TARGET)
+        list(APPEND PLSSVM_PLATFORM_NAME_LIST "cpu")
+    elseif (PLSSVM_PLATFORM MATCHES "^nvidia")
+        # parse provided NVIDIA GPU architectures
+        parse_architecture_info(${PLSSVM_PLATFORM} PLSSVM_NVIDIA_TARGET_ARCHS PLSSVM_NUM_NVIDIA_TARGET_ARCHS)
+        if (PLSSVM_NUM_NVIDIA_TARGET_ARCHS EQUAL 0)
+            message(FATAL_ERROR "Target platform \"nvidia\" must at least have one architecture specification!")
+        endif ()
+        target_compile_definitions(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC PLSSVM_HAS_NVIDIA_TARGET)
+        list(APPEND PLSSVM_PLATFORM_NAME_LIST "gpu_nvidia")
+    elseif (PLSSVM_PLATFORM MATCHES "^amd")
+        # parse provided AMD GPU architectures
+        parse_architecture_info(${PLSSVM_PLATFORM} PLSSVM_AMD_TARGET_ARCHS PLSSVM_NUM_AMD_TARGET_ARCHS)
+        if (PLSSVM_NUM_AMD_TARGET_ARCHS EQUAL 0)
+            message(FATAL_ERROR "Target platform \"amd\" must at least have one architecture specification!")
+        endif ()
+        target_compile_definitions(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC PLSSVM_HAS_AMD_TARGET)
+        list(APPEND PLSSVM_PLATFORM_NAME_LIST "gpu_amd")
+    elseif (PLSSVM_PLATFORM MATCHES "^intel")
+        # parse provided Intel GPU architectures
+        parse_architecture_info(${PLSSVM_PLATFORM} PLSSVM_INTEL_TARGET_ARCHS PLSSVM_NUM_INTEL_TARGET_ARCHS)
+        if (PLSSVM_NUM_INTEL_TARGET_ARCHS EQUAL 0)
+            message(FATAL_ERROR "Target platform \"intel\" must at least have one architecture specification!")
+        endif ()
+        target_compile_definitions(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC PLSSVM_HAS_INTEL_TARGET)
+        list(APPEND PLSSVM_PLATFORM_NAME_LIST "gpu_intel")
+    else ()
+        message(FATAL_ERROR "Unrecognized target platform \"${PLSSVM_PLATFORM}\"! Must be one of: cpu nvidia amd intel")
+    endif ()
+endforeach ()
+
+if ((NOT DEFINED PLSSVM_CPU_TARGET_ARCHS) AND (NOT DEfINED PLSSVM_NVIDIA_TARGET_ARCHS) AND (NOT DEFINED PLSSVM_AMD_TARGET_ARCHS) AND (NOT DEFINED PLSSVM_INTEL_TARGET_ARCHS))
+    if (PLSSVM_ENABLE_SYCL_BACKEND MATCHES "ON")
+        message(SEND_ERROR "Found requested SYCL backend, but no targets were specified!")
+    else ()
+        message(STATUS "Found SYCL backend, but no targets were specified!")
+    endif ()
+    message(CHECK_FAIL "skipped")
+    return()
+endif ()
+
+# generate summary string
+include(${PROJECT_SOURCE_DIR}/cmake/assemble_summary_string.cmake)
+set(PLSSVM_SYCL_BACKEND_SUMMARY_STRINGS "")
+foreach (SYCL_IMPLEMENTATION ${PLSSVM_SYCL_BACKEND_FOUND_IMPLEMENTATIONS})
+    # mark preferred SYCL implementation
+    get_target_property(PLSSVM_SYCL_BACKEND_LIBRARY_NAME_COMPILE_DEFINITIONS ${PLSSVM_SYCL_BACKEND_LIBRARY_NAME} INTERFACE_COMPILE_DEFINITIONS)
+    if ("${PLSSVM_SYCL_BACKEND_LIBRARY_NAME_COMPILE_DEFINITIONS}" MATCHES ".*${SYCL_IMPLEMENTATION}.*")
+        set(SYCL_IMPLEMENTATION "${SYCL_IMPLEMENTATION}*")
+    endif ()
+
+    assemble_summary_string(PLSSVM_SYCL_BACKEND_SUMMARY_STRING_ARCHS)
+    # do not print CPU and Intel GPU target architectures when using AdaptiveCpp
+    if ("${SYCL_IMPLEMENTATION}" MATCHES "^adaptivecpp")
+        if (PLSSVM_SYCL_BACKEND_ADAPTIVECPP_USE_GENERIC_SSCP)
+
+            assemble_summary_string(PLSSVM_SYCL_BACKEND_SUMMARY_STRING_ARCHS)
+            # do not print any special target architecture information
+            string(REPLACE " (${PLSSVM_CPU_TARGET_ARCHS})" "" PLSSVM_SYCL_BACKEND_SUMMARY_STRING_ARCHS "${PLSSVM_SYCL_BACKEND_SUMMARY_STRING_ARCHS}")
+            string(REPLACE " (${PLSSVM_NVIDIA_TARGET_ARCHS})" "" PLSSVM_SYCL_BACKEND_SUMMARY_STRING_ARCHS "${PLSSVM_SYCL_BACKEND_SUMMARY_STRING_ARCHS}")
+            string(REPLACE " (${PLSSVM_AMD_TARGET_ARCHS})" "" PLSSVM_SYCL_BACKEND_SUMMARY_STRING_ARCHS "${PLSSVM_SYCL_BACKEND_SUMMARY_STRING_ARCHS}")
+            string(REPLACE " (${PLSSVM_INTEL_TARGET_ARCHS})" "" PLSSVM_SYCL_BACKEND_SUMMARY_STRING_ARCHS "${PLSSVM_SYCL_BACKEND_SUMMARY_STRING_ARCHS}")
+
+            # remove first whitespace from string
+            string(LENGTH "${PLSSVM_SYCL_BACKEND_SUMMARY_STRING_ARCHS}" PLSSVM_SYCL_BACKEND_SUMMARY_STRING_ARCHS_LENGTH)
+            MATH(EXPR PLSSVM_SYCL_BACKEND_SUMMARY_STRING_ARCHS_LENGTH "${PLSSVM_SYCL_BACKEND_SUMMARY_STRING_ARCHS_LENGTH} - 1")
+            string(SUBSTRING "${PLSSVM_SYCL_BACKEND_SUMMARY_STRING_ARCHS}" 1 ${PLSSVM_SYCL_BACKEND_SUMMARY_STRING_ARCHS_LENGTH} PLSSVM_SYCL_BACKEND_SUMMARY_STRING_ARCHS)
+
+            set(PLSSVM_SYCL_BACKEND_SUMMARY_STRING_ARCHS " generic (${PLSSVM_SYCL_BACKEND_SUMMARY_STRING_ARCHS})")
+        else ()
+            string(REPLACE " (${PLSSVM_CPU_TARGET_ARCHS})" "" PLSSVM_SYCL_BACKEND_SUMMARY_STRING_ARCHS "${PLSSVM_SYCL_BACKEND_SUMMARY_STRING_ARCHS}")
+            string(REPLACE " (${PLSSVM_INTEL_TARGET_ARCHS})" "" PLSSVM_SYCL_BACKEND_SUMMARY_STRING_ARCHS "${PLSSVM_SYCL_BACKEND_SUMMARY_STRING_ARCHS}")
+        endif ()
+    endif ()
+    list(APPEND PLSSVM_SYCL_BACKEND_SUMMARY_STRINGS " - SYCL (${SYCL_IMPLEMENTATION}):${PLSSVM_SYCL_BACKEND_SUMMARY_STRING_ARCHS}")
+endforeach ()
+set(PLSSVM_SYCL_BACKEND_SUMMARY_STRINGS "${PLSSVM_SYCL_BACKEND_SUMMARY_STRINGS}" PARENT_SCOPE)
+
+message(CHECK_PASS "found " ${PLSSVM_SYCL_BACKEND_SUMMARY_STRINGS})
+
+
 message(CHECK_START "Checking for SYCL backend")
 
 # explicitly set sources shared between all SYCL implementations
@@ -111,41 +222,5 @@ set(PLSSVM_TARGETS_TO_INSTALL ${PLSSVM_TARGETS_TO_INSTALL} PARENT_SCOPE)
 # set manpage string
 set_local_and_parent(PLSSVM_SYCL_BACKEND_NAME_LIST "automatic;${PLSSVM_SYCL_BACKEND_FOUND_IMPLEMENTATIONS}")
 
-# generate summary string
-include(${PROJECT_SOURCE_DIR}/cmake/assemble_summary_string.cmake)
-set(PLSSVM_SYCL_BACKEND_SUMMARY_STRINGS "")
-foreach (SYCL_IMPLEMENTATION ${PLSSVM_SYCL_BACKEND_FOUND_IMPLEMENTATIONS})
-    # mark preferred SYCL implementation
-    get_target_property(PLSSVM_SYCL_BACKEND_LIBRARY_NAME_COMPILE_DEFINITIONS ${PLSSVM_SYCL_BACKEND_LIBRARY_NAME} INTERFACE_COMPILE_DEFINITIONS)
-    if ("${PLSSVM_SYCL_BACKEND_LIBRARY_NAME_COMPILE_DEFINITIONS}" MATCHES ".*${SYCL_IMPLEMENTATION}.*")
-        set(SYCL_IMPLEMENTATION "${SYCL_IMPLEMENTATION}*")
-    endif ()
-
-    assemble_summary_string(PLSSVM_SYCL_BACKEND_SUMMARY_STRING_ARCHS)
-    # do not print CPU and Intel GPU target architectures when using AdaptiveCpp
-    if ("${SYCL_IMPLEMENTATION}" MATCHES "^adaptivecpp")
-        if (PLSSVM_SYCL_BACKEND_ADAPTIVECPP_USE_GENERIC_SSCP)
-
-            assemble_summary_string(PLSSVM_SYCL_BACKEND_SUMMARY_STRING_ARCHS)
-            # do not print any special target architecture information
-            string(REPLACE " (${PLSSVM_CPU_TARGET_ARCHS})" "" PLSSVM_SYCL_BACKEND_SUMMARY_STRING_ARCHS "${PLSSVM_SYCL_BACKEND_SUMMARY_STRING_ARCHS}")
-            string(REPLACE " (${PLSSVM_NVIDIA_TARGET_ARCHS})" "" PLSSVM_SYCL_BACKEND_SUMMARY_STRING_ARCHS "${PLSSVM_SYCL_BACKEND_SUMMARY_STRING_ARCHS}")
-            string(REPLACE " (${PLSSVM_AMD_TARGET_ARCHS})" "" PLSSVM_SYCL_BACKEND_SUMMARY_STRING_ARCHS "${PLSSVM_SYCL_BACKEND_SUMMARY_STRING_ARCHS}")
-            string(REPLACE " (${PLSSVM_INTEL_TARGET_ARCHS})" "" PLSSVM_SYCL_BACKEND_SUMMARY_STRING_ARCHS "${PLSSVM_SYCL_BACKEND_SUMMARY_STRING_ARCHS}")
-
-            # remove first whitespace from string
-            string(LENGTH "${PLSSVM_SYCL_BACKEND_SUMMARY_STRING_ARCHS}" PLSSVM_SYCL_BACKEND_SUMMARY_STRING_ARCHS_LENGTH)
-            MATH(EXPR PLSSVM_SYCL_BACKEND_SUMMARY_STRING_ARCHS_LENGTH "${PLSSVM_SYCL_BACKEND_SUMMARY_STRING_ARCHS_LENGTH} - 1")
-            string(SUBSTRING "${PLSSVM_SYCL_BACKEND_SUMMARY_STRING_ARCHS}" 1 ${PLSSVM_SYCL_BACKEND_SUMMARY_STRING_ARCHS_LENGTH} PLSSVM_SYCL_BACKEND_SUMMARY_STRING_ARCHS)
-
-            set(PLSSVM_SYCL_BACKEND_SUMMARY_STRING_ARCHS " generic (${PLSSVM_SYCL_BACKEND_SUMMARY_STRING_ARCHS})")
-        else ()
-            string(REPLACE " (${PLSSVM_CPU_TARGET_ARCHS})" "" PLSSVM_SYCL_BACKEND_SUMMARY_STRING_ARCHS "${PLSSVM_SYCL_BACKEND_SUMMARY_STRING_ARCHS}")
-            string(REPLACE " (${PLSSVM_INTEL_TARGET_ARCHS})" "" PLSSVM_SYCL_BACKEND_SUMMARY_STRING_ARCHS "${PLSSVM_SYCL_BACKEND_SUMMARY_STRING_ARCHS}")
-        endif ()
-    endif ()
-    list(APPEND PLSSVM_SYCL_BACKEND_SUMMARY_STRINGS " - SYCL (${SYCL_IMPLEMENTATION}):${PLSSVM_SYCL_BACKEND_SUMMARY_STRING_ARCHS}")
-endforeach ()
-set(PLSSVM_SYCL_BACKEND_SUMMARY_STRINGS "${PLSSVM_SYCL_BACKEND_SUMMARY_STRINGS}" PARENT_SCOPE)
 
 list(POP_BACK CMAKE_MESSAGE_INDENT)

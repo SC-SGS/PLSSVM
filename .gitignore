@@ -78,3 +78,9 @@ tests/data/*
 !tests/data/libsvm/
 !tests/data/arff/
 !tests/data/predict/
+
+# spack related ================================
+spack-build*
+spack-external-stages*/
+spack-external-sources*/
+spack-configure-args.txt
