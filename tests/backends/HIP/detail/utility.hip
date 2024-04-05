@@ -11,6 +11,9 @@
 #include "plssvm/backends/HIP/detail/utility.hip.hpp"  // PLSSVM_HIP_ERROR_CHECK, plssvm::hip::detail::{gpu_assert, get_device_count, set_device, device_synchronize}
 #include "plssvm/backends/HIP/exceptions.hpp"          // plssvm::hip::backend_exception
 
+#include "hip/hip_runtime.h"
+#include "hip/hip_runtime_api.h"
+
 #include "tests/custom_test_macros.hpp"  // EXPECT_THROW_WHAT, EXPECT_THROW_WHAT_MATCHER
 
 #include "fmt/core.h"     // fmt::format
@@ -18,11 +21,6 @@
 #include "gtest/gtest.h"  // TEST, EXPECT_GE, EXPECT_NO_THROW
 
 #include <regex>  // std::regex, std::regex::extended, std::regex_match
-
-#if __has_include("hip/hip_runtime.h") && __has_include("hip/hip_runtime_api.h")
-
-    #include "hip/hip_runtime.h"
-    #include "hip/hip_runtime_api.h"
 
 TEST(HIPUtility, error_check) {
     // hipSuccess must not throw
@@ -57,5 +55,3 @@ TEST(HIPUtility, get_runtime_version) {
     const std::regex reg{ "[0-9]+\\.[0-9]+", std::regex::extended };
     EXPECT_TRUE(std::regex_match(plssvm::hip::detail::get_runtime_version(), reg));
 }
-
-#endif

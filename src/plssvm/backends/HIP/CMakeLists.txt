@@ -43,7 +43,7 @@ set(CMAKE_HIP_STANDARD_REQUIRED ON)
 set(CMAKE_HIP_FLAGS "${CMAKE_HIP_FLAGS} -std=c++17")
 # set fast-math if requested
 if (PLSSVM_ENABLE_FAST_MATH)
-    set(CMAKE_HIP_FLAGS "${CMAKE_HIP_FLAGS}  -ffast-math")
+    set(CMAKE_HIP_FLAGS "${CMAKE_HIP_FLAGS} -ffast-math")
 endif ()
 set(CMAKE_HIP_FLAGS_RELWITHDEBINFO "${CMAKE_HIP_FLAGS_RELWITHDEBINFO} -O2")
 set(CMAKE_HIP_FLAGS_RELEASE "${CMAKE_HIP_FLAGS_RELEASE} -O3")
@@ -70,7 +70,7 @@ target_compile_options(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC -Wno-sign-compare)
 set_property(TARGET ${PLSSVM_HIP_BACKEND_LIBRARY_NAME} PROPERTY HIP_ARCHITECTURES ${PLSSVM_AMD_TARGET_ARCHS})
 
 # link base library against HIP library
-target_link_libraries(${PLSSVM_HIP_BACKEND_LIBRARY_NAME} PUBLIC hip::device hip::host)
+target_link_libraries(${PLSSVM_HIP_BACKEND_LIBRARY_NAME} PRIVATE hip::device hip::host)
 set_target_properties(${PLSSVM_HIP_BACKEND_LIBRARY_NAME} PROPERTIES LINKER_LANGUAGE HIP)
 target_link_libraries(${PLSSVM_HIP_BACKEND_LIBRARY_NAME} PUBLIC ${PLSSVM_BASE_LIBRARY_NAME})
 
