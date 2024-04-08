@@ -38,29 +38,29 @@ namespace stdpar {
 class csvm : public ::plssvm::csvm {
   public:
     /**
-     * @brief Construct a new C-SVM using the stpar backend with the parameters given through @p params.
+     * @brief Construct a new C-SVM using the stdpar backend with the parameters given through @p params.
      * @param[in] params struct encapsulating all possible SVM parameters
      * @throws plssvm::exception all exceptions thrown in the base class constructor
-     * @throws plssvm::stdpar::backend_exception if the target platform isn't plssvm::target_platform::automatic or plssvm::target_platform::cpu
-     * @throws plssvm::stdpar::backend_exception if the plssvm::target_platform::cpu target isn't available
+     * @throws plssvm::stdpar::backend_exception if the requested target is not available
+     * @throws plssvm::stdpar::backend_exception if no device for the requested target was found
      */
     explicit csvm(parameter params = {});
     /**
-     * @brief Construct a new C-SVM using the OpenMP backend on the @p target platform with the parameters given through @p params.
+     * @brief Construct a new C-SVM using the stdpar backend on the @p target platform with the parameters given through @p params.
      * @param[in] target the target platform used for this C-SVM
      * @param[in] params struct encapsulating all possible SVM parameters
      * @throws plssvm::exception all exceptions thrown in the base class constructor
-     * @throws plssvm::stdpar::backend_exception if the target platform isn't plssvm::target_platform::automatic or plssvm::target_platform::cpu
-     * @throws plssvm::stdpar::backend_exception if the plssvm::target_platform::cpu target isn't available
+     * @throws plssvm::stdpar::backend_exception if the requested target is not available
+     * @throws plssvm::stdpar::backend_exception if no device for the requested target was found
      */
     explicit csvm(target_platform target, parameter params = {});
 
     /**
-     * @brief Construct a new C-SVM using the OpenMP backend and the optionally provided @p named_args.
+     * @brief Construct a new C-SVM using the stdpar backend and the optionally provided @p named_args.
      * @param[in] named_args the additional optional named-parameters
      * @throws plssvm::exception all exceptions thrown in the base class constructor
-     * @throws plssvm::stdpar::backend_exception if the target platform isn't plssvm::target_platform::automatic or plssvm::target_platform::cpu
-     * @throws plssvm::stdpar::backend_exception if the plssvm::target_platform::cpu target isn't available
+     * @throws plssvm::stdpar::backend_exception if the requested target is not available
+     * @throws plssvm::stdpar::backend_exception if no device for the requested target was found
      */
     template <typename... Args, PLSSVM_REQUIRES(::plssvm::detail::has_only_parameter_named_args_v<Args...>)>
     explicit csvm(Args &&...named_args) :
@@ -70,12 +70,12 @@ class csvm : public ::plssvm::csvm {
     }
 
     /**
-     * @brief Construct a new C-SVM using the OpenMP backend on the @p target platform and the optionally provided @p named_args.
+     * @brief Construct a new C-SVM using the stdpar backend on the @p target platform and the optionally provided @p named_args.
      * @param[in] target the target platform used for this C-SVM
      * @param[in] named_args the additional optional named-parameters
      * @throws plssvm::exception all exceptions thrown in the base class constructor
-     * @throws plssvm::stdpar::backend_exception if the target platform isn't plssvm::target_platform::automatic or plssvm::target_platform::cpu
-     * @throws plssvm::stdpar::backend_exception if the plssvm::target_platform::cpu target isn't available
+     * @throws plssvm::stdpar::backend_exception if the requested target is not available
+     * @throws plssvm::stdpar::backend_exception if no device for the requested target was found
      */
     template <typename... Args, PLSSVM_REQUIRES(::plssvm::detail::has_only_parameter_named_args_v<Args...>)>
     explicit csvm(const target_platform target, Args &&...named_args) :
@@ -106,7 +106,7 @@ class csvm : public ::plssvm::csvm {
 
     /**
      * @copydoc plssvm::csvm::num_available_devices
-     * @note On the CPU, only one device will ever be available.
+     * @note We currently only support one device for C++ standard parallelism.
      */
     [[nodiscard]] std::size_t num_available_devices() const noexcept override {
         return 1;
@@ -144,10 +144,10 @@ class csvm : public ::plssvm::csvm {
 
   private:
     /**
-     * @brief Initializes the OpenMP backend and performs some sanity checks.
+     * @brief Initializes the stdpar backend and performs some sanity checks.
      * @param[in] target the target platform to use
-     * @throws plssvm::stdpar::backend_exception if the target platform isn't plssvm::target_platform::automatic or plssvm::target_platform::cpu
-     * @throws plssvm::stdpar::backend_exception if the plssvm::target_platform::cpu target isn't available
+     * @throws plssvm::stdpar::backend_exception if the requested target is not available
+     * @throws plssvm::stdpar::backend_exception if no device for the requested target was found
      */
     void init(target_platform target);
 };
