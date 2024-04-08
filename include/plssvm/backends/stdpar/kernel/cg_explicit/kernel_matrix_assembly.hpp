@@ -45,11 +45,11 @@ void device_kernel_assembly(const std::vector<real_type> &q, std::vector<real_ty
     const std::size_t dept = q.size();
 
 #pragma omp parallel for collapse(2) schedule(dynamic)
-    for (std::size_t row = 0; row < dept; row += STDPAR_BLOCK_SIZE) {
-        for (std::size_t col = 0; col < dept; col += STDPAR_BLOCK_SIZE) {
+    for (std::size_t row = 0; row < dept; row += OPENMP_BLOCK_SIZE) {
+        for (std::size_t col = 0; col < dept; col += OPENMP_BLOCK_SIZE) {
             // perform operations on the current block
-            for (std::size_t row_block = 0; row_block < STDPAR_BLOCK_SIZE; ++row_block) {
-                for (std::size_t col_block = 0; col_block < STDPAR_BLOCK_SIZE; ++col_block) {
+            for (std::size_t row_block = 0; row_block < OPENMP_BLOCK_SIZE; ++row_block) {
+                for (std::size_t col_block = 0; col_block < OPENMP_BLOCK_SIZE; ++col_block) {
                     const std::size_t row_idx = row + row_block;
                     const std::size_t col_idx = col + col_block;
 
