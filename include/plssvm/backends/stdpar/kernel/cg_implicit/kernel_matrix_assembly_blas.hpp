@@ -56,12 +56,12 @@ inline void device_kernel_assembly_symm(const real_type alpha, const std::vector
 
 // loop over all rows in the IMPLICIT kernel matrix
 #pragma omp parallel for collapse(2) schedule(dynamic)
-    for (std::size_t km_row = 0; km_row < dept; km_row += STDPAR_BLOCK_SIZE) {
+    for (std::size_t km_row = 0; km_row < dept; km_row += OPENMP_BLOCK_SIZE) {
         // loop over all columns in the IMPLICIT kernel matrix
-        for (std::size_t km_col = 0; km_col < dept; km_col += STDPAR_BLOCK_SIZE) {
+        for (std::size_t km_col = 0; km_col < dept; km_col += OPENMP_BLOCK_SIZE) {
             // perform operations on the current block
-            for (std::size_t km_row_block = 0; km_row_block < STDPAR_BLOCK_SIZE; ++km_row_block) {
-                for (std::size_t km_col_block = 0; km_col_block < STDPAR_BLOCK_SIZE; ++km_col_block) {
+            for (std::size_t km_row_block = 0; km_row_block < OPENMP_BLOCK_SIZE; ++km_row_block) {
+                for (std::size_t km_col_block = 0; km_col_block < OPENMP_BLOCK_SIZE; ++km_col_block) {
                     const std::size_t km_row_idx = km_row + km_row_block;
                     const std::size_t km_col_idx = km_col + km_col_block;
 

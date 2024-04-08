@@ -57,6 +57,7 @@ The main highlights of our SVM implementations are:
 1. Drop-in replacement for LIBSVM's `svm-train`, `svm-predict`, and `svm-scale` (some features currently not implemented).
 2. Support of multiple different programming frameworks for parallelisation (also called backends in our PLSSVM implementation) which allows us to target GPUs and CPUs from different vendors like NVIDIA, AMD, or Intel:
    - [OpenMP](https://www.openmp.org/)
+   - stdpar TODO
    - [CUDA](https://developer.nvidia.com/cuda-zone)
    - [HIP](https://github.com/ROCm-Developer-Tools/HIP) (only tested on AMD GPUs)
    - [OpenCL](https://www.khronos.org/opencl/)
@@ -96,6 +97,10 @@ General dependencies:
 Additional dependencies for the OpenMP backend:
 
 - compiler with OpenMP support
+
+Additional dependencies for the stdpar backend:
+
+- compiler with stdpar support
 
 Additional dependencies for the CUDA backend:
 
@@ -214,6 +219,11 @@ The `[optional_options]` can be one or multiple of:
   - `ON`: check for the OpenMP backend and fail if not available
   - `AUTO`: check for the OpenMP backend but **do not** fail if not available
   - `OFF`: do not check for the OpenMP backend
+
+- `PLSSVM_ENABLE_STDPAR_BACKEND=ON|OFF|AUTO` (default: `AUTO`):
+    - `ON`: check for the stdpar backend and fail if not available
+    - `AUTO`: check for the stdpar backend but **do not** fail if not available
+    - `OFF`: do not check for the stdpar backend
 
 - `PLSSVM_ENABLE_CUDA_BACKEND=ON|OFF|AUTO` (default: `AUTO`):
   - `ON`: check for the CUDA backend and fail if not available
@@ -416,7 +426,7 @@ Usage:
   -i, --max_iter arg            set the maximum number of CG iterations (default: num_features)
   -l, --solver arg              choose the solver: automatic|cg_explicit|cg_implicit (default: automatic)
   -a, --classification arg      the classification strategy to use for multi-class classification: oaa|oao (default: oaa)
-  -b, --backend arg             choose the backend: automatic|openmp|cuda|hip|opencl|sycl (default: automatic)
+  -b, --backend arg             choose the backend: automatic|openmp|cuda|hip|opencl|sycl|stdpar (default: automatic)
   -p, --target_platform arg     choose the target platform: automatic|cpu|gpu_nvidia|gpu_amd|gpu_intel (default: automatic)
       --sycl_kernel_invocation_type arg
                                 choose the kernel invocation type when using SYCL as backend: automatic|nd_range (default: automatic)
