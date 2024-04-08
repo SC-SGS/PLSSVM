@@ -25,6 +25,9 @@
 #if defined(PLSSVM_HAS_OPENMP_BACKEND)
     #include "plssvm/backends/OpenMP/csvm.hpp"  // plssvm::openmp::csvm, plssvm::csvm_backend_exists_v
 #endif
+#if defined(PLSSVM_HAS_STDPAR_BACKEND)
+    #include "plssvm/backends/stdpar/csvm.hpp"  // plssvm::stdpar::csvm, plssvm::csvm_backend_exists_v
+#endif
 #if defined(PLSSVM_HAS_CUDA_BACKEND)
     #include "plssvm/backends/CUDA/csvm.hpp"  // plssvm::cuda::csvm, plssvm::csvm_backend_exists_v
 #endif
@@ -125,6 +128,8 @@ template <typename... Args>
             return make_csvm_impl(determine_default_backend(), std::forward<Args>(args)...);
         case backend_type::openmp:
             return make_csvm_default_impl<openmp::csvm>(std::forward<Args>(args)...);
+        case backend_type::stdpar:
+            return make_csvm_default_impl<stdpar::csvm>(std::forward<Args>(args)...);
         case backend_type::cuda:
             return make_csvm_default_impl<cuda::csvm>(std::forward<Args>(args)...);
         case backend_type::hip:
