@@ -23,7 +23,6 @@
 #include <atomic>   // std::atomic_ref
 #include <cstddef>  // std::size_t
 #include <execution>
-#include <ranges>
 #include <vector>  // std::vector
 
 // TODO: correct macro name!?
