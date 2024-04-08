@@ -6,21 +6,23 @@
  * @license This file is part of the PLSSVM project which is released under the MIT license.
  *          See the LICENSE.md file in the project root for full license information.
  *
- * @brief Functions for explicitly assembling the kernel matrix using the OpenMP backend.
+ * @brief Functions for explicitly assembling the kernel matrix using the stdpar backend.
  */
 
 #ifndef PLSSVM_BACKENDS_STDPAR_KERNEL_CG_EXPLICIT_KERNEL_MATRIX_ASSEMBLY_HPP_
 #define PLSSVM_BACKENDS_STDPAR_KERNEL_CG_EXPLICIT_KERNEL_MATRIX_ASSEMBLY_HPP_
 #pragma once
 
-#include "plssvm/constants.hpp"              // plssvm::real_type, plssvm::STDPAR_BLOCK_SIZE
+#include "plssvm/constants.hpp"              // plssvm::real_type
 #include "plssvm/detail/assert.hpp"          // PLSSVM_ASSERT
 #include "plssvm/kernel_function_types.hpp"  // plssvm::kernel_function_type
 #include "plssvm/kernel_functions.hpp"       // plssvm::kernel_function
 #include "plssvm/matrix.hpp"                 // plssvm::aos_matrix
 
 #include <cstddef>  // std::size_t
-#include <vector>   // std::vector
+#include <execution>
+#include <ranges>
+#include <vector>  // std::vector
 
 namespace plssvm::stdpar::detail {
 
@@ -44,29 +46,24 @@ void device_kernel_assembly(const std::vector<real_type> &q, std::vector<real_ty
 
     const std::size_t dept = q.size();
 
-#pragma omp parallel for collapse(2) schedule(dynamic)
-    for (std::size_t row = 0; row < dept; row += OPENMP_BLOCK_SIZE) {
-        for (std::size_t col = 0; col < dept; col += OPENMP_BLOCK_SIZE) {
-            // perform operations on the current block
-            for (std::size_t row_block = 0; row_block < OPENMP_BLOCK_SIZE; ++row_block) {
-                for (std::size_t col_block = 0; col_block < OPENMP_BLOCK_SIZE; ++col_block) {
-                    const std::size_t row_idx = row + row_block;
-                    const std::size_t col_idx = col + col_block;
+    const auto is = std::views::cartesian_product(
+        std::views::iota(std::size_t{ 0 }, dept),
+        std::views::iota(std::size_t{ 0 }, dept));
 
-                    // use symmetry and only calculate upper triangular matrix
-                    if (row_idx < dept && col_idx < dept && row_idx <= col_idx) {
-                        real_type temp = kernel_function<kernel>(data, row_idx, data, col_idx, args...) + QA_cost - q[row_idx] - q[col_idx];
+    std::for_each(std::execution::par_unseq, is.begin(), is.end(), [&](auto i) {
+        const auto [row_idx, col_idx] = i;
 
-                        // apply cost to diagonal
-                        if (row_idx == col_idx) {
-                            temp += cost;
-                        }
-                        ret[row_idx * (dept + PADDING_SIZE) + col_idx - row_idx * (row_idx + 1) / 2] = temp;
-                    }
-                }
+        // use symmetry and only calculate upper triangular matrix
+        if (row_idx <= col_idx) {
+            real_type temp = kernel_function<kernel>(data, row_idx, data, col_idx, args...) + QA_cost - q[row_idx] - q[col_idx];
+
+            // apply cost to diagonal
+            if (row_idx == col_idx) {
+                temp += cost;
             }
+            ret[row_idx * (dept + PADDING_SIZE) + col_idx - row_idx * (row_idx + 1) / 2] = temp;
         }
-    }
+    });
 }
 
 }  // namespace plssvm::stdpar::detail

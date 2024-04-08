@@ -6,7 +6,7 @@
  * @license This file is part of the PLSSVM project which is released under the MIT license.
  *          See the LICENSE.md file in the project root for full license information.
  *
- * @brief Defines the functions used for prediction for the C-SVM using the OpenMP backend.
+ * @brief Defines the functions used for prediction for the C-SVM using the stdpar backend.
  */
 
 #ifndef PLSSVM_BACKENDS_STDPAR_KERNEL_PREDICT_KERNEL_HPP_
@@ -22,7 +22,9 @@
 
 #include <cmath>    // std::fma
 #include <cstddef>  // std::size_t
-#include <vector>   // std::vector
+#include <ranges>
+#include <execution>
+#include <vector>  // std::vector
 
 namespace plssvm::stdpar::detail {
 
@@ -42,17 +44,19 @@ inline void device_kernel_w_linear(soa_matrix<real_type> &w, const aos_matrix<re
     const std::size_t num_support_vectors = support_vectors.num_rows();
     const std::size_t num_features = support_vectors.num_cols();
 
-#pragma omp parallel for collapse(2) default(none) shared(w, support_vectors, alpha) firstprivate(num_classes, num_features, num_support_vectors)
-    for (std::size_t a = 0; a < num_classes; ++a) {
-        for (std::size_t dim = 0; dim < num_features; ++dim) {
-            real_type temp{ 0.0 };
-#pragma omp simd reduction(+ : temp)
-            for (std::size_t idx = 0; idx < num_support_vectors; ++idx) {
-                temp = std::fma(alpha(a, idx), support_vectors(idx, dim), temp);
-            }
-            w(a, dim) = temp;
+    const auto is = std::views::cartesian_product(
+        std::views::iota(std::size_t{ 0 }, num_classes),
+        std::views::iota(std::size_t{ 0 }, num_features));
+
+    std::for_each(std::execution::par_unseq, is.begin(), is.end(), [&](auto i) {
+        const auto [a, dim] = i;
+
+        real_type temp{ 0.0 };
+        for (std::size_t idx = 0; idx < num_support_vectors; ++idx) {
+            temp = std::fma(alpha(a, idx), support_vectors(idx, dim), temp);
         }
-    }
+        w(a, dim) = temp;
+    });
 }
 
 /**
@@ -73,17 +77,19 @@ inline void device_kernel_predict_linear(aos_matrix<real_type> &out, const soa_m
     const std::size_t num_predict_points = predict_points.num_rows();
     const std::size_t num_features = predict_points.num_cols();
 
-#pragma omp parallel for collapse(2) default(none) shared(out, w, rho, predict_points) firstprivate(num_classes, num_features, num_predict_points)
-    for (std::size_t point_index = 0; point_index < num_predict_points; ++point_index) {
-        for (std::size_t a = 0; a < num_classes; ++a) {
-            real_type temp{ 0.0 };
-#pragma omp simd reduction(+ : temp)
-            for (std::size_t dim = 0; dim < num_features; ++dim) {
-                temp = std::fma(w(a, dim), predict_points(point_index, dim), temp);
-            }
-            out(point_index, a) = temp - rho[a];
+    const auto is = std::views::cartesian_product(
+        std::views::iota(std::size_t{ 0 }, num_predict_points),
+        std::views::iota(std::size_t{ 0 }, num_classes));
+
+    std::for_each(std::execution::par_unseq, is.begin(), is.end(), [&](auto i) {
+        const auto [point_index, a] = i;
+
+        real_type temp{ 0.0 };
+        for (std::size_t dim = 0; dim < num_features; ++dim) {
+            temp = std::fma(w(a, dim), predict_points(point_index, dim), temp);
         }
-    }
+        out(point_index, a) = temp - rho[a];
+    });
 }
 
 /**
@@ -109,8 +115,9 @@ inline void device_kernel_predict(aos_matrix<real_type> &out, const aos_matrix<r
     const std::size_t num_support_vectors = support_vectors.num_rows();
     const std::size_t num_predict_points = predict_points.num_rows();
 
-#pragma omp parallel for
-    for (std::size_t point_index = 0; point_index < num_predict_points; ++point_index) {
+    const auto is = std::views::iota(std::size_t{ 0 }, num_predict_points);
+
+    std::for_each(std::execution::par_unseq, is.begin(), is.end(), [&](const auto point_index) {
         for (std::size_t a = 0; a < num_classes; ++a) {
             out(point_index, a) -= rho[a];
         }
@@ -120,7 +127,7 @@ inline void device_kernel_predict(aos_matrix<real_type> &out, const aos_matrix<r
                 out(point_index, a) = std::fma(alpha(a, sv_index), kernel_func, out(point_index, a));
             }
         }
-    }
+    });
 }
 
 }  // namespace plssvm::stdpar::detail

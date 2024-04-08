@@ -13,15 +13,27 @@
 #define PLSSVM_BACKENDS_STDPAR_KERNEL_CG_IMPLICIT_KERNEL_MATRIX_ASSEMBLY_BLAS_HPP_
 #pragma once
 
-#include "plssvm/constants.hpp"              // plssvm::real_type, plssvm::STDPAR_BLOCK_SIZE
+#include "plssvm/constants.hpp"              // plssvm::real_type
 #include "plssvm/detail/assert.hpp"          // PLSSVM_ASSERT
 #include "plssvm/detail/operators.hpp"       // overloaded arithmetic operations for a plssvm::matrix
 #include "plssvm/kernel_function_types.hpp"  // plssvm::kernel_function_type
 #include "plssvm/kernel_functions.hpp"       // plssvm::kernel_function
 #include "plssvm/matrix.hpp"                 // aos_matrix
 
+#include <atomic>   // std::atomic_ref
 #include <cstddef>  // std::size_t
-#include <vector>   // std::vector
+#include <execution>
+#include <ranges>
+#include <vector>  // std::vector
+
+// TODO: correct macro name!?
+#if defined(PLSSVM_STDPAR_BACKEND_USE_ADAPTIVECPP)
+    #include "plssvm/backens/SYCL/detail/atomics.hpp"  // atomic_op
+using plssvm::sycl::detail::atomic_op;
+#else
+template <typename T>
+using atomic_op = std::atomic_ref<T>;
+#endif
 
 namespace plssvm::stdpar::detail {
 
@@ -54,44 +66,34 @@ inline void device_kernel_assembly_symm(const real_type alpha, const std::vector
     // alpha * A * B + beta * C
     C *= beta;
 
-// loop over all rows in the IMPLICIT kernel matrix
-#pragma omp parallel for collapse(2) schedule(dynamic)
-    for (std::size_t km_row = 0; km_row < dept; km_row += OPENMP_BLOCK_SIZE) {
-        // loop over all columns in the IMPLICIT kernel matrix
-        for (std::size_t km_col = 0; km_col < dept; km_col += OPENMP_BLOCK_SIZE) {
-            // perform operations on the current block
-            for (std::size_t km_row_block = 0; km_row_block < OPENMP_BLOCK_SIZE; ++km_row_block) {
-                for (std::size_t km_col_block = 0; km_col_block < OPENMP_BLOCK_SIZE; ++km_col_block) {
-                    const std::size_t km_row_idx = km_row + km_row_block;
-                    const std::size_t km_col_idx = km_col + km_col_block;
+    const auto is = std::views::cartesian_product(
+        std::views::iota(std::size_t{ 0 }, dept),
+        std::views::iota(std::size_t{ 0 }, dept));
 
-                    // half number of computations by exploiting symmetry
-                    if (km_row_idx < dept && km_col_idx < dept && km_row_idx <= km_col_idx) {
-                        real_type temp = kernel_function<kernel>(data, km_row_idx, data, km_col_idx, args...) + QA_cost - q[km_row_idx] - q[km_col_idx];
+    std::for_each(std::execution::par_unseq, is.begin(), is.end(), [&](auto i) {
+        const auto [km_row_idx, km_col_idx] = i;
 
-                        // apply cost to diagonal
-                        if (km_row_idx == km_col_idx) {
-                            temp += cost;
-                            // calculate the values of alpha * A * B
-                            for (std::size_t row = 0; row < B.num_rows(); ++row) {
-#pragma omp atomic
-                                C(row, km_row_idx) += alpha * temp * B(row, km_row_idx);
-                            }
-                        } else {
-                            // calculate the values of alpha * A * B
-                            for (std::size_t row = 0; row < B.num_rows(); ++row) {
-#pragma omp atomic
-                                C(row, km_row_idx) += alpha * temp * B(row, km_col_idx);
-// symmetry
-#pragma omp atomic
-                                C(row, km_col_idx) += alpha * temp * B(row, km_row_idx);
-                            }
-                        }
-                    }
+        // half number of computations by exploiting symmetry
+        if (km_row_idx <= km_col_idx) {
+            real_type temp = kernel_function<kernel>(data, km_row_idx, data, km_col_idx, args...) + QA_cost - q[km_row_idx] - q[km_col_idx];
+
+            // apply cost to diagonal
+            if (km_row_idx == km_col_idx) {
+                temp += cost;
+                // calculate the values of alpha * A * B
+                for (std::size_t row = 0; row < B.num_rows(); ++row) {
+                    atomic_op<real_type>{ C(row, km_row_idx) } += alpha * temp * B(row, km_row_idx);
+                }
+            } else {
+                // calculate the values of alpha * A * B
+                for (std::size_t row = 0; row < B.num_rows(); ++row) {
+                    atomic_op<real_type>{ C(row, km_row_idx) } += alpha * temp * B(row, km_col_idx);
+                    // symmetry
+                    atomic_op<real_type>{ C(row, km_col_idx) } += alpha * temp * B(row, km_row_idx);
                 }
             }
         }
-    }
+    });
 }
 
 }  // namespace plssvm::stdpar::detail
