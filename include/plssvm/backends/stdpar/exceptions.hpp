@@ -6,7 +6,7 @@
  * @license This file is part of the PLSSVM project which is released under the MIT license.
  *          See the LICENSE.md file in the project root for full license information.
  *
- * @brief Implements custom exception classes specific to the OpenMP backend.
+ * @brief Implements custom exception classes specific to the stdpar backend.
  */
 
 #ifndef PLSSVM_BACKENDS_STDPAR_EXCEPTIONS_HPP_
@@ -21,7 +21,7 @@
 namespace plssvm::stdpar {
 
 /**
- * @brief Exception type thrown if a problem with the OpenMP backend occurs.
+ * @brief Exception type thrown if a problem with the stdpar backend occurs.
  */
 class backend_exception : public exception {
   public:
