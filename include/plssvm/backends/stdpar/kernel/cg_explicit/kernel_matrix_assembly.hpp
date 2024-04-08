@@ -46,26 +46,47 @@ void device_kernel_assembly(const std::vector<real_type> &q, std::vector<real_ty
     const std::size_t dept = q.size();
     const std::size_t num_features = data.num_cols();
 
-    std::vector<std::pair<std::size_t, std::size_t>> range(dept * dept);
+    const std::size_t blocked_dept = (dept + PADDING_SIZE) / INTERNAL_BLOCK_SIZE;
+
+    std::vector<std::pair<std::size_t, std::size_t>> range(blocked_dept * blocked_dept);
+#pragma omp parallel for
     for (std::size_t i = 0; i < range.size(); ++i) {
-        range[i] = std::make_pair(i / dept, i % dept);
+        range[i] = std::make_pair(i / blocked_dept, i % blocked_dept);
     }
 
     std::for_each(std::execution::par_unseq, range.cbegin(), range.cend(), [=, q_ptr = q.data(), data_ptr = data.data(), ret_ptr = ret.data()](const std::pair<std::size_t, std::size_t> i) {
-        const auto [row_idx, col_idx] = i;
+        const auto [row, col] = i;
 
-        // use symmetry and only calculate upper triangular matrix
-        if (row_idx <= col_idx) {
-            real_type temp = QA_cost - q_ptr[row_idx] - q_ptr[col_idx];
-            for (std::size_t f = 0; f < num_features; ++f) {
-                temp += data_ptr[f * (dept + 1 + PADDING_SIZE) + row_idx] * data_ptr[f * (dept + 1 + PADDING_SIZE) + col_idx];
+        if (row >= col) {
+            real_type temp[INTERNAL_BLOCK_SIZE][INTERNAL_BLOCK_SIZE] = { { 0.0 } };
+
+            for (unsigned long long dim = 0; dim < num_features; dim += FEATURE_BLOCK_SIZE) {
+                // calculation
+                for (unsigned block_dim = 0; block_dim < FEATURE_BLOCK_SIZE; ++block_dim) {
+                    for (unsigned internal_i = 0; internal_i < INTERNAL_BLOCK_SIZE; ++internal_i) {
+                        const real_type internal_i_temp = data_ptr[(dim + block_dim) * (dept + 1 + PADDING_SIZE) + row + internal_i];
+                        for (unsigned internal_j = 0; internal_j < INTERNAL_BLOCK_SIZE; ++internal_j) {
+                            temp[internal_i][internal_j] += internal_i_temp * data_ptr[(dim + block_dim) * (dept + 1 + PADDING_SIZE) + col + internal_j];
+                        }
+                    }
+                }
             }
 
-            // apply cost to diagonal
-            if (row_idx == col_idx) {
-                temp += cost;
+            for (unsigned internal_i = 0; internal_i < INTERNAL_BLOCK_SIZE; ++internal_i) {
+                for (unsigned internal_j = 0; internal_j < INTERNAL_BLOCK_SIZE; ++internal_j) {
+                    const unsigned long long global_i = row * INTERNAL_BLOCK_SIZE + internal_i;
+                    const unsigned long long global_j = col * INTERNAL_BLOCK_SIZE + internal_j;
+
+                    if (global_i < dept && global_j < dept && global_i >= global_j) {
+                        real_type temp_ij = temp[internal_i][internal_j];
+                        temp_ij = temp_ij + QA_cost - q_ptr[global_i] - q_ptr[global_j];
+                        if (global_i == global_j) {
+                            temp_ij += cost;
+                        }
+                        ret_ptr[global_j * (dept + PADDING_SIZE) + global_i - global_j * (global_j + 1) / 2] = temp_ij;
+                    }
+                }
             }
-            ret_ptr[row_idx * (dept + PADDING_SIZE) + col_idx - row_idx * (row_idx + 1) / 2] = temp;
         }
     });
 }
