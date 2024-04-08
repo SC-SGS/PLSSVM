@@ -45,7 +45,7 @@ the maximum number of CG iterations (default: #features)
 
 .TP
 .B -l, --solver arg
-choose the solver: automatic|cg_explicit|cg_streaming|cg_implicit (default: automatic)
+choose the solver: automatic|cg_explicit|cg_implicit (default: automatic)
 
 .TP
 .B -a, --classification arg

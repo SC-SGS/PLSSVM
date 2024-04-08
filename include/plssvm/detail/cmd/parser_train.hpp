@@ -13,17 +13,18 @@
 #define PLSSVM_DETAIL_CMD_PARSER_TRAIN_HPP_
 #pragma once
 
-#include "plssvm/backend_types.hpp"                         // plssvm::backend_type
-#include "plssvm/backends/SYCL/implementation_type.hpp"     // plssvm::sycl::implementation_type
-#include "plssvm/backends/SYCL/kernel_invocation_type.hpp"  // plssvm::sycl::kernel_invocation_type
-#include "plssvm/classification_types.hpp"                  // plssvm::classification_type
-#include "plssvm/constants.hpp"                             // plssvm::real_type
-#include "plssvm/default_value.hpp"                         // plssvm::default_value
-#include "plssvm/parameter.hpp"                             // plssvm::parameter
-#include "plssvm/solver_types.hpp"                          // plssvm::solving_type
-#include "plssvm/target_platforms.hpp"                      // plssvm::target_platform
+#include "plssvm/backend_types.hpp"                          // plssvm::backend_type
+#include "plssvm/backends/SYCL/implementation_types.hpp"     // plssvm::sycl::implementation_type
+#include "plssvm/backends/SYCL/kernel_invocation_types.hpp"  // plssvm::sycl::kernel_invocation_type
+#include "plssvm/classification_types.hpp"                   // plssvm::classification_type
+#include "plssvm/constants.hpp"                              // plssvm::real_type
+#include "plssvm/default_value.hpp"                          // plssvm::default_value, plssvm::default_init
+#include "plssvm/parameter.hpp"                              // plssvm::parameter
+#include "plssvm/solver_types.hpp"                           // plssvm::solving_type
+#include "plssvm/target_platforms.hpp"                       // plssvm::target_platform
 
-#include "fmt/ostream.h"  // fmt::formatter, fmt::ostream_formatter
+#include "fmt/core.h"     // fmt::formatter
+#include "fmt/ostream.h"  // mt::ostream_formatter
 
 #include <cstddef>  // std::size_t
 #include <iosfwd>   // forward declare std::ostream
@@ -47,7 +48,7 @@ struct parser_train {
     plssvm::parameter csvm_params{};
 
     /// The error tolerance parameter for the CG algorithm.
-    default_value<real_type> epsilon{ default_init<real_type>{ plssvm::real_type{ 0.001 } } };
+    default_value<real_type> epsilon{ default_init<real_type>{ plssvm::real_type{ 1e-3 } } };
     /// The maximum number of iterations in the CG algorithm.
     default_value<std::size_t> max_iter{ default_init<std::size_t>{ 0 } };
     /// The multi-class classification strategy used.
@@ -57,7 +58,7 @@ struct parser_train {
     backend_type backend{ backend_type::automatic };
     /// The target platform: automatic (depending on the used backend), CPUs or GPUs from NVIDIA, AMD, or Intel.
     target_platform target{ target_platform::automatic };
-    /// The used solver type for the LS-SVM kernel matrix: automatic (depending on the available (V)RAM), cg_explicit, cg_streaming, or cg_implicit.
+    /// The used solver type for the LS-SVM kernel matrix: automatic (depending on the available (V)RAM), cg_explicit, or cg_implicit.
     solver_type solver{ solver_type::automatic };
 
     /// The kernel invocation type when using SYCL as backend.
@@ -73,7 +74,7 @@ struct parser_train {
     /// The name of the model file to write the learned support vectors to/to parse the saved model from.
     std::string model_filename{};
 
-    /// If performance tracking has been enabled, provides the name of the file where the performance tracking results are saved to. If the filename is empty, the results are dumped to stdout instead.
+    /// If performance tracking has been enabled, provides the name of the file where the performance tracking results are saved to. If the filename is empty, the results are dumped using std::clog instead.
     std::string performance_tracking_filename{};
 };
 
@@ -88,6 +89,6 @@ std::ostream &operator<<(std::ostream &out, const parser_train &params);
 }  // namespace plssvm::detail::cmd
 
 template <>
-struct fmt::formatter<plssvm::detail::cmd::parser_train> : fmt::ostream_formatter {};
+struct fmt::formatter<plssvm::detail::cmd::parser_train> : fmt::ostream_formatter { };
 
 #endif  // PLSSVM_DETAIL_CMD_PARSER_TRAIN_HPP_

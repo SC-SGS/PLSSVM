@@ -10,7 +10,7 @@
 
 #include "plssvm/classification_types.hpp"
 
-#include "custom_test_macros.hpp"  // EXPECT_CONVERSION_TO_STRING, EXPECT_CONVERSION_FROM_STRING
+#include "tests/custom_test_macros.hpp"  // EXPECT_CONVERSION_TO_STRING, EXPECT_CONVERSION_FROM_STRING
 
 #include "gtest/gtest.h"  // EXPECT_EQ, EXPECT_DEATH
 
@@ -23,6 +23,7 @@ TEST(ClassificationType, to_string) {
     EXPECT_CONVERSION_TO_STRING(plssvm::classification_type::oaa, "oaa");
     EXPECT_CONVERSION_TO_STRING(plssvm::classification_type::oao, "oao");
 }
+
 TEST(ClassificationType, to_string_unknown) {
     // check conversions to std::string from unknown classification_type
     EXPECT_CONVERSION_TO_STRING(static_cast<plssvm::classification_type>(2), "unknown");
@@ -33,13 +34,21 @@ TEST(ClassificationType, from_string) {
     // check conversion from std::string
     EXPECT_CONVERSION_FROM_STRING("oaa", plssvm::classification_type::oaa);
     EXPECT_CONVERSION_FROM_STRING("OAA", plssvm::classification_type::oaa);
-    EXPECT_CONVERSION_FROM_STRING("one_vs_all", plssvm::classification_type::oaa);
     EXPECT_CONVERSION_FROM_STRING("One_Against_All", plssvm::classification_type::oaa);
+    EXPECT_CONVERSION_FROM_STRING("ova", plssvm::classification_type::oaa);
+    EXPECT_CONVERSION_FROM_STRING("OVA", plssvm::classification_type::oaa);
+    EXPECT_CONVERSION_FROM_STRING("one_vs_all", plssvm::classification_type::oaa);
+    EXPECT_CONVERSION_FROM_STRING("ovr", plssvm::classification_type::oaa);
+    EXPECT_CONVERSION_FROM_STRING("OVR", plssvm::classification_type::oaa);
+    EXPECT_CONVERSION_FROM_STRING("one_vs_rest", plssvm::classification_type::oaa);
     EXPECT_CONVERSION_FROM_STRING("oao", plssvm::classification_type::oao);
     EXPECT_CONVERSION_FROM_STRING("OAO", plssvm::classification_type::oao);
-    EXPECT_CONVERSION_FROM_STRING("one_vs_one", plssvm::classification_type::oao);
     EXPECT_CONVERSION_FROM_STRING("One_Against_One", plssvm::classification_type::oao);
+    EXPECT_CONVERSION_FROM_STRING("ovo", plssvm::classification_type::oao);
+    EXPECT_CONVERSION_FROM_STRING("OVO", plssvm::classification_type::oao);
+    EXPECT_CONVERSION_FROM_STRING("one_vs_one", plssvm::classification_type::oao);
 }
+
 TEST(ClassificationType, from_string_unknown) {
     // foo isn't a valid classification_type
     std::istringstream input{ "foo" };
@@ -53,6 +62,7 @@ TEST(ClassificationType, classification_type_to_full_string) {
     EXPECT_EQ(plssvm::classification_type_to_full_string(plssvm::classification_type::oaa), "one vs. all");
     EXPECT_EQ(plssvm::classification_type_to_full_string(plssvm::classification_type::oao), "one vs. one");
 }
+
 TEST(ClassificationType, classification_type_to_full_string_unknown) {
     // check conversion from unknown classification_typ to a full string
     EXPECT_EQ(plssvm::classification_type_to_full_string(static_cast<plssvm::classification_type>(2)), "unknown");
@@ -71,6 +81,7 @@ TEST(ClassificationType, calculate_number_of_classifiers) {
     EXPECT_EQ(calculate_number_of_classifiers(plssvm::classification_type::oao, 4), 6);
     EXPECT_EQ(calculate_number_of_classifiers(plssvm::classification_type::oao, 42), 861);
 }
+
 TEST(ClassificationTypeDeathTest, too_few_classes) {
     // at least two classes must be provided
     EXPECT_DEATH(std::ignore = plssvm::calculate_number_of_classifiers(plssvm::classification_type::oaa, 1), "At least two classes must be given!");

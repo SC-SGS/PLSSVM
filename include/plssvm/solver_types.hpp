@@ -13,7 +13,8 @@
 #define PLSSVM_SOLVING_TYPES_HPP_
 #pragma once
 
-#include "fmt/ostream.h"  // fmt::formatter, fmt::ostream_formatter
+#include "fmt/core.h"     // fmt::formatter
+#include "fmt/ostream.h"  // fmt::ostream_formatter
 
 #include <iosfwd>  // forward declare std::ostream and std::istream
 
@@ -26,14 +27,11 @@ enum class solver_type {
     /**
      * @brief The default solver.
      * @details 1. cg_explicit: if the kernel matrix can be fully stored in the available device memory (highest memory footprint, but fastest).
-     *          2. cg_streaming: if the kernel matrix can be fully stored in the available host memory, but not in the device memory.
-     *          3. cg_implicit: if the kernel matrix can neither be fully stored in host nor device memory (smallest memory footprint, but slowest).
+     *          2. cg_implicit: if the kernel matrix can neither be fully stored in host nor device memory (smallest memory footprint, but slowest).
      */
     automatic,
     /** Use the CG algorithm explicitly calculating the kernel matrix and fully storing it on the device. */
     cg_explicit,
-    /** Use the CG algorithm explicitly calculating the kernel matrix, fully storing it on the host, and streaming the necessary parts to the device on the fly */
-    cg_streaming,
     /** Use the CG algorithm implicitly recomputing the kernel matrix each CG iteration (smallest memory footprint). */
     cg_implicit
 };
@@ -57,6 +55,6 @@ std::istream &operator>>(std::istream &in, solver_type &solving);
 }  // namespace plssvm
 
 template <>
-struct fmt::formatter<plssvm::solver_type> : fmt::ostream_formatter {};
+struct fmt::formatter<plssvm::solver_type> : fmt::ostream_formatter { };
 
 #endif  // PLSSVM_SOLVING_TYPES_HPP_

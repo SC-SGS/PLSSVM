@@ -15,14 +15,16 @@
 #include <ios>      // std::ios::failbit
 #include <istream>  // std::istream
 #include <ostream>  // std::ostream
-
-#include <iostream>
+#include <string>   // std::string
 
 namespace plssvm::detail {
 
 std::ostream &operator<<(std::ostream &out, const memory_size mem) {
+    // make custom memory size literals available
     using namespace literals;
+    // get the number of bytes as decimal value
     const auto val = static_cast<long double>(mem.num_bytes());
+    // output the value together with the correct binary memory unit suffix
     if (mem >= 1.0_TiB) {
         out << fmt::format("{:.2f} TiB", val / 1024L / 1024L / 1024L / 1024L);
     } else if (mem >= 1.0_GiB) {
@@ -38,14 +40,16 @@ std::ostream &operator<<(std::ostream &out, const memory_size mem) {
 }
 
 std::istream &operator>>(std::istream &in, memory_size &mem) {
+    // get the memory size as decimal value
     long double size{};
     in >> size;
 
+    // get the memory unit, removing all unnecessary whitespaces
     std::string unit{};
     in >> unit;
+    unit = detail::trim(unit);
 
     // convert size to bytes according to the provided unit
-    unit = detail::trim(unit);
     if (unit == "B") {
         // noting to do, size already given in byte
     } else if (unit == "KiB") {
@@ -57,9 +61,11 @@ std::istream &operator>>(std::istream &in, memory_size &mem) {
     } else if (unit == "MB") {
         size *= 1000L * 1000L;
     } else if (unit == "GiB") {
-        size *= 1024L * 1024L * 1024L;
+        size *= 1024L * 1024L;
+        size *= 1024L;
     } else if (unit == "GB") {
-        size *= 1000L * 1000L * 1000L;
+        size *= 1000L * 1000L;
+        size *= 1000L;
     } else if (unit == "TiB") {
         size *= 1024L * 1024L;
         size *= 1024L * 1024L;
@@ -67,9 +73,11 @@ std::istream &operator>>(std::istream &in, memory_size &mem) {
         size *= 1000L * 1000L;
         size *= 1000L * 1000L;
     } else {
+        // provided memory unit not recognized
         in.setstate(std::ios::failbit);
     }
 
+    // create memory_size struct
     mem = memory_size{ static_cast<unsigned long long>(size) };
     return in;
 }

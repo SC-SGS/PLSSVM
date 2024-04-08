@@ -6,13 +6,14 @@
  *          See the LICENSE.md file in the project root for full license information.
  */
 
-#include "plssvm/data_set.hpp"
+#include "plssvm/data_set.hpp"  // plssvm::data_set
 
-#include "plssvm/constants.hpp"         // plssvm::real_type
-#include "plssvm/detail/type_list.hpp"  // plssvm::detail::label_type_list
+#include "plssvm/constants.hpp"          // plssvm::real_type
+#include "plssvm/detail/type_list.hpp"   // plssvm::detail::supported_label_types
+#include "plssvm/file_format_types.hpp"  // plssvm::file_format_type
 
-#include "utility.hpp"  // check_kwargs_for_correctness, assemble_unique_class_name,
-                        // pyarray_to_vector, pyarray_to_string_vector, pylist_to_string_vector, pyarray_to_matrix
+#include "bindings/Python/utility.hpp"  // check_kwargs_for_correctness, assemble_unique_class_name,
+                                        // pyarray_to_vector, pyarray_to_string_vector, pylist_to_string_vector, pyarray_to_matrix
 
 #include "fmt/core.h"           // fmt::format
 #include "fmt/format.h"         // fmt::join
@@ -25,7 +26,7 @@
 #include <string>       // std::string
 #include <tuple>        // std::tuple_element_t, std::tuple_size_v
 #include <type_traits>  // std::is_same_v
-#include <utility>      // std::move, std::integer_sequence, std::make_integer_sequence
+#include <utility>      // std::integer_sequence, std::make_integer_sequence
 
 namespace py = pybind11;
 
@@ -177,14 +178,9 @@ void instantiate_data_set_bindings(py::module_ &m, label_type) {
         .def("save", py::overload_cast<const std::string &>(&data_set_type::save, py::const_), "save the data set to a file automatically deriving the file format type from the file extension")
         .def("num_data_points", &data_set_type::num_data_points, "the number of data points in the data set")
         .def("num_features", &data_set_type::num_features, "the number of features per data point")
-        .def(
-            "data", [](const data_set_type &data) {
-                return matrix_to_pyarray(data.data());
-            },
-            "the data saved as 2D vector")
+        .def("data", [](const data_set_type &data) { return matrix_to_pyarray(data.data()); }, "the data saved as 2D vector")
         .def("has_labels", &data_set_type::has_labels, "check whether the data set has labels")
-        .def(
-            "labels", [](const data_set_type &self) {
+        .def("labels", [](const data_set_type &self) {
                 if (!self.has_labels()) {
                     throw py::attribute_error{ "'DataSet' object has no function 'labels'. Maybe this DataSet was created without labels?" };
                 } else {
@@ -193,12 +189,9 @@ void instantiate_data_set_bindings(py::module_ &m, label_type) {
                     } else {
                         return vector_to_pyarray(self.labels()->get());
                     }
-                }
-            },
-            "the labels")
+                } }, "the labels")
         .def("num_classes", &data_set_type::num_classes, "the number of classes")
-        .def(
-            "classes", [](const data_set_type &self) {
+        .def("classes", [](const data_set_type &self) {
                 if (!self.has_labels()) {
                     throw py::attribute_error{ "'DataSet' object has no function 'classes'. Maybe this DataSet was created without labels?" };
                 } else {
@@ -207,20 +200,14 @@ void instantiate_data_set_bindings(py::module_ &m, label_type) {
                     } else {
                         return vector_to_pyarray(self.classes().value());
                     }
-                }
-            },
-            "the classes")
+                } }, "the classes")
         .def("is_scaled", &data_set_type::is_scaled, "check whether the original data has been scaled to [lower, upper] bounds")
-        .def(
-            "scaling_factors", [](const data_set_type &self) {
+        .def("scaling_factors", [](const data_set_type &self) {
                 if (!self.is_scaled()) {
                     throw py::attribute_error{ "'DataSet' object has no function 'scaling_factors'. Maybe this DataSet has not been scaled?" };
                 } else {
                     return self.scaling_factors().value();
-                }
-            },
-            py::return_value_policy::reference_internal,
-            "the factors used to scale this data set")
+                } }, py::return_value_policy::reference_internal, "the factors used to scale this data set")
         .def("__repr__", [class_name](const data_set_type &self) {
             std::string optional_repr{};
             if (self.has_labels()) {
@@ -235,8 +222,7 @@ void instantiate_data_set_bindings(py::module_ &m, label_type) {
                                class_name,
                                self.num_data_points(),
                                self.num_features(),
-                               optional_repr);
-        });
+                               optional_repr); });
 }
 
 template <typename T, std::size_t... Idx>

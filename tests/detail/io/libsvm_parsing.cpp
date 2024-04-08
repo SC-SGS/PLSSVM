@@ -10,20 +10,22 @@
 
 #include "plssvm/detail/io/libsvm_parsing.hpp"
 
-#include "plssvm/constants.hpp"              // plssvm::real_type, plssvm::PADDING_SIZE
-#include "plssvm/detail/io/file_reader.hpp"  // plssvm::detail::io::file_reader
-#include "plssvm/exceptions/exceptions.hpp"  // plssvm::invalid_file_format_exception
-#include "plssvm/matrix.hpp"                 // plssvm::aos_matrix
+#include "plssvm/constants.hpp"                    // plssvm::real_type, plssvm::PADDING_SIZE
+#include "plssvm/detail/arithmetic_type_name.hpp"  // plssvm::detail::arithmetic_type_name
+#include "plssvm/detail/io/file_reader.hpp"        // plssvm::detail::io::file_reader
+#include "plssvm/exceptions/exceptions.hpp"        // plssvm::invalid_file_format_exception
+#include "plssvm/matrix.hpp"                       // plssvm::aos_matrix
+#include "plssvm/shape.hpp"                        // plssvm::shape
 
-#include "custom_test_macros.hpp"  // EXPECT_FLOATING_POINT_MATRIX_NEAR, EXPECT_FLOATING_POINT_VECTOR_NEAR, EXPECT_THROW_WHAT
-#include "naming.hpp"              // naming::test_parameter_to_name
-#include "types_to_test.hpp"       // util::{label_type_gtest, test_parameter_type_at_t}
-#include "utility.hpp"             // util::{temporary_file, instantiate_template_file, get_correct_data_file_labels, get_distinct_label, generate_specific_matrix, generate_specific_sparse_matrix}
+#include "tests/custom_test_macros.hpp"  // EXPECT_FLOATING_POINT_MATRIX_NEAR, EXPECT_FLOATING_POINT_VECTOR_NEAR, EXPECT_THROW_WHAT
+#include "tests/naming.hpp"              // naming::test_parameter_to_name
+#include "tests/types_to_test.hpp"       // util::{label_type_gtest, test_parameter_type_at_t}
+#include "tests/utility.hpp"             // util::{temporary_file, instantiate_template_file, get_correct_data_file_labels, get_distinct_label, generate_specific_matrix, generate_specific_sparse_matrix}
 
-#include "fmt/core.h"              // fmt::format
-#include "gmock/gmock-matchers.h"  // ::testing::HasSubstr
-#include "gtest/gtest.h"           // TEST, TEST_P, TYPED_TEST, TYPED_TEST_SUITE, INSTANTIATE_TEST_SUITE_P, EXPECT_EQ, EXPECT_TRUE, EXPECT_DEATH, ASSERT_EQ, FAIL
-                                   // ::testing::{Test, TestWithParam, Values}
+#include "fmt/core.h"     // fmt::format
+#include "gmock/gmock.h"  // ::testing::HasSubstr
+#include "gtest/gtest.h"  // TEST, TEST_P, TYPED_TEST, TYPED_TEST_SUITE, INSTANTIATE_TEST_SUITE_P, EXPECT_EQ, EXPECT_TRUE, EXPECT_DEATH, ASSERT_EQ, FAIL
+                          // ::testing::{Test, TestWithParam, Values}
 
 #include <cstddef>  // std::size_t
 #include <string>   // std::string
@@ -31,7 +33,8 @@
 #include <utility>  // std::pair, std::make_pair
 #include <vector>   // std::vector
 
-class LIBSVMParseNumFeatures : public ::testing::TestWithParam<std::pair<std::string, std::size_t>> {};
+class LIBSVMParseNumFeatures : public ::testing::TestWithParam<std::pair<std::string, std::size_t>> { };
+
 TEST_P(LIBSVMParseNumFeatures, num_features) {
     const auto &[filename_part, num_features] = GetParam();
 
@@ -41,12 +44,13 @@ TEST_P(LIBSVMParseNumFeatures, num_features) {
     reader.read_lines('#');
     EXPECT_EQ((plssvm::detail::io::parse_libsvm_num_features(reader.lines())), num_features);
 }
+
 // clang-format off
 INSTANTIATE_TEST_SUITE_P(LIBSVMParse, LIBSVMParseNumFeatures, ::testing::Values(
                                                       std::make_pair("/data/libsvm/5x4.libsvm", 4),
                                                       std::make_pair("/data/libsvm/5x4_sparse.libsvm", 4),
                                                       std::make_pair("/data/libsvm/3x2_without_label.libsvm", 2),
-                                                      std::make_pair("/data/libsvm/500x200.libsvm", 200),
+                                                      std::make_pair("/data/libsvm/500x200_4.libsvm", 200),
                                                       std::make_pair("/data/empty.txt", 0)));
 // clang-format on
 
@@ -61,7 +65,8 @@ TEST(LIBSVMParseNumFeatures, index_with_alpha_char_at_the_beginning) {
 }
 
 template <typename T>
-class LIBSVMParseDense : public ::testing::Test, protected util::temporary_file {
+class LIBSVMParseDense : public ::testing::Test,
+                         protected util::temporary_file {
   protected:
     using fixture_label_type = util::test_parameter_type_at_t<0, T>;
 
@@ -75,6 +80,7 @@ class LIBSVMParseDense : public ::testing::Test, protected util::temporary_file 
      * @return the correct data points (`[[nodiscard]]`)
      */
     [[nodiscard]] const plssvm::soa_matrix<plssvm::real_type> &get_correct_data() const noexcept { return correct_data_; }
+
     /**
      * @brief Return the correct labels of the template ARFF file.
      * @return the correct labels (`[[nodiscard]]`)
@@ -89,15 +95,16 @@ class LIBSVMParseDense : public ::testing::Test, protected util::temporary_file 
                                                            { plssvm::real_type{ -0.20981208921241892 }, plssvm::real_type{ 0.60276937379453293 }, plssvm::real_type{ -0.13086851759108944 }, plssvm::real_type{ 0.10805254527169827 } },
                                                            { plssvm::real_type{ 1.88494043717792 }, plssvm::real_type{ 1.00518564317278263 }, plssvm::real_type{ 0.298499933047586044 }, plssvm::real_type{ 1.6464627048813514 } },
                                                            { plssvm::real_type{ -1.1256816275635 }, plssvm::real_type{ 2.12541534341344414 }, plssvm::real_type{ -0.165126576545454511 }, plssvm::real_type{ 2.5164553141200987 } } },
-                                                         plssvm::PADDING_SIZE,
-                                                         plssvm::PADDING_SIZE };
+                                                         plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE } };
     /// The correct labels.
     std::vector<fixture_label_type> correct_label_{ util::get_correct_data_file_labels<fixture_label_type>() };
 };
+
 TYPED_TEST_SUITE(LIBSVMParseDense, util::label_type_gtest, naming::test_parameter_to_name);
 
 template <typename T>
-class LIBSVMParseSparse : public ::testing::Test, protected util::temporary_file {
+class LIBSVMParseSparse : public ::testing::Test,
+                          protected util::temporary_file {
   protected:
     using fixture_label_type = util::test_parameter_type_at_t<0, T>;
 
@@ -111,6 +118,7 @@ class LIBSVMParseSparse : public ::testing::Test, protected util::temporary_file
      * @return the correct data points (`[[nodiscard]]`)
      */
     [[nodiscard]] const plssvm::soa_matrix<plssvm::real_type> &get_correct_data() const noexcept { return correct_data_; }
+
     /**
      * @brief Return the correct labels of the template ARFF file.
      * @return the correct labels (`[[nodiscard]]`)
@@ -125,11 +133,11 @@ class LIBSVMParseSparse : public ::testing::Test, protected util::temporary_file
                                                            { plssvm::real_type{ 0.60276937379453293 }, plssvm::real_type{ 0.0 }, plssvm::real_type{ -0.13086851759108944 }, plssvm::real_type{ 0.0 } },
                                                            { plssvm::real_type{ 0.0 }, plssvm::real_type{ 0.0 }, plssvm::real_type{ 0.0 }, plssvm::real_type{ 0.298499933047586044 } },
                                                            { plssvm::real_type{ 0.0 }, plssvm::real_type{ -1.615267454510097261 }, plssvm::real_type{ 2.098278675127757651 }, plssvm::real_type{ 0.0 } } },
-                                                         plssvm::PADDING_SIZE,
-                                                         plssvm::PADDING_SIZE };
+                                                         plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE } };
     /// The correct labels.
     std::vector<fixture_label_type> correct_label_{ util::get_correct_data_file_labels<fixture_label_type>() };
 };
+
 TYPED_TEST_SUITE(LIBSVMParseSparse, util::label_type_gtest, naming::test_parameter_to_name);
 
 template <typename T>
@@ -137,6 +145,7 @@ class LIBSVMParse : public ::testing::Test {
   protected:
     using fixture_label_type = util::test_parameter_type_at_t<0, T>;
 };
+
 TYPED_TEST_SUITE(LIBSVMParse, util::label_type_gtest, naming::test_parameter_to_name);
 
 TYPED_TEST(LIBSVMParseDense, read) {
@@ -190,8 +199,7 @@ TYPED_TEST(LIBSVMParse, read_without_label) {
     const plssvm::soa_matrix<plssvm::real_type> correct_data{ { { plssvm::real_type{ 1.5 }, plssvm::real_type{ -2.9 } },
                                                                 { plssvm::real_type{ 0.0 }, plssvm::real_type{ -0.3 } },
                                                                 { plssvm::real_type{ 5.5 }, plssvm::real_type{ 0.0 } } },
-                                                              plssvm::PADDING_SIZE,
-                                                              plssvm::PADDING_SIZE };
+                                                              plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE } };
     EXPECT_FLOATING_POINT_MATRIX_NEAR(data, correct_data);
     EXPECT_TRUE(label.empty());
 }
@@ -207,6 +215,7 @@ TYPED_TEST(LIBSVMParse, zero_based_features) {
                       plssvm::invalid_file_format_exception,
                       "LIBSVM assumes a 1-based feature indexing scheme, but 0 was given!");
 }
+
 TYPED_TEST(LIBSVMParse, arff_file) {
     using label_type = typename TestFixture::fixture_label_type;
 
@@ -216,6 +225,7 @@ TYPED_TEST(LIBSVMParse, arff_file) {
     reader.read_lines('#');
     EXPECT_THROW(std::ignore = (plssvm::detail::io::parse_libsvm_data<label_type>(reader)), plssvm::invalid_file_format_exception);
 }
+
 TYPED_TEST(LIBSVMParse, empty) {
     using label_type = typename TestFixture::fixture_label_type;
 
@@ -227,6 +237,7 @@ TYPED_TEST(LIBSVMParse, empty) {
                       plssvm::invalid_file_format_exception,
                       "Can't parse file: no data points are given!");
 }
+
 TYPED_TEST(LIBSVMParse, feature_with_alpha_char_at_the_beginning) {
     using label_type = typename TestFixture::fixture_label_type;
 
@@ -238,6 +249,7 @@ TYPED_TEST(LIBSVMParse, feature_with_alpha_char_at_the_beginning) {
                       plssvm::invalid_file_format_exception,
                       fmt::format("Can't convert 'a-1.11' to a value of type {}!", plssvm::detail::arithmetic_type_name<plssvm::real_type>()));
 }
+
 TYPED_TEST(LIBSVMParse, index_with_alpha_char_at_the_beginning) {
     using label_type = typename TestFixture::fixture_label_type;
 
@@ -249,6 +261,7 @@ TYPED_TEST(LIBSVMParse, index_with_alpha_char_at_the_beginning) {
                       plssvm::invalid_file_format_exception,
                       "Can't convert ' !2' to a value of type unsigned long!");
 }
+
 TYPED_TEST(LIBSVMParse, invalid_colon_at_the_beginning) {
     using label_type = typename TestFixture::fixture_label_type;
 
@@ -260,6 +273,7 @@ TYPED_TEST(LIBSVMParse, invalid_colon_at_the_beginning) {
                       plssvm::invalid_file_format_exception,
                       "Can't convert '' to a value of type unsigned long!");
 }
+
 TYPED_TEST(LIBSVMParse, invalid_colon_in_the_middle) {
     using label_type = typename TestFixture::fixture_label_type;
 
@@ -271,6 +285,7 @@ TYPED_TEST(LIBSVMParse, invalid_colon_in_the_middle) {
                       plssvm::invalid_file_format_exception,
                       "Can't convert ' :2' to a value of type unsigned long!");
 }
+
 TYPED_TEST(LIBSVMParse, missing_feature_value) {
     using label_type = typename TestFixture::fixture_label_type;
 
@@ -282,6 +297,7 @@ TYPED_TEST(LIBSVMParse, missing_feature_value) {
                       plssvm::invalid_file_format_exception,
                       fmt::format("Can't convert '' to a value of type {}!", plssvm::detail::arithmetic_type_name<plssvm::real_type>()));
 }
+
 TYPED_TEST(LIBSVMParse, missing_index_value) {
     using label_type = typename TestFixture::fixture_label_type;
 
@@ -293,6 +309,7 @@ TYPED_TEST(LIBSVMParse, missing_index_value) {
                       plssvm::invalid_file_format_exception,
                       "Can't convert ' ' to a value of type unsigned long!");
 }
+
 TYPED_TEST(LIBSVMParse, inconsistent_label_specification) {
     using label_type = typename TestFixture::fixture_label_type;
 
@@ -304,6 +321,7 @@ TYPED_TEST(LIBSVMParse, inconsistent_label_specification) {
                       plssvm::invalid_file_format_exception,
                       "Inconsistent label specification found (some data points are labeled, others are not)!");
 }
+
 TYPED_TEST(LIBSVMParse, non_increasing_indices) {
     using label_type = typename TestFixture::fixture_label_type;
 
@@ -315,6 +333,7 @@ TYPED_TEST(LIBSVMParse, non_increasing_indices) {
                       plssvm::invalid_file_format_exception,
                       "The features indices must be strictly increasing, but 3 is smaller or equal than 3!");
 }
+
 TYPED_TEST(LIBSVMParse, non_strictly_increasing_indices) {
     using label_type = typename TestFixture::fixture_label_type;
 
@@ -332,6 +351,7 @@ class LIBSVMParseDeathTest : public ::testing::Test {
   protected:
     using fixture_label_type = util::test_parameter_type_at_t<0, T>;
 };
+
 TYPED_TEST_SUITE(LIBSVMParseDeathTest, util::label_type_gtest, naming::test_parameter_to_name);
 
 TYPED_TEST(LIBSVMParseDeathTest, invalid_file_reader) {
@@ -344,14 +364,17 @@ TYPED_TEST(LIBSVMParseDeathTest, invalid_file_reader) {
 }
 
 template <typename T>
-class LIBSVMWrite : public ::testing::Test, protected util::temporary_file {
+class LIBSVMWrite : public ::testing::Test,
+                    protected util::temporary_file {
   protected:
     using fixture_label_type = util::test_parameter_type_at_t<0, T>;
 };
+
 TYPED_TEST_SUITE(LIBSVMWrite, util::label_type_gtest, naming::test_parameter_to_name);
 
 template <typename T>
-class LIBSVMWriteDeathTest : public LIBSVMWrite<T> {};
+class LIBSVMWriteDeathTest : public LIBSVMWrite<T> { };
+
 TYPED_TEST_SUITE(LIBSVMWriteDeathTest, util::label_type_gtest, naming::test_parameter_to_name);
 
 TYPED_TEST(LIBSVMWrite, write_dense_with_label) {
@@ -359,7 +382,7 @@ TYPED_TEST(LIBSVMWrite, write_dense_with_label) {
 
     // define data to write
     const std::vector<label_type> label = util::get_correct_data_file_labels<label_type>();
-    const auto data = util::generate_specific_matrix<plssvm::soa_matrix<plssvm::real_type>>(label.size(), 3);
+    const auto data = util::generate_specific_matrix<plssvm::soa_matrix<plssvm::real_type>>(plssvm::shape{ label.size(), 3 });
 
     // write the necessary data to the file
     plssvm::detail::io::write_libsvm_data(this->filename, data, label);
@@ -384,9 +407,10 @@ TYPED_TEST(LIBSVMWrite, write_dense_with_label) {
         }
     }
 }
+
 TYPED_TEST(LIBSVMWrite, write_dense_without_label) {
     // define data to write
-    const auto data = util::generate_specific_matrix<plssvm::soa_matrix<plssvm::real_type>>(3, 3);
+    const auto data = util::generate_specific_matrix<plssvm::soa_matrix<plssvm::real_type>>(plssvm::shape{ 3, 3 });
 
     // write the necessary data to the file
     plssvm::detail::io::write_libsvm_data(this->filename, data);
@@ -417,7 +441,7 @@ TYPED_TEST(LIBSVMWrite, write_sparse_with_label) {
 
     // define data to write
     const std::vector<label_type> label = util::get_correct_data_file_labels<label_type>();
-    const auto data = util::generate_specific_sparse_matrix<plssvm::soa_matrix<plssvm::real_type>>(label.size(), 3);
+    const auto data = util::generate_specific_sparse_matrix<plssvm::soa_matrix<plssvm::real_type>>(plssvm::shape{ label.size(), 3 });
 
     // write the necessary data to the file
     plssvm::detail::io::write_libsvm_data(this->filename, data, label);
@@ -449,9 +473,10 @@ TYPED_TEST(LIBSVMWrite, write_sparse_with_label) {
         }
     }
 }
+
 TYPED_TEST(LIBSVMWrite, write_sparse_without_label) {
     // define data to write
-    const auto data = util::generate_specific_sparse_matrix<plssvm::soa_matrix<plssvm::real_type>>(3, 3);
+    const auto data = util::generate_specific_sparse_matrix<plssvm::soa_matrix<plssvm::real_type>>(plssvm::shape{ 3, 3 });
 
     // write the necessary data to the file
     plssvm::detail::io::write_libsvm_data(this->filename, data);
@@ -506,28 +531,30 @@ TYPED_TEST(LIBSVMWriteDeathTest, data_with_provided_empty_labels) {
     using label_type = typename TestFixture::fixture_label_type;
 
     // define data to write
-    const plssvm::soa_matrix<plssvm::real_type> data{ 1, 1, 1 };
+    const plssvm::soa_matrix<plssvm::real_type> data{ plssvm::shape{ 1, 1 }, 1 };
     const std::vector<label_type> label{};
 
     // try to write the necessary data to the file
     EXPECT_DEATH(plssvm::detail::io::write_libsvm_data(this->filename, data, label), "has_label is 'true' but no labels were provided!");
 }
+
 TYPED_TEST(LIBSVMWriteDeathTest, data_and_label_size_mismatch) {
     using label_type = typename TestFixture::fixture_label_type;
 
     // define data to write
-    const plssvm::soa_matrix<plssvm::real_type> data{ 2, 1, 1 };
+    const plssvm::soa_matrix<plssvm::real_type> data{ plssvm::shape{ 2, 1 }, 1 };
     const std::vector<label_type> label{ util::get_distinct_label<label_type>().front() };
 
     // try to write the necessary data to the file
     EXPECT_DEATH(plssvm::detail::io::write_libsvm_data(this->filename, data, label),
                  ::testing::HasSubstr("Number of data points (2) and number of labels (1) mismatch!"));
 }
+
 TYPED_TEST(LIBSVMWriteDeathTest, labels_provided_but_not_written) {
     using label_type = typename TestFixture::fixture_label_type;
 
     // define data to write
-    const plssvm::soa_matrix<plssvm::real_type> data{ 2, 1, 1 };
+    const plssvm::soa_matrix<plssvm::real_type> data{ plssvm::shape{ 2, 1 }, 1 };
     const std::vector<label_type> label{ util::get_distinct_label<label_type>().front() };
 
     // try to write the necessary data to the file

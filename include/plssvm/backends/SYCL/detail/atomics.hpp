@@ -24,6 +24,6 @@ namespace plssvm::sycl::detail {
 template <typename T>
 using atomic_op = ::sycl::atomic_ref<T, ::sycl::memory_order::relaxed, ::sycl::memory_scope::device, ::sycl::access::address_space::global_space>;
 
-}  // namespace plssvm::sycl
+}  // namespace plssvm::sycl::detail
 
 #endif  // PLSSVM_BACKENDS_SYCL_DETAIL_ATOMICS_HPP_

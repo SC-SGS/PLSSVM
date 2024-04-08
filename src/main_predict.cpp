@@ -9,23 +9,22 @@
  */
 
 #include "plssvm/core.hpp"
-
 #include "plssvm/detail/cmd/data_set_variants.hpp"  // plssvm::detail::cmd::data_set_factory
 #include "plssvm/detail/cmd/parser_predict.hpp"     // plssvm::detail::cmd::parser_predict
 #include "plssvm/detail/logging.hpp"                // plssvm::detail::log
 #include "plssvm/detail/performance_tracker.hpp"    // plssvm::detail::tracking_entry, PLSSVM_DETAIL_PERFORMANCE_TRACKER_SAVE, PLSSVM_DETAIL_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY
 #include "plssvm/verbosity_levels.hpp"              // plssvm::verbosity_level
 
-#include "fmt/format.h"                             // fmt::print, fmt::join
-#include "fmt/os.h"                                 // fmt::ostream, fmt::output_file
+#include "fmt/format.h"  // fmt::print, fmt::join
+#include "fmt/os.h"      // fmt::ostream, fmt::output_file
 
-#include <chrono>                                   // std::chrono::{steady_clock, duration}
-#include <cstdlib>                                  // EXIT_SUCCESS, EXIT_FAILURE
-#include <exception>                                // std::exception
-#include <fstream>                                  // std::ofstream
-#include <iostream>                                 // std::cerr, std::endl
-#include <variant>                                  // std::visit
-#include <vector>                                   // std::vector
+#include <chrono>     // std::chrono::{steady_clock, duration}
+#include <cstdlib>    // EXIT_SUCCESS, EXIT_FAILURE
+#include <exception>  // std::exception
+#include <fstream>    // std::ofstream
+#include <iostream>   // std::cerr, std::endl
+#include <variant>    // std::visit
+#include <vector>     // std::vector
 
 int main(int argc, char *argv[]) {
     try {
@@ -40,7 +39,7 @@ int main(int argc, char *argv[]) {
                             plssvm::detail::tracking_entry{ "parameter", "", cmd_parser });
 
         // create data set
-        std::visit([&](auto &&data) {
+        const auto data_set_visitor = [&](auto &&data) {
             using label_type = typename std::remove_reference_t<decltype(data)>::label_type;
 
             // create model
@@ -52,8 +51,9 @@ int main(int argc, char *argv[]) {
                 plssvm::detail::log(plssvm::verbosity_level::full,
                                     "Parameter used to train the model:\n"
                                     "  kernel_type: {} -> {}\n",
-                                    params.kernel_type, plssvm::kernel_function_type_to_math_string(params.kernel_type));
-                switch (params.kernel_type) {
+                                    params.kernel_type,
+                                    plssvm::kernel_function_type_to_math_string(params.kernel_type));
+                switch (params.kernel_type.value()) {
                     case plssvm::kernel_function_type::linear:
                         break;
                     case plssvm::kernel_function_type::polynomial:
@@ -61,13 +61,24 @@ int main(int argc, char *argv[]) {
                                             "  degree: {}\n"
                                             "  gamma: {}\n"
                                             "  coef0: {}\n",
-                                            params.degree, params.gamma, params.coef0);
+                                            params.degree,
+                                            params.gamma,
+                                            params.coef0);
                         break;
                     case plssvm::kernel_function_type::rbf:
+                    case plssvm::kernel_function_type::laplacian:
+                    case plssvm::kernel_function_type::chi_squared:
                         plssvm::detail::log(plssvm::verbosity_level::full, "  gamma: {}\n", params.gamma);
                         break;
+                    case plssvm::kernel_function_type::sigmoid:
+                        plssvm::detail::log(plssvm::verbosity_level::full,
+                                            "  gamma: {}\n"
+                                            "  coef0: {}\n",
+                                            params.gamma,
+                                            params.coef0);
+                        break;
                 }
-                plssvm::detail::log(plssvm::verbosity_level::full, "  cost: {}\n",  params.cost);
+                plssvm::detail::log(plssvm::verbosity_level::full, "  cost: {}\n", params.cost);
             }
 
             // create default csvm
@@ -94,7 +105,7 @@ int main(int argc, char *argv[]) {
             // print achieved accuracy (if possible)
             if (data.has_labels()) {
                 // generate the classification report
-                const std::vector<label_type> &correct_labels = data.labels().value();
+                const std::vector<label_type> &correct_labels = *data.labels();
                 const plssvm::classification_report report{ correct_labels, predicted_labels };
 
                 // print complete report
@@ -105,7 +116,8 @@ int main(int argc, char *argv[]) {
                 PLSSVM_DETAIL_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking_entry{ "accuracy", "num_correct", report.accuracy().num_correct }));
                 PLSSVM_DETAIL_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking_entry{ "accuracy", "num_total", report.accuracy().num_total }));
             }
-        }, plssvm::detail::cmd::data_set_factory(cmd_parser));
+        };
+        std::visit(data_set_visitor, plssvm::detail::cmd::data_set_factory(cmd_parser));
 
         const std::chrono::steady_clock::time_point end_time = std::chrono::steady_clock::now();
         plssvm::detail::log(plssvm::verbosity_level::full | plssvm::verbosity_level::timing,

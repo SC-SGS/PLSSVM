@@ -11,10 +11,12 @@
 
 #ifndef PLSSVM_VERBOSITY_LEVELS_HPP_
 #define PLSSVM_VERBOSITY_LEVELS_HPP_
+#pragma once
 
 #include "plssvm/detail/utility.hpp"  // PLSSVM_EXTERN
 
-#include "fmt/ostream.h"  // fmt::formatter, fmt::ostream_formatter
+#include "fmt/core.h"     // fmt::formatter
+#include "fmt/ostream.h"  // fmt::ostream_formatter
 
 #include <iosfwd>  // std::istream, std::ostream
 
@@ -91,6 +93,6 @@ verbosity_level operator&=(verbosity_level &lhs, verbosity_level rhs);
 }  // namespace plssvm
 
 template <>
-struct fmt::formatter<plssvm::verbosity_level> : fmt::ostream_formatter {};
+struct fmt::formatter<plssvm::verbosity_level> : fmt::ostream_formatter { };
 
 #endif  // PLSSVM_VERBOSITY_LEVELS_HPP_

@@ -53,19 +53,30 @@ The LS-SVMs reformulated the original problem such that it boils down to solving
 For this kind of problem many highly parallel algorithms and implementations are known.
 We decided to use the [Conjugate Gradient (CG)](https://en.wikipedia.org/wiki/Conjugate_gradient_method) to solve the system of linear equations.
 
-We support multi-class classification using the one vs. all (also one vs. rest or OAA).
-Therefore, our CG algorithm solves multiple right-hand sides simultaneously. 
-This has the implication that, except for binary classification, our model file isn't LIBSVM conform, since for each support vector #classes many weights must be saved instead of only #classes - 1.
+The main highlights of our SVM implementations are:
+1. Drop-in replacement for LIBSVM's `svm-train`, `svm-predict`, and `svm-scale` (some features currently not implemented).
+2. Support of multiple different programming frameworks for parallelisation (also called backends in our PLSSVM implementation) which allows us to target GPUs and CPUs from different vendors like NVIDIA, AMD, or Intel:
+   - [OpenMP](https://www.openmp.org/)
+   - [CUDA](https://developer.nvidia.com/cuda-zone)
+   - [HIP](https://github.com/ROCm-Developer-Tools/HIP) (only tested on AMD GPUs)
+   - [OpenCL](https://www.khronos.org/opencl/)
+   - [SYCL](https://www.khronos.org/sycl/) (supported implementations are [DPC++](https://github.com/intel/llvm) and [AdaptiveCpp](https://github.com/AdaptiveCpp/AdaptiveCpp) (formerly known as hipSYCL); specifically the versions [sycl-nightly/20231201](https://github.com/intel/llvm/tree/sycl-nightly/20230110) and AdaptiveCpp release [v23.10.0](https://github.com/AdaptiveCpp/AdaptiveCpp/releases/tag/v23.10.0))
+3. Six different kernel functions to be able to classify a large variaty of different problems:
+   - linear: $\vec{u}^T \cdot \vec{v}$
+   - polynomial: $(\gamma \cdot \vec{u}^T \cdot \vec{v} + coef0)^{d}$
+   - radial basis function (rbf): $\exp(-\gamma \cdot |\vec{u} - \vec{v}|^2)$
+   - sigmoid: $\tanh(\gamma \cdot \vec{u}^T \cdot \vec{v} + coef0)$
+   - laplacian: $\exp(-\gamma \cdot |\vec{u} - \vec{v}|_1)$
+   - chi-squared (only well-defined for values > 0): $\exp(-\gamma \cdot \sum_i \frac{(x[i] - y[i])^2}{x[i] + y[i]})$
+4. Two different solver types for a trade-off between memory footprint and runtime:
+   - `cg_explicit`: large memory overhead but very fast
+   - `cg_implicit`: slower but requires drastically less memory
+5. Multi-class classification available via one vs. all (also one vs. rest or OAA) and one vs. one (also OAO):
+   - OAA: one huge classification task where our CG algorithm solves a system of linear equations with multiple right-hand sides. The resulting model file is **not** compatible with LIBSVM.
+   - OAO: constructs many but smaller binary classifications. The resulting model file is **fully** compatible with LIBSVM.
+6. Multi-GPU support for **all** kernel functions and GPU backends for `fit` as well as `predict/score`.
+7. Python bindings as drop-in replacement for `sklearn.SVC` (some features currently not implemented).
 
-Since one of our main goals was performance, we parallelized the implicit matrix-vector multiplication inside the CG algorithm.
-To do so, we use multiple different frameworks to be able to target a broad variety of different hardware platforms.
-The currently available frameworks (also called backends in our PLSSVM implementation) are:
-
-- [OpenMP](https://www.openmp.org/)
-- [CUDA](https://developer.nvidia.com/cuda-zone)
-- [HIP](https://github.com/ROCm-Developer-Tools/HIP) (only tested on AMD GPUs)
-- [OpenCL](https://www.khronos.org/opencl/)
-- [SYCL](https://www.khronos.org/sycl/) (tested implementations are [DPC++](https://github.com/intel/llvm) and [AdaptiveCpp](https://github.com/AdaptiveCpp/AdaptiveCpp) (formerly known as hipSYCL); specifically the versions [sycl-nightly/20231201](https://github.com/intel/llvm/tree/sycl-nightly/20230110) and AdaptiveCpp release [v23.10.0](https://github.com/AdaptiveCpp/AdaptiveCpp/releases/tag/v23.10.0))
 
 ## Getting Started
 
@@ -74,11 +85,11 @@ The currently available frameworks (also called backends in our PLSSVM implement
 General dependencies:
 
 - a C++17 capable compiler (e.g. [`gcc`](https://gcc.gnu.org/) or [`clang`](https://clang.llvm.org/))
-- [CMake](https://cmake.org/) 3.21 or newer
-- [cxxopts ≥ v3.1.1](https://github.com/jarro2783/cxxopts), [fast_float ≥ v3.10.0](https://github.com/fastfloat/fast_float), [{fmt} ≥ v10.1.1](https://github.com/fmtlib/fmt), and [igor](https://github.com/bluescarni/igor) (all four are automatically build during the CMake configuration if they couldn't be found using the respective `find_package` call)
+- [CMake](https://cmake.org/) 3.23 or newer
+- [cxxopts ≥ v3.2.0](https://github.com/jarro2783/cxxopts), [fast_float ≥ v3.10.0](https://github.com/fastfloat/fast_float), [{fmt} ≥ v10.2.1](https://github.com/fmtlib/fmt), and [igor](https://github.com/bluescarni/igor) (all four are automatically build during the CMake configuration if they couldn't be found using the respective `find_package` call)
 - [GoogleTest ≥ v1.14.0](https://github.com/google/googletest) if testing is enabled (automatically build during the CMake configuration if `find_package(GTest)` wasn't successful)
 - [doxygen](https://www.doxygen.nl/index.html) if documentation generation is enabled
-- [Pybind11 ≥ v2.11.1](https://github.com/pybind/pybind11) if Python bindings are enabled
+- [Pybind11 ≥ v2.12.0](https://github.com/pybind/pybind11) if Python bindings are enabled
 - [OpenMP](https://www.openmp.org/) 4.0 or newer (optional) to speed-up library utilities (like file parsing)
 - multiple Python modules used in the utility scripts, to install all modules use `pip install --user -r install/python_requirements.txt`
 
@@ -226,10 +237,11 @@ The `[optional_options]` can be one or multiple of:
 
 **Attention:** at least one backend must be enabled and available!
 
+- `PLSSVM_ENABLE_FAST_MATH=ON|OFF` (default depending on `CMAKE_BUILD_TYPE`: `ON` for Release or RelWithDebInfo, `OFF` otherwise): enable `fast-math` compiler flags for all backends
 - `PLSSVM_ENABLE_ASSERTS=ON|OFF` (default: `OFF`): enables custom assertions regardless whether the `DEBUG` macro is defined or not
 - `PLSSVM_USE_FLOAT_AS_REAL_TYPE=ON|OFF` (default: `OFF`): use `float` as real_type instead of `double`
 - `PLSSVM_THREAD_BLOCK_SIZE` (default: `8`): set a specific thread block size used in the GPU kernels (for fine-tuning optimizations)
-- `PLSSVM_INTERNAL_BLOCK_SIZE` (default: `4`: set a specific internal block size used in the GPU kernels (for fine-tuning optimizations)
+- `PLSSVM_INTERNAL_BLOCK_SIZE` (default: `4`): set a specific internal block size used in the GPU kernels (for fine-tuning optimizations)
 - `PLSSVM_ENABLE_LTO=ON|OFF` (default: `ON`): enable interprocedural optimization (IPO/LTO) if supported by the compiler
 - `PLSSVM_ENFORCE_MAX_MEM_ALLOC_SIZE=ON|OFF` (default: `ON`): enforce the maximum (device) memory allocation size for the plssvm::solver_type::automatic solver
 - `PLSSVM_ENABLE_DOCUMENTATION=ON|OFF` (default: `OFF`): enable the `doc` target using doxygen
@@ -243,6 +255,7 @@ If `PLSSVM_ENABLE_TESTING` is set to `ON`, the following options can also be set
 - `PLSSVM_GENERATE_TEST_FILE=ON|OFF` (default: `ON`): automatically generate test files
   - `PLSSVM_TEST_FILE_NUM_DATA_POINTS` (default: `5000`): the number of data points in the test file
   - `PLSSVM_TEST_FILE_NUM_FEATURES` (default: `2000`): the number of features per data point in the test file
+  - `PLSSVM_TEST_FILE_NUM_CLASSES` (default: `4`): the number of classes in the test file
 
 If `PLSSVM_ENABLE_LANGUAGE_BINDINGS` is set to `ON`, the following option can also be set:
 
@@ -254,7 +267,7 @@ If `PLSSVM_ENABLE_PYTHON_BINDINGS` is set to `ON`, the following options can als
 
 If the OpenCL backend is available and NVIDIA GPUs should be targeted, an additional option can be set.
 
-- `PLSSVM_OPENCL_BACKEND_ENABLE_PTX_INLINE_ASSEMBLY` (default: `ON`): enable PTX inline assembly to speed up the FP32/FP64 atomicAdd implementations on NVIDIA GPUs. **Note:** requires `sm_60` or newer!
+- `PLSSVM_OPENCL_BACKEND_ENABLE_PTX_INLINE_ASSEMBLY=ON|OFF` (default: `ON`): enable PTX inline assembly to speed up the FP32/FP64 atomicAdd implementations on NVIDIA GPUs. **Note:** requires `sm_60` or newer!
 
 If the SYCL backend is available, additional options can be set.
 
@@ -292,6 +305,8 @@ To run the tests after building the library (with `PLSSVM_ENABLE_TESTING` set to
 ```bash
 ctest
 ```
+
+**Note:** due to floating point inaccuracies, it is advisable to disable `PLSSVM_ENABLE_FAST_MATH` for testing.
 
 ### Generating Test Coverage Results
 
@@ -333,6 +348,7 @@ export MANPATH=${CMAKE_INSTALL_PREFIX}/share/man:$MANPATH
 
 export PATH=${CMAKE_INSTALL_PREFIX}/bin:${PATH}
 export LD_LIBRARY_PATH=${CMAKE_INSTALL_PREFIX}/lib:${LD_LIBRARY_PATH}
+export CPLUS_INCLUDE_PATH=${CMAKE_INSTALL_PREFIX}/include:${CPLUS_INCLUDE_PATH}
 ```
 
 ## Usage
@@ -387,15 +403,18 @@ Usage:
 
   -t, --kernel_type arg         set type of kernel function. 
                                          0 -- linear: u'*v
-                                         1 -- polynomial: (gamma*u'*v + coef0)^degree 
-                                         2 -- radial basis function: exp(-gamma*|u-v|^2) (default: 0)
+                                         1 -- polynomial: (gamma*u'*v+coef0)^degree
+                                         2 -- rbf: exp(-gamma*|u-v|^2)
+                                         3 -- sigmoid: tanh(gamma*u'*v+coef0)
+                                         4 -- laplacian: exp(-gamma*|u-v|_1)
+                                         5 -- chi_squared: exp(-gamma*sum_i((x[i]-y[i])^2/(x[i]+y[i]))) (default: 2)
   -d, --degree arg              set degree in kernel function (default: 3)
   -g, --gamma arg               set gamma in kernel function (default: 1 / num_features)
   -r, --coef0 arg               set coef0 in kernel function (default: 0)
   -c, --cost arg                set the parameter C (default: 1)
   -e, --epsilon arg             set the tolerance of termination criterion (default: 0.001)
   -i, --max_iter arg            set the maximum number of CG iterations (default: num_features)
-  -l, --solver arg              choose the solver: automatic|cg_explicit|cg_streaming|cg_implicit (default: automatic)
+  -l, --solver arg              choose the solver: automatic|cg_explicit|cg_implicit (default: automatic)
   -a, --classification arg      the classification strategy to use for multi-class classification: oaa|oao (default: oaa)
   -b, --backend arg             choose the backend: automatic|openmp|cuda|hip|opencl|sycl (default: automatic)
   -p, --target_platform arg     choose the target platform: automatic|cpu|gpu_nvidia|gpu_amd|gpu_intel (default: automatic)
@@ -459,13 +478,16 @@ If the `--sycl_implementation_type` is `automatic`, the used SYCL implementation
 
 ### Predicting using `plssvm-predict`
 
+Our predict utility is fully conform to LIBSVM's model files. 
+This means that our `plssvm-predict` can be used on model files learned with, e.g., LIBSVM's `svm-train`.
+
 ```bash
-./plssvm-preidct --help
+./plssvm-predict --help
 ```
 ```
 LS-SVM with multiple (GPU-)backends
 Usage:
-  ./plssvm-preidct [OPTION...] test_file model_file [output_file]
+  ./plssvm-predict [OPTION...] test_file model_file [output_file]
 
   -b, --backend arg             choose the backend: automatic|openmp|cuda|hip|opencl|sycl (default: automatic)
   -p, --target_platform arg     choose the target platform: automatic|cpu|gpu_nvidia|gpu_amd|gpu_intel (default: automatic)
@@ -486,13 +508,13 @@ Usage:
 An example invocation could look like:
 
 ```bash
-./plssvm-preidct --backend cuda --test /path/to/test_file --model /path/to/model_file
+./plssvm-predict --backend cuda --test /path/to/test_file --model /path/to/model_file
 ```
 
 Another example targeting NVIDIA GPUs using the SYCL backend looks like:
 
 ```bash
-./plssvm-preidct --backend sycl --target_platform gpu_nvidia --test /path/to/test_file --model /path/to/model_file
+./plssvm-predict --backend sycl --target_platform gpu_nvidia --test /path/to/test_file --model /path/to/model_file
 ```
 
 The `--target_platform=automatic` and `--sycl_implementation_type` flags work like in the training (`./plssvm-train`) case.
@@ -643,6 +665,10 @@ except RuntimeError as e:
 ```
 
 **Note:** it may be necessary to set the environment variable `PYTHONPATH` to the `lib` folder in the PLSSVM install path.
+
+```bash
+export PYTHONPATH=${CMAKE_INSTALL_PREFIX}/lib:${PYTHONPATH}
+```
 
 We also provide Python bindings for a `plssvm.SVC` class that offers the same interface as the [`sklearn.svm.SVC`](https://scikit-learn.org/stable/modules/generated/sklearn.svm.SVC.html) class.
 Note that currently not all functionality has been implemented in PLSSVM.

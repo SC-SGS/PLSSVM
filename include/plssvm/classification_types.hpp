@@ -13,7 +13,8 @@
 #define PLSSVM_CLASSIFICATION_TYPES_HPP_
 #pragma once
 
-#include "fmt/ostream.h"  // fmt::formatter, fmt::ostream_formatter
+#include "fmt/core.h"     // fmt::formatter
+#include "fmt/ostream.h"  // fmt::ostream_formatter
 
 #include <cstddef>      // std::size_t
 #include <iosfwd>       // forward declare std::ostream and std::istream
@@ -21,6 +22,9 @@
 
 namespace plssvm {
 
+/**
+ * @brief Enum class for all implemented classification strategies.
+ */
 enum class classification_type {
     /** Use the one vs. all classification strategy for the multi-class SVM (default). */
     oaa,
@@ -62,6 +66,6 @@ std::istream &operator>>(std::istream &in, classification_type &classification);
 }  // namespace plssvm
 
 template <>
-struct fmt::formatter<plssvm::classification_type> : fmt::ostream_formatter {};
+struct fmt::formatter<plssvm::classification_type> : fmt::ostream_formatter { };
 
 #endif  // PLSSVM_CLASSIFICATION_TYPES_HPP_

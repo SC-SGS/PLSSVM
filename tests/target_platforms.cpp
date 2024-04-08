@@ -10,7 +10,7 @@
 
 #include "plssvm/target_platforms.hpp"
 
-#include "custom_test_macros.hpp"  // EXPECT_CONVERSION_TO_STRING, EXPECT_CONVERSION_FROM_STRING
+#include "tests/custom_test_macros.hpp"  // EXPECT_CONVERSION_TO_STRING, EXPECT_CONVERSION_FROM_STRING
 
 #include "gmock/gmock.h"  // EXPECT_THAT, ::testing::Contains
 #include "gtest/gtest.h"  // TEST, EXPECT_EQ, EXPECT_NE, EXPECT_TRUE, EXPECT_GE
@@ -27,6 +27,7 @@ TEST(TargetPlatform, to_string) {
     EXPECT_CONVERSION_TO_STRING(plssvm::target_platform::gpu_amd, "gpu_amd");
     EXPECT_CONVERSION_TO_STRING(plssvm::target_platform::gpu_intel, "gpu_intel");
 }
+
 TEST(TargetPlatform, to_string_unknown) {
     // check conversions to std::string from unknown target_platform
     EXPECT_CONVERSION_TO_STRING(static_cast<plssvm::target_platform>(5), "unknown");
@@ -46,6 +47,7 @@ TEST(TargetPlatform, from_string) {
     EXPECT_CONVERSION_FROM_STRING("gpu_intel", plssvm::target_platform::gpu_intel);
     EXPECT_CONVERSION_FROM_STRING("GPU_INTEL", plssvm::target_platform::gpu_intel);
 }
+
 TEST(TargetPlatform, from_string_unknown) {
     // foo isn't a valid target_platform
     std::istringstream input{ "foo" };
@@ -70,6 +72,7 @@ TEST(TargetPlatform, determine_default_target_platform) {
     const plssvm::target_platform target = plssvm::determine_default_target_platform();
     EXPECT_NE(target, plssvm::target_platform::automatic);
 }
+
 TEST(TargetPlatform, determine_target_platform) {
     // if only one platform is available, the default platform must be this platform
     EXPECT_EQ(plssvm::determine_default_target_platform({ plssvm::target_platform::gpu_nvidia }), plssvm::target_platform::gpu_nvidia);

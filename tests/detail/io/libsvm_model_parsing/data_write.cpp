@@ -8,24 +8,24 @@
  * @brief Tests for writing LIBSVM model file data section.
  */
 
-#include "plssvm/detail/io/libsvm_model_parsing.hpp"
+#include "plssvm/classification_types.hpp"            // plssvm::classification_type, plssvm::calculate_number_of_classifiers
+#include "plssvm/constants.hpp"                       // plssvm::real_type
+#include "plssvm/data_set.hpp"                        // plssvm::data_set
+#include "plssvm/detail/io/file_reader.hpp"           // plssvm::detail::io::file_reader
+#include "plssvm/detail/io/libsvm_model_parsing.hpp"  // functions to test
+#include "plssvm/kernel_function_types.hpp"           // plssvm::kernel_function_type
+#include "plssvm/matrix.hpp"                          // plssvm::aos_matrix
+#include "plssvm/parameter.hpp"                       // plssvm::parameter
+#include "plssvm/shape.hpp"                           // plssvm::shape
 
-#include "plssvm/classification_types.hpp"   // plssvm::classification_type, plssvm::calculate_number_of_classifiers
-#include "plssvm/constants.hpp"              // plssvm::real_type
-#include "plssvm/data_set.hpp"               // plssvm::data_set
-#include "plssvm/detail/io/file_reader.hpp"  // plssvm::detail::io::file_reader
-#include "plssvm/kernel_function_types.hpp"  // plssvm::kernel_function_type
-#include "plssvm/matrix.hpp"                 // plssvm::aos_matrix
-#include "plssvm/parameter.hpp"              // plssvm::parameter
+#include "tests/naming.hpp"         // naming::parameter_definition_to_name
+#include "tests/types_to_test.hpp"  // util::label_type_classification_type_gtest
+#include "tests/utility.hpp"        // util::{get_distinct_label, get_correct_model_file_labels, get_correct_model_file_num_sv_per_class,
+                                    // generate_random_matrix, get_num_classes, generate_random_vector}
 
-#include "naming.hpp"         // naming::parameter_definition_to_name
-#include "types_to_test.hpp"  // util::label_type_classification_type_gtest
-#include "utility.hpp"        // util::{get_distinct_label, get_correct_model_file_labels, get_correct_model_file_num_sv_per_class,
-                              // generate_random_matrix, get_num_classes, generate_random_vector}
-
-#include "fmt/format.h"            // fmt::format, fmt::join
-#include "gmock/gmock-matchers.h"  // ::testing::HasSubstr
-#include "gtest/gtest.h"           // TYPED_TEST, TYPED_TEST_SUITE, EXPECT_EQ, EXPECT_DEATH, ASSERT_EQ, FAIL, SUCCEED, ::testing::Test
+#include "fmt/format.h"   // fmt::format, fmt::join
+#include "gmock/gmock.h"  // ::testing::HasSubstr
+#include "gtest/gtest.h"  // TYPED_TEST, TYPED_TEST_SUITE, EXPECT_EQ, EXPECT_DEATH, ASSERT_EQ, FAIL, SUCCEED, ::testing::Test
 
 #include <cstddef>      // std::size_t
 #include <string>       // std::string
@@ -33,7 +33,10 @@
 #include <vector>       // std::vector
 
 template <typename T>
-class LIBSVMModelDataWrite : public ::testing::Test, private util::redirect_output<>, protected util::temporary_file {};
+class LIBSVMModelDataWrite : public ::testing::Test,
+                             private util::redirect_output<>,
+                             protected util::temporary_file { };
+
 TYPED_TEST_SUITE(LIBSVMModelDataWrite, util::label_type_classification_type_gtest, naming::test_parameter_to_name);
 
 TYPED_TEST(LIBSVMModelDataWrite, write) {
@@ -46,7 +49,7 @@ TYPED_TEST(LIBSVMModelDataWrite, write) {
     const std::size_t num_classifiers = plssvm::calculate_number_of_classifiers(classification, classes.size());
     const std::vector<label_type> label = util::get_correct_model_file_labels<label_type>();
     const std::vector<std::size_t> num_sv_per_class = util::get_correct_model_file_num_sv_per_class<label_type>(label.size());
-    const auto data = util::generate_random_matrix<plssvm::aos_matrix<plssvm::real_type>>(label.size(), 3);
+    const auto data = util::generate_random_matrix<plssvm::aos_matrix<plssvm::real_type>>(plssvm::shape{ label.size(), 3 });
 
     // create necessary parameter
     const plssvm::parameter params{ plssvm::kernel_type = plssvm::kernel_function_type::linear };
@@ -78,11 +81,11 @@ TYPED_TEST(LIBSVMModelDataWrite, write) {
     }
     std::vector<plssvm::aos_matrix<plssvm::real_type>> alpha{};
     if constexpr (classification == plssvm::classification_type::oaa) {
-        alpha.emplace_back(util::generate_random_matrix<plssvm::aos_matrix<plssvm::real_type>>(num_classifiers, data.num_rows()));
+        alpha.emplace_back(util::generate_random_matrix<plssvm::aos_matrix<plssvm::real_type>>(plssvm::shape{ num_classifiers, data.num_rows() }));
     } else if constexpr (classification == plssvm::classification_type::oao) {
         for (std::size_t i = 0; i < num_classes; ++i) {
             for (std::size_t j = i + 1; j < num_classes; ++j) {
-                alpha.emplace_back(util::generate_random_matrix<plssvm::aos_matrix<plssvm::real_type>>(1, index_sets[i].size() + index_sets[j].size()));
+                alpha.emplace_back(util::generate_random_matrix<plssvm::aos_matrix<plssvm::real_type>>(plssvm::shape{ 1, index_sets[i].size() + index_sets[j].size() }));
             }
         }
     } else {
@@ -142,36 +145,40 @@ TYPED_TEST(LIBSVMModelDataWrite, write) {
                         case 2:
                             alpha_vec.emplace_back(alpha.front()(0, sv_idx));
                             break;
-                        case 3: {
-                            ASSERT_EQ(alpha.size(), 3);
-                            static const std::vector<std::vector<plssvm::real_type>> correct_output_alpha_vec_three_classes{
-                                // alpha order: 0v1 -> 0v2 -> 1v2
-                                // idx:          0  ->  1  ->  2
-                                // size:         4  ->  4  ->  4
-                                { alpha[0](0, 0), alpha[1](0, 0) },  // data point 0 ->       0v1 |       0v2
-                                { alpha[0](0, 1), alpha[1](0, 1) },  // data point 1 ->       0v1 |       0v2
-                                { alpha[0](0, 2), alpha[2](0, 0) },  // data point 2 -> 1v0 = 0v1 |       1v2
-                                { alpha[0](0, 3), alpha[2](0, 1) },  // data point 3 -> 1v0 = 0v1 |       1v2
-                                { alpha[1](0, 2), alpha[2](0, 2) },  // data point 4 -> 2v0 = 0v2 | 2v1 = 1v2
-                                { alpha[1](0, 3), alpha[2](0, 3) },  // data point 5 -> 2v0 = 0v2 | 2v1 = 1v2
-                            };
-                            alpha_vec = correct_output_alpha_vec_three_classes[sv_idx];
-                        } break;
-                        case 4: {
-                            ASSERT_EQ(alpha.size(), 6);
-                            static const std::vector<std::vector<plssvm::real_type>> correct_output_alpha_vec_four_classes{
-                                // alpha order: 0v1 -> 0v2 -> 0v3 -> 1v2 -> 1v3 -> 2v3
-                                // idx:          0  ->  1  ->  2  ->  3  ->  4  ->  5
-                                // size:         4  ->  3  ->  3  ->  3  ->  3  ->  2
-                                { alpha[0](0, 0), alpha[1](0, 0), alpha[2](0, 0) },  // data point 0 ->       0v1 |       0v2 |       0v3
-                                { alpha[0](0, 1), alpha[1](0, 1), alpha[2](0, 1) },  // data point 1 ->       0v1 |       0v2 |       0v3
-                                { alpha[0](0, 2), alpha[3](0, 0), alpha[4](0, 0) },  // data point 2 -> 1v0 = 0v1 |       1v2 |       1v3
-                                { alpha[0](0, 3), alpha[3](0, 1), alpha[4](0, 1) },  // data point 3 -> 1v0 = 0v1 |       1v2 |       1v3
-                                { alpha[1](0, 2), alpha[3](0, 2), alpha[5](0, 0) },  // data point 4 -> 2v0 = 0v2 | 2v1 = 1v2 |       2v3
-                                { alpha[2](0, 2), alpha[4](0, 2), alpha[5](0, 1) },  // data point 5 -> 3v0 = 0v3 | 3v1 = 1v3 | 3v2 = 2v3
-                            };
-                            alpha_vec = correct_output_alpha_vec_four_classes[sv_idx];
-                        } break;
+                        case 3:
+                            {
+                                ASSERT_EQ(alpha.size(), 3);
+                                static const std::vector<std::vector<plssvm::real_type>> correct_output_alpha_vec_three_classes{
+                                    // alpha order: 0v1 -> 0v2 -> 1v2
+                                    // idx:          0  ->  1  ->  2
+                                    // size:         4  ->  4  ->  4
+                                    { alpha[0](0, 0), alpha[1](0, 0) },  // data point 0 ->       0v1 |       0v2
+                                    { alpha[0](0, 1), alpha[1](0, 1) },  // data point 1 ->       0v1 |       0v2
+                                    { alpha[0](0, 2), alpha[2](0, 0) },  // data point 2 -> 1v0 = 0v1 |       1v2
+                                    { alpha[0](0, 3), alpha[2](0, 1) },  // data point 3 -> 1v0 = 0v1 |       1v2
+                                    { alpha[1](0, 2), alpha[2](0, 2) },  // data point 4 -> 2v0 = 0v2 | 2v1 = 1v2
+                                    { alpha[1](0, 3), alpha[2](0, 3) },  // data point 5 -> 2v0 = 0v2 | 2v1 = 1v2
+                                };
+                                alpha_vec = correct_output_alpha_vec_three_classes[sv_idx];
+                            }
+                            break;
+                        case 4:
+                            {
+                                ASSERT_EQ(alpha.size(), 6);
+                                static const std::vector<std::vector<plssvm::real_type>> correct_output_alpha_vec_four_classes{
+                                    // alpha order: 0v1 -> 0v2 -> 0v3 -> 1v2 -> 1v3 -> 2v3
+                                    // idx:          0  ->  1  ->  2  ->  3  ->  4  ->  5
+                                    // size:         4  ->  3  ->  3  ->  3  ->  3  ->  2
+                                    { alpha[0](0, 0), alpha[1](0, 0), alpha[2](0, 0) },  // data point 0 ->       0v1 |       0v2 |       0v3
+                                    { alpha[0](0, 1), alpha[1](0, 1), alpha[2](0, 1) },  // data point 1 ->       0v1 |       0v2 |       0v3
+                                    { alpha[0](0, 2), alpha[3](0, 0), alpha[4](0, 0) },  // data point 2 -> 1v0 = 0v1 |       1v2 |       1v3
+                                    { alpha[0](0, 3), alpha[3](0, 1), alpha[4](0, 1) },  // data point 3 -> 1v0 = 0v1 |       1v2 |       1v3
+                                    { alpha[1](0, 2), alpha[3](0, 2), alpha[5](0, 0) },  // data point 4 -> 2v0 = 0v2 | 2v1 = 1v2 |       2v3
+                                    { alpha[2](0, 2), alpha[4](0, 2), alpha[5](0, 1) },  // data point 5 -> 3v0 = 0v3 | 3v1 = 1v3 | 3v2 = 2v3
+                                };
+                                alpha_vec = correct_output_alpha_vec_four_classes[sv_idx];
+                            }
+                            break;
                         default:
                             FAIL() << "Invalid number of classes!";
                     }
@@ -201,7 +208,7 @@ template <typename T>
 class LIBSVMModelDataWriteDeathTest : public LIBSVMModelDataWrite<T> {
   protected:
     using fixture_label_type = util::test_parameter_type_at_t<0, T>;
-    static constexpr plssvm::classification_type fixture_classification = util::test_parameter_value_at_v<0, T>;
+    constexpr static plssvm::classification_type fixture_classification = util::test_parameter_value_at_v<0, T>;
 
     void SetUp() override {
         const std::size_t num_classes = util::get_num_classes<fixture_label_type>();
@@ -209,25 +216,25 @@ class LIBSVMModelDataWriteDeathTest : public LIBSVMModelDataWrite<T> {
         // create the weight vector based on the classification type and number of classes
         switch (fixture_classification) {
             case plssvm::classification_type::oaa:
-                alpha_.emplace_back(num_classes, 6);
+                alpha_.emplace_back(plssvm::shape{ num_classes, 6 });
                 break;
             case plssvm::classification_type::oao:
                 switch (num_classes) {
                     case 2:
-                        alpha_.emplace_back(1, 6);
+                        alpha_.emplace_back(plssvm::shape{ 1, 6 });
                         break;
                     case 3:
-                        alpha_.emplace_back(1, 4);
-                        alpha_.emplace_back(1, 4);
-                        alpha_.emplace_back(1, 4);
+                        alpha_.emplace_back(plssvm::shape{ 1, 4 });
+                        alpha_.emplace_back(plssvm::shape{ 1, 4 });
+                        alpha_.emplace_back(plssvm::shape{ 1, 4 });
                         break;
                     case 4:
-                        alpha_.emplace_back(1, 4);
-                        alpha_.emplace_back(1, 3);
-                        alpha_.emplace_back(1, 3);
-                        alpha_.emplace_back(1, 3);
-                        alpha_.emplace_back(1, 3);
-                        alpha_.emplace_back(1, 2);
+                        alpha_.emplace_back(plssvm::shape{ 1, 4 });
+                        alpha_.emplace_back(plssvm::shape{ 1, 3 });
+                        alpha_.emplace_back(plssvm::shape{ 1, 3 });
+                        alpha_.emplace_back(plssvm::shape{ 1, 3 });
+                        alpha_.emplace_back(plssvm::shape{ 1, 3 });
+                        alpha_.emplace_back(plssvm::shape{ 1, 2 });
                         break;
                     default:
                         FAIL();
@@ -255,23 +262,27 @@ class LIBSVMModelDataWriteDeathTest : public LIBSVMModelDataWrite<T> {
      * @return the parameter (`[[nodiscard]]`)
      */
     [[nodiscard]] const plssvm::parameter &get_params() const noexcept { return params_; }
+
     /**
      * @brief Return the rho values.
      * @details The size depends on the used classification type and number of classes.
      * @return the rho values (`[[nodiscard]]`)
      */
     [[nodiscard]] const std::vector<plssvm::real_type> &get_rho() const noexcept { return rho_; }
+
     /**
      * @brief Return the weights.
      * @details The shape of the vector and the containing matrices depend on the used classification type and number of classes.
      * @return the weights (`[[nodiscard]]`)
      */
     [[nodiscard]] const std::vector<plssvm::aos_matrix<plssvm::real_type>> &get_alpha() const noexcept { return alpha_; }
+
     /**
      * @brief Return the index sets indicating which data point is a support vector for which class.
      * @return the index sets (`[[nodiscard]]`)
      */
     [[nodiscard]] const std::vector<std::vector<std::size_t>> &get_index_sets() const noexcept { return index_sets_; }
+
     /**
      * @brief Return the data set containing all support vectors.
      * @return the support vectors (`[[nodiscard]]`)
@@ -294,8 +305,9 @@ class LIBSVMModelDataWriteDeathTest : public LIBSVMModelDataWrite<T> {
     /// The index sets indicating which data point is a support vector for which class.
     std::vector<std::vector<std::size_t>> index_sets_{};
     /// The support vectors.
-    plssvm::data_set<fixture_label_type> data_set_{ util::generate_random_matrix<plssvm::aos_matrix<plssvm::real_type>>(6, 2), util::get_correct_model_file_labels<fixture_label_type>() };
+    plssvm::data_set<fixture_label_type> data_set_{ util::generate_random_matrix<plssvm::aos_matrix<plssvm::real_type>>(plssvm::shape{ 6, 2 }), util::get_correct_model_file_labels<fixture_label_type>() };
 };
+
 TYPED_TEST_SUITE(LIBSVMModelDataWriteDeathTest, util::label_type_classification_type_gtest, naming::test_parameter_to_name);
 
 TYPED_TEST(LIBSVMModelDataWriteDeathTest, empty_filename) {
@@ -305,17 +317,19 @@ TYPED_TEST(LIBSVMModelDataWriteDeathTest, empty_filename) {
     EXPECT_DEATH((plssvm::detail::io::write_libsvm_model_data("", this->get_params(), classification, this->get_rho(), this->get_alpha(), this->get_index_sets(), this->get_data_set())),
                  "The provided model filename must not be empty!");
 }
+
 TYPED_TEST(LIBSVMModelDataWriteDeathTest, missing_labels) {
     using label_type = typename TestFixture::fixture_label_type;
     constexpr plssvm::classification_type classification = TestFixture::fixture_classification;
 
     // create invalid parameter
-    const plssvm::data_set<label_type> data_set{ util::generate_random_matrix<plssvm::aos_matrix<plssvm::real_type>>(4, 2) };
+    const plssvm::data_set<label_type> data_set{ util::generate_random_matrix<plssvm::aos_matrix<plssvm::real_type>>(plssvm::shape{ 4, 2 }) };
 
     // try writing the LIBSVM model header
     EXPECT_DEATH((plssvm::detail::io::write_libsvm_model_data(this->filename, this->get_params(), classification, this->get_rho(), this->get_alpha(), this->get_index_sets(), data_set)),
                  "Cannot write a model file that does not include labels!");
 }
+
 TYPED_TEST(LIBSVMModelDataWriteDeathTest, invalid_number_of_rho_values) {
     constexpr plssvm::classification_type classification = TestFixture::fixture_classification;
 
@@ -326,6 +340,7 @@ TYPED_TEST(LIBSVMModelDataWriteDeathTest, invalid_number_of_rho_values) {
     EXPECT_DEATH((plssvm::detail::io::write_libsvm_model_data(this->filename, this->get_params(), classification, rho, this->get_alpha(), this->get_index_sets(), this->get_data_set())),
                  ::testing::HasSubstr(fmt::format("The number of rho values is 42 but must be {} ({})", this->num_classifiers(), classification)));
 }
+
 TYPED_TEST(LIBSVMModelDataWriteDeathTest, invalid_alpha_vector) {
     constexpr plssvm::classification_type classification = TestFixture::fixture_classification;
 
@@ -338,13 +353,13 @@ TYPED_TEST(LIBSVMModelDataWriteDeathTest, invalid_alpha_vector) {
         }
         {
             // invalid number of rows in matrix
-            const std::vector<plssvm::aos_matrix<plssvm::real_type>> alpha{ plssvm::aos_matrix<plssvm::real_type>{ 42, 6 } };
+            const std::vector<plssvm::aos_matrix<plssvm::real_type>> alpha{ plssvm::aos_matrix<plssvm::real_type>{ plssvm::shape{ 42, 6 } } };
             EXPECT_DEATH((plssvm::detail::io::write_libsvm_model_data(this->filename, this->get_params(), classification, this->get_rho(), alpha, this->get_index_sets(), this->get_data_set())),
                          fmt::format("The number of rows in the matrix must be {}, but is 42!", this->num_classifiers(), classification));
         }
         {
             // invalid number of columns in matrix
-            const std::vector<plssvm::aos_matrix<plssvm::real_type>> alpha{ plssvm::aos_matrix<plssvm::real_type>{ this->num_classifiers(), 42 } };
+            const std::vector<plssvm::aos_matrix<plssvm::real_type>> alpha{ plssvm::aos_matrix<plssvm::real_type>{ plssvm::shape{ this->num_classifiers(), 42 } } };
             EXPECT_DEATH((plssvm::detail::io::write_libsvm_model_data(this->filename, this->get_params(), classification, this->get_rho(), alpha, this->get_index_sets(), this->get_data_set())),
                          ::testing::HasSubstr("The number of weights (42) must be equal to the number of support vectors (6)!"));
         }
@@ -358,7 +373,7 @@ TYPED_TEST(LIBSVMModelDataWriteDeathTest, invalid_alpha_vector) {
         {
             // invalid matrix shape
             std::vector<plssvm::aos_matrix<plssvm::real_type>> alpha(this->get_alpha());
-            alpha.back() = plssvm::aos_matrix<plssvm::real_type>{ 3, 2 };
+            alpha.back() = plssvm::aos_matrix<plssvm::real_type>{ plssvm::shape{ 3, 2 } };
             EXPECT_DEATH((plssvm::detail::io::write_libsvm_model_data(this->filename, this->get_params(), classification, this->get_rho(), alpha, this->get_index_sets(), this->get_data_set())),
                          "In case of OAO, each matrix may only contain one row!");
         }
@@ -366,6 +381,7 @@ TYPED_TEST(LIBSVMModelDataWriteDeathTest, invalid_alpha_vector) {
         FAIL() << "Invalid classification_type!";
     }
 }
+
 TYPED_TEST(LIBSVMModelDataWriteDeathTest, invalid_number_of_index_sets) {
     constexpr plssvm::classification_type classification = TestFixture::fixture_classification;
 
@@ -384,6 +400,7 @@ TYPED_TEST(LIBSVMModelDataWriteDeathTest, invalid_number_of_index_sets) {
         FAIL() << "Invalid classification_type!";
     }
 }
+
 TYPED_TEST(LIBSVMModelDataWriteDeathTest, invalid_number_of_indices) {
     constexpr plssvm::classification_type classification = TestFixture::fixture_classification;
 
@@ -402,6 +419,7 @@ TYPED_TEST(LIBSVMModelDataWriteDeathTest, invalid_number_of_indices) {
         FAIL() << "Invalid classification_type!";
     }
 }
+
 TYPED_TEST(LIBSVMModelDataWriteDeathTest, indices_not_sorted) {
     constexpr plssvm::classification_type classification = TestFixture::fixture_classification;
 
@@ -420,6 +438,7 @@ TYPED_TEST(LIBSVMModelDataWriteDeathTest, indices_not_sorted) {
         FAIL() << "Invalid classification_type!";
     }
 }
+
 TYPED_TEST(LIBSVMModelDataWriteDeathTest, indices_in_one_index_set_not_unique) {
     constexpr plssvm::classification_type classification = TestFixture::fixture_classification;
 
@@ -438,6 +457,7 @@ TYPED_TEST(LIBSVMModelDataWriteDeathTest, indices_in_one_index_set_not_unique) {
         FAIL() << "Invalid classification_type!";
     }
 }
+
 TYPED_TEST(LIBSVMModelDataWriteDeathTest, index_sets_not_disjoint) {
     constexpr plssvm::classification_type classification = TestFixture::fixture_classification;
 

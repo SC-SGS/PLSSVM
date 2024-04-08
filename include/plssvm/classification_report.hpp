@@ -13,13 +13,13 @@
 #define PLSSVM_CLASSIFICATION_REPORT_HPP_
 #pragma once
 
-#include "plssvm/detail/assert.hpp"          // PLSSVM_ASSERT
 #include "plssvm/detail/igor_utility.hpp"    // plssvm::detail::{has_only_named_args_v, get_value_from_named_parameter}
-#include "plssvm/exceptions/exceptions.hpp"  // plssvm::exception
+#include "plssvm/exceptions/exceptions.hpp"  // plssvm::classification_report_exception
 #include "plssvm/matrix.hpp"                 // plssvm::aos_matrix
+#include "plssvm/shape.hpp"                  // plssvm::shape
 
-#include "fmt/core.h"     // fmt::format
-#include "fmt/ostream.h"  // fmt::formatter, fmt::ostream_formatter
+#include "fmt/core.h"     // fmt::format,fmt::formatter
+#include "fmt/ostream.h"  // fmt::ostream_formatter
 #include "igor/igor.hpp"  // IGOR_MAKE_NAMED_ARGUMENT, igor::parser, igor::has_unnamed_arguments, igor::has_other_than
 
 #include <algorithm>    // std::find, std::find_if, std::count, std::sort, std::any_of
@@ -40,12 +40,15 @@ namespace plssvm {
  */
 class classification_report {
   public:
+    /// @cond Doxygen_suppress
+    // create named arguments
     /// Create a named argument for the number of floating point digits printed in the classification report.
     static IGOR_MAKE_NAMED_ARGUMENT(digits);
     /// Create a named argument for the zero division behavior: warn (and set to 0.0), 0.0, 1.0, or NaN.
     static IGOR_MAKE_NAMED_ARGUMENT(zero_division);
     /// Create a named argument for the displayed target names in the classification report as `std::vector<std::string>`. Must have the same number of names as there are labels.
     static IGOR_MAKE_NAMED_ARGUMENT(target_names);
+    /// @endcond
 
     /**
      * @brief Enum class for all possible zero division behaviors when calculating the precision, recall, or F1-score.
@@ -80,6 +83,7 @@ class classification_report {
         /// The number of times the label associated with this metric occurs in the correct label list.
         unsigned long long support{};
     };
+
     /**
      * @brief Struct encapsulating the different values used for the accuracy metric, i.e., the achieved accuracy (floating point, **not** percent),
      *        the number of correctly predicted labels, and the total number of labels.
@@ -99,9 +103,9 @@ class classification_report {
      * @param[in] correct_label the list of correct labels
      * @param[in] predicted_label the list of predicted labels
      * @param[in] named_args the potential name arguments (digits, zero_division, target_names)
-     * @throws plssvm::exception if the @p correct_label or @p predicted_label are empty
-     * @throws plssvm::exception if the @p correct_label and @p predicted_label sizes mismatch
-     * @throws plssvm::exception if the number of digits to print has been provided but is less or equal to 0
+     * @throws plssvm::classification_report_exception if the @p correct_label or @p predicted_label are empty
+     * @throws plssvm::classification_report_exception if the @p correct_label and @p predicted_label sizes mismatch
+     * @throws plssvm::classification_report_exception if the number of digits to print has been provided but is less or equal to 0
      */
     template <typename label_type, typename... Args>
     classification_report(const std::vector<label_type> &correct_label, const std::vector<label_type> &predicted_label, Args &&...named_args);
@@ -111,24 +115,26 @@ class classification_report {
      * @return the confusion matrix (`[[nodiscard]]`)
      */
     [[nodiscard]] const aos_matrix<unsigned long long> &confusion_matrix() const noexcept { return confusion_matrix_; }
+
     /**
      * @brief Return the achieved accuracy.
      * @return the achieved accuracy (`[[nodiscard]]`)
      */
     [[nodiscard]] accuracy_metric accuracy() const noexcept { return accuracy_; }
+
     /**
      * @brief Get the metrics associated with the provided @p label.
      * @details The metrics are: precision, recall, f1 score, and support.
      * @tparam label_type the type of the label
      * @param[in] label the label to query the metrics for
-     * @throws plssvm::exception if the @p label couldn't be found
+     * @throws plssvm::classification_report_exception if the @p label couldn't be found
      * @return the classification report for the specific label (`[[nodiscard]]`)
      */
     template <typename label_type>
     [[nodiscard]] metric metric_for_class(const label_type &label) const {
         const auto it = std::find_if(metrics_.cbegin(), metrics_.cend(), [label_str = fmt::format("{}", label)](const auto &p) { return p.first == label_str; });
         if (it == metrics_.cend()) {
-            throw exception{ fmt::format("Couldn't find the label \"{}\"!", label) };
+            throw classification_report_exception{ fmt::format("Couldn't find the label \"{}\"!", label) };
         }
         return it->second;
     }
@@ -176,13 +182,13 @@ template <typename label_type, typename... Args>
 classification_report::classification_report(const std::vector<label_type> &correct_label, const std::vector<label_type> &predicted_label, Args &&...named_args) {
     // sanity check for input correct sizes
     if (correct_label.empty()) {
-        throw exception{ "The correct labels list must not be empty!" };
+        throw classification_report_exception{ "The correct labels list must not be empty!" };
     }
     if (predicted_label.empty()) {
-        throw exception{ "The predicted labels list must not be empty!" };
+        throw classification_report_exception{ "The predicted labels list must not be empty!" };
     }
     if (correct_label.size() != predicted_label.size()) {
-        throw exception{ fmt::format("The number of correct labels ({}) and predicted labels ({}) must be the same!", correct_label.size(), predicted_label.size()) };
+        throw classification_report_exception{ fmt::format("The number of correct labels ({}) and predicted labels ({}) must be the same!", correct_label.size(), predicted_label.size()) };
     }
 
     igor::parser parser{ std::forward<Args>(named_args)... };
@@ -201,7 +207,7 @@ classification_report::classification_report(const std::vector<label_type> &corr
         output_digits_ = detail::get_value_from_named_parameter<decltype(output_digits_)>(parser, plssvm::classification_report::digits);
         // runtime check: the number of digits must be greater than zero!
         if (output_digits_ <= 0) {
-            throw exception{ fmt::format("Invalid number of output digits provided! Number of digits must be greater than zero but is {}!", output_digits_) };
+            throw classification_report_exception{ fmt::format("Invalid number of output digits provided! Number of digits must be greater than zero but is {}!", output_digits_) };
         }
     }
 
@@ -223,12 +229,12 @@ classification_report::classification_report(const std::vector<label_type> &corr
         display_names = detail::get_value_from_named_parameter<decltype(display_names)>(parser, plssvm::classification_report::target_names);
         // the number of display names must match the number of distinct labels
         if (display_names.size() != distinct_label_vec.size()) {
-            throw plssvm::exception{ fmt::format("Provided {} target names, but found {} distinct labels!", display_names.size(), distinct_label_vec.size()) };
+            throw classification_report_exception{ fmt::format("Provided {} target names, but found {} distinct labels!", display_names.size(), distinct_label_vec.size()) };
         }
     }
 
     // allocate confusion matrx
-    confusion_matrix_ = aos_matrix<unsigned long long>{ distinct_label_vec.size(), distinct_label_vec.size() };
+    confusion_matrix_ = aos_matrix<unsigned long long>{ shape{ distinct_label_vec.size(), distinct_label_vec.size() } };
 
     // function to map a label to its confusion matrix index
     const auto label_to_idx = [&](const label_type &label) -> std::size_t {
@@ -309,10 +315,12 @@ std::istream &operator>>(std::istream &in, classification_report::zero_division_
 }  // namespace plssvm
 
 template <>
-struct fmt::formatter<plssvm::classification_report> : fmt::ostream_formatter {};
+struct fmt::formatter<plssvm::classification_report> : fmt::ostream_formatter { };
+
 template <>
-struct fmt::formatter<plssvm::classification_report::accuracy_metric> : fmt::ostream_formatter {};
+struct fmt::formatter<plssvm::classification_report::accuracy_metric> : fmt::ostream_formatter { };
+
 template <>
-struct fmt::formatter<plssvm::classification_report::zero_division_behavior> : fmt::ostream_formatter {};
+struct fmt::formatter<plssvm::classification_report::zero_division_behavior> : fmt::ostream_formatter { };
 
 #endif  // PLSSVM_CLASSIFICATION_REPORT_HPP_

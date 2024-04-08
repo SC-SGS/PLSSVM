@@ -13,14 +13,15 @@
 #include "plssvm/detail/string_utility.hpp"  // plssvm::detail::starts_with
 #include "plssvm/exceptions/exceptions.hpp"  // plssvm::file_not_found_exception, plssvm::file_reader_exception
 
-#include "custom_test_macros.hpp"  // EXPECT_THROW_WHAT
-#include "naming.hpp"              // naming::{test_parameter_to_name, pretty_print_escaped_string}
-#include "types_to_test.hpp"       //  util::{wrap_tuple_types_in_type_lists_t, cartesian_type_product_t, test_parameter_type_at_t};
+#include "tests/custom_test_macros.hpp"  // EXPECT_THROW_WHAT
+#include "tests/naming.hpp"              // naming::{test_parameter_to_name, pretty_print_escaped_string}
+#include "tests/types_to_test.hpp"       //  util::{wrap_tuple_types_in_type_lists_t, cartesian_type_product_t, test_parameter_type_at_t};
 
 #include "fmt/core.h"     // fmt::format
 #include "gtest/gtest.h"  // TEST, TEST_P, TYPED_TEST, EXPECT_EQ, EXPECT_NE, EXPECT_TRUE, EXPECT_FALSE, ASSERT_TRUE, ASSERT_FALSE, TYPED_TEST_SUITE, INSTANTIATE_TEST_SUITE_P
                           // ::testing::{Test, Types, TestWithParam, ValuesIn}
 
+#include <array>        // std::array
 #include <cstddef>      // std::size_t
 #include <filesystem>   // std::filesystem::path
 #include <string>       // std::string
@@ -93,6 +94,7 @@ class FileReaderConstructWithOpen : public ::testing::Test {
   protected:
     using fixture_open_type = util::test_parameter_type_at_t<0, T>;
 };
+
 TYPED_TEST_SUITE(FileReaderConstructWithOpen, open_parameter_types_gtest, naming::test_parameter_to_name);
 
 TYPED_TEST(FileReaderConstructWithOpen, non_empty_file) {
@@ -109,6 +111,7 @@ TYPED_TEST(FileReaderConstructWithOpen, non_empty_file) {
     EXPECT_TRUE(reader.lines().empty());
     EXPECT_NE(reader.buffer(), nullptr);
 }
+
 TYPED_TEST(FileReaderConstructWithOpen, empty_file) {
     using open_type = typename TestFixture::fixture_open_type;
 
@@ -123,6 +126,7 @@ TYPED_TEST(FileReaderConstructWithOpen, empty_file) {
     EXPECT_TRUE(reader.lines().empty());
     EXPECT_EQ(reader.buffer(), nullptr);
 }
+
 TYPED_TEST(FileReaderConstructWithOpen, file_not_found) {
     using open_type = typename TestFixture::fixture_open_type;
 
@@ -138,6 +142,7 @@ class FileReaderOpen : public ::testing::Test {
   protected:
     using fixture_open_type = util::test_parameter_type_at_t<0, T>;
 };
+
 TYPED_TEST_SUITE(FileReaderOpen, open_parameter_types_gtest, naming::test_parameter_to_name);
 
 TYPED_TEST(FileReaderOpen, non_empty_file) {
@@ -155,6 +160,7 @@ TYPED_TEST(FileReaderOpen, non_empty_file) {
     EXPECT_TRUE(reader.lines().empty());
     EXPECT_NE(reader.buffer(), nullptr);
 }
+
 TYPED_TEST(FileReaderOpen, empty_file) {
     using open_type = typename TestFixture::fixture_open_type;
 
@@ -170,6 +176,7 @@ TYPED_TEST(FileReaderOpen, empty_file) {
     EXPECT_TRUE(reader.lines().empty());
     EXPECT_EQ(reader.buffer(), nullptr);
 }
+
 TYPED_TEST(FileReaderOpen, file_not_found) {
     using open_type = typename TestFixture::fixture_open_type;
 
@@ -181,6 +188,7 @@ TYPED_TEST(FileReaderOpen, file_not_found) {
                       plssvm::file_not_found_exception,
                       "Couldn't find file: '" PLSSVM_TEST_PATH "/data/file_not_found'!");
 }
+
 TYPED_TEST(FileReaderOpen, multiple_open) {
     using open_type = typename TestFixture::fixture_open_type;
 
@@ -211,6 +219,7 @@ TEST(FileReader, close) {
     EXPECT_TRUE(reader.lines().empty());
     EXPECT_EQ(reader.buffer(), nullptr);
 }
+
 TEST(FileReader, close_twice) {
     // create a new file_reader and associate it to a file
     plssvm::detail::io::file_reader reader{ PLSSVM_TEST_PATH "/data/libsvm/5x4.libsvm" };
@@ -289,6 +298,7 @@ const auto & get_file_lines() {
     std::make_tuple(PLSSVM_TEST_PATH "/data/empty.txt", ' ', std::vector<std::string_view>{}) };
     return lines;
 }
+
 // clang-format on
 
 /**
@@ -305,7 +315,8 @@ std::vector<std::string_view> filter_lines(const std::vector<std::string_view> &
     return filtered_lines;
 }
 
-class FileReaderLines : public ::testing::TestWithParam<std::tuple<std::string, char, std::vector<std::string_view>>> {};
+class FileReaderLines : public ::testing::TestWithParam<std::tuple<std::string, char, std::vector<std::string_view>>> { };
+
 TEST_P(FileReaderLines, parse_lines_with_comments) {
     const auto &[filename, comment, lines] = GetParam();
     // create and read file
@@ -315,6 +326,7 @@ TEST_P(FileReaderLines, parse_lines_with_comments) {
     // no comments have been filtered (but newlines)
     EXPECT_EQ(reader.lines(), lines);
 }
+
 TEST_P(FileReaderLines, parse_lines_without_char_comments) {
     const auto &[filename, comment, lines] = GetParam();
     // create and read file
@@ -324,6 +336,7 @@ TEST_P(FileReaderLines, parse_lines_without_char_comments) {
     // comments have been filtered
     EXPECT_EQ(reader.lines(), filter_lines(lines, comment));
 }
+
 TEST_P(FileReaderLines, parse_lines_without_string_comments) {
     const auto &[filename, comment, lines] = GetParam();
     // create and read file
@@ -333,6 +346,7 @@ TEST_P(FileReaderLines, parse_lines_without_string_comments) {
     // the arff header attributes have been filtered
     EXPECT_EQ(reader.lines(), filter_lines(lines, "@ATTRIBUTE"));
 }
+
 TEST_P(FileReaderLines, num_lines) {
     const auto &[filename, comment, lines] = GetParam();
     // create and read file
@@ -342,6 +356,7 @@ TEST_P(FileReaderLines, num_lines) {
     // check if the read number of lines is correct
     EXPECT_EQ(reader.num_lines(), filter_lines(lines, comment).size());
 }
+
 TEST_P(FileReaderLines, line) {
     const auto &[filename, comment, lines] = GetParam();
     // create and read file
@@ -355,6 +370,7 @@ TEST_P(FileReaderLines, line) {
         EXPECT_EQ(reader.line(i), filtered_lines[i]);
     }
 }
+
 TEST_P(FileReaderLines, lines) {
     const auto &[filename, comment, lines] = GetParam();
     // create and read file
@@ -364,6 +380,7 @@ TEST_P(FileReaderLines, lines) {
     // check if the read lines are correct
     EXPECT_EQ(reader.lines(), filter_lines(lines, comment));
 }
+
 TEST_P(FileReaderLines, buffer_valid) {
     const auto &[filename, comment, lines] = GetParam();
     // create and read file
@@ -377,6 +394,7 @@ TEST_P(FileReaderLines, buffer_valid) {
         EXPECT_NE(reader.buffer(), nullptr);
     }
 }
+
 INSTANTIATE_TEST_SUITE_P(FileReader, FileReaderLines, ::testing::ValuesIn(get_file_lines()), naming::pretty_print_escaped_string<FileReaderLines>);
 
 TEST(FileReaderLines, parse_lines_without_associated_file) {
@@ -389,7 +407,8 @@ TEST(FileReaderLines, parse_lines_without_associated_file) {
                       "This file_reader is currently not associated to a file!");
 }
 
-class FileReaderLinesDeathTest : public ::testing::TestWithParam<std::tuple<std::string, char, std::vector<std::string_view>>> {};
+class FileReaderLinesDeathTest : public ::testing::TestWithParam<std::tuple<std::string, char, std::vector<std::string_view>>> { };
+
 TEST_P(FileReaderLinesDeathTest, line_out_of_bounce) {
     const auto &[filename, comment, lines] = GetParam();
     // create and read file
@@ -400,6 +419,7 @@ TEST_P(FileReaderLinesDeathTest, line_out_of_bounce) {
     ASSERT_EQ(reader.lines().size(), filter_lines(lines, comment).size());
     EXPECT_DEATH(std::ignore = reader.line(reader.num_lines()), fmt::format("Out-of-bounce access!: {} >= {}", reader.num_lines(), reader.num_lines()));
 }
+
 INSTANTIATE_TEST_SUITE_P(FileReader, FileReaderLinesDeathTest, ::testing::ValuesIn(get_file_lines()), naming::pretty_print_escaped_string<FileReaderLinesDeathTest>);
 
 TEST(FileReader, swap_free_function) {

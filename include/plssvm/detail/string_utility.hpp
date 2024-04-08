@@ -63,19 +63,25 @@ namespace plssvm::detail {
 [[nodiscard]] bool contains(std::string_view str, char c) noexcept;
 
 /**
- * @brief Returns a new [`std::string_view`](https://en.cppreference.com/w/cpp/string/basic_string_view) equal to @p str where all leading whitespaces are removed.
+ * @brief Returns a new [`std::string_view`](https://en.cppreference.com/w/cpp/string/basic_string_view) equal to @p str where all leading whitespace characters are removed.
+ * @details The trimmed characters are: whitespace (`' '`), tab (`'\\t'`), vertical tab (`'\\v'`), carriage return (`'\\r'`), line feed (`'\\n'`), and form feed (`'\\f'`).
+ *
  * @param[in] str the string to remove the leading whitespaces
  * @return the string @p str without leading whitespace (`[[nodiscard]]`)
  */
 [[nodiscard]] std::string_view trim_left(std::string_view str) noexcept;
 /**
- * @brief Returns a new [`std::string_view`](https://en.cppreference.com/w/cpp/string/basic_string_view) equal to @p str where all trailing whitespaces are removed.
+ * @brief Returns a new [`std::string_view`](https://en.cppreference.com/w/cpp/string/basic_string_view) equal to @p str where all trailing whitespace characters are removed.
+ * @details The trimmed characters are: whitespace (`' '`), tab (`'\\t'`), vertical tab (`'\\v'`), carriage return (`'\\r'`), line feed (`'\\n'`), and form feed (`'\\f'`).
+ *
  * @param[in] str the string to remove the trailing whitespaces
  * @return the string @p str without trailing whitespace (`[[nodiscard]]`)
  */
 [[nodiscard]] std::string_view trim_right(std::string_view str) noexcept;
 /**
- * @brief Returns a new [`std::string_view`](https://en.cppreference.com/w/cpp/string/basic_string_view) equal to @p str where all leading and trailing whitespaces are removed.
+ * @brief Returns a new [`std::string_view`](https://en.cppreference.com/w/cpp/string/basic_string_view) equal to @p str where all leading and trailing whitespace characters are removed.
+ * @details The trimmed characters are: whitespace (`' '`), tab (`'\\t'`), vertical tab (`'\\v'`), carriage return (`'\\r'`), line feed (`'\\n'`), and form feed (`'\\f'`).
+ *
  * @param[in] str the string to remove the leading and trailing whitespaces
  * @return the string @p str without leading and trailing whitespace (`[[nodiscard]]`)
  */
@@ -86,20 +92,20 @@ namespace plssvm::detail {
  * @param[in,out] str the string to replace the values
  * @param[in] what the string to replace
  * @param[in] with the string to replace with
- * @return the replaced string
+ * @return a reference to the replaced string
  */
 std::string &replace_all(std::string &str, std::string_view what, std::string_view with);
 
 /**
  * @brief Convert the string @p str to its all lower case representation.
  * @param[in,out] str the string to transform
- * @return the transformed string
+ * @return a reference to the transformed string
  */
 std::string &to_lower_case(std::string &str);
 
 /**
  * @brief Return a new string with the same content as @p str but all lower case.
- * @details In contrast to to_lower_case(std::string&) this function does not change the input string @p str.
+ * @details In contrast to `plssvm::detail::to_lower_case(std::string&)` this function does not change the input string @p str.
  * @param[in] str the string to use in the transformation
  * @return the transformed string (`[[nodiscard]]`)
  */
@@ -108,13 +114,13 @@ std::string &to_lower_case(std::string &str);
 /**
  * @brief Convert the string @p str to its all upper case representation.
  * @param[in,out] str the string to transform
- * @return the transformed string
+ * @return a reference to the transformed string
  */
 std::string &to_upper_case(std::string &str);
 
 /**
  * @brief Return a new string with the same content as @p str but all upper case.
- * @details In contrast to to_upper_case(std::string&) this function does not change the input string @p str.
+ * @details In contrast to `plssvm::detail::to_upper_case(std::string&)` this function does not change the input string @p str.
  * @param[in] str the string to use in the transformation
  * @return the transformed string (`[[nodiscard]]`)
  */

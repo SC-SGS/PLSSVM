@@ -16,19 +16,17 @@
 #include "plssvm/constants.hpp"                                    // plssvm::real_type
 #include "plssvm/default_value.hpp"                                // plssvm::default_value, plssvm::is_default_value_v
 #include "plssvm/detail/igor_utility.hpp"                          // plssvm::detail::{has_only_named_args_v, get_value_from_named_parameter}
-#include "plssvm/detail/logging_without_performance_tracking.hpp"  // plssvm::detail::log
+#include "plssvm/detail/logging_without_performance_tracking.hpp"  // plssvm::detail::log_untracked
 #include "plssvm/detail/type_traits.hpp"                           // PLSSVM_REQUIRES, plssvm::detail::{remove_cvref_t, always_false_v}
-#include "plssvm/detail/utility.hpp"                               // plssvm::detail::unreachable
 #include "plssvm/kernel_function_types.hpp"                        // plssvm::kernel_function_type, plssvm::kernel_function_type_to_math_string
 #include "plssvm/verbosity_levels.hpp"                             // plssvm::verbosity_level, plssvm::verbosity
 
-#include "fmt/core.h"     // fmt::format
-#include "fmt/ostream.h"  // fmt::formatter, fmt::ostream_formatter
+#include "fmt/core.h"     // fmt::format, fmt::formatter
+#include "fmt/ostream.h"  // fmt::ostream_formatter
 #include "igor/igor.hpp"  // IGOR_MAKE_NAMED_ARGUMENT, igor::parser, igor::has_unnamed_arguments, igor::has_other_than
 
 #include <iosfwd>       // forward declare std::ostream and std::istream
 #include <string_view>  // std::string_view
-#include <type_traits>  // std::is_same_v, std::is_convertible_v
 #include <utility>      // std::forward
 
 namespace plssvm {
@@ -57,6 +55,7 @@ IGOR_MAKE_NAMED_ARGUMENT(classification);
 IGOR_MAKE_NAMED_ARGUMENT(sycl_implementation_type);
 /// Create a named argument for the SYCL backend specific kernel invocation type.
 IGOR_MAKE_NAMED_ARGUMENT(sycl_kernel_invocation_type);
+
 /// @endcond
 
 namespace detail {
@@ -88,6 +87,7 @@ struct parameter {
      * @brief Default construct a parameter set, i.e., each SVM parameter has its default value.
      */
     constexpr parameter() noexcept = default;
+
     /**
      * @brief Construct a parameter set by explicitly overwriting the SVM parameters' default values.
      * @param[in] kernel_p the kernel type: linear, polynomial, or radial-basis functions (rbf)
@@ -127,13 +127,13 @@ struct parameter {
         this->set_named_arguments(std::forward<Args>(named_args)...);
     }
 
-    /// The used kernel function: linear, polynomial, or radial basis functions (rbf).
+    /// The used kernel function: linear, polynomial, radial basis functions (rbf), sigmoid, laplacian, or chi-squared.
     default_value<kernel_function_type> kernel_type{ default_init<kernel_function_type>{ kernel_function_type::rbf } };
     /// The degree parameter used in the polynomial kernel function.
     default_value<int> degree{ default_init<int>{ 3 } };
-    /// The gamma parameter used in the polynomial and rbf kernel functions.
+    /// The gamma parameter used in the polynomial, rbf, sigmoid, laplacian, or chi-squared kernel functions.
     default_value<real_type> gamma{ default_init<real_type>{ 0.0 } };
-    /// The coef0 parameter used in the polynomial kernel function.
+    /// The coef0 parameter used in the polynomial or sigmoid kernel functions.
     default_value<real_type> coef0{ default_init<real_type>{ 0.0 } };
     /// The cost parameter in the C-SVM.
     default_value<real_type> cost{ default_init<real_type>{ 1.0 } };
@@ -159,7 +159,11 @@ struct parameter {
             case kernel_function_type::polynomial:
                 return degree == other.degree && gamma == other.gamma && coef0 == other.coef0 && cost == other.cost;
             case kernel_function_type::rbf:
+            case kernel_function_type::laplacian:
+            case kernel_function_type::chi_squared:
                 return gamma == other.gamma && cost == other.cost;
+            case kernel_function_type::sigmoid:
+                return gamma == other.gamma && coef0 == other.coef0 && cost == other.cost;
         }
         return false;
     }
@@ -185,11 +189,11 @@ struct parameter {
         // shorthand function for emitting a warning if a provided parameter is not used by the current kernel function
         [[maybe_unused]] const auto print_warning = [](const std::string_view param_name, const kernel_function_type kernel) {
             // NOTE: can't use the log function due to circular dependencies
-            detail::log(verbosity_level::full | verbosity_level::warning,
-                        "WARNING: {} parameter provided, which is not used in the {} kernel ({})!\n",
-                        param_name,
-                        kernel,
-                        kernel_function_type_to_math_string(kernel));
+            detail::log_untracked(verbosity_level::full | verbosity_level::warning,
+                                  "WARNING: {} parameter provided, which is not used in the {} kernel ({})!\n",
+                                  param_name,
+                                  kernel,
+                                  kernel_function_type_to_math_string(kernel));
         };
 
         // compile time/runtime check: the values must have the correct types
@@ -209,7 +213,7 @@ struct parameter {
             // get the value of the provided named parameter
             degree = detail::get_value_from_named_parameter<typename decltype(degree)::value_type>(parser, plssvm::degree);
             // runtime check: the value may only be used with a specific kernel type
-            if (kernel_type == kernel_function_type::linear || kernel_type == kernel_function_type::rbf) {
+            if (kernel_type != kernel_function_type::polynomial) {
                 print_warning("degree", kernel_type);
             }
         }
@@ -217,7 +221,7 @@ struct parameter {
             // get the value of the provided named parameter
             coef0 = detail::get_value_from_named_parameter<typename decltype(coef0)::value_type>(parser, plssvm::coef0);
             // runtime check: the value may only be used with a specific kernel type
-            if (kernel_type == kernel_function_type::linear || kernel_type == kernel_function_type::rbf) {
+            if (kernel_type != kernel_function_type::polynomial && kernel_type != kernel_function_type::sigmoid) {
                 print_warning("coef0", kernel_type);
             }
         }
@@ -238,6 +242,7 @@ struct parameter {
 [[nodiscard]] constexpr bool operator==(const parameter &lhs, const parameter &rhs) noexcept {
     return lhs.kernel_type == rhs.kernel_type && lhs.degree == rhs.degree && lhs.gamma == rhs.gamma && lhs.coef0 == rhs.coef0 && lhs.cost == rhs.cost;
 }
+
 /**
  * @brief Compares the two parameter sets @p lhs and @p rhs for inequality.
  * @details Two parameter sets are unequal if **any** of the SVM parameters are unequal.
@@ -273,6 +278,6 @@ std::ostream &operator<<(std::ostream &out, const parameter &params);
 }  // namespace plssvm
 
 template <>
-struct fmt::formatter<plssvm::parameter> : fmt::ostream_formatter {};
+struct fmt::formatter<plssvm::parameter> : fmt::ostream_formatter { };
 
 #endif  // PLSSVM_PARAMETER_HPP_

@@ -10,7 +10,7 @@
 
 #include "plssvm/detail/string_utility.hpp"
 
-#include "naming.hpp"  // naming::pretty_print_escaped_string
+#include "tests/naming.hpp"  // naming::pretty_print_escaped_string
 
 #include "fmt/core.h"     // fmt::format
 #include "gtest/gtest.h"  // TEST, ASSERT_EQ, EXPECT_EQ
@@ -26,6 +26,7 @@ TEST(StringUtility, starts_with_string) {
     EXPECT_FALSE(plssvm::detail::starts_with("abc", "abcd"));
     EXPECT_FALSE(plssvm::detail::starts_with("abc", "bc"));
 }
+
 TEST(StringUtility, starts_with_char) {
     EXPECT_TRUE(plssvm::detail::starts_with("abc", 'a'));
     EXPECT_FALSE(plssvm::detail::starts_with("abc", 'c'));
@@ -38,6 +39,7 @@ TEST(StringUtility, ends_with_string) {
     EXPECT_FALSE(plssvm::detail::ends_with("abc", "abcd"));
     EXPECT_TRUE(plssvm::detail::ends_with("abc", "bc"));
 }
+
 TEST(StringUtility, ends_with_char) {
     EXPECT_FALSE(plssvm::detail::ends_with("abc", 'a'));
     EXPECT_TRUE(plssvm::detail::ends_with("abc", 'c'));
@@ -50,66 +52,79 @@ TEST(StringUtility, contains_string) {
     EXPECT_FALSE(plssvm::detail::contains("abc", "abcd"));
     EXPECT_TRUE(plssvm::detail::contains("abc", "bc"));
 }
+
 TEST(StringUtility, contains_char) {
     EXPECT_TRUE(plssvm::detail::contains("abc", 'a'));
     EXPECT_TRUE(plssvm::detail::contains("abc", 'c'));
     EXPECT_FALSE(plssvm::detail::contains("abc", 'd'));
 }
 
-class StringUtilityBase : public ::testing::TestWithParam<std::tuple<std::string, std::string_view>> {};
+class StringUtilityBase : public ::testing::TestWithParam<std::tuple<std::string, std::string_view>> { };
 
 // test trim left only
-class StringUtilityTrimLeft : public StringUtilityBase {};
+class StringUtilityTrimLeft : public StringUtilityBase { };
+
 TEST_P(StringUtilityTrimLeft, trim_left) {
     auto [input, output] = GetParam();
     EXPECT_EQ(plssvm::detail::trim_left(input), output);
 }
+
 // clang-format off
 INSTANTIATE_TEST_SUITE_P(StringUtility, StringUtilityTrimLeft, ::testing::Values(
                 std::make_tuple("", ""), std::make_tuple("abc", "abc"),
                 std::make_tuple("  abc", "abc"), std::make_tuple("abc   ", "abc   "),
-                std::make_tuple(" abc  ", "abc  "), std::make_tuple(" a b c ", "a b c ")),
+                std::make_tuple(" abc  ", "abc  "), std::make_tuple(" a b c ", "a b c "),
+                std::make_tuple("\t abc  \r\n", "abc  \r\n"), std::make_tuple("\f\v a b c \t", "a b c \t")),
                 naming::pretty_print_escaped_string<StringUtilityTrimLeft>);
 // clang-format on
 
 // test trim right only
-class StringUtilityTrimRight : public StringUtilityBase {};
+class StringUtilityTrimRight : public StringUtilityBase { };
+
 TEST_P(StringUtilityTrimRight, trim_right) {
     auto [input, output] = GetParam();
     EXPECT_EQ(plssvm::detail::trim_right(input), output);
 }
+
 // clang-format off
 INSTANTIATE_TEST_SUITE_P(StringUtility, StringUtilityTrimRight, ::testing::Values(
                 std::make_tuple("", ""), std::make_tuple("abc", "abc"),
                 std::make_tuple("  abc", "  abc"), std::make_tuple("abc   ", "abc"),
-                std::make_tuple(" abc  ", " abc"), std::make_tuple(" a b c ", " a b c")),
+                std::make_tuple(" abc  ", " abc"), std::make_tuple(" a b c ", " a b c"),
+                std::make_tuple("\t abc  \r\n", "\t abc"), std::make_tuple("\f\v a b c \t", "\f\v a b c")),
                 naming::pretty_print_escaped_string<StringUtilityTrimRight>);
 // clang-format on
 
 // test trim
-class StringUtilityTrim : public StringUtilityBase {};
+class StringUtilityTrim : public StringUtilityBase { };
+
 TEST_P(StringUtilityTrim, trim) {
     auto [input, output] = GetParam();
     EXPECT_EQ(plssvm::detail::trim(input), output);
 }
+
 // clang-format off
 INSTANTIATE_TEST_SUITE_P(StringUtility, StringUtilityTrim, ::testing::Values(
                 std::make_tuple("", ""), std::make_tuple("abc", "abc"),
                 std::make_tuple("  abc", "abc"), std::make_tuple("abc   ", "abc"),
-                std::make_tuple(" abc  ", "abc"), std::make_tuple(" a b c ", "a b c")),
+                std::make_tuple(" abc  ", "abc"), std::make_tuple(" a b c ", "a b c"),
+                std::make_tuple("\t abc  \r\n", "abc"), std::make_tuple("\f\v a b c \t", "a b c")),
                 naming::pretty_print_escaped_string<StringUtilityTrim>);
 // clang-format on
 
 // test conversion to lower case
-class StringUtilityConvertLowerCase : public StringUtilityBase {};
+class StringUtilityConvertLowerCase : public StringUtilityBase { };
+
 TEST_P(StringUtilityConvertLowerCase, to_lower_case) {
     auto [input, output] = GetParam();
     EXPECT_EQ(plssvm::detail::to_lower_case(input), output);
 }
+
 TEST_P(StringUtilityConvertLowerCase, as_lower_case) {
     auto [input, output] = GetParam();
     EXPECT_EQ(plssvm::detail::as_lower_case(input), output);
 }
+
 // clang-format off
 INSTANTIATE_TEST_SUITE_P(StringUtility, StringUtilityConvertLowerCase, ::testing::Values(
                 std::make_tuple("", ""), std::make_tuple("abc", "abc"),
@@ -118,15 +133,18 @@ INSTANTIATE_TEST_SUITE_P(StringUtility, StringUtilityConvertLowerCase, ::testing
 // clang-format on
 
 // test conversion to upper case
-class StringUtilityConvertUpperCase : public StringUtilityBase {};
+class StringUtilityConvertUpperCase : public StringUtilityBase { };
+
 TEST_P(StringUtilityConvertUpperCase, to_upper_case) {
     auto [input, output] = GetParam();
     EXPECT_EQ(plssvm::detail::to_upper_case(input), output);
 }
+
 TEST_P(StringUtilityConvertUpperCase, as_upper_case) {
     auto [input, output] = GetParam();
     EXPECT_EQ(plssvm::detail::as_upper_case(input), output);
 }
+
 // clang-format off
 INSTANTIATE_TEST_SUITE_P(StringUtility, StringUtilityConvertUpperCase, ::testing::Values(
                 std::make_tuple("", ""), std::make_tuple("abc", "ABC"),
@@ -135,11 +153,13 @@ INSTANTIATE_TEST_SUITE_P(StringUtility, StringUtilityConvertUpperCase, ::testing
 // clang-format on
 
 // test replace_all
-class StringUtilityReplace : public ::testing::TestWithParam<std::tuple<std::string, std::string_view, std::string_view, std::string_view>> {};
+class StringUtilityReplace : public ::testing::TestWithParam<std::tuple<std::string, std::string_view, std::string_view, std::string_view>> { };
+
 TEST_P(StringUtilityReplace, replace_all) {
     auto [input, what, with, output] = GetParam();
     EXPECT_EQ(plssvm::detail::replace_all(input, what, with), output);
 }
+
 // clang-format off
 INSTANTIATE_TEST_SUITE_P(StringUtility, StringUtilityReplace, ::testing::Values(
                 std::make_tuple("", "", "", ""), std::make_tuple("aaa", "a", "b", "bbb"),
@@ -160,6 +180,7 @@ TEST(StringUtility, split_default_delimiter) {
         EXPECT_EQ(split[i], split_correct[i]) << fmt::format("pos: {}, split: {}, correct: {}", i, split[i], split_correct[i]);
     }
 }
+
 TEST(StringUtility, split_custom_delimiter) {
     // split string using a custom delimiter
     const std::string string_to_split = "1.5,2.0,-3.5,4.0,5.0,-6.0,,7.5";
@@ -171,12 +192,14 @@ TEST(StringUtility, split_custom_delimiter) {
         EXPECT_EQ(split[i], split_correct[i]) << fmt::format("pos: {}, split: {}, correct: {}", i, split[i], split_correct[i]);
     }
 }
+
 TEST(StringUtility, split_single_value) {
     // split string containing a single value
     const std::vector<std::string_view> split = plssvm::detail::split("42");
     ASSERT_EQ(split.size(), 1);
     EXPECT_EQ(split.front(), "42") << fmt::format("split: {}, correct: 42", split.front());
 }
+
 TEST(StringUtility, split_empty_string) {
     // split the empty string
     const std::vector<std::string_view> split = plssvm::detail::split("");

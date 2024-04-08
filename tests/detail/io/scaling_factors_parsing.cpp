@@ -10,16 +10,18 @@
 
 #include "plssvm/detail/io/scaling_factors_parsing.hpp"
 
-#include "plssvm/constants.hpp"              // plssvm::real_type
-#include "plssvm/data_set.hpp"               // plssvm::data_set::scaling::factors
-#include "plssvm/detail/io/file_reader.hpp"  // plssvm::detail::io::file_reader
-#include "plssvm/exceptions/exceptions.hpp"  // plssvm::invalid_file_format_exception
+#include "plssvm/constants.hpp"                    // plssvm::real_type
+#include "plssvm/data_set.hpp"                     // plssvm::data_set::scaling::factors
+#include "plssvm/detail/arithmetic_type_name.hpp"  // plssvm::detail::arithmetic_type_name
+#include "plssvm/detail/io/file_reader.hpp"        // plssvm::detail::io::file_reader
+#include "plssvm/exceptions/exceptions.hpp"        // plssvm::invalid_file_format_exception
 
-#include "custom_test_macros.hpp"  // EXPECT_FLOATING_POINT_EQ, EXPECT_THROW_WHAT
-#include "utility.hpp"             // util::temporary_file
+#include "tests/custom_test_macros.hpp"  // EXPECT_FLOATING_POINT_EQ, EXPECT_THROW_WHAT
+#include "tests/utility.hpp"             // util::temporary_file
 
-#include "gmock/gmock-matchers.h"  // ::testing::HasSubstr
-#include "gtest/gtest.h"           // TEST, TEST_F, EXPECT_EQ, EXPECT_TRUE, EXPECT_DEATH, ASSERT_EQ, ::testing::Test
+#include "fmt/core.h"     // fmt::format
+#include "gmock/gmock.h"  // ::testing::HasSubstr
+#include "gtest/gtest.h"  // TEST, TEST_F, EXPECT_EQ, EXPECT_TRUE, EXPECT_DEATH, ASSERT_EQ, ::testing::Test
 
 #include <cstddef>    // std::size_t
 #include <stdexcept>  // std::runtime_error
@@ -55,6 +57,7 @@ TEST(ScalingFactorsRead, read) {
         EXPECT_FLOATING_POINT_EQ(scaling_factors[i].upper, correct_scaling_factors[i].upper);
     }
 }
+
 TEST(ScalingFactorsRead, read_no_scaling_factors) {
     // parse scaling factors!
     plssvm::detail::io::file_reader reader{ PLSSVM_TEST_PATH "/data/scaling_factors/no_scaling_factors.txt" };
@@ -68,6 +71,7 @@ TEST(ScalingFactorsRead, read_no_scaling_factors) {
     // scaling factors -> are empty!
     EXPECT_TRUE(scaling_factors.empty());
 }
+
 TEST(ScalingFactorsRead, too_many_scaling_interval_values) {
     // parse scaling factors!
     plssvm::detail::io::file_reader reader{ PLSSVM_TEST_PATH "/data/scaling_factors/invalid/too_many_scaling_interval_values.txt" };
@@ -76,6 +80,7 @@ TEST(ScalingFactorsRead, too_many_scaling_interval_values) {
                       plssvm::invalid_file_format_exception,
                       "The interval to which the data points should be scaled must exactly have two values, but 3 were given!");
 }
+
 TEST(ScalingFactorsRead, too_few_scaling_interval_values) {
     // parse scaling factors!
     plssvm::detail::io::file_reader reader{ PLSSVM_TEST_PATH "/data/scaling_factors/invalid/too_few_scaling_interval_values.txt" };
@@ -84,6 +89,7 @@ TEST(ScalingFactorsRead, too_few_scaling_interval_values) {
                       plssvm::invalid_file_format_exception,
                       "The interval to which the data points should be scaled must exactly have two values, but 1 were given!");
 }
+
 TEST(ScalingFactorsRead, inconsistent_scaling_interval_values) {
     // parse scaling factors!
     plssvm::detail::io::file_reader reader{ PLSSVM_TEST_PATH "/data/scaling_factors/invalid/inconsistent_scaling_interval_values.txt" };
@@ -92,6 +98,7 @@ TEST(ScalingFactorsRead, inconsistent_scaling_interval_values) {
                       plssvm::invalid_file_format_exception,
                       "Inconsistent scaling interval specification: lower (1.4) must be less than upper (-2.6)!");
 }
+
 TEST(ScalingFactorsRead, no_header) {
     // parse scaling factors!
     plssvm::detail::io::file_reader reader{ PLSSVM_TEST_PATH "/data/scaling_factors/invalid/no_header.txt" };
@@ -100,6 +107,7 @@ TEST(ScalingFactorsRead, no_header) {
                       plssvm::invalid_file_format_exception,
                       R"(The first line must only contain an 'x', but is "-1.4 2.6"!)");
 }
+
 TEST(ScalingFactorsRead, too_few_lines) {
     // parse scaling factors!
     plssvm::detail::io::file_reader reader{ PLSSVM_TEST_PATH "/data/scaling_factors/invalid/too_few_lines.txt" };
@@ -108,6 +116,7 @@ TEST(ScalingFactorsRead, too_few_lines) {
                       plssvm::invalid_file_format_exception,
                       "At least two lines must be present, but only 1 were given!");
 }
+
 TEST(ScalingFactorsRead, empty) {
     // parse scaling factors!
     plssvm::detail::io::file_reader reader{ PLSSVM_TEST_PATH "/data/empty.txt" };
@@ -116,6 +125,7 @@ TEST(ScalingFactorsRead, empty) {
                       plssvm::invalid_file_format_exception,
                       "At least two lines must be present, but only 0 were given!");
 }
+
 TEST(ScalingFactorsRead, too_few_scaling_factor_values) {
     // parse scaling factors!
     plssvm::detail::io::file_reader reader{ PLSSVM_TEST_PATH "/data/scaling_factors/invalid/too_few_scaling_factor_values.txt" };
@@ -124,6 +134,7 @@ TEST(ScalingFactorsRead, too_few_scaling_factor_values) {
                       plssvm::invalid_file_format_exception,
                       "Each line must contain exactly three values, but 2 were given!");
 }
+
 TEST(ScalingFactorsRead, too_many_scaling_factor_values) {
     // parse scaling factors!
     plssvm::detail::io::file_reader reader{ PLSSVM_TEST_PATH "/data/scaling_factors/invalid/too_many_scaling_factor_values.txt" };
@@ -132,6 +143,7 @@ TEST(ScalingFactorsRead, too_many_scaling_factor_values) {
                       plssvm::invalid_file_format_exception,
                       "Each line must contain exactly three values, but 4 were given!");
 }
+
 TEST(ScalingFactorsRead, zero_based_scaling_factors) {
     // parse scaling factors!
     plssvm::detail::io::file_reader reader{ PLSSVM_TEST_PATH "/data/scaling_factors/invalid/zero_based_scaling_factors.txt" };
@@ -140,6 +152,7 @@ TEST(ScalingFactorsRead, zero_based_scaling_factors) {
                       plssvm::invalid_file_format_exception,
                       "The scaling factors must be provided one-based, but are zero-based!");
 }
+
 TEST(ScalingFactorsRead, invalid_number) {
     // parse scaling factors!
     plssvm::detail::io::file_reader reader{ PLSSVM_TEST_PATH "/data/scaling_factors/invalid/invalid_number.txt" };
@@ -156,8 +169,10 @@ TEST(ScalingFactorsReadDeathTest, invalid_file_reader) {
                  "The file_reader is currently not associated with a file!");
 }
 
-class ScalingFactorsWrite : public ::testing::Test, protected util::temporary_file {};
-class ScalingFactorsWriteDeathTest : public ScalingFactorsWrite {};
+class ScalingFactorsWrite : public ::testing::Test,
+                            protected util::temporary_file { };
+
+class ScalingFactorsWriteDeathTest : public ScalingFactorsWrite { };
 
 TEST_F(ScalingFactorsWrite, write) {
     // define data to write
@@ -186,6 +201,7 @@ TEST_F(ScalingFactorsWrite, write) {
         EXPECT_EQ(reader.line(i + 2), fmt::format("{} {:.10e} {:.10e}", scaling_factors[i].feature + 1, scaling_factors[i].lower, scaling_factors[i].upper));
     }
 }
+
 TEST_F(ScalingFactorsWrite, write_empty_scaling_factors) {
     // define data to write
     const std::pair<plssvm::real_type, plssvm::real_type> interval{ plssvm::real_type{ -1.5 }, plssvm::real_type{ 1.5 } };

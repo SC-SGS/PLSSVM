@@ -6,9 +6,11 @@
  *          See the LICENSE.md file in the project root for full license information.
  */
 
-#include "plssvm/classification_types.hpp"
+#include "plssvm/classification_types.hpp"  // plssvm::classification_type, plssvm::classification_type_to_full_string, plssvm::calculate_number_of_classifiers
 
 #include "pybind11/pybind11.h"  // py::module_, py::enum_
+
+#include <string>  // std::string
 
 namespace py = pybind11;
 

@@ -13,10 +13,11 @@
 #define PLSSVM_BACKENDS_SYCL_ADAPTIVECPP_DETAIL_DEVICE_PTR_HPP_
 #pragma once
 
-#include "plssvm/backends/SYCL/AdaptiveCpp/detail/queue.hpp"  // plssvm::adaptivecpp::detail::queue (PImpl)
 #include "plssvm/backends/gpu_device_ptr.hpp"                 // plssvm::detail::gpu_device_ptr
+#include "plssvm/backends/SYCL/AdaptiveCpp/detail/queue.hpp"  // plssvm::adaptivecpp::detail::queue (PImpl)
+#include "plssvm/shape.hpp"                                   // plssvm::shape
 
-#include <array>  // std::array
+#include <cstddef>  // std::size_t
 
 namespace plssvm::adaptivecpp::detail {
 
@@ -25,18 +26,20 @@ namespace plssvm::adaptivecpp::detail {
  * @tparam T the type of the kernel pointer to wrap
  */
 template <typename T>
-class device_ptr : public ::plssvm::detail::gpu_device_ptr<T, queue> {
+class device_ptr : public ::plssvm::detail::gpu_device_ptr<T, queue, T *, device_ptr<T>> {
     /// The template base type of the AdaptiveCpp device_ptr class.
-    using base_type = ::plssvm::detail::gpu_device_ptr<T, queue>;
+    using base_type = ::plssvm::detail::gpu_device_ptr<T, queue, T *, device_ptr<T>>;
 
     using base_type::data_;
-    using base_type::extents_;
     using base_type::queue_;
+    using base_type::shape_;
 
   public:
     // Be able to use overloaded base class functions.
     using base_type::copy_to_device;
+    using base_type::copy_to_device_strided;
     using base_type::copy_to_host;
+    using base_type::copy_to_other_device;
     using base_type::fill;
     using base_type::memset;
 
@@ -58,18 +61,18 @@ class device_ptr : public ::plssvm::detail::gpu_device_ptr<T, queue> {
      */
     device_ptr(size_type size, const queue &q);
     /**
-     * @brief Allocates `extents[0] * extents[1] * sizeof(T)` bytes on the device associated with @p q.
-     * @param[in] extents the number of elements represented by the device_ptr
+     * @brief Allocates `shape.x * shape.y * sizeof(T)` bytes on the device associated with @p q.
+     * @param[in] shape the number of elements represented by the device_ptr
      * @param[in] q the associated SYCL queue
      */
-    device_ptr(std::array<size_type, 2> extents, const queue &q);
+    device_ptr(plssvm::shape shape, const queue &q);
     /**
-     * @brief Allocates `(extents[0] + padding[0]) * (extents[1] * padding[1]) * sizeof(T)` bytes on the device associated with @p q.
-     * @param[in] extents the number of elements represented by the device_ptr
+     * @brief Allocates `(shape.x + padding.x) * (shape.y + padding.y) * sizeof(T)` bytes on the device associated with @p q.
+     * @param[in] shape the number of elements represented by the device_ptr
      * @param[in] padding the number of padding elements added to the extent values
      * @param[in] q the associated SYCL queue
      */
-    device_ptr(std::array<size_type, 2> extents, std::array<size_type, 2> padding, const queue &q);
+    device_ptr(plssvm::shape shape, plssvm::shape padding, const queue &q);
 
     /**
      * @copydoc plssvm::detail::gpu_device_ptr::gpu_device_ptr(const plssvm::detail::gpu_device_ptr &)
@@ -107,9 +110,17 @@ class device_ptr : public ::plssvm::detail::gpu_device_ptr<T, queue> {
      */
     void copy_to_device(const_host_pointer_type data_to_copy, size_type pos, size_type count) override;
     /**
+     * @copydoc plssvm::detail::gpu_device_ptr::copy_to_device_strided(const_host_pointer_type, std::size_t, std::size_t, std::size_t)
+     */
+    void copy_to_device_strided(const_host_pointer_type data_to_copy, std::size_t spitch, std::size_t width, std::size_t height) override;
+    /**
      * @copydoc plssvm::detail::gpu_device_ptr::copy_to_host(host_pointer_type, size_type, size_type) const
      */
     void copy_to_host(host_pointer_type buffer, size_type pos, size_type count) const override;
+    /**
+     * @copydoc plssvm::detail::gpu_device_ptr::copy_to_other_device(derived_gpu_device_ptr &, size_type, size_type) const
+     */
+    void copy_to_other_device(device_ptr &target, size_type pos, size_type count) const override;
 };
 
 extern template class device_ptr<float>;

@@ -8,12 +8,15 @@
 
 #include "plssvm/backends/SYCL/DPCPP/detail/utility.hpp"
 
+#include "plssvm/backends/SYCL/DPCPP/detail/queue.hpp"       // plssvm::adaptivecpp::detail::queue
 #include "plssvm/backends/SYCL/DPCPP/detail/queue_impl.hpp"  // plssvm::dpcpp::detail::queue (PImpl implementation)
 #include "plssvm/detail/string_utility.hpp"                  // plssvm::detail::{as_lower_case, contains}
 #include "plssvm/detail/utility.hpp"                         // plssvm::detail::contains
 #include "plssvm/target_platforms.hpp"                       // plssvm::target_platform, plssvm::determine_default_target_platform
 
 #include "sycl/sycl.hpp"  // ::sycl::platform, ::sycl::device, ::sycl::property::queue, ::sycl::info
+
+#include "fmt/core.h"  // fmt::format
 
 #include <map>      // std::multimap
 #include <memory>   // std::make_shared
@@ -99,6 +102,14 @@ queue get_default_queue() {
     queue q;
     q.impl = std::make_shared<queue::queue_impl>();
     return q;
+}
+
+std::string get_dpcpp_version() {
+    return fmt::format("{}.{}.{}", __LIBSYCL_MAJOR_VERSION, __LIBSYCL_MINOR_VERSION, __LIBSYCL_PATCH_VERSION);
+}
+
+std::string get_dpcpp_timestamp_version() {
+    return fmt::format("{}", __SYCL_COMPILER_VERSION);
 }
 
 }  // namespace plssvm::dpcpp::detail

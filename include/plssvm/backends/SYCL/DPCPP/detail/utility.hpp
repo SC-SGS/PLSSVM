@@ -16,6 +16,7 @@
 #include "plssvm/backends/SYCL/DPCPP/detail/queue.hpp"  // plssvm::dpcpp::detail::queue (PImpl)
 #include "plssvm/target_platforms.hpp"                  // plssvm::target_platform
 
+#include <string>   // std::string
 #include <utility>  // std::pair
 #include <vector>   // std::vector
 
@@ -47,6 +48,17 @@ void device_synchronize(const queue &q);
  * @return the default queue (`[[nodiscard]]`)
  */
 [[nodiscard]] queue get_default_queue();
+
+/**
+ * @brief Get the DPC++ version as pretty string.
+ * @return the DPC++ version (`[[nodiscard]]`)
+ */
+[[nodiscard]] std::string get_dpcpp_version();
+/**
+ * @brief Get the time (version) when the used DPC++ version was built.
+ * @return the DPC++ built date (`[[nodiscard]]`)
+ */
+[[nodiscard]] std::string get_dpcpp_timestamp_version();
 
 }  // namespace plssvm::dpcpp::detail
 

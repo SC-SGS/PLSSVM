@@ -16,6 +16,7 @@
 #include "plssvm/detail/arithmetic_type_name.hpp"  // plssvm::detail::arithmetic_type_name
 #include "plssvm/detail/string_utility.hpp"        // plssvm::detail::{trim, trim_left, as_lower_case}
 #include "plssvm/detail/type_traits.hpp"           // PLSSVM_REQUIRES, plssvm::detail::remove_cvref_t
+#include "plssvm/detail/utility.hpp"               // plssvm::detail::unreachable
 
 #include "fast_float/fast_float.h"  // fast_float::from_chars_result, fast_float::from_chars (floating point types)
 #include "fmt/core.h"               // fmt::format
@@ -32,10 +33,13 @@ namespace plssvm::detail {
 
 /**
  * @brief Converts the string @p str to a value of type @p T.
- * @details If @p T is an integral type [`std::from_chars`](https://en.cppreference.com/w/cpp/utility/from_chars) is used,
+ * @details If @p T is a `std::string` a trimmed version of the string is returned,
+ *          if @p T is a boolean either `"true"` or `"false"` is returned,
+ *          if @p T is a character the string is trimmed and a character is returned if only one char is left after trimming (otherwise an exception is thrown),
+ *          if @p T is a `long double` [`std::stold`](https://en.cppreference.com/w/cpp/string/basic_string/stof) is used since fast_float doesn't support long double,
+ *          if @p T is an integral type [`std::from_chars`](https://en.cppreference.com/w/cpp/utility/from_chars) is used,
  *          if @p T is a floating point type [`float_fast::from_chars`](https://github.com/fastfloat/fast_float) is used,
- *          if @p T is a `std::string` the normal `std::string` constructor is used,
- *          and if @p T is neither of the three, an exception is thrown.
+ *          otherwise an exception is thrown.
  * @tparam T the type to convert the value of @p str to, must be an arithmetic type or a `std::string`
  * @tparam Exception the exception type to throw in case that @p str can't be converted to a value of @p T
  *         (default: [`std::runtime_error`](https://en.cppreference.com/w/cpp/error/runtime_error)).
@@ -62,6 +66,7 @@ template <typename T, typename Exception = std::runtime_error, PLSSVM_REQUIRES((
         return static_cast<bool>(convert_to<long long, Exception>(str));
     } else if constexpr (std::is_same_v<remove_cvref_t<T>, char>) {
         const std::string_view trimmed = trim(str);
+        // since we expect a character, after trimming the string must only contain exactly one character
         if (trimmed.size() != 1) {
             throw Exception{ fmt::format("Can't convert '{}' to a value of type char!", str) };
         }
@@ -78,9 +83,7 @@ template <typename T, typename Exception = std::runtime_error, PLSSVM_REQUIRES((
                 // convert the string to an integral value
                 return std::from_chars(sv.data(), sv.data() + sv.size(), val);
             }
-            // unreachable, needed to silence a nvcc warning
-            // see also: https://stackoverflow.com/questions/64523302/cuda-missing-return-statement-at-end-of-non-void-function-in-constexpr-if-fun
-            return std::conditional_t<std::is_floating_point_v<T>, fast_float::from_chars_result, std::from_chars_result>{};
+            unreachable();
         };
 
         // remove leading whitespaces
@@ -94,9 +97,7 @@ template <typename T, typename Exception = std::runtime_error, PLSSVM_REQUIRES((
         }
         return val;
     }
-    // unreachable, needed to silence a nvcc warning
-    // see also: https://stackoverflow.com/questions/64523302/cuda-missing-return-statement-at-end-of-non-void-function-in-constexpr-if-fun
-    return T{};
+    unreachable();
 }
 
 /**
@@ -121,6 +122,7 @@ template <typename T>
  * @tparam T the type to convert the value of @p str to, must be an arithmetic type or a `std::string`
  * @param[in] str the string to split
  * @param[in] delim the split delimiter
+ * @throws std::runtime_error if at least one token in @p str can't be converted to @p T
  * @return the split sub-strings **converted** to the type @p T (`[[nodiscard]]`)
  */
 template <typename T>

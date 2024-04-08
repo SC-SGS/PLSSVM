@@ -86,13 +86,16 @@ std::istream &operator>>(std::istream &in, verbosity_level &verb) {
 verbosity_level operator|(const verbosity_level lhs, const verbosity_level rhs) {
     return static_cast<verbosity_level>(detail::to_underlying(lhs) | detail::to_underlying(rhs));
 }
+
 verbosity_level operator|=(verbosity_level &lhs, const verbosity_level rhs) {
     const verbosity_level verb = lhs | rhs;
     return lhs = verb;
 }
+
 verbosity_level operator&(const verbosity_level lhs, const verbosity_level rhs) {
     return static_cast<verbosity_level>(detail::to_underlying(lhs) & detail::to_underlying(rhs));
 }
+
 verbosity_level operator&=(verbosity_level &lhs, const verbosity_level rhs) {
     const verbosity_level verb = lhs & rhs;
     return lhs = verb;

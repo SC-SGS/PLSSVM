@@ -6,17 +6,20 @@
  *          See the LICENSE.md file in the project root for full license information.
  */
 
-#include "plssvm/backends/SYCL/exceptions.hpp"
-#include "plssvm/backends/SYCL/implementation_type.hpp"
-#include "plssvm/backends/SYCL/kernel_invocation_type.hpp"
+#include "plssvm/backends/SYCL/exceptions.hpp"               // plssvm::sycl::backend_exception
+#include "plssvm/backends/SYCL/implementation_types.hpp"     // plssvm::sycl::{implementation_type, list_available_sycl_implementations}
+#include "plssvm/backends/SYCL/kernel_invocation_types.hpp"  // plssvm::sycl::kernel_invocation_type
+#include "plssvm/exceptions/exceptions.hpp"                  // plssvm::exception
 
-#include "../utility.hpp"  // register_py_exception
+#include "bindings/Python/utility.hpp"  // register_py_exception
 
 #include "pybind11/pybind11.h"  // py::module_, py::enum_, py::exception
 #include "pybind11/stl.h"       // support for STL types: std:vector
 
+#include <vector>  // std::vector
+
 #define PLSSVM_CONCATENATE_DETAIL(x, y) x##y
-#define PLSSVM_CONCATENATE(x, y)        PLSSVM_CONCATENATE_DETAIL(x, y)
+#define PLSSVM_CONCATENATE(x, y) PLSSVM_CONCATENATE_DETAIL(x, y)
 
 namespace py = pybind11;
 

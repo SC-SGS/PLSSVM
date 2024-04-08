@@ -20,18 +20,17 @@ if (NOT OpenCL_FOUND)
 endif ()
 message(CHECK_PASS "found")
 
-
 # explicitly set sources
 set(PLSSVM_OPENCL_SOURCES
-        ${CMAKE_CURRENT_LIST_DIR}/detail/command_queue.cpp
-        ${CMAKE_CURRENT_LIST_DIR}/detail/context.cpp
-        ${CMAKE_CURRENT_LIST_DIR}/detail/device_ptr.cpp
-        ${CMAKE_CURRENT_LIST_DIR}/detail/error_code.cpp
-        ${CMAKE_CURRENT_LIST_DIR}/detail/kernel.cpp
-        ${CMAKE_CURRENT_LIST_DIR}/detail/utility.cpp
-        ${CMAKE_CURRENT_LIST_DIR}/csvm.cpp
-        ${CMAKE_CURRENT_LIST_DIR}/exceptions.cpp
-        ${CMAKE_CURRENT_LIST_DIR}/../gpu_device_ptr.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/detail/command_queue.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/detail/context.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/detail/device_ptr.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/detail/error_code.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/detail/kernel.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/detail/pinned_memory.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/detail/utility.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/csvm.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/exceptions.cpp
 )
 
 # set target properties
@@ -41,21 +40,24 @@ target_include_directories(${PLSSVM_OPENCL_BACKEND_LIBRARY_NAME} PUBLIC ${OpenCL
 target_link_libraries(${PLSSVM_OPENCL_BACKEND_LIBRARY_NAME} PUBLIC OpenCL)
 
 target_sources(${PLSSVM_OPENCL_BACKEND_LIBRARY_NAME} PRIVATE
-        FILE_SET HEADERS
-        BASE_DIRS
-            "${PROJECT_SOURCE_DIR}/include/plssvm/backends/OpenCL"
-        FILES
-            "${PROJECT_SOURCE_DIR}/include/plssvm/backends/OpenCL/cg_explicit/blas.cl"
-            "${PROJECT_SOURCE_DIR}/include/plssvm/backends/OpenCL/cg_explicit/kernel_matrix_assembly.cl"
-            "${PROJECT_SOURCE_DIR}/include/plssvm/backends/OpenCL/cg_implicit/kernel_matrix_assembly_blas.cl"
-            "${PROJECT_SOURCE_DIR}/include/plssvm/backends/OpenCL/predict_kernel.cl"
+               FILE_SET HEADERS
+               BASE_DIRS
+               "${PROJECT_SOURCE_DIR}/include/plssvm/backends/OpenCL/kernel"
+               FILES
+               "${PROJECT_SOURCE_DIR}/include/plssvm/backends/OpenCL/kernel/cg_explicit/blas.cl"
+               "${PROJECT_SOURCE_DIR}/include/plssvm/backends/OpenCL/kernel/cg_explicit/kernel_matrix_assembly.cl"
+               "${PROJECT_SOURCE_DIR}/include/plssvm/backends/OpenCL/kernel/cg_implicit/kernel_matrix_assembly_blas.cl"
+               "${PROJECT_SOURCE_DIR}/include/plssvm/backends/OpenCL/kernel/kernel_functions.cl"
+               "${PROJECT_SOURCE_DIR}/include/plssvm/backends/OpenCL/kernel/predict_kernel.cl"
+               "${PROJECT_SOURCE_DIR}/include/plssvm/backends/OpenCL/kernel/predict_kernel_linear.cl"
 )
 
 # link base library against OpenCL library
 target_link_libraries(${PLSSVM_OPENCL_BACKEND_LIBRARY_NAME} PUBLIC ${PLSSVM_BASE_LIBRARY_NAME})
 
 # set OpenCL include path to the *.cl files
-target_compile_definitions(${PLSSVM_OPENCL_BACKEND_LIBRARY_NAME} PRIVATE PLSSVM_OPENCL_KERNEL_SOURCE_DIR="${PROJECT_SOURCE_DIR}/include/plssvm/backends/OpenCL")
+set(PLSSVM_OPENCL_KERNEL_SOURCE_DIRECTORY "${PROJECT_SOURCE_DIR}/include/plssvm/backends/OpenCL/kernel")
+target_compile_definitions(${PLSSVM_OPENCL_BACKEND_LIBRARY_NAME} PRIVATE PLSSVM_OPENCL_KERNEL_SOURCE_DIR="${PLSSVM_OPENCL_KERNEL_SOURCE_DIRECTORY}")
 
 # set OpenCL library name (concatenated to the full kernel source string, to make sure that different OpenCL libraries
 # are recognized by the sha256 caching algorithm)
@@ -73,7 +75,7 @@ if (PLSSVM_NUM_NVIDIA_TARGET_ARCHS GREATER 0)
                 message(FATAL_ERROR "Requested PTX inline assembly to speed up the FP32/FP64 atomicAdd, but the supplied sm_${sm_value} is too old!")
             endif ()
         endforeach ()
-
+        
         message(STATUS "Enabled PTX inline assembly on NVIDIA GPUs to greatly improve the atomicAdd performance.")
         target_compile_definitions(${PLSSVM_OPENCL_BACKEND_LIBRARY_NAME} PRIVATE PLSSVM_OPENCL_BACKEND_USE_PTX_INLINE_ASSEMBLY)
     endif ()
@@ -84,6 +86,11 @@ target_compile_definitions(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC CL_TARGET_OPENCL_V
 
 # set current CMAKE_BUILD_TYPE included in the temp folder where the kernels are compiled to
 target_compile_definitions(${PLSSVM_OPENCL_BACKEND_LIBRARY_NAME} PRIVATE PLSSVM_CMAKE_BUILD_TYPE="${CMAKE_BUILD_TYPE}")
+
+# set whether the kernel source should be compiled with fast math enabled or not
+if (PLSSVM_ENABLE_FAST_MATH)
+    target_compile_definitions(${PLSSVM_OPENCL_BACKEND_LIBRARY_NAME} PRIVATE PLSSVM_ENABLE_FAST_MATH)
+endif ()
 
 # needed to link the OpenCL backend to a third-party executable
 target_compile_options(${PLSSVM_OPENCL_BACKEND_LIBRARY_NAME} PRIVATE -fPIE)
@@ -98,7 +105,6 @@ target_link_libraries(${PLSSVM_ALL_LIBRARY_NAME} INTERFACE ${PLSSVM_OPENCL_BACKE
 # mark backend library as install target
 list(APPEND PLSSVM_TARGETS_TO_INSTALL "${PLSSVM_OPENCL_BACKEND_LIBRARY_NAME}")
 set(PLSSVM_TARGETS_TO_INSTALL ${PLSSVM_TARGETS_TO_INSTALL} PARENT_SCOPE)
-
 
 # generate summary string
 set(PLSSVM_OPENCL_BACKEND_SUMMARY_STRING_COMPILER " - OpenCL:")

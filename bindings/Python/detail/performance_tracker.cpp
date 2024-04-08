@@ -6,9 +6,11 @@
  *          See the LICENSE.md file in the project root for full license information.
  */
 
-#include "plssvm/detail/performance_tracker.hpp"
+#include "plssvm/detail/performance_tracker.hpp"  // plssvm::detail::{global_tracker, tracking_entry}
 
 #include "pybind11/pybind11.h"  // py::module_
+
+#include <string>  // std::string
 
 namespace py = pybind11;
 
@@ -27,16 +29,11 @@ void init_performance_tracker([[maybe_unused]] py::module_ &m) {
         .def("add_parameter_tracking_entry", [](const plssvm::parameter &params) {
             plssvm::detail::global_tracker->add_tracking_entry(plssvm::detail::tracking_entry{ "parameter", "", params });
         })
-        .def(
-            "pause", []() { plssvm::detail::global_tracker->pause_tracking(); }, "pause performance tracking")
-        .def(
-            "resume", []() { plssvm::detail::global_tracker->resume_tracking(); }, "resume performance tracking")
-        .def(
-            "save", [](const std::string &filename) { plssvm::detail::global_tracker->save(filename); }, "save the performance tracking results to the specified yaml file")
-        .def(
-            "is_tracking", []() { return plssvm::detail::global_tracker->is_tracking(); }, "check whether performance tracking is currently enabled")
-        .def(
-            "clear_tracking_entries", []() { plssvm::detail::global_tracker->clear_tracking_entries(); }, "remove all currently tracked entries from the performance tracker");
+        .def("pause", []() { plssvm::detail::global_tracker->pause_tracking(); }, "pause performance tracking")
+        .def("resume", []() { plssvm::detail::global_tracker->resume_tracking(); }, "resume performance tracking")
+        .def("save", [](const std::string &filename) { plssvm::detail::global_tracker->save(filename); }, "save the performance tracking results to the specified yaml file")
+        .def("is_tracking", []() { return plssvm::detail::global_tracker->is_tracking(); }, "check whether performance tracking is currently enabled")
+        .def("clear_tracking_entries", []() { plssvm::detail::global_tracker->clear_tracking_entries(); }, "remove all currently tracked entries from the performance tracker");
 
 #endif
 }

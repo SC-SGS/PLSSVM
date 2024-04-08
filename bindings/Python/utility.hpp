@@ -11,22 +11,27 @@
 
 #ifndef PLSSVM_BINDINGS_PYTHON_UTILITY_HPP_
 #define PLSSVM_BINDINGS_PYTHON_UTILITY_HPP_
+
 #pragma once
 
-#include "plssvm/constants.hpp"       // plssvm::real_type
+#include "plssvm/constants.hpp"       // plssvm::real_type, plssvm::PADDING_SIZE
 #include "plssvm/detail/utility.hpp"  // plssvm::detail::contains
 #include "plssvm/matrix.hpp"          // plssvm::matrix, plssvm::layout_type
 #include "plssvm/parameter.hpp"       // plssvm::parameter
+#include "plssvm/shape.hpp"           // plssvm::shape
 
-#include "fmt/format.h"         // fmt::format
-#include "pybind11/numpy.h"     // py::array_t, py::buffer_info
-#include "pybind11/pybind11.h"  // py::kwargs, py::value_error, py::exception, py::str
-#include "pybind11/stl.h"       // support for STL types
+#include "fmt/format.h"            // fmt::format
+#include "pybind11/buffer_info.h"  // py::buffer_info
+#include "pybind11/numpy.h"        // py::array_t
+#include "pybind11/pybind11.h"     // py::kwargs, py::value_error, py::exception, py::str, py::set_error
+#include "pybind11/pytypes.h"      // py::list
+#include "pybind11/stl.h"          // support for STL types
 
 #include <cstring>      // std::memcpy
 #include <exception>    // std::exception_ptr, std::rethrow_exception
 #include <string>       // std::string
 #include <string_view>  // std::string_view
+#include <type_traits>  // std::is_same_v, std::conditional_t
 #include <vector>       // std::vector
 
 namespace py = pybind11;
@@ -81,11 +86,11 @@ template <typename T, plssvm::layout_type layout>
     T *ptr = static_cast<T *>(buffer.ptr);
     if (mat.is_padded()) {
         // must remove padding entries before copying to Python numpy array
-        const plssvm::matrix<T, layout> mat_without_padding{ mat, 0, 0 };
-        std::memcpy(ptr, mat_without_padding.data(), mat.num_entries() * sizeof(T));
+        const plssvm::matrix<T, layout> mat_without_padding{ mat, plssvm::shape{ 0, 0 } };
+        std::memcpy(ptr, mat_without_padding.data(), mat.size() * sizeof(T));
     } else {
         // can memcpy data directly
-        std::memcpy(ptr, mat.data(), mat.num_entries() * sizeof(T));
+        std::memcpy(ptr, mat.data(), mat.size() * sizeof(T));
     }
     return py_array;
 }
@@ -162,7 +167,7 @@ template <typename T>
     // convert py::array to plssvm::matrix<T>
     py::buffer_info buffer = mat.request();
     T *ptr = static_cast<T *>(buffer.ptr);
-    plssvm::aos_matrix<T> tmp{ static_cast<size_type>(mat.shape(0)), static_cast<size_type>(mat.shape(1)), ptr };
+    plssvm::aos_matrix<T> tmp{ plssvm::shape{ static_cast<size_type>(mat.shape(0)), static_cast<size_type>(mat.shape(1)) }, ptr, plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE } };
     return tmp;
 }
 
@@ -175,7 +180,7 @@ template <typename T>
 inline void check_kwargs_for_correctness(const py::kwargs &args, const std::vector<std::string_view> &valid_named_args) {
     for (const auto &[key, value] : args) {
         if (!plssvm::detail::contains(valid_named_args, key.cast<std::string_view>())) {
-            throw py::value_error(fmt::format("Invalid argument \"{}={}\" provided!", key.cast<std::string_view>(), value.cast<std::string_view>()));
+            throw py::value_error(fmt::format("got an unexpected keyword argument '{}'", key.cast<std::string_view>()));
         }
     }
 }
@@ -222,7 +227,7 @@ void register_py_exception(py::module_ &m, const std::string &py_exception_name,
                 std::rethrow_exception(p);
             }
         } catch (const Exception &e) {
-            py_exception(e.what_with_loc().c_str());
+            py::set_error(py_exception, e.what_with_loc().c_str());
         }
     });
 }

@@ -10,10 +10,11 @@
 
 #include "plssvm/detail/string_utility.hpp"  // plssvm::detail::to_lower_case
 
-#include <ios>      // std::ios::failbit
-#include <istream>  // std::istream
-#include <ostream>  // std::ostream
-#include <string>   // std::string
+#include <ios>          // std::ios::failbit
+#include <istream>      // std::istream
+#include <ostream>      // std::ostream
+#include <string>       // std::string
+#include <string_view>  // std::string_view
 
 namespace plssvm {
 

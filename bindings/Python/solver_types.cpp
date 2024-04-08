@@ -6,7 +6,7 @@
  *          See the LICENSE.md file in the project root for full license information.
  */
 
-#include "plssvm/solver_types.hpp"
+#include "plssvm/solver_types.hpp"  // plssvm::solver_type
 
 #include "pybind11/pybind11.h"  // py::module_, py::enum_
 
@@ -17,6 +17,5 @@ void init_solver_types(py::module_ &m) {
     py::enum_<plssvm::solver_type>(m, "SolverType")
         .value("AUTOMATIC", plssvm::solver_type::automatic, "the default solver type; depends on the available device and system memory")
         .value("CG_EXPLICIT", plssvm::solver_type::cg_explicit, "explicitly assemble the kernel matrix on the device")
-        .value("CG_STREAMING", plssvm::solver_type::cg_streaming, "assemble the kernel matrix piecewise on the device ")
         .value("CG_IMPLICIT", plssvm::solver_type::cg_implicit, "implicitly calculate the kernel matrix entries in each CG iteration");
 }

@@ -16,7 +16,7 @@
 namespace plssvm::opencl::detail {
 
 error_code::error_code(const cl_int error) noexcept :
-    err_{ error } {}
+    err_{ error } { }
 
 error_code &error_code::operator=(const cl_int error) noexcept {
     err_ = error;
@@ -183,6 +183,7 @@ std::ostream &operator<<(std::ostream &out, const error_code ec) {
 bool operator==(const error_code lhs, const error_code rhs) noexcept {
     return lhs.value() == rhs.value();
 }
+
 bool operator!=(const error_code lhs, const error_code rhs) noexcept {
     return !(lhs == rhs);
 }

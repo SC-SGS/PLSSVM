@@ -16,11 +16,11 @@ jobs:
     steps:
       # checkout repository
       - name: Checkout PLSSVM
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4.1.1
         with:
           path: PLSSVM
       # install dependencies
-      - name: Dependancies
+      - name: Dependencies
         run: |
           sudo apt update
           sudo apt-get install -y doxygen graphviz
@@ -38,7 +38,7 @@ jobs:
           make doc
       # deploy generated documentation using github.io
       - name: Deploy
-        uses: peaceiris/actions-gh-pages@v3
+        uses: peaceiris/actions-gh-pages@v3.9.3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./PLSSVM/docs/html

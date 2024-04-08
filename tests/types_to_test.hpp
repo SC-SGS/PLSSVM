@@ -39,13 +39,15 @@ namespace util {
 template <auto... Values>
 struct value_list {
     /// The compile-time constant values wrapped in a std::tuple.
-    static constexpr std::tuple<decltype(Values)...> values{ Values... };
+    constexpr static std::tuple<decltype(Values)...> values{ Values... };
 };
 
 template <typename T>
-struct is_value_list : std::false_type {};
+struct is_value_list : std::false_type { };
+
 template <auto... Values>
-struct is_value_list<value_list<Values...>> : std::true_type {};
+struct is_value_list<value_list<Values...>> : std::true_type { };
+
 /**
  * @brief Check whether @p T is a value_list independent of its possible compile-time constants.
  * @tparam T the type to check
@@ -64,9 +66,11 @@ struct type_list {
 };
 
 template <typename T>
-struct is_type_list : std::false_type {};
+struct is_type_list : std::false_type { };
+
 template <typename... Types>
-struct is_type_list<type_list<Types...>> : std::true_type {};
+struct is_type_list<type_list<Types...>> : std::true_type { };
+
 /**
  * @brief Check whether @p T s a type_list independent fof its possible compile-time types.
  * @tparam T the type to check
@@ -114,6 +118,7 @@ namespace detail {
 // convert the types in a tuple to GoogleTests ::testing::Type
 template <typename Ts>
 struct tuple_to_gtest_types;
+
 /**
  * @brief Convert the types in a tuple to GoogleTests ::testing::Types.
  * @details For example: converts `std::tuple<int, long, float>` to `::testing::Types<int, long, float>`.
@@ -123,6 +128,7 @@ template <typename... T>
 struct tuple_to_gtest_types<std::tuple<T...>> {
     using type = ::testing::Types<T...>;
 };
+
 /**
  * @brief Shorthand for the `typename tuple_to_gtest_types<...>::type` type.
  */
@@ -154,6 +160,7 @@ using concat_tuple_types_t = typename concat_tuple_types<T...>::type;
 
 template <typename T, auto N>
 struct add_to_value_list;
+
 /**
  * @brief Add the compile-time constant value @p N to the values in the provided `value_list`.
  * @tparam Values the values already in the `value_list`
@@ -163,6 +170,7 @@ template <auto... Values, auto N>
 struct add_to_value_list<value_list<Values...>, N> {
     using type = value_list<N, Values...>;
 };
+
 /**
  * @brief Shorthand for `typename add_to_value_list<...>::type`.
  */
@@ -171,6 +179,7 @@ using add_to_value_list_t = typename add_to_value_list<T, N>::type;
 
 template <const auto &Array, typename Indices = std::make_index_sequence<Array.size()>>
 struct wrap_in_value_list;
+
 /**
  * @brief Wrap the elements in @p Array in `value_list` types and return a std::tuple to this type.
  * @tparam Array the values to wrap
@@ -180,6 +189,7 @@ template <const auto &Array, std::size_t... I>
 struct wrap_in_value_list<Array, std::index_sequence<I...>> {
     using type = std::tuple<value_list<std::get<I>(Array)>...>;
 };
+
 /**
  * @brief Shorthand for `typename wrap_in_value_list<...>::type`.
  */
@@ -188,6 +198,7 @@ using wrap_in_value_list_t = typename wrap_in_value_list<Array>::type;
 
 template <typename T, std::size_t, std::size_t, const auto &Array, typename Tuple>
 struct combine_values;
+
 /**
  * @brief Recursion termination: add the last value in the @p Array to the `value_list`s in the std::tuple.
  * @tparam T the type in the array
@@ -199,6 +210,7 @@ template <typename T, std::size_t SIZE, const std::array<T, SIZE> &Array, typena
 struct combine_values<T, SIZE, 0, Array, std::tuple<Types...>> {
     using type = std::tuple<add_to_value_list_t<Types, std::get<0>(Array)>...>;
 };
+
 /**
  * @brief Recursively add the value @p I of the @p Array to the `value_list`s in the std::tuple.
  * @tparam T the type in the array
@@ -213,6 +225,7 @@ struct combine_values<T, SIZE, I, Array, std::tuple<Types...>> {
         std::tuple<add_to_value_list_t<Types, std::get<I>(Array)>...>,
         typename combine_values<T, SIZE, I - 1, Array, std::tuple<Types...>>::type>;
 };
+
 /**
  * @brief Shorthand for `typename combine_values<...>::type`.
  */
@@ -228,6 +241,7 @@ template <const auto &FirstArray, const auto &...RemainingArrays>
 struct cartesian_value_product {
     using type = combine_values_t<FirstArray, typename cartesian_value_product<RemainingArrays...>::type>;
 };
+
 /**
  * @brief Recursion termination: the cartesian product of a single array is the array itself wrapped in `value_list`s.
  * @tparam Array the array to wrap
@@ -243,6 +257,7 @@ struct cartesian_value_product<Array> {
 
 template <typename T, typename U>
 struct add_to_type_list;
+
 /**
  * @brief Add the type @p U to the types in the provided `type_list`.
  * @tparam Types the types already in the `type_list`
@@ -252,6 +267,7 @@ template <typename... Types, typename U>
 struct add_to_type_list<type_list<Types...>, U> {
     using type = type_list<U, Types...>;
 };
+
 /**
  * @brief Shorthand for `typename add_to_type_list<...>::type`.
  */
@@ -260,6 +276,7 @@ using add_to_type_list_t = typename add_to_type_list<T, U>::type;
 
 template <typename Tuple>
 struct wrap_in_type_list;
+
 /**
  * @brief Wrap the @p Types given in a std::tuple in `type_list` types and return a std::tuple to this type.
  * @tparam Types the types to wrap
@@ -268,6 +285,7 @@ template <typename... Types>
 struct wrap_in_type_list<std::tuple<Types...>> {
     using type = std::tuple<type_list<Types>...>;
 };
+
 /**
  * @brief Shorthand for `typename wrap_in_type_list<...>::type`.
  */
@@ -276,6 +294,7 @@ using wrap_in_type_list_t = typename wrap_in_type_list<Tuple>::type;
 
 template <std::size_t, typename Tuple, typename ResultTuple>
 struct combine_types;
+
 /**
  * @brief Recursion termination: add the last type in the @p Tuple to the `type_list`s in the std::tuple.
  * @tparam Tuple the std::tuple containing the types to add
@@ -285,6 +304,7 @@ template <typename Tuple, typename... ResultTupleTypes>
 struct combine_types<0, Tuple, std::tuple<ResultTupleTypes...>> {
     using type = std::tuple<add_to_type_list_t<ResultTupleTypes, std::tuple_element_t<0, Tuple>>...>;
 };
+
 /**
  * @brief Recursively add the type @p I of the @p Tuple to the `type_list`s in the std::tuple.
  * @tparam I the currently investigated tuple element
@@ -297,6 +317,7 @@ struct combine_types<I, Tuple, std::tuple<ResultTupleTypes...>> {
         std::tuple<add_to_type_list_t<ResultTupleTypes, std::tuple_element_t<I, Tuple>>...>,
         typename combine_types<I - 1, Tuple, std::tuple<ResultTupleTypes...>>::type>;
 };
+
 /**
  * @brief Shorthand for `typename combine_types<...>::type`.
  */
@@ -312,6 +333,7 @@ template <typename FirstTuple, typename... RemainingTuples>
 struct cartesian_type_product {
     using type = combine_types_t<FirstTuple, typename cartesian_type_product<RemainingTuples...>::type>;
 };
+
 /**
  * @brief Recursion termination: the cartesian product of a single tuple is the tuple itself wrapped in `type_list`s.
  * @tparam Tuple the tuple to wrap
@@ -388,17 +410,14 @@ struct create_test_parameters_dispatcher;
  */
 template <typename... Types>
 struct create_test_parameters_dispatcher<1, std::tuple<Types...>> {
-    // clang-format off
     using type = std::conditional_t<
-        (is_type_list_v<Types> && ...),  // check whether only type_lists have been provided
-            typename wrap_types_in_test_parameter_with_empty_value_list<std::tuple<Types...>>::type,  // true -> create test_parameters
-            std::conditional_t<  // false
-                (is_value_list_v<Types> && ...),  // check whether only value_lists have been provided
-                   typename wrap_types_in_test_parameter_with_empty_type_list<std::tuple<Types...>>::type,  // true -> create test_parameters
-                   void  // should be unreachable
-            >
-        >;
-    // clang-format on
+        (is_type_list_v<Types> && ...),                                                              // check whether only type_lists have been provided
+        typename wrap_types_in_test_parameter_with_empty_value_list<std::tuple<Types...>>::type,     // true -> create test_parameters
+        std::conditional_t<                                                                          // false
+            (is_value_list_v<Types> &&...),                                                          // check whether only value_lists have been provided
+            typename wrap_types_in_test_parameter_with_empty_type_list<std::tuple<Types...>>::type,  // true -> create test_parameters
+            void                                                                                     // should be unreachable
+            >>;
 };
 
 /**
@@ -442,8 +461,9 @@ using combine_test_parameters_gtest_t = typename combine_test_parameters_gtest<T
 //*************************************************************************************************************************************//
 
 /// A list of all available kernel function types.
-constexpr std::array<plssvm::kernel_function_type, 3> kernel_functions_to_test{
-    plssvm::kernel_function_type::linear, plssvm::kernel_function_type::polynomial, plssvm::kernel_function_type::rbf
+constexpr std::array<plssvm::kernel_function_type, 6> kernel_functions_to_test{
+    plssvm::kernel_function_type::linear, plssvm::kernel_function_type::polynomial, plssvm::kernel_function_type::rbf,
+    plssvm::kernel_function_type::sigmoid, plssvm::kernel_function_type::laplacian, plssvm::kernel_function_type::chi_squared
 };
 /// A list of all available layout types.
 constexpr std::array<plssvm::layout_type, 2> layout_types_to_test{
@@ -455,7 +475,7 @@ constexpr std::array<plssvm::classification_type, 2> classification_types_to_tes
 };
 /// A list of all available solver types.
 constexpr std::array<plssvm::solver_type, 4> solver_types_to_test = {
-    plssvm::solver_type::automatic, plssvm::solver_type::cg_explicit, plssvm::solver_type::cg_streaming, plssvm::solver_type::cg_implicit
+    plssvm::solver_type::automatic, plssvm::solver_type::cg_explicit, plssvm::solver_type::cg_implicit
 };
 
 /// A list of all solver types.
@@ -488,6 +508,8 @@ using real_type_layout_type_gtest = combine_test_parameters_gtest_t<real_type_li
 using label_type_classification_type_gtest = combine_test_parameters_gtest_t<label_type_list, classification_type_list>;
 /// A list of a combination of all supported label types and layout types wrapped in a Google test type.
 using label_type_layout_type_gtest = combine_test_parameters_gtest_t<label_type_list, layout_type_list>;
+/// A list of a combination of all supported label types, kernel function and classification types wrapped in a Google test type.
+using label_type_kernel_function_and_classification_type_gtest = combine_test_parameters_gtest_t<label_type_list, kernel_function_and_classification_type_list>;
 /// A list of a combination of all supported label types and classification, kernel function, and solver types wrapped in a Google test type.
 using label_type_solver_and_kernel_function_and_classification_type_gtest = combine_test_parameters_gtest_t<label_type_list, solver_and_kernel_function_and_classification_type_list>;
 

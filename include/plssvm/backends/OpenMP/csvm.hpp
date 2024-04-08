@@ -13,15 +13,17 @@
 #define PLSSVM_BACKENDS_OPENMP_CSVM_HPP_
 #pragma once
 
-#include "plssvm/constants.hpp"           // plssvm::real_type
-#include "plssvm/csvm.hpp"                // plssvm::csvm
-#include "plssvm/detail/memory_size.hpp"  // plssvm::detail::memory_size
-#include "plssvm/detail/simple_any.hpp"   // plssvm::detail::simple_any
-#include "plssvm/detail/type_traits.hpp"  // PLSSVM_REQUIRES
-#include "plssvm/matrix.hpp"              // plssvm::aos_matrix
-#include "plssvm/parameter.hpp"           // plssvm::parameter, plssvm::detail::has_only_parameter_named_args_v
-#include "plssvm/target_platforms.hpp"    // plssvm::target_platform
+#include "plssvm/constants.hpp"             // plssvm::real_type
+#include "plssvm/csvm.hpp"                  // plssvm::csvm, plssvm::detail::csvm_backend_exists
+#include "plssvm/detail/memory_size.hpp"    // plssvm::detail::memory_size
+#include "plssvm/detail/move_only_any.hpp"  // plssvm::detail::move_only_any
+#include "plssvm/detail/type_traits.hpp"    // PLSSVM_REQUIRES
+#include "plssvm/matrix.hpp"                // plssvm::aos_matrix
+#include "plssvm/parameter.hpp"             // plssvm::parameter, plssvm::detail::has_only_parameter_named_args_v
+#include "plssvm/solver_types.hpp"          // plssvm::solver_type
+#include "plssvm/target_platforms.hpp"      // plssvm::target_platform
 
+#include <cstddef>      // std::size_t
 #include <type_traits>  // std::true_type
 #include <utility>      // std::forward, std::pair
 #include <vector>       // std::vector
@@ -60,12 +62,13 @@ class csvm : public ::plssvm::csvm {
      * @throws plssvm::openmp::backend_exception if the target platform isn't plssvm::target_platform::automatic or plssvm::target_platform::cpu
      * @throws plssvm::openmp::backend_exception if the plssvm::target_platform::cpu target isn't available
      */
-    template <typename... Args, PLSSVM_REQUIRES(detail::has_only_parameter_named_args_v<Args...>)>
+    template <typename... Args, PLSSVM_REQUIRES(::plssvm::detail::has_only_parameter_named_args_v<Args...>)>
     explicit csvm(Args &&...named_args) :
         ::plssvm::csvm{ std::forward<Args>(named_args)... } {
         // the default target is the automatic one
         this->init(plssvm::target_platform::automatic);
     }
+
     /**
      * @brief Construct a new C-SVM using the OpenMP backend on the @p target platform and the optionally provided @p named_args.
      * @param[in] target the target platform used for this C-SVM
@@ -74,7 +77,7 @@ class csvm : public ::plssvm::csvm {
      * @throws plssvm::openmp::backend_exception if the target platform isn't plssvm::target_platform::automatic or plssvm::target_platform::cpu
      * @throws plssvm::openmp::backend_exception if the plssvm::target_platform::cpu target isn't available
      */
-    template <typename... Args, PLSSVM_REQUIRES(detail::has_only_parameter_named_args_v<Args...>)>
+    template <typename... Args, PLSSVM_REQUIRES(::plssvm::detail::has_only_parameter_named_args_v<Args...>)>
     explicit csvm(const target_platform target, Args &&...named_args) :
         ::plssvm::csvm{ std::forward<Args>(named_args)... } {
         this->init(target);
@@ -101,31 +104,35 @@ class csvm : public ::plssvm::csvm {
      */
     ~csvm() override = default;
 
+    /**
+     * @copydoc plssvm::csvm::num_available_devices
+     * @note On the CPU, only one device will ever be available.
+     */
+    [[nodiscard]] std::size_t num_available_devices() const noexcept override {
+        return 1;
+    }
+
   protected:
     /**
      * @copydoc plssvm::csvm::get_device_memory
      */
-    [[nodiscard]] ::plssvm::detail::memory_size get_device_memory() const final;
+    [[nodiscard]] std::vector<::plssvm::detail::memory_size> get_device_memory() const final;
     /**
      * @copydoc plssvm::csvm::get_max_mem_alloc_size
      */
-    [[nodiscard]] ::plssvm::detail::memory_size get_max_mem_alloc_size() const final;
+    [[nodiscard]] std::vector<::plssvm::detail::memory_size> get_max_mem_alloc_size() const final;
 
     //***************************************************//
     //                        fit                        //
     //***************************************************//
     /**
-     * @copydoc plssvm::csvm::setup_data_on_devices
-     */
-    [[nodiscard]] detail::simple_any setup_data_on_devices(solver_type solver, const soa_matrix<real_type> &A) const final;
-    /**
      * @copydoc plssvm::csvm::assemble_kernel_matrix
      */
-    [[nodiscard]] detail::simple_any assemble_kernel_matrix(solver_type solver, const parameter &params, detail::simple_any &data, const std::vector<real_type> &q_red, real_type QA_cost) const final;
+    [[nodiscard]] std::vector<::plssvm::detail::move_only_any> assemble_kernel_matrix(solver_type solver, const parameter &params, const soa_matrix<real_type> &A, const std::vector<real_type> &q_red, real_type QA_cost) const final;
     /**
      * @copydoc plssvm::csvm::blas_level_3
      */
-    void blas_level_3(solver_type solver, real_type alpha, const detail::simple_any &A, const soa_matrix<real_type> &B, real_type beta, soa_matrix<real_type> &C) const final;
+    void blas_level_3(solver_type solver, real_type alpha, const std::vector<::plssvm::detail::move_only_any> &A, const soa_matrix<real_type> &B, real_type beta, soa_matrix<real_type> &C) const final;
 
     //***************************************************//
     //                   predict, score                  //
@@ -153,7 +160,7 @@ namespace detail {
  * @brief Sets the `value` to `true` since C-SVMs using the OpenMP backend are available.
  */
 template <>
-struct csvm_backend_exists<openmp::csvm> : std::true_type {};
+struct csvm_backend_exists<openmp::csvm> : std::true_type { };
 
 }  // namespace detail
 

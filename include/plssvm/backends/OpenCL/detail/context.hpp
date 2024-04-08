@@ -55,7 +55,7 @@ class context {
      * @param[in,out] other the context to move the resources from
      * @return `*this`
      */
-    context &operator=(context &&other);
+    context &operator=(context &&other) noexcept;
 
     /**
      * @brief Release the context resources on destruction.
@@ -67,6 +67,7 @@ class context {
      * @return the wrapped OpenCL cl_context (`[[nodiscard]]`)
      */
     [[nodiscard]] operator cl_context &() noexcept { return device_context; }
+
     /**
      * @brief Implicitly convert a context wrapper to an OpenCL cl_context.
      * @return the wrapped OpenCL cl_context (`[[nodiscard]]`)

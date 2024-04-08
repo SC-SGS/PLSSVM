@@ -36,22 +36,25 @@ message(CHECK_PASS "found")
 enable_language(HIP)
 find_package(HIP REQUIRED)
 
-
 ## set necessary flags
 set(CMAKE_HIP_STANDARD 17)
 set(CMAKE_HIP_STANDARD_REQUIRED ON)
 
 set(CMAKE_HIP_FLAGS "${CMAKE_HIP_FLAGS} -std=c++17")
-set(CMAKE_HIP_FLAGS_RELWITHDEBINFO "${CMAKE_HIP_FLAGS_RELWITHDEBINFO} -O2 -ffast-math")
-set(CMAKE_HIP_FLAGS_RELEASE "${CMAKE_HIP_FLAGS_RELEASE} -O3 -ffast-math")
+# set fast-math if requested
+if (PLSSVM_ENABLE_FAST_MATH)
+    set(CMAKE_HIP_FLAGS "${CMAKE_HIP_FLAGS} -ffast-math")
+endif ()
+set(CMAKE_HIP_FLAGS_RELWITHDEBINFO "${CMAKE_HIP_FLAGS_RELWITHDEBINFO} -O2")
+set(CMAKE_HIP_FLAGS_RELEASE "${CMAKE_HIP_FLAGS_RELEASE} -O3")
 
 # explicitly set sources
 set(PLSSVM_HIP_SOURCES
-        ${CMAKE_CURRENT_LIST_DIR}/detail/device_ptr.hip.cpp
-        ${CMAKE_CURRENT_LIST_DIR}/detail/utility.hip.cpp
-        ${CMAKE_CURRENT_LIST_DIR}/csvm.hip.cpp
-        ${CMAKE_CURRENT_LIST_DIR}/exceptions.cpp
-        ${CMAKE_CURRENT_LIST_DIR}/../gpu_device_ptr.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/detail/device_ptr.hip
+    ${CMAKE_CURRENT_LIST_DIR}/detail/pinned_memory.hip
+    ${CMAKE_CURRENT_LIST_DIR}/detail/utility.hip
+    ${CMAKE_CURRENT_LIST_DIR}/csvm.hip
+    ${CMAKE_CURRENT_LIST_DIR}/exceptions.hip
 )
 
 # set target properties
@@ -67,7 +70,9 @@ target_compile_options(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC -Wno-sign-compare)
 set_property(TARGET ${PLSSVM_HIP_BACKEND_LIBRARY_NAME} PROPERTY HIP_ARCHITECTURES ${PLSSVM_AMD_TARGET_ARCHS})
 
 # link base library against HIP library
-target_link_libraries(${PLSSVM_HIP_BACKEND_LIBRARY_NAME} PUBLIC ${PLSSVM_BASE_LIBRARY_NAME} hip::device hip::host)
+target_link_libraries(${PLSSVM_HIP_BACKEND_LIBRARY_NAME} PRIVATE hip::device hip::host)
+set_target_properties(${PLSSVM_HIP_BACKEND_LIBRARY_NAME} PROPERTIES LINKER_LANGUAGE HIP)
+target_link_libraries(${PLSSVM_HIP_BACKEND_LIBRARY_NAME} PUBLIC ${PLSSVM_BASE_LIBRARY_NAME})
 
 # set compile definition that the HIP backend is available
 target_compile_definitions(${PLSSVM_BASE_LIBRARY_NAME} PRIVATE PLSSVM_HAS_HIP_BACKEND)
@@ -79,7 +84,6 @@ target_link_libraries(${PLSSVM_ALL_LIBRARY_NAME} INTERFACE ${PLSSVM_HIP_BACKEND_
 # mark backend library as install target
 list(APPEND PLSSVM_TARGETS_TO_INSTALL "${PLSSVM_HIP_BACKEND_LIBRARY_NAME}")
 set(PLSSVM_TARGETS_TO_INSTALL ${PLSSVM_TARGETS_TO_INSTALL} PARENT_SCOPE)
-
 
 # generate summary string
 set(PLSSVM_HIP_BACKEND_SUMMARY_STRING " - HIP: amd (${PLSSVM_AMD_TARGET_ARCHS})" PARENT_SCOPE)

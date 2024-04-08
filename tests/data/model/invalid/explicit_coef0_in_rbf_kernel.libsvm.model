@@ -1,5 +1,6 @@
 svm_type c_svc
 kernel_type rbf
+gamma 0.001
 coef0 1.5
 nr_class 2
 label 0 1

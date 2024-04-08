@@ -9,11 +9,12 @@
  */
 
 #include "plssvm/backends/SYCL/DPCPP/detail/device_ptr.hpp"  // plssvm::dpcpp::detail::device_ptr
-#include "plssvm/backends/SYCL/DPCPP/detail/utility.hpp"     // plssvm::dpcpp::detail::get_default_device
 
-#include "backends/generic_device_ptr_tests.h"  // generic device pointer tests to instantiate
-#include "naming.hpp"                           // naming::test_parameter_to_name
-#include "types_to_test.hpp"                    // util::{combine_test_parameters_gtest_t, cartesian_type_product_t, layout_type_list}
+#include "plssvm/backends/SYCL/DPCPP/detail/utility.hpp"  // plssvm::dpcpp::detail::get_default_device
+
+#include "tests/backends/generic_device_ptr_tests.hpp"  // generic device pointer tests to instantiate
+#include "tests/naming.hpp"                             // naming::test_parameter_to_name
+#include "tests/types_to_test.hpp"                      // util::{combine_test_parameters_gtest_t, cartesian_type_product_t, layout_type_list}
 
 #include "gtest/gtest.h"  // INSTANTIATE_TYPED_TEST_SUITE_P
 
@@ -29,6 +30,7 @@ struct dpcpp_device_ptr_test_type {
         return queue;
     }
 };
+
 using dpcpp_device_ptr_tuple = std::tuple<dpcpp_device_ptr_test_type<float>, dpcpp_device_ptr_test_type<double>>;
 
 // the tests used in the instantiated GTest test suites

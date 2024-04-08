@@ -8,12 +8,15 @@
 
 #include "plssvm/backends/SYCL/AdaptiveCpp/detail/utility.hpp"
 
+#include "plssvm/backends/SYCL/AdaptiveCpp/detail/queue.hpp"       // plssvm::adaptivecpp::detail::queue
 #include "plssvm/backends/SYCL/AdaptiveCpp/detail/queue_impl.hpp"  // plssvm::adaptivecpp::detail::queue (PImpl implementation)
 #include "plssvm/detail/string_utility.hpp"                        // plssvm::detail::{as_lower_case, contains}
 #include "plssvm/detail/utility.hpp"                               // plssvm::detail::contains
 #include "plssvm/target_platforms.hpp"                             // plssvm::target_platform, plssvm::determine_default_target_platform
 
 #include "sycl/sycl.hpp"  // ::sycl::platform, ::sycl::device, ::sycl::property::queue, ::sycl::info
+
+#include "fmt/format.h"  // fmt::format
 
 #include <map>      // std::multimap
 #include <memory>   // std::make_shared
@@ -89,6 +92,14 @@ queue get_default_queue() {
     queue q;
     q.impl = std::make_shared<queue::queue_impl>();
     return q;
+}
+
+std::string get_adaptivecpp_version_short() {
+    return fmt::format("{}.{}.{}", ACPP_VERSION_MAJOR, ACPP_VERSION_MINOR, ACPP_VERSION_PATCH);
+}
+
+std::string get_adaptivecpp_version() {
+    return ::hipsycl::sycl::detail::version_string();
 }
 
 }  // namespace plssvm::adaptivecpp::detail

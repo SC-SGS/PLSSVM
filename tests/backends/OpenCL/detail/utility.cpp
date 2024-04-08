@@ -8,37 +8,28 @@
  * @brief Tests for the custom utility functions related to the OpenCL backend.
  */
 
-#include "plssvm/backends/OpenCL/detail/utility.hpp"        // PLSSVM_OPENCL_ERROR_CHECK, plssvm::opencl::detail::{device_assert, get_contexts, get_device_name}
+#include "plssvm/backends/OpenCL/detail/utility.hpp"  // PLSSVM_OPENCL_ERROR_CHECK, plssvm::opencl::detail::{device_assert, get_contexts, get_device_name}
+
 #include "plssvm/backends/OpenCL/detail/command_queue.hpp"  // plssvm::opencl::detail::command_queue
 #include "plssvm/backends/OpenCL/detail/context.hpp"        // plssvm::opencl::detail::context
 #include "plssvm/backends/OpenCL/exceptions.hpp"            // plssvm::opencl::backend_exception
 
-#include "custom_test_macros.hpp"  // EXPECT_THROW_WHAT
+#include "CL/cl.h"  // CL_SUCCESS, CL_DEVICE_NOT_FOUND
 
-#include "CL/cl.h"        // CL_SUCCESS, CL_DEVICE_NOT_FOUND
+#include "tests/custom_test_macros.hpp"  // EXPECT_THROW_WHAT
+
 #include "gtest/gtest.h"  // TEST, EXPECT_EQ, EXPECT_NE, EXPECT_NO_THROW, EXPECT_FALSE
 
+#include <regex>   // std::regex, std::regex::extended, std::regex_match
 #include <string>  // std::string
 #include <vector>  // std::vector
 
-TEST(OpenCLUtility, device_assert) {
+TEST(OpenCLUtility, error_check) {
     // CL_SUCCESS must not throw
-    EXPECT_NO_THROW(PLSSVM_OPENCL_ERROR_CHECK(CL_SUCCESS));
     EXPECT_NO_THROW(PLSSVM_OPENCL_ERROR_CHECK(CL_SUCCESS, "success!"));
-    EXPECT_NO_THROW(plssvm::opencl::detail::device_assert(CL_SUCCESS));
-    EXPECT_NO_THROW(plssvm::opencl::detail::device_assert(CL_SUCCESS, "success!"));
 
     // any other code must throw
-    EXPECT_THROW_WHAT(PLSSVM_OPENCL_ERROR_CHECK(CL_DEVICE_NOT_FOUND),
-                      plssvm::opencl::backend_exception,
-                      "OpenCL assert 'CL_DEVICE_NOT_FOUND' (-1)!");
     EXPECT_THROW_WHAT(PLSSVM_OPENCL_ERROR_CHECK(CL_DEVICE_NOT_FOUND, "error"),
-                      plssvm::opencl::backend_exception,
-                      "OpenCL assert 'CL_DEVICE_NOT_FOUND' (-1): error!");
-    EXPECT_THROW_WHAT(plssvm::opencl::detail::device_assert(CL_DEVICE_NOT_FOUND),
-                      plssvm::opencl::backend_exception,
-                      "OpenCL assert 'CL_DEVICE_NOT_FOUND' (-1)!");
-    EXPECT_THROW_WHAT(plssvm::opencl::detail::device_assert(CL_DEVICE_NOT_FOUND, "error"),
                       plssvm::opencl::backend_exception,
                       "OpenCL assert 'CL_DEVICE_NOT_FOUND' (-1): error!");
 }
@@ -49,6 +40,20 @@ TEST(OpenCLUtility, get_contexts) {
     EXPECT_EQ(contexts.size(), 1);
     // the returned target must not be the automatic one
     EXPECT_NE(actual_target, plssvm::target_platform::automatic);
+}
+
+TEST(OpenCLUtility, get_opencl_target_version) {
+    const std::regex reg{ "[0-9]+\\.[0-9]+", std::regex::extended };
+    EXPECT_TRUE(std::regex_match(plssvm::opencl::detail::get_opencl_target_version(), reg));
+}
+
+TEST(OpenCLUtility, get_driver_version) {
+    // create a valid command queue
+    const std::vector<plssvm::opencl::detail::context> contexts{ plssvm::opencl::detail::get_contexts(plssvm::target_platform::automatic).first };
+    const plssvm::opencl::detail::command_queue queue{ contexts[0], contexts[0].devices[0] };
+    // the device name should not be empty
+    const std::string driver_version = plssvm::opencl::detail::get_driver_version(queue);
+    EXPECT_FALSE(driver_version.empty());
 }
 
 TEST(OpenCLUtility, get_device_name) {
@@ -62,7 +67,7 @@ TEST(OpenCLUtility, get_device_name) {
 
 TEST(OpenCLUtility, kernel_type_to_function_names) {
     // retrieve the function names
-    const auto function_name_map = plssvm::opencl::detail::kernel_type_to_function_names(plssvm::kernel_function_type::linear);
+    const auto function_name_map = plssvm::opencl::detail::kernel_type_to_function_names();
     // the map must not be empty!
     EXPECT_FALSE(function_name_map.empty());
 }
