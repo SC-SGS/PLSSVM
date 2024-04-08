@@ -131,9 +131,6 @@ std::vector<::plssvm::detail::move_only_any> csvm::assemble_kernel_matrix(const 
     PLSSVM_ASSERT(!q_red.empty(), "The q_red vector must not be empty!");
     PLSSVM_ASSERT(q_red.size() == A.num_rows() - 1, "The q_red size ({}) mismatches the number of data points after dimensional reduction ({})!", q_red.size(), A.num_rows() - 1);
 
-    // TODO Hotfix: extreme performance regression when using a soa_matrix -> convert to aos_matrix -> USES 2x the necessary memory!
-    const aos_matrix<real_type> aos_data{ A };
-
     std::vector<::plssvm::detail::move_only_any> kernel_matrices_parts(this->num_available_devices());
     const real_type cost = real_type{ 1.0 } / params.cost;
 
@@ -147,22 +144,22 @@ std::vector<::plssvm::detail::move_only_any> csvm::assemble_kernel_matrix(const 
                 std::vector<real_type> kernel_matrix(dist.calculate_explicit_kernel_matrix_num_entries_padded(0));  // only explicitly store the upper triangular matrix
                 switch (params.kernel_type.value()) {
                     case kernel_function_type::linear:
-                        detail::device_kernel_assembly<kernel_function_type::linear>(q_red, kernel_matrix, aos_data, QA_cost, cost);
+                        detail::device_kernel_assembly<kernel_function_type::linear>(q_red, kernel_matrix, A, QA_cost, cost);
                         break;
                     case kernel_function_type::polynomial:
-                        detail::device_kernel_assembly<kernel_function_type::polynomial>(q_red, kernel_matrix, aos_data, QA_cost, cost, params.degree.value(), params.gamma.value(), params.coef0.value());
+                        detail::device_kernel_assembly<kernel_function_type::polynomial>(q_red, kernel_matrix, A, QA_cost, cost, params.degree.value(), params.gamma.value(), params.coef0.value());
                         break;
                     case kernel_function_type::rbf:
-                        detail::device_kernel_assembly<kernel_function_type::rbf>(q_red, kernel_matrix, aos_data, QA_cost, cost, params.gamma.value());
+                        detail::device_kernel_assembly<kernel_function_type::rbf>(q_red, kernel_matrix, A, QA_cost, cost, params.gamma.value());
                         break;
                     case kernel_function_type::sigmoid:
-                        detail::device_kernel_assembly<kernel_function_type::sigmoid>(q_red, kernel_matrix, aos_data, QA_cost, cost, params.gamma.value(), params.coef0.value());
+                        detail::device_kernel_assembly<kernel_function_type::sigmoid>(q_red, kernel_matrix, A, QA_cost, cost, params.gamma.value(), params.coef0.value());
                         break;
                     case kernel_function_type::laplacian:
-                        detail::device_kernel_assembly<kernel_function_type::laplacian>(q_red, kernel_matrix, aos_data, QA_cost, cost, params.gamma.value());
+                        detail::device_kernel_assembly<kernel_function_type::laplacian>(q_red, kernel_matrix, A, QA_cost, cost, params.gamma.value());
                         break;
                     case kernel_function_type::chi_squared:
-                        detail::device_kernel_assembly<kernel_function_type::chi_squared>(q_red, kernel_matrix, aos_data, QA_cost, cost, params.gamma.value());
+                        detail::device_kernel_assembly<kernel_function_type::chi_squared>(q_red, kernel_matrix, A, QA_cost, cost, params.gamma.value());
                         break;
                 }
 
@@ -172,6 +169,7 @@ std::vector<::plssvm::detail::move_only_any> csvm::assemble_kernel_matrix(const 
         case solver_type::cg_implicit:
             {
                 // simply return data since in implicit we don't assembly the kernel matrix here!
+                aos_matrix<real_type> aos_data{ A };
                 kernel_matrices_parts[0] = ::plssvm::detail::move_only_any{ std::make_tuple(std::move(aos_data), params, std::move(q_red), QA_cost) };
             }
             break;

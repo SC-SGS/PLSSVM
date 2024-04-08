@@ -58,7 +58,7 @@ void device_kernel_assembly(const std::vector<real_type> &q, std::vector<real_ty
         if (row_idx <= col_idx) {
             real_type temp = QA_cost - q_ptr[row_idx] - q_ptr[col_idx];
             for (std::size_t f = 0; f < num_features; ++f) {
-                temp += data_ptr[row_idx * (num_features + PADDING_SIZE) + f] * data_ptr[col_idx * (num_features + PADDING_SIZE) + f];
+                temp += data_ptr[f * (dept + 1 + PADDING_SIZE) + row_idx] * data_ptr[f * (dept + 1 + PADDING_SIZE) + col_idx];
             }
 
             // apply cost to diagonal
