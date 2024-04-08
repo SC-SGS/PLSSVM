@@ -6,7 +6,7 @@
  * @license This file is part of the PLSSVM project which is released under the MIT license.
  *          See the LICENSE.md file in the project root for full license information.
  *
- * @brief Utility functions specific to the OpenMP backend.
+ * @brief Utility functions specific to the stdpar backend.
  */
 
 #ifndef PLSSVM_BACKENDS_STDPAR_DETAIL_UTILITY_HPP_
@@ -17,15 +17,12 @@
 
 namespace plssvm::stdpar::detail {
 
+// TODO: get the used stdpar implementation?
+
 /**
- * @brief Return the number of used CPU threads in the OpenMP backend.
- * @return the number of used CPU threads (`[[nodiscard]]`)
- */
-[[nodiscard]] int get_num_threads();
-/**
- * @brief Return the OpenMP version used.
- * @details Parses the output of `_STDPAR` according to https://stackoverflow.com/questions/1304363/how-to-check-the-version-of-openmp-on-linux.
- * @return the OpenMP version (`[[nodiscard]]`)
+ * @brief Return the stdpar version used (i.e. the used C++ version).
+ * @details Parses the output of `__cplusplus` according to https://en.cppreference.com/w/cpp/preprocessor/replace.
+ * @return the C++ standard version (`[[nodiscard]]`)
  */
 [[nodiscard]] std::string get_stdpar_version();
 

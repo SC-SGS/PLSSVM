@@ -8,49 +8,32 @@
 
 #include "plssvm/detail/utility.hpp"  // plssvm::detail::contains
 
-#include "omp.h"  // omp_get_num_threads, _OPENMP
-
 #include "fmt/core.h"  // fmt::format
 
 #include <string>         // std::string
 #include <unordered_map>  // std::unordered_map
 
-namespace plssvm::openmp::detail {
+namespace plssvm::stdpar::detail {
 
-int get_num_threads() {
-    // get the number of used OpenMP threads
-    int num_omp_threads{};
-#pragma omp parallel default(none) shared(num_omp_threads)
-    {
-#pragma omp master
-        num_omp_threads = omp_get_num_threads();
-    }
-    return num_omp_threads;
-}
-
-std::string get_openmp_version() {
-    // create version map according to https://stackoverflow.com/questions/1304363/how-to-check-the-version-of-openmp-on-linux
+std::string get_stdpar_version() {
+    // create version map according to https://en.cppreference.com/w/cpp/preprocessor/replace
     // clang-format off
-    static const std::unordered_map<unsigned, std::string> version_map{
-        { 1998'10, "1.0" },
-        { 2002'03, "2.0" },
-        { 2005'05, "2.5" },
-        { 2008'05, "3.0" },
-        { 2011'07, "3.1" },
-        { 2013'07, "4.0" },
-        { 2015'11, "4.5" },
-        { 2018'11, "5.0" },
-        { 2020'11, "5.1" },
-        { 2021'11, "5.2" }
+    static const std::unordered_map<long long, std::string> version_map{
+        { 199711L, "c++98" },
+        { 201103L, "c++11" },
+        { 201402L, "c++14" },
+        { 201703L, "c++17" },
+        { 202002L, "c++20" },
+        { 202302L, "c++23" }
     };
     // clang-format on
 
-    // return sanitized version or plain _OPENMP if the version isn't found
-    if (::plssvm::detail::contains(version_map, _OPENMP)) {
-        return version_map.at(_OPENMP);
+    // return sanitized version or plain __cplusplus if the version isn't found
+    if (::plssvm::detail::contains(version_map, __cplusplus)) {
+        return version_map.at(__cplusplus);
     } else {
-        return fmt::format("{}", _OPENMP);
+        return fmt::format("{}", __cplusplus);
     }
 }
 
-}  // namespace plssvm::openmp::detail
+}  // namespace plssvm::stdpar::detail
