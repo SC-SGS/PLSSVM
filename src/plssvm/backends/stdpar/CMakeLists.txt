@@ -40,24 +40,8 @@ set(PLSSVM_STDPAR_SOURCES
 # set target properties
 set_local_and_parent(PLSSVM_STDPAR_BACKEND_LIBRARY_NAME plssvm-stdpar)
 add_library(${PLSSVM_STDPAR_BACKEND_LIBRARY_NAME} SHARED ${PLSSVM_STDPAR_SOURCES})
-#target_link_libraries(${PLSSVM_OPENMP_BACKEND_LIBRARY_NAME} PRIVATE $<$<NOT:$<CXX_COMPILER_ID:MSVC>>:OpenMP::OpenMP_CXX>)
 # special command line options for MSVC:
-# -openmp:llvm -> enables unsigned loop indexes in OpenMP parallel for loops
-# -openmp:experimental -> enables OpenMP's SIMD instructions
-#target_compile_options(${PLSSVM_OPENMP_BACKEND_LIBRARY_NAME} PRIVATE $<$<CXX_COMPILER_ID:MSVC>:-openmp:llvm -openmp:experimental>)
-
-# work-around since hipcc doesn't define _OPENMP
-if (${CMAKE_CXX_COMPILER_ID} MATCHES "Clang")
-    # hipcc must be clang
-    execute_process(
-            COMMAND ${CMAKE_CXX_COMPILER} --version
-            OUTPUT_VARIABLE PLSSVM_CLANG_VERSION_OUTPUT)
-    # check if version message contains hipcc specific values
-    if ("${PLSSVM_CLANG_VERSION_OUTPUT}" MATCHES ".*HIP.*" AND "${PLSSVM_CLANG_VERSION_OUTPUT}" MATCHES ".*AMD clang.*")
-        message(STATUS "Add compiler options \"-x c++\" as workaround for hipcc (https://docs.amd.com/projects/HIP/en/docs-5.2.0/user_guide/faq.html#why-openmp-is-undefined-when-compiling-with-fopenmp).")
-        target_compile_options(${PLSSVM_STDPAR_BACKEND_LIBRARY_NAME} PRIVATE -x c++)
-    endif ()
-endif ()
+target_compile_options(${PLSSVM_STDPAR_BACKEND_LIBRARY_NAME} PRIVATE $<$<CXX_COMPILER_ID:MSVC>:"/Zc:__cplusplus">)
 
 # link base library against stdpar library
 target_link_libraries(${PLSSVM_STDPAR_BACKEND_LIBRARY_NAME} PUBLIC ${PLSSVM_BASE_LIBRARY_NAME})
