@@ -21,7 +21,6 @@
 
 #include <cstddef>  // std::size_t
 #include <execution>
-#include <ranges>
 #include <vector>  // std::vector
 
 namespace plssvm::stdpar::detail {
@@ -45,23 +44,28 @@ void device_kernel_assembly(const std::vector<real_type> &q, std::vector<real_ty
     PLSSVM_ASSERT(cost != real_type{ 0.0 }, "cost must not be 0.0 since it is 1 / plssvm::cost!");
 
     const std::size_t dept = q.size();
+    const std::size_t num_features = data.num_cols();
 
-    const auto is = std::views::cartesian_product(
-        std::views::iota(std::size_t{ 0 }, dept),
-        std::views::iota(std::size_t{ 0 }, dept));
+    std::vector<std::pair<std::size_t, std::size_t>> range(dept * dept);
+    for (std::size_t i = 0; i < range.size(); ++i) {
+        range[i] = std::make_pair(i / dept, i % dept);
+    }
 
-    std::for_each(std::execution::par_unseq, is.begin(), is.end(), [&](auto i) {
+    std::for_each(std::execution::par_unseq, range.cbegin(), range.cend(), [=, q_ptr = q.data(), data_ptr = data.data(), ret_ptr = ret.data()](const std::pair<std::size_t, std::size_t> i) {
         const auto [row_idx, col_idx] = i;
 
         // use symmetry and only calculate upper triangular matrix
         if (row_idx <= col_idx) {
-            real_type temp = kernel_function<kernel>(data, row_idx, data, col_idx, args...) + QA_cost - q[row_idx] - q[col_idx];
+            real_type temp = QA_cost - q_ptr[row_idx] - q_ptr[col_idx];
+            for (std::size_t f = 0; f < num_features; ++f) {
+                temp += data_ptr[row_idx * (num_features + PADDING_SIZE) + f] * data_ptr[col_idx * (num_features + PADDING_SIZE) + f];
+            }
 
             // apply cost to diagonal
             if (row_idx == col_idx) {
                 temp += cost;
             }
-            ret[row_idx * (dept + PADDING_SIZE) + col_idx - row_idx * (row_idx + 1) / 2] = temp;
+            ret_ptr[row_idx * (dept + PADDING_SIZE) + col_idx - row_idx * (row_idx + 1) / 2] = temp;
         }
     });
 }

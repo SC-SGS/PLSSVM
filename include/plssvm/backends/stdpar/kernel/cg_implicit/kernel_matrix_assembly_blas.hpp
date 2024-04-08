@@ -31,8 +31,8 @@
     #include "plssvm/backens/SYCL/detail/atomics.hpp"  // atomic_op
 using plssvm::sycl::detail::atomic_op;
 #else
-template <typename T>
-using atomic_op = std::atomic_ref<T>;
+//template <typename T>
+//using atomic_op = std::atomic_ref<T>;
 #endif
 
 namespace plssvm::stdpar::detail {
@@ -66,34 +66,35 @@ inline void device_kernel_assembly_symm(const real_type alpha, const std::vector
     // alpha * A * B + beta * C
     C *= beta;
 
-    const auto is = std::views::cartesian_product(
-        std::views::iota(std::size_t{ 0 }, dept),
-        std::views::iota(std::size_t{ 0 }, dept));
+    std::vector<std::pair<std::size_t, std::size_t>> range(dept * dept);
+    for (std::size_t i = 0; i < range.size(); ++i) {
+        range[i] = std::make_pair(i / dept, i % dept);
+    }
 
-    std::for_each(std::execution::par_unseq, is.begin(), is.end(), [&](auto i) {
-        const auto [km_row_idx, km_col_idx] = i;
-
-        // half number of computations by exploiting symmetry
-        if (km_row_idx <= km_col_idx) {
-            real_type temp = kernel_function<kernel>(data, km_row_idx, data, km_col_idx, args...) + QA_cost - q[km_row_idx] - q[km_col_idx];
-
-            // apply cost to diagonal
-            if (km_row_idx == km_col_idx) {
-                temp += cost;
-                // calculate the values of alpha * A * B
-                for (std::size_t row = 0; row < B.num_rows(); ++row) {
-                    atomic_op<real_type>{ C(row, km_row_idx) } += alpha * temp * B(row, km_row_idx);
-                }
-            } else {
-                // calculate the values of alpha * A * B
-                for (std::size_t row = 0; row < B.num_rows(); ++row) {
-                    atomic_op<real_type>{ C(row, km_row_idx) } += alpha * temp * B(row, km_col_idx);
-                    // symmetry
-                    atomic_op<real_type>{ C(row, km_col_idx) } += alpha * temp * B(row, km_row_idx);
-                }
-            }
-        }
-    });
+//    std::for_each(std::execution::par_unseq, range.cbegin(), range.cend(), [&](const std::pair<std::size_t, std::size_t> i) {
+//        const auto [km_row_idx, km_col_idx] = i;
+//
+//        // half number of computations by exploiting symmetry
+//        if (km_row_idx <= km_col_idx) {
+//            real_type temp = kernel_function<kernel>(data, km_row_idx, data, km_col_idx, args...) + QA_cost - q[km_row_idx] - q[km_col_idx];
+//
+//            // apply cost to diagonal
+//            if (km_row_idx == km_col_idx) {
+//                temp += cost;
+//                // calculate the values of alpha * A * B
+//                for (std::size_t row = 0; row < B.num_rows(); ++row) {
+//                    atomic_op<real_type>{ C(row, km_row_idx) } += alpha * temp * B(row, km_row_idx);
+//                }
+//            } else {
+//                // calculate the values of alpha * A * B
+//                for (std::size_t row = 0; row < B.num_rows(); ++row) {
+//                    atomic_op<real_type>{ C(row, km_row_idx) } += alpha * temp * B(row, km_col_idx);
+//                    // symmetry
+//                    atomic_op<real_type>{ C(row, km_col_idx) } += alpha * temp * B(row, km_row_idx);
+//                }
+//            }
+//        }
+//    });
 }
 
 }  // namespace plssvm::stdpar::detail

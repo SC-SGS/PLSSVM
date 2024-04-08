@@ -20,7 +20,6 @@
 
 #include <array>    // std::array
 #include <cstddef>  // std::size_t
-#include <ranges>
 #include <execution>
 #include <vector>  // std::vector
 
@@ -43,29 +42,27 @@ inline void device_kernel_symm(const unsigned long long m, const unsigned long l
     PLSSVM_ASSERT(B.shape() == (plssvm::shape{ n, k }), "B matrix sizes mismatch!: {} != [{}, {}]", B.shape(), n, k);
     PLSSVM_ASSERT(C.shape() == (plssvm::shape{ n, m }), "C matrix sizes mismatch!: {} != [{}, {}]", C.shape(), n, m);
 
-    const auto is = std::views::cartesian_product(
-        std::views::iota(std::size_t{ 0 }, n),
-        std::views::iota(std::size_t{ 0 }, m));
+#pragma omp parallel for collapse(2) default(none) shared(A, B, C) firstprivate(n, m, k, alpha, beta)
+    for (std::size_t rhs = 0; rhs < n; ++rhs) {
+        for (std::size_t row = 0; row < m; ++row) {
+            real_type temp{ 0.0 };
+            unsigned long long offset{ 0 };
 
-    std::for_each(std::execution::par_unseq, is.begin(), is.end(), [&](auto i) {
-        const auto [rhs, row] = i;
+            // left of the diagonal -> use symmetrically mirrored values
+            for (unsigned long long dim = 0; dim < row; ++dim) {
+                offset += dim;
+                temp += A[dim * (k + PADDING_SIZE) + row - offset] * B(rhs, dim);
+            }
+            // diagonal + right of the diagonal -> use contiguous values
+            offset += row;
+#pragma omp simd reduction(+ : temp)
+            for (unsigned long long dim = row; dim < k; ++dim) {
+                temp += A[row * (k + PADDING_SIZE) + dim - offset] * B(rhs, dim);
+            }
 
-        real_type temp{ 0.0 };
-        unsigned long long offset{ 0 };
-
-        // left of the diagonal -> use symmetrically mirrored values
-        for (unsigned long long dim = 0; dim < row; ++dim) {
-            offset += dim;
-            temp += A[dim * (k + PADDING_SIZE) + row - offset] * B(rhs, dim);
+            C(rhs, row) = alpha * temp + beta * C(rhs, row);
         }
-        // diagonal + right of the diagonal -> use contiguous values
-        offset += row;
-        for (unsigned long long dim = row; dim < k; ++dim) {
-            temp += A[row * (k + PADDING_SIZE) + dim - offset] * B(rhs, dim);
-        }
-
-        C(rhs, row) = alpha * temp + beta * C(rhs, row);
-    });
+    }
 }
 
 }  // namespace plssvm::stdpar::detail

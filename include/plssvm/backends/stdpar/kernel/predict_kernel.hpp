@@ -22,7 +22,6 @@
 
 #include <cmath>    // std::fma
 #include <cstddef>  // std::size_t
-#include <ranges>
 #include <execution>
 #include <vector>  // std::vector
 
@@ -44,11 +43,12 @@ inline void device_kernel_w_linear(soa_matrix<real_type> &w, const aos_matrix<re
     const std::size_t num_support_vectors = support_vectors.num_rows();
     const std::size_t num_features = support_vectors.num_cols();
 
-    const auto is = std::views::cartesian_product(
-        std::views::iota(std::size_t{ 0 }, num_classes),
-        std::views::iota(std::size_t{ 0 }, num_features));
+    std::vector<std::pair<std::size_t, std::size_t>> range(num_classes * num_features);
+    for (std::size_t i = 0; i < range.size(); ++i) {
+        range[i] = std::make_pair(i / num_features, i % num_classes);
+    }
 
-    std::for_each(std::execution::par_unseq, is.begin(), is.end(), [&](auto i) {
+    std::for_each(std::execution::par_unseq, range.cbegin(), range.cend(), [&](const std::pair<std::size_t, std::size_t> i) {
         const auto [a, dim] = i;
 
         real_type temp{ 0.0 };
@@ -77,11 +77,12 @@ inline void device_kernel_predict_linear(aos_matrix<real_type> &out, const soa_m
     const std::size_t num_predict_points = predict_points.num_rows();
     const std::size_t num_features = predict_points.num_cols();
 
-    const auto is = std::views::cartesian_product(
-        std::views::iota(std::size_t{ 0 }, num_predict_points),
-        std::views::iota(std::size_t{ 0 }, num_classes));
+    std::vector<std::pair<std::size_t, std::size_t>> range(num_predict_points * num_classes);
+    for (std::size_t i = 0; i < range.size(); ++i) {
+        range[i] = std::make_pair(i / num_classes, i % num_predict_points);
+    }
 
-    std::for_each(std::execution::par_unseq, is.begin(), is.end(), [&](auto i) {
+    std::for_each(std::execution::par_unseq, range.cbegin(), range.cend(), [&](const std::pair<std::size_t, std::size_t> i) {
         const auto [point_index, a] = i;
 
         real_type temp{ 0.0 };
@@ -115,9 +116,10 @@ inline void device_kernel_predict(aos_matrix<real_type> &out, const aos_matrix<r
     const std::size_t num_support_vectors = support_vectors.num_rows();
     const std::size_t num_predict_points = predict_points.num_rows();
 
-    const auto is = std::views::iota(std::size_t{ 0 }, num_predict_points);
+    std::vector<std::size_t> range(num_predict_points);
+    std::iota(range.begin(), range.end(), 0);
 
-    std::for_each(std::execution::par_unseq, is.begin(), is.end(), [&](const auto point_index) {
+    std::for_each(std::execution::par_unseq, range.cbegin(), range.cend(), [&](const std::size_t point_index) {
         for (std::size_t a = 0; a < num_classes; ++a) {
             out(point_index, a) -= rho[a];
         }
