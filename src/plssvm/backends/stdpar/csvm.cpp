@@ -9,7 +9,7 @@
 #include "plssvm/backends/stdpar/csvm.hpp"
 
 #include "plssvm/backend_types.hpp"                                                   // plssvm::backend_type
-#include "plssvm/backends/stdpar/detail/utility.hpp"                                  // plssvm::stdpar::detail::{get_num_threads, get_stdpar_version}
+#include "plssvm/backends/stdpar/detail/utility.hpp"                                  // plssvm::stdpar::detail::{get_stdpar_implementation}
 #include "plssvm/backends/stdpar/exceptions.hpp"                                      // plssvm::stdpar::backend_exception
 #include "plssvm/backends/stdpar/kernel/cg_explicit/blas.hpp"                         // plssvm::stdpar::detail::device_kernel_symm
 #include "plssvm/backends/stdpar/kernel/cg_explicit/kernel_matrix_assembly.hpp"       // plssvm::stdpar::detail::device_kernel_assembly
@@ -86,7 +86,7 @@ void csvm::init(const target_platform target) {
 
     plssvm::detail::log(verbosity_level::full,
                         "\nUsing stdpar ({}) as backend.\n\n",
-                        plssvm::detail::tracking_entry{ "dependencies", "stdpar_version", detail::get_stdpar_version() });
+                        plssvm::detail::tracking_entry{ "dependencies", "stdpar_implementation", detail::get_stdpar_implementation() });
 
     // print found stdpar devices
     plssvm::detail::log(verbosity_level::full,

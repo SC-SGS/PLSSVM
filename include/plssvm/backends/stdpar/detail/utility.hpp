@@ -17,14 +17,11 @@
 
 namespace plssvm::stdpar::detail {
 
-// TODO: get the used stdpar implementation?
-
 /**
- * @brief Return the stdpar version used (i.e. the used C++ version).
- * @details Parses the output of `__cplusplus` according to https://en.cppreference.com/w/cpp/preprocessor/replace.
- * @return the C++ standard version (`[[nodiscard]]`)
+ * @brief Return the stdpar implementation used.
+ * @return the stdpar implementation (`[[nodiscard]]`)
  */
-[[nodiscard]] std::string get_stdpar_version();
+[[nodiscard]] std::string get_stdpar_implementation();
 
 }  // namespace plssvm::stdpar::detail
 
