@@ -88,6 +88,8 @@ if (PLSSVM_STDPAR_BACKEND STREQUAL "ACPP")
     target_compile_options(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC --acpp-stdpar)
     target_compile_options(${PLSSVM_STDPAR_BACKEND_LIBRARY_NAME} PUBLIC --acpp-stdpar)
     target_compile_options(${PLSSVM_ALL_LIBRARY_NAME} INTERFACE --acpp-stdpar)
+    target_compile_definitions(${PLSSVM_STDPAR_BACKEND_LIBRARY_NAME} PRIVATE PLSSVM_STDPAR_BACKEND_IMPLEMENTATION="AdaptiveCpp")
+    target_compile_definitions(${PLSSVM_STDPAR_BACKEND_LIBRARY_NAME} PRIVATE PLSSVM_STDPAR_BACKEND_HAS_ACPP)
 endif ()
 
 # set compile definition that the stdpar backend is available
