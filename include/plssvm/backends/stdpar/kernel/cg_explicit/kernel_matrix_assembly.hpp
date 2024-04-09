@@ -63,9 +63,9 @@ void device_kernel_assembly(const std::vector<real_type> &q, std::vector<real_ty
             for (unsigned long long dim = 0; dim < num_features; ++dim) {
                 // calculation
                 for (unsigned internal_i = 0; internal_i < INTERNAL_BLOCK_SIZE; ++internal_i) {
-                    const real_type internal_i_temp = data_ptr[dim * (dept + 1 + PADDING_SIZE) + row + internal_i];
+                    const real_type internal_i_temp = data_ptr[dim * (dept + 1 + PADDING_SIZE) + row * INTERNAL_BLOCK_SIZE + internal_i];
                     for (unsigned internal_j = 0; internal_j < INTERNAL_BLOCK_SIZE; ++internal_j) {
-                        temp[internal_i][internal_j] += detail::feature_reduce<kernel>(internal_i_temp, data_ptr[dim * (dept + 1 + PADDING_SIZE) + col + internal_j]);
+                        temp[internal_i][internal_j] += detail::feature_reduce<kernel>(internal_i_temp, data_ptr[dim * (dept + 1 + PADDING_SIZE) + col * INTERNAL_BLOCK_SIZE + internal_j]);
                     }
                 }
             }
