@@ -6,6 +6,8 @@
 
 list(APPEND CMAKE_MESSAGE_INDENT "stdpar:  ")
 
+include(CheckCXXCompilerFlag)
+
 # check if OpenMP can be enabled
 message(CHECK_START "Checking for stdpar backend")
 
