@@ -19,6 +19,7 @@
 #include "plssvm/kernel_function_types.hpp"  // plssvm::kernel_function_type
 #include "plssvm/matrix.hpp"                 // aos_matrix
 
+#include <array>    // std::array
 #include <cstddef>  // std::size_t
 #include <vector>   // std::vector
 
@@ -27,7 +28,6 @@ namespace plssvm::openmp::detail {
 /**
  * @brief Perform an implicit BLAS SYMM-like operation: `C = alpha * A * B + C` where `A` is the implicitly calculated kernel matrix using the @p kernel function (never actually stored, reducing the amount of needed global memory), @p B and @p C are matrices, and @p alpha is a scalar.
  * @tparam kernel the compile-time kernel function to use
- * @tparam layout the compile-time layout type for the matrices
  * @tparam Args the types of the potential additional arguments for the @p kernel function
  * @param[in] alpha the scalar alpha value
  * @param[in] q the `q` vector

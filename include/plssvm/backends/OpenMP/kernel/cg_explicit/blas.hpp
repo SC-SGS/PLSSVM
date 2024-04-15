@@ -26,9 +26,8 @@ namespace plssvm::openmp::detail {
 
 /**
  * @brief Perform an explicit BLAS SYMM operation: `C = alpha * A * B + beta * C` where @p A is a `m x k` symmetric matrix (memory optimized), @p B is a `k x n` matrix, @p C is a `m x n` matrix, and @p alpha and @p beta are scalars.
- * @param[in] m the number of rows in @p A and @p C
- * @param[in] n the number of columns in @p B and @p C
- * @param[in] k the number of rows in @p A and number of columns in @p B
+ * @param[in] num_rows the number of rows and columns in @p A
+ * @param[in] num_rhs the number of rows in @p B and @p C
  * @param[in] alpha the scalar alpha value
  * @param[in] A the matrix @p A
  * @param[in] B the matrix @p B

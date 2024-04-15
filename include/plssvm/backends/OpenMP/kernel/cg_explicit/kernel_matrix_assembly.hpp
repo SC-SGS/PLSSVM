@@ -28,7 +28,6 @@ namespace plssvm::openmp::detail {
 /**
  * @brief Assemble the kernel matrix using the @p kernel function.
  * @tparam kernel the compile-time kernel function to use
- * @tparam layout the compile-time layout type for the data matrix
  * @tparam Args the types of the potential additional arguments for the @p kernel function
  * @param[in] q the `q` vector
  * @param[out] ret the resulting kernel matrix
