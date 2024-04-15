@@ -14,7 +14,7 @@
 #pragma once
 
 #include "plssvm/backends/OpenMP/kernel/kernel_functions.hpp"  // plssvm::openmp::detail::{feature_reduce, apply_kernel_function}
-#include "plssvm/constants.hpp"                                // plssvm::real_type, plssvm::OPENMP_BLOCK_SIZE
+#include "plssvm/constants.hpp"                                // plssvm::real_type, plssvm::THREAD_BLOCK_SIZE, plssvm::INTERNAL_BLOCK_SIZE, plssvm::PADDING_SIZE
 #include "plssvm/detail/assert.hpp"                            // PLSSVM_ASSERT
 #include "plssvm/kernel_function_types.hpp"                    // plssvm::kernel_function_type
 #include "plssvm/matrix.hpp"                                   // plssvm::aos_matrix

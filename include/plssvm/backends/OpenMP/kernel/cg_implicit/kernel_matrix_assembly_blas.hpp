@@ -13,7 +13,7 @@
 #define PLSSVM_BACKENDS_OPENMP_KERNEL_CG_IMPLICIT_KERNEL_MATRIX_ASSEMBLY_BLAS_HPP_
 #pragma once
 
-#include "plssvm/constants.hpp"              // plssvm::real_type, plssvm::OPENMP_BLOCK_SIZE
+#include "plssvm/constants.hpp"              // plssvm::real_type, plssvm::THREAD_BLOCK_SIZE, plssvm::INTERNAL_BLOCK_SIZE, plssvm::PADDING_SIZE
 #include "plssvm/detail/assert.hpp"          // PLSSVM_ASSERT
 #include "plssvm/detail/operators.hpp"       // overloaded arithmetic operations for a plssvm::matrix
 #include "plssvm/kernel_function_types.hpp"  // plssvm::kernel_function_type
