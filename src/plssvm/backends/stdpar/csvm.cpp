@@ -34,6 +34,10 @@
 
 #include "fmt/core.h"  // fmt::format
 
+#if defined(PLSSVM_STDPAR_BACKEND_HAS_ACPP)
+    #include "sycl/sycl.hpp"
+#endif
+
 #include <cmath>    // std::fma
 #include <cstddef>  // std::size_t
 #include <tuple>    // std::tuple, std::make_tuple
@@ -87,6 +91,13 @@ void csvm::init(const target_platform target) {
     plssvm::detail::log(verbosity_level::full,
                         "\nUsing stdpar ({}) as backend.\n\n",
                         plssvm::detail::tracking_entry{ "dependencies", "stdpar_implementation", detail::get_stdpar_implementation() });
+
+#if defined(PLSSVM_STDPAR_BACKEND_HAS_ACPP)
+    // AdaptiveCpp's stdpar per default uses the sycl default device
+    ::sycl::device default_device{};
+    // TODO: check whether the requested target_platform equals the default_selector
+    // if not -> throw excpetion with export ACPP_VISIBILITY_MASK="omp"
+#endif
 
     // print found stdpar devices
     plssvm::detail::log(verbosity_level::full,

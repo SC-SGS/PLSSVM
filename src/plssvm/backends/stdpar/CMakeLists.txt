@@ -85,6 +85,7 @@ endif ()
 
 if (PLSSVM_STDPAR_BACKEND STREQUAL "ACPP")
     target_link_libraries(${PLSSVM_STDPAR_BACKEND_LIBRARY_NAME} PUBLIC TBB::tbb)
+    # TODO: better
     target_compile_options(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC --acpp-stdpar)
     target_compile_options(${PLSSVM_STDPAR_BACKEND_LIBRARY_NAME} PUBLIC --acpp-stdpar)
     target_compile_options(${PLSSVM_ALL_LIBRARY_NAME} INTERFACE --acpp-stdpar)
