@@ -20,6 +20,7 @@
 #include "plssvm/matrix.hpp"                 // aos_matrix
 
 #include <array>    // std::array
+#include <cmath>    // std::ceil
 #include <cstddef>  // std::size_t
 #include <vector>   // std::vector
 
@@ -49,7 +50,7 @@ inline void device_kernel_assembly_symm(const real_type alpha, const std::vector
     using namespace operators;
 
     const std::size_t dept = q.size();
-    const std::size_t blocked_dept = (dept + PADDING_SIZE) / INTERNAL_BLOCK_SIZE;
+    const auto blocked_dept = static_cast<std::size_t>(std::ceil(static_cast<real_type>(dept) / INTERNAL_BLOCK_SIZE));
     const std::size_t num_features = data.num_cols();
     const std::size_t num_classes = B.num_rows();
 

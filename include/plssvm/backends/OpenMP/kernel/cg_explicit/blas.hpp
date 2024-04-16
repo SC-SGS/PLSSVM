@@ -19,6 +19,7 @@
 #include "plssvm/shape.hpp"          // plssvm::shape
 
 #include <array>    // std::array
+#include <cmath>    // std::ceil
 #include <cstddef>  // std::size_t
 #include <vector>   // std::vector
 
@@ -40,8 +41,8 @@ inline void device_kernel_symm(const unsigned long long num_rows, const unsigned
     PLSSVM_ASSERT(B.shape() == (plssvm::shape{ num_rhs, num_rows }), "B matrix sizes mismatch!: {} != [{}, {}]", B.shape(), num_rhs, num_rows);
     PLSSVM_ASSERT(C.shape() == (plssvm::shape{ num_rhs, num_rows }), "C matrix sizes mismatch!: {} != [{}, {}]", C.shape(), num_rhs, num_rows);
 
-    const std::size_t blocked_num_rhs = (num_rhs + PADDING_SIZE) / INTERNAL_BLOCK_SIZE;
-    const std::size_t blocked_num_rows = (num_rows + PADDING_SIZE) / INTERNAL_BLOCK_SIZE;
+    const auto blocked_num_rhs = static_cast<std::size_t>(std::ceil(static_cast<real_type>(num_rhs) / INTERNAL_BLOCK_SIZE));
+    const auto blocked_num_rows = static_cast<std::size_t>(std::ceil(static_cast<real_type>(num_rows) / INTERNAL_BLOCK_SIZE));
 
 #pragma omp parallel for collapse(2)
     for (std::size_t rhs = 0; rhs < blocked_num_rhs; rhs += THREAD_BLOCK_SIZE) {

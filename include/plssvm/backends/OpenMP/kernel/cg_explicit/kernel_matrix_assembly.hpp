@@ -20,6 +20,7 @@
 #include "plssvm/matrix.hpp"                                   // plssvm::aos_matrix
 
 #include <array>    // std::array
+#include <cmath>    // std::ceil
 #include <cstddef>  // std::size_t
 #include <vector>   // std::vector
 
@@ -43,7 +44,7 @@ void device_kernel_assembly(const std::vector<real_type> &q, std::vector<real_ty
     PLSSVM_ASSERT(cost != real_type{ 0.0 }, "cost must not be 0.0 since it is 1 / plssvm::cost!");
 
     const std::size_t dept = q.size();
-    const std::size_t blocked_dept = (dept + PADDING_SIZE) / INTERNAL_BLOCK_SIZE;
+    const auto blocked_dept = static_cast<std::size_t>(std::ceil(static_cast<real_type>(dept) / INTERNAL_BLOCK_SIZE));
     const std::size_t num_features = data.num_cols();
 
 #pragma omp parallel for collapse(2) schedule(dynamic)
