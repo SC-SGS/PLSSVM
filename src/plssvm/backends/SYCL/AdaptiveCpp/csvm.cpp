@@ -90,7 +90,7 @@ void csvm::init(const target_platform target) {
         // always use nd_range for AdaptiveCpp
         invocation_type_ = sycl::kernel_invocation_type::nd_range;
         if (target_ == target_platform::cpu) {
-#if !defined(__HIPSYCL_USE_ACCELERATED_CPU__)
+#if !defined(__HIPSYCL_USE_ACCELERATED_CPU__) && defined(__HIPSYCL_ENABLE_OMPHOST_TARGET__)
             plssvm::detail::log(verbosity_level::full | verbosity_level::warning,
                                 "WARNING: the AdaptiveCpp automatic target for the CPU is set to nd_range, but AdaptiveCpp hasn't been build with the \"omp.accelerated\" compilation flow resulting in major performance losses!\n");
 #endif
