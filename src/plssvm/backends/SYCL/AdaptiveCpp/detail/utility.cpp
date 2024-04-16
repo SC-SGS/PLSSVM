@@ -68,6 +68,10 @@ namespace plssvm::adaptivecpp::detail {
         for (const auto &[key, value] : platform_devices) {
             system_devices.push_back(key);
         }
+        // the system devices should not be empty!
+        if (system_devices.empty()) {
+            throw platform_devices_empty{ "No appropriate devices could be found!" };
+        }
         // determine the target_platform
         target = determine_default_target_platform(system_devices);
     }
