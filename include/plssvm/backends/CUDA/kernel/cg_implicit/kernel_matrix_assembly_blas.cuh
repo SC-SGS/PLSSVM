@@ -208,7 +208,7 @@ __global__ void device_kernel_assembly_symm(const real_type alpha, const real_ty
                     atomicAdd(&C[global_i * (num_classes + PADDING_SIZE_ull) + dim + threadIdx_y], C_out_cache[threadIdx.y][internal * THREAD_BLOCK_SIZE + threadIdx.x]);
                     atomicAdd(&C[global_i * (num_classes + PADDING_SIZE_ull) + dim + threadIdx_y + THREAD_BLOCK_SIZE_ull], C_out_cache[threadIdx.y + THREAD_BLOCK_SIZE][internal * THREAD_BLOCK_SIZE + threadIdx.x]);
                 }
-                __syncthreads();  // wai until all threads updated C with their values
+                __syncthreads();  // wait until all threads updated C with their values
             }
         }
     }

@@ -234,7 +234,7 @@ class device_kernel_assembly_symm {
                         detail::atomic_op<real_type>{ C_[global_i * (num_classes_ + PADDING_SIZE_uz) + dim + nd_idx.get_local_id(0)] } += C_out_cache[local_id_0 * INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE + internal * THREAD_BLOCK_SIZE + local_id_1];
                         detail::atomic_op<real_type>{ C_[global_i * (num_classes_ + PADDING_SIZE_uz) + dim + nd_idx.get_local_id(0) + THREAD_BLOCK_SIZE_uz] } += C_out_cache[(local_id_0 + THREAD_BLOCK_SIZE) * INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE + internal * THREAD_BLOCK_SIZE + local_id_1];
                     }
-                    nd_idx.barrier();  // wai until all threads updated C with their values
+                    nd_idx.barrier();  // wait until all threads updated C with their values
                 }
             }
         }
