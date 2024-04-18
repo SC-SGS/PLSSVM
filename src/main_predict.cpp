@@ -78,7 +78,6 @@ int main(int argc, char *argv[]) {
                                             params.coef0);
                         break;
                 }
-                plssvm::detail::log(plssvm::verbosity_level::full, "  cost: {}\n", params.cost);
             }
 
             // create default csvm
