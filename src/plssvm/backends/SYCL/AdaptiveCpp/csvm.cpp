@@ -181,15 +181,15 @@ std::size_t csvm::get_max_work_group_size(const std::size_t device_id) const {
 //***************************************************//
 
 auto csvm::run_assemble_kernel_matrix_explicit(const std::size_t device_id, const parameter &params, const device_ptr_type &data_d, const device_ptr_type &q_red_d, real_type QA_cost) const -> device_ptr_type {
-    const unsigned long long num_rows_reduced = data_d.shape().x - 1;
-    const unsigned long long num_features = data_d.shape().y;
+    const std::size_t num_rows_reduced = data_d.shape().x - 1;
+    const std::size_t num_features = data_d.shape().y;
     const queue_type &device = devices_[device_id];
 
     // calculate the number of data points this device is responsible for
-    const unsigned long long device_specific_num_rows = data_distribution_->place_specific_num_rows(device_id);
+    const std::size_t device_specific_num_rows = data_distribution_->place_specific_num_rows(device_id);
 
     // get the offset of the data points this device is responsible for
-    const unsigned long long row_offset = data_distribution_->place_row_offset(device_id);
+    const std::size_t row_offset = data_distribution_->place_row_offset(device_id);
 
     // define grid and block sizes
     const std::size_t max_work_group_size = this->get_max_work_group_size(device_id);
@@ -251,14 +251,14 @@ auto csvm::run_assemble_kernel_matrix_explicit(const std::size_t device_id, cons
 }
 
 void csvm::run_blas_level_3_kernel_explicit(const std::size_t device_id, const real_type alpha, const device_ptr_type &A_d, const device_ptr_type &B_d, const real_type beta, device_ptr_type &C_d) const {
-    const unsigned long long num_rhs = B_d.shape().x;
-    const unsigned long long num_rows = B_d.shape().y;
+    const std::size_t num_rhs = B_d.shape().x;
+    const std::size_t num_rows = B_d.shape().y;
     const queue_type &device = devices_[device_id];
 
     // calculate the number of data points this device is responsible for
-    const unsigned long long device_specific_num_rows = data_distribution_->place_specific_num_rows(device_id);
+    const std::size_t device_specific_num_rows = data_distribution_->place_specific_num_rows(device_id);
     // get the offset of the data points this device is responsible for
-    const unsigned long long row_offset = data_distribution_->place_row_offset(device_id);
+    const std::size_t row_offset = data_distribution_->place_row_offset(device_id);
 
     // define grid and block sizes
     const std::size_t max_work_group_size = this->get_max_work_group_size(device_id);
@@ -278,7 +278,7 @@ void csvm::run_blas_level_3_kernel_explicit(const std::size_t device_id, const r
     }
 
     {
-        const unsigned long long num_mirror_rows = num_rows - row_offset - device_specific_num_rows;
+        const std::size_t num_mirror_rows = num_rows - row_offset - device_specific_num_rows;
 
         if (num_mirror_rows > 0) {
             const ::sycl::range<2> block{ THREAD_BLOCK_SIZE, THREAD_BLOCK_SIZE };
@@ -295,8 +295,8 @@ void csvm::run_blas_level_3_kernel_explicit(const std::size_t device_id, const r
 }
 
 void csvm::run_inplace_matrix_addition(const std::size_t device_id, device_ptr_type &lhs_d, const device_ptr_type &rhs_d) const {
-    const unsigned long long num_rhs = lhs_d.shape().x;
-    const unsigned long long num_rows = lhs_d.shape().y;
+    const std::size_t num_rhs = lhs_d.shape().x;
+    const std::size_t num_rows = lhs_d.shape().y;
     const queue_type &device = devices_[device_id];
 
     // define the grid and block sizes
@@ -314,8 +314,8 @@ void csvm::run_inplace_matrix_addition(const std::size_t device_id, device_ptr_t
 }
 
 void csvm::run_inplace_matrix_scale(const std::size_t device_id, device_ptr_type &lhs_d, const real_type scale) const {
-    const unsigned long long num_rhs = lhs_d.shape().x;
-    const unsigned long long num_rows = lhs_d.shape().y;
+    const std::size_t num_rhs = lhs_d.shape().x;
+    const std::size_t num_rows = lhs_d.shape().y;
     const queue_type &device = devices_[device_id];
 
     // define the grid and block sizes
@@ -333,15 +333,15 @@ void csvm::run_inplace_matrix_scale(const std::size_t device_id, device_ptr_type
 }
 
 void csvm::run_assemble_kernel_matrix_implicit_blas_level_3(const std::size_t device_id, const real_type alpha, const device_ptr_type &A_d, const parameter &params, const device_ptr_type &q_red, const real_type QA_cost, const device_ptr_type &B_d, device_ptr_type &C_d) const {
-    const unsigned long long num_rows_reduced = A_d.shape().x - 1;
-    const unsigned long long num_features = A_d.shape().y;
-    const unsigned long long num_classes = B_d.shape().x;
+    const std::size_t num_rows_reduced = A_d.shape().x - 1;
+    const std::size_t num_features = A_d.shape().y;
+    const std::size_t num_classes = B_d.shape().x;
     const queue_type &device = devices_[device_id];
 
     // calculate the number of data points this device is responsible for
-    const unsigned long long device_specific_num_rows = data_distribution_->place_specific_num_rows(device_id);
+    const std::size_t device_specific_num_rows = data_distribution_->place_specific_num_rows(device_id);
     // get the offset of the data points this device is responsible for
-    const unsigned long long row_offset = data_distribution_->place_row_offset(device_id);
+    const std::size_t row_offset = data_distribution_->place_row_offset(device_id);
 
     // define the grid and block sizes
     const std::size_t max_work_group_size = this->get_max_work_group_size(device_id);
@@ -400,14 +400,14 @@ void csvm::run_assemble_kernel_matrix_implicit_blas_level_3(const std::size_t de
 //***************************************************//
 
 auto csvm::run_w_kernel(const std::size_t device_id, const device_ptr_type &alpha_d, const device_ptr_type &sv_d) const -> device_ptr_type {
-    const unsigned long long num_classes = alpha_d.shape().x;
-    const unsigned long long num_sv = alpha_d.shape().y;
-    const unsigned long long device_specific_num_sv = sv_d.shape().x;
-    const unsigned long long num_features = sv_d.shape().y;
+    const std::size_t num_classes = alpha_d.shape().x;
+    const std::size_t num_sv = alpha_d.shape().y;
+    const std::size_t device_specific_num_sv = sv_d.shape().x;
+    const std::size_t num_features = sv_d.shape().y;
     const queue_type &device = devices_[device_id];
 
     // get the offset of the data points this device is responsible for
-    const unsigned long long sv_offset = data_distribution_->place_row_offset(device_id);
+    const std::size_t sv_offset = data_distribution_->place_row_offset(device_id);
 
     // define grid and block sizes
     const std::size_t max_work_group_size = this->get_max_work_group_size(device_id);
@@ -430,9 +430,9 @@ auto csvm::run_w_kernel(const std::size_t device_id, const device_ptr_type &alph
 }
 
 auto csvm::run_predict_kernel(const std::size_t device_id, const parameter &params, const device_ptr_type &alpha_d, const device_ptr_type &rho_d, const device_ptr_type &sv_or_w_d, const device_ptr_type &predict_points_d) const -> device_ptr_type {
-    const unsigned long long num_classes = alpha_d.shape().x;
-    const unsigned long long num_predict_points = predict_points_d.shape().x;  // = device_specific_num_rows
-    const unsigned long long num_features = predict_points_d.shape().y;
+    const std::size_t num_classes = alpha_d.shape().x;
+    const std::size_t num_predict_points = predict_points_d.shape().x;  // = device_specific_num_rows
+    const std::size_t num_features = predict_points_d.shape().y;
     const queue_type &device = devices_[device_id];
 
     device_ptr_type out_d{ shape{ num_predict_points, num_classes }, shape{ PADDING_SIZE, PADDING_SIZE }, device };
@@ -453,7 +453,7 @@ auto csvm::run_predict_kernel(const std::size_t device_id, const parameter &para
             cgh.parallel_for(execution_range, sycl::detail::device_kernel_predict_linear{ cgh, out_d.get(), sv_or_w_d.get(), rho_d.get(), predict_points_d.get(), num_classes, num_predict_points, num_features });
         });
     } else {
-        const unsigned long long num_sv = sv_or_w_d.shape().x;
+        const std::size_t num_sv = sv_or_w_d.shape().x;
 
         const ::sycl::range<2> grid{ static_cast<std::size_t>(std::ceil(static_cast<double>(num_sv) / static_cast<double>(block[0] * INTERNAL_BLOCK_SIZE))) * block[0],
                                      static_cast<std::size_t>(std::ceil(static_cast<double>(num_predict_points) / static_cast<double>(block[1] * INTERNAL_BLOCK_SIZE))) * block[1] };
