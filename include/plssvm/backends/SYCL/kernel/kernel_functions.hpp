@@ -60,7 +60,7 @@ template <>
  */
 template <>
 [[nodiscard]] inline real_type feature_reduce<kernel_function_type::laplacian>(const real_type val1, const real_type val2) {
-    return abs(val1 - val2);
+    return ::sycl::fabs(val1 - val2);
 }
 
 /**
