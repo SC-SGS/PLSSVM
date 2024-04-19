@@ -128,7 +128,7 @@ constexpr memory_size &operator-=(memory_size &lhs, const memory_size rhs) {
  * @return a reference to the modified memory size @p mem
  */
 constexpr memory_size &operator*=(memory_size &mem, const long double factor) {
-    mem = memory_size{ static_cast<unsigned long long>(mem.num_bytes() * factor) };
+    mem = memory_size{ static_cast<unsigned long long>(static_cast<long double>(mem.num_bytes()) * factor) };
     return mem;
 }
 
@@ -155,7 +155,7 @@ constexpr memory_size &operator*=(memory_size &mem, const long double factor) {
  * @copydoc plssvm::detail::operator*=(memory_size &, const long double)
  */
 constexpr memory_size &operator/=(memory_size &mem, const long double factor) {
-    mem = memory_size{ static_cast<unsigned long long>(mem.num_bytes() / factor) };
+    mem = memory_size{ static_cast<unsigned long long>(static_cast<long double>(mem.num_bytes()) / factor) };
     return mem;
 }
 

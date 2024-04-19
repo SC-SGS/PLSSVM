@@ -67,8 +67,8 @@ class device_kernel_assembly {
      */
     void operator()(::sycl::nd_item<2> nd_idx) const {
         // cast values to 32-bit unsigned int values to prevent implicit conversions
-        const unsigned local_id_0 = nd_idx.get_local_id(0);
-        const unsigned local_id_1 = nd_idx.get_local_id(1);
+        const auto local_id_0 = static_cast<unsigned>(nd_idx.get_local_id(0));
+        const auto local_id_1 = static_cast<unsigned>(nd_idx.get_local_id(1));
 
         // cast all values to 64-bit std::size_t to prevent potential 32-bit overflows
         const auto INTERNAL_BLOCK_SIZE_uz = static_cast<std::size_t>(INTERNAL_BLOCK_SIZE);

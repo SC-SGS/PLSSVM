@@ -111,7 +111,7 @@ namespace plssvm::detail::io {
 
     const auto i_it = std::lower_bound(index_sets[i].cbegin(), index_sets[i].cend(), idx_to_find);
     const auto j_it = std::lower_bound(index_sets[j].cbegin(), index_sets[j].cend(), idx_to_find);
-    const std::size_t global_idx = std::distance(index_sets[i].cbegin(), i_it) + std::distance(index_sets[j].cbegin(), j_it);
+    const auto global_idx = static_cast<std::size_t>(std::distance(index_sets[i].cbegin(), i_it) + std::distance(index_sets[j].cbegin(), j_it));
 
     PLSSVM_ASSERT(global_idx < index_sets[i].size() + index_sets[j].size(), "The global index ({}) for the provided index to find ({}) must be smaller than the combined size of both index sets ({} + {})!", global_idx, idx_to_find, index_sets[i].size(), index_sets[j].size());
 
@@ -749,7 +749,7 @@ inline void write_libsvm_model_data(const std::string &filename, const plssvm::p
                     ptr = fmt::format_to(ptr, FMT_COMPILE("{}:{:.10e} "), j + i + 1, d(point, j + i));
                 }
             }
-            output.append(buffer.data(), ptr - buffer.data());
+            output.append(buffer.data(), static_cast<std::string::size_type>(ptr - buffer.data()));
         }
         output.push_back('\n');
     };

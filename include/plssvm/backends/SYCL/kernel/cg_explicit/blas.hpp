@@ -58,8 +58,8 @@ class device_kernel_symm {
      */
     void operator()(::sycl::nd_item<2> nd_idx) const {
         // cast values to 32-bit unsigned int values to prevent implicit conversions
-        const unsigned local_id_0 = nd_idx.get_local_id(0);
-        const unsigned local_id_1 = nd_idx.get_local_id(1);
+        const auto local_id_0 = static_cast<unsigned>(nd_idx.get_local_id(0));
+        const auto local_id_1 = static_cast<unsigned>(nd_idx.get_local_id(1));
 
         // cast all values to 64-bit std::size_t to prevent potential 32-bit overflows
         const auto INTERNAL_BLOCK_SIZE_uz = static_cast<std::size_t>(INTERNAL_BLOCK_SIZE);
@@ -186,8 +186,8 @@ class device_kernel_symm_mirror {
      */
     void operator()(::sycl::nd_item<2> nd_idx) const {
         // cast values to 32-bit unsigned int values to prevent implicit conversions
-        const unsigned local_id_0 = nd_idx.get_local_id(0);
-        const unsigned local_id_1 = nd_idx.get_local_id(1);
+        const auto local_id_0 = static_cast<unsigned>(nd_idx.get_local_id(0));
+        const auto local_id_1 = static_cast<unsigned>(nd_idx.get_local_id(1));
 
         // cast all values to 64-bit std::size_t to prevent potential 32-bit overflows
         const auto INTERNAL_BLOCK_SIZE_uz = static_cast<std::size_t>(INTERNAL_BLOCK_SIZE);
@@ -208,8 +208,8 @@ class device_kernel_symm_mirror {
         for (std::size_t dim = 0; dim < device_specific_num_rows_; dim += FEATURE_BLOCK_SIZE_uz) {
             // load data into shared memory
             for (unsigned internal = 0; internal < INTERNAL_BLOCK_SIZE; ++internal) {
-                const unsigned long long global_i = i_linear + static_cast<std::size_t>(internal) * THREAD_BLOCK_SIZE_uz;
-                const unsigned long long global_j = j_linear + static_cast<std::size_t>(internal) * THREAD_BLOCK_SIZE_uz;
+                const auto global_i = i_linear + static_cast<std::size_t>(internal) * THREAD_BLOCK_SIZE_uz;
+                const auto global_j = j_linear + static_cast<std::size_t>(internal) * THREAD_BLOCK_SIZE_uz;
 
                 // FEATURE_BLOCK_SIZE = 2 * THREAD_BLOCK_SIZE -> store twice as many values in the local memory
                 A_cache_[local_id_0][internal * THREAD_BLOCK_SIZE + local_id_1] = A_[(dim + nd_idx.get_local_id(0)) * (num_rows_ - row_offset_ + PADDING_SIZE_uz) - (dim + nd_idx.get_local_id(0) - std::size_t{ 1 }) * (dim + nd_idx.get_local_id(0)) / std::size_t{ 2 } + device_specific_num_rows_ - (dim + nd_idx.get_local_id(0)) + global_j];
