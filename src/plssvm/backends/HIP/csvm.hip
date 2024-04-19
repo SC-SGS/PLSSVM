@@ -72,7 +72,7 @@ void csvm::init(const target_platform target) {
     target_ = plssvm::target_platform::gpu_amd;
 
     // get all available devices wrt the requested target platform
-    devices_.resize(detail::get_device_count());
+    devices_.resize(static_cast<std::vector<queue_type>::size_type>(detail::get_device_count()));
     std::iota(devices_.begin(), devices_.end(), 0);
 
     // throw exception if no HIP devices could be found
