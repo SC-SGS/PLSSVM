@@ -77,7 +77,7 @@ if (AdaptiveCpp_FOUND)
     endif ()
     
     # silence unknown options warnings
-    target_compile_options(${PLSSVM_SYCL_BACKEND_ADAPTIVECPP_LIBRARY_NAME} PRIVATE -Wno-unknown-warning-option
+    target_compile_options(${PLSSVM_SYCL_BACKEND_ADAPTIVECPP_LIBRARY_NAME} PRIVATE -Wno-unknown-warning-option -Wconversion
                            $<$<CXX_COMPILER_ID:GNU>:-Wno-unknown-pragmas>
     )
     

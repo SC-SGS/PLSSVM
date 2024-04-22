@@ -19,6 +19,35 @@
 namespace plssvm::hip::detail {
 
 //***************************************************//
+//                  helper function                  //
+//***************************************************//
+
+/**
+ * @brief Unimplemented base-template for all real_type.
+ * @return the minimal floating point value (`[[nodiscard]]`)
+ */
+template <typename T>
+[[nodiscard]] __device__ __forceinline__ T floating_point_min();
+
+/**
+ * @brief Return the minimal `double` value.
+ * @return `DBL_MIN` (`[[nodiscard]]`)
+ */
+template <>
+[[nodiscard]] __device__ __forceinline__ double floating_point_min<double>() {
+    return DBL_MIN;
+}
+
+/**
+ * @brief Return the minimal `float` value.
+ * @return `FLT_MIN` (`[[nodiscard]]`)
+ */
+template <>
+[[nodiscard]] __device__ __forceinline__ float floating_point_min<float>() {
+    return FLT_MIN;
+}
+
+//***************************************************//
 //                 feature reductions                //
 //***************************************************//
 
@@ -65,13 +94,8 @@ template <>
  */
 template <>
 [[nodiscard]] __device__ __forceinline__ real_type feature_reduce<kernel_function_type::chi_squared>(const real_type val1, const real_type val2) {
-    const real_type s = val1 + val2;
-    if (s == real_type{ 0.0 }) {
-        return real_type{ 0.0 };
-    } else {
-        const real_type d = val1 - val2;
-        return (d * d) / s;
-    }
+    const real_type d = val1 - val2;
+    return (real_type{ 1.0 } / (val1 + val2 + floating_point_min<real_type>())) * d * d;
 }
 
 //***************************************************//

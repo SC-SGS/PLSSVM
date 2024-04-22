@@ -26,7 +26,7 @@ namespace plssvm::cuda::detail {
  */
 template <typename value_type, typename size_type>
 __global__ void fill_array(value_type *data, const value_type value, const size_type start_pos, const size_type count) {
-    const unsigned int idx = blockIdx.x * blockDim.x + threadIdx.x;
+    const auto idx = static_cast<size_type>(blockIdx.x) * static_cast<size_type>(blockDim.x) + static_cast<size_type>(threadIdx.x);
     // fill the array
     if (idx < count) {
         data[start_pos + idx] = value;

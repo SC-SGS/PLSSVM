@@ -56,13 +56,8 @@ real_type feature_reduce_manhattan_dist(const real_type val1, const real_type va
  * @return the reduced value (`[[nodiscard]]`)
  */
 real_type feature_reduce_chi_squared(const real_type val1, const real_type val2) {
-    const real_type s = val1 + val2;
-    if (s == 0.0) {
-        return 0.0;
-    } else {
-        const real_type d = val1 - val2;
-        return (d * d) / s;
-    }
+    const real_type d = val1 - val2;
+    return ((real_type) 1.0 / (val1 + val2 + FLOATING_POINT_MIN)) * d * d;
 }
 
 //***************************************************//

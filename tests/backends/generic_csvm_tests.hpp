@@ -1080,7 +1080,13 @@ TYPED_TEST_P(GenericCSVMKernelFunctionClassification, predict) {
     const plssvm::parameter params{ plssvm::kernel_type = kernel };
 
     // create data set that is always classifiable
-    const plssvm::data_set<label_type> test_data = util::generate_trivially_solvable_data_set<label_type>();
+    plssvm::data_set<label_type> test_data = util::generate_trivially_solvable_data_set<label_type>();
+    if constexpr (kernel == plssvm::kernel_function_type::chi_squared) {
+        // chi-squared is well-defined for non-negative values only
+        if (test_data.labels().has_value()) {
+            test_data = plssvm::data_set<label_type>{ util::matrix_abs(test_data.data()), *test_data.labels() };
+        }
+    }
 
     // create normal C-SVM
     const csvm_type svm = util::construct_from_tuple<csvm_type>(params, csvm_test_type::additional_arguments);
@@ -1106,7 +1112,13 @@ TYPED_TEST_P(GenericCSVMKernelFunctionClassification, score_model) {
     plssvm::parameter params{ plssvm::kernel_type = kernel };
 
     // create data set that is always classifiable
-    const plssvm::data_set<label_type> test_data = util::generate_trivially_solvable_data_set<label_type>();
+    plssvm::data_set<label_type> test_data = util::generate_trivially_solvable_data_set<label_type>();
+    if constexpr (kernel == plssvm::kernel_function_type::chi_squared) {
+        // chi-squared is well-defined for non-negative values only
+        if (test_data.labels().has_value()) {
+            test_data = plssvm::data_set<label_type>{ util::matrix_abs(test_data.data()), *test_data.labels() };
+        }
+    }
 
     // create normal C-SVM
     const csvm_type svm = util::construct_from_tuple<csvm_type>(params, csvm_test_type::additional_arguments);
@@ -1132,7 +1144,13 @@ TYPED_TEST_P(GenericCSVMKernelFunctionClassification, score) {
     plssvm::parameter params{ plssvm::kernel_type = kernel };
 
     // create data set that is always classifiable
-    const plssvm::data_set<label_type> test_data = util::generate_trivially_solvable_data_set<label_type>();
+    plssvm::data_set<label_type> test_data = util::generate_trivially_solvable_data_set<label_type>();
+    if constexpr (kernel == plssvm::kernel_function_type::chi_squared) {
+        // chi-squared is well-defined for non-negative values only
+        if (test_data.labels().has_value()) {
+            test_data = plssvm::data_set<label_type>{ util::matrix_abs(test_data.data()), *test_data.labels() };
+        }
+    }
 
     // create normal C-SVM
     const csvm_type svm = util::construct_from_tuple<csvm_type>(params, csvm_test_type::additional_arguments);
@@ -1174,7 +1192,13 @@ TYPED_TEST_P(GenericCSVMSolverKernelFunctionClassification, fit) {
     const plssvm::parameter params{ plssvm::kernel_type = kernel };
 
     // create data set to be used
-    const plssvm::data_set<label_type> test_data{ PLSSVM_TEST_PATH "/data/predict/50x20.libsvm" };
+    plssvm::data_set<label_type> test_data{ PLSSVM_TEST_PATH "/data/predict/50x20.libsvm" };
+    if constexpr (kernel == plssvm::kernel_function_type::chi_squared) {
+        // chi-squared is well-defined for non-negative values only
+        if (test_data.labels().has_value()) {
+            test_data = plssvm::data_set<label_type>{ util::matrix_abs(test_data.data()), *test_data.labels() };
+        }
+    }
 
     // create normal C-SVM
     const csvm_type svm = util::construct_from_tuple<csvm_type>(params, csvm_test_type::additional_arguments);

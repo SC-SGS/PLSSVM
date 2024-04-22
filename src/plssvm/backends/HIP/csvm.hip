@@ -72,7 +72,7 @@ void csvm::init(const target_platform target) {
     target_ = plssvm::target_platform::gpu_amd;
 
     // get all available devices wrt the requested target platform
-    devices_.resize(detail::get_device_count());
+    devices_.resize(static_cast<std::vector<queue_type>::size_type>(detail::get_device_count()));
     std::iota(devices_.begin(), devices_.end(), 0);
 
     // throw exception if no HIP devices could be found
@@ -156,8 +156,8 @@ auto csvm::run_assemble_kernel_matrix_explicit(const std::size_t device_id, cons
         throw kernel_launch_resources{ fmt::format("Not enough work-items allowed for a work-groups of size {}x{}! Try reducing THREAD_BLOCK_SIZE.", THREAD_BLOCK_SIZE, THREAD_BLOCK_SIZE) };
     }
     const dim3 block(THREAD_BLOCK_SIZE, THREAD_BLOCK_SIZE);
-    const dim3 grid(static_cast<int>(std::ceil(static_cast<double>(num_rows_reduced - row_offset) / static_cast<double>(block.x * INTERNAL_BLOCK_SIZE))),
-                    static_cast<int>(std::ceil(static_cast<double>(device_specific_num_rows) / static_cast<double>(block.y * INTERNAL_BLOCK_SIZE))));
+    const dim3 grid(static_cast<unsigned int>(std::ceil(static_cast<double>(num_rows_reduced - row_offset) / static_cast<double>(block.x * INTERNAL_BLOCK_SIZE))),
+                    static_cast<unsigned int>(std::ceil(static_cast<double>(device_specific_num_rows) / static_cast<double>(block.y * INTERNAL_BLOCK_SIZE))));
 
     // calculate the number of matrix entries
     const ::plssvm::detail::triangular_data_distribution &dist = dynamic_cast<::plssvm::detail::triangular_data_distribution &>(*data_distribution_);
@@ -212,8 +212,8 @@ void csvm::run_blas_level_3_kernel_explicit(const std::size_t device_id, const r
     detail::set_device(device);
     {
         const dim3 block(THREAD_BLOCK_SIZE, THREAD_BLOCK_SIZE);
-        const dim3 grid(static_cast<int>(std::ceil(static_cast<double>(num_rhs) / static_cast<double>(block.x * INTERNAL_BLOCK_SIZE))),
-                        static_cast<int>(std::ceil(static_cast<double>(device_specific_num_rows) / static_cast<double>(block.y * INTERNAL_BLOCK_SIZE))));
+        const dim3 grid(static_cast<unsigned int>(std::ceil(static_cast<double>(num_rhs) / static_cast<double>(block.x * INTERNAL_BLOCK_SIZE))),
+                        static_cast<unsigned int>(std::ceil(static_cast<double>(device_specific_num_rows) / static_cast<double>(block.y * INTERNAL_BLOCK_SIZE))));
 
         detail::device_kernel_symm<<<grid, block>>>(num_rows, num_rhs, device_specific_num_rows, row_offset, alpha, A_d.get(), B_d.get(), beta, C_d.get());
     }
@@ -223,8 +223,8 @@ void csvm::run_blas_level_3_kernel_explicit(const std::size_t device_id, const r
 
         if (num_mirror_rows > 0) {
             const dim3 block(THREAD_BLOCK_SIZE, THREAD_BLOCK_SIZE);
-            const dim3 grid(static_cast<int>(std::ceil(static_cast<double>(num_rhs) / static_cast<double>(block.x * INTERNAL_BLOCK_SIZE))),
-                            static_cast<int>(std::ceil(static_cast<double>(num_mirror_rows) / static_cast<double>(block.y * INTERNAL_BLOCK_SIZE))));
+            const dim3 grid(static_cast<unsigned int>(std::ceil(static_cast<double>(num_rhs) / static_cast<double>(block.x * INTERNAL_BLOCK_SIZE))),
+                            static_cast<unsigned int>(std::ceil(static_cast<double>(num_mirror_rows) / static_cast<double>(block.y * INTERNAL_BLOCK_SIZE))));
 
             detail::device_kernel_symm_mirror<<<grid, block>>>(num_rows, num_rhs, num_mirror_rows, device_specific_num_rows, row_offset, alpha, A_d.get(), B_d.get(), beta, C_d.get());
         }
@@ -244,8 +244,8 @@ void csvm::run_inplace_matrix_addition(const std::size_t device_id, device_ptr_t
         throw kernel_launch_resources{ fmt::format("Not enough work-items allowed for a work-groups of size {}x{}! Try reducing THREAD_BLOCK_SIZE.", THREAD_BLOCK_SIZE, THREAD_BLOCK_SIZE) };
     }
     const dim3 block(THREAD_BLOCK_SIZE, THREAD_BLOCK_SIZE);
-    const dim3 grid(static_cast<int>(std::ceil(static_cast<double>(num_rows) / static_cast<double>(block.x * INTERNAL_BLOCK_SIZE))),
-                    static_cast<int>(std::ceil(static_cast<double>(num_rhs) / static_cast<double>(block.y * INTERNAL_BLOCK_SIZE))));
+    const dim3 grid(static_cast<unsigned int>(std::ceil(static_cast<double>(num_rows) / static_cast<double>(block.x * INTERNAL_BLOCK_SIZE))),
+                    static_cast<unsigned int>(std::ceil(static_cast<double>(num_rhs) / static_cast<double>(block.y * INTERNAL_BLOCK_SIZE))));
 
     detail::set_device(device);
     detail::device_kernel_inplace_matrix_add<<<grid, block>>>(num_rhs, lhs_d.get(), rhs_d.get());
@@ -264,8 +264,8 @@ void csvm::run_inplace_matrix_scale(const std::size_t device_id, device_ptr_type
         throw kernel_launch_resources{ fmt::format("Not enough work-items allowed for a work-groups of size {}x{}! Try reducing THREAD_BLOCK_SIZE.", THREAD_BLOCK_SIZE, THREAD_BLOCK_SIZE) };
     }
     const dim3 block(THREAD_BLOCK_SIZE, THREAD_BLOCK_SIZE);
-    const dim3 grid(static_cast<int>(std::ceil(static_cast<double>(num_rows) / static_cast<double>(block.x * INTERNAL_BLOCK_SIZE))),
-                    static_cast<int>(std::ceil(static_cast<double>(num_rhs) / static_cast<double>(block.y * INTERNAL_BLOCK_SIZE))));
+    const dim3 grid(static_cast<unsigned int>(std::ceil(static_cast<double>(num_rows) / static_cast<double>(block.x * INTERNAL_BLOCK_SIZE))),
+                    static_cast<unsigned int>(std::ceil(static_cast<double>(num_rhs) / static_cast<double>(block.y * INTERNAL_BLOCK_SIZE))));
 
     detail::set_device(device);
     detail::device_kernel_inplace_matrix_scale<<<grid, block>>>(num_rhs, lhs_d.get(), scale);
@@ -290,8 +290,8 @@ void csvm::run_assemble_kernel_matrix_implicit_blas_level_3(const std::size_t de
         throw kernel_launch_resources{ fmt::format("Not enough work-items allowed for a work-groups of size {}x{}! Try reducing THREAD_BLOCK_SIZE.", THREAD_BLOCK_SIZE, THREAD_BLOCK_SIZE) };
     }
     const dim3 block(THREAD_BLOCK_SIZE, THREAD_BLOCK_SIZE);
-    const dim3 grid(static_cast<int>(std::ceil(static_cast<double>(num_rows_reduced - row_offset) / static_cast<double>(block.x * INTERNAL_BLOCK_SIZE))),
-                    static_cast<int>(std::ceil(static_cast<double>(device_specific_num_rows) / static_cast<double>(block.y * INTERNAL_BLOCK_SIZE))));
+    const dim3 grid(static_cast<unsigned int>(std::ceil(static_cast<double>(num_rows_reduced - row_offset) / static_cast<double>(block.x * INTERNAL_BLOCK_SIZE))),
+                    static_cast<unsigned int>(std::ceil(static_cast<double>(device_specific_num_rows) / static_cast<double>(block.y * INTERNAL_BLOCK_SIZE))));
 
     detail::set_device(device);
     const real_type cost_factor = real_type{ 1.0 } / params.cost;
@@ -340,8 +340,8 @@ auto csvm::run_w_kernel(const std::size_t device_id, const device_ptr_type &alph
         throw kernel_launch_resources{ fmt::format("Not enough work-items allowed for a work-groups of size {}x{}! Try reducing THREAD_BLOCK_SIZE.", THREAD_BLOCK_SIZE, THREAD_BLOCK_SIZE) };
     }
     const dim3 block(THREAD_BLOCK_SIZE, THREAD_BLOCK_SIZE);
-    const dim3 grid(static_cast<int>(std::ceil(static_cast<double>(num_features) / static_cast<double>(block.x * INTERNAL_BLOCK_SIZE))),
-                    static_cast<int>(std::ceil(static_cast<double>(num_classes) / static_cast<double>(block.y * INTERNAL_BLOCK_SIZE))));
+    const dim3 grid(static_cast<unsigned int>(std::ceil(static_cast<double>(num_features) / static_cast<double>(block.x * INTERNAL_BLOCK_SIZE))),
+                    static_cast<unsigned int>(std::ceil(static_cast<double>(num_classes) / static_cast<double>(block.y * INTERNAL_BLOCK_SIZE))));
 
     device_ptr_type w_d{ shape{ num_classes, num_features }, shape{ PADDING_SIZE, PADDING_SIZE }, device };
 
@@ -371,16 +371,16 @@ auto csvm::run_predict_kernel(const std::size_t device_id, const parameter &para
     detail::set_device(device);
     if (params.kernel_type == kernel_function_type::linear) {
         // define the grid sizes
-        const dim3 grid(static_cast<int>(std::ceil(static_cast<double>(num_predict_points) / static_cast<double>(block.x * INTERNAL_BLOCK_SIZE))),
-                        static_cast<int>(std::ceil(static_cast<double>(num_classes) / static_cast<double>(block.y * INTERNAL_BLOCK_SIZE))));
+        const dim3 grid(static_cast<unsigned int>(std::ceil(static_cast<double>(num_predict_points) / static_cast<double>(block.x * INTERNAL_BLOCK_SIZE))),
+                        static_cast<unsigned int>(std::ceil(static_cast<double>(num_classes) / static_cast<double>(block.y * INTERNAL_BLOCK_SIZE))));
 
         detail::device_kernel_predict_linear<<<grid, block>>>(out_d.get(), sv_or_w_d.get(), rho_d.get(), predict_points_d.get(), num_classes, num_predict_points, num_features);
     } else {
         const unsigned long long num_sv = sv_or_w_d.shape().x;
 
         // define the grid sizes
-        const dim3 grid(static_cast<int>(std::ceil(static_cast<double>(num_predict_points) / static_cast<double>(block.x * INTERNAL_BLOCK_SIZE))),
-                        static_cast<int>(std::ceil(static_cast<double>(num_sv) / static_cast<double>(block.y * INTERNAL_BLOCK_SIZE))));
+        const dim3 grid(static_cast<unsigned int>(std::ceil(static_cast<double>(num_predict_points) / static_cast<double>(block.x * INTERNAL_BLOCK_SIZE))),
+                        static_cast<unsigned int>(std::ceil(static_cast<double>(num_sv) / static_cast<double>(block.y * INTERNAL_BLOCK_SIZE))));
 
         switch (params.kernel_type.value()) {
             case kernel_function_type::linear:

@@ -41,7 +41,7 @@
 #include "fmt/core.h"     // fmt::format
 #include "igor/igor.hpp"  // igor::parser
 
-#include <algorithm>    // std::max_element
+#include <algorithm>    // std::max_element, std::all_of
 #include <chrono>       // std::chrono::{time_point, steady_clock, duration_cast}
 #include <cstddef>      // std::size_t
 #include <limits>       // std::numeric_limits::lowest
@@ -357,6 +357,12 @@ model<label_type> csvm::fit(const data_set<label_type> &data, Args &&...named_ar
                   "The provided matrix must be padded with {}, but is padded with {}!",
                   shape{ PADDING_SIZE, PADDING_SIZE },
                   data.data().padding());
+    #if defined(PLSSVM_ASSERT_ENABLED)
+    if (params_.kernel_type == kernel_function_type::chi_squared) {
+        PLSSVM_ASSERT(std::all_of(data.data().data(), data.data().data() + data.data().size_padded(), [](const real_type val) { return val >= real_type{ 0.0 }; }),
+                      "The chi-squared kernel is only well defined for non-negative values!");
+    }
+    #endif
 
     if (!data.has_labels()) {
         throw invalid_parameter_exception{ "No labels given for training! Maybe the data is only usable for prediction?" };
@@ -393,7 +399,7 @@ model<label_type> csvm::fit(const data_set<label_type> &data, Args &&...named_ar
     parameter params{ params_ };
     if (params.gamma.is_default()) {
         // no gamma provided -> use default value which depends on the number of features in the data set
-        params.gamma = real_type{ 1.0 } / data.num_features();
+        params.gamma = real_type{ 1.0 } / static_cast<real_type>(data.num_features());
     }
 
     // create model
@@ -517,6 +523,12 @@ std::vector<label_type> csvm::predict(const model<label_type> &model, const data
                   "The provided predict points must be padded with {}, but is padded with {}!",
                   shape{ PADDING_SIZE, PADDING_SIZE },
                   data.data().padding());
+#if defined(PLSSVM_ASSERT_ENABLED)
+    if (params_.kernel_type == kernel_function_type::chi_squared) {
+        PLSSVM_ASSERT(std::all_of(data.data().data(), data.data().data() + data.data().size_padded(), [](const real_type val) { return val >= real_type{ 0.0 }; }),
+                      "The chi-squared kernel is only well defined for non-negative values!");
+    }
+#endif
 
     if (model.num_features() != data.num_features()) {
         throw invalid_parameter_exception{ fmt::format("Number of features per data point ({}) must match the number of features per support vector of the provided model ({})!", data.num_features(), model.num_features()) };
@@ -658,11 +670,11 @@ std::vector<label_type> csvm::predict(const model<label_type> &model, const data
 #pragma omp parallel for default(none) shared(predicted_labels, class_votes, model) if (!std::is_same_v<label_type, bool>)
         for (typename std::vector<label_type>::size_type i = 0; i < predicted_labels.size(); ++i) {
             std::size_t argmax = 0;
-            real_type max = std::numeric_limits<real_type>::lowest();
+            std::size_t max = 0;
             for (std::size_t v = 0; v < class_votes.num_cols(); ++v) {
                 if (max < class_votes(i, v)) {
                     argmax = v;
-                    max = static_cast<real_type>(class_votes(i, v));
+                    max = class_votes(i, v);
                 }
             }
             predicted_labels[i] = model.data_.mapping_->get_label_by_mapped_index(argmax);

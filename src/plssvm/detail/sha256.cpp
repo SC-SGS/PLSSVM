@@ -25,8 +25,8 @@ std::string sha256::operator()(std::string input) const {
     // Pre-processing (Padding):
 
     // begin with the original message of length L byte
-    const std::uint64_t L = input.size();
-    const std::uint64_t L_bits = L * 8;
+    const auto L = static_cast<std::uint32_t>(input.size());
+    const std::uint32_t L_bits = L * 8;
 
     // append a single '1' byte
     input.append(1, static_cast<char>(0x80));

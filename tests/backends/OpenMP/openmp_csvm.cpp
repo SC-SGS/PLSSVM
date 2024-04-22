@@ -210,7 +210,7 @@ TYPED_TEST(OpenMPCSVMKernelFunction, assemble_kernel_matrix_explicit) {
     const plssvm::data_set data{ PLSSVM_TEST_FILE };
     auto data_matr{ data.data() };
     if constexpr (kernel == plssvm::kernel_function_type::chi_squared) {
-        // chi-squared is well-defined for positive values only
+        // chi-squared is well-defined for non-negative values only
         data_matr = util::matrix_abs(data_matr);
     }
 
@@ -262,7 +262,7 @@ TYPED_TEST(OpenMPCSVMKernelFunction, blas_level_3_kernel_implicit) {
     const plssvm::data_set data{ PLSSVM_TEST_FILE };
     auto data_matr{ data.data() };
     if constexpr (kernel == plssvm::kernel_function_type::chi_squared) {
-        // chi-squared is well-defined for positive values only
+        // chi-squared is well-defined for non-negative values only
         data_matr = util::matrix_abs(data_matr);
     }
 
@@ -311,7 +311,7 @@ TYPED_TEST(OpenMPCSVMKernelFunction, predict_values) {
     const plssvm::data_set data{ PLSSVM_TEST_FILE };
     auto data_matr{ data.data() };
     if constexpr (kernel == plssvm::kernel_function_type::chi_squared) {
-        // chi-squared is well-defined for positive values only
+        // chi-squared is well-defined for non-negative values only
         data_matr = util::matrix_abs(data_matr);
     }
 

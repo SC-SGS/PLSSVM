@@ -61,7 +61,7 @@ class ParameterBase : public ::testing::Test,
      * @brief Return the number of command line arguments encapsulated in this class.
      * @return the number of cmd arguments (`[[nodiscard]]`)
      */
-    [[nodiscard]] int get_argc() const noexcept { return cmd_argv_.size(); }
+    [[nodiscard]] int get_argc() const noexcept { return static_cast<int>(cmd_argv_.size()); }
 
     /**
      * @brief The command line arguments encapsulated in this class.
