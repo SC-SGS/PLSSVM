@@ -393,7 +393,7 @@ model<label_type> csvm::fit(const data_set<label_type> &data, Args &&...named_ar
     parameter params{ params_ };
     if (params.gamma.is_default()) {
         // no gamma provided -> use default value which depends on the number of features in the data set
-        params.gamma = real_type{ 1.0 } / data.num_features();
+        params.gamma = real_type{ 1.0 } / static_cast<real_type>(data.num_features());
     }
 
     // create model
@@ -658,11 +658,11 @@ std::vector<label_type> csvm::predict(const model<label_type> &model, const data
 #pragma omp parallel for default(none) shared(predicted_labels, class_votes, model) if (!std::is_same_v<label_type, bool>)
         for (typename std::vector<label_type>::size_type i = 0; i < predicted_labels.size(); ++i) {
             std::size_t argmax = 0;
-            real_type max = std::numeric_limits<real_type>::lowest();
+            std::size_t max = 0;
             for (std::size_t v = 0; v < class_votes.num_cols(); ++v) {
                 if (max < class_votes(i, v)) {
                     argmax = v;
-                    max = static_cast<real_type>(class_votes(i, v));
+                    max = class_votes(i, v);
                 }
             }
             predicted_labels[i] = model.data_.mapping_->get_label_by_mapped_index(argmax);

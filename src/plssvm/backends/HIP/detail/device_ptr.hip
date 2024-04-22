@@ -84,8 +84,8 @@ void device_ptr<T>::fill(const value_type value, const size_type pos, const size
 
     // run GPU kernel
     const size_type rcount = std::min(count, this->size_padded() - pos);
-    constexpr int block_size = 512;
-    const int grid_size = (rcount + block_size - 1) / block_size;
+    constexpr unsigned int block_size = 512;
+    const unsigned int grid_size = (static_cast<unsigned int>(rcount) + block_size - 1) / block_size;
     detail::fill_array<<<grid_size, block_size>>>(data_, value, pos, rcount);
 
     detail::peek_at_last_error();

@@ -25,60 +25,69 @@
  * @param[in,out] C the matrix @p C, also used as result matrix
  */
 __kernel void device_kernel_symm(const ulong num_rows, const ulong num_rhs, const ulong device_specific_num_rows, const ulong row_offset, const real_type alpha, const __global real_type *A, const __global real_type *B, const real_type beta, __global real_type *C) {
-    // compute: C = alpha * A * B + beta * C with A in m x k, B in n x k, and C in n x m, alpha, beta as scalar
-    const ulong i = get_global_id(0) * INTERNAL_BLOCK_SIZE;  // # rhs
-    const ulong i_linear = get_group_id(0) * get_local_size(0) * INTERNAL_BLOCK_SIZE + get_local_id(0);
-    const ulong j = get_global_id(1) * INTERNAL_BLOCK_SIZE;  // # rows
-    const ulong j_cached_idx_linear = get_group_id(1) * get_local_size(1) * INTERNAL_BLOCK_SIZE + get_local_id(0);
+    // cast values to 32-bit unsigned int values to prevent implicit conversions
+    const uint local_id_0 = get_local_id(0);
+    const uint local_id_1 = get_local_id(1);
 
+    // calculate the indices used in the current work-item
+    const ulong i = get_global_id(0) * INTERNAL_BLOCK_SIZE_ul;  // # rhs
+    const ulong i_linear = get_group_id(0) * get_local_size(0) * INTERNAL_BLOCK_SIZE_ul + get_local_id(0);
+    const ulong j = get_global_id(1) * INTERNAL_BLOCK_SIZE_ul;  // # rows
+    const ulong j_linear = get_group_id(1) * get_local_size(1) * INTERNAL_BLOCK_SIZE_ul + get_local_id(0);
+
+    // create the local memory arrays used for caching data point features
     __local real_type A_cache[FEATURE_BLOCK_SIZE][INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE];
     __local real_type B_cache[FEATURE_BLOCK_SIZE][INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE];
 
-    real_type temp[INTERNAL_BLOCK_SIZE][INTERNAL_BLOCK_SIZE] = { 0.0 };
+    // create a thread private array used for internal caching
+    real_type temp[INTERNAL_BLOCK_SIZE][INTERNAL_BLOCK_SIZE] = { (real_type) 0.0 };
 
-    for (ulong dim = 0; dim < (num_rows - row_offset); dim += FEATURE_BLOCK_SIZE) {
-        // load data into shared memory
+    // iterate over all features using blocking to be able to cache them for faster memory accesses
+    for (ulong dim = 0; dim < (num_rows - row_offset); dim += FEATURE_BLOCK_SIZE_ul) {
+        // load data into local memory
         for (uint internal = 0; internal < INTERNAL_BLOCK_SIZE; ++internal) {
-            const ulong global_i = i_linear + internal * THREAD_BLOCK_SIZE;
-            const ulong global_j = j_cached_idx_linear + internal * THREAD_BLOCK_SIZE;
+            const ulong global_i = i_linear + (ulong) internal * THREAD_BLOCK_SIZE_ul;
+            const ulong global_j = j_linear + (ulong) internal * THREAD_BLOCK_SIZE_ul;
 
             // determine on which side of the diagonal we are located
             if (dim + get_local_id(1) < global_j) {
-                A_cache[get_local_id(1)][internal * THREAD_BLOCK_SIZE + get_local_id(0)] = A[(dim + get_local_id(1)) * (num_rows - row_offset + PADDING_SIZE) + global_j - (dim + get_local_id(1)) * (dim + get_local_id(1) + 1) / 2];
+                A_cache[local_id_1][internal * THREAD_BLOCK_SIZE + local_id_0] = A[(dim + get_local_id(1)) * (num_rows - row_offset + PADDING_SIZE_ul) + global_j - (dim + get_local_id(1)) * (dim + get_local_id(1) + (ulong) 1) / (ulong) 2];
             } else {
-                A_cache[get_local_id(1)][internal * THREAD_BLOCK_SIZE + get_local_id(0)] = A[global_j * (num_rows - row_offset + PADDING_SIZE) + dim + get_local_id(1) - global_j * (global_j + 1) / 2];
+                A_cache[local_id_1][internal * THREAD_BLOCK_SIZE + local_id_0] = A[global_j * (num_rows - row_offset + PADDING_SIZE_ul) + dim + get_local_id(1) - global_j * (global_j + (ulong) 1) / (ulong) 2];
             }
             // determine on which side of the diagonal we are located
             if (dim + get_local_id(1) + THREAD_BLOCK_SIZE < global_j) {
-                A_cache[get_local_id(1) + THREAD_BLOCK_SIZE][internal * THREAD_BLOCK_SIZE + get_local_id(0)] = A[(dim + get_local_id(1) + THREAD_BLOCK_SIZE) * (num_rows - row_offset + PADDING_SIZE) + global_j - (dim + get_local_id(1) + THREAD_BLOCK_SIZE) * (dim + get_local_id(1) + THREAD_BLOCK_SIZE + 1) / 2];
+                A_cache[local_id_1 + THREAD_BLOCK_SIZE][internal * THREAD_BLOCK_SIZE + local_id_0] = A[(dim + get_local_id(1) + THREAD_BLOCK_SIZE_ul) * (num_rows - row_offset + PADDING_SIZE_ul) + global_j - (dim + get_local_id(1) + THREAD_BLOCK_SIZE_ul) * (dim + get_local_id(1) + THREAD_BLOCK_SIZE_ul + (ulong) 1) / (ulong) 2];
             } else {
-                A_cache[get_local_id(1) + THREAD_BLOCK_SIZE][internal * THREAD_BLOCK_SIZE + get_local_id(0)] = A[global_j * (num_rows - row_offset + PADDING_SIZE) + dim + get_local_id(1) + THREAD_BLOCK_SIZE - global_j * (global_j + 1) / 2];
+                A_cache[local_id_1 + THREAD_BLOCK_SIZE][internal * THREAD_BLOCK_SIZE + local_id_0] = A[global_j * (num_rows - row_offset + PADDING_SIZE_ul) + dim + get_local_id(1) + THREAD_BLOCK_SIZE_ul - global_j * (global_j + (ulong) 1) / (ulong) 2];
             }
 
-            B_cache[get_local_id(1)][internal * THREAD_BLOCK_SIZE + get_local_id(0)] = B[(dim + row_offset + get_local_id(1)) * (num_rhs + PADDING_SIZE) + global_i];
-            B_cache[get_local_id(1) + THREAD_BLOCK_SIZE][internal * THREAD_BLOCK_SIZE + get_local_id(0)] = B[(dim + row_offset + get_local_id(1) + THREAD_BLOCK_SIZE) * (num_rhs + PADDING_SIZE) + global_i];
+            B_cache[local_id_1][internal * THREAD_BLOCK_SIZE + local_id_0] = B[(dim + row_offset + get_local_id(1)) * (num_rhs + PADDING_SIZE_ul) + global_i];
+            B_cache[local_id_1 + THREAD_BLOCK_SIZE][internal * THREAD_BLOCK_SIZE + local_id_0] = B[(dim + row_offset + get_local_id(1) + THREAD_BLOCK_SIZE_ul) * (num_rhs + PADDING_SIZE_ul) + global_i];
         }
-        barrier(CLK_LOCAL_MEM_FENCE);
+        barrier(CLK_LOCAL_MEM_FENCE);  // wait until all work-items loaded their part of the data
 
-        // calculation
+        // perform the dot product calculation
         for (uint block_dim = 0; block_dim < FEATURE_BLOCK_SIZE; ++block_dim) {
             for (uint internal_i = 0; internal_i < INTERNAL_BLOCK_SIZE; ++internal_i) {
                 for (uint internal_j = 0; internal_j < INTERNAL_BLOCK_SIZE; ++internal_j) {
-                    temp[internal_i][internal_j] += A_cache[block_dim][get_local_id(1) * INTERNAL_BLOCK_SIZE + internal_j] * B_cache[block_dim][get_local_id(0) * INTERNAL_BLOCK_SIZE + internal_i];
+                    temp[internal_i][internal_j] += A_cache[block_dim][local_id_1 * INTERNAL_BLOCK_SIZE + internal_j] * B_cache[block_dim][local_id_0 * INTERNAL_BLOCK_SIZE + internal_i];
                 }
             }
         }
-        barrier(CLK_LOCAL_MEM_FENCE);
+        barrier(CLK_LOCAL_MEM_FENCE);  // wait until all work-items performed their part of the calculations
     }
 
+    // apply the (partial) BLAS operation and update C
     for (uint internal_i = 0; internal_i < INTERNAL_BLOCK_SIZE; ++internal_i) {
         for (uint internal_j = 0; internal_j < INTERNAL_BLOCK_SIZE; ++internal_j) {
-            const ulong global_i = i + internal_i;
-            const ulong device_global_j = j + internal_j;
-            const ulong global_j = row_offset + j + internal_j;
+            const ulong global_i = i + (ulong) internal_i;
+            const ulong device_global_j = j + (ulong) internal_j;
+            const ulong global_j = row_offset + j + (ulong) internal_j;
 
+            // be sure to not perform out of bounds accesses
             if (global_i < num_rhs && device_global_j < device_specific_num_rows) {
-                C[global_j * (num_rhs + PADDING_SIZE) + global_i] = alpha * temp[internal_i][internal_j] + beta * C[global_j * (num_rhs + PADDING_SIZE) + global_i];
+                C[global_j * (num_rhs + PADDING_SIZE_ul) + global_i] = alpha * temp[internal_i][internal_j] + beta * C[global_j * (num_rhs + PADDING_SIZE_ul) + global_i];
             }
         }
     }
@@ -99,51 +108,59 @@ __kernel void device_kernel_symm(const ulong num_rows, const ulong num_rhs, cons
  * @param[in,out] C the matrix @p C, also used as result matrix
  */
 __kernel void device_kernel_symm_mirror(const ulong num_rows, const ulong num_rhs, const ulong num_mirror_rows, const ulong device_specific_num_rows, const ulong row_offset, const real_type alpha, const __global real_type *A, const __global real_type *B, const real_type beta, __global real_type *C) {
-    // compute: C = alpha * A * B + beta * C with A in m x k, B in n x k, and C in n x m, alpha, beta as scalar
-    const ulong i = get_global_id(0) * INTERNAL_BLOCK_SIZE;  // # rhs
-    const ulong i_linear = get_group_id(0) * get_local_size(0) * INTERNAL_BLOCK_SIZE + get_local_id(0);
-    const ulong j = get_global_id(1) * INTERNAL_BLOCK_SIZE;  // # rows
-    const ulong j_cached_idx_linear = get_group_id(1) * get_local_size(1) * INTERNAL_BLOCK_SIZE + get_local_id(0);
+    // cast values to 32-bit unsigned int values to prevent implicit conversions
+    const uint local_id_0 = get_local_id(0);
+    const uint local_id_1 = get_local_id(1);
 
+    // calculate the indices used in the current work-item
+    const ulong i = get_global_id(0) * INTERNAL_BLOCK_SIZE_ul;  // # rhs
+    const ulong i_linear = get_group_id(0) * get_local_size(0) * INTERNAL_BLOCK_SIZE_ul + get_local_id(0);
+    const ulong j = get_global_id(1) * INTERNAL_BLOCK_SIZE_ul;  // # rows
+    const ulong j_linear = get_group_id(1) * get_local_size(1) * INTERNAL_BLOCK_SIZE_ul + get_local_id(0);
+
+    // create the local memory arrays used for caching data point features
     __local real_type A_cache[FEATURE_BLOCK_SIZE][INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE];
     __local real_type B_cache[FEATURE_BLOCK_SIZE][INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE];
 
-    real_type temp[INTERNAL_BLOCK_SIZE][INTERNAL_BLOCK_SIZE] = { 0.0 };
+    // create a thread private array used for internal caching
+    real_type temp[INTERNAL_BLOCK_SIZE][INTERNAL_BLOCK_SIZE] = { (real_type) 0.0 };
 
-    for (ulong dim = 0; dim < device_specific_num_rows; dim += FEATURE_BLOCK_SIZE) {
-        // load data into shared memory
+    // iterate over all features using blocking to be able to cache them for faster memory accesses
+    for (ulong dim = 0; dim < device_specific_num_rows; dim += FEATURE_BLOCK_SIZE_ul) {
+        // load data into local memory
         for (uint internal = 0; internal < INTERNAL_BLOCK_SIZE; ++internal) {
-            const ulong global_i = i_linear + internal * THREAD_BLOCK_SIZE;
-            const ulong global_j = j_cached_idx_linear + internal * THREAD_BLOCK_SIZE;
+            const ulong global_i = i_linear + (ulong) internal * THREAD_BLOCK_SIZE_ul;
+            const ulong global_j = j_linear + (ulong) internal * THREAD_BLOCK_SIZE_ul;
 
-            // determine on which side of the diagonal we are located
-            A_cache[get_local_id(1)][internal * THREAD_BLOCK_SIZE + get_local_id(0)] = A[(dim + get_local_id(1)) * (num_rows - row_offset + PADDING_SIZE) - (dim + get_local_id(1) - 1) * (dim + get_local_id(1)) / 2 + device_specific_num_rows - (dim + get_local_id(1)) + global_j];
-            A_cache[get_local_id(1) + THREAD_BLOCK_SIZE][internal * THREAD_BLOCK_SIZE + get_local_id(0)] = A[(dim + get_local_id(1) + THREAD_BLOCK_SIZE) * (num_rows - row_offset + PADDING_SIZE) - (dim + get_local_id(1) + THREAD_BLOCK_SIZE - 1) * (dim + get_local_id(1) + THREAD_BLOCK_SIZE) / 2 + device_specific_num_rows - (dim + get_local_id(1) + THREAD_BLOCK_SIZE) + global_j];
-
-            B_cache[get_local_id(1)][internal * THREAD_BLOCK_SIZE + get_local_id(0)] = B[(dim + row_offset + get_local_id(1)) * (num_rhs + PADDING_SIZE) + global_i];
-            B_cache[get_local_id(1) + THREAD_BLOCK_SIZE][internal * THREAD_BLOCK_SIZE + get_local_id(0)] = B[(dim + row_offset + get_local_id(1) + THREAD_BLOCK_SIZE) * (num_rhs + PADDING_SIZE) + global_i];
+            // FEATURE_BLOCK_SIZE = 2 * THREAD_BLOCK_SIZE -> store twice as many values in the shared memory
+            A_cache[local_id_1][internal * THREAD_BLOCK_SIZE + local_id_0] = A[(dim + get_local_id(1)) * (num_rows - row_offset + PADDING_SIZE_ul) - (dim + get_local_id(1) - (ulong) 1) * (dim + get_local_id(1)) / (ulong) 2 + device_specific_num_rows - (dim + get_local_id(1)) + global_j];
+            A_cache[local_id_1 + THREAD_BLOCK_SIZE][internal * THREAD_BLOCK_SIZE + local_id_0] = A[(dim + get_local_id(1) + THREAD_BLOCK_SIZE_ul) * (num_rows - row_offset + PADDING_SIZE_ul) - (dim + get_local_id(1) + THREAD_BLOCK_SIZE_ul - (ulong) 1) * (dim + get_local_id(1) + THREAD_BLOCK_SIZE_ul) / (ulong) 2 + device_specific_num_rows - (dim + get_local_id(1) + THREAD_BLOCK_SIZE_ul) + global_j];
+            B_cache[local_id_1][internal * THREAD_BLOCK_SIZE + local_id_0] = B[(dim + row_offset + get_local_id(1)) * (num_rhs + PADDING_SIZE_ul) + global_i];
+            B_cache[local_id_1 + THREAD_BLOCK_SIZE][internal * THREAD_BLOCK_SIZE + local_id_0] = B[(dim + row_offset + get_local_id(1) + THREAD_BLOCK_SIZE_ul) * (num_rhs + PADDING_SIZE_ul) + global_i];
         }
-        barrier(CLK_LOCAL_MEM_FENCE);
+        barrier(CLK_LOCAL_MEM_FENCE);  // wait until all work-items loaded their part of the data
 
-        // calculation
+        // perform the feature reduction calculation
         for (uint block_dim = 0; block_dim < FEATURE_BLOCK_SIZE; ++block_dim) {
             for (uint internal_i = 0; internal_i < INTERNAL_BLOCK_SIZE; ++internal_i) {
                 for (uint internal_j = 0; internal_j < INTERNAL_BLOCK_SIZE; ++internal_j) {
-                    temp[internal_i][internal_j] += A_cache[block_dim][get_local_id(1) * INTERNAL_BLOCK_SIZE + internal_j] * B_cache[block_dim][get_local_id(0) * INTERNAL_BLOCK_SIZE + internal_i];
+                    temp[internal_i][internal_j] += A_cache[block_dim][local_id_1 * INTERNAL_BLOCK_SIZE + internal_j] * B_cache[block_dim][local_id_0 * INTERNAL_BLOCK_SIZE + internal_i];
                 }
             }
         }
-        barrier(CLK_LOCAL_MEM_FENCE);
+        barrier(CLK_LOCAL_MEM_FENCE);  // wait until all work-items performed their part of the calculations
     }
 
+    // apply the (remaining) BLAS operation and update C
     for (uint internal_i = 0; internal_i < INTERNAL_BLOCK_SIZE; ++internal_i) {
         for (uint internal_j = 0; internal_j < INTERNAL_BLOCK_SIZE; ++internal_j) {
-            const ulong global_i = i + internal_i;
-            const ulong partial_global_j = j + internal_j;
-            const ulong global_j = row_offset + device_specific_num_rows + j + internal_j;
+            const ulong global_i = i + (ulong) internal_i;
+            const ulong partial_global_j = j + (ulong) internal_j;
+            const ulong global_j = row_offset + device_specific_num_rows + j + (ulong) internal_j;
 
+            // be sure to not perform out of bounds accesses
             if (global_i < num_rhs && partial_global_j < num_mirror_rows) {
-                C[global_j * (num_rhs + PADDING_SIZE) + global_i] = alpha * temp[internal_i][internal_j] + beta * C[global_j * (num_rhs + PADDING_SIZE) + global_i];
+                C[global_j * (num_rhs + PADDING_SIZE_ul) + global_i] = alpha * temp[internal_i][internal_j] + beta * C[global_j * (num_rhs + PADDING_SIZE_ul) + global_i];
             }
         }
     }
@@ -156,15 +173,15 @@ __kernel void device_kernel_symm_mirror(const ulong num_rows, const ulong num_rh
  * @param[in] rhs the second matrix
  */
 __kernel void device_kernel_inplace_matrix_add(const ulong num_cols, real_type __global *lhs, const real_type __global *rhs) {
-    const ulong i = get_global_id(0) * INTERNAL_BLOCK_SIZE;  // # num_rows
-    const ulong j = get_global_id(1) * INTERNAL_BLOCK_SIZE;  // # num_rhs
+    const ulong i = get_global_id(0) * INTERNAL_BLOCK_SIZE_ul;  // # num_rows
+    const ulong j = get_global_id(1) * INTERNAL_BLOCK_SIZE_ul;  // # num_rhs
 
     for (uint internal_i = 0; internal_i < INTERNAL_BLOCK_SIZE; ++internal_i) {
         for (uint internal_j = 0; internal_j < INTERNAL_BLOCK_SIZE; ++internal_j) {
-            const ulong global_i = i + internal_i;
-            const ulong global_j = j + internal_j;
+            const ulong global_i = i + (ulong) internal_i;
+            const ulong global_j = j + (ulong) internal_j;
 
-            lhs[global_i * (num_cols + PADDING_SIZE) + global_j] += rhs[global_i * (num_cols + PADDING_SIZE) + global_j];
+            lhs[global_i * (num_cols + PADDING_SIZE_ul) + global_j] += rhs[global_i * (num_cols + PADDING_SIZE_ul) + global_j];
         }
     }
 }
@@ -176,15 +193,15 @@ __kernel void device_kernel_inplace_matrix_add(const ulong num_cols, real_type _
  * @param[in] scale the value to scale
  */
 __kernel void device_kernel_inplace_matrix_scale(const ulong num_cols, real_type __global *lhs, const real_type scale) {
-    const ulong i = get_global_id(0) * INTERNAL_BLOCK_SIZE;  // # num_rows
-    const ulong j = get_global_id(1) * INTERNAL_BLOCK_SIZE;  // # num_rhs
+    const ulong i = get_global_id(0) * INTERNAL_BLOCK_SIZE_ul;  // # num_rows
+    const ulong j = get_global_id(1) * INTERNAL_BLOCK_SIZE_ul;  // # num_rhs
 
     for (uint internal_i = 0; internal_i < INTERNAL_BLOCK_SIZE; ++internal_i) {
         for (uint internal_j = 0; internal_j < INTERNAL_BLOCK_SIZE; ++internal_j) {
-            const ulong global_i = i + internal_i;
-            const ulong global_j = j + internal_j;
+            const ulong global_i = i + (ulong) internal_i;
+            const ulong global_j = j + (ulong) internal_j;
 
-            lhs[global_i * (num_cols + PADDING_SIZE) + global_j] *= scale;
+            lhs[global_i * (num_cols + PADDING_SIZE_ul) + global_j] *= scale;
         }
     }
 }

@@ -64,6 +64,10 @@ if (PLSSVM_SYCL_BACKEND_CHECK_FOR_DPCPP_COMPILER)
     # enable DPC++ SYCL support
     target_compile_options(${PLSSVM_SYCL_BACKEND_DPCPP_LIBRARY_NAME} PRIVATE -sycl-std=2020 -fsycl -fno-sycl-id-queries-fit-in-int)
     target_link_options(${PLSSVM_SYCL_BACKEND_DPCPP_LIBRARY_NAME} PRIVATE -fsycl)
+    # add additional compiler warnings
+    target_compile_options(${PLSSVM_SYCL_BACKEND_DPCPP_LIBRARY_NAME} PRIVATE
+                           -Wconversion -Wall -Wextra -Wmost -Wdouble-promotion -fno-common -Wshadow -Wcast-qual
+                           -Wextra-semi -Wunreachable-code -Wuninitialized -Wno-ctor-dtor-privacy)
     
     set(PLSSVM_DPCPP_FSYCL_TARGETS "")
     # cpu targets
