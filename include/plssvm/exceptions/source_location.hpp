@@ -41,8 +41,8 @@ class source_location {
 
         loc.file_name_ = file_name;
         loc.function_name_ = function_name;
-        loc.line_ = line;
-        loc.column_ = column;
+        loc.line_ = static_cast<std::uint_least32_t>(line);
+        loc.column_ = static_cast<uint_least32_t>(column);
 
         return loc;
     }

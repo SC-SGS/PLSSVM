@@ -344,6 +344,12 @@ std::vector<command_queue> create_command_queues(const std::vector<context> &con
     ::plssvm::detail::replace_all(kernel_src_string, "real_type", ::plssvm::detail::arithmetic_type_name<real_type>());
 
     // replace constants in kernel_src_string
+    // replace the size_t variants -> BEFORE replacing the "normal" values
+    ::plssvm::detail::replace_all(kernel_src_string, "THREAD_BLOCK_SIZE_ul", fmt::format("(ulong) {}", THREAD_BLOCK_SIZE));
+    ::plssvm::detail::replace_all(kernel_src_string, "FEATURE_BLOCK_SIZE_ul", fmt::format("(ulong) {}", FEATURE_BLOCK_SIZE));
+    ::plssvm::detail::replace_all(kernel_src_string, "INTERNAL_BLOCK_SIZE_ul", fmt::format("(ulong) {}", INTERNAL_BLOCK_SIZE));
+    ::plssvm::detail::replace_all(kernel_src_string, "PADDING_SIZE_ul", fmt::format("(ulong) {}", PADDING_SIZE));
+    // replace the normal variants
     ::plssvm::detail::replace_all(kernel_src_string, "THREAD_BLOCK_SIZE", fmt::format("{}", THREAD_BLOCK_SIZE));
     ::plssvm::detail::replace_all(kernel_src_string, "FEATURE_BLOCK_SIZE", fmt::format("{}", FEATURE_BLOCK_SIZE));
     ::plssvm::detail::replace_all(kernel_src_string, "INTERNAL_BLOCK_SIZE", fmt::format("{}", INTERNAL_BLOCK_SIZE));
