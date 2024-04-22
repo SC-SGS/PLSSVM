@@ -85,8 +85,11 @@ template <kernel_function_type kernel, typename T, typename... Args>
         // perform kernel function calculation
         T res{ 0.0 };
         for (typename std::vector<T>::size_type i = 0; i < xi.size(); ++i) {
-            const T temp = xi[i] - xj[i];
-            res += (temp * temp) / (xi[i] + xj[i]);
+            const T sum = xi[i] + xj[i];
+            if (sum != T{ 0.0 }) {
+                const T temp = xi[i] - xj[i];
+                res += (temp * temp) / sum;
+            }
         }
         return std::exp(-gamma_arg * res);
     } else {

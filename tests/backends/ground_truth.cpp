@@ -103,8 +103,11 @@ real_type chi_squared_kernel(const std::vector<real_type> &x, const std::vector<
 
     real_type result{ 0.0 };
     for (typename std::vector<real_type>::size_type i = 0; i < x.size(); ++i) {
-        const real_type diff = x[i] - y[i];
-        result += (diff * diff) / (x[i] + y[i]);
+        const real_type sum = x[i] + y[i];
+        if (sum != real_type{ 0.0 }) {
+            const real_type temp = x[i] - y[i];
+            result += (temp * temp) / sum;
+        }
     }
     return std::exp(-gamma * result);
 }
@@ -212,8 +215,11 @@ real_type chi_squared_kernel(const plssvm::matrix<real_type, layout> &X, const s
 
     real_type result{ 0.0 };
     for (typename std::vector<real_type>::size_type dim = 0; dim < X.num_cols(); ++dim) {
-        const real_type diff = X(i, dim) - Y(j, dim);
-        result += (diff * diff) / (X(i, dim) + Y(j, dim));
+        const real_type sum = X(i, dim) + Y(j, dim);
+        if (sum != real_type{ 0.0 }) {
+            const real_type temp = X(i, dim) - Y(j, dim);
+            result += (temp * temp) / sum;
+        }
     }
     return std::exp(-gamma * result);
 }
