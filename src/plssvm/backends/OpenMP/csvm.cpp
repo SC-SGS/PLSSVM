@@ -146,16 +146,15 @@ void csvm::blas_level_3(const solver_type solver, const real_type alpha, const s
     PLSSVM_ASSERT(B.shape() == C.shape(), "The B ({}) and C ({}) matrices must have the same shape!", B.shape(), C.shape());
     PLSSVM_ASSERT(B.padding() == C.padding(), "The B ({}) and C ({}) matrices must have the same padding!", B.padding(), C.padding());
 
-    // cast to correct type
-    const unsigned long long num_rhs = B.shape().x;
-    const unsigned long long num_rows = B.shape().y;
-
     switch (solver) {
         case solver_type::automatic:
             // unreachable
             break;
         case solver_type::cg_explicit:
             {
+                const std::size_t num_rhs = B.shape().x;
+                const std::size_t num_rows = B.shape().y;
+
                 const auto &explicit_A = ::plssvm::detail::move_only_any_cast<const std::vector<real_type> &>(A.front());
                 PLSSVM_ASSERT(!explicit_A.empty(), "The A matrix must not be empty!");
                 detail::device_kernel_symm(num_rows, num_rhs, alpha, explicit_A, B, beta, C);

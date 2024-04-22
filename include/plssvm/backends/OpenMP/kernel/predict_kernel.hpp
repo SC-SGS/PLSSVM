@@ -38,6 +38,7 @@ inline void device_kernel_w_linear(soa_matrix<real_type> &w, const aos_matrix<re
     PLSSVM_ASSERT(alpha.num_cols() == support_vectors.num_rows(), "Size mismatch: {} vs {}!", alpha.num_cols(), support_vectors.num_rows());
     PLSSVM_ASSERT(w.shape() == (plssvm::shape{ alpha.num_rows(), support_vectors.num_cols() }), "Shape mismatch: {} vs {}!", w.shape(), (plssvm::shape{ alpha.num_rows(), support_vectors.num_cols() }));
 
+    // calculate constants
     const std::size_t num_classes = alpha.num_rows();
     const std::size_t num_support_vectors = support_vectors.num_rows();
     const std::size_t num_features = support_vectors.num_cols();
@@ -69,6 +70,7 @@ inline void device_kernel_predict_linear(aos_matrix<real_type> &out, const soa_m
     PLSSVM_ASSERT(w.num_cols() == predict_points.num_cols(), "Size mismatch: {} vs {}!", w.num_cols(), predict_points.num_cols());
     PLSSVM_ASSERT(out.shape() == (plssvm::shape{ predict_points.num_rows(), w.num_rows() }), "Shape mismatch: {} vs {}!", out.shape(), (plssvm::shape{ predict_points.num_rows(), w.num_rows() }));
 
+    // calculate constants
     const std::size_t num_classes = out.num_cols();
     const std::size_t num_predict_points = predict_points.num_rows();
     const std::size_t num_features = predict_points.num_cols();
@@ -105,6 +107,7 @@ inline void device_kernel_predict(aos_matrix<real_type> &out, const aos_matrix<r
     PLSSVM_ASSERT(support_vectors.num_cols() == predict_points.num_cols(), "Size mismatch: {} vs {}!", support_vectors.num_cols(), predict_points.num_cols());
     PLSSVM_ASSERT(out.shape() == (plssvm::shape{ predict_points.num_rows(), alpha.num_rows() }), "Shape mismatch: {} vs {}!", out.shape(), (plssvm::shape{ predict_points.num_rows(), alpha.num_rows() }));
 
+    // calculate constants
     const std::size_t num_classes = alpha.num_rows();
     const std::size_t num_support_vectors = support_vectors.num_rows();
     const std::size_t num_predict_points = predict_points.num_rows();
