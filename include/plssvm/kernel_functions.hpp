@@ -196,8 +196,11 @@ template <kernel_function_type kernel, typename T, layout_type layout, typename.
         const auto gamma_arg = static_cast<T>(detail::get<0>(args...));
         T temp{ 0.0 };
         for (size_type dim = 0; dim < x.num_cols(); ++dim) {
-            const T diff = x(i, dim) - y(j, dim);
-            temp += (diff * diff) / (x(i, dim) + y(j, dim));
+            const T sum = x(i, dim) + y(j, dim);
+            if (sum != T{ 0.0 }) {
+                const T diff = x(i, dim) - y(j, dim);
+                temp += (diff * diff) / sum;
+            }
         }
         return std::exp(-gamma_arg * temp);
     } else {
