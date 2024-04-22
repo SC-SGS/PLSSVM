@@ -342,6 +342,7 @@ std::vector<command_queue> create_command_queues(const std::vector<context> &con
 
     // replace types in kernel_src_string
     ::plssvm::detail::replace_all(kernel_src_string, "real_type", ::plssvm::detail::arithmetic_type_name<real_type>());
+    ::plssvm::detail::replace_all(kernel_src_string, "FLOATING_POINT_MIN", fmt::format("{}", std::numeric_limits<real_type>::min()));
 
     // replace constants in kernel_src_string
     // replace the size_t variants -> BEFORE replacing the "normal" values
