@@ -63,14 +63,14 @@ inline void device_kernel_assembly_symm(const real_type alpha, const std::vector
     const auto THREAD_BLOCK_SIZE_uz = static_cast<std::size_t>(THREAD_BLOCK_SIZE);
 
 #pragma omp parallel for collapse(2) schedule(dynamic)
-    for (std::size_t row = 0; row < blocked_dept; row += INTERNAL_BLOCK_SIZE_uz) {
-        for (std::size_t col = 0; col < blocked_dept; col += INTERNAL_BLOCK_SIZE_uz) {
+    for (std::size_t row = 0; row < blocked_dept; row += THREAD_BLOCK_SIZE_uz) {
+        for (std::size_t col = 0; col < blocked_dept; col += THREAD_BLOCK_SIZE_uz) {
             // perform operations on the current block
-            for (std::size_t row_block = 0; row_block < INTERNAL_BLOCK_SIZE_uz; ++row_block) {
-                for (std::size_t col_block = 0; col_block < INTERNAL_BLOCK_SIZE_uz; ++col_block) {
+            for (std::size_t row_block = 0; row_block < THREAD_BLOCK_SIZE_uz; ++row_block) {
+                for (std::size_t col_block = 0; col_block < THREAD_BLOCK_SIZE_uz; ++col_block) {
                     // calculate the indices used in the current thread
-                    const std::size_t row_idx = (row + row_block) * THREAD_BLOCK_SIZE_uz;
-                    const std::size_t col_idx = (col + col_block) * THREAD_BLOCK_SIZE_uz;
+                    const std::size_t row_idx = (row + row_block) * INTERNAL_BLOCK_SIZE_uz;
+                    const std::size_t col_idx = (col + col_block) * INTERNAL_BLOCK_SIZE_uz;
 
                     // only calculate the upper triangular matrix
                     if (row_idx >= col_idx) {

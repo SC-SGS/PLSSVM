@@ -51,14 +51,14 @@ inline void device_kernel_symm(const std::size_t num_rows, const std::size_t num
     const auto PADDING_SIZE_uz = static_cast<std::size_t>(PADDING_SIZE);
 
 #pragma omp parallel for collapse(2)
-    for (std::size_t rhs = 0; rhs < blocked_num_rhs; rhs += INTERNAL_BLOCK_SIZE_uz) {
-        for (std::size_t row = 0; row < blocked_num_rows; row += INTERNAL_BLOCK_SIZE_uz) {
+    for (std::size_t rhs = 0; rhs < blocked_num_rhs; rhs += THREAD_BLOCK_SIZE_uz) {
+        for (std::size_t row = 0; row < blocked_num_rows; row += THREAD_BLOCK_SIZE_uz) {
             // perform operations on the current block
-            for (std::size_t rhs_block = 0; rhs_block < INTERNAL_BLOCK_SIZE_uz; ++rhs_block) {
-                for (std::size_t row_block = 0; row_block < INTERNAL_BLOCK_SIZE_uz; ++row_block) {
+            for (std::size_t rhs_block = 0; rhs_block < THREAD_BLOCK_SIZE_uz; ++rhs_block) {
+                for (std::size_t row_block = 0; row_block < THREAD_BLOCK_SIZE_uz; ++row_block) {
                     // calculate the indices used in the current thread
-                    const std::size_t rhs_idx = (rhs + rhs_block) * THREAD_BLOCK_SIZE_uz;
-                    const std::size_t row_idx = (row + row_block) * THREAD_BLOCK_SIZE_uz;
+                    const std::size_t rhs_idx = (rhs + rhs_block) * INTERNAL_BLOCK_SIZE_uz;
+                    const std::size_t row_idx = (row + row_block) * INTERNAL_BLOCK_SIZE_uz;
 
                     // create a thread private array used for internal caching
                     std::array<std::array<real_type, INTERNAL_BLOCK_SIZE>, INTERNAL_BLOCK_SIZE> temp{};
