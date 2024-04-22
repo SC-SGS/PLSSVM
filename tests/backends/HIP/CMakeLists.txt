@@ -7,21 +7,38 @@
 ## create HIP tests
 set(PLSSVM_HIP_TEST_NAME HIP_tests)
 
+include(CheckLanguage)
+check_language(HIP)
+enable_language(HIP)
+find_package(HIP REQUIRED)
+
 # list all necessary sources
 set(PLSSVM_HIP_TEST_SOURCES
-    ${CMAKE_CURRENT_LIST_DIR}/detail/device_ptr.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/detail/pinned_memory.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/kernel/detail/fill_kernel.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/detail/utility.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/exceptions.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/hip_csvm.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/detail/device_ptr.hip
+    ${CMAKE_CURRENT_LIST_DIR}/detail/pinned_memory.hip
+    ${CMAKE_CURRENT_LIST_DIR}/kernel/detail/fill_kernel.hip
+    ${CMAKE_CURRENT_LIST_DIR}/detail/utility.hip
+    ${CMAKE_CURRENT_LIST_DIR}/exceptions.hip
+    ${CMAKE_CURRENT_LIST_DIR}/hip_csvm.hip
 )
 
-# add test executable
-add_executable(${PLSSVM_HIP_TEST_NAME} ${CMAKE_CURRENT_LIST_DIR}/../../main.cpp ${PLSSVM_HIP_TEST_SOURCES})
+# set target properties
+set_local_and_parent(PLSSVM_HIP_BACKEND_TEST_LIBRARY_NAME plssvm-HIP_test)
+add_library(${PLSSVM_HIP_BACKEND_TEST_LIBRARY_NAME} SHARED ${PLSSVM_HIP_TEST_SOURCES})
 
-# link against test library
-target_link_libraries(${PLSSVM_HIP_TEST_NAME} PRIVATE ${PLSSVM_BASE_TEST_LIBRARY_NAME})
+# set target architecture
+set_property(TARGET ${PLSSVM_HIP_BACKEND_TEST_LIBRARY_NAME} PROPERTY HIP_ARCHITECTURES ${PLSSVM_AMD_TARGET_ARCHS})
+
+# link base library against HIP library
+target_link_libraries(${PLSSVM_HIP_BACKEND_TEST_LIBRARY_NAME} PRIVATE hip::device hip::host)
+set_target_properties(${PLSSVM_HIP_BACKEND_TEST_LIBRARY_NAME} PROPERTIES LINKER_LANGUAGE HIP)
+
+target_link_libraries(${PLSSVM_HIP_BACKEND_TEST_LIBRARY_NAME} PUBLIC ${PLSSVM_BASE_TEST_LIBRARY_NAME})
+
+# add test executable
+add_executable(${PLSSVM_HIP_TEST_NAME} ${CMAKE_CURRENT_LIST_DIR}/../../main.cpp)
+target_link_libraries(${PLSSVM_HIP_TEST_NAME} PRIVATE ${PLSSVM_HIP_BACKEND_TEST_LIBRARY_NAME})
+
 
 # add tests to google test
 include(GoogleTest)

@@ -13,11 +13,11 @@ if (GTEST_FOUND)
 else ()
     message(STATUS "Couldn't find package GTest. Building from source...")
     set(PLSSVM_googletest_VERSION v1.14.0)
+    set(CMAKE_CXX_FLAGS_OLD "${CMAKE_CXX_FLAGS}")
     if (PLSSVM_ENABLE_STL_DEBUG_MODE)
-        set(CMAKE_CXX_FLAGS_OLD "${CMAKE_CXX_FLAGS}")
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${PLSSVM_STL_DEBUG_MODE_FLAGS}")
     endif ()
-    
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC")
     # fetch testing framework GoogleTest
     include(FetchContent)
     FetchContent_Declare(googletest
@@ -34,9 +34,7 @@ else ()
         add_subdirectory(${googletest_SOURCE_DIR} ${googletest_SOURCE_DIR} EXCLUDE_FROM_ALL)
     endif ()
     message(STATUS "Installed GoogleTest version ${PLSSVM_googletest_VERSION}.")
-    if (PLSSVM_ENABLE_STL_DEBUG_MODE)
-        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS_OLD}")
-    endif ()
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS_OLD}")
 endif ()
 
 # create larger test files if desired

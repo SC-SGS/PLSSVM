@@ -10,6 +10,9 @@
 
 #include "plssvm/backends/HIP/kernel/detail/fill_kernel.hip.hpp"
 
+#include "hip/hip_runtime.h"
+#include "hip/hip_runtime_api.h"
+
 #include "tests/naming.hpp"         // util::test_parameter_to_name
 #include "tests/types_to_test.hpp"  // util::{real_type_gtest, test_parameter_type_at_t}
 
@@ -20,11 +23,6 @@
 #include <cstddef>    // std::size_t
 #include <tuple>      // std::ignore
 #include <vector>     // std::vector
-
-#if __has_include("hip/hip_runtime.h") && __has_include("hip/hip_runtime_api.h")
-
-    #include "hip/hip_runtime.h"
-    #include "hip/hip_runtime_api.h"
 
 template <typename T>
 class HIPFillUtility : public ::testing::Test {
@@ -88,5 +86,3 @@ TYPED_TEST(HIPFillUtility, fill_kernel_partial) {
     EXPECT_TRUE(std::all_of(vec.cbegin() + 42, vec.cbegin() + 1071, [](const real_type val) { return val == real_type{ 3.1415 }; }));
     EXPECT_TRUE(std::all_of(vec.cbegin() + 1071, vec.cend(), [](const real_type val) { return val == real_type{ 0.0 }; }));
 }
-
-#endif
