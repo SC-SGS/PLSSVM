@@ -41,7 +41,7 @@
 #include "fmt/core.h"     // fmt::format
 #include "igor/igor.hpp"  // igor::parser
 
-#include <algorithm>    // std::max_element
+#include <algorithm>    // std::max_element, std::all_of
 #include <chrono>       // std::chrono::{time_point, steady_clock, duration_cast}
 #include <cstddef>      // std::size_t
 #include <limits>       // std::numeric_limits::lowest
@@ -357,6 +357,12 @@ model<label_type> csvm::fit(const data_set<label_type> &data, Args &&...named_ar
                   "The provided matrix must be padded with {}, but is padded with {}!",
                   shape{ PADDING_SIZE, PADDING_SIZE },
                   data.data().padding());
+    #if defined(PLSSVM_ASSERT_ENABLED)
+    if (params_.kernel_type == kernel_function_type::chi_squared) {
+        PLSSVM_ASSERT(std::all_of(data.data().data(), data.data().data() + data.data().size_padded(), [](const real_type val) { return val >= real_type{ 0.0 }; }),
+                      "The chi-squared kernel is only well defined for non-negative values!");
+    }
+    #endif
 
     if (!data.has_labels()) {
         throw invalid_parameter_exception{ "No labels given for training! Maybe the data is only usable for prediction?" };
@@ -517,6 +523,12 @@ std::vector<label_type> csvm::predict(const model<label_type> &model, const data
                   "The provided predict points must be padded with {}, but is padded with {}!",
                   shape{ PADDING_SIZE, PADDING_SIZE },
                   data.data().padding());
+#if defined(PLSSVM_ASSERT_ENABLED)
+    if (params_.kernel_type == kernel_function_type::chi_squared) {
+        PLSSVM_ASSERT(std::all_of(data.data().data(), data.data().data() + data.data().size_padded(), [](const real_type val) { return val >= real_type{ 0.0 }; }),
+                      "The chi-squared kernel is only well defined for non-negative values!");
+    }
+#endif
 
     if (model.num_features() != data.num_features()) {
         throw invalid_parameter_exception{ fmt::format("Number of features per data point ({}) must match the number of features per support vector of the provided model ({})!", data.num_features(), model.num_features()) };
