@@ -16,7 +16,8 @@
 #include "plssvm/constants.hpp"              // plssvm::real_type
 #include "plssvm/kernel_function_types.hpp"  // plssvm::kernel_function_type
 
-#include <cmath>  // std::abs, std::pow, std::exp, std::tanh
+#include <cmath>   // std::abs, std::pow, std::exp, std::tanh
+#include <limits>  // std::numeric_limits::min
 
 namespace plssvm::openmp::detail {
 
@@ -67,13 +68,8 @@ template <>
  */
 template <>
 [[nodiscard]] inline real_type feature_reduce<kernel_function_type::chi_squared>(const real_type val1, const real_type val2) {
-    const real_type s = val1 + val2;
-    if (s == real_type{ 0.0 }) {
-        return real_type{ 0.0 };
-    } else {
-        const real_type d = val1 - val2;
-        return (d * d) / s;
-    }
+    const real_type d = val1 - val2;
+    return (real_type{ 1.0 } / (val1 + val2 + std::numeric_limits<real_type>::min())) * d * d;
 }
 
 //***************************************************//
