@@ -221,7 +221,7 @@ aos_matrix<real_type> csvm::predict_values(const parameter &params,
     const std::size_t num_features = predict_points.num_cols();
 
     // num_predict_points x num_classes
-    aos_matrix<real_type> out{ plssvm::shape{ num_predict_points, num_classes }, plssvm::shape{ PADDING_SIZE, PADDING_SIZE } };
+    aos_matrix<real_type> out{ plssvm::shape{ num_predict_points, num_classes }, real_type{ 0.0 }, plssvm::shape{ PADDING_SIZE, PADDING_SIZE } };
 
     if (params.kernel_type == kernel_function_type::linear) {
         // special optimization for the linear kernel function
