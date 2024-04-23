@@ -34,7 +34,10 @@ foreach (PLSSVM_PLATFORM ${PLSSVM_HIP_TARGET_PLATFORMS})
         message(WARNING "The hip backend currently does not support the target platform \"cpu\", ignoring it!")
     elseif (PLSSVM_PLATFORM MATCHES "^nvidia")
         # parse provided NVIDIA GPU architectures
-        message(WARNING "The hip backend currently does not support the target platform \"nvidia\", ignoring it!")
+        parse_architecture_info(${PLSSVM_PLATFORM} PLSSVM_NVIDIA_TARGET_ARCHS PLSSVM_NUM_NVIDIA_TARGET_ARCHS)
+        if (PLSSVM_NUM_NVIDIA_TARGET_ARCHS EQUAL 0)
+            message(FATAL_ERROR "Target platform \"nvidia\" must at least have one architecture specification!")
+        endif ()
     elseif (PLSSVM_PLATFORM MATCHES "^amd")
         # parse provided AMD GPU architectures
         parse_architecture_info(${PLSSVM_PLATFORM} PLSSVM_AMD_TARGET_ARCHS PLSSVM_NUM_AMD_TARGET_ARCHS)
@@ -49,7 +52,7 @@ foreach (PLSSVM_PLATFORM ${PLSSVM_HIP_TARGET_PLATFORMS})
     endif ()
 endforeach ()
 
-if (NOT DEFINED PLSSVM_AMD_TARGET_ARCHS)
+if (NOT DEFINED PLSSVM_AMD_TARGET_ARCHS AND NOT DEFINED PLSSVM_NVIDIA_TARGET_ARCHS)
     if (PLSSVM_ENABLE_HIP_BACKEND MATCHES "ON")
         message(SEND_ERROR "Found requested HIP backend, but no \"amd\" targets were specified!")
     else ()
@@ -59,8 +62,14 @@ if (NOT DEFINED PLSSVM_AMD_TARGET_ARCHS)
     return()
 endif ()
 
+
 # generate summary string
-set(PLSSVM_HIP_BACKEND_SUMMARY_STRING " - HIP: amd (${PLSSVM_AMD_TARGET_ARCHS})")
+if (DEFINED PLSSVM_AMD_TARGET_ARCHS)
+    set(PLSSVM_HIP_BACKEND_SUMMARY_STRING " - HIP: amd (${PLSSVM_AMD_TARGET_ARCHS})")
+endif ()
+if (DEFINED PLSSVM_NVIDIA_TARGET_ARCHS)
+    set(PLSSVM_HIP_BACKEND_SUMMARY_STRING "${PLSSVM_HIP_BACKEND_SUMMARY_STRING} - HIP: nvidia (${PLSSVM_NVIDIA_TARGET_ARCHS})")
+endif ()
 set(PLSSVM_HIP_BACKEND_SUMMARY_STRING "${PLSSVM_HIP_BACKEND_SUMMARY_STRING}" PARENT_SCOPE)
 
 message(CHECK_PASS "found " ${PLSSVM_HIP_BACKEND_SUMMARY_STRING})
@@ -118,7 +127,7 @@ target_compile_definitions(${PLSSVM_HIP_BACKEND_LIBRARY_NAME} PUBLIC PLSSVM_HAS_
 target_compile_options(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC -Wno-sign-compare)
 
 # set target architecture
-set_property(TARGET ${PLSSVM_HIP_BACKEND_LIBRARY_NAME} PROPERTY HIP_ARCHITECTURES ${PLSSVM_AMD_TARGET_ARCHS})
+set_property(TARGET ${PLSSVM_HIP_BACKEND_LIBRARY_NAME} PROPERTY HIP_ARCHITECTURES ${PLSSVM_AMD_TARGET_ARCHS} ${PLSSVM_NVIDIA_TARGET_ARCHS})
 
 # link base library against HIP library
 target_link_libraries(${PLSSVM_HIP_BACKEND_LIBRARY_NAME} PRIVATE hip::device hip::host)
