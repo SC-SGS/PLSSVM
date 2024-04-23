@@ -6,11 +6,68 @@
 
 list(APPEND CMAKE_MESSAGE_INDENT "CUDA:  ")
 
+message(CHECK_START "Checking for CUDA platforms")
+########################################################################################################################
+##                                         parse target platform information                                          ##
+########################################################################################################################
+if (DEFINED PLSSVM_CUDA_TARGET_PLATFORMS)
+    set(PLSSVM_CUDA_TARGET_PLATFORMS ${PLSSVM_CUDA_TARGET_PLATFORMS} CACHE STRING "The CUDA target platforms to compile for." FORCE)
+elseif (DEFINED ENV{PLSSVM_CUDA_TARGET_PLATFORMS})
+    set(PLSSVM_CUDA_TARGET_PLATFORMS $ENV{PLSSVM_CUDA_TARGET_PLATFORMS} CACHE STRING "The CUDA target platforms to compile for." FORCE)
+elseif (DEFINED PLSSVM_TARGET_PLATFORMS)
+    set(PLSSVM_CUDA_TARGET_PLATFORMS ${PLSSVM_TARGET_PLATFORMS} CACHE STRING "The CUDA target platforms to compile for." FORCE)
+elseif (DEFINED ENV{PLSSVM_TARGET_PLATFORMS})
+    set(PLSSVM_CUDA_TARGET_PLATFORMS $ENV{PLSSVM_TARGET_PLATFORMS} CACHE STRING "The CUDA target platforms to compile for." FORCE)
+endif ()
+
+## PLSSVM_TARGET_PLATFORMS must not be empty
+if (PLSSVM_CUDA_TARGET_PLATFORMS STREQUAL "")
+    message(FATAL_ERROR "Eather PLSSVM_TARGET_PLATFORMS or PLSSVM_CUDA_TARGET_PLATFORMS must not be empty to compile with the CUDA backend!")
+endif ()
+
+## parse provided target platforms
+include(${CMAKE_CURRENT_SOURCE_DIR}/../../../../cmake/parse_architecture_info.cmake)
+foreach (PLSSVM_PLATFORM ${PLSSVM_CUDA_TARGET_PLATFORMS})
+    if (PLSSVM_PLATFORM MATCHES "^cpu")
+        message(WARNING "The CUDA backend currently does not support the target platform \"cpu\", ignoring it!")
+    elseif (PLSSVM_PLATFORM MATCHES "^nvidia")
+        # parse provided NVIDIA GPU architectures
+        parse_architecture_info(${PLSSVM_PLATFORM} PLSSVM_NVIDIA_TARGET_ARCHS PLSSVM_NUM_NVIDIA_TARGET_ARCHS)
+        if (PLSSVM_NUM_NVIDIA_TARGET_ARCHS EQUAL 0)
+            message(FATAL_ERROR "Target platform \"nvidia\" must at least have one architecture specification!")
+        endif ()
+    elseif (PLSSVM_PLATFORM MATCHES "^amd")
+        # parse provided AMD GPU architectures
+        message(WARNING "The CUDA backend currently does not support the target platform \"amd\", ignoring it!")
+    elseif (PLSSVM_PLATFORM MATCHES "^intel")
+        # parse provided Intel GPU architectures
+        message(WARNING "The CUDA backend currently does not support the target platform \"intel\", ignoring it!")
+    else ()
+        message(FATAL_ERROR "Unrecognized target platform \"${PLSSVM_PLATFORM}\"! Must be one of: cpu nvidia amd intel")
+    endif ()
+endforeach ()
+
+if (NOT DEFINED PLSSVM_NVIDIA_TARGET_ARCHS)
+    if (PLSSVM_ENABLE_CUDA_BACKEND MATCHES "ON")
+        message(SEND_ERROR "Found requested CUDA backend, but no \"nvidia\" targets were specified!")
+    else ()
+        message(STATUS "Found CUDA backend, but no \"nvidia\" targets were specified!")
+    endif ()
+    message(CHECK_FAIL "skipped")
+    return()
+endif ()
+
+
+# generate summary string
+list(TRANSFORM PLSSVM_NVIDIA_TARGET_ARCHS PREPEND "sm_")
+set(PLSSVM_CUDA_BACKEND_SUMMARY_STRING " - CUDA: nvidia (${PLSSVM_NVIDIA_TARGET_ARCHS})" PARENT_SCOPE)
 # check if CUDA can be enabled
 message(CHECK_START "Checking for CUDA backend")
 
 include(CheckLanguage)
 check_language(CUDA)
+
+
 
 if (NOT CMAKE_CUDA_COMPILER)
     message(CHECK_FAIL "not found")
@@ -18,21 +75,10 @@ if (NOT CMAKE_CUDA_COMPILER)
         message(SEND_ERROR "Cannot find requested backend: CUDA!")
     endif ()
     return()
-else ()
-    if (NOT DEFINED PLSSVM_NVIDIA_TARGET_ARCHS)
-        if (PLSSVM_ENABLE_CUDA_BACKEND MATCHES "ON")
-            message(SEND_ERROR "Found requested CUDA backend, but no \"nvidia\" targets were specified!")
-        else ()
-            message(STATUS "Found CUDA backend, but no \"nvidia\" targets were specified!")
-        endif ()
-        message(CHECK_FAIL "skipped")
-        return()
-    endif ()
 endif ()
 message(CHECK_PASS "found")
 
 enable_language(CUDA)
-
 find_package(CUDAToolkit)
 
 # set necessary flags
@@ -126,8 +172,5 @@ target_link_libraries(${PLSSVM_ALL_LIBRARY_NAME} INTERFACE ${PLSSVM_CUDA_BACKEND
 list(APPEND PLSSVM_TARGETS_TO_INSTALL "${PLSSVM_CUDA_BACKEND_LIBRARY_NAME}")
 set(PLSSVM_TARGETS_TO_INSTALL ${PLSSVM_TARGETS_TO_INSTALL} PARENT_SCOPE)
 
-# generate summary string
-list(TRANSFORM PLSSVM_NVIDIA_TARGET_ARCHS PREPEND "sm_")
-set(PLSSVM_CUDA_BACKEND_SUMMARY_STRING " - CUDA: nvidia (${PLSSVM_NVIDIA_TARGET_ARCHS})" PARENT_SCOPE)
 
 list(POP_BACK CMAKE_MESSAGE_INDENT)
