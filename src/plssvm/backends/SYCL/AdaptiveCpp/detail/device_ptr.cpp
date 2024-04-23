@@ -20,6 +20,7 @@
 #include "fmt/core.h"  // fmt::format
 
 #include <algorithm>  // std::min
+#include <cstring>    // std::memcpy
 #include <vector>     // std::vector
 
 namespace plssvm::adaptivecpp::detail {
