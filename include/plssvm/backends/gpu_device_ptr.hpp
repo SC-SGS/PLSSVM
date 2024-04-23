@@ -482,7 +482,13 @@ void gpu_device_ptr<T, queue_t, device_pointer_t, derived_gpu_device_ptr>::copy_
         this->copy_to_device(data_to_copy.data() + start_row * data_to_copy.num_cols_padded(), 0, num_rows * data_to_copy.num_cols_padded());
     } else {
         // data NOT laid out linearly in memory -> strides necessary
-        this->copy_to_device_strided(data_to_copy.data() + start_row, data_to_copy.num_rows_padded(), num_rows, data_to_copy.num_cols_padded());
+        if (num_rows == data_to_copy.num_rows()) {
+            // use potential shortcut in strided memory copy -> only applicable if a single device is used, i.e., copying padding entries does not result in wrong values
+            this->copy_to_device_strided(data_to_copy.data() + start_row, data_to_copy.num_rows_padded(), num_rows + data_to_copy.padding().x, data_to_copy.num_cols_padded());
+        } else {
+            // otherwise, perform actual strided copy
+            this->copy_to_device_strided(data_to_copy.data() + start_row, data_to_copy.num_rows_padded(), num_rows, data_to_copy.num_cols_padded());
+        }
     }
 }
 
