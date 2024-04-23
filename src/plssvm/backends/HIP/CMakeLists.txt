@@ -98,7 +98,7 @@ find_package(HIP REQUIRED)
 set(CMAKE_HIP_STANDARD 17)
 set(CMAKE_HIP_STANDARD_REQUIRED ON)
 
-set(CMAKE_HIP_FLAGS "${CMAKE_HIP_FLAGS} -std=c++17")
+set(CMAKE_HIP_FLAGS "${CMAKE_HIP_FLAGS} -std=c++17 -Wall -Wextra -Wdouble-promotion -Wshadow -Wcast-qual -Wnull-dereference -Wextra-semi -Wunreachable-code -Wuninitialized -Wmost -Wconversion")
 # set fast-math if requested
 if (PLSSVM_ENABLE_FAST_MATH)
     set(CMAKE_HIP_FLAGS "${CMAKE_HIP_FLAGS} -ffast-math")

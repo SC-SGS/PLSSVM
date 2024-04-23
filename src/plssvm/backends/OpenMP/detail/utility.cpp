@@ -31,7 +31,7 @@ int get_num_threads() {
 std::string get_openmp_version() {
     // create version map according to https://stackoverflow.com/questions/1304363/how-to-check-the-version-of-openmp-on-linux
     // clang-format off
-    static const std::unordered_map<unsigned, std::string> version_map{
+    static const std::unordered_map<int, std::string> version_map{
         { 1998'10, "1.0" },
         { 2002'03, "2.0" },
         { 2005'05, "2.5" },

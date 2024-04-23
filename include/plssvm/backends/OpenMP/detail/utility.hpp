@@ -22,6 +22,7 @@ namespace plssvm::openmp::detail {
  * @return the number of used CPU threads (`[[nodiscard]]`)
  */
 [[nodiscard]] int get_num_threads();
+
 /**
  * @brief Return the OpenMP version used.
  * @details Parses the output of `_OPENMP` according to https://stackoverflow.com/questions/1304363/how-to-check-the-version-of-openmp-on-linux.

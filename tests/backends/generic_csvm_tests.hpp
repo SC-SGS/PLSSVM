@@ -133,7 +133,7 @@ template <typename csvm_type, typename device_ptr_type, typename matrix_type, ty
         // created matrix is different for the OpenMP backend and the GPU backends!
         if constexpr (plssvm::csvm_to_backend_type_v<csvm_type> == plssvm::backend_type::openmp) {
             // only a single device ever in use
-            result[0] = plssvm::detail::move_only_any{ std::make_tuple(plssvm::aos_matrix<real_type>{ matr, plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE } }, std::forward<Args>(args)...) };
+            result[0] = plssvm::detail::move_only_any{ std::make_tuple(plssvm::soa_matrix<real_type>{ matr, plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE } }, std::forward<Args>(args)...) };
         } else {
             auto &device = csvm.devices_[device_id];
 
@@ -919,11 +919,11 @@ TYPED_TEST_P(GenericCSVMSolverKernelFunction, assemble_kernel_matrix_minimal) {
 
                 // implicit doesn't assemble a kernel matrix!
                 if constexpr (plssvm::csvm_to_backend_type_v<csvm_type> == plssvm::backend_type::openmp) {
-                    const auto &[data_d_ret, params_ret, q_red_ret, QA_cost_ret] = plssvm::detail::move_only_any_cast<const std::tuple<plssvm::aos_matrix<plssvm::real_type>, plssvm::parameter, std::vector<plssvm::real_type>, plssvm::real_type> &>(kernel_matrix_d[device_id]);
+                    const auto &[data_d_ret, params_ret, q_red_ret, QA_cost_ret] = plssvm::detail::move_only_any_cast<const std::tuple<plssvm::soa_matrix<plssvm::real_type>, plssvm::parameter, std::vector<plssvm::real_type>, plssvm::real_type> &>(kernel_matrix_d[device_id]);
 
                     // the values should not have changed! (except the matrix layout)
                     EXPECT_EQ(params_ret, params);
-                    EXPECT_FLOATING_POINT_MATRIX_EQ(data_d_ret, plssvm::aos_matrix<plssvm::real_type>{ data });
+                    EXPECT_FLOATING_POINT_MATRIX_EQ(data_d_ret, data);
                     EXPECT_EQ(q_red_ret, q_red);
                     EXPECT_EQ(QA_cost_ret, QA_cost);
                 } else {
@@ -1029,11 +1029,11 @@ TYPED_TEST_P(GenericCSVMSolverKernelFunction, assemble_kernel_matrix) {
 
                 // implicit doesn't assemble a kernel matrix!
                 if constexpr (plssvm::csvm_to_backend_type_v<csvm_type> == plssvm::backend_type::openmp) {
-                    const auto &[data_d_ret, params_ret, q_red_ret, QA_cost_ret] = plssvm::detail::move_only_any_cast<const std::tuple<plssvm::aos_matrix<plssvm::real_type>, plssvm::parameter, std::vector<plssvm::real_type>, plssvm::real_type> &>(kernel_matrix_d[device_id]);
+                    const auto &[data_d_ret, params_ret, q_red_ret, QA_cost_ret] = plssvm::detail::move_only_any_cast<const std::tuple<plssvm::soa_matrix<plssvm::real_type>, plssvm::parameter, std::vector<plssvm::real_type>, plssvm::real_type> &>(kernel_matrix_d[device_id]);
 
                     // the values should not have changed! (except the matrix layout)
                     EXPECT_EQ(params_ret, params);
-                    EXPECT_FLOATING_POINT_MATRIX_EQ(data_d_ret, plssvm::aos_matrix<plssvm::real_type>{ data });
+                    EXPECT_FLOATING_POINT_MATRIX_EQ(data_d_ret, data);
                     EXPECT_EQ(q_red_ret, q_red);
                     EXPECT_EQ(QA_cost_ret, QA_cost);
                 } else {
@@ -1080,7 +1080,13 @@ TYPED_TEST_P(GenericCSVMKernelFunctionClassification, predict) {
     const plssvm::parameter params{ plssvm::kernel_type = kernel };
 
     // create data set that is always classifiable
-    const plssvm::data_set<label_type> test_data = util::generate_trivially_solvable_data_set<label_type>();
+    plssvm::data_set<label_type> test_data = util::generate_trivially_solvable_data_set<label_type>();
+    if constexpr (kernel == plssvm::kernel_function_type::chi_squared) {
+        // chi-squared is well-defined for non-negative values only
+        if (test_data.labels().has_value()) {
+            test_data = plssvm::data_set<label_type>{ util::matrix_abs(test_data.data()), *test_data.labels() };
+        }
+    }
 
     // create normal C-SVM
     const csvm_type svm = util::construct_from_tuple<csvm_type>(params, csvm_test_type::additional_arguments);
@@ -1106,7 +1112,13 @@ TYPED_TEST_P(GenericCSVMKernelFunctionClassification, score_model) {
     plssvm::parameter params{ plssvm::kernel_type = kernel };
 
     // create data set that is always classifiable
-    const plssvm::data_set<label_type> test_data = util::generate_trivially_solvable_data_set<label_type>();
+    plssvm::data_set<label_type> test_data = util::generate_trivially_solvable_data_set<label_type>();
+    if constexpr (kernel == plssvm::kernel_function_type::chi_squared) {
+        // chi-squared is well-defined for non-negative values only
+        if (test_data.labels().has_value()) {
+            test_data = plssvm::data_set<label_type>{ util::matrix_abs(test_data.data()), *test_data.labels() };
+        }
+    }
 
     // create normal C-SVM
     const csvm_type svm = util::construct_from_tuple<csvm_type>(params, csvm_test_type::additional_arguments);
@@ -1132,7 +1144,13 @@ TYPED_TEST_P(GenericCSVMKernelFunctionClassification, score) {
     plssvm::parameter params{ plssvm::kernel_type = kernel };
 
     // create data set that is always classifiable
-    const plssvm::data_set<label_type> test_data = util::generate_trivially_solvable_data_set<label_type>();
+    plssvm::data_set<label_type> test_data = util::generate_trivially_solvable_data_set<label_type>();
+    if constexpr (kernel == plssvm::kernel_function_type::chi_squared) {
+        // chi-squared is well-defined for non-negative values only
+        if (test_data.labels().has_value()) {
+            test_data = plssvm::data_set<label_type>{ util::matrix_abs(test_data.data()), *test_data.labels() };
+        }
+    }
 
     // create normal C-SVM
     const csvm_type svm = util::construct_from_tuple<csvm_type>(params, csvm_test_type::additional_arguments);
@@ -1174,7 +1192,13 @@ TYPED_TEST_P(GenericCSVMSolverKernelFunctionClassification, fit) {
     const plssvm::parameter params{ plssvm::kernel_type = kernel };
 
     // create data set to be used
-    const plssvm::data_set<label_type> test_data{ PLSSVM_TEST_PATH "/data/predict/50x20.libsvm" };
+    plssvm::data_set<label_type> test_data{ PLSSVM_TEST_PATH "/data/predict/50x20.libsvm" };
+    if constexpr (kernel == plssvm::kernel_function_type::chi_squared) {
+        // chi-squared is well-defined for non-negative values only
+        if (test_data.labels().has_value()) {
+            test_data = plssvm::data_set<label_type>{ util::matrix_abs(test_data.data()), *test_data.labels() };
+        }
+    }
 
     // create normal C-SVM
     const csvm_type svm = util::construct_from_tuple<csvm_type>(params, csvm_test_type::additional_arguments);

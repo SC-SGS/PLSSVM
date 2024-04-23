@@ -19,20 +19,20 @@
 namespace plssvm::hip::detail {
 
 /**
- * @brief Fill the array @p data with @p count values @p value starting at position @p pos.
- * @tparam value_type the type of the array
- * @tparam size_type  the unsigned size_type
- * @param[in,out] data the array to fill
+ * @brief Fill @p count values of the array @p data with the @p value starting at position @p start_pos.
+ * @tparam value_type the type of the array and fill value
+ * @tparam size_type the size type
+ * @param[out] data the array to fill
  * @param[in] value the value to fill the array with
- * @param[in] pos the position at which to start te filling
- * @param[in] count the number of values to fill in the array starting at @p pos
+ * @param[in] start_pos the position to start filling the array
+ * @param[in] count the number of values to fill
  */
 template <typename value_type, typename size_type>
-__global__ void fill_array(value_type *data, value_type value, size_type pos, size_type count) {
-    const unsigned int idx = blockIdx.x * blockDim.x + threadIdx.x;
+__global__ void fill_array(value_type *data, const value_type value, const size_type start_pos, const size_type count) {
+    const auto idx = static_cast<size_type>(blockIdx.x) * static_cast<size_type>(blockDim.x) + static_cast<size_type>(threadIdx.x);
     // fill the array
     if (idx < count) {
-        data[pos + idx] = value;
+        data[start_pos + idx] = value;
     }
 }
 

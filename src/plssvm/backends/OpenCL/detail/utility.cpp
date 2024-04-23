@@ -130,6 +130,10 @@ namespace plssvm::opencl::detail {
         for (const auto &[key, value] : platform_devices) {
             system_devices.push_back(key.second);
         }
+        // the system devices should not be empty!
+        if (system_devices.empty()) {
+            throw platform_devices_empty{ "No appropriate devices could be found!" };
+        }
         // determine the target_platform
         target = determine_default_target_platform(system_devices);
     }
@@ -338,8 +342,15 @@ std::vector<command_queue> create_command_queues(const std::vector<context> &con
 
     // replace types in kernel_src_string
     ::plssvm::detail::replace_all(kernel_src_string, "real_type", ::plssvm::detail::arithmetic_type_name<real_type>());
+    ::plssvm::detail::replace_all(kernel_src_string, "FLOATING_POINT_MIN", fmt::format("{}", std::numeric_limits<real_type>::min()));
 
     // replace constants in kernel_src_string
+    // replace the size_t variants -> BEFORE replacing the "normal" values
+    ::plssvm::detail::replace_all(kernel_src_string, "THREAD_BLOCK_SIZE_ul", fmt::format("(ulong) {}", THREAD_BLOCK_SIZE));
+    ::plssvm::detail::replace_all(kernel_src_string, "FEATURE_BLOCK_SIZE_ul", fmt::format("(ulong) {}", FEATURE_BLOCK_SIZE));
+    ::plssvm::detail::replace_all(kernel_src_string, "INTERNAL_BLOCK_SIZE_ul", fmt::format("(ulong) {}", INTERNAL_BLOCK_SIZE));
+    ::plssvm::detail::replace_all(kernel_src_string, "PADDING_SIZE_ul", fmt::format("(ulong) {}", PADDING_SIZE));
+    // replace the normal variants
     ::plssvm::detail::replace_all(kernel_src_string, "THREAD_BLOCK_SIZE", fmt::format("{}", THREAD_BLOCK_SIZE));
     ::plssvm::detail::replace_all(kernel_src_string, "FEATURE_BLOCK_SIZE", fmt::format("{}", FEATURE_BLOCK_SIZE));
     ::plssvm::detail::replace_all(kernel_src_string, "INTERNAL_BLOCK_SIZE", fmt::format("{}", INTERNAL_BLOCK_SIZE));

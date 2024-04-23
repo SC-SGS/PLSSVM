@@ -90,9 +90,6 @@ std::vector<::plssvm::detail::move_only_any> csvm::assemble_kernel_matrix(const 
     PLSSVM_ASSERT(!q_red.empty(), "The q_red vector must not be empty!");
     PLSSVM_ASSERT(q_red.size() == A.num_rows() - 1, "The q_red size ({}) mismatches the number of data points after dimensional reduction ({})!", q_red.size(), A.num_rows() - 1);
 
-    // TODO Hotfix: extreme performance regression when using a soa_matrix -> convert to aos_matrix -> USES 2x the necessary memory!
-    const aos_matrix<real_type> aos_data{ A };
-
     std::vector<::plssvm::detail::move_only_any> kernel_matrices_parts(this->num_available_devices());
     const real_type cost = real_type{ 1.0 } / params.cost;
 
@@ -106,22 +103,22 @@ std::vector<::plssvm::detail::move_only_any> csvm::assemble_kernel_matrix(const 
                 std::vector<real_type> kernel_matrix(dist.calculate_explicit_kernel_matrix_num_entries_padded(0));  // only explicitly store the upper triangular matrix
                 switch (params.kernel_type.value()) {
                     case kernel_function_type::linear:
-                        detail::device_kernel_assembly<kernel_function_type::linear>(q_red, kernel_matrix, aos_data, QA_cost, cost);
+                        detail::device_kernel_assembly<kernel_function_type::linear>(q_red, kernel_matrix, A, QA_cost, cost);
                         break;
                     case kernel_function_type::polynomial:
-                        detail::device_kernel_assembly<kernel_function_type::polynomial>(q_red, kernel_matrix, aos_data, QA_cost, cost, params.degree.value(), params.gamma.value(), params.coef0.value());
+                        detail::device_kernel_assembly<kernel_function_type::polynomial>(q_red, kernel_matrix, A, QA_cost, cost, params.degree.value(), params.gamma.value(), params.coef0.value());
                         break;
                     case kernel_function_type::rbf:
-                        detail::device_kernel_assembly<kernel_function_type::rbf>(q_red, kernel_matrix, aos_data, QA_cost, cost, params.gamma.value());
+                        detail::device_kernel_assembly<kernel_function_type::rbf>(q_red, kernel_matrix, A, QA_cost, cost, params.gamma.value());
                         break;
                     case kernel_function_type::sigmoid:
-                        detail::device_kernel_assembly<kernel_function_type::sigmoid>(q_red, kernel_matrix, aos_data, QA_cost, cost, params.gamma.value(), params.coef0.value());
+                        detail::device_kernel_assembly<kernel_function_type::sigmoid>(q_red, kernel_matrix, A, QA_cost, cost, params.gamma.value(), params.coef0.value());
                         break;
                     case kernel_function_type::laplacian:
-                        detail::device_kernel_assembly<kernel_function_type::laplacian>(q_red, kernel_matrix, aos_data, QA_cost, cost, params.gamma.value());
+                        detail::device_kernel_assembly<kernel_function_type::laplacian>(q_red, kernel_matrix, A, QA_cost, cost, params.gamma.value());
                         break;
                     case kernel_function_type::chi_squared:
-                        detail::device_kernel_assembly<kernel_function_type::chi_squared>(q_red, kernel_matrix, aos_data, QA_cost, cost, params.gamma.value());
+                        detail::device_kernel_assembly<kernel_function_type::chi_squared>(q_red, kernel_matrix, A, QA_cost, cost, params.gamma.value());
                         break;
                 }
 
@@ -131,7 +128,7 @@ std::vector<::plssvm::detail::move_only_any> csvm::assemble_kernel_matrix(const 
         case solver_type::cg_implicit:
             {
                 // simply return data since in implicit we don't assembly the kernel matrix here!
-                kernel_matrices_parts[0] = ::plssvm::detail::move_only_any{ std::make_tuple(std::move(aos_data), params, std::move(q_red), QA_cost) };
+                kernel_matrices_parts[0] = ::plssvm::detail::move_only_any{ std::make_tuple(std::move(A), params, std::move(q_red), QA_cost) };
             }
             break;
     }
@@ -149,59 +146,50 @@ void csvm::blas_level_3(const solver_type solver, const real_type alpha, const s
     PLSSVM_ASSERT(B.shape() == C.shape(), "The B ({}) and C ({}) matrices must have the same shape!", B.shape(), C.shape());
     PLSSVM_ASSERT(B.padding() == C.padding(), "The B ({}) and C ({}) matrices must have the same padding!", B.padding(), C.padding());
 
-    // cast to correct type
-    const auto m_ull = static_cast<unsigned long long>(B.num_cols());
-    const auto n_ull = static_cast<unsigned long long>(B.num_rows());
-    const auto k_ull = static_cast<unsigned long long>(B.num_cols());
-
-    // TODO Hotfix: extreme performance regression when using a soa_matrix -> convert to aos_matrix -> USES 2x the necessary memory!
-    const aos_matrix<real_type> aos_B{ B };
-    aos_matrix<real_type> aos_C{ C };
-
     switch (solver) {
         case solver_type::automatic:
             // unreachable
             break;
         case solver_type::cg_explicit:
             {
+                const std::size_t num_rhs = B.shape().x;
+                const std::size_t num_rows = B.shape().y;
+
                 const auto &explicit_A = ::plssvm::detail::move_only_any_cast<const std::vector<real_type> &>(A.front());
                 PLSSVM_ASSERT(!explicit_A.empty(), "The A matrix must not be empty!");
-
-                detail::device_kernel_symm(m_ull, n_ull, k_ull, alpha, explicit_A, aos_B, beta, aos_C);
+                detail::device_kernel_symm(num_rows, num_rhs, alpha, explicit_A, B, beta, C);
             }
             break;
         case solver_type::cg_implicit:
             {
-                const auto &[aos_matr_A, params, q_red, QA_cost] = ::plssvm::detail::move_only_any_cast<const std::tuple<aos_matrix<real_type>, parameter, std::vector<real_type>, real_type> &>(A.front());
-                PLSSVM_ASSERT(!aos_matr_A.empty(), "The A matrix must not be empty!");
+                const auto &[matr_A, params, q_red, QA_cost] = ::plssvm::detail::move_only_any_cast<const std::tuple<soa_matrix<real_type>, parameter, std::vector<real_type>, real_type> &>(A.front());
+                PLSSVM_ASSERT(!matr_A.empty(), "The A matrix must not be empty!");
                 PLSSVM_ASSERT(!q_red.empty(), "The q_red vector must not be empty!");
                 const real_type cost = real_type{ 1.0 } / params.cost;
 
                 switch (params.kernel_type.value()) {
                     case kernel_function_type::linear:
-                        detail::device_kernel_assembly_symm<kernel_function_type::linear>(alpha, q_red, aos_matr_A, QA_cost, cost, aos_B, beta, aos_C);
+                        detail::device_kernel_assembly_symm<kernel_function_type::linear>(alpha, q_red, matr_A, QA_cost, cost, B, beta, C);
                         break;
                     case kernel_function_type::polynomial:
-                        detail::device_kernel_assembly_symm<kernel_function_type::polynomial>(alpha, q_red, aos_matr_A, QA_cost, cost, aos_B, beta, aos_C, params.degree.value(), params.gamma.value(), params.coef0.value());
+                        detail::device_kernel_assembly_symm<kernel_function_type::polynomial>(alpha, q_red, matr_A, QA_cost, cost, B, beta, C, params.degree.value(), params.gamma.value(), params.coef0.value());
                         break;
                     case kernel_function_type::rbf:
-                        detail::device_kernel_assembly_symm<kernel_function_type::rbf>(alpha, q_red, aos_matr_A, QA_cost, cost, aos_B, beta, aos_C, params.gamma.value());
+                        detail::device_kernel_assembly_symm<kernel_function_type::rbf>(alpha, q_red, matr_A, QA_cost, cost, B, beta, C, params.gamma.value());
                         break;
                     case kernel_function_type::sigmoid:
-                        detail::device_kernel_assembly_symm<kernel_function_type::sigmoid>(alpha, q_red, aos_matr_A, QA_cost, cost, aos_B, beta, aos_C, params.gamma.value(), params.coef0.value());
+                        detail::device_kernel_assembly_symm<kernel_function_type::sigmoid>(alpha, q_red, matr_A, QA_cost, cost, B, beta, C, params.gamma.value(), params.coef0.value());
                         break;
                     case kernel_function_type::laplacian:
-                        detail::device_kernel_assembly_symm<kernel_function_type::laplacian>(alpha, q_red, aos_matr_A, QA_cost, cost, aos_B, beta, aos_C, params.gamma.value());
+                        detail::device_kernel_assembly_symm<kernel_function_type::laplacian>(alpha, q_red, matr_A, QA_cost, cost, B, beta, C, params.gamma.value());
                         break;
                     case kernel_function_type::chi_squared:
-                        detail::device_kernel_assembly_symm<kernel_function_type::chi_squared>(alpha, q_red, aos_matr_A, QA_cost, cost, aos_B, beta, aos_C, params.gamma.value());
+                        detail::device_kernel_assembly_symm<kernel_function_type::chi_squared>(alpha, q_red, matr_A, QA_cost, cost, B, beta, C, params.gamma.value());
                         break;
                 }
             }
             break;
     }
-
-    C = soa_matrix<real_type>{ aos_C };
 }
 
 //***************************************************//
@@ -232,19 +220,15 @@ aos_matrix<real_type> csvm::predict_values(const parameter &params,
     const std::size_t num_predict_points = predict_points.num_rows();
     const std::size_t num_features = predict_points.num_cols();
 
-    // TODO Hotfix: extreme performance regression when using a soa_matrix -> convert to aos_matrix -> USES 2x the necessary memory!
-    const aos_matrix<real_type> aos_support_vectors{ support_vectors };
-    const aos_matrix<real_type> aos_predict_points{ predict_points };
-
     // num_predict_points x num_classes
-    aos_matrix<real_type> out{ plssvm::shape{ num_predict_points, num_classes }, plssvm::shape{ PADDING_SIZE, PADDING_SIZE } };
+    aos_matrix<real_type> out{ plssvm::shape{ num_predict_points, num_classes }, real_type{ 0.0 }, plssvm::shape{ PADDING_SIZE, PADDING_SIZE } };
 
     if (params.kernel_type == kernel_function_type::linear) {
         // special optimization for the linear kernel function
         if (w.empty()) {
             // fill w vector
             w = soa_matrix<real_type>{ plssvm::shape{ num_classes, num_features }, plssvm::shape{ PADDING_SIZE, PADDING_SIZE } };
-            detail::device_kernel_w_linear(w, alpha, aos_support_vectors);
+            detail::device_kernel_w_linear(w, alpha, support_vectors);
         }
     }
 

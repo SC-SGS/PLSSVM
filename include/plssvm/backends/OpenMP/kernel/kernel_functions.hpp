@@ -6,12 +6,20 @@
  * @license This file is part of the PLSSVM project which is released under the MIT license.
  *          See the LICENSE.md file in the project root for full license information.
  *
- * @brief Implement the different kernel functions on the GPU using OpenCL.
+ * @brief Implement the different kernel functions for the OpenMP backend.
  */
 
-#pragma OPENCL EXTENSION cl_khr_fp64 : enable
+#ifndef PLSSVM_BACKENDS_OPENMP_KERNEL_KERNEL_FUNCTIONS_HPP_
+#define PLSSVM_BACKENDS_OPENMP_KERNEL_KERNEL_FUNCTIONS_HPP_
+#pragma once
 
-// ATTENTION: if a new function is added here, the mapping in the 'create_command_queues' function must be updated accordingly!!!
+#include "plssvm/constants.hpp"              // plssvm::real_type
+#include "plssvm/kernel_function_types.hpp"  // plssvm::kernel_function_type
+
+#include <cmath>   // std::abs, std::pow, std::exp, std::tanh
+#include <limits>  // std::numeric_limits::min
+
+namespace plssvm::openmp::detail {
 
 //***************************************************//
 //                 feature reductions                //
@@ -23,17 +31,19 @@
  * @param[in] val2 the second feature value
  * @return the reduced value (`[[nodiscard]]`)
  */
-real_type feature_reduce_dot(const real_type val1, const real_type val2) {
+template <kernel_function_type kernel_function>
+[[nodiscard]] inline real_type feature_reduce(const real_type val1, const real_type val2) {
     return val1 * val2;
 }
 
 /**
- * @brief Compute the feature reduction for the radial basis function kernel function, i.e., the squared euclidean distance.
+ * @brief Compute the feature reduction for the radial basis function kernel function, i.e., the squared Euclidean distance.
  * @param[in] val1 the first feature value
  * @param[in] val2 the second feature value
  * @return the reduced value (`[[nodiscard]]`)
  */
-real_type feature_reduce_euclidean_dist(const real_type val1, const real_type val2) {
+template <>
+[[nodiscard]] inline real_type feature_reduce<kernel_function_type::rbf>(const real_type val1, const real_type val2) {
     const real_type d = val1 - val2;
     return d * d;
 }
@@ -44,8 +54,9 @@ real_type feature_reduce_euclidean_dist(const real_type val1, const real_type va
  * @param[in] val2 the second feature value
  * @return the reduced value (`[[nodiscard]]`)
  */
-real_type feature_reduce_manhattan_dist(const real_type val1, const real_type val2) {
-    return fabs(val1 - val2);
+template <>
+[[nodiscard]] inline real_type feature_reduce<kernel_function_type::laplacian>(const real_type val1, const real_type val2) {
+    return std::abs(val1 - val2);
 }
 
 /**
@@ -55,9 +66,10 @@ real_type feature_reduce_manhattan_dist(const real_type val1, const real_type va
  * @param[in] val2 the second feature value
  * @return the reduced value (`[[nodiscard]]`)
  */
-real_type feature_reduce_chi_squared(const real_type val1, const real_type val2) {
+template <>
+[[nodiscard]] inline real_type feature_reduce<kernel_function_type::chi_squared>(const real_type val1, const real_type val2) {
     const real_type d = val1 - val2;
-    return ((real_type) 1.0 / (val1 + val2 + FLOATING_POINT_MIN)) * d * d;
+    return (real_type{ 1.0 } / (val1 + val2 + std::numeric_limits<real_type>::min())) * d * d;
 }
 
 //***************************************************//
@@ -65,11 +77,19 @@ real_type feature_reduce_chi_squared(const real_type val1, const real_type val2)
 //***************************************************//
 
 /**
+ * @brief Unimplemented base-template for all kernel functions.
+ * @return the result value (`[[nodiscard]]`)
+ */
+template <kernel_function_type, typename... Args>
+[[nodiscard]] inline real_type apply_kernel_function(real_type, Args...);
+
+/**
  * @brief Compute the linear kernel function using @p value.
  * @param[in] value the value to apply the linear kernel function to
  * @return the result value (`[[nodiscard]]`)
  */
-real_type apply_linear_kernel_function(const real_type value) {
+template <>
+[[nodiscard]] inline real_type apply_kernel_function<kernel_function_type::linear>(const real_type value) {
     return value;
 }
 
@@ -81,8 +101,9 @@ real_type apply_linear_kernel_function(const real_type value) {
  * @param[in] coef0 the coef0 parameter of the polynomial kernel function
  * @return the result value (`[[nodiscard]]`)
  */
-real_type apply_polynomial_kernel_function(const real_type value, const int degree, const real_type gamma, const real_type coef0) {
-    return pow(gamma * value + coef0, degree);
+template <>
+[[nodiscard]] inline real_type apply_kernel_function<kernel_function_type::polynomial>(const real_type value, const int degree, const real_type gamma, const real_type coef0) {
+    return std::pow(gamma * value + coef0, (real_type) degree);
 }
 
 /**
@@ -91,8 +112,9 @@ real_type apply_polynomial_kernel_function(const real_type value, const int degr
  * @param[in] gamma the gamma parameter of the rbf kernel function
  * @return the result value (`[[nodiscard]]`)
  */
-real_type apply_rbf_kernel_function(const real_type value, const real_type gamma) {
-    return exp(-gamma * value);
+template <>
+[[nodiscard]] inline real_type apply_kernel_function<kernel_function_type::rbf>(const real_type value, const real_type gamma) {
+    return std::exp(-gamma * value);
 }
 
 /**
@@ -102,8 +124,9 @@ real_type apply_rbf_kernel_function(const real_type value, const real_type gamma
  * @param[in] coef0 the coef0 parameter of the kernel kernel function
  * @return the result value (`[[nodiscard]]`)
  */
-real_type apply_sigmoid_kernel_function(const real_type value, const real_type gamma, const real_type coef0) {
-    return tanh(gamma * value + coef0);
+template <>
+[[nodiscard]] inline real_type apply_kernel_function<kernel_function_type::sigmoid>(const real_type value, const real_type gamma, const real_type coef0) {
+    return std::tanh(gamma * value + coef0);
 }
 
 /**
@@ -112,8 +135,9 @@ real_type apply_sigmoid_kernel_function(const real_type value, const real_type g
  * @param[in] gamma the gamma parameter of the laplacian kernel function
  * @return the result value (`[[nodiscard]]`)
  */
-real_type apply_laplacian_kernel_function(const real_type value, const real_type gamma) {
-    return exp(-gamma * value);
+template <>
+[[nodiscard]] inline real_type apply_kernel_function<kernel_function_type::laplacian>(const real_type value, const real_type gamma) {
+    return std::exp(-gamma * value);
 }
 
 /**
@@ -122,6 +146,11 @@ real_type apply_laplacian_kernel_function(const real_type value, const real_type
  * @param[in] gamma the gamma parameter of the chi-squared kernel function
  * @return the result value (`[[nodiscard]]`)
  */
-real_type apply_chi_squared_kernel_function(const real_type value, const real_type gamma) {
-    return exp(-gamma * value);
+template <>
+[[nodiscard]] inline real_type apply_kernel_function<kernel_function_type::chi_squared>(const real_type value, const real_type gamma) {
+    return std::exp(-gamma * value);
 }
+
+}  // namespace plssvm::openmp::detail
+
+#endif  // PLSSVM_BACKENDS_OPENMP_KERNEL_KERNEL_FUNCTIONS_HPP_
