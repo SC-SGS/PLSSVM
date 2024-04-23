@@ -29,7 +29,6 @@
 namespace py = pybind11;
 
 // TODO: implement missing functionality
-// TODO: fit -> return self
 
 // dummy
 struct svc {
