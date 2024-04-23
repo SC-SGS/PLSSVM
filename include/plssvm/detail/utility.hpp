@@ -148,7 +148,7 @@ template <typename Container, typename T, PLSSVM_REQUIRES(is_container_v<Contain
         return std::find(c.cbegin(), c.cend(), val) != c.cend();
     } else {
         // use count otherwise
-        return c.count(val) > 0;
+        return c.count(val) > typename Container::size_type{ 0 };
     }
 }
 
