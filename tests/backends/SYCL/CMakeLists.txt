@@ -9,7 +9,6 @@ set(PLSSVM_SYCL_TEST_NAME SYCL_tests)
 
 # list all necessary sources
 set(PLSSVM_SYCL_TEST_SOURCES
-    ${CMAKE_CURRENT_LIST_DIR}/detail/standard_layout_tuple.cpp
     ${CMAKE_CURRENT_LIST_DIR}/exceptions.cpp
     ## since the SYCL implementation_type and kernel_invocation_type enumerations are used even if no SYCL backend
     ## is available these are also tested in the base library

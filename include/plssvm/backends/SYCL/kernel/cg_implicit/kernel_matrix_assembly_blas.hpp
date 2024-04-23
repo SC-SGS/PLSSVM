@@ -13,15 +13,15 @@
 #define PLSSVM_BACKENDS_SYCL_CG_IMPLICIT_KERNEL_MATRIX_ASSEMBLY_BLAS_HPP_
 #pragma once
 
-#include "plssvm/backends/SYCL/detail/atomics.hpp"                // plssvm::sycl::detail::atomic_op
-#include "plssvm/backends/SYCL/detail/standard_layout_tuple.hpp"  // plssvm::sycl::detail::standard_layout_tuple
-#include "plssvm/backends/SYCL/kernel/kernel_functions.hpp"       // plssvm::sycl::detail::{feature_reduce, apply_kernel_function}
-#include "plssvm/constants.hpp"                                   // plssvm::{real_type, THREAD_BLOCK_SIZE, INTERNAL_BLOCK_SIZE, FEATURE_BLOCK_SIZE, PADDING_SIZE}
-#include "plssvm/kernel_function_types.hpp"                       // plssvm::kernel_function_type
+#include "plssvm/backends/SYCL/detail/atomics.hpp"           // plssvm::sycl::detail::atomic_op
+#include "plssvm/backends/SYCL/kernel/kernel_functions.hpp"  // plssvm::sycl::detail::{feature_reduce, apply_kernel_function}
+#include "plssvm/constants.hpp"                              // plssvm::{real_type, THREAD_BLOCK_SIZE, INTERNAL_BLOCK_SIZE, FEATURE_BLOCK_SIZE, PADDING_SIZE}
+#include "plssvm/kernel_function_types.hpp"                  // plssvm::kernel_function_type
 
 #include "sycl/sycl.hpp"  // sycl::nd_item
 
 #include <cstddef>  // std::size_t
+#include <tuple>    // std::tuple, std::make_tuple
 
 namespace plssvm::sycl::detail {
 
@@ -65,7 +65,7 @@ class device_kernel_assembly_symm {
         B_{ B },
         C_{ C },
         num_classes_{ num_classes },
-        kernel_function_parameter_{ detail::make_standard_layout_tuple(std::forward<Args>(kernel_function_parameter)...) } { }
+        kernel_function_parameter_{ std::make_tuple(std::forward<Args>(kernel_function_parameter)...) } { }
 
     /**
      * @brief Function call operator overload performing the actual calculation.
@@ -259,7 +259,7 @@ class device_kernel_assembly_symm {
     const real_type *B_;
     real_type *C_;
     const std::size_t num_classes_;
-    const detail::standard_layout_tuple<Args...> kernel_function_parameter_;
+    const std::tuple<Args...> kernel_function_parameter_;
     /// @endcond
 };
 

@@ -13,14 +13,14 @@
 #define PLSSVM_BACKENDS_SYCL_CG_EXPLICIT_KERNEL_MATRIX_ASSEMBLY_HPP_
 #pragma once
 
-#include "plssvm/backends/SYCL/detail/standard_layout_tuple.hpp"  // plssvm::sycl::detail::standard_layout_tuple
-#include "plssvm/backends/SYCL/kernel/kernel_functions.hpp"       // plssvm::sycl::detail::{feature_reduce, apply_kernel_function}
-#include "plssvm/constants.hpp"                                   // plssvm::{real_type, THREAD_BLOCK_SIZE, INTERNAL_BLOCK_SIZE, FEATURE_BLOCK_SIZE, PADDING_SIZE}
-#include "plssvm/kernel_function_types.hpp"                       // plssvm::kernel_function_type
+#include "plssvm/backends/SYCL/kernel/kernel_functions.hpp"  // plssvm::sycl::detail::{feature_reduce, apply_kernel_function}
+#include "plssvm/constants.hpp"                              // plssvm::{real_type, THREAD_BLOCK_SIZE, INTERNAL_BLOCK_SIZE, FEATURE_BLOCK_SIZE, PADDING_SIZE}
+#include "plssvm/kernel_function_types.hpp"                  // plssvm::kernel_function_type
 
 #include "sycl/sycl.hpp"  // sycl::nd_item
 
 #include <cstddef>  // std::size_t
+#include <tuple>    // std::tuple, std::make_tuple
 
 namespace plssvm::sycl::detail {
 
@@ -58,7 +58,7 @@ class device_kernel_assembly {
         q_{ q },
         QA_cost_{ QA_cost },
         cost_{ cost },
-        kernel_function_parameter_{ detail::make_standard_layout_tuple(std::forward<Args>(kernel_function_parameter)...) } {
+        kernel_function_parameter_{ std::make_tuple(std::forward<Args>(kernel_function_parameter)...) } {
     }
 
     /**
@@ -155,7 +155,7 @@ class device_kernel_assembly {
     const real_type *q_;
     const real_type QA_cost_;
     const real_type cost_;
-    const detail::standard_layout_tuple<Args...> kernel_function_parameter_;
+    const std::tuple<Args...> kernel_function_parameter_;
     /// @endcond
 };
 
