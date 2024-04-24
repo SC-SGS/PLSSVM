@@ -63,8 +63,10 @@ void parse_provided_params(svc &self, const py::kwargs &args) {
             kernel = plssvm::kernel_function_type::polynomial;
         } else if (kernel_str == "rbf") {
             kernel = plssvm::kernel_function_type::rbf;
-        } else if (kernel_str == "sigmoid" || kernel_str == "precomputed") {
-            throw py::attribute_error{ R"(The "kernel = 'sigmoid'" or "kernel = 'precomputed'" parameter for a call to the 'SVC' constructor is not implemented yet!)" };
+        } else if (kernel_str == "sigmoid") {
+            kernel = plssvm::kernel_function_type::sigmoid;
+        } else if (kernel_str == "precomputed") {
+            throw py::attribute_error{ R"(The "kernel = 'precomputed'" parameter for a call to the 'SVC' constructor is not implemented yet!)" };
         } else {
             throw py::value_error{ fmt::format("'{}' is not in list", kernel_str) };
         }
