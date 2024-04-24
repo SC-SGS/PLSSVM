@@ -14,7 +14,9 @@
 #include "plssvm/detail/move_only_any.hpp"        // plssvm::detail::move_only_any
 #include "plssvm/detail/operators.hpp"            // plssvm operator overloads for vectors
 #include "plssvm/detail/performance_tracker.hpp"  // PLSSVM_DETAIL_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY, plssvm::detail::tracking_entry
+#include "plssvm/detail/utility.hpp"              // plssvm::detail::to_underlying
 #include "plssvm/exceptions/exceptions.hpp"       // plssvm::invalid_parameter_exception
+#include "plssvm/gamma.hpp"                       // plssvm::gamma_type, plssvm::get_gamma_value
 #include "plssvm/kernel_function_types.hpp"       // plssvm::kernel_function_type
 #include "plssvm/kernel_functions.hpp"            // plssvm::kernel_function
 #include "plssvm/matrix.hpp"                      // plssvm::soa_matrix
@@ -32,6 +34,7 @@
 #include <numeric>     // std::inner_product
 #include <utility>     // std::move
 #include <utility>     // std::pair, std::make_pair
+#include <variant>     // std::holds_alternative
 #include <vector>      // std::vector
 
 namespace plssvm {
@@ -43,9 +46,9 @@ void csvm::sanity_check_parameter() const {
         throw invalid_parameter_exception{ fmt::format("Invalid kernel function with value {} given!", kernel_type_value) };
     }
 
-    // gamma: must be greater than 0 IF explicitly provided (not for the linear kernel
-    if (params_.kernel_type != kernel_function_type::linear && !params_.gamma.is_default() && params_.gamma.value() <= real_type{ 0.0 }) {
-        throw invalid_parameter_exception{ fmt::format("gamma must be greater than 0.0, but is {}!", params_.gamma) };
+    // gamma: must be greater than 0 IF explicitly provided as real_type (not for the linear kernel)
+    if (params_.kernel_type != kernel_function_type::linear && std::holds_alternative<real_type>(params_.gamma) && get_gamma_value(params_.gamma) <= real_type{ 0.0 }) {
+        throw invalid_parameter_exception{ fmt::format("gamma must be greater than 0.0, but is {}!", get_gamma_value(params_.gamma)) };
     }
     // degree: all allowed
     // coef0: all allowed
@@ -195,7 +198,7 @@ std::pair<std::vector<real_type>, real_type> csvm::perform_dimensional_reduction
 
     // create q_red vector and calculate QA_costs
     std::vector<real_type> q_red(num_rows_reduced);
-    switch (params.kernel_type.value()) {
+    switch (params.kernel_type) {
         case kernel_function_type::linear:
 #pragma omp parallel for default(none) shared(q_red, A) firstprivate(num_rows_reduced)
             for (std::size_t i = 0; i < num_rows_reduced; ++i) {
@@ -205,31 +208,31 @@ std::pair<std::vector<real_type>, real_type> csvm::perform_dimensional_reduction
         case kernel_function_type::polynomial:
 #pragma omp parallel for default(none) shared(q_red, A, params) firstprivate(num_rows_reduced)
             for (std::size_t i = 0; i < num_rows_reduced; ++i) {
-                q_red[i] = kernel_function<kernel_function_type::polynomial>(A, i, A, num_rows_reduced, params.degree.value(), params.gamma.value(), params.coef0.value());
+                q_red[i] = kernel_function<kernel_function_type::polynomial>(A, i, A, num_rows_reduced, params.degree, get_gamma_value(params.gamma), params.coef0);
             }
             break;
         case kernel_function_type::rbf:
 #pragma omp parallel for default(none) shared(q_red, A, params) firstprivate(num_rows_reduced)
             for (std::size_t i = 0; i < num_rows_reduced; ++i) {
-                q_red[i] = kernel_function<kernel_function_type::rbf>(A, i, A, num_rows_reduced, params.gamma.value());
+                q_red[i] = kernel_function<kernel_function_type::rbf>(A, i, A, num_rows_reduced, get_gamma_value(params.gamma));
             }
             break;
         case kernel_function_type::sigmoid:
 #pragma omp parallel for default(none) shared(q_red, A, params) firstprivate(num_rows_reduced)
             for (std::size_t i = 0; i < num_rows_reduced; ++i) {
-                q_red[i] = kernel_function<kernel_function_type::sigmoid>(A, i, A, num_rows_reduced, params.gamma.value(), params.coef0.value());
+                q_red[i] = kernel_function<kernel_function_type::sigmoid>(A, i, A, num_rows_reduced, get_gamma_value(params.gamma), params.coef0);
             }
             break;
         case kernel_function_type::laplacian:
 #pragma omp parallel for default(none) shared(q_red, A, params) firstprivate(num_rows_reduced)
             for (std::size_t i = 0; i < num_rows_reduced; ++i) {
-                q_red[i] = kernel_function<kernel_function_type::laplacian>(A, i, A, num_rows_reduced, params.gamma.value());
+                q_red[i] = kernel_function<kernel_function_type::laplacian>(A, i, A, num_rows_reduced, get_gamma_value(params.gamma));
             }
             break;
         case kernel_function_type::chi_squared:
 #pragma omp parallel for default(none) shared(q_red, A, params) firstprivate(num_rows_reduced)
             for (std::size_t i = 0; i < num_rows_reduced; ++i) {
-                q_red[i] = kernel_function<kernel_function_type::chi_squared>(A, i, A, num_rows_reduced, params.gamma.value());
+                q_red[i] = kernel_function<kernel_function_type::chi_squared>(A, i, A, num_rows_reduced, get_gamma_value(params.gamma));
             }
             break;
     }

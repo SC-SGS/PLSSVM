@@ -13,10 +13,10 @@
 #include "plssvm/backends/SYCL/kernel_invocation_types.hpp"        // plssvm::sycl::kernel_invocation_type
 #include "plssvm/classification_types.hpp"                         // plssvm::classification_type, plssvm::classification_type_to_full_string
 #include "plssvm/constants.hpp"                                    // plssvm::real_type
-#include "plssvm/default_value.hpp"                                // plssvm::default_value
 #include "plssvm/detail/assert.hpp"                                // PLSSVM_ASSERT
 #include "plssvm/detail/logging_without_performance_tracking.hpp"  // plssvm::detail::log_untracked
 #include "plssvm/detail/utility.hpp"                               // plssvm::detail::to_underlying
+#include "plssvm/gamma.hpp"                                        // plssvm::get_gamma_string
 #include "plssvm/kernel_function_types.hpp"                        // plssvm::kernel_type_to_math_string
 #include "plssvm/target_platforms.hpp"                             // plssvm::list_available_target_platforms
 #include "plssvm/verbosity_levels.hpp"                             // plssvm::verbosity, plssvm::verbosity_level
@@ -33,6 +33,7 @@
 #include <iostream>     // std::cout, std::cerr, std::endl
 #include <string>       // std::string
 #include <type_traits>  // std::is_same_v
+#include <variant>      // std::holds_alternative
 #include <vector>       // std::vector
 
 namespace plssvm::detail::cmd {
@@ -61,15 +62,15 @@ parser_train::parser_train(int argc, char **argv) {
         .set_tab_expansion()
         // clang-format off
        .add_options()
-           ("t,kernel_type", kernel_type_help, cxxopts::value<typename decltype(csvm_params.kernel_type)::value_type>()->default_value(fmt::format("{}", detail::to_underlying(csvm_params.kernel_type))))
-           ("d,degree", "set degree in kernel function", cxxopts::value<typename decltype(csvm_params.degree)::value_type>()->default_value(fmt::format("{}", csvm_params.degree)))
-           ("g,gamma", "set gamma in kernel function (default: 1 / num_features)", cxxopts::value<typename decltype(csvm_params.gamma)::value_type>())
-           ("r,coef0", "set coef0 in kernel function", cxxopts::value<typename decltype(csvm_params.coef0)::value_type>()->default_value(fmt::format("{}", csvm_params.coef0)))
-           ("c,cost", "set the parameter C", cxxopts::value<typename decltype(csvm_params.cost)::value_type>()->default_value(fmt::format("{}", csvm_params.cost)))
-           ("e,epsilon", "set the tolerance of termination criterion", cxxopts::value<typename decltype(epsilon)::value_type>()->default_value(fmt::format("{}", epsilon)))
+           ("t,kernel_type", kernel_type_help, cxxopts::value<decltype(csvm_params.kernel_type)>()->default_value(fmt::format("{}", detail::to_underlying(csvm_params.kernel_type))))
+           ("d,degree", "set degree in kernel function", cxxopts::value<decltype(csvm_params.degree)>()->default_value(fmt::format("{}", csvm_params.degree)))
+           ("g,gamma", "set gamma in kernel function", cxxopts::value<decltype(csvm_params.gamma)>()->default_value(fmt::format("{}", csvm_params.gamma)))
+           ("r,coef0", "set coef0 in kernel function", cxxopts::value<decltype(csvm_params.coef0)>()->default_value(fmt::format("{}", csvm_params.coef0)))
+           ("c,cost", "set the parameter C", cxxopts::value<decltype(csvm_params.cost)>()->default_value(fmt::format("{}", csvm_params.cost)))
+           ("e,epsilon", "set the tolerance of termination criterion", cxxopts::value<decltype(epsilon)>()->default_value(fmt::format("{}", epsilon)))
            ("i,max_iter", "set the maximum number of CG iterations (default: num_features)", cxxopts::value<long long int>())
            ("l,solver", "choose the solver: automatic|cg_explicit|cg_implicit", cxxopts::value<decltype(solver)>()->default_value("automatic"))
-           ("a,classification", "the classification strategy to use for multi-class classification: oaa|oao", cxxopts::value<typename decltype(classification)::value_type>()->default_value(fmt::format("{}", classification)))
+           ("a,classification", "the classification strategy to use for multi-class classification: oaa|oao", cxxopts::value<decltype(classification)>()->default_value(fmt::format("{}", classification)))
            ("b,backend", fmt::format("choose the backend: {}", fmt::join(list_available_backends(), "|")), cxxopts::value<decltype(backend)>()->default_value(fmt::format("{}", backend)))
            ("p,target_platform", fmt::format("choose the target platform: {}", fmt::join(list_available_target_platforms(), "|")), cxxopts::value<decltype(target)>()->default_value(fmt::format("{}", target)))
 #if defined(PLSSVM_HAS_SYCL_BACKEND)
@@ -120,20 +121,20 @@ parser_train::parser_train(int argc, char **argv) {
 
     // parse kernel_type and cast the value to the respective enum
     if (result.count("kernel_type")) {
-        csvm_params.kernel_type = result["kernel_type"].as<typename decltype(csvm_params.kernel_type)::value_type>();
+        csvm_params.kernel_type = result["kernel_type"].as<decltype(csvm_params.kernel_type)>();
     }
 
     // parse degree
     if (result.count("degree")) {
-        csvm_params.degree = result["degree"].as<typename decltype(csvm_params.degree)::value_type>();
+        csvm_params.degree = result["degree"].as<decltype(csvm_params.degree)>();
     }
 
     // parse gamma
     if (result.count("gamma")) {
-        const typename decltype(csvm_params.gamma)::value_type gamma_input = result["gamma"].as<typename decltype(csvm_params.gamma)::value_type>();
-        // check if the provided gamma is legal
-        if (gamma_input <= decltype(gamma_input){ 0.0 }) {
-            std::cerr << fmt::format(fmt::fg(fmt::color::red), "ERROR: gamma must be greater than 0.0, but is {}!\n", gamma_input) << std::endl;
+        const decltype(csvm_params.gamma) gamma_input = result["gamma"].as<decltype(csvm_params.gamma)>();
+        // check if the provided gamma is legal iff a real_type has been provided
+        if (std::holds_alternative<real_type>(gamma_input) && get_gamma_value(gamma_input) <= real_type{ 0.0 }) {
+            std::cerr << fmt::format(fmt::fg(fmt::color::red), "ERROR: gamma must be greater than 0.0, but is {}!\n", get_gamma_value(gamma_input)) << std::endl;
             std::cout << options.help() << std::endl;
             std::exit(EXIT_FAILURE);
         }
@@ -143,17 +144,17 @@ parser_train::parser_train(int argc, char **argv) {
 
     // parse coef0
     if (result.count("coef0")) {
-        csvm_params.coef0 = result["coef0"].as<typename decltype(csvm_params.coef0)::value_type>();
+        csvm_params.coef0 = result["coef0"].as<decltype(csvm_params.coef0)>();
     }
 
     // parse cost
     if (result.count("cost")) {
-        csvm_params.cost = result["cost"].as<typename decltype(csvm_params.cost)::value_type>();
+        csvm_params.cost = result["cost"].as<decltype(csvm_params.cost)>();
     }
 
     // parse epsilon
     if (result.count("epsilon")) {
-        epsilon = result["epsilon"].as<typename decltype(epsilon)::value_type>();
+        epsilon = result["epsilon"].as<decltype(epsilon)>();
     }
 
     // parse max_iter
@@ -166,12 +167,12 @@ parser_train::parser_train(int argc, char **argv) {
             std::exit(EXIT_FAILURE);
         }
         // provided max_iter was legal -> override default value
-        max_iter = static_cast<typename decltype(max_iter)::value_type>(max_iter_input);
+        max_iter = static_cast<decltype(max_iter)>(max_iter_input);
     }
 
     // parse the classification type
     if (result.count("classification")) {
-        classification = result["classification"].as<typename decltype(classification)::value_type>();
+        classification = result["classification"].as<decltype(classification)>();
     }
 
     // parse backend_type and cast the value to the respective enum
@@ -254,46 +255,35 @@ parser_train::parser_train(int argc, char **argv) {
 
 std::ostream &operator<<(std::ostream &out, const parser_train &params) {
     out << fmt::format("kernel_type: {} -> {}\n", params.csvm_params.kernel_type, kernel_function_type_to_math_string(params.csvm_params.kernel_type));
-    switch (params.csvm_params.kernel_type.value()) {
+    switch (params.csvm_params.kernel_type) {
         case kernel_function_type::linear:
             break;
         case kernel_function_type::polynomial:
-            {
-                if (params.csvm_params.gamma.is_default()) {
-                    out << "gamma: 1 / num_features (default)\n";
-                } else {
-                    out << fmt::format("gamma: {}\n", params.csvm_params.gamma.value());
-                }
-                out << fmt::format("coef0: {}{}\n", params.csvm_params.coef0.value(), params.csvm_params.coef0.is_default() ? " (default)" : "");
-                out << fmt::format("degree: {}{}\n", params.csvm_params.degree.value(), params.csvm_params.degree.is_default() ? " (default)" : "");
-            }
+            out << fmt::format("degree: {}\n"
+                               "gamma: {}\n"
+                               "coef0: {}\n",
+                               params.csvm_params.degree,
+                               get_gamma_string(params.csvm_params.gamma),
+                               params.csvm_params.coef0);
             break;
         case kernel_function_type::rbf:
         case kernel_function_type::laplacian:
         case kernel_function_type::chi_squared:
-            if (params.csvm_params.gamma.is_default()) {
-                out << "gamma: 1 / num_features (default)\n";
-            } else {
-                out << fmt::format("gamma: {}\n", params.csvm_params.gamma.value());
-            }
+            out << fmt::format("gamma: {}\n", get_gamma_string(params.csvm_params.gamma));
             break;
         case kernel_function_type::sigmoid:
-            {
-                if (params.csvm_params.gamma.is_default()) {
-                    out << "gamma: 1 / num_features (default)\n";
-                } else {
-                    out << fmt::format("gamma: {}\n", params.csvm_params.gamma.value());
-                }
-                out << fmt::format("coef0: {}{}\n", params.csvm_params.coef0.value(), params.csvm_params.coef0.is_default() ? " (default)" : "");
-            }
+            out << fmt::format("gamma: {}\n"
+                               "coef0: {}\n",
+                               get_gamma_string(params.csvm_params.gamma),
+                               params.csvm_params.coef0);
             break;
     }
-    out << fmt::format("cost: {}{}\n", params.csvm_params.cost.value(), params.csvm_params.cost.is_default() ? " (default)" : "");
-    out << fmt::format("epsilon: {}{}\n", params.epsilon.value(), params.epsilon.is_default() ? " (default)" : "");
-    if (params.max_iter.is_default()) {
-        out << "max_iter: num_data_points (default)\n";
+    out << fmt::format("cost: {}\n", params.csvm_params.cost);
+    out << fmt::format("epsilon: {}\n", params.epsilon);
+    if (params.max_iter == 0) {
+        out << "max_iter: num_data_points\n";
     } else {
-        out << fmt::format("max_iter: {}\n", params.max_iter.value());
+        out << fmt::format("max_iter: {}\n", params.max_iter);
     }
 
     out << fmt::format(
@@ -313,15 +303,14 @@ std::ostream &operator<<(std::ostream &out, const parser_train &params) {
     }
 
     out << fmt::format(
-        "classification_type: {}{}\n"
+        "classification_type: {}\n"
         "label_type: {}\n"
         "real_type: {}\n"
         "input file (data set): '{}'\n"
         "output file (model): '{}'\n",
-        classification_type_to_full_string(params.classification.value()),
-        params.classification.is_default() ? " (default)" : "",
-        params.strings_as_labels ? "std::string" : "int (default)",
-        std::is_same_v<real_type, float> ? "float" : "double (default)",
+        classification_type_to_full_string(params.classification),
+        params.strings_as_labels ? "std::string" : "int",
+        std::is_same_v<real_type, float> ? "float" : "double",
         params.input_filename,
         params.model_filename);
     if (!params.performance_tracking_filename.empty()) {

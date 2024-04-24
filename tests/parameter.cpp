@@ -14,6 +14,7 @@
 #include "plssvm/backends/SYCL/kernel_invocation_types.hpp"  // plssvm::sycl::kernel_invocation_type
 #include "plssvm/constants.hpp"                              // plssvm::real_type
 #include "plssvm/detail/arithmetic_type_name.hpp"            // plssvm::detail::arithmetic_type_name
+#include "plssvm/gamma.hpp"                                  // plssvm::gamma_coefficient_type
 #include "plssvm/kernel_function_types.hpp"                  // plssvm::kernel_function_type
 
 #include "tests/custom_test_macros.hpp"  // EXPECT_CONVERSION_TO_STRING, EXPECT_FLOATING_POINT_EQ
@@ -21,21 +22,19 @@
 #include "fmt/core.h"     // fmt::format
 #include "gtest/gtest.h"  // TEST, EXPECT_EQ, EXPECT_FLOAT_EQ, EXPECT_DOUBLE_EQ, EXPECT_TRUE, EXPECT_FALSE
 
+#include <variant>  // std::holds_alternative, std::get
+
 TEST(Parameter, default_construct) {
     // default construct parameter set
     const plssvm::parameter param{};
 
     // test default values
-    EXPECT_TRUE(param.kernel_type.is_default());
-    EXPECT_EQ(param.kernel_type.value(), plssvm::kernel_function_type::rbf);
-    EXPECT_TRUE(param.degree.is_default());
-    EXPECT_EQ(param.degree.value(), 3);
-    EXPECT_TRUE(param.gamma.is_default());
-    EXPECT_FLOATING_POINT_EQ(param.gamma.value(), plssvm::real_type{ 0.0 });
-    EXPECT_TRUE(param.coef0.is_default());
-    EXPECT_FLOATING_POINT_EQ(param.coef0.value(), plssvm::real_type{ 0.0 });
-    EXPECT_TRUE(param.cost.is_default());
-    EXPECT_FLOATING_POINT_EQ(param.cost.value(), plssvm::real_type{ 1.0 });
+    EXPECT_EQ(param.kernel_type, plssvm::kernel_function_type::rbf);
+    EXPECT_EQ(param.degree, 3);
+    ASSERT_TRUE(std::holds_alternative<plssvm::gamma_coefficient_type>(param.gamma));
+    EXPECT_EQ(std::get<plssvm::gamma_coefficient_type>(param.gamma), plssvm::gamma_coefficient_type::automatic);
+    EXPECT_FLOATING_POINT_EQ(param.coef0, plssvm::real_type{ 0.0 });
+    EXPECT_FLOATING_POINT_EQ(param.cost, plssvm::real_type{ 1.0 });
 }
 
 TEST(Parameter, construct) {
@@ -43,25 +42,12 @@ TEST(Parameter, construct) {
     const plssvm::parameter param{ plssvm::kernel_function_type::polynomial, 1, plssvm::real_type{ -1.0 }, plssvm::real_type{ 2.5 }, plssvm::real_type{ 0.05 } };
 
     // test default values
-    EXPECT_FALSE(param.kernel_type.is_default());
-    EXPECT_EQ(param.kernel_type.value(), plssvm::kernel_function_type::polynomial);
-    EXPECT_EQ(param.kernel_type.get_default(), plssvm::kernel_function_type::rbf);
-
-    EXPECT_FALSE(param.degree.is_default());
-    EXPECT_EQ(param.degree.value(), 1);
-    EXPECT_EQ(param.degree.get_default(), 3);
-
-    EXPECT_FALSE(param.gamma.is_default());
-    EXPECT_FLOATING_POINT_EQ(param.gamma.value(), plssvm::real_type{ -1.0 });
-    EXPECT_FLOATING_POINT_EQ(param.gamma.get_default(), plssvm::real_type{ 0.0 });
-
-    EXPECT_FALSE(param.coef0.is_default());
-    EXPECT_FLOATING_POINT_EQ(param.coef0.value(), plssvm::real_type{ 2.5 });
-    EXPECT_FLOATING_POINT_EQ(param.coef0.get_default(), plssvm::real_type{ 0.0 });
-
-    EXPECT_FALSE(param.cost.is_default());
-    EXPECT_FLOATING_POINT_EQ(param.cost.value(), plssvm::real_type{ 0.05 });
-    EXPECT_FLOATING_POINT_EQ(param.cost.get_default(), plssvm::real_type{ 1.0 });
+    EXPECT_EQ(param.kernel_type, plssvm::kernel_function_type::polynomial);
+    EXPECT_EQ(param.degree, 1);
+    ASSERT_TRUE(std::holds_alternative<plssvm::real_type>(param.gamma));
+    EXPECT_FLOATING_POINT_EQ(std::get<plssvm::real_type>(param.gamma), plssvm::real_type{ -1.0 });
+    EXPECT_FLOATING_POINT_EQ(param.coef0, plssvm::real_type{ 2.5 });
+    EXPECT_FLOATING_POINT_EQ(param.cost, plssvm::real_type{ 0.05 });
 }
 
 TEST(Parameter, construct_named_args_all) {
@@ -69,31 +55,18 @@ TEST(Parameter, construct_named_args_all) {
     const plssvm::parameter param{
         plssvm::kernel_type = plssvm::kernel_function_type::polynomial,
         plssvm::degree = 1,
-        plssvm::gamma = -1.0,
+        plssvm::gamma = plssvm::gamma_coefficient_type::scale,
         plssvm::coef0 = 2.5,
         plssvm::cost = 0.05
     };
 
     // test default values
-    EXPECT_FALSE(param.kernel_type.is_default());
-    EXPECT_EQ(param.kernel_type.value(), plssvm::kernel_function_type::polynomial);
-    EXPECT_EQ(param.kernel_type.get_default(), plssvm::kernel_function_type::rbf);
-
-    EXPECT_FALSE(param.degree.is_default());
-    EXPECT_EQ(param.degree.value(), 1);
-    EXPECT_EQ(param.degree.get_default(), 3);
-
-    EXPECT_FALSE(param.gamma.is_default());
-    EXPECT_FLOATING_POINT_EQ(param.gamma.value(), plssvm::real_type{ -1.0 });
-    EXPECT_FLOATING_POINT_EQ(param.gamma.get_default(), plssvm::real_type{ 0.0 });
-
-    EXPECT_FALSE(param.coef0.is_default());
-    EXPECT_FLOATING_POINT_EQ(param.coef0.value(), plssvm::real_type{ 2.5 });
-    EXPECT_FLOATING_POINT_EQ(param.coef0.get_default(), plssvm::real_type{ 0.0 });
-
-    EXPECT_FALSE(param.cost.is_default());
-    EXPECT_FLOATING_POINT_EQ(param.cost.value(), plssvm::real_type{ 0.05 });
-    EXPECT_FLOATING_POINT_EQ(param.cost.get_default(), plssvm::real_type{ 1.0 });
+    EXPECT_EQ(param.kernel_type, plssvm::kernel_function_type::polynomial);
+    EXPECT_EQ(param.degree, 1);
+    ASSERT_TRUE(std::holds_alternative<plssvm::gamma_coefficient_type>(param.gamma));
+    EXPECT_EQ(std::get<plssvm::gamma_coefficient_type>(param.gamma), plssvm::gamma_coefficient_type::scale);
+    EXPECT_FLOATING_POINT_EQ(param.coef0, plssvm::real_type{ 2.5 });
+    EXPECT_FLOATING_POINT_EQ(param.cost, plssvm::real_type{ 0.05 });
 }
 
 TEST(Parameter, construct_named_args) {
@@ -105,25 +78,12 @@ TEST(Parameter, construct_named_args) {
     };
 
     // test default values
-    EXPECT_FALSE(param.kernel_type.is_default());
-    EXPECT_EQ(param.kernel_type.value(), plssvm::kernel_function_type::polynomial);
-    EXPECT_EQ(param.kernel_type.get_default(), plssvm::kernel_function_type::rbf);
-
-    EXPECT_TRUE(param.degree.is_default());
-    EXPECT_EQ(param.degree.value(), 3);
-    EXPECT_EQ(param.degree.get_default(), 3);
-
-    EXPECT_FALSE(param.gamma.is_default());
-    EXPECT_FLOATING_POINT_EQ(param.gamma.value(), plssvm::real_type{ -1.0 });
-    EXPECT_FLOATING_POINT_EQ(param.gamma.get_default(), plssvm::real_type{ 0.0 });
-
-    EXPECT_TRUE(param.coef0.is_default());
-    EXPECT_FLOATING_POINT_EQ(param.coef0.value(), plssvm::real_type{ 0.0 });
-    EXPECT_FLOATING_POINT_EQ(param.coef0.get_default(), plssvm::real_type{ 0.0 });
-
-    EXPECT_FALSE(param.cost.is_default());
-    EXPECT_FLOATING_POINT_EQ(param.cost.value(), plssvm::real_type{ 0.05 });
-    EXPECT_FLOATING_POINT_EQ(param.cost.get_default(), plssvm::real_type{ 1.0 });
+    EXPECT_EQ(param.kernel_type, plssvm::kernel_function_type::polynomial);
+    EXPECT_EQ(param.degree, 3);
+    ASSERT_TRUE(std::holds_alternative<plssvm::real_type>(param.gamma));
+    EXPECT_FLOATING_POINT_EQ(std::get<plssvm::real_type>(param.gamma), plssvm::real_type{ -1.0 });
+    EXPECT_FLOATING_POINT_EQ(param.coef0, plssvm::real_type{ 0.0 });
+    EXPECT_FLOATING_POINT_EQ(param.cost, plssvm::real_type{ 0.05 });
 }
 
 TEST(Parameter, construct_parameter_and_named_args) {
@@ -141,25 +101,12 @@ TEST(Parameter, construct_parameter_and_named_args) {
                                    plssvm::sycl_kernel_invocation_type = plssvm::sycl::kernel_invocation_type::nd_range };
 
     // test default values
-    EXPECT_FALSE(param.kernel_type.is_default());
-    EXPECT_EQ(param.kernel_type.value(), plssvm::kernel_function_type::rbf);
-    EXPECT_EQ(param.kernel_type.get_default(), plssvm::kernel_function_type::rbf);
-
-    EXPECT_TRUE(param.degree.is_default());
-    EXPECT_EQ(param.degree.value(), 3);
-    EXPECT_EQ(param.degree.get_default(), 3);
-
-    EXPECT_FALSE(param.gamma.is_default());
-    EXPECT_FLOATING_POINT_EQ(param.gamma.value(), plssvm::real_type{ -1.0 });
-    EXPECT_FLOATING_POINT_EQ(param.gamma.get_default(), plssvm::real_type{ 0.0 });
-
-    EXPECT_TRUE(param.coef0.is_default());
-    EXPECT_FLOATING_POINT_EQ(param.coef0.value(), plssvm::real_type{ 0.0 });
-    EXPECT_FLOATING_POINT_EQ(param.coef0.get_default(), plssvm::real_type{ 0.0 });
-
-    EXPECT_FALSE(param.cost.is_default());
-    EXPECT_FLOATING_POINT_EQ(param.cost.value(), plssvm::real_type{ 0.05 });
-    EXPECT_FLOATING_POINT_EQ(param.cost.get_default(), plssvm::real_type{ 1.0 });
+    EXPECT_EQ(param.kernel_type, plssvm::kernel_function_type::rbf);
+    EXPECT_EQ(param.degree, 3);
+    ASSERT_TRUE(std::holds_alternative<plssvm::real_type>(param.gamma));
+    EXPECT_FLOATING_POINT_EQ(std::get<plssvm::real_type>(param.gamma), plssvm::real_type{ -1.0 });
+    EXPECT_FLOATING_POINT_EQ(param.coef0, plssvm::real_type{ 0.0 });
+    EXPECT_FLOATING_POINT_EQ(param.cost, plssvm::real_type{ 0.05 });
 }
 
 TEST(Parameter, equal) {

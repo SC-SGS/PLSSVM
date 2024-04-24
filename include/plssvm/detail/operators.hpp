@@ -170,6 +170,27 @@ template <typename T>
 }
 
 /**
+ * @brief Calculate the variance using the elements in the [`std::vector`](https://en.cppreference.com/w/cpp/container/vector) @p vec.
+ * @tparam T the value type
+ * @param[in] vec the elements to calculate the variance from
+ * @return the variance of all elements (`[[nodiscard]]`)
+ */
+template <typename T>
+[[nodiscard]] inline T variance(const std::vector<T> &vec) {
+    // calculate the mean of the vector
+    const T mean = sum(vec) / static_cast<T>(vec.size());
+
+    // calculate the variance of the vector using the previous calculated mean
+    T var{};
+#pragma omp simd reduction(+ : var)
+    for (typename std::vector<T>::size_type i = 0; i < vec.size(); ++i) {
+        const T diff = vec[i] - mean;
+        var += diff * diff;
+    }
+    return var / static_cast<T>(vec.size());
+}
+
+/**
  * @brief Calculates the squared Euclidean distance of both vectors: \f$d^2(x, y) = (x_1 - y_1)^2 + (x_2 - y_2)^2 + \dots + (x_n - y_n)^2\f$.
  * @tparam T the value type
  * @param[in] lhs the first vector

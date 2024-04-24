@@ -63,7 +63,7 @@ TYPED_TEST_P(GenericGPUCSVM, run_blas_level_3_kernel_explicit) {
     using mock_csvm_type = typename csvm_test_type::mock_csvm_type;
     using device_ptr_type = typename csvm_test_type::device_ptr_type;
 
-    const plssvm::parameter params{};
+    const plssvm::parameter params{ plssvm::gamma = plssvm::real_type{ 1.0 } };
     const plssvm::data_set data{ PLSSVM_TEST_FILE };
 
     // create C-SVM: must be done using the mock class since the member function to test is private or protected
@@ -405,7 +405,11 @@ TYPED_TEST_P(GenericGPUCSVMKernelFunction, run_predict_kernel) {
     using device_ptr_type = typename csvm_test_type::device_ptr_type;
     constexpr plssvm::kernel_function_type kernel = util::test_parameter_value_at_v<0, TypeParam>;
 
-    const plssvm::parameter params{ plssvm::kernel_type = kernel };
+    plssvm::parameter params{ plssvm::kernel_type = kernel };
+    if constexpr (kernel != plssvm::kernel_function_type::linear) {
+        params.gamma = 1.0;
+    }
+
     const plssvm::data_set data{ PLSSVM_TEST_FILE };
     auto data_matr{ data.data() };
     if constexpr (kernel == plssvm::kernel_function_type::chi_squared) {

@@ -409,7 +409,7 @@ Usage:
                                          4 -- laplacian: exp(-gamma*|u-v|_1)
                                          5 -- chi_squared: exp(-gamma*sum_i((x[i]-y[i])^2/(x[i]+y[i]))) (default: 2)
   -d, --degree arg              set degree in kernel function (default: 3)
-  -g, --gamma arg               set gamma in kernel function (default: 1 / num_features)
+  -g, --gamma arg               set gamma in kernel function (default: automatic)
   -r, --coef0 arg               set coef0 in kernel function (default: 0)
   -c, --cost arg                set the parameter C (default: 1)
   -e, --epsilon arg             set the tolerance of termination criterion (default: 0.001)
