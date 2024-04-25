@@ -233,7 +233,7 @@ if (fast_float_FOUND)
     target_include_directories(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC ${fast_float_INCLUDE_DIR})
 else ()
     message(STATUS "Couldn't find package fast_float. Building from source ...")
-    set(PLSSVM_fast_float_VERSION v3.10.0) # TODO: 6.0.0: https://github.com/fastfloat/fast_float/issues/215
+    set(PLSSVM_fast_float_VERSION v3.10.0) # TODO: 6.1.1: https://github.com/fastfloat/fast_float/issues/246
     target_compile_definitions(${PLSSVM_BASE_LIBRARY_NAME} PRIVATE PLSSVM_fast_float_VERSION="${PLSSVM_fast_float_VERSION}")
     # set options for fast_float
     set(FASTFLOAT_TEST OFF CACHE INTERNAL "" FORCE)
