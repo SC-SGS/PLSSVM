@@ -27,7 +27,7 @@
 #include "plssvm/detail/type_traits.hpp"          // PLSSVM_REQUIRES, plssvm::detail::remove_cvref_t
 #include "plssvm/detail/utility.hpp"              // plssvm::detail::to_underlying
 #include "plssvm/exceptions/exceptions.hpp"       // plssvm::invalid_parameter_exception
-#include "plssvm/gamma.hpp"                       // plssvm::gamma_type, plssvm::get_gamma_value
+#include "plssvm/gamma.hpp"                       // plssvm::gamma_type, plssvm::calculate_gamma_value
 #include "plssvm/kernel_function_types.hpp"       // plssvm::kernel_function_type
 #include "plssvm/matrix.hpp"                      // plssvm::aos_matrix
 #include "plssvm/model.hpp"                       // plssvm::model
@@ -382,7 +382,7 @@ model<label_type> csvm::fit(const data_set<label_type> &data, Args &&...named_ar
     parameter params{ params_ };
     // if the active gamma_type variant member isn't a real_type, replace it with a real_type value by calculating its true value based on the used data set
     // -> params.gamma is guaranteed to be a real_type now!
-    params.gamma = get_gamma_value(params_.gamma, data.data());
+    params.gamma = calculate_gamma_value(params_.gamma, data.data());
 
     // create model
     model<label_type> csvm_model{ params, data, used_classification };

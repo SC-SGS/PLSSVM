@@ -71,7 +71,7 @@ using gamma_type = std::variant<real_type, gamma_coefficient_type>;
  * @return the gamma value (`[[nodiscard]]`)
  */
 template <typename T, layout_type layout>
-[[nodiscard]] real_type get_gamma_value(const gamma_type &var, [[maybe_unused]] const matrix<T, layout> &matr) {
+[[nodiscard]] real_type calculate_gamma_value(const gamma_type &var, [[maybe_unused]] const matrix<T, layout> &matr) {
     return std::visit(detail::overloaded{
                           [](const real_type val) { return val; },
                           [&](const gamma_coefficient_type val) {
@@ -93,7 +93,7 @@ template <typename T, layout_type layout>
  * @return the gamma value (`[[nodiscard]]`)
  */
 template <typename T>
-[[nodiscard]] real_type get_gamma_value(const gamma_type &var, [[maybe_unused]] const std::vector<T> &vec) {
+[[nodiscard]] real_type calculate_gamma_value(const gamma_type &var, [[maybe_unused]] const std::vector<T> &vec) {
     return std::visit(detail::overloaded{
                           [](const real_type val) { return val; },
                           [&](const gamma_coefficient_type val) {

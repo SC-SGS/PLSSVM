@@ -100,10 +100,10 @@ TEST(GammaType, calculate_gamma_value_real_type) {
     // the std::variant must hold the real_type member
     ASSERT_TRUE(std::holds_alternative<plssvm::real_type>(gamma_value));
     // check the variant value
-    EXPECT_FLOATING_POINT_EQ(plssvm::get_gamma_value(gamma_value, matr), plssvm::real_type{ 1.5 });
+    EXPECT_FLOATING_POINT_EQ(plssvm::calculate_gamma_value(gamma_value, matr), plssvm::real_type{ 1.5 });
 }
 
-TEST(GammaType, get_gamma_value_gamma_coefficient_type_automatic) {
+TEST(GammaType, calculate_gamma_value_gamma_coefficient_type_automatic) {
     // create a gamma_type with a real_type value
     const plssvm::gamma_type gamma_value = plssvm::gamma_coefficient_type::automatic;
 
@@ -113,10 +113,10 @@ TEST(GammaType, get_gamma_value_gamma_coefficient_type_automatic) {
     // the std::variant must hold the real_type member
     ASSERT_TRUE(std::holds_alternative<plssvm::gamma_coefficient_type>(gamma_value));
     // check the variant value -> 1 / num_features
-    EXPECT_FLOATING_POINT_EQ(plssvm::get_gamma_value(gamma_value, matr), plssvm::real_type{ 0.25 });
+    EXPECT_FLOATING_POINT_EQ(plssvm::calculate_gamma_value(gamma_value, matr), plssvm::real_type{ 0.25 });
 }
 
-TEST(GammaType, get_gamma_value_gamma_coefficient_type_scale) {
+TEST(GammaType, calculate_gamma_value_gamma_coefficient_type_scale) {
     // create a gamma_type with a real_type value
     const plssvm::gamma_type gamma_value = plssvm::gamma_coefficient_type::scale;
 
@@ -126,7 +126,7 @@ TEST(GammaType, get_gamma_value_gamma_coefficient_type_scale) {
     // the std::variant must hold the real_type member
     ASSERT_TRUE(std::holds_alternative<plssvm::gamma_coefficient_type>(gamma_value));
     // check the variant value -> 1 / (num_features * variance(matr))
-    EXPECT_FLOATING_POINT_NEAR(plssvm::get_gamma_value(gamma_value, matr), plssvm::real_type{ 0.047505938242280283668 });
+    EXPECT_FLOATING_POINT_NEAR(plssvm::calculate_gamma_value(gamma_value, matr), plssvm::real_type{ 0.047505938242280283668 });
 }
 
 TEST(GammaType, get_gamma_string_real_type) {
