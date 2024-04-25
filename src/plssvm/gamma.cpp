@@ -52,7 +52,7 @@ std::istream &operator>>(std::istream &in, gamma_coefficient_type &gamma_coeffic
     in >> str;
     detail::to_lower_case(str);
 
-    if (str == "automatic") {
+    if (str == "automatic" || str == "auto") {
         gamma_coefficient = gamma_coefficient_type::automatic;
     } else if (str == "scale") {
         gamma_coefficient = gamma_coefficient_type::scale;

@@ -42,6 +42,7 @@ TEST(GammaCoefficientType, from_string) {
     // check conversion from std::string
     EXPECT_CONVERSION_FROM_STRING("automatic", plssvm::gamma_coefficient_type::automatic);
     EXPECT_CONVERSION_FROM_STRING("AUTOmatic", plssvm::gamma_coefficient_type::automatic);
+    EXPECT_CONVERSION_FROM_STRING("auto", plssvm::gamma_coefficient_type::automatic);
     EXPECT_CONVERSION_FROM_STRING("scale", plssvm::gamma_coefficient_type::scale);
     EXPECT_CONVERSION_FROM_STRING("SCALE", plssvm::gamma_coefficient_type::scale);
 }
@@ -78,6 +79,7 @@ TEST(GammaType, from_string) {
     EXPECT_CONVERSION_FROM_STRING("1.5", gamma_value);
     gamma_value = plssvm::gamma_coefficient_type::automatic;
     EXPECT_CONVERSION_FROM_STRING("AUTOmatic", gamma_value);
+    EXPECT_CONVERSION_FROM_STRING("auto", gamma_value);
     gamma_value = plssvm::gamma_coefficient_type::scale;
     EXPECT_CONVERSION_FROM_STRING("scale", gamma_value);
 }
