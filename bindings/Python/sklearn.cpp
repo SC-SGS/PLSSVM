@@ -24,11 +24,12 @@
 #include <optional>   // std::optional, std::nullopt
 #include <string>     // std::string
 #include <utility>    // std::move
+#include <variant>    // std::holds_alternative
 #include <vector>     // std::vector
 
 namespace py = pybind11;
 
-// TODO: implement missing functionality
+// TODO: implement missing functionality (as far es possible)
 
 // dummy
 struct svc {
@@ -79,23 +80,11 @@ void parse_provided_params(svc &self, const py::kwargs &args) {
         self.svm_->set_params(plssvm::degree = args["degree"].cast<int>());
     }
     if (args.contains("gamma")) {
-        if (py::isinstance<py::str>(args["gamma"])) {
-            // found a string
-            const auto gamma = args["gamma"].cast<std::string>();
-            if (gamma == "scale") {
-                // TODO: implement sklearn's scale option?
-                throw py::attribute_error{ "The \"gamma = 'scale'\" parameter for a call to the 'SVC' constructor is not implemented yet!" };
-            } else if (gamma == "auto") {
-                // default behavior in PLSSVM -> do nothing
-            } else {
-                throw py::value_error{ fmt::format("When 'gamma' is a string, it should be either 'scale' or 'auto'. Got '{}' instead.", gamma) };
-            }
+        const plssvm::gamma_type gamma = convert_gamma_kwarg_to_variant(args);
+        if (std::holds_alternative<plssvm::real_type>(gamma)) {
+            self.svm_->set_params(plssvm::gamma = std::get<plssvm::real_type>(gamma));
         } else {
-            const auto gamma = args["gamma"].cast<plssvm::real_type>();
-            if (gamma <= plssvm::real_type{ 0.0 }) {
-                throw py::value_error{ fmt::format("gamma value must be > 0; {} is invalid. Use a positive number or use 'auto' to set gamma to a value of 1 / n_features.", gamma) };
-            }
-            self.svm_->set_params(plssvm::gamma = gamma);
+            self.svm_->set_params(plssvm::gamma = std::get<plssvm::gamma_coefficient_type>(gamma));
         }
     }
     if (args.contains("coef0")) {
@@ -162,10 +151,10 @@ void parse_provided_params(svc &self, const py::kwargs &args) {
 
 void fit(svc &self) {
     // perform sanity checks
-    if (self.svm_->get_params().cost.value() <= plssvm::real_type{ 0.0 }) {
+    if (self.svm_->get_params().cost <= plssvm::real_type{ 0.0 }) {
         throw py::value_error{ "C <= 0" };
     }
-    if (self.svm_->get_params().degree.value() < 0) {
+    if (self.svm_->get_params().degree < 0) {
         throw py::value_error{ "degree of polynomial kernel < 0" };
     }
     if (self.epsilon.has_value() && self.epsilon.value() <= plssvm::real_type{ 0.0 }) {
@@ -398,18 +387,24 @@ void init_sklearn(py::module_ &m) {
 
                   // fill a Python dictionary with the supported keys and values
                   py::dict py_params;
-                  py_params["C"] = params.cost.value();
+                  py_params["C"] = params.cost;
                   py_params["break_ties"] = false;
                   py_params["cache_size"] = 0;
                   py_params["class_weight"] = py::none();
-                  py_params["coef0"] = params.coef0.value();
+                  py_params["coef0"] = params.coef0;
                   py_params["decision_function_shape"] = self.classification == plssvm::classification_type::oaa ? "ovr" : "ovo";
-                  py_params["degree"] = params.degree.value();
-                  // TODO: implemented sklearn gamma = 'scale'
-                  if (params.gamma.is_default()) {
-                      py_params["gamma"] = "auto";
+                  py_params["degree"] = params.degree;
+                  if (std::holds_alternative<plssvm::real_type>(params.gamma)) {
+                      py_params["gamma"] = std::get<plssvm::real_type>(params.gamma);
                   } else {
-                      py_params["gamma"] = params.gamma.value();
+                      switch (std::get<plssvm::gamma_coefficient_type>(params.gamma)) {
+                          case plssvm::gamma_coefficient_type::automatic:
+                              py_params["gamma"] = "auto";
+                              break;
+                          case plssvm::gamma_coefficient_type::scale:
+                              py_params["gamma"] = "scale";
+                              break;
+                      }
                   }
                   py_params["kernel"] = fmt::format("{}", params.kernel_type);
                   py_params["max_iter"] = self.max_iter.has_value() ? static_cast<long long>(self.max_iter.value()) : -1;
