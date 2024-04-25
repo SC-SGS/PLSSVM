@@ -6,9 +6,8 @@
  *          See the LICENSE.md file in the project root for full license information.
  */
 
+#include "plssvm/backend_types.hpp"  // plssvm::backend_type
 #include "plssvm/backends/HIP/csvm.hpp"
-
-#include "plssvm/backend_types.hpp"                                                    // plssvm::backend_type
 #include "plssvm/backends/HIP/detail/device_ptr.hip.hpp"                               // plssvm::hip::detail::device_ptr
 #include "plssvm/backends/HIP/detail/utility.hip.hpp"                                  // PLSSVM_HIP_ERROR_CHECK, plssvm::hip::detail::{device_synchronize, get_device_count, set_device, peek_at_last_error, get_runtime_version}
 #include "plssvm/backends/HIP/exceptions.hpp"                                          // plssvm::hip::backend_exception
@@ -23,6 +22,7 @@
 #include "plssvm/detail/memory_size.hpp"                                               // plssvm::detail::memory_size
 #include "plssvm/detail/performance_tracker.hpp"                                       // plssvm::detail::tracking_entry
 #include "plssvm/exceptions/exceptions.hpp"                                            // plssvm::exception
+#include "plssvm/gamma.hpp"                                                            // plssvm::gamma_type
 #include "plssvm/kernel_function_types.hpp"                                            // plssvm::kernel_function_type
 #include "plssvm/parameter.hpp"                                                        // plssvm::parameter, plssvm::detail::parameter
 #include "plssvm/shape.hpp"                                                            // plssvm::shape
@@ -40,6 +40,7 @@
 #include <iostream>   // std::cout, std::endl
 #include <numeric>    // std::iota
 #include <string>     // std::string
+#include <variant>    // std::get
 #include <vector>     // std::vector
 
 namespace plssvm::hip {
@@ -167,24 +168,24 @@ auto csvm::run_assemble_kernel_matrix_explicit(const std::size_t device_id, cons
     const real_type cost_factor = real_type{ 1.0 } / params.cost;
 
     detail::set_device(device);
-    switch (params.kernel_type.value()) {
+    switch (params.kernel_type) {
         case kernel_function_type::linear:
             detail::device_kernel_assembly<kernel_function_type::linear><<<grid, block>>>(kernel_matrix_d.get(), data_d.get(), num_rows_reduced, device_specific_num_rows, row_offset, num_features, q_red_d.get(), QA_cost, cost_factor);
             break;
         case kernel_function_type::polynomial:
-            detail::device_kernel_assembly<kernel_function_type::polynomial><<<grid, block>>>(kernel_matrix_d.get(), data_d.get(), num_rows_reduced, device_specific_num_rows, row_offset, num_features, q_red_d.get(), QA_cost, cost_factor, params.degree.value(), params.gamma.value(), params.coef0.value());
+            detail::device_kernel_assembly<kernel_function_type::polynomial><<<grid, block>>>(kernel_matrix_d.get(), data_d.get(), num_rows_reduced, device_specific_num_rows, row_offset, num_features, q_red_d.get(), QA_cost, cost_factor, params.degree, std::get<real_type>(params.gamma), params.coef0);
             break;
         case kernel_function_type::rbf:
-            detail::device_kernel_assembly<kernel_function_type::rbf><<<grid, block>>>(kernel_matrix_d.get(), data_d.get(), num_rows_reduced, device_specific_num_rows, row_offset, num_features, q_red_d.get(), QA_cost, cost_factor, params.gamma.value());
+            detail::device_kernel_assembly<kernel_function_type::rbf><<<grid, block>>>(kernel_matrix_d.get(), data_d.get(), num_rows_reduced, device_specific_num_rows, row_offset, num_features, q_red_d.get(), QA_cost, cost_factor, std::get<real_type>(params.gamma));
             break;
         case kernel_function_type::sigmoid:
-            detail::device_kernel_assembly<kernel_function_type::sigmoid><<<grid, block>>>(kernel_matrix_d.get(), data_d.get(), num_rows_reduced, device_specific_num_rows, row_offset, num_features, q_red_d.get(), QA_cost, cost_factor, params.gamma.value(), params.coef0.value());
+            detail::device_kernel_assembly<kernel_function_type::sigmoid><<<grid, block>>>(kernel_matrix_d.get(), data_d.get(), num_rows_reduced, device_specific_num_rows, row_offset, num_features, q_red_d.get(), QA_cost, cost_factor, std::get<real_type>(params.gamma), params.coef0);
             break;
         case kernel_function_type::laplacian:
-            detail::device_kernel_assembly<kernel_function_type::laplacian><<<grid, block>>>(kernel_matrix_d.get(), data_d.get(), num_rows_reduced, device_specific_num_rows, row_offset, num_features, q_red_d.get(), QA_cost, cost_factor, params.gamma.value());
+            detail::device_kernel_assembly<kernel_function_type::laplacian><<<grid, block>>>(kernel_matrix_d.get(), data_d.get(), num_rows_reduced, device_specific_num_rows, row_offset, num_features, q_red_d.get(), QA_cost, cost_factor, std::get<real_type>(params.gamma));
             break;
         case kernel_function_type::chi_squared:
-            detail::device_kernel_assembly<kernel_function_type::chi_squared><<<grid, block>>>(kernel_matrix_d.get(), data_d.get(), num_rows_reduced, device_specific_num_rows, row_offset, num_features, q_red_d.get(), QA_cost, cost_factor, params.gamma.value());
+            detail::device_kernel_assembly<kernel_function_type::chi_squared><<<grid, block>>>(kernel_matrix_d.get(), data_d.get(), num_rows_reduced, device_specific_num_rows, row_offset, num_features, q_red_d.get(), QA_cost, cost_factor, std::get<real_type>(params.gamma));
             break;
     }
     detail::peek_at_last_error();
@@ -296,24 +297,24 @@ void csvm::run_assemble_kernel_matrix_implicit_blas_level_3(const std::size_t de
     detail::set_device(device);
     const real_type cost_factor = real_type{ 1.0 } / params.cost;
 
-    switch (params.kernel_type.value()) {
+    switch (params.kernel_type) {
         case kernel_function_type::linear:
             detail::device_kernel_assembly_symm<kernel_function_type::linear><<<grid, block>>>(alpha, q_red.get(), A_d.get(), num_rows_reduced, device_specific_num_rows, row_offset, num_features, QA_cost, cost_factor, B_d.get(), C_d.get(), num_classes);
             break;
         case kernel_function_type::polynomial:
-            detail::device_kernel_assembly_symm<kernel_function_type::polynomial><<<grid, block>>>(alpha, q_red.get(), A_d.get(), num_rows_reduced, device_specific_num_rows, row_offset, num_features, QA_cost, cost_factor, B_d.get(), C_d.get(), num_classes, params.degree.value(), params.gamma.value(), params.coef0.value());
+            detail::device_kernel_assembly_symm<kernel_function_type::polynomial><<<grid, block>>>(alpha, q_red.get(), A_d.get(), num_rows_reduced, device_specific_num_rows, row_offset, num_features, QA_cost, cost_factor, B_d.get(), C_d.get(), num_classes, params.degree, std::get<real_type>(params.gamma), params.coef0);
             break;
         case kernel_function_type::rbf:
-            detail::device_kernel_assembly_symm<kernel_function_type::rbf><<<grid, block>>>(alpha, q_red.get(), A_d.get(), num_rows_reduced, device_specific_num_rows, row_offset, num_features, QA_cost, cost_factor, B_d.get(), C_d.get(), num_classes, params.gamma.value());
+            detail::device_kernel_assembly_symm<kernel_function_type::rbf><<<grid, block>>>(alpha, q_red.get(), A_d.get(), num_rows_reduced, device_specific_num_rows, row_offset, num_features, QA_cost, cost_factor, B_d.get(), C_d.get(), num_classes, std::get<real_type>(params.gamma));
             break;
         case kernel_function_type::sigmoid:
-            detail::device_kernel_assembly_symm<kernel_function_type::sigmoid><<<grid, block>>>(alpha, q_red.get(), A_d.get(), num_rows_reduced, device_specific_num_rows, row_offset, num_features, QA_cost, cost_factor, B_d.get(), C_d.get(), num_classes, params.gamma.value(), params.coef0.value());
+            detail::device_kernel_assembly_symm<kernel_function_type::sigmoid><<<grid, block>>>(alpha, q_red.get(), A_d.get(), num_rows_reduced, device_specific_num_rows, row_offset, num_features, QA_cost, cost_factor, B_d.get(), C_d.get(), num_classes, std::get<real_type>(params.gamma), params.coef0);
             break;
         case kernel_function_type::laplacian:
-            detail::device_kernel_assembly_symm<kernel_function_type::laplacian><<<grid, block>>>(alpha, q_red.get(), A_d.get(), num_rows_reduced, device_specific_num_rows, row_offset, num_features, QA_cost, cost_factor, B_d.get(), C_d.get(), num_classes, params.gamma.value());
+            detail::device_kernel_assembly_symm<kernel_function_type::laplacian><<<grid, block>>>(alpha, q_red.get(), A_d.get(), num_rows_reduced, device_specific_num_rows, row_offset, num_features, QA_cost, cost_factor, B_d.get(), C_d.get(), num_classes, std::get<real_type>(params.gamma));
             break;
         case kernel_function_type::chi_squared:
-            detail::device_kernel_assembly_symm<kernel_function_type::chi_squared><<<grid, block>>>(alpha, q_red.get(), A_d.get(), num_rows_reduced, device_specific_num_rows, row_offset, num_features, QA_cost, cost_factor, B_d.get(), C_d.get(), num_classes, params.gamma.value());
+            detail::device_kernel_assembly_symm<kernel_function_type::chi_squared><<<grid, block>>>(alpha, q_red.get(), A_d.get(), num_rows_reduced, device_specific_num_rows, row_offset, num_features, QA_cost, cost_factor, B_d.get(), C_d.get(), num_classes, std::get<real_type>(params.gamma));
             break;
     }
     detail::peek_at_last_error();
@@ -382,24 +383,24 @@ auto csvm::run_predict_kernel(const std::size_t device_id, const parameter &para
         const dim3 grid(static_cast<unsigned int>(std::ceil(static_cast<double>(num_predict_points) / static_cast<double>(block.x * INTERNAL_BLOCK_SIZE))),
                         static_cast<unsigned int>(std::ceil(static_cast<double>(num_sv) / static_cast<double>(block.y * INTERNAL_BLOCK_SIZE))));
 
-        switch (params.kernel_type.value()) {
+        switch (params.kernel_type) {
             case kernel_function_type::linear:
                 // already handled
                 break;
             case kernel_function_type::polynomial:
-                detail::device_kernel_predict<kernel_function_type::polynomial><<<grid, block>>>(out_d.get(), alpha_d.get(), rho_d.get(), sv_or_w_d.get(), predict_points_d.get(), num_classes, num_sv, num_predict_points, num_features, params.degree.value(), params.gamma.value(), params.coef0.value());
+                detail::device_kernel_predict<kernel_function_type::polynomial><<<grid, block>>>(out_d.get(), alpha_d.get(), rho_d.get(), sv_or_w_d.get(), predict_points_d.get(), num_classes, num_sv, num_predict_points, num_features, params.degree, std::get<real_type>(params.gamma), params.coef0);
                 break;
             case kernel_function_type::rbf:
-                detail::device_kernel_predict<kernel_function_type::rbf><<<grid, block>>>(out_d.get(), alpha_d.get(), rho_d.get(), sv_or_w_d.get(), predict_points_d.get(), num_classes, num_sv, num_predict_points, num_features, params.gamma.value());
+                detail::device_kernel_predict<kernel_function_type::rbf><<<grid, block>>>(out_d.get(), alpha_d.get(), rho_d.get(), sv_or_w_d.get(), predict_points_d.get(), num_classes, num_sv, num_predict_points, num_features, std::get<real_type>(params.gamma));
                 break;
             case kernel_function_type::sigmoid:
-                detail::device_kernel_predict<kernel_function_type::sigmoid><<<grid, block>>>(out_d.get(), alpha_d.get(), rho_d.get(), sv_or_w_d.get(), predict_points_d.get(), num_classes, num_sv, num_predict_points, num_features, params.gamma.value(), params.coef0.value());
+                detail::device_kernel_predict<kernel_function_type::sigmoid><<<grid, block>>>(out_d.get(), alpha_d.get(), rho_d.get(), sv_or_w_d.get(), predict_points_d.get(), num_classes, num_sv, num_predict_points, num_features, std::get<real_type>(params.gamma), params.coef0);
                 break;
             case kernel_function_type::laplacian:
-                detail::device_kernel_predict<kernel_function_type::laplacian><<<grid, block>>>(out_d.get(), alpha_d.get(), rho_d.get(), sv_or_w_d.get(), predict_points_d.get(), num_classes, num_sv, num_predict_points, num_features, params.gamma.value());
+                detail::device_kernel_predict<kernel_function_type::laplacian><<<grid, block>>>(out_d.get(), alpha_d.get(), rho_d.get(), sv_or_w_d.get(), predict_points_d.get(), num_classes, num_sv, num_predict_points, num_features, std::get<real_type>(params.gamma));
                 break;
             case kernel_function_type::chi_squared:
-                detail::device_kernel_predict<kernel_function_type::chi_squared><<<grid, block>>>(out_d.get(), alpha_d.get(), rho_d.get(), sv_or_w_d.get(), predict_points_d.get(), num_classes, num_sv, num_predict_points, num_features, params.gamma.value());
+                detail::device_kernel_predict<kernel_function_type::chi_squared><<<grid, block>>>(out_d.get(), alpha_d.get(), rho_d.get(), sv_or_w_d.get(), predict_points_d.get(), num_classes, num_sv, num_predict_points, num_features, std::get<real_type>(params.gamma));
                 break;
         }
     }

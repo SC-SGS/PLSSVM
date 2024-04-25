@@ -984,6 +984,40 @@ template <typename T, layout_type layout>
 }
 
 /**
+ * @brief Calculate the variance of the matrix @p matr.
+ * @details Used formula: \f$var = \frac{1}{n}\sum\limits_{i = 1}^n (x_i - \mu)^2\f$
+ * @tparam T the value type of the matrix
+ * @tparam layout the memory layout of the matrix
+ * @param[in] matr the matrix to calculate the variance for
+ * @return the matrix's variance (`[[nodiscard]]`)
+ */
+template <typename T, layout_type layout>
+[[nodiscard]] T variance(const matrix<T, layout> &matr) {
+    using size_type = typename matrix<T, layout>::size_type;
+
+    // calculate the mean of the matrix
+    T mean{};
+#pragma omp parallel for collapse(2) reduction(+ : mean)
+    for (size_type row = 0; row < matr.num_rows(); ++row) {
+        for (size_type col = 0; col < matr.num_cols(); ++col) {
+            mean += matr(row, col);
+        }
+    }
+    mean /= static_cast<T>(matr.size());
+
+    // calculate the variance of the matrix using the previous calculated mean
+    T var{};
+#pragma omp parallel for collapse(2) reduction(+ : var)
+    for (size_type row = 0; row < matr.num_rows(); ++row) {
+        for (size_type col = 0; col < matr.num_cols(); ++col) {
+            const T diff = matr(row, col) - mean;
+            var += diff * diff;
+        }
+    }
+    return var / static_cast<T>(matr.size());
+}
+
+/**
  * @brief Typedef for a matrix in Array-of-Struct (AoS) layout.
  */
 template <typename T>

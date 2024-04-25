@@ -13,13 +13,15 @@
 #include "plssvm/detail/cmd/parser_train.hpp"       // plssvm::detail::cmd::parser_train
 #include "plssvm/detail/logging.hpp"                // plssvm::detail::log
 #include "plssvm/detail/performance_tracker.hpp"    // plssvm::detail::tracking_entry, PLSSVM_DETAIL_PERFORMANCE_TRACKER_SAVE
-#include "plssvm/verbosity_levels.hpp"              // plssvm::verbosity_level
 
-#include <chrono>     // std::chrono::{steady_clock, duration}
-#include <cstdlib>    // EXIT_SUCCESS, EXIT_FAILURE
-#include <exception>  // std::exception
-#include <iostream>   // std::cerr, std::endl
-#include <variant>    // std::visit
+#include <chrono>       // std::chrono::{steady_clock, duration}
+#include <cstddef>      // std::size_t
+#include <cstdlib>      // EXIT_SUCCESS, EXIT_FAILURE
+#include <exception>    // std::exception
+#include <iostream>     // std::cerr, std::endl
+#include <memory>       // std::unique_ptr
+#include <type_traits>  // std::remove_reference_t
+#include <variant>      // std::visit
 
 int main(int argc, char *argv[]) {
     try {
@@ -43,15 +45,16 @@ int main(int argc, char *argv[]) {
 
             // only specify plssvm::max_iter if it isn't its default value
             const plssvm::model<label_type> model =
-                cmd_parser.max_iter.is_default() ? svm->fit(data,
-                                                            plssvm::epsilon = cmd_parser.epsilon,
-                                                            plssvm::classification = cmd_parser.classification,
-                                                            plssvm::solver = cmd_parser.solver)
-                                                 : svm->fit(data,
-                                                            plssvm::epsilon = cmd_parser.epsilon,
-                                                            plssvm::max_iter = cmd_parser.max_iter,
-                                                            plssvm::classification = cmd_parser.classification,
-                                                            plssvm::solver = cmd_parser.solver);
+                cmd_parser.max_iter == std::size_t{ 0 }
+                    ? svm->fit(data,
+                               plssvm::epsilon = cmd_parser.epsilon,
+                               plssvm::classification = cmd_parser.classification,
+                               plssvm::solver = cmd_parser.solver)
+                    : svm->fit(data,
+                               plssvm::epsilon = cmd_parser.epsilon,
+                               plssvm::max_iter = cmd_parser.max_iter,
+                               plssvm::classification = cmd_parser.classification,
+                               plssvm::solver = cmd_parser.solver);
             // save model to file
             model.save(cmd_parser.model_filename);
         };

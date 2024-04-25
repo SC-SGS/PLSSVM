@@ -21,6 +21,7 @@ void init_performance_tracker(py::module_ &);
 void init_target_platforms(py::module_ &);
 void init_solver_types(py::module_ &);
 void init_backend_types(py::module_ &);
+void init_gamma(py::module_ &);
 void init_classification_types(py::module_ &);
 void init_file_format_types(py::module_ &);
 void init_kernel_function_types(py::module_ &);
@@ -59,6 +60,7 @@ PYBIND11_MODULE(plssvm, m) {
     init_target_platforms(m);
     init_solver_types(m);
     init_backend_types(m);
+    init_gamma(m);
     init_classification_types(m);
     init_file_format_types(m);
     init_kernel_function_types(m);

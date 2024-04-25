@@ -11,8 +11,10 @@
 #include "plssvm/detail/string_utility.hpp"  // plssvm::detail::to_lower_case
 #include "plssvm/detail/utility.hpp"         // plssvm::detail::contains
 #include "plssvm/exceptions/exceptions.hpp"  // plssvm::unsupported_backend_exception
+#include "plssvm/target_platforms.hpp"       // plssvm::target_platform
 
-#include "fmt/format.h"  // fmt::format, fmt::join
+#include "fmt/core.h"    // fmt::format
+#include "fmt/format.h"  // fmt::join
 
 #include <array>    // std::array
 #include <ios>      // std::ios::failbit

@@ -18,6 +18,7 @@
 #include "plssvm/detail/type_traits.hpp"     // plssvm::detail::always_false_v
 #include "plssvm/detail/utility.hpp"         // plssvm::detail::get
 #include "plssvm/exceptions/exceptions.hpp"  // plssvm::unsupported_kernel_type_exception
+#include "plssvm/gamma.hpp"                  // plssvm::gamma_type
 #include "plssvm/kernel_function_types.hpp"  // plssvm::kernel_function_type
 #include "plssvm/matrix.hpp"                 // plssvm::matrix, plssvm::layout_type
 #include "plssvm/parameter.hpp"              // plssvm::parameter
@@ -26,6 +27,7 @@
 
 #include <cmath>    // std::pow, std::exp, std::fma, std::tanh
 #include <cstddef>  // std::size_t
+#include <variant>  // std::get
 #include <vector>   // std::vector
 
 namespace plssvm {
@@ -110,19 +112,19 @@ template <typename T>
 [[nodiscard]] inline T kernel_function(const std::vector<T> &xi, const std::vector<T> &xj, const parameter &params) {
     PLSSVM_ASSERT(xi.size() == xj.size(), "Sizes mismatch!: {} != {}", xi.size(), xj.size());
 
-    switch (params.kernel_type.value()) {
+    switch (params.kernel_type) {
         case kernel_function_type::linear:
             return kernel_function<kernel_function_type::linear>(xi, xj);
         case kernel_function_type::polynomial:
-            return kernel_function<kernel_function_type::polynomial>(xi, xj, params.degree.value(), static_cast<T>(params.gamma.value()), static_cast<T>(params.coef0.value()));
+            return kernel_function<kernel_function_type::polynomial>(xi, xj, params.degree, static_cast<T>(std::get<real_type>(params.gamma)), static_cast<T>(params.coef0));
         case kernel_function_type::rbf:
-            return kernel_function<kernel_function_type::rbf>(xi, xj, static_cast<T>(params.gamma.value()));
+            return kernel_function<kernel_function_type::rbf>(xi, xj, static_cast<T>(std::get<real_type>(params.gamma)));
         case kernel_function_type::sigmoid:
-            return kernel_function<kernel_function_type::sigmoid>(xi, xj, static_cast<T>(params.gamma.value()), static_cast<T>(params.coef0.value()));
+            return kernel_function<kernel_function_type::sigmoid>(xi, xj, static_cast<T>(std::get<real_type>(params.gamma)), static_cast<T>(params.coef0));
         case kernel_function_type::laplacian:
-            return kernel_function<kernel_function_type::laplacian>(xi, xj, static_cast<T>(params.gamma.value()));
+            return kernel_function<kernel_function_type::laplacian>(xi, xj, static_cast<T>(std::get<real_type>(params.gamma)));
         case kernel_function_type::chi_squared:
-            return kernel_function<kernel_function_type::chi_squared>(xi, xj, static_cast<T>(params.gamma.value()));
+            return kernel_function<kernel_function_type::chi_squared>(xi, xj, static_cast<T>(std::get<real_type>(params.gamma)));
     }
     throw unsupported_kernel_type_exception{ fmt::format("Unknown kernel type (value: {})!", detail::to_underlying(params.kernel_type)) };
 }
@@ -226,19 +228,19 @@ template <typename T, layout_type layout>
     PLSSVM_ASSERT(i < x.num_rows(), "Out-of-bounce access for i and x!: {} < {}", i, x.num_rows());
     PLSSVM_ASSERT(j < y.num_rows(), "Out-of-bounce access for j and y!: {} < {}", j, y.num_rows());
 
-    switch (params.kernel_type.value()) {
+    switch (params.kernel_type) {
         case kernel_function_type::linear:
             return kernel_function<kernel_function_type::linear>(x, i, y, j);
         case kernel_function_type::polynomial:
-            return kernel_function<kernel_function_type::polynomial>(x, i, y, j, params.degree.value(), static_cast<T>(params.gamma.value()), static_cast<T>(params.coef0.value()));
+            return kernel_function<kernel_function_type::polynomial>(x, i, y, j, params.degree, static_cast<T>(std::get<real_type>(params.gamma)), static_cast<T>(params.coef0));
         case kernel_function_type::rbf:
-            return kernel_function<kernel_function_type::rbf>(x, i, y, j, static_cast<T>(params.gamma.value()));
+            return kernel_function<kernel_function_type::rbf>(x, i, y, j, static_cast<T>(std::get<real_type>(params.gamma)));
         case kernel_function_type::sigmoid:
-            return kernel_function<kernel_function_type::sigmoid>(x, i, y, j, static_cast<double>(params.gamma.value()), static_cast<double>(params.coef0.value()));
+            return kernel_function<kernel_function_type::sigmoid>(x, i, y, j, static_cast<double>(std::get<real_type>(params.gamma)), static_cast<double>(params.coef0));
         case kernel_function_type::laplacian:
-            return kernel_function<kernel_function_type::laplacian>(x, i, y, j, static_cast<T>(params.gamma.value()));
+            return kernel_function<kernel_function_type::laplacian>(x, i, y, j, static_cast<T>(std::get<real_type>(params.gamma)));
         case kernel_function_type::chi_squared:
-            return kernel_function<kernel_function_type::chi_squared>(x, i, y, j, static_cast<T>(params.gamma.value()));
+            return kernel_function<kernel_function_type::chi_squared>(x, i, y, j, static_cast<T>(std::get<real_type>(params.gamma)));
     }
     throw unsupported_kernel_type_exception{ fmt::format("Unknown kernel type (value: {})!", detail::to_underlying(params.kernel_type)) };
 }
