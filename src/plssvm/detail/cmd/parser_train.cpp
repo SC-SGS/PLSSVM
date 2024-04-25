@@ -64,7 +64,7 @@ parser_train::parser_train(int argc, char **argv) {
        .add_options()
            ("t,kernel_type", kernel_type_help, cxxopts::value<decltype(csvm_params.kernel_type)>()->default_value(fmt::format("{}", detail::to_underlying(csvm_params.kernel_type))))
            ("d,degree", "set degree in kernel function", cxxopts::value<decltype(csvm_params.degree)>()->default_value(fmt::format("{}", csvm_params.degree)))
-           ("g,gamma", "set gamma in kernel function", cxxopts::value<decltype(csvm_params.gamma)>()->default_value(fmt::format("{}", csvm_params.gamma)))
+           ("g,gamma", fmt::format("set gamma in kernel function (default: {})", get_gamma_string(csvm_params.gamma)), cxxopts::value<decltype(csvm_params.gamma)>())
            ("r,coef0", "set coef0 in kernel function", cxxopts::value<decltype(csvm_params.coef0)>()->default_value(fmt::format("{}", csvm_params.coef0)))
            ("c,cost", "set the parameter C", cxxopts::value<decltype(csvm_params.cost)>()->default_value(fmt::format("{}", csvm_params.cost)))
            ("e,epsilon", "set the tolerance of termination criterion", cxxopts::value<decltype(epsilon)>()->default_value(fmt::format("{}", epsilon)))
