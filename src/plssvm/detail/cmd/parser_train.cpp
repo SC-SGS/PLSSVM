@@ -33,7 +33,7 @@
 #include <iostream>     // std::cout, std::cerr, std::endl
 #include <string>       // std::string
 #include <type_traits>  // std::is_same_v
-#include <variant>      // std::holds_alternative
+#include <variant>      // std::holds_alternative, std::get
 #include <vector>       // std::vector
 
 namespace plssvm::detail::cmd {
@@ -133,8 +133,8 @@ parser_train::parser_train(int argc, char **argv) {
     if (result.count("gamma")) {
         const decltype(csvm_params.gamma) gamma_input = result["gamma"].as<decltype(csvm_params.gamma)>();
         // check if the provided gamma is legal iff a real_type has been provided
-        if (std::holds_alternative<real_type>(gamma_input) && get_gamma_value(gamma_input) <= real_type{ 0.0 }) {
-            std::cerr << fmt::format(fmt::fg(fmt::color::red), "ERROR: gamma must be greater than 0.0, but is {}!\n", get_gamma_value(gamma_input)) << std::endl;
+        if (std::holds_alternative<real_type>(gamma_input) && std::get<real_type>(gamma_input) <= real_type{ 0.0 }) {
+            std::cerr << fmt::format(fmt::fg(fmt::color::red), "ERROR: gamma must be greater than 0.0, but is {}!\n", std::get<real_type>(gamma_input)) << std::endl;
             std::cout << options.help() << std::endl;
             std::exit(EXIT_FAILURE);
         }

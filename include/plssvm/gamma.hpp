@@ -62,14 +62,6 @@ enum class gamma_coefficient_type {
 using gamma_type = std::variant<real_type, gamma_coefficient_type>;
 
 /**
- * @brief Return the correct value of gamma assuming that the currently active std::variant member is a real_type.
- * @param[in] var the std::variant holding the type of the gamma to be used
- * @throws plssvm::exception if the currently active std::variant member isn't a real_type (but a gamma_coefficient_type enum value)
- * @return the gamma value (`[[nodiscard]]`)
- */
-[[nodiscard]] real_type get_gamma_value(const gamma_type &var);
-
-/**
  * @brief Return the correct value of gamma based on the current active variance member.
  * @details Can't use plssvm::data_set directly due to circular dependencies.
  * @tparam T the value type of the matrix

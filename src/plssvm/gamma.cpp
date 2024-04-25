@@ -23,14 +23,6 @@
 
 namespace plssvm {
 
-real_type get_gamma_value(const gamma_type &var) {
-    if (std::holds_alternative<real_type>(var)) {
-        return std::get<real_type>(var);
-    } else {
-        throw exception{ "The active std::variant member must be a real_type in order to call the function 'real_type get_gamma_value(const gamma_type &var)'!" };
-    }
-}
-
 std::string get_gamma_string(const gamma_type &var) {
     return std::visit(detail::overloaded{
                           [](const real_type val) { return fmt::format("{}", val); },

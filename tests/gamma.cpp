@@ -23,7 +23,7 @@
 #include <sstream>  // std::istringstream
 #include <string>   // std::string
 #include <tuple>    // std::ignore
-#include <variant>  // std::variant, std::holds_alternative
+#include <variant>  // std::variant, std::holds_alternative, std::get
 
 // check whether the plssvm::gamma_coefficient_type -> std::string conversions are correct
 TEST(GammaCoefficientType, to_string) {
@@ -90,27 +90,7 @@ TEST(GammaType, from_string_unknown) {
     EXPECT_TRUE(input.fail());
 }
 
-TEST(GammaType, get_gamma_value_real_type_only) {
-    // create a gamma_type with a real_type value
-    const plssvm::gamma_type gamma_value = plssvm::real_type{ 1.5 };
-
-    // the std::variant must hold the real_type member
-    ASSERT_TRUE(std::holds_alternative<plssvm::real_type>(gamma_value));
-    // check the variant value
-    EXPECT_FLOATING_POINT_EQ(plssvm::get_gamma_value(gamma_value), plssvm::real_type{ 1.5 });
-}
-
-TEST(GammaType, get_gamma_value_real_type_only_gamma_coefficient_type) {
-    // create a gamma_type with a real_type value
-    const plssvm::gamma_type gamma_value = plssvm::gamma_coefficient_type::scale;
-
-    // the std::variant must hold the real_type member
-    ASSERT_FALSE(std::holds_alternative<plssvm::real_type>(gamma_value));
-    // calling this function overload with a std::variant that doesn't hold a real_type must throw an exception
-    EXPECT_THROW_WHAT(std::ignore = plssvm::get_gamma_value(gamma_value), plssvm::exception, "The active std::variant member must be a real_type in order to call the function 'real_type get_gamma_value(const gamma_type &var)'!");
-}
-
-TEST(GammaType, get_gamma_value_real_type) {
+TEST(GammaType, calculate_gamma_value_real_type) {
     // create a gamma_type with a real_type value
     const plssvm::gamma_type gamma_value = plssvm::real_type{ 1.5 };
 
