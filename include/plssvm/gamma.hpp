@@ -81,6 +81,8 @@ template <typename T, layout_type layout>
                                   case gamma_coefficient_type::scale:
                                       return real_type{ 1.0 } / (static_cast<real_type>(matr.num_cols()) * variance(matr));
                               }
+                              // unreachable
+                              return real_type{ 1.0 };
                           } },
                       var);
 }

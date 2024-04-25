@@ -33,6 +33,8 @@ std::string get_gamma_string(const gamma_type &var) {
                                   case gamma_coefficient_type::scale:
                                       return "\"1 / (num_features * variance(input_data))\"";
                               }
+                              // unreachable
+                              return "unknown";
                           } },
                       var);
 }
