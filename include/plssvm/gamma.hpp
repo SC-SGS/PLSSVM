@@ -86,29 +86,6 @@ template <typename T, layout_type layout>
 }
 
 /**
- * @brief Return the correct value of gamma based on the current active variance member.
- * @tparam T the value type of the matrix
- * @param[in] var the std::variant holding the type of the gamma to be used
- * @param[in] vec the std::vector values used for the `gamma_coefficient_type` gamma values
- * @return the gamma value (`[[nodiscard]]`)
- */
-template <typename T>
-[[nodiscard]] real_type calculate_gamma_value(const gamma_type &var, [[maybe_unused]] const std::vector<T> &vec) {
-    return std::visit(detail::overloaded{
-                          [](const real_type val) { return val; },
-                          [&](const gamma_coefficient_type val) {
-                              switch (val) {
-                                  case gamma_coefficient_type::automatic:
-                                      return real_type{ 1.0 } / static_cast<real_type>(vec.size());
-                                  case gamma_coefficient_type::scale:
-                                      using namespace plssvm::operators;
-                                      return real_type{ 1.0 } / (static_cast<real_type>(vec.size()) * variance(vec));
-                              }
-                          } },
-                      var);
-}
-
-/**
  * @brief Return the string representing the value of gamma based on the current active variance member.
  * @param[in] var the std::variant holding the type of the gamma to be used
  * @return the string representing the gamma value (`[[nodiscard]]`)
