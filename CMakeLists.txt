@@ -82,6 +82,7 @@ set(PLSSVM_BASE_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/detail/memory_size.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/detail/performance_tracker.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/detail/sha256.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/detail/string_conversion.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/detail/string_utility.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/detail/utility.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/exceptions/exceptions.cpp
@@ -234,7 +235,7 @@ if (fast_float_FOUND)
     target_include_directories(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC ${fast_float_INCLUDE_DIR})
 else ()
     message(STATUS "Couldn't find package fast_float. Building from source ...")
-    set(PLSSVM_fast_float_VERSION v3.10.0) # TODO: 6.1.1: https://github.com/fastfloat/fast_float/issues/246
+    set(PLSSVM_fast_float_VERSION v6.1.1)
     target_compile_definitions(${PLSSVM_BASE_LIBRARY_NAME} PRIVATE PLSSVM_fast_float_VERSION="${PLSSVM_fast_float_VERSION}")
     # set options for fast_float
     set(FASTFLOAT_TEST OFF CACHE INTERNAL "" FORCE)
@@ -255,7 +256,6 @@ else ()
                                $<BUILD_INTERFACE:${fast_float_SOURCE_DIR}/include>
                                $<INSTALL_INTERFACE:include>
     )
-    list(APPEND PLSSVM_TARGETS_TO_INSTALL "fast_float")
     message(STATUS "Installing fast_float version ${PLSSVM_fast_float_VERSION}.")
 endif ()
 
@@ -765,12 +765,7 @@ install(TARGETS ${PLSSVM_TARGETS_TO_INSTALL}
 install(DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/include/"
         DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}"
 )
-## install header only libraries fast_float and igor header via 'make install'
-if (NOT fast_float_FOUND)
-    install(DIRECTORY "${fast_float_SOURCE_DIR}/include/"
-            DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}"
-    )
-endif ()
+## install header only library igor header via 'make install'
 if (NOT igor_FOUND)
     install(DIRECTORY "${igor_SOURCE_DIR}/include/"
             DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}"

@@ -18,8 +18,7 @@
 #include "plssvm/detail/type_traits.hpp"           // PLSSVM_REQUIRES, plssvm::detail::remove_cvref_t
 #include "plssvm/detail/utility.hpp"               // plssvm::detail::unreachable
 
-#include "fast_float/fast_float.h"  // fast_float::from_chars_result, fast_float::from_chars (floating point types)
-#include "fmt/core.h"               // fmt::format
+#include "fmt/core.h"  // fmt::format
 
 #include <charconv>      // std::from_chars_result, std::from_chars (integral types)
 #include <stdexcept>     // std::runtime_error
@@ -27,18 +26,29 @@
 #include <string_view>   // std::string_view
 #include <system_error>  // std:errc
 #include <type_traits>   // std::is_arithmetic_v, std::is_same_v, std::is_floating_point_v, std::is_integral_v
+#include <utility>       // std::pair
 #include <vector>        // std::vector
 
 namespace plssvm::detail {
+
+/**
+ * @brief Converts the string @p str to a floating point value of type @p T.
+ * @details If @p T is a `long double` [`std::stold`](https://en.cppreference.com/w/cpp/string/basic_string/stof) is used since fast_float doesn't support long double,
+ *          otherwise [`float_fast::from_chars`](https://github.com/fastfloat/fast_float) is used.
+ * @tparam T the type to convert the value of @p str to, must be a floating point type
+ * @param[in] str the string to convert
+ * @return the value of type @p T denoted by @p str and the potential error code if the @p str couldn't be converted to the type @p T (`[[nodiscard]]`)
+ */
+template <typename T>
+[[nodiscard]] std::pair<T, std::errc> convert_to_floating_point(std::string_view str);
 
 /**
  * @brief Converts the string @p str to a value of type @p T.
  * @details If @p T is a `std::string` a trimmed version of the string is returned,
  *          if @p T is a boolean either `"true"` or `"false"` is returned,
  *          if @p T is a character the string is trimmed and a character is returned if only one char is left after trimming (otherwise an exception is thrown),
- *          if @p T is a `long double` [`std::stold`](https://en.cppreference.com/w/cpp/string/basic_string/stof) is used since fast_float doesn't support long double,
  *          if @p T is an integral type [`std::from_chars`](https://en.cppreference.com/w/cpp/utility/from_chars) is used,
- *          if @p T is a floating point type [`float_fast::from_chars`](https://github.com/fastfloat/fast_float) is used,
+ *          if @p T is a floating point type the `convert_to_floating_point` function is used,
  *          otherwise an exception is thrown.
  * @tparam T the type to convert the value of @p str to, must be an arithmetic type or a `std::string`
  * @tparam Exception the exception type to throw in case that @p str can't be converted to a value of @p T
@@ -71,27 +81,19 @@ template <typename T, typename Exception = std::runtime_error, PLSSVM_REQUIRES((
             throw Exception{ fmt::format("Can't convert '{}' to a value of type char!", str) };
         }
         return trimmed.front();
-    } else if constexpr (std::is_same_v<remove_cvref_t<T>, long double>) {
-        return std::stold(std::string{ str });
+    } else if constexpr (std::is_floating_point_v<remove_cvref_t<T>>) {
+        const auto [val, err] = convert_to_floating_point<T>(str);
+        if (err != std::errc{}) {
+            throw Exception{ fmt::format("Can't convert '{}' to a value of type {}!", str, arithmetic_type_name<T>()) };
+        }
+        return val;
     } else {
-        // select conversion function depending on the provided type
-        const auto convert_from_chars = [](const std::string_view sv, auto &val) {
-            if constexpr (std::is_floating_point_v<T>) {
-                // convert the string to a floating point value
-                return fast_float::from_chars(sv.data(), sv.data() + sv.size(), val);
-            } else {
-                // convert the string to an integral value
-                return std::from_chars(sv.data(), sv.data() + sv.size(), val);
-            }
-            unreachable();
-        };
-
         // remove leading whitespaces
         const std::string_view trimmed_str = trim_left(str);
 
         // convert string to value fo type T
         T val;
-        auto res = convert_from_chars(trimmed_str, val);
+        auto res = std::from_chars(trimmed_str.data(), trimmed_str.data() + trimmed_str.size(), val);
         if (res.ec != std::errc{}) {
             throw Exception{ fmt::format("Can't convert '{}' to a value of type {}!", str, arithmetic_type_name<T>()) };
         }
