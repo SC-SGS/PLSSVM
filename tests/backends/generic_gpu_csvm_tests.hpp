@@ -407,7 +407,7 @@ TYPED_TEST_P(GenericGPUCSVMKernelFunction, run_predict_kernel) {
 
     plssvm::parameter params{ plssvm::kernel_type = kernel };
     if constexpr (kernel != plssvm::kernel_function_type::linear) {
-        params.gamma = real_type{ 1.0 };
+        params.gamma = plssvm::real_type{ 1.0 };
     }
 
     const plssvm::data_set data{ PLSSVM_TEST_FILE };

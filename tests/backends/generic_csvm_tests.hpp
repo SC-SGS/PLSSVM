@@ -492,7 +492,7 @@ TYPED_TEST_P(GenericCSVMKernelFunction, blas_level_3_assembly_implicit_without_C
     // create parameter struct
     plssvm::parameter params{ plssvm::kernel_type = kernel, plssvm::cost = 2.0 };
     if constexpr (kernel != plssvm::kernel_function_type::linear) {
-        params.gamma = real_type{ 1.0 };
+        params.gamma = plssvm::real_type{ 1.0 };
     }
     if constexpr (kernel == plssvm::kernel_function_type::polynomial) {
         params.degree = 1;
@@ -549,7 +549,7 @@ TYPED_TEST_P(GenericCSVMKernelFunction, blas_level_3_assembly_implicit) {
     // create parameter struct
     plssvm::parameter params{ plssvm::kernel_type = kernel, plssvm::cost = 2.0 };
     if constexpr (kernel != plssvm::kernel_function_type::linear) {
-        params.gamma = real_type{ 1.0 };
+        params.gamma = plssvm::real_type{ 1.0 };
     }
     if constexpr (kernel == plssvm::kernel_function_type::polynomial) {
         params.degree = 1;
@@ -601,7 +601,7 @@ TYPED_TEST_P(GenericCSVMKernelFunction, predict_values) {
     // create parameter struct
     plssvm::parameter params{ plssvm::kernel_type = kernel, plssvm::cost = 2.0 };
     if constexpr (kernel != plssvm::kernel_function_type::linear) {
-        params.gamma = real_type{ 1.0 };
+        params.gamma = plssvm::real_type{ 1.0 };
     }
     if constexpr (kernel == plssvm::kernel_function_type::polynomial) {
         params.degree = 1;
@@ -664,7 +664,7 @@ TYPED_TEST_P(GenericCSVMKernelFunction, predict_values_provided_w) {
         // create parameter struct
         plssvm::parameter params{ plssvm::kernel_type = kernel, plssvm::cost = 2.0 };
         if constexpr (kernel != plssvm::kernel_function_type::linear) {
-            params.gamma = real_type{ 1.0 };
+            params.gamma = plssvm::real_type{ 1.0 };
         }
 
         // create the data that should be used
@@ -716,7 +716,7 @@ TYPED_TEST_P(GenericCSVMKernelFunction, perform_dimensional_reduction) {
     // create parameter struct
     plssvm::parameter params{ plssvm::kernel_type = kernel };
     if constexpr (kernel != plssvm::kernel_function_type::linear) {
-        params.gamma = real_type{ 1.0 };
+        params.gamma = plssvm::real_type{ 1.0 };
     }
 
     const auto data = util::generate_specific_matrix<plssvm::soa_matrix<plssvm::real_type>>(plssvm::shape{ 6, 4 }, plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE });
@@ -760,7 +760,7 @@ TYPED_TEST_P(GenericCSVMSolver, solve_lssvm_system_of_linear_equations_trivial) 
     // create parameter struct
     plssvm::parameter params{ plssvm::kernel_type = kernel, plssvm::cost = 2.0 };
     if constexpr (kernel != plssvm::kernel_function_type::linear) {
-        params.gamma = real_type{ 1.0 };
+        params.gamma = plssvm::real_type{ 1.0 };
     }
 
     // create the data that should be used
@@ -802,7 +802,7 @@ TYPED_TEST_P(GenericCSVMSolver, solve_lssvm_system_of_linear_equations) {
     // create parameter struct
     plssvm::parameter params{ plssvm::kernel_type = kernel, plssvm::cost = 1.0 };
     if constexpr (kernel != plssvm::kernel_function_type::linear) {
-        params.gamma = real_type{ 1.0 };
+        params.gamma = plssvm::real_type{ 1.0 };
     }
 
     // create the data that should be used
@@ -855,7 +855,7 @@ TYPED_TEST_P(GenericCSVMSolverKernelFunction, assemble_kernel_matrix_minimal) {
 
     plssvm::parameter params{ plssvm::kernel_type = kernel, plssvm::cost = 1.0 };
     if constexpr (kernel != plssvm::kernel_function_type::linear) {
-        params.gamma = real_type{ 1.0 };
+        params.gamma = plssvm::real_type{ 1.0 };
     }
     if constexpr (kernel == plssvm::kernel_function_type::polynomial) {
         params.degree = 1;
@@ -1091,7 +1091,7 @@ TYPED_TEST_P(GenericCSVMKernelFunctionClassification, predict) {
     // create parameter struct
     plssvm::parameter params{ plssvm::kernel_type = kernel };
     if constexpr (kernel != plssvm::kernel_function_type::linear) {
-        params.gamma = real_type{ 1.0 };
+        params.gamma = plssvm::real_type{ 1.0 };
     }
 
     // create data set that is always classifiable
@@ -1126,7 +1126,7 @@ TYPED_TEST_P(GenericCSVMKernelFunctionClassification, score_model) {
     // create parameter struct
     plssvm::parameter params{ plssvm::kernel_type = kernel };
     if constexpr (kernel != plssvm::kernel_function_type::linear) {
-        params.gamma = real_type{ 1.0 };
+        params.gamma = plssvm::real_type{ 1.0 };
     }
 
     // create data set that is always classifiable
@@ -1161,7 +1161,7 @@ TYPED_TEST_P(GenericCSVMKernelFunctionClassification, score) {
     // create parameter struct
     plssvm::parameter params{ plssvm::kernel_type = kernel };
     if constexpr (kernel != plssvm::kernel_function_type::linear) {
-        params.gamma = real_type{ 1.0 };
+        params.gamma = plssvm::real_type{ 1.0 };
     }
 
     // create data set that is always classifiable
@@ -1557,7 +1557,7 @@ TYPED_TEST_P(GenericCSVMKernelFunctionDeathTest, solve_lssvm_system_of_linear_eq
     // create parameter
     plssvm::parameter params{ plssvm::kernel_type = kernel };
     if constexpr (kernel != plssvm::kernel_function_type::linear) {
-        params.gamma = real_type{ 1.0 };
+        params.gamma = plssvm::real_type{ 1.0 };
     }
 
     // create C-SVM: must be done using the mock class since the member function to test is private or protected
@@ -1578,7 +1578,7 @@ TYPED_TEST_P(GenericCSVMKernelFunctionDeathTest, solve_lssvm_system_of_linear_eq
     // create parameter
     plssvm::parameter params{ plssvm::kernel_type = kernel };
     if constexpr (kernel != plssvm::kernel_function_type::linear) {
-        params.gamma = real_type{ 1.0 };
+        params.gamma = plssvm::real_type{ 1.0 };
     }
 
     // create C-SVM: must be done using the mock class since the member function to test is private or protected
@@ -1599,7 +1599,7 @@ TYPED_TEST_P(GenericCSVMKernelFunctionDeathTest, solve_lssvm_system_of_linear_eq
     // create parameter
     plssvm::parameter params{ plssvm::kernel_type = kernel };
     if constexpr (kernel != plssvm::kernel_function_type::linear) {
-        params.gamma = real_type{ 1.0 };
+        params.gamma = plssvm::real_type{ 1.0 };
     }
 
     // create C-SVM: must be done using the mock class since the member function to test is private or protected
@@ -1621,7 +1621,7 @@ TYPED_TEST_P(GenericCSVMKernelFunctionDeathTest, solve_lssvm_system_of_linear_eq
     // create parameter
     plssvm::parameter params{ plssvm::kernel_type = kernel };
     if constexpr (kernel != plssvm::kernel_function_type::linear) {
-        params.gamma = real_type{ 1.0 };
+        params.gamma = plssvm::real_type{ 1.0 };
     }
 
     // create C-SVM: must be done using the mock class since the member function to test is private or protected
@@ -1642,7 +1642,7 @@ TYPED_TEST_P(GenericCSVMKernelFunctionDeathTest, solve_lssvm_system_of_linear_eq
     // create parameter
     plssvm::parameter params{ plssvm::kernel_type = kernel };
     if constexpr (kernel != plssvm::kernel_function_type::linear) {
-        params.gamma = real_type{ 1.0 };
+        params.gamma = plssvm::real_type{ 1.0 };
     }
 
     // create C-SVM: must be done using the mock class since the member function to test is private or protected
@@ -1663,7 +1663,7 @@ TYPED_TEST_P(GenericCSVMKernelFunctionDeathTest, perform_dimensional_reduction_e
     // create parameter
     plssvm::parameter params{ plssvm::kernel_type = kernel };
     if constexpr (kernel != plssvm::kernel_function_type::linear) {
-        params.gamma = real_type{ 1.0 };
+        params.gamma = plssvm::real_type{ 1.0 };
     }
 
     // create C-SVM: must be done using the mock class since the member function to test is private or protected
@@ -1683,7 +1683,7 @@ TYPED_TEST_P(GenericCSVMKernelFunctionDeathTest, assemble_kernel_matrix_automati
     // create parameter
     plssvm::parameter params{ plssvm::kernel_type = kernel };
     if constexpr (kernel != plssvm::kernel_function_type::linear) {
-        params.gamma = real_type{ 1.0 };
+        params.gamma = plssvm::real_type{ 1.0 };
     }
 
     // create C-SVM: must be done using the mock class since the member function to test is private or protected
@@ -1709,7 +1709,7 @@ TYPED_TEST_P(GenericCSVMKernelFunctionDeathTest, predict_values_empty_matrices) 
     // create parameter
     plssvm::parameter params{ plssvm::kernel_type = kernel };
     if constexpr (kernel != plssvm::kernel_function_type::linear) {
-        params.gamma = real_type{ 1.0 };
+        params.gamma = plssvm::real_type{ 1.0 };
     }
 
     // create C-SVM: must be done using the mock class since the member function to test is private or protected
@@ -1745,7 +1745,7 @@ TYPED_TEST_P(GenericCSVMKernelFunctionDeathTest, predict_values_missing_padding)
     // create parameter
     plssvm::parameter params{ plssvm::kernel_type = kernel };
     if constexpr (kernel != plssvm::kernel_function_type::linear) {
-        params.gamma = real_type{ 1.0 };
+        params.gamma = plssvm::real_type{ 1.0 };
     }
 
     // create C-SVM: must be done using the mock class since the member function to test is private or protected
@@ -1787,7 +1787,7 @@ TYPED_TEST_P(GenericCSVMKernelFunctionDeathTest, predict_values_sv_alpha_size_mi
     // create parameter
     plssvm::parameter params{ plssvm::kernel_type = kernel };
     if constexpr (kernel != plssvm::kernel_function_type::linear) {
-        params.gamma = real_type{ 1.0 };
+        params.gamma = plssvm::real_type{ 1.0 };
     }
 
     // create C-SVM: must be done using the mock class since the member function to test is private or protected
@@ -1815,7 +1815,7 @@ TYPED_TEST_P(GenericCSVMKernelFunctionDeathTest, predict_values_rho_alpha_size_m
     // create parameter
     plssvm::parameter params{ plssvm::kernel_type = kernel };
     if constexpr (kernel != plssvm::kernel_function_type::linear) {
-        params.gamma = real_type{ 1.0 };
+        params.gamma = plssvm::real_type{ 1.0 };
     }
 
     // create C-SVM: must be done using the mock class since the member function to test is private or protected
@@ -1843,7 +1843,7 @@ TYPED_TEST_P(GenericCSVMKernelFunctionDeathTest, predict_values_w_size_mismatch)
     // create parameter
     plssvm::parameter params{ plssvm::kernel_type = kernel };
     if constexpr (kernel != plssvm::kernel_function_type::linear) {
-        params.gamma = real_type{ 1.0 };
+        params.gamma = plssvm::real_type{ 1.0 };
     }
 
     // create C-SVM: must be done using the mock class since the member function to test is private or protected
@@ -1874,7 +1874,7 @@ TYPED_TEST_P(GenericCSVMKernelFunctionDeathTest, predict_values_num_features_mis
     // create parameter
     plssvm::parameter params{ plssvm::kernel_type = kernel };
     if constexpr (kernel != plssvm::kernel_function_type::linear) {
-        params.gamma = real_type{ 1.0 };
+        params.gamma = plssvm::real_type{ 1.0 };
     }
 
     // create C-SVM: must be done using the mock class since the member function to test is private or protected
@@ -1926,7 +1926,7 @@ TYPED_TEST_P(GenericCSVMSolverKernelFunctionDeathTest, assemble_kernel_matrix_em
         // create parameter
         plssvm::parameter params{ plssvm::kernel_type = kernel };
         if constexpr (kernel != plssvm::kernel_function_type::linear) {
-            params.gamma = real_type{ 1.0 };
+            params.gamma = plssvm::real_type{ 1.0 };
         }
 
         // create C-SVM: must be done using the mock class since the member function to test is private or protected
@@ -1962,7 +1962,7 @@ TYPED_TEST_P(GenericCSVMSolverKernelFunctionDeathTest, assemble_kernel_matrix_A_
         // create parameter
         plssvm::parameter params{ plssvm::kernel_type = kernel };
         if constexpr (kernel != plssvm::kernel_function_type::linear) {
-            params.gamma = real_type{ 1.0 };
+            params.gamma = plssvm::real_type{ 1.0 };
         }
 
         // create C-SVM: must be done using the mock class since the member function to test is private or protected
@@ -1993,7 +1993,7 @@ TYPED_TEST_P(GenericCSVMSolverKernelFunctionDeathTest, assemble_kernel_matrix_si
         // create parameter
         plssvm::parameter params{ plssvm::kernel_type = kernel };
         if constexpr (kernel != plssvm::kernel_function_type::linear) {
-            params.gamma = real_type{ 1.0 };
+            params.gamma = plssvm::real_type{ 1.0 };
         }
 
         // create C-SVM: must be done using the mock class since the member function to test is private or protected
