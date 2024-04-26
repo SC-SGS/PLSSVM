@@ -204,7 +204,7 @@ struct parameter {
         }
         if constexpr (parser.has(plssvm::gamma)) {
             // get the value of the provided named parameter
-            if constexpr (std::is_samve_v<detail::remove_cvref_t<decltype(parser(gamma))>, gamma_coefficient_type>) {
+            if constexpr (std::is_same_v<detail::remove_cvref_t<decltype(parser(gamma))>, gamma_coefficient_type>) {
                 gamma = detail::get_value_from_named_parameter<gamma_coefficient_type>(parser, plssvm::gamma);
             } else {
                 gamma = detail::get_value_from_named_parameter<real_type>(parser, plssvm::gamma);
