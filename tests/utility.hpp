@@ -24,6 +24,7 @@
 #include "plssvm/shape.hpp"                        // plssvm::shape
 
 #include "fmt/core.h"     // fmt::format
+#include "fmt/std.h"      // format std::vector<bool>::operator[] proxy type
 #include "gtest/gtest.h"  // FAIL
 
 #ifdef __unix__
@@ -275,10 +276,10 @@ inline void instantiate_template_file(const std::string &template_filename, cons
     std::ifstream input{ template_filename };
     std::string str((std::istreambuf_iterator<char>(input)), std::istreambuf_iterator<char>());
     plssvm::detail::replace_all(str, "LABEL_PLACEHOLDER", fmt::format("{}", fmt::join(labels, ",")));
-    plssvm::detail::replace_all(str, "LABEL_1_PLACEHOLDER", fmt::format("{}", static_cast<T>(labels[std::min<std::size_t>(0, labels.size() - 1)])));
-    plssvm::detail::replace_all(str, "LABEL_2_PLACEHOLDER", fmt::format("{}", static_cast<T>(labels[std::min<std::size_t>(1, labels.size() - 1)])));
-    plssvm::detail::replace_all(str, "LABEL_3_PLACEHOLDER", fmt::format("{}", static_cast<T>(labels[std::min<std::size_t>(2, labels.size() - 1)])));
-    plssvm::detail::replace_all(str, "LABEL_4_PLACEHOLDER", fmt::format("{}", static_cast<T>(labels[std::min<std::size_t>(3, labels.size() - 1)])));
+    plssvm::detail::replace_all(str, "LABEL_1_PLACEHOLDER", fmt::format("{}", labels[std::min<std::size_t>(0, labels.size() - 1)]));
+    plssvm::detail::replace_all(str, "LABEL_2_PLACEHOLDER", fmt::format("{}", labels[std::min<std::size_t>(1, labels.size() - 1)]));
+    plssvm::detail::replace_all(str, "LABEL_3_PLACEHOLDER", fmt::format("{}", labels[std::min<std::size_t>(2, labels.size() - 1)]));
+    plssvm::detail::replace_all(str, "LABEL_4_PLACEHOLDER", fmt::format("{}", labels[std::min<std::size_t>(3, labels.size() - 1)]));
 
     // replace the potential kernel type placeholder
     std::string kernel_type_replacement = fmt::format("kernel_type {}", kernel);
