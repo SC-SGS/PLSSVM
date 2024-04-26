@@ -44,7 +44,7 @@ ExpectedType get_value_from_named_parameter(const IgorParser &parser, const Name
         // an unwrapped value has been provided (e.g., double)
         return static_cast<ExpectedType>(parser(named_arg));
     } else {
-        static_assert(detail::always_false_v<ExpectedType>, "Cannot convert the named argument to the ExpectedType or plssvm::default_value<ExpectedType>!");
+        static_assert(detail::always_false_v<ExpectedType>, "Cannot convert the named argument to the ExpectedType!");
     }
     // may never be reached
     detail::unreachable();
