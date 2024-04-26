@@ -16,6 +16,8 @@
 #include "plssvm/constants.hpp"              // plssvm::real_type
 #include "plssvm/kernel_function_types.hpp"  // plssvm::kernel_function_type
 
+#include <cfloat>  // DBL_MIN, FLT_MIN
+
 namespace plssvm::cuda::detail {
 
 //***************************************************//
