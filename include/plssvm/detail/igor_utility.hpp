@@ -13,7 +13,6 @@
 #define PLSSVM_DETAIL_IGOR_UTILITY_HPP_
 #pragma once
 
-#include "plssvm/default_value.hpp"       // plssvm::is_default_value
 #include "plssvm/detail/type_traits.hpp"  // plssvm::detail::{remove_cvref_t, always_false_v}
 #include "plssvm/detail/utility.hpp"      // plssvm::detail::unreachable
 
@@ -41,12 +40,7 @@ constexpr bool has_only_named_args_v = !igor::has_unnamed_arguments<Args...>();
 template <typename ExpectedType, typename IgorParser, typename NamedArgType>
 ExpectedType get_value_from_named_parameter(const IgorParser &parser, const NamedArgType &named_arg) {
     using parsed_named_arg_type = detail::remove_cvref_t<decltype(parser(named_arg))>;
-    // check whether a plssvm::default_value (e.g., plssvm::default_value<double>) or unwrapped normal value (e.g., double) has been provided
-    if constexpr (is_default_value_v<parsed_named_arg_type>) {
-        static_assert(std::is_convertible_v<typename parsed_named_arg_type::value_type, ExpectedType>, "Cannot convert the wrapped default value to the expected type!");
-        // a plssvm::default_value has been provided (e.g., plssvm::default_value<double>)
-        return static_cast<ExpectedType>(parser(named_arg).value());
-    } else if constexpr (std::is_convertible_v<parsed_named_arg_type, ExpectedType>) {
+    if constexpr (std::is_convertible_v<parsed_named_arg_type, ExpectedType>) {
         // an unwrapped value has been provided (e.g., double)
         return static_cast<ExpectedType>(parser(named_arg));
     } else {

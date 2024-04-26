@@ -13,7 +13,6 @@
 #define PLSSVM_DETAIL_UTILITY_HPP_
 #pragma once
 
-#include "plssvm/default_value.hpp"       // plssvm::default_value
 #include "plssvm/detail/memory_size.hpp"  // plssvm::detail::memory_size
 #include "plssvm/detail/type_traits.hpp"  // PLSSVM_REQUIRES, plssvm::detail::always_false_v
 
@@ -92,18 +91,6 @@ template <typename Enum>
 }
 
 /**
- * @brief Converts an enumeration wrapped in a `plssvm::default_value` to its underlying type.
- * @tparam Enum the enumeration type
- * @param[in] e enumeration value to convert wrapped in a `plssvm::default_value`
- * @return the integer value of the underlying type of `Enum`, converted from @p e (`[[nodiscard]]`)
- */
-template <typename Enum>
-[[nodiscard]] constexpr std::underlying_type_t<Enum> to_underlying(const default_value<Enum> &e) noexcept {
-    static_assert(std::is_enum_v<Enum>, "e must be an enumeration type!");
-    return to_underlying(e.value());
-}
-
-/**
  * @brief Implements an erase_if function for different containers according to https://en.cppreference.com/w/cpp/container/map/erase_if.
  * @tparam Container the container type
  * @tparam Pred the type of the unary-predicate
@@ -148,7 +135,7 @@ template <typename Container, typename T, PLSSVM_REQUIRES(is_container_v<Contain
         return std::find(c.cbegin(), c.cend(), val) != c.cend();
     } else {
         // use count otherwise
-        return c.count(val) > 0;
+        return c.count(val) > typename Container::size_type{ 0 };
     }
 }
 

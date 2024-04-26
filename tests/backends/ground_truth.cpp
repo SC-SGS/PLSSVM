@@ -20,6 +20,7 @@
 #include <cmath>      // std::pow, std::exp, std::fma
 #include <cstddef>    // std::size_t
 #include <utility>    // std::pair, std::make_pair, std::move
+#include <variant>    // std::get
 #include <vector>     // std::vector
 
 namespace ground_truth {
@@ -103,8 +104,11 @@ real_type chi_squared_kernel(const std::vector<real_type> &x, const std::vector<
 
     real_type result{ 0.0 };
     for (typename std::vector<real_type>::size_type i = 0; i < x.size(); ++i) {
-        const real_type diff = x[i] - y[i];
-        result += (diff * diff) / (x[i] + y[i]);
+        const real_type sum = x[i] + y[i];
+        if (sum != real_type{ 0.0 }) {
+            const real_type temp = x[i] - y[i];
+            result += (temp * temp) / sum;
+        }
     }
     return std::exp(-gamma * result);
 }
@@ -212,8 +216,11 @@ real_type chi_squared_kernel(const plssvm::matrix<real_type, layout> &X, const s
 
     real_type result{ 0.0 };
     for (typename std::vector<real_type>::size_type dim = 0; dim < X.num_cols(); ++dim) {
-        const real_type diff = X(i, dim) - Y(j, dim);
-        result += (diff * diff) / (X(i, dim) + Y(j, dim));
+        const real_type sum = X(i, dim) + Y(j, dim);
+        if (sum != real_type{ 0.0 }) {
+            const real_type temp = X(i, dim) - Y(j, dim);
+            result += (temp * temp) / sum;
+        }
     }
     return std::exp(-gamma * result);
 }
@@ -237,7 +244,7 @@ plssvm::aos_matrix<real_type> predict_values(const plssvm::parameter &params, co
 
     plssvm::aos_matrix<real_type> result{ plssvm::shape{ device_specific_num_rows, num_classes }, plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE } };
 
-    switch (params.kernel_type.value()) {
+    switch (params.kernel_type) {
         case plssvm::kernel_function_type::linear:
             {
                 for (std::size_t c = 0; c < num_classes; ++c) {
@@ -260,8 +267,8 @@ plssvm::aos_matrix<real_type> predict_values(const plssvm::parameter &params, co
                             for (std::size_t f = 0; f < num_features; ++f) {
                                 temp = std::fma(support_vectors(j, f), predict_points(i, f), temp);
                             }
-                            temp = std::fma(static_cast<real_type>(params.gamma.value()), temp, static_cast<real_type>(params.coef0.value()));
-                            temp = weights(c, j) * static_cast<real_type>(std::pow(temp, params.degree.value()));
+                            temp = std::fma(static_cast<real_type>(std::get<plssvm::real_type>(params.gamma)), temp, static_cast<real_type>(params.coef0));
+                            temp = weights(c, j) * static_cast<real_type>(std::pow(temp, params.degree));
                             if (j == 0) {
                                 temp -= rho[c];
                             }
@@ -281,7 +288,7 @@ plssvm::aos_matrix<real_type> predict_values(const plssvm::parameter &params, co
                                 const real_type d = support_vectors(j, f) - predict_points(i, f);
                                 temp = std::fma(d, d, temp);
                             }
-                            temp = weights(c, j) * static_cast<real_type>(std::exp(static_cast<real_type>(-params.gamma.value()) * temp));
+                            temp = weights(c, j) * static_cast<real_type>(std::exp(static_cast<real_type>(-std::get<plssvm::real_type>(params.gamma)) * temp));
                             if (j == 0) {
                                 temp -= rho[c];
                             }
@@ -300,7 +307,7 @@ plssvm::aos_matrix<real_type> predict_values(const plssvm::parameter &params, co
                             for (std::size_t f = 0; f < num_features; ++f) {
                                 temp = std::fma(support_vectors(j, f), predict_points(i, f), temp);
                             }
-                            temp = weights(c, j) * static_cast<real_type>(std::tanh(static_cast<real_type>(params.gamma.value()) * temp + static_cast<real_type>(params.coef0.value())));
+                            temp = weights(c, j) * static_cast<real_type>(std::tanh(static_cast<real_type>(std::get<plssvm::real_type>(params.gamma)) * temp + static_cast<real_type>(params.coef0)));
                             if (j == 0) {
                                 temp -= rho[c];
                             }
@@ -319,7 +326,7 @@ plssvm::aos_matrix<real_type> predict_values(const plssvm::parameter &params, co
                             for (std::size_t f = 0; f < num_features; ++f) {
                                 temp += std::abs(support_vectors(j, f) - predict_points(i, f));
                             }
-                            temp = weights(c, j) * static_cast<real_type>(std::exp(static_cast<real_type>(-params.gamma.value()) * temp));
+                            temp = weights(c, j) * static_cast<real_type>(std::exp(static_cast<real_type>(-std::get<plssvm::real_type>(params.gamma)) * temp));
                             if (j == 0) {
                                 temp -= rho[c];
                             }
@@ -339,7 +346,7 @@ plssvm::aos_matrix<real_type> predict_values(const plssvm::parameter &params, co
                                 const real_type diff = support_vectors(j, f) - predict_points(i, f);
                                 temp += (diff * diff) / (support_vectors(j, f) + predict_points(i, f));
                             }
-                            temp = weights(c, j) * static_cast<real_type>(std::exp(static_cast<real_type>(-params.gamma.value()) * temp));
+                            temp = weights(c, j) * static_cast<real_type>(std::exp(static_cast<real_type>(-std::get<plssvm::real_type>(params.gamma)) * temp));
                             if (j == 0) {
                                 temp -= rho[c];
                             }
@@ -364,19 +371,19 @@ template <typename real_type>
 real_type kernel_function(const plssvm::parameter &params, const std::vector<real_type> &x, const std::vector<real_type> &y) {
     PLSSVM_ASSERT(x.size() == y.size(), "Sizes mismatch!: {} != {}", x.size(), y.size());
 
-    switch (params.kernel_type.value()) {
+    switch (params.kernel_type) {
         case plssvm::kernel_function_type::linear:
             return detail::linear_kernel(x, y);
         case plssvm::kernel_function_type::polynomial:
-            return detail::polynomial_kernel(x, y, params.degree.value(), static_cast<real_type>(params.gamma.value()), static_cast<real_type>(params.coef0.value()));
+            return detail::polynomial_kernel(x, y, params.degree, static_cast<real_type>(std::get<plssvm::real_type>(params.gamma)), static_cast<real_type>(params.coef0));
         case plssvm::kernel_function_type::rbf:
-            return detail::rbf_kernel(x, y, static_cast<real_type>(params.gamma.value()));
+            return detail::rbf_kernel(x, y, static_cast<real_type>(std::get<plssvm::real_type>(params.gamma)));
         case plssvm::kernel_function_type::sigmoid:
-            return detail::sigmoid_kernel(x, y, static_cast<real_type>(params.gamma.value()), static_cast<real_type>(params.coef0.value()));
+            return detail::sigmoid_kernel(x, y, static_cast<real_type>(std::get<plssvm::real_type>(params.gamma)), static_cast<real_type>(params.coef0));
         case plssvm::kernel_function_type::laplacian:
-            return detail::laplacian_kernel(x, y, static_cast<real_type>(params.gamma.value()));
+            return detail::laplacian_kernel(x, y, static_cast<real_type>(std::get<plssvm::real_type>(params.gamma)));
         case plssvm::kernel_function_type::chi_squared:
-            return detail::chi_squared_kernel(x, y, static_cast<real_type>(params.gamma.value()));
+            return detail::chi_squared_kernel(x, y, static_cast<real_type>(std::get<plssvm::real_type>(params.gamma)));
     }
     // unreachable
     return real_type{};
@@ -391,19 +398,19 @@ real_type kernel_function(const plssvm::parameter &params, const plssvm::matrix<
     PLSSVM_ASSERT(i < X.num_rows(), "Out-of-bounce access!: {} < {}", i, X.num_rows());
     PLSSVM_ASSERT(j < Y.num_rows(), "Out-of-bounce access!: {} < {}", j, Y.num_rows());
 
-    switch (params.kernel_type.value()) {
+    switch (params.kernel_type) {
         case plssvm::kernel_function_type::linear:
             return detail::linear_kernel(X, i, Y, j);
         case plssvm::kernel_function_type::polynomial:
-            return detail::polynomial_kernel(X, i, Y, j, params.degree.value(), static_cast<real_type>(params.gamma.value()), static_cast<real_type>(params.coef0.value()));
+            return detail::polynomial_kernel(X, i, Y, j, params.degree, static_cast<real_type>(std::get<plssvm::real_type>(params.gamma)), static_cast<real_type>(params.coef0));
         case plssvm::kernel_function_type::rbf:
-            return detail::rbf_kernel(X, i, Y, j, static_cast<real_type>(params.gamma.value()));
+            return detail::rbf_kernel(X, i, Y, j, static_cast<real_type>(std::get<plssvm::real_type>(params.gamma)));
         case plssvm::kernel_function_type::sigmoid:
-            return detail::sigmoid_kernel(X, i, Y, j, static_cast<real_type>(params.gamma.value()), static_cast<real_type>(params.coef0.value()));
+            return detail::sigmoid_kernel(X, i, Y, j, static_cast<real_type>(std::get<plssvm::real_type>(params.gamma)), static_cast<real_type>(params.coef0));
         case plssvm::kernel_function_type::laplacian:
-            return detail::laplacian_kernel(X, i, Y, j, static_cast<real_type>(params.gamma.value()));
+            return detail::laplacian_kernel(X, i, Y, j, static_cast<real_type>(std::get<plssvm::real_type>(params.gamma)));
         case plssvm::kernel_function_type::chi_squared:
-            return detail::chi_squared_kernel(X, i, Y, j, static_cast<real_type>(params.gamma.value()));
+            return detail::chi_squared_kernel(X, i, Y, j, static_cast<real_type>(std::get<plssvm::real_type>(params.gamma)));
     }
     // unreachable
     return real_type{};

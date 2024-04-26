@@ -18,7 +18,6 @@
 #include "plssvm/backends/SYCL/kernel_invocation_types.hpp"  // plssvm::sycl::kernel_invocation_type
 #include "plssvm/classification_types.hpp"                   // plssvm::classification_type
 #include "plssvm/constants.hpp"                              // plssvm::real_type
-#include "plssvm/default_value.hpp"                          // plssvm::default_value, plssvm::default_init
 #include "plssvm/parameter.hpp"                              // plssvm::parameter
 #include "plssvm/solver_types.hpp"                           // plssvm::solving_type
 #include "plssvm/target_platforms.hpp"                       // plssvm::target_platform
@@ -48,11 +47,11 @@ struct parser_train {
     plssvm::parameter csvm_params{};
 
     /// The error tolerance parameter for the CG algorithm.
-    default_value<real_type> epsilon{ default_init<real_type>{ plssvm::real_type{ 1e-3 } } };
+    real_type epsilon{ 1e-3 };
     /// The maximum number of iterations in the CG algorithm.
-    default_value<std::size_t> max_iter{ default_init<std::size_t>{ 0 } };
+    std::size_t max_iter{ 0 };
     /// The multi-class classification strategy used.
-    default_value<classification_type> classification{ default_init<classification_type>{ classification_type::oaa } };
+    classification_type classification{ classification_type::oaa };
 
     /// The used backend: automatic (depending on the specified target_platforms), OpenMP, CUDA, HIP, OpenCL, or SYCL.
     backend_type backend{ backend_type::automatic };

@@ -1,45 +1,53 @@
 # The Python3 Bindings
 
 - [Sklearn like API](#sklearn-like-api)
-  - [Parameters](#parameters)
-  - [Attributes](#attributes)
-  - [Methods](#methods)
+    - [Parameters](#parameters)
+    - [Attributes](#attributes)
+    - [Methods](#methods)
 - [Bindings close to our C++ API](#bindings-close-to-our-c-api)
-  - [Enumerations](#enumerations)
-  - [Classes and submodules](#classes-and-submodules)
-    - [plssvm.Parameter](#plssvmparameter)
-    - [plssvm.DataSet](#plssvmdataset)
-    - [plssvm.CSVM](#plssvmcsvm)
-    - [plssvm.openmp.CSVM, plssvm.cuda.CSVM, plssvm.hip.CSVM, plssvm.opencl.CSVM, plssvm.sycl.CSVM, plssvm.dpcpp.CSVM, plssvm.adaptivecpp.CSVM](#plssvmopenmpcsvm-plssvmcudacsvm-plssvmhipcsvm-plssvmopenclcsvm-plssvmsyclcsvm-plssvmdpcppcsvm-plssvmadaptivecppcsvm)
-    - [plssvm.Model](#plssvmmodel)
-    - [plssvm.Version](#plssvmversion)
-    - [plssvm.detail.PerformanceTracker](#plssvmdetailperformancetracker)
-  - [Free functions](#free-functions)
-  - [Exceptions](#exceptions)
+    - [Enumerations](#enumerations)
+    - [Classes and submodules](#classes-and-submodules)
+        - [plssvm.Parameter](#plssvmparameter)
+        - [plssvm.DataSet](#plssvmdataset)
+        - [plssvm.CSVM](#plssvmcsvm)
+        - [plssvm.openmp.CSVM, plssvm.cuda.CSVM, plssvm.hip.CSVM, plssvm.opencl.CSVM, plssvm.sycl.CSVM, plssvm.dpcpp.CSVM, plssvm.adaptivecpp.CSVM](#plssvmopenmpcsvm-plssvmcudacsvm-plssvmhipcsvm-plssvmopenclcsvm-plssvmsyclcsvm-plssvmdpcppcsvm-plssvmadaptivecppcsvm)
+        - [plssvm.Model](#plssvmmodel)
+        - [plssvm.Version](#plssvmversion)
+        - [plssvm.detail.PerformanceTracker](#plssvmdetailperformancetracker)
+    - [Free functions](#free-functions)
+    - [Exceptions](#exceptions)
 
-We currently support two kinds of Python3 bindings, one reflecting the API of [`sklearn.svm.SVC`](https://scikit-learn.org/stable/modules/generated/sklearn.svm.SVC.html) and one extremely closely to our C++ API.
+We currently support two kinds of Python3 bindings, one reflecting the API
+of [`sklearn.svm.SVC`](https://scikit-learn.org/stable/modules/generated/sklearn.svm.SVC.html) and one extremely closely
+to our C++ API.
 
-**Note**: this page is solely meant as an API reference and overview. For examples see the top-level [`../../examples/`](/examples) folder.
+**Note**: this page is solely meant as an API reference and overview. For examples see the
+top-level [`../../examples/`](/examples) folder.
 
 ## Sklearn like API
 
-The following tables show the API provided by [`sklearn.svm.SVC`](https://scikit-learn.org/stable/modules/generated/sklearn.svm.SVC.html) and whether we currently support the respective constructor parameter, class attribute, or method.
-Note that the documentation is a verbose copy from the sklearn SVC page with some additional information added if our implementation differs from the sklearn implementation.
+The following tables show the API provided
+by [`sklearn.svm.SVC`](https://scikit-learn.org/stable/modules/generated/sklearn.svm.SVC.html) and whether we currently
+support the respective constructor parameter, class attribute, or method.
+Note that the documentation is a verbose copy from the sklearn SVC page with some additional information added if our
+implementation differs from the sklearn implementation.
 
 ### Parameters
 
-The following parameters are supported by [`sklearn.svm.SVC`](https://scikit-learn.org/stable/modules/generated/sklearn.svm.SVC.html) when construction a new `SVC`:
+The following parameters are supported
+by [`sklearn.svm.SVC`](https://scikit-learn.org/stable/modules/generated/sklearn.svm.SVC.html) when construction a
+new `SVC`:
 
 | implementation status | parameter                                                                                  | sklearn description                                                                                                                                                                                                                                                      |
 |:---------------------:|--------------------------------------------------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 |  :white_check_mark:   | `C : real_type, default=1.0`                                                               | Regularization parameter. The strength of the regularization is inversely proportional to C. Must be strictly positive. The penalty is a squared l2 penalty.                                                                                                             |
 |  :white_check_mark:   | `kernel : {'linear', 'poly', 'rbf', 'sigmoid', 'laplacian', 'chi_squared'}, default='rbf'` | Specifies the kernel type to be used in the algorithm. If none is given, 'rbf' will be used. **Note**: 'precomputed' isn't supported, but 'laplacian' and 'chi_squared' are supported in addition.                                                                       |
 |  :white_check_mark:   | `degree : int, default=3`                                                                  | Degree of the polynomial kernel function (‘poly’). Must be non-negative. Ignored by all other kernels.                                                                                                                                                                   |
-|  :white_check_mark:   | `gamma : {'auto'} or real_type, default='auto'`                                            | Kernel coefficient for 'rbf' and 'poly'. **Note**: `scale` is currently not supported, therefore, the default is set to `'auto'`.                                                                                                                                        |
-|  :white_check_mark:   | `coef0 : real_type, default=0.0`                                                           | Independent term in kernel function. It is only significant in 'poly'.                                                                                                                                                                                                   |
+|  :white_check_mark:   | `gamma : {'scale', 'auto'} or real_type, default='scale'`                                  | Kernel coefficient for various kernel functions. **Note**: PLSSVM's normal default is `'auto'`.                                                                                                                                                                          |
+|  :white_check_mark:   | `coef0 : real_type, default=0.0`                                                           | Independent term in kernel function. It is only significant in 'poly' or 'sigmoid'.                                                                                                                                                                                      |
 |          :x:          | `shrinking : bool, default=False`                                                          | Whether to use the shrinking heuristic. **Note**: not supported, therefore, the default is set to `False`                                                                                                                                                                |
 |          :x:          | `probability : bool, default=False`                                                        | Whether to enable probability estimates.                                                                                                                                                                                                                                 |
-|  :white_check_mark:   | `tol : real_type, default=1e-3`                                                            | Tolerance for stopping criterion. **Note**: in PLSSVM, this is equal to the (relative) epsilon used in the CG algorithm.                                                                                                                                                 |
+|  :white_check_mark:   | `tol : real_type, default=1e-3`                                                            | Tolerance for stopping criterion. **Note**: in PLSSVM, this is equal to the (relative) epsilon used in the CG algorithm and, therefore, other values may be necessary than for `sklearn.SVC`'s SVM implementation.                                                       |
 |          :x:          | `cache_size : real_type, default=0`                                                        | Specify the size of the kernel cache (in MB). **Note**: not applicable in PLSSVM.                                                                                                                                                                                        |
 |          :x:          | `class_weight : dict or 'balanced, default=None`                                           | Set the parameter C of class i to class_weight[i]*C for SVC. If not given, all classes are supposed to have weight one.                                                                                                                                                  |
 |  :white_check_mark:   | `verbose : bool, default=False`                                                            | Enable verbose output. **Note**: if set to True, more information will be displayed than it would be the case with LIBSVM (and, therefore, `sklearn.svm.SVC`).                                                                                                           |
@@ -48,11 +56,13 @@ The following parameters are supported by [`sklearn.svm.SVC`](https://scikit-lea
 |          :x:          | `break_ties : bool, default=False`                                                         | If true, `decision_function_shape='ovr'`, and number of classes > 2, predict will break ties according to the confidence values of decision_function; otherwise the first class among the tied classes is returned. **Note**: PLSSVM behaves as if `False` was provided. |
 |          :x:          | `random_state : int, RandomState instance or None, default=None`                           | Controls the pseudo random number generation for shuffling the data for probability estimates. Ignored when `probability` is False.                                                                                                                                      |
 
-**Note**: the `plssvm.SVC` automatically uses the optimal (in the sense of performance) backend and target platform, as they were made available during PLSSVM's build step.
+**Note**: the `plssvm.SVC` automatically uses the optimal (in the sense of performance) backend and target platform, as
+they were made available during PLSSVM's build step.
 
 ### Attributes
 
-The following attributes are supported by [`sklearn.svm.SVC`](https://scikit-learn.org/stable/modules/generated/sklearn.svm.SVC.html):
+The following attributes are supported
+by [`sklearn.svm.SVC`](https://scikit-learn.org/stable/modules/generated/sklearn.svm.SVC.html):
 
 | implementation status | attribute                                                                | sklearn description                                                                                                                                                                                                                                                                                                  |
 |:---------------------:|--------------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
@@ -74,7 +84,8 @@ The following attributes are supported by [`sklearn.svm.SVC`](https://scikit-lea
 
 ### Methods
 
-The following methods are supported by [`sklearn.svm.SVC`](https://scikit-learn.org/stable/modules/generated/sklearn.svm.SVC.html):
+The following methods are supported
+by [`sklearn.svm.SVC`](https://scikit-learn.org/stable/modules/generated/sklearn.svm.SVC.html):
 
 | implementation status | method                                  | sklearn description                                                                            |
 |:---------------------:|-----------------------------------------|------------------------------------------------------------------------------------------------|
@@ -93,72 +104,82 @@ The following methods are supported by [`sklearn.svm.SVC`](https://scikit-learn.
 More detailed description of the class methods:
 
 - `decision_function(X)`: Evaluate the decision function for the samples in X.
-  - Parameters: 
-    - `X : array-like of shape (n_samples, n_features)`: the input samples
-  - Returns:
-    - `X : ndarray of shape (n_samples, n_classes * (n_classes-1) / 2)`: the decision function of the sample for each class in the model. If `decision_function_shape='ovr'`, the shape is `(n_samples, n_classes)`.
+    - Parameters:
+        - `X : array-like of shape (n_samples, n_features)`: the input samples
+    - Returns:
+        - `X : ndarray of shape (n_samples, n_classes * (n_classes-1) / 2)`: the decision function of the sample for
+          each class in the model. If `decision_function_shape='ovr'`, the shape is `(n_samples, n_classes)`.
 
 - `fit(X, y[, sample_weight])`: Fit the SVM model according to the given training data.
-  - Parameters:
-    - `X : array_like of shape (n_samples, n_features) or (n_samples, n_samples)`: Training vectors, where `n_samples` is the number of samples and `n_features` is the number of features.
-    - `y : array-like of shape (n_samples,)`: Target values (class labels).
-    - `sample_weight : array-like of shape (n_samples,), default=None`: Per-sample weights. Rescale C per sample. Higher weights force the classifier to put more emphasis on these points. **Note**: not supported
-  - Returns:
-    - `self : object`: Fitted estimator.
+    - Parameters:
+        - `X : array_like of shape (n_samples, n_features) or (n_samples, n_samples)`: Training vectors,
+          where `n_samples` is the number of samples and `n_features` is the number of features.
+        - `y : array-like of shape (n_samples,)`: Target values (class labels).
+        - `sample_weight : array-like of shape (n_samples,), default=None`: Per-sample weights. Rescale C per sample.
+          Higher weights force the classifier to put more emphasis on these points. **Note**: not supported
+    - Returns:
+        - `self : object`: Fitted estimator.
 
 - `get_metadata_routing()`: Get metadata routing of this object.
-  - Returns:
-    - `routing : MetadataRequest`: A MetadataRequest encapsulating routing information.
+    - Returns:
+        - `routing : MetadataRequest`: A MetadataRequest encapsulating routing information.
 
 - `get_params(deep=True)`: Get parameters for this estimator.
-  - Parameters:
-    - `deep : bool, default=True`: If True, will return the parameters for this estimator and contained subobjects that are estimators. **Note**: not applicable, therefore, ignored.
-  - Returns:
-    - `params : dict`: Parameter names mapped to their values.
+    - Parameters:
+        - `deep : bool, default=True`: If True, will return the parameters for this estimator and contained subobjects
+          that are estimators. **Note**: not applicable, therefore, ignored.
+    - Returns:
+        - `params : dict`: Parameter names mapped to their values.
 
 - `predict(X)`: Perform classification on samples in X.
-  - Parameters:
-    - `X : array-like of shape (n_samples, n_features)`
-  - Returns:
-    - `y_pred : ndarray of shape (n_samples,)`: Class labels for samples in X.
+    - Parameters:
+        - `X : array-like of shape (n_samples, n_features)`
+    - Returns:
+        - `y_pred : ndarray of shape (n_samples,)`: Class labels for samples in X.
 
 - `predict_log_proba(X)`: Compute log probabilities of possible outcomes for samples in X.
-  - Parameters: 
-    - `X : array-like of shape (n_samples, n_features)`
-  - Returns: 
-    - `T : ndarray of shape (n_samples, n_classes)`: Returns the log-probabilities of the sample for each class in the model. The columns correspond to the classes in sorted order, as they appear in the attribute classes_.
+    - Parameters:
+        - `X : array-like of shape (n_samples, n_features)`
+    - Returns:
+        - `T : ndarray of shape (n_samples, n_classes)`: Returns the log-probabilities of the sample for each class in
+          the model. The columns correspond to the classes in sorted order, as they appear in the attribute classes_.
 
 - `predict_proba(X)`: Compute probabilities of possible outcomes for samples in X.
-  - Parameters: 
-    - `X : array-like of shape (n_samples, n_features)`
-  - Returns:
-    - `T : ndarray of shape (n_samples, n_classes)`: Returns the probability of the sample for each class in the model. The columns correspond to the classes in sorted order, as they appear in the attribute classes_.
+    - Parameters:
+        - `X : array-like of shape (n_samples, n_features)`
+    - Returns:
+        - `T : ndarray of shape (n_samples, n_classes)`: Returns the probability of the sample for each class in the
+          model. The columns correspond to the classes in sorted order, as they appear in the attribute classes_.
 
 - `score(X, y, sample_weight=None)`: Return the mean accuracy on the given test data and labels.
-  - Parameters:
-    - `X : array-like of shape (n_samples, n_features)`: Test samples.
-    - `y : array-like of shape (n_samples,) or (n_samples, n_outputs)`: True labels for X.
-    - `sample_weightarray-like of shape (n_samples,), default=None`: Sample weights.
-  - Returns:
-    - `score : float`: Mean accuracy of `self.predict(X)` w.r.t. `y`.
+    - Parameters:
+        - `X : array-like of shape (n_samples, n_features)`: Test samples.
+        - `y : array-like of shape (n_samples,) or (n_samples, n_outputs)`: True labels for X.
+        - `sample_weightarray-like of shape (n_samples,), default=None`: Sample weights.
+    - Returns:
+        - `score : float`: Mean accuracy of `self.predict(X)` w.r.t. `y`.
 
-- `set_fit_request(*, sample_weight: bool | None | str = '$UNCHANGED$') → SVC`: Request metadata passed to the fit method.
-  - Parameters:
-    - `sample_weight : str, True, False, or None, default=sklearn.utils.metadata_routing.UNCHANGED`: Metadata routing for `sample_weight` parameter in `fit`.
-  - Returns:
-    - `self : object`: The updated object.
+- `set_fit_request(*, sample_weight: bool | None | str = '$UNCHANGED$') → SVC`: Request metadata passed to the fit
+  method.
+    - Parameters:
+        - `sample_weight : str, True, False, or None, default=sklearn.utils.metadata_routing.UNCHANGED`: Metadata
+          routing for `sample_weight` parameter in `fit`.
+    - Returns:
+        - `self : object`: The updated object.
 
 - `set_params(**params)`: Set the parameters of this estimator.
-  - Parameters:
-    - `**params : dict`: Estimator parameters.
-  - Returns:
-    - `self : object`: Estimator instance.
+    - Parameters:
+        - `**params : dict`: Estimator parameters.
+    - Returns:
+        - `self : object`: Estimator instance.
 
-- `set_score_request(*, sample_weight: bool | None | str = '$UNCHANGED$') → SVC`: Request metadata passed to the score method.
-  - Parameters:
-    - `sample_weightstr, True, False, or None, default=sklearn.utils.metadata_routing.UNCHANGED`: Metadata routing for `sample_weight` parameter in `score`.
-  - Returns:
-    - `self : object`: The updated object.
+- `set_score_request(*, sample_weight: bool | None | str = '$UNCHANGED$') → SVC`: Request metadata passed to the score
+  method.
+    - Parameters:
+        - `sample_weightstr, True, False, or None, default=sklearn.utils.metadata_routing.UNCHANGED`: Metadata routing
+          for `sample_weight` parameter in `score`.
+    - Returns:
+        - `self : object`: The updated object.
 
 ## Bindings close to our C++ API
 
@@ -166,15 +187,16 @@ More detailed description of the class methods:
 
 The following table lists all PLSSVM enumerations exposed on the Python side:
 
-| enumeration          | values                                                               | description                                                                                                                                                                                                                                                 |
-|----------------------|----------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `TargetPlatform`     | `AUTOMATIC`, `CPU`, `GPU_NVIDIA`, `GPU_AMD`, `GPU_INTEL`             | The different supported target platforms (default: `AUTOMATIC`). If `AUTOMATIC` is provided, checks for available devices in the following order: NVIDIA GPUs -> AMD GPUs -> Intel GPUs -> CPUs.                                                            |
-| `SolverType`         | `AUTOMATIC`, `CG_EXPLICIT`, `CG_IMPLICIT`                            | The different supported solver types (default: `AUTOMATIC`). If `AUTOMATIC` is provided, the used solver types depends on the available device and system memory.                                                                                           |
-| `KernelFunctionType` | `LINEAR`, `POLYNOMIAL`, `RBF`, `SIGMOID`, `LAPLACIAN`, `CHI_SQUARED` | The different supported kernel functions (default: `LINEAR`).                                                                                                                                                                                               |
-| `FileFormatType`     | `LIBSVM`, `ARFF`                                                     | The different supported file format types (default: `LIBSVM`).                                                                                                                                                                                              |
-| `ClassificationType` | `OAA`, `OAO`                                                         | The different supported multi-class classification strategies (default: `LIBSVM`).                                                                                                                                                                          |
-| `BackendType`        | `AUTOMATIC`, `OPENMP`, `CUDA`, `HIP`, `OPENCL`, `SYCL`               | The different supported backends (default: `AUTOMATIC`). If `AUTOMATIC` is provided, the selected backend depends on the used target platform.                                                                                                              |
-| `VerbosityLevel`     | `QUIET`, `LIBSVM`, `TIMING`, `FULL`                                  | The different supported log levels (default: `FULL`). `QUIET` means no output, `LIBSVM` output that is as conformant as possible with LIBSVM's output, `TIMING` all timing related outputs, and `FULL` everything. Can be combined via bit-wise operations. |
+| enumeration            | values                                                               | description                                                                                                                                                                                                                                                 |
+|------------------------|----------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `TargetPlatform`       | `AUTOMATIC`, `CPU`, `GPU_NVIDIA`, `GPU_AMD`, `GPU_INTEL`             | The different supported target platforms (default: `AUTOMATIC`). If `AUTOMATIC` is provided, checks for available devices in the following order: NVIDIA GPUs -> AMD GPUs -> Intel GPUs -> CPUs.                                                            |
+| `SolverType`           | `AUTOMATIC`, `CG_EXPLICIT`, `CG_IMPLICIT`                            | The different supported solver types (default: `AUTOMATIC`). If `AUTOMATIC` is provided, the used solver types depends on the available device and system memory.                                                                                           |
+| `KernelFunctionType`   | `LINEAR`, `POLYNOMIAL`, `RBF`, `SIGMOID`, `LAPLACIAN`, `CHI_SQUARED` | The different supported kernel functions (default: `LINEAR`).                                                                                                                                                                                               |
+| `FileFormatType`       | `LIBSVM`, `ARFF`                                                     | The different supported file format types (default: `LIBSVM`).                                                                                                                                                                                              |
+| `GammaCoefficientType` | `AUTOMATIC`, `SCALE`                                                 | The different modes for the dynamic gamma calculation (default: `AUTOMATIC`).                                                                                                                                                                               |
+| `ClassificationType`   | `OAA`, `OAO`                                                         | The different supported multi-class classification strategies (default: `LIBSVM`).                                                                                                                                                                          |
+| `BackendType`          | `AUTOMATIC`, `OPENMP`, `CUDA`, `HIP`, `OPENCL`, `SYCL`               | The different supported backends (default: `AUTOMATIC`). If `AUTOMATIC` is provided, the selected backend depends on the used target platform.                                                                                                              |
+| `VerbosityLevel`       | `QUIET`, `LIBSVM`, `TIMING`, `FULL`                                  | The different supported log levels (default: `FULL`). `QUIET` means no output, `LIBSVM` output that is as conformant as possible with LIBSVM's output, `TIMING` all timing related outputs, and `FULL` everything. Can be combined via bit-wise operations. |
 
 If a SYCL implementation is available, additional enumerations are available:
 
@@ -197,13 +219,13 @@ The parameter class encapsulates all necessary hyper-parameters needed to fit an
 | `Parameter(kernel_type, degree, gamma, coef0, cost)`                                                    | Construct a parameter object by explicitly providing each hyper-parameter value. |
 | `Parameter([kernel_type=KernelFunctionType.LINEAR, degree=3, gamma=*1/#features*, coef=0.0, cost=1.0])` | Construct a parameter object with the provided named parameters.                 |
 
-| attributes                         | description                                                                                  |
-|------------------------------------|----------------------------------------------------------------------------------------------|
-| `kernel_type : KernelFunctionType` | The used kernel function type (default: `LINEAR`).                                           |
-| `degree : int`                     | The used degree in the polynomial kernel function (default: `3`).                            |
-| `gamma : real_type`                | The used gamma in the polynomial and rbf kernel functions (default: `1 / #features`).        |
-| `coef0 : real_type`                | The used coef0 in the polynomial kernel function (default: `0.0`).                           |
-| `cost : real_type`                 | The used cost factor applied to the kernel matrix's diagonal by `1 / cost` (default: `1.0`). |
+| attributes                         | description                                                                                                                                                                                                                                                     |
+|------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `kernel_type : KernelFunctionType` | The used kernel function type (default: `LINEAR`).                                                                                                                                                                                                              |
+| `degree : int`                     | The used degree in the polynomial kernel function (default: `3`).                                                                                                                                                                                               |
+| `gamma : gamma_type`               | The used gamma in the different kernel functions (default: `AUTOMATIC`). The `gamma_type` is a `std::variant<real_type, plssvm.GammaCoefficientType`, i.e., either a normal floating point value can be provided or a `GammaCoefficientType` enumeration value. |
+| `coef0 : real_type`                | The used coef0 in the polynomial and sigmoid kernel function (default: `0.0`).                                                                                                                                                                                  |
+| `cost : real_type`                 | The used cost factor applied to the kernel matrix's diagonal by `1 / cost` (default: `1.0`).                                                                                                                                                                    |
 
 | methods               | description                                                                                         |
 |-----------------------|-----------------------------------------------------------------------------------------------------|
@@ -215,8 +237,10 @@ The parameter class encapsulates all necessary hyper-parameters needed to fit an
 #### `plssvm.DataSet`
 
 A class encapsulating a used data set.
-The label type of `plssvm.DataSet` corresponds to the value of `-DPLSSVM_PYTHON_BINDINGS_PREFERRED_LABEL_TYPE` as provided during PLSSVM's build step (default: `std::string`).
-If another label type is desired, one can simply use, e.g., `plssvm.DataSet_intc` for a data set with plain integers as label type.
+The label type of `plssvm.DataSet` corresponds to the value of `-DPLSSVM_PYTHON_BINDINGS_PREFERRED_LABEL_TYPE` as
+provided during PLSSVM's build step (default: `std::string`).
+If another label type is desired, one can simply use, e.g., `plssvm.DataSet_intc` for a data set with plain integers as
+label type.
 
 | constructors                                                                                         | description                                                                                                                                                                                                                                     |
 |------------------------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
@@ -241,8 +265,10 @@ If another label type is desired, one can simply use, e.g., `plssvm.DataSet_intc
 ##### `plssvm.DataSetScaling`
 
 A class encapsulating and performing the scaling of a `plssvm.DataSet`.
-The label type of `plssvm.DataSetScaling` corresponds to the value of `-DPLSSVM_PYTHON_BINDINGS_PREFERRED_LABEL_TYPE` as provided during PLSSVM's build step (default: `std::string`).
-If another label type is desired, one can simply use, e.g., `plssvm.DataSetScaling_intc` for a data set with plain integers as label  type.
+The label type of `plssvm.DataSetScaling` corresponds to the value of `-DPLSSVM_PYTHON_BINDINGS_PREFERRED_LABEL_TYPE` as
+provided during PLSSVM's build step (default: `std::string`).
+If another label type is desired, one can simply use, e.g., `plssvm.DataSetScaling_intc` for a data set with plain
+integers as label type.
 
 | constructors                   | description                                                          |
 |--------------------------------|----------------------------------------------------------------------|
@@ -263,8 +289,10 @@ If another label type is desired, one can simply use, e.g., `plssvm.DataSetScali
 ##### `plssvm.DataSetScalingFactors`
 
 A class encapsulating a scaling factor for a specific feature in a data set.
-The label type of `plssvm.DataSetScalingFactors` corresponds to the value of `-DPLSSVM_PYTHON_BINDINGS_PREFERRED_LABEL_TYPE` as provided during PLSSVM's build step (default: `std::string`).
-If another label type is desired, one can simply use, e.g., `plssvm.DataSetScalingFactors_intc` for a data set with plain integers as label type.
+The label type of `plssvm.DataSetScalingFactors` corresponds to the value
+of `-DPLSSVM_PYTHON_BINDINGS_PREFERRED_LABEL_TYPE` as provided during PLSSVM's build step (default: `std::string`).
+If another label type is desired, one can simply use, e.g., `plssvm.DataSetScalingFactors_intc` for a data set with
+plain integers as label type.
 **Note**: it shouldn't be necessary to directly use `plssvm.DataSetScalingFactors` in user code.
 
 | constructors                                         | description                                                                                           |
@@ -284,9 +312,12 @@ If another label type is desired, one can simply use, e.g., `plssvm.DataSetScali
 #### `plssvm.CSVM`
 
 The main class responsible for fitting an SVM model and later predicting or scoring new data sets.
-It uses either the provided backend type or the default determined one to create a PLSSVM CSVM of the correct backend type.
-**Note**: the backend specific CSVMs are only available if the respective backend has been enabled during PLSSVM's build step.
-These backend specific CSVMs can also directly be used, e.g., `plssvm.CSVM(plssvm.BackendType.CUDA)` is equal to `plssvm.cuda.CSVM` (the same also holds for all other backends).
+It uses either the provided backend type or the default determined one to create a PLSSVM CSVM of the correct backend
+type.
+**Note**: the backend specific CSVMs are only available if the respective backend has been enabled during PLSSVM's build
+step.
+These backend specific CSVMs can also directly be used, e.g., `plssvm.CSVM(plssvm.BackendType.CUDA)` is equal
+to `plssvm.cuda.CSVM` (the same also holds for all other backends).
 If the most performant backend should be used, it is sufficient to use `plssvm.CSVM()`.
 
 | constructors                                                        | description                                                                                                                                            |
@@ -294,8 +325,9 @@ If the most performant backend should be used, it is sufficient to use `plssvm.C
 | `CSVM([backend, target_platform, plssvm.Parameter kwargs])`         | Create a new CSVM with the provided named arguments.                                                                                                   |
 | `CSVM(params, [backend, target_platform, plssvm.Parameter kwargs])` | Create a new CSVM with the provided parameters and named arguments; the values in the `plssvm.Parameter` will be overwritten by the keyword arguments. |
 
-**Note**: if the backend type is `plssvm.BackendType.SYCL` two additional named parameters can be provided: 
-`sycl_implementation_type` to choose between DPC++ and AdaptiveCpp as SYCL implementations and `sycl_kernel_invocation_type` to choose between the two different SYCL kernel invocation types.
+**Note**: if the backend type is `plssvm.BackendType.SYCL` two additional named parameters can be provided:
+`sycl_implementation_type` to choose between DPC++ and AdaptiveCpp as SYCL implementations
+and `sycl_kernel_invocation_type` to choose between the two different SYCL kernel invocation types.
 
 | methods                                                                                                                                      | description                                                                                                                                                                                                        |
 |----------------------------------------------------------------------------------------------------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
@@ -312,7 +344,9 @@ If the most performant backend should be used, it is sufficient to use `plssvm.C
 
 These classes represent the backend specific CSVMs.
 **Note**: they are only available if the respective backend has been enabled during PLSSVM's build step.
-**Note**: the `plssvm.sycl.CSVM` is equal to the respective `plssvm.dpcpp.CSVM` or `plssvm.adaptivecpp.CSVM` if only one SYCL implementation is available or the SYCL implementation defined by `-DPLSSVM_SYCL_BACKEND_PREFERRED_IMPLEMENTATION` during PLSSVM's build step.
+**Note**: the `plssvm.sycl.CSVM` is equal to the respective `plssvm.dpcpp.CSVM` or `plssvm.adaptivecpp.CSVM` if only one
+SYCL implementation is available or the SYCL implementation defined by `-DPLSSVM_SYCL_BACKEND_PREFERRED_IMPLEMENTATION`
+during PLSSVM's build step.
 These classes inherit all methods from the base `plssvm.CSVM` class.
 
 | constructors                              | description                                                                                                                                  |
@@ -324,15 +358,17 @@ These classes inherit all methods from the base `plssvm.CSVM` class.
 | `CSVM(target, [plssvm.Parameter kwargs])` | Create a new CSVM with the default the provided target platform. The hyper-parameter values are set ot the provided named parameter values.  |
 | `CSVM(target, params)`                    | Create a new CSVM with the default the provided target platform. The hyper-parameters are explicitly set to the provided `plssvm.Parameter`. |
 
-In case of the SYCL CSVMs (`plssvm.sycl.CSVM`, `plssvm.dpcpp.CSVM`, and `plssvm.adaptivecpp.CSVM`) the additional named argument `sycl_kernel_invocation_type` to choose between the two different SYCL kernel invocation types can be provided.
+In case of the SYCL CSVMs (`plssvm.sycl.CSVM`, `plssvm.dpcpp.CSVM`, and `plssvm.adaptivecpp.CSVM`) the additional named
+argument `sycl_kernel_invocation_type` to choose between the two different SYCL kernel invocation types can be provided.
 
 Except for the `plssvm.openmp.CSVM` the following methods are additional available for the backend specific CSVMs.
 
-| methods                    | description                                                                                                                           |
-|----------------------------|---------------------------------------------------------------------------------------------------------------------------------------|
-| `num_available_devices()`  | Return the number of available devices, i.e., if the target platform represents a GPU, this function returns the number of used GPUs. |
+| methods                   | description                                                                                                                           |
+|---------------------------|---------------------------------------------------------------------------------------------------------------------------------------|
+| `num_available_devices()` | Return the number of available devices, i.e., if the target platform represents a GPU, this function returns the number of used GPUs. |
 
-In case of the SYCL CSVMs (`plssvm.sycl.CSVM`, `plssvm.dpcpp.CSVM`, and `plssvm.adaptivecpp.CSVM`) the following methods are additional available for the backend specific CSVMs.
+In case of the SYCL CSVMs (`plssvm.sycl.CSVM`, `plssvm.dpcpp.CSVM`, and `plssvm.adaptivecpp.CSVM`) the following methods
+are additional available for the backend specific CSVMs.
 
 | methods                        | description                             |
 |--------------------------------|-----------------------------------------|
@@ -341,8 +377,10 @@ In case of the SYCL CSVMs (`plssvm.sycl.CSVM`, `plssvm.dpcpp.CSVM`, and `plssvm.
 #### `plssvm.Model`
 
 A class encapsulating a model learned during a call to `plssvm.CSVM.fit()`.
-The label type of `plssvm.Model` corresponds to the value of `-DPLSSVM_PYTHON_BINDINGS_PREFERRED_LABEL_TYPE` as provided during PLSSVM's build step (default: `std::string`).
-If another label type is desired, one can simply use, e.g., `plssvm.Model_intc` for a model with plain integers as label type.
+The label type of `plssvm.Model` corresponds to the value of `-DPLSSVM_PYTHON_BINDINGS_PREFERRED_LABEL_TYPE` as provided
+during PLSSVM's build step (default: `std::string`).
+If another label type is desired, one can simply use, e.g., `plssvm.Model_intc` for a model with plain integers as label
+type.
 
 | constructors        | description                                                                     |
 |---------------------|---------------------------------------------------------------------------------|
@@ -387,6 +425,8 @@ The tracked metrics can be saved to a YAML file for later post-processing.
 | `pause()`                                          | Pause the current performance tracking.                                          |
 | `resume()`                                         | Resume performance tracking.                                                     |
 | `save(filename)`                                   | Save all collected tracking information to the provided file.                    |
+| `is_tracking()`                                    | Check whether performance tracking is currently enabled.                         |
+| `clear_tracking_entries()`                         | Remove all currently trackend entries from the performance tracker.              |
 
 ### Free functions
 
@@ -412,12 +452,14 @@ The following table lists all free functions in PLSSVM directly callable via `pl
 | `get_verbosity()`                                                           | Return the current verbosity level.                                                                                                                                                                                                                                                               |
 | `set_verbosity(verbosity)`                                                  | Explicitly set the current verbosity level. `plssvm.set_verbosity(plssvm.VerbosityLevel.QUIET)` is equal to `plssvm.quiet()`.                                                                                                                                                                     |
 | `equivalent(params1, params2)`                                              | Check whether the two parameter classes are equivalent, i.e., the parameters for **the current kernel function** are identical. E.g., for the rbf kernel function the gamma values must be identical, but the degree values can be different, since degree isn't used in the rbf kernel function. |
+| `get_gamma_string(gamma)`                                                   | Returns the gamma string based on the active member in the `gamma_type` `std::variant`.                                                                                                                                                                                                           |
+| `calculate_gamma_value(gamma, matrix)`                                      | Calculate the value of gamma based on the active member in the `gamma_type` `std::variant`.                                                                                                                                                                                                       |
 
 If a SYCL implementation is available, additional free functions are available:
 
-| function                                 | description                                                                      |
-|------------------------------------------|----------------------------------------------------------------------------------|
-| `list_available_sycl_implementations()`  | List all available SYCL implementations (determined during PLSSVM's build step). |
+| function                                | description                                                                      |
+|-----------------------------------------|----------------------------------------------------------------------------------|
+| `list_available_sycl_implementations()` | List all available SYCL implementations (determined during PLSSVM's build step). |
 
 ### Exceptions
 

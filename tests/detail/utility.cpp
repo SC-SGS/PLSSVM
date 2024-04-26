@@ -10,8 +10,6 @@
 
 #include "plssvm/detail/utility.hpp"
 
-#include "plssvm/default_value.hpp"  // plssvm::default_value
-
 #include "tests/naming.hpp"         // naming::{test_parameter_to_name}
 #include "tests/types_to_test.hpp"  // util::{combine_test_parameters_gtest_t, cartesian_type_product_t, test_parameter_type_at_t}
 
@@ -63,32 +61,6 @@ TEST(Utility, to_underlying_char) {
     EXPECT_EQ(plssvm::detail::to_underlying(char_enum::a), 'a');
     EXPECT_EQ(plssvm::detail::to_underlying(char_enum::b), 'b');
     EXPECT_EQ(plssvm::detail::to_underlying(char_enum::c), 'c');
-}
-
-TEST(Utility, to_underlying_default_value_int) {
-    // clang-format off
-    enum class int_enum { a, b, c = 10 };
-    // clang-format on
-
-    const plssvm::default_value<int_enum> int_default_a{ plssvm::default_init{ int_enum::a } };
-    EXPECT_EQ(plssvm::detail::to_underlying(int_default_a), 0);
-    const plssvm::default_value<int_enum> int_default_b{ plssvm::default_init{ int_enum::b } };
-    EXPECT_EQ(plssvm::detail::to_underlying(int_default_b), 1);
-    const plssvm::default_value<int_enum> int_default_c{ plssvm::default_init{ int_enum::c } };
-    EXPECT_EQ(plssvm::detail::to_underlying(int_default_c), 10);
-}
-
-TEST(Utility, to_underlying_default_value_char) {
-    // clang-format off
-    enum class char_enum : char { a = 'a', b = 'b', c = 'c' };
-    // clang-format on
-
-    const plssvm::default_value<char_enum> char_default_a{ plssvm::default_init{ char_enum::a } };
-    EXPECT_EQ(plssvm::detail::to_underlying(char_default_a), 'a');
-    const plssvm::default_value<char_enum> char_default_b{ plssvm::default_init{ char_enum::b } };
-    EXPECT_EQ(plssvm::detail::to_underlying(char_default_b), 'b');
-    const plssvm::default_value<char_enum> char_default_c{ plssvm::default_init{ char_enum::c } };
-    EXPECT_EQ(plssvm::detail::to_underlying(char_default_c), 'c');
 }
 
 // the map container types to test

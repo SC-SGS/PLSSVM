@@ -287,7 +287,7 @@ inline void write_libsvm_data_impl(const std::string &filename, const soa_matrix
 #endif
                 }
             }
-            output.append(buffer.data(), ptr - buffer.data());
+            output.append(buffer.data(), static_cast<std::string::size_type>(ptr - buffer.data()));
         }
         output.push_back('\n');
     };

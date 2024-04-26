@@ -16,7 +16,6 @@
 #include "plssvm/classification_types.hpp"        // plssvm::classification_type, plssvm::classification_type_to_full_string
 #include "plssvm/constants.hpp"                   // plssvm::real_type, plssvm::PADDING_SIZE
 #include "plssvm/data_set.hpp"                    // plssvm::data_set
-#include "plssvm/default_value.hpp"               // plssvm::default_value, plssvm::default_init
 #include "plssvm/detail/assert.hpp"               // PLSSVM_ASSERT
 #include "plssvm/detail/data_distribution.hpp"    // plssvm::detail::triangular_data_distribution
 #include "plssvm/detail/data_distribution.hpp"    // plssvm::detail::data_distribution
@@ -28,6 +27,7 @@
 #include "plssvm/detail/type_traits.hpp"          // PLSSVM_REQUIRES, plssvm::detail::remove_cvref_t
 #include "plssvm/detail/utility.hpp"              // plssvm::detail::to_underlying
 #include "plssvm/exceptions/exceptions.hpp"       // plssvm::invalid_parameter_exception
+#include "plssvm/gamma.hpp"                       // plssvm::gamma_type, plssvm::calculate_gamma_value
 #include "plssvm/kernel_function_types.hpp"       // plssvm::kernel_function_type
 #include "plssvm/matrix.hpp"                      // plssvm::aos_matrix
 #include "plssvm/model.hpp"                       // plssvm::model
@@ -41,7 +41,7 @@
 #include "fmt/core.h"     // fmt::format
 #include "igor/igor.hpp"  // igor::parser
 
-#include <algorithm>    // std::max_element
+#include <algorithm>    // std::max_element, std::all_of
 #include <chrono>       // std::chrono::{time_point, steady_clock, duration_cast}
 #include <cstddef>      // std::size_t
 #include <limits>       // std::numeric_limits::lowest
@@ -326,25 +326,8 @@ template <typename... Args, std::enable_if_t<detail::has_only_parameter_named_ar
 void csvm::set_params(Args &&...named_args) {
     static_assert(sizeof...(Args) > 0, "At least one named parameter mus be given when calling set_params()!");
 
-    // create new parameter struct which is responsible for parsing the named_args
-    parameter provided_params{ std::forward<Args>(named_args)... };
-
-    // set the value of params_ if and only if the respective value in provided_params isn't the default value
-    if (!provided_params.kernel_type.is_default()) {
-        params_.kernel_type = provided_params.kernel_type.value();
-    }
-    if (!provided_params.gamma.is_default()) {
-        params_.gamma = provided_params.gamma.value();
-    }
-    if (!provided_params.degree.is_default()) {
-        params_.degree = provided_params.degree.value();
-    }
-    if (!provided_params.coef0.is_default()) {
-        params_.coef0 = provided_params.coef0.value();
-    }
-    if (!provided_params.cost.is_default()) {
-        params_.cost = provided_params.cost.value();
-    }
+    // update the parameters
+    params_.set_named_arguments(std::forward<Args>(named_args)...);
 
     // check if the new parameters make sense
     this->sanity_check_parameter();
@@ -357,6 +340,12 @@ model<label_type> csvm::fit(const data_set<label_type> &data, Args &&...named_ar
                   "The provided matrix must be padded with {}, but is padded with {}!",
                   shape{ PADDING_SIZE, PADDING_SIZE },
                   data.data().padding());
+#if defined(PLSSVM_ASSERT_ENABLED)
+    if (params_.kernel_type == kernel_function_type::chi_squared) {
+        PLSSVM_ASSERT(std::all_of(data.data().data(), data.data().data() + data.data().size_padded(), [](const real_type val) { return val >= real_type{ 0.0 }; }),
+                      "The chi-squared kernel is only well defined for non-negative values!");
+    }
+#endif
 
     if (!data.has_labels()) {
         throw invalid_parameter_exception{ "No labels given for training! Maybe the data is only usable for prediction?" };
@@ -391,10 +380,9 @@ model<label_type> csvm::fit(const data_set<label_type> &data, Args &&...named_ar
 
     // copy parameter and set gamma if necessary
     parameter params{ params_ };
-    if (params.gamma.is_default()) {
-        // no gamma provided -> use default value which depends on the number of features in the data set
-        params.gamma = real_type{ 1.0 } / data.num_features();
-    }
+    // if the active gamma_type variant member isn't a real_type, replace it with a real_type value by calculating its true value based on the used data set
+    // -> params.gamma is guaranteed to be a real_type now!
+    params.gamma = calculate_gamma_value(params_.gamma, data.data());
 
     // create model
     model<label_type> csvm_model{ params, data, used_classification };
@@ -517,6 +505,12 @@ std::vector<label_type> csvm::predict(const model<label_type> &model, const data
                   "The provided predict points must be padded with {}, but is padded with {}!",
                   shape{ PADDING_SIZE, PADDING_SIZE },
                   data.data().padding());
+#if defined(PLSSVM_ASSERT_ENABLED)
+    if (params_.kernel_type == kernel_function_type::chi_squared) {
+        PLSSVM_ASSERT(std::all_of(data.data().data(), data.data().data() + data.data().size_padded(), [](const real_type val) { return val >= real_type{ 0.0 }; }),
+                      "The chi-squared kernel is only well defined for non-negative values!");
+    }
+#endif
 
     if (model.num_features() != data.num_features()) {
         throw invalid_parameter_exception{ fmt::format("Number of features per data point ({}) must match the number of features per support vector of the provided model ({})!", data.num_features(), model.num_features()) };
@@ -658,11 +652,11 @@ std::vector<label_type> csvm::predict(const model<label_type> &model, const data
 #pragma omp parallel for default(none) shared(predicted_labels, class_votes, model) if (!std::is_same_v<label_type, bool>)
         for (typename std::vector<label_type>::size_type i = 0; i < predicted_labels.size(); ++i) {
             std::size_t argmax = 0;
-            real_type max = std::numeric_limits<real_type>::lowest();
+            std::size_t max = 0;
             for (std::size_t v = 0; v < class_votes.num_cols(); ++v) {
                 if (max < class_votes(i, v)) {
                     argmax = v;
-                    max = static_cast<real_type>(class_votes(i, v));
+                    max = class_votes(i, v);
                 }
             }
             predicted_labels[i] = model.data_.mapping_->get_label_by_mapped_index(argmax);

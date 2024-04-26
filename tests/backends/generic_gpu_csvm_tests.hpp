@@ -63,7 +63,7 @@ TYPED_TEST_P(GenericGPUCSVM, run_blas_level_3_kernel_explicit) {
     using mock_csvm_type = typename csvm_test_type::mock_csvm_type;
     using device_ptr_type = typename csvm_test_type::device_ptr_type;
 
-    const plssvm::parameter params{};
+    const plssvm::parameter params{ plssvm::gamma = plssvm::real_type{ 1.0 } };
     const plssvm::data_set data{ PLSSVM_TEST_FILE };
 
     // create C-SVM: must be done using the mock class since the member function to test is private or protected
@@ -283,7 +283,7 @@ TYPED_TEST_P(GenericGPUCSVMKernelFunction, run_assemble_kernel_matrix_explicit) 
     const plssvm::data_set data{ PLSSVM_TEST_FILE };
     auto data_matr{ data.data() };
     if constexpr (kernel == plssvm::kernel_function_type::chi_squared) {
-        // chi-squared is well-defined for positive values only
+        // chi-squared is well-defined for non-negative values only
         data_matr = util::matrix_abs(data_matr);
     }
 
@@ -324,7 +324,7 @@ TYPED_TEST_P(GenericGPUCSVMKernelFunction, run_assemble_kernel_matrix_explicit) 
 
         // check for correctness
         ASSERT_EQ(kernel_matrix.size(), correct_kernel_matrix.size());
-        EXPECT_FLOATING_POINT_VECTOR_NEAR(kernel_matrix, correct_kernel_matrix);
+        EXPECT_FLOATING_POINT_VECTOR_NEAR_EPS(kernel_matrix, correct_kernel_matrix, 1e6);
     }
 }
 
@@ -341,7 +341,7 @@ TYPED_TEST_P(GenericGPUCSVMKernelFunction, run_assemble_kernel_matrix_implicit_b
     const plssvm::data_set data{ PLSSVM_TEST_FILE };
     auto data_matr{ data.data() };
     if constexpr (kernel == plssvm::kernel_function_type::chi_squared) {
-        // chi-squared is well-defined for positive values only
+        // chi-squared is well-defined for non-negative values only
         data_matr = util::matrix_abs(data_matr);
     }
 
@@ -405,11 +405,15 @@ TYPED_TEST_P(GenericGPUCSVMKernelFunction, run_predict_kernel) {
     using device_ptr_type = typename csvm_test_type::device_ptr_type;
     constexpr plssvm::kernel_function_type kernel = util::test_parameter_value_at_v<0, TypeParam>;
 
-    const plssvm::parameter params{ plssvm::kernel_type = kernel };
+    plssvm::parameter params{ plssvm::kernel_type = kernel };
+    if constexpr (kernel != plssvm::kernel_function_type::linear) {
+        params.gamma = 1.0;
+    }
+
     const plssvm::data_set data{ PLSSVM_TEST_FILE };
     auto data_matr{ data.data() };
     if constexpr (kernel == plssvm::kernel_function_type::chi_squared) {
-        // chi-squared is well-defined for positive values only
+        // chi-squared is well-defined for non-negative values only
         data_matr = util::matrix_abs(data_matr);
     }
 

@@ -442,7 +442,7 @@ template <typename matrix_type>
     matrix_type matrix{ shape };
     for (std::size_t i = 0; i < matrix.num_rows(); ++i) {
         for (std::size_t j = 1; j <= matrix.num_cols(); ++j) {
-            matrix(i, j - 1) = i + j / real_type{ 10.0 };
+            matrix(i, j - 1) = static_cast<real_type>(i) + static_cast<real_type>(j) / real_type{ 10.0 };
         }
     }
 
@@ -485,7 +485,7 @@ template <typename matrix_type>
     matrix_type matrix{ shape };
     for (std::size_t i = 0; i < matrix.num_rows(); ++i) {
         for (std::size_t j = 1; j <= matrix.num_cols(); ++j) {
-            matrix(i, j - 1) = i + j / real_type{ 10.0 };
+            matrix(i, j - 1) = static_cast<real_type>(i) + static_cast<real_type>(j) / real_type{ 10.0 };
         }
         // remove half of the created values randomly
         for (std::size_t j = 0; j < matrix.num_cols() / 2; ++j) {

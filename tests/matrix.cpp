@@ -2090,6 +2090,13 @@ TYPED_TEST(MatrixOperationsDeathTest, operator_masked_rowwise_scale) {
     EXPECT_DEATH(std::ignore = masked_rowwise_scale(std::vector<int>{ 1, 0, 1 }, scale, this->get_A()), ::testing::HasSubstr("Error: shapes missmatch! (3 != 2 (num_rows))"));
 }
 
+TYPED_TEST(MatrixOperations, operator_variance) {
+    using real_type = typename TestFixture::fixture_real_type;
+
+    EXPECT_FLOATING_POINT_NEAR(variance(this->get_A()), (real_type{ 17.5 } / static_cast<real_type>(this->get_A().size())));
+    EXPECT_FLOATING_POINT_NEAR(variance(this->get_B()), (real_type{ 17.5 } / static_cast<real_type>(this->get_A().size())));
+}
+
 TYPED_TEST(Matrix, matrix_shorthands) {
     using real_type = typename TestFixture::fixture_real_type;
     constexpr plssvm::layout_type layout = TestFixture::fixture_layout;
