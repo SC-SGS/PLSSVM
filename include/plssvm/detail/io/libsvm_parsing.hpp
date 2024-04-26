@@ -301,7 +301,7 @@ inline void write_libsvm_data_impl(const std::string &filename, const soa_matrix
 #pragma omp for schedule(dynamic) nowait
         for (typename std::vector<real_type>::size_type i = 0; i < num_data_points; ++i) {
             if constexpr (has_label) {
-                out_string.append(fmt::format(FMT_COMPILE("{} "), label[i]));
+                out_string.append(fmt::format(FMT_COMPILE("{} "), static_cast<label_type>(label[i])));
             }
             format_libsvm_line(out_string, data, i);
 
