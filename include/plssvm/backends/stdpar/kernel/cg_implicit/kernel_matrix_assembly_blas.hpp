@@ -20,18 +20,21 @@
 #include "plssvm/kernel_functions.hpp"       // plssvm::kernel_function
 #include "plssvm/matrix.hpp"                 // aos_matrix
 
-#include <atomic>   // std::atomic_ref
-#include <cstddef>  // std::size_t
-#include <execution>
-#include <vector>  // std::vector
+#include <algorithm>  // std::for_each
+#include <array>      // std::array
+#include <cmath>      // std::ceil
+#include <cstddef>    // std::size_t
+#include <execution>  // std::execution::par_unseq
+#include <utility>    // std::pair, std::make_pair
+#include <vector>     // std::vector
 
-// TODO: correct macro name!?
-#if defined(PLSSVM_STDPAR_BACKEND_USE_ADAPTIVECPP)
-    #include "plssvm/backens/SYCL/detail/atomics.hpp"  // atomic_op
-using plssvm::sycl::detail::atomic_op;
+#if defined(PLSSVM_STDPAR_BACKEND_HAS_ACPP)
+    #include "plssvm/backends/SYCL/detail/atomics.hpp"  // plssvm::sycl::detail::atomic_op
+template <typename T>
+using atomic_ref = plssvm::sycl::detail::atomic_op<T>;
 #else
-//template <typename T>
-//using atomic_op = std::atomic_ref<T>;
+    // TODO: other stdpar implementations
+    #include <atomic>  // std::atomic_ref
 #endif
 
 namespace plssvm::stdpar::detail {
@@ -39,7 +42,6 @@ namespace plssvm::stdpar::detail {
 /**
  * @brief Perform an implicit BLAS SYMM-like operation: `C = alpha * A * B + C` where `A` is the implicitly calculated kernel matrix using the @p kernel function (never actually stored, reducing the amount of needed global memory), @p B and @p C are matrices, and @p alpha is a scalar.
  * @tparam kernel the compile-time kernel function to use
- * @tparam layout the compile-time layout type for the matrices
  * @tparam Args the types of the potential additional arguments for the @p kernel function
  * @param[in] alpha the scalar alpha value
  * @param[in] q the `q` vector
@@ -49,10 +51,10 @@ namespace plssvm::stdpar::detail {
  * @param[in] B the matrix @p B
  * @param[in] beta the beta alpha value
  * @param[in,out] C the matrix @p C
- * @param[in] args the potential additional arguments for the @p kernel function
+ * @param[in] kernel_function_parameter the potential additional arguments for the @p kernel function
  */
-template <kernel_function_type kernel, layout_type layout, typename... Args>
-inline void device_kernel_assembly_symm(const real_type alpha, const std::vector<real_type> &q, const matrix<real_type, layout> &data, const real_type QA_cost, const real_type cost, const matrix<real_type, layout> &B, const real_type beta, matrix<real_type, layout> &C, Args... args) {
+template <kernel_function_type kernel, typename... Args>
+inline void device_kernel_assembly_symm(const real_type alpha, const std::vector<real_type> &q, const soa_matrix<real_type> &data, const real_type QA_cost, const real_type cost, const soa_matrix<real_type> &B, const real_type beta, soa_matrix<real_type> &C, Args... kernel_function_parameter) {
     PLSSVM_ASSERT(q.size() == data.num_rows() - 1, "Sizes mismatch!: {} != {}", q.size(), data.num_rows() - 1);
     PLSSVM_ASSERT(cost != real_type{ 0.0 }, "cost must not be 0.0 since it is 1 / plssvm::cost!");
     PLSSVM_ASSERT(B.shape() == C.shape(), "The matrices B and C must have the same shape!");
@@ -60,40 +62,78 @@ inline void device_kernel_assembly_symm(const real_type alpha, const std::vector
 
     using namespace operators;
 
-    const std::size_t dept = q.size();
-
     // alpha * A * B + beta * C
     C *= beta;
 
-    std::vector<std::pair<std::size_t, std::size_t>> range(dept * dept);
+    // calculate constants
+    const std::size_t dept = q.size();
+    const auto blocked_dept = static_cast<std::size_t>(std::ceil(static_cast<real_type>(dept) / INTERNAL_BLOCK_SIZE));
+    const std::size_t num_features = data.num_cols();
+    const std::size_t num_classes = B.num_rows();
+
+    // cast all values to 64-bit unsigned long long to prevent potential 32-bit overflows
+    const auto INTERNAL_BLOCK_SIZE_uz = static_cast<std::size_t>(INTERNAL_BLOCK_SIZE);
+
+    // calculate indices over which we parallelize
+    std::vector<std::pair<std::size_t, std::size_t>> range(blocked_dept * blocked_dept);
+#pragma omp parallel for
     for (std::size_t i = 0; i < range.size(); ++i) {
-        range[i] = std::make_pair(i / dept, i % dept);
+        range[i] = std::make_pair(i / blocked_dept, i % blocked_dept);
     }
 
-//    std::for_each(std::execution::par_unseq, range.cbegin(), range.cend(), [&](const std::pair<std::size_t, std::size_t> i) {
-//        const auto [km_row_idx, km_col_idx] = i;
-//
-//        // half number of computations by exploiting symmetry
-//        if (km_row_idx <= km_col_idx) {
-//            real_type temp = kernel_function<kernel>(data, km_row_idx, data, km_col_idx, args...) + QA_cost - q[km_row_idx] - q[km_col_idx];
-//
-//            // apply cost to diagonal
-//            if (km_row_idx == km_col_idx) {
-//                temp += cost;
-//                // calculate the values of alpha * A * B
-//                for (std::size_t row = 0; row < B.num_rows(); ++row) {
-//                    atomic_op<real_type>{ C(row, km_row_idx) } += alpha * temp * B(row, km_row_idx);
-//                }
-//            } else {
-//                // calculate the values of alpha * A * B
-//                for (std::size_t row = 0; row < B.num_rows(); ++row) {
-//                    atomic_op<real_type>{ C(row, km_row_idx) } += alpha * temp * B(row, km_col_idx);
-//                    // symmetry
-//                    atomic_op<real_type>{ C(row, km_col_idx) } += alpha * temp * B(row, km_row_idx);
-//                }
-//            }
-//        }
-//    });
+    std::for_each(std::execution::par_unseq, range.cbegin(), range.cend(), [&](const std::pair<std::size_t, std::size_t> idx) {
+        // calculate the indices used in the current thread
+        const auto [row, col] = idx;
+        const std::size_t row_idx = row * INTERNAL_BLOCK_SIZE_uz;
+        const std::size_t col_idx = col * INTERNAL_BLOCK_SIZE_uz;
+
+        // only calculate the upper triangular matrix
+        if (row_idx >= col_idx) {
+            // create a thread private array used for internal caching
+            std::array<std::array<real_type, INTERNAL_BLOCK_SIZE>, INTERNAL_BLOCK_SIZE> temp{};
+
+            // iterate over all features
+            for (std::size_t dim = 0; dim < num_features; ++dim) {
+                for (unsigned internal_row = 0; internal_row < INTERNAL_BLOCK_SIZE; ++internal_row) {
+                    for (unsigned internal_col = 0; internal_col < INTERNAL_BLOCK_SIZE; ++internal_col) {
+                        const std::size_t global_row = row_idx + static_cast<std::size_t>(internal_row);
+                        const std::size_t global_col = col_idx + static_cast<std::size_t>(internal_col);
+
+                        temp[internal_row][internal_col] += detail::feature_reduce<kernel>(data(global_row, dim), data(global_col, dim));
+                    }
+                }
+            }
+
+            // apply the remaining part of the kernel function and store the value in the output kernel matrix
+            for (unsigned internal_row = 0; internal_row < INTERNAL_BLOCK_SIZE; ++internal_row) {
+                for (unsigned internal_col = 0; internal_col < INTERNAL_BLOCK_SIZE; ++internal_col) {
+                    const std::size_t global_row = row_idx + static_cast<std::size_t>(internal_row);
+                    const std::size_t global_col = col_idx + static_cast<std::size_t>(internal_col);
+
+                    // be sure to not perform out of bounds accesses for the kernel matrix (only using the upper triangular matrix)
+                    if (global_row < dept && global_col < dept && global_row >= global_col) {
+                        real_type temp_ij = temp[internal_row][internal_col];
+                        temp_ij = detail::apply_kernel_function<kernel>(temp_ij, kernel_function_parameter...) + QA_cost - q[global_row] - q[global_col];
+                        // apply the cost on the diagonal
+                        if (global_row == global_col) {
+                            temp_ij += cost;
+                            // calculate the values of alpha * A * B
+                            for (std::size_t class_idx = 0; class_idx < num_classes; ++class_idx) {
+                                atomic_ref<real_type>{ C(class_idx, global_row) } += alpha * temp_ij * B(class_idx, global_row);
+                            }
+                        } else {
+                            // calculate the values of alpha * A * B
+                            for (std::size_t class_idx = 0; class_idx < num_classes; ++class_idx) {
+                                atomic_ref<real_type>{ C(class_idx, global_row) } += alpha * temp_ij * B(class_idx, global_col);
+                                // symmetry
+                                atomic_ref<real_type>{ C(class_idx, global_col) } += alpha * temp_ij * B(class_idx, global_row);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    });
 }
 
 }  // namespace plssvm::stdpar::detail
