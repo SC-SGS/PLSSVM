@@ -204,7 +204,12 @@ struct parameter {
         }
         if constexpr (parser.has(plssvm::gamma)) {
             // get the value of the provided named parameter
-            gamma = detail::get_value_from_named_parameter<decltype(gamma)>(parser, plssvm::gamma);
+            if constexpr (std::is_samve_v<detail::remove_cvref_t<decltype(parser(gamma))>, gamma_coefficient_type>) {
+                gamma = detail::get_value_from_named_parameter<gamma_coefficient_type>(parser, plssvm::gamma);
+            } else {
+                gamma = detail::get_value_from_named_parameter<real_type>(parser, plssvm::gamma);
+            }
+            
             // runtime check: the value may only be used with a specific kernel type
             if (kernel_type == kernel_function_type::linear) {
                 print_warning("gamma", kernel_type);
