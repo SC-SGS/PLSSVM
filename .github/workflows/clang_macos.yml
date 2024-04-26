@@ -21,11 +21,7 @@ jobs:
       - name: "Clone the PLSSVM repository into PLSSVM/"
         uses: actions/checkout@v4.1.1
         with:
-          repository: SC-SGS/PLSSVM
           path: PLSSVM
-      - name: "Install Python dependencies"
-        run: |
-          /usr/local/Frameworks/Python.framework/Versions/3.12/bin/python3.12 -m pip install argparse scikit-learn humanize --break-system-packages
       - name: "Configure PLSSVM using CMake"
         run: |
           mkdir PLSSVM/build
