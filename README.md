@@ -86,7 +86,7 @@ General dependencies:
 
 - a C++17 capable compiler (e.g. [`gcc`](https://gcc.gnu.org/) or [`clang`](https://clang.llvm.org/))
 - [CMake](https://cmake.org/) 3.23 or newer
-- [cxxopts ≥ v3.2.0](https://github.com/jarro2783/cxxopts), [fast_float ≥ v3.10.0](https://github.com/fastfloat/fast_float), [{fmt} ≥ v10.2.1](https://github.com/fmtlib/fmt), and [igor](https://github.com/bluescarni/igor) (all four are automatically build during the CMake configuration if they couldn't be found using the respective `find_package` call)
+- [cxxopts ≥ v3.2.0](https://github.com/jarro2783/cxxopts), [fast_float ≥ v6.1.1](https://github.com/fastfloat/fast_float), [{fmt} ≥ v10.2.1](https://github.com/fmtlib/fmt), and [igor](https://github.com/bluescarni/igor) (all four are automatically build during the CMake configuration if they couldn't be found using the respective `find_package` call)
 - [GoogleTest ≥ v1.14.0](https://github.com/google/googletest) if testing is enabled (automatically build during the CMake configuration if `find_package(GTest)` wasn't successful)
 - [doxygen](https://www.doxygen.nl/index.html) if documentation generation is enabled
 - [Pybind11 ≥ v2.12.0](https://github.com/pybind/pybind11) if Python bindings are enabled
