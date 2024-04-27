@@ -13,20 +13,13 @@
 #define PLSSVM_BACKENDS_STDPAR_KERNEL_PREDICT_KERNEL_HPP_
 #pragma once
 
+#include "plssvm/backends/stdpar/detail/utility.hpp"           // plssvm::stdpar::detail::atomic_ref
 #include "plssvm/backends/stdpar/kernel/kernel_functions.hpp"  // plssvm::stdpar::detail::{feature_reduce, apply_kernel_function}
 #include "plssvm/constants.hpp"                                // plssvm::{real_type, INTERNAL_BLOCK_SIZE, FEATURE_BLOCK_SIZE, PADDING_SIZE}
 #include "plssvm/detail/assert.hpp"                            // PLSSVM_ASSERT
 #include "plssvm/kernel_function_types.hpp"                    // plssvm::kernel_function_type
 #include "plssvm/matrix.hpp"                                   // plssvm::aos_matrix, plssvm::soa_matrix
 #include "plssvm/shape.hpp"                                    // plssvm::shape
-
-#if defined(PLSSVM_STDPAR_BACKEND_HAS_ACPP)
-    #include "plssvm/backends/SYCL/detail/atomics.hpp"  // plssvm::sycl::detail::atomic_op
-template <typename T>
-using atomic_ref = plssvm::sycl::detail::atomic_op<T>;
-#else
-// TODO: other stdpar implementations
-#endif
 
 #include <algorithm>  // std::for_each
 #include <array>      // std::array

@@ -13,12 +13,14 @@
 #define PLSSVM_BACKENDS_STDPAR_KERNEL_CG_IMPLICIT_KERNEL_MATRIX_ASSEMBLY_BLAS_HPP_
 #pragma once
 
-#include "plssvm/constants.hpp"              // plssvm::real_type
-#include "plssvm/detail/assert.hpp"          // PLSSVM_ASSERT
-#include "plssvm/detail/operators.hpp"       // overloaded arithmetic operations for a plssvm::matrix
-#include "plssvm/kernel_function_types.hpp"  // plssvm::kernel_function_type
-#include "plssvm/kernel_functions.hpp"       // plssvm::kernel_function
-#include "plssvm/matrix.hpp"                 // aos_matrix
+#include "plssvm/backends/stdpar/detail/utility.hpp"           // plssvm::stdpar::detail::atomic_ref
+#include "plssvm/backends/stdpar/kernel/kernel_functions.hpp"  // plssvm::stdpar::detail::{feature_reduce, apply_kernel_function}
+#include "plssvm/constants.hpp"                                // plssvm::real_type
+#include "plssvm/detail/assert.hpp"                            // PLSSVM_ASSERT
+#include "plssvm/detail/operators.hpp"                         // overloaded arithmetic operations for a plssvm::matrix
+#include "plssvm/kernel_function_types.hpp"                    // plssvm::kernel_function_type
+#include "plssvm/kernel_functions.hpp"                         // plssvm::kernel_function
+#include "plssvm/matrix.hpp"                                   // aos_matrix
 
 #include <algorithm>  // std::for_each
 #include <array>      // std::array
@@ -27,15 +29,6 @@
 #include <execution>  // std::execution::par_unseq
 #include <utility>    // std::pair, std::make_pair
 #include <vector>     // std::vector
-
-#if defined(PLSSVM_STDPAR_BACKEND_HAS_ACPP)
-    #include "plssvm/backends/SYCL/detail/atomics.hpp"  // plssvm::sycl::detail::atomic_op
-template <typename T>
-using atomic_ref = plssvm::sycl::detail::atomic_op<T>;
-#else
-    // TODO: other stdpar implementations
-    #include <atomic>  // std::atomic_ref
-#endif
 
 namespace plssvm::stdpar::detail {
 

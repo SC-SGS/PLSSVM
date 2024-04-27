@@ -13,9 +13,23 @@
 #define PLSSVM_BACKENDS_STDPAR_DETAIL_UTILITY_HPP_
 #pragma once
 
+#if defined(PLSSVM_STDPAR_BACKEND_HAS_ACPP)
+    #include "plssvm/backends/SYCL/detail/atomics.hpp"  // plssvm::sycl::detail::atomic_op
+#else
+    // TODO: other stdpar implementations
+    #include <atomic>  // std::atomic_ref
+#endif
+
 #include <string>  // std::string
 
 namespace plssvm::stdpar::detail {
+
+#if defined(PLSSVM_STDPAR_BACKEND_HAS_ACPP)
+template <typename T>
+using atomic_ref = plssvm::sycl::detail::atomic_op<T>;
+#else
+using std::atomic_ref;
+#endif
 
 /**
  * @brief Return the stdpar implementation used.
