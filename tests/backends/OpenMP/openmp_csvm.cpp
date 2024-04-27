@@ -521,7 +521,10 @@ TYPED_TEST(OpenMPCSVMKernelFunctionDeathTest, blas_level_3_kernel_implicit) {
 TYPED_TEST(OpenMPCSVMKernelFunctionDeathTest, predict_values) {
     constexpr plssvm::kernel_function_type kernel = util::test_parameter_value_at_v<0, TypeParam>;
 
-    const plssvm::parameter params{ plssvm::kernel_type = kernel };
+    plssvm::parameter params{ plssvm::kernel_type = kernel };
+    if constexpr (kernel != plssvm::kernel_function_type::linear) {
+        params.gamma = plssvm::real_type{ 0.001 };
+    }
     const plssvm::data_set data{ PLSSVM_TEST_FILE };
 
     const auto weights = util::generate_specific_matrix<plssvm::aos_matrix<plssvm::real_type>>(plssvm::shape{ 3, data.data().num_rows() }, plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE });
