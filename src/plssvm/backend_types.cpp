@@ -26,12 +26,13 @@
 
 namespace plssvm {
 
-// TODO: add stdpar!
-
 std::vector<backend_type> list_available_backends() {
     std::vector<backend_type> available_backends = { backend_type::automatic };
 #if defined(PLSSVM_HAS_OPENMP_BACKEND)
     available_backends.push_back(backend_type::openmp);
+#endif
+#if defined(PLSSVM_HAS_STDPAR_BACKEND)
+    available_backends.push_back(backend_type::stdpar);
 #endif
 #if defined(PLSSVM_HAS_CUDA_BACKEND)
     available_backends.push_back(backend_type::cuda);
