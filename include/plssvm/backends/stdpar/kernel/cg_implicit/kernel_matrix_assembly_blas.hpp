@@ -66,6 +66,7 @@ inline void device_kernel_assembly_symm(const real_type alpha, const std::vector
 
     // cast all values to 64-bit unsigned long long to prevent potential 32-bit overflows
     const auto INTERNAL_BLOCK_SIZE_uz = static_cast<std::size_t>(INTERNAL_BLOCK_SIZE);
+    const auto PADDING_SIZE_uz = static_cast<std::size_t>(PADDING_SIZE);
 
     // calculate indices over which we parallelize
     std::vector<std::pair<std::size_t, std::size_t>> range(blocked_dept * blocked_dept);
@@ -74,7 +75,7 @@ inline void device_kernel_assembly_symm(const real_type alpha, const std::vector
         range[i] = std::make_pair(i / blocked_dept, i % blocked_dept);
     }
 
-    std::for_each(std::execution::par_unseq, range.cbegin(), range.cend(), [&](const std::pair<std::size_t, std::size_t> idx) {
+    std::for_each(std::execution::par_unseq, range.cbegin(), range.cend(), [=, q_ptr = q.data(), data_ptr = data.data(), B_ptr = B.data(), C_ptr = C.data()](const std::pair<std::size_t, std::size_t> idx) {
         // calculate the indices used in the current thread
         const auto [row, col] = idx;
         const std::size_t row_idx = row * INTERNAL_BLOCK_SIZE_uz;
@@ -92,7 +93,7 @@ inline void device_kernel_assembly_symm(const real_type alpha, const std::vector
                         const std::size_t global_row = row_idx + static_cast<std::size_t>(internal_row);
                         const std::size_t global_col = col_idx + static_cast<std::size_t>(internal_col);
 
-                        temp[internal_row][internal_col] += detail::feature_reduce<kernel>(data(global_row, dim), data(global_col, dim));
+                        temp[internal_row][internal_col] += detail::feature_reduce<kernel>(data_ptr[dim * (dept + 1 + PADDING_SIZE_uz) + global_row], data_ptr[dim * (dept + 1 + PADDING_SIZE_uz) + global_col]);
                     }
                 }
             }
@@ -106,20 +107,20 @@ inline void device_kernel_assembly_symm(const real_type alpha, const std::vector
                     // be sure to not perform out of bounds accesses for the kernel matrix (only using the upper triangular matrix)
                     if (global_row < dept && global_col < dept && global_row >= global_col) {
                         real_type temp_ij = temp[internal_row][internal_col];
-                        temp_ij = detail::apply_kernel_function<kernel>(temp_ij, kernel_function_parameter...) + QA_cost - q[global_row] - q[global_col];
+                        temp_ij = detail::apply_kernel_function<kernel>(temp_ij, kernel_function_parameter...) + QA_cost - q_ptr[global_row] - q_ptr[global_col];
                         // apply the cost on the diagonal
                         if (global_row == global_col) {
                             temp_ij += cost;
                             // calculate the values of alpha * A * B
                             for (std::size_t class_idx = 0; class_idx < num_classes; ++class_idx) {
-                                atomic_ref<real_type>{ C(class_idx, global_row) } += alpha * temp_ij * B(class_idx, global_row);
+                                atomic_ref<real_type>{ C_ptr[global_row * (num_classes + PADDING_SIZE_uz) + class_idx] } += alpha * temp_ij * B_ptr[global_row * (num_classes + PADDING_SIZE_uz) + class_idx];
                             }
                         } else {
                             // calculate the values of alpha * A * B
                             for (std::size_t class_idx = 0; class_idx < num_classes; ++class_idx) {
-                                atomic_ref<real_type>{ C(class_idx, global_row) } += alpha * temp_ij * B(class_idx, global_col);
+                                atomic_ref<real_type>{ C_ptr[global_row * (num_classes + PADDING_SIZE_uz) + class_idx] } += alpha * temp_ij * B_ptr[global_col * (num_classes + PADDING_SIZE_uz) + class_idx];
                                 // symmetry
-                                atomic_ref<real_type>{ C(class_idx, global_col) } += alpha * temp_ij * B(class_idx, global_row);
+                                atomic_ref<real_type>{ C_ptr[global_col * (num_classes + PADDING_SIZE_uz) + class_idx] } += alpha * temp_ij * B_ptr[global_row * (num_classes + PADDING_SIZE_uz) + class_idx];
                             }
                         }
                     }
