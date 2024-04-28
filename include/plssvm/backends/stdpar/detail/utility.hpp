@@ -16,8 +16,7 @@
 #if defined(PLSSVM_STDPAR_BACKEND_HAS_ACPP)
     #include "plssvm/backends/SYCL/detail/atomics.hpp"  // plssvm::sycl::detail::atomic_op
 #else
-    // TODO: other stdpar implementations
-    #include <atomic>  // std::atomic_ref
+    #include "boost/atomic/atomic_ref.hpp"  // boost::atomic_ref
 #endif
 
 #include <string>  // std::string
@@ -28,7 +27,7 @@ namespace plssvm::stdpar::detail {
 template <typename T>
 using atomic_ref = plssvm::sycl::detail::atomic_op<T>;
 #else
-using std::atomic_ref;
+using boost::atomic_ref;
 #endif
 
 /**

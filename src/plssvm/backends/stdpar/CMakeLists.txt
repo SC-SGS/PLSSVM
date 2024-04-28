@@ -72,6 +72,19 @@ set(PLSSVM_STDPAR_SOURCES
 # set target properties
 set_local_and_parent(PLSSVM_STDPAR_BACKEND_LIBRARY_NAME plssvm-stdpar)
 add_library(${PLSSVM_STDPAR_BACKEND_LIBRARY_NAME} SHARED ${PLSSVM_STDPAR_SOURCES})
+
+# TODO: only install if necessary!!!
+# TODO: something that isn't Boost? -> https://github.com/boostorg/atomic.git doesn't support floating point values :/
+
+## try finding Boost atomic
+if (POLICY CMP0144)
+    cmake_policy(SET CMP0144 OLD) # suppress warning
+endif ()
+find_package(Boost 1.73.0 REQUIRED COMPONENTS atomic)
+message(STATUS "Found Boost atomic version ${Boost_VERSION}.")
+target_link_libraries(${PLSSVM_STDPAR_BACKEND_LIBRARY_NAME} PUBLIC Boost::atomic)
+target_compile_definitions(${PLSSVM_BASE_LIBRARY_NAME} PRIVATE PLSSVM_boost_VERSION="${Boost_VERSION}")
+
 # special command line options for MSVC:
 target_compile_options(${PLSSVM_STDPAR_BACKEND_LIBRARY_NAME} PRIVATE $<$<CXX_COMPILER_ID:MSVC>:"/Zc:__cplusplus">)
 target_compile_options(${PLSSVM_STDPAR_BACKEND_LIBRARY_NAME} PRIVATE $<$<CXX_COMPILER_ID:NVHPC>:"-stdpar">)
@@ -105,6 +118,6 @@ list(APPEND PLSSVM_TARGETS_TO_INSTALL "${PLSSVM_STDPAR_BACKEND_LIBRARY_NAME}")
 set(PLSSVM_TARGETS_TO_INSTALL ${PLSSVM_TARGETS_TO_INSTALL} PARENT_SCOPE)
 
 # generate summary string
-set(PLSSVM_STDPAR_BACKEND_SUMMARY_STRING " - stdpar: cpu " PARENT_SCOPE)
+set(PLSSVM_STDPAR_BACKEND_SUMMARY_STRING " - stdpar: ??? " PARENT_SCOPE) # TODO: acutal values
 
 list(POP_BACK CMAKE_MESSAGE_INDENT)
