@@ -40,8 +40,8 @@ namespace plssvm::stdpar::detail {
  */
 inline void device_kernel_symm(const std::size_t num_rows, const std::size_t num_rhs, const real_type alpha, const std::vector<real_type> &A, const soa_matrix<real_type> &B, const real_type beta, soa_matrix<real_type> &C) {
     PLSSVM_ASSERT(A.size() == (num_rows + PADDING_SIZE) * (num_rows + PADDING_SIZE + 1) / 2, "A matrix sizes mismatch!: {} != {}", A.size(), (num_rows + PADDING_SIZE) * (num_rows + PADDING_SIZE + 1) / 2);
-    PLSSVM_ASSERT(B.shape() == (plssvm::shape{ num_rows, num_rhs }), "B matrix sizes mismatch!: {} != [{}, {}]", B.shape(), num_rows, num_rhs);
-    PLSSVM_ASSERT(C.shape() == (plssvm::shape{ num_rows, num_rhs }), "C matrix sizes mismatch!: {} != [{}, {}]", C.shape(), num_rows, num_rhs);
+    PLSSVM_ASSERT(B.shape() == (plssvm::shape{ num_rhs, num_rows }), "B matrix sizes mismatch!: {} != [{}, {}]", B.shape(), num_rhs, num_rows);
+    PLSSVM_ASSERT(C.shape() == (plssvm::shape{ num_rhs, num_rows }), "C matrix sizes mismatch!: {} != [{}, {}]", C.shape(), num_rhs, num_rows);
 
     // calculate constants
     const auto blocked_num_rhs = static_cast<std::size_t>(std::ceil(static_cast<real_type>(num_rhs) / INTERNAL_BLOCK_SIZE));
