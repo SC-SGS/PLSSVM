@@ -149,7 +149,9 @@ inline void device_kernel_predict_linear(aos_matrix<real_type> &prediction, cons
                 const std::size_t global_pp_idx = pp_idx + static_cast<std::size_t>(internal_pp);
                 const std::size_t global_class_idx = class_idx + static_cast<std::size_t>(internal_class);
 
-                prediction_ptr[global_pp_idx * (num_classes + PADDING_SIZE_uz) + global_class_idx] = temp[internal_pp][internal_class] - rho_ptr[global_class_idx];
+                if (global_pp_idx < num_predict_points && global_class_idx < num_classes) {
+                    prediction_ptr[global_pp_idx * (num_classes + PADDING_SIZE_uz) + global_class_idx] = temp[internal_pp][internal_class] - rho_ptr[global_class_idx];
+                }
             }
         }
     });
