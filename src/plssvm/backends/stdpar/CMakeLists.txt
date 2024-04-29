@@ -6,65 +6,98 @@
 
 list(APPEND CMAKE_MESSAGE_INDENT "stdpar:  ")
 
-include(CheckCXXCompilerFlag)
+# check if stdpar can be enabled
+message(STATUS "Checking for stdpar backend")
 
-# check if OpenMP can be enabled
-message(CHECK_START "Checking for stdpar backend")
+message(CHECK_START "compiler check")
 
-message(CHECK_START "stdpar comiler check: ")
-
+# try finding Intel TBB -> necessary for GNU's and AdaptiveCpp's stdpar implementation on the CPU
 find_package(TBB)
 
-message(WARNING ${CMAKE_CXX_COMPILER_ID})
+include(CheckCXXCompilerFlag)
 if (CMAKE_CXX_COMPILER_ID STREQUAL "NVHPC")
-    message(CHECK_PASS "found NVHPC compiler")
-    set(PLSSVM_STDPAR_BACKEND "NVHPC")
-elseif (CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND TBB_FOUND)
-    message(CHECK_PASS "found gcc with TBB")
-    set(PLSSVM_STDPAR_BACKEND "GCC_TBB")
-elseif (CMAKE_CXX_COMPILER_ID STREQUAL "Clang" AND TBB_FOUND)
-    check_cxx_compiler_flag("--acpp-stdpar" PLSSVM_HAS_ACPP_STDPAR_FLAG)
-    if (PLSSVM_HAS_ACPP_STDPAR_FLAG)
-        message(CHECK_PASS "found ACPP")
-        set(PLSSVM_STDPAR_BACKEND "ACPP")
+    # check for NVIDIA's nvhpc compiler
+    # nvhpc needs either a CPU or an NVIDIA GPU as target
+    if (NOT DEFINED PLSSVM_CPU_TARGET_ARCHS AND NOT DEFINED PLSSVM_NVIDIA_TARGET_ARCHS)
+        if (PLSSVM_ENABLE_STDPAR_BACKEND MATCHES "ON")
+            message(SEND_ERROR "Found requested stdpar backend using NVHPC, but no \"cpu\" or \"nvidia\" targets were specified!")
+        else ()
+            message(STATUS "Found stdpar backend using NVHPC, but no \"cpu\" or \"nvidia\" targets were specified!")
+        endif ()
+        message(CHECK_FAIL "skipped")
+        return()
     endif ()
+    # for nvhpc not BOTH targets may be set
+    if (DEFINED PLSSVM_CPU_TARGET_ARCHS AND DEFINED PLSSVM_NVIDIA_TARGET_ARCHS)
+        if (PLSSVM_ENABLE_STDPAR_BACKEND MATCHES "ON")
+            message(SEND_ERROR "Found requested stdpar backend using NVHPC, but both \"cpu\" and \"nvidia\" targets were specified!")
+        else ()
+            message(STATUS "Found stdpar backend using NVHPC, but both \"cpu\" and \"nvidia\" targets were specified!")
+        endif ()
+        message(CHECK_FAIL "skipped")
+        return()
+    endif ()
+    # nvhpc found
+    message(CHECK_PASS "found NVHPC")
+    set(PLSSVM_STDPAR_BACKEND "NVHPC")
 elseif (CMAKE_CXX_COMPILER_ID STREQUAL "IntelLLVM")
-    check_cxx_compiler_flag("-fsycl-pstl-offload=gpu" PLSSVM_HAS_INTELLLVM_STDPAR_FLAG)
-    message(WARNING ${PLSSVM_HAS_INTELLLVM_STDPAR_FLAG})
-    # if (PLSSVM_HAS_INTELLLVM_STDPAR_FLAG) # TODO
-        message(CHECK_PASS "found IntelLLVM")
-        set(PLSSVM_STDPAR_BACKEND "IntelLLVM")
-    # endif ()
-endif ()
-
-if (NOT DEFINED PLSSVM_STDPAR_BACKEND)
+    # check for Intel's icpx compiler
+    check_cxx_compiler_flag("-fsycl-pstl-offload" PLSSVM_HAS_INTEL_LLVM_STDPAR_FLAG)
+    if (NOT PLSSVM_HAS_INTEL_LLVM_STDPAR_FLAG) # TODO: check whether this works!
+        # the target offload flag couldn't be found!
+        if (PLSSVM_ENABLE_STDPAR_BACKEND MATCHES "ON")
+            message(SEND_ERROR "Found requested stdpar backend using IntelLLVM, but the offloading compiler flag isn't supported!")
+        else ()
+            message(STATUS "Found stdpar backend using IntelLLVM, but the offloading compiler flag isn't supported!")
+        endif ()
+        message(CHECK_FAIL "skipped")
+        return()
+    endif ()
+    # IntelLLVM found
+    message(CHECK_PASS "found IntelLLVM")
+    set(PLSSVM_STDPAR_BACKEND "IntelLLVM")
+elseif (CMAKE_CXX_COMPILER_ID STREQUAL "Clang" AND TBB_FOUND)
+    # AdaptiveCpp also needs TBB
+    # check for the AdaptiveCpp compiler
+    check_cxx_compiler_flag("--acpp-stdpar" PLSSVM_HAS_ACPP_STDPAR_FLAG)
+    if (NOT PLSSVM_HAS_ACPP_STDPAR_FLAG)
+        # the stdpar flag couldn't be found!
+        if (PLSSVM_ENABLE_STDPAR_BACKEND MATCHES "ON")
+            message(SEND_ERROR "Found a Clang, but AdaptiveCpp's stdpar compiler flag isn't supported (mostly likely because the used Clang isn't AdaptiveCpp)!")
+        else ()
+            message(STATUS "Found a Clang, but AdaptiveCpp's stdpar compiler flag isn't supported (mostly likely because the used Clang isn't AdaptiveCpp)!")
+        endif ()
+        message(CHECK_FAIL "skipped")
+        return()
+    endif ()
+    # AdaptiveCpp found
+    message(CHECK_PASS "found AdaptiveCpp")
+    set(PLSSVM_STDPAR_BACKEND "ACPP")
+elseif (CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND TBB_FOUND)
+    # GNU GCC also needs TBB
+    # GNU GCC + TBB needs either a CPU target
+    if (NOT DEFINED PLSSVM_CPU_TARGET_ARCHS)
+        if (PLSSVM_ENABLE_STDPAR_BACKEND MATCHES "ON")
+            message(SEND_ERROR "Found requested stdpar backend using GNU GCC + TBB, but no \"cpu\" targets were specified!")
+        else ()
+            message(STATUS "Found stdpar backend using GNU GCC + TBB, but no \"cpu\" targets were specified!")
+        endif ()
+        message(CHECK_FAIL "skipped")
+        return()
+    endif ()
+    # GNU GCC + TBB found
+    message(CHECK_PASS "found GNU GCC with TBB")
+    set(PLSSVM_STDPAR_BACKEND "GNU_TBB")
+else ()
+    # couldn't find any supported stdpar implementation!
     message(CHECK_FAIL "not found")
     if (PLSSVM_ENABLE_STDPAR_BACKEND MATCHES "ON")
         message(SEND_ERROR "Cannot find requested backend: stdpar!")
     endif ()
     return()
 endif ()
-
-#find_package(OpenMP)
-#
-#if (NOT OPENMP_FOUND)
-#    message(CHECK_FAIL "not found")
-#    if (PLSSVM_ENABLE_OPENMP_BACKEND MATCHES "ON")
-#        message(SEND_ERROR "Cannot find requested backend: OpenMP!")
-#    endif ()
-#    return()
-#else ()
-#    if (NOT DEFINED PLSSVM_CPU_TARGET_ARCHS)
-#        if (PLSSVM_ENABLE_OPENMP_BACKEND MATCHES "ON")
-#            message(SEND_ERROR "Found requested OpenMP backend, but no \"cpu\" targets were specified!")
-#        else ()
-#            message(STATUS "Found OpenMP backend, but no \"cpu\" targets were specified!")
-#        endif ()
-#        message(CHECK_FAIL "skipped")
-#        return()
-#    endif ()
-#endif ()
-#message(CHECK_PASS "found ")
+# set variable also in the parent scope
+set_local_and_parent(PLSSVM_STDPAR_BACKEND ${PLSSVM_STDPAR_BACKEND})
 
 # explicitly set sources
 set(PLSSVM_STDPAR_SOURCES
@@ -74,110 +107,103 @@ set(PLSSVM_STDPAR_SOURCES
     ${CMAKE_CURRENT_LIST_DIR}/implementation_types.cpp
 )
 
+# add additional source files depending on the used stdpar implementation
 if (PLSSVM_STDPAR_BACKEND STREQUAL "ACPP")
     list(APPEND PLSSVM_STDPAR_SOURCES ${CMAKE_CURRENT_LIST_DIR}/../SYCL/AdaptiveCpp/detail/utility.cpp)
+elseif (PLSSVM_STDPAR_BACKEND STREQUAL "IntelLLVM")
+    list(APPEND PLSSVM_STDPAR_SOURCES ${CMAKE_CURRENT_LIST_DIR}/../SYCL/DPCPP/detail/utility.cpp)
 endif ()
-
-set_local_and_parent(PLSSVM_STDPAR_BACKEND ${PLSSVM_STDPAR_BACKEND})
 
 # set target properties
 set_local_and_parent(PLSSVM_STDPAR_BACKEND_LIBRARY_NAME plssvm-stdpar)
 add_library(${PLSSVM_STDPAR_BACKEND_LIBRARY_NAME} SHARED ${PLSSVM_STDPAR_SOURCES})
 
-# TODO: fast_math
-
-# TODO: only install if necessary!!!
-# TODO: something that isn't Boost? -> https://github.com/boostorg/atomic.git doesn't support floating point values :/
-
-## try finding Boost atomic
-if (POLICY CMP0144)
-    cmake_policy(SET CMP0144 OLD) # suppress warning
-endif ()
-find_package(Boost 1.73.0 REQUIRED COMPONENTS atomic)
-message(STATUS "Found Boost atomic version ${Boost_VERSION}.")
-target_link_libraries(${PLSSVM_STDPAR_BACKEND_LIBRARY_NAME} PUBLIC Boost::atomic)
-target_compile_definitions(${PLSSVM_BASE_LIBRARY_NAME} PRIVATE PLSSVM_boost_VERSION="${Boost_VERSION}")
-
-
 # link base library against stdpar library
 target_link_libraries(${PLSSVM_STDPAR_BACKEND_LIBRARY_NAME} PUBLIC ${PLSSVM_BASE_LIBRARY_NAME})
 
-if (PLSSVM_STDPAR_BACKEND STREQUAL "GCC_TBB")
-    if (NOT DEFINED PLSSVM_CPU_TARGET_ARCHS)
-        message(FATAL_ERROR "Please specify the CPU as target platform in order to use GNU GCC as stdpar implementation!")
+# TODO: fast_math
+
+# only NVHPC and GNU GCC + TBB need the boost::atomic_ref
+if (PLSSVM_STDPAR_BACKEND STREQUAL "NVHPC" OR PLSSVM_STDPAR_BACKEND STREQUAL "GNU_TBB")
+    ## try finding Boost atomic
+    if (POLICY CMP0144)
+        cmake_policy(SET CMP0144 OLD) # suppress cmake warning
     endif ()
-
-    target_link_libraries(${PLSSVM_STDPAR_BACKEND_LIBRARY_NAME} PUBLIC TBB::tbb)
-    target_compile_definitions(${PLSSVM_STDPAR_BACKEND_LIBRARY_NAME} PRIVATE PLSSVM_STDPAR_BACKEND_HAS_GNU_TBB)
-endif ()
-
-if (PLSSVM_STDPAR_BACKEND STREQUAL "ACPP")
-    set_local_and_parent(PLSSVM_STDPAR_BACKEND_COMPILER_FLAG --acpp-stdpar)
-
-    target_link_libraries(${PLSSVM_STDPAR_BACKEND_LIBRARY_NAME} PUBLIC TBB::tbb)
-    # TODO: better
-    target_compile_options(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC ${PLSSVM_STDPAR_BACKEND_COMPILER_FLAG})
-    target_compile_options(${PLSSVM_STDPAR_BACKEND_LIBRARY_NAME} PUBLIC ${PLSSVM_STDPAR_BACKEND_COMPILER_FLAG})
-    target_compile_options(${PLSSVM_ALL_LIBRARY_NAME} INTERFACE ${PLSSVM_STDPAR_BACKEND_COMPILER_FLAG})
-    target_compile_definitions(${PLSSVM_STDPAR_BACKEND_LIBRARY_NAME} PRIVATE PLSSVM_STDPAR_BACKEND_IMPLEMENTATION="AdaptiveCpp")
-    target_compile_definitions(${PLSSVM_STDPAR_BACKEND_LIBRARY_NAME} PRIVATE PLSSVM_STDPAR_BACKEND_HAS_ACPP)
+    find_package(Boost 1.73.0 REQUIRED COMPONENTS atomic)
+    message(STATUS "Found Boost atomic version ${Boost_VERSION}.")
+    target_link_libraries(${PLSSVM_STDPAR_BACKEND_LIBRARY_NAME} PUBLIC Boost::atomic)
+    target_compile_definitions(${PLSSVM_BASE_LIBRARY_NAME} PRIVATE PLSSVM_boost_VERSION="${Boost_VERSION}")
 endif ()
 
 if (PLSSVM_STDPAR_BACKEND STREQUAL "NVHPC")
-    enable_language(CUDA)
-
-    find_package(CUDAToolkit)
-
-    # set necessary flags
-    set(CMAKE_CUDA_STANDARD 17)
-    set(CMAKE_CUDA_STANDARD_REQUIRED ON)
-
-    if (DEFINED PLSSVM_CPU_TARGET_ARCHS AND DEFINED PLSSVM_NVIDIA_TARGET_ARCHS)
-        message(FATAL_ERROR "Please specify either CPU or NVIDIA GPU as target platforms but not both!")
-    elseif (DEFINED PLSSVM_CPU_TARGET_ARCHS)
+    # set global NVHPC compiler flags
+    if (DEFINED PLSSVM_CPU_TARGET_ARCHS)
         message(STATUS "CPU target platform provided, setting: \"-stdpar=multicore\"")
         set_local_and_parent(PLSSVM_STDPAR_BACKEND_COMPILER_FLAG -stdpar=multicore --restrict)
     elseif (DEFINED PLSSVM_NVIDIA_TARGET_ARCHS)
         message(STATUS "NVIDIA GPU target platform provided, setting: \"-stdpar=gpu\"")
         set_local_and_parent(PLSSVM_STDPAR_BACKEND_COMPILER_FLAG -stdpar=gpu --restrict)
-    else ()
-        message(FATAL_ERROR "Please specify one of CPU or NVIDIA GPU as target platforms!")
     endif ()
-
-    # TODO: better
+    
+    # NVHPC must be linked against CUDA
+    enable_language(CUDA)
+    find_package(CUDAToolkit)
+    
+    # set compile options
     target_link_options(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC ${PLSSVM_STDPAR_BACKEND_COMPILER_FLAG})
     target_link_options(${PLSSVM_STDPAR_BACKEND_LIBRARY_NAME} PUBLIC ${PLSSVM_STDPAR_BACKEND_COMPILER_FLAG})
     target_link_options(${PLSSVM_ALL_LIBRARY_NAME} INTERFACE ${PLSSVM_STDPAR_BACKEND_COMPILER_FLAG})
     target_compile_options(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC ${PLSSVM_STDPAR_BACKEND_COMPILER_FLAG})
     target_compile_options(${PLSSVM_STDPAR_BACKEND_LIBRARY_NAME} PUBLIC ${PLSSVM_STDPAR_BACKEND_COMPILER_FLAG})
     target_compile_options(${PLSSVM_ALL_LIBRARY_NAME} INTERFACE ${PLSSVM_STDPAR_BACKEND_COMPILER_FLAG})
-    target_compile_definitions(${PLSSVM_STDPAR_BACKEND_LIBRARY_NAME} PRIVATE PLSSVM_STDPAR_BACKEND_IMPLEMENTATION="NVHPC")
+    
+    # set NHPC compile definition
     target_compile_definitions(${PLSSVM_STDPAR_BACKEND_LIBRARY_NAME} PRIVATE PLSSVM_STDPAR_BACKEND_HAS_NVHPC)
-endif ()
-
-
-if (PLSSVM_STDPAR_BACKEND STREQUAL "IntelLLVM")
-    # target_link_libraries(${PLSSVM_STDPAR_BACKEND_LIBRARY_NAME} PUBLIC TBB::tbb)
-    # TODO: better
-    set_local_and_parent(PLSSVM_STDPAR_BACKEND_INTELLLVM_COMPILER_FLAG -fsycl -fsycl-pstl-offload=gpu -qopenmp)
-    separate_arguments(PLSSVM_STDPAR_BACKEND_INTELLLVM_COMPILER_FLAG UNIX_COMMAND ${PLSSVM_STDPAR_BACKEND_INTELLLVM_COMPILER_FLAG})
-
-    target_link_options(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC ${PLSSVM_STDPAR_BACKEND_INTELLLVM_COMPILER_FLAG})
-    target_link_options(${PLSSVM_STDPAR_BACKEND_LIBRARY_NAME} PUBLIC ${PLSSVM_STDPAR_BACKEND_INTELLLVM_COMPILER_FLAG})
-    target_link_options(${PLSSVM_ALL_LIBRARY_NAME} INTERFACE ${PLSSVM_STDPAR_BACKEND_INTELLLVM_COMPILER_FLAG})
-    target_compile_options(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC ${PLSSVM_STDPAR_BACKEND_INTELLLVM_COMPILER_FLAG})
-    target_compile_options(${PLSSVM_STDPAR_BACKEND_LIBRARY_NAME} PUBLIC ${PLSSVM_STDPAR_BACKEND_INTELLLVM_COMPILER_FLAG})
-    target_compile_options(${PLSSVM_ALL_LIBRARY_NAME} INTERFACE ${PLSSVM_STDPAR_BACKEND_INTELLLVM_COMPILER_FLAG})
-    target_compile_definitions(${PLSSVM_STDPAR_BACKEND_LIBRARY_NAME} PRIVATE PLSSVM_STDPAR_BACKEND_IMPLEMENTATION="IntelLLVM")
-    target_compile_definitions(${PLSSVM_STDPAR_BACKEND_LIBRARY_NAME} PRIVATE PLSSVM_STDPAR_BACKEND_HAS_DPCPP)
-
+elseif (PLSSVM_STDPAR_BACKEND STREQUAL "IntelLLVM")
+    # set global IntelLLVM compiler flags
+    set_local_and_parent(PLSSVM_STDPAR_BACKEND_COMPILER_FLAG -fsycl -fsycl-pstl-offload=gpu -qopenmp)
+    separate_arguments(PLSSVM_STDPAR_BACKEND_COMPILER_FLAG UNIX_COMMAND ${PLSSVM_STDPAR_BACKEND_COMPILER_FLAG})
+    
+    # Intel LLVM must be linked against oneDPL
     find_package(oneDPL REQUIRED)
     target_link_libraries(${PLSSVM_STDPAR_BACKEND_LIBRARY_NAME} PUBLIC oneDPL)
     target_link_libraries(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC oneDPL)
+    
+    # set compile options
+    target_link_options(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC ${PLSSVM_STDPAR_BACKEND_COMPILER_FLAG})
+    target_link_options(${PLSSVM_STDPAR_BACKEND_LIBRARY_NAME} PUBLIC ${PLSSVM_STDPAR_BACKEND_COMPILER_FLAG})
+    target_link_options(${PLSSVM_ALL_LIBRARY_NAME} INTERFACE ${PLSSVM_STDPAR_BACKEND_COMPILER_FLAG})
+    target_compile_options(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC ${PLSSVM_STDPAR_BACKEND_COMPILER_FLAG})
+    target_compile_options(${PLSSVM_STDPAR_BACKEND_LIBRARY_NAME} PUBLIC ${PLSSVM_STDPAR_BACKEND_COMPILER_FLAG})
+    target_compile_options(${PLSSVM_ALL_LIBRARY_NAME} INTERFACE ${PLSSVM_STDPAR_BACKEND_COMPILER_FLAG})
+    
+    # set Intel LLVM compile definition
+    target_compile_definitions(${PLSSVM_STDPAR_BACKEND_LIBRARY_NAME} PRIVATE PLSSVM_STDPAR_BACKEND_HAS_INTEL_LLVM)
+elseif (PLSSVM_STDPAR_BACKEND STREQUAL "ACPP")
+    # set global AdaptiveCpp compiler flags
+    set_local_and_parent(PLSSVM_STDPAR_BACKEND_COMPILER_FLAG --acpp-stdpar)
+    
+    # AdaptiveCpp must be linked against TBB
+    target_link_libraries(${PLSSVM_STDPAR_BACKEND_LIBRARY_NAME} PUBLIC TBB::tbb)
+    
+    # set compile options
+    target_compile_options(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC ${PLSSVM_STDPAR_BACKEND_COMPILER_FLAG})
+    target_compile_options(${PLSSVM_STDPAR_BACKEND_LIBRARY_NAME} PUBLIC ${PLSSVM_STDPAR_BACKEND_COMPILER_FLAG})
+    target_compile_options(${PLSSVM_ALL_LIBRARY_NAME} INTERFACE ${PLSSVM_STDPAR_BACKEND_COMPILER_FLAG})
+    
+    # set AdaptiveCpp compile definition
+    target_compile_definitions(${PLSSVM_STDPAR_BACKEND_LIBRARY_NAME} PRIVATE PLSSVM_STDPAR_BACKEND_HAS_ACPP)
+elseif (PLSSVM_STDPAR_BACKEND STREQUAL "GNU_TBB")
+    # GNU GCC must be linked against TBB
+    target_link_libraries(${PLSSVM_STDPAR_BACKEND_LIBRARY_NAME} PUBLIC TBB::tbb)
+    
+    # set GNU GCC + TBB compile definition
+    target_compile_definitions(${PLSSVM_STDPAR_BACKEND_LIBRARY_NAME} PRIVATE PLSSVM_STDPAR_BACKEND_HAS_GNU_TBB)
 endif ()
 
 # set compile definition that the stdpar backend is available
 target_compile_definitions(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC PLSSVM_HAS_STDPAR_BACKEND)
+target_compile_definitions(${PLSSVM_STDPAR_BACKEND_LIBRARY_NAME} PUBLIC PLSSVM_HAS_STDPAR_BACKEND)
 
 # link against interface library
 target_link_libraries(${PLSSVM_ALL_LIBRARY_NAME} INTERFACE ${PLSSVM_STDPAR_BACKEND_LIBRARY_NAME})
@@ -187,6 +213,8 @@ list(APPEND PLSSVM_TARGETS_TO_INSTALL "${PLSSVM_STDPAR_BACKEND_LIBRARY_NAME}")
 set(PLSSVM_TARGETS_TO_INSTALL ${PLSSVM_TARGETS_TO_INSTALL} PARENT_SCOPE)
 
 # generate summary string
-set(PLSSVM_STDPAR_BACKEND_SUMMARY_STRING " - stdpar: ??? " PARENT_SCOPE) # TODO: acutal values
+include(${PROJECT_SOURCE_DIR}/cmake/assemble_summary_string.cmake)
+assemble_summary_string(PLSSVM_STDPAR_BACKEND_SUMMARY_STRING_ARCHS)
+set(PLSSVM_STDPAR_BACKEND_SUMMARY_STRING " - stdpar (${PLSSVM_STDPAR_BACKEND}):${PLSSVM_STDPAR_BACKEND_SUMMARY_STRING_ARCHS}" PARENT_SCOPE)
 
 list(POP_BACK CMAKE_MESSAGE_INDENT)
