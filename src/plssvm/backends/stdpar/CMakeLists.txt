@@ -84,6 +84,8 @@ set_local_and_parent(PLSSVM_STDPAR_BACKEND ${PLSSVM_STDPAR_BACKEND})
 set_local_and_parent(PLSSVM_STDPAR_BACKEND_LIBRARY_NAME plssvm-stdpar)
 add_library(${PLSSVM_STDPAR_BACKEND_LIBRARY_NAME} SHARED ${PLSSVM_STDPAR_SOURCES})
 
+# TODO: fast_math
+
 # TODO: only install if necessary!!!
 # TODO: something that isn't Boost? -> https://github.com/boostorg/atomic.git doesn't support floating point values :/
 
@@ -96,26 +98,27 @@ message(STATUS "Found Boost atomic version ${Boost_VERSION}.")
 target_link_libraries(${PLSSVM_STDPAR_BACKEND_LIBRARY_NAME} PUBLIC Boost::atomic)
 target_compile_definitions(${PLSSVM_BASE_LIBRARY_NAME} PRIVATE PLSSVM_boost_VERSION="${Boost_VERSION}")
 
-# special command line options for MSVC:
-target_compile_options(${PLSSVM_STDPAR_BACKEND_LIBRARY_NAME} PRIVATE $<$<CXX_COMPILER_ID:MSVC>:"/Zc:__cplusplus">)
-# target_compile_options(${PLSSVM_STDPAR_BACKEND_LIBRARY_NAME} PRIVATE $<$<CXX_COMPILER_ID:NVHPC>:"--stdpar -gpu=sm_86:wq
-# ,fastmath --restrict -Minfo=stdpare">)
 
 # link base library against stdpar library
 target_link_libraries(${PLSSVM_STDPAR_BACKEND_LIBRARY_NAME} PUBLIC ${PLSSVM_BASE_LIBRARY_NAME})
 
 if (PLSSVM_STDPAR_BACKEND STREQUAL "GCC_TBB")
+    if (NOT DEFINED PLSSVM_CPU_TARGET_ARCHS)
+        message(FATAL_ERROR "Please specify the CPU as target platform in order to use GNU GCC as stdpar implementation!")
+    endif ()
+
     target_link_libraries(${PLSSVM_STDPAR_BACKEND_LIBRARY_NAME} PUBLIC TBB::tbb)
+    target_compile_definitions(${PLSSVM_STDPAR_BACKEND_LIBRARY_NAME} PRIVATE PLSSVM_STDPAR_BACKEND_HAS_GNU_TBB)
 endif ()
 
 if (PLSSVM_STDPAR_BACKEND STREQUAL "ACPP")
-    set_local_and_parent(PLSSVM_STDPAR_BACKEND_ACPP_COMPILER_FLAG --acpp-stdpar)
+    set_local_and_parent(PLSSVM_STDPAR_BACKEND_COMPILER_FLAG --acpp-stdpar)
 
     target_link_libraries(${PLSSVM_STDPAR_BACKEND_LIBRARY_NAME} PUBLIC TBB::tbb)
     # TODO: better
-    target_compile_options(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC ${PLSSVM_STDPAR_BACKEND_ACPP_COMPILER_FLAG})
-    target_compile_options(${PLSSVM_STDPAR_BACKEND_LIBRARY_NAME} PUBLIC ${PLSSVM_STDPAR_BACKEND_ACPP_COMPILER_FLAG})
-    target_compile_options(${PLSSVM_ALL_LIBRARY_NAME} INTERFACE ${PLSSVM_STDPAR_BACKEND_ACPP_COMPILER_FLAG})
+    target_compile_options(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC ${PLSSVM_STDPAR_BACKEND_COMPILER_FLAG})
+    target_compile_options(${PLSSVM_STDPAR_BACKEND_LIBRARY_NAME} PUBLIC ${PLSSVM_STDPAR_BACKEND_COMPILER_FLAG})
+    target_compile_options(${PLSSVM_ALL_LIBRARY_NAME} INTERFACE ${PLSSVM_STDPAR_BACKEND_COMPILER_FLAG})
     target_compile_definitions(${PLSSVM_STDPAR_BACKEND_LIBRARY_NAME} PRIVATE PLSSVM_STDPAR_BACKEND_IMPLEMENTATION="AdaptiveCpp")
     target_compile_definitions(${PLSSVM_STDPAR_BACKEND_LIBRARY_NAME} PRIVATE PLSSVM_STDPAR_BACKEND_HAS_ACPP)
 endif ()
@@ -128,14 +131,26 @@ if (PLSSVM_STDPAR_BACKEND STREQUAL "NVHPC")
     # set necessary flags
     set(CMAKE_CUDA_STANDARD 17)
     set(CMAKE_CUDA_STANDARD_REQUIRED ON)
-    set_local_and_parent(PLSSVM_STDPAR_BACKEND_NVHPC_COMPILER_FLAG -stdpar -target=multicore,fastmath --restrict -Minfo=stdpare)
+
+    if (DEFINED PLSSVM_CPU_TARGET_ARCHS AND DEFINED PLSSVM_NVIDIA_TARGET_ARCHS)
+        message(FATAL_ERROR "Please specify either CPU or NVIDIA GPU as target platforms but not both!")
+    elseif (DEFINED PLSSVM_CPU_TARGET_ARCHS)
+        message(STATUS "CPU target platform provided, setting: \"-stdpar=multicore\"")
+        set_local_and_parent(PLSSVM_STDPAR_BACKEND_COMPILER_FLAG -stdpar=multicore --restrict)
+    elseif (DEFINED PLSSVM_NVIDIA_TARGET_ARCHS)
+        message(STATUS "NVIDIA GPU target platform provided, setting: \"-stdpar=gpu\"")
+        set_local_and_parent(PLSSVM_STDPAR_BACKEND_COMPILER_FLAG -stdpar=gpu --restrict)
+    else ()
+        message(FATAL_ERROR "Please specify one of CPU or NVIDIA GPU as target platforms!")
+    endif ()
+
     # TODO: better
-    target_link_options(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC ${PLSSVM_STDPAR_BACKEND_NVHPC_COMPILER_FLAG})
-    target_link_options(${PLSSVM_STDPAR_BACKEND_LIBRARY_NAME} PUBLIC ${PLSSVM_STDPAR_BACKEND_NVHPC_COMPILER_FLAG})
-    target_link_options(${PLSSVM_ALL_LIBRARY_NAME} INTERFACE ${PLSSVM_STDPAR_BACKEND_NVHPC_COMPILER_FLAG})
-    target_compile_options(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC ${PLSSVM_STDPAR_BACKEND_NVHPC_COMPILER_FLAG})
-    target_compile_options(${PLSSVM_STDPAR_BACKEND_LIBRARY_NAME} PUBLIC ${PLSSVM_STDPAR_BACKEND_NVHPC_COMPILER_FLAG})
-    target_compile_options(${PLSSVM_ALL_LIBRARY_NAME} INTERFACE ${PLSSVM_STDPAR_BACKEND_NVHPC_COMPILER_FLAG})
+    target_link_options(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC ${PLSSVM_STDPAR_BACKEND_COMPILER_FLAG})
+    target_link_options(${PLSSVM_STDPAR_BACKEND_LIBRARY_NAME} PUBLIC ${PLSSVM_STDPAR_BACKEND_COMPILER_FLAG})
+    target_link_options(${PLSSVM_ALL_LIBRARY_NAME} INTERFACE ${PLSSVM_STDPAR_BACKEND_COMPILER_FLAG})
+    target_compile_options(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC ${PLSSVM_STDPAR_BACKEND_COMPILER_FLAG})
+    target_compile_options(${PLSSVM_STDPAR_BACKEND_LIBRARY_NAME} PUBLIC ${PLSSVM_STDPAR_BACKEND_COMPILER_FLAG})
+    target_compile_options(${PLSSVM_ALL_LIBRARY_NAME} INTERFACE ${PLSSVM_STDPAR_BACKEND_COMPILER_FLAG})
     target_compile_definitions(${PLSSVM_STDPAR_BACKEND_LIBRARY_NAME} PRIVATE PLSSVM_STDPAR_BACKEND_IMPLEMENTATION="NVHPC")
     target_compile_definitions(${PLSSVM_STDPAR_BACKEND_LIBRARY_NAME} PRIVATE PLSSVM_STDPAR_BACKEND_HAS_NVHPC)
 endif ()
@@ -154,7 +169,7 @@ if (PLSSVM_STDPAR_BACKEND STREQUAL "IntelLLVM")
     target_compile_options(${PLSSVM_STDPAR_BACKEND_LIBRARY_NAME} PUBLIC ${PLSSVM_STDPAR_BACKEND_INTELLLVM_COMPILER_FLAG})
     target_compile_options(${PLSSVM_ALL_LIBRARY_NAME} INTERFACE ${PLSSVM_STDPAR_BACKEND_INTELLLVM_COMPILER_FLAG})
     target_compile_definitions(${PLSSVM_STDPAR_BACKEND_LIBRARY_NAME} PRIVATE PLSSVM_STDPAR_BACKEND_IMPLEMENTATION="IntelLLVM")
-    target_compile_definitions(${PLSSVM_STDPAR_BACKEND_LIBRARY_NAME} PRIVATE PLSSVM_STDPAR_BACKEND_HAS_INTELLLVM)
+    target_compile_definitions(${PLSSVM_STDPAR_BACKEND_LIBRARY_NAME} PRIVATE PLSSVM_STDPAR_BACKEND_HAS_DPCPP)
 
     find_package(oneDPL REQUIRED)
     target_link_libraries(${PLSSVM_STDPAR_BACKEND_LIBRARY_NAME} PUBLIC oneDPL)

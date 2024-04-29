@@ -100,7 +100,8 @@ void csvm::init(const target_platform target) {
     const ::sycl::device default_device{};
     if (!detail::default_device_equals_target(default_device, target_)) {
         throw backend_exception{ fmt::format("The default device {} doesn't match the requested target platform {}! Please set the environment variable ACPP_VISIBILITY_MASK or change the target platform.",
-                                             default_device.get_info<::sycl::info::device::vendor>(), target_) };
+                                             default_device.get_info<::sycl::info::device::vendor>(),
+                                             target_) };
     }
 #endif
 
@@ -131,6 +132,12 @@ std::vector<::plssvm::detail::memory_size> csvm::get_max_mem_alloc_size() const 
 implementation_type csvm::get_implementation_type() const noexcept {
 #if defined(PLSSVM_STDPAR_BACKEND_HAS_ACPP)
     return implementation_type::adaptivecpp;
+#elif defined(PLSSVM_STDPAR_BACKEND_HAS_NVHPC)
+    return implementation_type::nvhpc;
+#elif defined(PLSSVM_STDPAR_BACKEND_HAS_DPCPP)
+    return implementation_type::dpcpp;
+#elif defined(PLSSVM_STDPAR_BACKEND_HAS_GNU_TBB)
+    return implementation_type::gnu_tbb;
 #endif
 }
 
