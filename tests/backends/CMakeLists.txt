@@ -9,6 +9,11 @@ if (TARGET ${PLSSVM_OPENMP_BACKEND_LIBRARY_NAME})
     add_subdirectory(OpenMP)
 endif ()
 
+# create stdpar tests if the stdpar backend is available
+if (TARGET ${PLSSVM_STDPAR_BACKEND_LIBRARY_NAME})
+    add_subdirectory(stdpar)
+endif ()
+
 # create CUDA tests if the CUDA backend is available
 if (TARGET ${PLSSVM_CUDA_BACKEND_LIBRARY_NAME})
     add_subdirectory(CUDA)

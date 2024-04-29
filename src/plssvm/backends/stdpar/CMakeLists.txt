@@ -13,7 +13,6 @@ message(CHECK_START "Checking for stdpar backend")
 
 message(CHECK_START "stdpar comiler check: ")
 
-
 find_package(TBB)
 
 if (CMAKE_CXX_COMPILER_ID STREQUAL "NVHPC")
@@ -37,9 +36,6 @@ if (NOT DEFINED PLSSVM_STDPAR_BACKEND)
     endif ()
     return()
 endif ()
-
-
-
 
 #find_package(OpenMP)
 #
@@ -70,6 +66,12 @@ set(PLSSVM_STDPAR_SOURCES
     ${CMAKE_CURRENT_LIST_DIR}/implementation_types.cpp
 )
 
+if (PLSSVM_STDPAR_BACKEND STREQUAL "ACPP")
+    list(APPEND PLSSVM_STDPAR_SOURCES ${CMAKE_CURRENT_LIST_DIR}/../SYCL/AdaptiveCpp/detail/utility.cpp)
+endif ()
+
+set_local_and_parent(PLSSVM_STDPAR_BACKEND ${PLSSVM_STDPAR_BACKEND})
+
 # set target properties
 set_local_and_parent(PLSSVM_STDPAR_BACKEND_LIBRARY_NAME plssvm-stdpar)
 add_library(${PLSSVM_STDPAR_BACKEND_LIBRARY_NAME} SHARED ${PLSSVM_STDPAR_SOURCES})
@@ -98,18 +100,19 @@ if (PLSSVM_STDPAR_BACKEND STREQUAL "GCC_TBB")
 endif ()
 
 if (PLSSVM_STDPAR_BACKEND STREQUAL "ACPP")
+    set_local_and_parent(PLSSVM_STDPAR_BACKEND_ACPP_COMPILER_FLAG --acpp-stdpar)
+    
     target_link_libraries(${PLSSVM_STDPAR_BACKEND_LIBRARY_NAME} PUBLIC TBB::tbb)
     # TODO: better
-    target_compile_options(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC --acpp-stdpar)
-    target_compile_options(${PLSSVM_STDPAR_BACKEND_LIBRARY_NAME} PUBLIC --acpp-stdpar)
-    target_compile_options(${PLSSVM_ALL_LIBRARY_NAME} INTERFACE --acpp-stdpar)
+    target_compile_options(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC ${PLSSVM_STDPAR_BACKEND_ACPP_COMPILER_FLAG})
+    target_compile_options(${PLSSVM_STDPAR_BACKEND_LIBRARY_NAME} PUBLIC ${PLSSVM_STDPAR_BACKEND_ACPP_COMPILER_FLAG})
+    target_compile_options(${PLSSVM_ALL_LIBRARY_NAME} INTERFACE ${PLSSVM_STDPAR_BACKEND_ACPP_COMPILER_FLAG})
     target_compile_definitions(${PLSSVM_STDPAR_BACKEND_LIBRARY_NAME} PRIVATE PLSSVM_STDPAR_BACKEND_IMPLEMENTATION="AdaptiveCpp")
     target_compile_definitions(${PLSSVM_STDPAR_BACKEND_LIBRARY_NAME} PRIVATE PLSSVM_STDPAR_BACKEND_HAS_ACPP)
 endif ()
 
 # set compile definition that the stdpar backend is available
 target_compile_definitions(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC PLSSVM_HAS_STDPAR_BACKEND)
-
 
 # link against interface library
 target_link_libraries(${PLSSVM_ALL_LIBRARY_NAME} INTERFACE ${PLSSVM_STDPAR_BACKEND_LIBRARY_NAME})
