@@ -121,7 +121,7 @@ add_library(${PLSSVM_STDPAR_BACKEND_LIBRARY_NAME} SHARED ${PLSSVM_STDPAR_SOURCES
 # link base library against stdpar library
 target_link_libraries(${PLSSVM_STDPAR_BACKEND_LIBRARY_NAME} PUBLIC ${PLSSVM_BASE_LIBRARY_NAME})
 
-# TODO: fast_math
+# TODO: fast_math, openmp
 
 # only NVHPC and GNU GCC + TBB need the boost::atomic_ref
 if (PLSSVM_STDPAR_BACKEND STREQUAL "NVHPC" OR PLSSVM_STDPAR_BACKEND STREQUAL "GNU_TBB")
@@ -139,10 +139,10 @@ if (PLSSVM_STDPAR_BACKEND STREQUAL "NVHPC")
     # set global NVHPC compiler flags
     if (DEFINED PLSSVM_CPU_TARGET_ARCHS)
         message(STATUS "CPU target platform provided, setting: \"-stdpar=multicore\"")
-        set_local_and_parent(PLSSVM_STDPAR_BACKEND_COMPILER_FLAG -stdpar=multicore --restrict)
+        set_local_and_parent(PLSSVM_STDPAR_BACKEND_COMPILER_FLAG -stdpar=multicore)
     elseif (DEFINED PLSSVM_NVIDIA_TARGET_ARCHS)
         message(STATUS "NVIDIA GPU target platform provided, setting: \"-stdpar=gpu\"")
-        set_local_and_parent(PLSSVM_STDPAR_BACKEND_COMPILER_FLAG -stdpar=gpu --restrict)
+        set_local_and_parent(PLSSVM_STDPAR_BACKEND_COMPILER_FLAG -stdpar=gpu)
     endif ()
     
     # NVHPC must be linked against CUDA
@@ -161,7 +161,7 @@ if (PLSSVM_STDPAR_BACKEND STREQUAL "NVHPC")
     target_compile_definitions(${PLSSVM_STDPAR_BACKEND_LIBRARY_NAME} PRIVATE PLSSVM_STDPAR_BACKEND_HAS_NVHPC)
 elseif (PLSSVM_STDPAR_BACKEND STREQUAL "IntelLLVM")
     # set global IntelLLVM compiler flags
-    set_local_and_parent(PLSSVM_STDPAR_BACKEND_COMPILER_FLAG -fsycl -fsycl-pstl-offload=gpu -qopenmp)
+    set_local_and_parent(PLSSVM_STDPAR_BACKEND_COMPILER_FLAG -fsycl -fsycl-pstl-offload=gpu -qopenmp) # TODO: qopenmp main CMake
     separate_arguments(PLSSVM_STDPAR_BACKEND_COMPILER_FLAG UNIX_COMMAND ${PLSSVM_STDPAR_BACKEND_COMPILER_FLAG})
     
     # Intel LLVM must be linked against oneDPL

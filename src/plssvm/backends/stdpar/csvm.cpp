@@ -24,7 +24,7 @@
 #include "plssvm/detail/memory_size.hpp"                                              // plssvm::detail::memory_size
 #include "plssvm/detail/move_only_any.hpp"                                            // plssvm::detail::{move_only_any, move_only_any_cast}
 #include "plssvm/detail/performance_tracker.hpp"                                      // plssvm::detail::tracking_entry, PLSSVM_DETAIL_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY
-#include "plssvm/detail/utility.hpp"                                                  // plssvm::detail::get_system_memory
+#include "plssvm/detail/utility.hpp"                                                  // plssvm::detail::{get_system_memory, unreachable}
 #include "plssvm/kernel_function_types.hpp"                                           // plssvm::kernel_function_type
 #include "plssvm/matrix.hpp"                                                          // plssvm::aos_matrix, plssvm::soa_matrix
 #include "plssvm/parameter.hpp"                                                       // plssvm::parameter
@@ -35,15 +35,17 @@
 
 #include "fmt/core.h"  // fmt::format
 
-#if defined(PLSSVM_STDPAR_BACKEND_HAS_ACPP)
+#if defined(PLSSVM_STDPAR_BACKEND_HAS_ACPP) || defined(PLSSVM_STDPAR_BACKEND_HAS_INTEL_LLVM)
     #include "sycl/sycl.hpp"  // sycl::device
 #endif
 
-#include <cmath>    // std::fma
-#include <cstddef>  // std::size_t
-#include <tuple>    // std::tuple, std::make_tuple
-#include <utility>  // std::pair, std::make_pair, std::move
-#include <vector>   // std::vector
+#include <cmath>        // std::fma
+#include <cstddef>      // std::size_t
+#include <string>       // std::string
+#include <string_view>  // std::string_view
+#include <tuple>        // std::tuple, std::make_tuple
+#include <utility>      // std::pair, std::make_pair, std::move
+#include <vector>       // std::vector
 
 namespace plssvm::stdpar {
 
@@ -57,7 +59,11 @@ csvm::csvm(const target_platform target, parameter params) :
 
 void csvm::init(const target_platform target) {
     // check whether the requested target platform has been enabled
-#if defined(PLSSVM_STDPAR_BACKEND_HAS_ACPP)
+#if defined(PLSSVM_STDPAR_BACKEND_HAS_NVHPC)
+    if (target != target_platform::automatic && target != target_platform::cpu && target != target_platform::gpu_nvidia) {
+        throw backend_exception{ fmt::format("Invalid target platform '{}' for the nvhpc stdpar backend!", target) };
+    }
+#elif defined(PLSSVM_STDPAR_BACKEND_HAS_ACPP) || defined(PLSSVM_STDPAR_BACKEND_HAS_INTEL_LLVM)
     switch (target) {
         case target_platform::automatic:
             break;
@@ -82,10 +88,19 @@ void csvm::init(const target_platform target) {
     #endif
             break;
     }
+#elif defined(PLSSVM_STDPAR_BACKEND_HAS_GNU_TBB)
+    if (target != target_platform::automatic && target != target_platform::cpu) {
+        throw backend_exception{ fmt::format("Invalid target platform '{}' for the gnu_tbb stdpar backend!", target) };
+    }
 #endif
 
     if (target == target_platform::automatic) {
+#if defined(PLSSVM_STDPAR_BACKEND_HAS_GNU_TBB)
+        // GNU TBB only runs on the CPU
+        target_ = target_platform::cpu;
+#else
         target_ = determine_default_target_platform();
+#endif
     } else {
         target_ = target;
     }
@@ -94,14 +109,22 @@ void csvm::init(const target_platform target) {
                         "\nUsing stdpar ({}; {}) as backend.\n\n",
                         plssvm::detail::tracking_entry{ "dependencies", "stdpar_implementation", this->get_implementation_type() },
                         plssvm::detail::tracking_entry{ "dependencies", "stdpar_version", detail::get_stdpar_version() });
+    PLSSVM_DETAIL_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking_entry{ "backend", "backend", plssvm::backend_type::stdpar }));
 
 #if defined(PLSSVM_STDPAR_BACKEND_HAS_ACPP)
+    const std::string_view env_mask{ "ACPP_VISIBILITY_MASK" };
+#elif defined(PLSSVM_STDPAR_BACKEND_HAS_ACPP)
+    const std::string_view env_mask{ "ONEAPI_DEVICE_SELECTOR" };  // TODO: check mechanism
+#endif
+
+#if defined(PLSSVM_STDPAR_BACKEND_HAS_ACPP) || defined(PLSSVM_STDPAR_BACKEND_HAS_INTEL_LLVM)
     // AdaptiveCpp's stdpar per default uses the sycl default device
     const ::sycl::device default_device{};
     if (!detail::default_device_equals_target(default_device, target_)) {
-        throw backend_exception{ fmt::format("The default device {} doesn't match the requested target platform {}! Please set the environment variable ACPP_VISIBILITY_MASK or change the target platform.",
+        throw backend_exception{ fmt::format("The default device {} doesn't match the requested target platform {}! Please set the environment variable {} or change the target platform.",
                                              default_device.get_info<::sycl::info::device::vendor>(),
-                                             target_) };
+                                             target_,
+                                             env_mask) };
     }
 #endif
 
@@ -111,7 +134,16 @@ void csvm::init(const target_platform target) {
                         plssvm::detail::tracking_entry{ "backend", "num_devices", this->num_available_devices() },
                         plssvm::detail::tracking_entry{ "backend", "target_platform", target_ });
 
-#if defined(PLSSVM_STDPAR_BACKEND_HAS_ACPP)
+#if defined(PLSSVM_STDPAR_BACKEND_HAS_NVHPC)
+    cudaDeviceProp prop{};
+    cudaGetDeviceProperties(&prop, 0);
+    plssvm::detail::log(verbosity_level::full,
+                        "  [0, {}, {}.{}]\n",
+                        prop.name,
+                        prop.major,
+                        prop.minor);
+    PLSSVM_DETAIL_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking_entry{ "backend", "device", prop.name }));
+#elif defined(PLSSVM_STDPAR_BACKEND_HAS_ACPP) || defined(PLSSVM_STDPAR_BACKEND_HAS_INTEL_LLVM)
     const std::string device_name = default_device.get_info<::sycl::info::device::name>();
     plssvm::detail::log(verbosity_level::full, "  [0, {}]\n", device_name);
     PLSSVM_DETAIL_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking_entry{ "backend", "device", device_name }));
@@ -134,11 +166,12 @@ implementation_type csvm::get_implementation_type() const noexcept {
     return implementation_type::adaptivecpp;
 #elif defined(PLSSVM_STDPAR_BACKEND_HAS_NVHPC)
     return implementation_type::nvhpc;
-#elif defined(PLSSVM_STDPAR_BACKEND_HAS_DPCPP)
+#elif defined(PLSSVM_STDPAR_BACKEND_HAS_INTEL_LLVM)
     return implementation_type::dpcpp;
 #elif defined(PLSSVM_STDPAR_BACKEND_HAS_GNU_TBB)
     return implementation_type::gnu_tbb;
 #endif
+    ::plssvm::detail::unreachable();
 }
 
 //***************************************************//
