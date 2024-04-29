@@ -11,6 +11,7 @@
 #include "plssvm/backend_types.hpp"                                                   // plssvm::backend_type
 #include "plssvm/backends/stdpar/detail/utility.hpp"                                  // plssvm::stdpar::detail::{get_stdpar_implementation}
 #include "plssvm/backends/stdpar/exceptions.hpp"                                      // plssvm::stdpar::backend_exception
+#include "plssvm/backends/stdpar/implementation_types.hpp"                            // plssvm::stdpar::implementation_type
 #include "plssvm/backends/stdpar/kernel/cg_explicit/blas.hpp"                         // plssvm::stdpar::detail::device_kernel_symm
 #include "plssvm/backends/stdpar/kernel/cg_explicit/kernel_matrix_assembly.hpp"       // plssvm::stdpar::detail::device_kernel_assembly
 #include "plssvm/backends/stdpar/kernel/cg_implicit/kernel_matrix_assembly_blas.hpp"  // plssvm::stdpar::detail::device_kernel_assembly_symm
@@ -129,6 +130,12 @@ std::vector<::plssvm::detail::memory_size> csvm::get_device_memory() const {
 std::vector<::plssvm::detail::memory_size> csvm::get_max_mem_alloc_size() const {
     // TODO: use correct values
     return this->get_device_memory();
+}
+
+implementation_type csvm::get_implementation_type() const noexcept {
+#if defined(PLSSVM_STDPAR_BACKEND_HAS_ACPP)
+    return implementation_type::adaptivecpp;
+#endif
 }
 
 //***************************************************//
