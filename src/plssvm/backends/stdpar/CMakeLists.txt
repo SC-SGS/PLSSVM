@@ -103,6 +103,10 @@ target_compile_definitions(${PLSSVM_BASE_LIBRARY_NAME} PRIVATE PLSSVM_boost_VERS
 target_link_libraries(${PLSSVM_STDPAR_BACKEND_LIBRARY_NAME} PUBLIC ${PLSSVM_BASE_LIBRARY_NAME})
 
 if (PLSSVM_STDPAR_BACKEND STREQUAL "GCC_TBB")
+    if (NOT DEFINED PLSSVM_CPU_TARGET_ARCHS)
+        message(FATAL_ERROR "Please specify the CPU as target platform in order to use GNU GCC as stdpar implementation!")
+    endif ()
+    
     target_link_libraries(${PLSSVM_STDPAR_BACKEND_LIBRARY_NAME} PUBLIC TBB::tbb)
     target_compile_definitions(${PLSSVM_STDPAR_BACKEND_LIBRARY_NAME} PRIVATE PLSSVM_STDPAR_BACKEND_HAS_GNU_TBB)
 endif ()
