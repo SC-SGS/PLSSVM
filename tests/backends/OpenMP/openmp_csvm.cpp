@@ -38,6 +38,7 @@
 #include "gtest/gtest.h"  // TEST_F, EXPECT_NO_THROW, INSTANTIATE_TYPED_TEST_SUITE_P, ::testing::Test
 
 #include <algorithm>  // std::min
+#include <cstddef>    // std::size_t
 #include <tuple>      // std::make_tuple, std::tuple
 #include <vector>     // std::vector
 
@@ -163,8 +164,8 @@ TEST_F(OpenMPCSVM, blas_level_3_kernel_explicit) {
     auto C = util::generate_specific_matrix<plssvm::soa_matrix<plssvm::real_type>>(plssvm::shape{ data.num_data_points() - 1, data.num_data_points() - 1 }, plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE });
     auto ground_truth_C{ C };
 
-    const unsigned long long num_rhs = B.shape().x;
-    const unsigned long long num_rows = B.shape().y;
+    const std::size_t num_rhs = B.shape().x;
+    const std::size_t num_rows = B.shape().y;
     plssvm::openmp::detail::device_kernel_symm(num_rows, num_rhs, alpha, kernel_matrix, B, beta, C);
 
     // calculate correct results
@@ -368,8 +369,8 @@ TEST_F(OpenMPCSVMDeathTest, blas_level_3_kernel_explicit) {
     const plssvm::real_type beta{ 0.5 };
     auto C = util::generate_random_matrix<plssvm::soa_matrix<plssvm::real_type>>(plssvm::shape{ 4, 4 }, plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE });
 
-    const unsigned long long num_rhs = B.shape().x;
-    const unsigned long long num_rows = B.shape().y;
+    const std::size_t num_rhs = B.shape().x;
+    const std::size_t num_rows = B.shape().y;
 
     // the A matrix must have the correct size
     EXPECT_DEATH(plssvm::openmp::detail::device_kernel_symm(num_rows, num_rows, alpha, std::vector<plssvm::real_type>{}, B, beta, C), fmt::format("A matrix sizes mismatch!: 0 != {}", kernel_matrix.size()));
