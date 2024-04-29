@@ -22,6 +22,8 @@ std::ostream &operator<<(std::ostream &out, const implementation_type impl) {
     switch (impl) {
         case implementation_type::adaptivecpp:
             return out << "adaptivecpp";
+        case implementation_type::nvhpc:
+            return out << "nvhpc";
     }
     return out << "unknown";
 }
@@ -33,6 +35,8 @@ std::istream &operator>>(std::istream &in, implementation_type &impl) {
 
     if (str == "adaptivecpp" || str == "acpp") {
         impl = implementation_type::adaptivecpp;
+    } else if (str == "nvhpc" || str == "nvcpp" || str == "nvc++") {
+        impl = implementation_type::nvhpc;
     } else {
         in.setstate(std::ios::failbit);
     }
