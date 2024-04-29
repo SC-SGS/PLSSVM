@@ -137,34 +137,34 @@ inline void device_kernel_predict(aos_matrix<real_type> &prediction, const aos_m
                     // iterate over all features
                     for (std::size_t dim = 0; dim < num_features; ++dim) {
                         // perform the feature reduction calculation
-                        for (unsigned internal_pd = 0; internal_pd < INTERNAL_BLOCK_SIZE; ++internal_pd) {
+                        for (unsigned internal_pp = 0; internal_pp < INTERNAL_BLOCK_SIZE; ++internal_pp) {
                             for (unsigned internal_sv = 0; internal_sv < INTERNAL_BLOCK_SIZE; ++internal_sv) {
-                                const std::size_t global_pp_idx = pp_idx + static_cast<std::size_t>(internal_pd);
-                                const std::size_t global_sv = sv_idx + static_cast<std::size_t>(internal_sv);
+                                const std::size_t global_pp_idx = pp_idx + static_cast<std::size_t>(internal_pp);
+                                const std::size_t global_sv_idx = sv_idx + static_cast<std::size_t>(internal_sv);
 
-                                temp[internal_pd][internal_sv] += detail::feature_reduce<kernel>(support_vectors(global_sv, dim), predict_points(global_pp_idx, dim));
+                                temp[internal_pp][internal_sv] += detail::feature_reduce<kernel>(support_vectors(global_sv_idx, dim), predict_points(global_pp_idx, dim));
                             }
                         }
                     }
 
                     // update temp using the respective kernel function
-                    for (unsigned internal_pd = 0; internal_pd < INTERNAL_BLOCK_SIZE; ++internal_pd) {
+                    for (unsigned internal_pp = 0; internal_pp < INTERNAL_BLOCK_SIZE; ++internal_pp) {
                         for (unsigned internal_sv = 0; internal_sv < INTERNAL_BLOCK_SIZE; ++internal_sv) {
-                            temp[internal_pd][internal_sv] = detail::apply_kernel_function<kernel>(temp[internal_pd][internal_sv], kernel_function_parameter...);
+                            temp[internal_pp][internal_sv] = detail::apply_kernel_function<kernel>(temp[internal_pp][internal_sv], kernel_function_parameter...);
                         }
                     }
 
                     // add results to prediction
                     for (std::size_t a = 0; a < num_classes; ++a) {
-                        for (unsigned internal_pd = 0; internal_pd < INTERNAL_BLOCK_SIZE; ++internal_pd) {
+                        for (unsigned internal_pp = 0; internal_pp < INTERNAL_BLOCK_SIZE; ++internal_pp) {
                             for (unsigned internal_sv = 0; internal_sv < INTERNAL_BLOCK_SIZE; ++internal_sv) {
-                                const std::size_t global_pp_idx = pp_idx + static_cast<std::size_t>(internal_pd);
-                                const std::size_t global_sv = sv_idx + static_cast<std::size_t>(internal_sv);
+                                const std::size_t global_pp_idx = pp_idx + static_cast<std::size_t>(internal_pp);
+                                const std::size_t global_sv_idx = sv_idx + static_cast<std::size_t>(internal_sv);
 
                                 // be sure to not perform out of bounds accesses
-                                if (global_pp_idx < num_predict_points && global_sv < num_support_vectors) {
+                                if (global_pp_idx < num_predict_points && global_sv_idx < num_support_vectors) {
 #pragma omp atomic
-                                    prediction(global_pp_idx, a) += alpha(a, global_sv) * temp[internal_pd][internal_sv];
+                                    prediction(global_pp_idx, a) += alpha(a, global_sv_idx) * temp[internal_pp][internal_sv];
                                 }
                             }
                         }
