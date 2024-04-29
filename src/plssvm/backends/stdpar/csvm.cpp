@@ -131,6 +131,8 @@ std::vector<::plssvm::detail::memory_size> csvm::get_max_mem_alloc_size() const 
 implementation_type csvm::get_implementation_type() const noexcept {
 #if defined(PLSSVM_STDPAR_BACKEND_HAS_ACPP)
     return implementation_type::adaptivecpp;
+#elif defined(PLSSVM_STDPAR_BACKEND_HAS_NVHPC)
+    return implementation_type::nvhpc;
 #endif
 }
 

@@ -123,7 +123,7 @@ target_include_directories(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC
 if (DEFINED ENV{CLION_IDE} OR CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
     # somehow necessary for CLion to detect the C++ standard as 17
     # also necessary for MSVC
-    set(CMAKE_CXX_STANDARD 20)
+    set(CMAKE_CXX_STANDARD 17)
 endif ()
 target_compile_features(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC cxx_std_20)
 ## additional base library compile options
@@ -598,16 +598,16 @@ find_package(fmt 10.2.1 QUIET)
 if (fmt_FOUND)
     message(STATUS "Found package fmt.")
 else ()
-    message(STATUS "Couldn't find package fmt. Building from source ...") #  TODO: MUST SET --acpp-stdpar here AND in GoogleTest! :/
+    message(STATUS "Couldn't find package fmt. Building from source ...")
     set(PLSSVM_fmt_VERSION 10.2.1)
     # set options for fmt
     if (PLSSVM_ENABLE_STL_DEBUG_MODE)
         set(CMAKE_CXX_FLAGS_OLD "${CMAKE_CXX_FLAGS}")
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${PLSSVM_STL_DEBUG_MODE_FLAGS}")
     endif ()
-    if (PLSSVM_STDPAR_BACKEND MATCHES "ACPP")
-        message(STATUS "Adding stdpar ACPP specific compiler flag: ${PLSSVM_STDPAR_BACKEND_ACPP_COMPILER_FLAG}")
-        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${PLSSVM_STDPAR_BACKEND_ACPP_COMPILER_FLAG}")
+    if (TARGET ${PLSSVM_STDPAR_BACKEND_LIBRARY_NAME})
+        message(STATUS "Adding stdpar ${PLSSVM_STDPAR_BACKEND} specific compiler flag(s): \"${PLSSVM_STDPAR_BACKEND_COMPILER_FLAG}\"")
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${PLSSVM_STDPAR_BACKEND_COMPILER_FLAG}")
     endif ()
     set(FMT_PEDANTIC OFF CACHE INTERNAL "" FORCE)
     set(FMT_WERROR OFF CACHE INTERNAL "" FORCE)
