@@ -6,8 +6,19 @@
 
 # set variable in the local and parent scope
 macro(set_local_and_parent NAME VALUE)
-    set(${ARGV0} ${ARGV1})
-    set(${ARGV0} ${ARGV1} PARENT_SCOPE)
+
+message(WARNING "ARGN ${ARGN} VALUE ${VALUE} Setting ${ARGV0} to ${ARGV1}")
+    if(${ARGC} GREATER 2)
+        set(temp "${ARGN}")
+        list(JOIN temp " " REMAINING_FLAGS)
+        message(WARNING "Setting!!!!!!!!!!!!!!!!!!!!!!!!!1 ${FLAGS}")
+        set(${ARGV0} "${ARGV1} ${REMAINING_FLAGS}")
+        set(${ARGV0} "${ARGV1} ${REMAINING_FLAGS}" PARENT_SCOPE)
+    else()
+        set(${ARGV0} "${ARGV1}")
+        set(${ARGV0} "${ARGV1}" PARENT_SCOPE)
+    endif()
+    message(WARNING "Setting ${${ARGV0}}")
 endmacro()
 
 macro(append_local_and_parent LIST_NAME VALUE)

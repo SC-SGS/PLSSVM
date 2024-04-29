@@ -58,7 +58,7 @@ inline void device_kernel_symm(const std::size_t num_rows, const std::size_t num
         range[i] = std::make_pair(i / blocked_num_rows, i % blocked_num_rows);
     }
 
-    std::for_each(std::execution::par_unseq, range.cbegin(), range.cend(), [=, A_ptr = A.data(), B_ptr = B.data(), C_ptr = C.data()](const std::pair<std::size_t, std::size_t> idx) {
+    std::for_each(std::execution::par_unseq, range.begin(), range.end(), [=, A_ptr = A.data(), B_ptr = B.data(), C_ptr = C.data()](const std::pair<std::size_t, std::size_t> idx) {
         // calculate the indices used in the current thread
         const auto [rhs, row] = idx;
         const std::size_t rhs_idx = rhs * INTERNAL_BLOCK_SIZE_uz;

@@ -144,14 +144,21 @@ endif ()
 if (PLSSVM_STDPAR_BACKEND STREQUAL "IntelLLVM")
     # target_link_libraries(${PLSSVM_STDPAR_BACKEND_LIBRARY_NAME} PUBLIC TBB::tbb)
     # TODO: better
-    target_link_options(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC -fsycl-pstl-offload=gpu)
-    target_link_options(${PLSSVM_STDPAR_BACKEND_LIBRARY_NAME} PUBLIC -fsycl-pstl-offload=gpu)
-    target_link_options(${PLSSVM_ALL_LIBRARY_NAME} INTERFACE -fsycl-pstl-offload=gpu)
-    target_compile_options(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC -fsycl-pstl-offload=gpu)
-    target_compile_options(${PLSSVM_STDPAR_BACKEND_LIBRARY_NAME} PUBLIC -fsycl-pstl-offload=gpu)
-    target_compile_options(${PLSSVM_ALL_LIBRARY_NAME} INTERFACE -fsycl-pstl-offload=gpu)
+    set_local_and_parent(PLSSVM_STDPAR_BACKEND_INTELLLVM_COMPILER_FLAG -fsycl -fsycl-pstl-offload=gpu -qopenmp)
+    separate_arguments(PLSSVM_STDPAR_BACKEND_INTELLLVM_COMPILER_FLAG UNIX_COMMAND ${PLSSVM_STDPAR_BACKEND_INTELLLVM_COMPILER_FLAG})
+
+    target_link_options(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC ${PLSSVM_STDPAR_BACKEND_INTELLLVM_COMPILER_FLAG})
+    target_link_options(${PLSSVM_STDPAR_BACKEND_LIBRARY_NAME} PUBLIC ${PLSSVM_STDPAR_BACKEND_INTELLLVM_COMPILER_FLAG})
+    target_link_options(${PLSSVM_ALL_LIBRARY_NAME} INTERFACE ${PLSSVM_STDPAR_BACKEND_INTELLLVM_COMPILER_FLAG})
+    target_compile_options(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC ${PLSSVM_STDPAR_BACKEND_INTELLLVM_COMPILER_FLAG})
+    target_compile_options(${PLSSVM_STDPAR_BACKEND_LIBRARY_NAME} PUBLIC ${PLSSVM_STDPAR_BACKEND_INTELLLVM_COMPILER_FLAG})
+    target_compile_options(${PLSSVM_ALL_LIBRARY_NAME} INTERFACE ${PLSSVM_STDPAR_BACKEND_INTELLLVM_COMPILER_FLAG})
     target_compile_definitions(${PLSSVM_STDPAR_BACKEND_LIBRARY_NAME} PRIVATE PLSSVM_STDPAR_BACKEND_IMPLEMENTATION="IntelLLVM")
     target_compile_definitions(${PLSSVM_STDPAR_BACKEND_LIBRARY_NAME} PRIVATE PLSSVM_STDPAR_BACKEND_HAS_INTELLLVM)
+
+    find_package(oneDPL REQUIRED)
+    target_link_libraries(${PLSSVM_STDPAR_BACKEND_LIBRARY_NAME} PUBLIC oneDPL)
+    target_link_libraries(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC oneDPL)
 endif ()
 
 # set compile definition that the stdpar backend is available

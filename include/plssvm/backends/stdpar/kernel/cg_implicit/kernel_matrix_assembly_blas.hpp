@@ -75,7 +75,7 @@ inline void device_kernel_assembly_symm(const real_type alpha, const std::vector
         range[i] = std::make_pair(i / blocked_dept, i % blocked_dept);
     }
 
-    std::for_each(std::execution::par_unseq, range.cbegin(), range.cend(), [=, q_ptr = q.data(), data_ptr = data.data(), B_ptr = B.data(), C_ptr = C.data()](const std::pair<std::size_t, std::size_t> idx) {
+    std::for_each(std::execution::par_unseq, range.begin(), range.end(), [=, q_ptr = q.data(), data_ptr = data.data(), B_ptr = B.data(), C_ptr = C.data()](const std::pair<std::size_t, std::size_t> idx) {
         // calculate the indices used in the current thread
         const auto [row, col] = idx;
         const std::size_t row_idx = row * INTERNAL_BLOCK_SIZE_uz;

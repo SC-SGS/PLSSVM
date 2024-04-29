@@ -58,7 +58,7 @@ inline void device_kernel_w_linear(soa_matrix<real_type> &w, const aos_matrix<re
         range[i] = std::make_pair(i / blocked_num_classes, i % blocked_num_classes);
     }
 
-    std::for_each(std::execution::par_unseq, range.cbegin(), range.cend(), [=, w_ptr = w.data(), alpha_ptr = alpha.data(), sv_ptr = support_vectors.data()](const std::pair<std::size_t, std::size_t> idx) {
+    std::for_each(std::execution::par_unseq, range.begin(), range.end(), [=, w_ptr = w.data(), alpha_ptr = alpha.data(), sv_ptr = support_vectors.data()](const std::pair<std::size_t, std::size_t> idx) {
         // calculate the indices used in the current thread
         const auto [feature, c] = idx;
         const std::size_t feature_idx = feature * INTERNAL_BLOCK_SIZE_uz;
@@ -121,7 +121,7 @@ inline void device_kernel_predict_linear(aos_matrix<real_type> &prediction, cons
         range[i] = std::make_pair(i / blocked_num_classes, i % blocked_num_classes);
     }
 
-    std::for_each(std::execution::par_unseq, range.cbegin(), range.cend(), [=, prediction_ptr = prediction.data(), w_ptr = w.data(), rho_ptr = rho.data(), pp_ptr = predict_points.data()](const std::pair<std::size_t, std::size_t> idx) {
+    std::for_each(std::execution::par_unseq, range.begin(), range.end(), [=, prediction_ptr = prediction.data(), w_ptr = w.data(), rho_ptr = rho.data(), pp_ptr = predict_points.data()](const std::pair<std::size_t, std::size_t> idx) {
         // calculate the indices used in the current thread
         const auto [pp, c] = idx;
         const std::size_t pp_idx = pp * INTERNAL_BLOCK_SIZE_uz;
@@ -193,7 +193,7 @@ inline void device_kernel_predict(aos_matrix<real_type> &prediction, const aos_m
         range[i] = std::make_pair(i / blocked_num_support_vectors, i % blocked_num_support_vectors);
     }
 
-    std::for_each(std::execution::par_unseq, range.cbegin(), range.cend(), [=, prediction_ptr = prediction.data(), alpha_ptr = alpha.data(), rho_ptr = rho.data(), sv_ptr = support_vectors.data(), pp_ptr = predict_points.data()](const std::pair<std::size_t, std::size_t> idx) {
+    std::for_each(std::execution::par_unseq, range.begin(), range.end(), [=, prediction_ptr = prediction.data(), alpha_ptr = alpha.data(), rho_ptr = rho.data(), sv_ptr = support_vectors.data(), pp_ptr = predict_points.data()](const std::pair<std::size_t, std::size_t> idx) {
         // calculate the indices used in the current thread
         const auto [pp, sv] = idx;
         const std::size_t pp_idx = pp * INTERNAL_BLOCK_SIZE_uz;
