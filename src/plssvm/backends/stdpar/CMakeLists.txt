@@ -16,6 +16,7 @@ message(CHECK_START "stdpar comiler check: ")
 
 find_package(TBB)
 
+message(WARNING ${CMAKE_CXX_COMPILER_ID})
 if (CMAKE_CXX_COMPILER_ID STREQUAL "NVHPC")
     message(CHECK_PASS "found NVHPC compiler")
     set(PLSSVM_STDPAR_BACKEND "NVHPC")
@@ -28,6 +29,13 @@ elseif (CMAKE_CXX_COMPILER_ID STREQUAL "Clang" AND TBB_FOUND)
         message(CHECK_PASS "found ACPP")
         set(PLSSVM_STDPAR_BACKEND "ACPP")
     endif ()
+elseif (CMAKE_CXX_COMPILER_ID STREQUAL "IntelLLVM")
+    check_cxx_compiler_flag("-fsycl-pstl-offload=gpu" PLSSVM_HAS_INTELLLVM_STDPAR_FLAG)
+    message(WARNING ${PLSSVM_HAS_INTELLLVM_STDPAR_FLAG})
+    # if (PLSSVM_HAS_INTELLLVM_STDPAR_FLAG) # TODO
+        message(CHECK_PASS "found IntelLLVM")
+        set(PLSSVM_STDPAR_BACKEND "IntelLLVM")
+    # endif ()
 endif ()
 
 if (NOT DEFINED PLSSVM_STDPAR_BACKEND)
@@ -104,6 +112,16 @@ if (PLSSVM_STDPAR_BACKEND STREQUAL "ACPP")
     target_compile_options(${PLSSVM_ALL_LIBRARY_NAME} INTERFACE --acpp-stdpar)
     target_compile_definitions(${PLSSVM_STDPAR_BACKEND_LIBRARY_NAME} PRIVATE PLSSVM_STDPAR_BACKEND_IMPLEMENTATION="AdaptiveCpp")
     target_compile_definitions(${PLSSVM_STDPAR_BACKEND_LIBRARY_NAME} PRIVATE PLSSVM_STDPAR_BACKEND_HAS_ACPP)
+endif ()
+
+if (PLSSVM_STDPAR_BACKEND STREQUAL "IntelLLVM")
+    # target_link_libraries(${PLSSVM_STDPAR_BACKEND_LIBRARY_NAME} PUBLIC TBB::tbb)
+    # TODO: better
+    target_compile_options(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC -fsycl-pstl-offload=gpu)
+    target_compile_options(${PLSSVM_STDPAR_BACKEND_LIBRARY_NAME} PUBLIC -fsycl-pstl-offload=gpu)
+    target_compile_options(${PLSSVM_ALL_LIBRARY_NAME} INTERFACE -fsycl-pstl-offload=gpu)
+    target_compile_definitions(${PLSSVM_STDPAR_BACKEND_LIBRARY_NAME} PRIVATE PLSSVM_STDPAR_BACKEND_IMPLEMENTATION="IntelLLVM")
+    target_compile_definitions(${PLSSVM_STDPAR_BACKEND_LIBRARY_NAME} PRIVATE PLSSVM_STDPAR_BACKEND_HAS_INTELLLVM)
 endif ()
 
 # set compile definition that the stdpar backend is available
