@@ -98,7 +98,8 @@ target_compile_definitions(${PLSSVM_BASE_LIBRARY_NAME} PRIVATE PLSSVM_boost_VERS
 
 # special command line options for MSVC:
 target_compile_options(${PLSSVM_STDPAR_BACKEND_LIBRARY_NAME} PRIVATE $<$<CXX_COMPILER_ID:MSVC>:"/Zc:__cplusplus">)
-target_compile_options(${PLSSVM_STDPAR_BACKEND_LIBRARY_NAME} PRIVATE $<$<CXX_COMPILER_ID:NVHPC>:"-stdpar">)
+# target_compile_options(${PLSSVM_STDPAR_BACKEND_LIBRARY_NAME} PRIVATE $<$<CXX_COMPILER_ID:NVHPC>:"--stdpar -gpu=sm_86:wq
+# ,fastmath --restrict -Minfo=stdpare">)
 
 # link base library against stdpar library
 target_link_libraries(${PLSSVM_STDPAR_BACKEND_LIBRARY_NAME} PUBLIC ${PLSSVM_BASE_LIBRARY_NAME})
@@ -109,7 +110,7 @@ endif ()
 
 if (PLSSVM_STDPAR_BACKEND STREQUAL "ACPP")
     set_local_and_parent(PLSSVM_STDPAR_BACKEND_ACPP_COMPILER_FLAG --acpp-stdpar)
-    
+
     target_link_libraries(${PLSSVM_STDPAR_BACKEND_LIBRARY_NAME} PUBLIC TBB::tbb)
     # TODO: better
     target_compile_options(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC ${PLSSVM_STDPAR_BACKEND_ACPP_COMPILER_FLAG})
@@ -119,9 +120,33 @@ if (PLSSVM_STDPAR_BACKEND STREQUAL "ACPP")
     target_compile_definitions(${PLSSVM_STDPAR_BACKEND_LIBRARY_NAME} PRIVATE PLSSVM_STDPAR_BACKEND_HAS_ACPP)
 endif ()
 
+if (PLSSVM_STDPAR_BACKEND STREQUAL "NVHPC")
+    enable_language(CUDA)
+
+    find_package(CUDAToolkit)
+
+    # set necessary flags
+    set(CMAKE_CUDA_STANDARD 17)
+    set(CMAKE_CUDA_STANDARD_REQUIRED ON)
+    set_local_and_parent(PLSSVM_STDPAR_BACKEND_NVHPC_COMPILER_FLAG -stdpar -target=multicore,fastmath --restrict -Minfo=stdpare)
+    # TODO: better
+    target_link_options(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC ${PLSSVM_STDPAR_BACKEND_NVHPC_COMPILER_FLAG})
+    target_link_options(${PLSSVM_STDPAR_BACKEND_LIBRARY_NAME} PUBLIC ${PLSSVM_STDPAR_BACKEND_NVHPC_COMPILER_FLAG})
+    target_link_options(${PLSSVM_ALL_LIBRARY_NAME} INTERFACE ${PLSSVM_STDPAR_BACKEND_NVHPC_COMPILER_FLAG})
+    target_compile_options(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC ${PLSSVM_STDPAR_BACKEND_NVHPC_COMPILER_FLAG})
+    target_compile_options(${PLSSVM_STDPAR_BACKEND_LIBRARY_NAME} PUBLIC ${PLSSVM_STDPAR_BACKEND_NVHPC_COMPILER_FLAG})
+    target_compile_options(${PLSSVM_ALL_LIBRARY_NAME} INTERFACE ${PLSSVM_STDPAR_BACKEND_NVHPC_COMPILER_FLAG})
+    target_compile_definitions(${PLSSVM_STDPAR_BACKEND_LIBRARY_NAME} PRIVATE PLSSVM_STDPAR_BACKEND_IMPLEMENTATION="NVHPC")
+    target_compile_definitions(${PLSSVM_STDPAR_BACKEND_LIBRARY_NAME} PRIVATE PLSSVM_STDPAR_BACKEND_HAS_NVHPC)
+endif ()
+
+
 if (PLSSVM_STDPAR_BACKEND STREQUAL "IntelLLVM")
     # target_link_libraries(${PLSSVM_STDPAR_BACKEND_LIBRARY_NAME} PUBLIC TBB::tbb)
     # TODO: better
+    target_link_options(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC -fsycl-pstl-offload=gpu)
+    target_link_options(${PLSSVM_STDPAR_BACKEND_LIBRARY_NAME} PUBLIC -fsycl-pstl-offload=gpu)
+    target_link_options(${PLSSVM_ALL_LIBRARY_NAME} INTERFACE -fsycl-pstl-offload=gpu)
     target_compile_options(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC -fsycl-pstl-offload=gpu)
     target_compile_options(${PLSSVM_STDPAR_BACKEND_LIBRARY_NAME} PUBLIC -fsycl-pstl-offload=gpu)
     target_compile_options(${PLSSVM_ALL_LIBRARY_NAME} INTERFACE -fsycl-pstl-offload=gpu)
