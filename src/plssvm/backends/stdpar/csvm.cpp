@@ -9,7 +9,7 @@
 #include "plssvm/backends/stdpar/csvm.hpp"
 
 #include "plssvm/backend_types.hpp"                                                   // plssvm::backend_type
-#include "plssvm/backends/stdpar/detail/utility.hpp"                                  // plssvm::stdpar::detail::{get_stdpar_implementation}
+#include "plssvm/backends/stdpar/detail/utility.hpp"                                  // plssvm::stdpar::detail::get_stdpar_version
 #include "plssvm/backends/stdpar/exceptions.hpp"                                      // plssvm::stdpar::backend_exception
 #include "plssvm/backends/stdpar/implementation_types.hpp"                            // plssvm::stdpar::implementation_type
 #include "plssvm/backends/stdpar/kernel/cg_explicit/blas.hpp"                         // plssvm::stdpar::detail::device_kernel_symm
@@ -36,7 +36,7 @@
 #include "fmt/core.h"  // fmt::format
 
 #if defined(PLSSVM_STDPAR_BACKEND_HAS_ACPP)
-    #include "sycl/sycl.hpp"
+    #include "sycl/sycl.hpp"  // sycl::device
 #endif
 
 #include <cmath>    // std::fma
@@ -57,32 +57,33 @@ csvm::csvm(const target_platform target, parameter params) :
 
 void csvm::init(const target_platform target) {
     // check whether the requested target platform has been enabled
+#if defined(PLSSVM_STDPAR_BACKEND_HAS_ACPP)
     switch (target) {
         case target_platform::automatic:
             break;
         case target_platform::cpu:
-#if !defined(PLSSVM_HAS_CPU_TARGET)
+    #if !defined(PLSSVM_HAS_CPU_TARGET)
             throw backend_exception{ fmt::format("Requested target platform '{}' that hasn't been enabled using PLSSVM_TARGET_PLATFORMS!", target) };
-#endif
+    #endif
             break;
         case target_platform::gpu_nvidia:
-#if !defined(PLSSVM_HAS_NVIDIA_TARGET)
+    #if !defined(PLSSVM_HAS_NVIDIA_TARGET)
             throw backend_exception{ fmt::format("Requested target platform '{}' that hasn't been enabled using PLSSVM_TARGET_PLATFORMS!", target) };
-#endif
+    #endif
             break;
         case target_platform::gpu_amd:
-#if !defined(PLSSVM_HAS_AMD_TARGET)
+    #if !defined(PLSSVM_HAS_AMD_TARGET)
             throw backend_exception{ fmt::format("Requested target platform '{}' that hasn't been enabled using PLSSVM_TARGET_PLATFORMS!", target) };
-#endif
+    #endif
             break;
         case target_platform::gpu_intel:
-#if !defined(PLSSVM_HAS_INTEL_TARGET)
+    #if !defined(PLSSVM_HAS_INTEL_TARGET)
             throw backend_exception{ fmt::format("Requested target platform '{}' that hasn't been enabled using PLSSVM_TARGET_PLATFORMS!", target) };
-#endif
+    #endif
             break;
     }
+#endif
 
-    // TODO: correct target platform selection
     if (target == target_platform::automatic) {
         target_ = determine_default_target_platform();
     } else {
@@ -90,45 +91,40 @@ void csvm::init(const target_platform target) {
     }
 
     plssvm::detail::log(verbosity_level::full,
-                        "\nUsing stdpar ({}) as backend.\n\n",
-                        plssvm::detail::tracking_entry{ "dependencies", "stdpar_implementation", detail::get_stdpar_implementation() });
+                        "\nUsing stdpar ({}; {}) as backend.\n\n",
+                        plssvm::detail::tracking_entry{ "dependencies", "stdpar_implementation", this->get_implementation_type() },
+                        plssvm::detail::tracking_entry{ "dependencies", "stdpar_version", detail::get_stdpar_version() });
 
 #if defined(PLSSVM_STDPAR_BACKEND_HAS_ACPP)
     // AdaptiveCpp's stdpar per default uses the sycl default device
-    ::sycl::device default_device{};
-    // TODO: check whether the requested target_platform equals the default_selector
-    // if not -> throw excpetion with export ACPP_VISIBILITY_MASK="omp"
+    const ::sycl::device default_device{};
+    if (!detail::default_device_equals_target(default_device, target_)) {
+        throw backend_exception{ fmt::format("The default device {} doesn't match the requested target platform {}! Please set the environment variable ACPP_VISIBILITY_MASK or change the target platform.",
+                                             default_device.get_info<::sycl::info::device::vendor>(), target_) };
+    }
 #endif
 
     // print found stdpar devices
     plssvm::detail::log(verbosity_level::full,
                         "Found {} stdpar device(s) for the target platform {}:\n",
-                        plssvm::detail::tracking_entry{ "backend", "num_devices", this->num_available_devices() },  // TODO: more than one device?
+                        plssvm::detail::tracking_entry{ "backend", "num_devices", this->num_available_devices() },
                         plssvm::detail::tracking_entry{ "backend", "target_platform", target_ });
 
-    // TODO: get used device names and types?
-    // std::vector<std::string> device_names;
-    // device_names.reserve(devices_.size());
-    // for (typename std::vector<queue_type>::size_type device = 0; device < devices_.size(); ++device) {
-    //     const std::string device_name = devices_[device].impl->sycl_queue.get_device().template get_info<::sycl::info::device::name>();
-    //     plssvm::detail::log(verbosity_level::full,
-    //                         "  [{}, {}]\n",
-    //                         device,
-    //                         device_name);
-    //     device_names.emplace_back(device_name);
-    // }
-    // PLSSVM_DETAIL_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking_entry{ "backend", "device", device_names }));
-    // plssvm::detail::log(verbosity_level::full | verbosity_level::timing,
-    //                     "\n");
+#if defined(PLSSVM_STDPAR_BACKEND_HAS_ACPP)
+    const std::string device_name = default_device.get_info<::sycl::info::device::name>();
+    plssvm::detail::log(verbosity_level::full, "  [0, {}]\n", device_name);
+    PLSSVM_DETAIL_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking_entry{ "backend", "device", device_name }));
+#endif
+
+    plssvm::detail::log(verbosity_level::full | verbosity_level::timing,
+                        "\n");
 }
 
 std::vector<::plssvm::detail::memory_size> csvm::get_device_memory() const {
-    // TODO: use correct values
     return { ::plssvm::detail::get_system_memory() };
 }
 
 std::vector<::plssvm::detail::memory_size> csvm::get_max_mem_alloc_size() const {
-    // TODO: use correct values
     return this->get_device_memory();
 }
 

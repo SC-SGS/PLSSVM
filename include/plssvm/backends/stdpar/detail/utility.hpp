@@ -13,8 +13,12 @@
 #define PLSSVM_BACKENDS_STDPAR_DETAIL_UTILITY_HPP_
 #pragma once
 
+#include "plssvm/target_platforms.hpp"  // plssvm::target_platform
+
 #if defined(PLSSVM_STDPAR_BACKEND_HAS_ACPP)
     #include "plssvm/backends/SYCL/detail/atomics.hpp"  // plssvm::sycl::detail::atomic_op
+
+    #include "sycl/sycl.hpp"  // ::sycl::device
 #else
     #include "boost/atomic/atomic_ref.hpp"  // boost::atomic_ref
 #endif
@@ -30,11 +34,15 @@ using atomic_ref = plssvm::sycl::detail::atomic_op<T>;
 using boost::atomic_ref;
 #endif
 
+#if defined(PLSSVM_STDPAR_BACKEND_HAS_ACPP)
+[[nodiscard]] bool default_device_equals_target(const ::sycl::device &device, plssvm::target_platform target);
+#endif
+
 /**
- * @brief Return the stdpar implementation used.
- * @return the stdpar implementation (`[[nodiscard]]`)
+ * @brief Return the version of the used stdpar implementation.
+ * @return the stdpar version (`[[nodiscard]]`)
  */
-[[nodiscard]] std::string get_stdpar_implementation();
+[[nodiscard]] std::string get_stdpar_version();
 
 }  // namespace plssvm::stdpar::detail
 
