@@ -104,6 +104,7 @@ target_link_libraries(${PLSSVM_STDPAR_BACKEND_LIBRARY_NAME} PUBLIC ${PLSSVM_BASE
 
 if (PLSSVM_STDPAR_BACKEND STREQUAL "GCC_TBB")
     target_link_libraries(${PLSSVM_STDPAR_BACKEND_LIBRARY_NAME} PUBLIC TBB::tbb)
+    target_compile_definitions(${PLSSVM_STDPAR_BACKEND_LIBRARY_NAME} PRIVATE PLSSVM_STDPAR_BACKEND_HAS_GNU_TBB)
 endif ()
 
 if (PLSSVM_STDPAR_BACKEND STREQUAL "ACPP")
@@ -161,7 +162,7 @@ if (PLSSVM_STDPAR_BACKEND STREQUAL "IntelLLVM")
     target_compile_options(${PLSSVM_STDPAR_BACKEND_LIBRARY_NAME} PUBLIC -fsycl-pstl-offload=gpu)
     target_compile_options(${PLSSVM_ALL_LIBRARY_NAME} INTERFACE -fsycl-pstl-offload=gpu)
     target_compile_definitions(${PLSSVM_STDPAR_BACKEND_LIBRARY_NAME} PRIVATE PLSSVM_STDPAR_BACKEND_IMPLEMENTATION="IntelLLVM")
-    target_compile_definitions(${PLSSVM_STDPAR_BACKEND_LIBRARY_NAME} PRIVATE PLSSVM_STDPAR_BACKEND_HAS_INTELLLVM)
+    target_compile_definitions(${PLSSVM_STDPAR_BACKEND_LIBRARY_NAME} PRIVATE PLSSVM_STDPAR_BACKEND_HAS_DPCPP)
 endif ()
 
 # set compile definition that the stdpar backend is available
