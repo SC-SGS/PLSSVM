@@ -21,7 +21,7 @@
 #include "plssvm/verbosity_levels.hpp"                             // plssvm::verbosity_level
 
 #include "fmt/color.h"    // fmt::fg, fmt::color::orange
-#include "fmt/core.h"     // fmt::format
+#include "fmt/core.h"     // fmt::format, fmt::runtime
 #include "fmt/ostream.h"  // fmt::formatter, fmt::ostream_formatter
 
 #include <algorithm>    // std::equal, std::all_of, std::fill_n
@@ -756,7 +756,7 @@ inline std::ostream &operator<<(std::ostream &out, const matrix<T, layout> &matr
     using size_type = typename matrix<T, layout>::size_type;
     for (size_type row = 0; row < matr.num_rows(); ++row) {
         for (size_type col = 0; col < matr.num_cols(); ++col) {
-            out << fmt::format("{:.10e} ", matr(row, col));
+            out << fmt::format(fmt::runtime("{:.10e} "), matr(row, col));
         }
         if (row < matr.num_rows() - 1) {
             out << '\n';

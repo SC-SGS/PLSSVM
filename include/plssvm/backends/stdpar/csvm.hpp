@@ -13,15 +13,16 @@
 #define PLSSVM_BACKENDS_STDPAR_CSVM_HPP_
 #pragma once
 
-#include "plssvm/constants.hpp"             // plssvm::real_type
-#include "plssvm/csvm.hpp"                  // plssvm::csvm, plssvm::detail::csvm_backend_exists
-#include "plssvm/detail/memory_size.hpp"    // plssvm::detail::memory_size
-#include "plssvm/detail/move_only_any.hpp"  // plssvm::detail::move_only_any
-#include "plssvm/detail/type_traits.hpp"    // PLSSVM_REQUIRES
-#include "plssvm/matrix.hpp"                // plssvm::aos_matrix
-#include "plssvm/parameter.hpp"             // plssvm::parameter, plssvm::detail::has_only_parameter_named_args_v
-#include "plssvm/solver_types.hpp"          // plssvm::solver_type
-#include "plssvm/target_platforms.hpp"      // plssvm::target_platform
+#include "plssvm/backends/stdpar/implementation_types.hpp"  // plssvm::stdpar::implementation_type
+#include "plssvm/constants.hpp"                             // plssvm::real_type
+#include "plssvm/csvm.hpp"                                  // plssvm::csvm, plssvm::detail::csvm_backend_exists
+#include "plssvm/detail/memory_size.hpp"                    // plssvm::detail::memory_size
+#include "plssvm/detail/move_only_any.hpp"                  // plssvm::detail::move_only_any
+#include "plssvm/detail/type_traits.hpp"                    // PLSSVM_REQUIRES
+#include "plssvm/matrix.hpp"                                // plssvm::aos_matrix
+#include "plssvm/parameter.hpp"                             // plssvm::parameter, plssvm::detail::has_only_parameter_named_args_v
+#include "plssvm/solver_types.hpp"                          // plssvm::solver_type
+#include "plssvm/target_platforms.hpp"                      // plssvm::target_platform
 
 #include <cstddef>      // std::size_t
 #include <type_traits>  // std::true_type
@@ -112,7 +113,13 @@ class csvm : public ::plssvm::csvm {
         return 1;
     }
 
-  protected:
+    /**
+     * @brief Return the stdpar implementation type.
+     * @return the stdpar implementation type (`[[nodiscard]]`)
+     */
+    [[nodiscard]] implementation_type get_implementation_type() const noexcept;
+
+    protected:
     /**
      * @copydoc plssvm::csvm::get_device_memory
      */

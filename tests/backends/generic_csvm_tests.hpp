@@ -84,7 +84,7 @@ template <typename csvm_type, typename device_ptr_type, typename matrix_type, ty
         return partial_kernel_matrix;
     };
 
-    if constexpr (plssvm::csvm_to_backend_type_v<csvm_type> == plssvm::backend_type::openmp) {
+    if constexpr (plssvm::csvm_to_backend_type_v<csvm_type> == plssvm::backend_type::openmp || plssvm::csvm_to_backend_type_v<csvm_type> == plssvm::backend_type::stdpar) {
         // only a single device for OpenMP on the CPU
         result[0] = plssvm::detail::move_only_any{ calculate_partial_kernel_matrix(0, matr.num_rows()) };
     } else {
@@ -131,7 +131,7 @@ template <typename csvm_type, typename device_ptr_type, typename matrix_type, ty
 
     for (std::size_t device_id = 0; device_id < csvm.num_available_devices(); ++device_id) {
         // created matrix is different for the OpenMP backend and the GPU backends!
-        if constexpr (plssvm::csvm_to_backend_type_v<csvm_type> == plssvm::backend_type::openmp) {
+        if constexpr (plssvm::csvm_to_backend_type_v<csvm_type> == plssvm::backend_type::openmp || plssvm::csvm_to_backend_type_v<csvm_type> == plssvm::backend_type::stdpar) {
             // only a single device ever in use
             result[0] = plssvm::detail::move_only_any{ std::make_tuple(plssvm::soa_matrix<real_type>{ matr, plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE } }, std::forward<Args>(args)...) };
         } else {
@@ -260,7 +260,7 @@ TYPED_TEST_P(GenericCSVM, num_available_devices) {
     const csvm_type svm = util::construct_from_tuple<csvm_type>(csvm_test_type::additional_arguments);
 
     // the maximum memory allocation size should be greater than 0!
-    if constexpr (plssvm::csvm_to_backend_type_v<csvm_type> == plssvm::backend_type::openmp) {
+    if constexpr (plssvm::csvm_to_backend_type_v<csvm_type> == plssvm::backend_type::openmp || plssvm::csvm_to_backend_type_v<csvm_type> == plssvm::backend_type::stdpar) {
         EXPECT_EQ(svm.num_available_devices(), 1);
     } else {
         EXPECT_GE(svm.num_available_devices(), 1);
@@ -903,7 +903,7 @@ TYPED_TEST_P(GenericCSVMSolverKernelFunction, assemble_kernel_matrix_minimal) {
 
                 // get result based on used backend
                 std::vector<plssvm::real_type> kernel_matrix{};
-                if constexpr (plssvm::csvm_to_backend_type_v<csvm_type> == plssvm::backend_type::openmp) {
+                if constexpr (plssvm::csvm_to_backend_type_v<csvm_type> == plssvm::backend_type::openmp || plssvm::csvm_to_backend_type_v<csvm_type> == plssvm::backend_type::stdpar) {
                     kernel_matrix = plssvm::detail::move_only_any_cast<std::vector<plssvm::real_type>>(kernel_matrix_d[device_id]);  // std::vector
                 } else {
                     const auto &kernel_matrix_d_ptr = plssvm::detail::move_only_any_cast<const device_ptr_type &>(kernel_matrix_d[device_id]);  // device_ptr -> convert it to a std::vector
@@ -930,7 +930,7 @@ TYPED_TEST_P(GenericCSVMSolverKernelFunction, assemble_kernel_matrix_minimal) {
                 EXPECT_TRUE(kernel_matrix_d[device_id].has_value());
 
                 // implicit doesn't assemble a kernel matrix!
-                if constexpr (plssvm::csvm_to_backend_type_v<csvm_type> == plssvm::backend_type::openmp) {
+                if constexpr (plssvm::csvm_to_backend_type_v<csvm_type> == plssvm::backend_type::openmp || plssvm::csvm_to_backend_type_v<csvm_type> == plssvm::backend_type::stdpar) {
                     const auto &[data_d_ret, params_ret, q_red_ret, QA_cost_ret] = plssvm::detail::move_only_any_cast<const std::tuple<plssvm::soa_matrix<plssvm::real_type>, plssvm::parameter, std::vector<plssvm::real_type>, plssvm::real_type> &>(kernel_matrix_d[device_id]);
 
                     // the values should not have changed! (except the matrix layout)
@@ -1013,7 +1013,7 @@ TYPED_TEST_P(GenericCSVMSolverKernelFunction, assemble_kernel_matrix) {
 
                 // get result based on used backend
                 std::vector<plssvm::real_type> kernel_matrix{};
-                if constexpr (plssvm::csvm_to_backend_type_v<csvm_type> == plssvm::backend_type::openmp) {
+                if constexpr (plssvm::csvm_to_backend_type_v<csvm_type> == plssvm::backend_type::openmp || plssvm::csvm_to_backend_type_v<csvm_type> == plssvm::backend_type::stdpar) {
                     kernel_matrix = plssvm::detail::move_only_any_cast<std::vector<plssvm::real_type>>(kernel_matrix_d[device_id]);  // std::vector
                 } else {
                     const auto &kernel_matrix_d_ptr = plssvm::detail::move_only_any_cast<const device_ptr_type &>(kernel_matrix_d[device_id]);  // device_ptr -> convert it to a std::vector
@@ -1040,7 +1040,7 @@ TYPED_TEST_P(GenericCSVMSolverKernelFunction, assemble_kernel_matrix) {
                 EXPECT_TRUE(kernel_matrix_d[device_id].has_value());
 
                 // implicit doesn't assemble a kernel matrix!
-                if constexpr (plssvm::csvm_to_backend_type_v<csvm_type> == plssvm::backend_type::openmp) {
+                if constexpr (plssvm::csvm_to_backend_type_v<csvm_type> == plssvm::backend_type::openmp || plssvm::csvm_to_backend_type_v<csvm_type> == plssvm::backend_type::stdpar) {
                     const auto &[data_d_ret, params_ret, q_red_ret, QA_cost_ret] = plssvm::detail::move_only_any_cast<const std::tuple<plssvm::soa_matrix<plssvm::real_type>, plssvm::parameter, std::vector<plssvm::real_type>, plssvm::real_type> &>(kernel_matrix_d[device_id]);
 
                     // the values should not have changed! (except the matrix layout)

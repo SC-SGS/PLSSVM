@@ -42,7 +42,7 @@ enum class implementation_type {
 
 /**
  * @brief Output the @p impl type to the given output-stream @p out.
- * @param[in,out] out the output-stream to write the backend type to
+ * @param[in,out] out the output-stream to write the SYCL implementation type to
  * @param[in] impl the SYCL implementation type
  * @return the output-stream
  */
@@ -50,7 +50,7 @@ std::ostream &operator<<(std::ostream &out, implementation_type impl);
 
 /**
  * @brief Use the input-stream @p in to initialize the @p impl type.
- * @param[in,out] in input-stream to extract the backend type from
+ * @param[in,out] in input-stream to extract the SYCL implementation type from
  * @param[in] impl the SYCL implementation type
  * @return the input-stream
  */

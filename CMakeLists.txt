@@ -179,164 +179,6 @@ if (PLSSVM_ENABLE_STL_DEBUG_MODE)
 endif ()
 
 ########################################################################################################################
-##                                    check for optional and necessary dependencies                                   ##
-########################################################################################################################
-# check for OpenMP (not for the backend!)
-find_package(OpenMP 4.0 QUIET)
-if (OpenMP_FOUND)
-    message(STATUS "Found OpenMP ${OpenMP_CXX_VERSION} to speed-up library utilities (like file parsing).")
-    set(PLSSVM_FOUND_OPENMP_FOR_UTILITY "${OpenMP_CXX_VERSION}")
-    target_link_libraries(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC $<$<NOT:$<CXX_COMPILER_ID:MSVC>>:OpenMP::OpenMP_CXX>)
-    target_compile_options(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC $<$<CXX_COMPILER_ID:MSVC>:-openmp:llvm -openmp:experimental>)
-else ()
-    # disable warning for unknown OpenMP pragmas if no OpenMP could be found
-    target_compile_options(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC
-                           $<$<COMPILE_LANG_AND_ID:CXX,GNU,Clang>:-Wno-unknown-pragmas>
-                           $<$<COMPILE_LANG_AND_ID:CXX,MSVC>:/wd4068>
-    )
-endif ()
-
-## setup dependencies
-include(FetchContent)
-list(APPEND CMAKE_MESSAGE_INDENT "Dependencies:  ")
-
-## try finding cxxopts
-find_package(cxxopts 3.2.0 QUIET)
-if (cxxopts_FOUND)
-    message(STATUS "Found package cxxopts.")
-    target_include_directories(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC ${cxxopts_INCLUDE_DIR})
-else ()
-    message(STATUS "Couldn't find package cxxopts. Building from source ...")
-    set(PLSSVM_cxxopts_VERSION v3.2.0)
-    # set options for cxxopts
-    set(CXXOPTS_BUILD_EXAMPLES OFF CACHE INTERNAL "" FORCE)
-    set(CXXOPTS_BUILD_TESTS OFF CACHE INTERNAL "" FORCE)
-    set(CXXOPTS_ENABLE_WARNINGS OFF CACHE INTERNAL "" FORCE)
-    # fetch command line parser library cxxopts
-    FetchContent_Declare(cxxopts
-                         GIT_REPOSITORY https://github.com/jarro2783/cxxopts.git
-                         GIT_TAG ${PLSSVM_cxxopts_VERSION}
-                         QUIET
-    )
-    FetchContent_MakeAvailable(cxxopts)
-    add_dependencies(${PLSSVM_BASE_LIBRARY_NAME} cxxopts)
-    target_include_directories(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC
-                               $<BUILD_INTERFACE:${cxxopts_SOURCE_DIR}/include>
-                               $<INSTALL_INTERFACE:include>
-    )
-    message(STATUS "Installing cxxopts version ${PLSSVM_cxxopts_VERSION}.")
-endif ()
-
-## try finding fast_float
-find_package(fast_float QUIET)
-if (fast_float_FOUND)
-    # TODO: get used fast_float version
-    message(STATUS "Found package fast_float.")
-    target_include_directories(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC ${fast_float_INCLUDE_DIR})
-else ()
-    message(STATUS "Couldn't find package fast_float. Building from source ...")
-    set(PLSSVM_fast_float_VERSION v6.1.1)
-    target_compile_definitions(${PLSSVM_BASE_LIBRARY_NAME} PRIVATE PLSSVM_fast_float_VERSION="${PLSSVM_fast_float_VERSION}")
-    # set options for fast_float
-    set(FASTFLOAT_TEST OFF CACHE INTERNAL "" FORCE)
-    set(FASTFLOAT_SANITIZE OFF CACHE INTERNAL "" FORCE)
-    # fetch float parsing library fast_float
-    FetchContent_Declare(fast_float
-                         GIT_REPOSITORY https://github.com/fastfloat/fast_float
-                         GIT_TAG ${PLSSVM_fast_float_VERSION}
-                         QUIET
-    )
-    FetchContent_GetProperties(fast_float)
-    if (NOT fast_float_POPULATED)
-        FetchContent_Populate(fast_float)
-        add_subdirectory(${fast_float_SOURCE_DIR} EXCLUDE_FROM_ALL)
-    endif ()
-    add_dependencies(${PLSSVM_BASE_LIBRARY_NAME} fast_float)
-    target_include_directories(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC
-                               $<BUILD_INTERFACE:${fast_float_SOURCE_DIR}/include>
-                               $<INSTALL_INTERFACE:include>
-    )
-    message(STATUS "Installing fast_float version ${PLSSVM_fast_float_VERSION}.")
-endif ()
-
-## try finding igor
-find_package(igor QUIET)
-if (igor_FOUND)
-    # TODO: get used igor version
-    message(STATUS "Found package igor.")
-    target_include_directories(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC ${igor_INCLUDE_DIR})
-else ()
-    message(STATUS "Couldn't find package igor. Building from source ...")
-    set(PLSSVM_igor_VERSION a5224c60d266974d3f407191583fe266cbe1c93d)
-    target_compile_definitions(${PLSSVM_BASE_LIBRARY_NAME} PRIVATE PLSSVM_igor_VERSION="${PLSSVM_igor_VERSION}")
-    # set options for igor
-    set(IGOR_BUILD_TESTS OFF CACHE INTERNAL "" FORCE)
-    # fetch named argument library igor
-    FetchContent_Declare(igor
-                         GIT_REPOSITORY https://github.com/bluescarni/igor
-                         GIT_TAG ${PLSSVM_igor_VERSION}
-                         QUIET
-    )
-    FetchContent_GetProperties(igor)
-    if (NOT igor_POPULATED)
-        FetchContent_Populate(igor)
-        add_subdirectory(${igor_SOURCE_DIR} EXCLUDE_FROM_ALL)
-    endif ()
-    add_dependencies(${PLSSVM_BASE_LIBRARY_NAME} igor)
-    target_include_directories(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC
-                               $<BUILD_INTERFACE:${igor_SOURCE_DIR}/include>
-                               $<INSTALL_INTERFACE:include>
-    )
-    list(APPEND PLSSVM_TARGETS_TO_INSTALL "igor")
-    message(STATUS "Installing igor version ${PLSSVM_igor_VERSION}.")
-endif ()
-
-## try finding fmt
-find_package(fmt 10.2.1 QUIET)
-if (fmt_FOUND)
-    message(STATUS "Found package fmt.")
-else ()
-    message(STATUS "Couldn't find package fmt. Building from source ...")
-    set(PLSSVM_fmt_VERSION 10.2.1)
-    # set options for fmt
-    if (PLSSVM_ENABLE_STL_DEBUG_MODE)
-        set(CMAKE_CXX_FLAGS_OLD "${CMAKE_CXX_FLAGS}")
-        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${PLSSVM_STL_DEBUG_MODE_FLAGS}")
-    endif ()
-    set(FMT_PEDANTIC OFF CACHE INTERNAL "" FORCE)
-    set(FMT_WERROR OFF CACHE INTERNAL "" FORCE)
-    set(FMT_DOC OFF CACHE INTERNAL "" FORCE)
-    set(FMT_INSTALL ON CACHE INTERNAL "" FORCE) # let {fmt} handle the install target
-    set(FMT_TEST OFF CACHE INTERNAL "" FORCE)
-    set(FMT_FUZZ OFF CACHE INTERNAL "" FORCE)
-    set(FMT_CUDA_TEST OFF CACHE INTERNAL "" FORCE)
-    set(FMT_MODULE OFF CACHE INTERNAL "" FORCE)
-    set(FMT_SYSTEM_HEADERS ON CACHE INTERNAL "" FORCE)
-    # fetch string formatting library fmt
-    FetchContent_Declare(fmt
-                         GIT_REPOSITORY https://github.com/fmtlib/fmt.git
-                         GIT_TAG ${PLSSVM_fmt_VERSION}
-                         QUIET
-    )
-    FetchContent_MakeAvailable(fmt)
-    set_property(TARGET fmt PROPERTY POSITION_INDEPENDENT_CODE ON)
-    target_compile_definitions(fmt PRIVATE FMT_USE_FULL_CACHE_DRAGONBOX)
-    add_dependencies(${PLSSVM_BASE_LIBRARY_NAME} fmt)
-    target_include_directories(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC
-                               $<BUILD_INTERFACE:${fmt_SOURCE_DIR}/include>
-                               $<INSTALL_INTERFACE:include>
-    )
-    # append fmt to installed targets if build from source
-    message(STATUS "Installing {fmt} version ${PLSSVM_fmt_VERSION}.")
-    if (PLSSVM_ENABLE_STL_DEBUG_MODE)
-        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS_OLD}")
-    endif ()
-endif ()
-target_link_libraries(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC fmt::fmt)
-
-list(POP_BACK CMAKE_MESSAGE_INDENT)
-
-########################################################################################################################
 ##                                                 create executables                                                 ##
 ########################################################################################################################
 ## create train executable
@@ -502,7 +344,7 @@ if (PLSSVM_ENABLE_OPENMP_BACKEND MATCHES "AUTO" OR PLSSVM_ENABLE_OPENMP_BACKEND)
     add_subdirectory(src/plssvm/backends/OpenMP)
 endif ()
 
-## checko for stdpar backend
+## check for stdpar backend
 set(PLSSVM_ENABLE_STDPAR_BACKEND AUTO CACHE STRING "Enable stdpar Backend")
 set_property(CACHE PLSSVM_ENABLE_STDPAR_BACKEND PROPERTY STRINGS AUTO ON OFF)
 if (PLSSVM_ENABLE_STDPAR_BACKEND MATCHES "AUTO" OR PLSSVM_ENABLE_STDPAR_BACKEND)
@@ -637,6 +479,168 @@ if (PLSSVM_ENABLE_LTO)
         message(STATUS "Interprocedural optimization (IPO/LTO) not supported.")
     endif ()
 endif ()
+
+########################################################################################################################
+##                                    check for optional and necessary dependencies                                   ##
+########################################################################################################################
+# check for OpenMP (not for the backend!)
+find_package(OpenMP 4.0 QUIET)
+if (OpenMP_FOUND)
+    message(STATUS "Found OpenMP ${OpenMP_CXX_VERSION} to speed-up library utilities (like file parsing).")
+    set(PLSSVM_FOUND_OPENMP_FOR_UTILITY "${OpenMP_CXX_VERSION}")
+    target_link_libraries(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC $<$<NOT:$<CXX_COMPILER_ID:MSVC>>:OpenMP::OpenMP_CXX>)
+    target_compile_options(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC $<$<CXX_COMPILER_ID:MSVC>:-openmp:llvm -openmp:experimental>)
+else ()
+    # disable warning for unknown OpenMP pragmas if no OpenMP could be found
+    target_compile_options(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC
+                           $<$<COMPILE_LANG_AND_ID:CXX,GNU,Clang>:-Wno-unknown-pragmas>
+                           $<$<COMPILE_LANG_AND_ID:CXX,MSVC>:/wd4068>
+    )
+endif ()
+
+## setup dependencies
+include(FetchContent)
+list(APPEND CMAKE_MESSAGE_INDENT "Dependencies:  ")
+
+## try finding cxxopts
+find_package(cxxopts 3.2.0 QUIET)
+if (cxxopts_FOUND)
+    message(STATUS "Found package cxxopts.")
+    target_include_directories(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC ${cxxopts_INCLUDE_DIR})
+else ()
+    message(STATUS "Couldn't find package cxxopts. Building from source ...")
+    set(PLSSVM_cxxopts_VERSION v3.2.0)
+    # set options for cxxopts
+    set(CXXOPTS_BUILD_EXAMPLES OFF CACHE INTERNAL "" FORCE)
+    set(CXXOPTS_BUILD_TESTS OFF CACHE INTERNAL "" FORCE)
+    set(CXXOPTS_ENABLE_WARNINGS OFF CACHE INTERNAL "" FORCE)
+    # fetch command line parser library cxxopts
+    FetchContent_Declare(cxxopts
+                         GIT_REPOSITORY https://github.com/jarro2783/cxxopts.git
+                         GIT_TAG ${PLSSVM_cxxopts_VERSION}
+                         QUIET
+    )
+    FetchContent_MakeAvailable(cxxopts)
+    add_dependencies(${PLSSVM_BASE_LIBRARY_NAME} cxxopts)
+    target_include_directories(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC
+                               $<BUILD_INTERFACE:${cxxopts_SOURCE_DIR}/include>
+                               $<INSTALL_INTERFACE:include>
+    )
+    message(STATUS "Installing cxxopts version ${PLSSVM_cxxopts_VERSION}.")
+endif ()
+
+## try finding fast_float
+find_package(fast_float QUIET)
+if (fast_float_FOUND)
+    # TODO: get used fast_float version
+    message(STATUS "Found package fast_float.")
+    target_include_directories(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC ${fast_float_INCLUDE_DIR})
+else ()
+    message(STATUS "Couldn't find package fast_float. Building from source ...")
+    set(PLSSVM_fast_float_VERSION v6.1.1)
+    target_compile_definitions(${PLSSVM_BASE_LIBRARY_NAME} PRIVATE PLSSVM_fast_float_VERSION="${PLSSVM_fast_float_VERSION}")
+    # set options for fast_float
+    set(FASTFLOAT_TEST OFF CACHE INTERNAL "" FORCE)
+    set(FASTFLOAT_SANITIZE OFF CACHE INTERNAL "" FORCE)
+    # fetch float parsing library fast_float
+    FetchContent_Declare(fast_float
+                         GIT_REPOSITORY https://github.com/fastfloat/fast_float
+                         GIT_TAG ${PLSSVM_fast_float_VERSION}
+                         QUIET
+    )
+    FetchContent_GetProperties(fast_float)
+    if (NOT fast_float_POPULATED)
+        FetchContent_Populate(fast_float)
+        add_subdirectory(${fast_float_SOURCE_DIR} EXCLUDE_FROM_ALL)
+    endif ()
+    add_dependencies(${PLSSVM_BASE_LIBRARY_NAME} fast_float)
+    target_include_directories(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC
+                               $<BUILD_INTERFACE:${fast_float_SOURCE_DIR}/include>
+                               $<INSTALL_INTERFACE:include>
+    )
+    message(STATUS "Installing fast_float version ${PLSSVM_fast_float_VERSION}.")
+endif ()
+
+## try finding igor
+find_package(igor QUIET)
+if (igor_FOUND)
+    # TODO: get used igor version
+    message(STATUS "Found package igor.")
+    target_include_directories(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC ${igor_INCLUDE_DIR})
+else ()
+    message(STATUS "Couldn't find package igor. Building from source ...")
+    set(PLSSVM_igor_VERSION a5224c60d266974d3f407191583fe266cbe1c93d)
+    target_compile_definitions(${PLSSVM_BASE_LIBRARY_NAME} PRIVATE PLSSVM_igor_VERSION="${PLSSVM_igor_VERSION}")
+    # set options for igor
+    set(IGOR_BUILD_TESTS OFF CACHE INTERNAL "" FORCE)
+    # fetch named argument library igor
+    FetchContent_Declare(igor
+                         GIT_REPOSITORY https://github.com/bluescarni/igor
+                         GIT_TAG ${PLSSVM_igor_VERSION}
+                         QUIET
+    )
+    FetchContent_GetProperties(igor)
+    if (NOT igor_POPULATED)
+        FetchContent_Populate(igor)
+        add_subdirectory(${igor_SOURCE_DIR} EXCLUDE_FROM_ALL)
+    endif ()
+    add_dependencies(${PLSSVM_BASE_LIBRARY_NAME} igor)
+    target_include_directories(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC
+                               $<BUILD_INTERFACE:${igor_SOURCE_DIR}/include>
+                               $<INSTALL_INTERFACE:include>
+    )
+    list(APPEND PLSSVM_TARGETS_TO_INSTALL "igor")
+    message(STATUS "Installing igor version ${PLSSVM_igor_VERSION}.")
+endif ()
+
+## try finding fmt
+find_package(fmt 10.2.1 QUIET)
+if (fmt_FOUND)
+    message(STATUS "Found package fmt.")
+else ()
+    message(STATUS "Couldn't find package fmt. Building from source ...") #  TODO: MUST SET --acpp-stdpar here AND in GoogleTest! :/
+    set(PLSSVM_fmt_VERSION 10.2.1)
+    # set options for fmt
+    if (PLSSVM_ENABLE_STL_DEBUG_MODE)
+        set(CMAKE_CXX_FLAGS_OLD "${CMAKE_CXX_FLAGS}")
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${PLSSVM_STL_DEBUG_MODE_FLAGS}")
+    endif ()
+    if (PLSSVM_STDPAR_BACKEND MATCHES "ACPP")
+        message(STATUS "Adding stdpar ACPP specific compiler flag: ${PLSSVM_STDPAR_BACKEND_ACPP_COMPILER_FLAG}")
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${PLSSVM_STDPAR_BACKEND_ACPP_COMPILER_FLAG}")
+    endif ()
+    set(FMT_PEDANTIC OFF CACHE INTERNAL "" FORCE)
+    set(FMT_WERROR OFF CACHE INTERNAL "" FORCE)
+    set(FMT_DOC OFF CACHE INTERNAL "" FORCE)
+    set(FMT_INSTALL ON CACHE INTERNAL "" FORCE) # let {fmt} handle the install target
+    set(FMT_TEST OFF CACHE INTERNAL "" FORCE)
+    set(FMT_FUZZ OFF CACHE INTERNAL "" FORCE)
+    set(FMT_CUDA_TEST OFF CACHE INTERNAL "" FORCE)
+    set(FMT_MODULE OFF CACHE INTERNAL "" FORCE)
+    set(FMT_SYSTEM_HEADERS ON CACHE INTERNAL "" FORCE)
+    # fetch string formatting library fmt
+    FetchContent_Declare(fmt
+                         GIT_REPOSITORY https://github.com/fmtlib/fmt.git
+                         GIT_TAG ${PLSSVM_fmt_VERSION}
+                         QUIET
+    )
+    FetchContent_MakeAvailable(fmt)
+    set_property(TARGET fmt PROPERTY POSITION_INDEPENDENT_CODE ON)
+    target_compile_definitions(fmt PRIVATE FMT_USE_FULL_CACHE_DRAGONBOX)
+    add_dependencies(${PLSSVM_BASE_LIBRARY_NAME} fmt)
+    target_include_directories(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC
+                               $<BUILD_INTERFACE:${fmt_SOURCE_DIR}/include>
+                               $<INSTALL_INTERFACE:include>
+    )
+    # append fmt to installed targets if build from source
+    message(STATUS "Installing {fmt} version ${PLSSVM_fmt_VERSION}.")
+    if (PLSSVM_ENABLE_STL_DEBUG_MODE)
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS_OLD}")
+    endif ()
+endif ()
+target_link_libraries(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC fmt::fmt)
+
+list(POP_BACK CMAKE_MESSAGE_INDENT)
 
 ########################################################################################################################
 ##                                    enable documentation generation via doxygen                                     ##

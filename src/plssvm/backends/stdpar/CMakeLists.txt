@@ -13,7 +13,6 @@ message(CHECK_START "Checking for stdpar backend")
 
 message(CHECK_START "stdpar comiler check: ")
 
-
 find_package(TBB)
 
 message(WARNING ${CMAKE_CXX_COMPILER_ID})
@@ -46,9 +45,6 @@ if (NOT DEFINED PLSSVM_STDPAR_BACKEND)
     return()
 endif ()
 
-
-
-
 #find_package(OpenMP)
 #
 #if (NOT OPENMP_FOUND)
@@ -75,7 +71,14 @@ set(PLSSVM_STDPAR_SOURCES
     ${CMAKE_CURRENT_LIST_DIR}/detail/utility.cpp
     ${CMAKE_CURRENT_LIST_DIR}/csvm.cpp
     ${CMAKE_CURRENT_LIST_DIR}/exceptions.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/implementation_types.cpp
 )
+
+if (PLSSVM_STDPAR_BACKEND STREQUAL "ACPP")
+    list(APPEND PLSSVM_STDPAR_SOURCES ${CMAKE_CURRENT_LIST_DIR}/../SYCL/AdaptiveCpp/detail/utility.cpp)
+endif ()
+
+set_local_and_parent(PLSSVM_STDPAR_BACKEND ${PLSSVM_STDPAR_BACKEND})
 
 # set target properties
 set_local_and_parent(PLSSVM_STDPAR_BACKEND_LIBRARY_NAME plssvm-stdpar)
@@ -105,11 +108,13 @@ if (PLSSVM_STDPAR_BACKEND STREQUAL "GCC_TBB")
 endif ()
 
 if (PLSSVM_STDPAR_BACKEND STREQUAL "ACPP")
+    set_local_and_parent(PLSSVM_STDPAR_BACKEND_ACPP_COMPILER_FLAG --acpp-stdpar)
+    
     target_link_libraries(${PLSSVM_STDPAR_BACKEND_LIBRARY_NAME} PUBLIC TBB::tbb)
     # TODO: better
-    target_compile_options(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC --acpp-stdpar)
-    target_compile_options(${PLSSVM_STDPAR_BACKEND_LIBRARY_NAME} PUBLIC --acpp-stdpar)
-    target_compile_options(${PLSSVM_ALL_LIBRARY_NAME} INTERFACE --acpp-stdpar)
+    target_compile_options(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC ${PLSSVM_STDPAR_BACKEND_ACPP_COMPILER_FLAG})
+    target_compile_options(${PLSSVM_STDPAR_BACKEND_LIBRARY_NAME} PUBLIC ${PLSSVM_STDPAR_BACKEND_ACPP_COMPILER_FLAG})
+    target_compile_options(${PLSSVM_ALL_LIBRARY_NAME} INTERFACE ${PLSSVM_STDPAR_BACKEND_ACPP_COMPILER_FLAG})
     target_compile_definitions(${PLSSVM_STDPAR_BACKEND_LIBRARY_NAME} PRIVATE PLSSVM_STDPAR_BACKEND_IMPLEMENTATION="AdaptiveCpp")
     target_compile_definitions(${PLSSVM_STDPAR_BACKEND_LIBRARY_NAME} PRIVATE PLSSVM_STDPAR_BACKEND_HAS_ACPP)
 endif ()
@@ -126,7 +131,6 @@ endif ()
 
 # set compile definition that the stdpar backend is available
 target_compile_definitions(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC PLSSVM_HAS_STDPAR_BACKEND)
-
 
 # link against interface library
 target_link_libraries(${PLSSVM_ALL_LIBRARY_NAME} INTERFACE ${PLSSVM_STDPAR_BACKEND_LIBRARY_NAME})
