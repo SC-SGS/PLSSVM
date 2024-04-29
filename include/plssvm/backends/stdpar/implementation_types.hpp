@@ -25,7 +25,9 @@ namespace plssvm::stdpar {
  */
 enum class implementation_type {
     /** Use [AdaptiveCpp](https://github.com/AdaptiveCpp/AdaptiveCpp) (formerly known as hipSYCL) as stdpar implementation. */
-    adaptivecpp
+    adaptivecpp,
+    /** Use [nvhpc (nvc++)](https://developer.nvidia.com/hpc-sdk) as stdpar implementation. */
+    nvhpc
 };
 
 /**
