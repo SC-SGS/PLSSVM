@@ -54,12 +54,16 @@ void device_kernel_assembly(const std::vector<real_type> &q, std::vector<real_ty
     const auto INTERNAL_BLOCK_SIZE_uz = static_cast<std::size_t>(INTERNAL_BLOCK_SIZE);
     const auto PADDING_SIZE_uz = static_cast<std::size_t>(PADDING_SIZE);
 
-    // TODO: better?
     // calculate indices over which we parallelize
-    std::vector<std::pair<std::size_t, std::size_t>> range(blocked_dept * blocked_dept);
+    std::vector<std::pair<std::size_t, std::size_t>> range(blocked_dept * (blocked_dept + 1) / 2);
 #pragma omp parallel for
-    for (std::size_t i = 0; i < range.size(); ++i) {
-        range[i] = std::make_pair(i / blocked_dept, i % blocked_dept);
+    for (std::size_t i = 0; i < blocked_dept * blocked_dept; ++i) {
+        const std::size_t row = i / blocked_dept;
+        const std::size_t col = i % blocked_dept;
+        // only create valid row <-> col index pairs
+        if (row >= col) {
+            range[col * blocked_dept + row - col * (col + 1) / 2] = std::make_pair(row, col);
+        }
     }
 
     // TODO: profile?
@@ -69,41 +73,39 @@ void device_kernel_assembly(const std::vector<real_type> &q, std::vector<real_ty
         const std::size_t row_idx = row * INTERNAL_BLOCK_SIZE_uz;
         const std::size_t col_idx = col * INTERNAL_BLOCK_SIZE_uz;
 
-        // only calculate the upper triangular matrix
-        if (row_idx >= col_idx) {
-            // create a thread private array used for internal caching
-            std::array<std::array<real_type, INTERNAL_BLOCK_SIZE>, INTERNAL_BLOCK_SIZE> temp{};
+        // only calculate the upper triangular matrix  -> done be only iterating over valid row <-> col pairs
+        // create a thread private array used for internal caching
+        std::array<std::array<real_type, INTERNAL_BLOCK_SIZE>, INTERNAL_BLOCK_SIZE> temp{};
 
-            // iterate over all features
-            for (std::size_t dim = 0; dim < num_features; ++dim) {
-                // perform the feature reduction calculation
-                for (unsigned internal_row = 0; internal_row < INTERNAL_BLOCK_SIZE; ++internal_row) {
-                    for (unsigned internal_col = 0; internal_col < INTERNAL_BLOCK_SIZE; ++internal_col) {
-                        const std::size_t global_row = row_idx + static_cast<std::size_t>(internal_row);
-                        const std::size_t global_col = col_idx + static_cast<std::size_t>(internal_col);
-
-                        temp[internal_row][internal_col] += detail::feature_reduce<kernel>(data_ptr[dim * (dept + 1 + PADDING_SIZE_uz) + global_row], data_ptr[dim * (dept + 1 + PADDING_SIZE_uz) + global_col]);
-                    }
-                }
-            }
-
-            // apply the remaining part of the kernel function and store the value in the output kernel matrix
+        // iterate over all features
+        for (std::size_t dim = 0; dim < num_features; ++dim) {
+            // perform the feature reduction calculation
             for (unsigned internal_row = 0; internal_row < INTERNAL_BLOCK_SIZE; ++internal_row) {
                 for (unsigned internal_col = 0; internal_col < INTERNAL_BLOCK_SIZE; ++internal_col) {
-                    // calculate the indices to access the kernel matrix (the part stored on the current device)
                     const std::size_t global_row = row_idx + static_cast<std::size_t>(internal_row);
                     const std::size_t global_col = col_idx + static_cast<std::size_t>(internal_col);
 
-                    // be sure to not perform out of bounds accesses for the kernel matrix (only using the upper triangular matrix)
-                    if (global_row < dept && global_col < dept && global_row >= global_col) {
-                        real_type temp_ij = temp[internal_row][internal_col];
-                        temp_ij = detail::apply_kernel_function<kernel>(temp_ij, kernel_function_parameter...) + QA_cost - q_ptr[global_row] - q_ptr[global_col];
-                        // apply the cost on the diagonal
-                        if (global_row == global_col) {
-                            temp_ij += cost;
-                        }
-                        kernel_matrix_ptr[global_col * (dept + PADDING_SIZE_uz) + global_row - global_col * (global_col + std::size_t{ 1 }) / std::size_t{ 2 }] = temp_ij;
+                    temp[internal_row][internal_col] += detail::feature_reduce<kernel>(data_ptr[dim * (dept + 1 + PADDING_SIZE_uz) + global_row], data_ptr[dim * (dept + 1 + PADDING_SIZE_uz) + global_col]);
+                }
+            }
+        }
+
+        // apply the remaining part of the kernel function and store the value in the output kernel matrix
+        for (unsigned internal_row = 0; internal_row < INTERNAL_BLOCK_SIZE; ++internal_row) {
+            for (unsigned internal_col = 0; internal_col < INTERNAL_BLOCK_SIZE; ++internal_col) {
+                // calculate the indices to access the kernel matrix (the part stored on the current device)
+                const std::size_t global_row = row_idx + static_cast<std::size_t>(internal_row);
+                const std::size_t global_col = col_idx + static_cast<std::size_t>(internal_col);
+
+                // be sure to not perform out of bounds accesses for the kernel matrix (only using the upper triangular matrix)
+                if (global_row < dept && global_col < dept && global_row >= global_col) {
+                    real_type temp_ij = temp[internal_row][internal_col];
+                    temp_ij = detail::apply_kernel_function<kernel>(temp_ij, kernel_function_parameter...) + QA_cost - q_ptr[global_row] - q_ptr[global_col];
+                    // apply the cost on the diagonal
+                    if (global_row == global_col) {
+                        temp_ij += cost;
                     }
+                    kernel_matrix_ptr[global_col * (dept + PADDING_SIZE_uz) + global_row - global_col * (global_col + std::size_t{ 1 }) / std::size_t{ 2 }] = temp_ij;
                 }
             }
         }
