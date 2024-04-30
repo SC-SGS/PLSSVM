@@ -134,7 +134,7 @@ void csvm::init(const target_platform target) {
                         plssvm::detail::tracking_entry{ "backend", "num_devices", this->num_available_devices() },
                         plssvm::detail::tracking_entry{ "backend", "target_platform", target_ });
 
-#if defined(PLSSVM_STDPAR_BACKEND_HAS_NVHPC)
+#if defined(PLSSVM_STDPAR_BACKEND_HAS_NVHPC) && defined(PLSSVM_STDPAR_BACKEND_NVHPC_GPU)
     cudaDeviceProp prop{};
     cudaGetDeviceProperties(&prop, 0);
     plssvm::detail::log(verbosity_level::full,

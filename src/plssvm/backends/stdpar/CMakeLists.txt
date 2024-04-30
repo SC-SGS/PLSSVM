@@ -148,12 +148,17 @@ endif ()
 if (PLSSVM_STDPAR_BACKEND STREQUAL "NVHPC")
     # set global NVHPC compiler flags
     if (DEFINED PLSSVM_CPU_TARGET_ARCHS)
-        message(STATUS "CPU target platform provided, setting: \"-stdpar=multicore\"")
-        set_local_and_parent(PLSSVM_STDPAR_BACKEND_COMPILER_FLAG -stdpar=multicore)
+        message(STATUS "CPU target platform provided, setting: \"-stdpar=multicore -tp=native\"")
+        set_local_and_parent(PLSSVM_STDPAR_BACKEND_COMPILER_FLAG -stdpar=multicore -tp=native)
+        
+        target_compile_definitions(${PLSSVM_STDPAR_BACKEND_LIBRARY_NAME} PRIVATE PLSSVM_STDPAR_BACKEND_NVHPC_CPU)
     elseif (DEFINED PLSSVM_NVIDIA_TARGET_ARCHS)
-        message(STATUS "NVIDIA GPU target platform provided, setting: \"-stdpar=gpu\"")
-        set_local_and_parent(PLSSVM_STDPAR_BACKEND_COMPILER_FLAG -stdpar=gpu)
+        message(STATUS "NVIDIA GPU target platform provided, setting: \"-stdpar=gpu -gpu=fastmath\"")
+        set_local_and_parent(PLSSVM_STDPAR_BACKEND_COMPILER_FLAG -stdpar=gpu -gpu=fastmath)
+        
+        target_compile_definitions(${PLSSVM_STDPAR_BACKEND_LIBRARY_NAME} PRIVATE PLSSVM_STDPAR_BACKEND_NVHPC_GPU)
     endif ()
+    separate_arguments(PLSSVM_STDPAR_BACKEND_COMPILER_FLAG UNIX_COMMAND ${PLSSVM_STDPAR_BACKEND_COMPILER_FLAG})
     
     # NVHPC must be linked against CUDA
     enable_language(CUDA)
