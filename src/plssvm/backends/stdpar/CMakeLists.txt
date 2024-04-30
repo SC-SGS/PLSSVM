@@ -202,7 +202,15 @@ elseif (PLSSVM_STDPAR_BACKEND STREQUAL "IntelLLVM")
     target_compile_definitions(${PLSSVM_STDPAR_BACKEND_LIBRARY_NAME} PRIVATE PLSSVM_STDPAR_BACKEND_HAS_INTEL_LLVM)
 elseif (PLSSVM_STDPAR_BACKEND STREQUAL "ACPP")
     # set global AdaptiveCpp compiler flags
-    set_local_and_parent(PLSSVM_STDPAR_BACKEND_COMPILER_FLAG --acpp-stdpar)
+    if (DEFINED PLSSVM_NVIDIA_TARGET_ARCHS OR DEFINED PLSSVM_AMD_TARGET_ARCHS OR DEFINED PLSSVM_INTEL_TARGET_ARCHS)
+        set_local_and_parent(PLSSVM_STDPAR_BACKEND_COMPILER_FLAG --acpp-stdpar)
+    else ()
+        set_local_and_parent(PLSSVM_STDPAR_BACKEND_COMPILER_FLAG --acpp-stdpar --acpp-stdpar-system-usm)
+    endif ()
+    if (PLSSVM_ENABLE_FAST_MATH)
+        set_local_and_parent(PLSSVM_STDPAR_BACKEND_COMPILER_FLAG ${PLSSVM_STDPAR_BACKEND_COMPILER_FLAG} -ffast-math) #  TODO: test
+    endif ()
+    separate_arguments(PLSSVM_STDPAR_BACKEND_COMPILER_FLAG UNIX_COMMAND ${PLSSVM_STDPAR_BACKEND_COMPILER_FLAG})
     
     # AdaptiveCpp must be linked against TBB
     target_link_libraries(${PLSSVM_STDPAR_BACKEND_LIBRARY_NAME} PUBLIC TBB::tbb)
