@@ -15,7 +15,7 @@
 
 #include "plssvm/target_platforms.hpp"  // plssvm::target_platform
 
-#if defined(PLSSVM_STDPAR_BACKEND_HAS_ACPP)
+#if defined(PLSSVM_STDPAR_BACKEND_HAS_ACPP) || defined(PLSSVM_STDPAR_BACKEND_HAS_INTEL_LLVM)
     #include "plssvm/backends/SYCL/detail/atomics.hpp"  // plssvm::sycl::detail::atomic_op
 
     #include "sycl/sycl.hpp"  // ::sycl::device
@@ -27,14 +27,14 @@
 
 namespace plssvm::stdpar::detail {
 
-#if defined(PLSSVM_STDPAR_BACKEND_HAS_ACPP)
+#if defined(PLSSVM_STDPAR_BACKEND_HAS_ACPP) || defined(PLSSVM_STDPAR_BACKEND_HAS_INTEL_LLVM)
 template <typename T>
 using atomic_ref = plssvm::sycl::detail::atomic_op<T>;
 #else
 using boost::atomic_ref;
 #endif
 
-#if defined(PLSSVM_STDPAR_BACKEND_HAS_ACPP)
+#if defined(PLSSVM_STDPAR_BACKEND_HAS_ACPP) || defined(PLSSVM_STDPAR_BACKEND_HAS_INTEL_LLVM)
 [[nodiscard]] bool default_device_equals_target(const ::sycl::device &device, plssvm::target_platform target);
 #endif
 
