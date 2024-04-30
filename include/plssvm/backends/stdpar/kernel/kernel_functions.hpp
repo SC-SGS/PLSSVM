@@ -61,7 +61,7 @@ template <>
 template <>
 [[nodiscard]] inline real_type feature_reduce<kernel_function_type::laplacian>(const real_type val1, const real_type val2) {
 #if defined(PLSSVM_USE_FAST_MATH) && defined(PLSSVM_STDPAR_BACKEND_HAS_ACPP)
-    return ::sycl::abs(val1 - val2);
+    return ::sycl::fabs(val1 - val2);
 #else
     return std::abs(val1 - val2);
 #endif
