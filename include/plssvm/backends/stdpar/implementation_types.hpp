@@ -28,8 +28,8 @@ enum class implementation_type {
     adaptivecpp,
     /** Use [nvhpc (nvc++)](https://developer.nvidia.com/hpc-sdk) as stdpar implementation. */
     nvhpc,
-    /** Use [DPC++](https://www.intel.com/content/www/us/en/developer/tools/oneapi/dpc-compiler.html) as stdpar implementation. */
-    dpcpp,
+    /** Use [icpx](https://www.intel.com/content/www/us/en/developer/tools/oneapi/dpc-compiler.html) as stdpar implementation. */
+    intel_llvm,
     /** Use [GNU GCC + TBB](https://gcc.gnu.org/) as stdpar implementation */
     gnu_tbb
 };

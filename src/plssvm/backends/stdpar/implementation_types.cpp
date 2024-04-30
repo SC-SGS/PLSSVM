@@ -24,8 +24,8 @@ std::ostream &operator<<(std::ostream &out, const implementation_type impl) {
             return out << "adaptivecpp";
         case implementation_type::nvhpc:
             return out << "nvhpc";
-        case implementation_type::dpcpp:
-            return out << "dpcpp";
+        case implementation_type::intel_llvm:
+            return out << "intel_llvm";
         case implementation_type::gnu_tbb:
             return out << "gnu_tbb";
     }
@@ -41,8 +41,8 @@ std::istream &operator>>(std::istream &in, implementation_type &impl) {
         impl = implementation_type::adaptivecpp;
     } else if (str == "nvhpc" || str == "nvcpp" || str == "nvc++") {
         impl = implementation_type::nvhpc;
-    } else if (str == "dpcpp" || str == "dpc++") {
-        impl = implementation_type::dpcpp;
+    } else if (str == "intel_llvm" || str == "icpx" || str == "dpcpp" || str == "dpc++") {
+        impl = implementation_type::intel_llvm;
     } else if (str == "gnu_tbb" || str == "gcc_tbb" || str == "g++_tbb" || str == "gnu" || str == "gcc" || str == "g++") {
         impl = implementation_type::gnu_tbb;
     } else {
