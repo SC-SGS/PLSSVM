@@ -43,7 +43,7 @@ if (CMAKE_CXX_COMPILER_ID STREQUAL "NVHPC")
 elseif (CMAKE_CXX_COMPILER_ID STREQUAL "IntelLLVM")
     # check for Intel's icpx compiler
     check_cxx_compiler_flag("-fsycl-pstl-offload" PLSSVM_HAS_INTEL_LLVM_STDPAR_FLAG)
-    if (NOT PLSSVM_HAS_INTEL_LLVM_STDPAR_FLAG) # TODO: check whether this works!
+    if (NOT PLSSVM_HAS_INTEL_LLVM_STDPAR_FLAG)
         # the target offload flag couldn't be found!
         if (PLSSVM_ENABLE_STDPAR_BACKEND MATCHES "ON")
             message(SEND_ERROR "Found requested stdpar backend using IntelLLVM, but the offloading compiler flag isn't supported!")
@@ -180,15 +180,18 @@ elseif (PLSSVM_STDPAR_BACKEND STREQUAL "IntelLLVM")
     # set global IntelLLVM compiler flags
     if (DEFINED PLSSVM_CPU_TARGET_ARCHS)
         message(STATUS "CPU target platform provided, setting: \"-fsycl-pstl-offload=cpu\"")
-        set_local_and_parent(PLSSVM_STDPAR_BACKEND_COMPILER_FLAG -fsycl -fsycl-pstl-offload=cpu -qopenmp) # TODO: qopenmp main CMake
+        set_local_and_parent(PLSSVM_STDPAR_BACKEND_COMPILER_FLAG -fsycl -fsycl-pstl-offload=cpu)
     elseif (DEFINED PLSSVM_NVIDIA_TARGET_ARCHS)
         message(STATUS "A GPU target platform provided, setting: \"-fsycl-pstl-offload=gpu\"")
-        set_local_and_parent(PLSSVM_STDPAR_BACKEND_COMPILER_FLAG -fsycl -fsycl-pstl-offload=gpu -qopenmp) # TODO: qopenmp main CMake
+        set_local_and_parent(PLSSVM_STDPAR_BACKEND_COMPILER_FLAG -fsycl -fsycl-pstl-offload=gpu)
+    endif ()
+    if (PLSSVM_ENABLE_FAST_MATH)
+        set_local_and_parent(PLSSVM_STDPAR_BACKEND_COMPILER_FLAG ${PLSSVM_STDPAR_BACKEND_COMPILER_FLAG} -ffast-math)
     endif ()
     separate_arguments(PLSSVM_STDPAR_BACKEND_COMPILER_FLAG UNIX_COMMAND ${PLSSVM_STDPAR_BACKEND_COMPILER_FLAG})
     
     # Intel LLVM must be linked against oneDPL
-    find_package(oneDPL REQUIRED)
+    find_package(oneDPL REQUIRED) # causes -qopenmp warning
     target_link_libraries(${PLSSVM_STDPAR_BACKEND_LIBRARY_NAME} PUBLIC oneDPL)
     target_link_libraries(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC oneDPL)
     
