@@ -53,6 +53,16 @@ elseif (CMAKE_CXX_COMPILER_ID STREQUAL "IntelLLVM")
         message(CHECK_FAIL "skipped")
         return()
     endif ()
+    # for Intel LLVM either CPU or any GPU target may be set, but not both!
+    if (DEFINED PLSSVM_CPU_TARGET_ARCHS AND (DEFINED PLSSVM_NVIDIA_TARGET_ARCHS OR DEFINED PLSSVM_AMD_TARGET_ARCHS OR DEFINED PLSSVM_INTEL_TARGET_ARCHS))
+        if (PLSSVM_ENABLE_STDPAR_BACKEND MATCHES "ON")
+            message(SEND_ERROR "Found requested stdpar backend using IntelLLVM, but both \"cpu\" and at least one GPU target was specified!")
+        else ()
+            message(STATUS "Found stdpar backend using NVHPC, but both \"cpu\" and at least one GPU target was specified!")
+        endif ()
+        message(CHECK_FAIL "skipped")
+        return()
+    endif ()
     # IntelLLVM found
     message(CHECK_PASS "found IntelLLVM")
     set(PLSSVM_STDPAR_BACKEND "IntelLLVM")
@@ -157,11 +167,17 @@ if (PLSSVM_STDPAR_BACKEND STREQUAL "NVHPC")
     target_compile_options(${PLSSVM_STDPAR_BACKEND_LIBRARY_NAME} PUBLIC ${PLSSVM_STDPAR_BACKEND_COMPILER_FLAG})
     target_compile_options(${PLSSVM_ALL_LIBRARY_NAME} INTERFACE ${PLSSVM_STDPAR_BACKEND_COMPILER_FLAG})
     
-    # set NHPC compile definition
+    # set NVHPC compile definition
     target_compile_definitions(${PLSSVM_STDPAR_BACKEND_LIBRARY_NAME} PRIVATE PLSSVM_STDPAR_BACKEND_HAS_NVHPC)
 elseif (PLSSVM_STDPAR_BACKEND STREQUAL "IntelLLVM")
     # set global IntelLLVM compiler flags
-    set_local_and_parent(PLSSVM_STDPAR_BACKEND_COMPILER_FLAG -fsycl -fsycl-pstl-offload=gpu -qopenmp) # TODO: qopenmp main CMake
+    if (DEFINED PLSSVM_CPU_TARGET_ARCHS)
+        message(STATUS "CPU target platform provided, setting: \"-fsycl-pstl-offload=cpu\"")
+        set_local_and_parent(PLSSVM_STDPAR_BACKEND_COMPILER_FLAG -fsycl -fsycl-pstl-offload=cpu -qopenmp) # TODO: qopenmp main CMake
+    elseif (DEFINED PLSSVM_NVIDIA_TARGET_ARCHS)
+        message(STATUS "A GPU target platform provided, setting: \"-fsycl-pstl-offload=gpu\"")
+        set_local_and_parent(PLSSVM_STDPAR_BACKEND_COMPILER_FLAG -fsycl -fsycl-pstl-offload=gpu -qopenmp) # TODO: qopenmp main CMake
+    endif ()
     separate_arguments(PLSSVM_STDPAR_BACKEND_COMPILER_FLAG UNIX_COMMAND ${PLSSVM_STDPAR_BACKEND_COMPILER_FLAG})
     
     # Intel LLVM must be linked against oneDPL
