@@ -20,6 +20,10 @@
     #include "sycl/sycl.hpp"  // override std::* math functions  // TODO: remove after AdaptiveCpp fast-math bug is fixed (https://github.com/AdaptiveCpp/AdaptiveCpp/issues/1435)
 #endif
 
+#if defined(PLSSVM_STDPAR_BACKEND_HAS_INTEL_LLVM)
+    #include "sycl/sycl.hpp"  // override std::* math functions
+#endif
+
 #include <cmath>   // std::abs, std::pow, std::exp, std::tanh
 #include <limits>  // std::numeric_limits::min
 
@@ -60,7 +64,7 @@ template <>
  */
 template <>
 [[nodiscard]] inline real_type feature_reduce<kernel_function_type::laplacian>(const real_type val1, const real_type val2) {
-#if defined(PLSSVM_USE_FAST_MATH) && defined(PLSSVM_STDPAR_BACKEND_HAS_ACPP)
+#if (defined(PLSSVM_USE_FAST_MATH) && defined(PLSSVM_STDPAR_BACKEND_HAS_ACPP)) || defined(PLSSVM_STDPAR_BACKEND_HAS_INTEL_LLVM)
     return ::sycl::fabs(val1 - val2);
 #else
     return std::abs(val1 - val2);
@@ -111,7 +115,7 @@ template <>
  */
 template <>
 [[nodiscard]] inline real_type apply_kernel_function<kernel_function_type::polynomial>(const real_type value, const int degree, const real_type gamma, const real_type coef0) {
-#if defined(PLSSVM_USE_FAST_MATH) && defined(PLSSVM_STDPAR_BACKEND_HAS_ACPP)
+#if (defined(PLSSVM_USE_FAST_MATH) && defined(PLSSVM_STDPAR_BACKEND_HAS_ACPP)) || defined(PLSSVM_STDPAR_BACKEND_HAS_INTEL_LLVM)
     return ::sycl::pow(gamma * value + coef0, (real_type) degree);
 #else
     return std::pow(gamma * value + coef0, (real_type) degree);
@@ -126,7 +130,7 @@ template <>
  */
 template <>
 [[nodiscard]] inline real_type apply_kernel_function<kernel_function_type::rbf>(const real_type value, const real_type gamma) {
-#if defined(PLSSVM_USE_FAST_MATH) && defined(PLSSVM_STDPAR_BACKEND_HAS_ACPP)
+#if (defined(PLSSVM_USE_FAST_MATH) && defined(PLSSVM_STDPAR_BACKEND_HAS_ACPP)) || defined(PLSSVM_STDPAR_BACKEND_HAS_INTEL_LLVM)
     return ::sycl::exp(-gamma * value);
 #else
     return std::exp(-gamma * value);
@@ -142,7 +146,7 @@ template <>
  */
 template <>
 [[nodiscard]] inline real_type apply_kernel_function<kernel_function_type::sigmoid>(const real_type value, const real_type gamma, const real_type coef0) {
-#if defined(PLSSVM_USE_FAST_MATH) && defined(PLSSVM_STDPAR_BACKEND_HAS_ACPP)
+#if (defined(PLSSVM_USE_FAST_MATH) && defined(PLSSVM_STDPAR_BACKEND_HAS_ACPP)) || defined(PLSSVM_STDPAR_BACKEND_HAS_INTEL_LLVM)
     return ::sycl::tanh(gamma * value + coef0);
 #else
     return std::tanh(gamma * value + coef0);
@@ -157,7 +161,7 @@ template <>
  */
 template <>
 [[nodiscard]] inline real_type apply_kernel_function<kernel_function_type::laplacian>(const real_type value, const real_type gamma) {
-#if defined(PLSSVM_USE_FAST_MATH) && defined(PLSSVM_STDPAR_BACKEND_HAS_ACPP)
+#if (defined(PLSSVM_USE_FAST_MATH) && defined(PLSSVM_STDPAR_BACKEND_HAS_ACPP)) || defined(PLSSVM_STDPAR_BACKEND_HAS_INTEL_LLVM)
     return ::sycl::exp(-gamma * value);
 #else
     return std::exp(-gamma * value);
@@ -172,7 +176,7 @@ template <>
  */
 template <>
 [[nodiscard]] inline real_type apply_kernel_function<kernel_function_type::chi_squared>(const real_type value, const real_type gamma) {
-#if defined(PLSSVM_USE_FAST_MATH) && defined(PLSSVM_STDPAR_BACKEND_HAS_ACPP)
+#if (defined(PLSSVM_USE_FAST_MATH) && defined(PLSSVM_STDPAR_BACKEND_HAS_ACPP)) || defined(PLSSVM_STDPAR_BACKEND_HAS_INTEL_LLVM)
     return ::sycl::exp(-gamma * value);
 #else
     return std::exp(-gamma * value);
