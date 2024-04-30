@@ -31,7 +31,7 @@ std::pair<T, std::errc> convert_to_floating_point(const std::string_view str) {
         const std::string_view trimmed_str = trim_left(str);
 
         // convert string to value fo type T
-        T val;
+        T val{};
         const fast_float::from_chars_result res = fast_float::from_chars(trimmed_str.data(), trimmed_str.data() + trimmed_str.size(), val);
         return std::make_pair(val, res.ec);
     }
