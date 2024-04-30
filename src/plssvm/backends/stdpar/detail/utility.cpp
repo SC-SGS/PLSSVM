@@ -18,8 +18,8 @@
 
 #if defined(PLSSVM_STDPAR_BACKEND_HAS_ACPP)
     #include "plssvm/backends/SYCL/AdaptiveCpp/detail/utility.hpp"  // plssvm::adaptivecpp::detail::get_adaptivecpp_version_short
-#elif defined(PLSSVM_STDPAR_BACKEND_HAS_DPCPP)
-    #include "plssvm/backends/SYCL/AdaptiveCpp/detail/utility.hpp"  // plssvm::dpcpp::detail::{get_dpcpp_version, get_dpcpp_timestamp_version}
+#elif defined(PLSSVM_STDPAR_BACKEND_HAS_INTEL_LLVM)
+    #include "plssvm/backends/SYCL/DPCPP/detail/utility.hpp"  // plssvm::dpcpp::detail::{get_dpcpp_version, get_dpcpp_timestamp_version}
 #endif
 
 #include "fmt/core.h"  // fmt::format
