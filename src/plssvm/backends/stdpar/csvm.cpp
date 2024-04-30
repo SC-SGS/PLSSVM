@@ -113,7 +113,7 @@ void csvm::init(const target_platform target) {
 
 #if defined(PLSSVM_STDPAR_BACKEND_HAS_ACPP)
     const std::string_view env_mask{ "ACPP_VISIBILITY_MASK" };
-#elif defined(PLSSVM_STDPAR_BACKEND_HAS_ACPP)
+#elif defined(PLSSVM_STDPAR_BACKEND_HAS_INTEL_LLVM)
     const std::string_view env_mask{ "ONEAPI_DEVICE_SELECTOR" };  // TODO: check mechanism
 #endif
 
