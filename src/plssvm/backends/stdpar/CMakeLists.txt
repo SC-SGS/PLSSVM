@@ -131,8 +131,6 @@ add_library(${PLSSVM_STDPAR_BACKEND_LIBRARY_NAME} SHARED ${PLSSVM_STDPAR_SOURCES
 # link base library against stdpar library
 target_link_libraries(${PLSSVM_STDPAR_BACKEND_LIBRARY_NAME} PUBLIC ${PLSSVM_BASE_LIBRARY_NAME})
 
-# TODO: fast_math, openmp
-
 # only NVHPC and GNU GCC + TBB need the boost::atomic_ref
 if (PLSSVM_STDPAR_BACKEND STREQUAL "NVHPC" OR PLSSVM_STDPAR_BACKEND STREQUAL "GNU_TBB")
     ## try finding Boost atomic
@@ -223,8 +221,19 @@ elseif (PLSSVM_STDPAR_BACKEND STREQUAL "ACPP")
     # set AdaptiveCpp compile definition
     target_compile_definitions(${PLSSVM_STDPAR_BACKEND_LIBRARY_NAME} PRIVATE PLSSVM_STDPAR_BACKEND_HAS_ACPP)
 elseif (PLSSVM_STDPAR_BACKEND STREQUAL "GNU_TBB")
+    if (PLSSVM_ENABLE_FAST_MATH)
+        set_local_and_parent(PLSSVM_STDPAR_BACKEND_COMPILER_FLAG -ffast-math)
+    endif ()
+    
     # GNU GCC must be linked against TBB
     target_link_libraries(${PLSSVM_STDPAR_BACKEND_LIBRARY_NAME} PUBLIC TBB::tbb)
+    
+    # set compile options
+    if (PLSSVM_STDPAR_BACKEND_COMPILER_FLAG)
+        target_compile_options(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC ${PLSSVM_STDPAR_BACKEND_COMPILER_FLAG})
+        target_compile_options(${PLSSVM_STDPAR_BACKEND_LIBRARY_NAME} PUBLIC ${PLSSVM_STDPAR_BACKEND_COMPILER_FLAG})
+        target_compile_options(${PLSSVM_ALL_LIBRARY_NAME} INTERFACE ${PLSSVM_STDPAR_BACKEND_COMPILER_FLAG})
+    endif ()
     
     # set GNU GCC + TBB compile definition
     target_compile_definitions(${PLSSVM_STDPAR_BACKEND_LIBRARY_NAME} PRIVATE PLSSVM_STDPAR_BACKEND_HAS_GNU_TBB)
