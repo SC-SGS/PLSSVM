@@ -171,7 +171,6 @@ implementation_type csvm::get_implementation_type() const noexcept {
 #elif defined(PLSSVM_STDPAR_BACKEND_HAS_GNU_TBB)
     return implementation_type::gnu_tbb;
 #endif
-    ::plssvm::detail::unreachable();
 }
 
 //***************************************************//

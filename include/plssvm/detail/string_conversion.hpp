@@ -99,7 +99,6 @@ template <typename T, typename Exception = std::runtime_error, PLSSVM_REQUIRES((
         }
         return val;
     }
-    unreachable();
 }
 
 /**
