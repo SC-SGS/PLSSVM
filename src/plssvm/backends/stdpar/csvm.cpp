@@ -167,7 +167,7 @@ implementation_type csvm::get_implementation_type() const noexcept {
 #elif defined(PLSSVM_STDPAR_BACKEND_HAS_NVHPC)
     return implementation_type::nvhpc;
 #elif defined(PLSSVM_STDPAR_BACKEND_HAS_INTEL_LLVM)
-    return implementation_type::dpcpp;
+    return implementation_type::intel_llvm;
 #elif defined(PLSSVM_STDPAR_BACKEND_HAS_GNU_TBB)
     return implementation_type::gnu_tbb;
 #endif
