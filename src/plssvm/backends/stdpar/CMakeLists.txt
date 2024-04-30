@@ -153,8 +153,12 @@ if (PLSSVM_STDPAR_BACKEND STREQUAL "NVHPC")
         
         target_compile_definitions(${PLSSVM_STDPAR_BACKEND_LIBRARY_NAME} PRIVATE PLSSVM_STDPAR_BACKEND_NVHPC_CPU)
     elseif (DEFINED PLSSVM_NVIDIA_TARGET_ARCHS)
-        message(STATUS "NVIDIA GPU target platform provided, setting: \"-stdpar=gpu -gpu=fastmath\"")
-        set_local_and_parent(PLSSVM_STDPAR_BACKEND_COMPILER_FLAG -stdpar=gpu -gpu=fastmath)
+        message(STATUS "NVIDIA GPU target platform provided, setting: \"-stdpar=gpu\"")
+        set_local_and_parent(PLSSVM_STDPAR_BACKEND_COMPILER_FLAG -stdpar=gpu)
+        
+        if (PLSSVM_ENABLE_FAST_MATH)
+            set_local_and_parent(PLSSVM_STDPAR_BACKEND_COMPILER_FLAG ${PLSSVM_STDPAR_BACKEND_COMPILER_FLAG} -gpu=fastmath)
+        endif ()
         
         target_compile_definitions(${PLSSVM_STDPAR_BACKEND_LIBRARY_NAME} PRIVATE PLSSVM_STDPAR_BACKEND_NVHPC_GPU)
     endif ()
