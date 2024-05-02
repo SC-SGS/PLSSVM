@@ -184,7 +184,7 @@ elseif (PLSSVM_STDPAR_BACKEND STREQUAL "IntelLLVM")
         if (PLSSVM_NUM_CPU_TARGET_ARCHS EQUAL 1)
             set_local_and_parent(PLSSVM_STDPAR_BACKEND_COMPILER_FLAG ${PLSSVM_STDPAR_BACKEND_COMPILER_FLAG} -Xsycl-target-backend=spir64_x86_64 "-march=${PLSSVM_CPU_TARGET_ARCHS}")
         endif ()
-    elseif (DEFINED PLSSVM_NVIDIA_TARGET_ARCHS)
+    else ()
         message(STATUS "A GPU target platform provided, setting: \"-fsycl-pstl-offload=gpu\"")
         set_local_and_parent(PLSSVM_STDPAR_BACKEND_COMPILER_FLAG -fsycl -fsycl-pstl-offload=gpu)
         
