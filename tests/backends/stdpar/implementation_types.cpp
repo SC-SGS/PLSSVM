@@ -19,19 +19,38 @@
 // check whether the plssvm::stdpar::implementation_type -> std::string conversions are correct
 TEST(stdparImplementationType, to_string) {
     // check conversions to std::string
+    EXPECT_CONVERSION_TO_STRING(plssvm::stdpar::implementation_type::nvhpc, "nvhpc");
+    EXPECT_CONVERSION_TO_STRING(plssvm::stdpar::implementation_type::intel_llvm, "intel_llvm");
     EXPECT_CONVERSION_TO_STRING(plssvm::stdpar::implementation_type::adaptivecpp, "adaptivecpp");
+    EXPECT_CONVERSION_TO_STRING(plssvm::stdpar::implementation_type::gnu_tbb, "gnu_tbb");
 }
 
 TEST(stdparImplementationType, to_string_unknown) {
     // check conversions to std::string from unknown implementation_type
-    EXPECT_CONVERSION_TO_STRING(static_cast<plssvm::stdpar::implementation_type>(1), "unknown");
+    EXPECT_CONVERSION_TO_STRING(static_cast<plssvm::stdpar::implementation_type>(4), "unknown");
 }
 
 // check whether the std::string -> plssvm::stdpar::implementation_type conversions are correct
 TEST(stdparImplementationType, from_string) {
     // check conversion from std::string
+    EXPECT_CONVERSION_FROM_STRING("NVHPC", plssvm::stdpar::implementation_type::nvhpc);
+    EXPECT_CONVERSION_FROM_STRING("nvcpp", plssvm::stdpar::implementation_type::nvhpc);
+    EXPECT_CONVERSION_FROM_STRING("nvc++", plssvm::stdpar::implementation_type::nvhpc);
+
+    EXPECT_CONVERSION_FROM_STRING("intel_llvm", plssvm::stdpar::implementation_type::intel_llvm);
+    EXPECT_CONVERSION_FROM_STRING("icpx", plssvm::stdpar::implementation_type::intel_llvm);
+    EXPECT_CONVERSION_FROM_STRING("dpcpp", plssvm::stdpar::implementation_type::intel_llvm);
+    EXPECT_CONVERSION_FROM_STRING("dpc++", plssvm::stdpar::implementation_type::intel_llvm);
+
     EXPECT_CONVERSION_FROM_STRING("AdaptiveCpp", plssvm::stdpar::implementation_type::adaptivecpp);
-    EXPECT_CONVERSION_FROM_STRING("ADAPTIVECPP", plssvm::stdpar::implementation_type::adaptivecpp);
+    EXPECT_CONVERSION_FROM_STRING("ACPP", plssvm::stdpar::implementation_type::adaptivecpp);
+
+    EXPECT_CONVERSION_FROM_STRING("gnu_tbb", plssvm::stdpar::implementation_type::gnu_tbb);
+    EXPECT_CONVERSION_FROM_STRING("gcc_tbb", plssvm::stdpar::implementation_type::gnu_tbb);
+    EXPECT_CONVERSION_FROM_STRING("g++_tbb", plssvm::stdpar::implementation_type::gnu_tbb);
+    EXPECT_CONVERSION_FROM_STRING("GNU", plssvm::stdpar::implementation_type::gnu_tbb);
+    EXPECT_CONVERSION_FROM_STRING("GCC", plssvm::stdpar::implementation_type::gnu_tbb);
+    EXPECT_CONVERSION_FROM_STRING("g++", plssvm::stdpar::implementation_type::gnu_tbb);
 }
 
 TEST(stdparImplementationType, from_string_unknown) {
