@@ -24,12 +24,12 @@ namespace plssvm::stdpar {
  * @brief Enum class for all supported stdpar implementations.
  */
 enum class implementation_type {
-    /** Use [AdaptiveCpp](https://github.com/AdaptiveCpp/AdaptiveCpp) (formerly known as hipSYCL) as stdpar implementation. */
-    adaptivecpp,
     /** Use [nvhpc (nvc++)](https://developer.nvidia.com/hpc-sdk) as stdpar implementation. */
     nvhpc,
     /** Use [icpx](https://www.intel.com/content/www/us/en/developer/tools/oneapi/dpc-compiler.html) as stdpar implementation. */
     intel_llvm,
+    /** Use [AdaptiveCpp](https://github.com/AdaptiveCpp/AdaptiveCpp) (formerly known as hipSYCL) as stdpar implementation. */
+    adaptivecpp,
     /** Use [GNU GCC + TBB](https://gcc.gnu.org/) as stdpar implementation */
     gnu_tbb
 };
