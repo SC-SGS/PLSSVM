@@ -57,7 +57,8 @@ The main highlights of our SVM implementations are:
 1. Drop-in replacement for LIBSVM's `svm-train`, `svm-predict`, and `svm-scale` (some features currently not implemented).
 2. Support of multiple different programming frameworks for parallelisation (also called backends in our PLSSVM implementation) which allows us to target GPUs and CPUs from different vendors like NVIDIA, AMD, or Intel:
    - [OpenMP](https://www.openmp.org/)
-   - stdpar TODO
+   - [stdpar](https://en.cppreference.com/w/cpp/algorithm) (supported implementations are [nvc++](https://developer.nvidia.com/hpc-sdk) from NVIDIA's HPC SDK, [icpx](https://www.intel.com/content/www/us/en/developer/tools/oneapi/dpc-compiler.html) as Intel's oneAPI compiler, [AdaptiveCpp](https://github.com/AdaptiveCpp/AdaptiveCpp), and [GNU GCC](https://gcc.gnu.org/) using TBB). <br>
+     **Note**: due to the nature of the used USM mechanics in the `stdpar` implementations, the `stdpar` backend **can't** be enabled together with **any** other backend!
    - [CUDA](https://developer.nvidia.com/cuda-zone)
    - [HIP](https://github.com/ROCm-Developer-Tools/HIP) (only tested on AMD GPUs)
    - [OpenCL](https://www.khronos.org/opencl/)
@@ -75,7 +76,7 @@ The main highlights of our SVM implementations are:
 5. Multi-class classification available via one vs. all (also one vs. rest or OAA) and one vs. one (also OAO):
    - OAA: one huge classification task where our CG algorithm solves a system of linear equations with multiple right-hand sides. The resulting model file is **not** compatible with LIBSVM.
    - OAO: constructs many but smaller binary classifications. The resulting model file is **fully** compatible with LIBSVM.
-6. Multi-GPU support for **all** kernel functions and GPU backends for `fit` as well as `predict/score`.
+6. Multi-GPU support for **all** kernel functions and GPU backends for `fit` as well as `predict/score` (**note**: no multi-GPU support for the stdpar backend even if run on a GPU!).
 7. Python bindings as drop-in replacement for `sklearn.SVC` (some features currently not implemented).
 
 
@@ -118,7 +119,17 @@ Additional dependencies for the OpenCL backend:
 
 Additional dependencies for the SYCL backend:
 
-- the code must be compiled with a SYCL capable compiler; currently tested with [DPC++](https://github.com/intel/llvm) and [AdaptiveCpp](https://github.com/AdaptiveCpp/AdaptiveCpp)
+- the code must be compiled with a SYCL capable compiler; currently supported are [DPC++](https://github.com/intel/llvm) and [AdaptiveCpp](https://github.com/AdaptiveCpp/AdaptiveCpp)
+
+Additional dependencies for the stdpar backend:
+
+- the code must be compiled with a stdpar capable compiler; currently supported are [nvc++](https://developer.nvidia.com/hpc-sdk), [icpx](https://www.intel.com/content/www/us/en/developer/tools/oneapi/dpc-compiler.html), [AdaptiveCpp](https://github.com/AdaptiveCpp/AdaptiveCpp), and [GNU GCC](https://gcc.gnu.org/))
+- depending on the used stdpar implementation, additional dependencies are required:
+    
+    - `nvc++`: [Boost ≥ 1.73.0](https://www.boost.org/) with the `atomic` library enabled and a CUDA SDK
+    - `icpx`: Intel's [oneDPL](https://www.intel.com/content/www/us/en/developer/tools/oneapi/dpc-library.html) library
+    - `AdaptiveCpp`: Intel's [TBB](https://github.com/wjakob/tbb) library
+    - `GNU GCC`: [Boost ≥ 1.73.0](https://www.boost.org/) with the `atomic` library enabled and Intel's [TBB](https://github.com/wjakob/tbb) library
 
 Additional dependencies if `PLSSVM_ENABLE_TESTING` and `PLSSVM_GENERATE_TEST_FILE` are both set to `ON`:
 
@@ -308,6 +319,10 @@ If more than one SYCL implementation is available the environment variables `PLS
 
 - `PLSSVM_SYCL_BACKEND_PREFERRED_IMPLEMENTATION` (`dpcpp`|`adaptivecpp`): specify the preferred SYCL implementation if the `sycl_implementation_type` option is set to `automatic`; additional the specified SYCL implementation is used in the `plssvm::sycl` namespace, the other implementations are available in the `plssvm::dpcpp` and `plssvm::adaptivecpp` namespace respectively
 
+If the stdpar backend is available, an additional options can be set.
+
+- `PLSSVM_STDPAR_BACKEND_IMPLEMENTATION` (default: `AUTO`): explicitly specify the used stdpar implementation; must be one of: `AUTO`, `NVHPC`, `IntelLLVM`, `ACPP`, `GNU_TBB`.
+
 ### Running the Tests
 
 To run the tests after building the library (with `PLSSVM_ENABLE_TESTING` set to `ON`) use:
@@ -481,6 +496,7 @@ The `--target_platform=automatic` option works for the different backends as fol
 - `HIP`: always selects an AMD GPU (if no AMD GPU is available, throws an exception)
 - `OpenCL`: tries to find available devices in the following order: NVIDIA GPUs 🠦 AMD GPUs 🠦 Intel GPUs 🠦 CPU
 - `SYCL`: tries to find available devices in the following order: NVIDIA GPUs 🠦 AMD GPUs 🠦 Intel GPUs 🠦 CPU
+- `stdpar`: target device must be selected at compile time (using `PLSSVM_TARGET_PLATFORMS`) or using environment variables at runtime
 
 The `--sycl_kernel_invocation_type` and `--sycl_implementation_type` flags are only used if the `--backend` is `sycl`, otherwise a warning is emitted on `stderr`.
 If the `--sycl_kernel_invocation_type` is `automatic`, the `nd_range` invocation type is currently always used.
@@ -499,7 +515,7 @@ LS-SVM with multiple (GPU-)backends
 Usage:
   ./plssvm-predict [OPTION...] test_file model_file [output_file]
 
-  -b, --backend arg             choose the backend: automatic|openmp|cuda|hip|opencl|sycl (default: automatic)
+  -b, --backend arg             choose the backend: automatic|openmp|cuda|hip|opencl|sycl|stdpar (default: automatic)
   -p, --target_platform arg     choose the target platform: automatic|cpu|gpu_nvidia|gpu_amd|gpu_intel (default: automatic)
       --sycl_implementation_type arg
                                 choose the SYCL implementation to be used in the SYCL backend: automatic|dpcpp|adaptivecpp (default: automatic)
