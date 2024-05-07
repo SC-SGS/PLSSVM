@@ -39,7 +39,6 @@ endif ()
 find_package(Boost 1.73.0 REQUIRED COMPONENTS atomic)
 message(STATUS "Found Boost atomic version ${Boost_VERSION}.")
 target_link_libraries(${PLSSVM_STDPAR_BACKEND_LIBRARY_NAME} PUBLIC Boost::atomic)
-target_compile_definitions(${PLSSVM_BASE_LIBRARY_NAME} PRIVATE PLSSVM_boost_VERSION="${Boost_VERSION}")
 
 if (PLSSVM_ENABLE_FAST_MATH)
     set_local_and_parent(PLSSVM_STDPAR_BACKEND_COMPILER_FLAG -ffast-math)
@@ -56,4 +55,5 @@ if (PLSSVM_STDPAR_BACKEND_COMPILER_FLAG)
 endif ()
 
 # set GNU GCC + TBB compile definition
+target_compile_definitions(${PLSSVM_BASE_LIBRARY_NAME} PRIVATE PLSSVM_STDPAR_BACKEND_HAS_GNU_TBB)
 target_compile_definitions(${PLSSVM_STDPAR_BACKEND_LIBRARY_NAME} PRIVATE PLSSVM_STDPAR_BACKEND_HAS_GNU_TBB)

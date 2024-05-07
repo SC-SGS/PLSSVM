@@ -46,7 +46,6 @@ endif ()
 find_package(Boost 1.73.0 REQUIRED COMPONENTS atomic)
 message(STATUS "Found Boost atomic version ${Boost_VERSION}.")
 target_link_libraries(${PLSSVM_STDPAR_BACKEND_LIBRARY_NAME} PUBLIC Boost::atomic)
-target_compile_definitions(${PLSSVM_BASE_LIBRARY_NAME} PRIVATE PLSSVM_boost_VERSION="${Boost_VERSION}")
 
 # set global NVHPC compiler flags
 if (DEFINED PLSSVM_CPU_TARGET_ARCHS)
@@ -80,4 +79,5 @@ target_compile_options(${PLSSVM_STDPAR_BACKEND_LIBRARY_NAME} PUBLIC ${PLSSVM_STD
 target_compile_options(${PLSSVM_ALL_LIBRARY_NAME} INTERFACE ${PLSSVM_STDPAR_BACKEND_COMPILER_FLAG})
 
 # set NVHPC compile definition
+target_compile_definitions(${PLSSVM_BASE_LIBRARY_NAME} PRIVATE PLSSVM_STDPAR_BACKEND_HAS_NVHPC)
 target_compile_definitions(${PLSSVM_STDPAR_BACKEND_LIBRARY_NAME} PRIVATE PLSSVM_STDPAR_BACKEND_HAS_NVHPC)
