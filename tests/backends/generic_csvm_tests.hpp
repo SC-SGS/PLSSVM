@@ -878,7 +878,7 @@ TYPED_TEST_P(GenericCSVMSolverKernelFunction, assemble_kernel_matrix_minimal) {
 
     // automatic solver type not permitted
     if constexpr (solver == plssvm::solver_type::automatic) {
-#if defined(PLSSVM_ASSERT_ENABLED)
+#if defined(PLSSVM_ASSERT_ENABLED) && defined(PLSSVM_DEATH_TESTS_ENABLED)
         EXPECT_DEATH(std::ignore = svm.assemble_kernel_matrix(solver, params, data, q_red, QA_cost), "An explicit solver type must be provided instead of solver_type::automatic!");
 #else
         SUCCEED() << "Solver type is automatic, but assertions are disabled!";
@@ -988,7 +988,7 @@ TYPED_TEST_P(GenericCSVMSolverKernelFunction, assemble_kernel_matrix) {
 
     // automatic solver type not permitted
     if constexpr (solver == plssvm::solver_type::automatic) {
-#if defined(PLSSVM_ASSERT_ENABLED)
+#if defined(PLSSVM_ASSERT_ENABLED) && defined(PLSSVM_DEATH_TESTS_ENABLED)
         EXPECT_DEATH(std::ignore = svm.assemble_kernel_matrix(solver, params, data, q_red, QA_cost), "An explicit solver type must be provided instead of solver_type::automatic!");
 #else
         SUCCEED() << "Solver type is automatic, but assertions are disabled!";

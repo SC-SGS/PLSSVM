@@ -198,6 +198,7 @@ if (PLSSVM_ENABLE_ASSERTS OR NOT "${PLSSVM_CMAKE_CXX_FLAGS}" MATCHES ".*NDEBUG.*
     # assertions are enabled -> enable Google death tests
     message(STATUS "Enabling GTest's death tests.")
     set(PLSSVM_ENABLE_DEATH_TESTS ON)
+    target_compile_definitions(${PLSSVM_BASE_TEST_LIBRARY_NAME} PUBLIC PLSSVM_DEATH_TESTS_ENABLED)
 else ()
     # assertions are disabled -> disable Google death tests
     message(STATUS "Disabling GTest's death tests.")
