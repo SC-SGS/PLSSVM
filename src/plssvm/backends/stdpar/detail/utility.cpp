@@ -62,7 +62,7 @@ std::string get_stdpar_version() {
     return fmt::format("{}.{}.{}", __NVCOMPILER_MAJOR__, __NVCOMPILER_MINOR__, __NVCOMPILER_PATCHLEVEL__);
 #endif
 #elif defined(PLSSVM_STDPAR_BACKEND_HAS_INTEL_LLVM)
-    return fmt::format("{}; {}", plssvm::dpcpp::detail::get_dpcpp_version(), plssvm::dpcpp::detail::get_dpcpp_timestamp_version());
+    return fmt::format("{}", __VERSION__);
 #elif defined(PLSSVM_STDPAR_BACKEND_HAS_GNU_TBB)
     return fmt::format("{}.{}.{}", __GNUC__, __GNUC_MINOR__, __GNUC_PATCHLEVEL__);
 #else
