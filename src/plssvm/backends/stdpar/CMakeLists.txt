@@ -83,7 +83,9 @@ else ()
 endif ()
 
 # set potential compiler flags in parent scope
-set_local_and_parent(PLSSVM_STDPAR_BACKEND_COMPILER_FLAG ${PLSSVM_STDPAR_BACKEND_COMPILER_FLAG})
+if (PLSSVM_STDPAR_BACKEND_COMPILER_FLAG)
+    set_local_and_parent(PLSSVM_STDPAR_BACKEND_COMPILER_FLAG ${PLSSVM_STDPAR_BACKEND_COMPILER_FLAG})
+endif ()
 set_local_and_parent(PLSSVM_STDPAR_BACKEND ${PLSSVM_STDPAR_BACKEND})
 
 # link base library against stdpar library
