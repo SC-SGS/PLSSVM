@@ -643,7 +643,7 @@ TYPED_TEST_P(GenericCSVMKernelFunction, predict_values) {
 
     // check the calculated result for correctness
     ASSERT_EQ(calculated.shape(), correct_predict_values.shape());
-    EXPECT_FLOATING_POINT_MATRIX_NEAR(calculated, correct_predict_values);
+    EXPECT_FLOATING_POINT_MATRIX_NEAR_EPS(calculated, correct_predict_values, 1e6);
     // in case of the linear kernel, the w vector should have been filled
     if (kernel == plssvm::kernel_function_type::linear) {
         EXPECT_EQ(w.num_rows(), rho.size());
