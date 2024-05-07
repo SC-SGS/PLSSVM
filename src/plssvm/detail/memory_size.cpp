@@ -23,16 +23,16 @@ std::ostream &operator<<(std::ostream &out, const memory_size mem) {
     // make custom memory size literals available
     using namespace literals;
     // get the number of bytes as decimal value
-    const auto val = static_cast<long double>(mem.num_bytes());
+    const auto val = static_cast<double>(mem.num_bytes());
     // output the value together with the correct binary memory unit suffix
     if (mem >= 1.0_TiB) {
-        out << fmt::format("{:.2f} TiB", val / 1024L / 1024L / 1024L / 1024L);
+        out << fmt::format("{:.2f} TiB", val / 1024.0 / 1024.0 / 1024.0 / 1024.0);
     } else if (mem >= 1.0_GiB) {
-        out << fmt::format("{:.2f} GiB", val / 1024L / 1024L / 1024L);
+        out << fmt::format("{:.2f} GiB", val / 1024.0 / 1024.0 / 1024.0);
     } else if (mem >= 1.0_MiB) {
-        out << fmt::format("{:.2f} MiB", val / 1024L / 1024L);
+        out << fmt::format("{:.2f} MiB", val / 1024.0 / 1024.0);
     } else if (mem >= 1.0_KiB) {
-        out << fmt::format("{:.2f} KiB", val / 1024L);
+        out << fmt::format("{:.2f} KiB", val / 1024.0);
     } else {
         out << fmt::format("{} B", mem.num_bytes());
     }

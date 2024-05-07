@@ -803,7 +803,7 @@ std::tuple<aos_matrix<real_type>, std::vector<real_type>, unsigned long long> cs
                     "  - usable device memory (with safety margin of min({0} %, {1}): {5}\n"
                     "  - maximum memory needed (cg_explicit): {6}\n"
                     "  - maximum memory needed (cg_implicit): {7}\n",
-                    percentual_safety_margin * 100.0L,
+                    static_cast<double>(percentual_safety_margin * 100.0L),
                     minimal_safety_margin,
                     detail::tracking_entry{ "solver", "system_memory", total_system_memory },
                     detail::tracking_entry{ "solver", "usable_system_memory_with_safety_margin", usable_system_memory },
