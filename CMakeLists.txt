@@ -383,6 +383,14 @@ endif ()
 get_target_property(PLSSVM_LINKED_BACKENDS ${PLSSVM_ALL_LIBRARY_NAME} INTERFACE_LINK_LIBRARIES)
 if (NOT PLSSVM_LINKED_BACKENDS)
     message(FATAL_ERROR "At least one backend must be available!")
+elseif (PLSSVM_STDPAR_BACKEND_LIBRARY_NAME AND PLSSVM_LINKED_BACKENDS MATCHES "${PLSSVM_STDPAR_BACKEND_LIBRARY_NAME}")
+    # count the occurrences of "plssvm-"
+    string(REGEX MATCHALL "plssvm-" PLSSVM_MATCHED_LINKED_BACKENDS "${PLSSVM_LINKED_BACKENDS}")
+    list(LENGTH PLSSVM_MATCHED_LINKED_BACKENDS PLSSVM_NUM_MATCHED_LINKED_BACKENDS)
+    # if plssvm-stdpar has been found and plssvm- occurred more than once, some other backend is present which is currently not supported!
+    if (PLSSVM_NUM_MATCHED_LINKED_BACKENDS GREATER 1)
+        message(FATAL_ERROR "Found the stdpar backend together with some other backend(s). This is currently not supported!\nTo fix this, either disable the stdpar backend or all other backends!")
+    endif ()
 endif ()
 
 ## link backends against executables
