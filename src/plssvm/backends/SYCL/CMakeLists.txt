@@ -9,7 +9,7 @@ include(CMakeDependentOption)
 list(APPEND CMAKE_MESSAGE_INDENT "SYCL:  ")
 
 
-message(CHECK_START "Checking for OpenCL platforms")
+message(CHECK_START "Checking for SYCL platforms")
 ########################################################################################################################
 ##                                         parse target platform information                                          ##
 ########################################################################################################################
