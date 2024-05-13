@@ -27,6 +27,24 @@ void csvm::init(const target_platform target) {
         throw backend_exception{ fmt::format("Invalid target platform '{}' for the nvhpc stdpar backend!", target) };
     }
 
+    switch (target) {
+        case target_platform::automatic:
+            break;
+        case target_platform::cpu:
+#if !defined(PLSSVM_HAS_CPU_TARGET)
+            throw backend_exception{ fmt::format("Requested target platform '{}' that hasn't been enabled using PLSSVM_TARGET_PLATFORMS!", target) };
+#endif
+            break;
+        case target_platform::gpu_nvidia:
+#if !defined(PLSSVM_HAS_NVIDIA_TARGET)
+            throw backend_exception{ fmt::format("Requested target platform '{}' that hasn't been enabled using PLSSVM_TARGET_PLATFORMS!", target) };
+#endif
+            break;
+        default:
+            // nothing to do
+            break;
+    }
+
     if (target == target_platform::automatic) {
         target_ = determine_default_target_platform();
     } else {

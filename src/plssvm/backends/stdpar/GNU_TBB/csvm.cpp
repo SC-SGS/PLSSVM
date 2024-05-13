@@ -26,6 +26,10 @@ void csvm::init(const target_platform target) {
     if (target != target_platform::automatic && target != target_platform::cpu) {
         throw backend_exception{ fmt::format("Invalid target platform '{}' for the gnu_tbb stdpar backend!", target) };
     }
+// the CPU target must be available
+#if !defined(PLSSVM_HAS_CPU_TARGET)
+    throw backend_exception{ "Requested target platform 'cpu' that hasn't been enabled using PLSSVM_TARGET_PLATFORMS!" };
+#endif
 
     if (target == target_platform::automatic) {
         // GNU TBB only runs on the CPU
