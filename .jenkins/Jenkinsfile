@@ -73,6 +73,11 @@ pipeline {
                             git clone https://github.com/spack/spack.git spack
                         fi
                         source $SGSSCRATCH/spack/share/spack/setup-env.sh
+                        if [[ ! -d  "$SGSSCRATCH/PLSSVM-spack" ]]; then
+                            cd $SGSSCRATCH
+                            git@github.com:vancraar/PLSSVM-spack.git PLSSVM-spack
+                            spack repo add $SGSSCRATCH/PLSSVM-spack
+                        fi
 
 
                         if  [ ! -f $SPACK_SYSTEM_CONFIG_PATH/compilers.yaml ]; then
