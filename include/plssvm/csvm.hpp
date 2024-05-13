@@ -570,7 +570,7 @@ std::vector<label_type> csvm::predict(const model<label_type> &model, const data
             // w is currently empty
             // initialize the w matrix and calculate it later!
             calculate_w = true;
-            (*model.w_ptr_) = soa_matrix<real_type>{ shape{ calculate_number_of_classifiers(classification_type::oao, num_classes), num_features } };
+            (*model.w_ptr_) = soa_matrix<real_type>{ shape{ calculate_number_of_classifiers(classification_type::oao, num_classes), num_features }, shape{ PADDING_SIZE, PADDING_SIZE } };
         }
 
         // perform one vs. one prediction
