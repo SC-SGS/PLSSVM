@@ -7,7 +7,7 @@
 message(CHECK_START "searching for AdaptiveCpp")
 
 # try finding Intel TBB
-find_package(TBB)
+find_package(TBB QUIET)
 
 if (CMAKE_CXX_COMPILER_ID STREQUAL "Clang" AND TBB_FOUND)
     # AdaptiveCpp also needs TBB

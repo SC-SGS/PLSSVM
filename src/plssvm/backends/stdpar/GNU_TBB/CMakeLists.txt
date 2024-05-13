@@ -7,7 +7,7 @@
 message(CHECK_START "searching for GNU GCC + TBB")
 
 # try finding Intel TBB
-find_package(TBB)
+find_package(TBB QUIET)
 
 if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND TBB_FOUND)
     # GNU GCC also needs TBB
