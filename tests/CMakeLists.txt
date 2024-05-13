@@ -192,6 +192,11 @@ if (PLSSVM_ENABLE_ASSERTS)
     message(STATUS "Enabling GTest's death tests.")
     set(PLSSVM_ENABLE_DEATH_TESTS ON)
     target_compile_definitions(${PLSSVM_BASE_TEST_LIBRARY_NAME} PUBLIC PLSSVM_DEATH_TESTS_ENABLED)
+    
+    # death tests are currently not supported for the stdpar implementations due to GoogleTest internal SegFaults
+    if (TARGET ${PLSSVM_STDPAR_BACKEND_LIBRARY_NAME})
+        message(FATAL_ERROR "GTest's death tests not supported with our stdpar backend. Please set \"PLSSVM_ENABLE_ASSERTS=OFF\"!")
+    endif ()
 else ()
     # assertions are disabled -> disable Google death tests
     message(STATUS "Disabling GTest's death tests.")
