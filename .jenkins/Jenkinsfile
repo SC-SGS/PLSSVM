@@ -270,11 +270,11 @@ pipeline {
                                         $([[ $BACKEND == OPENCL ]] && echo "+opencl" || echo "~opencl") \
                                         $([[ $BACKEND == HIPSYCL ]] && echo "+adaptivecpp" || echo "~adaptivecpp") \
                                         $([[ $BACKEND == DPCPP ]] && echo "+icpx" || echo "~icpx") \
-                                        +langauga_bindings \
+                                        +language_bindings \
                                         +test_file \
-                                        test_flie_num_classes=5 \
-                                        test_flie_num_data_points=$NUM_DATA_POINTS \
-                                        test_flie_num_features=$NUM_FEATURES \
+                                        test_file_num_classes=5 \
+                                        test_file_num_data_points=$NUM_DATA_POINTS \
+                                        test_file_num_features=$NUM_FEATURES \
                                         +asserts \
                                         build_type=$BUILD_TYPE
                                 '''
