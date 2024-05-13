@@ -125,7 +125,7 @@ if (DEFINED ENV{CLION_IDE} OR CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
     # also necessary for MSVC
     set(CMAKE_CXX_STANDARD 17)
 endif ()
-target_compile_features(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC cxx_std_20)
+target_compile_features(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC cxx_std_17)
 ## additional base library compile options
 target_compile_options(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC
                        $<$<COMPILE_LANGUAGE:CXX>:$<$<CXX_COMPILER_ID:GNU,Clang>:-Wall -Wextra -Wdouble-promotion -fno-common -Wshadow -Wcast-qual
