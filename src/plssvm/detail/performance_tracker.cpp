@@ -10,7 +10,7 @@
 
 #include "plssvm/constants.hpp"                          // plssvm::real_type, plssvm::THREAD_BLOCK_SIZE, plssvm::INTERNAL_BLOCK_SIZE, plssvm::FEATURE_BLOCK_SIZE, plssvm::PADDING_SIZE
 #include "plssvm/detail/arithmetic_type_name.hpp"        // plssvm::detail::arithmetic_type_name
-#include "plssvm/detail/assert.hpp"                      // PLSSVM_ASSERT, PLSSVM_ASSERT_ENABLED
+#include "plssvm/detail/assert.hpp"                      // PLSSVM_ASSERT
 #include "plssvm/detail/cmd/parser_predict.hpp"          // plssvm::detail::cmd::parser_predict
 #include "plssvm/detail/cmd/parser_scale.hpp"            // plssvm::detail::cmd::parser_scale
 #include "plssvm/detail/cmd/parser_train.hpp"            // plssvm::detail::cmd::parser_train
@@ -174,7 +174,7 @@ void performance_tracker::save(std::ostream &out) {
     constexpr std::string_view username{ "not available" };
 #endif
     // check whether asserts are enabled
-    constexpr bool assert_enabled = PLSSVM_IS_DEFINED(PLSSVM_ASSERT_ENABLED);
+    constexpr bool assert_enabled = PLSSVM_IS_DEFINED(PLSSVM_ENABLE_ASSERTS);
     // check whether LTO has been enabled
     constexpr bool lto_enabled = PLSSVM_IS_DEFINED(PLSSVM_LTO_SUPPORTED);
     // check whether fast-math has been enabled

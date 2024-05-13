@@ -259,7 +259,7 @@ The `[optional_options]` can be one or multiple of:
 **Attention:** at least one backend must be enabled and available!
 
 - `PLSSVM_ENABLE_FAST_MATH=ON|OFF` (default depending on `CMAKE_BUILD_TYPE`: `ON` for Release or RelWithDebInfo, `OFF` otherwise): enable `fast-math` compiler flags for all backends
-- `PLSSVM_ENABLE_ASSERTS=ON|OFF` (default: `OFF`): enables custom assertions regardless whether the `DEBUG` macro is defined or not
+- `PLSSVM_ENABLE_ASSERTS=ON|OFF` (default: `OFF`): enables custom assertions
 - `PLSSVM_USE_FLOAT_AS_REAL_TYPE=ON|OFF` (default: `OFF`): use `float` as real_type instead of `double`
 - `PLSSVM_THREAD_BLOCK_SIZE` (default: `8`): set a specific thread block size used in the GPU kernels (for fine-tuning optimizations)
 - `PLSSVM_INTERNAL_BLOCK_SIZE` (default: `4`): set a specific internal block size used in the GPU kernels (for fine-tuning optimizations)

@@ -340,7 +340,7 @@ model<label_type> csvm::fit(const data_set<label_type> &data, Args &&...named_ar
                   "The provided matrix must be padded with {}, but is padded with {}!",
                   shape{ PADDING_SIZE, PADDING_SIZE },
                   data.data().padding());
-#if defined(PLSSVM_ASSERT_ENABLED)
+#if defined(PLSSVM_ENABLE_ASSERTS)
     if (params_.kernel_type == kernel_function_type::chi_squared) {
         PLSSVM_ASSERT(std::all_of(data.data().data(), data.data().data() + data.data().size_padded(), [](const real_type val) { return val >= real_type{ 0.0 }; }),
                       "The chi-squared kernel is only well defined for non-negative values!");
@@ -505,7 +505,7 @@ std::vector<label_type> csvm::predict(const model<label_type> &model, const data
                   "The provided predict points must be padded with {}, but is padded with {}!",
                   shape{ PADDING_SIZE, PADDING_SIZE },
                   data.data().padding());
-#if defined(PLSSVM_ASSERT_ENABLED)
+#if defined(PLSSVM_ENABLE_ASSERTS)
     if (params_.kernel_type == kernel_function_type::chi_squared) {
         PLSSVM_ASSERT(std::all_of(data.data().data(), data.data().data() + data.data().size_padded(), [](const real_type val) { return val >= real_type{ 0.0 }; }),
                       "The chi-squared kernel is only well defined for non-negative values!");
