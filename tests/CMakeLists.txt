@@ -187,8 +187,7 @@ target_link_libraries(${PLSSVM_BASE_TEST_NAME} PRIVATE ${PLSSVM_BASE_TEST_LIBRAR
 
 # check whether death tests should be activated or not
 string(TOUPPER "${CMAKE_BUILD_TYPE}" PLSSVM_CMAKE_BUILD_TYPE_UPPER_CASE)
-set(PLSSVM_CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS_${PLSSVM_CMAKE_BUILD_TYPE_UPPER_CASE}}")
-if (PLSSVM_ENABLE_ASSERTS OR NOT "${PLSSVM_CMAKE_CXX_FLAGS}" MATCHES ".*NDEBUG.*")
+if (PLSSVM_ENABLE_ASSERTS)
     # assertions are enabled -> enable Google death tests
     message(STATUS "Enabling GTest's death tests.")
     set(PLSSVM_ENABLE_DEATH_TESTS ON)
