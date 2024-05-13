@@ -39,8 +39,8 @@ else ()
 endif ()
 
 # add stdpar implementation specific source file to library
-target_sources(${PLSSVM_STDPAR_BACKEND_LIBRARY_NAME} PRIVATE ${CMAKE_CURRENT_LIST_DIR}/csvm.cpp)
-target_sources(${PLSSVM_STDPAR_BACKEND_LIBRARY_NAME} PRIVATE ${CMAKE_CURRENT_LIST_DIR}/../../SYCL/DPCPP/detail/utility.cpp)
+append_local_and_parent(PLSSVM_STDPAR_SOURCES ${CMAKE_CURRENT_LIST_DIR}/csvm.cpp)
+append_local_and_parent(PLSSVM_STDPAR_SOURCES ${CMAKE_CURRENT_LIST_DIR}/../../SYCL/DPCPP/detail/utility.cpp)
 
 # set global IntelLLVM compiler flags
 if (DEFINED PLSSVM_CPU_TARGET_ARCHS)
@@ -68,17 +68,9 @@ separate_arguments(PLSSVM_STDPAR_BACKEND_COMPILER_FLAG UNIX_COMMAND ${PLSSVM_STD
 
 # Intel LLVM must be linked against oneDPL
 find_package(oneDPL REQUIRED) # causes -qopenmp warning
-target_link_libraries(${PLSSVM_STDPAR_BACKEND_LIBRARY_NAME} PUBLIC oneDPL)
+target_link_libraries(${PLSSVM_STDPAR_BACKEND_LIBRARY_INTERFACE} INTERFACE oneDPL)
 target_link_libraries(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC oneDPL)
-
-# set compile options
-target_link_options(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC ${PLSSVM_STDPAR_BACKEND_COMPILER_FLAG})
-target_link_options(${PLSSVM_STDPAR_BACKEND_LIBRARY_NAME} PUBLIC ${PLSSVM_STDPAR_BACKEND_COMPILER_FLAG})
-target_link_options(${PLSSVM_ALL_LIBRARY_NAME} INTERFACE ${PLSSVM_STDPAR_BACKEND_COMPILER_FLAG})
-target_compile_options(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC ${PLSSVM_STDPAR_BACKEND_COMPILER_FLAG})
-target_compile_options(${PLSSVM_STDPAR_BACKEND_LIBRARY_NAME} PUBLIC ${PLSSVM_STDPAR_BACKEND_COMPILER_FLAG})
-target_compile_options(${PLSSVM_ALL_LIBRARY_NAME} INTERFACE ${PLSSVM_STDPAR_BACKEND_COMPILER_FLAG})
 
 # set Intel LLVM compile definition
 target_compile_definitions(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC PLSSVM_STDPAR_BACKEND_HAS_INTEL_LLVM)
-target_compile_definitions(${PLSSVM_STDPAR_BACKEND_LIBRARY_NAME} PRIVATE PLSSVM_STDPAR_BACKEND_HAS_INTEL_LLVM)
+target_compile_definitions(${PLSSVM_STDPAR_BACKEND_LIBRARY_INTERFACE} INTERFACE PLSSVM_STDPAR_BACKEND_HAS_INTEL_LLVM)

@@ -7,7 +7,7 @@
 list(APPEND CMAKE_MESSAGE_INDENT "stdpar:  ")
 
 # check if stdpar can be enabled
-message(STATUS "Checking for stdpar backend")
+message(CHECK_START "Checking for stdpar backend")
 
 # explicitly set general sources
 set(PLSSVM_STDPAR_SOURCES
@@ -17,9 +17,9 @@ set(PLSSVM_STDPAR_SOURCES
     ${CMAKE_CURRENT_LIST_DIR}/implementation_types.cpp
 )
 
-# set target properties
-set_local_and_parent(PLSSVM_STDPAR_BACKEND_LIBRARY_NAME plssvm-stdpar)
-add_library(${PLSSVM_STDPAR_BACKEND_LIBRARY_NAME} SHARED ${PLSSVM_STDPAR_SOURCES}) # TODO: may break something else?
+# create interface library used in the sub-CMakeLists
+set(PLSSVM_STDPAR_BACKEND_LIBRARY_INTERFACE plssvm-stdpar-interface)
+add_library(${PLSSVM_STDPAR_BACKEND_LIBRARY_INTERFACE} INTERFACE)
 
 set(PLSSVM_STDPAR_BACKEND_IMPLEMENTATION AUTO CACHE STRING "Set the stdpar implementation that should be used.")
 set_property(CACHE PLSSVM_STDPAR_BACKEND_IMPLEMENTATION PROPERTY STRINGS AUTO NVHPC IntelLLVM ACPP GNU_TBB)
@@ -82,9 +82,17 @@ else ()
     return()
 endif ()
 
+# create real stdpar library
+set_local_and_parent(PLSSVM_STDPAR_BACKEND_LIBRARY_NAME plssvm-stdpar)
+add_library(${PLSSVM_STDPAR_BACKEND_LIBRARY_NAME} STATIC ${PLSSVM_STDPAR_SOURCES})
+
+# link against interface library
+target_link_libraries(${PLSSVM_STDPAR_BACKEND_LIBRARY_NAME} PUBLIC ${PLSSVM_STDPAR_BACKEND_LIBRARY_INTERFACE})
+
 # set potential compiler flags in parent scope
 if (PLSSVM_STDPAR_BACKEND_COMPILER_FLAG)
-    set_local_and_parent(PLSSVM_STDPAR_BACKEND_COMPILER_FLAG ${PLSSVM_STDPAR_BACKEND_COMPILER_FLAG})
+    message(STATUS "Adding stdpar ${PLSSVM_STDPAR_BACKEND} specific compiler flag(s) \"${PLSSVM_STDPAR_BACKEND_COMPILER_FLAG}\" to CMAKE_CXX_FLAGS.")
+    set_local_and_parent(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${PLSSVM_STDPAR_BACKEND_COMPILER_FLAG}")
 endif ()
 set_local_and_parent(PLSSVM_STDPAR_BACKEND ${PLSSVM_STDPAR_BACKEND})
 
@@ -99,8 +107,8 @@ target_compile_definitions(${PLSSVM_STDPAR_BACKEND_LIBRARY_NAME} PUBLIC PLSSVM_H
 target_link_libraries(${PLSSVM_ALL_LIBRARY_NAME} INTERFACE ${PLSSVM_STDPAR_BACKEND_LIBRARY_NAME})
 
 # mark backend library as install target
-list(APPEND PLSSVM_TARGETS_TO_INSTALL "${PLSSVM_STDPAR_BACKEND_LIBRARY_NAME}")
-set(PLSSVM_TARGETS_TO_INSTALL ${PLSSVM_TARGETS_TO_INSTALL} PARENT_SCOPE)
+append_local_and_parent(PLSSVM_TARGETS_TO_INSTALL ${PLSSVM_STDPAR_BACKEND_LIBRARY_NAME})
+append_local_and_parent(PLSSVM_TARGETS_TO_INSTALL ${PLSSVM_STDPAR_BACKEND_LIBRARY_INTERFACE})
 
 # generate summary string
 include(${PROJECT_SOURCE_DIR}/cmake/assemble_summary_string.cmake)

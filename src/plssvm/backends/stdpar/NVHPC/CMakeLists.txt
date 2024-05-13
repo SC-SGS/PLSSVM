@@ -37,7 +37,7 @@ else ()
 endif ()
 
 # add stdpar implementation specific source file to library
-target_sources(${PLSSVM_STDPAR_BACKEND_LIBRARY_NAME} PRIVATE ${CMAKE_CURRENT_LIST_DIR}/csvm.cpp)
+append_local_and_parent(PLSSVM_STDPAR_SOURCES ${CMAKE_CURRENT_LIST_DIR}/csvm.cpp)
 
 ## try finding Boost atomic
 if (POLICY CMP0144)
@@ -45,7 +45,7 @@ if (POLICY CMP0144)
 endif ()
 find_package(Boost 1.73.0 REQUIRED COMPONENTS atomic)
 message(STATUS "Found Boost atomic version ${Boost_VERSION}.")
-target_link_libraries(${PLSSVM_STDPAR_BACKEND_LIBRARY_NAME} PUBLIC Boost::atomic)
+target_link_libraries(${PLSSVM_STDPAR_BACKEND_LIBRARY_INTERFACE} INTERFACE Boost::atomic)
 
 # set global NVHPC compiler flags
 if (DEFINED PLSSVM_CPU_TARGET_ARCHS)
@@ -53,7 +53,7 @@ if (DEFINED PLSSVM_CPU_TARGET_ARCHS)
     set_local_and_parent(PLSSVM_STDPAR_BACKEND_COMPILER_FLAG -stdpar=multicore)
     set_local_and_parent(PLSSVM_STDPAR_BACKEND_COMPILER_FLAG ${PLSSVM_STDPAR_BACKEND_COMPILER_FLAG} -tp=native)
     
-    target_compile_definitions(${PLSSVM_STDPAR_BACKEND_LIBRARY_NAME} PRIVATE PLSSVM_STDPAR_BACKEND_NVHPC_CPU)
+    target_compile_definitions(${PLSSVM_STDPAR_BACKEND_LIBRARY_INTERFACE} INTERFACE PLSSVM_STDPAR_BACKEND_NVHPC_CPU)
 elseif (DEFINED PLSSVM_NVIDIA_TARGET_ARCHS)
     message(STATUS "NVIDIA GPU target platform provided, setting: \"-stdpar=gpu\"")
     set_local_and_parent(PLSSVM_STDPAR_BACKEND_COMPILER_FLAG -stdpar=gpu)
@@ -62,7 +62,7 @@ elseif (DEFINED PLSSVM_NVIDIA_TARGET_ARCHS)
         set_local_and_parent(PLSSVM_STDPAR_BACKEND_COMPILER_FLAG ${PLSSVM_STDPAR_BACKEND_COMPILER_FLAG} -gpu=fastmath)
     endif ()
     
-    target_compile_definitions(${PLSSVM_STDPAR_BACKEND_LIBRARY_NAME} PRIVATE PLSSVM_STDPAR_BACKEND_NVHPC_GPU)
+    target_compile_definitions(${PLSSVM_STDPAR_BACKEND_LIBRARY_INTERFACE} INTERFACE PLSSVM_STDPAR_BACKEND_NVHPC_GPU)
 endif ()
 separate_arguments(PLSSVM_STDPAR_BACKEND_COMPILER_FLAG UNIX_COMMAND ${PLSSVM_STDPAR_BACKEND_COMPILER_FLAG})
 
@@ -70,14 +70,6 @@ separate_arguments(PLSSVM_STDPAR_BACKEND_COMPILER_FLAG UNIX_COMMAND ${PLSSVM_STD
 enable_language(CUDA)
 find_package(CUDAToolkit)
 
-# set compile options
-target_link_options(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC ${PLSSVM_STDPAR_BACKEND_COMPILER_FLAG})
-target_link_options(${PLSSVM_STDPAR_BACKEND_LIBRARY_NAME} PUBLIC ${PLSSVM_STDPAR_BACKEND_COMPILER_FLAG})
-target_link_options(${PLSSVM_ALL_LIBRARY_NAME} INTERFACE ${PLSSVM_STDPAR_BACKEND_COMPILER_FLAG})
-target_compile_options(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC ${PLSSVM_STDPAR_BACKEND_COMPILER_FLAG})
-target_compile_options(${PLSSVM_STDPAR_BACKEND_LIBRARY_NAME} PUBLIC ${PLSSVM_STDPAR_BACKEND_COMPILER_FLAG})
-target_compile_options(${PLSSVM_ALL_LIBRARY_NAME} INTERFACE ${PLSSVM_STDPAR_BACKEND_COMPILER_FLAG})
-
 # set NVHPC compile definition
 target_compile_definitions(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC PLSSVM_STDPAR_BACKEND_HAS_NVHPC)
-target_compile_definitions(${PLSSVM_STDPAR_BACKEND_LIBRARY_NAME} PRIVATE PLSSVM_STDPAR_BACKEND_HAS_NVHPC)
+target_compile_definitions(${PLSSVM_STDPAR_BACKEND_LIBRARY_INTERFACE} INTERFACE PLSSVM_STDPAR_BACKEND_HAS_NVHPC)

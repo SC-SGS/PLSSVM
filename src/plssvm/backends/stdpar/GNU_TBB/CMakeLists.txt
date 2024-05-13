@@ -30,7 +30,7 @@ else ()
 endif ()
 
 # add stdpar implementation specific source file to library
-target_sources(${PLSSVM_STDPAR_BACKEND_LIBRARY_NAME} PRIVATE ${CMAKE_CURRENT_LIST_DIR}/csvm.cpp)
+append_local_and_parent(PLSSVM_STDPAR_SOURCES ${CMAKE_CURRENT_LIST_DIR}/csvm.cpp)
 
 ## try finding Boost atomic
 if (POLICY CMP0144)
@@ -38,22 +38,15 @@ if (POLICY CMP0144)
 endif ()
 find_package(Boost 1.73.0 REQUIRED COMPONENTS atomic)
 message(STATUS "Found Boost atomic version ${Boost_VERSION}.")
-target_link_libraries(${PLSSVM_STDPAR_BACKEND_LIBRARY_NAME} PUBLIC Boost::atomic)
+target_link_libraries(${PLSSVM_STDPAR_BACKEND_LIBRARY_INTERFACE} INTERFACE Boost::atomic)
 
 if (PLSSVM_ENABLE_FAST_MATH)
     set_local_and_parent(PLSSVM_STDPAR_BACKEND_COMPILER_FLAG -ffast-math)
 endif ()
 
 # GNU GCC must be linked against TBB
-target_link_libraries(${PLSSVM_STDPAR_BACKEND_LIBRARY_NAME} PUBLIC TBB::tbb)
-
-# set compile options
-if (PLSSVM_STDPAR_BACKEND_COMPILER_FLAG)
-    target_compile_options(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC ${PLSSVM_STDPAR_BACKEND_COMPILER_FLAG})
-    target_compile_options(${PLSSVM_STDPAR_BACKEND_LIBRARY_NAME} PUBLIC ${PLSSVM_STDPAR_BACKEND_COMPILER_FLAG})
-    target_compile_options(${PLSSVM_ALL_LIBRARY_NAME} INTERFACE ${PLSSVM_STDPAR_BACKEND_COMPILER_FLAG})
-endif ()
+target_link_libraries(${PLSSVM_STDPAR_BACKEND_LIBRARY_INTERFACE} INTERFACE TBB::tbb)
 
 # set GNU GCC + TBB compile definition
 target_compile_definitions(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC PLSSVM_STDPAR_BACKEND_HAS_GNU_TBB)
-target_compile_definitions(${PLSSVM_STDPAR_BACKEND_LIBRARY_NAME} PRIVATE PLSSVM_STDPAR_BACKEND_HAS_GNU_TBB)
+target_compile_definitions(${PLSSVM_STDPAR_BACKEND_LIBRARY_INTERFACE} INTERFACE PLSSVM_STDPAR_BACKEND_HAS_GNU_TBB)
