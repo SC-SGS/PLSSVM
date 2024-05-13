@@ -334,6 +334,12 @@ ctest
 
 **Note:** due to floating point inaccuracies, it is advisable to disable `PLSSVM_ENABLE_FAST_MATH` for testing.
 
+**Note:** GoogleTest's death tests are currently not supported in conjunction with the stdpar backend. If you wish to use test with stdpar, you have to set `PLSSVM_ENABLE_ASSERTS` to `OFF`.
+
+**Note:** If the used stdpar implementation is `nvc++`, `PLSSVM_ENABLE_PERFORMANCE_TRACKING` must be set to `OFF` in order to run the tests.
+
+**Note:** the stdpar tests may fail if executed in parallel via `ctest -j $(nproc)`.
+
 ### Generating Test Coverage Results
 
 To enable the generation of test coverage reports using `locv` the library must be compiled using the custom `Coverage` `CMAKE_BUILD_TYPE`.
