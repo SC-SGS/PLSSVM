@@ -615,7 +615,9 @@ std::vector<label_type> csvm::predict(const model<label_type> &model, const data
                     binary_votes = this->run_predict_values(model.params_, binary_sv, binary_alpha, binary_rho, w, predict_points);
                     // only in case of the linear kernel, the w vector gets filled -> store it
                     if (params_.kernel_type == kernel_function_type::linear) {
-#pragma omp parallel for default(none) shared(model, w) firstprivate(num_features, pos)
+#if !defined(PLSSVM_STDPAR_BACKEND_HAS_NVHPC)
+    #pragma omp parallel for default(none) shared(model, w) firstprivate(num_features, pos)
+#endif
                         for (std::size_t dim = 0; dim < num_features; ++dim) {
                             (*model.w_ptr_)(pos, dim) = w(0, dim);
                         }
