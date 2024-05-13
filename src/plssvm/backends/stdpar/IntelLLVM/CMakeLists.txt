@@ -63,6 +63,9 @@ else ()
 endif ()
 if (PLSSVM_ENABLE_FAST_MATH)
     set_local_and_parent(PLSSVM_STDPAR_BACKEND_COMPILER_FLAG ${PLSSVM_STDPAR_BACKEND_COMPILER_FLAG} -ffast-math)
+else ()
+    # icpx does compile with fast-math by default -> explicitly disable it if not requested otherwise!
+    set_local_and_parent(PLSSVM_STDPAR_BACKEND_COMPILER_FLAG ${PLSSVM_STDPAR_BACKEND_COMPILER_FLAG} -fno-fast-math)
 endif ()
 separate_arguments(PLSSVM_STDPAR_BACKEND_COMPILER_FLAG UNIX_COMMAND ${PLSSVM_STDPAR_BACKEND_COMPILER_FLAG})
 
