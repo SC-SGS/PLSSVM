@@ -246,7 +246,7 @@ pipeline {
                                           . /usr/local.nfs/Modules/latest/init/sh
                                           module load cuda/12.0.1
                                       fi
-
+                                      source $SGSSCRATCH/spack/share/spack/setup-env.sh
                                       if [ "$ARCHITECTURE" == "AMD" ]; then
                                          #export ROCM_PATH_="/opt/rocm"
                                          export LD_LIBRARY_PATH="${ROCM_PATH}/lib64:${ROCM_PATH}/lib:${ROCM_PATH}/opencl/lib/x86_64:${ROCM_PATH}/hsa/lib:${ROCM_PATH}/hip/lib:${LD_LIBRARY_PATH}"
@@ -254,9 +254,6 @@ pipeline {
                                          export CMAKE_PREFIX_PATH="${ROCM_PATH}/hip:${ROCM_PATH}:${CMAKE_PREFIX_PATH}"
                                          export TARGET_PLATFORM=amd:gfx906
                                          export LIBRARY_PATH=$LD_LIBRARY_PATH
-                                      fi
-                                      if [ "$BACKEND" == "HIP" ]; then
-                                        export COMPILER=hipcc
                                       fi
 
                                       if [ "$BUILD_TYPE" == Release ]; then
