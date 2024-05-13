@@ -203,6 +203,13 @@ else ()
     set(PLSSVM_ENABLE_DEATH_TESTS OFF)
 endif ()
 
+# performance tracker not supported with NVHPC
+if (PLSSVM_ENABLE_PERFORMANCE_TRACKING)
+    if (PLSSVM_STDPAR_BACKEND AND PLSSVM_STDPAR_BACKEND STREQUAL "NVHPC")
+        message(FATAL_ERROR "The (global) performance tracker is currently not supported with GTest and NVHPC. Please set \"PLSSVM_ENABLE_PERFORMANCE_TRACKING=OFF\" or use another stdpar implementation!")
+    endif ()
+endif ()
+
 # add tests to google test
 include(GoogleTest)
 include(${PROJECT_SOURCE_DIR}/cmake/discover_tests_with_death_test_filter.cmake)
