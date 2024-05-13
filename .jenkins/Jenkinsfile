@@ -60,7 +60,7 @@ pipeline {
     }
 
     stages{
-        stage('Dependency -- CMake')
+        stage('Dependency -- Spack')
         {
             steps{
                 script{
@@ -264,7 +264,6 @@ pipeline {
                                         $([[ $BACKEND == HIP ]] && echo "+hip" || echo "~hip") \
                                         $([[ $BACKEND == OPENCL ]] && echo "+opencl" || echo "~opencl") \
                                         $([[ $BACKEND == HIPSYCL ]] && echo "+adaptivecpp" || echo "~adaptivecpp") \
-                                        $([[ $BACKEND == DPCPP ]] && echo "+icpx" || echo "~icpx") \
                                         $([[ $BACKEND == DPCPP ]] && echo "+icpx" || echo "~icpx") \
                                         +langauga_bindings \
                                         +test_file \
