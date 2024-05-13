@@ -58,6 +58,9 @@ elseif (DEFINED PLSSVM_NVIDIA_TARGET_ARCHS)
     message(STATUS "NVIDIA GPU target platform provided, setting: \"-stdpar=gpu\"")
     set_local_and_parent(PLSSVM_STDPAR_BACKEND_COMPILER_FLAG -stdpar=gpu)
     
+    # TODO: if supported by the device, this may fix the performance tracking error in our tests?
+    # set_local_and_parent(PLSSVM_STDPAR_BACKEND_COMPILER_FLAG -gpu=unified)
+    
     if (PLSSVM_ENABLE_FAST_MATH)
         set_local_and_parent(PLSSVM_STDPAR_BACKEND_COMPILER_FLAG ${PLSSVM_STDPAR_BACKEND_COMPILER_FLAG} -gpu=fastmath)
     endif ()
