@@ -61,6 +61,15 @@ set(PLSSVM_PYTHON_BINDINGS_SOURCES
 if (TARGET ${PLSSVM_OPENMP_BACKEND_LIBRARY_NAME})
     list(APPEND PLSSVM_PYTHON_BINDINGS_SOURCES ${CMAKE_CURRENT_LIST_DIR}/backends/openmp_csvm.cpp)
 endif ()
+if (TARGET ${PLSSVM_STDPAR_BACKEND_LIBRARY_NAME})
+    
+    # AdaptiveCpp stdpar only support on the CPU when using our Python bindings
+    if (PLSSVM_STDPAR_BACKEND STREQUAL "ACPP" AND (DEFINED PLSSVM_NVIDIA_TARGET_ARCHS OR DEFINED PLSSVM_AMD_TARGET_ARCHS OR DEFINED PLSSVM_INTEL_TARGET_ARCHS))
+        message(FATAL_ERROR "The stdpar implementation using AdaptiveCpp isn't currently supported in the Python bindings when targeting something different than the CPU!")
+    endif ()
+    
+    list(APPEND PLSSVM_PYTHON_BINDINGS_SOURCES ${CMAKE_CURRENT_LIST_DIR}/backends/stdpar_csvm.cpp)
+endif ()
 if (TARGET ${PLSSVM_CUDA_BACKEND_LIBRARY_NAME})
     list(APPEND PLSSVM_PYTHON_BINDINGS_SOURCES ${CMAKE_CURRENT_LIST_DIR}/backends/cuda_csvm.cpp)
 endif ()
@@ -106,6 +115,7 @@ target_compile_definitions(${PLSSVM_PYTHON_BINDINGS_LIBRARY_NAME} PRIVATE PYBIND
 
 # disable clang compiler warning
 target_compile_options(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC $<$<COMPILE_LANG_AND_ID:CXX,Clang>:-Wno-self-assign-overloaded>)
+target_compile_options(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC -fPIC)
 
 # append pybind11 bindings library to installed targets
 append_local_and_parent(PLSSVM_TARGETS_TO_INSTALL ${PLSSVM_PYTHON_BINDINGS_LIBRARY_NAME})

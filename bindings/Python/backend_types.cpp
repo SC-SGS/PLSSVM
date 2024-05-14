@@ -20,6 +20,7 @@ void init_backend_types(py::module_ &m) {
     py::enum_<plssvm::backend_type>(m, "BackendType")
         .value("AUTOMATIC", plssvm::backend_type::automatic, "the default backend; depends on the specified target platform")
         .value("OPENMP", plssvm::backend_type::openmp, "OpenMP to target CPUs only (currently no OpenMP target offloading support)")
+        .value("STDPAR", plssvm::backend_type::stdpar, "C++ standard parallelism to target CPUs and GPUs from different vendors based on the used stdpar implementation; supported implementations are: nvhpc (nvc++), roc-stdpar, AdaptiveCpp, Intel LLVM (icpx), and GNU GCC + TBB")
         .value("CUDA", plssvm::backend_type::cuda, "CUDA to target NVIDIA GPUs only")
         .value("HIP", plssvm::backend_type::hip, "HIP to target AMD and NVIDIA GPUs")
         .value("OPENCL", plssvm::backend_type::opencl, "OpenCL to target CPUs and GPUs from different vendors")
