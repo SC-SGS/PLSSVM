@@ -24,6 +24,12 @@
     #include "sycl/sycl.hpp"  // override std::* math functions
 #endif
 
+#if defined(PLSSVM_STDPAR_BACKEND_HAS_HIPSTDPAR)
+    #define PLSSVM_STDPAR_KERNEL_FUNCTION __device__
+#else
+    #define PLSSVM_STDPAR_KERNEL_FUNCTION
+#endif
+
 #include <cmath>   // std::abs, std::pow, std::exp, std::tanh
 #include <limits>  // std::numeric_limits::min
 
@@ -40,7 +46,7 @@ namespace plssvm::stdpar::detail {
  * @return the reduced value (`[[nodiscard]]`)
  */
 template <kernel_function_type kernel_function>
-[[nodiscard]] inline real_type feature_reduce(const real_type val1, const real_type val2) {
+[[nodiscard]] inline PLSSVM_STDPAR_KERNEL_FUNCTION real_type feature_reduce(const real_type val1, const real_type val2) {
     return val1 * val2;
 }
 
@@ -51,7 +57,7 @@ template <kernel_function_type kernel_function>
  * @return the reduced value (`[[nodiscard]]`)
  */
 template <>
-[[nodiscard]] inline real_type feature_reduce<kernel_function_type::rbf>(const real_type val1, const real_type val2) {
+[[nodiscard]] inline PLSSVM_STDPAR_KERNEL_FUNCTION real_type feature_reduce<kernel_function_type::rbf>(const real_type val1, const real_type val2) {
     const real_type d = val1 - val2;
     return d * d;
 }
@@ -63,7 +69,7 @@ template <>
  * @return the reduced value (`[[nodiscard]]`)
  */
 template <>
-[[nodiscard]] inline real_type feature_reduce<kernel_function_type::laplacian>(const real_type val1, const real_type val2) {
+[[nodiscard]] inline PLSSVM_STDPAR_KERNEL_FUNCTION real_type feature_reduce<kernel_function_type::laplacian>(const real_type val1, const real_type val2) {
 #if (defined(PLSSVM_USE_FAST_MATH) && defined(PLSSVM_STDPAR_BACKEND_HAS_ACPP)) || defined(PLSSVM_STDPAR_BACKEND_HAS_INTEL_LLVM)
     return ::sycl::fabs(val1 - val2);
 #else
@@ -79,7 +85,7 @@ template <>
  * @return the reduced value (`[[nodiscard]]`)
  */
 template <>
-[[nodiscard]] inline real_type feature_reduce<kernel_function_type::chi_squared>(const real_type val1, const real_type val2) {
+[[nodiscard]] inline PLSSVM_STDPAR_KERNEL_FUNCTION real_type feature_reduce<kernel_function_type::chi_squared>(const real_type val1, const real_type val2) {
     const real_type d = val1 - val2;
     return (real_type{ 1.0 } / (val1 + val2 + std::numeric_limits<real_type>::min())) * d * d;
 }
@@ -93,7 +99,7 @@ template <>
  * @return the result value (`[[nodiscard]]`)
  */
 template <kernel_function_type, typename... Args>
-[[nodiscard]] inline real_type apply_kernel_function(real_type, Args...);
+[[nodiscard]] inline PLSSVM_STDPAR_KERNEL_FUNCTION real_type apply_kernel_function(real_type, Args...);
 
 /**
  * @brief Compute the linear kernel function using @p value.
@@ -101,7 +107,7 @@ template <kernel_function_type, typename... Args>
  * @return the result value (`[[nodiscard]]`)
  */
 template <>
-[[nodiscard]] inline real_type apply_kernel_function<kernel_function_type::linear>(const real_type value) {
+[[nodiscard]] inline PLSSVM_STDPAR_KERNEL_FUNCTION real_type apply_kernel_function<kernel_function_type::linear>(const real_type value) {
     return value;
 }
 
@@ -114,7 +120,7 @@ template <>
  * @return the result value (`[[nodiscard]]`)
  */
 template <>
-[[nodiscard]] inline real_type apply_kernel_function<kernel_function_type::polynomial>(const real_type value, const int degree, const real_type gamma, const real_type coef0) {
+[[nodiscard]] inline PLSSVM_STDPAR_KERNEL_FUNCTION real_type apply_kernel_function<kernel_function_type::polynomial>(const real_type value, const int degree, const real_type gamma, const real_type coef0) {
 #if (defined(PLSSVM_USE_FAST_MATH) && defined(PLSSVM_STDPAR_BACKEND_HAS_ACPP)) || defined(PLSSVM_STDPAR_BACKEND_HAS_INTEL_LLVM)
     return ::sycl::pow(gamma * value + coef0, (real_type) degree);
 #else
@@ -129,7 +135,7 @@ template <>
  * @return the result value (`[[nodiscard]]`)
  */
 template <>
-[[nodiscard]] inline real_type apply_kernel_function<kernel_function_type::rbf>(const real_type value, const real_type gamma) {
+[[nodiscard]] inline PLSSVM_STDPAR_KERNEL_FUNCTION real_type apply_kernel_function<kernel_function_type::rbf>(const real_type value, const real_type gamma) {
 #if (defined(PLSSVM_USE_FAST_MATH) && defined(PLSSVM_STDPAR_BACKEND_HAS_ACPP)) || defined(PLSSVM_STDPAR_BACKEND_HAS_INTEL_LLVM)
     return ::sycl::exp(-gamma * value);
 #else
@@ -145,7 +151,7 @@ template <>
  * @return the result value (`[[nodiscard]]`)
  */
 template <>
-[[nodiscard]] inline real_type apply_kernel_function<kernel_function_type::sigmoid>(const real_type value, const real_type gamma, const real_type coef0) {
+[[nodiscard]] inline PLSSVM_STDPAR_KERNEL_FUNCTION real_type apply_kernel_function<kernel_function_type::sigmoid>(const real_type value, const real_type gamma, const real_type coef0) {
 #if (defined(PLSSVM_USE_FAST_MATH) && defined(PLSSVM_STDPAR_BACKEND_HAS_ACPP)) || defined(PLSSVM_STDPAR_BACKEND_HAS_INTEL_LLVM)
     return ::sycl::tanh(gamma * value + coef0);
 #else
@@ -160,7 +166,7 @@ template <>
  * @return the result value (`[[nodiscard]]`)
  */
 template <>
-[[nodiscard]] inline real_type apply_kernel_function<kernel_function_type::laplacian>(const real_type value, const real_type gamma) {
+[[nodiscard]] inline PLSSVM_STDPAR_KERNEL_FUNCTION real_type apply_kernel_function<kernel_function_type::laplacian>(const real_type value, const real_type gamma) {
 #if (defined(PLSSVM_USE_FAST_MATH) && defined(PLSSVM_STDPAR_BACKEND_HAS_ACPP)) || defined(PLSSVM_STDPAR_BACKEND_HAS_INTEL_LLVM)
     return ::sycl::exp(-gamma * value);
 #else
@@ -175,7 +181,7 @@ template <>
  * @return the result value (`[[nodiscard]]`)
  */
 template <>
-[[nodiscard]] inline real_type apply_kernel_function<kernel_function_type::chi_squared>(const real_type value, const real_type gamma) {
+[[nodiscard]] inline PLSSVM_STDPAR_KERNEL_FUNCTION real_type apply_kernel_function<kernel_function_type::chi_squared>(const real_type value, const real_type gamma) {
 #if (defined(PLSSVM_USE_FAST_MATH) && defined(PLSSVM_STDPAR_BACKEND_HAS_ACPP)) || defined(PLSSVM_STDPAR_BACKEND_HAS_INTEL_LLVM)
     return ::sycl::exp(-gamma * value);
 #else

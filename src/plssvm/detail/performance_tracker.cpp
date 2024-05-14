@@ -31,7 +31,7 @@
     #define PLSSVM_UNISTD_AVAILABLE
 #endif
 
-#if defined(PLSSVM_STDPAR_BACKEND_HAS_NVHPC) || defined(PLSSVM_STDPAR_BACKEND_HAS_GNU_TBB)
+#if defined(PLSSVM_STDPAR_BACKEND_HAS_NVHPC) || defined(PLSSVM_STDPAR_BACKEND_HAS_HIPSTDPAR) || defined(PLSSVM_STDPAR_BACKEND_HAS_GNU_TBB)
     #include "boost/version.hpp"  // BOOST_VERSION
 #endif
 
@@ -269,7 +269,7 @@ void performance_tracker::save(std::ostream &out) {
 
     // stdpar backend specific versions
     // Boost version
-#if defined(PLSSVM_STDPAR_BACKEND_HAS_NVHPC) || defined(PLSSVM_STDPAR_BACKEND_HAS_GNU_TBB)
+#if defined(PLSSVM_STDPAR_BACKEND_HAS_NVHPC) || defined(PLSSVM_STDPAR_BACKEND_HAS_HIPSTDPAR) || defined(PLSSVM_STDPAR_BACKEND_HAS_GNU_TBB)
     const std::string boost_version = fmt::format("{}.{}.{}", BOOST_VERSION / 100'000, BOOST_VERSION / 100 % 1000, BOOST_VERSION % 100);
 #else
     const std::string boost_version{ "unknown/unused" };

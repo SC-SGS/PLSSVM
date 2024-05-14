@@ -20,6 +20,7 @@
 TEST(stdparImplementationType, to_string) {
     // check conversions to std::string
     EXPECT_CONVERSION_TO_STRING(plssvm::stdpar::implementation_type::nvhpc, "nvhpc");
+    EXPECT_CONVERSION_TO_STRING(plssvm::stdpar::implementation_type::roc_stdpar, "roc_stdpar");
     EXPECT_CONVERSION_TO_STRING(plssvm::stdpar::implementation_type::intel_llvm, "intel_llvm");
     EXPECT_CONVERSION_TO_STRING(plssvm::stdpar::implementation_type::adaptivecpp, "adaptivecpp");
     EXPECT_CONVERSION_TO_STRING(plssvm::stdpar::implementation_type::gnu_tbb, "gnu_tbb");
@@ -27,7 +28,7 @@ TEST(stdparImplementationType, to_string) {
 
 TEST(stdparImplementationType, to_string_unknown) {
     // check conversions to std::string from unknown implementation_type
-    EXPECT_CONVERSION_TO_STRING(static_cast<plssvm::stdpar::implementation_type>(4), "unknown");
+    EXPECT_CONVERSION_TO_STRING(static_cast<plssvm::stdpar::implementation_type>(5), "unknown");
 }
 
 // check whether the std::string -> plssvm::stdpar::implementation_type conversions are correct
@@ -36,6 +37,11 @@ TEST(stdparImplementationType, from_string) {
     EXPECT_CONVERSION_FROM_STRING("NVHPC", plssvm::stdpar::implementation_type::nvhpc);
     EXPECT_CONVERSION_FROM_STRING("nvcpp", plssvm::stdpar::implementation_type::nvhpc);
     EXPECT_CONVERSION_FROM_STRING("nvc++", plssvm::stdpar::implementation_type::nvhpc);
+
+    EXPECT_CONVERSION_FROM_STRING("ROC_STDPAR", plssvm::stdpar::implementation_type::roc_stdpar);
+    EXPECT_CONVERSION_FROM_STRING("roc-stdpar", plssvm::stdpar::implementation_type::roc_stdpar);
+    EXPECT_CONVERSION_FROM_STRING("rocstdpar", plssvm::stdpar::implementation_type::roc_stdpar);
+    EXPECT_CONVERSION_FROM_STRING("hipstdpar", plssvm::stdpar::implementation_type::roc_stdpar);
 
     EXPECT_CONVERSION_FROM_STRING("intel_llvm", plssvm::stdpar::implementation_type::intel_llvm);
     EXPECT_CONVERSION_FROM_STRING("icpx", plssvm::stdpar::implementation_type::intel_llvm);

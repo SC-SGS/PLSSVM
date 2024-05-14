@@ -14,7 +14,6 @@
 #include <istream>  // std::istream
 #include <ostream>  // std::ostream
 #include <string>   // std::string
-#include <vector>   // std::vector
 
 namespace plssvm::stdpar {
 
@@ -22,6 +21,8 @@ std::ostream &operator<<(std::ostream &out, const implementation_type impl) {
     switch (impl) {
         case implementation_type::nvhpc:
             return out << "nvhpc";
+        case implementation_type::roc_stdpar:
+            return out << "roc-stdpar";
         case implementation_type::intel_llvm:
             return out << "intel_llvm";
         case implementation_type::adaptivecpp:
@@ -39,6 +40,8 @@ std::istream &operator>>(std::istream &in, implementation_type &impl) {
 
     if (str == "nvhpc" || str == "nvcpp" || str == "nvc++") {
         impl = implementation_type::nvhpc;
+    } else if (str == "roc-stdpar" || str == "roc_stdpar" || str == "rocstdpar" || str == "hipstdpar") {
+        impl = implementation_type::roc_stdpar;
     } else if (str == "intel_llvm" || str == "icpx" || str == "dpcpp" || str == "dpc++") {
         impl = implementation_type::intel_llvm;
     } else if (str == "adaptivecpp" || str == "acpp") {

@@ -57,7 +57,7 @@ The main highlights of our SVM implementations are:
 1. Drop-in replacement for LIBSVM's `svm-train`, `svm-predict`, and `svm-scale` (some features currently not implemented).
 2. Support of multiple different programming frameworks for parallelisation (also called backends in our PLSSVM implementation) which allows us to target GPUs and CPUs from different vendors like NVIDIA, AMD, or Intel:
    - [OpenMP](https://www.openmp.org/)
-   - [stdpar](https://en.cppreference.com/w/cpp/algorithm) (supported implementations are [nvc++](https://developer.nvidia.com/hpc-sdk) from NVIDIA's HPC SDK, [icpx](https://www.intel.com/content/www/us/en/developer/tools/oneapi/dpc-compiler.html) as Intel's oneAPI compiler, [AdaptiveCpp](https://github.com/AdaptiveCpp/AdaptiveCpp), and [GNU GCC](https://gcc.gnu.org/) using TBB). <br>
+   - [stdpar](https://en.cppreference.com/w/cpp/algorithm) (supported implementations are [nvc++](https://developer.nvidia.com/hpc-sdk) from NVIDIA's HPC SDK, [roc-stdpar](https://github.com/ROCm/roc-stdpar) as a patched LLVM, [icpx](https://www.intel.com/content/www/us/en/developer/tools/oneapi/dpc-compiler.html) as Intel's oneAPI compiler, [AdaptiveCpp](https://github.com/AdaptiveCpp/AdaptiveCpp), and [GNU GCC](https://gcc.gnu.org/) using TBB). <br>
      **Note**: due to the nature of the used USM mechanics in the `stdpar` implementations, the `stdpar` backend **can't** be enabled together with **any** other backend! <br>
      **Note**: since every translation units need to be compiled with the same flag, we currently globally set `CMAKE_CXX_FLAGS` although it's discouraged in favor of `target_compile_options`.
    - [CUDA](https://developer.nvidia.com/cuda-zone)
@@ -124,10 +124,11 @@ Additional dependencies for the SYCL backend:
 
 Additional dependencies for the stdpar backend:
 
-- the code must be compiled with a stdpar capable compiler; currently supported are [nvc++](https://developer.nvidia.com/hpc-sdk), [icpx](https://www.intel.com/content/www/us/en/developer/tools/oneapi/dpc-compiler.html), [AdaptiveCpp](https://github.com/AdaptiveCpp/AdaptiveCpp), and [GNU GCC](https://gcc.gnu.org/))
+- the code must be compiled with a stdpar capable compiler; currently supported are [nvc++](https://developer.nvidia.com/hpc-sdk), [roc-stdpar](https://github.com/ROCm/roc-stdpar), [icpx](https://www.intel.com/content/www/us/en/developer/tools/oneapi/dpc-compiler.html), [AdaptiveCpp](https://github.com/AdaptiveCpp/AdaptiveCpp), and [GNU GCC](https://gcc.gnu.org/))
 - depending on the used stdpar implementation, additional dependencies are required:
     
     - `nvc++`: [Boost ≥ 1.73.0](https://www.boost.org/) with the `atomic` library enabled and a CUDA SDK
+    - `roc-stdpar`: [Boost ≥ 1.73.0](https://www.boost.org/) with the `atomic` library enabled; it may be necessary to set `export HSA_XNACK=1` (e.g., if the error `Memory access fault by GPU node-2` occurs)
     - `icpx`: Intel's [oneDPL](https://www.intel.com/content/www/us/en/developer/tools/oneapi/dpc-library.html) library
     - `AdaptiveCpp`: Intel's [TBB](https://github.com/wjakob/tbb) library
     - `GNU GCC`: [Boost ≥ 1.73.0](https://www.boost.org/) with the `atomic` library enabled and Intel's [TBB](https://github.com/wjakob/tbb) library
@@ -322,7 +323,7 @@ If more than one SYCL implementation is available the environment variables `PLS
 
 If the stdpar backend is available, an additional options can be set.
 
-- `PLSSVM_STDPAR_BACKEND_IMPLEMENTATION` (default: `AUTO`): explicitly specify the used stdpar implementation; must be one of: `AUTO`, `NVHPC`, `IntelLLVM`, `ACPP`, `GNU_TBB`.
+- `PLSSVM_STDPAR_BACKEND_IMPLEMENTATION` (default: `AUTO`): explicitly specify the used stdpar implementation; must be one of: `AUTO`, `NVHPC`, `roc-stdpar`, `IntelLLVM`, `ACPP`, `GNU_TBB`.
 
 ### Running the Tests
 

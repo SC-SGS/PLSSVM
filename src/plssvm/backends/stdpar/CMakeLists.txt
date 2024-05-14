@@ -22,7 +22,7 @@ set(PLSSVM_STDPAR_BACKEND_LIBRARY_INTERFACE plssvm-stdpar-interface)
 add_library(${PLSSVM_STDPAR_BACKEND_LIBRARY_INTERFACE} INTERFACE)
 
 set(PLSSVM_STDPAR_BACKEND_IMPLEMENTATION AUTO CACHE STRING "Set the stdpar implementation that should be used.")
-set_property(CACHE PLSSVM_STDPAR_BACKEND_IMPLEMENTATION PROPERTY STRINGS AUTO NVHPC IntelLLVM ACPP GNU_TBB)
+set_property(CACHE PLSSVM_STDPAR_BACKEND_IMPLEMENTATION PROPERTY STRINGS AUTO NVHPC roc-stdpar IntelLLVM ACPP GNU_TBB)
 
 # try finding a stdpar backend
 if (PLSSVM_STDPAR_BACKEND_IMPLEMENTATION MATCHES "NVHPC")
@@ -31,6 +31,14 @@ if (PLSSVM_STDPAR_BACKEND_IMPLEMENTATION MATCHES "NVHPC")
     # check whether it could be found
     if (NOT PLSSVM_STDPAR_BACKEND)
         message(SEND_ERROR "Cannot find requested backend: stdpar with NVHPC!")
+        return()
+    endif ()
+elseif (PLSSVM_STDPAR_BACKEND_IMPLEMENTATION MATCHES "roc-stdpar")
+    # roc-stdpar requested -> try finding it
+    add_subdirectory(roc-stdpar)
+    # check whether it could be found
+    if (NOT PLSSVM_STDPAR_BACKEND)
+        message(SEND_ERROR "Cannot find requested backend: stdpar with roc-stdpar!")
         return()
     endif ()
 elseif (PLSSVM_STDPAR_BACKEND_IMPLEMENTATION MATCHES "IntelLLVM")
@@ -61,18 +69,22 @@ elseif (PLSSVM_STDPAR_BACKEND_IMPLEMENTATION MATCHES "AUTO")
     # automatic order is NVHPC -> Intel LLVM -> AdaptiveCpp -> GNU GCC + TBB
     add_subdirectory(NVHPC)
     if (NOT PLSSVM_STDPAR_BACKEND)
-        # NVHPC not found -> try finding Intel LLVM
-        add_subdirectory(IntelLLVM)
+        # NVHPC not found -> try finding roc-stdpar
+        add_subdirectory(roc-stdpar)
         if (NOT PLSSVM_STDPAR_BACKEND)
-            # Intel LLVM not found -> try finding AdaptiveCpp
-            add_subdirectory(AdaptiveCpp)
+            # roc-stdpar not found -> try finding Intel LLVM
+            add_subdirectory(IntelLLVM)
             if (NOT PLSSVM_STDPAR_BACKEND)
-                # AdaptiveCpp not found -> try finding GNU GCC + TBB
-                add_subdirectory(GNU_TBB)
+                # Intel LLVM not found -> try finding AdaptiveCpp
+                add_subdirectory(AdaptiveCpp)
                 if (NOT PLSSVM_STDPAR_BACKEND)
-                    # no stdpar backend found
-                    message(CHECK_FAIL "not found")
-                    return()
+                    # AdaptiveCpp not found -> try finding GNU GCC + TBB
+                    add_subdirectory(GNU_TBB)
+                    if (NOT PLSSVM_STDPAR_BACKEND)
+                        # no stdpar backend found
+                        message(CHECK_FAIL "not found")
+                        return()
+                    endif ()
                 endif ()
             endif ()
         endif ()
@@ -115,6 +127,8 @@ include(${PROJECT_SOURCE_DIR}/cmake/assemble_summary_string.cmake)
 assemble_summary_string(PLSSVM_STDPAR_BACKEND_SUMMARY_STRING_ARCHS)
 if (PLSSVM_STDPAR_BACKEND STREQUAL "NVHPC")
     set(PLSSVM_STDPAR_BACKEND_NAME "nvhpc (nvc++)")
+elseif (PLSSVM_STDPAR_BACKEND STREQUAL "roc-stdpar")
+    set(PLSSVM_STDPAR_BACKEND_NAME "roc-stdpar")
 elseif (PLSSVM_STDPAR_BACKEND STREQUAL "IntelLLVM")
     set(PLSSVM_STDPAR_BACKEND_NAME "Intel LLVM (icpx)")
 elseif (PLSSVM_STDPAR_BACKEND STREQUAL "ACPP")
