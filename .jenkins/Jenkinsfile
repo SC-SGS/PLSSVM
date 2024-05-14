@@ -86,57 +86,57 @@ pipeline {
     stages{
         stage('Dependency -- Spack')
         {
-            steps{
-                script{
-                    def labels = onlineNodes('sgs_workstation')
-                    def builders = [: ]
-                    for (x in labels){
-                        def label = x
-                            builders[label] = {
-                                node(label) {
-                                    sh '''
-                                        mkdir -p $SGSSCRATCH
-                                        mkdir -p $SPACK_SYSTEM_CONFIG_PATH
+        steps{
+            script{
+                def labels = onlineNodes('sgs_workstation')
+                def builders = [: ]
+                for (x in labels){
+                    def label = x
+                        builders[label] = {
+                            node(label) {
+                                sh '''
+                                    mkdir -p $SGSSCRATCH
+                                    mkdir -p $SPACK_SYSTEM_CONFIG_PATH
 
-                                        if [[ ! -d  "$SGSSCRATCH/spack" ]]; then
-                                            cd $SGSSCRATCH
-                                            git clone https://github.com/spack/spack.git spack
-                                        fi
-                                        source $SGSSCRATCH/spack/share/spack/setup-env.sh
-                                        if [[ ! -d  "$SGSSCRATCH/PLSSVM-spack" ]]; then
-                                            cd $SGSSCRATCH
-                                            git clone git@github.com:vancraar/PLSSVM-spack.git PLSSVM-spack
-                                            spack repo add $SGSSCRATCH/PLSSVM-spack
-                                        fi
-
-
-                                        if  [ ! -f $SPACK_SYSTEM_CONFIG_PATH/compilers.yaml ]; then
-                                            spack compiler find --scope system
-                                            spack external find --scope system
-                                        fi
-
-                                        if [ ! -f $SPACK_SYSTEM_CONFIG_PATH/config.yaml ]; then
-                                            touch  $SPACK_SYSTEM_CONFIG_PATH/config.yaml
-                                            echo "config:" >> $SPACK_SYSTEM_CONFIG_PATH/config.yaml
-                                            echo "  install_tree:" >> $SPACK_SYSTEM_CONFIG_PATH/config.yaml
-                                            echo "    root: $SGSSCRATCH/spack/opt/spack" >> $SPACK_SYSTEM_CONFIG_PATH/config.yaml
-                                            echo "  build_jops: $(nproc)" >> $SPACK_SYSTEM_CONFIG_PATH/config.yaml
-                                            echo "  build_stage:" >> $SPACK_SYSTEM_CONFIG_PATH/config.yaml
-                                            echo "      - /data/scratch/jenkins/spack_tmp" >> $SPACK_SYSTEM_CONFIG_PATH/config.yaml
-                                        fi
-                                    '''
+                                    if [[ ! -d  "$SGSSCRATCH/spack" ]]; then
+                                        cd $SGSSCRATCH
+                                        git clone https://github.com/spack/spack.git spack
+                                    fi
+                                    source $SGSSCRATCH/spack/share/spack/setup-env.sh
+                                    if [[ ! -d  "$SGSSCRATCH/PLSSVM-spack" ]]; then
+                                        cd $SGSSCRATCH
+                                        git clone git@github.com:vancraar/PLSSVM-spack.git PLSSVM-spack
+                                        spack repo add $SGSSCRATCH/PLSSVM-spack
+                                    fi
 
 
-                                }
+                                    if  [ ! -f $SPACK_SYSTEM_CONFIG_PATH/compilers.yaml ]; then
+                                        spack compiler find --scope system
+                                        spack external find --scope system
+                                    fi
+
+                                    if [ ! -f $SPACK_SYSTEM_CONFIG_PATH/config.yaml ]; then
+                                        touch  $SPACK_SYSTEM_CONFIG_PATH/config.yaml
+                                        echo "config:" >> $SPACK_SYSTEM_CONFIG_PATH/config.yaml
+                                        echo "  install_tree:" >> $SPACK_SYSTEM_CONFIG_PATH/config.yaml
+                                        echo "    root: $SGSSCRATCH/spack/opt/spack" >> $SPACK_SYSTEM_CONFIG_PATH/config.yaml
+                                        echo "  build_jops: $(nproc)" >> $SPACK_SYSTEM_CONFIG_PATH/config.yaml
+                                        echo "  build_stage:" >> $SPACK_SYSTEM_CONFIG_PATH/config.yaml
+                                        echo "      - /data/scratch/jenkins/spack_tmp" >> $SPACK_SYSTEM_CONFIG_PATH/config.yaml
+                                    fi
+                                '''
+
 
                             }
-                            parallel builders
+
                         }
+                        parallel builders
                     }
                 }
-
             }
+
         }
+
 
 
         stage('Checkout PLSSVM') {
