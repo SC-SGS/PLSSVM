@@ -18,23 +18,23 @@ if (currentBuild.getBuildCauses().toString().contains('BranchIndexingCause')) {
 }
 
 // @NonCPS
-def hostNames(label) {
-  def nodes = []
-  jenkins.model.Jenkins.get().computers.each { c ->
-    if (c.node.labelString.contains(label)) {
-      nodes.add(c.node.selfLabel.name)
-    }
-  }
-  return nodes
-}
+// def hostNames(label) {
+//   def nodes = []
+//   jenkins.model.Jenkins.get().computers.each { c ->
+//     if (c.node.labelString.contains(label)) {
+//       nodes.add(c.node.selfLabel.name)
+//     }
+//   }
+//   return nodes
+// }
 
 // @NonCPS
 def onlineNodes(label) {
     def nodes = []
     def allNodes = hostNames(label)
     def onlineNodes = []
-    for (node in allNodes) {
-        if ( node.getComputer().isOnline() && node.getL) {
+    for (node in  hudson.model.Hudson.instance.slaves) {
+        if ( node.getComputer().isOnline().toString() == "true" && node.getLabelString().contains(label)) {
             onlineNodes.add(node.getDisplayName())
         }
     }
