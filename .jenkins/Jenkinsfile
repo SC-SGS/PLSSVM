@@ -17,6 +17,7 @@ if (currentBuild.getBuildCauses().toString().contains('BranchIndexingCause')) {
     print "Proceeding!"
 }
 
+pipeline {
 @NonCPS
 def hostNames(label) {
   def nodes = []
@@ -41,7 +42,7 @@ def onlineNodes(label) {
   return nodes
 }
 
-pipeline {
+
     agent { label 'sgs_workstation' }
 
     options {
