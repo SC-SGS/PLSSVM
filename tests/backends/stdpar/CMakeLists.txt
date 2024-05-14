@@ -15,6 +15,19 @@ set(PLSSVM_STDPAR_TEST_SOURCES
     ${CMAKE_CURRENT_LIST_DIR}/stdpar_csvm.cpp
 )
 
+# add stdpar implementation specific test files containing tests for the stdpar::csvm constructors
+if (PLSSVM_STDPAR_BACKEND STREQUAL "NVHPC")
+    list(APPEND PLSSVM_STDPAR_TEST_SOURCES ${CMAKE_CURRENT_LIST_DIR}/NVHPC/stdpar_csvm.cpp)
+elseif (PLSSVM_STDPAR_BACKEND STREQUAL "roc-stdpar")
+    list(APPEND PLSSVM_STDPAR_TEST_SOURCES ${CMAKE_CURRENT_LIST_DIR}/roc-stdpar/stdpar_csvm.cpp)
+elseif (PLSSVM_STDPAR_BACKEND STREQUAL "IntelLLVM")
+    list(APPEND PLSSVM_STDPAR_TEST_SOURCES ${CMAKE_CURRENT_LIST_DIR}/IntelLLVM/stdpar_csvm.cpp)
+elseif (PLSSVM_STDPAR_BACKEND STREQUAL "ACPP")
+    list(APPEND PLSSVM_STDPAR_TEST_SOURCES ${CMAKE_CURRENT_LIST_DIR}/AdaptiveCpp/stdpar_csvm.cpp)
+elseif (PLSSVM_STDPAR_BACKEND STREQUAL "GNU_TBB")
+    list(APPEND PLSSVM_STDPAR_TEST_SOURCES ${CMAKE_CURRENT_LIST_DIR}/GNU_TBB/stdpar_csvm.cpp)
+endif ()
+
 # add test executable
 add_executable(${PLSSVM_STDPAR_TEST_NAME} ${CMAKE_CURRENT_LIST_DIR}/../../main.cpp ${PLSSVM_STDPAR_TEST_SOURCES})
 
