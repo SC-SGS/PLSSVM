@@ -24,7 +24,7 @@ namespace plssvm::stdpar {
 void csvm::init(const target_platform target) {
     // check whether the requested target platform has been enabled
     if (target != target_platform::automatic && target != target_platform::cpu) {
-        throw backend_exception{ fmt::format("Invalid target platform '{}' for the gnu_tbb stdpar backend!", target) };
+        throw backend_exception{ fmt::format("Invalid target platform '{}' for the {} stdpar backend!", target, this->get_implementation_type()) };
     }
 // the CPU target must be available
 #if !defined(PLSSVM_HAS_CPU_TARGET)

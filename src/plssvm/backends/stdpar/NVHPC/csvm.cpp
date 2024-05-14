@@ -24,7 +24,7 @@ namespace plssvm::stdpar {
 void csvm::init(const target_platform target) {
     // check whether the requested target platform has been enabled
     if (target != target_platform::automatic && target != target_platform::cpu && target != target_platform::gpu_nvidia) {
-        throw backend_exception{ fmt::format("Invalid target platform '{}' for the nvhpc stdpar backend!", target) };
+        throw backend_exception{ fmt::format("Invalid target platform '{}' for the {} stdpar backend!", target, this->get_implementation_type()) };
     }
 
     switch (target) {
