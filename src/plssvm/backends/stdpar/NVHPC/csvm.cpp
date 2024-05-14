@@ -29,6 +29,9 @@ void csvm::init(const target_platform target) {
 
     switch (target) {
         case target_platform::automatic:
+#if !defined(PLSSVM_HAS_CPU_TARGET) && !defined(PLSSVM_HAS_NVIDIA_TARGET)
+            throw backend_exception{ fmt::format("Requested target platform '{}' that hasn't been enabled using PLSSVM_TARGET_PLATFORMS!", determine_default_target_platform()) };
+#endif
             break;
         case target_platform::cpu:
 #if !defined(PLSSVM_HAS_CPU_TARGET)
