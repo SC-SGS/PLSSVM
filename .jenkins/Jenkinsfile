@@ -31,7 +31,6 @@ if (currentBuild.getBuildCauses().toString().contains('BranchIndexingCause')) {
 // @NonCPS
 def onlineNodes(label) {
     def nodes = []
-    def allNodes = hostNames(label)
     def onlineNodes = []
     for (node in  hudson.model.Hudson.instance.slaves) {
         if ( node.getComputer().isOnline().toString() == "true" && node.getLabelString().contains(label)) {
