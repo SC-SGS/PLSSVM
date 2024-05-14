@@ -17,8 +17,7 @@ if (currentBuild.getBuildCauses().toString().contains('BranchIndexingCause')) {
     print "Proceeding!"
 }
 
-pipeline {
-@NonCPS
+// @NonCPS
 def hostNames(label) {
   def nodes = []
   jenkins.model.Jenkins.get().computers.each { c ->
@@ -29,7 +28,7 @@ def hostNames(label) {
   return nodes
 }
 
-@NonCPS
+// @NonCPS
 def onlineNodes(label) {
     def nodes = []
     def allNodes = hostNames(label)
@@ -42,7 +41,7 @@ def onlineNodes(label) {
   return nodes
 }
 
-
+pipeline {
     agent { label 'sgs_workstation' }
 
     options {
