@@ -511,13 +511,13 @@ include(FetchContent)
 list(APPEND CMAKE_MESSAGE_INDENT "Dependencies:  ")
 
 ## try finding cxxopts
+set(PLSSVM_cxxopts_VERSION v3.2.0)
 find_package(cxxopts 3.2.0 QUIET)
 if (cxxopts_FOUND)
     message(STATUS "Found package cxxopts.")
     target_include_directories(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC ${cxxopts_INCLUDE_DIR})
 else ()
-    message(STATUS "Couldn't find package cxxopts. Building from source ...")
-    set(PLSSVM_cxxopts_VERSION v3.2.0)
+    message(STATUS "Couldn't find package cxxopts. Building version ${PLSSVM_cxxopts_VERSION} from source.")
     # set options for cxxopts
     set(CXXOPTS_BUILD_EXAMPLES OFF CACHE INTERNAL "" FORCE)
     set(CXXOPTS_BUILD_TESTS OFF CACHE INTERNAL "" FORCE)
@@ -534,18 +534,17 @@ else ()
                                $<BUILD_INTERFACE:${cxxopts_SOURCE_DIR}/include>
                                $<INSTALL_INTERFACE:include>
     )
-    message(STATUS "Installing cxxopts version ${PLSSVM_cxxopts_VERSION}.")
 endif ()
 
 ## try finding fast_float
+set(PLSSVM_fast_float_VERSION v6.1.1)
 find_package(fast_float QUIET)
 if (fast_float_FOUND)
     # TODO: get used fast_float version
     message(STATUS "Found package fast_float.")
     target_include_directories(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC ${fast_float_INCLUDE_DIR})
 else ()
-    message(STATUS "Couldn't find package fast_float. Building from source ...")
-    set(PLSSVM_fast_float_VERSION v6.1.1)
+    message(STATUS "Couldn't find package fast_float. Building version ${PLSSVM_fast_float_VERSION} from source.")
     target_compile_definitions(${PLSSVM_BASE_LIBRARY_NAME} PRIVATE PLSSVM_fast_float_VERSION="${PLSSVM_fast_float_VERSION}")
     # set options for fast_float
     set(FASTFLOAT_TEST OFF CACHE INTERNAL "" FORCE)
@@ -566,18 +565,17 @@ else ()
                                $<BUILD_INTERFACE:${fast_float_SOURCE_DIR}/include>
                                $<INSTALL_INTERFACE:include>
     )
-    message(STATUS "Installing fast_float version ${PLSSVM_fast_float_VERSION}.")
 endif ()
 
 ## try finding igor
+set(PLSSVM_igor_VERSION a5224c60d266974d3f407191583fe266cbe1c93d)
 find_package(igor QUIET)
 if (igor_FOUND)
     # TODO: get used igor version
     message(STATUS "Found package igor.")
     target_include_directories(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC ${igor_INCLUDE_DIR})
 else ()
-    message(STATUS "Couldn't find package igor. Building from source ...")
-    set(PLSSVM_igor_VERSION a5224c60d266974d3f407191583fe266cbe1c93d)
+    message(STATUS "Couldn't find package igor. Building version ${PLSSVM_igor_VERSION} from source.")
     target_compile_definitions(${PLSSVM_BASE_LIBRARY_NAME} PRIVATE PLSSVM_igor_VERSION="${PLSSVM_igor_VERSION}")
     # set options for igor
     set(IGOR_BUILD_TESTS OFF CACHE INTERNAL "" FORCE)
@@ -598,16 +596,15 @@ else ()
                                $<INSTALL_INTERFACE:include>
     )
     list(APPEND PLSSVM_TARGETS_TO_INSTALL "igor")
-    message(STATUS "Installing igor version ${PLSSVM_igor_VERSION}.")
 endif ()
 
 ## try finding fmt
+set(PLSSVM_fmt_VERSION 10.2.1)
 find_package(fmt 10.2.1 QUIET)
 if (fmt_FOUND)
     message(STATUS "Found package fmt.")
 else ()
-    message(STATUS "Couldn't find package fmt. Building from source ...")
-    set(PLSSVM_fmt_VERSION 10.2.1)
+    message(STATUS "Couldn't find package fmt. Building version ${PLSSVM_fmt_VERSION} from source.")
     # set options for fmt
     set(CMAKE_CXX_FLAGS_OLD "${CMAKE_CXX_FLAGS}")
     if (PLSSVM_ENABLE_STL_DEBUG_MODE)
@@ -636,8 +633,6 @@ else ()
                                $<BUILD_INTERFACE:${fmt_SOURCE_DIR}/include>
                                $<INSTALL_INTERFACE:include>
     )
-    # append fmt to installed targets if build from source
-    message(STATUS "Installing {fmt} version ${PLSSVM_fmt_VERSION}.")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS_OLD}")
 endif ()
 target_link_libraries(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC fmt::fmt)

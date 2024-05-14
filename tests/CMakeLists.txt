@@ -7,12 +7,12 @@
 list(APPEND CMAKE_MESSAGE_INDENT "Tests:  ")
 
 ## setup testing wit GoogleTest
+set(PLSSVM_googletest_VERSION v1.14.0)
 find_package(GTest 1.14.0 QUIET)
 if (GTEST_FOUND)
     message(STATUS "Found package GTest.")
 else ()
-    message(STATUS "Couldn't find package GTest. Building from source...")
-    set(PLSSVM_googletest_VERSION v1.14.0)
+    message(STATUS "Couldn't find package GTest. Building version ${PLSSVM_googletest_VERSION} from source.")
     set(CMAKE_CXX_FLAGS_OLD "${CMAKE_CXX_FLAGS}")
     if (PLSSVM_ENABLE_STL_DEBUG_MODE)
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${PLSSVM_STL_DEBUG_MODE_FLAGS}")
@@ -33,7 +33,6 @@ else ()
         FetchContent_Populate(googletest)
         add_subdirectory(${googletest_SOURCE_DIR} ${googletest_SOURCE_DIR} EXCLUDE_FROM_ALL)
     endif ()
-    message(STATUS "Installed GoogleTest version ${PLSSVM_googletest_VERSION}.")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS_OLD}")
 endif ()
 

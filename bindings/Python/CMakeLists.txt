@@ -11,12 +11,12 @@ message(STATUS "Building Python language bindings for PLSSVM.")
 find_package(Python COMPONENTS Interpreter Development)
 
 ## try finding pybind11
+set(PLSSVM_pybind11_VERSION v2.12.0)
 find_package(pybind11 2.12.0 QUIET)
 if (pybind11_FOUND)
     message(STATUS "Found package pybind11.")
 else ()
-    message(STATUS "Couldn't find package pybind11. Building from source ...")
-    set(PLSSVM_pybind11_VERSION v2.12.0)
+    message(STATUS "Couldn't find package pybind11. Building version ${PLSSVM_pybind11_VERSION} from source.")
     # fetch pybind11 library for creating Python bindings
     FetchContent_Declare(pybind11
                          GIT_REPOSITORY https://github.com/pybind/pybind11.git
@@ -29,7 +29,6 @@ else ()
                                $<BUILD_INTERFACE:${pybind11_SOURCE_DIR}/include>
                                $<INSTALL_INTERFACE:include>
     )
-    message(STATUS "Installed pybind11 version ${PLSSVM_pybind11_VERSION}.")
 endif ()
 
 # set source files that are always used
