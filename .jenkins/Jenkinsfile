@@ -131,13 +131,13 @@ pipeline {
 
                             }
                             parallel builders
-                            }
                         }
                     }
-
                 }
+
             }
         }
+
 
         stage('Checkout PLSSVM') {
             steps {
