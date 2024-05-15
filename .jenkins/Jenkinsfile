@@ -300,6 +300,21 @@ pipeline {
 
                                       cd ${WORKSPACE}/plssvm
 
+                                      spack uninstall -a -y -q plssvm@develop \
+                                        $([[ $BACKEND == OPENMP ]] && echo "+openmp" || echo "~openmp") \
+                                        $([[ $BACKEND == CUDA ]] && echo "+cuda" || echo "~cuda") \
+                                        $([[ $BACKEND == HIP ]] && echo "+hip" || echo "~hip") \
+                                        $([[ $BACKEND == OPENCL ]] && echo "+opencl" || echo "~opencl") \
+                                        $([[ $BACKEND == HIPSYCL ]] && echo "+adaptivecpp" || echo "~adaptivecpp") \
+                                        $([[ $BACKEND == DPCPP ]] && echo "+icpx" || echo "~icpx") \
+                                        +language_bindings \
+                                        +test_file \
+                                        test_file_num_classes=5 \
+                                        test_file_num_data_points=$NUM_DATA_POINTS \
+                                        test_file_num_features=$NUM_FEATURES \
+                                        +asserts \
+                                        build_type=$BUILD_TYPE || true
+
                                       spack dev-build plssvm@develop \
                                         $([[ $BACKEND == OPENMP ]] && echo "+openmp" || echo "~openmp") \
                                         $([[ $BACKEND == CUDA ]] && echo "+cuda" || echo "~cuda") \
@@ -329,8 +344,36 @@ pipeline {
                                    export ROCM_PATH_="/opt/rocm"
                                    export LD_LIBRARY_PATH="${ROCM_PATH}/lib64:${ROCM_PATH}/lib:${ROCM_PATH}/opencl/lib/x86_64:${ROCM_PATH}/hsa/lib:${ROCM_PATH}/hip/lib:${LD_LIBRARY_PATH}"
                                 fi
-                                cd ${WORKSPACE}/plssvm/build/${BACKEND}_${BUILD_TYPE}_${ARCHITECTURE}
-                                ctest -j4 --output-on-failure --no-compress-output -T Test
+                                cd $( spack location -b  \
+                                        $([[ $BACKEND == OPENMP ]] && echo "+openmp" || echo "~openmp") \
+                                        $([[ $BACKEND == CUDA ]] && echo "+cuda" || echo "~cuda") \
+                                        $([[ $BACKEND == HIP ]] && echo "+hip" || echo "~hip") \
+                                        $([[ $BACKEND == OPENCL ]] && echo "+opencl" || echo "~opencl") \
+                                        $([[ $BACKEND == HIPSYCL ]] && echo "+adaptivecpp" || echo "~adaptivecpp") \
+                                        $([[ $BACKEND == DPCPP ]] && echo "+icpx" || echo "~icpx") \
+                                        +language_bindings \
+                                        +test_file \
+                                        test_file_num_classes=5 \
+                                        test_file_num_data_points=$NUM_DATA_POINTS \
+                                        test_file_num_features=$NUM_FEATURES \
+                                        +asserts \
+                                        build_type=$BUILD_TYPE )
+
+                                spack test-env plssvm@develop \
+                                        $([[ $BACKEND == OPENMP ]] && echo "+openmp" || echo "~openmp") \
+                                        $([[ $BACKEND == CUDA ]] && echo "+cuda" || echo "~cuda") \
+                                        $([[ $BACKEND == HIP ]] && echo "+hip" || echo "~hip") \
+                                        $([[ $BACKEND == OPENCL ]] && echo "+opencl" || echo "~opencl") \
+                                        $([[ $BACKEND == HIPSYCL ]] && echo "+adaptivecpp" || echo "~adaptivecpp") \
+                                        $([[ $BACKEND == DPCPP ]] && echo "+icpx" || echo "~icpx") \
+                                        +language_bindings \
+                                        +test_file \
+                                        test_file_num_classes=5 \
+                                        test_file_num_data_points=$NUM_DATA_POINTS \
+                                        test_file_num_features=$NUM_FEATURES \
+                                        +asserts \
+                                        build_type=$BUILD_TYPE \
+                                        ctest -j4 --output-on-failure --no-compress-output -T Test
                             '''
                         }
                     }
