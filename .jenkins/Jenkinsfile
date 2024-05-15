@@ -37,7 +37,7 @@ def onlineNodes(label) {
             onlineNodes.add(node.getDisplayName())
         }
     }
-  return nodes
+  return ['pcsgs02','pcsgs03','pcsgs04','pcsgs05','pcsgs09','pcsgs11', 'pcsgs13',] //TODO fix
 }
 
 pipeline {
@@ -343,16 +343,16 @@ pipeline {
                                    export LD_LIBRARY_PATH="${ROCM_PATH}/lib64:${ROCM_PATH}/lib:${ROCM_PATH}/opencl/lib/x86_64:${ROCM_PATH}/hsa/lib:${ROCM_PATH}/hip/lib:${LD_LIBRARY_PATH}"
                                 fi
                                 source $SGSSCRATCH/spack/share/spack/setup-env.sh
-                                cd build-$(spack arch)-$(echo ${${$(spack location -i \
-                                    plssvm@develop \
-                                        $([[ $BACKEND == OPENMP ]] && echo "+openmp" || echo "~openmp") \
-                                        $([[ $BACKEND == CUDA ]] && echo "+cuda" || echo "~cuda") \
-                                        $([[ $BACKEND == HIP ]] && echo "+hip" || echo "~hip") \
-                                        $([[ $BACKEND == OPENCL ]] && echo "+opencl" || echo "~opencl") \
-                                        $([[ $BACKEND == HIPSYCL ]] && echo "+adaptivecpp" || echo "~adaptivecpp") \
-                                        $([[ $BACKEND == DPCPP ]] && echo "+icpx" || echo "~icpx") \
-                                        build_type=$BUILD_TYPE )\
-                                        )##*/}##*-} | head -c  7)
+                                installpath=$(spack location -i plssvm@develop \
+                                    $([[ $BACKEND == OPENMP ]] && echo "+openmp" || echo "~openmp") \
+                                    $([[ $BACKEND == CUDA ]] && echo "+cuda" || echo "~cuda") \
+                                    $([[ $BACKEND == HIP ]] && echo "+hip" || echo "~hip") \
+                                    $([[ $BACKEND == OPENCL ]] && echo "+opencl" || echo "~opencl") \
+                                    $([[ $BACKEND == HIPSYCL ]] && echo "+adaptivecpp" || echo "~adaptivecpp") \
+                                    $([[ $BACKEND == DPCPP ]] && echo "+icpx" || echo "~icpx") \
+                                    build_type=$BUILD_TYPE)
+                                install_hash=$(echo ${${${installpath}##*/}##*-} | head -c  7)
+                                cd build-$(spack arch)-${install_hash}
 
                                 spack test-env plssvm@develop \
                                         $([[ $BACKEND == OPENMP ]] && echo "+openmp" || echo "~openmp") \
