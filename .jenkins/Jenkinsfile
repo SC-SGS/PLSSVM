@@ -311,12 +311,6 @@ pipeline {
                                         $([[ $BACKEND == OPENCL ]] && echo "+opencl" || echo "~opencl") \
                                         $([[ $BACKEND == HIPSYCL ]] && echo "+adaptivecpp" || echo "~adaptivecpp") \
                                         $([[ $BACKEND == DPCPP ]] && echo "+icpx" || echo "~icpx") \
-                                        +language_bindings \
-                                        +test_file \
-                                        test_file_num_classes=5 \
-                                        test_file_num_data_points=$NUM_DATA_POINTS \
-                                        test_file_num_features=$NUM_FEATURES \
-                                        +asserts \
                                         build_type=$BUILD_TYPE || true
 
                                       spack dev-build plssvm@develop%gcc@9.4.0 \
@@ -356,12 +350,6 @@ pipeline {
                                         $([[ $BACKEND == OPENCL ]] && echo "+opencl" || echo "~opencl") \
                                         $([[ $BACKEND == HIPSYCL ]] && echo "+adaptivecpp" || echo "~adaptivecpp") \
                                         $([[ $BACKEND == DPCPP ]] && echo "+icpx" || echo "~icpx") \
-                                        +language_bindings \
-                                        +test_file \
-                                        test_file_num_classes=5 \
-                                        test_file_num_data_points=$NUM_DATA_POINTS \
-                                        test_file_num_features=$NUM_FEATURES \
-                                        +asserts \
                                         build_type=$BUILD_TYPE )
 
                                 spack test-env plssvm@develop \
@@ -371,12 +359,6 @@ pipeline {
                                         $([[ $BACKEND == OPENCL ]] && echo "+opencl" || echo "~opencl") \
                                         $([[ $BACKEND == HIPSYCL ]] && echo "+adaptivecpp" || echo "~adaptivecpp") \
                                         $([[ $BACKEND == DPCPP ]] && echo "+icpx" || echo "~icpx") \
-                                        +language_bindings \
-                                        +test_file \
-                                        test_file_num_classes=5 \
-                                        test_file_num_data_points=$NUM_DATA_POINTS \
-                                        test_file_num_features=$NUM_FEATURES \
-                                        +asserts \
                                         build_type=$BUILD_TYPE \
                                         ctest -j4 --output-on-failure --no-compress-output -T Test
                             '''
