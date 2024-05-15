@@ -315,7 +315,7 @@ pipeline {
                                         $([[ $ARCHITECTURE == AMD ]] && echo "amdgpu_target=gfx90a" || echo "amdgpu_target=none") \
                                         build_type=$BUILD_TYPE || true
 
-                                      spack dev-build plssvm@develop \
+                                      spack dev-build "plssvm@develop \
                                         $([[ $BACKEND == OPENMP ]] && echo "+openmp" || echo "~openmp") \
                                         $([[ $BACKEND == CUDA ]] && echo "+cuda" || echo "~cuda") \
                                         $([[ $BACKEND == HIP ]] && echo "+hip" || echo "~hip") \
@@ -330,7 +330,7 @@ pipeline {
                                         test_file_num_data_points=$NUM_DATA_POINTS \
                                         test_file_num_features=$NUM_FEATURES \
                                         +asserts \
-                                        build_type=$BUILD_TYPE
+                                        build_type=$BUILD_TYPE"
                                 '''
 
                         }
