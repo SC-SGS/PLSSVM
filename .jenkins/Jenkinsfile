@@ -352,7 +352,7 @@ pipeline {
                                     $([[ $BACKEND == DPCPP ]] && echo "+icpx" || echo "~icpx") \
                                     build_type=$BUILD_TYPE)
                                 install_hash=$( echo ${installpath} | rev | cut -d/ -f1| cut -d- -f1 | rev | head -c 7)
-                                cd build-$(spack arch)-${install_hash}
+                                cd ${WORKSPACE}/plssvm/build-$(spack arch)-${install_hash}
 
                                 spack test-env plssvm@develop \
                                         $([[ $BACKEND == OPENMP ]] && echo "+openmp" || echo "~openmp") \
