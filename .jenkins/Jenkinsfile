@@ -333,7 +333,7 @@ pipeline {
                     }
                     stage('Ctest PLSSVM'){
                         steps{
-                            sh '''
+                            bash '''
                                  if [ [ ! "$NODE_NAME" == "pcsgs09" ] && [ ! "$NODE_NAME" == "pcsgs13" ] ]; then
                                      . /usr/local.nfs/Modules/latest/init/sh
                                      module load cuda/12.0.1
