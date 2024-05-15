@@ -334,7 +334,7 @@ pipeline {
                     stage('Ctest PLSSVM'){
                         steps{
                             sh '''
-                                 if [ ! "$NODE_NAME" == "pcsgs09" && ! "$NODE_NAME" == "pcsgs13"  ]; then
+                                 if [ [ ! "$NODE_NAME" == "pcsgs09" ] && [ ! "$NODE_NAME" == "pcsgs13" ] ]; then
                                      . /usr/local.nfs/Modules/latest/init/sh
                                      module load cuda/12.0.1
                                  fi
@@ -343,14 +343,16 @@ pipeline {
                                    export LD_LIBRARY_PATH="${ROCM_PATH}/lib64:${ROCM_PATH}/lib:${ROCM_PATH}/opencl/lib/x86_64:${ROCM_PATH}/hsa/lib:${ROCM_PATH}/hip/lib:${LD_LIBRARY_PATH}"
                                 fi
                                 source $SGSSCRATCH/spack/share/spack/setup-env.sh
-                                cd $( spack location -b  plssvm@develop \
+                                cd build-$(spack arch)-$(echo ${${$(spack location -i \
+                                    plssvm@develop \
                                         $([[ $BACKEND == OPENMP ]] && echo "+openmp" || echo "~openmp") \
                                         $([[ $BACKEND == CUDA ]] && echo "+cuda" || echo "~cuda") \
                                         $([[ $BACKEND == HIP ]] && echo "+hip" || echo "~hip") \
                                         $([[ $BACKEND == OPENCL ]] && echo "+opencl" || echo "~opencl") \
                                         $([[ $BACKEND == HIPSYCL ]] && echo "+adaptivecpp" || echo "~adaptivecpp") \
                                         $([[ $BACKEND == DPCPP ]] && echo "+icpx" || echo "~icpx") \
-                                        build_type=$BUILD_TYPE )
+                                        build_type=$BUILD_TYPE )\
+                                        )##*/}##*-} | head -c  7)
 
                                 spack test-env plssvm@develop \
                                         $([[ $BACKEND == OPENMP ]] && echo "+openmp" || echo "~openmp") \
