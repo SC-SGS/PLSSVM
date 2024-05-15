@@ -345,7 +345,7 @@ pipeline {
                                    export LD_LIBRARY_PATH="${ROCM_PATH}/lib64:${ROCM_PATH}/lib:${ROCM_PATH}/opencl/lib/x86_64:${ROCM_PATH}/hsa/lib:${ROCM_PATH}/hip/lib:${LD_LIBRARY_PATH}"
                                 fi
                                 source $SGSSCRATCH/spack/share/spack/setup-env.sh
-                                cd $( spack location -b  \
+                                cd $( spack location -b  plssvm@develop \
                                         $([[ $BACKEND == OPENMP ]] && echo "+openmp" || echo "~openmp") \
                                         $([[ $BACKEND == CUDA ]] && echo "+cuda" || echo "~cuda") \
                                         $([[ $BACKEND == HIP ]] && echo "+hip" || echo "~hip") \
