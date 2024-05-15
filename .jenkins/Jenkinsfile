@@ -311,6 +311,8 @@ pipeline {
                                         $([[ $BACKEND == OPENCL ]] && echo "+opencl" || echo "~opencl") \
                                         $([[ $BACKEND == HIPSYCL ]] && echo "+adaptivecpp" || echo "~adaptivecpp") \
                                         $([[ $BACKEND == DPCPP ]] && echo "+icpx" || echo "~icpx") \
+                                        $([[ $ARCHITECTURE == NVIDIA ]] && echo "cuda_arch=86" || echo "cuda_arch=none") \
+                                        $([[ $ARCHITECTURE == AMD ]] && echo "amdgpu_target=gfx90a" || echo "amdgpu_target=none") \
                                         build_type=$BUILD_TYPE || true
 
                                       spack dev-build plssvm@develop \
@@ -320,6 +322,8 @@ pipeline {
                                         $([[ $BACKEND == OPENCL ]] && echo "+opencl" || echo "~opencl") \
                                         $([[ $BACKEND == HIPSYCL ]] && echo "+adaptivecpp" || echo "~adaptivecpp") \
                                         $([[ $BACKEND == DPCPP ]] && echo "+icpx" || echo "~icpx") \
+                                        $([[ $ARCHITECTURE == NVIDIA ]] && echo "cuda_arch=86" || echo "cuda_arch=none") \
+                                        $([[ $ARCHITECTURE == AMD ]] && echo "amdgpu_target=gfx90a" || echo "amdgpu_target=none") \
                                         +language_bindings \
                                         +test_file \
                                         test_file_num_classes=5 \
@@ -350,6 +354,8 @@ pipeline {
                                     $([[ $BACKEND == OPENCL ]] && echo "+opencl" || echo "~opencl") \
                                     $([[ $BACKEND == HIPSYCL ]] && echo "+adaptivecpp" || echo "~adaptivecpp") \
                                     $([[ $BACKEND == DPCPP ]] && echo "+icpx" || echo "~icpx") \
+                                    $([[ $ARCHITECTURE == NVIDIA ]] && echo "cuda_arch=86" || echo "cuda_arch=none") \
+                                    $([[ $ARCHITECTURE == AMD ]] && echo "amdgpu_target=gfx90a" || echo "amdgpu_target=none") \
                                     build_type=$BUILD_TYPE)
                                 install_hash=$( echo ${installpath} | rev | cut -d/ -f1| cut -d- -f1 | rev | head -c 7)
                                 cd ${WORKSPACE}/plssvm/build-$(spack arch)-${install_hash}
@@ -361,6 +367,8 @@ pipeline {
                                         $([[ $BACKEND == OPENCL ]] && echo "+opencl" || echo "~opencl") \
                                         $([[ $BACKEND == HIPSYCL ]] && echo "+adaptivecpp" || echo "~adaptivecpp") \
                                         $([[ $BACKEND == DPCPP ]] && echo "+icpx" || echo "~icpx") \
+                                        $([[ $ARCHITECTURE == NVIDIA ]] && echo "cuda_arch=86" || echo "cuda_arch=none") \
+                                        $([[ $ARCHITECTURE == AMD ]] && echo "amdgpu_target=gfx90a" || echo "amdgpu_target=none") \
                                         build_type=$BUILD_TYPE \
                                         ctest -j4 --output-on-failure --no-compress-output -T Test
                             '''
