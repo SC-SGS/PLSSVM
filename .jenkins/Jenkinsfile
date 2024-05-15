@@ -311,18 +311,18 @@ pipeline {
                                         $([[ $BACKEND == OPENCL ]] && echo "+opencl" || echo "~opencl") \
                                         $([[ $BACKEND == HIPSYCL ]] && echo "+adaptivecpp" || echo "~adaptivecpp") \
                                         $([[ $BACKEND == DPCPP ]] && echo "+icpx" || echo "~icpx") \
-                                        $([[ $ARCHITECTURE == NVIDIA ]] && echo "cuda_arch=86" ) \
-                                        $([[ $ARCHITECTURE == AMD ]] && echo "amdgpu_target=gfx90a" ) \
+                                        $([[ $ARCHITECTURE == NVIDIA ]] && echo "cuda_arch=86") \
+                                        $([[ $ARCHITECTURE == AMD ]] && echo "amdgpu_target=gfx90a") \
                                         build_type=$BUILD_TYPE || true
 
-                                      spack dev-build "plssvm@develop \
+                                      spack dev-build plssvm@develop \
                                         $([[ $BACKEND == OPENMP ]] && echo "+openmp" || echo "~openmp") \
                                         $([[ $BACKEND == CUDA ]] && echo "+cuda" || echo "~cuda") \
                                         $([[ $BACKEND == HIP ]] && echo "+hip" || echo "~hip") \
                                         $([[ $BACKEND == OPENCL ]] && echo "+opencl" || echo "~opencl") \
                                         $([[ $BACKEND == HIPSYCL ]] && echo "+adaptivecpp" || echo "~adaptivecpp") \
                                         $([[ $BACKEND == DPCPP ]] && echo "+icpx" || echo "~icpx") \
-                                        $([[ $ARCHITECTURE == NVIDIA ]] && echo "cuda_arch=86" ) \
+                                        $([[ $ARCHITECTURE == NVIDIA ]] && echo "cuda_arch=86") \
                                         $([[ $ARCHITECTURE == AMD ]] && echo "amdgpu_target=gfx90a") \
                                         +language_bindings \
                                         +test_file \
@@ -330,7 +330,7 @@ pipeline {
                                         test_file_num_data_points=$NUM_DATA_POINTS \
                                         test_file_num_features=$NUM_FEATURES \
                                         +asserts \
-                                        build_type=$BUILD_TYPE"
+                                        build_type=$BUILD_TYPE
                                 '''
 
                         }
@@ -367,7 +367,7 @@ pipeline {
                                         $([[ $BACKEND == OPENCL ]] && echo "+opencl" || echo "~opencl") \
                                         $([[ $BACKEND == HIPSYCL ]] && echo "+adaptivecpp" || echo "~adaptivecpp") \
                                         $([[ $BACKEND == DPCPP ]] && echo "+icpx" || echo "~icpx") \
-                                        $([[ $ARCHITECTURE == NVIDIA ]] && echo "cuda_arch=86" || echo "cuda_arch=none") \
+                                        $([[ $ARCHITECTURE == NVIDIA ]] && echo "cuda_arch=86" ) \
                                         $([[ $ARCHITECTURE == AMD ]] && echo "amdgpu_target=gfx90a") \
                                         build_type=$BUILD_TYPE" \
                                         ctest -j4 --output-on-failure --no-compress-output -T Test
