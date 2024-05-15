@@ -313,7 +313,7 @@ pipeline {
                                         $([[ $BACKEND == DPCPP ]] && echo "+icpx" || echo "~icpx") \
                                         build_type=$BUILD_TYPE || true
 
-                                      spack dev-build plssvm@develop%gcc@9.4.0 \
+                                      spack dev-build plssvm@develop \
                                         $([[ $BACKEND == OPENMP ]] && echo "+openmp" || echo "~openmp") \
                                         $([[ $BACKEND == CUDA ]] && echo "+cuda" || echo "~cuda") \
                                         $([[ $BACKEND == HIP ]] && echo "+hip" || echo "~hip") \
