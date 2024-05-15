@@ -333,7 +333,7 @@ pipeline {
                     }
                     stage('Ctest PLSSVM'){
                         steps{
-                            bash '''
+                            sh '''
                                  if [ [ ! "$NODE_NAME" == "pcsgs09" ] && [ ! "$NODE_NAME" == "pcsgs13" ] ]; then
                                      . /usr/local.nfs/Modules/latest/init/sh
                                      module load cuda/12.0.1
@@ -351,7 +351,7 @@ pipeline {
                                     $([[ $BACKEND == HIPSYCL ]] && echo "+adaptivecpp" || echo "~adaptivecpp") \
                                     $([[ $BACKEND == DPCPP ]] && echo "+icpx" || echo "~icpx") \
                                     build_type=$BUILD_TYPE)
-                                install_hash=$(echo ${${${installpath}##*/}##*-} | head -c  7)
+                                install_hash=$( echo ${installpath} | rev | cut -d/ -f1| cut -d- -f1 | rev | head -c 7)
                                 cd build-$(spack arch)-${install_hash}
 
                                 spack test-env plssvm@develop \
