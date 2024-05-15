@@ -285,7 +285,7 @@ pipeline {
                                       fi
                                       source $SGSSCRATCH/spack/share/spack/setup-env.sh
                                       if [ "$ARCHITECTURE" == "AMD" ]; then
-                                         #export ROCM_PATH_="/opt/rocm"
+                                         export ROCM_PATH="/opt/rocm"
                                          export LD_LIBRARY_PATH="${ROCM_PATH}/lib64:${ROCM_PATH}/lib:${ROCM_PATH}/opencl/lib/x86_64:${ROCM_PATH}/hsa/lib:${ROCM_PATH}/hip/lib:${LD_LIBRARY_PATH}"
                                          export CPLUS_INCLUDE_PATH="${ROCM_PATH}/hip/include:${CPLUS_INCLUDE_PATH}"
                                          export CMAKE_PREFIX_PATH="${ROCM_PATH}/hip:${ROCM_PATH}:${CMAKE_PREFIX_PATH}"
@@ -343,7 +343,7 @@ pipeline {
                                      module load cuda/12.0.1
                                  fi
                                 if [ "$ARCHITECTURE" == "AMD" ]; then
-                                   export ROCM_PATH_="/opt/rocm"
+                                   export ROCM_PATH="/opt/rocm"
                                    export LD_LIBRARY_PATH="${ROCM_PATH}/lib64:${ROCM_PATH}/lib:${ROCM_PATH}/opencl/lib/x86_64:${ROCM_PATH}/hsa/lib:${ROCM_PATH}/hip/lib:${LD_LIBRARY_PATH}"
                                 fi
                                 source $SGSSCRATCH/spack/share/spack/setup-env.sh
@@ -360,7 +360,7 @@ pipeline {
                                 install_hash=$( echo ${installpath} | rev | cut -d/ -f1| cut -d- -f1 | rev | head -c 7)
                                 cd ${WORKSPACE}/plssvm/build-$(spack arch)-${install_hash}/spack-build-${install_hash}
 
-                                spack test-env plssvm@develop \
+                                spack test-env "plssvm@develop \
                                         $([[ $BACKEND == OPENMP ]] && echo "+openmp" || echo "~openmp") \
                                         $([[ $BACKEND == CUDA ]] && echo "+cuda" || echo "~cuda") \
                                         $([[ $BACKEND == HIP ]] && echo "+hip" || echo "~hip") \
@@ -369,7 +369,7 @@ pipeline {
                                         $([[ $BACKEND == DPCPP ]] && echo "+icpx" || echo "~icpx") \
                                         $([[ $ARCHITECTURE == NVIDIA ]] && echo "cuda_arch=86" || echo "cuda_arch=none") \
                                         $([[ $ARCHITECTURE == AMD ]] && echo "amdgpu_target=gfx90a" || echo "amdgpu_target=none") \
-                                        build_type=$BUILD_TYPE \
+                                        build_type=$BUILD_TYPE" \
                                         ctest -j4 --output-on-failure --no-compress-output -T Test
                             '''
                         }
