@@ -101,6 +101,15 @@ std::pair<soa_matrix<real_type>, unsigned long long> csvm::conjugate_gradients(c
     const auto num_rhs_converged = [eps, &delta, &delta0]() {
         return static_cast<std::size_t>(std::inner_product(delta.cbegin(), delta.cend(), delta0.cbegin(), real_type{ 0.0 }, std::plus<>{}, [eps](const real_type d, const real_type d0) { return d <= eps * eps * d0; }));
     };
+    // calculate a mask for every converged right hand side
+    // -> 0 if the rhs already converged, 1 otherwise
+    const auto calculate_rhs_converged_mask = [eps, &delta, &delta0]() {
+        std::vector<int> mask(delta.size());
+        for (std::size_t i = 0; i < mask.size(); ++i) {
+            mask[i] = delta[i] <= eps * eps * delta0[i] ? 0 : 1;
+        }
+        return mask;
+    };
 
     unsigned long long iter = 0;
     while (iter < max_cg_iter && num_rhs_converged() < num_rhs) {
@@ -123,14 +132,24 @@ std::pair<soa_matrix<real_type>, unsigned long long> csvm::conjugate_gradients(c
         // alpha = delta_new / (D^T * Q))
         const std::vector<real_type> alpha = delta / rowwise_dot(D, Q);
 
-        // create mask for the residual -> can't update X if the residual is already 0
-        std::vector<int> mask(alpha.size(), 0);
+        // create mask for the residual -> only update X if the respective rhs did not already converge
+        std::vector<int> mask = calculate_rhs_converged_mask();
+        // update mask -> can't update X if the residual is already 0
 #pragma omp parallel for shared(R, mask)
         for (std::size_t row = 0; row < R.num_rows(); ++row) {
-            for (std::size_t col = 0; col < R.num_cols(); ++col) {
-                if (R(row, col) != real_type{ 0.0 }) {
-                    mask[row] = 1;
-                    break;
+            // if mask[row] == 0 -> rhs already converged -> X wouldn't be updated either way
+            if (mask[row] == 1) {
+                // check if any residual value is not zero
+                bool is_residual_zero = true;
+                for (std::size_t col = 0; col < R.num_cols(); ++col) {
+                    if (R(row, col) != real_type{ 0.0 }) {
+                        is_residual_zero = false;
+                        break;
+                    }
+                }
+                // all residual values are 0 -> residual is 0 -> can't updated X for this rhs!
+                if (is_residual_zero) {
+                    mask[row] = 0;
                 }
             }
         }
