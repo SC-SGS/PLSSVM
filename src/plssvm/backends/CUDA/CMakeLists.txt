@@ -36,6 +36,7 @@ foreach (PLSSVM_PLATFORM ${PLSSVM_CUDA_TARGET_PLATFORMS})
         if (PLSSVM_NUM_NVIDIA_TARGET_ARCHS EQUAL 0)
             message(FATAL_ERROR "Target platform \"nvidia\" must at least have one architecture specification!")
         endif ()
+        target_compile_definitions(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC PLSSVM_HAS_NVIDIA_TARGET)
     elseif (PLSSVM_PLATFORM MATCHES "^amd")
         # parse provided AMD GPU architectures
         message(WARNING "The CUDA backend currently does not support the target platform \"amd\", ignoring it!")
