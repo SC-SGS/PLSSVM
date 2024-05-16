@@ -315,7 +315,7 @@ pipeline {
                                         $([[ $ARCHITECTURE == AMD ]] && echo "amdgpu_target=gfx90a") \
                                         build_type=$BUILD_TYPE || true
 
-                                      spack dev-build plssvm@develop$([[ $BACKEND == ADAPTIVECPP ]] && echo "%clang" ) \ # TODO debug gcc
+                                      spack dev-build plssvm@develop$([[ $BACKEND == ADAPTIVECPP ]] && echo "%clang" ) \
                                         $([[ $BACKEND == OPENMP ]] && echo "+openmp" || echo "~openmp") \
                                         $([[ $BACKEND == CUDA ]] && echo "+cuda" || echo "~cuda") \
                                         $([[ $BACKEND == HIP ]] && echo "+hip" || echo "~hip") \
