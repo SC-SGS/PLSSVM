@@ -370,7 +370,7 @@ pipeline {
                                         $([[ $ARCHITECTURE == NVIDIA ]] && echo "cuda_arch=86" ) \
                                         $([[ $ARCHITECTURE == AMD ]] && echo "amdgpu_target=gfx90a") \
                                         build_type=$BUILD_TYPE" \
-                                        ctest -j4 --output-on-failure --no-compress-output -T Test
+                                        ctest -j16 --output-on-failure --no-compress-output -T Test
                             '''
                         }
                     }
