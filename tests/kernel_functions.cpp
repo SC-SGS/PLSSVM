@@ -10,9 +10,12 @@
 
 #include "plssvm/kernel_functions.hpp"
 
-#include "plssvm/constants.hpp"       // plssvm::PADDING_SIZE
-#include "plssvm/detail/utility.hpp"  // plssvm::detail::{contains, erase_if}
-#include "plssvm/parameter.hpp"       // plssvm::parameter
+#include "plssvm/constants.hpp"              // plssvm::PADDING_SIZE
+#include "plssvm/detail/utility.hpp"         // plssvm::detail::{contains, erase_if}
+#include "plssvm/exceptions/exceptions.hpp"  // plssvm::unsupported_kernel_function
+#include "plssvm/kernel_function_types.hpp"  // plssvm::kernel_function_type
+#include "plssvm/matrix.hpp"                 // plssvm::matrix, plssvm::layout_type
+#include "plssvm/parameter.hpp"              // plssvm::parameter
 
 #include "tests/backends/ground_truth.hpp"  // ground_truth::detail::{linear_kernel, poly_kernel, rbf_kernel}
 #include "tests/custom_test_macros.hpp"     // EXPECT_CONVERSION_TO_STRING, EXPECT_CONVERSION_FROM_STRING, EXPECT_THROW_WHAT, EXPECT_FLOATING_POINT_NEAR
@@ -25,7 +28,7 @@
 
 #include <array>    // std::array
 #include <cstddef>  // std::size_t
-#include <tuple>    // std::tuple
+#include <tuple>    // std::tuple, std::ignore
 #include <vector>   // std::vector
 
 //*************************************************************************************************************************************//
@@ -128,7 +131,7 @@ TYPED_TEST(KernelFunctionVector, polynomial_kernel_function_parameter) {
             SCOPED_TRACE(fmt::format("parameter: [{}, {}, {}, {}]", degree, gamma, coef0, cost));
             const plssvm::parameter params{ plssvm::kernel_function_type::polynomial, static_cast<int>(degree), gamma, coef0, cost };
             EXPECT_FLOATING_POINT_NEAR(plssvm::kernel_function(x1, x2, params),
-                                           ground_truth::detail::polynomial_kernel(x1, x2, params.degree.value(), static_cast<real_type>(params.gamma.value()), static_cast<real_type>(params.coef0.value())));
+                                       ground_truth::detail::polynomial_kernel(x1, x2, params.degree.value(), static_cast<real_type>(params.gamma.value()), static_cast<real_type>(params.coef0.value())));
         }
     }
 }
@@ -480,7 +483,7 @@ TYPED_TEST(KernelFunctionMatrix, polynomial_kernel_function_parameter) {
 
                     const plssvm::parameter params{ plssvm::kernel_function_type::polynomial, static_cast<int>(degree), gamma, coef0, cost };
                     EXPECT_FLOATING_POINT_NEAR(plssvm::kernel_function(matr1, i, matr2, j, params),
-                                                   ground_truth::detail::polynomial_kernel(x1, x2, params.degree.value(), static_cast<real_type>(params.gamma.value()), static_cast<real_type>(params.coef0.value())));
+                                               ground_truth::detail::polynomial_kernel(x1, x2, params.degree.value(), static_cast<real_type>(params.gamma.value()), static_cast<real_type>(params.coef0.value())));
                 }
             }
         }
@@ -549,7 +552,7 @@ TYPED_TEST(KernelFunctionMatrix, rbf_kernel_function_parameter) {
 
                     const plssvm::parameter params{ plssvm::kernel_function_type::rbf, static_cast<int>(degree), gamma, coef0, cost };
                     EXPECT_FLOATING_POINT_NEAR(plssvm::kernel_function(matr1, i, matr2, j, params),
-                                                   ground_truth::detail::rbf_kernel(x1, x2, static_cast<real_type>(params.gamma.value())));
+                                               ground_truth::detail::rbf_kernel(x1, x2, static_cast<real_type>(params.gamma.value())));
                 }
             }
         }
@@ -693,15 +696,17 @@ TYPED_TEST(KernelFunctionMatrix, laplacian_kernel_function_parameter) {
             }
         }
     }
-}TYPED_TEST(KernelFunctionMatrix, chi_squared_kernel_function_variadic) {
+}
+
+TYPED_TEST(KernelFunctionMatrix, chi_squared_kernel_function_variadic) {
     using real_type = typename TestFixture::fixture_real_type;
     constexpr plssvm::layout_type layout = TestFixture::fixture_layout;
 
     for (const std::size_t size : this->get_sizes()) {
         SCOPED_TRACE(fmt::format("size: {}", size));
         // create random matrices with the specified size
-        auto matr1 = util::generate_random_matrix<plssvm::matrix<real_type, layout>>(plssvm::shape{ 4, size }, { real_type{ 0.0 }, real_type{ 1.0 } });
-        auto matr2 = util::generate_random_matrix<plssvm::matrix<real_type, layout>>(plssvm::shape{ 4, size }, plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE }, { real_type{ 0.0 }, real_type{ 1.0 } });
+        auto matr1 = util::generate_random_matrix<plssvm::matrix<real_type, layout>>(plssvm::shape{ 4, size }, std::pair{ real_type{ 0.0 }, real_type{ 1.0 } });
+        auto matr2 = util::generate_random_matrix<plssvm::matrix<real_type, layout>>(plssvm::shape{ 4, size }, plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE }, std::pair{ real_type{ 0.0 }, real_type{ 1.0 } });
 
         for (const auto [degree, gamma, coef0, cost] : this->get_param_values()) {
             SCOPED_TRACE(fmt::format("parameter: [{}, {}, {}, {}]", degree, gamma, coef0, cost));
@@ -734,8 +739,8 @@ TYPED_TEST(KernelFunctionMatrix, chi_squared_kernel_function_parameter) {
     for (const std::size_t size : this->get_sizes()) {
         SCOPED_TRACE(fmt::format("size: {}", size));
         // create random matrices with the specified size
-        const auto matr1 = util::generate_random_matrix<plssvm::matrix<real_type, layout>>(plssvm::shape{ 4, size }, plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE }, { real_type{ 0.0 }, real_type{ 1.0 } });
-        const auto matr2 = util::generate_random_matrix<plssvm::matrix<real_type, layout>>(plssvm::shape{ 4, size }, { real_type{ 0.0 }, real_type{ 1.0 } });
+        const auto matr1 = util::generate_random_matrix<plssvm::matrix<real_type, layout>>(plssvm::shape{ 4, size }, plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE }, std::pair{ real_type{ 0.0 }, real_type{ 1.0 } });
+        const auto matr2 = util::generate_random_matrix<plssvm::matrix<real_type, layout>>(plssvm::shape{ 4, size }, std::pair{ real_type{ 0.0 }, real_type{ 1.0 } });
 
         for (const auto [degree, gamma, coef0, cost] : this->get_param_values()) {
             SCOPED_TRACE(fmt::format("parameter: [{}, {}, {}, {}]", degree, gamma, coef0, cost));

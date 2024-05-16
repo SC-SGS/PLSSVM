@@ -10,6 +10,9 @@
 
 #include "plssvm/classification_report.hpp"
 
+#include "plssvm/exceptions/exceptions.hpp"  // plssvm::classification_report_exception
+#include "plssvm/matrix.hpp"                 // plssvm::aos_matrix
+
 #include "tests/custom_test_macros.hpp"  // EXPECT_THROW_WHAT, EXPECT_CONVERSION_TO_STRING, EXPECT_CONVERSION_FROM_STRING
 #include "tests/utility.hpp"             // util::redirect_output
 

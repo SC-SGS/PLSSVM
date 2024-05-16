@@ -19,14 +19,15 @@
 
 #include "cxxopts.hpp"    // cxxopts::{Options, value, ParseResult}
 #include "fmt/color.h"    // fmt::fg, fmt::color::orange
-#include "fmt/core.h"     // fmt::format, fmt::join
-#include "fmt/ostream.h"  // can use fmt using operator<< overloads
+#include "fmt/core.h"     // fmt::format
+#include "fmt/format.h"   // fmt::join
 
 #include <cstdlib>      // std::exit, EXIT_SUCCESS, EXIT_FAILURE
 #include <exception>    // std::exception
 #include <filesystem>   // std::filesystem::path
 #include <iostream>     // std::cout, std::cerr, std::endl
 #include <type_traits>  // std::is_same_v
+#include <vector>       // std::vector
 
 namespace plssvm::detail::cmd {
 
@@ -36,7 +37,7 @@ parser_predict::parser_predict(int argc, char **argv) {
     PLSSVM_ASSERT(argv != nullptr, "At least one argument is always given (the executable name), but argv is a nullptr!");
 
     // setup command line parser with all available options
-    cxxopts::Options options(argv[0], "LS-SVM with multiple (GPU-)backends");
+    cxxopts::Options options("plssvm-predict", "LS-SVM with multiple (GPU-)backends");
     options
         .positional_help("test_file model_file [output_file]")
         .show_positional_help();

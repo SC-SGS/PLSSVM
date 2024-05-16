@@ -14,13 +14,11 @@
 
 #include "tests/custom_test_macros.hpp"  // EXPECT_THROW_WHAT, EXPECT_THROW_WHAT_MATCHER
 
-#include "fmt/core.h"              // fmt::format
-#include "gmock/gmock-matchers.h"  // ::testing::StartsWith
-#include "gtest/gtest.h"           // TEST, EXPECT_GE, EXPECT_NO_THROW
+#include "fmt/core.h"     // fmt::format
+#include "gmock/gmock.h"  // ::testing::StartsWith
+#include "gtest/gtest.h"  // TEST, EXPECT_GE, EXPECT_NO_THROW
 
 #include <regex>  // std::regex, std::regex::extended, std::regex_match
-
-#if __has_include("cuda_runtime.h")
 
 TEST(CUDAUtility, error_check) {
     // cudaSuccess must not throw
@@ -55,5 +53,3 @@ TEST(CUDAUtility, get_runtime_version) {
     const std::regex reg{ "[0-9]+\\.[0-9]+", std::regex::extended };
     EXPECT_TRUE(std::regex_match(plssvm::cuda::detail::get_runtime_version(), reg));
 }
-
-#endif

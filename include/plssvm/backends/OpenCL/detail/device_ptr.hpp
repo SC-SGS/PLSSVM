@@ -19,7 +19,7 @@
 
 #include "CL/cl.h"  // cl_mem
 
-#include <array>  // std::array
+#include <cstddef>  // std::size_t
 
 namespace plssvm::opencl::detail {
 

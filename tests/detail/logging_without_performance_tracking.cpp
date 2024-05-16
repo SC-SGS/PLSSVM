@@ -10,6 +10,8 @@
 
 #include "plssvm/detail/logging_without_performance_tracking.hpp"
 
+#include "plssvm/verbosity_levels.hpp"  // plssvm::verbosity, plssvm::verbosity_level
+
 #include "tests/utility.hpp"  // util::redirect_output
 
 #include "gtest/gtest.h"  // TEST_F, EXPECT_EQ, EXPECT_TRUE, ::testing::Test

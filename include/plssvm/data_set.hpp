@@ -30,16 +30,12 @@
 #include "plssvm/shape.hpp"                              // plssvm::shape
 #include "plssvm/verbosity_levels.hpp"                   // plssvm::verbosity_level
 
-#include "fmt/chrono.h"   // directly output std::chrono times via fmt
-#include "fmt/core.h"     // fmt::format
-#include "fmt/ostream.h"  // directly output objects with operator<< overload via fmt
+#include "fmt/core.h"  // fmt::format
 
 #include <algorithm>   // std::all_of, std::max, std::min, std::sort, std::adjacent_find
-#include <array>       // std::array
 #include <chrono>      // std::chrono::{time_point, steady_clock, duration_cast, millisecond}
 #include <cstddef>     // std::size_t
 #include <functional>  // std::reference_wrapper, std::cref
-#include <iostream>    // std::cout, std::endl
 #include <limits>      // std::numeric_limits::{max, lowest}
 #include <map>         // std::map
 #include <memory>      // std::shared_ptr, std::make_shared
@@ -399,7 +395,7 @@ class data_set<U>::scaling {
      * @param[in] filename the filename to read the scaling information from
      * @throws plssvm::invalid_file_format_exception all exceptions thrown by the plssvm::detail::io::parse_scaling_factors function
      */
-    scaling(const std::string &filename);
+    scaling(const std::string &filename);  // can't be explicit due to the data_set_variant
 
     /**
      * @brief Save the scaling factors to the file @p filename.

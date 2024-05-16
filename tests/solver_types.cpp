@@ -27,7 +27,7 @@ TEST(SolverType, to_string) {
 
 TEST(SolverType, to_string_unknown) {
     // check conversions to std::string from unknown solver_type
-    EXPECT_CONVERSION_TO_STRING(static_cast<plssvm::solver_type>(4), "unknown");
+    EXPECT_CONVERSION_TO_STRING(static_cast<plssvm::solver_type>(3), "unknown");
 }
 
 // check whether the std::string -> plssvm::solver_type conversions are correct

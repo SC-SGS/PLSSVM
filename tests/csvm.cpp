@@ -30,9 +30,8 @@
 #include "tests/utility.hpp"             // util::{redirect_output, temporary_file, instantiate_template_file, get_num_classes, calculate_number_of_classifiers,
                                          // generate_random_matrix, get_correct_data_file_labels}
 
-#include "gmock/gmock.h"           // EXPECT_CALL, ::testing::{An, Between, Return}
-#include "gtest/gtest-matchers.h"  // EXPECT_THAT, ::testing::HasSubstr
-#include "gtest/gtest.h"           // TEST, TYPED_TEST, TYPED_TEST_SUITE, EXPECT_EQ, EXPECT_TRUE, EXPECT_FALSE, EXPECT_THAT,
+#include "gmock/gmock.h"  // EXPECT_CALL, EXPECT_THAT, ::testing::{An, Between, Return, HasSubstr}
+#include "gtest/gtest.h"  // TEST, TYPED_TEST, TYPED_TEST_SUITE, EXPECT_EQ, EXPECT_TRUE, EXPECT_FALSE, EXPECT_THAT,
 
 #include <cstddef>   // std::size_t
 #include <iostream>  // std::clog
@@ -385,7 +384,13 @@ TYPED_TEST(BaseCSVMFit, fit) {
     // clang-format on
 
     // create data set
-    const plssvm::data_set<label_type> training_data{ this->get_data_filename() };
+    plssvm::data_set<label_type> training_data{ this->get_data_filename() };
+    if constexpr (kernel == plssvm::kernel_function_type::chi_squared) {
+        // chi-squared is well-defined for non-negative values only
+        if (training_data.labels().has_value()) {
+            training_data = plssvm::data_set<label_type>{ util::matrix_abs(training_data.data()), *training_data.labels() };
+        }
+    }
 
     // call function
     const plssvm::model<label_type> model = csvm.fit(training_data, plssvm::solver = solver, plssvm::classification = classification);
@@ -444,7 +449,13 @@ TYPED_TEST(BaseCSVMFit, fit_named_parameters) {
     // clang-format on
 
     // create data set
-    const plssvm::data_set<label_type> training_data{ this->get_data_filename() };
+    plssvm::data_set<label_type> training_data{ this->get_data_filename() };
+    if constexpr (kernel == plssvm::kernel_function_type::chi_squared) {
+        // chi-squared is well-defined for non-negative values only
+        if (training_data.labels().has_value()) {
+            training_data = plssvm::data_set<label_type>{ util::matrix_abs(training_data.data()), *training_data.labels() };
+        }
+    }
 
     // call function
     const plssvm::model<label_type> model = csvm.fit(training_data,
@@ -494,7 +505,13 @@ TYPED_TEST(BaseCSVMFit, fit_named_parameters_invalid_epsilon) {
     // clang-format on
 
     // create data set
-    const plssvm::data_set<label_type> training_data{ this->get_data_filename() };
+    plssvm::data_set<label_type> training_data{ this->get_data_filename() };
+    if constexpr (kernel == plssvm::kernel_function_type::chi_squared) {
+        // chi-squared is well-defined for non-negative values only
+        if (training_data.labels().has_value()) {
+            training_data = plssvm::data_set<label_type>{ util::matrix_abs(training_data.data()), *training_data.labels() };
+        }
+    }
 
     // calling the function with an invalid epsilon should throw
     EXPECT_THROW_WHAT((std::ignore = csvm.fit(training_data, plssvm::solver = solver, plssvm::classification = classification, plssvm::epsilon = 0.0)),
@@ -536,7 +553,13 @@ TYPED_TEST(BaseCSVMFit, fit_named_parameters_invalid_max_iter) {
     // clang-format on
 
     // create data set
-    const plssvm::data_set<label_type> training_data{ this->get_data_filename() };
+    plssvm::data_set<label_type> training_data{ this->get_data_filename() };
+    if constexpr (kernel == plssvm::kernel_function_type::chi_squared) {
+        // chi-squared is well-defined for non-negative values only
+        if (training_data.labels().has_value()) {
+            training_data = plssvm::data_set<label_type>{ util::matrix_abs(training_data.data()), *training_data.labels() };
+        }
+    }
 
     // calling the function with an invalid epsilon should throw
     EXPECT_THROW_WHAT((std::ignore = csvm.fit(training_data, plssvm::solver = solver, plssvm::classification = classification, plssvm::max_iter = 0)),
@@ -578,7 +601,11 @@ TYPED_TEST(BaseCSVMFit, fit_no_label) {
     // clang-format on
 
     // create data set without labels
-    const plssvm::data_set<label_type> training_data{ PLSSVM_TEST_PATH "/data/libsvm/3x2_without_label.libsvm" };
+    plssvm::data_set<label_type> training_data{ PLSSVM_TEST_PATH "/data/libsvm/3x2_without_label.libsvm" };
+    if constexpr (kernel == plssvm::kernel_function_type::chi_squared) {
+        // chi-squared is well-defined for non-negative values only
+        training_data = plssvm::data_set<label_type>{ util::matrix_abs(training_data.data()) };
+    }
 
     // in order to call fit, the provided data set must contain labels
     EXPECT_THROW_WHAT((std::ignore = csvm.fit(training_data, plssvm::solver = solver, plssvm::classification = classification)),

@@ -1,34 +1,42 @@
 # The Python3 Bindings
 
 - [Sklearn like API](#sklearn-like-api)
-  - [Parameters](#parameters)
-  - [Attributes](#attributes)
-  - [Methods](#methods)
+    - [Parameters](#parameters)
+    - [Attributes](#attributes)
+    - [Methods](#methods)
 - [Bindings close to our C++ API](#bindings-close-to-our-c-api)
-  - [Enumerations](#enumerations)
-  - [Classes and submodules](#classes-and-submodules)
-    - [plssvm.Parameter](#plssvmparameter)
-    - [plssvm.DataSet](#plssvmdataset)
-    - [plssvm.CSVM](#plssvmcsvm)
-    - [plssvm.openmp.CSVM, plssvm.cuda.CSVM, plssvm.hip.CSVM, plssvm.opencl.CSVM, plssvm.sycl.CSVM, plssvm.dpcpp.CSVM, plssvm.adaptivecpp.CSVM](#plssvmopenmpcsvm-plssvmcudacsvm-plssvmhipcsvm-plssvmopenclcsvm-plssvmsyclcsvm-plssvmdpcppcsvm-plssvmadaptivecppcsvm)
-    - [plssvm.Model](#plssvmmodel)
-    - [plssvm.Version](#plssvmversion)
-    - [plssvm.detail.PerformanceTracker](#plssvmdetailperformancetracker)
-  - [Free functions](#free-functions)
-  - [Exceptions](#exceptions)
+    - [Enumerations](#enumerations)
+    - [Classes and submodules](#classes-and-submodules)
+        - [plssvm.Parameter](#plssvmparameter)
+        - [plssvm.DataSet](#plssvmdataset)
+        - [plssvm.CSVM](#plssvmcsvm)
+        - [plssvm.openmp.CSVM, plssvm.cuda.CSVM, plssvm.hip.CSVM, plssvm.opencl.CSVM, plssvm.sycl.CSVM, plssvm.dpcpp.CSVM, plssvm.adaptivecpp.CSVM](#plssvmopenmpcsvm-plssvmcudacsvm-plssvmhipcsvm-plssvmopenclcsvm-plssvmsyclcsvm-plssvmdpcppcsvm-plssvmadaptivecppcsvm)
+        - [plssvm.Model](#plssvmmodel)
+        - [plssvm.Version](#plssvmversion)
+        - [plssvm.detail.PerformanceTracker](#plssvmdetailperformancetracker)
+    - [Free functions](#free-functions)
+    - [Exceptions](#exceptions)
 
-We currently support two kinds of Python3 bindings, one reflecting the API of [`sklearn.svm.SVC`](https://scikit-learn.org/stable/modules/generated/sklearn.svm.SVC.html) and one extremely closely to our C++ API.
+We currently support two kinds of Python3 bindings, one reflecting the API
+of [`sklearn.svm.SVC`](https://scikit-learn.org/stable/modules/generated/sklearn.svm.SVC.html) and one extremely closely
+to our C++ API.
 
-**Note**: this page is solely meant as an API reference and overview. For examples see the top-level [`../../examples/`](/examples) folder.
+**Note**: this page is solely meant as an API reference and overview. For examples see the
+top-level [`../../examples/`](/examples) folder.
 
 ## Sklearn like API
 
-The following tables show the API provided by [`sklearn.svm.SVC`](https://scikit-learn.org/stable/modules/generated/sklearn.svm.SVC.html) and whether we currently support the respective constructor parameter, class attribute, or method.
-Note that the documentation is a verbose copy from the sklearn SVC page with some additional information added if our implementation differs from the sklearn implementation.
+The following tables show the API provided
+by [`sklearn.svm.SVC`](https://scikit-learn.org/stable/modules/generated/sklearn.svm.SVC.html) and whether we currently
+support the respective constructor parameter, class attribute, or method.
+Note that the documentation is a verbose copy from the sklearn SVC page with some additional information added if our
+implementation differs from the sklearn implementation.
 
 ### Parameters
 
-The following parameters are supported by [`sklearn.svm.SVC`](https://scikit-learn.org/stable/modules/generated/sklearn.svm.SVC.html) when construction a new `SVC`:
+The following parameters are supported
+by [`sklearn.svm.SVC`](https://scikit-learn.org/stable/modules/generated/sklearn.svm.SVC.html) when construction a
+new `SVC`:
 
 | implementation status | parameter                                                                                  | sklearn description                                                                                                                                                                                                                                                      |
 |:---------------------:|--------------------------------------------------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
@@ -48,11 +56,13 @@ The following parameters are supported by [`sklearn.svm.SVC`](https://scikit-lea
 |          :x:          | `break_ties : bool, default=False`                                                         | If true, `decision_function_shape='ovr'`, and number of classes > 2, predict will break ties according to the confidence values of decision_function; otherwise the first class among the tied classes is returned. **Note**: PLSSVM behaves as if `False` was provided. |
 |          :x:          | `random_state : int, RandomState instance or None, default=None`                           | Controls the pseudo random number generation for shuffling the data for probability estimates. Ignored when `probability` is False.                                                                                                                                      |
 
-**Note**: the `plssvm.SVC` automatically uses the optimal (in the sense of performance) backend and target platform, as they were made available during PLSSVM's build step.
+**Note**: the `plssvm.SVC` automatically uses the optimal (in the sense of performance) backend and target platform, as
+they were made available during PLSSVM's build step.
 
 ### Attributes
 
-The following attributes are supported by [`sklearn.svm.SVC`](https://scikit-learn.org/stable/modules/generated/sklearn.svm.SVC.html):
+The following attributes are supported
+by [`sklearn.svm.SVC`](https://scikit-learn.org/stable/modules/generated/sklearn.svm.SVC.html):
 
 | implementation status | attribute                                                                | sklearn description                                                                                                                                                                                                                                                                                                  |
 |:---------------------:|--------------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
@@ -74,7 +84,8 @@ The following attributes are supported by [`sklearn.svm.SVC`](https://scikit-lea
 
 ### Methods
 
-The following methods are supported by [`sklearn.svm.SVC`](https://scikit-learn.org/stable/modules/generated/sklearn.svm.SVC.html):
+The following methods are supported
+by [`sklearn.svm.SVC`](https://scikit-learn.org/stable/modules/generated/sklearn.svm.SVC.html):
 
 | implementation status | method                                  | sklearn description                                                                            |
 |:---------------------:|-----------------------------------------|------------------------------------------------------------------------------------------------|
@@ -93,72 +104,82 @@ The following methods are supported by [`sklearn.svm.SVC`](https://scikit-learn.
 More detailed description of the class methods:
 
 - `decision_function(X)`: Evaluate the decision function for the samples in X.
-  - Parameters: 
-    - `X : array-like of shape (n_samples, n_features)`: the input samples
-  - Returns:
-    - `X : ndarray of shape (n_samples, n_classes * (n_classes-1) / 2)`: the decision function of the sample for each class in the model. If `decision_function_shape='ovr'`, the shape is `(n_samples, n_classes)`.
+    - Parameters:
+        - `X : array-like of shape (n_samples, n_features)`: the input samples
+    - Returns:
+        - `X : ndarray of shape (n_samples, n_classes * (n_classes-1) / 2)`: the decision function of the sample for
+          each class in the model. If `decision_function_shape='ovr'`, the shape is `(n_samples, n_classes)`.
 
 - `fit(X, y[, sample_weight])`: Fit the SVM model according to the given training data.
-  - Parameters:
-    - `X : array_like of shape (n_samples, n_features) or (n_samples, n_samples)`: Training vectors, where `n_samples` is the number of samples and `n_features` is the number of features.
-    - `y : array-like of shape (n_samples,)`: Target values (class labels).
-    - `sample_weight : array-like of shape (n_samples,), default=None`: Per-sample weights. Rescale C per sample. Higher weights force the classifier to put more emphasis on these points. **Note**: not supported
-  - Returns:
-    - `self : object`: Fitted estimator.
+    - Parameters:
+        - `X : array_like of shape (n_samples, n_features) or (n_samples, n_samples)`: Training vectors,
+          where `n_samples` is the number of samples and `n_features` is the number of features.
+        - `y : array-like of shape (n_samples,)`: Target values (class labels).
+        - `sample_weight : array-like of shape (n_samples,), default=None`: Per-sample weights. Rescale C per sample.
+          Higher weights force the classifier to put more emphasis on these points. **Note**: not supported
+    - Returns:
+        - `self : object`: Fitted estimator.
 
 - `get_metadata_routing()`: Get metadata routing of this object.
-  - Returns:
-    - `routing : MetadataRequest`: A MetadataRequest encapsulating routing information.
+    - Returns:
+        - `routing : MetadataRequest`: A MetadataRequest encapsulating routing information.
 
 - `get_params(deep=True)`: Get parameters for this estimator.
-  - Parameters:
-    - `deep : bool, default=True`: If True, will return the parameters for this estimator and contained subobjects that are estimators. **Note**: not applicable, therefore, ignored.
-  - Returns:
-    - `params : dict`: Parameter names mapped to their values.
+    - Parameters:
+        - `deep : bool, default=True`: If True, will return the parameters for this estimator and contained subobjects
+          that are estimators. **Note**: not applicable, therefore, ignored.
+    - Returns:
+        - `params : dict`: Parameter names mapped to their values.
 
 - `predict(X)`: Perform classification on samples in X.
-  - Parameters:
-    - `X : array-like of shape (n_samples, n_features)`
-  - Returns:
-    - `y_pred : ndarray of shape (n_samples,)`: Class labels for samples in X.
+    - Parameters:
+        - `X : array-like of shape (n_samples, n_features)`
+    - Returns:
+        - `y_pred : ndarray of shape (n_samples,)`: Class labels for samples in X.
 
 - `predict_log_proba(X)`: Compute log probabilities of possible outcomes for samples in X.
-  - Parameters: 
-    - `X : array-like of shape (n_samples, n_features)`
-  - Returns: 
-    - `T : ndarray of shape (n_samples, n_classes)`: Returns the log-probabilities of the sample for each class in the model. The columns correspond to the classes in sorted order, as they appear in the attribute classes_.
+    - Parameters:
+        - `X : array-like of shape (n_samples, n_features)`
+    - Returns:
+        - `T : ndarray of shape (n_samples, n_classes)`: Returns the log-probabilities of the sample for each class in
+          the model. The columns correspond to the classes in sorted order, as they appear in the attribute classes_.
 
 - `predict_proba(X)`: Compute probabilities of possible outcomes for samples in X.
-  - Parameters: 
-    - `X : array-like of shape (n_samples, n_features)`
-  - Returns:
-    - `T : ndarray of shape (n_samples, n_classes)`: Returns the probability of the sample for each class in the model. The columns correspond to the classes in sorted order, as they appear in the attribute classes_.
+    - Parameters:
+        - `X : array-like of shape (n_samples, n_features)`
+    - Returns:
+        - `T : ndarray of shape (n_samples, n_classes)`: Returns the probability of the sample for each class in the
+          model. The columns correspond to the classes in sorted order, as they appear in the attribute classes_.
 
 - `score(X, y, sample_weight=None)`: Return the mean accuracy on the given test data and labels.
-  - Parameters:
-    - `X : array-like of shape (n_samples, n_features)`: Test samples.
-    - `y : array-like of shape (n_samples,) or (n_samples, n_outputs)`: True labels for X.
-    - `sample_weightarray-like of shape (n_samples,), default=None`: Sample weights.
-  - Returns:
-    - `score : float`: Mean accuracy of `self.predict(X)` w.r.t. `y`.
+    - Parameters:
+        - `X : array-like of shape (n_samples, n_features)`: Test samples.
+        - `y : array-like of shape (n_samples,) or (n_samples, n_outputs)`: True labels for X.
+        - `sample_weightarray-like of shape (n_samples,), default=None`: Sample weights.
+    - Returns:
+        - `score : float`: Mean accuracy of `self.predict(X)` w.r.t. `y`.
 
-- `set_fit_request(*, sample_weight: bool | None | str = '$UNCHANGED$') → SVC`: Request metadata passed to the fit method.
-  - Parameters:
-    - `sample_weight : str, True, False, or None, default=sklearn.utils.metadata_routing.UNCHANGED`: Metadata routing for `sample_weight` parameter in `fit`.
-  - Returns:
-    - `self : object`: The updated object.
+- `set_fit_request(*, sample_weight: bool | None | str = '$UNCHANGED$') → SVC`: Request metadata passed to the fit
+  method.
+    - Parameters:
+        - `sample_weight : str, True, False, or None, default=sklearn.utils.metadata_routing.UNCHANGED`: Metadata
+          routing for `sample_weight` parameter in `fit`.
+    - Returns:
+        - `self : object`: The updated object.
 
 - `set_params(**params)`: Set the parameters of this estimator.
-  - Parameters:
-    - `**params : dict`: Estimator parameters.
-  - Returns:
-    - `self : object`: Estimator instance.
+    - Parameters:
+        - `**params : dict`: Estimator parameters.
+    - Returns:
+        - `self : object`: Estimator instance.
 
-- `set_score_request(*, sample_weight: bool | None | str = '$UNCHANGED$') → SVC`: Request metadata passed to the score method.
-  - Parameters:
-    - `sample_weightstr, True, False, or None, default=sklearn.utils.metadata_routing.UNCHANGED`: Metadata routing for `sample_weight` parameter in `score`.
-  - Returns:
-    - `self : object`: The updated object.
+- `set_score_request(*, sample_weight: bool | None | str = '$UNCHANGED$') → SVC`: Request metadata passed to the score
+  method.
+    - Parameters:
+        - `sample_weightstr, True, False, or None, default=sklearn.utils.metadata_routing.UNCHANGED`: Metadata routing
+          for `sample_weight` parameter in `score`.
+    - Returns:
+        - `self : object`: The updated object.
 
 ## Bindings close to our C++ API
 
@@ -215,8 +236,10 @@ The parameter class encapsulates all necessary hyper-parameters needed to fit an
 #### `plssvm.DataSet`
 
 A class encapsulating a used data set.
-The label type of `plssvm.DataSet` corresponds to the value of `-DPLSSVM_PYTHON_BINDINGS_PREFERRED_LABEL_TYPE` as provided during PLSSVM's build step (default: `std::string`).
-If another label type is desired, one can simply use, e.g., `plssvm.DataSet_intc` for a data set with plain integers as label type.
+The label type of `plssvm.DataSet` corresponds to the value of `-DPLSSVM_PYTHON_BINDINGS_PREFERRED_LABEL_TYPE` as
+provided during PLSSVM's build step (default: `std::string`).
+If another label type is desired, one can simply use, e.g., `plssvm.DataSet_intc` for a data set with plain integers as
+label type.
 
 | constructors                                                                                         | description                                                                                                                                                                                                                                     |
 |------------------------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
@@ -241,8 +264,10 @@ If another label type is desired, one can simply use, e.g., `plssvm.DataSet_intc
 ##### `plssvm.DataSetScaling`
 
 A class encapsulating and performing the scaling of a `plssvm.DataSet`.
-The label type of `plssvm.DataSetScaling` corresponds to the value of `-DPLSSVM_PYTHON_BINDINGS_PREFERRED_LABEL_TYPE` as provided during PLSSVM's build step (default: `std::string`).
-If another label type is desired, one can simply use, e.g., `plssvm.DataSetScaling_intc` for a data set with plain integers as label  type.
+The label type of `plssvm.DataSetScaling` corresponds to the value of `-DPLSSVM_PYTHON_BINDINGS_PREFERRED_LABEL_TYPE` as
+provided during PLSSVM's build step (default: `std::string`).
+If another label type is desired, one can simply use, e.g., `plssvm.DataSetScaling_intc` for a data set with plain
+integers as label type.
 
 | constructors                   | description                                                          |
 |--------------------------------|----------------------------------------------------------------------|
@@ -263,8 +288,10 @@ If another label type is desired, one can simply use, e.g., `plssvm.DataSetScali
 ##### `plssvm.DataSetScalingFactors`
 
 A class encapsulating a scaling factor for a specific feature in a data set.
-The label type of `plssvm.DataSetScalingFactors` corresponds to the value of `-DPLSSVM_PYTHON_BINDINGS_PREFERRED_LABEL_TYPE` as provided during PLSSVM's build step (default: `std::string`).
-If another label type is desired, one can simply use, e.g., `plssvm.DataSetScalingFactors_intc` for a data set with plain integers as label type.
+The label type of `plssvm.DataSetScalingFactors` corresponds to the value
+of `-DPLSSVM_PYTHON_BINDINGS_PREFERRED_LABEL_TYPE` as provided during PLSSVM's build step (default: `std::string`).
+If another label type is desired, one can simply use, e.g., `plssvm.DataSetScalingFactors_intc` for a data set with
+plain integers as label type.
 **Note**: it shouldn't be necessary to directly use `plssvm.DataSetScalingFactors` in user code.
 
 | constructors                                         | description                                                                                           |
@@ -284,9 +311,12 @@ If another label type is desired, one can simply use, e.g., `plssvm.DataSetScali
 #### `plssvm.CSVM`
 
 The main class responsible for fitting an SVM model and later predicting or scoring new data sets.
-It uses either the provided backend type or the default determined one to create a PLSSVM CSVM of the correct backend type.
-**Note**: the backend specific CSVMs are only available if the respective backend has been enabled during PLSSVM's build step.
-These backend specific CSVMs can also directly be used, e.g., `plssvm.CSVM(plssvm.BackendType.CUDA)` is equal to `plssvm.cuda.CSVM` (the same also holds for all other backends).
+It uses either the provided backend type or the default determined one to create a PLSSVM CSVM of the correct backend
+type.
+**Note**: the backend specific CSVMs are only available if the respective backend has been enabled during PLSSVM's build
+step.
+These backend specific CSVMs can also directly be used, e.g., `plssvm.CSVM(plssvm.BackendType.CUDA)` is equal
+to `plssvm.cuda.CSVM` (the same also holds for all other backends).
 If the most performant backend should be used, it is sufficient to use `plssvm.CSVM()`.
 
 | constructors                                                        | description                                                                                                                                            |
@@ -294,8 +324,9 @@ If the most performant backend should be used, it is sufficient to use `plssvm.C
 | `CSVM([backend, target_platform, plssvm.Parameter kwargs])`         | Create a new CSVM with the provided named arguments.                                                                                                   |
 | `CSVM(params, [backend, target_platform, plssvm.Parameter kwargs])` | Create a new CSVM with the provided parameters and named arguments; the values in the `plssvm.Parameter` will be overwritten by the keyword arguments. |
 
-**Note**: if the backend type is `plssvm.BackendType.SYCL` two additional named parameters can be provided: 
-`sycl_implementation_type` to choose between DPC++ and AdaptiveCpp as SYCL implementations and `sycl_kernel_invocation_type` to choose between the two different SYCL kernel invocation types.
+**Note**: if the backend type is `plssvm.BackendType.SYCL` two additional named parameters can be provided:
+`sycl_implementation_type` to choose between DPC++ and AdaptiveCpp as SYCL implementations
+and `sycl_kernel_invocation_type` to choose between the two different SYCL kernel invocation types.
 
 | methods                                                                                                                                      | description                                                                                                                                                                                                        |
 |----------------------------------------------------------------------------------------------------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
@@ -312,7 +343,9 @@ If the most performant backend should be used, it is sufficient to use `plssvm.C
 
 These classes represent the backend specific CSVMs.
 **Note**: they are only available if the respective backend has been enabled during PLSSVM's build step.
-**Note**: the `plssvm.sycl.CSVM` is equal to the respective `plssvm.dpcpp.CSVM` or `plssvm.adaptivecpp.CSVM` if only one SYCL implementation is available or the SYCL implementation defined by `-DPLSSVM_SYCL_BACKEND_PREFERRED_IMPLEMENTATION` during PLSSVM's build step.
+**Note**: the `plssvm.sycl.CSVM` is equal to the respective `plssvm.dpcpp.CSVM` or `plssvm.adaptivecpp.CSVM` if only one
+SYCL implementation is available or the SYCL implementation defined by `-DPLSSVM_SYCL_BACKEND_PREFERRED_IMPLEMENTATION`
+during PLSSVM's build step.
 These classes inherit all methods from the base `plssvm.CSVM` class.
 
 | constructors                              | description                                                                                                                                  |
@@ -324,15 +357,17 @@ These classes inherit all methods from the base `plssvm.CSVM` class.
 | `CSVM(target, [plssvm.Parameter kwargs])` | Create a new CSVM with the default the provided target platform. The hyper-parameter values are set ot the provided named parameter values.  |
 | `CSVM(target, params)`                    | Create a new CSVM with the default the provided target platform. The hyper-parameters are explicitly set to the provided `plssvm.Parameter`. |
 
-In case of the SYCL CSVMs (`plssvm.sycl.CSVM`, `plssvm.dpcpp.CSVM`, and `plssvm.adaptivecpp.CSVM`) the additional named argument `sycl_kernel_invocation_type` to choose between the two different SYCL kernel invocation types can be provided.
+In case of the SYCL CSVMs (`plssvm.sycl.CSVM`, `plssvm.dpcpp.CSVM`, and `plssvm.adaptivecpp.CSVM`) the additional named
+argument `sycl_kernel_invocation_type` to choose between the two different SYCL kernel invocation types can be provided.
 
 Except for the `plssvm.openmp.CSVM` the following methods are additional available for the backend specific CSVMs.
 
-| methods                    | description                                                                                                                           |
-|----------------------------|---------------------------------------------------------------------------------------------------------------------------------------|
-| `num_available_devices()`  | Return the number of available devices, i.e., if the target platform represents a GPU, this function returns the number of used GPUs. |
+| methods                   | description                                                                                                                           |
+|---------------------------|---------------------------------------------------------------------------------------------------------------------------------------|
+| `num_available_devices()` | Return the number of available devices, i.e., if the target platform represents a GPU, this function returns the number of used GPUs. |
 
-In case of the SYCL CSVMs (`plssvm.sycl.CSVM`, `plssvm.dpcpp.CSVM`, and `plssvm.adaptivecpp.CSVM`) the following methods are additional available for the backend specific CSVMs.
+In case of the SYCL CSVMs (`plssvm.sycl.CSVM`, `plssvm.dpcpp.CSVM`, and `plssvm.adaptivecpp.CSVM`) the following methods
+are additional available for the backend specific CSVMs.
 
 | methods                        | description                             |
 |--------------------------------|-----------------------------------------|
@@ -341,8 +376,10 @@ In case of the SYCL CSVMs (`plssvm.sycl.CSVM`, `plssvm.dpcpp.CSVM`, and `plssvm.
 #### `plssvm.Model`
 
 A class encapsulating a model learned during a call to `plssvm.CSVM.fit()`.
-The label type of `plssvm.Model` corresponds to the value of `-DPLSSVM_PYTHON_BINDINGS_PREFERRED_LABEL_TYPE` as provided during PLSSVM's build step (default: `std::string`).
-If another label type is desired, one can simply use, e.g., `plssvm.Model_intc` for a model with plain integers as label type.
+The label type of `plssvm.Model` corresponds to the value of `-DPLSSVM_PYTHON_BINDINGS_PREFERRED_LABEL_TYPE` as provided
+during PLSSVM's build step (default: `std::string`).
+If another label type is desired, one can simply use, e.g., `plssvm.Model_intc` for a model with plain integers as label
+type.
 
 | constructors        | description                                                                     |
 |---------------------|---------------------------------------------------------------------------------|
@@ -387,6 +424,8 @@ The tracked metrics can be saved to a YAML file for later post-processing.
 | `pause()`                                          | Pause the current performance tracking.                                          |
 | `resume()`                                         | Resume performance tracking.                                                     |
 | `save(filename)`                                   | Save all collected tracking information to the provided file.                    |
+| `is_tracking()`                                    | Check whether performance tracking is currently enabled.                         |
+| `clear_tracking_entries()`                         | Remove all currently trackend entries from the performance tracker.              |
 
 ### Free functions
 
@@ -415,9 +454,9 @@ The following table lists all free functions in PLSSVM directly callable via `pl
 
 If a SYCL implementation is available, additional free functions are available:
 
-| function                                 | description                                                                      |
-|------------------------------------------|----------------------------------------------------------------------------------|
-| `list_available_sycl_implementations()`  | List all available SYCL implementations (determined during PLSSVM's build step). |
+| function                                | description                                                                      |
+|-----------------------------------------|----------------------------------------------------------------------------------|
+| `list_available_sycl_implementations()` | List all available SYCL implementations (determined during PLSSVM's build step). |
 
 ### Exceptions
 

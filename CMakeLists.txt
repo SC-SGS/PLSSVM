@@ -127,7 +127,7 @@ target_compile_features(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC cxx_std_17)
 ## additional base library compile options
 target_compile_options(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC
                        $<$<COMPILE_LANGUAGE:CXX>:$<$<CXX_COMPILER_ID:GNU,Clang>:-Wall -Wextra -Wdouble-promotion -fno-common -Wshadow -Wcast-qual
-                       -Wnull-dereference -Wctor-dtor-privacy -Wnon-virtual-dtor -Wextra-semi -Wunreachable-code -Wuninitialized -Wno-ctor-dtor-privacy
+                       -Wnull-dereference -Wnon-virtual-dtor -Wextra-semi -Wunreachable-code -Wuninitialized -Wno-ctor-dtor-privacy
                        -fPIC>
                        $<$<COMPILE_LANG_AND_ID:CXX,GNU>:-Wsuggest-override -Wstrict-null-sentinel -Wlogical-op -Wduplicated-branches -Wimplicit-fallthrough=5>
                        $<$<COMPILE_LANG_AND_ID:CXX,Clang>:-Wdocumentation -Wmost>
@@ -184,13 +184,7 @@ find_package(OpenMP 4.0 QUIET)
 if (OpenMP_FOUND)
     message(STATUS "Found OpenMP ${OpenMP_CXX_VERSION} to speed-up library utilities (like file parsing).")
     set(PLSSVM_FOUND_OPENMP_FOR_UTILITY "${OpenMP_CXX_VERSION}")
-    # target_link_libraries(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC OpenMP::OpenMP_CXX -fopenmp)
-    # target_compile_options(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC $<$<COMPILE_LANGUAGE:CXX>:-fopenmp>)
-    # target_compile_options(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC $<$<CXX_COMPILER_ID:MSVC>:-openmp:llvm -openmp:experimental>)
     target_link_libraries(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC $<$<NOT:$<CXX_COMPILER_ID:MSVC>>:OpenMP::OpenMP_CXX>)
-    # special command line options for MSVC:
-    # -openmp:llvm -> enables unsigned loop indexes in OpenMP parallel for loops
-    # -openmp:experimental -> enables OpenMP's SIMD instructions
     target_compile_options(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC $<$<CXX_COMPILER_ID:MSVC>:-openmp:llvm -openmp:experimental>)
 
 else ()
@@ -206,13 +200,13 @@ include(FetchContent)
 list(APPEND CMAKE_MESSAGE_INDENT "Dependencies:  ")
 
 ## try finding cxxopts
-find_package(cxxopts 3.1.1 QUIET)
+find_package(cxxopts 3.2.0 QUIET)
 if (cxxopts_FOUND)
     message(STATUS "Found package cxxopts.")
     target_include_directories(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC ${cxxopts_INCLUDE_DIR})
 else ()
     message(STATUS "Couldn't find package cxxopts. Building from source ...")
-    set(PLSSVM_cxxopts_VERSION v3.1.1)
+    set(PLSSVM_cxxopts_VERSION v3.2.0)
     # set options for cxxopts
     set(CXXOPTS_BUILD_EXAMPLES OFF CACHE INTERNAL "" FORCE)
     set(CXXOPTS_BUILD_TESTS OFF CACHE INTERNAL "" FORCE)
@@ -423,82 +417,40 @@ elseif (DEFINED ENV{PLSSVM_TARGET_PLATFORMS})
     set(PLSSVM_TARGET_PLATFORMS $ENV{PLSSVM_TARGET_PLATFORMS} CACHE STRING "The target platforms to compile for." FORCE)
 else ()
     # check for Python3 and all necessary libraries
-    find_package(Python3 COMPONENTS Interpreter Development)
-    if (NOT Python3_FOUND)
-        message(FATAL_ERROR "Can't find Python3. Please manually specify PLSSVM_TARGET_PLATFORMS (e.g. -DPLSSVM_TARGET_PLATFORMS=\"cpu;nvidia:sm_70,sm_86;amd:gfx906;intel:skl\"!")
-    endif ()
+    # find_package(Python3 COMPONENTS Interpreter Development)
+    # if (NOT Python3_FOUND)
+    #     message(FATAL_ERROR "Can't find Python3. Please manually specify PLSSVM_TARGET_PLATFORMS (e.g. -DPLSSVM_TARGET_PLATFORMS=\"cpu;nvidia:sm_70,sm_86;amd:gfx906;intel:skl\"!")
+    # endif ()
 
-    include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/check_python_libs.cmake)
-    set(PLSSVM_TARGET_PLATFORMS_PYTHON_SCRIPT_REQUIRED_LIBS cpuinfo GPUtil pyamdgpuinfo pylspci)
-    message(STATUS "Checking required Python3 libraries (${PLSSVM_TARGET_PLATFORMS_PYTHON_SCRIPT_REQUIRED_LIBS}) to automatically determine the PLSSVM_TARGET_PLATFORMS.")
-    set(PLSSVM_TARGET_PLATFORMS_PYTHON_SCRIPT_REQUIRED_LIBS_ERROR_MESSAGE "or manually define PLSSVM_TARGET_PLATFORMS (e.g. -DPLSSVM_TARGET_PLATFORMS=\"cpu;nvidia:sm_70,sm_86;amd:gfx906;intel:skl\"!")
-    check_python_libs(${PLSSVM_TARGET_PLATFORMS_PYTHON_SCRIPT_REQUIRED_LIBS} ${PLSSVM_TARGET_PLATFORMS_PYTHON_SCRIPT_REQUIRED_LIBS_ERROR_MESSAGE})
+    # include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/check_python_libs.cmake)
+    # set(PLSSVM_TARGET_PLATFORMS_PYTHON_SCRIPT_REQUIRED_LIBS cpuinfo GPUtil pyamdgpuinfo pylspci)
+    # message(STATUS "Checking required Python3 libraries (${PLSSVM_TARGET_PLATFORMS_PYTHON_SCRIPT_REQUIRED_LIBS}) to automatically determine the PLSSVM_TARGET_PLATFORMS.")
+    # set(PLSSVM_TARGET_PLATFORMS_PYTHON_SCRIPT_REQUIRED_LIBS_ERROR_MESSAGE "or manually define PLSSVM_TARGET_PLATFORMS (e.g. -DPLSSVM_TARGET_PLATFORMS=\"cpu;nvidia:sm_70,sm_86;amd:gfx906;intel:skl\"!")
+    # check_python_libs(${PLSSVM_TARGET_PLATFORMS_PYTHON_SCRIPT_REQUIRED_LIBS} ${PLSSVM_TARGET_PLATFORMS_PYTHON_SCRIPT_REQUIRED_LIBS_ERROR_MESSAGE})
 
-    # run our `plssvm_target_platforms.py` script to determine the PLSSVM_TARGET_PLATFORMS string
-    execute_process(
-            COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/utility_scripts/plssvm_target_platforms.py" "--quiet"
-            RESULT_VARIABLE PLSSVM_PYTHON_TARGET_PLATFORMS_EXIT_CODE
-            OUTPUT_VARIABLE PLSSVM_PYTHON_TARGET_PLATFORMS_OUTPUT
-    )
+    # # run our `plssvm_target_platforms.py` script to determine the PLSSVM_TARGET_PLATFORMS string
+    # execute_process(
+    #         COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/utility_scripts/plssvm_target_platforms.py" "--quiet"
+    #         RESULT_VARIABLE PLSSVM_PYTHON_TARGET_PLATFORMS_EXIT_CODE
+    #         OUTPUT_VARIABLE PLSSVM_PYTHON_TARGET_PLATFORMS_OUTPUT
+    # )
 
-    # an error occurred when running our python script
-    if (NOT ${PLSSVM_PYTHON_TARGET_PLATFORMS_EXIT_CODE} EQUAL 0)
-        message(FATAL_ERROR
-                "Error running '${CMAKE_CURRENT_SOURCE_DIR}/utility_scripts/plssvm_target_platforms.py'."
-                "Please manually specify PLSSVM_TARGET_PLATFORMS (e.g. -DPLSSVM_TARGET_PLATFORMS=\"cpu;nvidia:sm_70,sm_86;amd:gfx906;intel:skl\"!"
-        )
-    endif ()
+    # # an error occurred when running our python script
+    # if (NOT ${PLSSVM_PYTHON_TARGET_PLATFORMS_EXIT_CODE} EQUAL 0)
+    #     message(FATAL_ERROR
+    #             "Error running '${CMAKE_CURRENT_SOURCE_DIR}/utility_scripts/plssvm_target_platforms.py'."
+    #             "Please manually specify PLSSVM_TARGET_PLATFORMS (e.g. -DPLSSVM_TARGET_PLATFORMS=\"cpu;nvidia:sm_70,sm_86;amd:gfx906;intel:skl\"!"
+    #     )
+    # endif ()
 
-    # set PLSSVM_TARGET_PLATFORMS
-    string(STRIP "${PLSSVM_PYTHON_TARGET_PLATFORMS_OUTPUT}" PLSSVM_TARGET_PLATFORMS)
-    message(STATUS "Automatically derived PLSSVM_TARGET_PLATFORMS=\"${PLSSVM_TARGET_PLATFORMS}\".")
+    # # set PLSSVM_TARGET_PLATFORMS
+    # string(STRIP "${PLSSVM_PYTHON_TARGET_PLATFORMS_OUTPUT}" PLSSVM_TARGET_PLATFORMS)
+    # message(STATUS "Automatically derived PLSSVM_TARGET_PLATFORMS=\"${PLSSVM_TARGET_PLATFORMS}\".")
 endif ()
 
-## PLSSVM_TARGET_PLATFORMS must not be empty
-if (PLSSVM_TARGET_PLATFORMS STREQUAL "")
-    message(FATAL_ERROR "PLSSVM_TARGET_PLATFORMS must not be empty!")
-endif ()
 
-## parse provided target platforms
-include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/parse_architecture_info.cmake)
-set(PLSSVM_PLATFORM_NAME_LIST "automatic")
-foreach (PLSSVM_PLATFORM ${PLSSVM_TARGET_PLATFORMS})
-    if (PLSSVM_PLATFORM MATCHES "^cpu")
-        # parse provided CPU architectures
-        parse_architecture_info(${PLSSVM_PLATFORM} PLSSVM_CPU_TARGET_ARCHS PLSSVM_NUM_CPU_TARGET_ARCHS)
-        if (PLSSVM_NUM_CPU_TARGET_ARCHS GREATER 1)
-            message(FATAL_ERROR "Target platform \"cpu\" must at most have one architecture specification!")
-        endif ()
-        target_compile_definitions(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC PLSSVM_HAS_CPU_TARGET)
-        list(APPEND PLSSVM_PLATFORM_NAME_LIST "cpu")
-    elseif (PLSSVM_PLATFORM MATCHES "^nvidia")
-        # parse provided NVIDIA GPU architectures
-        parse_architecture_info(${PLSSVM_PLATFORM} PLSSVM_NVIDIA_TARGET_ARCHS PLSSVM_NUM_NVIDIA_TARGET_ARCHS)
-        if (PLSSVM_NUM_NVIDIA_TARGET_ARCHS EQUAL 0)
-            message(FATAL_ERROR "Target platform \"nvidia\" must at least have one architecture specification!")
-        endif ()
-        target_compile_definitions(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC PLSSVM_HAS_NVIDIA_TARGET)
-        list(APPEND PLSSVM_PLATFORM_NAME_LIST "gpu_nvidia")
-    elseif (PLSSVM_PLATFORM MATCHES "^amd")
-        # parse provided AMD GPU architectures
-        parse_architecture_info(${PLSSVM_PLATFORM} PLSSVM_AMD_TARGET_ARCHS PLSSVM_NUM_AMD_TARGET_ARCHS)
-        if (PLSSVM_NUM_AMD_TARGET_ARCHS EQUAL 0)
-            message(FATAL_ERROR "Target platform \"amd\" must at least have one architecture specification!")
-        endif ()
-        target_compile_definitions(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC PLSSVM_HAS_AMD_TARGET)
-        list(APPEND PLSSVM_PLATFORM_NAME_LIST "gpu_amd")
-    elseif (PLSSVM_PLATFORM MATCHES "^intel")
-        # parse provided Intel GPU architectures
-        parse_architecture_info(${PLSSVM_PLATFORM} PLSSVM_INTEL_TARGET_ARCHS PLSSVM_NUM_INTEL_TARGET_ARCHS)
-        if (PLSSVM_NUM_INTEL_TARGET_ARCHS EQUAL 0)
-            message(FATAL_ERROR "Target platform \"intel\" must at least have one architecture specification!")
-        endif ()
-        target_compile_definitions(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC PLSSVM_HAS_INTEL_TARGET)
-        list(APPEND PLSSVM_PLATFORM_NAME_LIST "gpu_intel")
-    else ()
-        message(FATAL_ERROR "Unrecognized target platform \"${PLSSVM_PLATFORM}\"! Must be one of: cpu nvidia amd intel")
-    endif ()
-endforeach ()
+
+
 
 ########################################################################################################################
 ##                                            check for and enable backends                                           ##
@@ -780,13 +732,11 @@ if (NOT fast_float_FOUND)
             DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}"
     )
 endif ()
-
 if (NOT igor_FOUND)
     install(DIRECTORY "${igor_SOURCE_DIR}/include/"
             DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}"
     )
 endif ()
-
 ## mark man pages to install
 install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/docs/plssvm-train.1
         ${CMAKE_CURRENT_SOURCE_DIR}/docs/plssvm-predict.1

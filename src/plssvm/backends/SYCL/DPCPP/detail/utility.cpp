@@ -8,12 +8,15 @@
 
 #include "plssvm/backends/SYCL/DPCPP/detail/utility.hpp"
 
+#include "plssvm/backends/SYCL/DPCPP/detail/queue.hpp"       // plssvm::adaptivecpp::detail::queue
 #include "plssvm/backends/SYCL/DPCPP/detail/queue_impl.hpp"  // plssvm::dpcpp::detail::queue (PImpl implementation)
 #include "plssvm/detail/string_utility.hpp"                  // plssvm::detail::{as_lower_case, contains}
 #include "plssvm/detail/utility.hpp"                         // plssvm::detail::contains
 #include "plssvm/target_platforms.hpp"                       // plssvm::target_platform, plssvm::determine_default_target_platform
 
 #include "sycl/sycl.hpp"  // ::sycl::platform, ::sycl::device, ::sycl::property::queue, ::sycl::info
+
+#include "fmt/core.h"  // fmt::format
 
 #include <map>      // std::multimap
 #include <memory>   // std::make_shared
@@ -74,6 +77,10 @@ namespace plssvm::dpcpp::detail {
         std::vector<target_platform> system_devices;
         for (const auto &[key, value] : platform_devices) {
             system_devices.push_back(key);
+        }
+        // the system devices should not be empty!
+        if (system_devices.empty()) {
+            throw platform_devices_empty{ "No appropriate devices could be found!" };
         }
         // determine the target_platform
         target = determine_default_target_platform(system_devices);

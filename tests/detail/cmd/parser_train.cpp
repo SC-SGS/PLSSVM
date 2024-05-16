@@ -10,18 +10,25 @@
 
 #include "plssvm/detail/cmd/parser_train.hpp"
 
-#include "plssvm/constants.hpp"         // plssvm::real_type
-#include "plssvm/verbosity_levels.hpp"  // plssvm::verbosity
+#include "plssvm/backend_types.hpp"                          // plssvm::backend_type
+#include "plssvm/backends/SYCL/implementation_types.hpp"     // plssvm::sycl::implementation_type
+#include "plssvm/backends/SYCL/kernel_invocation_types.hpp"  // plssvm::sycl::kernel_invocation_type
+#include "plssvm/classification_types.hpp"                   // plssvm::classification_type
+#include "plssvm/constants.hpp"                              // plssvm::real_type
+#include "plssvm/kernel_function_types.hpp"                  // plssvm::kernel_function_type
+#include "plssvm/solver_types.hpp"                           // plssvm::solver_type
+#include "plssvm/target_platforms.hpp"                       // plssvm::target_platform
+#include "plssvm/verbosity_levels.hpp"                       // plssvm::verbosity
 
 #include "tests/custom_test_macros.hpp"      // EXPECT_CONVERSION_TO_STRING
 #include "tests/detail/cmd/cmd_utility.hpp"  // util::ParameterBase
 #include "tests/naming.hpp"                  // naming::{pretty_print_parameter_flag_and_value, pretty_print_parameter_flag}
 #include "tests/utility.hpp"                 // util::{convert_from_string, redirect_output}
 
-#include "fmt/core.h"              // fmt::format
-#include "gmock/gmock-matchers.h"  // ::testing::{StartsWith, HasSubstr}
-#include "gtest/gtest.h"           // TEST_F, TEST_P, EXPECT_EQ, EXPECT_TRUE, EXPECT_FALSE, EXPECT_EXIT, EXPECT_DEATH, INSTANTIATE_TEST_SUITE_P,
-                                   // ::testing::WithParamInterface, ::testing::Combine, ::testing::Values, ::testing::Range, ::testing::Bool, ::testing::ExitedWithCode
+#include "fmt/core.h"     // fmt::format
+#include "gmock/gmock.h"  // ::testing::{StartsWith, HasSubstr}
+#include "gtest/gtest.h"  // TEST_F, TEST_P, EXPECT_EQ, EXPECT_TRUE, EXPECT_FALSE, EXPECT_EXIT, EXPECT_DEATH, INSTANTIATE_TEST_SUITE_P,
+                          // ::testing::WithParamInterface, ::testing::Combine, ::testing::Values, ::testing::Range, ::testing::Bool, ::testing::ExitedWithCode
 
 #include <cstddef>      // std::size_t
 #include <cstdlib>      // EXIT_SUCCESS, EXIT_FAILURE
@@ -29,6 +36,7 @@
 #include <string>       // std::string
 #include <tuple>        // std::tuple
 #include <type_traits>  // std::is_same_v
+#include <vector>       // std::vector
 
 class ParserTrain : public util::ParameterBase { };
 

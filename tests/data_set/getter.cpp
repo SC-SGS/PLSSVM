@@ -9,15 +9,15 @@
  */
 
 #include "plssvm/constants.hpp"  // plssvm::real_type, plssvm::PADDING_SIZE
-#include "plssvm/data_set.hpp"
-#include "plssvm/matrix.hpp"  // plssvm::aos_matrix
+#include "plssvm/data_set.hpp"   // class to test
+#include "plssvm/matrix.hpp"     // plssvm::aos_matrix
+#include "plssvm/shape.hpp"      // plssvm::shape
 
 #include "tests/custom_test_macros.hpp"  // EXPECT_FLOATING_POINT_MATRIX_EQ, EXPECT_FLOATING_POINT_EQ, EXPECT_FLOATING_POINT_NEAR
 #include "tests/naming.hpp"              // naming::test_parameter_to_name
 #include "tests/types_to_test.hpp"       // util::{label_type_gtest, test_parameter_type_at_t}
 #include "tests/utility.hpp"             // util::{redirect_output, scale}
 
-#include "gmock/gmock-matchers.h"  // EXPECT_THAT, ::testing::{ContainsRegex, StartsWith}
 #include "gtest/gtest.h"           // TYPED_TEST, TYPED_TEST_SUITE, EXPECT_TRUE, EXPECT_FALSE, EXPECT_EQ, ASSERT_TRUE, ::testing::Test
 
 #include <cstddef>  // std::size_t
@@ -92,7 +92,7 @@ TYPED_TEST(DataSetGetter, labels) {
     const plssvm::data_set<label_type> data_with_labels{ this->get_data_points(), this->get_label() };
     // check labels getter
     ASSERT_TRUE(data_with_labels.labels().has_value());
-    EXPECT_EQ(data_with_labels.labels().value().get(), this->get_label());
+    EXPECT_EQ(data_with_labels.labels()->get(), this->get_label());
 }
 
 TYPED_TEST(DataSetGetter, classes) {
@@ -106,7 +106,7 @@ TYPED_TEST(DataSetGetter, classes) {
     const plssvm::data_set<label_type> data_with_labels{ this->get_data_points(), this->get_label() };
     // check different_labels getter
     ASSERT_TRUE(data_with_labels.classes().has_value());
-    EXPECT_EQ(data_with_labels.classes().value(), this->get_classes());
+    EXPECT_EQ(*data_with_labels.classes(), this->get_classes());
 }
 
 TYPED_TEST(DataSetGetter, num_data_points) {
@@ -170,7 +170,7 @@ TYPED_TEST(DataSetGetter, scaling_factors) {
     // check scaling_factors getter
     ASSERT_TRUE(data_scaled.scaling_factors().has_value());
     const auto &[ignored, correct_scaling_factors] = util::scale(this->get_data_points(), plssvm::real_type{ -1.0 }, plssvm::real_type{ 1.0 });
-    const scaling_type &scaling_factors = data_scaled.scaling_factors().value();
+    const scaling_type &scaling_factors = *data_scaled.scaling_factors();
     EXPECT_FLOATING_POINT_EQ(scaling_factors.scaling_interval.first, plssvm::real_type{ -1.0 });
     EXPECT_FLOATING_POINT_EQ(scaling_factors.scaling_interval.second, plssvm::real_type{ 1.0 });
     ASSERT_EQ(scaling_factors.scaling_factors.size(), correct_scaling_factors.size());

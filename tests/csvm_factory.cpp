@@ -10,21 +10,20 @@
 
 #include "plssvm/csvm_factory.hpp"
 
-#include "plssvm/backend_types.hpp"          // plssvm::backend_type, plssvm::csvm_to_backend_type_v
-#include "plssvm/csvm.hpp"                   // plssvm::csvm_backend_exists_v
-#include "plssvm/exceptions/exceptions.hpp"  // plssvm::unsupported_backend_exception
-#include "plssvm/kernel_function_types.hpp"  // plssvm::kernel_function_type
-#include "plssvm/parameter.hpp"              // plssvm::parameter
-#include "plssvm/target_platforms.hpp"       // plssvm::target_platform
+#include "plssvm/backend_types.hpp"                       // plssvm::backend_type, plssvm::csvm_to_backend_type_v
+#include "plssvm/backends/SYCL/implementation_types.hpp"  // plssvm::sycl::implementation_type
+#include "plssvm/csvm.hpp"                                // plssvm::csvm_backend_exists_v
+#include "plssvm/exceptions/exceptions.hpp"               // plssvm::unsupported_backend_exception
+#include "plssvm/kernel_function_types.hpp"               // plssvm::kernel_function_type
+#include "plssvm/parameter.hpp"                           // plssvm::parameter
+#include "plssvm/target_platforms.hpp"                    // plssvm::target_platform
 
 #include "tests/custom_test_macros.hpp"  // EXPECT_THROW_WHAT_MATCHER
 #include "tests/types_to_test.hpp"       // util::{combine_test_parameters_gtest_t, cartesian_type_product_t, test_parameter_type_at_t}
 #include "tests/utility.hpp"             // util::redirect_output
 
-#include "fmt/core.h"              // fmt::format
-#include "fmt/ostream.h"           // be able to format a plssvm::backend_type using fmt
-#include "gmock/gmock-matchers.h"  // ::testing::StartsWith
-#include "gtest/gtest.h"           // TYPED_TEST_SUITE, TYPED_TEST, ::testing::{Test, Types, internal::GetTypeName}
+#include "fmt/core.h"     // fmt::format
+#include "gtest/gtest.h"  // TYPED_TEST_SUITE, TYPED_TEST, ::testing::{Test, Types, internal::GetTypeName}
 
 #include <string>  // std::string
 #include <tuple>   // std::tuple, std::ignore

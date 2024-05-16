@@ -14,7 +14,8 @@
 #define PLSSVM_TARGET_PLATFORMS_HPP_
 #pragma once
 
-#include "fmt/ostream.h"  // fmt::formatter, fmt::ostream_formatter
+#include "fmt/core.h"     // fmt::formatter
+#include "fmt/ostream.h"  // fmt::ostream_formatter
 
 #include <iosfwd>  // forward declare std::ostream and std::istream
 #include <vector>  // std::vector

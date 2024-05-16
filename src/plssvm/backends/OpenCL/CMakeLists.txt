@@ -6,6 +6,90 @@
 
 list(APPEND CMAKE_MESSAGE_INDENT "OpenCL:  ")
 
+message(CHECK_START "Checking for OpenCL platforms")
+########################################################################################################################
+##                                         parse target platform information                                          ##
+########################################################################################################################
+if (DEFINED PLSSVM_OPENCL_TARGET_PLATFORMS)
+    set(PLSSVM_OPENCL_TARGET_PLATFORMS ${PLSSVM_OPENCL_TARGET_PLATFORMS} CACHE STRING "The OpenCL target platforms to compile for." FORCE)
+elseif (DEFINED ENV{PLSSVM_OPENCL_TARGET_PLATFORMS})
+    set(PLSSVM_OPENCL_TARGET_PLATFORMS $ENV{PLSSVM_OPENCL_TARGET_PLATFORMS} CACHE STRING "The OpenCL target platforms to compile for." FORCE)
+elseif (DEFINED PLSSVM_TARGET_PLATFORMS)
+    set(PLSSVM_OPENCL_TARGET_PLATFORMS ${PLSSVM_TARGET_PLATFORMS} CACHE STRING "The OpenCL target platforms to compile for." FORCE)
+elseif (DEFINED ENV{PLSSVM_TARGET_PLATFORMS})
+    set(PLSSVM_OPENCL_TARGET_PLATFORMS $ENV{PLSSVM_TARGET_PLATFORMS} CACHE STRING "The OpenCL target platforms to compile for." FORCE)
+endif ()
+
+## PLSSVM_TARGET_PLATFORMS must not be empty
+if (PLSSVM_OPENCL_TARGET_PLATFORMS STREQUAL "")
+    message(FATAL_ERROR "Eather PLSSVM_TARGET_PLATFORMS or PLSSVM_OPENCL_TARGET_PLATFORMS must not be empty to compile with the OpenCL backend!")
+endif ()
+
+## parse provided target platforms
+include(${CMAKE_CURRENT_SOURCE_DIR}/../../../../cmake/parse_architecture_info.cmake)
+set(PLSSVM_PLATFORM_NAME_LIST "automatic")
+foreach (PLSSVM_PLATFORM ${PLSSVM_TARGET_PLATFORMS})
+    if (PLSSVM_PLATFORM MATCHES "^cpu")
+        # parse provided CPU architectures
+        parse_architecture_info(${PLSSVM_PLATFORM} PLSSVM_CPU_TARGET_ARCHS PLSSVM_NUM_CPU_TARGET_ARCHS)
+        if (PLSSVM_NUM_CPU_TARGET_ARCHS GREATER 1)
+            message(FATAL_ERROR "Target platform \"cpu\" must at most have one architecture specification!")
+        endif ()
+        target_compile_definitions(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC PLSSVM_HAS_CPU_TARGET)
+        list(APPEND PLSSVM_PLATFORM_NAME_LIST "cpu")
+    elseif (PLSSVM_PLATFORM MATCHES "^nvidia")
+        # parse provided NVIDIA GPU architectures
+        parse_architecture_info(${PLSSVM_PLATFORM} PLSSVM_NVIDIA_TARGET_ARCHS PLSSVM_NUM_NVIDIA_TARGET_ARCHS)
+        if (PLSSVM_NUM_NVIDIA_TARGET_ARCHS EQUAL 0)
+            message(FATAL_ERROR "Target platform \"nvidia\" must at least have one architecture specification!")
+        endif ()
+        target_compile_definitions(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC PLSSVM_HAS_NVIDIA_TARGET)
+        list(APPEND PLSSVM_PLATFORM_NAME_LIST "gpu_nvidia")
+    elseif (PLSSVM_PLATFORM MATCHES "^amd")
+        # parse provided AMD GPU architectures
+        parse_architecture_info(${PLSSVM_PLATFORM} PLSSVM_AMD_TARGET_ARCHS PLSSVM_NUM_AMD_TARGET_ARCHS)
+        if (PLSSVM_NUM_AMD_TARGET_ARCHS EQUAL 0)
+            message(FATAL_ERROR "Target platform \"amd\" must at least have one architecture specification!")
+        endif ()
+        target_compile_definitions(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC PLSSVM_HAS_AMD_TARGET)
+        list(APPEND PLSSVM_PLATFORM_NAME_LIST "gpu_amd")
+    elseif (PLSSVM_PLATFORM MATCHES "^intel")
+        # parse provided Intel GPU architectures
+        parse_architecture_info(${PLSSVM_PLATFORM} PLSSVM_INTEL_TARGET_ARCHS PLSSVM_NUM_INTEL_TARGET_ARCHS)
+        if (PLSSVM_NUM_INTEL_TARGET_ARCHS EQUAL 0)
+            message(FATAL_ERROR "Target platform \"intel\" must at least have one architecture specification!")
+        endif ()
+        target_compile_definitions(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC PLSSVM_HAS_INTEL_TARGET)
+        list(APPEND PLSSVM_PLATFORM_NAME_LIST "gpu_intel")
+    else ()
+        message(FATAL_ERROR "Unrecognized target platform \"${PLSSVM_PLATFORM}\"! Must be one of: cpu nvidia amd intel")
+    endif ()
+endforeach ()
+
+if ((NOT DEFINED PLSSVM_CPU_TARGET_ARCHS) AND (NOT DEfINED PLSSVM_NVIDIA_TARGET_ARCHS) AND (NOT DEFINED PLSSVM_AMD_TARGET_ARCHS) AND (NOT DEFINED PLSSVM_INTEL_TARGET_ARCHS))
+    if (PLSSVM_ENABLE_OPENCL_BACKEND MATCHES "ON")
+        message(SEND_ERROR "Found requested OpenCL backend, but no targets were specified!")
+    else ()
+        message(STATUS "Found OpenCL backend, but no targets were specified!")
+    endif ()
+    message(CHECK_FAIL "skipped")
+    return()
+endif ()
+
+# generate summary string
+set(PLSSVM_OPENCL_BACKEND_SUMMARY_STRING_COMPILER " - OpenCL:")
+include(${PROJECT_SOURCE_DIR}/cmake/assemble_summary_string.cmake)
+assemble_summary_string(PLSSVM_OPENCL_BACKEND_SUMMARY_STRING_ARCHS)
+# do not print any special target architecture information
+string(REPLACE " (${PLSSVM_CPU_TARGET_ARCHS})" "" PLSSVM_OPENCL_BACKEND_SUMMARY_STRING_ARCHS "${PLSSVM_OPENCL_BACKEND_SUMMARY_STRING_ARCHS}")
+string(REPLACE " (${PLSSVM_NVIDIA_TARGET_ARCHS})" "" PLSSVM_OPENCL_BACKEND_SUMMARY_STRING_ARCHS "${PLSSVM_OPENCL_BACKEND_SUMMARY_STRING_ARCHS}")
+string(REPLACE " (${PLSSVM_AMD_TARGET_ARCHS})" "" PLSSVM_OPENCL_BACKEND_SUMMARY_STRING_ARCHS "${PLSSVM_OPENCL_BACKEND_SUMMARY_STRING_ARCHS}")
+string(REPLACE " (${PLSSVM_INTEL_TARGET_ARCHS})" "" PLSSVM_OPENCL_BACKEND_SUMMARY_STRING_ARCHS "${PLSSVM_OPENCL_BACKEND_SUMMARY_STRING_ARCHS}")
+set(PLSSVM_OPENCL_BACKEND_SUMMARY_STRING "${PLSSVM_OPENCL_BACKEND_SUMMARY_STRING_COMPILER}${PLSSVM_OPENCL_BACKEND_SUMMARY_STRING_ARCHS}")
+set(PLSSVM_OPENCL_BACKEND_SUMMARY_STRING "${PLSSVM_OPENCL_BACKEND_SUMMARY_STRING}" PARENT_SCOPE)
+
+message(CHECK_PASS "found " ${PLSSVM_OPENCL_BACKEND_SUMMARY_STRING})
+
 # check if OpenCL can be enabled
 message(CHECK_START "Checking for OpenCL backend")
 
@@ -106,15 +190,6 @@ target_link_libraries(${PLSSVM_ALL_LIBRARY_NAME} INTERFACE ${PLSSVM_OPENCL_BACKE
 list(APPEND PLSSVM_TARGETS_TO_INSTALL "${PLSSVM_OPENCL_BACKEND_LIBRARY_NAME}")
 set(PLSSVM_TARGETS_TO_INSTALL ${PLSSVM_TARGETS_TO_INSTALL} PARENT_SCOPE)
 
-# generate summary string
-set(PLSSVM_OPENCL_BACKEND_SUMMARY_STRING_COMPILER " - OpenCL:")
-include(${PROJECT_SOURCE_DIR}/cmake/assemble_summary_string.cmake)
-assemble_summary_string(PLSSVM_OPENCL_BACKEND_SUMMARY_STRING_ARCHS)
-# do not print any special target architecture information
-string(REPLACE " (${PLSSVM_CPU_TARGET_ARCHS})" "" PLSSVM_OPENCL_BACKEND_SUMMARY_STRING_ARCHS "${PLSSVM_OPENCL_BACKEND_SUMMARY_STRING_ARCHS}")
-string(REPLACE " (${PLSSVM_NVIDIA_TARGET_ARCHS})" "" PLSSVM_OPENCL_BACKEND_SUMMARY_STRING_ARCHS "${PLSSVM_OPENCL_BACKEND_SUMMARY_STRING_ARCHS}")
-string(REPLACE " (${PLSSVM_AMD_TARGET_ARCHS})" "" PLSSVM_OPENCL_BACKEND_SUMMARY_STRING_ARCHS "${PLSSVM_OPENCL_BACKEND_SUMMARY_STRING_ARCHS}")
-string(REPLACE " (${PLSSVM_INTEL_TARGET_ARCHS})" "" PLSSVM_OPENCL_BACKEND_SUMMARY_STRING_ARCHS "${PLSSVM_OPENCL_BACKEND_SUMMARY_STRING_ARCHS}")
-set(PLSSVM_OPENCL_BACKEND_SUMMARY_STRING "${PLSSVM_OPENCL_BACKEND_SUMMARY_STRING_COMPILER}${PLSSVM_OPENCL_BACKEND_SUMMARY_STRING_ARCHS}" PARENT_SCOPE)
+
 
 list(POP_BACK CMAKE_MESSAGE_INDENT)

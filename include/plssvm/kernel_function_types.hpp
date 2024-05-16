@@ -13,7 +13,8 @@
 #define PLSSVM_KERNEL_FUNCTION_TYPES_HPP_
 #pragma once
 
-#include "fmt/ostream.h"  // fmt::formatter, fmt::ostream_formatter
+#include "fmt/core.h"     // fmt::formatter
+#include "fmt/ostream.h"  // fmt::ostream_formatter
 
 #include <iosfwd>       // forward declare std::ostream and std::istream
 #include <string_view>  // std::string_view
@@ -34,7 +35,7 @@ enum class kernel_function_type {
     sigmoid = 3,
     /** Laplacian kernel function: \f$\exp(-gamma \cdot |\vec{u} - \vec{v}|_1)\f$ */
     laplacian = 4,
-    /** Chi-squared kernel function (only well-defined for values > 0): \f$\exp(-gamma \cdot \sum_i \frac{(x[i] - y[i])^2}{x[i] + y[i]})\f$ */
+    /** Chi-squared kernel function (only well-defined for non-negative values): \f$\exp(-gamma \cdot \sum_i \frac{(x[i] - y[i])^2}{x[i] + y[i]})\f$ */
     chi_squared = 5
 };
 

@@ -8,8 +8,8 @@
  * @brief Tests for the different data_set constructors.
  */
 
-#include "plssvm/constants.hpp"  // plssvm::real_type, plssvm::PADDING_SIZE
-#include "plssvm/data_set.hpp"
+#include "plssvm/constants.hpp"              // plssvm::real_type, plssvm::PADDING_SIZE
+#include "plssvm/data_set.hpp"               // class to test
 #include "plssvm/exceptions/exceptions.hpp"  // plssvm::data_set_exception
 #include "plssvm/file_format_types.hpp"      // plssvm::file_format_type
 #include "plssvm/matrix.hpp"                 // plssvm::matrix, plssvm::layout_type
@@ -20,8 +20,8 @@
 #include "tests/types_to_test.hpp"       // util::{label_type_gtest, label_type_layout_type_gtest, test_parameter_type_at_t, test_parameter_value_at_v}
 #include "tests/utility.hpp"             // util::{redirect_output, temporary_file, instantiate_template_file, get_distinct_label, get_correct_data_file_labels, generate_specific_matrix, scale}
 
-#include "gmock/gmock-matchers.h"  // EXPECT_THAT, ::testing::{ContainsRegex, StartsWith}
-#include "gtest/gtest.h"           // TYPED_TEST, TYPED_TEST_SUITE, EXPECT_EQ, EXPECT_TRUE, EXPECT_FALSE; ASSERT_TRUE, FAIL, ::testing::{Test, StaticAssertTypeEq}
+#include "gmock/gmock.h"  // EXPECT_THAT, ::testing::{ContainsRegex, StartsWith}
+#include "gtest/gtest.h"  // TYPED_TEST, TYPED_TEST_SUITE, EXPECT_EQ, EXPECT_TRUE, EXPECT_FALSE; ASSERT_TRUE, FAIL, ::testing::{Test, StaticAssertTypeEq}
 
 #include <cstddef>      // std::size_t
 #include <tuple>        // std::get
@@ -70,7 +70,7 @@ TYPED_TEST(DataSetConstructors, construct_arff_from_file_with_label) {
     using label_type = typename TestFixture::fixture_label_type;
 
     // must append .arff to filename so that the correct function is called in the data_set constructor
-    this->filename.append(".arff");
+    this->append_to_filename(".arff");
 
     // create data set
     util::instantiate_template_file<label_type>(PLSSVM_TEST_PATH "/data/arff/6x4_TEMPLATE.arff", this->filename);
@@ -227,7 +227,7 @@ TYPED_TEST(DataSetConstructors, construct_scaled_arff_from_file) {
     using label_type = typename TestFixture::fixture_label_type;
 
     // must append .arff to filename so that the correct function is called in the data_set constructor
-    this->filename.append(".arff");
+    this->append_to_filename(".arff");
 
     // create data set
     util::instantiate_template_file<label_type>(PLSSVM_TEST_PATH "/data/arff/6x4_TEMPLATE.arff", this->filename);

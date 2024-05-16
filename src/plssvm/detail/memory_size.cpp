@@ -12,7 +12,6 @@
 
 #include "fmt/core.h"  // fmt::format
 
-#include <cstdint>  // unsigned long long
 #include <ios>      // std::ios::failbit
 #include <istream>  // std::istream
 #include <ostream>  // std::ostream

@@ -17,7 +17,9 @@
 #include "plssvm/backends/HIP/detail/device_ptr.hip.hpp"     // plssvm::hip::detail::device_ptr
 #include "plssvm/backends/HIP/detail/pinned_memory.hip.hpp"  // plssvm::hip::detail::pinned_memory
 #include "plssvm/constants.hpp"                              // plssvm::real_type
+#include "plssvm/csvm.hpp"                                   // plssvm::detail::csvm_backend_exists
 #include "plssvm/detail/memory_size.hpp"                     // plssvm::detail::memory_size
+#include "plssvm/detail/type_traits.hpp"                     // PLSSVM_REQUIRES
 #include "plssvm/parameter.hpp"                              // plssvm::parameter, plssvm::detail::parameter
 #include "plssvm/target_platforms.hpp"                       // plssvm::target_platform
 
@@ -26,13 +28,6 @@
 #include <utility>      // std::forward
 
 namespace plssvm {
-
-namespace detail {
-
-// forward declare execution_range class
-class execution_range;
-
-}  // namespace detail
 
 namespace hip {
 
@@ -45,6 +40,7 @@ class csvm : public ::plssvm::detail::gpu_csvm<detail::device_ptr, int, detail::
     /// The template base type of the HIP C-SVM class.
     using base_type = ::plssvm::detail::gpu_csvm<detail::device_ptr, int, detail::pinned_memory>;
 
+    using base_type::data_distribution_;
     using base_type::devices_;
 
   public:

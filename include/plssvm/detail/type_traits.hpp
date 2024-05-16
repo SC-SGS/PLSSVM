@@ -14,6 +14,7 @@
 #pragma once
 
 #include <array>          // std::array
+#include <cstddef>        // std::size_t
 #include <deque>          // std::deque
 #include <forward_list>   // std::forward_list
 #include <list>           // std::list

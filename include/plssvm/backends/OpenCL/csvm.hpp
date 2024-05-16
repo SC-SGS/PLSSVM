@@ -16,10 +16,12 @@
 #include "plssvm/backends/gpu_csvm.hpp"                     // plssvm::detail::gpu_csvm
 #include "plssvm/backends/OpenCL/detail/command_queue.hpp"  // plssvm::opencl::detail::command_queue
 #include "plssvm/backends/OpenCL/detail/context.hpp"        // plssvm::opencl::detail::context
-#include "plssvm/backends/OpenCL/detail/pinned_memory.hpp"  // plssvm::opencl::detail::pinned_memory
 #include "plssvm/backends/OpenCL/detail/device_ptr.hpp"     // plssvm::opencl::detail::device_ptr
+#include "plssvm/backends/OpenCL/detail/pinned_memory.hpp"  // plssvm::opencl::detail::pinned_memory
 #include "plssvm/constants.hpp"                             // plssvm::real_type
+#include "plssvm/csvm.hpp"                                  // plssvm::detail::csvm_backend_exists
 #include "plssvm/detail/memory_size.hpp"                    // plssvm::detail::memory_size
+#include "plssvm/detail/type_traits.hpp"                    // PLSSVM_REQUIRES
 #include "plssvm/parameter.hpp"                             // plssvm::parameter, plssvm::detail::parameter
 #include "plssvm/target_platforms.hpp"                      // plssvm::target_platform
 
@@ -175,7 +177,7 @@ class csvm : public ::plssvm::detail::gpu_csvm<detail::device_ptr, detail::comma
     /**
      * @copydoc plssvm::detail::gpu_csvm::run_predict_kernel
      */
-    [[nodiscard]] device_ptr_type run_predict_kernel(std::size_t device_id, const parameter &params,const device_ptr_type &alpha_d, const device_ptr_type &rho_d, const device_ptr_type &sv_or_w_d, const device_ptr_type &predict_points_d) const final;
+    [[nodiscard]] device_ptr_type run_predict_kernel(std::size_t device_id, const parameter &params, const device_ptr_type &alpha_d, const device_ptr_type &rho_d, const device_ptr_type &sv_or_w_d, const device_ptr_type &predict_points_d) const final;
 
     /// The available OpenCL contexts for the current target platform with the associated devices.
     std::vector<detail::context> contexts_{};

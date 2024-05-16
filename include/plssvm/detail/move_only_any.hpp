@@ -13,7 +13,7 @@
 #define PLSSVM_DETAIL_move_only_any_HPP_
 #pragma once
 
-#include "plssvm/detail/utility.hpp"  // PLSSVM_REQUIRES
+#include "plssvm/detail/type_traits.hpp"  // PLSSVM_REQUIRES, plssvm::detail::remove_cvref_t
 
 #include <initializer_list>  // std::initializer_list
 #include <memory>            // std::unique_ptr, std::make_unique

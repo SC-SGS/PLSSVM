@@ -165,6 +165,16 @@ class temporary_file {
     temporary_file &operator=(temporary_file &&) = delete;
 
     /**
+     * @brief Append @p filename_suffix to the current temporary file.
+     * @param[in] filename_suffix the suffix to append (e.g., special file extension)
+     */
+    void append_to_filename(const std::string &filename_suffix) {
+        std::string new_filename{ filename + filename_suffix };
+        std::filesystem::rename(filename, new_filename);
+        filename = std::move(new_filename);
+    }
+
+    /**
      * @brief Remove the temporary file if it exists.
      */
     virtual ~temporary_file() {
@@ -432,7 +442,7 @@ template <typename matrix_type>
     matrix_type matrix{ shape };
     for (std::size_t i = 0; i < matrix.num_rows(); ++i) {
         for (std::size_t j = 1; j <= matrix.num_cols(); ++j) {
-            matrix(i, j - 1) = i + j / real_type{ 10.0 };
+            matrix(i, j - 1) = static_cast<real_type>(i) + static_cast<real_type>(j) / real_type{ 10.0 };
         }
     }
 
@@ -475,7 +485,7 @@ template <typename matrix_type>
     matrix_type matrix{ shape };
     for (std::size_t i = 0; i < matrix.num_rows(); ++i) {
         for (std::size_t j = 1; j <= matrix.num_cols(); ++j) {
-            matrix(i, j - 1) = i + j / real_type{ 10.0 };
+            matrix(i, j - 1) = static_cast<real_type>(i) + static_cast<real_type>(j) / real_type{ 10.0 };
         }
         // remove half of the created values randomly
         for (std::size_t j = 0; j < matrix.num_cols() / 2; ++j) {

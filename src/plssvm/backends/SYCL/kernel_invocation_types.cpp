@@ -17,8 +17,8 @@
 
 namespace plssvm::sycl {
 
-std::ostream &operator<<(std::ostream &out, const kernel_invocation_type target) {
-    switch (target) {
+std::ostream &operator<<(std::ostream &out, const kernel_invocation_type invocation) {
+    switch (invocation) {
         case kernel_invocation_type::automatic:
             return out << "automatic";
         case kernel_invocation_type::nd_range:
@@ -27,15 +27,15 @@ std::ostream &operator<<(std::ostream &out, const kernel_invocation_type target)
     return out << "unknown";
 }
 
-std::istream &operator>>(std::istream &in, kernel_invocation_type &target) {
+std::istream &operator>>(std::istream &in, kernel_invocation_type &invocation) {
     std::string str;
     in >> str;
     detail::to_lower_case(str);
 
     if (str == "automatic") {
-        target = kernel_invocation_type::automatic;
+        invocation = kernel_invocation_type::automatic;
     } else if (str == "nd_range") {
-        target = kernel_invocation_type::nd_range;
+        invocation = kernel_invocation_type::nd_range;
     } else {
         in.setstate(std::ios::failbit);
     }

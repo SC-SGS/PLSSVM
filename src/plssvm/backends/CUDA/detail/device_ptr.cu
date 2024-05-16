@@ -11,14 +11,14 @@
 #include "plssvm/backends/CUDA/detail/utility.cuh"             // PLSSVM_CUDA_ERROR_CHECK, plssvm::cuda::detail::{set_device, peek_at_last_error, device_synchronize, get_device_count}
 #include "plssvm/backends/CUDA/exceptions.hpp"                 // plssvm::cuda::backend_exception
 #include "plssvm/backends/CUDA/kernel/detail/fill_kernel.cuh"  // plssvm::cuda::detail::fill_array
-#include "plssvm/backends/gpu_device_ptr.hpp"                  // plssvm::detail::gpu_device_ptr
 #include "plssvm/detail/assert.hpp"                            // PLSSVM_ASSERT
+#include "plssvm/exceptions/exceptions.hpp"                    // plssvm::exception
 #include "plssvm/shape.hpp"                                    // plssvm::shape
 
 #include "fmt/core.h"  // fmt::format
 
 #include <algorithm>  // std::min
-#include <array>      // std::array
+#include <cstddef>    // std::size_t
 #include <exception>  // std::terminate
 #include <iostream>   // std::cerr, std::endl
 
@@ -80,8 +80,8 @@ void device_ptr<T>::fill(const value_type value, const size_type pos, const size
 
     // run GPU kernel
     const size_type rcount = std::min(count, this->size_padded() - pos);
-    constexpr int block_size = 512;
-    const int grid_size = (rcount + block_size - 1) / block_size;
+    constexpr unsigned int block_size = 512;
+    const unsigned int grid_size = (static_cast<unsigned int>(rcount) + block_size - 1) / block_size;
     detail::fill_array<<<grid_size, block_size>>>(data_, value, pos, rcount);
 
     detail::peek_at_last_error();
@@ -129,7 +129,7 @@ void device_ptr<T>::copy_to_other_device(device_ptr &target, const size_type pos
     detail::set_device(queue_);
     const size_type rcount = std::min(count, this->size_padded() - pos);
     if (target.size_padded() < rcount) {
-        throw gpu_device_ptr_exception{ fmt::format("Buffer too small to perform copy (needed: {}, provided: {})!", rcount, target.size_padded()) };
+        throw backend_exception{ fmt::format("Buffer too small to perform copy (needed: {}, provided: {})!", rcount, target.size_padded()) };
     }
     PLSSVM_CUDA_ERROR_CHECK(cudaMemcpy(target.get(), data_ + pos, rcount * sizeof(value_type), cudaMemcpyDeviceToDevice))
 }

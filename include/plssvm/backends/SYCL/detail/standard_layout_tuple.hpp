@@ -11,6 +11,7 @@
 
 #ifndef PLSSVM_BACKENDS_SYCL_DETAIL_STANDARD_LAYOUT_TUPLE_HPP_
 #define PLSSVM_BACKENDS_SYCL_DETAIL_STANDARD_LAYOUT_TUPLE_HPP_
+#pragma once
 
 #include "plssvm/constants.hpp"  // plssvm::real_type
 

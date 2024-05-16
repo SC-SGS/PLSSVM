@@ -10,8 +10,8 @@
 
 #include "plssvm/version/git_metadata/git_metadata.hpp"
 
-#include "gmock/gmock-matchers.h"  // ::testing::{HasSubstr, Not, StartsWith, EndsWith}
-#include "gtest/gtest.h"           // TEST, EXPECT_TRUE, EXPECT_FALSE, EXPECT_THAT
+#include "gmock/gmock.h"  // ::testing::{HasSubstr, Not, StartsWith, EndsWith}
+#include "gtest/gtest.h"  // TEST, EXPECT_TRUE, EXPECT_FALSE, EXPECT_THAT
 
 #include <regex>   // std::regex, std::regex::extended, std::regex_match
 #include <string>  // std::string

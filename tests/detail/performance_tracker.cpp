@@ -10,21 +10,27 @@
 
 #include "plssvm/detail/performance_tracker.hpp"
 
-#include "plssvm/detail/io/file_reader.hpp"  // plssvm::detail::io::file_reader
-#include "plssvm/detail/memory_size.hpp"     // plssvm::detail::memory_size (literals)
+#include "plssvm/detail/cmd/parser_predict.hpp"  // plssvm::detail::cmd::parser_predict
+#include "plssvm/detail/cmd/parser_scale.hpp"    // plssvm::detail::cmd::parser_scale
+#include "plssvm/detail/cmd/parser_train.hpp"    // plssvm::detail::cmd::parser_train
+#include "plssvm/detail/io/file_reader.hpp"      // plssvm::detail::io::file_reader
+#include "plssvm/detail/memory_size.hpp"         // plssvm::detail::memory_size (literals)
 
 #include "tests/naming.hpp"         // naming::test_parameter_to_name
 #include "tests/types_to_test.hpp"  // util::{label_type_gtest, test_parameter_type_at_t}
 #include "tests/utility.hpp"        // util::redirect_output
 
-#include "fmt/core.h"              // fmt::format
-#include "gmock/gmock-matchers.h"  // EXPECT_THAT, ::testing::{HasSubstr}
-#include "gtest/gtest.h"           // TEST, TYPED_TEST_SUITE, TYPED_TEST, EXPECT_EQ, EXPECT_TRUE, EXPECT_FALSE, ::testing::Test
+#include "fmt/core.h"     // fmt::format
+#include "gmock/gmock.h"  // EXPECT_THAT, ::testing::{HasSubstr}
+#include "gtest/gtest.h"  // TEST, TYPED_TEST_SUITE, TYPED_TEST, EXPECT_EQ, EXPECT_TRUE, EXPECT_FALSE, ::testing::Test
 
+#include <algorithm>   // std::transform
+#include <array>       // std::array
 #include <filesystem>  // std::filesystem::is_empty
 #include <iostream>    // std::cout, std::clog
 #include <map>         // std::map
 #include <string>      // std::string
+#include <vector>      // std::vector
 
 using namespace plssvm::detail::literals;
 
@@ -273,10 +279,11 @@ TEST_F(PerformanceTracker, add_parameter_tracking_entry) {
 
 TEST_F(PerformanceTracker, add_parser_train_tracking_entry) {
     // create a parameter train object
-    constexpr int argc = 3;
-    char argv_arr[argc][20] = { "./plssvm-train", "/path/to/train", "/path/to/model" };
-    char *argv[]{ argv_arr[0], argv_arr[1], argv_arr[2] };
-    const plssvm::detail::cmd::parser_train parser{ argc, static_cast<char **>(argv) };
+    std::array<std::string, 3> input_argv{ "./plssvm-train", "/path/to/train", "/path/to/model" };
+    std::array<char *, input_argv.size()> argv{};
+    std::transform(input_argv.begin(), input_argv.end(), argv.begin(), [](std::string &str) { return str.data(); });
+
+    const plssvm::detail::cmd::parser_train parser{ argv.size(), argv.data() };
 
     // save cmd::parser_train entry
     plssvm::detail::global_tracker->add_tracking_entry(plssvm::detail::tracking_entry{ "parameter", "", parser });
@@ -295,10 +302,11 @@ TEST_F(PerformanceTracker, add_parser_train_tracking_entry) {
 
 TEST_F(PerformanceTracker, add_parser_predict_tracking_entry) {
     // create a parameter train object
-    constexpr int argc = 4;
-    char argv_arr[argc][20] = { "./plssvm-predict", "/path/to/train", "/path/to/model", "/path/to/predict" };
-    char *argv[]{ argv_arr[0], argv_arr[1], argv_arr[2], argv_arr[3] };
-    const plssvm::detail::cmd::parser_predict parser{ argc, static_cast<char **>(argv) };
+    std::array<std::string, 4> input_argv{ "./plssvm-predict", "/path/to/train", "/path/to/model", "/path/to/predict" };
+    std::array<char *, input_argv.size()> argv{};
+    std::transform(input_argv.begin(), input_argv.end(), argv.begin(), [](std::string &str) { return str.data(); });
+
+    const plssvm::detail::cmd::parser_predict parser{ argv.size(), argv.data() };
 
     // save cmd::parser_predict entry
     plssvm::detail::global_tracker->add_tracking_entry(plssvm::detail::tracking_entry{ "parameter", "", parser });
@@ -317,10 +325,11 @@ TEST_F(PerformanceTracker, add_parser_predict_tracking_entry) {
 
 TEST_F(PerformanceTracker, add_parser_scale_tracking_entry) {
     // create a parameter train object
-    constexpr int argc = 3;
-    char argv_arr[argc][20] = { "./plssvm-train", "/path/to/train", "/path/to/scaled" };
-    char *argv[]{ argv_arr[0], argv_arr[1], argv_arr[2] };
-    const plssvm::detail::cmd::parser_scale parser{ argc, static_cast<char **>(argv) };
+    std::array<std::string, 3> input_argv{ "./plssvm-train", "/path/to/train", "/path/to/scaled" };
+    std::array<char *, input_argv.size()> argv{};
+    std::transform(input_argv.begin(), input_argv.end(), argv.begin(), [](std::string &str) { return str.data(); });
+
+    const plssvm::detail::cmd::parser_scale parser{ argv.size(), argv.data() };
 
     // save cmd::parser_scale entry
     plssvm::detail::global_tracker->add_tracking_entry(plssvm::detail::tracking_entry{ "parameter", "", parser });

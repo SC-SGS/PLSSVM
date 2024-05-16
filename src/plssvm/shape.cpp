@@ -11,6 +11,7 @@
 #include "fmt/core.h"  // fmt::format
 
 #include <algorithm>  // std::swap
+#include <cstddef>    // std::size_t
 #include <iostream>   // std:ostream, std::istream
 
 namespace plssvm {

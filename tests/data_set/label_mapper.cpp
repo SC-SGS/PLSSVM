@@ -8,7 +8,7 @@
  * @brief Tests for functions related to the data_set label mapper used for learning an SVM model.
  */
 
-#include "plssvm/data_set.hpp"
+#include "plssvm/data_set.hpp"                  // class to test
 #include "plssvm/detail/string_conversion.hpp"  // plssvm::detail::convert_to
 #include "plssvm/exceptions/exceptions.hpp"     // plssvm::data_set_exception
 

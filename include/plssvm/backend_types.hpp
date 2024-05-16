@@ -18,7 +18,8 @@
 #include "plssvm/detail/type_traits.hpp"                  // plssvm::detail::remove_cvref_t
 #include "plssvm/target_platforms.hpp"                    // plssvm::list_available_target_platforms
 
-#include "fmt/ostream.h"  // fmt::formatter, fmt::ostream_formatter
+#include "fmt/core.h"     // fmt::formatter
+#include "fmt/ostream.h"  // fmt::ostream_formatter
 
 #include <iosfwd>  // forward declare std::ostream and std::istream
 #include <vector>  // std::vector

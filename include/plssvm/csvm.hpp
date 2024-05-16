@@ -17,13 +17,13 @@
 #include "plssvm/constants.hpp"                   // plssvm::real_type, plssvm::PADDING_SIZE
 #include "plssvm/data_set.hpp"                    // plssvm::data_set
 #include "plssvm/default_value.hpp"               // plssvm::default_value, plssvm::default_init
+#include "plssvm/detail/assert.hpp"               // PLSSVM_ASSERT
 #include "plssvm/detail/data_distribution.hpp"    // plssvm::detail::triangular_data_distribution
 #include "plssvm/detail/data_distribution.hpp"    // plssvm::detail::data_distribution
 #include "plssvm/detail/igor_utility.hpp"         // plssvm::detail::{get_value_from_named_parameter, has_only_parameter_named_args_v}
 #include "plssvm/detail/logging.hpp"              // plssvm::detail::log
 #include "plssvm/detail/memory_size.hpp"          // plssvm::detail::memory_size
 #include "plssvm/detail/move_only_any.hpp"        // plssvm::detail::move_only_any
-#include "plssvm/detail/operators.hpp"            // plssvm::operators::sign
 #include "plssvm/detail/performance_tracker.hpp"  // plssvm::detail::performance_tracker
 #include "plssvm/detail/type_traits.hpp"          // PLSSVM_REQUIRES, plssvm::detail::remove_cvref_t
 #include "plssvm/detail/utility.hpp"              // plssvm::detail::to_underlying
@@ -41,12 +41,13 @@
 #include "fmt/core.h"     // fmt::format
 #include "igor/igor.hpp"  // igor::parser
 
-#include <algorithm>    // std::max_element
+#include <algorithm>    // std::max_element, std::all_of
 #include <chrono>       // std::chrono::{time_point, steady_clock, duration_cast}
-#include <iostream>     // std::cout, std::endl
-#include <iterator>     // std::distance
+#include <cstddef>      // std::size_t
+#include <limits>       // std::numeric_limits::lowest
 #include <memory>       // std::unique_ptr
 #include <optional>     // std::optional, std::make_optional, std::nullopt
+#include <ratio>        // std::milli
 #include <tuple>        // std::tie
 #include <type_traits>  // std::enable_if_t, std::is_same_v, std::is_convertible_v, std::false_type
 #include <utility>      // std::pair, std::forward
@@ -279,10 +280,10 @@ class csvm {
      * @param[in] B the right-hand sides
      * @param[in] eps the termination criterion for the CG algorithm
      * @param[in] max_cg_iter the maximum number of CG iterations
-     * @param[in] cd_solver_variant the variation of the CG algorithm to use, i.e., how the kernel matrix is assembled (currently: explicit, streaming, implicit)
+     * @param[in] cg_solver the variation of the CG algorithm to use, i.e., how the kernel matrix is assembled (currently: explicit, streaming, implicit)
      * @return the result matrix `X` and the number of CG iterations necessary to solve the system of linear equations (`[[nodiscard]]`)
      */
-    [[nodiscard]] std::pair<soa_matrix<real_type>, unsigned long long> conjugate_gradients(const std::vector<detail::move_only_any> &A, const soa_matrix<real_type> &B, real_type eps, unsigned long long max_cg_iter, solver_type cd_solver_variant) const;
+    [[nodiscard]] std::pair<soa_matrix<real_type>, unsigned long long> conjugate_gradients(const std::vector<detail::move_only_any> &A, const soa_matrix<real_type> &B, real_type eps, unsigned long long max_cg_iter, solver_type cg_solver) const;
     /**
      * @brief Perform a dimensional reduction for the kernel matrix.
      * @details Reduces the resulting dimension by `2` compared to the original LS-SVM formulation.
@@ -356,6 +357,12 @@ model<label_type> csvm::fit(const data_set<label_type> &data, Args &&...named_ar
                   "The provided matrix must be padded with {}, but is padded with {}!",
                   shape{ PADDING_SIZE, PADDING_SIZE },
                   data.data().padding());
+    #if defined(PLSSVM_ASSERT_ENABLED)
+    if (params_.kernel_type == kernel_function_type::chi_squared) {
+        PLSSVM_ASSERT(std::all_of(data.data().data(), data.data().data() + data.data().size_padded(), [](const real_type val) { return val >= real_type{ 0.0 }; }),
+                      "The chi-squared kernel is only well defined for non-negative values!");
+    }
+    #endif
 
     if (!data.has_labels()) {
         throw invalid_parameter_exception{ "No labels given for training! Maybe the data is only usable for prediction?" };
@@ -392,7 +399,7 @@ model<label_type> csvm::fit(const data_set<label_type> &data, Args &&...named_ar
     parameter params{ params_ };
     if (params.gamma.is_default()) {
         // no gamma provided -> use default value which depends on the number of features in the data set
-        params.gamma = real_type{ 1.0 } / data.num_features();
+        params.gamma = real_type{ 1.0 } / static_cast<real_type>(data.num_features());
     }
 
     // create model
@@ -419,7 +426,7 @@ model<label_type> csvm::fit(const data_set<label_type> &data, Args &&...named_ar
         // create index vector: index_sets[0] contains the indices of all data points in the big data set with label index 0, and so on
         std::vector<std::vector<std::size_t>> index_sets(num_classes);
         {
-            const std::vector<label_type> &labels = data.labels().value();
+            const std::vector<label_type> &labels = *data.labels();
             for (std::size_t i = 0; i < data.num_data_points(); ++i) {
                 index_sets[data.mapping_->get_mapped_index_by_label(labels[i])].push_back(i);
             }
@@ -516,6 +523,12 @@ std::vector<label_type> csvm::predict(const model<label_type> &model, const data
                   "The provided predict points must be padded with {}, but is padded with {}!",
                   shape{ PADDING_SIZE, PADDING_SIZE },
                   data.data().padding());
+#if defined(PLSSVM_ASSERT_ENABLED)
+    if (params_.kernel_type == kernel_function_type::chi_squared) {
+        PLSSVM_ASSERT(std::all_of(data.data().data(), data.data().data() + data.data().size_padded(), [](const real_type val) { return val >= real_type{ 0.0 }; }),
+                      "The chi-squared kernel is only well defined for non-negative values!");
+    }
+#endif
 
     if (model.num_features() != data.num_features()) {
         throw invalid_parameter_exception{ fmt::format("Number of features per data point ({}) must match the number of features per support vector of the provided model ({})!", data.num_features(), model.num_features()) };
@@ -532,7 +545,6 @@ std::vector<label_type> csvm::predict(const model<label_type> &model, const data
         PLSSVM_ASSERT(model.alpha_ptr_ != nullptr, "The alpha_ptr_ may never be a nullptr!");
         PLSSVM_ASSERT(model.alpha_ptr_->size() == 1, "For OAA, the alpha vector must only contain a single aos_matrix of size {}x{}!", model.num_classes(), model.num_support_vectors());
         PLSSVM_ASSERT(model.alpha_ptr_->front().num_rows() == calculate_number_of_classifiers(classification_type::oaa, data.num_classes()), "The number of rows in the matrix must be {}, but is {}!", model.alpha_ptr_->front().num_rows(), calculate_number_of_classifiers(classification_type::oaa, data.num_classes()));
-        PLSSVM_ASSERT(model.alpha_ptr_->front().num_cols() == data.num_data_points(), "The number of weights ({}) must be equal to the number of support vectors ({})!", model.alpha_ptr_->front().num_cols(), data.num_data_points());
 
         const soa_matrix<real_type> &sv = *model.data_.data_ptr_;
         const aos_matrix<real_type> &alpha = model.alpha_ptr_->front();  // num_classes x num_data_points
@@ -628,7 +640,7 @@ std::vector<label_type> csvm::predict(const model<label_type> &model, const data
                     }
                 } else {
                     // use previously calculated w vector
-                    soa_matrix<real_type> binary_w{ shape{ 1, num_features } };
+                    soa_matrix<real_type> binary_w{ shape{ 1, num_features }, shape{ PADDING_SIZE, PADDING_SIZE } };
 #pragma omp parallel for default(none) shared(model, binary_w) firstprivate(num_features, pos)
                     for (std::size_t dim = 0; dim < num_features; ++dim) {
                         binary_w(0, dim) = (*model.w_ptr_)(pos, dim);
@@ -658,11 +670,11 @@ std::vector<label_type> csvm::predict(const model<label_type> &model, const data
 #pragma omp parallel for default(none) shared(predicted_labels, class_votes, model) if (!std::is_same_v<label_type, bool>)
         for (typename std::vector<label_type>::size_type i = 0; i < predicted_labels.size(); ++i) {
             std::size_t argmax = 0;
-            real_type max = std::numeric_limits<real_type>::lowest();
+            std::size_t max = 0;
             for (std::size_t v = 0; v < class_votes.num_cols(); ++v) {
                 if (max < class_votes(i, v)) {
                     argmax = v;
-                    max = static_cast<real_type>(class_votes(i, v));
+                    max = class_votes(i, v);
                 }
             }
             predicted_labels[i] = model.data_.mapping_->get_label_by_mapped_index(argmax);
@@ -691,7 +703,7 @@ real_type csvm::score(const model<label_type> &model, const data_set<label_type>
     // predict labels
     const std::vector<label_type> predicted_labels = this->predict(model, data);
     // correct labels
-    const std::vector<label_type> &correct_labels = data.labels().value();
+    const std::vector<label_type> &correct_labels = *data.labels();
 
     // calculate the accuracy
     typename std::vector<label_type>::size_type correct{ 0 };

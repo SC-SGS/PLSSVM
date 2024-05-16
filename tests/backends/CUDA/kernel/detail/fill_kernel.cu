@@ -20,8 +20,6 @@
 #include <cstddef>    // std::size_t
 #include <vector>     // std::vector
 
-#if __has_include("cuda_runtime.h")
-
 template <typename T>
 class CUDAFillUtility : public ::testing::Test {
   protected:
@@ -84,5 +82,3 @@ TYPED_TEST(CUDAFillUtility, fill_kernel_partial) {
     EXPECT_TRUE(std::all_of(vec.cbegin() + 42, vec.cbegin() + 1071, [](const real_type val) { return val == real_type{ 3.1415 }; }));
     EXPECT_TRUE(std::all_of(vec.cbegin() + 1071, vec.cend(), [](const real_type val) { return val == real_type{ 0.0 }; }));
 }
-
-#endif

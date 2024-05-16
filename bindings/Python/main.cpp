@@ -9,6 +9,7 @@
 #include "plssvm/exceptions/exceptions.hpp"  // plssvm::exception
 
 #include "pybind11/pybind11.h"  // PYBIND11_MODULE, py::module_, py::exception, py::register_exception_translator
+#include "pybind11/pytypes.h"   // py::set_error
 
 #include <exception>  // std::exception_ptr, std::rethrow_exception
 
@@ -48,7 +49,7 @@ PYBIND11_MODULE(plssvm, m) {
                 std::rethrow_exception(p);
             }
         } catch (const plssvm::exception &e) {
-            base_exception(e.what_with_loc().c_str());
+            py::set_error(base_exception, e.what_with_loc().c_str());
         }
     });
 

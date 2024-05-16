@@ -14,13 +14,12 @@
 #pragma once
 
 #include "plssvm/backend_types.hpp"                       // plssvm::backend, plssvm::csvm_to_backend_type_v
-#include "plssvm/backends/SYCL/detail/constants.hpp"      // alias plssvm::sycl to the PLSSVM_SYCL_BACKEND_PREFERRED_IMPLEMENTATION
+#include "plssvm/backends/SYCL/detail/constants.hpp"      // plssvm::sycl::csvm alias
 #include "plssvm/backends/SYCL/implementation_types.hpp"  // plssvm::sycl::implementation_type
 #include "plssvm/csvm.hpp"                                // plssvm::csvm, plssvm::csvm_backend_exists_v
 #include "plssvm/detail/igor_utility.hpp"                 // plssvm::detail::get_value_from_named_parameter
-#include "plssvm/detail/type_traits.hpp"                  // plssvm::detail::remove_cvref_t
 #include "plssvm/exceptions/exceptions.hpp"               // plssvm::unsupported_backend_exception
-                                                          // or to plssvm::dpcpp if no SYCL backend is available
+#include "plssvm/parameter.hpp"                           // plssvm::sycl_implementation_type
 
 // only include requested/available backends
 #if defined(PLSSVM_HAS_OPENMP_BACKEND)

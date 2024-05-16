@@ -17,7 +17,8 @@
 
 #include "hip/hip_runtime_api.h"  // hipError_t, hipSuccess, hipGetErrorName, hipGetErrorString
 
-#include "fmt/ostream.h"  // fmt::formatter, fmt::ostream_formatter
+#include "fmt/core.h"     // fmt::formatter
+#include "fmt/ostream.h"  // fmt::ostream_formatter
 
 #include <string>  // std::string
 
@@ -29,7 +30,7 @@
  * @throws plssvm::hip::backend_exception if the error code signals a failure
  */
 #define PLSSVM_HIP_ERROR_CHECK(err)                                                                                                         \
-    if (err != hipSuccess) {                                                                                                                \
+    if ((err) != hipSuccess) {                                                                                                              \
         throw plssvm::hip::backend_exception{ fmt::format("HIP assert '{}' ({}): {}", hipGetErrorName(err), err, hipGetErrorString(err)) }; \
     }
 

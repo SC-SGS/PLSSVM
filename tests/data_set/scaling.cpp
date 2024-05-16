@@ -8,8 +8,8 @@
  * @brief Tests for functions related to the data_set scaling used for learning an SVM model.
  */
 
-#include "plssvm/constants.hpp"  // plssvm::real_type
-#include "plssvm/data_set.hpp"
+#include "plssvm/constants.hpp"                 // plssvm::real_type
+#include "plssvm/data_set.hpp"                  // class to test
 #include "plssvm/detail/io/file_reader.hpp"     // plssvm::detail::io::file_reader
 #include "plssvm/detail/string_conversion.hpp"  // plssvm::detail::convert_to
 #include "plssvm/exceptions/exceptions.hpp"     // plssvm::data_set_exception

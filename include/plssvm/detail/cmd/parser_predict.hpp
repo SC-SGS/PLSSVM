@@ -13,11 +13,12 @@
 #define PLSSVM_DETAIL_CMD_PARSER_PREDICT_HPP_
 #pragma once
 
-#include "plssvm/backend_types.hpp"                      // plssvm::backend_type
+#include "plssvm/backend_types.hpp"                       // plssvm::backend_type
 #include "plssvm/backends/SYCL/implementation_types.hpp"  // plssvm::sycl::implementation_type
-#include "plssvm/target_platforms.hpp"                   // plssvm::target_platform
+#include "plssvm/target_platforms.hpp"                    // plssvm::target_platform
 
-#include "fmt/ostream.h"  // fmt::formatter, fmt::ostream_formatter
+#include "fmt/core.h"     // fmt::formatter
+#include "fmt/ostream.h"  // fmt::ostream_formatter
 
 #include <iosfwd>  // forward declare std::ostream
 #include <string>  // std::string

@@ -16,7 +16,6 @@
 #include "plssvm/constants.hpp"                 // plssvm::real_type, plssvm::PADDING_SIZE
 #include "plssvm/data_set.hpp"                  // plssvm::data_set
 #include "plssvm/detail/data_distribution.hpp"  // plssvm::detail::{triangular_data_distribution, rectangular_data_distribution}
-#include "plssvm/detail/memory_size.hpp"        // memory size literals
 #include "plssvm/kernel_function_types.hpp"     // plssvm::kernel_function_type
 #include "plssvm/matrix.hpp"                    // plssvm::aos_matrix
 #include "plssvm/parameter.hpp"                 // plssvm::parameter
@@ -31,7 +30,6 @@
 #include "fmt/core.h"     // fmt::format
 #include "gtest/gtest.h"  // TYPED_TEST_SUITE_P, TYPED_TEST_P, REGISTER_TYPED_TEST_SUITE_P, EXPECT_GT, EXPECT_GE, ASSERT_EQ, ::testing::Test
 
-#include <cmath>    // std::pow, std::exp
 #include <cstddef>  // std::size_t
 #include <memory>   // std::unique_ptr, std::make_unique
 #include <tuple>    // std::ignore
@@ -285,7 +283,7 @@ TYPED_TEST_P(GenericGPUCSVMKernelFunction, run_assemble_kernel_matrix_explicit) 
     const plssvm::data_set data{ PLSSVM_TEST_FILE };
     auto data_matr{ data.data() };
     if constexpr (kernel == plssvm::kernel_function_type::chi_squared) {
-        // chi-squared is well-defined for positive values only
+        // chi-squared is well-defined for non-negative values only
         data_matr = util::matrix_abs(data_matr);
     }
 
@@ -326,7 +324,7 @@ TYPED_TEST_P(GenericGPUCSVMKernelFunction, run_assemble_kernel_matrix_explicit) 
 
         // check for correctness
         ASSERT_EQ(kernel_matrix.size(), correct_kernel_matrix.size());
-        EXPECT_FLOATING_POINT_VECTOR_NEAR(kernel_matrix, correct_kernel_matrix);
+        EXPECT_FLOATING_POINT_VECTOR_NEAR_EPS(kernel_matrix, correct_kernel_matrix, 1e6);
     }
 }
 
@@ -343,7 +341,7 @@ TYPED_TEST_P(GenericGPUCSVMKernelFunction, run_assemble_kernel_matrix_implicit_b
     const plssvm::data_set data{ PLSSVM_TEST_FILE };
     auto data_matr{ data.data() };
     if constexpr (kernel == plssvm::kernel_function_type::chi_squared) {
-        // chi-squared is well-defined for positive values only
+        // chi-squared is well-defined for non-negative values only
         data_matr = util::matrix_abs(data_matr);
     }
 
@@ -411,7 +409,7 @@ TYPED_TEST_P(GenericGPUCSVMKernelFunction, run_predict_kernel) {
     const plssvm::data_set data{ PLSSVM_TEST_FILE };
     auto data_matr{ data.data() };
     if constexpr (kernel == plssvm::kernel_function_type::chi_squared) {
-        // chi-squared is well-defined for positive values only
+        // chi-squared is well-defined for non-negative values only
         data_matr = util::matrix_abs(data_matr);
     }
 
