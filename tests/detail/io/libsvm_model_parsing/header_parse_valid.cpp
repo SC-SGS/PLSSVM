@@ -25,6 +25,7 @@
 
 #include <cstddef>  // std::size_t
 #include <string>   // std::string
+#include <variant>  // std::get
 #include <vector>   // std::vector
 
 template <typename T>
@@ -41,6 +42,7 @@ class LIBSVMModelHeaderParseValid : public ::testing::Test {
     [[nodiscard]] constexpr bool has_degree() const noexcept {
         return fixture_kernel == plssvm::kernel_function_type::polynomial;
     }
+
     /**
      * @brief Check whether the gamma field should be read from the file depending on the current kernel type.
      * @return `true` if the gamma field should be read, otherwise `false` (`[[nodiscard]]`)
@@ -48,6 +50,7 @@ class LIBSVMModelHeaderParseValid : public ::testing::Test {
     [[nodiscard]] constexpr bool has_gamma() const noexcept {
         return fixture_kernel != plssvm::kernel_function_type::linear;
     }
+
     /**
      * @brief Check whether the coef0 field should be read from the file depending on the current kernel type.
      * @return `true` if the coef0 field should be read, otherwise `false` (`[[nodiscard]]`)
@@ -98,27 +101,16 @@ TYPED_TEST(LIBSVMModelHeaderParseValid, read) {
     // check for correctness
 
     // check parameter
-    EXPECT_FALSE(params.kernel_type.is_default());
-    EXPECT_EQ(params.kernel_type.value(), kernel);
+    EXPECT_EQ(params.kernel_type, kernel);
     if (this->has_degree()) {
-        EXPECT_FALSE(params.degree.is_default());
-        EXPECT_EQ(params.degree.value(), 2);
-    } else {
-        EXPECT_TRUE(params.degree.is_default());
+        EXPECT_EQ(params.degree, 2);
     }
     if (this->has_gamma()) {
-        EXPECT_FALSE(params.gamma.is_default());
-        EXPECT_EQ(params.gamma.value(), plssvm::real_type{ 0.25 });
-    } else {
-        EXPECT_TRUE(params.gamma.is_default());
+        EXPECT_EQ(std::get<plssvm::real_type>(params.gamma), plssvm::real_type{ 0.25 });
     }
     if (this->has_coef0()) {
-        EXPECT_FALSE(params.coef0.is_default());
-        EXPECT_EQ(params.coef0.value(), plssvm::real_type{ 1.5 });
-    } else {
-        EXPECT_TRUE(params.coef0.is_default());
+        EXPECT_EQ(params.coef0, plssvm::real_type{ 1.5 });
     }
-    EXPECT_TRUE(params.cost.is_default());
 
     // check rho values
     const std::vector<plssvm::real_type> all_rhos{

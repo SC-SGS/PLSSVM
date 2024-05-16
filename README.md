@@ -86,7 +86,7 @@ General dependencies:
 
 - a C++17 capable compiler (e.g. [`gcc`](https://gcc.gnu.org/) or [`clang`](https://clang.llvm.org/))
 - [CMake](https://cmake.org/) 3.23 or newer
-- [cxxopts ≥ v3.2.0](https://github.com/jarro2783/cxxopts), [fast_float ≥ v3.10.0](https://github.com/fastfloat/fast_float), [{fmt} ≥ v10.2.1](https://github.com/fmtlib/fmt), and [igor](https://github.com/bluescarni/igor) (all four are automatically build during the CMake configuration if they couldn't be found using the respective `find_package` call)
+- [cxxopts ≥ v3.2.0](https://github.com/jarro2783/cxxopts), [fast_float ≥ v6.1.1](https://github.com/fastfloat/fast_float), [{fmt} ≥ v10.2.1](https://github.com/fmtlib/fmt), and [igor](https://github.com/bluescarni/igor) (all four are automatically build during the CMake configuration if they couldn't be found using the respective `find_package` call)
 - [GoogleTest ≥ v1.14.0](https://github.com/google/googletest) if testing is enabled (automatically build during the CMake configuration if `find_package(GTest)` wasn't successful)
 - [doxygen](https://www.doxygen.nl/index.html) if documentation generation is enabled
 - [Pybind11 ≥ v2.12.0](https://github.com/pybind/pybind11) if Python bindings are enabled
@@ -409,7 +409,7 @@ Usage:
                                          4 -- laplacian: exp(-gamma*|u-v|_1)
                                          5 -- chi_squared: exp(-gamma*sum_i((x[i]-y[i])^2/(x[i]+y[i]))) (default: 2)
   -d, --degree arg              set degree in kernel function (default: 3)
-  -g, --gamma arg               set gamma in kernel function (default: 1 / num_features)
+  -g, --gamma arg               set gamma in kernel function (default: automatic)
   -r, --coef0 arg               set coef0 in kernel function (default: 0)
   -c, --cost arg                set the parameter C (default: 1)
   -e, --epsilon arg             set the tolerance of termination criterion (default: 0.001)

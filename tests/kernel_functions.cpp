@@ -29,6 +29,8 @@
 #include <array>    // std::array
 #include <cstddef>  // std::size_t
 #include <tuple>    // std::tuple, std::ignore
+#include <utility>  // std::pair
+#include <variant>  // std::get
 #include <vector>   // std::vector
 
 //*************************************************************************************************************************************//
@@ -131,7 +133,7 @@ TYPED_TEST(KernelFunctionVector, polynomial_kernel_function_parameter) {
             SCOPED_TRACE(fmt::format("parameter: [{}, {}, {}, {}]", degree, gamma, coef0, cost));
             const plssvm::parameter params{ plssvm::kernel_function_type::polynomial, static_cast<int>(degree), gamma, coef0, cost };
             EXPECT_FLOATING_POINT_NEAR(plssvm::kernel_function(x1, x2, params),
-                                       ground_truth::detail::polynomial_kernel(x1, x2, params.degree.value(), static_cast<real_type>(params.gamma.value()), static_cast<real_type>(params.coef0.value())));
+                                       ground_truth::detail::polynomial_kernel(x1, x2, params.degree, static_cast<real_type>(std::get<plssvm::real_type>(params.gamma)), static_cast<real_type>(params.coef0)));
         }
     }
 }
@@ -165,7 +167,7 @@ TYPED_TEST(KernelFunctionVector, radial_basis_function_kernel_function_parameter
         for (const auto [degree, gamma, coef0, cost] : this->get_param_values()) {
             SCOPED_TRACE(fmt::format("parameter: [{}, {}, {}, {}]", degree, gamma, coef0, cost));
             const plssvm::parameter params{ plssvm::kernel_function_type::rbf, static_cast<int>(degree), gamma, coef0, cost };
-            EXPECT_FLOATING_POINT_NEAR(plssvm::kernel_function(x1, x2, params), ground_truth::detail::rbf_kernel(x1, x2, static_cast<real_type>(params.gamma.value())));
+            EXPECT_FLOATING_POINT_NEAR(plssvm::kernel_function(x1, x2, params), ground_truth::detail::rbf_kernel(x1, x2, static_cast<real_type>(std::get<plssvm::real_type>(params.gamma))));
         }
     }
 }
@@ -200,7 +202,7 @@ TYPED_TEST(KernelFunctionVector, sigmoid_kernel_function_parameter) {
         for (const auto [degree, gamma, coef0, cost] : this->get_param_values()) {
             SCOPED_TRACE(fmt::format("parameter: [{}, {}, {}, {}]", degree, gamma, coef0, cost));
             const plssvm::parameter params{ plssvm::kernel_function_type::sigmoid, static_cast<int>(degree), gamma, coef0, cost };
-            EXPECT_FLOATING_POINT_NEAR(plssvm::kernel_function(x1, x2, params), ground_truth::detail::sigmoid_kernel(x1, x2, static_cast<real_type>(params.gamma.value()), static_cast<real_type>(params.coef0.value())));
+            EXPECT_FLOATING_POINT_NEAR(plssvm::kernel_function(x1, x2, params), ground_truth::detail::sigmoid_kernel(x1, x2, static_cast<real_type>(std::get<plssvm::real_type>(params.gamma)), static_cast<real_type>(params.coef0)));
         }
     }
 }
@@ -234,7 +236,7 @@ TYPED_TEST(KernelFunctionVector, laplacian_kernel_function_parameter) {
         for (const auto [degree, gamma, coef0, cost] : this->get_param_values()) {
             SCOPED_TRACE(fmt::format("parameter: [{}, {}, {}, {}]", degree, gamma, coef0, cost));
             const plssvm::parameter params{ plssvm::kernel_function_type::laplacian, static_cast<int>(degree), gamma, coef0, cost };
-            EXPECT_FLOATING_POINT_NEAR(plssvm::kernel_function(x1, x2, params), ground_truth::detail::laplacian_kernel(x1, x2, static_cast<real_type>(params.gamma.value())));
+            EXPECT_FLOATING_POINT_NEAR(plssvm::kernel_function(x1, x2, params), ground_truth::detail::laplacian_kernel(x1, x2, static_cast<real_type>(std::get<plssvm::real_type>(params.gamma))));
         }
     }
 }
@@ -268,7 +270,7 @@ TYPED_TEST(KernelFunctionVector, chi_squared_kernel_function_parameter) {
         for (const auto [degree, gamma, coef0, cost] : this->get_param_values()) {
             SCOPED_TRACE(fmt::format("parameter: [{}, {}, {}, {}]", degree, gamma, coef0, cost));
             const plssvm::parameter params{ plssvm::kernel_function_type::chi_squared, static_cast<int>(degree), gamma, coef0, cost };
-            EXPECT_FLOATING_POINT_NEAR(plssvm::kernel_function(x1, x2, params), ground_truth::detail::chi_squared_kernel(x1, x2, static_cast<real_type>(params.gamma.value())));
+            EXPECT_FLOATING_POINT_NEAR(plssvm::kernel_function(x1, x2, params), ground_truth::detail::chi_squared_kernel(x1, x2, static_cast<real_type>(std::get<plssvm::real_type>(params.gamma))));
         }
     }
 }
@@ -483,7 +485,7 @@ TYPED_TEST(KernelFunctionMatrix, polynomial_kernel_function_parameter) {
 
                     const plssvm::parameter params{ plssvm::kernel_function_type::polynomial, static_cast<int>(degree), gamma, coef0, cost };
                     EXPECT_FLOATING_POINT_NEAR(plssvm::kernel_function(matr1, i, matr2, j, params),
-                                               ground_truth::detail::polynomial_kernel(x1, x2, params.degree.value(), static_cast<real_type>(params.gamma.value()), static_cast<real_type>(params.coef0.value())));
+                                               ground_truth::detail::polynomial_kernel(x1, x2, params.degree, static_cast<real_type>(std::get<plssvm::real_type>(params.gamma)), static_cast<real_type>(params.coef0)));
                 }
             }
         }
@@ -552,7 +554,7 @@ TYPED_TEST(KernelFunctionMatrix, rbf_kernel_function_parameter) {
 
                     const plssvm::parameter params{ plssvm::kernel_function_type::rbf, static_cast<int>(degree), gamma, coef0, cost };
                     EXPECT_FLOATING_POINT_NEAR(plssvm::kernel_function(matr1, i, matr2, j, params),
-                                               ground_truth::detail::rbf_kernel(x1, x2, static_cast<real_type>(params.gamma.value())));
+                                               ground_truth::detail::rbf_kernel(x1, x2, static_cast<real_type>(std::get<plssvm::real_type>(params.gamma))));
                 }
             }
         }
@@ -622,7 +624,7 @@ TYPED_TEST(KernelFunctionMatrix, sigmoid_kernel_function_parameter) {
 
                     const plssvm::parameter params{ plssvm::kernel_function_type::sigmoid, static_cast<int>(degree), gamma, coef0, cost };
                     EXPECT_FLOATING_POINT_NEAR(plssvm::kernel_function(matr1, i, matr2, j, params),
-                                               ground_truth::detail::sigmoid_kernel(x1, x2, static_cast<real_type>(params.gamma.value()), static_cast<real_type>(params.coef0.value())));
+                                               ground_truth::detail::sigmoid_kernel(x1, x2, static_cast<real_type>(std::get<plssvm::real_type>(params.gamma)), static_cast<real_type>(params.coef0)));
                 }
             }
         }
@@ -691,7 +693,7 @@ TYPED_TEST(KernelFunctionMatrix, laplacian_kernel_function_parameter) {
 
                     const plssvm::parameter params{ plssvm::kernel_function_type::laplacian, static_cast<int>(degree), gamma, coef0, cost };
                     EXPECT_FLOATING_POINT_NEAR(plssvm::kernel_function(matr1, i, matr2, j, params),
-                                               ground_truth::detail::laplacian_kernel(x1, x2, static_cast<real_type>(params.gamma.value())));
+                                               ground_truth::detail::laplacian_kernel(x1, x2, static_cast<real_type>(std::get<plssvm::real_type>(params.gamma))));
                 }
             }
         }
@@ -760,7 +762,7 @@ TYPED_TEST(KernelFunctionMatrix, chi_squared_kernel_function_parameter) {
 
                     const plssvm::parameter params{ plssvm::kernel_function_type::chi_squared, static_cast<int>(degree), gamma, coef0, cost };
                     EXPECT_FLOATING_POINT_NEAR(plssvm::kernel_function(matr1, i, matr2, j, params),
-                                               ground_truth::detail::chi_squared_kernel(x1, x2, static_cast<real_type>(params.gamma.value())));
+                                               ground_truth::detail::chi_squared_kernel(x1, x2, static_cast<real_type>(std::get<plssvm::real_type>(params.gamma))));
                 }
             }
         }

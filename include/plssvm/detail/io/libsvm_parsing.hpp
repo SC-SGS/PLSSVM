@@ -26,6 +26,7 @@
 #include "fmt/core.h"     // fmt::format
 #include "fmt/format.h"   // fmt::format_to
 #include "fmt/os.h"       // fmt::ostream, fmt::output_file
+#include "fmt/std.h"      // format std::vector<bool>::operator[] proxy type
 
 #include <algorithm>    // std::max, std::min
 #include <array>        // std::array

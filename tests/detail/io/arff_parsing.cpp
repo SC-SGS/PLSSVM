@@ -23,6 +23,7 @@
 #include "tests/utility.hpp"             // util::{temporary_file, instantiate_template_file, get_correct_data_file_labels, get_distinct_label, generate_specific_matrix}
 
 #include "fmt/core.h"     // fmt::format
+#include "fmt/std.h"      // format std::vector<bool>::operator[] proxy type
 #include "gmock/gmock.h"  // ::testing::HasSubstr
 #include "gtest/gtest.h"  // TEST, TEST_P, TYPED_TEST, TYPED_TEST_SUITE, INSTANTIATE_TEST_SUITE_P, EXPECT_EQ, EXPECT_TRUE, EXPECT_DEATH, ASSERT_EQ, FAIL
                           // ::testing::{Test, Types, TestWithParam, Values}

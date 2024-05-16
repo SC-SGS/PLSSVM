@@ -15,6 +15,7 @@
 #include "plssvm/backends/SYCL/kernel_invocation_types.hpp"  // plssvm::sycl::kernel_invocation_type
 #include "plssvm/classification_types.hpp"                   // plssvm::classification_type
 #include "plssvm/constants.hpp"                              // plssvm::real_type
+#include "plssvm/gamma.hpp"                                  // plssvm::gamma_type
 #include "plssvm/kernel_function_types.hpp"                  // plssvm::kernel_function_type
 #include "plssvm/solver_types.hpp"                           // plssvm::solver_type
 #include "plssvm/target_platforms.hpp"                       // plssvm::target_platform
@@ -36,6 +37,7 @@
 #include <string>       // std::string
 #include <tuple>        // std::tuple
 #include <type_traits>  // std::is_same_v
+#include <variant>      // std::get, std::variant, std::holds_alternative
 #include <vector>       // std::vector
 
 class ParserTrain : public util::ParameterBase { };
@@ -51,11 +53,9 @@ TEST_F(ParserTrain, minimal) {
 
     // check parsed values
     EXPECT_EQ(parser.csvm_params, plssvm::parameter{});
-    EXPECT_TRUE(parser.epsilon.is_default());
-    EXPECT_FLOATING_POINT_EQ(parser.epsilon.value(), plssvm::real_type{ 0.001 });
-    EXPECT_TRUE(parser.max_iter.is_default());
-    EXPECT_EQ(parser.max_iter.value(), 0);
-    EXPECT_EQ(parser.classification.value(), plssvm::classification_type::oaa);
+    EXPECT_FLOATING_POINT_EQ(parser.epsilon, plssvm::real_type{ 0.001 });
+    EXPECT_EQ(parser.max_iter, 0);
+    EXPECT_EQ(parser.classification, plssvm::classification_type::oaa);
     EXPECT_EQ(parser.backend, plssvm::backend_type::automatic);
     EXPECT_EQ(parser.target, plssvm::target_platform::automatic);
     EXPECT_EQ(parser.solver, plssvm::solver_type::automatic);
@@ -79,21 +79,21 @@ TEST_F(ParserTrain, minimal_output) {
     // test output string
     const std::string correct = fmt::format(
         "kernel_type: rbf -> exp(-gamma*|u-v|^2)\n"
-        "gamma: 1 / num_features (default)\n"
-        "cost: 1 (default)\n"
-        "epsilon: 0.001 (default)\n"
-        "max_iter: num_data_points (default)\n"
+        "gamma: \"1 / num_features\"\n"
+        "cost: 1\n"
+        "epsilon: 0.001\n"
+        "max_iter: num_data_points\n"
         "backend: automatic\n"
         "target platform: automatic\n"
         "solver: automatic\n"
         "SYCL implementation type: automatic\n"
         "SYCL kernel invocation type: automatic\n"
-        "classification_type: one vs. all (default)\n"
-        "label_type: int (default)\n"
+        "classification_type: one vs. all\n"
+        "label_type: int\n"
         "real_type: {}\n"
         "input file (data set): 'data.libsvm'\n"
         "output file (model): 'data.libsvm.model'\n",
-        std::is_same_v<plssvm::real_type, float> ? "float" : "double (default)");
+        std::is_same_v<plssvm::real_type, float> ? "float" : "double");
     EXPECT_CONVERSION_TO_STRING(parser, correct);
 
     EXPECT_EQ(plssvm::verbosity, plssvm::verbosity_level::full);
@@ -117,16 +117,14 @@ TEST_F(ParserTrain, all_arguments) {
     // check parsed values
     EXPECT_EQ(parser.csvm_params.kernel_type, plssvm::kernel_function_type::polynomial);
     EXPECT_EQ(parser.csvm_params.degree, 2);
-    EXPECT_FLOATING_POINT_EQ(parser.csvm_params.gamma.value(), plssvm::real_type{ 1.5 });
-    EXPECT_FLOATING_POINT_EQ(parser.csvm_params.coef0.value(), plssvm::real_type{ -1.5 });
-    EXPECT_FLOATING_POINT_EQ(parser.csvm_params.cost.value(), plssvm::real_type{ 2.0 });
+    ASSERT_TRUE(std::holds_alternative<plssvm::real_type>(parser.csvm_params.gamma));
+    EXPECT_FLOATING_POINT_EQ(std::get<plssvm::real_type>(parser.csvm_params.gamma), plssvm::real_type{ 1.5 });
+    EXPECT_FLOATING_POINT_EQ(parser.csvm_params.coef0, plssvm::real_type{ -1.5 });
+    EXPECT_FLOATING_POINT_EQ(parser.csvm_params.cost, plssvm::real_type{ 2.0 });
 
-    EXPECT_FALSE(parser.epsilon.is_default());
-    EXPECT_FLOATING_POINT_EQ(parser.epsilon.value(), plssvm::real_type{ 1e-10 });
-    EXPECT_FALSE(parser.max_iter.is_default());
-    EXPECT_EQ(parser.max_iter.value(), 100);
-    EXPECT_FALSE(parser.classification.is_default());
-    EXPECT_EQ(parser.classification.value(), plssvm::classification_type::oao);
+    EXPECT_FLOATING_POINT_EQ(parser.epsilon, plssvm::real_type{ 1e-10 });
+    EXPECT_EQ(parser.max_iter, 100);
+    EXPECT_EQ(parser.classification, plssvm::classification_type::oao);
     EXPECT_EQ(parser.backend, plssvm::backend_type::cuda);
     EXPECT_EQ(parser.target, plssvm::target_platform::gpu_nvidia);
     EXPECT_EQ(parser.solver, plssvm::solver_type::cg_implicit);
@@ -165,9 +163,9 @@ TEST_F(ParserTrain, all_arguments_output) {
     // test output string
     std::string correct =
         "kernel_type: polynomial -> (gamma*u'*v+coef0)^degree\n"
+        "degree: 2\n"
         "gamma: 1.5\n"
         "coef0: -1.5\n"
-        "degree: 2\n"
         "cost: 2\n"
         "epsilon: 1e-10\n"
         "max_iter: 100\n"
@@ -187,7 +185,7 @@ TEST_F(ParserTrain, all_arguments_output) {
         "real_type: {}\n"
         "input file (data set): 'data.libsvm'\n"
         "output file (model): 'data.libsvm.model'\n",
-        std::is_same_v<plssvm::real_type, float> ? "float" : "double (default)");
+        std::is_same_v<plssvm::real_type, float> ? "float" : "double");
 #if defined(PLSSVM_PERFORMANCE_TRACKER_ENABLED)
     correct += "performance tracking file: 'tracking.yaml'\n";
 #endif
@@ -209,7 +207,6 @@ TEST_P(ParserTrainKernel, parsing) {
     // create parameter object
     const plssvm::detail::cmd::parser_train parser{ this->get_argc(), this->get_argv() };
     // test for correctness
-    EXPECT_FALSE(parser.csvm_params.kernel_type.is_default());
     EXPECT_EQ(parser.csvm_params.kernel_type, kernel_type);
 }
 
@@ -231,7 +228,6 @@ TEST_P(ParserTrainDegree, parsing) {
     // create parameter object
     const plssvm::detail::cmd::parser_train parser{ this->get_argc(), this->get_argv() };
     // test for correctness
-    EXPECT_FALSE(parser.csvm_params.degree.is_default());
     EXPECT_EQ(parser.csvm_params.degree, degree);
 }
 
@@ -243,7 +239,7 @@ INSTANTIATE_TEST_SUITE_P(ParserTrain, ParserTrainDegree, ::testing::Combine(
 // clang-format on
 
 class ParserTrainGamma : public ParserTrain,
-                         public ::testing::WithParamInterface<std::tuple<std::string, plssvm::real_type>> { };
+                         public ::testing::WithParamInterface<std::tuple<std::string, plssvm::gamma_type>> { };
 
 TEST_P(ParserTrainGamma, parsing) {
     const auto &[flag, gamma] = GetParam();
@@ -252,14 +248,21 @@ TEST_P(ParserTrainGamma, parsing) {
     // create parameter object
     const plssvm::detail::cmd::parser_train parser{ this->get_argc(), this->get_argv() };
     // test for correctness
-    EXPECT_FALSE(parser.csvm_params.gamma.is_default());
-    EXPECT_FLOATING_POINT_EQ(parser.csvm_params.gamma.value(), gamma);
+    if (std::holds_alternative<plssvm::real_type>(gamma)) {
+        ASSERT_TRUE(std::holds_alternative<plssvm::real_type>(parser.csvm_params.gamma));
+        EXPECT_EQ(std::get<plssvm::real_type>(parser.csvm_params.gamma), std::get<plssvm::real_type>(gamma));
+    } else if (std::holds_alternative<plssvm::gamma_coefficient_type>(gamma)) {
+        ASSERT_TRUE(std::holds_alternative<plssvm::gamma_coefficient_type>(parser.csvm_params.gamma));
+        EXPECT_EQ(std::get<plssvm::gamma_coefficient_type>(parser.csvm_params.gamma), std::get<plssvm::gamma_coefficient_type>(gamma));
+    } else {
+        FAIL() << "unreachable";
+    }
 }
 
 // clang-format off
 INSTANTIATE_TEST_SUITE_P(ParserTrain, ParserTrainGamma,
                 ::testing::Combine(::testing::Values("-g", "--gamma"),
-                ::testing::Values(plssvm::real_type{ 0.001 }, plssvm::real_type{ 0.75 }, plssvm::real_type{ 1.5 }, plssvm::real_type{ 2 })),
+                ::testing::Values(plssvm::real_type{ 0.001 }, plssvm::real_type{ 0.75 }, plssvm::real_type{ 1.5 }, plssvm::real_type{ 2 }, plssvm::gamma_coefficient_type::automatic, plssvm::gamma_coefficient_type::scale)),
                 naming::pretty_print_parameter_flag_and_value<ParserTrainGamma>);
 // clang-format on
 
@@ -291,8 +294,7 @@ TEST_P(ParserTrainCoef0, parsing) {
     // create parameter object
     const plssvm::detail::cmd::parser_train parser{ this->get_argc(), this->get_argv() };
     // test for correctness
-    EXPECT_FALSE(parser.csvm_params.coef0.is_default());
-    EXPECT_FLOATING_POINT_EQ(parser.csvm_params.coef0.value(), coef0);
+    EXPECT_FLOATING_POINT_EQ(parser.csvm_params.coef0, coef0);
 }
 
 // clang-format off
@@ -314,8 +316,7 @@ TEST_P(ParserTrainCost, parsing) {
     // create parameter object
     const plssvm::detail::cmd::parser_train parser{ this->get_argc(), this->get_argv() };
     // test for correctness
-    EXPECT_FALSE(parser.csvm_params.cost.is_default());
-    EXPECT_FLOATING_POINT_EQ(parser.csvm_params.cost.value(), cost);
+    EXPECT_FLOATING_POINT_EQ(parser.csvm_params.cost, cost);
 }
 
 // clang-format off
@@ -335,8 +336,7 @@ TEST_P(ParserTrainEpsilon, parsing) {
     // create parameter object
     const plssvm::detail::cmd::parser_train parser{ this->get_argc(), this->get_argv() };
     // test for correctness
-    EXPECT_FALSE(parser.epsilon.is_default());
-    EXPECT_FLOATING_POINT_EQ(parser.epsilon.value(), eps);
+    EXPECT_FLOATING_POINT_EQ(parser.epsilon, eps);
 }
 
 // clang-format off
@@ -357,7 +357,6 @@ TEST_P(ParserTrainMaxIter, parsing) {
     // create parameter object
     const plssvm::detail::cmd::parser_train parser{ this->get_argc(), this->get_argv() };
     // test for correctness
-    EXPECT_FALSE(parser.max_iter.is_default());
     EXPECT_EQ(parser.max_iter, max_iter);
 }
 
@@ -416,7 +415,6 @@ TEST_P(ParserTrainClassification, parsing) {
     // create parameter object
     const plssvm::detail::cmd::parser_train parser{ this->get_argc(), this->get_argv() };
     // test for correctness
-    EXPECT_FALSE(parser.classification.is_default());
     EXPECT_EQ(parser.classification, classification);
 }
 

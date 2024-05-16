@@ -37,6 +37,7 @@
 #include <iostream>  // std::clog
 #include <string>    // std::string
 #include <tuple>     // std::ignore
+#include <variant>   // std::holds_alternative
 #include <vector>    // std::vector
 
 class BaseCSVM : public ::testing::Test { };
@@ -399,7 +400,8 @@ TYPED_TEST(BaseCSVMFit, fit) {
     EXPECT_EQ(model.num_classes(), util::get_num_classes<label_type>());
     EXPECT_EQ(model.get_classification_type(), classification);
     EXPECT_EQ(model.get_params().kernel_type, kernel);
-    EXPECT_EQ(model.get_params().gamma, 0.25);
+    ASSERT_TRUE(std::holds_alternative<plssvm::real_type>(model.get_params().gamma));
+    EXPECT_EQ(std::get<plssvm::real_type>(model.get_params().gamma), plssvm::real_type{ 0.25 });
 }
 
 TYPED_TEST(BaseCSVMFit, fit_named_parameters) {
@@ -468,7 +470,8 @@ TYPED_TEST(BaseCSVMFit, fit_named_parameters) {
     EXPECT_EQ(model.num_classes(), util::get_num_classes<label_type>());
     EXPECT_EQ(model.get_classification_type(), classification);
     EXPECT_EQ(model.get_params().kernel_type, kernel);
-    EXPECT_EQ(model.get_params().gamma, 0.25);
+    ASSERT_TRUE(std::holds_alternative<plssvm::real_type>(model.get_params().gamma));
+    EXPECT_EQ(std::get<plssvm::real_type>(model.get_params().gamma), plssvm::real_type{ 0.25 });
 }
 
 TYPED_TEST(BaseCSVMFit, fit_named_parameters_invalid_epsilon) {
