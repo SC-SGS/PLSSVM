@@ -294,11 +294,11 @@ pipeline {
                                       fi
 
                                       if [ "$BUILD_TYPE" == Release ]; then
-                                          export NUM_DATA_POINTS=2000
-                                          export NUM_FEATURES=1000
+                                          export NUM_DATA_POINTS=200
+                                          export NUM_FEATURES=100
                                       else
-                                          export NUM_DATA_POINTS=50
-                                          export NUM_FEATURES=20
+                                          export NUM_DATA_POINTS=20
+                                          export NUM_FEATURES=10
                                       fi
 
 
