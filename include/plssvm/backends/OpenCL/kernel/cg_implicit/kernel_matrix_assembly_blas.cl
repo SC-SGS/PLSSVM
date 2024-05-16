@@ -21,13 +21,15 @@
  * @param[in] q the vector used in the dimensional reduction
  * @param[in] data_d the data points to calculate the implicit kernel matrix from
  * @param[in] num_rows the number of data points
+ * @param[in] device_num_rows the number of rows the current device is responsible for
+ * @param[in] row_offset the first row in @p data_d the current device is responsible for
  * @param[in] num_features the number of features per data point
  * @param[in] QA_cost the scalar used in the dimensional reduction
  * @param[in] cost the cost factor the diagonal is scaled with
  * @param[in] B the matrix @p B
  * @param[in,out] C the matrix @p C
  * @param[in] num_classes the number of classes in the data set
- * @param[in] PLSSVM_OPENCL_KERNEL_FUNCTION_PARAMETER_LIST a placeholder that is used to string replace the correct kernel parameter (attention: no comma!)
+ * @param[in] PLSSVM_OPENCL_KERNEL_FUNCTION_PARAMETER_LIST a placeholder that is used to string replace the correct kernel parameter (attention: no comma!; Args... only added for Doxygen)
  */
 __kernel void device_kernel_assembly_symm(const real_type alpha, const __global real_type *q, const __global real_type *data_d, const ulong num_rows, const ulong device_num_rows, const ulong row_offset, const ulong num_features, const real_type QA_cost, const real_type cost, const __global real_type *B, __global real_type *C, const ulong num_classes PLSSVM_OPENCL_KERNEL_FUNCTION_PARAMETER_LIST) {
     // cast values to 32-bit unsigned int values to prevent implicit conversions
