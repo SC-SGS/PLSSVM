@@ -331,8 +331,8 @@ pipeline {
                                         test_file_num_features=$NUM_FEATURES \
                                         +asserts \
                                         build_type=$BUILD_TYPE \
-                                        ^py-scipy%gcc # TODO: remove, neads a fortran compiler and we currently have no flang installed
-                                        ^openblas%gcc # TODO: remove, neads a fortran compiler and we currently have no flang installed
+                                        $([[ $BACKEND == ADAPTIVECPP ]] && echo "^py-scipy%gcc" ) # TODO: remove, neads a fortran compiler and we currently have no flang installed \
+                                        $([[ $BACKEND == ADAPTIVECPP ]] && echo "^openblas%gcc" ) # TODO: remove, neads a fortran compiler and we currently have no flang installed
                                 '''
 
                         }
