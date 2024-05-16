@@ -25,6 +25,7 @@
 
 #include "fmt/format.h"  // fmt::format, fmt::join
 #include "fmt/os.h"      // fmt::ostream, fmt::output_file
+#include "fmt/std.h"     // format std::vector<bool>::operator[] proxy type
 
 #include <cstddef>      // std::size_t
 #include <exception>    // std::exception, std::exception_ptr, std::current_exception, std::rethrow_exception
