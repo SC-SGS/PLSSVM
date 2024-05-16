@@ -615,12 +615,16 @@ cmake_minimum_required(VERSION 3.16)
 project(LibraryUsageExample
         LANGUAGES CXX)
 
-find_package(plssvm CONFIG REQUIRED)
+find_package(plssvm REQUIRED)
+# CMake's COMPONENTS mechanism can also be used if a specific library component is required, e.g.:
+# find_package(plssvm REQUIRED COMPONENTS CUDA)
 
 add_executable(prog main.cpp)
 
 target_compile_features(prog PUBLIC cxx_std_17)
-target_link_libraries(prog PUBLIC plssvm::plssvm-all)
+target_link_libraries(prog PUBLIC plssvm::all)
+# can also only link against a single library component, e.g.:
+# target_link_libraries(prog PUBLIC plssvm::cuda)
 ```
 
 ### Example Using the Python Bindings Available For PLSSVM
