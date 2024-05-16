@@ -205,7 +205,7 @@ pipeline {
                 axes {
                     axis {
                         name 'BACKEND'
-                        values 'OPENMP', 'CUDA', 'OPENCL', 'DPCPP', 'HIPSYCL', 'HIP'
+                        values 'OPENMP', 'CUDA', 'OPENCL', 'DPCPP', 'ADAPTIVECPP', 'HIP'
                     }
                     axis {
                         name 'ARCHITECTURE'
@@ -260,7 +260,7 @@ pipeline {
                     exclude {
                       axis{
                         name 'BACKEND'
-                        values 'HIPSYCL'
+                        values 'ADAPTIVECPP'
                       }
                       axis{
                         name 'BUILD_TYPE'
@@ -309,7 +309,7 @@ pipeline {
                                         $([[ $BACKEND == CUDA ]] && echo "+cuda" || echo "~cuda") \
                                         $([[ $BACKEND == HIP ]] && echo "+hip" || echo "~hip") \
                                         $([[ $BACKEND == OPENCL ]] && echo "+opencl" || echo "~opencl") \
-                                        $([[ $BACKEND == HIPSYCL ]] && echo "+adaptivecpp" || echo "~adaptivecpp") \
+                                        $([[ $BACKEND == ADAPTIVECPP ]] && echo "+adaptivecpp" || echo "~adaptivecpp") \
                                         $([[ $BACKEND == DPCPP ]] && echo "+icpx" || echo "~icpx") \
                                         $([[ $ARCHITECTURE == NVIDIA ]] && echo "cuda_arch=86") \
                                         $([[ $ARCHITECTURE == AMD ]] && echo "amdgpu_target=gfx90a") \
@@ -320,7 +320,7 @@ pipeline {
                                         $([[ $BACKEND == CUDA ]] && echo "+cuda" || echo "~cuda") \
                                         $([[ $BACKEND == HIP ]] && echo "+hip" || echo "~hip") \
                                         $([[ $BACKEND == OPENCL ]] && echo "+opencl" || echo "~opencl") \
-                                        $([[ $BACKEND == HIPSYCL ]] && echo "+adaptivecpp" || echo "~adaptivecpp") \
+                                        $([[ $BACKEND == ADAPTIVECPP ]] && echo "+adaptivecpp" || echo "~adaptivecpp") \
                                         $([[ $BACKEND == DPCPP ]] && echo "+icpx" || echo "~icpx") \
                                         $([[ $ARCHITECTURE == NVIDIA ]] && echo "cuda_arch=86") \
                                         $([[ $ARCHITECTURE == AMD ]] && echo "amdgpu_target=gfx90a") \
@@ -352,7 +352,7 @@ pipeline {
                                     $([[ $BACKEND == CUDA ]] && echo "+cuda" || echo "~cuda") \
                                     $([[ $BACKEND == HIP ]] && echo "+hip" || echo "~hip") \
                                     $([[ $BACKEND == OPENCL ]] && echo "+opencl" || echo "~opencl") \
-                                    $([[ $BACKEND == HIPSYCL ]] && echo "+adaptivecpp" || echo "~adaptivecpp") \
+                                    $([[ $BACKEND == ADAPTIVECPP ]] && echo "+adaptivecpp" || echo "~adaptivecpp") \
                                     $([[ $BACKEND == DPCPP ]] && echo "+icpx" || echo "~icpx") \
                                     $([[ $ARCHITECTURE == NVIDIA ]] && echo "cuda_arch=86" ) \
                                     $([[ $ARCHITECTURE == AMD ]] && echo "amdgpu_target=gfx90a" ) \
@@ -365,7 +365,7 @@ pipeline {
                                         $([[ $BACKEND == CUDA ]] && echo "+cuda" || echo "~cuda") \
                                         $([[ $BACKEND == HIP ]] && echo "+hip" || echo "~hip") \
                                         $([[ $BACKEND == OPENCL ]] && echo "+opencl" || echo "~opencl") \
-                                        $([[ $BACKEND == HIPSYCL ]] && echo "+adaptivecpp" || echo "~adaptivecpp") \
+                                        $([[ $BACKEND == ADAPTIVECPP ]] && echo "+adaptivecpp" || echo "~adaptivecpp") \
                                         $([[ $BACKEND == DPCPP ]] && echo "+icpx" || echo "~icpx") \
                                         $([[ $ARCHITECTURE == NVIDIA ]] && echo "cuda_arch=86" ) \
                                         $([[ $ARCHITECTURE == AMD ]] && echo "amdgpu_target=gfx90a") \
@@ -385,7 +385,7 @@ pipeline {
                     //       . /usr/local.nfs/Modules/latest/init/sh
                     //       module load cuda/12.0.1
                     //   fi
-                    //   if [ "$BACKEND" == "DPCPP" ] || [ "$BACKEND" == "HIPSYCL" ]; then
+                    //   if [ "$BACKEND" == "DPCPP" ] || [ "$BACKEND" == "ADAPTIVECPP" ]; then
                     //       export PATH="$DPCPP_PATH/bin:${PATH}"
                     //       export LIBRARY_PATH="$DPCPP_PATH/lib:${LIBRARY_PATH}"
                     //       export LD_LIBRARY_PATH="$DPCPP_PATH/lib:${LD_LIBRARY_PATH}"
@@ -393,12 +393,12 @@ pipeline {
                     //       export COMPILER=$DPCPP_PATH/bin/clang++
                     //       export export CPLUS_INCLUDE_PATH="$DPCPP_PATH/projects/openmp/runtime/src:${CPLUS_INCLUDE_PATH}"
                     //   fi
-                    //   if [ "$BACKEND" == "HIPSYCL" ]; then
-                    //       export PATH="$HIPSYCL_PATH/bin:${PATH}"
-                    //       export LIBRARY_PATH="$HIPSYCL_PATH/lib:${LIBRARY_PATH}"
-                    //       export LD_LIBRARY_PATH="$HIPSYCL_PATH/lib:${LD_LIBRARY_PATH}"
-                    //       export CPLUS_INCLUDE_PATH="$HIPSYCL_PATH/include:${CPLUS_INCLUDE_PATH}"
-                    //       export PLSSVM_SYCL_HIPSYCL_INCLUDE_DIR="${HIPSYCL_PATH}/include"
+                    //   if [ "$BACKEND" == "ADAPTIVECPP" ]; then
+                    //       export PATH="$ADAPTIVECPP_PATH/bin:${PATH}"
+                    //       export LIBRARY_PATH="$ADAPTIVECPP_PATH/lib:${LIBRARY_PATH}"
+                    //       export LD_LIBRARY_PATH="$ADAPTIVECPP_PATH/lib:${LD_LIBRARY_PATH}"
+                    //       export CPLUS_INCLUDE_PATH="$ADAPTIVECPP_PATH/include:${CPLUS_INCLUDE_PATH}"
+                    //       export PLSSVM_SYCL_ADAPTIVECPP_INCLUDE_DIR="${ADAPTIVECPP_PATH}/include"
                     //   fi
                     //   if [ "$ARCHITECTURE" == "CPU" ]; then
                     //       PATH="$POCL_PATH/bin:${PATH}"
@@ -440,11 +440,11 @@ pipeline {
                     //        . /usr/local.nfs/Modules/latest/init/sh
                     //        module load cuda/12.0.1
                     //    fi
-                    //    if [ "$BACKEND" == "DPCPP" ] || [ "$BACKEND" == "HIPSYCL" ]; then
+                    //    if [ "$BACKEND" == "DPCPP" ] || [ "$BACKEND" == "ADAPTIVECPP" ]; then
                     //        export LD_LIBRARY_PATH="$DPCPP_PATH/lib:${LD_LIBRARY_PATH}"
                     //    fi
-                    //    if [ "$BACKEND" == "HIPSYCL" ]; then
-                    //        export LD_LIBRARY_PATH="$HIPSYCL_PATH/lib:${LD_LIBRARY_PATH}"
+                    //    if [ "$BACKEND" == "ADAPTIVECPP" ]; then
+                    //        export LD_LIBRARY_PATH="$ADAPTIVECPP_PATH/lib:${LD_LIBRARY_PATH}"
                     //    fi
                     //    if [ "$ARCHITECTURE" == "CPU" ]; then
                     //        LD_LIBRARY_PATH="$POCL_PATH/lib:${LD_LIBRARY_PATH}"
@@ -483,16 +483,16 @@ pipeline {
         //                  export PLSSVM_SYCL_DPCPP_INCLUDE_DIR="$DPCPP_PATH/install/include"
         //                  export COMPILER=$DPCPP_PATH/bin/clang++
         //                  export export CPLUS_INCLUDE_PATH="$DPCPP_PATH/projects/openmp/runtime/src:${CPLUS_INCLUDE_PATH}"
-        //                  export PATH="$HIPSYCL_PATH/bin:${PATH}"
-        //                  export LIBRARY_PATH="$HIPSYCL_PATH/lib:${LIBRARY_PATH}"
-        //                  export LD_LIBRARY_PATH="$HIPSYCL_PATH/lib:${LD_LIBRARY_PATH}"
-        //                  export CPLUS_INCLUDE_PATH="$HIPSYCL_PATH/include:${CPLUS_INCLUDE_PATH}"
-        //                  export PLSSVM_SYCL_HIPSYCL_INCLUDE_DIR="${HIPSYCL_PATH}/include"
+        //                  export PATH="$ADAPTIVECPP_PATH/bin:${PATH}"
+        //                  export LIBRARY_PATH="$ADAPTIVECPP_PATH/lib:${LIBRARY_PATH}"
+        //                  export LD_LIBRARY_PATH="$ADAPTIVECPP_PATH/lib:${LD_LIBRARY_PATH}"
+        //                  export CPLUS_INCLUDE_PATH="$ADAPTIVECPP_PATH/include:${CPLUS_INCLUDE_PATH}"
+        //                  export PLSSVM_SYCL_ADAPTIVECPP_INCLUDE_DIR="${ADAPTIVECPP_PATH}/include"
 
         //                 mkdir -p $WORKSPACE/plssvm/build/Debug_cov
         //                 cd $WORKSPACE/plssvm/build/Debug_cov
         //                 rm -rf *
-        //                 $WORKSPACE/cmake-3.25.2-linux-x86_64/bin/cmake -DCMAKE_BUILD_TYPE=Coverage -DCMAKE_CXX_COMPILER=g++ -DCMAKE_CC_COMPILER=gcc -DPLSSVM_ENABLE_ASSERTS=ON -DPLSSVM_TEST_FILE_NUM_DATA_POINTS=50 -DPLSSVM_TEST_FILE_NUM_FEATURES=10 -DPLSSVM_ENABLE_SYCL_HIPSYCL_BACKEND=OFF ../../
+        //                 $WORKSPACE/cmake-3.25.2-linux-x86_64/bin/cmake -DCMAKE_BUILD_TYPE=Coverage -DCMAKE_CXX_COMPILER=g++ -DCMAKE_CC_COMPILER=gcc -DPLSSVM_ENABLE_ASSERTS=ON -DPLSSVM_TEST_FILE_NUM_DATA_POINTS=50 -DPLSSVM_TEST_FILE_NUM_FEATURES=10 -DPLSSVM_ENABLE_SYCL_ADAPTIVECPP_BACKEND=OFF ../../
         //                 make -j36 coverage
         //                 wget -N https://raw.githubusercontent.com/eriwen/lcov-to-cobertura-xml/master/lcov_cobertura/lcov_cobertura.py
         //                 python lcov_cobertura.py test_clean.info
