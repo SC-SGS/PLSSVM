@@ -59,7 +59,6 @@ endif ()
 
 
 # generate summary string
-list(TRANSFORM PLSSVM_NVIDIA_TARGET_ARCHS PREPEND "sm_")
 set(PLSSVM_CUDA_BACKEND_SUMMARY_STRING " - CUDA: nvidia (${PLSSVM_NVIDIA_TARGET_ARCHS})" PARENT_SCOPE)
 # check if CUDA can be enabled
 message(CHECK_START "Checking for CUDA backend")
