@@ -330,7 +330,9 @@ pipeline {
                                         test_file_num_data_points=$NUM_DATA_POINTS \
                                         test_file_num_features=$NUM_FEATURES \
                                         +asserts \
-                                        build_type=$BUILD_TYPE
+                                        build_type=$BUILD_TYPE \
+                                        ^py-scipy%gcc # TODO: remove, neads a fortran compiler and we currently have no flang installed
+                                        ^openblas%gcc # TODO: remove, neads a fortran compiler and we currently have no flang installed
                                 '''
 
                         }
@@ -515,7 +517,7 @@ pipeline {
                     failed(failureThreshold: '0')
                 ],
                 tools: [CTest(
-                    pattern: 'plssvm/build/*/Testing/**/*.xml',
+                    pattern: 'plssvm/build*/*/Testing/**/*.xml',
                     deleteOutputFiles: true,
                     failIfNotNew: false,
                     skipNoTestFiles: true,
