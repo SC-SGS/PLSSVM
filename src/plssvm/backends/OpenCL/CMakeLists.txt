@@ -28,7 +28,8 @@ endif ()
 ## parse provided target platforms
 include(${CMAKE_CURRENT_SOURCE_DIR}/../../../../cmake/parse_architecture_info.cmake)
 set(PLSSVM_PLATFORM_NAME_LIST "automatic")
-foreach (PLSSVM_PLATFORM ${PLSSVM_TARGET_PLATFORMS})
+foreach (PLSSVM_PLATFORM ${PLSSVM_OPENCL_TARGET_PLATFORMS})
+
     if (PLSSVM_PLATFORM MATCHES "^cpu")
         # parse provided CPU architectures
         parse_architecture_info(${PLSSVM_PLATFORM} PLSSVM_CPU_TARGET_ARCHS PLSSVM_NUM_CPU_TARGET_ARCHS)
