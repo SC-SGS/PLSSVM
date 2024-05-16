@@ -127,8 +127,8 @@ Additional dependencies for the stdpar backend:
 - the code must be compiled with a stdpar capable compiler; currently supported are [nvc++](https://developer.nvidia.com/hpc-sdk), [roc-stdpar](https://github.com/ROCm/roc-stdpar), [icpx](https://www.intel.com/content/www/us/en/developer/tools/oneapi/dpc-compiler.html), [AdaptiveCpp](https://github.com/AdaptiveCpp/AdaptiveCpp), and [GNU GCC](https://gcc.gnu.org/))
 - depending on the used stdpar implementation, additional dependencies are required:
     
-    - `nvc++`: [Boost ≥ 1.73.0](https://www.boost.org/) with the `atomic` library enabled and a CUDA SDK
-    - `roc-stdpar`: [Boost ≥ 1.73.0](https://www.boost.org/) with the `atomic` library enabled; it may be necessary to set `export HSA_XNACK=1` (e.g., if the error `Memory access fault by GPU node-2` occurs)
+    - `nvc++`: a CUDA SDK
+    - `roc-stdpar`: a HIP installation; it may be necessary to set `export HSA_XNACK=1` (e.g., if the error `Memory access fault by GPU node-2` occurs)
     - `icpx`: Intel's [oneDPL](https://www.intel.com/content/www/us/en/developer/tools/oneapi/dpc-library.html) library
     - `AdaptiveCpp`: Intel's [TBB](https://github.com/wjakob/tbb) library
     - `GNU GCC`: [Boost ≥ 1.73.0](https://www.boost.org/) with the `atomic` library enabled and Intel's [TBB](https://github.com/wjakob/tbb) library

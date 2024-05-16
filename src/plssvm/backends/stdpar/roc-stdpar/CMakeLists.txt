@@ -51,14 +51,6 @@ endif ()
 # add stdpar implementation specific source file to library
 append_local_and_parent(PLSSVM_STDPAR_SOURCES ${CMAKE_CURRENT_LIST_DIR}/csvm.cpp)
 
-## try finding Boost atomic
-if (POLICY CMP0144)
-    cmake_policy(SET CMP0144 OLD) # suppress cmake warning
-endif ()
-find_package(Boost 1.73.0 REQUIRED COMPONENTS atomic)
-message(STATUS "Found Boost atomic version ${Boost_VERSION}.")
-target_link_libraries(${PLSSVM_STDPAR_BACKEND_LIBRARY_INTERFACE} INTERFACE Boost::atomic)
-
 # set global roc-stdpar compiler flags
 # TODO: The flag "--hipstdpar-interpose-alloc" may be necessary for older AMD GPUs
 set_local_and_parent(PLSSVM_STDPAR_BACKEND_COMPILER_FLAG -hipstdpar --hipstdpar-path=${PLSSVM_STDPAR_BACKEND_HIPSTDPAR_PATH} --offload-arch=${PLSSVM_AMD_TARGET_ARCHS})

@@ -39,14 +39,6 @@ endif ()
 # add stdpar implementation specific source file to library
 append_local_and_parent(PLSSVM_STDPAR_SOURCES ${CMAKE_CURRENT_LIST_DIR}/csvm.cpp)
 
-## try finding Boost atomic
-if (POLICY CMP0144)
-    cmake_policy(SET CMP0144 OLD) # suppress cmake warning
-endif ()
-find_package(Boost 1.73.0 REQUIRED COMPONENTS atomic)
-message(STATUS "Found Boost atomic version ${Boost_VERSION}.")
-target_link_libraries(${PLSSVM_STDPAR_BACKEND_LIBRARY_INTERFACE} INTERFACE Boost::atomic)
-
 # set global NVHPC compiler flags
 if (DEFINED PLSSVM_CPU_TARGET_ARCHS)
     message(STATUS "CPU target platform provided, setting: \"-stdpar=multicore -tp=native\"")

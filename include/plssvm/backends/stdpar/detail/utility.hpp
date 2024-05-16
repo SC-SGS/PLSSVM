@@ -19,6 +19,8 @@
     #include "plssvm/backends/SYCL/detail/atomics.hpp"  // plssvm::sycl::detail::atomic_op
 
     #include "sycl/sycl.hpp"  // ::sycl::device
+#elif defined(PLSSVM_STDPAR_BACKEND_HAS_NVHPC)
+    #include <cuda/atomic>  // cuda::atomic_ref, cuda::thread_scope_device
 #else
     #include "boost/atomic/atomic_ref.hpp"  // boost::atomic_ref
 #endif
@@ -30,6 +32,19 @@ namespace plssvm::stdpar::detail {
 #if defined(PLSSVM_STDPAR_BACKEND_HAS_ACPP) || defined(PLSSVM_STDPAR_BACKEND_HAS_INTEL_LLVM)
 template <typename T>
 using atomic_ref = plssvm::sycl::detail::atomic_op<T>;
+#elif defined(PLSSVM_STDPAR_BACKEND_HAS_NVHPC)
+template <typename T>
+using atomic_ref = ::cuda::atomic_ref<T, ::cuda::thread_scope_device>;
+#elif defined(PLSSVM_STDPAR_BACKEND_HAS_HIPSTDPAR)
+template <typename T>
+struct atomic_ref {
+    T &value_;
+
+    __device__ T operator+=(const T other) noexcept {
+        atomicAdd(&value_, other);
+        return value_;
+    }
+};
 #else
 using boost::atomic_ref;
 #endif
