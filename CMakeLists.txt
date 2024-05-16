@@ -800,7 +800,7 @@ write_basic_package_version_file(
 
 ## generate configuration file
 configure_package_config_file(
-        "${CMAKE_CURRENT_SOURCE_DIR}/cmake/plssvmConfig.cmake.in"
+        "${CMAKE_CURRENT_SOURCE_DIR}/cmake/plssvm/plssvmConfig.cmake.in"
         "${PROJECT_BINARY_DIR}/plssvmConfig.cmake"
         INSTALL_DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/plssvm/cmake
 )
@@ -813,7 +813,14 @@ install(EXPORT plssvm_Targets
 )
 
 ## create file containing the build configuration and version information
-install(FILES "${PROJECT_BINARY_DIR}/plssvmConfig.cmake"
+install(FILES
+        "${PROJECT_BINARY_DIR}/plssvmConfig.cmake"
         "${PROJECT_BINARY_DIR}/plssvmConfigVersion.cmake"
+        "${CMAKE_CURRENT_SOURCE_DIR}/cmake/plssvm/plssvmCUDATargets.cmake"
+        "${CMAKE_CURRENT_SOURCE_DIR}/cmake/plssvm/plssvmHIPTargets.cmake"
+        "${CMAKE_CURRENT_SOURCE_DIR}/cmake/plssvm/plssvmOpenCLTargets.cmake"
+        "${CMAKE_CURRENT_SOURCE_DIR}/cmake/plssvm/plssvmOpenMPTargets.cmake"
+        "${CMAKE_CURRENT_SOURCE_DIR}/cmake/plssvm/plssvmAdaptiveCppTargets.cmake"
+        "${CMAKE_CURRENT_SOURCE_DIR}/cmake/plssvm/plssvmDPCPPTargets.cmake"
         DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/plssvm/cmake
 )
