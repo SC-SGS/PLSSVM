@@ -99,23 +99,23 @@ pipeline {
 
                                     if [[ ! -d  "$SGSSCRATCH/spack" ]]; then
                                         cd $SGSSCRATCH
-                                        git clone https://github.com/spack/spack.git spack
+                                        git clone https://github.com/spack/spack.git spack || true
                                     fi
                                     source $SGSSCRATCH/spack/share/spack/setup-env.sh
                                     if [[ ! -d  "$SGSSCRATCH/PLSSVM-spack" ]]; then
                                         cd $SGSSCRATCH
-                                        git clone git@github.com:vancraar/PLSSVM-spack.git PLSSVM-spack
-                                        spack repo add $SGSSCRATCH/PLSSVM-spack
+                                        git clone git@github.com:vancraar/PLSSVM-spack.git PLSSVM-spack || true
+                                        spack repo add $SGSSCRATCH/PLSSVM-spack || true
                                     else
                                         cd $SGSSCRATCH/PLSSVM-spack
-                                        git pull
+                                        git pull || true
                                     fi
 
 
 
                                     if  [ ! -f $SPACK_SYSTEM_CONFIG_PATH/compilers.yaml ]; then
-                                        spack compiler find --scope system
-                                        spack external find --scope system
+                                        spack compiler find --scope system || true
+                                        spack external find --scope system || true
                                     fi
 
                                     if [ ! -f $SPACK_SYSTEM_CONFIG_PATH/config.yaml ]; then
