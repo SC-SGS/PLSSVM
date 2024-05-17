@@ -21,7 +21,7 @@
 TEST(stdparImplementationType, to_string) {
     // check conversions to std::string
     EXPECT_CONVERSION_TO_STRING(plssvm::stdpar::implementation_type::nvhpc, "nvhpc");
-    EXPECT_CONVERSION_TO_STRING(plssvm::stdpar::implementation_type::roc_stdpar, "roc_stdpar");
+    EXPECT_CONVERSION_TO_STRING(plssvm::stdpar::implementation_type::roc_stdpar, "roc-stdpar");
     EXPECT_CONVERSION_TO_STRING(plssvm::stdpar::implementation_type::intel_llvm, "intel_llvm");
     EXPECT_CONVERSION_TO_STRING(plssvm::stdpar::implementation_type::adaptivecpp, "adaptivecpp");
     EXPECT_CONVERSION_TO_STRING(plssvm::stdpar::implementation_type::gnu_tbb, "gnu_tbb");
