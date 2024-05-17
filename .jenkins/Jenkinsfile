@@ -215,6 +215,10 @@ pipeline {
                         name 'BUILD_TYPE'
                         values 'Release', 'Debug'
                     }
+                    axis {
+                        name 'TEST_TYPE'
+                        values 'BASE', 'BACKEND'
+                    }
                   }
                   excludes {
                     exclude {
@@ -265,6 +269,26 @@ pipeline {
                       axis{
                         name 'BUILD_TYPE'
                         values 'Debug'
+                      }
+                    }
+                    exclude {
+                      axis{
+                        name 'TEST_TYPE'
+                        values 'BASE'
+                      }
+                      axis{
+                        name 'ARCHITECTURE'
+                        notValues 'CPU'
+                      }
+                    }
+                    exclude {
+                      axis{
+                        name 'TEST_TYPE'
+                        values 'BASE'
+                      }
+                      axis{
+                        name 'BACKEND'
+                        notValues 'OPENMP'
                       }
                     }
                   }
@@ -375,55 +399,15 @@ pipeline {
                                         $([[ $ARCHITECTURE == AMD ]] && echo "amdgpu_target=gfx90a") \
                                         build_type=$BUILD_TYPE \
                                         arch=$(spack arch)" \
-                                        ctest -j16 --output-on-failure --no-compress-output -T Test -E "'Base*'"
-
-                            '''
-                        }
-                    }
-
-                    stage('Ctest PLSSVM Base'){
-                        steps{
-                            sh '''
-                                 if [ [ ! "$NODE_NAME" == "pcsgs09" ] && [ ! "$NODE_NAME" == "pcsgs13" ] ]; then
-                                     . /usr/local.nfs/Modules/latest/init/sh
-                                     module load cuda/12.0.1
-                                 fi
-                                if [ "$ARCHITECTURE" == "AMD" ]; then
-                                   export ROCM_PATH="/opt/rocm"
-                                   export LD_LIBRARY_PATH="${ROCM_PATH}/lib64:${ROCM_PATH}/lib:${ROCM_PATH}/opencl/lib/x86_64:${ROCM_PATH}/hsa/lib:${ROCM_PATH}/hip/lib:${LD_LIBRARY_PATH}"
-                                fi
-                                source $SGSSCRATCH/spack/share/spack/setup-env.sh
-                                installpath=$(spack location -i plssvm@develop$([[ $BACKEND == ADAPTIVECPP ]] && echo "%clang" ) \
-                                    $([[ $BACKEND == OPENMP ]] && echo "+openmp" || echo "~openmp") \
-                                    $([[ $BACKEND == CUDA ]] && echo "+cuda" || echo "~cuda") \
-                                    $([[ $BACKEND == HIP ]] && echo "+hip" || echo "~hip") \
-                                    $([[ $BACKEND == OPENCL ]] && echo "+opencl" || echo "~opencl") \
-                                    $([[ $BACKEND == ADAPTIVECPP ]] && echo "+adaptivecpp" || echo "~adaptivecpp") \
-                                    $([[ $BACKEND == DPCPP ]] && echo "+icpx" || echo "~icpx") \
-                                    $([[ $ARCHITECTURE == NVIDIA ]] && echo "cuda_arch=86") \
-                                    $([[ $ARCHITECTURE == AMD ]] && echo "amdgpu_target=gfx90a") \
-                                    build_type=$BUILD_TYPE \
-                                    arch=$(spack arch))
-                                install_hash=$( echo ${installpath} | rev | cut -d/ -f1| cut -d- -f1 | rev | head -c 7)
-                                cd ${WORKSPACE}/plssvm/build-$(spack arch)-${install_hash}/spack-build-${install_hash}
-
-                                spack test-env "plssvm@develop $([[ $BACKEND == ADAPTIVECPP ]] && echo "%clang" )\
-                                        $([[ $BACKEND == OPENMP ]] && echo "+openmp" || echo "~openmp") \
-                                        $([[ $BACKEND == CUDA ]] && echo "+cuda" || echo "~cuda") \
-                                        $([[ $BACKEND == HIP ]] && echo "+hip" || echo "~hip") \
-                                        $([[ $BACKEND == OPENCL ]] && echo "+opencl" || echo "~opencl") \
-                                        $([[ $BACKEND == ADAPTIVECPP ]] && echo "+adaptivecpp" || echo "~adaptivecpp") \
-                                        $([[ $BACKEND == DPCPP ]] && echo "+icpx" || echo "~icpx") \
-                                        $([[ $ARCHITECTURE == NVIDIA ]] && echo "cuda_arch=86") \
-                                        $([[ $ARCHITECTURE == AMD ]] && echo "amdgpu_target=gfx90a") \
-                                        build_type=$BUILD_TYPE \
-                                        arch=$(spack arch)" \
-                                        ctest -j16 --output-on-failure --no-compress-output -T Test -R "'Base*'"
+                                        ctest -j16 --output-on-failure --no-compress-output -T Test  \
+                                        $([[ $TEST_TYPE == BASE ]] && echo "-R 'Base*'" || echo "-E 'Base*'")
 
 
                             '''
                         }
                     }
+
+
 
                     // stage('Test CMake Library integration'){
                     // steps{
