@@ -357,6 +357,7 @@ pipeline {
                                         test_file_num_data_points=$NUM_DATA_POINTS \
                                         test_file_num_features=$NUM_FEATURES \
                                         +asserts \
+                                        ~fast-math \
                                         build_type=$BUILD_TYPE \
                                         $([[ $BACKEND == ADAPTIVECPP ]] && echo "^py-scipy%gcc" ) # TODO: remove, neads a fortran compiler and we currently have no flang installed \
                                         $([[ $BACKEND == ADAPTIVECPP ]] && echo "^openblas%gcc" ) # TODO: remove, neads a fortran compiler and we currently have no flang installed
@@ -386,7 +387,7 @@ pipeline {
                                     $([[ $ARCHITECTURE == NVIDIA ]] && echo "cuda_arch=86") \
                                     $([[ $ARCHITECTURE == AMD ]] && echo "amdgpu_target=gfx90a") \
                                     build_type=$BUILD_TYPE \
-                                    arch=$(spack arch))
+                                    arch=$(spack arch)) \
                                 install_hash=$( echo ${installpath} | rev | cut -d/ -f1| cut -d- -f1 | rev | head -c 7)
                                 cd ${WORKSPACE}/plssvm/build-$(spack arch)-${install_hash}/spack-build-${install_hash}
 
