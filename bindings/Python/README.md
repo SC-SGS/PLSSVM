@@ -476,6 +476,12 @@ If a SYCL implementation is available, additional free functions are available:
 |-----------------------------------------|----------------------------------------------------------------------------------|
 | `list_available_sycl_implementations()` | List all available SYCL implementations (determined during PLSSVM's build step). |
 
+If a stdpar implementation is available, additional free functions are available:
+
+| function                                  | description                                                                                                                                   |
+|-------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------|
+| `list_available_stdpar_implementations()` | List all available stdpar implementations (determined during PLSSVM's build step; currently always guaranteed to be only one implementation). |
+
 ### Exceptions
 
 The PLSSVM Python3 bindings define a few new exception types:

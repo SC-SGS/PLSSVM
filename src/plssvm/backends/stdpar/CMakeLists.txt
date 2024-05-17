@@ -14,7 +14,6 @@ set(PLSSVM_STDPAR_SOURCES
     ${CMAKE_CURRENT_LIST_DIR}/detail/utility.cpp
     ${CMAKE_CURRENT_LIST_DIR}/csvm.cpp
     ${CMAKE_CURRENT_LIST_DIR}/exceptions.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/implementation_types.cpp
 )
 
 # create interface library used in the sub-CMakeLists

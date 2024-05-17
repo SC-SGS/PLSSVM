@@ -17,6 +17,7 @@
 #include "fmt/ostream.h"  // fmt::ostream_formatter
 
 #include <iosfwd>  // forward declare std::ostream and std::istream
+#include <vector>  // std::vector
 
 namespace plssvm::stdpar {
 
@@ -35,6 +36,13 @@ enum class implementation_type {
     /** Use [GNU GCC + TBB](https://gcc.gnu.org/) as stdpar implementation */
     gnu_tbb
 };
+
+/**
+ * @brief Return a list of all currently available stdpar implementations.
+ * @details Currently **only** a single stdpar implementation can ever be active at a given time!.
+ * @return the available stdpar implementations (`[[nodiscard]]`)
+ */
+[[nodiscard]] std::vector<implementation_type> list_available_stdpar_implementations();
 
 /**
  * @brief Output the @p impl type to the given output-stream @p out.

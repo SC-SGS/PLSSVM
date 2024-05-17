@@ -35,6 +35,8 @@ void init_stdpar_csvm(py::module_ &m, const py::exception<plssvm::exception> &ba
         .value("ADAPTIVECPP", plssvm::stdpar::implementation_type::adaptivecpp, "use AdaptiveCpp (formerly known as hipSYCL)")
         .value("GNU_TBB", plssvm::stdpar::implementation_type::gnu_tbb, "use GNU GCC + Intel's TBB library");
 
+    stdpar_module.def("list_available_stdpar_implementations", &plssvm::stdpar::list_available_stdpar_implementations, "list all available stdpar implementations");
+
     // bind the CSVM using the stdpar backend
     py::class_<plssvm::stdpar::csvm, plssvm::csvm>(stdpar_module, "CSVM")
         .def(py::init<>(), "create an SVM with the automatic target platform and default parameter object")

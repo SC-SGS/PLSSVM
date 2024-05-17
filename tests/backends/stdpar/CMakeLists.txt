@@ -11,8 +11,10 @@ set(PLSSVM_STDPAR_TEST_NAME stdpar_tests)
 set(PLSSVM_STDPAR_TEST_SOURCES
     ${CMAKE_CURRENT_LIST_DIR}/detail/utility.cpp
     ${CMAKE_CURRENT_LIST_DIR}/exceptions.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/implementation_types.cpp
     ${CMAKE_CURRENT_LIST_DIR}/stdpar_csvm.cpp
+    ## since the stdpar implementation_type enumeration is used even if no stdpar backend
+    ## is available this is also tested in the base library
+    # ${CMAKE_CURRENT_LIST_DIR}/implementation_types.cpp
 )
 
 # add stdpar implementation specific test files containing tests for the stdpar::csvm constructors

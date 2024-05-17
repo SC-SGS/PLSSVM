@@ -15,6 +15,7 @@
 #include "gtest/gtest.h"  // TEST, EXPECT_TRUE
 
 #include <sstream>  // std::istringstream
+#include <vector>   // std::vector
 
 // check whether the plssvm::stdpar::implementation_type -> std::string conversions are correct
 TEST(stdparImplementationType, to_string) {
@@ -65,4 +66,11 @@ TEST(stdparImplementationType, from_string_unknown) {
     plssvm::stdpar::implementation_type impl{};
     input >> impl;
     EXPECT_TRUE(input.fail());
+}
+
+TEST(stdparImplementationType, minimal_available_stdpar_implementation_type) {
+    const std::vector<plssvm::stdpar::implementation_type> implementation_type = plssvm::stdpar::list_available_stdpar_implementations();
+
+    // at least one must be available!
+    EXPECT_GE(implementation_type.size(), 1);
 }

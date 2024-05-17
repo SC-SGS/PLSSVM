@@ -115,6 +115,9 @@ set(PLSSVM_BASE_TEST_SOURCES
     ## is available these are also tested in the base library
     ${CMAKE_CURRENT_LIST_DIR}/backends/SYCL/implementation_types.cpp
     ${CMAKE_CURRENT_LIST_DIR}/backends/SYCL/kernel_invocation_types.cpp
+    ## since the stdpar implementation_type enumeration is used even if no stdpar backend
+    ## is available this is also tested in the base library
+    ${CMAKE_CURRENT_LIST_DIR}/backends/stdpar/implementation_types.cpp
     
     ${CMAKE_CURRENT_LIST_DIR}/detail/cmd/data_set_variants.cpp
     ${CMAKE_CURRENT_LIST_DIR}/detail/cmd/parser_predict.cpp
