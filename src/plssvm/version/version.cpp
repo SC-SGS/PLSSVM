@@ -8,12 +8,13 @@
 
 #include "plssvm/version/version.hpp"  // plssvm::version::{name, version}, plssvm::version::detail::{target_platform, target_platform}
 
-#include "plssvm/backend_types.hpp"                      // plssvm::list_available_backends
+#include "plssvm/backend_types.hpp"                       // plssvm::list_available_backends
 #include "plssvm/backends/SYCL/implementation_types.hpp"  // plssvm::sycl::detail::list_available_sycl_implementations
-#include "plssvm/version/git_metadata/git_metadata.hpp"  // plssvm::version::git_metadata::{is_populated, commit_date, remote_url, branch, commit_sha1}
+#include "plssvm/target_platforms.hpp"                    // plssvm::list_available_target_platforms
+#include "plssvm/version/git_metadata/git_metadata.hpp"   // plssvm::version::git_metadata::{is_populated, commit_date, remote_url, branch, commit_sha1}
 
-#include "fmt/format.h"   // fmt::format, fmt::join
-#include "fmt/ostream.h"  // can use fmt using operator<< overloads
+#include "fmt/core.h"     // fmt::format
+#include "fmt/format.h"   // fmt::join
 
 #include <optional>     // std::optional, std::make_optional, std::nullopt
 #include <string>       // std::string
