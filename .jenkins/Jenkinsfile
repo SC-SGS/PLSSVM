@@ -390,6 +390,10 @@ pipeline {
                                 install_hash=$( echo ${installpath} | rev | cut -d/ -f1| cut -d- -f1 | rev | head -c 7)
                                 cd ${WORKSPACE}/plssvm/build-$(spack arch)-${install_hash}/spack-build-${install_hash}
 
+                                $([[ $ARCHITECTURE == NVIDIA ]] && echo "export ONEAPI_DEVICE_SELECTOR=cuda:*")
+                                $([[ $ARCHITECTURE == AMD ]] && echo "export ONEAPI_DEVICE_SELECTOR=hip:*")
+                                $([[ $ARCHITECTURE == CPU ]] && echo "export ONEAPI_DEVICE_SELECTOR=*:cpu ")
+
                                 spack test-env "plssvm@develop $([[ $BACKEND == ADAPTIVECPP ]] && echo "%clang" )\
                                         $([[ $BACKEND == OPENMP ]] && echo "+openmp" || echo "~openmp") \
                                         $([[ $BACKEND == CUDA ]] && echo "+cuda" || echo "~cuda") \
