@@ -96,7 +96,7 @@ target_link_libraries(${PLSSVM_OPENMP_BACKEND_LIBRARY_NAME} PRIVATE $<$<NOT:$<CX
 target_compile_options(${PLSSVM_OPENMP_BACKEND_LIBRARY_NAME} PRIVATE $<$<CXX_COMPILER_ID:MSVC>:-openmp:llvm -openmp:experimental>)
 
 # additional compilation flags
-target_compile_options(${PLSSVM_OPENMP_BACKEND_LIBRARY_NAME} PRIVATE  -Wconversion)
+target_compile_options(${PLSSVM_OPENMP_BACKEND_LIBRARY_NAME} PRIVATE $<$<COMPILE_LANG_AND_ID:CXX,GNU,Clang>:-Wconversion>)
 
 # work-around since hipcc doesn't define _OPENMP
 if (${CMAKE_CXX_COMPILER_ID} MATCHES "Clang")

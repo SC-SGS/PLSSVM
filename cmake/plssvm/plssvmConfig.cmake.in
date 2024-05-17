@@ -1,0 +1,77 @@
+## Authors: Alexander Van Craen, Marcel Breyer
+## Copyright (C): 2018-today The PLSSVM project - All Rights Reserved
+## License: This file is part of the PLSSVM project which is released under the MIT license.
+##          See the LICENSE.md file in the project root for full license information.
+########################################################################################################################
+
+@PACKAGE_INIT@
+
+include(CMakeFindDependencyMacro)
+
+# check if the OpenMP is required for the library utilities
+set(PLSSVM_HAS_OPENMP_UTILITY @PLSSVM_FOUND_OPENMP_FOR_UTILITY@)
+if (PLSSVM_HAS_OPENMP_UTILITY)
+    find_dependency(OpenMP)
+endif ()
+
+# always try finding {fmt}
+# -> CMAKE_PREFIX_PATH necessary if build via FetchContent
+# -> doesn't hurt to be set everytime
+list(APPEND CMAKE_PREFIX_PATH "${CMAKE_CURRENT_LIST_DIR}/../../../lib/cmake/fmt")
+find_dependency(fmt REQUIRED)
+
+
+# load all targets
+include("${CMAKE_CURRENT_LIST_DIR}/plssvmTargets.cmake")
+
+# list all available libraries
+set(PLSSVM_SUPPORTED_COMPONENTS "OpenMP;CUDA;HIP;OpenCL;DPCPP;AdaptiveCpp;stdpar")
+set(PLSSVM_DISABLED_COMPONENTS "${PLSSVM_SUPPORTED_COMPONENTS}")
+
+# check which libraries are available
+set(PLSSVM_ENABLED_COMPONENTS)
+foreach (_comp ${PLSSVM_SUPPORTED_COMPONENTS})
+    # check "normal" components
+    if (TARGET plssvm::plssvm-${_comp})
+        list(APPEND PLSSVM_ENABLED_COMPONENTS ${_comp})
+    else ()
+        # check for SYCL component
+        string(TOLOWER ${_comp} lower_case_comp)
+        if (TARGET plssvm::plssvm-SYCL_${lower_case_comp})
+            list(APPEND PLSSVM_ENABLED_COMPONENTS ${_comp})
+        endif ()
+    endif ()
+endforeach ()
+
+# no component are provided -> load everything
+if (NOT plssvm_FIND_COMPONENTS)
+    set(plssvm_FIND_COMPONENTS ${PLSSVM_ENABLED_COMPONENTS})
+endif ()
+
+# set convenience alias targets
+add_library(plssvm::all ALIAS plssvm::plssvm-all)
+add_library(plssvm::plssvm ALIAS plssvm::plssvm-all)
+
+# load the library components
+foreach (_comp ${plssvm_FIND_COMPONENTS})
+    if (NOT ";${PLSSVM_SUPPORTED_COMPONENTS};" MATCHES ";${_comp};")
+        set(plssvm_FOUND OFF)
+        set(plssvm_NOT_FOUND_MESSAGE "Unsupported component: ${_comp}")
+    elseif (NOT ";${PLSSVM_ENABLED_COMPONENTS};" MATCHES ";${_comp};")
+        set(plssvm_FOUND OFF)
+        set(plssvm_NOT_FOUND_MESSAGE "Component ${_comp} wasn't enabled!")
+    else ()
+        # include the component specific config file
+        include("${CMAKE_CURRENT_LIST_DIR}/plssvm${_comp}Targets.cmake")
+        # remove the found element from the list
+        list(REMOVE_ITEM PLSSVM_DISABLED_COMPONENTS "${_comp}")
+    endif()
+endforeach ()
+
+# set the remaining components to OFF
+foreach (_comp ${PLSSVM_DISABLED_COMPONENTS})
+    set(plssvm_${_comp}_FOUND OFF)
+endforeach ()
+
+# sanity checks
+check_required_components("plssvm")
