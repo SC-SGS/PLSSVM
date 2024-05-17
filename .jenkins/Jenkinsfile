@@ -136,11 +136,9 @@ pipeline {
 
                         }
                     }
-
+                    builders
                 }
-                builders
             }
-
         }
 
 
