@@ -136,9 +136,9 @@ pipeline {
 
                         }
                     }
-
+                    parallel builders
                 }
-                parallel builders
+
             }
         }
 
