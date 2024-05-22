@@ -30,14 +30,14 @@ namespace plssvm::cuda::detail {
  * @param[in] device_specific_num_sv the number of support vectors the current device is responsible for
  * @param[in] sv_offset the first support vector (row in @p alpha_d) the current device is responsible for
  */
-__global__ void device_kernel_w_linear(real_type *w_d, const real_type *alpha_d, const real_type *sv_d, const unsigned long long num_classes, const unsigned long long num_sv, const unsigned long long device_specific_num_sv, const unsigned long long sv_offset) {
+__global__ void device_kernel_w_linear(real_type *w_d, const real_type *alpha_d, const real_type *sv_d, const unsigned long long num_classes, const unsigned long long num_sv, const unsigned long long device_specific_num_sv, const unsigned long long sv_offset, const unsigned long long grid_x_offset, const unsigned long long grid_y_offset) {
     // cast all values to 64-bit unsigned long long to prevent potential 32-bit overflows
-    const auto threadIdx_x = static_cast<unsigned long long>(threadIdx.x);
-    const auto threadIdx_y = static_cast<unsigned long long>(threadIdx.y);
-    const auto blockIdx_x = static_cast<unsigned long long>(blockIdx.x);
-    const auto blockIdx_y = static_cast<unsigned long long>(blockIdx.y);
-    const auto blockDim_x = static_cast<unsigned long long>(blockDim.x);
-    const auto blockDim_y = static_cast<unsigned long long>(blockDim.y);
+    const auto threadIdx_x = static_cast<unsigned long long>(threadIdx.x);                // current thread in block x-dimension
+    const auto threadIdx_y = static_cast<unsigned long long>(threadIdx.y);                // current thread in block y-dimension
+    const auto blockDim_x = static_cast<unsigned long long>(blockDim.x);                  // number of threads in block x-dimension
+    const auto blockDim_y = static_cast<unsigned long long>(blockDim.y);                  // number of threads in block y-dimension
+    const auto blockIdx_x = static_cast<unsigned long long>(blockIdx.x + grid_x_offset);  // current block in grid x-dimension
+    const auto blockIdx_y = static_cast<unsigned long long>(blockIdx.y + grid_y_offset);  // current block in grid y-dimension
     const auto INTERNAL_BLOCK_SIZE_ull = static_cast<unsigned long long>(INTERNAL_BLOCK_SIZE);
     const auto THREAD_BLOCK_SIZE_ull = static_cast<unsigned long long>(THREAD_BLOCK_SIZE);
     const auto PADDING_SIZE_ull = static_cast<unsigned long long>(PADDING_SIZE);
@@ -99,14 +99,14 @@ __global__ void device_kernel_w_linear(real_type *w_d, const real_type *alpha_d,
  * @param[in] num_predict_points the number of data points to predict
  * @param[in] num_features the number of features per data point
  */
-__global__ void device_kernel_predict_linear(real_type *prediction_d, const real_type *w_d, const real_type *rho_d, const real_type *predict_points_d, const unsigned long long num_classes, const unsigned long long num_predict_points, const unsigned long long num_features) {
+__global__ void device_kernel_predict_linear(real_type *prediction_d, const real_type *w_d, const real_type *rho_d, const real_type *predict_points_d, const unsigned long long num_classes, const unsigned long long num_predict_points, const unsigned long long num_features, const unsigned long long grid_x_offset, const unsigned long long grid_y_offset) {
     // cast all values to 64-bit unsigned long long to prevent potential 32-bit overflows
-    const auto threadIdx_x = static_cast<unsigned long long>(threadIdx.x);
-    const auto threadIdx_y = static_cast<unsigned long long>(threadIdx.y);
-    const auto blockIdx_x = static_cast<unsigned long long>(blockIdx.x);
-    const auto blockIdx_y = static_cast<unsigned long long>(blockIdx.y);
-    const auto blockDim_x = static_cast<unsigned long long>(blockDim.x);
-    const auto blockDim_y = static_cast<unsigned long long>(blockDim.y);
+    const auto threadIdx_x = static_cast<unsigned long long>(threadIdx.x);                // current thread in block x-dimension
+    const auto threadIdx_y = static_cast<unsigned long long>(threadIdx.y);                // current thread in block y-dimension
+    const auto blockDim_x = static_cast<unsigned long long>(blockDim.x);                  // number of threads in block x-dimension
+    const auto blockDim_y = static_cast<unsigned long long>(blockDim.y);                  // number of threads in block y-dimension
+    const auto blockIdx_x = static_cast<unsigned long long>(blockIdx.x + grid_x_offset);  // current block in grid x-dimension
+    const auto blockIdx_y = static_cast<unsigned long long>(blockIdx.y + grid_y_offset);  // current block in grid y-dimension
     const auto INTERNAL_BLOCK_SIZE_ull = static_cast<unsigned long long>(INTERNAL_BLOCK_SIZE);
     const auto THREAD_BLOCK_SIZE_ull = static_cast<unsigned long long>(THREAD_BLOCK_SIZE);
     const auto FEATURE_BLOCK_SIZE_ull = static_cast<unsigned long long>(FEATURE_BLOCK_SIZE);
@@ -178,14 +178,14 @@ __global__ void device_kernel_predict_linear(real_type *prediction_d, const real
  * @param[in] kernel_function_parameter the parameters necessary to apply the @p kernel_function
  */
 template <kernel_function_type kernel_function, typename... Args>
-__global__ void device_kernel_predict(real_type *prediction_d, const real_type *alpha_d, const real_type *rho_d, const real_type *sv_d, const real_type *predict_points_d, const unsigned long long num_classes, const unsigned long long num_sv, const unsigned long long num_predict_points, const unsigned long long num_features, Args... kernel_function_parameter) {
+__global__ void device_kernel_predict(real_type *prediction_d, const real_type *alpha_d, const real_type *rho_d, const real_type *sv_d, const real_type *predict_points_d, const unsigned long long num_classes, const unsigned long long num_sv, const unsigned long long num_predict_points, const unsigned long long num_features, const unsigned long long grid_x_offset, const unsigned long long grid_y_offset, Args... kernel_function_parameter) {
     // cast all values to 64-bit unsigned long long to prevent potential 32-bit overflows
-    const auto threadIdx_x = static_cast<unsigned long long>(threadIdx.x);
-    const auto threadIdx_y = static_cast<unsigned long long>(threadIdx.y);
-    const auto blockIdx_x = static_cast<unsigned long long>(blockIdx.x);
-    const auto blockIdx_y = static_cast<unsigned long long>(blockIdx.y);
-    const auto blockDim_x = static_cast<unsigned long long>(blockDim.x);
-    const auto blockDim_y = static_cast<unsigned long long>(blockDim.y);
+    const auto threadIdx_x = static_cast<unsigned long long>(threadIdx.x);                // current thread in block x-dimension
+    const auto threadIdx_y = static_cast<unsigned long long>(threadIdx.y);                // current thread in block y-dimension
+    const auto blockDim_x = static_cast<unsigned long long>(blockDim.x);                  // number of threads in block x-dimension
+    const auto blockDim_y = static_cast<unsigned long long>(blockDim.y);                  // number of threads in block y-dimension
+    const auto blockIdx_x = static_cast<unsigned long long>(blockIdx.x + grid_x_offset);  // current block in grid x-dimension
+    const auto blockIdx_y = static_cast<unsigned long long>(blockIdx.y + grid_y_offset);  // current block in grid y-dimension
     const auto INTERNAL_BLOCK_SIZE_ull = static_cast<unsigned long long>(INTERNAL_BLOCK_SIZE);
     const auto THREAD_BLOCK_SIZE_ull = static_cast<unsigned long long>(THREAD_BLOCK_SIZE);
     const auto FEATURE_BLOCK_SIZE_ull = static_cast<unsigned long long>(FEATURE_BLOCK_SIZE);

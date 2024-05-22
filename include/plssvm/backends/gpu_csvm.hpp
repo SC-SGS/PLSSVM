@@ -13,6 +13,7 @@
 #define PLSSVM_BACKENDS_GPU_CSVM_HPP_
 #pragma once
 
+#include "plssvm/backends/execution_range.hpp"  // plssvm::detail::{dim_type, execution_range}
 #include "plssvm/constants.hpp"                 // plssvm::real_type, plssvm::PADDING_SIZE
 #include "plssvm/csvm.hpp"                      // plssvm::csvm
 #include "plssvm/detail/assert.hpp"             // PLSSVM_ASSERT
@@ -26,6 +27,7 @@
 
 #include "fmt/core.h"  // fmt::format
 
+#include <cmath>    // std::ceil
 #include <cstddef>  // std::size_t
 #include <memory>   // std::make_unique
 #include <tuple>    // std::tuple
@@ -118,14 +120,18 @@ class gpu_csvm : public ::plssvm::csvm {
     //*************************************************************************************************************************************//
     //                                         pure virtual, must be implemented by all subclasses                                         //
     //*************************************************************************************************************************************//
-    // Note: there are two versions of each function (one for float and one for double) since virtual template functions are not allowed in C++!
-
     /**
      * @brief Return the maximum allowed work group size for the specified device.
      * @param[in] device_id the device_id to query the max work group size from
      * @return the maximum allowed work group size (`[[nodiscard]]`)
      */
     [[nodiscard]] virtual std::size_t get_max_work_group_size(std::size_t device_id) const = 0;
+    /**
+     * @brief Return the maximum allowed 3D grid size for the specified device.
+     * @param[in] device_id the device_id to query the maximum 3D grid size from
+     * @return the maximum allowed 3D grid size (`[[nodiscard]]`)
+     */
+    [[nodiscard]] virtual dim_type get_max_grid_size(std::size_t device_id) const = 0;
 
     //***************************************************//
     //                        fit                        //
@@ -133,26 +139,29 @@ class gpu_csvm : public ::plssvm::csvm {
     /**
      * @brief Explicitly assemble the kernel matrix on the device with @p device_id.
      * @param[in] device_id the device to run the kernel on
+     * @param[in] exec the execution range used in the device call
      * @param[in] params the parameters (e.g., kernel function) used to assemble the kernel matrix
      * @param[in] data_d the data set to create the kernel matrix from
      * @param[in] q_red_d the vector used in the dimensional reduction
      * @param[in] QA_cost the scalar used in the dimensional reduction
      * @return the explicit kernel matrix stored on the device (`[[nodiscard]]`)
      */
-    [[nodiscard]] virtual device_ptr_type run_assemble_kernel_matrix_explicit(std::size_t device_id, const parameter &params, const device_ptr_type &data_d, const device_ptr_type &q_red_d, real_type QA_cost) const = 0;
+    [[nodiscard]] virtual device_ptr_type run_assemble_kernel_matrix_explicit(std::size_t device_id, const execution_range &exec, const parameter &params, const device_ptr_type &data_d, const device_ptr_type &q_red_d, real_type QA_cost) const = 0;
     /**
      * @brief Perform an explicit BLAS level 3 operation: `C = alpha * A * B + beta * C` where @p A, @p B, and @p C are matrices, and @p alpha and @p beta are scalars.
      * @param[in] device_id the device to run the kernel on
+     * @param[in] exec the execution range used in the device call
      * @param[in] alpha the scalar alpha value
      * @param[in] A_d the matrix @p A
      * @param[in] B_d the matrix @p B
      * @param[in] beta the scalar beta value
      * @param[in,out] C_d the matrix @p C, also used as result matrix
      */
-    virtual void run_blas_level_3_kernel_explicit(std::size_t device_id, real_type alpha, const device_ptr_type &A_d, const device_ptr_type &B_d, real_type beta, device_ptr_type &C_d) const = 0;
+    virtual void run_blas_level_3_kernel_explicit(std::size_t device_id, const execution_range &exec, const execution_range &mirror_exec, real_type alpha, const device_ptr_type &A_d, const device_ptr_type &B_d, real_type beta, device_ptr_type &C_d) const = 0;
     /**
      * @brief Perform an implicit BLAS level 3 operation: `C = alpha * A * B + beta * C` where @p A is an implicitly constructed kernel matrix, @p B and @p C are matrices and @p alpha is a scalar.
      * @param[in] device_id the device to run the kernel on
+     * @param[in] exec the execution range used in the device call
      * @param[in] alpha the scalar alpha value
      * @param[in] A_d the data points to implicitly create the kernel matrix from
      * @param[in] params the parameters (e.g., kernel function) used to assemble the kernel matrix
@@ -161,21 +170,23 @@ class gpu_csvm : public ::plssvm::csvm {
      * @param[in] B_d the matrix @p B
      * @param[in,out] C_d the matrix @p C, also used as result matrix
      */
-    virtual void run_assemble_kernel_matrix_implicit_blas_level_3(std::size_t device_id, real_type alpha, const device_ptr_type &A_d, const parameter &params, const device_ptr_type &q_red_d, real_type QA_cost, const device_ptr_type &B_d, device_ptr_type &C_d) const = 0;
+    virtual void run_assemble_kernel_matrix_implicit_blas_level_3(std::size_t device_id, const execution_range &exec, real_type alpha, const device_ptr_type &A_d, const parameter &params, const device_ptr_type &q_red_d, real_type QA_cost, const device_ptr_type &B_d, device_ptr_type &C_d) const = 0;
     /**
      * @brief Perform a simple inplace matrix addition adding the contents of @p rhs_d to @p lhs_d.
      * @param[in] device_id the device to run the kernel on
+     * @param[in] exec the execution range used in the device call
      * @param[in,out] lhs_d the matrix to add the values of @p rhs_d to
      * @param[in] rhs_d the matrix to add to @p lhs_d
      */
-    virtual void run_inplace_matrix_addition(std::size_t device_id, device_ptr_type &lhs_d, const device_ptr_type &rhs_d) const = 0;
+    virtual void run_inplace_matrix_addition(std::size_t device_id, const execution_range &exec, device_ptr_type &lhs_d, const device_ptr_type &rhs_d) const = 0;
     /**
      * @brief Perform a simple inplace matrix scale: @p lhs_d *= @p scale.
      * @param[in] device_id the device to run the kernel on
+     * @param[in] exec the execution range used in the device call
      * @param[in,out] lhs_d the matrix to @p scale
      * @param[in] scale the scaling value
      */
-    virtual void run_inplace_matrix_scale(std::size_t device_id, device_ptr_type &lhs_d, real_type scale) const = 0;
+    virtual void run_inplace_matrix_scale(std::size_t device_id, const execution_range &exec, device_ptr_type &lhs_d, real_type scale) const = 0;
 
     //***************************************************//
     //                   predict, score                  //
@@ -183,14 +194,16 @@ class gpu_csvm : public ::plssvm::csvm {
     /**
      * @brief Calculate the `w` vector used to speedup the linear kernel prediction.
      * @param[in] device_id the device to run the kernel on
+     * @param[in] exec the execution range used in the device call
      * @param[in] alpha_d the support vector weights
      * @param[in] sv_d the support vectors
      * @return the `w` vector (`[[nodiscard]]`)
      */
-    [[nodiscard]] virtual device_ptr_type run_w_kernel(std::size_t device_id, const device_ptr_type &alpha_d, const device_ptr_type &sv_d) const = 0;
+    [[nodiscard]] virtual device_ptr_type run_w_kernel(std::size_t device_id, const execution_range &exec, const device_ptr_type &alpha_d, const device_ptr_type &sv_d) const = 0;
     /**
      * @brief Predict the values of the new @p predict_points_d using the previously learned weights @p alpha_d, biases @p rho_d, and support vectors @p sv_d.
      * @param[in] device_id the device to run the kernel on
+     * @param[in] exec the execution range used in the device call
      * @param[in] params the parameter used to predict the values (e.g., the used kernel function)
      * @param[in] alpha_d the previously learned weights
      * @param[in] rho_d the previously calculated biases
@@ -198,7 +211,7 @@ class gpu_csvm : public ::plssvm::csvm {
      * @param[in] predict_points_d the new data points to predict
      * @return the predicted values (`[[nodiscard]]`)
      */
-    [[nodiscard]] virtual device_ptr_type run_predict_kernel(std::size_t device_id, const parameter &params, const device_ptr_type &alpha_d, const device_ptr_type &rho_d, const device_ptr_type &sv_or_w_d, const device_ptr_type &predict_points_d) const = 0;
+    [[nodiscard]] virtual device_ptr_type run_predict_kernel(std::size_t device_id, const execution_range &exec, const parameter &params, const device_ptr_type &alpha_d, const device_ptr_type &rho_d, const device_ptr_type &sv_or_w_d, const device_ptr_type &predict_points_d) const = 0;
 
     /// The available/used backend devices.
     std::vector<queue_type> devices_{};
@@ -216,6 +229,7 @@ std::vector<::plssvm::detail::move_only_any> gpu_csvm<device_ptr_t, queue_t, pin
     PLSSVM_ASSERT(q_red.size() == A.num_rows() - 1, "The q_red size ({}) mismatches the number of data points after dimensional reduction ({})!", q_red.size(), A.num_rows() - 1);
 
     const std::size_t num_devices = this->num_available_devices();
+    const std::size_t num_rows_reduced = A.shape().x - 1;
 
     // update the data distribution: only the upper triangular kernel matrix is used
     // note: account for the dimensional reduction
@@ -256,6 +270,22 @@ std::vector<::plssvm::detail::move_only_any> gpu_csvm<device_ptr_t, queue_t, pin
         q_red_d[device_id].copy_to_device(q_red, 0, q_red.size());
         q_red_d[device_id].memset(0, q_red.size());
 
+        // set kernel parameter
+        const unsigned long long device_specific_num_rows = data_distribution_->place_specific_num_rows(device_id);
+        const unsigned long long device_row_offset = data_distribution_->place_row_offset(device_id);
+
+        // the block dimension is THREAD_BLOCK_SIZE x THREAD_BLOCK_SIZE
+        const dim_type block{ std::size_t{ THREAD_BLOCK_SIZE }, std::size_t{ THREAD_BLOCK_SIZE } };
+
+        // define the full execution grid
+        const dim_type grid{
+            static_cast<std::size_t>(std::ceil(static_cast<double>(num_rows_reduced - device_row_offset) / static_cast<double>(block.x * INTERNAL_BLOCK_SIZE))),
+            static_cast<std::size_t>(std::ceil(static_cast<double>(device_specific_num_rows) / static_cast<double>(block.y * INTERNAL_BLOCK_SIZE)))
+        };
+
+        // create the final execution range
+        const execution_range exec{ block, this->get_max_work_group_size(device_id), grid, this->get_max_grid_size(device_id) };
+
         switch (solver) {
             case solver_type::automatic:
                 // unreachable
@@ -263,14 +293,14 @@ std::vector<::plssvm::detail::move_only_any> gpu_csvm<device_ptr_t, queue_t, pin
             case solver_type::cg_explicit:
                 {
                     // explicitly assemble the (potential partial) kernel matrix
-                    device_ptr_type kernel_matrix = this->run_assemble_kernel_matrix_explicit(device_id, params, data_d[device_id], q_red_d[device_id], QA_cost);
+                    device_ptr_type kernel_matrix = this->run_assemble_kernel_matrix_explicit(device_id, exec, params, data_d[device_id], q_red_d[device_id], QA_cost);
                     kernel_matrices_parts[device_id] = ::plssvm::detail::move_only_any{ std::move(kernel_matrix) };
                 }
                 break;
             case solver_type::cg_implicit:
                 {
                     // simply return the data since in cg_implicit we don't assemble the kernel matrix here!
-                    kernel_matrices_parts[device_id] = ::plssvm::detail::move_only_any{ std::make_tuple(std::move(data_d[device_id]), params, std::move(q_red_d[device_id]), QA_cost) };
+                    kernel_matrices_parts[device_id] = ::plssvm::detail::move_only_any{ std::make_tuple(exec, std::move(data_d[device_id]), params, std::move(q_red_d[device_id]), QA_cost) };
                 }
                 break;
         }
@@ -331,7 +361,21 @@ void gpu_csvm<device_ptr_t, queue_t, pinned_memory_t>::blas_level_3(const solver
             // we do not perform the beta scale in C in the cg_implicit device kernel
             // -> calculate it using a separate kernel (always on device 0!)
             if (solver == solver_type::cg_implicit) {
-                this->run_inplace_matrix_scale(0, C_d[device_id], beta);
+                // the block dimension is THREAD_BLOCK_SIZE x THREAD_BLOCK_SIZE
+                const dim_type block{ std::size_t{ THREAD_BLOCK_SIZE }, std::size_t{ THREAD_BLOCK_SIZE } };
+
+                // define the full execution grid
+                const unsigned long long num_rhs = C_d[device_id].shape().x;
+                const unsigned long long num_rows = C_d[device_id].shape().y;
+                const dim_type grid{
+                    static_cast<std::size_t>(std::ceil(static_cast<double>(num_rows) / static_cast<double>(block.x * INTERNAL_BLOCK_SIZE))),
+                    static_cast<std::size_t>(std::ceil(static_cast<double>(num_rhs) / static_cast<double>(block.y * INTERNAL_BLOCK_SIZE)))
+                };
+
+                // create execution range
+                const execution_range exec{ block, this->get_max_work_group_size(device_id), grid, this->get_max_grid_size(device_id) };
+
+                this->run_inplace_matrix_scale(0, exec, C_d[device_id], beta);
             }
         }
 
@@ -344,16 +388,37 @@ void gpu_csvm<device_ptr_t, queue_t, pinned_memory_t>::blas_level_3(const solver
                     const auto &A_d = detail::move_only_any_cast<const device_ptr_type &>(A[device_id]);
                     PLSSVM_ASSERT(!A_d.empty(), "The A matrix must not be empty!");
 
-                    this->run_blas_level_3_kernel_explicit(device_id, alpha, A_d, B_d[device_id], beta, C_d[device_id]);
+                    // the block dimension is THREAD_BLOCK_SIZE x THREAD_BLOCK_SIZE
+                    const dim_type block{ std::size_t{ THREAD_BLOCK_SIZE }, std::size_t{ THREAD_BLOCK_SIZE } };
+
+                    // define the full execution grid
+                    const unsigned long long num_rhs = B_d[device_id].shape().x;
+                    const unsigned long long num_rows = B_d[device_id].shape().y;
+                    const unsigned long long device_specific_num_rows = data_distribution_->place_specific_num_rows(device_id);
+                    const dim_type grid{
+                        static_cast<std::size_t>(std::ceil(static_cast<double>(num_rhs) / static_cast<double>(block.x * INTERNAL_BLOCK_SIZE))),
+                        static_cast<std::size_t>(std::ceil(static_cast<double>(device_specific_num_rows) / static_cast<double>(block.y * INTERNAL_BLOCK_SIZE)))
+                    };
+                    const unsigned long long num_mirror_rows = num_rows - data_distribution_->place_row_offset(device_id) - device_specific_num_rows;
+                    const dim_type mirror_grid{
+                        static_cast<std::size_t>(std::ceil(static_cast<double>(num_rhs) / static_cast<double>(block.x * INTERNAL_BLOCK_SIZE))),
+                        static_cast<std::size_t>(std::ceil(static_cast<double>(num_mirror_rows) / static_cast<double>(block.y * INTERNAL_BLOCK_SIZE)))
+                    };
+
+                    // create execution ranges
+                    const execution_range exec{ block, this->get_max_work_group_size(device_id), grid, this->get_max_grid_size(device_id) };
+                    const execution_range mirror_exec{ block, this->get_max_work_group_size(device_id), mirror_grid, this->get_max_grid_size(device_id) };
+
+                    this->run_blas_level_3_kernel_explicit(device_id, exec, mirror_exec, alpha, A_d, B_d[device_id], beta, C_d[device_id]);
                 }
                 break;
             case solver_type::cg_implicit:
                 {
-                    const auto &[A_d, params, q_red_d, QA_cost] = detail::move_only_any_cast<const std::tuple<device_ptr_type, parameter, device_ptr_type, real_type> &>(A[device_id]);
+                    const auto &[exec, A_d, params, q_red_d, QA_cost] = detail::move_only_any_cast<const std::tuple<execution_range, device_ptr_type, parameter, device_ptr_type, real_type> &>(A[device_id]);
                     PLSSVM_ASSERT(!A_d.empty(), "The A matrix must not be empty!");
                     PLSSVM_ASSERT(!q_red_d.empty(), "The q_red vector must not be empty!");
 
-                    this->run_assemble_kernel_matrix_implicit_blas_level_3(device_id, alpha, A_d, params, q_red_d, QA_cost, B_d[device_id], C_d[device_id]);
+                    this->run_assemble_kernel_matrix_implicit_blas_level_3(device_id, exec, alpha, A_d, params, q_red_d, QA_cost, B_d[device_id], C_d[device_id]);
                 }
                 break;
         }
@@ -362,8 +427,24 @@ void gpu_csvm<device_ptr_t, queue_t, pinned_memory_t>::blas_level_3(const solver
 #pragma omp ordered
         if (device_id != 0) {
             C_d[device_id].copy_to_other_device(partial_C_d);
-            // always reduce on device 0!!!
-            this->run_inplace_matrix_addition(0, C_d[0], partial_C_d);
+
+            // NOTE: always reduce on device 0!!!
+
+            // the block dimension is THREAD_BLOCK_SIZE x THREAD_BLOCK_SIZE
+            const dim_type block{ std::size_t{ THREAD_BLOCK_SIZE }, std::size_t{ THREAD_BLOCK_SIZE } };
+
+            // define the full execution grid
+            const unsigned long long num_rhs = C_d[0].shape().x;
+            const unsigned long long num_rows = C_d[0].shape().y;
+            const dim_type grid{
+                static_cast<std::size_t>(std::ceil(static_cast<double>(num_rows) / static_cast<double>(block.x * INTERNAL_BLOCK_SIZE))),
+                static_cast<std::size_t>(std::ceil(static_cast<double>(num_rhs) / static_cast<double>(block.y * INTERNAL_BLOCK_SIZE)))
+            };
+
+            // create execution range
+            const execution_range exec{ block, this->get_max_work_group_size(device_id), grid, this->get_max_grid_size(device_id) };
+
+            this->run_inplace_matrix_addition(0, exec, C_d[0], partial_C_d);
         }
     }
 
@@ -460,15 +541,40 @@ aos_matrix<real_type> gpu_csvm<device_ptr_t, queue_t, pinned_memory_t>::predict_
                 // copy data to the device
                 sv_d[device_id].copy_to_device_strided(support_vectors, data_distribution_->place_row_offset(device_id), data_distribution_->place_specific_num_rows(device_id));
 
+                // the block dimension is THREAD_BLOCK_SIZE x THREAD_BLOCK_SIZE
+                const dim_type block{ std::size_t{ THREAD_BLOCK_SIZE }, std::size_t{ THREAD_BLOCK_SIZE } };
+
+                // define the full execution grid
+                const dim_type grid{
+                    static_cast<std::size_t>(std::ceil(static_cast<double>(num_features) / static_cast<double>(block.x * INTERNAL_BLOCK_SIZE))),
+                    static_cast<std::size_t>(std::ceil(static_cast<double>(num_classes) / static_cast<double>(block.y * INTERNAL_BLOCK_SIZE)))
+                };
+
+                // create execution range
+                const execution_range exec{ block, this->get_max_work_group_size(device_id), grid, this->get_max_grid_size(device_id) };
+
                 // calculate the partial w vector
-                w_d[device_id] = this->run_w_kernel(device_id, alpha_d[device_id], sv_d[device_id]);
+                w_d[device_id] = this->run_w_kernel(device_id, exec, alpha_d[device_id], sv_d[device_id]);
 
                 // reduce the partial w vectors on device 0
 #pragma omp ordered
                 if (device_id != 0) {
                     w_d[device_id].copy_to_other_device(partial_w_d);
+
                     // always reduce on device 0!!!
-                    this->run_inplace_matrix_addition(0, w_d[0], partial_w_d);
+
+                    // define the full execution grid
+                    const unsigned long long num_rhs = w_d[0].shape().x;
+                    const unsigned long long num_rows = w_d[0].shape().y;
+                    const dim_type add_grid{
+                        static_cast<std::size_t>(std::ceil(static_cast<double>(num_rows) / static_cast<double>(block.x * INTERNAL_BLOCK_SIZE))),
+                        static_cast<std::size_t>(std::ceil(static_cast<double>(num_rhs) / static_cast<double>(block.y * INTERNAL_BLOCK_SIZE)))
+                    };
+
+                    // create execution range
+                    const execution_range w_exec{ block, this->get_max_work_group_size(device_id), grid, this->get_max_grid_size(device_id) };
+
+                    this->run_inplace_matrix_addition(0, w_exec, w_d[0], partial_w_d);
                 }
             }
 
@@ -546,8 +652,22 @@ aos_matrix<real_type> gpu_csvm<device_ptr_t, queue_t, pinned_memory_t>::predict_
         rho_d[device_id].copy_to_device(rho, 0, rho.size());
         rho_d[device_id].memset(0, rho.size());
 
+        // the block dimension is THREAD_BLOCK_SIZE x THREAD_BLOCK_SIZE
+        const dim_type block{ std::size_t{ THREAD_BLOCK_SIZE }, std::size_t{ THREAD_BLOCK_SIZE } };
+
+        // define the full execution grid
+        const unsigned long long device_specific_num_predict_points = predict_points_d[device_id].shape().x;
+        const unsigned long long y_dim_size = params.kernel_type == kernel_function_type::linear ? alpha_d[device_id].shape().x : sv_or_w_d[device_id].shape().x;
+        const dim_type grid{
+            static_cast<std::size_t>(std::ceil(static_cast<double>(device_specific_num_predict_points) / static_cast<double>(block.x * INTERNAL_BLOCK_SIZE))),
+            static_cast<std::size_t>(std::ceil(static_cast<double>(y_dim_size) / static_cast<double>(block.y * INTERNAL_BLOCK_SIZE)))
+        };
+
+        // create execution range
+        const execution_range exec{ block, this->get_max_work_group_size(device_id), grid, this->get_max_grid_size(device_id) };
+
         // predict
-        const device_ptr_type out_d = this->run_predict_kernel(device_id, params, alpha_d[device_id], rho_d[device_id], sv_or_w_d[device_id], predict_points_d[device_id]);
+        const device_ptr_type out_d = this->run_predict_kernel(device_id, exec, params, alpha_d[device_id], rho_d[device_id], sv_or_w_d[device_id], predict_points_d[device_id]);
 
         // copy results back to host, combining them into one result matrix
 #pragma omp critical
