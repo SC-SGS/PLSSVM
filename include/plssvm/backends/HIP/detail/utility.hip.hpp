@@ -38,9 +38,9 @@
 namespace plssvm::hip::detail {
 
 /**
- * @brief Convert a `plssvm::detail::dim_type` to a CUDA native dim3.
+ * @brief Convert a `plssvm::detail::dim_type` to a HIP native dim3.
  * @param[in] dims the dimensional value to convert
- * @return the native CUDA dim3 type (`[[nodiscard]]`)
+ * @return the native HIP dim3 type (`[[nodiscard]]`)
  */
 [[nodiscard]] dim3 dim_type_to_native(const ::plssvm::detail::dim_type &dims);
 
