@@ -245,7 +245,6 @@ void csvm::run_blas_level_3_kernel_explicit(const std::size_t device_id, const :
 
 void csvm::run_inplace_matrix_addition(const std::size_t device_id, const ::plssvm::detail::execution_range &exec, device_ptr_type &lhs_d, const device_ptr_type &rhs_d) const {
     const unsigned long long num_rhs = lhs_d.shape().x;
-    const unsigned long long num_rows = lhs_d.shape().y;
     const queue_type &device = devices_[device_id];
 
     // convert execution range block to CUDA's native dim3
