@@ -13,7 +13,7 @@
 #define PLSSVM_BACKENDS_HIP_CSVM_HPP_
 #pragma once
 
-#include "plssvm/backends/execution_range.hpp"               // plssvm::detail::execution_range
+#include "plssvm/backends/execution_range.hpp"               // plssvm::detail::{dim_type, execution_range}
 #include "plssvm/backends/gpu_csvm.hpp"                      // plssvm::detail::gpu_csvm
 #include "plssvm/backends/HIP/detail/device_ptr.hip.hpp"     // plssvm::hip::detail::device_ptr
 #include "plssvm/backends/HIP/detail/pinned_memory.hip.hpp"  // plssvm::hip::detail::pinned_memory
