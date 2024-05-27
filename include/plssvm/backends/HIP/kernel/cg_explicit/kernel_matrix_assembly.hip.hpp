@@ -38,14 +38,14 @@ namespace plssvm::hip::detail {
 * @param[in] kernel_function_parameter the parameters necessary to apply the @p kernel_function
  */
 template <kernel_function_type kernel_function, typename... Args>
-__global__ void device_kernel_assembly(real_type *kernel_matrix_d, const real_type *data_d, const unsigned long long num_rows, const unsigned long long device_num_rows, const unsigned long long row_offset, const unsigned long long num_features, const real_type *q, const real_type QA_cost, const real_type cost, Args... kernel_function_parameter) {
+__global__ void device_kernel_assembly(real_type *kernel_matrix_d, const real_type *data_d, const unsigned long long num_rows, const unsigned long long device_num_rows, const unsigned long long row_offset, const unsigned long long num_features, const real_type *q, const real_type QA_cost, const real_type cost, const unsigned long long grid_x_offset, const unsigned long long grid_y_offset, Args... kernel_function_parameter) {
     // cast all values to 64-bit unsigned long long to prevent potential 32-bit overflows
-    const auto threadIdx_x = static_cast<unsigned long long>(threadIdx.x);
-    const auto threadIdx_y = static_cast<unsigned long long>(threadIdx.y);
-    const auto blockIdx_x = static_cast<unsigned long long>(blockIdx.x);
-    const auto blockIdx_y = static_cast<unsigned long long>(blockIdx.y);
-    const auto blockDim_x = static_cast<unsigned long long>(blockDim.x);
-    const auto blockDim_y = static_cast<unsigned long long>(blockDim.y);
+    const auto threadIdx_x = static_cast<unsigned long long>(threadIdx.x);                // current thread in block x-dimension
+    const auto threadIdx_y = static_cast<unsigned long long>(threadIdx.y);                // current thread in block y-dimension
+    const auto blockDim_x = static_cast<unsigned long long>(blockDim.x);                  // number of threads in block x-dimension
+    const auto blockDim_y = static_cast<unsigned long long>(blockDim.y);                  // number of threads in block y-dimension
+    const auto blockIdx_x = static_cast<unsigned long long>(blockIdx.x + grid_x_offset);  // current block in grid x-dimension
+    const auto blockIdx_y = static_cast<unsigned long long>(blockIdx.y + grid_y_offset);  // current block in grid y-dimension
     const auto INTERNAL_BLOCK_SIZE_ull = static_cast<unsigned long long>(INTERNAL_BLOCK_SIZE);
     const auto THREAD_BLOCK_SIZE_ull = static_cast<unsigned long long>(THREAD_BLOCK_SIZE);
     const auto FEATURE_BLOCK_SIZE_ull = static_cast<unsigned long long>(FEATURE_BLOCK_SIZE);
@@ -62,7 +62,7 @@ __global__ void device_kernel_assembly(real_type *kernel_matrix_d, const real_ty
     __shared__ real_type data_cache_j[FEATURE_BLOCK_SIZE][INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE];
 
     // only calculate the upper triangular matrix -> can't use threadIdx since all threads in a wavefront must progress further
-    if (blockIdx.x >= blockIdx.y) {
+    if (blockIdx_x >= blockIdx_y) {
         // create a thread private array used for internal caching
         real_type temp[INTERNAL_BLOCK_SIZE][INTERNAL_BLOCK_SIZE]{};
 
