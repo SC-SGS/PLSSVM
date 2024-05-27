@@ -303,22 +303,6 @@ pipeline {
                     stage('Build PLSSVM'){
                         steps{
                                 sh '''
-                                      export COMPILER=g++
-                                      export TARGET_PLATFORM=nvidia:sm_86
-                                      if [ ! "$NODE_NAME" == "pcsgs09" && ! "$NODE_NAME" == "pcsgs13" ]; then
-                                          . /usr/local.nfs/Modules/latest/init/sh
-                                          module load cuda/12.0.1
-                                      fi
-                                      source $SGSSCRATCH/spack/share/spack/setup-env.sh
-                                      if [ "$ARCHITECTURE" == "AMD" ]; then
-                                         export ROCM_PATH="/opt/rocm"
-                                         export LD_LIBRARY_PATH="${ROCM_PATH}/lib64:${ROCM_PATH}/lib:${ROCM_PATH}/opencl/lib/x86_64:${ROCM_PATH}/hsa/lib:${ROCM_PATH}/hip/lib:${LD_LIBRARY_PATH}"
-                                         export CPLUS_INCLUDE_PATH="${ROCM_PATH}/hip/include:${CPLUS_INCLUDE_PATH}"
-                                         export CMAKE_PREFIX_PATH="${ROCM_PATH}/hip:${ROCM_PATH}:${CMAKE_PREFIX_PATH}"
-                                         export TARGET_PLATFORM=amd:gfx906
-                                         export LIBRARY_PATH=$LD_LIBRARY_PATH
-                                      fi
-
                                       if [ "$BUILD_TYPE" == Release ]; then
                                           export NUM_DATA_POINTS=200
                                           export NUM_FEATURES=100
@@ -369,14 +353,7 @@ pipeline {
                     stage('Ctest PLSSVM'){
                         steps{
                             sh '''
-                                 if [ [ ! "$NODE_NAME" == "pcsgs09" ] && [ ! "$NODE_NAME" == "pcsgs13" ] ]; then
-                                     . /usr/local.nfs/Modules/latest/init/sh
-                                     module load cuda/12.0.1
-                                 fi
-                                if [ "$ARCHITECTURE" == "AMD" ]; then
-                                   export ROCM_PATH="/opt/rocm"
-                                   export LD_LIBRARY_PATH="${ROCM_PATH}/lib64:${ROCM_PATH}/lib:${ROCM_PATH}/opencl/lib/x86_64:${ROCM_PATH}/hsa/lib:${ROCM_PATH}/hip/lib:${LD_LIBRARY_PATH}"
-                                fi
+
                                 source $SGSSCRATCH/spack/share/spack/setup-env.sh
                                 spack find package plssvm@develop
                                 echo $hostname
@@ -424,14 +401,6 @@ pipeline {
                     stage('test installed PLSSVM'){
                         steps{
                             sh '''
-                                 if [ [ ! "$NODE_NAME" == "pcsgs09" ] && [ ! "$NODE_NAME" == "pcsgs13" ] ]; then
-                                     . /usr/local.nfs/Modules/latest/init/sh
-                                     module load cuda/12.0.1
-                                 fi
-                                if [ "$ARCHITECTURE" == "AMD" ]; then
-                                   export ROCM_PATH="/opt/rocm"
-                                   export LD_LIBRARY_PATH="${ROCM_PATH}/lib64:${ROCM_PATH}/lib:${ROCM_PATH}/opencl/lib/x86_64:${ROCM_PATH}/hsa/lib:${ROCM_PATH}/hip/lib:${LD_LIBRARY_PATH}"
-                                fi
                                 source $SGSSCRATCH/spack/share/spack/setup-env.sh
 
                                 cd ${WORKSPACE}/plssvm/test/data/libsvm
