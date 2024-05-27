@@ -15,6 +15,7 @@
 
 #include "plssvm/backends/CUDA/detail/device_ptr.cuh"     // plssvm::cuda::detail::device_ptr
 #include "plssvm/backends/CUDA/detail/pinned_memory.cuh"  // plssvm::cuda::detail::pinned_memory
+#include "plssvm/backends/execution_range.hpp"            // plssvm::detail::execution_range
 #include "plssvm/backends/gpu_csvm.hpp"                   // plssvm::detail::gpu_csvm
 #include "plssvm/constants.hpp"                           // plssvm::real_type
 #include "plssvm/csvm.hpp"                                // plssvm::detail::csvm_backend_exists
@@ -22,9 +23,6 @@
 #include "plssvm/detail/type_traits.hpp"                  // PLSSVM_REQUIRES
 #include "plssvm/parameter.hpp"                           // plssvm::parameter
 #include "plssvm/target_platforms.hpp"                    // plssvm::target_platform
-
-#include "plssvm/backends/kernel_parameter.hpp"
-#include "plssvm/backends/execution_range.hpp"
 
 #include <cstddef>      // std::size_t
 #include <type_traits>  // std::true_type
