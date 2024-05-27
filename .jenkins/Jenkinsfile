@@ -358,6 +358,7 @@ pipeline {
                                         test_file_num_features=$NUM_FEATURES \
                                         +asserts \
                                         ~fast-math \
+                                        arch=$(spack arch) \
                                         build_type=$BUILD_TYPE \
                                         $([[ $BACKEND == ADAPTIVECPP ]] && echo "^py-scipy%gcc" ) # TODO: remove, neads a fortran compiler and we currently have no flang installed \
                                         $([[ $BACKEND == ADAPTIVECPP ]] && echo "^openblas%gcc" ) # TODO: remove, neads a fortran compiler and we currently have no flang installed
@@ -377,6 +378,8 @@ pipeline {
                                    export LD_LIBRARY_PATH="${ROCM_PATH}/lib64:${ROCM_PATH}/lib:${ROCM_PATH}/opencl/lib/x86_64:${ROCM_PATH}/hsa/lib:${ROCM_PATH}/hip/lib:${LD_LIBRARY_PATH}"
                                 fi
                                 source $SGSSCRATCH/spack/share/spack/setup-env.sh
+                                spack find package plssvm@develop
+                                echo $hostname
                                 installpath=$(spack location -i plssvm@develop$([[ $BACKEND == ADAPTIVECPP ]] && echo "%clang" ) \
                                     $([[ $BACKEND == OPENMP ]] && echo "+openmp" || echo "~openmp") \
                                     $([[ $BACKEND == CUDA ]] && echo "+cuda" || echo "~cuda") \
