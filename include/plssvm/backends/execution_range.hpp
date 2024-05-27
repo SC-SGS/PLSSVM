@@ -12,46 +12,64 @@
 #ifndef PLSSVM_BACKENDS_EXECUTION_RANGE_HPP_
 #define PLSSVM_BACKENDS_EXECUTION_RANGE_HPP_
 
-#include "plssvm/exceptions/exceptions.hpp"  // plssvm::kernel_launch_resources
+#include "fmt/core.h"     // fmt::formatter
+#include "fmt/ostream.h"  // fmt::ostream_formatter
 
-#include "fmt/core.h"  // fmt::format
-
-#include <algorithm>  // std::min
-#include <cmath>      // std::ceil
-#include <utility>    // std::move, std::pair
-#include <vector>     // std::vector
+#include <iosfwd>   // forward declare std::ostream and std::istream
+#include <utility>  // std::pair
+#include <vector>   // std::vector
 
 namespace plssvm::detail {
+
+//*************************************************************************************************************************************//
+//                                                              dim_type                                                               //
+//*************************************************************************************************************************************//
 
 /**
  * @brief A type encapsulating up-to three dimensions for kernel launches.
  */
-struct dim_type {
+struct [[nodiscard]] dim_type {
     /**
      * @brief Construct an empty dimensional type.
      */
-    dim_type() = default;
+    constexpr dim_type() = default;
 
     /**
      * @brief Construct an one-dimensional dimensional type.
      */
-    explicit dim_type(const unsigned long long x_p) :
+    constexpr explicit dim_type(const unsigned long long x_p) :
         x{ x_p } { }
 
     /**
      * @brief Construct a two-dimensional dimensional type.
      */
-    dim_type(const unsigned long long x_p, const unsigned long long y_p) :
+    constexpr dim_type(const unsigned long long x_p, const unsigned long long y_p) :
         x{ x_p },
         y{ y_p } { }
 
     /**
      * @brief Construct a three-dimensional dimensional type.
      */
-    dim_type(const unsigned long long x_p, const unsigned long long y_p, const unsigned long long z_p) :
+    constexpr dim_type(const unsigned long long x_p, const unsigned long long y_p, const unsigned long long z_p) :
         x{ x_p },
         y{ y_p },
         z{ z_p } { }
+
+    /**
+     * @brief Swap the contents of `*this` with the contents of @p other.
+     * @param[in,out] other the other dim_type
+     */
+    constexpr void swap(dim_type &other) noexcept {
+        // can't use std::swap since it isn't constexpr in C++17
+        constexpr auto swap_ull = [](auto &lhs, auto &rhs) {
+            auto temp{ rhs };
+            rhs = lhs;
+            lhs = temp;
+        };
+        swap_ull(x, other.x);
+        swap_ull(y, other.y);
+        swap_ull(z, other.z);
+    }
 
     /// The dimensional size in x direction.
     unsigned long long x{ 1 };
@@ -62,10 +80,51 @@ struct dim_type {
 };
 
 /**
+ * @brief Swap the contents of @p lhs with the contents of @p rhs.
+ * @param[in,out] lhs the first dim_type
+ * @param[in,out] rhs the second dim_type
+ */
+constexpr void swap(dim_type &lhs, dim_type &rhs) noexcept {
+    lhs.swap(rhs);
+}
+
+/**
+ * @brief Compare two dim_types for equality.
+ * @param[in] lhs the first dim_type
+ * @param[in] rhs the second dim_type
+ * @return `true` if all three dimensions are equal, otherwise `false` (`[[nodiscard]]`)
+ */
+constexpr bool operator==(const dim_type lhs, const dim_type rhs) {
+    return lhs.x == rhs.x && lhs.y == rhs.y && lhs.z == rhs.z;
+}
+
+/**
+ * @brief Compare two dim_types for inequality.
+ * @param[in] lhs the first dim_type
+ * @param[in] rhs the second dim_type
+ * @return `false` if all three dimensions are equal, otherwise `true` (`[[nodiscard]]`)
+ */
+constexpr bool operator!=(const dim_type lhs, const dim_type rhs) {
+    return !(lhs == rhs);
+}
+
+/**
+ * @brief Output the @p dim to the given output-stream @p out.
+ * @param[in,out] out the output-stream to write the dim_type to
+ * @param[in] dim the dim_type
+ * @return the output-stream
+ */
+std::ostream &operator<<(std::ostream &out, dim_type dim);
+
+//*************************************************************************************************************************************//
+//                                                           execution_range                                                           //
+//*************************************************************************************************************************************//
+
+/**
  * @brief A struct encapsulating an arbitrary execution range used to launch a kernel.
  */
 struct execution_range {
-    /// The type used to store the grid sizes and offsets.
+    /// The type used to store the grid sizes (first) and offsets (second).
     using grid_type = std::pair<dim_type, dim_type>;
 
     /**
@@ -77,38 +136,13 @@ struct execution_range {
      * @param[in] max_allowed_grid_size the maximum allowed 3D grid sizes
      * @throws plssvm::kernel_launch_resources if the block size exceeds the upper limits
      */
-    execution_range(const dim_type block_p, const unsigned long long max_allowed_block_size, const dim_type grid, const dim_type max_allowed_grid_size) :
-        block{ block_p } {
-        // check whether the provided block size is valid
-        if (max_allowed_block_size < block.x * block.y * block.z) {
-            throw kernel_launch_resources{ fmt::format("Not enough work-items allowed for a work-groups of size {}x{}x{}, max {}! Try reducing THREAD_BLOCK_SIZE.", block.x, block.y, block.z, max_allowed_block_size) };
-        }
+    execution_range(dim_type block_p, unsigned long long max_allowed_block_size, dim_type grid, dim_type max_allowed_grid_size);
 
-        // TODO: implement better?!
-        // split the large grid into sub-grids
-        const unsigned long long num_grid_x = grid.x / max_allowed_grid_size.x;
-        for (unsigned long long x = 0; x < num_grid_x; ++x) {
-            const unsigned long long num_grid_y = grid.y / max_allowed_grid_size.y;
-            for (unsigned long long y = 0; y < num_grid_y; ++y) {
-                grids.emplace_back(dim_type{ std::min(grid.x, max_allowed_grid_size.x), std::min(grid.y, max_allowed_grid_size.y) }, dim_type{ x * max_allowed_grid_size.x, y * max_allowed_grid_size.y });
-            }
-            const unsigned long long remaining_y = grid.y % max_allowed_grid_size.y;
-            if (remaining_y > 0ull) {
-                grids.emplace_back(dim_type{ std::min(grid.x, max_allowed_grid_size.x), remaining_y }, dim_type{ x * max_allowed_grid_size.x, num_grid_y * max_allowed_grid_size.y });
-            }
-        }
-        const unsigned long long remaining_x = grid.x % max_allowed_grid_size.x;
-        if (remaining_x > 0ull) {
-            const unsigned long long num_grid_y = grid.y / max_allowed_grid_size.y;
-            for (unsigned long long y = 0; y < num_grid_y; ++y) {
-                grids.emplace_back(dim_type{ std::min(grid.x, max_allowed_grid_size.x), std::min(grid.y, max_allowed_grid_size.y) }, dim_type{ num_grid_x * max_allowed_grid_size.x, y * max_allowed_grid_size.y });
-            }
-            const unsigned long long remaining_y = grid.y % max_allowed_grid_size.y;
-            if (remaining_y > 0ull) {
-                grids.emplace_back(dim_type{ remaining_x, remaining_y }, dim_type{ num_grid_x * max_allowed_grid_size.x, num_grid_y * max_allowed_grid_size.y });
-            }
-        }
-    }
+    /**
+     * @brief Swap the contents of `*this` with the contents of @p other.
+     * @param[in,out] other the other execution range
+     */
+    void swap(execution_range &other) noexcept;
 
     /// The up-to three dimensional block (work-group) size.
     dim_type block{};
@@ -116,6 +150,47 @@ struct execution_range {
     std::vector<grid_type> grids{};
 };
 
+/**
+ * @brief Swap the contents of @p lhs with the contents of @p rhs.
+ * @param[in,out] lhs the first execution range
+ * @param[in,out] rhs the second execution range
+ */
+void swap(execution_range &lhs, execution_range &rhs) noexcept;
+
+/**
+ * @brief Compare two execution ranges for equality.
+ * @param[in] lhs the first execution range
+ * @param[in] rhs the second execution range
+ * @return `true` if all grids and blocks are equal, otherwise `false` (`[[nodiscard]]`)
+ */
+constexpr bool operator==(const execution_range &lhs, const execution_range &rhs) {
+    return lhs.block == rhs.block && lhs.grids == rhs.grids;
+}
+
+/**
+ * @brief Compare two execution ranges for inequality.
+ * @param[in] lhs the first execution range
+ * @param[in] rhs the second execution range
+ * @return `false` if all grids and blocks are equal, otherwise `true` (`[[nodiscard]]`)
+ */
+constexpr bool operator!=(const execution_range &lhs, const execution_range &rhs) {
+    return !(lhs == rhs);
+}
+
+/**
+ * @brief Output the execution_range @p exec to the given output-stream @p out.
+ * @param[in,out] out the output-stream to write the execution range to
+ * @param[in] exec the execution range
+ * @return the output-stream
+ */
+std::ostream &operator<<(std::ostream &out, const execution_range &exec);
+
 }  // namespace plssvm::detail
+
+template <>
+struct fmt::formatter<plssvm::detail::dim_type> : fmt::ostream_formatter { };
+
+template <>
+struct fmt::formatter<plssvm::detail::execution_range> : fmt::ostream_formatter { };
 
 #endif  // PLSSVM_BACKENDS_EXECUTION_RANGE_HPP_
