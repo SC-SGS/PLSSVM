@@ -270,7 +270,7 @@ std::vector<::plssvm::detail::move_only_any> gpu_csvm<device_ptr_t, queue_t, pin
         q_red_d[device_id].copy_to_device(q_red, 0, q_red.size());
         q_red_d[device_id].memset(0, q_red.size());
 
-        // set kernel parameter
+        // kernel launch specific sizes
         const unsigned long long device_specific_num_rows = data_distribution_->place_specific_num_rows(device_id);
         const unsigned long long device_row_offset = data_distribution_->place_row_offset(device_id);
 
