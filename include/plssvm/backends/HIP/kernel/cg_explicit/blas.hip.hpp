@@ -39,8 +39,8 @@ __global__ void device_kernel_symm(const unsigned long long num_rows, const unsi
     const auto threadIdx_y = static_cast<unsigned long long>(threadIdx.y);                // current thread in block y-dimension
     const auto blockDim_x = static_cast<unsigned long long>(blockDim.x);                  // number of threads in block x-dimension
     const auto blockDim_y = static_cast<unsigned long long>(blockDim.y);                  // number of threads in block y-dimension
-    const auto blockIdx_x = static_cast<unsigned long long>(blockIdx.x + grid_x_offset);  // current block in grid x-dimension
-    const auto blockIdx_y = static_cast<unsigned long long>(blockIdx.y + grid_y_offset);  // current block in grid y-dimension
+    const auto blockIdx_x = static_cast<unsigned long long>(blockIdx.x) + grid_x_offset;  // current block in grid x-dimension + offsets if the grid size would be too large
+    const auto blockIdx_y = static_cast<unsigned long long>(blockIdx.y) + grid_y_offset;  // current block in grid y-dimension + offsets if the grid size would be too large
     const auto INTERNAL_BLOCK_SIZE_ull = static_cast<unsigned long long>(INTERNAL_BLOCK_SIZE);
     const auto THREAD_BLOCK_SIZE_ull = static_cast<unsigned long long>(THREAD_BLOCK_SIZE);
     const auto FEATURE_BLOCK_SIZE_ull = static_cast<unsigned long long>(FEATURE_BLOCK_SIZE);
@@ -130,8 +130,8 @@ __global__ void device_kernel_symm_mirror(const unsigned long long num_rows, con
     const auto threadIdx_y = static_cast<unsigned long long>(threadIdx.y);                // current thread in block y-dimension
     const auto blockDim_x = static_cast<unsigned long long>(blockDim.x);                  // number of threads in block x-dimension
     const auto blockDim_y = static_cast<unsigned long long>(blockDim.y);                  // number of threads in block y-dimension
-    const auto blockIdx_x = static_cast<unsigned long long>(blockIdx.x + grid_x_offset);  // current block in grid x-dimension
-    const auto blockIdx_y = static_cast<unsigned long long>(blockIdx.y + grid_y_offset);  // current block in grid y-dimension
+    const auto blockIdx_x = static_cast<unsigned long long>(blockIdx.x) + grid_x_offset;  // current block in grid x-dimension + offsets if the grid size would be too large
+    const auto blockIdx_y = static_cast<unsigned long long>(blockIdx.y) + grid_y_offset;  // current block in grid y-dimension + offsets if the grid size would be too large
     const auto INTERNAL_BLOCK_SIZE_ull = static_cast<unsigned long long>(INTERNAL_BLOCK_SIZE);
     const auto THREAD_BLOCK_SIZE_ull = static_cast<unsigned long long>(THREAD_BLOCK_SIZE);
     const auto FEATURE_BLOCK_SIZE_ull = static_cast<unsigned long long>(FEATURE_BLOCK_SIZE);
@@ -203,8 +203,8 @@ __global__ void device_kernel_inplace_matrix_add(const unsigned long long num_co
     const auto threadIdx_y = static_cast<unsigned long long>(threadIdx.y);                // current thread in block y-dimension
     const auto blockDim_x = static_cast<unsigned long long>(blockDim.x);                  // number of threads in block x-dimension
     const auto blockDim_y = static_cast<unsigned long long>(blockDim.y);                  // number of threads in block y-dimension
-    const auto blockIdx_x = static_cast<unsigned long long>(blockIdx.x + grid_x_offset);  // current block in grid x-dimension
-    const auto blockIdx_y = static_cast<unsigned long long>(blockIdx.y + grid_y_offset);  // current block in grid y-dimension
+    const auto blockIdx_x = static_cast<unsigned long long>(blockIdx.x) + grid_x_offset;  // current block in grid x-dimension + offsets if the grid size would be too large
+    const auto blockIdx_y = static_cast<unsigned long long>(blockIdx.y) + grid_y_offset;  // current block in grid y-dimension + offsets if the grid size would be too large
     const auto INTERNAL_BLOCK_SIZE_ull = static_cast<unsigned long long>(INTERNAL_BLOCK_SIZE);
     const auto PADDING_SIZE_ull = static_cast<unsigned long long>(PADDING_SIZE);
 
@@ -234,8 +234,8 @@ __global__ void device_kernel_inplace_matrix_scale(const unsigned long long num_
     const auto threadIdx_y = static_cast<unsigned long long>(threadIdx.y);                // current thread in block y-dimension
     const auto blockDim_x = static_cast<unsigned long long>(blockDim.x);                  // number of threads in block x-dimension
     const auto blockDim_y = static_cast<unsigned long long>(blockDim.y);                  // number of threads in block y-dimension
-    const auto blockIdx_x = static_cast<unsigned long long>(blockIdx.x + grid_x_offset);  // current block in grid x-dimension
-    const auto blockIdx_y = static_cast<unsigned long long>(blockIdx.y + grid_y_offset);  // current block in grid y-dimension
+    const auto blockIdx_x = static_cast<unsigned long long>(blockIdx.x) + grid_x_offset;  // current block in grid x-dimension + offsets if the grid size would be too large
+    const auto blockIdx_y = static_cast<unsigned long long>(blockIdx.y) + grid_y_offset;  // current block in grid y-dimension + offsets if the grid size would be too large
     const auto INTERNAL_BLOCK_SIZE_ull = static_cast<unsigned long long>(INTERNAL_BLOCK_SIZE);
     const auto PADDING_SIZE_ull = static_cast<unsigned long long>(PADDING_SIZE);
 

@@ -79,12 +79,12 @@ class device_kernel_assembly_symm {
         const auto local_id_1 = static_cast<unsigned>(nd_idx.get_local_id(1));
 
         // cast all values to 64-bit std::size_t to prevent potential 32-bit overflows
-        const auto threadIdx_x = static_cast<std::size_t>(nd_idx.get_local_id(0));               // current thread in block x-dimension
-        const auto threadIdx_y = static_cast<std::size_t>(nd_idx.get_local_id(1));               // current thread in block y-dimension
-        const auto blockDim_x = static_cast<std::size_t>(nd_idx.get_local_range(0));             // number of threads in block x-dimension
-        const auto blockDim_y = static_cast<std::size_t>(nd_idx.get_local_range(1));             // number of threads in block y-dimension
-        const auto blockIdx_x = static_cast<std::size_t>(nd_idx.get_group(0) + grid_x_offset_);  // current block in grid x-dimension
-        const auto blockIdx_y = static_cast<std::size_t>(nd_idx.get_group(1) + grid_y_offset_);  // current block in grid y-dimension
+        const std::size_t threadIdx_x = nd_idx.get_local_id(0);               // current thread in block x-dimension
+        const std::size_t threadIdx_y = nd_idx.get_local_id(1);               // current thread in block y-dimension
+        const std::size_t blockDim_x = nd_idx.get_local_range(0);             // number of threads in block x-dimension
+        const std::size_t blockDim_y = nd_idx.get_local_range(1);             // number of threads in block y-dimension
+        const std::size_t blockIdx_x = nd_idx.get_group(0) + grid_x_offset_;  // current block in grid x-dimension + offsets if the grid size would be too large
+        const std::size_t blockIdx_y = nd_idx.get_group(1) + grid_y_offset_;  // current block in grid y-dimension + offsets if the grid size would be too large
         const auto INTERNAL_BLOCK_SIZE_uz = static_cast<std::size_t>(INTERNAL_BLOCK_SIZE);
         const auto THREAD_BLOCK_SIZE_uz = static_cast<std::size_t>(THREAD_BLOCK_SIZE);
         const auto FEATURE_BLOCK_SIZE_uz = static_cast<std::size_t>(FEATURE_BLOCK_SIZE);

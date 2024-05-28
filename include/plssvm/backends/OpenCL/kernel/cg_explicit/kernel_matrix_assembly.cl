@@ -35,8 +35,8 @@ __kernel void device_kernel_assembly(__global real_type *kernel_matrix_d, const 
     const ulong threadIdx_y = get_local_id(1);                 // current thread in block y-dimension
     const ulong blockDim_x = get_local_size(0);                // number of threads in block x-dimension
     const ulong blockDim_y = get_local_size(1);                // number of threads in block y-dimension
-    const ulong blockIdx_x = get_group_id(0) + grid_x_offset;  // current block in grid x-dimension
-    const ulong blockIdx_y = get_group_id(1) + grid_y_offset;  // current block in grid y-dimension
+    const ulong blockIdx_x = get_group_id(0) + grid_x_offset;  // current block in grid x-dimension + offsets if the grid size would be too large
+    const ulong blockIdx_y = get_group_id(1) + grid_y_offset;  // current block in grid y-dimension + offsets if the grid size would be too large
 
     // calculate the indices used in the current thread
     const ulong i = (blockIdx_x * blockDim_x + threadIdx_x) * INTERNAL_BLOCK_SIZE_ul;
