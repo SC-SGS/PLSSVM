@@ -310,8 +310,8 @@ pipeline {
                         steps{
                                 sh '''
                                         if [ "$BUILD_TYPE" == Release ]; then
-                                            export NUM_DATA_POINTS=200
-                                            export NUM_FEATURES=100
+                                            export NUM_DATA_POINTS=100
+                                            export NUM_FEATURES=20
                                         else
                                             export NUM_DATA_POINTS=20
                                             export NUM_FEATURES=10
