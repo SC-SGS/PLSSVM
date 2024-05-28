@@ -180,7 +180,7 @@ std::size_t csvm::get_max_work_group_size(const std::size_t device_id) const {
     return devices_[device_id].impl->sycl_queue.get_device().get_info<::sycl::info::device::max_work_group_size>();
 }
 
-::plssvm::detail::dim_type csvm::get_max_grid_size(const std::size_t device_id) const {
+::plssvm::detail::dim_type csvm::get_max_grid_size([[maybe_unused]] const std::size_t device_id) const {
     PLSSVM_ASSERT(device_id < this->num_available_devices(), "Invalid device {} requested!", device_id);
 
     // fallback to maximum theoretical value, may break at runtime!
