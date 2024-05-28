@@ -29,6 +29,8 @@
  * @param[in] B the matrix @p B
  * @param[in,out] C the matrix @p C
  * @param[in] num_classes the number of classes in the data set
+ * @param[in] grid_x_offset the offset in x-dimension into the data points if more than one execution grid has to be used
+ * @param[in] grid_y_offset the offset in y-dimension into the data points if more than one execution grid has to be used
  * @param[in] PLSSVM_OPENCL_KERNEL_FUNCTION_PARAMETER_LIST a placeholder that is used to string replace the correct kernel parameter (attention: no comma!; Args... only added for Doxygen)
  */
 __kernel void device_kernel_assembly_symm(const real_type alpha, const __global real_type *q, const __global real_type *data_d, const ulong num_rows, const ulong device_num_rows, const ulong row_offset, const ulong num_features, const real_type QA_cost, const real_type cost, const __global real_type *B, __global real_type *C, const ulong num_classes, const ulong grid_x_offset, const ulong grid_y_offset PLSSVM_OPENCL_KERNEL_FUNCTION_PARAMETER_LIST) {

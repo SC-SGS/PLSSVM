@@ -25,6 +25,8 @@
  * @param[in] num_sv the number of support vectors
  * @param[in] num_predict_points the number of data points to predict
  * @param[in] num_features the number of features per data point
+ * @param[in] grid_x_offset the offset in x-dimension into the data points if more than one execution grid has to be used
+ * @param[in] grid_y_offset the offset in y-dimension into the data points if more than one execution grid has to be used
  * @param[in] PLSSVM_OPENCL_KERNEL_FUNCTION_PARAMETER_LIST a placeholder that is used to string replace the correct kernel parameter (attention: no comma!; Args... only added for Doxygen)
  */
 __kernel void PLSSVM_DEVICE_KERNEL_PREDICT_NAME(__global real_type *prediction_d, const __global real_type *alpha_d, const __global real_type *rho_d, const __global real_type *sv_d, const __global real_type *predict_points_d, const ulong num_classes, const ulong num_sv, const ulong num_predict_points, const ulong num_features, const ulong grid_x_offset, const ulong grid_y_offset PLSSVM_OPENCL_KERNEL_FUNCTION_PARAMETER_LIST) {

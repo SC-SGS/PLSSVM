@@ -36,12 +36,15 @@ struct [[nodiscard]] dim_type {
 
     /**
      * @brief Construct an one-dimensional dimensional type.
+     * @param[in] x_p the value of the first dimension
      */
     constexpr explicit dim_type(const unsigned long long x_p) :
         x{ x_p } { }
 
     /**
      * @brief Construct a two-dimensional dimensional type.
+     * @param[in] x_p the value of the first dimension
+     * @param[in] y_p the value of the second dimension
      */
     constexpr dim_type(const unsigned long long x_p, const unsigned long long y_p) :
         x{ x_p },
@@ -49,6 +52,9 @@ struct [[nodiscard]] dim_type {
 
     /**
      * @brief Construct a three-dimensional dimensional type.
+     * @param[in] x_p the value of the first dimension
+     * @param[in] y_p the value of the second dimension
+     * @param[in] z_p the value of the third dimension
      */
     constexpr dim_type(const unsigned long long x_p, const unsigned long long y_p, const unsigned long long z_p) :
         x{ x_p },

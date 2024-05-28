@@ -151,6 +151,7 @@ class gpu_csvm : public ::plssvm::csvm {
      * @brief Perform an explicit BLAS level 3 operation: `C = alpha * A * B + beta * C` where @p A, @p B, and @p C are matrices, and @p alpha and @p beta are scalars.
      * @param[in] device_id the device to run the kernel on
      * @param[in] exec the execution range used in the device call
+     * @param[in] mirror_exec the execution range used in the mirror device call (since the explicit BLAS level 3 kernel is split into two support multi-device execution)
      * @param[in] alpha the scalar alpha value
      * @param[in] A_d the matrix @p A
      * @param[in] B_d the matrix @p B

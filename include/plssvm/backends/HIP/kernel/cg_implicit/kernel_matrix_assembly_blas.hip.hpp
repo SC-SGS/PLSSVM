@@ -38,6 +38,8 @@ namespace plssvm::hip::detail {
  * @param[in] B the matrix @p B
  * @param[in,out] C the matrix @p C
  * @param[in] num_classes the number of classes in the data set
+ * @param[in] grid_x_offset the offset in x-dimension into the data points if more than one execution grid has to be used
+ * @param[in] grid_y_offset the offset in y-dimension into the data points if more than one execution grid has to be used
  * @param[in] kernel_function_parameter the parameters necessary to apply the @p kernel_function
  */
 template <kernel_function_type kernel_function, typename... Args>

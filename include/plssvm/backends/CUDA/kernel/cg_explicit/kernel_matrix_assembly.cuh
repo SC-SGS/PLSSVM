@@ -32,6 +32,8 @@ namespace plssvm::cuda::detail {
  * @param[in] q the vector used in the dimensional reduction
  * @param[in] QA_cost the scalar used in the dimensional reduction
  * @param[in] cost the cost factor the diagonal is scaled with
+ * @param[in] grid_x_offset the offset in x-dimension into the data points if more than one execution grid has to be used
+ * @param[in] grid_y_offset the offset in y-dimension into the data points if more than one execution grid has to be used
  * @param[in] kernel_function_parameter the parameters necessary to apply the @p kernel_function
  */
 template <kernel_function_type kernel_function, typename... Args>

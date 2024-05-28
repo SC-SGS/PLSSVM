@@ -48,6 +48,8 @@ class device_kernel_assembly_symm {
      * @param[in] B the matrix @p B
      * @param[in,out] C the matrix @p C
      * @param[in] num_classes the number of classes in the data set
+     * @param[in] grid_x_offset the offset in x-dimension into the data points if more than one execution grid has to be used
+     * @param[in] grid_y_offset the offset in y-dimension into the data points if more than one execution grid has to be used
      * @param[in] kernel_function_parameter the parameters necessary to apply the @p kernel_function
      */
     device_kernel_assembly_symm(::sycl::handler &cgh, const real_type alpha, const real_type *q, const real_type *data_d, const std::size_t num_rows, const std::size_t device_num_rows, const std::size_t row_offset, const std::size_t num_features, const real_type QA_cost, const real_type cost, const real_type *B, real_type *C, const std::size_t num_classes, const std::size_t grid_x_offset, const std::size_t grid_y_offset, Args... kernel_function_parameter) :

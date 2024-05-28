@@ -38,6 +38,8 @@ class device_kernel_symm {
      * @param[in] B the matrix @p B
      * @param[in] beta the scalar beta value
      * @param[in,out] C the matrix @p C, also used as result matrix
+     * @param[in] grid_x_offset the offset in x-dimension into the data points if more than one execution grid has to be used
+     * @param[in] grid_y_offset the offset in y-dimension into the data points if more than one execution grid has to be used
      */
     device_kernel_symm(::sycl::handler &cgh, const std::size_t num_rows, const std::size_t num_rhs, const std::size_t device_specific_num_rows, const std::size_t row_offset, const real_type alpha, const real_type *A, const real_type *B, const real_type beta, real_type *C, const std::size_t grid_x_offset, const std::size_t grid_y_offset) :
         A_cache_{ ::sycl::range<2>{ static_cast<std::size_t>(FEATURE_BLOCK_SIZE), static_cast<std::size_t>(INTERNAL_BLOCK_SIZE) * static_cast<std::size_t>(THREAD_BLOCK_SIZE) }, cgh },
@@ -175,6 +177,8 @@ class device_kernel_symm_mirror {
      * @param[in] B the matrix @p B
      * @param[in] beta the scalar beta value
      * @param[in,out] C the matrix @p C, also used as result matrix
+     * @param[in] grid_x_offset the offset in x-dimension into the data points if more than one execution grid has to be used
+     * @param[in] grid_y_offset the offset in y-dimension into the data points if more than one execution grid has to be used
      */
     device_kernel_symm_mirror(::sycl::handler &cgh, const std::size_t num_rows, const std::size_t num_rhs, const std::size_t num_mirror_rows, const std::size_t device_specific_num_rows, const std::size_t row_offset, const real_type alpha, const real_type *A, const real_type *B, const real_type beta, real_type *C, const std::size_t grid_x_offset, const std::size_t grid_y_offset) :
         A_cache_{ ::sycl::range<2>{ static_cast<std::size_t>(FEATURE_BLOCK_SIZE), static_cast<std::size_t>(INTERNAL_BLOCK_SIZE) * static_cast<std::size_t>(THREAD_BLOCK_SIZE) }, cgh },
@@ -296,6 +300,8 @@ class device_kernel_inplace_matrix_add {
      * @param[in] num_cols the number of columns in both matrices
      * @param[in,out] lhs the first matrix (updated inplace)
      * @param[in] rhs the second matrix
+     * @param[in] grid_x_offset the offset in x-dimension into the data points if more than one execution grid has to be used
+     * @param[in] grid_y_offset the offset in y-dimension into the data points if more than one execution grid has to be used
      */
     device_kernel_inplace_matrix_add(const std::size_t num_cols, real_type *lhs, const real_type *rhs, const std::size_t grid_x_offset, const std::size_t grid_y_offset) :
         num_cols_{ num_cols },
@@ -353,6 +359,8 @@ class device_kernel_inplace_matrix_scale {
      * @param[in] num_cols the number of columns in the matrix
      * @param[in,out] lhs the first matrix (updated inplace)
      * @param[in] scale the value to scale
+     * @param[in] grid_x_offset the offset in x-dimension into the data points if more than one execution grid has to be used
+     * @param[in] grid_y_offset the offset in y-dimension into the data points if more than one execution grid has to be used
      */
     device_kernel_inplace_matrix_scale(const std::size_t num_cols, real_type *lhs, const real_type scale, const std::size_t grid_x_offset, const std::size_t grid_y_offset) :
         num_cols_{ num_cols },

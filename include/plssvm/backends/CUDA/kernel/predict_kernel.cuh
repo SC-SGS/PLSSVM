@@ -29,6 +29,8 @@ namespace plssvm::cuda::detail {
  * @param[in] num_sv the number of support vectors
  * @param[in] device_specific_num_sv the number of support vectors the current device is responsible for
  * @param[in] sv_offset the first support vector (row in @p alpha_d) the current device is responsible for
+ * @param[in] grid_x_offset the offset in x-dimension into the data points if more than one execution grid has to be used
+ * @param[in] grid_y_offset the offset in y-dimension into the data points if more than one execution grid has to be used
  */
 __global__ void device_kernel_w_linear(real_type *w_d, const real_type *alpha_d, const real_type *sv_d, const unsigned long long num_classes, const unsigned long long num_sv, const unsigned long long device_specific_num_sv, const unsigned long long sv_offset, const unsigned long long grid_x_offset, const unsigned long long grid_y_offset) {
     // cast all values to 64-bit unsigned long long to prevent potential 32-bit overflows
@@ -98,6 +100,8 @@ __global__ void device_kernel_w_linear(real_type *w_d, const real_type *alpha_d,
  * @param[in] num_classes the number of classes
  * @param[in] num_predict_points the number of data points to predict
  * @param[in] num_features the number of features per data point
+ * @param[in] grid_x_offset the offset in x-dimension into the data points if more than one execution grid has to be used
+ * @param[in] grid_y_offset the offset in y-dimension into the data points if more than one execution grid has to be used
  */
 __global__ void device_kernel_predict_linear(real_type *prediction_d, const real_type *w_d, const real_type *rho_d, const real_type *predict_points_d, const unsigned long long num_classes, const unsigned long long num_predict_points, const unsigned long long num_features, const unsigned long long grid_x_offset, const unsigned long long grid_y_offset) {
     // cast all values to 64-bit unsigned long long to prevent potential 32-bit overflows
@@ -175,6 +179,8 @@ __global__ void device_kernel_predict_linear(real_type *prediction_d, const real
  * @param[in] num_sv the number of support vectors
  * @param[in] num_predict_points the number of data points to predict
  * @param[in] num_features the number of features per data point
+ * @param[in] grid_x_offset the offset in x-dimension into the data points if more than one execution grid has to be used
+ * @param[in] grid_y_offset the offset in y-dimension into the data points if more than one execution grid has to be used
  * @param[in] kernel_function_parameter the parameters necessary to apply the @p kernel_function
  */
 template <kernel_function_type kernel_function, typename... Args>

@@ -44,6 +44,8 @@ class device_kernel_assembly {
      * @param[in] q the vector used in the dimensional reduction
      * @param[in] QA_cost the scalar used in the dimensional reduction
      * @param[in] cost the cost factor the diagonal is scaled with
+     * @param[in] grid_x_offset the offset in x-dimension into the data points if more than one execution grid has to be used
+     * @param[in] grid_y_offset the offset in y-dimension into the data points if more than one execution grid has to be used
      * @param[in] kernel_function_parameter the parameters necessary to apply the @p kernel_function
      */
     device_kernel_assembly(::sycl::handler &cgh, real_type *kernel_matrix_d, const real_type *data_d, const std::size_t num_rows, const std::size_t device_num_rows, const std::size_t row_offset, const std::size_t num_features, const real_type *q, const real_type QA_cost, const real_type cost, const std::size_t grid_x_offset, const std::size_t grid_y_offset, Args... kernel_function_parameter) :

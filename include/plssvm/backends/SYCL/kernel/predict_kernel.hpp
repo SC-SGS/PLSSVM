@@ -40,6 +40,8 @@ class device_kernel_w_linear {
      * @param[in] num_sv the number of support vectors
      * @param[in] device_specific_num_sv the number of support vectors the current device is responsible for
      * @param[in] sv_offset the first support vector (row in @p alpha_d) the current device is responsible for
+     * @param[in] grid_x_offset the offset in x-dimension into the data points if more than one execution grid has to be used
+     * @param[in] grid_y_offset the offset in y-dimension into the data points if more than one execution grid has to be used
      */
     device_kernel_w_linear(::sycl::handler &cgh, real_type *w_d, const real_type *alpha_d, const real_type *sv_d, const std::size_t num_classes, const std::size_t num_sv, const std::size_t device_specific_num_sv, const std::size_t sv_offset, const std::size_t grid_x_offset, const std::size_t grid_y_offset) :
         data_cache_feature_{ ::sycl::range<2>{ static_cast<std::size_t>(FEATURE_BLOCK_SIZE), static_cast<std::size_t>(INTERNAL_BLOCK_SIZE) * static_cast<std::size_t>(THREAD_BLOCK_SIZE) }, cgh },
@@ -151,6 +153,8 @@ class device_kernel_predict_linear {
      * @param[in] num_classes the number of classes
      * @param[in] num_predict_points the number of data points to predict
      * @param[in] num_features the number of features per data point
+     * @param[in] grid_x_offset the offset in x-dimension into the data points if more than one execution grid has to be used
+     * @param[in] grid_y_offset the offset in y-dimension into the data points if more than one execution grid has to be used
      */
     device_kernel_predict_linear(::sycl::handler &cgh, real_type *prediction_d, const real_type *w_d, const real_type *rho_d, const real_type *predict_points_d, const std::size_t num_classes, const std::size_t num_predict_points, const std::size_t num_features, const std::size_t grid_x_offset, const std::size_t grid_y_offset) :
         data_cache_pp_{ ::sycl::range<2>{ static_cast<std::size_t>(FEATURE_BLOCK_SIZE), static_cast<std::size_t>(INTERNAL_BLOCK_SIZE) * static_cast<std::size_t>(THREAD_BLOCK_SIZE) }, cgh },
@@ -271,6 +275,8 @@ class device_kernel_predict {
      * @param[in] num_sv the number of support vectors
      * @param[in] num_predict_points the number of data points to predict
      * @param[in] num_features the number of features per data point
+     * @param[in] grid_x_offset the offset in x-dimension into the data points if more than one execution grid has to be used
+     * @param[in] grid_y_offset the offset in y-dimension into the data points if more than one execution grid has to be used
      * @param[in] kernel_function_parameter the parameters necessary to apply the @p kernel_function
      */
     device_kernel_predict(::sycl::handler &cgh, real_type *prediction_d, const real_type *alpha_d, const real_type *rho_d, const real_type *sv_d, const real_type *predict_points_d, const std::size_t num_classes, const std::size_t num_sv, const std::size_t num_predict_points, const std::size_t num_features, const std::size_t grid_x_offset, const std::size_t grid_y_offset, Args... kernel_function_parameter) :

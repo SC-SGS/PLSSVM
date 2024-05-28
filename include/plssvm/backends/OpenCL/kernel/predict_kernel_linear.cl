@@ -22,6 +22,8 @@
  * @param[in] num_sv the number of support vectors
  * @param[in] device_specific_num_sv the number of support vectors the current device is responsible for
  * @param[in] sv_offset the first support vector (row in @p alpha_d) the current device is responsible for
+ * @param[in] grid_x_offset the offset in x-dimension into the data points if more than one execution grid has to be used
+ * @param[in] grid_y_offset the offset in y-dimension into the data points if more than one execution grid has to be used
  */
 __kernel void device_kernel_w_linear(__global real_type *w_d, const __global real_type *alpha_d, const __global real_type *sv_d, const ulong num_classes, const ulong num_sv, const ulong device_specific_num_sv, const ulong sv_offset, const ulong grid_x_offset, const ulong grid_y_offset) {
     // cast values to 32-bit unsigned int values to prevent implicit conversions
@@ -92,6 +94,8 @@ __kernel void device_kernel_w_linear(__global real_type *w_d, const __global rea
  * @param[in] num_classes the number of classes
  * @param[in] num_predict_points the number of data points to predict
  * @param[in] num_features the number of features per data point
+ * @param[in] grid_x_offset the offset in x-dimension into the data points if more than one execution grid has to be used
+ * @param[in] grid_y_offset the offset in y-dimension into the data points if more than one execution grid has to be used
  */
 __kernel void device_kernel_predict_linear(__global real_type *prediction_d, const __global real_type *w_d, const __global real_type *rho_d, const __global real_type *predict_points_d, const ulong num_classes, const ulong num_predict_points, const ulong num_features, const ulong grid_x_offset, const ulong grid_y_offset) {
     // cast values to 32-bit unsigned int values to prevent implicit conversions

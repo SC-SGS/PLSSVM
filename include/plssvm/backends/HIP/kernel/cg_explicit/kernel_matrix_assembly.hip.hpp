@@ -23,19 +23,21 @@
 namespace plssvm::hip::detail {
 
 /**
-* @brief Create the explicit kernel matrix using the @p kernel_function.
-* @tparam kernel_function the type of the used kernel function
-* @tparam Args the types of the parameters necessary for the specific kernel function
-* @param[out] kernel_matrix_d the calculated kernel matrix
-* @param[in] data_d the data points to calculate the kernel matrix from
-* @param[in] num_rows the total number of data points (= total number of rows)
-* @param[in] device_num_rows the number of rows the current device is responsible for
-* @param[in] row_offset the first row in @p data_d the current device is responsible for
-* @param[in] num_features the number of features per data point
-* @param[in] q the vector used in the dimensional reduction
-* @param[in] QA_cost the scalar used in the dimensional reduction
-* @param[in] cost the cost factor the diagonal is scaled with
-* @param[in] kernel_function_parameter the parameters necessary to apply the @p kernel_function
+ * @brief Create the explicit kernel matrix using the @p kernel_function.
+ * @tparam kernel_function the type of the used kernel function
+ * @tparam Args the types of the parameters necessary for the specific kernel function
+ * @param[out] kernel_matrix_d the calculated kernel matrix
+ * @param[in] data_d the data points to calculate the kernel matrix from
+ * @param[in] num_rows the total number of data points (= total number of rows)
+ * @param[in] device_num_rows the number of rows the current device is responsible for
+ * @param[in] row_offset the first row in @p data_d the current device is responsible for
+ * @param[in] num_features the number of features per data point
+ * @param[in] q the vector used in the dimensional reduction
+ * @param[in] QA_cost the scalar used in the dimensional reduction
+ * @param[in] cost the cost factor the diagonal is scaled with
+ * @param[in] grid_x_offset the offset in x-dimension into the data points if more than one execution grid has to be used
+ * @param[in] grid_y_offset the offset in y-dimension into the data points if more than one execution grid has to be used
+ * @param[in] kernel_function_parameter the parameters necessary to apply the @p kernel_function
  */
 template <kernel_function_type kernel_function, typename... Args>
 __global__ void device_kernel_assembly(real_type *kernel_matrix_d, const real_type *data_d, const unsigned long long num_rows, const unsigned long long device_num_rows, const unsigned long long row_offset, const unsigned long long num_features, const real_type *q, const real_type QA_cost, const real_type cost, const unsigned long long grid_x_offset, const unsigned long long grid_y_offset, Args... kernel_function_parameter) {

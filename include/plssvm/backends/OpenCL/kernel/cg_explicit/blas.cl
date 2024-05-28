@@ -23,6 +23,8 @@
  * @param[in] B the matrix @p B
  * @param[in] beta the scalar beta value
  * @param[in,out] C the matrix @p C, also used as result matrix
+ * @param[in] grid_x_offset the offset in x-dimension into the data points if more than one execution grid has to be used
+ * @param[in] grid_y_offset the offset in y-dimension into the data points if more than one execution grid has to be used
  */
 __kernel void device_kernel_symm(const ulong num_rows, const ulong num_rhs, const ulong device_specific_num_rows, const ulong row_offset, const real_type alpha, const __global real_type *A, const __global real_type *B, const real_type beta, __global real_type *C, const ulong grid_x_offset, const ulong grid_y_offset) {
     // cast values to 32-bit unsigned int values to prevent implicit conversions
@@ -114,6 +116,8 @@ __kernel void device_kernel_symm(const ulong num_rows, const ulong num_rhs, cons
  * @param[in] B the matrix @p B
  * @param[in] beta the scalar beta value
  * @param[in,out] C the matrix @p C, also used as result matrix
+ * @param[in] grid_x_offset the offset in x-dimension into the data points if more than one execution grid has to be used
+ * @param[in] grid_y_offset the offset in y-dimension into the data points if more than one execution grid has to be used
  */
 __kernel void device_kernel_symm_mirror(const ulong num_rows, const ulong num_rhs, const ulong num_mirror_rows, const ulong device_specific_num_rows, const ulong row_offset, const real_type alpha, const __global real_type *A, const __global real_type *B, const real_type beta, __global real_type *C, const ulong grid_x_offset, const ulong grid_y_offset) {
     // cast values to 32-bit unsigned int values to prevent implicit conversions
@@ -187,6 +191,8 @@ __kernel void device_kernel_symm_mirror(const ulong num_rows, const ulong num_rh
  * @param[in] num_cols the number of columns in both matrices
  * @param[in,out] lhs the first matrix (updated inplace)
  * @param[in] rhs the second matrix
+ * @param[in] grid_x_offset the offset in x-dimension into the data points if more than one execution grid has to be used
+ * @param[in] grid_y_offset the offset in y-dimension into the data points if more than one execution grid has to be used
  */
 __kernel void device_kernel_inplace_matrix_add(const ulong num_cols, real_type __global *lhs, const real_type __global *rhs, const ulong grid_x_offset, const ulong grid_y_offset) {
     // cast all values to 64-bit unsigned long long to prevent potential 32-bit overflows
@@ -216,6 +222,8 @@ __kernel void device_kernel_inplace_matrix_add(const ulong num_cols, real_type _
  * @param[in] num_cols the number of columns in the matrix
  * @param[in,out] lhs the matrix (updated inplace)
  * @param[in] scale the value to scale
+ * @param[in] grid_x_offset the offset in x-dimension into the data points if more than one execution grid has to be used
+ * @param[in] grid_y_offset the offset in y-dimension into the data points if more than one execution grid has to be used
  */
 __kernel void device_kernel_inplace_matrix_scale(const ulong num_cols, real_type __global *lhs, const real_type scale, const ulong grid_x_offset, const ulong grid_y_offset) {
     // cast all values to 64-bit unsigned long long to prevent potential 32-bit overflows
