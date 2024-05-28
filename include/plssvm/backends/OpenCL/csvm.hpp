@@ -145,6 +145,7 @@ class csvm : public ::plssvm::detail::gpu_csvm<detail::device_ptr, detail::comma
     [[nodiscard]] std::size_t get_max_work_group_size(std::size_t device_id) const final;
     /**
      * @copydoc plssvm::detail::gpu_csvm::get_max_grid_size
+     * @note Uses hardcoded values: int32_t max for all dimensions on the CPU and int32_t max for the first dimension and uint16_t max for the remaining dimensions otherwise.
      */
     [[nodiscard]] ::plssvm::detail::dim_type get_max_grid_size(std::size_t device_id) const final;
 
