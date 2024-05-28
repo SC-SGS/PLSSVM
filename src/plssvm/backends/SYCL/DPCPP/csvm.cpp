@@ -9,7 +9,7 @@
 #include "plssvm/backends/SYCL/DPCPP/csvm.hpp"
 
 #include "plssvm/backend_types.hpp"                                                 // plssvm::backend_type
-#include "plssvm/backends/execution_range.hpp"                                      // plssvm::detail::dim_type
+#include "plssvm/backends/execution_range.hpp"                                      // plssvm::detail::{dim_type, execution_range}
 #include "plssvm/backends/SYCL/DPCPP/detail/device_ptr.hpp"                         // plssvm::dpcpp::detail::::device_ptr
 #include "plssvm/backends/SYCL/DPCPP/detail/queue_impl.hpp"                         // plssvm::dpcpp::detail::queue (PImpl implementation)
 #include "plssvm/backends/SYCL/DPCPP/detail/utility.hpp"                            // plssvm::dpcpp::detail::{get_device_list, device_synchronize, get_dpcpp_version}
@@ -169,6 +169,7 @@ std::size_t csvm::get_max_work_group_size(const std::size_t device_id) const {
 ::plssvm::detail::dim_type csvm::get_max_grid_size(const std::size_t device_id) const {
     PLSSVM_ASSERT(device_id < this->num_available_devices(), "Invalid device {} requested!", device_id);
 
+    // TODO: replace with standardized function if there will be one in the future
 #if defined(SYCL_EXT_ONEAPI_MAX_WORK_GROUP_QUERY)
     const ::sycl::id<3> native_range = devices_[device_id].impl->sycl_queue.get_device().get_info<::sycl::ext::oneapi::experimental::info::device::max_work_groups<3>>();
 #else

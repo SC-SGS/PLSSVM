@@ -9,6 +9,7 @@
 #include "plssvm/backends/OpenCL/csvm.hpp"
 
 #include "plssvm/backend_types.hpp"                         // plssvm::backend_type
+#include "plssvm/backends/execution_range.hpp"              // plssvm::detail::{dim_type, execution_range}
 #include "plssvm/backends/OpenCL/detail/command_queue.hpp"  // plssvm::opencl::detail::command_queue
 #include "plssvm/backends/OpenCL/detail/context.hpp"        // plssvm::opencl::detail::context
 #include "plssvm/backends/OpenCL/detail/device_ptr.hpp"     // plssvm::opencl::detail::device_ptr
@@ -244,6 +245,7 @@ std::size_t csvm::get_max_work_group_size(const std::size_t device_id) const {
 ::plssvm::detail::dim_type csvm::get_max_grid_size([[maybe_unused]] const std::size_t device_id) const {
     PLSSVM_ASSERT(device_id < this->num_available_devices(), "Invalid device {} requested!", device_id);
 
+    // TODO: replace with function if there will be one in the future
     // fallback to maximum theoretical value, may break at runtime!
     ::plssvm::detail::dim_type native_range{};
     const std::size_t max_int32 = std::numeric_limits<std::int32_t>::max();

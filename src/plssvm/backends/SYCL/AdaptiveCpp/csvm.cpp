@@ -9,6 +9,7 @@
 #include "plssvm/backends/SYCL/AdaptiveCpp/csvm.hpp"
 
 #include "plssvm/backend_types.hpp"                                                 // plssvm::backend_type
+#include "plssvm/backends/execution_range.hpp"                                      // plssvm::detail::{dim_type, execution_range}
 #include "plssvm/backends/SYCL/AdaptiveCpp/detail/device_ptr.hpp"                   // plssvm::adaptivecpp::detail::::device_ptr
 #include "plssvm/backends/SYCL/AdaptiveCpp/detail/queue_impl.hpp"                   // plssvm::adaptivecpp::detail::queue (PImpl implementation)
 #include "plssvm/backends/SYCL/AdaptiveCpp/detail/utility.hpp"                      // plssvm::adaptivecpp::detail::{get_device_list, device_synchronize, get_adaptivecpp_version_short, get_adaptivecpp_version}
@@ -183,6 +184,7 @@ std::size_t csvm::get_max_work_group_size(const std::size_t device_id) const {
 ::plssvm::detail::dim_type csvm::get_max_grid_size([[maybe_unused]] const std::size_t device_id) const {
     PLSSVM_ASSERT(device_id < this->num_available_devices(), "Invalid device {} requested!", device_id);
 
+    // TODO: replace with function if there will be one in the future
     // fallback to maximum theoretical value, may break at runtime!
     ::sycl::id<3> native_range{};
     const std::size_t max_int32 = std::numeric_limits<std::int32_t>::max();

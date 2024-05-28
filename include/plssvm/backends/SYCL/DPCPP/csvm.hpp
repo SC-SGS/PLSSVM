@@ -32,6 +32,7 @@
 #include <cstddef>      // std::size_t
 #include <type_traits>  // std::is_same_v, std::true_type
 #include <utility>      // std::forward
+#include <vector>       // std::vector
 
 namespace plssvm {
 

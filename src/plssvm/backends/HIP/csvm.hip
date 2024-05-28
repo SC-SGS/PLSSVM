@@ -6,8 +6,10 @@
  *          See the LICENSE.md file in the project root for full license information.
  */
 
-#include "plssvm/backend_types.hpp"  // plssvm::backend_type
 #include "plssvm/backends/HIP/csvm.hpp"
+
+#include "plssvm/backend_types.hpp"                                                    // plssvm::backend_type
+#include "plssvm/backends/execution_range.hpp"                                         // plssvm::detail::{dim_type, execution_range}
 #include "plssvm/backends/HIP/detail/device_ptr.hip.hpp"                               // plssvm::hip::detail::device_ptr
 #include "plssvm/backends/HIP/detail/utility.hip.hpp"                                  // PLSSVM_HIP_ERROR_CHECK, plssvm::hip::detail::{device_synchronize, get_device_count, set_device, peek_at_last_error, get_runtime_version}
 #include "plssvm/backends/HIP/exceptions.hpp"                                          // plssvm::hip::backend_exception
