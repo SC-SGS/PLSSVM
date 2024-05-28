@@ -40,6 +40,7 @@
 #include "fmt/ostream.h"  // can use fmt using operator<< overloads
 
 #include <cstddef>    // std::size_t
+#include <cstdint>    // std::int32_t, std::uint16_t
 #include <exception>  // std::terminate
 #include <iostream>   // std::cout, std::endl
 #include <limits>     // std::numeric_limits::max
@@ -172,8 +173,14 @@ std::size_t csvm::get_max_work_group_size(const std::size_t device_id) const {
     const ::sycl::id<3> native_range = devices_[device_id].impl->sycl_queue.get_device().get_info<::sycl::ext::oneapi::experimental::info::device::max_work_groups<3>>();
 #else
     // fallback to maximum theoretical value, may break at runtime!
-    const std::size_t max_value = std::numeric_limits<std::size_t>::max();
-    const ::sycl::id<3> native_range{ max_value, max_value, max_value };
+    ::sycl::id<3> native_range{};
+    const std::size_t max_int32 = std::numeric_limits<std::int32_t>::max();
+    const std::size_t max_uint16 = std::numeric_limits<std::uint16_t>::max();
+    if (target_ == target_platform::cpu) {
+        native_range = ::sycl::id<3>{ max_int32, max_int32, max_int32 };
+    } else {
+        native_range = ::sycl::id<3>{ max_int32, max_uint16, max_uint16 };
+    }
 #endif
     // note: account for SYCL's different iteration range!
     return { native_range[2], native_range[1], native_range[0] };
