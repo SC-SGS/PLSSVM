@@ -337,7 +337,7 @@ pipeline {
                                             $([[ $BACKEND == CUDA ]] && echo "+cuda" || echo "~cuda") \
                                             $([[ $BACKEND == HIP ]] && echo "+hip" || echo "~hip") \
                                             $([[ $BACKEND == OPENCL ]] && echo "+opencl" || echo "~opencl") \
-                                            $([[ $BACKEND == ADAPTIVECPP ]] && echo "+adaptivecpp" || echo "~adaptivecpp") \
+                                            $([[ $BACKEND == ADAPTIVECPP ]] && echo "+adaptivecpp^llvm~gold" || echo "~adaptivecpp") \
                                             $([[ $BACKEND == DPCPP ]] && echo "+icpx" || echo "~icpx") \
                                             $([[ $ARCHITECTURE == NVIDIA ]] && echo "cuda_arch=86") \
                                             $([[ $ARCHITECTURE == AMD ]] && echo "amdgpu_target=gfx90a") \
