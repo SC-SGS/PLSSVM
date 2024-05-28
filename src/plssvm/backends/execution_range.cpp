@@ -56,7 +56,7 @@ execution_range::execution_range(const dim_type block_p, const unsigned long lon
     if (remaining_x > 0ull) {
         const unsigned long long num_grid_y = grid.y / max_allowed_grid_size.y;
         for (unsigned long long y = 0; y < num_grid_y; ++y) {
-            grids.emplace_back(dim_type{ std::min(grid.x, max_allowed_grid_size.x), std::min(grid.y, max_allowed_grid_size.y) }, dim_type{ num_grid_x * max_allowed_grid_size.x, y * max_allowed_grid_size.y });
+            grids.emplace_back(dim_type{ remaining_x, std::min(grid.y, max_allowed_grid_size.y) }, dim_type{ num_grid_x * max_allowed_grid_size.x, y * max_allowed_grid_size.y });
         }
         const unsigned long long remaining_y = grid.y % max_allowed_grid_size.y;
         if (remaining_y > 0ull) {
