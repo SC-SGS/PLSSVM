@@ -143,7 +143,7 @@ std::size_t csvm::get_max_work_group_size(const std::size_t device_id) const {
     PLSSVM_ASSERT(device_id < this->num_available_devices(), "Invalid device {} requested!", device_id);
     cudaDeviceProp prop{};
     PLSSVM_CUDA_ERROR_CHECK(cudaGetDeviceProperties(&prop, devices_[device_id]));
-     return { static_cast<std::size_t>(prop.maxGridSize[0]), static_cast<std::size_t>(prop.maxGridSize[1]), static_cast<std::size_t>(prop.maxGridSize[2]) };
+    return { static_cast<std::size_t>(prop.maxGridSize[0]), static_cast<std::size_t>(prop.maxGridSize[1]), static_cast<std::size_t>(prop.maxGridSize[2]) };
 }
 
 //***************************************************//
