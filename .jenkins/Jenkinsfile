@@ -111,12 +111,18 @@ pipeline {
                                         git pull || true
                                     fi
 
-
-
                                     if  [ ! -f $SPACK_SYSTEM_CONFIG_PATH/compilers.yaml ]; then
+                                        # TODO: check for existance of cxx and CC Compilers
                                         spack compiler find --scope system || true
+                                        # rm broken compiler
+                                        spack compiler rm -a gcc@10.5.0
                                         spack external find --scope system || true
                                     fi
+
+                                    if [[ -f ~/.spack/linux/compilers.yaml ]]; then
+                                        rm ~/.spack/linux/compilers.yaml
+                                    fi
+
 
                                     if [ ! -f $SPACK_SYSTEM_CONFIG_PATH/config.yaml ]; then
                                         touch  $SPACK_SYSTEM_CONFIG_PATH/config.yaml
