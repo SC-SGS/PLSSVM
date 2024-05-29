@@ -285,9 +285,8 @@ auto csvm::run_assemble_kernel_matrix_explicit(const std::size_t device_id, cons
 
     using namespace plssvm::operators;
 
-    for (const auto &grid : exec.grids) {
-        const auto [partial_grid, offsets] = grid;
-        // convert execution range grid[i] to OpenCL's native std::vector
+    for (const auto &[partial_grid, offsets] : exec.grids) {
+        // convert execution range partial_grid to OpenCL's native std::vector
         const std::vector<std::size_t> native_partial_grid = detail::dim_type_to_native<2>(partial_grid) * native_block;
 
         // cast offsets to OpenCL type
@@ -330,13 +329,12 @@ void csvm::run_blas_level_3_kernel_explicit(const std::size_t device_id, const :
     // get the offset of the data points this device is responsible for
     const cl_ulong row_offset = data_distribution_->place_row_offset(device_id);
 
+    // convert execution range block to OpenCL's native std::vector
+    const std::vector<std::size_t> native_block = detail::dim_type_to_native<2>(exec.block);
+
     using namespace plssvm::operators;
 
-    for (const auto &grid : exec.grids) {
-        // convert execution range block to OpenCL's native std::vector
-        const std::vector<std::size_t> native_block = detail::dim_type_to_native<2>(exec.block);
-
-        const auto [partial_grid, offsets] = grid;
+    for (const auto &[partial_grid, offsets] : exec.grids) {
         // convert execution range grid[i] to OpenCL's native std::vector
         const std::vector<std::size_t> native_partial_grid = detail::dim_type_to_native<2>(partial_grid) * native_block;
 
@@ -346,22 +344,22 @@ void csvm::run_blas_level_3_kernel_explicit(const std::size_t device_id, const :
 
         detail::run_kernel(device, device.get_kernel(detail::compute_kernel_name::symm_kernel_explicit), native_partial_grid, native_block, num_rows, num_rhs, device_specific_num_rows, row_offset, alpha, A_d.get(), B_d.get(), beta, C_d.get(), grid_offset_x, grid_offset_y);
     }
-    for (const auto &mirror_grid : mirror_exec.grids) {
+
+    // convert execution range block to OpenCL's native std::vector
+    const std::vector<std::size_t> native_mirror_block = detail::dim_type_to_native<2>(mirror_exec.block);
+
+    for (const auto &[partial_grid, offsets] : mirror_exec.grids) {
         const cl_ulong num_mirror_rows = num_rows - row_offset - device_specific_num_rows;
 
         if (num_mirror_rows > 0) {
-            // convert execution range block to OpenCL's native std::vector
-            const std::vector<std::size_t> native_block = detail::dim_type_to_native<2>(mirror_exec.block);
-
-            const auto [partial_grid, offsets] = mirror_grid;
             // convert execution range grid[i] to OpenCL's native std::vector
-            const std::vector<std::size_t> native_partial_grid = detail::dim_type_to_native<2>(partial_grid) * native_block;
+            const std::vector<std::size_t> native_partial_grid = detail::dim_type_to_native<2>(partial_grid) * native_mirror_block;
 
             // cast offsets to OpenCL type
             const cl_ulong grid_offset_x = offsets.x;
             const cl_ulong grid_offset_y = offsets.y;
 
-            detail::run_kernel(device, device.get_kernel(detail::compute_kernel_name::mirror_symm_kernel_explicit), native_partial_grid, native_block, num_rows, num_rhs, num_mirror_rows, device_specific_num_rows, row_offset, alpha, A_d.get(), B_d.get(), beta, C_d.get(), grid_offset_x, grid_offset_y);
+            detail::run_kernel(device, device.get_kernel(detail::compute_kernel_name::mirror_symm_kernel_explicit), native_partial_grid, native_mirror_block, num_rows, num_rhs, num_mirror_rows, device_specific_num_rows, row_offset, alpha, A_d.get(), B_d.get(), beta, C_d.get(), grid_offset_x, grid_offset_y);
         }
     }
     detail::device_synchronize(device);
@@ -376,9 +374,8 @@ void csvm::run_inplace_matrix_addition(const std::size_t device_id, const ::plss
 
     using namespace plssvm::operators;
 
-    for (const auto &grid : exec.grids) {
-        const auto [partial_grid, offsets] = grid;
-        // convert execution range grid[i] to OpenCL's native std::vector
+    for (const auto &[partial_grid, offsets] : exec.grids) {
+        // convert execution range partial_grid to OpenCL's native std::vector
         const std::vector<std::size_t> native_partial_grid = detail::dim_type_to_native<2>(partial_grid) * native_block;
 
         // cast offsets to OpenCL type
@@ -399,9 +396,8 @@ void csvm::run_inplace_matrix_scale(const std::size_t device_id, const ::plssvm:
 
     using namespace plssvm::operators;
 
-    for (const auto &grid : exec.grids) {
-        const auto [partial_grid, offsets] = grid;
-        // convert execution range grid[i] to OpenCL's native std::vector
+    for (const auto &[partial_grid, offsets] : exec.grids) {
+        // convert execution range partial_grid to OpenCL's native std::vector
         const std::vector<std::size_t> native_partial_grid = detail::dim_type_to_native<2>(partial_grid) * native_block;
 
         // cast offsets to OpenCL type
@@ -431,9 +427,8 @@ void csvm::run_assemble_kernel_matrix_implicit_blas_level_3(const std::size_t de
 
     using namespace plssvm::operators;
 
-    for (const auto &grid : exec.grids) {
-        const auto [partial_grid, offsets] = grid;
-        // convert execution range grid[i] to OpenCL's native std::vector
+    for (const auto &[partial_grid, offsets] : exec.grids) {
+        // convert execution range partial_grid to OpenCL's native std::vector
         const std::vector<std::size_t> native_partial_grid = detail::dim_type_to_native<2>(partial_grid) * native_block;
 
         // cast offsets to OpenCL type
@@ -485,9 +480,8 @@ auto csvm::run_w_kernel(const std::size_t device_id, const ::plssvm::detail::exe
 
     using namespace plssvm::operators;
 
-    for (const auto &grid : exec.grids) {
-        const auto [partial_grid, offsets] = grid;
-        // convert execution range grid[i] to OpenCL's native std::vector
+    for (const auto &[partial_grid, offsets] : exec.grids) {
+        // convert execution range partial_grid to OpenCL's native std::vector
         const std::vector<std::size_t> native_partial_grid = detail::dim_type_to_native<2>(partial_grid) * native_block;
 
         // cast offsets to OpenCL type
@@ -515,9 +509,8 @@ auto csvm::run_predict_kernel(const std::size_t device_id, const ::plssvm::detai
 
     using namespace plssvm::operators;
 
-    for (const auto &grid : exec.grids) {
-        const auto [partial_grid, offsets] = grid;
-        // convert execution range grid[i] to OpenCL's native std::vector
+    for (const auto &[partial_grid, offsets] : exec.grids) {
+        // convert execution range partial_grid to OpenCL's native std::vector
         const std::vector<std::size_t> native_partial_grid = detail::dim_type_to_native<2>(partial_grid) * native_block;
 
         // cast offsets to OpenCL type

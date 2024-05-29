@@ -171,9 +171,8 @@ auto csvm::run_assemble_kernel_matrix_explicit(const std::size_t device_id, cons
     const dim3 native_block = detail::dim_type_to_native(exec.block);
 
     detail::set_device(device);
-    for (const auto &grid : exec.grids) {
-        const auto [partial_grid, offsets] = grid;
-        // convert execution range grid[i] to HIP's native dim3
+    for (const auto &[partial_grid, offsets] : exec.grids) {
+        // convert execution range partial_grid to HIP's native dim3
         const dim3 native_partial_grid = detail::dim_type_to_native(partial_grid);
 
         switch (params.kernel_type) {
@@ -213,29 +212,28 @@ void csvm::run_blas_level_3_kernel_explicit(const std::size_t device_id, const :
     // get the offset of the data points this device is responsible for
     const unsigned long long row_offset = data_distribution_->place_row_offset(device_id);
 
-    detail::set_device(device);
-    for (const auto &grid : exec.grids) {
-        // convert execution range block to HIP's native dim3
-        const dim3 native_block = detail::dim_type_to_native(exec.block);
+    // convert execution range block to HIP's native dim3
+    const dim3 native_block = detail::dim_type_to_native(exec.block);
 
-        const auto [partial_grid, offsets] = grid;
-        // convert execution range grid[i] to HIP's native dim3
+    detail::set_device(device);
+    for (const auto &[partial_grid, offsets] : exec.grids) {
+        // convert execution range partial_grid to HIP's native dim3
         const dim3 native_partial_grid = detail::dim_type_to_native(partial_grid);
 
         detail::device_kernel_symm<<<native_partial_grid, native_block>>>(num_rows, num_rhs, device_specific_num_rows, row_offset, alpha, A_d.get(), B_d.get(), beta, C_d.get(), offsets.x, offsets.y);
     }
-    for (const auto &mirror_grid : mirror_exec.grids) {
+
+    // convert execution range block to HIP's native dim3
+    const dim3 native_mirror_block = detail::dim_type_to_native(mirror_exec.block);
+
+    for (const auto &[partial_grid, offsets] : mirror_exec.grids) {
         const unsigned long long num_mirror_rows = num_rows - row_offset - device_specific_num_rows;
 
         if (num_mirror_rows > 0) {
-            // convert execution range block to HIP's native dim3
-            const dim3 native_block = detail::dim_type_to_native(mirror_exec.block);
-
-            const auto [partial_grid, offsets] = mirror_grid;
-            // convert execution range grid[i] to HIP's native dim3
+            // convert execution range partial_grid to HIP's native dim3
             const dim3 native_partial_grid = detail::dim_type_to_native(partial_grid);
 
-            detail::device_kernel_symm_mirror<<<native_partial_grid, native_block>>>(num_rows, num_rhs, num_mirror_rows, device_specific_num_rows, row_offset, alpha, A_d.get(), B_d.get(), beta, C_d.get(), offsets.x, offsets.y);
+            detail::device_kernel_symm_mirror<<<native_partial_grid, native_mirror_block>>>(num_rows, num_rhs, num_mirror_rows, device_specific_num_rows, row_offset, alpha, A_d.get(), B_d.get(), beta, C_d.get(), offsets.x, offsets.y);
         }
     }
     detail::peek_at_last_error();
@@ -250,9 +248,8 @@ void csvm::run_inplace_matrix_addition(const std::size_t device_id, const ::plss
     const dim3 native_block = detail::dim_type_to_native(exec.block);
 
     detail::set_device(device);
-    for (const auto &grid : exec.grids) {
-        const auto [partial_grid, offsets] = grid;
-        // convert execution range grid[i] to HIP's native dim3
+    for (const auto &[partial_grid, offsets] : exec.grids) {
+        // convert execution range partial_grid to HIP's native dim3
         const dim3 native_partial_grid = detail::dim_type_to_native(partial_grid);
 
         detail::device_kernel_inplace_matrix_add<<<native_partial_grid, native_block>>>(num_rhs, lhs_d.get(), rhs_d.get(), offsets.x, offsets.y);
@@ -269,9 +266,8 @@ void csvm::run_inplace_matrix_scale(const std::size_t device_id, const ::plssvm:
     const dim3 native_block = detail::dim_type_to_native(exec.block);
 
     detail::set_device(device);
-    for (const auto &grid : exec.grids) {
-        const auto [partial_grid, offsets] = grid;
-        // convert execution range grid[i] to HIP's native dim3
+    for (const auto &[partial_grid, offsets] : exec.grids) {
+        // convert execution range partial_grid to HIP's native dim3
         const dim3 native_partial_grid = detail::dim_type_to_native(partial_grid);
 
         detail::device_kernel_inplace_matrix_scale<<<native_partial_grid, native_block>>>(num_rhs, lhs_d.get(), scale, offsets.x, offsets.y);
@@ -297,9 +293,8 @@ void csvm::run_assemble_kernel_matrix_implicit_blas_level_3(const std::size_t de
     const dim3 native_block = detail::dim_type_to_native(exec.block);
 
     detail::set_device(device);
-    for (const auto &grid : exec.grids) {
-        const auto [partial_grid, offsets] = grid;
-        // convert execution range grid[i] to HIP's native dim3
+    for (const auto &[partial_grid, offsets] : exec.grids) {
+        // convert execution range partial_grid to HIP's native dim3
         const dim3 native_partial_grid = detail::dim_type_to_native(partial_grid);
 
         switch (params.kernel_type) {
@@ -347,9 +342,8 @@ auto csvm::run_w_kernel(const std::size_t device_id, const ::plssvm::detail::exe
     const dim3 native_block = detail::dim_type_to_native(exec.block);
 
     detail::set_device(device);
-    for (const auto &grid : exec.grids) {
-        const auto [partial_grid, offsets] = grid;
-        // convert execution range grid[i] to HIP's native dim3
+    for (const auto &[partial_grid, offsets] : exec.grids) {
+        // convert execution range partial_grid to HIP's native dim3
         const dim3 native_partial_grid = detail::dim_type_to_native(partial_grid);
 
         detail::device_kernel_w_linear<<<native_partial_grid, native_block>>>(w_d.get(), alpha_d.get(), sv_d.get(), num_classes, num_sv, device_specific_num_sv, sv_offset, offsets.x, offsets.y);
@@ -373,9 +367,8 @@ auto csvm::run_predict_kernel(const std::size_t device_id, const ::plssvm::detai
     const dim3 native_block = detail::dim_type_to_native(exec.block);
 
     detail::set_device(device);
-    for (const auto &grid : exec.grids) {
-        const auto [partial_grid, offsets] = grid;
-        // convert execution range grid[i] to HIP's native dim3
+    for (const auto &[partial_grid, offsets] : exec.grids) {
+        // convert execution range partial_grid to HIP's native dim3
         const dim3 native_partial_grid = detail::dim_type_to_native(partial_grid);
 
         switch (params.kernel_type) {
