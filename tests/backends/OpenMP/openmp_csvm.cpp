@@ -149,7 +149,7 @@ TEST_F(OpenMPCSVM, blas_level_3_kernel_explicit) {
     const plssvm::real_type alpha{ 1.0 };
 
     // create kernel matrix to use in the BLAS calculation
-    const plssvm::parameter params{};
+    const plssvm::parameter params{ plssvm::gamma = plssvm::real_type{ 0.001 } };
     const plssvm::data_set data{ PLSSVM_TEST_FILE };
     const auto [q_red, QA_cost] = ground_truth::perform_dimensional_reduction(params, data.data());
 
@@ -227,19 +227,19 @@ TYPED_TEST(OpenMPCSVMKernelFunction, assemble_kernel_matrix_explicit) {
             plssvm::openmp::detail::device_kernel_assembly<plssvm::kernel_function_type::linear>(q_red, kernel_matrix, data_matr, QA_cost, cost);
             break;
         case plssvm::kernel_function_type::polynomial:
-            plssvm::openmp::detail::device_kernel_assembly<plssvm::kernel_function_type::polynomial>(q_red, kernel_matrix, data_matr, QA_cost, cost, params.degree.value(), params.gamma.value(), params.coef0.value());
+            plssvm::openmp::detail::device_kernel_assembly<plssvm::kernel_function_type::polynomial>(q_red, kernel_matrix, data_matr, QA_cost, cost, params.degree, std::get<plssvm::real_type>(params.gamma), params.coef0);
             break;
         case plssvm::kernel_function_type::rbf:
-            plssvm::openmp::detail::device_kernel_assembly<plssvm::kernel_function_type::rbf>(q_red, kernel_matrix, data_matr, QA_cost, cost, params.gamma.value());
+            plssvm::openmp::detail::device_kernel_assembly<plssvm::kernel_function_type::rbf>(q_red, kernel_matrix, data_matr, QA_cost, cost, std::get<plssvm::real_type>(params.gamma));
             break;
         case plssvm::kernel_function_type::sigmoid:
-            plssvm::openmp::detail::device_kernel_assembly<plssvm::kernel_function_type::sigmoid>(q_red, kernel_matrix, data_matr, QA_cost, cost, params.gamma.value(), params.coef0.value());
+            plssvm::openmp::detail::device_kernel_assembly<plssvm::kernel_function_type::sigmoid>(q_red, kernel_matrix, data_matr, QA_cost, cost, std::get<plssvm::real_type>(params.gamma), params.coef0);
             break;
         case plssvm::kernel_function_type::laplacian:
-            plssvm::openmp::detail::device_kernel_assembly<plssvm::kernel_function_type::laplacian>(q_red, kernel_matrix, data_matr, QA_cost, cost, params.gamma.value());
+            plssvm::openmp::detail::device_kernel_assembly<plssvm::kernel_function_type::laplacian>(q_red, kernel_matrix, data_matr, QA_cost, cost, std::get<plssvm::real_type>(params.gamma));
             break;
         case plssvm::kernel_function_type::chi_squared:
-            plssvm::openmp::detail::device_kernel_assembly<plssvm::kernel_function_type::chi_squared>(q_red, kernel_matrix, data_matr, QA_cost, cost, params.gamma.value());
+            plssvm::openmp::detail::device_kernel_assembly<plssvm::kernel_function_type::chi_squared>(q_red, kernel_matrix, data_matr, QA_cost, cost, std::get<plssvm::real_type>(params.gamma));
             break;
     }
     const std::vector<plssvm::real_type> correct_kernel_matrix = ground_truth::assemble_device_specific_kernel_matrix(params, data_matr, q_red, QA_cost, dist, 0);
@@ -280,19 +280,19 @@ TYPED_TEST(OpenMPCSVMKernelFunction, blas_level_3_kernel_implicit) {
             plssvm::openmp::detail::device_kernel_assembly_symm<plssvm::kernel_function_type::linear>(alpha, q_red, data_matr, QA_cost, cost, B, beta, C);
             break;
         case plssvm::kernel_function_type::polynomial:
-            plssvm::openmp::detail::device_kernel_assembly_symm<plssvm::kernel_function_type::polynomial>(alpha, q_red, data_matr, QA_cost, cost, B, beta, C, params.degree.value(), params.gamma.value(), params.coef0.value());
+            plssvm::openmp::detail::device_kernel_assembly_symm<plssvm::kernel_function_type::polynomial>(alpha, q_red, data_matr, QA_cost, cost, B, beta, C, params.degree, std::get<plssvm::real_type>(params.gamma), params.coef0);
             break;
         case plssvm::kernel_function_type::rbf:
-            plssvm::openmp::detail::device_kernel_assembly_symm<plssvm::kernel_function_type::rbf>(alpha, q_red, data_matr, QA_cost, cost, B, beta, C, params.gamma.value());
+            plssvm::openmp::detail::device_kernel_assembly_symm<plssvm::kernel_function_type::rbf>(alpha, q_red, data_matr, QA_cost, cost, B, beta, C, std::get<plssvm::real_type>(params.gamma));
             break;
         case plssvm::kernel_function_type::sigmoid:
-            plssvm::openmp::detail::device_kernel_assembly_symm<plssvm::kernel_function_type::sigmoid>(alpha, q_red, data_matr, QA_cost, cost, B, beta, C, params.gamma.value(), params.coef0.value());
+            plssvm::openmp::detail::device_kernel_assembly_symm<plssvm::kernel_function_type::sigmoid>(alpha, q_red, data_matr, QA_cost, cost, B, beta, C, std::get<plssvm::real_type>(params.gamma), params.coef0);
             break;
         case plssvm::kernel_function_type::laplacian:
-            plssvm::openmp::detail::device_kernel_assembly_symm<plssvm::kernel_function_type::laplacian>(alpha, q_red, data_matr, QA_cost, cost, B, beta, C, params.gamma.value());
+            plssvm::openmp::detail::device_kernel_assembly_symm<plssvm::kernel_function_type::laplacian>(alpha, q_red, data_matr, QA_cost, cost, B, beta, C, std::get<plssvm::real_type>(params.gamma));
             break;
         case plssvm::kernel_function_type::chi_squared:
-            plssvm::openmp::detail::device_kernel_assembly_symm<plssvm::kernel_function_type::chi_squared>(alpha, q_red, data_matr, QA_cost, cost, B, beta, C, params.gamma.value());
+            plssvm::openmp::detail::device_kernel_assembly_symm<plssvm::kernel_function_type::chi_squared>(alpha, q_red, data_matr, QA_cost, cost, B, beta, C, std::get<plssvm::real_type>(params.gamma));
             break;
     }
 
@@ -307,7 +307,10 @@ TYPED_TEST(OpenMPCSVMKernelFunction, blas_level_3_kernel_implicit) {
 TYPED_TEST(OpenMPCSVMKernelFunction, predict_values) {
     constexpr plssvm::kernel_function_type kernel = util::test_parameter_value_at_v<0, TypeParam>;
 
-    const plssvm::parameter params{ plssvm::kernel_type = kernel };
+    plssvm::parameter params{ plssvm::kernel_type = kernel };
+    if constexpr (kernel != plssvm::kernel_function_type::linear) {
+        params.gamma = plssvm::real_type{ 0.001 };
+    }
     const plssvm::data_set data{ PLSSVM_TEST_FILE };
     auto data_matr{ data.data() };
     if constexpr (kernel == plssvm::kernel_function_type::chi_squared) {
@@ -327,19 +330,19 @@ TYPED_TEST(OpenMPCSVMKernelFunction, predict_values) {
             plssvm::openmp::detail::device_kernel_predict_linear(out, correct_w, rho, predict_points);
             break;
         case plssvm::kernel_function_type::polynomial:
-            plssvm::openmp::detail::device_kernel_predict<plssvm::kernel_function_type::polynomial>(out, weights, rho, data_matr, predict_points, params.degree.value(), params.gamma.value(), params.coef0.value());
+            plssvm::openmp::detail::device_kernel_predict<plssvm::kernel_function_type::polynomial>(out, weights, rho, data_matr, predict_points, params.degree, std::get<plssvm::real_type>(params.gamma), params.coef0);
             break;
         case plssvm::kernel_function_type::rbf:
-            plssvm::openmp::detail::device_kernel_predict<plssvm::kernel_function_type::rbf>(out, weights, rho, data_matr, predict_points, params.gamma.value());
+            plssvm::openmp::detail::device_kernel_predict<plssvm::kernel_function_type::rbf>(out, weights, rho, data_matr, predict_points, std::get<plssvm::real_type>(params.gamma));
             break;
         case plssvm::kernel_function_type::sigmoid:
-            plssvm::openmp::detail::device_kernel_predict<plssvm::kernel_function_type::sigmoid>(out, weights, rho, data_matr, predict_points, params.gamma.value(), params.coef0.value());
+            plssvm::openmp::detail::device_kernel_predict<plssvm::kernel_function_type::sigmoid>(out, weights, rho, data_matr, predict_points, std::get<plssvm::real_type>(params.gamma), params.coef0);
             break;
         case plssvm::kernel_function_type::laplacian:
-            plssvm::openmp::detail::device_kernel_predict<plssvm::kernel_function_type::laplacian>(out, weights, rho, data_matr, predict_points, params.gamma.value());
+            plssvm::openmp::detail::device_kernel_predict<plssvm::kernel_function_type::laplacian>(out, weights, rho, data_matr, predict_points, std::get<plssvm::real_type>(params.gamma));
             break;
         case plssvm::kernel_function_type::chi_squared:
-            plssvm::openmp::detail::device_kernel_predict<plssvm::kernel_function_type::chi_squared>(out, weights, rho, data_matr, predict_points, params.gamma.value());
+            plssvm::openmp::detail::device_kernel_predict<plssvm::kernel_function_type::chi_squared>(out, weights, rho, data_matr, predict_points, std::get<plssvm::real_type>(params.gamma));
             break;
     }
 
@@ -423,22 +426,22 @@ TYPED_TEST(OpenMPCSVMKernelFunctionDeathTest, assemble_kernel_matrix_explicit) {
     const auto run_assembly = [=](const plssvm::parameter &params_p, const std::vector<plssvm::real_type> &q_red_p, std::vector<plssvm::real_type> &kernel_matrix_p, const plssvm::soa_matrix<plssvm::real_type> &data_p, const plssvm::real_type QA_cost_p) {
         switch (kernel) {
             case plssvm::kernel_function_type::linear:
-                plssvm::openmp::detail::device_kernel_assembly<plssvm::kernel_function_type::linear>(q_red_p, kernel_matrix_p, data_p, QA_cost_p, params_p.cost.value());
+                plssvm::openmp::detail::device_kernel_assembly<plssvm::kernel_function_type::linear>(q_red_p, kernel_matrix_p, data_p, QA_cost_p, params_p.cost);
                 break;
             case plssvm::kernel_function_type::polynomial:
-                plssvm::openmp::detail::device_kernel_assembly<plssvm::kernel_function_type::polynomial>(q_red_p, kernel_matrix_p, data_p, QA_cost_p, params_p.cost.value(), params_p.degree.value(), params_p.gamma.value(), params_p.coef0.value());
+                plssvm::openmp::detail::device_kernel_assembly<plssvm::kernel_function_type::polynomial>(q_red_p, kernel_matrix_p, data_p, QA_cost_p, params_p.cost, params_p.degree, std::get<plssvm::real_type>(params_p.gamma), params_p.coef0);
                 break;
             case plssvm::kernel_function_type::rbf:
-                plssvm::openmp::detail::device_kernel_assembly<plssvm::kernel_function_type::rbf>(q_red_p, kernel_matrix_p, data_p, QA_cost_p, params_p.cost.value(), params_p.gamma.value());
+                plssvm::openmp::detail::device_kernel_assembly<plssvm::kernel_function_type::rbf>(q_red_p, kernel_matrix_p, data_p, QA_cost_p, params_p.cost, std::get<plssvm::real_type>(params_p.gamma));
                 break;
             case plssvm::kernel_function_type::sigmoid:
-                plssvm::openmp::detail::device_kernel_assembly<plssvm::kernel_function_type::sigmoid>(q_red_p, kernel_matrix_p, data_p, QA_cost_p, params_p.cost.value(), params_p.gamma.value(), params_p.coef0.value());
+                plssvm::openmp::detail::device_kernel_assembly<plssvm::kernel_function_type::sigmoid>(q_red_p, kernel_matrix_p, data_p, QA_cost_p, params_p.cost, std::get<plssvm::real_type>(params_p.gamma), params_p.coef0);
                 break;
             case plssvm::kernel_function_type::laplacian:
-                plssvm::openmp::detail::device_kernel_assembly<plssvm::kernel_function_type::laplacian>(q_red_p, kernel_matrix_p, data_p, QA_cost_p, params_p.cost.value(), params_p.gamma.value());
+                plssvm::openmp::detail::device_kernel_assembly<plssvm::kernel_function_type::laplacian>(q_red_p, kernel_matrix_p, data_p, QA_cost_p, params_p.cost, std::get<plssvm::real_type>(params_p.gamma));
                 break;
             case plssvm::kernel_function_type::chi_squared:
-                plssvm::openmp::detail::device_kernel_assembly<plssvm::kernel_function_type::chi_squared>(q_red_p, kernel_matrix_p, data_p, QA_cost_p, params_p.cost.value(), params_p.gamma.value());
+                plssvm::openmp::detail::device_kernel_assembly<plssvm::kernel_function_type::chi_squared>(q_red_p, kernel_matrix_p, data_p, QA_cost_p, params_p.cost, std::get<plssvm::real_type>(params_p.gamma));
                 break;
         }
     };
@@ -477,22 +480,22 @@ TYPED_TEST(OpenMPCSVMKernelFunctionDeathTest, blas_level_3_kernel_implicit) {
     const auto run_assembly_symm = [=](const plssvm::parameter &params_p, const std::vector<plssvm::real_type> &q_red_p, const plssvm::soa_matrix<plssvm::real_type> &data_p, const plssvm::soa_matrix<plssvm::real_type> &B_p, plssvm::soa_matrix<plssvm::real_type> &C_p) {
         switch (kernel) {
             case plssvm::kernel_function_type::linear:
-                plssvm::openmp::detail::device_kernel_assembly_symm<plssvm::kernel_function_type::linear>(alpha, q_red_p, data_p, QA_cost, params_p.cost.value(), B_p, beta, C_p);
+                plssvm::openmp::detail::device_kernel_assembly_symm<plssvm::kernel_function_type::linear>(alpha, q_red_p, data_p, QA_cost, params_p.cost, B_p, beta, C_p);
                 break;
             case plssvm::kernel_function_type::polynomial:
-                plssvm::openmp::detail::device_kernel_assembly_symm<plssvm::kernel_function_type::polynomial>(alpha, q_red_p, data_p, QA_cost, params_p.cost.value(), B_p, beta, C_p, params_p.degree.value(), params_p.gamma.value(), params_p.coef0.value());
+                plssvm::openmp::detail::device_kernel_assembly_symm<plssvm::kernel_function_type::polynomial>(alpha, q_red_p, data_p, QA_cost, params_p.cost, B_p, beta, C_p, params_p.degree, std::get<plssvm::real_type>(params_p.gamma), params_p.coef0);
                 break;
             case plssvm::kernel_function_type::rbf:
-                plssvm::openmp::detail::device_kernel_assembly_symm<plssvm::kernel_function_type::rbf>(alpha, q_red_p, data_p, QA_cost, params_p.cost.value(), B_p, beta, C_p, params_p.gamma.value());
+                plssvm::openmp::detail::device_kernel_assembly_symm<plssvm::kernel_function_type::rbf>(alpha, q_red_p, data_p, QA_cost, params_p.cost, B_p, beta, C_p, std::get<plssvm::real_type>(params_p.gamma));
                 break;
             case plssvm::kernel_function_type::sigmoid:
-                plssvm::openmp::detail::device_kernel_assembly_symm<plssvm::kernel_function_type::sigmoid>(alpha, q_red_p, data_p, QA_cost, params_p.cost.value(), B_p, beta, C_p, params_p.gamma.value(), params_p.coef0.value());
+                plssvm::openmp::detail::device_kernel_assembly_symm<plssvm::kernel_function_type::sigmoid>(alpha, q_red_p, data_p, QA_cost, params_p.cost, B_p, beta, C_p, std::get<plssvm::real_type>(params_p.gamma), params_p.coef0);
                 break;
             case plssvm::kernel_function_type::laplacian:
-                plssvm::openmp::detail::device_kernel_assembly_symm<plssvm::kernel_function_type::laplacian>(alpha, q_red_p, data_p, QA_cost, params_p.cost.value(), B_p, beta, C_p, params_p.gamma.value());
+                plssvm::openmp::detail::device_kernel_assembly_symm<plssvm::kernel_function_type::laplacian>(alpha, q_red_p, data_p, QA_cost, params_p.cost, B_p, beta, C_p, std::get<plssvm::real_type>(params_p.gamma));
                 break;
             case plssvm::kernel_function_type::chi_squared:
-                plssvm::openmp::detail::device_kernel_assembly_symm<plssvm::kernel_function_type::chi_squared>(alpha, q_red_p, data_p, QA_cost, params_p.cost.value(), B_p, beta, C_p, params_p.gamma.value());
+                plssvm::openmp::detail::device_kernel_assembly_symm<plssvm::kernel_function_type::chi_squared>(alpha, q_red_p, data_p, QA_cost, params_p.cost, B_p, beta, C_p, std::get<plssvm::real_type>(params_p.gamma));
                 break;
         }
     };
@@ -518,7 +521,10 @@ TYPED_TEST(OpenMPCSVMKernelFunctionDeathTest, blas_level_3_kernel_implicit) {
 TYPED_TEST(OpenMPCSVMKernelFunctionDeathTest, predict_values) {
     constexpr plssvm::kernel_function_type kernel = util::test_parameter_value_at_v<0, TypeParam>;
 
-    const plssvm::parameter params{ plssvm::kernel_type = kernel };
+    plssvm::parameter params{ plssvm::kernel_type = kernel };
+    if constexpr (kernel != plssvm::kernel_function_type::linear) {
+        params.gamma = plssvm::real_type{ 0.001 };
+    }
     const plssvm::data_set data{ PLSSVM_TEST_FILE };
 
     const auto weights = util::generate_specific_matrix<plssvm::aos_matrix<plssvm::real_type>>(plssvm::shape{ 3, data.data().num_rows() }, plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE });
@@ -552,19 +558,19 @@ TYPED_TEST(OpenMPCSVMKernelFunctionDeathTest, predict_values) {
                     // unreachable
                     break;
                 case plssvm::kernel_function_type::polynomial:
-                    plssvm::openmp::detail::device_kernel_predict<plssvm::kernel_function_type::polynomial>(out_p, weights_p, rho_p, support_vectors_p, predict_points_p, params_p.degree.value(), params_p.gamma.value(), params_p.coef0.value());
+                    plssvm::openmp::detail::device_kernel_predict<plssvm::kernel_function_type::polynomial>(out_p, weights_p, rho_p, support_vectors_p, predict_points_p, params_p.degree, std::get<plssvm::real_type>(params_p.gamma), params_p.coef0);
                     break;
                 case plssvm::kernel_function_type::rbf:
-                    plssvm::openmp::detail::device_kernel_predict<plssvm::kernel_function_type::rbf>(out_p, weights_p, rho_p, support_vectors_p, predict_points_p, params_p.gamma.value());
+                    plssvm::openmp::detail::device_kernel_predict<plssvm::kernel_function_type::rbf>(out_p, weights_p, rho_p, support_vectors_p, predict_points_p, std::get<plssvm::real_type>(params_p.gamma));
                     break;
                 case plssvm::kernel_function_type::sigmoid:
-                    plssvm::openmp::detail::device_kernel_predict<plssvm::kernel_function_type::sigmoid>(out_p, weights_p, rho_p, support_vectors_p, predict_points_p, params_p.gamma.value(), params_p.coef0.value());
+                    plssvm::openmp::detail::device_kernel_predict<plssvm::kernel_function_type::sigmoid>(out_p, weights_p, rho_p, support_vectors_p, predict_points_p, std::get<plssvm::real_type>(params_p.gamma), params_p.coef0);
                     break;
                 case plssvm::kernel_function_type::laplacian:
-                    plssvm::openmp::detail::device_kernel_predict<plssvm::kernel_function_type::laplacian>(out_p, weights_p, rho_p, support_vectors_p, predict_points_p, params_p.gamma.value());
+                    plssvm::openmp::detail::device_kernel_predict<plssvm::kernel_function_type::laplacian>(out_p, weights_p, rho_p, support_vectors_p, predict_points_p, std::get<plssvm::real_type>(params_p.gamma));
                     break;
                 case plssvm::kernel_function_type::chi_squared:
-                    plssvm::openmp::detail::device_kernel_predict<plssvm::kernel_function_type::chi_squared>(out_p, weights_p, rho_p, support_vectors_p, predict_points_p, params_p.gamma.value());
+                    plssvm::openmp::detail::device_kernel_predict<plssvm::kernel_function_type::chi_squared>(out_p, weights_p, rho_p, support_vectors_p, predict_points_p, std::get<plssvm::real_type>(params_p.gamma));
                     break;
             }
         };

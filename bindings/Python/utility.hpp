@@ -16,6 +16,7 @@
 
 #include "plssvm/constants.hpp"       // plssvm::real_type, plssvm::PADDING_SIZE
 #include "plssvm/detail/utility.hpp"  // plssvm::detail::contains
+#include "plssvm/gamma.hpp"           // plssvm::gamma_type
 #include "plssvm/matrix.hpp"          // plssvm::matrix, plssvm::layout_type
 #include "plssvm/parameter.hpp"       // plssvm::parameter
 #include "plssvm/shape.hpp"           // plssvm::shape
@@ -29,6 +30,7 @@
 
 #include <cstring>      // std::memcpy
 #include <exception>    // std::exception_ptr, std::rethrow_exception
+#include <sstream>      // std::istringstream
 #include <string>       // std::string
 #include <string_view>  // std::string_view
 #include <type_traits>  // std::is_same_v, std::conditional_t
@@ -186,6 +188,32 @@ inline void check_kwargs_for_correctness(const py::kwargs &args, const std::vect
 }
 
 /**
+ * @brief Convert the `gamma` Python kwargs @p args to an `plssvm::gamma_type` object.
+ * @note Assumes that @p args contains the keyword argument `gamma`!
+ * @param[in] args the Python keyword arguments
+ * @return the `plssvm::gamma_type` object filled with the keyword @p args (`[[nodiscard]]`)
+ */
+[[nodiscard]] inline plssvm::gamma_type convert_gamma_kwarg_to_variant(const py::kwargs &args) {
+    if (py::isinstance<py::str>(args["gamma"])) {
+        // found a string
+        const auto str = args["gamma"].cast<std::string>();
+        std::istringstream is{ str };
+        plssvm::gamma_type gamma;
+        is >> gamma;
+        if (is.fail()) {
+            throw py::value_error{ fmt::format("When 'gamma' is a string, it should be either 'scale' or 'auto'. Got '{}' instead.", gamma) };
+        }
+        return gamma;
+    } else {
+        const auto gamma = args["gamma"].cast<plssvm::real_type>();
+        if (gamma <= plssvm::real_type{ 0.0 }) {
+            throw py::value_error{ fmt::format("gamma value must be > 0; {} is invalid. Use a positive number or use 'auto' to set gamma to a value of 1 / n_features.", gamma) };
+        }
+        return gamma;
+    }
+}
+
+/**
  * @brief Convert the Python kwargs @p args to an `plssvm::parameter` object.
  * @param[in] args the Python keyword arguments
  * @param[in] params the baseline parameter
@@ -193,19 +221,19 @@ inline void check_kwargs_for_correctness(const py::kwargs &args, const std::vect
  */
 [[nodiscard]] inline plssvm::parameter convert_kwargs_to_parameter(const py::kwargs &args, plssvm::parameter params = {}) {
     if (args.contains("kernel_type")) {
-        params.kernel_type = args["kernel_type"].cast<typename decltype(params.kernel_type)::value_type>();
+        params.kernel_type = args["kernel_type"].cast<decltype(params.kernel_type)>();
     }
     if (args.contains("degree")) {
-        params.degree = args["degree"].cast<typename decltype(params.degree)::value_type>();
+        params.degree = args["degree"].cast<decltype(params.degree)>();
     }
     if (args.contains("gamma")) {
-        params.gamma = args["gamma"].cast<typename decltype(params.gamma)::value_type>();
+        params.gamma = convert_gamma_kwarg_to_variant(args);
     }
     if (args.contains("coef0")) {
-        params.coef0 = args["coef0"].cast<typename decltype(params.coef0)::value_type>();
+        params.coef0 = args["coef0"].cast<decltype(params.coef0)>();
     }
     if (args.contains("cost")) {
-        params.cost = args["cost"].cast<typename decltype(params.cost)::value_type>();
+        params.cost = args["cost"].cast<decltype(params.cost)>();
     }
     return params;
 }

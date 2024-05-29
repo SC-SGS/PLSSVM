@@ -25,6 +25,7 @@
 #include "plssvm/default_value.hpp"                          // a small wrapper around default values
 #include "plssvm/exceptions/exceptions.hpp"                  // exception hierarchy
 #include "plssvm/file_format_types.hpp"                      // all supported file format types
+#include "plssvm/gamma.hpp"                                  // the types of the gamma parameter
 #include "plssvm/kernel_function_types.hpp"                  // all supported kernel function types
 #include "plssvm/kernel_functions.hpp"                       // implementation of all supported kernel functions
 #include "plssvm/matrix.hpp"                                 // a custom matrix class

@@ -31,16 +31,16 @@ namespace plssvm::openmp::detail {
  * @tparam kernel the compile-time kernel function to use
  * @tparam Args the types of the potential additional arguments for the @p kernel function
  * @param[in] q the `q` vector
- * @param[out] ret the resulting kernel matrix
+ * @param[out] kernel_matrix the resulting kernel matrix
  * @param[in] data the data matrix
  * @param[in] QA_cost he bottom right matrix entry multiplied by cost
  * @param[in] cost 1 / the cost parameter in the C-SVM
  * @param[in] kernel_function_parameter the potential additional arguments for the @p kernel function
  */
 template <kernel_function_type kernel, typename... Args>
-void device_kernel_assembly(const std::vector<real_type> &q, std::vector<real_type> &ret, const soa_matrix<real_type> &data, const real_type QA_cost, const real_type cost, Args... kernel_function_parameter) {
+void device_kernel_assembly(const std::vector<real_type> &q, std::vector<real_type> &kernel_matrix, const soa_matrix<real_type> &data, const real_type QA_cost, const real_type cost, Args... kernel_function_parameter) {
     PLSSVM_ASSERT(q.size() == data.num_rows() - 1, "Sizes mismatch!: {} != {}", q.size(), data.num_rows() - 1);
-    PLSSVM_ASSERT(ret.size() == (q.size() + PADDING_SIZE) * (q.size() + PADDING_SIZE + 1) / 2, "Sizes mismatch (SYMM)!: {} != {}", ret.size(), (q.size() + PADDING_SIZE) * (q.size() + PADDING_SIZE + 1) / 2);
+    PLSSVM_ASSERT(kernel_matrix.size() == (q.size() + PADDING_SIZE) * (q.size() + PADDING_SIZE + 1) / 2, "Sizes mismatch (SYMM)!: {} != {}", kernel_matrix.size(), (q.size() + PADDING_SIZE) * (q.size() + PADDING_SIZE + 1) / 2);
     PLSSVM_ASSERT(cost != real_type{ 0.0 }, "cost must not be 0.0 since it is 1 / plssvm::cost!");
 
     // calculate constants
@@ -51,6 +51,7 @@ void device_kernel_assembly(const std::vector<real_type> &q, std::vector<real_ty
     // cast all values to 64-bit unsigned long long to prevent potential 32-bit overflows
     const auto INTERNAL_BLOCK_SIZE_uz = static_cast<std::size_t>(INTERNAL_BLOCK_SIZE);
     const auto THREAD_BLOCK_SIZE_uz = static_cast<std::size_t>(THREAD_BLOCK_SIZE);
+    const auto PADDING_SIZE_uz = static_cast<std::size_t>(PADDING_SIZE);
 
 #pragma omp parallel for collapse(2) schedule(dynamic)
     for (std::size_t row = 0; row < blocked_dept; row += THREAD_BLOCK_SIZE_uz) {
@@ -96,7 +97,7 @@ void device_kernel_assembly(const std::vector<real_type> &q, std::vector<real_ty
                                         temp_ij += cost;
                                     }
                                     // update the kernel matrix
-                                    ret[global_col * (dept + PADDING_SIZE) + global_row - global_col * (global_col + 1) / 2] = temp_ij;
+                                    kernel_matrix[global_col * (dept + PADDING_SIZE_uz) + global_row - global_col * (global_col + std::size_t{ 1 }) / std::size_t{ 2 }] = temp_ij;
                                 }
                             }
                         }

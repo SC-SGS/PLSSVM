@@ -23,6 +23,7 @@
 #include "plssvm/detail/memory_size.hpp"        // plssvm::memory_size, custom literals
 #include "plssvm/detail/string_conversion.hpp"  // plssvm::detail::{convert_to, split_as}
 #include "plssvm/detail/string_utility.hpp"     // plssvm::detail::{trim, trim_left, to_lower_case}
+#include "plssvm/gamma.hpp"                     // plssvm::get_gamma_string
 #include "plssvm/kernel_function_types.hpp"     // plssvm::kernel_function_type
 #include "plssvm/matrix.hpp"                    // plssvm::soa_matrix
 #include "plssvm/parameter.hpp"                 // plssvm::parameter
@@ -170,6 +171,9 @@ template <typename label_type>
     bool rho_set{ false };
     bool label_set{ false };
     bool nr_sv_set{ false };
+    bool degree_provided{ false };
+    bool gamma_provided{ false };
+    bool coef0_provided{ false };
     std::size_t nr_class{};
     std::vector<label_type> labels{};
     std::vector<std::size_t> num_support_vectors_per_class{};
@@ -204,14 +208,17 @@ template <typename label_type>
                 // read the kernel_type
                 kernel_type_set = true;
             } else if (detail::starts_with(line, "gamma")) {
-                // parse gamma
-                params.gamma = detail::convert_to<typename decltype(params.gamma)::value_type>(value);
+                // parse gamma -> always use the real_type std::variant member here!
+                params.gamma = detail::convert_to<real_type>(value);
+                gamma_provided = true;
             } else if (detail::starts_with(line, "degree")) {
                 // parse degree
-                params.degree = detail::convert_to<typename decltype(params.degree)::value_type>(value);
+                params.degree = detail::convert_to<decltype(params.degree)>(value);
+                degree_provided = true;
             } else if (detail::starts_with(line, "coef0")) {
                 // parse coef0
-                params.coef0 = detail::convert_to<typename decltype(params.coef0)::value_type>(value);
+                params.coef0 = detail::convert_to<decltype(params.coef0)>(value);
+                coef0_provided = true;
             } else if (detail::starts_with(line, "nr_class")) {
                 // number of classes must be greater or equal than two
                 nr_class = detail::convert_to<unsigned long long>(value);
@@ -274,15 +281,15 @@ template <typename label_type>
         throw invalid_file_format_exception{ "Missing kernel_type!" };
     }
     // check provided values based on kernel_type
-    switch (params.kernel_type.value()) {
+    switch (params.kernel_type) {
         case plssvm::kernel_function_type::linear:
-            if (!params.degree.is_default()) {
+            if (degree_provided) {
                 throw invalid_file_format_exception{ "Explicitly provided a value for the degree parameter which is not used in the linear kernel!" };
             }
-            if (!params.gamma.is_default()) {
+            if (gamma_provided) {
                 throw invalid_file_format_exception{ "Explicitly provided a value for the gamma parameter which is not used in the linear kernel!" };
             }
-            if (!params.coef0.is_default()) {
+            if (coef0_provided) {
                 throw invalid_file_format_exception{ "Explicitly provided a value for the coef0 parameter which is not used in the linear kernel!" };
             }
             break;
@@ -291,15 +298,15 @@ template <typename label_type>
         case plssvm::kernel_function_type::rbf:
         case plssvm::kernel_function_type::laplacian:
         case plssvm::kernel_function_type::chi_squared:
-            if (!params.degree.is_default()) {
-                throw invalid_file_format_exception{ fmt::format("Explicitly provided a value for the degree parameter which is not used in the {} kernel!", params.kernel_type.value()) };
+            if (degree_provided) {
+                throw invalid_file_format_exception{ fmt::format("Explicitly provided a value for the degree parameter which is not used in the {} kernel!", params.kernel_type) };
             }
-            if (!params.coef0.is_default()) {
-                throw invalid_file_format_exception{ fmt::format("Explicitly provided a value for the coef0 parameter which is not used in the {} kernel!", params.kernel_type.value()) };
+            if (coef0_provided) {
+                throw invalid_file_format_exception{ fmt::format("Explicitly provided a value for the coef0 parameter which is not used in the {} kernel!", params.kernel_type) };
             }
             break;
         case plssvm::kernel_function_type::sigmoid:
-            if (!params.degree.is_default()) {
+            if (degree_provided) {
                 throw invalid_file_format_exception{ "Explicitly provided a value for the degree parameter which is not used in the sigmoid kernel!" };
             }
             break;
@@ -588,19 +595,19 @@ template <typename label_type>
     // save model file header
     std::string out_string = fmt::format("svm_type c_svc\nkernel_type {}\n", params.kernel_type);
     // save the SVM parameter information based on the used kernel_type
-    switch (params.kernel_type.value()) {
+    switch (params.kernel_type) {
         case kernel_function_type::linear:
             break;
         case kernel_function_type::polynomial:
-            out_string += fmt::format("degree {}\ngamma {}\ncoef0 {}\n", params.degree, params.gamma, params.coef0);
+            out_string += fmt::format("degree {}\ngamma {}\ncoef0 {}\n", params.degree, get_gamma_string(params.gamma), params.coef0);
             break;
         case kernel_function_type::rbf:
         case kernel_function_type::laplacian:
         case kernel_function_type::chi_squared:
-            out_string += fmt::format("gamma {}\n", params.gamma);
+            out_string += fmt::format("gamma {}\n", get_gamma_string(params.gamma));
             break;
         case kernel_function_type::sigmoid:
-            out_string += fmt::format("\ngamma {}\ncoef0 {}\n", params.gamma, params.coef0);
+            out_string += fmt::format("\ngamma {}\ncoef0 {}\n", get_gamma_string(params.gamma), params.coef0);
             break;
     }
 
@@ -736,7 +743,7 @@ inline void write_libsvm_model_data(const std::string &filename, const plssvm::p
 
     // format one output-line
     auto format_libsvm_line = [](std::string &output, const std::vector<real_type> &a, const soa_matrix<real_type> &d, const std::size_t point) {
-        static constexpr std::size_t STACK_BUFFER_SIZE = BLOCK_SIZE * CHARS_PER_BLOCK;
+        constexpr static std::size_t STACK_BUFFER_SIZE = BLOCK_SIZE * CHARS_PER_BLOCK;
         static std::array<char, STACK_BUFFER_SIZE> buffer{};
 #pragma omp threadprivate(buffer)
 

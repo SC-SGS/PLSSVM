@@ -99,24 +99,30 @@ pipeline {
 
                                     if [[ ! -d  "$SGSSCRATCH/spack" ]]; then
                                         cd $SGSSCRATCH
-                                        git clone https://github.com/spack/spack.git spack
+                                        git clone https://github.com/spack/spack.git spack || true
                                     fi
                                     source $SGSSCRATCH/spack/share/spack/setup-env.sh
                                     if [[ ! -d  "$SGSSCRATCH/PLSSVM-spack" ]]; then
                                         cd $SGSSCRATCH
-                                        git clone git@github.com:vancraar/PLSSVM-spack.git PLSSVM-spack
-                                        spack repo add $SGSSCRATCH/PLSSVM-spack
+                                        git clone git@github.com:vancraar/PLSSVM-spack.git PLSSVM-spack || true
+                                        spack repo add $SGSSCRATCH/PLSSVM-spack || true
                                     else
                                         cd $SGSSCRATCH/PLSSVM-spack
-                                        git pull
+                                        git pull || true
                                     fi
-
-
 
                                     if  [ ! -f $SPACK_SYSTEM_CONFIG_PATH/compilers.yaml ]; then
-                                        spack compiler find --scope system
-                                        spack external find --scope system
+                                        # TODO: check for existance of cxx and CC Compilers
+                                        spack compiler find --scope system || true
+                                        # rm broken compiler
+                                        spack compiler rm -a gcc@10.5.0
+                                        spack external find --scope system || true
                                     fi
+
+                                    if [[ -f ~/.spack/linux/compilers.yaml ]]; then
+                                        rm ~/.spack/linux/compilers.yaml
+                                    fi
+
 
                                     if [ ! -f $SPACK_SYSTEM_CONFIG_PATH/config.yaml ]; then
                                         touch  $SPACK_SYSTEM_CONFIG_PATH/config.yaml
@@ -127,6 +133,8 @@ pipeline {
                                         echo "  build_stage:" >> $SPACK_SYSTEM_CONFIG_PATH/config.yaml
                                         echo "      - /data/scratch/jenkins/spack_tmp" >> $SPACK_SYSTEM_CONFIG_PATH/config.yaml
                                     fi
+
+                                    spack uninstall -a -y plssvm@develop || true
                                 '''
 
 
@@ -134,10 +142,10 @@ pipeline {
 
                         }
                     }
-
+                    parallel builders
                 }
-            }
 
+            }
         }
 
 
@@ -215,6 +223,10 @@ pipeline {
                         name 'BUILD_TYPE'
                         values 'Release', 'Debug'
                     }
+                    axis {
+                        name 'TEST_TYPE'
+                        values 'BASE', 'BACKEND'
+                    }
                   }
                   excludes {
                     exclude {
@@ -267,6 +279,26 @@ pipeline {
                         values 'Debug'
                       }
                     }
+                    exclude {
+                      axis{
+                        name 'TEST_TYPE'
+                        values 'BASE'
+                      }
+                      axis{
+                        name 'ARCHITECTURE'
+                        notValues 'CPU'
+                      }
+                    }
+                    exclude {
+                      axis{
+                        name 'TEST_TYPE'
+                        values 'BASE'
+                      }
+                      axis{
+                        name 'BACKEND'
+                        notValues 'OPENMP'
+                      }
+                    }
                   }
 
 
@@ -277,62 +309,50 @@ pipeline {
                     stage('Build PLSSVM'){
                         steps{
                                 sh '''
-                                      export COMPILER=g++
-                                      export TARGET_PLATFORM=nvidia:sm_86
-                                      if [ ! "$NODE_NAME" == "pcsgs09" && ! "$NODE_NAME" == "pcsgs13" ]; then
-                                          . /usr/local.nfs/Modules/latest/init/sh
-                                          module load cuda/12.0.1
-                                      fi
-                                      source $SGSSCRATCH/spack/share/spack/setup-env.sh
-                                      if [ "$ARCHITECTURE" == "AMD" ]; then
-                                         export ROCM_PATH="/opt/rocm"
-                                         export LD_LIBRARY_PATH="${ROCM_PATH}/lib64:${ROCM_PATH}/lib:${ROCM_PATH}/opencl/lib/x86_64:${ROCM_PATH}/hsa/lib:${ROCM_PATH}/hip/lib:${LD_LIBRARY_PATH}"
-                                         export CPLUS_INCLUDE_PATH="${ROCM_PATH}/hip/include:${CPLUS_INCLUDE_PATH}"
-                                         export CMAKE_PREFIX_PATH="${ROCM_PATH}/hip:${ROCM_PATH}:${CMAKE_PREFIX_PATH}"
-                                         export TARGET_PLATFORM=amd:gfx906
-                                         export LIBRARY_PATH=$LD_LIBRARY_PATH
-                                      fi
+                                        if [ "$BUILD_TYPE" == Release ]; then
+                                            export NUM_DATA_POINTS=100
+                                            export NUM_FEATURES=20
+                                        else
+                                            export NUM_DATA_POINTS=20
+                                            export NUM_FEATURES=10
+                                        fi
 
-                                      if [ "$BUILD_TYPE" == Release ]; then
-                                          export NUM_DATA_POINTS=200
-                                          export NUM_FEATURES=100
-                                      else
-                                          export NUM_DATA_POINTS=20
-                                          export NUM_FEATURES=10
-                                      fi
+                                        source $SGSSCRATCH/spack/share/spack/setup-env.sh
+                                        cd ${WORKSPACE}/plssvm
 
+                                        spack uninstall -a -y plssvm@develop$([[ $BACKEND == ADAPTIVECPP ]] && echo "%clang" )  \
+                                            $([[ $BACKEND == OPENMP ]] && echo "+openmp" || echo "~openmp") \
+                                            $([[ $BACKEND == CUDA ]] && echo "+cuda" || echo "~cuda") \
+                                            $([[ $BACKEND == HIP ]] && echo "+hip" || echo "~hip") \
+                                            $([[ $BACKEND == OPENCL ]] && echo "+opencl" || echo "~opencl") \
+                                            $([[ $BACKEND == ADAPTIVECPP ]] && echo "+adaptivecpp" || echo "~adaptivecpp") \
+                                            $([[ $BACKEND == DPCPP ]] && echo "+icpx" || echo "~icpx") \
+                                            $([[ $ARCHITECTURE == NVIDIA ]] && echo "cuda_arch=86") \
+                                            $([[ $ARCHITECTURE == AMD ]] && echo "amdgpu_target=gfx90a") \
+                                            build_type=$BUILD_TYPE \
+                                            arch=$(spack arch) || true
 
-                                      cd ${WORKSPACE}/plssvm
-
-                                      spack uninstall -a -y plssvm@develop  \
-                                        $([[ $BACKEND == OPENMP ]] && echo "+openmp" || echo "~openmp") \
-                                        $([[ $BACKEND == CUDA ]] && echo "+cuda" || echo "~cuda") \
-                                        $([[ $BACKEND == HIP ]] && echo "+hip" || echo "~hip") \
-                                        $([[ $BACKEND == OPENCL ]] && echo "+opencl" || echo "~opencl") \
-                                        $([[ $BACKEND == ADAPTIVECPP ]] && echo "+adaptivecpp" || echo "~adaptivecpp") \
-                                        $([[ $BACKEND == DPCPP ]] && echo "+icpx" || echo "~icpx") \
-                                        $([[ $ARCHITECTURE == NVIDIA ]] && echo "cuda_arch=86") \
-                                        $([[ $ARCHITECTURE == AMD ]] && echo "amdgpu_target=gfx90a") \
-                                        build_type=$BUILD_TYPE || true
-
-                                      spack dev-build plssvm@develop$([[ $BACKEND == ADAPTIVECPP ]] && echo "%clang" \ # TODO debug gcc
-                                        $([[ $BACKEND == OPENMP ]] && echo "+openmp" || echo "~openmp") \
-                                        $([[ $BACKEND == CUDA ]] && echo "+cuda" || echo "~cuda") \
-                                        $([[ $BACKEND == HIP ]] && echo "+hip" || echo "~hip") \
-                                        $([[ $BACKEND == OPENCL ]] && echo "+opencl" || echo "~opencl") \
-                                        $([[ $BACKEND == ADAPTIVECPP ]] && echo "+adaptivecpp" || echo "~adaptivecpp") \
-                                        $([[ $BACKEND == DPCPP ]] && echo "+icpx" || echo "~icpx") \
-                                        $([[ $ARCHITECTURE == NVIDIA ]] && echo "cuda_arch=86") \
-                                        $([[ $ARCHITECTURE == AMD ]] && echo "amdgpu_target=gfx90a") \
-                                        +language_bindings \
-                                        +test_file \
-                                        test_file_num_classes=5 \
-                                        test_file_num_data_points=$NUM_DATA_POINTS \
-                                        test_file_num_features=$NUM_FEATURES \
-                                        +asserts \
-                                        build_type=$BUILD_TYPE \
-                                        $([[ $BACKEND == ADAPTIVECPP ]] && echo "^py-scipy%gcc" ) # TODO: remove, neads a fortran compiler and we currently have no flang installed \
-                                        $([[ $BACKEND == ADAPTIVECPP ]] && echo "^openblas%gcc" ) # TODO: remove, neads a fortran compiler and we currently have no flang installed
+                                        spack dev-build plssvm@develop$([[ $BACKEND == ADAPTIVECPP ]] && echo "%clang" ) \
+                                            $([[ $BACKEND == OPENMP ]] && echo "+openmp" || echo "~openmp") \
+                                            $([[ $BACKEND == CUDA ]] && echo "+cuda" || echo "~cuda") \
+                                            $([[ $BACKEND == HIP ]] && echo "+hip" || echo "~hip") \
+                                            $([[ $BACKEND == OPENCL ]] && echo "+opencl" || echo "~opencl") \
+                                            $([[ $BACKEND == ADAPTIVECPP ]] && echo "+adaptivecpp" || echo "~adaptivecpp") \
+                                            $([[ $BACKEND == DPCPP ]] && echo "+icpx" || echo "~icpx") \
+                                            $([[ $ARCHITECTURE == NVIDIA ]] && echo "cuda_arch=86") \
+                                            $([[ $ARCHITECTURE == AMD ]] && echo "amdgpu_target=gfx90a") \
+                                            +language_bindings \
+                                            +test_file \
+                                            test_file_num_classes=5 \
+                                            test_file_num_data_points=$NUM_DATA_POINTS \
+                                            test_file_num_features=$NUM_FEATURES \
+                                            +asserts \
+                                            ~fast-math \
+                                            arch=$(spack arch) \
+                                            build_type=$BUILD_TYPE \
+                                            $([[ $BACKEND == ADAPTIVECPP ]] && echo "^py-scipy%gcc" ) # TODO: remove, neads a fortran compiler and we currently have no flang installed \
+                                            $([[ $BACKEND == ADAPTIVECPP ]] && echo "^openblas%gcc" ) # TODO: remove, neads a fortran compiler and we currently have no flang installed \
+                                            $([[ $BACKEND == ADAPTIVECPP ]] && echo "^llvm~gold")
                                 '''
 
                         }
@@ -340,42 +360,81 @@ pipeline {
                     stage('Ctest PLSSVM'){
                         steps{
                             sh '''
-                                 if [ [ ! "$NODE_NAME" == "pcsgs09" ] && [ ! "$NODE_NAME" == "pcsgs13" ] ]; then
-                                     . /usr/local.nfs/Modules/latest/init/sh
-                                     module load cuda/12.0.1
-                                 fi
-                                if [ "$ARCHITECTURE" == "AMD" ]; then
-                                   export ROCM_PATH="/opt/rocm"
-                                   export LD_LIBRARY_PATH="${ROCM_PATH}/lib64:${ROCM_PATH}/lib:${ROCM_PATH}/opencl/lib/x86_64:${ROCM_PATH}/hsa/lib:${ROCM_PATH}/hip/lib:${LD_LIBRARY_PATH}"
-                                fi
+
                                 source $SGSSCRATCH/spack/share/spack/setup-env.sh
-                                installpath=$(spack location -i plssvm@develop \
+                                spack find package plssvm@develop
+                                echo $hostname
+                                installpath=$(spack location -i plssvm@develop$([[ $BACKEND == ADAPTIVECPP ]] && echo "%clang" ) \
                                     $([[ $BACKEND == OPENMP ]] && echo "+openmp" || echo "~openmp") \
                                     $([[ $BACKEND == CUDA ]] && echo "+cuda" || echo "~cuda") \
                                     $([[ $BACKEND == HIP ]] && echo "+hip" || echo "~hip") \
                                     $([[ $BACKEND == OPENCL ]] && echo "+opencl" || echo "~opencl") \
                                     $([[ $BACKEND == ADAPTIVECPP ]] && echo "+adaptivecpp" || echo "~adaptivecpp") \
                                     $([[ $BACKEND == DPCPP ]] && echo "+icpx" || echo "~icpx") \
-                                    $([[ $ARCHITECTURE == NVIDIA ]] && echo "cuda_arch=86" ) \
-                                    $([[ $ARCHITECTURE == AMD ]] && echo "amdgpu_target=gfx90a" ) \
-                                    build_type=$BUILD_TYPE)
+                                    $([[ $ARCHITECTURE == NVIDIA ]] && echo "cuda_arch=86") \
+                                    $([[ $ARCHITECTURE == AMD ]] && echo "amdgpu_target=gfx90a") \
+                                    build_type=$BUILD_TYPE \
+                                    arch=$(spack arch)) \
                                 install_hash=$( echo ${installpath} | rev | cut -d/ -f1| cut -d- -f1 | rev | head -c 7)
                                 cd ${WORKSPACE}/plssvm/build-$(spack arch)-${install_hash}/spack-build-${install_hash}
 
-                                spack test-env "plssvm@develop \
+                                if [[ $ARCHITECTURE == NVIDIA ]]; then
+                                    export ONEAPI_DEVICE_SELECTOR=cuda:*
+                                elif [[ $ARCHITECTURE == AMD ]]; then
+                                    export ONEAPI_DEVICE_SELECTOR=hip:*
+                                else
+                                    export ONEAPI_DEVICE_SELECTOR=*:cpu
+                                fi
+
+
+                                spack test-env "plssvm@develop $([[ $BACKEND == ADAPTIVECPP ]] && echo "%clang" )\
                                         $([[ $BACKEND == OPENMP ]] && echo "+openmp" || echo "~openmp") \
                                         $([[ $BACKEND == CUDA ]] && echo "+cuda" || echo "~cuda") \
                                         $([[ $BACKEND == HIP ]] && echo "+hip" || echo "~hip") \
                                         $([[ $BACKEND == OPENCL ]] && echo "+opencl" || echo "~opencl") \
                                         $([[ $BACKEND == ADAPTIVECPP ]] && echo "+adaptivecpp" || echo "~adaptivecpp") \
                                         $([[ $BACKEND == DPCPP ]] && echo "+icpx" || echo "~icpx") \
-                                        $([[ $ARCHITECTURE == NVIDIA ]] && echo "cuda_arch=86" ) \
+                                        $([[ $ARCHITECTURE == NVIDIA ]] && echo "cuda_arch=86") \
                                         $([[ $ARCHITECTURE == AMD ]] && echo "amdgpu_target=gfx90a") \
-                                        build_type=$BUILD_TYPE" \
-                                        ctest -j16 --output-on-failure --no-compress-output -T Test
+                                        build_type=$BUILD_TYPE \
+                                        arch=$(spack arch)" \
+                                        ctest -j8 --output-on-failure --no-compress-output -T Test  \
+                                        $([[ $TEST_TYPE == BASE ]] && echo \"-R "Base*\"" || echo "-E \"Base*\"")
+
+
                             '''
                         }
                     }
+                    stage('test installed PLSSVM'){
+                        steps{
+                            sh '''
+                                source $SGSSCRATCH/spack/share/spack/setup-env.sh
+
+                                cd ${WORKSPACE}/plssvm/test/data/libsvm
+
+                                spack load "plssvm@develop $([[ $BACKEND == ADAPTIVECPP ]] && echo "%clang" )\
+                                        $([[ $BACKEND == OPENMP ]] && echo "+openmp" || echo "~openmp") \
+                                        $([[ $BACKEND == CUDA ]] && echo "+cuda" || echo "~cuda") \
+                                        $([[ $BACKEND == HIP ]] && echo "+hip" || echo "~hip") \
+                                        $([[ $BACKEND == OPENCL ]] && echo "+opencl" || echo "~opencl") \
+                                        $([[ $BACKEND == ADAPTIVECPP ]] && echo "+adaptivecpp" || echo "~adaptivecpp") \
+                                        $([[ $BACKEND == DPCPP ]] && echo "+icpx" || echo "~icpx") \
+                                        $([[ $ARCHITECTURE == NVIDIA ]] && echo "cuda_arch=86") \
+                                        $([[ $ARCHITECTURE == AMD ]] && echo "amdgpu_target=gfx90a") \
+                                        build_type=$BUILD_TYPE \
+                                        arch=$(spack arch)"
+
+                                plssvm-scale --help
+                                plssvm-train 5x4.libsvm ${BACKEND}-${ARCHITECTURE}-${BUILD_TYPE}-${TEST_TYPE}.model
+                                plssvm-predict 5x4.libsvm ${BACKEND}-${ARCHITECTURE}-${BUILD_TYPE}-${TEST_TYPE}.model
+                                rm ${BACKEND}-${ARCHITECTURE}-${BUILD_TYPE}-${TEST_TYPE}.model
+
+
+
+                            '''
+                        }
+                    }
+
 
 
                     // stage('Test CMake Library integration'){

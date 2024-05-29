@@ -13,8 +13,8 @@ if (PLSSVM_SYCL_BACKEND_ADAPTIVECPP_USE_GENERIC_SSCP)
     set(ACPP_TARGETS "generic" CACHE STRING "" FORCE)
 else ()
     message(STATUS "Using the old AdaptiveCpp compilation flow.")
-    # reformat PLSSVM_TARGET_PLATFORMS to be usable with ACPP_TARGETS
-    set(ACPP_TARGETS "${PLSSVM_TARGET_PLATFORMS}" CACHE STRING "" FORCE)
+    # reformat PLSSVM_SYCL_TARGET_PLATFORMS to be usable with ACPP_TARGETS
+    set(ACPP_TARGETS "${PLSSVM_SYCL_TARGET_PLATFORMS}" CACHE STRING "" FORCE)
     list(TRANSFORM ACPP_TARGETS REPLACE "cpu" "omp.accelerated")
     list(TRANSFORM ACPP_TARGETS REPLACE "nvidia" "cuda")
     list(TRANSFORM ACPP_TARGETS REPLACE "amd" "hip")

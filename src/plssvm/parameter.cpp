@@ -10,9 +10,9 @@
 
 #include "plssvm/constants.hpp"                    // plssvm::real_type
 #include "plssvm/detail/arithmetic_type_name.hpp"  // plssvm::detail::arithmetic_type_name
+#include "plssvm/gamma.hpp"                        // plssvm::get_gamma_string
 
-#include "fmt/core.h"     // fmt::format
-#include "fmt/ostream.h"  // can use fmt using operator<< overloads
+#include "fmt/core.h"  // fmt::format
 
 #include <ostream>  // std::ostream
 
@@ -28,7 +28,7 @@ std::ostream &operator<<(std::ostream &out, const parameter &params) {
                "real_type                   {}\n",
                params.kernel_type,
                params.degree,
-               params.gamma,
+               get_gamma_string(params.gamma),
                params.coef0,
                params.cost,
                detail::arithmetic_type_name<real_type>());

@@ -14,10 +14,10 @@
 #pragma once
 
 #include "plssvm/constants.hpp"                                    // plssvm::real_type
-#include "plssvm/default_value.hpp"                                // plssvm::default_value, plssvm::is_default_value_v
 #include "plssvm/detail/igor_utility.hpp"                          // plssvm::detail::{has_only_named_args_v, get_value_from_named_parameter}
 #include "plssvm/detail/logging_without_performance_tracking.hpp"  // plssvm::detail::log_untracked
 #include "plssvm/detail/type_traits.hpp"                           // PLSSVM_REQUIRES, plssvm::detail::{remove_cvref_t, always_false_v}
+#include "plssvm/gamma.hpp"                                        // plssvm::gamma_type
 #include "plssvm/kernel_function_types.hpp"                        // plssvm::kernel_function_type, plssvm::kernel_function_type_to_math_string
 #include "plssvm/verbosity_levels.hpp"                             // plssvm::verbosity_level, plssvm::verbosity
 
@@ -84,31 +84,30 @@ constexpr bool has_only_sycl_parameter_named_args_v = !igor::has_other_than<Args
  */
 struct parameter {
     /**
-     * @brief Default construct a parameter set, i.e., each SVM parameter has its default value.
+     * @brief Default construct a parameter set.
      */
     constexpr parameter() noexcept = default;
 
     /**
-     * @brief Construct a parameter set by explicitly overwriting the SVM parameters' default values.
+     * @brief Construct a parameter.
      * @param[in] kernel_p the kernel type: linear, polynomial, or radial-basis functions (rbf)
      * @param[in] degree_p the degree used in the polynomial kernel function
      * @param[in] gamma_p the gamma used in the polynomial and rbf kernel functions
      * @param[in] coef0_p the coef0 used in the polynomial kernel function
      * @param[in] cost_p the cost used in all kernel functions
      */
-    constexpr parameter(const kernel_function_type kernel_p, const int degree_p, const real_type gamma_p, const real_type coef0_p, const real_type cost_p) noexcept {
-        // not in member initializer list since we want to override the default value
-        kernel_type = kernel_p;
-        degree = degree_p;
-        gamma = gamma_p;
-        coef0 = coef0_p;
-        cost = cost_p;
+    constexpr parameter(const kernel_function_type kernel_p, const int degree_p, const gamma_type gamma_p, const real_type coef0_p, const real_type cost_p) noexcept :
+        kernel_type{ kernel_p },
+        degree{ degree_p },
+        gamma{ gamma_p },
+        coef0{ coef0_p },
+        cost{ cost_p } {
     }
 
     /**
      * @brief Construct a parameter by using the values in @p params and overwriting all values using the provided named-parameters.
      * @tparam Args the type of the named-parameters
-     * @param[in] params the parameters used to overwrite the default values
+     * @param[in] params the parameters used
      * @param[in] named_args the potential named-parameters
      */
     template <typename... Args, PLSSVM_REQUIRES(detail::has_only_named_args_v<Args...>)>
@@ -118,7 +117,7 @@ struct parameter {
     }
 
     /**
-     * @brief Construct a parameter set by overwriting the SVM parameters' default values that are provided using named-parameters.
+     * @brief Construct a parameter using the provided named-parameters.
      * @tparam Args the type of the named-parameters
      * @param[in] named_args the potential named-parameters
      */
@@ -128,15 +127,15 @@ struct parameter {
     }
 
     /// The used kernel function: linear, polynomial, radial basis functions (rbf), sigmoid, laplacian, or chi-squared.
-    default_value<kernel_function_type> kernel_type{ default_init<kernel_function_type>{ kernel_function_type::rbf } };
+    kernel_function_type kernel_type{ kernel_function_type::rbf };
     /// The degree parameter used in the polynomial kernel function.
-    default_value<int> degree{ default_init<int>{ 3 } };
+    int degree{ 3 };
     /// The gamma parameter used in the polynomial, rbf, sigmoid, laplacian, or chi-squared kernel functions.
-    default_value<real_type> gamma{ default_init<real_type>{ 0.0 } };
+    gamma_type gamma{ gamma_coefficient_type::automatic };
     /// The coef0 parameter used in the polynomial or sigmoid kernel functions.
-    default_value<real_type> coef0{ default_init<real_type>{ 0.0 } };
+    real_type coef0{ 0.0 };
     /// The cost parameter in the C-SVM.
-    default_value<real_type> cost{ default_init<real_type>{ 1.0 } };
+    real_type cost{ 1.0 };
 
     /**
      * @brief Checks whether the current parameter set is **equivalent** to the one given by @p other.
@@ -153,7 +152,7 @@ struct parameter {
             return false;
         }
         // check member variables based on kernel type
-        switch (kernel_type.value()) {
+        switch (kernel_type) {
             case kernel_function_type::linear:
                 return cost == other.cost;
             case kernel_function_type::polynomial:
@@ -169,8 +168,10 @@ struct parameter {
     }
 
   private:
+    friend class csvm;
+
     /**
-     * @brief Overwrite the default values of this parameter object with the potential provided named-parameters @p named_args.
+     * @brief Overwrite the values of this parameter object with the potential provided named-parameters @p named_args.
      * @tparam Args the type of the named-parameters
      * @param[in] named_args the potential named-parameters
      */
@@ -199,11 +200,18 @@ struct parameter {
         // compile time/runtime check: the values must have the correct types
         if constexpr (parser.has(plssvm::kernel_type)) {
             // get the value of the provided named parameter
-            kernel_type = detail::get_value_from_named_parameter<typename decltype(kernel_type)::value_type>(parser, plssvm::kernel_type);
+            kernel_type = detail::get_value_from_named_parameter<decltype(kernel_type)>(parser, plssvm::kernel_type);
         }
         if constexpr (parser.has(plssvm::gamma)) {
             // get the value of the provided named parameter
-            gamma = detail::get_value_from_named_parameter<typename decltype(gamma)::value_type>(parser, plssvm::gamma);
+            if constexpr (std::is_same_v<detail::remove_cvref_t<decltype(parser(plssvm::gamma))>, gamma_type>) {
+                gamma = static_cast<gamma_type>(parser(plssvm::gamma));
+            } else if constexpr (std::is_same_v<detail::remove_cvref_t<decltype(parser(plssvm::gamma))>, gamma_coefficient_type>) {
+                gamma = static_cast<gamma_coefficient_type>(parser(plssvm::gamma));
+            } else {
+                gamma = detail::get_value_from_named_parameter<real_type>(parser, plssvm::gamma);
+            }
+            
             // runtime check: the value may only be used with a specific kernel type
             if (kernel_type == kernel_function_type::linear) {
                 print_warning("gamma", kernel_type);
@@ -211,7 +219,7 @@ struct parameter {
         }
         if constexpr (parser.has(plssvm::degree)) {
             // get the value of the provided named parameter
-            degree = detail::get_value_from_named_parameter<typename decltype(degree)::value_type>(parser, plssvm::degree);
+            degree = detail::get_value_from_named_parameter<decltype(degree)>(parser, plssvm::degree);
             // runtime check: the value may only be used with a specific kernel type
             if (kernel_type != kernel_function_type::polynomial) {
                 print_warning("degree", kernel_type);
@@ -219,7 +227,7 @@ struct parameter {
         }
         if constexpr (parser.has(plssvm::coef0)) {
             // get the value of the provided named parameter
-            coef0 = detail::get_value_from_named_parameter<typename decltype(coef0)::value_type>(parser, plssvm::coef0);
+            coef0 = detail::get_value_from_named_parameter<decltype(coef0)>(parser, plssvm::coef0);
             // runtime check: the value may only be used with a specific kernel type
             if (kernel_type != kernel_function_type::polynomial && kernel_type != kernel_function_type::sigmoid) {
                 print_warning("coef0", kernel_type);
@@ -227,7 +235,7 @@ struct parameter {
         }
         if constexpr (parser.has(plssvm::cost)) {
             // get the value of the provided named parameter
-            cost = detail::get_value_from_named_parameter<typename decltype(cost)::value_type>(parser, plssvm::cost);
+            cost = detail::get_value_from_named_parameter<decltype(cost)>(parser, plssvm::cost);
         }
     }
 };

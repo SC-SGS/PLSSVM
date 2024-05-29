@@ -13,7 +13,7 @@
 #include "plssvm/detail/cmd/parser_predict.hpp"     // plssvm::detail::cmd::parser_predict
 #include "plssvm/detail/logging.hpp"                // plssvm::detail::log
 #include "plssvm/detail/performance_tracker.hpp"    // plssvm::detail::tracking_entry, PLSSVM_DETAIL_PERFORMANCE_TRACKER_SAVE, PLSSVM_DETAIL_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY
-#include "plssvm/verbosity_levels.hpp"              // plssvm::verbosity_level
+#include "plssvm/detail/utility.hpp"                // PLSSVM_IS_DEFINED
 
 #include "fmt/format.h"  // fmt::print, fmt::join
 #include "fmt/os.h"      // fmt::ostream, fmt::output_file
@@ -32,6 +32,13 @@ int main(int argc, char *argv[]) {
 
         // parse SVM parameter from command line
         const plssvm::detail::cmd::parser_predict cmd_parser{ argc, argv };
+
+        // send warning if the build type is release and assertions are enabled
+        if constexpr (std::string_view{ PLSSVM_BUILD_TYPE } == "Release" && PLSSVM_IS_DEFINED(PLSSVM_ASSERT_ENABLED)) {
+            plssvm::detail::log(plssvm::verbosity_level::full | plssvm::verbosity_level::warning,
+                                "WARNING: The build type is set to Release, but assertions are enabled. "
+                                "This may result in a noticeable performance degradation in parts of PLSSVM!\n");
+        }
 
         // output used parameter
         plssvm::detail::log(plssvm::verbosity_level::full,
@@ -53,7 +60,7 @@ int main(int argc, char *argv[]) {
                                     "  kernel_type: {} -> {}\n",
                                     params.kernel_type,
                                     plssvm::kernel_function_type_to_math_string(params.kernel_type));
-                switch (params.kernel_type.value()) {
+                switch (params.kernel_type) {
                     case plssvm::kernel_function_type::linear:
                         break;
                     case plssvm::kernel_function_type::polynomial:
@@ -62,19 +69,19 @@ int main(int argc, char *argv[]) {
                                             "  gamma: {}\n"
                                             "  coef0: {}\n",
                                             params.degree,
-                                            params.gamma,
+                                            plssvm::get_gamma_string(params.gamma),
                                             params.coef0);
                         break;
                     case plssvm::kernel_function_type::rbf:
                     case plssvm::kernel_function_type::laplacian:
                     case plssvm::kernel_function_type::chi_squared:
-                        plssvm::detail::log(plssvm::verbosity_level::full, "  gamma: {}\n", params.gamma);
+                        plssvm::detail::log(plssvm::verbosity_level::full, "  gamma: {}\n", plssvm::get_gamma_string(params.gamma));
                         break;
                     case plssvm::kernel_function_type::sigmoid:
                         plssvm::detail::log(plssvm::verbosity_level::full,
                                             "  gamma: {}\n"
                                             "  coef0: {}\n",
-                                            params.gamma,
+                                            plssvm::get_gamma_string(params.gamma),
                                             params.coef0);
                         break;
                 }

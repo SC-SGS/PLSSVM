@@ -13,14 +13,14 @@
 #define PLSSVM_BACKENDS_SYCL_KERNEL_KERNEL_FUNCTIONS_HPP_
 #pragma once
 
-#include "plssvm/backends/SYCL/detail/standard_layout_tuple.hpp"  // plssvm::sycl::detail::standard_layout_tuple
-#include "plssvm/constants.hpp"                                   // plssvm::real_type
-#include "plssvm/detail/utility.hpp"                              // plssvm::detail::always_false_v
-#include "plssvm/kernel_function_types.hpp"                       // plssvm::kernel_function_type
+#include "plssvm/constants.hpp"              // plssvm::real_type
+#include "plssvm/detail/utility.hpp"         // plssvm::detail::always_false_v
+#include "plssvm/kernel_function_types.hpp"  // plssvm::kernel_function_type
 
-#include "sycl/sycl.hpp"  // sycl::pown, sycl::exp
+#include "sycl/sycl.hpp"  // sycl::pown, sycl::exp, sycl::tanh, sycl::fabs
 
 #include <limits>  // std::numeric_limits
+#include <tuple>   // std::tuple, std::get
 
 namespace plssvm::sycl::detail {
 
@@ -89,19 +89,19 @@ template <>
  * @return the result value (`[[nodiscard]]`)
  */
 template <kernel_function_type kernel_function, typename... Args>
-[[nodiscard]] inline real_type apply_kernel_function(const real_type value, const standard_layout_tuple<Args...> params) {
+[[nodiscard]] inline real_type apply_kernel_function(const real_type value, const std::tuple<Args...> params) {
     if constexpr (kernel_function == kernel_function_type::linear) {
         return value;
     } else if constexpr (kernel_function == kernel_function_type::polynomial) {
-        return ::sycl::pown(detail::get<1>(params) * value + detail::get<2>(params), detail::get<0>(params));
+        return ::sycl::pown(std::get<1>(params) * value + std::get<2>(params), std::get<0>(params));
     } else if constexpr (kernel_function == kernel_function_type::rbf) {
-        return ::sycl::exp(-detail::get<0>(params) * value);
+        return ::sycl::exp(-std::get<0>(params) * value);
     } else if constexpr (kernel_function == kernel_function_type::sigmoid) {
-        return ::sycl::tanh(detail::get<0>(params) * value + detail::get<1>(params));
+        return ::sycl::tanh(std::get<0>(params) * value + std::get<1>(params));
     } else if constexpr (kernel_function == kernel_function_type::laplacian) {
-        return ::sycl::exp(-detail::get<0>(params) * value);
+        return ::sycl::exp(-std::get<0>(params) * value);
     } else if constexpr (kernel_function == kernel_function_type::chi_squared) {
-        return ::sycl::exp(-detail::get<0>(params) * value);
+        return ::sycl::exp(-std::get<0>(params) * value);
     } else {
         static_assert(::plssvm::detail::always_false_v<Args...>, "Unsupported kernel function!");
     }

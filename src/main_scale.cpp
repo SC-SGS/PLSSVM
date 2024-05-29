@@ -13,7 +13,7 @@
 #include "plssvm/detail/cmd/parser_scale.hpp"       // plssvm::detail::cmd::parser_scale
 #include "plssvm/detail/logging.hpp"                // plssvm::detail::log
 #include "plssvm/detail/performance_tracker.hpp"    // plssvm::detail::tracking_entry,PLSSVM_DETAIL_PERFORMANCE_TRACKER_SAVE
-#include "plssvm/verbosity_levels.hpp"              // plssvm::verbosity_level
+#include "plssvm/detail/utility.hpp"                // PLSSVM_IS_DEFINED
 
 #include <chrono>     // std::chrono::{steady_clock, duration}
 #include <cstdlib>    // std::exit, EXIT_SUCCESS, EXIT_FAILURE
@@ -28,6 +28,13 @@ int main(int argc, char *argv[]) {
 
         // create default parameters
         const plssvm::detail::cmd::parser_scale cmd_parser{ argc, argv };
+
+        // send warning if the build type is release and assertions are enabled
+        if constexpr (std::string_view{ PLSSVM_BUILD_TYPE } == "Release" && PLSSVM_IS_DEFINED(PLSSVM_ASSERT_ENABLED)) {
+            plssvm::detail::log(plssvm::verbosity_level::full | plssvm::verbosity_level::warning,
+                                "WARNING: The build type is set to Release, but assertions are enabled. "
+                                "This may result in a noticeable performance degradation in parts of PLSSVM!\n");
+        }
 
         // output used parameter
         plssvm::detail::log(plssvm::verbosity_level::full,

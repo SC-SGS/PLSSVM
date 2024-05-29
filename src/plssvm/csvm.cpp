@@ -14,7 +14,9 @@
 #include "plssvm/detail/move_only_any.hpp"        // plssvm::detail::move_only_any
 #include "plssvm/detail/operators.hpp"            // plssvm operator overloads for vectors
 #include "plssvm/detail/performance_tracker.hpp"  // PLSSVM_DETAIL_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY, plssvm::detail::tracking_entry
+#include "plssvm/detail/utility.hpp"              // plssvm::detail::to_underlying
 #include "plssvm/exceptions/exceptions.hpp"       // plssvm::invalid_parameter_exception
+#include "plssvm/gamma.hpp"                       // plssvm::gamma_type
 #include "plssvm/kernel_function_types.hpp"       // plssvm::kernel_function_type
 #include "plssvm/kernel_functions.hpp"            // plssvm::kernel_function
 #include "plssvm/matrix.hpp"                      // plssvm::soa_matrix
@@ -32,6 +34,7 @@
 #include <numeric>     // std::inner_product
 #include <utility>     // std::move
 #include <utility>     // std::pair, std::make_pair
+#include <variant>     // std::holds_alternative, std::get
 #include <vector>      // std::vector
 
 namespace plssvm {
@@ -43,9 +46,9 @@ void csvm::sanity_check_parameter() const {
         throw invalid_parameter_exception{ fmt::format("Invalid kernel function with value {} given!", kernel_type_value) };
     }
 
-    // gamma: must be greater than 0 IF explicitly provided (not for the linear kernel
-    if (params_.kernel_type != kernel_function_type::linear && !params_.gamma.is_default() && params_.gamma.value() <= real_type{ 0.0 }) {
-        throw invalid_parameter_exception{ fmt::format("gamma must be greater than 0.0, but is {}!", params_.gamma) };
+    // gamma: must be greater than 0 IF explicitly provided as real_type (not for the linear kernel)
+    if (params_.kernel_type != kernel_function_type::linear && std::holds_alternative<real_type>(params_.gamma) && std::get<real_type>(params_.gamma) <= real_type{ 0.0 }) {
+        throw invalid_parameter_exception{ fmt::format("gamma must be greater than 0.0, but is {}!", std::get<real_type>(params_.gamma)) };
     }
     // degree: all allowed
     // coef0: all allowed
@@ -98,6 +101,15 @@ std::pair<soa_matrix<real_type>, unsigned long long> csvm::conjugate_gradients(c
     const auto num_rhs_converged = [eps, &delta, &delta0]() {
         return static_cast<std::size_t>(std::inner_product(delta.cbegin(), delta.cend(), delta0.cbegin(), real_type{ 0.0 }, std::plus<>{}, [eps](const real_type d, const real_type d0) { return d <= eps * eps * d0; }));
     };
+    // calculate a mask for every converged right hand side
+    // -> 0 if the rhs already converged, 1 otherwise
+    const auto calculate_rhs_converged_mask = [eps, &delta, &delta0]() {
+        std::vector<int> mask(delta.size());
+        for (std::size_t i = 0; i < mask.size(); ++i) {
+            mask[i] = delta[i] <= eps * eps * delta0[i] ? 0 : 1;
+        }
+        return mask;
+    };
 
     unsigned long long iter = 0;
     while (iter < max_cg_iter && num_rhs_converged() < num_rhs) {
@@ -120,14 +132,24 @@ std::pair<soa_matrix<real_type>, unsigned long long> csvm::conjugate_gradients(c
         // alpha = delta_new / (D^T * Q))
         const std::vector<real_type> alpha = delta / rowwise_dot(D, Q);
 
-        // create mask for the residual -> can't update X if the residual is already 0
-        std::vector<int> mask(alpha.size(), 0);
+        // create mask for the residual -> only update X if the respective rhs did not already converge
+        std::vector<int> mask = calculate_rhs_converged_mask();
+        // update mask -> can't update X if the residual is already 0
 #pragma omp parallel for shared(R, mask)
         for (std::size_t row = 0; row < R.num_rows(); ++row) {
-            for (std::size_t col = 0; col < R.num_cols(); ++col) {
-                if (R(row, col) != real_type{ 0.0 }) {
-                    mask[row] = 1;
-                    break;
+            // if mask[row] == 0 -> rhs already converged -> X wouldn't be updated either way
+            if (mask[row] == 1) {
+                // check if any residual value is not zero
+                bool is_residual_zero = true;
+                for (std::size_t col = 0; col < R.num_cols(); ++col) {
+                    if (R(row, col) != real_type{ 0.0 }) {
+                        is_residual_zero = false;
+                        break;
+                    }
+                }
+                // all residual values are 0 -> residual is 0 -> can't updated X for this rhs!
+                if (is_residual_zero) {
+                    mask[row] = 0;
                 }
             }
         }
@@ -195,7 +217,7 @@ std::pair<std::vector<real_type>, real_type> csvm::perform_dimensional_reduction
 
     // create q_red vector and calculate QA_costs
     std::vector<real_type> q_red(num_rows_reduced);
-    switch (params.kernel_type.value()) {
+    switch (params.kernel_type) {
         case kernel_function_type::linear:
 #pragma omp parallel for default(none) shared(q_red, A) firstprivate(num_rows_reduced)
             for (std::size_t i = 0; i < num_rows_reduced; ++i) {
@@ -205,31 +227,31 @@ std::pair<std::vector<real_type>, real_type> csvm::perform_dimensional_reduction
         case kernel_function_type::polynomial:
 #pragma omp parallel for default(none) shared(q_red, A, params) firstprivate(num_rows_reduced)
             for (std::size_t i = 0; i < num_rows_reduced; ++i) {
-                q_red[i] = kernel_function<kernel_function_type::polynomial>(A, i, A, num_rows_reduced, params.degree.value(), params.gamma.value(), params.coef0.value());
+                q_red[i] = kernel_function<kernel_function_type::polynomial>(A, i, A, num_rows_reduced, params.degree, std::get<real_type>(params.gamma), params.coef0);
             }
             break;
         case kernel_function_type::rbf:
 #pragma omp parallel for default(none) shared(q_red, A, params) firstprivate(num_rows_reduced)
             for (std::size_t i = 0; i < num_rows_reduced; ++i) {
-                q_red[i] = kernel_function<kernel_function_type::rbf>(A, i, A, num_rows_reduced, params.gamma.value());
+                q_red[i] = kernel_function<kernel_function_type::rbf>(A, i, A, num_rows_reduced, std::get<real_type>(params.gamma));
             }
             break;
         case kernel_function_type::sigmoid:
 #pragma omp parallel for default(none) shared(q_red, A, params) firstprivate(num_rows_reduced)
             for (std::size_t i = 0; i < num_rows_reduced; ++i) {
-                q_red[i] = kernel_function<kernel_function_type::sigmoid>(A, i, A, num_rows_reduced, params.gamma.value(), params.coef0.value());
+                q_red[i] = kernel_function<kernel_function_type::sigmoid>(A, i, A, num_rows_reduced, std::get<real_type>(params.gamma), params.coef0);
             }
             break;
         case kernel_function_type::laplacian:
 #pragma omp parallel for default(none) shared(q_red, A, params) firstprivate(num_rows_reduced)
             for (std::size_t i = 0; i < num_rows_reduced; ++i) {
-                q_red[i] = kernel_function<kernel_function_type::laplacian>(A, i, A, num_rows_reduced, params.gamma.value());
+                q_red[i] = kernel_function<kernel_function_type::laplacian>(A, i, A, num_rows_reduced, std::get<real_type>(params.gamma));
             }
             break;
         case kernel_function_type::chi_squared:
 #pragma omp parallel for default(none) shared(q_red, A, params) firstprivate(num_rows_reduced)
             for (std::size_t i = 0; i < num_rows_reduced; ++i) {
-                q_red[i] = kernel_function<kernel_function_type::chi_squared>(A, i, A, num_rows_reduced, params.gamma.value());
+                q_red[i] = kernel_function<kernel_function_type::chi_squared>(A, i, A, num_rows_reduced, std::get<real_type>(params.gamma));
             }
             break;
     }
