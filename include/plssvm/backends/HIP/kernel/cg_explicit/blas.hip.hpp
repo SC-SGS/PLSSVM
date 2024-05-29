@@ -31,9 +31,9 @@ namespace plssvm::hip::detail {
  * @param[in] A the matrix @p A
  * @param[in] B the matrix @p B
  * @param[in] beta the scalar beta value
+ * @param[in,out] C the matrix @p C, also used as result matrix
  * @param[in] grid_x_offset the offset in x-dimension into the data points if more than one execution grid has to be used
  * @param[in] grid_y_offset the offset in y-dimension into the data points if more than one execution grid has to be used
- * @param[in,out] C the matrix @p C, also used as result matrix
  */
 __global__ void device_kernel_symm(const unsigned long long num_rows, const unsigned long long num_rhs, const unsigned long long device_specific_num_rows, const unsigned long long row_offset, const real_type alpha, const real_type *A, const real_type *B, const real_type beta, real_type *C, const unsigned long long grid_x_offset, const unsigned long long grid_y_offset) {
     // cast all values to 64-bit unsigned long long to prevent potential 32-bit overflows
