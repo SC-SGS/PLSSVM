@@ -351,7 +351,8 @@ pipeline {
                                             arch=$(spack arch) \
                                             build_type=$BUILD_TYPE \
                                             $([[ $BACKEND == ADAPTIVECPP ]] && echo "^py-scipy%gcc" ) # TODO: remove, neads a fortran compiler and we currently have no flang installed \
-                                            $([[ $BACKEND == ADAPTIVECPP ]] && echo "^openblas%gcc" ) # TODO: remove, neads a fortran compiler and we currently have no flang installed
+                                            $([[ $BACKEND == ADAPTIVECPP ]] && echo "^openblas%gcc" ) # TODO: remove, neads a fortran compiler and we currently have no flang installed \
+                                            $([[ $BACKEND == ADAPTIVECPP ]] && echo "^llvm~gold")
                                 '''
 
                         }
