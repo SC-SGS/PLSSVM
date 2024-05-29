@@ -276,42 +276,42 @@ void csvm::run_blas_level_3_kernel_explicit(const std::size_t device_id, const :
     // get the offset of the data points this device is responsible for
     const std::size_t row_offset = data_distribution_->place_row_offset(device_id);
 
-    // convert execution range block to SYCL's native range<2>
-    const ::sycl::range native_block = detail::dim_type_to_native<2>(exec.block);
+    for (const auto &grid : exec.grids) {
+        // convert execution range block to SYCL's native range<2>
+        const ::sycl::range native_block = detail::dim_type_to_native<2>(exec.block);
 
-    for (std::size_t i = 0; i < exec.grids.size(); ++i) {
-        {
+        // capturing structured bindings is a C++20 extension
+        ::plssvm::detail::dim_type partial_grid{};
+        ::plssvm::detail::dim_type offsets{};
+        std::tie(partial_grid, offsets) = grid;
+        // convert execution range grid[i] to SYCL's native range<2>
+        const ::sycl::range native_partial_grid = detail::dim_type_to_native<2>(partial_grid) * native_block;
+
+        const ::sycl::nd_range native_exec{ native_partial_grid, native_block };
+
+        device.impl->sycl_queue.submit([&](::sycl::handler &cgh) {
+            cgh.parallel_for(native_exec, sycl::detail::device_kernel_symm{ cgh, num_rows, num_rhs, device_specific_num_rows, row_offset, alpha, A_d.get(), B_d.get(), beta, C_d.get(), offsets.y, offsets.x });
+        });
+    }
+    for (const auto &mirror_grid : mirror_exec.grids) {
+        const unsigned long long num_mirror_rows = num_rows - row_offset - device_specific_num_rows;
+
+        if (num_mirror_rows > 0) {
+            // convert execution range block to SYCL's native range<2>
+            const ::sycl::range native_block = detail::dim_type_to_native<2>(mirror_exec.block);
+
             // capturing structured bindings is a C++20 extension
             ::plssvm::detail::dim_type partial_grid{};
             ::plssvm::detail::dim_type offsets{};
-            std::tie(partial_grid, offsets) = exec.grids[i];
+            std::tie(partial_grid, offsets) = mirror_grid;
             // convert execution range grid[i] to SYCL's native range<2>
             const ::sycl::range native_partial_grid = detail::dim_type_to_native<2>(partial_grid) * native_block;
 
             const ::sycl::nd_range native_exec{ native_partial_grid, native_block };
 
             device.impl->sycl_queue.submit([&](::sycl::handler &cgh) {
-                cgh.parallel_for(native_exec, sycl::detail::device_kernel_symm{ cgh, num_rows, num_rhs, device_specific_num_rows, row_offset, alpha, A_d.get(), B_d.get(), beta, C_d.get(), offsets.y, offsets.x });
+                cgh.parallel_for(native_exec, sycl::detail::device_kernel_symm_mirror{ cgh, num_rows, num_rhs, num_mirror_rows, device_specific_num_rows, row_offset, alpha, A_d.get(), B_d.get(), beta, C_d.get(), offsets.y, offsets.x });
             });
-        }
-
-        {
-            const unsigned long long num_mirror_rows = num_rows - row_offset - device_specific_num_rows;
-
-            if (num_mirror_rows > 0) {
-                // capturing structured bindings is a C++20 extension
-                ::plssvm::detail::dim_type partial_grid{};
-                ::plssvm::detail::dim_type offsets{};
-                std::tie(partial_grid, offsets) = mirror_exec.grids[i];
-                // convert execution range grid[i] to SYCL's native range<2>
-                const ::sycl::range native_partial_grid = detail::dim_type_to_native<2>(partial_grid) * native_block;
-
-                const ::sycl::nd_range native_exec{ native_partial_grid, native_block };
-
-                device.impl->sycl_queue.submit([&](::sycl::handler &cgh) {
-                    cgh.parallel_for(native_exec, sycl::detail::device_kernel_symm_mirror{ cgh, num_rows, num_rhs, num_mirror_rows, device_specific_num_rows, row_offset, alpha, A_d.get(), B_d.get(), beta, C_d.get(), offsets.y, offsets.x });
-                });
-            }
         }
     }
     detail::device_synchronize(device);

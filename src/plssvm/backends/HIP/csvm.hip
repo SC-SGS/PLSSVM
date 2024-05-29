@@ -213,29 +213,29 @@ void csvm::run_blas_level_3_kernel_explicit(const std::size_t device_id, const :
     // get the offset of the data points this device is responsible for
     const unsigned long long row_offset = data_distribution_->place_row_offset(device_id);
 
-    // convert execution range block to HIP's native dim3
-    const dim3 native_block = detail::dim_type_to_native(exec.block);
-
     detail::set_device(device);
-    for (std::size_t i = 0; i < exec.grids.size(); ++i) {
-        {
-            const auto [partial_grid, offsets] = exec.grids[i];
+    for (const auto &grid : exec.grids) {
+        // convert execution range block to HIP's native dim3
+        const dim3 native_block = detail::dim_type_to_native(exec.block);
+
+        const auto [partial_grid, offsets] = grid;
+        // convert execution range grid[i] to HIP's native dim3
+        const dim3 native_partial_grid = detail::dim_type_to_native(partial_grid);
+
+        detail::device_kernel_symm<<<native_partial_grid, native_block>>>(num_rows, num_rhs, device_specific_num_rows, row_offset, alpha, A_d.get(), B_d.get(), beta, C_d.get(), offsets.x, offsets.y);
+    }
+    for (const auto &mirror_grid : mirror_exec.grids) {
+        const unsigned long long num_mirror_rows = num_rows - row_offset - device_specific_num_rows;
+
+        if (num_mirror_rows > 0) {
+            // convert execution range block to HIP's native dim3
+            const dim3 native_block = detail::dim_type_to_native(mirror_exec.block);
+
+            const auto [partial_grid, offsets] = mirror_grid;
             // convert execution range grid[i] to HIP's native dim3
             const dim3 native_partial_grid = detail::dim_type_to_native(partial_grid);
 
-            detail::device_kernel_symm<<<native_partial_grid, native_block>>>(num_rows, num_rhs, device_specific_num_rows, row_offset, alpha, A_d.get(), B_d.get(), beta, C_d.get(), offsets.x, offsets.y);
-        }
-
-        {
-            const unsigned long long num_mirror_rows = num_rows - row_offset - device_specific_num_rows;
-
-            if (num_mirror_rows > 0) {
-                const auto [partial_grid, offsets] = mirror_exec.grids[i];
-                // convert execution range grid[i] to HIP's native dim3
-                const dim3 native_partial_grid = detail::dim_type_to_native(partial_grid);
-
-                detail::device_kernel_symm_mirror<<<native_partial_grid, native_block>>>(num_rows, num_rhs, num_mirror_rows, device_specific_num_rows, row_offset, alpha, A_d.get(), B_d.get(), beta, C_d.get(), offsets.x, offsets.y);
-            }
+            detail::device_kernel_symm_mirror<<<native_partial_grid, native_block>>>(num_rows, num_rhs, num_mirror_rows, device_specific_num_rows, row_offset, alpha, A_d.get(), B_d.get(), beta, C_d.get(), offsets.x, offsets.y);
         }
     }
     detail::peek_at_last_error();
