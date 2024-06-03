@@ -8,13 +8,18 @@
 
 #include "plssvm/version/version.hpp"  // plssvm::version::{name, version}, plssvm::version::detail::{target_platform, target_platform}
 
-#include "plssvm/backend_types.hpp"                       // plssvm::list_available_backends
-#include "plssvm/backends/SYCL/implementation_types.hpp"  // plssvm::sycl::detail::list_available_sycl_implementations
-#include "plssvm/target_platforms.hpp"                    // plssvm::list_available_target_platforms
-#include "plssvm/version/git_metadata/git_metadata.hpp"   // plssvm::version::git_metadata::{is_populated, commit_date, remote_url, branch, commit_sha1}
+#include "plssvm/backend_types.hpp"  // plssvm::list_available_backends
+#if defined(PLSSVM_HAS_STDPAR_BACKEND)
+    #include "plssvm/backends/stdpar/implementation_types.hpp"  // plssvm::stdpar::list_available_stdpar_implementations
+#endif
+#if defined(PLSSVM_HAS_SYCL_BACKEND)
+    #include "plssvm/backends/SYCL/implementation_types.hpp"  // plssvm::sycl::list_available_sycl_implementations
+#endif
+#include "plssvm/target_platforms.hpp"                   // plssvm::list_available_target_platforms
+#include "plssvm/version/git_metadata/git_metadata.hpp"  // plssvm::version::git_metadata::{is_populated, commit_date, remote_url, branch, commit_sha1}
 
-#include "fmt/core.h"     // fmt::format
-#include "fmt/format.h"   // fmt::join
+#include "fmt/core.h"    // fmt::format
+#include "fmt/format.h"  // fmt::join
 
 #include <optional>     // std::optional, std::make_optional, std::nullopt
 #include <string>       // std::string
@@ -43,6 +48,9 @@ std::string get_version_info(const std::string_view executable_name, const bool 
         backend_specifics += fmt::format("  available backends: {}\n", fmt::join(list_available_backends(), ", "));
 #if defined(PLSSVM_HAS_SYCL_BACKEND)
         backend_specifics += fmt::format("  available SYCL implementations: {}\n", fmt::join(::plssvm::sycl::list_available_sycl_implementations(), ", "));
+#endif
+#if defined(PLSSVM_HAS_STDPAR_BACKEND)
+        backend_specifics += fmt::format("  available stdpar implementations: {}\n", fmt::join(::plssvm::stdpar::list_available_stdpar_implementations(), ", "));
 #endif
     }
 

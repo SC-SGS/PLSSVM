@@ -23,7 +23,7 @@
  * @param[in] q the vector used in the dimensional reduction
  * @param[in] QA_cost the scalar used in the dimensional reduction
  * @param[in] cost the cost factor the diagonal is scaled with
- * @param[in] PLSSVM_OPENCL_KERNEL_FUNCTION_PARAMETER_LIST a placeholder that is used to string replace the correct kernel parameter (attention: no comma!)
+ * @param[in] PLSSVM_OPENCL_KERNEL_FUNCTION_PARAMETER_LIST a placeholder that is used to string replace the correct kernel parameter (attention: no comma!; Args... only added for Doxygen)
  */
 __kernel void device_kernel_assembly(__global real_type *kernel_matrix_d, const __global real_type *data_d, const ulong num_rows, const ulong device_num_rows, const ulong row_offset, const ulong num_features, const __global real_type *q, const real_type QA_cost, const real_type cost PLSSVM_OPENCL_KERNEL_FUNCTION_PARAMETER_LIST) {
     // cast values to 32-bit unsigned int values to prevent implicit conversions

@@ -12,7 +12,8 @@
 #include "plssvm/detail/assert.hpp"       // PLSSVM_ASSERT
 #include "plssvm/detail/memory_size.hpp"  // plssvm::detail::memory_size
 
-#include "fmt/format.h"  // fmt::format, fmt::join
+#include "fmt/core.h"    // fmt::format, fmt::runtime
+#include "fmt/format.h"  // fmt::join
 
 #include <algorithm>  // std::max, std::fill
 #include <cstddef>    // std::size_t
@@ -68,7 +69,7 @@ std::size_t data_distribution::num_places() const noexcept {
 }
 
 std::ostream &operator<<(std::ostream &out, const data_distribution &dist) {
-    return out << fmt::format("{ num_rows: {}, num_places: {}, dist: [{}] }", dist.num_rows(), dist.num_places(), fmt::join(dist.distribution(), ", "));
+    return out << fmt::format(fmt::runtime("{ num_rows: {}, num_places: {}, dist: [{}] }"), dist.num_rows(), dist.num_places(), fmt::join(dist.distribution(), ", "));
 }
 
 //*************************************************************************************************************************************//

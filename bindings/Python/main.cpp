@@ -33,6 +33,7 @@ void init_version(py::module_ &);
 void init_exceptions(py::module_ &, const py::exception<plssvm::exception> &);
 void init_csvm(py::module_ &);
 void init_openmp_csvm(py::module_ &, const py::exception<plssvm::exception> &);
+void init_stdpar_csvm(py::module_ &, const py::exception<plssvm::exception> &);
 void init_cuda_csvm(py::module_ &, const py::exception<plssvm::exception> &);
 void init_hip_csvm(py::module_ &, const py::exception<plssvm::exception> &);
 void init_opencl_csvm(py::module_ &, const py::exception<plssvm::exception> &);
@@ -75,6 +76,9 @@ PYBIND11_MODULE(plssvm, m) {
     // init bindings for the specific backends ONLY if the backend has been enabled
 #if defined(PLSSVM_HAS_OPENMP_BACKEND)
     init_openmp_csvm(m, base_exception);
+#endif
+#if defined(PLSSVM_HAS_STDPAR_BACKEND)
+    init_stdpar_csvm(m, base_exception);
 #endif
 #if defined(PLSSVM_HAS_CUDA_BACKEND)
     init_cuda_csvm(m, base_exception);

@@ -25,7 +25,7 @@ TEST(SYCLImplementationType, to_string) {
 }
 
 TEST(SYCLImplementationType, to_string_unknown) {
-    // check conversions to std::string from unknown file_format_type
+    // check conversions to std::string from unknown implementation_type
     EXPECT_CONVERSION_TO_STRING(static_cast<plssvm::sycl::implementation_type>(3), "unknown");
 }
 
@@ -44,7 +44,7 @@ TEST(SYCLImplementationType, from_string) {
 }
 
 TEST(SYCLImplementationType, from_string_unknown) {
-    // foo isn't a valid file_format_type
+    // foo isn't a valid implementation_type
     std::istringstream input{ "foo" };
     plssvm::sycl::implementation_type impl{};
     input >> impl;

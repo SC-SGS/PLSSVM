@@ -10,7 +10,7 @@
 
 #include "plssvm/constants.hpp"                          // plssvm::real_type, plssvm::THREAD_BLOCK_SIZE, plssvm::INTERNAL_BLOCK_SIZE, plssvm::FEATURE_BLOCK_SIZE, plssvm::PADDING_SIZE
 #include "plssvm/detail/arithmetic_type_name.hpp"        // plssvm::detail::arithmetic_type_name
-#include "plssvm/detail/assert.hpp"                      // PLSSVM_ASSERT, PLSSVM_ASSERT_ENABLED
+#include "plssvm/detail/assert.hpp"                      // PLSSVM_ASSERT
 #include "plssvm/detail/cmd/parser_predict.hpp"          // plssvm::detail::cmd::parser_predict
 #include "plssvm/detail/cmd/parser_scale.hpp"            // plssvm::detail::cmd::parser_scale
 #include "plssvm/detail/cmd/parser_train.hpp"            // plssvm::detail::cmd::parser_train
@@ -29,6 +29,18 @@
 #if __has_include(<unistd.h>)
     #include <unistd.h>  // gethostname, getlogin_r, sysconf, _SC_HOST_NAME_MAX, _SC_LOGIN_NAME_MAX
     #define PLSSVM_UNISTD_AVAILABLE
+#endif
+
+#if defined(PLSSVM_STDPAR_BACKEND_HAS_NVHPC) || defined(PLSSVM_STDPAR_BACKEND_HAS_HIPSTDPAR) || defined(PLSSVM_STDPAR_BACKEND_HAS_GNU_TBB)
+    #include "boost/version.hpp"  // BOOST_VERSION
+#endif
+
+#if defined(PLSSVM_STDPAR_BACKEND_HAS_INTEL_LLVM)
+    #include "oneapi/dpl/pstl/onedpl_config.h"  // ONEDPL_VERSION_MAJOR, ONEDPL_VERSION_MINOR, ONEDPL_VERSION_PATCH
+#endif
+
+#if defined(PLSSVM_STDPAR_BACKEND_HAS_ACPP) || defined(PLSSVM_STDPAR_BACKEND_HAS_GNU_TBB)
+    #include "tbb/tbb_stddef.h"  // TBB_VERSION_MAJOR, TBB_VERSION_MINOR
 #endif
 
 #include <algorithm>    // std::max
@@ -162,9 +174,11 @@ void performance_tracker::save(std::ostream &out) {
     constexpr std::string_view username{ "not available" };
 #endif
     // check whether asserts are enabled
-    constexpr bool assert_enabled = PLSSVM_IS_DEFINED(PLSSVM_ASSERT_ENABLED);
+    constexpr bool assert_enabled = PLSSVM_IS_DEFINED(PLSSVM_ENABLE_ASSERTS);
     // check whether LTO has been enabled
     constexpr bool lto_enabled = PLSSVM_IS_DEFINED(PLSSVM_LTO_SUPPORTED);
+    // check whether fast-math has been enabled
+    constexpr bool fast_math_enabled = PLSSVM_IS_DEFINED(PLSSVM_USE_FAST_MATH);
     // check whether the maximum allocatable memory size should be enforced
     constexpr bool enforce_max_mem_alloc_size = PLSSVM_IS_DEFINED(PLSSVM_ENFORCE_MAX_MEM_ALLOC_SIZE);
 
@@ -182,6 +196,7 @@ void performance_tracker::save(std::ostream &out) {
         "  user:                              {}\n"
         "  build_type:                        {}\n"
         "  LTO:                               {}\n"
+        "  fast-math:                         {}\n"
         "  asserts:                           {}\n"
         "  enforce_max_mem_alloc_size:        {}\n"
         "  THREAD_BLOCK_SIZE:                 {}\n"
@@ -196,6 +211,7 @@ void performance_tracker::save(std::ostream &out) {
         username.data(),
         PLSSVM_BUILD_TYPE,
         lto_enabled,
+        fast_math_enabled,
         assert_enabled,
         enforce_max_mem_alloc_size,
         THREAD_BLOCK_SIZE,
@@ -251,6 +267,26 @@ void performance_tracker::save(std::ostream &out) {
     const std::string igor_version{ "unknown" };
 #endif
 
+    // stdpar backend specific versions
+    // Boost version
+#if defined(PLSSVM_STDPAR_BACKEND_HAS_NVHPC) || defined(PLSSVM_STDPAR_BACKEND_HAS_HIPSTDPAR) || defined(PLSSVM_STDPAR_BACKEND_HAS_GNU_TBB)
+    const std::string boost_version = fmt::format("{}.{}.{}", BOOST_VERSION / 100'000, BOOST_VERSION / 100 % 1000, BOOST_VERSION % 100);
+#else
+    const std::string boost_version{ "unknown/unused" };
+#endif
+    // Intel oneDPL version
+#if defined(PLSSVM_STDPAR_BACKEND_HAS_INTEL_LLVM)
+    const std::string oneDPL_version = fmt::format("{}.{}.{}", ONEDPL_VERSION_MAJOR, ONEDPL_VERSION_MINOR, ONEDPL_VERSION_PATCH);
+#else
+    const std::string oneDPL_version{ "unknown/unused" };
+#endif
+    // Intel TBB version
+#if defined(PLSSVM_STDPAR_BACKEND_HAS_ACPP) || defined(PLSSVM_STDPAR_BACKEND_HAS_GNU_TBB)
+    const std::string tbb_version = fmt::format("{}.{}", TBB_VERSION_MAJOR, TBB_VERSION_MINOR);
+#else
+    const std::string tbb_version{ "unknown/unused" };
+#endif
+
     out << "dependencies:\n";
 
     // calculate the number of padding whitespaces for the dependencies category
@@ -278,11 +314,17 @@ void performance_tracker::save(std::ostream &out) {
         "  cxxopts_version: {}\n"
         "  fmt_version: {}\n"
         "  fast_float_version: {}\n"
-        "  igor_version: {}\n\n",
+        "  igor_version: {}\n"
+        "  boost_version: {}\n"
+        "  oneDPL_version: {}\n"
+        "  tbb_version: {}\n\n",
         fmt::format("{:<{}}\"{}\"", "", max_dependency_entry_name_length - 15, cxxopts_version),
         fmt::format("{:<{}}\"{}\"", "", max_dependency_entry_name_length - 11, fmt_version),
         fmt::format("{:<{}}\"{}\"", "", max_dependency_entry_name_length - 18, fast_float_version),
-        fmt::format("{:<{}}\"{}\"", "", max_dependency_entry_name_length - 12, igor_version));
+        fmt::format("{:<{}}\"{}\"", "", max_dependency_entry_name_length - 12, igor_version),
+        fmt::format("{:<{}}\"{}\"", "", max_dependency_entry_name_length - 13, boost_version),
+        fmt::format("{:<{}}\"{}\"", "", max_dependency_entry_name_length - 14, oneDPL_version),
+        fmt::format("{:<{}}\"{}\"", "", max_dependency_entry_name_length - 11, tbb_version));
 
     //*************************************************************************************************************************************//
     //                                                          other statistics                                                           //
@@ -333,7 +375,9 @@ const std::map<std::string, std::map<std::string, std::vector<std::string>>> &pe
 
 void performance_tracker::clear_tracking_entries() noexcept { tracking_entries_.clear(); }
 
+#if defined(PLSSVM_PERFORMANCE_TRACKER_ENABLED)
 std::shared_ptr<performance_tracker> global_tracker = std::make_shared<performance_tracker>();
+#endif
 
 }  // namespace plssvm::detail
 
