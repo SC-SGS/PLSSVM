@@ -48,7 +48,7 @@ std::istream &operator>>(std::istream &in, implementation_type &impl) {
 
     if (str == "automatic") {
         impl = implementation_type::automatic;
-    } else if (str == "dpcpp" || str == "dpc++") {
+    } else if (str == "dpcpp" || str == "dpc++" || str == "icpx") {
         impl = implementation_type::dpcpp;
     } else if (str == "adaptivecpp" || str == "acpp") {
         impl = implementation_type::adaptivecpp;
