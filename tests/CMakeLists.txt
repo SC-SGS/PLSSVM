@@ -94,6 +94,13 @@ set(PLSSVM_BASE_TEST_LIBRARY_NAME_SOURCES
 # create base test library
 add_library(${PLSSVM_BASE_TEST_LIBRARY_NAME} SHARED ${PLSSVM_BASE_TEST_LIBRARY_NAME_SOURCES})
 
+## optionally use a reduced number of label types in the tests
+option(PLSSVM_TEST_WITH_REDUCED_LABEL_TYPES "Reduce the number of tested label types to speed up compilation and actual tests." OFF)
+if (PLSSVM_TEST_WITH_REDUCED_LABEL_TYPES)
+    message(STATUS "Reducing the number of tested label types.")
+    target_compile_definitions(${PLSSVM_BASE_TEST_LIBRARY_NAME} PUBLIC PLSSVM_TEST_WITH_REDUCED_LABEL_TYPES)
+endif ()
+
 # set necessary include directories
 target_include_directories(${PLSSVM_BASE_TEST_LIBRARY_NAME} PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/..")
 
