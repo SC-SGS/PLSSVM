@@ -8,11 +8,11 @@
 
 #include "plssvm/backends/CUDA/detail/pinned_memory.cuh"
 
-#include "plssvm/backends/CUDA/detail/utility.cuh"  // PLSSVM_CUDA_ERROR_CHECK
-#include "plssvm/backends/host_pinned_memory.hpp"   // plssvm::detail::host_pinned_memory
-#include "plssvm/detail/assert.hpp"                 // PLSSVM_ASSERT
-#include "plssvm/detail/performance_tracker.hpp"    // PLSSVM_DETAIL_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY
-#include "plssvm/exceptions/exceptions.hpp"         // plssvm::exception
+#include "plssvm/backends/CUDA/detail/utility.cuh"         // PLSSVM_CUDA_ERROR_CHECK
+#include "plssvm/backends/host_pinned_memory.hpp"          // plssvm::detail::host_pinned_memory
+#include "plssvm/detail/assert.hpp"                        // PLSSVM_ASSERT
+#include "plssvm/detail/tracking/performance_tracker.hpp"  // PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY
+#include "plssvm/exceptions/exceptions.hpp"                // plssvm::exception
 
 #include "cuda_runtime_api.h"  // cudaHostRegister
 
@@ -60,7 +60,7 @@ void pinned_memory<T>::pin_memory(const std::size_t num_bytes) {
     is_pinned_ = true;
 
     [[maybe_unused]] const std::chrono::steady_clock::time_point end_time = std::chrono::steady_clock::now();
-    PLSSVM_DETAIL_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking_entry{ "kernel_matrix", "pin_memory_runtime", std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time) }));
+    PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking::tracking_entry{ "kernel_matrix", "pin_memory_runtime", std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time) }));
 }
 
 template <typename T>

@@ -10,8 +10,8 @@
  * @details Can be completely disabled during the CMake configuration step.
  */
 
-#ifndef PLSSVM_DETAIL_PERFORMANCE_TRACKER_HPP_
-#define PLSSVM_DETAIL_PERFORMANCE_TRACKER_HPP_
+#ifndef PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_HPP_
+#define PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_HPP_
 #pragma once
 
 #include "plssvm/detail/cmd/parser_predict.hpp"  // plssvm::detail::cmd::parser_predict
@@ -35,7 +35,7 @@
 #include <utility>      // std::move
 #include <vector>       // std::vector
 
-namespace plssvm::detail {
+namespace plssvm::detail::tracking {
 
 /**
  * @brief A single tracking entry containing a specific category, a unique name, and the actual value to be tracked.
@@ -318,53 +318,53 @@ void performance_tracker::add_tracking_entry(const tracking_entry<std::vector<T>
 }
 
 /// The global performance tracker instance used for the default tracking.
-PLSSVM_EXTERN std::shared_ptr<performance_tracker> global_tracker;
+PLSSVM_EXTERN std::shared_ptr<performance_tracker> global_performance_tracker;
 
 /**
- * @def PLSSVM_DETAIL_PERFORMANCE_TRACKER_PAUSE
- * @brief Defines the `PLSSVM_DETAIL_PERFORMANCE_TRACKER_PAUSE` macro if `PLSSVM_PERFORMANCE_TRACKER_ENABLED` is defined.
+ * @def PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_PAUSE
+ * @brief Defines the `PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_PAUSE` macro if `PLSSVM_PERFORMANCE_TRACKER_ENABLED` is defined.
  * @details Pause the tracking functionality if performance tracking has been enabled during the CMake configuration.
  */
 /**
- * @def PLSSVM_DETAIL_PERFORMANCE_TRACKER_RESUME
- * @brief Defines the `PLSSVM_DETAIL_PERFORMANCE_TRACKER_RESUME` macro if `PLSSVM_PERFORMANCE_TRACKER_ENABLED` is defined.
+ * @def PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_RESUME
+ * @brief Defines the `PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_RESUME` macro if `PLSSVM_PERFORMANCE_TRACKER_ENABLED` is defined.
  * @details Resume the tracking functionality if performance tracking has been enabled during the CMake configuration.
  */
 /**
- * @def PLSSVM_DETAIL_PERFORMANCE_TRACKER_SAVE
- * @brief Defines the `PLSSVM_DETAIL_PERFORMANCE_TRACKER_SAVE` macro if `PLSSVM_PERFORMANCE_TRACKER_ENABLED` is defined.
+ * @def PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_SAVE
+ * @brief Defines the `PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_SAVE` macro if `PLSSVM_PERFORMANCE_TRACKER_ENABLED` is defined.
  * @details Save the previously tracked entries if performance tracking has been enabled during the CMake configuration.
  */
 /**
- * @def PLSSVM_DETAIL_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY
- * @brief Defines the `PLSSVM_DETAIL_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY` macro if `PLSSVM_PERFORMANCE_TRACKER_ENABLED` is defined.
- * @details Adds the provided entry to the `plssvm::detail::performance_tracker` singleton if performance tracking has been enabled during the CMake configuration.
+ * @def PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY
+ * @brief Defines the `PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY` macro if `PLSSVM_PERFORMANCE_TRACKER_ENABLED` is defined.
+ * @details Adds the provided entry to the `plssvm::detail::tracking::performance_tracker` singleton if performance tracking has been enabled during the CMake configuration.
  */
 #if defined(PLSSVM_PERFORMANCE_TRACKER_ENABLED)
 
-    #define PLSSVM_DETAIL_PERFORMANCE_TRACKER_PAUSE() \
-        ::plssvm::detail::global_tracker->pause_tracking()
+    #define PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_PAUSE() \
+        ::plssvm::detail::tracking::global_performance_tracker->pause_tracking()
 
-    #define PLSSVM_DETAIL_PERFORMANCE_TRACKER_RESUME() \
-        ::plssvm::detail::global_tracker->resume_tracking()
+    #define PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_RESUME() \
+        ::plssvm::detail::tracking::global_performance_tracker->resume_tracking()
 
-    #define PLSSVM_DETAIL_PERFORMANCE_TRACKER_SAVE(filename) \
-        ::plssvm::detail::global_tracker->save(filename)
+    #define PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_SAVE(filename) \
+        ::plssvm::detail::tracking::global_performance_tracker->save(filename)
 
-    #define PLSSVM_DETAIL_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY(entry) \
-        ::plssvm::detail::global_tracker->add_tracking_entry(entry)
+    #define PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY(entry) \
+        ::plssvm::detail::tracking::global_performance_tracker->add_tracking_entry(entry)
 #else
 
-    #define PLSSVM_DETAIL_PERFORMANCE_TRACKER_PAUSE()
-    #define PLSSVM_DETAIL_PERFORMANCE_TRACKER_RESUME()
-    #define PLSSVM_DETAIL_PERFORMANCE_TRACKER_SAVE(filename)
-    #define PLSSVM_DETAIL_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY(entry)
+    #define PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_PAUSE()
+    #define PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_RESUME()
+    #define PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_SAVE(filename)
+    #define PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY(entry)
 
 #endif
 
-}  // namespace plssvm::detail
+}  // namespace plssvm::detail::tracking
 
 template <typename T>
-struct fmt::formatter<plssvm::detail::tracking_entry<T>> : fmt::ostream_formatter { };
+struct fmt::formatter<plssvm::detail::tracking::tracking_entry<T>> : fmt::ostream_formatter { };
 
-#endif  // PLSSVM_DETAIL_PERFORMANCE_TRACKER_HPP_
+#endif  // PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_HPP_

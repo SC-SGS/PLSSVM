@@ -20,7 +20,7 @@
 #include "plssvm/detail/data_distribution.hpp"                                         // plssvm::detail::{data_distribution, triangular_data_distribution, rectangular_data_distribution}
 #include "plssvm/detail/logging.hpp"                                                   // plssvm::detail::log
 #include "plssvm/detail/memory_size.hpp"                                               // plssvm::detail::memory_size
-#include "plssvm/detail/performance_tracker.hpp"                                       // plssvm::detail::tracking_entry
+#include "plssvm/detail/tracking/performance_tracker.hpp"                              // plssvm::detail::tracking::tracking_entry
 #include "plssvm/exceptions/exceptions.hpp"                                            // plssvm::exception
 #include "plssvm/gamma.hpp"                                                            // plssvm::gamma_type
 #include "plssvm/kernel_function_types.hpp"                                            // plssvm::kernel_function_type
@@ -65,9 +65,9 @@ void csvm::init(const target_platform target) {
 
     plssvm::detail::log(verbosity_level::full,
                         "\nUsing HIP ({}) as backend.\n",
-                        plssvm::detail::tracking_entry{ "dependencies", "hip_runtime_version", detail::get_runtime_version() });
-    PLSSVM_DETAIL_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking_entry{ "backend", "backend", plssvm::backend_type::hip }));
-    PLSSVM_DETAIL_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking_entry{ "backend", "target_platform", plssvm::target_platform::gpu_amd }));
+                        plssvm::detail::tracking::tracking_entry{ "dependencies", "hip_runtime_version", detail::get_runtime_version() });
+    PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking::tracking_entry{ "backend", "backend", plssvm::backend_type::hip }));
+    PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking::tracking_entry{ "backend", "target_platform", plssvm::target_platform::gpu_amd }));
 
     // update the target platform
     target_ = plssvm::target_platform::gpu_amd;
@@ -84,7 +84,7 @@ void csvm::init(const target_platform target) {
     // print found HIP devices
     plssvm::detail::log(verbosity_level::full,
                         "Found {} HIP device(s):\n",
-                        plssvm::detail::tracking_entry{ "backend", "num_devices", devices_.size() });
+                        plssvm::detail::tracking::tracking_entry{ "backend", "num_devices", devices_.size() });
     std::vector<std::string> device_names;
     device_names.reserve(devices_.size());
     for (const queue_type &device : devices_) {
@@ -98,7 +98,7 @@ void csvm::init(const target_platform target) {
                             prop.minor);
         device_names.emplace_back(prop.name);
     }
-    PLSSVM_DETAIL_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking_entry{ "backend", "device", device_names }));
+    PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking::tracking_entry{ "backend", "device", device_names }));
     plssvm::detail::log(verbosity_level::full | verbosity_level::timing,
                         "\n");
 }

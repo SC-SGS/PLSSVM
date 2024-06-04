@@ -13,29 +13,29 @@
 #define PLSSVM_CSVM_HPP_
 #pragma once
 
-#include "plssvm/classification_types.hpp"        // plssvm::classification_type, plssvm::classification_type_to_full_string
-#include "plssvm/constants.hpp"                   // plssvm::real_type, plssvm::PADDING_SIZE
-#include "plssvm/data_set.hpp"                    // plssvm::data_set
-#include "plssvm/detail/assert.hpp"               // PLSSVM_ASSERT
-#include "plssvm/detail/data_distribution.hpp"    // plssvm::detail::triangular_data_distribution
-#include "plssvm/detail/data_distribution.hpp"    // plssvm::detail::data_distribution
-#include "plssvm/detail/igor_utility.hpp"         // plssvm::detail::{get_value_from_named_parameter, has_only_parameter_named_args_v}
-#include "plssvm/detail/logging.hpp"              // plssvm::detail::log
-#include "plssvm/detail/memory_size.hpp"          // plssvm::detail::memory_size
-#include "plssvm/detail/move_only_any.hpp"        // plssvm::detail::move_only_any
-#include "plssvm/detail/performance_tracker.hpp"  // plssvm::detail::performance_tracker
-#include "plssvm/detail/type_traits.hpp"          // PLSSVM_REQUIRES, plssvm::detail::remove_cvref_t
-#include "plssvm/detail/utility.hpp"              // plssvm::detail::to_underlying
-#include "plssvm/exceptions/exceptions.hpp"       // plssvm::invalid_parameter_exception
-#include "plssvm/gamma.hpp"                       // plssvm::gamma_type, plssvm::calculate_gamma_value
-#include "plssvm/kernel_function_types.hpp"       // plssvm::kernel_function_type
-#include "plssvm/matrix.hpp"                      // plssvm::aos_matrix
-#include "plssvm/model.hpp"                       // plssvm::model
-#include "plssvm/parameter.hpp"                   // plssvm::parameter
-#include "plssvm/shape.hpp"                       // plssvm::shape
-#include "plssvm/solver_types.hpp"                // plssvm::solver_type
-#include "plssvm/target_platforms.hpp"            // plssvm::target_platform
-#include "plssvm/verbosity_levels.hpp"            // plssvm::verbosity_level
+#include "plssvm/classification_types.hpp"                 // plssvm::classification_type, plssvm::classification_type_to_full_string
+#include "plssvm/constants.hpp"                            // plssvm::real_type, plssvm::PADDING_SIZE
+#include "plssvm/data_set.hpp"                             // plssvm::data_set
+#include "plssvm/detail/assert.hpp"                        // PLSSVM_ASSERT
+#include "plssvm/detail/data_distribution.hpp"             // plssvm::detail::triangular_data_distribution
+#include "plssvm/detail/data_distribution.hpp"             // plssvm::detail::data_distribution
+#include "plssvm/detail/igor_utility.hpp"                  // plssvm::detail::{get_value_from_named_parameter, has_only_parameter_named_args_v}
+#include "plssvm/detail/logging.hpp"                       // plssvm::detail::log
+#include "plssvm/detail/memory_size.hpp"                   // plssvm::detail::memory_size
+#include "plssvm/detail/move_only_any.hpp"                 // plssvm::detail::move_only_any
+#include "plssvm/detail/tracking/performance_tracker.hpp"  // PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY, plssvm::detail::tracking::tracking_entry
+#include "plssvm/detail/type_traits.hpp"                   // PLSSVM_REQUIRES, plssvm::detail::remove_cvref_t
+#include "plssvm/detail/utility.hpp"                       // plssvm::detail::to_underlying
+#include "plssvm/exceptions/exceptions.hpp"                // plssvm::invalid_parameter_exception
+#include "plssvm/gamma.hpp"                                // plssvm::gamma_type, plssvm::calculate_gamma_value
+#include "plssvm/kernel_function_types.hpp"                // plssvm::kernel_function_type
+#include "plssvm/matrix.hpp"                               // plssvm::aos_matrix
+#include "plssvm/model.hpp"                                // plssvm::model
+#include "plssvm/parameter.hpp"                            // plssvm::parameter
+#include "plssvm/shape.hpp"                                // plssvm::shape
+#include "plssvm/solver_types.hpp"                         // plssvm::solver_type
+#include "plssvm/target_platforms.hpp"                     // plssvm::target_platform
+#include "plssvm/verbosity_levels.hpp"                     // plssvm::verbosity_level
 
 #include "fmt/color.h"    // fmt::fg, fmt::color::orange
 #include "fmt/core.h"     // fmt::format
@@ -488,7 +488,7 @@ model<label_type> csvm::fit(const data_set<label_type> &data, Args &&...named_ar
     detail::log(verbosity_level::full | verbosity_level::timing,
                 "\nLearned the SVM classifier for {} multi-class classification in {}.\n\n",
                 classification_type_to_full_string(used_classification),
-                detail::tracking_entry{ "cg", "total_runtime", std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time) });
+                detail::tracking::tracking_entry{ "cg", "total_runtime", std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time) });
 
     return csvm_model;
 }
@@ -805,16 +805,16 @@ std::tuple<aos_matrix<real_type>, std::vector<real_type>, unsigned long long> cs
                     "  - maximum memory needed (cg_implicit): {7}\n",
                     percentual_safety_margin * 100.0L,
                     minimal_safety_margin,
-                    detail::tracking_entry{ "solver", "system_memory", total_system_memory },
-                    detail::tracking_entry{ "solver", "usable_system_memory_with_safety_margin", usable_system_memory },
+                    detail::tracking::tracking_entry{ "solver", "system_memory", total_system_memory },
+                    detail::tracking::tracking_entry{ "solver", "usable_system_memory_with_safety_margin", usable_system_memory },
                     format_vector(total_device_memory_per_device),
                     format_vector(usable_device_memory_per_device),
                     format_vector(total_memory_needed_explicit_per_device),
                     format_vector(total_memory_needed_implicit_per_device));
-        PLSSVM_DETAIL_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((detail::tracking_entry{ "solver", "device_memory", total_device_memory_per_device }));
-        PLSSVM_DETAIL_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((detail::tracking_entry{ "solver", "usable_device_memory_with_safety_margin", usable_device_memory_per_device }));
-        PLSSVM_DETAIL_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((detail::tracking_entry{ "solver", "needed_device_memory_cg_explicit", total_memory_needed_explicit_per_device }));
-        PLSSVM_DETAIL_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((detail::tracking_entry{ "solver", "needed_device_memory_cg_implicit", total_memory_needed_implicit_per_device }));
+        PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((detail::tracking::tracking_entry{ "solver", "device_memory", total_device_memory_per_device }));
+        PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((detail::tracking::tracking_entry{ "solver", "usable_device_memory_with_safety_margin", usable_device_memory_per_device }));
+        PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((detail::tracking::tracking_entry{ "solver", "needed_device_memory_cg_explicit", total_memory_needed_explicit_per_device }));
+        PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((detail::tracking::tracking_entry{ "solver", "needed_device_memory_cg_implicit", total_memory_needed_implicit_per_device }));
 
         // helper function to check whether ALL devices fulfill the requested memory constraint for the specific solver type
         const auto check_sizes = [](const auto &needed_memory_per_device, const auto &memory_constraint) -> std::vector<std::size_t> {
@@ -863,9 +863,9 @@ std::tuple<aos_matrix<real_type>, std::vector<real_type>, unsigned long long> cs
                     format_vector(max_mem_alloc_size_per_device),
                     format_vector(max_single_allocation_cg_explicit_size_per_device),
                     format_vector(max_single_allocation_cg_implicit_size_per_device));
-        PLSSVM_DETAIL_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((detail::tracking_entry{ "solver", "device_max_single_mem_alloc_size", max_mem_alloc_size_per_device }));
-        PLSSVM_DETAIL_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((detail::tracking_entry{ "solver", "device_max_mem_alloc_size_cg_explicit", max_single_allocation_cg_explicit_size_per_device }));
-        PLSSVM_DETAIL_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((detail::tracking_entry{ "solver", "device_max_mem_alloc_size_cg_implicit", max_single_allocation_cg_implicit_size_per_device }));
+        PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((detail::tracking::tracking_entry{ "solver", "device_max_single_mem_alloc_size", max_mem_alloc_size_per_device }));
+        PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((detail::tracking::tracking_entry{ "solver", "device_max_mem_alloc_size_cg_explicit", max_single_allocation_cg_explicit_size_per_device }));
+        PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((detail::tracking::tracking_entry{ "solver", "device_max_mem_alloc_size_cg_implicit", max_single_allocation_cg_implicit_size_per_device }));
 
         // check whether the maximum single memory allocation sizes per device can be satisfied
         // check whether the maximum single cg_explicit memory allocation size can be satisfied
@@ -891,7 +891,7 @@ std::tuple<aos_matrix<real_type>, std::vector<real_type>, unsigned long long> cs
 
     detail::log(verbosity_level::full,
                 "Using {} as solver for AX=B.\n\n",
-                detail::tracking_entry{ "solver", "solver_type", used_solver });
+                detail::tracking::tracking_entry{ "solver", "solver_type", used_solver });
 
     // perform dimensional reduction
     // note: structured binding is rejected by clang HIP compiler!
@@ -921,7 +921,7 @@ std::tuple<aos_matrix<real_type>, std::vector<real_type>, unsigned long long> cs
                     "Assembled the kernel matrix in {}.\n",
                     assembly_duration);
     }
-    PLSSVM_DETAIL_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((detail::tracking_entry{ "kernel_matrix", "kernel_matrix_assembly", assembly_duration }));
+    PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((detail::tracking::tracking_entry{ "kernel_matrix", "kernel_matrix_assembly", assembly_duration }));
 
     // choose the correct algorithm based on the (provided) solver type -> currently only CG available
     soa_matrix<real_type> X{};

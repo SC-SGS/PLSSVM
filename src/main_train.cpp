@@ -12,7 +12,7 @@
 #include "plssvm/detail/cmd/data_set_variants.hpp"  // plssvm::detail::cmd::data_set_factory
 #include "plssvm/detail/cmd/parser_train.hpp"       // plssvm::detail::cmd::parser_train
 #include "plssvm/detail/logging.hpp"                // plssvm::detail::log
-#include "plssvm/detail/performance_tracker.hpp"    // plssvm::detail::tracking_entry, PLSSVM_DETAIL_PERFORMANCE_TRACKER_SAVE
+#include "plssvm/detail/tracking/performance_tracker.hpp"    // plssvm::detail::tracking::tracking_entry, PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_SAVE
 #include "plssvm/detail/utility.hpp"                // PLSSVM_IS_DEFINED
 
 #include <chrono>       // std::chrono::{steady_clock, duration}
@@ -41,7 +41,7 @@ int main(int argc, char *argv[]) {
         // output used parameter
         plssvm::detail::log(plssvm::verbosity_level::full,
                             "\ntask: training\n{}\n\n\n",
-                            plssvm::detail::tracking_entry{ "parameter", "", cmd_parser });
+                            plssvm::detail::tracking::tracking_entry{ "parameter", "", cmd_parser });
 
         // create data set
         const auto data_set_visitor = [&](auto &&data) {
@@ -74,9 +74,9 @@ int main(int argc, char *argv[]) {
         const std::chrono::steady_clock::time_point end_time = std::chrono::steady_clock::now();
         plssvm::detail::log(plssvm::verbosity_level::full,
                             "\nTotal runtime: {}\n",
-                            plssvm::detail::tracking_entry{ "", "total_time", std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time) });
+                            plssvm::detail::tracking::tracking_entry{ "", "total_time", std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time) });
 
-        PLSSVM_DETAIL_PERFORMANCE_TRACKER_SAVE(cmd_parser.performance_tracking_filename);
+        PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_SAVE(cmd_parser.performance_tracking_filename);
 
     } catch (const plssvm::exception &e) {
         std::cerr << e.what_with_loc() << std::endl;

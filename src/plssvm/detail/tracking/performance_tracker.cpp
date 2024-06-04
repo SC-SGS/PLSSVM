@@ -6,7 +6,7 @@
  *          See the LICENSE.md file in the project root for full license information.
  */
 
-#include "plssvm/detail/performance_tracker.hpp"
+#include "plssvm/detail/tracking/performance_tracker.hpp"
 
 #include "plssvm/constants.hpp"                          // plssvm::real_type, plssvm::THREAD_BLOCK_SIZE, plssvm::INTERNAL_BLOCK_SIZE, plssvm::FEATURE_BLOCK_SIZE, plssvm::PADDING_SIZE
 #include "plssvm/detail/arithmetic_type_name.hpp"        // plssvm::detail::arithmetic_type_name
@@ -41,7 +41,7 @@
 #include <string_view>  // std::string_view
 #include <vector>       // std::vector
 
-namespace plssvm::detail {
+namespace plssvm::detail::tracking {
 
 // Must be explicitly defaulted in the cpp file to prevent linker errors!
 performance_tracker::performance_tracker() = default;
@@ -335,6 +335,6 @@ void performance_tracker::clear_tracking_entries() noexcept { tracking_entries_.
 
 std::shared_ptr<performance_tracker> global_tracker = std::make_shared<performance_tracker>();
 
-}  // namespace plssvm::detail
+}  // namespace plssvm::detail::tracking
 
 #undef PLSSVM_UNISTD_AVAILABLE

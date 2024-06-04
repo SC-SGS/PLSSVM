@@ -12,7 +12,7 @@
 #include "plssvm/detail/cmd/data_set_variants.hpp"  // plssvm::detail::cmd::data_set_factory
 #include "plssvm/detail/cmd/parser_predict.hpp"     // plssvm::detail::cmd::parser_predict
 #include "plssvm/detail/logging.hpp"                // plssvm::detail::log
-#include "plssvm/detail/performance_tracker.hpp"    // plssvm::detail::tracking_entry, PLSSVM_DETAIL_PERFORMANCE_TRACKER_SAVE, PLSSVM_DETAIL_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY
+#include "plssvm/detail/tracking/performance_tracker.hpp"    // plssvm::detail::tracking::tracking_entry, PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_SAVE, PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY
 #include "plssvm/detail/utility.hpp"                // PLSSVM_IS_DEFINED
 
 #include "fmt/format.h"  // fmt::print, fmt::join
@@ -43,7 +43,7 @@ int main(int argc, char *argv[]) {
         // output used parameter
         plssvm::detail::log(plssvm::verbosity_level::full,
                             "\ntask: prediction\n{}\n",
-                            plssvm::detail::tracking_entry{ "parameter", "", cmd_parser });
+                            plssvm::detail::tracking::tracking_entry{ "parameter", "", cmd_parser });
 
         // create data set
         const auto data_set_visitor = [&](auto &&data) {
@@ -106,9 +106,9 @@ int main(int argc, char *argv[]) {
                 const std::chrono::time_point write_end_time = std::chrono::steady_clock::now();
                 plssvm::detail::log(plssvm::verbosity_level::full | plssvm::verbosity_level::timing,
                                     "Write {} predictions in {} to the file '{}'.\n",
-                                    plssvm::detail::tracking_entry{ "predictions_write", "num_predictions", predicted_labels.size() },
-                                    plssvm::detail::tracking_entry{ "predictions_write", "time", std::chrono::duration_cast<std::chrono::milliseconds>(write_end_time - write_start_time) },
-                                    plssvm::detail::tracking_entry{ "predictions_write", "filename", cmd_parser.predict_filename });
+                                    plssvm::detail::tracking::tracking_entry{ "predictions_write", "num_predictions", predicted_labels.size() },
+                                    plssvm::detail::tracking::tracking_entry{ "predictions_write", "time", std::chrono::duration_cast<std::chrono::milliseconds>(write_end_time - write_start_time) },
+                                    plssvm::detail::tracking::tracking_entry{ "predictions_write", "filename", cmd_parser.predict_filename });
             }
 
             // print achieved accuracy (if possible)
@@ -121,9 +121,9 @@ int main(int argc, char *argv[]) {
                 plssvm::detail::log(plssvm::verbosity_level::full, "\n{}\n", report);
                 // print only accuracy for LIBSVM conformity
                 plssvm::detail::log(plssvm::verbosity_level::libsvm, "{} (classification)\n", report.accuracy());
-                PLSSVM_DETAIL_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking_entry{ "accuracy", "achieved_accuracy", report.accuracy().achieved_accuracy }));
-                PLSSVM_DETAIL_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking_entry{ "accuracy", "num_correct", report.accuracy().num_correct }));
-                PLSSVM_DETAIL_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking_entry{ "accuracy", "num_total", report.accuracy().num_total }));
+                PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking::tracking_entry{ "accuracy", "achieved_accuracy", report.accuracy().achieved_accuracy }));
+                PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking::tracking_entry{ "accuracy", "num_correct", report.accuracy().num_correct }));
+                PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking::tracking_entry{ "accuracy", "num_total", report.accuracy().num_total }));
             }
         };
         std::visit(data_set_visitor, plssvm::detail::cmd::data_set_factory(cmd_parser));
@@ -131,9 +131,9 @@ int main(int argc, char *argv[]) {
         const std::chrono::steady_clock::time_point end_time = std::chrono::steady_clock::now();
         plssvm::detail::log(plssvm::verbosity_level::full | plssvm::verbosity_level::timing,
                             "\nTotal runtime: {}\n",
-                            plssvm::detail::tracking_entry{ "", "total_time", std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time) });
+                            plssvm::detail::tracking::tracking_entry{ "", "total_time", std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time) });
 
-        PLSSVM_DETAIL_PERFORMANCE_TRACKER_SAVE(cmd_parser.performance_tracking_filename);
+        PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_SAVE(cmd_parser.performance_tracking_filename);
 
     } catch (const plssvm::exception &e) {
         std::cerr << e.what_with_loc() << std::endl;
