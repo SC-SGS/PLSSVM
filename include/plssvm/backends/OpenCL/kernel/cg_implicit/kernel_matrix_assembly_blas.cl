@@ -57,7 +57,7 @@ __kernel void device_kernel_assembly_symm(const real_type alpha, const __global 
     __local real_type data_cache_j[FEATURE_BLOCK_SIZE][INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE];
 
     // only calculate the upper triangular matrix -> can't use threadIdx since all threads in a warp must progress further
-    if (get_group_id(0) >= get_group_id(1)) {
+    if (blockIdx_x >= blockIdx_y) {
         // create a thread private array used for internal caching
         real_type temp[INTERNAL_BLOCK_SIZE][INTERNAL_BLOCK_SIZE] = { (real_type) 0.0 };
 
