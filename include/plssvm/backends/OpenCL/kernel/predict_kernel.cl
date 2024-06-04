@@ -103,7 +103,7 @@ __kernel void PLSSVM_DEVICE_KERNEL_PREDICT_NAME(__global real_type *prediction_d
                 alpha_cache[local_id_1 + THREAD_BLOCK_SIZE][internal * THREAD_BLOCK_SIZE + local_id_0] = alpha_d[(dim + threadIdx_y + THREAD_BLOCK_SIZE_ul) * (num_sv + PADDING_SIZE_ul) + global_sv_idx];
 
                 // the bias (rho) must only be applied once for all support vectors
-                if (get_group_id(1) == (ulong) 0) {
+                if (blockIdx_y == (ulong) 0) {
                     out_cache[local_id_1][internal * THREAD_BLOCK_SIZE + local_id_0] = -rho_d[dim + threadIdx_y];
                     out_cache[local_id_1 + THREAD_BLOCK_SIZE][internal * THREAD_BLOCK_SIZE + local_id_0] = -rho_d[dim + threadIdx_y + THREAD_BLOCK_SIZE_ul];
                 } else {

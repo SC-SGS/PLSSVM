@@ -263,7 +263,7 @@ __global__ void device_kernel_predict(real_type *prediction_d, const real_type *
                 alpha_cache[threadIdx.y + THREAD_BLOCK_SIZE][internal * THREAD_BLOCK_SIZE + threadIdx.x] = alpha_d[(dim + threadIdx_y + THREAD_BLOCK_SIZE_ull) * (num_sv + PADDING_SIZE_ull) + global_sv_idx];
 
                 // the bias (rho) must only be applied once for all support vectors
-                if (blockIdx.y == 0u) {
+                if (blockIdx_y == 0ull) {
                     out_cache[threadIdx.y][internal * THREAD_BLOCK_SIZE + threadIdx.x] = -rho_d[dim + threadIdx_y];
                     out_cache[threadIdx.y + THREAD_BLOCK_SIZE][internal * THREAD_BLOCK_SIZE + threadIdx.x] = -rho_d[dim + threadIdx_y + THREAD_BLOCK_SIZE_ull];
                 } else {

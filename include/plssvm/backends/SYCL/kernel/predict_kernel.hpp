@@ -375,7 +375,7 @@ class device_kernel_predict {
                     alpha_cache[local_id_0 + THREAD_BLOCK_SIZE][internal * THREAD_BLOCK_SIZE + local_id_1] = alpha_d_[(dim + threadIdx_x + THREAD_BLOCK_SIZE_uz) * (num_sv_ + PADDING_SIZE_uz) + global_sv_idx];
 
                     // the bias (rho) must only be applied once for all support vectors
-                    if (nd_idx.get_group(0) == std::size_t{ 0 }) {
+                    if (blockIdx_x == std::size_t{ 0 }) {
                         out_cache[local_id_0][internal * THREAD_BLOCK_SIZE + local_id_1] = -rho_d_[dim + threadIdx_x];
                         out_cache[local_id_0 + THREAD_BLOCK_SIZE][internal * THREAD_BLOCK_SIZE + local_id_1] = -rho_d_[dim + threadIdx_x + THREAD_BLOCK_SIZE_uz];
                     } else {
