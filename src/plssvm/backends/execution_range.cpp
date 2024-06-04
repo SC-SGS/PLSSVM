@@ -39,29 +39,24 @@ execution_range::execution_range(const dim_type block_p, const unsigned long lon
         throw kernel_launch_resources{ fmt::format("Not enough work-items allowed for a work-groups of size {}x{}x{} (#threads: {}; max allowed: {})! Try reducing THREAD_BLOCK_SIZE.", block.x, block.y, block.z, block.x * block.y * block.z, max_allowed_block_size) };
     }
 
-    // TODO: implement better?! -> z axis?
     // split the large grid into sub-grids
-    const unsigned long long num_grid_x = grid.x / max_allowed_grid_size.x;
+    const auto num_grid_x = static_cast<unsigned long long>(std::ceil(static_cast<double>(grid.x) / static_cast<double>(max_allowed_grid_size.x)));
+    const auto num_grid_y = static_cast<unsigned long long>(std::ceil(static_cast<double>(grid.y) / static_cast<double>(max_allowed_grid_size.y)));
+    const auto num_grid_z = static_cast<unsigned long long>(std::ceil(static_cast<double>(grid.z) / static_cast<double>(max_allowed_grid_size.z)));
+
+    unsigned long long remaining_x = grid.x;
     for (unsigned long long x = 0; x < num_grid_x; ++x) {
-        const unsigned long long num_grid_y = grid.y / max_allowed_grid_size.y;
+        unsigned long long remaining_y = grid.y;
         for (unsigned long long y = 0; y < num_grid_y; ++y) {
-            grids.emplace_back(dim_type{ std::min(grid.x, max_allowed_grid_size.x), std::min(grid.y, max_allowed_grid_size.y) }, dim_type{ x * max_allowed_grid_size.x, y * max_allowed_grid_size.y });
+            unsigned long long remaining_z = grid.z;
+            for (unsigned long long z = 0; z < num_grid_z; ++z) {
+                grids.emplace_back(dim_type{ std::min(remaining_x, max_allowed_grid_size.x), std::min(remaining_y, max_allowed_grid_size.y), std::min(remaining_z, max_allowed_grid_size.z) },
+                                   dim_type{ x * max_allowed_grid_size.x, y * max_allowed_grid_size.y, z * max_allowed_grid_size.z });
+                remaining_z -= max_allowed_grid_size.z;
+            }
+            remaining_y -= max_allowed_grid_size.y;
         }
-        const unsigned long long remaining_y = grid.y % max_allowed_grid_size.y;
-        if (remaining_y > 0ull) {
-            grids.emplace_back(dim_type{ std::min(grid.x, max_allowed_grid_size.x), remaining_y }, dim_type{ x * max_allowed_grid_size.x, num_grid_y * max_allowed_grid_size.y });
-        }
-    }
-    const unsigned long long remaining_x = grid.x % max_allowed_grid_size.x;
-    if (remaining_x > 0ull) {
-        const unsigned long long num_grid_y = grid.y / max_allowed_grid_size.y;
-        for (unsigned long long y = 0; y < num_grid_y; ++y) {
-            grids.emplace_back(dim_type{ remaining_x, std::min(grid.y, max_allowed_grid_size.y) }, dim_type{ num_grid_x * max_allowed_grid_size.x, y * max_allowed_grid_size.y });
-        }
-        const unsigned long long remaining_y = grid.y % max_allowed_grid_size.y;
-        if (remaining_y > 0ull) {
-            grids.emplace_back(dim_type{ remaining_x, remaining_y }, dim_type{ num_grid_x * max_allowed_grid_size.x, num_grid_y * max_allowed_grid_size.y });
-        }
+        remaining_x -= max_allowed_grid_size.x;
     }
 }
 

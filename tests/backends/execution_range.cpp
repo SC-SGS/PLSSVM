@@ -156,74 +156,85 @@ TEST(DimType, to_string) {
 
 TEST(ExecutionRange, construct_single_grid) {
     // create execution range
-    const plssvm::detail::execution_range exec{ plssvm::detail::dim_type{ 16ull, 16ull }, 1024ull, plssvm::detail::dim_type{ 64ull, 64ull }, plssvm::detail::dim_type{ 1024ull, 1024ull } };
+    const plssvm::detail::execution_range exec{ plssvm::detail::dim_type{ 16ull, 16ull, 2ull }, 1024ull, plssvm::detail::dim_type{ 64ull, 64ull, 64ull }, plssvm::detail::dim_type{ 1024ull, 1024ull, 1024ull } };
 
     // check the block size
-    EXPECT_EQ(exec.block, (plssvm::detail::dim_type{ 16ull, 16ull }));
+    EXPECT_EQ(exec.block, (plssvm::detail::dim_type{ 16ull, 16ull, 2ull }));
 
     // check the grids
     EXPECT_EQ(exec.grids.size(), 1);
-    EXPECT_EQ(exec.grids.front().first, (plssvm::detail::dim_type{ 64ull, 64ull }));
-    EXPECT_EQ(exec.grids.front().second, (plssvm::detail::dim_type{ 0ull, 0ull }));
+    EXPECT_EQ(exec.grids.front().first, (plssvm::detail::dim_type{ 64ull, 64ull, 64ull }));
+    EXPECT_EQ(exec.grids.front().second, (plssvm::detail::dim_type{ 0ull, 0ull, 0ull }));
 }
 
 TEST(ExecutionRange, construct_multiple_grids) {
     // create execution range
-    const plssvm::detail::execution_range exec{ plssvm::detail::dim_type{ 32ull, 32ull }, 1024ull, plssvm::detail::dim_type{ 128ull, 128ull }, plssvm::detail::dim_type{ 64ull, 64ull } };
+    const plssvm::detail::execution_range exec{ plssvm::detail::dim_type{ 16ull, 16ull, 4ull }, 1024ull, plssvm::detail::dim_type{ 128ull, 127ull, 126ull }, plssvm::detail::dim_type{ 64ull, 64ull, 64ull } };
 
     // check the block size
-    EXPECT_EQ(exec.block, (plssvm::detail::dim_type{ 32ull, 32ull }));
+    EXPECT_EQ(exec.block, (plssvm::detail::dim_type{ 16ull, 16ull, 4ull }));
 
     // check the grids
-    EXPECT_EQ(exec.grids.size(), 4);
-    EXPECT_EQ(exec.grids[0].first, (plssvm::detail::dim_type{ 64ull, 64ull }));
-    EXPECT_EQ(exec.grids[0].second, (plssvm::detail::dim_type{ 0ull, 0ull }));
-    EXPECT_EQ(exec.grids[1].first, (plssvm::detail::dim_type{ 64ull, 64ull }));
-    EXPECT_EQ(exec.grids[1].second, (plssvm::detail::dim_type{ 0ull, 64ull }));
-    EXPECT_EQ(exec.grids[2].first, (plssvm::detail::dim_type{ 64ull, 64ull }));
-    EXPECT_EQ(exec.grids[2].second, (plssvm::detail::dim_type{ 64ull, 0ull }));
-    EXPECT_EQ(exec.grids[3].first, (plssvm::detail::dim_type{ 64ull, 64ull }));
-    EXPECT_EQ(exec.grids[3].second, (plssvm::detail::dim_type{ 64ull, 64ull }));
+    EXPECT_EQ(exec.grids.size(), 8);
+    EXPECT_EQ(exec.grids[0].first, (plssvm::detail::dim_type{ 64ull, 64ull, 64ull }));
+    EXPECT_EQ(exec.grids[0].second, (plssvm::detail::dim_type{ 0ull, 0ull, 0ull }));
+    EXPECT_EQ(exec.grids[1].first, (plssvm::detail::dim_type{ 64ull, 64ull, 62ull }));
+    EXPECT_EQ(exec.grids[1].second, (plssvm::detail::dim_type{ 0ull, 0ull, 64ull }));
+
+    EXPECT_EQ(exec.grids[2].first, (plssvm::detail::dim_type{ 64ull, 63ull, 64ull }));
+    EXPECT_EQ(exec.grids[2].second, (plssvm::detail::dim_type{ 0ull, 64ull, 0ull }));
+    EXPECT_EQ(exec.grids[3].first, (plssvm::detail::dim_type{ 64ull, 63ull, 62ull }));
+    EXPECT_EQ(exec.grids[3].second, (plssvm::detail::dim_type{ 0ull, 64ull, 64ull }));
+
+    EXPECT_EQ(exec.grids[4].first, (plssvm::detail::dim_type{ 64ull, 64ull, 64ull }));
+    EXPECT_EQ(exec.grids[4].second, (plssvm::detail::dim_type{ 64ull, 0ull, 0ull }));
+    EXPECT_EQ(exec.grids[5].first, (plssvm::detail::dim_type{ 64ull, 64ull, 62ull }));
+    EXPECT_EQ(exec.grids[5].second, (plssvm::detail::dim_type{ 64ull, 0ull, 64ull }));
+
+    EXPECT_EQ(exec.grids[6].first, (plssvm::detail::dim_type{ 64ull, 63ull, 64ull }));
+    EXPECT_EQ(exec.grids[6].second, (plssvm::detail::dim_type{ 64ull, 64ull, 0ull }));
+    EXPECT_EQ(exec.grids[7].first, (plssvm::detail::dim_type{ 64ull, 63ull, 62ull }));
+    EXPECT_EQ(exec.grids[7].second, (plssvm::detail::dim_type{ 64ull, 64ull, 64ull }));
 }
 
 TEST(ExecutionRange, construct_invalid_block) {
     // the product of the block dimensions may not exceed to total number of threads allowed in a block
-    EXPECT_THROW_WHAT((plssvm::detail::execution_range{ plssvm::detail::dim_type{ 16ull, 16ull }, 16ull, plssvm::detail::dim_type{ 64ull, 64ull }, plssvm::detail::dim_type{ 1024ull, 1024ull } }),
+    EXPECT_THROW_WHAT((plssvm::detail::execution_range{ plssvm::detail::dim_type{ 16ull, 16ull, 4ull }, 16ull, plssvm::detail::dim_type{ 64ull, 64ull, 64ull }, plssvm::detail::dim_type{ 1024ull, 1024ull, 1024ull } }),
                       plssvm::kernel_launch_resources,
-                      "Not enough work-items allowed for a work-groups of size 16x16x1 (#threads: 256; max allowed: 16)! Try reducing THREAD_BLOCK_SIZE.");
+                      "Not enough work-items allowed for a work-groups of size 16x16x4 (#threads: 1024; max allowed: 16)! Try reducing THREAD_BLOCK_SIZE.");
 }
 
 TEST(ExecutionRange, swap_member_function) {
-    plssvm::detail::execution_range exec1{ plssvm::detail::dim_type{ 16ull, 16ull }, 1024ull, plssvm::detail::dim_type{ 64ull, 64ull }, plssvm::detail::dim_type{ 1024ull, 1024ull } };
-    plssvm::detail::execution_range exec2{ plssvm::detail::dim_type{ 32ull, 32ull }, 1024ull, plssvm::detail::dim_type{ 128ull, 128ull }, plssvm::detail::dim_type{ 64ull, 64ull } };
+    plssvm::detail::execution_range exec1{ plssvm::detail::dim_type{ 16ull, 16ull, 4ull }, 1024ull, plssvm::detail::dim_type{ 64ull, 64ull, 64ull }, plssvm::detail::dim_type{ 1024ull, 1024ull, 1024ull } };
+    plssvm::detail::execution_range exec2{ plssvm::detail::dim_type{ 4ull, 4ull, 4ull }, 1024ull, plssvm::detail::dim_type{ 128ull, 128ull, 128ull }, plssvm::detail::dim_type{ 64ull, 64ull, 64ull } };
 
     // swap the contents
     exec1.swap(exec2);
 
     // check the contents
-    EXPECT_EQ(exec1.block, (plssvm::detail::dim_type{ 32ull, 32ull }));
-    EXPECT_EQ(exec1.grids.size(), 4);
+    EXPECT_EQ(exec1.block, (plssvm::detail::dim_type{ 4ull, 4ull, 4ull }));
+    EXPECT_EQ(exec1.grids.size(), 8);
 
-    EXPECT_EQ(exec2.block, (plssvm::detail::dim_type{ 16ull, 16ull }));
+    EXPECT_EQ(exec2.block, (plssvm::detail::dim_type{ 16ull, 16ull, 4ull }));
     EXPECT_EQ(exec2.grids.size(), 1);
-    EXPECT_EQ(exec2.grids.front().first, (plssvm::detail::dim_type{ 64ull, 64ull }));
+    EXPECT_EQ(exec2.grids.front().first, (plssvm::detail::dim_type{ 64ull, 64ull, 64ull }));
 }
 
 TEST(ExecutionRange, swap_free_function) {
-    plssvm::detail::execution_range exec1{ plssvm::detail::dim_type{ 16ull, 16ull }, 1024ull, plssvm::detail::dim_type{ 64ull, 64ull }, plssvm::detail::dim_type{ 1024ull, 1024ull } };
-    plssvm::detail::execution_range exec2{ plssvm::detail::dim_type{ 32ull, 32ull }, 1024ull, plssvm::detail::dim_type{ 128ull, 128ull }, plssvm::detail::dim_type{ 64ull, 64ull } };
+    plssvm::detail::execution_range exec1{ plssvm::detail::dim_type{ 16ull, 16ull, 4ull }, 1024ull, plssvm::detail::dim_type{ 64ull, 64ull, 64ull }, plssvm::detail::dim_type{ 1024ull, 1024ull, 1024ull } };
+    plssvm::detail::execution_range exec2{ plssvm::detail::dim_type{ 4ull, 4ull, 4ull }, 1024ull, plssvm::detail::dim_type{ 128ull, 128ull, 128ull }, plssvm::detail::dim_type{ 64ull, 64ull, 64ull } };
 
     // swap the contents
     using plssvm::detail::swap;
     swap(exec1, exec2);
 
     // check the contents
-    EXPECT_EQ(exec1.block, (plssvm::detail::dim_type{ 32ull, 32ull }));
-    EXPECT_EQ(exec1.grids.size(), 4);
+    EXPECT_EQ(exec1.block, (plssvm::detail::dim_type{ 4ull, 4ull, 4ull }));
+    EXPECT_EQ(exec1.grids.size(), 8);
 
-    EXPECT_EQ(exec2.block, (plssvm::detail::dim_type{ 16ull, 16ull }));
+    EXPECT_EQ(exec2.block, (plssvm::detail::dim_type{ 16ull, 16ull, 4ull }));
     EXPECT_EQ(exec2.grids.size(), 1);
-    EXPECT_EQ(exec2.grids.front().first, (plssvm::detail::dim_type{ 64ull, 64ull }));
+    EXPECT_EQ(exec2.grids.front().first, (plssvm::detail::dim_type{ 64ull, 64ull, 64ull }));
 }
 
 TEST(ExecutionRange, equality) {
