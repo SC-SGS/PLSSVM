@@ -80,7 +80,6 @@ set(PLSSVM_BASE_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/detail/io/file_reader.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/detail/data_distribution.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/detail/memory_size.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/detail/tracking/performance_tracker.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/detail/sha256.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/detail/string_conversion.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/detail/string_utility.cpp
@@ -596,14 +595,6 @@ if (DEFINED PLSSVM_INTERNAL_BLOCK_SIZE)
     endif ()
 endif ()
 
-## enable or disable the performance tracker
-option(PLSSVM_ENABLE_PERFORMANCE_TRACKING "Enable performance tracking to YAML files for the PLSSVM executables plssvm-train, plssvm-predict, and plssvm-scale." OFF)
-if (PLSSVM_ENABLE_PERFORMANCE_TRACKING)
-    message(STATUS "Enabled performance tracking to YAML files for the PLSSVM executables plssvm-train, plssvm-predict, and plssvm-scale.")
-    # add target definitions
-    target_compile_definitions(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC PLSSVM_PERFORMANCE_TRACKER_ENABLED)
-endif ()
-
 ## enforce maximum device memory allocation sizes for the automatic solver type
 option(PLSSVM_ENFORCE_MAX_MEM_ALLOC_SIZE "Enforce the maximum device memory allocation sizes for the automatic plssvm::solver_type." ON)
 if (PLSSVM_ENFORCE_MAX_MEM_ALLOC_SIZE)
@@ -654,6 +645,14 @@ endif ()
 option(PLSSVM_ENABLE_LANGUAGE_BINDINGS "Build langauge bindings, e.g., for Python." OFF)
 if (PLSSVM_ENABLE_LANGUAGE_BINDINGS)
     add_subdirectory(bindings)
+endif ()
+
+########################################################################################################################
+##                                              enable language bindings                                              ##
+########################################################################################################################
+option(PLSSVM_ENABLE_PERFORMANCE_TRACKING "Enable performance tracking to YAML files for the PLSSVM executables plssvm-train, plssvm-predict, and plssvm-scale." OFF)
+if (PLSSVM_ENABLE_PERFORMANCE_TRACKING)
+    add_subdirectory(src/plssvm/detail/tracking)
 endif ()
 
 ########################################################################################################################
