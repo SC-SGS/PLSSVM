@@ -35,8 +35,10 @@ std::ostream &operator<<(std::ostream &out, const dim_type dim) {
 execution_range::execution_range(const dim_type block_p, const unsigned long long max_allowed_block_size, const dim_type grid, const dim_type max_allowed_grid_size) :
     block{ block_p } {
     // check whether the provided block size is valid
-    if (max_allowed_block_size < block.x * block.y * block.z) {
-        throw kernel_launch_resources{ fmt::format("Not enough work-items allowed for a work-groups of size {}x{}x{} (#threads: {}; max allowed: {})! Try reducing THREAD_BLOCK_SIZE.", block.x, block.y, block.z, block.x * block.y * block.z, max_allowed_block_size) };
+    if (this->num_threads_in_block() == 0) {
+        throw kernel_launch_resources{ "At least one thread must be given per block! Maybe one dimension is zero?" };
+    } else if (max_allowed_block_size < this->num_threads_in_block()) {
+        throw kernel_launch_resources{ fmt::format("Not enough work-items allowed for a work-groups of size {}x{}x{} (#threads: {}; max allowed: {})! Try reducing THREAD_BLOCK_SIZE.", block.x, block.y, block.z, this->num_threads_in_block(), max_allowed_block_size) };
     }
 
     // split the large grid into sub-grids
@@ -64,6 +66,10 @@ void execution_range::swap(execution_range &other) noexcept {
     using std::swap;
     swap(block, other.block);
     swap(grids, other.grids);
+}
+
+unsigned long long execution_range::num_threads_in_block() const noexcept {
+    return block.x * block.y * block.z;
 }
 
 void swap(execution_range &lhs, execution_range &rhs) noexcept {

@@ -197,7 +197,21 @@ TEST(ExecutionRange, construct_multiple_grids) {
     EXPECT_EQ(exec.grids[7].second, (plssvm::detail::dim_type{ 64ull, 64ull, 64ull }));
 }
 
-TEST(ExecutionRange, construct_invalid_block) {
+TEST(ExecutionRange, construct_block_zero_threads) {
+    // at least one thread must be present!
+    EXPECT_THROW_WHAT((plssvm::detail::execution_range{ plssvm::detail::dim_type{ 0ull, 0ull, 0ull }, 16ull, plssvm::detail::dim_type{ 64ull, 64ull, 64ull }, plssvm::detail::dim_type{ 1024ull, 1024ull, 1024ull } }),
+                      plssvm::kernel_launch_resources,
+                      "At least one thread must be given per block! Maybe one dimension is zero?");
+}
+
+TEST(ExecutionRange, construct_block_zero_threads_in_single_dimension) {
+    // EACH dimension must at least consist of a single thread!
+    EXPECT_THROW_WHAT((plssvm::detail::execution_range{ plssvm::detail::dim_type{ 4ull, 4ull, 0ull }, 16ull, plssvm::detail::dim_type{ 64ull, 64ull, 64ull }, plssvm::detail::dim_type{ 1024ull, 1024ull, 1024ull } }),
+                      plssvm::kernel_launch_resources,
+                      "At least one thread must be given per block! Maybe one dimension is zero?");
+}
+
+TEST(ExecutionRange, construct_block_too_many_threads) {
     // the product of the block dimensions may not exceed to total number of threads allowed in a block
     EXPECT_THROW_WHAT((plssvm::detail::execution_range{ plssvm::detail::dim_type{ 16ull, 16ull, 4ull }, 16ull, plssvm::detail::dim_type{ 64ull, 64ull, 64ull }, plssvm::detail::dim_type{ 1024ull, 1024ull, 1024ull } }),
                       plssvm::kernel_launch_resources,
