@@ -87,9 +87,12 @@ int main(int argc, char *argv[]) {
                 }
             }
 
+            // check whether SYCL is used as backend (it is either requested directly or as automatic backend)
+            const bool use_sycl_as_backend{ cmd_parser.backend == plssvm::backend_type::sycl || (cmd_parser.backend == plssvm::backend_type::automatic && plssvm::determine_default_backend() == plssvm::backend_type::sycl) };
+
             // create default csvm
-            const std::unique_ptr<plssvm::csvm> svm = (cmd_parser.backend == plssvm::backend_type::sycl) ? plssvm::make_csvm(cmd_parser.backend, cmd_parser.target, plssvm::sycl_implementation_type = cmd_parser.sycl_implementation_type)
-                                                                                                         : plssvm::make_csvm(cmd_parser.backend, cmd_parser.target);
+            const std::unique_ptr<plssvm::csvm> svm = use_sycl_as_backend ? plssvm::make_csvm(cmd_parser.backend, cmd_parser.target, plssvm::sycl_implementation_type = cmd_parser.sycl_implementation_type)
+                                                                          : plssvm::make_csvm(cmd_parser.backend, cmd_parser.target);
             // predict labels
             const std::vector<label_type> predicted_labels = svm->predict(model, data);
 
