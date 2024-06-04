@@ -658,7 +658,7 @@ aos_matrix<real_type> gpu_csvm<device_ptr_t, queue_t, pinned_memory_t>::predict_
 
         // define the full execution grid
         const unsigned long long device_specific_num_predict_points = predict_points_d[device_id].shape().x;
-        const unsigned long long y_dim_size = params.kernel_type == kernel_function_type::linear ? alpha_d[device_id].shape().x : sv_or_w_d[device_id].shape().x;
+        const unsigned long long y_dim_size = params.kernel_type == kernel_function_type::linear ? num_classes : num_support_vectors;
         const dim_type grid{
             static_cast<std::size_t>(std::ceil(static_cast<double>(device_specific_num_predict_points) / static_cast<double>(block.x * INTERNAL_BLOCK_SIZE))),
             static_cast<std::size_t>(std::ceil(static_cast<double>(y_dim_size) / static_cast<double>(block.y * INTERNAL_BLOCK_SIZE)))

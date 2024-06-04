@@ -47,6 +47,7 @@ class csvm : public ::plssvm::detail::gpu_csvm<detail::device_ptr, int, detail::
 
   public:
     using base_type::device_ptr_type;
+    using typename base_type::pinned_memory_type;
     using typename base_type::queue_type;
 
     /**
@@ -147,7 +148,7 @@ class csvm : public ::plssvm::detail::gpu_csvm<detail::device_ptr, int, detail::
     /**
      * @copydoc plssvm::detail::gpu_csvm::get_max_grid_size
      */
-    [[nodiscard]] ::plssvm::detail::dim_type get_max_grid_size(std::size_t device_id) const final;
+    [[nodiscard]] ::plssvm::detail::dim_type get_max_grid_size(std::size_t device_id) const override;
 
     //***************************************************//
     //                        fit                        //

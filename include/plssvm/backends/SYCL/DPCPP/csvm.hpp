@@ -160,7 +160,7 @@ class csvm : public ::plssvm::detail::gpu_csvm<detail::device_ptr, detail::queue
      * @note Uses the DPC++ experimental extension `sycl::ext::oneapi::experimental::info::device::max_work_groups` if the feature test macro `SYCL_EXT_ONEAPI_MAX_WORK_GROUP_QUERY` is defined,
      *       otherwise it uses hardcoded values (int32_t max for all dimensions on the CPU and int32_t max for the first dimension and uint16_t max for the remaining dimensions otherwise).
      */
-    [[nodiscard]] ::plssvm::detail::dim_type get_max_grid_size(std::size_t device_id) const final;
+    [[nodiscard]] ::plssvm::detail::dim_type get_max_grid_size(std::size_t device_id) const override;
 
     //***************************************************//
     //                        fit                        //
