@@ -317,8 +317,8 @@ void performance_tracker::add_tracking_entry(const tracking_entry<std::vector<T>
     }
 }
 
-/// The global performance tracker instance used for the default tracking.
-PLSSVM_EXTERN std::shared_ptr<performance_tracker> global_performance_tracker;
+/// The global performance tracker singleton function used for the default tracking.
+performance_tracker &global_performance_tracker();
 
 /**
  * @def PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_PAUSE
@@ -343,16 +343,16 @@ PLSSVM_EXTERN std::shared_ptr<performance_tracker> global_performance_tracker;
 #if defined(PLSSVM_PERFORMANCE_TRACKER_ENABLED)
 
     #define PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_PAUSE() \
-        ::plssvm::detail::tracking::global_performance_tracker->pause_tracking()
+        ::plssvm::detail::tracking::global_performance_tracker().pause_tracking()
 
     #define PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_RESUME() \
-        ::plssvm::detail::tracking::global_performance_tracker->resume_tracking()
+        ::plssvm::detail::tracking::global_performance_tracker().resume_tracking()
 
     #define PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_SAVE(filename) \
-        ::plssvm::detail::tracking::global_performance_tracker->save(filename)
+        ::plssvm::detail::tracking::global_performance_tracker().save(filename)
 
     #define PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY(entry) \
-        ::plssvm::detail::tracking::global_performance_tracker->add_tracking_entry(entry)
+        ::plssvm::detail::tracking::global_performance_tracker().add_tracking_entry(entry)
 #else
 
     #define PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_PAUSE()

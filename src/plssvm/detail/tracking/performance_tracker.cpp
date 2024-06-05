@@ -333,7 +333,10 @@ const std::map<std::string, std::map<std::string, std::vector<std::string>>> &pe
 
 void performance_tracker::clear_tracking_entries() noexcept { tracking_entries_.clear(); }
 
-std::shared_ptr<performance_tracker> global_tracker = std::make_shared<performance_tracker>();
+performance_tracker &global_performance_tracker() {
+    static performance_tracker tracker;
+    return tracker;
+}
 
 }  // namespace plssvm::detail::tracking
 
