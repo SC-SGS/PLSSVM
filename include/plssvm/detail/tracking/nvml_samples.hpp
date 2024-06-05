@@ -17,7 +17,7 @@ namespace plssvm::detail::tracking {
 class nvml_general_samples {
   public:
     struct nvml_general_sample {
-        std::chrono::steady_clock::duration time_since_start{ 0 };
+        std::chrono::milliseconds time_since_start{ 0 };
         int performance_state{ 0 };
         unsigned int utilization_gpu{ 0 };
         unsigned int utilization_mem{ 0 };
