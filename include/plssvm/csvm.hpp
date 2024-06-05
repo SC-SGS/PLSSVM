@@ -13,29 +13,30 @@
 #define PLSSVM_CSVM_HPP_
 #pragma once
 
-#include "plssvm/classification_types.hpp"                 // plssvm::classification_type, plssvm::classification_type_to_full_string
-#include "plssvm/constants.hpp"                            // plssvm::real_type, plssvm::PADDING_SIZE
-#include "plssvm/data_set.hpp"                             // plssvm::data_set
-#include "plssvm/detail/assert.hpp"                        // PLSSVM_ASSERT
-#include "plssvm/detail/data_distribution.hpp"             // plssvm::detail::triangular_data_distribution
-#include "plssvm/detail/data_distribution.hpp"             // plssvm::detail::data_distribution
-#include "plssvm/detail/igor_utility.hpp"                  // plssvm::detail::{get_value_from_named_parameter, has_only_parameter_named_args_v}
-#include "plssvm/detail/logging.hpp"                       // plssvm::detail::log
-#include "plssvm/detail/memory_size.hpp"                   // plssvm::detail::memory_size
-#include "plssvm/detail/move_only_any.hpp"                 // plssvm::detail::move_only_any
-#include "plssvm/detail/tracking/performance_tracker.hpp"  // PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY, plssvm::detail::tracking::tracking_entry
-#include "plssvm/detail/type_traits.hpp"                   // PLSSVM_REQUIRES, plssvm::detail::remove_cvref_t
-#include "plssvm/detail/utility.hpp"                       // plssvm::detail::to_underlying
-#include "plssvm/exceptions/exceptions.hpp"                // plssvm::invalid_parameter_exception
-#include "plssvm/gamma.hpp"                                // plssvm::gamma_type, plssvm::calculate_gamma_value
-#include "plssvm/kernel_function_types.hpp"                // plssvm::kernel_function_type
-#include "plssvm/matrix.hpp"                               // plssvm::aos_matrix
-#include "plssvm/model.hpp"                                // plssvm::model
-#include "plssvm/parameter.hpp"                            // plssvm::parameter
-#include "plssvm/shape.hpp"                                // plssvm::shape
-#include "plssvm/solver_types.hpp"                         // plssvm::solver_type
-#include "plssvm/target_platforms.hpp"                     // plssvm::target_platform
-#include "plssvm/verbosity_levels.hpp"                     // plssvm::verbosity_level
+#include "plssvm/classification_types.hpp"                      // plssvm::classification_type, plssvm::classification_type_to_full_string
+#include "plssvm/constants.hpp"                                 // plssvm::real_type, plssvm::PADDING_SIZE
+#include "plssvm/data_set.hpp"                                  // plssvm::data_set
+#include "plssvm/detail/assert.hpp"                             // PLSSVM_ASSERT
+#include "plssvm/detail/data_distribution.hpp"                  // plssvm::detail::triangular_data_distribution
+#include "plssvm/detail/data_distribution.hpp"                  // plssvm::detail::data_distribution
+#include "plssvm/detail/igor_utility.hpp"                       // plssvm::detail::{get_value_from_named_parameter, has_only_parameter_named_args_v}
+#include "plssvm/detail/logging.hpp"                            // plssvm::detail::log
+#include "plssvm/detail/memory_size.hpp"                        // plssvm::detail::memory_size
+#include "plssvm/detail/move_only_any.hpp"                      // plssvm::detail::move_only_any
+#include "plssvm/detail/tracking/hardware_sampler_factory.hpp"  // PLSSVM_DETAIL_TRACKING_HARDWARE_SAMPLER_ADD_EVENT
+#include "plssvm/detail/tracking/performance_tracker.hpp"       // PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY, plssvm::detail::tracking::tracking_entry
+#include "plssvm/detail/type_traits.hpp"                        // PLSSVM_REQUIRES, plssvm::detail::remove_cvref_t
+#include "plssvm/detail/utility.hpp"                            // plssvm::detail::to_underlying
+#include "plssvm/exceptions/exceptions.hpp"                     // plssvm::invalid_parameter_exception
+#include "plssvm/gamma.hpp"                                     // plssvm::gamma_type, plssvm::calculate_gamma_value
+#include "plssvm/kernel_function_types.hpp"                     // plssvm::kernel_function_type
+#include "plssvm/matrix.hpp"                                    // plssvm::aos_matrix
+#include "plssvm/model.hpp"                                     // plssvm::model
+#include "plssvm/parameter.hpp"                                 // plssvm::parameter
+#include "plssvm/shape.hpp"                                     // plssvm::shape
+#include "plssvm/solver_types.hpp"                              // plssvm::solver_type
+#include "plssvm/target_platforms.hpp"                          // plssvm::target_platform
+#include "plssvm/verbosity_levels.hpp"                          // plssvm::verbosity_level
 
 #include "fmt/color.h"    // fmt::fg, fmt::color::orange
 #include "fmt/core.h"     // fmt::format
@@ -351,6 +352,8 @@ model<label_type> csvm::fit(const data_set<label_type> &data, Args &&...named_ar
         throw invalid_parameter_exception{ "No labels given for training! Maybe the data is only usable for prediction?" };
     }
 
+    PLSSVM_DETAIL_TRACKING_HARDWARE_SAMPLER_ADD_EVENT("fit start");
+
     igor::parser parser{ named_args... };
 
     // set default values
@@ -490,6 +493,8 @@ model<label_type> csvm::fit(const data_set<label_type> &data, Args &&...named_ar
                 classification_type_to_full_string(used_classification),
                 detail::tracking::tracking_entry{ "cg", "total_runtime", std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time) });
 
+    PLSSVM_DETAIL_TRACKING_HARDWARE_SAMPLER_ADD_EVENT("fit end");
+
     return csvm_model;
 }
 
@@ -515,6 +520,8 @@ std::vector<label_type> csvm::predict(const model<label_type> &model, const data
     if (model.num_features() != data.num_features()) {
         throw invalid_parameter_exception{ fmt::format("Number of features per data point ({}) must match the number of features per support vector of the provided model ({})!", data.num_features(), model.num_features()) };
     }
+
+    PLSSVM_DETAIL_TRACKING_HARDWARE_SAMPLER_ADD_EVENT("predict start");
 
     // convert predicted values to the correct labels
     std::vector<label_type> predicted_labels(data.num_data_points());
@@ -662,6 +669,8 @@ std::vector<label_type> csvm::predict(const model<label_type> &model, const data
             predicted_labels[i] = model.data_.mapping_->get_label_by_mapped_index(argmax);
         }
     }
+
+    PLSSVM_DETAIL_TRACKING_HARDWARE_SAMPLER_ADD_EVENT("predict end");
 
     return predicted_labels;
 }

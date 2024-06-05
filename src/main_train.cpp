@@ -9,11 +9,13 @@
  */
 
 #include "plssvm/core.hpp"
-#include "plssvm/detail/cmd/data_set_variants.hpp"  // plssvm::detail::cmd::data_set_factory
-#include "plssvm/detail/cmd/parser_train.hpp"       // plssvm::detail::cmd::parser_train
-#include "plssvm/detail/logging.hpp"                // plssvm::detail::log
-#include "plssvm/detail/tracking/performance_tracker.hpp"    // plssvm::detail::tracking::tracking_entry, PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_SAVE
-#include "plssvm/detail/utility.hpp"                // PLSSVM_IS_DEFINED
+#include "plssvm/detail/cmd/data_set_variants.hpp"         // plssvm::detail::cmd::data_set_factory
+#include "plssvm/detail/cmd/parser_train.hpp"              // plssvm::detail::cmd::parser_train
+#include "plssvm/detail/logging.hpp"                       // plssvm::detail::log
+#include "plssvm/detail/tracking/performance_tracker.hpp"  // plssvm::detail::tracking::tracking_entry, PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_SAVE
+#include "plssvm/detail/utility.hpp"                       // PLSSVM_IS_DEFINED
+
+#include "plssvm/detail/tracking/hardware_sampler_factory.hpp"  // TODO: !!!
 
 #include <chrono>       // std::chrono::{steady_clock, duration}
 #include <cstddef>      // std::size_t
@@ -54,6 +56,10 @@ int main(int argc, char *argv[]) {
             const std::unique_ptr<plssvm::csvm> svm = use_sycl_as_backend ? plssvm::make_csvm(cmd_parser.backend, cmd_parser.target, cmd_parser.csvm_params, plssvm::sycl_implementation_type = cmd_parser.sycl_implementation_type, plssvm::sycl_kernel_invocation_type = cmd_parser.sycl_kernel_invocation_type)
                                                                           : plssvm::make_csvm(cmd_parser.backend, cmd_parser.target, cmd_parser.csvm_params);
 
+            // initialize hardware sampling
+            PLSSVM_DETAIL_TRACKING_HARDWARE_SAMPLER_INIT(svm->get_target_platform(), svm->num_available_devices(), 100);
+            PLSSVM_DETAIL_TRACKING_HARDWARE_SAMPLER_START_SAMPLING();
+
             // only specify plssvm::max_iter if it isn't its default value
             const plssvm::model<label_type> model =
                 cmd_parser.max_iter == std::size_t{ 0 }
@@ -68,6 +74,9 @@ int main(int argc, char *argv[]) {
                                plssvm::solver = cmd_parser.solver);
             // save model to file
             model.save(cmd_parser.model_filename);
+
+            PLSSVM_DETAIL_TRACKING_HARDWARE_SAMPLER_STOP_SAMPLING();
+            PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_HARDWARE_SAMPLER_ENTRIES();
         };
         std::visit(data_set_visitor, plssvm::detail::cmd::data_set_factory(cmd_parser));
 

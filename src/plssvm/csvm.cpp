@@ -62,6 +62,8 @@ std::pair<soa_matrix<real_type>, unsigned long long> csvm::conjugate_gradients(c
     PLSSVM_ASSERT(eps > real_type{ 0.0 }, "The epsilon value must be greater than 0.0!");
     PLSSVM_ASSERT(max_cg_iter > 0, "The maximum number of iterations must be greater than 0!");
 
+    PLSSVM_DETAIL_TRACKING_HARDWARE_SAMPLER_ADD_EVENT("cg start");
+
     const std::size_t num_rows = B.num_cols();
     const std::size_t num_rhs = B.num_rows();
 
@@ -113,6 +115,8 @@ std::pair<soa_matrix<real_type>, unsigned long long> csvm::conjugate_gradients(c
 
     unsigned long long iter = 0;
     while (iter < max_cg_iter && num_rhs_converged() < num_rhs) {
+        PLSSVM_DETAIL_TRACKING_HARDWARE_SAMPLER_ADD_EVENT(fmt::format("cg iter {} start", iter));
+
         const std::size_t max_residual_difference_idx = rhs_idx_max_residual_difference();
         detail::log(verbosity_level::full | verbosity_level::timing,
                     "Start Iteration {} (max: {}) with {}/{} converged rhs (max residual {} with target residual {} for rhs {}). ",
@@ -204,6 +208,8 @@ std::pair<soa_matrix<real_type>, unsigned long long> csvm::conjugate_gradients(c
     detail::log(verbosity_level::libsvm,
                 "optimization finished, #iter = {}\n",
                 iter);
+
+    PLSSVM_DETAIL_TRACKING_HARDWARE_SAMPLER_ADD_EVENT("cg end");
 
     return std::make_pair(X, iter);
 }
