@@ -8,12 +8,13 @@
 
 #include "plssvm/detail/tracking/performance_tracker.hpp"
 
-#include "plssvm/constants.hpp"                          // plssvm::real_type, plssvm::THREAD_BLOCK_SIZE, plssvm::INTERNAL_BLOCK_SIZE, plssvm::FEATURE_BLOCK_SIZE, plssvm::PADDING_SIZE
-#include "plssvm/detail/arithmetic_type_name.hpp"        // plssvm::detail::arithmetic_type_name
-#include "plssvm/detail/assert.hpp"                      // PLSSVM_ASSERT, PLSSVM_ASSERT_ENABLED
-#include "plssvm/detail/cmd/parser_predict.hpp"          // plssvm::detail::cmd::parser_predict
-#include "plssvm/detail/cmd/parser_scale.hpp"            // plssvm::detail::cmd::parser_scale
-#include "plssvm/detail/cmd/parser_train.hpp"            // plssvm::detail::cmd::parser_train
+#include "plssvm/constants.hpp"                    // plssvm::real_type, plssvm::THREAD_BLOCK_SIZE, plssvm::INTERNAL_BLOCK_SIZE, plssvm::FEATURE_BLOCK_SIZE, plssvm::PADDING_SIZE
+#include "plssvm/detail/arithmetic_type_name.hpp"  // plssvm::detail::arithmetic_type_name
+#include "plssvm/detail/assert.hpp"                // PLSSVM_ASSERT, PLSSVM_ASSERT_ENABLED
+#include "plssvm/detail/cmd/parser_predict.hpp"    // plssvm::detail::cmd::parser_predict
+#include "plssvm/detail/cmd/parser_scale.hpp"      // plssvm::detail::cmd::parser_scale
+#include "plssvm/detail/cmd/parser_train.hpp"      // plssvm::detail::cmd::parser_train
+#include "plssvm/detail/tracking/hardware_sampler_factory.hpp"
 #include "plssvm/detail/utility.hpp"                     // plssvm::detail::current_date_time, PLSSVM_IS_DEFINED
 #include "plssvm/gamma.hpp"                              // plssvm::get_gamma_string
 #include "plssvm/parameter.hpp"                          // plssvm::parameter
@@ -126,6 +127,17 @@ void performance_tracker::add_tracking_entry(const tracking_entry<cmd::parser_sc
         tracking_entries_[entry.entry_category].emplace("scaled_filename", std::vector<std::string>{ fmt::format("\"{}\"", entry.entry_value.scaled_filename) });
         tracking_entries_[entry.entry_category].emplace("save_filename", std::vector<std::string>{ fmt::format("\"{}\"", entry.entry_value.save_filename) });
         tracking_entries_[entry.entry_category].emplace("restore_filename", std::vector<std::string>{ fmt::format("\"{}\"", entry.entry_value.restore_filename) });
+    }
+}
+
+void performance_tracker::add_hardware_sampling_entries() {
+    for (const auto &sampler : tracking::global_hardware_sampler()) {
+        const std::string category_name = fmt::format("hardware_samples_device_{}", sampler->device_id());
+        // add events
+        tracking_entries_[category_name]["events"].push_back(sampler->assemble_yaml_event_string());
+
+        // add samples
+        tracking_entries_[category_name]["samples"].push_back(sampler->assemble_yaml_sample_string());
     }
 }
 

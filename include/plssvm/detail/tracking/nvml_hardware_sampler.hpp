@@ -13,64 +13,38 @@
 #define PLSSVM_DETAIL_TRACKING_NVML_HARDWARE_SAMPLER_HPP_
 
 #include "plssvm/detail/tracking/hardware_sampler.hpp"  // plssvm::detail::tracking::hardware_sampler
-#include "plssvm/detail/tracking/time_point.hpp"
+#include "plssvm/detail/tracking/nvml_samples.hpp"
 
-#include "nvml.h"
 #include <atomic>   // std::atomic
-#include <cstdint>  // std::uint64_t, std::int64_t, std::uint32_t
-#include <mutex>    // std::mutex
+#include <cstddef>  // std::size_t
+#include <mutex>    // std::once_flag
+#include <string>   // std::string
 
 namespace plssvm::detail::tracking {
 
-struct sample_type {
-    time_point_type time;
-
-    // clock related information in MHz
-    unsigned int clock_graph = 0;
-    unsigned int clock_sm = 0;
-    unsigned int clock_mem = 0;
-    unsigned long long clock_throttle_reason = 0;
-    unsigned int clock_graph_max = 0;
-    unsigned int clock_sm_max = 0;
-    unsigned int clock_mem_max = 0;
-
-    // temperature related information in °C
-    unsigned int fan_speed = 0;
-    unsigned int temperature_gpu = 0;
-    unsigned int temperature_threshold_gpu_max = 0;
-    unsigned int temperature_threshold_mem_max = 0;
-
-    // memory related information in Byte // TODO: use memory struct -> circular dependencies? :/
-    unsigned long long memory_free = 0;
-    unsigned long long memory_used = 0;
-    unsigned long long memory_total = 0;
-
-    // power related information in mW
-    int power_state = 0;
-    unsigned int power_usage = 0;
-    unsigned int power_limit = 0;
-    unsigned int power_default_limit = 0;
-    unsigned int power_total_energy_consumption = 0;
-
-    // general information
-    int performance_state = 0;
-    unsigned int utilization_gpu = 0;
-    unsigned int utilization_mem = 0;
-};
-
-class nvml_hardware_sampler : public hardware_sampler<sample_type> {
-    using base_type = hardware_sampler<sample_type>;
-
+class nvml_hardware_sampler : public hardware_sampler {
   public:
     // TODO: handle device id?!?!?
-    explicit nvml_hardware_sampler(int device_id, unsigned long long sampling_interval = 100);
+    explicit nvml_hardware_sampler(std::size_t device_id, unsigned long long sampling_interval = 100);
+
     ~nvml_hardware_sampler() override;
 
-  private:
-    sample_type get_sample_measurement() final;
-    std::uint64_t get_total_energy_consumption() final;
+    [[nodiscard]] std::size_t device_id() const noexcept {
+        return device_id_;
+    }
 
-    nvmlDevice_t device_;
+    [[nodiscard]] std::string assemble_yaml_sample_string() const override;
+
+  private:
+    void add_sample() final;
+
+    nvml_general_samples general_samples_{};
+    nvml_clock_samples clock_samples_{};
+    nvml_power_samples power_samples_{};
+    nvml_memory_samples memory_samples_{};
+    nvml_temperature_samples temperature_samples_{};
+
+    std::size_t device_id_;
 
     inline static std::atomic<int> instances_{ 0 };
     inline static std::once_flag nvml_init_once_{};

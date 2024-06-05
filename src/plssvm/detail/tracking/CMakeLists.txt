@@ -13,10 +13,10 @@ target_sources(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC $<BUILD_INTERFACE:${CMAKE_CURR
 ## add target definitions
 target_compile_definitions(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC PLSSVM_PERFORMANCE_TRACKER_ENABLED)
 
-
 ## explicitly set sources
 set(PLSSVM_HARDWARE_TRACKING_SOURCES
     ${CMAKE_CURRENT_LIST_DIR}/nvml_hardware_sampler.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/hardware_sampler.cpp
 )
 
 ## set target properties
@@ -27,7 +27,6 @@ add_library(${PLSSVM_HARDWARE_TRACKING_LIBRARY_NAME} SHARED ${PLSSVM_HARDWARE_TR
 find_package(CUDAToolkit REQUIRED)
 message(STATUS "Enable sampling of NVIDIA GPU information using NVML.")
 target_link_libraries(${PLSSVM_HARDWARE_TRACKING_LIBRARY_NAME} PUBLIC CUDA::nvml)
-
 
 ## link base library against CUDA library
 target_link_libraries(${PLSSVM_HARDWARE_TRACKING_LIBRARY_NAME} PUBLIC ${PLSSVM_BASE_LIBRARY_NAME})

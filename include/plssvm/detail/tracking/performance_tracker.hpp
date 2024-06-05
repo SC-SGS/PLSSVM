@@ -203,6 +203,8 @@ class performance_tracker {
      */
     void add_tracking_entry(const tracking_entry<cmd::parser_scale> &entry);
 
+    void add_hardware_sampling_entries();
+
     /**
      * @brief Write all stored tracking entries to the [YAML](https://yaml.org/) file @p filename.
      * @details Appends all entries at the end of the file creating a new YAML document.
@@ -353,12 +355,16 @@ performance_tracker &global_performance_tracker();
 
     #define PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY(entry) \
         ::plssvm::detail::tracking::global_performance_tracker().add_tracking_entry(entry)
+
+    #define PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_HARDWARE_SAMPLER_ENTRIES() \
+        ::plssvm::detail::tracking::global_performance_tracker().add_hardware_sampling_entries()
 #else
 
     #define PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_PAUSE()
     #define PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_RESUME()
     #define PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_SAVE(filename)
     #define PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY(entry)
+    #define PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_HARDWARE_SAMPLER_ENTRIES()
 
 #endif
 
