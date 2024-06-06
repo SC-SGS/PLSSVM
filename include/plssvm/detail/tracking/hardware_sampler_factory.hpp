@@ -17,24 +17,21 @@
 #if defined(PLSSVM_HARDWARE_TRACKING_VIA_NVML_ENABLED)
     #include "plssvm/detail/tracking/nvml_hardware_sampler.hpp"  // plssvm::detail::tracking::nvml_hardware_sampler
 #endif
+#include "plssvm/detail/utility.hpp"         // plssvm::detail::unreachable
 #include "plssvm/exceptions/exceptions.hpp"  // plssvm::hardware_sampling_exception
 #include "plssvm/target_platforms.hpp"       // plssvm::target_platform
 
-#include <chrono>  // std::chrono::milliseconds, std::chrono_literals namespace
-#include <memory>  // std::unique_ptr, std::make_unique
-#include <vector>  // std::vector
+#include <chrono>   // std::chrono::milliseconds, std::chrono_literals namespace
+#include <cstddef>  // std::size_t
+#include <memory>   // std::unique_ptr, std::make_unique
+#include <vector>   // std::vector
 
 namespace plssvm::detail::tracking {
 
-using namespace std::chrono_literals;
-
-// TODO: template parameter
-inline std::unique_ptr<hardware_sampler> hardware_sampler_factory(const target_platform target, const std::size_t device_id, const std::chrono::milliseconds sampling_interval = 100ms) {
-    // TODO: may not be automatic
-
+[[nodiscard]] inline std::unique_ptr<hardware_sampler> make_hardware_sampler([[maybe_unused]] const target_platform target, [[maybe_unused]] const std::size_t device_id, [[maybe_unused]] const std::chrono::milliseconds sampling_interval) {
     switch (target) {
         case target_platform::automatic:
-            break;
+            return make_hardware_sampler(determine_default_target_platform(), device_id, sampling_interval);
         case target_platform::cpu:
             throw hardware_sampling_exception{ "CPU hardware sampling currently not implemented!" };  // TODO: implement
         case target_platform::gpu_nvidia:
@@ -49,46 +46,71 @@ inline std::unique_ptr<hardware_sampler> hardware_sampler_factory(const target_p
             throw hardware_sampling_exception{ "Intel GPU hardware sampling currently not implemented!" };  // TODO: implement
     }
 
-    return nullptr;  // TODO:
+    detail::unreachable();
 }
 
-// TODO: better
-inline std::vector<std::unique_ptr<hardware_sampler>> &global_hardware_sampler(const target_platform target = target_platform::automatic, const std::size_t num_devices = 0, const std::chrono::milliseconds sampling_interval = 100ms) {
-    static std::vector<std::unique_ptr<hardware_sampler>> sampler = [=]() {
-        std::vector<std::unique_ptr<hardware_sampler>> s{};
-        for (std::size_t device = 0; device < num_devices; ++device) {
-            s.push_back(hardware_sampler_factory(target, device, sampling_interval));
+class global_hardware_sampler {
+    friend std::unique_ptr<global_hardware_sampler> std::make_unique<global_hardware_sampler>(const plssvm::target_platform &, const std::size_t &, const std::chrono::milliseconds &);
+
+  public:
+    static void init_instance(const target_platform target, const std::size_t num_devices, const std::chrono::milliseconds sampling_interval) {
+        if (instance_ == nullptr) {
+            instance_ = std::make_unique<global_hardware_sampler>(target, num_devices, sampling_interval);
         }
-        return s;
-    }();
-    return sampler;
-}
+    }
+
+    [[nodiscard]] static global_hardware_sampler &get_instance() noexcept {
+        return *instance_;
+    }
+
+    [[nodiscard]] std::vector<std::unique_ptr<hardware_sampler>> &get_sampler() noexcept { return sampler_; }
+
+    template <typename Func, typename... Args>
+    static void for_each_sampler(Func f, Args... args) {
+        for (std::unique_ptr<hardware_sampler> &sampler : get_instance().get_sampler()) {
+            ((*sampler).*f)(args...);
+        }
+    }
+
+  private:
+    global_hardware_sampler(const target_platform target, const std::size_t num_devices, const std::chrono::milliseconds sampling_interval) {
+        for (std::size_t device = 0; device < num_devices; ++device) {
+            sampler_.push_back(make_hardware_sampler(target, device, sampling_interval));
+        }
+    }
+
+    std::vector<std::unique_ptr<hardware_sampler>> sampler_{};
+
+    inline static std::unique_ptr<global_hardware_sampler> instance_{};
+};
 
 #if defined(PLSSVM_HARDWARE_SAMPLING_ENABLED)
 
     #define PLSSVM_DETAIL_TRACKING_HARDWARE_SAMPLER_INIT(target, num_devices) \
-        plssvm::detail::tracking::global_hardware_sampler(target, num_devices, PLSSVM_HARDWARE_SAMPLING_INTERVAL);
+        plssvm::detail::tracking::global_hardware_sampler::init_instance(target, num_devices, PLSSVM_HARDWARE_SAMPLING_INTERVAL);
 
-    #define PLSSVM_DETAIL_TRACKING_HARDWARE_SAMPLER_START_SAMPLING()                \
-        for (const auto &s : plssvm::detail::tracking::global_hardware_sampler()) { \
-            s->start_sampling();                                                    \
-        }
+    #define PLSSVM_DETAIL_TRACKING_HARDWARE_SAMPLER_START_SAMPLING() \
+        plssvm::detail::tracking::global_hardware_sampler::for_each_sampler(&plssvm::detail::tracking::hardware_sampler::start_sampling);
 
-    #define PLSSVM_DETAIL_TRACKING_HARDWARE_SAMPLER_STOP_SAMPLING()                 \
-        for (const auto &s : plssvm::detail::tracking::global_hardware_sampler()) { \
-            s->stop_sampling();                                                     \
-        }
+    #define PLSSVM_DETAIL_TRACKING_HARDWARE_SAMPLER_STOP_SAMPLING() \
+        plssvm::detail::tracking::global_hardware_sampler::for_each_sampler(&plssvm::detail::tracking::hardware_sampler::stop_sampling);
 
-    #define PLSSVM_DETAIL_TRACKING_HARDWARE_SAMPLER_ADD_EVENT(name)                 \
-        for (const auto &s : plssvm::detail::tracking::global_hardware_sampler()) { \
-            s->add_event(name);                                                     \
-        }
+    #define PLSSVM_DETAIL_TRACKING_HARDWARE_SAMPLER_PAUSE_SAMPLING() \
+        plssvm::detail::tracking::global_hardware_sampler::for_each_sampler(&plssvm::detail::tracking::hardware_sampler::pause_sampling);
+
+    #define PLSSVM_DETAIL_TRACKING_HARDWARE_SAMPLER_RESUME_SAMPLING() \
+        plssvm::detail::tracking::global_hardware_sampler::for_each_sampler(&plssvm::detail::tracking::hardware_sampler::resume_sampling);
+
+    #define PLSSVM_DETAIL_TRACKING_HARDWARE_SAMPLER_ADD_EVENT(name) \
+        plssvm::detail::tracking::global_hardware_sampler::for_each_sampler(&plssvm::detail::tracking::hardware_sampler::add_event, name);
 
 #else
 
     #define PLSSVM_DETAIL_TRACKING_HARDWARE_SAMPLER_INIT(target, num_devices)
     #define PLSSVM_DETAIL_TRACKING_HARDWARE_SAMPLER_START_SAMPLING()
     #define PLSSVM_DETAIL_TRACKING_HARDWARE_SAMPLER_STOP_SAMPLING()
+    #define PLSSVM_DETAIL_TRACKING_HARDWARE_SAMPLER_PAUSE_SAMPLING()
+    #define PLSSVM_DETAIL_TRACKING_HARDWARE_SAMPLER_RESUME_SAMPLING()
     #define PLSSVM_DETAIL_TRACKING_HARDWARE_SAMPLER_ADD_EVENT(name)
 
 #endif

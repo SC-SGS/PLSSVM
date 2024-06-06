@@ -134,7 +134,7 @@ void performance_tracker::add_tracking_entry(const tracking_entry<cmd::parser_sc
 void performance_tracker::add_hardware_sampling_entries() {
 #if defined(PLSSVM_HARDWARE_SAMPLING_ENABLED)
     const std::string category_name{ "hardware_samples" };
-    for (const auto &sampler : tracking::global_hardware_sampler()) {
+    for (const auto &sampler : tracking::global_hardware_sampler::get_instance().get_sampler()) {
         // assemble sampler content string
         std::string sampler_content{ sampler->assemble_yaml_event_string() + sampler->assemble_yaml_sample_string() };
 
