@@ -17,7 +17,7 @@
 
 #include "plssvm/detail/tracking/hardware_sampler_factory.hpp"  // TODO: !!!
 
-#include <chrono>       // std::chrono::{steady_clock, duration}
+#include <chrono>       // std::chrono::{steady_clock, duration, milliseconds}, std::chrono_literals namespace
 #include <cstddef>      // std::size_t
 #include <cstdlib>      // EXIT_SUCCESS, EXIT_FAILURE
 #include <exception>    // std::exception
@@ -25,6 +25,8 @@
 #include <memory>       // std::unique_ptr
 #include <type_traits>  // std::remove_reference_t
 #include <variant>      // std::visit
+
+using namespace std::chrono_literals;
 
 int main(int argc, char *argv[]) {
     try {
@@ -57,7 +59,7 @@ int main(int argc, char *argv[]) {
                                                                           : plssvm::make_csvm(cmd_parser.backend, cmd_parser.target, cmd_parser.csvm_params);
 
             // initialize hardware sampling
-            PLSSVM_DETAIL_TRACKING_HARDWARE_SAMPLER_INIT(svm->get_target_platform(), svm->num_available_devices(), 100);
+            PLSSVM_DETAIL_TRACKING_HARDWARE_SAMPLER_INIT(svm->get_target_platform(), svm->num_available_devices(), 100ms);
             PLSSVM_DETAIL_TRACKING_HARDWARE_SAMPLER_START_SAMPLING();
 
             // only specify plssvm::max_iter if it isn't its default value

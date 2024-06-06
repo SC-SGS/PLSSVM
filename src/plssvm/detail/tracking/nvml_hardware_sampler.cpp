@@ -38,7 +38,7 @@ nvmlDevice_t device_id_to_nvml_handle(const std::size_t device_id) {
     return device;
 }
 
-nvml_hardware_sampler::nvml_hardware_sampler(const std::size_t device_id, const unsigned long long sampling_interval) :  // TODO: chrono!
+nvml_hardware_sampler::nvml_hardware_sampler(const std::size_t device_id, const std::chrono::milliseconds sampling_interval) :
     hardware_sampler{ sampling_interval },
     device_id_{ device_id } {
     // make sure that nvmlInit is only called once for all instances

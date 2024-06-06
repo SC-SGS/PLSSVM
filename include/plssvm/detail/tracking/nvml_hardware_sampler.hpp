@@ -16,16 +16,19 @@
 #include "plssvm/detail/tracking/nvml_samples.hpp"
 
 #include <atomic>   // std::atomic
+#include <chrono>   // std::chrono::milliseconds, std::chrono_literals namespace
 #include <cstddef>  // std::size_t
 #include <mutex>    // std::once_flag
 #include <string>   // std::string
 
 namespace plssvm::detail::tracking {
 
+using namespace std::chrono_literals;
+
 class nvml_hardware_sampler : public hardware_sampler {
   public:
     // TODO: handle device id?!?!?
-    explicit nvml_hardware_sampler(std::size_t device_id, unsigned long long sampling_interval = 100);
+    explicit nvml_hardware_sampler(std::size_t device_id, std::chrono::milliseconds sampling_interval = 100ms);
 
     ~nvml_hardware_sampler() override;
 

@@ -20,7 +20,7 @@
 
 namespace plssvm::detail::tracking {
 
-hardware_sampler::hardware_sampler(unsigned long long sampling_interval) :
+hardware_sampler::hardware_sampler(const std::chrono::milliseconds sampling_interval) :
     sampling_interval_{ sampling_interval } { }
 
 hardware_sampler::~hardware_sampler() = default;

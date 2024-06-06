@@ -16,7 +16,7 @@
 #include "plssvm/detail/tracking/events.hpp"  // plssvm::detail::tracking::events
 
 #include <atomic>  // std::atomic
-#include <chrono>  // std::chrono::steady_clock::time_point
+#include <chrono>  // std::chrono::{steady_clock::time_point, milliseconds}
 #include <string>  // std::string
 #include <thread>  // std::thread
 
@@ -24,7 +24,7 @@ namespace plssvm::detail::tracking {
 
 class hardware_sampler {
   public:
-    explicit hardware_sampler(unsigned long long sampling_interval = 100ull);
+    explicit hardware_sampler(std::chrono::milliseconds sampling_interval);
 
     hardware_sampler(const hardware_sampler &) = delete;
     hardware_sampler(hardware_sampler &&) noexcept = delete;
@@ -58,7 +58,7 @@ class hardware_sampler {
     std::atomic<bool> sampling_stopped_{ false };
     std::atomic<bool> sampling_running_{ false };
 
-    unsigned long long sampling_interval_;
+    const std::chrono::milliseconds sampling_interval_;
     std::chrono::steady_clock::time_point start_time_;
     std::thread sampling_thread_{};
 

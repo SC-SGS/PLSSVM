@@ -16,13 +16,16 @@
 #include "plssvm/detail/tracking/nvml_hardware_sampler.hpp"  // TODO: guard behind ifdef
 #include "plssvm/target_platforms.hpp"
 
+#include <chrono>  // std::chrono::milliseconds, std::chrono_literals namespace
 #include <memory>  // std::unique_ptr, std::make_unique
 #include <vector>  // std::vector
 
 namespace plssvm::detail::tracking {
 
+using namespace std::chrono_literals;
+
 // TODO: template parameter
-inline std::unique_ptr<nvml_hardware_sampler> hardware_sampler_factory(const target_platform target, const std::size_t device_id, const unsigned long long sampling_interval = 100) {
+inline std::unique_ptr<nvml_hardware_sampler> hardware_sampler_factory(const target_platform target, const std::size_t device_id, const std::chrono::milliseconds sampling_interval = 100ms) {
     // TODO: may not be automatic
 
     switch (target) {
@@ -42,7 +45,7 @@ inline std::unique_ptr<nvml_hardware_sampler> hardware_sampler_factory(const tar
 }
 
 // TODO: better
-inline std::vector<std::unique_ptr<nvml_hardware_sampler>> &global_hardware_sampler(const target_platform target = target_platform::automatic, const std::size_t num_devices = 0, const unsigned long long sampling_interval = 100) {
+inline std::vector<std::unique_ptr<nvml_hardware_sampler>> &global_hardware_sampler(const target_platform target = target_platform::automatic, const std::size_t num_devices = 0, const std::chrono::milliseconds sampling_interval = 100ms) {
     static std::vector<std::unique_ptr<nvml_hardware_sampler>> sampler = [=]() {
         std::vector<std::unique_ptr<nvml_hardware_sampler>> s{};
         for (std::size_t device = 0; device < num_devices; ++device) {
