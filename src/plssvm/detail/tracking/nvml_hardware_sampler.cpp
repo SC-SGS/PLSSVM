@@ -150,7 +150,7 @@ void nvml_hardware_sampler::add_sample() {
         PLSSVM_NVML_ERROR_CHECK(nvmlDeviceGetUtilizationRates(device, &util));
         sample.utilization_gpu = util.gpu;
         sample.utilization_mem = util.memory;
-        this->general_samples_.add_sample(sample);
+        general_samples_.add_sample(sample);
     }
     // retrieve clock related information
     {
@@ -163,7 +163,7 @@ void nvml_hardware_sampler::add_sample() {
         nvmlEnableState_t default_mode{};
         PLSSVM_NVML_ERROR_CHECK(nvmlDeviceGetAutoBoostedClocksEnabled(device, &mode, &default_mode));
         sample.auto_boosted_clocks = mode == NVML_FEATURE_ENABLED;
-        this->clock_samples_.add_sample(sample);
+        clock_samples_.add_sample(sample);
     }
     // retrieve power related information
     {
@@ -173,7 +173,7 @@ void nvml_hardware_sampler::add_sample() {
         sample.power_state = static_cast<int>(pstate);
         PLSSVM_NVML_ERROR_CHECK(nvmlDeviceGetPowerUsage(device, &sample.power_usage));
         PLSSVM_NVML_ERROR_CHECK(nvmlDeviceGetTotalEnergyConsumption(device, &sample.power_total_energy_consumption));
-        this->power_samples_.add_sample(sample);
+        power_samples_.add_sample(sample);
     }
     // retrieve memory related information
     {
@@ -184,14 +184,14 @@ void nvml_hardware_sampler::add_sample() {
         sample.memory_used = memory_info.used;
         PLSSVM_NVML_ERROR_CHECK(nvmlDeviceGetCurrPcieLinkWidth(device, &sample.pcie_link_width));
         PLSSVM_NVML_ERROR_CHECK(nvmlDeviceGetCurrPcieLinkGeneration(device, &sample.pcie_link_generation));
-        this->memory_samples_.add_sample(sample);
+        memory_samples_.add_sample(sample);
     }
     // retrieve temperature related information
     {
         nvml_temperature_samples::nvml_temperature_sample sample{};
         PLSSVM_NVML_ERROR_CHECK(nvmlDeviceGetFanSpeed(device, &sample.fan_speed));
         PLSSVM_NVML_ERROR_CHECK(nvmlDeviceGetTemperature(device, NVML_TEMPERATURE_GPU, &sample.temperature_gpu));
-        this->temperature_samples_.add_sample(sample);
+        temperature_samples_.add_sample(sample);
     }
 }
 
