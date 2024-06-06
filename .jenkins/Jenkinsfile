@@ -328,7 +328,7 @@ pipeline {
                                             $([[ $BACKEND == OPENMP ]] && echo "~stdpar +openmp" || echo "~openmp") \
                                             $([[ $BACKEND == CUDA ]] && echo "~stdpar +cuda" || echo "~cuda") \
                                             $([[ $BACKEND == HIP ]] && echo "~stdpar +hip" || echo "~hip") \
-                                            $([[ $BACKEND == OPENCL ]] && echo "+~stdpar opencl" || echo "~opencl") \
+                                            $([[ $BACKEND == OPENCL ]] && echo "~stdpar +opencl" || echo "~opencl") \
                                             $([[ $BACKEND == ADAPTIVECPP ]] && echo "~stdpar +adaptivecpp" || echo "~adaptivecpp") \
                                             $([[ $BACKEND == DPCPP ]] && echo "~stdpar +icpx" || echo "~icpx") \
                                             $([[ $BACKEND == STDPAR-GNU-TBB ]] && echo "+stdpar stdparimplementation=gnu-tbb" ) \
@@ -345,7 +345,7 @@ pipeline {
                                             $([[ $BACKEND == OPENMP ]] && echo "~stdpar +openmp" || echo "~openmp") \
                                             $([[ $BACKEND == CUDA ]] && echo "~stdpar +cuda" || echo "~cuda") \
                                             $([[ $BACKEND == HIP ]] && echo "~stdpar +hip" || echo "~hip") \
-                                            $([[ $BACKEND == OPENCL ]] && echo "+~stdpar opencl" || echo "~opencl") \
+                                            $([[ $BACKEND == OPENCL ]] && echo "~stdpar +opencl" || echo "~opencl") \
                                             $([[ $BACKEND == ADAPTIVECPP ]] && echo "~stdpar +adaptivecpp" || echo "~adaptivecpp") \
                                             $([[ $BACKEND == DPCPP ]] && echo "~stdpar +icpx" || echo "~icpx") \
                                             $([[ $BACKEND == STDPAR-GNU-TBB ]] && echo "+stdpar stdparimplementation=gnu-tbb" ) \
