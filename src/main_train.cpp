@@ -59,7 +59,7 @@ int main(int argc, char *argv[]) {
                                                                           : plssvm::make_csvm(cmd_parser.backend, cmd_parser.target, cmd_parser.csvm_params);
 
             // initialize hardware sampling
-            PLSSVM_DETAIL_TRACKING_HARDWARE_SAMPLER_INIT(svm->get_target_platform(), svm->num_available_devices(), 100ms);
+            PLSSVM_DETAIL_TRACKING_HARDWARE_SAMPLER_INIT(svm->get_target_platform(), svm->num_available_devices());
             PLSSVM_DETAIL_TRACKING_HARDWARE_SAMPLER_START_SAMPLING();
 
             // only specify plssvm::max_iter if it isn't its default value
