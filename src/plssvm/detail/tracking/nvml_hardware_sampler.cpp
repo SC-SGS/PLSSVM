@@ -10,7 +10,7 @@
 
 #include "plssvm/detail/tracking/hardware_sampler.hpp"  // plssvm::detail::tracking::hardware_sampler
 #include "plssvm/detail/tracking/nvml_samples.hpp"
-#include "plssvm/exceptions/exceptions.hpp"  // plssvm::hardware_sampling_exception
+#include "plssvm/exceptions/exceptions.hpp"  // plssvm::exception, plssvm::hardware_sampling_exception
 
 #include "nvml.h"
 
@@ -32,8 +32,8 @@ namespace plssvm::detail::tracking {
 
     #define PLSSVM_NVML_ERROR_CHECK(nvml_func)                                                                                                           \
         {                                                                                                                                                \
-            const auto errc = nvml_func;                                                                                                                 \
-            if ((errc) != NVML_SUCCESS && (errc) != NVML_ERROR_NOT_SUPPORTED) {                                                                          \
+            const nvmlReturn_t errc = nvml_func;                                                                                                         \
+            if (errc != NVML_SUCCESS && errc != NVML_ERROR_NOT_SUPPORTED) {                                                                              \
                 throw hardware_sampling_exception{ fmt::format("Error in NVML function call: {} ({})", nvmlErrorString(errc), static_cast<int>(errc)) }; \
             }                                                                                                                                            \
         }
@@ -53,9 +53,7 @@ nvml_hardware_sampler::nvml_hardware_sampler(const std::size_t device_id, const 
     hardware_sampler{ sampling_interval },
     device_id_{ device_id } {
     // make sure that nvmlInit is only called once for all instances
-    std::call_once(nvml_init_once_, []() {
-        nvmlInit();
-    });
+    std::call_once(nvml_init_once_, []() { PLSSVM_NVML_ERROR_CHECK(nvmlInit()); });
     ++instances_;
 }
 
@@ -64,8 +62,10 @@ nvml_hardware_sampler::~nvml_hardware_sampler() {
         // the last instance must shut down the NVML runtime
         if (--instances_ == 0) {
             // make sure that nvmlShutdown is only called once
-            std::call_once(nvml_shutdown_once_, []() { nvmlShutdown(); });  // TODO: can't create new nvml_hardware_sampler instance afterwards?!
+            std::call_once(nvml_shutdown_once_, []() { PLSSVM_NVML_ERROR_CHECK(nvmlShutdown()); });  // TODO: can't create new nvml_hardware_sampler instance afterwards?!
         }
+    } catch (const plssvm::exception &e) {
+        std::cerr << e.what_with_loc() << std::endl;
     } catch (const std::exception &e) {
         std::cerr << e.what() << std::endl;
         std::terminate();
