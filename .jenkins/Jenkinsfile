@@ -325,12 +325,12 @@ pipeline {
                                         fi
 
                                         spack uninstall -a -y plssvm@develop$([[ $BACKEND == ADAPTIVECPP ]] && echo "%clang" )  \
-                                            $([[ $BACKEND == OPENMP ]] && echo "+openmp" || echo "~openmp") \
-                                            $([[ $BACKEND == CUDA ]] && echo "+cuda" || echo "~cuda") \
-                                            $([[ $BACKEND == HIP ]] && echo "+hip" || echo "~hip") \
-                                            $([[ $BACKEND == OPENCL ]] && echo "+opencl" || echo "~opencl") \
-                                            $([[ $BACKEND == ADAPTIVECPP ]] && echo "+adaptivecpp" || echo "~adaptivecpp") \
-                                            $([[ $BACKEND == DPCPP ]] && echo "+icpx" || echo "~icpx") \
+                                            $([[ $BACKEND == OPENMP ]] && echo "~stdpar +openmp" || echo "~openmp") \
+                                            $([[ $BACKEND == CUDA ]] && echo "~stdpar +cuda" || echo "~cuda") \
+                                            $([[ $BACKEND == HIP ]] && echo "~stdpar +hip" || echo "~hip") \
+                                            $([[ $BACKEND == OPENCL ]] && echo "+~stdpar opencl" || echo "~opencl") \
+                                            $([[ $BACKEND == ADAPTIVECPP ]] && echo "~stdpar +adaptivecpp" || echo "~adaptivecpp") \
+                                            $([[ $BACKEND == DPCPP ]] && echo "~stdpar +icpx" || echo "~icpx") \
                                             $([[ $BACKEND == STDPAR-GNU-TBB ]] && echo "+stdpar stdparimplementation=gnu-tbb" ) \
                                             $([[ $BACKEND == STDPAR-DPCPP ]] && echo "+stdpar stdparimplementation=icpx" ) \
                                             $([[ $BACKEND == STDPAR-NVHPC ]] && echo "+stdpar stdparimplementation=nvhpc" ) \
@@ -342,12 +342,12 @@ pipeline {
                                             arch=$(spack arch) || true
 
                                         spack dev-build plssvm@develop$([[ $BACKEND == ADAPTIVECPP ]] && echo "%clang" ) \
-                                            $([[ $BACKEND == OPENMP ]] && echo "+openmp" || echo "~openmp") \
-                                            $([[ $BACKEND == CUDA ]] && echo "+cuda" || echo "~cuda") \
-                                            $([[ $BACKEND == HIP ]] && echo "+hip" || echo "~hip") \
-                                            $([[ $BACKEND == OPENCL ]] && echo "+opencl" || echo "~opencl") \
-                                            $([[ $BACKEND == ADAPTIVECPP ]] && echo "+adaptivecpp" || echo "~adaptivecpp") \
-                                            $([[ $BACKEND == DPCPP ]] && echo "+icpx" || echo "~icpx") \
+                                            $([[ $BACKEND == OPENMP ]] && echo "~stdpar +openmp" || echo "~openmp") \
+                                            $([[ $BACKEND == CUDA ]] && echo "~stdpar +cuda" || echo "~cuda") \
+                                            $([[ $BACKEND == HIP ]] && echo "~stdpar +hip" || echo "~hip") \
+                                            $([[ $BACKEND == OPENCL ]] && echo "+~stdpar opencl" || echo "~opencl") \
+                                            $([[ $BACKEND == ADAPTIVECPP ]] && echo "~stdpar +adaptivecpp" || echo "~adaptivecpp") \
+                                            $([[ $BACKEND == DPCPP ]] && echo "~stdpar +icpx" || echo "~icpx") \
                                             $([[ $BACKEND == STDPAR-GNU-TBB ]] && echo "+stdpar stdparimplementation=gnu-tbb" ) \
                                             $([[ $BACKEND == STDPAR-DPCPP ]] && echo "+stdpar stdparimplementation=icpx" ) \
                                             $([[ $BACKEND == STDPAR-NVHPC ]] && echo "+stdpar stdparimplementation=nvhpc" ) \
@@ -378,12 +378,12 @@ pipeline {
                                 spack find package plssvm@develop
                                 echo $hostname
                                 installpath=$(spack location -i plssvm@develop$([[ $BACKEND == ADAPTIVECPP ]] && echo "%clang" ) \
-                                    $([[ $BACKEND == OPENMP ]] && echo "+openmp" || echo "~openmp") \
-                                    $([[ $BACKEND == CUDA ]] && echo "+cuda" || echo "~cuda") \
-                                    $([[ $BACKEND == HIP ]] && echo "+hip" || echo "~hip") \
-                                    $([[ $BACKEND == OPENCL ]] && echo "+opencl" || echo "~opencl") \
-                                    $([[ $BACKEND == ADAPTIVECPP ]] && echo "+adaptivecpp" || echo "~adaptivecpp") \
-                                    $([[ $BACKEND == DPCPP ]] && echo "+icpx" || echo "~icpx") \
+                                    $([[ $BACKEND == OPENMP ]] && echo "~stdpar +openmp" || echo "~openmp") \
+                                    $([[ $BACKEND == CUDA ]] && echo "~stdpar +cuda" || echo "~cuda") \
+                                    $([[ $BACKEND == HIP ]] && echo "~stdpar +hip" || echo "~hip") \
+                                    $([[ $BACKEND == OPENCL ]] && echo "~stdpar +opencl" || echo "~opencl") \
+                                    $([[ $BACKEND == ADAPTIVECPP ]] && echo "~stdpar +adaptivecpp" || echo "~adaptivecpp") \
+                                    $([[ $BACKEND == DPCPP ]] && echo "~stdpar +icpx" || echo "~icpx") \
                                     $([[ $BACKEND == STDPAR-GNU-TBB ]] && echo "+stdpar stdparimplementation=gnu-tbb" ) \
                                     $([[ $BACKEND == STDPAR-DPCPP ]] && echo "+stdpar stdparimplementation=icpx" ) \
                                     $([[ $BACKEND == STDPAR-NVHPC ]] && echo "+stdpar stdparimplementation=nvhpc" ) \
@@ -405,12 +405,16 @@ pipeline {
 
 
                                 spack test-env "plssvm@develop $([[ $BACKEND == ADAPTIVECPP ]] && echo "%clang" )\
-                                        $([[ $BACKEND == OPENMP ]] && echo "+openmp" || echo "~openmp") \
-                                        $([[ $BACKEND == CUDA ]] && echo "+cuda" || echo "~cuda") \
-                                        $([[ $BACKEND == HIP ]] && echo "+hip" || echo "~hip") \
-                                        $([[ $BACKEND == OPENCL ]] && echo "+opencl" || echo "~opencl") \
-                                        $([[ $BACKEND == ADAPTIVECPP ]] && echo "+adaptivecpp" || echo "~adaptivecpp") \
-                                        $([[ $BACKEND == DPCPP ]] && echo "+icpx" || echo "~icpx") \
+                                        $([[ $BACKEND == OPENMP ]] && echo "~stdpar +openmp" || echo "~openmp") \
+                                        $([[ $BACKEND == CUDA ]] && echo "~stdpar +cuda" || echo "~cuda") \
+                                        $([[ $BACKEND == HIP ]] && echo "~stdpar +hip" || echo "~hip") \
+                                        $([[ $BACKEND == OPENCL ]] && echo "~stdpar +opencl" || echo "~opencl") \
+                                        $([[ $BACKEND == ADAPTIVECPP ]] && echo "~stdpar  +adaptivecpp" || echo "~adaptivecpp") \
+                                        $([[ $BACKEND == DPCPP ]] && echo "~stdpar +icpx" || echo "~icpx") \
+                                        $([[ $BACKEND == STDPAR-GNU-TBB ]] && echo "+stdpar stdparimplementation=gnu-tbb" ) \
+                                        $([[ $BACKEND == STDPAR-DPCPP ]] && echo "+stdpar stdparimplementation=icpx" ) \
+                                        $([[ $BACKEND == STDPAR-NVHPC ]] && echo "+stdpar stdparimplementation=nvhpc" ) \
+                                        $([[ $BACKEND == STDPAR-ADAPTIVECPP ]] && echo "+stdpar stdparimplementation=adaptivecpp" ) \
                                         $([[ $ARCHITECTURE == NVIDIA ]] && echo "cuda_arch=86") \
                                         $([[ $ARCHITECTURE == AMD ]] && echo "amdgpu_target=gfx90a") \
                                         build_type=$BUILD_TYPE \
@@ -430,12 +434,12 @@ pipeline {
                                 cd ${WORKSPACE}/plssvm/test/data/libsvm
 
                                 spack load "plssvm@develop $([[ $BACKEND == ADAPTIVECPP ]] && echo "%clang" )\
-                                        $([[ $BACKEND == OPENMP ]] && echo "+openmp" || echo "~openmp") \
-                                        $([[ $BACKEND == CUDA ]] && echo "+cuda" || echo "~cuda") \
-                                        $([[ $BACKEND == HIP ]] && echo "+hip" || echo "~hip") \
-                                        $([[ $BACKEND == OPENCL ]] && echo "+opencl" || echo "~opencl") \
-                                        $([[ $BACKEND == ADAPTIVECPP ]] && echo "+adaptivecpp" || echo "~adaptivecpp") \
-                                        $([[ $BACKEND == DPCPP ]] && echo "+icpx" || echo "~icpx") \
+                                        $([[ $BACKEND == OPENMP ]] && echo "~stdpar  +openmp" || echo "~openmp") \
+                                        $([[ $BACKEND == CUDA ]] && echo "~stdpar +cuda" || echo "~cuda") \
+                                        $([[ $BACKEND == HIP ]] && echo "~stdpar +hip" || echo "~hip") \
+                                        $([[ $BACKEND == OPENCL ]] && echo "~stdpar +opencl" || echo "~opencl") \
+                                        $([[ $BACKEND == ADAPTIVECPP ]] && echo "~stdpar +adaptivecpp" || echo "~adaptivecpp") \
+                                        $([[ $BACKEND == DPCPP ]] && echo "~stdpar +icpx" || echo "~icpx") \
                                         $([[ $BACKEND == STDPAR-GNU-TBB ]] && echo "+stdpar stdparimplementation=gnu-tbb" ) \
                                         $([[ $BACKEND == STDPAR-DPCPP ]] && echo "+stdpar stdparimplementation=icpx" ) \
                                         $([[ $BACKEND == STDPAR-NVHPC ]] && echo "+stdpar stdparimplementation=nvhpc" ) \
