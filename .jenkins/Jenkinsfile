@@ -213,7 +213,7 @@ pipeline {
                 axes {
                     axis {
                         name 'BACKEND'
-                        values 'OPENMP', 'CUDA', 'OPENCL', 'DPCPP', 'ADAPTIVECPP', 'HIP'
+                        values 'OPENMP', 'CUDA', 'OPENCL', 'DPCPP', 'ADAPTIVECPP', 'HIP', 'STDPAR-GNU-TBB', 'STDPAR-DPCPP', 'STDPAR-ADAPTIVECPP', 'STDPAR-ROC', 'STDPAR-NVHPC'
                     }
                     axis {
                         name 'ARCHITECTURE'
@@ -232,7 +232,7 @@ pipeline {
                     exclude {
                       axis{
                         name 'BACKEND'
-                        values 'HIP'
+                        values 'HIP', 'STDPAR-ROC'
                       }
                       axis{
                         name 'ARCHITECTURE'
@@ -242,7 +242,7 @@ pipeline {
                     exclude {
                       axis{
                         name 'BACKEND'
-                        values 'CUDA'
+                        values 'CUDA', 'STDPAR-NVHPC'
                       }
                       axis{
                         name 'ARCHITECTURE'
@@ -252,7 +252,7 @@ pipeline {
                     exclude {
                       axis{
                         name 'BACKEND'
-                        values 'OPENMP'
+                        values 'OPENMP', 'STDPAR-GNU-TBB'
                       }
                       axis{
                         name 'ARCHITECTURE'
@@ -320,6 +320,10 @@ pipeline {
                                         source $SGSSCRATCH/spack/share/spack/setup-env.sh
                                         cd ${WORKSPACE}/plssvm
 
+                                        if [[ $ARCHITECTURE == AMD ]]; then
+                                            spack install hip@4.5.2
+                                        fi
+
                                         spack uninstall -a -y plssvm@develop$([[ $BACKEND == ADAPTIVECPP ]] && echo "%clang" )  \
                                             $([[ $BACKEND == OPENMP ]] && echo "+openmp" || echo "~openmp") \
                                             $([[ $BACKEND == CUDA ]] && echo "+cuda" || echo "~cuda") \
@@ -327,6 +331,11 @@ pipeline {
                                             $([[ $BACKEND == OPENCL ]] && echo "+opencl" || echo "~opencl") \
                                             $([[ $BACKEND == ADAPTIVECPP ]] && echo "+adaptivecpp" || echo "~adaptivecpp") \
                                             $([[ $BACKEND == DPCPP ]] && echo "+icpx" || echo "~icpx") \
+                                            $([[ $BACKEND == STDPAR-GNU-TBB ]] && echo "+stdpar stdparimplementation=gnu-tbb" ) \
+                                            $([[ $BACKEND == STDPAR-DPCPP ]] && echo "+stdpar stdparimplementation=icpx" ) \
+                                            $([[ $BACKEND == STDPAR-NVHPC ]] && echo "+stdpar stdparimplementation=nvhpc" ) \
+                                            $([[ $BACKEND == STDPAR-ADAPTIVECPP ]] && echo "+stdpar stdparimplementation=adaptivecpp" ) \
+                                            $([[ $BACKEND == STDPAR-ROC ]] && echo "+stdpar stdparimplementation=roc" ) \
                                             $([[ $ARCHITECTURE == NVIDIA ]] && echo "cuda_arch=86") \
                                             $([[ $ARCHITECTURE == AMD ]] && echo "amdgpu_target=gfx90a") \
                                             build_type=$BUILD_TYPE \
@@ -339,6 +348,10 @@ pipeline {
                                             $([[ $BACKEND == OPENCL ]] && echo "+opencl" || echo "~opencl") \
                                             $([[ $BACKEND == ADAPTIVECPP ]] && echo "+adaptivecpp" || echo "~adaptivecpp") \
                                             $([[ $BACKEND == DPCPP ]] && echo "+icpx" || echo "~icpx") \
+                                            $([[ $BACKEND == STDPAR-GNU-TBB ]] && echo "+stdpar stdparimplementation=gnu-tbb" ) \
+                                            $([[ $BACKEND == STDPAR-DPCPP ]] && echo "+stdpar stdparimplementation=icpx" ) \
+                                            $([[ $BACKEND == STDPAR-NVHPC ]] && echo "+stdpar stdparimplementation=nvhpc" ) \
+                                            $([[ $BACKEND == STDPAR-ADAPTIVECPP ]] && echo "+stdpar stdparimplementation=adaptivecpp" ) \
                                             $([[ $ARCHITECTURE == NVIDIA ]] && echo "cuda_arch=86") \
                                             $([[ $ARCHITECTURE == AMD ]] && echo "amdgpu_target=gfx90a") \
                                             +language_bindings \
@@ -371,6 +384,10 @@ pipeline {
                                     $([[ $BACKEND == OPENCL ]] && echo "+opencl" || echo "~opencl") \
                                     $([[ $BACKEND == ADAPTIVECPP ]] && echo "+adaptivecpp" || echo "~adaptivecpp") \
                                     $([[ $BACKEND == DPCPP ]] && echo "+icpx" || echo "~icpx") \
+                                    $([[ $BACKEND == STDPAR-GNU-TBB ]] && echo "+stdpar stdparimplementation=gnu-tbb" ) \
+                                    $([[ $BACKEND == STDPAR-DPCPP ]] && echo "+stdpar stdparimplementation=icpx" ) \
+                                    $([[ $BACKEND == STDPAR-NVHPC ]] && echo "+stdpar stdparimplementation=nvhpc" ) \
+                                    $([[ $BACKEND == STDPAR-ADAPTIVECPP ]] && echo "+stdpar stdparimplementation=adaptivecpp" ) \
                                     $([[ $ARCHITECTURE == NVIDIA ]] && echo "cuda_arch=86") \
                                     $([[ $ARCHITECTURE == AMD ]] && echo "amdgpu_target=gfx90a") \
                                     build_type=$BUILD_TYPE \
@@ -419,6 +436,10 @@ pipeline {
                                         $([[ $BACKEND == OPENCL ]] && echo "+opencl" || echo "~opencl") \
                                         $([[ $BACKEND == ADAPTIVECPP ]] && echo "+adaptivecpp" || echo "~adaptivecpp") \
                                         $([[ $BACKEND == DPCPP ]] && echo "+icpx" || echo "~icpx") \
+                                        $([[ $BACKEND == STDPAR-GNU-TBB ]] && echo "+stdpar stdparimplementation=gnu-tbb" ) \
+                                        $([[ $BACKEND == STDPAR-DPCPP ]] && echo "+stdpar stdparimplementation=icpx" ) \
+                                        $([[ $BACKEND == STDPAR-NVHPC ]] && echo "+stdpar stdparimplementation=nvhpc" ) \
+                                        $([[ $BACKEND == STDPAR-ADAPTIVECPP ]] && echo "+stdpar stdparimplementation=adaptivecpp" ) \
                                         $([[ $ARCHITECTURE == NVIDIA ]] && echo "cuda_arch=86") \
                                         $([[ $ARCHITECTURE == AMD ]] && echo "amdgpu_target=gfx90a") \
                                         build_type=$BUILD_TYPE \
