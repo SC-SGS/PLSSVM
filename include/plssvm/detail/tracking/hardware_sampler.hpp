@@ -27,9 +27,9 @@ class hardware_sampler {
     explicit hardware_sampler(unsigned long long sampling_interval = 100ull);
 
     hardware_sampler(const hardware_sampler &) = delete;
-    hardware_sampler(hardware_sampler &&) noexcept = default;
+    hardware_sampler(hardware_sampler &&) noexcept = delete;
     hardware_sampler &operator=(const hardware_sampler &) = delete;
-    hardware_sampler &operator=(hardware_sampler &&) noexcept = default;
+    hardware_sampler &operator=(hardware_sampler &&) noexcept = delete;
 
     virtual ~hardware_sampler() = 0;
 
