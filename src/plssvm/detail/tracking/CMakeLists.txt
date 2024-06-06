@@ -53,7 +53,9 @@ if (PLSSVM_ENABLE_HARDWARE_SAMPLING)
         target_link_libraries(${PLSSVM_HARDWARE_TRACKING_LIBRARY_NAME} PUBLIC CUDA::nvml)
         
         # add source file to source file list
-        target_sources(${PLSSVM_HARDWARE_TRACKING_LIBRARY_NAME} PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/nvml_hardware_sampler.cpp>)
+        target_sources(${PLSSVM_HARDWARE_TRACKING_LIBRARY_NAME} PUBLIC
+                       $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/nvml_hardware_sampler.cpp>
+                       $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/nvml_samples.cpp>)
         
         # add compile definition
         target_compile_definitions(${PLSSVM_HARDWARE_TRACKING_LIBRARY_NAME} PUBLIC PLSSVM_HARDWARE_TRACKING_VIA_NVML_ENABLED)

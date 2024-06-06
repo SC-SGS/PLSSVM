@@ -12,12 +12,18 @@
 #ifndef PLSSVM_DETAIL_TRACKING_NVML_SAMPLES_HPP_
 #define PLSSVM_DETAIL_TRACKING_NVML_SAMPLES_HPP_
 
+#include "fmt/core.h"     // fmt::formatter
+#include "fmt/ostream.h"  // fmt::ostream_formatter
+
+#include <iosfwd>  // std::ostream forward declaration
+#include <string>  // std::string
+#include <vector>  // std::vector
+
 namespace plssvm::detail::tracking {
 
 class nvml_general_samples {
   public:
     struct nvml_general_sample {
-        std::chrono::milliseconds time_since_start{ 0 };
         int performance_state{ 0 };
         unsigned int utilization_gpu{ 0 };
         unsigned int utilization_mem{ 0 };
@@ -28,7 +34,6 @@ class nvml_general_samples {
     unsigned int num_cores{ 0 };
 
     void add_sample(nvml_general_sample s) {
-        this->time_since_start_.push_back(s.time_since_start);
         this->performance_state_.push_back(s.performance_state);
         this->utilization_gpu_.push_back(s.utilization_gpu);
         this->utilization_mem_.push_back(s.utilization_mem);
@@ -37,14 +42,12 @@ class nvml_general_samples {
     }
 
     nvml_general_sample operator[](const std::size_t idx) const noexcept {
-        return nvml_general_sample{ time_since_start_[idx], performance_state_[idx], utilization_gpu_[idx], utilization_mem_[idx] };
+        return nvml_general_sample{ performance_state_[idx], utilization_gpu_[idx], utilization_mem_[idx] };
     }
 
-    [[nodiscard]] std::size_t num_samples() const noexcept { return time_since_start_.size(); }
+    [[nodiscard]] std::size_t num_samples() const noexcept { return performance_state_.size(); }
 
-    [[nodiscard]] bool empty() const noexcept { return time_since_start_.empty(); }
-
-    [[nodiscard]] const auto &get_time_since_start() const noexcept { return time_since_start_; }
+    [[nodiscard]] bool empty() const noexcept { return performance_state_.empty(); }
 
     [[nodiscard]] const auto &get_performance_state() const noexcept { return performance_state_; }
 
@@ -53,11 +56,12 @@ class nvml_general_samples {
     [[nodiscard]] const auto &get_utilization_mem() const noexcept { return utilization_mem_; }
 
   private:
-    std::vector<decltype(nvml_general_sample::time_since_start)> time_since_start_{};
     std::vector<decltype(nvml_general_sample::performance_state)> performance_state_{};
     std::vector<decltype(nvml_general_sample::utilization_gpu)> utilization_gpu_{};
     std::vector<decltype(nvml_general_sample::utilization_mem)> utilization_mem_{};
 };
+
+std::ostream &operator<<(std::ostream &out, const nvml_general_samples &samples);
 
 class nvml_clock_samples {
   public:
@@ -106,6 +110,8 @@ class nvml_clock_samples {
     std::vector<decltype(nvml_clock_sample::auto_boosted_clocks)> auto_boosted_clocks_{};
 };
 
+std::ostream &operator<<(std::ostream &out, const nvml_clock_samples &samples);
+
 class nvml_power_samples {
   public:
     struct nvml_power_sample {
@@ -144,6 +150,8 @@ class nvml_power_samples {
     std::vector<decltype(nvml_power_sample::power_usage)> power_usage_{};
     std::vector<decltype(nvml_power_sample::power_total_energy_consumption)> power_total_energy_consumption_{};
 };
+
+std::ostream &operator<<(std::ostream &out, const nvml_power_samples &samples);
 
 class nvml_memory_samples {
   public:
@@ -191,6 +199,8 @@ class nvml_memory_samples {
     std::vector<decltype(nvml_memory_sample::pcie_link_generation)> pcie_link_generation_{};
 };
 
+std::ostream &operator<<(std::ostream &out, const nvml_memory_samples &samples);
+
 class nvml_temperature_samples {
   public:
     struct nvml_temperature_sample {
@@ -226,6 +236,23 @@ class nvml_temperature_samples {
     std::vector<decltype(nvml_temperature_sample::temperature_gpu)> temperature_gpu_{};
 };
 
+std::ostream &operator<<(std::ostream &out, const nvml_temperature_samples &samples);
+
 }  // namespace plssvm::detail::tracking
+
+template <>
+struct fmt::formatter<plssvm::detail::tracking::nvml_general_samples> : fmt::ostream_formatter { };
+
+template <>
+struct fmt::formatter<plssvm::detail::tracking::nvml_clock_samples> : fmt::ostream_formatter { };
+
+template <>
+struct fmt::formatter<plssvm::detail::tracking::nvml_power_samples> : fmt::ostream_formatter { };
+
+template <>
+struct fmt::formatter<plssvm::detail::tracking::nvml_memory_samples> : fmt::ostream_formatter { };
+
+template <>
+struct fmt::formatter<plssvm::detail::tracking::nvml_temperature_samples> : fmt::ostream_formatter { };
 
 #endif  // PLSSVM_DETAIL_TRACKING_NVML_SAMPLES_HPP_

@@ -78,171 +78,22 @@ std::string nvml_hardware_sampler::assemble_yaml_sample_string() const {
         throw hardware_sampling_exception{ "Can't create the final YAML entry if the hardware sampler is still running!" };
     }
 
-    // generate the YAML entry
-    std::string str{ "\n"
-                     "    samples:\n" };
-
-    // format time points
-    str += fmt::format("      sampling_interval: {}\n"
-                       "      time_points: [{}]\n",
+    return fmt::format("\n"
+                       "    samples:\n"
+                       "      sampling_interval: {}\n"
+                       "      time_points: [{}]\n"
+                       "{}\n"
+                       "{}\n"
+                       "{}\n"
+                       "{}\n"
+                       "{}",
                        sampling_interval_,
-                       fmt::join(general_samples_.get_time_since_start(), ", "));
-
-    // format general information
-    str += fmt::format("      general:\n"
-                       "        name:\n"
-                       "          unit: \"string\"\n"
-                       "          values: \"{}\"\n"
-                       "        persistence_mode:\n"
-                       "          unit: \"bool\"\n"
-                       "          values: {}\n"
-                       "        num_cores:\n"
-                       "          unit: \"int\"\n"
-                       "          values: {}\n"
-                       "        performance_state:\n"
-                       "          unit: \"0 - maximum performance; 15 - minimum performance; 32 - unknown\"\n"
-                       "          values: [{}]\n"
-                       "        utilization_gpu:\n"
-                       "          unit: \"percentage\"\n"
-                       "          values: [{}]\n"
-                       "        utilization_mem:\n"
-                       "          unit: \"percentage\"\n"
-                       "          values: [{}]\n",
-                       general_samples_.name,
-                       general_samples_.persistence_mode,
-                       general_samples_.num_cores,
-                       fmt::join(general_samples_.get_performance_state(), ", "),
-                       fmt::join(general_samples_.get_utilization_gpu(), ", "),
-                       fmt::join(general_samples_.get_utilization_mem(), ", "));
-
-    // format clock related information
-    str += fmt::format("      clock:\n"
-                       "        adaptive_clock_status:\n"
-                       "          unit: \"bool\"\n"
-                       "          values: {}\n"
-                       "        clock_graph_max:\n"
-                       "          unit: \"MHz\"\n"
-                       "          values: {}\n"
-                       "        clock_sm_max:\n"
-                       "          unit: \"MHz\"\n"
-                       "          values: {}\n"
-                       "        clock_mem_max:\n"
-                       "          unit: \"MHz\"\n"
-                       "          values: {}\n"
-                       "        clock_graph:\n"
-                       "          unit: \"MHz\"\n"
-                       "          values: [{}]\n"
-                       "        clock_sm:\n"
-                       "          unit: \"MHz\"\n"
-                       "          values: [{}]\n"
-                       "        clock_mem:\n"
-                       "          unit: \"MHz\"\n"
-                       "          values: [{}]\n"
-                       "        clock_throttle_reason:\n"
-                       "          unit: \"bitmask\"\n"
-                       "          values: [{}]\n"
-                       "        auto_boosted_clocks:\n"
-                       "          unit: \"bool\"\n"
-                       "          values: [{}]\n",
-                       fmt::format("{}", clock_samples_.adaptive_clock_status == NVML_ADAPTIVE_CLOCKING_INFO_STATUS_ENABLED),
-                       clock_samples_.clock_graph_max,
-                       clock_samples_.clock_sm_max,
-                       clock_samples_.clock_mem_max,
-                       fmt::join(clock_samples_.get_clock_graph(), ", "),
-                       fmt::join(clock_samples_.get_clock_sm(), ", "),
-                       fmt::join(clock_samples_.get_clock_mem(), ", "),
-                       fmt::join(clock_samples_.get_clock_throttle_reason(), ", "),
-                       fmt::join(clock_samples_.get_auto_boosted_clocks(), ", "));
-
-    // format power related information
-    std::vector<unsigned long long> consumed_energy(power_samples_.num_samples());
-#pragma omp parallel for
-    for (std::size_t i = 0; i < power_samples_.num_samples(); ++i) {
-        consumed_energy[i] = power_samples_.get_power_total_energy_consumption()[i] - power_samples_.get_power_total_energy_consumption()[0];
-    }
-    str += fmt::format("      power:\n"
-                       "        power_management_limit:\n"
-                       "          unit: \"mW\"\n"
-                       "          values: {}\n"
-                       "        power_enforced_limit:\n"
-                       "          unit: \"mW\"\n"
-                       "          values: {}\n"
-                       "        power_state:\n"
-                       "          unit: \"0 - maximum performance; 15 - minimum performance; 32 - unknown\"\n"
-                       "          values: [{}]\n"
-                       "        power_usage:\n"
-                       "          unit: \"mW\"\n"
-                       "          values: [{}]\n"
-                       "        power_total_energy_consumed:\n"
-                       "          unit: \"J\"\n"
-                       "          values: [{}]\n",
-                       power_samples_.power_management_limit,
-                       power_samples_.power_enforced_limit,
-                       fmt::join(power_samples_.get_power_state(), ", "),
-                       fmt::join(power_samples_.get_power_usage(), ", "),
-                       fmt::join(consumed_energy, ", "));
-
-    // format memory related information
-    str += fmt::format("      memory:\n"
-                       "        memory_total:\n"
-                       "          unit: \"B\"\n"
-                       "          values: {}\n"
-                       "        memory_bus_width:\n"
-                       "          unit: \"Bit\"\n"
-                       "          values: {}\n"
-                       "        max_pcie_link_generation:\n"
-                       "          unit: \"int\"\n"
-                       "          values: {}\n"
-                       "        pcie_link_max_speed:\n"
-                       "          unit: \"MBPS\"\n"
-                       "          values: {}\n"
-                       "        memory_free:\n"
-                       "          unit \"B\"\n"
-                       "          values: [{}]\n"
-                       "        memory_used:\n"
-                       "          unit: \"B\"\n"
-                       "          values: [{}]\n"
-                       "        pcie_link_width:\n"
-                       "          unit: \"int\"\n"
-                       "          values: [{}]\n"
-                       "        pcie_link_generation:\n"
-                       "          unit: \"int\"\n"
-                       "          values: [{}]\n",
-                       memory_samples_.memory_total,
-                       memory_samples_.memory_bus_width,
-                       memory_samples_.max_pcie_link_generation,
-                       memory_samples_.pcie_link_max_speed,
-                       fmt::join(memory_samples_.get_memory_free(), ", "),
-                       fmt::join(memory_samples_.get_memory_used(), ", "),
-                       fmt::join(memory_samples_.get_pcie_link_width(), ", "),
-                       fmt::join(memory_samples_.get_pcie_link_generation(), ", "));
-
-    // format temperature related information
-    str += fmt::format("      temperature:\n"
-                       "        num_fans:\n"
-                       "          unit: \"int\"\n"
-                       "          values: {}\n"
-                       "        temperature_threshold_gpu_max:\n"
-                       "          unit: \"°C\"\n"
-                       "          values: {}\n"
-                       "        temperature_threshold_mem_max:\n"
-                       "          unit: \"°C\"\n"
-                       "          values: {}\n"
-                       "        fan_speed:\n"
-                       "          unit \"percentage\"\n"
-                       "          values: [{}]\n"
-                       "        temperature_gpu:\n"
-                       "          unit: \"°C\"\n"
-                       "          values: [{}]\n",
-                       temperature_samples_.num_fans,
-                       temperature_samples_.temperature_threshold_gpu_max,
-                       temperature_samples_.temperature_threshold_mem_max,
-                       fmt::join(temperature_samples_.get_fan_speed(), ", "),
-                       fmt::join(temperature_samples_.get_temperature_gpu(), ", "));
-
-    // remove last newline
-    str.pop_back();
-    return str;
+                       fmt::join(time_since_start_, ", "),
+                       general_samples_,
+                       clock_samples_,
+                       power_samples_,
+                       memory_samples_,
+                       temperature_samples_);
 }
 
 void nvml_hardware_sampler::add_init_sample() {
@@ -286,10 +137,12 @@ void nvml_hardware_sampler::add_sample() {
     // get the nvml handle from the device_id
     nvmlDevice_t device = device_id_to_nvml_handle(device_id_);
 
+    // add current time point
+    time_since_start_.push_back(std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - start_time_));
+
     // retrieve general information
     {
         nvml_general_samples::nvml_general_sample sample{};
-        sample.time_since_start = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - start_time_);
         nvmlPstates_t pstate{};
         PLSSVM_NVML_ERROR_CHECK(nvmlDeviceGetPerformanceState(device, &pstate));
         sample.performance_state = static_cast<int>(pstate);

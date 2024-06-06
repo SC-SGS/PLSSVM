@@ -42,6 +42,7 @@ class nvml_hardware_sampler : public hardware_sampler {
     void add_init_sample() final;
     void add_sample() final;
 
+    std::vector<std::chrono::milliseconds> time_since_start_{};
     nvml_general_samples general_samples_{};
     nvml_clock_samples clock_samples_{};
     nvml_power_samples power_samples_{};
