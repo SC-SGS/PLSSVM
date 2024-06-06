@@ -23,6 +23,7 @@
 #include <exception>  // std::exception, std::terminate
 #include <iostream>   // std::cerr, std::endl
 #include <mutex>      // std::call_once
+#include <string>     // std::string
 #include <vector>     // std::vector
 
 namespace plssvm::detail::tracking {
@@ -72,6 +73,12 @@ nvml_hardware_sampler::~nvml_hardware_sampler() {
 }
 
 std::string nvml_hardware_sampler::assemble_yaml_sample_string() const {
+    // check whether it's safe to generate the YAML entry
+    if (this->is_sampling()) {
+        throw hardware_sampling_exception{ "Can't create the final YAML entry if the hardware sampler is still running!" };
+    }
+
+    // generate the YAML entry
     std::string str{ "\n"
                      "    samples:\n" };
 

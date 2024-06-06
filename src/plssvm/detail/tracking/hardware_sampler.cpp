@@ -27,8 +27,6 @@ hardware_sampler::hardware_sampler(const std::chrono::milliseconds sampling_inte
 
 hardware_sampler::~hardware_sampler() = default;
 
-// TODO: use correct exception
-
 void hardware_sampler::start_sampling() {
     // can't start an already running sampler
     if (sampling_started_) {
@@ -87,8 +85,12 @@ void hardware_sampler::sampling_loop() {
 }
 
 std::string hardware_sampler::assemble_yaml_event_string() const {
-    // TODO: check if currently running?
+    // check whether it's safe to generate the YAML entry
+    if (this->is_sampling()) {
+        throw hardware_sampling_exception{ "Can't create the final YAML entry if the hardware sampler is still running!" };
+    }
 
+    // generate the YAML entry
     if (events_.empty()) {
         // no events -> return empty string
         return "";
