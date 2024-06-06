@@ -20,6 +20,7 @@
 #include <cstddef>  // std::size_t
 #include <mutex>    // std::once_flag
 #include <string>   // std::string
+#include <vector>   // std::vector
 
 namespace plssvm::detail::tracking {
 
@@ -29,6 +30,11 @@ class nvml_hardware_sampler : public hardware_sampler {
   public:
     // TODO: handle device id?!?!?
     explicit nvml_hardware_sampler(std::size_t device_id, std::chrono::milliseconds sampling_interval = 100ms);
+
+    nvml_hardware_sampler(const nvml_hardware_sampler &) = delete;
+    nvml_hardware_sampler(nvml_hardware_sampler &&) noexcept = delete;
+    nvml_hardware_sampler &operator=(const nvml_hardware_sampler &) = delete;
+    nvml_hardware_sampler &operator=(nvml_hardware_sampler &&) noexcept = delete;
 
     ~nvml_hardware_sampler() override;
 
