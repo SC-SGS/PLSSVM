@@ -40,6 +40,7 @@
 #include <memory>       // std::shared_ptr, std::make_shared
 #include <string>       // std::string
 #include <string_view>  // std::string_view
+#include <utility>      // std::move
 #include <vector>       // std::vector
 
 namespace plssvm::detail::tracking {
@@ -131,13 +132,13 @@ void performance_tracker::add_tracking_entry(const tracking_entry<cmd::parser_sc
 }
 
 void performance_tracker::add_hardware_sampling_entries() {
+    const std::string category_name{ "hardware_samples" };
     for (const auto &sampler : tracking::global_hardware_sampler()) {
-        const std::string category_name = fmt::format("hardware_samples_device_{}", sampler->device_id());
-        // add events
-        tracking_entries_[category_name]["events"].push_back(sampler->assemble_yaml_event_string());
+        // assemble sampler content string
+        std::string sampler_content{ sampler->assemble_yaml_event_string() + sampler->assemble_yaml_sample_string() };
 
-        // add samples
-        tracking_entries_[category_name]["samples"].push_back(sampler->assemble_yaml_sample_string());
+        // add an entry for the current sampler
+        tracking_entries_[category_name][fmt::format("device_{}", sampler->device_id())].push_back(std::move(sampler_content));
     }
 }
 

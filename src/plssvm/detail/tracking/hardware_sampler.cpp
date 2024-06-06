@@ -89,15 +89,17 @@ std::string hardware_sampler::assemble_yaml_event_string() const {
     } else if (events_.num_events() == 1) {
         // only a single event has been provided -> no join necessary and do not use []
         return fmt::format("\n"
-                           "    time_points: {}\n"
-                           "    names: {}",
+                           "    events:\n"
+                           "      time_points: {}\n"
+                           "      names: {}",
                            events_.get_times().front(),
                            events_.get_names().front());
     } else {
         // assemble string
         return fmt::format("\n"
-                           "    time_points: [{}]\n"
-                           "    names: [{}]",
+                           "    events:\n"
+                           "      time_points: [{}]\n"
+                           "      names: [{}]",
                            fmt::join(events_.get_times(), ", "),
                            fmt::join(events_.get_names(), ", "));
     }

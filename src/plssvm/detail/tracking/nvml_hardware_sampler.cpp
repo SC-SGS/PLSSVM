@@ -62,49 +62,50 @@ nvml_hardware_sampler::~nvml_hardware_sampler() {
 }
 
 std::string nvml_hardware_sampler::assemble_yaml_sample_string() const {
-    std::string str{ "\n" };
+    std::string str{ "\n"
+                     "    samples:\n" };
 
     // TODO: zero or single elements!
 
     // format time points
-    str += fmt::format("    time_points: [{}]\n", fmt::join(general_samples_.get_times_since_start(), ", "));
+    str += fmt::format("      time_points: [{}]\n", fmt::join(general_samples_.get_times_since_start(), ", "));
 
     // format general information
-    str += fmt::format("    performance_state:\n"
-                       "      unit: \"0 - maximum performance; 15 - minimum performance; 32 - unknown\"\n"
-                       "      values: [{}]\n"
-                       "    utilization_gpu:\n"
-                       "      unit: \"percentage\"\n"
-                       "      values: [{}]\n"
-                       "    utilization_mem:\n"
-                       "      unit: \"percentage\"\n"
-                       "      values: [{}]\n",
+    str += fmt::format("      performance_state:\n"
+                       "        unit: \"0 - maximum performance; 15 - minimum performance; 32 - unknown\"\n"
+                       "        values: [{}]\n"
+                       "      utilization_gpu:\n"
+                       "        unit: \"percentage\"\n"
+                       "        values: [{}]\n"
+                       "      utilization_mem:\n"
+                       "        unit: \"percentage\"\n"
+                       "        values: [{}]\n",
                        fmt::join(general_samples_.get_performance_states(), ", "),
                        fmt::join(general_samples_.get_utilizations_gpu(), ", "),
                        fmt::join(general_samples_.get_utilizations_mem(), ", "));
 
     // format clock related information
-    str += fmt::format("    clock_graph:\n"
-                       "      unit: \"MHz\"\n"
-                       "      values: [{}]\n"
-                       "    clock_sm:\n"
-                       "      unit: \"MHz\"\n"
-                       "      values: [{}]\n"
-                       "    clock_mem:\n"
-                       "      unit: \"MHz\"\n"
-                       "      values: [{}]\n"
-                       "    clock_throttle_reason:\n"
-                       "      unit: \"bitmask\"\n"
-                       "      values: [{}]\n"
-                       "    clock_graph_max:\n"
-                       "      unit: \"MHz\"\n"
-                       "      values: [{}]\n"
-                       "    clock_sm_max:\n"
-                       "      unit: \"MHz\"\n"
-                       "      values: [{}]\n"
-                       "    clock_mem_max:\n"
-                       "      unit: \"MHz\"\n"
-                       "      values: [{}]\n",
+    str += fmt::format("      clock_graph:\n"
+                       "        unit: \"MHz\"\n"
+                       "        values: [{}]\n"
+                       "      clock_sm:\n"
+                       "        unit: \"MHz\"\n"
+                       "        values: [{}]\n"
+                       "      clock_mem:\n"
+                       "        unit: \"MHz\"\n"
+                       "        values: [{}]\n"
+                       "      clock_throttle_reason:\n"
+                       "        unit: \"bitmask\"\n"
+                       "        values: [{}]\n"
+                       "      clock_graph_max:\n"
+                       "        unit: \"MHz\"\n"
+                       "        values: [{}]\n"
+                       "      clock_sm_max:\n"
+                       "        unit: \"MHz\"\n"
+                       "        values: [{}]\n"
+                       "      clock_mem_max:\n"
+                       "        unit: \"MHz\"\n"
+                       "        values: [{}]\n",
                        fmt::join(clock_samples_.get_clocks_graph(), ", "),
                        fmt::join(clock_samples_.get_clocks_sm(), ", "),
                        fmt::join(clock_samples_.get_clocks_mem(), ", "),
@@ -119,21 +120,21 @@ std::string nvml_hardware_sampler::assemble_yaml_sample_string() const {
     for (std::size_t i = 0; i < power_samples_.num_samples(); ++i) {
         consumed_energy[i] = power_samples_.get_power_total_energy_consumptions()[i] - power_samples_.get_power_total_energy_consumptions()[0];
     }
-    str += fmt::format("    power_state:\n"
-                       "      unit: \"0 - maximum performance; 15 - minimum performance; 32 - unknown\"\n"
-                       "      values: [{}]\n"
-                       "    power_usage:\n"
-                       "      unit: \"mW\"\n"
-                       "      values: [{}]\n"
-                       "    power_management_limit:\n"
-                       "      unit: \"mW\"\n"
-                       "      values: [{}]\n"
-                       "    power_enforced_limit:\n"
-                       "      unit: \"mW\"\n"
-                       "      values: [{}]\n"
-                       "    power_total_energy_consumed:\n"
-                       "      unit: \"J\"\n"
-                       "      values: [{}]\n",
+    str += fmt::format("      power_state:\n"
+                       "        unit: \"0 - maximum performance; 15 - minimum performance; 32 - unknown\"\n"
+                       "        values: [{}]\n"
+                       "      power_usage:\n"
+                       "        unit: \"mW\"\n"
+                       "        values: [{}]\n"
+                       "      power_management_limit:\n"
+                       "        unit: \"mW\"\n"
+                       "        values: [{}]\n"
+                       "      power_enforced_limit:\n"
+                       "        unit: \"mW\"\n"
+                       "        values: [{}]\n"
+                       "      power_total_energy_consumed:\n"
+                       "        unit: \"J\"\n"
+                       "        values: [{}]\n",
                        fmt::join(power_samples_.get_power_states(), ", "),
                        fmt::join(power_samples_.get_power_usages(), ", "),
                        fmt::join(power_samples_.get_power_management_limits(), ", "),
@@ -141,32 +142,32 @@ std::string nvml_hardware_sampler::assemble_yaml_sample_string() const {
                        fmt::join(consumed_energy, ", "));
 
     // format memory related information
-    str += fmt::format("    memory_free:\n"
-                       "      unit \"B\"\n"
-                       "      values: [{}]\n"
-                       "    memory_used:\n"
-                       "      unit: \"B\"\n"
-                       "      values: [{}]\n"
-                       "    memory_total:\n"
-                       "      unit: \"B\"\n"
-                       "      values: [{}]\n",
+    str += fmt::format("      memory_free:\n"
+                       "        unit \"B\"\n"
+                       "        values: [{}]\n"
+                       "      memory_used:\n"
+                       "        unit: \"B\"\n"
+                       "        values: [{}]\n"
+                       "      memory_total:\n"
+                       "        unit: \"B\"\n"
+                       "        values: [{}]\n",
                        fmt::join(memory_samples_.get_memory_free(), ", "),
                        fmt::join(memory_samples_.get_memory_used(), ", "),
                        fmt::join(memory_samples_.get_memory_total(), ", "));
 
     // format temperature related information
-    str += fmt::format("    fan_speed:\n"
-                       "      unit \"percentage\"\n"
-                       "      values: [{}]\n"
-                       "    temperature_gpu:\n"
-                       "      unit: \"°C\"\n"
-                       "      values: [{}]\n"
-                       "    temperature_threshold_gpu_max:\n"
-                       "      unit: \"°C\"\n"
-                       "      values: [{}]\n"
-                       "    temperature_threshold_mem_max:\n"
-                       "      unit: \"°C\"\n"
-                       "      values: [{}]\n",
+    str += fmt::format("      fan_speed:\n"
+                       "        unit \"percentage\"\n"
+                       "        values: [{}]\n"
+                       "      temperature_gpu:\n"
+                       "        unit: \"°C\"\n"
+                       "        values: [{}]\n"
+                       "      temperature_threshold_gpu_max:\n"
+                       "        unit: \"°C\"\n"
+                       "        values: [{}]\n"
+                       "      temperature_threshold_mem_max:\n"
+                       "        unit: \"°C\"\n"
+                       "        values: [{}]\n",
                        fmt::join(temperature_samples_.get_fan_speeds(), ", "),
                        fmt::join(temperature_samples_.get_temperatures_gpu(), ", "),
                        fmt::join(temperature_samples_.get_temperatures_threshold_gpu_max(), ", "),
