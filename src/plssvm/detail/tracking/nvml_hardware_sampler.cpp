@@ -9,12 +9,12 @@
 #include "plssvm/detail/tracking/nvml_hardware_sampler.hpp"
 
 #include "plssvm/detail/tracking/hardware_sampler.hpp"  // plssvm::detail::tracking::hardware_sampler
-#include "plssvm/detail/tracking/nvml_samples.hpp"
-#include "plssvm/exceptions/exceptions.hpp"  // plssvm::exception, plssvm::hardware_sampling_exception
+#include "plssvm/detail/tracking/nvml_samples.hpp"      // plssvm::detail::tracking{nvml_general_samples, nvml_clock_samples, nvml_power_samples, nvml_memory_samples, nvml_temperature_samples}
+#include "plssvm/exceptions/exceptions.hpp"             // plssvm::exception, plssvm::hardware_sampling_exception
 
 #include "nvml.h"
 
-#include "fmt/chrono.h"
+#include "fmt/chrono.h"  // format std::chrono types
 #include "fmt/core.h"    // fmt::format
 #include "fmt/format.h"  // fmt::join
 
@@ -22,7 +22,6 @@
 #include <cstddef>    // std::size_t
 #include <exception>  // std::exception, std::terminate
 #include <iostream>   // std::cerr, std::endl
-#include <mutex>      // std::call_once
 #include <string>     // std::string
 #include <vector>     // std::vector
 
@@ -53,16 +52,24 @@ nvml_hardware_sampler::nvml_hardware_sampler(const std::size_t device_id, const 
     hardware_sampler{ sampling_interval },
     device_id_{ device_id } {
     // make sure that nvmlInit is only called once for all instances
-    std::call_once(nvml_init_once_, []() { PLSSVM_NVML_ERROR_CHECK(nvmlInit()); });
-    ++instances_;
+    if (instances_++ == 0) {
+        PLSSVM_NVML_ERROR_CHECK(nvmlInit());
+        // notify that initialization has been finished
+        init_finished_ = true;
+    } else {
+        // wait until init has been finished!
+        while (!init_finished_) { }
+    }
 }
 
 nvml_hardware_sampler::~nvml_hardware_sampler() {
     try {
         // the last instance must shut down the NVML runtime
+        // make sure that nvmlShutdown is only called once
         if (--instances_ == 0) {
-            // make sure that nvmlShutdown is only called once
-            std::call_once(nvml_shutdown_once_, []() { PLSSVM_NVML_ERROR_CHECK(nvmlShutdown()); });  // TODO: can't create new nvml_hardware_sampler instance afterwards?!
+            PLSSVM_NVML_ERROR_CHECK(nvmlShutdown());
+            // reset init_finished flag
+            init_finished_ = false;
         }
     } catch (const plssvm::exception &e) {
         std::cerr << e.what_with_loc() << std::endl;

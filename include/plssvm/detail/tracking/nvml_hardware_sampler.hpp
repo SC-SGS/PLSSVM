@@ -17,7 +17,7 @@
 
 #include <atomic>   // std::atomic
 #include <chrono>   // std::chrono::milliseconds, std::chrono_literals namespace
-#include <mutex>    // std::once_flag
+#include <cstddef>  // std::size_t
 #include <string>   // std::string
 #include <vector>   // std::vector
 
@@ -54,8 +54,7 @@ class nvml_hardware_sampler : public hardware_sampler {
     std::size_t device_id_;
 
     inline static std::atomic<int> instances_{ 0 };
-    inline static std::once_flag nvml_init_once_{};
-    inline static std::once_flag nvml_shutdown_once_{};
+    inline static std::atomic<bool> init_finished_{ false };
 };
 
 }  // namespace plssvm::detail::tracking
