@@ -8,14 +8,15 @@
 
 #include "plssvm/detail/tracking/hardware_sampler.hpp"
 
-#include "fmt/chrono.h"
-#include "fmt/format.h"
+#include "fmt/chrono.h"  // format std::chrono types
+#include "fmt/core.h"    // fmt::format
+#include "fmt/format.h"  // fmt::join
 
-#include <cstddef>    // std::size_t
-#include <cstdint>    // std::uint64_t
-#include <exception>  // std::exception, std::terminate
-#include <iostream>   // std::cerr, std::endl
-#include <mutex>      // std::call_once
+#include <chrono>     // std::chrono::{steady_clock, duration_cast, milliseconds}
+#include <stdexcept>  // std::runtime_error
+#include <string>     // std::string
+#include <thread>     // std::thread, std::this_thread
+#include <utility>    // std::move
 
 namespace plssvm::detail::tracking {
 
@@ -71,6 +72,9 @@ void hardware_sampler::add_event(std::string name) {
 }
 
 void hardware_sampler::sampling_loop() {
+    // add samples where we only have to retrieve the value once
+    this->add_init_sample();
+
     // loop until stop_sampling() is called
     while (!sampling_stopped_) {
         this->add_sample();

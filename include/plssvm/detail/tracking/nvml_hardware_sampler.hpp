@@ -36,6 +36,7 @@ class nvml_hardware_sampler : public hardware_sampler {
     [[nodiscard]] std::string assemble_yaml_sample_string() const override;
 
   private:
+    void add_init_sample() final;
     void add_sample() final;
 
     nvml_general_samples general_samples_{};

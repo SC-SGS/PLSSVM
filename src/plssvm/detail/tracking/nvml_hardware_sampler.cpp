@@ -68,114 +68,142 @@ std::string nvml_hardware_sampler::assemble_yaml_sample_string() const {
     // TODO: zero or single elements!
 
     // format time points
-    str += fmt::format("      time_points: [{}]\n", fmt::join(general_samples_.get_times_since_start(), ", "));
+    str += fmt::format("      time_points: [{}]\n", fmt::join(general_samples_.get_time_since_start(), ", "));
 
     // format general information
-    str += fmt::format("      performance_state:\n"
-                       "        unit: \"0 - maximum performance; 15 - minimum performance; 32 - unknown\"\n"
-                       "        values: [{}]\n"
-                       "      utilization_gpu:\n"
-                       "        unit: \"percentage\"\n"
-                       "        values: [{}]\n"
-                       "      utilization_mem:\n"
-                       "        unit: \"percentage\"\n"
-                       "        values: [{}]\n",
-                       fmt::join(general_samples_.get_performance_states(), ", "),
-                       fmt::join(general_samples_.get_utilizations_gpu(), ", "),
-                       fmt::join(general_samples_.get_utilizations_mem(), ", "));
+    str += fmt::format("      general:\n"
+                       "        performance_state:\n"
+                       "          unit: \"0 - maximum performance; 15 - minimum performance; 32 - unknown\"\n"
+                       "          values: [{}]\n"
+                       "        utilization_gpu:\n"
+                       "          unit: \"percentage\"\n"
+                       "          values: [{}]\n"
+                       "        utilization_mem:\n"
+                       "          unit: \"percentage\"\n"
+                       "          values: [{}]\n",
+                       fmt::join(general_samples_.get_performance_state(), ", "),
+                       fmt::join(general_samples_.get_utilization_gpu(), ", "),
+                       fmt::join(general_samples_.get_utilization_mem(), ", "));
 
     // format clock related information
-    str += fmt::format("      clock_graph:\n"
-                       "        unit: \"MHz\"\n"
-                       "        values: [{}]\n"
-                       "      clock_sm:\n"
-                       "        unit: \"MHz\"\n"
-                       "        values: [{}]\n"
-                       "      clock_mem:\n"
-                       "        unit: \"MHz\"\n"
-                       "        values: [{}]\n"
-                       "      clock_throttle_reason:\n"
-                       "        unit: \"bitmask\"\n"
-                       "        values: [{}]\n"
-                       "      clock_graph_max:\n"
-                       "        unit: \"MHz\"\n"
-                       "        values: [{}]\n"
-                       "      clock_sm_max:\n"
-                       "        unit: \"MHz\"\n"
-                       "        values: [{}]\n"
-                       "      clock_mem_max:\n"
-                       "        unit: \"MHz\"\n"
-                       "        values: [{}]\n",
-                       fmt::join(clock_samples_.get_clocks_graph(), ", "),
-                       fmt::join(clock_samples_.get_clocks_sm(), ", "),
-                       fmt::join(clock_samples_.get_clocks_mem(), ", "),
-                       fmt::join(clock_samples_.get_clocks_throttle_reason(), ", "),
-                       fmt::join(clock_samples_.get_clocks_graph_max(), ", "),
-                       fmt::join(clock_samples_.get_clocks_sm_max(), ", "),
-                       fmt::join(clock_samples_.get_clocks_mem_max(), ", "));
+    str += fmt::format("      clock:\n"
+                       "        clock_graph_max:\n"
+                       "          unit: \"MHz\"\n"
+                       "          values: {}\n"
+                       "        clock_sm_max:\n"
+                       "          unit: \"MHz\"\n"
+                       "          values: {}\n"
+                       "        clock_mem_max:\n"
+                       "          unit: \"MHz\"\n"
+                       "          values: {}\n"
+                       "        clock_graph:\n"
+                       "          unit: \"MHz\"\n"
+                       "          values: [{}]\n"
+                       "        clock_sm:\n"
+                       "          unit: \"MHz\"\n"
+                       "          values: [{}]\n"
+                       "        clock_mem:\n"
+                       "          unit: \"MHz\"\n"
+                       "          values: [{}]\n"
+                       "        clock_throttle_reason:\n"
+                       "          unit: \"bitmask\"\n"
+                       "          values: [{}]\n",
+                       clock_samples_.clock_graph_max,
+                       clock_samples_.clock_sm_max,
+                       clock_samples_.clock_mem_max,
+                       fmt::join(clock_samples_.get_clock_graph(), ", "),
+                       fmt::join(clock_samples_.get_clock_sm(), ", "),
+                       fmt::join(clock_samples_.get_clock_mem(), ", "),
+                       fmt::join(clock_samples_.get_clock_throttle_reason(), ", "));
 
     // format power related information
     std::vector<unsigned long long> consumed_energy(power_samples_.num_samples());
 #pragma omp parallel for
     for (std::size_t i = 0; i < power_samples_.num_samples(); ++i) {
-        consumed_energy[i] = power_samples_.get_power_total_energy_consumptions()[i] - power_samples_.get_power_total_energy_consumptions()[0];
+        consumed_energy[i] = power_samples_.get_power_total_energy_consumption()[i] - power_samples_.get_power_total_energy_consumption()[0];
     }
-    str += fmt::format("      power_state:\n"
-                       "        unit: \"0 - maximum performance; 15 - minimum performance; 32 - unknown\"\n"
-                       "        values: [{}]\n"
-                       "      power_usage:\n"
-                       "        unit: \"mW\"\n"
-                       "        values: [{}]\n"
-                       "      power_management_limit:\n"
-                       "        unit: \"mW\"\n"
-                       "        values: [{}]\n"
-                       "      power_enforced_limit:\n"
-                       "        unit: \"mW\"\n"
-                       "        values: [{}]\n"
-                       "      power_total_energy_consumed:\n"
-                       "        unit: \"J\"\n"
-                       "        values: [{}]\n",
-                       fmt::join(power_samples_.get_power_states(), ", "),
-                       fmt::join(power_samples_.get_power_usages(), ", "),
-                       fmt::join(power_samples_.get_power_management_limits(), ", "),
-                       fmt::join(power_samples_.get_power_enforced_limits(), ", "),
+    str += fmt::format("      power:\n"
+                       "        power_management_limit:\n"
+                       "          unit: \"mW\"\n"
+                       "          values: {}\n"
+                       "        power_enforced_limit:\n"
+                       "          unit: \"mW\"\n"
+                       "          values: {}\n"
+                       "        power_state:\n"
+                       "          unit: \"0 - maximum performance; 15 - minimum performance; 32 - unknown\"\n"
+                       "          values: [{}]\n"
+                       "        power_usage:\n"
+                       "          unit: \"mW\"\n"
+                       "          values: [{}]\n"
+                       "        power_total_energy_consumed:\n"
+                       "          unit: \"J\"\n"
+                       "          values: [{}]\n",
+                       power_samples_.power_management_limit,
+                       power_samples_.power_enforced_limit,
+                       fmt::join(power_samples_.get_power_state(), ", "),
+                       fmt::join(power_samples_.get_power_usage(), ", "),
                        fmt::join(consumed_energy, ", "));
 
     // format memory related information
-    str += fmt::format("      memory_free:\n"
-                       "        unit \"B\"\n"
-                       "        values: [{}]\n"
-                       "      memory_used:\n"
-                       "        unit: \"B\"\n"
-                       "        values: [{}]\n"
-                       "      memory_total:\n"
-                       "        unit: \"B\"\n"
-                       "        values: [{}]\n",
+    str += fmt::format("      memory:\n"
+                       "        memory_total:\n"
+                       "          unit: \"B\"\n"
+                       "          values: {}\n"
+                       "        memory_free:\n"
+                       "          unit \"B\"\n"
+                       "          values: [{}]\n"
+                       "        memory_used:\n"
+                       "          unit: \"B\"\n"
+                       "          values: [{}]\n",
+                       memory_samples_.memory_total,
                        fmt::join(memory_samples_.get_memory_free(), ", "),
-                       fmt::join(memory_samples_.get_memory_used(), ", "),
-                       fmt::join(memory_samples_.get_memory_total(), ", "));
+                       fmt::join(memory_samples_.get_memory_used(), ", "));
 
     // format temperature related information
-    str += fmt::format("      fan_speed:\n"
-                       "        unit \"percentage\"\n"
-                       "        values: [{}]\n"
-                       "      temperature_gpu:\n"
-                       "        unit: \"°C\"\n"
-                       "        values: [{}]\n"
-                       "      temperature_threshold_gpu_max:\n"
-                       "        unit: \"°C\"\n"
-                       "        values: [{}]\n"
-                       "      temperature_threshold_mem_max:\n"
-                       "        unit: \"°C\"\n"
-                       "        values: [{}]\n",
-                       fmt::join(temperature_samples_.get_fan_speeds(), ", "),
-                       fmt::join(temperature_samples_.get_temperatures_gpu(), ", "),
-                       fmt::join(temperature_samples_.get_temperatures_threshold_gpu_max(), ", "),
-                       fmt::join(temperature_samples_.get_temperatures_threshold_mem_max(), ", "));
+    str += fmt::format("      temperature:\n"
+                       "        temperature_threshold_gpu_max:\n"
+                       "          unit: \"°C\"\n"
+                       "          values: {}\n"
+                       "        temperature_threshold_mem_max:\n"
+                       "          unit: \"°C\"\n"
+                       "          values: {}\n"
+                       "        fan_speed:\n"
+                       "          unit \"percentage\"\n"
+                       "          values: [{}]\n"
+                       "        temperature_gpu:\n"
+                       "          unit: \"°C\"\n"
+                       "          values: [{}]\n",
+                       temperature_samples_.temperature_threshold_gpu_max,
+                       temperature_samples_.temperature_threshold_mem_max,
+                       fmt::join(temperature_samples_.get_fan_speed(), ", "),
+                       fmt::join(temperature_samples_.get_temperature_gpu(), ", "));
 
     // remove last newline
     str.pop_back();
     return str;
+}
+
+void nvml_hardware_sampler::add_init_sample() {
+    // get the nvml handle from the device_id
+    nvmlDevice_t device = device_id_to_nvml_handle(device_id_);
+
+    // retrieve fixed clock related information
+    PLSSVM_NVML_ERROR_CHECK(nvmlDeviceGetMaxClockInfo(device, NVML_CLOCK_GRAPHICS, &clock_samples_.clock_graph_max));
+    PLSSVM_NVML_ERROR_CHECK(nvmlDeviceGetMaxClockInfo(device, NVML_CLOCK_SM, &clock_samples_.clock_sm_max));
+    PLSSVM_NVML_ERROR_CHECK(nvmlDeviceGetMaxClockInfo(device, NVML_CLOCK_MEM, &clock_samples_.clock_mem_max));
+
+    // retrieve fixed power related information
+    PLSSVM_NVML_ERROR_CHECK(nvmlDeviceGetPowerManagementLimit(device, &power_samples_.power_management_limit));
+    PLSSVM_NVML_ERROR_CHECK(nvmlDeviceGetEnforcedPowerLimit(device, &power_samples_.power_enforced_limit));
+
+    // retrieve fixed memory related information
+    nvmlMemory_t memory_info{};
+    PLSSVM_NVML_ERROR_CHECK(nvmlDeviceGetMemoryInfo(device, &memory_info));
+    memory_samples_.memory_total = memory_info.total;
+
+    // retrieve fixed memory related information
+    PLSSVM_NVML_ERROR_CHECK(nvmlDeviceGetTemperatureThreshold(device, NVML_TEMPERATURE_THRESHOLD_GPU_MAX, &temperature_samples_.temperature_threshold_gpu_max));
+    PLSSVM_NVML_ERROR_CHECK(nvmlDeviceGetTemperatureThreshold(device, NVML_TEMPERATURE_THRESHOLD_MEM_MAX, &temperature_samples_.temperature_threshold_mem_max));
 }
 
 void nvml_hardware_sampler::add_sample() {
@@ -202,9 +230,6 @@ void nvml_hardware_sampler::add_sample() {
         PLSSVM_NVML_ERROR_CHECK(nvmlDeviceGetClockInfo(device, NVML_CLOCK_SM, &sample.clock_sm));
         PLSSVM_NVML_ERROR_CHECK(nvmlDeviceGetClockInfo(device, NVML_CLOCK_MEM, &sample.clock_mem));
         PLSSVM_NVML_ERROR_CHECK(nvmlDeviceGetCurrentClocksThrottleReasons(device, &sample.clock_throttle_reason));
-        PLSSVM_NVML_ERROR_CHECK(nvmlDeviceGetMaxClockInfo(device, NVML_CLOCK_GRAPHICS, &sample.clock_graph_max));
-        PLSSVM_NVML_ERROR_CHECK(nvmlDeviceGetMaxClockInfo(device, NVML_CLOCK_SM, &sample.clock_sm_max));
-        PLSSVM_NVML_ERROR_CHECK(nvmlDeviceGetMaxClockInfo(device, NVML_CLOCK_MEM, &sample.clock_mem_max));
         this->clock_samples_.add_sample(sample);
     }
     // retrieve power related information
@@ -214,8 +239,6 @@ void nvml_hardware_sampler::add_sample() {
         PLSSVM_NVML_ERROR_CHECK(nvmlDeviceGetPowerState(device, &pstate));
         sample.power_state = static_cast<int>(pstate);
         PLSSVM_NVML_ERROR_CHECK(nvmlDeviceGetPowerUsage(device, &sample.power_usage));
-        PLSSVM_NVML_ERROR_CHECK(nvmlDeviceGetPowerManagementLimit(device, &sample.power_management_limit));
-        PLSSVM_NVML_ERROR_CHECK(nvmlDeviceGetEnforcedPowerLimit(device, &sample.power_enforced_limit));
         PLSSVM_NVML_ERROR_CHECK(nvmlDeviceGetTotalEnergyConsumption(device, &sample.power_total_energy_consumption));
         this->power_samples_.add_sample(sample);
     }
@@ -226,7 +249,6 @@ void nvml_hardware_sampler::add_sample() {
         PLSSVM_NVML_ERROR_CHECK(nvmlDeviceGetMemoryInfo(device, &memory_info));
         sample.memory_free = memory_info.free;
         sample.memory_used = memory_info.used;
-        sample.memory_total = memory_info.total;
         this->memory_samples_.add_sample(sample);
     }
     // retrieve temperature related information
@@ -234,8 +256,6 @@ void nvml_hardware_sampler::add_sample() {
         nvml_temperature_samples::nvml_temperature_sample sample{};
         PLSSVM_NVML_ERROR_CHECK(nvmlDeviceGetFanSpeed(device, &sample.fan_speed));
         PLSSVM_NVML_ERROR_CHECK(nvmlDeviceGetTemperature(device, NVML_TEMPERATURE_GPU, &sample.temperature_gpu));
-        PLSSVM_NVML_ERROR_CHECK(nvmlDeviceGetTemperatureThreshold(device, NVML_TEMPERATURE_THRESHOLD_GPU_MAX, &sample.temperature_threshold_gpu_max));
-        PLSSVM_NVML_ERROR_CHECK(nvmlDeviceGetTemperatureThreshold(device, NVML_TEMPERATURE_THRESHOLD_MEM_MAX, &sample.temperature_threshold_mem_max));
         this->temperature_samples_.add_sample(sample);
     }
 }

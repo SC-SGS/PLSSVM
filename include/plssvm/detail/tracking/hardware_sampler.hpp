@@ -52,6 +52,7 @@ class hardware_sampler {
     void sampling_loop();
 
     virtual void add_sample() = 0;
+    virtual void add_init_sample() = 0;
 
     std::atomic<bool> sampling_started_{ false };
     std::atomic<bool> sampling_stopped_{ false };
