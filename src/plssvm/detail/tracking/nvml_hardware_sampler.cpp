@@ -27,13 +27,19 @@
 
 namespace plssvm::detail::tracking {
 
-#define PLSSVM_NVML_ERROR_CHECK(nvml_func)                                                                                                           \
-    {                                                                                                                                                \
-        const auto errc = nvml_func;                                                                                                                 \
-        if ((errc) != NVML_SUCCESS && (errc) != NVML_ERROR_NOT_SUPPORTED) {                                                                          \
-            throw hardware_sampling_exception{ fmt::format("Error in NVML function call: {} ({})", nvmlErrorString(errc), static_cast<int>(errc)) }; \
-        }                                                                                                                                            \
-    }
+#if defined(PLSSVM_HARDWARE_SAMPLING_ERROR_CHECKS_ENABLED)
+
+    #define PLSSVM_NVML_ERROR_CHECK(nvml_func)                                                                                                           \
+        {                                                                                                                                                \
+            const auto errc = nvml_func;                                                                                                                 \
+            if ((errc) != NVML_SUCCESS && (errc) != NVML_ERROR_NOT_SUPPORTED) {                                                                          \
+                throw hardware_sampling_exception{ fmt::format("Error in NVML function call: {} ({})", nvmlErrorString(errc), static_cast<int>(errc)) }; \
+            }                                                                                                                                            \
+        }
+
+#else
+    #define PLSSVM_NVML_ERROR_CHECK(nvml_func) nvml_func;
+#endif
 
 nvmlDevice_t device_id_to_nvml_handle(const std::size_t device_id) {
     // get the device handle for which this hardware sampler is responsible for

@@ -29,7 +29,12 @@ if (PLSSVM_ENABLE_HARDWARE_SAMPLING)
     target_compile_definitions(${PLSSVM_HARDWARE_TRACKING_LIBRARY_NAME} PUBLIC PLSSVM_HARDWARE_SAMPLING_ENABLED)
     target_compile_definitions(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC PLSSVM_HARDWARE_SAMPLING_ENABLED)
     
-    # TODO: enable/disable error checking
+    ## add option to enable/disable error checking in the hardware sampling functions
+    option(PLSSVM_HARDWARE_SAMPLING_ENABLE_ERROR_CHECKS "Enable error checking for the hardware sampling functions. May be problematic with smaller sample intervals." OFF)
+    if (PLSSVM_HARDWARE_SAMPLING_ENABLE_ERROR_CHECKS)
+        message(STATUS "Enable error checks for the hardware sampling functions.")
+        target_compile_definitions(${PLSSVM_HARDWARE_TRACKING_LIBRARY_NAME} PRIVATE PLSSVM_HARDWARE_SAMPLING_ERROR_CHECKS_ENABLED)
+    endif ()
     
     ## option for the used sampling interval
     set(PLSSVM_HARDWARE_SAMPLING_INTERVAL "100" CACHE STRING "The interval in milliseconds in which the hardware information (like clock frequency or power draw) are queried.")
