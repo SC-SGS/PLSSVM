@@ -72,6 +72,15 @@ std::string nvml_hardware_sampler::assemble_yaml_sample_string() const {
 
     // format general information
     str += fmt::format("      general:\n"
+                       "        name:\n"
+                       "          unit: \"string\"\n"
+                       "          values: \"{}\"\n"
+                       "        persistence_mode:\n"
+                       "          unit: \"bool\"\n"
+                       "          values: {}\n"
+                       "        num_cores:\n"
+                       "          unit: \"int\"\n"
+                       "          values: {}\n"
                        "        performance_state:\n"
                        "          unit: \"0 - maximum performance; 15 - minimum performance; 32 - unknown\"\n"
                        "          values: [{}]\n"
@@ -81,12 +90,18 @@ std::string nvml_hardware_sampler::assemble_yaml_sample_string() const {
                        "        utilization_mem:\n"
                        "          unit: \"percentage\"\n"
                        "          values: [{}]\n",
+                       general_samples_.name,
+                       general_samples_.persistence_mode,
+                       general_samples_.num_cores,
                        fmt::join(general_samples_.get_performance_state(), ", "),
                        fmt::join(general_samples_.get_utilization_gpu(), ", "),
                        fmt::join(general_samples_.get_utilization_mem(), ", "));
 
     // format clock related information
     str += fmt::format("      clock:\n"
+                       "        adaptive_clock_status:\n"
+                       "          unit: \"bool\"\n"
+                       "          values: {}\n"
                        "        clock_graph_max:\n"
                        "          unit: \"MHz\"\n"
                        "          values: {}\n"
@@ -107,14 +122,19 @@ std::string nvml_hardware_sampler::assemble_yaml_sample_string() const {
                        "          values: [{}]\n"
                        "        clock_throttle_reason:\n"
                        "          unit: \"bitmask\"\n"
+                       "          values: [{}]\n"
+                       "        auto_boosted_clocks:\n"
+                       "          unit: \"bool\"\n"
                        "          values: [{}]\n",
+                       fmt::format("{}", clock_samples_.adaptive_clock_status == NVML_ADAPTIVE_CLOCKING_INFO_STATUS_ENABLED),
                        clock_samples_.clock_graph_max,
                        clock_samples_.clock_sm_max,
                        clock_samples_.clock_mem_max,
                        fmt::join(clock_samples_.get_clock_graph(), ", "),
                        fmt::join(clock_samples_.get_clock_sm(), ", "),
                        fmt::join(clock_samples_.get_clock_mem(), ", "),
-                       fmt::join(clock_samples_.get_clock_throttle_reason(), ", "));
+                       fmt::join(clock_samples_.get_clock_throttle_reason(), ", "),
+                       fmt::join(clock_samples_.get_auto_boosted_clocks(), ", "));
 
     // format power related information
     std::vector<unsigned long long> consumed_energy(power_samples_.num_samples());
@@ -149,18 +169,41 @@ std::string nvml_hardware_sampler::assemble_yaml_sample_string() const {
                        "        memory_total:\n"
                        "          unit: \"B\"\n"
                        "          values: {}\n"
+                       "        memory_bus_width:\n"
+                       "          unit: \"Bit\"\n"
+                       "          values: {}\n"
+                       "        max_pcie_link_generation:\n"
+                       "          unit: \"int\"\n"
+                       "          values: {}\n"
+                       "        pcie_link_max_speed:\n"
+                       "          unit: \"MBPS\"\n"
+                       "          values: {}\n"
                        "        memory_free:\n"
                        "          unit \"B\"\n"
                        "          values: [{}]\n"
                        "        memory_used:\n"
                        "          unit: \"B\"\n"
+                       "          values: [{}]\n"
+                       "        pcie_link_width:\n"
+                       "          unit: \"int\"\n"
+                       "          values: [{}]\n"
+                       "        pcie_link_generation:\n"
+                       "          unit: \"int\"\n"
                        "          values: [{}]\n",
                        memory_samples_.memory_total,
+                       memory_samples_.memory_bus_width,
+                       memory_samples_.max_pcie_link_generation,
+                       memory_samples_.pcie_link_max_speed,
                        fmt::join(memory_samples_.get_memory_free(), ", "),
-                       fmt::join(memory_samples_.get_memory_used(), ", "));
+                       fmt::join(memory_samples_.get_memory_used(), ", "),
+                       fmt::join(memory_samples_.get_pcie_link_width(), ", "),
+                       fmt::join(memory_samples_.get_pcie_link_generation(), ", "));
 
     // format temperature related information
     str += fmt::format("      temperature:\n"
+                       "        num_fans:\n"
+                       "          unit: \"int\"\n"
+                       "          values: {}\n"
                        "        temperature_threshold_gpu_max:\n"
                        "          unit: \"°C\"\n"
                        "          values: {}\n"
@@ -173,6 +216,7 @@ std::string nvml_hardware_sampler::assemble_yaml_sample_string() const {
                        "        temperature_gpu:\n"
                        "          unit: \"°C\"\n"
                        "          values: [{}]\n",
+                       temperature_samples_.num_fans,
                        temperature_samples_.temperature_threshold_gpu_max,
                        temperature_samples_.temperature_threshold_mem_max,
                        fmt::join(temperature_samples_.get_fan_speed(), ", "),
@@ -187,7 +231,17 @@ void nvml_hardware_sampler::add_init_sample() {
     // get the nvml handle from the device_id
     nvmlDevice_t device = device_id_to_nvml_handle(device_id_);
 
+    // retrieve fixed general information
+    std::string name(NVML_DEVICE_NAME_V2_BUFFER_SIZE, '\0');
+    PLSSVM_NVML_ERROR_CHECK(nvmlDeviceGetName(device, name.data(), name.size()));
+    general_samples_.name = name;//.substr(0, name.find_first_of('\0'));
+    nvmlEnableState_t mode{};
+    PLSSVM_NVML_ERROR_CHECK(nvmlDeviceGetPersistenceMode(device, &mode));
+    general_samples_.persistence_mode = mode == NVML_FEATURE_ENABLED;
+    PLSSVM_NVML_ERROR_CHECK(nvmlDeviceGetNumGpuCores(device, &general_samples_.num_cores));
+
     // retrieve fixed clock related information
+    PLSSVM_NVML_ERROR_CHECK(nvmlDeviceGetAdaptiveClockInfoStatus(device, &clock_samples_.adaptive_clock_status));
     PLSSVM_NVML_ERROR_CHECK(nvmlDeviceGetMaxClockInfo(device, NVML_CLOCK_GRAPHICS, &clock_samples_.clock_graph_max));
     PLSSVM_NVML_ERROR_CHECK(nvmlDeviceGetMaxClockInfo(device, NVML_CLOCK_SM, &clock_samples_.clock_sm_max));
     PLSSVM_NVML_ERROR_CHECK(nvmlDeviceGetMaxClockInfo(device, NVML_CLOCK_MEM, &clock_samples_.clock_mem_max));
@@ -200,8 +254,12 @@ void nvml_hardware_sampler::add_init_sample() {
     nvmlMemory_t memory_info{};
     PLSSVM_NVML_ERROR_CHECK(nvmlDeviceGetMemoryInfo(device, &memory_info));
     memory_samples_.memory_total = memory_info.total;
+    PLSSVM_NVML_ERROR_CHECK(nvmlDeviceGetMemoryBusWidth(device, &memory_samples_.memory_bus_width));
+    PLSSVM_NVML_ERROR_CHECK(nvmlDeviceGetGpuMaxPcieLinkGeneration(device, &memory_samples_.max_pcie_link_generation));
+    PLSSVM_NVML_ERROR_CHECK(nvmlDeviceGetPcieLinkMaxSpeed(device, &memory_samples_.pcie_link_max_speed));
 
     // retrieve fixed memory related information
+    PLSSVM_NVML_ERROR_CHECK(nvmlDeviceGetNumFans(device, &temperature_samples_.num_fans));
     PLSSVM_NVML_ERROR_CHECK(nvmlDeviceGetTemperatureThreshold(device, NVML_TEMPERATURE_THRESHOLD_GPU_MAX, &temperature_samples_.temperature_threshold_gpu_max));
     PLSSVM_NVML_ERROR_CHECK(nvmlDeviceGetTemperatureThreshold(device, NVML_TEMPERATURE_THRESHOLD_MEM_MAX, &temperature_samples_.temperature_threshold_mem_max));
 }
@@ -230,6 +288,10 @@ void nvml_hardware_sampler::add_sample() {
         PLSSVM_NVML_ERROR_CHECK(nvmlDeviceGetClockInfo(device, NVML_CLOCK_SM, &sample.clock_sm));
         PLSSVM_NVML_ERROR_CHECK(nvmlDeviceGetClockInfo(device, NVML_CLOCK_MEM, &sample.clock_mem));
         PLSSVM_NVML_ERROR_CHECK(nvmlDeviceGetCurrentClocksThrottleReasons(device, &sample.clock_throttle_reason));
+        nvmlEnableState_t mode{};
+        nvmlEnableState_t default_mode{};
+        PLSSVM_NVML_ERROR_CHECK(nvmlDeviceGetAutoBoostedClocksEnabled(device, &mode, &default_mode));
+        sample.auto_boosted_clocks = mode == NVML_FEATURE_ENABLED;
         this->clock_samples_.add_sample(sample);
     }
     // retrieve power related information
@@ -249,6 +311,8 @@ void nvml_hardware_sampler::add_sample() {
         PLSSVM_NVML_ERROR_CHECK(nvmlDeviceGetMemoryInfo(device, &memory_info));
         sample.memory_free = memory_info.free;
         sample.memory_used = memory_info.used;
+        PLSSVM_NVML_ERROR_CHECK(nvmlDeviceGetCurrPcieLinkWidth(device, &sample.pcie_link_width));
+        PLSSVM_NVML_ERROR_CHECK(nvmlDeviceGetCurrPcieLinkGeneration(device, &sample.pcie_link_generation));
         this->memory_samples_.add_sample(sample);
     }
     // retrieve temperature related information
