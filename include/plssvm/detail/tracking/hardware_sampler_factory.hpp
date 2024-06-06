@@ -17,7 +17,8 @@
 #if defined(PLSSVM_HARDWARE_TRACKING_VIA_NVML_ENABLED)
     #include "plssvm/detail/tracking/nvml_hardware_sampler.hpp"  // plssvm::detail::tracking::nvml_hardware_sampler
 #endif
-#include "plssvm/target_platforms.hpp"
+#include "plssvm/exceptions/exceptions.hpp"  // plssvm::hardware_sampling_exception
+#include "plssvm/target_platforms.hpp"       // plssvm::target_platform
 
 #include <chrono>  // std::chrono::milliseconds, std::chrono_literals namespace
 #include <memory>  // std::unique_ptr, std::make_unique
@@ -35,17 +36,17 @@ inline std::unique_ptr<hardware_sampler> hardware_sampler_factory(const target_p
         case target_platform::automatic:
             break;
         case target_platform::cpu:
-            return nullptr;  // TODO: implement
+            throw hardware_sampling_exception{ "CPU hardware sampling currently not implemented!" };  // TODO: implement
         case target_platform::gpu_nvidia:
-    #if defined(PLSSVM_HARDWARE_TRACKING_VIA_NVML_ENABLED)
+#if defined(PLSSVM_HARDWARE_TRACKING_VIA_NVML_ENABLED)
             return std::make_unique<nvml_hardware_sampler>(device_id, sampling_interval);
-    #else
-        throw std::runtime_error{ "NVML sampling not enabled!" };
-    #endif
+#else
+            throw hardware_sampling_exception{ "Provided 'gpu_nvidia' as target_platform, but hardware sampling on NVIDIA GPUs using NVML wasn't enabled! Try setting an nvidia target during CMake configuration." };
+#endif
         case target_platform::gpu_amd:
-            return nullptr;  // TODO: implement
+            throw hardware_sampling_exception{ "AMD GPU hardware sampling currently not implemented!" };  // TODO: implement
         case target_platform::gpu_intel:
-            return nullptr;  // TODO: implement
+            throw hardware_sampling_exception{ "Intel GPU hardware sampling currently not implemented!" };  // TODO: implement
     }
 
     return nullptr;  // TODO:

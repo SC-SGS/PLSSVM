@@ -8,6 +8,8 @@
 
 #include "plssvm/detail/tracking/hardware_sampler.hpp"
 
+#include "plssvm/exceptions/exceptions.hpp"  // plssvm::hardware_sampling_exception
+
 #include "fmt/chrono.h"  // format std::chrono types
 #include "fmt/core.h"    // fmt::format
 #include "fmt/format.h"  // fmt::join
@@ -30,7 +32,7 @@ hardware_sampler::~hardware_sampler() = default;
 void hardware_sampler::start_sampling() {
     // can't start an already running sampler
     if (sampling_started_) {
-        throw std::runtime_error{ "Can't start an already running sampler!" };
+        throw hardware_sampling_exception{ "Can't start an already running sampler!" };
     }
 
     // start sampling loop
@@ -44,7 +46,7 @@ void hardware_sampler::start_sampling() {
 void hardware_sampler::stop_sampling() {
     // can't stop an already stopped sampler
     if (sampling_stopped_) {
-        throw std::runtime_error{ "Can't stop an already stopped sampler!" };
+        throw hardware_sampling_exception{ "Can't stop an already stopped sampler!" };
     }
 
     // stop sampling

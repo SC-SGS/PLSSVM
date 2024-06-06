@@ -10,6 +10,7 @@
 
 #include "plssvm/detail/tracking/hardware_sampler.hpp"  // plssvm::detail::tracking::hardware_sampler
 #include "plssvm/detail/tracking/nvml_samples.hpp"
+#include "plssvm/exceptions/exceptions.hpp"  // plssvm::hardware_sampling_exception
 
 #include "nvml.h"
 
@@ -26,9 +27,12 @@
 
 namespace plssvm::detail::tracking {
 
-#define PLSSVM_NVML_ERROR_CHECK(errc)                                                                       \
-    if ((errc) != NVML_SUCCESS && (errc) != NVML_ERROR_NOT_SUPPORTED) {                                     \
-        throw std::runtime_error{ std::string{ "Error in NVML function call: " } + nvmlErrorString(errc) }; \
+#define PLSSVM_NVML_ERROR_CHECK(nvml_func)                                                                                                           \
+    {                                                                                                                                                \
+        const auto errc = nvml_func;                                                                                                                 \
+        if ((errc) != NVML_SUCCESS && (errc) != NVML_ERROR_NOT_SUPPORTED) {                                                                          \
+            throw hardware_sampling_exception{ fmt::format("Error in NVML function call: {} ({})", nvmlErrorString(errc), static_cast<int>(errc)) }; \
+        }                                                                                                                                            \
     }
 
 nvmlDevice_t device_id_to_nvml_handle(const std::size_t device_id) {

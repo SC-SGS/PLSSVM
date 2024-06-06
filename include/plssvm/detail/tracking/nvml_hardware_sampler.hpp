@@ -32,7 +32,7 @@ class nvml_hardware_sampler : public hardware_sampler {
 
     ~nvml_hardware_sampler() override;
 
-    [[nodiscard]] std::size_t device_id() const noexcept {
+    [[nodiscard]] std::size_t device_id() const noexcept override {
         return device_id_;
     }
 

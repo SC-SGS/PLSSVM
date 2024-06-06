@@ -212,6 +212,19 @@ class platform_devices_empty : public exception {
     explicit platform_devices_empty(const std::string &msg, source_location loc = source_location::current());
 };
 
+/**
+ * @brief Exception type thrown if something during hardware sampling goes wrong.
+ */
+class hardware_sampling_exception : public exception {
+  public:
+    /**
+     * @brief Construct a new exception forwarding the exception message and source location to `plssvm::exception`.
+     * @param[in] msg the exception's `what()` message
+     * @param[in] loc the exception's call side information
+     */
+    explicit hardware_sampling_exception(const std::string &msg, source_location loc = source_location::current());
+};
+
 }  // namespace plssvm
 
 #endif  // PLSSVM_EXCEPTIONS_EXCEPTIONS_HPP_
