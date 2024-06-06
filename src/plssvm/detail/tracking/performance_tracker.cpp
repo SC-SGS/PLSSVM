@@ -33,7 +33,7 @@
 #endif
 
 #if defined(PLSSVM_STDPAR_BACKEND_HAS_NVHPC) || defined(PLSSVM_STDPAR_BACKEND_HAS_HIPSTDPAR) || defined(PLSSVM_STDPAR_BACKEND_HAS_GNU_TBB)
-    #include "boost/version.hpp"  // BOOST_VERSION
+    #include "boost/version.hpp"  // BOOST_VERSION //FIXME: dependancy to boost only in GNU CMakeLists.txt
 #endif
 
 #if defined(PLSSVM_STDPAR_BACKEND_HAS_INTEL_LLVM)
@@ -41,7 +41,15 @@
 #endif
 
 #if defined(PLSSVM_STDPAR_BACKEND_HAS_ACPP) || defined(PLSSVM_STDPAR_BACKEND_HAS_GNU_TBB)
-    #include "tbb/tbb_stddef.h"  // TBB_VERSION_MAJOR, TBB_VERSION_MINOR
+    # if __has_include("tbb/tbb_stddef.h")
+        #include "tbb/tbb_stddef.h"  // TBB_VERSION_MAJOR, TBB_VERSION_MINOR
+    # elif __has_include("version.h")
+        #include "tbb/version.h"  // TBB_VERSION_MAJOR, TBB_VERSION_MINOR
+    #else
+        #define TBB_VERSION_MAJOR 0
+        #define TBB_VERSION_MINOR 0
+
+    # endif
 #endif
 
 #include <algorithm>    // std::max
