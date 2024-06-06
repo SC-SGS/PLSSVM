@@ -17,7 +17,6 @@
 
 #include <atomic>   // std::atomic
 #include <chrono>   // std::chrono::milliseconds, std::chrono_literals namespace
-#include <cstddef>  // std::size_t
 #include <mutex>    // std::once_flag
 #include <string>   // std::string
 #include <vector>   // std::vector
@@ -28,7 +27,6 @@ using namespace std::chrono_literals;
 
 class nvml_hardware_sampler : public hardware_sampler {
   public:
-    // TODO: handle device id?!?!?
     explicit nvml_hardware_sampler(std::size_t device_id, std::chrono::milliseconds sampling_interval = 100ms);
 
     nvml_hardware_sampler(const nvml_hardware_sampler &) = delete;
@@ -38,9 +36,7 @@ class nvml_hardware_sampler : public hardware_sampler {
 
     ~nvml_hardware_sampler() override;
 
-    [[nodiscard]] std::size_t device_id() const noexcept override {
-        return device_id_;
-    }
+    [[nodiscard]] std::string device_identification() const noexcept override;
 
     [[nodiscard]] std::string assemble_yaml_sample_string() const override;
 

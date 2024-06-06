@@ -72,6 +72,10 @@ nvml_hardware_sampler::~nvml_hardware_sampler() {
     }
 }
 
+std::string nvml_hardware_sampler::device_identification() const noexcept {
+    return fmt::format("nvml_device_{}", device_id_);
+}
+
 std::string nvml_hardware_sampler::assemble_yaml_sample_string() const {
     // check whether it's safe to generate the YAML entry
     if (this->is_sampling()) {

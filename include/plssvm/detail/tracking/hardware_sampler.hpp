@@ -17,7 +17,6 @@
 
 #include <atomic>   // std::atomic
 #include <chrono>   // std::chrono::{steady_clock::time_point, milliseconds}
-#include <cstddef>  // std::size_t
 #include <string>   // std::string
 #include <thread>   // std::thread
 
@@ -49,7 +48,7 @@ class hardware_sampler {
 
     [[nodiscard]] virtual std::string assemble_yaml_sample_string() const = 0;
 
-    [[nodiscard]] virtual std::size_t device_id() const noexcept = 0;
+    [[nodiscard]] virtual std::string device_identification() const noexcept = 0;
 
   protected:
     void sampling_loop();

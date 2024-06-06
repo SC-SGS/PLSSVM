@@ -139,7 +139,7 @@ void performance_tracker::add_hardware_sampling_entries() {
         std::string sampler_content{ sampler->assemble_yaml_event_string() + sampler->assemble_yaml_sample_string() };
 
         // add an entry for the current sampler
-        tracking_entries_[category_name][fmt::format("device_{}", sampler->device_id())].push_back(std::move(sampler_content));
+        tracking_entries_[category_name][sampler->device_identification()].push_back(std::move(sampler_content));
     }
 #endif
 }
