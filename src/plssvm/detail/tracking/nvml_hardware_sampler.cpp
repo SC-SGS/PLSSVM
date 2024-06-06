@@ -65,10 +65,11 @@ std::string nvml_hardware_sampler::assemble_yaml_sample_string() const {
     std::string str{ "\n"
                      "    samples:\n" };
 
-    // TODO: zero or single elements!
-
     // format time points
-    str += fmt::format("      time_points: [{}]\n", fmt::join(general_samples_.get_time_since_start(), ", "));
+    str += fmt::format("      sampling_interval: {}\n"
+                       "      time_points: [{}]\n",
+                       sampling_interval_,
+                       fmt::join(general_samples_.get_time_since_start(), ", "));
 
     // format general information
     str += fmt::format("      general:\n"
@@ -234,7 +235,7 @@ void nvml_hardware_sampler::add_init_sample() {
     // retrieve fixed general information
     std::string name(NVML_DEVICE_NAME_V2_BUFFER_SIZE, '\0');
     PLSSVM_NVML_ERROR_CHECK(nvmlDeviceGetName(device, name.data(), name.size()));
-    general_samples_.name = name;//.substr(0, name.find_first_of('\0'));
+    general_samples_.name = name;  //.substr(0, name.find_first_of('\0'));
     nvmlEnableState_t mode{};
     PLSSVM_NVML_ERROR_CHECK(nvmlDeviceGetPersistenceMode(device, &mode));
     general_samples_.persistence_mode = mode == NVML_FEATURE_ENABLED;
