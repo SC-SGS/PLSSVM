@@ -27,6 +27,7 @@ if (PLSSVM_ENABLE_HARDWARE_SAMPLING)
     add_library(${PLSSVM_HARDWARE_TRACKING_LIBRARY_NAME} SHARED ${PLSSVM_HARDWARE_TRACKING_SOURCES})
     
     target_compile_definitions(${PLSSVM_HARDWARE_TRACKING_LIBRARY_NAME} PUBLIC PLSSVM_HARDWARE_SAMPLING_ENABLED)
+    target_compile_definitions(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC PLSSVM_HARDWARE_SAMPLING_ENABLED)
     
     # TODO: enable/disable error checking
     
@@ -40,16 +41,17 @@ if (PLSSVM_ENABLE_HARDWARE_SAMPLING)
     
     ## nvidia targets are provided -> enable NVIDIA GPU hardware samping using NVML
     if (DEFINED PLSSVM_NVIDIA_TARGET_ARCHS)
+        message(STATUS "Enable sampling of NVIDIA GPU information using NVML.")
+        
         # find libraries necessary for NVML and link against them
         find_package(CUDAToolkit REQUIRED)
-        message(STATUS "Enable sampling of NVIDIA GPU information using NVML.")
         target_link_libraries(${PLSSVM_HARDWARE_TRACKING_LIBRARY_NAME} PUBLIC CUDA::nvml)
         
         # add source file to source file list
         target_sources(${PLSSVM_HARDWARE_TRACKING_LIBRARY_NAME} PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/nvml_hardware_sampler.cpp>)
         
         # add compile definition
-        target_compile_definitions(${PLSSVM_HARDWARE_TRACKING_LIBRARY_NAME} PRIVATE PLSSVM_HARDWARE_TRACKING_VIA_NVML_ENABLED)
+        target_compile_definitions(${PLSSVM_HARDWARE_TRACKING_LIBRARY_NAME} PUBLIC PLSSVM_HARDWARE_TRACKING_VIA_NVML_ENABLED)
     endif ()
     
     ## link base library against hardware sampling library
