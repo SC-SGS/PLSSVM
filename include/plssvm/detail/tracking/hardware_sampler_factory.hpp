@@ -56,6 +56,8 @@ inline std::vector<std::unique_ptr<nvml_hardware_sampler>> &global_hardware_samp
     return sampler;
 }
 
+#if defined(PLSSVM_HARDWARE_SAMPLING_ENABLED)
+
 #define PLSSVM_DETAIL_TRACKING_HARDWARE_SAMPLER_INIT(target, num_devices) \
     plssvm::detail::tracking::global_hardware_sampler(target, num_devices, PLSSVM_HARDWARE_SAMPLING_INTERVAL);
 
@@ -73,6 +75,15 @@ inline std::vector<std::unique_ptr<nvml_hardware_sampler>> &global_hardware_samp
     for (const auto &s : plssvm::detail::tracking::global_hardware_sampler()) { \
         s->add_event(name);                                                     \
     }
+
+#else
+
+    #define PLSSVM_DETAIL_TRACKING_HARDWARE_SAMPLER_INIT(target, num_devices)
+    #define PLSSVM_DETAIL_TRACKING_HARDWARE_SAMPLER_START_SAMPLING()
+    #define PLSSVM_DETAIL_TRACKING_HARDWARE_SAMPLER_STOP_SAMPLING()
+    #define PLSSVM_DETAIL_TRACKING_HARDWARE_SAMPLER_ADD_EVENT(name)
+
+#endif
 
 }  // namespace plssvm::detail::tracking
 

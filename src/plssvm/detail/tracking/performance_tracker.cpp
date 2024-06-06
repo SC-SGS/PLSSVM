@@ -132,6 +132,7 @@ void performance_tracker::add_tracking_entry(const tracking_entry<cmd::parser_sc
 }
 
 void performance_tracker::add_hardware_sampling_entries() {
+#if defined(PLSSVM_HARDWARE_SAMPLING_ENABLED)
     const std::string category_name{ "hardware_samples" };
     for (const auto &sampler : tracking::global_hardware_sampler()) {
         // assemble sampler content string
@@ -140,6 +141,7 @@ void performance_tracker::add_hardware_sampling_entries() {
         // add an entry for the current sampler
         tracking_entries_[category_name][fmt::format("device_{}", sampler->device_id())].push_back(std::move(sampler_content));
     }
+#endif
 }
 
 void performance_tracker::save(const std::string &filename) {
