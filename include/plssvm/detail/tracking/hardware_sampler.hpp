@@ -15,10 +15,10 @@
 
 #include "plssvm/detail/tracking/events.hpp"  // plssvm::detail::tracking::events
 
-#include <atomic>   // std::atomic
-#include <chrono>   // std::chrono::{steady_clock::time_point, milliseconds}
-#include <string>   // std::string
-#include <thread>   // std::thread
+#include <atomic>  // std::atomic
+#include <chrono>  // std::chrono::{steady_clock::time_point, milliseconds}
+#include <string>  // std::string
+#include <thread>  // std::thread
 
 namespace plssvm::detail::tracking {
 
@@ -40,6 +40,8 @@ class hardware_sampler {
 
     [[nodiscard]] bool is_sampling() const noexcept;
 
+    [[nodiscard]] std::chrono::milliseconds sampling_interval() const noexcept { return sampling_interval_; }
+
     void add_event(std::string name);
 
     [[nodiscard]] const events &get_events() const noexcept { return events_; }
@@ -56,15 +58,18 @@ class hardware_sampler {
     virtual void add_sample() = 0;
     virtual void add_init_sample() = 0;
 
+    [[nodiscard]] std::chrono::steady_clock::time_point sampling_start_time() const noexcept { return start_time_; }
+
+  private:
+    std::thread sampling_thread_{};
+
     std::atomic<bool> sampling_started_{ false };
     std::atomic<bool> sampling_stopped_{ false };
     std::atomic<bool> sampling_running_{ false };
 
     const std::chrono::milliseconds sampling_interval_;
     std::chrono::steady_clock::time_point start_time_;
-    std::thread sampling_thread_{};
-
-    events events_;
+    events events_{};
 };
 
 }  // namespace plssvm::detail::tracking

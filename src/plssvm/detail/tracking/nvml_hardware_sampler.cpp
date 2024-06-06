@@ -98,7 +98,7 @@ std::string nvml_hardware_sampler::assemble_yaml_sample_string() const {
                        "{}\n"
                        "{}\n"
                        "{}",
-                       sampling_interval_,
+                       this->sampling_interval(),
                        fmt::join(time_since_start_, ", "),
                        general_samples_,
                        clock_samples_,
@@ -149,7 +149,7 @@ void nvml_hardware_sampler::add_sample() {
     nvmlDevice_t device = device_id_to_nvml_handle(device_id_);
 
     // add current time point
-    time_since_start_.push_back(std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - start_time_));
+    time_since_start_.push_back(std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - this->sampling_start_time()));
 
     // retrieve general information
     {
