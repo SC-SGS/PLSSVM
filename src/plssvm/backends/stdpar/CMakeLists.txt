@@ -8,6 +8,65 @@ list(APPEND CMAKE_MESSAGE_INDENT "stdpar:  ")
 
 # check if stdpar can be enabled
 message(CHECK_START "Checking for stdpar backend")
+########################################################################################################################
+##                                         parse target platform information                                          ##
+########################################################################################################################
+if (DEFINED PLSSVM_STDPAR_TARGET_PLATFORMS)
+    set(PLSSVM_STDPAR_TARGET_PLATFORMS ${PLSSVM_STDPAR_TARGET_PLATFORMS} CACHE STRING "The stdpar target platforms to compile for." FORCE)
+elseif (DEFINED ENV{PLSSVM_STDPAR_TARGET_PLATFORMS})
+    set(PLSSVM_STDPAR_TARGET_PLATFORMS $ENV{PLSSVM_STDPAR_TARGET_PLATFORMS} CACHE STRING "The stdpar target platforms to compile for." FORCE)
+elseif (DEFINED PLSSVM_TARGET_PLATFORMS)
+    set(PLSSVM_STDPAR_TARGET_PLATFORMS ${PLSSVM_TARGET_PLATFORMS} CACHE STRING "The stdpar target platforms to compile for." FORCE)
+elseif (DEFINED ENV{PLSSVM_TARGET_PLATFORMS})
+    set(PLSSVM_STDPAR_TARGET_PLATFORMS $ENV{PLSSVM_TARGET_PLATFORMS} CACHE STRING "The stdpar target platforms to compile for." FORCE)
+endif ()
+
+## PLSSVM_TARGET_PLATFORMS must not be empty
+if (PLSSVM_STDPAR_TARGET_PLATFORMS STREQUAL "")
+    message(FATAL_ERROR "Eather PLSSVM_TARGET_PLATFORMS or PLSSVM_STDPAR_TARGET_PLATFORMS must not be empty to compile with the stdpar backend!")
+endif ()
+
+## parse provided target platforms
+include(${CMAKE_CURRENT_SOURCE_DIR}/../../../../cmake/parse_architecture_info.cmake)
+set(PLSSVM_PLATFORM_NAME_LIST "automatic")
+foreach (PLSSVM_PLATFORM ${PLSSVM_STDPAR_TARGET_PLATFORMS})
+    if (PLSSVM_PLATFORM MATCHES "^cpu")
+        # parse provided CPU architectures
+        parse_architecture_info(${PLSSVM_PLATFORM} PLSSVM_CPU_TARGET_ARCHS PLSSVM_NUM_CPU_TARGET_ARCHS)
+        if (PLSSVM_NUM_CPU_TARGET_ARCHS GREATER 1)
+            message(FATAL_ERROR "Target platform \"cpu\" must at most have one architecture specification!")
+        endif ()
+        target_compile_definitions(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC PLSSVM_HAS_CPU_TARGET)
+        list(APPEND PLSSVM_PLATFORM_NAME_LIST "cpu")
+    elseif (PLSSVM_PLATFORM MATCHES "^nvidia")
+        # parse provided NVIDIA GPU architectures
+        parse_architecture_info(${PLSSVM_PLATFORM} PLSSVM_NVIDIA_TARGET_ARCHS PLSSVM_NUM_NVIDIA_TARGET_ARCHS)
+        if (PLSSVM_NUM_NVIDIA_TARGET_ARCHS EQUAL 0)
+            message(FATAL_ERROR "Target platform \"nvidia\" must at least have one architecture specification!")
+        endif ()
+        target_compile_definitions(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC PLSSVM_HAS_NVIDIA_TARGET)
+        list(APPEND PLSSVM_PLATFORM_NAME_LIST "gpu_nvidia")
+    elseif (PLSSVM_PLATFORM MATCHES "^amd")
+        # parse provided AMD GPU architectures
+        parse_architecture_info(${PLSSVM_PLATFORM} PLSSVM_AMD_TARGET_ARCHS PLSSVM_NUM_AMD_TARGET_ARCHS)
+        if (PLSSVM_NUM_AMD_TARGET_ARCHS EQUAL 0)
+            message(FATAL_ERROR "Target platform \"amd\" must at least have one architecture specification!")
+        endif ()
+        target_compile_definitions(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC PLSSVM_HAS_AMD_TARGET)
+        list(APPEND PLSSVM_PLATFORM_NAME_LIST "gpu_amd")
+    elseif (PLSSVM_PLATFORM MATCHES "^intel")
+        # parse provided Intel GPU architectures
+        parse_architecture_info(${PLSSVM_PLATFORM} PLSSVM_INTEL_TARGET_ARCHS PLSSVM_NUM_INTEL_TARGET_ARCHS)
+        if (PLSSVM_NUM_INTEL_TARGET_ARCHS EQUAL 0)
+            message(FATAL_ERROR "Target platform \"intel\" must at least have one architecture specification!")
+        endif ()
+        target_compile_definitions(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC PLSSVM_HAS_INTEL_TARGET)
+        list(APPEND PLSSVM_PLATFORM_NAME_LIST "gpu_intel")
+    else ()
+        message(FATAL_ERROR "Unrecognized target platform \"${PLSSVM_PLATFORM}\"! Must be one of: cpu nvidia amd intel")
+    endif ()
+endforeach ()
+
 
 # explicitly set general sources
 set(PLSSVM_STDPAR_SOURCES
