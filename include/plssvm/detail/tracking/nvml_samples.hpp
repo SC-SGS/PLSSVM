@@ -12,12 +12,15 @@
 #ifndef PLSSVM_DETAIL_TRACKING_NVML_SAMPLES_HPP_
 #define PLSSVM_DETAIL_TRACKING_NVML_SAMPLES_HPP_
 
+#include "plssvm/detail/assert.hpp"  // PLSSVM_ASSERT
+
 #include "fmt/core.h"     // fmt::formatter
 #include "fmt/ostream.h"  // fmt::ostream_formatter
 
-#include <iosfwd>  // std::ostream forward declaration
-#include <string>  // std::string
-#include <vector>  // std::vector
+#include <cstddef>  // std::size_t
+#include <iosfwd>   // std::ostream forward declaration
+#include <string>   // std::string
+#include <vector>   // std::vector
 
 namespace plssvm::detail::tracking {
 
@@ -38,10 +41,14 @@ class nvml_general_samples {
         this->utilization_gpu_.push_back(s.utilization_gpu);
         this->utilization_mem_.push_back(s.utilization_mem);
 
-        // TODO: invariant!
+        PLSSVM_ASSERT(this->num_samples() == this->performance_state_.size(), "Error: number of general samples missmatch!");
+        PLSSVM_ASSERT(this->num_samples() == this->utilization_gpu_.size(), "Error: number of general samples missmatch!");
+        PLSSVM_ASSERT(this->num_samples() == this->utilization_mem_.size(), "Error: number of general samples missmatch!");
     }
 
     nvml_general_sample operator[](const std::size_t idx) const noexcept {
+        PLSSVM_ASSERT(idx < this->num_samples(), "Error: out-of-bounce access with index {} for size {}!", idx, this->num_samples());
+
         return nvml_general_sample{ performance_state_[idx], utilization_gpu_[idx], utilization_mem_[idx] };
     }
 
@@ -85,7 +92,17 @@ class nvml_clock_samples {
         this->clock_throttle_reason_.push_back(s.clock_throttle_reason);
         this->auto_boosted_clocks_.push_back(s.auto_boosted_clocks);
 
-        // TODO: invariant!
+        PLSSVM_ASSERT(this->num_samples() == this->clock_graph_.size(), "Error: number of general samples missmatch!");
+        PLSSVM_ASSERT(this->num_samples() == this->clock_sm_.size(), "Error: number of general samples missmatch!");
+        PLSSVM_ASSERT(this->num_samples() == this->clock_mem_.size(), "Error: number of general samples missmatch!");
+        PLSSVM_ASSERT(this->num_samples() == this->clock_throttle_reason_.size(), "Error: number of general samples missmatch!");
+        PLSSVM_ASSERT(this->num_samples() == this->auto_boosted_clocks_.size(), "Error: number of general samples missmatch!");
+    }
+
+    nvml_clock_sample operator[](const std::size_t idx) const noexcept {
+        PLSSVM_ASSERT(idx < this->num_samples(), "Error: out-of-bounce access with index {} for size {}!", idx, this->num_samples());
+
+        return nvml_clock_sample{ clock_graph_[idx], clock_sm_[idx], clock_mem_[idx], clock_throttle_reason_[idx], auto_boosted_clocks_[idx] };
     }
 
     [[nodiscard]] std::size_t num_samples() const noexcept { return clock_graph_.size(); }
@@ -128,10 +145,14 @@ class nvml_power_samples {
         this->power_usage_.push_back(s.power_usage);
         this->power_total_energy_consumption_.push_back(s.power_total_energy_consumption);
 
-        // TODO: invariant!
+        PLSSVM_ASSERT(this->num_samples() == this->power_state_.size(), "Error: number of general samples missmatch!");
+        PLSSVM_ASSERT(this->num_samples() == this->power_usage_.size(), "Error: number of general samples missmatch!");
+        PLSSVM_ASSERT(this->num_samples() == this->power_total_energy_consumption_.size(), "Error: number of general samples missmatch!");
     }
 
     nvml_power_sample operator[](const std::size_t idx) const noexcept {
+        PLSSVM_ASSERT(idx < this->num_samples(), "Error: out-of-bounce access with index {} for size {}!", idx, this->num_samples());
+
         return nvml_power_sample{ power_state_[idx], power_usage_[idx], power_total_energy_consumption_[idx] };
     }
 
@@ -173,10 +194,15 @@ class nvml_memory_samples {
         this->pcie_link_width_.push_back(s.pcie_link_width);
         this->pcie_link_generation_.push_back(s.pcie_link_generation);
 
-        // TODO: invariant!
+        PLSSVM_ASSERT(this->num_samples() == this->memory_free_.size(), "Error: number of general samples missmatch!");
+        PLSSVM_ASSERT(this->num_samples() == this->memory_used_.size(), "Error: number of general samples missmatch!");
+        PLSSVM_ASSERT(this->num_samples() == this->pcie_link_width_.size(), "Error: number of general samples missmatch!");
+        PLSSVM_ASSERT(this->num_samples() == this->pcie_link_generation_.size(), "Error: number of general samples missmatch!");
     }
 
     nvml_memory_sample operator[](const std::size_t idx) const noexcept {
+        PLSSVM_ASSERT(idx < this->num_samples(), "Error: out-of-bounce access with index {} for size {}!", idx, this->num_samples());
+
         return nvml_memory_sample{ memory_free_[idx], memory_used_[idx] };
     }
 
@@ -216,10 +242,13 @@ class nvml_temperature_samples {
         this->fan_speed_.push_back(s.fan_speed);
         this->temperature_gpu_.push_back(s.temperature_gpu);
 
-        // TODO: invariant!
+        PLSSVM_ASSERT(this->num_samples() == this->fan_speed_.size(), "Error: number of general samples missmatch!");
+        PLSSVM_ASSERT(this->num_samples() == this->temperature_gpu_.size(), "Error: number of general samples missmatch!");
     }
 
     nvml_temperature_sample operator[](const std::size_t idx) const noexcept {
+        PLSSVM_ASSERT(idx < this->num_samples(), "Error: out-of-bounce access with index {} for size {}!", idx, this->num_samples());
+
         return nvml_temperature_sample{ fan_speed_[idx], temperature_gpu_[idx] };
     }
 
