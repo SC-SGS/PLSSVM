@@ -321,7 +321,7 @@ pipeline {
                                         cd ${WORKSPACE}/plssvm
 
                                         if [[ $ARCHITECTURE == AMD ]]; then
-                                            spack install hip@4.5.2
+                                            spack install hip@5.4.3
                                         fi
 
                                         spack uninstall -a -y plssvm@develop$([[ $BACKEND == ADAPTIVECPP ]] && echo "%clang" )  \
