@@ -122,7 +122,7 @@ pipeline {
                                     if [[ -f ~/.spack/linux/compilers.yaml ]]; then
                                         rm ~/.spack/linux/compilers.yaml
                                     fi
-
+                                    spack clean -a
 
                                     if [ ! -f $SPACK_SYSTEM_CONFIG_PATH/config.yaml ]; then
                                         touch  $SPACK_SYSTEM_CONFIG_PATH/config.yaml
@@ -362,7 +362,6 @@ pipeline {
                                             test_file_num_data_points=$NUM_DATA_POINTS \
                                             test_file_num_features=$NUM_FEATURES \
                                             $([[ $BACKEND == *"STDPAR"* ]] && echo "~asserts" || echo "+asserts") \
-
                                             ~fast-math \
                                             arch=$(spack arch) \
                                             build_type=$BUILD_TYPE \
