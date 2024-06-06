@@ -30,7 +30,7 @@ hardware_sampler::~hardware_sampler() = default;
 void hardware_sampler::start_sampling() {
     // can't start an already running sampler
     if (sampling_started_) {
-        throw hardware_sampling_exception{ "Can't start an already running sampler!" };
+        throw hardware_sampling_exception{ "Can start every hardware sampler only once!" };
     }
 
     // start sampling loop
@@ -44,7 +44,7 @@ void hardware_sampler::start_sampling() {
 void hardware_sampler::stop_sampling() {
     // can't stop an already stopped sampler
     if (sampling_stopped_) {
-        throw hardware_sampling_exception{ "Can't stop an already stopped sampler!" };
+        throw hardware_sampling_exception{ "Can stop every hardware sampler only once!" };
     }
 
     // stop sampling
