@@ -53,19 +53,16 @@ class hardware_sampler {
     [[nodiscard]] virtual std::string device_identification() const noexcept = 0;
 
   protected:
-    void sampling_loop();
-
-    virtual void add_sample() = 0;
-    virtual void add_init_sample() = 0;
+    virtual void sampling_loop() = 0;
 
     [[nodiscard]] std::chrono::steady_clock::time_point sampling_start_time() const noexcept { return start_time_; }
-
-  private:
-    std::thread sampling_thread_{};
 
     std::atomic<bool> sampling_started_{ false };
     std::atomic<bool> sampling_stopped_{ false };
     std::atomic<bool> sampling_running_{ false };
+
+  private:
+    std::thread sampling_thread_{};
 
     const std::chrono::milliseconds sampling_interval_;
     std::chrono::steady_clock::time_point start_time_;

@@ -14,11 +14,10 @@
 #include "fmt/core.h"    // fmt::format
 #include "fmt/format.h"  // fmt::join
 
-#include <chrono>     // std::chrono::{steady_clock, duration_cast, milliseconds}
-#include <stdexcept>  // std::runtime_error
-#include <string>     // std::string
-#include <thread>     // std::thread, std::this_thread
-#include <utility>    // std::move
+#include <chrono>   // std::chrono::{steady_clock, duration_cast, milliseconds}
+#include <string>   // std::string
+#include <thread>   // std::thread
+#include <utility>  // std::move
 
 namespace plssvm::detail::tracking {
 
@@ -69,19 +68,6 @@ bool hardware_sampler::is_sampling() const noexcept {
 
 void hardware_sampler::add_event(std::string name) {
     events_.add_event(std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - start_time_), std::move(name));
-}
-
-void hardware_sampler::sampling_loop() {
-    // add samples where we only have to retrieve the value once
-    this->add_init_sample();
-
-    // loop until stop_sampling() is called
-    while (!sampling_stopped_) {
-        this->add_sample();
-
-        // wait for sampling_interval_ milliseconds to retrieve the next sample
-        std::this_thread::sleep_for(std::chrono::milliseconds{ sampling_interval_ });
-    }
 }
 
 std::string hardware_sampler::assemble_yaml_event_string() const {

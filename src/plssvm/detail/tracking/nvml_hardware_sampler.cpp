@@ -12,17 +12,17 @@
 #include "plssvm/detail/tracking/nvml_samples.hpp"      // plssvm::detail::tracking{nvml_general_samples, nvml_clock_samples, nvml_power_samples, nvml_memory_samples, nvml_temperature_samples}
 #include "plssvm/exceptions/exceptions.hpp"             // plssvm::exception, plssvm::hardware_sampling_exception
 
-#include "nvml.h"
-
 #include "fmt/chrono.h"  // format std::chrono types
 #include "fmt/core.h"    // fmt::format
 #include "fmt/format.h"  // fmt::join
+#include "nvml.h"        // NVML runtime functions
 
 #include <chrono>     // std::chrono::{steady_clock, duration_cast, milliseconds}
 #include <cstddef>    // std::size_t
 #include <exception>  // std::exception, std::terminate
 #include <iostream>   // std::cerr, std::endl
 #include <string>     // std::string
+#include <thread>     // std::this_thread
 #include <vector>     // std::vector
 
 namespace plssvm::detail::tracking {
@@ -107,102 +107,120 @@ std::string nvml_hardware_sampler::assemble_yaml_sample_string() const {
                        temperature_samples_);
 }
 
-void nvml_hardware_sampler::add_init_sample() {
+void nvml_hardware_sampler::sampling_loop() {
     // get the nvml handle from the device_id
     nvmlDevice_t device = device_id_to_nvml_handle(device_id_);
+
+    //
+    // add samples where we only have to retrieve the value once
+    //
 
     // retrieve fixed general information
-    std::string name(NVML_DEVICE_NAME_V2_BUFFER_SIZE, '\0');
-    PLSSVM_NVML_ERROR_CHECK(nvmlDeviceGetName(device, name.data(), name.size()));
-    general_samples_.name = name;  //.substr(0, name.find_first_of('\0'));
-    nvmlEnableState_t mode{};
-    PLSSVM_NVML_ERROR_CHECK(nvmlDeviceGetPersistenceMode(device, &mode));
-    general_samples_.persistence_mode = mode == NVML_FEATURE_ENABLED;
-    PLSSVM_NVML_ERROR_CHECK(nvmlDeviceGetNumGpuCores(device, &general_samples_.num_cores));
+    {
+        std::string name(NVML_DEVICE_NAME_V2_BUFFER_SIZE, '\0');
+        PLSSVM_NVML_ERROR_CHECK(nvmlDeviceGetName(device, name.data(), name.size()));
+        general_samples_.name = name;  //.substr(0, name.find_first_of('\0'));
+        nvmlEnableState_t mode{};
+        PLSSVM_NVML_ERROR_CHECK(nvmlDeviceGetPersistenceMode(device, &mode));
+        general_samples_.persistence_mode = mode == NVML_FEATURE_ENABLED;
+        PLSSVM_NVML_ERROR_CHECK(nvmlDeviceGetNumGpuCores(device, &general_samples_.num_cores));
+    }
 
     // retrieve fixed clock related information
-    PLSSVM_NVML_ERROR_CHECK(nvmlDeviceGetAdaptiveClockInfoStatus(device, &clock_samples_.adaptive_clock_status));
-    PLSSVM_NVML_ERROR_CHECK(nvmlDeviceGetMaxClockInfo(device, NVML_CLOCK_GRAPHICS, &clock_samples_.clock_graph_max));
-    PLSSVM_NVML_ERROR_CHECK(nvmlDeviceGetMaxClockInfo(device, NVML_CLOCK_SM, &clock_samples_.clock_sm_max));
-    PLSSVM_NVML_ERROR_CHECK(nvmlDeviceGetMaxClockInfo(device, NVML_CLOCK_MEM, &clock_samples_.clock_mem_max));
+    {
+        PLSSVM_NVML_ERROR_CHECK(nvmlDeviceGetAdaptiveClockInfoStatus(device, &clock_samples_.adaptive_clock_status));
+        PLSSVM_NVML_ERROR_CHECK(nvmlDeviceGetMaxClockInfo(device, NVML_CLOCK_GRAPHICS, &clock_samples_.clock_graph_max));
+        PLSSVM_NVML_ERROR_CHECK(nvmlDeviceGetMaxClockInfo(device, NVML_CLOCK_SM, &clock_samples_.clock_sm_max));
+        PLSSVM_NVML_ERROR_CHECK(nvmlDeviceGetMaxClockInfo(device, NVML_CLOCK_MEM, &clock_samples_.clock_mem_max));
+    }
 
     // retrieve fixed power related information
-    PLSSVM_NVML_ERROR_CHECK(nvmlDeviceGetPowerManagementLimit(device, &power_samples_.power_management_limit));
-    PLSSVM_NVML_ERROR_CHECK(nvmlDeviceGetEnforcedPowerLimit(device, &power_samples_.power_enforced_limit));
+    {
+        PLSSVM_NVML_ERROR_CHECK(nvmlDeviceGetPowerManagementLimit(device, &power_samples_.power_management_limit));
+        PLSSVM_NVML_ERROR_CHECK(nvmlDeviceGetEnforcedPowerLimit(device, &power_samples_.power_enforced_limit));
+    }
 
     // retrieve fixed memory related information
-    nvmlMemory_t memory_info{};
-    PLSSVM_NVML_ERROR_CHECK(nvmlDeviceGetMemoryInfo(device, &memory_info));
-    memory_samples_.memory_total = memory_info.total;
-    PLSSVM_NVML_ERROR_CHECK(nvmlDeviceGetMemoryBusWidth(device, &memory_samples_.memory_bus_width));
-    PLSSVM_NVML_ERROR_CHECK(nvmlDeviceGetGpuMaxPcieLinkGeneration(device, &memory_samples_.max_pcie_link_generation));
-    PLSSVM_NVML_ERROR_CHECK(nvmlDeviceGetPcieLinkMaxSpeed(device, &memory_samples_.pcie_link_max_speed));
-
-    // retrieve fixed memory related information
-    PLSSVM_NVML_ERROR_CHECK(nvmlDeviceGetNumFans(device, &temperature_samples_.num_fans));
-    PLSSVM_NVML_ERROR_CHECK(nvmlDeviceGetTemperatureThreshold(device, NVML_TEMPERATURE_THRESHOLD_GPU_MAX, &temperature_samples_.temperature_threshold_gpu_max));
-    PLSSVM_NVML_ERROR_CHECK(nvmlDeviceGetTemperatureThreshold(device, NVML_TEMPERATURE_THRESHOLD_MEM_MAX, &temperature_samples_.temperature_threshold_mem_max));
-}
-
-void nvml_hardware_sampler::add_sample() {
-    // get the nvml handle from the device_id
-    nvmlDevice_t device = device_id_to_nvml_handle(device_id_);
-
-    // add current time point
-    time_since_start_.push_back(std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - this->sampling_start_time()));
-
-    // retrieve general information
     {
-        nvml_general_samples::nvml_general_sample sample{};
-        nvmlPstates_t pstate{};
-        PLSSVM_NVML_ERROR_CHECK(nvmlDeviceGetPerformanceState(device, &pstate));
-        sample.performance_state = static_cast<int>(pstate);
-        nvmlUtilization_t util{};
-        PLSSVM_NVML_ERROR_CHECK(nvmlDeviceGetUtilizationRates(device, &util));
-        sample.utilization_gpu = util.gpu;
-        sample.utilization_mem = util.memory;
-        general_samples_.add_sample(sample);
-    }
-    // retrieve clock related information
-    {
-        nvml_clock_samples::nvml_clock_sample sample{};
-        PLSSVM_NVML_ERROR_CHECK(nvmlDeviceGetClockInfo(device, NVML_CLOCK_GRAPHICS, &sample.clock_graph));
-        PLSSVM_NVML_ERROR_CHECK(nvmlDeviceGetClockInfo(device, NVML_CLOCK_SM, &sample.clock_sm));
-        PLSSVM_NVML_ERROR_CHECK(nvmlDeviceGetClockInfo(device, NVML_CLOCK_MEM, &sample.clock_mem));
-        PLSSVM_NVML_ERROR_CHECK(nvmlDeviceGetCurrentClocksThrottleReasons(device, &sample.clock_throttle_reason));
-        nvmlEnableState_t mode{};
-        nvmlEnableState_t default_mode{};
-        PLSSVM_NVML_ERROR_CHECK(nvmlDeviceGetAutoBoostedClocksEnabled(device, &mode, &default_mode));
-        sample.auto_boosted_clocks = mode == NVML_FEATURE_ENABLED;
-        clock_samples_.add_sample(sample);
-    }
-    // retrieve power related information
-    {
-        nvml_power_samples::nvml_power_sample sample{};
-        nvmlPstates_t pstate{};
-        PLSSVM_NVML_ERROR_CHECK(nvmlDeviceGetPowerState(device, &pstate));
-        sample.power_state = static_cast<int>(pstate);
-        PLSSVM_NVML_ERROR_CHECK(nvmlDeviceGetPowerUsage(device, &sample.power_usage));
-        PLSSVM_NVML_ERROR_CHECK(nvmlDeviceGetTotalEnergyConsumption(device, &sample.power_total_energy_consumption));
-        power_samples_.add_sample(sample);
-    }
-    // retrieve memory related information
-    {
-        nvml_memory_samples::nvml_memory_sample sample{};
         nvmlMemory_t memory_info{};
         PLSSVM_NVML_ERROR_CHECK(nvmlDeviceGetMemoryInfo(device, &memory_info));
-        sample.memory_free = memory_info.free;
-        sample.memory_used = memory_info.used;
-        PLSSVM_NVML_ERROR_CHECK(nvmlDeviceGetCurrPcieLinkWidth(device, &sample.pcie_link_width));
-        PLSSVM_NVML_ERROR_CHECK(nvmlDeviceGetCurrPcieLinkGeneration(device, &sample.pcie_link_generation));
-        memory_samples_.add_sample(sample);
+        memory_samples_.memory_total = memory_info.total;
+        PLSSVM_NVML_ERROR_CHECK(nvmlDeviceGetMemoryBusWidth(device, &memory_samples_.memory_bus_width));
+        PLSSVM_NVML_ERROR_CHECK(nvmlDeviceGetGpuMaxPcieLinkGeneration(device, &memory_samples_.max_pcie_link_generation));
+        PLSSVM_NVML_ERROR_CHECK(nvmlDeviceGetPcieLinkMaxSpeed(device, &memory_samples_.pcie_link_max_speed));
     }
-    // retrieve temperature related information
+
+    // retrieve fixed memory related information
     {
-        nvml_temperature_samples::nvml_temperature_sample sample{};
-        PLSSVM_NVML_ERROR_CHECK(nvmlDeviceGetFanSpeed(device, &sample.fan_speed));
-        PLSSVM_NVML_ERROR_CHECK(nvmlDeviceGetTemperature(device, NVML_TEMPERATURE_GPU, &sample.temperature_gpu));
-        temperature_samples_.add_sample(sample);
+        PLSSVM_NVML_ERROR_CHECK(nvmlDeviceGetNumFans(device, &temperature_samples_.num_fans));
+        PLSSVM_NVML_ERROR_CHECK(nvmlDeviceGetTemperatureThreshold(device, NVML_TEMPERATURE_THRESHOLD_GPU_MAX, &temperature_samples_.temperature_threshold_gpu_max));
+        PLSSVM_NVML_ERROR_CHECK(nvmlDeviceGetTemperatureThreshold(device, NVML_TEMPERATURE_THRESHOLD_MEM_MAX, &temperature_samples_.temperature_threshold_mem_max));
+    }
+
+    //
+    // loop until stop_sampling() is called
+    //
+
+    while (!sampling_stopped_) {
+        // add current time point
+        time_since_start_.push_back(std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - this->sampling_start_time()));
+
+        // retrieve general information
+        {
+            nvml_general_samples::nvml_general_sample sample{};
+            nvmlPstates_t pstate{};
+            PLSSVM_NVML_ERROR_CHECK(nvmlDeviceGetPerformanceState(device, &pstate));
+            sample.performance_state = static_cast<int>(pstate);
+            nvmlUtilization_t util{};
+            PLSSVM_NVML_ERROR_CHECK(nvmlDeviceGetUtilizationRates(device, &util));
+            sample.utilization_gpu = util.gpu;
+            sample.utilization_mem = util.memory;
+            general_samples_.add_sample(sample);
+        }
+        // retrieve clock related information
+        {
+            nvml_clock_samples::nvml_clock_sample sample{};
+            PLSSVM_NVML_ERROR_CHECK(nvmlDeviceGetClockInfo(device, NVML_CLOCK_GRAPHICS, &sample.clock_graph));
+            PLSSVM_NVML_ERROR_CHECK(nvmlDeviceGetClockInfo(device, NVML_CLOCK_SM, &sample.clock_sm));
+            PLSSVM_NVML_ERROR_CHECK(nvmlDeviceGetClockInfo(device, NVML_CLOCK_MEM, &sample.clock_mem));
+            PLSSVM_NVML_ERROR_CHECK(nvmlDeviceGetCurrentClocksThrottleReasons(device, &sample.clock_throttle_reason));
+            nvmlEnableState_t mode{};
+            nvmlEnableState_t default_mode{};
+            PLSSVM_NVML_ERROR_CHECK(nvmlDeviceGetAutoBoostedClocksEnabled(device, &mode, &default_mode));
+            sample.auto_boosted_clocks = mode == NVML_FEATURE_ENABLED;
+            clock_samples_.add_sample(sample);
+        }
+        // retrieve power related information
+        {
+            nvml_power_samples::nvml_power_sample sample{};
+            nvmlPstates_t pstate{};
+            PLSSVM_NVML_ERROR_CHECK(nvmlDeviceGetPowerState(device, &pstate));
+            sample.power_state = static_cast<int>(pstate);
+            PLSSVM_NVML_ERROR_CHECK(nvmlDeviceGetPowerUsage(device, &sample.power_usage));
+            PLSSVM_NVML_ERROR_CHECK(nvmlDeviceGetTotalEnergyConsumption(device, &sample.power_total_energy_consumption));
+            power_samples_.add_sample(sample);
+        }
+        // retrieve memory related information
+        {
+            nvml_memory_samples::nvml_memory_sample sample{};
+            nvmlMemory_t memory_info{};
+            PLSSVM_NVML_ERROR_CHECK(nvmlDeviceGetMemoryInfo(device, &memory_info));
+            sample.memory_free = memory_info.free;
+            sample.memory_used = memory_info.used;
+            PLSSVM_NVML_ERROR_CHECK(nvmlDeviceGetCurrPcieLinkWidth(device, &sample.pcie_link_width));
+            PLSSVM_NVML_ERROR_CHECK(nvmlDeviceGetCurrPcieLinkGeneration(device, &sample.pcie_link_generation));
+            memory_samples_.add_sample(sample);
+        }
+        // retrieve temperature related information
+        {
+            nvml_temperature_samples::nvml_temperature_sample sample{};
+            PLSSVM_NVML_ERROR_CHECK(nvmlDeviceGetFanSpeed(device, &sample.fan_speed));
+            PLSSVM_NVML_ERROR_CHECK(nvmlDeviceGetTemperature(device, NVML_TEMPERATURE_GPU, &sample.temperature_gpu));
+            temperature_samples_.add_sample(sample);
+        }
+
+        // wait for sampling_interval_ milliseconds to retrieve the next sample
+        std::this_thread::sleep_for(std::chrono::milliseconds{ this->sampling_interval() });
     }
 }
 
