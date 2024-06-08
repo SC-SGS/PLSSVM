@@ -37,7 +37,6 @@ void hardware_sampler::start_sampling() {
     this->resume_sampling();
     start_time_ = std::chrono::steady_clock::now();
     sampling_thread_ = std::thread{ [this]() { this->sampling_loop(); } };
-    sampling_thread_.detach();
 }
 
 void hardware_sampler::stop_sampling() {
@@ -49,9 +48,7 @@ void hardware_sampler::stop_sampling() {
     // stop sampling
     this->pause_sampling();
     sampling_stopped_ = true;  // -> notifies the sampling std::thread
-    if (sampling_thread_.joinable()) {
-        sampling_thread_.join();
-    }
+    sampling_thread_.join();
 }
 
 void hardware_sampler::pause_sampling() {
