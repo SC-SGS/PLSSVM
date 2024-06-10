@@ -84,9 +84,17 @@ class global_hardware_sampler {
 
   private:
     global_hardware_sampler(const target_platform target, const std::size_t num_devices, const std::chrono::milliseconds sampling_interval) {
-        for (std::size_t device = 0; device < num_devices; ++device) {
-            sampler_.push_back(make_hardware_sampler(target, device, sampling_interval));
+        // ignore the CPU target platform since we ALWAYS add a CPU hardware sampler if possible
+        if (target != target_platform::cpu) {
+            for (std::size_t device = 0; device < num_devices; ++device) {
+                sampler_.push_back(make_hardware_sampler(target, device, sampling_interval));
+            }
         }
+
+#if defined(PLSSVM_HARDWARE_TRACKING_FOR_CPUS_ENABLED)
+        // if available, ALWAYS add a CPU hardware sampler
+        sampler_.push_back(make_hardware_sampler(target_platform::cpu, 0, sampling_interval));
+#endif
     }
 
     std::vector<std::unique_ptr<hardware_sampler>> sampler_{};
