@@ -14,9 +14,7 @@
 
 #include "plssvm/detail/tracking/hardware_sampler.hpp"  // plssvm::detail::tracking::hardware_sampler
 
-#include <atomic>   // std::atomic
 #include <chrono>   // std::chrono::milliseconds, std::chrono_literals namespace
-#include <cstddef>  // std::size_t
 #include <string>   // std::string
 #include <vector>   // std::vector
 
@@ -43,7 +41,8 @@ class turbostat_hardware_sampler : public hardware_sampler {
     void sampling_loop() final;
 
     std::vector<std::chrono::milliseconds> time_since_start_{};
-    std::vector<std::string> data_lines_{};
+    std::vector<std::string> lscpu_data_lines_{};
+    std::vector<std::string> turbostat_data_lines_{};
 };
 
 }  // namespace plssvm::detail::tracking
