@@ -14,6 +14,10 @@
 
 #include "plssvm/detail/tracking/hardware_sampler.hpp"
 
+#if defined(PLSSVM_HARDWARE_TRACKING_VIA_TURBOSTAT_ENABLED)
+    #include "plssvm/detail/tracking/turbostat_hardware_sampler.hpp"  // plssvm::detail::tracking::turbostat_hardware_sampler
+#endif
+
 #if defined(PLSSVM_HARDWARE_TRACKING_VIA_NVML_ENABLED)
     #include "plssvm/detail/tracking/nvml_hardware_sampler.hpp"  // plssvm::detail::tracking::nvml_hardware_sampler
 #endif
@@ -33,7 +37,11 @@ namespace plssvm::detail::tracking {
         case target_platform::automatic:
             return make_hardware_sampler(determine_default_target_platform(), device_id, sampling_interval);
         case target_platform::cpu:
-            throw hardware_sampling_exception{ "CPU hardware sampling currently not implemented!" };  // TODO: implement
+#if defined(PLSSVM_HARDWARE_TRACKING_VIA_TURBOSTAT_ENABLED)
+            return std::make_unique<turbostat_hardware_sampler>(sampling_interval);
+#else
+            throw hardware_sampling_exception{ "Provided 'cpu' as target_platform, but hardware sampling on CPUs using turbostat wasn't enabled! Try setting an cpu target during CMake configuration." };  // TODO: exception message?
+#endif
         case target_platform::gpu_nvidia:
 #if defined(PLSSVM_HARDWARE_TRACKING_VIA_NVML_ENABLED)
             return std::make_unique<nvml_hardware_sampler>(device_id, sampling_interval);
@@ -48,6 +56,8 @@ namespace plssvm::detail::tracking {
 
     detail::unreachable();
 }
+
+// TODO: host sampler!?
 
 class global_hardware_sampler {
     friend std::unique_ptr<global_hardware_sampler> std::make_unique<global_hardware_sampler>(const plssvm::target_platform &, const std::size_t &, const std::chrono::milliseconds &);

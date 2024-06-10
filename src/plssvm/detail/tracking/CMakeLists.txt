@@ -44,6 +44,76 @@ if (PLSSVM_ENABLE_HARDWARE_SAMPLING)
     message(STATUS "Setting the hardware sampler interval to ${PLSSVM_HARDWARE_SAMPLING_INTERVAL}ms.")
     target_compile_definitions(${PLSSVM_HARDWARE_TRACKING_LIBRARY_NAME} PUBLIC PLSSVM_HARDWARE_SAMPLING_INTERVAL=${PLSSVM_HARDWARE_SAMPLING_INTERVAL}ms)
     
+    ## check whether turbostat could be found -> used for the CPU targets as well as for ALL host could
+    ## -> checked even if no CPU targets where provided
+    find_program(PLSSVM_TURBOSTAT_FOUND turbostat)
+    if (PLSSVM_TURBOSTAT_FOUND)
+        ## check if the turbostat command works as intended
+        execute_process(COMMAND turbostat -n 1 -S -q
+                        RESULT_VARIABLE PLSSVM_TURBOSTAT_WITHOUT_ROOT
+                        OUTPUT_QUIET
+                        ERROR_QUIET)
+        if (NOT PLSSVM_TURBOSTAT_WITHOUT_ROOT EQUAL 0)
+            message(STATUS "Can't use turbostat without root permissions! Try using with sudo...")
+            execute_process(COMMAND sudo -n turbostat -n 1 -S -q
+                            RESULT_VARIABLE PLSSVM_TURBOSTAT_ROOT_PASSWORD_REQUIRED
+                            OUTPUT_QUIET
+                            ERROR_QUIET)
+            if (NOT PLSSVM_TURBOSTAT_ROOT_PASSWORD_REQUIRED EQUAL 0)
+                message(STATUS "Can't use turbostat with root if a sudo password is required! Please add turbostat to the sudoer group.")
+                message(STATUS "Disabling turbostat support!")
+            else ()
+                execute_process(COMMAND sudo turbostat -n 1 -S -q
+                                RESULT_VARIABLE PLSSVM_TURBOSTAT_WITH_ROOT
+                                OUTPUT_QUIET
+                                ERROR_QUIET)
+                if (NOT PLSSVM_TURBOSTAT_WITH_ROOT EQUAL 0)
+                    message(STATUS "Can't use turbostat with root even if no sudo password is required!")
+                    message(STATUS "Disabling turbostat support!")
+                else ()
+                    message(STATUS "Enable sampling of CPU information using turbostat.")
+                    set(PLSSVM_TURBOSTAT_EXECUTION_TYPE "root")
+                endif ()
+            endif ()
+        else ()
+            set(PLSSVM_TURBOSTAT_EXECUTION_TYPE "without_root")
+        endif ()
+        
+        ## check if turbostat can be used
+        if (PLSSVM_TURBOSTAT_EXECUTION_TYPE)
+            ## try finding subprocess.h
+            set(PLSSVM_subprocess_VERSION b6e1611d430e3019c423d2af26bb162e7ed5c3ae)
+            find_package(subprocess QUIET)
+            if (subprocess_FOUND)
+                message(STATUS "Found package subprocess.h.")
+                target_include_directories(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC ${subprocess_INCLUDE_DIR})
+            else ()
+                message(STATUS "Couldn't find package subprocess.h. Building version ${PLSSVM_subprocess_VERSION} from source.")
+                target_compile_definitions(${PLSSVM_BASE_LIBRARY_NAME} PRIVATE PLSSVM_subprocess_VERSION="${PLSSVM_subprocess_VERSION}")
+                # fetch subprocess library subprocess.h
+                FetchContent_Declare(subprocess
+                                     GIT_REPOSITORY https://github.com/sheredom/subprocess.h.git
+                                     GIT_TAG ${PLSSVM_subprocess_VERSION}
+                                     QUIET
+                                     CONFIGURE_COMMAND ""
+                                     BUILD_COMMAND ""
+                )
+                FetchContent_MakeAvailable(subprocess)
+                target_include_directories(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC $<BUILD_INTERFACE:${subprocess_SOURCE_DIR}>)
+            endif ()
+            
+            # add source file to source file list
+            target_sources(${PLSSVM_HARDWARE_TRACKING_LIBRARY_NAME} PUBLIC
+                           $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/turbostat_hardware_sampler.cpp>)
+            
+            # add compile definition
+            target_compile_definitions(${PLSSVM_HARDWARE_TRACKING_LIBRARY_NAME} PUBLIC PLSSVM_HARDWARE_TRACKING_VIA_TURBOSTAT_ENABLED)
+            if (PLSSVM_TURBOSTAT_EXECUTION_TYPE MATCHES "root")
+                target_compile_definitions(${PLSSVM_HARDWARE_TRACKING_LIBRARY_NAME} PUBLIC PLSSVM_HARDWARE_TRACKING_VIA_TURBOSTAT_ROOT)
+            endif ()
+        endif ()
+    endif ()
+    
     ## nvidia targets are provided -> enable NVIDIA GPU hardware samping using NVML
     if (DEFINED PLSSVM_NVIDIA_TARGET_ARCHS)
         message(STATUS "Enable sampling of NVIDIA GPU information using NVML.")

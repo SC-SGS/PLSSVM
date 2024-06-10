@@ -79,11 +79,11 @@ IncludeBlocks: Regroup
 IncludeCategories:
   - Regex: '^"plssvm/'
     Priority: 1
-  - Regex: '^"(cuda|hip|CL|sycl|omp|nvml)'
+  - Regex: '^"(cuda|hip|CL|sycl|omp)'
     Priority: 2
   - Regex: '^"(tests|bindings)/'
     Priority: 3
-  - Regex: '^"(fmt|igor|fast_float|cxxopts|gtest|gmock|pybind)'
+  - Regex: '^"(fmt|igor|fast_float|cxxopts|gtest|gmock|pybind|nvml|subprocess)'
     Priority: 4
   - Regex: '^.*'
     Priority: 5
