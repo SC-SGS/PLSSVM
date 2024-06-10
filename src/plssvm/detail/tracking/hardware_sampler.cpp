@@ -14,7 +14,7 @@
 #include "fmt/core.h"    // fmt::format
 #include "fmt/format.h"  // fmt::join
 
-#include <chrono>   // std::chrono::{steady_clock, duration_cast, milliseconds}
+#include <chrono>   // std::chrono::{steady_clock, system_clock, duration_cast, milliseconds}
 #include <string>   // std::string
 #include <thread>   // std::thread
 #include <utility>  // std::move
@@ -35,7 +35,8 @@ void hardware_sampler::start_sampling() {
     // start sampling loop
     sampling_started_ = true;
     this->resume_sampling();
-    start_time_ = std::chrono::steady_clock::now();
+    steady_clock_start_time_ = std::chrono::steady_clock::now();
+    system_clock_start_time_ = std::chrono::system_clock::now();
     sampling_thread_ = std::thread{ [this]() { this->sampling_loop(); } };
 }
 
@@ -64,7 +65,7 @@ bool hardware_sampler::is_sampling() const noexcept {
 }
 
 void hardware_sampler::add_event(std::string name) {
-    events_.add_event(std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - start_time_), std::move(name));
+    events_.add_event(std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - steady_clock_start_time_), std::move(name));
 }
 
 std::string hardware_sampler::assemble_yaml_event_string() const {

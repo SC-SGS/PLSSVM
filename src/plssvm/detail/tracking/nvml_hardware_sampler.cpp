@@ -163,7 +163,7 @@ void nvml_hardware_sampler::sampling_loop() {
 
     while (!sampling_stopped_) {
         // add current time point
-        time_since_start_.push_back(std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - this->sampling_start_time()));
+        time_since_start_.push_back(std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - this->sampling_steady_clock_start_time()));
 
         // retrieve general information
         {
