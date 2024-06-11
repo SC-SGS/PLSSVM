@@ -56,6 +56,11 @@ std::string turbostat_hardware_sampler::device_identification() const noexcept {
 }
 
 std::string turbostat_hardware_sampler::assemble_yaml_sample_string() const {
+    // check whether it's safe to generate the YAML entry
+    if (this->is_sampling()) {
+        throw hardware_sampling_exception{ "Can't create the final YAML entry if the hardware sampler is still running!" };
+    }
+
     // output the basic sample information
     std::string str = fmt::format("\n"
                                   "    samples:\n"
