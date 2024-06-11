@@ -8,7 +8,7 @@ list(APPEND CMAKE_MESSAGE_INDENT "Tracking:  ")
 
 message(STATUS "Enabled performance tracking to YAML files for the PLSSVM executables plssvm-train, plssvm-predict, and plssvm-scale.")
 
-target_sources(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/performance_tracker.cpp>)
+target_sources(${PLSSVM_BASE_LIBRARY_NAME} PRIVATE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/performance_tracker.cpp>)
 
 ## add target definitions
 target_compile_definitions(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC PLSSVM_PERFORMANCE_TRACKER_ENABLED)
@@ -25,6 +25,7 @@ if (PLSSVM_ENABLE_HARDWARE_SAMPLING)
     ## set target properties
     set(PLSSVM_HARDWARE_TRACKING_LIBRARY_NAME plssvm-tracking)
     add_library(${PLSSVM_HARDWARE_TRACKING_LIBRARY_NAME} SHARED ${PLSSVM_HARDWARE_TRACKING_SOURCES})
+    target_sources(${PLSSVM_BASE_LIBRARY_NAME} PRIVATE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/hardware_sampler.cpp>)
     
     target_compile_definitions(${PLSSVM_HARDWARE_TRACKING_LIBRARY_NAME} PUBLIC PLSSVM_HARDWARE_SAMPLING_ENABLED)
     target_compile_definitions(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC PLSSVM_HARDWARE_SAMPLING_ENABLED)
@@ -104,7 +105,7 @@ if (PLSSVM_ENABLE_HARDWARE_SAMPLING)
         find_package(subprocess QUIET)
         if (subprocess_FOUND)
             message(STATUS "Found package subprocess.h.")
-            target_include_directories(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC ${subprocess_INCLUDE_DIR})
+            target_include_directories(${PLSSVM_HARDWARE_TRACKING_LIBRARY_NAME} PRIVATE ${subprocess_INCLUDE_DIR})
         else ()
             message(STATUS "Couldn't find package subprocess.h. Building version ${PLSSVM_subprocess_VERSION} from source.")
             target_compile_definitions(${PLSSVM_BASE_LIBRARY_NAME} PRIVATE PLSSVM_subprocess_VERSION="${PLSSVM_subprocess_VERSION}")
@@ -117,11 +118,11 @@ if (PLSSVM_ENABLE_HARDWARE_SAMPLING)
                                  BUILD_COMMAND ""
             )
             FetchContent_MakeAvailable(subprocess)
-            target_include_directories(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC $<BUILD_INTERFACE:${subprocess_SOURCE_DIR}>)
+            target_include_directories(${PLSSVM_HARDWARE_TRACKING_LIBRARY_NAME} PRIVATE $<BUILD_INTERFACE:${subprocess_SOURCE_DIR}>)
         endif ()
         
         # add source file to source file list
-        target_sources(${PLSSVM_HARDWARE_TRACKING_LIBRARY_NAME} PUBLIC
+        target_sources(${PLSSVM_HARDWARE_TRACKING_LIBRARY_NAME} PRIVATE
                        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/turbostat_hardware_sampler.cpp>)
         
         # add compile definitions
@@ -132,14 +133,14 @@ if (PLSSVM_ENABLE_HARDWARE_SAMPLING)
     ##                  nvidia targets are provided -> enable NVIDIA GPU hardware samping using NVML                  ##
     ####################################################################################################################
     if (DEFINED PLSSVM_NVIDIA_TARGET_ARCHS)
-        message(STATUS "Enable sampling of NVIDIA GPU information using NVML.")
-        
         # find libraries necessary for NVML and link against them
         find_package(CUDAToolkit REQUIRED)
-        target_link_libraries(${PLSSVM_HARDWARE_TRACKING_LIBRARY_NAME} PUBLIC CUDA::nvml)
+        target_link_libraries(${PLSSVM_HARDWARE_TRACKING_LIBRARY_NAME} PRIVATE CUDA::nvml)
+        
+        message(STATUS "Enable sampling of NVIDIA GPU information using NVML.")
         
         # add source file to source file list
-        target_sources(${PLSSVM_HARDWARE_TRACKING_LIBRARY_NAME} PUBLIC
+        target_sources(${PLSSVM_HARDWARE_TRACKING_LIBRARY_NAME} PRIVATE
                        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/nvml_hardware_sampler.cpp>
                        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/nvml_samples.cpp>)
         
