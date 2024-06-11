@@ -50,7 +50,12 @@ nvmlDevice_t device_id_to_nvml_handle(const std::size_t device_id) {
 
 nvml_hardware_sampler::nvml_hardware_sampler(const std::size_t device_id, const std::chrono::milliseconds sampling_interval) :
     hardware_sampler{ sampling_interval },
-    device_id_{ device_id } {
+    device_id_{ device_id },
+    general_samples_{ device_id },
+    clock_samples_{ device_id },
+    power_samples_{ device_id },
+    memory_samples_{ device_id },
+    temperature_samples_{ device_id } {
     // make sure that nvmlInit is only called once for all instances
     if (instances_++ == 0) {
         PLSSVM_NVML_ERROR_CHECK(nvmlInit());
@@ -125,7 +130,6 @@ void nvml_hardware_sampler::sampling_loop() {
         general_samples_.persistence_mode = mode == NVML_FEATURE_ENABLED;
         PLSSVM_NVML_ERROR_CHECK(nvmlDeviceGetNumGpuCores(device, &general_samples_.num_cores));
     }
-
     // retrieve fixed clock related information
     {
         PLSSVM_NVML_ERROR_CHECK(nvmlDeviceGetAdaptiveClockInfoStatus(device, &clock_samples_.adaptive_clock_status));
@@ -133,13 +137,11 @@ void nvml_hardware_sampler::sampling_loop() {
         PLSSVM_NVML_ERROR_CHECK(nvmlDeviceGetMaxClockInfo(device, NVML_CLOCK_SM, &clock_samples_.clock_sm_max));
         PLSSVM_NVML_ERROR_CHECK(nvmlDeviceGetMaxClockInfo(device, NVML_CLOCK_MEM, &clock_samples_.clock_mem_max));
     }
-
     // retrieve fixed power related information
     {
         PLSSVM_NVML_ERROR_CHECK(nvmlDeviceGetPowerManagementLimit(device, &power_samples_.power_management_limit));
         PLSSVM_NVML_ERROR_CHECK(nvmlDeviceGetEnforcedPowerLimit(device, &power_samples_.power_enforced_limit));
     }
-
     // retrieve fixed memory related information
     {
         nvmlMemory_t memory_info{};
@@ -149,8 +151,7 @@ void nvml_hardware_sampler::sampling_loop() {
         PLSSVM_NVML_ERROR_CHECK(nvmlDeviceGetGpuMaxPcieLinkGeneration(device, &memory_samples_.max_pcie_link_generation));
         PLSSVM_NVML_ERROR_CHECK(nvmlDeviceGetPcieLinkMaxSpeed(device, &memory_samples_.pcie_link_max_speed));
     }
-
-    // retrieve fixed memory related information
+    // retrieve fixed temperature related information
     {
         PLSSVM_NVML_ERROR_CHECK(nvmlDeviceGetNumFans(device, &temperature_samples_.num_fans));
         PLSSVM_NVML_ERROR_CHECK(nvmlDeviceGetMinMaxFanSpeed(device, &temperature_samples_.min_fan_speed, &temperature_samples_.max_fan_speed));

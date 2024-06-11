@@ -32,6 +32,9 @@ class nvml_general_samples {
         unsigned int utilization_mem{ 0 };
     };
 
+    explicit nvml_general_samples(const std::size_t device_id) :
+        device_id_{ device_id } { }
+
     std::string name{};
     bool persistence_mode{ false };
     unsigned int num_cores{ 0 };
@@ -52,6 +55,8 @@ class nvml_general_samples {
         return nvml_general_sample{ performance_state_[idx], utilization_gpu_[idx], utilization_mem_[idx] };
     }
 
+    [[nodiscard]] std::size_t get_device() const noexcept { return device_id_; }
+
     [[nodiscard]] std::size_t num_samples() const noexcept { return performance_state_.size(); }
 
     [[nodiscard]] bool empty() const noexcept { return performance_state_.empty(); }
@@ -63,6 +68,8 @@ class nvml_general_samples {
     [[nodiscard]] const auto &get_utilization_mem() const noexcept { return utilization_mem_; }
 
   private:
+    std::size_t device_id_{};
+
     std::vector<decltype(nvml_general_sample::performance_state)> performance_state_{};
     std::vector<decltype(nvml_general_sample::utilization_gpu)> utilization_gpu_{};
     std::vector<decltype(nvml_general_sample::utilization_mem)> utilization_mem_{};
@@ -79,6 +86,9 @@ class nvml_clock_samples {
         unsigned long long clock_throttle_reason{ 0 };
         bool auto_boosted_clocks{ false };
     };
+
+    explicit nvml_clock_samples(const std::size_t device_id) :
+        device_id_{ device_id } { }
 
     unsigned int adaptive_clock_status{ 0 };
     unsigned int clock_graph_max{ 0 };
@@ -105,6 +115,8 @@ class nvml_clock_samples {
         return nvml_clock_sample{ clock_graph_[idx], clock_sm_[idx], clock_mem_[idx], clock_throttle_reason_[idx], auto_boosted_clocks_[idx] };
     }
 
+    [[nodiscard]] std::size_t get_device() const noexcept { return device_id_; }
+
     [[nodiscard]] std::size_t num_samples() const noexcept { return clock_graph_.size(); }
 
     [[nodiscard]] bool empty() const noexcept { return clock_graph_.empty(); }
@@ -120,6 +132,8 @@ class nvml_clock_samples {
     [[nodiscard]] const auto &get_auto_boosted_clocks() const noexcept { return auto_boosted_clocks_; }
 
   private:
+    std::size_t device_id_{};
+
     std::vector<decltype(nvml_clock_sample::clock_graph)> clock_graph_{};
     std::vector<decltype(nvml_clock_sample::clock_sm)> clock_sm_{};
     std::vector<decltype(nvml_clock_sample::clock_mem)> clock_mem_{};
@@ -136,6 +150,9 @@ class nvml_power_samples {
         unsigned int power_usage{ 0 };                           // current power draw in W
         unsigned long long power_total_energy_consumption{ 0 };  // total energy consumption since last driver reload in J
     };
+
+    explicit nvml_power_samples(const std::size_t device_id) :
+        device_id_{ device_id } { }
 
     unsigned int power_management_limit{ 0 };  // maximum power limit in W
     unsigned int power_enforced_limit{ 0 };    // default power limit in W
@@ -156,6 +173,8 @@ class nvml_power_samples {
         return nvml_power_sample{ power_state_[idx], power_usage_[idx], power_total_energy_consumption_[idx] };
     }
 
+    [[nodiscard]] std::size_t get_device() const noexcept { return device_id_; }
+
     [[nodiscard]] std::size_t num_samples() const noexcept { return power_state_.size(); }
 
     [[nodiscard]] bool empty() const noexcept { return power_state_.empty(); }
@@ -167,6 +186,8 @@ class nvml_power_samples {
     [[nodiscard]] const auto &get_power_total_energy_consumption() const noexcept { return power_total_energy_consumption_; }
 
   private:
+    std::size_t device_id_{};
+
     std::vector<decltype(nvml_power_sample::power_state)> power_state_{};
     std::vector<decltype(nvml_power_sample::power_usage)> power_usage_{};
     std::vector<decltype(nvml_power_sample::power_total_energy_consumption)> power_total_energy_consumption_{};
@@ -182,6 +203,9 @@ class nvml_memory_samples {
         unsigned int pcie_link_width{ 0 };
         unsigned int pcie_link_generation{ 0 };
     };
+
+    explicit nvml_memory_samples(const std::size_t device_id) :
+        device_id_{ device_id } { }
 
     unsigned long long memory_total{ 0 };
     unsigned int memory_bus_width{ 0 };
@@ -206,6 +230,8 @@ class nvml_memory_samples {
         return nvml_memory_sample{ memory_free_[idx], memory_used_[idx], pcie_link_width_[idx], pcie_link_generation_[idx] };
     }
 
+    [[nodiscard]] std::size_t get_device() const noexcept { return device_id_; }
+
     [[nodiscard]] std::size_t num_samples() const noexcept { return memory_free_.size(); }
 
     [[nodiscard]] bool empty() const noexcept { return memory_free_.empty(); }
@@ -219,6 +245,8 @@ class nvml_memory_samples {
     [[nodiscard]] const auto &get_pcie_link_generation() const noexcept { return pcie_link_generation_; }
 
   private:
+    std::size_t device_id_{};
+
     std::vector<decltype(nvml_memory_sample::memory_free)> memory_free_{};
     std::vector<decltype(nvml_memory_sample::memory_used)> memory_used_{};
     std::vector<decltype(nvml_memory_sample::pcie_link_width)> pcie_link_width_{};
@@ -233,6 +261,9 @@ class nvml_temperature_samples {
         unsigned int fan_speed{ 0 };
         unsigned int temperature_gpu{ 0 };
     };
+
+    explicit nvml_temperature_samples(const std::size_t device_id) :
+        device_id_{ device_id } { }
 
     unsigned int num_fans{ 0 };
     unsigned int min_fan_speed{ 0 };
@@ -254,6 +285,8 @@ class nvml_temperature_samples {
         return nvml_temperature_sample{ fan_speed_[idx], temperature_gpu_[idx] };
     }
 
+    [[nodiscard]] std::size_t get_device() const noexcept { return device_id_; }
+
     [[nodiscard]] std::size_t num_samples() const noexcept { return fan_speed_.size(); }
 
     [[nodiscard]] bool empty() const noexcept { return fan_speed_.empty(); }
@@ -263,6 +296,8 @@ class nvml_temperature_samples {
     [[nodiscard]] const auto &get_temperature_gpu() const noexcept { return temperature_gpu_; }
 
   private:
+    std::size_t device_id_{};
+
     std::vector<decltype(nvml_temperature_sample::fan_speed)> fan_speed_{};
     std::vector<decltype(nvml_temperature_sample::temperature_gpu)> temperature_gpu_{};
 };

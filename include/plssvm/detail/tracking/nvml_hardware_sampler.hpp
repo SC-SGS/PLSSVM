@@ -43,14 +43,14 @@ class nvml_hardware_sampler : public hardware_sampler {
   private:
     void sampling_loop() final;
 
-    std::vector<std::chrono::milliseconds> time_since_start_{};
-    nvml_general_samples general_samples_{};
-    nvml_clock_samples clock_samples_{};
-    nvml_power_samples power_samples_{};
-    nvml_memory_samples memory_samples_{};
-    nvml_temperature_samples temperature_samples_{};
-
     std::size_t device_id_;
+
+    std::vector<std::chrono::milliseconds> time_since_start_{};
+    nvml_general_samples general_samples_;
+    nvml_clock_samples clock_samples_;
+    nvml_power_samples power_samples_;
+    nvml_memory_samples memory_samples_;
+    nvml_temperature_samples temperature_samples_;
 
     inline static std::atomic<int> instances_{ 0 };
     inline static std::atomic<bool> init_finished_{ false };
