@@ -8,10 +8,9 @@
 
 #include "plssvm/detail/tracking/nvml_samples.hpp"
 
-#include "nvml.h"  // NVML_ADAPTIVE_CLOCKING_INFO_STATUS_ENABLED
-
 #include "fmt/core.h"    // fmt::format
 #include "fmt/format.h"  // fmt::join
+#include "nvml.h"        // NVML_ADAPTIVE_CLOCKING_INFO_STATUS_ENABLED
 
 #include <cstddef>  // std::size_t
 #include <ostream>  // std::ostream
@@ -157,6 +156,12 @@ std::ostream &operator<<(std::ostream &out, const nvml_temperature_samples &samp
                               "        num_fans:\n"
                               "          unit: \"int\"\n"
                               "          values: {}\n"
+                              "        min_fan_speed:\n"
+                              "          unit: \"percentage\"\n"
+                              "          values: {}\n"
+                              "        max_fan_speed:\n"
+                              "          unit: \"percentage\"\n"
+                              "          values: {}\n"
                               "        temperature_threshold_gpu_max:\n"
                               "          unit: \"°C\"\n"
                               "          values: {}\n"
@@ -170,6 +175,8 @@ std::ostream &operator<<(std::ostream &out, const nvml_temperature_samples &samp
                               "          unit: \"°C\"\n"
                               "          values: [{}]",
                               samples.num_fans,
+                              samples.min_fan_speed,
+                              samples.max_fan_speed,
                               samples.temperature_threshold_gpu_max,
                               samples.temperature_threshold_mem_max,
                               fmt::join(samples.get_fan_speed(), ", "),

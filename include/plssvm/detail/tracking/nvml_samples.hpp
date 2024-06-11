@@ -203,7 +203,7 @@ class nvml_memory_samples {
     nvml_memory_sample operator[](const std::size_t idx) const noexcept {
         PLSSVM_ASSERT(idx < this->num_samples(), "Error: out-of-bounce access with index {} for size {}!", idx, this->num_samples());
 
-        return nvml_memory_sample{ memory_free_[idx], memory_used_[idx] };
+        return nvml_memory_sample{ memory_free_[idx], memory_used_[idx], pcie_link_width_[idx], pcie_link_generation_[idx] };
     }
 
     [[nodiscard]] std::size_t num_samples() const noexcept { return memory_free_.size(); }
@@ -235,6 +235,8 @@ class nvml_temperature_samples {
     };
 
     unsigned int num_fans{ 0 };
+    unsigned int min_fan_speed{ 0 };
+    unsigned int max_fan_speed{ 0 };
     unsigned int temperature_threshold_gpu_max{ 0 };
     unsigned int temperature_threshold_mem_max{ 0 };
 

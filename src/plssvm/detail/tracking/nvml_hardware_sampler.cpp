@@ -153,6 +153,7 @@ void nvml_hardware_sampler::sampling_loop() {
     // retrieve fixed memory related information
     {
         PLSSVM_NVML_ERROR_CHECK(nvmlDeviceGetNumFans(device, &temperature_samples_.num_fans));
+        PLSSVM_NVML_ERROR_CHECK(nvmlDeviceGetMinMaxFanSpeed(device, &temperature_samples_.min_fan_speed, &temperature_samples_.max_fan_speed));
         PLSSVM_NVML_ERROR_CHECK(nvmlDeviceGetTemperatureThreshold(device, NVML_TEMPERATURE_THRESHOLD_GPU_MAX, &temperature_samples_.temperature_threshold_gpu_max));
         PLSSVM_NVML_ERROR_CHECK(nvmlDeviceGetTemperatureThreshold(device, NVML_TEMPERATURE_THRESHOLD_MEM_MAX, &temperature_samples_.temperature_threshold_mem_max));
     }
