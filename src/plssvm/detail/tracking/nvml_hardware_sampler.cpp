@@ -9,7 +9,7 @@
 #include "plssvm/detail/tracking/nvml_hardware_sampler.hpp"
 
 #include "plssvm/detail/tracking/hardware_sampler.hpp"  // plssvm::detail::tracking::hardware_sampler
-#include "plssvm/detail/tracking/nvml_samples.hpp"      // plssvm::detail::tracking{nvml_general_samples, nvml_clock_samples, nvml_power_samples, nvml_memory_samples, nvml_temperature_samples}
+#include "plssvm/detail/tracking/nvml_samples.hpp"      // plssvm::detail::tracking::{nvml_general_samples, nvml_clock_samples, nvml_power_samples, nvml_memory_samples, nvml_temperature_samples}
 #include "plssvm/exceptions/exceptions.hpp"             // plssvm::exception, plssvm::hardware_sampling_exception
 
 #include "fmt/chrono.h"  // format std::chrono types
