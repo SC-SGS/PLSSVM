@@ -320,9 +320,7 @@ pipeline {
                                         source $SGSSCRATCH/spack/share/spack/setup-env.sh
                                         cd ${WORKSPACE}/plssvm
 
-                                        if [[ $ARCHITECTURE == AMD ]]; then
-                                            spack install hip@5.4.3
-                                        fi
+
 
                                         spack uninstall -a -y plssvm@develop$([[ $BACKEND == ADAPTIVECPP ]] && echo "%clang" )  \
                                             $([[ $BACKEND == OPENMP ]] && echo "+openmp" || echo "~openmp") \
