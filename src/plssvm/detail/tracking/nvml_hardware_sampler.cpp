@@ -78,6 +78,7 @@ nvml_hardware_sampler::~nvml_hardware_sampler() {
         }
     } catch (const plssvm::exception &e) {
         std::cerr << e.what_with_loc() << std::endl;
+        std::terminate();
     } catch (const std::exception &e) {
         std::cerr << e.what() << std::endl;
         std::terminate();
