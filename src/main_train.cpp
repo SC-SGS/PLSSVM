@@ -47,9 +47,12 @@ int main(int argc, char *argv[]) {
         const auto data_set_visitor = [&](auto &&data) {
             using label_type = typename std::remove_reference_t<decltype(data)>::label_type;
 
+            // check whether SYCL is used as backend (it is either requested directly or as automatic backend)
+            const bool use_sycl_as_backend{ cmd_parser.backend == plssvm::backend_type::sycl || (cmd_parser.backend == plssvm::backend_type::automatic && plssvm::determine_default_backend() == plssvm::backend_type::sycl) };
+
             // create SVM
-            const std::unique_ptr<plssvm::csvm> svm = (cmd_parser.backend == plssvm::backend_type::sycl) ? plssvm::make_csvm(cmd_parser.backend, cmd_parser.target, cmd_parser.csvm_params, plssvm::sycl_implementation_type = cmd_parser.sycl_implementation_type, plssvm::sycl_kernel_invocation_type = cmd_parser.sycl_kernel_invocation_type)
-                                                                                                         : plssvm::make_csvm(cmd_parser.backend, cmd_parser.target, cmd_parser.csvm_params);
+            const std::unique_ptr<plssvm::csvm> svm = use_sycl_as_backend ? plssvm::make_csvm(cmd_parser.backend, cmd_parser.target, cmd_parser.csvm_params, plssvm::sycl_implementation_type = cmd_parser.sycl_implementation_type, plssvm::sycl_kernel_invocation_type = cmd_parser.sycl_kernel_invocation_type)
+                                                                          : plssvm::make_csvm(cmd_parser.backend, cmd_parser.target, cmd_parser.csvm_params);
 
             // only specify plssvm::max_iter if it isn't its default value
             const plssvm::model<label_type> model =

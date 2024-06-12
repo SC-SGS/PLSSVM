@@ -44,9 +44,11 @@ class device_kernel_assembly {
      * @param[in] q the vector used in the dimensional reduction
      * @param[in] QA_cost the scalar used in the dimensional reduction
      * @param[in] cost the cost factor the diagonal is scaled with
+     * @param[in] grid_x_offset the offset in x-dimension into the data points if more than one execution grid has to be used
+     * @param[in] grid_y_offset the offset in y-dimension into the data points if more than one execution grid has to be used
      * @param[in] kernel_function_parameter the parameters necessary to apply the @p kernel_function
      */
-    device_kernel_assembly(::sycl::handler &cgh, real_type *kernel_matrix_d, const real_type *data_d, const std::size_t num_rows, const std::size_t device_num_rows, const std::size_t row_offset, const std::size_t num_features, const real_type *q, const real_type QA_cost, const real_type cost, Args... kernel_function_parameter) :
+    device_kernel_assembly(::sycl::handler &cgh, real_type *kernel_matrix_d, const real_type *data_d, const std::size_t num_rows, const std::size_t device_num_rows, const std::size_t row_offset, const std::size_t num_features, const real_type *q, const real_type QA_cost, const real_type cost, const std::size_t grid_x_offset, const std::size_t grid_y_offset, Args... kernel_function_parameter) :
         data_cache_i_{ ::sycl::range<2>{ static_cast<std::size_t>(FEATURE_BLOCK_SIZE), static_cast<std::size_t>(INTERNAL_BLOCK_SIZE) * static_cast<std::size_t>(THREAD_BLOCK_SIZE) }, cgh },
         data_cache_j_{ ::sycl::range<2>{ static_cast<std::size_t>(FEATURE_BLOCK_SIZE), static_cast<std::size_t>(INTERNAL_BLOCK_SIZE) * static_cast<std::size_t>(THREAD_BLOCK_SIZE) }, cgh },
         kernel_matrix_d_{ kernel_matrix_d },
@@ -58,6 +60,8 @@ class device_kernel_assembly {
         q_{ q },
         QA_cost_{ QA_cost },
         cost_{ cost },
+        grid_x_offset_{ grid_x_offset },
+        grid_y_offset_{ grid_y_offset },
         kernel_function_parameter_{ std::make_tuple(std::forward<Args>(kernel_function_parameter)...) } {
     }
 
@@ -71,19 +75,25 @@ class device_kernel_assembly {
         const auto local_id_1 = static_cast<unsigned>(nd_idx.get_local_id(1));
 
         // cast all values to 64-bit std::size_t to prevent potential 32-bit overflows
+        const std::size_t threadIdx_x = nd_idx.get_local_id(0);               // current thread in block x-dimension
+        const std::size_t threadIdx_y = nd_idx.get_local_id(1);               // current thread in block y-dimension
+        const std::size_t blockDim_x = nd_idx.get_local_range(0);             // number of threads in block x-dimension
+        const std::size_t blockDim_y = nd_idx.get_local_range(1);             // number of threads in block y-dimension
+        const std::size_t blockIdx_x = nd_idx.get_group(0) + grid_x_offset_;  // current block in grid x-dimension + offsets if the grid size would be too large
+        const std::size_t blockIdx_y = nd_idx.get_group(1) + grid_y_offset_;  // current block in grid y-dimension + offsets if the grid size would be too large
         const auto INTERNAL_BLOCK_SIZE_uz = static_cast<std::size_t>(INTERNAL_BLOCK_SIZE);
         const auto THREAD_BLOCK_SIZE_uz = static_cast<std::size_t>(THREAD_BLOCK_SIZE);
         const auto FEATURE_BLOCK_SIZE_uz = static_cast<std::size_t>(FEATURE_BLOCK_SIZE);
         const auto PADDING_SIZE_uz = static_cast<std::size_t>(PADDING_SIZE);
 
         // calculate the indices used in the current work-item
-        const auto i = nd_idx.get_global_id(1) * INTERNAL_BLOCK_SIZE_uz;
-        const auto i_linear = nd_idx.get_group(1) * nd_idx.get_local_range(1) * INTERNAL_BLOCK_SIZE_uz + nd_idx.get_local_id(1);
-        const auto j = nd_idx.get_global_id(0) * INTERNAL_BLOCK_SIZE_uz;
-        const auto j_linear = nd_idx.get_group(0) * nd_idx.get_local_range(0) * INTERNAL_BLOCK_SIZE_uz + nd_idx.get_local_id(1);
+        const auto i = (blockIdx_y * blockDim_y + threadIdx_y) * INTERNAL_BLOCK_SIZE_uz;
+        const auto i_linear = blockIdx_y * blockDim_y * INTERNAL_BLOCK_SIZE_uz + threadIdx_y;
+        const auto j = (blockIdx_x * blockDim_x + threadIdx_x) * INTERNAL_BLOCK_SIZE_uz;
+        const auto j_linear = blockIdx_x * blockDim_x * INTERNAL_BLOCK_SIZE_uz + threadIdx_y;
 
         // only calculate the upper triangular matrix -> can't use get_local_id() since all work-items in a work-group must progress further
-        if (nd_idx.get_group(1) >= nd_idx.get_group(0)) {
+        if (blockIdx_y >= blockIdx_x) {
             // create a work-item private array used for internal caching
             real_type temp[INTERNAL_BLOCK_SIZE][INTERNAL_BLOCK_SIZE]{};
 
@@ -95,10 +105,10 @@ class device_kernel_assembly {
                     const auto global_j = row_offset_ + j_linear + static_cast<std::size_t>(internal) * THREAD_BLOCK_SIZE_uz;
 
                     // FEATURE_BLOCK_SIZE = 2 * THREAD_BLOCK_SIZE -> store twice as many values in the local memory
-                    data_cache_i_[local_id_0][internal * THREAD_BLOCK_SIZE + local_id_1] = data_d_[(dim + nd_idx.get_local_id(0)) * (num_rows_ + std::size_t{ 1 } + PADDING_SIZE_uz) + global_i];
-                    data_cache_i_[local_id_0 + THREAD_BLOCK_SIZE][internal * THREAD_BLOCK_SIZE + local_id_1] = data_d_[(dim + nd_idx.get_local_id(0) + THREAD_BLOCK_SIZE_uz) * (num_rows_ + std::size_t{ 1 } + PADDING_SIZE_uz) + global_i];
-                    data_cache_j_[local_id_0][internal * THREAD_BLOCK_SIZE + local_id_1] = data_d_[(dim + nd_idx.get_local_id(0)) * (num_rows_ + std::size_t{ 1 } + PADDING_SIZE_uz) + global_j];
-                    data_cache_j_[local_id_0 + THREAD_BLOCK_SIZE][internal * THREAD_BLOCK_SIZE + local_id_1] = data_d_[(dim + nd_idx.get_local_id(0) + THREAD_BLOCK_SIZE_uz) * (num_rows_ + std::size_t{ 1 } + PADDING_SIZE_uz) + global_j];
+                    data_cache_i_[local_id_0][internal * THREAD_BLOCK_SIZE + local_id_1] = data_d_[(dim + threadIdx_x) * (num_rows_ + std::size_t{ 1 } + PADDING_SIZE_uz) + global_i];
+                    data_cache_i_[local_id_0 + THREAD_BLOCK_SIZE][internal * THREAD_BLOCK_SIZE + local_id_1] = data_d_[(dim + threadIdx_x + THREAD_BLOCK_SIZE_uz) * (num_rows_ + std::size_t{ 1 } + PADDING_SIZE_uz) + global_i];
+                    data_cache_j_[local_id_0][internal * THREAD_BLOCK_SIZE + local_id_1] = data_d_[(dim + threadIdx_x) * (num_rows_ + std::size_t{ 1 } + PADDING_SIZE_uz) + global_j];
+                    data_cache_j_[local_id_0 + THREAD_BLOCK_SIZE][internal * THREAD_BLOCK_SIZE + local_id_1] = data_d_[(dim + threadIdx_x + THREAD_BLOCK_SIZE_uz) * (num_rows_ + std::size_t{ 1 } + PADDING_SIZE_uz) + global_j];
                 }
                 nd_idx.barrier();  // wait until all work-items loaded their part of the data
 
@@ -155,6 +165,8 @@ class device_kernel_assembly {
     const real_type *q_;
     const real_type QA_cost_;
     const real_type cost_;
+    const std::size_t grid_x_offset_;
+    const std::size_t grid_y_offset_;
     const std::tuple<Args...> kernel_function_parameter_;
     /// @endcond
 };

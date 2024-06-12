@@ -41,6 +41,8 @@ TEST(SYCLImplementationType, from_string) {
     EXPECT_CONVERSION_FROM_STRING("DPCPP", plssvm::sycl::implementation_type::dpcpp);
     EXPECT_CONVERSION_FROM_STRING("dpc++", plssvm::sycl::implementation_type::dpcpp);
     EXPECT_CONVERSION_FROM_STRING("DPC++", plssvm::sycl::implementation_type::dpcpp);
+    EXPECT_CONVERSION_FROM_STRING("icpx", plssvm::sycl::implementation_type::dpcpp);
+    EXPECT_CONVERSION_FROM_STRING("ICPX", plssvm::sycl::implementation_type::dpcpp);
 }
 
 TEST(SYCLImplementationType, from_string_unknown) {

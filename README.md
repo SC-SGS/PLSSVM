@@ -294,7 +294,7 @@ If the OpenCL backend is available and NVIDIA GPUs should be targeted, an additi
 
 If the SYCL backend is available, additional options can be set.
 
-- `PLSSVM_ENABLE_SYCL_ADAPITVECPP_BACKEND=ON|OFF|AUTO` (default: `AUTO`):
+- `PLSSVM_ENABLE_SYCL_ADAPTIVECPP_BACKEND=ON|OFF|AUTO` (default: `AUTO`):
   - `ON`: check for AdaptiveCpp as implementation for the SYCL backend and fail if not available
   - `AUTO`: check for AdaptiveCpp as implementation for the SYCL backend but **do not** fail if not available
   - `OFF`: do not check for AdaptiveCpp as implementation for the SYCL backend
