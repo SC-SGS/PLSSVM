@@ -12,7 +12,9 @@
 #include "plssvm/detail/cmd/data_set_variants.hpp"              // plssvm::detail::cmd::data_set_factory
 #include "plssvm/detail/cmd/parser_train.hpp"                   // plssvm::detail::cmd::parser_train
 #include "plssvm/detail/logging.hpp"                            // plssvm::detail::log
-#include "plssvm/detail/tracking/hardware_sampler_factory.hpp"  // TODO: !!!
+#include "plssvm/detail/tracking/hardware_sampler_factory.hpp"  // PLSSVM_DETAIL_TRACKING_HARDWARE_SAMPLER_INIT, PLSSVM_DETAIL_TRACKING_HARDWARE_SAMPLER_START_SAMPLING, ,
+                                                                // PLSSVM_DETAIL_TRACKING_HARDWARE_SAMPLER_STOP_SAMPLING, PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_HARDWARE_SAMPLER_ENTRIES,
+                                                                // PLSSVM_DETAIL_TRACKING_HARDWARE_SAMPLER_CLEANUP
 #include "plssvm/detail/tracking/performance_tracker.hpp"       // plssvm::detail::tracking::tracking_entry, PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_SAVE
 #include "plssvm/detail/utility.hpp"                            // PLSSVM_IS_DEFINED
 
@@ -76,6 +78,7 @@ int main(int argc, char *argv[]) {
             // save model to file
             model.save(cmd_parser.model_filename);
 
+            // shutdown sampling, add YAML entries, and perform cleanup
             PLSSVM_DETAIL_TRACKING_HARDWARE_SAMPLER_STOP_SAMPLING();
             PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_HARDWARE_SAMPLER_ENTRIES();
             PLSSVM_DETAIL_TRACKING_HARDWARE_SAMPLER_CLEANUP();

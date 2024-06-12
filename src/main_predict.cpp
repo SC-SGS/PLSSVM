@@ -9,22 +9,27 @@
  */
 
 #include "plssvm/core.hpp"
-#include "plssvm/detail/cmd/data_set_variants.hpp"  // plssvm::detail::cmd::data_set_factory
-#include "plssvm/detail/cmd/parser_predict.hpp"     // plssvm::detail::cmd::parser_predict
-#include "plssvm/detail/logging.hpp"                // plssvm::detail::log
-#include "plssvm/detail/tracking/performance_tracker.hpp"    // plssvm::detail::tracking::tracking_entry, PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_SAVE, PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY
-#include "plssvm/detail/utility.hpp"                // PLSSVM_IS_DEFINED
+#include "plssvm/detail/cmd/data_set_variants.hpp"              // plssvm::detail::cmd::data_set_factory
+#include "plssvm/detail/cmd/parser_predict.hpp"                 // plssvm::detail::cmd::parser_predict
+#include "plssvm/detail/logging.hpp"                            // plssvm::detail::log
+#include "plssvm/detail/tracking/hardware_sampler_factory.hpp"  // PLSSVM_DETAIL_TRACKING_HARDWARE_SAMPLER_INIT, PLSSVM_DETAIL_TRACKING_HARDWARE_SAMPLER_START_SAMPLING,
+                                                                // PLSSVM_DETAIL_TRACKING_HARDWARE_SAMPLER_STOP_SAMPLING, PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_HARDWARE_SAMPLER_ENTRIES,
+                                                                // PLSSVM_DETAIL_TRACKING_HARDWARE_SAMPLER_CLEANUP
+#include "plssvm/detail/tracking/performance_tracker.hpp"       // plssvm::detail::tracking::tracking_entry, PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_SAVE, PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY
+#include "plssvm/detail/utility.hpp"                            // PLSSVM_IS_DEFINED
 
 #include "fmt/format.h"  // fmt::print, fmt::join
 #include "fmt/os.h"      // fmt::ostream, fmt::output_file
 
-#include <chrono>     // std::chrono::{steady_clock, duration}
+#include <chrono>     // std::chrono::{steady_clock, duration}, std::chrono_literals namespace
 #include <cstdlib>    // EXIT_SUCCESS, EXIT_FAILURE
 #include <exception>  // std::exception
 #include <fstream>    // std::ofstream
 #include <iostream>   // std::cerr, std::endl
 #include <variant>    // std::visit
 #include <vector>     // std::vector
+
+using namespace std::chrono_literals;
 
 int main(int argc, char *argv[]) {
     try {
@@ -48,6 +53,17 @@ int main(int argc, char *argv[]) {
         // create data set
         const auto data_set_visitor = [&](auto &&data) {
             using label_type = typename std::remove_reference_t<decltype(data)>::label_type;
+
+            // check whether SYCL is used as backend (it is either requested directly or as automatic backend)
+            const bool use_sycl_as_backend{ cmd_parser.backend == plssvm::backend_type::sycl || (cmd_parser.backend == plssvm::backend_type::automatic && plssvm::determine_default_backend() == plssvm::backend_type::sycl) };
+
+            // create default csvm
+            const std::unique_ptr<plssvm::csvm> svm = use_sycl_as_backend ? plssvm::make_csvm(cmd_parser.backend, cmd_parser.target, plssvm::sycl_implementation_type = cmd_parser.sycl_implementation_type)
+                                                                          : plssvm::make_csvm(cmd_parser.backend, cmd_parser.target);
+
+            // initialize hardware sampling
+            PLSSVM_DETAIL_TRACKING_HARDWARE_SAMPLER_INIT(svm->get_target_platform(), svm->num_available_devices());
+            PLSSVM_DETAIL_TRACKING_HARDWARE_SAMPLER_START_SAMPLING();
 
             // create model
             const plssvm::model<label_type> model{ cmd_parser.model_filename };
@@ -87,12 +103,6 @@ int main(int argc, char *argv[]) {
                 }
             }
 
-            // check whether SYCL is used as backend (it is either requested directly or as automatic backend)
-            const bool use_sycl_as_backend{ cmd_parser.backend == plssvm::backend_type::sycl || (cmd_parser.backend == plssvm::backend_type::automatic && plssvm::determine_default_backend() == plssvm::backend_type::sycl) };
-
-            // create default csvm
-            const std::unique_ptr<plssvm::csvm> svm = use_sycl_as_backend ? plssvm::make_csvm(cmd_parser.backend, cmd_parser.target, plssvm::sycl_implementation_type = cmd_parser.sycl_implementation_type)
-                                                                          : plssvm::make_csvm(cmd_parser.backend, cmd_parser.target);
             // predict labels
             const std::vector<label_type> predicted_labels = svm->predict(model, data);
 
@@ -125,6 +135,11 @@ int main(int argc, char *argv[]) {
                 PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking::tracking_entry{ "accuracy", "num_correct", report.accuracy().num_correct }));
                 PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking::tracking_entry{ "accuracy", "num_total", report.accuracy().num_total }));
             }
+
+            // shutdown sampling, add YAML entries, and perform cleanup
+            PLSSVM_DETAIL_TRACKING_HARDWARE_SAMPLER_STOP_SAMPLING();
+            PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_HARDWARE_SAMPLER_ENTRIES();
+            PLSSVM_DETAIL_TRACKING_HARDWARE_SAMPLER_CLEANUP();
         };
         std::visit(data_set_visitor, plssvm::detail::cmd::data_set_factory(cmd_parser));
 
