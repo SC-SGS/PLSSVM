@@ -31,7 +31,7 @@ class turbostat_hardware_sampler : public hardware_sampler {
     turbostat_hardware_sampler &operator=(const turbostat_hardware_sampler &) = delete;
     turbostat_hardware_sampler &operator=(turbostat_hardware_sampler &&) noexcept = delete;
 
-    ~turbostat_hardware_sampler() override = default;
+    ~turbostat_hardware_sampler() override;
 
     [[nodiscard]] std::string device_identification() const noexcept override;
 

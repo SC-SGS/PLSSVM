@@ -51,6 +51,21 @@ namespace plssvm::detail::tracking {
 turbostat_hardware_sampler::turbostat_hardware_sampler(const std::chrono::milliseconds sampling_interval) :
     hardware_sampler{ sampling_interval } { }
 
+turbostat_hardware_sampler::~turbostat_hardware_sampler() {
+    try {
+        // if this hardware sampler is still sampling, stop it
+        if (this->is_sampling()) {
+            this->stop_sampling();
+        }
+    } catch (const plssvm::exception &e) {
+        std::cerr << e.what_with_loc() << std::endl;
+        std::terminate();
+    } catch (const std::exception &e) {
+        std::cerr << e.what() << std::endl;
+        std::terminate();
+    }
+}
+
 std::string turbostat_hardware_sampler::device_identification() const noexcept {
     return "turbostat_device_cpu";
 }

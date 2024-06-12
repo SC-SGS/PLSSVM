@@ -69,6 +69,11 @@ rocm_smi_hardware_sampler::rocm_smi_hardware_sampler(const std::size_t device_id
 
 rocm_smi_hardware_sampler::~rocm_smi_hardware_sampler() {
     try {
+        // if this hardware sampler is still sampling, stop it
+        if (this->is_sampling()) {
+            this->stop_sampling();
+        }
+
         // the last instance must shut down the ROCm SMI runtime
         // make sure that rsmi_shut_down is only called once
         if (--instances_ == 0) {

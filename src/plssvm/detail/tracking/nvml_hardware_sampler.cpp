@@ -70,6 +70,11 @@ nvml_hardware_sampler::nvml_hardware_sampler(const std::size_t device_id, const 
 
 nvml_hardware_sampler::~nvml_hardware_sampler() {
     try {
+        // if this hardware sampler is still sampling, stop it
+        if (this->is_sampling()) {
+            this->stop_sampling();
+        }
+
         // the last instance must shut down the NVML runtime
         // make sure that nvmlShutdown is only called once
         if (--instances_ == 0) {
