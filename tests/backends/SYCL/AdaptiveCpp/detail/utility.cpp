@@ -8,14 +8,57 @@
  * @brief Tests for the custom utility functions related to the SYCL backends with AdaptiveCpp as SYCL implementation.
  */
 
-#include "plssvm/backends/SYCL/AdaptiveCpp/detail/utility.hpp"  // plssvm::adaptivecpp::detail::get_device_list
+#include "plssvm/backends/SYCL/AdaptiveCpp/detail/utility.hpp"
 
-#include "plssvm/target_platforms.hpp"  // plssvm::target_platform
+#include "plssvm/backends/execution_range.hpp"  // plssvm::detail::dim_type
+#include "plssvm/target_platforms.hpp"          // plssvm::target_platform
+
+#include "sycl/sycl.hpp"  // sycl::range
 
 #include "gtest/gtest.h"  // TEST, EXPECT_NE, EXPECT_FALSE
 
-#include <regex>   // std::regex, std::regex::extended, std::regex_match
-#include <string>  // std::string
+#include <regex>        // std::regex, std::regex::extended, std::regex_match
+#include <string>       // std::string
+#include <type_traits>  // std::remove_const_t
+
+TEST(AdaptiveCppUtility, dim_type_to_native_1) {
+    // create a dim_type
+    constexpr plssvm::detail::dim_type dim{ 128ull, 64ull, 32ull };
+
+    // convert it to a SYCL sycl::range
+    const ::sycl::range native_dim = plssvm::adaptivecpp::detail::dim_type_to_native<1>(dim);
+
+    // check values for correctness
+    ::testing::StaticAssertTypeEq<std::remove_const_t<decltype(native_dim)>, ::sycl::range<1>>();
+    EXPECT_EQ(native_dim[0], dim.x);
+}
+
+TEST(AdaptiveCppUtility, dim_type_to_native_2) {
+    // create a dim_type
+    constexpr plssvm::detail::dim_type dim{ 128ull, 64ull, 32ull };
+
+    // convert it to a SYCL sycl::range
+    const ::sycl::range native_dim = plssvm::adaptivecpp::detail::dim_type_to_native<2>(dim);
+
+    // check values for correctness -> account for inversed iteration range in SYCL!
+    ::testing::StaticAssertTypeEq<std::remove_const_t<decltype(native_dim)>, ::sycl::range<2>>();
+    EXPECT_EQ(native_dim[0], dim.y);
+    EXPECT_EQ(native_dim[1], dim.x);
+}
+
+TEST(AdaptiveCppUtility, dim_type_to_native_3) {
+    // create a dim_type
+    constexpr plssvm::detail::dim_type dim{ 128ull, 64ull, 32ull };
+
+    // convert it to a SYCL sycl::range
+    const ::sycl::range native_dim = plssvm::adaptivecpp::detail::dim_type_to_native<3>(dim);
+
+    // check values for correctness -> account for inversed iteration range in SYCL!
+    ::testing::StaticAssertTypeEq<std::remove_const_t<decltype(native_dim)>, ::sycl::range<3>>();
+    EXPECT_EQ(native_dim[0], dim.z);
+    EXPECT_EQ(native_dim[1], dim.y);
+    EXPECT_EQ(native_dim[2], dim.x);
+}
 
 TEST(AdaptiveCppUtility, get_device_list) {
     const auto &[queues, actual_target] = plssvm::adaptivecpp::detail::get_device_list(plssvm::target_platform::automatic);

@@ -58,6 +58,22 @@ TYPED_TEST_P(GenericGPUCSVM, get_max_work_group_size) {
     }
 }
 
+TYPED_TEST_P(GenericGPUCSVM, get_max_grid_size) {
+    using csvm_test_type = util::test_parameter_type_at_t<0, TypeParam>;
+    using mock_csvm_type = typename csvm_test_type::mock_csvm_type;
+
+    // create C-SVM: must be done using the mock class since the member function to test is private or protected
+    const mock_csvm_type svm = util::construct_from_tuple<mock_csvm_type>(csvm_test_type::additional_arguments);
+
+    // the maximum allowed work-group size should be greater than 0!
+    for (std::size_t device_id = 0; device_id < svm.num_available_devices(); ++device_id) {
+        const plssvm::detail::dim_type max_grid = svm.get_max_grid_size(device_id);
+        EXPECT_GT(max_grid.x, std::size_t{ 0 });
+        EXPECT_GT(max_grid.y, std::size_t{ 0 });
+        EXPECT_GT(max_grid.z, std::size_t{ 0 });
+    }
+}
+
 TYPED_TEST_P(GenericGPUCSVM, run_blas_level_3_kernel_explicit) {
     using csvm_test_type = util::test_parameter_type_at_t<0, TypeParam>;
     using mock_csvm_type = typename csvm_test_type::mock_csvm_type;
@@ -106,8 +122,29 @@ TYPED_TEST_P(GenericGPUCSVM, run_blas_level_3_kernel_explicit) {
         device_ptr_type C_d{ C.shape(), C.padding(), device };
         C_d.copy_to_device(C);
 
+        // the block dimension is THREAD_BLOCK_SIZE x THREAD_BLOCK_SIZE
+        const plssvm::detail::dim_type block{ std::size_t{ plssvm::THREAD_BLOCK_SIZE }, std::size_t{ plssvm::THREAD_BLOCK_SIZE } };
+
+        // define the full execution grid
+        const unsigned long long num_rhs = B_d.shape().x;
+        const unsigned long long num_rows = B_d.shape().y;
+        const unsigned long long device_specific_num_rows = svm.data_distribution_->place_specific_num_rows(device_id);
+        const plssvm::detail::dim_type grid{
+            static_cast<std::size_t>(std::ceil(static_cast<double>(num_rhs) / static_cast<double>(block.x * plssvm::INTERNAL_BLOCK_SIZE))),
+            static_cast<std::size_t>(std::ceil(static_cast<double>(device_specific_num_rows) / static_cast<double>(block.y * plssvm::INTERNAL_BLOCK_SIZE)))
+        };
+        const unsigned long long num_mirror_rows = num_rows - svm.data_distribution_->place_row_offset(device_id) - device_specific_num_rows;
+        const plssvm::detail::dim_type mirror_grid{
+            static_cast<std::size_t>(std::ceil(static_cast<double>(num_rhs) / static_cast<double>(block.x * plssvm::INTERNAL_BLOCK_SIZE))),
+            static_cast<std::size_t>(std::ceil(static_cast<double>(num_mirror_rows) / static_cast<double>(block.y * plssvm::INTERNAL_BLOCK_SIZE)))
+        };
+
+        // create execution ranges
+        const plssvm::detail::execution_range exec{ block, svm.get_max_work_group_size(device_id), grid, svm.get_max_grid_size(device_id) };
+        const plssvm::detail::execution_range mirror_exec{ block, svm.get_max_work_group_size(device_id), mirror_grid, svm.get_max_grid_size(device_id) };
+
         // perform BLAS calculation
-        svm.run_blas_level_3_kernel_explicit(device_id, alpha, A_d, B_d, beta, C_d);
+        svm.run_blas_level_3_kernel_explicit(device_id, exec, mirror_exec, alpha, A_d, B_d, beta, C_d);
 
         // retrieve data
         plssvm::soa_matrix<plssvm::real_type> C_res{ C.shape(), C.padding() };
@@ -130,6 +167,7 @@ TYPED_TEST_P(GenericGPUCSVM, run_w_kernel) {
 
     const plssvm::data_set data{ PLSSVM_TEST_FILE };
     const std::size_t num_features = data.num_features();
+    const std::size_t num_classes = data.num_classes();
 
     // the weights (i.e., alpha values) for all support vectors
     const auto weights = util::generate_specific_matrix<plssvm::aos_matrix<plssvm::real_type>>(plssvm::shape{ 3, data.num_data_points() }, plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE });
@@ -159,8 +197,20 @@ TYPED_TEST_P(GenericGPUCSVM, run_w_kernel) {
         device_ptr_type weights_d{ weights.shape(), weights.padding(), device };
         weights_d.copy_to_device(weights);
 
+        // the block dimension is THREAD_BLOCK_SIZE x THREAD_BLOCK_SIZE
+        const plssvm::detail::dim_type block{ std::size_t{ plssvm::THREAD_BLOCK_SIZE }, std::size_t{ plssvm::THREAD_BLOCK_SIZE } };
+
+        // define the full execution grid
+        const plssvm::detail::dim_type grid{
+            static_cast<std::size_t>(std::ceil(static_cast<double>(num_features) / static_cast<double>(block.x * plssvm::INTERNAL_BLOCK_SIZE))),
+            static_cast<std::size_t>(std::ceil(static_cast<double>(num_classes) / static_cast<double>(block.y * plssvm::INTERNAL_BLOCK_SIZE)))
+        };
+
+        // create execution range
+        const plssvm::detail::execution_range exec{ block, svm.get_max_work_group_size(device_id), grid, svm.get_max_grid_size(device_id) };
+
         // calculate (partial) w on the device
-        const device_ptr_type w_d = svm.run_w_kernel(device_id, weights_d, sv_d);
+        const device_ptr_type w_d = svm.run_w_kernel(device_id, exec, weights_d, sv_d);
 
         // check sizes
         plssvm::soa_matrix<plssvm::real_type> w(plssvm::shape{ weights.num_rows(), data.data().num_cols() }, plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE });
@@ -204,8 +254,22 @@ TYPED_TEST_P(GenericGPUCSVM, run_inplace_matrix_addition) {
         device_ptr_type B_d{ matr.shape(), matr.padding(), device };
         B_d.copy_to_device(matr);
 
+        // the block dimension is THREAD_BLOCK_SIZE x THREAD_BLOCK_SIZE
+        const plssvm::detail::dim_type block{ std::size_t{ plssvm::THREAD_BLOCK_SIZE }, std::size_t{ plssvm::THREAD_BLOCK_SIZE } };
+
+        // define the full execution grid
+        const unsigned long long num_rhs = A_d.shape().x;
+        const unsigned long long num_rows = A_d.shape().y;
+        const plssvm::detail::dim_type grid{
+            static_cast<std::size_t>(std::ceil(static_cast<double>(num_rows) / static_cast<double>(block.x * plssvm::INTERNAL_BLOCK_SIZE))),
+            static_cast<std::size_t>(std::ceil(static_cast<double>(num_rhs) / static_cast<double>(block.y * plssvm::INTERNAL_BLOCK_SIZE)))
+        };
+
+        // create execution range
+        const plssvm::detail::execution_range exec{ block, svm.get_max_work_group_size(device_id), grid, svm.get_max_grid_size(device_id) };
+
         // add the two matrices to each other
-        svm.run_inplace_matrix_addition(device_id, A_d, B_d);
+        svm.run_inplace_matrix_addition(device_id, exec, A_d, B_d);
 
         // copy result back to host
         plssvm::soa_matrix<plssvm::real_type> A{ matr.shape(), matr.padding() };
@@ -242,8 +306,22 @@ TYPED_TEST_P(GenericGPUCSVM, run_inplace_matrix_scale) {
         device_ptr_type A_d{ matr.shape(), matr.padding(), device };
         A_d.copy_to_device(matr);
 
+        // the block dimension is THREAD_BLOCK_SIZE x THREAD_BLOCK_SIZE
+        const plssvm::detail::dim_type block{ std::size_t{ plssvm::THREAD_BLOCK_SIZE }, std::size_t{ plssvm::THREAD_BLOCK_SIZE } };
+
+        // define the full execution grid
+        const unsigned long long num_rhs = A_d.shape().x;
+        const unsigned long long num_rows = A_d.shape().y;
+        const plssvm::detail::dim_type grid{
+            static_cast<std::size_t>(std::ceil(static_cast<double>(num_rows) / static_cast<double>(block.x * plssvm::INTERNAL_BLOCK_SIZE))),
+            static_cast<std::size_t>(std::ceil(static_cast<double>(num_rhs) / static_cast<double>(block.y * plssvm::INTERNAL_BLOCK_SIZE)))
+        };
+
+        // create execution range
+        const plssvm::detail::execution_range exec{ block, svm.get_max_work_group_size(device_id), grid, svm.get_max_grid_size(device_id) };
+
         // add the two matrices to each other
-        svm.run_inplace_matrix_scale(device_id, A_d, scaling_factor);
+        svm.run_inplace_matrix_scale(device_id, exec, A_d, scaling_factor);
 
         // copy result back to host
         plssvm::soa_matrix<plssvm::real_type> A{ matr.shape(), matr.padding() };
@@ -256,6 +334,7 @@ TYPED_TEST_P(GenericGPUCSVM, run_inplace_matrix_scale) {
 
 REGISTER_TYPED_TEST_SUITE_P(GenericGPUCSVM,
                             get_max_work_group_size,
+                            get_max_grid_size,
                             run_blas_level_3_kernel_explicit,
                             run_w_kernel,
                             run_inplace_matrix_addition,
@@ -312,8 +391,25 @@ TYPED_TEST_P(GenericGPUCSVMKernelFunction, run_assemble_kernel_matrix_explicit) 
         device_ptr_type q_red_d{ q_red.size() + plssvm::PADDING_SIZE, device };
         q_red_d.copy_to_device(q_red, 0, q_red.size());
 
+        // kernel launch specific sizes
+        const unsigned long long num_rows_reduced = data_matr.shape().x;
+        const unsigned long long device_specific_num_rows = svm.data_distribution_->place_specific_num_rows(device_id);
+        const unsigned long long device_row_offset = svm.data_distribution_->place_row_offset(device_id);
+
+        // the block dimension is THREAD_BLOCK_SIZE x THREAD_BLOCK_SIZE
+        const plssvm::detail::dim_type block{ std::size_t{ plssvm::THREAD_BLOCK_SIZE }, std::size_t{ plssvm::THREAD_BLOCK_SIZE } };
+
+        // define the full execution grid
+        const plssvm::detail::dim_type grid{
+            static_cast<std::size_t>(std::ceil(static_cast<double>(num_rows_reduced - device_row_offset) / static_cast<double>(block.x * plssvm::INTERNAL_BLOCK_SIZE))),
+            static_cast<std::size_t>(std::ceil(static_cast<double>(device_specific_num_rows) / static_cast<double>(block.y * plssvm::INTERNAL_BLOCK_SIZE)))
+        };
+
+        // create the final execution range
+        const plssvm::detail::execution_range exec{ block, svm.get_max_work_group_size(device_id), grid, svm.get_max_grid_size(device_id) };
+
         // calculate the current part of the kernel matrix
-        const device_ptr_type kernel_matrix_d = svm.run_assemble_kernel_matrix_explicit(device_id, params, data_d, q_red_d, QA_cost);
+        const device_ptr_type kernel_matrix_d = svm.run_assemble_kernel_matrix_explicit(device_id, exec, params, data_d, q_red_d, QA_cost);
 
         // copy the kernel matrix back to the host
         std::vector<plssvm::real_type> kernel_matrix(kernel_matrix_d.size());
@@ -383,8 +479,25 @@ TYPED_TEST_P(GenericGPUCSVMKernelFunction, run_assemble_kernel_matrix_implicit_b
         device_ptr_type C_d{ C.shape(), C.padding(), device };
         C_d.copy_to_device(C);
 
+        // kernel launch specific sizes
+        const unsigned long long num_rows_reduced = data_matr.shape().x;
+        const unsigned long long device_specific_num_rows = svm.data_distribution_->place_specific_num_rows(device_id);
+        const unsigned long long device_row_offset = svm.data_distribution_->place_row_offset(device_id);
+
+        // the block dimension is THREAD_BLOCK_SIZE x THREAD_BLOCK_SIZE
+        const plssvm::detail::dim_type block{ std::size_t{ plssvm::THREAD_BLOCK_SIZE }, std::size_t{ plssvm::THREAD_BLOCK_SIZE } };
+
+        // define the full execution grid
+        const plssvm::detail::dim_type grid{
+            static_cast<std::size_t>(std::ceil(static_cast<double>(num_rows_reduced - device_row_offset) / static_cast<double>(block.x * plssvm::INTERNAL_BLOCK_SIZE))),
+            static_cast<std::size_t>(std::ceil(static_cast<double>(device_specific_num_rows) / static_cast<double>(block.y * plssvm::INTERNAL_BLOCK_SIZE)))
+        };
+
+        // create the final execution range
+        const plssvm::detail::execution_range exec{ block, svm.get_max_work_group_size(device_id), grid, svm.get_max_grid_size(device_id) };
+
         // run the compute kernel
-        svm.run_assemble_kernel_matrix_implicit_blas_level_3(device_id, alpha, data_d, params, q_red_d, QA_cost, B_d, C_d);
+        svm.run_assemble_kernel_matrix_implicit_blas_level_3(device_id, exec, alpha, data_d, params, q_red_d, QA_cost, B_d, C_d);
 
         // copy results back to host
         C_d.copy_to_host(C);
@@ -462,8 +575,22 @@ TYPED_TEST_P(GenericGPUCSVMKernelFunction, run_predict_kernel) {
         rho_d.copy_to_device(rho, 0, rho.size());
         rho_d.memset(0, rho.size());
 
+        // the block dimension is THREAD_BLOCK_SIZE x THREAD_BLOCK_SIZE
+        const plssvm::detail::dim_type block{ std::size_t{ plssvm::THREAD_BLOCK_SIZE }, std::size_t{ plssvm::THREAD_BLOCK_SIZE } };
+
+        // define the full execution grid
+        const unsigned long long device_specific_num_predict_points = predict_points_d.shape().x;
+        const unsigned long long y_dim_size = params.kernel_type == plssvm::kernel_function_type::linear ? weights_d.shape().x : sv_or_w_d.shape().x;
+        const plssvm::detail::dim_type grid{
+            static_cast<std::size_t>(std::ceil(static_cast<double>(device_specific_num_predict_points) / static_cast<double>(block.x * plssvm::INTERNAL_BLOCK_SIZE))),
+            static_cast<std::size_t>(std::ceil(static_cast<double>(y_dim_size) / static_cast<double>(block.y * plssvm::INTERNAL_BLOCK_SIZE)))
+        };
+
+        // create execution range
+        const plssvm::detail::execution_range exec{ block, svm.get_max_work_group_size(device_id), grid, svm.get_max_grid_size(device_id) };
+
         // call predict kernel
-        const device_ptr_type out_d = svm.run_predict_kernel(device_id, params, weights_d, rho_d, sv_or_w_d, predict_points_d);
+        const device_ptr_type out_d = svm.run_predict_kernel(device_id, exec, params, weights_d, rho_d, sv_or_w_d, predict_points_d);
 
         // check sizes
         plssvm::aos_matrix<plssvm::real_type> out{ plssvm::shape{ device_specific_num_rows, weights.num_rows() }, plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE } };
@@ -499,7 +626,20 @@ TYPED_TEST_P(GenericGPUCSVMDeathTest, get_max_work_group_size_out_of_range) {
     EXPECT_DEATH(std::ignore = svm.get_max_work_group_size(num_devices), fmt::format("Invalid device {} requested!", num_devices));
 }
 
+TYPED_TEST_P(GenericGPUCSVMDeathTest, get_max_grid_size_out_of_range) {
+    using csvm_test_type = util::test_parameter_type_at_t<0, TypeParam>;
+    using mock_csvm_type = typename csvm_test_type::mock_csvm_type;
+
+    // create C-SVM: must be done using the mock class since the member function to test is private or protected
+    const mock_csvm_type svm = util::construct_from_tuple<mock_csvm_type>(csvm_test_type::additional_arguments);
+    const std::size_t num_devices = svm.num_available_devices();
+
+    // try querying an invalid device_id
+    EXPECT_DEATH(std::ignore = svm.get_max_grid_size(num_devices), fmt::format("Invalid device {} requested!", num_devices));
+}
+
 REGISTER_TYPED_TEST_SUITE_P(GenericGPUCSVMDeathTest,
-                            get_max_work_group_size_out_of_range);
+                            get_max_work_group_size_out_of_range,
+                            get_max_grid_size_out_of_range);
 
 #endif  // PLSSVM_TESTS_BACKENDS_GENERIC_GPU_CSVM_TESTS_HPP_

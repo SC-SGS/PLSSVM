@@ -109,14 +109,15 @@ TEST_F(CUDACSVM, construct_target_and_named_args) {
                       "Invalid target platform 'gpu_intel' for the CUDA backend!");
 }
 
+template <bool mock_grid_size>
 struct cuda_csvm_test_type {
-    using mock_csvm_type = mock_cuda_csvm;
+    using mock_csvm_type = mock_cuda_csvm<mock_grid_size>;
     using csvm_type = plssvm::cuda::csvm;
     using device_ptr_type = typename csvm_type::device_ptr_type;
     inline constexpr static auto additional_arguments = std::make_tuple();
 };
 
-using cuda_csvm_test_tuple = std::tuple<cuda_csvm_test_type>;
+using cuda_csvm_test_tuple = std::tuple<cuda_csvm_test_type<false>>;
 using cuda_csvm_test_label_type_list = util::cartesian_type_product_t<cuda_csvm_test_tuple, plssvm::detail::supported_label_types>;
 using cuda_csvm_test_type_list = util::cartesian_type_product_t<cuda_csvm_test_tuple>;
 
@@ -143,9 +144,19 @@ INSTANTIATE_TYPED_TEST_SUITE_P(CUDACSVMDeathTest, GenericCSVMSolverDeathTest, cu
 INSTANTIATE_TYPED_TEST_SUITE_P(CUDACSVMDeathTest, GenericCSVMKernelFunctionDeathTest, cuda_kernel_function_type_gtest, naming::test_parameter_to_name);
 INSTANTIATE_TYPED_TEST_SUITE_P(CUDACSVMDeathTest, GenericCSVMSolverKernelFunctionDeathTest, cuda_solver_and_kernel_function_type_gtest, naming::test_parameter_to_name);
 
-// generic GPU CSVM tests
+// generic GPU CSVM tests - correct grid sizes
 INSTANTIATE_TYPED_TEST_SUITE_P(CUDACSVM, GenericGPUCSVM, cuda_csvm_test_type_gtest, naming::test_parameter_to_name);
 INSTANTIATE_TYPED_TEST_SUITE_P(CUDACSVM, GenericGPUCSVMKernelFunction, cuda_kernel_function_type_gtest, naming::test_parameter_to_name);
 
-// generic GPU CSVM DeathTests
+// generic GPU CSVM DeathTests - correct grid sizes
 INSTANTIATE_TYPED_TEST_SUITE_P(CUDACSVMDeathTest, GenericGPUCSVMDeathTest, cuda_csvm_test_type_gtest, naming::test_parameter_to_name);
+
+using cuda_mock_csvm_test_tuple = std::tuple<cuda_csvm_test_type<true>>;
+using cuda_mock_csvm_test_type_list = util::cartesian_type_product_t<cuda_mock_csvm_test_tuple>;
+
+using cuda_mock_csvm_test_type_gtest = util::combine_test_parameters_gtest_t<cuda_mock_csvm_test_type_list>;
+using cuda_mock_kernel_function_type_gtest = util::combine_test_parameters_gtest_t<cuda_mock_csvm_test_type_list, util::kernel_function_type_list>;
+
+// generic GPU CSVM tests - mocked grid sizes
+INSTANTIATE_TYPED_TEST_SUITE_P(CUDACSVMFakedGridSize, GenericGPUCSVM, cuda_mock_csvm_test_type_gtest, naming::test_parameter_to_name);
+INSTANTIATE_TYPED_TEST_SUITE_P(CUDACSVMFakedGridSize, GenericGPUCSVMKernelFunction, cuda_mock_kernel_function_type_gtest, naming::test_parameter_to_name);

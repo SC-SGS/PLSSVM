@@ -38,8 +38,10 @@ class device_kernel_symm {
      * @param[in] B the matrix @p B
      * @param[in] beta the scalar beta value
      * @param[in,out] C the matrix @p C, also used as result matrix
+     * @param[in] grid_x_offset the offset in x-dimension into the data points if more than one execution grid has to be used
+     * @param[in] grid_y_offset the offset in y-dimension into the data points if more than one execution grid has to be used
      */
-    device_kernel_symm(::sycl::handler &cgh, const std::size_t num_rows, const std::size_t num_rhs, const std::size_t device_specific_num_rows, const std::size_t row_offset, const real_type alpha, const real_type *A, const real_type *B, const real_type beta, real_type *C) :
+    device_kernel_symm(::sycl::handler &cgh, const std::size_t num_rows, const std::size_t num_rhs, const std::size_t device_specific_num_rows, const std::size_t row_offset, const real_type alpha, const real_type *A, const real_type *B, const real_type beta, real_type *C, const std::size_t grid_x_offset, const std::size_t grid_y_offset) :
         A_cache_{ ::sycl::range<2>{ static_cast<std::size_t>(FEATURE_BLOCK_SIZE), static_cast<std::size_t>(INTERNAL_BLOCK_SIZE) * static_cast<std::size_t>(THREAD_BLOCK_SIZE) }, cgh },
         B_cache_{ ::sycl::range<2>{ static_cast<std::size_t>(FEATURE_BLOCK_SIZE), static_cast<std::size_t>(INTERNAL_BLOCK_SIZE) * static_cast<std::size_t>(THREAD_BLOCK_SIZE) }, cgh },
         num_rows_{ num_rows },
@@ -50,7 +52,9 @@ class device_kernel_symm {
         A_{ A },
         B_{ B },
         beta_{ beta },
-        C_{ C } { }
+        C_{ C },
+        grid_x_offset_{ grid_x_offset },
+        grid_y_offset_{ grid_y_offset } { }
 
     /**
      * @brief Function call operator overload performing the actual calculation.
@@ -62,16 +66,22 @@ class device_kernel_symm {
         const auto local_id_1 = static_cast<unsigned>(nd_idx.get_local_id(1));
 
         // cast all values to 64-bit std::size_t to prevent potential 32-bit overflows
+        const std::size_t threadIdx_x = nd_idx.get_local_id(0);               // current thread in block x-dimension
+        const std::size_t threadIdx_y = nd_idx.get_local_id(1);               // current thread in block y-dimension
+        const std::size_t blockDim_x = nd_idx.get_local_range(0);             // number of threads in block x-dimension
+        const std::size_t blockDim_y = nd_idx.get_local_range(1);             // number of threads in block y-dimension
+        const std::size_t blockIdx_x = nd_idx.get_group(0) + grid_x_offset_;  // current block in grid x-dimension + offsets if the grid size would be too large
+        const std::size_t blockIdx_y = nd_idx.get_group(1) + grid_y_offset_;  // current block in grid y-dimension + offsets if the grid size would be too large
         const auto INTERNAL_BLOCK_SIZE_uz = static_cast<std::size_t>(INTERNAL_BLOCK_SIZE);
         const auto THREAD_BLOCK_SIZE_uz = static_cast<std::size_t>(THREAD_BLOCK_SIZE);
         const auto FEATURE_BLOCK_SIZE_uz = static_cast<std::size_t>(FEATURE_BLOCK_SIZE);
         const auto PADDING_SIZE_uz = static_cast<std::size_t>(PADDING_SIZE);
 
         // calculate the indices used in the current work-item
-        const auto i = nd_idx.get_global_id(1) * INTERNAL_BLOCK_SIZE_uz;
-        const auto i_linear = nd_idx.get_group(1) * nd_idx.get_local_range(1) * INTERNAL_BLOCK_SIZE_uz + nd_idx.get_local_id(1);
-        const auto j = nd_idx.get_global_id(0) * INTERNAL_BLOCK_SIZE_uz;
-        const auto j_linear = nd_idx.get_group(0) * nd_idx.get_local_range(0) * INTERNAL_BLOCK_SIZE_uz + nd_idx.get_local_id(1);
+        const auto i = (blockIdx_y * blockDim_y + threadIdx_y) * INTERNAL_BLOCK_SIZE_uz;
+        const auto i_linear = blockIdx_y * blockDim_y * INTERNAL_BLOCK_SIZE_uz + threadIdx_y;
+        const auto j = (blockIdx_x * blockDim_x + threadIdx_x) * INTERNAL_BLOCK_SIZE_uz;
+        const auto j_linear = blockIdx_x * blockDim_x * INTERNAL_BLOCK_SIZE_uz + threadIdx_y;
 
         // create a work-item private array used for internal caching
         real_type temp[INTERNAL_BLOCK_SIZE][INTERNAL_BLOCK_SIZE]{};
@@ -85,19 +95,19 @@ class device_kernel_symm {
 
                 // determine on which side of the diagonal we are located
                 if (dim + nd_idx.get_local_id(0) < global_j) {
-                    A_cache_[local_id_0][internal * THREAD_BLOCK_SIZE + local_id_1] = A_[(dim + nd_idx.get_local_id(0)) * (num_rows_ - row_offset_ + PADDING_SIZE_uz) + global_j - (dim + nd_idx.get_local_id(0)) * (dim + nd_idx.get_local_id(0) + std::size_t{ 1 }) / std::size_t{ 2 }];
+                    A_cache_[local_id_0][internal * THREAD_BLOCK_SIZE + local_id_1] = A_[(dim + threadIdx_x) * (num_rows_ - row_offset_ + PADDING_SIZE_uz) + global_j - (dim + threadIdx_x) * (dim + threadIdx_x + std::size_t{ 1 }) / std::size_t{ 2 }];
                 } else {
-                    A_cache_[local_id_0][internal * THREAD_BLOCK_SIZE + local_id_1] = A_[global_j * (num_rows_ - row_offset_ + PADDING_SIZE_uz) + dim + nd_idx.get_local_id(0) - global_j * (global_j + std::size_t{ 1 }) / std::size_t{ 2 }];
+                    A_cache_[local_id_0][internal * THREAD_BLOCK_SIZE + local_id_1] = A_[global_j * (num_rows_ - row_offset_ + PADDING_SIZE_uz) + dim + threadIdx_x - global_j * (global_j + std::size_t{ 1 }) / std::size_t{ 2 }];
                 }
                 // determine on which side of the diagonal we are located
                 if (dim + nd_idx.get_local_id(0) + THREAD_BLOCK_SIZE < global_j) {
-                    A_cache_[local_id_0 + THREAD_BLOCK_SIZE][internal * THREAD_BLOCK_SIZE + local_id_1] = A_[(dim + nd_idx.get_local_id(0) + THREAD_BLOCK_SIZE_uz) * (num_rows_ - row_offset_ + PADDING_SIZE_uz) + global_j - (dim + nd_idx.get_local_id(0) + THREAD_BLOCK_SIZE_uz) * (dim + nd_idx.get_local_id(0) + THREAD_BLOCK_SIZE_uz + std::size_t{ 1 }) / std::size_t{ 2 }];
+                    A_cache_[local_id_0 + THREAD_BLOCK_SIZE][internal * THREAD_BLOCK_SIZE + local_id_1] = A_[(dim + threadIdx_x + THREAD_BLOCK_SIZE_uz) * (num_rows_ - row_offset_ + PADDING_SIZE_uz) + global_j - (dim + threadIdx_x + THREAD_BLOCK_SIZE_uz) * (dim + threadIdx_x + THREAD_BLOCK_SIZE_uz + std::size_t{ 1 }) / std::size_t{ 2 }];
                 } else {
-                    A_cache_[local_id_0 + THREAD_BLOCK_SIZE][internal * THREAD_BLOCK_SIZE + local_id_1] = A_[global_j * (num_rows_ - row_offset_ + PADDING_SIZE_uz) + dim + nd_idx.get_local_id(0) + THREAD_BLOCK_SIZE_uz - global_j * (global_j + std::size_t{ 1 }) / std::size_t{ 2 }];
+                    A_cache_[local_id_0 + THREAD_BLOCK_SIZE][internal * THREAD_BLOCK_SIZE + local_id_1] = A_[global_j * (num_rows_ - row_offset_ + PADDING_SIZE_uz) + dim + threadIdx_x + THREAD_BLOCK_SIZE_uz - global_j * (global_j + std::size_t{ 1 }) / std::size_t{ 2 }];
                 }
 
-                B_cache_[local_id_0][internal * THREAD_BLOCK_SIZE + local_id_1] = B_[(dim + row_offset_ + nd_idx.get_local_id(0)) * (num_rhs_ + PADDING_SIZE_uz) + global_i];
-                B_cache_[local_id_0 + THREAD_BLOCK_SIZE][internal * THREAD_BLOCK_SIZE + local_id_1] = B_[(dim + row_offset_ + nd_idx.get_local_id(0) + THREAD_BLOCK_SIZE_uz) * (num_rhs_ + PADDING_SIZE_uz) + global_i];
+                B_cache_[local_id_0][internal * THREAD_BLOCK_SIZE + local_id_1] = B_[(dim + row_offset_ + threadIdx_x) * (num_rhs_ + PADDING_SIZE_uz) + global_i];
+                B_cache_[local_id_0 + THREAD_BLOCK_SIZE][internal * THREAD_BLOCK_SIZE + local_id_1] = B_[(dim + row_offset_ + threadIdx_x + THREAD_BLOCK_SIZE_uz) * (num_rhs_ + PADDING_SIZE_uz) + global_i];
             }
             nd_idx.barrier();  // wait until all work-items loaded their part of the data
 
@@ -143,6 +153,8 @@ class device_kernel_symm {
     const real_type *B_;
     const real_type beta_;
     real_type *C_;
+    const std::size_t grid_x_offset_;
+    const std::size_t grid_y_offset_;
     /// @endcond
 };
 
@@ -165,8 +177,10 @@ class device_kernel_symm_mirror {
      * @param[in] B the matrix @p B
      * @param[in] beta the scalar beta value
      * @param[in,out] C the matrix @p C, also used as result matrix
+     * @param[in] grid_x_offset the offset in x-dimension into the data points if more than one execution grid has to be used
+     * @param[in] grid_y_offset the offset in y-dimension into the data points if more than one execution grid has to be used
      */
-    device_kernel_symm_mirror(::sycl::handler &cgh, const std::size_t num_rows, const std::size_t num_rhs, const std::size_t num_mirror_rows, const std::size_t device_specific_num_rows, const std::size_t row_offset, const real_type alpha, const real_type *A, const real_type *B, const real_type beta, real_type *C) :
+    device_kernel_symm_mirror(::sycl::handler &cgh, const std::size_t num_rows, const std::size_t num_rhs, const std::size_t num_mirror_rows, const std::size_t device_specific_num_rows, const std::size_t row_offset, const real_type alpha, const real_type *A, const real_type *B, const real_type beta, real_type *C, const std::size_t grid_x_offset, const std::size_t grid_y_offset) :
         A_cache_{ ::sycl::range<2>{ static_cast<std::size_t>(FEATURE_BLOCK_SIZE), static_cast<std::size_t>(INTERNAL_BLOCK_SIZE) * static_cast<std::size_t>(THREAD_BLOCK_SIZE) }, cgh },
         B_cache_{ ::sycl::range<2>{ static_cast<std::size_t>(FEATURE_BLOCK_SIZE), static_cast<std::size_t>(INTERNAL_BLOCK_SIZE) * static_cast<std::size_t>(THREAD_BLOCK_SIZE) }, cgh },
         num_rows_{ num_rows },
@@ -178,7 +192,9 @@ class device_kernel_symm_mirror {
         A_{ A },
         B_{ B },
         beta_{ beta },
-        C_{ C } { }
+        C_{ C },
+        grid_x_offset_{ grid_x_offset },
+        grid_y_offset_{ grid_y_offset } { }
 
     /**
      * @brief Function call operator overload performing the actual calculation.
@@ -190,16 +206,22 @@ class device_kernel_symm_mirror {
         const auto local_id_1 = static_cast<unsigned>(nd_idx.get_local_id(1));
 
         // cast all values to 64-bit std::size_t to prevent potential 32-bit overflows
+        const std::size_t threadIdx_x = nd_idx.get_local_id(0);               // current thread in block x-dimension
+        const std::size_t threadIdx_y = nd_idx.get_local_id(1);               // current thread in block y-dimension
+        const std::size_t blockDim_x = nd_idx.get_local_range(0);             // number of threads in block x-dimension
+        const std::size_t blockDim_y = nd_idx.get_local_range(1);             // number of threads in block y-dimension
+        const std::size_t blockIdx_x = nd_idx.get_group(0) + grid_x_offset_;  // current block in grid x-dimension + offsets if the grid size would be too large
+        const std::size_t blockIdx_y = nd_idx.get_group(1) + grid_y_offset_;  // current block in grid y-dimension + offsets if the grid size would be too large
         const auto INTERNAL_BLOCK_SIZE_uz = static_cast<std::size_t>(INTERNAL_BLOCK_SIZE);
         const auto THREAD_BLOCK_SIZE_uz = static_cast<std::size_t>(THREAD_BLOCK_SIZE);
         const auto FEATURE_BLOCK_SIZE_uz = static_cast<std::size_t>(FEATURE_BLOCK_SIZE);
         const auto PADDING_SIZE_uz = static_cast<std::size_t>(PADDING_SIZE);
 
         // calculate the indices used in the current work-item
-        const auto i = nd_idx.get_global_id(1) * INTERNAL_BLOCK_SIZE_uz;
-        const auto i_linear = nd_idx.get_group(1) * nd_idx.get_local_range(1) * INTERNAL_BLOCK_SIZE_uz + nd_idx.get_local_id(1);
-        const auto j = nd_idx.get_global_id(0) * INTERNAL_BLOCK_SIZE_uz;
-        const auto j_linear = nd_idx.get_group(0) * nd_idx.get_local_range(0) * INTERNAL_BLOCK_SIZE_uz + nd_idx.get_local_id(1);
+        const auto i = (blockIdx_y * blockDim_y + threadIdx_y) * INTERNAL_BLOCK_SIZE_uz;
+        const auto i_linear = blockIdx_y * blockDim_y * INTERNAL_BLOCK_SIZE_uz + threadIdx_y;
+        const auto j = (blockIdx_x * blockDim_x + threadIdx_x) * INTERNAL_BLOCK_SIZE_uz;
+        const auto j_linear = blockIdx_x * blockDim_x * INTERNAL_BLOCK_SIZE_uz + threadIdx_y;
 
         // create a work-item private array used for internal caching
         real_type temp[INTERNAL_BLOCK_SIZE][INTERNAL_BLOCK_SIZE]{};
@@ -212,11 +234,11 @@ class device_kernel_symm_mirror {
                 const auto global_j = j_linear + static_cast<std::size_t>(internal) * THREAD_BLOCK_SIZE_uz;
 
                 // FEATURE_BLOCK_SIZE = 2 * THREAD_BLOCK_SIZE -> store twice as many values in the local memory
-                A_cache_[local_id_0][internal * THREAD_BLOCK_SIZE + local_id_1] = A_[(dim + nd_idx.get_local_id(0)) * (num_rows_ - row_offset_ + PADDING_SIZE_uz) - (dim + nd_idx.get_local_id(0) - std::size_t{ 1 }) * (dim + nd_idx.get_local_id(0)) / std::size_t{ 2 } + device_specific_num_rows_ - (dim + nd_idx.get_local_id(0)) + global_j];
-                A_cache_[local_id_0 + THREAD_BLOCK_SIZE][internal * THREAD_BLOCK_SIZE + local_id_1] = A_[(dim + nd_idx.get_local_id(0) + THREAD_BLOCK_SIZE_uz) * (num_rows_ - row_offset_ + PADDING_SIZE_uz) - (dim + nd_idx.get_local_id(0) + THREAD_BLOCK_SIZE_uz - std::size_t{ 1 }) * (dim + nd_idx.get_local_id(0) + THREAD_BLOCK_SIZE_uz) / std::size_t{ 2 } + device_specific_num_rows_ - (dim + nd_idx.get_local_id(0) + THREAD_BLOCK_SIZE_uz) + global_j];
+                A_cache_[local_id_0][internal * THREAD_BLOCK_SIZE + local_id_1] = A_[(dim + nd_idx.get_local_id(0)) * (num_rows_ - row_offset_ + PADDING_SIZE_uz) - (dim + threadIdx_x - std::size_t{ 1 }) * (dim + nd_idx.get_local_id(0)) / std::size_t{ 2 } + device_specific_num_rows_ - (dim + nd_idx.get_local_id(0)) + global_j];
+                A_cache_[local_id_0 + THREAD_BLOCK_SIZE][internal * THREAD_BLOCK_SIZE + local_id_1] = A_[(dim + threadIdx_x + THREAD_BLOCK_SIZE_uz) * (num_rows_ - row_offset_ + PADDING_SIZE_uz) - (dim + nd_idx.get_local_id(0) + THREAD_BLOCK_SIZE_uz - std::size_t{ 1 }) * (dim + nd_idx.get_local_id(0) + THREAD_BLOCK_SIZE_uz) / std::size_t{ 2 } + device_specific_num_rows_ - (dim + nd_idx.get_local_id(0) + THREAD_BLOCK_SIZE_uz) + global_j];
 
-                B_cache_[local_id_0][internal * THREAD_BLOCK_SIZE + local_id_1] = B_[(dim + row_offset_ + nd_idx.get_local_id(0)) * (num_rhs_ + PADDING_SIZE_uz) + global_i];
-                B_cache_[local_id_0 + THREAD_BLOCK_SIZE][internal * THREAD_BLOCK_SIZE + local_id_1] = B_[(dim + row_offset_ + nd_idx.get_local_id(0) + THREAD_BLOCK_SIZE_uz) * (num_rhs_ + PADDING_SIZE_uz) + global_i];
+                B_cache_[local_id_0][internal * THREAD_BLOCK_SIZE + local_id_1] = B_[(dim + row_offset_ + threadIdx_x) * (num_rhs_ + PADDING_SIZE_uz) + global_i];
+                B_cache_[local_id_0 + THREAD_BLOCK_SIZE][internal * THREAD_BLOCK_SIZE + local_id_1] = B_[(dim + row_offset_ + threadIdx_x + THREAD_BLOCK_SIZE_uz) * (num_rhs_ + PADDING_SIZE_uz) + global_i];
             }
             nd_idx.barrier();  // wait until all threads loaded their part of the data
 
@@ -263,6 +285,8 @@ class device_kernel_symm_mirror {
     const real_type *B_;
     const real_type beta_;
     real_type *C_;
+    const std::size_t grid_x_offset_;
+    const std::size_t grid_y_offset_;
     /// @endcond
 };
 
@@ -276,11 +300,15 @@ class device_kernel_inplace_matrix_add {
      * @param[in] num_cols the number of columns in both matrices
      * @param[in,out] lhs the first matrix (updated inplace)
      * @param[in] rhs the second matrix
+     * @param[in] grid_x_offset the offset in x-dimension into the data points if more than one execution grid has to be used
+     * @param[in] grid_y_offset the offset in y-dimension into the data points if more than one execution grid has to be used
      */
-    device_kernel_inplace_matrix_add(const std::size_t num_cols, real_type *lhs, const real_type *rhs) :
+    device_kernel_inplace_matrix_add(const std::size_t num_cols, real_type *lhs, const real_type *rhs, const std::size_t grid_x_offset, const std::size_t grid_y_offset) :
         num_cols_{ num_cols },
         lhs_{ lhs },
-        rhs_{ rhs } { }
+        rhs_{ rhs },
+        grid_x_offset_{ grid_x_offset },
+        grid_y_offset_{ grid_y_offset } { }
 
     /**
      * @brief Function call operator overload performing the actual calculation.
@@ -288,12 +316,18 @@ class device_kernel_inplace_matrix_add {
      */
     void operator()(::sycl::nd_item<2> nd_idx) const {
         // cast all values to 64-bit std::size_t to prevent potential 32-bit overflows
+        const std::size_t threadIdx_x = nd_idx.get_local_id(0);               // current thread in block x-dimension
+        const std::size_t threadIdx_y = nd_idx.get_local_id(1);               // current thread in block y-dimension
+        const std::size_t blockDim_x = nd_idx.get_local_range(0);             // number of threads in block x-dimension
+        const std::size_t blockDim_y = nd_idx.get_local_range(1);             // number of threads in block y-dimension
+        const std::size_t blockIdx_x = nd_idx.get_group(0) + grid_x_offset_;  // current block in grid x-dimension + offsets if the grid size would be too large
+        const std::size_t blockIdx_y = nd_idx.get_group(1) + grid_y_offset_;  // current block in grid y-dimension + offsets if the grid size would be too large
         const auto INTERNAL_BLOCK_SIZE_uz = static_cast<std::size_t>(INTERNAL_BLOCK_SIZE);
         const auto PADDING_SIZE_uz = static_cast<std::size_t>(PADDING_SIZE);
 
         // calculate the indices used in the current work-item
-        const auto i = nd_idx.get_global_id(1) * INTERNAL_BLOCK_SIZE_uz;  // # num_rows
-        const auto j = nd_idx.get_global_id(0) * INTERNAL_BLOCK_SIZE_uz;  // # num_rhs
+        const auto i = (blockIdx_y * blockDim_y + threadIdx_y) * INTERNAL_BLOCK_SIZE_uz;  // # num_rows
+        const auto j = (blockIdx_x * blockDim_x + threadIdx_x) * INTERNAL_BLOCK_SIZE_uz;  // # num_rhs
 
         for (unsigned internal_i = 0; internal_i < INTERNAL_BLOCK_SIZE; ++internal_i) {
             for (unsigned internal_j = 0; internal_j < INTERNAL_BLOCK_SIZE; ++internal_j) {
@@ -310,6 +344,8 @@ class device_kernel_inplace_matrix_add {
     const std::size_t num_cols_;
     real_type *lhs_;
     const real_type *rhs_;
+    const std::size_t grid_x_offset_;
+    const std::size_t grid_y_offset_;
     /// @endcond
 };
 
@@ -323,11 +359,15 @@ class device_kernel_inplace_matrix_scale {
      * @param[in] num_cols the number of columns in the matrix
      * @param[in,out] lhs the first matrix (updated inplace)
      * @param[in] scale the value to scale
+     * @param[in] grid_x_offset the offset in x-dimension into the data points if more than one execution grid has to be used
+     * @param[in] grid_y_offset the offset in y-dimension into the data points if more than one execution grid has to be used
      */
-    device_kernel_inplace_matrix_scale(const std::size_t num_cols, real_type *lhs, const real_type scale) :
+    device_kernel_inplace_matrix_scale(const std::size_t num_cols, real_type *lhs, const real_type scale, const std::size_t grid_x_offset, const std::size_t grid_y_offset) :
         num_cols_{ num_cols },
         lhs_{ lhs },
-        scale_{ scale } { }
+        scale_{ scale },
+        grid_x_offset_{ grid_x_offset },
+        grid_y_offset_{ grid_y_offset } { }
 
     /**
      * @brief Function call operator overload performing the actual calculation.
@@ -335,12 +375,18 @@ class device_kernel_inplace_matrix_scale {
      */
     void operator()(::sycl::nd_item<2> nd_idx) const {
         // cast all values to 64-bit std::size_t to prevent potential 32-bit overflows
+        const std::size_t threadIdx_x = nd_idx.get_local_id(0);               // current thread in block x-dimension
+        const std::size_t threadIdx_y = nd_idx.get_local_id(1);               // current thread in block y-dimension
+        const std::size_t blockDim_x = nd_idx.get_local_range(0);             // number of threads in block x-dimension
+        const std::size_t blockDim_y = nd_idx.get_local_range(1);             // number of threads in block y-dimension
+        const std::size_t blockIdx_x = nd_idx.get_group(0) + grid_x_offset_;  // current block in grid x-dimension + offsets if the grid size would be too large
+        const std::size_t blockIdx_y = nd_idx.get_group(1) + grid_y_offset_;  // current block in grid y-dimension + offsets if the grid size would be too large
         const auto INTERNAL_BLOCK_SIZE_uz = static_cast<std::size_t>(INTERNAL_BLOCK_SIZE);
         const auto PADDING_SIZE_uz = static_cast<std::size_t>(PADDING_SIZE);
 
         // calculate the indices used in the current work-item
-        const auto i = nd_idx.get_global_id(1) * INTERNAL_BLOCK_SIZE_uz;  // # num_rows
-        const auto j = nd_idx.get_global_id(0) * INTERNAL_BLOCK_SIZE_uz;  // # num_rhs
+        const auto i = (blockIdx_y * blockDim_y + threadIdx_y) * INTERNAL_BLOCK_SIZE_uz;  // # num_rows
+        const auto j = (blockIdx_x * blockDim_x + threadIdx_x) * INTERNAL_BLOCK_SIZE_uz;  // # num_rhs
 
         for (unsigned internal_i = 0; internal_i < INTERNAL_BLOCK_SIZE; ++internal_i) {
             for (unsigned internal_j = 0; internal_j < INTERNAL_BLOCK_SIZE; ++internal_j) {
@@ -357,6 +403,8 @@ class device_kernel_inplace_matrix_scale {
     const std::size_t num_cols_;
     real_type *lhs_;
     const real_type scale_;
+    const std::size_t grid_x_offset_;
+    const std::size_t grid_y_offset_;
     /// @endcond
 };
 

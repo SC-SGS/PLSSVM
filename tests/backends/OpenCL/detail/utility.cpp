@@ -8,8 +8,9 @@
  * @brief Tests for the custom utility functions related to the OpenCL backend.
  */
 
-#include "plssvm/backends/OpenCL/detail/utility.hpp"  // PLSSVM_OPENCL_ERROR_CHECK, plssvm::opencl::detail::{device_assert, get_contexts, get_device_name}
+#include "plssvm/backends/OpenCL/detail/utility.hpp"
 
+#include "plssvm/backends/execution_range.hpp"              // plssvm::detail::dim_type
 #include "plssvm/backends/OpenCL/detail/command_queue.hpp"  // plssvm::opencl::detail::command_queue
 #include "plssvm/backends/OpenCL/detail/context.hpp"        // plssvm::opencl::detail::context
 #include "plssvm/backends/OpenCL/exceptions.hpp"            // plssvm::opencl::backend_exception
@@ -20,9 +21,10 @@
 
 #include "gtest/gtest.h"  // TEST, EXPECT_EQ, EXPECT_NE, EXPECT_NO_THROW, EXPECT_FALSE
 
-#include <regex>   // std::regex, std::regex::extended, std::regex_match
-#include <string>  // std::string
-#include <vector>  // std::vector
+#include <cstddef>  // std::size_t
+#include <regex>    // std::regex, std::regex::extended, std::regex_match
+#include <string>   // std::string
+#include <vector>   // std::vector
 
 TEST(OpenCLUtility, error_check) {
     // CL_SUCCESS must not throw
@@ -32,6 +34,45 @@ TEST(OpenCLUtility, error_check) {
     EXPECT_THROW_WHAT(PLSSVM_OPENCL_ERROR_CHECK(CL_DEVICE_NOT_FOUND, "error"),
                       plssvm::opencl::backend_exception,
                       "OpenCL assert 'CL_DEVICE_NOT_FOUND' (-1): error!");
+}
+
+TEST(OpenCLUtility, dim_type_to_native_1) {
+    // create a dim_type
+    constexpr plssvm::detail::dim_type dim{ 128ull, 64ull, 32ull };
+
+    // convert it to a OpenCL std::vector<std::size_t>
+    const std::vector<std::size_t> native_dim = plssvm::opencl::detail::dim_type_to_native<1>(dim);
+
+    // check values for correctness
+    ASSERT_EQ(native_dim.size(), 1);
+    EXPECT_EQ(native_dim[0], dim.x);
+}
+
+TEST(OpenCLUtility, dim_type_to_native_2) {
+    // create a dim_type
+    constexpr plssvm::detail::dim_type dim{ 128ull, 64ull, 32ull };
+
+    // convert it to a OpenCL std::vector<std::size_t>
+    const std::vector<std::size_t> native_dim = plssvm::opencl::detail::dim_type_to_native<2>(dim);
+
+    // check values for correctness
+    ASSERT_EQ(native_dim.size(), 2);
+    EXPECT_EQ(native_dim[0], dim.x);
+    EXPECT_EQ(native_dim[1], dim.y);
+}
+
+TEST(OpenCLUtility, dim_type_to_native_3) {
+    // create a dim_type
+    constexpr plssvm::detail::dim_type dim{ 128ull, 64ull, 32ull };
+
+    // convert it to a OpenCL std::vector<std::size_t>
+    const std::vector<std::size_t> native_dim = plssvm::opencl::detail::dim_type_to_native<3>(dim);
+
+    // check values for correctness
+    ASSERT_EQ(native_dim.size(), 3);
+    EXPECT_EQ(native_dim[0], dim.x);
+    EXPECT_EQ(native_dim[1], dim.y);
+    EXPECT_EQ(native_dim[2], dim.z);
 }
 
 TEST(OpenCLUtility, get_contexts) {

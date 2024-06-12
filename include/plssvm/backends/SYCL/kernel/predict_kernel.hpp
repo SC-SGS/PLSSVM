@@ -40,8 +40,10 @@ class device_kernel_w_linear {
      * @param[in] num_sv the number of support vectors
      * @param[in] device_specific_num_sv the number of support vectors the current device is responsible for
      * @param[in] sv_offset the first support vector (row in @p alpha_d) the current device is responsible for
+     * @param[in] grid_x_offset the offset in x-dimension into the data points if more than one execution grid has to be used
+     * @param[in] grid_y_offset the offset in y-dimension into the data points if more than one execution grid has to be used
      */
-    device_kernel_w_linear(::sycl::handler &cgh, real_type *w_d, const real_type *alpha_d, const real_type *sv_d, const std::size_t num_classes, const std::size_t num_sv, const std::size_t device_specific_num_sv, const std::size_t sv_offset) :
+    device_kernel_w_linear(::sycl::handler &cgh, real_type *w_d, const real_type *alpha_d, const real_type *sv_d, const std::size_t num_classes, const std::size_t num_sv, const std::size_t device_specific_num_sv, const std::size_t sv_offset, const std::size_t grid_x_offset, const std::size_t grid_y_offset) :
         data_cache_feature_{ ::sycl::range<2>{ static_cast<std::size_t>(FEATURE_BLOCK_SIZE), static_cast<std::size_t>(INTERNAL_BLOCK_SIZE) * static_cast<std::size_t>(THREAD_BLOCK_SIZE) }, cgh },
         data_cache_alpha_{ ::sycl::range<2>{ static_cast<std::size_t>(FEATURE_BLOCK_SIZE), static_cast<std::size_t>(INTERNAL_BLOCK_SIZE) * static_cast<std::size_t>(THREAD_BLOCK_SIZE) }, cgh },
         w_d_{ w_d },
@@ -50,7 +52,9 @@ class device_kernel_w_linear {
         num_classes_{ num_classes },
         num_sv_{ num_sv },
         device_specific_num_sv_{ device_specific_num_sv },
-        sv_offset_{ sv_offset } { }
+        sv_offset_{ sv_offset },
+        grid_x_offset_{ grid_x_offset },
+        grid_y_offset_{ grid_y_offset } { }
 
     /**
      * @brief Function call operator overload performing the actual calculation.
@@ -62,15 +66,21 @@ class device_kernel_w_linear {
         const auto local_id_1 = static_cast<unsigned>(nd_idx.get_local_id(1));
 
         // cast all values to 64-bit std::size_t to prevent potential 32-bit overflows
+        const std::size_t threadIdx_x = nd_idx.get_local_id(0);               // current thread in block x-dimension
+        const std::size_t threadIdx_y = nd_idx.get_local_id(1);               // current thread in block y-dimension
+        const std::size_t blockDim_x = nd_idx.get_local_range(0);             // number of threads in block x-dimension
+        const std::size_t blockDim_y = nd_idx.get_local_range(1);             // number of threads in block y-dimension
+        const std::size_t blockIdx_x = nd_idx.get_group(0) + grid_x_offset_;  // current block in grid x-dimension + offsets if the grid size would be too large
+        const std::size_t blockIdx_y = nd_idx.get_group(1) + grid_y_offset_;  // current block in grid y-dimension + offsets if the grid size would be too large
         const auto INTERNAL_BLOCK_SIZE_uz = static_cast<std::size_t>(INTERNAL_BLOCK_SIZE);
         const auto THREAD_BLOCK_SIZE_uz = static_cast<std::size_t>(THREAD_BLOCK_SIZE);
         const auto PADDING_SIZE_uz = static_cast<std::size_t>(PADDING_SIZE);
 
         // calculate the indices used in the current work-item
-        const auto feature_idx = nd_idx.get_global_id(1) * INTERNAL_BLOCK_SIZE_uz;
-        const auto feature_idx_linear = nd_idx.get_group(1) * nd_idx.get_local_range(1) * INTERNAL_BLOCK_SIZE_uz + nd_idx.get_local_id(1);
-        const auto class_idx = nd_idx.get_global_id(0) * INTERNAL_BLOCK_SIZE_uz;
-        const auto class_idx_linear = nd_idx.get_group(0) * nd_idx.get_local_range(0) * INTERNAL_BLOCK_SIZE_uz + nd_idx.get_local_id(1);
+        const auto feature_idx = (blockIdx_y * blockDim_y + threadIdx_y) * INTERNAL_BLOCK_SIZE_uz;
+        const auto feature_idx_linear = blockIdx_y * blockDim_y * INTERNAL_BLOCK_SIZE_uz + threadIdx_y;
+        const auto class_idx = (blockIdx_x * blockDim_x + threadIdx_x) * INTERNAL_BLOCK_SIZE_uz;
+        const auto class_idx_linear = blockIdx_x * blockDim_x * INTERNAL_BLOCK_SIZE_uz + threadIdx_y;
 
         // create a work-item private array used for internal caching
         real_type temp[INTERNAL_BLOCK_SIZE][INTERNAL_BLOCK_SIZE]{};
@@ -82,8 +92,8 @@ class device_kernel_w_linear {
                 const auto global_class_idx = class_idx_linear + static_cast<std::size_t>(internal) * THREAD_BLOCK_SIZE_uz;
                 const auto global_feature_idx = feature_idx_linear + static_cast<std::size_t>(internal) * THREAD_BLOCK_SIZE_uz;
 
-                data_cache_feature_[local_id_0][internal * THREAD_BLOCK_SIZE + local_id_1] = sv_d_[global_feature_idx * (device_specific_num_sv_ + PADDING_SIZE_uz) + sv + sv_offset_ + nd_idx.get_local_id(0)];  // SoA
-                data_cache_alpha_[local_id_0][internal * THREAD_BLOCK_SIZE + local_id_1] = alpha_d_[global_class_idx * (num_sv_ + PADDING_SIZE_uz) + sv + nd_idx.get_local_id(0)];                                // AoS
+                data_cache_feature_[local_id_0][internal * THREAD_BLOCK_SIZE + local_id_1] = sv_d_[global_feature_idx * (device_specific_num_sv_ + PADDING_SIZE_uz) + sv + sv_offset_ + threadIdx_x];  // SoA
+                data_cache_alpha_[local_id_0][internal * THREAD_BLOCK_SIZE + local_id_1] = alpha_d_[global_class_idx * (num_sv_ + PADDING_SIZE_uz) + sv + threadIdx_x];                                // AoS
             }
             nd_idx.barrier();  // wait until all work-items loaded their part of the data
 
@@ -123,6 +133,8 @@ class device_kernel_w_linear {
     const std::size_t num_sv_;
     const std::size_t device_specific_num_sv_;
     const std::size_t sv_offset_;
+    const std::size_t grid_x_offset_;
+    const std::size_t grid_y_offset_;
     /// @endcond
 };
 
@@ -141,8 +153,10 @@ class device_kernel_predict_linear {
      * @param[in] num_classes the number of classes
      * @param[in] num_predict_points the number of data points to predict
      * @param[in] num_features the number of features per data point
+     * @param[in] grid_x_offset the offset in x-dimension into the data points if more than one execution grid has to be used
+     * @param[in] grid_y_offset the offset in y-dimension into the data points if more than one execution grid has to be used
      */
-    device_kernel_predict_linear(::sycl::handler &cgh, real_type *prediction_d, const real_type *w_d, const real_type *rho_d, const real_type *predict_points_d, const std::size_t num_classes, const std::size_t num_predict_points, const std::size_t num_features) :
+    device_kernel_predict_linear(::sycl::handler &cgh, real_type *prediction_d, const real_type *w_d, const real_type *rho_d, const real_type *predict_points_d, const std::size_t num_classes, const std::size_t num_predict_points, const std::size_t num_features, const std::size_t grid_x_offset, const std::size_t grid_y_offset) :
         data_cache_pp_{ ::sycl::range<2>{ static_cast<std::size_t>(FEATURE_BLOCK_SIZE), static_cast<std::size_t>(INTERNAL_BLOCK_SIZE) * static_cast<std::size_t>(THREAD_BLOCK_SIZE) }, cgh },
         data_cache_w_{ ::sycl::range<2>{ static_cast<std::size_t>(FEATURE_BLOCK_SIZE), static_cast<std::size_t>(INTERNAL_BLOCK_SIZE) * static_cast<std::size_t>(THREAD_BLOCK_SIZE) }, cgh },
         prediction_d_{ prediction_d },
@@ -151,7 +165,9 @@ class device_kernel_predict_linear {
         predict_points_d_{ predict_points_d },
         num_classes_{ num_classes },
         num_predict_points_{ num_predict_points },
-        num_features_{ num_features } { }
+        num_features_{ num_features },
+        grid_x_offset_{ grid_x_offset },
+        grid_y_offset_{ grid_y_offset } { }
 
     /**
      * @brief Function call operator overload performing the actual calculation.
@@ -163,16 +179,22 @@ class device_kernel_predict_linear {
         const auto local_id_1 = static_cast<unsigned>(nd_idx.get_local_id(1));
 
         // cast all values to 64-bit std::size_t to prevent potential 32-bit overflows
+        const std::size_t threadIdx_x = nd_idx.get_local_id(0);               // current thread in block x-dimension
+        const std::size_t threadIdx_y = nd_idx.get_local_id(1);               // current thread in block y-dimension
+        const std::size_t blockDim_x = nd_idx.get_local_range(0);             // number of threads in block x-dimension
+        const std::size_t blockDim_y = nd_idx.get_local_range(1);             // number of threads in block y-dimension
+        const std::size_t blockIdx_x = nd_idx.get_group(0) + grid_x_offset_;  // current block in grid x-dimension + offsets if the grid size would be too large
+        const std::size_t blockIdx_y = nd_idx.get_group(1) + grid_y_offset_;  // current block in grid y-dimension + offsets if the grid size would be too large
         const auto INTERNAL_BLOCK_SIZE_uz = static_cast<std::size_t>(INTERNAL_BLOCK_SIZE);
         const auto THREAD_BLOCK_SIZE_uz = static_cast<std::size_t>(THREAD_BLOCK_SIZE);
         const auto FEATURE_BLOCK_SIZE_uz = static_cast<std::size_t>(FEATURE_BLOCK_SIZE);
         const auto PADDING_SIZE_uz = static_cast<std::size_t>(PADDING_SIZE);
 
         // calculate the indices used in the current work-item
-        const auto pp_idx = nd_idx.get_global_id(1) * INTERNAL_BLOCK_SIZE_uz;
-        const auto pp_idx_linear = nd_idx.get_group(1) * nd_idx.get_local_range(1) * INTERNAL_BLOCK_SIZE_uz + nd_idx.get_local_id(1);
-        const auto class_idx = nd_idx.get_global_id(0) * INTERNAL_BLOCK_SIZE_uz;
-        const auto class_idx_linear = nd_idx.get_group(0) * nd_idx.get_local_range(0) * INTERNAL_BLOCK_SIZE_uz + nd_idx.get_local_id(1);
+        const auto pp_idx = (blockIdx_y * blockDim_y + threadIdx_y) * INTERNAL_BLOCK_SIZE_uz;
+        const auto pp_idx_linear = blockIdx_y * blockDim_y * INTERNAL_BLOCK_SIZE_uz + threadIdx_y;
+        const auto class_idx = (blockIdx_x * blockDim_x + threadIdx_x) * INTERNAL_BLOCK_SIZE_uz;
+        const auto class_idx_linear = blockIdx_x * blockDim_x * INTERNAL_BLOCK_SIZE_uz + threadIdx_y;
 
         // create a work-item private array used for internal caching
         real_type temp[INTERNAL_BLOCK_SIZE][INTERNAL_BLOCK_SIZE]{};
@@ -185,10 +207,10 @@ class device_kernel_predict_linear {
                 const auto global_class_idx = class_idx_linear + static_cast<std::size_t>(internal) * THREAD_BLOCK_SIZE_uz;
 
                 // FEATURE_BLOCK_SIZE = 2 * THREAD_BLOCK_SIZE -> store twice as many values in the local memory
-                data_cache_pp_[local_id_0][internal * THREAD_BLOCK_SIZE + local_id_1] = predict_points_d_[(dim + nd_idx.get_local_id(0)) * (num_predict_points_ + PADDING_SIZE_uz) + global_pp_idx];
-                data_cache_pp_[local_id_0 + THREAD_BLOCK_SIZE][internal * THREAD_BLOCK_SIZE + local_id_1] = predict_points_d_[(dim + nd_idx.get_local_id(0) + THREAD_BLOCK_SIZE_uz) * (num_predict_points_ + PADDING_SIZE_uz) + global_pp_idx];
-                data_cache_w_[local_id_0][internal * THREAD_BLOCK_SIZE + local_id_1] = w_d_[(dim + nd_idx.get_local_id(0)) * (num_classes_ + PADDING_SIZE_uz) + global_class_idx];
-                data_cache_w_[local_id_0 + THREAD_BLOCK_SIZE][internal * THREAD_BLOCK_SIZE + local_id_1] = w_d_[(dim + nd_idx.get_local_id(0) + THREAD_BLOCK_SIZE_uz) * (num_classes_ + PADDING_SIZE_uz) + global_class_idx];
+                data_cache_pp_[local_id_0][internal * THREAD_BLOCK_SIZE + local_id_1] = predict_points_d_[(dim + threadIdx_x) * (num_predict_points_ + PADDING_SIZE_uz) + global_pp_idx];
+                data_cache_pp_[local_id_0 + THREAD_BLOCK_SIZE][internal * THREAD_BLOCK_SIZE + local_id_1] = predict_points_d_[(dim + threadIdx_x + THREAD_BLOCK_SIZE_uz) * (num_predict_points_ + PADDING_SIZE_uz) + global_pp_idx];
+                data_cache_w_[local_id_0][internal * THREAD_BLOCK_SIZE + local_id_1] = w_d_[(dim + threadIdx_x) * (num_classes_ + PADDING_SIZE_uz) + global_class_idx];
+                data_cache_w_[local_id_0 + THREAD_BLOCK_SIZE][internal * THREAD_BLOCK_SIZE + local_id_1] = w_d_[(dim + threadIdx_x + THREAD_BLOCK_SIZE_uz) * (num_classes_ + PADDING_SIZE_uz) + global_class_idx];
             }
             nd_idx.barrier();  // wait until all work-items loaded their part of the data
 
@@ -228,6 +250,8 @@ class device_kernel_predict_linear {
     const std::size_t num_classes_;
     const std::size_t num_predict_points_;
     const std::size_t num_features_;
+    const std::size_t grid_x_offset_;
+    const std::size_t grid_y_offset_;
     /// @endcond
 };
 
@@ -251,9 +275,11 @@ class device_kernel_predict {
      * @param[in] num_sv the number of support vectors
      * @param[in] num_predict_points the number of data points to predict
      * @param[in] num_features the number of features per data point
+     * @param[in] grid_x_offset the offset in x-dimension into the data points if more than one execution grid has to be used
+     * @param[in] grid_y_offset the offset in y-dimension into the data points if more than one execution grid has to be used
      * @param[in] kernel_function_parameter the parameters necessary to apply the @p kernel_function
      */
-    device_kernel_predict(::sycl::handler &cgh, real_type *prediction_d, const real_type *alpha_d, const real_type *rho_d, const real_type *sv_d, const real_type *predict_points_d, const std::size_t num_classes, const std::size_t num_sv, const std::size_t num_predict_points, const std::size_t num_features, Args... kernel_function_parameter) :
+    device_kernel_predict(::sycl::handler &cgh, real_type *prediction_d, const real_type *alpha_d, const real_type *rho_d, const real_type *sv_d, const real_type *predict_points_d, const std::size_t num_classes, const std::size_t num_sv, const std::size_t num_predict_points, const std::size_t num_features, const std::size_t grid_x_offset, const std::size_t grid_y_offset, Args... kernel_function_parameter) :
         data_cache_pp_{ ::sycl::range<2>{ static_cast<std::size_t>(FEATURE_BLOCK_SIZE), static_cast<std::size_t>(INTERNAL_BLOCK_SIZE) * static_cast<std::size_t>(THREAD_BLOCK_SIZE) }, cgh },
         data_cache_sv_{ ::sycl::range<2>{ static_cast<std::size_t>(FEATURE_BLOCK_SIZE), static_cast<std::size_t>(INTERNAL_BLOCK_SIZE) * static_cast<std::size_t>(THREAD_BLOCK_SIZE) }, cgh },
         prediction_d_{ prediction_d },
@@ -265,6 +291,8 @@ class device_kernel_predict {
         num_sv_{ num_sv },
         num_predict_points_{ num_predict_points },
         num_features_{ num_features },
+        grid_x_offset_{ grid_x_offset },
+        grid_y_offset_{ grid_y_offset },
         kernel_function_parameter_{ std::make_tuple(std::forward<Args>(kernel_function_parameter)...) } { }
 
     /**
@@ -277,15 +305,21 @@ class device_kernel_predict {
         const auto local_id_1 = static_cast<unsigned>(nd_idx.get_local_id(1));
 
         // cast all values to 64-bit std::size_t to prevent potential 32-bit overflows
+        const std::size_t threadIdx_x = nd_idx.get_local_id(0);               // current thread in block x-dimension
+        const std::size_t threadIdx_y = nd_idx.get_local_id(1);               // current thread in block y-dimension
+        const std::size_t blockDim_x = nd_idx.get_local_range(0);             // number of threads in block x-dimension
+        const std::size_t blockDim_y = nd_idx.get_local_range(1);             // number of threads in block y-dimension
+        const std::size_t blockIdx_x = nd_idx.get_group(0) + grid_x_offset_;  // current block in grid x-dimension + offsets if the grid size would be too large
+        const std::size_t blockIdx_y = nd_idx.get_group(1) + grid_y_offset_;  // current block in grid y-dimension + offsets if the grid size would be too large
         const auto INTERNAL_BLOCK_SIZE_uz = static_cast<std::size_t>(INTERNAL_BLOCK_SIZE);
         const auto THREAD_BLOCK_SIZE_uz = static_cast<std::size_t>(THREAD_BLOCK_SIZE);
         const auto FEATURE_BLOCK_SIZE_uz = static_cast<std::size_t>(FEATURE_BLOCK_SIZE);
         const auto PADDING_SIZE_uz = static_cast<std::size_t>(PADDING_SIZE);
 
         // calculate the indices used in the current work-item
-        const auto pp_idx = nd_idx.get_global_id(1) * INTERNAL_BLOCK_SIZE_uz;
-        const auto pp_idx_linear = nd_idx.get_group(1) * nd_idx.get_local_range(1) * INTERNAL_BLOCK_SIZE_uz + nd_idx.get_local_id(1);
-        const auto sv_idx_linear = nd_idx.get_group(0) * nd_idx.get_local_range(0) * INTERNAL_BLOCK_SIZE_uz + nd_idx.get_local_id(1);
+        const auto pp_idx = (blockIdx_y * blockDim_y + threadIdx_y) * INTERNAL_BLOCK_SIZE_uz;
+        const auto pp_idx_linear = blockIdx_y * blockDim_y * INTERNAL_BLOCK_SIZE_uz + threadIdx_y;
+        const auto sv_idx_linear = blockIdx_x * blockDim_x * INTERNAL_BLOCK_SIZE_uz + threadIdx_y;
 
         // create a work-item private array used for internal caching
         real_type temp[INTERNAL_BLOCK_SIZE][INTERNAL_BLOCK_SIZE]{};
@@ -299,10 +333,10 @@ class device_kernel_predict {
                     const auto global_sv_idx = sv_idx_linear + static_cast<std::size_t>(internal) * THREAD_BLOCK_SIZE_uz;
 
                     // FEATURE_BLOCK_SIZE = 2 * THREAD_BLOCK_SIZE -> store twice as many values in the shared memory
-                    data_cache_pp_[local_id_0][internal * THREAD_BLOCK_SIZE + local_id_1] = predict_points_d_[(dim + nd_idx.get_local_id(0)) * (num_predict_points_ + PADDING_SIZE_uz) + global_pp_idx];
-                    data_cache_pp_[local_id_0 + THREAD_BLOCK_SIZE][internal * THREAD_BLOCK_SIZE + local_id_1] = predict_points_d_[(dim + nd_idx.get_local_id(0) + THREAD_BLOCK_SIZE) * (num_predict_points_ + PADDING_SIZE_uz) + global_pp_idx];
-                    data_cache_sv_[local_id_0][internal * THREAD_BLOCK_SIZE + local_id_1] = sv_d_[(dim + nd_idx.get_local_id(0)) * (num_sv_ + PADDING_SIZE_uz) + global_sv_idx];
-                    data_cache_sv_[local_id_0 + THREAD_BLOCK_SIZE][internal * THREAD_BLOCK_SIZE + local_id_1] = sv_d_[(dim + nd_idx.get_local_id(0) + THREAD_BLOCK_SIZE_uz) * (num_sv_ + PADDING_SIZE_uz) + global_sv_idx];
+                    data_cache_pp_[local_id_0][internal * THREAD_BLOCK_SIZE + local_id_1] = predict_points_d_[(dim + threadIdx_x) * (num_predict_points_ + PADDING_SIZE_uz) + global_pp_idx];
+                    data_cache_pp_[local_id_0 + THREAD_BLOCK_SIZE][internal * THREAD_BLOCK_SIZE + local_id_1] = predict_points_d_[(dim + threadIdx_x + THREAD_BLOCK_SIZE) * (num_predict_points_ + PADDING_SIZE_uz) + global_pp_idx];
+                    data_cache_sv_[local_id_0][internal * THREAD_BLOCK_SIZE + local_id_1] = sv_d_[(dim + threadIdx_x) * (num_sv_ + PADDING_SIZE_uz) + global_sv_idx];
+                    data_cache_sv_[local_id_0 + THREAD_BLOCK_SIZE][internal * THREAD_BLOCK_SIZE + local_id_1] = sv_d_[(dim + threadIdx_x + THREAD_BLOCK_SIZE_uz) * (num_sv_ + PADDING_SIZE_uz) + global_sv_idx];
                 }
                 nd_idx.barrier();  // wait until all work-items loaded their part of the data
 
@@ -337,13 +371,13 @@ class device_kernel_predict {
                 for (unsigned internal = 0; internal < INTERNAL_BLOCK_SIZE; ++internal) {
                     const std::size_t global_sv_idx = sv_idx_linear + static_cast<std::size_t>(internal) * THREAD_BLOCK_SIZE_uz;
 
-                    alpha_cache[local_id_0][internal * THREAD_BLOCK_SIZE + local_id_1] = alpha_d_[(dim + nd_idx.get_local_id(0)) * (num_sv_ + PADDING_SIZE_uz) + global_sv_idx];
-                    alpha_cache[local_id_0 + THREAD_BLOCK_SIZE][internal * THREAD_BLOCK_SIZE + local_id_1] = alpha_d_[(dim + nd_idx.get_local_id(0) + THREAD_BLOCK_SIZE_uz) * (num_sv_ + PADDING_SIZE_uz) + global_sv_idx];
+                    alpha_cache[local_id_0][internal * THREAD_BLOCK_SIZE + local_id_1] = alpha_d_[(dim + threadIdx_x) * (num_sv_ + PADDING_SIZE_uz) + global_sv_idx];
+                    alpha_cache[local_id_0 + THREAD_BLOCK_SIZE][internal * THREAD_BLOCK_SIZE + local_id_1] = alpha_d_[(dim + threadIdx_x + THREAD_BLOCK_SIZE_uz) * (num_sv_ + PADDING_SIZE_uz) + global_sv_idx];
 
                     // the bias (rho) must only be applied once for all support vectors
-                    if (nd_idx.get_group(0) == std::size_t{ 0 }) {
-                        out_cache[local_id_0][internal * THREAD_BLOCK_SIZE + local_id_1] = -rho_d_[dim + nd_idx.get_local_id(0)];
-                        out_cache[local_id_0 + THREAD_BLOCK_SIZE][internal * THREAD_BLOCK_SIZE + local_id_1] = -rho_d_[dim + nd_idx.get_local_id(0) + THREAD_BLOCK_SIZE_uz];
+                    if (blockIdx_x == std::size_t{ 0 }) {
+                        out_cache[local_id_0][internal * THREAD_BLOCK_SIZE + local_id_1] = -rho_d_[dim + threadIdx_x];
+                        out_cache[local_id_0 + THREAD_BLOCK_SIZE][internal * THREAD_BLOCK_SIZE + local_id_1] = -rho_d_[dim + threadIdx_x + THREAD_BLOCK_SIZE_uz];
                     } else {
                         out_cache[local_id_0][internal * THREAD_BLOCK_SIZE + local_id_1] = real_type{ 0.0 };
                         out_cache[local_id_0 + THREAD_BLOCK_SIZE][internal * THREAD_BLOCK_SIZE + local_id_1] = real_type{ 0.0 };
@@ -366,8 +400,8 @@ class device_kernel_predict {
                 for (unsigned internal = 0; internal < INTERNAL_BLOCK_SIZE; ++internal) {
                     const auto global_pp_idx = pp_idx + static_cast<std::size_t>(internal);
 
-                    detail::atomic_op<real_type>{ prediction_d_[global_pp_idx * (num_classes_ + PADDING_SIZE_uz) + dim + nd_idx.get_local_id(0)] } += out_cache[local_id_0][internal * THREAD_BLOCK_SIZE + local_id_1];
-                    detail::atomic_op<real_type>{ prediction_d_[global_pp_idx * (num_classes_ + PADDING_SIZE_uz) + dim + nd_idx.get_local_id(0) + THREAD_BLOCK_SIZE_uz] } += out_cache[local_id_0 + THREAD_BLOCK_SIZE][internal * THREAD_BLOCK_SIZE + local_id_1];
+                    detail::atomic_op<real_type>{ prediction_d_[global_pp_idx * (num_classes_ + PADDING_SIZE_uz) + dim + threadIdx_x] } += out_cache[local_id_0][internal * THREAD_BLOCK_SIZE + local_id_1];
+                    detail::atomic_op<real_type>{ prediction_d_[global_pp_idx * (num_classes_ + PADDING_SIZE_uz) + dim + threadIdx_x + THREAD_BLOCK_SIZE_uz] } += out_cache[local_id_0 + THREAD_BLOCK_SIZE][internal * THREAD_BLOCK_SIZE + local_id_1];
                 }
                 nd_idx.barrier();  // wait until all work-items updated their part of the prediction
             }
@@ -390,6 +424,8 @@ class device_kernel_predict {
     const std::size_t num_sv_;
     const std::size_t num_predict_points_;
     const std::size_t num_features_;
+    const std::size_t grid_x_offset_;
+    const std::size_t grid_y_offset_;
     const std::tuple<Args...> kernel_function_parameter_;
     /// @endcond
 };

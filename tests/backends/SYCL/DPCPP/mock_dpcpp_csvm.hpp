@@ -14,10 +14,19 @@
 #pragma once
 
 #include "plssvm/backends/SYCL/DPCPP/csvm.hpp"  // plssvm::dpcpp::csvm
+#include "plssvm/backends/execution_range.hpp"  // plssvm::detail::dim_type
+
+#include "gmock/gmock.h"  // MOCK_METHOD, ON_CALL, ::testing::Return
+
+#include <cstddef>  // std::size_t
+#include <utility>  // std::forward
+
 
 /**
  * @brief GTest mock class for the SYCL CSVM using DPC++ as SYCL implementation.
+ * @tparam mock_grid_size `true` if the `plssvm::dpcpp::csvm::get_max_grid_size()` function should be mocked, otherwise `false`
  */
+template <bool mock_grid_size>
 class mock_dpcpp_csvm final : public plssvm::dpcpp::csvm {
     using base_type = plssvm::dpcpp::csvm;
 
@@ -26,7 +35,11 @@ class mock_dpcpp_csvm final : public plssvm::dpcpp::csvm {
 
     template <typename... Args>
     explicit mock_dpcpp_csvm(Args &&...args) :
-        base_type{ std::forward<Args>(args)... } { }
+        base_type{ std::forward<Args>(args)... } {
+        this->fake_functions();
+    }
+
+    MOCK_METHOD((plssvm::detail::dim_type), get_max_grid_size, (const std::size_t), (const, override));
 
     // make protected member functions public
     using base_type::assemble_kernel_matrix;
@@ -54,6 +67,20 @@ class mock_dpcpp_csvm final : public plssvm::dpcpp::csvm {
 
     using base_type::data_distribution_;
     using base_type::devices_;
+
+  private:
+    /*
+     * @brief Fake the plssvm::dpcpp::csvm::get_max_grid_size() function if requested.
+     */
+    void fake_functions() const {
+        if constexpr (mock_grid_size) {
+            // mock the function using hardcoded maximum grid sizes
+            ON_CALL(*this, get_max_grid_size).WillByDefault(::testing::Return(plssvm::detail::dim_type{ std::size_t{ 4 }, std::size_t{ 4 }, std::size_t{ 4 } }));
+        } else {
+            // use the actual real implementation otherwise
+            ON_CALL(*this, get_max_grid_size).WillByDefault([this](const std::size_t device_id) { return base_type::get_max_grid_size(device_id); });
+        }
+    }
 };
 
 #endif  // PLSSVM_TESTS_BACKENDS_SYCL_DPCPP_MOCK_DPCPP_CSVM_HPP_
