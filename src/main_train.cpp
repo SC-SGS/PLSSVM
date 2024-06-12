@@ -9,13 +9,12 @@
  */
 
 #include "plssvm/core.hpp"
-#include "plssvm/detail/cmd/data_set_variants.hpp"         // plssvm::detail::cmd::data_set_factory
-#include "plssvm/detail/cmd/parser_train.hpp"              // plssvm::detail::cmd::parser_train
-#include "plssvm/detail/logging.hpp"                       // plssvm::detail::log
-#include "plssvm/detail/tracking/performance_tracker.hpp"  // plssvm::detail::tracking::tracking_entry, PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_SAVE
-#include "plssvm/detail/utility.hpp"                       // PLSSVM_IS_DEFINED
-
+#include "plssvm/detail/cmd/data_set_variants.hpp"              // plssvm::detail::cmd::data_set_factory
+#include "plssvm/detail/cmd/parser_train.hpp"                   // plssvm::detail::cmd::parser_train
+#include "plssvm/detail/logging.hpp"                            // plssvm::detail::log
 #include "plssvm/detail/tracking/hardware_sampler_factory.hpp"  // TODO: !!!
+#include "plssvm/detail/tracking/performance_tracker.hpp"       // plssvm::detail::tracking::tracking_entry, PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_SAVE
+#include "plssvm/detail/utility.hpp"                            // PLSSVM_IS_DEFINED
 
 #include <chrono>       // std::chrono::{steady_clock, duration, milliseconds}, std::chrono_literals namespace
 #include <cstddef>      // std::size_t
@@ -79,6 +78,7 @@ int main(int argc, char *argv[]) {
 
             PLSSVM_DETAIL_TRACKING_HARDWARE_SAMPLER_STOP_SAMPLING();
             PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_HARDWARE_SAMPLER_ENTRIES();
+            PLSSVM_DETAIL_TRACKING_HARDWARE_SAMPLER_CLEANUP();
         };
         std::visit(data_set_visitor, plssvm::detail::cmd::data_set_factory(cmd_parser));
 

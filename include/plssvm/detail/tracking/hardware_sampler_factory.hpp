@@ -21,6 +21,12 @@
 #if defined(PLSSVM_HARDWARE_TRACKING_VIA_NVML_ENABLED)
     #include "plssvm/detail/tracking/nvml_hardware_sampler.hpp"  // plssvm::detail::tracking::nvml_hardware_sampler
 #endif
+
+#if defined(PLSSVM_HARDWARE_TRACKING_VIA_ROCM_SMI_ENABLED)
+    #include "plssvm/detail/tracking/rocm_smi_hardware_sampler.hpp"  // plssvm::detail::tracking::rocm_smi_hardware_sampler
+#endif
+
+#include "plssvm/detail/assert.hpp"          // PLSSVM_ASSERT
 #include "plssvm/detail/utility.hpp"         // plssvm::detail::unreachable
 #include "plssvm/exceptions/exceptions.hpp"  // plssvm::hardware_sampling_exception
 #include "plssvm/target_platforms.hpp"       // plssvm::target_platform
@@ -40,7 +46,7 @@ namespace plssvm::detail::tracking {
 #if defined(PLSSVM_HARDWARE_TRACKING_FOR_CPUS_ENABLED)
             return std::make_unique<turbostat_hardware_sampler>(sampling_interval);
 #else
-            throw hardware_sampling_exception{ "Provided 'cpu' as target_platform, but hardware sampling on CPUs wasn't enabled! Try setting an cpu target during CMake configuration." };  // TODO: exception message?
+            throw hardware_sampling_exception{ "Hardware sampling on CPUs wasn't enabled!" };
 #endif
         case target_platform::gpu_nvidia:
 #if defined(PLSSVM_HARDWARE_TRACKING_VIA_NVML_ENABLED)
@@ -49,7 +55,12 @@ namespace plssvm::detail::tracking {
             throw hardware_sampling_exception{ "Provided 'gpu_nvidia' as target_platform, but hardware sampling on NVIDIA GPUs using NVML wasn't enabled! Try setting an nvidia target during CMake configuration." };
 #endif
         case target_platform::gpu_amd:
-            throw hardware_sampling_exception{ "AMD GPU hardware sampling currently not implemented!" };  // TODO: implement
+
+#if defined(PLSSVM_HARDWARE_TRACKING_VIA_ROCM_SMI_ENABLED)
+            return std::make_unique<rocm_smi_hardware_sampler>(device_id, sampling_interval);
+#else
+            throw hardware_sampling_exception{ "Provided 'gpu_amd' as target_platform, but hardware sampling on AMD GPUs using ROCm SMI wasn't enabled! Try setting an amd target during CMake configuration." };
+#endif
         case target_platform::gpu_intel:
             throw hardware_sampling_exception{ "Intel GPU hardware sampling currently not implemented!" };  // TODO: implement
     }
@@ -57,19 +68,23 @@ namespace plssvm::detail::tracking {
     detail::unreachable();
 }
 
-// TODO: host sampler!?
-
 class global_hardware_sampler {
     friend std::unique_ptr<global_hardware_sampler> std::make_unique<global_hardware_sampler>(const plssvm::target_platform &, const std::size_t &, const std::chrono::milliseconds &);
 
   public:
     static void init_instance(const target_platform target, const std::size_t num_devices, const std::chrono::milliseconds sampling_interval) {
+        PLSSVM_ASSERT(instance_ == nullptr, "Instance already initialized!");
         if (instance_ == nullptr) {
             instance_ = std::make_unique<global_hardware_sampler>(target, num_devices, sampling_interval);
         }
     }
 
+    [[nodiscard]] static std::unique_ptr<global_hardware_sampler> &get_instance_ptr() noexcept {
+        return instance_;
+    }
+
     [[nodiscard]] static global_hardware_sampler &get_instance() noexcept {
+        PLSSVM_ASSERT(instance_ != nullptr, "Can't get an instance from a nullptr! Maybe a call to 'init_instance' is missing?");
         return *instance_;
     }
 
@@ -122,6 +137,9 @@ class global_hardware_sampler {
     #define PLSSVM_DETAIL_TRACKING_HARDWARE_SAMPLER_ADD_EVENT(name) \
         plssvm::detail::tracking::global_hardware_sampler::for_each_sampler(&plssvm::detail::tracking::hardware_sampler::add_event, name);
 
+    #define PLSSVM_DETAIL_TRACKING_HARDWARE_SAMPLER_CLEANUP() \
+        plssvm::detail::tracking::global_hardware_sampler::get_instance_ptr().reset();
+
 #else
 
     #define PLSSVM_DETAIL_TRACKING_HARDWARE_SAMPLER_INIT(target, num_devices)
@@ -130,6 +148,7 @@ class global_hardware_sampler {
     #define PLSSVM_DETAIL_TRACKING_HARDWARE_SAMPLER_PAUSE_SAMPLING()
     #define PLSSVM_DETAIL_TRACKING_HARDWARE_SAMPLER_RESUME_SAMPLING()
     #define PLSSVM_DETAIL_TRACKING_HARDWARE_SAMPLER_ADD_EVENT(name)
+    #define PLSSVM_DETAIL_TRACKING_HARDWARE_SAMPLER_CLEANUP()
 
 #endif
 

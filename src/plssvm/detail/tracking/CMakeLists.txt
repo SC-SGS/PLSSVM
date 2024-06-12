@@ -150,6 +150,28 @@ if (PLSSVM_ENABLE_HARDWARE_SAMPLING)
         target_compile_definitions(${PLSSVM_HARDWARE_TRACKING_LIBRARY_NAME} PUBLIC PLSSVM_HARDWARE_TRACKING_VIA_NVML_ENABLED)
     endif ()
     
+    ####################################################################################################################
+    ##                   amd targets are provided -> enable AMD GPU hardware samping using ROCm SMI                   ##
+    ####################################################################################################################
+    if (DEFINED PLSSVM_AMD_TARGET_ARCHS)
+        ## try finding ROCm SMI
+        find_package(rocm_smi REQUIRED)
+        target_link_libraries(${PLSSVM_HARDWARE_TRACKING_LIBRARY_NAME} PRIVATE -lrocm_smi64)
+        target_include_directories(${PLSSVM_HARDWARE_TRACKING_LIBRARY_NAME} PRIVATE ${ROCM_SMI_INCLUDE_DIR})
+        
+        message(STATUS "Enable sampling of AMD GPU information using ROCm SMI (${ROCM_SMI_INCLUDE_DIR}).")
+        
+        # add source file to source file list
+        target_sources(${PLSSVM_HARDWARE_TRACKING_LIBRARY_NAME} PRIVATE
+                       $<BUILD_INTERFACE:
+                       ${CMAKE_CURRENT_SOURCE_DIR}/rocm_smi_hardware_sampler.cpp;
+                       ${CMAKE_CURRENT_SOURCE_DIR}/rocm_smi_samples.cpp
+                       >)
+        
+        # add compile definition
+        target_compile_definitions(${PLSSVM_HARDWARE_TRACKING_LIBRARY_NAME} PUBLIC PLSSVM_HARDWARE_TRACKING_VIA_ROCM_SMI_ENABLED)
+    endif ()
+    
     ## link base library against hardware sampling library
     target_link_libraries(${PLSSVM_HARDWARE_TRACKING_LIBRARY_NAME} PUBLIC ${PLSSVM_BASE_LIBRARY_NAME})
     
