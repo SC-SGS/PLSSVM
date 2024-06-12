@@ -17,6 +17,7 @@
 #include "fmt/format.h"  // fmt::join
 #include "nvml.h"        // NVML runtime functions
 
+#include <algorithm>  // std::min_element
 #include <chrono>     // std::chrono::{steady_clock, duration_cast, milliseconds}
 #include <cstddef>    // std::size_t
 #include <exception>  // std::exception, std::terminate
@@ -137,6 +138,17 @@ void nvml_hardware_sampler::sampling_loop() {
         PLSSVM_NVML_ERROR_CHECK(nvmlDeviceGetMaxClockInfo(device, NVML_CLOCK_GRAPHICS, &clock_samples_.clock_graph_max));
         PLSSVM_NVML_ERROR_CHECK(nvmlDeviceGetMaxClockInfo(device, NVML_CLOCK_SM, &clock_samples_.clock_sm_max));
         PLSSVM_NVML_ERROR_CHECK(nvmlDeviceGetMaxClockInfo(device, NVML_CLOCK_MEM, &clock_samples_.clock_mem_max));
+
+        unsigned int clock_count{ 128 };
+        std::vector<unsigned int> supported_clocks(clock_count);
+        PLSSVM_NVML_ERROR_CHECK(nvmlDeviceGetSupportedMemoryClocks(device, &clock_count, supported_clocks.data()));
+        supported_clocks.resize(clock_count);
+        clock_samples_.clock_mem_min = *std::min_element(supported_clocks.cbegin(), supported_clocks.cend());
+
+        clock_count = 128u;
+        supported_clocks.resize(128);
+        PLSSVM_NVML_ERROR_CHECK(nvmlDeviceGetSupportedGraphicsClocks(device, clock_samples_.clock_mem_min, &clock_count, supported_clocks.data()));
+        clock_samples_.clock_graph_min = *std::min_element(supported_clocks.cbegin(), supported_clocks.cend());
     }
     // retrieve fixed power related information
     {

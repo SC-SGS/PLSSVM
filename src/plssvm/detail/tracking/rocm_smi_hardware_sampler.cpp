@@ -155,6 +155,9 @@ void rocm_smi_hardware_sampler::sampling_loop() {
                 power_samples_.power_type = "invalid/undetected";
                 break;
         }
+        // rsmi_power_profile_status_t power_profile{};
+        // PLSSVM_ROCM_SMI_ERROR_CHECK(rsmi_dev_power_profile_presets_get(device_id_, std::uint32_t{ 0 }, &power_profile));
+        // power_samples_.available_power_profiles = static_cast<std::uint64_t>(power_profile.available_profiles);
     }
     // retrieve fixed memory related information
     {
@@ -165,8 +168,15 @@ void rocm_smi_hardware_sampler::sampling_loop() {
         memory_samples_.min_num_pcie_lanes = bandwidth_info.lanes[0];
         memory_samples_.max_num_pcie_lanes = bandwidth_info.lanes[bandwidth_info.transfer_rate.num_supported - 1];
     }
-    // retrieve fixed memory related information
+    // retrieve fixed temperature related information
     {
+        std::uint32_t fan_id{ 0 };
+        [[maybe_unused]] std::int64_t fan_speed{ 0 };
+        while (rsmi_dev_fan_speed_get(device_id_, fan_id, &fan_speed) == RSMI_STATUS_SUCCESS) {
+            ++fan_id;
+        }
+        temperature_samples_.num_fans = fan_id;
+
         PLSSVM_ROCM_SMI_ERROR_CHECK(rsmi_dev_fan_speed_max_get(device_id_, std::uint32_t{ 0 }, &temperature_samples_.max_fan_speed));
         PLSSVM_ROCM_SMI_ERROR_CHECK(rsmi_dev_temp_metric_get(device_id_, RSMI_TEMP_TYPE_EDGE, RSMI_TEMP_MIN, &temperature_samples_.temperature_edge_min));
         PLSSVM_ROCM_SMI_ERROR_CHECK(rsmi_dev_temp_metric_get(device_id_, RSMI_TEMP_TYPE_EDGE, RSMI_TEMP_MAX, &temperature_samples_.temperature_edge_max));
@@ -205,6 +215,8 @@ void rocm_smi_hardware_sampler::sampling_loop() {
             PLSSVM_ROCM_SMI_ERROR_CHECK(rsmi_dev_gpu_clk_freq_get(device_id_, RSMI_CLK_TYPE_MEM, &frequency_info));
             sample.clock_memory = frequency_info.frequency[frequency_info.current];
             PLSSVM_ROCM_SMI_ERROR_CHECK(rsmi_dev_metrics_throttle_status_get(device_id_, &sample.clock_throttle_reason));
+            PLSSVM_ROCM_SMI_ERROR_CHECK(rsmi_dev_overdrive_level_get(device_id_, &sample.overdrive_level));
+            PLSSVM_ROCM_SMI_ERROR_CHECK(rsmi_dev_mem_overdrive_level_get(device_id_, &sample.memory_overdrive_level));
             clock_samples_.add_sample(sample);
         }
         // retrieve power related information
@@ -214,7 +226,10 @@ void rocm_smi_hardware_sampler::sampling_loop() {
             PLSSVM_ROCM_SMI_ERROR_CHECK(rsmi_dev_power_get(device_id_, &sample.power_usage, &power_type));
             [[maybe_unused]] std::uint64_t timestamp{};
             [[maybe_unused]] float resolution{};
-            PLSSVM_ROCM_SMI_ERROR_CHECK(rsmi_dev_energy_count_get(device_id_, &sample.power_total_energy_consumption, &resolution, &timestamp));
+            PLSSVM_ROCM_SMI_ERROR_CHECK(rsmi_dev_energy_count_get(device_id_, &sample.power_total_energy_consumption, &resolution, &timestamp));  // TODO: returns the same value for all invocations
+            // rsmi_power_profile_status_t power_profile{};
+            // PLSSVM_ROCM_SMI_ERROR_CHECK(rsmi_dev_power_profile_presets_get(device_id_, std::uint32_t{ 0 }, &power_profile));
+            // sample.power_profile = static_cast<std::uint64_t>(power_profile.current);
             power_samples_.add_sample(sample);
         }
         // retrieve memory related information

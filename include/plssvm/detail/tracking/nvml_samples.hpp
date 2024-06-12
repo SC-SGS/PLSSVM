@@ -91,8 +91,10 @@ class nvml_clock_samples {
         device_id_{ device_id } { }
 
     unsigned int adaptive_clock_status{ 0 };
+    unsigned int clock_graph_min{ 0 };
     unsigned int clock_graph_max{ 0 };
     unsigned int clock_sm_max{ 0 };
+    unsigned int clock_mem_min{ 0 };
     unsigned int clock_mem_max{ 0 };
 
     void add_sample(nvml_clock_sample s) {
@@ -200,6 +202,7 @@ class nvml_memory_samples {
     struct nvml_memory_sample {
         unsigned long long memory_free{ 0 };
         unsigned long long memory_used{ 0 };
+        unsigned int pcie_link_speed{ 0 };
         unsigned int pcie_link_width{ 0 };
         unsigned int pcie_link_generation{ 0 };
     };
@@ -208,18 +211,20 @@ class nvml_memory_samples {
         device_id_{ device_id } { }
 
     unsigned long long memory_total{ 0 };
+    unsigned int pcie_link_max_speed{ 0 };
     unsigned int memory_bus_width{ 0 };
     unsigned int max_pcie_link_generation{ 0 };
-    unsigned int pcie_link_max_speed{ 0 };
 
     void add_sample(nvml_memory_sample s) {
         this->memory_free_.push_back(s.memory_free);
         this->memory_used_.push_back(s.memory_used);
+        this->pcie_link_speed_.push_back(s.pcie_link_speed);
         this->pcie_link_width_.push_back(s.pcie_link_width);
         this->pcie_link_generation_.push_back(s.pcie_link_generation);
 
         PLSSVM_ASSERT(this->num_samples() == this->memory_free_.size(), "Error: number of general samples missmatch!");
         PLSSVM_ASSERT(this->num_samples() == this->memory_used_.size(), "Error: number of general samples missmatch!");
+        PLSSVM_ASSERT(this->num_samples() == this->pcie_link_speed_.size(), "Error: number of general samples missmatch!");
         PLSSVM_ASSERT(this->num_samples() == this->pcie_link_width_.size(), "Error: number of general samples missmatch!");
         PLSSVM_ASSERT(this->num_samples() == this->pcie_link_generation_.size(), "Error: number of general samples missmatch!");
     }
@@ -227,7 +232,7 @@ class nvml_memory_samples {
     nvml_memory_sample operator[](const std::size_t idx) const noexcept {
         PLSSVM_ASSERT(idx < this->num_samples(), "Error: out-of-bounce access with index {} for size {}!", idx, this->num_samples());
 
-        return nvml_memory_sample{ memory_free_[idx], memory_used_[idx], pcie_link_width_[idx], pcie_link_generation_[idx] };
+        return nvml_memory_sample{ memory_free_[idx], memory_used_[idx], pcie_link_speed_[idx], pcie_link_width_[idx], pcie_link_generation_[idx] };
     }
 
     [[nodiscard]] std::size_t get_device() const noexcept { return device_id_; }
@@ -240,6 +245,8 @@ class nvml_memory_samples {
 
     [[nodiscard]] const auto &get_memory_used() const noexcept { return memory_used_; }
 
+    [[nodiscard]] const auto &get_pcie_link_speed() const noexcept { return pcie_link_speed_; }
+
     [[nodiscard]] const auto &get_pcie_link_width() const noexcept { return pcie_link_width_; }
 
     [[nodiscard]] const auto &get_pcie_link_generation() const noexcept { return pcie_link_generation_; }
@@ -249,6 +256,7 @@ class nvml_memory_samples {
 
     std::vector<decltype(nvml_memory_sample::memory_free)> memory_free_{};
     std::vector<decltype(nvml_memory_sample::memory_used)> memory_used_{};
+    std::vector<decltype(nvml_memory_sample::pcie_link_speed)> pcie_link_speed_{};
     std::vector<decltype(nvml_memory_sample::pcie_link_width)> pcie_link_width_{};
     std::vector<decltype(nvml_memory_sample::pcie_link_generation)> pcie_link_generation_{};
 };

@@ -83,6 +83,8 @@ class rocm_smi_clock_samples {
         std::uint64_t clock_socket{ 0 };
         std::uint64_t clock_memory{ 0 };
         std::uint32_t clock_throttle_reason{ 0 };
+        std::uint32_t overdrive_level{ 0 };
+        std::uint32_t memory_overdrive_level{ 0 };
     };
 
     explicit rocm_smi_clock_samples(const std::uint32_t device_id) :
@@ -100,17 +102,21 @@ class rocm_smi_clock_samples {
         this->clock_socket_.push_back(s.clock_socket);
         this->clock_memory_.push_back(s.clock_memory);
         this->clock_throttle_reason_.push_back(s.clock_throttle_reason);
+        this->overdrive_level_.push_back(s.overdrive_level);
+        this->memory_overdrive_level_.push_back(s.memory_overdrive_level);
 
         PLSSVM_ASSERT(this->num_samples() == this->clock_system_.size(), "Error: number of general samples missmatch!");
         PLSSVM_ASSERT(this->num_samples() == this->clock_socket_.size(), "Error: number of general samples missmatch!");
         PLSSVM_ASSERT(this->num_samples() == this->clock_memory_.size(), "Error: number of general samples missmatch!");
         PLSSVM_ASSERT(this->num_samples() == this->clock_throttle_reason_.size(), "Error: number of general samples missmatch!");
+        PLSSVM_ASSERT(this->num_samples() == this->overdrive_level_.size(), "Error: number of general samples missmatch!");
+        PLSSVM_ASSERT(this->num_samples() == this->memory_overdrive_level_.size(), "Error: number of general samples missmatch!");
     }
 
     rocm_smi_clock_sample operator[](const std::size_t idx) const noexcept {
         PLSSVM_ASSERT(idx < this->num_samples(), "Error: out-of-bounce access with index {} for size {}!", idx, this->num_samples());
 
-        return rocm_smi_clock_sample{ clock_system_[idx], clock_socket_[idx], clock_memory_[idx] };
+        return rocm_smi_clock_sample{ clock_system_[idx], clock_socket_[idx], clock_memory_[idx], clock_throttle_reason_[idx], overdrive_level_[idx], memory_overdrive_level_[idx] };
     }
 
     [[nodiscard]] std::uint32_t get_device() const noexcept { return device_id_; }
@@ -127,6 +133,10 @@ class rocm_smi_clock_samples {
 
     [[nodiscard]] const auto &get_clock_throttle_reason() const noexcept { return clock_throttle_reason_; }
 
+    [[nodiscard]] const auto &get_overdrive_level() const noexcept { return overdrive_level_; }
+
+    [[nodiscard]] const auto &get_memory_overdrive_level() const noexcept { return memory_overdrive_level_; }
+
   private:
     std::uint32_t device_id_;
 
@@ -134,6 +144,8 @@ class rocm_smi_clock_samples {
     std::vector<decltype(rocm_smi_clock_sample::clock_socket)> clock_socket_{};
     std::vector<decltype(rocm_smi_clock_sample::clock_memory)> clock_memory_{};
     std::vector<decltype(rocm_smi_clock_sample::clock_throttle_reason)> clock_throttle_reason_{};
+    std::vector<decltype(rocm_smi_clock_sample::overdrive_level)> overdrive_level_{};
+    std::vector<decltype(rocm_smi_clock_sample::memory_overdrive_level)> memory_overdrive_level_{};
 };
 
 std::ostream &operator<<(std::ostream &out, const rocm_smi_clock_samples &samples);
@@ -201,8 +213,6 @@ class rocm_smi_memory_samples {
     std::uint32_t min_num_pcie_lanes{ 0 };
     std::uint32_t max_num_pcie_lanes{ 0 };
 
-    // TODO: rsmi_dev_pci_bandwidth_get?
-
     void add_sample(rocm_smi_memory_sample s) {
         this->memory_used_.push_back(s.memory_used);
         this->pcie_transfer_rate_.push_back(s.pcie_transfer_rate);
@@ -251,6 +261,7 @@ class rocm_smi_temperature_samples {
     explicit rocm_smi_temperature_samples(const std::uint32_t device_id) :
         device_id_{ device_id } { }
 
+    std::uint32_t num_fans{ 0 };
     std::uint64_t max_fan_speed{};
     std::int64_t temperature_edge_min{ 0 };
     std::int64_t temperature_edge_max{ 0 };

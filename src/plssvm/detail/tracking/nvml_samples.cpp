@@ -95,19 +95,22 @@ std::ostream &operator<<(std::ostream &out, const nvml_clock_samples &samples) {
                            "          values: {}\n",
                            samples.adaptive_clock_status == NVML_ADAPTIVE_CLOCKING_INFO_STATUS_ENABLED);
     }
-    // maximum graph clock
-    if (nvml_function_is_supported<decltype(nvml_clock_samples::clock_graph_max)>(nvmlDeviceGetMaxClockInfo, device, NVML_CLOCK_GRAPHICS)) {
-        str += fmt::format("        clock_graph_max:\n"
-                           "          unit: \"MHz\"\n"
-                           "          values: {}\n",
-                           samples.clock_graph_max);
-    }
     // maximum SM clock
     if (nvml_function_is_supported<decltype(nvml_clock_samples::clock_sm_max)>(nvmlDeviceGetMaxClockInfo, device, NVML_CLOCK_SM)) {
         str += fmt::format("        clock_sm_max:\n"
                            "          unit: \"MHz\"\n"
                            "          values: {}\n",
                            samples.clock_sm_max);
+    }
+    // minimum memory clock
+    unsigned int clock_count{ 128 };
+    std::vector<unsigned int> clocks(clock_count);
+    nvmlReturn_t ret = nvmlDeviceGetSupportedMemoryClocks(device, &clock_count, clocks.data());
+    if (ret == NVML_SUCCESS) {
+        str += fmt::format("        clock_mem_min:\n"
+                           "          unit: \"MHz\"\n"
+                           "          values: {}\n",
+                           samples.clock_mem_min);
     }
     // maximum memory clock
     if (nvml_function_is_supported<decltype(nvml_clock_samples::clock_mem_max)>(nvmlDeviceGetMaxClockInfo, device, NVML_CLOCK_MEM)) {
@@ -116,14 +119,24 @@ std::ostream &operator<<(std::ostream &out, const nvml_clock_samples &samples) {
                            "          values: {}\n",
                            samples.clock_mem_max);
     }
-
-    // graph clock
-    if (nvml_function_is_supported<decltype(nvml_clock_samples::nvml_clock_sample::clock_graph)>(nvmlDeviceGetClockInfo, device, NVML_CLOCK_GRAPHICS)) {
-        str += fmt::format("        clock_graph:\n"
+    // minimum graph clock
+    const unsigned int clock = clocks.front();
+    clock_count = 128u;
+    ret = nvmlDeviceGetSupportedGraphicsClocks(device, clock, &clock_count, clocks.data());
+    if (ret == NVML_SUCCESS) {
+        str += fmt::format("        clock_gpu_min:\n"
                            "          unit: \"MHz\"\n"
-                           "          values: [{}]\n",
-                           fmt::join(samples.get_clock_graph(), ", "));
+                           "          values: {}\n",
+                           samples.clock_graph_min);
     }
+    // maximum graph clock
+    if (nvml_function_is_supported<decltype(nvml_clock_samples::clock_graph_max)>(nvmlDeviceGetMaxClockInfo, device, NVML_CLOCK_GRAPHICS)) {
+        str += fmt::format("        clock_gpu_max:\n"
+                           "          unit: \"MHz\"\n"
+                           "          values: {}\n",
+                           samples.clock_graph_max);
+    }
+
     // SM clock
     if (nvml_function_is_supported<decltype(nvml_clock_samples::nvml_clock_sample::clock_sm)>(nvmlDeviceGetClockInfo, device, NVML_CLOCK_SM)) {
         str += fmt::format("        clock_sm:\n"
@@ -137,6 +150,13 @@ std::ostream &operator<<(std::ostream &out, const nvml_clock_samples &samples) {
                            "          unit: \"MHz\"\n"
                            "          values: [{}]\n",
                            fmt::join(samples.get_clock_mem(), ", "));
+    }
+    // graph clock
+    if (nvml_function_is_supported<decltype(nvml_clock_samples::nvml_clock_sample::clock_graph)>(nvmlDeviceGetClockInfo, device, NVML_CLOCK_GRAPHICS)) {
+        str += fmt::format("        clock_gpu:\n"
+                           "          unit: \"MHz\"\n"
+                           "          values: [{}]\n",
+                           fmt::join(samples.get_clock_graph(), ", "));
     }
     // clock throttle reason
     if (nvml_function_is_supported<decltype(nvml_clock_samples::nvml_clock_sample::clock_throttle_reason)>(nvmlDeviceGetCurrentClocksThrottleReasons, device)) {
@@ -227,6 +247,13 @@ std::ostream &operator<<(std::ostream &out, const nvml_memory_samples &samples) 
                            "          values: {}\n",
                            samples.memory_total);
     }
+    // maximum PCIe link speed
+    if (nvml_function_is_supported<decltype(nvml_memory_samples::pcie_link_max_speed)>(nvmlDeviceGetPcieLinkMaxSpeed, device)) {
+        str += fmt::format("        pcie_max_bandwidth:\n"
+                           "          unit: \"MBPS\"\n"
+                           "          values: {}\n",
+                           samples.pcie_link_max_speed);
+    }
     // memory bus width
     if (nvml_function_is_supported<decltype(nvml_memory_samples::memory_bus_width)>(nvmlDeviceGetMemoryBusWidth, device)) {
         str += fmt::format("        memory_bus_width:\n"
@@ -241,13 +268,6 @@ std::ostream &operator<<(std::ostream &out, const nvml_memory_samples &samples) 
                            "          values: {}\n",
                            samples.max_pcie_link_generation);
     }
-    // maximum PCIe link speed
-    if (nvml_function_is_supported<decltype(nvml_memory_samples::pcie_link_max_speed)>(nvmlDeviceGetPcieLinkMaxSpeed, device)) {
-        str += fmt::format("        pcie_link_max_speed:\n"
-                           "          unit: \"MBPS\"\n"
-                           "          values: {}\n",
-                           samples.pcie_link_max_speed);
-    }
 
     // free and used memory size
     if (nvml_function_is_supported<nvmlMemory_t>(nvmlDeviceGetMemoryInfo, device)) {
@@ -259,6 +279,13 @@ std::ostream &operator<<(std::ostream &out, const nvml_memory_samples &samples) 
                            "          values: [{}]\n",
                            fmt::join(samples.get_memory_free(), ", "),
                            fmt::join(samples.get_memory_used(), ", "));
+    }
+    // PCIe link speed
+    if (nvml_function_is_supported<decltype(nvml_memory_samples::nvml_memory_sample::pcie_link_speed)>(nvmlDeviceGetPcieSpeed, device)) {
+        str += fmt::format("        pcie_bandwidth:\n"
+                           "          unit: \"MBPS\"\n"
+                           "          values: [{}]\n",
+                           fmt::join(samples.get_pcie_link_speed(), ", "));
     }
     // PCIe link width
     if (nvml_function_is_supported<decltype(nvml_memory_samples::nvml_memory_sample::pcie_link_width)>(nvmlDeviceGetCurrPcieLinkWidth, device)) {
@@ -308,14 +335,14 @@ std::ostream &operator<<(std::ostream &out, const nvml_temperature_samples &samp
     }
     // temperature threshold GPU max
     if (nvml_function_is_supported<decltype(nvml_temperature_samples::temperature_threshold_gpu_max)>(nvmlDeviceGetTemperatureThreshold, device, NVML_TEMPERATURE_THRESHOLD_GPU_MAX)) {
-        str += fmt::format("        temperature_threshold_gpu_max:\n"
+        str += fmt::format("        temperature_gpu_max:\n"
                            "          unit: \"°C\"\n"
                            "          values: {}\n",
                            samples.temperature_threshold_gpu_max);
     }
     // temperature threshold memory max
     if (nvml_function_is_supported<decltype(nvml_temperature_samples::temperature_threshold_mem_max)>(nvmlDeviceGetTemperatureThreshold, device, NVML_TEMPERATURE_THRESHOLD_MEM_MAX)) {
-        str += fmt::format("        temperature_threshold_mem_max:\n"
+        str += fmt::format("        temperature_mem_max:\n"
                            "          unit: \"°C\"\n"
                            "          values: {}\n",
                            samples.temperature_threshold_mem_max);

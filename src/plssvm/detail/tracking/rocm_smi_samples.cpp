@@ -76,18 +76,6 @@ std::ostream &operator<<(std::ostream &out, const rocm_smi_clock_samples &sample
     const std::uint32_t device = samples.get_device();
 
     std::string str{ "      clock:\n" };
-
-    // system clock min/max frequencies
-    if (rsmi_function_is_supported<rsmi_frequencies_t>(rsmi_dev_gpu_clk_freq_get, device, RSMI_CLK_TYPE_SYS)) {
-        str += fmt::format("        clock_system_min:\n"
-                           "          unit: \"Hz\"\n"
-                           "          values: {}\n"
-                           "        clock_system_max:\n"
-                           "          unit: \"Hz\"\n"
-                           "          values: {}\n",
-                           samples.clock_system_min,
-                           samples.clock_system_max);
-    }
     // socket clock min/max frequencies
     if (rsmi_function_is_supported<rsmi_frequencies_t>(rsmi_dev_gpu_clk_freq_get, device, RSMI_CLK_TYPE_SOC)) {
         str += fmt::format("        clock_socket_min:\n"
@@ -111,13 +99,18 @@ std::ostream &operator<<(std::ostream &out, const rocm_smi_clock_samples &sample
                            samples.clock_memory_max);
     }
 
-    // system clock frequency
+    // system clock min/max frequencies
     if (rsmi_function_is_supported<rsmi_frequencies_t>(rsmi_dev_gpu_clk_freq_get, device, RSMI_CLK_TYPE_SYS)) {
-        str += fmt::format("        clock_system:\n"
+        str += fmt::format("        clock_gpu_min:\n"
                            "          unit: \"Hz\"\n"
-                           "          values: [{}]\n",
-                           fmt::join(samples.get_clock_system(), ", "));
+                           "          values: {}\n"
+                           "        clock_gpu_max:\n"
+                           "          unit: \"Hz\"\n"
+                           "          values: {}\n",
+                           samples.clock_system_min,
+                           samples.clock_system_max);
     }
+
     // socket clock frequency
     if (rsmi_function_is_supported<rsmi_frequencies_t>(rsmi_dev_gpu_clk_freq_get, device, RSMI_CLK_TYPE_SOC)) {
         str += fmt::format("        clock_socket:\n"
@@ -132,12 +125,33 @@ std::ostream &operator<<(std::ostream &out, const rocm_smi_clock_samples &sample
                            "          values: [{}]\n",
                            fmt::join(samples.get_clock_memory(), ", "));
     }
+    // system clock frequency
+    if (rsmi_function_is_supported<rsmi_frequencies_t>(rsmi_dev_gpu_clk_freq_get, device, RSMI_CLK_TYPE_SYS)) {
+        str += fmt::format("        clock_gpu:\n"
+                           "          unit: \"Hz\"\n"
+                           "          values: [{}]\n",
+                           fmt::join(samples.get_clock_system(), ", "));
+    }
     // clock throttle reason
     if (rsmi_function_is_supported<decltype(rocm_smi_clock_samples::rocm_smi_clock_sample::clock_throttle_reason)>(rsmi_dev_metrics_throttle_status_get, device)) {
         str += fmt::format("        clock_throttle_reason:\n"
                            "          unit: \"bitmask\"\n"
                            "          values: [{}]\n",
                            fmt::join(samples.get_clock_throttle_reason(), ", "));
+    }
+    // overdrive level
+    if (rsmi_function_is_supported<decltype(rocm_smi_clock_samples::rocm_smi_clock_sample::overdrive_level)>(rsmi_dev_overdrive_level_get, device)) {
+        str += fmt::format("        overdrive_level:\n"
+                           "          unit: \"percentage\"\n"
+                           "          values: [{}]\n",
+                           fmt::join(samples.get_overdrive_level(), ", "));
+    }
+    // memory overdrive level
+    if (rsmi_function_is_supported<decltype(rocm_smi_clock_samples::rocm_smi_clock_sample::memory_overdrive_level)>(rsmi_dev_mem_overdrive_level_get, device)) {
+        str += fmt::format("        memory_overdrive_level:\n"
+                           "          unit: \"percentage\"\n"
+                           "          values: [{}]\n",
+                           fmt::join(samples.get_memory_overdrive_level(), ", "));
     }
 
     // remove last newline
@@ -270,6 +284,13 @@ std::ostream &operator<<(std::ostream &out, const rocm_smi_temperature_samples &
 
     std::string str{ "      temperature:\n" };
 
+    // number of fans (emulated)
+    if (rsmi_function_is_supported<decltype(rocm_smi_temperature_samples::rocm_smi_temperature_sample::fan_speed)>(rsmi_dev_fan_speed_get, device, std::uint32_t{ 0 })) {
+        str += fmt::format("        num_fans:\n"
+                           "          unit: \"int\"\n"
+                           "          values: {}\n",
+                           samples.num_fans);
+    }
     // maximum fan speed
     if (rsmi_function_is_supported<decltype(rocm_smi_temperature_samples::max_fan_speed)>(rsmi_dev_fan_speed_max_get, device, std::uint32_t{ 0 })) {
         str += fmt::format("        max_fan_speed:\n"
@@ -279,14 +300,14 @@ std::ostream &operator<<(std::ostream &out, const rocm_smi_temperature_samples &
     }
     // minimum GPU edge temperature
     if (rsmi_function_is_supported<decltype(rocm_smi_temperature_samples::temperature_edge_min)>(rsmi_dev_temp_metric_get, device, RSMI_TEMP_TYPE_EDGE, RSMI_TEMP_MIN)) {
-        str += fmt::format("        temperature_edge_min:\n"
+        str += fmt::format("        temperature_gpu_min:\n"
                            "          unit: \"m°C\"\n"
                            "          values: {}\n",
                            samples.temperature_edge_min);
     }
     // maximum GPU edge temperature
     if (rsmi_function_is_supported<decltype(rocm_smi_temperature_samples::temperature_edge_max)>(rsmi_dev_temp_metric_get, device, RSMI_TEMP_TYPE_EDGE, RSMI_TEMP_MAX)) {
-        str += fmt::format("        temperature_edge_max:\n"
+        str += fmt::format("        temperature_gpu_max:\n"
                            "          unit: \"m°C\"\n"
                            "          values: {}\n",
                            samples.temperature_edge_max);
@@ -334,7 +355,7 @@ std::ostream &operator<<(std::ostream &out, const rocm_smi_temperature_samples &
     }
     // GPU edge temperature
     if (rsmi_function_is_supported<decltype(rocm_smi_temperature_samples::rocm_smi_temperature_sample::temperature_edge)>(rsmi_dev_temp_metric_get, device, RSMI_TEMP_TYPE_EDGE, RSMI_TEMP_CURRENT)) {
-        str += fmt::format("        temperature_edge:\n"
+        str += fmt::format("        temperature_gpu:\n"
                            "          unit: \"m°C\"\n"
                            "          values: [{}]\n",
                            fmt::join(samples.get_temperature_edge(), ", "));
