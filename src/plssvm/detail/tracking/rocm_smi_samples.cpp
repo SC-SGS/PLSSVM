@@ -115,28 +115,28 @@ std::ostream &operator<<(std::ostream &out, const rocm_smi_clock_samples &sample
     if (rsmi_function_is_supported<rsmi_frequencies_t>(rsmi_dev_gpu_clk_freq_get, device, RSMI_CLK_TYPE_SYS)) {
         str += fmt::format("        clock_system:\n"
                            "          unit: \"Hz\"\n"
-                           "          values: {}\n",
+                           "          values: [{}]\n",
                            fmt::join(samples.get_clock_system(), ", "));
     }
     // socket clock frequency
     if (rsmi_function_is_supported<rsmi_frequencies_t>(rsmi_dev_gpu_clk_freq_get, device, RSMI_CLK_TYPE_SOC)) {
         str += fmt::format("        clock_socket:\n"
                            "          unit: \"Hz\"\n"
-                           "          values: {}\n",
+                           "          values: [{}]\n",
                            fmt::join(samples.get_clock_socket(), ", "));
     }
     // memory clock frequency
     if (rsmi_function_is_supported<rsmi_frequencies_t>(rsmi_dev_gpu_clk_freq_get, device, RSMI_CLK_TYPE_MEM)) {
         str += fmt::format("        clock_memory:\n"
                            "          unit: \"Hz\"\n"
-                           "          values: {}\n",
+                           "          values: [{}]\n",
                            fmt::join(samples.get_clock_memory(), ", "));
     }
     // clock throttle reason
     if (rsmi_function_is_supported<decltype(rocm_smi_clock_samples::rocm_smi_clock_sample::clock_throttle_reason)>(rsmi_dev_metrics_throttle_status_get, device)) {
         str += fmt::format("        clock_throttle_reason:\n"
                            "          unit: \"bitmask\"\n"
-                           "          values: {}\n",
+                           "          values: [{}]\n",
                            fmt::join(samples.get_clock_throttle_reason(), ", "));
     }
 
