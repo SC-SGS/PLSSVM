@@ -312,6 +312,10 @@ pipeline {
                                         source $SGSSCRATCH/spack/share/spack/setup-env.sh
                                         cd ${WORKSPACE}/plssvm
 
+                                        echo $(hostname)
+                                        echo $(spack arch)
+
+
 
 
                                         spack uninstall -a -y plssvm@develop$([[ $BACKEND == ADAPTIVECPP ]] && echo "%clang" )  \
