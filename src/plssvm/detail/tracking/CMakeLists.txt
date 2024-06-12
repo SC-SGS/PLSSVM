@@ -123,7 +123,7 @@ if (PLSSVM_ENABLE_HARDWARE_SAMPLING)
         
         # add source file to source file list
         target_sources(${PLSSVM_HARDWARE_TRACKING_LIBRARY_NAME} PRIVATE
-                       $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/turbostat_hardware_sampler.cpp>)
+                       $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/cpu_hardware_sampler.cpp>)
         
         # add compile definitions
         target_compile_definitions(${PLSSVM_HARDWARE_TRACKING_LIBRARY_NAME} PUBLIC PLSSVM_HARDWARE_TRACKING_FOR_CPUS_ENABLED)
@@ -142,12 +142,12 @@ if (PLSSVM_ENABLE_HARDWARE_SAMPLING)
         # add source file to source file list
         target_sources(${PLSSVM_HARDWARE_TRACKING_LIBRARY_NAME} PRIVATE
                        $<BUILD_INTERFACE:
-                       ${CMAKE_CURRENT_SOURCE_DIR}/nvml_hardware_sampler.cpp;
+                       ${CMAKE_CURRENT_SOURCE_DIR}/gpu_nvidia_hardware_sampler.cpp;
                        ${CMAKE_CURRENT_SOURCE_DIR}/nvml_samples.cpp
                        >)
         
         # add compile definition
-        target_compile_definitions(${PLSSVM_HARDWARE_TRACKING_LIBRARY_NAME} PUBLIC PLSSVM_HARDWARE_TRACKING_VIA_NVML_ENABLED)
+        target_compile_definitions(${PLSSVM_HARDWARE_TRACKING_LIBRARY_NAME} PUBLIC PLSSVM_HARDWARE_TRACKING_FOR_NVIDIA_GPUS_ENABLED)
     endif ()
     
     ####################################################################################################################
@@ -164,12 +164,12 @@ if (PLSSVM_ENABLE_HARDWARE_SAMPLING)
         # add source file to source file list
         target_sources(${PLSSVM_HARDWARE_TRACKING_LIBRARY_NAME} PRIVATE
                        $<BUILD_INTERFACE:
-                       ${CMAKE_CURRENT_SOURCE_DIR}/rocm_smi_hardware_sampler.cpp;
+                       ${CMAKE_CURRENT_SOURCE_DIR}/gpu_amd_hardware_sampler.cpp;
                        ${CMAKE_CURRENT_SOURCE_DIR}/rocm_smi_samples.cpp
                        >)
         
         # add compile definition
-        target_compile_definitions(${PLSSVM_HARDWARE_TRACKING_LIBRARY_NAME} PUBLIC PLSSVM_HARDWARE_TRACKING_VIA_ROCM_SMI_ENABLED)
+        target_compile_definitions(${PLSSVM_HARDWARE_TRACKING_LIBRARY_NAME} PUBLIC PLSSVM_HARDWARE_TRACKING_FOR_AMD_GPUS_ENABLED)
     endif ()
     
     ## link base library against hardware sampling library

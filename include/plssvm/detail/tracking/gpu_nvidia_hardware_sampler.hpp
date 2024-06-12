@@ -9,8 +9,8 @@
  * @brief Defines a hardware sampler for NVIDIA GPUs using NVIDIA's Management Library (NVML).
  */
 
-#ifndef PLSSVM_DETAIL_TRACKING_NVML_HARDWARE_SAMPLER_HPP_
-#define PLSSVM_DETAIL_TRACKING_NVML_HARDWARE_SAMPLER_HPP_
+#ifndef PLSSVM_DETAIL_TRACKING_GPU_NVIDIA_HARDWARE_SAMPLER_HPP_
+#define PLSSVM_DETAIL_TRACKING_GPU_NVIDIA_HARDWARE_SAMPLER_HPP_
 
 #include "plssvm/detail/tracking/hardware_sampler.hpp"  // plssvm::detail::tracking::hardware_sampler
 #include "plssvm/detail/tracking/nvml_samples.hpp"
@@ -25,16 +25,16 @@ namespace plssvm::detail::tracking {
 
 using namespace std::chrono_literals;
 
-class nvml_hardware_sampler : public hardware_sampler {
+class gpu_nvidia_hardware_sampler : public hardware_sampler {
   public:
-    explicit nvml_hardware_sampler(std::size_t device_id, std::chrono::milliseconds sampling_interval = 100ms);
+    explicit gpu_nvidia_hardware_sampler(std::size_t device_id, std::chrono::milliseconds sampling_interval = 100ms);
 
-    nvml_hardware_sampler(const nvml_hardware_sampler &) = delete;
-    nvml_hardware_sampler(nvml_hardware_sampler &&) noexcept = delete;
-    nvml_hardware_sampler &operator=(const nvml_hardware_sampler &) = delete;
-    nvml_hardware_sampler &operator=(nvml_hardware_sampler &&) noexcept = delete;
+    gpu_nvidia_hardware_sampler(const gpu_nvidia_hardware_sampler &) = delete;
+    gpu_nvidia_hardware_sampler(gpu_nvidia_hardware_sampler &&) noexcept = delete;
+    gpu_nvidia_hardware_sampler &operator=(const gpu_nvidia_hardware_sampler &) = delete;
+    gpu_nvidia_hardware_sampler &operator=(gpu_nvidia_hardware_sampler &&) noexcept = delete;
 
-    ~nvml_hardware_sampler() override;
+    ~gpu_nvidia_hardware_sampler() override;
 
     [[nodiscard]] std::string device_identification() const noexcept override;
 
@@ -58,4 +58,4 @@ class nvml_hardware_sampler : public hardware_sampler {
 
 }  // namespace plssvm::detail::tracking
 
-#endif  // PLSSVM_DETAIL_TRACKING_NVML_HARDWARE_SAMPLER_HPP_
+#endif  // PLSSVM_DETAIL_TRACKING_GPU_NVIDIA_HARDWARE_SAMPLER_HPP_

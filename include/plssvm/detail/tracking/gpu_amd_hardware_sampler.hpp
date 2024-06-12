@@ -9,8 +9,8 @@
  * @brief Defines a hardware sampler for AMD GPUs using AMD's ROCm SMI library.
  */
 
-#ifndef PLSSVM_DETAIL_TRACKING_ROCM_SMI_HARDWARE_SAMPLER_HPP_
-#define PLSSVM_DETAIL_TRACKING_ROCM_SMI_HARDWARE_SAMPLER_HPP_
+#ifndef PLSSVM_DETAIL_TRACKING_GPU_AMD_HARDWARE_SAMPLER_HPP_
+#define PLSSVM_DETAIL_TRACKING_GPU_AMD_HARDWARE_SAMPLER_HPP_
 
 #include "plssvm/detail/tracking/hardware_sampler.hpp"  // plssvm::detail::tracking::hardware_sampler
 #include "plssvm/detail/tracking/rocm_smi_samples.hpp"  // plssvm::detail::tracking::{rocm_smi_general_samples, rocm_smi_clock_samples, rocm_smi_power_samples, rocm_smi_memory_samples, rocm_smi_temperature_samples}
@@ -26,16 +26,16 @@ namespace plssvm::detail::tracking {
 
 using namespace std::chrono_literals;
 
-class rocm_smi_hardware_sampler : public hardware_sampler {
+class gpu_amd_hardware_sampler : public hardware_sampler {
   public:
-    explicit rocm_smi_hardware_sampler(std::size_t device_id, std::chrono::milliseconds sampling_interval = 100ms);
+    explicit gpu_amd_hardware_sampler(std::size_t device_id, std::chrono::milliseconds sampling_interval = 100ms);
 
-    rocm_smi_hardware_sampler(const rocm_smi_hardware_sampler &) = delete;
-    rocm_smi_hardware_sampler(rocm_smi_hardware_sampler &&) noexcept = delete;
-    rocm_smi_hardware_sampler &operator=(const rocm_smi_hardware_sampler &) = delete;
-    rocm_smi_hardware_sampler &operator=(rocm_smi_hardware_sampler &&) noexcept = delete;
+    gpu_amd_hardware_sampler(const gpu_amd_hardware_sampler &) = delete;
+    gpu_amd_hardware_sampler(gpu_amd_hardware_sampler &&) noexcept = delete;
+    gpu_amd_hardware_sampler &operator=(const gpu_amd_hardware_sampler &) = delete;
+    gpu_amd_hardware_sampler &operator=(gpu_amd_hardware_sampler &&) noexcept = delete;
 
-    ~rocm_smi_hardware_sampler() override;
+    ~gpu_amd_hardware_sampler() override;
 
     [[nodiscard]] std::string device_identification() const noexcept override;
 
@@ -60,4 +60,4 @@ class rocm_smi_hardware_sampler : public hardware_sampler {
 
 }  // namespace plssvm::detail::tracking
 
-#endif  // PLSSVM_DETAIL_TRACKING_ROCM_SMI_HARDWARE_SAMPLER_HPP_
+#endif  // PLSSVM_DETAIL_TRACKING_GPU_AMD_HARDWARE_SAMPLER_HPP_

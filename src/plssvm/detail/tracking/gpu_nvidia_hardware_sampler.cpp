@@ -6,7 +6,7 @@
  *          See the LICENSE.md file in the project root for full license information.
  */
 
-#include "plssvm/detail/tracking/nvml_hardware_sampler.hpp"
+#include "plssvm/detail/tracking/gpu_nvidia_hardware_sampler.hpp"
 
 #include "plssvm/detail/tracking/hardware_sampler.hpp"  // plssvm::detail::tracking::hardware_sampler
 #include "plssvm/detail/tracking/nvml_samples.hpp"      // plssvm::detail::tracking::{nvml_general_samples, nvml_clock_samples, nvml_power_samples, nvml_memory_samples, nvml_temperature_samples}
@@ -49,7 +49,7 @@ nvmlDevice_t device_id_to_nvml_handle(const std::size_t device_id) {
     return device;
 }
 
-nvml_hardware_sampler::nvml_hardware_sampler(const std::size_t device_id, const std::chrono::milliseconds sampling_interval) :
+gpu_nvidia_hardware_sampler::gpu_nvidia_hardware_sampler(const std::size_t device_id, const std::chrono::milliseconds sampling_interval) :
     hardware_sampler{ sampling_interval },
     device_id_{ device_id },
     general_samples_{ device_id },
@@ -68,7 +68,7 @@ nvml_hardware_sampler::nvml_hardware_sampler(const std::size_t device_id, const 
     }
 }
 
-nvml_hardware_sampler::~nvml_hardware_sampler() {
+gpu_nvidia_hardware_sampler::~gpu_nvidia_hardware_sampler() {
     try {
         // if this hardware sampler is still sampling, stop it
         if (this->is_sampling()) {
@@ -91,11 +91,11 @@ nvml_hardware_sampler::~nvml_hardware_sampler() {
     }
 }
 
-std::string nvml_hardware_sampler::device_identification() const noexcept {
-    return fmt::format("nvml_device_{}", device_id_);
+std::string gpu_nvidia_hardware_sampler::device_identification() const noexcept {
+    return fmt::format("gpu_nvidia_device_{}", device_id_);
 }
 
-std::string nvml_hardware_sampler::assemble_yaml_sample_string() const {
+std::string gpu_nvidia_hardware_sampler::assemble_yaml_sample_string() const {
     // check whether it's safe to generate the YAML entry
     if (this->is_sampling()) {
         throw hardware_sampling_exception{ "Can't create the final YAML entry if the hardware sampler is still running!" };
@@ -119,7 +119,7 @@ std::string nvml_hardware_sampler::assemble_yaml_sample_string() const {
                        temperature_samples_);
 }
 
-void nvml_hardware_sampler::sampling_loop() {
+void gpu_nvidia_hardware_sampler::sampling_loop() {
     // get the nvml handle from the device_id
     nvmlDevice_t device = device_id_to_nvml_handle(device_id_);
 

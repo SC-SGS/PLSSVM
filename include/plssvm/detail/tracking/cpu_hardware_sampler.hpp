@@ -9,29 +9,29 @@
  * @brief Defines a hardware sampler for CPUs using the turbostat utility (requires root).
  */
 
-#ifndef PLSSVM_DETAIL_TRACKING_TURBOSTAT_HARDWARE_SAMPLER_HPP_
-#define PLSSVM_DETAIL_TRACKING_TURBOSTAT_HARDWARE_SAMPLER_HPP_
+#ifndef PLSSVM_DETAIL_TRACKING_CPU_HARDWARE_SAMPLER_HPP_
+#define PLSSVM_DETAIL_TRACKING_CPU_HARDWARE_SAMPLER_HPP_
 
 #include "plssvm/detail/tracking/hardware_sampler.hpp"  // plssvm::detail::tracking::hardware_sampler
 
-#include <chrono>   // std::chrono::milliseconds, std::chrono_literals namespace
-#include <string>   // std::string
-#include <vector>   // std::vector
+#include <chrono>  // std::chrono::milliseconds, std::chrono_literals namespace
+#include <string>  // std::string
+#include <vector>  // std::vector
 
 namespace plssvm::detail::tracking {
 
 using namespace std::chrono_literals;
 
-class turbostat_hardware_sampler : public hardware_sampler {
+class cpu_hardware_sampler : public hardware_sampler {
   public:
-    explicit turbostat_hardware_sampler(std::chrono::milliseconds sampling_interval = 100ms);
+    explicit cpu_hardware_sampler(std::chrono::milliseconds sampling_interval = 100ms);
 
-    turbostat_hardware_sampler(const turbostat_hardware_sampler &) = delete;
-    turbostat_hardware_sampler(turbostat_hardware_sampler &&) noexcept = delete;
-    turbostat_hardware_sampler &operator=(const turbostat_hardware_sampler &) = delete;
-    turbostat_hardware_sampler &operator=(turbostat_hardware_sampler &&) noexcept = delete;
+    cpu_hardware_sampler(const cpu_hardware_sampler &) = delete;
+    cpu_hardware_sampler(cpu_hardware_sampler &&) noexcept = delete;
+    cpu_hardware_sampler &operator=(const cpu_hardware_sampler &) = delete;
+    cpu_hardware_sampler &operator=(cpu_hardware_sampler &&) noexcept = delete;
 
-    ~turbostat_hardware_sampler() override;
+    ~cpu_hardware_sampler() override;
 
     [[nodiscard]] std::string device_identification() const noexcept override;
 
@@ -47,4 +47,4 @@ class turbostat_hardware_sampler : public hardware_sampler {
 
 }  // namespace plssvm::detail::tracking
 
-#endif  // PLSSVM_DETAIL_TRACKING_TURBOSTAT_HARDWARE_SAMPLER_HPP_
+#endif  // PLSSVM_DETAIL_TRACKING_CPU_HARDWARE_SAMPLER_HPP_

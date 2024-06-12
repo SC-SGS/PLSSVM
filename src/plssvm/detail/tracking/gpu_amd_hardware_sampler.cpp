@@ -6,7 +6,7 @@
  *          See the LICENSE.md file in the project root for full license information.
  */
 
-#include "plssvm/detail/tracking/rocm_smi_hardware_sampler.hpp"
+#include "plssvm/detail/tracking/gpu_amd_hardware_sampler.hpp"
 
 #include "plssvm/detail/tracking/hardware_sampler.hpp"  // plssvm::detail::tracking::hardware_sampler
 #include "plssvm/detail/tracking/rocm_smi_samples.hpp"  // plssvm::detail::tracking::{rocm_smi_general_samples, rocm_smi_clock_samples, rocm_smi_power_samples, rocm_smi_memory_samples, rocm_smi_temperature_samples}
@@ -48,7 +48,7 @@ namespace plssvm::detail::tracking {
     #define PLSSVM_ROCM_SMI_ERROR_CHECK(rocm_smi_func) rocm_smi_func;
 #endif
 
-rocm_smi_hardware_sampler::rocm_smi_hardware_sampler(const std::size_t device_id, const std::chrono::milliseconds sampling_interval) :
+gpu_amd_hardware_sampler::gpu_amd_hardware_sampler(const std::size_t device_id, const std::chrono::milliseconds sampling_interval) :
     hardware_sampler{ sampling_interval },
     device_id_{ static_cast<std::uint32_t>(device_id) },
     general_samples_{ static_cast<std::uint32_t>(device_id) },
@@ -67,7 +67,7 @@ rocm_smi_hardware_sampler::rocm_smi_hardware_sampler(const std::size_t device_id
     }
 }
 
-rocm_smi_hardware_sampler::~rocm_smi_hardware_sampler() {
+gpu_amd_hardware_sampler::~gpu_amd_hardware_sampler() {
     try {
         // if this hardware sampler is still sampling, stop it
         if (this->is_sampling()) {
@@ -90,11 +90,11 @@ rocm_smi_hardware_sampler::~rocm_smi_hardware_sampler() {
     }
 }
 
-std::string rocm_smi_hardware_sampler::device_identification() const noexcept {
-    return fmt::format("rocm_smi_device_{}", device_id_);
+std::string gpu_amd_hardware_sampler::device_identification() const noexcept {
+    return fmt::format("gpu_amd_device_{}", device_id_);
 }
 
-std::string rocm_smi_hardware_sampler::assemble_yaml_sample_string() const {
+std::string gpu_amd_hardware_sampler::assemble_yaml_sample_string() const {
     // check whether it's safe to generate the YAML entry
     if (this->is_sampling()) {
         throw hardware_sampling_exception{ "Can't create the final YAML entry if the hardware sampler is still running!" };
@@ -118,7 +118,7 @@ std::string rocm_smi_hardware_sampler::assemble_yaml_sample_string() const {
                        temperature_samples_);
 }
 
-void rocm_smi_hardware_sampler::sampling_loop() {
+void gpu_amd_hardware_sampler::sampling_loop() {
     //
     // add samples where we only have to retrieve the value once
     //

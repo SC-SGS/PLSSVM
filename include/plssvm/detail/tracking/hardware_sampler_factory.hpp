@@ -15,15 +15,15 @@
 #include "plssvm/detail/tracking/hardware_sampler.hpp"
 
 #if defined(PLSSVM_HARDWARE_TRACKING_FOR_CPUS_ENABLED)
-    #include "plssvm/detail/tracking/turbostat_hardware_sampler.hpp"  // plssvm::detail::tracking::turbostat_hardware_sampler
+    #include "plssvm/detail/tracking/cpu_hardware_sampler.hpp"  // plssvm::detail::tracking::cpu_hardware_sampler
 #endif
 
-#if defined(PLSSVM_HARDWARE_TRACKING_VIA_NVML_ENABLED)
-    #include "plssvm/detail/tracking/nvml_hardware_sampler.hpp"  // plssvm::detail::tracking::nvml_hardware_sampler
+#if defined(PLSSVM_HARDWARE_TRACKING_FOR_NVIDIA_GPUS_ENABLED)
+    #include "plssvm/detail/tracking/gpu_nvidia_hardware_sampler.hpp"  // plssvm::detail::tracking::gpu_nvidia_hardware_sampler
 #endif
 
-#if defined(PLSSVM_HARDWARE_TRACKING_VIA_ROCM_SMI_ENABLED)
-    #include "plssvm/detail/tracking/rocm_smi_hardware_sampler.hpp"  // plssvm::detail::tracking::rocm_smi_hardware_sampler
+#if defined(PLSSVM_HARDWARE_TRACKING_FOR_AMD_GPUS_ENABLED)
+    #include "plssvm/detail/tracking/gpu_amd_hardware_sampler.hpp"  // plssvm::detail::tracking::gpu_amd_hardware_sampler
 #endif
 
 #include "plssvm/detail/assert.hpp"          // PLSSVM_ASSERT
@@ -44,20 +44,20 @@ namespace plssvm::detail::tracking {
             return make_hardware_sampler(determine_default_target_platform(), device_id, sampling_interval);
         case target_platform::cpu:
 #if defined(PLSSVM_HARDWARE_TRACKING_FOR_CPUS_ENABLED)
-            return std::make_unique<turbostat_hardware_sampler>(sampling_interval);
+            return std::make_unique<cpu_hardware_sampler>(sampling_interval);
 #else
             throw hardware_sampling_exception{ "Hardware sampling on CPUs wasn't enabled!" };
 #endif
         case target_platform::gpu_nvidia:
-#if defined(PLSSVM_HARDWARE_TRACKING_VIA_NVML_ENABLED)
-            return std::make_unique<nvml_hardware_sampler>(device_id, sampling_interval);
+#if defined(PLSSVM_HARDWARE_TRACKING_FOR_NVIDIA_GPUS_ENABLED)
+            return std::make_unique<gpu_nvidia_hardware_sampler>(device_id, sampling_interval);
 #else
             throw hardware_sampling_exception{ "Provided 'gpu_nvidia' as target_platform, but hardware sampling on NVIDIA GPUs using NVML wasn't enabled! Try setting an nvidia target during CMake configuration." };
 #endif
         case target_platform::gpu_amd:
 
-#if defined(PLSSVM_HARDWARE_TRACKING_VIA_ROCM_SMI_ENABLED)
-            return std::make_unique<rocm_smi_hardware_sampler>(device_id, sampling_interval);
+#if defined(PLSSVM_HARDWARE_TRACKING_FOR_AMD_GPUS_ENABLED)
+            return std::make_unique<gpu_amd_hardware_sampler>(device_id, sampling_interval);
 #else
             throw hardware_sampling_exception{ "Provided 'gpu_amd' as target_platform, but hardware sampling on AMD GPUs using ROCm SMI wasn't enabled! Try setting an amd target during CMake configuration." };
 #endif

@@ -6,7 +6,7 @@
  *          See the LICENSE.md file in the project root for full license information.
  */
 
-#include "plssvm/detail/tracking/turbostat_hardware_sampler.hpp"
+#include "plssvm/detail/tracking/cpu_hardware_sampler.hpp"
 
 #include "plssvm/detail/assert.hpp"                     // PLSSVM_ASSERT
 #include "plssvm/detail/string_conversion.hpp"          // plssvm::detail::split_as
@@ -24,6 +24,8 @@
 #include <chrono>         // std::chrono::{steady_clock, duration_cast, milliseconds}
 #include <cstddef>        // std::size_t
 #include <cstdio>         // std::FILE, std::fread
+#include <exception>      // std::exception, std::terminate
+#include <iostream>       // std::cerr << std::endl
 #include <regex>          // std::regex, std::regex::extended, std::regex_match
 #include <string>         // std::string
 #include <string_view>    // std::string_view
@@ -48,10 +50,10 @@ namespace plssvm::detail::tracking {
     #define PLSSVM_TURBOSTAT_ERROR_CHECK(turbostat_func) turbostat_func;
 #endif
 
-turbostat_hardware_sampler::turbostat_hardware_sampler(const std::chrono::milliseconds sampling_interval) :
+cpu_hardware_sampler::cpu_hardware_sampler(const std::chrono::milliseconds sampling_interval) :
     hardware_sampler{ sampling_interval } { }
 
-turbostat_hardware_sampler::~turbostat_hardware_sampler() {
+cpu_hardware_sampler::~cpu_hardware_sampler() {
     try {
         // if this hardware sampler is still sampling, stop it
         if (this->is_sampling()) {
@@ -66,11 +68,11 @@ turbostat_hardware_sampler::~turbostat_hardware_sampler() {
     }
 }
 
-std::string turbostat_hardware_sampler::device_identification() const noexcept {
-    return "turbostat_device_cpu";
+std::string cpu_hardware_sampler::device_identification() const noexcept {
+    return "cpu_device";
 }
 
-std::string turbostat_hardware_sampler::assemble_yaml_sample_string() const {
+std::string cpu_hardware_sampler::assemble_yaml_sample_string() const {
     // check whether it's safe to generate the YAML entry
     if (this->is_sampling()) {
         throw hardware_sampling_exception{ "Can't create the final YAML entry if the hardware sampler is still running!" };
@@ -321,7 +323,7 @@ std::string turbostat_hardware_sampler::assemble_yaml_sample_string() const {
     return str;
 }
 
-void turbostat_hardware_sampler::sampling_loop() {
+void cpu_hardware_sampler::sampling_loop() {
     const int options = subprocess_option_e::subprocess_option_search_user_path | subprocess_option_e::subprocess_option_enable_async;
 
 #if defined(PLSSVM_HARDWARE_TRACKING_VIA_LSCPU_ENABLED)
