@@ -359,9 +359,9 @@ pipeline {
                                             ~fast-math \
                                             arch=$(spack arch) \
                                             build_type=$BUILD_TYPE \
-                                            +reducing_label_types # TODO: remove for PR, develop and main \
-                                            $([[ $BACKEND == ADAPTIVECPP ]] && echo "^py-scipy%gcc" ) # TODO: remove, neads a fortran compiler and we currently have no flang installed \
-                                            $([[ $BACKEND == ADAPTIVECPP ]] && echo "^openblas%gcc" ) # TODO: remove, neads a fortran compiler and we currently have no flang installed \
+                                            +reducing_label_types \
+                                            $([[ $BACKEND == ADAPTIVECPP ]] && echo "^py-scipy%gcc" ) \
+                                            $([[ $BACKEND == ADAPTIVECPP ]] && echo "^openblas%gcc" ) \
                                             $([[ $BACKEND == ADAPTIVECPP ]] && echo "^llvm~gold")
                                 '''
 
