@@ -32,9 +32,27 @@ if (TARGET ${PLSSVM_SYCL_BACKEND_DPCPP_LIBRARY_NAME})
     list(APPEND PLSSVM_SYCL_TEST_SOURCES ${CMAKE_CURRENT_LIST_DIR}/DPCPP/dpcpp_csvm.cpp)
 endif ()
 
-# add test executable
-add_executable(${PLSSVM_SYCL_TEST_NAME} ${CMAKE_CURRENT_LIST_DIR}/../../main.cpp ${PLSSVM_SYCL_TEST_SOURCES})
 
+
+
+
+if (DEFINED PLSSVM_SYCL_BACKEND_ADAPTIVECPP_LIBRARY_NAME AND TARGET ${PLSSVM_SYCL_BACKEND_ADAPTIVECPP_LIBRARY_NAME})
+    find_package(AdaptiveCpp CONFIG REQUIRED)
+    add_executable(${PLSSVM_SYCL_TEST_NAME} ${CMAKE_CURRENT_LIST_DIR}/../../main.cpp)
+    add_sycl_to_target(TARGET ${PLSSVM_SYCL_TEST_NAME} SOURCES ${PLSSVM_SYCL_TEST_SOURCES})
+else ()
+    add_executable(${PLSSVM_SYCL_TEST_NAME} ${CMAKE_CURRENT_LIST_DIR}/../../main.cpp ${PLSSVM_SYCL_TEST_SOURCES})
+endif()
+
+if (DEFINED PLSSVM_SYCL_BACKEND_DPCPP_LIBRARY_NAME AND TARGET ${PLSSVM_SYCL_BACKEND_DPCPP_LIBRARY_NAME})
+        if (DEFINED PLSSVM_SYCL_DPCPP_INCLUDE_DIR)
+        target_include_directories(${PLSSVM_SYCL_TEST_NAME} PUBLIC ${PLSSVM_SYCL_DPCPP_INCLUDE_DIR})
+    elseif (DEFINED ENV{PLSSVM_SYCL_DPCPP_INCLUDE_DIR})
+        target_include_directories(${PLSSVM_SYCL_TEST_NAME} PUBLIC $ENV{PLSSVM_SYCL_DPCPP_INCLUDE_DIR})
+    endif ()
+    target_compile_options(${PLSSVM_SYCL_TEST_NAME} PRIVATE -sycl-std=2020 -fsycl -fno-sycl-id-queries-fit-in-int)
+    target_link_options(${PLSSVM_SYCL_TEST_NAME} PRIVATE -fsycl)
+endif ()
 # link against test library
 target_link_libraries(${PLSSVM_SYCL_TEST_NAME} PRIVATE ${PLSSVM_BASE_TEST_LIBRARY_NAME})
 
