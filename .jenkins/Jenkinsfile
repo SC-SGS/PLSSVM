@@ -430,7 +430,7 @@ pipeline {
                             sh '''
                                 source $SGSSCRATCH/spack/share/spack/setup-env.sh
 
-                                cd ${WORKSPACE}/plssvm/test/data/libsvm
+                                cd ${WORKSPACE}/plssvm/tests/data/libsvm
 
                                 spack load "plssvm@develop $([[ $BACKEND == ADAPTIVECPP ]] && echo "%clang" )\
                                         $([[ $BACKEND == OPENMP ]] && echo " +openmp" || echo "~openmp") \
