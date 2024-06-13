@@ -172,6 +172,25 @@ if (PLSSVM_ENABLE_HARDWARE_SAMPLING)
         target_compile_definitions(${PLSSVM_HARDWARE_TRACKING_LIBRARY_NAME} PUBLIC PLSSVM_HARDWARE_TRACKING_FOR_AMD_GPUS_ENABLED)
     endif ()
     
+    ####################################################################################################################
+    ##                intel targets are provided -> enable Intel GPU hardware samping using Level Zero                ##
+    ####################################################################################################################
+    if (DEFINED PLSSVM_INTEL_TARGET_ARCHS)
+        # try finding Level Zero
+        # find_package(LevelZero REQUIRED)
+        target_link_libraries(${PLSSVM_HARDWARE_TRACKING_LIBRARY_NAME} PRIVATE LevelZero::LevelZero)
+        target_include_directories(${PLSSVM_HARDWARE_TRACKING_LIBRARY_NAME} PRIVATE ${LevelZero_INCLUDE_DIRS})
+        
+        message(STATUS "Enable sampling of Intel GPU information using Level Zero.")
+        
+        # add source file to source file list
+        target_sources(${PLSSVM_HARDWARE_TRACKING_LIBRARY_NAME} PRIVATE
+                       $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/gpu_intel_hardware_sampler.cpp>)
+        
+        # add compile definition
+        target_compile_definitions(${PLSSVM_HARDWARE_TRACKING_LIBRARY_NAME} PUBLIC PLSSVM_HARDWARE_TRACKING_FOR_INTEL_GPUS_ENABLED)
+    endif ()
+    
     ## link base library against hardware sampling library
     target_link_libraries(${PLSSVM_HARDWARE_TRACKING_LIBRARY_NAME} PUBLIC ${PLSSVM_BASE_LIBRARY_NAME})
     

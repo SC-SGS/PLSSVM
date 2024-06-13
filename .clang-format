@@ -83,7 +83,7 @@ IncludeCategories:
     Priority: 2
   - Regex: '^"(tests|bindings)/'
     Priority: 3
-  - Regex: '^"(fmt|igor|fast_float|cxxopts|gtest|gmock|pybind|nvml|rocm_smi|subprocess)'
+  - Regex: '^"(fmt|igor|fast_float|cxxopts|gtest|gmock|pybind|nvml|rocm_smi|level_zero|subprocess)'
     Priority: 4
   - Regex: '^.*'
     Priority: 5

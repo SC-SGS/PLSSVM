@@ -26,6 +26,10 @@
     #include "plssvm/detail/tracking/gpu_amd_hardware_sampler.hpp"  // plssvm::detail::tracking::gpu_amd_hardware_sampler
 #endif
 
+#if defined(PLSSVM_HARDWARE_TRACKING_FOR_INTEL_GPUS_ENABLED)
+    #include "plssvm/detail/tracking/gpu_intel_hardware_sampler.hpp"  // plssvm::detail::tracking::gpu_intel_hardware_sampler
+#endif
+
 #include "plssvm/detail/assert.hpp"          // PLSSVM_ASSERT
 #include "plssvm/detail/utility.hpp"         // plssvm::detail::unreachable
 #include "plssvm/exceptions/exceptions.hpp"  // plssvm::hardware_sampling_exception
@@ -62,7 +66,11 @@ namespace plssvm::detail::tracking {
             throw hardware_sampling_exception{ "Provided 'gpu_amd' as target_platform, but hardware sampling on AMD GPUs using ROCm SMI wasn't enabled! Try setting an amd target during CMake configuration." };
 #endif
         case target_platform::gpu_intel:
-            throw hardware_sampling_exception{ "Intel GPU hardware sampling currently not implemented!" };  // TODO: implement
+#if defined(PLSSVM_HARDWARE_TRACKING_FOR_INTEL_GPUS_ENABLED)
+            return std::make_unique<gpu_intel_hardware_sampler>(device_id, sampling_interval);
+#else
+            throw hardware_sampling_exception{ "Provided 'gpu_intel' as target_platform, but hardware sampling on Intel GPUs using Level Zero wasn't enabled! Try setting an intel target during CMake configuration." };
+#endif
     }
 
     detail::unreachable();
