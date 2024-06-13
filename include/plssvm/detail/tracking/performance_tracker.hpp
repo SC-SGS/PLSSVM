@@ -23,11 +23,11 @@
 #include "plssvm/parameter.hpp"                  // plssvm::parameter
 
 #include "fmt/chrono.h"   // format std::chrono types
-#include "fmt/format.h"   // fmt::format, fmt::join, fmt::formatter
+#include "fmt/core.h"     // fmt::format, fmt::formatter
+#include "fmt/format.h"   // fmt::join,
 #include "fmt/ostream.h"  // fmt::ostream_formatter
 
 #include <map>          // std::map
-#include <memory>       // std::shared_ptr
 #include <ostream>      // std::ostream
 #include <string>       // std::string
 #include <string_view>  // std::string_view
