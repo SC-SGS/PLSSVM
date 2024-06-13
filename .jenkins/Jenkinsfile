@@ -452,7 +452,7 @@ pipeline {
                                         arch=$(spack arch)"
 
                                 plssvm-scale --help
-                                plssvm-train 5x4.libsvm ${BACKEND}-${ARCHITECTURE}-${BUILD_TYPE}-${TEST_TYPE}.model
+                                plssvm-train -i 1 5x4.libsvm ${BACKEND}-${ARCHITECTURE}-${BUILD_TYPE}-${TEST_TYPE}.model
                                 plssvm-predict 5x4.libsvm ${BACKEND}-${ARCHITECTURE}-${BUILD_TYPE}-${TEST_TYPE}.model
                                 rm ${BACKEND}-${ARCHITECTURE}-${BUILD_TYPE}-${TEST_TYPE}.model
 
