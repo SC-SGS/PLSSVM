@@ -348,6 +348,7 @@ pipeline {
                                             $([[ $BACKEND == STDPAR-DPCPP ]] && echo "stdparimplementation=icpx" ) \
                                             $([[ $BACKEND == STDPAR-NVHPC ]] && echo "stdparimplementation=nvhpc" ) \
                                             $([[ $BACKEND == STDPAR-ADAPTIVECPP ]] && echo "stdparimplementation=adaptivecpp" ) \
+                                            $([[ $BACKEND == STDPAR-ROC ]] && echo "stdparimplementation=roc" ) \
                                             $([[ $ARCHITECTURE == NVIDIA ]] && echo "cuda_arch=86") \
                                             $([[ $ARCHITECTURE == AMD ]] && echo "amdgpu_target=gfx90a") \
                                             +language_bindings \
@@ -386,6 +387,7 @@ pipeline {
                                     $([[ $BACKEND == STDPAR-DPCPP ]] && echo "stdparimplementation=icpx" ) \
                                     $([[ $BACKEND == STDPAR-NVHPC ]] && echo "stdparimplementation=nvhpc" ) \
                                     $([[ $BACKEND == STDPAR-ADAPTIVECPP ]] && echo "stdparimplementation=adaptivecpp" ) \
+                                    $([[ $BACKEND == STDPAR-ROC ]] && echo "stdparimplementation=roc" ) \
                                     $([[ $ARCHITECTURE == NVIDIA ]] && echo "cuda_arch=86") \
                                     $([[ $ARCHITECTURE == AMD ]] && echo "amdgpu_target=gfx90a") \
                                     build_type=$BUILD_TYPE \
