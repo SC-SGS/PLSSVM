@@ -362,7 +362,7 @@ pipeline {
                                             +reducing_label_types \
                                             $([[ $BACKEND == ADAPTIVECPP ]] && echo "^py-scipy%gcc" ) \
                                             $([[ $BACKEND == ADAPTIVECPP ]] && echo "^openblas%gcc" ) \
-                                            $([[ $BACKEND == ADAPTIVECPP ]] && echo "^llvm~gold")
+                                            $([[ $BACKEND == ADAPTIVECPP ]] && echo "^llvm~gold~libomptarget")
                                 '''
 
                         }
