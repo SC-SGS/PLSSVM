@@ -20,6 +20,7 @@ if (PLSSVM_ENABLE_HARDWARE_SAMPLING)
     ## explicitly set sources
     set(PLSSVM_HARDWARE_TRACKING_SOURCES
         ${CMAKE_CURRENT_LIST_DIR}/hardware_sampler.cpp
+        ${CMAKE_CURRENT_LIST_DIR}/hardware_sampler_factory.cpp
     )
     
     ## set target properties

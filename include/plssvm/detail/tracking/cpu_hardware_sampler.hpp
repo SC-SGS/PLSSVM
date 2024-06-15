@@ -14,7 +14,7 @@
 
 #include "plssvm/detail/tracking/hardware_sampler.hpp"  // plssvm::detail::tracking::hardware_sampler
 
-#include <chrono>  // std::chrono::milliseconds, std::chrono_literals namespace
+#include <chrono>  // std::chrono::{system_clock::time_point, milliseconds}, std::chrono_literals namespace
 #include <string>  // std::string
 #include <vector>  // std::vector
 
@@ -24,7 +24,7 @@ using namespace std::chrono_literals;
 
 class cpu_hardware_sampler : public hardware_sampler {
   public:
-    explicit cpu_hardware_sampler(std::chrono::milliseconds sampling_interval = 100ms);
+    explicit cpu_hardware_sampler(std::chrono::milliseconds sampling_interval = PLSSVM_HARDWARE_SAMPLING_INTERVAL);
 
     cpu_hardware_sampler(const cpu_hardware_sampler &) = delete;
     cpu_hardware_sampler(cpu_hardware_sampler &&) noexcept = delete;
@@ -33,14 +33,13 @@ class cpu_hardware_sampler : public hardware_sampler {
 
     ~cpu_hardware_sampler() override;
 
-    [[nodiscard]] std::string device_identification() const noexcept override;
+    [[nodiscard]] std::string device_identification() const override;
 
-    [[nodiscard]] std::string assemble_yaml_sample_string() const override;
+    [[nodiscard]] std::string generate_yaml_string(std::chrono::system_clock::time_point start_time_point) const override;
 
   private:
     void sampling_loop() final;
 
-    std::vector<std::chrono::milliseconds> time_since_start_{};
     std::vector<std::string> lscpu_data_lines_{};
     std::vector<std::string> turbostat_data_lines_{};
 };

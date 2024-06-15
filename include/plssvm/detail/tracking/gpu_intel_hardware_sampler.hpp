@@ -26,7 +26,7 @@ using namespace std::chrono_literals;
 
 class gpu_intel_hardware_sampler : public hardware_sampler {
   public:
-    explicit gpu_intel_hardware_sampler(std::size_t device_id, std::chrono::milliseconds sampling_interval = 100ms);
+    explicit gpu_intel_hardware_sampler(std::size_t device_id, std::chrono::milliseconds sampling_interval = PLSSVM_HARDWARE_SAMPLING_INTERVAL);
 
     gpu_intel_hardware_sampler(const gpu_intel_hardware_sampler &) = delete;
     gpu_intel_hardware_sampler(gpu_intel_hardware_sampler &&) noexcept = delete;
@@ -35,17 +35,15 @@ class gpu_intel_hardware_sampler : public hardware_sampler {
 
     ~gpu_intel_hardware_sampler() override;
 
-    [[nodiscard]] std::string device_identification() const noexcept override;
+    [[nodiscard]] std::string device_identification() const override;
 
-    [[nodiscard]] std::string assemble_yaml_sample_string() const override;
+    [[nodiscard]] std::string generate_yaml_string(std::chrono::system_clock::time_point start_time_point) const override;
 
   private:
     void sampling_loop() final;
 
     // TODO: correct device handle
     std::size_t device_id_;
-
-    std::vector<std::chrono::milliseconds> time_since_start_{};
 
     inline static std::atomic<int> instances_{ 0 };
     inline static std::atomic<bool> init_finished_{ false };

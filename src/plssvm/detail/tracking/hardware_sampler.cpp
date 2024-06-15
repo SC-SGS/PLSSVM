@@ -8,16 +8,13 @@
 
 #include "plssvm/detail/tracking/hardware_sampler.hpp"
 
-#include "plssvm/exceptions/exceptions.hpp"  // plssvm::hardware_sampling_exception
+#include "plssvm/exceptions/exceptions.hpp"  // plssvm::hardware_sampling_exception, plssvm::exception
 
-#include "fmt/chrono.h"  // format std::chrono types
-#include "fmt/core.h"    // fmt::format
-#include "fmt/format.h"  // fmt::join
-
-#include <chrono>   // std::chrono::{steady_clock, system_clock, duration_cast, milliseconds}
-#include <string>   // std::string
-#include <thread>   // std::thread
-#include <utility>  // std::move
+#include <chrono>     // std::chrono::{steady_clock, system_clock, duration_cast, milliseconds}
+#include <exception>  // std::exception
+#include <iostream>   // std::cerr, std::endl
+#include <string>     // std::string
+#include <thread>     // std::thread
 
 namespace plssvm::detail::tracking {
 
@@ -35,9 +32,21 @@ void hardware_sampler::start_sampling() {
     // start sampling loop
     sampling_started_ = true;
     this->resume_sampling();
-    steady_clock_start_time_ = std::chrono::steady_clock::now();
-    system_clock_start_time_ = std::chrono::system_clock::now();
-    sampling_thread_ = std::thread{ [this]() { this->sampling_loop(); } };
+    sampling_thread_ = std::thread{
+        [this]() {
+            try {
+                this->sampling_loop();
+            } catch (const plssvm::exception &e) {
+                // print useful error message
+                std::cerr << e.what_with_loc() << std::endl;
+                throw;
+            } catch (const std::exception &e) {
+                // print useful error message
+                std::cerr << e.what() << std::endl;
+                throw;
+            }
+        }
+    };
 }
 
 void hardware_sampler::stop_sampling() {
@@ -62,39 +71,6 @@ void hardware_sampler::resume_sampling() {
 
 bool hardware_sampler::is_sampling() const noexcept {
     return sampling_running_;
-}
-
-void hardware_sampler::add_event(std::string name) {
-    events_.add_event(std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - steady_clock_start_time_), std::move(name));
-}
-
-std::string hardware_sampler::assemble_yaml_event_string() const {
-    // check whether it's safe to generate the YAML entry
-    if (this->is_sampling()) {
-        throw hardware_sampling_exception{ "Can't create the final YAML entry if the hardware sampler is still running!" };
-    }
-
-    // generate the YAML entry
-    if (events_.empty()) {
-        // no events -> return empty string
-        return "";
-    } else if (events_.num_events() == 1) {
-        // only a single event has been provided -> no join necessary and do not use []
-        return fmt::format("\n"
-                           "    events:\n"
-                           "      time_points: {}\n"
-                           "      names: {}",
-                           events_.get_times().front(),
-                           events_.get_names().front());
-    } else {
-        // assemble string
-        return fmt::format("\n"
-                           "    events:\n"
-                           "      time_points: [{}]\n"
-                           "      names: [{}]",
-                           fmt::join(events_.get_times(), ", "),
-                           fmt::join(events_.get_names(), ", "));
-    }
 }
 
 }  // namespace plssvm::detail::tracking

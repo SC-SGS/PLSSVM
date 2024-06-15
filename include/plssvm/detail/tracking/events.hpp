@@ -12,9 +12,14 @@
 #ifndef PLSSVM_DETAIL_TRACKING_EVENT_HPP_
 #define PLSSVM_DETAIL_TRACKING_EVENT_HPP_
 
-#include "fmt/core.h"  // fmt::format
+#include "plssvm/detail/assert.hpp"            // PLSSVM_ASSERT
+#include "plssvm/detail/tracking/utility.hpp"  // plssvm::detail::tracking::durations_from_reference_time
 
-#include <chrono>   // std::chrono::steady_clock::duration
+#include "fmt/chrono.h"  // format std::chrono types
+#include "fmt/core.h"    // fmt::format
+#include "fmt/format.h"  // fmt::join
+
+#include <chrono>   // std::chrono::system_clock::time_point
 #include <cstddef>  // std::size_t
 #include <string>   // std::string
 #include <utility>  // std::move
@@ -25,37 +30,53 @@ namespace plssvm::detail::tracking {
 class events {
   public:
     struct event {
-        std::chrono::milliseconds time_since_start;
+        std::chrono::system_clock::time_point time_point;
         std::string name;
-        // TODO: std::ostream overload for proxy
     };
 
     void add_event(event e) {
-        this->times_since_start_.push_back(std::move(e.time_since_start));
+        this->time_points_.push_back(std::move(e.time_point));
         this->names_.push_back(fmt::format("\"{}\"", std::move(e.name)));
-        // TODO: invariant!
+
+        PLSSVM_ASSERT(this->num_events() == this->time_points_.size(), "Error: number of event members mismatch!");
+        PLSSVM_ASSERT(this->num_events() == this->names_.size(), "Error: number of event members mismatch!");
     }
 
-    void add_event(decltype(event::time_since_start) time_since_start, decltype(event::name) name) {
-        this->times_since_start_.push_back(std::move(time_since_start));
+    void add_event(decltype(event::time_point) time_since_start, decltype(event::name) name) {
+        this->time_points_.push_back(std::move(time_since_start));
         this->names_.push_back(fmt::format("\"{}\"", std::move(name)));
-        // TODO: invariant!
+
+        PLSSVM_ASSERT(this->num_events() == this->time_points_.size(), "Error: number of event members mismatch!");
+        PLSSVM_ASSERT(this->num_events() == this->names_.size(), "Error: number of event members mismatch!");
     }
 
     event operator[](const std::size_t idx) const noexcept {
-        return event{ times_since_start_[idx], names_[idx] };
+        return event{ time_points_[idx], names_[idx] };
     }
 
-    [[nodiscard]] std::size_t num_events() const noexcept { return times_since_start_.size(); }
+    [[nodiscard]] std::size_t num_events() const noexcept { return time_points_.size(); }
 
-    [[nodiscard]] bool empty() const noexcept { return times_since_start_.empty(); }
+    [[nodiscard]] bool empty() const noexcept { return time_points_.empty(); }
 
-    [[nodiscard]] const auto &get_times() const noexcept { return times_since_start_; }
+    [[nodiscard]] const auto &get_time_points() const noexcept { return time_points_; }
 
     [[nodiscard]] const auto &get_names() const noexcept { return names_; }
 
+    [[nodiscard]] std::string generate_yaml_string(const std::chrono::system_clock::time_point start_time_point) const noexcept {
+        if (this->empty()) {
+            // no events -> return empty string
+            return std::string{};
+        } else {
+            // assemble string
+            return fmt::format("    time_points: [{}]\n"
+                               "    names: [{}]",
+                               fmt::join(durations_from_reference_time(time_points_, start_time_point), ", "),
+                               fmt::join(names_, ", "));
+        }
+    }
+
   private:
-    std::vector<decltype(event::time_since_start)> times_since_start_;
+    std::vector<decltype(event::time_point)> time_points_;
     std::vector<decltype(event::name)> names_;
 };
 

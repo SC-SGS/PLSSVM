@@ -8,13 +8,14 @@
 
 #include "plssvm/detail/tracking/performance_tracker.hpp"
 
-#include "plssvm/constants.hpp"                    // plssvm::real_type, plssvm::THREAD_BLOCK_SIZE, plssvm::INTERNAL_BLOCK_SIZE, plssvm::FEATURE_BLOCK_SIZE, plssvm::PADDING_SIZE
-#include "plssvm/detail/arithmetic_type_name.hpp"  // plssvm::detail::arithmetic_type_name
-#include "plssvm/detail/assert.hpp"                // PLSSVM_ASSERT, PLSSVM_ASSERT_ENABLED
-#include "plssvm/detail/cmd/parser_predict.hpp"    // plssvm::detail::cmd::parser_predict
-#include "plssvm/detail/cmd/parser_scale.hpp"      // plssvm::detail::cmd::parser_scale
-#include "plssvm/detail/cmd/parser_train.hpp"      // plssvm::detail::cmd::parser_train
-#include "plssvm/detail/tracking/hardware_sampler_factory.hpp"
+#include "plssvm/constants.hpp"                          // plssvm::real_type, plssvm::THREAD_BLOCK_SIZE, plssvm::INTERNAL_BLOCK_SIZE, plssvm::FEATURE_BLOCK_SIZE, plssvm::PADDING_SIZE
+#include "plssvm/detail/arithmetic_type_name.hpp"        // plssvm::detail::arithmetic_type_name
+#include "plssvm/detail/assert.hpp"                      // PLSSVM_ASSERT, PLSSVM_ASSERT_ENABLED
+#include "plssvm/detail/cmd/parser_predict.hpp"          // plssvm::detail::cmd::parser_predict
+#include "plssvm/detail/cmd/parser_scale.hpp"            // plssvm::detail::cmd::parser_scale
+#include "plssvm/detail/cmd/parser_train.hpp"            // plssvm::detail::cmd::parser_train
+#include "plssvm/detail/tracking/hardware_sampler.hpp"   // plssvm::detail::tracking::hardware_sampler
+#include "plssvm/detail/tracking/utility.hpp"            // plssvm::detail::tracking::durations_from_reference_time
 #include "plssvm/detail/utility.hpp"                     // plssvm::detail::current_date_time, PLSSVM_IS_DEFINED
 #include "plssvm/gamma.hpp"                              // plssvm::get_gamma_string
 #include "plssvm/parameter.hpp"                          // plssvm::parameter
@@ -33,11 +34,12 @@
 #endif
 
 #include <algorithm>    // std::max
+#include <chrono>       // std::chrono::system_clock
 #include <cstddef>      // std::size_t
 #include <fstream>      // std::ofstream
 #include <iostream>     // std::ios_base::app, std::ostream, std::clog, std::endl
 #include <map>          // std::map
-#include <memory>       // std::shared_ptr, std::make_shared
+#include <memory>       // std::unique_ptr
 #include <string>       // std::string
 #include <string_view>  // std::string_view
 #include <utility>      // std::move
@@ -131,17 +133,27 @@ void performance_tracker::add_tracking_entry(const tracking_entry<cmd::parser_sc
     }
 }
 
-void performance_tracker::add_hardware_sampling_entries() {
-#if defined(PLSSVM_HARDWARE_SAMPLING_ENABLED)
-    const std::string category_name{ "hardware_samples" };
-    for (const auto &sampler : tracking::global_hardware_sampler::get_instance().get_sampler()) {
-        // assemble sampler content string
-        std::string sampler_content{ sampler->assemble_yaml_event_string() + sampler->assemble_yaml_sample_string() };
+void performance_tracker::add_tracking_entry(const tracking_entry<std::pair<hardware_sampler *, std::chrono::system_clock::time_point>> &entry) {
+    // check whether entries should currently be tracked
+    if (this->is_tracking()) {
+        // add events -> only once!
+        if (!detail::contains(tracking_entries_, entry.entry_category)) {
+            // no hardware samples added yet -> add events
+            if (events_.empty()) {
+                // no events
+            } else {
+                // assemble string
+                tracking_entries_[entry.entry_category]["events"].push_back(fmt::format("\n{}", events_.generate_yaml_string(entry.entry_value.second)));
+            }
+        }
 
-        // add an entry for the current sampler
-        tracking_entries_[category_name][sampler->device_identification()].push_back(std::move(sampler_content));
+        // fill category
+        tracking_entries_[entry.entry_category][entry.entry_name].push_back(entry.entry_value.first->generate_yaml_string(entry.entry_value.second));
     }
-#endif
+}
+
+void performance_tracker::add_event(const std::string name) {
+    events_.add_event(std::chrono::system_clock::now(), std::move(name));
 }
 
 void performance_tracker::save(const std::string &filename) {

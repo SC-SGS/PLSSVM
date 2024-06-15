@@ -10,6 +10,7 @@
 
 #include "plssvm/detail/tracking/hardware_sampler.hpp"  // plssvm::detail::tracking::hardware_sampler
 #include "plssvm/detail/tracking/rocm_smi_samples.hpp"  // plssvm::detail::tracking::{rocm_smi_general_samples, rocm_smi_clock_samples, rocm_smi_power_samples, rocm_smi_memory_samples, rocm_smi_temperature_samples}
+#include "plssvm/detail/tracking/utility.hpp"           // plssvm::detail::tracking::durations_from_reference_time
 #include "plssvm/exceptions/exceptions.hpp"             // plssvm::exception, plssvm::hardware_sampling_exception
 
 #include "fmt/chrono.h"         // format std::chrono types
@@ -30,18 +31,18 @@ namespace plssvm::detail::tracking {
 
 #if defined(PLSSVM_HARDWARE_SAMPLING_ERROR_CHECKS_ENABLED)
 
-    #define PLSSVM_ROCM_SMI_ERROR_CHECK(rocm_smi_func)                                                                     \
-        {                                                                                                                  \
-            const rsmi_status_t errc = rocm_smi_func;                                                                      \
-            if (errc != RSMI_STATUS_SUCCESS && errc != RSMI_STATUS_NOT_SUPPORTED) {                                        \
-                const char *error_string;                                                                                  \
-                const rsmi_status_t ret = rsmi_status_string(errc, &error_string);                                         \
-                if (ret == RSMI_STATUS_SUCCESS) {                                                                          \
-                    throw hardware_sampling_exception{ fmt::format("Error in ROCm SMI function call: {}", error_string) }; \
-                } else {                                                                                                   \
-                    throw hardware_sampling_exception{ "Error in ROCm SMI function call" };                                \
-                }                                                                                                          \
-            }                                                                                                              \
+    #define PLSSVM_ROCM_SMI_ERROR_CHECK(rocm_smi_func)                                                                                                      \
+        {                                                                                                                                                   \
+            const rsmi_status_t errc = rocm_smi_func;                                                                                                       \
+            if (errc != RSMI_STATUS_SUCCESS && errc != RSMI_STATUS_NOT_SUPPORTED) {                                                                         \
+                const char *error_string;                                                                                                                   \
+                const rsmi_status_t ret = rsmi_status_string(errc, &error_string);                                                                          \
+                if (ret == RSMI_STATUS_SUCCESS) {                                                                                                           \
+                    throw hardware_sampling_exception{ fmt::format("Error in ROCm SMI function call \"{}\": {}", #rocm_smi_func, error_string) };           \
+                } else {                                                                                                                                    \
+                    throw hardware_sampling_exception{ fmt::format("Error in ROCm SMI function call \"{}\": {}", #rocm_smi_func, static_cast<int>(errc)) }; \
+                }                                                                                                                                           \
+            }                                                                                                                                               \
         }
 
 #else
@@ -90,27 +91,26 @@ gpu_amd_hardware_sampler::~gpu_amd_hardware_sampler() {
     }
 }
 
-std::string gpu_amd_hardware_sampler::device_identification() const noexcept {
+std::string gpu_amd_hardware_sampler::device_identification() const {
     return fmt::format("gpu_amd_device_{}", device_id_);
 }
 
-std::string gpu_amd_hardware_sampler::assemble_yaml_sample_string() const {
+std::string gpu_amd_hardware_sampler::generate_yaml_string(const std::chrono::system_clock::time_point start_time_point) const {
     // check whether it's safe to generate the YAML entry
     if (this->is_sampling()) {
         throw hardware_sampling_exception{ "Can't create the final YAML entry if the hardware sampler is still running!" };
     }
 
     return fmt::format("\n"
-                       "    samples:\n"
-                       "      sampling_interval: {}\n"
-                       "      time_points: [{}]\n"
+                       "    sampling_interval: {}\n"
+                       "    time_points: [{}]\n"
                        "{}\n"
                        "{}\n"
                        "{}\n"
                        "{}\n"
                        "{}",
                        this->sampling_interval(),
-                       fmt::join(time_since_start_, ", "),
+                       fmt::join(durations_from_reference_time(time_points_, start_time_point), ", "),
                        general_samples_,
                        clock_samples_,
                        power_samples_,
@@ -197,7 +197,7 @@ void gpu_amd_hardware_sampler::sampling_loop() {
 
     while (!sampling_stopped_) {
         // add current time point
-        time_since_start_.push_back(std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - this->sampling_steady_clock_start_time()));
+        time_points_.push_back(std::chrono::system_clock::now());
 
         // retrieve general information
         {
@@ -257,8 +257,8 @@ void gpu_amd_hardware_sampler::sampling_loop() {
             temperature_samples_.add_sample(sample);
         }
 
-        // wait for sampling_interval_ milliseconds to retrieve the next sample
-        std::this_thread::sleep_for(std::chrono::milliseconds{ this->sampling_interval() });
+        // wait for the sampling interval to pass to retrieve the next sample
+        std::this_thread::sleep_for(this->sampling_interval());
     }
 }
 

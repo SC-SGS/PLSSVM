@@ -9,6 +9,7 @@
 #include "plssvm/detail/tracking/gpu_intel_hardware_sampler.hpp"
 
 #include "plssvm/detail/tracking/hardware_sampler.hpp"  // plssvm::detail::tracking::hardware_sampler
+#include "plssvm/detail/tracking/utility.hpp"           // plssvm::detail::tracking::durations_from_reference_time
 #include "plssvm/exceptions/exceptions.hpp"             // plssvm::exception, plssvm::hardware_sampling_exception
 
 #include "fmt/chrono.h"          // format std::chrono types
@@ -134,12 +135,12 @@ std::string_view to_result_string(const ze_result_t errc) {
 
 #if defined(PLSSVM_HARDWARE_SAMPLING_ERROR_CHECKS_ENABLED)
 
-    #define PLSSVM_LEVEL_ZERO_ERROR_CHECK(level_zero_func)                                                                         \
-        {                                                                                                                          \
-            const ze_result_t errc = level_zero_func;                                                                              \
-            if (errc != ZE_RESULT_SUCCESS && errc != ZE_RESULT_ERROR_UNSUPPORTED_FEATURE) {                                        \
-                throw hardware_sampling_exception{ fmt::format("Error in Level Zero function call: {}", to_result_string(errc)) }; \
-            }                                                                                                                      \
+    #define PLSSVM_LEVEL_ZERO_ERROR_CHECK(level_zero_func)                                                                                                  \
+        {                                                                                                                                                   \
+            const ze_result_t errc = level_zero_func;                                                                                                       \
+            if (errc != ZE_RESULT_SUCCESS && errc != ZE_RESULT_ERROR_UNSUPPORTED_FEATURE) {                                                                 \
+                throw hardware_sampling_exception{ fmt::format("Error in Level Zero function call \"{}\": {}", #level_zero_func, to_result_string(errc)) }; \
+            }                                                                                                                                               \
         }
 
 #else
@@ -176,22 +177,21 @@ gpu_intel_hardware_sampler::~gpu_intel_hardware_sampler() {
     }
 }
 
-std::string gpu_intel_hardware_sampler::device_identification() const noexcept {
+std::string gpu_intel_hardware_sampler::device_identification() const {
     return fmt::format("gpu_intel_device_{}", device_id_);
 }
 
-std::string gpu_intel_hardware_sampler::assemble_yaml_sample_string() const {
+std::string gpu_intel_hardware_sampler::generate_yaml_string(const std::chrono::system_clock::time_point start_time_point) const {
     // check whether it's safe to generate the YAML entry
     if (this->is_sampling()) {
         throw hardware_sampling_exception{ "Can't create the final YAML entry if the hardware sampler is still running!" };
     }
 
     return fmt::format("\n"
-                       "    samples:\n"
-                       "      sampling_interval: {}\n"
-                       "      time_points: [{}]\n",
+                       "    sampling_interval: {}\n"
+                       "    time_points: [{}]\n",
                        this->sampling_interval(),
-                       fmt::join(time_since_start_, ", "));
+                       fmt::join(durations_from_reference_time(time_points_, start_time_point), ", "));
 }
 
 void gpu_intel_hardware_sampler::sampling_loop() {
@@ -210,12 +210,12 @@ void gpu_intel_hardware_sampler::sampling_loop() {
 
     while (!sampling_stopped_) {
         // add current time point
-        time_since_start_.push_back(std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - this->sampling_steady_clock_start_time()));
+        time_points_.push_back(std::chrono::system_clock::now());
 
         // TODO: sampled samples
 
-        // wait for sampling_interval_ milliseconds to retrieve the next sample
-        std::this_thread::sleep_for(std::chrono::milliseconds{ this->sampling_interval() });
+        // wait for the sampling interval to pass to retrieve the next sample
+        std::this_thread::sleep_for(this->sampling_interval());
     }
 }
 

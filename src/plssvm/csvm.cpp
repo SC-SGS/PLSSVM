@@ -13,7 +13,7 @@
 #include "plssvm/detail/logging.hpp"                       // plssvm::detail::log
 #include "plssvm/detail/move_only_any.hpp"                 // plssvm::detail::move_only_any
 #include "plssvm/detail/operators.hpp"                     // plssvm operator overloads for vectors
-#include "plssvm/detail/tracking/performance_tracker.hpp"  // PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY, plssvm::detail::tracking::tracking_entry
+#include "plssvm/detail/tracking/performance_tracker.hpp"  // PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY, PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_EVENT, plssvm::detail::tracking::tracking_entry
 #include "plssvm/detail/utility.hpp"                       // plssvm::detail::to_underlying
 #include "plssvm/exceptions/exceptions.hpp"                // plssvm::invalid_parameter_exception
 #include "plssvm/gamma.hpp"                                // plssvm::gamma_type
@@ -62,7 +62,7 @@ std::pair<soa_matrix<real_type>, unsigned long long> csvm::conjugate_gradients(c
     PLSSVM_ASSERT(eps > real_type{ 0.0 }, "The epsilon value must be greater than 0.0!");
     PLSSVM_ASSERT(max_cg_iter > 0, "The maximum number of iterations must be greater than 0!");
 
-    PLSSVM_DETAIL_TRACKING_HARDWARE_SAMPLER_ADD_EVENT("cg start");
+    PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_EVENT("cg start");
 
     const std::size_t num_rows = B.num_cols();
     const std::size_t num_rhs = B.num_rows();
@@ -115,7 +115,7 @@ std::pair<soa_matrix<real_type>, unsigned long long> csvm::conjugate_gradients(c
 
     unsigned long long iter = 0;
     while (iter < max_cg_iter && num_rhs_converged() < num_rhs) {
-        PLSSVM_DETAIL_TRACKING_HARDWARE_SAMPLER_ADD_EVENT(fmt::format("cg iter {} start", iter));
+        PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_EVENT(fmt::format("cg iter {} start", iter));
 
         const std::size_t max_residual_difference_idx = rhs_idx_max_residual_difference();
         detail::log(verbosity_level::full | verbosity_level::timing,
@@ -209,7 +209,7 @@ std::pair<soa_matrix<real_type>, unsigned long long> csvm::conjugate_gradients(c
                 "optimization finished, #iter = {}\n",
                 iter);
 
-    PLSSVM_DETAIL_TRACKING_HARDWARE_SAMPLER_ADD_EVENT("cg end");
+    PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_EVENT("cg end");
 
     return std::make_pair(X, iter);
 }

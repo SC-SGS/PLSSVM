@@ -10,6 +10,7 @@
 
 #include "plssvm/detail/tracking/hardware_sampler.hpp"  // plssvm::detail::tracking::hardware_sampler
 #include "plssvm/detail/tracking/nvml_samples.hpp"      // plssvm::detail::tracking::{nvml_general_samples, nvml_clock_samples, nvml_power_samples, nvml_memory_samples, nvml_temperature_samples}
+#include "plssvm/detail/tracking/utility.hpp"           // plssvm::detail::tracking::durations_from_reference_time
 #include "plssvm/exceptions/exceptions.hpp"             // plssvm::exception, plssvm::hardware_sampling_exception
 
 #include "fmt/chrono.h"  // format std::chrono types
@@ -30,12 +31,12 @@ namespace plssvm::detail::tracking {
 
 #if defined(PLSSVM_HARDWARE_SAMPLING_ERROR_CHECKS_ENABLED)
 
-    #define PLSSVM_NVML_ERROR_CHECK(nvml_func)                                                                                                           \
-        {                                                                                                                                                \
-            const nvmlReturn_t errc = nvml_func;                                                                                                         \
-            if (errc != NVML_SUCCESS && errc != NVML_ERROR_NOT_SUPPORTED) {                                                                              \
-                throw hardware_sampling_exception{ fmt::format("Error in NVML function call: {} ({})", nvmlErrorString(errc), static_cast<int>(errc)) }; \
-            }                                                                                                                                            \
+    #define PLSSVM_NVML_ERROR_CHECK(nvml_func)                                                                                                                              \
+        {                                                                                                                                                                   \
+            const nvmlReturn_t errc = nvml_func;                                                                                                                            \
+            if (errc != NVML_SUCCESS && errc != NVML_ERROR_NOT_SUPPORTED) {                                                                                                 \
+                throw hardware_sampling_exception{ fmt::format("Error in NVML function call \"{}\": {} ({})", #nvml_func, nvmlErrorString(errc), static_cast<int>(errc)) }; \
+            }                                                                                                                                                               \
         }
 
 #else
@@ -91,27 +92,26 @@ gpu_nvidia_hardware_sampler::~gpu_nvidia_hardware_sampler() {
     }
 }
 
-std::string gpu_nvidia_hardware_sampler::device_identification() const noexcept {
+std::string gpu_nvidia_hardware_sampler::device_identification() const {
     return fmt::format("gpu_nvidia_device_{}", device_id_);
 }
 
-std::string gpu_nvidia_hardware_sampler::assemble_yaml_sample_string() const {
+std::string gpu_nvidia_hardware_sampler::generate_yaml_string(const std::chrono::system_clock::time_point start_time_point) const {
     // check whether it's safe to generate the YAML entry
     if (this->is_sampling()) {
         throw hardware_sampling_exception{ "Can't create the final YAML entry if the hardware sampler is still running!" };
     }
 
     return fmt::format("\n"
-                       "    samples:\n"
-                       "      sampling_interval: {}\n"
-                       "      time_points: [{}]\n"
+                       "    sampling_interval: {}\n"
+                       "    time_points: [{}]\n"
                        "{}\n"
                        "{}\n"
                        "{}\n"
                        "{}\n"
                        "{}",
                        this->sampling_interval(),
-                       fmt::join(time_since_start_, ", "),
+                       fmt::join(durations_from_reference_time(time_points_, start_time_point), ", "),
                        general_samples_,
                        clock_samples_,
                        power_samples_,
@@ -172,7 +172,9 @@ void gpu_nvidia_hardware_sampler::sampling_loop() {
     // retrieve fixed temperature related information
     {
         PLSSVM_NVML_ERROR_CHECK(nvmlDeviceGetNumFans(device, &temperature_samples_.num_fans));
-        PLSSVM_NVML_ERROR_CHECK(nvmlDeviceGetMinMaxFanSpeed(device, &temperature_samples_.min_fan_speed, &temperature_samples_.max_fan_speed));
+        if (temperature_samples_.num_fans > 0) {
+            PLSSVM_NVML_ERROR_CHECK(nvmlDeviceGetMinMaxFanSpeed(device, &temperature_samples_.min_fan_speed, &temperature_samples_.max_fan_speed));
+        }
         PLSSVM_NVML_ERROR_CHECK(nvmlDeviceGetTemperatureThreshold(device, NVML_TEMPERATURE_THRESHOLD_GPU_MAX, &temperature_samples_.temperature_threshold_gpu_max));
         PLSSVM_NVML_ERROR_CHECK(nvmlDeviceGetTemperatureThreshold(device, NVML_TEMPERATURE_THRESHOLD_MEM_MAX, &temperature_samples_.temperature_threshold_mem_max));
     }
@@ -183,7 +185,7 @@ void gpu_nvidia_hardware_sampler::sampling_loop() {
 
     while (!sampling_stopped_) {
         // add current time point
-        time_since_start_.push_back(std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - this->sampling_steady_clock_start_time()));
+        time_points_.push_back(std::chrono::system_clock::now());
 
         // retrieve general information
         {
@@ -239,8 +241,8 @@ void gpu_nvidia_hardware_sampler::sampling_loop() {
             temperature_samples_.add_sample(sample);
         }
 
-        // wait for sampling_interval_ milliseconds to retrieve the next sample
-        std::this_thread::sleep_for(std::chrono::milliseconds{ this->sampling_interval() });
+        // wait for the sampling interval to pass to retrieve the next sample
+        std::this_thread::sleep_for(this->sampling_interval());
     }
 }
 

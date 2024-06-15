@@ -12,6 +12,7 @@
 #include "plssvm/detail/string_conversion.hpp"          // plssvm::detail::split_as
 #include "plssvm/detail/string_utility.hpp"             // plssvm::detail::{starts_with, trim}
 #include "plssvm/detail/tracking/hardware_sampler.hpp"  // plssvm::detail::tracking::hardware_sampler
+#include "plssvm/detail/tracking/utility.hpp"           // plssvm::detail::tracking::durations_from_reference_time
 #include "plssvm/detail/utility.hpp"                    // plssvm::detail::contains
 #include "plssvm/exceptions/exceptions.hpp"             // plssvm::hardware_sampling_exception
 
@@ -21,7 +22,7 @@
 #include "subprocess.h"  // subprocess_p, subprocess_option_e, subprocess_create, subprocess_stdout, subprocess_destroy
 
 #include <array>          // std::array
-#include <chrono>         // std::chrono::{steady_clock, duration_cast, milliseconds}
+#include <chrono>         // std::chrono::{system_clock, milliseconds}
 #include <cstddef>        // std::size_t
 #include <cstdio>         // std::FILE, std::fread
 #include <exception>      // std::exception, std::terminate
@@ -38,16 +39,16 @@ namespace plssvm::detail::tracking {
 
 #if defined(PLSSVM_HARDWARE_SAMPLING_ERROR_CHECKS_ENABLED)
 
-    #define PLSSVM_TURBOSTAT_ERROR_CHECK(turbostat_func)                                   \
-        {                                                                                  \
-            const int errc = turbostat_func;                                               \
-            if (errc != 0) {                                                               \
-                throw hardware_sampling_exception{ "Error calling subprocess function!" }; \
-            }                                                                              \
+    #define PLSSVM_SUBPROCESS_ERROR_CHECK(subprocess_func)                                                                      \
+        {                                                                                                                       \
+            const int errc = subprocess_func;                                                                                   \
+            if (errc != 0) {                                                                                                    \
+                throw hardware_sampling_exception{ fmt::format("Error calling subprocess function \"{}\"", #subprocess_func) }; \
+            }                                                                                                                   \
         }
 
 #else
-    #define PLSSVM_TURBOSTAT_ERROR_CHECK(turbostat_func) turbostat_func;
+    #define PLSSVM_SUBPROCESS_ERROR_CHECK(subprocess_func) subprocess_func;
 #endif
 
 cpu_hardware_sampler::cpu_hardware_sampler(const std::chrono::milliseconds sampling_interval) :
@@ -68,11 +69,11 @@ cpu_hardware_sampler::~cpu_hardware_sampler() {
     }
 }
 
-std::string cpu_hardware_sampler::device_identification() const noexcept {
+std::string cpu_hardware_sampler::device_identification() const {
     return "cpu_device";
 }
 
-std::string cpu_hardware_sampler::assemble_yaml_sample_string() const {
+std::string cpu_hardware_sampler::generate_yaml_string([[maybe_unused]] const std::chrono::system_clock::time_point start_time_point) const {
     // check whether it's safe to generate the YAML entry
     if (this->is_sampling()) {
         throw hardware_sampling_exception{ "Can't create the final YAML entry if the hardware sampler is still running!" };
@@ -80,8 +81,7 @@ std::string cpu_hardware_sampler::assemble_yaml_sample_string() const {
 
     // output the basic sample information
     std::string str = fmt::format("\n"
-                                  "    samples:\n"
-                                  "      sampling_interval: {}\n",
+                                  "    sampling_interval: {}\n",
                                   this->sampling_interval());
 
     // create a map to group the output in categories
@@ -132,30 +132,30 @@ std::string cpu_hardware_sampler::assemble_yaml_sample_string() const {
                         for (std::string &flag : flags) {
                             flag = fmt::format("\"{}\"", flag);
                         }
-                        category_groups[category].push_back(fmt::format("        {}:\n"
-                                                                        "          unit: \"string\"\n"
-                                                                        "          values: [{}]\n",
+                        category_groups[category].push_back(fmt::format("      {}:\n"
+                                                                        "        unit: \"string\"\n"
+                                                                        "        values: [{}]\n",
                                                                         yaml_entry_name,
                                                                         fmt::join(flags, ", ")));
                     } else if (unit == "string") {
                         // strings should be quoted
-                        category_groups[category].push_back(fmt::format("        {}:\n"
-                                                                        "          unit: \"string\"\n"
-                                                                        "          values: \"{}\"\n",
+                        category_groups[category].push_back(fmt::format("      {}:\n"
+                                                                        "        unit: \"string\"\n"
+                                                                        "        values: \"{}\"\n",
                                                                         yaml_entry_name,
                                                                         line_value));
                     } else if (unit == "bool") {
                         // enabled should be converted to a boolean value
                         const bool enabled = line_value == "enabled";
-                        category_groups[category].push_back(fmt::format("        {}:\n"
-                                                                        "          unit: \"bool\"\n"
-                                                                        "          values: {}\n",
+                        category_groups[category].push_back(fmt::format("      {}:\n"
+                                                                        "        unit: \"bool\"\n"
+                                                                        "        values: {}\n",
                                                                         yaml_entry_name,
                                                                         enabled));
                     } else {
-                        category_groups[category].push_back(fmt::format("        {}:\n"
-                                                                        "          unit: \"{}\"\n"
-                                                                        "          values: {}\n",
+                        category_groups[category].push_back(fmt::format("      {}:\n"
+                                                                        "        unit: \"{}\"\n"
+                                                                        "        values: {}\n",
                                                                         yaml_entry_name,
                                                                         unit,
                                                                         line_value));
@@ -234,20 +234,22 @@ std::string cpu_hardware_sampler::assemble_yaml_sample_string() const {
         }
 
         // calculate time differences
-        std::vector<std::chrono::milliseconds> times(num_samples);
+
         for (std::size_t header_idx = 0; header_idx < header.size(); ++header_idx) {
             if (header[header_idx] == "Time_Of_Day_Seconds") {
-                const auto start_epoch = std::chrono::duration<double>{ this->sampling_system_clock_start_time().time_since_epoch() };
+                std::vector<std::chrono::system_clock::time_point> times(num_samples);
                 // parse the time information
     #pragma omp parallel for
                 for (std::size_t sample_idx = 0; sample_idx < num_samples; ++sample_idx) {
-                    const auto sample_epoch = std::chrono::duration<double>{ data_samples[header_idx][sample_idx] };
-                    times[sample_idx] = std::chrono::duration_cast<std::chrono::milliseconds>(sample_epoch - start_epoch);
+                    const auto dur = std::chrono::duration<double>{ data_samples[header_idx][sample_idx] };
+                    times[sample_idx] = std::chrono::system_clock::time_point{ std::chrono::duration_cast<std::chrono::milliseconds>(dur) };
                 }
+
+                str += fmt::format("    time_points: [{}]\n",
+                                   fmt::join(durations_from_reference_time(times, start_time_point), ", "));
+                break;
             }
         }
-        str += fmt::format("      time_points: [{}]\n",
-                           fmt::join(times, ", "));
 
         // output data in YAML format
         for (std::size_t header_idx = 0; header_idx < header.size(); ++header_idx) {
@@ -257,10 +259,10 @@ std::string cpu_hardware_sampler::assemble_yaml_sample_string() const {
             } else if (detail::contains(header_to_name_unit_map, header[header_idx])) {
                 const auto &[category, yaml_entry_name, unit] = header_to_name_unit_map.at(header[header_idx]);
                 // better category name and unit available
-                category_groups[category].push_back(fmt::format("        {}:\n"
-                                                                "          turbostat_name: \"{}\"\n"
-                                                                "          unit: \"{}\"\n"
-                                                                "          values: [{}]\n",
+                category_groups[category].push_back(fmt::format("      {}:\n"
+                                                                "        turbostat_name: \"{}\"\n"
+                                                                "        unit: \"{}\"\n"
+                                                                "        values: [{}]\n",
                                                                 yaml_entry_name,
                                                                 header[header_idx],
                                                                 unit,
@@ -282,10 +284,10 @@ std::string cpu_hardware_sampler::assemble_yaml_sample_string() const {
                         // assemble better category name
                         const std::string yaml_category_str = fmt::format(fmt::runtime(yaml_entry_name), state);
 
-                        category_groups[category].push_back(fmt::format("        {}:\n"
-                                                                        "          turbostat_name: \"{}\"\n"
-                                                                        "          unit: \"{}\"\n"
-                                                                        "          values: [{}]\n",
+                        category_groups[category].push_back(fmt::format("      {}:\n"
+                                                                        "        turbostat_name: \"{}\"\n"
+                                                                        "        unit: \"{}\"\n"
+                                                                        "        values: [{}]\n",
                                                                         yaml_category_str,
                                                                         header[header_idx],
                                                                         unit,
@@ -299,8 +301,8 @@ std::string cpu_hardware_sampler::assemble_yaml_sample_string() const {
 
                 // fallback to most simple output if nothing else worked
                 if (!regex_found) {
-                    category_groups["general"].push_back(fmt::format("        {}:\n"
-                                                                     "          values: [{}]\n",
+                    category_groups["general"].push_back(fmt::format("      {}:\n"
+                                                                     "        values: [{}]\n",
                                                                      header[header_idx],
                                                                      fmt::join(data_samples[header_idx], ", ")));
                 }
@@ -311,7 +313,7 @@ std::string cpu_hardware_sampler::assemble_yaml_sample_string() const {
 
     // create final string with grouped entries
     for (const auto &[category, entries] : category_groups) {
-        str += fmt::format("      {}:\n"
+        str += fmt::format("    {}:\n"
                            "{}",
                            category,
                            fmt::join(entries, ""));
@@ -332,10 +334,10 @@ void cpu_hardware_sampler::sampling_loop() {
 
         // create subprocess
         subprocess_s proc{};
-        PLSSVM_TURBOSTAT_ERROR_CHECK(subprocess_create(command_line.data(), options, &proc));
+        PLSSVM_SUBPROCESS_ERROR_CHECK(subprocess_create(command_line.data(), options, &proc));
         // wait until process has finished
         int return_code{};
-        PLSSVM_TURBOSTAT_ERROR_CHECK(subprocess_join(&proc, &return_code));
+        PLSSVM_SUBPROCESS_ERROR_CHECK(subprocess_join(&proc, &return_code));
         if (return_code != 0) {
             throw hardware_sampling_exception{ fmt::format("Error: lscpu returned with {}!", return_code) };
         }
@@ -357,7 +359,7 @@ void cpu_hardware_sampler::sampling_loop() {
         // -q, --quiet       skip decoding system configuration header
         // -e, --enable      enable the additional Time_Of_Day_Seconds column
 
-        const std::string interval = fmt::format("{}", std::chrono::duration<double>{ this->sampling_interval() }.count());
+        const std::string interval = fmt::format("{}", std::chrono::duration<double>{ sampling_interval_ }.count());
 
     #if defined(PLSSVM_HARDWARE_TRACKING_VIA_TURBOSTAT_ROOT)
         // must use sudo
@@ -369,7 +371,7 @@ void cpu_hardware_sampler::sampling_loop() {
 
         // create subprocess
         subprocess_s proc{};
-        PLSSVM_TURBOSTAT_ERROR_CHECK(subprocess_create(command_line.data(), options, &proc));
+        PLSSVM_SUBPROCESS_ERROR_CHECK(subprocess_create(command_line.data(), options, &proc));
 
         //
         // loop until stop_sampling() is called
@@ -395,7 +397,7 @@ void cpu_hardware_sampler::sampling_loop() {
         }
 
         // terminate subprocess -> same as strg + c for turbostat
-        PLSSVM_TURBOSTAT_ERROR_CHECK(subprocess_destroy(&proc));
+        PLSSVM_SUBPROCESS_ERROR_CHECK(subprocess_destroy(&proc));
     }
 #endif
 }

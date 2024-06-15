@@ -14,25 +14,28 @@
 #define PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_HPP_
 #pragma once
 
-#include "plssvm/detail/cmd/parser_predict.hpp"  // plssvm::detail::cmd::parser_predict
-#include "plssvm/detail/cmd/parser_scale.hpp"    // plssvm::detail::cmd::parser_scale
-#include "plssvm/detail/cmd/parser_train.hpp"    // plssvm::detail::cmd::parser_train
-#include "plssvm/detail/memory_size.hpp"         // plssvm::detail::memory_size
-#include "plssvm/detail/type_traits.hpp"         // plssvm::detail::remove_cvref_t
-#include "plssvm/detail/utility.hpp"             // PLSSVM_EXTERN
-#include "plssvm/parameter.hpp"                  // plssvm::parameter
+#include "plssvm/detail/cmd/parser_predict.hpp"         // plssvm::detail::cmd::parser_predict
+#include "plssvm/detail/cmd/parser_scale.hpp"           // plssvm::detail::cmd::parser_scale
+#include "plssvm/detail/cmd/parser_train.hpp"           // plssvm::detail::cmd::parser_train
+#include "plssvm/detail/memory_size.hpp"                // plssvm::detail::memory_size
+#include "plssvm/detail/tracking/events.hpp"            // plssvm::detail::tracking::{events, event}
+#include "plssvm/detail/tracking/hardware_sampler.hpp"  // plssvm::detail::tracking::hardware_sampler
+#include "plssvm/detail/type_traits.hpp"                // plssvm::detail::remove_cvref_t
+#include "plssvm/detail/utility.hpp"                    // PLSSVM_EXTERN
+#include "plssvm/parameter.hpp"                         // plssvm::parameter
 
 #include "fmt/chrono.h"   // format std::chrono types
 #include "fmt/core.h"     // fmt::format, fmt::formatter
 #include "fmt/format.h"   // fmt::join,
 #include "fmt/ostream.h"  // fmt::ostream_formatter
 
+#include <chrono>       // std::chrono::system_clock::time_point
 #include <map>          // std::map
 #include <ostream>      // std::ostream
 #include <string>       // std::string
 #include <string_view>  // std::string_view
 #include <type_traits>  // std::false_type, std::true_type, std::is_same_v
-#include <utility>      // std::move
+#include <utility>      // std::move, std::pair
 #include <vector>       // std::vector
 
 namespace plssvm::detail::tracking {
@@ -202,8 +205,19 @@ class performance_tracker {
      * @param[in] entry the entry to add
      */
     void add_tracking_entry(const tracking_entry<cmd::parser_scale> &entry);
+    /**
+     * @brief Add a tracking_entry encapsulating a `plssvm::detail::tracking::hardware_tracker` (or any of its subclasses) and the hardware sampling start time to this performance tracker.
+     * @details Saves a string containing the entry name and value in a map with the entry category as key.
+     *          Uses the `plssvm::detail::tracking::hardware_tracker::generate_yaml_string` function to generate the tracking entry.
+     * @param[in] entry the entry to add
+     */
+    void add_tracking_entry(const tracking_entry<std::pair<hardware_sampler *, std::chrono::system_clock::time_point>> &entry);
 
-    void add_hardware_sampling_entries();
+    /**
+     * @brief Add an event to this hardware sampler.
+     * @param[in] name the event name
+     */
+    void add_event(std::string name);
 
     /**
      * @brief Write all stored tracking entries to the [YAML](https://yaml.org/) file @p filename.
@@ -248,6 +262,8 @@ class performance_tracker {
   private:
     /// All tracking entries grouped by their specified categories.
     std::map<std::string, std::map<std::string, std::vector<std::string>>> tracking_entries_{};
+    /// All special events mainly used for hardware sampling.
+    events events_{};
     /// Flag indicating whether tracking is currently enabled or disabled. Tracking is enabled by default.
     bool is_tracking_{ true };
 };
@@ -356,15 +372,16 @@ performance_tracker &global_performance_tracker();
     #define PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY(entry) \
         ::plssvm::detail::tracking::global_performance_tracker().add_tracking_entry(entry)
 
-    #define PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_HARDWARE_SAMPLER_ENTRIES() \
-        ::plssvm::detail::tracking::global_performance_tracker().add_hardware_sampling_entries()
+    #define PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_EVENT(event_name) \
+        ::plssvm::detail::tracking::global_performance_tracker().add_event(event_name)
+
 #else
 
     #define PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_PAUSE()
     #define PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_RESUME()
     #define PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_SAVE(filename)
     #define PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY(entry)
-    #define PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_HARDWARE_SAMPLER_ENTRIES()
+    #define PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_EVENT(event_name)
 
 #endif
 
