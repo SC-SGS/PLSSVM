@@ -24,7 +24,7 @@ namespace plssvm::detail::tracking {
 
 using namespace std::chrono_literals;
 
-[[nodiscard]] std::unique_ptr<hardware_sampler> make_hardware_sampler(target_platform target, std::size_t device_id, std::chrono::milliseconds sampling_interval);
+[[nodiscard]] std::unique_ptr<hardware_sampler> make_hardware_sampler(target_platform target, std::size_t device_id, std::chrono::milliseconds sampling_interval = PLSSVM_HARDWARE_SAMPLING_INTERVAL);
 
 [[nodiscard]] std::vector<std::unique_ptr<hardware_sampler>> create_hardware_sampler(target_platform target, std::size_t num_devices, std::chrono::milliseconds sampling_interval = PLSSVM_HARDWARE_SAMPLING_INTERVAL);
 
