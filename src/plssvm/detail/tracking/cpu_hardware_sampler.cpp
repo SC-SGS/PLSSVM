@@ -379,18 +379,21 @@ void cpu_hardware_sampler::sampling_loop() {
 
         std::string buffer(static_cast<std::string::size_type>(4096), '\0');  // 4096 character should be enough
         while (!sampling_stopped_) {
-            // read new stdout line
-            const unsigned read_size = subprocess_read_stdout(&proc, buffer.data(), buffer.size());
-            // add data if anything was read
-            if (read_size > 0u) {
-                // get the read substring
-                const std::string_view read_samples{ buffer.data(), static_cast<std::string::size_type>(read_size) };
-                // split the substring on newlines
-                std::vector<std::string> samples = detail::split_as<std::string>(read_samples, '\n');
-                // append the new lines to the already read lines
-                for (std::string &sample : samples) {
-                    if (!sample.empty()) {
-                        turbostat_data_lines_.push_back(std::move(sample));
+            // only sample values if the sampler currently isn't paused
+            if (this->is_sampling()) {
+                // read new stdout line
+                const unsigned read_size = subprocess_read_stdout(&proc, buffer.data(), buffer.size());
+                // add data if anything was read
+                if (read_size > 0u) {
+                    // get the read substring
+                    const std::string_view read_samples{ buffer.data(), static_cast<std::string::size_type>(read_size) };
+                    // split the substring on newlines
+                    std::vector<std::string> samples = detail::split_as<std::string>(read_samples, '\n');
+                    // append the new lines to the already read lines
+                    for (std::string &sample : samples) {
+                        if (!sample.empty()) {
+                            turbostat_data_lines_.push_back(std::move(sample));
+                        }
                     }
                 }
             }

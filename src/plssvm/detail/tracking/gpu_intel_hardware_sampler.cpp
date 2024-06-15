@@ -209,10 +209,13 @@ void gpu_intel_hardware_sampler::sampling_loop() {
     //
 
     while (!sampling_stopped_) {
-        // add current time point
-        time_points_.push_back(std::chrono::system_clock::now());
+        // only sample values if the sampler currently isn't paused
+        if (this->is_sampling()) {
+            // add current time point
+            time_points_.push_back(std::chrono::system_clock::now());
 
-        // TODO: sampled samples
+            // TODO: sampled samples
+        }
 
         // wait for the sampling interval to pass to retrieve the next sample
         std::this_thread::sleep_for(this->sampling_interval());
