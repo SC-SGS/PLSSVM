@@ -6,13 +6,13 @@
  *          See the LICENSE.md file in the project root for full license information.
  */
 
-#include "plssvm/detail/tracking/gpu_amd_hardware_sampler.hpp"
+#include "plssvm/detail/tracking/gpu_amd/hardware_sampler.hpp"
 
-#include "plssvm/detail/tracking/hardware_sampler.hpp"     // plssvm::detail::tracking::hardware_sampler
-#include "plssvm/detail/tracking/performance_tracker.hpp"  // PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY
-#include "plssvm/detail/tracking/rocm_smi_samples.hpp"     // plssvm::detail::tracking::{rocm_smi_general_samples, rocm_smi_clock_samples, rocm_smi_power_samples, rocm_smi_memory_samples, rocm_smi_temperature_samples}
-#include "plssvm/detail/tracking/utility.hpp"              // plssvm::detail::tracking::durations_from_reference_time
-#include "plssvm/exceptions/exceptions.hpp"                // plssvm::exception, plssvm::hardware_sampling_exception
+#include "plssvm/detail/tracking/gpu_amd/rocm_smi_samples.hpp"  // plssvm::detail::tracking::{rocm_smi_general_samples, rocm_smi_clock_samples, rocm_smi_power_samples, rocm_smi_memory_samples, rocm_smi_temperature_samples}
+#include "plssvm/detail/tracking/hardware_sampler.hpp"          // plssvm::detail::tracking::hardware_sampler
+#include "plssvm/detail/tracking/performance_tracker.hpp"       // PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY
+#include "plssvm/detail/tracking/utility.hpp"                   // plssvm::detail::tracking::durations_from_reference_time
+#include "plssvm/exceptions/exceptions.hpp"                     // plssvm::exception, plssvm::hardware_sampling_exception
 
 #include "fmt/chrono.h"         // format std::chrono types
 #include "fmt/core.h"           // fmt::format

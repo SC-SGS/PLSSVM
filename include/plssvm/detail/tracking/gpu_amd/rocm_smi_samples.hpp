@@ -9,8 +9,8 @@
  * @brief Defines the samples used with ROCm SMI.
  */
 
-#ifndef PLSSVM_DETAIL_TRACKING_ROCM_SMI_SAMPLES_HPP_
-#define PLSSVM_DETAIL_TRACKING_ROCM_SMI_SAMPLES_HPP_
+#ifndef PLSSVM_DETAIL_TRACKING_GPU_AMD_ROCM_SMI_SAMPLES_HPP_
+#define PLSSVM_DETAIL_TRACKING_GPU_AMD_ROCM_SMI_SAMPLES_HPP_
 #pragma once
 
 #include "plssvm/detail/assert.hpp"  // PLSSVM_ASSERT
@@ -162,7 +162,7 @@ class rocm_smi_power_samples {
         device_id_{ device_id } { }
 
     std::uint64_t power_default_cap{ 0 };  // maximum power limit in W
-    std::uint64_t power_cap{ 0 };    // default power limit in W
+    std::uint64_t power_cap{ 0 };          // default power limit in W
     std::string power_type{};
 
     void add_sample(rocm_smi_power_sample s) {
@@ -331,4 +331,4 @@ struct fmt::formatter<plssvm::detail::tracking::rocm_smi_memory_samples> : fmt::
 template <>
 struct fmt::formatter<plssvm::detail::tracking::rocm_smi_temperature_samples> : fmt::ostream_formatter { };
 
-#endif  // PLSSVM_DETAIL_TRACKING_ROCM_SMI_SAMPLES_HPP_
+#endif  // PLSSVM_DETAIL_TRACKING_GPU_AMD_ROCM_SMI_SAMPLES_HPP_

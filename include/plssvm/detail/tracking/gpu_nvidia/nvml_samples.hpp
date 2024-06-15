@@ -9,8 +9,8 @@
  * @brief Defines the samples used with NVML.
  */
 
-#ifndef PLSSVM_DETAIL_TRACKING_NVML_SAMPLES_HPP_
-#define PLSSVM_DETAIL_TRACKING_NVML_SAMPLES_HPP_
+#ifndef PLSSVM_DETAIL_TRACKING_GPU_NVIDIA_NVML_SAMPLES_HPP_
+#define PLSSVM_DETAIL_TRACKING_GPU_NVIDIA_NVML_SAMPLES_HPP_
 #pragma once
 
 #include "plssvm/detail/assert.hpp"  // PLSSVM_ASSERT
@@ -330,4 +330,4 @@ struct fmt::formatter<plssvm::detail::tracking::nvml_memory_samples> : fmt::ostr
 template <>
 struct fmt::formatter<plssvm::detail::tracking::nvml_temperature_samples> : fmt::ostream_formatter { };
 
-#endif  // PLSSVM_DETAIL_TRACKING_NVML_SAMPLES_HPP_
+#endif  // PLSSVM_DETAIL_TRACKING_GPU_NVIDIA_NVML_SAMPLES_HPP_

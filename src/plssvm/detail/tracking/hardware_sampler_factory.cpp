@@ -9,19 +9,19 @@
 #include "plssvm/detail/tracking/hardware_sampler.hpp"
 
 #if defined(PLSSVM_HARDWARE_TRACKING_FOR_CPUS_ENABLED)
-    #include "plssvm/detail/tracking/cpu_hardware_sampler.hpp"  // plssvm::detail::tracking::cpu_hardware_sampler
+    #include "plssvm/detail/tracking/cpu/hardware_sampler.hpp"  // plssvm::detail::tracking::cpu_hardware_sampler
 #endif
 
 #if defined(PLSSVM_HARDWARE_TRACKING_FOR_NVIDIA_GPUS_ENABLED)
-    #include "plssvm/detail/tracking/gpu_nvidia_hardware_sampler.hpp"  // plssvm::detail::tracking::gpu_nvidia_hardware_sampler
+    #include "plssvm/detail/tracking/gpu_nvidia/hardware_sampler.hpp"  // plssvm::detail::tracking::gpu_nvidia_hardware_sampler
 #endif
 
 #if defined(PLSSVM_HARDWARE_TRACKING_FOR_AMD_GPUS_ENABLED)
-    #include "plssvm/detail/tracking/gpu_amd_hardware_sampler.hpp"  // plssvm::detail::tracking::gpu_amd_hardware_sampler
+    #include "plssvm/detail/tracking/gpu_amd/hardware_sampler.hpp"  // plssvm::detail::tracking::gpu_amd_hardware_sampler
 #endif
 
 #if defined(PLSSVM_HARDWARE_TRACKING_FOR_INTEL_GPUS_ENABLED)
-    #include "plssvm/detail/tracking/gpu_intel_hardware_sampler.hpp"  // plssvm::detail::tracking::gpu_intel_hardware_sampler
+    #include "plssvm/detail/tracking/gpu_intel/hardware_sampler.hpp"  // plssvm::detail::tracking::gpu_intel_hardware_sampler
 #endif
 
 #include "plssvm/detail/assert.hpp"          // PLSSVM_ASSERT

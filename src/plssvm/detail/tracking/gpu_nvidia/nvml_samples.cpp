@@ -6,7 +6,7 @@
  *          See the LICENSE.md file in the project root for full license information.
  */
 
-#include "plssvm/detail/tracking/nvml_samples.hpp"
+#include "plssvm/detail/tracking/gpu_nvidia/nvml_samples.hpp"
 
 #include "fmt/core.h"    // fmt::format
 #include "fmt/format.h"  // fmt::join

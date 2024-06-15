@@ -6,7 +6,7 @@
  *          See the LICENSE.md file in the project root for full license information.
  */
 
-#include "plssvm/detail/tracking/rocm_smi_samples.hpp"
+#include "plssvm/detail/tracking/gpu_amd/rocm_smi_samples.hpp"
 
 #include "plssvm/detail/operators.hpp"  // operators namespace
 
