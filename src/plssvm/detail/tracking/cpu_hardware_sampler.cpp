@@ -8,13 +8,14 @@
 
 #include "plssvm/detail/tracking/cpu_hardware_sampler.hpp"
 
-#include "plssvm/detail/assert.hpp"                     // PLSSVM_ASSERT
-#include "plssvm/detail/string_conversion.hpp"          // plssvm::detail::split_as
-#include "plssvm/detail/string_utility.hpp"             // plssvm::detail::{starts_with, trim}
-#include "plssvm/detail/tracking/hardware_sampler.hpp"  // plssvm::detail::tracking::hardware_sampler
-#include "plssvm/detail/tracking/utility.hpp"           // plssvm::detail::tracking::durations_from_reference_time
-#include "plssvm/detail/utility.hpp"                    // plssvm::detail::contains
-#include "plssvm/exceptions/exceptions.hpp"             // plssvm::hardware_sampling_exception
+#include "plssvm/detail/assert.hpp"                        // PLSSVM_ASSERT
+#include "plssvm/detail/string_conversion.hpp"             // plssvm::detail::split_as
+#include "plssvm/detail/string_utility.hpp"                // plssvm::detail::{starts_with, trim}
+#include "plssvm/detail/tracking/hardware_sampler.hpp"     // plssvm::detail::tracking::hardware_sampler
+#include "plssvm/detail/tracking/performance_tracker.hpp"  // PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY
+#include "plssvm/detail/tracking/utility.hpp"              // plssvm::detail::tracking::durations_from_reference_time
+#include "plssvm/detail/utility.hpp"                       // plssvm::detail::contains
+#include "plssvm/exceptions/exceptions.hpp"                // plssvm::hardware_sampling_exception
 
 #include "fmt/chrono.h"  // format std::chrono types
 #include "fmt/core.h"    // fmt::format
@@ -52,7 +53,59 @@ namespace plssvm::detail::tracking {
 #endif
 
 cpu_hardware_sampler::cpu_hardware_sampler(const std::chrono::milliseconds sampling_interval) :
-    hardware_sampler{ sampling_interval } { }
+    hardware_sampler{ sampling_interval } {
+    const int options = subprocess_option_e::subprocess_option_search_user_path | subprocess_option_e::subprocess_option_enable_async;
+
+    // track the lscpu version
+#if defined(PLSSVM_HARDWARE_TRACKING_VIA_LSCPU_ENABLED)
+    {
+        const std::array<const char *, 3> command_line = { "lscpu", "--version", nullptr };
+
+        // create subprocess
+        subprocess_s proc{};
+        PLSSVM_SUBPROCESS_ERROR_CHECK(subprocess_create(command_line.data(), options, &proc));
+        // wait until process has finished
+        int return_code{};
+        PLSSVM_SUBPROCESS_ERROR_CHECK(subprocess_join(&proc, &return_code));
+        if (return_code != 0) {
+            throw hardware_sampling_exception{ fmt::format("Error: lscpu returned with {}!", return_code) };
+        }
+        // get stdout handle and read data
+        std::FILE *stdout_handle = subprocess_stdout(&proc);
+        std::string buffer(static_cast<std::string::size_type>(512), '\0');  // 512 characters should be enough
+        const std::size_t bytes_read = std::fread(buffer.data(), sizeof(typename decltype(buffer)::value_type), buffer.size(), stdout_handle);
+        if (bytes_read == 0) {
+            throw hardware_sampling_exception{ "Error in lscpu: no bytes were read!" };
+        }
+        PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking::tracking_entry{ "dependencies", "lscpu_version", buffer.substr(0, buffer.find_first_of('\n')) }));
+    }
+#endif
+
+    // track the turbostat version
+#if defined(PLSSVM_HARDWARE_TRACKING_VIA_TURBOSTAT_ENABLED)
+{
+    const std::array<const char *, 3> command_line = { "turbostat", "--version", nullptr };
+
+    // create subprocess
+    subprocess_s proc{};
+    PLSSVM_SUBPROCESS_ERROR_CHECK(subprocess_create(command_line.data(), options, &proc));
+    // wait until process has finished
+    int return_code{};
+    PLSSVM_SUBPROCESS_ERROR_CHECK(subprocess_join(&proc, &return_code));
+    if (return_code != 0) {
+        throw hardware_sampling_exception{ fmt::format("Error: lscpu returned with {}!", return_code) };
+    }
+    // get stdout handle and read data
+    std::FILE *stdout_handle = subprocess_stderr(&proc);
+    std::string buffer(static_cast<std::string::size_type>(512), '\0');  // 512 characters should be enough
+    const std::size_t bytes_read = std::fread(buffer.data(), sizeof(typename decltype(buffer)::value_type), buffer.size(), stdout_handle);
+    if (bytes_read == 0) {
+        throw hardware_sampling_exception{ "Error in lscpu: no bytes were read!" };
+    }
+    PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking::tracking_entry{ "dependencies", "turbostat_version", buffer.substr(0, buffer.find_first_of('\n')) }));
+}
+#endif
+}
 
 cpu_hardware_sampler::~cpu_hardware_sampler() {
     try {
@@ -342,9 +395,9 @@ void cpu_hardware_sampler::sampling_loop() {
             throw hardware_sampling_exception{ fmt::format("Error: lscpu returned with {}!", return_code) };
         }
         // get stdout handle and read data
-        std::FILE *lscpu_stdout = subprocess_stdout(&proc);
+        std::FILE *stdout_handle = subprocess_stdout(&proc);
         std::string buffer(static_cast<std::string::size_type>(4096), '\0');  // 4096 character should be enough
-        const std::size_t bytes_read = std::fread(buffer.data(), sizeof(typename decltype(buffer)::value_type), buffer.size(), lscpu_stdout);
+        const std::size_t bytes_read = std::fread(buffer.data(), sizeof(typename decltype(buffer)::value_type), buffer.size(), stdout_handle);
         if (bytes_read == 0) {
             throw hardware_sampling_exception{ "Error in lscpu: no bytes were read!" };
         }

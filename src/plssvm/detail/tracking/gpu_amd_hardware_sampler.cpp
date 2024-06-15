@@ -8,10 +8,11 @@
 
 #include "plssvm/detail/tracking/gpu_amd_hardware_sampler.hpp"
 
-#include "plssvm/detail/tracking/hardware_sampler.hpp"  // plssvm::detail::tracking::hardware_sampler
-#include "plssvm/detail/tracking/rocm_smi_samples.hpp"  // plssvm::detail::tracking::{rocm_smi_general_samples, rocm_smi_clock_samples, rocm_smi_power_samples, rocm_smi_memory_samples, rocm_smi_temperature_samples}
-#include "plssvm/detail/tracking/utility.hpp"           // plssvm::detail::tracking::durations_from_reference_time
-#include "plssvm/exceptions/exceptions.hpp"             // plssvm::exception, plssvm::hardware_sampling_exception
+#include "plssvm/detail/tracking/hardware_sampler.hpp"     // plssvm::detail::tracking::hardware_sampler
+#include "plssvm/detail/tracking/performance_tracker.hpp"  // PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY
+#include "plssvm/detail/tracking/rocm_smi_samples.hpp"     // plssvm::detail::tracking::{rocm_smi_general_samples, rocm_smi_clock_samples, rocm_smi_power_samples, rocm_smi_memory_samples, rocm_smi_temperature_samples}
+#include "plssvm/detail/tracking/utility.hpp"              // plssvm::detail::tracking::durations_from_reference_time
+#include "plssvm/exceptions/exceptions.hpp"                // plssvm::exception, plssvm::hardware_sampling_exception
 
 #include "fmt/chrono.h"         // format std::chrono types
 #include "fmt/core.h"           // fmt::format
@@ -66,6 +67,11 @@ gpu_amd_hardware_sampler::gpu_amd_hardware_sampler(const std::size_t device_id, 
         // wait until init has been finished!
         while (!init_finished_) { }
     }
+
+    // track the ROCm SMI version
+    rsmi_version_t version{};
+    PLSSVM_ROCM_SMI_ERROR_CHECK(rsmi_version_get(&version));
+    PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking::tracking_entry{ "dependencies", "rocm_smi_version", fmt::format("{}.{}.{}_{}", version.major, version.minor, version.patch, version.build) }));
 }
 
 gpu_amd_hardware_sampler::~gpu_amd_hardware_sampler() {

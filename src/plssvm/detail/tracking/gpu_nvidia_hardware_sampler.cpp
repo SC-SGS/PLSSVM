@@ -8,10 +8,11 @@
 
 #include "plssvm/detail/tracking/gpu_nvidia_hardware_sampler.hpp"
 
-#include "plssvm/detail/tracking/hardware_sampler.hpp"  // plssvm::detail::tracking::hardware_sampler
-#include "plssvm/detail/tracking/nvml_samples.hpp"      // plssvm::detail::tracking::{nvml_general_samples, nvml_clock_samples, nvml_power_samples, nvml_memory_samples, nvml_temperature_samples}
-#include "plssvm/detail/tracking/utility.hpp"           // plssvm::detail::tracking::durations_from_reference_time
-#include "plssvm/exceptions/exceptions.hpp"             // plssvm::exception, plssvm::hardware_sampling_exception
+#include "plssvm/detail/tracking/hardware_sampler.hpp"     // plssvm::detail::tracking::hardware_sampler
+#include "plssvm/detail/tracking/nvml_samples.hpp"         // plssvm::detail::tracking::{nvml_general_samples, nvml_clock_samples, nvml_power_samples, nvml_memory_samples, nvml_temperature_samples}
+#include "plssvm/detail/tracking/performance_tracker.hpp"  // PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY
+#include "plssvm/detail/tracking/utility.hpp"              // plssvm::detail::tracking::durations_from_reference_time
+#include "plssvm/exceptions/exceptions.hpp"                // plssvm::exception, plssvm::hardware_sampling_exception
 
 #include "fmt/chrono.h"  // format std::chrono types
 #include "fmt/core.h"    // fmt::format
@@ -67,6 +68,11 @@ gpu_nvidia_hardware_sampler::gpu_nvidia_hardware_sampler(const std::size_t devic
         // wait until init has been finished!
         while (!init_finished_) { }
     }
+
+    // track the NVML version
+    std::string version(NVML_SYSTEM_NVML_VERSION_BUFFER_SIZE, '\0');
+    PLSSVM_NVML_ERROR_CHECK(nvmlSystemGetNVMLVersion(version.data(), NVML_SYSTEM_NVML_VERSION_BUFFER_SIZE));
+    PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking::tracking_entry{ "dependencies", "nvml_version", version }));
 }
 
 gpu_nvidia_hardware_sampler::~gpu_nvidia_hardware_sampler() {

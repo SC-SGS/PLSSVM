@@ -277,6 +277,12 @@ void performance_tracker::save(std::ostream &out) {
 #else
     const std::string igor_version{ "unknown" };
 #endif
+    // subprocess.h version
+#if defined(PLSSVM_subprocess_VERSION)
+    const std::string subprocess_version{ PLSSVM_subprocess_VERSION };
+#else
+    const std::string subprocess_version{ "unknown" };
+#endif
 
     out << "dependencies:\n";
 
@@ -292,10 +298,10 @@ void performance_tracker::save(std::ostream &out) {
             // check if the current tracking entry contains more than a single value
             if (entry_value.size() == 1) {
                 // single value: output it directly
-                out << fmt::format("  {}: {:>{}}\n", entry_name, entry_value.front(), max_dependency_entry_name_length - entry_name.size() + 1);
+                out << fmt::format("  {}: {:>{}}{}\n", entry_name, "", max_dependency_entry_name_length - entry_name.size(), entry_value.front());
             } else {
                 // multiple values: create a YAML array
-                out << fmt::format("  {}: {:>{}}[{}]\n", entry_name, "", max_dependency_entry_name_length - entry_name.size() + 1, fmt::join(entry_value, ", "));
+                out << fmt::format("  {}: {:>{}}[{}]\n", entry_name, "", max_dependency_entry_name_length - entry_name.size(), fmt::join(entry_value, ", "));
             }
         }
     }
@@ -305,11 +311,13 @@ void performance_tracker::save(std::ostream &out) {
         "  cxxopts_version: {}\n"
         "  fmt_version: {}\n"
         "  fast_float_version: {}\n"
-        "  igor_version: {}\n\n",
+        "  igor_version: {}\n"
+        "  subprocess_version: {}\n\n",
         fmt::format("{:<{}}\"{}\"", "", max_dependency_entry_name_length - 15, cxxopts_version),
         fmt::format("{:<{}}\"{}\"", "", max_dependency_entry_name_length - 11, fmt_version),
         fmt::format("{:<{}}\"{}\"", "", max_dependency_entry_name_length - 18, fast_float_version),
-        fmt::format("{:<{}}\"{}\"", "", max_dependency_entry_name_length - 12, igor_version));
+        fmt::format("{:<{}}\"{}\"", "", max_dependency_entry_name_length - 12, igor_version),
+        fmt::format("{:<{}}\"{}\"", "", max_dependency_entry_name_length - 18, subprocess_version));
 
     //*************************************************************************************************************************************//
     //                                                          other statistics                                                           //

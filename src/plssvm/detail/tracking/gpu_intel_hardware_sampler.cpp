@@ -159,6 +159,8 @@ gpu_intel_hardware_sampler::gpu_intel_hardware_sampler(const std::size_t device_
         // wait until init has been finished!
         while (!init_finished_) { }
     }
+
+    // TODO: get the level zero version: zeDriverGetApiVersion
 }
 
 gpu_intel_hardware_sampler::~gpu_intel_hardware_sampler() {
