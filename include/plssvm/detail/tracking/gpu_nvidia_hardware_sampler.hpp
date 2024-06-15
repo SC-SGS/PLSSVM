@@ -11,6 +11,7 @@
 
 #ifndef PLSSVM_DETAIL_TRACKING_GPU_NVIDIA_HARDWARE_SAMPLER_HPP_
 #define PLSSVM_DETAIL_TRACKING_GPU_NVIDIA_HARDWARE_SAMPLER_HPP_
+#pragma once
 
 #include "plssvm/detail/tracking/hardware_sampler.hpp"  // plssvm::detail::tracking::hardware_sampler
 #include "plssvm/detail/tracking/nvml_samples.hpp"      // plssvm::detail::tracking::{nvml_general_samples, nvml_clock_samples, nvml_power_samples, nvml_memory_samples, nvml_temperature_samples}

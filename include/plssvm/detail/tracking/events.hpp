@@ -11,6 +11,7 @@
 
 #ifndef PLSSVM_DETAIL_TRACKING_EVENT_HPP_
 #define PLSSVM_DETAIL_TRACKING_EVENT_HPP_
+#pragma once
 
 #include "plssvm/detail/assert.hpp"            // PLSSVM_ASSERT
 #include "plssvm/detail/tracking/utility.hpp"  // plssvm::detail::tracking::durations_from_reference_time

@@ -11,6 +11,7 @@
 
 #ifndef PLSSVM_DETAIL_TRACKING_CPU_HARDWARE_SAMPLER_HPP_
 #define PLSSVM_DETAIL_TRACKING_CPU_HARDWARE_SAMPLER_HPP_
+#pragma once
 
 #include "plssvm/detail/tracking/hardware_sampler.hpp"  // plssvm::detail::tracking::hardware_sampler
 
