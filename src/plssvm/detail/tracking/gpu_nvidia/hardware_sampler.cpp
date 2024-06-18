@@ -118,11 +118,11 @@ std::string gpu_nvidia_hardware_sampler::generate_yaml_string(const std::chrono:
                        "{}",
                        this->sampling_interval(),
                        fmt::join(durations_from_reference_time(this->time_points(), start_time_point), ", "),
-                       general_samples_,
-                       clock_samples_,
-                       power_samples_,
-                       memory_samples_,
-                       temperature_samples_);
+                       general_samples_.generate_yaml_string(),
+                       clock_samples_.generate_yaml_string(),
+                       power_samples_.generate_yaml_string(),
+                       memory_samples_.generate_yaml_string(),
+                       temperature_samples_.generate_yaml_string());
 }
 
 void gpu_nvidia_hardware_sampler::sampling_loop() {

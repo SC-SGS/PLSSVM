@@ -26,6 +26,10 @@
 
 namespace plssvm::detail::tracking {
 
+//*************************************************************************************************************************************//
+//                                                           general samples                                                           //
+//*************************************************************************************************************************************//
+
 class rocm_smi_general_samples {
   public:
     struct rocm_smi_general_sample {
@@ -67,6 +71,8 @@ class rocm_smi_general_samples {
 
     [[nodiscard]] const auto &get_utilization_mem() const noexcept { return utilization_mem_; }
 
+    [[nodiscard]] std::string generate_yaml_string() const;
+
   private:
     std::uint32_t device_id_;
 
@@ -75,7 +81,12 @@ class rocm_smi_general_samples {
     std::vector<decltype(rocm_smi_general_sample::utilization_mem)> utilization_mem_{};
 };
 
+std::ostream &operator<<(std::ostream &out, const rocm_smi_general_samples::rocm_smi_general_sample &sample);
 std::ostream &operator<<(std::ostream &out, const rocm_smi_general_samples &samples);
+
+//*************************************************************************************************************************************//
+//                                                            clock samples                                                            //
+//*************************************************************************************************************************************//
 
 class rocm_smi_clock_samples {
   public:
@@ -138,6 +149,8 @@ class rocm_smi_clock_samples {
 
     [[nodiscard]] const auto &get_memory_overdrive_level() const noexcept { return memory_overdrive_level_; }
 
+    [[nodiscard]] std::string generate_yaml_string() const;
+
   private:
     std::uint32_t device_id_;
 
@@ -149,7 +162,12 @@ class rocm_smi_clock_samples {
     std::vector<decltype(rocm_smi_clock_sample::memory_overdrive_level)> memory_overdrive_level_{};
 };
 
+std::ostream &operator<<(std::ostream &out, const rocm_smi_clock_samples::rocm_smi_clock_sample &sample);
 std::ostream &operator<<(std::ostream &out, const rocm_smi_clock_samples &samples);
+
+//*************************************************************************************************************************************//
+//                                                            power samples                                                            //
+//*************************************************************************************************************************************//
 
 class rocm_smi_power_samples {
   public:
@@ -189,6 +207,8 @@ class rocm_smi_power_samples {
 
     [[nodiscard]] const auto &get_power_total_energy_consumption() const noexcept { return power_total_energy_consumption_; }
 
+    [[nodiscard]] std::string generate_yaml_string() const;
+
   private:
     std::uint32_t device_id_;
 
@@ -196,7 +216,12 @@ class rocm_smi_power_samples {
     std::vector<decltype(rocm_smi_power_sample::power_total_energy_consumption)> power_total_energy_consumption_{};
 };
 
+std::ostream &operator<<(std::ostream &out, const rocm_smi_power_samples::rocm_smi_power_sample &sample);
 std::ostream &operator<<(std::ostream &out, const rocm_smi_power_samples &samples);
+
+//*************************************************************************************************************************************//
+//                                                            memory samples                                                           //
+//*************************************************************************************************************************************//
 
 class rocm_smi_memory_samples {
   public:
@@ -240,6 +265,8 @@ class rocm_smi_memory_samples {
 
     [[nodiscard]] const auto &get_num_pcie_lanes() const noexcept { return num_pcie_lanes_; }
 
+    [[nodiscard]] std::string generate_yaml_string() const;
+
   private:
     std::uint32_t device_id_;
 
@@ -248,7 +275,12 @@ class rocm_smi_memory_samples {
     std::vector<decltype(rocm_smi_memory_sample::num_pcie_lanes)> num_pcie_lanes_{};
 };
 
+std::ostream &operator<<(std::ostream &out, const rocm_smi_memory_samples::rocm_smi_memory_sample &sample);
 std::ostream &operator<<(std::ostream &out, const rocm_smi_memory_samples &samples);
+
+//*************************************************************************************************************************************//
+//                                                         temperature samples                                                         //
+//*************************************************************************************************************************************//
 
 class rocm_smi_temperature_samples {
   public:
@@ -303,6 +335,8 @@ class rocm_smi_temperature_samples {
 
     [[nodiscard]] const auto &get_temperature_memory() const noexcept { return temperature_memory_; }
 
+    [[nodiscard]] std::string generate_yaml_string() const;
+
   private:
     std::uint32_t device_id_;
 
@@ -312,21 +346,37 @@ class rocm_smi_temperature_samples {
     std::vector<decltype(rocm_smi_temperature_sample::temperature_memory)> temperature_memory_{};
 };
 
+std::ostream &operator<<(std::ostream &out, const rocm_smi_temperature_samples::rocm_smi_temperature_sample &sample);
 std::ostream &operator<<(std::ostream &out, const rocm_smi_temperature_samples &samples);
 
 }  // namespace plssvm::detail::tracking
 
 template <>
+struct fmt::formatter<plssvm::detail::tracking::rocm_smi_general_samples::rocm_smi_general_sample> : fmt::ostream_formatter { };
+
+template <>
 struct fmt::formatter<plssvm::detail::tracking::rocm_smi_general_samples> : fmt::ostream_formatter { };
+
+template <>
+struct fmt::formatter<plssvm::detail::tracking::rocm_smi_clock_samples::rocm_smi_clock_sample> : fmt::ostream_formatter { };
 
 template <>
 struct fmt::formatter<plssvm::detail::tracking::rocm_smi_clock_samples> : fmt::ostream_formatter { };
 
 template <>
+struct fmt::formatter<plssvm::detail::tracking::rocm_smi_power_samples::rocm_smi_power_sample> : fmt::ostream_formatter { };
+
+template <>
 struct fmt::formatter<plssvm::detail::tracking::rocm_smi_power_samples> : fmt::ostream_formatter { };
 
 template <>
+struct fmt::formatter<plssvm::detail::tracking::rocm_smi_memory_samples::rocm_smi_memory_sample> : fmt::ostream_formatter { };
+
+template <>
 struct fmt::formatter<plssvm::detail::tracking::rocm_smi_memory_samples> : fmt::ostream_formatter { };
+
+template <>
+struct fmt::formatter<plssvm::detail::tracking::rocm_smi_temperature_samples::rocm_smi_temperature_sample> : fmt::ostream_formatter { };
 
 template <>
 struct fmt::formatter<plssvm::detail::tracking::rocm_smi_temperature_samples> : fmt::ostream_formatter { };

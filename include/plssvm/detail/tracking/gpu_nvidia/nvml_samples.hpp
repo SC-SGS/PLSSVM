@@ -25,6 +25,10 @@
 
 namespace plssvm::detail::tracking {
 
+//*************************************************************************************************************************************//
+//                                                           general samples                                                           //
+//*************************************************************************************************************************************//
+
 class nvml_general_samples {
   public:
     struct nvml_general_sample {
@@ -68,6 +72,8 @@ class nvml_general_samples {
 
     [[nodiscard]] const auto &get_utilization_mem() const noexcept { return utilization_mem_; }
 
+    [[nodiscard]] std::string generate_yaml_string() const;
+
   private:
     std::size_t device_id_{};
 
@@ -76,7 +82,12 @@ class nvml_general_samples {
     std::vector<decltype(nvml_general_sample::utilization_mem)> utilization_mem_{};
 };
 
+std::ostream &operator<<(std::ostream &out, const nvml_general_samples::nvml_general_sample &sample);
 std::ostream &operator<<(std::ostream &out, const nvml_general_samples &samples);
+
+//*************************************************************************************************************************************//
+//                                                            clock samples                                                            //
+//*************************************************************************************************************************************//
 
 class nvml_clock_samples {
   public:
@@ -134,6 +145,8 @@ class nvml_clock_samples {
 
     [[nodiscard]] const auto &get_auto_boosted_clocks() const noexcept { return auto_boosted_clocks_; }
 
+    [[nodiscard]] std::string generate_yaml_string() const;
+
   private:
     std::size_t device_id_{};
 
@@ -144,7 +157,12 @@ class nvml_clock_samples {
     std::vector<decltype(nvml_clock_sample::auto_boosted_clocks)> auto_boosted_clocks_{};
 };
 
+std::ostream &operator<<(std::ostream &out, const nvml_clock_samples::nvml_clock_sample &sample);
 std::ostream &operator<<(std::ostream &out, const nvml_clock_samples &samples);
+
+//*************************************************************************************************************************************//
+//                                                            power samples                                                            //
+//*************************************************************************************************************************************//
 
 class nvml_power_samples {
   public:
@@ -188,6 +206,8 @@ class nvml_power_samples {
 
     [[nodiscard]] const auto &get_power_total_energy_consumption() const noexcept { return power_total_energy_consumption_; }
 
+    [[nodiscard]] std::string generate_yaml_string() const;
+
   private:
     std::size_t device_id_{};
 
@@ -196,7 +216,12 @@ class nvml_power_samples {
     std::vector<decltype(nvml_power_sample::power_total_energy_consumption)> power_total_energy_consumption_{};
 };
 
+std::ostream &operator<<(std::ostream &out, const nvml_power_samples::nvml_power_sample &sample);
 std::ostream &operator<<(std::ostream &out, const nvml_power_samples &samples);
+
+//*************************************************************************************************************************************//
+//                                                            memory samples                                                           //
+//*************************************************************************************************************************************//
 
 class nvml_memory_samples {
   public:
@@ -252,6 +277,8 @@ class nvml_memory_samples {
 
     [[nodiscard]] const auto &get_pcie_link_generation() const noexcept { return pcie_link_generation_; }
 
+    [[nodiscard]] std::string generate_yaml_string() const;
+
   private:
     std::size_t device_id_{};
 
@@ -262,7 +289,12 @@ class nvml_memory_samples {
     std::vector<decltype(nvml_memory_sample::pcie_link_generation)> pcie_link_generation_{};
 };
 
+std::ostream &operator<<(std::ostream &out, const nvml_memory_samples::nvml_memory_sample &sample);
 std::ostream &operator<<(std::ostream &out, const nvml_memory_samples &samples);
+
+//*************************************************************************************************************************************//
+//                                                         temperature samples                                                         //
+//*************************************************************************************************************************************//
 
 class nvml_temperature_samples {
   public:
@@ -304,6 +336,8 @@ class nvml_temperature_samples {
 
     [[nodiscard]] const auto &get_temperature_gpu() const noexcept { return temperature_gpu_; }
 
+    [[nodiscard]] std::string generate_yaml_string() const;
+
   private:
     std::size_t device_id_{};
 
@@ -311,21 +345,37 @@ class nvml_temperature_samples {
     std::vector<decltype(nvml_temperature_sample::temperature_gpu)> temperature_gpu_{};
 };
 
+std::ostream &operator<<(std::ostream &out, const nvml_temperature_samples::nvml_temperature_sample &samples);
 std::ostream &operator<<(std::ostream &out, const nvml_temperature_samples &samples);
 
 }  // namespace plssvm::detail::tracking
 
 template <>
+struct fmt::formatter<plssvm::detail::tracking::nvml_general_samples::nvml_general_sample> : fmt::ostream_formatter { };
+
+template <>
 struct fmt::formatter<plssvm::detail::tracking::nvml_general_samples> : fmt::ostream_formatter { };
+
+template <>
+struct fmt::formatter<plssvm::detail::tracking::nvml_clock_samples::nvml_clock_sample> : fmt::ostream_formatter { };
 
 template <>
 struct fmt::formatter<plssvm::detail::tracking::nvml_clock_samples> : fmt::ostream_formatter { };
 
 template <>
+struct fmt::formatter<plssvm::detail::tracking::nvml_power_samples::nvml_power_sample> : fmt::ostream_formatter { };
+
+template <>
 struct fmt::formatter<plssvm::detail::tracking::nvml_power_samples> : fmt::ostream_formatter { };
 
 template <>
+struct fmt::formatter<plssvm::detail::tracking::nvml_memory_samples::nvml_memory_sample> : fmt::ostream_formatter { };
+
+template <>
 struct fmt::formatter<plssvm::detail::tracking::nvml_memory_samples> : fmt::ostream_formatter { };
+
+template <>
+struct fmt::formatter<plssvm::detail::tracking::nvml_temperature_samples::nvml_temperature_sample> : fmt::ostream_formatter { };
 
 template <>
 struct fmt::formatter<plssvm::detail::tracking::nvml_temperature_samples> : fmt::ostream_formatter { };
