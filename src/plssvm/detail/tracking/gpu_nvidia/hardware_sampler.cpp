@@ -8,11 +8,13 @@
 
 #include "plssvm/detail/tracking/gpu_nvidia/hardware_sampler.hpp"
 
-#include "plssvm/detail/tracking/gpu_nvidia/nvml_samples.hpp"  // plssvm::detail::tracking::{nvml_general_samples, nvml_clock_samples, nvml_power_samples, nvml_memory_samples, nvml_temperature_samples}
-#include "plssvm/detail/tracking/hardware_sampler.hpp"         // plssvm::detail::tracking::hardware_sampler
-#include "plssvm/detail/tracking/performance_tracker.hpp"      // PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY
-#include "plssvm/detail/tracking/utility.hpp"                  // plssvm::detail::tracking::durations_from_reference_time
-#include "plssvm/exceptions/exceptions.hpp"                    // plssvm::exception, plssvm::hardware_sampling_exception
+#include "plssvm/detail/tracking/gpu_nvidia/nvml_device_handle_impl.hpp"  // plssvm::detail::tracking::nvml_device_handle implementation
+#include "plssvm/detail/tracking/gpu_nvidia/nvml_samples.hpp"             // plssvm::detail::tracking::{nvml_general_samples, nvml_clock_samples, nvml_power_samples, nvml_memory_samples, nvml_temperature_samples}
+#include "plssvm/detail/tracking/gpu_nvidia/utility.hpp"                  // PLSSVM_NVML_ERROR_CHECK
+#include "plssvm/detail/tracking/hardware_sampler.hpp"                    // plssvm::detail::tracking::hardware_sampler
+#include "plssvm/detail/tracking/performance_tracker.hpp"                 // PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY
+#include "plssvm/detail/tracking/utility.hpp"                             // plssvm::detail::tracking::durations_from_reference_time
+#include "plssvm/exceptions/exceptions.hpp"                               // plssvm::exception, plssvm::hardware_sampling_exception
 
 #include "fmt/chrono.h"  // format std::chrono types
 #include "fmt/core.h"    // fmt::format
@@ -30,35 +32,8 @@
 
 namespace plssvm::detail::tracking {
 
-#if defined(PLSSVM_HARDWARE_SAMPLING_ERROR_CHECKS_ENABLED)
-
-    #define PLSSVM_NVML_ERROR_CHECK(nvml_func)                                                                                                                              \
-        {                                                                                                                                                                   \
-            const nvmlReturn_t errc = nvml_func;                                                                                                                            \
-            if (errc != NVML_SUCCESS && errc != NVML_ERROR_NOT_SUPPORTED) {                                                                                                 \
-                throw hardware_sampling_exception{ fmt::format("Error in NVML function call \"{}\": {} ({})", #nvml_func, nvmlErrorString(errc), static_cast<int>(errc)) }; \
-            }                                                                                                                                                               \
-        }
-
-#else
-    #define PLSSVM_NVML_ERROR_CHECK(nvml_func) nvml_func;
-#endif
-
-nvmlDevice_t device_id_to_nvml_handle(const std::size_t device_id) {
-    // get the device handle for which this hardware sampler is responsible for
-    nvmlDevice_t device{};
-    PLSSVM_NVML_ERROR_CHECK((nvmlDeviceGetHandleByIndex(static_cast<int>(device_id), &device)));
-    return device;
-}
-
 gpu_nvidia_hardware_sampler::gpu_nvidia_hardware_sampler(const std::size_t device_id, const std::chrono::milliseconds sampling_interval) :
-    hardware_sampler{ sampling_interval },
-    device_id_{ device_id },
-    general_samples_{ device_id },
-    clock_samples_{ device_id },
-    power_samples_{ device_id },
-    memory_samples_{ device_id },
-    temperature_samples_{ device_id } {
+    hardware_sampler{ sampling_interval } {
     // make sure that nvmlInit is only called once for all instances
     if (instances_++ == 0) {
         PLSSVM_NVML_ERROR_CHECK(nvmlInit());
@@ -73,6 +48,14 @@ gpu_nvidia_hardware_sampler::gpu_nvidia_hardware_sampler(const std::size_t devic
     std::string version(NVML_SYSTEM_NVML_VERSION_BUFFER_SIZE, '\0');
     PLSSVM_NVML_ERROR_CHECK(nvmlSystemGetNVMLVersion(version.data(), NVML_SYSTEM_NVML_VERSION_BUFFER_SIZE));
     PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking::tracking_entry{ "dependencies", "nvml_version", version }));
+
+    // initialize samples -> can't be done beforehand since the device handle can only be initialized after a call to nvmlInit
+    device_ = nvml_device_handle{ device_id };
+    general_samples_ = nvml_general_samples{ device_ };
+    clock_samples_ = nvml_clock_samples{ device_ };
+    power_samples_ = nvml_power_samples{ device_ };
+    memory_samples_ = nvml_memory_samples{ device_ };
+    temperature_samples_ = nvml_temperature_samples{ device_ };
 }
 
 gpu_nvidia_hardware_sampler::~gpu_nvidia_hardware_sampler() {
@@ -99,7 +82,9 @@ gpu_nvidia_hardware_sampler::~gpu_nvidia_hardware_sampler() {
 }
 
 std::string gpu_nvidia_hardware_sampler::device_identification() const {
-    return fmt::format("gpu_nvidia_device_{}", device_id_);
+    nvmlPciInfo_st pcie_info{};
+    PLSSVM_NVML_ERROR_CHECK(nvmlDeviceGetPciInfo_v3(device_.get_impl().device, &pcie_info));
+    return fmt::format("gpu_nvidia_device_{}_{}", pcie_info.bus, pcie_info.device);
 }
 
 std::string gpu_nvidia_hardware_sampler::generate_yaml_string(const std::chrono::system_clock::time_point start_time_point) const {
@@ -127,8 +112,7 @@ std::string gpu_nvidia_hardware_sampler::generate_yaml_string(const std::chrono:
 
 void gpu_nvidia_hardware_sampler::sampling_loop() {
     // get the nvml handle from the device_id
-    nvmlDevice_t device = device_id_to_nvml_handle(device_id_);
-
+    nvmlDevice_t device = device_.get_impl().device;
     //
     // add samples where we only have to retrieve the value once
     //

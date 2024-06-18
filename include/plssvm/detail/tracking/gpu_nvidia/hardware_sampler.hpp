@@ -13,8 +13,9 @@
 #define PLSSVM_DETAIL_TRACKING_GPU_NVIDIA_HARDWARE_SAMPLER_HPP_
 #pragma once
 
-#include "plssvm/detail/tracking/gpu_nvidia/nvml_samples.hpp"  // plssvm::detail::tracking::{nvml_general_samples, nvml_clock_samples, nvml_power_samples, nvml_memory_samples, nvml_temperature_samples}
-#include "plssvm/detail/tracking/hardware_sampler.hpp"         // plssvm::detail::tracking::hardware_sampler
+#include "plssvm/detail/tracking/gpu_nvidia/nvml_device_handle.hpp"  // plssvm::detail::tracking::nvml_device_handle
+#include "plssvm/detail/tracking/gpu_nvidia/nvml_samples.hpp"        // plssvm::detail::tracking::{nvml_general_samples, nvml_clock_samples, nvml_power_samples, nvml_memory_samples, nvml_temperature_samples}
+#include "plssvm/detail/tracking/hardware_sampler.hpp"               // plssvm::detail::tracking::hardware_sampler
 
 #include <atomic>   // std::atomic
 #include <chrono>   // std::chrono::milliseconds, std::chrono_literals namespace
@@ -53,13 +54,13 @@ class gpu_nvidia_hardware_sampler : public hardware_sampler {
   private:
     void sampling_loop() final;
 
-    std::size_t device_id_;
+    nvml_device_handle device_;
 
-    nvml_general_samples general_samples_;
-    nvml_clock_samples clock_samples_;
-    nvml_power_samples power_samples_;
-    nvml_memory_samples memory_samples_;
-    nvml_temperature_samples temperature_samples_;
+    nvml_general_samples general_samples_{};
+    nvml_clock_samples clock_samples_{};
+    nvml_power_samples power_samples_{};
+    nvml_memory_samples memory_samples_{};
+    nvml_temperature_samples temperature_samples_{};
 
     inline static std::atomic<int> instances_{ 0 };
     inline static std::atomic<bool> init_finished_{ false };

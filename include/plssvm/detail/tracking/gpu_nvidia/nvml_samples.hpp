@@ -13,7 +13,8 @@
 #define PLSSVM_DETAIL_TRACKING_GPU_NVIDIA_NVML_SAMPLES_HPP_
 #pragma once
 
-#include "plssvm/detail/assert.hpp"  // PLSSVM_ASSERT
+#include "plssvm/detail/assert.hpp"                                  // PLSSVM_ASSERT
+#include "plssvm/detail/tracking/gpu_nvidia/nvml_device_handle.hpp"  // plssvm::detail::tracking::nvml_device_handle
 
 #include "fmt/core.h"     // fmt::formatter
 #include "fmt/ostream.h"  // fmt::ostream_formatter
@@ -37,8 +38,9 @@ class nvml_general_samples {
         unsigned int utilization_mem{ 0 };
     };
 
-    explicit nvml_general_samples(const std::size_t device_id) :
-        device_id_{ device_id } { }
+    nvml_general_samples() = default;
+    explicit nvml_general_samples(const nvml_device_handle device) :
+        device_{ device } { }
 
     std::string name{};
     bool persistence_mode{ false };
@@ -60,7 +62,7 @@ class nvml_general_samples {
         return nvml_general_sample{ performance_state_[idx], utilization_gpu_[idx], utilization_mem_[idx] };
     }
 
-    [[nodiscard]] std::size_t get_device() const noexcept { return device_id_; }
+    [[nodiscard]] nvml_device_handle get_device() const noexcept { return device_; }
 
     [[nodiscard]] std::size_t num_samples() const noexcept { return performance_state_.size(); }
 
@@ -75,7 +77,7 @@ class nvml_general_samples {
     [[nodiscard]] std::string generate_yaml_string() const;
 
   private:
-    std::size_t device_id_{};
+    nvml_device_handle device_;
 
     std::vector<decltype(nvml_general_sample::performance_state)> performance_state_{};
     std::vector<decltype(nvml_general_sample::utilization_gpu)> utilization_gpu_{};
@@ -99,8 +101,9 @@ class nvml_clock_samples {
         bool auto_boosted_clocks{ false };
     };
 
-    explicit nvml_clock_samples(const std::size_t device_id) :
-        device_id_{ device_id } { }
+    nvml_clock_samples() = default;
+    explicit nvml_clock_samples(const nvml_device_handle device) :
+        device_{ device } { }
 
     unsigned int adaptive_clock_status{ 0 };
     unsigned int clock_graph_min{ 0 };
@@ -129,7 +132,7 @@ class nvml_clock_samples {
         return nvml_clock_sample{ clock_graph_[idx], clock_sm_[idx], clock_mem_[idx], clock_throttle_reason_[idx], auto_boosted_clocks_[idx] };
     }
 
-    [[nodiscard]] std::size_t get_device() const noexcept { return device_id_; }
+    [[nodiscard]] nvml_device_handle get_device() const noexcept { return device_; }
 
     [[nodiscard]] std::size_t num_samples() const noexcept { return clock_graph_.size(); }
 
@@ -148,7 +151,7 @@ class nvml_clock_samples {
     [[nodiscard]] std::string generate_yaml_string() const;
 
   private:
-    std::size_t device_id_{};
+    nvml_device_handle device_;
 
     std::vector<decltype(nvml_clock_sample::clock_graph)> clock_graph_{};
     std::vector<decltype(nvml_clock_sample::clock_sm)> clock_sm_{};
@@ -172,8 +175,9 @@ class nvml_power_samples {
         unsigned long long power_total_energy_consumption{ 0 };  // total energy consumption since last driver reload in J
     };
 
-    explicit nvml_power_samples(const std::size_t device_id) :
-        device_id_{ device_id } { }
+    nvml_power_samples() = default;
+    explicit nvml_power_samples(const nvml_device_handle device) :
+        device_{ device } { }
 
     unsigned int power_management_limit{ 0 };  // maximum power limit in W
     unsigned int power_enforced_limit{ 0 };    // default power limit in W
@@ -194,7 +198,7 @@ class nvml_power_samples {
         return nvml_power_sample{ power_state_[idx], power_usage_[idx], power_total_energy_consumption_[idx] };
     }
 
-    [[nodiscard]] std::size_t get_device() const noexcept { return device_id_; }
+    [[nodiscard]] nvml_device_handle get_device() const noexcept { return device_; }
 
     [[nodiscard]] std::size_t num_samples() const noexcept { return power_state_.size(); }
 
@@ -209,7 +213,7 @@ class nvml_power_samples {
     [[nodiscard]] std::string generate_yaml_string() const;
 
   private:
-    std::size_t device_id_{};
+    nvml_device_handle device_;
 
     std::vector<decltype(nvml_power_sample::power_state)> power_state_{};
     std::vector<decltype(nvml_power_sample::power_usage)> power_usage_{};
@@ -233,8 +237,9 @@ class nvml_memory_samples {
         unsigned int pcie_link_generation{ 0 };
     };
 
-    explicit nvml_memory_samples(const std::size_t device_id) :
-        device_id_{ device_id } { }
+    nvml_memory_samples() = default;
+    explicit nvml_memory_samples(const nvml_device_handle device) :
+        device_{ device } { }
 
     unsigned long long memory_total{ 0 };
     unsigned int pcie_link_max_speed{ 0 };
@@ -261,7 +266,7 @@ class nvml_memory_samples {
         return nvml_memory_sample{ memory_free_[idx], memory_used_[idx], pcie_link_speed_[idx], pcie_link_width_[idx], pcie_link_generation_[idx] };
     }
 
-    [[nodiscard]] std::size_t get_device() const noexcept { return device_id_; }
+    [[nodiscard]] nvml_device_handle get_device() const noexcept { return device_; }
 
     [[nodiscard]] std::size_t num_samples() const noexcept { return memory_free_.size(); }
 
@@ -280,7 +285,7 @@ class nvml_memory_samples {
     [[nodiscard]] std::string generate_yaml_string() const;
 
   private:
-    std::size_t device_id_{};
+    nvml_device_handle device_;
 
     std::vector<decltype(nvml_memory_sample::memory_free)> memory_free_{};
     std::vector<decltype(nvml_memory_sample::memory_used)> memory_used_{};
@@ -303,8 +308,9 @@ class nvml_temperature_samples {
         unsigned int temperature_gpu{ 0 };
     };
 
-    explicit nvml_temperature_samples(const std::size_t device_id) :
-        device_id_{ device_id } { }
+    nvml_temperature_samples() = default;
+    explicit nvml_temperature_samples(const nvml_device_handle device) :
+        device_{ device } { }
 
     unsigned int num_fans{ 0 };
     unsigned int min_fan_speed{ 0 };
@@ -326,7 +332,7 @@ class nvml_temperature_samples {
         return nvml_temperature_sample{ fan_speed_[idx], temperature_gpu_[idx] };
     }
 
-    [[nodiscard]] std::size_t get_device() const noexcept { return device_id_; }
+    [[nodiscard]] nvml_device_handle get_device() const noexcept { return device_; }
 
     [[nodiscard]] std::size_t num_samples() const noexcept { return fan_speed_.size(); }
 
@@ -339,7 +345,7 @@ class nvml_temperature_samples {
     [[nodiscard]] std::string generate_yaml_string() const;
 
   private:
-    std::size_t device_id_{};
+    nvml_device_handle device_;
 
     std::vector<decltype(nvml_temperature_sample::fan_speed)> fan_speed_{};
     std::vector<decltype(nvml_temperature_sample::temperature_gpu)> temperature_gpu_{};

@@ -8,6 +8,8 @@
 
 #include "plssvm/detail/tracking/gpu_nvidia/nvml_samples.hpp"
 
+#include "plssvm/detail/tracking/gpu_nvidia/nvml_device_handle_impl.hpp"  // plssvm::detail::tracking::nvml_device_handle implementation
+
 #include "fmt/core.h"    // fmt::format
 #include "fmt/format.h"  // fmt::join
 #include "nvml.h"        // NVML runtime functions
@@ -32,8 +34,7 @@ template <typename T, typename nvml_func, typename... Args>
 //*************************************************************************************************************************************//
 
 std::string nvml_general_samples::generate_yaml_string() const {
-    nvmlDevice_t device{};
-    nvmlDeviceGetHandleByIndex(static_cast<int>(this->get_device()), &device);
+    nvmlDevice_t device = this->get_device().get_impl().device;
 
     std::string str{ "    general:\n" };
 
@@ -115,8 +116,7 @@ std::ostream &operator<<(std::ostream &out, const nvml_general_samples &samples)
 //*************************************************************************************************************************************//
 
 std::string nvml_clock_samples::generate_yaml_string() const {
-    nvmlDevice_t device{};
-    nvmlDeviceGetHandleByIndex(static_cast<int>(this->get_device()), &device);
+    nvmlDevice_t device = this->get_device().get_impl().device;
 
     std::string str{ "    clock:\n" };
 
@@ -255,8 +255,7 @@ std::ostream &operator<<(std::ostream &out, const nvml_clock_samples &samples) {
 //*************************************************************************************************************************************//
 
 std::string nvml_power_samples::generate_yaml_string() const {
-    nvmlDevice_t device{};
-    nvmlDeviceGetHandleByIndex(static_cast<int>(this->get_device()), &device);
+    nvmlDevice_t device = this->get_device().get_impl().device;
 
     std::string str{ "    power:\n" };
 
@@ -335,8 +334,7 @@ std::ostream &operator<<(std::ostream &out, const nvml_power_samples &samples) {
 //*************************************************************************************************************************************//
 
 std::string nvml_memory_samples::generate_yaml_string() const {
-    nvmlDevice_t device{};
-    nvmlDeviceGetHandleByIndex(static_cast<int>(this->get_device()), &device);
+    nvmlDevice_t device = this->get_device().get_impl().device;
 
     std::string str{ "    memory:\n" };
 
@@ -447,8 +445,7 @@ std::ostream &operator<<(std::ostream &out, const nvml_memory_samples &samples) 
 //*************************************************************************************************************************************//
 
 std::string nvml_temperature_samples::generate_yaml_string() const {
-    nvmlDevice_t device{};
-    nvmlDeviceGetHandleByIndex(static_cast<int>(this->get_device()), &device);
+    nvmlDevice_t device = this->get_device().get_impl().device;
 
     std::string str{ "    temperature:\n" };
 
