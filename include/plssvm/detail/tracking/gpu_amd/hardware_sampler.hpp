@@ -38,6 +38,16 @@ class gpu_amd_hardware_sampler : public hardware_sampler {
 
     ~gpu_amd_hardware_sampler() override;
 
+    [[nodiscard]] const rocm_smi_general_samples &general_samples() const noexcept { return general_samples_; }
+
+    [[nodiscard]] const rocm_smi_clock_samples &clock_samples() const noexcept { return clock_samples_; }
+
+    [[nodiscard]] const rocm_smi_power_samples &power_samples() const noexcept { return power_samples_; }
+
+    [[nodiscard]] const rocm_smi_memory_samples &memory_samples() const noexcept { return memory_samples_; }
+
+    [[nodiscard]] const rocm_smi_temperature_samples &temperature_samples() const noexcept { return temperature_samples_; }
+
     [[nodiscard]] std::string device_identification() const override;
 
     [[nodiscard]] std::string generate_yaml_string(std::chrono::system_clock::time_point start_time_point) const override;

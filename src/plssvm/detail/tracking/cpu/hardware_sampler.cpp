@@ -381,6 +381,8 @@ std::string cpu_hardware_sampler::generate_yaml_string([[maybe_unused]] const st
 void cpu_hardware_sampler::sampling_loop() {
     const int options = subprocess_option_e::subprocess_option_search_user_path | subprocess_option_e::subprocess_option_enable_async;
 
+    // TODO: getter + fill time_points_
+
 #if defined(PLSSVM_HARDWARE_TRACKING_VIA_LSCPU_ENABLED)
     {
         const std::array<const char *, 2> command_line = { "lscpu", nullptr };
@@ -412,7 +414,7 @@ void cpu_hardware_sampler::sampling_loop() {
         // -q, --quiet       skip decoding system configuration header
         // -e, --enable      enable the additional Time_Of_Day_Seconds column
 
-        const std::string interval = fmt::format("{}", std::chrono::duration<double>{ sampling_interval_ }.count());
+        const std::string interval = fmt::format("{}", std::chrono::duration<double>{ this->sampling_interval() }.count());
 
     #if defined(PLSSVM_HARDWARE_TRACKING_VIA_TURBOSTAT_ROOT)
         // must use sudo
@@ -431,7 +433,7 @@ void cpu_hardware_sampler::sampling_loop() {
         //
 
         std::string buffer(static_cast<std::string::size_type>(4096), '\0');  // 4096 character should be enough
-        while (!sampling_stopped_) {
+        while (!this->has_sampling_stopped()) {
             // only sample values if the sampler currently isn't paused
             if (this->is_sampling()) {
                 // read new stdout line

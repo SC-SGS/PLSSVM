@@ -25,7 +25,7 @@ hardware_sampler::~hardware_sampler() = default;
 
 void hardware_sampler::start_sampling() {
     // can't start an already running sampler
-    if (sampling_started_) {
+    if (this->has_sampling_started()) {
         throw hardware_sampling_exception{ "Can start every hardware sampler only once!" };
     }
 
@@ -51,7 +51,7 @@ void hardware_sampler::start_sampling() {
 
 void hardware_sampler::stop_sampling() {
     // can't stop an already stopped sampler
-    if (sampling_stopped_) {
+    if (this->has_sampling_stopped()) {
         throw hardware_sampling_exception{ "Can stop every hardware sampler only once!" };
     }
 
@@ -69,8 +69,16 @@ void hardware_sampler::resume_sampling() {
     sampling_running_ = true;  // notifies the sampling std::thread
 }
 
+bool hardware_sampler::has_sampling_started() const noexcept {
+    return sampling_started_;
+}
+
 bool hardware_sampler::is_sampling() const noexcept {
     return sampling_running_;
+}
+
+bool hardware_sampler::has_sampling_stopped() const noexcept {
+    return sampling_stopped_;
 }
 
 }  // namespace plssvm::detail::tracking

@@ -36,6 +36,16 @@ class gpu_nvidia_hardware_sampler : public hardware_sampler {
 
     ~gpu_nvidia_hardware_sampler() override;
 
+    [[nodiscard]] const nvml_general_samples &general_samples() const noexcept { return general_samples_; }
+
+    [[nodiscard]] const nvml_clock_samples &clock_samples() const noexcept { return clock_samples_; }
+
+    [[nodiscard]] const nvml_power_samples &power_samples() const noexcept { return power_samples_; }
+
+    [[nodiscard]] const nvml_memory_samples &memory_samples() const noexcept { return memory_samples_; }
+
+    [[nodiscard]] const nvml_temperature_samples &temperature_samples() const noexcept { return temperature_samples_; }
+
     [[nodiscard]] std::string device_identification() const override;
 
     [[nodiscard]] std::string generate_yaml_string(std::chrono::system_clock::time_point start_time_point) const override;

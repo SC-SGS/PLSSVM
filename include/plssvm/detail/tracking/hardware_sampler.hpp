@@ -37,7 +37,11 @@ class hardware_sampler {
     void pause_sampling();
     void resume_sampling();
 
+    [[nodiscard]] bool has_sampling_started() const noexcept;
     [[nodiscard]] bool is_sampling() const noexcept;
+    [[nodiscard]] bool has_sampling_stopped() const noexcept;
+
+    [[nodiscard]] std::vector<std::chrono::system_clock::time_point> time_points() const noexcept { return time_points_; }
 
     [[nodiscard]] std::chrono::milliseconds sampling_interval() const noexcept { return sampling_interval_; }
 
@@ -47,17 +51,18 @@ class hardware_sampler {
   protected:
     virtual void sampling_loop() = 0;
 
-    // TODO: getter?
-    std::atomic<bool> sampling_started_{ false };
+    void add_time_point(const std::chrono::system_clock::time_point time_point) { time_points_.push_back(time_point); }
+
+  private:
     std::atomic<bool> sampling_stopped_{ false };
     std::atomic<bool> sampling_running_{ false };
+    std::atomic<bool> sampling_started_{ false };
+
+    std::thread sampling_thread_{};
 
     std::vector<std::chrono::system_clock::time_point> time_points_{};
 
     const std::chrono::milliseconds sampling_interval_{};
-
-  private:
-    std::thread sampling_thread_{};
 };
 
 }  // namespace plssvm::detail::tracking

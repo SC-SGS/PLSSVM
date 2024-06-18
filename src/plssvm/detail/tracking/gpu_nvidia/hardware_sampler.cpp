@@ -117,7 +117,7 @@ std::string gpu_nvidia_hardware_sampler::generate_yaml_string(const std::chrono:
                        "{}\n"
                        "{}",
                        this->sampling_interval(),
-                       fmt::join(durations_from_reference_time(time_points_, start_time_point), ", "),
+                       fmt::join(durations_from_reference_time(this->time_points(), start_time_point), ", "),
                        general_samples_,
                        clock_samples_,
                        power_samples_,
@@ -189,11 +189,11 @@ void gpu_nvidia_hardware_sampler::sampling_loop() {
     // loop until stop_sampling() is called
     //
 
-    while (!sampling_stopped_) {
+    while (!this->has_sampling_stopped()) {
         // only sample values if the sampler currently isn't paused
         if (this->is_sampling()) {
             // add current time point
-            time_points_.push_back(std::chrono::system_clock::now());
+            this->add_time_point(std::chrono::system_clock::now());
 
             // retrieve general information
             {

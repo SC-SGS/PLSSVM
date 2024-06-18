@@ -193,7 +193,7 @@ std::string gpu_intel_hardware_sampler::generate_yaml_string(const std::chrono::
                        "    sampling_interval: {}\n"
                        "    time_points: [{}]\n",
                        this->sampling_interval(),
-                       fmt::join(durations_from_reference_time(time_points_, start_time_point), ", "));
+                       fmt::join(durations_from_reference_time(this->time_points(), start_time_point), ", "));
 }
 
 void gpu_intel_hardware_sampler::sampling_loop() {
@@ -210,11 +210,11 @@ void gpu_intel_hardware_sampler::sampling_loop() {
     // loop until stop_sampling() is called
     //
 
-    while (!sampling_stopped_) {
+    while (!this->has_sampling_stopped()) {
         // only sample values if the sampler currently isn't paused
         if (this->is_sampling()) {
             // add current time point
-            time_points_.push_back(std::chrono::system_clock::now());
+            this->add_time_point(std::chrono::system_clock::now());
 
             // TODO: sampled samples
         }
