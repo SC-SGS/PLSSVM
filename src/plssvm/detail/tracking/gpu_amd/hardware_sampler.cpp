@@ -212,7 +212,7 @@ void gpu_amd_hardware_sampler::sampling_loop() {
                 rocm_smi_general_samples::rocm_smi_general_sample sample{};
                 rsmi_dev_perf_level_t pstate{};
                 PLSSVM_ROCM_SMI_ERROR_CHECK(rsmi_dev_perf_level_get(device_id_, &pstate));
-                sample.performance_state = static_cast<int>(pstate);
+                sample.performance_level = static_cast<int>(pstate);
                 PLSSVM_ROCM_SMI_ERROR_CHECK(rsmi_dev_busy_percent_get(device_id_, &sample.utilization_gpu));
                 PLSSVM_ROCM_SMI_ERROR_CHECK(rsmi_dev_memory_busy_percent_get(device_id_, &sample.utilization_mem));
                 general_samples_.add_sample(sample);
@@ -227,7 +227,7 @@ void gpu_amd_hardware_sampler::sampling_loop() {
                 sample.clock_socket = frequency_info.frequency[frequency_info.current];
                 PLSSVM_ROCM_SMI_ERROR_CHECK(rsmi_dev_gpu_clk_freq_get(device_id_, RSMI_CLK_TYPE_MEM, &frequency_info));
                 sample.clock_memory = frequency_info.frequency[frequency_info.current];
-                PLSSVM_ROCM_SMI_ERROR_CHECK(rsmi_dev_metrics_throttle_status_get(device_id_, &sample.clock_throttle_reason));
+                PLSSVM_ROCM_SMI_ERROR_CHECK(rsmi_dev_metrics_throttle_status_get(device_id_, &sample.clock_throttle_status));
                 PLSSVM_ROCM_SMI_ERROR_CHECK(rsmi_dev_overdrive_level_get(device_id_, &sample.overdrive_level));
                 PLSSVM_ROCM_SMI_ERROR_CHECK(rsmi_dev_mem_overdrive_level_get(device_id_, &sample.memory_overdrive_level));
                 clock_samples_.add_sample(sample);

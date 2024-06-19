@@ -53,7 +53,7 @@ std::string rocm_smi_general_samples::generate_yaml_string() const {
         str += fmt::format("      performance_state:\n"
                            "        unit: \"int - see rsmi_dev_perf_level_t\"\n"
                            "        values: [{}]\n",
-                           fmt::join(this->get_performance_state(), ", "));
+                           fmt::join(this->get_performance_level(), ", "));
     }
     // device compute utilization
     if (rsmi_function_is_supported<decltype(rocm_smi_general_samples::rocm_smi_general_sample::utilization_gpu)>(rsmi_dev_busy_percent_get, device)) {
@@ -77,21 +77,21 @@ std::string rocm_smi_general_samples::generate_yaml_string() const {
 }
 
 std::ostream &operator<<(std::ostream &out, const rocm_smi_general_samples::rocm_smi_general_sample &sample) {
-    return out << fmt::format("performance_state: {}\n"
+    return out << fmt::format("performance_level: {}\n"
                               "utilization_gpu: {}\n"
                               "utilization_mem: {}",
-                              sample.performance_state,
+                              sample.performance_level,
                               sample.utilization_gpu,
                               sample.utilization_mem);
 }
 
 std::ostream &operator<<(std::ostream &out, const rocm_smi_general_samples &samples) {
     return out << fmt::format("name: {}\n"
-                              "performance_state: [{}]\n"
+                              "performance_level: [{}]\n"
                               "utilization_gpu: [{}]\n"
                               "utilization_mem: [{}]",
                               samples.name,
-                              fmt::join(samples.get_performance_state(), ", "),
+                              fmt::join(samples.get_performance_level(), ", "),
                               fmt::join(samples.get_utilization_gpu(), ", "),
                               fmt::join(samples.get_utilization_mem(), ", "));
 }
@@ -161,11 +161,11 @@ std::string rocm_smi_clock_samples::generate_yaml_string() const {
                            fmt::join(this->get_clock_system(), ", "));
     }
     // clock throttle reason
-    if (rsmi_function_is_supported<decltype(rocm_smi_clock_samples::rocm_smi_clock_sample::clock_throttle_reason)>(rsmi_dev_metrics_throttle_status_get, device)) {
+    if (rsmi_function_is_supported<decltype(rocm_smi_clock_samples::rocm_smi_clock_sample::clock_throttle_status)>(rsmi_dev_metrics_throttle_status_get, device)) {
         str += fmt::format("      clock_throttle_reason:\n"
                            "        unit: \"bitmask\"\n"
                            "        values: [{}]\n",
-                           fmt::join(this->get_clock_throttle_reason(), ", "));
+                           fmt::join(this->get_clock_throttle_status(), ", "));
     }
     // overdrive level
     if (rsmi_function_is_supported<decltype(rocm_smi_clock_samples::rocm_smi_clock_sample::overdrive_level)>(rsmi_dev_overdrive_level_get, device)) {
@@ -192,13 +192,13 @@ std::ostream &operator<<(std::ostream &out, const rocm_smi_clock_samples::rocm_s
     return out << fmt::format("clock_system: {}\n"
                               "clock_socket: {}\n"
                               "clock_memory: {}\n"
-                              "clock_throttle_reason: {}\n"
+                              "clock_throttle_status: {}\n"
                               "overdrive_level: {}\n"
                               "memory_overdrive_level: {}",
                               sample.clock_system,
                               sample.clock_socket,
                               sample.clock_memory,
-                              sample.clock_throttle_reason,
+                              sample.clock_throttle_status,
                               sample.overdrive_level,
                               sample.memory_overdrive_level);
 }
@@ -213,7 +213,7 @@ std::ostream &operator<<(std::ostream &out, const rocm_smi_clock_samples &sample
                               "clock_system: [{}]\n"
                               "clock_socket: [{}]\n"
                               "clock_memory: [{}]\n"
-                              "clock_throttle_reason: [{}]\n"
+                              "clock_throttle_status: [{}]\n"
                               "overdrive_level: [{}]\n"
                               "memory_overdrive_level: [{}]",
                               samples.clock_system_min,
@@ -225,7 +225,7 @@ std::ostream &operator<<(std::ostream &out, const rocm_smi_clock_samples &sample
                               fmt::join(samples.get_clock_system(), ", "),
                               fmt::join(samples.get_clock_socket(), ", "),
                               fmt::join(samples.get_clock_memory(), ", "),
-                              fmt::join(samples.get_clock_throttle_reason(), ", "),
+                              fmt::join(samples.get_clock_throttle_status(), ", "),
                               fmt::join(samples.get_overdrive_level(), ", "),
                               fmt::join(samples.get_memory_overdrive_level(), ", "));
 }

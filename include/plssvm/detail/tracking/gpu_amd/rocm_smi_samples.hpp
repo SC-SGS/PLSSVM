@@ -33,7 +33,7 @@ namespace plssvm::detail::tracking {
 class rocm_smi_general_samples {
   public:
     struct rocm_smi_general_sample {
-        int performance_state{ 0 };
+        int performance_level{ 0 };
         std::uint32_t utilization_gpu{ 0 };
         std::uint32_t utilization_mem{ 0 };
     };
@@ -44,11 +44,11 @@ class rocm_smi_general_samples {
     std::string name{};
 
     void add_sample(rocm_smi_general_sample s) {
-        this->performance_state_.push_back(s.performance_state);
+        this->performance_level_.push_back(s.performance_level);
         this->utilization_gpu_.push_back(s.utilization_gpu);
         this->utilization_mem_.push_back(s.utilization_mem);
 
-        PLSSVM_ASSERT(this->num_samples() == this->performance_state_.size(), "Error: number of general samples missmatch!");
+        PLSSVM_ASSERT(this->num_samples() == this->performance_level_.size(), "Error: number of general samples missmatch!");
         PLSSVM_ASSERT(this->num_samples() == this->utilization_gpu_.size(), "Error: number of general samples missmatch!");
         PLSSVM_ASSERT(this->num_samples() == this->utilization_mem_.size(), "Error: number of general samples missmatch!");
     }
@@ -56,16 +56,16 @@ class rocm_smi_general_samples {
     rocm_smi_general_sample operator[](const std::size_t idx) const noexcept {
         PLSSVM_ASSERT(idx < this->num_samples(), "Error: out-of-bounce access with index {} for size {}!", idx, this->num_samples());
 
-        return rocm_smi_general_sample{ performance_state_[idx], utilization_gpu_[idx], utilization_mem_[idx] };
+        return rocm_smi_general_sample{ performance_level_[idx], utilization_gpu_[idx], utilization_mem_[idx] };
     }
 
     [[nodiscard]] std::uint32_t get_device() const noexcept { return device_id_; }
 
-    [[nodiscard]] std::size_t num_samples() const noexcept { return performance_state_.size(); }
+    [[nodiscard]] std::size_t num_samples() const noexcept { return performance_level_.size(); }
 
-    [[nodiscard]] bool empty() const noexcept { return performance_state_.empty(); }
+    [[nodiscard]] bool empty() const noexcept { return performance_level_.empty(); }
 
-    [[nodiscard]] const auto &get_performance_state() const noexcept { return performance_state_; }
+    [[nodiscard]] const auto &get_performance_level() const noexcept { return performance_level_; }
 
     [[nodiscard]] const auto &get_utilization_gpu() const noexcept { return utilization_gpu_; }
 
@@ -76,7 +76,7 @@ class rocm_smi_general_samples {
   private:
     std::uint32_t device_id_;
 
-    std::vector<decltype(rocm_smi_general_sample::performance_state)> performance_state_{};
+    std::vector<decltype(rocm_smi_general_sample::performance_level)> performance_level_{};
     std::vector<decltype(rocm_smi_general_sample::utilization_gpu)> utilization_gpu_{};
     std::vector<decltype(rocm_smi_general_sample::utilization_mem)> utilization_mem_{};
 };
@@ -94,7 +94,7 @@ class rocm_smi_clock_samples {
         std::uint64_t clock_system{ 0 };
         std::uint64_t clock_socket{ 0 };
         std::uint64_t clock_memory{ 0 };
-        std::uint32_t clock_throttle_reason{ 0 };
+        std::uint32_t clock_throttle_status{ 0 };
         std::uint32_t overdrive_level{ 0 };
         std::uint32_t memory_overdrive_level{ 0 };
     };
@@ -113,14 +113,14 @@ class rocm_smi_clock_samples {
         this->clock_system_.push_back(s.clock_system);
         this->clock_socket_.push_back(s.clock_socket);
         this->clock_memory_.push_back(s.clock_memory);
-        this->clock_throttle_reason_.push_back(s.clock_throttle_reason);
+        this->clock_throttle_status_.push_back(s.clock_throttle_status);
         this->overdrive_level_.push_back(s.overdrive_level);
         this->memory_overdrive_level_.push_back(s.memory_overdrive_level);
 
         PLSSVM_ASSERT(this->num_samples() == this->clock_system_.size(), "Error: number of general samples missmatch!");
         PLSSVM_ASSERT(this->num_samples() == this->clock_socket_.size(), "Error: number of general samples missmatch!");
         PLSSVM_ASSERT(this->num_samples() == this->clock_memory_.size(), "Error: number of general samples missmatch!");
-        PLSSVM_ASSERT(this->num_samples() == this->clock_throttle_reason_.size(), "Error: number of general samples missmatch!");
+        PLSSVM_ASSERT(this->num_samples() == this->clock_throttle_status_.size(), "Error: number of general samples missmatch!");
         PLSSVM_ASSERT(this->num_samples() == this->overdrive_level_.size(), "Error: number of general samples missmatch!");
         PLSSVM_ASSERT(this->num_samples() == this->memory_overdrive_level_.size(), "Error: number of general samples missmatch!");
     }
@@ -128,7 +128,7 @@ class rocm_smi_clock_samples {
     rocm_smi_clock_sample operator[](const std::size_t idx) const noexcept {
         PLSSVM_ASSERT(idx < this->num_samples(), "Error: out-of-bounce access with index {} for size {}!", idx, this->num_samples());
 
-        return rocm_smi_clock_sample{ clock_system_[idx], clock_socket_[idx], clock_memory_[idx], clock_throttle_reason_[idx], overdrive_level_[idx], memory_overdrive_level_[idx] };
+        return rocm_smi_clock_sample{ clock_system_[idx], clock_socket_[idx], clock_memory_[idx], clock_throttle_status_[idx], overdrive_level_[idx], memory_overdrive_level_[idx] };
     }
 
     [[nodiscard]] std::uint32_t get_device() const noexcept { return device_id_; }
@@ -143,7 +143,7 @@ class rocm_smi_clock_samples {
 
     [[nodiscard]] const auto &get_clock_memory() const noexcept { return clock_memory_; }
 
-    [[nodiscard]] const auto &get_clock_throttle_reason() const noexcept { return clock_throttle_reason_; }
+    [[nodiscard]] const auto &get_clock_throttle_status() const noexcept { return clock_throttle_status_; }
 
     [[nodiscard]] const auto &get_overdrive_level() const noexcept { return overdrive_level_; }
 
@@ -157,7 +157,7 @@ class rocm_smi_clock_samples {
     std::vector<decltype(rocm_smi_clock_sample::clock_system)> clock_system_{};
     std::vector<decltype(rocm_smi_clock_sample::clock_socket)> clock_socket_{};
     std::vector<decltype(rocm_smi_clock_sample::clock_memory)> clock_memory_{};
-    std::vector<decltype(rocm_smi_clock_sample::clock_throttle_reason)> clock_throttle_reason_{};
+    std::vector<decltype(rocm_smi_clock_sample::clock_throttle_status)> clock_throttle_status_{};
     std::vector<decltype(rocm_smi_clock_sample::overdrive_level)> overdrive_level_{};
     std::vector<decltype(rocm_smi_clock_sample::memory_overdrive_level)> memory_overdrive_level_{};
 };
