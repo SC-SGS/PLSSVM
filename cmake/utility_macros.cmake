@@ -6,8 +6,15 @@
 
 # set variable in the local and parent scope
 macro(set_local_and_parent NAME VALUE)
-    set(${ARGV0} ${ARGV1})
-    set(${ARGV0} ${ARGV1} PARENT_SCOPE)
+    if(${ARGC} GREATER 2)
+        set(PLSSVM_TEMP_ARGN "${ARGN}")
+        list(JOIN PLSSVM_TEMP_ARGN " " PLSSVM_REMAINING_FLAGS)
+        set(${ARGV0} "${ARGV1} ${PLSSVM_REMAINING_FLAGS}")
+        set(${ARGV0} "${ARGV1} ${PLSSVM_REMAINING_FLAGS}" PARENT_SCOPE)
+    else()
+        set(${ARGV0} "${ARGV1}")
+        set(${ARGV0} "${ARGV1}" PARENT_SCOPE)
+    endif()
 endmacro()
 
 macro(append_local_and_parent LIST_NAME VALUE)

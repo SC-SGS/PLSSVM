@@ -11,12 +11,12 @@ message(STATUS "Building Python language bindings for PLSSVM.")
 find_package(Python COMPONENTS Interpreter Development)
 
 ## try finding pybind11
+set(PLSSVM_pybind11_VERSION v2.12.0)
 find_package(pybind11 2.12.0 QUIET)
 if (pybind11_FOUND)
     message(STATUS "Found package pybind11.")
 else ()
-    message(STATUS "Couldn't find package pybind11. Building from source ...")
-    set(PLSSVM_pybind11_VERSION v2.12.0)
+    message(STATUS "Couldn't find package pybind11. Building version ${PLSSVM_pybind11_VERSION} from source.")
     # fetch pybind11 library for creating Python bindings
     FetchContent_Declare(pybind11
                          GIT_REPOSITORY https://github.com/pybind/pybind11.git
@@ -29,7 +29,6 @@ else ()
                                $<BUILD_INTERFACE:${pybind11_SOURCE_DIR}/include>
                                $<INSTALL_INTERFACE:include>
     )
-    message(STATUS "Installed pybind11 version ${PLSSVM_pybind11_VERSION}.")
 endif ()
 
 # set source files that are always used
@@ -61,6 +60,15 @@ set(PLSSVM_PYTHON_BINDINGS_SOURCES
 # set backends specific source files if the respective backend is used
 if (TARGET ${PLSSVM_OPENMP_BACKEND_LIBRARY_NAME})
     list(APPEND PLSSVM_PYTHON_BINDINGS_SOURCES ${CMAKE_CURRENT_LIST_DIR}/backends/openmp_csvm.cpp)
+endif ()
+if (TARGET ${PLSSVM_STDPAR_BACKEND_LIBRARY_NAME})
+    
+    # AdaptiveCpp stdpar only support on the CPU when using our Python bindings
+    if (PLSSVM_STDPAR_BACKEND STREQUAL "ACPP" AND (DEFINED PLSSVM_NVIDIA_TARGET_ARCHS OR DEFINED PLSSVM_AMD_TARGET_ARCHS OR DEFINED PLSSVM_INTEL_TARGET_ARCHS))
+        message(FATAL_ERROR "The stdpar implementation using AdaptiveCpp isn't currently supported in the Python bindings when targeting something different than the CPU!")
+    endif ()
+    
+    list(APPEND PLSSVM_PYTHON_BINDINGS_SOURCES ${CMAKE_CURRENT_LIST_DIR}/backends/stdpar_csvm.cpp)
 endif ()
 if (TARGET ${PLSSVM_CUDA_BACKEND_LIBRARY_NAME})
     list(APPEND PLSSVM_PYTHON_BINDINGS_SOURCES ${CMAKE_CURRENT_LIST_DIR}/backends/cuda_csvm.cpp)
@@ -107,6 +115,7 @@ target_compile_definitions(${PLSSVM_PYTHON_BINDINGS_LIBRARY_NAME} PRIVATE PYBIND
 
 # disable clang compiler warning
 target_compile_options(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC $<$<COMPILE_LANG_AND_ID:CXX,Clang>:-Wno-self-assign-overloaded>)
+target_compile_options(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC -fPIC)
 
 # append pybind11 bindings library to installed targets
 append_local_and_parent(PLSSVM_TARGETS_TO_INSTALL ${PLSSVM_PYTHON_BINDINGS_LIBRARY_NAME})

@@ -340,7 +340,7 @@ model<label_type> csvm::fit(const data_set<label_type> &data, Args &&...named_ar
                   "The provided matrix must be padded with {}, but is padded with {}!",
                   shape{ PADDING_SIZE, PADDING_SIZE },
                   data.data().padding());
-#if defined(PLSSVM_ASSERT_ENABLED)
+#if defined(PLSSVM_ENABLE_ASSERTS)
     if (params_.kernel_type == kernel_function_type::chi_squared) {
         PLSSVM_ASSERT(std::all_of(data.data().data(), data.data().data() + data.data().size_padded(), [](const real_type val) { return val >= real_type{ 0.0 }; }),
                       "The chi-squared kernel is only well defined for non-negative values!");
@@ -509,7 +509,7 @@ std::vector<label_type> csvm::predict(const model<label_type> &model, const data
                   "The provided predict points must be padded with {}, but is padded with {}!",
                   shape{ PADDING_SIZE, PADDING_SIZE },
                   data.data().padding());
-#if defined(PLSSVM_ASSERT_ENABLED)
+#if defined(PLSSVM_ENABLE_ASSERTS)
     if (params_.kernel_type == kernel_function_type::chi_squared) {
         PLSSVM_ASSERT(std::all_of(data.data().data(), data.data().data() + data.data().size_padded(), [](const real_type val) { return val >= real_type{ 0.0 }; }),
                       "The chi-squared kernel is only well defined for non-negative values!");
@@ -576,7 +576,7 @@ std::vector<label_type> csvm::predict(const model<label_type> &model, const data
             // w is currently empty
             // initialize the w matrix and calculate it later!
             calculate_w = true;
-            (*model.w_ptr_) = soa_matrix<real_type>{ shape{ calculate_number_of_classifiers(classification_type::oao, num_classes), num_features } };
+            (*model.w_ptr_) = soa_matrix<real_type>{ shape{ calculate_number_of_classifiers(classification_type::oao, num_classes), num_features }, shape{ PADDING_SIZE, PADDING_SIZE } };
         }
 
         // perform one vs. one prediction
@@ -621,7 +621,9 @@ std::vector<label_type> csvm::predict(const model<label_type> &model, const data
                     binary_votes = this->run_predict_values(model.params_, binary_sv, binary_alpha, binary_rho, w, predict_points);
                     // only in case of the linear kernel, the w vector gets filled -> store it
                     if (params_.kernel_type == kernel_function_type::linear) {
-#pragma omp parallel for default(none) shared(model, w) firstprivate(num_features, pos)
+#if !defined(PLSSVM_STDPAR_BACKEND_HAS_NVHPC)
+    #pragma omp parallel for default(none) shared(model, w) firstprivate(num_features, pos)
+#endif
                         for (std::size_t dim = 0; dim < num_features; ++dim) {
                             (*model.w_ptr_)(pos, dim) = w(0, dim);
                         }
@@ -811,7 +813,7 @@ std::tuple<aos_matrix<real_type>, std::vector<real_type>, unsigned long long> cs
                     "  - usable device memory (with safety margin of min({0} %, {1}): {5}\n"
                     "  - maximum memory needed (cg_explicit): {6}\n"
                     "  - maximum memory needed (cg_implicit): {7}\n",
-                    percentual_safety_margin * 100.0L,
+                    static_cast<double>(percentual_safety_margin * 100.0L),
                     minimal_safety_margin,
                     detail::tracking::tracking_entry{ "solver", "system_memory", total_system_memory },
                     detail::tracking::tracking_entry{ "solver", "usable_system_memory_with_safety_margin", usable_system_memory },

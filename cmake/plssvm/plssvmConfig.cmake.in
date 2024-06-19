@@ -61,6 +61,20 @@ foreach (_comp ${plssvm_FIND_COMPONENTS})
         set(plssvm_FOUND OFF)
         set(plssvm_NOT_FOUND_MESSAGE "Component ${_comp} wasn't enabled!")
     else ()
+        # set component specific variables
+        if (${_comp} MATCHES "AdaptiveCpp")
+            set(ACPP_TARGETS @ACPP_TARGETS@)
+        elseif (${_comp} MATCHES "stdpar")
+            set(PLSSVM_STDPAR_BACKEND @PLSSVM_STDPAR_BACKEND@)
+            if (PLSSVM_STDPAR_BACKEND MATCHES "roc-stdpar")
+                set(PLSSVM_STDPAR_BACKEND_HIPSTDPAR_PATH "@PLSSVM_STDPAR_BACKEND_HIPSTDPAR_PATH@")
+            endif ()
+            set(CMAKE_CXX_FLAGS "@CMAKE_CXX_FLAGS@")
+            if (CMAKE_CXX_FLAGS)
+                message(STATUS "Setting CMAKE_CXX_FLAGS for the plssvm::stdpar backend to: \"${CMAKE_CXX_FLAGS}\"")
+            endif ()
+        endif ()
+
         # include the component specific config file
         include("${CMAKE_CURRENT_LIST_DIR}/plssvm${_comp}Targets.cmake")
         # remove the found element from the list

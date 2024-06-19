@@ -41,7 +41,7 @@ int main(int argc, char *argv[]) {
         const plssvm::detail::cmd::parser_predict cmd_parser{ argc, argv };
 
         // send warning if the build type is release and assertions are enabled
-        if constexpr (std::string_view{ PLSSVM_BUILD_TYPE } == "Release" && PLSSVM_IS_DEFINED(PLSSVM_ASSERT_ENABLED)) {
+        if constexpr (std::string_view{ PLSSVM_BUILD_TYPE } == "Release" && PLSSVM_IS_DEFINED(PLSSVM_ENABLE_ASSERTS)) {
             plssvm::detail::log(plssvm::verbosity_level::full | plssvm::verbosity_level::warning,
                                 "WARNING: The build type is set to Release, but assertions are enabled. "
                                 "This may result in a noticeable performance degradation in parts of PLSSVM!\n");

@@ -10,7 +10,7 @@
         - [plssvm.Parameter](#plssvmparameter)
         - [plssvm.DataSet](#plssvmdataset)
         - [plssvm.CSVM](#plssvmcsvm)
-        - [plssvm.openmp.CSVM, plssvm.cuda.CSVM, plssvm.hip.CSVM, plssvm.opencl.CSVM, plssvm.sycl.CSVM, plssvm.dpcpp.CSVM, plssvm.adaptivecpp.CSVM](#plssvmopenmpcsvm-plssvmcudacsvm-plssvmhipcsvm-plssvmopenclcsvm-plssvmsyclcsvm-plssvmdpcppcsvm-plssvmadaptivecppcsvm)
+        - [plssvm.openmp.CSVM, plssvm.stdpar.CSVM, plssvm.cuda.CSVM, plssvm.hip.CSVM, plssvm.opencl.CSVM, plssvm.sycl.CSVM, plssvm.dpcpp.CSVM, plssvm.adaptivecpp.CSVM](#plssvmopenmpcsvm-plssvmcudacsvm-plssvmhipcsvm-plssvmopenclcsvm-plssvmsyclcsvm-plssvmdpcppcsvm-plssvmadaptivecppcsvm)
         - [plssvm.Model](#plssvmmodel)
         - [plssvm.Version](#plssvmversion)
         - [plssvm.detail.PerformanceTracker](#plssvmdetailperformancetracker)
@@ -205,6 +205,12 @@ If a SYCL implementation is available, additional enumerations are available:
 | `ImplementationType`   | `AUTOMATIC`, `DPCPP`, `ADAPTIVECPP` | The different supported SYCL implementation types (default: `AUTOMATIC`). If `AUTOMATIC` is provided, determines the used SYCL implementation based on the value of `-DPLSSVM_SYCL_BACKEND_PREFERRED_IMPLEMENTATION` provided during PLSSVM'S build step. |
 | `KernelInvocationType` | `AUTOMATIC`, `ND_RANGE`             | The different supported SYCL kernel invocation types (default: `AUTOMATIC`). If `AUTOMATIC` is provided, simply uses `ND_RANGE` (only implemented to be able to add new invocation types in the future).                                                  |
 
+If the stdpar backend is available, an additional enumeration is available:
+
+| enumeration          | values                                                        | description                                     |
+|----------------------|---------------------------------------------------------------|-------------------------------------------------|
+| `ImplementationType` | `NVHPC`, `ROC_STDPAR`, `INTEL_LLVM`, `ADAPTIVECPP`, `GNU_TBB` | The different supported stdpar implementations. |
+
 ### Classes and submodules
 
 The following tables list all PLSSVM classes exposed on the Python side:
@@ -340,13 +346,15 @@ and `sycl_kernel_invocation_type` to choose between the two different SYCL kerne
 | `score(model)`                                                                                                                               | Score the model with respect to itself returning its accuracy.                                                                                                                                                     |
 | `score(model, data_set)`                                                                                                                     | Score the model given the provided data set returning its accuracy.                                                                                                                                                |
 
-#### `plssvm.openmp.CSVM`, `plssvm.cuda.CSVM`, `plssvm.hip.CSVM`, `plssvm.opencl.CSVM`, `plssvm.sycl.CSVM`, `plssvm.dpcpp.CSVM`, `plssvm.adaptivecpp.CSVM`
+#### `plssvm.openmp.CSVM`, `plssvm.stdpar.CSVM`, plssvm.cuda.CSVM`, `plssvm.hip.CSVM`, `plssvm.opencl.CSVM`, `plssvm.sycl.CSVM`, `plssvm.dpcpp.CSVM`, `plssvm.adaptivecpp.CSVM`
 
 These classes represent the backend specific CSVMs.
 **Note**: they are only available if the respective backend has been enabled during PLSSVM's build step.
 **Note**: the `plssvm.sycl.CSVM` is equal to the respective `plssvm.dpcpp.CSVM` or `plssvm.adaptivecpp.CSVM` if only one
 SYCL implementation is available or the SYCL implementation defined by `-DPLSSVM_SYCL_BACKEND_PREFERRED_IMPLEMENTATION`
 during PLSSVM's build step.
+**Note**: when using `plssvm.stdpar.CSVM` together with AdaptiveCpp as stdpar implementation, currently only the CPU is supported as target.
+
 These classes inherit all methods from the base `plssvm.CSVM` class.
 
 | constructors                              | description                                                                                                                                  |
@@ -373,6 +381,13 @@ are additional available for the backend specific CSVMs.
 | methods                        | description                             |
 |--------------------------------|-----------------------------------------|
 | `get_kernel_invocation_type()` | Return the SYCL kernel invocation type. |
+
+In case of the stdpar CSVM (`plssvm.stdpar.CSVM`) the following method is additional available for the backend specific
+CSVM.
+
+| methods                     | description                                 |
+|-----------------------------|---------------------------------------------|
+| `get_implementation_type()` | Return the used stdpar implementation type. |
 
 #### `plssvm.Model`
 
@@ -460,6 +475,12 @@ If a SYCL implementation is available, additional free functions are available:
 | function                                | description                                                                      |
 |-----------------------------------------|----------------------------------------------------------------------------------|
 | `list_available_sycl_implementations()` | List all available SYCL implementations (determined during PLSSVM's build step). |
+
+If a stdpar implementation is available, additional free functions are available:
+
+| function                                  | description                                                                                                                                   |
+|-------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------|
+| `list_available_stdpar_implementations()` | List all available stdpar implementations (determined during PLSSVM's build step; currently always guaranteed to be only one implementation). |
 
 ### Exceptions
 

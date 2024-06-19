@@ -33,6 +33,18 @@
     #define PLSSVM_UNISTD_AVAILABLE
 #endif
 
+#if defined(PLSSVM_STDPAR_BACKEND_HAS_NVHPC) || defined(PLSSVM_STDPAR_BACKEND_HAS_HIPSTDPAR) || defined(PLSSVM_STDPAR_BACKEND_HAS_GNU_TBB)
+    #include "boost/version.hpp"  // BOOST_VERSION
+#endif
+
+#if defined(PLSSVM_STDPAR_BACKEND_HAS_INTEL_LLVM)
+    #include "oneapi/dpl/pstl/onedpl_config.h"  // ONEDPL_VERSION_MAJOR, ONEDPL_VERSION_MINOR, ONEDPL_VERSION_PATCH
+#endif
+
+#if defined(PLSSVM_STDPAR_BACKEND_HAS_ACPP) || defined(PLSSVM_STDPAR_BACKEND_HAS_GNU_TBB)
+    #include "tbb/tbb_stddef.h"  // TBB_VERSION_MAJOR, TBB_VERSION_MINOR
+#endif
+
 #include <algorithm>    // std::max
 #include <chrono>       // std::chrono::system_clock
 #include <cstddef>      // std::size_t
@@ -189,9 +201,11 @@ void performance_tracker::save(std::ostream &out) {
     constexpr std::string_view username{ "not available" };
 #endif
     // check whether asserts are enabled
-    constexpr bool assert_enabled = PLSSVM_IS_DEFINED(PLSSVM_ASSERT_ENABLED);
+    constexpr bool assert_enabled = PLSSVM_IS_DEFINED(PLSSVM_ENABLE_ASSERTS);
     // check whether LTO has been enabled
     constexpr bool lto_enabled = PLSSVM_IS_DEFINED(PLSSVM_LTO_SUPPORTED);
+    // check whether fast-math has been enabled
+    constexpr bool fast_math_enabled = PLSSVM_IS_DEFINED(PLSSVM_USE_FAST_MATH);
     // check whether the maximum allocatable memory size should be enforced
     constexpr bool enforce_max_mem_alloc_size = PLSSVM_IS_DEFINED(PLSSVM_ENFORCE_MAX_MEM_ALLOC_SIZE);
 
@@ -209,6 +223,7 @@ void performance_tracker::save(std::ostream &out) {
         "  user:                              {}\n"
         "  build_type:                        {}\n"
         "  LTO:                               {}\n"
+        "  fast-math:                         {}\n"
         "  asserts:                           {}\n"
         "  enforce_max_mem_alloc_size:        {}\n"
         "  THREAD_BLOCK_SIZE:                 {}\n"
@@ -223,6 +238,7 @@ void performance_tracker::save(std::ostream &out) {
         username.data(),
         PLSSVM_BUILD_TYPE,
         lto_enabled,
+        fast_math_enabled,
         assert_enabled,
         enforce_max_mem_alloc_size,
         THREAD_BLOCK_SIZE,
@@ -277,6 +293,26 @@ void performance_tracker::save(std::ostream &out) {
 #else
     const std::string igor_version{ "unknown" };
 #endif
+
+    // stdpar backend specific versions
+    // Boost version
+#if defined(PLSSVM_STDPAR_BACKEND_HAS_NVHPC) || defined(PLSSVM_STDPAR_BACKEND_HAS_HIPSTDPAR) || defined(PLSSVM_STDPAR_BACKEND_HAS_GNU_TBB)
+    const std::string boost_version = fmt::format("{}.{}.{}", BOOST_VERSION / 100'000, BOOST_VERSION / 100 % 1000, BOOST_VERSION % 100);
+#else
+    const std::string boost_version{ "unknown/unused" };
+#endif
+    // Intel oneDPL version
+#if defined(PLSSVM_STDPAR_BACKEND_HAS_INTEL_LLVM)
+    const std::string oneDPL_version = fmt::format("{}.{}.{}", ONEDPL_VERSION_MAJOR, ONEDPL_VERSION_MINOR, ONEDPL_VERSION_PATCH);
+#else
+    const std::string oneDPL_version{ "unknown/unused" };
+#endif
+    // Intel TBB version
+#if defined(PLSSVM_STDPAR_BACKEND_HAS_ACPP) || defined(PLSSVM_STDPAR_BACKEND_HAS_GNU_TBB)
+    const std::string tbb_version = fmt::format("{}.{}", TBB_VERSION_MAJOR, TBB_VERSION_MINOR);
+#else
+    const std::string tbb_version{ "unknown/unused" };
+#endif
     // subprocess.h version
 #if defined(PLSSVM_subprocess_VERSION)
     const std::string subprocess_version{ PLSSVM_subprocess_VERSION };
@@ -312,11 +348,17 @@ void performance_tracker::save(std::ostream &out) {
         "  fmt_version: {}\n"
         "  fast_float_version: {}\n"
         "  igor_version: {}\n"
+        "  boost_version: {}\n"
+        "  oneDPL_version: {}\n"
+        "  tbb_version: {}\n"
         "  subprocess_version: {}\n\n",
         fmt::format("{:<{}}\"{}\"", "", max_dependency_entry_name_length - 15, cxxopts_version),
         fmt::format("{:<{}}\"{}\"", "", max_dependency_entry_name_length - 11, fmt_version),
         fmt::format("{:<{}}\"{}\"", "", max_dependency_entry_name_length - 18, fast_float_version),
         fmt::format("{:<{}}\"{}\"", "", max_dependency_entry_name_length - 12, igor_version),
+        fmt::format("{:<{}}\"{}\"", "", max_dependency_entry_name_length - 13, boost_version),
+        fmt::format("{:<{}}\"{}\"", "", max_dependency_entry_name_length - 14, oneDPL_version),
+        fmt::format("{:<{}}\"{}\"", "", max_dependency_entry_name_length - 11, tbb_version),
         fmt::format("{:<{}}\"{}\"", "", max_dependency_entry_name_length - 18, subprocess_version));
 
     //*************************************************************************************************************************************//

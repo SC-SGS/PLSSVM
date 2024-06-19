@@ -14,7 +14,7 @@
 #include "gtest/gtest.h"  // TEST, ASSERT_DEATH, EXPECT_DEATH
 
 // only test if assertions are enabled
-#if defined(PLSSVM_ASSERT_ENABLED)
+#if defined(PLSSVM_ENABLE_ASSERTS)
 
 TEST(PLSSVMAssert, assert_true) {
     // must not trigger an assertion

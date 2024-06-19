@@ -683,7 +683,7 @@ inline void write_libsvm_model_data(const std::string &filename, const plssvm::p
                   rho.size(),
                   calculate_number_of_classifiers(classification, data.num_classes()),
                   classification);
-#if defined(PLSSVM_ASSERT_ENABLED)
+#if defined(PLSSVM_ENABLE_ASSERTS)
     switch (classification) {
         case classification_type::oaa:
             // weights

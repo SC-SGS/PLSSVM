@@ -7,12 +7,12 @@
 list(APPEND CMAKE_MESSAGE_INDENT "Tests:  ")
 
 ## setup testing wit GoogleTest
+set(PLSSVM_googletest_VERSION v1.14.0)
 find_package(GTest 1.14.0 QUIET)
 if (GTEST_FOUND)
     message(STATUS "Found package GTest.")
 else ()
-    message(STATUS "Couldn't find package GTest. Building from source...")
-    set(PLSSVM_googletest_VERSION v1.14.0)
+    message(STATUS "Couldn't find package GTest. Building version ${PLSSVM_googletest_VERSION} from source.")
     set(CMAKE_CXX_FLAGS_OLD "${CMAKE_CXX_FLAGS}")
     if (PLSSVM_ENABLE_STL_DEBUG_MODE)
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${PLSSVM_STL_DEBUG_MODE_FLAGS}")
@@ -33,7 +33,6 @@ else ()
         FetchContent_Populate(googletest)
         add_subdirectory(${googletest_SOURCE_DIR} ${googletest_SOURCE_DIR} EXCLUDE_FROM_ALL)
     endif ()
-    message(STATUS "Installed GoogleTest version ${PLSSVM_googletest_VERSION}.")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS_OLD}")
 endif ()
 
@@ -123,6 +122,9 @@ set(PLSSVM_BASE_TEST_SOURCES
     ## is available these are also tested in the base library
     ${CMAKE_CURRENT_LIST_DIR}/backends/SYCL/implementation_types.cpp
     ${CMAKE_CURRENT_LIST_DIR}/backends/SYCL/kernel_invocation_types.cpp
+    ## since the stdpar implementation_type enumeration is used even if no stdpar backend
+    ## is available this is also tested in the base library
+    ${CMAKE_CURRENT_LIST_DIR}/backends/stdpar/implementation_types.cpp
     
     ${CMAKE_CURRENT_LIST_DIR}/detail/cmd/data_set_variants.cpp
     ${CMAKE_CURRENT_LIST_DIR}/detail/cmd/parser_predict.cpp
@@ -194,15 +196,27 @@ target_link_libraries(${PLSSVM_BASE_TEST_NAME} PRIVATE ${PLSSVM_BASE_TEST_LIBRAR
 
 # check whether death tests should be activated or not
 string(TOUPPER "${CMAKE_BUILD_TYPE}" PLSSVM_CMAKE_BUILD_TYPE_UPPER_CASE)
-set(PLSSVM_CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS_${PLSSVM_CMAKE_BUILD_TYPE_UPPER_CASE}}")
-if (PLSSVM_ENABLE_ASSERTS OR NOT "${PLSSVM_CMAKE_CXX_FLAGS}" MATCHES ".*NDEBUG.*")
+if (PLSSVM_ENABLE_ASSERTS)
     # assertions are enabled -> enable Google death tests
     message(STATUS "Enabling GTest's death tests.")
     set(PLSSVM_ENABLE_DEATH_TESTS ON)
+    target_compile_definitions(${PLSSVM_BASE_TEST_LIBRARY_NAME} PUBLIC PLSSVM_DEATH_TESTS_ENABLED)
+    
+    # death tests are currently not supported for the stdpar implementations due to GoogleTest internal SegFaults
+    if (TARGET ${PLSSVM_STDPAR_BACKEND_LIBRARY_NAME})
+        message(FATAL_ERROR "GTest's death tests not supported with our stdpar backend. Please set \"PLSSVM_ENABLE_ASSERTS=OFF\"!")
+    endif ()
 else ()
     # assertions are disabled -> disable Google death tests
     message(STATUS "Disabling GTest's death tests.")
     set(PLSSVM_ENABLE_DEATH_TESTS OFF)
+endif ()
+
+# performance tracker not supported with NVHPC
+if (PLSSVM_ENABLE_PERFORMANCE_TRACKING)
+    if (PLSSVM_STDPAR_BACKEND AND PLSSVM_STDPAR_BACKEND STREQUAL "NVHPC")
+        message(FATAL_ERROR "The (global) performance tracker is currently not supported with GTest and NVHPC. Please set \"PLSSVM_ENABLE_PERFORMANCE_TRACKING=OFF\" or use another stdpar implementation!")
+    endif ()
 endif ()
 
 # add tests to google test

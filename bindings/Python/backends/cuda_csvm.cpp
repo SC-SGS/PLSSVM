@@ -13,7 +13,7 @@
 #include "plssvm/parameter.hpp"                 // plssvm::parameter
 #include "plssvm/target_platforms.hpp"          // plssvm::target_platform
 
-#include "bindings/Python//utility.hpp"  // check_kwargs_for_correctness, convert_kwargs_to_parameter, register_py_exception
+#include "bindings/Python/utility.hpp"  // check_kwargs_for_correctness, convert_kwargs_to_parameter, register_py_exception
 
 #include "pybind11/pybind11.h"  // py::module_, py::class_, py::init
 #include "pybind11/stl.h"       // support for STL types

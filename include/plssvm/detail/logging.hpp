@@ -19,6 +19,7 @@
 
 #include "fmt/chrono.h"  // format std::chrono types
 #include "fmt/color.h"   // fmt::fg, fmt::color
+#include "fmt/core.h"    // fmt::runtime
 #include "fmt/format.h"  // fmt::format
 
 #include <iostream>     // std::cout, std::clog, std::flush
@@ -45,9 +46,9 @@ void log(const verbosity_level verb, const std::string_view msg, Args &&...args)
         // if the plssvm::verbosity_level is the warning level, output the message on stderr
         // otherwise output the message on stdout
         if ((verb & verbosity_level::warning) != verbosity_level::quiet) {
-            std::clog << fmt::format(fmt::fg(fmt::color::orange), msg, args...) << std::flush;
+            std::clog << fmt::format(fmt::runtime(msg), args...) << std::flush;
         } else {
-            std::cout << fmt::format(msg, args...) << std::flush;
+            std::cout << fmt::format(fmt::runtime(msg), args...) << std::flush;
         }
     }
 
