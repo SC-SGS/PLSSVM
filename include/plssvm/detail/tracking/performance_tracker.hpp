@@ -279,7 +279,7 @@ void performance_tracker::add_tracking_entry(const tracking_entry<T> &entry) {
     // check whether entries should currently be tracked
     if (this->is_tracking()) {
         std::string entry_value_str{};
-        if constexpr (std::is_same_v<T, std::string>) {
+        if constexpr (std::is_same_v<T, std::string> || std::is_same_v<T, std::string_view>) {
             // escape strings with "" since they may contain whitespaces
             entry_value_str = fmt::format("\"{}\"", entry.entry_value);
         } else if constexpr (std::is_same_v<T, detail::memory_size>) {
@@ -310,7 +310,7 @@ void performance_tracker::add_tracking_entry(const tracking_entry<std::vector<T>
     // check whether entries should currently be tracked
     if (this->is_tracking()) {
         std::string entry_value_str{};
-        if constexpr (std::is_same_v<T, std::string>) {
+        if constexpr (std::is_same_v<T, std::string> || std::is_same_v<T, std::string_view>) {
             // escape strings with "" since they may contain whitespaces
             entry_value_str = fmt::format("[\"{}\"]", fmt::join(entry.entry_value, "\", \""));
         } else if constexpr (std::is_same_v<T, detail::memory_size>) {
