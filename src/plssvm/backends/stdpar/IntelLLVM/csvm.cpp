@@ -13,7 +13,7 @@
 #include "plssvm/backends/stdpar/exceptions.hpp"            // plssvm::stdpar::backend_exception
 #include "plssvm/backends/stdpar/implementation_types.hpp"  // plssvm::stdpar::implementation_type
 #include "plssvm/detail/logging.hpp"                        // plssvm::detail::log
-#include "plssvm/detail/tracking/performance_tracker.hpp"   // plssvm::detail::tracking::tracking_entry, PLSSVM_DETAIL_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY
+#include "plssvm/detail/tracking/performance_tracker.hpp"   // plssvm::detail::tracking::tracking_entry, PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY
 #include "plssvm/target_platforms.hpp"                      // plssvm::target_platform
 #include "plssvm/verbosity_levels.hpp"                      // plssvm::verbosity_level
 
@@ -60,7 +60,7 @@ void csvm::init(const target_platform target) {
                         "\nUsing stdpar ({}; {}) as backend.\n\n",
                         plssvm::detail::tracking::tracking_entry{ "dependencies", "stdpar_implementation", this->get_implementation_type() },
                         plssvm::detail::tracking::tracking_entry{ "dependencies", "stdpar_version", detail::get_stdpar_version() });
-    PLSSVM_DETAIL_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking::tracking_entry{ "backend", "backend", plssvm::backend_type::stdpar }));
+    PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking::tracking_entry{ "backend", "backend", plssvm::backend_type::stdpar }));
 
     // AdaptiveCpp's stdpar per default uses the sycl default device
     const ::sycl::device default_device{};
@@ -78,7 +78,7 @@ void csvm::init(const target_platform target) {
 
     const std::string device_name = default_device.get_info<::sycl::info::device::name>();
     plssvm::detail::log(verbosity_level::full, "  [0, {}]\n", device_name);
-    PLSSVM_DETAIL_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking::tracking_entry{ "backend", "device", device_name }));
+    PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking::tracking_entry{ "backend", "device", device_name }));
 
     plssvm::detail::log(verbosity_level::full | verbosity_level::timing,
                         "\n");
