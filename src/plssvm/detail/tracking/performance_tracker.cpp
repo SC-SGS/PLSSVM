@@ -364,7 +364,9 @@ void performance_tracker::resume_tracking() noexcept { is_tracking_ = true; }
 
 bool performance_tracker::is_tracking() const noexcept { return is_tracking_; }
 
-const std::map<std::string, std::map<std::string, std::vector<std::string>>> &performance_tracker::get_tracking_entries() noexcept { return tracking_entries_; }
+const std::map<std::string, std::map<std::string, std::vector<std::string>>> &performance_tracker::get_tracking_entries() const noexcept { return tracking_entries_; }
+
+const events &performance_tracker::get_events() const noexcept { return events_; }
 
 void performance_tracker::clear_tracking_entries() noexcept { tracking_entries_.clear(); }
 

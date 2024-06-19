@@ -253,7 +253,13 @@ class performance_tracker {
      * @details Grouped as a map containing the categories as a string and a map containing the tracking entry names and all associated values.
      * @return the previously added tracking entries (`[[nodiscard]]`)
      */
-    [[nodiscard]] const std::map<std::string, std::map<std::string, std::vector<std::string>>> &get_tracking_entries() noexcept;
+    [[nodiscard]] const std::map<std::string, std::map<std::string, std::vector<std::string>>> &get_tracking_entries() const noexcept;
+    /**
+     * @brief Return the currently available events.
+     * @return the previously added events (`[[nodiscard]]`)
+     */
+    [[nodiscard]] const events &get_events() const noexcept;
+
     /**
      * @brief Remove all currently saved tracking entries from the performance tracker.
      */
