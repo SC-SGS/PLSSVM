@@ -9,6 +9,7 @@
 #include "plssvm/detail/tracking/gpu_amd/hardware_sampler.hpp"
 
 #include "plssvm/detail/tracking/gpu_amd/rocm_smi_samples.hpp"  // plssvm::detail::tracking::{rocm_smi_general_samples, rocm_smi_clock_samples, rocm_smi_power_samples, rocm_smi_memory_samples, rocm_smi_temperature_samples}
+#include "plssvm/detail/tracking/gpu_amd/utility.hpp"           // PLSSVM_ROCM_SMI_ERROR_CHECK
 #include "plssvm/detail/tracking/hardware_sampler.hpp"          // plssvm::detail::tracking::hardware_sampler
 #include "plssvm/detail/tracking/performance_tracker.hpp"       // PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY
 #include "plssvm/detail/tracking/utility.hpp"                   // plssvm::detail::tracking::durations_from_reference_time
@@ -29,26 +30,6 @@
 #include <vector>     // std::vector
 
 namespace plssvm::detail::tracking {
-
-#if defined(PLSSVM_HARDWARE_SAMPLING_ERROR_CHECKS_ENABLED)
-
-    #define PLSSVM_ROCM_SMI_ERROR_CHECK(rocm_smi_func)                                                                                                      \
-        {                                                                                                                                                   \
-            const rsmi_status_t errc = rocm_smi_func;                                                                                                       \
-            if (errc != RSMI_STATUS_SUCCESS && errc != RSMI_STATUS_NOT_SUPPORTED) {                                                                         \
-                const char *error_string;                                                                                                                   \
-                const rsmi_status_t ret = rsmi_status_string(errc, &error_string);                                                                          \
-                if (ret == RSMI_STATUS_SUCCESS) {                                                                                                           \
-                    throw hardware_sampling_exception{ fmt::format("Error in ROCm SMI function call \"{}\": {}", #rocm_smi_func, error_string) };           \
-                } else {                                                                                                                                    \
-                    throw hardware_sampling_exception{ fmt::format("Error in ROCm SMI function call \"{}\": {}", #rocm_smi_func, static_cast<int>(errc)) }; \
-                }                                                                                                                                           \
-            }                                                                                                                                               \
-        }
-
-#else
-    #define PLSSVM_ROCM_SMI_ERROR_CHECK(rocm_smi_func) rocm_smi_func;
-#endif
 
 gpu_amd_hardware_sampler::gpu_amd_hardware_sampler(const std::size_t device_id, const std::chrono::milliseconds sampling_interval) :
     hardware_sampler{ sampling_interval },
