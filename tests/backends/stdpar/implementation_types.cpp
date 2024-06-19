@@ -71,6 +71,11 @@ TEST(stdparImplementationType, from_string_unknown) {
 TEST(stdparImplementationType, minimal_available_stdpar_implementation_type) {
     const std::vector<plssvm::stdpar::implementation_type> implementation_type = plssvm::stdpar::list_available_stdpar_implementations();
 
-    // at least one must be available!
-    EXPECT_GE(implementation_type.size(), 1);
+    #if defined(PLSSVM_HAS_STDPAR_BACKEND)
+        // at least one must be available!
+        EXPECT_GE(implementation_type.size(), 1);
+    #else
+        // stdpar not active -> no implementation type available
+        EXPECT_TRUE(implementation_type.empty());
+    #endif
 }
