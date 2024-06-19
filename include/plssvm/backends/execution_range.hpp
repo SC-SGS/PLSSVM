@@ -159,7 +159,9 @@ struct execution_range {
     /// The up-to three dimensional block (work-group) size.
     dim_type block{};
     /// The grids. Multiple grids are used, if the grid sizes would exceed the maximum allowed number. Also stores the offsets for the respective grids used in the kernels.
-    std::vector<grid_type> grids{};
+    /// Note: no default initialization due to a linker error occurring with NVIDIA's nvhpc!
+    std::vector<grid_type> grids;
+
 };
 
 /**
