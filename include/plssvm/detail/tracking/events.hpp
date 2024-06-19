@@ -13,15 +13,14 @@
 #define PLSSVM_DETAIL_TRACKING_EVENT_HPP_
 #pragma once
 
-#include "plssvm/detail/assert.hpp"            // PLSSVM_ASSERT
-#include "plssvm/detail/tracking/utility.hpp"  // plssvm::detail::tracking::durations_from_reference_time
+#include "plssvm/detail/assert.hpp"  // PLSSVM_ASSERT
 
-#include "fmt/chrono.h"  // format std::chrono types
-#include "fmt/core.h"    // fmt::format
-#include "fmt/format.h"  // fmt::join
+#include "fmt/core.h"     // fmt::formatter
+#include "fmt/ostream.h"  // fmt::ostream_formatter
 
 #include <chrono>   // std::chrono::system_clock::time_point
 #include <cstddef>  // std::size_t
+#include <iosfwd>   // std::ostream forward declaration
 #include <string>   // std::string
 #include <utility>  // std::move
 #include <vector>   // std::vector
@@ -43,8 +42,8 @@ class events {
         PLSSVM_ASSERT(this->num_events() == this->names_.size(), "Error: number of event members mismatch!");
     }
 
-    void add_event(decltype(event::time_point) time_since_start, decltype(event::name) name) {
-        this->time_points_.push_back(std::move(time_since_start));
+    void add_event(decltype(event::time_point) time_point, decltype(event::name) name) {
+        this->time_points_.push_back(std::move(time_point));
         this->names_.push_back(fmt::format("\"{}\"", std::move(name)));
 
         PLSSVM_ASSERT(this->num_events() == this->time_points_.size(), "Error: number of event members mismatch!");
@@ -63,24 +62,22 @@ class events {
 
     [[nodiscard]] const auto &get_names() const noexcept { return names_; }
 
-    [[nodiscard]] std::string generate_yaml_string(const std::chrono::system_clock::time_point start_time_point) const noexcept {
-        if (this->empty()) {
-            // no events -> return empty string
-            return std::string{};
-        } else {
-            // assemble string
-            return fmt::format("    time_points: [{}]\n"
-                               "    names: [{}]",
-                               fmt::join(durations_from_reference_time(time_points_, start_time_point), ", "),
-                               fmt::join(names_, ", "));
-        }
-    }
+    [[nodiscard]] std::string generate_yaml_string(std::chrono::system_clock::time_point start_time_point) const;
 
   private:
     std::vector<decltype(event::time_point)> time_points_;
     std::vector<decltype(event::name)> names_;
 };
 
+std::ostream &operator<<(std::ostream &out, const events::event &e);
+std::ostream &operator<<(std::ostream &out, const events &e);
+
 }  // namespace plssvm::detail::tracking
+
+template <>
+struct fmt::formatter<plssvm::detail::tracking::events::event> : fmt::ostream_formatter { };
+
+template <>
+struct fmt::formatter<plssvm::detail::tracking::events> : fmt::ostream_formatter { };
 
 #endif  // PLSSVM_DETAIL_TRACKING_EVENT_HPP_
