@@ -85,9 +85,11 @@ class rocm_smi_power_samples {
     PLSSVM_SAMPLE_STRUCT_FIXED_MEMBER(std::uint64_t, power_default_cap)
     PLSSVM_SAMPLE_STRUCT_FIXED_MEMBER(std::uint64_t, power_cap)
     PLSSVM_SAMPLE_STRUCT_FIXED_MEMBER(std::string, power_type)
+    PLSSVM_SAMPLE_STRUCT_FIXED_MEMBER(std::vector<std::string>, available_power_profiles)
 
     PLSSVM_SAMPLE_STRUCT_SAMPLING_MEMBER(std::uint64_t, power_usage)
     PLSSVM_SAMPLE_STRUCT_SAMPLING_MEMBER(std::uint64_t, power_total_energy_consumption)
+    PLSSVM_SAMPLE_STRUCT_SAMPLING_MEMBER(std::string, power_profile)
 };
 
 std::ostream &operator<<(std::ostream &out, const rocm_smi_power_samples &samples);

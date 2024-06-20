@@ -28,6 +28,7 @@
 #include <optional>   // std::optional
 #include <string>     // std::string
 #include <thread>     // std::this_thread
+#include <utility>    // std::move
 #include <vector>     // std::vector
 
 namespace plssvm::detail::tracking {
@@ -206,12 +207,61 @@ void gpu_amd_hardware_sampler::sampling_loop() {
             }
         }
 
-        // rsmi_power_profile_status_t power_profile{};
-        // if (rsmi_dev_power_profile_presets_get(device_id_, std::uint32_t{ 0 }, &power_profile) == RSMI_STATUS_SUCCESS) {
-        //     power_samples_.available_power_profiles_ = static_cast<decltype(power_samples_.available_power_profiles_)::value_type>(power_profile.available_profiles);
-        //     // queried samples -> retrieved every iteration if available
-        //     power_samples_.power_profile_ = decltype(power_samples_.power_profile_)::value_type{ static_cast<decltype(power_samples_.power_profile_)::value_type::value_type>(power_profile.current) };
-        // }
+        rsmi_power_profile_status_t power_profile{};
+        if (rsmi_dev_power_profile_presets_get(device_id_, std::uint32_t{ 0 }, &power_profile) == RSMI_STATUS_SUCCESS) {
+            decltype(power_samples_.available_power_profiles_)::value_type available_power_profiles{};
+            // go through all possible power profiles
+            if ((power_profile.available_profiles & RSMI_PWR_PROF_PRST_CUSTOM_MASK) != std::uint64_t{ 0 }) {
+                available_power_profiles.emplace_back("CUSTOM");
+            }
+            if ((power_profile.available_profiles & RSMI_PWR_PROF_PRST_VIDEO_MASK) != std::uint64_t{ 0 }) {
+                available_power_profiles.emplace_back("VIDEO");
+            }
+            if ((power_profile.available_profiles & RSMI_PWR_PROF_PRST_POWER_SAVING_MASK) != std::uint64_t{ 0 }) {
+                available_power_profiles.emplace_back("POWER_SAVING");
+            }
+            if ((power_profile.available_profiles & RSMI_PWR_PROF_PRST_COMPUTE_MASK) != std::uint64_t{ 0 }) {
+                available_power_profiles.emplace_back("COMPUTE");
+            }
+            if ((power_profile.available_profiles & RSMI_PWR_PROF_PRST_VR_MASK) != std::uint64_t{ 0 }) {
+                available_power_profiles.emplace_back("VR");
+            }
+            if ((power_profile.available_profiles & RSMI_PWR_PROF_PRST_3D_FULL_SCR_MASK) != std::uint64_t{ 0 }) {
+                available_power_profiles.emplace_back("3D_FULL_SCREEN");
+            }
+            if ((power_profile.available_profiles & RSMI_PWR_PROF_PRST_BOOTUP_DEFAULT) != std::uint64_t{ 0 }) {
+                available_power_profiles.emplace_back("BOOTUP_DEFAULT");
+            }
+            power_samples_.available_power_profiles_ = std::move(available_power_profiles);
+
+            // queried samples -> retrieved every iteration if available
+            switch (power_profile.current) {
+                case RSMI_PWR_PROF_PRST_CUSTOM_MASK:
+                    power_samples_.power_profile_ = decltype(power_samples_.power_profile_)::value_type{ "CUSTOM" };
+                    break;
+                case RSMI_PWR_PROF_PRST_VIDEO_MASK:
+                    power_samples_.power_profile_ = decltype(power_samples_.power_profile_)::value_type{ "VIDEO" };
+                    break;
+                case RSMI_PWR_PROF_PRST_POWER_SAVING_MASK:
+                    power_samples_.power_profile_ = decltype(power_samples_.power_profile_)::value_type{ "POWER_SAVING" };
+                    break;
+                case RSMI_PWR_PROF_PRST_COMPUTE_MASK:
+                    power_samples_.power_profile_ = decltype(power_samples_.power_profile_)::value_type{ "COMPUTE" };
+                    break;
+                case RSMI_PWR_PROF_PRST_VR_MASK:
+                    power_samples_.power_profile_ = decltype(power_samples_.power_profile_)::value_type{ "VR" };
+                    break;
+                case RSMI_PWR_PROF_PRST_3D_FULL_SCR_MASK:
+                    power_samples_.power_profile_ = decltype(power_samples_.power_profile_)::value_type{ "3D_FULL_SCREEN" };
+                    break;
+                case RSMI_PWR_PROF_PRST_BOOTUP_DEFAULT:
+                    power_samples_.power_profile_ = decltype(power_samples_.power_profile_)::value_type{ "BOOTUP_DEFAULT" };
+                    break;
+                case RSMI_PWR_PROF_PRST_INVALID:
+                    power_samples_.power_profile_ = decltype(power_samples_.power_profile_)::value_type{ "INVALID" };
+                    break;
+            }
+        }
 
         // queried samples -> retrieved every iteration if available
         [[maybe_unused]] std::uint64_t timestamp{};
@@ -402,11 +452,36 @@ void gpu_amd_hardware_sampler::sampling_loop() {
                     power_samples_.power_total_energy_consumption_->push_back(value);
                 }
 
-                // if (power_samples_.power_profile_.has_value()) {
-                //     rsmi_power_profile_status_t power_profile{};
-                //     PLSSVM_ROCM_SMI_ERROR_CHECK(rsmi_dev_power_profile_presets_get(device_id_, std::uint32_t{ 0 }, &power_profile));
-                //     power_samples_.power_profile_->push_back(static_cast<decltype(power_samples_.power_profile_)::value_type::value_type>(power_profile.current));
-                // }
+                if (power_samples_.power_profile_.has_value()) {
+                    rsmi_power_profile_status_t power_profile{};
+                    PLSSVM_ROCM_SMI_ERROR_CHECK(rsmi_dev_power_profile_presets_get(device_id_, std::uint32_t{ 0 }, &power_profile));
+                    switch (power_profile.current) {
+                        case RSMI_PWR_PROF_PRST_CUSTOM_MASK:
+                            power_samples_.power_profile_->emplace_back("CUSTOM");
+                            break;
+                        case RSMI_PWR_PROF_PRST_VIDEO_MASK:
+                            power_samples_.power_profile_->emplace_back("VIDEO");
+                            break;
+                        case RSMI_PWR_PROF_PRST_POWER_SAVING_MASK:
+                            power_samples_.power_profile_->emplace_back("POWER_SAVING");
+                            break;
+                        case RSMI_PWR_PROF_PRST_COMPUTE_MASK:
+                            power_samples_.power_profile_->emplace_back("COMPUTE");
+                            break;
+                        case RSMI_PWR_PROF_PRST_VR_MASK:
+                            power_samples_.power_profile_->emplace_back("VR");
+                            break;
+                        case RSMI_PWR_PROF_PRST_3D_FULL_SCR_MASK:
+                            power_samples_.power_profile_->emplace_back("3D_FULL_SCREEN");
+                            break;
+                        case RSMI_PWR_PROF_PRST_BOOTUP_DEFAULT:
+                            power_samples_.power_profile_->emplace_back("BOOTUP_DEFAULT");
+                            break;
+                        case RSMI_PWR_PROF_PRST_INVALID:
+                            power_samples_.power_profile_->emplace_back("INVALID");
+                            break;
+                    }
+                }
             }
 
             // retrieve memory related samples

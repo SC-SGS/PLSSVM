@@ -233,6 +233,13 @@ std::string rocm_smi_power_samples::generate_yaml_string() const {
                            "        values: {}\n",
                            this->power_type_.value());
     }
+    // available power levels
+    if (this->available_power_profiles_.has_value()) {
+        str += fmt::format("      available_power_profiles:\n"
+                           "        unit: \"string\"\n"
+                           "        values: [{}]\n",
+                           fmt::join(this->available_power_profiles_.value(), ", "));
+    }
 
     // current power usage
     if (this->power_usage_.has_value()) {
@@ -253,6 +260,13 @@ std::string rocm_smi_power_samples::generate_yaml_string() const {
                            "        values: [{}]\n",
                            fmt::join(consumed_energy, ", "));
     }
+    // current power level
+    if (this->power_profile_.has_value()) {
+        str += fmt::format("      power_profile:\n"
+                           "        unit: \"string\"\n"
+                           "        values: [{}]\n",
+                           fmt::join(this->power_profile_.value(), ", "));
+    }
 
     // remove last newline
     str.pop_back();
@@ -264,13 +278,17 @@ std::ostream &operator<<(std::ostream &out, const rocm_smi_power_samples &sample
     return out << fmt::format("power_default_cap: {}\n"
                               "power_cap: {}\n"
                               "power_type: {}\n"
+                              "available_power_profiles: [{}]\n"
                               "power_usage: [{}]\n"
-                              "power_total_energy_consumption: [{}]",
+                              "power_total_energy_consumption: [{}]\n"
+                              "power_profile: [{}]",
                               value_or_default(samples.get_power_default_cap()),
                               value_or_default(samples.get_power_cap()),
                               value_or_default(samples.get_power_type()),
+                              fmt::join(value_or_default(samples.get_available_power_profiles()), ", "),
                               fmt::join(value_or_default(samples.get_power_usage()), ", "),
-                              fmt::join(value_or_default(samples.get_power_total_energy_consumption()), ", "));
+                              fmt::join(value_or_default(samples.get_power_total_energy_consumption()), ", "),
+                              fmt::join(value_or_default(samples.get_power_profile()), ", "));
 }
 
 //*************************************************************************************************************************************//
