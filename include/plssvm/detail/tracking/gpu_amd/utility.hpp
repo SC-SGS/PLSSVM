@@ -25,7 +25,7 @@ namespace plssvm::detail::tracking {
     #define PLSSVM_ROCM_SMI_ERROR_CHECK(rocm_smi_func)                                                                                                      \
         {                                                                                                                                                   \
             const rsmi_status_t errc = rocm_smi_func;                                                                                                       \
-            if (errc != RSMI_STATUS_SUCCESS && errc != RSMI_STATUS_NOT_SUPPORTED) {                                                                         \
+            if (errc != RSMI_STATUS_SUCCESS) {                                                                                                              \
                 const char *error_string;                                                                                                                   \
                 const rsmi_status_t ret = rsmi_status_string(errc, &error_string);                                                                          \
                 if (ret == RSMI_STATUS_SUCCESS) {                                                                                                           \
