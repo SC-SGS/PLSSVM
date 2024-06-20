@@ -25,6 +25,7 @@
 #include <cstdint>    // std::uint32_t, std::uint64_t
 #include <exception>  // std::exception, std::terminate
 #include <iostream>   // std::cerr, std::endl
+#include <optional>   // std::optional
 #include <string>     // std::string
 #include <thread>     // std::this_thread
 #include <vector>     // std::vector
@@ -33,12 +34,7 @@ namespace plssvm::detail::tracking {
 
 gpu_amd_hardware_sampler::gpu_amd_hardware_sampler(const std::size_t device_id, const std::chrono::milliseconds sampling_interval) :
     hardware_sampler{ sampling_interval },
-    device_id_{ static_cast<std::uint32_t>(device_id) },
-    general_samples_{ static_cast<std::uint32_t>(device_id) },
-    clock_samples_{ static_cast<std::uint32_t>(device_id) },
-    power_samples_{ static_cast<std::uint32_t>(device_id) },
-    memory_samples_{ static_cast<std::uint32_t>(device_id) },
-    temperature_samples_{ static_cast<std::uint32_t>(device_id) } {
+    device_id_{ static_cast<std::uint32_t>(device_id) } {
     // make sure that rsmi_init is only called once for all instances
     if (instances_++ == 0) {
         PLSSVM_ROCM_SMI_ERROR_CHECK(rsmi_init(std::uint64_t{ 0 }));
@@ -110,72 +106,213 @@ void gpu_amd_hardware_sampler::sampling_loop() {
     // add samples where we only have to retrieve the value once
     //
 
-    // retrieve fixed general information
+    this->add_time_point(std::chrono::system_clock::now());
+
+    // retrieve initial general information
     {
+        // fixed information -> only retrieved once
         std::string name(static_cast<std::string::size_type>(1024), '\0');
-        PLSSVM_ROCM_SMI_ERROR_CHECK(rsmi_dev_name_get(device_id_, name.data(), name.size()));
-        general_samples_.name = name;
+        if (rsmi_dev_name_get(device_id_, name.data(), name.size()) == RSMI_STATUS_SUCCESS) {
+            general_samples_.name_ = name.substr(0, name.find_first_of('\0'));
+        }
+
+        // queried samples -> retrieved every iteration if available
+        rsmi_dev_perf_level_t pstate{};
+        if (rsmi_dev_perf_level_get(device_id_, &pstate) == RSMI_STATUS_SUCCESS) {
+            general_samples_.performance_level_ = decltype(general_samples_.performance_level_)::value_type{ static_cast<decltype(general_samples_.performance_level_)::value_type::value_type>(pstate) };
+        }
+
+        decltype(general_samples_.utilization_gpu_)::value_type::value_type utilization_gpu{};
+        if (rsmi_dev_busy_percent_get(device_id_, &utilization_gpu) == RSMI_STATUS_SUCCESS) {
+            general_samples_.utilization_gpu_ = decltype(general_samples_.utilization_gpu_)::value_type{ utilization_gpu };
+        }
+
+        decltype(general_samples_.utilization_mem_)::value_type::value_type utilization_mem{};
+        if (rsmi_dev_memory_busy_percent_get(device_id_, &utilization_mem) == RSMI_STATUS_SUCCESS) {
+            general_samples_.utilization_mem_ = decltype(general_samples_.utilization_mem_)::value_type{ utilization_mem };
+        }
     }
-    // retrieve fixed clock related information
+
+    // retrieve initial clock related information
     {
         rsmi_frequencies_t frequency_info{};
-        PLSSVM_ROCM_SMI_ERROR_CHECK(rsmi_dev_gpu_clk_freq_get(device_id_, RSMI_CLK_TYPE_SYS, &frequency_info));
-        clock_samples_.clock_system_min = frequency_info.frequency[0];
-        clock_samples_.clock_system_max = frequency_info.frequency[frequency_info.num_supported - 1];
-        PLSSVM_ROCM_SMI_ERROR_CHECK(rsmi_dev_gpu_clk_freq_get(device_id_, RSMI_CLK_TYPE_SOC, &frequency_info));
-        clock_samples_.clock_socket_min = frequency_info.frequency[0];
-        clock_samples_.clock_socket_max = frequency_info.frequency[frequency_info.num_supported - 1];
-        PLSSVM_ROCM_SMI_ERROR_CHECK(rsmi_dev_gpu_clk_freq_get(device_id_, RSMI_CLK_TYPE_MEM, &frequency_info));
-        clock_samples_.clock_memory_min = frequency_info.frequency[0];
-        clock_samples_.clock_memory_max = frequency_info.frequency[frequency_info.num_supported - 1];
-    }
-    // retrieve fixed power related information
-    {
-        PLSSVM_ROCM_SMI_ERROR_CHECK(rsmi_dev_power_cap_default_get(device_id_, &power_samples_.power_default_cap));
-        PLSSVM_ROCM_SMI_ERROR_CHECK(rsmi_dev_power_cap_get(device_id_, std::uint32_t{ 0 }, &power_samples_.power_cap));
-        [[maybe_unused]] std::uint64_t power_usage{};
-        RSMI_POWER_TYPE power_type{};
-        PLSSVM_ROCM_SMI_ERROR_CHECK(rsmi_dev_power_get(device_id_, &power_usage, &power_type));
-        switch (power_type) {
-            case RSMI_POWER_TYPE::RSMI_AVERAGE_POWER:
-                power_samples_.power_type = "average";
-                break;
-            case RSMI_POWER_TYPE::RSMI_CURRENT_POWER:
-                power_samples_.power_type = "current/instant";
-                break;
-            case RSMI_POWER_TYPE::RSMI_INVALID_POWER:
-                power_samples_.power_type = "invalid/undetected";
-                break;
+        if (rsmi_dev_gpu_clk_freq_get(device_id_, RSMI_CLK_TYPE_SYS, &frequency_info) == RSMI_STATUS_SUCCESS) {
+            clock_samples_.clock_system_min_ = frequency_info.frequency[0];
+            clock_samples_.clock_system_max_ = frequency_info.frequency[frequency_info.num_supported - 1];
+            // queried samples -> retrieved every iteration if available
+            clock_samples_.clock_system_ = decltype(clock_samples_.clock_system_)::value_type{ frequency_info.frequency[frequency_info.current] };
         }
-        // rsmi_power_profile_status_t power_profile{};
-        // PLSSVM_ROCM_SMI_ERROR_CHECK(rsmi_dev_power_profile_presets_get(device_id_, std::uint32_t{ 0 }, &power_profile));
-        // power_samples_.available_power_profiles = static_cast<std::uint64_t>(power_profile.available_profiles);
+
+        if (rsmi_dev_gpu_clk_freq_get(device_id_, RSMI_CLK_TYPE_SOC, &frequency_info) == RSMI_STATUS_SUCCESS) {
+            clock_samples_.clock_socket_min_ = frequency_info.frequency[0];
+            clock_samples_.clock_socket_max_ = frequency_info.frequency[frequency_info.num_supported - 1];
+            // queried samples -> retrieved every iteration if available
+            clock_samples_.clock_socket_ = decltype(clock_samples_.clock_socket_)::value_type{ frequency_info.frequency[frequency_info.current] };
+        }
+
+        if (rsmi_dev_gpu_clk_freq_get(device_id_, RSMI_CLK_TYPE_MEM, &frequency_info) == RSMI_STATUS_SUCCESS) {
+            clock_samples_.clock_memory_min_ = frequency_info.frequency[0];
+            clock_samples_.clock_memory_max_ = frequency_info.frequency[frequency_info.num_supported - 1];
+            // queried samples -> retrieved every iteration if available
+            clock_samples_.clock_memory_ = decltype(clock_samples_.clock_memory_)::value_type{ frequency_info.frequency[frequency_info.current] };
+        }
+
+        // queried samples -> retrieved every iteration if available
+        decltype(clock_samples_.clock_throttle_status_)::value_type::value_type clock_throttle_status{};
+        if (rsmi_dev_metrics_throttle_status_get(device_id_, &clock_throttle_status) == RSMI_STATUS_SUCCESS) {
+            clock_samples_.clock_throttle_status_ = decltype(clock_samples_.clock_throttle_status_)::value_type{ clock_throttle_status };
+        }
+
+        decltype(clock_samples_.overdrive_level_)::value_type::value_type overdrive_level{};
+        if (rsmi_dev_overdrive_level_get(device_id_, &overdrive_level) == RSMI_STATUS_SUCCESS) {
+            clock_samples_.overdrive_level_ = decltype(clock_samples_.overdrive_level_)::value_type{ overdrive_level };
+        }
+
+        decltype(clock_samples_.memory_overdrive_level_)::value_type::value_type memory_overdrive_level{};
+        if (rsmi_dev_mem_overdrive_level_get(device_id_, &memory_overdrive_level) == RSMI_STATUS_SUCCESS) {
+            clock_samples_.memory_overdrive_level_ = decltype(clock_samples_.memory_overdrive_level_)::value_type{ memory_overdrive_level };
+        }
     }
-    // retrieve fixed memory related information
+
+    // retrieve initial power related information
     {
-        PLSSVM_ROCM_SMI_ERROR_CHECK(rsmi_dev_memory_total_get(device_id_, RSMI_MEM_TYPE_VRAM, &memory_samples_.memory_total));
-        PLSSVM_ROCM_SMI_ERROR_CHECK(rsmi_dev_memory_total_get(device_id_, RSMI_MEM_TYPE_VIS_VRAM, &memory_samples_.visible_memory_total));
-        rsmi_pcie_bandwidth_t bandwidth_info{};
-        PLSSVM_ROCM_SMI_ERROR_CHECK(rsmi_dev_pci_bandwidth_get(device_id_, &bandwidth_info));
-        memory_samples_.min_num_pcie_lanes = bandwidth_info.lanes[0];
-        memory_samples_.max_num_pcie_lanes = bandwidth_info.lanes[bandwidth_info.transfer_rate.num_supported - 1];
+        decltype(power_samples_.power_default_cap_)::value_type power_default_cap{};
+        if (rsmi_dev_power_cap_default_get(device_id_, &power_default_cap) == RSMI_STATUS_SUCCESS) {
+            power_samples_.power_default_cap_ = power_default_cap;
+        }
+
+        decltype(power_samples_.power_cap_)::value_type power_cap{};
+        if (rsmi_dev_power_cap_get(device_id_, std::uint32_t{ 0 }, &power_cap) == RSMI_STATUS_SUCCESS) {
+            power_samples_.power_cap_ = power_cap;
+        }
+
+        {
+            decltype(power_samples_.power_usage_)::value_type::value_type power_usage{};
+            RSMI_POWER_TYPE power_type{};
+            if (rsmi_dev_power_get(device_id_, &power_usage, &power_type) == RSMI_STATUS_SUCCESS) {
+                switch (power_type) {
+                    case RSMI_POWER_TYPE::RSMI_AVERAGE_POWER:
+                        power_samples_.power_type_ = "average";
+                        break;
+                    case RSMI_POWER_TYPE::RSMI_CURRENT_POWER:
+                        power_samples_.power_type_ = "current/instant";
+                        break;
+                    case RSMI_POWER_TYPE::RSMI_INVALID_POWER:
+                        power_samples_.power_type_ = "invalid/undetected";
+                        break;
+                }
+                // queried samples -> retrieved every iteration if available
+                power_samples_.power_usage_ = decltype(power_samples_.power_usage_)::value_type{ power_usage };
+            }
+        }
+
+        // rsmi_power_profile_status_t power_profile{};
+        // if (rsmi_dev_power_profile_presets_get(device_id_, std::uint32_t{ 0 }, &power_profile) == RSMI_STATUS_SUCCESS) {
+        //     power_samples_.available_power_profiles_ = static_cast<decltype(power_samples_.available_power_profiles_)::value_type>(power_profile.available_profiles);
+        //     // queried samples -> retrieved every iteration if available
+        //     power_samples_.power_profile_ = decltype(power_samples_.power_profile_)::value_type{ static_cast<decltype(power_samples_.power_profile_)::value_type::value_type>(power_profile.current) };
+        // }
+
+        // queried samples -> retrieved every iteration if available
+        [[maybe_unused]] std::uint64_t timestamp{};
+        [[maybe_unused]] float resolution{};
+        decltype(power_samples_.power_total_energy_consumption_)::value_type::value_type power_total_energy_consumption{};
+        if (rsmi_dev_energy_count_get(device_id_, &power_total_energy_consumption, &resolution, &timestamp) == RSMI_STATUS_SUCCESS) {  // TODO: returns the same value for all invocations
+            power_samples_.power_total_energy_consumption_ = decltype(power_samples_.power_total_energy_consumption_)::value_type{ power_total_energy_consumption };
+        }
     }
+
+    // retrieve initial memory related information
+    {
+        decltype(memory_samples_.memory_total_)::value_type memory_total{};
+        if (rsmi_dev_memory_total_get(device_id_, RSMI_MEM_TYPE_VRAM, &memory_total) == RSMI_STATUS_SUCCESS) {
+            memory_samples_.memory_total_ = memory_total;
+        }
+
+        decltype(memory_samples_.visible_memory_total_)::value_type visible_memory_total{};
+        if (rsmi_dev_memory_total_get(device_id_, RSMI_MEM_TYPE_VIS_VRAM, &visible_memory_total) == RSMI_STATUS_SUCCESS) {
+            memory_samples_.visible_memory_total_ = visible_memory_total;
+        }
+
+        rsmi_pcie_bandwidth_t bandwidth_info{};
+        if (rsmi_dev_pci_bandwidth_get(device_id_, &bandwidth_info) == RSMI_STATUS_SUCCESS) {
+            memory_samples_.min_num_pcie_lanes_ = bandwidth_info.lanes[0];
+            memory_samples_.max_num_pcie_lanes_ = bandwidth_info.lanes[bandwidth_info.transfer_rate.num_supported - 1];
+            // queried samples -> retrieved every iteration if available
+            memory_samples_.pcie_transfer_rate_ = decltype(memory_samples_.pcie_transfer_rate_)::value_type{ bandwidth_info.transfer_rate.frequency[bandwidth_info.transfer_rate.current] };
+            memory_samples_.num_pcie_lanes_ = decltype(memory_samples_.num_pcie_lanes_)::value_type{ bandwidth_info.lanes[bandwidth_info.transfer_rate.current] };
+        }
+
+        // queried samples -> retrieved every iteration if available
+        decltype(memory_samples_.memory_used_)::value_type::value_type memory_used{};
+        if (rsmi_dev_memory_usage_get(device_id_, RSMI_MEM_TYPE_VRAM, &memory_used) == RSMI_STATUS_SUCCESS) {
+            memory_samples_.memory_used_ = decltype(memory_samples_.memory_used_)::value_type{ memory_used };
+        }
+    }
+
     // retrieve fixed temperature related information
     {
         std::uint32_t fan_id{ 0 };
-        [[maybe_unused]] std::int64_t fan_speed{ 0 };
+        decltype(temperature_samples_.fan_speed_)::value_type::value_type fan_speed{};
         while (rsmi_dev_fan_speed_get(device_id_, fan_id, &fan_speed) == RSMI_STATUS_SUCCESS) {
+            if (fan_id == 0) {
+                // queried samples -> retrieved every iteration if available
+                temperature_samples_.fan_speed_ = decltype(temperature_samples_.fan_speed_)::value_type{ fan_speed };
+            }
             ++fan_id;
         }
-        temperature_samples_.num_fans = fan_id;
+        temperature_samples_.num_fans_ = fan_id;
 
-        PLSSVM_ROCM_SMI_ERROR_CHECK(rsmi_dev_fan_speed_max_get(device_id_, std::uint32_t{ 0 }, &temperature_samples_.max_fan_speed));
-        PLSSVM_ROCM_SMI_ERROR_CHECK(rsmi_dev_temp_metric_get(device_id_, RSMI_TEMP_TYPE_EDGE, RSMI_TEMP_MIN, &temperature_samples_.temperature_edge_min));
-        PLSSVM_ROCM_SMI_ERROR_CHECK(rsmi_dev_temp_metric_get(device_id_, RSMI_TEMP_TYPE_EDGE, RSMI_TEMP_MAX, &temperature_samples_.temperature_edge_max));
-        PLSSVM_ROCM_SMI_ERROR_CHECK(rsmi_dev_temp_metric_get(device_id_, RSMI_TEMP_TYPE_JUNCTION, RSMI_TEMP_MIN, &temperature_samples_.temperature_hotspot_min));
-        PLSSVM_ROCM_SMI_ERROR_CHECK(rsmi_dev_temp_metric_get(device_id_, RSMI_TEMP_TYPE_JUNCTION, RSMI_TEMP_MAX, &temperature_samples_.temperature_hotspot_max));
-        PLSSVM_ROCM_SMI_ERROR_CHECK(rsmi_dev_temp_metric_get(device_id_, RSMI_TEMP_TYPE_MEMORY, RSMI_TEMP_MIN, &temperature_samples_.temperature_memory_min));
-        PLSSVM_ROCM_SMI_ERROR_CHECK(rsmi_dev_temp_metric_get(device_id_, RSMI_TEMP_TYPE_MEMORY, RSMI_TEMP_MAX, &temperature_samples_.temperature_memory_max));
+        decltype(temperature_samples_.max_fan_speed_)::value_type max_fan_speed{};
+        if (rsmi_dev_fan_speed_max_get(device_id_, std::uint32_t{ 0 }, &max_fan_speed) == RSMI_STATUS_SUCCESS) {
+            temperature_samples_.max_fan_speed_ = max_fan_speed;
+        }
+
+        decltype(temperature_samples_.temperature_edge_min_)::value_type temperature_edge_min{};
+        if (rsmi_dev_temp_metric_get(device_id_, RSMI_TEMP_TYPE_EDGE, RSMI_TEMP_MIN, &temperature_edge_min) == RSMI_STATUS_SUCCESS) {
+            temperature_samples_.temperature_edge_min_ = temperature_edge_min;
+        }
+
+        decltype(temperature_samples_.temperature_edge_max_)::value_type temperature_edge_max{};
+        if (rsmi_dev_temp_metric_get(device_id_, RSMI_TEMP_TYPE_EDGE, RSMI_TEMP_MAX, &temperature_edge_max) == RSMI_STATUS_SUCCESS) {
+            temperature_samples_.temperature_edge_max_ = temperature_edge_min;
+        }
+
+        decltype(temperature_samples_.temperature_hotspot_min_)::value_type temperature_hotspot_min{};
+        if (rsmi_dev_temp_metric_get(device_id_, RSMI_TEMP_TYPE_JUNCTION, RSMI_TEMP_MIN, &temperature_hotspot_min) == RSMI_STATUS_SUCCESS) {
+            temperature_samples_.temperature_hotspot_min_ = temperature_hotspot_min;
+        }
+
+        decltype(temperature_samples_.temperature_hotspot_max_)::value_type temperature_hotspot_max{};
+        if (rsmi_dev_temp_metric_get(device_id_, RSMI_TEMP_TYPE_JUNCTION, RSMI_TEMP_MAX, &temperature_hotspot_max) == RSMI_STATUS_SUCCESS) {
+            temperature_samples_.temperature_hotspot_max_ = temperature_hotspot_max;
+        }
+
+        decltype(temperature_samples_.temperature_memory_min_)::value_type temperature_memory_min{};
+        if (rsmi_dev_temp_metric_get(device_id_, RSMI_TEMP_TYPE_MEMORY, RSMI_TEMP_MIN, &temperature_memory_min) == RSMI_STATUS_SUCCESS) {
+            temperature_samples_.temperature_memory_min_ = temperature_memory_min;
+        }
+
+        decltype(temperature_samples_.temperature_memory_max_)::value_type temperature_memory_max{};
+        if (rsmi_dev_temp_metric_get(device_id_, RSMI_TEMP_TYPE_MEMORY, RSMI_TEMP_MAX, &temperature_memory_max) == RSMI_STATUS_SUCCESS) {
+            temperature_samples_.temperature_memory_max_ = temperature_memory_max;
+        }
+
+        // queried samples -> retrieved every iteration if available
+        decltype(temperature_samples_.temperature_edge_)::value_type::value_type temperature_edge{};
+        if (rsmi_dev_temp_metric_get(device_id_, RSMI_TEMP_TYPE_EDGE, RSMI_TEMP_CURRENT, &temperature_edge) == RSMI_STATUS_SUCCESS) {
+            temperature_samples_.temperature_edge_ = decltype(temperature_samples_.temperature_edge_)::value_type{ temperature_edge };
+        }
+
+        decltype(temperature_samples_.temperature_hotspot_)::value_type::value_type temperature_hotspot{};
+        if (rsmi_dev_temp_metric_get(device_id_, RSMI_TEMP_TYPE_JUNCTION, RSMI_TEMP_CURRENT, &temperature_hotspot) == RSMI_STATUS_SUCCESS) {
+            temperature_samples_.temperature_hotspot_ = decltype(temperature_samples_.temperature_hotspot_)::value_type{ temperature_hotspot };
+        }
+
+        decltype(temperature_samples_.temperature_memory_)::value_type::value_type temperature_memory{};
+        if (rsmi_dev_temp_metric_get(device_id_, RSMI_TEMP_TYPE_MEMORY, RSMI_TEMP_CURRENT, &temperature_memory) == RSMI_STATUS_SUCCESS) {
+            temperature_samples_.temperature_memory_ = decltype(temperature_samples_.temperature_memory_)::value_type{ temperature_memory };
+        }
     }
 
     //
@@ -188,62 +325,131 @@ void gpu_amd_hardware_sampler::sampling_loop() {
             // add current time point
             this->add_time_point(std::chrono::system_clock::now());
 
-            // retrieve general information
+            // retrieve general samples
             {
-                rocm_smi_general_samples::rocm_smi_general_sample sample{};
-                rsmi_dev_perf_level_t pstate{};
-                PLSSVM_ROCM_SMI_ERROR_CHECK(rsmi_dev_perf_level_get(device_id_, &pstate));
-                sample.performance_level = static_cast<int>(pstate);
-                PLSSVM_ROCM_SMI_ERROR_CHECK(rsmi_dev_busy_percent_get(device_id_, &sample.utilization_gpu));
-                PLSSVM_ROCM_SMI_ERROR_CHECK(rsmi_dev_memory_busy_percent_get(device_id_, &sample.utilization_mem));
-                general_samples_.add_sample(sample);
+                if (general_samples_.performance_level_.has_value()) {
+                    rsmi_dev_perf_level_t pstate{};
+                    PLSSVM_ROCM_SMI_ERROR_CHECK(rsmi_dev_perf_level_get(device_id_, &pstate));
+                    general_samples_.performance_level_->push_back(static_cast<decltype(general_samples_.performance_level_)::value_type::value_type>(pstate));
+                }
+
+                if (general_samples_.utilization_gpu_.has_value()) {
+                    decltype(general_samples_.utilization_gpu_)::value_type::value_type value{};
+                    PLSSVM_ROCM_SMI_ERROR_CHECK(rsmi_dev_busy_percent_get(device_id_, &value));
+                    general_samples_.utilization_gpu_->push_back(value);
+                }
+
+                if (general_samples_.utilization_mem_.has_value()) {
+                    decltype(general_samples_.utilization_mem_)::value_type::value_type value{};
+                    PLSSVM_ROCM_SMI_ERROR_CHECK(rsmi_dev_memory_busy_percent_get(device_id_, &value));
+                    general_samples_.utilization_mem_->push_back(value);
+                }
             }
-            // retrieve clock related information
+
+            // retrieve clock related samples
             {
-                rocm_smi_clock_samples::rocm_smi_clock_sample sample{};
-                rsmi_frequencies_t frequency_info{};
-                PLSSVM_ROCM_SMI_ERROR_CHECK(rsmi_dev_gpu_clk_freq_get(device_id_, RSMI_CLK_TYPE_SYS, &frequency_info));
-                sample.clock_system = frequency_info.frequency[frequency_info.current];
-                PLSSVM_ROCM_SMI_ERROR_CHECK(rsmi_dev_gpu_clk_freq_get(device_id_, RSMI_CLK_TYPE_SOC, &frequency_info));
-                sample.clock_socket = frequency_info.frequency[frequency_info.current];
-                PLSSVM_ROCM_SMI_ERROR_CHECK(rsmi_dev_gpu_clk_freq_get(device_id_, RSMI_CLK_TYPE_MEM, &frequency_info));
-                sample.clock_memory = frequency_info.frequency[frequency_info.current];
-                PLSSVM_ROCM_SMI_ERROR_CHECK(rsmi_dev_metrics_throttle_status_get(device_id_, &sample.clock_throttle_status));
-                PLSSVM_ROCM_SMI_ERROR_CHECK(rsmi_dev_overdrive_level_get(device_id_, &sample.overdrive_level));
-                PLSSVM_ROCM_SMI_ERROR_CHECK(rsmi_dev_mem_overdrive_level_get(device_id_, &sample.memory_overdrive_level));
-                clock_samples_.add_sample(sample);
+                if (clock_samples_.clock_system_.has_value()) {
+                    rsmi_frequencies_t frequency_info{};
+                    PLSSVM_ROCM_SMI_ERROR_CHECK(rsmi_dev_gpu_clk_freq_get(device_id_, RSMI_CLK_TYPE_SYS, &frequency_info));
+                    clock_samples_.clock_system_->push_back(frequency_info.frequency[frequency_info.current]);
+                }
+
+                if (clock_samples_.clock_socket_.has_value()) {
+                    rsmi_frequencies_t frequency_info{};
+                    PLSSVM_ROCM_SMI_ERROR_CHECK(rsmi_dev_gpu_clk_freq_get(device_id_, RSMI_CLK_TYPE_SOC, &frequency_info));
+                    clock_samples_.clock_socket_->push_back(frequency_info.frequency[frequency_info.current]);
+                }
+
+                if (clock_samples_.clock_memory_.has_value()) {
+                    rsmi_frequencies_t frequency_info{};
+                    PLSSVM_ROCM_SMI_ERROR_CHECK(rsmi_dev_gpu_clk_freq_get(device_id_, RSMI_CLK_TYPE_MEM, &frequency_info));
+                    clock_samples_.clock_memory_->push_back(frequency_info.frequency[frequency_info.current]);
+                }
+
+                if (clock_samples_.clock_throttle_status_.has_value()) {
+                    decltype(clock_samples_.clock_throttle_status_)::value_type::value_type value{};
+                    PLSSVM_ROCM_SMI_ERROR_CHECK(rsmi_dev_metrics_throttle_status_get(device_id_, &value));
+                    clock_samples_.clock_throttle_status_->push_back(value);
+                }
+
+                if (clock_samples_.overdrive_level_.has_value()) {
+                    decltype(clock_samples_.overdrive_level_)::value_type::value_type value{};
+                    PLSSVM_ROCM_SMI_ERROR_CHECK(rsmi_dev_overdrive_level_get(device_id_, &value));
+                    clock_samples_.overdrive_level_->push_back(value);
+                }
+
+                if (clock_samples_.memory_overdrive_level_.has_value()) {
+                    decltype(clock_samples_.memory_overdrive_level_)::value_type::value_type value{};
+                    PLSSVM_ROCM_SMI_ERROR_CHECK(rsmi_dev_mem_overdrive_level_get(device_id_, &value));
+                    clock_samples_.memory_overdrive_level_->push_back(value);
+                }
             }
-            // retrieve power related information
+
+            // retrieve power related samples
             {
-                rocm_smi_power_samples::rocm_smi_power_sample sample{};
-                [[maybe_unused]] RSMI_POWER_TYPE power_type{};
-                PLSSVM_ROCM_SMI_ERROR_CHECK(rsmi_dev_power_get(device_id_, &sample.power_usage, &power_type));
-                [[maybe_unused]] std::uint64_t timestamp{};
-                [[maybe_unused]] float resolution{};
-                PLSSVM_ROCM_SMI_ERROR_CHECK(rsmi_dev_energy_count_get(device_id_, &sample.power_total_energy_consumption, &resolution, &timestamp));  // TODO: returns the same value for all invocations
-                // rsmi_power_profile_status_t power_profile{};
-                // PLSSVM_ROCM_SMI_ERROR_CHECK(rsmi_dev_power_profile_presets_get(device_id_, std::uint32_t{ 0 }, &power_profile));
-                // sample.power_profile = static_cast<std::uint64_t>(power_profile.current);
-                power_samples_.add_sample(sample);
+                if (power_samples_.power_usage_.has_value()) {
+                    [[maybe_unused]] RSMI_POWER_TYPE power_type{};
+                    decltype(power_samples_.power_usage_)::value_type::value_type value{};
+                    PLSSVM_ROCM_SMI_ERROR_CHECK(rsmi_dev_power_get(device_id_, &value, &power_type));
+                    power_samples_.power_usage_->push_back(value);
+                }
+
+                if (power_samples_.power_total_energy_consumption_.has_value()) {
+                    [[maybe_unused]] std::uint64_t timestamp{};
+                    [[maybe_unused]] float resolution{};
+                    decltype(power_samples_.power_total_energy_consumption_)::value_type::value_type value{};
+                    PLSSVM_ROCM_SMI_ERROR_CHECK(rsmi_dev_energy_count_get(device_id_, &value, &resolution, &timestamp));  // TODO: returns the same value for all invocations
+                    power_samples_.power_total_energy_consumption_->push_back(value);
+                }
+
+                // if (power_samples_.power_profile_.has_value()) {
+                //     rsmi_power_profile_status_t power_profile{};
+                //     PLSSVM_ROCM_SMI_ERROR_CHECK(rsmi_dev_power_profile_presets_get(device_id_, std::uint32_t{ 0 }, &power_profile));
+                //     power_samples_.power_profile_->push_back(static_cast<decltype(power_samples_.power_profile_)::value_type::value_type>(power_profile.current));
+                // }
             }
-            // retrieve memory related information
+
+            // retrieve memory related samples
             {
-                rocm_smi_memory_samples::rocm_smi_memory_sample sample{};
-                PLSSVM_ROCM_SMI_ERROR_CHECK(rsmi_dev_memory_usage_get(device_id_, RSMI_MEM_TYPE_VRAM, &sample.memory_used));
-                rsmi_pcie_bandwidth_t bandwidth_info{};
-                PLSSVM_ROCM_SMI_ERROR_CHECK(rsmi_dev_pci_bandwidth_get(device_id_, &bandwidth_info));
-                sample.pcie_transfer_rate = bandwidth_info.transfer_rate.frequency[bandwidth_info.transfer_rate.current];
-                sample.num_pcie_lanes = bandwidth_info.lanes[bandwidth_info.transfer_rate.current];
-                memory_samples_.add_sample(sample);
+                if (memory_samples_.memory_used_.has_value()) {
+                    decltype(memory_samples_.memory_used_)::value_type::value_type value{};
+                    PLSSVM_ROCM_SMI_ERROR_CHECK(rsmi_dev_memory_usage_get(device_id_, RSMI_MEM_TYPE_VRAM, &value));
+                    memory_samples_.memory_used_->push_back(value);
+                }
+
+                if (memory_samples_.pcie_transfer_rate_.has_value() && memory_samples_.num_pcie_lanes_.has_value()) {
+                    rsmi_pcie_bandwidth_t bandwidth_info{};
+                    PLSSVM_ROCM_SMI_ERROR_CHECK(rsmi_dev_pci_bandwidth_get(device_id_, &bandwidth_info));
+                    memory_samples_.pcie_transfer_rate_->push_back(bandwidth_info.transfer_rate.frequency[bandwidth_info.transfer_rate.current]);
+                    memory_samples_.num_pcie_lanes_->push_back(bandwidth_info.lanes[bandwidth_info.transfer_rate.current]);
+                }
             }
-            // retrieve temperature related information
+
+            // retrieve temperature related samples
             {
-                rocm_smi_temperature_samples::rocm_smi_temperature_sample sample{};
-                PLSSVM_ROCM_SMI_ERROR_CHECK(rsmi_dev_fan_speed_get(device_id_, std::uint32_t{ 0 }, &sample.fan_speed));
-                PLSSVM_ROCM_SMI_ERROR_CHECK(rsmi_dev_temp_metric_get(device_id_, RSMI_TEMP_TYPE_EDGE, RSMI_TEMP_CURRENT, &sample.temperature_edge));
-                PLSSVM_ROCM_SMI_ERROR_CHECK(rsmi_dev_temp_metric_get(device_id_, RSMI_TEMP_TYPE_JUNCTION, RSMI_TEMP_CURRENT, &sample.temperature_hotspot));
-                PLSSVM_ROCM_SMI_ERROR_CHECK(rsmi_dev_temp_metric_get(device_id_, RSMI_TEMP_TYPE_MEMORY, RSMI_TEMP_CURRENT, &sample.temperature_memory));
-                temperature_samples_.add_sample(sample);
+                if (temperature_samples_.fan_speed_.has_value()) {
+                    decltype(temperature_samples_.fan_speed_)::value_type::value_type value{};
+                    PLSSVM_ROCM_SMI_ERROR_CHECK(rsmi_dev_fan_speed_get(device_id_, std::uint32_t{ 0 }, &value));
+                    temperature_samples_.fan_speed_->push_back(value);
+                }
+
+                if (temperature_samples_.temperature_edge_.has_value()) {
+                    decltype(temperature_samples_.temperature_edge_)::value_type::value_type value{};
+                    PLSSVM_ROCM_SMI_ERROR_CHECK(rsmi_dev_temp_metric_get(device_id_, RSMI_TEMP_TYPE_EDGE, RSMI_TEMP_CURRENT, &value));
+                    temperature_samples_.temperature_edge_->push_back(value);
+                }
+
+                if (temperature_samples_.temperature_hotspot_.has_value()) {
+                    decltype(temperature_samples_.temperature_hotspot_)::value_type::value_type value{};
+                    PLSSVM_ROCM_SMI_ERROR_CHECK(rsmi_dev_temp_metric_get(device_id_, RSMI_TEMP_TYPE_JUNCTION, RSMI_TEMP_CURRENT, &value));
+                    temperature_samples_.temperature_hotspot_->push_back(value);
+                }
+
+                if (temperature_samples_.temperature_memory_.has_value()) {
+                    decltype(temperature_samples_.temperature_memory_)::value_type::value_type value{};
+                    PLSSVM_ROCM_SMI_ERROR_CHECK(rsmi_dev_temp_metric_get(device_id_, RSMI_TEMP_TYPE_MEMORY, RSMI_TEMP_CURRENT, &value));
+                    temperature_samples_.temperature_memory_->push_back(value);
+                }
             }
         }
 

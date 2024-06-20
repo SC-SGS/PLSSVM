@@ -26,6 +26,7 @@
 #include <cstddef>    // std::size_t
 #include <exception>  // std::exception, std::terminate
 #include <iostream>   // std::cerr, std::endl
+#include <optional>   // std::optional
 #include <string>     // std::string
 #include <thread>     // std::this_thread
 #include <vector>     // std::vector
@@ -51,11 +52,6 @@ gpu_nvidia_hardware_sampler::gpu_nvidia_hardware_sampler(const std::size_t devic
 
     // initialize samples -> can't be done beforehand since the device handle can only be initialized after a call to nvmlInit
     device_ = nvml_device_handle{ device_id };
-    general_samples_ = nvml_general_samples{ device_ };
-    clock_samples_ = nvml_clock_samples{ device_ };
-    power_samples_ = nvml_power_samples{ device_ };
-    memory_samples_ = nvml_memory_samples{ device_ };
-    temperature_samples_ = nvml_temperature_samples{ device_ };
 }
 
 gpu_nvidia_hardware_sampler::~gpu_nvidia_hardware_sampler() {
@@ -113,60 +109,218 @@ std::string gpu_nvidia_hardware_sampler::generate_yaml_string(const std::chrono:
 void gpu_nvidia_hardware_sampler::sampling_loop() {
     // get the nvml handle from the device_id
     nvmlDevice_t device = device_.get_impl().device;
+
     //
     // add samples where we only have to retrieve the value once
     //
 
-    // retrieve fixed general information
+    this->add_time_point(std::chrono::system_clock::now());
+
+    // retrieve initial general information
     {
+        // fixed information -> only retrieved once
         std::string name(NVML_DEVICE_NAME_V2_BUFFER_SIZE, '\0');
-        PLSSVM_NVML_ERROR_CHECK(nvmlDeviceGetName(device, name.data(), name.size()));
-        general_samples_.name = name;  //.substr(0, name.find_first_of('\0'));
-        nvmlEnableState_t mode{};
-        PLSSVM_NVML_ERROR_CHECK(nvmlDeviceGetPersistenceMode(device, &mode));
-        general_samples_.persistence_mode = mode == NVML_FEATURE_ENABLED;
-        PLSSVM_NVML_ERROR_CHECK(nvmlDeviceGetNumGpuCores(device, &general_samples_.num_cores));
-    }
-    // retrieve fixed clock related information
-    {
-        PLSSVM_NVML_ERROR_CHECK(nvmlDeviceGetAdaptiveClockInfoStatus(device, &clock_samples_.adaptive_clock_status));
-        PLSSVM_NVML_ERROR_CHECK(nvmlDeviceGetMaxClockInfo(device, NVML_CLOCK_GRAPHICS, &clock_samples_.clock_graph_max));
-        PLSSVM_NVML_ERROR_CHECK(nvmlDeviceGetMaxClockInfo(device, NVML_CLOCK_SM, &clock_samples_.clock_sm_max));
-        PLSSVM_NVML_ERROR_CHECK(nvmlDeviceGetMaxClockInfo(device, NVML_CLOCK_MEM, &clock_samples_.clock_mem_max));
-
-        unsigned int clock_count{ 128 };
-        std::vector<unsigned int> supported_clocks(clock_count);
-        PLSSVM_NVML_ERROR_CHECK(nvmlDeviceGetSupportedMemoryClocks(device, &clock_count, supported_clocks.data()));
-        supported_clocks.resize(clock_count);
-        clock_samples_.clock_mem_min = *std::min_element(supported_clocks.cbegin(), supported_clocks.cend());
-
-        clock_count = 128u;
-        supported_clocks.resize(128);
-        PLSSVM_NVML_ERROR_CHECK(nvmlDeviceGetSupportedGraphicsClocks(device, clock_samples_.clock_mem_min, &clock_count, supported_clocks.data()));
-        clock_samples_.clock_graph_min = *std::min_element(supported_clocks.cbegin(), supported_clocks.cend());
-    }
-    // retrieve fixed power related information
-    {
-        PLSSVM_NVML_ERROR_CHECK(nvmlDeviceGetPowerManagementLimit(device, &power_samples_.power_management_limit));
-        PLSSVM_NVML_ERROR_CHECK(nvmlDeviceGetEnforcedPowerLimit(device, &power_samples_.power_enforced_limit));
-    }
-    // retrieve fixed memory related information
-    {
-        nvmlMemory_t memory_info{};
-        PLSSVM_NVML_ERROR_CHECK(nvmlDeviceGetMemoryInfo(device, &memory_info));
-        memory_samples_.memory_total = memory_info.total;
-        PLSSVM_NVML_ERROR_CHECK(nvmlDeviceGetMemoryBusWidth(device, &memory_samples_.memory_bus_width));
-        PLSSVM_NVML_ERROR_CHECK(nvmlDeviceGetGpuMaxPcieLinkGeneration(device, &memory_samples_.max_pcie_link_generation));
-        PLSSVM_NVML_ERROR_CHECK(nvmlDeviceGetPcieLinkMaxSpeed(device, &memory_samples_.pcie_link_max_speed));
-    }
-    // retrieve fixed temperature related information
-    {
-        PLSSVM_NVML_ERROR_CHECK(nvmlDeviceGetNumFans(device, &temperature_samples_.num_fans));
-        if (temperature_samples_.num_fans > 0) {
-            PLSSVM_NVML_ERROR_CHECK(nvmlDeviceGetMinMaxFanSpeed(device, &temperature_samples_.min_fan_speed, &temperature_samples_.max_fan_speed));
+        if (nvmlDeviceGetName(device, name.data(), name.size()) == NVML_SUCCESS) {
+            general_samples_.name_ = name.substr(0, name.find_first_of('\0'));
         }
-        PLSSVM_NVML_ERROR_CHECK(nvmlDeviceGetTemperatureThreshold(device, NVML_TEMPERATURE_THRESHOLD_GPU_MAX, &temperature_samples_.temperature_threshold_gpu_max));
-        PLSSVM_NVML_ERROR_CHECK(nvmlDeviceGetTemperatureThreshold(device, NVML_TEMPERATURE_THRESHOLD_MEM_MAX, &temperature_samples_.temperature_threshold_mem_max));
+
+        nvmlEnableState_t mode{};
+        if (nvmlDeviceGetPersistenceMode(device, &mode) == NVML_SUCCESS) {
+            general_samples_.persistence_mode_ = mode == NVML_FEATURE_ENABLED;
+        }
+
+        decltype(general_samples_.num_cores_)::value_type num_cores{};
+        if (nvmlDeviceGetNumGpuCores(device, &num_cores) == NVML_SUCCESS) {
+            general_samples_.num_cores_ = num_cores;
+        }
+
+        // queried samples -> retrieved every iteration if available
+        nvmlPstates_t pstate{};
+        if (nvmlDeviceGetPerformanceState(device, &pstate) == NVML_SUCCESS) {
+            general_samples_.performance_state_ = decltype(general_samples_.performance_state_)::value_type{ static_cast<decltype(general_samples_.performance_state_)::value_type::value_type>(pstate) };
+        }
+
+        nvmlUtilization_t util{};
+        if (nvmlDeviceGetUtilizationRates(device, &util) == NVML_SUCCESS) {
+            general_samples_.utilization_gpu_ = decltype(general_samples_.utilization_gpu_)::value_type{ util.gpu };
+            general_samples_.utilization_mem_ = decltype(general_samples_.utilization_gpu_)::value_type{ util.memory };
+        }
+    }
+
+    // retrieve initial clock related information
+    {
+        // fixed information -> only retrieved once
+        decltype(clock_samples_.adaptive_clock_status_)::value_type adaptive_clock_status{};
+        if (nvmlDeviceGetAdaptiveClockInfoStatus(device, &adaptive_clock_status) == NVML_SUCCESS) {
+            clock_samples_.adaptive_clock_status_ = adaptive_clock_status;
+        }
+
+        decltype(clock_samples_.clock_graph_max_)::value_type clock_graph_max{};
+        if (nvmlDeviceGetMaxClockInfo(device, NVML_CLOCK_GRAPHICS, &clock_graph_max) == NVML_SUCCESS) {
+            clock_samples_.clock_graph_max_ = clock_graph_max;
+        }
+
+        decltype(clock_samples_.clock_sm_max_)::value_type clock_sm_max{};
+        if (nvmlDeviceGetMaxClockInfo(device, NVML_CLOCK_SM, &clock_sm_max) == NVML_SUCCESS) {
+            clock_samples_.clock_sm_max_ = clock_sm_max;
+        }
+
+        decltype(clock_samples_.clock_mem_max_)::value_type clock_mem_max{};
+        if (nvmlDeviceGetMaxClockInfo(device, NVML_CLOCK_MEM, &clock_mem_max) == NVML_SUCCESS) {
+            clock_samples_.clock_mem_max_ = clock_mem_max;
+        }
+
+        {
+            unsigned int clock_count{ 128 };
+            std::vector<unsigned int> supported_clocks(clock_count);
+            if (nvmlDeviceGetSupportedMemoryClocks(device, &clock_count, supported_clocks.data()) == NVML_SUCCESS) {
+                supported_clocks.resize(clock_count);
+                clock_samples_.clock_mem_min_ = *std::min_element(supported_clocks.cbegin(), supported_clocks.cend());
+            }
+        }
+
+        {
+            unsigned int clock_count{ 128 };
+            std::vector<unsigned int> supported_clocks(clock_count);
+            if (clock_samples_.clock_mem_min_.has_value() && nvmlDeviceGetSupportedGraphicsClocks(device, clock_samples_.clock_mem_min_.value(), &clock_count, supported_clocks.data()) == NVML_SUCCESS) {
+                supported_clocks.resize(clock_count);
+                clock_samples_.clock_graph_min_ = *std::min_element(supported_clocks.cbegin(), supported_clocks.cend());
+            }
+        }
+
+        // queried samples -> retrieved every iteration if available
+        decltype(clock_samples_.clock_graph_)::value_type::value_type clock_graph{};
+        if (nvmlDeviceGetClockInfo(device, NVML_CLOCK_GRAPHICS, &clock_graph) == NVML_SUCCESS) {
+            clock_samples_.clock_graph_ = decltype(clock_samples_.clock_graph_)::value_type{ clock_graph };
+        }
+
+        decltype(clock_samples_.clock_sm_)::value_type::value_type clock_sm{};
+        if (nvmlDeviceGetClockInfo(device, NVML_CLOCK_SM, &clock_sm) == NVML_SUCCESS) {
+            clock_samples_.clock_sm_ = decltype(clock_samples_.clock_sm_)::value_type{ clock_sm };
+        }
+
+        decltype(clock_samples_.clock_mem_)::value_type::value_type clock_mem{};
+        if (nvmlDeviceGetClockInfo(device, NVML_CLOCK_MEM, &clock_mem) == NVML_SUCCESS) {
+            clock_samples_.clock_mem_ = decltype(clock_samples_.clock_mem_)::value_type{ clock_mem };
+        }
+
+        decltype(clock_samples_.clock_throttle_reason_)::value_type::value_type clock_throttle_reason{};
+        if (nvmlDeviceGetCurrentClocksThrottleReasons(device, &clock_throttle_reason) == NVML_SUCCESS) {
+            clock_samples_.clock_throttle_reason_ = decltype(clock_samples_.clock_throttle_reason_)::value_type{ clock_throttle_reason };
+        }
+
+        nvmlEnableState_t mode{};
+        nvmlEnableState_t default_mode{};
+        if (nvmlDeviceGetAutoBoostedClocksEnabled(device, &mode, &default_mode) == NVML_SUCCESS) {
+            clock_samples_.auto_boosted_clocks_ = decltype(clock_samples_.auto_boosted_clocks_)::value_type{ mode == NVML_FEATURE_ENABLED };
+        }
+    }
+
+    // retrieve initial power related information
+    {
+        // fixed information -> only retrieved once
+        decltype(power_samples_.power_management_limit_)::value_type power_management_limit{};
+        if (nvmlDeviceGetPowerManagementLimit(device, &power_management_limit) == NVML_SUCCESS) {
+            power_samples_.power_management_limit_ = power_management_limit;
+        }
+
+        decltype(power_samples_.power_enforced_limit_)::value_type power_enforced_limit{};
+        if (nvmlDeviceGetEnforcedPowerLimit(device, &power_enforced_limit) == NVML_SUCCESS) {
+            power_samples_.power_enforced_limit_ = power_enforced_limit;
+        }
+
+        // queried samples -> retrieved every iteration if available
+        nvmlPstates_t pstate{};
+        if (nvmlDeviceGetPowerState(device, &pstate) == NVML_SUCCESS) {
+            power_samples_.power_state_ = decltype(general_samples_.performance_state_)::value_type{ static_cast<decltype(power_samples_.power_state_)::value_type::value_type>(pstate) };
+        }
+
+        decltype(power_samples_.power_usage_)::value_type::value_type power_usage{};
+        if (nvmlDeviceGetPowerUsage(device, &power_usage) == NVML_SUCCESS) {
+            power_samples_.power_usage_ = decltype(power_samples_.power_usage_)::value_type{ power_usage };
+        }
+
+        decltype(power_samples_.power_total_energy_consumption_)::value_type::value_type power_total_energy_consumption{};
+        if (nvmlDeviceGetTotalEnergyConsumption(device, &power_total_energy_consumption) == NVML_SUCCESS) {
+            power_samples_.power_total_energy_consumption_ = decltype(power_samples_.power_total_energy_consumption_)::value_type{ power_total_energy_consumption };
+        }
+    }
+
+    // retrieve initial memory related information
+    {
+        // fixed information -> only retrieved once
+        nvmlMemory_t memory_info{};
+        if (nvmlDeviceGetMemoryInfo(device, &memory_info) == NVML_SUCCESS) {
+            memory_samples_.memory_total_ = memory_info.total;
+            // queried samples -> retrieved every iteration if available
+            memory_samples_.memory_free_ = decltype(memory_samples_.memory_free_)::value_type{ memory_info.free };
+            memory_samples_.memory_used_ = decltype(memory_samples_.memory_used_)::value_type{ memory_info.used };
+        }
+
+        decltype(memory_samples_.memory_bus_width_)::value_type memory_bus_width{};
+        if (nvmlDeviceGetMemoryBusWidth(device, &memory_bus_width) == NVML_SUCCESS) {
+            memory_samples_.memory_bus_width_ = memory_bus_width;
+        }
+
+        decltype(memory_samples_.max_pcie_link_generation_)::value_type max_pcie_link_generation{};
+        if (nvmlDeviceGetGpuMaxPcieLinkGeneration(device, &max_pcie_link_generation) == NVML_SUCCESS) {
+            memory_samples_.max_pcie_link_generation_ = max_pcie_link_generation;
+        }
+
+        decltype(memory_samples_.pcie_link_max_speed_)::value_type pcie_link_max_speed{};
+        if (nvmlDeviceGetPcieLinkMaxSpeed(device, &pcie_link_max_speed) == NVML_SUCCESS) {
+            memory_samples_.pcie_link_max_speed_ = pcie_link_max_speed;
+        }
+
+        // queried samples -> retrieved every iteration if available
+        decltype(memory_samples_.pcie_link_width_)::value_type::value_type pcie_link_width{};
+        if (nvmlDeviceGetCurrPcieLinkWidth(device, &pcie_link_width) == NVML_SUCCESS) {
+            memory_samples_.pcie_link_width_ = decltype(memory_samples_.pcie_link_width_)::value_type{ pcie_link_width };
+        }
+
+        decltype(memory_samples_.pcie_link_generation_)::value_type::value_type pcie_link_generation{};
+        if (nvmlDeviceGetCurrPcieLinkGeneration(device, &pcie_link_generation) == NVML_SUCCESS) {
+            memory_samples_.pcie_link_generation_ = decltype(memory_samples_.pcie_link_generation_)::value_type{ pcie_link_generation };
+        }
+    }
+
+    // retrieve initial temperature related information
+    {
+        // fixed information -> only retrieved once
+        decltype(temperature_samples_.num_fans_)::value_type num_fans{};
+        if (nvmlDeviceGetNumFans(device, &num_fans) == NVML_SUCCESS) {
+            temperature_samples_.num_fans_ = num_fans;
+        }
+
+        if (temperature_samples_.num_fans_.has_value() && temperature_samples_.num_fans_.value() > 0) {
+            decltype(temperature_samples_.min_fan_speed_)::value_type min_fan_speed{};
+            decltype(temperature_samples_.max_fan_speed_)::value_type max_fan_speed{};
+            if (nvmlDeviceGetMinMaxFanSpeed(device, &min_fan_speed, &max_fan_speed) == NVML_SUCCESS) {
+                temperature_samples_.min_fan_speed_ = min_fan_speed;
+                temperature_samples_.max_fan_speed_ = max_fan_speed;
+            }
+        }
+
+        decltype(temperature_samples_.temperature_threshold_gpu_max_)::value_type temperature_threshold_gpu_max{};
+        if (nvmlDeviceGetTemperatureThreshold(device, NVML_TEMPERATURE_THRESHOLD_GPU_MAX, &temperature_threshold_gpu_max) == NVML_SUCCESS) {
+            temperature_samples_.temperature_threshold_gpu_max_ = temperature_threshold_gpu_max;
+        }
+
+        decltype(temperature_samples_.temperature_threshold_mem_max_)::value_type temperature_threshold_mem_max{};
+        if (nvmlDeviceGetTemperatureThreshold(device, NVML_TEMPERATURE_THRESHOLD_MEM_MAX, &temperature_threshold_mem_max) == NVML_SUCCESS) {
+            temperature_samples_.temperature_threshold_mem_max_ = temperature_threshold_mem_max;
+        }
+
+        // queried samples -> retrieved every iteration if available
+        decltype(temperature_samples_.fan_speed_)::value_type::value_type fan_speed{};
+        if (nvmlDeviceGetFanSpeed(device, &fan_speed) == NVML_SUCCESS) {
+            temperature_samples_.fan_speed_ = decltype(temperature_samples_.fan_speed_)::value_type{ fan_speed };
+        }
+
+        decltype(temperature_samples_.temperature_gpu_)::value_type::value_type temperature_gpu{};
+        if (nvmlDeviceGetTemperature(device, NVML_TEMPERATURE_GPU, &temperature_gpu) == NVML_SUCCESS) {
+            temperature_samples_.temperature_gpu_ = decltype(temperature_samples_.temperature_gpu_)::value_type{ temperature_gpu };
+        }
     }
 
     //
@@ -179,58 +333,112 @@ void gpu_nvidia_hardware_sampler::sampling_loop() {
             // add current time point
             this->add_time_point(std::chrono::system_clock::now());
 
-            // retrieve general information
+            // retrieve general samples
             {
-                nvml_general_samples::nvml_general_sample sample{};
-                nvmlPstates_t pstate{};
-                PLSSVM_NVML_ERROR_CHECK(nvmlDeviceGetPerformanceState(device, &pstate));
-                sample.performance_state = static_cast<int>(pstate);
-                nvmlUtilization_t util{};
-                PLSSVM_NVML_ERROR_CHECK(nvmlDeviceGetUtilizationRates(device, &util));
-                sample.utilization_gpu = util.gpu;
-                sample.utilization_mem = util.memory;
-                general_samples_.add_sample(sample);
+                if (general_samples_.performance_state_.has_value()) {
+                    nvmlPstates_t pstate{};
+                    PLSSVM_NVML_ERROR_CHECK(nvmlDeviceGetPerformanceState(device, &pstate));
+                    general_samples_.performance_state_->push_back(static_cast<decltype(general_samples_.performance_state_)::value_type::value_type>(pstate));
+                }
+
+                if (general_samples_.utilization_gpu_.has_value() && general_samples_.utilization_mem_.has_value()) {
+                    nvmlUtilization_t util{};
+                    PLSSVM_NVML_ERROR_CHECK(nvmlDeviceGetUtilizationRates(device, &util));
+                    general_samples_.utilization_gpu_->push_back(util.gpu);
+                    general_samples_.utilization_mem_->push_back(util.memory);
+                }
             }
-            // retrieve clock related information
+
+            // retrieve clock related samples
             {
-                nvml_clock_samples::nvml_clock_sample sample{};
-                PLSSVM_NVML_ERROR_CHECK(nvmlDeviceGetClockInfo(device, NVML_CLOCK_GRAPHICS, &sample.clock_graph));
-                PLSSVM_NVML_ERROR_CHECK(nvmlDeviceGetClockInfo(device, NVML_CLOCK_SM, &sample.clock_sm));
-                PLSSVM_NVML_ERROR_CHECK(nvmlDeviceGetClockInfo(device, NVML_CLOCK_MEM, &sample.clock_mem));
-                PLSSVM_NVML_ERROR_CHECK(nvmlDeviceGetCurrentClocksThrottleReasons(device, &sample.clock_throttle_reason));
-                nvmlEnableState_t mode{};
-                nvmlEnableState_t default_mode{};
-                PLSSVM_NVML_ERROR_CHECK(nvmlDeviceGetAutoBoostedClocksEnabled(device, &mode, &default_mode));
-                sample.auto_boosted_clocks = mode == NVML_FEATURE_ENABLED;
-                clock_samples_.add_sample(sample);
+                if (clock_samples_.clock_graph_.has_value()) {
+                    decltype(clock_samples_.clock_graph_)::value_type::value_type value{};
+                    PLSSVM_NVML_ERROR_CHECK(nvmlDeviceGetClockInfo(device, NVML_CLOCK_GRAPHICS, &value));
+                    clock_samples_.clock_graph_->push_back(value);
+                }
+
+                if (clock_samples_.clock_sm_.has_value()) {
+                    decltype(clock_samples_.clock_sm_)::value_type::value_type value{};
+                    PLSSVM_NVML_ERROR_CHECK(nvmlDeviceGetClockInfo(device, NVML_CLOCK_SM, &value));
+                    clock_samples_.clock_sm_->push_back(value);
+                }
+
+                if (clock_samples_.clock_mem_.has_value()) {
+                    decltype(clock_samples_.clock_mem_)::value_type::value_type value{};
+                    PLSSVM_NVML_ERROR_CHECK(nvmlDeviceGetClockInfo(device, NVML_CLOCK_MEM, &value));
+                    clock_samples_.clock_mem_->push_back(value);
+                }
+
+                if (clock_samples_.clock_throttle_reason_.has_value()) {
+                    decltype(clock_samples_.clock_throttle_reason_)::value_type::value_type value{};
+                    PLSSVM_NVML_ERROR_CHECK(nvmlDeviceGetCurrentClocksThrottleReasons(device, &value));
+                    clock_samples_.clock_throttle_reason_->push_back(value);
+                }
+
+                if (clock_samples_.auto_boosted_clocks_.has_value()) {
+                    nvmlEnableState_t mode{};
+                    nvmlEnableState_t default_mode{};
+                    PLSSVM_NVML_ERROR_CHECK(nvmlDeviceGetAutoBoostedClocksEnabled(device, &mode, &default_mode));
+                    clock_samples_.auto_boosted_clocks_->push_back(mode == NVML_FEATURE_ENABLED);
+                }
             }
+
             // retrieve power related information
             {
-                nvml_power_samples::nvml_power_sample sample{};
-                nvmlPstates_t pstate{};
-                PLSSVM_NVML_ERROR_CHECK(nvmlDeviceGetPowerState(device, &pstate));
-                sample.power_state = static_cast<int>(pstate);
-                PLSSVM_NVML_ERROR_CHECK(nvmlDeviceGetPowerUsage(device, &sample.power_usage));
-                PLSSVM_NVML_ERROR_CHECK(nvmlDeviceGetTotalEnergyConsumption(device, &sample.power_total_energy_consumption));
-                power_samples_.add_sample(sample);
+                if (power_samples_.power_state_.has_value()) {
+                    nvmlPstates_t pstate{};
+                    PLSSVM_NVML_ERROR_CHECK(nvmlDeviceGetPowerState(device, &pstate));
+                    power_samples_.power_state_->push_back(static_cast<decltype(power_samples_.power_state_)::value_type::value_type>(pstate));
+                }
+
+                if (power_samples_.power_usage_.has_value()) {
+                    decltype(power_samples_.power_usage_)::value_type::value_type value{};
+                    PLSSVM_NVML_ERROR_CHECK(nvmlDeviceGetPowerUsage(device, &value));
+                    power_samples_.power_usage_->push_back(value);
+                }
+
+                if (power_samples_.power_total_energy_consumption_.has_value()) {
+                    decltype(power_samples_.power_total_energy_consumption_)::value_type::value_type value{};
+                    PLSSVM_NVML_ERROR_CHECK(nvmlDeviceGetTotalEnergyConsumption(device, &value));
+                    power_samples_.power_total_energy_consumption_->push_back(value);
+                }
             }
+
             // retrieve memory related information
             {
-                nvml_memory_samples::nvml_memory_sample sample{};
-                nvmlMemory_t memory_info{};
-                PLSSVM_NVML_ERROR_CHECK(nvmlDeviceGetMemoryInfo(device, &memory_info));
-                sample.memory_free = memory_info.free;
-                sample.memory_used = memory_info.used;
-                PLSSVM_NVML_ERROR_CHECK(nvmlDeviceGetCurrPcieLinkWidth(device, &sample.pcie_link_width));
-                PLSSVM_NVML_ERROR_CHECK(nvmlDeviceGetCurrPcieLinkGeneration(device, &sample.pcie_link_generation));
-                memory_samples_.add_sample(sample);
+                if (memory_samples_.memory_free_.has_value() && memory_samples_.memory_used_.has_value()) {
+                    nvmlMemory_t memory_info{};
+                    PLSSVM_NVML_ERROR_CHECK(nvmlDeviceGetMemoryInfo(device, &memory_info));
+                    memory_samples_.memory_free_->push_back(memory_info.free);
+                    memory_samples_.memory_used_->push_back(memory_info.used);
+                }
+
+                if (memory_samples_.pcie_link_width_.has_value()) {
+                    decltype(memory_samples_.pcie_link_width_)::value_type::value_type value{};
+                    PLSSVM_NVML_ERROR_CHECK(nvmlDeviceGetCurrPcieLinkWidth(device, &value));
+                    memory_samples_.pcie_link_width_->push_back(value);
+                }
+
+                if (memory_samples_.pcie_link_generation_.has_value()) {
+                    decltype(memory_samples_.pcie_link_generation_)::value_type::value_type value{};
+                    PLSSVM_NVML_ERROR_CHECK(nvmlDeviceGetCurrPcieLinkGeneration(device, &value));
+                    memory_samples_.pcie_link_generation_->push_back(value);
+                }
             }
+
             // retrieve temperature related information
             {
-                nvml_temperature_samples::nvml_temperature_sample sample{};
-                PLSSVM_NVML_ERROR_CHECK(nvmlDeviceGetFanSpeed(device, &sample.fan_speed));
-                PLSSVM_NVML_ERROR_CHECK(nvmlDeviceGetTemperature(device, NVML_TEMPERATURE_GPU, &sample.temperature_gpu));
-                temperature_samples_.add_sample(sample);
+                if (temperature_samples_.fan_speed_.has_value()) {
+                    decltype(temperature_samples_.fan_speed_)::value_type::value_type value{};
+                    PLSSVM_NVML_ERROR_CHECK(nvmlDeviceGetFanSpeed(device, &value));
+                    temperature_samples_.fan_speed_->push_back(value);
+                }
+
+                if (temperature_samples_.temperature_gpu_.has_value()) {
+                    decltype(temperature_samples_.temperature_gpu_)::value_type::value_type value{};
+                    PLSSVM_NVML_ERROR_CHECK(nvmlDeviceGetTemperature(device, NVML_TEMPERATURE_GPU, &value));
+                    temperature_samples_.temperature_gpu_->push_back(value);
+                }
             }
         }
 

@@ -8,92 +8,76 @@
 
 #include "plssvm/detail/tracking/gpu_nvidia/nvml_samples.hpp"
 
-#include "plssvm/detail/tracking/gpu_nvidia/nvml_device_handle_impl.hpp"  // plssvm::detail::tracking::nvml_device_handle implementation
+#include "plssvm/detail/tracking/utility.hpp"  // plssvm::detail::tracking::value_or_default
 
 #include "fmt/core.h"    // fmt::format
 #include "fmt/format.h"  // fmt::join
-#include "nvml.h"        // NVML runtime functions
+#include "nvml.h"        // NVML_ADAPTIVE_CLOCKING_INFO_STATUS_ENABLED
 
-#include <cstddef>  // std::size_t
-#include <ostream>  // std::ostream
-#include <string>   // std::string
-#include <utility>  // std::forward
-#include <vector>   // std::vector
+#include <cstddef>   // std::size_t
+#include <optional>  // std::optional
+#include <ostream>   // std::ostream
+#include <string>    // std::string
+#include <vector>    // std::vector
 
 namespace plssvm::detail::tracking {
-
-template <typename T, typename nvml_func, typename... Args>
-[[nodiscard]] bool nvml_function_is_supported(nvml_func func, Args &&...args) {
-    [[maybe_unused]] T val{};
-    const nvmlReturn_t ret = func(std::forward<Args>(args)..., &val);
-    return ret == NVML_SUCCESS;
-}
 
 //*************************************************************************************************************************************//
 //                                                           general samples                                                           //
 //*************************************************************************************************************************************//
 
 std::string nvml_general_samples::generate_yaml_string() const {
-    nvmlDevice_t device = this->get_device().get_impl().device;
-
     std::string str{ "    general:\n" };
 
     // device name
-    std::string device_name(NVML_DEVICE_NAME_V2_BUFFER_SIZE, '\0');
-    const nvmlReturn_t ret = nvmlDeviceGetName(device, device_name.data(), device_name.size());
-    if (ret == NVML_SUCCESS) {
+    if (this->name_.has_value()) {
         str += fmt::format("      name:\n"
                            "        unit: \"string\"\n"
                            "        values: \"{}\"\n",
-                           this->name);
+                           this->name_.value());
     }
     // persistence mode enabled
-    if (nvml_function_is_supported<nvmlEnableState_t>(nvmlDeviceGetPersistenceMode, device)) {
+    if (this->persistence_mode_.has_value()) {
         str += fmt::format("      persistence_mode:\n"
                            "        unit: \"bool\"\n"
                            "        values: {}\n",
-                           this->persistence_mode);
+                           this->persistence_mode_.value());
     }
     // number of cores
-    if (nvml_function_is_supported<decltype(nvml_general_samples::num_cores)>(nvmlDeviceGetNumGpuCores, device)) {
+    if (this->num_cores_.has_value()) {
         str += fmt::format("      num_cores:\n"
                            "        unit: \"int\"\n"
                            "        values: {}\n",
-                           this->num_cores);
+                           this->num_cores_.value());
     }
 
     // performance state
-    if (nvml_function_is_supported<nvmlPstates_t>(nvmlDeviceGetPerformanceState, device)) {
+    if (this->performance_state_.has_value()) {
         str += fmt::format("      performance_state:\n"
                            "        unit: \"0 - maximum performance; 15 - minimum performance; 32 - unknown\"\n"
                            "        values: [{}]\n",
-                           fmt::join(this->get_performance_state(), ", "));
+                           fmt::join(this->performance_state_.value(), ", "));
     }
-    // device compute and memory utilization
-    if (nvml_function_is_supported<nvmlUtilization_t>(nvmlDeviceGetUtilizationRates, device)) {
+    // device compute utilization
+    if (this->utilization_gpu_.has_value()) {
         str += fmt::format("      utilization_gpu:\n"
                            "        unit: \"percentage\"\n"
-                           "        values: [{}]\n"
-                           "      utilization_mem:\n"
+                           "        values: [{}]\n",
+                           fmt::join(this->utilization_gpu_.value(), ", "));
+    }
+
+    // device compute utilization
+    if (this->utilization_mem_.has_value()) {
+        str += fmt::format("      utilization_mem:\n"
                            "        unit: \"percentage\"\n"
                            "        values: [{}]\n",
-                           fmt::join(this->get_utilization_gpu(), ", "),
-                           fmt::join(this->get_utilization_mem(), ", "));
+                           fmt::join(this->utilization_mem_.value(), ", "));
     }
 
     // remove last newline
     str.pop_back();
 
     return str;
-}
-
-std::ostream &operator<<(std::ostream &out, const nvml_general_samples::nvml_general_sample &sample) {
-    return out << fmt::format("performance_state: {}\n"
-                              "utilization_gpu: {}\n"
-                              "utilization_mem: {}",
-                              sample.performance_state,
-                              sample.utilization_gpu,
-                              sample.utilization_mem);
 }
 
 std::ostream &operator<<(std::ostream &out, const nvml_general_samples &samples) {
@@ -103,12 +87,12 @@ std::ostream &operator<<(std::ostream &out, const nvml_general_samples &samples)
                               "performance_state: [{}]\n"
                               "utilization_gpu: [{}]\n"
                               "utilization_mem: [{}]",
-                              samples.name,
-                              samples.persistence_mode,
-                              samples.num_cores,
-                              fmt::join(samples.get_performance_state(), ", "),
-                              fmt::join(samples.get_utilization_gpu(), ", "),
-                              fmt::join(samples.get_utilization_mem(), ", "));
+                              value_or_default(samples.get_name()),
+                              value_or_default(samples.get_persistence_mode()),
+                              value_or_default(samples.get_num_cores()),
+                              fmt::join(value_or_default(samples.get_performance_state()), ", "),
+                              fmt::join(value_or_default(samples.get_utilization_gpu()), ", "),
+                              fmt::join(value_or_default(samples.get_utilization_mem()), ", "));
 }
 
 //*************************************************************************************************************************************//
@@ -116,113 +100,91 @@ std::ostream &operator<<(std::ostream &out, const nvml_general_samples &samples)
 //*************************************************************************************************************************************//
 
 std::string nvml_clock_samples::generate_yaml_string() const {
-    nvmlDevice_t device = this->get_device().get_impl().device;
-
     std::string str{ "    clock:\n" };
 
     // adaptive clock status
-    if (nvml_function_is_supported<decltype(nvml_clock_samples::adaptive_clock_status)>(nvmlDeviceGetAdaptiveClockInfoStatus, device)) {
+    if (this->adaptive_clock_status_.has_value()) {
         str += fmt::format("      adaptive_clock_status:\n"
                            "        unit: \"bool\"\n"
                            "        values: {}\n",
-                           this->adaptive_clock_status == NVML_ADAPTIVE_CLOCKING_INFO_STATUS_ENABLED);
+                           this->adaptive_clock_status_.value() == NVML_ADAPTIVE_CLOCKING_INFO_STATUS_ENABLED);
     }
     // maximum SM clock
-    if (nvml_function_is_supported<decltype(nvml_clock_samples::clock_sm_max)>(nvmlDeviceGetMaxClockInfo, device, NVML_CLOCK_SM)) {
+    if (this->clock_sm_max_.has_value()) {
         str += fmt::format("      clock_sm_max:\n"
                            "        unit: \"MHz\"\n"
                            "        values: {}\n",
-                           this->clock_sm_max);
+                           this->clock_sm_max_.value());
     }
     // minimum memory clock
-    unsigned int clock_count{ 128 };
-    std::vector<unsigned int> clocks(clock_count);
-    nvmlReturn_t ret = nvmlDeviceGetSupportedMemoryClocks(device, &clock_count, clocks.data());
-    if (ret == NVML_SUCCESS) {
+    if (this->clock_mem_min_.has_value()) {
         str += fmt::format("      clock_mem_min:\n"
                            "        unit: \"MHz\"\n"
                            "        values: {}\n",
-                           this->clock_mem_min);
+                           this->clock_mem_min_.value());
     }
     // maximum memory clock
-    if (nvml_function_is_supported<decltype(nvml_clock_samples::clock_mem_max)>(nvmlDeviceGetMaxClockInfo, device, NVML_CLOCK_MEM)) {
+    if (this->clock_mem_max_.has_value()) {
         str += fmt::format("      clock_mem_max:\n"
                            "        unit: \"MHz\"\n"
                            "        values: {}\n",
-                           this->clock_mem_max);
+                           this->clock_mem_max_.value());
     }
     // minimum graph clock
-    const unsigned int clock = clocks.front();
-    clock_count = 128u;
-    ret = nvmlDeviceGetSupportedGraphicsClocks(device, clock, &clock_count, clocks.data());
-    if (ret == NVML_SUCCESS) {
+    if (this->clock_graph_min_.has_value()) {
         str += fmt::format("      clock_gpu_min:\n"
                            "        unit: \"MHz\"\n"
                            "        values: {}\n",
-                           this->clock_graph_min);
+                           this->clock_graph_min_.value());
     }
     // maximum graph clock
-    if (nvml_function_is_supported<decltype(nvml_clock_samples::clock_graph_max)>(nvmlDeviceGetMaxClockInfo, device, NVML_CLOCK_GRAPHICS)) {
+    if (this->clock_graph_max_.has_value()) {
         str += fmt::format("      clock_gpu_max:\n"
                            "        unit: \"MHz\"\n"
                            "        values: {}\n",
-                           this->clock_graph_max);
+                           this->clock_graph_max_.value());
     }
 
     // SM clock
-    if (nvml_function_is_supported<decltype(nvml_clock_samples::nvml_clock_sample::clock_sm)>(nvmlDeviceGetClockInfo, device, NVML_CLOCK_SM)) {
+    if (this->clock_sm_.has_value()) {
         str += fmt::format("      clock_sm:\n"
                            "        unit: \"MHz\"\n"
                            "        values: [{}]\n",
-                           fmt::join(this->get_clock_sm(), ", "));
+                           fmt::join(this->clock_sm_.value(), ", "));
     }
     // memory clock
-    if (nvml_function_is_supported<decltype(nvml_clock_samples::nvml_clock_sample::clock_mem)>(nvmlDeviceGetClockInfo, device, NVML_CLOCK_MEM)) {
+    if (this->clock_mem_.has_value()) {
         str += fmt::format("      clock_mem:\n"
                            "        unit: \"MHz\"\n"
                            "        values: [{}]\n",
-                           fmt::join(this->get_clock_mem(), ", "));
+                           fmt::join(this->clock_mem_.value(), ", "));
     }
     // graph clock
-    if (nvml_function_is_supported<decltype(nvml_clock_samples::nvml_clock_sample::clock_graph)>(nvmlDeviceGetClockInfo, device, NVML_CLOCK_GRAPHICS)) {
+    if (this->clock_graph_.has_value()) {
         str += fmt::format("      clock_gpu:\n"
                            "        unit: \"MHz\"\n"
                            "        values: [{}]\n",
-                           fmt::join(this->get_clock_graph(), ", "));
+                           fmt::join(this->clock_graph_.value(), ", "));
     }
     // clock throttle reason
-    if (nvml_function_is_supported<decltype(nvml_clock_samples::nvml_clock_sample::clock_throttle_reason)>(nvmlDeviceGetCurrentClocksThrottleReasons, device)) {
+    if (this->clock_throttle_reason_.has_value()) {
         str += fmt::format("      clock_throttle_reason:\n"
                            "        unit: \"bitmask\"\n"
                            "        values: [{}]\n",
-                           fmt::join(this->get_clock_throttle_reason(), ", "));
+                           fmt::join(this->clock_throttle_reason_.value(), ", "));
     }
     // clock is auto-boosted
-    nvmlEnableState_t mode{};
-    if (nvml_function_is_supported<nvmlEnableState_t>(nvmlDeviceGetAutoBoostedClocksEnabled, device, &mode)) {
+    if (this->auto_boosted_clocks_.has_value()) {
         str += fmt::format("      auto_boosted_clocks:\n"
                            "        unit: \"bool\"\n"
                            "        values: [{}]\n",
-                           fmt::join(this->get_auto_boosted_clocks(), ", "));
+                           fmt::join(this->auto_boosted_clocks_.value(), ", "));
     }
 
     // remove last newline
     str.pop_back();
 
     return str;
-}
-
-std::ostream &operator<<(std::ostream &out, const nvml_clock_samples::nvml_clock_sample &sample) {
-    return out << fmt::format("clock_graph: {}\n"
-                              "clock_sm: {}\n"
-                              "clock_mem: {}\n"
-                              "clock_throttle_reason: {}\n"
-                              "auto_boosted_clocks: {}",
-                              sample.clock_graph,
-                              sample.clock_sm,
-                              sample.clock_mem,
-                              sample.clock_throttle_reason,
-                              sample.auto_boosted_clocks);
 }
 
 std::ostream &operator<<(std::ostream &out, const nvml_clock_samples &samples) {
@@ -237,17 +199,17 @@ std::ostream &operator<<(std::ostream &out, const nvml_clock_samples &samples) {
                               "clock_mem: [{}]\n"
                               "clock_throttle_reason: [{}]\n"
                               "auto_boosted_clocks: [{}]",
-                              samples.adaptive_clock_status,
-                              samples.clock_graph_min,
-                              samples.clock_graph_max,
-                              samples.clock_sm_max,
-                              samples.clock_mem_min,
-                              samples.clock_mem_max,
-                              fmt::join(samples.get_clock_graph(), ", "),
-                              fmt::join(samples.get_clock_sm(), ", "),
-                              fmt::join(samples.get_clock_mem(), ", "),
-                              fmt::join(samples.get_clock_throttle_reason(), ", "),
-                              fmt::join(samples.get_auto_boosted_clocks(), ", "));
+                              value_or_default(samples.get_adaptive_clock_status()),
+                              value_or_default(samples.get_clock_graph_min()),
+                              value_or_default(samples.get_clock_graph_max()),
+                              value_or_default(samples.get_clock_sm_max()),
+                              value_or_default(samples.get_clock_mem_min()),
+                              value_or_default(samples.get_clock_mem_max()),
+                              fmt::join(value_or_default(samples.get_clock_graph()), ", "),
+                              fmt::join(value_or_default(samples.get_clock_sm()), ", "),
+                              fmt::join(value_or_default(samples.get_clock_mem()), ", "),
+                              fmt::join(value_or_default(samples.get_clock_throttle_reason()), ", "),
+                              fmt::join(value_or_default(samples.get_auto_boosted_clocks()), ", "));
 }
 
 //*************************************************************************************************************************************//
@@ -255,45 +217,43 @@ std::ostream &operator<<(std::ostream &out, const nvml_clock_samples &samples) {
 //*************************************************************************************************************************************//
 
 std::string nvml_power_samples::generate_yaml_string() const {
-    nvmlDevice_t device = this->get_device().get_impl().device;
-
     std::string str{ "    power:\n" };
 
     // power management limit
-    if (nvml_function_is_supported<decltype(nvml_power_samples::power_management_limit)>(nvmlDeviceGetPowerManagementLimit, device)) {
+    if (this->power_management_limit_.has_value()) {
         str += fmt::format("      power_management_limit:\n"
                            "        unit: \"mW\"\n"
                            "        values: {}\n",
-                           this->power_management_limit);
+                           this->power_management_limit_.value());
     }
     // power enforced limit
-    if (nvml_function_is_supported<decltype(nvml_power_samples::power_enforced_limit)>(nvmlDeviceGetEnforcedPowerLimit, device)) {
+    if (this->power_enforced_limit_.has_value()) {
         str += fmt::format("      power_enforced_limit:\n"
                            "        unit: \"mW\"\n"
                            "        values: {}\n",
-                           this->power_enforced_limit);
+                           this->power_enforced_limit_.value());
     }
 
     // power state
-    if (nvml_function_is_supported<nvmlPstates_t>(nvmlDeviceGetPowerState, device)) {
+    if (this->power_state_.has_value()) {
         str += fmt::format("      power_state:\n"
                            "        unit: \"0 - maximum performance; 15 - minimum performance; 32 - unknown\"\n"
                            "        values: [{}]\n",
-                           fmt::join(this->get_power_state(), ", "));
+                           fmt::join(this->power_state_.value(), ", "));
     }
     // current power usage
-    if (nvml_function_is_supported<decltype(nvml_power_samples::nvml_power_sample::power_usage)>(nvmlDeviceGetPowerUsage, device)) {
+    if (this->power_usage_.has_value()) {
         str += fmt::format("      power_usage:\n"
                            "        unit: \"mW\"\n"
                            "        values: [{}]\n",
-                           fmt::join(this->get_power_usage(), ", "));
+                           fmt::join(this->power_usage_.value(), ", "));
     }
     // total energy consumed
-    if (nvml_function_is_supported<decltype(nvml_power_samples::nvml_power_sample::power_total_energy_consumption)>(nvmlDeviceGetTotalEnergyConsumption, device)) {
-        std::vector<decltype(nvml_power_samples::nvml_power_sample::power_total_energy_consumption)> consumed_energy(this->num_samples());
+    if (this->power_total_energy_consumption_.has_value()) {
+        decltype(nvml_power_samples::power_total_energy_consumption_)::value_type consumed_energy(this->power_total_energy_consumption_->size());
 #pragma omp parallel for
-        for (std::size_t i = 0; i < this->num_samples(); ++i) {
-            consumed_energy[i] = this->get_power_total_energy_consumption()[i] - this->get_power_total_energy_consumption()[0];
+        for (std::size_t i = 0; i < consumed_energy.size(); ++i) {
+            consumed_energy[i] = this->power_total_energy_consumption_.value()[i] - this->power_total_energy_consumption_->front();
         }
         str += fmt::format("      power_total_energy_consumed:\n"
                            "        unit: \"J\"\n"
@@ -307,26 +267,17 @@ std::string nvml_power_samples::generate_yaml_string() const {
     return str;
 }
 
-std::ostream &operator<<(std::ostream &out, const nvml_power_samples::nvml_power_sample &sample) {
-    return out << fmt::format("power_state: {}\n"
-                              "power_usage: {}\n"
-                              "power_total_energy_consumption: {}",
-                              sample.power_state,
-                              sample.power_usage,
-                              sample.power_total_energy_consumption);
-}
-
 std::ostream &operator<<(std::ostream &out, const nvml_power_samples &samples) {
     return out << fmt::format("power_management_limit: {}\n"
                               "power_enforced_limit: {}\n"
                               "power_state: [{}]\n"
                               "power_usage: [{}]\n"
                               "power_total_energy_consumption: [{}]",
-                              samples.power_management_limit,
-                              samples.power_enforced_limit,
-                              fmt::join(samples.get_power_state(), ", "),
-                              fmt::join(samples.get_power_usage(), ", "),
-                              fmt::join(samples.get_power_total_energy_consumption(), ", "));
+                              value_or_default(samples.get_power_management_limit()),
+                              value_or_default(samples.get_power_enforced_limit()),
+                              fmt::join(value_or_default(samples.get_power_state()), ", "),
+                              fmt::join(value_or_default(samples.get_power_usage()), ", "),
+                              fmt::join(value_or_default(samples.get_power_total_energy_consumption()), ", "));
 }
 
 //*************************************************************************************************************************************//
@@ -334,89 +285,77 @@ std::ostream &operator<<(std::ostream &out, const nvml_power_samples &samples) {
 //*************************************************************************************************************************************//
 
 std::string nvml_memory_samples::generate_yaml_string() const {
-    nvmlDevice_t device = this->get_device().get_impl().device;
-
     std::string str{ "    memory:\n" };
 
     // total memory size
-    if (nvml_function_is_supported<nvmlMemory_t>(nvmlDeviceGetMemoryInfo, device)) {
+    if (this->memory_total_.has_value()) {
         str += fmt::format("      memory_total:\n"
                            "        unit: \"B\"\n"
                            "        values: {}\n",
-                           this->memory_total);
+                           this->memory_total_.value());
     }
     // maximum PCIe link speed
-    if (nvml_function_is_supported<decltype(nvml_memory_samples::pcie_link_max_speed)>(nvmlDeviceGetPcieLinkMaxSpeed, device)) {
+    if (this->pcie_link_max_speed_.has_value()) {
         str += fmt::format("      pcie_max_bandwidth:\n"
                            "        unit: \"MBPS\"\n"
                            "        values: {}\n",
-                           this->pcie_link_max_speed);
+                           this->pcie_link_max_speed_.value());
     }
     // memory bus width
-    if (nvml_function_is_supported<decltype(nvml_memory_samples::memory_bus_width)>(nvmlDeviceGetMemoryBusWidth, device)) {
+    if (this->memory_bus_width_.has_value()) {
         str += fmt::format("      memory_bus_width:\n"
                            "        unit: \"Bit\"\n"
                            "        values: {}\n",
-                           this->memory_bus_width);
+                           this->memory_bus_width_.value());
     }
     // maximum PCIe link generation
-    if (nvml_function_is_supported<decltype(nvml_memory_samples::max_pcie_link_generation)>(nvmlDeviceGetGpuMaxPcieLinkGeneration, device)) {
+    if (this->max_pcie_link_generation_.has_value()) {
         str += fmt::format("      max_pcie_link_generation:\n"
                            "        unit: \"int\"\n"
                            "        values: {}\n",
-                           this->max_pcie_link_generation);
+                           this->max_pcie_link_generation_.value());
     }
 
-    // free and used memory size
-    if (nvml_function_is_supported<nvmlMemory_t>(nvmlDeviceGetMemoryInfo, device)) {
+    // free memory size
+    if (this->memory_free_.has_value()) {
         str += fmt::format("      memory_free:\n"
                            "        unit \"B\"\n"
-                           "        values: [{}]\n"
-                           "      memory_used:\n"
+                           "        values: [{}]\n",
+                           fmt::join(this->memory_free_.value(), ", "));
+    }
+    // used memory size
+    if (this->memory_used_.has_value()) {
+        str += fmt::format("      memory_used:\n"
                            "        unit: \"B\"\n"
                            "        values: [{}]\n",
-                           fmt::join(this->get_memory_free(), ", "),
-                           fmt::join(this->get_memory_used(), ", "));
+                           fmt::join(this->memory_used_.value(), ", "));
     }
     // PCIe link speed
-    if (nvml_function_is_supported<decltype(nvml_memory_samples::nvml_memory_sample::pcie_link_speed)>(nvmlDeviceGetPcieSpeed, device)) {
+    if (this->pcie_link_speed_.has_value()) {
         str += fmt::format("      pcie_bandwidth:\n"
                            "        unit: \"MBPS\"\n"
                            "        values: [{}]\n",
-                           fmt::join(this->get_pcie_link_speed(), ", "));
+                           fmt::join(this->pcie_link_speed_.value(), ", "));
     }
     // PCIe link width
-    if (nvml_function_is_supported<decltype(nvml_memory_samples::nvml_memory_sample::pcie_link_width)>(nvmlDeviceGetCurrPcieLinkWidth, device)) {
+    if (this->pcie_link_width_.has_value()) {
         str += fmt::format("      pcie_link_width:\n"
                            "        unit: \"int\"\n"
                            "        values: [{}]\n",
-                           fmt::join(this->get_pcie_link_width(), ", "));
+                           fmt::join(this->pcie_link_width_.value(), ", "));
     }
     // PCIe link generation
-    if (nvml_function_is_supported<decltype(nvml_memory_samples::nvml_memory_sample::pcie_link_generation)>(nvmlDeviceGetCurrPcieLinkGeneration, device)) {
+    if (this->pcie_link_generation_.has_value()) {
         str += fmt::format("      pcie_link_generation:\n"
                            "        unit: \"int\"\n"
                            "        values: [{}]\n",
-                           fmt::join(this->get_pcie_link_generation(), ", "));
+                           fmt::join(this->pcie_link_generation_.value(), ", "));
     }
 
     // remove last newline
     str.pop_back();
 
     return str;
-}
-
-std::ostream &operator<<(std::ostream &out, const nvml_memory_samples::nvml_memory_sample &sample) {
-    return out << fmt::format("memory_free: {}\n"
-                              "memory_used: {}\n"
-                              "pcie_link_speed: {}\n"
-                              "pcie_link_width: {}\n"
-                              "pcie_link_generation: {}",
-                              sample.memory_free,
-                              sample.memory_used,
-                              sample.pcie_link_speed,
-                              sample.pcie_link_width,
-                              sample.pcie_link_generation);
 }
 
 std::ostream &operator<<(std::ostream &out, const nvml_memory_samples &samples) {
@@ -429,15 +368,15 @@ std::ostream &operator<<(std::ostream &out, const nvml_memory_samples &samples) 
                               "pcie_link_speed: [{}]\n"
                               "pcie_link_width: [{}]\n"
                               "pcie_link_generation: [{}]",
-                              samples.memory_total,
-                              samples.pcie_link_max_speed,
-                              samples.memory_bus_width,
-                              samples.max_pcie_link_generation,
-                              fmt::join(samples.get_memory_free(), ", "),
-                              fmt::join(samples.get_memory_used(), ", "),
-                              fmt::join(samples.get_pcie_link_speed(), ", "),
-                              fmt::join(samples.get_pcie_link_width(), ", "),
-                              fmt::join(samples.get_pcie_link_generation(), ", "));
+                              value_or_default(samples.get_memory_total()),
+                              value_or_default(samples.get_pcie_link_max_speed()),
+                              value_or_default(samples.get_memory_bus_width()),
+                              value_or_default(samples.get_max_pcie_link_generation()),
+                              fmt::join(value_or_default(samples.get_memory_free()), ", "),
+                              fmt::join(value_or_default(samples.get_memory_used()), ", "),
+                              fmt::join(value_or_default(samples.get_pcie_link_speed()), ", "),
+                              fmt::join(value_or_default(samples.get_pcie_link_width()), ", "),
+                              fmt::join(value_or_default(samples.get_pcie_link_generation()), ", "));
 }
 
 //*************************************************************************************************************************************//
@@ -445,72 +384,63 @@ std::ostream &operator<<(std::ostream &out, const nvml_memory_samples &samples) 
 //*************************************************************************************************************************************//
 
 std::string nvml_temperature_samples::generate_yaml_string() const {
-    nvmlDevice_t device = this->get_device().get_impl().device;
-
     std::string str{ "    temperature:\n" };
 
     // number of fans
-    if (nvml_function_is_supported<decltype(nvml_temperature_samples::num_fans)>(nvmlDeviceGetNumFans, device)) {
+    if (this->num_fans_.has_value()) {
         str += fmt::format("      num_fans:\n"
                            "        unit: \"int\"\n"
                            "        values: {}\n",
-                           this->num_fans);
+                           this->num_fans_.value());
     }
-    // min and max fan speed
-    if (this->num_fans > 0) {
-        unsigned int min_fan_speed_test{};
-        if (nvml_function_is_supported<decltype(nvml_temperature_samples::min_fan_speed)>(nvmlDeviceGetMinMaxFanSpeed, device, &min_fan_speed_test)) {
-            str += fmt::format("      min_fan_speed:\n"
-                               "        unit: \"percentage\"\n"
-                               "        values: {}\n"
-                               "      max_fan_speed:\n"
-                               "        unit: \"percentage\"\n"
-                               "        values: {}\n",
-                               this->min_fan_speed,
-                               this->max_fan_speed);
-        }
+    // min fan speed
+    if (this->min_fan_speed_.has_value()) {
+        str += fmt::format("      min_fan_speed:\n"
+                           "        unit: \"percentage\"\n"
+                           "        values: {}\n",
+                           this->min_fan_speed_.value());
+    }
+    // max fan speed
+    if (this->max_fan_speed_.has_value()) {
+        str += fmt::format("      max_fan_speed:\n"
+                           "        unit: \"percentage\"\n"
+                           "        values: {}\n",
+                           this->max_fan_speed_.value());
     }
     // temperature threshold GPU max
-    if (nvml_function_is_supported<decltype(nvml_temperature_samples::temperature_threshold_gpu_max)>(nvmlDeviceGetTemperatureThreshold, device, NVML_TEMPERATURE_THRESHOLD_GPU_MAX)) {
+    if (this->temperature_threshold_gpu_max_.has_value()) {
         str += fmt::format("      temperature_gpu_max:\n"
                            "        unit: \"°C\"\n"
                            "        values: {}\n",
-                           this->temperature_threshold_gpu_max);
+                           this->temperature_threshold_gpu_max_.value());
     }
     // temperature threshold memory max
-    if (nvml_function_is_supported<decltype(nvml_temperature_samples::temperature_threshold_mem_max)>(nvmlDeviceGetTemperatureThreshold, device, NVML_TEMPERATURE_THRESHOLD_MEM_MAX)) {
+    if (this->temperature_threshold_mem_max_.has_value()) {
         str += fmt::format("      temperature_mem_max:\n"
                            "        unit: \"°C\"\n"
                            "        values: {}\n",
-                           this->temperature_threshold_mem_max);
+                           this->temperature_threshold_mem_max_.value());
     }
 
     // fan speed
-    if (nvml_function_is_supported<decltype(nvml_temperature_samples::nvml_temperature_sample::fan_speed)>(nvmlDeviceGetFanSpeed, device)) {
+    if (this->fan_speed_.has_value()) {
         str += fmt::format("      fan_speed:\n"
                            "        unit \"percentage\"\n"
                            "        values: [{}]\n",
-                           fmt::join(this->get_fan_speed(), ", "));
+                           fmt::join(this->fan_speed_.value(), ", "));
     }
     // temperature GPU
-    if (nvml_function_is_supported<decltype(nvml_temperature_samples::nvml_temperature_sample::temperature_gpu)>(nvmlDeviceGetTemperature, device, NVML_TEMPERATURE_GPU)) {
+    if (this->temperature_gpu_.has_value()) {
         str += fmt::format("      temperature_gpu:\n"
                            "        unit: \"°C\"\n"
                            "        values: [{}]\n",
-                           fmt::join(this->get_temperature_gpu(), ", "));
+                           fmt::join(this->temperature_gpu_.value(), ", "));
     }
 
     // remove last newline
     str.pop_back();
 
     return str;
-}
-
-std::ostream &operator<<(std::ostream &out, const nvml_temperature_samples::nvml_temperature_sample &sample) {
-    return out << fmt::format("fan_speed: {}\n"
-                              "temperature_gpu: {}",
-                              sample.fan_speed,
-                              sample.temperature_gpu);
 }
 
 std::ostream &operator<<(std::ostream &out, const nvml_temperature_samples &samples) {
@@ -521,13 +451,13 @@ std::ostream &operator<<(std::ostream &out, const nvml_temperature_samples &samp
                               "temperature_threshold_mem_max: {}\n"
                               "fan_speed: [{}]\n"
                               "temperature_gpu: [{}]",
-                              samples.num_fans,
-                              samples.min_fan_speed,
-                              samples.max_fan_speed,
-                              samples.temperature_threshold_gpu_max,
-                              samples.temperature_threshold_mem_max,
-                              fmt::join(samples.get_fan_speed(), ", "),
-                              fmt::join(samples.get_temperature_gpu(), ", "));
+                              value_or_default(samples.get_num_fans()),
+                              value_or_default(samples.get_min_fan_speed()),
+                              value_or_default(samples.get_max_fan_speed()),
+                              value_or_default(samples.get_temperature_threshold_gpu_max()),
+                              value_or_default(samples.get_temperature_threshold_mem_max()),
+                              fmt::join(value_or_default(samples.get_fan_speed()), ", "),
+                              fmt::join(value_or_default(samples.get_temperature_gpu()), ", "));
 }
 
 }  // namespace plssvm::detail::tracking
