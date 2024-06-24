@@ -43,24 +43,24 @@ cpu_hardware_sampler::cpu_hardware_sampler(const std::chrono::milliseconds sampl
     // track the lscpu version
 #if defined(PLSSVM_HARDWARE_TRACKING_VIA_LSCPU_ENABLED)
     {
-        const auto &[lscpu_stdout, lscpu_stderr] = run_subprocess("lscpu --version");
-        PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking::tracking_entry{ "dependencies", "lscpu_version", detail::trim(lscpu_stdout) }));
+        const std::string lscpu_output = run_subprocess("lscpu --version");
+        PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking::tracking_entry{ "dependencies", "lscpu_version", detail::trim(lscpu_output) }));
     }
 #endif
 
     // track the free version
 #if defined(PLSSVM_HARDWARE_TRACKING_VIA_FREE_ENABLED)
     {
-        const auto &[free_stdout, free_stderr] = run_subprocess("free --version");
-        PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking::tracking_entry{ "dependencies", "free_version", detail::trim(free_stdout) }));
+        const std::string free_output = run_subprocess("free --version");
+        PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking::tracking_entry{ "dependencies", "free_version", detail::trim(free_output) }));
     }
 #endif
 
     // track the turbostat version
 #if defined(PLSSVM_HARDWARE_TRACKING_VIA_TURBOSTAT_ENABLED)
     {
-        const auto &[turbostat_stdout, turbostat_stderr] = run_subprocess("turbostat --version");
-        PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking::tracking_entry{ "dependencies", "turbostat_version", detail::trim(turbostat_stderr) }));
+        const std::string turbostat_output = run_subprocess("turbostat --version");
+        PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking::tracking_entry{ "dependencies", "turbostat_version", detail::trim(turbostat_output) }));
     }
 #endif
 }
@@ -120,8 +120,8 @@ void cpu_hardware_sampler::sampling_loop() {
 
 #if defined(PLSSVM_HARDWARE_TRACKING_VIA_LSCPU_ENABLED)
     {
-        const auto &[lscpu_stdout, lscpu_stderr] = run_subprocess("lscpu");
-        const std::vector<std::string_view> lscpu_lines = detail::split(lscpu_stdout, '\n');
+        const std::string lscpu_output = run_subprocess("lscpu");
+        const std::vector<std::string_view> lscpu_lines = detail::split(lscpu_output, '\n');
 
         for (std::string_view line : lscpu_lines) {
             line = detail::trim(line);
@@ -173,9 +173,9 @@ void cpu_hardware_sampler::sampling_loop() {
 #if defined(PLSSVM_HARDWARE_TRACKING_VIA_FREE_ENABLED)
     const std::regex whitespace_replace_reg{ "[ ]+", std::regex::extended };
     {
-        auto [free_stdout, free_stderr] = run_subprocess("free -b");
-        free_stdout = std::regex_replace(free_stdout, whitespace_replace_reg, " ");
-        const std::vector<std::string_view> free_lines = detail::split(free_stdout, '\n');
+        std::string free_output = run_subprocess("free -b");
+        free_output = std::regex_replace(free_output, whitespace_replace_reg, " ");
+        const std::vector<std::string_view> free_lines = detail::split(free_output, '\n');
         PLSSVM_ASSERT(free_lines.size() >= 3, "Must read exactly more than three lines, but only read {} lines!", free_lines.size());
 
         // read memory information
@@ -210,10 +210,10 @@ void cpu_hardware_sampler::sampling_loop() {
 
     {
         // run turbostat
-        const auto &[turbostat_data, turbostat_error] = run_subprocess(turbostat_command_line);
+        const std::string turbostat_output = run_subprocess(turbostat_command_line);
 
         // retrieve the turbostat data
-        const std::vector<std::string_view> data = detail::split(turbostat_data, '\n');
+        const std::vector<std::string_view> data = detail::split(turbostat_output, '\n');
         PLSSVM_ASSERT(data.size() == 2, "Must read exactly two lines, but read {} lines!", data.size());
         const std::vector<std::string_view> header = detail::split(data[0], '\t');
         const std::vector<std::string_view> values = detail::split(data[1], '\t');
@@ -334,9 +334,9 @@ void cpu_hardware_sampler::sampling_loop() {
 #if defined(PLSSVM_HARDWARE_TRACKING_VIA_FREE_ENABLED)
             {
                 // run free
-                auto [free_stdout, free_stderr] = run_subprocess("free -b");
-                free_stdout = std::regex_replace(free_stdout, whitespace_replace_reg, " ");
-                const std::vector<std::string_view> free_lines = detail::split(free_stdout, '\n');
+                std::string free_output = run_subprocess("free -b");
+                free_output = std::regex_replace(free_output, whitespace_replace_reg, " ");
+                const std::vector<std::string_view> free_lines = detail::split(free_output, '\n');
                 PLSSVM_ASSERT(free_lines.size() >= 3, "Must read exactly more than three lines, but only read {} lines!", free_lines.size());
 
                 // read memory information
@@ -354,10 +354,10 @@ void cpu_hardware_sampler::sampling_loop() {
 #if defined(PLSSVM_HARDWARE_TRACKING_VIA_TURBOSTAT_ENABLED)
             {
                 // run turbostat
-                const auto &[turbostat_data, turbostat_error] = run_subprocess(turbostat_command_line);
+                const std::string turbostat_output = run_subprocess(turbostat_command_line);
 
                 // retrieve the turbostat data
-                const std::vector<std::string_view> data = detail::split(turbostat_data, '\n');
+                const std::vector<std::string_view> data = detail::split(turbostat_output, '\n');
                 PLSSVM_ASSERT(data.size() == 2, "Must read exactly two lines, but read {} lines!", data.size());
                 const std::vector<std::string_view> header = detail::split(data[0], '\t');
                 const std::vector<std::string_view> values = detail::split(data[1], '\t');

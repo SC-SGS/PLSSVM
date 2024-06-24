@@ -19,7 +19,6 @@
 
 #include <string>       // std::string
 #include <string_view>  // std::string_view
-#include <utility>      // std::pair
 
 namespace plssvm::detail::tracking {
 
@@ -37,7 +36,7 @@ namespace plssvm::detail::tracking {
     #define PLSSVM_SUBPROCESS_ERROR_CHECK(subprocess_func) subprocess_func;
 #endif
 
-[[nodiscard]] std::pair<std::string, std::string> run_subprocess(std::string_view cmd_line);
+[[nodiscard]] std::string run_subprocess(std::string_view cmd_line);
 
 }  // namespace plssvm::detail::tracking
 

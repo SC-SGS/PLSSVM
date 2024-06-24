@@ -19,14 +19,13 @@
 #include <cstdio>       // std::FILE, std::fread
 #include <string>       // std::string
 #include <string_view>  // std::string_view
-#include <utility>      // std::pair, std::make_pair
 #include <vector>       // std::vector
 
 namespace plssvm::detail::tracking {
 
-std::pair<std::string, std::string> run_subprocess(const std::string_view cmd_line) {
+std::string run_subprocess(const std::string_view cmd_line) {
     // search PATH for executable
-    constexpr int options = subprocess_option_e::subprocess_option_search_user_path | subprocess_option_e::subprocess_option_enable_async;
+    constexpr int options = subprocess_option_e::subprocess_option_search_user_path | subprocess_option_e::subprocess_option_combined_stdout_stderr;
     constexpr static std::string::size_type buffer_size = 4096;
 
     // extract the separate command line arguments
@@ -46,18 +45,13 @@ std::pair<std::string, std::string> run_subprocess(const std::string_view cmd_li
         throw hardware_sampling_exception{ fmt::format("Error: \"{}\" returned with {}!", cmd_line, return_code) };
     }
 
-    // get stdout handle and read data
-    std::FILE *stdout_handle = subprocess_stdout(&proc);
-    std::string stdout_buffer(buffer_size, '\0');  // 4096 characters should be enough
-    const std::size_t stdout_bytes_read = std::fread(stdout_buffer.data(), sizeof(typename decltype(stdout_buffer)::value_type), stdout_buffer.size(), stdout_handle);
+    // get output handle and read data -> stdout and stderr are the same handle
+    std::FILE *out_handle = subprocess_stdout(&proc);
+    std::string buffer(buffer_size, '\0');  // 4096 characters should be enough
+    const std::size_t bytes_read = std::fread(buffer.data(), sizeof(typename decltype(buffer)::value_type), buffer.size(), out_handle);
 
-    // get stderr handle and read data
-    std::FILE *stderr_handle = subprocess_stderr(&proc);
-    std::string stderr_buffer(buffer_size, '\0');  // 4096 characters should be enough
-    const std::size_t stderr_bytes_read = std::fread(stderr_buffer.data(), sizeof(typename decltype(stderr_buffer)::value_type), stderr_buffer.size(), stderr_handle);
-
-    // create pair containing the stdout and stderr output
-    return std::make_pair(stdout_buffer.substr(0, stdout_bytes_read), stderr_buffer.substr(0, stderr_bytes_read));
+    // create output
+    return buffer.substr(0, bytes_read);
 }
 
 }  // namespace plssvm::detail::tracking
