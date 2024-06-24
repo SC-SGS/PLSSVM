@@ -429,11 +429,23 @@ std::ostream &operator<<(std::ostream &out, const cpu_memory_samples &samples) {
     return out << fmt::format("l1d_cache: {}\n"
                               "l1i_cache: {}\n"
                               "l2_cache: {}\n"
-                              "l3_cache: {}",
+                              "l3_cache: {}\n"
+                              "memory_total: {}\n"
+                              "swap_memory_total: {}\n"
+                              "memory_free: [{}]\n"
+                              "memory_used: [{}]\n"
+                              "swap_memory_free: [{}]\n"
+                              "swap_memory_used: [{}]",
                               value_or_default(samples.get_l1d_cache()),
                               value_or_default(samples.get_l1i_cache()),
                               value_or_default(samples.get_l2_cache()),
-                              value_or_default(samples.get_l3_cache()));
+                              value_or_default(samples.get_l3_cache()),
+                              value_or_default(samples.get_memory_total()),
+                              value_or_default(samples.get_swap_memory_total()),
+                              fmt::join(value_or_default(samples.get_memory_free()), ", "),
+                              fmt::join(value_or_default(samples.get_memory_used()), ", "),
+                              fmt::join(value_or_default(samples.get_swap_memory_free()), ", "),
+                              fmt::join(value_or_default(samples.get_swap_memory_used()), ", "));
 }
 
 //*************************************************************************************************************************************//
