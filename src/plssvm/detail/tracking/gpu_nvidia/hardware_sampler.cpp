@@ -83,7 +83,7 @@ std::string gpu_nvidia_hardware_sampler::device_identification() const {
     return fmt::format("gpu_nvidia_device_{}_{}", pcie_info.bus, pcie_info.device);
 }
 
-std::string gpu_nvidia_hardware_sampler::generate_yaml_string(const std::chrono::system_clock::time_point start_time_point) const {
+std::string gpu_nvidia_hardware_sampler::generate_yaml_string(const std::chrono::steady_clock::time_point start_time_point) const {
     // check whether it's safe to generate the YAML entry
     if (this->is_sampling()) {
         throw hardware_sampling_exception{ "Can't create the final YAML entry if the hardware sampler is still running!" };
@@ -114,7 +114,7 @@ void gpu_nvidia_hardware_sampler::sampling_loop() {
     // add samples where we only have to retrieve the value once
     //
 
-    this->add_time_point(std::chrono::system_clock::now());
+    this->add_time_point(std::chrono::steady_clock::now());
 
     // retrieve initial general information
     {
@@ -331,7 +331,7 @@ void gpu_nvidia_hardware_sampler::sampling_loop() {
         // only sample values if the sampler currently isn't paused
         if (this->is_sampling()) {
             // add current time point
-            this->add_time_point(std::chrono::system_clock::now());
+            this->add_time_point(std::chrono::steady_clock::now());
 
             // retrieve general samples
             {

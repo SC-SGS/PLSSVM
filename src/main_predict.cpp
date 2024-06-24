@@ -35,7 +35,7 @@ using namespace std::chrono_literals;
 
 int main(int argc, char *argv[]) {
     try {
-        const std::chrono::system_clock::time_point start_time = std::chrono::system_clock::now();
+        const std::chrono::steady_clock::time_point start_time = std::chrono::steady_clock::now();
 
         // parse SVM parameter from command line
         const plssvm::detail::cmd::parser_predict cmd_parser{ argc, argv };
@@ -147,14 +147,14 @@ int main(int argc, char *argv[]) {
             std::for_each(sampler.begin(), sampler.end(), std::mem_fn(&plssvm::detail::tracking::hardware_sampler::stop_sampling));
             // write samples to yaml file
             std::for_each(sampler.cbegin(), sampler.cend(), [&](const std::unique_ptr<plssvm::detail::tracking::hardware_sampler> &s) {
-                using track_type = std::pair<plssvm::detail::tracking::hardware_sampler *, std::chrono::system_clock::time_point>;
+                using track_type = std::pair<plssvm::detail::tracking::hardware_sampler *, std::chrono::steady_clock::time_point>;
                 PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking::tracking_entry{ "hardware_samples", s->device_identification(), track_type{ s.get(), start_time } }));
             });
 #endif
         };
         std::visit(data_set_visitor, plssvm::detail::cmd::data_set_factory(cmd_parser));
 
-        const std::chrono::system_clock::time_point end_time = std::chrono::system_clock::now();
+        const std::chrono::steady_clock::time_point end_time = std::chrono::steady_clock::now();
         plssvm::detail::log(plssvm::verbosity_level::full | plssvm::verbosity_level::timing,
                             "\nTotal runtime: {}\n",
                             plssvm::detail::tracking::tracking_entry{ "", "total_time", std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time) });

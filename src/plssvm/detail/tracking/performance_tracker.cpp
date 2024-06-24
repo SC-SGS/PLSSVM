@@ -46,7 +46,7 @@
 #endif
 
 #include <algorithm>    // std::max
-#include <chrono>       // std::chrono::system_clock
+#include <chrono>       // std::chrono::steady_clock
 #include <cstddef>      // std::size_t
 #include <fstream>      // std::ofstream
 #include <iostream>     // std::ios_base::app, std::ostream, std::clog, std::endl
@@ -145,7 +145,7 @@ void performance_tracker::add_tracking_entry(const tracking_entry<cmd::parser_sc
     }
 }
 
-void performance_tracker::add_tracking_entry(const tracking_entry<std::pair<hardware_sampler *, std::chrono::system_clock::time_point>> &entry) {
+void performance_tracker::add_tracking_entry(const tracking_entry<std::pair<hardware_sampler *, std::chrono::steady_clock::time_point>> &entry) {
     // check whether entries should currently be tracked
     if (this->is_tracking()) {
         // add events -> only once!
@@ -165,7 +165,7 @@ void performance_tracker::add_tracking_entry(const tracking_entry<std::pair<hard
 }
 
 void performance_tracker::add_event(const std::string name) {
-    events_.add_event(std::chrono::system_clock::now(), std::move(name));
+    events_.add_event(std::chrono::steady_clock::now(), std::move(name));
 }
 
 void performance_tracker::save(const std::string &filename) {

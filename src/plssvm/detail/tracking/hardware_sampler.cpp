@@ -10,7 +10,7 @@
 
 #include "plssvm/exceptions/exceptions.hpp"  // plssvm::hardware_sampling_exception, plssvm::exception
 
-#include <chrono>     // std::chrono::{steady_clock, system_clock, duration_cast, milliseconds}
+#include <chrono>     // std::chrono::{steady_clock, duration_cast, milliseconds}
 #include <exception>  // std::exception
 #include <iostream>   // std::cerr, std::endl
 #include <string>     // std::string

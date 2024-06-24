@@ -14,7 +14,7 @@
 #pragma once
 
 #include <atomic>  // std::atomic
-#include <chrono>  // std::chrono::{steady_clock::time_point, system_clock::time_point, milliseconds}
+#include <chrono>  // std::chrono::{steady_clock::time_point, milliseconds}
 #include <string>  // std::string
 #include <thread>  // std::thread
 #include <vector>  // std::vector
@@ -41,17 +41,17 @@ class hardware_sampler {
     [[nodiscard]] bool is_sampling() const noexcept;
     [[nodiscard]] bool has_sampling_stopped() const noexcept;
 
-    [[nodiscard]] std::vector<std::chrono::system_clock::time_point> time_points() const noexcept { return time_points_; }
+    [[nodiscard]] std::vector<std::chrono::steady_clock::time_point> time_points() const noexcept { return time_points_; }
 
     [[nodiscard]] std::chrono::milliseconds sampling_interval() const noexcept { return sampling_interval_; }
 
-    [[nodiscard]] virtual std::string generate_yaml_string(std::chrono::system_clock::time_point start_time_point) const = 0;
+    [[nodiscard]] virtual std::string generate_yaml_string(std::chrono::steady_clock::time_point start_time_point) const = 0;
     [[nodiscard]] virtual std::string device_identification() const = 0;
 
   protected:
     virtual void sampling_loop() = 0;
 
-    void add_time_point(const std::chrono::system_clock::time_point time_point) { time_points_.push_back(time_point); }
+    void add_time_point(const std::chrono::steady_clock::time_point time_point) { time_points_.push_back(time_point); }
 
   private:
     std::atomic<bool> sampling_stopped_{ false };
@@ -60,7 +60,7 @@ class hardware_sampler {
 
     std::thread sampling_thread_{};
 
-    std::vector<std::chrono::system_clock::time_point> time_points_{};
+    std::vector<std::chrono::steady_clock::time_point> time_points_{};
 
     const std::chrono::milliseconds sampling_interval_{};
 };

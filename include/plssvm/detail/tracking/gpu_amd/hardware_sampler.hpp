@@ -17,11 +17,10 @@
 #include "plssvm/detail/tracking/hardware_sampler.hpp"          // plssvm::detail::tracking::hardware_sampler
 
 #include <atomic>   // std::atomic
-#include <chrono>   // std::chrono::milliseconds, std::chrono_literals namespace
+#include <chrono>   // std::chrono::{steady_clock, milliseconds}, std::chrono_literals namespace
 #include <cstddef>  // std::size_t
 #include <cstdint>  // std::uint32_t
 #include <string>   // std::string
-#include <vector>   // std::vector
 
 namespace plssvm::detail::tracking {
 
@@ -50,7 +49,7 @@ class gpu_amd_hardware_sampler : public hardware_sampler {
 
     [[nodiscard]] std::string device_identification() const override;
 
-    [[nodiscard]] std::string generate_yaml_string(std::chrono::system_clock::time_point start_time_point) const override;
+    [[nodiscard]] std::string generate_yaml_string(std::chrono::steady_clock::time_point start_time_point) const override;
 
   private:
     void sampling_loop() final;

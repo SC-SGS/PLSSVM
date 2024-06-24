@@ -16,9 +16,8 @@
 #include "plssvm/detail/tracking/cpu/cpu_samples.hpp"   // plssvm::detail::tracking::{cpu_general_samples, clock_samples, power_samples, memory_samples, temperature_samples, gfx_samples, idle_state_samples}
 #include "plssvm/detail/tracking/hardware_sampler.hpp"  // plssvm::detail::tracking::hardware_sampler
 
-#include <chrono>  // std::chrono::{system_clock::time_point, milliseconds}, std::chrono_literals namespace
+#include <chrono>  // std::chrono::{steady_clock, milliseconds}, std::chrono_literals namespace
 #include <string>  // std::string
-#include <vector>  // std::vector
 
 namespace plssvm::detail::tracking {
 
@@ -51,7 +50,7 @@ class cpu_hardware_sampler : public hardware_sampler {
 
     [[nodiscard]] std::string device_identification() const override;
 
-    [[nodiscard]] std::string generate_yaml_string(std::chrono::system_clock::time_point start_time_point) const override;
+    [[nodiscard]] std::string generate_yaml_string(std::chrono::steady_clock::time_point start_time_point) const override;
 
   private:
     void sampling_loop() final;

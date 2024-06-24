@@ -23,7 +23,7 @@
 #include "fmt/core.h"    // fmt::format
 #include "fmt/format.h"  // fmt::join
 
-#include <chrono>         // std::chrono::{system_clock, milliseconds}
+#include <chrono>         // std::chrono::{steady_clock, milliseconds}
 #include <cstddef>        // std::size_t
 #include <cstdio>         // std::FILE, std::fread
 #include <exception>      // std::exception, std::terminate
@@ -76,7 +76,7 @@ std::string cpu_hardware_sampler::device_identification() const {
     return "cpu_device";
 }
 
-std::string cpu_hardware_sampler::generate_yaml_string([[maybe_unused]] const std::chrono::system_clock::time_point start_time_point) const {
+std::string cpu_hardware_sampler::generate_yaml_string([[maybe_unused]] const std::chrono::steady_clock::time_point start_time_point) const {
     // check whether it's safe to generate the YAML entry
     if (this->is_sampling()) {
         throw hardware_sampling_exception{ "Can't create the final YAML entry if the hardware sampler is still running!" };
@@ -108,7 +108,7 @@ void cpu_hardware_sampler::sampling_loop() {
     // add samples where we only have to retrieve the value once
     //
 
-    this->add_time_point(std::chrono::system_clock::now());
+    this->add_time_point(std::chrono::steady_clock::now());
 
 #if defined(PLSSVM_HARDWARE_TRACKING_VIA_LSCPU_ENABLED)
     {
@@ -297,7 +297,7 @@ void cpu_hardware_sampler::sampling_loop() {
             // only sample values if the sampler currently isn't paused
             if (this->is_sampling()) {
                 // add current time point
-                this->add_time_point(std::chrono::system_clock::now());
+                this->add_time_point(std::chrono::steady_clock::now());
 
                 // run turbostat
                 const auto &[turbostat_data, turbostat_error] = run_subprocess(command_line);

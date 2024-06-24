@@ -18,7 +18,7 @@
 #include "fmt/core.h"     // fmt::formatter
 #include "fmt/ostream.h"  // fmt::ostream_formatter
 
-#include <chrono>   // std::chrono::system_clock::time_point
+#include <chrono>   // std::chrono::steady_clock::time_point
 #include <cstddef>  // std::size_t
 #include <iosfwd>   // std::ostream forward declaration
 #include <string>   // std::string
@@ -30,7 +30,7 @@ namespace plssvm::detail::tracking {
 class events {
   public:
     struct event {
-        std::chrono::system_clock::time_point time_point;
+        std::chrono::steady_clock::time_point time_point;
         std::string name;
     };
 
@@ -62,7 +62,7 @@ class events {
 
     [[nodiscard]] const auto &get_names() const noexcept { return names_; }
 
-    [[nodiscard]] std::string generate_yaml_string(std::chrono::system_clock::time_point start_time_point) const;
+    [[nodiscard]] std::string generate_yaml_string(std::chrono::steady_clock::time_point start_time_point) const;
 
   private:
     std::vector<decltype(event::time_point)> time_points_;

@@ -29,7 +29,7 @@
 #include "fmt/format.h"   // fmt::join,
 #include "fmt/ostream.h"  // fmt::ostream_formatter
 
-#include <chrono>       // std::chrono::system_clock::time_point
+#include <chrono>       // std::chrono::steady_clock::time_point
 #include <map>          // std::map
 #include <ostream>      // std::ostream
 #include <string>       // std::string
@@ -211,7 +211,7 @@ class performance_tracker {
      *          Uses the `plssvm::detail::tracking::hardware_tracker::generate_yaml_string` function to generate the tracking entry.
      * @param[in] entry the entry to add
      */
-    void add_tracking_entry(const tracking_entry<std::pair<hardware_sampler *, std::chrono::system_clock::time_point>> &entry);
+    void add_tracking_entry(const tracking_entry<std::pair<hardware_sampler *, std::chrono::steady_clock::time_point>> &entry);
 
     /**
      * @brief Add an event to this hardware sampler.

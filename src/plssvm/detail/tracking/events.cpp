@@ -14,13 +14,15 @@
 #include "fmt/core.h"    // fmt::format
 #include "fmt/format.h"  // fmt::join
 
-#include <chrono>   // std::chrono::system_clock::time_point
+#include <chrono>   // std::chrono::steady_clock::time_point
+#include <cstddef>  // std::size_t
 #include <ostream>  // std::ostream
 #include <string>   // std::string
+#include <vector>   // std::vector
 
 namespace plssvm::detail::tracking {
 
-std::string events::generate_yaml_string(const std::chrono::system_clock::time_point start_time_point) const {
+std::string events::generate_yaml_string(const std::chrono::steady_clock::time_point start_time_point) const {
     if (this->empty()) {
         // no events -> return empty string
         return std::string{};
@@ -36,14 +38,19 @@ std::string events::generate_yaml_string(const std::chrono::system_clock::time_p
 std::ostream &operator<<(std::ostream &out, const events::event &e) {
     return out << fmt::format("time_point: {}\n"
                               "name: {}",
-                              e.time_point,
+                              e.time_point.time_since_epoch(),
                               e.name);
 }
 
 std::ostream &operator<<(std::ostream &out, const events &e) {
+    std::vector<std::chrono::steady_clock::duration> times(e.num_events());
+#pragma omp parallel for
+    for (std::size_t i = 0; i < times.size(); ++i) {
+        times[i] = e.get_time_points()[i].time_since_epoch();
+    }
     return out << fmt::format("time_points: [{}]\n"
                               "names: [{}]",
-                              fmt::join(e.get_time_points(), ", "),
+                              fmt::join(times, ", "),
                               fmt::join(e.get_names(), ", "));
 }
 
