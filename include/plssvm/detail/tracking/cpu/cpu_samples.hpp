@@ -111,6 +111,13 @@ class cpu_memory_samples {
     PLSSVM_SAMPLE_STRUCT_FIXED_MEMBER(std::string, l1i_cache)
     PLSSVM_SAMPLE_STRUCT_FIXED_MEMBER(std::string, l2_cache)
     PLSSVM_SAMPLE_STRUCT_FIXED_MEMBER(std::string, l3_cache)
+    PLSSVM_SAMPLE_STRUCT_FIXED_MEMBER(unsigned long long, memory_total)
+    PLSSVM_SAMPLE_STRUCT_FIXED_MEMBER(unsigned long long, swap_memory_total)
+
+    PLSSVM_SAMPLE_STRUCT_SAMPLING_MEMBER(unsigned long long, memory_used)
+    PLSSVM_SAMPLE_STRUCT_SAMPLING_MEMBER(unsigned long long, memory_free)
+    PLSSVM_SAMPLE_STRUCT_SAMPLING_MEMBER(unsigned long long, swap_memory_used)
+    PLSSVM_SAMPLE_STRUCT_SAMPLING_MEMBER(unsigned long long, swap_memory_free)
 };
 
 std::ostream &operator<<(std::ostream &out, const cpu_memory_samples &samples);

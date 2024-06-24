@@ -375,6 +375,50 @@ std::string cpu_memory_samples::generate_yaml_string() const {
                            this->l3_cache_.value());
     }
 
+    // the total size of available memory
+    if (this->memory_total_.has_value()) {
+        str += fmt::format("      memory_total:\n"
+                           "        unit: \"B\"\n"
+                           "        values: {}\n",
+                           this->memory_total_.value());
+    }
+    // the total size of the swap memory
+    if (this->swap_memory_total_.has_value()) {
+        str += fmt::format("      swap_memory_total:\n"
+                           "        unit: \"B\"\n"
+                           "        values: {}\n",
+                           this->swap_memory_total_.value());
+    }
+
+    // the available free memory
+    if (this->memory_free_.has_value()) {
+        str += fmt::format("      memory_free:\n"
+                           "        unit: \"B\"\n"
+                           "        values: [{}]\n",
+                           fmt::join(this->memory_free_.value(), ", "));
+    }
+    // the used memory
+    if (this->memory_used_.has_value()) {
+        str += fmt::format("      memory_used:\n"
+                           "        unit: \"B\"\n"
+                           "        values: [{}]\n",
+                           fmt::join(this->memory_used_.value(), ", "));
+    }
+    // the available swap memory
+    if (this->swap_memory_free_.has_value()) {
+        str += fmt::format("      swap_memory_free:\n"
+                           "        unit: \"B\"\n"
+                           "        values: [{}]\n",
+                           fmt::join(this->swap_memory_free_.value(), ", "));
+    }
+    // the swap memory
+    if (this->swap_memory_used_.has_value()) {
+        str += fmt::format("      swap_memory_used:\n"
+                           "        unit: \"B\"\n"
+                           "        values: [{}]\n",
+                           fmt::join(this->swap_memory_used_.value(), ", "));
+    }
+
     // remove last newline
     str.pop_back();
 

@@ -57,7 +57,17 @@ if (PLSSVM_ENABLE_HARDWARE_SAMPLING)
     ## LINUX only
     find_program(PLSSVM_LSCPU_FOUND lscpu)
     if (PLSSVM_LSCPU_FOUND)
+        message(STATUS "Enable sampling of CPU information using lscpu.")
         target_compile_definitions(${PLSSVM_HARDWARE_TRACKING_LIBRARY_NAME} PUBLIC PLSSVM_HARDWARE_TRACKING_VIA_LSCPU_ENABLED)
+    endif ()
+
+    ## check whether free could be found -> used for the CPU targets as well as for ALL host measurements
+    ## -> checked even if no CPU targets where provided
+    ## LINUX only
+    find_program(PLSSVM_FREE_FOUND free)
+    if (PLSSVM_FREE_FOUND)
+        message(STATUS "Enable sampling of CPU information using free.")
+        target_compile_definitions(${PLSSVM_HARDWARE_TRACKING_LIBRARY_NAME} PUBLIC PLSSVM_HARDWARE_TRACKING_VIA_FREE_ENABLED)
     endif ()
     
     ## check whether turbostat could be found -> used for the CPU targets as well as for ALL host measurements
@@ -103,7 +113,7 @@ if (PLSSVM_ENABLE_HARDWARE_SAMPLING)
     endif ()
     
     ## check if the CPU hardware tracker can be used
-    if (PLSSVM_LSCPU_FOUND OR PLSSVM_TURBOSTAT_EXECUTION_TYPE)
+    if (PLSSVM_LSCPU_FOUND OR PLSSVM_FREE_FOUND OR PLSSVM_TURBOSTAT_EXECUTION_TYPE)
         ## try finding subprocess.h
         set(PLSSVM_subprocess_VERSION b6e1611d430e3019c423d2af26bb162e7ed5c3ae)
         find_package(subprocess QUIET)
