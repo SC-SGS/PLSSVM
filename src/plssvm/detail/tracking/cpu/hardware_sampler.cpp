@@ -15,7 +15,7 @@
 #include "plssvm/detail/tracking/cpu/utility.hpp"          // PLSSVM_SUBPROCESS_ERROR_CHECK
 #include "plssvm/detail/tracking/hardware_sampler.hpp"     // plssvm::detail::tracking::hardware_sampler
 #include "plssvm/detail/tracking/performance_tracker.hpp"  // PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY
-#include "plssvm/detail/tracking/utility.hpp"              // plssvm::detail::tracking::durations_from_reference_time
+#include "plssvm/detail/tracking/utility.hpp"              // plssvm::detail::tracking::{durations_from_reference_time, time_points_to_epoch}
 #include "plssvm/detail/utility.hpp"                       // plssvm::detail::contains
 #include "plssvm/exceptions/exceptions.hpp"                // plssvm::hardware_sampling_exception
 
@@ -29,6 +29,7 @@
 #include <exception>      // std::exception, std::terminate
 #include <iostream>       // std::cerr << std::endl
 #include <optional>       // std::make_optional
+#include <ostream>        // std::ostream
 #include <regex>          // std::regex, std::regex::extended, std::regex_match, std::regex_replace
 #include <string>         // std::string
 #include <string_view>    // std::string_view
@@ -463,6 +464,27 @@ void cpu_hardware_sampler::sampling_loop() {
         // wait for the sampling interval to pass to retrieve the next sample
         std::this_thread::sleep_for(this->sampling_interval());
     }
+}
+
+std::ostream &operator<<(std::ostream &out, const cpu_hardware_sampler &sampler) {
+    return out << fmt::format("sampling interval: {}\n"
+                              "time points: [{}]\n\n"
+                              "general samples:\n{}\n\n"
+                              "clock samples:\n{}\n\n"
+                              "power samples:\n{}\n\n"
+                              "memory samples:\n{}\n\n"
+                              "temperature samples:\n{}\n\n"
+                              "gfx samples:\n{}\n\n"
+                              "idle state samples:\n{}",
+                              sampler.sampling_interval(),
+                              fmt::join(time_points_to_epoch(sampler.time_points()), ", "),
+                              sampler.general_samples(),
+                              sampler.clock_samples(),
+                              sampler.power_samples(),
+                              sampler.memory_samples(),
+                              sampler.temperature_samples(),
+                              sampler.gfx_samples(),
+                              sampler.idle_state_samples());
 }
 
 }  // namespace plssvm::detail::tracking

@@ -16,7 +16,11 @@
 #include "plssvm/detail/tracking/cpu/cpu_samples.hpp"   // plssvm::detail::tracking::{cpu_general_samples, clock_samples, power_samples, memory_samples, temperature_samples, gfx_samples, idle_state_samples}
 #include "plssvm/detail/tracking/hardware_sampler.hpp"  // plssvm::detail::tracking::hardware_sampler
 
+#include "fmt/core.h"     // fmt::formatter
+#include "fmt/ostream.h"  // fmt::ostream_formatter
+
 #include <chrono>  // std::chrono::{steady_clock, milliseconds}, std::chrono_literals namespace
+#include <iosfwd>  // std::ostream forward declaration
 #include <string>  // std::string
 
 namespace plssvm::detail::tracking {
@@ -64,6 +68,11 @@ class cpu_hardware_sampler : public hardware_sampler {
     cpu_idle_states_samples idle_state_samples_;
 };
 
+std::ostream &operator<<(std::ostream &out, const cpu_hardware_sampler &sampler);
+
 }  // namespace plssvm::detail::tracking
+
+template <>
+struct fmt::formatter<plssvm::detail::tracking::cpu_hardware_sampler> : fmt::ostream_formatter { };
 
 #endif  // PLSSVM_DETAIL_TRACKING_CPU_HARDWARE_SAMPLER_HPP_

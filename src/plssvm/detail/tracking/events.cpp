@@ -8,7 +8,7 @@
 
 #include "plssvm/detail/tracking/events.hpp"
 
-#include "plssvm/detail/tracking/utility.hpp"  // plssvm::detail::tracking::durations_from_reference_time
+#include "plssvm/detail/tracking/utility.hpp"  // plssvm::detail::tracking::{durations_from_reference_time, time_points_to_epoch}
 
 #include "fmt/chrono.h"  // format std::chrono types
 #include "fmt/core.h"    // fmt::format
@@ -43,14 +43,9 @@ std::ostream &operator<<(std::ostream &out, const events::event &e) {
 }
 
 std::ostream &operator<<(std::ostream &out, const events &e) {
-    std::vector<std::chrono::steady_clock::duration> times(e.num_events());
-#pragma omp parallel for
-    for (std::size_t i = 0; i < times.size(); ++i) {
-        times[i] = e.get_time_points()[i].time_since_epoch();
-    }
     return out << fmt::format("time_points: [{}]\n"
                               "names: [{}]",
-                              fmt::join(times, ", "),
+                              fmt::join(time_points_to_epoch(e.get_time_points()), ", "),
                               fmt::join(e.get_names(), ", "));
 }
 

@@ -17,9 +17,13 @@
 #include "plssvm/detail/tracking/gpu_nvidia/nvml_samples.hpp"        // plssvm::detail::tracking::{nvml_general_samples, nvml_clock_samples, nvml_power_samples, nvml_memory_samples, nvml_temperature_samples}
 #include "plssvm/detail/tracking/hardware_sampler.hpp"               // plssvm::detail::tracking::hardware_sampler
 
+#include "fmt/core.h"     // fmt::formatter
+#include "fmt/ostream.h"  // fmt::ostream_formatter
+
 #include <atomic>   // std::atomic
 #include <chrono>   // std::chrono::{steady_clock, milliseconds}, std::chrono_literals namespace
 #include <cstddef>  // std::size_t
+#include <iosfwd>   // std::ostream forward declaration
 #include <string>   // std::string
 
 namespace plssvm::detail::tracking {
@@ -66,6 +70,11 @@ class gpu_nvidia_hardware_sampler : public hardware_sampler {
     inline static std::atomic<bool> init_finished_{ false };
 };
 
+std::ostream &operator<<(std::ostream &out, const gpu_nvidia_hardware_sampler &sampler);
+
 }  // namespace plssvm::detail::tracking
+
+template <>
+struct fmt::formatter<plssvm::detail::tracking::gpu_nvidia_hardware_sampler> : fmt::ostream_formatter { };
 
 #endif  // PLSSVM_DETAIL_TRACKING_GPU_NVIDIA_HARDWARE_SAMPLER_HPP_

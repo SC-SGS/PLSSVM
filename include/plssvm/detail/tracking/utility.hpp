@@ -50,8 +50,18 @@ template <typename Duration = std::chrono::milliseconds, typename TimePoint>
     return durations;
 }
 
+template <typename TimePoint>
+[[nodiscard]] inline std::vector<typename TimePoint::duration> time_points_to_epoch(const std::vector<TimePoint> &time_points) {
+    std::vector<typename TimePoint::duration> times(time_points.size());
+#pragma omp parallel for
+    for (std::size_t i = 0; i < times.size(); ++i) {
+        times[i] = time_points[i].time_since_epoch();
+    }
+    return times;
+}
+
 template <typename T>
-[[nodiscard]] T value_or_default(const std::optional<T> &opt) {
+[[nodiscard]] inline T value_or_default(const std::optional<T> &opt) {
     if (opt.has_value()) {
         return opt.value();
     } else {

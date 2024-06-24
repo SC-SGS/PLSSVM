@@ -12,7 +12,7 @@
 #include "plssvm/detail/tracking/gpu_amd/utility.hpp"           // PLSSVM_ROCM_SMI_ERROR_CHECK
 #include "plssvm/detail/tracking/hardware_sampler.hpp"          // plssvm::detail::tracking::hardware_sampler
 #include "plssvm/detail/tracking/performance_tracker.hpp"       // PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY
-#include "plssvm/detail/tracking/utility.hpp"                   // plssvm::detail::tracking::durations_from_reference_time
+#include "plssvm/detail/tracking/utility.hpp"                   // plssvm::detail::tracking::{durations_from_reference_time, time_points_to_epoch}
 #include "plssvm/exceptions/exceptions.hpp"                     // plssvm::exception, plssvm::hardware_sampling_exception
 
 #include "fmt/chrono.h"         // format std::chrono types
@@ -26,6 +26,7 @@
 #include <exception>  // std::exception, std::terminate
 #include <iostream>   // std::cerr, std::endl
 #include <optional>   // std::optional
+#include <ostream>    // std::ostream
 #include <string>     // std::string
 #include <thread>     // std::this_thread
 #include <utility>    // std::move
@@ -615,6 +616,23 @@ void gpu_amd_hardware_sampler::sampling_loop() {
         // wait for the sampling interval to pass to retrieve the next sample
         std::this_thread::sleep_for(this->sampling_interval());
     }
+}
+
+std::ostream &operator<<(std::ostream &out, const gpu_amd_hardware_sampler &sampler) {
+    return out << fmt::format("sampling interval: {}\n"
+                              "time points: [{}]\n\n"
+                              "general samples:\n{}\n\n"
+                              "clock samples:\n{}\n\n"
+                              "power samples:\n{}\n\n"
+                              "memory samples:\n{}\n\n"
+                              "temperature samples:\n{}",
+                              sampler.sampling_interval(),
+                              fmt::join(time_points_to_epoch(sampler.time_points()), ", "),
+                              sampler.general_samples(),
+                              sampler.clock_samples(),
+                              sampler.power_samples(),
+                              sampler.memory_samples(),
+                              sampler.temperature_samples());
 }
 
 }  // namespace plssvm::detail::tracking
