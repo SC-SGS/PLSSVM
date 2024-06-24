@@ -134,11 +134,23 @@ class rocm_smi_temperature_samples {
     PLSSVM_SAMPLE_STRUCT_FIXED_MEMBER(std::int64_t, temperature_hotspot_max)
     PLSSVM_SAMPLE_STRUCT_FIXED_MEMBER(std::int64_t, temperature_memory_min)
     PLSSVM_SAMPLE_STRUCT_FIXED_MEMBER(std::int64_t, temperature_memory_max)
+    PLSSVM_SAMPLE_STRUCT_FIXED_MEMBER(std::int64_t, temperature_hbm_0_min)
+    PLSSVM_SAMPLE_STRUCT_FIXED_MEMBER(std::int64_t, temperature_hbm_0_max)
+    PLSSVM_SAMPLE_STRUCT_FIXED_MEMBER(std::int64_t, temperature_hbm_1_min)
+    PLSSVM_SAMPLE_STRUCT_FIXED_MEMBER(std::int64_t, temperature_hbm_1_max)
+    PLSSVM_SAMPLE_STRUCT_FIXED_MEMBER(std::int64_t, temperature_hbm_2_min)
+    PLSSVM_SAMPLE_STRUCT_FIXED_MEMBER(std::int64_t, temperature_hbm_2_max)
+    PLSSVM_SAMPLE_STRUCT_FIXED_MEMBER(std::int64_t, temperature_hbm_3_min)
+    PLSSVM_SAMPLE_STRUCT_FIXED_MEMBER(std::int64_t, temperature_hbm_3_max)
 
     PLSSVM_SAMPLE_STRUCT_SAMPLING_MEMBER(std::int64_t, fan_speed)
     PLSSVM_SAMPLE_STRUCT_SAMPLING_MEMBER(std::int64_t, temperature_edge)
     PLSSVM_SAMPLE_STRUCT_SAMPLING_MEMBER(std::int64_t, temperature_hotspot)
     PLSSVM_SAMPLE_STRUCT_SAMPLING_MEMBER(std::int64_t, temperature_memory)
+    PLSSVM_SAMPLE_STRUCT_SAMPLING_MEMBER(std::int64_t, temperature_hbm_0)
+    PLSSVM_SAMPLE_STRUCT_SAMPLING_MEMBER(std::int64_t, temperature_hbm_1)
+    PLSSVM_SAMPLE_STRUCT_SAMPLING_MEMBER(std::int64_t, temperature_hbm_2)
+    PLSSVM_SAMPLE_STRUCT_SAMPLING_MEMBER(std::int64_t, temperature_hbm_3)
 };
 
 std::ostream &operator<<(std::ostream &out, const rocm_smi_temperature_samples &samples);

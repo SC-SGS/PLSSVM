@@ -348,6 +348,46 @@ void gpu_amd_hardware_sampler::sampling_loop() {
             temperature_samples_.temperature_memory_max_ = temperature_memory_max;
         }
 
+        decltype(temperature_samples_.temperature_hbm_0_min_)::value_type temperature_hbm_0_min{};
+        if (rsmi_dev_temp_metric_get(device_id_, RSMI_TEMP_TYPE_HBM_0, RSMI_TEMP_MIN, &temperature_hbm_0_min) == RSMI_STATUS_SUCCESS) {
+            temperature_samples_.temperature_hbm_0_min_ = temperature_hbm_0_min;
+        }
+
+        decltype(temperature_samples_.temperature_hbm_0_max_)::value_type temperature_hbm_0_max{};
+        if (rsmi_dev_temp_metric_get(device_id_, RSMI_TEMP_TYPE_HBM_0, RSMI_TEMP_MAX, &temperature_hbm_0_max) == RSMI_STATUS_SUCCESS) {
+            temperature_samples_.temperature_hbm_0_max_ = temperature_hbm_0_max;
+        }
+
+        decltype(temperature_samples_.temperature_hbm_1_min_)::value_type temperature_hbm_1_min{};
+        if (rsmi_dev_temp_metric_get(device_id_, RSMI_TEMP_TYPE_HBM_1, RSMI_TEMP_MIN, &temperature_hbm_1_min) == RSMI_STATUS_SUCCESS) {
+            temperature_samples_.temperature_hbm_1_min_ = temperature_hbm_1_min;
+        }
+
+        decltype(temperature_samples_.temperature_hbm_1_max_)::value_type temperature_hbm_1_max{};
+        if (rsmi_dev_temp_metric_get(device_id_, RSMI_TEMP_TYPE_HBM_1, RSMI_TEMP_MAX, &temperature_hbm_1_max) == RSMI_STATUS_SUCCESS) {
+            temperature_samples_.temperature_hbm_1_max_ = temperature_hbm_1_max;
+        }
+
+        decltype(temperature_samples_.temperature_hbm_2_min_)::value_type temperature_hbm_2_min{};
+        if (rsmi_dev_temp_metric_get(device_id_, RSMI_TEMP_TYPE_HBM_2, RSMI_TEMP_MIN, &temperature_hbm_2_min) == RSMI_STATUS_SUCCESS) {
+            temperature_samples_.temperature_hbm_2_min_ = temperature_hbm_2_min;
+        }
+
+        decltype(temperature_samples_.temperature_hbm_2_max_)::value_type temperature_hbm_2_max{};
+        if (rsmi_dev_temp_metric_get(device_id_, RSMI_TEMP_TYPE_HBM_2, RSMI_TEMP_MAX, &temperature_hbm_2_max) == RSMI_STATUS_SUCCESS) {
+            temperature_samples_.temperature_hbm_2_max_ = temperature_hbm_2_max;
+        }
+
+        decltype(temperature_samples_.temperature_hbm_3_min_)::value_type temperature_hbm_3_min{};
+        if (rsmi_dev_temp_metric_get(device_id_, RSMI_TEMP_TYPE_HBM_3, RSMI_TEMP_MIN, &temperature_hbm_3_min) == RSMI_STATUS_SUCCESS) {
+            temperature_samples_.temperature_hbm_3_min_ = temperature_hbm_3_min;
+        }
+
+        decltype(temperature_samples_.temperature_hbm_3_max_)::value_type temperature_hbm_3_max{};
+        if (rsmi_dev_temp_metric_get(device_id_, RSMI_TEMP_TYPE_HBM_3, RSMI_TEMP_MAX, &temperature_hbm_3_max) == RSMI_STATUS_SUCCESS) {
+            temperature_samples_.temperature_hbm_3_max_ = temperature_hbm_3_max;
+        }
+
         // queried samples -> retrieved every iteration if available
         decltype(temperature_samples_.temperature_edge_)::value_type::value_type temperature_edge{};
         if (rsmi_dev_temp_metric_get(device_id_, RSMI_TEMP_TYPE_EDGE, RSMI_TEMP_CURRENT, &temperature_edge) == RSMI_STATUS_SUCCESS) {
@@ -362,6 +402,26 @@ void gpu_amd_hardware_sampler::sampling_loop() {
         decltype(temperature_samples_.temperature_memory_)::value_type::value_type temperature_memory{};
         if (rsmi_dev_temp_metric_get(device_id_, RSMI_TEMP_TYPE_MEMORY, RSMI_TEMP_CURRENT, &temperature_memory) == RSMI_STATUS_SUCCESS) {
             temperature_samples_.temperature_memory_ = decltype(temperature_samples_.temperature_memory_)::value_type{ temperature_memory };
+        }
+
+        decltype(temperature_samples_.temperature_hbm_0_)::value_type::value_type temperature_hbm_0{};
+        if (rsmi_dev_temp_metric_get(device_id_, RSMI_TEMP_TYPE_HBM_0, RSMI_TEMP_CURRENT, &temperature_hbm_0) == RSMI_STATUS_SUCCESS) {
+            temperature_samples_.temperature_hbm_0_ = decltype(temperature_samples_.temperature_hbm_0_)::value_type{ temperature_hbm_0 };
+        }
+
+        decltype(temperature_samples_.temperature_hbm_1_)::value_type::value_type temperature_hbm_1{};
+        if (rsmi_dev_temp_metric_get(device_id_, RSMI_TEMP_TYPE_HBM_1, RSMI_TEMP_CURRENT, &temperature_hbm_1) == RSMI_STATUS_SUCCESS) {
+            temperature_samples_.temperature_hbm_1_ = decltype(temperature_samples_.temperature_hbm_1_)::value_type{ temperature_hbm_1 };
+        }
+
+        decltype(temperature_samples_.temperature_hbm_2_)::value_type::value_type temperature_hbm_2{};
+        if (rsmi_dev_temp_metric_get(device_id_, RSMI_TEMP_TYPE_HBM_2, RSMI_TEMP_CURRENT, &temperature_hbm_2) == RSMI_STATUS_SUCCESS) {
+            temperature_samples_.temperature_hbm_2_ = decltype(temperature_samples_.temperature_hbm_2_)::value_type{ temperature_hbm_2 };
+        }
+
+        decltype(temperature_samples_.temperature_hbm_3_)::value_type::value_type temperature_hbm_3{};
+        if (rsmi_dev_temp_metric_get(device_id_, RSMI_TEMP_TYPE_HBM_3, RSMI_TEMP_CURRENT, &temperature_hbm_3) == RSMI_STATUS_SUCCESS) {
+            temperature_samples_.temperature_hbm_3_ = decltype(temperature_samples_.temperature_hbm_3_)::value_type{ temperature_hbm_3 };
         }
     }
 
@@ -524,6 +584,30 @@ void gpu_amd_hardware_sampler::sampling_loop() {
                     decltype(temperature_samples_.temperature_memory_)::value_type::value_type value{};
                     PLSSVM_ROCM_SMI_ERROR_CHECK(rsmi_dev_temp_metric_get(device_id_, RSMI_TEMP_TYPE_MEMORY, RSMI_TEMP_CURRENT, &value));
                     temperature_samples_.temperature_memory_->push_back(value);
+                }
+
+                if (temperature_samples_.temperature_hbm_0_.has_value()) {
+                    decltype(temperature_samples_.temperature_hbm_0_)::value_type::value_type value{};
+                    PLSSVM_ROCM_SMI_ERROR_CHECK(rsmi_dev_temp_metric_get(device_id_, RSMI_TEMP_TYPE_HBM_0, RSMI_TEMP_CURRENT, &value));
+                    temperature_samples_.temperature_hbm_0_->push_back(value);
+                }
+
+                if (temperature_samples_.temperature_hbm_1_.has_value()) {
+                    decltype(temperature_samples_.temperature_hbm_1_)::value_type::value_type value{};
+                    PLSSVM_ROCM_SMI_ERROR_CHECK(rsmi_dev_temp_metric_get(device_id_, RSMI_TEMP_TYPE_HBM_1, RSMI_TEMP_CURRENT, &value));
+                    temperature_samples_.temperature_hbm_1_->push_back(value);
+                }
+
+                if (temperature_samples_.temperature_hbm_2_.has_value()) {
+                    decltype(temperature_samples_.temperature_hbm_2_)::value_type::value_type value{};
+                    PLSSVM_ROCM_SMI_ERROR_CHECK(rsmi_dev_temp_metric_get(device_id_, RSMI_TEMP_TYPE_HBM_2, RSMI_TEMP_CURRENT, &value));
+                    temperature_samples_.temperature_hbm_2_->push_back(value);
+                }
+
+                if (temperature_samples_.temperature_hbm_3_.has_value()) {
+                    decltype(temperature_samples_.temperature_hbm_3_)::value_type::value_type value{};
+                    PLSSVM_ROCM_SMI_ERROR_CHECK(rsmi_dev_temp_metric_get(device_id_, RSMI_TEMP_TYPE_HBM_3, RSMI_TEMP_CURRENT, &value));
+                    temperature_samples_.temperature_hbm_3_->push_back(value);
                 }
             }
         }
