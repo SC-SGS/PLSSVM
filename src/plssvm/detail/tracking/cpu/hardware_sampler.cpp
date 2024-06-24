@@ -11,6 +11,8 @@
 #include "plssvm/detail/assert.hpp"                        // PLSSVM_ASSERT
 #include "plssvm/detail/string_conversion.hpp"             // plssvm::detail::split_as
 #include "plssvm/detail/string_utility.hpp"                // plssvm::detail::{starts_with, trim}
+#include "plssvm/detail/tracking/cpu/cpu_samples.hpp"      // plssvm::detail::tracking::{cpu_general_samples, clock_samples, power_samples, memory_samples, temperature_samples, gfx_samples, idle_state_samples}
+#include "plssvm/detail/tracking/cpu/utility.hpp"          // PLSSVM_SUBPROCESS_ERROR_CHECK
 #include "plssvm/detail/tracking/hardware_sampler.hpp"     // plssvm::detail::tracking::hardware_sampler
 #include "plssvm/detail/tracking/performance_tracker.hpp"  // PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY
 #include "plssvm/detail/tracking/utility.hpp"              // plssvm::detail::tracking::durations_from_reference_time
@@ -20,89 +22,37 @@
 #include "fmt/chrono.h"  // format std::chrono types
 #include "fmt/core.h"    // fmt::format
 #include "fmt/format.h"  // fmt::join
-#include "subprocess.h"  // subprocess_p, subprocess_option_e, subprocess_create, subprocess_stdout, subprocess_destroy
 
-#include <array>          // std::array
 #include <chrono>         // std::chrono::{system_clock, milliseconds}
 #include <cstddef>        // std::size_t
 #include <cstdio>         // std::FILE, std::fread
 #include <exception>      // std::exception, std::terminate
 #include <iostream>       // std::cerr << std::endl
+#include <optional>       // std::make_optional
 #include <regex>          // std::regex, std::regex::extended, std::regex_match
 #include <string>         // std::string
 #include <string_view>    // std::string_view
-#include <tuple>          // std::tuple
+#include <thread>         // std::this_thread
 #include <unordered_map>  // std::unordered_map
-#include <utility>        // std::move
 #include <vector>         // std::vector
 
 namespace plssvm::detail::tracking {
 
-#if defined(PLSSVM_HARDWARE_SAMPLING_ERROR_CHECKS_ENABLED)
-
-    #define PLSSVM_SUBPROCESS_ERROR_CHECK(subprocess_func)                                                                      \
-        {                                                                                                                       \
-            const int errc = subprocess_func;                                                                                   \
-            if (errc != 0) {                                                                                                    \
-                throw hardware_sampling_exception{ fmt::format("Error calling subprocess function \"{}\"", #subprocess_func) }; \
-            }                                                                                                                   \
-        }
-
-#else
-    #define PLSSVM_SUBPROCESS_ERROR_CHECK(subprocess_func) subprocess_func;
-#endif
-
 cpu_hardware_sampler::cpu_hardware_sampler(const std::chrono::milliseconds sampling_interval) :
     hardware_sampler{ sampling_interval } {
-    const int options = subprocess_option_e::subprocess_option_search_user_path | subprocess_option_e::subprocess_option_enable_async;
-
     // track the lscpu version
 #if defined(PLSSVM_HARDWARE_TRACKING_VIA_LSCPU_ENABLED)
     {
-        const std::array<const char *, 3> command_line = { "lscpu", "--version", nullptr };
-
-        // create subprocess
-        subprocess_s proc{};
-        PLSSVM_SUBPROCESS_ERROR_CHECK(subprocess_create(command_line.data(), options, &proc));
-        // wait until process has finished
-        int return_code{};
-        PLSSVM_SUBPROCESS_ERROR_CHECK(subprocess_join(&proc, &return_code));
-        if (return_code != 0) {
-            throw hardware_sampling_exception{ fmt::format("Error: lscpu returned with {}!", return_code) };
-        }
-        // get stdout handle and read data
-        std::FILE *stdout_handle = subprocess_stdout(&proc);
-        std::string buffer(static_cast<std::string::size_type>(512), '\0');  // 512 characters should be enough
-        const std::size_t bytes_read = std::fread(buffer.data(), sizeof(typename decltype(buffer)::value_type), buffer.size(), stdout_handle);
-        if (bytes_read == 0) {
-            throw hardware_sampling_exception{ "Error in lscpu: no bytes were read!" };
-        }
-        PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking::tracking_entry{ "dependencies", "lscpu_version", buffer.substr(0, buffer.find_first_of('\n')) }));
+        const auto &[lscpu_stdout, lscpu_stderr] = run_subprocess("lscpu --version");
+        PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking::tracking_entry{ "dependencies", "lscpu_version", detail::trim(lscpu_stdout) }));
     }
 #endif
 
     // track the turbostat version
 #if defined(PLSSVM_HARDWARE_TRACKING_VIA_TURBOSTAT_ENABLED)
     {
-        const std::array<const char *, 3> command_line = { "turbostat", "--version", nullptr };
-
-        // create subprocess
-        subprocess_s proc{};
-        PLSSVM_SUBPROCESS_ERROR_CHECK(subprocess_create(command_line.data(), options, &proc));
-        // wait until process has finished
-        int return_code{};
-        PLSSVM_SUBPROCESS_ERROR_CHECK(subprocess_join(&proc, &return_code));
-        if (return_code != 0) {
-            throw hardware_sampling_exception{ fmt::format("Error: lscpu returned with {}!", return_code) };
-        }
-        // get stdout handle and read data
-        std::FILE *stdout_handle = subprocess_stderr(&proc);
-        std::string buffer(static_cast<std::string::size_type>(512), '\0');  // 512 characters should be enough
-        const std::size_t bytes_read = std::fread(buffer.data(), sizeof(typename decltype(buffer)::value_type), buffer.size(), stdout_handle);
-        if (bytes_read == 0) {
-            throw hardware_sampling_exception{ "Error in lscpu: no bytes were read!" };
-        }
-        PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking::tracking_entry{ "dependencies", "turbostat_version", buffer.substr(0, buffer.find_first_of('\n')) }));
+        const auto &[turbostat_stdout, turbostat_stderr] = run_subprocess("turbostat --version");
+        PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking::tracking_entry{ "dependencies", "turbostat_version", detail::trim(turbostat_stderr) }));
     }
 #endif
 }
@@ -132,330 +82,331 @@ std::string cpu_hardware_sampler::generate_yaml_string([[maybe_unused]] const st
         throw hardware_sampling_exception{ "Can't create the final YAML entry if the hardware sampler is still running!" };
     }
 
-    // output the basic sample information
-    std::string str = fmt::format("\n"
-                                  "    sampling_interval: {}\n",
-                                  this->sampling_interval());
-
-    // create a map to group the output in categories
-    std::unordered_map<std::string, std::vector<std::string>> category_groups{};
-
-#if defined(PLSSVM_HARDWARE_TRACKING_VIA_LSCPU_ENABLED)
-    // parse general lscpu information
-    if (!lscpu_data_lines_.empty()) {
-        // create a lscpu entry mapping including the used units
-        static const std::unordered_map<std::string, std::tuple<std::string, std::string, std::string>> entry_to_name_unit_map{
-            { "Architecture", { "general", "architecture", "string" } },
-            { "Byte Order", { "general", "byte_order", "string" } },
-            { "CPU(s)", { "general", "num_threads", "int" } },
-            { "Thread(s) per core", { "general", "threads_per_core", "int" } },
-            { "Core(s) per core", { "general", "cores_per_socket", "int" } },
-            { "NUMA node(s)", { "general", "numa_nodes", "int" } },
-            { "Vendor ID", { "general", "vendor_id", "string" } },
-            { "Model name", { "general", "cpu_name", "string" } },
-            { "Frequency boost", { "clock", "frequency_boost", "bool" } },
-            { "CPU max MHz", { "clock", "max_cpu_frequency", "MHz" } },
-            { "CPU min MHz", { "clock", "min_cpu_frequency", "MHz" } },
-            { "Flags", { "general", "flags", "string" } },
-            { "L1d cache", { "memory", "cache_L1d", "string" } },
-            { "L1i cache", { "memory", "cache_L1i", "string" } },
-            { "L2 cache", { "memory", "cache_L2", "string" } },
-            { "L3 cache", { "memory", "cache_L3", "string" } }
-        };
-
-        // parse lscpu output
-        for (const std::string &line : lscpu_data_lines_) {
-            const std::string_view line_view{ detail::trim(line) };
-
-            // check if the line should be used
-            for (const auto &[entry_name, values] : entry_to_name_unit_map) {
-                if (detail::starts_with(line_view, entry_name)) {
-                    const auto &[category, yaml_entry_name, unit] = values;
-
-                    // extract the value
-                    std::string_view line_value{ line_view };
-                    line_value.remove_prefix(line_value.find_first_of(":") + 1);
-                    line_value = detail::trim(line_value);
-
-                    // add entry to category_groups map
-                    if (yaml_entry_name == "flags") {
-                        // flags should be parsed as an array
-                        std::vector<std::string> flags = detail::split_as<std::string>(line_value, ' ');
-                        // quote all flags
-                        for (std::string &flag : flags) {
-                            flag = fmt::format("\"{}\"", flag);
-                        }
-                        category_groups[category].push_back(fmt::format("      {}:\n"
-                                                                        "        unit: \"string\"\n"
-                                                                        "        values: [{}]\n",
-                                                                        yaml_entry_name,
-                                                                        fmt::join(flags, ", ")));
-                    } else if (unit == "string") {
-                        // strings should be quoted
-                        category_groups[category].push_back(fmt::format("      {}:\n"
-                                                                        "        unit: \"string\"\n"
-                                                                        "        values: \"{}\"\n",
-                                                                        yaml_entry_name,
-                                                                        line_value));
-                    } else if (unit == "bool") {
-                        // enabled should be converted to a boolean value
-                        const bool enabled = line_value == "enabled";
-                        category_groups[category].push_back(fmt::format("      {}:\n"
-                                                                        "        unit: \"bool\"\n"
-                                                                        "        values: {}\n",
-                                                                        yaml_entry_name,
-                                                                        enabled));
-                    } else {
-                        category_groups[category].push_back(fmt::format("      {}:\n"
-                                                                        "        unit: \"{}\"\n"
-                                                                        "        values: {}\n",
-                                                                        yaml_entry_name,
-                                                                        unit,
-                                                                        line_value));
-                    }
-                }
-            }
-        }
-    }
-#endif
-
-#if defined(PLSSVM_HARDWARE_TRACKING_VIA_TURBOSTAT_ENABLED)
-    // parse read data in a usable format
-    if (!turbostat_data_lines_.empty()) {
-        // create a more useful turbostat header name mapping including the used units
-        static const std::unordered_map<std::string, std::tuple<std::string, std::string, std::string>> header_to_name_unit_map{
-            { "Avg_MHz", { "clock", "average_frequency", "MHz" } },
-            { "Busy%", { "general", "utilization", "percentage" } },
-            { "Bzy_MHz", { "clock", "average_non_idle_frequency", "MHz" } },
-            { "TSC_MHz", { "clock", "time_stamp_counter", "MHz" } },
-            { "IPC", { "general", "instructions_per_cycle", "float" } },
-            { "IRQ", { "general", "interrupts", "int" } },
-            { "SMI", { "general", "system_management_interrupts", "int" } },
-            { "POLL", { "general", "polling_state", "int" } },
-            // use std::regex for C.+
-            { "POLL%", { "general", "polling_percentage", "percentage" } },
-            // use std::regex for C.+%
-            // use std::regex for CPU%.+
-            { "CoreTmp", { "temperature", "per_core_temperature", "°C" } },
-            { "CoreThr", { "temperature", "core_throttle_percentage", "percentage" } },
-            { "PkgTmp", { "temperature", "per_package_temperature", "°C" } },
-            { "GFX%rc6", { "integrated_gpu", "graphics_render_state", "percentage" } },
-            { "GFXMHz", { "integrated_gpu", "graphics_frequency", "MHz" } },
-            { "GFXAMHz", { "integrated_gpu", "average_graphics_frequency", "MHz" } },
-            { "Totl%C0", { "idle_states", "all_cpus_state_c0", "percentage" } },
-            { "Any%C0", { "idle_states", "any_cpu_state_c0", "percentage" } },
-            { "GFX%C0", { "integrated_gpu", "gpu_state_c0", "percentage" } },
-            { "CPUGFX%", { "integrated_gpu", "cpu_works_for_gpu", "percentage" } },
-            // use std::regex for Pkg%.+
-            { "CPU%LPI", { "idle_state", "lower_power_idle_state", "percentage" } },
-            { "SYS%LPI", { "idle_state", "system_lower_power_idle_state", "percentage" } },
-            { "Pkg%LPI", { "idle_state", "package_lower_power_idle_state", "percentage" } },
-            { "PkgWatt", { "power", "package_power", "W" } },
-            { "CorWatt", { "power", "core_power", "W" } },
-            { "GFXWatt", { "power", "graphics_power", "W" } },
-            { "RAMWatt", { "power", "dram_power", "W" } },
-            { "PKG_%", { "power", "package_rapl_throttling", "percentage" } },
-            { "RAM_%", { "power", "dram_rapl_throttling", "percentage" } }
-        };
-        // create a more useful turbostat header name mapping including the used units using regular expressions
-        static const std::vector<std::tuple<std::string, std::string, std::string, std::string, std::size_t, std::size_t>> regex_header_to_name_unit_map{
-            { "CPU%[0-9a-zA-Z]+", "idle_state", "cpu_idle_state_{}_percentage", "percentage", 4, 0 },
-            { "Pkg%[0-9a-zA-Z]+", "idle_state", "package_idle_state_{}_percentage", "percentage", 4, 0 },
-            { "Pk%[0-9a-zA-Z]+", "idle_state", "package_idle_state_{}_percentage", "percentage", 3, 0 },
-            { "C[0-9a-zA-Z]+%", "idle_state", "idle_state_{}_percentage", "percentage", 1, 1 },
-            { "C[0-9a-zA-Z]+", "idle_state", "idle_state_{}", "int", 1, 0 }
-        };
-
-        // header information
-        const std::vector<std::string> header = detail::split_as<std::string>(turbostat_data_lines_.front(), '\t');
-
-        // parse actual samples
-        const std::size_t num_samples = turbostat_data_lines_.size() - 1;  // don't count the column headers
-        std::vector<std::vector<double>> data_samples(header.size(), std::vector<double>(num_samples));
-    #pragma omp parallel for
-        for (std::size_t line = 1; line < turbostat_data_lines_.size(); ++line) {  // skip first line
-            // get the values
-            const std::vector<double> sample = detail::split_as<double>(turbostat_data_lines_[line], '\t');
-
-            // check size
-            PLSSVM_ASSERT(sample.size() == header.size(), "Invalid data sample size for sample {}!: {} (sample) vs. {} (header)", line - 1, sample.size(), header.size());
-
-            // add current sample to all samples
-            for (std::size_t h = 0; h < sample.size(); ++h) {
-                data_samples[h][line - 1] = sample[h];
-            }
-        }
-
-        // calculate time differences
-
-        for (std::size_t header_idx = 0; header_idx < header.size(); ++header_idx) {
-            if (header[header_idx] == "Time_Of_Day_Seconds") {
-                std::vector<std::chrono::system_clock::time_point> times(num_samples);
-                // parse the time information
-    #pragma omp parallel for
-                for (std::size_t sample_idx = 0; sample_idx < num_samples; ++sample_idx) {
-                    const auto dur = std::chrono::duration<double>{ data_samples[header_idx][sample_idx] };
-                    times[sample_idx] = std::chrono::system_clock::time_point{ std::chrono::duration_cast<std::chrono::milliseconds>(dur) };
-                }
-
-                str += fmt::format("    time_points: [{}]\n",
-                                   fmt::join(durations_from_reference_time(times, start_time_point), ", "));
-                break;
-            }
-        }
-
-        // output data in YAML format
-        for (std::size_t header_idx = 0; header_idx < header.size(); ++header_idx) {
-            if (header[header_idx] == "Time_Of_Day_Seconds") {
-                // already handled
-                continue;
-            } else if (detail::contains(header_to_name_unit_map, header[header_idx])) {
-                const auto &[category, yaml_entry_name, unit] = header_to_name_unit_map.at(header[header_idx]);
-                // better category name and unit available
-                category_groups[category].push_back(fmt::format("      {}:\n"
-                                                                "        turbostat_name: \"{}\"\n"
-                                                                "        unit: \"{}\"\n"
-                                                                "        values: [{}]\n",
-                                                                yaml_entry_name,
-                                                                header[header_idx],
-                                                                unit,
-                                                                fmt::join(data_samples[header_idx], ", ")));
-            } else {
-                // try using regular expressions for a better category name and unit
-                bool regex_found{ false };
-                // test all regular expressions one after another
-                for (const auto &[regex_value, category, yaml_entry_name, unit, prefix_size, suffix_size] : regex_header_to_name_unit_map) {
-                    const std::regex reg{ regex_value, std::regex::extended };
-
-                    // check if regex matches
-                    if (std::regex_match(header[header_idx], reg)) {
-                        // remove specified prefix and suffix from state
-                        std::string_view state{ header[header_idx] };
-                        state.remove_prefix(prefix_size);
-                        state.remove_suffix(suffix_size);
-
-                        // assemble better category name
-                        const std::string yaml_category_str = fmt::format(fmt::runtime(yaml_entry_name), state);
-
-                        category_groups[category].push_back(fmt::format("      {}:\n"
-                                                                        "        turbostat_name: \"{}\"\n"
-                                                                        "        unit: \"{}\"\n"
-                                                                        "        values: [{}]\n",
-                                                                        yaml_category_str,
-                                                                        header[header_idx],
-                                                                        unit,
-                                                                        fmt::join(data_samples[header_idx], ", ")));
-
-                        // regex match found
-                        regex_found = true;
-                        break;
-                    }
-                }
-
-                // fallback to most simple output if nothing else worked
-                if (!regex_found) {
-                    category_groups["general"].push_back(fmt::format("      {}:\n"
-                                                                     "        values: [{}]\n",
-                                                                     header[header_idx],
-                                                                     fmt::join(data_samples[header_idx], ", ")));
-                }
-            }
-        }
-    }
-#endif
-
-    // create final string with grouped entries
-    for (const auto &[category, entries] : category_groups) {
-        str += fmt::format("    {}:\n"
-                           "{}",
-                           category,
-                           fmt::join(entries, ""));
-    }
-
-    // remove last newline
-    str.pop_back();
-
-    return str;
+    return fmt::format("\n"
+                       "    sampling_interval: {}\n"
+                       "    time_points: [{}]\n"
+                       "{}\n"
+                       "{}\n"
+                       "{}\n"
+                       "{}\n"
+                       "{}\n"
+                       "{}\n"
+                       "{}",
+                       this->sampling_interval(),
+                       fmt::join(durations_from_reference_time(this->time_points(), start_time_point), ", "),
+                       general_samples_.generate_yaml_string(),
+                       clock_samples_.generate_yaml_string(),
+                       power_samples_.generate_yaml_string(),
+                       memory_samples_.generate_yaml_string(),
+                       temperature_samples_.generate_yaml_string(),
+                       gfx_samples_.generate_yaml_string(),
+                       idle_state_samples_.generate_yaml_string());
 }
 
 void cpu_hardware_sampler::sampling_loop() {
-    const int options = subprocess_option_e::subprocess_option_search_user_path | subprocess_option_e::subprocess_option_enable_async;
+    //
+    // add samples where we only have to retrieve the value once
+    //
 
-    // TODO: getter + fill time_points_
+    this->add_time_point(std::chrono::system_clock::now());
 
 #if defined(PLSSVM_HARDWARE_TRACKING_VIA_LSCPU_ENABLED)
     {
-        const std::array<const char *, 2> command_line = { "lscpu", nullptr };
+        const auto &[lscpu_stdout, lscpu_stderr] = run_subprocess("lscpu");
+        const std::vector<std::string_view> lscpu_lines = detail::split(lscpu_stdout, '\n');
 
-        // create subprocess
-        subprocess_s proc{};
-        PLSSVM_SUBPROCESS_ERROR_CHECK(subprocess_create(command_line.data(), options, &proc));
-        // wait until process has finished
-        int return_code{};
-        PLSSVM_SUBPROCESS_ERROR_CHECK(subprocess_join(&proc, &return_code));
-        if (return_code != 0) {
-            throw hardware_sampling_exception{ fmt::format("Error: lscpu returned with {}!", return_code) };
+        for (std::string_view line : lscpu_lines) {
+            line = detail::trim(line);
+            // extract the value
+            std::string_view value{ line };
+            value.remove_prefix(value.find_first_of(":") + 1);
+            value = detail::trim(value);
+
+            // check the lines if the start with an entry that we want to sample
+            if (detail::starts_with(line, "Architecture")) {
+                general_samples_.architecture_ = detail::convert_to<decltype(general_samples_.architecture_)::value_type>(value);
+            } else if (detail::starts_with(line, "Byte Order")) {
+                general_samples_.byte_order_ = detail::convert_to<decltype(general_samples_.byte_order_)::value_type>(value);
+            } else if (detail::starts_with(line, "CPU(s)")) {
+                general_samples_.num_threads_ = detail::convert_to<decltype(general_samples_.num_threads_)::value_type>(value);
+            } else if (detail::starts_with(line, "Thread(s) per core")) {
+                general_samples_.threads_per_core_ = detail::convert_to<decltype(general_samples_.threads_per_core_)::value_type>(value);
+            } else if (detail::starts_with(line, "Core(s) per socket")) {
+                general_samples_.cores_per_socket_ = detail::convert_to<decltype(general_samples_.cores_per_socket_)::value_type>(value);
+            } else if (detail::starts_with(line, "Socket(s)")) {
+                general_samples_.num_sockets_ = detail::convert_to<decltype(general_samples_.num_sockets_)::value_type>(value);
+            } else if (detail::starts_with(line, "NUMA node(s)")) {
+                general_samples_.numa_nodes_ = detail::convert_to<decltype(general_samples_.numa_nodes_)::value_type>(value);
+            } else if (detail::starts_with(line, "Vendor ID")) {
+                general_samples_.vendor_id_ = detail::convert_to<decltype(general_samples_.vendor_id_)::value_type>(value);
+            } else if (detail::starts_with(line, "Model name")) {
+                general_samples_.name_ = detail::convert_to<decltype(general_samples_.name_)::value_type>(value);
+            } else if (detail::starts_with(line, "Flags")) {
+                general_samples_.flags_ = detail::split_as<decltype(general_samples_.flags_)::value_type::value_type>(value, ' ');
+            } else if (detail::starts_with(line, "Frequency boost")) {
+                clock_samples_.frequency_boost_ = value == "enabled";
+            } else if (detail::starts_with(line, "CPU max MHz")) {
+                clock_samples_.min_frequency_ = detail::convert_to<decltype(clock_samples_.min_frequency_)::value_type>(value);
+            } else if (detail::starts_with(line, "CPU min MHz")) {
+                clock_samples_.max_frequency_ = detail::convert_to<decltype(clock_samples_.max_frequency_)::value_type>(value);
+            } else if (detail::starts_with(line, "L1d cache")) {
+                memory_samples_.l1d_cache_ = detail::convert_to<decltype(memory_samples_.l1d_cache_)::value_type>(value);
+            } else if (detail::starts_with(line, "L1i cache")) {
+                memory_samples_.l1i_cache_ = detail::convert_to<decltype(memory_samples_.l1i_cache_)::value_type>(value);
+            } else if (detail::starts_with(line, "L2 cache")) {
+                memory_samples_.l2_cache_ = detail::convert_to<decltype(memory_samples_.l2_cache_)::value_type>(value);
+            } else if (detail::starts_with(line, "L3 cache")) {
+                memory_samples_.l3_cache_ = detail::convert_to<decltype(memory_samples_.l3_cache_)::value_type>(value);
+            }
         }
-        // get stdout handle and read data
-        std::FILE *stdout_handle = subprocess_stdout(&proc);
-        std::string buffer(static_cast<std::string::size_type>(4096), '\0');  // 4096 character should be enough
-        const std::size_t bytes_read = std::fread(buffer.data(), sizeof(typename decltype(buffer)::value_type), buffer.size(), stdout_handle);
-        if (bytes_read == 0) {
-            throw hardware_sampling_exception{ "Error in lscpu: no bytes were read!" };
-        }
-        lscpu_data_lines_ = detail::split_as<std::string>(buffer, '\n');
     }
 #endif
 
 #if defined(PLSSVM_HARDWARE_TRACKING_VIA_TURBOSTAT_ENABLED)
     {
-        // -i, --interval    sampling interval in seconds (decimal number)
-        // -S, --Summary     limits output to 1-line per interval
-        // -q, --quiet       skip decoding system configuration header
-        // -e, --enable      enable the additional Time_Of_Day_Seconds column
+        // -n, --num_iterations     number of the measurement iterations
+        // -i, --interval           sampling interval in seconds (decimal number)
+        // -S, --Summary            limits output to 1-line per interval
+        // -q, --quiet              skip decoding system configuration header
 
-        const std::string interval = fmt::format("{}", std::chrono::duration<double>{ this->sampling_interval() }.count());
-
+        // get header information
     #if defined(PLSSVM_HARDWARE_TRACKING_VIA_TURBOSTAT_ROOT)
-        // must use sudo
-        const std::array<const char *, 9> command_line = { "sudo", "turbostat", "-i", interval.data(), "-S", "-q", "-e", "Time_Of_Day_Seconds", nullptr };
+        // run with sudo
+        const std::string_view command_line = "sudo turbostat -n 1 -i 0.001 -S -q";
     #else
-        // can run without sudo
-        const std::array<const char *, 8> command_line = { "turbostat", "-i", interval.data(), "-S", "-q", "-e", "Time_Of_Day_Seconds", nullptr };
+        // run without sudo
+        const std::string_view command_line = "turbostat -n 1 -i 0.001 -S -q";
     #endif
+        {
+            // run turbostat
+            const auto &[turbostat_data, turbostat_error] = run_subprocess(command_line);
 
-        // create subprocess
-        subprocess_s proc{};
-        PLSSVM_SUBPROCESS_ERROR_CHECK(subprocess_create(command_line.data(), options, &proc));
+            // retrieve the turbostat data
+            const std::vector<std::string_view> data = detail::split(turbostat_data, '\n');
+            PLSSVM_ASSERT(data.size() == 2, "Must read exactly two lines, but read {} lines!", data.size());
+            const std::vector<std::string_view> header = detail::split(data[0], '\t');
+            const std::vector<std::string_view> values = detail::split(data[1], '\t');
+
+            for (std::size_t i = 0; i < header.size(); ++i) {
+                if (header[i] == "Avg_MHz") {
+                    using vector_type = decltype(clock_samples_.average_frequency_)::value_type;
+                    clock_samples_.average_frequency_ = vector_type{ detail::convert_to<typename vector_type::value_type>(values[i]) };
+                } else if (header[i] == "Busy%") {
+                    using vector_type = decltype(general_samples_.busy_percent_)::value_type;
+                    general_samples_.busy_percent_ = vector_type{ detail::convert_to<typename vector_type::value_type>(values[i]) };
+                } else if (header[i] == "Bzy_MHz") {
+                    using vector_type = decltype(clock_samples_.average_non_idle_frequency_)::value_type;
+                    clock_samples_.average_non_idle_frequency_ = vector_type{ detail::convert_to<typename vector_type::value_type>(values[i]) };
+                } else if (header[i] == "TSC_MHz") {
+                    using vector_type = decltype(clock_samples_.time_stamp_counter_)::value_type;
+                    clock_samples_.time_stamp_counter_ = vector_type{ detail::convert_to<typename vector_type::value_type>(values[i]) };
+                } else if (header[i] == "IPC") {
+                    using vector_type = decltype(general_samples_.ipc_)::value_type;
+                    general_samples_.ipc_ = vector_type{ detail::convert_to<typename vector_type::value_type>(values[i]) };
+                } else if (header[i] == "IRQ") {
+                    using vector_type = decltype(general_samples_.irq_)::value_type;
+                    general_samples_.irq_ = vector_type{ detail::convert_to<typename vector_type::value_type>(values[i]) };
+                } else if (header[i] == "SMI") {
+                    using vector_type = decltype(general_samples_.smi_)::value_type;
+                    general_samples_.smi_ = vector_type{ detail::convert_to<typename vector_type::value_type>(values[i]) };
+                } else if (header[i] == "POLL") {
+                    using vector_type = decltype(general_samples_.poll_)::value_type;
+                    general_samples_.poll_ = vector_type{ detail::convert_to<typename vector_type::value_type>(values[i]) };
+                } else if (header[i] == "POLL%") {
+                    using vector_type = decltype(general_samples_.poll_percent_)::value_type;
+                    general_samples_.poll_percent_ = vector_type{ detail::convert_to<typename vector_type::value_type>(values[i]) };
+                } else if (header[i] == "CoreTmp") {
+                    using vector_type = decltype(temperature_samples_.core_temperature_)::value_type;
+                    temperature_samples_.core_temperature_ = vector_type{ detail::convert_to<typename vector_type::value_type>(values[i]) };
+                } else if (header[i] == "CoreThr") {
+                    using vector_type = decltype(temperature_samples_.core_throttle_percent_)::value_type;
+                    temperature_samples_.core_throttle_percent_ = vector_type{ detail::convert_to<typename vector_type::value_type>(values[i]) };
+                } else if (header[i] == "PkgTmp") {
+                    using vector_type = decltype(temperature_samples_.package_temperature_)::value_type;
+                    temperature_samples_.package_temperature_ = vector_type{ detail::convert_to<typename vector_type::value_type>(values[i]) };
+                } else if (header[i] == "GFX%rc6") {
+                    using vector_type = decltype(gfx_samples_.gfx_render_state_percent_)::value_type;
+                    gfx_samples_.gfx_render_state_percent_ = vector_type{ detail::convert_to<typename vector_type::value_type>(values[i]) };
+                } else if (header[i] == "GFXMHz") {
+                    using vector_type = decltype(gfx_samples_.gfx_frequency_)::value_type;
+                    gfx_samples_.gfx_frequency_ = vector_type{ detail::convert_to<typename vector_type::value_type>(values[i]) };
+                } else if (header[i] == "GFXAMHz") {
+                    using vector_type = decltype(gfx_samples_.average_gfx_frequency_)::value_type;
+                    gfx_samples_.average_gfx_frequency_ = vector_type{ detail::convert_to<typename vector_type::value_type>(values[i]) };
+                } else if (header[i] == "Totl%C0") {
+                    using vector_type = decltype(idle_state_samples_.all_cpus_state_c0_percent_)::value_type;
+                    idle_state_samples_.all_cpus_state_c0_percent_ = vector_type{ detail::convert_to<typename vector_type::value_type>(values[i]) };
+                } else if (header[i] == "Any%C0") {
+                    using vector_type = decltype(idle_state_samples_.any_cpu_state_c0_percent_)::value_type;
+                    idle_state_samples_.any_cpu_state_c0_percent_ = vector_type{ detail::convert_to<typename vector_type::value_type>(values[i]) };
+                } else if (header[i] == "GFX%C0") {
+                    using vector_type = decltype(gfx_samples_.gfx_state_c0_percent_)::value_type;
+                    gfx_samples_.gfx_state_c0_percent_ = vector_type{ detail::convert_to<typename vector_type::value_type>(values[i]) };
+                } else if (header[i] == "CPUGFX%") {
+                    using vector_type = decltype(gfx_samples_.cpu_works_for_gpu_percent_)::value_type;
+                    gfx_samples_.cpu_works_for_gpu_percent_ = vector_type{ detail::convert_to<typename vector_type::value_type>(values[i]) };
+                } else if (header[i] == "CPU%LPI") {
+                    using vector_type = decltype(idle_state_samples_.low_power_idle_state_percent_)::value_type;
+                    idle_state_samples_.low_power_idle_state_percent_ = vector_type{ detail::convert_to<typename vector_type::value_type>(values[i]) };
+                } else if (header[i] == "SYS%LPI") {
+                    using vector_type = decltype(idle_state_samples_.system_low_power_idle_state_percent_)::value_type;
+                    idle_state_samples_.system_low_power_idle_state_percent_ = vector_type{ detail::convert_to<typename vector_type::value_type>(values[i]) };
+                } else if (header[i] == "Pkg%LPI") {
+                    using vector_type = decltype(idle_state_samples_.package_low_power_idle_state_percent_)::value_type;
+                    idle_state_samples_.package_low_power_idle_state_percent_ = vector_type{ detail::convert_to<typename vector_type::value_type>(values[i]) };
+                } else if (header[i] == "PkgWatt") {
+                    using vector_type = decltype(power_samples_.package_watt_)::value_type;
+                    idle_state_samples_.package_low_power_idle_state_percent_ = vector_type{ detail::convert_to<typename vector_type::value_type>(values[i]) };
+                } else if (header[i] == "CorWatt") {
+                    using vector_type = decltype(power_samples_.core_watt_)::value_type;
+                    power_samples_.core_watt_ = vector_type{ detail::convert_to<typename vector_type::value_type>(values[i]) };
+                } else if (header[i] == "GFXWatt") {
+                    using vector_type = decltype(gfx_samples_.gfx_watt_)::value_type;
+                    gfx_samples_.gfx_watt_ = vector_type{ detail::convert_to<typename vector_type::value_type>(values[i]) };
+                } else if (header[i] == "RAMWatt") {
+                    using vector_type = decltype(power_samples_.ram_watt_)::value_type;
+                    power_samples_.ram_watt_ = vector_type{ detail::convert_to<typename vector_type::value_type>(values[i]) };
+                } else if (header[i] == "PKG_%") {
+                    using vector_type = decltype(power_samples_.package_rapl_throttle_percent_)::value_type;
+                    power_samples_.package_rapl_throttle_percent_ = vector_type{ detail::convert_to<typename vector_type::value_type>(values[i]) };
+                } else if (header[i] == "RAM_%") {
+                    using vector_type = decltype(power_samples_.dram_rapl_throttle_percent_)::value_type;
+                    power_samples_.dram_rapl_throttle_percent_ = vector_type{ detail::convert_to<typename vector_type::value_type>(values[i]) };
+                } else {
+                    // test against regex
+                    const std::string header_str{ header[i] };
+                    const std::regex reg{ std::string{ "CPU%[0-9a-zA-Z]+|Pkg%[0-9a-zA-Z]+|Pk%[0-9a-zA-Z]+|C[0-9a-zA-Z]+%|C[0-9a-zA-Z]+" }, std::regex::extended };
+                    if (std::regex_match(header_str, reg)) {
+                        // first time this branch is reached -> create optional value
+                        if (!idle_state_samples_.idle_states_.has_value()) {
+                            idle_state_samples_.idle_states_ = std::make_optional<typename cpu_idle_states_samples::map_type>();
+                        }
+
+                        using vector_type = cpu_idle_states_samples::map_type::mapped_type;
+                        idle_state_samples_.idle_states_.value()[header_str] = vector_type{ detail::convert_to<typename vector_type::value_type>(values[i]) };
+                    }
+                }
+            }
+        }
 
         //
         // loop until stop_sampling() is called
         //
 
-        std::string buffer(static_cast<std::string::size_type>(4096), '\0');  // 4096 character should be enough
         while (!this->has_sampling_stopped()) {
             // only sample values if the sampler currently isn't paused
             if (this->is_sampling()) {
-                // read new stdout line
-                const unsigned read_size = subprocess_read_stdout(&proc, buffer.data(), buffer.size());
-                // add data if anything was read
-                if (read_size > 0u) {
-                    // get the read substring
-                    const std::string_view read_samples{ buffer.data(), static_cast<std::string::size_type>(read_size) };
-                    // split the substring on newlines
-                    std::vector<std::string> samples = detail::split_as<std::string>(read_samples, '\n');
-                    // append the new lines to the already read lines
-                    for (std::string &sample : samples) {
-                        if (!sample.empty()) {
-                            turbostat_data_lines_.push_back(std::move(sample));
+                // add current time point
+                this->add_time_point(std::chrono::system_clock::now());
+
+                // run turbostat
+                const auto &[turbostat_data, turbostat_error] = run_subprocess(command_line);
+
+                // retrieve the turbostat data
+                const std::vector<std::string_view> data = detail::split(turbostat_data, '\n');
+                PLSSVM_ASSERT(data.size() == 2, "Must read exactly two lines, but read {} lines!", data.size());
+                const std::vector<std::string_view> header = detail::split(data[0], '\t');
+                const std::vector<std::string_view> values = detail::split(data[1], '\t');
+
+                // add values to the respective sample entries
+                for (std::size_t i = 0; i < header.size(); ++i) {
+                    if (header[i] == "Avg_MHz") {
+                        using vector_type = decltype(clock_samples_.average_frequency_)::value_type;
+                        clock_samples_.average_frequency_->push_back(detail::convert_to<typename vector_type::value_type>(values[i]));
+                    } else if (header[i] == "Busy%") {
+                        using vector_type = decltype(general_samples_.busy_percent_)::value_type;
+                        general_samples_.busy_percent_->push_back(detail::convert_to<typename vector_type::value_type>(values[i]));
+                    } else if (header[i] == "Bzy_MHz") {
+                        using vector_type = decltype(clock_samples_.average_non_idle_frequency_)::value_type;
+                        clock_samples_.average_non_idle_frequency_->push_back(detail::convert_to<typename vector_type::value_type>(values[i]));
+                    } else if (header[i] == "TSC_MHz") {
+                        using vector_type = decltype(clock_samples_.time_stamp_counter_)::value_type;
+                        clock_samples_.time_stamp_counter_->push_back(detail::convert_to<typename vector_type::value_type>(values[i]));
+                    } else if (header[i] == "IPC") {
+                        using vector_type = decltype(general_samples_.ipc_)::value_type;
+                        general_samples_.ipc_->push_back(detail::convert_to<typename vector_type::value_type>(values[i]));
+                    } else if (header[i] == "IRQ") {
+                        using vector_type = decltype(general_samples_.irq_)::value_type;
+                        general_samples_.irq_->push_back(detail::convert_to<typename vector_type::value_type>(values[i]));
+                    } else if (header[i] == "SMI") {
+                        using vector_type = decltype(general_samples_.smi_)::value_type;
+                        general_samples_.smi_->push_back(detail::convert_to<typename vector_type::value_type>(values[i]));
+                    } else if (header[i] == "POLL") {
+                        using vector_type = decltype(general_samples_.poll_)::value_type;
+                        general_samples_.poll_->push_back(detail::convert_to<typename vector_type::value_type>(values[i]));
+                    } else if (header[i] == "POLL%") {
+                        using vector_type = decltype(general_samples_.poll_percent_)::value_type;
+                        general_samples_.poll_percent_->push_back(detail::convert_to<typename vector_type::value_type>(values[i]));
+                    } else if (header[i] == "CoreTmp") {
+                        using vector_type = decltype(temperature_samples_.core_temperature_)::value_type;
+                        temperature_samples_.core_temperature_->push_back(detail::convert_to<typename vector_type::value_type>(values[i]));
+                    } else if (header[i] == "CoreThr") {
+                        using vector_type = decltype(temperature_samples_.core_throttle_percent_)::value_type;
+                        temperature_samples_.core_throttle_percent_->push_back(detail::convert_to<typename vector_type::value_type>(values[i]));
+                    } else if (header[i] == "PkgTmp") {
+                        using vector_type = decltype(temperature_samples_.package_temperature_)::value_type;
+                        temperature_samples_.package_temperature_->push_back(detail::convert_to<typename vector_type::value_type>(values[i]));
+                    } else if (header[i] == "GFX%rc6") {
+                        using vector_type = decltype(gfx_samples_.gfx_render_state_percent_)::value_type;
+                        gfx_samples_.gfx_render_state_percent_->push_back(detail::convert_to<typename vector_type::value_type>(values[i]));
+                    } else if (header[i] == "GFXMHz") {
+                        using vector_type = decltype(gfx_samples_.gfx_frequency_)::value_type;
+                        gfx_samples_.gfx_frequency_->push_back(detail::convert_to<typename vector_type::value_type>(values[i]));
+                    } else if (header[i] == "GFXAMHz") {
+                        using vector_type = decltype(gfx_samples_.average_gfx_frequency_)::value_type;
+                        gfx_samples_.average_gfx_frequency_->push_back(detail::convert_to<typename vector_type::value_type>(values[i]));
+                    } else if (header[i] == "Totl%C0") {
+                        using vector_type = decltype(idle_state_samples_.all_cpus_state_c0_percent_)::value_type;
+                        idle_state_samples_.all_cpus_state_c0_percent_->push_back(detail::convert_to<typename vector_type::value_type>(values[i]));
+                    } else if (header[i] == "Any%C0") {
+                        using vector_type = decltype(idle_state_samples_.any_cpu_state_c0_percent_)::value_type;
+                        idle_state_samples_.any_cpu_state_c0_percent_->push_back(detail::convert_to<typename vector_type::value_type>(values[i]));
+                    } else if (header[i] == "GFX%C0") {
+                        using vector_type = decltype(gfx_samples_.gfx_state_c0_percent_)::value_type;
+                        gfx_samples_.gfx_state_c0_percent_->push_back(detail::convert_to<typename vector_type::value_type>(values[i]));
+                    } else if (header[i] == "CPUGFX%") {
+                        using vector_type = decltype(gfx_samples_.cpu_works_for_gpu_percent_)::value_type;
+                        gfx_samples_.cpu_works_for_gpu_percent_->push_back(detail::convert_to<typename vector_type::value_type>(values[i]));
+                    } else if (header[i] == "CPU%LPI") {
+                        using vector_type = decltype(idle_state_samples_.low_power_idle_state_percent_)::value_type;
+                        idle_state_samples_.low_power_idle_state_percent_->push_back(detail::convert_to<typename vector_type::value_type>(values[i]));
+                    } else if (header[i] == "SYS%LPI") {
+                        using vector_type = decltype(idle_state_samples_.system_low_power_idle_state_percent_)::value_type;
+                        idle_state_samples_.system_low_power_idle_state_percent_->push_back(detail::convert_to<typename vector_type::value_type>(values[i]));
+                    } else if (header[i] == "Pkg%LPI") {
+                        using vector_type = decltype(idle_state_samples_.package_low_power_idle_state_percent_)::value_type;
+                        idle_state_samples_.package_low_power_idle_state_percent_->push_back(detail::convert_to<typename vector_type::value_type>(values[i]));
+                    } else if (header[i] == "PkgWatt") {
+                        using vector_type = decltype(power_samples_.package_watt_)::value_type;
+                        idle_state_samples_.package_low_power_idle_state_percent_->push_back(detail::convert_to<typename vector_type::value_type>(values[i]));
+                    } else if (header[i] == "CorWatt") {
+                        using vector_type = decltype(power_samples_.core_watt_)::value_type;
+                        power_samples_.core_watt_->push_back(detail::convert_to<typename vector_type::value_type>(values[i]));
+                    } else if (header[i] == "GFXWatt") {
+                        using vector_type = decltype(gfx_samples_.gfx_watt_)::value_type;
+                        gfx_samples_.gfx_watt_->push_back(detail::convert_to<typename vector_type::value_type>(values[i]));
+                    } else if (header[i] == "RAMWatt") {
+                        using vector_type = decltype(power_samples_.ram_watt_)::value_type;
+                        power_samples_.ram_watt_->push_back(detail::convert_to<typename vector_type::value_type>(values[i]));
+                    } else if (header[i] == "PKG_%") {
+                        using vector_type = decltype(power_samples_.package_rapl_throttle_percent_)::value_type;
+                        power_samples_.package_rapl_throttle_percent_->push_back(detail::convert_to<typename vector_type::value_type>(values[i]));
+                    } else if (header[i] == "RAM_%") {
+                        using vector_type = decltype(power_samples_.dram_rapl_throttle_percent_)::value_type;
+                        power_samples_.dram_rapl_throttle_percent_->push_back(detail::convert_to<typename vector_type::value_type>(values[i]));
+                    } else {
+                        const std::string header_str{ header[i] };
+                        if (detail::contains(idle_state_samples_.idle_states_.value(), header_str)) {
+                            using vector_type = cpu_idle_states_samples::map_type::mapped_type;
+                            idle_state_samples_.idle_states_.value()[header_str].push_back(detail::convert_to<typename vector_type::value_type>(values[i]));
                         }
                     }
                 }
             }
-        }
 
-        // terminate subprocess -> same as strg + c for turbostat
-        PLSSVM_SUBPROCESS_ERROR_CHECK(subprocess_destroy(&proc));
+            // wait for the sampling interval to pass to retrieve the next sample
+            std::this_thread::sleep_for(this->sampling_interval());
+        }
     }
 #endif
 }

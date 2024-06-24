@@ -13,6 +13,7 @@
 #define PLSSVM_DETAIL_TRACKING_CPU_HARDWARE_SAMPLER_HPP_
 #pragma once
 
+#include "plssvm/detail/tracking/cpu/cpu_samples.hpp"   // plssvm::detail::tracking::{cpu_general_samples, clock_samples, power_samples, memory_samples, temperature_samples, gfx_samples, idle_state_samples}
 #include "plssvm/detail/tracking/hardware_sampler.hpp"  // plssvm::detail::tracking::hardware_sampler
 
 #include <chrono>  // std::chrono::{system_clock::time_point, milliseconds}, std::chrono_literals namespace
@@ -34,6 +35,20 @@ class cpu_hardware_sampler : public hardware_sampler {
 
     ~cpu_hardware_sampler() override;
 
+    [[nodiscard]] const cpu_general_samples &general_samples() const noexcept { return general_samples_; }
+
+    [[nodiscard]] const cpu_clock_samples &clock_samples() const noexcept { return clock_samples_; }
+
+    [[nodiscard]] const cpu_power_samples &power_samples() const noexcept { return power_samples_; }
+
+    [[nodiscard]] const cpu_memory_samples &memory_samples() const noexcept { return memory_samples_; }
+
+    [[nodiscard]] const cpu_temperature_samples &temperature_samples() const noexcept { return temperature_samples_; }
+
+    [[nodiscard]] const cpu_gfx_samples &gfx_samples() const noexcept { return gfx_samples_; }
+
+    [[nodiscard]] const cpu_idle_states_samples &idle_state_samples() const noexcept { return idle_state_samples_; }
+
     [[nodiscard]] std::string device_identification() const override;
 
     [[nodiscard]] std::string generate_yaml_string(std::chrono::system_clock::time_point start_time_point) const override;
@@ -41,8 +56,13 @@ class cpu_hardware_sampler : public hardware_sampler {
   private:
     void sampling_loop() final;
 
-    std::vector<std::string> lscpu_data_lines_{};
-    std::vector<std::string> turbostat_data_lines_{};
+    cpu_general_samples general_samples_;
+    cpu_clock_samples clock_samples_;
+    cpu_power_samples power_samples_;
+    cpu_memory_samples memory_samples_;
+    cpu_temperature_samples temperature_samples_;
+    cpu_gfx_samples gfx_samples_;
+    cpu_idle_states_samples idle_state_samples_;
 };
 
 }  // namespace plssvm::detail::tracking
