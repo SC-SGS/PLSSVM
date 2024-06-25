@@ -195,9 +195,8 @@ if (PLSSVM_ENABLE_HARDWARE_SAMPLING)
     ####################################################################################################################
     if (DEFINED PLSSVM_INTEL_TARGET_ARCHS)
         # try finding Level Zero
-        # find_package(LevelZero REQUIRED)
-        target_link_libraries(${PLSSVM_HARDWARE_TRACKING_LIBRARY_NAME} PRIVATE LevelZero::LevelZero)
-        target_include_directories(${PLSSVM_HARDWARE_TRACKING_LIBRARY_NAME} PRIVATE ${LevelZero_INCLUDE_DIRS})
+        find_package(level_zero REQUIRED)
+        target_link_libraries(${PLSSVM_HARDWARE_TRACKING_LIBRARY_NAME} PRIVATE level_zero)
         
         message(STATUS "Enable sampling of Intel GPU information using Level Zero.")
         
@@ -205,6 +204,7 @@ if (PLSSVM_ENABLE_HARDWARE_SAMPLING)
         target_sources(${PLSSVM_HARDWARE_TRACKING_LIBRARY_NAME} PRIVATE
                        $<BUILD_INTERFACE:
                        ${CMAKE_CURRENT_SOURCE_DIR}/gpu_intel/hardware_sampler.cpp;
+                       ${CMAKE_CURRENT_SOURCE_DIR}/gpu_intel/level_zero_samples.cpp;
                        ${CMAKE_CURRENT_SOURCE_DIR}/gpu_intel/utility.cpp
                        >)
         

@@ -8,10 +8,11 @@
 
 #include "plssvm/detail/tracking/gpu_intel/hardware_sampler.hpp"
 
-#include "plssvm/detail/tracking/gpu_intel/utility.hpp"  // PLSSVM_LEVEL_ZERO_ERROR_CHECK
-#include "plssvm/detail/tracking/hardware_sampler.hpp"   // plssvm::detail::tracking::hardware_sampler
-#include "plssvm/detail/tracking/utility.hpp"            // plssvm::detail::tracking::durations_from_reference_time
-#include "plssvm/exceptions/exceptions.hpp"              // plssvm::exception, plssvm::hardware_sampling_exception
+#include "plssvm/detail/tracking/gpu_intel/level_zero_device_handle_impl.hpp"  // plssvm::detail::tracking::level_zero_device_handle_impl
+#include "plssvm/detail/tracking/gpu_intel/utility.hpp"                        // PLSSVM_LEVEL_ZERO_ERROR_CHECK
+#include "plssvm/detail/tracking/hardware_sampler.hpp"                         // plssvm::detail::tracking::hardware_sampler
+#include "plssvm/detail/tracking/utility.hpp"                                  // plssvm::detail::tracking::durations_from_reference_time
+#include "plssvm/exceptions/exceptions.hpp"                                    // plssvm::exception, plssvm::hardware_sampling_exception
 
 #include "fmt/chrono.h"          // format std::chrono types
 #include "fmt/core.h"            // fmt::format
@@ -32,8 +33,7 @@
 namespace plssvm::detail::tracking {
 
 gpu_intel_hardware_sampler::gpu_intel_hardware_sampler(const std::size_t device_id, const std::chrono::milliseconds sampling_interval) :
-    hardware_sampler{ sampling_interval },
-    device_id_{ device_id } {
+    hardware_sampler{ sampling_interval } {
     // make sure that zeInit is only called once for all instances
     if (instances_++ == 0) {
         PLSSVM_LEVEL_ZERO_ERROR_CHECK(zeInit(ZE_INIT_FLAG_GPU_ONLY));
@@ -44,7 +44,8 @@ gpu_intel_hardware_sampler::gpu_intel_hardware_sampler(const std::size_t device_
         while (!init_finished_) { }
     }
 
-    // TODO: get the level zero version: zeDriverGetApiVersion
+    // initialize samples -> can't be done beforehand since the device handle can only be initialized after a call to nvmlInit
+    device_ = level_zero_device_handle{ device_id };
 }
 
 gpu_intel_hardware_sampler::~gpu_intel_hardware_sampler() {
@@ -64,7 +65,7 @@ gpu_intel_hardware_sampler::~gpu_intel_hardware_sampler() {
 }
 
 std::string gpu_intel_hardware_sampler::device_identification() const {
-    return fmt::format("gpu_intel_device_{}", device_id_);
+    return fmt::format("gpu_intel_device_");  // TODO:
 }
 
 std::string gpu_intel_hardware_sampler::generate_yaml_string(const std::chrono::steady_clock::time_point start_time_point) const {
@@ -75,14 +76,24 @@ std::string gpu_intel_hardware_sampler::generate_yaml_string(const std::chrono::
 
     return fmt::format("\n"
                        "    sampling_interval: {}\n"
-                       "    time_points: [{}]\n",
+                       "    time_points: [{}]\n"
+                       "{}\n"
+                       "{}\n"
+                       "{}\n"
+                       "{}\n"
+                       "{}",
                        this->sampling_interval(),
-                       fmt::join(durations_from_reference_time(this->time_points(), start_time_point), ", "));
+                       fmt::join(durations_from_reference_time(this->time_points(), start_time_point), ", "),
+                       general_samples_.generate_yaml_string(),
+                       clock_samples_.generate_yaml_string(),
+                       power_samples_.generate_yaml_string(),
+                       memory_samples_.generate_yaml_string(),
+                       temperature_samples_.generate_yaml_string());
 }
 
 void gpu_intel_hardware_sampler::sampling_loop() {
-    // get the TODO handle from the device_id
-    // TODO: GET INTEL DEVICE?
+    // get the level zero handle from the device
+    zes_device_handle_t device = device_.get_impl().device;
 
     //
     // add samples where we only have to retrieve the value once
@@ -106,6 +117,23 @@ void gpu_intel_hardware_sampler::sampling_loop() {
         // wait for the sampling interval to pass to retrieve the next sample
         std::this_thread::sleep_for(this->sampling_interval());
     }
+}
+
+std::ostream &operator<<(std::ostream &out, const gpu_intel_hardware_sampler &sampler) {
+    return out << fmt::format("sampling interval: {}\n"
+                              "time points: [{}]\n\n"
+                              "general samples:\n{}\n\n"
+                              "clock samples:\n{}\n\n"
+                              "power samples:\n{}\n\n"
+                              "memory samples:\n{}\n\n"
+                              "temperature samples:\n{}",
+                              sampler.sampling_interval(),
+                              fmt::join(time_points_to_epoch(sampler.time_points()), ", "),
+                              sampler.general_samples(),
+                              sampler.clock_samples(),
+                              sampler.power_samples(),
+                              sampler.memory_samples(),
+                              sampler.temperature_samples());
 }
 
 }  // namespace plssvm::detail::tracking
