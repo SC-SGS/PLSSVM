@@ -205,7 +205,7 @@ pipeline {
                 axes {
                     axis {
                         name 'BACKEND'
-                        values 'OPENMP', 'CUDA', 'OPENCL', 'DPCPP', 'ADAPTIVECPP', 'HIP', 'STDPAR-GNU-TBB', 'STDPAR-DPCPP', 'STDPAR-ADAPTIVECPP', 'STDPAR-ROC', 'STDPAR-NVHPC'
+                        values 'OPENMP', 'CUDA', 'OPENCL', 'DPCPP', 'ADAPTIVECPP', 'HIP', 'STDPAR-GNU-TBB', 'STDPAR-DPCPP', 'STDPAR-ADAPTIVECPP', 'STDPAR-NVHPC' //, 'STDPAR-ROC'
                     }
                     axis {
                         name 'ARCHITECTURE'
@@ -224,7 +224,7 @@ pipeline {
                     exclude {
                       axis{
                         name 'BACKEND'
-                        values 'HIP', 'STDPAR-ROC'
+                        values 'HIP'//, 'STDPAR-ROC'
                       }
                       axis{
                         name 'ARCHITECTURE'
@@ -302,7 +302,7 @@ pipeline {
                         steps{
                                 sh '''
                                         if [ "$BUILD_TYPE" == Release ]; then
-                                            export NUM_DATA_POINTS=100
+                                            export NUM_DATA_POINTS=200
                                             export NUM_FEATURES=20
                                         else
                                             export NUM_DATA_POINTS=20
