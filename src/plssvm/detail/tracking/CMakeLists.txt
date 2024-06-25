@@ -27,7 +27,7 @@ if (PLSSVM_ENABLE_HARDWARE_SAMPLING)
     )
     
     ## set target properties
-    set(PLSSVM_HARDWARE_TRACKING_LIBRARY_NAME plssvm-tracking)
+    set_local_and_parent(PLSSVM_HARDWARE_TRACKING_LIBRARY_NAME plssvm-tracking)
     add_library(${PLSSVM_HARDWARE_TRACKING_LIBRARY_NAME} SHARED ${PLSSVM_HARDWARE_TRACKING_SOURCES})
     target_sources(${PLSSVM_BASE_LIBRARY_NAME} PRIVATE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/hardware_sampler.cpp>)
     

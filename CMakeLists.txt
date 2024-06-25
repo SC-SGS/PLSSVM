@@ -649,19 +649,19 @@ if (PLSSVM_ENABLE_TESTING)
 endif ()
 
 ########################################################################################################################
-##                                              enable language bindings                                              ##
+##                                 enable performance tracking and hardware sampling                                  ##
 ########################################################################################################################
-option(PLSSVM_ENABLE_LANGUAGE_BINDINGS "Build langauge bindings, e.g., for Python." OFF)
-if (PLSSVM_ENABLE_LANGUAGE_BINDINGS)
-    add_subdirectory(bindings)
+option(PLSSVM_ENABLE_PERFORMANCE_TRACKING "Enable performance tracking to YAML files for the PLSSVM executables plssvm-train, plssvm-predict, and plssvm-scale." OFF)
+if (PLSSVM_ENABLE_PERFORMANCE_TRACKING)
+    add_subdirectory(src/plssvm/detail/tracking)
 endif ()
 
 ########################################################################################################################
 ##                                              enable language bindings                                              ##
 ########################################################################################################################
-option(PLSSVM_ENABLE_PERFORMANCE_TRACKING "Enable performance tracking to YAML files for the PLSSVM executables plssvm-train, plssvm-predict, and plssvm-scale." OFF)
-if (PLSSVM_ENABLE_PERFORMANCE_TRACKING)
-    add_subdirectory(src/plssvm/detail/tracking)
+option(PLSSVM_ENABLE_LANGUAGE_BINDINGS "Build langauge bindings, e.g., for Python." OFF)
+if (PLSSVM_ENABLE_LANGUAGE_BINDINGS)
+    add_subdirectory(bindings)
 endif ()
 
 ########################################################################################################################

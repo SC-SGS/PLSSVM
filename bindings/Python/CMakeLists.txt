@@ -35,8 +35,6 @@ endif ()
 set(PLSSVM_PYTHON_BINDINGS_SOURCES
     ${CMAKE_CURRENT_LIST_DIR}/exceptions/exceptions.cpp
     
-    ${CMAKE_CURRENT_LIST_DIR}/detail/tracking/performance_tracker.cpp
-    
     ${CMAKE_CURRENT_LIST_DIR}/version/version.cpp
     
     ${CMAKE_CURRENT_LIST_DIR}/backend_types.cpp
@@ -57,7 +55,30 @@ set(PLSSVM_PYTHON_BINDINGS_SOURCES
     
     ${CMAKE_CURRENT_LIST_DIR}/main.cpp
 )
-# set backends specific source files if the respective backend is used
+
+# add performance tracker source if available
+get_target_property(PLSSVM_BASE_COMPILE_DEFINITIONS ${PLSSVM_BASE_LIBRARY_NAME} COMPILE_DEFINITIONS)
+if ("PLSSVM_PERFORMANCE_TRACKER_ENABLED" IN_LIST PLSSVM_BASE_COMPILE_DEFINITIONS)
+    list(APPEND PLSSVM_PYTHON_BINDINGS_SOURCES ${CMAKE_CURRENT_LIST_DIR}/detail/tracking/performance_tracker.cpp)
+    list(APPEND PLSSVM_PYTHON_BINDINGS_SOURCES ${CMAKE_CURRENT_LIST_DIR}/detail/tracking/events.cpp)
+endif ()
+
+# add hardware sampling specific source files if the respective sampling is used
+if (TARGET ${PLSSVM_HARDWARE_TRACKING_LIBRARY_NAME})
+    list(APPEND PLSSVM_PYTHON_BINDINGS_SOURCES ${CMAKE_CURRENT_LIST_DIR}/detail/tracking/hardware_sampler.cpp)
+    get_target_property(PLSSVM_HARDWARE_TRACKING_COMPILE_DEFINITIONS ${PLSSVM_HARDWARE_TRACKING_LIBRARY_NAME} COMPILE_DEFINITIONS)
+    if ("PLSSVM_HARDWARE_TRACKING_FOR_CPUS_ENABLED" IN_LIST PLSSVM_HARDWARE_TRACKING_COMPILE_DEFINITIONS)
+        list(APPEND PLSSVM_PYTHON_BINDINGS_SOURCES ${CMAKE_CURRENT_LIST_DIR}/detail/tracking/cpu_hardware_sampler.cpp)
+    endif ()
+    if ("PLSSVM_HARDWARE_TRACKING_FOR_NVIDIA_GPUS_ENABLED" IN_LIST PLSSVM_HARDWARE_TRACKING_COMPILE_DEFINITIONS)
+        list(APPEND PLSSVM_PYTHON_BINDINGS_SOURCES ${CMAKE_CURRENT_LIST_DIR}/detail/tracking/gpu_nvidia_hardware_sampler.cpp)
+    endif ()
+    if ("PLSSVM_HARDWARE_TRACKING_FOR_AMD_GPUS_ENABLED" IN_LIST PLSSVM_HARDWARE_TRACKING_COMPILE_DEFINITIONS)
+        list(APPEND PLSSVM_PYTHON_BINDINGS_SOURCES ${CMAKE_CURRENT_LIST_DIR}/detail/tracking/gpu_amd_hardware_sampler.cpp)
+    endif ()
+endif ()
+
+# add backends specific source files if the respective backend is used
 if (TARGET ${PLSSVM_OPENMP_BACKEND_LIBRARY_NAME})
     list(APPEND PLSSVM_PYTHON_BINDINGS_SOURCES ${CMAKE_CURRENT_LIST_DIR}/backends/openmp_csvm.cpp)
 endif ()
