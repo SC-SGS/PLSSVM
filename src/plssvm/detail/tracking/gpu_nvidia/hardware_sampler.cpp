@@ -108,7 +108,7 @@ std::string gpu_nvidia_hardware_sampler::generate_yaml_string(const std::chrono:
 }
 
 void gpu_nvidia_hardware_sampler::sampling_loop() {
-    // get the nvml handle from the device_id
+    // get the nvml handle from the device
     nvmlDevice_t device = device_.get_impl().device;
 
     //
@@ -220,6 +220,11 @@ void gpu_nvidia_hardware_sampler::sampling_loop() {
     // retrieve initial power related information
     {
         // fixed information -> only retrieved once
+        nvmlEnableState_t mode{};
+        if (nvmlDeviceGetPowerManagementMode(device, &mode) == NVML_SUCCESS) {
+            power_samples_.power_management_mode_ = mode == NVML_FEATURE_ENABLED;
+        }
+
         decltype(power_samples_.power_management_limit_)::value_type power_management_limit{};
         if (nvmlDeviceGetPowerManagementLimit(device, &power_management_limit) == NVML_SUCCESS) {
             power_samples_.power_management_limit_ = power_management_limit;

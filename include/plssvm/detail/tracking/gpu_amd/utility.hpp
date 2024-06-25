@@ -20,8 +20,12 @@
 
 namespace plssvm::detail::tracking {
 
+/**
+ * @def PLSSVM_ROCM_SMI_ERROR_CHECK
+ * @brief Defines the `PLSSVM_ROCM_SMI_ERROR_CHECK` macro if `PLSSVM_HARDWARE_SAMPLING_ERROR_CHECKS_ENABLED` is defined, does nothing otherwise.
+ * @details Throws an exception if a ROCm SMI call returns with an error. Additionally outputs a more concrete error string if possible.
+ */
 #if defined(PLSSVM_HARDWARE_SAMPLING_ERROR_CHECKS_ENABLED)
-
     #define PLSSVM_ROCM_SMI_ERROR_CHECK(rocm_smi_func)                                                                                                      \
         {                                                                                                                                                   \
             const rsmi_status_t errc = rocm_smi_func;                                                                                                       \
@@ -35,7 +39,6 @@ namespace plssvm::detail::tracking {
                 }                                                                                                                                           \
             }                                                                                                                                               \
         }
-
 #else
     #define PLSSVM_ROCM_SMI_ERROR_CHECK(rocm_smi_func) rocm_smi_func;
 #endif

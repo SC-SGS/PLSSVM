@@ -219,6 +219,13 @@ std::ostream &operator<<(std::ostream &out, const nvml_clock_samples &samples) {
 std::string nvml_power_samples::generate_yaml_string() const {
     std::string str{ "    power:\n" };
 
+    // the power management mode
+    if (this->power_management_mode_.has_value()) {
+        str += fmt::format("      power_management_mode:\n"
+                           "        unit: \"bool\"\n"
+                           "        values: {}\n",
+                           this->power_management_mode_.value());
+    }
     // power management limit
     if (this->power_management_limit_.has_value()) {
         str += fmt::format("      power_management_limit:\n"
@@ -268,11 +275,13 @@ std::string nvml_power_samples::generate_yaml_string() const {
 }
 
 std::ostream &operator<<(std::ostream &out, const nvml_power_samples &samples) {
-    return out << fmt::format("power_management_limit: {}\n"
+    return out << fmt::format("power_management_mode: {}\n"
+                              "power_management_limit: {}\n"
                               "power_enforced_limit: {}\n"
                               "power_state: [{}]\n"
                               "power_usage: [{}]\n"
                               "power_total_energy_consumption: [{}]",
+                              value_or_default(samples.get_power_management_mode()),
                               value_or_default(samples.get_power_management_limit()),
                               value_or_default(samples.get_power_enforced_limit()),
                               fmt::join(value_or_default(samples.get_power_state()), ", "),

@@ -23,12 +23,20 @@
 
 namespace plssvm::detail::tracking {
 
+/**
+ * @brief The PImpl implementation struct encapsulating a nvmlDevice_t.
+ */
 struct nvml_device_handle::nvml_device_handle_impl {
   public:
+    /**
+     * @brief Get the nvmlDevice_t for the device with ID @p device_id.
+     * @param[in] device_id the device to get the handle for
+     */
     explicit nvml_device_handle_impl(const std::size_t device_id) {
         PLSSVM_NVML_ERROR_CHECK(nvmlDeviceGetHandleByIndex(static_cast<int>(device_id), &device));
     }
 
+    /// The wrapped NVML device handle.
     nvmlDevice_t device{};
 };
 

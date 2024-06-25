@@ -20,8 +20,12 @@
 
 namespace plssvm::detail::tracking {
 
+/**
+ * @def PLSSVM_NVML_ERROR_CHECK
+ * @brief Defines the `PLSSVM_NVML_ERROR_CHECK` macro if `PLSSVM_HARDWARE_SAMPLING_ERROR_CHECKS_ENABLED` is defined, does nothing otherwise.
+ * @details Throws an exception if an NVML call returns with an error. Additionally outputs a more concrete error string.
+ */
 #if defined(PLSSVM_HARDWARE_SAMPLING_ERROR_CHECKS_ENABLED)
-
     #define PLSSVM_NVML_ERROR_CHECK(nvml_func)                                                                                                                              \
         {                                                                                                                                                                   \
             const nvmlReturn_t errc = nvml_func;                                                                                                                            \
@@ -29,7 +33,6 @@ namespace plssvm::detail::tracking {
                 throw hardware_sampling_exception{ fmt::format("Error in NVML function call \"{}\": {} ({})", #nvml_func, nvmlErrorString(errc), static_cast<int>(errc)) }; \
             }                                                                                                                                                               \
         }
-
 #else
     #define PLSSVM_NVML_ERROR_CHECK(nvml_func) nvml_func;
 #endif

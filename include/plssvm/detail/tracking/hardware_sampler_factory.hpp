@@ -25,8 +25,23 @@ namespace plssvm::detail::tracking {
 
 using namespace std::chrono_literals;
 
+/**
+ * @brief Create a hardware sampler for device @p device_id on the @p target platform.
+ * @param[in] target the target platform to create a hardware sampler for
+ * @param[in] device_id the device for which to create a hardware sampler for
+ * @param[in] sampling_interval the sampling interval to use; default value determined during CMake configuration
+ * @return the hardware sampler (`[[nodiscard]]`)
+ */
 [[nodiscard]] std::unique_ptr<hardware_sampler> make_hardware_sampler(target_platform target, std::size_t device_id, std::chrono::milliseconds sampling_interval = PLSSVM_HARDWARE_SAMPLING_INTERVAL);
 
+/**
+ * @brief Create @p num_devices many hardware samplers for the @p target platform.
+ * @details If available, the CPU is **always** sampled regardless the @p target platform. If the @p target is `plssvm::target_platform::cpu`, only one hardware sampler is created.
+ * @param[in] target the target platform that should be sampled
+ * @param[in] num_devices the number of devices to sample
+ * @param[in] sampling_interval the sampling interval to use; default value determined during CMake configuration
+ * @return all created hardware samplers (possible sampling different targets) (`[[nodiscard]]`)
+ */
 [[nodiscard]] std::vector<std::unique_ptr<hardware_sampler>> create_hardware_sampler(target_platform target, std::size_t num_devices, std::chrono::milliseconds sampling_interval = PLSSVM_HARDWARE_SAMPLING_INTERVAL);
 
 }  // namespace plssvm::detail::tracking

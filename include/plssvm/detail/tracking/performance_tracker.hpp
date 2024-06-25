@@ -341,8 +341,11 @@ void performance_tracker::add_tracking_entry(const tracking_entry<std::vector<T>
     }
 }
 
-/// The global performance tracker singleton function used for the default tracking.
-performance_tracker &global_performance_tracker();
+/**
+ * @brief The global performance tracker singleton function used for the default tracking.
+ * @return the global performance tracker singleton (`[[nodiscard]]`)
+ */
+[[nodiscard]] performance_tracker &global_performance_tracker();
 
 /**
  * @def PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_PAUSE
@@ -363,6 +366,11 @@ performance_tracker &global_performance_tracker();
  * @def PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY
  * @brief Defines the `PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY` macro if `PLSSVM_PERFORMANCE_TRACKER_ENABLED` is defined.
  * @details Adds the provided entry to the `plssvm::detail::tracking::performance_tracker` singleton if performance tracking has been enabled during the CMake configuration.
+ */
+/**
+ * @def PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_EVENT
+ * @brief Defines the `PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_EVENT` macro if `PLSSVM_PERFORMANCE_TRACKER_ENABLED` is defined.
+ * @details Adds the provided event (name) to the `plssvm::detail::tracking::performance_tracker` singleton if performance tracking has been enabled during the CMake configuration.
  */
 #if defined(PLSSVM_PERFORMANCE_TRACKER_ENABLED)
 
