@@ -93,7 +93,7 @@ std::string gpu_intel_hardware_sampler::generate_yaml_string(const std::chrono::
 
 void gpu_intel_hardware_sampler::sampling_loop() {
     // get the level zero handle from the device
-    zes_device_handle_t device = device_.get_impl().device;
+    ze_device_handle_t device = device_.get_impl().device;
 
     //
     // add samples where we only have to retrieve the value once

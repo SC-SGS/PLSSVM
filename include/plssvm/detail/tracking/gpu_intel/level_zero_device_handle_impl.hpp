@@ -56,7 +56,7 @@ struct level_zero_device_handle::level_zero_device_handle_impl {
         }
 
         // get the GPUs
-        std::vector<zes_device_handle_t> all_devices(device_count);
+        std::vector<ze_device_handle_t> all_devices(device_count);
         PLSSVM_LEVEL_ZERO_ERROR_CHECK(zeDeviceGet(driver, &device_count, all_devices.data()));
 
         // save the requested device
