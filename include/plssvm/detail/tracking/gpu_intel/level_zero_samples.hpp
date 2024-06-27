@@ -46,8 +46,10 @@ class level_zero_general_samples {
      */
     [[nodiscard]] std::string generate_yaml_string() const;
 
-    PLSSVM_SAMPLE_STRUCT_FIXED_MEMBER(std::string, name)          // the model name of the device
-    PLSSVM_SAMPLE_STRUCT_FIXED_MEMBER(std::string, standby_mode)  // the enabled standby mode (power saving or never)
+    PLSSVM_SAMPLE_STRUCT_FIXED_MEMBER(std::string, name)                  // the model name of the device
+    PLSSVM_SAMPLE_STRUCT_FIXED_MEMBER(std::string, standby_mode)          // the enabled standby mode (power saving or never)
+    PLSSVM_SAMPLE_STRUCT_FIXED_MEMBER(std::uint32_t, num_threads_per_eu)  // the number of threads per EU unit
+    PLSSVM_SAMPLE_STRUCT_FIXED_MEMBER(std::uint32_t, eu_simd_width)       // the physical EU unit SIMD width
 };
 
 /**
@@ -161,17 +163,17 @@ class level_zero_memory_samples {
 
     PLSSVM_SAMPLE_STRUCT_FIXED_MEMBER(map_type<std::uint64_t>, memory_total)              // the total memory size of the different memory modules in Bytes
     PLSSVM_SAMPLE_STRUCT_FIXED_MEMBER(map_type<std::uint64_t>, allocatable_memory_total)  // the total allocatable memory size of the different memory modules in Bytes
-    PLSSVM_SAMPLE_STRUCT_FIXED_MEMBER(std::int64_t, pcie_link_max_speed)                   // the maximum PCIe bandwidth in bytes/sec
-    PLSSVM_SAMPLE_STRUCT_FIXED_MEMBER(std::int32_t, pcie_max_width)                           // the PCIe lane width
-    PLSSVM_SAMPLE_STRUCT_FIXED_MEMBER(std::int32_t, max_pcie_link_generation)                      // the PCIe generation
+    PLSSVM_SAMPLE_STRUCT_FIXED_MEMBER(std::int64_t, pcie_link_max_speed)                  // the maximum PCIe bandwidth in bytes/sec
+    PLSSVM_SAMPLE_STRUCT_FIXED_MEMBER(std::int32_t, pcie_max_width)                       // the PCIe lane width
+    PLSSVM_SAMPLE_STRUCT_FIXED_MEMBER(std::int32_t, max_pcie_link_generation)             // the PCIe generation
     PLSSVM_SAMPLE_STRUCT_FIXED_MEMBER(map_type<std::int32_t>, bus_width)                  // the bus width of the different memory modules
     PLSSVM_SAMPLE_STRUCT_FIXED_MEMBER(map_type<std::int32_t>, num_channels)               // the number of memory channels of the different memory modules
     PLSSVM_SAMPLE_STRUCT_FIXED_MEMBER(map_type<std::string>, location)                    // the location of the different memory modules (system or device)
 
     PLSSVM_SAMPLE_STRUCT_FIXED_MEMBER(map_type<std::vector<std::uint64_t>>, memory_free)  // the currently free memory of the different memory modules in Bytes
-    PLSSVM_SAMPLE_STRUCT_SAMPLING_MEMBER(std::int64_t, pcie_link_speed)            // the current PCIe bandwidth in bytes/sec
-    PLSSVM_SAMPLE_STRUCT_SAMPLING_MEMBER(std::int32_t, pcie_link_width)                // the current PCIe lane width
-    PLSSVM_SAMPLE_STRUCT_SAMPLING_MEMBER(std::int32_t, pcie_link_generation)           // the current PCIe generation
+    PLSSVM_SAMPLE_STRUCT_SAMPLING_MEMBER(std::int64_t, pcie_link_speed)                   // the current PCIe bandwidth in bytes/sec
+    PLSSVM_SAMPLE_STRUCT_SAMPLING_MEMBER(std::int32_t, pcie_link_width)                   // the current PCIe lane width
+    PLSSVM_SAMPLE_STRUCT_SAMPLING_MEMBER(std::int32_t, pcie_link_generation)              // the current PCIe generation
 };
 
 /**

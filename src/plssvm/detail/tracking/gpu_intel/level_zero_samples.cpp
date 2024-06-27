@@ -43,6 +43,20 @@ std::string level_zero_general_samples::generate_yaml_string() const {
                            "        values: \"{}\"\n",
                            this->standby_mode_.value());
     }
+    // the number of threads per EU unit
+    if (this->num_threads_per_eu_.has_value()) {
+        str += fmt::format("      num_threads_per_eu:\n"
+                           "        unit: \"int\"\n"
+                           "        values: {}\n",
+                           this->num_threads_per_eu_.value());
+    }
+    // the EU SIMD width
+    if (this->eu_simd_width_.has_value()) {
+        str += fmt::format("      physical_eu_simd_width:\n"
+                           "        unit: \"int\"\n"
+                           "        values: {}\n",
+                           this->eu_simd_width_.value());
+    }
 
     // remove last newline
     str.pop_back();
@@ -52,9 +66,13 @@ std::string level_zero_general_samples::generate_yaml_string() const {
 
 std::ostream &operator<<(std::ostream &out, const level_zero_general_samples &samples) {
     return out << fmt::format("name: {}\n"
-                              "standby_mode: {}",
+                              "standby_mode: {}\n"
+                              "num_threads_per_eu: {}\n"
+                              "eu_simd_width: {}",
                               value_or_default(samples.get_name()),
-                              value_or_default(samples.get_standby_mode()));
+                              value_or_default(samples.get_standby_mode()),
+                              value_or_default(samples.get_num_threads_per_eu()),
+                              value_or_default(samples.get_eu_simd_width()));
 }
 
 //*************************************************************************************************************************************//

@@ -120,9 +120,15 @@ void gpu_intel_hardware_sampler::sampling_loop() {
 
     // retrieve initial general information
     {
-        zes_device_properties_t device_prop{};
-        if (zesDeviceGetProperties(device, &device_prop) == ZE_RESULT_SUCCESS) {
-            general_samples_.name_ = device_prop.modelName;
+        ze_device_properties_t ze_device_prop{};
+        if (zeDeviceGetProperties(device, &ze_device_prop) == ZE_RESULT_SUCCESS) {
+            general_samples_.num_threads_per_eu_ = ze_device_prop.numThreadsPerEU;
+            general_samples_.eu_simd_width_ = ze_device_prop.physicalEUSimdWidth;
+        }
+
+        zes_device_properties_t zes_device_prop{};
+        if (zesDeviceGetProperties(device, &zes_device_prop) == ZE_RESULT_SUCCESS) {
+            general_samples_.name_ = zes_device_prop.modelName;
         }
 
         std::uint32_t num_standby_domains{ 0 };
