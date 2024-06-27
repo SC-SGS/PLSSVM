@@ -14,6 +14,7 @@
 #include "plssvm/detail/tracking/performance_tracker.hpp"       // PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY
 #include "plssvm/detail/tracking/utility.hpp"                   // plssvm::detail::tracking::{durations_from_reference_time, time_points_to_epoch}
 #include "plssvm/exceptions/exceptions.hpp"                     // plssvm::exception, plssvm::hardware_sampling_exception
+#include "plssvm/target_platforms.hpp"                          // plssvm::target_platform
 
 #include "fmt/chrono.h"         // format std::chrono types
 #include "fmt/core.h"           // fmt::format
@@ -78,6 +79,10 @@ gpu_amd_hardware_sampler::~gpu_amd_hardware_sampler() {
 
 std::string gpu_amd_hardware_sampler::device_identification() const {
     return fmt::format("gpu_amd_device_{}", device_id_);
+}
+
+target_platform gpu_amd_hardware_sampler::sampling_target() const {
+    return target_platform::gpu_amd;
 }
 
 std::string gpu_amd_hardware_sampler::generate_yaml_string(const std::chrono::steady_clock::time_point start_time_point) const {

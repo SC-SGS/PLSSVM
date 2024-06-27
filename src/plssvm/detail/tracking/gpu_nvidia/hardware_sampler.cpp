@@ -15,6 +15,7 @@
 #include "plssvm/detail/tracking/performance_tracker.hpp"                 // PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY
 #include "plssvm/detail/tracking/utility.hpp"                             // plssvm::detail::tracking::{durations_from_reference_time, time_points_to_epoch}
 #include "plssvm/exceptions/exceptions.hpp"                               // plssvm::exception, plssvm::hardware_sampling_exception
+#include "plssvm/target_platforms.hpp"                                    // plssvm::target_platform
 
 #include "fmt/chrono.h"  // format std::chrono types
 #include "fmt/core.h"    // fmt::format
@@ -82,6 +83,10 @@ std::string gpu_nvidia_hardware_sampler::device_identification() const {
     nvmlPciInfo_st pcie_info{};
     PLSSVM_NVML_ERROR_CHECK(nvmlDeviceGetPciInfo_v3(device_.get_impl().device, &pcie_info));
     return fmt::format("gpu_nvidia_device_{}_{}", pcie_info.bus, pcie_info.device);
+}
+
+target_platform gpu_nvidia_hardware_sampler::sampling_target() const {
+    return target_platform::gpu_nvidia;
 }
 
 std::string gpu_nvidia_hardware_sampler::generate_yaml_string(const std::chrono::steady_clock::time_point start_time_point) const {

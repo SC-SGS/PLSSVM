@@ -16,6 +16,7 @@
 #include "plssvm/detail/tracking/gpu_intel/level_zero_device_handle.hpp"  // plssvm::detail::tracking::level_zero_device_handle
 #include "plssvm/detail/tracking/gpu_intel/level_zero_samples.hpp"        // plssvm::detail::tracking::{level_zero_general_samples, level_zero_clock_samples, level_zero_power_samples, level_zero_memory_samples, level_zero_temperature_samples}
 #include "plssvm/detail/tracking/hardware_sampler.hpp"                    // plssvm::detail::tracking::hardware_sampler
+#include "plssvm/target_platforms.hpp"                                    // plssvm::target_platform
 
 #include <atomic>   // std::atomic
 #include <chrono>   // std::chrono::{steady_clock, milliseconds}, std::chrono_literals namespace
@@ -100,6 +101,10 @@ class gpu_intel_hardware_sampler : public hardware_sampler {
      * @copydoc plssvm::detail::tracking::hardware_sampler::device_identification
      */
     [[nodiscard]] std::string device_identification() const override;
+    /**
+     * @copydoc plssvm::detail::tracking::hardware_sampler::sampling_target
+     */
+    [[nodiscard]] target_platform sampling_target() const override;
 
   private:
     /**

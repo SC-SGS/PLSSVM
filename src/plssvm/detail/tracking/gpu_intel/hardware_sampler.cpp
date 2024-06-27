@@ -14,6 +14,7 @@
 #include "plssvm/detail/tracking/utility.hpp"                                  // plssvm::detail::tracking::durations_from_reference_time
 #include "plssvm/detail/utility.hpp"                                           // plssvm::detail::contains
 #include "plssvm/exceptions/exceptions.hpp"                                    // plssvm::exception, plssvm::hardware_sampling_exception
+#include "plssvm/target_platforms.hpp"                                         // plssvm::target_platform
 
 #include "fmt/chrono.h"          // format std::chrono types
 #include "fmt/core.h"            // fmt::format
@@ -72,6 +73,10 @@ std::string gpu_intel_hardware_sampler::device_identification() const {
     ze_device_properties_t prop{};
     PLSSVM_LEVEL_ZERO_ERROR_CHECK(zeDeviceGetProperties(device, &prop));
     return fmt::format("gpu_intel_device_{}", prop.deviceId);
+}
+
+target_platform gpu_intel_hardware_sampler::sampling_target() const {
+    return target_platform::gpu_intel;
 }
 
 std::string gpu_intel_hardware_sampler::generate_yaml_string(const std::chrono::steady_clock::time_point start_time_point) const {

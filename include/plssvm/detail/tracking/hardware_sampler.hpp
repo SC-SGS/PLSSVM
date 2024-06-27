@@ -13,6 +13,9 @@
 #define PLSSVM_DETAIL_TRACKING_HARDWARE_SAMPLER_HPP_
 #pragma once
 
+#include "plssvm/detail/type_traits.hpp"  // plssvm::detail::remove_cvref_t
+#include "plssvm/target_platforms.hpp"    // plssvm::target_platform
+
 #include <atomic>  // std::atomic
 #include <chrono>  // std::chrono::{steady_clock::time_point, milliseconds}
 #include <string>  // std::string
@@ -112,6 +115,11 @@ class hardware_sampler {
      * @return the unique device identification (`[[nodiscard]]`)
      */
     [[nodiscard]] virtual std::string device_identification() const = 0;
+    /**
+     * @brief Returns the target platform this hardware sampler is responsible for.
+     * @return the target platform (`[[nodiscard]]`)
+     */
+    [[nodiscard]] virtual target_platform sampling_target() const = 0;
 
   protected:
     /**
@@ -142,6 +150,72 @@ class hardware_sampler {
     /// The sampling interval of this hardware sampler.
     const std::chrono::milliseconds sampling_interval_{};
 };
+
+/// @cond Doxygen_suppress
+// Forward declare all possible hardware sampler.
+class cpu_hardware_sampler;
+class gpu_nvidia_hardware_sampler;
+class gpu_amd_hardware_sampler;
+class gpu_intel_hardware_sampler;
+
+/**
+ * @brief No `value` member variable if anything other than a hardware sampler has been provided.
+ */
+template <typename T>
+struct hardware_sampler_to_target_platform_impl { };
+
+/**
+ * @brief Sets the `value` to `plssvm::target_platform::cpu` for the CPU hardware sampler.
+ */
+template <>
+struct hardware_sampler_to_target_platform_impl<cpu_hardware_sampler> {
+    /// The enum value representing the CPU target.
+    constexpr static target_platform value = target_platform::cpu;
+};
+
+/**
+ * @brief Sets the `value` to `plssvm::target_platform::gpu_nvidia` for the NVIDIA GPU hardware sampler.
+ */
+template <>
+struct hardware_sampler_to_target_platform_impl<gpu_nvidia_hardware_sampler> {
+    /// The enum value representing the NVIDIA GPU target.
+    constexpr static target_platform value = target_platform::gpu_nvidia;
+};
+
+/**
+ * @brief Sets the `value` to `plssvm::target_platform::gpu_amd` for the AMD GPU hardware sampler.
+ */
+template <>
+struct hardware_sampler_to_target_platform_impl<gpu_amd_hardware_sampler> {
+    /// The enum value representing the AMD GPU target.
+    constexpr static target_platform value = target_platform::gpu_amd;
+};
+
+/**
+ * @brief Sets the `value` to `plssvm::target_platform::gpu_intel` for the Intel GPU hardware sampler.
+ */
+template <>
+struct hardware_sampler_to_target_platform_impl<gpu_intel_hardware_sampler> {
+    /// The enum value representing the Intel GPU target.
+    constexpr static target_platform value = target_platform::gpu_intel;
+};
+
+/// @endcond
+
+/**
+ * @brief Get the plssvm::target_platform of the hardware sampler class of type @p T. Ignores all top-level const, volatile, and reference qualifiers.
+ * @details Provides a member variable `value` if @p T is a valid hardware sampler.
+ * @tparam T the type of the hardware sampler to get the backend type from
+ */
+template <typename T>
+struct hardware_sampler_to_target_platform : hardware_sampler_to_target_platform_impl<detail::remove_cvref_t<T>> { };
+
+/**
+ * @copydoc plssvm::detail::tracking::hardware_sampler_to_target_platform
+ * @details A shorthand for `plssvm::hardware_sampler_to_target_platform::value`.
+ */
+template <typename T>
+constexpr target_platform hardware_sampler_to_target_platform_v = hardware_sampler_to_target_platform<T>::value;
 
 }  // namespace plssvm::detail::tracking
 

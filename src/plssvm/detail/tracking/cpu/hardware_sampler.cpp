@@ -18,6 +18,7 @@
 #include "plssvm/detail/tracking/utility.hpp"              // plssvm::detail::tracking::{durations_from_reference_time, time_points_to_epoch}
 #include "plssvm/detail/utility.hpp"                       // plssvm::detail::contains
 #include "plssvm/exceptions/exceptions.hpp"                // plssvm::hardware_sampling_exception
+#include "plssvm/target_platforms.hpp"                     // plssvm::target_platform
 
 #include "fmt/chrono.h"  // format std::chrono types
 #include "fmt/core.h"    // fmt::format
@@ -83,6 +84,10 @@ cpu_hardware_sampler::~cpu_hardware_sampler() {
 
 std::string cpu_hardware_sampler::device_identification() const {
     return "cpu_device";
+}
+
+target_platform cpu_hardware_sampler::sampling_target() const {
+    return target_platform::cpu;
 }
 
 std::string cpu_hardware_sampler::generate_yaml_string([[maybe_unused]] const std::chrono::steady_clock::time_point start_time_point) const {

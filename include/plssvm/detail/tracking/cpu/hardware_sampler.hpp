@@ -15,6 +15,7 @@
 
 #include "plssvm/detail/tracking/cpu/cpu_samples.hpp"   // plssvm::detail::tracking::{cpu_general_samples, clock_samples, power_samples, memory_samples, temperature_samples, gfx_samples, idle_state_samples}
 #include "plssvm/detail/tracking/hardware_sampler.hpp"  // plssvm::detail::tracking::hardware_sampler
+#include "plssvm/target_platforms.hpp"                  // plssvm::target_platform
 
 #include "fmt/core.h"     // fmt::formatter
 #include "fmt/ostream.h"  // fmt::ostream_formatter
@@ -111,6 +112,10 @@ class cpu_hardware_sampler : public hardware_sampler {
      * @copydoc plssvm::detail::tracking::hardware_sampler::device_identification
      */
     [[nodiscard]] std::string device_identification() const override;
+    /**
+     * @copydoc plssvm::detail::tracking::hardware_sampler::sampling_target
+     */
+    [[nodiscard]] target_platform sampling_target() const override;
 
   private:
     /**

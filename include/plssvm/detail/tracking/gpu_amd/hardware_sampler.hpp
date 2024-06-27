@@ -15,6 +15,7 @@
 
 #include "plssvm/detail/tracking/gpu_amd/rocm_smi_samples.hpp"  // plssvm::detail::tracking::{rocm_smi_general_samples, rocm_smi_clock_samples, rocm_smi_power_samples, rocm_smi_memory_samples, rocm_smi_temperature_samples}
 #include "plssvm/detail/tracking/hardware_sampler.hpp"          // plssvm::detail::tracking::hardware_sampler
+#include "plssvm/target_platforms.hpp"                          // plssvm::target_platform
 
 #include "fmt/core.h"     // fmt::formatter
 #include "fmt/ostream.h"  // fmt::ostream_formatter
@@ -105,6 +106,10 @@ class gpu_amd_hardware_sampler : public hardware_sampler {
      * @copydoc plssvm::detail::tracking::hardware_sampler::device_identification
      */
     [[nodiscard]] std::string device_identification() const override;
+    /**
+     * @copydoc plssvm::detail::tracking::hardware_sampler::sampling_target
+     */
+    [[nodiscard]] target_platform sampling_target() const override;
 
   private:
     /**
