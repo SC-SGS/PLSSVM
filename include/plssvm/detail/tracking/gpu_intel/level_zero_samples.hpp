@@ -87,7 +87,6 @@ class level_zero_clock_samples {
     PLSSVM_SAMPLE_STRUCT_FIXED_MEMBER(double, clock_mem_max)                      // the maximum possible memory clock frequency in MHz
     PLSSVM_SAMPLE_STRUCT_FIXED_MEMBER(std::vector<double>, available_clocks_mem)  // the available memory clock frequencies in MHz (slowest to fastest)
 
-    // TODO: throttle reason bitmask?
     PLSSVM_SAMPLE_STRUCT_SAMPLING_MEMBER(double, tdp_frequency_limit_gpu)  // the current maximum allowed GPU frequency based on the TDP limit in MHz
     PLSSVM_SAMPLE_STRUCT_SAMPLING_MEMBER(double, clock_gpu)                // the current GPU frequency in MHz
     PLSSVM_SAMPLE_STRUCT_SAMPLING_MEMBER(int, throttle_reason_gpu)         // the current GPU frequency throttle reason

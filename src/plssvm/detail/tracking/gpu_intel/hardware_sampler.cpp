@@ -114,10 +114,6 @@ void gpu_intel_hardware_sampler::sampling_loop() {
     // add samples where we only have to retrieve the value once
     //
 
-    // TODO: fixed samples
-    // TODO: https://spec.oneapi.io/level-zero/latest/sysman/PROG.html
-    // TODO: https://spec.oneapi.io/level-zero/latest/sysman/api.html#_CPPv417zes_power_level_t
-
     // retrieve initial general information
     {
         ze_device_properties_t ze_device_prop{};
@@ -267,14 +263,6 @@ void gpu_intel_hardware_sampler::sampling_loop() {
                         power_samples_.energy_threshold_enabled_ = static_cast<decltype(power_samples_.energy_threshold_enabled_)::value_type>(energy_threshold.enable);
                         power_samples_.energy_threshold_ = energy_threshold.threshold;
                     }
-
-                    // // get power limits
-                    // std::uint32_t num_power_limits{ 0 };
-                    // PLSSVM_LEVEL_ZERO_ERROR_CHECK(zesPowerGetLimitsExt(handle, &num_power_limits, nullptr));
-                    // std::vector<zes_power_limit_ext_desc_t> power_limit_handles(num_power_limits);
-                    // for (zes_power_limit_ext_desc_t power_limit : power_limit_handles) {
-                    //     // TODO:
-                    // }
                 }
             }
         }
