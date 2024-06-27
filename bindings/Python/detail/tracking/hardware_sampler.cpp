@@ -27,6 +27,7 @@
 
 #include "bindings/Python/utility.hpp"  // register_py_exception
 
+#include "fmt/core.h"           // fmt::format
 #include "pybind11/pybind11.h"  // py::module_, py::class_
 
 #include <chrono>   // std::chrono::milliseconds
