@@ -76,6 +76,9 @@ if (TARGET ${PLSSVM_HARDWARE_TRACKING_LIBRARY_NAME})
     if ("PLSSVM_HARDWARE_TRACKING_FOR_AMD_GPUS_ENABLED" IN_LIST PLSSVM_HARDWARE_TRACKING_COMPILE_DEFINITIONS)
         list(APPEND PLSSVM_PYTHON_BINDINGS_SOURCES ${CMAKE_CURRENT_LIST_DIR}/detail/tracking/gpu_amd_hardware_sampler.cpp)
     endif ()
+    if ("PLSSVM_HARDWARE_TRACKING_FOR_INTEL_GPUS_ENABLED" IN_LIST PLSSVM_HARDWARE_TRACKING_COMPILE_DEFINITIONS)
+        list(APPEND PLSSVM_PYTHON_BINDINGS_SOURCES ${CMAKE_CURRENT_LIST_DIR}/detail/tracking/gpu_intel_hardware_sampler.cpp)
+    endif ()
 endif ()
 
 # add backends specific source files if the respective backend is used

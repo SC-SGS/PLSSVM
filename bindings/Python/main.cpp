@@ -23,6 +23,7 @@ void init_hardware_sampler(py::module_ &, const py::exception<plssvm::exception>
 void init_cpu_hardware_sampler(py::module_ &);
 void init_gpu_nvidia_hardware_sampler(py::module_ &);
 void init_gpu_amd_hardware_sampler(py::module_ &);
+void init_gpu_intel_hardware_sampler(py::module_ &);
 void init_target_platforms(py::module_ &);
 void init_solver_types(py::module_ &);
 void init_backend_types(py::module_ &);
@@ -77,6 +78,9 @@ PYBIND11_MODULE(plssvm, m) {
 #endif
 #if defined(PLSSVM_HARDWARE_TRACKING_FOR_AMD_GPUS_ENABLED)
     init_gpu_amd_hardware_sampler(m);
+#endif
+#if defined(PLSSVM_HARDWARE_TRACKING_FOR_INTEL_GPUS_ENABLED)
+    init_gpu_intel_hardware_sampler(m);
 #endif
 
     init_target_platforms(m);
