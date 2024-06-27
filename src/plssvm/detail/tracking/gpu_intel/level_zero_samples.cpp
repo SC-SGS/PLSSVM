@@ -335,7 +335,7 @@ std::string level_zero_memory_samples::generate_yaml_string() const {
         for (const auto &[key, value] : this->memory_free_.value()) {
             str += fmt::format("      memory_free_{}:\n"
                                "        unit: \"string\"\n"
-                               "        values: {}\n",
+                               "        values: [{}]\n",
                                key,
                                fmt::join(value, ", "));
 
@@ -346,7 +346,7 @@ std::string level_zero_memory_samples::generate_yaml_string() const {
                 memory_used -= value;
                 str += fmt::format("      memory_used_{}:\n"
                                    "        unit: \"string\"\n"
-                                   "        values: {}\n",
+                                   "        values: [{}]\n",
                                    key,
                                    fmt::join(memory_used, ", "));
             }
@@ -415,7 +415,7 @@ std::string level_zero_temperature_samples::generate_yaml_string() const {
         for (const auto &[key, value] : this->temperature_.value()) {
             str += fmt::format("      temperature_{}:\n"
                                "        unit: \"°C\"\n"
-                               "        values: {}\n",
+                               "        values: [{}]\n",
                                key,
                                fmt::join(value, ", "));
         }
