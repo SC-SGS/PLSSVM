@@ -9,13 +9,16 @@
  */
 
 #include "plssvm/core.hpp"
-#include "plssvm/detail/cmd/data_set_variants.hpp"              // plssvm::detail::cmd::data_set_factory
-#include "plssvm/detail/cmd/parser_predict.hpp"                 // plssvm::detail::cmd::parser_predict
-#include "plssvm/detail/logging.hpp"                            // plssvm::detail::log
-#include "plssvm/detail/tracking/hardware_sampler.hpp"          // plssvm::detail::tracking::hardware_sampler
-#include "plssvm/detail/tracking/hardware_sampler_factory.hpp"  // plssvm::detail::tracking::create_hardware_sampler
-#include "plssvm/detail/tracking/performance_tracker.hpp"       // plssvm::detail::tracking::tracking_entry, PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_SAVE, PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY
-#include "plssvm/detail/utility.hpp"                            // PLSSVM_IS_DEFINED
+#include "plssvm/detail/cmd/data_set_variants.hpp"         // plssvm::detail::cmd::data_set_factory
+#include "plssvm/detail/cmd/parser_predict.hpp"            // plssvm::detail::cmd::parser_predict
+#include "plssvm/detail/logging.hpp"                       // plssvm::detail::log
+#include "plssvm/detail/tracking/performance_tracker.hpp"  // plssvm::detail::tracking::tracking_entry, PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_SAVE, PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY
+#include "plssvm/detail/utility.hpp"                       // PLSSVM_IS_DEFINED
+
+#if defined(PLSSVM_HARDWARE_SAMPLING_ENABLED)
+    #include "plssvm/detail/tracking/hardware_sampler.hpp"          // plssvm::detail::tracking::hardware_sampler
+    #include "plssvm/detail/tracking/hardware_sampler_factory.hpp"  // plssvm::detail::tracking::create_hardware_sampler
+#endif
 
 #include "fmt/format.h"  // fmt::print, fmt::join
 #include "fmt/os.h"      // fmt::ostream, fmt::output_file
