@@ -276,8 +276,7 @@ class cpu_idle_states_samples {
      */
     [[nodiscard]] std::string generate_yaml_string() const;
 
-    PLSSVM_SAMPLE_STRUCT_FIXED_MEMBER(map_type, idle_states)  // the map of additional CPU idle states
-
+    PLSSVM_SAMPLE_STRUCT_FIXED_MEMBER(map_type, idle_states)                            // the map of additional CPU idle states
     PLSSVM_SAMPLE_STRUCT_SAMPLING_MEMBER(double, all_cpus_state_c0_percent)             // the percent of time all CPUs were in idle state c0
     PLSSVM_SAMPLE_STRUCT_SAMPLING_MEMBER(double, any_cpu_state_c0_percent)              // the percent of time any CPU was in the idle state c0
     PLSSVM_SAMPLE_STRUCT_SAMPLING_MEMBER(double, low_power_idle_state_percent)          // the percent of time the CPUs was in the low power idle state
