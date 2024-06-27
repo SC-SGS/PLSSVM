@@ -18,10 +18,12 @@
 #include "fmt/core.h"     // fmt::formatter
 #include "fmt/ostream.h"  // fmt::ostream_formatter
 
-#include <iosfwd>    // std::ostream forward declaration
-#include <optional>  // std::optional
-#include <string>    // std::string
-#include <vector>    // std::vector
+#include <cstdint>        // std::uint64_t, std::int32_t
+#include <iosfwd>         // std::ostream forward declaration
+#include <optional>       // std::optional
+#include <string>         // std::string
+#include <unordered_map>  // std::unordered_map
+#include <vector>         // std::vector
 
 namespace plssvm::detail::tracking {
 
@@ -43,6 +45,9 @@ class level_zero_general_samples {
      * @return the YAML string (`[[nodiscard]]`)
      */
     [[nodiscard]] std::string generate_yaml_string() const;
+
+    PLSSVM_SAMPLE_STRUCT_FIXED_MEMBER(std::string, name)          // the model name of the device
+    PLSSVM_SAMPLE_STRUCT_FIXED_MEMBER(std::string, standby_mode)  // the enabled standby mode (power saving or never)
 };
 
 /**
@@ -72,6 +77,21 @@ class level_zero_clock_samples {
      * @return the YAML string (`[[nodiscard]]`)
      */
     [[nodiscard]] std::string generate_yaml_string() const;
+
+    PLSSVM_SAMPLE_STRUCT_FIXED_MEMBER(double, clock_gpu_min)                      // the minimum possible GPU clock frequency in MHz
+    PLSSVM_SAMPLE_STRUCT_FIXED_MEMBER(double, clock_gpu_max)                      // the maximum possible GPU clock frequency in MHz
+    PLSSVM_SAMPLE_STRUCT_FIXED_MEMBER(std::vector<double>, available_clocks_gpu)  // the available GPU clock frequencies in MHz (slowest to fastest)
+    PLSSVM_SAMPLE_STRUCT_FIXED_MEMBER(double, clock_mem_min)                      // the minimum possible memory clock frequency in MHz
+    PLSSVM_SAMPLE_STRUCT_FIXED_MEMBER(double, clock_mem_max)                      // the maximum possible memory clock frequency in MHz
+    PLSSVM_SAMPLE_STRUCT_FIXED_MEMBER(std::vector<double>, available_clocks_mem)  // the available memory clock frequencies in MHz (slowest to fastest)
+
+    // TODO: throttle reason bitmask?
+    PLSSVM_SAMPLE_STRUCT_SAMPLING_MEMBER(double, tdp_frequency_limit_gpu)  // the current maximum allowed GPU frequency based on the TDP limit in MHz
+    PLSSVM_SAMPLE_STRUCT_SAMPLING_MEMBER(double, clock_gpu)                // the current GPU frequency in MHz
+    PLSSVM_SAMPLE_STRUCT_SAMPLING_MEMBER(int, throttle_reason_gpu)         // the current GPU frequency throttle reason
+    PLSSVM_SAMPLE_STRUCT_SAMPLING_MEMBER(double, tdp_frequency_limit_mem)  // the current maximum allowed memory frequency based on the TDP limit in MHz
+    PLSSVM_SAMPLE_STRUCT_SAMPLING_MEMBER(double, clock_mem)                // the current memory frequency in MHz
+    PLSSVM_SAMPLE_STRUCT_SAMPLING_MEMBER(int, throttle_reason_mem)         // the current memory frequency throttle reason
 };
 
 /**
@@ -101,6 +121,11 @@ class level_zero_power_samples {
      * @return the YAML string (`[[nodiscard]]`)
      */
     [[nodiscard]] std::string generate_yaml_string() const;
+
+    PLSSVM_SAMPLE_STRUCT_FIXED_MEMBER(bool, energy_threshold_enabled)  // true if the energy threshold is enabled
+    PLSSVM_SAMPLE_STRUCT_FIXED_MEMBER(double, energy_threshold)        // the energy threshold in J
+
+    PLSSVM_SAMPLE_STRUCT_SAMPLING_MEMBER(std::uint64_t, power_total_energy_consumption)  // the total power consumption since the last driver reload in mJ
 };
 
 /**
@@ -123,6 +148,9 @@ class level_zero_memory_samples {
     // befriend hardware sampler class
     friend class gpu_intel_hardware_sampler;
 
+    template <typename T>
+    using map_type = std::unordered_map<std::string, T>;
+
   public:
     /**
      * @brief Assemble the YAML string containing all available memory related hardware samples.
@@ -130,6 +158,20 @@ class level_zero_memory_samples {
      * @return the YAML string (`[[nodiscard]]`)
      */
     [[nodiscard]] std::string generate_yaml_string() const;
+
+    PLSSVM_SAMPLE_STRUCT_FIXED_MEMBER(map_type<std::uint64_t>, memory_total)              // the total memory size of the different memory modules in Bytes
+    PLSSVM_SAMPLE_STRUCT_FIXED_MEMBER(map_type<std::uint64_t>, allocatable_memory_total)  // the total allocatable memory size of the different memory modules in Bytes
+    PLSSVM_SAMPLE_STRUCT_FIXED_MEMBER(std::int64_t, pcie_link_max_speed)                   // the maximum PCIe bandwidth in bytes/sec
+    PLSSVM_SAMPLE_STRUCT_FIXED_MEMBER(std::int32_t, pcie_max_width)                           // the PCIe lane width
+    PLSSVM_SAMPLE_STRUCT_FIXED_MEMBER(std::int32_t, max_pcie_link_generation)                      // the PCIe generation
+    PLSSVM_SAMPLE_STRUCT_FIXED_MEMBER(map_type<std::int32_t>, bus_width)                  // the bus width of the different memory modules
+    PLSSVM_SAMPLE_STRUCT_FIXED_MEMBER(map_type<std::int32_t>, num_channels)               // the number of memory channels of the different memory modules
+    PLSSVM_SAMPLE_STRUCT_FIXED_MEMBER(map_type<std::string>, location)                    // the location of the different memory modules (system or device)
+
+    PLSSVM_SAMPLE_STRUCT_FIXED_MEMBER(map_type<std::vector<std::uint64_t>>, memory_free)  // the currently free memory of the different memory modules in Bytes
+    PLSSVM_SAMPLE_STRUCT_SAMPLING_MEMBER(std::int64_t, pcie_link_speed)            // the current PCIe bandwidth in bytes/sec
+    PLSSVM_SAMPLE_STRUCT_SAMPLING_MEMBER(std::int32_t, pcie_link_width)                // the current PCIe lane width
+    PLSSVM_SAMPLE_STRUCT_SAMPLING_MEMBER(std::int32_t, pcie_link_generation)           // the current PCIe generation
 };
 
 /**
@@ -152,6 +194,9 @@ class level_zero_temperature_samples {
     // befriend hardware sampler class
     friend class gpu_intel_hardware_sampler;
 
+    template <typename T>
+    using map_type = std::unordered_map<std::string, T>;
+
   public:
     /**
      * @brief Assemble the YAML string containing all available temperature related hardware samples.
@@ -159,6 +204,11 @@ class level_zero_temperature_samples {
      * @return the YAML string (`[[nodiscard]]`)
      */
     [[nodiscard]] std::string generate_yaml_string() const;
+
+    PLSSVM_SAMPLE_STRUCT_FIXED_MEMBER(map_type<double>, temperature_max)  // the maximum temperature for the sensor in °C
+
+    PLSSVM_SAMPLE_STRUCT_SAMPLING_MEMBER(std::int32_t, temperature_psu)            // the temperature of the PSU in °C
+    PLSSVM_SAMPLE_STRUCT_FIXED_MEMBER(map_type<std::vector<double>>, temperature)  // the current temperature for the sensor in °C
 };
 
 /**

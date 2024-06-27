@@ -8,8 +8,10 @@
 
 #include "plssvm/detail/tracking/gpu_intel/utility.hpp"
 
-#include "level_zero/ze_api.h"  // Level Zero runtime functions
+#include "level_zero/ze_api.h"   // Level Zero runtime functions
+#include "level_zero/zes_api.h"  // Level Zero runtime functions
 
+#include <string>       // std::string
 #include <string_view>  // std::string_view
 
 namespace plssvm::detail::tracking {
@@ -114,6 +116,76 @@ std::string_view to_result_string(const ze_result_t errc) {
             return "ZE_RESULT_FORCE_UINT32";
         default:
             return "unknown level zero error";
+    }
+}
+
+std::string memory_module_to_name(const zes_mem_type_t mem_type) {
+    switch (mem_type) {
+        case ZES_MEM_TYPE_HBM:
+            return "hbm";
+        case ZES_MEM_TYPE_DDR:
+            return "ddr";
+        case ZES_MEM_TYPE_DDR3:
+            return "ddr3";
+        case ZES_MEM_TYPE_DDR4:
+            return "ddr4";
+        case ZES_MEM_TYPE_DDR5:
+            return "ddr5";
+        case ZES_MEM_TYPE_LPDDR:
+            return "lpddr";
+        case ZES_MEM_TYPE_LPDDR3:
+            return "lpddr3";
+        case ZES_MEM_TYPE_LPDDR4:
+            return "lpddr4";
+        case ZES_MEM_TYPE_LPDDR5:
+            return "lpddr5";
+        case ZES_MEM_TYPE_SRAM:
+            return "sram";
+        case ZES_MEM_TYPE_L1:
+            return "l1";
+        case ZES_MEM_TYPE_L3:
+            return "l3";
+        case ZES_MEM_TYPE_GRF:
+            return "grf";
+        case ZES_MEM_TYPE_SLM:
+            return "slm";
+        case ZES_MEM_TYPE_GDDR4:
+            return "gddr4";
+        case ZES_MEM_TYPE_GDDR5:
+            return "gddr5";
+        case ZES_MEM_TYPE_GDDR5X:
+            return "gddr5x";
+        case ZES_MEM_TYPE_GDDR6:
+            return "gddr6";
+        case ZES_MEM_TYPE_GDDR6X:
+            return "gddr6x";
+        case ZES_MEM_TYPE_GDDR7:
+            return "gddr7";
+        default: return "";
+    }
+}
+
+std::string memory_location_to_name(const zes_mem_loc_t mem_loc) {
+    switch (mem_loc) {
+        case ZES_MEM_LOC_SYSTEM:
+            return "system";
+        case ZES_MEM_LOC_DEVICE:
+            return "device";
+        default:
+            return "";
+    }
+}
+
+std::string temperature_sensor_type_to_name(const zes_temp_sensors_t sensor_type) {
+    switch (sensor_type) {
+        case ZES_TEMP_SENSORS_GLOBAL:
+            return "global";
+        case ZES_TEMP_SENSORS_GPU:
+            return "gpu";
+        case ZES_TEMP_SENSORS_MEMORY:
+            return "memory";
+        default:
+            return "";
     }
 }
 

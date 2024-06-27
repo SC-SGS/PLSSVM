@@ -15,9 +15,11 @@
 
 #include "plssvm/exceptions/exceptions.hpp"  // plssvm::hardware_sampling_exception
 
-#include "fmt/core.h"           // fmt::format
-#include "level_zero/ze_api.h"  // Level Zero runtime functions
+#include "fmt/core.h"            // fmt::format
+#include "level_zero/ze_api.h"   // Level Zero runtime functions
+#include "level_zero/zes_api.h"  // Level Zero runtime functions
 
+#include <string>       // std::string
 #include <string_view>  // std::string_view
 
 namespace plssvm::detail::tracking {
@@ -27,7 +29,7 @@ namespace plssvm::detail::tracking {
  * @param[in] errc the Level Zero API error code
  * @return the error string (`[[nodiscard]]`)
  */
-[[nodiscard]] std::string_view to_result_string(const ze_result_t errc);
+[[nodiscard]] std::string_view to_result_string(ze_result_t errc);
 
 /**
  * @def PLSSVM_LEVEL_ZERO_ERROR_CHECK
@@ -42,9 +44,31 @@ namespace plssvm::detail::tracking {
                 throw hardware_sampling_exception{ fmt::format("Error in Level Zero function call \"{}\": {}", #level_zero_func, to_result_string(errc)) }; \
             }                                                                                                                                               \
         }
-#else
+#else>
     #define PLSSVM_LEVEL_ZERO_ERROR_CHECK(level_zero_func) level_zero_func;
 #endif
+
+/**
+ * @brief Convert a Level Zero memory type to a string representation.
+ * @param[in] mem_type the Level Zero memory type
+ * @return the string representation (`[[nodiscard]]`)
+ */
+[[nodiscard]] std::string memory_module_to_name(zes_mem_type_t mem_type);
+
+/**
+ * @brief Convert a Level Zero memory location to a string representation.
+ * @param[in] mem_loc the Level Zero memory location
+ * @return the string representation (`[[nodiscard]]`)
+ */
+[[nodiscard]] std::string memory_location_to_name(zes_mem_loc_t mem_loc);
+
+/**
+ * @brief Convert a Level Zero temperature sensor type to a string representation.
+ * @param[in] sensor_type the Level Zero temperature sensor type
+ * @return the string representation (`[[nodiscard]]`)
+ */
+[[nodiscard]] std::string temperature_sensor_type_to_name(zes_temp_sensors_t sensor_type);
+
 
 }  // namespace plssvm::detail::tracking
 
