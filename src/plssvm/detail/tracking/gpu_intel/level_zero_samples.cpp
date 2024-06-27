@@ -10,17 +10,32 @@
 
 #include "plssvm/detail/operators.hpp"         // operators namespace
 #include "plssvm/detail/tracking/utility.hpp"  // plssvm::detail::tracking::value_or_default
+#include "plssvm/detail/type_traits.hpp"       // plssvm::detail::{remove_cvref_t, is_vector}
 
 #include "fmt/core.h"    // fmt::format
 #include "fmt/format.h"  // fmt::join
 
-#include <cstddef>   // std::size_t
-#include <optional>  // std::optional
-#include <ostream>   // std::ostream
-#include <string>    // std::string
-#include <vector>    // std::vector
+#include <cstddef>      // std::size_t
+#include <optional>     // std::optional
+#include <ostream>      // std::ostream
+#include <string>       // std::string
+#include <string_view>  // std::string_view
+#include <vector>       // std::vector
 
 namespace plssvm::detail::tracking {
+
+template <typename MapType>
+void append_map_values(std::string &str, const std::string_view entry_name, const MapType &map) {
+    if (map.has_value()) {
+        for (const auto &[key, value] : map.value()) {
+            if constexpr (detail::is_vector_v<detail::remove_cvref_t<decltype(value)>>) {
+                str += fmt::format("{}_{}: [{}]\n", entry_name, key, fmt::join(value, ", "));
+            } else {
+                str += fmt::format("{}_{}: {}\n", entry_name, key, value);
+            }
+        }
+    }
+}
 
 //*************************************************************************************************************************************//
 //                                                           general samples                                                           //
@@ -381,8 +396,31 @@ std::string level_zero_memory_samples::generate_yaml_string() const {
 }
 
 std::ostream &operator<<(std::ostream &out, const level_zero_memory_samples &samples) {
-    // TODO: correct output
-    return out;
+    std::string str{};
+
+    append_map_values(str, "memory_total", samples.get_memory_total());
+    append_map_values(str, "allocatable_memory_total", samples.get_allocatable_memory_total());
+
+    str += fmt::format("pcie_link_max_speed: {}\n"
+                       "pcie_max_width: {}\n"
+                       "max_pcie_link_generation: {}\n",
+                       value_or_default(samples.get_pcie_link_max_speed()),
+                       value_or_default(samples.get_pcie_max_width()),
+                       value_or_default(samples.get_max_pcie_link_generation()));
+
+    append_map_values(str, "bus_width", samples.get_bus_width());
+    append_map_values(str, "num_channels", samples.get_num_channels());
+    append_map_values(str, "location", samples.get_location());
+    append_map_values(str, "memory_free", samples.get_memory_free());
+
+    str += fmt::format("pcie_link_speed: [{}]\n"
+                       "pcie_link_width: [{}]\n"
+                       "pcie_link_generation: [{}]",
+                       fmt::join(value_or_default(samples.get_pcie_link_speed()), ", "),
+                       fmt::join(value_or_default(samples.get_pcie_link_width()), ", "),
+                       fmt::join(value_or_default(samples.get_pcie_link_generation()), ", "));
+
+    return out << str;
 }
 
 //*************************************************************************************************************************************//
@@ -428,8 +466,19 @@ std::string level_zero_temperature_samples::generate_yaml_string() const {
 }
 
 std::ostream &operator<<(std::ostream &out, const level_zero_temperature_samples &samples) {
-    // TODO: correct output
-    return out;
+    std::string str{};
+
+    append_map_values(str, "temperature_max", samples.get_temperature_max());
+
+    str += fmt::format("temperature_psu: [{}]\n",
+                       fmt::join(value_or_default(samples.get_temperature_psu()), ", "));
+
+    append_map_values(str, "temperature", samples.get_temperature());
+
+    // remove last newline
+    str.pop_back();
+
+    return out << str;
 }
 
 }  // namespace plssvm::detail::tracking
