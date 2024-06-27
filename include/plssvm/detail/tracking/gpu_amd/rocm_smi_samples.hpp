@@ -90,7 +90,6 @@ class rocm_smi_clock_samples {
     PLSSVM_SAMPLE_STRUCT_SAMPLING_MEMBER(std::uint64_t, clock_system)            // the current system clock frequency in Hz
     PLSSVM_SAMPLE_STRUCT_SAMPLING_MEMBER(std::uint64_t, clock_socket)            // the current socket clock frequency in Hz
     PLSSVM_SAMPLE_STRUCT_SAMPLING_MEMBER(std::uint64_t, clock_memory)            // the current memory clock frequency in Hz
-    PLSSVM_SAMPLE_STRUCT_SAMPLING_MEMBER(std::uint32_t, clock_throttle_status)   // the current GPU throttle status (bitmask)
     PLSSVM_SAMPLE_STRUCT_SAMPLING_MEMBER(std::uint32_t, overdrive_level)         // the GPU overdrive percentage
     PLSSVM_SAMPLE_STRUCT_SAMPLING_MEMBER(std::uint32_t, memory_overdrive_level)  // the GPU's memory overdrive percentage
 };

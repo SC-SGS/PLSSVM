@@ -165,11 +165,6 @@ void gpu_amd_hardware_sampler::sampling_loop() {
         }
 
         // queried samples -> retrieved every iteration if available
-        decltype(clock_samples_.clock_throttle_status_)::value_type::value_type clock_throttle_status{};
-        if (rsmi_dev_metrics_throttle_status_get(device_id_, &clock_throttle_status) == RSMI_STATUS_SUCCESS) {
-            clock_samples_.clock_throttle_status_ = decltype(clock_samples_.clock_throttle_status_)::value_type{ clock_throttle_status };
-        }
-
         decltype(clock_samples_.overdrive_level_)::value_type::value_type overdrive_level{};
         if (rsmi_dev_overdrive_level_get(device_id_, &overdrive_level) == RSMI_STATUS_SUCCESS) {
             clock_samples_.overdrive_level_ = decltype(clock_samples_.overdrive_level_)::value_type{ overdrive_level };
@@ -480,12 +475,6 @@ void gpu_amd_hardware_sampler::sampling_loop() {
                     rsmi_frequencies_t frequency_info{};
                     PLSSVM_ROCM_SMI_ERROR_CHECK(rsmi_dev_gpu_clk_freq_get(device_id_, RSMI_CLK_TYPE_MEM, &frequency_info));
                     clock_samples_.clock_memory_->push_back(frequency_info.frequency[frequency_info.current]);
-                }
-
-                if (clock_samples_.clock_throttle_status_.has_value()) {
-                    decltype(clock_samples_.clock_throttle_status_)::value_type::value_type value{};
-                    PLSSVM_ROCM_SMI_ERROR_CHECK(rsmi_dev_metrics_throttle_status_get(device_id_, &value));
-                    clock_samples_.clock_throttle_status_->push_back(value);
                 }
 
                 if (clock_samples_.overdrive_level_.has_value()) {

@@ -150,13 +150,6 @@ std::string rocm_smi_clock_samples::generate_yaml_string() const {
                            "        values: [{}]\n",
                            fmt::join(this->clock_system_.value(), ", "));
     }
-    // clock throttle reason
-    if (this->clock_throttle_status_.has_value()) {
-        str += fmt::format("      clock_throttle_reason:\n"
-                           "        unit: \"bitmask\"\n"
-                           "        values: [{}]\n",
-                           fmt::join(this->clock_throttle_status_.value(), ", "));
-    }
     // overdrive level
     if (this->overdrive_level_.has_value()) {
         str += fmt::format("      overdrive_level:\n"
@@ -188,7 +181,6 @@ std::ostream &operator<<(std::ostream &out, const rocm_smi_clock_samples &sample
                               "clock_system: [{}]\n"
                               "clock_socket: [{}]\n"
                               "clock_memory: [{}]\n"
-                              "clock_throttle_status: [{}]\n"
                               "overdrive_level: [{}]\n"
                               "memory_overdrive_level: [{}]",
                               value_or_default(samples.get_clock_system_min()),
@@ -200,7 +192,6 @@ std::ostream &operator<<(std::ostream &out, const rocm_smi_clock_samples &sample
                               fmt::join(value_or_default(samples.get_clock_system()), ", "),
                               fmt::join(value_or_default(samples.get_clock_socket()), ", "),
                               fmt::join(value_or_default(samples.get_clock_memory()), ", "),
-                              fmt::join(value_or_default(samples.get_clock_throttle_status()), ", "),
                               fmt::join(value_or_default(samples.get_overdrive_level()), ", "),
                               fmt::join(value_or_default(samples.get_memory_overdrive_level()), ", "));
 }
