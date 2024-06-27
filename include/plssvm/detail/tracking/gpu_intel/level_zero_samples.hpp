@@ -149,6 +149,10 @@ class level_zero_memory_samples {
     // befriend hardware sampler class
     friend class gpu_intel_hardware_sampler;
 
+    /**
+     * @brief The map type used if the number of potential Level Zero domains is unknown at compile time.
+     * @tparam T the mapped type
+     */
     template <typename T>
     using map_type = std::unordered_map<std::string, T>;
 
@@ -195,6 +199,10 @@ class level_zero_temperature_samples {
     // befriend hardware sampler class
     friend class gpu_intel_hardware_sampler;
 
+    /**
+     * @brief The map type used if the number of potential Level Zero domains is unknown at compile time.
+     * @tparam T the mapped type
+     */
     template <typename T>
     using map_type = std::unordered_map<std::string, T>;
 
