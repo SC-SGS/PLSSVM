@@ -17,7 +17,7 @@
 
 #if defined(PLSSVM_HARDWARE_SAMPLING_ENABLED)
     #include "plssvm/detail/tracking/hardware_sampler.hpp"          // plssvm::detail::tracking::hardware_sampler
-    #include "plssvm/detail/tracking/hardware_sampler_factory.hpp"  // plssvm::detail::tracking::create_hardware_sampler
+    #include "plssvm/detail/tracking/hardware_sampler_factory.hpp"  // plssvm::detail::tracking::make_hardware_sampler
 #endif
 
 #include <algorithm>   // std::for_each
