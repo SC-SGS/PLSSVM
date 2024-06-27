@@ -11,6 +11,7 @@
 #include "plssvm/detail/tracking/gpu_intel/level_zero_device_handle_impl.hpp"  // plssvm::detail::tracking::level_zero_device_handle_impl
 #include "plssvm/detail/tracking/gpu_intel/utility.hpp"                        // PLSSVM_LEVEL_ZERO_ERROR_CHECK
 #include "plssvm/detail/tracking/hardware_sampler.hpp"                         // plssvm::detail::tracking::hardware_sampler
+#include "plssvm/detail/tracking/performance_tracker.hpp"                      // PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY
 #include "plssvm/detail/tracking/utility.hpp"                                  // plssvm::detail::tracking::durations_from_reference_time
 #include "plssvm/detail/utility.hpp"                                           // plssvm::detail::contains
 #include "plssvm/exceptions/exceptions.hpp"                                    // plssvm::exception, plssvm::hardware_sampling_exception
@@ -49,6 +50,12 @@ gpu_intel_hardware_sampler::gpu_intel_hardware_sampler(const std::size_t device_
 
     // initialize samples -> can't be done beforehand since the device handle can only be initialized after a call to nvmlInit
     device_ = level_zero_device_handle{ device_id };
+
+    // track the Level Zero API version
+    ze_driver_handle_t driver = device_.get_impl().driver;
+    ze_api_version_t api_version{};
+    PLSSVM_LEVEL_ZERO_ERROR_CHECK(zeDriverGetApiVersion(driver, &api_version));
+    PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking::tracking_entry{ "dependencies", "level_zero_api_version", fmt::format("{}.{}", ZE_MAJOR_VERSION(api_version), ZE_MINOR_VERSION(api_version)) }));
 }
 
 gpu_intel_hardware_sampler::~gpu_intel_hardware_sampler() {
