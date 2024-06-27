@@ -177,7 +177,7 @@ if (PLSSVM_ENABLE_HARDWARE_SAMPLING)
         target_link_libraries(${PLSSVM_HARDWARE_TRACKING_LIBRARY_NAME} PRIVATE -lrocm_smi64)
         target_include_directories(${PLSSVM_HARDWARE_TRACKING_LIBRARY_NAME} PRIVATE ${ROCM_SMI_INCLUDE_DIR})
         
-        message(STATUS "Enable sampling of AMD GPU information using ROCm SMI (${ROCM_SMI_INCLUDE_DIR}).")
+        message(STATUS "Enable sampling of AMD GPU information using ROCm SMI.")
         
         # add source file to source file list
         target_sources(${PLSSVM_HARDWARE_TRACKING_LIBRARY_NAME} PRIVATE
