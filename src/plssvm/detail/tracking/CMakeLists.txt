@@ -145,6 +145,8 @@ if (PLSSVM_ENABLE_HARDWARE_SAMPLING)
         
         # add compile definitions
         target_compile_definitions(${PLSSVM_HARDWARE_TRACKING_LIBRARY_NAME} PUBLIC PLSSVM_HARDWARE_TRACKING_FOR_CPUS_ENABLED)
+    elseif (DEFINED PLSSVM_CPU_TARGET_ARCHS)
+        message(FATAL_ERROR "Hardware sampling enabled with explicitly provided CPU targets, but none of the required utilities, turbostat, lscpu, or free, can be used!")
     endif ()
     
     ####################################################################################################################
