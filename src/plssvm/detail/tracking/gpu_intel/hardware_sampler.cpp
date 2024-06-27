@@ -112,6 +112,8 @@ void gpu_intel_hardware_sampler::sampling_loop() {
     // add samples where we only have to retrieve the value once
     //
 
+    this->add_time_point(std::chrono::steady_clock::now());
+
     // retrieve initial general information
     {
         ze_device_properties_t ze_device_prop{};
