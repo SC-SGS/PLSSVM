@@ -44,7 +44,7 @@ namespace plssvm::detail::tracking {
                 throw hardware_sampling_exception{ fmt::format("Error in Level Zero function call \"{}\": {}", #level_zero_func, to_result_string(errc)) }; \
             }                                                                                                                                               \
         }
-#else>
+#else
     #define PLSSVM_LEVEL_ZERO_ERROR_CHECK(level_zero_func) level_zero_func;
 #endif
 
