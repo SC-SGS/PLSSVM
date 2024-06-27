@@ -21,18 +21,16 @@
 #include "level_zero/ze_api.h"   // Level Zero runtime functions
 #include "level_zero/zes_api.h"  // Level Zero runtime functions
 
-#include <algorithm>    // std::min_element
-#include <chrono>       // std::chrono::{steady_clock, duration_cast, milliseconds}
-#include <cstddef>      // std::size_t
-#include <cstdint>      // std::size_t
-#include <cstdint>      // std::uint64_t, std::int32_t
-#include <exception>    // std::exception, std::terminate
-#include <iostream>     // std::cerr, std::endl
-#include <string>       // std::string
-#include <string_view>  // std:string_view
-#include <thread>       // std::this_thread
-#include <utility>      // std::move
-#include <vector>       // std::vector
+#include <chrono>     // std::chrono::{steady_clock, duration_cast, milliseconds}
+#include <cstddef>    // std::size_t
+#include <cstdint>    // std::size_t
+#include <cstdint>    // std::int32_t
+#include <exception>  // std::exception, std::terminate
+#include <iostream>   // std::cerr, std::endl
+#include <string>     // std::string
+#include <thread>     // std::this_thread
+#include <utility>    // std::move
+#include <vector>     // std::vector
 
 namespace plssvm::detail::tracking {
 
