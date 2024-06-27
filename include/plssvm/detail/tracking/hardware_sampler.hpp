@@ -60,11 +60,14 @@ class hardware_sampler {
     /**
      * @brief Start hardware sampling in a new std::thread.
      * @details Once a hardware sampler has been started, it can never be started again, even if `hardware_sampler::stop_sampling` has been called.
+     * @throws plssvm::hardware_sampling_exception if the hardware sampler has already been started
      */
     void start_sampling();
     /**
      * @brief Stop hardware sampling. Signals the running std::thread to stop sampling and joins it.
      * @details Once a hardware sampler has been stopped, it can never be stopped again.
+     * @throws plssvm::hardware_sampling_exception if the hardware sampler hasn't been started yet
+     * @throws plssvm::hardware_sampling_exception if the hardware sampler has already been stopped
      */
     void stop_sampling();
     /**

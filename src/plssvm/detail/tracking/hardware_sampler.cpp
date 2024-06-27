@@ -50,6 +50,10 @@ void hardware_sampler::start_sampling() {
 }
 
 void hardware_sampler::stop_sampling() {
+    // can't stop a hardware sampler that has never been started
+    if (!this->has_sampling_started()) {
+        throw hardware_sampling_exception{ "Can't stop a hardware sampler that has never been started!" };
+    }
     // can't stop an already stopped sampler
     if (this->has_sampling_stopped()) {
         throw hardware_sampling_exception{ "Can stop every hardware sampler only once!" };
