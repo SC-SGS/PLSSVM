@@ -86,7 +86,7 @@ class nvml_clock_samples {
     PLSSVM_SAMPLE_STRUCT_FIXED_MEMBER(unsigned int, clock_graph_max)        // the maximum possible graphics clock frequency in MHz
     PLSSVM_SAMPLE_STRUCT_FIXED_MEMBER(unsigned int, clock_sm_max)           // the maximum possible SM clock frequency in MHz
     PLSSVM_SAMPLE_STRUCT_FIXED_MEMBER(unsigned int, clock_mem_min)          // the minimum possible memory clock frequency in MHz
-    PLSSVM_SAMPLE_STRUCT_FIXED_MEMBER(unsigned int, clock_mem_max)          // the maximum possible memory clck frequency in MHz
+    PLSSVM_SAMPLE_STRUCT_FIXED_MEMBER(unsigned int, clock_mem_max)          // the maximum possible memory clock frequency in MHz
 
     PLSSVM_SAMPLE_STRUCT_SAMPLING_MEMBER(unsigned int, clock_graph)                  // the current graphics clock frequency in MHz
     PLSSVM_SAMPLE_STRUCT_SAMPLING_MEMBER(unsigned int, clock_sm)                     // the current SM clock frequency in Mhz
