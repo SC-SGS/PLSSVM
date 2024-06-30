@@ -35,7 +35,7 @@
 #include <string>       // std::string
 #include <string_view>  // std::string_view
 #include <type_traits>  // std::false_type, std::true_type, std::is_same_v
-#include <utility>      // std::move, std::pair
+#include <utility>      // std::move
 #include <vector>       // std::vector
 
 namespace plssvm::detail::tracking {
@@ -206,18 +206,29 @@ class performance_tracker {
      */
     void add_tracking_entry(const tracking_entry<cmd::parser_scale> &entry);
     /**
-     * @brief Add a tracking_entry encapsulating a `plssvm::detail::tracking::hardware_tracker` (or any of its subclasses) and the hardware sampling start time to this performance tracker.
+     * @brief A `plssvm::detail::tracking::hardware_tracker` (or any of its subclasses) from which all samples should be added.
      * @details Saves a string containing the entry name and value in a map with the entry category as key.
      *          Uses the `plssvm::detail::tracking::hardware_tracker::generate_yaml_string` function to generate the tracking entry.
-     * @param[in] entry the entry to add
+     * @param[in] entry the hardware sampler to add the samples from
      */
-    void add_tracking_entry(const tracking_entry<std::pair<hardware_sampler *, std::chrono::steady_clock::time_point>> &entry);
+    void add_hardware_sampler_entry(const hardware_sampler &entry);
 
     /**
      * @brief Add an event to this hardware sampler.
      * @param[in] name the event name
      */
     void add_event(std::string name);
+
+    /**
+     * @brief Set a new reference time from which the relative times of the events and hardware samples are calculated.
+     * @param[in] time the new reference time
+     */
+    void set_reference_time(std::chrono::steady_clock::time_point time) noexcept;
+    /**
+     * @brief The currently used reference time.
+     * @return the reference time (`[[nodiscard]]`)
+     */
+    [[nodiscard]] std::chrono::steady_clock::time_point get_reference_time() const noexcept;
 
     /**
      * @brief Write all stored tracking entries to the [YAML](https://yaml.org/) file @p filename.
@@ -268,6 +279,8 @@ class performance_tracker {
   private:
     /// All tracking entries grouped by their specified categories.
     std::map<std::string, std::map<std::string, std::vector<std::string>>> tracking_entries_{};
+    /// The reference time point used for the performance tracking and hardware samples entries.
+    std::chrono::steady_clock::time_point reference_time_{ std::chrono::steady_clock::now() };
     /// All special events mainly used for hardware sampling.
     events events_{};
     /// Flag indicating whether tracking is currently enabled or disabled. Tracking is enabled by default.
@@ -363,8 +376,18 @@ void performance_tracker::add_tracking_entry(const tracking_entry<std::vector<T>
  * @details Save the previously tracked entries if performance tracking has been enabled during the CMake configuration.
  */
 /**
+ * @def PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_SET_REFERENCE_TIME
+ * @brief Defines the `PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_SET_REFERENCE_TIME` macro if `PLSSVM_PERFORMANCE_TRACKER_ENABLED` is defined.
+ * @details Set the new reference time if performance tracking has been enabled during the CMake configuration.
+ */
+/**
  * @def PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY
  * @brief Defines the `PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY` macro if `PLSSVM_PERFORMANCE_TRACKER_ENABLED` is defined.
+ * @details Adds the provided entry to the `plssvm::detail::tracking::performance_tracker` singleton if performance tracking has been enabled during the CMake configuration.
+ */
+/**
+ * @def PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_HARDWARE_SAMPLER_ENTRY
+ * @brief Defines the `PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_HARDWARE_SAMPLER_ENTRY` macro if `PLSSVM_PERFORMANCE_TRACKER_ENABLED` is defined.
  * @details Adds the provided entry to the `plssvm::detail::tracking::performance_tracker` singleton if performance tracking has been enabled during the CMake configuration.
  */
 /**
@@ -383,8 +406,14 @@ void performance_tracker::add_tracking_entry(const tracking_entry<std::vector<T>
     #define PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_SAVE(filename) \
         ::plssvm::detail::tracking::global_performance_tracker().save(filename)
 
+    #define PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_SET_REFERENCE_TIME(time) \
+        ::plssvm::detail::tracking::global_performance_tracker().set_reference_time(time)
+
     #define PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY(entry) \
         ::plssvm::detail::tracking::global_performance_tracker().add_tracking_entry(entry)
+
+    #define PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_HARDWARE_SAMPLER_ENTRY(sampler) \
+        ::plssvm::detail::tracking::global_performance_tracker().add_hardware_sampler_entry(sampler)
 
     #define PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_EVENT(event_name) \
         ::plssvm::detail::tracking::global_performance_tracker().add_event(event_name)
@@ -394,7 +423,9 @@ void performance_tracker::add_tracking_entry(const tracking_entry<std::vector<T>
     #define PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_PAUSE()
     #define PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_RESUME()
     #define PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_SAVE(filename)
+    #define PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_SET_REFERENCE_TIME(time)
     #define PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY(entry)
+    #define PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_HARDWARE_SAMPLER_ENTRY(sampler)
     #define PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_EVENT(event_name)
 
 #endif

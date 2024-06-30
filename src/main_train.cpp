@@ -12,7 +12,8 @@
 #include "plssvm/detail/cmd/data_set_variants.hpp"         // plssvm::detail::cmd::data_set_factory
 #include "plssvm/detail/cmd/parser_train.hpp"              // plssvm::detail::cmd::parser_train
 #include "plssvm/detail/logging.hpp"                       // plssvm::detail::log
-#include "plssvm/detail/tracking/performance_tracker.hpp"  // plssvm::detail::tracking::tracking_entry, PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_SAVE
+#include "plssvm/detail/tracking/performance_tracker.hpp"  // plssvm::detail::tracking::tracking_entry, PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_SAVE,
+                                                           // PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_HARDWARE_SAMPLER_ENTRY, PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_SET_REFERENCE_TIME
 #include "plssvm/detail/utility.hpp"                       // PLSSVM_IS_DEFINED
 
 #if defined(PLSSVM_HARDWARE_SAMPLING_ENABLED)
@@ -38,6 +39,7 @@ using namespace std::chrono_literals;
 int main(int argc, char *argv[]) {
     try {
         const std::chrono::steady_clock::time_point start_time = std::chrono::steady_clock::now();
+        PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_SET_REFERENCE_TIME(start_time);
 
         // parse SVM parameter from command line
         plssvm::detail::cmd::parser_train cmd_parser{ argc, argv };
@@ -93,8 +95,7 @@ int main(int argc, char *argv[]) {
             std::for_each(sampler.begin(), sampler.end(), std::mem_fn(&plssvm::detail::tracking::hardware_sampler::stop_sampling));
             // write samples to yaml file
             std::for_each(sampler.cbegin(), sampler.cend(), [&](const std::unique_ptr<plssvm::detail::tracking::hardware_sampler> &s) {
-                using track_type = std::pair<plssvm::detail::tracking::hardware_sampler *, std::chrono::steady_clock::time_point>;
-                PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking::tracking_entry{ "hardware_samples", s->device_identification(), track_type{ s.get(), start_time } }));
+                PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_HARDWARE_SAMPLER_ENTRY(*s);
             });
 #endif
         };

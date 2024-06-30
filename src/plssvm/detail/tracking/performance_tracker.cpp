@@ -15,7 +15,6 @@
 #include "plssvm/detail/cmd/parser_scale.hpp"            // plssvm::detail::cmd::parser_scale
 #include "plssvm/detail/cmd/parser_train.hpp"            // plssvm::detail::cmd::parser_train
 #include "plssvm/detail/tracking/hardware_sampler.hpp"   // plssvm::detail::tracking::hardware_sampler
-#include "plssvm/detail/tracking/utility.hpp"            // plssvm::detail::tracking::durations_from_reference_time
 #include "plssvm/detail/utility.hpp"                     // plssvm::detail::current_date_time, PLSSVM_IS_DEFINED
 #include "plssvm/gamma.hpp"                              // plssvm::get_gamma_string
 #include "plssvm/parameter.hpp"                          // plssvm::parameter
@@ -46,7 +45,7 @@
 #endif
 
 #include <algorithm>    // std::max
-#include <chrono>       // std::chrono::steady_clock
+#include <chrono>       // std::chrono::steady_clock::time_point
 #include <cstddef>      // std::size_t
 #include <fstream>      // std::ofstream
 #include <iostream>     // std::ios_base::app, std::ostream, std::clog, std::endl
@@ -145,27 +144,23 @@ void performance_tracker::add_tracking_entry(const tracking_entry<cmd::parser_sc
     }
 }
 
-void performance_tracker::add_tracking_entry(const tracking_entry<std::pair<hardware_sampler *, std::chrono::steady_clock::time_point>> &entry) {
+void performance_tracker::add_hardware_sampler_entry(const hardware_sampler &entry) {
     // check whether entries should currently be tracked
     if (this->is_tracking()) {
-        // add events -> only once!
-        if (!detail::contains(tracking_entries_, entry.entry_category)) {
-            // no hardware samples added yet -> add events
-            if (events_.empty()) {
-                // no events
-            } else {
-                // assemble string
-                tracking_entries_[entry.entry_category]["events"].push_back(fmt::format("\n{}", events_.generate_yaml_string(entry.entry_value.second)));
-            }
-        }
-
-        // fill category
-        tracking_entries_[entry.entry_category][entry.entry_name].push_back(entry.entry_value.first->generate_yaml_string(entry.entry_value.second));
+        tracking_entries_[std::string{ "hardware_samples" }][entry.device_identification()].push_back(entry.generate_yaml_string(reference_time_));
     }
 }
 
 void performance_tracker::add_event(const std::string name) {
     events_.add_event(std::chrono::steady_clock::now(), std::move(name));
+}
+
+void performance_tracker::set_reference_time(const std::chrono::steady_clock::time_point time) noexcept {
+    reference_time_ = time;
+}
+
+std::chrono::steady_clock::time_point performance_tracker::get_reference_time() const noexcept {
+    return reference_time_;
 }
 
 void performance_tracker::save(const std::string &filename) {
@@ -360,6 +355,13 @@ void performance_tracker::save(std::ostream &out) {
         fmt::format("{:<{}}\"{}\"", "", max_dependency_entry_name_length - 14, oneDPL_version),
         fmt::format("{:<{}}\"{}\"", "", max_dependency_entry_name_length - 11, tbb_version),
         fmt::format("{:<{}}\"{}\"", "", max_dependency_entry_name_length - 18, subprocess_version));
+
+    //*************************************************************************************************************************************//
+    //                                                          events, if present                                                         //
+    //*************************************************************************************************************************************//
+    if (!events_.empty()) {
+        out << fmt::format("events:\n{}", events_.generate_yaml_string(reference_time_));
+    }
 
     //*************************************************************************************************************************************//
     //                                                          other statistics                                                           //

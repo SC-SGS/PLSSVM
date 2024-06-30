@@ -437,18 +437,21 @@ A submodule used to track various performance statistics like runtimes, but also
 The tracked metrics can be saved to a YAML file for later post-processing.
 **Note**: only available if PLSSVM was built with `-DPLSSVM_ENABLE_PERFORMANCE_TRACKING=ON`!
 
-| function                                           | description                                                                      |
-|----------------------------------------------------|----------------------------------------------------------------------------------|
-| `add_string_tracking_entry(category, name, value)` | Add a new tracking entry to the provided category with the given name and value. |
-| `add_parameter_tracking_entry(params)`             | Add a new tracking entry for the provided `plssvm.Parameter` object.             |
-| `add_event()`                                      | Add a new generic event to the tracker.                                          |
-| `pause()`                                          | Pause the current performance tracking.                                          |
-| `resume()`                                         | Resume performance tracking.                                                     |
-| `save(filename)`                                   | Save all collected tracking information to the provided file.                    |
-| `is_tracking()`                                    | Check whether performance tracking is currently enabled.                         |
-| `get_tracking_entries()`                           | Return a dictionary that contains all previously added tracking entries.         |
-| `get_events()`                                     | Return all previously recorded events.                                           |
-| `clear_tracking_entries()`                         | Remove all currently tracked entries from the performance tracker.               |
+| function                                           | description                                                                             |
+|----------------------------------------------------|-----------------------------------------------------------------------------------------|
+| `add_string_tracking_entry(category, name, value)` | Add a new tracking entry to the provided category with the given name and value.        |
+| `add_parameter_tracking_entry(params)`             | Add a new tracking entry for the provided `plssvm.Parameter` object.                    |
+| `add_hardware_sampler_entry(sampler)`              | Add a new tracking entry including all hardware samples collected by the given sampler. |
+| `add_event()`                                      | Add a new generic event to the tracker.                                                 |
+| `pause()`                                          | Pause the current performance tracking.                                                 |
+| `resume()`                                         | Resume performance tracking.                                                            |
+| `save(filename)`                                   | Save all collected tracking information to the provided file.                           |
+| `set_reference_time(time)`                         | Set a new reference time to which the relative event and samples times are calculated.  |
+| `get_reference_time()`                             | Get the current reference type.                                                         |
+| `is_tracking()`                                    | Check whether performance tracking is currently enabled.                                |
+| `get_tracking_entries()`                           | Return a dictionary that contains all previously added tracking entries.                |
+| `get_events()`                                     | Return all previously recorded events.                                                  |
+| `clear_tracking_entries()`                         | Remove all currently tracked entries from the performance tracker.                      |
 
 #### `plssvm.detail.tracking.Event`, `plssvm.detail.tracking.Events`
 
@@ -542,7 +545,8 @@ In case of the CPU hardware sampler, two additional methods are available.
 | `gfx_samples()`        | Return all collect gfx (iGPU) related hardware samples. |
 | `idle_state_samples()` | Return all collect idle state related hardware samples. |
 
-For the definitions and available methods of the returned sampling structs (encapsulating the actual samples using optionals), refer to the respective binding implementation files.
+For the definitions and available methods of the returned sampling structs (encapsulating the actual samples using
+optionals), refer to the respective binding implementation files.
 
 ### Free functions
 
