@@ -13,9 +13,6 @@
 #define PLSSVM_DETAIL_TRACKING_EVENT_HPP_
 #pragma once
 
-#include "plssvm/detail/assert.hpp"          // PLSSVM_ASSERT
-#include "plssvm/exceptions/exceptions.hpp"  // plssvm::exception
-
 #include "fmt/core.h"     // fmt::formatter
 #include "fmt/ostream.h"  // fmt::ostream_formatter
 
@@ -23,7 +20,6 @@
 #include <cstddef>  // std::size_t
 #include <iosfwd>   // std::ostream forward declaration
 #include <string>   // std::string
-#include <utility>  // std::move
 #include <vector>   // std::vector
 
 namespace plssvm::detail::tracking {
@@ -39,6 +35,7 @@ class events {
     struct event {
         /// The time point this event occurred at.
         std::chrono::steady_clock::time_point time_point;
+
         /// The name of this event.
         std::string name;
     };
@@ -47,35 +44,21 @@ class events {
      * @brief Add a new event.
      * @param e the event
      */
-    void add_event(event e) {
-        this->time_points_.push_back(std::move(e.time_point));
-        this->names_.push_back(fmt::format("\"{}\"", std::move(e.name)));
-
-        PLSSVM_ASSERT(this->num_events() == this->time_points_.size(), "Error: number of event members mismatch!");
-        PLSSVM_ASSERT(this->num_events() == this->names_.size(), "Error: number of event members mismatch!");
-    }
+    void add_event(event e);
 
     /**
      * @brief Add a new event.
      * @param[in] time_point the time point when the event occurred
      * @param[in] name the name of the event
      */
-    void add_event(decltype(event::time_point) time_point, decltype(event::name) name) {
-        this->time_points_.push_back(std::move(time_point));
-        this->names_.push_back(fmt::format("\"{}\"", std::move(name)));
-
-        PLSSVM_ASSERT(this->num_events() == this->time_points_.size(), "Error: number of event members mismatch!");
-        PLSSVM_ASSERT(this->num_events() == this->names_.size(), "Error: number of event members mismatch!");
-    }
+    void add_event(decltype(event::time_point) time_point, decltype(event::name) name);
 
     /**
      * @brief Return the event at index @p idx.
      * @param[in] idx the index of the event to retrieve
      * @return the event (`[[nodiscard]]`)
      */
-    [[nodiscard]] event operator[](const std::size_t idx) const noexcept {
-        return event{ time_points_[idx], names_[idx] };
-    }
+    [[nodiscard]] event operator[](std::size_t idx) const noexcept;
 
     /**
      * @brief Return the event at index @p idx.
@@ -83,12 +66,7 @@ class events {
      * @throws plssvm::exception if the requested index is out-of-bounce
      * @return the event (`[[nodiscard]]`)
      */
-    [[nodiscard]] event at(const std::size_t idx) const {
-        if (idx >= this->num_events()) {
-            throw exception{ fmt::format("Index {} is out-of-bounce for the number of events {}!", idx, this->num_events()) };
-        }
-        return (*this)[idx];
-    }
+    [[nodiscard]] event at(std::size_t idx) const;
 
     /**
      * @brief Return the number of recorded events.
