@@ -127,7 +127,7 @@ void cpu_hardware_sampler::sampling_loop() {
 #if defined(PLSSVM_HARDWARE_TRACKING_VIA_LSCPU_ENABLED)
     {
         const std::string lscpu_output = run_subprocess("lscpu");
-        const std::vector<std::string_view> lscpu_lines = detail::split(lscpu_output, '\n');
+        const std::vector<std::string_view> lscpu_lines = detail::split(detail::trim(lscpu_output), '\n');
 
         for (std::string_view line : lscpu_lines) {
             line = detail::trim(line);
@@ -181,7 +181,7 @@ void cpu_hardware_sampler::sampling_loop() {
     {
         std::string free_output = run_subprocess("free -b");
         free_output = std::regex_replace(free_output, whitespace_replace_reg, " ");
-        const std::vector<std::string_view> free_lines = detail::split(free_output, '\n');
+        const std::vector<std::string_view> free_lines = detail::split(detail::trim(free_output), '\n');
         PLSSVM_ASSERT(free_lines.size() >= 3, "Must read exactly more than three lines, but only read {} lines!", free_lines.size());
 
         // read memory information
@@ -219,7 +219,7 @@ void cpu_hardware_sampler::sampling_loop() {
         const std::string turbostat_output = run_subprocess(turbostat_command_line);
 
         // retrieve the turbostat data
-        const std::vector<std::string_view> data = detail::split(turbostat_output, '\n');
+        const std::vector<std::string_view> data = detail::split(detail::trim(turbostat_output), '\n');
         PLSSVM_ASSERT(data.size() == 2, "Must read exactly two lines, but read {} lines!", data.size());
         const std::vector<std::string_view> header = detail::split(data[0], '\t');
         const std::vector<std::string_view> values = detail::split(data[1], '\t');
@@ -342,7 +342,7 @@ void cpu_hardware_sampler::sampling_loop() {
                 // run free
                 std::string free_output = run_subprocess("free -b");
                 free_output = std::regex_replace(free_output, whitespace_replace_reg, " ");
-                const std::vector<std::string_view> free_lines = detail::split(free_output, '\n');
+                const std::vector<std::string_view> free_lines = detail::split(detail::trim(free_output), '\n');
                 PLSSVM_ASSERT(free_lines.size() >= 3, "Must read exactly more than three lines, but only read {} lines!", free_lines.size());
 
                 // read memory information
@@ -363,7 +363,7 @@ void cpu_hardware_sampler::sampling_loop() {
                 const std::string turbostat_output = run_subprocess(turbostat_command_line);
 
                 // retrieve the turbostat data
-                const std::vector<std::string_view> data = detail::split(turbostat_output, '\n');
+                const std::vector<std::string_view> data = detail::split(detail::trim(turbostat_output), '\n');
                 PLSSVM_ASSERT(data.size() == 2, "Must read exactly two lines, but read {} lines!", data.size());
                 const std::vector<std::string_view> header = detail::split(data[0], '\t');
                 const std::vector<std::string_view> values = detail::split(data[1], '\t');
