@@ -143,6 +143,7 @@ set(PLSSVM_BASE_TEST_SOURCES
     ${CMAKE_CURRENT_LIST_DIR}/detail/io/libsvm_parsing.cpp
     ${CMAKE_CURRENT_LIST_DIR}/detail/io/scaling_factors_parsing.cpp
     
+    ${CMAKE_CURRENT_LIST_DIR}/detail/tracking/events.cpp
     ${CMAKE_CURRENT_LIST_DIR}/detail/tracking/performance_tracker.cpp
     
     ${CMAKE_CURRENT_LIST_DIR}/detail/arithmetic_type_name.cpp
