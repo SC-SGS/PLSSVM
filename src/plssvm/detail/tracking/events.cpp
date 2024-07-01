@@ -43,6 +43,8 @@ void events::add_event(decltype(event::time_point) time_point, decltype(event::n
 }
 
 auto events::operator[](const std::size_t idx) const noexcept -> event {
+    PLSSVM_ASSERT(idx < this->num_events(), "Index {} is out-of-bounce for the number of events {}!", idx, this->num_events());
+
     return event{ time_points_[idx], names_[idx] };
 }
 
