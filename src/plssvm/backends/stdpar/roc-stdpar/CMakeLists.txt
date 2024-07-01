@@ -7,10 +7,7 @@
 message(CHECK_START "searching for roc-stdpar")
 
 find_package(rocthrust REQUIRED)
-message(STATUS "Found rocThrust: ${ROCTHRUST_INCLUDE_DIR}")
-
 find_package(rocprim REQUIRED)
-message(STATUS "Found rocPRIM: ${ROCPRIM_INCLUDE_DIR}")
 
 
 # check whether the roc-stdpar include path has been provided
