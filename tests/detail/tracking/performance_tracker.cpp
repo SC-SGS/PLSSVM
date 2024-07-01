@@ -416,6 +416,30 @@ TEST_F(PerformanceTracker, add_event) {
     EXPECT_EQ(tracker.get_events()[0].name, std::string{ "EVENT" });
 }
 
+TEST_F(PerformanceTracker, set_reference_time) {
+    // get performance tracker from fixture class
+    plssvm::detail::tracking::performance_tracker &tracker = this->get_performance_tracker();
+
+    // set the new reference time
+    const std::chrono::steady_clock::time_point ref_time = std::chrono::steady_clock::now();
+    tracker.set_reference_time(ref_time);
+
+    // check if the reference time was correctly set
+    EXPECT_EQ(tracker.get_reference_time(), ref_time);
+}
+
+TEST_F(PerformanceTracker, get_reference_time) {
+    // get performance tracker from fixture class
+    plssvm::detail::tracking::performance_tracker &tracker = this->get_performance_tracker();
+
+    // set the new reference time
+    const std::chrono::steady_clock::time_point ref_time = std::chrono::steady_clock::now();
+    tracker.set_reference_time(ref_time);
+
+    // check if the reference time was correctly set
+    EXPECT_EQ(tracker.get_reference_time(), ref_time);
+}
+
 TEST_F(PerformanceTracker, save_no_additional_entries) {
     // get performance tracker from fixture class
     plssvm::detail::tracking::performance_tracker &tracker = this->get_performance_tracker();
