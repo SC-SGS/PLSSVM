@@ -16,7 +16,8 @@
 #include "plssvm/detail/tracking/hardware_sampler.hpp"  // plssvm::detail::tracking::hardware_sampler
 #include "plssvm/target_platforms.hpp"                  //plssvm::target_platform
 
-#include "fmt/core.h"  // fmt::format
+#include "fmt/core.h"     // fmt::format
+#include "gmock/gmock.h"  // MOCK_METHOD, ON_CALL, ::testing::Return
 
 #include <chrono>   // std::chrono::steady_clock::time_point
 #include <cstddef>  // std::size_t
@@ -32,23 +33,22 @@ class mock_hardware_sampler final : public plssvm::detail::tracking::hardware_sa
     explicit mock_hardware_sampler(const std::size_t device_id, Args &&...args) :
         plssvm::detail::tracking::hardware_sampler{ std::forward<Args>(args)... },
         device_id_{ device_id } {
+        this->fake_functions();
     }
 
-    // basic implementation for pure virtual functions
-    [[nodiscard]] std::string generate_yaml_string(std::chrono::steady_clock::time_point) const override {
-        return "YAML_string";
-    }
-
-    [[nodiscard]] std::string device_identification() const override {
-        return fmt::format("device_{}", device_id_);
-    }
-
-    [[nodiscard]] plssvm::target_platform sampling_target() const override {
-        return plssvm::target_platform::cpu;
-    }
+    // mock pure virtual functions
+    MOCK_METHOD((std::string), generate_yaml_string, (std::chrono::steady_clock::time_point), (const, override));
+    MOCK_METHOD((std::string), device_identification, (), (const, override));
+    MOCK_METHOD((plssvm::target_platform), sampling_target, (), (const, override));
 
   private:
-    void sampling_loop() override { }
+    MOCK_METHOD((void), sampling_loop, (), (override));
+
+    void fake_functions() const {
+        ON_CALL(*this, generate_yaml_string).WillByDefault(::testing::Return(std::string{ "YAML_string" }));
+        ON_CALL(*this, device_identification()).WillByDefault(::testing::Return(fmt::format("device_{}", device_id_)));
+        ON_CALL(*this, sampling_target()).WillByDefault(::testing::Return(plssvm::target_platform::cpu));
+    }
 
     std::size_t device_id_{ 0 };
 };

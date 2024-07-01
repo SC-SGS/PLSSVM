@@ -23,8 +23,8 @@
 #include "tests/utility.hpp"                                // util::redirect_output
 
 #include "fmt/core.h"     // fmt::format
-#include "gmock/gmock.h"  // EXPECT_THAT, ::testing::{HasSubstr}
-#include "gtest/gtest.h"  // TEST, TYPED_TEST_SUITE, TYPED_TEST, EXPECT_EQ, EXPECT_TRUE, EXPECT_FALSE, ::testing::Test
+#include "gmock/gmock.h"  // EXPECT_CALL, EXPECT_THAT, ::testing::{HasSubstr}
+#include "gtest/gtest.h"  // TEST, TYPED_TEST_SUITE, TYPED_TEST, EXPECT_EQ, EXPECT_TRUE, EXPECT_FALSE, ::testing::Test, ::testing::An
 
 #include <algorithm>   // std::transform
 #include <array>       // std::array
@@ -158,6 +158,15 @@ TEST_F(PerformanceTracker, save_macro) {
     plssvm::detail::tracking::global_performance_tracker().clear_tracking_entries();
 }
 
+TEST_F(PerformanceTracker, set_reference_time_macro) {
+    // set the new reference time
+    const std::chrono::steady_clock::time_point ref_time = std::chrono::steady_clock::now();
+    PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_SET_REFERENCE_TIME(ref_time);
+
+    // check if the reference time was correctly set
+    EXPECT_EQ(plssvm::detail::tracking::global_performance_tracker().get_reference_time(), ref_time);
+}
+
 TEST_F(PerformanceTracker, add_entry_macro) {
     // add different tracking entries
     PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking::tracking_entry{ "foo", "bar", 42 }));
@@ -188,6 +197,31 @@ TEST_F(PerformanceTracker, add_entry_macro) {
 
     // clear tracking entries for next test
     plssvm::detail::tracking::global_performance_tracker().clear_tracking_entries();
+}
+
+TEST_F(PerformanceTracker, add_hardware_sampler_entry_macro) {
+    using namespace std::chrono_literals;
+
+    // create the mocked hardware sampler
+    const mock_hardware_sampler sampler1{ std::size_t{ 0 }, 50ms };
+    const mock_hardware_sampler sampler2{ std::size_t{ 1 }, 100ms };
+
+    EXPECT_CALL(sampler1, generate_yaml_string(::testing::An<std::chrono::steady_clock::time_point>())).Times(1);
+    EXPECT_CALL(sampler1, device_identification()).Times(1);
+    EXPECT_CALL(sampler2, generate_yaml_string(::testing::An<std::chrono::steady_clock::time_point>())).Times(1);
+    EXPECT_CALL(sampler2, device_identification()).Times(1);
+
+    // save the sampling entries
+    PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_HARDWARE_SAMPLER_ENTRY(sampler1);
+    PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_HARDWARE_SAMPLER_ENTRY(sampler2);
+
+    // get the tracking entries
+    const std::map<std::string, std::map<std::string, std::vector<std::string>>> entries = plssvm::detail::tracking::global_performance_tracker().get_tracking_entries();
+
+    // check entries for correctness
+    ASSERT_EQ(entries.size(), 1);
+
+    EXPECT_EQ(entries.at("hardware_samples").size(), 2);
 }
 
 TEST_F(PerformanceTracker, add_event_macro) {
@@ -388,6 +422,11 @@ TEST_F(PerformanceTracker, add_hardware_sampler_entry) {
     const mock_hardware_sampler sampler1{ std::size_t{ 0 }, 50ms };
     const mock_hardware_sampler sampler2{ std::size_t{ 1 }, 100ms };
 
+    EXPECT_CALL(sampler1, generate_yaml_string(::testing::An<std::chrono::steady_clock::time_point>())).Times(1);
+    EXPECT_CALL(sampler1, device_identification()).Times(1);
+    EXPECT_CALL(sampler2, generate_yaml_string(::testing::An<std::chrono::steady_clock::time_point>())).Times(1);
+    EXPECT_CALL(sampler2, device_identification()).Times(1);
+
     // get performance tracker from fixture class
     plssvm::detail::tracking::performance_tracker &tracker = this->get_performance_tracker();
 
@@ -399,7 +438,7 @@ TEST_F(PerformanceTracker, add_hardware_sampler_entry) {
     const std::map<std::string, std::map<std::string, std::vector<std::string>>> entries = tracker.get_tracking_entries();
 
     // check entries for correctness
-    EXPECT_EQ(entries.size(), 1);
+    ASSERT_EQ(entries.size(), 1);
 
     EXPECT_EQ(entries.at("hardware_samples").size(), 2);
 }
