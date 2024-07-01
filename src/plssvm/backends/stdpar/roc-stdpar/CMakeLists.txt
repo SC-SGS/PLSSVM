@@ -6,6 +6,13 @@
 
 message(CHECK_START "searching for roc-stdpar")
 
+find_package(rocthrust REQUIRED)
+message(STATUS "Found rocThrust: ${ROCTHRUST_INCLUDE_DIR}")
+
+find_package(rocprim REQUIRED)
+message(STATUS "Found rocPRIM: ${ROCPRIM_INCLUDE_DIR}")
+
+
 # check whether the roc-stdpar include path has been provided
 if (DEFINED PLSSVM_STDPAR_BACKEND_HIPSTDPAR_PATH)
     set(PLSSVM_STDPAR_BACKEND_HIPSTDPAR_PATH ${PLSSVM_STDPAR_BACKEND_HIPSTDPAR_PATH} CACHE STRING "The roc-stdpar path (--hipstdpar-path) necessary to compile the roc-stdpar backend." FORCE)
@@ -16,7 +23,7 @@ endif ()
 if (CMAKE_CXX_COMPILER_ID STREQUAL "Clang" AND PLSSVM_STDPAR_BACKEND_HIPSTDPAR_PATH)
     # check for AMD's roc-stdpar enabled compiler -> only possible with the provided path
     include(CheckCXXCompilerFlag)
-    check_cxx_compiler_flag("-hipstdpar --hipstdpar-path=${PLSSVM_STDPAR_BACKEND_HIPSTDPAR_PATH}" PLSSVM_HAS_HIPSTDPAR_STDPAR_FLAG)
+    check_cxx_compiler_flag("-hipstdpar --hipstdpar-path=${PLSSVM_STDPAR_BACKEND_HIPSTDPAR_PATH} --hipstdpar-thrust-path=${ROCTHRUST_INCLUDE_DIR} --hipstdpar-prim-path=${ROCPRIM__INCLUDE_DIR}" PLSSVM_HAS_HIPSTDPAR_STDPAR_FLAG)
     if (NOT PLSSVM_HAS_HIPSTDPAR_STDPAR_FLAG)
         # the target offload flag couldn't be found!
         if (PLSSVM_ENABLE_STDPAR_BACKEND MATCHES "ON")
