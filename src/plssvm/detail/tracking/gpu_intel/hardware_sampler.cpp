@@ -61,7 +61,7 @@ gpu_intel_hardware_sampler::gpu_intel_hardware_sampler(const std::size_t device_
 gpu_intel_hardware_sampler::~gpu_intel_hardware_sampler() {
     try {
         // if this hardware sampler is still sampling, stop it
-        if (this->is_sampling()) {
+        if (this->has_sampling_started() && !this->has_sampling_stopped()) {
             this->stop_sampling();
         }
         // the level zero runtime has no dedicated shut down or cleanup function
