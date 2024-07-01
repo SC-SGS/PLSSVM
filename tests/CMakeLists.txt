@@ -145,6 +145,7 @@ set(PLSSVM_BASE_TEST_SOURCES
     
     ${CMAKE_CURRENT_LIST_DIR}/detail/tracking/events.cpp
     ${CMAKE_CURRENT_LIST_DIR}/detail/tracking/performance_tracker.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/detail/tracking/utility.cpp
     
     ${CMAKE_CURRENT_LIST_DIR}/detail/arithmetic_type_name.cpp
     ${CMAKE_CURRENT_LIST_DIR}/detail/assert.cpp
