@@ -76,6 +76,7 @@ class hardware_sampler {
     void pause_sampling();
     /**
      * @brief Resume hardware sampling.
+     * @throws plssvm::hardware_sampling_exception if the hardware sampler has already been stopped
      */
     void resume_sampling();
 

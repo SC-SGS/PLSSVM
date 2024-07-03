@@ -70,6 +70,9 @@ void hardware_sampler::pause_sampling() {
 }
 
 void hardware_sampler::resume_sampling() {
+    if (this->has_sampling_stopped()) {
+        throw hardware_sampling_exception{ "Can't resume a hardware sampler that has already been stopped!" };
+    }
     sampling_running_ = true;  // notifies the sampling std::thread
 }
 
