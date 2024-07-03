@@ -16,15 +16,19 @@
 #include "tests/utility.hpp"             // util::number_of_substring_occurrences
 
 #include "gmock/gmock.h"  // EXPECT_THAT, ::testing::HasSubstr
-#include "gtest/gtest.h"  // TEST, EXPECT_EQ, EXPECT_FALSE
+#include "gtest/gtest.h"  // TEST_F, EXPECT_EQ, EXPECT_FALSE
 
-#include <chrono>  // std::chrono_literals namespace, std::chrono::steady_clock
-#include <string>  // std::string
-#include <tuple>   // std::ignore
+#include <chrono>    // std::chrono_literals namespace, std::chrono::steady_clock
+#include <iostream>  // std::cout
+#include <string>    // std::string
+#include <tuple>     // std::ignore
+
+class GPUIntelHardwareSampler : public ::testing::Test,
+                                protected util::redirect_output<> { };
 
 using namespace std::chrono_literals;
 
-TEST(GPUIntelHardwareSampler, construct) {
+TEST_F(GPUIntelHardwareSampler, construct) {
     // construct a new Intel GPU hardware sampler
     const plssvm::detail::tracking::gpu_intel_hardware_sampler sampler{ 0, 75ms };
 
@@ -37,7 +41,7 @@ TEST(GPUIntelHardwareSampler, construct) {
     EXPECT_EQ(sampler.sampling_interval(), 75ms);
 }
 
-TEST(GPUIntelHardwareSampler, construct_default_interval) {
+TEST_F(GPUIntelHardwareSampler, construct_default_interval) {
     // construct a new Intel GPU hardware sampler
     const plssvm::detail::tracking::gpu_intel_hardware_sampler sampler{ 0 };
 
@@ -50,7 +54,7 @@ TEST(GPUIntelHardwareSampler, construct_default_interval) {
     EXPECT_EQ(sampler.sampling_interval(), PLSSVM_HARDWARE_SAMPLING_INTERVAL);
 }
 
-TEST(GPUIntelHardwareSampler, yaml_string) {
+TEST_F(GPUIntelHardwareSampler, yaml_string) {
     const std::chrono::steady_clock::time_point start_time = std::chrono::steady_clock::now();
 
     // construct a new Intel GPU hardware sampler
@@ -78,7 +82,7 @@ TEST(GPUIntelHardwareSampler, yaml_string) {
     EXPECT_EQ(util::number_of_substring_occurrences(yaml_string, "unit"), util::number_of_substring_occurrences(yaml_string, "values"));
 }
 
-TEST(GPUIntelHardwareSampler, yaml_string_still_sampling) {
+TEST_F(GPUIntelHardwareSampler, yaml_string_still_sampling) {
     // construct a new Intel GPU hardware sampler
     plssvm::detail::tracking::gpu_intel_hardware_sampler sampler{ 0 };
 
@@ -90,7 +94,7 @@ TEST(GPUIntelHardwareSampler, yaml_string_still_sampling) {
     EXPECT_THROW_WHAT(std::ignore = sampler.generate_yaml_string(std::chrono::steady_clock::now()), plssvm::hardware_sampling_exception, "Can't create the final YAML entry if the hardware sampler is still running!");
 }
 
-TEST(GPUIntelHardwareSampler, device_identification) {
+TEST_F(GPUIntelHardwareSampler, device_identification) {
     // construct a new Intel GPU hardware sampler
     const plssvm::detail::tracking::gpu_intel_hardware_sampler sampler{ 0 };
 
@@ -98,10 +102,50 @@ TEST(GPUIntelHardwareSampler, device_identification) {
     EXPECT_THAT(sampler.device_identification(), ::testing::StartsWith("gpu_intel_device_"));
 }
 
-TEST(GPUIntelHardwareSampler, sampling_target) {
+TEST_F(GPUIntelHardwareSampler, sampling_target) {
     // construct a new Intel GPU hardware sampler
     const plssvm::detail::tracking::gpu_intel_hardware_sampler sampler{ 0 };
 
     // check the target platform
     EXPECT_EQ(sampler.sampling_target(), plssvm::target_platform::gpu_intel);
+}
+
+TEST_F(GPUIntelHardwareSampler, output_operator) {
+    // construct a new Intel GPU hardware sampler
+    plssvm::detail::tracking::gpu_intel_hardware_sampler sampler{ 0 };
+
+    // start sampling and then stop it again
+    sampler.start_sampling();
+    ASSERT_TRUE(sampler.is_sampling());
+    sampler.stop_sampling();
+
+    // get the output string
+    std::cout << sampler;
+    const std::string str = this->get_capture();
+
+    ASSERT_FALSE(std::cout.fail());
+
+    // the output string may not be empty!
+    ASSERT_FALSE(str.empty());
+    // some strings MUST be in the output string
+    EXPECT_THAT(str, ::testing::HasSubstr("sampling interval"));
+    EXPECT_THAT(str, ::testing::HasSubstr("time points"));
+    EXPECT_THAT(str, ::testing::HasSubstr("general samples"));
+    EXPECT_THAT(str, ::testing::HasSubstr("clock samples"));
+    EXPECT_THAT(str, ::testing::HasSubstr("power samples"));
+    EXPECT_THAT(str, ::testing::HasSubstr("memory samples"));
+    EXPECT_THAT(str, ::testing::HasSubstr("temperature samples"));
+}
+
+TEST_F(GPUIntelHardwareSampler, output_operator_still_sampling) {
+    // construct a new Intel GPU hardware sampler
+    plssvm::detail::tracking::gpu_intel_hardware_sampler sampler{ 0 };
+
+    // start sampling and then stop it again
+    sampler.start_sampling();
+    ASSERT_TRUE(sampler.is_sampling());
+
+    // get the output string -> will fail if the sampler is currently sampling
+    std::cout << sampler;
+    ASSERT_TRUE(std::cout.fail());
 }
