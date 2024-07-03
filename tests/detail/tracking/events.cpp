@@ -25,7 +25,7 @@
 #include <vector>    // std::vector
 
 class Event : public ::testing::Test,
-              protected util::redirect_output<&std::cout> { };
+              protected util::redirect_output<> { };
 
 TEST_F(Event, construct) {
     const std::chrono::steady_clock::time_point time = std::chrono::steady_clock::now();
