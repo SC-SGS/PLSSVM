@@ -21,6 +21,16 @@
 #include <vector>   // std::vector
 
 TEST(HardwareSampler, construct) {
+    // construct a mock hardware sampler
+    const mock_hardware_sampler sampler{ std::size_t{ 0 }, std::chrono::milliseconds{ 50 } };
+
+    // the sampler should not be running right after construction
+    EXPECT_FALSE(sampler.has_sampling_started());
+    EXPECT_FALSE(sampler.is_sampling());
+    EXPECT_FALSE(sampler.has_sampling_stopped());
+
+    // the sampling interval should have been set correctly
+    EXPECT_EQ(sampler.sampling_interval(), std::chrono::milliseconds{ 50 });
 }
 
 TEST(HardwareSampler, start_sampling) {
