@@ -73,10 +73,14 @@ std::unique_ptr<hardware_sampler> make_hardware_sampler([[maybe_unused]] const t
 }
 
 std::vector<std::unique_ptr<hardware_sampler>> create_hardware_sampler(const target_platform target, const std::size_t num_devices, const std::chrono::milliseconds sampling_interval) {
+    if (num_devices == 0) {
+        throw hardware_sampling_exception{ "The number of devices must be greater than 0!" };
+    }
+
     std::vector<std::unique_ptr<hardware_sampler>> sampler{};
 
     // ignore the CPU target platform since we ALWAYS add a CPU hardware sampler if possible
-    if (target != target_platform::cpu) {
+    if ((target != target_platform::automatic && target != target_platform::cpu) || (target == target_platform::automatic && determine_default_target_platform() != target_platform::cpu)) {
         for (std::size_t device = 0; device < num_devices; ++device) {
             sampler.push_back(make_hardware_sampler(target, device, sampling_interval));
         }
