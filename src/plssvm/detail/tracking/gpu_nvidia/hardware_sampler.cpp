@@ -26,6 +26,7 @@
 #include <chrono>     // std::chrono::{steady_clock, duration_cast, milliseconds}
 #include <cstddef>    // std::size_t
 #include <exception>  // std::exception, std::terminate
+#include <ios>        // std::ios_base
 #include <iostream>   // std::cerr, std::endl
 #include <optional>   // std::optional
 #include <ostream>    // std::ostream
@@ -459,20 +460,25 @@ void gpu_nvidia_hardware_sampler::sampling_loop() {
 }
 
 std::ostream &operator<<(std::ostream &out, const gpu_nvidia_hardware_sampler &sampler) {
-    return out << fmt::format("sampling interval: {}\n"
-                              "time points: [{}]\n\n"
-                              "general samples:\n{}\n\n"
-                              "clock samples:\n{}\n\n"
-                              "power samples:\n{}\n\n"
-                              "memory samples:\n{}\n\n"
-                              "temperature samples:\n{}",
-                              sampler.sampling_interval(),
-                              fmt::join(time_points_to_epoch(sampler.time_points()), ", "),
-                              sampler.general_samples(),
-                              sampler.clock_samples(),
-                              sampler.power_samples(),
-                              sampler.memory_samples(),
-                              sampler.temperature_samples());
+    if (sampler.is_sampling()) {
+        out.setstate(std::ios_base::failbit);
+        return out;
+    } else {
+        return out << fmt::format("sampling interval: {}\n"
+                                  "time points: [{}]\n\n"
+                                  "general samples:\n{}\n\n"
+                                  "clock samples:\n{}\n\n"
+                                  "power samples:\n{}\n\n"
+                                  "memory samples:\n{}\n\n"
+                                  "temperature samples:\n{}",
+                                  sampler.sampling_interval(),
+                                  fmt::join(time_points_to_epoch(sampler.time_points()), ", "),
+                                  sampler.general_samples(),
+                                  sampler.clock_samples(),
+                                  sampler.power_samples(),
+                                  sampler.memory_samples(),
+                                  sampler.temperature_samples());
+    }
 }
 
 }  // namespace plssvm::detail::tracking

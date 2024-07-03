@@ -134,6 +134,7 @@ class gpu_intel_hardware_sampler : public hardware_sampler {
 
 /**
  * @brief Output all Intel GPU samples gathered by the @p sampler to the given output-stream @p out.
+ * @details Sets `std::ios_base::failbit` if the @p sampler is still sampling.
  * @param[in,out] out the output-stream to write the Intel GPU samples to
  * @param[in] sampler the Intel GPU hardware sampler
  * @return the output-stream

@@ -139,6 +139,7 @@ class gpu_nvidia_hardware_sampler : public hardware_sampler {
 
 /**
  * @brief Output all NVIDIA GPU samples gathered by the @p sampler to the given output-stream @p out.
+ * @details Sets `std::ios_base::failbit` if the @p sampler is still sampling.
  * @param[in,out] out the output-stream to write the NVIDIA GPU samples to
  * @param[in] sampler the NVIDIA GPU hardware sampler
  * @return the output-stream
