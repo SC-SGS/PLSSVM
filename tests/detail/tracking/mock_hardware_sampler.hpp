@@ -36,14 +36,25 @@ class mock_hardware_sampler final : public plssvm::detail::tracking::hardware_sa
         this->fake_functions();
     }
 
+    mock_hardware_sampler(const mock_hardware_sampler &) = delete;
+    mock_hardware_sampler(mock_hardware_sampler &&) noexcept = delete;
+    mock_hardware_sampler &operator=(const mock_hardware_sampler &) = delete;
+    mock_hardware_sampler &operator=(mock_hardware_sampler &&) noexcept = delete;
+
+    ~mock_hardware_sampler() override {
+        if (this->has_sampling_started() && !this->has_sampling_stopped()) {
+            this->stop_sampling();
+        }
+    }
+
     // mock pure virtual functions
     MOCK_METHOD((std::string), generate_yaml_string, (std::chrono::steady_clock::time_point), (const, override));
     MOCK_METHOD((std::string), device_identification, (), (const, override));
     MOCK_METHOD((plssvm::target_platform), sampling_target, (), (const, override));
 
-  private:
     MOCK_METHOD((void), sampling_loop, (), (override));
 
+  private:
     void fake_functions() const {
         ON_CALL(*this, generate_yaml_string).WillByDefault(::testing::Return(std::string{ "YAML_string" }));
         ON_CALL(*this, device_identification()).WillByDefault(::testing::Return(fmt::format("device_{}", device_id_)));
