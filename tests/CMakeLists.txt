@@ -145,6 +145,7 @@ set(PLSSVM_BASE_TEST_SOURCES
     
     ${CMAKE_CURRENT_LIST_DIR}/detail/tracking/events.cpp
     ${CMAKE_CURRENT_LIST_DIR}/detail/tracking/hardware_sampler.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/detail/tracking/hardware_sampler_factory.cpp
     ${CMAKE_CURRENT_LIST_DIR}/detail/tracking/performance_tracker.cpp
     ${CMAKE_CURRENT_LIST_DIR}/detail/tracking/utility.cpp
     
@@ -267,6 +268,11 @@ endif ()
 
 # add tests for the available backends
 add_subdirectory(backends)
+
+# add tests for the hardware samplers
+if (PLSSVM_ENABLE_HARDWARE_SAMPLING)
+    add_subdirectory(detail/tracking)
+endif ()
 
 # fix shared library linker error on Windows
 if (NOT GTEST_FOUND)

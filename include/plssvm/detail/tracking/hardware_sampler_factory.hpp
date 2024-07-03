@@ -40,6 +40,8 @@ using namespace std::chrono_literals;
  * @param[in] target the target platform that should be sampled
  * @param[in] num_devices the number of devices to sample
  * @param[in] sampling_interval the sampling interval to use; default value determined during CMake configuration
+ * @throws plssvm::hardware_sampling_exception all exceptions thrown in the `plssvm::detail::tracking::make_hardware_sampler()` function
+ * @throws plssvm::hardware_sampling_exception if the number of devices is zero
  * @return all created hardware samplers (possible sampling different targets) (`[[nodiscard]]`)
  */
 [[nodiscard]] std::vector<std::unique_ptr<hardware_sampler>> create_hardware_sampler(target_platform target, std::size_t num_devices, std::chrono::milliseconds sampling_interval = PLSSVM_HARDWARE_SAMPLING_INTERVAL);
