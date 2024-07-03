@@ -640,20 +640,20 @@ if (PLSSVM_ENABLE_DOCUMENTATION)
 endif ()
 
 ########################################################################################################################
+##                                 enable performance tracking and hardware sampling                                  ##
+########################################################################################################################
+option(PLSSVM_ENABLE_PERFORMANCE_TRACKING "Enable performance tracking to YAML files for the PLSSVM executables plssvm-train, plssvm-predict, and plssvm-scale." OFF)
+if (PLSSVM_ENABLE_PERFORMANCE_TRACKING)
+    add_subdirectory(src/plssvm/detail/tracking)
+endif ()
+
+########################################################################################################################
 ##                                           enable testing via google test                                           ##
 ########################################################################################################################
 option(PLSSVM_ENABLE_TESTING "Build tests for all backends." ON)
 if (PLSSVM_ENABLE_TESTING)
     enable_testing()
     add_subdirectory(tests)
-endif ()
-
-########################################################################################################################
-##                                 enable performance tracking and hardware sampling                                  ##
-########################################################################################################################
-option(PLSSVM_ENABLE_PERFORMANCE_TRACKING "Enable performance tracking to YAML files for the PLSSVM executables plssvm-train, plssvm-predict, and plssvm-scale." OFF)
-if (PLSSVM_ENABLE_PERFORMANCE_TRACKING)
-    add_subdirectory(src/plssvm/detail/tracking)
 endif ()
 
 ########################################################################################################################
