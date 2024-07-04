@@ -275,7 +275,7 @@ void gpu_nvidia_hardware_sampler::sampling_loop() {
         }
 
         decltype(memory_samples_.max_pcie_link_generation_)::value_type max_pcie_link_generation{};
-        if (nvmlDeviceGetGpuMaxPcieLinkGeneration(device, &max_pcie_link_generation) == NVML_SUCCESS) {
+        if (nvmlDeviceGetMaxPcieLinkGeneration(device, &max_pcie_link_generation) == NVML_SUCCESS) {
             memory_samples_.max_pcie_link_generation_ = max_pcie_link_generation;
         }
 
