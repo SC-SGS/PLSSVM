@@ -148,21 +148,36 @@ void gpu_amd_hardware_sampler::sampling_loop() {
             clock_samples_.clock_system_min_ = frequency_info.frequency[0];
             clock_samples_.clock_system_max_ = frequency_info.frequency[frequency_info.num_supported - 1];
             // queried samples -> retrieved every iteration if available
-            clock_samples_.clock_system_ = decltype(clock_samples_.clock_system_)::value_type{ frequency_info.frequency[frequency_info.current] };
+            clock_samples_.clock_system_ = decltype(clock_samples_.clock_system_)::value_type{};
+            if (frequency_info.current < RSMI_MAX_NUM_FREQUENCIES) {
+                clock_samples_.clock_system_->push_back(frequency_info.frequency[frequency_info.current]);
+            } else {
+                clock_samples_.clock_system_->push_back(0);
+            }
         }
 
         if (rsmi_dev_gpu_clk_freq_get(device_id_, RSMI_CLK_TYPE_SOC, &frequency_info) == RSMI_STATUS_SUCCESS) {
             clock_samples_.clock_socket_min_ = frequency_info.frequency[0];
             clock_samples_.clock_socket_max_ = frequency_info.frequency[frequency_info.num_supported - 1];
             // queried samples -> retrieved every iteration if available
-            clock_samples_.clock_socket_ = decltype(clock_samples_.clock_socket_)::value_type{ frequency_info.frequency[frequency_info.current] };
+            clock_samples_.clock_socket_ = decltype(clock_samples_.clock_socket_)::value_type{};
+            if (frequency_info.current < RSMI_MAX_NUM_FREQUENCIES) {
+                clock_samples_.clock_socket_->push_back(frequency_info.frequency[frequency_info.current]);
+            } else {
+                clock_samples_.clock_socket_->push_back(0);
+            }
         }
 
         if (rsmi_dev_gpu_clk_freq_get(device_id_, RSMI_CLK_TYPE_MEM, &frequency_info) == RSMI_STATUS_SUCCESS) {
             clock_samples_.clock_memory_min_ = frequency_info.frequency[0];
             clock_samples_.clock_memory_max_ = frequency_info.frequency[frequency_info.num_supported - 1];
             // queried samples -> retrieved every iteration if available
-            clock_samples_.clock_memory_ = decltype(clock_samples_.clock_memory_)::value_type{ frequency_info.frequency[frequency_info.current] };
+            clock_samples_.clock_memory_ = decltype(clock_samples_.clock_memory_)::value_type{};
+            if (frequency_info.current < RSMI_MAX_NUM_FREQUENCIES) {
+                clock_samples_.clock_memory_->push_back(frequency_info.frequency[frequency_info.current]);
+            } else {
+                clock_samples_.clock_memory_->push_back(0);
+            }
         }
 
         // queried samples -> retrieved every iteration if available
@@ -291,8 +306,16 @@ void gpu_amd_hardware_sampler::sampling_loop() {
             memory_samples_.min_num_pcie_lanes_ = bandwidth_info.lanes[0];
             memory_samples_.max_num_pcie_lanes_ = bandwidth_info.lanes[bandwidth_info.transfer_rate.num_supported - 1];
             // queried samples -> retrieved every iteration if available
-            memory_samples_.pcie_transfer_rate_ = decltype(memory_samples_.pcie_transfer_rate_)::value_type{ bandwidth_info.transfer_rate.frequency[bandwidth_info.transfer_rate.current] };
-            memory_samples_.num_pcie_lanes_ = decltype(memory_samples_.num_pcie_lanes_)::value_type{ bandwidth_info.lanes[bandwidth_info.transfer_rate.current] };
+            memory_samples_.pcie_transfer_rate_ = decltype(memory_samples_.pcie_transfer_rate_)::value_type{};
+            memory_samples_.num_pcie_lanes_ = decltype(memory_samples_.num_pcie_lanes_)::value_type{};
+            if (bandwidth_info.transfer_rate.current < RSMI_MAX_NUM_FREQUENCIES) {
+                memory_samples_.pcie_transfer_rate_->push_back(bandwidth_info.transfer_rate.frequency[bandwidth_info.transfer_rate.current]);
+                memory_samples_.num_pcie_lanes_->push_back(bandwidth_info.lanes[bandwidth_info.transfer_rate.current]);
+            } else {
+                // the current index is (somehow) wrong
+                memory_samples_.pcie_transfer_rate_->push_back(0);
+                memory_samples_.num_pcie_lanes_->push_back(0);
+            }
         }
 
         // queried samples -> retrieved every iteration if available
@@ -463,19 +486,34 @@ void gpu_amd_hardware_sampler::sampling_loop() {
                 if (clock_samples_.clock_system_.has_value()) {
                     rsmi_frequencies_t frequency_info{};
                     PLSSVM_ROCM_SMI_ERROR_CHECK(rsmi_dev_gpu_clk_freq_get(device_id_, RSMI_CLK_TYPE_SYS, &frequency_info));
-                    clock_samples_.clock_system_->push_back(frequency_info.frequency[frequency_info.current]);
+                    if (frequency_info.current < RSMI_MAX_NUM_FREQUENCIES) {
+                        clock_samples_.clock_system_->push_back(frequency_info.frequency[frequency_info.current]);
+                    } else {
+                        // the current index is (somehow) wrong
+                        clock_samples_.clock_system_->push_back(0);
+                    }
                 }
 
                 if (clock_samples_.clock_socket_.has_value()) {
                     rsmi_frequencies_t frequency_info{};
                     PLSSVM_ROCM_SMI_ERROR_CHECK(rsmi_dev_gpu_clk_freq_get(device_id_, RSMI_CLK_TYPE_SOC, &frequency_info));
-                    clock_samples_.clock_socket_->push_back(frequency_info.frequency[frequency_info.current]);
+                    if (frequency_info.current < RSMI_MAX_NUM_FREQUENCIES) {
+                        clock_samples_.clock_socket_->push_back(frequency_info.frequency[frequency_info.current]);
+                    } else {
+                        // the current index is (somehow) wrong
+                        clock_samples_.clock_socket_->push_back(0);
+                    }
                 }
 
                 if (clock_samples_.clock_memory_.has_value()) {
                     rsmi_frequencies_t frequency_info{};
                     PLSSVM_ROCM_SMI_ERROR_CHECK(rsmi_dev_gpu_clk_freq_get(device_id_, RSMI_CLK_TYPE_MEM, &frequency_info));
-                    clock_samples_.clock_memory_->push_back(frequency_info.frequency[frequency_info.current]);
+                    if (frequency_info.current < RSMI_MAX_NUM_FREQUENCIES) {
+                        clock_samples_.clock_memory_->push_back(frequency_info.frequency[frequency_info.current]);
+                    } else {
+                        // the current index is (somehow) wrong
+                        clock_samples_.clock_memory_->push_back(0);
+                    }
                 }
 
                 if (clock_samples_.overdrive_level_.has_value()) {
@@ -551,8 +589,14 @@ void gpu_amd_hardware_sampler::sampling_loop() {
                 if (memory_samples_.pcie_transfer_rate_.has_value() && memory_samples_.num_pcie_lanes_.has_value()) {
                     rsmi_pcie_bandwidth_t bandwidth_info{};
                     PLSSVM_ROCM_SMI_ERROR_CHECK(rsmi_dev_pci_bandwidth_get(device_id_, &bandwidth_info));
-                    memory_samples_.pcie_transfer_rate_->push_back(bandwidth_info.transfer_rate.frequency[bandwidth_info.transfer_rate.current]);
-                    memory_samples_.num_pcie_lanes_->push_back(bandwidth_info.lanes[bandwidth_info.transfer_rate.current]);
+                    if (bandwidth_info.transfer_rate.current < RSMI_MAX_NUM_FREQUENCIES) {
+                        memory_samples_.pcie_transfer_rate_->push_back(bandwidth_info.transfer_rate.frequency[bandwidth_info.transfer_rate.current]);
+                        memory_samples_.num_pcie_lanes_->push_back(bandwidth_info.lanes[bandwidth_info.transfer_rate.current]);
+                    } else {
+                        // the current index is (somehow) wrong
+                        memory_samples_.pcie_transfer_rate_->push_back(0);
+                        memory_samples_.num_pcie_lanes_->push_back(0);
+                    }
                 }
             }
 
