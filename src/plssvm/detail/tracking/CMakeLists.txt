@@ -81,7 +81,7 @@ if (PLSSVM_ENABLE_HARDWARE_SAMPLING)
                         ERROR_QUIET)
         if (NOT PLSSVM_TURBOSTAT_WITHOUT_ROOT EQUAL 0)
             message(STATUS "Can't use turbostat without root permissions! Try using with sudo...")
-            execute_process(COMMAND sudo -n turbostat -n 1 -S -q
+            execute_process(COMMAND sudo -n turbostat -n 1 -i 0.001 -S -q
                             RESULT_VARIABLE PLSSVM_TURBOSTAT_ROOT_PASSWORD_REQUIRED
                             OUTPUT_QUIET
                             ERROR_QUIET)
@@ -89,7 +89,7 @@ if (PLSSVM_ENABLE_HARDWARE_SAMPLING)
                 message(STATUS "Can't use turbostat with root if a sudo password is required! Please add turbostat to the sudoer group.")
                 message(STATUS "Disabling turbostat support!")
             else ()
-                execute_process(COMMAND sudo turbostat -n 1 -S -q
+                execute_process(COMMAND sudo turbostat -n 1 -i 0.001 -S -q
                                 RESULT_VARIABLE PLSSVM_TURBOSTAT_WITH_ROOT
                                 OUTPUT_QUIET
                                 ERROR_QUIET)
