@@ -251,16 +251,16 @@ pipeline {
                         notValues 'CPU'
                       }
                     }
-                    exclude {
-                      axis{
-                        name 'BACKEND'
-                        values 'DPCPP'
-                      }
-                      axis{
-                        name 'ARCHITECTURE'
-                        values 'CPU'
-                      }
-                    }
+                    // exclude {
+                    //   axis{
+                    //     name 'BACKEND'
+                    //     values 'DPCPP'
+                    //   }
+                    //   axis{
+                    //     name 'ARCHITECTURE'
+                    //     values 'CPU'
+                    //   }
+                    // }
                     exclude {
                       axis{
                         name 'BACKEND'
@@ -331,8 +331,8 @@ pipeline {
                                             $([[ $BACKEND == STDPAR-NVHPC ]] && echo "stdparimplementation=nvhpc" ) \
                                             $([[ $BACKEND == STDPAR-ADAPTIVECPP ]] && echo "stdparimplementation=adaptivecpp" ) \
                                             $([[ $BACKEND == STDPAR-ROC ]] && echo "stdparimplementation=roc" ) \
-                                            $([[ $ARCHITECTURE == NVIDIA ]] && echo "cuda_arch=86") \
-                                            $([[ $ARCHITECTURE == AMD ]] && echo "amdgpu_target=gfx90a") \
+                                            $([[ $ARCHITECTURE == NVIDIA ]] && echo "cuda_arch=86" ||  echo "cuda_arch=none") \
+                                        $([[ $ARCHITECTURE == AMD ]] && echo "amdgpu_target=gfx90a" || echo "amdgpu_target=none") \
                                             build_type=$BUILD_TYPE \
                                             arch=$(spack arch) || true
 
@@ -349,8 +349,8 @@ pipeline {
                                             $([[ $BACKEND == STDPAR-NVHPC ]] && echo "stdparimplementation=nvhpc" ) \
                                             $([[ $BACKEND == STDPAR-ADAPTIVECPP ]] && echo "stdparimplementation=adaptivecpp" ) \
                                             $([[ $BACKEND == STDPAR-ROC ]] && echo "stdparimplementation=roc" ) \
-                                            $([[ $ARCHITECTURE == NVIDIA ]] && echo "cuda_arch=86") \
-                                            $([[ $ARCHITECTURE == AMD ]] && echo "amdgpu_target=gfx90a") \
+                                            $([[ $ARCHITECTURE == NVIDIA ]] && echo "cuda_arch=86" ||  echo "cuda_arch=none") \
+                                            $([[ $ARCHITECTURE == AMD ]] && echo "amdgpu_target=gfx90a" || echo "amdgpu_target=none") \
                                             +language_bindings \
                                             +test_file \
                                             test_file_num_classes=5 \
@@ -388,8 +388,8 @@ pipeline {
                                     $([[ $BACKEND == STDPAR-NVHPC ]] && echo "stdparimplementation=nvhpc" ) \
                                     $([[ $BACKEND == STDPAR-ADAPTIVECPP ]] && echo "stdparimplementation=adaptivecpp" ) \
                                     $([[ $BACKEND == STDPAR-ROC ]] && echo "stdparimplementation=roc" ) \
-                                    $([[ $ARCHITECTURE == NVIDIA ]] && echo "cuda_arch=86") \
-                                    $([[ $ARCHITECTURE == AMD ]] && echo "amdgpu_target=gfx90a") \
+                                    $([[ $ARCHITECTURE == NVIDIA ]] && echo "cuda_arch=86" ||  echo "cuda_arch=none") \
+                                    $([[ $ARCHITECTURE == AMD ]] && echo "amdgpu_target=gfx90a" || echo "amdgpu_target=none") \
                                     build_type=$BUILD_TYPE \
                                     arch=$(spack arch)) \
                                 install_hash=$( echo ${installpath} | rev | cut -d/ -f1| cut -d- -f1 | rev | head -c 7)
@@ -416,8 +416,8 @@ pipeline {
                                         $([[ $BACKEND == STDPAR-DPCPP ]] && echo "stdparimplementation=icpx" ) \
                                         $([[ $BACKEND == STDPAR-NVHPC ]] && echo "stdparimplementation=nvhpc" ) \
                                         $([[ $BACKEND == STDPAR-ADAPTIVECPP ]] && echo "stdparimplementation=adaptivecpp" ) \
-                                        $([[ $ARCHITECTURE == NVIDIA ]] && echo "cuda_arch=86") \
-                                        $([[ $ARCHITECTURE == AMD ]] && echo "amdgpu_target=gfx90a") \
+                                        $([[ $ARCHITECTURE == NVIDIA ]] && echo "cuda_arch=86" ||  echo "cuda_arch=none") \
+                                        $([[ $ARCHITECTURE == AMD ]] && echo "amdgpu_target=gfx90a" || echo "amdgpu_target=none") \
                                         build_type=$BUILD_TYPE \
                                         arch=$(spack arch)" \
                                         ctest -j8 --output-on-failure --timeout 600 --no-compress-output -T Test  \
@@ -446,8 +446,8 @@ pipeline {
                                         $([[ $BACKEND == STDPAR-DPCPP ]] && echo "stdparimplementation=icpx" ) \
                                         $([[ $BACKEND == STDPAR-NVHPC ]] && echo "stdparimplementation=nvhpc" ) \
                                         $([[ $BACKEND == STDPAR-ADAPTIVECPP ]] && echo "stdparimplementation=adaptivecpp" ) \
-                                        $([[ $ARCHITECTURE == NVIDIA ]] && echo "cuda_arch=86") \
-                                        $([[ $ARCHITECTURE == AMD ]] && echo "amdgpu_target=gfx90a") \
+                                        $([[ $ARCHITECTURE == NVIDIA ]] && echo "cuda_arch=86" ||  echo "cuda_arch=none") \
+                                        $([[ $ARCHITECTURE == AMD ]] && echo "amdgpu_target=gfx90a" || echo "amdgpu_target=none") \
                                         build_type=$BUILD_TYPE \
                                         arch=$(spack arch)"
 
