@@ -57,16 +57,6 @@ namespace plssvm::opencl::detail {
 [[nodiscard]] std::pair<std::vector<context>, target_platform> get_contexts(target_platform target) {
     error_code err;
 
-    // function to add a key value pair to a map, where the value is added to a std::vector
-    const auto add_to_map = [](auto &map, const auto &key, auto value) {
-        // if key currently doesn't exist, add a new std::vector
-        if (map.count(key) == 0) {
-            map[key] = std::vector<decltype(value)>();
-        }
-        // add value to std::vector represented by key
-        map[key].push_back(value);
-    };
-
     // iterate over all platforms and save all available devices
     std::map<std::pair<cl_platform_id, target_platform>, std::vector<cl_device_id>> platform_devices;
     // get number of platforms
@@ -97,7 +87,7 @@ namespace plssvm::opencl::detail {
                 // the current device is a CPU
                 // -> check if the CPU target has been enabled
                 if (::plssvm::detail::contains(available_target_platforms, target_platform::cpu)) {
-                    add_to_map(platform_devices, std::make_pair(platform, target_platform::cpu), device);
+                    platform_devices[std::make_pair(platform, target_platform::cpu)].push_back(device);
                 }
             } else if (device_type == CL_DEVICE_TYPE_GPU) {
                 // the current device is a GPU
@@ -111,12 +101,12 @@ namespace plssvm::opencl::detail {
 
                 // check vendor string and insert to correct target platform
                 if (::plssvm::detail::contains(vendor_string, "nvidia") && ::plssvm::detail::contains(available_target_platforms, target_platform::gpu_nvidia)) {
-                    add_to_map(platform_devices, std::make_pair(platform, target_platform::gpu_nvidia), device);
+                    platform_devices[std::make_pair(platform, target_platform::gpu_nvidia)].push_back(device);
                 } else if ((::plssvm::detail::contains(vendor_string, "amd") || ::plssvm::detail::contains(vendor_string, "advanced micro devices"))
                            && ::plssvm::detail::contains(available_target_platforms, target_platform::gpu_amd)) {
-                    add_to_map(platform_devices, std::make_pair(platform, target_platform::gpu_amd), device);
+                    platform_devices[std::make_pair(platform, target_platform::gpu_amd)].push_back(device);
                 } else if (::plssvm::detail::contains(vendor_string, "intel") && ::plssvm::detail::contains(available_target_platforms, target_platform::gpu_intel)) {
-                    add_to_map(platform_devices, std::make_pair(platform, target_platform::gpu_intel), device);
+                    platform_devices[std::make_pair(platform, target_platform::gpu_intel)].push_back(device);
                 }
             }
         }

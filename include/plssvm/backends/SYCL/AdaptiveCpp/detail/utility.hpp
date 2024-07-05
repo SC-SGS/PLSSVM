@@ -13,14 +13,38 @@
 #define PLSSVM_BACKENDS_SYCL_ADAPTIVECPP_DETAIL_UTILITY_HPP_
 #pragma once
 
+#include "plssvm/backends/execution_range.hpp"                // plssvm::detail::dim_type
 #include "plssvm/backends/SYCL/AdaptiveCpp/detail/queue.hpp"  // plssvm::adaptivecpp::detail::queue (PImpl)
 #include "plssvm/target_platforms.hpp"                        // plssvm::target_platform
+
+#include "sycl/sycl.hpp"  // sycl::range
 
 #include <string>   // std::string
 #include <utility>  // std::pair
 #include <vector>   // std::vector
 
 namespace plssvm::adaptivecpp::detail {
+
+/**
+ * @brief Convert a `plssvm::detail::dim_type` to a SYCL native range.
+ * @tparam I the number of dimensions in the SYCL range
+ * @param[in] dims the dimensional value to convert
+ * @note Inverts the dimensions to account for SYCL's different iteration range!
+ * @return the native SYCL range type (`[[nodiscard]]`)
+ */
+template <std::size_t I>
+[[nodiscard]] ::sycl::range<I> dim_type_to_native(const ::plssvm::detail::dim_type &dims) {
+    // note: invert order to account for SYCL's different iteration range
+    if constexpr (I == 1) {
+        return ::sycl::range<I>{ static_cast<std::size_t>(dims.x) };
+    } else if constexpr (I == 2) {
+        return ::sycl::range<I>{ static_cast<std::size_t>(dims.y), static_cast<std::size_t>(dims.x) };
+    } else if constexpr (I == 3) {
+        return ::sycl::range<I>{ static_cast<std::size_t>(dims.z), static_cast<std::size_t>(dims.y), static_cast<std::size_t>(dims.x) };
+    } else {
+        static_assert(I != I, "Invalid number of native sycl::range dimension!");
+    }
+}
 
 /**
  * @brief Returns the list devices matching the target platform @p target and the actually used target platform

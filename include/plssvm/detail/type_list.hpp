@@ -25,6 +25,9 @@ using supported_real_types = std::tuple<float, double>;
 /// A type list of all supported label types (currently arithmetic types and `std::string`) as `std::tuple`.
 using supported_label_types = std::tuple<bool, char, signed char, unsigned char, short, unsigned short, int, unsigned int, long, unsigned long, long long, unsigned long long, float, double, long double, std::string>;
 
+/// A type list of a reduced number of supported label types as `std::tuple`.
+using supported_label_types_reduced = std::tuple<bool, int, double, std::string>;
+
 /**
  * @brief Checks whether the type @p T is present in the @p Tuple.
  * @tparam T the type to check if is contained in the tuple

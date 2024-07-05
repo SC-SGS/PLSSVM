@@ -25,17 +25,27 @@
  * @param[in] num_sv the number of support vectors
  * @param[in] num_predict_points the number of data points to predict
  * @param[in] num_features the number of features per data point
+ * @param[in] grid_x_offset the offset in x-dimension into the data points if more than one execution grid has to be used
+ * @param[in] grid_y_offset the offset in y-dimension into the data points if more than one execution grid has to be used
  * @param[in] PLSSVM_OPENCL_KERNEL_FUNCTION_PARAMETER_LIST a placeholder that is used to string replace the correct kernel parameter (attention: no comma!; Args... only added for Doxygen)
  */
-__kernel void PLSSVM_DEVICE_KERNEL_PREDICT_NAME(__global real_type *prediction_d, const __global real_type *alpha_d, const __global real_type *rho_d, const __global real_type *sv_d, const __global real_type *predict_points_d, const ulong num_classes, const ulong num_sv, const ulong num_predict_points, const ulong num_features PLSSVM_OPENCL_KERNEL_FUNCTION_PARAMETER_LIST) {
+__kernel void PLSSVM_DEVICE_KERNEL_PREDICT_NAME(__global real_type *prediction_d, const __global real_type *alpha_d, const __global real_type *rho_d, const __global real_type *sv_d, const __global real_type *predict_points_d, const ulong num_classes, const ulong num_sv, const ulong num_predict_points, const ulong num_features, const ulong grid_x_offset, const ulong grid_y_offset PLSSVM_OPENCL_KERNEL_FUNCTION_PARAMETER_LIST) {
     // cast values to 32-bit unsigned int values to prevent implicit conversions
     const uint local_id_0 = get_local_id(0);
     const uint local_id_1 = get_local_id(1);
 
+    // cast all values to 64-bit unsigned long long to prevent potential 32-bit overflows
+    const ulong threadIdx_x = get_local_id(0);                 // current thread in block x-dimension
+    const ulong threadIdx_y = get_local_id(1);                 // current thread in block y-dimension
+    const ulong blockDim_x = get_local_size(0);                // number of threads in block x-dimension
+    const ulong blockDim_y = get_local_size(1);                // number of threads in block y-dimension
+    const ulong blockIdx_x = get_group_id(0) + grid_x_offset;  // current block in grid x-dimension + offsets if the grid size would be too large
+    const ulong blockIdx_y = get_group_id(1) + grid_y_offset;  // current block in grid y-dimension + offsets if the grid size would be too large
+
     // calculate the indices used in the current thread
-    const ulong pp_idx = get_global_id(0) * INTERNAL_BLOCK_SIZE_ul;
-    const ulong pp_idx_linear = get_group_id(0) * get_local_size(0) * INTERNAL_BLOCK_SIZE_ul + get_local_id(0);
-    const ulong sv_idx_linear = get_group_id(1) * get_local_size(1) * INTERNAL_BLOCK_SIZE_ul + get_local_id(0);
+    const ulong pp_idx = (blockIdx_x * blockDim_x + threadIdx_x) * INTERNAL_BLOCK_SIZE_ul;
+    const ulong pp_idx_linear = blockIdx_x * blockDim_x * INTERNAL_BLOCK_SIZE_ul + threadIdx_x;
+    const ulong sv_idx_linear = blockIdx_y * blockDim_y * INTERNAL_BLOCK_SIZE_ul + threadIdx_x;
 
     // create the local memory arrays used for caching data point features
     __local real_type data_cache_pp[FEATURE_BLOCK_SIZE][INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE];
@@ -52,10 +62,10 @@ __kernel void PLSSVM_DEVICE_KERNEL_PREDICT_NAME(__global real_type *prediction_d
             const ulong global_sv_idx = sv_idx_linear + (ulong) internal * THREAD_BLOCK_SIZE_ul;
 
             // FEATURE_BLOCK_SIZE = 2 * THREAD_BLOCK_SIZE -> store twice as many values in the shared memory
-            data_cache_pp[local_id_1][internal * THREAD_BLOCK_SIZE + local_id_0] = predict_points_d[(dim + get_local_id(1)) * (num_predict_points + PADDING_SIZE_ul) + global_pp_idx];
-            data_cache_pp[local_id_1 + THREAD_BLOCK_SIZE][internal * THREAD_BLOCK_SIZE + local_id_0] = predict_points_d[(dim + get_local_id(1) + THREAD_BLOCK_SIZE_ul) * (num_predict_points + PADDING_SIZE_ul) + global_pp_idx];
-            data_cache_sv[local_id_1][internal * THREAD_BLOCK_SIZE + local_id_0] = sv_d[(dim + get_local_id(1)) * (num_sv + PADDING_SIZE_ul) + global_sv_idx];
-            data_cache_sv[local_id_1 + THREAD_BLOCK_SIZE][internal * THREAD_BLOCK_SIZE + local_id_0] = sv_d[(dim + get_local_id(1) + THREAD_BLOCK_SIZE_ul) * (num_sv + PADDING_SIZE_ul) + global_sv_idx];
+            data_cache_pp[local_id_1][internal * THREAD_BLOCK_SIZE + local_id_0] = predict_points_d[(dim + threadIdx_y) * (num_predict_points + PADDING_SIZE_ul) + global_pp_idx];
+            data_cache_pp[local_id_1 + THREAD_BLOCK_SIZE][internal * THREAD_BLOCK_SIZE + local_id_0] = predict_points_d[(dim + threadIdx_y + THREAD_BLOCK_SIZE_ul) * (num_predict_points + PADDING_SIZE_ul) + global_pp_idx];
+            data_cache_sv[local_id_1][internal * THREAD_BLOCK_SIZE + local_id_0] = sv_d[(dim + threadIdx_y) * (num_sv + PADDING_SIZE_ul) + global_sv_idx];
+            data_cache_sv[local_id_1 + THREAD_BLOCK_SIZE][internal * THREAD_BLOCK_SIZE + local_id_0] = sv_d[(dim + threadIdx_y + THREAD_BLOCK_SIZE_ul) * (num_sv + PADDING_SIZE_ul) + global_sv_idx];
         }
         barrier(CLK_LOCAL_MEM_FENCE);  // wait until all work-items loaded their part of the data
 
@@ -89,13 +99,13 @@ __kernel void PLSSVM_DEVICE_KERNEL_PREDICT_NAME(__global real_type *prediction_d
                 const ulong global_sv_idx = sv_idx_linear + (ulong) internal * THREAD_BLOCK_SIZE_ul;
 
                 // FEATURE_BLOCK_SIZE = 2 * THREAD_BLOCK_SIZE -> store twice as many values in the shared memory
-                alpha_cache[local_id_1][internal * THREAD_BLOCK_SIZE + local_id_0] = alpha_d[(dim + get_local_id(1)) * (num_sv + PADDING_SIZE_ul) + global_sv_idx];
-                alpha_cache[local_id_1 + THREAD_BLOCK_SIZE][internal * THREAD_BLOCK_SIZE + local_id_0] = alpha_d[(dim + get_local_id(1) + THREAD_BLOCK_SIZE_ul) * (num_sv + PADDING_SIZE_ul) + global_sv_idx];
+                alpha_cache[local_id_1][internal * THREAD_BLOCK_SIZE + local_id_0] = alpha_d[(dim + threadIdx_y) * (num_sv + PADDING_SIZE_ul) + global_sv_idx];
+                alpha_cache[local_id_1 + THREAD_BLOCK_SIZE][internal * THREAD_BLOCK_SIZE + local_id_0] = alpha_d[(dim + threadIdx_y + THREAD_BLOCK_SIZE_ul) * (num_sv + PADDING_SIZE_ul) + global_sv_idx];
 
                 // the bias (rho) must only be applied once for all support vectors
-                if (get_group_id(1) == (ulong) 0) {
-                    out_cache[local_id_1][internal * THREAD_BLOCK_SIZE + local_id_0] = -rho_d[dim + get_local_id(1)];
-                    out_cache[local_id_1 + THREAD_BLOCK_SIZE][internal * THREAD_BLOCK_SIZE + local_id_0] = -rho_d[dim + get_local_id(1) + THREAD_BLOCK_SIZE_ul];
+                if (blockIdx_y == (ulong) 0) {
+                    out_cache[local_id_1][internal * THREAD_BLOCK_SIZE + local_id_0] = -rho_d[dim + threadIdx_y];
+                    out_cache[local_id_1 + THREAD_BLOCK_SIZE][internal * THREAD_BLOCK_SIZE + local_id_0] = -rho_d[dim + threadIdx_y + THREAD_BLOCK_SIZE_ul];
                 } else {
                     out_cache[local_id_1][internal * THREAD_BLOCK_SIZE + local_id_0] = (real_type) 0.0;
                     out_cache[local_id_1 + THREAD_BLOCK_SIZE][internal * THREAD_BLOCK_SIZE + local_id_0] = (real_type) 0.0;
@@ -118,8 +128,8 @@ __kernel void PLSSVM_DEVICE_KERNEL_PREDICT_NAME(__global real_type *prediction_d
             for (uint internal = 0; internal < INTERNAL_BLOCK_SIZE; ++internal) {
                 const ulong global_pp_idx = pp_idx + (ulong) internal;
 
-                atomicAdd(&prediction_d[global_pp_idx * (num_classes + PADDING_SIZE_ul) + dim + get_local_id(1)], out_cache[local_id_1][internal * THREAD_BLOCK_SIZE + local_id_0]);
-                atomicAdd(&prediction_d[global_pp_idx * (num_classes + PADDING_SIZE_ul) + dim + get_local_id(1) + THREAD_BLOCK_SIZE_ul], out_cache[local_id_1 + THREAD_BLOCK_SIZE][internal * THREAD_BLOCK_SIZE + local_id_0]);
+                atomicAdd(&prediction_d[global_pp_idx * (num_classes + PADDING_SIZE_ul) + dim + threadIdx_y], out_cache[local_id_1][internal * THREAD_BLOCK_SIZE + local_id_0]);
+                atomicAdd(&prediction_d[global_pp_idx * (num_classes + PADDING_SIZE_ul) + dim + threadIdx_y + THREAD_BLOCK_SIZE_ul], out_cache[local_id_1 + THREAD_BLOCK_SIZE][internal * THREAD_BLOCK_SIZE + local_id_0]);
             }
             barrier(CLK_LOCAL_MEM_FENCE);  // wait until all work-items updated their part of the prediction
         }

@@ -8,8 +8,10 @@
  * @brief Tests for the custom utility functions related to the HIP backend.
  */
 
-#include "plssvm/backends/HIP/detail/utility.hip.hpp"  // PLSSVM_HIP_ERROR_CHECK, plssvm::hip::detail::{gpu_assert, get_device_count, set_device, device_synchronize}
-#include "plssvm/backends/HIP/exceptions.hpp"          // plssvm::hip::backend_exception
+#include "plssvm/backends/HIP/detail/utility.hip.hpp"
+
+#include "plssvm/backends/execution_range.hpp"  // plssvm::detail::dim_type
+#include "plssvm/backends/HIP/exceptions.hpp"   // plssvm::hip::backend_exception
 
 #include "hip/hip_runtime.h"
 #include "hip/hip_runtime_api.h"
@@ -30,6 +32,19 @@ TEST(HIPUtility, error_check) {
     EXPECT_THROW_WHAT_MATCHER(PLSSVM_HIP_ERROR_CHECK(hipErrorInvalidValue),
                               plssvm::hip::backend_exception,
                               ::testing::StartsWith("HIP assert 'hipErrorInvalidValue' (1):"));
+}
+
+TEST(HIPUtility, dim_type_to_native) {
+    // create a dim_type
+    constexpr plssvm::detail::dim_type dim{ 128ull, 64ull, 32ull };
+
+    // convert it to a HIP dim3
+    const dim3 native_dim = plssvm::hip::detail::dim_type_to_native(dim);
+
+    // check values for correctness
+    EXPECT_EQ(native_dim.x, dim.x);
+    EXPECT_EQ(native_dim.y, dim.y);
+    EXPECT_EQ(native_dim.z, dim.z);
 }
 
 TEST(HIPUtility, get_device_count) {

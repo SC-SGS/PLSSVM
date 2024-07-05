@@ -13,6 +13,7 @@
 #define PLSSVM_BACKENDS_OPENCL_DETAIL_UTILITY_HPP_
 #pragma once
 
+#include "plssvm/backends/execution_range.hpp"              // plssvm::detail::dim_type
 #include "plssvm/backends/OpenCL/detail/command_queue.hpp"  // plssvm::opencl::detail::command_queue
 #include "plssvm/backends/OpenCL/detail/context.hpp"        // plssvm::opencl::detail::context
 #include "plssvm/backends/OpenCL/detail/error_code.hpp"     // plssvm::opencl::detail::error_code
@@ -41,11 +42,30 @@
  * @throws plssvm::opencl::backend_exception if the error code signals a failure
  */
 #define PLSSVM_OPENCL_ERROR_CHECK(err, additional_msg)                                                                                                \
-    if (const plssvm::opencl::detail::error_code err_code{ err }; !err_code) {                                                                              \
+    if (const plssvm::opencl::detail::error_code err_code{ err }; !err_code) {                                                                        \
         throw plssvm::opencl::backend_exception{ fmt::format("OpenCL assert '{}' ({}): {}!", err_code.message(), err_code.value(), additional_msg) }; \
     }
 
 namespace plssvm::opencl::detail {
+
+/**
+ * @brief Convert a `plssvm::detail::dim_type` to a OpenCL native range, i.e., a std::vector.
+ * @tparam I the number of dimensions in the OpenCL range
+ * @param[in] dims the dimensional value to convert
+ * @return the native OpenCL range type (`[[nodiscard]]`)
+ */
+template <std::size_t I>
+[[nodiscard]] std::vector<std::size_t> dim_type_to_native(const ::plssvm::detail::dim_type &dims) {
+    if constexpr (I == 1) {
+        return { static_cast<std::size_t>(dims.x) };
+    } else if constexpr (I == 2) {
+        return { static_cast<std::size_t>(dims.x), static_cast<std::size_t>(dims.y) };
+    } else if constexpr (I == 3) {
+        return { static_cast<std::size_t>(dims.x), static_cast<std::size_t>(dims.y), static_cast<std::size_t>(dims.z) };
+    } else {
+        static_assert(I != I, "Invalid number of native OpenCL range dimension!");
+    }
+}
 
 /**
  * @brief Returns the context listing all devices matching the target platform @p target and the actually used target platform

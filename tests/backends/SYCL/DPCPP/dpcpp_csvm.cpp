@@ -137,14 +137,15 @@ TEST_F(DPCPPCSVM, get_kernel_invocation_type) {
     EXPECT_NE(svm.get_kernel_invocation_type(), plssvm::sycl::kernel_invocation_type::automatic);
 }
 
+template <bool mock_grid_size>
 struct dpcpp_csvm_test_type {
-    using mock_csvm_type = mock_dpcpp_csvm;
+    using mock_csvm_type = mock_dpcpp_csvm<mock_grid_size>;
     using csvm_type = plssvm::dpcpp::csvm;
     using device_ptr_type = typename csvm_type::device_ptr_type;
     inline static auto additional_arguments = std::make_tuple();
 };
 
-using dpcpp_csvm_test_tuple = std::tuple<dpcpp_csvm_test_type>;
+using dpcpp_csvm_test_tuple = std::tuple<dpcpp_csvm_test_type<false>>;
 using dpcpp_csvm_test_label_type_list = util::cartesian_type_product_t<dpcpp_csvm_test_tuple, plssvm::detail::supported_label_types>;
 using dpcpp_csvm_test_type_list = util::cartesian_type_product_t<dpcpp_csvm_test_tuple>;
 
@@ -171,9 +172,19 @@ INSTANTIATE_TYPED_TEST_SUITE_P(DPCPPCSVMDeathTest, GenericCSVMSolverDeathTest, d
 INSTANTIATE_TYPED_TEST_SUITE_P(DPCPPCSVMDeathTest, GenericCSVMKernelFunctionDeathTest, dpcpp_kernel_function_type_gtest, naming::test_parameter_to_name);
 INSTANTIATE_TYPED_TEST_SUITE_P(DPCPPCSVMDeathTest, GenericCSVMSolverKernelFunctionDeathTest, dpcpp_solver_and_kernel_function_type_gtest, naming::test_parameter_to_name);
 
-// generic GPU CSVM tests
+// generic GPU CSVM tests - correct grid sizes
 INSTANTIATE_TYPED_TEST_SUITE_P(DPCPPCSVM, GenericGPUCSVM, dpcpp_csvm_test_type_gtest, naming::test_parameter_to_name);
 INSTANTIATE_TYPED_TEST_SUITE_P(DPCPPCSVM, GenericGPUCSVMKernelFunction, dpcpp_kernel_function_type_gtest, naming::test_parameter_to_name);
 
-// generic GPU CSVM DeathTests
+// generic GPU CSVM DeathTests - correct grid sizes
 INSTANTIATE_TYPED_TEST_SUITE_P(DPCPPCSVMDeathTest, GenericGPUCSVMDeathTest, dpcpp_csvm_test_type_gtest, naming::test_parameter_to_name);
+
+using dpcpp_mock_csvm_test_tuple = std::tuple<dpcpp_csvm_test_type<true>>;
+using dpcpp_mock_csvm_test_type_list = util::cartesian_type_product_t<dpcpp_mock_csvm_test_tuple>;
+
+using dpcpp_mock_csvm_test_type_gtest = util::combine_test_parameters_gtest_t<dpcpp_mock_csvm_test_type_list>;
+using dpcpp_mock_kernel_function_type_gtest = util::combine_test_parameters_gtest_t<dpcpp_mock_csvm_test_type_list, util::kernel_function_type_list>;
+
+// generic GPU CSVM tests - mocked grid sizes
+INSTANTIATE_TYPED_TEST_SUITE_P(DPCPPCSVMFakedGridSize, GenericGPUCSVM, dpcpp_mock_csvm_test_type_gtest, naming::test_parameter_to_name);
+INSTANTIATE_TYPED_TEST_SUITE_P(DPCPPCSVMFakedGridSize, GenericGPUCSVMKernelFunction, dpcpp_mock_kernel_function_type_gtest, naming::test_parameter_to_name);
