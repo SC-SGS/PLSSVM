@@ -49,8 +49,7 @@ void init_opencl_csvm(py::module_ &m, const py::exception<plssvm::exception> &ba
                  // create CSVM with the provided target platform
                  return std::make_unique<plssvm::opencl::csvm>(target, params);
              }),
-             "create an SVM with the provided target platform and keyword arguments")
-        .def("num_available_devices", &plssvm::opencl::csvm::num_available_devices, "the number of available devices");
+             "create an SVM with the provided target platform and keyword arguments");
 
     // register OpenCL backend specific exceptions
     register_py_exception<plssvm::opencl::backend_exception>(opencl_module, "BackendError", base_exception);

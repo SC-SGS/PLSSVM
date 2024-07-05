@@ -61,8 +61,7 @@ void init_stdpar_csvm(py::module_ &m, const py::exception<plssvm::exception> &ba
                  return std::make_unique<plssvm::stdpar::csvm>(target, params);
              }),
              "create an SVM with the provided target platform and keyword arguments")
-        .def("get_implementation_type", &plssvm::stdpar::csvm::get_implementation_type, "get the stdpar implementation type used in this stdpar SVM")
-        .def("num_available_devices", &plssvm::stdpar::csvm::num_available_devices, "the number of available devices");
+        .def("get_implementation_type", &plssvm::stdpar::csvm::get_implementation_type, "get the stdpar implementation type used in this stdpar SVM");
 
     // register stdpar backend specific exceptions
     register_py_exception<plssvm::stdpar::backend_exception>(stdpar_module, "BackendError", base_exception);
