@@ -495,8 +495,13 @@ using solver_and_kernel_function_and_classification_type_list = cartesian_value_
 
 /// A list of all supported real types based on `plssvm::detail::supported_real_types`.
 using real_type_list = cartesian_type_product_t<plssvm::detail::supported_real_types>;
+
 /// A list of all supported label types based on `plssvm::detail::supported_label_types`.
+#if defined(PLSSVM_TEST_WITH_REDUCED_LABEL_TYPES)
+using label_type_list = cartesian_type_product_t<plssvm::detail::supported_label_types_reduced>;
+#else
 using label_type_list = cartesian_type_product_t<plssvm::detail::supported_label_types>;
+#endif
 
 /// A list of all supported real types wrapped in a Google test type.
 using real_type_gtest = combine_test_parameters_gtest_t<real_type_list>;

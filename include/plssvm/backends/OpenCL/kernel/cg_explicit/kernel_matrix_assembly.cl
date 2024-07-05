@@ -23,25 +23,35 @@
  * @param[in] q the vector used in the dimensional reduction
  * @param[in] QA_cost the scalar used in the dimensional reduction
  * @param[in] cost the cost factor the diagonal is scaled with
+ * @param[in] grid_x_offset the offset in x-dimension into the data points if more than one execution grid has to be used
+ * @param[in] grid_y_offset the offset in y-dimension into the data points if more than one execution grid has to be used
  * @param[in] PLSSVM_OPENCL_KERNEL_FUNCTION_PARAMETER_LIST a placeholder that is used to string replace the correct kernel parameter (attention: no comma!; Args... only added for Doxygen)
  */
-__kernel void device_kernel_assembly(__global real_type *kernel_matrix_d, const __global real_type *data_d, const ulong num_rows, const ulong device_num_rows, const ulong row_offset, const ulong num_features, const __global real_type *q, const real_type QA_cost, const real_type cost PLSSVM_OPENCL_KERNEL_FUNCTION_PARAMETER_LIST) {
+__kernel void device_kernel_assembly(__global real_type *kernel_matrix_d, const __global real_type *data_d, const ulong num_rows, const ulong device_num_rows, const ulong row_offset, const ulong num_features, const __global real_type *q, const real_type QA_cost, const real_type cost, const ulong grid_x_offset, const ulong grid_y_offset PLSSVM_OPENCL_KERNEL_FUNCTION_PARAMETER_LIST) {
     // cast values to 32-bit unsigned int values to prevent implicit conversions
     const uint local_id_0 = get_local_id(0);
     const uint local_id_1 = get_local_id(1);
 
+    // cast all values to 64-bit unsigned long long to prevent potential 32-bit overflows
+    const ulong threadIdx_x = get_local_id(0);                 // current thread in block x-dimension
+    const ulong threadIdx_y = get_local_id(1);                 // current thread in block y-dimension
+    const ulong blockDim_x = get_local_size(0);                // number of threads in block x-dimension
+    const ulong blockDim_y = get_local_size(1);                // number of threads in block y-dimension
+    const ulong blockIdx_x = get_group_id(0) + grid_x_offset;  // current block in grid x-dimension + offsets if the grid size would be too large
+    const ulong blockIdx_y = get_group_id(1) + grid_y_offset;  // current block in grid y-dimension + offsets if the grid size would be too large
+
     // calculate the indices used in the current thread
-    const ulong i = get_global_id(0) * INTERNAL_BLOCK_SIZE_ul;
-    const ulong i_linear = get_group_id(0) * get_local_size(0) * INTERNAL_BLOCK_SIZE_ul + get_local_id(0);
-    const ulong j = get_global_id(1) * INTERNAL_BLOCK_SIZE_ul;
-    const ulong j_idx_linear = get_group_id(1) * get_local_size(1) * INTERNAL_BLOCK_SIZE_ul + get_local_id(0);
+    const ulong i = (blockIdx_x * blockDim_x + threadIdx_x) * INTERNAL_BLOCK_SIZE_ul;
+    const ulong i_linear = blockIdx_x * blockDim_x * INTERNAL_BLOCK_SIZE_ul + threadIdx_x;
+    const ulong j = (blockIdx_y * blockDim_y + threadIdx_y) * INTERNAL_BLOCK_SIZE_ul;
+    const ulong j_linear = blockIdx_y * blockDim_y * INTERNAL_BLOCK_SIZE_ul + threadIdx_x;
 
     // create the local memory arrays used for caching data point features
     __local real_type data_cache_i[FEATURE_BLOCK_SIZE][INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE];
     __local real_type data_cache_j[FEATURE_BLOCK_SIZE][INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE];
 
     // only calculate the upper triangular matrix -> can't use get_local_id() since all work-items in a work-group must progress further
-    if (get_group_id(0) >= get_group_id(1)) {
+    if (blockIdx_x >= blockIdx_y) {
         // create a thread private array used for internal caching
         real_type temp[INTERNAL_BLOCK_SIZE][INTERNAL_BLOCK_SIZE] = { (real_type) 0.0 };
 
@@ -50,13 +60,13 @@ __kernel void device_kernel_assembly(__global real_type *kernel_matrix_d, const 
             // load data into local memory
             for (uint internal = 0; internal < INTERNAL_BLOCK_SIZE; ++internal) {
                 const ulong global_i = row_offset + i_linear + (ulong) internal * THREAD_BLOCK_SIZE_ul;
-                const ulong global_j = row_offset + j_idx_linear + (ulong) internal * THREAD_BLOCK_SIZE_ul;
+                const ulong global_j = row_offset + j_linear + (ulong) internal * THREAD_BLOCK_SIZE_ul;
 
                 // FEATURE_BLOCK_SIZE = 2 * THREAD_BLOCK_SIZE -> store twice as many values in the local memory
-                data_cache_i[local_id_1][internal * THREAD_BLOCK_SIZE + local_id_0] = data_d[(dim + get_local_id(1)) * (num_rows + (ulong) 1 + PADDING_SIZE_ul) + global_i];
-                data_cache_i[local_id_1 + THREAD_BLOCK_SIZE][internal * THREAD_BLOCK_SIZE + local_id_0] = data_d[(dim + get_local_id(1) + THREAD_BLOCK_SIZE_ul) * (num_rows + (ulong) 1 + PADDING_SIZE_ul) + global_i];
-                data_cache_j[local_id_1][internal * THREAD_BLOCK_SIZE + local_id_0] = data_d[(dim + get_local_id(1)) * (num_rows + (ulong) 1 + PADDING_SIZE_ul) + global_j];
-                data_cache_j[local_id_1 + THREAD_BLOCK_SIZE][internal * THREAD_BLOCK_SIZE + local_id_0] = data_d[(dim + get_local_id(1) + THREAD_BLOCK_SIZE_ul) * (num_rows + (ulong) 1 + PADDING_SIZE_ul) + global_j];
+                data_cache_i[local_id_1][internal * THREAD_BLOCK_SIZE + local_id_0] = data_d[(dim + threadIdx_y) * (num_rows + (ulong) 1 + PADDING_SIZE_ul) + global_i];
+                data_cache_i[local_id_1 + THREAD_BLOCK_SIZE][internal * THREAD_BLOCK_SIZE + local_id_0] = data_d[(dim + threadIdx_y + THREAD_BLOCK_SIZE_ul) * (num_rows + (ulong) 1 + PADDING_SIZE_ul) + global_i];
+                data_cache_j[local_id_1][internal * THREAD_BLOCK_SIZE + local_id_0] = data_d[(dim + threadIdx_y) * (num_rows + (ulong) 1 + PADDING_SIZE_ul) + global_j];
+                data_cache_j[local_id_1 + THREAD_BLOCK_SIZE][internal * THREAD_BLOCK_SIZE + local_id_0] = data_d[(dim + threadIdx_y + THREAD_BLOCK_SIZE_ul) * (num_rows + (ulong) 1 + PADDING_SIZE_ul) + global_j];
             }
             barrier(CLK_LOCAL_MEM_FENCE);  // wait until all work-items loaded their part of the data
 

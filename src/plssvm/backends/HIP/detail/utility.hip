@@ -8,6 +8,8 @@
 
 #include "plssvm/backends/HIP/detail/utility.hip.hpp"
 
+#include "plssvm/backends/execution_range.hpp"  // plssvm::detail::dim_type
+
 #include "hip/hip_runtime_api.h"  // hipGetDeviceCount, hipSetDevice, hipPeekAtLastError, hipDeviceSynchronize, hipRuntimeGetVersion
 
 #include "fmt/core.h"  // fmt::format
@@ -15,6 +17,10 @@
 #include <string>  // std::string
 
 namespace plssvm::hip::detail {
+
+dim3 dim_type_to_native(const ::plssvm::detail::dim_type &dims) {
+    return dim3{ static_cast<unsigned int>(dims.x), static_cast<unsigned int>(dims.y), static_cast<unsigned int>(dims.z) };
+}
 
 [[nodiscard]] int get_device_count() {
     int count{};

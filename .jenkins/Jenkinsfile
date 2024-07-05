@@ -37,7 +37,7 @@ def onlineNodes(label) {
             onlineNodes.add(node.getDisplayName())
         }
     }
-  return ['pcsgs02','pcsgs03','pcsgs04','pcsgs05','pcsgs09','pcsgs11',] //TODO fix
+  return ['pcsgs02','pcsgs03','pcsgs04','pcsgs05','simcl1n3','pcsgs11',] //TODO fix
 }
 
 pipeline {
@@ -122,7 +122,7 @@ pipeline {
                                     if [[ -f ~/.spack/linux/compilers.yaml ]]; then
                                         rm ~/.spack/linux/compilers.yaml
                                     fi
-
+                                    spack clean -a  || true
 
                                     if [ ! -f $SPACK_SYSTEM_CONFIG_PATH/config.yaml ]; then
                                         touch  $SPACK_SYSTEM_CONFIG_PATH/config.yaml
@@ -173,15 +173,6 @@ pipeline {
                 }
             }
         }
-        stage('Dependency -- Python dependencies')
-        {
-            steps{
-                sh '''
-                    cd ${WORKSPACE}
-                    python3 -m pip install --user -r  install/python_requirements.txt
-                '''
-            }
-        }
         stage('Generate test files') {
             steps {
               script{
@@ -194,6 +185,7 @@ pipeline {
                               sh '''
 
                               cd ${WORKSPACE}/plssvm
+                              python3 -m pip install --user -r  install/python_requirements.txt
                               python3 utility_scripts/generate_data.py --output tests/data/5000x2000.libsvm --format libsvm --problem planes --samples 5000 --features 2000
                               python3 utility_scripts/generate_data.py --output tests/data/500x100.libsvm --format libsvm --problem planes --samples 500 --features 100
                               '''
@@ -213,7 +205,7 @@ pipeline {
                 axes {
                     axis {
                         name 'BACKEND'
-                        values 'OPENMP', 'CUDA', 'OPENCL', 'DPCPP', 'ADAPTIVECPP', 'HIP'
+                        values 'OPENMP', 'CUDA', 'OPENCL', 'DPCPP', 'ADAPTIVECPP', 'HIP', 'STDPAR-GNU-TBB', 'STDPAR-DPCPP', 'STDPAR-ADAPTIVECPP', 'STDPAR-NVHPC' //, 'STDPAR-ROC'
                     }
                     axis {
                         name 'ARCHITECTURE'
@@ -232,7 +224,7 @@ pipeline {
                     exclude {
                       axis{
                         name 'BACKEND'
-                        values 'HIP'
+                        values 'HIP'//, 'STDPAR-ROC'
                       }
                       axis{
                         name 'ARCHITECTURE'
@@ -242,7 +234,7 @@ pipeline {
                     exclude {
                       axis{
                         name 'BACKEND'
-                        values 'CUDA'
+                        values 'CUDA', 'STDPAR-NVHPC'
                       }
                       axis{
                         name 'ARCHITECTURE'
@@ -252,23 +244,23 @@ pipeline {
                     exclude {
                       axis{
                         name 'BACKEND'
-                        values 'OPENMP'
+                        values 'OPENMP', 'STDPAR-GNU-TBB'
                       }
                       axis{
                         name 'ARCHITECTURE'
                         notValues 'CPU'
                       }
                     }
-                    exclude {
-                      axis{
-                        name 'BACKEND'
-                        values 'DPCPP'
-                      }
-                      axis{
-                        name 'ARCHITECTURE'
-                        values 'CPU'
-                      }
-                    }
+                    // exclude {
+                    //   axis{
+                    //     name 'BACKEND'
+                    //     values 'DPCPP'
+                    //   }
+                    //   axis{
+                    //     name 'ARCHITECTURE'
+                    //     values 'CPU'
+                    //   }
+                    // }
                     exclude {
                       axis{
                         name 'BACKEND'
@@ -303,14 +295,14 @@ pipeline {
 
 
 
-                agent { label " ${env.ARCHITECTURE.equalsIgnoreCase('AMD') ? 'sgs_amd_gpu_node' : 'sgs_nvidia_gpu_node' }"}
+                agent { label " ${env.ARCHITECTURE.equalsIgnoreCase('AMD') ? 'amd' : 'sgs_nvidia_gpu_node' }"}
 
                 stages{
                     stage('Build PLSSVM'){
                         steps{
                                 sh '''
                                         if [ "$BUILD_TYPE" == Release ]; then
-                                            export NUM_DATA_POINTS=100
+                                            export NUM_DATA_POINTS=200
                                             export NUM_FEATURES=20
                                         else
                                             export NUM_DATA_POINTS=20
@@ -320,6 +312,12 @@ pipeline {
                                         source $SGSSCRATCH/spack/share/spack/setup-env.sh
                                         cd ${WORKSPACE}/plssvm
 
+                                        echo $(hostname)
+                                        echo $(spack arch)
+
+
+
+
                                         spack uninstall -a -y plssvm@develop$([[ $BACKEND == ADAPTIVECPP ]] && echo "%clang" )  \
                                             $([[ $BACKEND == OPENMP ]] && echo "+openmp" || echo "~openmp") \
                                             $([[ $BACKEND == CUDA ]] && echo "+cuda" || echo "~cuda") \
@@ -327,8 +325,14 @@ pipeline {
                                             $([[ $BACKEND == OPENCL ]] && echo "+opencl" || echo "~opencl") \
                                             $([[ $BACKEND == ADAPTIVECPP ]] && echo "+adaptivecpp" || echo "~adaptivecpp") \
                                             $([[ $BACKEND == DPCPP ]] && echo "+icpx" || echo "~icpx") \
-                                            $([[ $ARCHITECTURE == NVIDIA ]] && echo "cuda_arch=86") \
-                                            $([[ $ARCHITECTURE == AMD ]] && echo "amdgpu_target=gfx90a") \
+                                            $([[ $BACKEND == *"STDPAR"* ]] && echo "+stdpar" || echo "~stdpar") \
+                                            $([[ $BACKEND == STDPAR-GNU-TBB ]] && echo "stdparimplementation=gnu-tbb" ) \
+                                            $([[ $BACKEND == STDPAR-DPCPP ]] && echo "stdparimplementation=icpx" ) \
+                                            $([[ $BACKEND == STDPAR-NVHPC ]] && echo "stdparimplementation=nvhpc" ) \
+                                            $([[ $BACKEND == STDPAR-ADAPTIVECPP ]] && echo "stdparimplementation=adaptivecpp" ) \
+                                            $([[ $BACKEND == STDPAR-ROC ]] && echo "stdparimplementation=roc" ) \
+                                            $([[ $ARCHITECTURE == NVIDIA ]] && echo "cuda_arch=86" ||  echo "cuda_arch=none") \
+                                        $([[ $ARCHITECTURE == AMD ]] && echo "amdgpu_target=gfx90a" || echo "amdgpu_target=none") \
                                             build_type=$BUILD_TYPE \
                                             arch=$(spack arch) || true
 
@@ -339,20 +343,27 @@ pipeline {
                                             $([[ $BACKEND == OPENCL ]] && echo "+opencl" || echo "~opencl") \
                                             $([[ $BACKEND == ADAPTIVECPP ]] && echo "+adaptivecpp" || echo "~adaptivecpp") \
                                             $([[ $BACKEND == DPCPP ]] && echo "+icpx" || echo "~icpx") \
-                                            $([[ $ARCHITECTURE == NVIDIA ]] && echo "cuda_arch=86") \
-                                            $([[ $ARCHITECTURE == AMD ]] && echo "amdgpu_target=gfx90a") \
+                                            $([[ $BACKEND == *"STDPAR"* ]] && echo "+stdpar" || echo "~stdpar") \
+                                            $([[ $BACKEND == STDPAR-GNU-TBB ]] && echo "stdparimplementation=gnu-tbb" ) \
+                                            $([[ $BACKEND == STDPAR-DPCPP ]] && echo "stdparimplementation=icpx" ) \
+                                            $([[ $BACKEND == STDPAR-NVHPC ]] && echo "stdparimplementation=nvhpc" ) \
+                                            $([[ $BACKEND == STDPAR-ADAPTIVECPP ]] && echo "stdparimplementation=adaptivecpp" ) \
+                                            $([[ $BACKEND == STDPAR-ROC ]] && echo "stdparimplementation=roc" ) \
+                                            $([[ $ARCHITECTURE == NVIDIA ]] && echo "cuda_arch=86" ||  echo "cuda_arch=none") \
+                                            $([[ $ARCHITECTURE == AMD ]] && echo "amdgpu_target=gfx90a" || echo "amdgpu_target=none") \
                                             +language_bindings \
                                             +test_file \
                                             test_file_num_classes=5 \
                                             test_file_num_data_points=$NUM_DATA_POINTS \
                                             test_file_num_features=$NUM_FEATURES \
-                                            +asserts \
+                                            $([[ $BACKEND == *"STDPAR"* ]] && echo "~asserts" || echo "+asserts") \
                                             ~fast-math \
                                             arch=$(spack arch) \
                                             build_type=$BUILD_TYPE \
-                                            $([[ $BACKEND == ADAPTIVECPP ]] && echo "^py-scipy%gcc" ) # TODO: remove, neads a fortran compiler and we currently have no flang installed \
-                                            $([[ $BACKEND == ADAPTIVECPP ]] && echo "^openblas%gcc" ) # TODO: remove, neads a fortran compiler and we currently have no flang installed \
-                                            $([[ $BACKEND == ADAPTIVECPP ]] && echo "^llvm~gold")
+                                            +reducing_label_types \
+                                            $([[ $BACKEND == ADAPTIVECPP ]] && echo "^py-scipy%gcc" ) \
+                                            $([[ $BACKEND == ADAPTIVECPP ]] && echo "^openblas%gcc" ) \
+                                            $([[ $BACKEND == ADAPTIVECPP ]] && echo "^llvm@17~gold~libomptarget")
                                 '''
 
                         }
@@ -371,8 +382,14 @@ pipeline {
                                     $([[ $BACKEND == OPENCL ]] && echo "+opencl" || echo "~opencl") \
                                     $([[ $BACKEND == ADAPTIVECPP ]] && echo "+adaptivecpp" || echo "~adaptivecpp") \
                                     $([[ $BACKEND == DPCPP ]] && echo "+icpx" || echo "~icpx") \
-                                    $([[ $ARCHITECTURE == NVIDIA ]] && echo "cuda_arch=86") \
-                                    $([[ $ARCHITECTURE == AMD ]] && echo "amdgpu_target=gfx90a") \
+                                    $([[ $BACKEND == *"STDPAR"* ]] && echo "+stdpar" || echo "~stdpar") \
+                                    $([[ $BACKEND == STDPAR-GNU-TBB ]] && echo "stdparimplementation=gnu-tbb" ) \
+                                    $([[ $BACKEND == STDPAR-DPCPP ]] && echo "stdparimplementation=icpx" ) \
+                                    $([[ $BACKEND == STDPAR-NVHPC ]] && echo "stdparimplementation=nvhpc" ) \
+                                    $([[ $BACKEND == STDPAR-ADAPTIVECPP ]] && echo "stdparimplementation=adaptivecpp" ) \
+                                    $([[ $BACKEND == STDPAR-ROC ]] && echo "stdparimplementation=roc" ) \
+                                    $([[ $ARCHITECTURE == NVIDIA ]] && echo "cuda_arch=86" ||  echo "cuda_arch=none") \
+                                    $([[ $ARCHITECTURE == AMD ]] && echo "amdgpu_target=gfx90a" || echo "amdgpu_target=none") \
                                     build_type=$BUILD_TYPE \
                                     arch=$(spack arch)) \
                                 install_hash=$( echo ${installpath} | rev | cut -d/ -f1| cut -d- -f1 | rev | head -c 7)
@@ -380,10 +397,13 @@ pipeline {
 
                                 if [[ $ARCHITECTURE == NVIDIA ]]; then
                                     export ONEAPI_DEVICE_SELECTOR=cuda:*
+                                    export ACPP_VISIBILITY_MASK=cuda
                                 elif [[ $ARCHITECTURE == AMD ]]; then
                                     export ONEAPI_DEVICE_SELECTOR=hip:*
+                                    export ACPP_VISIBILITY_MASK=hip
                                 else
                                     export ONEAPI_DEVICE_SELECTOR=*:cpu
+                                    export ACPP_VISIBILITY_MASK=omp
                                 fi
 
 
@@ -392,13 +412,18 @@ pipeline {
                                         $([[ $BACKEND == CUDA ]] && echo "+cuda" || echo "~cuda") \
                                         $([[ $BACKEND == HIP ]] && echo "+hip" || echo "~hip") \
                                         $([[ $BACKEND == OPENCL ]] && echo "+opencl" || echo "~opencl") \
-                                        $([[ $BACKEND == ADAPTIVECPP ]] && echo "+adaptivecpp" || echo "~adaptivecpp") \
+                                        $([[ $BACKEND == ADAPTIVECPP ]] && echo " +adaptivecpp" || echo "~adaptivecpp") \
                                         $([[ $BACKEND == DPCPP ]] && echo "+icpx" || echo "~icpx") \
-                                        $([[ $ARCHITECTURE == NVIDIA ]] && echo "cuda_arch=86") \
-                                        $([[ $ARCHITECTURE == AMD ]] && echo "amdgpu_target=gfx90a") \
+                                        $([[ $BACKEND == *"STDPAR"* ]] && echo "+stdpar" || echo "~stdpar") \
+                                        $([[ $BACKEND == STDPAR-GNU-TBB ]] && echo "stdparimplementation=gnu-tbb" ) \
+                                        $([[ $BACKEND == STDPAR-DPCPP ]] && echo "stdparimplementation=icpx" ) \
+                                        $([[ $BACKEND == STDPAR-NVHPC ]] && echo "stdparimplementation=nvhpc" ) \
+                                        $([[ $BACKEND == STDPAR-ADAPTIVECPP ]] && echo "stdparimplementation=adaptivecpp" ) \
+                                        $([[ $ARCHITECTURE == NVIDIA ]] && echo "cuda_arch=86" ||  echo "cuda_arch=none") \
+                                        $([[ $ARCHITECTURE == AMD ]] && echo "amdgpu_target=gfx90a" || echo "amdgpu_target=none") \
                                         build_type=$BUILD_TYPE \
                                         arch=$(spack arch)" \
-                                        ctest -j8 --output-on-failure --no-compress-output -T Test  \
+                                        ctest -j8 --output-on-failure --timeout 600 --no-compress-output -T Test  \
                                         $([[ $TEST_TYPE == BASE ]] && echo \"-R "Base*\"" || echo "-E \"Base*\"")
 
 
@@ -410,22 +435,38 @@ pipeline {
                             sh '''
                                 source $SGSSCRATCH/spack/share/spack/setup-env.sh
 
-                                cd ${WORKSPACE}/plssvm/test/data/libsvm
+                                cd ${WORKSPACE}/plssvm/tests/data/libsvm
 
                                 spack load "plssvm@develop $([[ $BACKEND == ADAPTIVECPP ]] && echo "%clang" )\
-                                        $([[ $BACKEND == OPENMP ]] && echo "+openmp" || echo "~openmp") \
+                                        $([[ $BACKEND == OPENMP ]] && echo " +openmp" || echo "~openmp") \
                                         $([[ $BACKEND == CUDA ]] && echo "+cuda" || echo "~cuda") \
                                         $([[ $BACKEND == HIP ]] && echo "+hip" || echo "~hip") \
                                         $([[ $BACKEND == OPENCL ]] && echo "+opencl" || echo "~opencl") \
                                         $([[ $BACKEND == ADAPTIVECPP ]] && echo "+adaptivecpp" || echo "~adaptivecpp") \
                                         $([[ $BACKEND == DPCPP ]] && echo "+icpx" || echo "~icpx") \
-                                        $([[ $ARCHITECTURE == NVIDIA ]] && echo "cuda_arch=86") \
-                                        $([[ $ARCHITECTURE == AMD ]] && echo "amdgpu_target=gfx90a") \
+                                        $([[ $BACKEND == *"STDPAR"* ]] && echo "+stdpar" || echo "~stdpar") \
+                                        $([[ $BACKEND == STDPAR-GNU-TBB ]] && echo "stdparimplementation=gnu-tbb" ) \
+                                        $([[ $BACKEND == STDPAR-DPCPP ]] && echo "stdparimplementation=icpx" ) \
+                                        $([[ $BACKEND == STDPAR-NVHPC ]] && echo "stdparimplementation=nvhpc" ) \
+                                        $([[ $BACKEND == STDPAR-ADAPTIVECPP ]] && echo "stdparimplementation=adaptivecpp" ) \
+                                        $([[ $ARCHITECTURE == NVIDIA ]] && echo "cuda_arch=86" ||  echo "cuda_arch=none") \
+                                        $([[ $ARCHITECTURE == AMD ]] && echo "amdgpu_target=gfx90a" || echo "amdgpu_target=none") \
                                         build_type=$BUILD_TYPE \
                                         arch=$(spack arch)"
 
+                                if [[ $ARCHITECTURE == NVIDIA ]]; then
+                                    export ONEAPI_DEVICE_SELECTOR=cuda:*
+                                    export ACPP_VISIBILITY_MASK=cuda
+                                elif [[ $ARCHITECTURE == AMD ]]; then
+                                    export ONEAPI_DEVICE_SELECTOR=hip:*
+                                    export ACPP_VISIBILITY_MASK=hip
+                                else
+                                    export ONEAPI_DEVICE_SELECTOR=*:cpu
+                                    export ACPP_VISIBILITY_MASK=omp
+                                fi
+
                                 plssvm-scale --help
-                                plssvm-train 5x4.libsvm ${BACKEND}-${ARCHITECTURE}-${BUILD_TYPE}-${TEST_TYPE}.model
+                                plssvm-train -i 1 5x4.libsvm ${BACKEND}-${ARCHITECTURE}-${BUILD_TYPE}-${TEST_TYPE}.model
                                 plssvm-predict 5x4.libsvm ${BACKEND}-${ARCHITECTURE}-${BUILD_TYPE}-${TEST_TYPE}.model
                                 rm ${BACKEND}-${ARCHITECTURE}-${BUILD_TYPE}-${TEST_TYPE}.model
 

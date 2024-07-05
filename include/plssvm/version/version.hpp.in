@@ -55,7 +55,7 @@ namespace detail {
  * @brief The provided target platforms to use.
  * @details The value gets automatically set during the [`CMake`](https://cmake.org/) configuration step.
  */
-constexpr std::string_view target_platforms = "@PLSSVM_TARGET_PLATFORMS@";
+constexpr std::string_view target_platforms = "BASE: @PLSSVM_TARGET_PLATFORMS@ | SYCL: @PLSSVM_SYCL_TARGET_PLATFORMS@ | CUDA: @PLSSVM_CUDA_TARGET_PLATFORMS@ | HIP: @PLSSVM_HIP_TARGET_PLATFORMS@ | OpenMP: @PLSSVM_OPENMP_TARGET_PLATFORMS@ | OpenCL: @PLSSVM_OPENCL_TARGET_PLATFORMS@ | stdpar: @PLSSVM_STDPAR_TARGET_PLATFORMS@";
 
 /**
  * @brief The copyright notice of the PLSSVM library.
