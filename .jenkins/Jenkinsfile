@@ -397,10 +397,13 @@ pipeline {
 
                                 if [[ $ARCHITECTURE == NVIDIA ]]; then
                                     export ONEAPI_DEVICE_SELECTOR=cuda:*
+                                    export ACPP_VISIBILITY_MASK=cuda
                                 elif [[ $ARCHITECTURE == AMD ]]; then
                                     export ONEAPI_DEVICE_SELECTOR=hip:*
+                                    export ACPP_VISIBILITY_MASK=hip
                                 else
                                     export ONEAPI_DEVICE_SELECTOR=*:cpu
+                                    export ACPP_VISIBILITY_MASK=omp
                                 fi
 
 
