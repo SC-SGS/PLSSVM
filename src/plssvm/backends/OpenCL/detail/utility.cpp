@@ -435,6 +435,7 @@ std::vector<command_queue> create_command_queues(const std::vector<context> &con
             for (std::vector<context>::size_type device = 0; device < contexts[0].devices.size(); ++device) {
                 cl_build_program_error_message(program, contexts[0].devices[device], device);
             }
+            PLSSVM_OPENCL_ERROR_CHECK(err, "error building program")
         }
 
         // get sizes of binaries
@@ -524,6 +525,7 @@ std::vector<command_queue> create_command_queues(const std::vector<context> &con
         for (std::vector<context>::size_type device = 0; device < contexts[0].devices.size(); ++device) {
             cl_build_program_error_message(binary_program, contexts[0].devices[device], device);
         }
+        PLSSVM_OPENCL_ERROR_CHECK(err, "error building program")
     }
 
     // build all kernels, one for each device
