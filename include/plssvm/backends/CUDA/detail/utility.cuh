@@ -14,6 +14,7 @@
 #pragma once
 
 #include "plssvm/backends/CUDA/exceptions.hpp"  // plssvm::cuda::backend_exception
+#include "plssvm/backends/execution_range.hpp"  // plssvm::detail::dim_type
 
 #include "fmt/core.h"     // fmt::format, fmt::formatter
 #include "fmt/ostream.h"  // fmt::ostream_formatter
@@ -33,6 +34,13 @@
     }
 
 namespace plssvm::cuda::detail {
+
+/**
+ * @brief Convert a `plssvm::detail::dim_type` to a CUDA native dim3.
+ * @param[in] dims the dimensional value to convert
+ * @return the native CUDA dim3 type (`[[nodiscard]]`)
+ */
+[[nodiscard]] dim3 dim_type_to_native(const ::plssvm::detail::dim_type &dims);
 
 /**
  * @brief Returns the number of available CUDA devices.

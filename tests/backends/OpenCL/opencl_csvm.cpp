@@ -107,14 +107,15 @@ TEST_F(OpenCLCSVM, construct_target_and_named_args) {
 #endif
 }
 
+template <bool mock_grid_size>
 struct opencl_csvm_test_type {
-    using mock_csvm_type = mock_opencl_csvm;
+    using mock_csvm_type = mock_opencl_csvm<mock_grid_size>;
     using csvm_type = plssvm::opencl::csvm;
     using device_ptr_type = typename csvm_type::device_ptr_type;
     inline constexpr static auto additional_arguments = std::make_tuple();
 };
 
-using opencl_csvm_test_tuple = std::tuple<opencl_csvm_test_type>;
+using opencl_csvm_test_tuple = std::tuple<opencl_csvm_test_type<false>>;
 using opencl_csvm_test_label_type_list = util::cartesian_type_product_t<opencl_csvm_test_tuple, plssvm::detail::supported_label_types>;
 using opencl_csvm_test_type_list = util::cartesian_type_product_t<opencl_csvm_test_tuple>;
 
@@ -141,9 +142,19 @@ INSTANTIATE_TYPED_TEST_SUITE_P(OpenCLCSVMDeathTest, GenericCSVMSolverDeathTest, 
 INSTANTIATE_TYPED_TEST_SUITE_P(OpenCLCSVMDeathTest, GenericCSVMKernelFunctionDeathTest, opencl_kernel_function_type_gtest, naming::test_parameter_to_name);
 INSTANTIATE_TYPED_TEST_SUITE_P(OpenCLCSVMDeathTest, GenericCSVMSolverKernelFunctionDeathTest, opencl_solver_and_kernel_function_type_gtest, naming::test_parameter_to_name);
 
-// generic GPU CSVM tests
+// generic GPU CSVM tests - correct grid sizes
 INSTANTIATE_TYPED_TEST_SUITE_P(OpenCLCSVM, GenericGPUCSVM, opencl_csvm_test_type_gtest, naming::test_parameter_to_name);
 INSTANTIATE_TYPED_TEST_SUITE_P(OpenCLCSVM, GenericGPUCSVMKernelFunction, opencl_kernel_function_type_gtest, naming::test_parameter_to_name);
 
-// generic GPU CSVM DeathTests
+// generic GPU CSVM DeathTests - correct grid sizes
 INSTANTIATE_TYPED_TEST_SUITE_P(OpenCLCSVMDeathTest, GenericGPUCSVMDeathTest, opencl_csvm_test_type_gtest, naming::test_parameter_to_name);
+
+using opencl_mock_csvm_test_tuple = std::tuple<opencl_csvm_test_type<true>>;
+using opencl_mock_csvm_test_type_list = util::cartesian_type_product_t<opencl_mock_csvm_test_tuple>;
+
+using opencl_mock_csvm_test_type_gtest = util::combine_test_parameters_gtest_t<opencl_mock_csvm_test_type_list>;
+using opencl_mock_kernel_function_type_gtest = util::combine_test_parameters_gtest_t<opencl_mock_csvm_test_type_list, util::kernel_function_type_list>;
+
+// generic GPU CSVM tests - mocked grid sizes
+INSTANTIATE_TYPED_TEST_SUITE_P(OpenCLCSVMFakedGridSize, GenericGPUCSVM, opencl_mock_csvm_test_type_gtest, naming::test_parameter_to_name);
+INSTANTIATE_TYPED_TEST_SUITE_P(OpenCLCSVMFakedGridSize, GenericGPUCSVMKernelFunction, opencl_mock_kernel_function_type_gtest, naming::test_parameter_to_name);

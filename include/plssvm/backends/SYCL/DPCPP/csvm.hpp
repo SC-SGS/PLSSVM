@@ -13,6 +13,7 @@
 #define PLSSVM_BACKENDS_SYCL_DPCPP_CSVM_HPP_
 #pragma once
 
+#include "plssvm/backends/execution_range.hpp"                  // plssvm::detail::{dim_type, execution_range}
 #include "plssvm/backends/gpu_csvm.hpp"                         // plssvm::detail::gpu_csvm
 #include "plssvm/backends/SYCL/DPCPP/detail/device_ptr.hpp"     // plssvm::dpcpp::detail::device_ptr
 #include "plssvm/backends/SYCL/DPCPP/detail/pinned_memory.hpp"  // plssvm::dpcpp::detail::pinned_memory
@@ -31,6 +32,7 @@
 #include <cstddef>      // std::size_t
 #include <type_traits>  // std::is_same_v, std::true_type
 #include <utility>      // std::forward
+#include <vector>       // std::vector
 
 namespace plssvm {
 
@@ -153,6 +155,12 @@ class csvm : public ::plssvm::detail::gpu_csvm<detail::device_ptr, detail::queue
      * @copydoc plssvm::detail::gpu_csvm::get_max_work_group_size
      */
     [[nodiscard]] std::size_t get_max_work_group_size(std::size_t device_id) const final;
+    /**
+     * @copydoc plssvm::detail::gpu_csvm::get_max_grid_size
+     * @note Uses the DPC++ experimental extension `sycl::ext::oneapi::experimental::info::device::max_work_groups` if the feature test macro `SYCL_EXT_ONEAPI_MAX_WORK_GROUP_QUERY` is defined,
+     *       otherwise it uses hardcoded values (int32_t max for all dimensions on the CPU and int32_t max for the first dimension and uint16_t max for the remaining dimensions otherwise).
+     */
+    [[nodiscard]] ::plssvm::detail::dim_type get_max_grid_size(std::size_t device_id) const override;
 
     //***************************************************//
     //                        fit                        //
@@ -160,23 +168,23 @@ class csvm : public ::plssvm::detail::gpu_csvm<detail::device_ptr, detail::queue
     /**
      * @copydoc plssvm::detail::gpu_csvm::run_assemble_kernel_matrix_explicit
      */
-    [[nodiscard]] device_ptr_type run_assemble_kernel_matrix_explicit(std::size_t device_id, const parameter &params, const device_ptr_type &data_d, const device_ptr_type &q_red_d, real_type QA_cost) const final;
+    [[nodiscard]] device_ptr_type run_assemble_kernel_matrix_explicit(std::size_t device_id, const ::plssvm::detail::execution_range &exec, const parameter &params, const device_ptr_type &data_d, const device_ptr_type &q_red_d, real_type QA_cost) const final;
     /**
      * @copydoc plssvm::detail::gpu_csvm::run_blas_level_3_kernel_explicit
      */
-    void run_blas_level_3_kernel_explicit(std::size_t device_id, real_type alpha, const device_ptr_type &A_d, const device_ptr_type &B_d, real_type beta, device_ptr_type &C_d) const final;
+    void run_blas_level_3_kernel_explicit(std::size_t device_id, const ::plssvm::detail::execution_range &exec, const ::plssvm::detail::execution_range &mirror_exec, real_type alpha, const device_ptr_type &A_d, const device_ptr_type &B_d, real_type beta, device_ptr_type &C_d) const final;
     /**
      * @copydoc plssvm::detail::gpu_csvm::run_assemble_kernel_matrix_implicit_blas_level_3
      */
-    void run_assemble_kernel_matrix_implicit_blas_level_3(std::size_t device_id, real_type alpha, const device_ptr_type &A_d, const parameter &params, const device_ptr_type &q_red_d, real_type QA_cost, const device_ptr_type &B_d, device_ptr_type &C_d) const final;
+    void run_assemble_kernel_matrix_implicit_blas_level_3(std::size_t device_id, const ::plssvm::detail::execution_range &exec, real_type alpha, const device_ptr_type &A_d, const parameter &params, const device_ptr_type &q_red_d, real_type QA_cost, const device_ptr_type &B_d, device_ptr_type &C_d) const final;
     /**
      * @copydoc plssvm::detail::gpu_csvm::run_inplace_matrix_addition
      */
-    void run_inplace_matrix_addition(std::size_t device_id, device_ptr_type &lhs_d, const device_ptr_type &rhs_d) const override;
+    void run_inplace_matrix_addition(std::size_t device_id, const ::plssvm::detail::execution_range &exec, device_ptr_type &lhs_d, const device_ptr_type &rhs_d) const override;
     /**
      * @copydoc plssvm::detail::gpu_csvm::run_inplace_matrix_scale
      */
-    void run_inplace_matrix_scale(std::size_t device_id, device_ptr_type &lhs_d, real_type scale) const override;
+    void run_inplace_matrix_scale(std::size_t device_id, const ::plssvm::detail::execution_range &exec, device_ptr_type &lhs_d, real_type scale) const override;
 
     //***************************************************//
     //                   predict, score                  //
@@ -184,11 +192,11 @@ class csvm : public ::plssvm::detail::gpu_csvm<detail::device_ptr, detail::queue
     /**
      * @copydoc plssvm::detail::gpu_csvm::run_w_kernel
      */
-    [[nodiscard]] device_ptr_type run_w_kernel(std::size_t device_id, const device_ptr_type &alpha_d, const device_ptr_type &sv_d) const final;
+    [[nodiscard]] device_ptr_type run_w_kernel(std::size_t device_id, const ::plssvm::detail::execution_range &exec, const device_ptr_type &alpha_d, const device_ptr_type &sv_d) const final;
     /**
      * @copydoc plssvm::detail::gpu_csvm::run_predict_kernel
      */
-    [[nodiscard]] device_ptr_type run_predict_kernel(std::size_t device_id, const parameter &params, const device_ptr_type &alpha_d, const device_ptr_type &rho_d, const device_ptr_type &sv_or_w_d, const device_ptr_type &predict_points_d) const final;
+    [[nodiscard]] device_ptr_type run_predict_kernel(std::size_t device_id, const ::plssvm::detail::execution_range &exec, const parameter &params, const device_ptr_type &alpha_d, const device_ptr_type &rho_d, const device_ptr_type &sv_or_w_d, const device_ptr_type &predict_points_d) const final;
 
     /// The SYCL kernel invocation type for the svm kernel.
     sycl::kernel_invocation_type invocation_type_{ sycl::kernel_invocation_type::automatic };

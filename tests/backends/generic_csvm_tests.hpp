@@ -20,6 +20,7 @@
 #include "plssvm/detail/data_distribution.hpp"  // plssvm::detail::{triangular_data_distribution, rectangular_data_distribution}
 #include "plssvm/detail/memory_size.hpp"        // memory size literals
 #include "plssvm/detail/move_only_any.hpp"      // plssvm::detail::move_only_any
+#include "plssvm/backends/execution_range.hpp"  // plssvm::detail::execution_range
 #include "plssvm/detail/utility.hpp"            // plssvm::detail::{unreachable, get, unreachable}
 #include "plssvm/kernel_function_types.hpp"     // plssvm::csvm_to_backend_type_v, plssvm::backend_type
 #include "plssvm/matrix.hpp"                    // plssvm::aos_matrix, plssvm::layout_type
@@ -146,7 +147,23 @@ template <typename csvm_type, typename device_ptr_type, typename matrix_type, ty
             q_d.copy_to_device(q_red, 0, q_red.size());
             q_d.memset(0, q_red.size());
 
-            result[device_id] = plssvm::detail::move_only_any{ std::make_tuple(std::move(matr_d), params, std::move(q_d), QA_cost) };
+            // kernel launch specific sizes
+            const unsigned long long device_specific_num_rows = csvm.data_distribution_->place_specific_num_rows(device_id);
+            const unsigned long long device_row_offset = csvm.data_distribution_->place_row_offset(device_id);
+
+            // the block dimension is THREAD_BLOCK_SIZE x THREAD_BLOCK_SIZE
+            const plssvm::detail::dim_type block{ std::size_t{ plssvm::THREAD_BLOCK_SIZE }, std::size_t{ plssvm::THREAD_BLOCK_SIZE } };
+
+            // define the full execution grid
+            const plssvm::detail::dim_type grid{
+                static_cast<std::size_t>(std::ceil(static_cast<double>(matr.shape().x - 1 - device_row_offset) / static_cast<double>(block.x * plssvm::INTERNAL_BLOCK_SIZE))),
+                static_cast<std::size_t>(std::ceil(static_cast<double>(device_specific_num_rows) / static_cast<double>(block.y * plssvm::INTERNAL_BLOCK_SIZE)))
+            };
+
+            // create the final execution range
+            const plssvm::detail::execution_range exec{ block, csvm.get_max_work_group_size(device_id), grid, csvm.get_max_grid_size(device_id) };
+
+            result[device_id] = plssvm::detail::move_only_any{ std::make_tuple(exec, std::move(matr_d), params, std::move(q_d), QA_cost) };
         }
     }
     return result;
@@ -939,7 +956,7 @@ TYPED_TEST_P(GenericCSVMSolverKernelFunction, assemble_kernel_matrix_minimal) {
                     EXPECT_EQ(q_red_ret, q_red);
                     EXPECT_EQ(QA_cost_ret, QA_cost);
                 } else {
-                    const auto &[data_d_ret, params_ret, q_red_d_ret, QA_cost_ret] = plssvm::detail::move_only_any_cast<const std::tuple<device_ptr_type, plssvm::parameter, device_ptr_type, plssvm::real_type> &>(kernel_matrix_d[device_id]);
+                    const auto &[exec, data_d_ret, params_ret, q_red_d_ret, QA_cost_ret] = plssvm::detail::move_only_any_cast<const std::tuple<plssvm::detail::execution_range, device_ptr_type, plssvm::parameter, device_ptr_type, plssvm::real_type> &>(kernel_matrix_d[device_id]);
 
                     // copy data back to host
                     plssvm::soa_matrix<plssvm::real_type> data_ret{ data };
@@ -1049,7 +1066,7 @@ TYPED_TEST_P(GenericCSVMSolverKernelFunction, assemble_kernel_matrix) {
                     EXPECT_EQ(q_red_ret, q_red);
                     EXPECT_EQ(QA_cost_ret, QA_cost);
                 } else {
-                    const auto &[data_d_ret, params_ret, q_red_d_ret, QA_cost_ret] = plssvm::detail::move_only_any_cast<const std::tuple<device_ptr_type, plssvm::parameter, device_ptr_type, plssvm::real_type> &>(kernel_matrix_d[device_id]);
+                    const auto &[exec, data_d_ret, params_ret, q_red_d_ret, QA_cost_ret] = plssvm::detail::move_only_any_cast<const std::tuple<plssvm::detail::execution_range, device_ptr_type, plssvm::parameter, device_ptr_type, plssvm::real_type> &>(kernel_matrix_d[device_id]);
 
                     // copy data back to host
                     plssvm::soa_matrix<plssvm::real_type> data_ret{ data };

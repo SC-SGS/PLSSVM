@@ -31,15 +31,17 @@ namespace plssvm::hip::detail {
  * @param[in] num_sv the number of support vectors
  * @param[in] device_specific_num_sv the number of support vectors the current device is responsible for
  * @param[in] sv_offset the first support vector (row in @p alpha_d) the current device is responsible for
+ * @param[in] grid_x_offset the offset in x-dimension into the data points if more than one execution grid has to be used
+ * @param[in] grid_y_offset the offset in y-dimension into the data points if more than one execution grid has to be used
  */
-__global__ void device_kernel_w_linear(real_type *w_d, const real_type *alpha_d, const real_type *sv_d, const unsigned long long num_classes, const unsigned long long num_sv, const unsigned long long device_specific_num_sv, const unsigned long long sv_offset) {
+__global__ void device_kernel_w_linear(real_type *w_d, const real_type *alpha_d, const real_type *sv_d, const unsigned long long num_classes, const unsigned long long num_sv, const unsigned long long device_specific_num_sv, const unsigned long long sv_offset, const unsigned long long grid_x_offset, const unsigned long long grid_y_offset) {
     // cast all values to 64-bit unsigned long long to prevent potential 32-bit overflows
-    const auto threadIdx_x = static_cast<unsigned long long>(threadIdx.x);
-    const auto threadIdx_y = static_cast<unsigned long long>(threadIdx.y);
-    const auto blockIdx_x = static_cast<unsigned long long>(blockIdx.x);
-    const auto blockIdx_y = static_cast<unsigned long long>(blockIdx.y);
-    const auto blockDim_x = static_cast<unsigned long long>(blockDim.x);
-    const auto blockDim_y = static_cast<unsigned long long>(blockDim.y);
+    const auto threadIdx_x = static_cast<unsigned long long>(threadIdx.x);                // current thread in block x-dimension
+    const auto threadIdx_y = static_cast<unsigned long long>(threadIdx.y);                // current thread in block y-dimension
+    const auto blockDim_x = static_cast<unsigned long long>(blockDim.x);                  // number of threads in block x-dimension
+    const auto blockDim_y = static_cast<unsigned long long>(blockDim.y);                  // number of threads in block y-dimension
+    const auto blockIdx_x = static_cast<unsigned long long>(blockIdx.x) + grid_x_offset;  // current block in grid x-dimension + offsets if the grid size would be too large
+    const auto blockIdx_y = static_cast<unsigned long long>(blockIdx.y) + grid_y_offset;  // current block in grid y-dimension + offsets if the grid size would be too large
     const auto INTERNAL_BLOCK_SIZE_ull = static_cast<unsigned long long>(INTERNAL_BLOCK_SIZE);
     const auto THREAD_BLOCK_SIZE_ull = static_cast<unsigned long long>(THREAD_BLOCK_SIZE);
     const auto PADDING_SIZE_ull = static_cast<unsigned long long>(PADDING_SIZE);
@@ -48,7 +50,7 @@ __global__ void device_kernel_w_linear(real_type *w_d, const real_type *alpha_d,
     const auto feature_idx = (blockIdx_x * blockDim_x + threadIdx_x) * INTERNAL_BLOCK_SIZE_ull;
     const auto feature_idx_linear = blockIdx_x * blockDim_x * INTERNAL_BLOCK_SIZE_ull + threadIdx_x;
     const auto class_idx = (blockIdx_y * blockDim_y + threadIdx_y) * INTERNAL_BLOCK_SIZE_ull;
-    const auto class_linear = blockIdx_y * blockDim_y * INTERNAL_BLOCK_SIZE_ull + threadIdx_x;
+    const auto class_idx_linear = blockIdx_y * blockDim_y * INTERNAL_BLOCK_SIZE_ull + threadIdx_x;
 
     // create the shared memory arrays used for caching data point features
     __shared__ real_type data_cache_feature[THREAD_BLOCK_SIZE][INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE];
@@ -62,7 +64,7 @@ __global__ void device_kernel_w_linear(real_type *w_d, const real_type *alpha_d,
         // load data into shared memory
         for (unsigned internal = 0; internal < INTERNAL_BLOCK_SIZE; ++internal) {
             const auto global_feature_idx = feature_idx_linear + static_cast<unsigned long long>(internal) * THREAD_BLOCK_SIZE_ull;
-            const auto global_class_idx = class_linear + static_cast<unsigned long long>(internal) * THREAD_BLOCK_SIZE_ull;
+            const auto global_class_idx = class_idx_linear + static_cast<unsigned long long>(internal) * THREAD_BLOCK_SIZE_ull;
 
             data_cache_feature[threadIdx.y][internal * THREAD_BLOCK_SIZE + threadIdx.x] = sv_d[global_feature_idx * (device_specific_num_sv + PADDING_SIZE_ull) + sv + threadIdx_y];  // SoA
             data_cache_alpha[threadIdx.y][internal * THREAD_BLOCK_SIZE + threadIdx.x] = alpha_d[global_class_idx * (num_sv + PADDING_SIZE_ull) + sv + sv_offset + threadIdx_y];       // AoS
@@ -100,15 +102,17 @@ __global__ void device_kernel_w_linear(real_type *w_d, const real_type *alpha_d,
  * @param[in] num_classes the number of classes
  * @param[in] num_predict_points the number of data points to predict
  * @param[in] num_features the number of features per data point
+ * @param[in] grid_x_offset the offset in x-dimension into the data points if more than one execution grid has to be used
+ * @param[in] grid_y_offset the offset in y-dimension into the data points if more than one execution grid has to be used
  */
-__global__ void device_kernel_predict_linear(real_type *prediction_d, const real_type *w_d, const real_type *rho_d, const real_type *predict_points_d, const unsigned long long num_classes, const unsigned long long num_predict_points, const unsigned long long num_features) {
+__global__ void device_kernel_predict_linear(real_type *prediction_d, const real_type *w_d, const real_type *rho_d, const real_type *predict_points_d, const unsigned long long num_classes, const unsigned long long num_predict_points, const unsigned long long num_features, const unsigned long long grid_x_offset, const unsigned long long grid_y_offset) {
     // cast all values to 64-bit unsigned long long to prevent potential 32-bit overflows
-    const auto threadIdx_x = static_cast<unsigned long long>(threadIdx.x);
-    const auto threadIdx_y = static_cast<unsigned long long>(threadIdx.y);
-    const auto blockIdx_x = static_cast<unsigned long long>(blockIdx.x);
-    const auto blockIdx_y = static_cast<unsigned long long>(blockIdx.y);
-    const auto blockDim_x = static_cast<unsigned long long>(blockDim.x);
-    const auto blockDim_y = static_cast<unsigned long long>(blockDim.y);
+    const auto threadIdx_x = static_cast<unsigned long long>(threadIdx.x);                // current thread in block x-dimension
+    const auto threadIdx_y = static_cast<unsigned long long>(threadIdx.y);                // current thread in block y-dimension
+    const auto blockDim_x = static_cast<unsigned long long>(blockDim.x);                  // number of threads in block x-dimension
+    const auto blockDim_y = static_cast<unsigned long long>(blockDim.y);                  // number of threads in block y-dimension
+    const auto blockIdx_x = static_cast<unsigned long long>(blockIdx.x) + grid_x_offset;  // current block in grid x-dimension + offsets if the grid size would be too large
+    const auto blockIdx_y = static_cast<unsigned long long>(blockIdx.y) + grid_y_offset;  // current block in grid y-dimension + offsets if the grid size would be too large
     const auto INTERNAL_BLOCK_SIZE_ull = static_cast<unsigned long long>(INTERNAL_BLOCK_SIZE);
     const auto THREAD_BLOCK_SIZE_ull = static_cast<unsigned long long>(THREAD_BLOCK_SIZE);
     const auto FEATURE_BLOCK_SIZE_ull = static_cast<unsigned long long>(FEATURE_BLOCK_SIZE);
@@ -118,7 +122,7 @@ __global__ void device_kernel_predict_linear(real_type *prediction_d, const real
     const auto pp_idx = (blockIdx_x * blockDim_x + threadIdx_x) * INTERNAL_BLOCK_SIZE_ull;
     const auto pp_idx_linear = blockIdx_x * blockDim_x * INTERNAL_BLOCK_SIZE_ull + threadIdx_x;
     const auto class_idx = (blockIdx_y * blockDim_y + threadIdx_y) * INTERNAL_BLOCK_SIZE_ull;
-    const auto class_linear = blockIdx_y * blockDim_y * INTERNAL_BLOCK_SIZE_ull + threadIdx_x;
+    const auto class_idx_linear = blockIdx_y * blockDim_y * INTERNAL_BLOCK_SIZE_ull + threadIdx_x;
 
     // create the shared memory arrays used for caching data point features
     __shared__ real_type data_cache_pp[FEATURE_BLOCK_SIZE][INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE];
@@ -132,7 +136,7 @@ __global__ void device_kernel_predict_linear(real_type *prediction_d, const real
         // load data into shared memory
         for (unsigned internal = 0; internal < INTERNAL_BLOCK_SIZE; ++internal) {
             const auto global_pp_idx = pp_idx_linear + static_cast<unsigned long long>(internal) * THREAD_BLOCK_SIZE_ull;
-            const auto global_class_idx = class_linear + static_cast<unsigned long long>(internal) * THREAD_BLOCK_SIZE_ull;
+            const auto global_class_idx = class_idx_linear + static_cast<unsigned long long>(internal) * THREAD_BLOCK_SIZE_ull;
 
             // FEATURE_BLOCK_SIZE = 2 * THREAD_BLOCK_SIZE -> store twice as many values in the shared memory
             data_cache_pp[threadIdx.y][internal * THREAD_BLOCK_SIZE + threadIdx.x] = predict_points_d[(dim + threadIdx_y) * (num_predict_points + PADDING_SIZE_ull) + global_pp_idx];
@@ -177,17 +181,19 @@ __global__ void device_kernel_predict_linear(real_type *prediction_d, const real
  * @param[in] num_sv the number of support vectors
  * @param[in] num_predict_points the number of data points to predict
  * @param[in] num_features the number of features per data point
+ * @param[in] grid_x_offset the offset in x-dimension into the data points if more than one execution grid has to be used
+ * @param[in] grid_y_offset the offset in y-dimension into the data points if more than one execution grid has to be used
  * @param[in] kernel_function_parameter the parameters necessary to apply the @p kernel_function
  */
 template <kernel_function_type kernel_function, typename... Args>
-__global__ void device_kernel_predict(real_type *prediction_d, const real_type *alpha_d, const real_type *rho_d, const real_type *sv_d, const real_type *predict_points_d, const unsigned long long num_classes, const unsigned long long num_sv, const unsigned long long num_predict_points, const unsigned long long num_features, Args... kernel_function_parameter) {
+__global__ void device_kernel_predict(real_type *prediction_d, const real_type *alpha_d, const real_type *rho_d, const real_type *sv_d, const real_type *predict_points_d, const unsigned long long num_classes, const unsigned long long num_sv, const unsigned long long num_predict_points, const unsigned long long num_features, const unsigned long long grid_x_offset, const unsigned long long grid_y_offset, Args... kernel_function_parameter) {
     // cast all values to 64-bit unsigned long long to prevent potential 32-bit overflows
-    const auto threadIdx_x = static_cast<unsigned long long>(threadIdx.x);
-    const auto threadIdx_y = static_cast<unsigned long long>(threadIdx.y);
-    const auto blockIdx_x = static_cast<unsigned long long>(blockIdx.x);
-    const auto blockIdx_y = static_cast<unsigned long long>(blockIdx.y);
-    const auto blockDim_x = static_cast<unsigned long long>(blockDim.x);
-    const auto blockDim_y = static_cast<unsigned long long>(blockDim.y);
+    const auto threadIdx_x = static_cast<unsigned long long>(threadIdx.x);                // current thread in block x-dimension
+    const auto threadIdx_y = static_cast<unsigned long long>(threadIdx.y);                // current thread in block y-dimension
+    const auto blockDim_x = static_cast<unsigned long long>(blockDim.x);                  // number of threads in block x-dimension
+    const auto blockDim_y = static_cast<unsigned long long>(blockDim.y);                  // number of threads in block y-dimension
+    const auto blockIdx_x = static_cast<unsigned long long>(blockIdx.x) + grid_x_offset;  // current block in grid x-dimension + offsets if the grid size would be too large
+    const auto blockIdx_y = static_cast<unsigned long long>(blockIdx.y) + grid_y_offset;  // current block in grid y-dimension + offsets if the grid size would be too large
     const auto INTERNAL_BLOCK_SIZE_ull = static_cast<unsigned long long>(INTERNAL_BLOCK_SIZE);
     const auto THREAD_BLOCK_SIZE_ull = static_cast<unsigned long long>(THREAD_BLOCK_SIZE);
     const auto FEATURE_BLOCK_SIZE_ull = static_cast<unsigned long long>(FEATURE_BLOCK_SIZE);
@@ -196,7 +202,7 @@ __global__ void device_kernel_predict(real_type *prediction_d, const real_type *
     // calculate the indices used in the current thread
     const auto pp_idx = (blockIdx_x * blockDim_x + threadIdx_x) * INTERNAL_BLOCK_SIZE_ull;
     const auto pp_idx_linear = blockIdx_x * blockDim_x * INTERNAL_BLOCK_SIZE_ull + threadIdx_x;
-    const auto sv_cached_idx_linear = blockIdx_y * blockDim_y * INTERNAL_BLOCK_SIZE_ull + threadIdx_x;
+    const auto sv_idx_linear = blockIdx_y * blockDim_y * INTERNAL_BLOCK_SIZE_ull + threadIdx_x;
 
     // create a thread private array used for internal caching
     real_type temp[INTERNAL_BLOCK_SIZE][INTERNAL_BLOCK_SIZE]{};
@@ -211,7 +217,7 @@ __global__ void device_kernel_predict(real_type *prediction_d, const real_type *
             // load data into shared memory
             for (unsigned internal = 0; internal < INTERNAL_BLOCK_SIZE; ++internal) {
                 const auto global_pp_idx = pp_idx_linear + static_cast<unsigned long long>(internal) * THREAD_BLOCK_SIZE;
-                const auto global_sv_idx = sv_cached_idx_linear + static_cast<unsigned long long>(internal) * THREAD_BLOCK_SIZE;
+                const auto global_sv_idx = sv_idx_linear + static_cast<unsigned long long>(internal) * THREAD_BLOCK_SIZE;
 
                 // FEATURE_BLOCK_SIZE = 2 * THREAD_BLOCK_SIZE -> store twice as many values in the shared memory
                 data_cache_pp[threadIdx.y][internal * THREAD_BLOCK_SIZE + threadIdx.x] = predict_points_d[(dim + threadIdx_y) * (num_predict_points + PADDING_SIZE_ull) + global_pp_idx];
@@ -250,14 +256,14 @@ __global__ void device_kernel_predict(real_type *prediction_d, const real_type *
         for (unsigned long long dim = 0; dim < num_classes; dim += FEATURE_BLOCK_SIZE_ull) {
             // load data into shared memory
             for (unsigned internal = 0; internal < INTERNAL_BLOCK_SIZE; ++internal) {
-                const unsigned long long global_sv_idx = sv_cached_idx_linear + internal * THREAD_BLOCK_SIZE;
+                const unsigned long long global_sv_idx = sv_idx_linear + internal * THREAD_BLOCK_SIZE;
 
                 // FEATURE_BLOCK_SIZE = 2 * THREAD_BLOCK_SIZE -> store twice as many values in the shared memory
                 alpha_cache[threadIdx.y][internal * THREAD_BLOCK_SIZE + threadIdx.x] = alpha_d[(dim + threadIdx_y) * (num_sv + PADDING_SIZE_ull) + global_sv_idx];
                 alpha_cache[threadIdx.y + THREAD_BLOCK_SIZE][internal * THREAD_BLOCK_SIZE + threadIdx.x] = alpha_d[(dim + threadIdx_y + THREAD_BLOCK_SIZE_ull) * (num_sv + PADDING_SIZE_ull) + global_sv_idx];
 
                 // the bias (rho) must only be applied once for all support vectors
-                if (blockIdx.y == 0u) {
+                if (blockIdx_y == 0ull) {
                     out_cache[threadIdx.y][internal * THREAD_BLOCK_SIZE + threadIdx.x] = -rho_d[dim + threadIdx_y];
                     out_cache[threadIdx.y + THREAD_BLOCK_SIZE][internal * THREAD_BLOCK_SIZE + threadIdx.x] = -rho_d[dim + threadIdx_y + THREAD_BLOCK_SIZE_ull];
                 } else {

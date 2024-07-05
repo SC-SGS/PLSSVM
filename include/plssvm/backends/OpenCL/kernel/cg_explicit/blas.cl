@@ -23,17 +23,27 @@
  * @param[in] B the matrix @p B
  * @param[in] beta the scalar beta value
  * @param[in,out] C the matrix @p C, also used as result matrix
+ * @param[in] grid_x_offset the offset in x-dimension into the data points if more than one execution grid has to be used
+ * @param[in] grid_y_offset the offset in y-dimension into the data points if more than one execution grid has to be used
  */
-__kernel void device_kernel_symm(const ulong num_rows, const ulong num_rhs, const ulong device_specific_num_rows, const ulong row_offset, const real_type alpha, const __global real_type *A, const __global real_type *B, const real_type beta, __global real_type *C) {
+__kernel void device_kernel_symm(const ulong num_rows, const ulong num_rhs, const ulong device_specific_num_rows, const ulong row_offset, const real_type alpha, const __global real_type *A, const __global real_type *B, const real_type beta, __global real_type *C, const ulong grid_x_offset, const ulong grid_y_offset) {
     // cast values to 32-bit unsigned int values to prevent implicit conversions
     const uint local_id_0 = get_local_id(0);
     const uint local_id_1 = get_local_id(1);
 
+    // cast all values to 64-bit unsigned long long to prevent potential 32-bit overflows
+    const ulong threadIdx_x = get_local_id(0);                 // current thread in block x-dimension
+    const ulong threadIdx_y = get_local_id(1);                 // current thread in block y-dimension
+    const ulong blockDim_x = get_local_size(0);                // number of threads in block x-dimension
+    const ulong blockDim_y = get_local_size(1);                // number of threads in block y-dimension
+    const ulong blockIdx_x = get_group_id(0) + grid_x_offset;  // current block in grid x-dimension + offsets if the grid size would be too large
+    const ulong blockIdx_y = get_group_id(1) + grid_y_offset;  // current block in grid y-dimension + offsets if the grid size would be too large
+
     // calculate the indices used in the current work-item
-    const ulong i = get_global_id(0) * INTERNAL_BLOCK_SIZE_ul;  // # rhs
-    const ulong i_linear = get_group_id(0) * get_local_size(0) * INTERNAL_BLOCK_SIZE_ul + get_local_id(0);
-    const ulong j = get_global_id(1) * INTERNAL_BLOCK_SIZE_ul;  // # rows
-    const ulong j_linear = get_group_id(1) * get_local_size(1) * INTERNAL_BLOCK_SIZE_ul + get_local_id(0);
+    const ulong i = (blockIdx_x * blockDim_x + threadIdx_x) * INTERNAL_BLOCK_SIZE_ul;  // #rhs
+    const ulong i_linear = blockIdx_x * blockDim_x * INTERNAL_BLOCK_SIZE_ul + threadIdx_x;
+    const ulong j = (blockIdx_y * blockDim_y + threadIdx_y) * INTERNAL_BLOCK_SIZE_ul;  // # row
+    const ulong j_linear = blockIdx_y * blockDim_y * INTERNAL_BLOCK_SIZE_ul + threadIdx_x;
 
     // create the local memory arrays used for caching data point features
     __local real_type A_cache[FEATURE_BLOCK_SIZE][INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE];
@@ -51,19 +61,19 @@ __kernel void device_kernel_symm(const ulong num_rows, const ulong num_rhs, cons
 
             // determine on which side of the diagonal we are located
             if (dim + get_local_id(1) < global_j) {
-                A_cache[local_id_1][internal * THREAD_BLOCK_SIZE + local_id_0] = A[(dim + get_local_id(1)) * (num_rows - row_offset + PADDING_SIZE_ul) + global_j - (dim + get_local_id(1)) * (dim + get_local_id(1) + (ulong) 1) / (ulong) 2];
+                A_cache[local_id_1][internal * THREAD_BLOCK_SIZE + local_id_0] = A[(dim + threadIdx_y) * (num_rows - row_offset + PADDING_SIZE_ul) + global_j - (dim + threadIdx_y) * (dim + threadIdx_y + (ulong) 1) / (ulong) 2];
             } else {
-                A_cache[local_id_1][internal * THREAD_BLOCK_SIZE + local_id_0] = A[global_j * (num_rows - row_offset + PADDING_SIZE_ul) + dim + get_local_id(1) - global_j * (global_j + (ulong) 1) / (ulong) 2];
+                A_cache[local_id_1][internal * THREAD_BLOCK_SIZE + local_id_0] = A[global_j * (num_rows - row_offset + PADDING_SIZE_ul) + dim + threadIdx_y - global_j * (global_j + (ulong) 1) / (ulong) 2];
             }
             // determine on which side of the diagonal we are located
             if (dim + get_local_id(1) + THREAD_BLOCK_SIZE < global_j) {
-                A_cache[local_id_1 + THREAD_BLOCK_SIZE][internal * THREAD_BLOCK_SIZE + local_id_0] = A[(dim + get_local_id(1) + THREAD_BLOCK_SIZE_ul) * (num_rows - row_offset + PADDING_SIZE_ul) + global_j - (dim + get_local_id(1) + THREAD_BLOCK_SIZE_ul) * (dim + get_local_id(1) + THREAD_BLOCK_SIZE_ul + (ulong) 1) / (ulong) 2];
+                A_cache[local_id_1 + THREAD_BLOCK_SIZE][internal * THREAD_BLOCK_SIZE + local_id_0] = A[(dim + threadIdx_y + THREAD_BLOCK_SIZE_ul) * (num_rows - row_offset + PADDING_SIZE_ul) + global_j - (dim + threadIdx_y + THREAD_BLOCK_SIZE_ul) * (dim + threadIdx_y + THREAD_BLOCK_SIZE_ul + (ulong) 1) / (ulong) 2];
             } else {
-                A_cache[local_id_1 + THREAD_BLOCK_SIZE][internal * THREAD_BLOCK_SIZE + local_id_0] = A[global_j * (num_rows - row_offset + PADDING_SIZE_ul) + dim + get_local_id(1) + THREAD_BLOCK_SIZE_ul - global_j * (global_j + (ulong) 1) / (ulong) 2];
+                A_cache[local_id_1 + THREAD_BLOCK_SIZE][internal * THREAD_BLOCK_SIZE + local_id_0] = A[global_j * (num_rows - row_offset + PADDING_SIZE_ul) + dim + threadIdx_y + THREAD_BLOCK_SIZE_ul - global_j * (global_j + (ulong) 1) / (ulong) 2];
             }
 
-            B_cache[local_id_1][internal * THREAD_BLOCK_SIZE + local_id_0] = B[(dim + row_offset + get_local_id(1)) * (num_rhs + PADDING_SIZE_ul) + global_i];
-            B_cache[local_id_1 + THREAD_BLOCK_SIZE][internal * THREAD_BLOCK_SIZE + local_id_0] = B[(dim + row_offset + get_local_id(1) + THREAD_BLOCK_SIZE_ul) * (num_rhs + PADDING_SIZE_ul) + global_i];
+            B_cache[local_id_1][internal * THREAD_BLOCK_SIZE + local_id_0] = B[(dim + row_offset + threadIdx_y) * (num_rhs + PADDING_SIZE_ul) + global_i];
+            B_cache[local_id_1 + THREAD_BLOCK_SIZE][internal * THREAD_BLOCK_SIZE + local_id_0] = B[(dim + row_offset + threadIdx_y + THREAD_BLOCK_SIZE_ul) * (num_rhs + PADDING_SIZE_ul) + global_i];
         }
         barrier(CLK_LOCAL_MEM_FENCE);  // wait until all work-items loaded their part of the data
 
@@ -106,17 +116,27 @@ __kernel void device_kernel_symm(const ulong num_rows, const ulong num_rhs, cons
  * @param[in] B the matrix @p B
  * @param[in] beta the scalar beta value
  * @param[in,out] C the matrix @p C, also used as result matrix
+ * @param[in] grid_x_offset the offset in x-dimension into the data points if more than one execution grid has to be used
+ * @param[in] grid_y_offset the offset in y-dimension into the data points if more than one execution grid has to be used
  */
-__kernel void device_kernel_symm_mirror(const ulong num_rows, const ulong num_rhs, const ulong num_mirror_rows, const ulong device_specific_num_rows, const ulong row_offset, const real_type alpha, const __global real_type *A, const __global real_type *B, const real_type beta, __global real_type *C) {
+__kernel void device_kernel_symm_mirror(const ulong num_rows, const ulong num_rhs, const ulong num_mirror_rows, const ulong device_specific_num_rows, const ulong row_offset, const real_type alpha, const __global real_type *A, const __global real_type *B, const real_type beta, __global real_type *C, const ulong grid_x_offset, const ulong grid_y_offset) {
     // cast values to 32-bit unsigned int values to prevent implicit conversions
     const uint local_id_0 = get_local_id(0);
     const uint local_id_1 = get_local_id(1);
 
+    // cast all values to 64-bit unsigned long long to prevent potential 32-bit overflows
+    const ulong threadIdx_x = get_local_id(0);                 // current thread in block x-dimension
+    const ulong threadIdx_y = get_local_id(1);                 // current thread in block y-dimension
+    const ulong blockDim_x = get_local_size(0);                // number of threads in block x-dimension
+    const ulong blockDim_y = get_local_size(1);                // number of threads in block y-dimension
+    const ulong blockIdx_x = get_group_id(0) + grid_x_offset;  // current block in grid x-dimension + offsets if the grid size would be too large
+    const ulong blockIdx_y = get_group_id(1) + grid_y_offset;  // current block in grid y-dimension + offsets if the grid size would be too large
+
     // calculate the indices used in the current work-item
-    const ulong i = get_global_id(0) * INTERNAL_BLOCK_SIZE_ul;  // # rhs
-    const ulong i_linear = get_group_id(0) * get_local_size(0) * INTERNAL_BLOCK_SIZE_ul + get_local_id(0);
-    const ulong j = get_global_id(1) * INTERNAL_BLOCK_SIZE_ul;  // # rows
-    const ulong j_linear = get_group_id(1) * get_local_size(1) * INTERNAL_BLOCK_SIZE_ul + get_local_id(0);
+    const ulong i = (blockIdx_x * blockDim_x + threadIdx_x) * INTERNAL_BLOCK_SIZE_ul;  // #rhs
+    const ulong i_linear = blockIdx_x * blockDim_x * INTERNAL_BLOCK_SIZE_ul + threadIdx_x;
+    const ulong j = (blockIdx_y * blockDim_y + threadIdx_y) * INTERNAL_BLOCK_SIZE_ul;  // # row
+    const ulong j_linear = blockIdx_y * blockDim_y * INTERNAL_BLOCK_SIZE_ul + threadIdx_x;
 
     // create the local memory arrays used for caching data point features
     __local real_type A_cache[FEATURE_BLOCK_SIZE][INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE];
@@ -133,10 +153,10 @@ __kernel void device_kernel_symm_mirror(const ulong num_rows, const ulong num_rh
             const ulong global_j = j_linear + (ulong) internal * THREAD_BLOCK_SIZE_ul;
 
             // FEATURE_BLOCK_SIZE = 2 * THREAD_BLOCK_SIZE -> store twice as many values in the shared memory
-            A_cache[local_id_1][internal * THREAD_BLOCK_SIZE + local_id_0] = A[(dim + get_local_id(1)) * (num_rows - row_offset + PADDING_SIZE_ul) - (dim + get_local_id(1) - (ulong) 1) * (dim + get_local_id(1)) / (ulong) 2 + device_specific_num_rows - (dim + get_local_id(1)) + global_j];
-            A_cache[local_id_1 + THREAD_BLOCK_SIZE][internal * THREAD_BLOCK_SIZE + local_id_0] = A[(dim + get_local_id(1) + THREAD_BLOCK_SIZE_ul) * (num_rows - row_offset + PADDING_SIZE_ul) - (dim + get_local_id(1) + THREAD_BLOCK_SIZE_ul - (ulong) 1) * (dim + get_local_id(1) + THREAD_BLOCK_SIZE_ul) / (ulong) 2 + device_specific_num_rows - (dim + get_local_id(1) + THREAD_BLOCK_SIZE_ul) + global_j];
-            B_cache[local_id_1][internal * THREAD_BLOCK_SIZE + local_id_0] = B[(dim + row_offset + get_local_id(1)) * (num_rhs + PADDING_SIZE_ul) + global_i];
-            B_cache[local_id_1 + THREAD_BLOCK_SIZE][internal * THREAD_BLOCK_SIZE + local_id_0] = B[(dim + row_offset + get_local_id(1) + THREAD_BLOCK_SIZE_ul) * (num_rhs + PADDING_SIZE_ul) + global_i];
+            A_cache[local_id_1][internal * THREAD_BLOCK_SIZE + local_id_0] = A[(dim + threadIdx_y) * (num_rows - row_offset + PADDING_SIZE_ul) - (dim + threadIdx_y - (ulong) 1) * (dim + threadIdx_y) / (ulong) 2 + device_specific_num_rows - (dim + get_local_id(1)) + global_j];
+            A_cache[local_id_1 + THREAD_BLOCK_SIZE][internal * THREAD_BLOCK_SIZE + local_id_0] = A[(dim + threadIdx_y + THREAD_BLOCK_SIZE_ul) * (num_rows - row_offset + PADDING_SIZE_ul) - (dim + threadIdx_y + THREAD_BLOCK_SIZE_ul - (ulong) 1) * (dim + get_local_id(1) + THREAD_BLOCK_SIZE_ul) / (ulong) 2 + device_specific_num_rows - (dim + get_local_id(1) + THREAD_BLOCK_SIZE_ul) + global_j];
+            B_cache[local_id_1][internal * THREAD_BLOCK_SIZE + local_id_0] = B[(dim + row_offset + threadIdx_y) * (num_rhs + PADDING_SIZE_ul) + global_i];
+            B_cache[local_id_1 + THREAD_BLOCK_SIZE][internal * THREAD_BLOCK_SIZE + local_id_0] = B[(dim + row_offset + threadIdx_y + THREAD_BLOCK_SIZE_ul) * (num_rhs + PADDING_SIZE_ul) + global_i];
         }
         barrier(CLK_LOCAL_MEM_FENCE);  // wait until all work-items loaded their part of the data
 
@@ -171,10 +191,21 @@ __kernel void device_kernel_symm_mirror(const ulong num_rows, const ulong num_rh
  * @param[in] num_cols the number of columns in both matrices
  * @param[in,out] lhs the first matrix (updated inplace)
  * @param[in] rhs the second matrix
+ * @param[in] grid_x_offset the offset in x-dimension into the data points if more than one execution grid has to be used
+ * @param[in] grid_y_offset the offset in y-dimension into the data points if more than one execution grid has to be used
  */
-__kernel void device_kernel_inplace_matrix_add(const ulong num_cols, real_type __global *lhs, const real_type __global *rhs) {
-    const ulong i = get_global_id(0) * INTERNAL_BLOCK_SIZE_ul;  // # num_rows
-    const ulong j = get_global_id(1) * INTERNAL_BLOCK_SIZE_ul;  // # num_rhs
+__kernel void device_kernel_inplace_matrix_add(const ulong num_cols, real_type __global *lhs, const real_type __global *rhs, const ulong grid_x_offset, const ulong grid_y_offset) {
+    // cast all values to 64-bit unsigned long long to prevent potential 32-bit overflows
+    const ulong threadIdx_x = get_local_id(0);                 // current thread in block x-dimension
+    const ulong threadIdx_y = get_local_id(1);                 // current thread in block y-dimension
+    const ulong blockDim_x = get_local_size(0);                // number of threads in block x-dimension
+    const ulong blockDim_y = get_local_size(1);                // number of threads in block y-dimension
+    const ulong blockIdx_x = get_group_id(0) + grid_x_offset;  // current block in grid x-dimension + offsets if the grid size would be too large
+    const ulong blockIdx_y = get_group_id(1) + grid_y_offset;  // current block in grid y-dimension + offsets if the grid size would be too large
+
+    // calculate the indices used in the current thread
+    const ulong i = (blockIdx_x * blockDim_x + threadIdx_x) * INTERNAL_BLOCK_SIZE_ul;  // # num_rows
+    const ulong j = (blockIdx_y * blockDim_y + threadIdx_y) * INTERNAL_BLOCK_SIZE_ul;  // # num_rhs
 
     for (uint internal_i = 0; internal_i < INTERNAL_BLOCK_SIZE; ++internal_i) {
         for (uint internal_j = 0; internal_j < INTERNAL_BLOCK_SIZE; ++internal_j) {
@@ -191,10 +222,21 @@ __kernel void device_kernel_inplace_matrix_add(const ulong num_cols, real_type _
  * @param[in] num_cols the number of columns in the matrix
  * @param[in,out] lhs the matrix (updated inplace)
  * @param[in] scale the value to scale
+ * @param[in] grid_x_offset the offset in x-dimension into the data points if more than one execution grid has to be used
+ * @param[in] grid_y_offset the offset in y-dimension into the data points if more than one execution grid has to be used
  */
-__kernel void device_kernel_inplace_matrix_scale(const ulong num_cols, real_type __global *lhs, const real_type scale) {
-    const ulong i = get_global_id(0) * INTERNAL_BLOCK_SIZE_ul;  // # num_rows
-    const ulong j = get_global_id(1) * INTERNAL_BLOCK_SIZE_ul;  // # num_rhs
+__kernel void device_kernel_inplace_matrix_scale(const ulong num_cols, real_type __global *lhs, const real_type scale, const ulong grid_x_offset, const ulong grid_y_offset) {
+    // cast all values to 64-bit unsigned long long to prevent potential 32-bit overflows
+    const ulong threadIdx_x = get_local_id(0);                 // current thread in block x-dimension
+    const ulong threadIdx_y = get_local_id(1);                 // current thread in block y-dimension
+    const ulong blockDim_x = get_local_size(0);                // number of threads in block x-dimension
+    const ulong blockDim_y = get_local_size(1);                // number of threads in block y-dimension
+    const ulong blockIdx_x = get_group_id(0) + grid_x_offset;  // current block in grid x-dimension + offsets if the grid size would be too large
+    const ulong blockIdx_y = get_group_id(1) + grid_y_offset;  // current block in grid y-dimension + offsets if the grid size would be too large
+
+    // calculate the indices used in the current thread
+    const ulong i = (blockIdx_x * blockDim_x + threadIdx_x) * INTERNAL_BLOCK_SIZE_ul;  // # num_rows
+    const ulong j = (blockIdx_y * blockDim_y + threadIdx_y) * INTERNAL_BLOCK_SIZE_ul;  // # num_rhs
 
     for (uint internal_i = 0; internal_i < INTERNAL_BLOCK_SIZE; ++internal_i) {
         for (uint internal_j = 0; internal_j < INTERNAL_BLOCK_SIZE; ++internal_j) {

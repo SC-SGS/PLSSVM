@@ -11,6 +11,7 @@
 #include "plssvm/backends/CUDA/detail/utility.cuh"
 
 #include "plssvm/backends/CUDA/exceptions.hpp"  // plssvm::cuda::backend_exception
+#include "plssvm/backends/execution_range.hpp"  // plssvm::detail::dim_type
 
 #include "tests/custom_test_macros.hpp"  // EXPECT_THROW_WHAT, EXPECT_THROW_WHAT_MATCHER
 
@@ -28,6 +29,19 @@ TEST(CUDAUtility, error_check) {
     EXPECT_THROW_WHAT_MATCHER(PLSSVM_CUDA_ERROR_CHECK(cudaErrorInvalidValue),
                               plssvm::cuda::backend_exception,
                               ::testing::StartsWith("CUDA assert 'cudaErrorInvalidValue' (1):"));
+}
+
+TEST(CUDAUtility, dim_type_to_native) {
+    // create a dim_type
+    constexpr plssvm::detail::dim_type dim{ 128ull, 64ull, 32ull };
+
+    // convert it to a CUDA dim3
+    const dim3 native_dim = plssvm::cuda::detail::dim_type_to_native(dim);
+
+    // check values for correctness
+    EXPECT_EQ(native_dim.x, dim.x);
+    EXPECT_EQ(native_dim.y, dim.y);
+    EXPECT_EQ(native_dim.z, dim.z);
 }
 
 TEST(CUDAUtility, get_device_count) {

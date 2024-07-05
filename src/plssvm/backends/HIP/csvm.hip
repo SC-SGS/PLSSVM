@@ -6,8 +6,10 @@
  *          See the LICENSE.md file in the project root for full license information.
  */
 
-#include "plssvm/backend_types.hpp"  // plssvm::backend_type
 #include "plssvm/backends/HIP/csvm.hpp"
+
+#include "plssvm/backend_types.hpp"                                                    // plssvm::backend_type
+#include "plssvm/backends/execution_range.hpp"                                         // plssvm::detail::{dim_type, execution_range}
 #include "plssvm/backends/HIP/detail/device_ptr.hip.hpp"                               // plssvm::hip::detail::device_ptr
 #include "plssvm/backends/HIP/detail/utility.hip.hpp"                                  // PLSSVM_HIP_ERROR_CHECK, plssvm::hip::detail::{device_synchronize, get_device_count, set_device, peek_at_last_error, get_runtime_version}
 #include "plssvm/backends/HIP/exceptions.hpp"                                          // plssvm::hip::backend_exception
@@ -136,11 +138,18 @@ std::size_t csvm::get_max_work_group_size(const std::size_t device_id) const {
     return static_cast<std::size_t>(prop.maxThreadsPerBlock);
 }
 
+::plssvm::detail::dim_type csvm::get_max_grid_size(const std::size_t device_id) const {
+    PLSSVM_ASSERT(device_id < this->num_available_devices(), "Invalid device {} requested!", device_id);
+    hipDeviceProp_t prop{};
+    PLSSVM_HIP_ERROR_CHECK(hipGetDeviceProperties(&prop, devices_[device_id]));
+    return { static_cast<std::size_t>(prop.maxGridSize[0]), static_cast<std::size_t>(prop.maxGridSize[1]), static_cast<std::size_t>(prop.maxGridSize[2]) };
+}
+
 //***************************************************//
 //                        fit                        //
 //***************************************************//
 
-auto csvm::run_assemble_kernel_matrix_explicit(const std::size_t device_id, const parameter &params, const device_ptr_type &data_d, const device_ptr_type &q_red_d, real_type QA_cost) const -> device_ptr_type {
+auto csvm::run_assemble_kernel_matrix_explicit(const std::size_t device_id, const ::plssvm::detail::execution_range &exec, const parameter &params, const device_ptr_type &data_d, const device_ptr_type &q_red_d, real_type QA_cost) const -> device_ptr_type {
     const unsigned long long num_rows_reduced = data_d.shape().x - 1;
     const unsigned long long num_features = data_d.shape().y;
     const queue_type &device = devices_[device_id];
@@ -151,15 +160,6 @@ auto csvm::run_assemble_kernel_matrix_explicit(const std::size_t device_id, cons
     // get the offset of the data points this device is responsible for
     const unsigned long long row_offset = data_distribution_->place_row_offset(device_id);
 
-    // define grid and block sizes
-    const std::size_t max_work_group_size = this->get_max_work_group_size(device_id);
-    if (max_work_group_size < std::size_t{ THREAD_BLOCK_SIZE } * std::size_t{ THREAD_BLOCK_SIZE }) {
-        throw kernel_launch_resources{ fmt::format("Not enough work-items allowed for a work-groups of size {}x{}! Try reducing THREAD_BLOCK_SIZE.", THREAD_BLOCK_SIZE, THREAD_BLOCK_SIZE) };
-    }
-    const dim3 block(THREAD_BLOCK_SIZE, THREAD_BLOCK_SIZE);
-    const dim3 grid(static_cast<unsigned int>(std::ceil(static_cast<double>(num_rows_reduced - row_offset) / static_cast<double>(block.x * INTERNAL_BLOCK_SIZE))),
-                    static_cast<unsigned int>(std::ceil(static_cast<double>(device_specific_num_rows) / static_cast<double>(block.y * INTERNAL_BLOCK_SIZE))));
-
     // calculate the number of matrix entries
     const ::plssvm::detail::triangular_data_distribution &dist = dynamic_cast<::plssvm::detail::triangular_data_distribution &>(*data_distribution_);
     const std::size_t num_entries_padded = dist.calculate_explicit_kernel_matrix_num_entries_padded(device_id);
@@ -167,26 +167,34 @@ auto csvm::run_assemble_kernel_matrix_explicit(const std::size_t device_id, cons
     device_ptr_type kernel_matrix_d{ num_entries_padded, device };  // only explicitly store the upper triangular matrix
     const real_type cost_factor = real_type{ 1.0 } / params.cost;
 
+    // convert execution range block to HIP's native dim3
+    const dim3 native_block = detail::dim_type_to_native(exec.block);
+
     detail::set_device(device);
-    switch (params.kernel_type) {
-        case kernel_function_type::linear:
-            detail::device_kernel_assembly<kernel_function_type::linear><<<grid, block>>>(kernel_matrix_d.get(), data_d.get(), num_rows_reduced, device_specific_num_rows, row_offset, num_features, q_red_d.get(), QA_cost, cost_factor);
-            break;
-        case kernel_function_type::polynomial:
-            detail::device_kernel_assembly<kernel_function_type::polynomial><<<grid, block>>>(kernel_matrix_d.get(), data_d.get(), num_rows_reduced, device_specific_num_rows, row_offset, num_features, q_red_d.get(), QA_cost, cost_factor, params.degree, std::get<real_type>(params.gamma), params.coef0);
-            break;
-        case kernel_function_type::rbf:
-            detail::device_kernel_assembly<kernel_function_type::rbf><<<grid, block>>>(kernel_matrix_d.get(), data_d.get(), num_rows_reduced, device_specific_num_rows, row_offset, num_features, q_red_d.get(), QA_cost, cost_factor, std::get<real_type>(params.gamma));
-            break;
-        case kernel_function_type::sigmoid:
-            detail::device_kernel_assembly<kernel_function_type::sigmoid><<<grid, block>>>(kernel_matrix_d.get(), data_d.get(), num_rows_reduced, device_specific_num_rows, row_offset, num_features, q_red_d.get(), QA_cost, cost_factor, std::get<real_type>(params.gamma), params.coef0);
-            break;
-        case kernel_function_type::laplacian:
-            detail::device_kernel_assembly<kernel_function_type::laplacian><<<grid, block>>>(kernel_matrix_d.get(), data_d.get(), num_rows_reduced, device_specific_num_rows, row_offset, num_features, q_red_d.get(), QA_cost, cost_factor, std::get<real_type>(params.gamma));
-            break;
-        case kernel_function_type::chi_squared:
-            detail::device_kernel_assembly<kernel_function_type::chi_squared><<<grid, block>>>(kernel_matrix_d.get(), data_d.get(), num_rows_reduced, device_specific_num_rows, row_offset, num_features, q_red_d.get(), QA_cost, cost_factor, std::get<real_type>(params.gamma));
-            break;
+    for (const auto &[partial_grid, offsets] : exec.grids) {
+        // convert execution range partial_grid to HIP's native dim3
+        const dim3 native_partial_grid = detail::dim_type_to_native(partial_grid);
+
+        switch (params.kernel_type) {
+            case kernel_function_type::linear:
+                detail::device_kernel_assembly<kernel_function_type::linear><<<native_partial_grid, native_block>>>(kernel_matrix_d.get(), data_d.get(), num_rows_reduced, device_specific_num_rows, row_offset, num_features, q_red_d.get(), QA_cost, cost_factor, offsets.x, offsets.y);
+                break;
+            case kernel_function_type::polynomial:
+                detail::device_kernel_assembly<kernel_function_type::polynomial><<<native_partial_grid, native_block>>>(kernel_matrix_d.get(), data_d.get(), num_rows_reduced, device_specific_num_rows, row_offset, num_features, q_red_d.get(), QA_cost, cost_factor, offsets.x, offsets.y, params.degree, std::get<real_type>(params.gamma), params.coef0);
+                break;
+            case kernel_function_type::rbf:
+                detail::device_kernel_assembly<kernel_function_type::rbf><<<native_partial_grid, native_block>>>(kernel_matrix_d.get(), data_d.get(), num_rows_reduced, device_specific_num_rows, row_offset, num_features, q_red_d.get(), QA_cost, cost_factor, offsets.x, offsets.y, std::get<real_type>(params.gamma));
+                break;
+            case kernel_function_type::sigmoid:
+                detail::device_kernel_assembly<kernel_function_type::sigmoid><<<native_partial_grid, native_block>>>(kernel_matrix_d.get(), data_d.get(), num_rows_reduced, device_specific_num_rows, row_offset, num_features, q_red_d.get(), QA_cost, cost_factor, offsets.x, offsets.y, std::get<real_type>(params.gamma), params.coef0);
+                break;
+            case kernel_function_type::laplacian:
+                detail::device_kernel_assembly<kernel_function_type::laplacian><<<native_partial_grid, native_block>>>(kernel_matrix_d.get(), data_d.get(), num_rows_reduced, device_specific_num_rows, row_offset, num_features, q_red_d.get(), QA_cost, cost_factor, offsets.x, offsets.y, std::get<real_type>(params.gamma));
+                break;
+            case kernel_function_type::chi_squared:
+                detail::device_kernel_assembly<kernel_function_type::chi_squared><<<native_partial_grid, native_block>>>(kernel_matrix_d.get(), data_d.get(), num_rows_reduced, device_specific_num_rows, row_offset, num_features, q_red_d.get(), QA_cost, cost_factor, offsets.x, offsets.y, std::get<real_type>(params.gamma));
+                break;
+        }
     }
     detail::peek_at_last_error();
     detail::device_synchronize(device);
@@ -194,7 +202,7 @@ auto csvm::run_assemble_kernel_matrix_explicit(const std::size_t device_id, cons
     return kernel_matrix_d;
 }
 
-void csvm::run_blas_level_3_kernel_explicit(const std::size_t device_id, const real_type alpha, const device_ptr_type &A_d, const device_ptr_type &B_d, const real_type beta, device_ptr_type &C_d) const {
+void csvm::run_blas_level_3_kernel_explicit(const std::size_t device_id, const ::plssvm::detail::execution_range &exec, const ::plssvm::detail::execution_range &mirror_exec, const real_type alpha, const device_ptr_type &A_d, const device_ptr_type &B_d, const real_type beta, device_ptr_type &C_d) const {
     const unsigned long long num_rhs = B_d.shape().x;
     const unsigned long long num_rows = B_d.shape().y;
     const queue_type &device = devices_[device_id];
@@ -204,77 +212,71 @@ void csvm::run_blas_level_3_kernel_explicit(const std::size_t device_id, const r
     // get the offset of the data points this device is responsible for
     const unsigned long long row_offset = data_distribution_->place_row_offset(device_id);
 
-    // define the grid and block sizes
-    const std::size_t max_work_group_size = this->get_max_work_group_size(device_id);
-    if (max_work_group_size < std::size_t{ THREAD_BLOCK_SIZE } * std::size_t{ THREAD_BLOCK_SIZE }) {
-        throw kernel_launch_resources{ fmt::format("Not enough work-items allowed for a work-groups of size {}x{}! Try reducing THREAD_BLOCK_SIZE.", THREAD_BLOCK_SIZE, THREAD_BLOCK_SIZE) };
-    }
+    // convert execution range block to HIP's native dim3
+    const dim3 native_block = detail::dim_type_to_native(exec.block);
 
     detail::set_device(device);
-    {
-        const dim3 block(THREAD_BLOCK_SIZE, THREAD_BLOCK_SIZE);
-        const dim3 grid(static_cast<unsigned int>(std::ceil(static_cast<double>(num_rhs) / static_cast<double>(block.x * INTERNAL_BLOCK_SIZE))),
-                        static_cast<unsigned int>(std::ceil(static_cast<double>(device_specific_num_rows) / static_cast<double>(block.y * INTERNAL_BLOCK_SIZE))));
+    for (const auto &[partial_grid, offsets] : exec.grids) {
+        // convert execution range partial_grid to HIP's native dim3
+        const dim3 native_partial_grid = detail::dim_type_to_native(partial_grid);
 
-        detail::device_kernel_symm<<<grid, block>>>(num_rows, num_rhs, device_specific_num_rows, row_offset, alpha, A_d.get(), B_d.get(), beta, C_d.get());
+        detail::device_kernel_symm<<<native_partial_grid, native_block>>>(num_rows, num_rhs, device_specific_num_rows, row_offset, alpha, A_d.get(), B_d.get(), beta, C_d.get(), offsets.x, offsets.y);
     }
 
-    {
+    // convert execution range block to HIP's native dim3
+    const dim3 native_mirror_block = detail::dim_type_to_native(mirror_exec.block);
+
+    for (const auto &[partial_grid, offsets] : mirror_exec.grids) {
         const unsigned long long num_mirror_rows = num_rows - row_offset - device_specific_num_rows;
 
         if (num_mirror_rows > 0) {
-            const dim3 block(THREAD_BLOCK_SIZE, THREAD_BLOCK_SIZE);
-            const dim3 grid(static_cast<unsigned int>(std::ceil(static_cast<double>(num_rhs) / static_cast<double>(block.x * INTERNAL_BLOCK_SIZE))),
-                            static_cast<unsigned int>(std::ceil(static_cast<double>(num_mirror_rows) / static_cast<double>(block.y * INTERNAL_BLOCK_SIZE))));
+            // convert execution range partial_grid to HIP's native dim3
+            const dim3 native_partial_grid = detail::dim_type_to_native(partial_grid);
 
-            detail::device_kernel_symm_mirror<<<grid, block>>>(num_rows, num_rhs, num_mirror_rows, device_specific_num_rows, row_offset, alpha, A_d.get(), B_d.get(), beta, C_d.get());
+            detail::device_kernel_symm_mirror<<<native_partial_grid, native_mirror_block>>>(num_rows, num_rhs, num_mirror_rows, device_specific_num_rows, row_offset, alpha, A_d.get(), B_d.get(), beta, C_d.get(), offsets.x, offsets.y);
         }
     }
     detail::peek_at_last_error();
     detail::device_synchronize(device);
 }
 
-void csvm::run_inplace_matrix_addition(const std::size_t device_id, device_ptr_type &lhs_d, const device_ptr_type &rhs_d) const {
+void csvm::run_inplace_matrix_addition(const std::size_t device_id, const ::plssvm::detail::execution_range &exec, device_ptr_type &lhs_d, const device_ptr_type &rhs_d) const {
     const unsigned long long num_rhs = lhs_d.shape().x;
-    const unsigned long long num_rows = lhs_d.shape().y;
     const queue_type &device = devices_[device_id];
 
-    // define the grid and block sizes
-    const std::size_t max_work_group_size = this->get_max_work_group_size(device_id);
-    if (max_work_group_size < std::size_t{ THREAD_BLOCK_SIZE } * std::size_t{ THREAD_BLOCK_SIZE }) {
-        throw kernel_launch_resources{ fmt::format("Not enough work-items allowed for a work-groups of size {}x{}! Try reducing THREAD_BLOCK_SIZE.", THREAD_BLOCK_SIZE, THREAD_BLOCK_SIZE) };
-    }
-    const dim3 block(THREAD_BLOCK_SIZE, THREAD_BLOCK_SIZE);
-    const dim3 grid(static_cast<unsigned int>(std::ceil(static_cast<double>(num_rows) / static_cast<double>(block.x * INTERNAL_BLOCK_SIZE))),
-                    static_cast<unsigned int>(std::ceil(static_cast<double>(num_rhs) / static_cast<double>(block.y * INTERNAL_BLOCK_SIZE))));
+    // convert execution range block to HIP's native dim3
+    const dim3 native_block = detail::dim_type_to_native(exec.block);
 
     detail::set_device(device);
-    detail::device_kernel_inplace_matrix_add<<<grid, block>>>(num_rhs, lhs_d.get(), rhs_d.get());
+    for (const auto &[partial_grid, offsets] : exec.grids) {
+        // convert execution range partial_grid to HIP's native dim3
+        const dim3 native_partial_grid = detail::dim_type_to_native(partial_grid);
+
+        detail::device_kernel_inplace_matrix_add<<<native_partial_grid, native_block>>>(num_rhs, lhs_d.get(), rhs_d.get(), offsets.x, offsets.y);
+    }
     detail::peek_at_last_error();
     detail::device_synchronize(device);
 }
 
-void csvm::run_inplace_matrix_scale(const std::size_t device_id, device_ptr_type &lhs_d, const real_type scale) const {
+void csvm::run_inplace_matrix_scale(const std::size_t device_id, const ::plssvm::detail::execution_range &exec, device_ptr_type &lhs_d, const real_type scale) const {
     const unsigned long long num_rhs = lhs_d.shape().x;
-    const unsigned long long num_rows = lhs_d.shape().y;
     const queue_type &device = devices_[device_id];
 
-    // define the grid and block sizes
-    const std::size_t max_work_group_size = this->get_max_work_group_size(device_id);
-    if (max_work_group_size < std::size_t{ THREAD_BLOCK_SIZE } * std::size_t{ THREAD_BLOCK_SIZE }) {
-        throw kernel_launch_resources{ fmt::format("Not enough work-items allowed for a work-groups of size {}x{}! Try reducing THREAD_BLOCK_SIZE.", THREAD_BLOCK_SIZE, THREAD_BLOCK_SIZE) };
-    }
-    const dim3 block(THREAD_BLOCK_SIZE, THREAD_BLOCK_SIZE);
-    const dim3 grid(static_cast<unsigned int>(std::ceil(static_cast<double>(num_rows) / static_cast<double>(block.x * INTERNAL_BLOCK_SIZE))),
-                    static_cast<unsigned int>(std::ceil(static_cast<double>(num_rhs) / static_cast<double>(block.y * INTERNAL_BLOCK_SIZE))));
+    // convert execution range block to HIP's native dim3
+    const dim3 native_block = detail::dim_type_to_native(exec.block);
 
     detail::set_device(device);
-    detail::device_kernel_inplace_matrix_scale<<<grid, block>>>(num_rhs, lhs_d.get(), scale);
+    for (const auto &[partial_grid, offsets] : exec.grids) {
+        // convert execution range partial_grid to HIP's native dim3
+        const dim3 native_partial_grid = detail::dim_type_to_native(partial_grid);
+
+        detail::device_kernel_inplace_matrix_scale<<<native_partial_grid, native_block>>>(num_rhs, lhs_d.get(), scale, offsets.x, offsets.y);
+    }
     detail::peek_at_last_error();
     detail::device_synchronize(device);
 }
 
-void csvm::run_assemble_kernel_matrix_implicit_blas_level_3(const std::size_t device_id, const real_type alpha, const device_ptr_type &A_d, const parameter &params, const device_ptr_type &q_red, const real_type QA_cost, const device_ptr_type &B_d, device_ptr_type &C_d) const {
+void csvm::run_assemble_kernel_matrix_implicit_blas_level_3(const std::size_t device_id, const ::plssvm::detail::execution_range &exec, const real_type alpha, const device_ptr_type &A_d, const parameter &params, const device_ptr_type &q_red, const real_type QA_cost, const device_ptr_type &B_d, device_ptr_type &C_d) const {
     const unsigned long long num_rows_reduced = A_d.shape().x - 1;
     const unsigned long long num_features = A_d.shape().y;
     const unsigned long long num_classes = B_d.shape().x;
@@ -285,37 +287,36 @@ void csvm::run_assemble_kernel_matrix_implicit_blas_level_3(const std::size_t de
     // get the offset of the data points this device is responsible for
     const unsigned long long row_offset = data_distribution_->place_row_offset(device_id);
 
-    // define the grid and block sizes
-    const std::size_t max_work_group_size = this->get_max_work_group_size(device_id);
-    if (max_work_group_size < std::size_t{ THREAD_BLOCK_SIZE } * std::size_t{ THREAD_BLOCK_SIZE }) {
-        throw kernel_launch_resources{ fmt::format("Not enough work-items allowed for a work-groups of size {}x{}! Try reducing THREAD_BLOCK_SIZE.", THREAD_BLOCK_SIZE, THREAD_BLOCK_SIZE) };
-    }
-    const dim3 block(THREAD_BLOCK_SIZE, THREAD_BLOCK_SIZE);
-    const dim3 grid(static_cast<unsigned int>(std::ceil(static_cast<double>(num_rows_reduced - row_offset) / static_cast<double>(block.x * INTERNAL_BLOCK_SIZE))),
-                    static_cast<unsigned int>(std::ceil(static_cast<double>(device_specific_num_rows) / static_cast<double>(block.y * INTERNAL_BLOCK_SIZE))));
-
-    detail::set_device(device);
     const real_type cost_factor = real_type{ 1.0 } / params.cost;
 
-    switch (params.kernel_type) {
-        case kernel_function_type::linear:
-            detail::device_kernel_assembly_symm<kernel_function_type::linear><<<grid, block>>>(alpha, q_red.get(), A_d.get(), num_rows_reduced, device_specific_num_rows, row_offset, num_features, QA_cost, cost_factor, B_d.get(), C_d.get(), num_classes);
-            break;
-        case kernel_function_type::polynomial:
-            detail::device_kernel_assembly_symm<kernel_function_type::polynomial><<<grid, block>>>(alpha, q_red.get(), A_d.get(), num_rows_reduced, device_specific_num_rows, row_offset, num_features, QA_cost, cost_factor, B_d.get(), C_d.get(), num_classes, params.degree, std::get<real_type>(params.gamma), params.coef0);
-            break;
-        case kernel_function_type::rbf:
-            detail::device_kernel_assembly_symm<kernel_function_type::rbf><<<grid, block>>>(alpha, q_red.get(), A_d.get(), num_rows_reduced, device_specific_num_rows, row_offset, num_features, QA_cost, cost_factor, B_d.get(), C_d.get(), num_classes, std::get<real_type>(params.gamma));
-            break;
-        case kernel_function_type::sigmoid:
-            detail::device_kernel_assembly_symm<kernel_function_type::sigmoid><<<grid, block>>>(alpha, q_red.get(), A_d.get(), num_rows_reduced, device_specific_num_rows, row_offset, num_features, QA_cost, cost_factor, B_d.get(), C_d.get(), num_classes, std::get<real_type>(params.gamma), params.coef0);
-            break;
-        case kernel_function_type::laplacian:
-            detail::device_kernel_assembly_symm<kernel_function_type::laplacian><<<grid, block>>>(alpha, q_red.get(), A_d.get(), num_rows_reduced, device_specific_num_rows, row_offset, num_features, QA_cost, cost_factor, B_d.get(), C_d.get(), num_classes, std::get<real_type>(params.gamma));
-            break;
-        case kernel_function_type::chi_squared:
-            detail::device_kernel_assembly_symm<kernel_function_type::chi_squared><<<grid, block>>>(alpha, q_red.get(), A_d.get(), num_rows_reduced, device_specific_num_rows, row_offset, num_features, QA_cost, cost_factor, B_d.get(), C_d.get(), num_classes, std::get<real_type>(params.gamma));
-            break;
+    // convert general execution range's block to HIP specific block
+    const dim3 native_block = detail::dim_type_to_native(exec.block);
+
+    detail::set_device(device);
+    for (const auto &[partial_grid, offsets] : exec.grids) {
+        // convert execution range partial_grid to HIP's native dim3
+        const dim3 native_partial_grid = detail::dim_type_to_native(partial_grid);
+
+        switch (params.kernel_type) {
+            case kernel_function_type::linear:
+                detail::device_kernel_assembly_symm<kernel_function_type::linear><<<native_partial_grid, native_block>>>(alpha, q_red.get(), A_d.get(), num_rows_reduced, device_specific_num_rows, row_offset, num_features, QA_cost, cost_factor, B_d.get(), C_d.get(), num_classes, offsets.x, offsets.y);
+                break;
+            case kernel_function_type::polynomial:
+                detail::device_kernel_assembly_symm<kernel_function_type::polynomial><<<native_partial_grid, native_block>>>(alpha, q_red.get(), A_d.get(), num_rows_reduced, device_specific_num_rows, row_offset, num_features, QA_cost, cost_factor, B_d.get(), C_d.get(), num_classes, offsets.x, offsets.y, params.degree, std::get<real_type>(params.gamma), params.coef0);
+                break;
+            case kernel_function_type::rbf:
+                detail::device_kernel_assembly_symm<kernel_function_type::rbf><<<native_partial_grid, native_block>>>(alpha, q_red.get(), A_d.get(), num_rows_reduced, device_specific_num_rows, row_offset, num_features, QA_cost, cost_factor, B_d.get(), C_d.get(), num_classes, offsets.x, offsets.y, std::get<real_type>(params.gamma));
+                break;
+            case kernel_function_type::sigmoid:
+                detail::device_kernel_assembly_symm<kernel_function_type::sigmoid><<<native_partial_grid, native_block>>>(alpha, q_red.get(), A_d.get(), num_rows_reduced, device_specific_num_rows, row_offset, num_features, QA_cost, cost_factor, B_d.get(), C_d.get(), num_classes, offsets.x, offsets.y, std::get<real_type>(params.gamma), params.coef0);
+                break;
+            case kernel_function_type::laplacian:
+                detail::device_kernel_assembly_symm<kernel_function_type::laplacian><<<native_partial_grid, native_block>>>(alpha, q_red.get(), A_d.get(), num_rows_reduced, device_specific_num_rows, row_offset, num_features, QA_cost, cost_factor, B_d.get(), C_d.get(), num_classes, offsets.x, offsets.y, std::get<real_type>(params.gamma));
+                break;
+            case kernel_function_type::chi_squared:
+                detail::device_kernel_assembly_symm<kernel_function_type::chi_squared><<<native_partial_grid, native_block>>>(alpha, q_red.get(), A_d.get(), num_rows_reduced, device_specific_num_rows, row_offset, num_features, QA_cost, cost_factor, B_d.get(), C_d.get(), num_classes, offsets.x, offsets.y, std::get<real_type>(params.gamma));
+                break;
+        }
     }
     detail::peek_at_last_error();
     detail::device_synchronize(device);
@@ -325,7 +326,7 @@ void csvm::run_assemble_kernel_matrix_implicit_blas_level_3(const std::size_t de
 //                   predict, score                  //
 //***************************************************//
 
-auto csvm::run_w_kernel(const std::size_t device_id, const device_ptr_type &alpha_d, const device_ptr_type &sv_d) const -> device_ptr_type {
+auto csvm::run_w_kernel(const std::size_t device_id, const ::plssvm::detail::execution_range &exec, const device_ptr_type &alpha_d, const device_ptr_type &sv_d) const -> device_ptr_type {
     const unsigned long long num_classes = alpha_d.shape().x;
     const unsigned long long num_sv = alpha_d.shape().y;
     const unsigned long long device_specific_num_sv = sv_d.shape().x;
@@ -335,72 +336,59 @@ auto csvm::run_w_kernel(const std::size_t device_id, const device_ptr_type &alph
     // get the offset of the data points this device is responsible for
     const unsigned long long sv_offset = data_distribution_->place_row_offset(device_id);
 
-    // define the grid and block sizes
-    const std::size_t max_work_group_size = this->get_max_work_group_size(device_id);
-    if (max_work_group_size < std::size_t{ THREAD_BLOCK_SIZE } * std::size_t{ THREAD_BLOCK_SIZE }) {
-        throw kernel_launch_resources{ fmt::format("Not enough work-items allowed for a work-groups of size {}x{}! Try reducing THREAD_BLOCK_SIZE.", THREAD_BLOCK_SIZE, THREAD_BLOCK_SIZE) };
-    }
-    const dim3 block(THREAD_BLOCK_SIZE, THREAD_BLOCK_SIZE);
-    const dim3 grid(static_cast<unsigned int>(std::ceil(static_cast<double>(num_features) / static_cast<double>(block.x * INTERNAL_BLOCK_SIZE))),
-                    static_cast<unsigned int>(std::ceil(static_cast<double>(num_classes) / static_cast<double>(block.y * INTERNAL_BLOCK_SIZE))));
-
     device_ptr_type w_d{ shape{ num_classes, num_features }, shape{ PADDING_SIZE, PADDING_SIZE }, device };
 
+    // convert execution range block to HIP's native dim3
+    const dim3 native_block = detail::dim_type_to_native(exec.block);
+
     detail::set_device(device);
-    detail::device_kernel_w_linear<<<grid, block>>>(w_d.get(), alpha_d.get(), sv_d.get(), num_classes, num_sv, device_specific_num_sv, sv_offset);
+    for (const auto &[partial_grid, offsets] : exec.grids) {
+        // convert execution range partial_grid to HIP's native dim3
+        const dim3 native_partial_grid = detail::dim_type_to_native(partial_grid);
+
+        detail::device_kernel_w_linear<<<native_partial_grid, native_block>>>(w_d.get(), alpha_d.get(), sv_d.get(), num_classes, num_sv, device_specific_num_sv, sv_offset, offsets.x, offsets.y);
+    }
     detail::peek_at_last_error();
     detail::device_synchronize(device);
 
     return w_d;
 }
 
-auto csvm::run_predict_kernel(const std::size_t device_id, const parameter &params, const device_ptr_type &alpha_d, const device_ptr_type &rho_d, const device_ptr_type &sv_or_w_d, const device_ptr_type &predict_points_d) const -> device_ptr_type {
+auto csvm::run_predict_kernel(const std::size_t device_id, const ::plssvm::detail::execution_range &exec, const parameter &params, const device_ptr_type &alpha_d, const device_ptr_type &rho_d, const device_ptr_type &sv_or_w_d, const device_ptr_type &predict_points_d) const -> device_ptr_type {
     const unsigned long long num_classes = alpha_d.shape().x;
     const unsigned long long num_predict_points = predict_points_d.shape().x;  // = device_specific_num_rows
     const unsigned long long num_features = predict_points_d.shape().y;
+    const unsigned long long num_sv = sv_or_w_d.shape().x;
     const queue_type &device = devices_[device_id];
 
     device_ptr_type out_d{ shape{ num_predict_points, num_classes }, shape{ PADDING_SIZE, PADDING_SIZE }, device };
 
-    // define the block sizes
-    const std::size_t max_work_group_size = this->get_max_work_group_size(device_id);
-    if (max_work_group_size < std::size_t{ THREAD_BLOCK_SIZE } * std::size_t{ THREAD_BLOCK_SIZE }) {
-        throw kernel_launch_resources{ fmt::format("Not enough work-items allowed for a work-groups of size {}x{}! Try reducing THREAD_BLOCK_SIZE.", THREAD_BLOCK_SIZE, THREAD_BLOCK_SIZE) };
-    }
-    const dim3 block(THREAD_BLOCK_SIZE, THREAD_BLOCK_SIZE);
+    // convert execution range block to HIP's native dim3
+    const dim3 native_block = detail::dim_type_to_native(exec.block);
 
     detail::set_device(device);
-    if (params.kernel_type == kernel_function_type::linear) {
-        // define the grid sizes
-        const dim3 grid(static_cast<unsigned int>(std::ceil(static_cast<double>(num_predict_points) / static_cast<double>(block.x * INTERNAL_BLOCK_SIZE))),
-                        static_cast<unsigned int>(std::ceil(static_cast<double>(num_classes) / static_cast<double>(block.y * INTERNAL_BLOCK_SIZE))));
-
-        detail::device_kernel_predict_linear<<<grid, block>>>(out_d.get(), sv_or_w_d.get(), rho_d.get(), predict_points_d.get(), num_classes, num_predict_points, num_features);
-    } else {
-        const unsigned long long num_sv = sv_or_w_d.shape().x;
-
-        // define the grid sizes
-        const dim3 grid(static_cast<unsigned int>(std::ceil(static_cast<double>(num_predict_points) / static_cast<double>(block.x * INTERNAL_BLOCK_SIZE))),
-                        static_cast<unsigned int>(std::ceil(static_cast<double>(num_sv) / static_cast<double>(block.y * INTERNAL_BLOCK_SIZE))));
+    for (const auto &[partial_grid, offsets] : exec.grids) {
+        // convert execution range partial_grid to HIP's native dim3
+        const dim3 native_partial_grid = detail::dim_type_to_native(partial_grid);
 
         switch (params.kernel_type) {
             case kernel_function_type::linear:
-                // already handled
+                detail::device_kernel_predict_linear<<<native_partial_grid, native_block>>>(out_d.get(), sv_or_w_d.get(), rho_d.get(), predict_points_d.get(), num_classes, num_predict_points, num_features, offsets.x, offsets.y);
                 break;
             case kernel_function_type::polynomial:
-                detail::device_kernel_predict<kernel_function_type::polynomial><<<grid, block>>>(out_d.get(), alpha_d.get(), rho_d.get(), sv_or_w_d.get(), predict_points_d.get(), num_classes, num_sv, num_predict_points, num_features, params.degree, std::get<real_type>(params.gamma), params.coef0);
+                detail::device_kernel_predict<kernel_function_type::polynomial><<<native_partial_grid, native_block>>>(out_d.get(), alpha_d.get(), rho_d.get(), sv_or_w_d.get(), predict_points_d.get(), num_classes, num_sv, num_predict_points, num_features, offsets.x, offsets.y, params.degree, std::get<real_type>(params.gamma), params.coef0);
                 break;
             case kernel_function_type::rbf:
-                detail::device_kernel_predict<kernel_function_type::rbf><<<grid, block>>>(out_d.get(), alpha_d.get(), rho_d.get(), sv_or_w_d.get(), predict_points_d.get(), num_classes, num_sv, num_predict_points, num_features, std::get<real_type>(params.gamma));
+                detail::device_kernel_predict<kernel_function_type::rbf><<<native_partial_grid, native_block>>>(out_d.get(), alpha_d.get(), rho_d.get(), sv_or_w_d.get(), predict_points_d.get(), num_classes, num_sv, num_predict_points, num_features, offsets.x, offsets.y, std::get<real_type>(params.gamma));
                 break;
             case kernel_function_type::sigmoid:
-                detail::device_kernel_predict<kernel_function_type::sigmoid><<<grid, block>>>(out_d.get(), alpha_d.get(), rho_d.get(), sv_or_w_d.get(), predict_points_d.get(), num_classes, num_sv, num_predict_points, num_features, std::get<real_type>(params.gamma), params.coef0);
+                detail::device_kernel_predict<kernel_function_type::sigmoid><<<native_partial_grid, native_block>>>(out_d.get(), alpha_d.get(), rho_d.get(), sv_or_w_d.get(), predict_points_d.get(), num_classes, num_sv, num_predict_points, num_features, offsets.x, offsets.y, std::get<real_type>(params.gamma), params.coef0);
                 break;
             case kernel_function_type::laplacian:
-                detail::device_kernel_predict<kernel_function_type::laplacian><<<grid, block>>>(out_d.get(), alpha_d.get(), rho_d.get(), sv_or_w_d.get(), predict_points_d.get(), num_classes, num_sv, num_predict_points, num_features, std::get<real_type>(params.gamma));
+                detail::device_kernel_predict<kernel_function_type::laplacian><<<native_partial_grid, native_block>>>(out_d.get(), alpha_d.get(), rho_d.get(), sv_or_w_d.get(), predict_points_d.get(), num_classes, num_sv, num_predict_points, num_features, offsets.x, offsets.y, std::get<real_type>(params.gamma));
                 break;
             case kernel_function_type::chi_squared:
-                detail::device_kernel_predict<kernel_function_type::chi_squared><<<grid, block>>>(out_d.get(), alpha_d.get(), rho_d.get(), sv_or_w_d.get(), predict_points_d.get(), num_classes, num_sv, num_predict_points, num_features, std::get<real_type>(params.gamma));
+                detail::device_kernel_predict<kernel_function_type::chi_squared><<<native_partial_grid, native_block>>>(out_d.get(), alpha_d.get(), rho_d.get(), sv_or_w_d.get(), predict_points_d.get(), num_classes, num_sv, num_predict_points, num_features, offsets.x, offsets.y, std::get<real_type>(params.gamma));
                 break;
         }
     }

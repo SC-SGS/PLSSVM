@@ -66,7 +66,7 @@ void csvm::init(const target_platform target) {
     const ::sycl::device default_device{};
     if (!detail::default_device_equals_target(default_device, target_)) {
         throw backend_exception{ fmt::format("The default device {} doesn't match the requested target platform {}! Please set the environment variable ACPP_VISIBILITY_MASK or change the target platform.",
-                                             default_device.get_info<::sycl::info::device::vendor>(),
+                                             default_device.get_info<::sycl::info::device::name>(),
                                              target_) };
     }
 

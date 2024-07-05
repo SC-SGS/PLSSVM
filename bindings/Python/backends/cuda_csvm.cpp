@@ -49,8 +49,7 @@ void init_cuda_csvm(py::module_ &m, const py::exception<plssvm::exception> &base
                  // create CSVM with the provided target platform
                  return std::make_unique<plssvm::cuda::csvm>(target, params);
              }),
-             "create an SVM with the provided target platform and keyword arguments")
-        .def("num_available_devices", &plssvm::cuda::csvm::num_available_devices, "the number of available devices");
+             "create an SVM with the provided target platform and keyword arguments");
 
     // register CUDA backend specific exceptions
     register_py_exception<plssvm::cuda::backend_exception>(cuda_module, "BackendError", base_exception);
