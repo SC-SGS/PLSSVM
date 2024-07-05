@@ -40,12 +40,11 @@ if (PLSSVM_ENABLE_HARDWARE_SAMPLING)
         message(STATUS "Enable error checks for the hardware sampling functions.")
         target_compile_definitions(${PLSSVM_HARDWARE_TRACKING_LIBRARY_NAME} PRIVATE PLSSVM_HARDWARE_SAMPLING_ERROR_CHECKS_ENABLED)
     endif ()
-    
+
+    include(${PROJECT_SOURCE_DIR}/cmake/utility_macros.cmake)
     ## option for the used sampling interval
     set(PLSSVM_HARDWARE_SAMPLING_INTERVAL "100" CACHE STRING "The interval in milliseconds in which the hardware information (like clock frequency or power draw) are queried.")
-    if (NOT PLSSVM_HARDWARE_SAMPLING_INTERVAL MATCHES "^[0-9]+$" OR PLSSVM_HARDWARE_SAMPLING_INTERVAL LESS_EQUAL 0)
-        message(FATAL_ERROR "The PLSSVM_HARDWARE_SAMPLING_INTERVAL must be a natural number greater 0, but is \"${PLSSVM_HARDWARE_SAMPLING_INTERVAL}\"!")
-    endif ()
+    check_integer(PLSSVM_HARDWARE_SAMPLING_INTERVAL)
     message(STATUS "Setting the hardware sampler interval to ${PLSSVM_HARDWARE_SAMPLING_INTERVAL}ms.")
     target_compile_definitions(${PLSSVM_HARDWARE_TRACKING_LIBRARY_NAME} PUBLIC PLSSVM_HARDWARE_SAMPLING_INTERVAL=${PLSSVM_HARDWARE_SAMPLING_INTERVAL}ms)
     

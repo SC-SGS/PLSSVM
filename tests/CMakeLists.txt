@@ -39,10 +39,14 @@ endif ()
 # create larger test files if desired
 option(PLSSVM_GENERATE_TEST_FILE "Generate test file with user defined sizes." ON)
 if (PLSSVM_GENERATE_TEST_FILE)
+    include(${PROJECT_SOURCE_DIR}/cmake/utility_macros.cmake)
     # set default sizes
     set(PLSSVM_TEST_FILE_NUM_DATA_POINTS "5000" CACHE STRING "Number of data points for the test file generator")
+    check_integer(PLSSVM_TEST_FILE_NUM_DATA_POINTS)
     set(PLSSVM_TEST_FILE_NUM_FEATURES "2000" CACHE STRING "Number of features for each data point for the test file generator")
+    check_integer(PLSSVM_TEST_FILE_NUM_FEATURES)
     set(PLSSVM_TEST_FILE_NUM_CLASSES "4" CACHE STRING "number of classes for the test file generator")
+    check_integer(PLSSVM_TEST_FILE_NUM_CLASSES)
     
     # set test file name based on requested sizes
     set(PLSSVM_TEST_FILE "${PROJECT_SOURCE_DIR}/tests/data/${PLSSVM_TEST_FILE_NUM_DATA_POINTS}x${PLSSVM_TEST_FILE_NUM_FEATURES}_${PLSSVM_TEST_FILE_NUM_CLASSES}.libsvm" CACHE STRING "Path including name of the test file" FORCE)
