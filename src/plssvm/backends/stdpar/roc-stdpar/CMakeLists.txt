@@ -57,6 +57,13 @@ append_local_and_parent(PLSSVM_STDPAR_SOURCES ${CMAKE_CURRENT_LIST_DIR}/csvm.cpp
 
 # set global roc-stdpar compiler flags
 # TODO: The flag "--hipstdpar-interpose-alloc" may be necessary for older AMD GPUs
+if(NOT HSA_XNACK eq 1 AND NOT ENV{HSA_XNACK} eq 1)
+    message (STATUS "HSA_XNACK is not set, enabeling interpose alloc")
+    set_local_and_parent(PLSSVM_STDPAR_BACKEND_COMPILER_FLAG -hipstdpar --hipstdpar-path=${PLSSVM_STDPAR_BACKEND_HIPSTDPAR_PATH} --offload-arch=${PLSSVM_AMD_TARGET_ARCHS} --hipstdpar-interpose-alloc)
+else ()
+    set_local_and_parent(PLSSVM_STDPAR_BACKEND_COMPILER_FLAG -hipstdpar --hipstdpar-path=${PLSSVM_STDPAR_BACKEND_HIPSTDPAR_PATH} --offload-arch=${PLSSVM_AMD_TARGET_ARCHS})
+endif()
+
 set_local_and_parent(PLSSVM_STDPAR_BACKEND_COMPILER_FLAG -hipstdpar --hipstdpar-path=${PLSSVM_STDPAR_BACKEND_HIPSTDPAR_PATH} --offload-arch=${PLSSVM_AMD_TARGET_ARCHS})
 
 if (PLSSVM_ENABLE_FAST_MATH)
