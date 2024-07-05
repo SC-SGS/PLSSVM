@@ -133,7 +133,7 @@ target_compile_options(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC
                        -Wnull-dereference -Wnon-virtual-dtor -Wextra-semi -Wunreachable-code -Wuninitialized -Wno-ctor-dtor-privacy
                        -fPIC>
                        $<$<COMPILE_LANG_AND_ID:CXX,GNU>:-Wsuggest-override -Wstrict-null-sentinel -Wlogical-op -Wduplicated-branches -Wimplicit-fallthrough=5>
-                       $<$<COMPILE_LANG_AND_ID:CXX,Clang>:-Wdocumentation -Wmost>
+                       $<$<COMPILE_LANG_AND_ID:CXX,Clang>:-Wmost>
                        $<$<COMPILE_LANG_AND_ID:CXX,MSVC>:/W4 /bigobj /wd4459 /Zc:lambda>>
 )
 
@@ -646,6 +646,8 @@ list(POP_BACK CMAKE_MESSAGE_INDENT)
 option(PLSSVM_ENABLE_DOCUMENTATION "Build documentation using doxygen." OFF)
 if (PLSSVM_ENABLE_DOCUMENTATION)
     add_subdirectory(docs)
+    # if documentation is enabled, add documentation warning flag when compiling with clang
+    target_compile_options(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC $<$<COMPILE_LANG_AND_ID:CXX,Clang>:-Wdocumentation>)
 endif ()
 
 ########################################################################################################################
