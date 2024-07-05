@@ -370,7 +370,7 @@ pipeline {
                                             $([[ $ARCHITECTURE == NVIDIA ]] && echo "cuda_arch=86") \
                                             $([[ SET_NVIDIA_GPU_NONE == 1 ]] && echo "cuda_arch=none") \
                                             $([[ $ARCHITECTURE == AMD ]] && echo "amdgpu_target=gfx90a") \
-                                            $([[ SET_AMD_GPU_NONE == 1 ]] & "amdgpu_target=none") \
+                                            $([[ SET_AMD_GPU_NONE == 1 ]] && "amdgpu_target=none") \
                                             +language_bindings \
                                             +test_file \
                                             test_file_num_classes=5 \
@@ -431,8 +431,8 @@ pipeline {
                                     $([[ $ARCHITECTURE == NVIDIA ]] && echo "cuda_arch=86") \
                                     $([[ SET_NVIDIA_GPU_NONE == 1 ]] && echo "cuda_arch=none") \
                                     $([[ $ARCHITECTURE == AMD ]] && echo "amdgpu_target=gfx90a") \
-                                    $([[ SET_AMD_GPU_NONE == 1 ]] & "amdgpu_target=none") \
-                                    build_type=$BUILD_TYPE
+                                    $([[ SET_AMD_GPU_NONE == 1 ]] && "amdgpu_target=none") \
+                                    build_type=$BUILD_TYPE )
                                 install_hash=$( echo ${installpath} | rev | cut -d/ -f1| cut -d- -f1 | rev | head -c 7)
                                 cd ${WORKSPACE}/plssvm/build-$(spack arch)-${install_hash}/spack-build-${install_hash}
 
@@ -463,7 +463,7 @@ pipeline {
                                         $([[ $ARCHITECTURE == NVIDIA ]] && echo "cuda_arch=86") \
                                         $([[ SET_NVIDIA_GPU_NONE == 1 ]] && echo "cuda_arch=none") \
                                         $([[ $ARCHITECTURE == AMD ]] && echo "amdgpu_target=gfx90a") \
-                                        $([[ SET_AMD_GPU_NONE == 1 ]] & "amdgpu_target=none") \
+                                        $([[ SET_AMD_GPU_NONE == 1 ]] && "amdgpu_target=none") \
                                         build_type=$BUILD_TYPE \
                                         arch=$(spack arch)" \
                                         ctest -j8 --output-on-failure --timeout 600 --no-compress-output -T Test  \
@@ -512,7 +512,7 @@ pipeline {
                                         $([[ $ARCHITECTURE == NVIDIA ]] && echo "cuda_arch=86") \
                                         $([[ SET_NVIDIA_GPU_NONE == 1 ]] && echo "cuda_arch=none") \
                                         $([[ $ARCHITECTURE == AMD ]] && echo "amdgpu_target=gfx90a") \
-                                        $([[ SET_AMD_GPU_NONE == 1 ]] & "amdgpu_target=none") \
+                                        $([[ SET_AMD_GPU_NONE == 1 ]] && "amdgpu_target=none") \
                                         build_type=$BUILD_TYPE \
                                         arch=$(spack arch)"
 
