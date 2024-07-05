@@ -89,8 +89,8 @@ __kernel void PLSSVM_DEVICE_KERNEL_PREDICT_NAME(__global real_type *prediction_d
 
     {
         // reinterpret cache arrays with interchanged dimensions
-        real_type(*alpha_cache)[INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE] = (real_type(*)[INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE]) data_cache_pp;
-        real_type(*out_cache)[INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE] = (real_type(*)[INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE]) data_cache_sv;
+        __local real_type(*alpha_cache)[INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE] = (__local real_type(*)[INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE]) data_cache_pp;
+        __local real_type(*out_cache)[INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE] = (__local real_type(*)[INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE]) data_cache_sv;
 
         // iterate over all features using blocking to be able to cache them for faster memory accesses
         for (ulong dim = 0; dim < num_classes; dim += FEATURE_BLOCK_SIZE_ul) {
