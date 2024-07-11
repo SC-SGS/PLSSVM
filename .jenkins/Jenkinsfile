@@ -301,6 +301,11 @@ pipeline {
                     stage('Build PLSSVM'){
                         steps{
                                 sh '''
+                                        if [ "$TEST_TYPE" == BASE ]; then
+                                            echo "Only build once, base tests use the same build as the backend tests"
+                                            exit 0;
+                                        fi
+
                                         if [ "$BUILD_TYPE" == Release ]; then
                                             export NUM_DATA_POINTS=200
                                             export NUM_FEATURES=20
@@ -315,6 +320,23 @@ pipeline {
                                         echo $(hostname)
                                         echo $(spack arch)
 
+                                        case $BACKEND in
+                                            OPENCL|ADAPTIVECPP|DPCPP|STDPAR-NVHPC|STDPAR-DPCPP|STDPAR-ADAPTIVECPP)
+                                                if [ "$ARCHITECTURE" != NVIDIA ]; then
+                                                    SET_NVIDIA_GPU_NONE=1
+                                                fi
+                                                ;;
+                                            *) ;;
+                                        esac
+
+                                        case $BACKEND in
+                                            OPENCL|ADAPTIVECPP|DPCPP|STDPAR-DPCPP|STDPAR-ADAPTIVECPP)
+                                                if [ "$ARCHITECTURE" != AMD ]; then
+                                                    SET_AMD_GPU_NONE=1
+                                                fi
+                                            ;;
+                                            *) ;;
+                                        esac
 
 
 
@@ -331,8 +353,10 @@ pipeline {
                                             $([[ $BACKEND == STDPAR-NVHPC ]] && echo "stdparimplementation=nvhpc" ) \
                                             $([[ $BACKEND == STDPAR-ADAPTIVECPP ]] && echo "stdparimplementation=adaptivecpp" ) \
                                             $([[ $BACKEND == STDPAR-ROC ]] && echo "stdparimplementation=roc" ) \
-                                            $([[ $ARCHITECTURE == NVIDIA ]] && echo "cuda_arch=86" ||  echo "cuda_arch=none") \
-                                        $([[ $ARCHITECTURE == AMD ]] && echo "amdgpu_target=gfx90a" || echo "amdgpu_target=none") \
+                                            $([[ $ARCHITECTURE == NVIDIA ]] && echo "cuda_arch=86") \
+                                            $([[ SET_NVIDIA_GPU_NONE == 1 ]] && echo "cuda_arch=none") \
+                                            $([[ $ARCHITECTURE == AMD ]] && echo "amdgpu_target=gfx90a") \
+                                            $([[ SET_AMD_GPU_NONE == 1 ]] && echo "amdgpu_target=none") \
                                             build_type=$BUILD_TYPE \
                                             arch=$(spack arch) || true
 
@@ -349,8 +373,10 @@ pipeline {
                                             $([[ $BACKEND == STDPAR-NVHPC ]] && echo "stdparimplementation=nvhpc" ) \
                                             $([[ $BACKEND == STDPAR-ADAPTIVECPP ]] && echo "stdparimplementation=adaptivecpp" ) \
                                             $([[ $BACKEND == STDPAR-ROC ]] && echo "stdparimplementation=roc" ) \
-                                            $([[ $ARCHITECTURE == NVIDIA ]] && echo "cuda_arch=86" ||  echo "cuda_arch=none") \
-                                            $([[ $ARCHITECTURE == AMD ]] && echo "amdgpu_target=gfx90a" || echo "amdgpu_target=none") \
+                                            $([[ $ARCHITECTURE == NVIDIA ]] && echo "cuda_arch=86") \
+                                            $([[ SET_NVIDIA_GPU_NONE == 1 ]] && echo "cuda_arch=none") \
+                                            $([[ $ARCHITECTURE == AMD ]] && echo "amdgpu_target=gfx90a") \
+                                            $([[ SET_AMD_GPU_NONE == 1 ]] && "amdgpu_target=none") \
                                             +language_bindings \
                                             +test_file \
                                             test_file_num_classes=5 \
@@ -375,7 +401,27 @@ pipeline {
                                 source $SGSSCRATCH/spack/share/spack/setup-env.sh
                                 spack find package plssvm@develop
                                 echo $hostname
-                                installpath=$(spack location -i plssvm@develop$([[ $BACKEND == ADAPTIVECPP ]] && echo "%clang" ) \
+
+                                case $BACKEND in
+                                    OPENCL|ADAPTIVECPP|DPCPP|STDPAR-NVHPC|STDPAR-DPCPP|STDPAR-ADAPTIVECPP)
+                                        if [ "$ARCHITECTURE" != NVIDIA ]; then
+                                            SET_NVIDIA_GPU_NONE=1
+                                        fi
+                                        ;;
+                                    *) ;;
+                                esac
+
+                                case $BACKEND in
+                                    OPENCL|ADAPTIVECPP|DPCPP|STDPAR-DPCPP|STDPAR-ADAPTIVECPP)
+                                        if [ "$ARCHITECTURE" != AMD ]; then
+                                            SET_AMD_GPU_NONE=1
+                                        fi
+                                    ;;
+                                    *) ;;
+                                esac
+
+
+                                installpath=$(spack location --first -i plssvm@develop$([[ $BACKEND == ADAPTIVECPP ]] && echo "%clang" ) \
                                     $([[ $BACKEND == OPENMP ]] && echo "+openmp" || echo "~openmp") \
                                     $([[ $BACKEND == CUDA ]] && echo "+cuda" || echo "~cuda") \
                                     $([[ $BACKEND == HIP ]] && echo "+hip" || echo "~hip") \
@@ -388,10 +434,11 @@ pipeline {
                                     $([[ $BACKEND == STDPAR-NVHPC ]] && echo "stdparimplementation=nvhpc" ) \
                                     $([[ $BACKEND == STDPAR-ADAPTIVECPP ]] && echo "stdparimplementation=adaptivecpp" ) \
                                     $([[ $BACKEND == STDPAR-ROC ]] && echo "stdparimplementation=roc" ) \
-                                    $([[ $ARCHITECTURE == NVIDIA ]] && echo "cuda_arch=86" ||  echo "cuda_arch=none") \
-                                    $([[ $ARCHITECTURE == AMD ]] && echo "amdgpu_target=gfx90a" || echo "amdgpu_target=none") \
-                                    build_type=$BUILD_TYPE \
-                                    arch=$(spack arch)) \
+                                    $([[ $ARCHITECTURE == NVIDIA ]] && echo "cuda_arch=86") \
+                                    $([[ SET_NVIDIA_GPU_NONE == 1 ]] && echo "cuda_arch=none") \
+                                    $([[ $ARCHITECTURE == AMD ]] && echo "amdgpu_target=gfx90a") \
+                                    $([[ SET_AMD_GPU_NONE == 1 ]] && "amdgpu_target=none") \
+                                    build_type=$BUILD_TYPE )
                                 install_hash=$( echo ${installpath} | rev | cut -d/ -f1| cut -d- -f1 | rev | head -c 7)
                                 cd ${WORKSPACE}/plssvm/build-$(spack arch)-${install_hash}/spack-build-${install_hash}
 
@@ -419,8 +466,10 @@ pipeline {
                                         $([[ $BACKEND == STDPAR-DPCPP ]] && echo "stdparimplementation=icpx" ) \
                                         $([[ $BACKEND == STDPAR-NVHPC ]] && echo "stdparimplementation=nvhpc" ) \
                                         $([[ $BACKEND == STDPAR-ADAPTIVECPP ]] && echo "stdparimplementation=adaptivecpp" ) \
-                                        $([[ $ARCHITECTURE == NVIDIA ]] && echo "cuda_arch=86" ||  echo "cuda_arch=none") \
-                                        $([[ $ARCHITECTURE == AMD ]] && echo "amdgpu_target=gfx90a" || echo "amdgpu_target=none") \
+                                        $([[ $ARCHITECTURE == NVIDIA ]] && echo "cuda_arch=86") \
+                                        $([[ SET_NVIDIA_GPU_NONE == 1 ]] && echo "cuda_arch=none") \
+                                        $([[ $ARCHITECTURE == AMD ]] && echo "amdgpu_target=gfx90a") \
+                                        $([[ SET_AMD_GPU_NONE == 1 ]] && "amdgpu_target=none") \
                                         build_type=$BUILD_TYPE \
                                         arch=$(spack arch)" \
                                         ctest -j8 --output-on-failure --timeout 600 --no-compress-output -T Test  \
@@ -435,7 +484,29 @@ pipeline {
                             sh '''
                                 source $SGSSCRATCH/spack/share/spack/setup-env.sh
 
+                                if [ "TEST_TYPE" == BASE ]; then
+                                    echo "Only test the specific backends"
+                                    exit 0;
+                                fi
+
                                 cd ${WORKSPACE}/plssvm/tests/data/libsvm
+                                case $BACKEND in
+                                    OPENCL|ADAPTIVECPP|DPCPP|STDPAR-NVHPC|STDPAR-DPCPP|STDPAR-ADAPTIVECPP)
+                                        if [ "$ARCHITECTURE" != NVIDIA ]; then
+                                            SET_NVIDIA_GPU_NONE=1
+                                        fi
+                                        ;;
+                                    *) ;;
+                                esac
+
+                                case $BACKEND in
+                                    OPENCL|ADAPTIVECPP|DPCPP|STDPAR-DPCPP|STDPAR-ADAPTIVECPP)
+                                        if [ "$ARCHITECTURE" != AMD ]; then
+                                            SET_AMD_GPU_NONE=1
+                                        fi
+                                    ;;
+                                    *) ;;
+                                esac
 
                                 spack load "plssvm@develop $([[ $BACKEND == ADAPTIVECPP ]] && echo "%clang" )\
                                         $([[ $BACKEND == OPENMP ]] && echo " +openmp" || echo "~openmp") \
@@ -449,8 +520,10 @@ pipeline {
                                         $([[ $BACKEND == STDPAR-DPCPP ]] && echo "stdparimplementation=icpx" ) \
                                         $([[ $BACKEND == STDPAR-NVHPC ]] && echo "stdparimplementation=nvhpc" ) \
                                         $([[ $BACKEND == STDPAR-ADAPTIVECPP ]] && echo "stdparimplementation=adaptivecpp" ) \
-                                        $([[ $ARCHITECTURE == NVIDIA ]] && echo "cuda_arch=86" ||  echo "cuda_arch=none") \
-                                        $([[ $ARCHITECTURE == AMD ]] && echo "amdgpu_target=gfx90a" || echo "amdgpu_target=none") \
+                                        $([[ $ARCHITECTURE == NVIDIA ]] && echo "cuda_arch=86") \
+                                        $([[ SET_NVIDIA_GPU_NONE == 1 ]] && echo "cuda_arch=none") \
+                                        $([[ $ARCHITECTURE == AMD ]] && echo "amdgpu_target=gfx90a") \
+                                        $([[ SET_AMD_GPU_NONE == 1 ]] && "amdgpu_target=none") \
                                         build_type=$BUILD_TYPE \
                                         arch=$(spack arch)"
 

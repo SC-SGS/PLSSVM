@@ -111,8 +111,8 @@ __kernel void device_kernel_assembly_symm(const real_type alpha, const __global 
         // calculate C += alpha * temp * B for the UPPER triangular matrix
         {
             // reinterpret cache arrays with interchanged dimensions
-            real_type (*B_cache)[FEATURE_BLOCK_SIZE] = (real_type (*)[FEATURE_BLOCK_SIZE]) data_cache_i;
-            real_type (*C_out_cache)[FEATURE_BLOCK_SIZE] = (real_type (*)[FEATURE_BLOCK_SIZE]) data_cache_j;
+            __local real_type (*B_cache)[FEATURE_BLOCK_SIZE] = (__local real_type (*)[FEATURE_BLOCK_SIZE]) data_cache_i;
+            __local real_type (*C_out_cache)[FEATURE_BLOCK_SIZE] = (__local real_type (*)[FEATURE_BLOCK_SIZE]) data_cache_j;
 
             // iterate over all classes using blocking to be able to cache them for faster memory accesses
             for (ulong dim = 0; dim < num_classes; dim += FEATURE_BLOCK_SIZE_ul) {
@@ -164,8 +164,8 @@ __kernel void device_kernel_assembly_symm(const real_type alpha, const __global 
         // calculate C += alpha * temp * B for the LOWER triangular matrix
         {
             // reinterpret cache arrays with interchanged dimensions
-            real_type (*B_cache)[INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE] = (real_type (*)[INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE]) data_cache_i;
-            real_type (*C_out_cache)[INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE] = (real_type (*)[INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE]) data_cache_j;
+            __local real_type (*B_cache)[INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE] = (__local real_type (*)[INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE]) data_cache_i;
+            __local real_type (*C_out_cache)[INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE] = (__local real_type (*)[INTERNAL_BLOCK_SIZE * THREAD_BLOCK_SIZE]) data_cache_j;
 
             // iterate over all classes using blocking to be able to cache them for faster memory accesses
             for (ulong dim = 0; dim < num_classes; dim += FEATURE_BLOCK_SIZE_ul) {
