@@ -173,7 +173,7 @@ pipeline {
                 }
             }
         }
-        stage('Generate test files') {
+        stage('install python requirements') {
             steps {
               script{
                 def labels = onlineNodes('sgs_workstation')
@@ -186,8 +186,6 @@ pipeline {
 
                               cd ${WORKSPACE}/plssvm
                               python3 -m pip install --user -r  install/python_requirements.txt
-                              python3 utility_scripts/generate_data.py --output tests/data/5000x2000.libsvm --format libsvm --problem planes --samples 5000 --features 2000
-                              python3 utility_scripts/generate_data.py --output tests/data/500x100.libsvm --format libsvm --problem planes --samples 500 --features 100
                               '''
                           }
                       }
