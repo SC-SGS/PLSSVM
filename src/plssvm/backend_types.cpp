@@ -8,6 +8,7 @@
 
 #include "plssvm/backend_types.hpp"
 
+#include "plssvm/detail/assert.hpp"          // PLSSVM_ASSERT
 #include "plssvm/detail/string_utility.hpp"  // plssvm::detail::to_lower_case
 #include "plssvm/detail/utility.hpp"         // plssvm::detail::contains
 #include "plssvm/exceptions/exceptions.hpp"  // plssvm::unsupported_backend_exception
@@ -46,6 +47,10 @@ std::vector<backend_type> list_available_backends() {
 #if defined(PLSSVM_HAS_SYCL_BACKEND)
     available_backends.push_back(backend_type::sycl);
 #endif
+
+    // automatic is ALWAYS available but AT LEAST ONE other backend must be available in addition
+    PLSSVM_ASSERT(available_backends.size() > 1, "Besides \"automatic\" at least one other backend must be available!");
+
     return available_backends;
 }
 
