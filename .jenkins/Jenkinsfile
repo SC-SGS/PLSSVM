@@ -301,10 +301,6 @@ pipeline {
                     stage('Build PLSSVM'){
                         steps{
                                 sh '''
-                                        if [ "$TEST_TYPE" == BASE ]; then
-                                            echo "Only build once, base tests use the same build as the backend tests"
-                                            exit 0;
-                                        fi
 
                                         if [ "$BUILD_TYPE" == Release ]; then
                                             export NUM_DATA_POINTS=200
