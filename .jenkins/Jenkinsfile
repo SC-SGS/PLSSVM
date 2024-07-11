@@ -441,12 +441,18 @@ pipeline {
                                 if [[ $ARCHITECTURE == NVIDIA ]]; then
                                     export ONEAPI_DEVICE_SELECTOR=cuda:*
                                     export ACPP_VISIBILITY_MASK=cuda
+                                    ONEAPI_DEVICE_SELECTOR=cuda:*
+                                    ACPP_VISIBILITY_MASK=cuda
                                 elif [[ $ARCHITECTURE == AMD ]]; then
                                     export ONEAPI_DEVICE_SELECTOR=hip:*
                                     export ACPP_VISIBILITY_MASK=hip
+                                    ONEAPI_DEVICE_SELECTOR=hip:*
+                                    ACPP_VISIBILITY_MASK=hip
                                 else
                                     export ONEAPI_DEVICE_SELECTOR=*:cpu
                                     export ACPP_VISIBILITY_MASK=omp
+                                    ONEAPI_DEVICE_SELECTOR=*:cpu
+                                    ACPP_VISIBILITY_MASK=omp
                                 fi
 
 
@@ -468,7 +474,7 @@ $([[ $ARCHITECTURE == AMD ]] && echo "amdgpu_target=gfx90a") \
 $([[ SET_AMD_GPU_NONE == 1 ]] && "amdgpu_target=none") \
 build_type=$BUILD_TYPE \
 arch=$(spack arch)" \
-ctest -j8 --output-on-failure --timeout 600 --no-compress-output -T Test  \
+ONEAPI_DEVICE_SELECTOR=${ONEAPI_DEVICE_SELECTOR} ACPP_VISIBILITY_MASK=${ACPP_VISIBILITY_MASK} ctest -j8 --output-on-failure --timeout 600 --no-compress-output -T Test  \
 $([[ $TEST_TYPE == BASE ]] && echo \"-R "Base*\"" || echo "-E \"Base*\"")
                             '''
                         }
