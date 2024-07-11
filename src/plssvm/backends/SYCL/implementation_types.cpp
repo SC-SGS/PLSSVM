@@ -46,7 +46,7 @@ std::istream &operator>>(std::istream &in, implementation_type &impl) {
     in >> str;
     detail::to_lower_case(str);
 
-    if (str == "automatic") {
+    if (str == "automatic" || str == "auto") {
         impl = implementation_type::automatic;
     } else if (str == "dpcpp" || str == "dpc++" || str == "icpx") {
         impl = implementation_type::dpcpp;

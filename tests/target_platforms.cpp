@@ -38,6 +38,8 @@ TEST(TargetPlatform, from_string) {
     // check conversion from std::string
     EXPECT_CONVERSION_FROM_STRING("automatic", plssvm::target_platform::automatic);
     EXPECT_CONVERSION_FROM_STRING("AUTOmatic", plssvm::target_platform::automatic);
+    EXPECT_CONVERSION_FROM_STRING("auto", plssvm::target_platform::automatic);
+    EXPECT_CONVERSION_FROM_STRING("AUTO", plssvm::target_platform::automatic);
     EXPECT_CONVERSION_FROM_STRING("cpu", plssvm::target_platform::cpu);
     EXPECT_CONVERSION_FROM_STRING("CPU", plssvm::target_platform::cpu);
     EXPECT_CONVERSION_FROM_STRING("gpu_nvidia", plssvm::target_platform::gpu_nvidia);

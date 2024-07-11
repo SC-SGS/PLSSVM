@@ -69,7 +69,7 @@ std::istream &operator>>(std::istream &in, target_platform &target) {
     in >> str;
     detail::to_lower_case(str);
 
-    if (str == "automatic") {
+    if (str == "automatic" || str == "auto") {
         target = target_platform::automatic;
     } else if (str == "cpu") {
         target = target_platform::cpu;

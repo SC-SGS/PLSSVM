@@ -49,6 +49,8 @@ TEST(BackendType, from_string) {
     // check conversion from std::string
     EXPECT_CONVERSION_FROM_STRING("automatic", plssvm::backend_type::automatic);
     EXPECT_CONVERSION_FROM_STRING("AUTOmatic", plssvm::backend_type::automatic);
+    EXPECT_CONVERSION_FROM_STRING("auto", plssvm::backend_type::automatic);
+    EXPECT_CONVERSION_FROM_STRING("AUTO", plssvm::backend_type::automatic);
     EXPECT_CONVERSION_FROM_STRING("openmp", plssvm::backend_type::openmp);
     EXPECT_CONVERSION_FROM_STRING("OpenMP", plssvm::backend_type::openmp);
     EXPECT_CONVERSION_FROM_STRING("cuda", plssvm::backend_type::cuda);

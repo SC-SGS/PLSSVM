@@ -35,6 +35,8 @@ TEST(SolverType, from_string) {
     // check conversion from std::string
     EXPECT_CONVERSION_FROM_STRING("automatic", plssvm::solver_type::automatic);
     EXPECT_CONVERSION_FROM_STRING("AUTOmatic", plssvm::solver_type::automatic);
+    EXPECT_CONVERSION_FROM_STRING("auto", plssvm::solver_type::automatic);
+    EXPECT_CONVERSION_FROM_STRING("AUTO", plssvm::solver_type::automatic);
     EXPECT_CONVERSION_FROM_STRING("cg_explicit", plssvm::solver_type::cg_explicit);
     EXPECT_CONVERSION_FROM_STRING("CG_Explicit", plssvm::solver_type::cg_explicit);
     EXPECT_CONVERSION_FROM_STRING("cg_implicit", plssvm::solver_type::cg_implicit);
