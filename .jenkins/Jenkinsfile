@@ -484,6 +484,11 @@ pipeline {
                             sh '''
                                 source $SGSSCRATCH/spack/share/spack/setup-env.sh
 
+                                if [ "TEST_TYPE" == BASE ]; then
+                                    echo "Only test the specific backends"
+                                    exit 0;
+                                fi
+
                                 cd ${WORKSPACE}/plssvm/tests/data/libsvm
                                 case $BACKEND in
                                     OPENCL|ADAPTIVECPP|DPCPP|STDPAR-NVHPC|STDPAR-DPCPP|STDPAR-ADAPTIVECPP)
