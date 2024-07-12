@@ -55,8 +55,7 @@ py::module_ init_adaptivecpp_csvm(py::module_ &m, const py::exception<plssvm::ex
                  return std::make_unique<plssvm::adaptivecpp::csvm>(target, params, plssvm::sycl_kernel_invocation_type = invoc);
              }),
              "create an SVM with the provided target platform and keyword arguments")
-        .def("get_kernel_invocation_type", &plssvm::adaptivecpp::csvm::get_kernel_invocation_type, "get the kernel invocation type used in this SYCL SVM")
-        .def("num_available_devices", &plssvm::adaptivecpp::csvm::num_available_devices, "the number of available devices");
+        .def("get_kernel_invocation_type", &plssvm::adaptivecpp::csvm::get_kernel_invocation_type, "get the kernel invocation type used in this SYCL SVM");
 
     // register AdaptiveCpp backend specific exceptions
     register_py_exception<plssvm::adaptivecpp::backend_exception>(adaptivecpp_module, "BackendError", base_exception);

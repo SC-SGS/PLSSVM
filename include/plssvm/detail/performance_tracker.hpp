@@ -317,9 +317,6 @@ void performance_tracker::add_tracking_entry(const tracking_entry<std::vector<T>
     }
 }
 
-/// The global performance tracker instance used for the default tracking.
-PLSSVM_EXTERN std::shared_ptr<performance_tracker> global_tracker;
-
 /**
  * @def PLSSVM_DETAIL_PERFORMANCE_TRACKER_PAUSE
  * @brief Defines the `PLSSVM_DETAIL_PERFORMANCE_TRACKER_PAUSE` macro if `PLSSVM_PERFORMANCE_TRACKER_ENABLED` is defined.
@@ -341,6 +338,9 @@ PLSSVM_EXTERN std::shared_ptr<performance_tracker> global_tracker;
  * @details Adds the provided entry to the `plssvm::detail::performance_tracker` singleton if performance tracking has been enabled during the CMake configuration.
  */
 #if defined(PLSSVM_PERFORMANCE_TRACKER_ENABLED)
+
+/// The global performance tracker instance used for the default tracking.
+PLSSVM_EXTERN std::shared_ptr<performance_tracker> global_tracker;
 
     #define PLSSVM_DETAIL_PERFORMANCE_TRACKER_PAUSE() \
         ::plssvm::detail::global_tracker->pause_tracking()

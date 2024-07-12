@@ -10,7 +10,7 @@
         - [plssvm.Parameter](#plssvmparameter)
         - [plssvm.DataSet](#plssvmdataset)
         - [plssvm.CSVM](#plssvmcsvm)
-        - [plssvm.openmp.CSVM, plssvm.cuda.CSVM, plssvm.hip.CSVM, plssvm.opencl.CSVM, plssvm.sycl.CSVM, plssvm.dpcpp.CSVM, plssvm.adaptivecpp.CSVM](#plssvmopenmpcsvm-plssvmcudacsvm-plssvmhipcsvm-plssvmopenclcsvm-plssvmsyclcsvm-plssvmdpcppcsvm-plssvmadaptivecppcsvm)
+        - [plssvm.openmp.CSVM, plssvm.stdpar.CSVM, plssvm.cuda.CSVM, plssvm.hip.CSVM, plssvm.opencl.CSVM, plssvm.sycl.CSVM, plssvm.dpcpp.CSVM, plssvm.adaptivecpp.CSVM](#plssvmopenmpcsvm-plssvmcudacsvm-plssvmhipcsvm-plssvmopenclcsvm-plssvmsyclcsvm-plssvmdpcppcsvm-plssvmadaptivecppcsvm)
         - [plssvm.Model](#plssvmmodel)
         - [plssvm.Version](#plssvmversion)
         - [plssvm.detail.PerformanceTracker](#plssvmdetailperformancetracker)
@@ -126,7 +126,7 @@ More detailed description of the class methods:
 
 - `get_params(deep=True)`: Get parameters for this estimator.
     - Parameters:
-        - `deep : bool, default=True`: If True, will return the parameters for this estimator and contained subobjects
+        - `deep : bool, default=True`: If True, will return the parameters for this estimator and contained sub-objects
           that are estimators. **Note**: not applicable, therefore, ignored.
     - Returns:
         - `params : dict`: Parameter names mapped to their values.
@@ -205,13 +205,19 @@ If a SYCL implementation is available, additional enumerations are available:
 | `ImplementationType`   | `AUTOMATIC`, `DPCPP`, `ADAPTIVECPP` | The different supported SYCL implementation types (default: `AUTOMATIC`). If `AUTOMATIC` is provided, determines the used SYCL implementation based on the value of `-DPLSSVM_SYCL_BACKEND_PREFERRED_IMPLEMENTATION` provided during PLSSVM'S build step. |
 | `KernelInvocationType` | `AUTOMATIC`, `ND_RANGE`             | The different supported SYCL kernel invocation types (default: `AUTOMATIC`). If `AUTOMATIC` is provided, simply uses `ND_RANGE` (only implemented to be able to add new invocation types in the future).                                                  |
 
+If the stdpar backend is available, an additional enumeration is available:
+
+| enumeration          | values                                                        | description                                     |
+|----------------------|---------------------------------------------------------------|-------------------------------------------------|
+| `ImplementationType` | `NVHPC`, `ROC_STDPAR`, `INTEL_LLVM`, `ADAPTIVECPP`, `GNU_TBB` | The different supported stdpar implementations. |
+
 ### Classes and submodules
 
 The following tables list all PLSSVM classes exposed on the Python side:
 
 #### `plssvm.Parameter`
 
-The parameter class encapsulates all necessary hyper-parameters needed to fit an SVM.
+The parameter class encapsulates all necessary hyperparameters needed to fit an SVM.
 
 | constructors                                                                                            | description                                                                      |
 |---------------------------------------------------------------------------------------------------------|----------------------------------------------------------------------------------|
@@ -329,24 +335,28 @@ If the most performant backend should be used, it is sufficient to use `plssvm.C
 `sycl_implementation_type` to choose between DPC++ and AdaptiveCpp as SYCL implementations
 and `sycl_kernel_invocation_type` to choose between the two different SYCL kernel invocation types.
 
-| methods                                                                                                                                      | description                                                                                                                                                                                                        |
-|----------------------------------------------------------------------------------------------------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `set_params(params)`                                                                                                                         | Replace the current `plssvm.Parameter` with the provided one.                                                                                                                                                      |
-| `set_params([kernel_type=KernelFunctionType.LINEAR, degree=3, gamma=*1/#features*, coef=0.0, cost=1.0])`                                     | Replace the current `plssvm.Parameter` values with the provided named parameters.                                                                                                                                  |
-| `get_params()`                                                                                                                               | Return the `plssvm.Parameter` that are used in the CSVM to learn the model.                                                                                                                                        |
-| `get_target_platform()`                                                                                                                      | Return the target platfrom this CSVM is running on.                                                                                                                                                                |
-| `fit(data_set, [epsilon=0.01, classification=plssvm.ClassificatioType.OAA, solver=plssvm.SolverType.AUTOMATIC, max_iter=*#datapoints - 1*])` | Learn a LSSVM model given the provided data points and optional parameters (the termination criterion in the CG algorithm, the classification strategy, the used solver, and the maximum number of CG iterations). |
-| `predict(model, data_set)`                                                                                                                   | Predict the labels of the data set using the previously learned model.                                                                                                                                             |
-| `score(model)`                                                                                                                               | Score the model with respect to itself returning its accuracy.                                                                                                                                                     |
-| `score(model, data_set)`                                                                                                                     | Score the model given the provided data set returning its accuracy.                                                                                                                                                |
+| methods                                                                                                                                      | description                                                                                                                                                                                                         |
+|----------------------------------------------------------------------------------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `set_params(params)`                                                                                                                         | Replace the current `plssvm.Parameter` with the provided one.                                                                                                                                                       |
+| `set_params([kernel_type=KernelFunctionType.LINEAR, degree=3, gamma=*1/#features*, coef=0.0, cost=1.0])`                                     | Replace the current `plssvm.Parameter` values with the provided named parameters.                                                                                                                                   |
+| `get_params()`                                                                                                                               | Return the `plssvm.Parameter` that are used in the CSVM to learn the model.                                                                                                                                         |
+| `get_target_platform()`                                                                                                                      | Return the target platform this CSVM is running on.                                                                                                                                                                 |
+| `num_available_devices()`                                                                                                                    | Return the number of available devices, i.e., if the target platform represents a GPU, this function returns the number of used GPUs. Returns always 1 for CPU only backends.                                       |
+| `fit(data_set, [epsilon=0.01, classification=plssvm.ClassificatioType.OAA, solver=plssvm.SolverType.AUTOMATIC, max_iter=*#datapoints - 1*])` | Learn a LS-SVM model given the provided data points and optional parameters (the termination criterion in the CG algorithm, the classification strategy, the used solver, and the maximum number of CG iterations). |
+| `predict(model, data_set)`                                                                                                                   | Predict the labels of the data set using the previously learned model.                                                                                                                                              |
+| `score(model)`                                                                                                                               | Score the model with respect to itself returning its accuracy.                                                                                                                                                      |
+| `score(model, data_set)`                                                                                                                     | Score the model given the provided data set returning its accuracy.                                                                                                                                                 |
 
-#### `plssvm.openmp.CSVM`, `plssvm.cuda.CSVM`, `plssvm.hip.CSVM`, `plssvm.opencl.CSVM`, `plssvm.sycl.CSVM`, `plssvm.dpcpp.CSVM`, `plssvm.adaptivecpp.CSVM`
+#### `plssvm.openmp.CSVM`, `plssvm.stdpar.CSVM`, plssvm.cuda.CSVM`, `plssvm.hip.CSVM`, `plssvm.opencl.CSVM`, `plssvm.sycl.CSVM`, `plssvm.dpcpp.CSVM`, `plssvm.adaptivecpp.CSVM`
 
 These classes represent the backend specific CSVMs.
 **Note**: they are only available if the respective backend has been enabled during PLSSVM's build step.
 **Note**: the `plssvm.sycl.CSVM` is equal to the respective `plssvm.dpcpp.CSVM` or `plssvm.adaptivecpp.CSVM` if only one
 SYCL implementation is available or the SYCL implementation defined by `-DPLSSVM_SYCL_BACKEND_PREFERRED_IMPLEMENTATION`
 during PLSSVM's build step.
+**Note**: when using `plssvm.stdpar.CSVM` together with AdaptiveCpp as stdpar implementation, currently only the CPU is
+supported as target.
+
 These classes inherit all methods from the base `plssvm.CSVM` class.
 
 | constructors                              | description                                                                                                                                  |
@@ -361,18 +371,19 @@ These classes inherit all methods from the base `plssvm.CSVM` class.
 In case of the SYCL CSVMs (`plssvm.sycl.CSVM`, `plssvm.dpcpp.CSVM`, and `plssvm.adaptivecpp.CSVM`) the additional named
 argument `sycl_kernel_invocation_type` to choose between the two different SYCL kernel invocation types can be provided.
 
-Except for the `plssvm.openmp.CSVM` the following methods are additional available for the backend specific CSVMs.
-
-| methods                   | description                                                                                                                           |
-|---------------------------|---------------------------------------------------------------------------------------------------------------------------------------|
-| `num_available_devices()` | Return the number of available devices, i.e., if the target platform represents a GPU, this function returns the number of used GPUs. |
-
 In case of the SYCL CSVMs (`plssvm.sycl.CSVM`, `plssvm.dpcpp.CSVM`, and `plssvm.adaptivecpp.CSVM`) the following methods
 are additional available for the backend specific CSVMs.
 
 | methods                        | description                             |
 |--------------------------------|-----------------------------------------|
 | `get_kernel_invocation_type()` | Return the SYCL kernel invocation type. |
+
+In case of the stdpar CSVM (`plssvm.stdpar.CSVM`) the following method is additional available for the backend specific
+CSVM.
+
+| methods                     | description                                 |
+|-----------------------------|---------------------------------------------|
+| `get_implementation_type()` | Return the used stdpar implementation type. |
 
 #### `plssvm.Model`
 
@@ -389,10 +400,10 @@ type.
 | methods                     | description                                                                                                                                                      |
 |-----------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | `save(filename)`            | Save the current model to the provided file.                                                                                                                     |
-| `num_support_vectors()`     | Return the number of support vectors. **Note**: for LSSVMs this corresponds to the number of training data points.                                               |
+| `num_support_vectors()`     | Return the number of support vectors. **Note**: for LS-SVMs this corresponds to the number of training data points.                                              |
 | `num_features()`            | Return the number of features each support vector has.                                                                                                           |
 | `get_params()`              | Return the `plssvm.Parameter` that were used to learn this model.                                                                                                |
-| `support_vectors()`         | Return the support vectors learned in this model. **Note**: for LSSVMs this corresponds to all training data points.                                             |
+| `support_vectors()`         | Return the support vectors learned in this model. **Note**: for LS-SVMs this corresponds to all training data points.                                            |
 | `labels()`                  | Return the labels of the support vectors.                                                                                                                        |
 | `num_classes()`             | Return the number of different classes.                                                                                                                          |
 | `weights()`                 | Return the learned weights.                                                                                                                                      |
@@ -414,7 +425,7 @@ A class encapsulating the version information of the used PLSSVM installation.
 
 #### `plssvm.detail.PerformanceTracker`
 
-A submodule used to track various performance statistics like runtimes, but also the used setup and hyper-parameters.
+A submodule used to track various performance statistics like runtimes, but also the used setup and hyperparameters.
 The tracked metrics can be saved to a YAML file for later post-processing.
 **Note**: only available if PLSSVM was built with `-DPLSSVM_ENABLE_PERFORMANCE_TRACKING=ON`!
 
@@ -426,7 +437,7 @@ The tracked metrics can be saved to a YAML file for later post-processing.
 | `resume()`                                         | Resume performance tracking.                                                     |
 | `save(filename)`                                   | Save all collected tracking information to the provided file.                    |
 | `is_tracking()`                                    | Check whether performance tracking is currently enabled.                         |
-| `clear_tracking_entries()`                         | Remove all currently trackend entries from the performance tracker.              |
+| `clear_tracking_entries()`                         | Remove all currently tracked entries from the performance tracker.               |
 
 ### Free functions
 
@@ -460,6 +471,12 @@ If a SYCL implementation is available, additional free functions are available:
 | function                                | description                                                                      |
 |-----------------------------------------|----------------------------------------------------------------------------------|
 | `list_available_sycl_implementations()` | List all available SYCL implementations (determined during PLSSVM's build step). |
+
+If a stdpar implementation is available, additional free functions are available:
+
+| function                                  | description                                                                                                                                   |
+|-------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------|
+| `list_available_stdpar_implementations()` | List all available stdpar implementations (determined during PLSSVM's build step; currently always guaranteed to be only one implementation). |
 
 ### Exceptions
 

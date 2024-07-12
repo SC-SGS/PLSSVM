@@ -23,6 +23,8 @@
 
 #include "bindings/Python/utility.hpp"  // check_kwargs_for_correctness, convert_kwargs_to_parameter
 
+#include "fmt/core.h"           // fmt::format
+#include "fmt/format.h"         // fmt::join
 #include "pybind11/pybind11.h"  // py::module_, py::class_, py::kwargs, py::overload_cast, py::const_
 
 #include <cstddef>      // std::size_t
@@ -156,7 +158,8 @@ void init_csvm(py::module_ &m) {
                 check_kwargs_for_correctness(args, { "kernel_type", "degree", "gamma", "coef0", "cost" });
                 // convert kwargs to parameter and update csvm internal parameter
                 self.set_params(convert_kwargs_to_parameter(args, self.get_params())); }, "update the parameter used for this SVM using keyword arguments")
-        .def("get_target_platform", &plssvm::csvm::get_target_platform, "get the actual target platform this SVM runs on");
+        .def("get_target_platform", &plssvm::csvm::get_target_platform, "get the actual target platform this SVM runs on")
+        .def("num_available_devices", &plssvm::csvm::num_available_devices, "get the number of available devices for the current SVM");
 
     // instantiate all functions using all available label_type
     instantiate_model_bindings<plssvm::detail::supported_label_types>(pycsvm);

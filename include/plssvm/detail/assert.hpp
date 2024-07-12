@@ -59,18 +59,10 @@ inline void check_assertion(const bool cond, const std::string_view cond_str, co
 }
 
 /**
- * @def PLSSVM_ASSERT_ENABLED
- * @brief Defines the `PLSSVM_ASSERT_ENABLED` macro if `PLSSVM_ENABLE_ASSERTS` is defined and `NDEBUG` is **not** defined (in DEBUG mode).
- */
-#if defined(PLSSVM_ENABLE_ASSERTS) || !defined(NDEBUG)
-    #define PLSSVM_ASSERT_ENABLED 1
-#endif
-
-/**
  * @def PLSSVM_ASSERT
- * @brief Defines the `PLSSVM_ASSERT` macro if `PLSSVM_ASSERT_ENABLED` is defined, does nothing otherwise.
+ * @brief Defines the `PLSSVM_ASSERT` macro if `PLSSVM_ENABLE_ASSERTS` is defined, does nothing otherwise.
  */
-#if defined(PLSSVM_ASSERT_ENABLED)
+#if defined(PLSSVM_ENABLE_ASSERTS)
     #define PLSSVM_ASSERT(cond, msg, ...) plssvm::detail::check_assertion((cond), (#cond), plssvm::source_location::current(), (msg), ##__VA_ARGS__)
 #else
     #define PLSSVM_ASSERT(cond, msg, ...)

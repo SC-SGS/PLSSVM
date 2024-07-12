@@ -74,6 +74,7 @@ endif ()
 set(PLSSVM_BASE_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/backends/SYCL/implementation_types.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/backends/SYCL/kernel_invocation_types.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/backends/stdpar/implementation_types.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/backends/execution_range.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/detail/cmd/parser_predict.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/detail/cmd/parser_scale.cpp
@@ -133,7 +134,7 @@ target_compile_options(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC
                        -Wnull-dereference -Wnon-virtual-dtor -Wextra-semi -Wunreachable-code -Wuninitialized -Wno-ctor-dtor-privacy
                        -fPIC>
                        $<$<COMPILE_LANG_AND_ID:CXX,GNU>:-Wsuggest-override -Wstrict-null-sentinel -Wlogical-op -Wduplicated-branches -Wimplicit-fallthrough=5>
-                       $<$<COMPILE_LANG_AND_ID:CXX,Clang>:-Wdocumentation -Wmost>
+                       $<$<COMPILE_LANG_AND_ID:CXX,Clang>:-Wmost>
                        $<$<COMPILE_LANG_AND_ID:CXX,MSVC>:/W4 /bigobj /wd4459 /Zc:lambda>>
 )
 
@@ -178,164 +179,6 @@ if (PLSSVM_ENABLE_STL_DEBUG_MODE)
     message(STATUS "Enable standard library debug modes.")
     target_compile_definitions(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC ${PLSSVM_STL_DEBUG_MODE_FLAGS})
 endif ()
-
-########################################################################################################################
-##                                    check for optional and necessary dependencies                                   ##
-########################################################################################################################
-# check for OpenMP (not for the backend!)
-find_package(OpenMP 4.0 QUIET)
-if (OpenMP_FOUND)
-    message(STATUS "Found OpenMP ${OpenMP_CXX_VERSION} to speed-up library utilities (like file parsing).")
-    set(PLSSVM_FOUND_OPENMP_FOR_UTILITY "${OpenMP_CXX_VERSION}")
-    target_link_libraries(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC $<$<NOT:$<CXX_COMPILER_ID:MSVC>>:OpenMP::OpenMP_CXX>)
-    target_compile_options(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC $<$<CXX_COMPILER_ID:MSVC>:-openmp:llvm -openmp:experimental>)
-else ()
-    # disable warning for unknown OpenMP pragmas if no OpenMP could be found
-    target_compile_options(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC
-                           $<$<COMPILE_LANG_AND_ID:CXX,GNU,Clang>:-Wno-unknown-pragmas>
-                           $<$<COMPILE_LANG_AND_ID:CXX,MSVC>:/wd4068>
-    )
-endif ()
-
-## setup dependencies
-include(FetchContent)
-list(APPEND CMAKE_MESSAGE_INDENT "Dependencies:  ")
-
-## try finding cxxopts
-find_package(cxxopts 3.2.0 QUIET)
-if (cxxopts_FOUND)
-    message(STATUS "Found package cxxopts.")
-    target_include_directories(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC ${cxxopts_INCLUDE_DIR})
-else ()
-    message(STATUS "Couldn't find package cxxopts. Building from source ...")
-    set(PLSSVM_cxxopts_VERSION v3.2.0)
-    # set options for cxxopts
-    set(CXXOPTS_BUILD_EXAMPLES OFF CACHE INTERNAL "" FORCE)
-    set(CXXOPTS_BUILD_TESTS OFF CACHE INTERNAL "" FORCE)
-    set(CXXOPTS_ENABLE_WARNINGS OFF CACHE INTERNAL "" FORCE)
-    # fetch command line parser library cxxopts
-    FetchContent_Declare(cxxopts
-                         GIT_REPOSITORY https://github.com/jarro2783/cxxopts.git
-                         GIT_TAG ${PLSSVM_cxxopts_VERSION}
-                         QUIET
-    )
-    FetchContent_MakeAvailable(cxxopts)
-    add_dependencies(${PLSSVM_BASE_LIBRARY_NAME} cxxopts)
-    target_include_directories(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC
-                               $<BUILD_INTERFACE:${cxxopts_SOURCE_DIR}/include>
-                               $<INSTALL_INTERFACE:include>
-    )
-    message(STATUS "Installing cxxopts version ${PLSSVM_cxxopts_VERSION}.")
-endif ()
-
-## try finding fast_float
-find_package(fast_float QUIET)
-if (fast_float_FOUND)
-    # TODO: get used fast_float version
-    message(STATUS "Found package fast_float.")
-    target_include_directories(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC ${fast_float_INCLUDE_DIR})
-else ()
-    message(STATUS "Couldn't find package fast_float. Building from source ...")
-    set(PLSSVM_fast_float_VERSION v6.1.1)
-    target_compile_definitions(${PLSSVM_BASE_LIBRARY_NAME} PRIVATE PLSSVM_fast_float_VERSION="${PLSSVM_fast_float_VERSION}")
-    # set options for fast_float
-    set(FASTFLOAT_TEST OFF CACHE INTERNAL "" FORCE)
-    set(FASTFLOAT_SANITIZE OFF CACHE INTERNAL "" FORCE)
-    # fetch float parsing library fast_float
-    FetchContent_Declare(fast_float
-                         GIT_REPOSITORY https://github.com/fastfloat/fast_float
-                         GIT_TAG ${PLSSVM_fast_float_VERSION}
-                         QUIET
-    )
-    FetchContent_GetProperties(fast_float)
-    if (NOT fast_float_POPULATED)
-        FetchContent_Populate(fast_float)
-        add_subdirectory(${fast_float_SOURCE_DIR} EXCLUDE_FROM_ALL)
-    endif ()
-    add_dependencies(${PLSSVM_BASE_LIBRARY_NAME} fast_float)
-    target_include_directories(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC
-                               $<BUILD_INTERFACE:${fast_float_SOURCE_DIR}/include>
-                               $<INSTALL_INTERFACE:include>
-    )
-    message(STATUS "Installing fast_float version ${PLSSVM_fast_float_VERSION}.")
-endif ()
-
-## try finding igor
-find_package(igor QUIET)
-if (igor_FOUND)
-    # TODO: get used igor version
-    message(STATUS "Found package igor.")
-    target_include_directories(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC ${igor_INCLUDE_DIR})
-else ()
-    message(STATUS "Couldn't find package igor. Building from source ...")
-    set(PLSSVM_igor_VERSION a5224c60d266974d3f407191583fe266cbe1c93d)
-    target_compile_definitions(${PLSSVM_BASE_LIBRARY_NAME} PRIVATE PLSSVM_igor_VERSION="${PLSSVM_igor_VERSION}")
-    # set options for igor
-    set(IGOR_BUILD_TESTS OFF CACHE INTERNAL "" FORCE)
-    # fetch named argument library igor
-    FetchContent_Declare(igor
-                         GIT_REPOSITORY https://github.com/bluescarni/igor
-                         GIT_TAG ${PLSSVM_igor_VERSION}
-                         QUIET
-    )
-    FetchContent_GetProperties(igor)
-    if (NOT igor_POPULATED)
-        FetchContent_Populate(igor)
-        add_subdirectory(${igor_SOURCE_DIR} EXCLUDE_FROM_ALL)
-    endif ()
-    add_dependencies(${PLSSVM_BASE_LIBRARY_NAME} igor)
-    target_include_directories(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC
-                               $<BUILD_INTERFACE:${igor_SOURCE_DIR}/include>
-                               $<INSTALL_INTERFACE:include>
-    )
-    list(APPEND PLSSVM_TARGETS_TO_INSTALL "igor")
-    message(STATUS "Installing igor version ${PLSSVM_igor_VERSION}.")
-endif ()
-
-## try finding fmt
-find_package(fmt 10.2.1 QUIET)
-if (fmt_FOUND)
-    message(STATUS "Found package fmt.")
-else ()
-    message(STATUS "Couldn't find package fmt. Building from source ...")
-    set(PLSSVM_fmt_VERSION 10.2.1)
-    # set options for fmt
-    if (PLSSVM_ENABLE_STL_DEBUG_MODE)
-        set(CMAKE_CXX_FLAGS_OLD "${CMAKE_CXX_FLAGS}")
-        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${PLSSVM_STL_DEBUG_MODE_FLAGS}")
-    endif ()
-    set(FMT_PEDANTIC OFF CACHE INTERNAL "" FORCE)
-    set(FMT_WERROR OFF CACHE INTERNAL "" FORCE)
-    set(FMT_DOC OFF CACHE INTERNAL "" FORCE)
-    set(FMT_INSTALL ON CACHE INTERNAL "" FORCE) # let {fmt} handle the install target
-    set(FMT_TEST OFF CACHE INTERNAL "" FORCE)
-    set(FMT_FUZZ OFF CACHE INTERNAL "" FORCE)
-    set(FMT_CUDA_TEST OFF CACHE INTERNAL "" FORCE)
-    set(FMT_MODULE OFF CACHE INTERNAL "" FORCE)
-    set(FMT_SYSTEM_HEADERS ON CACHE INTERNAL "" FORCE)
-    # fetch string formatting library fmt
-    FetchContent_Declare(fmt
-                         GIT_REPOSITORY https://github.com/fmtlib/fmt.git
-                         GIT_TAG ${PLSSVM_fmt_VERSION}
-                         QUIET
-    )
-    FetchContent_MakeAvailable(fmt)
-    set_property(TARGET fmt PROPERTY POSITION_INDEPENDENT_CODE ON)
-    target_compile_definitions(fmt PRIVATE FMT_USE_FULL_CACHE_DRAGONBOX)
-    add_dependencies(${PLSSVM_BASE_LIBRARY_NAME} fmt)
-    target_include_directories(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC
-                               $<BUILD_INTERFACE:${fmt_SOURCE_DIR}/include>
-                               $<INSTALL_INTERFACE:include>
-    )
-    # append fmt to installed targets if build from source
-    message(STATUS "Installing {fmt} version ${PLSSVM_fmt_VERSION}.")
-    if (PLSSVM_ENABLE_STL_DEBUG_MODE)
-        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS_OLD}")
-    endif ()
-endif ()
-target_link_libraries(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC fmt::fmt)
-
-list(POP_BACK CMAKE_MESSAGE_INDENT)
 
 ########################################################################################################################
 ##                                                 create executables                                                 ##
@@ -503,6 +346,13 @@ if (PLSSVM_ENABLE_OPENMP_BACKEND MATCHES "AUTO" OR PLSSVM_ENABLE_OPENMP_BACKEND)
     add_subdirectory(src/plssvm/backends/OpenMP)
 endif ()
 
+## check for stdpar backend
+set(PLSSVM_ENABLE_STDPAR_BACKEND AUTO CACHE STRING "Enable stdpar Backend")
+set_property(CACHE PLSSVM_ENABLE_STDPAR_BACKEND PROPERTY STRINGS AUTO ON OFF)
+if (PLSSVM_ENABLE_STDPAR_BACKEND MATCHES "AUTO" OR PLSSVM_ENABLE_STDPAR_BACKEND)
+    add_subdirectory(src/plssvm/backends/stdpar)
+endif ()
+
 ## check for CUDA backend
 set(PLSSVM_ENABLE_CUDA_BACKEND AUTO CACHE STRING "Enable CUDA Backend")
 set_property(CACHE PLSSVM_ENABLE_CUDA_BACKEND PROPERTY STRINGS AUTO ON OFF)
@@ -535,6 +385,14 @@ endif ()
 get_target_property(PLSSVM_LINKED_BACKENDS ${PLSSVM_ALL_LIBRARY_NAME} INTERFACE_LINK_LIBRARIES)
 if (NOT PLSSVM_LINKED_BACKENDS)
     message(FATAL_ERROR "At least one backend must be available!")
+elseif (PLSSVM_STDPAR_BACKEND_LIBRARY_NAME AND PLSSVM_LINKED_BACKENDS MATCHES "${PLSSVM_STDPAR_BACKEND_LIBRARY_NAME}")
+    # count the occurrences of "plssvm-"
+    string(REGEX MATCHALL "plssvm-" PLSSVM_MATCHED_LINKED_BACKENDS "${PLSSVM_LINKED_BACKENDS}")
+    list(LENGTH PLSSVM_MATCHED_LINKED_BACKENDS PLSSVM_NUM_MATCHED_LINKED_BACKENDS)
+    # if plssvm-stdpar has been found and plssvm- occurred more than once, some other backend is present which is currently not supported!
+    if (PLSSVM_NUM_MATCHED_LINKED_BACKENDS GREATER 1)
+        message(FATAL_ERROR "Found the stdpar backend together with some other backend(s). This is currently not supported!\nTo fix this, either disable the stdpar backend or all other backends!")
+    endif ()
 endif ()
 
 ## link backends against executables
@@ -633,11 +491,164 @@ if (PLSSVM_ENABLE_LTO)
 endif ()
 
 ########################################################################################################################
+##                                    check for optional and necessary dependencies                                   ##
+########################################################################################################################
+# check for OpenMP (not for the backend!)
+find_package(OpenMP 4.0 QUIET)
+if (OpenMP_FOUND)
+    message(STATUS "Found OpenMP ${OpenMP_CXX_VERSION} to speed-up library utilities (like file parsing).")
+    set(PLSSVM_FOUND_OPENMP_FOR_UTILITY ON)
+    target_link_libraries(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC $<$<NOT:$<CXX_COMPILER_ID:MSVC>>:OpenMP::OpenMP_CXX>)
+    target_compile_options(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC $<$<CXX_COMPILER_ID:MSVC>:-openmp:llvm -openmp:experimental>)
+else ()
+    # disable warning for unknown OpenMP pragmas if no OpenMP could be found
+    target_compile_options(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC
+                           $<$<COMPILE_LANG_AND_ID:CXX,GNU,Clang>:-Wno-unknown-pragmas>
+                           $<$<COMPILE_LANG_AND_ID:CXX,MSVC>:/wd4068>
+    )
+endif ()
+
+## setup dependencies
+include(FetchContent)
+list(APPEND CMAKE_MESSAGE_INDENT "Dependencies:  ")
+
+## try finding cxxopts
+set(PLSSVM_cxxopts_VERSION v3.2.0)
+find_package(cxxopts 3.2.0 QUIET)
+if (cxxopts_FOUND)
+    message(STATUS "Found package cxxopts.")
+    target_include_directories(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC ${cxxopts_INCLUDE_DIR})
+else ()
+    message(STATUS "Couldn't find package cxxopts. Building version ${PLSSVM_cxxopts_VERSION} from source.")
+    # set options for cxxopts
+    set(CXXOPTS_BUILD_EXAMPLES OFF CACHE INTERNAL "" FORCE)
+    set(CXXOPTS_BUILD_TESTS OFF CACHE INTERNAL "" FORCE)
+    set(CXXOPTS_ENABLE_WARNINGS OFF CACHE INTERNAL "" FORCE)
+    # fetch command line parser library cxxopts
+    FetchContent_Declare(cxxopts
+                         GIT_REPOSITORY https://github.com/jarro2783/cxxopts.git
+                         GIT_TAG ${PLSSVM_cxxopts_VERSION}
+                         QUIET
+    )
+    FetchContent_MakeAvailable(cxxopts)
+    add_dependencies(${PLSSVM_BASE_LIBRARY_NAME} cxxopts)
+    target_include_directories(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC
+                               $<BUILD_INTERFACE:${cxxopts_SOURCE_DIR}/include>
+                               $<INSTALL_INTERFACE:include>
+    )
+endif ()
+
+## try finding fast_float
+set(PLSSVM_fast_float_VERSION v6.1.1)
+find_package(fast_float QUIET)
+if (fast_float_FOUND)
+    # TODO: get used fast_float version
+    message(STATUS "Found package fast_float.")
+    target_include_directories(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC ${fast_float_INCLUDE_DIR})
+else ()
+    message(STATUS "Couldn't find package fast_float. Building version ${PLSSVM_fast_float_VERSION} from source.")
+    target_compile_definitions(${PLSSVM_BASE_LIBRARY_NAME} PRIVATE PLSSVM_fast_float_VERSION="${PLSSVM_fast_float_VERSION}")
+    # set options for fast_float
+    set(FASTFLOAT_TEST OFF CACHE INTERNAL "" FORCE)
+    set(FASTFLOAT_SANITIZE OFF CACHE INTERNAL "" FORCE)
+    # fetch float parsing library fast_float
+    FetchContent_Declare(fast_float
+                         GIT_REPOSITORY https://github.com/fastfloat/fast_float
+                         GIT_TAG ${PLSSVM_fast_float_VERSION}
+                         QUIET
+    )
+    FetchContent_GetProperties(fast_float)
+    if (NOT fast_float_POPULATED)
+        FetchContent_Populate(fast_float)
+        add_subdirectory(${fast_float_SOURCE_DIR} EXCLUDE_FROM_ALL)
+    endif ()
+    add_dependencies(${PLSSVM_BASE_LIBRARY_NAME} fast_float)
+    target_include_directories(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC
+                               $<BUILD_INTERFACE:${fast_float_SOURCE_DIR}/include>
+                               $<INSTALL_INTERFACE:include>
+    )
+endif ()
+
+## try finding igor
+set(PLSSVM_igor_VERSION a5224c60d266974d3f407191583fe266cbe1c93d)
+find_package(igor QUIET)
+if (igor_FOUND)
+    # TODO: get used igor version
+    message(STATUS "Found package igor.")
+    target_include_directories(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC ${igor_INCLUDE_DIR})
+else ()
+    message(STATUS "Couldn't find package igor. Building version ${PLSSVM_igor_VERSION} from source.")
+    target_compile_definitions(${PLSSVM_BASE_LIBRARY_NAME} PRIVATE PLSSVM_igor_VERSION="${PLSSVM_igor_VERSION}")
+    # set options for igor
+    set(IGOR_BUILD_TESTS OFF CACHE INTERNAL "" FORCE)
+    # fetch named argument library igor
+    FetchContent_Declare(igor
+                         GIT_REPOSITORY https://github.com/bluescarni/igor
+                         GIT_TAG ${PLSSVM_igor_VERSION}
+                         QUIET
+    )
+    FetchContent_GetProperties(igor)
+    if (NOT igor_POPULATED)
+        FetchContent_Populate(igor)
+        add_subdirectory(${igor_SOURCE_DIR} EXCLUDE_FROM_ALL)
+    endif ()
+    add_dependencies(${PLSSVM_BASE_LIBRARY_NAME} igor)
+    target_include_directories(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC
+                               $<BUILD_INTERFACE:${igor_SOURCE_DIR}/include>
+                               $<INSTALL_INTERFACE:include>
+    )
+    list(APPEND PLSSVM_TARGETS_TO_INSTALL "igor")
+endif ()
+
+## try finding fmt
+set(PLSSVM_fmt_VERSION 10.2.1)
+find_package(fmt 10.2.1 QUIET)
+if (fmt_FOUND)
+    message(STATUS "Found package fmt.")
+else ()
+    message(STATUS "Couldn't find package fmt. Building version ${PLSSVM_fmt_VERSION} from source.")
+    # set options for fmt
+    set(CMAKE_CXX_FLAGS_OLD "${CMAKE_CXX_FLAGS}")
+    if (PLSSVM_ENABLE_STL_DEBUG_MODE)
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${PLSSVM_STL_DEBUG_MODE_FLAGS}")
+    endif ()
+    set(FMT_PEDANTIC OFF CACHE INTERNAL "" FORCE)
+    set(FMT_WERROR OFF CACHE INTERNAL "" FORCE)
+    set(FMT_DOC OFF CACHE INTERNAL "" FORCE)
+    set(FMT_INSTALL ON CACHE INTERNAL "" FORCE) # let {fmt} handle the install target
+    set(FMT_TEST OFF CACHE INTERNAL "" FORCE)
+    set(FMT_FUZZ OFF CACHE INTERNAL "" FORCE)
+    set(FMT_CUDA_TEST OFF CACHE INTERNAL "" FORCE)
+    set(FMT_MODULE OFF CACHE INTERNAL "" FORCE)
+    set(FMT_SYSTEM_HEADERS ON CACHE INTERNAL "" FORCE)
+    # fetch string formatting library fmt
+    FetchContent_Declare(fmt
+                         GIT_REPOSITORY https://github.com/fmtlib/fmt.git
+                         GIT_TAG ${PLSSVM_fmt_VERSION}
+                         QUIET
+    )
+    FetchContent_MakeAvailable(fmt)
+    set_property(TARGET fmt PROPERTY POSITION_INDEPENDENT_CODE ON)
+    target_compile_definitions(fmt PRIVATE FMT_USE_FULL_CACHE_DRAGONBOX)
+    add_dependencies(${PLSSVM_BASE_LIBRARY_NAME} fmt)
+    target_include_directories(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC
+                               $<BUILD_INTERFACE:${fmt_SOURCE_DIR}/include>
+                               $<INSTALL_INTERFACE:include>
+    )
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS_OLD}")
+endif ()
+target_link_libraries(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC fmt::fmt)
+
+list(POP_BACK CMAKE_MESSAGE_INDENT)
+
+########################################################################################################################
 ##                                    enable documentation generation via doxygen                                     ##
 ########################################################################################################################
 option(PLSSVM_ENABLE_DOCUMENTATION "Build documentation using doxygen." OFF)
 if (PLSSVM_ENABLE_DOCUMENTATION)
     add_subdirectory(docs)
+    # if documentation is enabled, add documentation warning flag when compiling with clang
+    target_compile_options(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC $<$<COMPILE_LANG_AND_ID:CXX,Clang>:-Wdocumentation>)
 endif ()
 
 ########################################################################################################################
@@ -666,6 +677,10 @@ set(PLSSVM_BACKEND_NAME_LIST "automatic")
 if (TARGET ${PLSSVM_OPENMP_BACKEND_LIBRARY_NAME})
     message(STATUS "${PLSSVM_OPENMP_BACKEND_SUMMARY_STRING}")
     list(APPEND PLSSVM_BACKEND_NAME_LIST "openmp")
+endif ()
+if (TARGET ${PLSSVM_STDPAR_BACKEND_LIBRARY_NAME})
+    message(STATUS "${PLSSVM_STDPAR_BACKEND_SUMMARY_STRING}")
+    list(APPEND PLSSVM_BACKEND_NAME_LIST "stdpar")
 endif ()
 if (TARGET ${PLSSVM_CUDA_BACKEND_LIBRARY_NAME})
     message(STATUS "${PLSSVM_CUDA_BACKEND_SUMMARY_STRING}")
@@ -811,5 +826,6 @@ install(FILES
         "${CMAKE_CURRENT_SOURCE_DIR}/cmake/plssvm/plssvmOpenMPTargets.cmake"
         "${CMAKE_CURRENT_SOURCE_DIR}/cmake/plssvm/plssvmAdaptiveCppTargets.cmake"
         "${CMAKE_CURRENT_SOURCE_DIR}/cmake/plssvm/plssvmDPCPPTargets.cmake"
+        "${CMAKE_CURRENT_SOURCE_DIR}/cmake/plssvm/plssvmstdparTargets.cmake"
         DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/plssvm/cmake
 )

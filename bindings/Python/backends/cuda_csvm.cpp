@@ -13,7 +13,7 @@
 #include "plssvm/parameter.hpp"                 // plssvm::parameter
 #include "plssvm/target_platforms.hpp"          // plssvm::target_platform
 
-#include "bindings/Python//utility.hpp"  // check_kwargs_for_correctness, convert_kwargs_to_parameter, register_py_exception
+#include "bindings/Python/utility.hpp"  // check_kwargs_for_correctness, convert_kwargs_to_parameter, register_py_exception
 
 #include "pybind11/pybind11.h"  // py::module_, py::class_, py::init
 #include "pybind11/stl.h"       // support for STL types
@@ -49,8 +49,7 @@ void init_cuda_csvm(py::module_ &m, const py::exception<plssvm::exception> &base
                  // create CSVM with the provided target platform
                  return std::make_unique<plssvm::cuda::csvm>(target, params);
              }),
-             "create an SVM with the provided target platform and keyword arguments")
-        .def("num_available_devices", &plssvm::cuda::csvm::num_available_devices, "the number of available devices");
+             "create an SVM with the provided target platform and keyword arguments");
 
     // register CUDA backend specific exceptions
     register_py_exception<plssvm::cuda::backend_exception>(cuda_module, "BackendError", base_exception);
