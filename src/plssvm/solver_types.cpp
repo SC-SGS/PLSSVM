@@ -34,7 +34,7 @@ std::istream &operator>>(std::istream &in, solver_type &solving) {
     in >> str;
     detail::to_lower_case(str);
 
-    if (str == "automatic") {
+    if (str == "automatic" || str == "auto") {
         solving = solver_type::automatic;
     } else if (str == "cg_explicit") {
         solving = solver_type::cg_explicit;

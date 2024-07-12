@@ -33,6 +33,8 @@ TEST(SYCLKernelInvocationType, from_string) {
     // check conversion from std::string
     EXPECT_CONVERSION_FROM_STRING("automatic", plssvm::sycl::kernel_invocation_type::automatic);
     EXPECT_CONVERSION_FROM_STRING("AUTOMATIC", plssvm::sycl::kernel_invocation_type::automatic);
+    EXPECT_CONVERSION_FROM_STRING("auto", plssvm::sycl::kernel_invocation_type::automatic);
+    EXPECT_CONVERSION_FROM_STRING("AUTO", plssvm::sycl::kernel_invocation_type::automatic);
     EXPECT_CONVERSION_FROM_STRING("nd_range", plssvm::sycl::kernel_invocation_type::nd_range);
     EXPECT_CONVERSION_FROM_STRING("ND_RANGE", plssvm::sycl::kernel_invocation_type::nd_range);
 }

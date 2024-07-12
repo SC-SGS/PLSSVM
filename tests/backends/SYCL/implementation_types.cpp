@@ -34,6 +34,8 @@ TEST(SYCLImplementationType, from_string) {
     // check conversion from std::string
     EXPECT_CONVERSION_FROM_STRING("automatic", plssvm::sycl::implementation_type::automatic);
     EXPECT_CONVERSION_FROM_STRING("AUTOMATIC", plssvm::sycl::implementation_type::automatic);
+    EXPECT_CONVERSION_FROM_STRING("auto", plssvm::sycl::implementation_type::automatic);
+    EXPECT_CONVERSION_FROM_STRING("AUTO", plssvm::sycl::implementation_type::automatic);
     EXPECT_CONVERSION_FROM_STRING("AdaptiveCpp", plssvm::sycl::implementation_type::adaptivecpp);
     EXPECT_CONVERSION_FROM_STRING("ADAPTIVECPP", plssvm::sycl::implementation_type::adaptivecpp);
     EXPECT_CONVERSION_FROM_STRING("ACPP", plssvm::sycl::implementation_type::adaptivecpp);
