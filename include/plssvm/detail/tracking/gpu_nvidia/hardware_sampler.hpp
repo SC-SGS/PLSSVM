@@ -18,7 +18,7 @@
 #include "plssvm/detail/tracking/hardware_sampler.hpp"               // plssvm::detail::tracking::hardware_sampler
 #include "plssvm/target_platforms.hpp"                               // plssvm::target_platform
 
-#include "fmt/core.h"     // fmt::formatter
+#include "fmt/base.h"     // fmt::formatter
 #include "fmt/ostream.h"  // fmt::ostream_formatter
 
 #include <atomic>   // std::atomic

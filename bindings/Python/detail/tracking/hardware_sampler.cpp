@@ -27,10 +27,10 @@
 
 #include "bindings/Python/utility.hpp"  // register_py_exception
 
-#include "fmt/core.h"           // fmt::format
+#include "fmt/format.h"         // fmt::format
 #include "pybind11/pybind11.h"  // py::module_, py::class_
 
-#include <chrono>   // std::chrono::milliseconds
+#include <chrono>   // std::chrono::milliseconds, std::chrono_literals namespace
 #include <cstddef>  // std::size_t
 
 namespace py = pybind11;
@@ -62,7 +62,8 @@ void init_hardware_sampler(py::module_ &m, const py::exception<plssvm::exception
              }),
              "create a hardware sampler for the provided target using the given device ID and sampling interval")
         .def(py::init([](const plssvm::target_platform target, const std::size_t device_id) {
-                 return plssvm::detail::tracking::make_hardware_sampler(target, device_id);
+                 using namespace std::chrono_literals;
+                 return plssvm::detail::tracking::make_hardware_sampler(target, device_id, PLSSVM_HARDWARE_SAMPLING_INTERVAL);
              }),
              "create a hardware sampler for the provided target using the given device ID")
         .def("__repr__", [](const plssvm::detail::tracking::hardware_sampler &self) {

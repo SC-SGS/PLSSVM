@@ -10,7 +10,7 @@
 #include "plssvm/detail/tracking/gpu_nvidia/nvml_samples.hpp"      // plssvm::detail::tracking::{nvml_general_samples, nvml_clock_samples, nvml_power_samples, nvml_memory_samples, nvml_temperature_samples}
 #include "plssvm/detail/tracking/hardware_sampler.hpp"             // plssvm::detail::tracking::hardware_sampler
 
-#include "fmt/core.h"           // fmt::format
+#include "fmt/format.h"         // fmt::format
 #include "pybind11/chrono.h"    // automatic bindings for std::chrono::milliseconds
 #include "pybind11/pybind11.h"  // py::module_
 #include "pybind11/stl.h"       // automatic bindings for std::optional and std::vector

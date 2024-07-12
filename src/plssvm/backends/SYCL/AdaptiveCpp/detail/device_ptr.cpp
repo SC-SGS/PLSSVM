@@ -17,7 +17,7 @@
 
 #include "sycl/sycl.hpp"  // ::sycl::malloc_device, ::sycl::free
 
-#include "fmt/core.h"  // fmt::format
+#include "fmt/format.h"  // fmt::format
 
 #include <algorithm>  // std::min
 #include <cstring>    // std::memcpy

@@ -15,7 +15,8 @@
 
 #include "plssvm/exceptions/exceptions.hpp"  // plssvm::exception
 
-#include "fmt/core.h"     // fmt::format, fmt::formatter
+#include "fmt/base.h"     // fmt::formatter
+#include "fmt/format.h"   // fmt::format
 #include "fmt/ostream.h"  // fmt::ostream_formatter
 
 #include <cstddef>     // std::size_t

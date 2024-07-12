@@ -22,7 +22,7 @@
 #include "plssvm/solver_types.hpp"                           // plssvm::solving_type
 #include "plssvm/target_platforms.hpp"                       // plssvm::target_platform
 
-#include "fmt/core.h"     // fmt::formatter
+#include "fmt/base.h"     // fmt::formatter
 #include "fmt/ostream.h"  // mt::ostream_formatter
 
 #include <cstddef>  // std::size_t

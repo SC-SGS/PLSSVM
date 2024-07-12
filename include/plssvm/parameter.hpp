@@ -21,7 +21,8 @@
 #include "plssvm/kernel_function_types.hpp"                        // plssvm::kernel_function_type, plssvm::kernel_function_type_to_math_string
 #include "plssvm/verbosity_levels.hpp"                             // plssvm::verbosity_level, plssvm::verbosity
 
-#include "fmt/core.h"     // fmt::format, fmt::formatter
+#include "fmt/base.h"     // fmt::formatter
+#include "fmt/format.h"   // fmt::format
 #include "fmt/ostream.h"  // fmt::ostream_formatter
 #include "igor/igor.hpp"  // IGOR_MAKE_NAMED_ARGUMENT, igor::parser, igor::has_unnamed_arguments, igor::has_other_than
 
@@ -211,7 +212,7 @@ struct parameter {
             } else {
                 gamma = detail::get_value_from_named_parameter<real_type>(parser, plssvm::gamma);
             }
-            
+
             // runtime check: the value may only be used with a specific kernel type
             if (kernel_type == kernel_function_type::linear) {
                 print_warning("gamma", kernel_type);

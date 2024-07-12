@@ -8,7 +8,7 @@
 
 #include "plssvm/shape.hpp"
 
-#include "fmt/core.h"  // fmt::format
+#include "fmt/format.h"  // fmt::format
 
 #include <algorithm>  // std::swap
 #include <cstddef>    // std::size_t

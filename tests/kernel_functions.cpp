@@ -23,7 +23,7 @@
 #include "tests/types_to_test.hpp"          // util::{real_type_gtest, test_parameter_type_at_t, test_parameter_value_at_v}
 #include "tests/utility.hpp"                // util::{generate_random_vector, generate_random_matrix}
 
-#include "fmt/core.h"     // fmt::format
+#include "fmt/format.h"   // fmt::format
 #include "gtest/gtest.h"  // TEST, TYPED_TEST, TYPED_TEST_SUITE, EXPECT_EQ, EXPECT_TRUE, EXPECT_FALSE, EXPECT_DEATH, SCOPED_TRACE, ::testing::Test
 
 #include <array>    // std::array

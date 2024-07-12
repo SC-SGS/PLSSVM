@@ -550,8 +550,8 @@ else ()
 endif ()
 
 ## try finding fmt
-set(PLSSVM_fmt_VERSION 10.2.1)
-find_package(fmt 10.2.1 QUIET)
+set(PLSSVM_fmt_VERSION 11.0.1)
+find_package(fmt 11.0.1 QUIET)
 if (fmt_FOUND)
     message(STATUS "Found package fmt.")
 else ()

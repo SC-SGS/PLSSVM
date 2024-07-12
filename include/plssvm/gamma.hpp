@@ -17,7 +17,7 @@
 #include "plssvm/detail/operators.hpp"  // plssvm::operators namespace
 #include "plssvm/matrix.hpp"            // plssvm::matrix, plssvm::layout_type, plssvm::variance
 
-#include "fmt/core.h"     // fmt::formatter
+#include "fmt/base.h"     // fmt::formatter
 #include "fmt/ostream.h"  // fmt::ostream_formatter
 
 #include <iosfwd>   // forward declare std::ostream and std::istream

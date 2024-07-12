@@ -33,8 +33,7 @@
 
 #include "hip/hip_runtime_api.h"  // HIP runtime functions
 
-#include "fmt/core.h"     // fmt::format
-#include "fmt/ostream.h"  // can use fmt using operator<< overloads
+#include "fmt/format.h"  // fmt::format
 
 #include <cmath>      // std::ceil
 #include <cstddef>    // std::size_t

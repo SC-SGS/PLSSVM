@@ -10,7 +10,7 @@
 
 #include "bindings/Python/utility.hpp"  // check_kwargs_for_correctness, assemble_unique_class_name, pyarray_to_vector, pyarray_to_matrix
 
-#include "fmt/core.h"            // fmt::format
+#include "fmt/format.h"          // fmt::format
 #include "pybind11/numpy.h"      // support for STL types
 #include "pybind11/operators.h"  // support for operators
 #include "pybind11/pybind11.h"   // py::module_, py::class_, py::init, py::arg, py::return_value_policy, py::self

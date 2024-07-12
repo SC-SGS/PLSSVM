@@ -12,7 +12,7 @@
 #include "plssvm/detail/string_utility.hpp"  // plssvm::detail::to_lower_case
 #include "plssvm/exceptions/exceptions.hpp"  // plssvm::exception
 
-#include "fmt/core.h"  // fmt::format
+#include "fmt/format.h"  // fmt::format
 
 #include <ios>      // std::ios::failbit
 #include <istream>  // std::istream

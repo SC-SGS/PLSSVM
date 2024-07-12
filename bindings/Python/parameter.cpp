@@ -14,7 +14,7 @@
 
 #include "bindings/Python/utility.hpp"
 
-#include "fmt/core.h"            // fmt::format
+#include "fmt/format.h"          // fmt::format
 #include "pybind11/operators.h"  // support for operators
 #include "pybind11/pybind11.h"   // py::module_, py::class_, py::init, py::return_value_policy, py::self
 #include "pybind11/stl.h"        // support for STL types

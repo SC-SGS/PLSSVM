@@ -7,8 +7,8 @@
  */
 
 #include "plssvm/backends/HIP/detail/device_ptr.hip.hpp"
+// main header
 
-#include "plssvm/backends/gpu_device_ptr.hpp"                     // plssvm::detail::gpu_device_ptr
 #include "plssvm/backends/HIP/detail/utility.hip.hpp"             // PLSSVM_HIP_ERROR_CHECK, plssvm::hip::detail::get_device_count
 #include "plssvm/backends/HIP/exceptions.hpp"                     // plssvm::hip::backend_exception
 #include "plssvm/backends/HIP/kernel/detail/fill_kernel.hip.hpp"  // plssvm::hip::detail::fill_array
@@ -16,13 +16,13 @@
 #include "plssvm/exceptions/exceptions.hpp"                       // plssvm::exception
 #include "plssvm/shape.hpp"                                       // plssvm::shape
 
+#include "hip/driver_types.h"     // hipMemcpyHostToDevice, hipMemcpyDeviceToHost, hipMemcpyDeviceToDevice
 #include "hip/hip_runtime_api.h"  // HIP runtime functions
-#include "hip/driver_types.h"  // hipMemcpyHostToDevice, hipMemcpyDeviceToHost, hipMemcpyDeviceToDevice
 
-#include "fmt/core.h"  // fmt::format
+#include "fmt/format.h"  // fmt::format
 
-#include <cstddef>  // std::size_t
 #include <algorithm>  // std::min
+#include <cstddef>    // std::size_t
 #include <exception>  // std::terminate
 #include <iostream>   // std::cerr, std::endl
 

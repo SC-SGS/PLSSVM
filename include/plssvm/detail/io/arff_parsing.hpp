@@ -23,8 +23,9 @@
 #include "plssvm/matrix.hpp"                    // plssvm::soa_matrix
 #include "plssvm/shape.hpp"                     // plssvm::shape
 
-#include "fmt/format.h"  // fmt::format, fmt::join
+#include "fmt/format.h"  // fmt::format
 #include "fmt/os.h"      // fmt::ostream, fmt::output_file
+#include "fmt/ranges.h"  // fmt::join
 #include "fmt/std.h"     // format std::vector<bool>::operator[] proxy type
 
 #include <cstddef>      // std::size_t

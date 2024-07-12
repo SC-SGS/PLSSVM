@@ -18,7 +18,7 @@
 #include "tests/naming.hpp"              // naming::label_type_to_name
 #include "tests/types_to_test.hpp"       // util::label_type_gtest
 
-#include "fmt/core.h"     // fmt::format
+#include "fmt/format.h"   // fmt::format
 #include "gtest/gtest.h"  // TYPED_TEST, TYPED_TEST_SUITE, ::testing::Test
 
 #include <cstddef>  // std::size_t

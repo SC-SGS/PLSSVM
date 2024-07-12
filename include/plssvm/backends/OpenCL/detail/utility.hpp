@@ -25,7 +25,7 @@
 
 #include "CL/cl.h"  // cl_uint, cl_int, clSetKernelArg, clEnqueueNDRangeKernel, clFinish
 
-#include "fmt/core.h"  // fmt::format
+#include "fmt/format.h"  // fmt::format
 
 #include <cstddef>      // std::size_t
 #include <string>       // std::string

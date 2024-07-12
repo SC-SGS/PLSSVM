@@ -10,8 +10,8 @@
 
 #include "plssvm/detail/tracking/utility.hpp"  // plssvm::detail::tracking::value_or_default
 
-#include "fmt/core.h"    // fmt::format
-#include "fmt/format.h"  // fmt::join
+#include "fmt/format.h"  // fmt::format
+#include "fmt/ranges.h"  // fmt::join
 
 #include <array>        // std::array
 #include <cstddef>      // std::size_t

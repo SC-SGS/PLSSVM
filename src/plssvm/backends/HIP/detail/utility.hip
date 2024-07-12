@@ -7,12 +7,13 @@
  */
 
 #include "plssvm/backends/HIP/detail/utility.hip.hpp"
+// main header
 
 #include "plssvm/backends/execution_range.hpp"  // plssvm::detail::dim_type
 
 #include "hip/hip_runtime_api.h"  // hipGetDeviceCount, hipSetDevice, hipPeekAtLastError, hipDeviceSynchronize, hipRuntimeGetVersion
 
-#include "fmt/core.h"  // fmt::format
+#include "fmt/format.h"  // fmt::format
 
 #include <string>  // std::string
 

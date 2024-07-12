@@ -27,7 +27,7 @@
 #include "tests/types_to_test.hpp"          // util::{test_parameter_type_at_t, test_parameter_value_at_v}
 #include "tests/utility.hpp"                // util::{redirect_output, construct_from_tuple, generate_random_matrix}
 
-#include "fmt/core.h"     // fmt::format
+#include "fmt/format.h"   // fmt::format
 #include "gtest/gtest.h"  // TYPED_TEST_SUITE_P, TYPED_TEST_P, REGISTER_TYPED_TEST_SUITE_P, EXPECT_GT, EXPECT_GE, ASSERT_EQ, ::testing::Test
 
 #include <cstddef>  // std::size_t

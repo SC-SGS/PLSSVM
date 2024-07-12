@@ -15,7 +15,7 @@
 
 #include "plssvm/detail/memory_size.hpp"  // plssvm:detail::memory_size
 
-#include "fmt/core.h"     // fmt::formatter
+#include "fmt/base.h"     // fmt::formatter
 #include "fmt/ostream.h"  // fmt::ostream_formatter
 
 #include <cstddef>  // std::size_t

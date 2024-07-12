@@ -31,8 +31,7 @@
 #include "plssvm/verbosity_levels.hpp"          // plssvm::verbosity_level
 
 #include "fmt/compile.h"  // FMT_COMPILE
-#include "fmt/core.h"     // fmt::format
-#include "fmt/format.h"   // fmt::format_to
+#include "fmt/format.h"   // fmt::format_to, fmt::format
 #include "fmt/os.h"       // fmt::ostream, fmt::output_file
 #ifdef _OPENMP
     #include <omp.h>  // omp_get_num_threads

@@ -31,8 +31,8 @@
                              // clSetKernelArg, clEnqueueNDRangeKernel, clFinish, clGetPlatformIDs, clGetDeviceIDs, clGetDeviceInfo, clCreateContext, clGetPlatformInfo
 #include "CL/cl_platform.h"  // cl_uint
 
-#include "fmt/core.h"    // fmt::format
-#include "fmt/format.h"  // fmt::join
+#include "fmt/format.h"  // fmt::format
+#include "fmt/ranges.h"  // fmt::join
 #include "fmt/std.h"     // format std::filesystem::path
 
 #include <algorithm>     // std::count_if

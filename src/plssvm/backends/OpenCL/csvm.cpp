@@ -35,7 +35,7 @@
                              // clGetCommandQueueInfo, clGetDeviceInfo, cl_device_id
 #include "CL/cl_platform.h"  // cl_ulong
 
-#include "fmt/core.h"  // fmt::format
+#include "fmt/format.h"  // fmt::format
 
 #include <algorithm>  // std::all_of
 #include <chrono>     // std::chrono

@@ -21,8 +21,9 @@
 #include "tests/utility.hpp"        // util::{temporary_file, get_distinct_label, get_correct_model_file_labels, get_correct_model_file_num_sv_per_class,
                                     // generate_specific_matrix, get_num_classes}
 
-#include "fmt/format.h"   // fmt::format, fmt::join
+#include "fmt/format.h"   // fmt::format
 #include "fmt/os.h"       // fmt::ostream, fmt::output_file
+#include "fmt/ranges.h"   // fmt::join
 #include "gmock/gmock.h"  // ::testing::HasSubstr
 #include "gtest/gtest.h"  // TYPED_TEST, TYPED_TEST_SUITE, EXPECT_EQ, EXPECT_DEATH, ASSERT_EQ, ::testing::Test
 

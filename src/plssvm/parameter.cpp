@@ -12,7 +12,7 @@
 #include "plssvm/detail/arithmetic_type_name.hpp"  // plssvm::detail::arithmetic_type_name
 #include "plssvm/gamma.hpp"                        // plssvm::get_gamma_string
 
-#include "fmt/core.h"  // fmt::format
+#include "fmt/format.h"  // fmt::format
 
 #include <ostream>  // std::ostream
 

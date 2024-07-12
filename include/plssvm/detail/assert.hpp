@@ -15,8 +15,8 @@
 
 #include "plssvm/exceptions/source_location.hpp"  // plssvm::source_location
 
-#include "fmt/color.h"  // fmt::emphasis, fmt::fg, fmt::color
-#include "fmt/core.h"   // fmt::format
+#include "fmt/color.h"   // fmt::emphasis, fmt::fg, fmt::color
+#include "fmt/format.h"  // fmt::format
 
 #include <cstdlib>      // std::abort
 #include <iostream>     // std::cerr, std::endl

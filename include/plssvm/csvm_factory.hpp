@@ -46,7 +46,7 @@
     #endif
 #endif
 
-#include "fmt/core.h"     // fmt::format
+#include "fmt/format.h"   // fmt::format
 #include "igor/igor.hpp"  // igor::parser, igor::has_unnamed_arguments
 
 #include <memory>       // std::unique_ptr, std::make_unique

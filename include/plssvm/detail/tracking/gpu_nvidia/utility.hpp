@@ -15,8 +15,8 @@
 
 #include "plssvm/exceptions/exceptions.hpp"  // plssvm::hardware_sampling_exception
 
-#include "fmt/core.h"  // fmt::format
-#include "nvml.h"      // NVML runtime functions
+#include "fmt/format.h"  // fmt::format
+#include "nvml.h"        // NVML runtime functions
 
 namespace plssvm::detail::tracking {
 
@@ -29,7 +29,7 @@ namespace plssvm::detail::tracking {
     #define PLSSVM_NVML_ERROR_CHECK(nvml_func)                                                                                                                              \
         {                                                                                                                                                                   \
             const nvmlReturn_t errc = nvml_func;                                                                                                                            \
-            if (errc != NVML_SUCCESS) {                                                                                                 \
+            if (errc != NVML_SUCCESS) {                                                                                                                                     \
                 throw hardware_sampling_exception{ fmt::format("Error in NVML function call \"{}\": {} ({})", #nvml_func, nvmlErrorString(errc), static_cast<int>(errc)) }; \
             }                                                                                                                                                               \
         }

@@ -22,7 +22,7 @@
     #include "plssvm/backends/SYCL/DPCPP/detail/utility.hpp"  // plssvm::dpcpp::detail::{get_dpcpp_version, get_dpcpp_timestamp_version}
 #endif
 
-#include "fmt/core.h"  // fmt::format
+#include "fmt/format.h"  // fmt::format
 
 #include <string>  // std::string
 

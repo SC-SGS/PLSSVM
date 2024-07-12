@@ -19,7 +19,7 @@
 #include "tests/custom_test_macros.hpp"  // EXPECT_FLOATING_POINT_EQ, EXPECT_THROW_WHAT
 #include "tests/utility.hpp"             // util::temporary_file
 
-#include "fmt/core.h"     // fmt::format
+#include "fmt/format.h"   // fmt::format
 #include "gmock/gmock.h"  // ::testing::HasSubstr
 #include "gtest/gtest.h"  // TEST, TEST_F, EXPECT_EQ, EXPECT_TRUE, EXPECT_DEATH, ASSERT_EQ, ::testing::Test
 

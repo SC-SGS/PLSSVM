@@ -14,8 +14,8 @@
 #include "plssvm/exceptions/exceptions.hpp"  // plssvm::unsupported_backend_exception
 #include "plssvm/target_platforms.hpp"       // plssvm::target_platform
 
-#include "fmt/core.h"    // fmt::format
-#include "fmt/format.h"  // fmt::join
+#include "fmt/format.h"  // fmt::format
+#include "fmt/ranges.h"  // fmt::join
 
 #include <array>    // std::array
 #include <ios>      // std::ios::failbit

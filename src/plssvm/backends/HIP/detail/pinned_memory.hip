@@ -7,6 +7,8 @@
  */
 
 #include "plssvm/backends/HIP/detail/pinned_memory.hip.hpp"
+// main header
+
 #include "plssvm/backends/HIP/detail/utility.hip.hpp"      // PLSSVM_HIP_ERROR_CHECK
 #include "plssvm/backends/host_pinned_memory.hpp"          // plssvm::detail::host_pinned_memory
 #include "plssvm/detail/assert.hpp"                        // PLSSVM_ASSERT

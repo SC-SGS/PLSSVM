@@ -10,8 +10,8 @@
 
 #include "plssvm/exceptions/exceptions.hpp"  // plssvm::kernel_launch_resources
 
-#include "fmt/core.h"    // fmt::format
-#include "fmt/format.h"  // fmt::join
+#include "fmt/format.h"  // fmt::format
+#include "fmt/ranges.h"  // fmt::join
 
 #include <algorithm>  // std::min, std::swap
 #include <cmath>      // std::ceil

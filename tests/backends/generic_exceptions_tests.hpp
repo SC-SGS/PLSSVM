@@ -17,7 +17,7 @@
 
 #include "tests/custom_test_macros.hpp"  // EXPECT_THROW_WHAT
 
-#include "fmt/core.h"     // fmt::format
+#include "fmt/format.h"   // fmt::format
 #include "gmock/gmock.h"  // ::testing::{HasSubstr, ContainsRegex}
 #include "gtest/gtest.h"  // TEST, EXPECT_EQ, EXPECT_THAT, EXPECT_TRUE, ASSERT_EQ, ::testing::Test
 

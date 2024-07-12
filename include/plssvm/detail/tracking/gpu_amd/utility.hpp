@@ -15,7 +15,7 @@
 
 #include "plssvm/exceptions/exceptions.hpp"  // plssvm::hardware_sampling_exception
 
-#include "fmt/core.h"           // fmt::format
+#include "fmt/base.h"           // fmt::format
 #include "rocm_smi/rocm_smi.h"  // ROCm SMI runtime functions
 
 namespace plssvm::detail::tracking {

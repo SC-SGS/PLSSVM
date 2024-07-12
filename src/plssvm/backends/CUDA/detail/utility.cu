@@ -10,7 +10,7 @@
 
 #include "plssvm/backends/execution_range.hpp"  // plssvm::detail::dim_type
 
-#include "fmt/core.h"  // fmt::format
+#include "fmt/format.h"  // fmt::format
 
 #include <string>  // std::string
 

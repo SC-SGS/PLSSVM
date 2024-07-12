@@ -16,7 +16,8 @@
 #include "plssvm/backends/CUDA/exceptions.hpp"  // plssvm::cuda::backend_exception
 #include "plssvm/backends/execution_range.hpp"  // plssvm::detail::dim_type
 
-#include "fmt/core.h"     // fmt::format, fmt::formatter
+#include "fmt/base.h"     // fmt::formatter
+#include "fmt/format.h"   // fmt::format
 #include "fmt/ostream.h"  // fmt::ostream_formatter
 
 #include <string>  // std::string

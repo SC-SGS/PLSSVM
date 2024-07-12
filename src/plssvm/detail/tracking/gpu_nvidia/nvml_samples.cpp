@@ -10,8 +10,8 @@
 
 #include "plssvm/detail/tracking/utility.hpp"  // plssvm::detail::tracking::value_or_default
 
-#include "fmt/core.h"    // fmt::format
-#include "fmt/format.h"  // fmt::join
+#include "fmt/format.h"  // fmt::format
+#include "fmt/ranges.h"  // fmt::join
 #include "nvml.h"        // NVML_ADAPTIVE_CLOCKING_INFO_STATUS_ENABLED
 
 #include <cstddef>   // std::size_t

@@ -11,7 +11,8 @@
 #include "plssvm/detail/string_utility.hpp"  // plssvm::detail::{to_lower_case, split, trim}
 #include "plssvm/detail/utility.hpp"         // plssvm::detail::to_underlying
 
-#include "fmt/format.h"  // fmt::format, fmt::join
+#include "fmt/format.h"  // fmt::format
+#include "fmt/ranges.h"  // fmt::join
 
 #include <ios>          // std::ios::failbit
 #include <istream>      // std::istream

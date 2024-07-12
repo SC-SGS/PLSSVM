@@ -20,7 +20,7 @@
 #include "tests/types_to_test.hpp"       // util::label_type_classification_type_gtest
 #include "tests/utility.hpp"             // util::{temporary_file, get_correct_model_file_labels, get_distinct_label, generate_specific_matrix}
 
-#include "fmt/core.h"     // fmt::format
+#include "fmt/format.h"   // fmt::format
 #include "gtest/gtest.h"  // TYPED_TEST, TYPED_TEST_SUITE, EXPECT_EQ, ASSERT_EQ, FAIL, ::testing::Test
 
 #include <array>    // std::array

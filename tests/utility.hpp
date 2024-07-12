@@ -23,7 +23,7 @@
 #include "plssvm/parameter.hpp"                    // plssvm::parameter
 #include "plssvm/shape.hpp"                        // plssvm::shape
 
-#include "fmt/core.h"     // fmt::format
+#include "fmt/format.h"   // fmt::format
 #include "fmt/std.h"      // format std::vector<bool>::operator[] proxy type
 #include "gtest/gtest.h"  // FAIL
 

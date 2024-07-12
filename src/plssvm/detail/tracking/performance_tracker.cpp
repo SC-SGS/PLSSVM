@@ -21,19 +21,19 @@
 #include "plssvm/version/git_metadata/git_metadata.hpp"  // plssvm::version::git_metadata::commit_sha1
 #include "plssvm/version/version.hpp"                    // plssvm::version::{version, detail::target_platforms}
 
-#include "cxxopts.hpp"    // CXXOPTS__VERSION_MAJOR, CXXOPTS__VERSION_MINOR, CXXOPTS__VERSION_MINOR
-#include "fmt/chrono.h"   // format std::chrono types
-#include "fmt/core.h"     // fmt::format, FMT_VERSION
-#include "fmt/format.h"   // fmt::join
-#include "fmt/ostream.h"  // format types with an operator<< overload
+#include "cxxopts.hpp"   // CXXOPTS__VERSION_MAJOR, CXXOPTS__VERSION_MINOR, CXXOPTS__VERSION_MINOR
+#include "fmt/base.h"    // FMT_VERSION
+#include "fmt/chrono.h"  // format std::chrono types
+#include "fmt/format.h"  // fmt::format
+#include "fmt/ranges.h"  // fmt::join
 
 #if __has_include(<unistd.h>)
     #include <unistd.h>  // gethostname, getlogin_r, sysconf, _SC_HOST_NAME_MAX, _SC_LOGIN_NAME_MAX
     #define PLSSVM_UNISTD_AVAILABLE
 #endif
 
-#if defined(PLSSVM_STDPAR_BACKEND_HAS_NVHPC) || defined(PLSSVM_STDPAR_BACKEND_HAS_HIPSTDPAR) || defined(PLSSVM_STDPAR_BACKEND_HAS_GNU_TBB)
-    #include "boost/version.hpp"  // BOOST_VERSION //FIXME: dependancy to boost only in GNU CMakeLists.txt
+#if defined(PLSSVM_STDPAR_BACKEND_HAS_GNU_TBB)
+    #include "boost/version.hpp"  // BOOST_VERSION
 #endif
 
 #if defined(PLSSVM_STDPAR_BACKEND_HAS_INTEL_LLVM)
@@ -41,15 +41,15 @@
 #endif
 
 #if defined(PLSSVM_STDPAR_BACKEND_HAS_ACPP) || defined(PLSSVM_STDPAR_BACKEND_HAS_GNU_TBB)
-    # if __has_include("tbb/tbb_stddef.h")
+    #if __has_include("tbb/tbb_stddef.h")
         #include "tbb/tbb_stddef.h"  // TBB_VERSION_MAJOR, TBB_VERSION_MINOR
-    # elif __has_include("version.h")
+    #elif __has_include("tbb/version.h")
         #include "tbb/version.h"  // TBB_VERSION_MAJOR, TBB_VERSION_MINOR
     #else
+    // no appropriate header found -> set version to 0
         #define TBB_VERSION_MAJOR 0
         #define TBB_VERSION_MINOR 0
-
-    # endif
+    #endif
 #endif
 
 #include <algorithm>    // std::max
@@ -299,7 +299,7 @@ void performance_tracker::save(std::ostream &out) {
 
     // stdpar backend specific versions
     // Boost version
-#if defined(PLSSVM_STDPAR_BACKEND_HAS_NVHPC) || defined(PLSSVM_STDPAR_BACKEND_HAS_HIPSTDPAR) || defined(PLSSVM_STDPAR_BACKEND_HAS_GNU_TBB)
+#if defined(PLSSVM_STDPAR_BACKEND_HAS_GNU_TBB)
     const std::string boost_version = fmt::format("{}.{}.{}", BOOST_VERSION / 100'000, BOOST_VERSION / 100 % 1000, BOOST_VERSION % 100);
 #else
     const std::string boost_version{ "unknown/unused" };

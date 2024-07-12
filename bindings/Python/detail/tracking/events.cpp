@@ -9,7 +9,7 @@
 #include "plssvm/detail/tracking/events.hpp"  // plssvm::detail::tracking::events
 
 #include "fmt/chrono.h"         // format std::chrono types
-#include "fmt/core.h"           // fmt::format
+#include "fmt/format.h"         // fmt::format
 #include "pybind11/pybind11.h"  // py::module_
 #include "pybind11/stl.h"       // bind STL types
 

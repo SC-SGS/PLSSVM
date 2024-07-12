@@ -25,7 +25,7 @@
 #include "plssvm/solver_types.hpp"                         // plssvm::solver_type
 #include "plssvm/verbosity_levels.hpp"                     // plssvm::verbosity_level
 
-#include "fmt/core.h"  // fmt::format
+#include "fmt/format.h"  // fmt::format
 
 #include <algorithm>   // std::count
 #include <chrono>      // std::chrono::{steady_clock, duration_cast, milliseconds}

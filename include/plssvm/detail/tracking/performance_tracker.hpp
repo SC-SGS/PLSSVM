@@ -24,10 +24,11 @@
 #include "plssvm/detail/utility.hpp"                    // PLSSVM_EXTERN
 #include "plssvm/parameter.hpp"                         // plssvm::parameter
 
+#include "fmt/base.h"     // fmt::formatter
 #include "fmt/chrono.h"   // format std::chrono types
-#include "fmt/core.h"     // fmt::format, fmt::formatter
-#include "fmt/format.h"   // fmt::join,
+#include "fmt/format.h"   // fmt::format
 #include "fmt/ostream.h"  // fmt::ostream_formatter
+#include "fmt/ranges.h"   // fmt::join
 
 #include <chrono>       // std::chrono::steady_clock::time_point
 #include <map>          // std::map

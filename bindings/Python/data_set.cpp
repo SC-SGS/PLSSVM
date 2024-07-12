@@ -15,8 +15,8 @@
 #include "bindings/Python/utility.hpp"  // check_kwargs_for_correctness, assemble_unique_class_name,
                                         // pyarray_to_vector, pyarray_to_string_vector, pylist_to_string_vector, pyarray_to_matrix
 
-#include "fmt/core.h"           // fmt::format
-#include "fmt/format.h"         // fmt::join
+#include "fmt/format.h"         // fmt::format
+#include "fmt/ranges.h"         // fmt::join
 #include "pybind11/numpy.h"     // py::array_t
 #include "pybind11/pybind11.h"  // py::module_, py::class_, py::init, py::return_value_policy, py::arg, py::kwargs, py::value_error, py::pos_only, py::list
 #include "pybind11/stl.h"       // support for STL types

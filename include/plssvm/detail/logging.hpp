@@ -19,8 +19,7 @@
 
 #include "fmt/chrono.h"  // format std::chrono types
 #include "fmt/color.h"   // fmt::fg, fmt::color
-#include "fmt/core.h"    // fmt::runtime
-#include "fmt/format.h"  // fmt::format
+#include "fmt/format.h"  // fmt::format, fmt::runtime
 
 #include <iostream>     // std::cout, std::clog, std::flush
 #include <string_view>  // std::string_view

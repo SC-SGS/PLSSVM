@@ -19,7 +19,7 @@
 
 #include "sycl/sycl.hpp"  // sycl::device
 
-#include "fmt/core.h"  // fmt::format
+#include "fmt/format.h"  // fmt::format
 
 namespace plssvm::stdpar {
 

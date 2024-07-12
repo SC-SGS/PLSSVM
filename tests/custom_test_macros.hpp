@@ -17,7 +17,7 @@
 #include "plssvm/detail/type_traits.hpp"  // plssvm::detail::{always_false_v, remove_cvref_t}
 #include "plssvm/matrix.hpp"              // plssvm::matrix
 
-#include "fmt/core.h"     // fmt::format
+#include "fmt/format.h"   // fmt::format
 #include "gmock/gmock.h"  // EXPECT_THAT, ::testing::{StrEq, Ge, Le, Gt, Lt}
 #include "gtest/gtest.h"  // EXPECT_FLOAT_EQ, EXPECT_DOUBLE_EQ, ASSERT_FLOAT_EQ, ASSERT_DOUBLE_EQ, EXPECT_EQ, ASSERT_EQ, FAIL, EXPECT_LT, ASSERT_LT
 
