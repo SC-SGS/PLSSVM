@@ -39,10 +39,14 @@ endif ()
 # create larger test files if desired
 option(PLSSVM_GENERATE_TEST_FILE "Generate test file with user defined sizes." ON)
 if (PLSSVM_GENERATE_TEST_FILE)
+    include(${PROJECT_SOURCE_DIR}/cmake/utility_macros.cmake)
     # set default sizes
     set(PLSSVM_TEST_FILE_NUM_DATA_POINTS "5000" CACHE STRING "Number of data points for the test file generator")
+    check_integer(PLSSVM_TEST_FILE_NUM_DATA_POINTS)
     set(PLSSVM_TEST_FILE_NUM_FEATURES "2000" CACHE STRING "Number of features for each data point for the test file generator")
+    check_integer(PLSSVM_TEST_FILE_NUM_FEATURES)
     set(PLSSVM_TEST_FILE_NUM_CLASSES "4" CACHE STRING "number of classes for the test file generator")
+    check_integer(PLSSVM_TEST_FILE_NUM_CLASSES)
     
     # set test file name based on requested sizes
     set(PLSSVM_TEST_FILE "${PROJECT_SOURCE_DIR}/tests/data/${PLSSVM_TEST_FILE_NUM_DATA_POINTS}x${PLSSVM_TEST_FILE_NUM_FEATURES}_${PLSSVM_TEST_FILE_NUM_CLASSES}.libsvm" CACHE STRING "Path including name of the test file" FORCE)
@@ -146,6 +150,12 @@ set(PLSSVM_BASE_TEST_SOURCES
     ${CMAKE_CURRENT_LIST_DIR}/detail/io/libsvm_parsing.cpp
     ${CMAKE_CURRENT_LIST_DIR}/detail/io/scaling_factors_parsing.cpp
     
+    ${CMAKE_CURRENT_LIST_DIR}/detail/tracking/events.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/detail/tracking/hardware_sampler.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/detail/tracking/hardware_sampler_factory.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/detail/tracking/performance_tracker.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/detail/tracking/utility.cpp
+    
     ${CMAKE_CURRENT_LIST_DIR}/detail/arithmetic_type_name.cpp
     ${CMAKE_CURRENT_LIST_DIR}/detail/assert.cpp
     ${CMAKE_CURRENT_LIST_DIR}/detail/data_distribution.cpp
@@ -154,7 +164,6 @@ set(PLSSVM_BASE_TEST_SOURCES
     ${CMAKE_CURRENT_LIST_DIR}/detail/memory_size.cpp
     ${CMAKE_CURRENT_LIST_DIR}/detail/move_only_any.cpp
     ${CMAKE_CURRENT_LIST_DIR}/detail/operators.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/detail/performance_tracker.cpp
     ${CMAKE_CURRENT_LIST_DIR}/detail/sha256.cpp
     ${CMAKE_CURRENT_LIST_DIR}/detail/string_conversion.cpp
     ${CMAKE_CURRENT_LIST_DIR}/detail/string_utility.cpp
@@ -266,6 +275,11 @@ endif ()
 
 # add tests for the available backends
 add_subdirectory(backends)
+
+# add tests for the hardware samplers
+if (PLSSVM_ENABLE_HARDWARE_SAMPLING)
+    add_subdirectory(detail/tracking)
+endif ()
 
 # fix shared library linker error on Windows
 if (NOT GTEST_FOUND)

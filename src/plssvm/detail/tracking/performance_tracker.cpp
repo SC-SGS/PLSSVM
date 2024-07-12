@@ -6,14 +6,15 @@
  *          See the LICENSE.md file in the project root for full license information.
  */
 
-#include "plssvm/detail/performance_tracker.hpp"
+#include "plssvm/detail/tracking/performance_tracker.hpp"
 
 #include "plssvm/constants.hpp"                          // plssvm::real_type, plssvm::THREAD_BLOCK_SIZE, plssvm::INTERNAL_BLOCK_SIZE, plssvm::FEATURE_BLOCK_SIZE, plssvm::PADDING_SIZE
 #include "plssvm/detail/arithmetic_type_name.hpp"        // plssvm::detail::arithmetic_type_name
-#include "plssvm/detail/assert.hpp"                      // PLSSVM_ASSERT
+#include "plssvm/detail/assert.hpp"                      // PLSSVM_ASSERT, PLSSVM_ASSERT_ENABLED
 #include "plssvm/detail/cmd/parser_predict.hpp"          // plssvm::detail::cmd::parser_predict
 #include "plssvm/detail/cmd/parser_scale.hpp"            // plssvm::detail::cmd::parser_scale
 #include "plssvm/detail/cmd/parser_train.hpp"            // plssvm::detail::cmd::parser_train
+#include "plssvm/detail/tracking/hardware_sampler.hpp"   // plssvm::detail::tracking::hardware_sampler
 #include "plssvm/detail/utility.hpp"                     // plssvm::detail::current_date_time, PLSSVM_IS_DEFINED
 #include "plssvm/gamma.hpp"                              // plssvm::get_gamma_string
 #include "plssvm/parameter.hpp"                          // plssvm::parameter
@@ -52,16 +53,18 @@
 #endif
 
 #include <algorithm>    // std::max
+#include <chrono>       // std::chrono::steady_clock::time_point
 #include <cstddef>      // std::size_t
 #include <fstream>      // std::ofstream
 #include <iostream>     // std::ios_base::app, std::ostream, std::clog, std::endl
 #include <map>          // std::map
-#include <memory>       // std::shared_ptr, std::make_shared
+#include <memory>       // std::unique_ptr
 #include <string>       // std::string
 #include <string_view>  // std::string_view
+#include <utility>      // std::move
 #include <vector>       // std::vector
 
-namespace plssvm::detail {
+namespace plssvm::detail::tracking {
 
 // Must be explicitly defaulted in the cpp file to prevent linker errors!
 performance_tracker::performance_tracker() = default;
@@ -147,6 +150,25 @@ void performance_tracker::add_tracking_entry(const tracking_entry<cmd::parser_sc
         tracking_entries_[entry.entry_category].emplace("save_filename", std::vector<std::string>{ fmt::format("\"{}\"", entry.entry_value.save_filename) });
         tracking_entries_[entry.entry_category].emplace("restore_filename", std::vector<std::string>{ fmt::format("\"{}\"", entry.entry_value.restore_filename) });
     }
+}
+
+void performance_tracker::add_hardware_sampler_entry(const hardware_sampler &entry) {
+    // check whether entries should currently be tracked
+    if (this->is_tracking()) {
+        tracking_entries_[std::string{ "hardware_samples" }][entry.device_identification()].push_back(entry.generate_yaml_string(reference_time_));
+    }
+}
+
+void performance_tracker::add_event(const std::string name) {
+    events_.add_event(std::chrono::steady_clock::now(), std::move(name));
+}
+
+void performance_tracker::set_reference_time(const std::chrono::steady_clock::time_point time) noexcept {
+    reference_time_ = time;
+}
+
+std::chrono::steady_clock::time_point performance_tracker::get_reference_time() const noexcept {
+    return reference_time_;
 }
 
 void performance_tracker::save(const std::string &filename) {
@@ -294,6 +316,12 @@ void performance_tracker::save(std::ostream &out) {
 #else
     const std::string tbb_version{ "unknown/unused" };
 #endif
+    // subprocess.h version
+#if defined(PLSSVM_subprocess_VERSION)
+    const std::string subprocess_version{ PLSSVM_subprocess_VERSION };
+#else
+    const std::string subprocess_version{ "unknown" };
+#endif
 
     out << "dependencies:\n";
 
@@ -309,10 +337,10 @@ void performance_tracker::save(std::ostream &out) {
             // check if the current tracking entry contains more than a single value
             if (entry_value.size() == 1) {
                 // single value: output it directly
-                out << fmt::format("  {}: {:>{}}\n", entry_name, entry_value.front(), max_dependency_entry_name_length - entry_name.size() + 1);
+                out << fmt::format("  {}: {:>{}}{}\n", entry_name, "", max_dependency_entry_name_length - entry_name.size(), entry_value.front());
             } else {
                 // multiple values: create a YAML array
-                out << fmt::format("  {}: {:>{}}[{}]\n", entry_name, "", max_dependency_entry_name_length - entry_name.size() + 1, fmt::join(entry_value, ", "));
+                out << fmt::format("  {}: {:>{}}[{}]\n", entry_name, "", max_dependency_entry_name_length - entry_name.size(), fmt::join(entry_value, ", "));
             }
         }
     }
@@ -325,14 +353,23 @@ void performance_tracker::save(std::ostream &out) {
         "  igor_version: {}\n"
         "  boost_version: {}\n"
         "  oneDPL_version: {}\n"
-        "  tbb_version: {}\n\n",
+        "  tbb_version: {}\n"
+        "  subprocess_version: {}\n\n",
         fmt::format("{:<{}}\"{}\"", "", max_dependency_entry_name_length - 15, cxxopts_version),
         fmt::format("{:<{}}\"{}\"", "", max_dependency_entry_name_length - 11, fmt_version),
         fmt::format("{:<{}}\"{}\"", "", max_dependency_entry_name_length - 18, fast_float_version),
         fmt::format("{:<{}}\"{}\"", "", max_dependency_entry_name_length - 12, igor_version),
         fmt::format("{:<{}}\"{}\"", "", max_dependency_entry_name_length - 13, boost_version),
         fmt::format("{:<{}}\"{}\"", "", max_dependency_entry_name_length - 14, oneDPL_version),
-        fmt::format("{:<{}}\"{}\"", "", max_dependency_entry_name_length - 11, tbb_version));
+        fmt::format("{:<{}}\"{}\"", "", max_dependency_entry_name_length - 11, tbb_version),
+        fmt::format("{:<{}}\"{}\"", "", max_dependency_entry_name_length - 18, subprocess_version));
+
+    //*************************************************************************************************************************************//
+    //                                                          events, if present                                                         //
+    //*************************************************************************************************************************************//
+    if (!events_.empty()) {
+        out << fmt::format("events:\n{}", events_.generate_yaml_string(reference_time_));
+    }
 
     //*************************************************************************************************************************************//
     //                                                          other statistics                                                           //
@@ -379,14 +416,17 @@ void performance_tracker::resume_tracking() noexcept { is_tracking_ = true; }
 
 bool performance_tracker::is_tracking() const noexcept { return is_tracking_; }
 
-const std::map<std::string, std::map<std::string, std::vector<std::string>>> &performance_tracker::get_tracking_entries() noexcept { return tracking_entries_; }
+const std::map<std::string, std::map<std::string, std::vector<std::string>>> &performance_tracker::get_tracking_entries() const noexcept { return tracking_entries_; }
+
+const events &performance_tracker::get_events() const noexcept { return events_; }
 
 void performance_tracker::clear_tracking_entries() noexcept { tracking_entries_.clear(); }
 
-#if defined(PLSSVM_PERFORMANCE_TRACKER_ENABLED)
-std::shared_ptr<performance_tracker> global_tracker = std::make_shared<performance_tracker>();
-#endif
+performance_tracker &global_performance_tracker() {
+    static performance_tracker tracker;
+    return tracker;
+}
 
-}  // namespace plssvm::detail
+}  // namespace plssvm::detail::tracking
 
 #undef PLSSVM_UNISTD_AVAILABLE

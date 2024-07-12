@@ -22,7 +22,7 @@
 #include "plssvm/detail/logging.hpp"                                                  // plssvm::detail::log
 #include "plssvm/detail/memory_size.hpp"                                              // plssvm::detail::memory_size
 #include "plssvm/detail/move_only_any.hpp"                                            // plssvm::detail::{move_only_any, move_only_any_cast}
-#include "plssvm/detail/performance_tracker.hpp"                                      // plssvm::detail::tracking_entry, PLSSVM_DETAIL_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY
+#include "plssvm/detail/tracking/performance_tracker.hpp"                             // plssvm::detail::tracking::tracking_entry, PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY
 #include "plssvm/detail/utility.hpp"                                                  // plssvm::detail::get_system_memory
 #include "plssvm/gamma.hpp"                                                           // plssvm::gamma_type
 #include "plssvm/kernel_function_types.hpp"                                           // plssvm::kernel_function_type
@@ -64,10 +64,10 @@ void csvm::init(const target_platform target) {
 
     plssvm::detail::log(verbosity_level::full,
                         "\nUsing OpenMP ({}) as backend with {} thread(s).\n\n",
-                        plssvm::detail::tracking_entry{ "dependencies", "openmp_version", detail::get_openmp_version() },
-                        plssvm::detail::tracking_entry{ "backend", "num_threads", detail::get_num_threads() });
-    PLSSVM_DETAIL_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking_entry{ "backend", "backend", plssvm::backend_type::openmp }));
-    PLSSVM_DETAIL_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking_entry{ "backend", "target_platform", plssvm::target_platform::cpu }));
+                        plssvm::detail::tracking::tracking_entry{ "dependencies", "openmp_version", detail::get_openmp_version() },
+                        plssvm::detail::tracking::tracking_entry{ "backend", "num_threads", detail::get_num_threads() });
+    PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking::tracking_entry{ "backend", "backend", plssvm::backend_type::openmp }));
+    PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking::tracking_entry{ "backend", "target_platform", plssvm::target_platform::cpu }));
 
     // update the target platform
     target_ = plssvm::target_platform::cpu;

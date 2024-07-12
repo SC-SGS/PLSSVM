@@ -51,6 +51,9 @@ namespace plssvm::detail::io { }
 /// Namespace containing implementation details for the command line interface functionality. **Should not** directly be used by users.
 namespace plssvm::detail::cmd { }
 
+/// Namespace containing implementation details for the performance tracking and hardware sampling functionality. **Should not** directly be used by users.
+namespace plssvm::detail::tracking { }
+
 /// Namespace containing implementation details for the custom literals representing memory sizes. **Should not** directly be used by users.
 namespace plssvm::detail::literals { }
 
