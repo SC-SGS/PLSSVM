@@ -60,7 +60,7 @@ int main(int argc, char *argv[]) {
 #if defined(PLSSVM_HARDWARE_SAMPLING_ENABLED)
             // initialize hardware sampling
             std::vector<std::unique_ptr<plssvm::detail::tracking::hardware_sampler>> sampler =
-                plssvm::detail::tracking::create_hardware_sampler(plssvm::target_platform::cpu, std::size_t{ 1 });
+                plssvm::detail::tracking::create_hardware_sampler(plssvm::target_platform::cpu, std::size_t{ 1 }, PLSSVM_HARDWARE_SAMPLING_INTERVAL);
             // start sampling
             std::for_each(sampler.begin(), sampler.end(), std::mem_fn(&plssvm::detail::tracking::hardware_sampler::start_sampling));
 #endif
