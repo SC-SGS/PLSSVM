@@ -49,8 +49,7 @@ void init_hip_csvm(py::module_ &m, const py::exception<plssvm::exception> &base_
                  // create CSVM with the provided target platform
                  return std::make_unique<plssvm::hip::csvm>(target, params);
              }),
-             "create an SVM with the provided target platform and keyword arguments")
-        .def("num_available_devices", &plssvm::hip::csvm::num_available_devices, "the number of available devices");
+             "create an SVM with the provided target platform and keyword arguments");
 
     // register HIP backend specific exceptions
     register_py_exception<plssvm::hip::backend_exception>(hip_module, "BackendError", base_exception);

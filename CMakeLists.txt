@@ -72,9 +72,9 @@ endif ()
 ########################################################################################################################
 ## set base sources
 set(PLSSVM_BASE_SOURCES
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/backends/stdpar/implementation_types.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/backends/SYCL/implementation_types.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/backends/SYCL/kernel_invocation_types.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/backends/stdpar/implementation_types.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/backends/execution_range.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/detail/cmd/parser_predict.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/plssvm/detail/cmd/parser_scale.cpp
@@ -134,7 +134,7 @@ target_compile_options(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC
                        -Wnull-dereference -Wnon-virtual-dtor -Wextra-semi -Wunreachable-code -Wuninitialized -Wno-ctor-dtor-privacy
                        -fPIC>
                        $<$<COMPILE_LANG_AND_ID:CXX,GNU>:-Wsuggest-override -Wstrict-null-sentinel -Wlogical-op -Wduplicated-branches -Wimplicit-fallthrough=5>
-                       $<$<COMPILE_LANG_AND_ID:CXX,Clang>:-Wdocumentation -Wmost>
+                       $<$<COMPILE_LANG_AND_ID:CXX,Clang>:-Wmost>
                        $<$<COMPILE_LANG_AND_ID:CXX,MSVC>:/W4 /bigobj /wd4459 /Zc:lambda>>
 )
 
@@ -605,6 +605,8 @@ list(POP_BACK CMAKE_MESSAGE_INDENT)
 option(PLSSVM_ENABLE_DOCUMENTATION "Build documentation using doxygen." OFF)
 if (PLSSVM_ENABLE_DOCUMENTATION)
     add_subdirectory(docs)
+    # if documentation is enabled, add documentation warning flag when compiling with clang
+    target_compile_options(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC $<$<COMPILE_LANG_AND_ID:CXX,Clang>:-Wdocumentation>)
 endif ()
 
 ########################################################################################################################
@@ -737,13 +739,7 @@ install(TARGETS ${PLSSVM_TARGETS_TO_INSTALL}
 install(DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/include/"
         DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}"
 )
-
-## install header only libraries fast_float and igor header via 'make install'
-if (NOT fast_float_FOUND)
-    install(DIRECTORY "${fast_float_SOURCE_DIR}/include/"
-            DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}"
-    )
-endif ()
+## install header only library igor header via 'make install'
 if (NOT igor_FOUND)
     install(DIRECTORY "${igor_SOURCE_DIR}/include/"
             DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}"
@@ -791,4 +787,3 @@ install(FILES
         "${CMAKE_CURRENT_SOURCE_DIR}/cmake/plssvm/plssvmstdparTargets.cmake"
         DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/plssvm/cmake
 )
-

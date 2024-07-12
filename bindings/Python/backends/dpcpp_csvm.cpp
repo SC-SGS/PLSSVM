@@ -55,8 +55,7 @@ py::module_ init_dpcpp_csvm(py::module_ &m, const py::exception<plssvm::exceptio
                  return std::make_unique<plssvm::dpcpp::csvm>(target, params, plssvm::sycl_kernel_invocation_type = invoc);
              }),
              "create an SVM with the provided target platform and keyword arguments")
-        .def("get_kernel_invocation_type", &plssvm::dpcpp::csvm::get_kernel_invocation_type, "get the kernel invocation type used in this SYCL SVM")
-        .def("num_available_devices", &plssvm::dpcpp::csvm::num_available_devices, "the number of available devices");
+        .def("get_kernel_invocation_type", &plssvm::dpcpp::csvm::get_kernel_invocation_type, "get the kernel invocation type used in this SYCL SVM");
 
     // register DPCPP backend specific exceptions
     register_py_exception<plssvm::dpcpp::backend_exception>(dpcpp_module, "BackendError", base_exception);
