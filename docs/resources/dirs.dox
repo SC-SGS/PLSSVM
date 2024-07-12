@@ -463,6 +463,17 @@
  */
 
 /**
+ * @dir include/plssvm/detail/tracking
+ * @author Alexander Van Craen
+ * @author Marcel Breyer
+ * @copyright 2018-today The PLSSVM project - All Rights Reserved
+ * @license This file is part of the PLSSVM project which is released under the MIT license.
+ *          See the LICENSE.md file in the project root for full license information.
+ *
+ * @brief Directory containing implementation details regarding the performance tracking and hardware sampling functionality which **should not** be used by users.
+ */
+
+/**
  * @dir include/plssvm/exceptions
  * @author Alexander Van Craen
  * @author Marcel Breyer

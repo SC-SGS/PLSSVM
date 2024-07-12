@@ -16,10 +16,10 @@
 #include "plssvm/detail/arithmetic_type_name.hpp"           // plssvm::detail::arithmetic_type_name
 #include "plssvm/detail/assert.hpp"                         // PLSSVM_ASSERT
 #include "plssvm/detail/logging.hpp"                        // plssvm::detail::log
-#include "plssvm/detail/performance_tracker.hpp"            // PLSSVM_DETAIL_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY, plssvm::detail::tracking_entry
 #include "plssvm/detail/sha256.hpp"                         // plssvm::detail::sha256
 #include "plssvm/detail/string_conversion.hpp"              // plssvm::detail::extract_first_integer_from_string
 #include "plssvm/detail/string_utility.hpp"                 // plssvm::detail::replace_all, plssvm::detail::to_lower_case, plssvm::detail::contains
+#include "plssvm/detail/tracking/performance_tracker.hpp"   // PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY, plssvm::detail::tracking::tracking_entry
 #include "plssvm/detail/utility.hpp"                        // plssvm::detail::erase_if
 #include "plssvm/kernel_function_types.hpp"                 // plssvm::kernel_function_type
 #include "plssvm/target_platforms.hpp"                      // plssvm::target_platform
@@ -246,7 +246,7 @@ std::vector<command_queue> create_command_queues(const std::vector<context> &con
         plssvm::detail::log(verbosity_level::full,
                             "Enabling atomicAdd acceleration using PTX inline assembly.\n");
     }
-    PLSSVM_DETAIL_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking_entry{ "opencl", "use_inline_assembly", use_inline_assembly }));
+    PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking::tracking_entry{ "opencl", "use_inline_assembly", use_inline_assembly }));
 #endif
 
     error_code err, err_bin;

@@ -137,6 +137,13 @@ Additional dependencies if `PLSSVM_ENABLE_TESTING` and `PLSSVM_GENERATE_TEST_FIL
 
 - [Python3](https://www.python.org/) with the [`argparse`](https://docs.python.org/3/library/argparse.html), [`timeit`](https://docs.python.org/3/library/timeit.html), [`sklearn`](https://scikit-learn.org/stable/), and [`humanize`](https://pypi.org/project/humanize/) modules
 
+Additional dependencies if `PLSSVM_ENABLE_PERFORMANCE_TRACKING` and `PLSSVM_ENABLE_HARDWARE_SAMPLING` are both set to `ON`:
+
+- if a CPU should be targeted (or **optionally** for all targets): at least one of [`turbostat`](https://www.linux.org/docs/man8/turbostat.html) (may require root privileges), [`lscpu`](https://man7.org/linux/man-pages/man1/lscpu.1.html), or [`free`](https://man7.org/linux/man-pages/man1/free.1.html) and the [`subprocess.h`](https://github.com/sheredom/subprocess.h) library (automatically build during the CMake configuration if they couldn't be found using the respective `find_package` call)
+- if an NVIDIA GPU should be targeted: NVIDIA's Management Library [`NVML`](https://docs.nvidia.com/deploy/nvml-api/)
+- if an AMD GPU should be targeted: AMD's ROCm SMI library [`rocm_smi_lib`](https://rocm.docs.amd.com/projects/rocm_smi_lib/en/latest/doxygen/html/modules.html)
+- if an Intel GPU should be targeted: Intel's [`Level Zero library`](https://spec.oneapi.io/level-zero/latest/core/INTRO.html)
+
 ### Building PLSSVM
 
 To download PLSSVM use:
@@ -273,12 +280,24 @@ The `[optional_options]` can be one or multiple of:
 - `PLSSVM_ENABLE_LANGUAGE_BINDINGS=ON|OFF` (default: `OFF`): enable language bindings
 - `PLSSVM_STL_DEBUG_MODE_FLAGS=ON|OFF` (default: `OFF`): enable STL debug modes (**note**: changes the resulting library's ABI!)
 
-If `PLSSVM_ENABLE_TESTING` is set to `ON`, the following options can also be set:
+If `PLSSVM_ENABLE_TESTING` is set to `ON`, the following option can also be set:
 
 - `PLSSVM_GENERATE_TEST_FILE=ON|OFF` (default: `ON`): automatically generate test files
-  - `PLSSVM_TEST_FILE_NUM_DATA_POINTS` (default: `5000`): the number of data points in the test file
-  - `PLSSVM_TEST_FILE_NUM_FEATURES` (default: `2000`): the number of features per data point in the test file
-  - `PLSSVM_TEST_FILE_NUM_CLASSES` (default: `4`): the number of classes in the test file
+
+If `PLSSVM_GENERATE_TEST_FILE` is set to `ON`, the following options can also be set:
+
+- `PLSSVM_TEST_FILE_NUM_DATA_POINTS` (default: `5000`): the number of data points in the test file
+- `PLSSVM_TEST_FILE_NUM_FEATURES` (default: `2000`): the number of features per data point in the test file
+- `PLSSVM_TEST_FILE_NUM_CLASSES` (default: `4`): the number of classes in the test file
+
+If `PLSSVM_ENABLE_PERFORMANCE_TRACKING` is set to `ON`, the following option can also be set:
+
+- `PLSSVM_ENABLE_HARDWARE_SAMPLING=ON|OFF` (default: `OFF`): enable hardware sampling like current clock frequencies, memory usage, or power draw
+
+If `PLSSVM_ENABLE_HARDWARE_SAMPLING` is set to `ON`, the following options can also be set:
+
+- `PLSSVM_HARDWARE_SAMPLING_ENABLE_ERROR_CHECKS=ON|OFF` (default: `OFF`): enable some runtime error checks for the hardware sampling libraries
+- `PLSSVM_HARDWARE_SAMPLING_INTERVAL` (default: `100`): the sampling interval for the `plssvm-train`, `plssvm-predict`, and `plssvm-scale` executables in **milliseconds**
 
 If `PLSSVM_ENABLE_LANGUAGE_BINDINGS` is set to `ON`, the following option can also be set:
 
