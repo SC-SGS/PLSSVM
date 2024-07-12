@@ -173,7 +173,7 @@ pipeline {
                 }
             }
         }
-        stage('Generate test files') {
+        stage('install python requirements') {
             steps {
               script{
                 def labels = onlineNodes('sgs_workstation')
@@ -186,8 +186,6 @@ pipeline {
 
                               cd ${WORKSPACE}/plssvm
                               python3 -m pip install --user -r  install/python_requirements.txt
-                              python3 utility_scripts/generate_data.py --output tests/data/5000x2000.libsvm --format libsvm --problem planes --samples 5000 --features 2000
-                              python3 utility_scripts/generate_data.py --output tests/data/500x100.libsvm --format libsvm --problem planes --samples 500 --features 100
                               '''
                           }
                       }
@@ -417,7 +415,7 @@ pipeline {
                                 esac
 
 
-                                installpath=$(spack location --first -i plssvm@develop$([[ $BACKEND == ADAPTIVECPP ]] && echo "%clang" ) \
+                                hashes=$(spack find -H  plssvm@develop$([[ $BACKEND == ADAPTIVECPP ]] && echo "%clang" ) \
                                     $([[ $BACKEND == OPENMP ]] && echo "+openmp" || echo "~openmp") \
                                     $([[ $BACKEND == CUDA ]] && echo "+cuda" || echo "~cuda") \
                                     $([[ $BACKEND == HIP ]] && echo "+hip" || echo "~hip") \
@@ -435,8 +433,18 @@ pipeline {
                                     $([[ $ARCHITECTURE == AMD ]] && echo "amdgpu_target=gfx90a") \
                                     $([[ SET_AMD_GPU_NONE == 1 ]] && "amdgpu_target=none") \
                                     build_type=$BUILD_TYPE )
-                                install_hash=$( echo ${installpath} | rev | cut -d/ -f1| cut -d- -f1 | rev | head -c 7)
-                                cd ${WORKSPACE}/plssvm/build-$(spack arch)-${install_hash}/spack-build-${install_hash}
+
+
+                                for hash in $hashes; do
+                                    tmp=$(echo $i | head -c 8 | tail  -c 7)
+                                    if [ -d $WORKSPACE/plssvm/build-$(spack arch)-$tmp/spack-build-$tmp ]; then
+                                        installpath=$WORKSPACE/plssvm/build-$(spack arch)-$tmp/spack-build-$tmp
+                                        break
+                                    fi
+                                done
+
+                                cd ${installpath}
+
 
                                 if [[ $ARCHITECTURE == NVIDIA ]]; then
                                     export ONEAPI_DEVICE_SELECTOR=cuda:*
