@@ -88,7 +88,7 @@ IncludeCategories:
   - Regex: '^.*'
     Priority: 5
 IncludeIsMainRegex: '(Test)?$'
-IncludeIsMainSourceRegex: '\.cu'
+IncludeIsMainSourceRegex: '(\.cu|\.hip)'
 IndentAccessModifiers: false
 IndentCaseBlocks: true
 IndentCaseLabels: true
