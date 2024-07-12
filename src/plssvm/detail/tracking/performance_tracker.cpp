@@ -41,15 +41,15 @@
 #endif
 
 #if defined(PLSSVM_STDPAR_BACKEND_HAS_ACPP) || defined(PLSSVM_STDPAR_BACKEND_HAS_GNU_TBB)
-    # if __has_include("tbb/tbb_stddef.h")
+    #if __has_include("tbb/tbb_stddef.h")
         #include "tbb/tbb_stddef.h"  // TBB_VERSION_MAJOR, TBB_VERSION_MINOR
-    # elif __has_include("version.h")
+    #elif __has_include("tbb/version.h")
         #include "tbb/version.h"  // TBB_VERSION_MAJOR, TBB_VERSION_MINOR
     #else
+    // no appropriate header found -> set version to 0
         #define TBB_VERSION_MAJOR 0
         #define TBB_VERSION_MINOR 0
-
-    # endif
+    #endif
 #endif
 
 #include <algorithm>    // std::max
