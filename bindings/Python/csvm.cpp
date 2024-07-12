@@ -23,8 +23,8 @@
 
 #include "bindings/Python/utility.hpp"  // check_kwargs_for_correctness, convert_kwargs_to_parameter
 
-#include "fmt/core.h"           // fmt::format
-#include "fmt/format.h"         // fmt::join
+#include "fmt/format.h"         // fmt::format
+#include "fmt/ranges.h"         // fmt::join
 #include "pybind11/pybind11.h"  // py::module_, py::class_, py::kwargs, py::overload_cast, py::const_
 
 #include <cstddef>      // std::size_t

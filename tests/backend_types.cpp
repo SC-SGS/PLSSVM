@@ -18,8 +18,8 @@
 #include "tests/custom_test_macros.hpp"  // EXPECT_CONVERSION_TO_STRING, EXPECT_CONVERSION_FROM_STRING, EXPECT_THROW_WHAT
 #include "tests/naming.hpp"              // naming::{pretty_print_unsupported_backend_combination, pretty_print_supported_backend_combination}
 
-#include "fmt/core.h"     // fmt::format
-#include "fmt/format.h"   // fmt::join
+#include "fmt/format.h"   // fmt::format
+#include "fmt/ranges.h"   // fmt::join
 #include "gmock/gmock.h"  // EXPECT_THAT, ::testing::Contains
 #include "gtest/gtest.h"  // TEST, EXPECT_EQ, EXPECT_TRUE, EXPECT_GE, TEST_P, INSTANTIATE_TEST_SUITE_P
 

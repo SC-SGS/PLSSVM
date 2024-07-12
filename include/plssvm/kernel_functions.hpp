@@ -23,7 +23,7 @@
 #include "plssvm/matrix.hpp"                 // plssvm::matrix, plssvm::layout_type
 #include "plssvm/parameter.hpp"              // plssvm::parameter
 
-#include "fmt/core.h"  // fmt::format
+#include "fmt/format.h"  // fmt::format
 
 #include <cmath>    // std::pow, std::exp, std::fma, std::tanh
 #include <cstddef>  // std::size_t

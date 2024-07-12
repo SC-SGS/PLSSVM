@@ -12,7 +12,7 @@
 #include "plssvm/detail/string_utility.hpp"  // plssvm::detail::{starts_with, trim_left}
 #include "plssvm/exceptions/exceptions.hpp"  // plssvm::file_not_found_exception, plssvm::invalid_file_format_exception
 
-#include "fmt/core.h"  // fmt::format
+#include "fmt/format.h"  // fmt::format
 
 // check if memory mapping can be supported
 #if defined(PLSSVM_HAS_MEMORY_MAPPING_UNIX)

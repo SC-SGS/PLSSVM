@@ -21,7 +21,7 @@
 #include "plssvm/detail/utility.hpp"            // plssvm:detail::current_date_time
 #include "plssvm/exceptions/exceptions.hpp"     // plssvm::invalid_file_format_exception
 
-#include "fmt/core.h"  // fmt::format
+#include "fmt/format.h"  // fmt::format
 #include "fmt/os.h"    // fmt::ostream, fmt::output_file
 
 #include <exception>    // std::exception_ptr, std::exception, std::current_exception, std::rethrow_exception

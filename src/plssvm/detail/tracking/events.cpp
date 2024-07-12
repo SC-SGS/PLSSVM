@@ -13,13 +13,12 @@
 #include "plssvm/exceptions/exceptions.hpp"    // plssvm::exception
 
 #include "fmt/chrono.h"  // format std::chrono types
-#include "fmt/core.h"    // fmt::format
-#include "fmt/format.h"  // fmt::join
+#include "fmt/format.h"  // fmt::format
+#include "fmt/ranges.h"  // fmt::join
 
 #include <chrono>   // std::chrono::steady_clock::time_point
 #include <cstddef>  // std::size_t
 #include <ostream>  // std::ostream
-#include <string>   // std::string
 #include <string>   // std::string
 #include <utility>  // std::move
 #include <vector>   // std::vector

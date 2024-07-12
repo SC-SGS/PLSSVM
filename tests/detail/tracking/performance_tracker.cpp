@@ -22,7 +22,7 @@
 #include "tests/types_to_test.hpp"                          // util::{label_type_gtest, test_parameter_type_at_t}
 #include "tests/utility.hpp"                                // util::redirect_output
 
-#include "fmt/core.h"     // fmt::format
+#include "fmt/format.h"   // fmt::format
 #include "gmock/gmock.h"  // EXPECT_CALL, EXPECT_THAT, ::testing::{HasSubstr}
 #include "gtest/gtest.h"  // TEST, TYPED_TEST_SUITE, TYPED_TEST, EXPECT_EQ, EXPECT_TRUE, EXPECT_FALSE, ::testing::Test, ::testing::An
 

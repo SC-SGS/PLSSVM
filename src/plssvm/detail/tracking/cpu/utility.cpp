@@ -11,7 +11,7 @@
 #include "plssvm/detail/string_conversion.hpp"  // plssvm::detail::split_as
 #include "plssvm/exceptions/exceptions.hpp"     // plssvm::hardware_sampling_exception
 
-#include "fmt/core.h"    // fmt::format
+#include "fmt/format.h"  // fmt::format
 #include "subprocess.h"  // subprocess_s, subprocess_create, subprocess_join, subprocess_stdout, subprocess_stderr, subprocess_option_e
 
 #include <algorithm>    // std::transform

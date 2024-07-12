@@ -12,7 +12,7 @@
 
 #include "tests/naming.hpp"  // naming::pretty_print_sha256
 
-#include "fmt/core.h"     // fmt::format
+#include "fmt/format.h"   // fmt::format
 #include "gtest/gtest.h"  // TEST_P, INSTANTIATE_TEST_SUITE_P, ASSERT_EQ, EXPECT_EQ, ::testing::{TestWithParam, Values}
 
 #include <string>   // std::string

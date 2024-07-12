@@ -21,9 +21,9 @@
 #include "tests/types_to_test.hpp"       // util::test_parameter_type_at_t
 #include "tests/utility.hpp"
 
-#include "gmock/gmock.h"   // ::testing::HasSubstr
-#include "gtest//gtest.h"  // TYPED_TEST_SUITE_P, TYPED_TEST_P, REGISTER_TYPED_TEST_SUITE_P, EXPECT_TRUE, EXPECT_FALSE, EXPECT_EQ, EXPECT_NE, EXPECT_DEATH
-                           // ::testing::Test
+#include "gmock/gmock.h"  // ::testing::HasSubstr
+#include "gtest/gtest.h"  // TYPED_TEST_SUITE_P, TYPED_TEST_P, REGISTER_TYPED_TEST_SUITE_P, EXPECT_TRUE, EXPECT_FALSE, EXPECT_EQ, EXPECT_NE, EXPECT_DEATH
+                          // ::testing::Test
 
 #include <cstring>  // std::memset
 #include <utility>  // std::move, std::swap

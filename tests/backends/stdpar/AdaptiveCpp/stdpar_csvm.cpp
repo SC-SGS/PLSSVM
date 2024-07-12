@@ -17,7 +17,7 @@
 #include "tests/custom_test_macros.hpp"  // EXPECT_THROW_WHAT
 #include "tests/utility.hpp"             // util::redirect_output
 
-#include "fmt/core.h"     // fmt::format
+#include "fmt/format.h"   // fmt::format
 #include "gtest/gtest.h"  // TEST_F, EXPECT_NO_THROW, ::testing::Test
 
 class adaptivecpp_stdparCSVM : public ::testing::Test,

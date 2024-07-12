@@ -22,7 +22,7 @@
 #include "tests/types_to_test.hpp"       // util::{combine_test_parameters_gtest_t, cartesian_type_product_t, test_parameter_type_at_t}
 #include "tests/utility.hpp"             // util::redirect_output
 
-#include "fmt/core.h"     // fmt::format
+#include "fmt/format.h"   // fmt::format
 #include "gtest/gtest.h"  // TYPED_TEST_SUITE, TYPED_TEST, ::testing::{Test, Types, internal::GetTypeName}
 
 #include <string>  // std::string

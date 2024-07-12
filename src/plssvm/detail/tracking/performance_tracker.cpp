@@ -21,11 +21,11 @@
 #include "plssvm/version/git_metadata/git_metadata.hpp"  // plssvm::version::git_metadata::commit_sha1
 #include "plssvm/version/version.hpp"                    // plssvm::version::{version, detail::target_platforms}
 
-#include "cxxopts.hpp"    // CXXOPTS__VERSION_MAJOR, CXXOPTS__VERSION_MINOR, CXXOPTS__VERSION_MINOR
-#include "fmt/chrono.h"   // format std::chrono types
-#include "fmt/core.h"     // fmt::format, FMT_VERSION
-#include "fmt/format.h"   // fmt::join
-#include "fmt/ostream.h"  // format types with an operator<< overload
+#include "cxxopts.hpp"   // CXXOPTS__VERSION_MAJOR, CXXOPTS__VERSION_MINOR, CXXOPTS__VERSION_MINOR
+#include "fmt/base.h"    // FMT_VERSION
+#include "fmt/chrono.h"  // format std::chrono types
+#include "fmt/format.h"  // fmt::format
+#include "fmt/ranges.h"  // fmt::join
 
 #if __has_include(<unistd.h>)
     #include <unistd.h>  // gethostname, getlogin_r, sysconf, _SC_HOST_NAME_MAX, _SC_LOGIN_NAME_MAX

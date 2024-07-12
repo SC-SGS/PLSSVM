@@ -10,7 +10,7 @@
 #include "plssvm/detail/tracking/gpu_amd/rocm_smi_samples.hpp"  // plssvm::detail::tracking::{rocm_smi_general_samples, rocm_smi_clock_samples, rocm_smi_power_samples, rocm_smi_memory_samples, rocm_smi_temperature_samples}
 #include "plssvm/detail/tracking/hardware_sampler.hpp"          // plssvm::detail::tracking::hardware_sampler
 
-#include "fmt/core.h"           // fmt::format
+#include "fmt/format.h"         // fmt::format
 #include "pybind11/chrono.h"    // automatic bindings for std::chrono::milliseconds
 #include "pybind11/pybind11.h"  // py::module_
 #include "pybind11/stl.h"       // automatic bindings for std::optional and std::vector

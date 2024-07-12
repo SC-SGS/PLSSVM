@@ -12,8 +12,8 @@
 #include "plssvm/detail/assert.hpp"       // PLSSVM_ASSERT
 #include "plssvm/detail/memory_size.hpp"  // plssvm::detail::memory_size
 
-#include "fmt/core.h"    // fmt::format, fmt::runtime
-#include "fmt/format.h"  // fmt::join
+#include "fmt/format.h"  // fmt::format, fmt::runtime
+#include "fmt/ranges.h"  // fmt::join
 
 #include <algorithm>  // std::max, std::fill
 #include <cstddef>    // std::size_t

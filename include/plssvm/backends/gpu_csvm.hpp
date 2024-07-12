@@ -25,7 +25,7 @@
 #include "plssvm/shape.hpp"                     // plssvm::shape
 #include "plssvm/solver_types.hpp"              // plssvm::solver_type
 
-#include "fmt/core.h"  // fmt::format
+#include "fmt/format.h"  // fmt::format
 
 #include <cmath>    // std::ceil
 #include <cstddef>  // std::size_t

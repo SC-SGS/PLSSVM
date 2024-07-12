@@ -34,7 +34,7 @@
 #include "tests/types_to_test.hpp"                     // util::{cartesian_type_product_t, combine_test_parameters_gtest_t}
 #include "tests/utility.hpp"                           // util::redirect_output
 
-#include "fmt/core.h"     // fmt::format
+#include "fmt/format.h"   // fmt::format
 #include "gtest/gtest.h"  // TEST_F, EXPECT_NO_THROW, INSTANTIATE_TYPED_TEST_SUITE_P, ::testing::Test
 
 #include <algorithm>  // std::min

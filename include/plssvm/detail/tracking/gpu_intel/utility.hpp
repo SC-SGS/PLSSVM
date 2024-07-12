@@ -15,7 +15,7 @@
 
 #include "plssvm/exceptions/exceptions.hpp"  // plssvm::hardware_sampling_exception
 
-#include "fmt/core.h"            // fmt::format
+#include "fmt/format.h"          // fmt::format
 #include "level_zero/ze_api.h"   // Level Zero runtime functions
 #include "level_zero/zes_api.h"  // Level Zero runtime functions
 
@@ -68,7 +68,6 @@ namespace plssvm::detail::tracking {
  * @return the string representation (`[[nodiscard]]`)
  */
 [[nodiscard]] std::string temperature_sensor_type_to_name(zes_temp_sensors_t sensor_type);
-
 
 }  // namespace plssvm::detail::tracking
 

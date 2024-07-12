@@ -12,8 +12,8 @@
 #include "plssvm/detail/tracking/utility.hpp"  // plssvm::detail::tracking::value_or_default
 #include "plssvm/detail/type_traits.hpp"       // plssvm::detail::{remove_cvref_t, is_vector}
 
-#include "fmt/core.h"    // fmt::format
-#include "fmt/format.h"  // fmt::join
+#include "fmt/format.h"  // fmt::format
+#include "fmt/ranges.h"  // fmt::join
 
 #include <cstddef>      // std::size_t
 #include <optional>     // std::optional

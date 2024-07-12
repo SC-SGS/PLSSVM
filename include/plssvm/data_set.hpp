@@ -30,7 +30,7 @@
 #include "plssvm/shape.hpp"                                // plssvm::shape
 #include "plssvm/verbosity_levels.hpp"                     // plssvm::verbosity_level
 
-#include "fmt/core.h"  // fmt::format
+#include "fmt/format.h"  // fmt::format
 
 #include <algorithm>   // std::all_of, std::max, std::min, std::sort, std::adjacent_find
 #include <chrono>      // std::chrono::{time_point, steady_clock, duration_cast, millisecond}

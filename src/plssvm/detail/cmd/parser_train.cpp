@@ -24,8 +24,8 @@
 
 #include "cxxopts.hpp"   // cxxopts::Options, cxxopts::value,cxxopts::ParseResult
 #include "fmt/color.h"   // fmt::fg, fmt::color::red
-#include "fmt/core.h"    // fmt::format
-#include "fmt/format.h"  // fmt::join
+#include "fmt/format.h"  // fmt::format
+#include "fmt/ranges.h"  // fmt::join
 
 #include <cstdlib>      // std::exit, EXIT_SUCCESS, EXIT_FAILURE
 #include <exception>    // std::exception

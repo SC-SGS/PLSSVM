@@ -14,13 +14,13 @@
 #pragma once
 
 #include "plssvm/backend_types.hpp"             // plssvm::backend_type
+#include "plssvm/backends/execution_range.hpp"  // plssvm::detail::execution_range
 #include "plssvm/classification_types.hpp"      // plssvm::classification_type
 #include "plssvm/constants.hpp"                 // plssvm::real_type, plssvm::PADDING_SIZE
 #include "plssvm/data_set.hpp"                  // plssvm::data_set
 #include "plssvm/detail/data_distribution.hpp"  // plssvm::detail::{triangular_data_distribution, rectangular_data_distribution}
 #include "plssvm/detail/memory_size.hpp"        // memory size literals
 #include "plssvm/detail/move_only_any.hpp"      // plssvm::detail::move_only_any
-#include "plssvm/backends/execution_range.hpp"  // plssvm::detail::execution_range
 #include "plssvm/detail/utility.hpp"            // plssvm::detail::{unreachable, get, unreachable}
 #include "plssvm/kernel_function_types.hpp"     // plssvm::csvm_to_backend_type_v, plssvm::backend_type
 #include "plssvm/matrix.hpp"                    // plssvm::aos_matrix, plssvm::layout_type
@@ -35,7 +35,7 @@
 #include "tests/types_to_test.hpp"          // util::{test_parameter_type_at_t, test_parameter_value_at_v}
 #include "tests/utility.hpp"                // util::{redirect_output, generate_specific_matrix, construct_from_tuple, flatten, generate_random_matrix}
 
-#include "fmt/core.h"     // fmt::format
+#include "fmt/format.h"   // fmt::format
 #include "gmock/gmock.h"  // ::testing::HasSubstr
 #include "gtest/gtest.h"  // TYPED_TEST_SUITE_P, TYPED_TEST_P, REGISTER_TYPED_TEST_SUITE_P, EXPECT_EQ, EXPECT_NE, EXPECT_GT, EXPECT_TRUE, EXPECT_DEATH,
                           // ASSERT_EQ, GTEST_SKIP, SUCCEED, ::testing::Test

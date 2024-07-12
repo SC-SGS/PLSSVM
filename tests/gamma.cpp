@@ -17,7 +17,7 @@
 #include "tests/custom_test_macros.hpp"  // EXPECT_CONVERSION_TO_STRING, EXPECT_CONVERSION_FROM_STRING, EXPECT_THROW_WHAT
 #include "tests/utility.hpp"             // util::generate_specific_matrix
 
-#include "fmt/core.h"     // fmt::format
+#include "fmt/format.h"   // fmt::format
 #include "gtest/gtest.h"  // TEST, EXPECT_EQ, EXPECT_TRUE, ASSERT_TRUE, ASSERT_FALSE
 
 #include <sstream>  // std::istringstream

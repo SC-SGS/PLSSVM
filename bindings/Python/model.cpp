@@ -14,7 +14,7 @@
 
 #include "bindings/Python/utility.hpp"  // assemble_unique_class_name, vector_to_pyarray, matrix_to_pyarray
 
-#include "fmt/core.h"           // fmt::format
+#include "fmt/format.h"         // fmt::format
 #include "pybind11/pybind11.h"  // py::module_, py::class_, py::return_value_policy
 #include "pybind11/stl.h"       // support for STL types: std::vector
 

@@ -36,9 +36,8 @@
 
 #include "sycl/sycl.hpp"  // sycl::queue, sycl::range, sycl::nd_range, sycl::handler, sycl::info::device
 
-#include "fmt/color.h"    // fmt::fg, fmt::color::orange
-#include "fmt/core.h"     // fmt::format
-#include "fmt/ostream.h"  // can use fmt using operator<< overloads
+#include "fmt/color.h"   // fmt::fg, fmt::color::orange
+#include "fmt/format.h"  // fmt::format
 
 #include <cstddef>    // std::size_t
 #include <cstdint>    // std::int32_t, std::uint16_t

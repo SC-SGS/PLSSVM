@@ -10,7 +10,7 @@
 #include "plssvm/detail/tracking/gpu_intel/level_zero_samples.hpp"  // plssvm::detail::tracking::{level_zero_general_samples, level_zero_clock_samples, level_zero_power_samples, level_zero_memory_samples, level_zero_temperature_samples}
 #include "plssvm/detail/tracking/hardware_sampler.hpp"              // plssvm::detail::tracking::hardware_sampler
 
-#include "fmt/core.h"           // fmt::format
+#include "fmt/format.h"         // fmt::format
 #include "pybind11/chrono.h"    // automatic bindings for std::chrono::milliseconds
 #include "pybind11/pybind11.h"  // py::module_
 #include "pybind11/stl.h"       // automatic bindings for std::optional and std::vector

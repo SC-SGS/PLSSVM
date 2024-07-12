@@ -15,7 +15,7 @@
 #include "plssvm/exceptions/exceptions.hpp"                    // plssvm::exception
 #include "plssvm/shape.hpp"                                    // plssvm::shape
 
-#include "fmt/core.h"  // fmt::format
+#include "fmt/format.h"  // fmt::format
 
 #include <algorithm>  // std::min
 #include <cstddef>    // std::size_t

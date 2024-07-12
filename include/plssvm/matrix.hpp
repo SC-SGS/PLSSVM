@@ -20,9 +20,10 @@
 #include "plssvm/shape.hpp"                                        // plssvm::shape
 #include "plssvm/verbosity_levels.hpp"                             // plssvm::verbosity_level
 
+#include "fmt/base.h"     // fmt::formatter
 #include "fmt/color.h"    // fmt::fg, fmt::color::orange
-#include "fmt/core.h"     // fmt::format, fmt::runtime
-#include "fmt/ostream.h"  // fmt::formatter, fmt::ostream_formatter
+#include "fmt/format.h"   // fmt::format, fmt::runtime
+#include "fmt/ostream.h"  // fmt::ostream_formatter
 
 #include <algorithm>    // std::equal, std::all_of, std::fill_n
 #include <cstddef>      // std::size_t

@@ -12,7 +12,7 @@
 
 #include "tests/naming.hpp"  // naming::pretty_print_escaped_string
 
-#include "fmt/core.h"     // fmt::format
+#include "fmt/format.h"   // fmt::format
 #include "gtest/gtest.h"  // TEST, ASSERT_EQ, EXPECT_EQ
 
 #include <string>       // std::string

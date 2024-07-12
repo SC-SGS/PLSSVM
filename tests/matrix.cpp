@@ -21,7 +21,7 @@
 #include "gmock/gmock.h"  // EXPECT_THAT, ::testing::HasSubstr
 #include "gtest/gtest.h"  // TEST, TYPED_TEST, TYPED_TEST_SUITE, EXPECT_EQ, EXPECT_TRUE, EXPECT_FALSE, EXPECT_DEATH, ASSERT_EQ, SCOPED_TRACE, FAIL,
                           // ::testing::{Test, StaticAssertTypeEq}
-#include "fmt/core.h"     // fmt::format
+#include "fmt/format.h"   // fmt::format
 
 #include <algorithm>  // std::swap
 #include <cstddef>    // std::size_t

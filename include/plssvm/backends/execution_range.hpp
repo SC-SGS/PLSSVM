@@ -12,7 +12,7 @@
 #ifndef PLSSVM_BACKENDS_EXECUTION_RANGE_HPP_
 #define PLSSVM_BACKENDS_EXECUTION_RANGE_HPP_
 
-#include "fmt/core.h"     // fmt::formatter
+#include "fmt/base.h"     // fmt::formatter
 #include "fmt/ostream.h"  // fmt::ostream_formatter
 
 #include <iosfwd>   // forward declare std::ostream and std::istream

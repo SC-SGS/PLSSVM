@@ -16,7 +16,7 @@
 #include "plssvm/detail/tracking/hardware_sampler.hpp"  // plssvm::detail::tracking::hardware_sampler
 #include "plssvm/target_platforms.hpp"                  //plssvm::target_platform
 
-#include "fmt/core.h"     // fmt::format
+#include "fmt/format.h"   // fmt::format
 #include "gmock/gmock.h"  // MOCK_METHOD, ON_CALL, ::testing::Return
 
 #include <chrono>   // std::chrono::steady_clock::time_point

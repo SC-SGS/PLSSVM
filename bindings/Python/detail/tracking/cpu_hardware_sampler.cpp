@@ -10,7 +10,7 @@
 #include "plssvm/detail/tracking/cpu/hardware_sampler.hpp"  // plssvm::detail::tracking::cpu_hardware_sampler
 #include "plssvm/detail/tracking/hardware_sampler.hpp"      // plssvm::detail::tracking::hardware_sampler
 
-#include "fmt/core.h"           // fmt::format
+#include "fmt/format.h"         // fmt::format
 #include "pybind11/chrono.h"    // automatic bindings for std::chrono::milliseconds
 #include "pybind11/pybind11.h"  // py::module_
 #include "pybind11/stl.h"       // automatic bindings for std::optional and std::vector

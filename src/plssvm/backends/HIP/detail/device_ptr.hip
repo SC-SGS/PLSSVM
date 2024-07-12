@@ -19,7 +19,7 @@
 #include "hip/driver_types.h"     // hipMemcpyHostToDevice, hipMemcpyDeviceToHost, hipMemcpyDeviceToDevice
 #include "hip/hip_runtime_api.h"  // HIP runtime functions
 
-#include "fmt/core.h"  // fmt::format
+#include "fmt/format.h"  // fmt::format
 
 #include <algorithm>  // std::min
 #include <cstddef>    // std::size_t

@@ -18,7 +18,7 @@
 #include "plssvm/detail/type_traits.hpp"           // PLSSVM_REQUIRES, plssvm::detail::remove_cvref_t
 #include "plssvm/detail/utility.hpp"               // plssvm::detail::unreachable
 
-#include "fmt/core.h"  // fmt::format
+#include "fmt/format.h"  // fmt::format
 
 #include <charconv>      // std::from_chars_result, std::from_chars (integral types)
 #include <stdexcept>     // std::runtime_error

@@ -13,7 +13,7 @@
 
 #include "hip/hip_runtime_api.h"  // hipGetDeviceCount, hipSetDevice, hipPeekAtLastError, hipDeviceSynchronize, hipRuntimeGetVersion
 
-#include "fmt/core.h"  // fmt::format
+#include "fmt/format.h"  // fmt::format
 
 #include <string>  // std::string
 

@@ -11,8 +11,8 @@
 #include "plssvm/detail/operators.hpp"         // operators namespace
 #include "plssvm/detail/tracking/utility.hpp"  // plssvm::detail::tracking::value_or_default
 
-#include "fmt/core.h"           // fmt::format
-#include "fmt/format.h"         // fmt::join
+#include "fmt/format.h"         // fmt::format
+#include "fmt/ranges.h"         // fmt::join
 #include "rocm_smi/rocm_smi.h"  // RSMI_MAX_FAN_SPEED
 
 #include <cstddef>   // std::size_t

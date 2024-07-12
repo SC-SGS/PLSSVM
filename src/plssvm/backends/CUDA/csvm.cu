@@ -35,7 +35,7 @@
 #include "cuda_runtime.h"      // cuda runtime
 #include "cuda_runtime_api.h"  // cuda runtime functions
 
-#include "fmt/core.h"  // fmt::format
+#include "fmt/format.h"  // fmt::format
 
 #include <cmath>      // std::sqrt, std::ceil
 #include <cstddef>    // std::size_t

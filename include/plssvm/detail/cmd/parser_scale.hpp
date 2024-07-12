@@ -16,7 +16,7 @@
 #include "plssvm/constants.hpp"          // plssvm::real_type
 #include "plssvm/file_format_types.hpp"  // plssvm::file_format_type
 
-#include "fmt/core.h"     // fmt::formatter
+#include "fmt/base.h"     // fmt::formatter
 #include "fmt/ostream.h"  // mt::ostream_formatter
 
 #include <iosfwd>  // forward declare std::ostream

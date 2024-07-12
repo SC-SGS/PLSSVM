@@ -23,8 +23,7 @@
 #include "plssvm/shape.hpp"                     // plssvm::shape
 
 #include "fmt/compile.h"  // FMT_COMPILE
-#include "fmt/core.h"     // fmt::format
-#include "fmt/format.h"   // fmt::format_to
+#include "fmt/format.h"   // fmt::format, fmt::format_to
 #include "fmt/os.h"       // fmt::ostream, fmt::output_file
 #include "fmt/std.h"      // format std::vector<bool>::operator[] proxy type
 
@@ -273,7 +272,7 @@ inline void write_libsvm_data_impl(const std::string &filename, const soa_matrix
 
     // format one output-line
     auto format_libsvm_line = [num_features](std::string &output, const soa_matrix<real_type> &data_point, const std::size_t row) {
-        static constexpr std::size_t BUFFER_SIZE = BLOCK_SIZE * CHARS_PER_BLOCK;
+        constexpr static std::size_t BUFFER_SIZE = BLOCK_SIZE * CHARS_PER_BLOCK;
         static std::array<char, BUFFER_SIZE> buffer;
 #pragma omp threadprivate(buffer)
 

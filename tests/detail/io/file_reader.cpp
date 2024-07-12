@@ -17,7 +17,7 @@
 #include "tests/naming.hpp"              // naming::{test_parameter_to_name, pretty_print_escaped_string}
 #include "tests/types_to_test.hpp"       //  util::{wrap_tuple_types_in_type_lists_t, cartesian_type_product_t, test_parameter_type_at_t};
 
-#include "fmt/core.h"     // fmt::format
+#include "fmt/format.h"   // fmt::format
 #include "gtest/gtest.h"  // TEST, TEST_P, TYPED_TEST, EXPECT_EQ, EXPECT_NE, EXPECT_TRUE, EXPECT_FALSE, ASSERT_TRUE, ASSERT_FALSE, TYPED_TEST_SUITE, INSTANTIATE_TEST_SUITE_P
                           // ::testing::{Test, Types, TestWithParam, ValuesIn}
 

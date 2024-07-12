@@ -11,7 +11,7 @@
 #include "plssvm/detail/memory_size.hpp"  // plssvm::detail::memory_size
 
 #include "fmt/chrono.h"  // fmt::localtime
-#include "fmt/core.h"    // fmt::format
+#include "fmt/format.h"  // fmt::format
 
 #if __has_include(<unistd.h>)
     #include <unistd.h>  // sysconf, _SC_PHYS_PAGES, _SC_PAGE_SIZE

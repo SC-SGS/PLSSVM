@@ -9,6 +9,7 @@
  */
 
 #include "plssvm/backends/HIP/detail/utility.hip.hpp"
+// main header
 
 #include "plssvm/backends/execution_range.hpp"  // plssvm::detail::dim_type
 #include "plssvm/backends/HIP/exceptions.hpp"   // plssvm::hip::backend_exception
@@ -18,7 +19,7 @@
 
 #include "tests/custom_test_macros.hpp"  // EXPECT_THROW_WHAT, EXPECT_THROW_WHAT_MATCHER
 
-#include "fmt/core.h"     // fmt::format
+#include "fmt/format.h"   // fmt::format
 #include "gmock/gmock.h"  // ::testing::StartsWith
 #include "gtest/gtest.h"  // TEST, EXPECT_GE, EXPECT_NO_THROW
 

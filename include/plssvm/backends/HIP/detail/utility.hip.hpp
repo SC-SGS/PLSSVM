@@ -18,7 +18,7 @@
 
 #include "hip/hip_runtime_api.h"  // hipError_t, hipSuccess, hipGetErrorName, hipGetErrorString
 
-#include "fmt/core.h"     // fmt::formatter
+#include "fmt/base.h"     // fmt::formatter
 #include "fmt/ostream.h"  // fmt::ostream_formatter
 
 #include <string>  // std::string

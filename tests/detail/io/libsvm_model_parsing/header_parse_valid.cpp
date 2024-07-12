@@ -20,7 +20,7 @@
 #include "tests/utility.hpp"             // util::{temporary_file, get_num_classes, instantiate_template_file, get_correct_model_file_labels,
                                          // get_distinct_label, get_correct_model_file_num_sv_per_class}
 
-#include "fmt/core.h"     // fmt::format
+#include "fmt/format.h"   // fmt::format
 #include "gtest/gtest.h"  // TYPED_TEST, TYPED_TEST_SUITE, EXPECT_EQ, EXPECT_TRUE, EXPECT_FALSE, ASSERT_EQ, FAIL, FAIL, ::testing::Test
 
 #include <cstddef>  // std::size_t

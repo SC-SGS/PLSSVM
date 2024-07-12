@@ -10,7 +10,7 @@
 
 #include "omp.h"  // omp_get_num_threads, _OPENMP
 
-#include "fmt/core.h"  // fmt::format
+#include "fmt/format.h"  // fmt::format
 
 #include <string>         // std::string
 #include <unordered_map>  // std::unordered_map

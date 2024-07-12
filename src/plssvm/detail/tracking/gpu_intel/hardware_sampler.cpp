@@ -18,8 +18,8 @@
 #include "plssvm/target_platforms.hpp"                                         // plssvm::target_platform
 
 #include "fmt/chrono.h"          // format std::chrono types
-#include "fmt/core.h"            // fmt::format
-#include "fmt/format.h"          // fmt::join
+#include "fmt/format.h"          // fmt::format
+#include "fmt/ranges.h"          // fmt::join
 #include "level_zero/ze_api.h"   // Level Zero runtime functions
 #include "level_zero/zes_api.h"  // Level Zero runtime functions
 

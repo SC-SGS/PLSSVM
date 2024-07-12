@@ -38,7 +38,7 @@
 #include "plssvm/verbosity_levels.hpp"                     // plssvm::verbosity_level
 
 #include "fmt/color.h"    // fmt::fg, fmt::color::orange
-#include "fmt/core.h"     // fmt::format
+#include "fmt/format.h"   // fmt::format
 #include "igor/igor.hpp"  // igor::parser
 
 #include <algorithm>    // std::max_element, std::all_of

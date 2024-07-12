@@ -15,7 +15,7 @@
 
 #include "plssvm/detail/tracking/utility.hpp"  // PLSSVM_SAMPLE_STRUCT_FIXED_MEMBER, PLSSVM_SAMPLE_STRUCT_SAMPLING_MEMBER
 
-#include "fmt/core.h"     // fmt::formatter
+#include "fmt/base.h"     // fmt::formatter
 #include "fmt/ostream.h"  // fmt::ostream_formatter
 
 #include <cstdint>   // std::uint64_t, std::int64_t, std::uint32_t

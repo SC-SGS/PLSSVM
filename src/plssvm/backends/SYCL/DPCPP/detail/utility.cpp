@@ -16,7 +16,7 @@
 
 #include "sycl/sycl.hpp"  // ::sycl::platform, ::sycl::device, ::sycl::property::queue, ::sycl::info
 
-#include "fmt/core.h"  // fmt::format
+#include "fmt/format.h"  // fmt::format
 
 #include <map>      // std::multimap
 #include <memory>   // std::make_shared

@@ -22,8 +22,9 @@
     #include "plssvm/detail/tracking/hardware_sampler_factory.hpp"  // plssvm::detail::tracking::make_hardware_sampler
 #endif
 
-#include "fmt/format.h"  // fmt::print, fmt::join
+#include "fmt/format.h"  // fmt::print
 #include "fmt/os.h"      // fmt::ostream, fmt::output_file
+#include "fmt/ranges.h"  // fmt::join
 
 #include <algorithm>   // std::for_each
 #include <chrono>      // std::chrono::{steady_clock, duration}, std::chrono_literals namespace

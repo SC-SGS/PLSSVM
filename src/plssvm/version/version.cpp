@@ -18,8 +18,8 @@
 #include "plssvm/target_platforms.hpp"                   // plssvm::list_available_target_platforms
 #include "plssvm/version/git_metadata/git_metadata.hpp"  // plssvm::version::git_metadata::{is_populated, commit_date, remote_url, branch, commit_sha1}
 
-#include "fmt/core.h"    // fmt::format
-#include "fmt/format.h"  // fmt::join
+#include "fmt/format.h"  // fmt::format
+#include "fmt/ranges.h"  // fmt::join
 
 #include <optional>     // std::optional, std::make_optional, std::nullopt
 #include <string>       // std::string
