@@ -11,8 +11,7 @@ message(STATUS "Enabled performance tracking to YAML files for the PLSSVM execut
 target_sources(${PLSSVM_BASE_LIBRARY_NAME} PRIVATE $<BUILD_INTERFACE:
                ${CMAKE_CURRENT_SOURCE_DIR}/performance_tracker.cpp;
                ${CMAKE_CURRENT_SOURCE_DIR}/events.cpp
-               ${CMAKE_CURRENT_LIST_DIR}/hardware_sampler.cpp
-               ${CMAKE_CURRENT_LIST_DIR}/hardware_sampler_factory.cpp
+               ${CMAKE_CURRENT_SOURCE_DIR}/hardware_sampler.cpp
                >)
 
 ## add target definitions
@@ -24,7 +23,7 @@ if (PLSSVM_ENABLE_HARDWARE_SAMPLING)
     
     ## set target properties
     set_local_and_parent(PLSSVM_HARDWARE_TRACKING_LIBRARY_NAME plssvm-tracking)
-    add_library(${PLSSVM_HARDWARE_TRACKING_LIBRARY_NAME} SHARED)
+    add_library(${PLSSVM_HARDWARE_TRACKING_LIBRARY_NAME} SHARED ${CMAKE_CURRENT_SOURCE_DIR}/hardware_sampler_factory.cpp)
     
     target_compile_definitions(${PLSSVM_HARDWARE_TRACKING_LIBRARY_NAME} PUBLIC PLSSVM_HARDWARE_SAMPLING_ENABLED)
     target_compile_definitions(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC PLSSVM_HARDWARE_SAMPLING_ENABLED)
