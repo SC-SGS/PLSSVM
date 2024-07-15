@@ -11,6 +11,8 @@ message(STATUS "Enabled performance tracking to YAML files for the PLSSVM execut
 target_sources(${PLSSVM_BASE_LIBRARY_NAME} PRIVATE $<BUILD_INTERFACE:
                ${CMAKE_CURRENT_SOURCE_DIR}/performance_tracker.cpp;
                ${CMAKE_CURRENT_SOURCE_DIR}/events.cpp
+               ${CMAKE_CURRENT_LIST_DIR}/hardware_sampler.cpp
+               ${CMAKE_CURRENT_LIST_DIR}/hardware_sampler_factory.cpp
                >)
 
 ## add target definitions
@@ -20,16 +22,9 @@ option(PLSSVM_ENABLE_HARDWARE_SAMPLING "Enable hardware sampling (like clock fre
 if (PLSSVM_ENABLE_HARDWARE_SAMPLING)
     message(STATUS "Enable hardware sampling to YAML files for the PLSSVM executables plssvm-train, plssvm-predict, and plssvm-scale.")
     
-    ## explicitly set sources
-    set(PLSSVM_HARDWARE_TRACKING_SOURCES
-        ${CMAKE_CURRENT_LIST_DIR}/hardware_sampler.cpp
-        ${CMAKE_CURRENT_LIST_DIR}/hardware_sampler_factory.cpp
-    )
-    
     ## set target properties
     set_local_and_parent(PLSSVM_HARDWARE_TRACKING_LIBRARY_NAME plssvm-tracking)
-    add_library(${PLSSVM_HARDWARE_TRACKING_LIBRARY_NAME} SHARED ${PLSSVM_HARDWARE_TRACKING_SOURCES})
-    target_sources(${PLSSVM_BASE_LIBRARY_NAME} PRIVATE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/hardware_sampler.cpp>)
+    add_library(${PLSSVM_HARDWARE_TRACKING_LIBRARY_NAME} SHARED)
     
     target_compile_definitions(${PLSSVM_HARDWARE_TRACKING_LIBRARY_NAME} PUBLIC PLSSVM_HARDWARE_SAMPLING_ENABLED)
     target_compile_definitions(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC PLSSVM_HARDWARE_SAMPLING_ENABLED)
@@ -40,7 +35,7 @@ if (PLSSVM_ENABLE_HARDWARE_SAMPLING)
         message(STATUS "Enable error checks for the hardware sampling functions.")
         target_compile_definitions(${PLSSVM_HARDWARE_TRACKING_LIBRARY_NAME} PRIVATE PLSSVM_HARDWARE_SAMPLING_ERROR_CHECKS_ENABLED)
     endif ()
-
+    
     include(${PROJECT_SOURCE_DIR}/cmake/utility_macros.cmake)
     ## option for the used sampling interval
     set(PLSSVM_HARDWARE_SAMPLING_INTERVAL "100" CACHE STRING "The interval in milliseconds in which the hardware information (like clock frequency or power draw) are queried.")
@@ -59,7 +54,7 @@ if (PLSSVM_ENABLE_HARDWARE_SAMPLING)
         message(STATUS "Enable sampling of CPU information using lscpu.")
         target_compile_definitions(${PLSSVM_HARDWARE_TRACKING_LIBRARY_NAME} PUBLIC PLSSVM_HARDWARE_TRACKING_VIA_LSCPU_ENABLED)
     endif ()
-
+    
     ## check whether free could be found -> used for the CPU targets as well as for ALL host measurements
     ## -> checked even if no CPU targets where provided
     ## LINUX only

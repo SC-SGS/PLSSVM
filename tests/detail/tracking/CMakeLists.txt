@@ -8,7 +8,10 @@
 set(PLSSVM_HARDWARE_SAMPLER_TEST_NAME hardware_sampler_tests)
 
 # list all necessary sources
-set(PLSSVM_HARDWARE_SAMPLER_TEST_SOURCES "")
+set(PLSSVM_HARDWARE_SAMPLER_TEST_SOURCES
+    ${CMAKE_CURRENT_LIST_DIR}/hardware_sampler.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/hardware_sampler_factory.cpp
+)
 
 # add hardware sampling specific source files if the respective sampling is used
 if (TARGET ${PLSSVM_HARDWARE_TRACKING_LIBRARY_NAME})
@@ -27,24 +30,20 @@ if (TARGET ${PLSSVM_HARDWARE_TRACKING_LIBRARY_NAME})
     endif ()
 endif ()
 
-# check that at least one source file has been added
-if (PLSSVM_HARDWARE_SAMPLER_TEST_SOURCES)
-    message(STATUS "${PLSSVM_HARDWARE_SAMPLER_TEST_SOURCES}")
-    # add test executable
-    add_executable(${PLSSVM_HARDWARE_SAMPLER_TEST_NAME} ${CMAKE_CURRENT_LIST_DIR}/../../main.cpp ${PLSSVM_HARDWARE_SAMPLER_TEST_SOURCES})
-    
-    # link against test library
-    target_link_libraries(${PLSSVM_HARDWARE_SAMPLER_TEST_NAME} PRIVATE ${PLSSVM_BASE_TEST_LIBRARY_NAME})
-    
-    # add tests to google test
-    include(GoogleTest)
-    include(${PROJECT_SOURCE_DIR}/cmake/discover_tests_with_death_test_filter.cmake)
-    discover_tests_with_death_test_filter(${PLSSVM_HARDWARE_SAMPLER_TEST_NAME})
-    
-    # add test as coverage dependency
-    if (TARGET coverage)
-        add_dependencies(coverage ${PLSSVM_HARDWARE_SAMPLER_TEST_NAME})
-    endif ()
+# add test executable
+add_executable(${PLSSVM_HARDWARE_SAMPLER_TEST_NAME} ${CMAKE_CURRENT_LIST_DIR}/../../main.cpp ${PLSSVM_HARDWARE_SAMPLER_TEST_SOURCES})
+
+# link against test library
+target_link_libraries(${PLSSVM_HARDWARE_SAMPLER_TEST_NAME} PRIVATE ${PLSSVM_BASE_TEST_LIBRARY_NAME})
+
+# add tests to google test
+include(GoogleTest)
+include(${PROJECT_SOURCE_DIR}/cmake/discover_tests_with_death_test_filter.cmake)
+discover_tests_with_death_test_filter(${PLSSVM_HARDWARE_SAMPLER_TEST_NAME})
+
+# add test as coverage dependency
+if (TARGET coverage)
+    add_dependencies(coverage ${PLSSVM_HARDWARE_SAMPLER_TEST_NAME})
 endif ()
 
 
