@@ -368,7 +368,7 @@ void performance_tracker::save(std::ostream &out) {
     //                                                          events, if present                                                         //
     //*************************************************************************************************************************************//
     if (!events_.empty()) {
-        out << fmt::format("events:\n{}", events_.generate_yaml_string(reference_time_));
+        out << fmt::format("events:\n{}\n\n", events_.generate_yaml_string(reference_time_));
     }
 
     //*************************************************************************************************************************************//
