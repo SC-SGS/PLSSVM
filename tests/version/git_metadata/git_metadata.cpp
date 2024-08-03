@@ -10,8 +10,11 @@
 
 #include "plssvm/version/git_metadata/git_metadata.hpp"
 
-#include "gmock/gmock-matchers.h"  // ::testing::{HasSubstr, ContainsRegex, Not, StartsWith, EndsWith}
-#include "gtest/gtest.h"           // TEST, EXPECT_TRUE, EXPECT_FALSE, EXPECT_THAT
+#include "gmock/gmock.h"  // ::testing::{HasSubstr, Not, StartsWith, EndsWith}
+#include "gtest/gtest.h"  // TEST, EXPECT_TRUE, EXPECT_FALSE, EXPECT_THAT
+
+#include <regex>   // std::regex, std::regex::extended, std::regex_match
+#include <string>  // std::string
 
 using namespace plssvm::version;
 
@@ -30,7 +33,8 @@ TEST(GitMetadata, author_email) {
         // if we are inside a Git repository, the author email must not be empty
         EXPECT_FALSE(git_metadata::author_email().empty());
         // check for a valid email address
-        EXPECT_THAT(git_metadata::author_email(), ::testing::ContainsRegex("^[[:graph:]]+@[[:graph:]]+\\.[[:graph:]]+$"));
+        EXPECT_TRUE(std::regex_match(std::string{ git_metadata::author_email() },
+                                     std::regex{ "^[[:graph:]]+@[[:graph:]]+\\.[[:graph:]]+$", std::regex::extended }));
     } else {
         // if we are outside a Git repository, the author email must be empty
         EXPECT_TRUE(git_metadata::author_email().empty());
@@ -42,7 +46,8 @@ TEST(GitMetadata, commit_sha1) {
         // if we are inside a Git repository, the commit sha1 must not be empty
         EXPECT_FALSE(git_metadata::commit_sha1().empty());
         // test for valid commit sha1 characters
-        EXPECT_THAT(git_metadata::commit_sha1(), ::testing::ContainsRegex("^([0-9a-f]{40})|([0-9a-f]{6,8})$"));
+        EXPECT_TRUE(std::regex_match(std::string{ git_metadata::commit_sha1() },
+                                     std::regex{ "^([0-9a-f]{40})|([0-9a-f]{6,8})$", std::regex::extended }));
     } else {
         // if we are outside a Git repository, the commit sha1 must be empty
         EXPECT_TRUE(git_metadata::commit_sha1().empty());
@@ -92,17 +97,22 @@ TEST(GitMetadata, branch) {
         EXPECT_FALSE(git_metadata::branch().empty());
         // check whether the branch name is valid
         // https://git-scm.com/docs/git-check-ref-format
-        EXPECT_THAT(git_metadata::branch(), ::testing::Not(::testing::StartsWith(".")));                    // must not start with a .a
-        EXPECT_THAT(git_metadata::branch(), ::testing::Not(::testing::EndsWith(".lock")));                  // must not end with .lock
-        EXPECT_THAT(git_metadata::branch(), ::testing::Not(::testing::EndsWith("..")));                     // must not end with .. anywhere
-        // EXPECT_THAT(git_metadata::branch(), ::testing::Not(::testing::ContainsRegex("[\\\040-\\\177]+")));  // not contain an ASCII control character anywhere // TODO:@breyerml fix this no idea what you wanted to test here
-        EXPECT_THAT(git_metadata::branch(), ::testing::Not(::testing::ContainsRegex("(~|\\^|:)+")));        // must not contain a ~, ^ or : anywhere
-        EXPECT_THAT(git_metadata::branch(), ::testing::Not(::testing::ContainsRegex("(\\?|\\[|\\*)+")));    // must not contain ?, [ or * anywhere
-        EXPECT_THAT(git_metadata::branch(), ::testing::Not(::testing::StartsWith("/")));                    // must not start with a /
-        EXPECT_THAT(git_metadata::branch(), ::testing::Not(::testing::EndsWith("/")));                      // must not end with a /
-        EXPECT_THAT(git_metadata::branch(), ::testing::Not(::testing::ContainsRegex("/{2,}")));             // must not contain multiple consecutive /
-        EXPECT_THAT(git_metadata::branch(), ::testing::Not(::testing::ContainsRegex("(@\\{)+")));           // must not contain @{
-        EXPECT_THAT(git_metadata::branch(), ::testing::Not(::testing::ContainsRegex("(@|\\\\)+")));         // must not contain a single @ or backslash
+        EXPECT_THAT(std::string{ git_metadata::branch() }, ::testing::Not(::testing::StartsWith(".")));    // must not start with a .a
+        EXPECT_THAT(std::string{ git_metadata::branch() }, ::testing::Not(::testing::EndsWith(".lock")));  // must not end with .lock
+        EXPECT_THAT(std::string{ git_metadata::branch() }, ::testing::Not(::testing::EndsWith("..")));     // must not end with .. anywhere
+        // EXPECT_THAT(git_metadata::branch(), ::testing::Not(::testing::ContainsRegex("[\\\040-\\\177]+")));  // not contain an ASCII control character anywhere
+        EXPECT_FALSE(std::regex_match(std::string{ git_metadata::branch() },
+                                      std::regex{ "(~|\\^|:)+", std::regex::extended }));  // must not contain a ~, ^ or : anywhere
+        EXPECT_FALSE(std::regex_match(std::string{ git_metadata::branch() },
+                                      std::regex{ "(\\?|\\[|\\*)+", std::regex::extended }));            // must not contain ?, [ or * anywhere
+        EXPECT_THAT(std::string{ git_metadata::branch() }, ::testing::Not(::testing::StartsWith("/")));  // must not start with a /
+        EXPECT_THAT(std::string{ git_metadata::branch() }, ::testing::Not(::testing::EndsWith("/")));    // must not end with a /
+        EXPECT_FALSE(std::regex_match(std::string{ git_metadata::branch() },
+                                      std::regex{ "/{2,}", std::regex::extended }));  // must not contain multiple consecutive /
+        EXPECT_FALSE(std::regex_match(std::string{ git_metadata::branch() },
+                                      std::regex{ "(@\\{)+", std::regex::extended }));  // must not contain @{
+        EXPECT_FALSE(std::regex_match(std::string{ git_metadata::branch() },
+                                      std::regex{ "(@|\\\\)+", std::regex::extended }));  // must not contain a single @ or backslash
     } else {
         // if we are outside a Git repository, the branch name is HEAD
         EXPECT_EQ(git_metadata::branch(), "HEAD");
@@ -115,7 +125,8 @@ TEST(GitMetadata, remote_url) {
         EXPECT_FALSE(git_metadata::remote_url().empty());
         // check whether the remote URL is valid
         // https://github.com/jonschlinkert/is-git-url
-        EXPECT_THAT(git_metadata::remote_url(), ::testing::ContainsRegex("^(git|ssh|http|https|git@[A-Za-z0-9_\\.\\-]+):(//)?[A-Za-z0-9_\\.@:/-~\\-]+(\\.git(/)?)?$"));
+        EXPECT_TRUE(std::regex_match(std::string{ git_metadata::remote_url() },
+                                     std::regex{ "^(git|ssh|http|https|git@[A-Za-z0-9_\\.\\-]+):(//)?[A-Za-z0-9_\\.@:/-~\\-]+(\\.git(/)?)?$", std::regex::extended }));
     } else {
         // if we are outside a Git repository, the remote URL must be empty
         EXPECT_TRUE(git_metadata::remote_url().empty());

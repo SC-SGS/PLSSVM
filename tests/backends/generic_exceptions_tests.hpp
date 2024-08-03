@@ -15,12 +15,13 @@
 
 #include "plssvm/detail/string_utility.hpp"  // plssvm::detail::split
 
-#include "../custom_test_macros.hpp"  // EXPECT_THROW_WHAT
+#include "tests/custom_test_macros.hpp"  // EXPECT_THROW_WHAT
 
-#include "fmt/core.h"              // fmt::format
-#include "gmock/gmock-matchers.h"  // ::testing::{HasSubstr, ContainsRegex}
-#include "gtest/gtest.h"           // TEST, EXPECT_EQ, EXPECT_THAT, EXPECT_TRUE, ASSERT_EQ, ::testing::Test
+#include "fmt/format.h"   // fmt::format
+#include "gmock/gmock.h"  // ::testing::{HasSubstr, ContainsRegex}
+#include "gtest/gtest.h"  // TEST, EXPECT_EQ, EXPECT_THAT, EXPECT_TRUE, ASSERT_EQ, ::testing::Test
 
+#include <cstdint>      // std::uint_least32_t
 #include <string>       // std::string
 #include <string_view>  // std::string_view
 #include <vector>       // std::vector
@@ -32,15 +33,17 @@ ExceptionType dummy(const std::string &msg) {
 }
 
 template <typename T>
-class Exception : public ::testing::Test {};
+class Exception : public ::testing::Test { };
+
 TYPED_TEST_SUITE_P(Exception);
 
 // check whether throwing exceptions works as intended
-TYPED_TEST_P(Exception, throwing_excpetion) {
+TYPED_TEST_P(Exception, throwing_exception) {
     using exception_type = typename TypeParam::exception_type;
 
     // throw the specified exception
-    EXPECT_THROW_WHAT(throw exception_type{ "exception message" }, exception_type, "exception message");
+    const auto dummy = []() { throw exception_type{ "exception message" }; };
+    EXPECT_THROW_WHAT(dummy(), exception_type, "exception message");
 }
 
 // check whether the source location information are populated correctly
@@ -49,10 +52,10 @@ TYPED_TEST_P(Exception, exception_source_location) {
 
     const exception_type exc = dummy<exception_type>("exception message");
 
-    EXPECT_EQ(exc.loc().file_name(), __FILE__);
+    EXPECT_EQ(exc.loc().file_name(), std::string{ __builtin_FILE() });
     EXPECT_THAT(exc.loc().function_name(), ::testing::HasSubstr("dummy"));
-    EXPECT_EQ(exc.loc().line(), 31);   // attention: hardcoded line!
-    EXPECT_EQ(exc.loc().column(), 0);  // attention: always 0!
+    EXPECT_EQ(exc.loc().line(), std::uint_least32_t{ 32 });   // attention: hardcoded line!
+    EXPECT_EQ(exc.loc().column(), std::uint_least32_t{ 0 });  // attention: always 0!
 }
 
 // check whether what message including the source location information is assembled correctly
@@ -70,16 +73,16 @@ TYPED_TEST_P(Exception, exception_what_with_source_location) {
     ASSERT_EQ(what_lines.size(), 5);
 
     // check the "what" message content
-    EXPECT_EQ(what_lines[0], "exception message");
+    EXPECT_EQ(what_lines[0], std::string{ "exception message" });
     EXPECT_EQ(what_lines[1], fmt::format("{} thrown:", exception_name));
-    EXPECT_EQ(what_lines[2], "  in file      " __FILE__);
-    EXPECT_THAT(what_lines[3], ::testing::ContainsRegex("  in function  .*dummy.*"));
-    EXPECT_EQ(what_lines[4], "  @ line       31");
+    EXPECT_EQ(what_lines[2], fmt::format("  in file      {}", __builtin_FILE()));
+    EXPECT_THAT(std::string{ what_lines[3] }, ::testing::ContainsRegex("  in function  .*dummy.*"));
+    EXPECT_EQ(what_lines[4], std::string{ "  @ line       32" });
 }
 
-// clang-format off
 REGISTER_TYPED_TEST_SUITE_P(Exception,
-                            throwing_excpetion, exception_source_location, exception_what_with_source_location);
-// clang-format on
+                            throwing_exception,
+                            exception_source_location,
+                            exception_what_with_source_location);
 
 #endif  // PLSSVM_TESTS_BACKENDS_GENERIC_EXCEPTIONS_TESTS_HPP_

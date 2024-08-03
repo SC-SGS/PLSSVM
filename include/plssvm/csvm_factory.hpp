@@ -13,18 +13,20 @@
 #define PLSSVM_CSVM_FACTORY_HPP_
 #pragma once
 
-#include "plssvm/backend_types.hpp"                      // plssvm::backend, plssvm::csvm_to_backend_type_v
-#include "plssvm/backends/SYCL/implementation_type.hpp"  // plssvm::sycl::implementation_type
-#include "plssvm/csvm.hpp"                               // plssvm::csvm, plssvm::csvm_backend_exists_v
-#include "plssvm/detail/type_traits.hpp"                 // plssvm::detail::remove_cvref_t
-#include "plssvm/exceptions/exceptions.hpp"              // plssvm::unsupported_backend_exception
-
-#include "plssvm/backends/SYCL/detail/constants.hpp"  // alias plssvm::sycl to the PLSSVM_SYCL_BACKEND_PREFERRED_IMPLEMENTATION
-                                                      // or to plssvm::dpcpp if no SYCL backend is available
+#include "plssvm/backend_types.hpp"                       // plssvm::backend, plssvm::csvm_to_backend_type_v
+#include "plssvm/backends/SYCL/detail/constants.hpp"      // plssvm::sycl::csvm alias
+#include "plssvm/backends/SYCL/implementation_types.hpp"  // plssvm::sycl::implementation_type
+#include "plssvm/csvm.hpp"                                // plssvm::csvm, plssvm::csvm_backend_exists_v
+#include "plssvm/detail/igor_utility.hpp"                 // plssvm::detail::get_value_from_named_parameter
+#include "plssvm/exceptions/exceptions.hpp"               // plssvm::unsupported_backend_exception
+#include "plssvm/parameter.hpp"                           // plssvm::sycl_implementation_type
 
 // only include requested/available backends
 #if defined(PLSSVM_HAS_OPENMP_BACKEND)
     #include "plssvm/backends/OpenMP/csvm.hpp"  // plssvm::openmp::csvm, plssvm::csvm_backend_exists_v
+#endif
+#if defined(PLSSVM_HAS_STDPAR_BACKEND)
+    #include "plssvm/backends/stdpar/csvm.hpp"  // plssvm::stdpar::csvm, plssvm::csvm_backend_exists_v
 #endif
 #if defined(PLSSVM_HAS_CUDA_BACKEND)
     #include "plssvm/backends/CUDA/csvm.hpp"  // plssvm::cuda::csvm, plssvm::csvm_backend_exists_v
@@ -39,12 +41,12 @@
     #if defined(PLSSVM_SYCL_BACKEND_HAS_DPCPP)
         #include "plssvm/backends/SYCL/DPCPP/csvm.hpp"  // plssvm::dpcpp::csvm, plssvm::csvm_backend_exists_v
     #endif
-    #if defined(PLSSVM_SYCL_BACKEND_HAS_HIPSYCL)
-        #include "plssvm/backends/SYCL/hipSYCL/csvm.hpp"  // plssvm::hipsycl::csvm, plssvm::csvm_backend_exists_v
+    #if defined(PLSSVM_SYCL_BACKEND_HAS_ADAPTIVECPP)
+        #include "plssvm/backends/SYCL/AdaptiveCpp/csvm.hpp"  // plssvm::adaptivecpp::csvm, plssvm::csvm_backend_exists_v
     #endif
 #endif
 
-#include "fmt/core.h"     // fmt::format
+#include "fmt/format.h"   // fmt::format
 #include "igor/igor.hpp"  // igor::parser, igor::has_unnamed_arguments
 
 #include <memory>       // std::unique_ptr, std::make_unique
@@ -97,8 +99,7 @@ template <typename... Args>
     // check whether a specific SYCL implementation type has been requested
     if constexpr (parser.has(sycl_implementation_type)) {
         // compile time check: the value must have the correct type
-        static_assert(std::is_same_v<detail::remove_cvref_t<decltype(parser(sycl_implementation_type))>, sycl::implementation_type>, "Provided sycl_implementation_type must be convertible to a plssvm::sycl::implementation_type!");
-        impl_type = static_cast<sycl::implementation_type>(parser(sycl_implementation_type));
+        impl_type = detail::get_value_from_named_parameter<sycl::implementation_type>(parser, sycl_implementation_type);
     }
 
     switch (impl_type) {
@@ -106,8 +107,8 @@ template <typename... Args>
             return make_csvm_default_impl<sycl::csvm>(std::forward<Args>(args)...);
         case sycl::implementation_type::dpcpp:
             return make_csvm_default_impl<dpcpp::csvm>(std::forward<Args>(args)...);
-        case sycl::implementation_type::hipsycl:
-            return make_csvm_default_impl<hipsycl::csvm>(std::forward<Args>(args)...);
+        case sycl::implementation_type::adaptivecpp:
+            return make_csvm_default_impl<adaptivecpp::csvm>(std::forward<Args>(args)...);
     }
     throw unsupported_backend_exception{ "No sycl backend available!" };
 }
@@ -127,6 +128,8 @@ template <typename... Args>
             return make_csvm_impl(determine_default_backend(), std::forward<Args>(args)...);
         case backend_type::openmp:
             return make_csvm_default_impl<openmp::csvm>(std::forward<Args>(args)...);
+        case backend_type::stdpar:
+            return make_csvm_default_impl<stdpar::csvm>(std::forward<Args>(args)...);
         case backend_type::cuda:
             return make_csvm_default_impl<cuda::csvm>(std::forward<Args>(args)...);
         case backend_type::hip:
@@ -158,6 +161,7 @@ template <typename... Args>
 [[nodiscard]] inline std::unique_ptr<csvm> make_csvm(const backend_type backend, Args &&...args) {
     return detail::make_csvm_impl(backend, std::forward<Args>(args)...);
 }
+
 /**
  * @brief Create a new C-SVM using the automatic backend type and the additional parameter @p args.
  * @tparam Args the types of the parameters to initialize the C-SVM

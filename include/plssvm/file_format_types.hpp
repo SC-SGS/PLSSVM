@@ -13,6 +13,9 @@
 #define PLSSVM_FILE_FORMAT_TYPES_HPP_
 #pragma once
 
+#include "fmt/base.h"     // fmt::formatter
+#include "fmt/ostream.h"  // fmt::ostream_formatter
+
 #include <iosfwd>  // forward declare std::ostream and std::istream
 
 namespace plssvm {
@@ -44,5 +47,8 @@ std::ostream &operator<<(std::ostream &out, file_format_type format);
 std::istream &operator>>(std::istream &in, file_format_type &format);
 
 }  // namespace plssvm
+
+template <>
+struct fmt::formatter<plssvm::file_format_type> : fmt::ostream_formatter { };
 
 #endif  // PLSSVM_FILE_FORMAT_TYPES_HPP_

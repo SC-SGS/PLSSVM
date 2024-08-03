@@ -1,7 +1,7 @@
 # This CITATION.cff file was generated with cffinit.
 # Visit https://bit.ly/cffinit to generate yours today!
 
-cff-version: 1.2.0
+cff-version: 2.0.0
 title: >-
   PLSSVM: A (multi-)GPGPU-accelerated Least Squares
   Support Vector Machine
@@ -29,5 +29,5 @@ repository-code: 'https://github.com/SC-SGS/PLSSVM'
 url: 'https://sc-sgs.github.io/PLSSVM/'
 repository: 'https://github.com/SC-SGS/PLSSVM'
 license: MIT
-version: v1.2.0
-date-released: '2022-04-27'
+version: v3.0.0
+date-released: '2023-05-12'

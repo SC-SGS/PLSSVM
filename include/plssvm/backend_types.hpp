@@ -14,9 +14,12 @@
 #define PLSSVM_BACKEND_TYPES_HPP_
 #pragma once
 
-#include "plssvm/backends/SYCL/implementation_type.hpp"  // plssvm::sycl::implementation_type
-#include "plssvm/detail/type_traits.hpp"                 // plssvm::detail::remove_cvref_t
-#include "plssvm/target_platforms.hpp"                   // plssvm::list_available_target_platforms
+#include "plssvm/backends/SYCL/implementation_types.hpp"  // plssvm::sycl::implementation_type
+#include "plssvm/detail/type_traits.hpp"                  // plssvm::detail::remove_cvref_t
+#include "plssvm/target_platforms.hpp"                    // plssvm::list_available_target_platforms
+
+#include "fmt/base.h"     // fmt::formatter
+#include "fmt/ostream.h"  // fmt::ostream_formatter
 
 #include <iosfwd>  // forward declare std::ostream and std::istream
 #include <vector>  // std::vector
@@ -32,13 +35,15 @@ enum class backend_type {
     automatic,
     /** [OpenMP](https://www.openmp.org/) to target CPUs only (currently no OpenMP target offloading support). */
     openmp,
+    /** [C++ stdpar](https://en.cppreference.com/w/cpp/algorithm#Execution_policies) to target CPUs and GPUs from different vendors using C++ standard library parallel algorithms. */
+    stdpar,
     /** [CUDA](https://developer.nvidia.com/cuda-zone) to target NVIDIA GPUs only. */
     cuda,
     /** [HIP](https://github.com/ROCm-Developer-Tools/HIP) to target AMD and NVIDIA GPUs. */
     hip,
     /** [OpenCL](https://www.khronos.org/opencl/) to target CPUs and GPUs from different vendors. */
     opencl,
-    /** [SYCL](https://www.khronos.org/sycl/) to target CPUs and GPUs from different vendors. Currently tested SYCL implementations are [DPC++](https://github.com/intel/llvm) and [hipSYCL](https://github.com/illuhad/hipSYCL). */
+    /** [SYCL](https://www.khronos.org/sycl/) to target CPUs and GPUs from different vendors. Currently tested SYCL implementations are [DPC++](https://github.com/intel/llvm) and [AdaptiveCpp](https://github.com/AdaptiveCpp/AdaptiveCpp) (formerly known as hipSYCL). */
     sycl
 };
 
@@ -50,7 +55,7 @@ enum class backend_type {
 [[nodiscard]] std::vector<backend_type> list_available_backends();
 
 /**
- * @brief Returns the default backend (if plssvm::backend_type::automatic is used) given the backend and target platform lists.
+ * @brief Returns the default backend given the backend and target platform lists.
  * @param[in] available_backends list of backends; if no backends are provided, queries all available backends
  * @param[in] available_target_platforms list of target platforms; if no target platforms are provided, queries all available target platforms
  * @return the default backend given the backend and target platform lists (`[[nodiscard]]`)
@@ -78,11 +83,13 @@ std::istream &operator>>(std::istream &in, backend_type &backend);
 // clang-format off
 // Forward declare all possible C-SVMs.
 namespace openmp { class csvm; }
+namespace stdpar { class csvm; }
 namespace cuda { class csvm; }
 namespace hip { class csvm; }
 namespace opencl { class csvm; }
-namespace hipsycl { class csvm; }
+namespace adaptivecpp { class csvm; }
 namespace dpcpp { class csvm; }
+
 // clang-format on
 
 namespace detail {
@@ -91,7 +98,7 @@ namespace detail {
  * @brief No `value` member variable if anything other than a C-SVM has been provided.
  */
 template <typename T>
-struct csvm_to_backend_type {};
+struct csvm_to_backend_type { };
 
 /**
  * @brief Sets the `value` to `plssvm::backend_type::openmp` for the OpenMP C-SVM.
@@ -99,43 +106,57 @@ struct csvm_to_backend_type {};
 template <>
 struct csvm_to_backend_type<openmp::csvm> {
     /// The enum value representing the OpenMP backend.
-    static constexpr backend_type value = backend_type::openmp;
+    constexpr static backend_type value = backend_type::openmp;
 };
+
+/**
+ * @brief Sets the `value` to `plssvm::backend_type::stdpar` for the C++ standard library parallelism C-SVM.
+ */
+template <>
+struct csvm_to_backend_type<stdpar::csvm> {
+    /// The enum value representing the stdpar backend.
+    constexpr static backend_type value = backend_type::stdpar;
+};
+
 /**
  * @brief Sets the `value` to `plssvm::backend_type::cuda` for the CUDA C-SVM.
  */
 template <>
 struct csvm_to_backend_type<cuda::csvm> {
     /// The enum value representing the CUDA backend.
-    static constexpr backend_type value = backend_type::cuda;
+    constexpr static backend_type value = backend_type::cuda;
 };
+
 /**
  * @brief Sets the `value` to `plssvm::backend_type::hip` for the HIP C-SVM.
  */
 template <>
 struct csvm_to_backend_type<hip::csvm> {
     /// The enum value representing the HIP backend.
-    static constexpr backend_type value = backend_type::hip;
+    constexpr static backend_type value = backend_type::hip;
 };
+
 /**
  * @brief Sets the `value` to `plssvm::backend_type::opencl` for the OpenCL C-SVM.
  */
 template <>
 struct csvm_to_backend_type<opencl::csvm> {
     /// The enum value representing the OpenCL backend.
-    static constexpr backend_type value = backend_type::opencl;
+    constexpr static backend_type value = backend_type::opencl;
 };
+
 /**
- * @brief Sets the `value` to `plssvm::backend_type::sycl` for the SYCL C-SVM using hipSYCL as SYCL implementation.
- * @details Also sets a member variable `impl` to the value `plssvm::sycl::implementation_type::hipsycl` (only present for SYCL backends!).
+ * @brief Sets the `value` to `plssvm::backend_type::sycl` for the SYCL C-SVM using AdaptiveCpp as SYCL implementation.
+ * @details Also sets a member variable `impl` to the value `plssvm::sycl::implementation_type::adaptivecpp` (only present for SYCL backends!).
  */
 template <>
-struct csvm_to_backend_type<hipsycl::csvm> {
-    /// The enum value representing the SYCL (hipSYCL) backend.
-    static constexpr backend_type value = backend_type::sycl;
-    /// The enum value representing the SYCL implementation for the (hipSYCL) SYCL backend.
-    static constexpr sycl::implementation_type impl = sycl::implementation_type::hipsycl;
+struct csvm_to_backend_type<adaptivecpp::csvm> {
+    /// The enum value representing the SYCL (AdaptiveCpp) backend.
+    constexpr static backend_type value = backend_type::sycl;
+    /// The enum value representing the SYCL implementation for the (AdaptiveCpp) SYCL backend.
+    constexpr static sycl::implementation_type impl = sycl::implementation_type::adaptivecpp;
 };
+
 /**
  * @brief Sets the `value` to `plssvm::backend_type::sycl` for the SYCL C-SVM using DPC++ as SYCL implementation.
  * @details Also sets a member variable `impl` to the value `plssvm::sycl::implementation_type::dpcpp` (only present for SYCL backends!).
@@ -143,12 +164,13 @@ struct csvm_to_backend_type<hipsycl::csvm> {
 template <>
 struct csvm_to_backend_type<dpcpp::csvm> {
     /// The enum value representing the SYCL (DPC++) backend.
-    static constexpr backend_type value = backend_type::sycl;
+    constexpr static backend_type value = backend_type::sycl;
     /// The enum value representing the SYCL implementation for the (DPC++) SYCL backend.
-    static constexpr sycl::implementation_type impl = sycl::implementation_type::dpcpp;
+    constexpr static sycl::implementation_type impl = sycl::implementation_type::dpcpp;
 };
 
 }  // namespace detail
+
 /// @endcond
 
 /**
@@ -158,7 +180,8 @@ struct csvm_to_backend_type<dpcpp::csvm> {
  * @tparam T the type of the C-SVM to get the backend type from
  */
 template <typename T>
-struct csvm_to_backend_type : detail::csvm_to_backend_type<detail::remove_cvref_t<T>> {};
+struct csvm_to_backend_type : detail::csvm_to_backend_type<detail::remove_cvref_t<T>> { };
+
 /**
  * @copydoc plssvm::csvm_to_backend_type
  * @details A shorthand for `plssvm::csvm_to_backend_type::value`.
@@ -167,5 +190,8 @@ template <typename T>
 constexpr backend_type csvm_to_backend_type_v = csvm_to_backend_type<T>::value;
 
 }  // namespace plssvm
+
+template <>
+struct fmt::formatter<plssvm::backend_type> : fmt::ostream_formatter { };
 
 #endif  // PLSSVM_BACKEND_TYPES_HPP_

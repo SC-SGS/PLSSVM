@@ -13,16 +13,6 @@
 #define PLSSVM_BACKENDS_SYCL_DETAIL_CONSTANTS_HPP_
 #pragma once
 
-/**
- * @brief Macro identifying the used SYCL compiler as [hipSYCL](https://github.com/illuhad/hipSYCL).
- */
-#define PLSSVM_SYCL_BACKEND_COMPILER_HIPSYCL 1
-
-/**
- * @brief Macro identifying the used SYCL compiler as [DPC++](https://github.com/intel/llvm).
- */
-#define PLSSVM_SYCL_BACKEND_COMPILER_DPCPP 0
-
 #if defined(PLSSVM_HAS_SYCL_BACKEND)
 // define the default used SYCL implementation
 namespace plssvm::sycl {
@@ -30,6 +20,8 @@ using namespace plssvm::PLSSVM_SYCL_BACKEND_PREFERRED_IMPLEMENTATION;
 }
 #else
 // define dpcpp as default SYCL namespace if no SYCL backend is available (to prevent compiler errors)
+namespace plssvm::dpcpp { }  // namespace plssvm::dpcpp
+
 namespace plssvm::sycl {
 using namespace plssvm::dpcpp;
 }

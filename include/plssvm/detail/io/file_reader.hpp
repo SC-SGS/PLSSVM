@@ -88,7 +88,7 @@ class file_reader {
 
     /**
      * @brief Associates the current file_reader with the file denoted by @p filename, i.e., opens the file @p filename (possible memory mapping it).
-     * @details This function is called by the constructor of file_reader accepting a std::string and is not usually invoked directly.
+     * @details This function is called by the constructor of file_reader and is not usually invoked directly.
      * @param[in] filename the file to open
      * @throws plssvm::file_reader_exception if the file_reader has already opened another file
      * @throws plssvm::file_not_found_exception if the @p filename couldn't be found
@@ -103,11 +103,6 @@ class file_reader {
      */
     void open(const std::filesystem::path &filename);
     /**
-     * @brief Checks whether this file_reader is currently associated with a file.
-     * @return `true` if a file is currently open, `false` otherwise (`[[nodiscard]]`)
-     */
-    [[nodiscard]] bool is_open() const noexcept;
-    /**
      * @brief Closes the associated file.
      * @details If memory mapped IO has been used, unmap the file and close the file descriptor, and delete the allocated buffer.
      *          This function is called by the destructor of file_reader when the object goes out of scope and is not usually invoked directly.
@@ -115,13 +110,20 @@ class file_reader {
     void close();
 
     /**
+     * @brief Checks whether this file_reader is currently associated with a file.
+     * @return `true` if a file is currently open, `false` otherwise (`[[nodiscard]]`)
+     */
+    [[nodiscard]] bool is_open() const noexcept;
+
+    /**
      * @brief Element-wise swap all contents of `*this` with @p other.
      * @param[in,out] other the other file_reader to swap the contents with
      */
-    void swap(file_reader &other);
+    void swap(file_reader &other) noexcept;
 
     /**
      * @brief Read the content of the associated file and split it into lines, ignoring empty lines and lines starting with the @p comment.
+     * @details Per default, @p comment is set to ignore all newlines.
      * @param[in] comment a character (sequence) at the beginning of a line that causes this line to be ignored (used to filter comments)
      * @throws plssvm::file_reader_exception if no file is currently associated to this file_reader
      * @return the split lines, ignoring empty lines and lines starting with the @p comment
@@ -140,19 +142,19 @@ class file_reader {
     [[nodiscard]] typename std::vector<std::string_view>::size_type num_lines() const noexcept;
     /**
      * @brief Return the @p pos line of the parsed file.
-     * @details Returns `0` if no file is currently associated with this file_reader or the read_lines() function has not been called yet.
      * @param[in] pos the line to return
      * @return the line without leading whitespaces (`[[nodiscard]]`)
      */
     [[nodiscard]] std::string_view line(typename std::vector<std::string_view>::size_type pos) const;
     /**
      * @brief Return all lines present after the preprocessing.
-     * @details Returns `0` if no file is currently associated with this file_reader or the read_lines() function has not been called yet.
+     * @details Returns an empty vector if no file is currently associated with this file_reader or the read_lines() function has not been called yet.
      * @return all lines after preprocessing (`[[nodiscard]]`)
      */
     [[nodiscard]] const std::vector<std::string_view> &lines() const noexcept;
     /**
      * @brief Return the underlying file content as one large string.
+     * @details Returns a nullptr if no file is currently associated with this file_reader.
      * @return the file content (`[[nodiscard]]`)
      */
     [[nodiscard]] const char *buffer() const noexcept;
@@ -197,6 +199,8 @@ class file_reader {
 #endif
     /// The content of the file. Pointer to the memory mapped area or to a separately allocated memory area holding the file's content. If the file is empty, corresponds to a `nullptr`!
     char *file_content_{ nullptr };
+    /// The content of the file IF memory mapping wasn't available or successful. In this case, `file_content_` points to this std::string's data. Otherwise, this std::string isn't used.
+    std::string fallback_file_content_{};
     /// The number of bytes stored in file_content_.
     std::streamsize num_bytes_{ 0 };
     /// The parsed content of file_content_: a vector of all lines that are not empty and do not start with the provided comment.
@@ -210,7 +214,7 @@ class file_reader {
  * @param[in,out] lhs the first file_reader
  * @param[in,out] rhs the second file_reader
  */
-void swap(file_reader &lhs, file_reader &rhs);
+void swap(file_reader &lhs, file_reader &rhs) noexcept;
 
 }  // namespace plssvm::detail::io
 

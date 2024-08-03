@@ -14,6 +14,9 @@
 #pragma once
 
 #include "plssvm/backends/gpu_device_ptr.hpp"  // plssvm::detail::gpu_device_ptr
+#include "plssvm/shape.hpp"                    // plssvm::shape
+
+#include <cstddef>  // std::size_t
 
 namespace plssvm::hip::detail {
 
@@ -22,20 +25,22 @@ namespace plssvm::hip::detail {
  * @tparam T the type of the kernel pointer to wrap
  */
 template <typename T>
-class device_ptr : public ::plssvm::detail::gpu_device_ptr<T, int> {
+class device_ptr : public ::plssvm::detail::gpu_device_ptr<T, int, T *, device_ptr<T>> {
     /// The template base type of the HIP device_ptr class.
-    using base_type = ::plssvm::detail::gpu_device_ptr<T, int>;
+    using base_type = ::plssvm::detail::gpu_device_ptr<T, int, T *, device_ptr<T>>;
 
     using base_type::data_;
     using base_type::queue_;
-    using base_type::size_;
+    using base_type::shape_;
 
   public:
     // Be able to use overloaded base class functions.
-    using base_type::memset;
-    using base_type::fill;
     using base_type::copy_to_device;
+    using base_type::copy_to_device_strided;
     using base_type::copy_to_host;
+    using base_type::copy_to_other_device;
+    using base_type::fill;
+    using base_type::memset;
 
     using typename base_type::const_host_pointer_type;
     using typename base_type::device_pointer_type;
@@ -55,23 +60,38 @@ class device_ptr : public ::plssvm::detail::gpu_device_ptr<T, int> {
      * @param[in] device the associated HIP device
      * @throws plssvm::hip::backend_exception if the given device ID is smaller than 0 or greater or equal than the available number of devices
      */
-    explicit device_ptr(size_type size, queue_type device = 0);
+    explicit device_ptr(size_type size, queue_type device);
+    /**
+     * @brief Allocates `shape.x * shape.y * sizeof(T)` bytes on the device with ID @p device.
+     * @param[in] shape the number of elements represented by the device_ptr
+     * @param[in] device the associated HIP device
+     * @throws plssvm::hip::backend_exception if the given device ID is smaller than 0 or greater or equal than the available number of devices
+     */
+    explicit device_ptr(plssvm::shape shape, queue_type device);
+    /**
+     * @brief Allocates `(shape.x + padding.x) * (shape.y + padding.y) * sizeof(T)` bytes on the device with ID @p device.
+     * @param[in] shape the number of elements represented by the device_ptr
+     * @param[in] padding the number of padding elements added to the extent values
+     * @param[in] device the associated CUDA device
+     * @throws plssvm::cuda::backend_exception if the given device ID is smaller than 0 or greater or equal than the available number of devices
+     */
+    device_ptr(plssvm::shape shape, plssvm::shape padding, queue_type device);
 
     /**
-     * @copydoc plssvm::detail::gpu_device_ptr::gpu_device_ptr(const gpu_device_ptr&)
+     * @copydoc plssvm::detail::gpu_device_ptr::gpu_device_ptr(const plssvm::detail::gpu_device_ptr &)
      */
     device_ptr(const device_ptr &) = delete;
     /**
-     * @copydoc plssvm::detail::gpu_device_ptr::gpu_device_ptr(gpu_device_ptr&&)
+     * @copydoc plssvm::detail::gpu_device_ptr::gpu_device_ptr(plssvm::detail::gpu_device_ptr &&)
      */
     device_ptr(device_ptr &&other) noexcept = default;
 
     /**
-     * @copydoc plssvm::detail::gpu_device_ptr::operator=(const gpu_device_ptr&)
+     * @copydoc plssvm::detail::gpu_device_ptr::operator=(const plssvm::detail::gpu_device_ptr &)
      */
     device_ptr &operator=(const device_ptr &) = delete;
     /**
-     * @copydoc plssvm::detail::gpu_device_ptr::operator=(gpu_device_ptr&&)
+     * @copydoc plssvm::detail::gpu_device_ptr::operator=(plssvm::detail::gpu_device_ptr &&)
      */
     device_ptr &operator=(device_ptr &&other) noexcept = default;
 
@@ -93,9 +113,17 @@ class device_ptr : public ::plssvm::detail::gpu_device_ptr<T, int> {
      */
     void copy_to_device(const_host_pointer_type data_to_copy, size_type pos, size_type count) override;
     /**
+     * @copydoc plssvm::detail::gpu_device_ptr::copy_to_device_strided(const_host_pointer_type, std::size_t, std::size_t, std::size_t)
+     */
+    void copy_to_device_strided(const_host_pointer_type data_to_copy, std::size_t spitch, std::size_t width, std::size_t height) override;
+    /**
      * @copydoc plssvm::detail::gpu_device_ptr::copy_to_host(host_pointer_type, size_type, size_type) const
      */
     void copy_to_host(host_pointer_type buffer, size_type pos, size_type count) const override;
+    /**
+     * @copydoc plssvm::detail::gpu_device_ptr::copy_to_other_device(derived_gpu_device_ptr &, size_type, size_type) const
+     */
+    void copy_to_other_device(device_ptr &target, size_type pos, size_type count) const override;
 };
 
 extern template class device_ptr<float>;

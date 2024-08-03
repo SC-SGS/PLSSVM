@@ -22,14 +22,32 @@ namespace plssvm::opencl::detail {
  * @details Used to distinguish kernels in the plssvm::opencl::detail::command_queue class.
  */
 enum class compute_kernel_name {
-    /// The kernels to generate the `q` vector.
-    q_kernel,
-    /// The main C-SVM kernel.
-    svm_kernel,
-    /// The predict kernel for the linear kernel function.
+    /// The kernels to explicitly assemble the kernel matrix.
+    assemble_kernel_matrix_explicit,
+    /// The kernel performing a explicit BLAS SYMM calculation.
+    symm_kernel_explicit,
+    /// The kernel performing a explicit BLAS SYMM mirroring the values on a multi device setting.
+    mirror_symm_kernel_explicit,
+    /// The kernel used to inplace add two matrices: lhs += rhs.
+    inplace_matrix_add_kernel,
+    /// The kernel used to inplace scale a matrix: lhs *= scale.
+    inplace_matrix_scale_kernel,
+    /// The kernels to implicitly assemble the kernel matrix.
+    assemble_kernel_matrix_implicit_blas,
+    /// The kernel to speed up the linear kernel function prediction.
     w_kernel,
-    /// The predict kernels for the polynomial and rbf kernel functions.
-    predict_kernel
+    /// The predict kernel for the linear kernel function.
+    predict_kernel_linear,
+    /// The predict kernel for the polynomial kernel function.
+    predict_kernel_polynomial,
+    /// The predict kernel for the radial basis function kernel function.
+    predict_kernel_rbf,
+    /// The predict kernel for the sigmoid kernel function.
+    predict_kernel_sigmoid,
+    /// The predict kernel for the laplacian kernel function.
+    predict_kernel_laplacian,
+    /// The predict kernel for the chi-squared kernel function.
+    predict_kernel_chi_squared
 };
 
 /**
@@ -77,6 +95,7 @@ class kernel {
      * @return the wrapped OpenCL cl_kernel (`[[nodiscard]]`)
      */
     [[nodiscard]] operator cl_kernel &() noexcept { return compute_kernel; }
+
     /**
      * @brief Implicitly convert a kernel wrapper to an OpenCL cl_kernel.
      * @return the wrapped OpenCL cl_kernel (`[[nodiscard]]`)

@@ -12,17 +12,19 @@
 
 #include "plssvm/detail/arithmetic_type_name.hpp"  // plssvm::detail::arithmetic_type_name
 
-#include "../custom_test_macros.hpp"  // EXPECT_THROW_WHAT
-#include "../naming.hpp"              // naming::{real_type_to_name, pretty_print_escaped_string}
+#include "tests/custom_test_macros.hpp"  // EXPECT_THROW_WHAT
+#include "tests/naming.hpp"              // naming::{real_type_to_name, pretty_print_escaped_string}
+#include "tests/types_to_test.hpp"       // util::{combine_test_parameters_gtest_t, cartesian_type_product_t, test_parameter_type_at_t}
 
 #include "fmt/format.h"   // fmt::format
+#include "fmt/std.h"      // format std::vector<bool>::operator[] proxy type
 #include "gtest/gtest.h"  // TEST, ASSERT_EQ, EXPECT_EQ, EXPECT_TRUE, TYPED_TEST, TYPED_TEST_SUITE, TEST_P, INSTANTIATE_TEST_SUITE_P
                           // ::testing::{Test, TestWithParam, Types, Values}
 
 #include <stdexcept>    // std::invalid_argument, std::runtime_error
 #include <string>       // std::string
 #include <string_view>  // std::string_view
-#include <tuple>        // std::ignore
+#include <tuple>        // std::tuple, std::ignore
 #include <utility>      // std::pair, std::make_pair
 #include <vector>       // std::vector
 
@@ -89,38 +91,62 @@ TEST(StringConversion, string_conversion) {
     check_convert_to(input, std::vector<std::string>{ "-3", "-1.5", "0.0", "1.5", "3", "5", "6", "7" });
 }
 
+using string_conversion_exception_types = std::tuple<short, unsigned char, int, unsigned int, long, unsigned long, long long, unsigned long long, float, double>;
+using string_conversion_exception_types_gtest = util::combine_test_parameters_gtest_t<util::cartesian_type_product_t<string_conversion_exception_types>>;
+
 template <typename T>
-class StringConversionException : public ::testing::Test {};
-using string_conversion_exception_types = ::testing::Types<short, unsigned char, int, unsigned int, long, unsigned long, long long, unsigned long long, float, double>;
-TYPED_TEST_SUITE(StringConversionException, string_conversion_exception_types, naming::label_type_to_name);
+class StringConversionException : public ::testing::Test {
+  protected:
+    using fixture_type = util::test_parameter_type_at_t<0, T>;
+};
+
+TYPED_TEST_SUITE(StringConversionException, string_conversion_exception_types_gtest, naming::test_parameter_to_name);
 
 TYPED_TEST(StringConversionException, string_conversion_exception) {
-    using namespace plssvm::detail;
+    using type = typename TestFixture::fixture_type;
 
-    EXPECT_THROW_WHAT(std::ignore = convert_to<TypeParam>("a"), std::runtime_error, fmt::format("Can't convert 'a' to a value of type {}!", arithmetic_type_name<TypeParam>()));
-    EXPECT_THROW_WHAT(std::ignore = convert_to<TypeParam>("  abc 1"), std::runtime_error, fmt::format("Can't convert '  abc 1' to a value of type {}!", arithmetic_type_name<TypeParam>()));
-    EXPECT_THROW_WHAT((std::ignore = convert_to<TypeParam, std::invalid_argument>("a")), std::invalid_argument, fmt::format("Can't convert 'a' to a value of type {}!", arithmetic_type_name<TypeParam>()));
+    EXPECT_THROW_WHAT(std::ignore = plssvm::detail::convert_to<type>("a"),
+                      std::runtime_error,
+                      fmt::format("Can't convert 'a' to a value of type {}!", plssvm::detail::arithmetic_type_name<type>()));
+    EXPECT_THROW_WHAT(std::ignore = plssvm::detail::convert_to<type>("  abc 1"),
+                      std::runtime_error,
+                      fmt::format("Can't convert '  abc 1' to a value of type {}!", plssvm::detail::arithmetic_type_name<type>()));
+    EXPECT_THROW_WHAT((std::ignore = plssvm::detail::convert_to<type, std::invalid_argument>("a")),
+                      std::invalid_argument,
+                      fmt::format("Can't convert 'a' to a value of type {}!", plssvm::detail::arithmetic_type_name<type>()));
 }
+
 TEST(StringConversionException, string_conversion_exception_bool) {
-    using namespace plssvm::detail;
-
-    EXPECT_THROW_WHAT(std::ignore = convert_to<bool>("a"), std::runtime_error, "Can't convert 'a' to a value of type long long!");
-    EXPECT_THROW_WHAT(std::ignore = convert_to<bool>("  abc 1"), std::runtime_error, "Can't convert '  abc 1' to a value of type long long!");
-    EXPECT_THROW_WHAT((std::ignore = convert_to<bool, std::invalid_argument>("a")), std::invalid_argument, "Can't convert 'a' to a value of type long long!");
+    EXPECT_THROW_WHAT(std::ignore = plssvm::detail::convert_to<bool>("a"),
+                      std::runtime_error,
+                      "Can't convert 'a' to a value of type long long!");
+    EXPECT_THROW_WHAT(std::ignore = plssvm::detail::convert_to<bool>("  abc 1"),
+                      std::runtime_error,
+                      "Can't convert '  abc 1' to a value of type long long!");
+    EXPECT_THROW_WHAT((std::ignore = plssvm::detail::convert_to<bool, std::invalid_argument>("a")),
+                      std::invalid_argument,
+                      "Can't convert 'a' to a value of type long long!");
 }
+
 TEST(StringConversionException, string_conversion_exception_char) {
-    using namespace plssvm::detail;
-
-    EXPECT_THROW_WHAT(std::ignore = convert_to<char>("42"), std::runtime_error, "Can't convert '42' to a value of type char!");
-    EXPECT_THROW_WHAT(std::ignore = convert_to<char>("  abc 1"), std::runtime_error, "Can't convert '  abc 1' to a value of type char!");
-    EXPECT_THROW_WHAT((std::ignore = convert_to<char, std::invalid_argument>("")), std::invalid_argument, "Can't convert '' to a value of type char!");
+    EXPECT_THROW_WHAT(std::ignore = plssvm::detail::convert_to<char>("42"),
+                      std::runtime_error,
+                      "Can't convert '42' to a value of type char!");
+    EXPECT_THROW_WHAT(std::ignore = plssvm::detail::convert_to<char>("  abc 1"),
+                      std::runtime_error,
+                      "Can't convert '  abc 1' to a value of type char!");
+    EXPECT_THROW_WHAT((std::ignore = plssvm::detail::convert_to<char, std::invalid_argument>("")),
+                      std::invalid_argument,
+                      "Can't convert '' to a value of type char!");
 }
 
-class StringConversionExtract : public ::testing::TestWithParam<std::tuple<std::string_view, int>> {};
+class StringConversionExtract : public ::testing::TestWithParam<std::tuple<std::string_view, int>> { };
+
 TEST_P(StringConversionExtract, extract_first_integer_from_string) {
     auto [input, output] = GetParam();
     EXPECT_EQ(plssvm::detail::extract_first_integer_from_string<int>(input), output);
 }
+
 // clang-format off
 INSTANTIATE_TEST_SUITE_P(StringUtility, StringConversionExtract, ::testing::Values(
                 std::make_tuple("111", 111), std::make_tuple("111 222", 111),
@@ -136,41 +162,58 @@ TEST(StringConversion, extract_first_integer_from_string_exception) {
     EXPECT_THROW_WHAT(std::ignore = plssvm::detail::extract_first_integer_from_string<int>(""), std::runtime_error, R"(String "" doesn't contain any integer!)");
 }
 
+using split_as_types = std::tuple<short, int, long, long long, float, double>;
+using split_as_types_gtest = util::combine_test_parameters_gtest_t<util::cartesian_type_product_t<split_as_types>>;
+
 template <typename T>
-class StringConversionSplitAs : public ::testing::Test {};
-using split_as_types = ::testing::Types<short, int, long, long long, float, double>;
-TYPED_TEST_SUITE(StringConversionSplitAs, split_as_types, naming::label_type_to_name);
+class StringConversionSplitAs : public ::testing::Test {
+  protected:
+    using fixture_type = util::test_parameter_type_at_t<0, T>;
+};
+
+TYPED_TEST_SUITE(StringConversionSplitAs, split_as_types_gtest, naming::test_parameter_to_name);
 
 TYPED_TEST(StringConversionSplitAs, split_default_delimiter) {
+    using type = typename TestFixture::fixture_type;
+
     // split string using the default delimiter
     const std::string string_to_split = "1.5 2.0 -3.5 4.0 5.0 -6.0 7.5";
 
-    const std::vector<TypeParam> split_correct = { static_cast<TypeParam>(1.5), static_cast<TypeParam>(2.0), static_cast<TypeParam>(-3.5), static_cast<TypeParam>(4.0), static_cast<TypeParam>(5.0), static_cast<TypeParam>(-6.0), static_cast<TypeParam>(7.5) };
-    const std::vector<TypeParam> split = plssvm::detail::split_as<TypeParam>(string_to_split);
+    const std::vector<type> split_correct = { static_cast<type>(1.5), static_cast<type>(2.0), static_cast<type>(-3.5), static_cast<type>(4.0), static_cast<type>(5.0), static_cast<type>(-6.0), static_cast<type>(7.5) };
+    const std::vector<type> split = plssvm::detail::split_as<type>(string_to_split);
     ASSERT_EQ(split.size(), split_correct.size());
     for (typename std::vector<TypeParam>::size_type i = 0; i < split_correct.size(); ++i) {
         EXPECT_EQ(split[i], split_correct[i]) << fmt::format("pos: {}, split: {}, correct: {}", i, split[i], split_correct[i]);
     }
 }
+
 TYPED_TEST(StringConversionSplitAs, split_custom_delimiter) {
+    using type = typename TestFixture::fixture_type;
+
     // split string using a custom delimiter
     const std::string string_to_split = "1.5,2.0,-3.5,4.0,5.0,-6.0,7.5";
 
-    const std::vector<TypeParam> split_correct = { static_cast<TypeParam>(1.5), static_cast<TypeParam>(2.0), static_cast<TypeParam>(-3.5), static_cast<TypeParam>(4.0), static_cast<TypeParam>(5.0), static_cast<TypeParam>(-6.0), static_cast<TypeParam>(7.5) };
-    const std::vector<TypeParam> split = plssvm::detail::split_as<TypeParam>(string_to_split, ',');
+    const std::vector<type> split_correct = { static_cast<type>(1.5), static_cast<type>(2.0), static_cast<type>(-3.5), static_cast<type>(4.0), static_cast<type>(5.0), static_cast<type>(-6.0), static_cast<type>(7.5) };
+    const std::vector<type> split = plssvm::detail::split_as<type>(string_to_split, ',');
     ASSERT_EQ(split.size(), split_correct.size());
     for (typename std::vector<TypeParam>::size_type i = 0; i < split_correct.size(); ++i) {
         EXPECT_EQ(split[i], split_correct[i]) << fmt::format("pos: {}, split: {}, correct: {}", i, split[i], split_correct[i]);
     }
 }
+
 TYPED_TEST(StringConversionSplitAs, split_single_value) {
+    using type = typename TestFixture::fixture_type;
+
     // split string containing a single value
-    const std::vector<TypeParam> split = plssvm::detail::split_as<TypeParam>("42");
+    const std::vector<type> split = plssvm::detail::split_as<type>("42");
     ASSERT_EQ(split.size(), 1);
-    EXPECT_EQ(split.front(), static_cast<TypeParam>(42)) << fmt::format("split: {}, correct: {}", split.front(), static_cast<TypeParam>(42));
+    EXPECT_EQ(split.front(), static_cast<type>(42)) << fmt::format("split: {}, correct: {}", split.front(), static_cast<type>(42));
 }
+
 TYPED_TEST(StringConversionSplitAs, split_empty_string) {
+    using type = typename TestFixture::fixture_type;
+
     // split the empty string
-    const std::vector<TypeParam> split = plssvm::detail::split_as<TypeParam>("");
+    const std::vector<type> split = plssvm::detail::split_as<type>("");
     EXPECT_TRUE(split.empty());
 }

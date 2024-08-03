@@ -14,6 +14,9 @@
 #define PLSSVM_TARGET_PLATFORMS_HPP_
 #pragma once
 
+#include "fmt/base.h"     // fmt::formatter
+#include "fmt/ostream.h"  // fmt::ostream_formatter
+
 #include <iosfwd>  // forward declare std::ostream and std::istream
 #include <vector>  // std::vector
 
@@ -67,5 +70,8 @@ std::ostream &operator<<(std::ostream &out, target_platform target);
 std::istream &operator>>(std::istream &in, target_platform &target);
 
 }  // namespace plssvm
+
+template <>
+struct fmt::formatter<plssvm::target_platform> : fmt::ostream_formatter { };
 
 #endif  // PLSSVM_TARGET_PLATFORMS_HPP_

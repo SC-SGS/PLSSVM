@@ -10,7 +10,7 @@
 
 #include "plssvm/exceptions/source_location.hpp"  // plssvm::source_location
 
-#include "fmt/core.h"  // fmt::format
+#include "fmt/format.h"  // fmt::format
 
 #include <stdexcept>    // std::runtime_error
 #include <string>       // std::string
@@ -19,7 +19,9 @@
 namespace plssvm {
 
 exception::exception(const std::string &msg, const std::string_view class_name, source_location loc) :
-    std::runtime_error{ msg }, class_name_{ class_name }, loc_{ loc } {}
+    std::runtime_error{ msg },
+    class_name_{ class_name },
+    loc_{ loc } { }
 
 const source_location &exception::loc() const noexcept { return loc_; }
 
@@ -38,27 +40,42 @@ std::string exception::what_with_loc() const {
 }
 
 invalid_parameter_exception::invalid_parameter_exception(const std::string &msg, source_location loc) :
-    exception{ msg, "invalid_parameter_exception", loc } {}
+    exception{ msg, "invalid_parameter_exception", loc } { }
 
 file_reader_exception::file_reader_exception(const std::string &msg, source_location loc) :
-    exception{ msg, "file_reader_exception", loc } {}
+    exception{ msg, "file_reader_exception", loc } { }
 
 data_set_exception::data_set_exception(const std::string &msg, source_location loc) :
-    exception{ msg, "data_set_exception", loc } {}
+    exception{ msg, "data_set_exception", loc } { }
 
 file_not_found_exception::file_not_found_exception(const std::string &msg, source_location loc) :
-    exception{ msg, "file_not_found_exception", loc } {}
+    exception{ msg, "file_not_found_exception", loc } { }
 
 invalid_file_format_exception::invalid_file_format_exception(const std::string &msg, source_location loc) :
-    exception{ msg, "invalid_file_format_exception", loc } {}
+    exception{ msg, "invalid_file_format_exception", loc } { }
 
 unsupported_backend_exception::unsupported_backend_exception(const std::string &msg, source_location loc) :
-    exception{ msg, "unsupported_backend_exception", loc } {}
+    exception{ msg, "unsupported_backend_exception", loc } { }
 
 unsupported_kernel_type_exception::unsupported_kernel_type_exception(const std::string &msg, source_location loc) :
-    exception{ msg, "unsupported_kernel_type_exception", loc } {}
+    exception{ msg, "unsupported_kernel_type_exception", loc } { }
 
 gpu_device_ptr_exception::gpu_device_ptr_exception(const std::string &msg, source_location loc) :
-    exception{ msg, "gpu_device_ptr_exception", loc } {}
+    exception{ msg, "gpu_device_ptr_exception", loc } { }
+
+matrix_exception::matrix_exception(const std::string &msg, source_location loc) :
+    exception{ msg, "matrix_exception", loc } { }
+
+kernel_launch_resources::kernel_launch_resources(const std::string &msg, source_location loc) :
+    exception{ msg, "kernel_launch_resources", loc } { }
+
+classification_report_exception::classification_report_exception(const std::string &msg, source_location loc) :
+    exception{ msg, "classification_report_exception", loc } { }
+
+platform_devices_empty::platform_devices_empty(const std::string &msg, source_location loc) :
+    exception{ msg, "platform_devices_empty", loc } { }
+
+hardware_sampling_exception::hardware_sampling_exception(const std::string &msg, source_location loc) :
+    exception{ msg, "hardware_sampling_exception", loc } { }
 
 }  // namespace plssvm

@@ -10,16 +10,16 @@
 
 #include "plssvm/detail/sha256.hpp"
 
-#include "../naming.hpp"  // naming::pretty_print_sha256
+#include "tests/naming.hpp"  // naming::pretty_print_sha256
 
-#include "fmt/core.h"     // fmt::format
+#include "fmt/format.h"   // fmt::format
 #include "gtest/gtest.h"  // TEST_P, INSTANTIATE_TEST_SUITE_P, ASSERT_EQ, EXPECT_EQ, ::testing::{TestWithParam, Values}
 
 #include <string>   // std::string
 #include <utility>  // std::pair, std::make_pair
 #include <vector>   // std::vector
 
-class Sha256 : public ::testing::TestWithParam<std::pair<std::string, std::string_view>> {};
+class Sha256 : public ::testing::TestWithParam<std::pair<std::string, std::string_view>> { };
 
 TEST_P(Sha256, correct_encoding) {
     // get generated parameter
@@ -34,6 +34,7 @@ TEST_P(Sha256, correct_encoding) {
     // check sha256 string for correctness
     EXPECT_EQ(sha, encoded_output) << fmt::format(R"(input: "{}", output: {}, correct output: {})", input, sha, encoded_output);
 }
+
 // clang-format off
 INSTANTIATE_TEST_SUITE_P(Sha256, Sha256, ::testing::Values(
         std::make_pair("abc", "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad"),

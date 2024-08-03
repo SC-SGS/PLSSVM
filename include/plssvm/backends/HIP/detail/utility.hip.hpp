@@ -13,23 +13,36 @@
 #define PLSSVM_BACKENDS_HIP_DETAIL_UTILITY_HPP_
 #pragma once
 
-#include "hip/hip_runtime_api.h"  // hipError_t
+#include "plssvm/backends/execution_range.hpp"  // plssvm::detail::dim_type
+#include "plssvm/backends/HIP/exceptions.hpp"   // plssvm::hip::backend_exception
+
+#include "hip/hip_runtime_api.h"  // hipError_t, hipSuccess, hipGetErrorName, hipGetErrorString
+
+#include "fmt/base.h"     // fmt::formatter
+#include "fmt/ostream.h"  // fmt::ostream_formatter
+
+#include <string>  // std::string
 
 /**
  * @def PLSSVM_HIP_ERROR_CHECK
- * @brief Macro used for error checking HIP runtime functions.
+ * @brief Check the HIP error @p err. If @p err signals an error, throw a plssvm::hip::backend_exception.
+ * @details The exception contains the following message: "HIP assert 'HIP_ERROR_NAME' (HIP_ERROR_CODE): HIP_ERROR_STRING".
+ * @param[in] err the HIP error code to check
+ * @throws plssvm::hip::backend_exception if the error code signals a failure
  */
-#define PLSSVM_HIP_ERROR_CHECK(err) plssvm::hip::detail::gpu_assert((err))
+#define PLSSVM_HIP_ERROR_CHECK(err)                                                                                                         \
+    if ((err) != hipSuccess) {                                                                                                              \
+        throw plssvm::hip::backend_exception{ fmt::format("HIP assert '{}' ({}): {}", hipGetErrorName(err), err, hipGetErrorString(err)) }; \
+    }
 
 namespace plssvm::hip::detail {
 
 /**
- * @brief Check the HIP error @p code. If @p code signals an error, throw a plssvm::hip::backend_exception.
- * @details The exception contains the following message: "HIP assert 'HIP_ERROR_NAME' (HIP_ERROR_CODE): HIP_ERROR_STRING".
- * @param[in] code the HIP error code to check
- * @throws plssvm::hip::backend_exception if the error code signals a failure
+ * @brief Convert a `plssvm::detail::dim_type` to a HIP native dim3.
+ * @param[in] dims the dimensional value to convert
+ * @return the native HIP dim3 type (`[[nodiscard]]`)
  */
-void gpu_assert(hipError_t code);
+[[nodiscard]] dim3 dim_type_to_native(const ::plssvm::detail::dim_type &dims);
 
 /**
  * @brief Returns the number of available HIP devices.
@@ -57,6 +70,15 @@ void peek_at_last_error();
  */
 void device_synchronize(int device);
 
+/**
+ * @brief Get the HIP runtime version as pretty string.
+ * @return the HIP runtime version (`[[nodiscard]]`)
+ */
+[[nodiscard]] std::string get_runtime_version();
+
 }  // namespace plssvm::hip::detail
+
+template <>
+struct fmt::formatter<hipError_t> : fmt::ostream_formatter { };
 
 #endif  // PLSSVM_BACKENDS_HIP_DETAIL_UTILITY_HPP_

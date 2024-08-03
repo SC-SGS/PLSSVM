@@ -33,30 +33,51 @@ message(CHECK_PASS "found")
 
 enable_language(CUDA)
 
+find_package(CUDAToolkit)
+
 # set necessary flags
 set(CMAKE_CUDA_STANDARD 17)
 set(CMAKE_CUDA_STANDARD_REQUIRED ON)
 
 if (CMAKE_CUDA_COMPILER_ID STREQUAL "NVIDIA")
     # use nvcc to compile CUDA code
-    set(CMAKE_CUDA_FLAGS_DEBUG "${CMAKE_CUDA_FLAGS_DEBUG} -lineinfo -Xptxas=-v -Xptxas -dlcm=cg")
-    set(CMAKE_CUDA_FLAGS_RELEASE "${CMAKE_CUDA_FLAGS} -O3 --use_fast_math -Wno-attributes")
+    set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -Xcompiler '-fPIC' -Xcudafe --diag_suppress=unsigned_compare_with_zero -lineinfo")
+    # build type specific flags
+    set(CMAKE_CUDA_FLAGS_DEBUG "${CMAKE_CUDA_FLAGS_DEBUG} -Xptxas=-v -Xptxas -dlcm=cg -Xcudafe --diag_suppress=unrecognized_gcc_pragma")
+    set(CMAKE_CUDA_FLAGS_RELWITHDEBINFO "${CMAKE_CUDA_FLAGS_RELWITHDEBINFO} -O2")
+    set(CMAKE_CUDA_FLAGS_RELEASE "${CMAKE_CUDA_FLAGS_RELEASE} -O3")
+    # set fast-math if requested
+    if (PLSSVM_ENABLE_FAST_MATH)
+        set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} --use_fast_math")
+    endif ()
+    # set OpenMP specific flags
+    if (OpenMP_FOUND)
+        set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -Xcompiler '-fopenmp'")
+    endif ()
 elseif (CMAKE_CUDA_COMPILER_ID STREQUAL "Clang")
     # use clang to compile CUDA code
-    set(CMAKE_CUDA_FLAGS_RELEASE "${CMAKE_CUDA_FLAGS} -O3 -ffast-math")
+    # build type specific flags
+    set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -Wall -Wextra -Wdouble-promotion -Wshadow -Wcast-qual -Wnull-dereference -Wextra-semi -Wunreachable-code -Wuninitialized -Wmost -Wconversion")
+    set(CMAKE_CUDA_FLAGS_RELWITHDEBINFO "${CMAKE_CUDA_FLAGS_RELWITHDEBINFO} -O2")
+    set(CMAKE_CUDA_FLAGS_RELEASE "${CMAKE_CUDA_FLAGS} -O3")
+    # set fast-math if requested
+    if (PLSSVM_ENABLE_FAST_MATH)
+        set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -ffast-math")
+    endif ()
+    # set OpenMP specific flags
+    if (OpenMP_FOUND)
+        set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -fopenmp")
+    endif ()
 endif ()
 
 # explicitly set sources
 set(PLSSVM_CUDA_SOURCES
-        ${CMAKE_CURRENT_LIST_DIR}/detail/device_ptr.cu
-        ${CMAKE_CURRENT_LIST_DIR}/detail/utility.cu
-        ${CMAKE_CURRENT_LIST_DIR}/csvm.cu
-        ${CMAKE_CURRENT_LIST_DIR}/exceptions.cpp
-        ${CMAKE_CURRENT_LIST_DIR}/predict_kernel.cu
-        ${CMAKE_CURRENT_LIST_DIR}/q_kernel.cu
-        ${CMAKE_CURRENT_LIST_DIR}/svm_kernel.cu
-        ${CMAKE_CURRENT_LIST_DIR}/../gpu_device_ptr.cpp
-        )
+    ${CMAKE_CURRENT_LIST_DIR}/detail/device_ptr.cu
+    ${CMAKE_CURRENT_LIST_DIR}/detail/pinned_memory.cu
+    ${CMAKE_CURRENT_LIST_DIR}/detail/utility.cu
+    ${CMAKE_CURRENT_LIST_DIR}/csvm.cu
+    ${CMAKE_CURRENT_LIST_DIR}/exceptions.cpp
+)
 
 # set target properties
 set_local_and_parent(PLSSVM_CUDA_BACKEND_LIBRARY_NAME plssvm-CUDA)
@@ -64,6 +85,12 @@ add_library(${PLSSVM_CUDA_BACKEND_LIBRARY_NAME} SHARED ${PLSSVM_CUDA_SOURCES})
 if (CMAKE_CUDA_COMPILER_ID STREQUAL "NVIDIA")
     set_target_properties(${PLSSVM_CUDA_BACKEND_LIBRARY_NAME} PROPERTIES CUDA_SEPARABLE_COMPILATION ON)
 endif ()
+if (CMAKE_CUDA_COMPILER_ID STREQUAL "Clang")
+    target_compile_options(${PLSSVM_CUDA_BACKEND_LIBRARY_NAME} PUBLIC -fPIC)
+    target_link_options(${PLSSVM_CUDA_BACKEND_LIBRARY_NAME} PUBLIC -lcudart)
+endif ()
+
+target_link_libraries(${PLSSVM_CUDA_BACKEND_LIBRARY_NAME} PUBLIC CUDA::cudart)
 
 # prepare architectures for CMake's CUDA_ARCHITECTURES
 list(TRANSFORM PLSSVM_NVIDIA_TARGET_ARCHS REPLACE "sm_" "")
@@ -81,9 +108,7 @@ target_compile_definitions(${PLSSVM_CUDA_BACKEND_LIBRARY_NAME} PUBLIC PLSSVM_HAS
 target_link_libraries(${PLSSVM_ALL_LIBRARY_NAME} INTERFACE ${PLSSVM_CUDA_BACKEND_LIBRARY_NAME})
 
 # mark backend library as install target
-list(APPEND PLSSVM_TARGETS_TO_INSTALL "${PLSSVM_CUDA_BACKEND_LIBRARY_NAME}")
-set(PLSSVM_TARGETS_TO_INSTALL ${PLSSVM_TARGETS_TO_INSTALL} PARENT_SCOPE)
-
+append_local_and_parent(PLSSVM_TARGETS_TO_INSTALL ${PLSSVM_CUDA_BACKEND_LIBRARY_NAME})
 
 # generate summary string
 list(TRANSFORM PLSSVM_NVIDIA_TARGET_ARCHS PREPEND "sm_")

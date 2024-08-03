@@ -13,17 +13,19 @@
 #define PLSSVM_BACKENDS_OPENCL_DETAIL_UTILITY_HPP_
 #pragma once
 
+#include "plssvm/backends/execution_range.hpp"              // plssvm::detail::dim_type
 #include "plssvm/backends/OpenCL/detail/command_queue.hpp"  // plssvm::opencl::detail::command_queue
 #include "plssvm/backends/OpenCL/detail/context.hpp"        // plssvm::opencl::detail::context
 #include "plssvm/backends/OpenCL/detail/error_code.hpp"     // plssvm::opencl::detail::error_code
 #include "plssvm/backends/OpenCL/detail/kernel.hpp"         // plssvm::opencl::detail::compute_kernel_name
+#include "plssvm/backends/OpenCL/exceptions.hpp"            // plssvm::opencl::backend_exception
 #include "plssvm/detail/assert.hpp"                         // PLSSVM_ASSERT
 #include "plssvm/kernel_function_types.hpp"                 // plssvm::kernel_function_type
 #include "plssvm/target_platforms.hpp"                      // plssvm::target_platform
 
 #include "CL/cl.h"  // cl_uint, cl_int, clSetKernelArg, clEnqueueNDRangeKernel, clFinish
 
-#include "fmt/core.h"  // fmt::format
+#include "fmt/format.h"  // fmt::format
 
 #include <cstddef>      // std::size_t
 #include <string>       // std::string
@@ -33,20 +35,37 @@
 
 /**
  * @def PLSSVM_OPENCL_ERROR_CHECK
- * @brief Macro used for error checking OpenCL runtime functions.
+ * @brief Check the OpenCL error @p err. If @p err signals an error, throw a plssvm::opencl::backend_exception.
+ * @details The exception contains the following message: "OpenCL assert 'OPENCL_ERROR_NAME' (OPENCL_ERROR_CODE): OPTIONAL_OPENCL_ERROR_STRING".
+ * @param[in] err the OpenCL error code to check
+ * @param[in] additional_msg optional message printed if the error code check failed
+ * @throws plssvm::opencl::backend_exception if the error code signals a failure
  */
-#define PLSSVM_OPENCL_ERROR_CHECK(err, ...) plssvm::opencl::detail::device_assert((err), ##__VA_ARGS__)
+#define PLSSVM_OPENCL_ERROR_CHECK(err, additional_msg)                                                                                                \
+    if (const plssvm::opencl::detail::error_code err_code{ err }; !err_code) {                                                                        \
+        throw plssvm::opencl::backend_exception{ fmt::format("OpenCL assert '{}' ({}): {}!", err_code.message(), err_code.value(), additional_msg) }; \
+    }
 
 namespace plssvm::opencl::detail {
 
 /**
- * @brief Check the OpenCL error @p code. If @p code signals an error, throw a plssvm::opencl::backend_exception.
- * @details The exception contains the following message: "OpenCL assert 'OPENCL_ERROR_NAME' (OPENCL_ERROR_CODE): OPTIONAL_OPENCL_ERROR_STRING".
- * @param[in] code the OpenCL error code to check
- * @param[in] msg optional message printed if the error code check failed
- * @throws plssvm::opencl::backend_exception if the error code signals a failure
+ * @brief Convert a `plssvm::detail::dim_type` to a OpenCL native range, i.e., a std::vector.
+ * @tparam I the number of dimensions in the OpenCL range
+ * @param[in] dims the dimensional value to convert
+ * @return the native OpenCL range type (`[[nodiscard]]`)
  */
-void device_assert(error_code code, std::string_view msg = "");
+template <std::size_t I>
+[[nodiscard]] std::vector<std::size_t> dim_type_to_native(const ::plssvm::detail::dim_type &dims) {
+    if constexpr (I == 1) {
+        return { static_cast<std::size_t>(dims.x) };
+    } else if constexpr (I == 2) {
+        return { static_cast<std::size_t>(dims.x), static_cast<std::size_t>(dims.y) };
+    } else if constexpr (I == 3) {
+        return { static_cast<std::size_t>(dims.x), static_cast<std::size_t>(dims.y), static_cast<std::size_t>(dims.z) };
+    } else {
+        static_assert(I != I, "Invalid number of native OpenCL range dimension!");
+    }
+}
 
 /**
  * @brief Returns the context listing all devices matching the target platform @p target and the actually used target platform
@@ -64,6 +83,19 @@ void device_assert(error_code code, std::string_view msg = "");
 void device_synchronize(const command_queue &queue);
 
 /**
+ * @brief Get the targeted OpenCL version.
+ * @return the prettyfied OpenCL version (`[[nodiscard]]`)
+ */
+[[nodiscard]] std::string get_opencl_target_version();
+
+/**
+ * @brief Get the driver version of the device associated with the OpenCL command queue @p queue.
+ * @param[in] queue the OpenCL command queue
+ * @return a string encapsulating the driver version (`[[nodiscard]]`)
+ */
+[[nodiscard]] std::string get_driver_version(const command_queue &queue);
+
+/**
  * @brief Get the name of the device associated with the OpenCL command queue @p queue.
  * @param[in] queue the OpenCL command queue
  * @return the device name (`[[nodiscard]]`)
@@ -71,11 +103,10 @@ void device_synchronize(const command_queue &queue);
 [[nodiscard]] std::string get_device_name(const command_queue &queue);
 
 /**
- * @brief Convert the kernel type @p kernel to the device function names and return the plssvm::opencl::detail::compute_kernel_name identifier.
- * @param[in] kernel the kernel type
+ * @brief Return the device function names and the plssvm::opencl::detail::compute_kernel_name identifier.
  * @return the kernel function names with the respective plssvm::opencl::detail::compute_kernel_name identifier (`[[nodiscard]]`)
  */
-[[nodiscard]] std::vector<std::pair<compute_kernel_name, std::string>> kernel_type_to_function_names(kernel_function_type kernel);
+[[nodiscard]] std::vector<std::pair<compute_kernel_name, std::string>> kernel_type_to_function_names();
 
 /**
  * @brief Create command queues for all devices in the OpenCL @p contexts with respect to @p target given and
@@ -92,12 +123,12 @@ void device_synchronize(const command_queue &queue);
  *          changes in the used OpenCL implementation and trigger a kernel rebuild.
  *
  * @param[in] contexts the used OpenCL contexts
- * @param[in] target the target platform
+ * @param[in] kernel_function the kernel function
  * @param[in] kernel_names all kernel name for which an OpenCL cl_kernel should be build
  * @throws plssvm::invalid_file_format_exception if the file couldn't be read using [`std::ifstream::read`](https://en.cppreference.com/w/cpp/io/basic_istream/read)
  * @return the command queues with all necessary kernels (`[[nodiscard]]`)
  */
-[[nodiscard]] std::vector<command_queue> create_command_queues(const std::vector<context> &contexts, target_platform target, const std::vector<std::pair<compute_kernel_name, std::string>> &kernel_names);
+[[nodiscard]] std::vector<command_queue> create_command_queues(const std::vector<context> &contexts, kernel_function_type kernel_function, const std::vector<std::pair<compute_kernel_name, std::string>> &kernel_names);
 
 /**
  * @brief Set all arguments in the parameter pack @p args for the kernel @p kernel.
@@ -111,7 +142,7 @@ inline void set_kernel_args(cl_kernel kernel, Args... args) {
     // iterate over parameter pack and set OpenCL kernel
     ([&](auto &arg) {
         const error_code ec = clSetKernelArg(kernel, i++, sizeof(decltype(arg)), &arg);
-        PLSSVM_OPENCL_ERROR_CHECK(ec, fmt::format("error setting OpenCL kernel argument {}", i - 1));
+        PLSSVM_OPENCL_ERROR_CHECK(ec, fmt::format("error setting OpenCL kernel argument {}", i - 1))
     }(args),
      ...);
 }
@@ -136,7 +167,7 @@ inline void run_kernel(const command_queue &queue, cl_kernel kernel, const std::
     // enqueue kernel in command queue
     PLSSVM_OPENCL_ERROR_CHECK(clEnqueueNDRangeKernel(queue, kernel, static_cast<cl_int>(grid_size.size()), nullptr, grid_size.data(), block_size.data(), 0, nullptr, nullptr), "error enqueuing OpenCL kernel");
     // wait until kernel computation finished
-    PLSSVM_OPENCL_ERROR_CHECK(clFinish(queue), "error running OpenCL kernel");
+    PLSSVM_OPENCL_ERROR_CHECK(clFinish(queue), "error running OpenCL kernel")
 }
 
 /**

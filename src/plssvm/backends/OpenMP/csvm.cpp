@@ -8,31 +8,44 @@
 
 #include "plssvm/backends/OpenMP/csvm.hpp"
 
-#include "plssvm/backends/OpenMP/exceptions.hpp"  // plssvm::openmp::backend_exception
-#include "plssvm/backends/OpenMP/q_kernel.hpp"    // plssvm::openmp::device_kernel_q_linear, plssvm::openmp::device_kernel_q_polynomial, plssvm::openmp::device_kernel_q_rbf
-#include "plssvm/backends/OpenMP/svm_kernel.hpp"  // plssvm::openmp::device_kernel_linear, plssvm::openmp::device_kernel_polynomial, plssvm::openmp::device_kernel_rbf
-#include "plssvm/csvm.hpp"                        // plssvm::csvm
-#include "plssvm/detail/assert.hpp"               // PLSSVM_ASSERT
-#include "plssvm/detail/operators.hpp"            // various operator overloads for std::vector and scalars
-#include "plssvm/kernel_function_types.hpp"       // plssvm::kernel_function_type
-#include "plssvm/parameter.hpp"                   // plssvm::parameter, plssvm::detail::parameter
-#include "plssvm/target_platforms.hpp"            // plssvm::target_platform
+#include "plssvm/backend_types.hpp"                                                   // plssvm::backend_type
+#include "plssvm/backends/OpenMP/detail/utility.hpp"                                  // plssvm::openmp::detail::{get_num_threads, get_openmp_version}
+#include "plssvm/backends/OpenMP/exceptions.hpp"                                      // plssvm::openmp::backend_exception
+#include "plssvm/backends/OpenMP/kernel/cg_explicit/blas.hpp"                         // plssvm::openmp::detail::device_kernel_symm
+#include "plssvm/backends/OpenMP/kernel/cg_explicit/kernel_matrix_assembly.hpp"       // plssvm::openmp::detail::device_kernel_assembly
+#include "plssvm/backends/OpenMP/kernel/cg_implicit/kernel_matrix_assembly_blas.hpp"  // plssvm::openmp::detail::device_kernel_assembly_symm
+#include "plssvm/backends/OpenMP/kernel/predict_kernel.hpp"                           // plssvm::openmp::detail::{device_kernel_w_linear, device_kernel_predict_linear, device_kernel_predict}
+#include "plssvm/constants.hpp"                                                       // plssvm::real_type
+#include "plssvm/csvm.hpp"                                                            // plssvm::csvm
+#include "plssvm/detail/assert.hpp"                                                   // PLSSVM_ASSERT
+#include "plssvm/detail/data_distribution.hpp"                                        // plssvm::detail::{data_distribution, triangular_data_distribution, rectangular_data_distribution}
+#include "plssvm/detail/logging.hpp"                                                  // plssvm::detail::log
+#include "plssvm/detail/memory_size.hpp"                                              // plssvm::detail::memory_size
+#include "plssvm/detail/move_only_any.hpp"                                            // plssvm::detail::{move_only_any, move_only_any_cast}
+#include "plssvm/detail/tracking/performance_tracker.hpp"                             // plssvm::detail::tracking::tracking_entry, PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY
+#include "plssvm/detail/utility.hpp"                                                  // plssvm::detail::get_system_memory
+#include "plssvm/gamma.hpp"                                                           // plssvm::gamma_type
+#include "plssvm/kernel_function_types.hpp"                                           // plssvm::kernel_function_type
+#include "plssvm/matrix.hpp"                                                          // plssvm::aos_matrix, plssvm::soa_matrix
+#include "plssvm/parameter.hpp"                                                       // plssvm::parameter
+#include "plssvm/shape.hpp"                                                           // plssvm::shape
+#include "plssvm/solver_types.hpp"                                                    // plssvm::solver_type
+#include "plssvm/target_platforms.hpp"                                                // plssvm::target_platform
+#include "plssvm/verbosity_levels.hpp"                                                // plssvm::verbosity_level
 
-#include "fmt/chrono.h"   // directly print std::chrono literals with fmt
-#include "fmt/core.h"     // fmt::format
-#include "fmt/ostream.h"  // can use fmt using operator<< overloads
+#include "fmt/format.h"  // fmt::format
 
-#include <algorithm>  // std::fill, std::all_of, std::min
-#include <chrono>     // std::chrono::{milliseconds, steady_clock, time_point, duration_cast}
-#include <cmath>      // std::fma
-#include <iostream>   // std::cout, std::endl
-#include <utility>    // std::pair, std::make_pair, std::move
-#include <vector>     // std::vector
+#include <cmath>    // std::fma
+#include <cstddef>  // std::size_t
+#include <tuple>    // std::tuple, std::make_tuple
+#include <utility>  // std::pair, std::make_pair, std::move
+#include <variant>  // std::get
+#include <vector>   // std::vector
 
 namespace plssvm::openmp {
 
 csvm::csvm(parameter params) :
-    csvm{ plssvm::target_platform::automatic, params } {}
+    csvm{ plssvm::target_platform::automatic, params } { }
 
 csvm::csvm(const target_platform target, parameter params) :
     ::plssvm::csvm{ params } {
@@ -49,258 +62,202 @@ void csvm::init(const target_platform target) {
     throw backend_exception{ "Requested target platform 'cpu' that hasn't been enabled using PLSSVM_TARGET_PLATFORMS!" };
 #endif
 
-    // get the number of used OpenMP threads
-    int num_omp_threads = 0;
-    #pragma omp parallel default(none) shared(num_omp_threads)
-    {
-        #pragma omp master
-        num_omp_threads = omp_get_num_threads();
-    }
+    plssvm::detail::log(verbosity_level::full,
+                        "\nUsing OpenMP ({}) as backend with {} thread(s).\n\n",
+                        plssvm::detail::tracking::tracking_entry{ "dependencies", "openmp_version", detail::get_openmp_version() },
+                        plssvm::detail::tracking::tracking_entry{ "backend", "num_threads", detail::get_num_threads() });
+    PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking::tracking_entry{ "backend", "backend", plssvm::backend_type::openmp }));
+    PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking::tracking_entry{ "backend", "target_platform", plssvm::target_platform::cpu }));
 
-    if (verbose) {
-        std::cout << fmt::format("\nUsing OpenMP as backend with {} threads.\n\n", num_omp_threads) << std::endl;
-    }
+    // update the target platform
+    target_ = plssvm::target_platform::cpu;
 }
 
-template <typename real_type>
-std::pair<std::vector<real_type>, real_type> csvm::solve_system_of_linear_equations_impl(const detail::parameter<real_type> &params, const std::vector<std::vector<real_type>> &A, std::vector<real_type> b, const real_type eps, const unsigned long long max_iter) const {
-    PLSSVM_ASSERT(!A.empty(), "The data must not be empty!");
-    PLSSVM_ASSERT(!A.front().empty(), "The data points must contain at least one feature!");
-    PLSSVM_ASSERT(std::all_of(A.cbegin(), A.cend(), [&A](const std::vector<real_type> &data_point) { return data_point.size() == A.front().size(); }), "All data points must have the same number of features!");
-    PLSSVM_ASSERT(A.size() == b.size(), "The number of data points in the matrix A ({}) and the values in the right hand side vector ({}) must be the same!", A.size(), b.size());
-    PLSSVM_ASSERT(eps > real_type{ 0.0 }, "The stopping criterion in the CG algorithm must be greater than 0.0, but is {}!", eps);
-    PLSSVM_ASSERT(max_iter > 0, "The number of CG iterations must be greater than 0!");
+std::vector<::plssvm::detail::memory_size> csvm::get_device_memory() const {
+    return { ::plssvm::detail::get_system_memory() };
+}
 
-    using namespace plssvm::operators;
+std::vector<::plssvm::detail::memory_size> csvm::get_max_mem_alloc_size() const {
+    return this->get_device_memory();
+}
 
-    // create q vector
-    const std::vector<real_type> q = this->generate_q(params, A);
+//***************************************************//
+//                        fit                        //
+//***************************************************//
 
-    // calculate QA_costs
-    const real_type QA_cost = kernel_function(A.back(), A.back(), params) + real_type{ 1.0 } / params.cost;
+std::vector<::plssvm::detail::move_only_any> csvm::assemble_kernel_matrix(const solver_type solver, const parameter &params, const soa_matrix<real_type> &A, const std::vector<real_type> &q_red, const real_type QA_cost) const {
+    PLSSVM_ASSERT(solver != solver_type::automatic, "An explicit solver type must be provided instead of solver_type::automatic!");
+    PLSSVM_ASSERT(!A.empty(), "The matrix to setup on the devices must not be empty!");
+    PLSSVM_ASSERT(A.is_padded(), "The matrix to setup on the devices must be padded!");
+    PLSSVM_ASSERT(!q_red.empty(), "The q_red vector must not be empty!");
+    PLSSVM_ASSERT(q_red.size() == A.num_rows() - 1, "The q_red size ({}) mismatches the number of data points after dimensional reduction ({})!", q_red.size(), A.num_rows() - 1);
 
-    // update b
-    const real_type b_back_value = b.back();
-    b.pop_back();
-    b -= b_back_value;
+    std::vector<::plssvm::detail::move_only_any> kernel_matrices_parts(this->num_available_devices());
+    const real_type cost = real_type{ 1.0 } / params.cost;
 
-    // CG
+    switch (solver) {
+        case solver_type::automatic:
+            // unreachable
+            break;
+        case solver_type::cg_explicit:
+            {
+                const plssvm::detail::triangular_data_distribution dist{ A.num_rows() - 1, this->num_available_devices() };
+                std::vector<real_type> kernel_matrix(dist.calculate_explicit_kernel_matrix_num_entries_padded(0));  // only explicitly store the upper triangular matrix
+                switch (params.kernel_type) {
+                    case kernel_function_type::linear:
+                        detail::device_kernel_assembly<kernel_function_type::linear>(q_red, kernel_matrix, A, QA_cost, cost);
+                        break;
+                    case kernel_function_type::polynomial:
+                        detail::device_kernel_assembly<kernel_function_type::polynomial>(q_red, kernel_matrix, A, QA_cost, cost, params.degree, std::get<real_type>(params.gamma), params.coef0);
+                        break;
+                    case kernel_function_type::rbf:
+                        detail::device_kernel_assembly<kernel_function_type::rbf>(q_red, kernel_matrix, A, QA_cost, cost, std::get<real_type>(params.gamma));
+                        break;
+                    case kernel_function_type::sigmoid:
+                        detail::device_kernel_assembly<kernel_function_type::sigmoid>(q_red, kernel_matrix, A, QA_cost, cost, std::get<real_type>(params.gamma), params.coef0);
+                        break;
+                    case kernel_function_type::laplacian:
+                        detail::device_kernel_assembly<kernel_function_type::laplacian>(q_red, kernel_matrix, A, QA_cost, cost, std::get<real_type>(params.gamma));
+                        break;
+                    case kernel_function_type::chi_squared:
+                        detail::device_kernel_assembly<kernel_function_type::chi_squared>(q_red, kernel_matrix, A, QA_cost, cost, std::get<real_type>(params.gamma));
+                        break;
+                }
 
-    std::vector<real_type> alpha(b.size(), 1.0);
-    const typename std::vector<real_type>::size_type dept = b.size();
-
-    // sanity checks
-    PLSSVM_ASSERT(dept == A.size() - 1, "Sizes mismatch!: {} != {}", dept, A.size() - 1);
-
-    std::vector<real_type> r(b);
-
-    // r = A + alpha_ (r = b - Ax)
-    run_device_kernel(params, q, r, alpha, A, QA_cost, real_type{ -1.0 });
-
-    // delta = r.T * r
-    real_type delta = transposed{ r } * r;
-    const real_type delta0 = delta;
-    std::vector<real_type> Ad(dept);
-
-    std::vector<real_type> d(r);
-
-    // timing for each CG iteration
-    std::chrono::milliseconds average_iteration_time{};
-    std::chrono::steady_clock::time_point iteration_start_time{};
-    const auto output_iteration_duration = [&]() {
-        std::chrono::time_point iteration_end_time = std::chrono::steady_clock::now();
-        auto iteration_duration = std::chrono::duration_cast<std::chrono::milliseconds>(iteration_end_time - iteration_start_time);
-        std::cout << fmt::format("Done in {}.", iteration_duration) << std::endl;
-        average_iteration_time += iteration_duration;
-    };
-
-    unsigned long long iter = 0;
-    for (; iter < max_iter; ++iter) {
-        if (verbose) {
-            std::cout << fmt::format("Start Iteration {} (max: {}) with current residuum {} (target: {}). ", iter + 1, max_iter, delta, eps * eps * delta0);
-        }
-        iteration_start_time = std::chrono::steady_clock::now();
-
-        // Ad = A * d (q = A * d)
-        std::fill(Ad.begin(), Ad.end(), real_type{ 0.0 });
-        run_device_kernel(params, q, Ad, d, A, QA_cost, real_type{ 1.0 });
-
-        // (alpha = delta_new / (d^T * q))
-        const real_type alpha_cd = delta / (transposed{ d } * Ad);
-
-        // (x = x + alpha * d)
-        alpha += alpha_cd * d;
-
-        if (iter % 50 == 49) {
-            // (r = b - A * x)
-            // r = b
-            r = b;
-            // r -= A * x
-            run_device_kernel(params, q, r, alpha, A, QA_cost, real_type{ -1.0 });
-        } else {
-            // r -= alpha_cd * Ad (r = r - alpha * q)
-            r -= alpha_cd * Ad;
-        }
-
-        // (delta = r^T * r)
-        const real_type delta_old = delta;
-        delta = transposed{ r } * r;
-        // if we are exact enough stop CG iterations
-        if (delta <= eps * eps * delta0) {
-            if (verbose) {
-                output_iteration_duration();
+                kernel_matrices_parts[0] = ::plssvm::detail::move_only_any{ std::move(kernel_matrix) };
             }
             break;
-        }
-
-        // (beta = delta_new / delta_old)
-        const real_type beta = delta / delta_old;
-        // d = beta * d + r
-        d = beta * d + r;
-
-        if (verbose) {
-            output_iteration_duration();
-        }
-    }
-    if (verbose) {
-        std::cout << fmt::format("Finished after {} iterations with a residuum of {} (target: {}) and an average iteration time of {}.",
-                                 std::min(iter + 1, max_iter),
-                                 delta,
-                                 eps * eps * delta0,
-                                 average_iteration_time / std::min(iter + 1, max_iter))
-                  << std::endl;
+        case solver_type::cg_implicit:
+            {
+                // simply return data since in implicit we don't assembly the kernel matrix here!
+                kernel_matrices_parts[0] = ::plssvm::detail::move_only_any{ std::make_tuple(std::move(A), params, std::move(q_red), QA_cost) };
+            }
+            break;
     }
 
-    // calculate bias
-    const real_type bias = b_back_value + QA_cost * sum(alpha) - (transposed{ q } * alpha);
-    alpha.push_back(-sum(alpha));
-
-    return std::make_pair(std::move(alpha), -bias);
+    return kernel_matrices_parts;
 }
 
-template std::pair<std::vector<float>, float> csvm::solve_system_of_linear_equations_impl(const detail::parameter<float> &, const std::vector<std::vector<float>> &, std::vector<float>, const float, const unsigned long long) const;
-template std::pair<std::vector<double>, double> csvm::solve_system_of_linear_equations_impl(const detail::parameter<double> &, const std::vector<std::vector<double>> &, std::vector<double>, const double, const unsigned long long) const;
+void csvm::blas_level_3(const solver_type solver, const real_type alpha, const std::vector<::plssvm::detail::move_only_any> &A, const soa_matrix<real_type> &B, const real_type beta, soa_matrix<real_type> &C) const {
+    PLSSVM_ASSERT(solver != solver_type::automatic, "An explicit solver type must be provided instead of solver_type::automatic!");
+    PLSSVM_ASSERT(A.size() == 1, "Not enough kernel matrix parts ({}) for the available number of devices (1)!", A.size());
+    PLSSVM_ASSERT(!B.empty(), "The B matrix must not be empty!");
+    PLSSVM_ASSERT(B.is_padded(), "The B matrix must be padded!");
+    PLSSVM_ASSERT(!C.empty(), "The C matrix must not be empty!");
+    PLSSVM_ASSERT(C.is_padded(), "The C matrix must be padded!");
+    PLSSVM_ASSERT(B.shape() == C.shape(), "The B ({}) and C ({}) matrices must have the same shape!", B.shape(), C.shape());
+    PLSSVM_ASSERT(B.padding() == C.padding(), "The B ({}) and C ({}) matrices must have the same padding!", B.padding(), C.padding());
 
-template <typename real_type>
-std::vector<real_type> csvm::predict_values_impl(const detail::parameter<real_type> &params, const std::vector<std::vector<real_type>> &support_vectors, const std::vector<real_type> &alpha, const real_type rho, std::vector<real_type> &w, const std::vector<std::vector<real_type>> &predict_points) const {
-    PLSSVM_ASSERT(!support_vectors.empty(), "The support vectors must not be empty!");
-    PLSSVM_ASSERT(!support_vectors.front().empty(), "The support vectors must contain at least one feature!");
-    PLSSVM_ASSERT(std::all_of(support_vectors.cbegin(), support_vectors.cend(), [&support_vectors](const std::vector<real_type> &data_point) { return data_point.size() == support_vectors.front().size(); }), "All support vectors must have the same number of features!");
-    PLSSVM_ASSERT(support_vectors.size() == alpha.size(), "The number of support vectors ({}) and number of weights ({}) must be the same!", support_vectors.size(), alpha.size());
-    PLSSVM_ASSERT(w.empty() || support_vectors.front().size() == w.size(), "Either w must be empty or contain exactly the same number of values ({}) as features are present ({})!", w.size(), support_vectors.front().size());
-    PLSSVM_ASSERT(!predict_points.empty(), "The data points to predict must not be empty!");
-    PLSSVM_ASSERT(!predict_points.front().empty(), "The data points to predict must contain at least one feature!");
-    PLSSVM_ASSERT(std::all_of(predict_points.cbegin(), predict_points.cend(), [&predict_points](const std::vector<real_type> &data_point) { return data_point.size() == predict_points.front().size(); }), "All data points to predict must have the same number of features!");
-    PLSSVM_ASSERT(support_vectors.front().size() == predict_points.front().size(), "The number of features in the support vectors ({}) must be the same as in the data points to predict ({})!", support_vectors.front().size(), predict_points.front().size());
+    switch (solver) {
+        case solver_type::automatic:
+            // unreachable
+            break;
+        case solver_type::cg_explicit:
+            {
+                const std::size_t num_rhs = B.shape().x;
+                const std::size_t num_rows = B.shape().y;
 
-    using namespace plssvm::operators;
+                const auto &explicit_A = ::plssvm::detail::move_only_any_cast<const std::vector<real_type> &>(A.front());
+                PLSSVM_ASSERT(!explicit_A.empty(), "The A matrix must not be empty!");
+                detail::device_kernel_symm(num_rows, num_rhs, alpha, explicit_A, B, beta, C);
+            }
+            break;
+        case solver_type::cg_implicit:
+            {
+                const auto &[matr_A, params, q_red, QA_cost] = ::plssvm::detail::move_only_any_cast<const std::tuple<soa_matrix<real_type>, parameter, std::vector<real_type>, real_type> &>(A.front());
+                PLSSVM_ASSERT(!matr_A.empty(), "The A matrix must not be empty!");
+                PLSSVM_ASSERT(!q_red.empty(), "The q_red vector must not be empty!");
+                const real_type cost = real_type{ 1.0 } / params.cost;
 
-    std::vector<real_type> out(predict_points.size(), -rho);
-
-    // use faster methode in case of the linear kernel function
-    if (params.kernel_type == kernel_function_type::linear && w.empty()) {
-        w = calculate_w(support_vectors, alpha);
-    }
-
-    #pragma omp parallel for default(none) shared(predict_points, support_vectors, alpha, w, params, out)
-    for (typename std::vector<std::vector<real_type>>::size_type point_index = 0; point_index < predict_points.size(); ++point_index) {
-        switch (params.kernel_type) {
-            case kernel_function_type::linear:
-                out[point_index] += transposed{ w } * predict_points[point_index];
-                break;
-            case kernel_function_type::polynomial:
-            case kernel_function_type::rbf: {
-                real_type temp{ 0.0 };
-                #pragma omp simd reduction(+ : temp)
-                for (typename std::vector<std::vector<real_type>>::size_type data_index = 0; data_index < support_vectors.size(); ++data_index) {
-                    temp += alpha[data_index] * kernel_function(support_vectors[data_index], predict_points[point_index], params);
+                switch (params.kernel_type) {
+                    case kernel_function_type::linear:
+                        detail::device_kernel_assembly_symm<kernel_function_type::linear>(alpha, q_red, matr_A, QA_cost, cost, B, beta, C);
+                        break;
+                    case kernel_function_type::polynomial:
+                        detail::device_kernel_assembly_symm<kernel_function_type::polynomial>(alpha, q_red, matr_A, QA_cost, cost, B, beta, C, params.degree, std::get<real_type>(params.gamma), params.coef0);
+                        break;
+                    case kernel_function_type::rbf:
+                        detail::device_kernel_assembly_symm<kernel_function_type::rbf>(alpha, q_red, matr_A, QA_cost, cost, B, beta, C, std::get<real_type>(params.gamma));
+                        break;
+                    case kernel_function_type::sigmoid:
+                        detail::device_kernel_assembly_symm<kernel_function_type::sigmoid>(alpha, q_red, matr_A, QA_cost, cost, B, beta, C, std::get<real_type>(params.gamma), params.coef0);
+                        break;
+                    case kernel_function_type::laplacian:
+                        detail::device_kernel_assembly_symm<kernel_function_type::laplacian>(alpha, q_red, matr_A, QA_cost, cost, B, beta, C, std::get<real_type>(params.gamma));
+                        break;
+                    case kernel_function_type::chi_squared:
+                        detail::device_kernel_assembly_symm<kernel_function_type::chi_squared>(alpha, q_red, matr_A, QA_cost, cost, B, beta, C, std::get<real_type>(params.gamma));
+                        break;
                 }
-                out[point_index] += temp;
-            } break;
+            }
+            break;
+    }
+}
+
+//***************************************************//
+//                   predict, score                  //
+//***************************************************//
+
+aos_matrix<real_type> csvm::predict_values(const parameter &params,
+                                           const soa_matrix<real_type> &support_vectors,
+                                           const aos_matrix<real_type> &alpha,
+                                           const std::vector<real_type> &rho,
+                                           soa_matrix<real_type> &w,
+                                           const soa_matrix<real_type> &predict_points) const {
+    PLSSVM_ASSERT(!support_vectors.empty(), "The support vectors must not be empty!");
+    PLSSVM_ASSERT(support_vectors.is_padded(), "The support vectors must be padded!");
+    PLSSVM_ASSERT(!alpha.empty(), "The alpha vectors (weights) must not be empty!");
+    PLSSVM_ASSERT(alpha.is_padded(), "The alpha vectors (weights) must be padded!");
+    PLSSVM_ASSERT(support_vectors.num_rows() == alpha.num_cols(), "The number of support vectors ({}) and number of weights ({}) must be the same!", support_vectors.num_rows(), alpha.num_cols());
+    PLSSVM_ASSERT(rho.size() == alpha.num_rows(), "The number of rho values ({}) and the number of weight vectors ({}) must be the same!", rho.size(), alpha.num_rows());
+    PLSSVM_ASSERT(w.empty() || w.is_padded(), "Either w must be empty or must be padded!");
+    PLSSVM_ASSERT(w.empty() || support_vectors.num_cols() == w.num_cols(), "Either w must be empty or contain exactly the same number of values ({}) as features are present ({})!", w.num_cols(), support_vectors.num_cols());
+    PLSSVM_ASSERT(w.empty() || alpha.num_rows() == w.num_rows(), "Either w must be empty or contain exactly the same number of vectors ({}) as the alpha vector ({})!", w.num_rows(), alpha.num_rows());
+    PLSSVM_ASSERT(!predict_points.empty(), "The data points to predict must not be empty!");
+    PLSSVM_ASSERT(predict_points.is_padded(), "The data points to predict must be padded!");
+    PLSSVM_ASSERT(support_vectors.num_cols() == predict_points.num_cols(), "The number of features in the support vectors ({}) must be the same as in the data points to predict ({})!", support_vectors.num_cols(), predict_points.num_cols());
+
+    // defined sizes
+    const std::size_t num_classes = alpha.num_rows();
+    const std::size_t num_predict_points = predict_points.num_rows();
+    const std::size_t num_features = predict_points.num_cols();
+
+    // num_predict_points x num_classes
+    aos_matrix<real_type> out{ plssvm::shape{ num_predict_points, num_classes }, real_type{ 0.0 }, plssvm::shape{ PADDING_SIZE, PADDING_SIZE } };
+
+    if (params.kernel_type == kernel_function_type::linear) {
+        // special optimization for the linear kernel function
+        if (w.empty()) {
+            // fill w vector
+            w = soa_matrix<real_type>{ plssvm::shape{ num_classes, num_features }, plssvm::shape{ PADDING_SIZE, PADDING_SIZE } };
+            detail::device_kernel_w_linear(w, alpha, support_vectors);
         }
     }
+
+    // call the predict kernels
+    switch (params.kernel_type) {
+        case kernel_function_type::linear:
+            // predict the values using the w vector
+            detail::device_kernel_predict_linear(out, w, rho, predict_points);
+            break;
+        case kernel_function_type::polynomial:
+            detail::device_kernel_predict<kernel_function_type::polynomial>(out, alpha, rho, support_vectors, predict_points, params.degree, std::get<real_type>(params.gamma), params.coef0);
+            break;
+        case kernel_function_type::rbf:
+            detail::device_kernel_predict<kernel_function_type::rbf>(out, alpha, rho, support_vectors, predict_points, std::get<real_type>(params.gamma));
+            break;
+        case kernel_function_type::sigmoid:
+            detail::device_kernel_predict<kernel_function_type::sigmoid>(out, alpha, rho, support_vectors, predict_points, std::get<real_type>(params.gamma), params.coef0);
+            break;
+        case kernel_function_type::laplacian:
+            detail::device_kernel_predict<kernel_function_type::laplacian>(out, alpha, rho, support_vectors, predict_points, std::get<real_type>(params.gamma));
+            break;
+        case kernel_function_type::chi_squared:
+            detail::device_kernel_predict<kernel_function_type::chi_squared>(out, alpha, rho, support_vectors, predict_points, std::get<real_type>(params.gamma));
+            break;
+    }
+
     return out;
 }
-
-template std::vector<float> csvm::predict_values_impl(const detail::parameter<float> &, const std::vector<std::vector<float>> &, const std::vector<float> &, float, std::vector<float> &, const std::vector<std::vector<float>> &) const;
-template std::vector<double> csvm::predict_values_impl(const detail::parameter<double> &, const std::vector<std::vector<double>> &, const std::vector<double> &, double, std::vector<double> &, const std::vector<std::vector<double>> &) const;
-
-template <typename real_type>
-std::vector<real_type> csvm::generate_q(const detail::parameter<real_type> &params, const std::vector<std::vector<real_type>> &data) const {
-    PLSSVM_ASSERT(!data.empty(), "The data must not be empty!");
-    PLSSVM_ASSERT(!data.front().empty(), "The data points must contain at least one feature!");
-    PLSSVM_ASSERT(std::all_of(data.cbegin(), data.cend(), [](const std::vector<real_type> &features) { return !features.empty(); }), "All data point must have exactly the same number of features!");
-
-    std::vector<real_type> q(data.size() - 1);
-    switch (params.kernel_type) {
-        case kernel_function_type::linear:
-            device_kernel_q_linear(q, data);
-            break;
-        case kernel_function_type::polynomial:
-            device_kernel_q_polynomial(q, data, params.degree.value(), params.gamma.value(), params.coef0.value());
-            break;
-        case kernel_function_type::rbf:
-            device_kernel_q_rbf(q, data, params.gamma.value());
-            break;
-    }
-    return q;
-}
-template std::vector<float> csvm::generate_q<float>(const detail::parameter<float> &, const std::vector<std::vector<float>> &) const;
-template std::vector<double> csvm::generate_q<double>(const detail::parameter<double> &, const std::vector<std::vector<double>> &) const;
-
-template <typename real_type>
-std::vector<real_type> csvm::calculate_w(const std::vector<std::vector<real_type>> &support_vectors, const std::vector<real_type> &alpha) const {
-    PLSSVM_ASSERT(!support_vectors.empty(), "The support vectors may not be empty!");
-    PLSSVM_ASSERT(!support_vectors.front().empty(), "Each support vector must at least contain one feature!");
-    PLSSVM_ASSERT(std::all_of(support_vectors.cbegin(), support_vectors.cend(), [](const std::vector<real_type> &features) { return !features.empty(); }), "All support vectors must have exactly the same number of features!");
-    PLSSVM_ASSERT(!alpha.empty(), "The alpha array may not be empty!");
-    PLSSVM_ASSERT(support_vectors.size() == alpha.size(), "The number of support vectors ({}) and weights ({}) must match!", support_vectors.size(), alpha.size());
-
-    const typename std::vector<std::vector<real_type>>::size_type num_data_points = support_vectors.size();
-    const typename std::vector<real_type>::size_type num_features = support_vectors.front().size();
-
-    // create w vector and fill with zeros
-    std::vector<real_type> w(num_features, real_type{ 0.0 });
-
-    // calculate the w vector
-    #pragma omp parallel for default(none) shared(support_vectors, alpha, w) firstprivate(num_features, num_data_points)
-    for (typename std::vector<real_type>::size_type feature_index = 0; feature_index < num_features; ++feature_index) {
-        real_type temp{ 0.0 };
-        #pragma omp simd reduction(+ : temp)
-        for (typename std::vector<std::vector<real_type>>::size_type data_index = 0; data_index < num_data_points; ++data_index) {
-            temp = std::fma(alpha[data_index], support_vectors[data_index][feature_index], temp);
-        }
-        w[feature_index] = temp;
-    }
-    return w;
-}
-
-template std::vector<float> csvm::calculate_w(const std::vector<std::vector<float>> &, const std::vector<float> &) const;
-template std::vector<double> csvm::calculate_w(const std::vector<std::vector<double>> &, const std::vector<double> &) const;
-
-template <typename real_type>
-void csvm::run_device_kernel(const detail::parameter<real_type> &params, const std::vector<real_type> &q, std::vector<real_type> &ret, const std::vector<real_type> &d, const std::vector<std::vector<real_type>> &data, const real_type QA_cost, const real_type add) const {
-    PLSSVM_ASSERT(!q.empty(), "The q array may not be empty!");
-    PLSSVM_ASSERT(!ret.empty(), "The ret array may not be empty!");
-    PLSSVM_ASSERT(!d.empty(), "The d array may not be empty!");
-    PLSSVM_ASSERT(!data.empty(), "The data must not be empty!");
-    PLSSVM_ASSERT(!data.front().empty(), "The data points must contain at least one feature!");
-    PLSSVM_ASSERT(std::all_of(data.cbegin(), data.cend(), [](const std::vector<real_type> &features) { return !features.empty(); }), "All data point must have exactly the same number of features!");
-    PLSSVM_ASSERT(add == real_type{ -1.0 } || add == real_type{ 1.0 }, "add must either by -1.0 or 1.0, but is {}!", add);
-
-    switch (params.kernel_type) {
-        case kernel_function_type::linear:
-            openmp::device_kernel_linear(q, ret, d, data, QA_cost, 1 / params.cost, add);
-            break;
-        case kernel_function_type::polynomial:
-            openmp::device_kernel_polynomial(q, ret, d, data, QA_cost, 1 / params.cost, add, params.degree.value(), params.gamma.value(), params.coef0.value());
-            break;
-        case kernel_function_type::rbf:
-            openmp::device_kernel_rbf(q, ret, d, data, QA_cost, 1 / params.cost, add, params.gamma.value());
-            break;
-    }
-}
-template void csvm::run_device_kernel(const detail::parameter<float> &, const std::vector<float> &, std::vector<float> &, const std::vector<float> &, const std::vector<std::vector<float>> &, float, float) const;
-template void csvm::run_device_kernel(const detail::parameter<double> &, const std::vector<double> &, std::vector<double> &, const std::vector<double> &, const std::vector<std::vector<double>> &, double, double) const;
 
 }  // namespace plssvm::openmp

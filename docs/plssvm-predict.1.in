@@ -1,5 +1,5 @@
 .\" Manpage for plssvm-predict.
-.TH PLSSVM-PREDICT 1 "13 December 2022" "2.0.0" "plssvm-predict Manual"
+.TH PLSSVM-PREDICT 1 "@PLSSVM_CURRENT_BUILD_TIME@" "@PROJECT_VERSION@" "plssvm-predict Manual"
 
 .SH NAME
 plssvm-predict - LS-SVM with multiple (GPU-)backends
@@ -22,17 +22,19 @@ choose the target platform: @PLSSVM_PLATFORM_NAME_LIST@ (default: automatic)
 
 @PLSSVM_SYCL_MANPAGE_ENTRY@
 
+@PLSSVM_PERFORMANCE_TRACKER_MANPAGE_ENTRY@
+
 .TP
 .B --use_string_as_labels arg
 must be specified if the labels should be interpreted as strings instead of integers
 
 .TP
-.B --use_float_as_real_type arg
-must be specified if float should be used instead of double as floating point type
+.B --verbosity arg
+choose the level of verbosity: full|timing|libsvm|quiet (default: full)
 
 .TP
 .B -q, --quiet
-quiet mode (no outputs)
+quiet mode (no outputs regardless the provided verbosity level!)
 
 .TP
 .B -h, --help

@@ -8,18 +8,20 @@
 
 #include "plssvm/detail/cmd/parser_scale.hpp"
 
-#include "plssvm/constants.hpp"        // plssvm::verbose_default, plssvm::verbose
-#include "plssvm/detail/assert.hpp"    // PLSSVM_ASSERT
-#include "plssvm/version/version.hpp"  // plssvm::version::detail::get_version_info
+#include "plssvm/detail/assert.hpp"                                // PLSSVM_ASSERT
+#include "plssvm/detail/logging_without_performance_tracking.hpp"  // plssvm::detail::log_untracked
+#include "plssvm/verbosity_levels.hpp"                             // plssvm::verbosity, plssvm::verbosity_level
+#include "plssvm/version/version.hpp"                              // plssvm::version::detail::get_version_info
 
 #include "cxxopts.hpp"    // cxxopts::{Options, value, ParseResult}
-#include "fmt/core.h"     // fmt::format, fmt::join
-#include "fmt/ostream.h"  // can use fmt using operator<< overloads
+#include "fmt/color.h"    // fmt::fg, fmt::color::red
+#include "fmt/format.h"  // fmt::format
+#include "fmt/ranges.h"  // fmt::join
 
-#include <cstdlib>     // std::exit, EXIT_SUCCESS, EXIT_FAILURE
-#include <exception>   // std::exception
-#include <filesystem>  // std::filesystem::path
-#include <iostream>    // std::cout, std::cerr, std::clog, std::endl
+#include <cstdlib>      // std::exit, EXIT_SUCCESS, EXIT_FAILURE
+#include <exception>    // std::exception
+#include <iostream>     // std::cout, std::cerr, std::endl
+#include <type_traits>  // std::is_same_v
 
 namespace plssvm::detail::cmd {
 
@@ -29,7 +31,7 @@ parser_scale::parser_scale(int argc, char **argv) {
     PLSSVM_ASSERT(argv != nullptr, "At least one argument is always given (the executable name), but argv is a nullptr!");
 
     // setup command line parser with all available options
-    cxxopts::Options options(argv[0], "LS-SVM with multiple (GPU-)backends");
+    cxxopts::Options options("plssvm-scale", "LS-SVM with multiple (GPU-)backends");
     options
         .positional_help("input_file [scaled_file]")
         .show_positional_help();
@@ -43,9 +45,12 @@ parser_scale::parser_scale(int argc, char **argv) {
            ("f,format", "the file format to output the scaled data set to", cxxopts::value<decltype(format)>()->default_value(fmt::format("{}", format)))
            ("s,save_filename", "the file to which the scaling factors should be saved", cxxopts::value<decltype(save_filename)>())
            ("r,restore_filename", "the file from which previous scaling factors should be loaded", cxxopts::value<decltype(restore_filename)>())
+#if defined(PLSSVM_PERFORMANCE_TRACKER_ENABLED)
+           ("performance_tracking", "the output YAML file where the performance tracking results are written to; if not provided, the results are dumped to stderr", cxxopts::value<decltype(performance_tracking_filename)>())
+#endif
            ("use_strings_as_labels", "use strings as labels instead of plane numbers", cxxopts::value<decltype(strings_as_labels)>()->default_value(fmt::format("{}", strings_as_labels)))
-           ("use_float_as_real_type", "use floats as real types instead of doubles", cxxopts::value<decltype(float_as_real_type)>()->default_value(fmt::format("{}", float_as_real_type)))
-           ("q,quiet", "quiet mode (no outputs)", cxxopts::value<bool>()->default_value(fmt::format("{}", !plssvm::verbose_default)))
+           ("verbosity", fmt::format("choose the level of verbosity: full|timing|libsvm|quiet (default: {})", fmt::format("{}", verbosity)), cxxopts::value<verbosity_level>())
+           ("q,quiet", "quiet mode (no outputs regardless the provided verbosity level!)", cxxopts::value<bool>())
            ("h,help", "print this helper message", cxxopts::value<bool>())
            ("v,version", "print version information", cxxopts::value<bool>())
            ("input", "", cxxopts::value<decltype(input_filename)>(), "input_file")
@@ -58,7 +63,7 @@ parser_scale::parser_scale(int argc, char **argv) {
         options.parse_positional({ "input", "scaled" });
         result = options.parse(argc, argv);
     } catch (const std::exception &e) {
-        std::cerr << e.what() << std::endl;
+        std::cerr << fmt::format(fmt::fg(fmt::color::red), "ERROR: {}\n", e.what()) << std::endl;
         std::cout << options.help() << std::endl;
         std::exit(EXIT_FAILURE);
     }
@@ -77,7 +82,7 @@ parser_scale::parser_scale(int argc, char **argv) {
 
     // check if the number of positional arguments is not too large
     if (!result.unmatched().empty()) {
-        std::cerr << fmt::format("Only up to two positional options may be given, but {} (\"{}\") additional option(s) where provided!\n", result.unmatched().size(), fmt::join(result.unmatched(), " ")) << std::endl;
+        std::cerr << fmt::format(fmt::fg(fmt::color::red), "ERROR: only up to two positional options may be given, but {} (\"{}\") additional option(s) where provided!\n", result.unmatched().size(), fmt::join(result.unmatched(), " ")) << std::endl;
         std::cout << options.help() << std::endl;
         std::exit(EXIT_FAILURE);
     }
@@ -90,7 +95,7 @@ parser_scale::parser_scale(int argc, char **argv) {
 
     // lower must be strictly less than upper!
     if (lower >= upper) {
-        std::cerr << fmt::format("Error invalid scaling range [lower, upper] with [{}, {}]!", lower, upper) << std::endl;
+        std::cerr << fmt::format(fmt::fg(fmt::color::red), "ERROR: invalid scaling range [lower, upper] with [{}, {}]!\n", lower, upper) << std::endl;
         std::cout << options.help() << std::endl;
         std::exit(EXIT_FAILURE);
     }
@@ -101,15 +106,27 @@ parser_scale::parser_scale(int argc, char **argv) {
     // parse whether strings should be used as labels
     strings_as_labels = result["use_strings_as_labels"].as<decltype(strings_as_labels)>();
 
-    // parse whether floats should be used as real_type
-    float_as_real_type = result["use_float_as_real_type"].as<decltype(float_as_real_type)>();
-
     // parse whether output is quiet or not
-    plssvm::verbose = !result["quiet"].as<bool>();
+    const bool quiet = result["quiet"].as<bool>();
+
+    // -q/--quiet has precedence over --verbosity
+    if (result["verbosity"].count()) {
+        const verbosity_level verb = result["verbosity"].as<verbosity_level>();
+        if (quiet && verb != verbosity_level::quiet) {
+            detail::log_untracked(verbosity_level::full | verbosity_level::warning,
+                                  "WARNING: explicitly set the -q/--quiet flag, but the provided verbosity level isn't \"quiet\"; setting --verbosity={} to --verbosity=quiet\n",
+                                  verb);
+            verbosity = verbosity_level::quiet;
+        } else {
+            verbosity = verb;
+        }
+    } else if (quiet) {
+        verbosity = verbosity_level::quiet;
+    }
 
     // parse input data filename
     if (!result.count("input")) {
-        std::cerr << "Error missing input file!" << std::endl;
+        std::cerr << fmt::format(fmt::fg(fmt::color::red), "ERROR: missing input file!\n") << std::endl;
         std::cout << options.help() << std::endl;
         std::exit(EXIT_FAILURE);
     }
@@ -118,14 +135,11 @@ parser_scale::parser_scale(int argc, char **argv) {
     // parse output model filename
     if (result.count("scaled")) {
         scaled_filename = result["scaled"].as<decltype(scaled_filename)>();
-    } else {
-        std::filesystem::path input_path{ input_filename };
-        scaled_filename = input_path.replace_filename(input_path.filename().string() + ".scaled").string();
     }
 
     // can only use one of save_filename or restore_filename
     if (result.count("save_filename") && result.count("restore_filename")) {
-        std::cerr << "Error cannot use -s (--save_filename) and -r (--restore_filename) simultaneously!" << std::endl;
+        std::cerr << fmt::format(fmt::fg(fmt::color::red), "ERROR: cannot use -s (--save_filename) and -r (--restore_filename) simultaneously!\n") << std::endl;
         std::cout << options.help() << std::endl;
         std::exit(EXIT_FAILURE);
     }
@@ -138,32 +152,42 @@ parser_scale::parser_scale(int argc, char **argv) {
     // parse the file name to restore the previously saved weights from
     if (result.count("restore_filename")) {
         if (result.count("lower") || result.count("upper")) {
-            std::clog << "Warning: provided -l (--lower) and/or -u (--upper) together with -r (--restore_filename); ignoring -l/-u" << std::endl;
+            detail::log_untracked(verbosity_level::full | verbosity_level::warning,
+                                  "WARNING: provided -l (--lower) and/or -u (--upper) together with -r (--restore_filename); ignoring -l/-u\n");
         }
         restore_filename = result["restore_filename"].as<decltype(restore_filename)>();
+    }
+
+    // parse performance tracking filename
+    if (result.count("performance_tracking")) {
+        performance_tracking_filename = result["performance_tracking"].as<decltype(performance_tracking_filename)>();
     }
 }
 
 std::ostream &operator<<(std::ostream &out, const parser_scale &params) {
-    return out << fmt::format(
-               "lower: {}\n"
-               "upper: {}\n"
-               "label_type: {}\n"
-               "real_type: {}\n"
-               "output file format: {}\n"
-               "input file: '{}'\n"
-               "scaled file: '{}'\n"
-               "save file (scaling factors): '{}'\n"
-               "restore file (scaling factors): '{}'\n",
-               params.lower,
-               params.upper,
-               params.strings_as_labels ? "std::string" : "int (default)",
-               params.float_as_real_type ? "float" : "double (default)",
-               params.format,
-               params.input_filename,
-               params.scaled_filename,
-               params.save_filename,
-               params.restore_filename);
+    out << fmt::format(
+        "lower: {}\n"
+        "upper: {}\n"
+        "output file format: {}\n"
+        "label_type: {}\n"
+        "real_type: {}\n"
+        "input file: '{}'\n"
+        "scaled file: '{}'\n"
+        "save file (scaling factors): '{}'\n"
+        "restore file (scaling factors): '{}'\n",
+        params.lower,
+        params.upper,
+        params.format,
+        params.strings_as_labels ? "std::string" : "int (default)",
+        std::is_same_v<real_type, float> ? "float" : "double (default)",
+        params.input_filename,
+        params.scaled_filename,
+        params.save_filename,
+        params.restore_filename);
+    if (!params.performance_tracking_filename.empty()) {
+        out << fmt::format("performance tracking file: '{}'\n", params.performance_tracking_filename);
+    }
+    return out;
 }
 
 }  // namespace plssvm::detail::cmd

@@ -14,24 +14,23 @@
 #include <vector>
 
 int main() {
-
     // create a data set from a file with int labels
-    plssvm::data_set<double> data1{ "path/to/train/file.libsvm" };
+    plssvm::data_set data1{ "path/to/train/file.libsvm" };
     // create a data set from a file with std::string labels
-    plssvm::data_set<double, std::string> data2{ "path/to/train/file_string_labels.libsvm" };
+    plssvm::data_set<std::string> data2{ "path/to/train/file_string_labels.libsvm" };
 
     // create a data set from a std::vector with labels
     std::vector<std::vector<double>> data_vector{ { 1, 2, 3 }, { 4, 5, 6 }, { 7, 8, 9 } };
     std::vector<int> label_vector{ 0, 0, 1 };
-    plssvm::data_set data3{ std::move(data_vector), std::move(label_vector) };
+    plssvm::data_set data3{ data_vector, std::move(label_vector) };
     // get the different labels
-    const bool has_label = data3.has_labels();                 // will return true, since labels have explicitly been provided
-    auto different_labels = data3.different_labels().value();  // will return an optional vector containing { 0, 1 }
+    const bool has_label = data3.has_labels();        // will return true, since labels have explicitly been provided
+    auto different_labels = data3.classes().value();  // will return an optional vector containing { 0, 1 }
 
     // create a train data set and scale it to the range [-1, 1]
-    plssvm::data_set<double> train_data{ "path/to/train/file.libsvm", { -1.0, 1.0 } };
+    plssvm::data_set train_data{ "path/to/train/file.libsvm", { -1.0, 1.0 } };
     // scale a test data set and scale it according to the train data set
-    plssvm::data_set<double> test_data{ "path/to/test/file.libsvm", train_data.scaling_factors()->get() };
+    plssvm::data_set test_data{ "path/to/test/file.libsvm", train_data.scaling_factors()->get() };
 
     return 0;
 }

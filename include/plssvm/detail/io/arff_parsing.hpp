@@ -13,29 +13,35 @@
 #define PLSSVM_DETAIL_IO_ARFF_PARSING_HPP_
 #pragma once
 
+#include "plssvm/constants.hpp"                 // plssvm::real_type, plssvm::PADDING_SIZE
 #include "plssvm/detail/io/file_reader.hpp"     // plssvm::detail::io::file_reader
 #include "plssvm/detail/operators.hpp"          // plssvm::operator::sign
 #include "plssvm/detail/string_conversion.hpp"  // plssvm::detail::convert_to
 #include "plssvm/detail/string_utility.hpp"     // plssvm::detail::{to_upper_case, as_upper_case, starts_with, ends_with}
 #include "plssvm/detail/utility.hpp"            // plssvm::detail::current_date_time
 #include "plssvm/exceptions/exceptions.hpp"     // plssvm::exception::invalid_file_format_exception
+#include "plssvm/matrix.hpp"                    // plssvm::soa_matrix
+#include "plssvm/shape.hpp"                     // plssvm::shape
 
-#include "fmt/format.h"  // fmt::format, fmt::join
+#include "fmt/format.h"  // fmt::format
 #include "fmt/os.h"      // fmt::ostream, fmt::output_file
+#include "fmt/ranges.h"  // fmt::join
+#include "fmt/std.h"     // format std::vector<bool>::operator[] proxy type
 
 #include <cstddef>      // std::size_t
 #include <exception>    // std::exception, std::exception_ptr, std::current_exception, std::rethrow_exception
 #include <set>          // std::set
 #include <string>       // std::string
 #include <string_view>  // std::string_view
-#include <tuple>        // std::tuple, std::make_tuple
+#include <tuple>        // std::tuple, std::make_tuple, std::tie
+#include <type_traits>  // std::is_same_v
 #include <utility>      // std::move
 #include <vector>       // std::vector
 
 namespace plssvm::detail::io {
 
 /**
- * @brief Parse the ARFF file header, i.e., determine the number of features, the length of the ARRF header, whether the data set is annotated with labels
+ * @brief Parse the ARFF file header, i.e., determine the number of features, the length of the ARFF header, whether the data set is annotated with labels,
  *        and at which position the label is written in the data set.
  * @tparam label_type the type of the labels (any arithmetic type or std::string)
  * @param[in] lines the ARFF header to parse
@@ -54,7 +60,7 @@ namespace plssvm::detail::io {
  * @throws plssvm::invalid_file_format_exception if a header entry starts with an @ but is none of \@RELATION, \@ATTRIBUTE, or \@DATA
  * @throws plssvm::invalid_file_format_exception if no feature attributes are provided
  * @throws plssvm::invalid_file_format_exception if the \@DATA attribute is missing
- * @return the necessary header information: [num_features, num_header_lines, unique_labels, label_idx] (`[[nodiscard]]`)
+ * @return [the number of features; the number of header lines; the unique labels; the index at which the labels are stored in the file] (`[[nodiscard]]`)
  */
 template <typename label_type>
 [[nodiscard]] inline std::tuple<std::size_t, std::size_t, std::set<label_type>, std::size_t> parse_arff_header(const std::vector<std::string_view> &lines) {
@@ -63,10 +69,12 @@ template <typename label_type>
     bool has_label = false;
     std::set<label_type> labels{};
 
-    const auto check_for_name = [](std::string_view line, const std::size_t prefix, const std::size_t suffix) {
+    // check whether an ARFF header entry has a correct name (i.e., not empty and quoted if whitespaces are present)
+    const auto check_for_valid_name = [](std::string_view line, const std::string_view prefix, const std::string_view suffix) {
+        // remove potential prefixes and suffixes
         std::string_view sv{ line };
-        sv.remove_prefix(prefix);
-        sv.remove_suffix(suffix);
+        sv.remove_prefix(prefix.size());
+        sv.remove_suffix(suffix.size());
         sv = detail::trim(sv);
 
         // remaining string may not be empty
@@ -82,7 +90,7 @@ template <typename label_type>
         return sv;
     };
 
-    // parse arff header
+    // parse arff header -> read the whole file or until @DATA has been found
     std::size_t header_line = 0;
     for (; header_line < lines.size(); ++header_line) {
         // get next line and convert content to all upper case
@@ -95,7 +103,7 @@ template <typename label_type>
                 throw invalid_file_format_exception{ "The @RELATION attribute must be set before any other @ATTRIBUTE!" };
             }
             // the relation field must contain a name
-            check_for_name(line, 9, 0);  // @RELATION is 9 chars long
+            check_for_valid_name(line, "@RELATION", "");
             // parse next line
             continue;
         }
@@ -104,7 +112,7 @@ template <typename label_type>
             // check if a "normal" numeric feature has been found
             if (upper_case_line.find("NUMERIC") != std::string::npos) {
                 // a numeric field must also contain a name
-                const std::string_view name = check_for_name(line, 10, 7);  // @ATTRIBUTE is 10 chars long, NUMERIC 7 chars
+                const std::string_view name = check_for_valid_name(line, "@ATTRIBUTE", "NUMERIC");
                 // the attribute name "CLASS" is reserved!
                 if (detail::as_upper_case(name) == "CLASS") {
                     throw invalid_file_format_exception{ "May not use the combination of the reserved name \"class\" and attribute type NUMERIC!" };
@@ -123,7 +131,7 @@ template <typename label_type>
 
             // remove attribute from string
             std::string_view sv{ line };
-            sv.remove_prefix(10);  // @ATTRIBUTE is 10 chars long
+            sv.remove_prefix(std::string_view{ "@ATTRIBUTE" }.size());
             sv = trim_left(sv);
 
             // if the line is valid, it must now start with CLASS
@@ -133,7 +141,7 @@ template <typename label_type>
                     throw invalid_file_format_exception{ "A nominal attribute with the name CLASS may only be provided once!" };
                 }
                 // check if the nominal attribute ist enclosed in curly braces
-                sv.remove_prefix(5);  // CLASS is 5 chars long
+                sv.remove_prefix(std::string_view{ "CLASS" }.size());
                 sv = detail::trim(sv);
                 // the class labels must be given
                 if (sv.empty()) {
@@ -215,7 +223,6 @@ template <typename label_type>
  * 0.57650218263054642,1.01405596624706053,0.13009428079760464,0.7261913886869387,-1
  * 1.88494043717792,1.00518564317278263,0.298499933047586044,1.6464627048813514,-1
  * @endcode
- * @tparam real_type the floating point type
  * @tparam label_type the type of the labels (any arithmetic type or std::string)
  * @param[in] reader the file_reader used to read the ARFF data
  * @note The features must be provided with zero-based indices!
@@ -230,10 +237,10 @@ template <typename label_type>
  * @throws plssvm::invalid_file_format_exception if the ARFF header specifies labels but any data point misses a label
  * @throws plssvm::invalid_file_format_exception if the number of found features and labels mismatches the numbers provided in the ARFF header
  * @throws plssvm::invalid_file_format_exception if a label in the data section has been found, that did not appear in the header
- * @return a std::tuple containing: [num_data_points, num_features, data_points, labels] (`[[nodiscard]]`)
+ * @return[the number of data points, the number of features per data point, the data points, the labels (optional)] (`[[nodiscard]]`)
  */
-template <typename real_type, typename label_type>
-[[nodiscard]] inline std::tuple<std::size_t, std::size_t, std::vector<std::vector<real_type>>, std::vector<label_type>> parse_arff_data(const file_reader &reader) {
+template <typename label_type>
+[[nodiscard]] inline std::tuple<std::size_t, std::size_t, soa_matrix<real_type>, std::vector<label_type>> parse_arff_data(const file_reader &reader) {
     PLSSVM_ASSERT(reader.is_open(), "The file_reader is currently not associated with a file!");
 
     // parse arff header, structured bindings can't be used because of the OpenMP parallel section
@@ -249,16 +256,15 @@ template <typename real_type, typename label_type>
     const std::size_t num_attributes = num_features + static_cast<std::size_t>(has_label);
 
     // create data and label vectors
-    std::vector<std::vector<real_type>> data(num_data_points, std::vector<real_type>(num_features));
+    soa_matrix<real_type> data{ shape{ num_data_points, num_features }, shape{ PADDING_SIZE, PADDING_SIZE } };
     std::vector<label_type> label(num_data_points);
 
     std::exception_ptr parallel_exception;
 
-    #pragma omp parallel default(none) shared(reader, data, label, unique_label, parallel_exception) firstprivate(num_header_lines, num_features, num_attributes, has_label, label_idx)
+#pragma omp parallel default(none) shared(reader, data, label, unique_label, parallel_exception) firstprivate(num_header_lines, num_data_points, num_attributes, has_label, label_idx)
     {
-        #pragma omp for
-        for (std::size_t i = 0; i < data.size(); ++i) {
-            #pragma omp cancellation point for
+#pragma omp for
+        for (std::size_t i = 0; i < num_data_points; ++i) {
             try {
                 std::string_view line = reader.line(i + num_header_lines);
                 // there must not be any @ inside the data section
@@ -299,19 +305,19 @@ template <typename real_type, typename label_type>
                             // write label value
                             is_class_set = true;
                             if constexpr (std::is_same_v<label_type, bool>) {
-                                // the std::vector<bool> template specialization is per C++ standard NOT thread safe
-                                #pragma omp critical
+// the std::vector<bool> template specialization is per C++ standard NOT thread safe
+#pragma omp critical
                                 label[i] = detail::convert_to<label_type, invalid_file_format_exception>(line.substr(pos, next_pos - pos));
                             } else {
                                 label[i] = detail::convert_to<label_type, invalid_file_format_exception>(line.substr(pos, next_pos - pos));
                             }
                         } else {
-                            // write feature valuehas a whitespace!
+                            // write feature value has a whitespace!
                             // if the feature index is larger than the label index, the index must be reduced in order to write the feature to the correct data index
                             if (has_label && index > label_idx) {
                                 --index;
                             }
-                            data[i][index] = detail::convert_to<real_type, invalid_file_format_exception>(line.substr(pos, next_pos - pos));
+                            data(i, index) = detail::convert_to<real_type, invalid_file_format_exception>(line.substr(pos, next_pos - pos));
                         }
 
                         // remove already processes part of the line
@@ -339,33 +345,31 @@ template <typename real_type, typename label_type>
                             // found a label
 
                             if constexpr (std::is_same_v<label_type, bool>) {
-                                // the std::vector<bool> template specialization is per C++ standard NOT thread safe
-                                #pragma omp critical
+// the std::vector<bool> template specialization is per C++ standard NOT thread safe
+#pragma omp critical
                                 label[i] = detail::convert_to<label_type, invalid_file_format_exception>(line_split[j]);
                             } else {
                                 label[i] = detail::convert_to<label_type, invalid_file_format_exception>(line_split[j]);
                             }
                         } else {
                             // found data point
-                            data[i][j] = detail::convert_to<real_type, invalid_file_format_exception>(line_split[j]);
+                            data(i, j) = detail::convert_to<real_type, invalid_file_format_exception>(line_split[j]);
                         }
                     }
                 }
 
                 // check if the parsed label is one of the labels specified in the ARFF file header
                 if (has_label && !detail::contains(unique_label, static_cast<label_type>(label[i]))) {
-                    throw invalid_file_format_exception{ fmt::format("Found the label \"{}\" which was not specified in the header ({{{}}})!", label[i], fmt::join(unique_label, ",")) };
+                    throw invalid_file_format_exception{ fmt::format("Found the label \"{}\" which was not specified in the header ({{{}}})!", static_cast<label_type>(label[i]), fmt::join(unique_label, ", ")) };
                 }
             } catch (const std::exception &) {
-                // catch first exception and store it
-                #pragma omp critical
+// catch first exception and store it
+#pragma omp critical
                 {
                     if (!parallel_exception) {
                         parallel_exception = std::current_exception();
                     }
                 }
-                // cancel parallel execution, needs env variable OMP_CANCELLATION=true
-                #pragma omp cancel for
             }
         }
     }
@@ -398,7 +402,6 @@ template <typename real_type, typename label_type>
  * 1.88494043717792,1.00518564317278263,0.298499933047586044,1.6464627048813514,-1
  * @endcode
  * Note that the output will always be dense, i.e., all features with a value of `0.0` are explicitly written in the resulting file.
- * @tparam real_type the floating point type
  * @tparam label_type the type of the labels (any arithmetic type or std::string)
  * @tparam has_label if `true` the provided labels are also written to the file, if `false` **no** labels are outputted
  * @param[in] filename the filename to write the data to
@@ -407,11 +410,11 @@ template <typename real_type, typename label_type>
  * @note The resulting order of the data points in the ARFF file is unspecified!
  * @note The features are written using zero-based indices!
  */
-template <typename real_type, typename label_type, bool has_label>
-inline void write_arff_data_impl(const std::string &filename, const std::vector<std::vector<real_type>> &data, const std::vector<label_type> &label) {
+template <typename label_type, bool has_label>
+inline void write_arff_data_impl(const std::string &filename, const soa_matrix<real_type> &data, const std::vector<label_type> &label) {
     if constexpr (has_label) {
         PLSSVM_ASSERT(data.empty() || !label.empty(), "has_label is 'true' but no labels were provided!");
-        PLSSVM_ASSERT(data.size() == label.size(), "Number of data points ({}) and number of labels ({}) mismatch!", data.size(), label.size());
+        PLSSVM_ASSERT(data.num_rows() == label.size(), "Number of data points ({}) and number of labels ({}) mismatch!", data.num_rows(), label.size());
     } else {
         PLSSVM_ASSERT(label.empty(), "has_label is 'false' but labels were provided!");
     }
@@ -421,12 +424,12 @@ inline void write_arff_data_impl(const std::string &filename, const std::vector<
     // write arff header with current time stamp
     out.print("% This data set has been created at {}\n", detail::current_date_time());
 
-    const std::size_t num_data_points = data.size();
+    const std::size_t num_data_points = data.num_rows();
     if (num_data_points == 0) {
         // nothing to output
         return;
     }
-    const std::size_t num_features = data.front().size();
+    const std::size_t num_features = data.num_cols();
     out.print("% {}x{}\n", num_data_points, num_features);
 
     out.print("@RELATION data_set\n");
@@ -441,21 +444,27 @@ inline void write_arff_data_impl(const std::string &filename, const std::vector<
     }
     out.print("@DATA\n");
 
-    // write arff data
-    #pragma omp parallel default(none) shared(out, data, label) firstprivate(num_data_points)
+// write arff data
+#pragma omp parallel default(none) shared(out, data, label) firstprivate(num_data_points, num_features)
     {
         // all support vectors
         std::string out_string;
-        #pragma omp for schedule(dynamic) nowait
+#pragma omp for schedule(dynamic) nowait
         for (std::size_t i = 0; i < num_data_points; ++i) {
-            if constexpr (has_label) {
-                out_string.append(fmt::format("{:.10e},{}\n", fmt::join(data[i], ","), label[i]));
-            } else {
-                out_string.append(fmt::format("{:.10e}\n", fmt::join(data[i], ",")));
+            // output data points
+            for (std::size_t j = 0; j < num_features - 1; ++j) {
+                out_string.append(fmt::format("{:.10e},", data(i, j)));
             }
+            out_string.append(fmt::format("{:.10e}", data(i, num_features - 1)));
+            // output label if provided
+            if constexpr (has_label) {
+                out_string.append(fmt::format(",{}", label[i]));
+            }
+            // output newline at the end
+            out_string.push_back('\n');
         }
 
-        #pragma omp critical
+#pragma omp critical
         out.print("{}", out_string);
     }
 }
@@ -480,7 +489,6 @@ inline void write_arff_data_impl(const std::string &filename, const std::vector<
  * 1.88494043717792,1.00518564317278263,0.298499933047586044,1.6464627048813514,-1
  * @endcode
  * Note that the output will always be dense, i.e., all features with a value of `0.0` are explicitly written in the resulting file.
- * @tparam real_type the floating point type
  * @tparam label_type the type of the labels (any arithmetic type or std::string)
  * @param[in] filename the filename to write the data to
  * @param[in] data the data points to write to the file
@@ -488,9 +496,9 @@ inline void write_arff_data_impl(const std::string &filename, const std::vector<
  * @note The resulting order of the data points in the ARFF file is unspecified!
  * @note The features are written using zero-based indices!
  */
-template <typename real_type, typename label_type>
-inline void write_arff_data(const std::string &filename, const std::vector<std::vector<real_type>> &data, const std::vector<label_type> &label) {
-    write_arff_data_impl<real_type, label_type, true>(filename, data, label);
+template <typename label_type>
+inline void write_arff_data(const std::string &filename, const soa_matrix<real_type> &data, const std::vector<label_type> &label) {
+    write_arff_data_impl<label_type, true>(filename, data, label);
 }
 
 /**
@@ -512,15 +520,13 @@ inline void write_arff_data(const std::string &filename, const std::vector<std::
  * 1.88494043717792,1.00518564317278263,0.298499933047586044,1.6464627048813514
  * @endcode
  * Note that the output will always be dense, i.e., all features with a value of `0.0` are explicitly written in the resulting file.
- * @tparam real_type the floating point type
  * @param[in] filename the filename to write the data to
  * @param[in] data the data points to write to the file
  * @note The resulting order of the data points in the ARFF file is unspecified!
  * @note The features are written using zero-based indices!
  */
-template <typename real_type>
-inline void write_arff_data(const std::string &filename, const std::vector<std::vector<real_type>> &data) {
-    write_arff_data_impl<real_type, real_type, false>(filename, data, {});
+inline void write_arff_data(const std::string &filename, const soa_matrix<real_type> &data) {
+    write_arff_data_impl<real_type, false>(filename, data, {});
 }
 
 }  // namespace plssvm::detail::io

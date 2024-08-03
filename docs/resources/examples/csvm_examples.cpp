@@ -15,9 +15,9 @@
 
 int main() {
     // create a train data set from a file with int labels
-    const plssvm::data_set<double> train_data_with_label{ "path/to/train/file.libsvm" };
+    const plssvm::data_set train_data_with_label{ "path/to/train/file.libsvm" };
     // create a test data set from a file without labels
-    const plssvm::data_set<double> test_data{ "path/to/test/file.libsvm" };
+    const plssvm::data_set test_data{ "path/to/test/file.libsvm" };
 
     // create a support vector machine
     auto svm = plssvm::make_csvm();

@@ -10,19 +10,24 @@
 
 #include "plssvm/backends/OpenCL/detail/error_code.hpp"  // plssvm::opencl::detail::error_code
 
-#include "../../../custom_test_macros.hpp"  // EXPECT_CONVERSION_TO_STRING
+#include "CL/cl.h"  // CL_SUCCESS, CL_DEVICE_NOT_FOUND, cl_int
 
-#include "CL/cl.h"  // CL_SUCCESS, CL_DEVICE_NOT_FOUND
-#include "gtest/gtest.h"  // TEST, EXPECT_GE, EXPECT_NO_THROW, EXPECT_TRUE, EXPECT_FALSE
+#include "tests/custom_test_macros.hpp"  // EXPECT_CONVERSION_TO_STRING
+
+#include "gtest/gtest.h"  // TEST, EXPECT_EQ, EXPECT_NE, EXPECT_TRUE, EXPECT_FALSE
+
+#include <string>  // std::string
 
 TEST(OpenCLErrorCode, default_construct) {
     // the default error code should signal success
     EXPECT_EQ(plssvm::opencl::detail::error_code{}.value(), CL_SUCCESS);
 }
+
 TEST(OpenCLErrorCode, construct) {
     // construct from an OpenCL error code
     EXPECT_EQ(plssvm::opencl::detail::error_code{ CL_DEVICE_NOT_FOUND }.value(), CL_DEVICE_NOT_FOUND);
 }
+
 TEST(OpenCLErrorCode, operator_assign) {
     // default construct the error code
     plssvm::opencl::detail::error_code errc{};
@@ -31,6 +36,7 @@ TEST(OpenCLErrorCode, operator_assign) {
     errc = CL_DEVICE_NOT_FOUND;
     EXPECT_EQ(errc.value(), CL_DEVICE_NOT_FOUND);
 }
+
 TEST(OpenCLErrorCode, assign) {
     // default construct the error code
     plssvm::opencl::detail::error_code errc{};
@@ -39,6 +45,7 @@ TEST(OpenCLErrorCode, assign) {
     errc.assign(CL_DEVICE_NOT_FOUND);
     EXPECT_EQ(errc.value(), CL_DEVICE_NOT_FOUND);
 }
+
 TEST(OpenCLErrorCode, clear) {
     // construct from an OpenCL error code
     plssvm::opencl::detail::error_code errc{ CL_DEVICE_NOT_FOUND };
@@ -50,16 +57,18 @@ TEST(OpenCLErrorCode, clear) {
 
 TEST(OpenCLErrorCode, value) {
     // default construct the error code
-    plssvm::opencl::detail::error_code errc{};
+    const plssvm::opencl::detail::error_code errc{};
     // get the value
     EXPECT_EQ(errc.value(), CL_SUCCESS);
 }
+
 TEST(OpenCLErrorCode, message) {
     // default construct the error code
-    plssvm::opencl::detail::error_code errc{};
+    const plssvm::opencl::detail::error_code errc{};
     // get the value as a string
     EXPECT_EQ(errc.message(), "CL_SUCCESS");
 }
+
 TEST(OpenCLErrorCode, possible_message_error_codes) {
     // any error code greater than zero is unknown
     std::string msg = std::string{ plssvm::opencl::detail::error_code{ 1 }.message() };
@@ -77,6 +86,7 @@ TEST(OpenCLErrorCode, possible_message_error_codes) {
         EXPECT_NE(msg, "UNKNOWN ERROR_CODE") << fmt::format("for OpenCL error code: {}", err);
     }
 }
+
 TEST(OpenCLErrorCode, operator_bool) {
     // conversion to bool must be true if the error code is CL_SUCCESS
     EXPECT_TRUE(static_cast<bool>(plssvm::opencl::detail::error_code{}));
@@ -88,22 +98,24 @@ TEST(OpenCLErrorCode, operator_ostream) {
     EXPECT_CONVERSION_TO_STRING(plssvm::opencl::detail::error_code{ CL_SUCCESS }, "0: CL_SUCCESS");
     EXPECT_CONVERSION_TO_STRING(plssvm::opencl::detail::error_code{ CL_DEVICE_NOT_FOUND }, "-1: CL_DEVICE_NOT_FOUND");
 }
+
 TEST(OpenCLErrorCode, operator_equal) {
     // test two error codes for equality
-    plssvm::opencl::detail::error_code errc1{};
-    plssvm::opencl::detail::error_code errc2{ CL_SUCCESS };
-    plssvm::opencl::detail::error_code errc3{ CL_DEVICE_NOT_FOUND };
+    const plssvm::opencl::detail::error_code errc1{};
+    const plssvm::opencl::detail::error_code errc2{ CL_SUCCESS };
+    const plssvm::opencl::detail::error_code errc3{ CL_DEVICE_NOT_FOUND };
 
     EXPECT_TRUE(errc1 == errc1);
     EXPECT_TRUE(errc1 == errc2);
     EXPECT_FALSE(errc1 == errc3);
     EXPECT_FALSE(errc2 == errc3);
 }
+
 TEST(OpenCLErrorCode, operator_unequal) {
     // test two error codes for equality
-    plssvm::opencl::detail::error_code errc1{};
-    plssvm::opencl::detail::error_code errc2{ CL_SUCCESS };
-    plssvm::opencl::detail::error_code errc3{ CL_DEVICE_NOT_FOUND };
+    const plssvm::opencl::detail::error_code errc1{};
+    const plssvm::opencl::detail::error_code errc2{ CL_SUCCESS };
+    const plssvm::opencl::detail::error_code errc3{ CL_DEVICE_NOT_FOUND };
 
     EXPECT_FALSE(errc1 != errc1);
     EXPECT_FALSE(errc1 != errc2);

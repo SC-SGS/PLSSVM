@@ -8,21 +8,17 @@
 
 #include "plssvm/parameter.hpp"
 
+#include "plssvm/constants.hpp"                    // plssvm::real_type
 #include "plssvm/detail/arithmetic_type_name.hpp"  // plssvm::detail::arithmetic_type_name
+#include "plssvm/gamma.hpp"                        // plssvm::get_gamma_string
 
-#include "fmt/core.h"     // fmt::format
-#include "fmt/ostream.h"  // can use fmt using operator<< overloads
+#include "fmt/format.h"  // fmt::format
 
 #include <ostream>  // std::ostream
 
-namespace plssvm::detail {
+namespace plssvm {
 
-// explicitly instantiate template class
-template struct parameter<float>;
-template struct parameter<double>;
-
-template <typename T>
-std::ostream &operator<<(std::ostream &out, const parameter<T> &params) {
+std::ostream &operator<<(std::ostream &out, const parameter &params) {
     return out << fmt::format(
                "kernel_type                 {}\n"
                "degree                      {}\n"
@@ -32,12 +28,10 @@ std::ostream &operator<<(std::ostream &out, const parameter<T> &params) {
                "real_type                   {}\n",
                params.kernel_type,
                params.degree,
-               params.gamma,
+               get_gamma_string(params.gamma),
                params.coef0,
                params.cost,
-               detail::arithmetic_type_name<typename parameter<T>::real_type>());
+               detail::arithmetic_type_name<real_type>());
 }
-template std::ostream &operator<<(std::ostream &, const parameter<float> &);
-template std::ostream &operator<<(std::ostream &, const parameter<double> &);
 
-}  // namespace plssvm::detail
+}  // namespace plssvm

@@ -13,10 +13,16 @@
 #define PLSSVM_BACKENDS_OPENCL_CSVM_HPP_
 #pragma once
 
+#include "plssvm/backends/execution_range.hpp"              // plssvm::detail::{dim_type, execution_range}
+#include "plssvm/backends/gpu_csvm.hpp"                     // plssvm::detail::gpu_csvm
 #include "plssvm/backends/OpenCL/detail/command_queue.hpp"  // plssvm::opencl::detail::command_queue
 #include "plssvm/backends/OpenCL/detail/context.hpp"        // plssvm::opencl::detail::context
 #include "plssvm/backends/OpenCL/detail/device_ptr.hpp"     // plssvm::opencl::detail::device_ptr
-#include "plssvm/backends/gpu_csvm.hpp"                     // plssvm::detail::gpu_csvm
+#include "plssvm/backends/OpenCL/detail/pinned_memory.hpp"  // plssvm::opencl::detail::pinned_memory
+#include "plssvm/constants.hpp"                             // plssvm::real_type
+#include "plssvm/csvm.hpp"                                  // plssvm::detail::csvm_backend_exists
+#include "plssvm/detail/memory_size.hpp"                    // plssvm::detail::memory_size
+#include "plssvm/detail/type_traits.hpp"                    // PLSSVM_REQUIRES
 #include "plssvm/parameter.hpp"                             // plssvm::parameter, plssvm::detail::parameter
 #include "plssvm/target_platforms.hpp"                      // plssvm::target_platform
 
@@ -27,28 +33,23 @@
 
 namespace plssvm {
 
-namespace detail {
-
-// forward declare execution_range class
-class execution_range;
-
-}  // namespace detail
-
 namespace opencl {
 
 /**
  * @brief A C-SVM implementation using OpenCL as backend.
  */
-class csvm : public ::plssvm::detail::gpu_csvm<detail::device_ptr, detail::command_queue> {
+class csvm : public ::plssvm::detail::gpu_csvm<detail::device_ptr, detail::command_queue, detail::pinned_memory> {
   protected:
     // protected for test MOCK class
     /// The template base type of the OpenCL C-SVM class.
-    using base_type = ::plssvm::detail::gpu_csvm<detail::device_ptr, detail::command_queue>;
+    using base_type = ::plssvm::detail::gpu_csvm<detail::device_ptr, detail::command_queue, detail::pinned_memory>;
 
+    using base_type::data_distribution_;
     using base_type::devices_;
 
   public:
     using base_type::device_ptr_type;
+    using typename base_type::pinned_memory_type;
     using typename base_type::queue_type;
 
     /**
@@ -81,7 +82,8 @@ class csvm : public ::plssvm::detail::gpu_csvm<detail::device_ptr, detail::comma
      */
     template <typename... Args, PLSSVM_REQUIRES(::plssvm::detail::has_only_parameter_named_args_v<Args...>)>
     explicit csvm(Args &&...named_args) :
-        csvm{ plssvm::target_platform::automatic, std::forward<Args>(named_args)... } {}
+        csvm{ plssvm::target_platform::automatic, std::forward<Args>(named_args)... } { }
+
     /**
      * @brief Construct a new C-SVM using the OpenCL backend on the @p target platform and the optionally provided @p named_args.
      * @param[in] target the target platform used for this C-SVM
@@ -98,6 +100,22 @@ class csvm : public ::plssvm::detail::gpu_csvm<detail::device_ptr, detail::comma
     }
 
     /**
+     * @copydoc plssvm::csvm::csvm(const plssvm::csvm &)
+     */
+    csvm(const csvm &) = delete;
+    /**
+     * @copydoc plssvm::csvm::csvm(plssvm::csvm &&) noexcept
+     */
+    csvm(csvm &&) noexcept = default;
+    /**
+     * @copydoc plssvm::csvm::operator=(const plssvm::csvm &)
+     */
+    csvm &operator=(const csvm &) = delete;
+    /**
+     * @copydoc plssvm::csvm::operator=(plssvm::csvm &&) noexcept
+     */
+    csvm &operator=(csvm &&) noexcept = default;
+    /**
      * @brief Wait for all operations on all OpenCL devices to finish.
      * @details Terminates the program, if any exception is thrown.
      */
@@ -105,75 +123,70 @@ class csvm : public ::plssvm::detail::gpu_csvm<detail::device_ptr, detail::comma
 
   protected:
     /**
-     * @copydoc plssvm::detail::gpu_csvm::device_synchronize
+     * @brief Initialize all important states related to the CUDA backend.
+     * @param[in] target the target platform to use
+     * @throws plssvm::cuda::backend_exception if the target platform isn't plssvm::target_platform::automatic or plssvm::target_platform::gpu_nvidia
+     * @throws plssvm::cuda::backend_exception if the plssvm::target_platform::gpu_nvidia target isn't available
+     * @throws plssvm::cuda::backend_exception if no CUDA capable devices could be found
      */
-    void device_synchronize(const queue_type &queue) const final;
+    void init(target_platform target);
 
     /**
-     * @copydoc plssvm::detail::gpu_csvm::run_q_kernel
+     * @copydoc plssvm::csvm::get_device_memory
      */
-    void run_q_kernel(std::size_t device, const ::plssvm::detail::execution_range &range, const ::plssvm::detail::parameter<float> &params, device_ptr_type<float> &q_d, const device_ptr_type<float> &data_d, const device_ptr_type<float> &data_last_d, std::size_t num_data_points_padded, std::size_t num_features) const final { this->run_q_kernel_impl(device, range, params, q_d, data_d, data_last_d, num_data_points_padded, num_features); }
+    [[nodiscard]] std::vector<::plssvm::detail::memory_size> get_device_memory() const final;
     /**
-     * @copydoc plssvm::detail::gpu_csvm::run_q_kernel
+     * @copydoc plssvm::csvm::get_max_mem_alloc_size
      */
-    void run_q_kernel(std::size_t device, const ::plssvm::detail::execution_range &range, const ::plssvm::detail::parameter<double> &params, device_ptr_type<double> &q_d, const device_ptr_type<double> &data_d, const device_ptr_type<double> &data_last_d, std::size_t num_data_points_padded, std::size_t num_features) const final { this->run_q_kernel_impl(device, range, params, q_d, data_d, data_last_d, num_data_points_padded, num_features); }
+    [[nodiscard]] std::vector<::plssvm::detail::memory_size> get_max_mem_alloc_size() const final;
     /**
-     * @copydoc plssvm::detail::gpu_csvm::run_q_kernel
+     * @copydoc plssvm::detail::gpu_csvm::get_max_work_group_size
      */
-    template <typename real_type>
-    void run_q_kernel_impl(std::size_t device, const ::plssvm::detail::execution_range &range, const ::plssvm::detail::parameter<real_type> &params, device_ptr_type<real_type> &q_d, const device_ptr_type<real_type> &data_d, const device_ptr_type<real_type> &data_last_d, std::size_t num_data_points_padded, std::size_t num_features) const;
+    [[nodiscard]] std::size_t get_max_work_group_size(std::size_t device_id) const final;
     /**
-     * @copydoc plssvm::detail::gpu_csvm::run_svm_kernel
+     * @copydoc plssvm::detail::gpu_csvm::get_max_grid_size
+     * @note Uses hardcoded values: int32_t max for all dimensions on the CPU and int32_t max for the first dimension and uint16_t max for the remaining dimensions otherwise.
      */
-    void run_svm_kernel(std::size_t device, const ::plssvm::detail::execution_range &range, const ::plssvm::detail::parameter<float> &params, const device_ptr_type<float> &q_d, device_ptr_type<float> &r_d, const device_ptr_type<float> &x_d, const device_ptr_type<float> &data_d, float QA_cost, float add, std::size_t num_data_points_padded, std::size_t num_features) const final { this->run_svm_kernel_impl(device, range, params, q_d, r_d, x_d, data_d, QA_cost, add, num_data_points_padded, num_features); }
+    [[nodiscard]] ::plssvm::detail::dim_type get_max_grid_size(std::size_t device_id) const override;
+
+    //***************************************************//
+    //                        fit                        //
+    //***************************************************//
     /**
-     * @copydoc plssvm::detail::gpu_csvm::run_svm_kernel
+     * @copydoc plssvm::detail::gpu_csvm::run_assemble_kernel_matrix_explicit
      */
-    void run_svm_kernel(std::size_t device, const ::plssvm::detail::execution_range &range, const ::plssvm::detail::parameter<double> &params, const device_ptr_type<double> &q_d, device_ptr_type<double> &r_d, const device_ptr_type<double> &x_d, const device_ptr_type<double> &data_d, double QA_cost, double add, std::size_t num_data_points_padded, std::size_t num_features) const final { this->run_svm_kernel_impl(device, range, params, q_d, r_d, x_d, data_d, QA_cost, add, num_data_points_padded, num_features); }
+    [[nodiscard]] device_ptr_type run_assemble_kernel_matrix_explicit(std::size_t device_id, const ::plssvm::detail::execution_range &exec, const parameter &params, const device_ptr_type &data_d, const device_ptr_type &q_red_d, real_type QA_cost) const final;
     /**
-     * @copydoc plssvm::detail::gpu_csvm::run_svm_kernel
+     * @copydoc plssvm::detail::gpu_csvm::run_blas_level_3_kernel_explicit
      */
-    template <typename real_type>
-    void run_svm_kernel_impl(std::size_t device, const ::plssvm::detail::execution_range &range, const ::plssvm::detail::parameter<real_type> &params, const device_ptr_type<real_type> &q_d, device_ptr_type<real_type> &r_d, const device_ptr_type<real_type> &x_d, const device_ptr_type<real_type> &data_d, real_type QA_cost, real_type add, std::size_t num_data_points_padded, std::size_t num_features) const;
+    void run_blas_level_3_kernel_explicit(std::size_t device_id, const ::plssvm::detail::execution_range &exec, const ::plssvm::detail::execution_range &mirror_exec, real_type alpha, const device_ptr_type &A_d, const device_ptr_type &B_d, real_type beta, device_ptr_type &C_d) const final;
+    /**
+     * @copydoc plssvm::detail::gpu_csvm::run_assemble_kernel_matrix_implicit_blas_level_3
+     */
+    void run_assemble_kernel_matrix_implicit_blas_level_3(std::size_t device_id, const ::plssvm::detail::execution_range &exec, real_type alpha, const device_ptr_type &A_d, const parameter &params, const device_ptr_type &q_red_d, real_type QA_cost, const device_ptr_type &B_d, device_ptr_type &C_d) const final;
+    /**
+     * @copydoc plssvm::detail::gpu_csvm::run_inplace_matrix_addition
+     */
+    void run_inplace_matrix_addition(std::size_t device_id, const ::plssvm::detail::execution_range &exec, device_ptr_type &lhs_d, const device_ptr_type &rhs_d) const override;
+    /**
+     * @copydoc plssvm::detail::gpu_csvm::run_inplace_matrix_scale
+     */
+    void run_inplace_matrix_scale(std::size_t device_id, const ::plssvm::detail::execution_range &exec, device_ptr_type &lhs_d, real_type scale) const override;
+
+    //***************************************************//
+    //                   predict, score                  //
+    //***************************************************//
     /**
      * @copydoc plssvm::detail::gpu_csvm::run_w_kernel
      */
-    void run_w_kernel(std::size_t device, const ::plssvm::detail::execution_range &range, device_ptr_type<float> &w_d, const device_ptr_type<float> &alpha_d, const device_ptr_type<float> &data_d, const device_ptr_type<float> &data_last_d, std::size_t num_data_points, std::size_t num_features) const final { this->run_w_kernel_impl(device, range, w_d, alpha_d, data_d, data_last_d, num_data_points, num_features); }
-    /**
-     * @copydoc plssvm::detail::gpu_csvm::run_w_kernel
-     */
-    void run_w_kernel(std::size_t device, const ::plssvm::detail::execution_range &range, device_ptr_type<double> &w_d, const device_ptr_type<double> &alpha_d, const device_ptr_type<double> &data_d, const device_ptr_type<double> &data_last_d, std::size_t num_data_points, std::size_t num_features) const final { this->run_w_kernel_impl(device, range, w_d, alpha_d, data_d, data_last_d, num_data_points, num_features); }
-    /**
-     * @copydoc plssvm::detail::gpu_csvm::run_w_kernel
-     */
-    template <typename real_type>
-    void run_w_kernel_impl(std::size_t device, const ::plssvm::detail::execution_range &range, device_ptr_type<real_type> &w_d, const device_ptr_type<real_type> &alpha_d, const device_ptr_type<real_type> &data_d, const device_ptr_type<real_type> &data_last_d, std::size_t num_data_points, std::size_t num_features) const;
+    [[nodiscard]] device_ptr_type run_w_kernel(std::size_t device_id, const ::plssvm::detail::execution_range &exec, const device_ptr_type &alpha_d, const device_ptr_type &sv_d) const final;
     /**
      * @copydoc plssvm::detail::gpu_csvm::run_predict_kernel
      */
-    void run_predict_kernel(const ::plssvm::detail::execution_range &range, const ::plssvm::detail::parameter<float> &params, device_ptr_type<float> &out_d, const device_ptr_type<float> &alpha_d, const device_ptr_type<float> &point_d, const device_ptr_type<float> &data_d, const device_ptr_type<float> &data_last_d, std::size_t num_support_vectors, std::size_t num_predict_points, std::size_t num_features) const final { this->run_predict_kernel_impl(range, params, out_d, alpha_d, point_d, data_d, data_last_d, num_support_vectors, num_predict_points, num_features); }
-    /**
-     * @copydoc plssvm::detail::gpu_csvm::run_predict_kernel
-     */
-    void run_predict_kernel(const ::plssvm::detail::execution_range &range, const ::plssvm::detail::parameter<double> &params, device_ptr_type<double> &out_d, const device_ptr_type<double> &alpha_d, const device_ptr_type<double> &point_d, const device_ptr_type<double> &data_d, const device_ptr_type<double> &data_last_d, std::size_t num_support_vectors, std::size_t num_predict_points, std::size_t num_features) const final { this->run_predict_kernel_impl(range, params, out_d, alpha_d, point_d, data_d, data_last_d, num_support_vectors, num_predict_points, num_features); }
-    /**
-     * @copydoc plssvm::detail::gpu_csvm::run_predict_kernel
-     */
-    template <typename real_type>
-    void run_predict_kernel_impl(const ::plssvm::detail::execution_range &range, const ::plssvm::detail::parameter<real_type> &params, device_ptr_type<real_type> &out_d, const device_ptr_type<real_type> &alpha_d, const device_ptr_type<real_type> &point_d, const device_ptr_type<real_type> &data_d, const device_ptr_type<real_type> &data_last_d, std::size_t num_support_vectors, std::size_t num_predict_points, std::size_t num_features) const;
+    [[nodiscard]] device_ptr_type run_predict_kernel(std::size_t device_id, const ::plssvm::detail::execution_range &exec, const parameter &params, const device_ptr_type &alpha_d, const device_ptr_type &rho_d, const device_ptr_type &sv_or_w_d, const device_ptr_type &predict_points_d) const final;
 
     /// The available OpenCL contexts for the current target platform with the associated devices.
     std::vector<detail::context> contexts_{};
-
-  private:
-    /**
-     * @brief Initialize all important states related to the OpenCL backend.
-     * @param[in] target the target platform to use
-     * @throws plssvm::opencl::backend_exception if the requested target is not available
-     * @throws plssvm::opencl::backend_exception if more than one OpenCL context for the requested target was found
-     * @throws plssvm::opencl::backend_exception if no device for the requested target was found
-     */
-    void init(target_platform target);
 };
 
 }  // namespace opencl
@@ -184,7 +197,7 @@ namespace detail {
  * @brief Sets the `value` to `true` since C-SVMs using the OpenCL backend are available.
  */
 template <>
-struct csvm_backend_exists<opencl::csvm> : std::true_type {};
+struct csvm_backend_exists<opencl::csvm> : std::true_type { };
 
 }  // namespace detail
 

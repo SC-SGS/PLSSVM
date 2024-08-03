@@ -5,6 +5,7 @@ on:
   push:
     branches:
       - main
+      - documentation
   pull_request:
     branches:
       - main
@@ -15,13 +16,12 @@ jobs:
     steps:
       # checkout repository
       - name: Checkout PLSSVM
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4.1.1
         with:
           path: PLSSVM
       # install dependencies
-      - name: Dependancies
+      - name: Dependencies
         run: |
-          echo "deb http://dk.archive.ubuntu.com/ubuntu/ hirsute main universe" | sudo tee -a /etc/apt/sources.list
           sudo apt update
           sudo apt-get install -y doxygen graphviz
       # configure project via CMake
@@ -38,7 +38,7 @@ jobs:
           make doc
       # deploy generated documentation using github.io
       - name: Deploy
-        uses: peaceiris/actions-gh-pages@v3
+        uses: peaceiris/actions-gh-pages@v3.9.3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./PLSSVM/docs/html

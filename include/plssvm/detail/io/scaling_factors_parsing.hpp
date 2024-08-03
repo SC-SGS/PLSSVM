@@ -13,19 +13,21 @@
 #define PLSSVM_DETAIL_IO_SCALING_FACTORS_PARSING_HPP_
 #pragma once
 
+#include "plssvm/constants.hpp"                 // plssvm::real_type
 #include "plssvm/detail/assert.hpp"             // PLSSVM_ASSERT
-#include "plssvm/detail/utility.hpp"            // plssvm:detail::current_date_time
 #include "plssvm/detail/io/file_reader.hpp"     // plssvm::detail::io::file_reader
 #include "plssvm/detail/string_conversion.hpp"  // plssvm::detail::split_as
 #include "plssvm/detail/string_utility.hpp"     // plssvm::detail::trim
+#include "plssvm/detail/utility.hpp"            // plssvm:detail::current_date_time
 #include "plssvm/exceptions/exceptions.hpp"     // plssvm::invalid_file_format_exception
 
-#include "fmt/core.h"  // fmt::format
+#include "fmt/format.h"  // fmt::format
 #include "fmt/os.h"    // fmt::ostream, fmt::output_file
 
-#include <exception>    // std::exception_ptr, std::exception, std::rethrow_exception
+#include <exception>    // std::exception_ptr, std::exception, std::current_exception, std::rethrow_exception
 #include <string>       // std::string
 #include <string_view>  // std::string_view
+#include <tuple>        // std::tuple, std::make_tuple
 #include <utility>      // std::pair, std::make_pair
 #include <vector>       // std::vector
 
@@ -43,17 +45,17 @@ namespace plssvm::detail::io {
  * 4 0.10805254527169827 1.6464627048813514
  * @endcode
  * Note that the scaling factors are given using an one-based indexing scheme, but are internally stored using zero-based indexing.
- * @tparam real_type the used floating point type
  * @tparam factors_type plssvm::data_set<real_type>::scaling::factors (cannot be forward declared or included)
  * @param[in] reader the file_reader used to read the scaling factors
  * @throws plssvm::invalid_file_format_exception if the header is omitted ('x' and the scaling interval)
- * @throws plssvm::invalid_file_format_exception if the first line doesn't only contain `x`
+ * @throws plssvm::invalid_file_format_exception if the first "real" line, i.e. omitting comments, doesn't only contain `x`
  * @throws plssvm::invalid_file_format_exception if the scaling interval is provided with more or less than two values
+ * @throws plssvm::invalid_file_format_exception if the scaling interval is invalid, i.e., the first value is greater or equal than the second value
  * @throws plssvm::invalid_file_format_exception if the scaling factors are provided with more or less than three values
  * @throws plssvm::invalid_file_format_exception if the scaling factors feature index is zero-based instead of one-based
- * @return the read scaling interval and factors (`[[nodiscard]]`)
+ * @return [the read scaling interval; the read scaling factors] (`[[nodiscard]]`)
  */
-template <typename real_type, typename factors_type>
+template <typename factors_type>
 [[nodiscard]] inline std::tuple<std::pair<real_type, real_type>, std::vector<factors_type>> parse_scaling_factors(const file_reader &reader) {
     PLSSVM_ASSERT(reader.is_open(), "The file_reader is currently not associated with a file!");
 
@@ -78,11 +80,10 @@ template <typename real_type, typename factors_type>
     // parse scaling factors
     std::exception_ptr parallel_exception;
     std::vector<factors_type> scaling_factors(reader.num_lines() - 2);
-    #pragma omp parallel default(none) shared(parallel_exception, scaling_factors, reader)
+#pragma omp parallel default(none) shared(parallel_exception, scaling_factors, reader)
     {
-        #pragma omp for
+#pragma omp for
         for (typename std::vector<factors_type>::size_type i = 0; i < scaling_factors.size(); ++i) {
-            #pragma omp cancellation point for
             try {
                 // parse the current line
                 const std::string_view line = reader.line(i + 2);
@@ -92,7 +93,7 @@ template <typename real_type, typename factors_type>
                     throw invalid_file_format_exception{ fmt::format("Each line must contain exactly three values, but {} were given!", values.size()) };
                 }
                 // set the scaling factor based on the parsed values
-                auto feature = static_cast<decltype(scaling_factors[i].feature)>(values[0]);
+                const auto feature = static_cast<decltype(scaling_factors[i].feature)>(values[0]);
                 // check if we are one-based, i.e., no 0 must be read as feature value
                 if (feature == 0) {
                     throw invalid_file_format_exception{ "The scaling factors must be provided one-based, but are zero-based!" };
@@ -101,15 +102,13 @@ template <typename real_type, typename factors_type>
                 scaling_factors[i].lower = values[1];
                 scaling_factors[i].upper = values[2];
             } catch (const std::exception &) {
-                // catch first exception and store it
-                #pragma omp critical
+// catch first exception and store it
+#pragma omp critical
                 {
                     if (!parallel_exception) {
                         parallel_exception = std::current_exception();
                     }
                 }
-                // cancel parallel execution, needs env variable OMP_CANCELLATION=true
-                #pragma omp cancel for
             }
         }
     }
@@ -132,13 +131,12 @@ template <typename real_type, typename factors_type>
  * 3 -0.13086851759108944 0.6663834427003914
  * 4 0.10805254527169827 1.6464627048813514
  * @endcode
- * @tparam real_type the used floating point type
  * @tparam factors_type plssvm::data_set<real_type>::scaling::factors (cannot be forward declared or included)
  * @param[in] filename the filename to write the data to
  * @param[in] scaling_interval the valid scaling interval, i.e., [first, second]
  * @param[in] scaling_factors the scaling factor for each feature; given **zero** based, but written to file **one** based!
  */
-template <typename real_type, typename factors_type>
+template <typename factors_type>
 inline void write_scaling_factors(const std::string &filename, const std::pair<real_type, real_type> &scaling_interval, const std::vector<factors_type> &scaling_factors) {
     PLSSVM_ASSERT(scaling_interval.first < scaling_interval.second, "Illegal interval specification: lower ({}) < upper ({}).", scaling_interval.first, scaling_interval.second);
 
@@ -149,11 +147,11 @@ inline void write_scaling_factors(const std::string &filename, const std::pair<r
 
     // x must always be outputted
     out.print("x\n");
-    // write the requested scaling interval
+    // write the scaling interval
     out.print("{} {}\n", scaling_interval.first, scaling_interval.second);
     // write the scaling factors for each feature, note the one based indexing scheme!
     for (const factors_type &f : scaling_factors) {
-        out.print("{} {} {}\n", f.feature + 1, f.lower, f.upper);
+        out.print("{} {:.10e} {:.10e}\n", f.feature + 1, f.lower, f.upper);
     }
 }
 

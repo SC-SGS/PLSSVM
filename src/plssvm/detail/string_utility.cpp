@@ -19,30 +19,37 @@ namespace plssvm::detail {
 bool starts_with(const std::string_view str, const std::string_view sv) noexcept {
     return str.substr(0, sv.size()) == sv;
 }
+
 bool starts_with(const std::string_view str, const char c) noexcept {
     return !str.empty() && std::char_traits<char>::eq(str.front(), c);
 }
+
 bool ends_with(const std::string_view str, const std::string_view sv) noexcept {
     return str.size() >= sv.size() && str.compare(str.size() - sv.size(), std::string_view::npos, sv) == 0;
 }
+
 bool ends_with(const std::string_view str, const char c) noexcept {
     return !str.empty() && std::char_traits<char>::eq(str.back(), c);
 }
+
 bool contains(const std::string_view str, const std::string_view sv) noexcept {
     return str.find(sv) != std::string_view::npos;
 }
+
 bool contains(const std::string_view str, const char c) noexcept {
     return str.find(c) != std::string_view::npos;
 }
 
 std::string_view trim_left(const std::string_view str) noexcept {
-    const std::string_view::size_type pos = std::min(str.find_first_not_of(' '), str.size());
+    const std::string_view::size_type pos = std::min(str.find_first_not_of(" \t\v\r\n\f"), str.size());
     return str.substr(pos);
 }
+
 std::string_view trim_right(const std::string_view str) noexcept {
-    const std::string_view::size_type pos = std::min(str.find_last_not_of(' ') + 1, str.size());
+    const std::string_view::size_type pos = std::min(str.find_last_not_of(" \t\v\r\n\f") + 1, str.size());
     return str.substr(0, pos);
 }
+
 std::string_view trim(const std::string_view str) noexcept {
     return trim_left(trim_right(str));
 }
@@ -60,24 +67,24 @@ std::string &replace_all(std::string &str, const std::string_view what, const st
 }
 
 std::string &to_lower_case(std::string &str) {
-    std::transform(str.begin(), str.end(), str.begin(), [](const unsigned char c) { return static_cast<char>(std::tolower(c)); });
+    std::transform(str.begin(), str.end(), str.begin(), [](const unsigned char c) { return static_cast<char>(std::tolower(static_cast<int>(c))); });
     return str;
 }
 
 std::string as_lower_case(const std::string_view str) {
     std::string lowercase_str{ str };
-    std::transform(str.begin(), str.end(), lowercase_str.begin(), [](const unsigned char c) { return static_cast<char>(std::tolower(c)); });
+    std::transform(str.begin(), str.end(), lowercase_str.begin(), [](const unsigned char c) { return static_cast<char>(std::tolower(static_cast<int>(c))); });
     return lowercase_str;
 }
 
 std::string &to_upper_case(std::string &str) {
-    std::transform(str.begin(), str.end(), str.begin(), [](const unsigned char c) { return static_cast<char>(std::toupper(c)); });
+    std::transform(str.begin(), str.end(), str.begin(), [](const unsigned char c) { return static_cast<char>(std::toupper(static_cast<int>(c))); });
     return str;
 }
 
 std::string as_upper_case(const std::string_view str) {
     std::string uppercase_str{ str };
-    std::transform(str.begin(), str.end(), uppercase_str.begin(), [](const unsigned char c) { return static_cast<char>(std::toupper(c)); });
+    std::transform(str.begin(), str.end(), uppercase_str.begin(), [](const unsigned char c) { return static_cast<char>(std::toupper(static_cast<int>(c))); });
     return uppercase_str;
 }
 

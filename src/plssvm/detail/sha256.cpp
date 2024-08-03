@@ -8,7 +8,8 @@
 
 #include "plssvm/detail/sha256.hpp"
 
-#include "fmt/format.h"  // fmt::format, fmt::join
+#include "fmt/format.h"  // fmt::format
+#include "fmt/ranges.h"  // fmt::join
 
 #include <array>    // std::array
 #include <cstdint>  // std::uint32_t, std::uint64_t
@@ -24,8 +25,8 @@ std::string sha256::operator()(std::string input) const {
     // Pre-processing (Padding):
 
     // begin with the original message of length L byte
-    const std::uint64_t L = input.size();
-    const std::uint64_t L_bits = L * 8;
+    const auto L = static_cast<std::uint32_t>(input.size());
+    const std::uint32_t L_bits = L * 8;
 
     // append a single '1' byte
     input.append(1, static_cast<char>(0x80));
@@ -34,6 +35,7 @@ std::string sha256::operator()(std::string input) const {
     const std::uint32_t K = CHUNK_SIZE - (L + 1 + 8) % CHUNK_SIZE;
     input.resize(L + 1 + K + 8);
 
+    // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast): cast necessary to use the correct character type for the sha256 algorithm
     auto *input_unsigned_ptr = reinterpret_cast<unsigned char *>(input.data());
 
     // append L as an 8-byte big-endian integer, making the total post-processed length a multiple of 64 byte
@@ -112,7 +114,7 @@ void sha256::pack32(const unsigned char *str, std::uint32_t &x) {
         | static_cast<std::uint32_t>(str[0] << 24);
 }
 
-std::uint32_t sha256::rotr32(const std::uint32_t value, unsigned int count) {
+std::uint32_t sha256::rotr32(const std::uint32_t value, int count) {
     // prevent UB if count is 0 or greater than sizeof(std::uint32_t)
     const unsigned int mask = std::numeric_limits<std::uint32_t>::digits - 1;
     count &= mask;

@@ -16,7 +16,8 @@
 #include "plssvm/exceptions/exceptions.hpp"       // plssvm::exception
 #include "plssvm/exceptions/source_location.hpp"  // plssvm::source_location
 
-#include <string>  // std::string
+#include <string>       // std::string
+#include <string_view>  // std::string_view
 
 namespace plssvm {
 
@@ -44,10 +45,10 @@ class backend_exception : public exception {
 
 }  // namespace sycl
 
-namespace hipsycl {
+namespace adaptivecpp {
 
 /**
- * @brief Exception type thrown if a problem with the hipSYCL SYCL backend occurs.
+ * @brief Exception type thrown if a problem with the AdaptiveCpp SYCL backend occurs.
  */
 class backend_exception : public sycl::backend_exception {
   public:
@@ -59,7 +60,7 @@ class backend_exception : public sycl::backend_exception {
     explicit backend_exception(const std::string &msg, source_location loc = source_location::current());
 };
 
-}  // namespace hipsycl
+}  // namespace adaptivecpp
 
 namespace dpcpp {
 

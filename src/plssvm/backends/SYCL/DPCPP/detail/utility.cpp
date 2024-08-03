@@ -8,6 +8,7 @@
 
 #include "plssvm/backends/SYCL/DPCPP/detail/utility.hpp"
 
+#include "plssvm/backends/SYCL/DPCPP/detail/queue.hpp"       // plssvm::adaptivecpp::detail::queue
 #include "plssvm/backends/SYCL/DPCPP/detail/queue_impl.hpp"  // plssvm::dpcpp::detail::queue (PImpl implementation)
 #include "plssvm/detail/string_utility.hpp"                  // plssvm::detail::{as_lower_case, contains}
 #include "plssvm/detail/utility.hpp"                         // plssvm::detail::contains
@@ -15,8 +16,11 @@
 
 #include "sycl/sycl.hpp"  // ::sycl::platform, ::sycl::device, ::sycl::property::queue, ::sycl::info
 
+#include "fmt/format.h"  // fmt::format
+
 #include <map>      // std::multimap
 #include <memory>   // std::make_shared
+#include <sstream>  // std::ostringstream
 #include <string>   // std::string
 #include <utility>  // std::pair, std::make_pair, std::move
 #include <vector>   // std::vector
@@ -51,12 +55,21 @@ namespace plssvm::dpcpp::detail {
                     platform_devices.insert({ target_platform::gpu_nvidia, device });
                 } else if ((::plssvm::detail::contains(vendor_string, "amd") || ::plssvm::detail::contains(vendor_string, "advanced micro devices"))
                            && ::plssvm::detail::contains(available_target_platforms, target_platform::gpu_amd)) {
-                    platform_devices.insert({ target_platform::gpu_amd, device });
-                } else if (::plssvm::detail::contains(vendor_string, "intel") && ::plssvm::detail::contains(available_target_platforms, target_platform::gpu_intel)) {
-                    // select between DPC++'s OpenCL and Level Zero backend
+                    // select between DPC++'s OpenCL and HIP backend
+                    std::ostringstream oss;
+                    oss << device.get_backend();
+#if defined(PLSSVM_SYCL_BACKEND_DPCPP_GPU_AMD_BACKEND_TYPE)
+                    if (::plssvm::detail::contains(oss.str(), PLSSVM_SYCL_BACKEND_DPCPP_GPU_AMD_BACKEND_TYPE)) {
+                        platform_devices.insert({ target_platform::gpu_amd, device });
+                    }
+#endif
+                } else if (::plssvm::detail::contains(vendor_string, "intel") || ::plssvm::detail::contains(available_target_platforms, target_platform::gpu_intel)) {
+                    // select between DPC++'s OpenCL and Level-Zero backend
+#if defined(PLSSVM_SYCL_BACKEND_DPCPP_BACKEND_TYPE)
                     if (::plssvm::detail::contains(platform_string, PLSSVM_SYCL_BACKEND_DPCPP_BACKEND_TYPE)) {
                         platform_devices.insert({ target_platform::gpu_intel, device });
                     }
+#endif
                 }
             }
         }
@@ -68,6 +81,10 @@ namespace plssvm::dpcpp::detail {
         std::vector<target_platform> system_devices;
         for (const auto &[key, value] : platform_devices) {
             system_devices.push_back(key);
+        }
+        // the system devices should not be empty!
+        if (system_devices.empty()) {
+            throw platform_devices_empty{ "No appropriate devices could be found!" };
         }
         // determine the target_platform
         target = determine_default_target_platform(system_devices);
@@ -93,6 +110,14 @@ queue get_default_queue() {
     queue q;
     q.impl = std::make_shared<queue::queue_impl>();
     return q;
+}
+
+std::string get_dpcpp_version() {
+    return fmt::format("{}.{}.{}", __LIBSYCL_MAJOR_VERSION, __LIBSYCL_MINOR_VERSION, __LIBSYCL_PATCH_VERSION);
+}
+
+std::string get_dpcpp_timestamp_version() {
+    return fmt::format("{}", __SYCL_COMPILER_VERSION);
 }
 
 }  // namespace plssvm::dpcpp::detail

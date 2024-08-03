@@ -11,10 +11,10 @@
 import argparse
 import re
 
-import cpuinfo       # get CPU SIMD information
-import GPUtil        # get NVIDIA GPU information
+import cpuinfo  # get CPU SIMD information
+import GPUtil  # get NVIDIA GPU information
 import pyamdgpuinfo  # get AMD GPU information
-import pylspci       # get Intel GPU information
+import pylspci  # get Intel GPU information
 
 # parse command line arguments
 parser = argparse.ArgumentParser()
@@ -32,6 +32,9 @@ def cond_print(msg=""):
 # https://developer.nvidia.com/cuda-gpus
 nvidia_compute_capability_mapping = {
     # Datacenter Products
+    "NVIDIA H100": "sm_90",
+    "NVIDIA L4": "sm_89",
+    "NVIDIA L40": "sm_89",
     "NVIDIA A100": "sm_80",
     "NVIDIA A40": "sm_86",
     "NVIDIA A30": "sm_80",
@@ -43,6 +46,7 @@ nvidia_compute_capability_mapping = {
     "Tesla P40": "sm_61",
     "Tesla P4": "sm_61",
     # NVIDIA Quadro and NVIDIA RTX
+    "RTX 6000": "sm_89",
     "RTX A6000": "sm_86",
     "RTX A5000": "sm_86",
     "RTX A4000": "sm_86",
@@ -80,11 +84,16 @@ nvidia_compute_capability_mapping = {
     "Quadro P3000": "sm_61",
     "Quadro P500": "sm_61",
     # GeForce and TITAN Products
-    "GeForce RTX 3060 Ti": "sm_86",
+    "GeForce RTX 4090": "sm_89",
+    "GeForce RTX 4080": "sm_89",
+    "GeForce RTX 4070 Ti": "sm_89",
     "GeForce RTX 3060": "sm_86",
     "GeForce RTX 3090": "sm_86",
+    "GeForce RTX 3090 Ti": "sm_86",
     "GeForce RTX 3080": "sm_86",
+    "GeForce RTX 3080 Ti": "sm_86",
     "GeForce RTX 3070": "sm_86",
+    "GeForce RTX 3070 Ti": "sm_86",
     "GeForce GTX 1650 Ti": "sm_75",
     "NVIDIA TITAN RTX": "sm_75",
     "GeForce RTX 2080 Ti": "sm_75",
@@ -103,13 +112,26 @@ nvidia_compute_capability_mapping = {
     "GeForce RTX 3050 Ti": "sm_86",
     "GeForce RTX 3050": "sm_86",
     # Jetson Products
+    "Jetson AGX Orin": "sm_87",
+    "Jetson AGX Orin NX": "sm_87",
+    "Jetson AGX Orin Nano": "sm_87",
     "Jetson AGX Xavier": "sm_72",
+    "Jetson AGX Xavier NX": "sm_72",
 }
 
 # mapping of AMD architectures given the GPU name
 # https://llvm.org/docs/AMDGPUUsage.html
 amd_arch_mapping = {
     # AMD Radeon GPUs
+    "AMD Instinct MI250X": "gfx90a",
+    "AMD Instinct MI250": "gfx90a",
+    "AMD Instinct MI210": "gfx90a",
+    "Radeon RX 7900 XTX": "gfx1101",
+    "Radeon RX 7900 XT": "gfx1101",
+    "Radeon RX 7900 GRE": "gfx1101",
+    "Radeon RX 7800 XT": "gfx1101",
+    "Radeon RX 7700 XT": "gfx1101",
+    "Radeon RX 7600": "gfx1101",
     "Radeon RX 6700 XT": "gfx1031",
     "Radeon RX 6800": "gfx1030",
     "Radeon RX 6800 XT": "gfx1030",
@@ -210,6 +232,19 @@ intel_arch_mapping = {
     "tgllp": ["9A60", "9A68", "9A70", "9A40", "9A49", "9A78", "9AC0", "9AC9", "9AD9", "9AF8"],
     # Xe MAX
     "dg1": ["4905"],
+    # Rocket Lake
+    "Gen11": ["4C8A", "4C8B", "4C90", "4C9A", "4C8C"],
+    #
+    "Gen12LP": [],
+    # Alder Lake
+    "adls": ["4680", "4682", "4688", "468A", "4690", "4692", "4693"],
+    # Alder Lake
+    "aldp": ["4626", "4628", "462A", "46A0", "46A1", "46A2", "46A3", "46A6", "46A8", "46AA", "46B0", "46B1", "46B2",
+             "46B3", "46C0", "46C1", "46C2", "46C3", "46D0", "46D1", "46D2"],
+    # # Alchemist
+    # "": ["5690", "56A0", "5691", "56A1", "5692", "56A5" ,"5693", "5694", "56A6"],
+    # # Flex Series
+    # "": ["56C1", "56C0"],
 }
 intel_arch_to_name_mapping = {
     "skl": "Skylake with Intel Processor Graphics Gen9",
@@ -220,10 +255,11 @@ intel_arch_to_name_mapping = {
     "tgllp": "Tiger Lake with Intel Processor Graphics Gen12",
     "dg1": "Intel Iris Xe MAX graphics",
     "Gen9": "Intel Processor Graphics Gen9",
-    "Gen11": "Intel Processor Graphics Gen11",
+    "Gen11": "Rocket Lake with Intel Processor Graphics Gen11",
     "Gen12LP": "Intel Processor Graphics Gen12 (Lower Power)",
+    "adls": "Alder Lake S with Intel Processor Graphics Gen12.2",
+    "aldp": "Alder Lake P with Intel Processor Graphics Gen12.2",
 }
-
 
 # construct PLSSVM_TARGET_PLATFORMS string
 plssvm_target_platforms = ""
@@ -254,7 +290,6 @@ for key in simd_version_support:
         break
 plssvm_target_platforms += "cpu" + ("" if "".__eq__(newest_simd_version) else ":") + newest_simd_version
 
-
 # NVIDIA GPU information
 nvidia_gpu_names = [gpu.name for gpu in GPUtil.getGPUs()]
 nvidia_num_gpus = len(nvidia_gpu_names)
@@ -281,9 +316,13 @@ if nvidia_num_gpus > 0:
 
     plssvm_target_platforms += ";nvidia:" + ",".join({str(sm) for sm in nvidia_gpu_sm.values()})
 
-
 # AMD GPU information
-amd_gpu_names = [pyamdgpuinfo.get_gpu(gpu_id).name for gpu_id in range(pyamdgpuinfo.detect_gpus())]
+amd_gpu_names_plain = [pyamdgpuinfo.get_gpu(gpu_id).name for gpu_id in range(pyamdgpuinfo.detect_gpus())]
+amd_gpu_names = list(filter(lambda gpu: gpu is not None, amd_gpu_names_plain))
+if len(amd_gpu_names_plain) > len(amd_gpu_names):
+    cond_print("Found {} AMD GPU(s) but pyamdgpuinfo returned 'None' for {} of them!\n".format(
+        len(amd_gpu_names_plain),
+        len(amd_gpu_names_plain) - len(amd_gpu_names)))
 amd_num_gpus = len(amd_gpu_names)
 
 if amd_num_gpus > 0:
@@ -309,7 +348,6 @@ if amd_num_gpus > 0:
     cond_print()
 
     plssvm_target_platforms += ";amd:" + ",".join({str(sm) for sm in amd_gpu_arch.values()})
-
 
 # Intel GPU information
 intel_gpu_names = []
@@ -338,7 +376,6 @@ if intel_num_gpus > 0:
     cond_print()
 
     plssvm_target_platforms += ";intel:" + ",".join({str(sm) for sm in intel_gpu_arch.values()})
-
 
 cond_print("Possible -DPLSSVM_TARGET_PLATFORMS entries:")
 print("{}".format(plssvm_target_platforms))

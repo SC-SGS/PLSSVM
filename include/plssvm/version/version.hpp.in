@@ -6,7 +6,7 @@
  * @license This file is part of the PLSSVM project which is released under the MIT license.
  *          See the LICENSE.md file in the project root for full license information.
  *
- * @brief Implements compile-time constants to query the current library version.
+ * @brief Implements compile-time constants to query the current library version and additional information.
  */
 
 #ifndef PLSSVM_VERSION_VERSION_HPP_
@@ -66,7 +66,7 @@ constexpr std::string_view copyright_notice = "Copyright(C) 2018-today The PLSSV
 /**
  * @brief Special git information used in the `--version` message.
  * @details If no git could be found, returns a [`std::nullopt`](https://en.cppreference.com/w/cpp/utility/optional/nullopt)
- * @return the git information: remote url, branch, commit sha1, and commit data (`[[nodiscard]]`)
+ * @return the git information: remote url, branch, commit sha1, and commit date (`[[nodiscard]]`)
  */
 [[nodiscard]] std::optional<std::string> get_git_info();
 

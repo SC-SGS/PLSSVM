@@ -1,0 +1,81 @@
+.\" Manpage for plssvm-scale.
+.TH PLSSVM-SCALE 1 "@PLSSVM_CURRENT_BUILD_TIME@" "@PROJECT_VERSION@" "plssvm-predict Manual"
+
+.SH NAME
+plssvm-scale - LS-SVM with multiple (GPU-)backends
+
+.SH SYNOPSIS
+svm-scale [OPTION...] input_file [scaled_file]
+
+.SH DESCRIPTION
+plssvm-scale is a utility to scale the data points in a data set to a specific range.
+
+.SH OPTIONS
+
+.TP
+.B -l, --lower arg
+the lowest (minimal) value allowed in each dimension of the data set (default: -1)
+
+.TP
+.B -u, --upper arg
+the highest (maximal) value allowed in each dimension of the data set (default: 1)
+
+.TP
+.B -f, --format arg
+the file format to output the scaled data to: libsvm|arff (default: libsvm)
+
+.TP
+.B -s, --save_filename arg
+the file name to which the scaling factors should be saved
+
+.TP
+.B -r, --restore_filename arg
+the file name from which previous scaling factors should be loaded
+
+@PLSSVM_PERFORMANCE_TRACKER_MANPAGE_ENTRY@
+
+.TP
+.B --use_string_as_labels arg
+must be specified if the labels should be interpreted as strings instead of integers
+
+.TP
+.B --verbosity arg
+choose the level of verbosity: full|timing|libsvm|quiet (default: full)
+
+.TP
+.B -q, --quiet
+quiet mode (no outputs regardless the provided verbosity level!)
+
+.TP
+.B -h, --help
+print this helper message
+
+.TP
+.B -v, --version
+print version information
+
+.TP
+.B --input input_file
+the file containing the data points that should be scaled
+
+.TP
+.B --scaled scaled_file
+the file containing the scaled data points
+
+.SH EXIT STATUS
+EXIT_SUCCESS
+.RS
+if OK,
+.RE
+EXIT_FAILURE
+.RS
+if any error occurred (e.g., the input file couldn't be opened).
+
+.SH SEE ALSO
+plssvm-train(1)
+plssvm-predict(1)
+
+.SH AUTHOR
+Alexander Van Craen <Alexander.Van-Craen@ipvs.uni-stuttgart.de>
+.br
+Marcel Breyer <Marcel.Breyer@ipvs.uni-stuttgart.de>

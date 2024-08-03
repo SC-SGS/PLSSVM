@@ -8,30 +8,42 @@
  * @brief Tests for the functionality related to the OpenMP backend.
  */
 
-#include "backends/OpenMP/mock_openmp_csvm.hpp"
+#include "plssvm/backend_types.hpp"                                                   // plssvm::csvm_to_backend_type_v
+#include "plssvm/backends/OpenMP/csvm.hpp"                                            // plssvm::openmp::csvm
+#include "plssvm/backends/OpenMP/exceptions.hpp"                                      // plssvm::openmp::backend_exception
+#include "plssvm/backends/OpenMP/kernel/cg_explicit/blas.hpp"                         // plssvm::openmp::device_kernel_symm
+#include "plssvm/backends/OpenMP/kernel/cg_explicit/kernel_matrix_assembly.hpp"       // plssvm::openmp::device_kernel_assembly
+#include "plssvm/backends/OpenMP/kernel/cg_implicit/kernel_matrix_assembly_blas.hpp"  // plssvm::openmp::device_kernel_assembly_symm
+#include "plssvm/backends/OpenMP/kernel/predict_kernel.hpp"                           // plssvm::openmp::{device_kernel_w_linear, device_kernel_predict_linear, device_kernel_predict}
+#include "plssvm/constants.hpp"                                                       // plssvm::PADDING_SIZE
+#include "plssvm/data_set.hpp"                                                        // plssvm::data_set
+#include "plssvm/detail/arithmetic_type_name.hpp"                                     // plssvm::detail::arithmetic_type_name
+#include "plssvm/detail/data_distribution.hpp"                                        // plssvm::detail::triangular_data_distribution
+#include "plssvm/detail/type_list.hpp"                                                // plssvm::detail::supported_label_types
+#include "plssvm/kernel_function_types.hpp"                                           // plssvm::kernel_function_type
+#include "plssvm/matrix.hpp"                                                          // plssvm::soa_matrix
+#include "plssvm/parameter.hpp"                                                       // plssvm::parameter, plssvm::detail::parameter, plssvm::kernel_type, plssvm::cost
+#include "plssvm/shape.hpp"                                                           // plssvm::shape
+#include "plssvm/target_platforms.hpp"                                                // plssvm::target_platform
 
-#include "plssvm/backend_types.hpp"                // plssvm::csvm_to_backend_type_v
-#include "plssvm/backends/OpenMP/csvm.hpp"         // plssvm::openmp::csvm
-#include "plssvm/backends/OpenMP/exceptions.hpp"   // plssvm::openmp::backend_exception
-#include "plssvm/data_set.hpp"                     // plssvm::data_set
-#include "plssvm/detail/arithmetic_type_name.hpp"  // plssvm::detail::arithmetic_type_name
-#include "plssvm/kernel_function_types.hpp"        // plssvm::kernel_function_type
-#include "plssvm/parameter.hpp"                    // plssvm::parameter, plssvm::detail::parameter, plssvm::kernel_type, plssvm::cost
-#include "plssvm/target_platforms.hpp"             // plssvm::target_platform
+#include "tests/backends/generic_csvm_tests.hpp"       // generic CSVM tests to instantiate
+#include "tests/backends/ground_truth.hpp"             // ground_truth::{perform_dimensional_reduction, assemble_device_specific_kernel_matrix, assemble_full_kernel_matrix, gemm, calculate_w}
+#include "tests/backends/OpenMP/mock_openmp_csvm.hpp"  // mock_openmp_csvm
+#include "tests/custom_test_macros.hpp"                // EXPECT_THROW_WHAT
+#include "tests/naming.hpp"                            // naming::test_parameter_to_name
+#include "tests/types_to_test.hpp"                     // util::{cartesian_type_product_t, combine_test_parameters_gtest_t}
+#include "tests/utility.hpp"                           // util::redirect_output
 
-#include "../../custom_test_macros.hpp"  // EXPECT_THROW_WHAT, EXPECT_FLOATING_POINT_VECTOR_NEAR
-#include "../../naming.hpp"              // naming::{real_type_kernel_function_to_name, real_type_to_name}
-#include "../../types_to_test.hpp"       // util::{real_type_kernel_function_gtest, real_type_gtest}
-#include "../../utility.hpp"             // util::{redirect_output, generate_random_vector}
-#include "../compare.hpp"                // compare::{generate_q, calculate_w, kernel_function, device_kernel_function}
-#include "../generic_csvm_tests.hpp"     // generic::{test_solve_system_of_linear_equations, test_predict_values, test_predict, test_score}
+#include "fmt/format.h"   // fmt::format
+#include "gtest/gtest.h"  // TEST_F, EXPECT_NO_THROW, INSTANTIATE_TYPED_TEST_SUITE_P, ::testing::Test
 
-#include "gtest/gtest.h"  // TEST_F, EXPECT_NO_THROW, TYPED_TEST_SUITE, TYPED_TEST, ::testing::Test
+#include <algorithm>  // std::min
+#include <cstddef>    // std::size_t
+#include <tuple>      // std::make_tuple, std::tuple
+#include <vector>     // std::vector
 
-#include <tuple>   // std::make_tuple
-#include <vector>  // std::vector
-
-class OpenMPCSVM : public ::testing::Test, private util::redirect_output<> {};
+class OpenMPCSVM : public ::testing::Test,
+                   private util::redirect_output<> { };
 
 // check whether the constructor correctly fails when using an incompatible target platform
 TEST_F(OpenMPCSVM, construct_parameter) {
@@ -39,11 +51,12 @@ TEST_F(OpenMPCSVM, construct_parameter) {
     // the automatic target platform must always be available
     EXPECT_NO_THROW(plssvm::openmp::csvm{ plssvm::parameter{} });
 #else
-    EXPECT_THROW_WHAT(plssvm::openmp::csvm{ plssvm::parameter{} },
+    EXPECT_THROW_WHAT((plssvm::openmp::csvm{ plssvm::parameter{} }),
                       plssvm::openmp::backend_exception,
                       "Requested target platform 'cpu' that hasn't been enabled using PLSSVM_TARGET_PLATFORMS!");
 #endif
 }
+
 TEST_F(OpenMPCSVM, construct_target_and_parameter) {
     // create parameter struct
     const plssvm::parameter params{};
@@ -53,10 +66,10 @@ TEST_F(OpenMPCSVM, construct_target_and_parameter) {
     EXPECT_NO_THROW((plssvm::openmp::csvm{ plssvm::target_platform::automatic, params }));
     EXPECT_NO_THROW((plssvm::openmp::csvm{ plssvm::target_platform::cpu, params }));
 #else
-    EXPECT_THROW_WHAT(plssvm::openmp::csvm{ plssvm::target_platform::automatic, params },
+    EXPECT_THROW_WHAT((plssvm::openmp::csvm{ plssvm::target_platform::automatic, params }),
                       plssvm::openmp::backend_exception,
                       "Requested target platform 'cpu' that hasn't been enabled using PLSSVM_TARGET_PLATFORMS!");
-    EXPECT_THROW_WHAT(plssvm::openmp::csvm{ plssvm::target_platform::cpu, params },
+    EXPECT_THROW_WHAT((plssvm::openmp::csvm{ plssvm::target_platform::cpu, params }),
                       plssvm::openmp::backend_exception,
                       "Requested target platform 'cpu' that hasn't been enabled using PLSSVM_TARGET_PLATFORMS!");
 #endif
@@ -72,16 +85,17 @@ TEST_F(OpenMPCSVM, construct_target_and_parameter) {
                       plssvm::openmp::backend_exception,
                       "Invalid target platform 'gpu_intel' for the OpenMP backend!");
 }
+
 TEST_F(OpenMPCSVM, construct_target_and_named_args) {
 #if defined(PLSSVM_HAS_CPU_TARGET)
     // only automatic or cpu are allowed as target platform for the OpenMP backend
     EXPECT_NO_THROW((plssvm::openmp::csvm{ plssvm::target_platform::automatic, plssvm::kernel_type = plssvm::kernel_function_type::linear, plssvm::cost = 2.0 }));
     EXPECT_NO_THROW((plssvm::openmp::csvm{ plssvm::target_platform::cpu, plssvm::cost = 2.0 }));
 #else
-    EXPECT_THROW_WHAT(plssvm::openmp::csvm{ plssvm::target_platform::automatic, plssvm::kernel_type = plssvm::kernel_function_type::linear, plssvm::cost = 2.0 },
+    EXPECT_THROW_WHAT((plssvm::openmp::csvm{ plssvm::target_platform::automatic, plssvm::kernel_type = plssvm::kernel_function_type::linear, plssvm::cost = 2.0 }),
                       plssvm::openmp::backend_exception,
                       "Requested target platform 'cpu' that hasn't been enabled using PLSSVM_TARGET_PLATFORMS!");
-    EXPECT_THROW_WHAT(plssvm::openmp::csvm{ plssvm::target_platform::cpu, plssvm::cost = 2.0 },
+    EXPECT_THROW_WHAT((plssvm::openmp::csvm{ plssvm::target_platform::cpu, plssvm::cost = 2.0 }),
                       plssvm::openmp::backend_exception,
                       "Requested target platform 'cpu' that hasn't been enabled using PLSSVM_TARGET_PLATFORMS!");
 #endif
@@ -98,118 +112,489 @@ TEST_F(OpenMPCSVM, construct_target_and_named_args) {
                       "Invalid target platform 'gpu_intel' for the OpenMP backend!");
 }
 
-template <typename T, plssvm::kernel_function_type kernel>
-struct csvm_test_type {
+struct openmp_csvm_test_type {
     using mock_csvm_type = mock_openmp_csvm;
     using csvm_type = plssvm::openmp::csvm;
-    using real_type = T;
-    static constexpr plssvm::kernel_function_type kernel_type = kernel;
-    inline static auto additional_arguments = std::make_tuple();
+    using device_ptr_type = const plssvm::soa_matrix<plssvm::real_type> *;
+    inline constexpr static auto additional_arguments = std::make_tuple();
 };
 
-class csvm_test_type_to_name {
-  public:
-    template <typename T>
-    static std::string GetName(int) {
-        return fmt::format("{}_{}_{}",
-                           plssvm::csvm_to_backend_type_v<typename T::csvm_type>,
-                           plssvm::detail::arithmetic_type_name<typename T::real_type>(),
-                           T::kernel_type);
-    }
-};
+using openmp_csvm_test_tuple = std::tuple<openmp_csvm_test_type>;
+using openmp_csvm_test_label_type_list = util::cartesian_type_product_t<openmp_csvm_test_tuple, plssvm::detail::supported_label_types>;
+using openmp_csvm_test_type_list = util::cartesian_type_product_t<openmp_csvm_test_tuple>;
 
-using csvm_test_types = ::testing::Types<
-    csvm_test_type<float, plssvm::kernel_function_type::linear>,
-    csvm_test_type<float, plssvm::kernel_function_type::polynomial>,
-    csvm_test_type<float, plssvm::kernel_function_type::rbf>,
-    csvm_test_type<double, plssvm::kernel_function_type::linear>,
-    csvm_test_type<double, plssvm::kernel_function_type::polynomial>,
-    csvm_test_type<double, plssvm::kernel_function_type::rbf>>;
+// the tests used in the instantiated GTest test suites
+using openmp_csvm_test_type_gtest = util::combine_test_parameters_gtest_t<openmp_csvm_test_type_list>;
+using openmp_solver_type_gtest = util::combine_test_parameters_gtest_t<openmp_csvm_test_type_list, util::solver_type_list>;
+using openmp_kernel_function_type_gtest = util::combine_test_parameters_gtest_t<openmp_csvm_test_type_list, util::kernel_function_type_list>;
+using openmp_solver_and_kernel_function_type_gtest = util::combine_test_parameters_gtest_t<openmp_csvm_test_type_list, util::solver_and_kernel_function_type_list>;
+using openmp_label_type_kernel_function_and_classification_type_gtest = util::combine_test_parameters_gtest_t<openmp_csvm_test_label_type_list, util::kernel_function_and_classification_type_list>;
+using openmp_label_type_solver_kernel_function_and_classification_type_gtest = util::combine_test_parameters_gtest_t<openmp_csvm_test_label_type_list, util::solver_and_kernel_function_and_classification_type_list>;
 
 // instantiate type-parameterized tests
-INSTANTIATE_TYPED_TEST_SUITE_P(OpenMPBackend, GenericCSVM, csvm_test_types, csvm_test_type_to_name);
-INSTANTIATE_TYPED_TEST_SUITE_P(OpenMPBackendDeathTest, GenericCSVMDeathTest, csvm_test_types, csvm_test_type_to_name);
+// generic CSVM tests
+INSTANTIATE_TYPED_TEST_SUITE_P(OpenMPCSVM, GenericCSVM, openmp_csvm_test_type_gtest, naming::test_parameter_to_name);
+INSTANTIATE_TYPED_TEST_SUITE_P(OpenMPCSVM, GenericCSVMKernelFunction, openmp_kernel_function_type_gtest, naming::test_parameter_to_name);
+INSTANTIATE_TYPED_TEST_SUITE_P(OpenMPCSVM, GenericCSVMSolver, openmp_solver_type_gtest, naming::test_parameter_to_name);
+INSTANTIATE_TYPED_TEST_SUITE_P(OpenMPCSVM, GenericCSVMSolverKernelFunction, openmp_solver_and_kernel_function_type_gtest, naming::test_parameter_to_name);
+INSTANTIATE_TYPED_TEST_SUITE_P(OpenMPCSVM, GenericCSVMKernelFunctionClassification, openmp_label_type_kernel_function_and_classification_type_gtest, naming::test_parameter_to_name);
+INSTANTIATE_TYPED_TEST_SUITE_P(OpenMPCSVM, GenericCSVMSolverKernelFunctionClassification, openmp_label_type_solver_kernel_function_and_classification_type_gtest, naming::test_parameter_to_name);
+
+// generic CSVM DeathTests
+INSTANTIATE_TYPED_TEST_SUITE_P(OpenMPCSVMDeathTest, GenericCSVMDeathTest, openmp_csvm_test_type_gtest, naming::test_parameter_to_name);
+INSTANTIATE_TYPED_TEST_SUITE_P(OpenMPCSVMDeathTest, GenericCSVMSolverDeathTest, openmp_solver_type_gtest, naming::test_parameter_to_name);
+INSTANTIATE_TYPED_TEST_SUITE_P(OpenMPCSVMDeathTest, GenericCSVMKernelFunctionDeathTest, openmp_kernel_function_type_gtest, naming::test_parameter_to_name);
+INSTANTIATE_TYPED_TEST_SUITE_P(OpenMPCSVMDeathTest, GenericCSVMSolverKernelFunctionDeathTest, openmp_solver_and_kernel_function_type_gtest, naming::test_parameter_to_name);
+
+TEST_F(OpenMPCSVM, blas_level_3_kernel_explicit) {
+    const plssvm::real_type alpha{ 1.0 };
+
+    // create kernel matrix to use in the BLAS calculation
+    const plssvm::parameter params{ plssvm::gamma = plssvm::real_type{ 0.001 } };
+    const plssvm::data_set data{ PLSSVM_TEST_FILE };
+    const auto [q_red, QA_cost] = ground_truth::perform_dimensional_reduction(params, data.data());
+
+    // create correct data distribution for the ground truth calculation
+    const plssvm::detail::triangular_data_distribution dist{ data.num_data_points() - 1, 1 };
+    const std::vector<plssvm::real_type> kernel_matrix = ground_truth::assemble_device_specific_kernel_matrix(params, data.data(), q_red, QA_cost, dist, 0);
+
+    const auto B = util::generate_specific_matrix<plssvm::soa_matrix<plssvm::real_type>>(plssvm::shape{ data.num_data_points() - 1, data.num_data_points() - 1 }, plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE });
+
+    const plssvm::real_type beta{ 0.5 };
+    auto C = util::generate_specific_matrix<plssvm::soa_matrix<plssvm::real_type>>(plssvm::shape{ data.num_data_points() - 1, data.num_data_points() - 1 }, plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE });
+    auto ground_truth_C{ C };
+
+    const std::size_t num_rhs = B.shape().x;
+    const std::size_t num_rows = B.shape().y;
+    plssvm::openmp::detail::device_kernel_symm(num_rows, num_rhs, alpha, kernel_matrix, B, beta, C);
+
+    // calculate correct results
+    const plssvm::aos_matrix<plssvm::real_type> kernel_matrix_gemm_padded = ground_truth::assemble_full_kernel_matrix(params, data.data(), q_red, QA_cost);
+    ground_truth::gemm(alpha, kernel_matrix_gemm_padded, B, beta, ground_truth_C);
+
+    // check C for correctness
+    EXPECT_FLOATING_POINT_MATRIX_NEAR(C, ground_truth_C);
+}
+
+TEST_F(OpenMPCSVM, calculate_w) {
+    // the data used for prediction
+    const plssvm::data_set data{ PLSSVM_TEST_FILE };
+
+    // the weights (i.e., alpha values) for all support vectors
+    const auto weights = util::generate_specific_matrix<plssvm::aos_matrix<plssvm::real_type>>(plssvm::shape{ 3, data.num_data_points() }, plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE });
+
+    // calculate w
+    plssvm::soa_matrix<plssvm::real_type> w{ plssvm::shape{ weights.num_rows(), data.data().num_cols() }, plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE } };
+    plssvm::openmp::detail::device_kernel_w_linear(w, weights, data.data());
+
+    // calculate correct results
+    const plssvm::soa_matrix<plssvm::real_type> correct_w = ground_truth::calculate_w(weights, data.data());
+
+    // check C for correctness
+    EXPECT_FLOATING_POINT_MATRIX_NEAR(w, correct_w);
+}
+
+using kernel_function_type_list_gtest = util::combine_test_parameters_gtest_t<util::kernel_function_type_list>;
 
 template <typename T>
-class OpenMPCSVMGenerateQ : public OpenMPCSVM {};
-TYPED_TEST_SUITE(OpenMPCSVMGenerateQ, util::real_type_kernel_function_gtest, naming::real_type_kernel_function_to_name);
+class OpenMPCSVMKernelFunction : public OpenMPCSVM { };
 
-TYPED_TEST(OpenMPCSVMGenerateQ, generate_q) {
-    using real_type = typename TypeParam::real_type;
-    const plssvm::kernel_function_type kernel_type = TypeParam::kernel_type;
+TYPED_TEST_SUITE(OpenMPCSVMKernelFunction, kernel_function_type_list_gtest, naming::test_parameter_to_name);
 
-    // create parameter struct
-    const plssvm::detail::parameter<real_type> params{ kernel_type, 2, 0.001, 1.0, 0.1 };
+TYPED_TEST(OpenMPCSVMKernelFunction, assemble_kernel_matrix_explicit) {
+    constexpr plssvm::kernel_function_type kernel = util::test_parameter_value_at_v<0, TypeParam>;
 
-    // create the data that should be used
-    const plssvm::data_set<real_type> data{ PLSSVM_TEST_FILE };
+    plssvm::parameter params{ plssvm::kernel_type = kernel };
+    if constexpr (kernel != plssvm::kernel_function_type::linear) {
+        params.gamma = plssvm::real_type{ 0.001 };
+    }
+    const plssvm::data_set data{ PLSSVM_TEST_FILE };
+    auto data_matr{ data.data() };
+    if constexpr (kernel == plssvm::kernel_function_type::chi_squared) {
+        // chi-squared is well-defined for non-negative values only
+        data_matr = util::matrix_abs(data_matr);
+    }
 
-    // calculate correct q vector (ground truth)
-    const std::vector<real_type> ground_truth = compare::generate_q(params, data.data());
+    // create correct data distribution for the ground truth calculation
+    const plssvm::detail::triangular_data_distribution dist{ data.num_data_points() - 1, 1 };
 
-    // create C-SVM: must be done using the mock class, since plssvm::openmp::csvm::generate_q is protected
-    const mock_openmp_csvm svm{};
+    const auto [q_red, QA_cost] = ground_truth::perform_dimensional_reduction(params, data_matr);
+    const plssvm::real_type cost = plssvm::real_type{ 1.0 } / params.cost;
 
-    // calculate the q vector using the OpenMP backend
-    const std::vector<real_type> calculated = svm.generate_q(params, data.data());
+    std::vector<plssvm::real_type> kernel_matrix(dist.calculate_explicit_kernel_matrix_num_entries_padded(0));  // only explicitly store the upper triangular matrix
 
-    // check the calculated result for correctness
-    EXPECT_FLOATING_POINT_VECTOR_NEAR(ground_truth, calculated);
+    switch (kernel) {
+        case plssvm::kernel_function_type::linear:
+            plssvm::openmp::detail::device_kernel_assembly<plssvm::kernel_function_type::linear>(q_red, kernel_matrix, data_matr, QA_cost, cost);
+            break;
+        case plssvm::kernel_function_type::polynomial:
+            plssvm::openmp::detail::device_kernel_assembly<plssvm::kernel_function_type::polynomial>(q_red, kernel_matrix, data_matr, QA_cost, cost, params.degree, std::get<plssvm::real_type>(params.gamma), params.coef0);
+            break;
+        case plssvm::kernel_function_type::rbf:
+            plssvm::openmp::detail::device_kernel_assembly<plssvm::kernel_function_type::rbf>(q_red, kernel_matrix, data_matr, QA_cost, cost, std::get<plssvm::real_type>(params.gamma));
+            break;
+        case plssvm::kernel_function_type::sigmoid:
+            plssvm::openmp::detail::device_kernel_assembly<plssvm::kernel_function_type::sigmoid>(q_red, kernel_matrix, data_matr, QA_cost, cost, std::get<plssvm::real_type>(params.gamma), params.coef0);
+            break;
+        case plssvm::kernel_function_type::laplacian:
+            plssvm::openmp::detail::device_kernel_assembly<plssvm::kernel_function_type::laplacian>(q_red, kernel_matrix, data_matr, QA_cost, cost, std::get<plssvm::real_type>(params.gamma));
+            break;
+        case plssvm::kernel_function_type::chi_squared:
+            plssvm::openmp::detail::device_kernel_assembly<plssvm::kernel_function_type::chi_squared>(q_red, kernel_matrix, data_matr, QA_cost, cost, std::get<plssvm::real_type>(params.gamma));
+            break;
+    }
+    const std::vector<plssvm::real_type> correct_kernel_matrix = ground_truth::assemble_device_specific_kernel_matrix(params, data_matr, q_red, QA_cost, dist, 0);
+
+    // check for correctness
+    ASSERT_EQ(kernel_matrix.size(), correct_kernel_matrix.size());
+    EXPECT_FLOATING_POINT_VECTOR_NEAR_EPS(kernel_matrix, correct_kernel_matrix, 1e6);
+}
+
+TYPED_TEST(OpenMPCSVMKernelFunction, blas_level_3_kernel_implicit) {
+    constexpr plssvm::kernel_function_type kernel = util::test_parameter_value_at_v<0, TypeParam>;
+
+    const plssvm::real_type alpha{ 1.0 };
+
+    // create kernel matrix to use in the BLAS calculation
+    plssvm::parameter params{ plssvm::kernel_type = kernel };
+    if constexpr (kernel != plssvm::kernel_function_type::linear) {
+        params.gamma = plssvm::real_type{ 0.001 };
+    }
+    const plssvm::data_set data{ PLSSVM_TEST_FILE };
+    auto data_matr{ data.data() };
+    if constexpr (kernel == plssvm::kernel_function_type::chi_squared) {
+        // chi-squared is well-defined for non-negative values only
+        data_matr = util::matrix_abs(data_matr);
+    }
+
+    const auto [q_red, QA_cost] = ground_truth::perform_dimensional_reduction(params, data_matr);
+    const plssvm::real_type cost = plssvm::real_type{ 1.0 } / params.cost;
+
+    const auto B = util::generate_specific_matrix<plssvm::soa_matrix<plssvm::real_type>>(plssvm::shape{ data.num_data_points() - 1, data.num_data_points() - 1 }, plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE });
+
+    const plssvm::real_type beta{ 0.5 };
+    auto C = util::generate_specific_matrix<plssvm::soa_matrix<plssvm::real_type>>(plssvm::shape{ data.num_data_points() - 1, data.num_data_points() - 1 }, plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE });
+    auto ground_truth_C{ C };
+
+    switch (kernel) {
+        case plssvm::kernel_function_type::linear:
+            plssvm::openmp::detail::device_kernel_assembly_symm<plssvm::kernel_function_type::linear>(alpha, q_red, data_matr, QA_cost, cost, B, beta, C);
+            break;
+        case plssvm::kernel_function_type::polynomial:
+            plssvm::openmp::detail::device_kernel_assembly_symm<plssvm::kernel_function_type::polynomial>(alpha, q_red, data_matr, QA_cost, cost, B, beta, C, params.degree, std::get<plssvm::real_type>(params.gamma), params.coef0);
+            break;
+        case plssvm::kernel_function_type::rbf:
+            plssvm::openmp::detail::device_kernel_assembly_symm<plssvm::kernel_function_type::rbf>(alpha, q_red, data_matr, QA_cost, cost, B, beta, C, std::get<plssvm::real_type>(params.gamma));
+            break;
+        case plssvm::kernel_function_type::sigmoid:
+            plssvm::openmp::detail::device_kernel_assembly_symm<plssvm::kernel_function_type::sigmoid>(alpha, q_red, data_matr, QA_cost, cost, B, beta, C, std::get<plssvm::real_type>(params.gamma), params.coef0);
+            break;
+        case plssvm::kernel_function_type::laplacian:
+            plssvm::openmp::detail::device_kernel_assembly_symm<plssvm::kernel_function_type::laplacian>(alpha, q_red, data_matr, QA_cost, cost, B, beta, C, std::get<plssvm::real_type>(params.gamma));
+            break;
+        case plssvm::kernel_function_type::chi_squared:
+            plssvm::openmp::detail::device_kernel_assembly_symm<plssvm::kernel_function_type::chi_squared>(alpha, q_red, data_matr, QA_cost, cost, B, beta, C, std::get<plssvm::real_type>(params.gamma));
+            break;
+    }
+
+    // calculate correct results
+    const plssvm::aos_matrix<plssvm::real_type> kernel_matrix_gemm_padded = ground_truth::assemble_full_kernel_matrix(params, data_matr, q_red, QA_cost);
+    ground_truth::gemm(alpha, kernel_matrix_gemm_padded, B, beta, ground_truth_C);
+
+    // check C for correctness
+    EXPECT_FLOATING_POINT_MATRIX_NEAR(C, ground_truth_C);
+}
+
+TYPED_TEST(OpenMPCSVMKernelFunction, predict_values) {
+    constexpr plssvm::kernel_function_type kernel = util::test_parameter_value_at_v<0, TypeParam>;
+
+    plssvm::parameter params{ plssvm::kernel_type = kernel };
+    if constexpr (kernel != plssvm::kernel_function_type::linear) {
+        params.gamma = plssvm::real_type{ 0.001 };
+    }
+    const plssvm::data_set data{ PLSSVM_TEST_FILE };
+    auto data_matr{ data.data() };
+    if constexpr (kernel == plssvm::kernel_function_type::chi_squared) {
+        // chi-squared is well-defined for non-negative values only
+        data_matr = util::matrix_abs(data_matr);
+    }
+
+    const auto weights = util::generate_specific_matrix<plssvm::aos_matrix<plssvm::real_type>>(plssvm::shape{ 3, data_matr.num_rows() }, plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE });
+    const auto predict_points = util::generate_specific_matrix<plssvm::soa_matrix<plssvm::real_type>>(plssvm::shape{ data_matr.num_rows(), data_matr.num_cols() }, plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE });
+    const std::vector<plssvm::real_type> rho = util::generate_random_vector<plssvm::real_type>(weights.num_rows());
+    const plssvm::soa_matrix<plssvm::real_type> correct_w = ground_truth::calculate_w(weights, data_matr);
+
+    plssvm::aos_matrix<plssvm::real_type> out{ plssvm::shape{ predict_points.num_rows(), weights.num_rows() }, plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE } };
+
+    switch (kernel) {
+        case plssvm::kernel_function_type::linear:
+            plssvm::openmp::detail::device_kernel_predict_linear(out, correct_w, rho, predict_points);
+            break;
+        case plssvm::kernel_function_type::polynomial:
+            plssvm::openmp::detail::device_kernel_predict<plssvm::kernel_function_type::polynomial>(out, weights, rho, data_matr, predict_points, params.degree, std::get<plssvm::real_type>(params.gamma), params.coef0);
+            break;
+        case plssvm::kernel_function_type::rbf:
+            plssvm::openmp::detail::device_kernel_predict<plssvm::kernel_function_type::rbf>(out, weights, rho, data_matr, predict_points, std::get<plssvm::real_type>(params.gamma));
+            break;
+        case plssvm::kernel_function_type::sigmoid:
+            plssvm::openmp::detail::device_kernel_predict<plssvm::kernel_function_type::sigmoid>(out, weights, rho, data_matr, predict_points, std::get<plssvm::real_type>(params.gamma), params.coef0);
+            break;
+        case plssvm::kernel_function_type::laplacian:
+            plssvm::openmp::detail::device_kernel_predict<plssvm::kernel_function_type::laplacian>(out, weights, rho, data_matr, predict_points, std::get<plssvm::real_type>(params.gamma));
+            break;
+        case plssvm::kernel_function_type::chi_squared:
+            plssvm::openmp::detail::device_kernel_predict<plssvm::kernel_function_type::chi_squared>(out, weights, rho, data_matr, predict_points, std::get<plssvm::real_type>(params.gamma));
+            break;
+    }
+
+    // check out for correctness
+    const plssvm::aos_matrix<plssvm::real_type> correct_out = ground_truth::predict_values(params, correct_w, weights, rho, data_matr, predict_points);
+    EXPECT_FLOATING_POINT_MATRIX_NEAR(out, correct_out);
+}
+
+//*************************************************************************************************************************************//
+//                                                           CSVM DeathTests                                                           //
+//*************************************************************************************************************************************//
+
+class OpenMPCSVMDeathTest : public OpenMPCSVM { };
+
+TEST_F(OpenMPCSVMDeathTest, blas_level_3_kernel_explicit) {
+    const plssvm::real_type alpha{ 1.0 };
+
+    // create kernel matrix to use in the BLAS calculation
+    const std::vector<plssvm::real_type> kernel_matrix((4 + plssvm::PADDING_SIZE) * (4 + plssvm::PADDING_SIZE + 1) / 2);
+
+    const auto B = util::generate_random_matrix<plssvm::soa_matrix<plssvm::real_type>>(plssvm::shape{ 4, 4 }, plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE });
+
+    const plssvm::real_type beta{ 0.5 };
+    auto C = util::generate_random_matrix<plssvm::soa_matrix<plssvm::real_type>>(plssvm::shape{ 4, 4 }, plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE });
+
+    const std::size_t num_rhs = B.shape().x;
+    const std::size_t num_rows = B.shape().y;
+
+    // the A matrix must have the correct size
+    EXPECT_DEATH(plssvm::openmp::detail::device_kernel_symm(num_rows, num_rows, alpha, std::vector<plssvm::real_type>{}, B, beta, C), fmt::format("A matrix sizes mismatch!: 0 != {}", kernel_matrix.size()));
+
+    // the B matrix must have the correct shape
+    const auto B_wrong = util::generate_random_matrix<plssvm::soa_matrix<plssvm::real_type>>(plssvm::shape{ std::min<std::size_t>(0ULL, num_rows - 1), std::min<std::size_t>(0ULL, num_rhs - 2) }, plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE });
+    EXPECT_DEATH(plssvm::openmp::detail::device_kernel_symm(num_rows, num_rows, alpha, kernel_matrix, B_wrong, beta, C), ::testing::HasSubstr(fmt::format("B matrix sizes mismatch!: [{}, {}] != [{}, {}]", std::min(0, static_cast<int>(num_rows) - 1), std::min(0, static_cast<int>(num_rhs) - 2), num_rows, num_rhs)));
+
+    // the C matrix must have the correct shape
+    auto C_wrong = util::generate_random_matrix<plssvm::soa_matrix<plssvm::real_type>>(plssvm::shape{ std::min<std::size_t>(0ULL, num_rows - 1), std::min<std::size_t>(0ULL, num_rhs - 2) }, plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE });
+    EXPECT_DEATH(plssvm::openmp::detail::device_kernel_symm(num_rows, num_rows, alpha, kernel_matrix, B, beta, C_wrong), ::testing::HasSubstr(fmt::format("C matrix sizes mismatch!: [{}, {}] != [{}, {}]", std::min(0, static_cast<int>(num_rows) - 1), std::min(0, static_cast<int>(num_rhs) - 2), num_rows, num_rhs)));
+}
+
+TEST_F(OpenMPCSVMDeathTest, calculate_w) {
+    // the data used for prediction
+    const plssvm::data_set data{ PLSSVM_TEST_FILE };
+
+    // the weights (i.e., alpha values) for all support vectors
+    const auto weights = util::generate_specific_matrix<plssvm::aos_matrix<plssvm::real_type>>(plssvm::shape{ 3, data.num_data_points() }, plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE });
+    plssvm::soa_matrix<plssvm::real_type> w(plssvm::shape{ weights.num_rows(), data.data().num_cols() }, plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE });
+
+    // the weights and support vector matrix shapes must match
+    const auto weights_wrong = util::generate_specific_matrix<plssvm::aos_matrix<plssvm::real_type>>(plssvm::shape{ 3, data.num_data_points() + 1 }, plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE });
+    EXPECT_DEATH(plssvm::openmp::detail::device_kernel_w_linear(w, weights_wrong, data.data()), fmt::format("Size mismatch: {} vs {}!", weights_wrong.num_cols(), data.data().num_rows()));
+    // the w shape must be correct
+    plssvm::soa_matrix<plssvm::real_type> w_wrong{};
+    EXPECT_DEATH(plssvm::openmp::detail::device_kernel_w_linear(w_wrong, weights, data.data()), ::testing::HasSubstr(fmt::format("Shape mismatch: [0, 0] vs [{}, {}]!", weights.num_rows(), data.data().num_cols())));
 }
 
 template <typename T>
-class OpenMPCSVMCalculateW : public OpenMPCSVM {};
-TYPED_TEST_SUITE(OpenMPCSVMCalculateW, util::real_type_gtest, naming::real_type_to_name);
+class OpenMPCSVMKernelFunctionDeathTest : public OpenMPCSVM { };
 
-TYPED_TEST(OpenMPCSVMCalculateW, calculate_w) {
-    using real_type = TypeParam;
+TYPED_TEST_SUITE(OpenMPCSVMKernelFunctionDeathTest, kernel_function_type_list_gtest, naming::test_parameter_to_name);
 
-    // create the data that should be used
-    const plssvm::data_set<real_type> support_vectors{ PLSSVM_TEST_FILE };
-    const std::vector<real_type> weights = util::generate_random_vector<real_type>(support_vectors.num_data_points());
+TYPED_TEST(OpenMPCSVMKernelFunctionDeathTest, assemble_kernel_matrix_explicit) {
+    constexpr plssvm::kernel_function_type kernel = util::test_parameter_value_at_v<0, TypeParam>;
 
-    // calculate the correct w vector
-    const std::vector<real_type> ground_truth = compare::calculate_w(support_vectors.data(), weights);
+    // create correct data for the function call
+    plssvm::parameter params{ plssvm::kernel_type = kernel };
+    if constexpr (kernel != plssvm::kernel_function_type::linear) {
+        params.gamma = plssvm::real_type{ 0.001 };
+    }
+    const plssvm::data_set data{ PLSSVM_TEST_FILE };
 
-    // create C-SVM: must be done using the mock class, since plssvm::openmp::csvm::calculate_w is protected
-    const mock_openmp_csvm svm{};
+    // create correct data distribution for the ground truth calculation
+    const plssvm::detail::triangular_data_distribution dist{ data.num_data_points() - 1, 1 };
 
-    // calculate the w vector using the OpenMP backend
-    const std::vector<real_type> calculated = svm.calculate_w(support_vectors.data(), weights);
+    const auto [q_red, QA_cost] = ground_truth::perform_dimensional_reduction(params, data.data());
 
-    // check the calculated result for correctness
-    EXPECT_FLOATING_POINT_VECTOR_NEAR(ground_truth, calculated);
+    // create correct data distribution for the ground truth calculation
+    std::vector<plssvm::real_type> kernel_matrix(dist.calculate_explicit_kernel_matrix_num_entries_padded(0));  // only explicitly store the upper triangular matrix
+
+    // helper lambda to reduce the amount of needed switches!
+    const auto run_assembly = [=](const plssvm::parameter &params_p, const std::vector<plssvm::real_type> &q_red_p, std::vector<plssvm::real_type> &kernel_matrix_p, const plssvm::soa_matrix<plssvm::real_type> &data_p, const plssvm::real_type QA_cost_p) {
+        switch (kernel) {
+            case plssvm::kernel_function_type::linear:
+                plssvm::openmp::detail::device_kernel_assembly<plssvm::kernel_function_type::linear>(q_red_p, kernel_matrix_p, data_p, QA_cost_p, params_p.cost);
+                break;
+            case plssvm::kernel_function_type::polynomial:
+                plssvm::openmp::detail::device_kernel_assembly<plssvm::kernel_function_type::polynomial>(q_red_p, kernel_matrix_p, data_p, QA_cost_p, params_p.cost, params_p.degree, std::get<plssvm::real_type>(params_p.gamma), params_p.coef0);
+                break;
+            case plssvm::kernel_function_type::rbf:
+                plssvm::openmp::detail::device_kernel_assembly<plssvm::kernel_function_type::rbf>(q_red_p, kernel_matrix_p, data_p, QA_cost_p, params_p.cost, std::get<plssvm::real_type>(params_p.gamma));
+                break;
+            case plssvm::kernel_function_type::sigmoid:
+                plssvm::openmp::detail::device_kernel_assembly<plssvm::kernel_function_type::sigmoid>(q_red_p, kernel_matrix_p, data_p, QA_cost_p, params_p.cost, std::get<plssvm::real_type>(params_p.gamma), params_p.coef0);
+                break;
+            case plssvm::kernel_function_type::laplacian:
+                plssvm::openmp::detail::device_kernel_assembly<plssvm::kernel_function_type::laplacian>(q_red_p, kernel_matrix_p, data_p, QA_cost_p, params_p.cost, std::get<plssvm::real_type>(params_p.gamma));
+                break;
+            case plssvm::kernel_function_type::chi_squared:
+                plssvm::openmp::detail::device_kernel_assembly<plssvm::kernel_function_type::chi_squared>(q_red_p, kernel_matrix_p, data_p, QA_cost_p, params_p.cost, std::get<plssvm::real_type>(params_p.gamma));
+                break;
+        }
+    };
+
+    // check q_red size (must be equal to the number of data points - 1
+    EXPECT_DEATH(run_assembly(params, std::vector<plssvm::real_type>{}, kernel_matrix, data.data(), QA_cost), fmt::format("Sizes mismatch!: 0 != {}", data.num_data_points() - 1));
+
+    // check the kernel matrix size (depending on the usage of GEMM/SYMM)
+    std::vector<plssvm::real_type> ret;
+    EXPECT_DEATH(run_assembly(params, q_red, ret, data.data(), QA_cost), ::testing::HasSubstr(fmt::format("Sizes mismatch (SYMM)!: 0 != {}", kernel_matrix.size())));
+
+    // cost must not be 0.0 since 1.0 / cost is used
+    params.cost = plssvm::real_type{ 0.0 };
+    EXPECT_DEATH(run_assembly(params, q_red, kernel_matrix, data.data(), QA_cost), "cost must not be 0.0 since it is 1 / plssvm::cost!");
 }
 
-template <typename T>
-class OpenMPCSVMRunDeviceKernel : public OpenMPCSVM {};
-TYPED_TEST_SUITE(OpenMPCSVMRunDeviceKernel, util::real_type_kernel_function_gtest, naming::real_type_kernel_function_to_name);
+TYPED_TEST(OpenMPCSVMKernelFunctionDeathTest, blas_level_3_kernel_implicit) {
+    constexpr plssvm::kernel_function_type kernel = util::test_parameter_value_at_v<0, TypeParam>;
 
-TYPED_TEST(OpenMPCSVMRunDeviceKernel, run_device_kernel) {
-    using real_type = typename TypeParam::real_type;
-    const plssvm::kernel_function_type kernel_type = TypeParam::kernel_type;
+    // create correct data for the function call
+    plssvm::parameter params{ plssvm::kernel_type = kernel };
+    if constexpr (kernel != plssvm::kernel_function_type::linear) {
+        params.gamma = plssvm::real_type{ 0.001 };
+    }
+    const plssvm::data_set data{ PLSSVM_TEST_FILE };
 
-    // create parameter struct
-    const plssvm::detail::parameter<real_type> params{ kernel_type, 2, 0.001, 1.0, 0.1 };
+    std::vector<plssvm::real_type> q_red{};
+    plssvm::real_type QA_cost{};
+    std::tie(q_red, QA_cost) = ground_truth::perform_dimensional_reduction(params, data.data());
+    const plssvm::real_type alpha{ 1.0 };
+    plssvm::soa_matrix<plssvm::real_type> B{ plssvm::shape{ data.num_classes(), data.num_data_points() - 1 } };
+    const plssvm::real_type beta{ 1.0 };
+    plssvm::soa_matrix<plssvm::real_type> C{ B };
 
-    // create the data that should be used
-    const plssvm::data_set<real_type> data{ PLSSVM_TEST_FILE };
-    const std::vector<real_type> rhs = util::generate_random_vector<real_type>(data.num_data_points() - 1, real_type{ 1.0 }, real_type{ 2.0 });
-    const std::vector<real_type> q = compare::generate_q(params, data.data());
-    const real_type QA_cost = compare::kernel_function(params, data.data().back(), data.data().back()) + 1 / params.cost;
+    // helper lambda to reduce the amount of needed switches!
+    const auto run_assembly_symm = [=](const plssvm::parameter &params_p, const std::vector<plssvm::real_type> &q_red_p, const plssvm::soa_matrix<plssvm::real_type> &data_p, const plssvm::soa_matrix<plssvm::real_type> &B_p, plssvm::soa_matrix<plssvm::real_type> &C_p) {
+        switch (kernel) {
+            case plssvm::kernel_function_type::linear:
+                plssvm::openmp::detail::device_kernel_assembly_symm<plssvm::kernel_function_type::linear>(alpha, q_red_p, data_p, QA_cost, params_p.cost, B_p, beta, C_p);
+                break;
+            case plssvm::kernel_function_type::polynomial:
+                plssvm::openmp::detail::device_kernel_assembly_symm<plssvm::kernel_function_type::polynomial>(alpha, q_red_p, data_p, QA_cost, params_p.cost, B_p, beta, C_p, params_p.degree, std::get<plssvm::real_type>(params_p.gamma), params_p.coef0);
+                break;
+            case plssvm::kernel_function_type::rbf:
+                plssvm::openmp::detail::device_kernel_assembly_symm<plssvm::kernel_function_type::rbf>(alpha, q_red_p, data_p, QA_cost, params_p.cost, B_p, beta, C_p, std::get<plssvm::real_type>(params_p.gamma));
+                break;
+            case plssvm::kernel_function_type::sigmoid:
+                plssvm::openmp::detail::device_kernel_assembly_symm<plssvm::kernel_function_type::sigmoid>(alpha, q_red_p, data_p, QA_cost, params_p.cost, B_p, beta, C_p, std::get<plssvm::real_type>(params_p.gamma), params_p.coef0);
+                break;
+            case plssvm::kernel_function_type::laplacian:
+                plssvm::openmp::detail::device_kernel_assembly_symm<plssvm::kernel_function_type::laplacian>(alpha, q_red_p, data_p, QA_cost, params_p.cost, B_p, beta, C_p, std::get<plssvm::real_type>(params_p.gamma));
+                break;
+            case plssvm::kernel_function_type::chi_squared:
+                plssvm::openmp::detail::device_kernel_assembly_symm<plssvm::kernel_function_type::chi_squared>(alpha, q_red_p, data_p, QA_cost, params_p.cost, B_p, beta, C_p, std::get<plssvm::real_type>(params_p.gamma));
+                break;
+        }
+    };
 
-    // create C-SVM: must be done using the mock class, since plssvm::openmp::csvm::calculate_w is protected
-    const mock_openmp_csvm svm{};
+    // check q_red size (must be equal to the number of data points - 1
+    EXPECT_DEATH(run_assembly_symm(params, std::vector<plssvm::real_type>{}, data.data(), B, C), fmt::format("Sizes mismatch!: 0 != {}", data.num_data_points() - 1));
 
-    for (const real_type add : { real_type{ -1.0 }, real_type{ 1.0 } }) {
-        // calculate the correct device function result
-        const std::vector<real_type> ground_truth = compare::device_kernel_function(params, data.data(), rhs, q, QA_cost, add);
+    // cost must not be 0.0 since 1.0 / cost is used
+    plssvm::parameter params2{ params };
+    params2.cost = plssvm::real_type{ 0.0 };
+    EXPECT_DEATH(run_assembly_symm(params2, q_red, data.data(), B, C), "cost must not be 0.0 since it is 1 / plssvm::cost!");
 
-        // perform the kernel calculation on the device
-        std::vector<real_type> calculated(data.num_data_points() - 1);
-        svm.run_device_kernel(params, q, calculated, rhs, data.data(), QA_cost, add);
+    // B and C must be of the same shape
+    B = plssvm::soa_matrix<plssvm::real_type>{ plssvm::shape{ 1, 1 } };
+    EXPECT_DEATH(run_assembly_symm(params, q_red, data.data(), B, C), "The matrices B and C must have the same shape!");
 
-        // check the calculated result for correctness
-        EXPECT_FLOATING_POINT_VECTOR_NEAR(ground_truth, calculated);
+    // the number of columns in B must match the number of rows in the data set - 1
+    B = plssvm::soa_matrix<plssvm::real_type>{ plssvm::shape{ data.num_classes(), data.num_data_points() - 2 } };
+    C = B;
+    EXPECT_DEATH(run_assembly_symm(params, q_red, data.data(), B, C), ::testing::HasSubstr(fmt::format("The number of columns in B ({}) must be the same as the values in q ({})!", B.num_cols(), data.num_data_points() - 1)));
+}
+
+TYPED_TEST(OpenMPCSVMKernelFunctionDeathTest, predict_values) {
+    constexpr plssvm::kernel_function_type kernel = util::test_parameter_value_at_v<0, TypeParam>;
+
+    plssvm::parameter params{ plssvm::kernel_type = kernel };
+    if constexpr (kernel != plssvm::kernel_function_type::linear) {
+        params.gamma = plssvm::real_type{ 0.001 };
+    }
+    const plssvm::data_set data{ PLSSVM_TEST_FILE };
+
+    const auto weights = util::generate_specific_matrix<plssvm::aos_matrix<plssvm::real_type>>(plssvm::shape{ 3, data.data().num_rows() }, plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE });
+    const auto predict_points = util::generate_specific_matrix<plssvm::soa_matrix<plssvm::real_type>>(plssvm::shape{ data.data().num_rows(), data.data().num_cols() }, plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE });
+    const std::vector<plssvm::real_type> rho = util::generate_random_vector<plssvm::real_type>(weights.num_rows());
+    const plssvm::soa_matrix<plssvm::real_type> w = ground_truth::calculate_w(weights, data.data());
+
+    plssvm::aos_matrix<plssvm::real_type> out{ plssvm::shape{ predict_points.num_rows(), weights.num_rows() }, plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE } };
+
+    if constexpr (kernel == plssvm::kernel_function_type::linear) {
+        // the number of classes must match
+        std::vector<plssvm::real_type> rho_wrong = util::generate_random_vector<plssvm::real_type>(weights.num_rows());
+        rho_wrong.pop_back();
+        EXPECT_DEATH(plssvm::openmp::detail::device_kernel_predict_linear(out, w, rho_wrong, predict_points),
+                     ::testing::HasSubstr(fmt::format("Size mismatch: {} vs {}!", w.num_rows(), rho_wrong.size())));
+
+        // the number of features must match
+        const auto predict_points_wrong = util::generate_specific_matrix<plssvm::soa_matrix<plssvm::real_type>>(plssvm::shape{ data.data().num_rows(), data.data().num_cols() + 1 }, plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE });
+        EXPECT_DEATH(plssvm::openmp::detail::device_kernel_predict_linear(out, w, rho, predict_points_wrong),
+                     ::testing::HasSubstr(fmt::format("Size mismatch: {} vs {}!", w.num_cols(), predict_points_wrong.num_cols())));
+
+        // the output shape must match
+        plssvm::aos_matrix<plssvm::real_type> out_wrong{};
+        EXPECT_DEATH(plssvm::openmp::detail::device_kernel_predict_linear(out_wrong, w, rho, predict_points),
+                     ::testing::HasSubstr(fmt::format("Shape mismatch: [0, 0] vs {}!", (plssvm::shape{ predict_points.num_rows(), w.num_rows() }))));
+    } else {
+        // helper lambda to reduce the amount of needed switches!
+        const auto run_predict_values = [=](const plssvm::parameter &params_p, plssvm::aos_matrix<plssvm::real_type> &out_p, const plssvm::aos_matrix<plssvm::real_type> &weights_p, const std::vector<plssvm::real_type> &rho_p, const plssvm::soa_matrix<plssvm::real_type> &support_vectors_p, const plssvm::soa_matrix<plssvm::real_type> &predict_points_p) {
+            switch (kernel) {
+                case plssvm::kernel_function_type::linear:
+                    // unreachable
+                    break;
+                case plssvm::kernel_function_type::polynomial:
+                    plssvm::openmp::detail::device_kernel_predict<plssvm::kernel_function_type::polynomial>(out_p, weights_p, rho_p, support_vectors_p, predict_points_p, params_p.degree, std::get<plssvm::real_type>(params_p.gamma), params_p.coef0);
+                    break;
+                case plssvm::kernel_function_type::rbf:
+                    plssvm::openmp::detail::device_kernel_predict<plssvm::kernel_function_type::rbf>(out_p, weights_p, rho_p, support_vectors_p, predict_points_p, std::get<plssvm::real_type>(params_p.gamma));
+                    break;
+                case plssvm::kernel_function_type::sigmoid:
+                    plssvm::openmp::detail::device_kernel_predict<plssvm::kernel_function_type::sigmoid>(out_p, weights_p, rho_p, support_vectors_p, predict_points_p, std::get<plssvm::real_type>(params_p.gamma), params_p.coef0);
+                    break;
+                case plssvm::kernel_function_type::laplacian:
+                    plssvm::openmp::detail::device_kernel_predict<plssvm::kernel_function_type::laplacian>(out_p, weights_p, rho_p, support_vectors_p, predict_points_p, std::get<plssvm::real_type>(params_p.gamma));
+                    break;
+                case plssvm::kernel_function_type::chi_squared:
+                    plssvm::openmp::detail::device_kernel_predict<plssvm::kernel_function_type::chi_squared>(out_p, weights_p, rho_p, support_vectors_p, predict_points_p, std::get<plssvm::real_type>(params_p.gamma));
+                    break;
+            }
+        };
+
+        // the number of classes must match
+        std::vector<plssvm::real_type> rho_wrong = util::generate_random_vector<plssvm::real_type>(weights.num_rows());
+        rho_wrong.pop_back();
+        EXPECT_DEATH(run_predict_values(params, out, weights, rho_wrong, data.data(), predict_points),
+                     ::testing::HasSubstr(fmt::format("Size mismatch: {} vs {}!", w.num_rows(), rho_wrong.size())));
+
+        // the number of support vectors and weights must match
+        const auto weights_wrong = util::generate_specific_matrix<plssvm::aos_matrix<plssvm::real_type>>(plssvm::shape{ 3, data.data().num_rows() + 1 }, plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE });
+        EXPECT_DEATH(run_predict_values(params, out, weights_wrong, rho, data.data(), predict_points),
+                     ::testing::HasSubstr(fmt::format("Size mismatch: {} vs {}!", weights_wrong.num_cols(), data.data().num_rows())));
+
+        // the number of features must match
+        const auto predict_points_wrong = util::generate_specific_matrix<plssvm::soa_matrix<plssvm::real_type>>(plssvm::shape{ data.data().num_rows(), data.data().num_cols() + 1 }, plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE });
+        EXPECT_DEATH(run_predict_values(params, out, weights, rho, data.data(), predict_points_wrong),
+                     ::testing::HasSubstr(fmt::format("Size mismatch: {} vs {}!", data.data().num_cols(), predict_points_wrong.num_cols())));
+
+        // the output shape must match
+        plssvm::aos_matrix<plssvm::real_type> out_wrong{};
+        EXPECT_DEATH(run_predict_values(params, out_wrong, weights, rho, data.data(), predict_points),
+                     ::testing::HasSubstr(fmt::format("Shape mismatch: [0, 0] vs {}!", (plssvm::shape{ predict_points.num_rows(), w.num_rows() }))));
     }
 }

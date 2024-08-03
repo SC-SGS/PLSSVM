@@ -8,38 +8,41 @@
  * @brief Tests for the custom utility functions related to the CUDA backend.
  */
 
-// necessary only for compiling the tests
-#if __has_include("cuda_runtime.h")
-    #include "cuda_runtime.h"  // cudaError_t
-#endif
-
-#include "plssvm/backends/CUDA/detail/utility.cuh"  // PLSSVM_CUDA_ERROR_CHECK, plssvm::cuda::detail::{gpu_assert, get_device_count, set_device, device_synchronize}
+#include "plssvm/backends/CUDA/detail/utility.cuh"
 
 #include "plssvm/backends/CUDA/exceptions.hpp"  // plssvm::cuda::backend_exception
+#include "plssvm/backends/execution_range.hpp"  // plssvm::detail::dim_type
 
-#include "../../../custom_test_macros.hpp"  // EXPECT_THROW_WHAT, EXPECT_THROW_WHAT_MATCHER
+#include "tests/custom_test_macros.hpp"  // EXPECT_THROW_WHAT, EXPECT_THROW_WHAT_MATCHER
 
-#include "fmt/core.h"              // fmt::format
-#include "gmock/gmock-matchers.h"  // ::testing::StartsWith
-#include "gtest/gtest.h"           // TEST, EXPECT_GE, EXPECT_NO_THROW
+#include "fmt/format.h"   // fmt::format
+#include "gmock/gmock.h"  // ::testing::StartsWith
+#include "gtest/gtest.h"  // TEST, EXPECT_GE, EXPECT_NO_THROW
 
-#if __has_include("cuda_runtime.h")
+#include <regex>  // std::regex, std::regex::extended, std::regex_match
 
-TEST(CUDAUtility, gpu_assert) {
+TEST(CUDAUtility, error_check) {
     // cudaSuccess must not throw
     EXPECT_NO_THROW(PLSSVM_CUDA_ERROR_CHECK(cudaSuccess));
-    EXPECT_NO_THROW(plssvm::cuda::detail::gpu_assert(cudaSuccess));
 
     // any other code must throw
     EXPECT_THROW_WHAT_MATCHER(PLSSVM_CUDA_ERROR_CHECK(cudaErrorInvalidValue),
                               plssvm::cuda::backend_exception,
                               ::testing::StartsWith("CUDA assert 'cudaErrorInvalidValue' (1):"));
-    EXPECT_THROW_WHAT_MATCHER(plssvm::cuda::detail::gpu_assert(cudaErrorInvalidValue),
-                              plssvm::cuda::backend_exception,
-                              ::testing::StartsWith("CUDA assert 'cudaErrorInvalidValue' (1):"));
 }
 
-#endif
+TEST(CUDAUtility, dim_type_to_native) {
+    // create a dim_type
+    constexpr plssvm::detail::dim_type dim{ 128ull, 64ull, 32ull };
+
+    // convert it to a CUDA dim3
+    const dim3 native_dim = plssvm::cuda::detail::dim_type_to_native(dim);
+
+    // check values for correctness
+    EXPECT_EQ(native_dim.x, dim.x);
+    EXPECT_EQ(native_dim.y, dim.y);
+    EXPECT_EQ(native_dim.z, dim.z);
+}
 
 TEST(CUDAUtility, get_device_count) {
     // must not return a negative number
@@ -58,4 +61,9 @@ TEST(CUDAUtility, device_synchronize) {
     EXPECT_THROW_WHAT(plssvm::cuda::detail::device_synchronize(plssvm::cuda::detail::get_device_count()),
                       plssvm::cuda::backend_exception,
                       fmt::format("Illegal device ID! Must be in range: [0, {}) but is {}!", plssvm::cuda::detail::get_device_count(), plssvm::cuda::detail::get_device_count()));
+}
+
+TEST(CUDAUtility, get_runtime_version) {
+    const std::regex reg{ "[0-9]+\\.[0-9]+", std::regex::extended };
+    EXPECT_TRUE(std::regex_match(plssvm::cuda::detail::get_runtime_version(), reg));
 }

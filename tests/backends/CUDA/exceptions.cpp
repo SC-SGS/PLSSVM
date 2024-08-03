@@ -10,7 +10,7 @@
 
 #include "plssvm/backends/CUDA/exceptions.hpp"  // plssvm::cuda::backend_exception
 
-#include "../generic_exceptions_tests.hpp"  // generic exception tests to instantiate
+#include "tests/backends/generic_exceptions_tests.hpp"  // generic exception tests to instantiate
 
 #include "gtest/gtest.h"  // INSTANTIATE_TYPED_TEST_SUITE_P
 
@@ -18,8 +18,8 @@
 
 struct exception_test_type {
     using exception_type = plssvm::cuda::backend_exception;
-    static constexpr std::string_view name = "cuda::backend_exception";
+    constexpr static std::string_view name = "cuda::backend_exception";
 };
 
 // instantiate type-parameterized tests
-INSTANTIATE_TYPED_TEST_SUITE_P(CUDABackend, Exception, exception_test_type);
+INSTANTIATE_TYPED_TEST_SUITE_P(CUDAExceptions, Exception, exception_test_type);

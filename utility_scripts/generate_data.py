@@ -9,16 +9,20 @@
 ########################################################################################################################
 
 import argparse
+import math
 from timeit import default_timer as timer
 import os
 import humanize
 import datetime
+import importlib.util
 
 # data set creation
 from sklearn.datasets import make_classification
 from sklearn.datasets import make_blobs
 from sklearn.datasets import make_gaussian_quantiles
 from sklearn.preprocessing import minmax_scale
+
+has_plssvm_python_bindings = importlib.util.find_spec("plssvm") is not None
 
 # parse command line arguments
 parser = argparse.ArgumentParser()
@@ -27,7 +31,7 @@ parser.add_argument(
     "--output", help="the output file to write the samples to (without extension)")
 parser.add_argument(
     "--format", help="the file format; either arff, libsvm, or csv", default="libsvm")
-parser.add_argument("--problem", help="the problem to solve; one of: blobs, blobs_merged, planes, planes_merged, ball",
+parser.add_argument("--problem", help="the problem to solve; one of: blobs, blobs_merged, planes, ball",
                     default="blobs")
 parser.add_argument(
     "--samples", help="the number of training samples to generate", required=True, type=int)
@@ -35,6 +39,8 @@ parser.add_argument(
     "--test_samples", help="the number of test samples to generate; default: 0", type=int, default=0)
 parser.add_argument(
     "--features", help="the number of features per data point", required=True, type=int)
+parser.add_argument(
+    "--classes", help="the number of classes to generate; default: 2", type=int, default=2)
 parser.add_argument("--plot", help="plot training samples; only possible if 0 < samples <= 2000 and 1 < features <= 3",
                     action="store_true")
 
@@ -56,31 +62,26 @@ start_time = timer()
 # create labeled data set
 if args.problem == "blobs":
     samples, labels = make_blobs(
-        n_samples=num_samples, n_features=args.features, centers=2)
+        n_samples=num_samples, n_features=args.features, centers=args.classes)
 elif args.problem == "blobs_merged":
     samples, labels = make_blobs(
-        n_samples=num_samples, n_features=args.features, centers=2, cluster_std=4.0)
+        n_samples=num_samples, n_features=args.features, centers=args.classes, cluster_std=4.0)
 elif args.problem == "planes":
-    samples, labels = make_classification(n_samples=num_samples, n_features=args.features, n_redundant=0,
-                                          n_informative=2, n_clusters_per_class=1)
-elif args.problem == "planes_merged":
-    samples, labels = make_classification(n_samples=num_samples, n_features=args.features, n_redundant=0,
-                                          n_informative=args.features)
+    samples, labels = make_classification(n_samples=num_samples, n_features=args.features,
+                                          n_informative=math.ceil(math.sqrt(args.classes)),
+                                          n_clusters_per_class=1, n_classes=args.classes)
 elif args.problem == "ball":
     samples, labels = make_gaussian_quantiles(
-        n_samples=num_samples, n_features=args.features, n_classes=2)
+        n_samples=num_samples, n_features=args.features, n_classes=args.classes)
 else:
     raise RuntimeError("Invalid problem!")
 
-# map labels to -1 and 1
-labels = labels * 2 - 1
-
-minmax_scale(samples, feature_range=[-1, 1], copy=False)
+minmax_scale(samples, feature_range=(-1, 1), copy=False)
 
 end_time = timer()
 print("Done in {}ms.".format(int((end_time - start_time) * 1000)))
 
-print("Saving samples... ", end="", flush=True)
+print("Saving samples using {} ... ".format("plssvm::data_set::save" if has_plssvm_python_bindings else "sklearn.datasets.dump_svmlight_file" ), end="", flush=True)
 start_time = timer()
 # set file names
 if args.output is not None:
@@ -92,26 +93,37 @@ else:
 if rawfile.endswith(args.format):
     rawfile = rawfile[:-(len(args.format) + 1)]
 file = rawfile + "." + args.format
+test_file = ""
 if args.test_samples > 0:
     test_file = rawfile + "_test." + args.format
 
+# save the files
 if args.format == "libsvm":
-    from sklearn.datasets import dump_svmlight_file
+    if has_plssvm_python_bindings:
+        # save the libsvm file using the "fast" PLSSVM function
+        import plssvm
+        plssvm.set_verbosity(plssvm.VerbosityLevel.QUIET)
 
-    # dump data in libsvm format
-    dump_svmlight_file(samples[:args.samples, :],
-                       labels[:args.samples],
-                       file,
-                       comment="This training data set has been created at {}\n{}x{}\n".format(
-                           datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"), args.samples, args.features),
-                       zero_based=False)
-    if args.test_samples > 0:
-        dump_svmlight_file(samples[args.samples:, :],
-                           labels[args.samples:],
-                           test_file,
-                           comment="This test data set has been created at {}\n{}x{}\n".format(
-                               datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"), args.test_samples, args.features),
+        # dump data in libsvm format
+        data_set = plssvm.DataSet(samples[:args.samples, :], labels[:args.samples])
+        data_set.save(file, plssvm.FileFormatType.LIBSVM)
+        if args.test_samples > 0:
+            test_data_set = plssvm.DataSet(samples[args.samples:, :], labels[args.samples:])
+            test_data_set.save(file, plssvm.FileFormatType.LIBSVM)
+    else:
+        # save the libsvm file using the "slow" sklearn function
+        from sklearn.datasets import dump_svmlight_file
+
+        # dump data in libsvm format
+        dump_svmlight_file(samples[:args.samples, :],
+                           labels[:args.samples],
+                           file,
                            zero_based=False)
+        if args.test_samples > 0:
+            dump_svmlight_file(samples[args.samples:, :],
+                               labels[args.samples:],
+                               test_file,
+                               zero_based=False)
 elif args.format == "arff":
     import numpy
     import arff
@@ -163,8 +175,8 @@ end_time = timer()
 print("Done in {}ms.".format(int((end_time - start_time) * 1000)))
 
 # output info
-print("Created training data set '{}' ({}) with {} data points and {} features.".format(
-    file, humanize.naturalsize(os.path.getsize(file)), args.samples, args.features))
+print("Created training data set '{}' ({}) with {} data points, {} features, and {} classes.".format(
+    file, humanize.naturalsize(os.path.getsize(file)), args.samples, args.features, args.classes))
 if args.test_samples > 0:
     print("Created test data set '{}' with {} data points and {} features."
           .format(test_file, args.test_samples, args.features))
@@ -181,6 +193,5 @@ if args.plot:
     elif args.features == 3:
         fig = plt.figure()
         ax = Axes3D(fig)
-        ax.scatter(samples[:args.samples, 0], samples[:args.samples,
-                                              1], samples[:args.samples, 2], c=labels)
+        ax.scatter(samples[:args.samples, 0], samples[:args.samples, 1], samples[:args.samples, 2], c=labels)
     plt.show()

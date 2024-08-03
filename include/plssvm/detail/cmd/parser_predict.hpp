@@ -13,9 +13,12 @@
 #define PLSSVM_DETAIL_CMD_PARSER_PREDICT_HPP_
 #pragma once
 
-#include "plssvm/backend_types.hpp"                      // plssvm::backend_type
-#include "plssvm/backends/SYCL/implementation_type.hpp"  // plssvm::sycl::implementation_type
-#include "plssvm/target_platforms.hpp"                   // plssvm::target_platform
+#include "plssvm/backend_types.hpp"                       // plssvm::backend_type
+#include "plssvm/backends/SYCL/implementation_types.hpp"  // plssvm::sycl::implementation_type
+#include "plssvm/target_platforms.hpp"                    // plssvm::target_platform
+
+#include "fmt/base.h"     // fmt::formatter
+#include "fmt/ostream.h"  // fmt::ostream_formatter
 
 #include <iosfwd>  // forward declare std::ostream
 #include <string>  // std::string
@@ -23,12 +26,12 @@
 namespace plssvm::detail::cmd {
 
 /**
- * @brief Class for encapsulating all necessary parameters for prediction; normally provided through command line arguments.
+ * @brief Struct for encapsulating all necessary parameters for prediction; normally provided through command line arguments.
  */
-class parser_predict {
-  public:
+struct parser_predict {
     /**
      * @brief Parse the command line arguments @p argv using [`cxxopts`](https://github.com/jarro2783/cxxopts) and set the predict parameters accordingly.
+     * @details If no output filename is given, uses the input filename and appends a ".predict". The output file is than saved in the current working directory.
      * @param[in] argc the number of passed command line arguments
      * @param[in] argv the command line arguments
      */
@@ -39,13 +42,11 @@ class parser_predict {
     /// The target platform: automatic (depending on the used backend), CPUs or GPUs from NVIDIA, AMD, or Intel.
     target_platform target{ target_platform::automatic };
 
-    /// The SYCL implementation to use with `--backend sycl`: automatic (depending on the SYCL implementation defined during the CMake configuration), hipsycl, or dpcpp.
+    /// The SYCL implementation to use with `--backend sycl`.
     sycl::implementation_type sycl_implementation_type{ sycl::implementation_type::automatic };
 
     /// `true` if `std::string` should be used as label type instead of the default type `ìnt`.
     bool strings_as_labels{ false };
-    /// `true` if `float` should be used as real type instead of the default type `double`.
-    bool float_as_real_type{ false };
 
     /// The name of the data file to predict.
     std::string input_filename{};
@@ -53,16 +54,22 @@ class parser_predict {
     std::string model_filename{};
     /// The name of the file to write the predicted labels to.
     std::string predict_filename{};
+
+    /// If performance tracking has been enabled, provides the name of the file where the performance tracking results are saved to. If the filename is empty, the results are dumped using std::clog instead.
+    std::string performance_tracking_filename{};
 };
 
 /**
  * @brief Output all predict parameters encapsulated by @p params to the given output-stream @p out.
- * @param[in,out] out the output-stream to write the parameters to
- * @param[in] params the parameters
+ * @param[in,out] out the output-stream to write the predict parameters to
+ * @param[in] params the predict parameters
  * @return the output-stream
  */
 std::ostream &operator<<(std::ostream &out, const parser_predict &params);
 
 }  // namespace plssvm::detail::cmd
+
+template <>
+struct fmt::formatter<plssvm::detail::cmd::parser_predict> : fmt::ostream_formatter { };
 
 #endif  // PLSSVM_DETAIL_CMD_PARSER_PREDICT_HPP_

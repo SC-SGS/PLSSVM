@@ -32,21 +32,35 @@ message(CHECK_PASS "found ")
 
 # explicitly set sources
 set(PLSSVM_OPENMP_SOURCES
-        ${CMAKE_CURRENT_LIST_DIR}/csvm.cpp
-        ${CMAKE_CURRENT_LIST_DIR}/exceptions.cpp
-        ${CMAKE_CURRENT_LIST_DIR}/q_kernel.cpp
-        ${CMAKE_CURRENT_LIST_DIR}/svm_kernel.cpp
-        )
-
+    ${CMAKE_CURRENT_LIST_DIR}/detail/utility.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/csvm.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/exceptions.cpp
+)
 
 # set target properties
 set_local_and_parent(PLSSVM_OPENMP_BACKEND_LIBRARY_NAME plssvm-OpenMP)
-add_library(${PLSSVM_OPENMP_BACKEND_LIBRARY_NAME} STATIC ${PLSSVM_OPENMP_SOURCES})
-target_link_libraries(${PLSSVM_OPENMP_BACKEND_LIBRARY_NAME} PUBLIC OpenMP::OpenMP_CXX)
+add_library(${PLSSVM_OPENMP_BACKEND_LIBRARY_NAME} SHARED ${PLSSVM_OPENMP_SOURCES})
+target_link_libraries(${PLSSVM_OPENMP_BACKEND_LIBRARY_NAME} PRIVATE $<$<NOT:$<CXX_COMPILER_ID:MSVC>>:OpenMP::OpenMP_CXX>)
 # special command line options for MSVC:
 # -openmp:llvm -> enables unsigned loop indexes in OpenMP parallel for loops
 # -openmp:experimental -> enables OpenMP's SIMD instructions
-target_compile_options(${PLSSVM_OPENMP_BACKEND_LIBRARY_NAME} PUBLIC $<$<CXX_COMPILER_ID:MSVC>:-openmp:llvm -openmp:experimental>)
+target_compile_options(${PLSSVM_OPENMP_BACKEND_LIBRARY_NAME} PRIVATE $<$<CXX_COMPILER_ID:MSVC>:-openmp:llvm -openmp:experimental>)
+
+# additional compilation flags
+target_compile_options(${PLSSVM_OPENMP_BACKEND_LIBRARY_NAME} PRIVATE $<$<COMPILE_LANG_AND_ID:CXX,GNU,Clang>:-Wconversion>)
+
+# work-around since hipcc doesn't define _OPENMP
+if (${CMAKE_CXX_COMPILER_ID} MATCHES "Clang")
+    # hipcc must be clang
+    execute_process(
+            COMMAND ${CMAKE_CXX_COMPILER} --version
+            OUTPUT_VARIABLE PLSSVM_CLANG_VERSION_OUTPUT)
+    # check if version message contains hipcc specific values
+    if ("${PLSSVM_CLANG_VERSION_OUTPUT}" MATCHES ".*HIP.*" AND "${PLSSVM_CLANG_VERSION_OUTPUT}" MATCHES ".*AMD clang.*")
+        message(STATUS "Add compiler options \"-x c++\" as workaround for hipcc (https://docs.amd.com/projects/HIP/en/docs-5.2.0/user_guide/faq.html#why-openmp-is-undefined-when-compiling-with-fopenmp).")
+        target_compile_options(${PLSSVM_OPENMP_BACKEND_LIBRARY_NAME} PRIVATE -x c++)
+    endif ()
+endif ()
 
 # link base library against OpenMP library
 target_link_libraries(${PLSSVM_OPENMP_BACKEND_LIBRARY_NAME} PUBLIC ${PLSSVM_BASE_LIBRARY_NAME})
@@ -58,9 +72,7 @@ target_compile_definitions(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC PLSSVM_HAS_OPENMP_
 target_link_libraries(${PLSSVM_ALL_LIBRARY_NAME} INTERFACE ${PLSSVM_OPENMP_BACKEND_LIBRARY_NAME})
 
 # mark backend library as install target
-list(APPEND PLSSVM_TARGETS_TO_INSTALL "${PLSSVM_OPENMP_BACKEND_LIBRARY_NAME}")
-set(PLSSVM_TARGETS_TO_INSTALL ${PLSSVM_TARGETS_TO_INSTALL} PARENT_SCOPE)
-
+append_local_and_parent(PLSSVM_TARGETS_TO_INSTALL ${PLSSVM_OPENMP_BACKEND_LIBRARY_NAME})
 
 # generate summary string
 set(PLSSVM_OPENMP_BACKEND_SUMMARY_STRING " - OpenMP: cpu " PARENT_SCOPE)

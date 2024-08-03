@@ -1,5 +1,5 @@
 .\" Manpage for plssvm-train.
-.TH PLSSVM-TRAIN 1 "13 December 2022" "2.0.0" "plssvm-train Manual"
+.TH PLSSVM-TRAIN 1 "@PLSSVM_CURRENT_BUILD_TIME@" "@PROJECT_VERSION@" "plssvm-train Manual"
 
 .SH NAME
 plssvm-train - LS-SVM with multiple (GPU-)backends
@@ -17,7 +17,7 @@ plssvm-train is a utility to train an LS-SVM using different backends to target 
 set type of kernel function.
     0 -- linear: u'*v
     1 -- polynomial: (gamma*u'*v + coef0)^degree
-    2 -- radial basis function: exp(-gamma*|u-v|^2) (default: 0)
+    2 -- radial basis function: exp(-gamma*|u-v|^2) (default: 2)
 
 .TP
 .B -d, --degree arg
@@ -44,6 +44,14 @@ set the tolerance of termination criterion (default: 0.001)
 the maximum number of CG iterations (default: #features)
 
 .TP
+.B -l, --solver arg
+choose the solver: automatic|cg_explicit|cg_implicit (default: automatic)
+
+.TP
+.B -a, --classification arg
+the classification strategy to use for multi-class classification: oaa|oao (default: oaa)
+
+.TP
 .B -b, --backend arg
 choose the backend: @PLSSVM_BACKEND_NAME_LIST@ (default: automatic)
 
@@ -53,17 +61,19 @@ choose the target platform: @PLSSVM_PLATFORM_NAME_LIST@ (default: automatic)
 
 @PLSSVM_SYCL_MANPAGE_ENTRY@
 
+@PLSSVM_PERFORMANCE_TRACKER_MANPAGE_ENTRY@
+
 .TP
 .B --use_string_as_labels arg
 must be specified if the labels should be interpreted as strings instead of integers
 
 .TP
-.B --use_float_as_real_type arg
-must be specified if float should be used instead of double as floating point type
+.B --verbosity arg
+choose the level of verbosity: full|timing|libsvm|quiet (default: full)
 
 .TP
 .B -q, --quiet
-quiet mode (no outputs)
+quiet mode (no outputs regardless the provided verbosity level!)
 
 .TP
 .B -h, --help

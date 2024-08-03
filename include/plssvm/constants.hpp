@@ -13,43 +13,41 @@
 #define PLSSVM_CONSTANTS_HPP_
 #pragma once
 
+#include "plssvm/detail/type_list.hpp"  // plssvm::detail::{supported_real_types, tuple_contains_v}
+
 namespace plssvm {
 
-// TODO: replace "verbose" flag with a dedicated logging library?!
-
-/// Per default use a verbose output of all information.
-constexpr bool verbose_default = true;
-/// If `true` use verbose output of information (e.g., runtimes). May be changed by a user.
-inline bool verbose = verbose_default;
-
-/// Integer type used inside kernels.
-using kernel_index_type = int;  // TODO: remove and replace by backend specific type?
-
-/// Global compile-time constant used for internal caching. May be changed during the CMake configuration step.
-#if defined(PLSSVM_THREAD_BLOCK_SIZE)
-constexpr kernel_index_type THREAD_BLOCK_SIZE = PLSSVM_THREAD_BLOCK_SIZE;
+/// The used floating point type. May be changed during the CMake configuration step.
+#if defined(PLSSVM_FLOAT_AS_REAL_TYPE)
+using real_type = float;
 #else
-constexpr kernel_index_type THREAD_BLOCK_SIZE = 16;
+using real_type = double;
+#endif
+
+/// Global compile-time constant used for internal thread block caching. May be changed during the CMake configuration step.
+#if defined(PLSSVM_THREAD_BLOCK_SIZE)
+constexpr unsigned THREAD_BLOCK_SIZE = PLSSVM_THREAD_BLOCK_SIZE;
+#else
+constexpr unsigned THREAD_BLOCK_SIZE = 8;
 #endif
 
 /// Global compile-time constant used for internal caching. May be changed during the CMake configuration step.
 #if defined(PLSSVM_INTERNAL_BLOCK_SIZE)
-constexpr kernel_index_type INTERNAL_BLOCK_SIZE = PLSSVM_INTERNAL_BLOCK_SIZE;
+constexpr unsigned INTERNAL_BLOCK_SIZE = PLSSVM_INTERNAL_BLOCK_SIZE;
 #else
-constexpr kernel_index_type INTERNAL_BLOCK_SIZE = 6;
+constexpr unsigned INTERNAL_BLOCK_SIZE = 4;
 #endif
 
-/// Global compile-time constant used for internal caching in the OpenMP kernel. May be changed during the CMake configuration step.
-#if defined(PLSSVM_OPENMP_BLOCK_SIZE)
-constexpr kernel_index_type OPENMP_BLOCK_SIZE = PLSSVM_OPENMP_BLOCK_SIZE;
-#else
-constexpr kernel_index_type OPENMP_BLOCK_SIZE = 64;
-#endif
+/// Global compile time constant used for internal feature caching.
+constexpr unsigned FEATURE_BLOCK_SIZE = 2 * THREAD_BLOCK_SIZE;
+
+/// Padding used for the device w_d matrix to prevent out-of-bounce accesses without ifs.
+constexpr unsigned PADDING_SIZE = FEATURE_BLOCK_SIZE > (THREAD_BLOCK_SIZE * INTERNAL_BLOCK_SIZE) ? FEATURE_BLOCK_SIZE : (THREAD_BLOCK_SIZE *INTERNAL_BLOCK_SIZE);
 
 // perform sanity checks
+static_assert(detail::tuple_contains_v<real_type, detail::supported_real_types>, "Illegal real type provided! See the 'real_type_list' in the type_list.hpp header for a list of the allowed types.");
 static_assert(THREAD_BLOCK_SIZE > 0, "THREAD_BLOCK_SIZE must be greater than 0!");
 static_assert(INTERNAL_BLOCK_SIZE > 0, "INTERNAL_BLOCK_SIZE must be greater than 0!");
-static_assert(OPENMP_BLOCK_SIZE > 0, "OPENMP_BLOCK_SIZE must be greater than 0!");
 
 }  // namespace plssvm
 

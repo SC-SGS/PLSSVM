@@ -8,20 +8,22 @@
 
 #include "plssvm/backend_types.hpp"
 
+#include "plssvm/detail/assert.hpp"          // PLSSVM_ASSERT
 #include "plssvm/detail/string_utility.hpp"  // plssvm::detail::to_lower_case
 #include "plssvm/detail/utility.hpp"         // plssvm::detail::contains
 #include "plssvm/exceptions/exceptions.hpp"  // plssvm::unsupported_backend_exception
+#include "plssvm/target_platforms.hpp"       // plssvm::target_platform
 
-#include "fmt/format.h"   // fmt::format, fmt::join
-#include "fmt/ostream.h"  // be able to format types with an operator<< overload
+#include "fmt/format.h"  // fmt::format
+#include "fmt/ranges.h"  // fmt::join
 
-#include <array>      // std::array
-#include <ios>        // std::ios::failbit
-#include <istream>    // std::istream
-#include <ostream>    // std::ostream
-#include <string>     // std::string
-#include <utility>    // std::pair
-#include <vector>     // std::vector
+#include <array>    // std::array
+#include <ios>      // std::ios::failbit
+#include <istream>  // std::istream
+#include <ostream>  // std::ostream
+#include <string>   // std::string
+#include <utility>  // std::pair
+#include <vector>   // std::vector
 
 namespace plssvm {
 
@@ -29,6 +31,9 @@ std::vector<backend_type> list_available_backends() {
     std::vector<backend_type> available_backends = { backend_type::automatic };
 #if defined(PLSSVM_HAS_OPENMP_BACKEND)
     available_backends.push_back(backend_type::openmp);
+#endif
+#if defined(PLSSVM_HAS_STDPAR_BACKEND)
+    available_backends.push_back(backend_type::stdpar);
 #endif
 #if defined(PLSSVM_HAS_CUDA_BACKEND)
     available_backends.push_back(backend_type::cuda);
@@ -42,6 +47,10 @@ std::vector<backend_type> list_available_backends() {
 #if defined(PLSSVM_HAS_SYCL_BACKEND)
     available_backends.push_back(backend_type::sycl);
 #endif
+
+    // automatic is ALWAYS available but AT LEAST ONE other backend must be available in addition
+    PLSSVM_ASSERT(available_backends.size() > 1, "Besides \"automatic\" at least one other backend must be available!");
+
     return available_backends;
 }
 
@@ -49,10 +58,10 @@ backend_type determine_default_backend(const std::vector<backend_type> &availabl
     // the decision order based on empiric findings
     using decision_order_type = std::pair<target_platform, std::vector<backend_type>>;
     const std::array decision_order = {
-        decision_order_type{ target_platform::gpu_nvidia, { backend_type::cuda, backend_type::hip, backend_type::opencl, backend_type::sycl } },
-        decision_order_type{ target_platform::gpu_amd, { backend_type::hip, backend_type::opencl, backend_type::sycl } },
-        decision_order_type{ target_platform::gpu_intel, { backend_type::sycl, backend_type::opencl } },
-        decision_order_type{ target_platform::cpu, { backend_type::sycl, backend_type::opencl, backend_type::openmp } }
+        decision_order_type{ target_platform::gpu_nvidia, { backend_type::cuda, backend_type::hip, backend_type::opencl, backend_type::sycl, backend_type::stdpar } },
+        decision_order_type{ target_platform::gpu_amd, { backend_type::hip, backend_type::opencl, backend_type::sycl, backend_type::stdpar } },
+        decision_order_type{ target_platform::gpu_intel, { backend_type::sycl, backend_type::opencl, backend_type::stdpar } },
+        decision_order_type{ target_platform::cpu, { backend_type::sycl, backend_type::opencl, backend_type::openmp, backend_type::stdpar } }
     };
 
     // return the default backend based on the previously defined decision order
@@ -76,6 +85,8 @@ std::ostream &operator<<(std::ostream &out, const backend_type backend) {
             return out << "automatic";
         case backend_type::openmp:
             return out << "openmp";
+        case backend_type::stdpar:
+            return out << "stdpar";
         case backend_type::cuda:
             return out << "cuda";
         case backend_type::hip:
@@ -93,10 +104,12 @@ std::istream &operator>>(std::istream &in, backend_type &backend) {
     in >> str;
     detail::to_lower_case(str);
 
-    if (str == "automatic") {
+    if (str == "automatic" || str == "auto") {
         backend = backend_type::automatic;
     } else if (str == "openmp") {
         backend = backend_type::openmp;
+    } else if (str == "stdpar") {
+        backend = backend_type::stdpar;
     } else if (str == "cuda") {
         backend = backend_type::cuda;
     } else if (str == "hip") {
