@@ -50,6 +50,9 @@ std::string run_subprocess(const std::string_view cmd_line) {
     std::string buffer(buffer_size, '\0');  // 4096 characters should be enough
     const std::size_t bytes_read = std::fread(buffer.data(), sizeof(typename decltype(buffer)::value_type), buffer.size(), out_handle);
 
+    // destroy subprocess
+    PLSSVM_SUBPROCESS_ERROR_CHECK(subprocess_destroy(&proc));
+
     // create output
     return buffer.substr(0, bytes_read);
 }
