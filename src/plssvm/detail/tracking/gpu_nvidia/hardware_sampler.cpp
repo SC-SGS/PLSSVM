@@ -51,6 +51,7 @@ gpu_nvidia_hardware_sampler::gpu_nvidia_hardware_sampler(const std::size_t devic
     // track the NVML version
     std::string version(NVML_SYSTEM_NVML_VERSION_BUFFER_SIZE, '\0');
     PLSSVM_NVML_ERROR_CHECK(nvmlSystemGetNVMLVersion(version.data(), NVML_SYSTEM_NVML_VERSION_BUFFER_SIZE));
+    version = version.substr(0, version.find_first_of('\0'));
     PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking::tracking_entry{ "dependencies", "nvml_version", version }));
 
     // initialize samples -> can't be done beforehand since the device handle can only be initialized after a call to nvmlInit
