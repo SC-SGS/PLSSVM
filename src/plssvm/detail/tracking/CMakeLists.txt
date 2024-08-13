@@ -90,7 +90,7 @@ if (PLSSVM_ENABLE_HARDWARE_SAMPLING)
                     message(STATUS "Can't use turbostat with root even if no sudo password is required!")
                     message(STATUS "Disabling turbostat support!")
                 else ()
-                    message(STATUS "Enable sampling of CPU information using turbostat.")
+                    message(STATUS "Enable sampling of CPU information using sudo turbostat.")
                     
                     set(PLSSVM_TURBOSTAT_EXECUTION_TYPE "root")
                     # add compile definitions
@@ -99,6 +99,8 @@ if (PLSSVM_ENABLE_HARDWARE_SAMPLING)
                 endif ()
             endif ()
         else ()
+            message(STATUS "Enable sampling of CPU information using turbostat.")
+            
             set(PLSSVM_TURBOSTAT_EXECUTION_TYPE "without_root")
             # add compile definitions
             target_compile_definitions(${PLSSVM_HARDWARE_TRACKING_LIBRARY_NAME} PUBLIC PLSSVM_HARDWARE_TRACKING_VIA_TURBOSTAT_ENABLED)
