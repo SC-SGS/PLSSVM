@@ -582,6 +582,15 @@ If a stdpar implementation is available, additional free functions are available
 |-------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------|
 | `list_available_stdpar_implementations()` | List all available stdpar implementations (determined during PLSSVM's build step; currently always guaranteed to be only one implementation). |
 
+If hardware sampling is available, additional free functions are available:
+
+| function                            | description                                                                          |
+|-------------------------------------|--------------------------------------------------------------------------------------|
+| `has_cpu_hardware_sampler()`        | Returns `true` if the CPU hardware sampler is available, `false` otherwise.          |
+| `has_gpu_nvidia_hardware_sampler()` | Returns `true` if the NVIDIA GPU hardware sampler is available, `false` otherwise.   |
+| `has_gpu_amd_hardware_sampler()`    | Returns `true` if the NVIDIA AMD hardware sampler is available, `false` otherwise.   |
+| `has_gpu_intel_hardware_sampler()`  | Returns `true` if the NVIDIA Intel hardware sampler is available, `false` otherwise. |
+
 ### Exceptions
 
 The PLSSVM Python3 bindings define a few new exception types:
