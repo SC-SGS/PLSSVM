@@ -245,7 +245,7 @@ void gpu_nvidia_hardware_sampler::sampling_loop() {
         // queried samples -> retrieved every iteration if available
         nvmlPstates_t pstate{};
         if (nvmlDeviceGetPowerState(device, &pstate) == NVML_SUCCESS) {
-            power_samples_.power_state_ = decltype(general_samples_.performance_state_)::value_type{ static_cast<decltype(power_samples_.power_state_)::value_type::value_type>(pstate) };
+            power_samples_.power_state_ = decltype(power_samples_.power_state_)::value_type{ static_cast<decltype(power_samples_.power_state_)::value_type::value_type>(pstate) };
         }
 
         decltype(power_samples_.power_usage_)::value_type::value_type power_usage{};
