@@ -170,14 +170,14 @@ std::string level_zero_clock_samples::generate_yaml_string() const {
     }
     // the current memory clock frequency
     if (this->clock_mem_.has_value()) {
-        str += fmt::format("      clock_gpu:\n"
+        str += fmt::format("      clock_mem:\n"
                            "        unit: \"MHz\"\n"
                            "        values: [{}]\n",
                            fmt::join(this->clock_mem_.value(), ", "));
     }
     // the current memory throttle reason
     if (this->throttle_reason_mem_.has_value()) {
-        str += fmt::format("      throttle_reason_gpu:\n"
+        str += fmt::format("      throttle_reason_mem:\n"
                            "        unit: \"bitmask\"\n"
                            "        values: [{}]\n",
                            fmt::join(this->throttle_reason_mem_.value(), ", "));
