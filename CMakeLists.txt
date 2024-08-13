@@ -654,7 +654,7 @@ endif ()
 ########################################################################################################################
 ##                                              enable language bindings                                              ##
 ########################################################################################################################
-option(PLSSVM_ENABLE_LANGUAGE_BINDINGS "Build langauge bindings, e.g., for Python." OFF)
+option(PLSSVM_ENABLE_LANGUAGE_BINDINGS "Build language bindings, e.g., for Python." OFF)
 if (PLSSVM_ENABLE_LANGUAGE_BINDINGS)
     add_subdirectory(bindings)
 endif ()
