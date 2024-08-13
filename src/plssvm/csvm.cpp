@@ -69,7 +69,7 @@ std::pair<soa_matrix<real_type>, unsigned long long> csvm::conjugate_gradients(c
 
     // timing for each CG iteration
     std::chrono::milliseconds total_iteration_time{};
-    std::chrono::milliseconds total_blas_level_3_time{};
+    std::vector<std::chrono::milliseconds> blas_level_3_times{};
 
     //
     // perform Conjugate Gradients (CG) algorithm
@@ -79,7 +79,7 @@ std::pair<soa_matrix<real_type>, unsigned long long> csvm::conjugate_gradients(c
 
     // R = B - A * X
     soa_matrix<real_type> R{ B, shape{ PADDING_SIZE, PADDING_SIZE } };
-    total_blas_level_3_time += this->run_blas_level_3(cg_solver, real_type{ -1.0 }, A, X, real_type{ 1.0 }, R);
+    blas_level_3_times.push_back(this->run_blas_level_3(cg_solver, real_type{ -1.0 }, A, X, real_type{ 1.0 }, R));
 
     // delta = R.T * R
     std::vector<real_type> delta = rowwise_dot(R, R);
@@ -131,7 +131,7 @@ std::pair<soa_matrix<real_type>, unsigned long long> csvm::conjugate_gradients(c
 
         // Q = A * D
         soa_matrix<real_type> Q{ shape{ D.num_rows(), D.num_cols() }, shape{ PADDING_SIZE, PADDING_SIZE } };
-        total_blas_level_3_time += this->run_blas_level_3(cg_solver, real_type{ 1.0 }, A, D, real_type{ 0.0 }, Q);
+        blas_level_3_times.push_back(this->run_blas_level_3(cg_solver, real_type{ 1.0 }, A, D, real_type{ 0.0 }, Q));
 
         // alpha = delta_new / (D^T * Q))
         const std::vector<real_type> alpha = delta / rowwise_dot(D, Q);
@@ -165,7 +165,7 @@ std::pair<soa_matrix<real_type>, unsigned long long> csvm::conjugate_gradients(c
             // explicitly recalculate residual to remove accumulating floating point errors
             // R = B - A * X
             R = soa_matrix<real_type>{ B, shape{ PADDING_SIZE, PADDING_SIZE } };
-            total_blas_level_3_time += this->run_blas_level_3(cg_solver, real_type{ -1.0 }, A, X, real_type{ 1.0 }, R);
+            blas_level_3_times.push_back(this->run_blas_level_3(cg_solver, real_type{ -1.0 }, A, X, real_type{ 1.0 }, R));
         } else {
             // R = R - alpha * Q
             R -= rowwise_scale(alpha, Q);
@@ -192,7 +192,7 @@ std::pair<soa_matrix<real_type>, unsigned long long> csvm::conjugate_gradients(c
     }
     const std::size_t max_residual_difference_idx = rhs_idx_max_residual_difference();
     detail::log(verbosity_level::full | verbosity_level::timing,
-                "Finished after {}/{} iterations with {}/{} converged rhs (max residual {} with target residual {} for rhs {}) and an average iteration time of {} and an average SYMM time of {}.\n",
+                "Finished after {}/{} iterations with {}/{} converged rhs (max residual {} with target residual {} for rhs {}) and an average iteration time of {}.\n",
                 detail::tracking::tracking_entry{ "cg", "iterations", iter },
                 detail::tracking::tracking_entry{ "cg", "max_iterations", max_cg_iter },
                 detail::tracking::tracking_entry{ "cg", "num_converged_rhs", num_rhs_converged() },
@@ -200,8 +200,8 @@ std::pair<soa_matrix<real_type>, unsigned long long> csvm::conjugate_gradients(c
                 delta[max_residual_difference_idx],
                 eps * eps * delta0[max_residual_difference_idx],
                 max_residual_difference_idx,
-                detail::tracking::tracking_entry{ "cg", "avg_iteration_time", total_iteration_time / std::max(iter, 1ULL) },
-                detail::tracking::tracking_entry{ "cg", "avg_blas_level_3_time", total_blas_level_3_time / (1 + iter + iter / 50) });
+                detail::tracking::tracking_entry{ "cg", "avg_iteration_time", total_iteration_time / std::max(iter, 1ULL) });
+    PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((detail::tracking::tracking_entry{ "cg", "blas_level_3_times", blas_level_3_times }));
     PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((detail::tracking::tracking_entry{ "cg", "residuals", delta }));
     PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((detail::tracking::tracking_entry{ "cg", "target_residuals", eps * eps * delta0 }));
     PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((detail::tracking::tracking_entry{ "cg", "epsilon", eps }));
