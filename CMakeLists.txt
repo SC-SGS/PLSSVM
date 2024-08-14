@@ -614,10 +614,6 @@ else ()
     set_property(TARGET fmt PROPERTY POSITION_INDEPENDENT_CODE ON)
     target_compile_definitions(fmt PRIVATE FMT_USE_FULL_CACHE_DRAGONBOX)
     add_dependencies(${PLSSVM_BASE_LIBRARY_NAME} fmt)
-    target_include_directories(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC
-                               $<BUILD_INTERFACE:${fmt_SOURCE_DIR}/include>
-                               $<INSTALL_INTERFACE:include>
-    )
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS_OLD}")
 endif ()
 target_link_libraries(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC fmt::fmt)
