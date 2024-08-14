@@ -969,7 +969,7 @@ template <typename T, layout_type layout>
  * @return the newly scaled matrix (`[[nodiscard]]`)
  */
 template <typename T, layout_type layout>
-[[nodiscard]] matrix<T, layout> masked_rowwise_scale(const std::vector<int> &mask, const std::vector<T> &scale, matrix<T, layout> matr) {
+[[nodiscard]] matrix<T, layout> masked_rowwise_scale(const std::vector<unsigned long long> &mask, const std::vector<T> &scale, matrix<T, layout> matr) {
     PLSSVM_ASSERT(scale.size() == matr.num_rows(), "Error: shapes missmatch! ({} != {} (num_rows))", scale.size(), matr.num_rows());
     PLSSVM_ASSERT(mask.size() == matr.num_rows(), "Error: shapes missmatch! ({} != {} (num_rows))", mask.size(), matr.num_rows());
     using size_type = typename matrix<T, layout>::size_type;

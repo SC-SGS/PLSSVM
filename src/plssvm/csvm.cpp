@@ -55,7 +55,7 @@ void csvm::sanity_check_parameter() const {
     // cost: all allowed
 }
 
-std::pair<soa_matrix<real_type>, unsigned long long> csvm::conjugate_gradients(const std::vector<detail::move_only_any> &A, const soa_matrix<real_type> &B, const real_type eps, const unsigned long long max_cg_iter, const solver_type cg_solver) const {
+std::pair<soa_matrix<real_type>, std::vector<unsigned long long>> csvm::conjugate_gradients(const std::vector<detail::move_only_any> &A, const soa_matrix<real_type> &B, const real_type eps, const unsigned long long max_cg_iter, const solver_type cg_solver) const {
     using namespace plssvm::operators;
 
     PLSSVM_ASSERT(!B.empty(), "The right-hand sides must not be empty!");
@@ -70,6 +70,10 @@ std::pair<soa_matrix<real_type>, unsigned long long> csvm::conjugate_gradients(c
     // timing for each CG iteration
     std::chrono::milliseconds total_iteration_time{};
     std::vector<std::chrono::milliseconds> blas_level_3_times{};
+
+    // track the number of iterations needed per rhs
+    unsigned long long iter = 0;
+    std::vector<unsigned long long> num_iters(num_rhs, 1);
 
     //
     // perform Conjugate Gradients (CG) algorithm
@@ -99,21 +103,42 @@ std::pair<soa_matrix<real_type>, unsigned long long> csvm::conjugate_gradients(c
         }
         return idx;
     };
-    // get the number of rhs that have already been converged
-    const auto num_rhs_converged = [eps, &delta, &delta0]() {
-        return static_cast<std::size_t>(std::inner_product(delta.cbegin(), delta.cend(), delta0.cbegin(), real_type{ 0.0 }, std::plus<>{}, [eps](const real_type d, const real_type d0) { return d <= eps * eps * d0; }));
-    };
+
+    std::vector<unsigned long long> mask(num_rhs, 1);
     // calculate a mask for every converged right hand side
     // -> 0 if the rhs already converged, 1 otherwise
-    const auto calculate_rhs_converged_mask = [eps, &delta, &delta0]() {
-        std::vector<int> mask(delta.size());
-        for (std::size_t i = 0; i < mask.size(); ++i) {
-            mask[i] = delta[i] <= eps * eps * delta0[i] ? 0 : 1;
+    const auto calculate_rhs_converged_mask = [eps, delta0, &mask](const std::vector<real_type> &delta_vec, const soa_matrix<real_type>& R_matr) {
+#pragma omp parallel for shared(delta_vec, R_matr)
+        for (std::size_t row = 0; row < R_matr.num_rows(); ++row) {
+            // check if this rhs is already marked as converged
+            if (mask[row] == 1) {
+                // check if this rhs is now converged
+                if (delta_vec[row] <= eps * eps * delta0[row]) {
+                    // the residual of this rhs is already small enough -> converged
+                    mask[row] = 0;
+                } else {
+                    // the residual of this rhs is all zeros -> converged
+                    bool is_residual_zero = true;
+                    for (std::size_t col = 0; col < R_matr.num_cols(); ++col) {
+                        if (R_matr(row, col) != real_type{ 0.0 }) {
+                            is_residual_zero = false;
+                            break;
+                        }
+                    }
+                    // all residual values are 0 -> residual is 0 -> can't updated X for this rhs!
+                    if (is_residual_zero) {
+                        mask[row] = 0;
+                    }
+                }
+            }
         }
         return mask;
     };
+    // get the number of rhs that have already been converged
+    const auto num_rhs_converged = [&mask]() {
+        return static_cast<std::size_t>(std::count(mask.cbegin(), mask.cend(), 0));
+    };
 
-    unsigned long long iter = 0;
     while (iter < max_cg_iter && num_rhs_converged() < num_rhs) {
         PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_EVENT(fmt::format("cg iter {} start", iter));
 
@@ -129,34 +154,15 @@ std::pair<soa_matrix<real_type>, unsigned long long> csvm::conjugate_gradients(c
                     max_residual_difference_idx);
         const std::chrono::steady_clock::time_point iteration_start_time = std::chrono::steady_clock::now();
 
+        // create mask for the residual -> only update X if the respective rhs did not already converge
+        mask = calculate_rhs_converged_mask(delta, R);
+
         // Q = A * D
         soa_matrix<real_type> Q{ shape{ D.num_rows(), D.num_cols() }, shape{ PADDING_SIZE, PADDING_SIZE } };
         blas_level_3_times.push_back(this->run_blas_level_3(cg_solver, real_type{ 1.0 }, A, D, real_type{ 0.0 }, Q));
 
         // alpha = delta_new / (D^T * Q))
         const std::vector<real_type> alpha = delta / rowwise_dot(D, Q);
-
-        // create mask for the residual -> only update X if the respective rhs did not already converge
-        std::vector<int> mask = calculate_rhs_converged_mask();
-        // update mask -> can't update X if the residual is already 0
-#pragma omp parallel for shared(R, mask)
-        for (std::size_t row = 0; row < R.num_rows(); ++row) {
-            // if mask[row] == 0 -> rhs already converged -> X wouldn't be updated either way
-            if (mask[row] == 1) {
-                // check if any residual value is not zero
-                bool is_residual_zero = true;
-                for (std::size_t col = 0; col < R.num_cols(); ++col) {
-                    if (R(row, col) != real_type{ 0.0 }) {
-                        is_residual_zero = false;
-                        break;
-                    }
-                }
-                // all residual values are 0 -> residual is 0 -> can't updated X for this rhs!
-                if (is_residual_zero) {
-                    mask[row] = 0;
-                }
-            }
-        }
 
         // X = X + alpha * D
         X += masked_rowwise_scale(mask, alpha, D);
@@ -189,6 +195,7 @@ std::pair<soa_matrix<real_type>, unsigned long long> csvm::conjugate_gradients(c
 
         // next CG iteration
         ++iter;
+        num_iters += mask;
     }
     const std::size_t max_residual_difference_idx = rhs_idx_max_residual_difference();
     detail::log(verbosity_level::full | verbosity_level::timing,
@@ -211,7 +218,7 @@ std::pair<soa_matrix<real_type>, unsigned long long> csvm::conjugate_gradients(c
 
     PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_EVENT("cg end");
 
-    return std::make_pair(X, iter);
+    return std::make_pair(X, num_iters);
 }
 
 std::pair<std::vector<real_type>, real_type> csvm::perform_dimensional_reduction(const parameter &params, const soa_matrix<real_type> &A) const {
