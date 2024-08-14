@@ -29,7 +29,9 @@
 #include "bindings/Python/utility.hpp"  // register_py_exception
 
 #include "fmt/format.h"         // fmt::format
+#include "pybind11/chrono.h"    // bind std::chrono types
 #include "pybind11/pybind11.h"  // py::module_, py::class_
+#include "pybind11/stl.h"       // bind STL types
 
 #include <chrono>   // std::chrono::milliseconds, std::chrono_literals namespace
 #include <cstddef>  // std::size_t

@@ -12,7 +12,9 @@
 #include "plssvm/detail/tracking/hardware_sampler.hpp"  // plssvm::detail::tracking::hardware_sampler
 #include "plssvm/parameter.hpp"                         // plssvm::parameter
 
+#include "pybind11/chrono.h"    // automatic bindings for std::chrono::milliseconds
 #include "pybind11/pybind11.h"  // py::module_
+#include "pybind11/stl.h"       // automatic bindings for std::optional and std::vector
 
 #include <chrono>  // std::chrono::steady_clock::time_point
 #include <string>  // std::string
