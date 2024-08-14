@@ -530,7 +530,7 @@ else ()
 endif ()
 
 ## try finding fast_float
-set(PLSSVM_fast_float_VERSION v6.1.1)
+set(PLSSVM_fast_float_VERSION v6.1.3)
 find_package(fast_float QUIET)
 if (fast_float_FOUND)
     # TODO: get used fast_float version
@@ -584,8 +584,8 @@ else ()
 endif ()
 
 ## try finding fmt
-set(PLSSVM_fmt_VERSION 11.0.1)
-find_package(fmt 11.0.1 QUIET)
+set(PLSSVM_fmt_VERSION 11.0.2)
+find_package(fmt 11.0.2 QUIET)
 if (fmt_FOUND)
     message(STATUS "Found package fmt.")
 else ()
