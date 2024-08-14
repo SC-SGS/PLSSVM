@@ -18,6 +18,7 @@
 #include "plssvm/detail/utility.hpp"                       // PLSSVM_IS_DEFINED
 
 #if defined(PLSSVM_HARDWARE_SAMPLING_ENABLED)
+    #include "plssvm/detail/tracking/cpu/hardware_sampler.hpp"      // plssvm::detail::tracking::cpu_hardware_sampler
     #include "plssvm/detail/tracking/hardware_sampler.hpp"          // plssvm::detail::tracking::hardware_sampler
     #include "plssvm/detail/tracking/hardware_sampler_factory.hpp"  // plssvm::detail::tracking::make_hardware_sampler
 #endif
@@ -43,6 +44,12 @@ int main(int argc, char *argv[]) {
     try {
         const std::chrono::steady_clock::time_point start_time = std::chrono::steady_clock::now();
         PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_SET_REFERENCE_TIME(start_time);
+
+        // create and start CPU hardware sampler if available
+#if defined(PLSSVM_HARDWARE_TRACKING_FOR_CPUS_ENABLED)
+        plssvm::detail::tracking::cpu_hardware_sampler cpu_sampler{ PLSSVM_HARDWARE_SAMPLING_INTERVAL };
+        cpu_sampler.start_sampling();
+#endif
 
         // parse SVM parameter from command line
         const plssvm::detail::cmd::parser_predict cmd_parser{ argc, argv };
@@ -159,6 +166,12 @@ int main(int argc, char *argv[]) {
 #endif
         };
         std::visit(data_set_visitor, plssvm::detail::cmd::data_set_factory(cmd_parser));
+
+        // stop CPU hardware sampler and dump results if available
+#if defined(PLSSVM_HARDWARE_TRACKING_FOR_CPUS_ENABLED)
+        cpu_sampler.stop_sampling();
+        PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_HARDWARE_SAMPLER_ENTRY(cpu_sampler);
+#endif
 
         const std::chrono::steady_clock::time_point end_time = std::chrono::steady_clock::now();
         plssvm::detail::log(plssvm::verbosity_level::full | plssvm::verbosity_level::timing,
