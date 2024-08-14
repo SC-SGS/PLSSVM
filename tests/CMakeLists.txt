@@ -150,10 +150,6 @@ set(PLSSVM_BASE_TEST_SOURCES
     ${CMAKE_CURRENT_LIST_DIR}/detail/io/libsvm_parsing.cpp
     ${CMAKE_CURRENT_LIST_DIR}/detail/io/scaling_factors_parsing.cpp
     
-    ${CMAKE_CURRENT_LIST_DIR}/detail/tracking/events.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/detail/tracking/performance_tracker.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/detail/tracking/utility.cpp
-    
     ${CMAKE_CURRENT_LIST_DIR}/detail/arithmetic_type_name.cpp
     ${CMAKE_CURRENT_LIST_DIR}/detail/assert.cpp
     ${CMAKE_CURRENT_LIST_DIR}/detail/data_distribution.cpp
@@ -275,7 +271,7 @@ endif ()
 add_subdirectory(backends)
 
 # add tests for the hardware samplers
-if (PLSSVM_ENABLE_HARDWARE_SAMPLING)
+if (PLSSVM_ENABLE_PERFORMANCE_TRACKING)
     add_subdirectory(detail/tracking)
 endif ()
 
