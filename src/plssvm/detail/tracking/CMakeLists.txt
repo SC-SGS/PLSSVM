@@ -10,8 +10,8 @@ message(STATUS "Enabled performance tracking to YAML files for the PLSSVM execut
 
 target_sources(${PLSSVM_BASE_LIBRARY_NAME} PRIVATE $<BUILD_INTERFACE:
                ${CMAKE_CURRENT_SOURCE_DIR}/performance_tracker.cpp;
-               ${CMAKE_CURRENT_SOURCE_DIR}/events.cpp
-               ${CMAKE_CURRENT_SOURCE_DIR}/hardware_sampler.cpp
+               ${CMAKE_CURRENT_SOURCE_DIR}/events.cpp;
+               ${CMAKE_CURRENT_SOURCE_DIR}/hardware_sampler.cpp;
                >)
 
 ## add target definitions
