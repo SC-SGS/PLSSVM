@@ -107,7 +107,7 @@ std::pair<soa_matrix<real_type>, std::vector<unsigned long long>> csvm::conjugat
     std::vector<unsigned long long> mask(num_rhs, 1);
     // calculate a mask for every converged right hand side
     // -> 0 if the rhs already converged, 1 otherwise
-    const auto calculate_rhs_converged_mask = [eps, delta0, &mask](const std::vector<real_type> &delta_vec, const soa_matrix<real_type>& R_matr) {
+    const auto calculate_rhs_converged_mask = [eps, delta0, &mask](const std::vector<real_type> &delta_vec, const soa_matrix<real_type> &R_matr) {
 #pragma omp parallel for shared(delta_vec, R_matr)
         for (std::size_t row = 0; row < R_matr.num_rows(); ++row) {
             // check if this rhs is already marked as converged
