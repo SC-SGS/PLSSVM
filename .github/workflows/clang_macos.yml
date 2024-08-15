@@ -2,7 +2,7 @@ name: macOS CPU
 on: push
 jobs:
   macOS-Test:
-    runs-on: macos-latest-large
+    runs-on: macos-14-large
     strategy:
       matrix:
         build_type: [Debug, Release]
