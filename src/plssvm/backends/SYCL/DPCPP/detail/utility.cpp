@@ -14,6 +14,8 @@
 #include "plssvm/target_platforms.hpp"                       // plssvm::target_platform, plssvm::determine_default_target_platform
 
 #include "sycl/sycl.hpp"  // ::sycl::platform, ::sycl::device, ::sycl::property::queue, ::sycl::info
+#include <sycl/ext/intel/fpga_extensions.hpp>
+
 
 #include <map>      // std::multimap
 #include <memory>   // std::make_shared
@@ -30,38 +32,56 @@ namespace plssvm::dpcpp::detail {
     // get the available target_platforms
     const std::vector<target_platform> available_target_platforms = list_available_target_platforms();
 
-    // enumerate all available platforms and retrieve the associated devices
-    for (const ::sycl::platform &platform : ::sycl::platform::get_platforms()) {
-        // get devices associated with current platform
-        for (const ::sycl::device &device : platform.get_devices()) {
-            if (device.is_cpu()) {
-                // the current device is a CPU
-                // -> check if the CPU target has been enabled
-                if (::plssvm::detail::contains(available_target_platforms, target_platform::cpu)) {
-                    platform_devices.insert({ target_platform::cpu, device });
-                }
-            } else if (device.is_gpu()) {
-                // the current device is a GPU
-                // get vendor string and convert it to all lower case
-                const std::string vendor_string = ::plssvm::detail::as_lower_case(device.get_info<::sycl::info::device::vendor>());
-                // get platform name of current GPU device and convert it to all lower case
-                const std::string platform_string = ::plssvm::detail::as_lower_case(platform.get_info<::sycl::info::platform::name>());
+    if (target == target_platform::fpga ) {  // TODO only for FPGA
 
-                // check vendor string and insert to correct target platform
-                if (::plssvm::detail::contains(vendor_string, "nvidia") && ::plssvm::detail::contains(available_target_platforms, target_platform::gpu_nvidia)) {
-                    platform_devices.insert({ target_platform::gpu_nvidia, device });
-                } else if ((::plssvm::detail::contains(vendor_string, "amd") || ::plssvm::detail::contains(vendor_string, "advanced micro devices"))
-                           && ::plssvm::detail::contains(available_target_platforms, target_platform::gpu_amd)) {
-                    // select between DPC++'s OpenCL and HIP backend
-                    std::ostringstream oss;
-                    oss << device.get_backend();
-                    if (::plssvm::detail::contains(oss.str(), PLSSVM_SYCL_BACKEND_DPCPP_GPU_AMD_BACKEND_TYPE)) {
-                        platform_devices.insert({ target_platform::gpu_amd, device });
+#if FPGA_SIMULATOR
+        auto selector = sycl::ext::intel::fpga_simulator_selector_v;
+#elif FPGA_HARDWARE
+        auto selector = sycl::ext::intel::fpga_selector_v;
+#else  // #if FPGA_EMULATOR
+        auto selector = sycl::ext::intel::fpga_emulator_selector_v;
+#endif
+
+        // Create a queue bound to the chosen device.
+        // If the device is unavailable, a SYCL runtime exception is thrown.
+        queue q(selector, fpga_tools::exception_handler);
+
+        return std::make_pair(std::vector<queue>{q}, target);
+
+    } else {
+        // enumerate all available platforms and retrieve the associated devices
+        for (const ::sycl::platform &platform : ::sycl::platform::get_platforms()) {
+            // get devices associated with current platform
+            for (const ::sycl::device &device : platform.get_devices()) {
+                if (device.is_cpu()) {
+                    // the current device is a CPU
+                    // -> check if the CPU target has been enabled
+                    if (::plssvm::detail::contains(available_target_platforms, target_platform::cpu)) {
+                        platform_devices.insert({ target_platform::cpu, device });
                     }
-                } else if (::plssvm::detail::contains(vendor_string, "intel") || ::plssvm::detail::contains(available_target_platforms, target_platform::gpu_intel)) {
-                    // select between DPC++'s OpenCL and Level-Zero backend
-                    if (::plssvm::detail::contains(platform_string, PLSSVM_SYCL_BACKEND_DPCPP_BACKEND_TYPE)) {
-                        platform_devices.insert({ target_platform::gpu_intel, device });
+                } else if (device.is_gpu()) {
+                    // the current device is a GPU
+                    // get vendor string and convert it to all lower case
+                    const std::string vendor_string = ::plssvm::detail::as_lower_case(device.get_info<::sycl::info::device::vendor>());
+                    // get platform name of current GPU device and convert it to all lower case
+                    const std::string platform_string = ::plssvm::detail::as_lower_case(platform.get_info<::sycl::info::platform::name>());
+
+                    // check vendor string and insert to correct target platform
+                    if (::plssvm::detail::contains(vendor_string, "nvidia") && ::plssvm::detail::contains(available_target_platforms, target_platform::gpu_nvidia)) {
+                        platform_devices.insert({ target_platform::gpu_nvidia, device });
+                    } else if ((::plssvm::detail::contains(vendor_string, "amd") || ::plssvm::detail::contains(vendor_string, "advanced micro devices"))
+                               && ::plssvm::detail::contains(available_target_platforms, target_platform::gpu_amd)) {
+                        // select between DPC++'s OpenCL and HIP backend
+                        std::ostringstream oss;
+                        oss << device.get_backend();
+                        if (::plssvm::detail::contains(oss.str(), PLSSVM_SYCL_BACKEND_DPCPP_GPU_AMD_BACKEND_TYPE)) {
+                            platform_devices.insert({ target_platform::gpu_amd, device });
+                        }
+                    } else if (::plssvm::detail::contains(vendor_string, "intel") || ::plssvm::detail::contains(available_target_platforms, target_platform::gpu_intel)) {
+                        // select between DPC++'s OpenCL and Level-Zero backend
+                        if (::plssvm::detail::contains(platform_string, PLSSVM_SYCL_BACKEND_DPCPP_BACKEND_TYPE)) {
+                            platform_devices.insert({ target_platform::gpu_intel, device });
+                        }
                     }
                 }
             }

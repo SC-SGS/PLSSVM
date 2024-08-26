@@ -16,6 +16,8 @@
 #include "plssvm/constants.hpp"  // plssvm::{real_type, PADDING_SIZE}
 
 #include "sycl/sycl.hpp"  // sycl::nd_item, sycl::pown, sycl::exp
+#include <sycl/ext/intel/fpga_extensions.hpp> // TODO: guard
+
 
 namespace plssvm::sycl::detail::basic {
 

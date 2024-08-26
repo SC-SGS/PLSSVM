@@ -20,7 +20,9 @@ void init_target_platforms(py::module_ &m) {
         .value("CPU", plssvm::target_platform::cpu, "target CPUs only (Intel, AMD, IBM, ...)")
         .value("GPU_NVIDIA", plssvm::target_platform::gpu_nvidia, "target GPUs from NVIDIA")
         .value("GPU_AMD", plssvm::target_platform::gpu_amd, "target GPUs from AMD")
-        .value("GPU_INTEL", plssvm::target_platform::gpu_intel, "target GPUs from Intel");
+        .value("GPU_INTEL", plssvm::target_platform::gpu_intel, "target GPUs from Intel")
+        .value("FPGA", plssvm::target_platform::fpga, "target FPGA devices");
+
 
     // bind free functions
     m.def("list_available_target_platforms", &plssvm::list_available_target_platforms, "list the available target platforms (as defined during CMake configuration)");

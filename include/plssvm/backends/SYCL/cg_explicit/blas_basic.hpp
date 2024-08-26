@@ -17,6 +17,8 @@
 
 #include "sycl/sycl.hpp"  // sycl::nd_item
 
+#include <sycl/ext/intel/fpga_extensions.hpp> // TODO: guard
+
 namespace plssvm::sycl::detail::basic {
 
 /**

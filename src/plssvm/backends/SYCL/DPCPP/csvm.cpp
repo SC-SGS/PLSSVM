@@ -81,6 +81,11 @@ void csvm::init(const target_platform target) {
             throw backend_exception{ fmt::format("Requested target platform '{}' that hasn't been enabled using PLSSVM_TARGET_PLATFORMS!", target) };
 #endif
             break;
+        case target_platform::fpga:
+#if !defined(PLSSVM_HAS_FPGA_TARGET)
+            throw backend_exception{ fmt::format("Requested target platform '{}' that hasn't been enabled using PLSSVM_TARGET_PLATFORMS!", target) };
+#endif
+            break;
     }
 
     // get all available devices wrt the requested target platform

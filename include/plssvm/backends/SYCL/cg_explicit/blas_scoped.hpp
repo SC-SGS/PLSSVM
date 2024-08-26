@@ -18,6 +18,9 @@
 #include "sycl/sycl.hpp"  // sycl::pown, sycl::exp
                           // sycl::memory_environment, sycl::require_local_mem, sycl::require_private_mem, sycl::distribute_items_and_wait, sycl::s_item
 
+#include <sycl/ext/intel/fpga_extensions.hpp> // TODO: guard
+
+
 namespace plssvm::sycl::detail::scoped {
 
 /**
