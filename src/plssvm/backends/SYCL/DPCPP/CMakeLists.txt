@@ -71,8 +71,8 @@ if (PLSSVM_SYCL_BACKEND_CHECK_FOR_DPCPP_COMPILER)
                 target_compile_definitions(${PLSSVM_SYCL_BACKEND_DPCPP_LIBRARY_NAME} PUBLIC "-fintelfpga -DFPGA_BUILD")
                 target_compile_definitions(${PLSSVM_SYCL_BACKEND_DPCPP_LIBRARY_NAME} PUBLIC "-fintelfpga -DFPGA_BUILD -Xshardware -fsycl-link=image -Xsboard=$AOCL_BOARD_PACKAGE_ROOT:$FPGA_BOARD_NAME")
             endif ()
-
-
+	endif()
+    endif()
 
     # set target properties
     set(PLSSVM_SYCL_BACKEND_DPCPP_LIBRARY_NAME plssvm-SYCL_dpcpp CACHE INTERNAL "")

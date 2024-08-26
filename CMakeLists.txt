@@ -468,7 +468,7 @@ foreach (PLSSVM_PLATFORM ${PLSSVM_TARGET_PLATFORMS})
         endif ()
         target_compile_definitions(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC PLSSVM_HAS_INTEL_TARGET)
         list(APPEND PLSSVM_PLATFORM_NAME_LIST "gpu_intel")
-    elseif (PLSSVM_PLATFORM MATCHES "^fpga)")
+    elseif (PLSSVM_PLATFORM MATCHES "^fpga")
         # parse provided FPGA architectures
         parse_architecture_info(${PLSSVM_PLATFORM} PLSSVM_FPGA_TARGET_ARCHS PLSSVM_NUM_FPGA_TARGET_ARCHS)
         target_compile_definitions(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC PLSSVM_HAS_FPGA_TARGET)
