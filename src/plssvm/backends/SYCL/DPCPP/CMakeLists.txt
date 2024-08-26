@@ -8,16 +8,16 @@ message(CHECK_START "Checking for DPC++ as SYCL implementation")
 
 # check if current compiler is Intel's clang llvm fork aka DPC++
 set(PLSSVM_SYCL_BACKEND_CHECK_FOR_DPCPP_COMPILER OFF)
-if (${CMAKE_CXX_COMPILER_ID} MATCHES "Clang")
-    # intel llvm fork must be clang
-    execute_process(
-            COMMAND ${CMAKE_CXX_COMPILER} --help
-            OUTPUT_VARIABLE PLSSVM_DPCPP_CLANG_HELP_OUTPUT)
+#if (${CMAKE_CXX_COMPILER_ID} MATCHES "Clang")
+#    # intel llvm fork must be clang
+#    execute_process(
+#            COMMAND ${CMAKE_CXX_COMPILER} --help
+#            OUTPUT_VARIABLE PLSSVM_DPCPP_CLANG_HELP_OUTPUT)
     # check if help message contains DPC++ specific values
-    if ("${PLSSVM_DPCPP_CLANG_HELP_OUTPUT}" MATCHES ".*intel.*" AND "${PLSSVM_DPCPP_CLANG_HELP_OUTPUT}" MATCHES ".*-fsycl.*")
+ #   if ("${PLSSVM_DPCPP_CLANG_HELP_OUTPUT}" MATCHES ".*intel.*" AND "${PLSSVM_DPCPP_CLANG_HELP_OUTPUT}" MATCHES ".*-fsycl.*")
         set(PLSSVM_SYCL_BACKEND_CHECK_FOR_DPCPP_COMPILER ON)
-    endif ()
-endif ()
+ #   endif ()
+#endif ()
 
 if (PLSSVM_SYCL_BACKEND_CHECK_FOR_DPCPP_COMPILER)
     message(CHECK_PASS "found")
@@ -29,6 +29,12 @@ if (PLSSVM_SYCL_BACKEND_CHECK_FOR_DPCPP_COMPILER)
         ${CMAKE_CURRENT_LIST_DIR}/detail/utility.cpp
         ${CMAKE_CURRENT_LIST_DIR}/csvm.cpp
     )
+ 
+ # set target properties
+    set(PLSSVM_SYCL_BACKEND_DPCPP_LIBRARY_NAME plssvm-SYCL_dpcpp CACHE INTERNAL "")
+    add_library(${PLSSVM_SYCL_BACKEND_DPCPP_LIBRARY_NAME} SHARED ${PLSSVM_SYCL_SOURCES} ${PLSSVM_SYCL_DPCPP_SOURCES})
+    append_local_and_parent(PLSSVM_TARGETS_TO_INSTALL "${PLSSVM_SYCL_BACKEND_DPCPP_LIBRARY_NAME}")
+
 
     if (${CMAKE_CXX_COMPILER_ID} MATCHES "IntelLLVM")
         option(PLSSVM_SYCL_FPGA "Enable FPGA support for DPC++." ON)
@@ -46,8 +52,8 @@ if (PLSSVM_SYCL_BACKEND_CHECK_FOR_DPCPP_COMPILER)
                     message(FATAL_ERROR "FPGA build and emulator cannot be enabled at the same time!")
                 endif ()
                 message(STATUS "Enabled FPGA emulator support for DPC++.")
-                target_compile_definitions(${PLSSVM_SYCL_BACKEND_DPCPP_LIBRARY_NAME} PUBLIC "-fintelfpga -DFPGA_EMULATOR")
-                target_compile_definitions(${PLSSVM_SYCL_BACKEND_DPCPP_LIBRARY_NAME} PUBLIC "-fintelfpga -DFPGA_EMULATOR")
+                target_compile_options(${PLSSVM_SYCL_BACKEND_DPCPP_LIBRARY_NAME} PUBLIC -fintelfpga -DFPGA_EMULATOR)
+                target_compile_options(${PLSSVM_SYCL_BACKEND_DPCPP_LIBRARY_NAME} PUBLIC -fintelfpga -DFPGA_EMULATOR)
             endif ()
             if (PLSSVM_SYCL_FPGA_REPORT)
                 if (PLSSVM_SYCL_FPGA_EMULATOR)
@@ -57,8 +63,8 @@ if (PLSSVM_SYCL_BACKEND_CHECK_FOR_DPCPP_COMPILER)
                     message(FATAL_ERROR "FPGA build and report cannot be enabled at the same time!")
                 endif ()
                 message(STATUS "Enabled FPGA report for DPC++.")
-                target_compile_definitions(${PLSSVM_SYCL_BACKEND_DPCPP_LIBRARY_NAME} PUBLIC "-fintelfpga -DFPGA_REPORT")
-                target_compile_definitions(${PLSSVM_SYCL_BACKEND_DPCPP_LIBRARY_NAME} PUBLIC "-fintelfpga -DFPGA_REPORT -Xshardware -fsycl-link=early -Xsboard=$AOCL_BOARD_PACKAGE_ROOT:$FPGA_BOARD_NAME")
+                target_compile_options(${PLSSVM_SYCL_BACKEND_DPCPP_LIBRARY_NAME} PUBLIC -fintelfpga -DFPGA_REPORT)
+                target_compile_options(${PLSSVM_SYCL_BACKEND_DPCPP_LIBRARY_NAME} PUBLIC -fintelfpga -DFPGA_REPORT -Xshardware -fsycl-link=early -Xsboard=$AOCL_BOARD_PACKAGE_ROOT:$FPGA_BOARD_NAME)
             endif ()
             if (PLSSVM_SYCL_FPGA_BUILD)
                 if (PLSSVM_SYCL_FPGA_EMULATOR)
@@ -68,16 +74,16 @@ if (PLSSVM_SYCL_BACKEND_CHECK_FOR_DPCPP_COMPILER)
                     message(FATAL_ERROR "FPGA report and build cannot be enabled at the same time!")
                 endif ()
                 message(STATUS "Enabled FPGA build for DPC++.")
-                target_compile_definitions(${PLSSVM_SYCL_BACKEND_DPCPP_LIBRARY_NAME} PUBLIC "-fintelfpga -DFPGA_BUILD")
-                target_compile_definitions(${PLSSVM_SYCL_BACKEND_DPCPP_LIBRARY_NAME} PUBLIC "-fintelfpga -DFPGA_BUILD -Xshardware -fsycl-link=image -Xsboard=$AOCL_BOARD_PACKAGE_ROOT:$FPGA_BOARD_NAME")
+                target_compile_options(${PLSSVM_SYCL_BACKEND_DPCPP_LIBRARY_NAME} PUBLIC -fintelfpga -DFPGA_BUILD)
+                target_compile_options(${PLSSVM_SYCL_BACKEND_DPCPP_LIBRARY_NAME} PUBLIC -fintelfpga -DFPGA_BUILD -Xshardware -fsycl-link=image -Xsboard=$AOCL_BOARD_PACKAGE_ROOT:$FPGA_BOARD_NAME)
             endif ()
 	endif()
     endif()
 
     # set target properties
-    set(PLSSVM_SYCL_BACKEND_DPCPP_LIBRARY_NAME plssvm-SYCL_dpcpp CACHE INTERNAL "")
-    add_library(${PLSSVM_SYCL_BACKEND_DPCPP_LIBRARY_NAME} SHARED ${PLSSVM_SYCL_SOURCES} ${PLSSVM_SYCL_DPCPP_SOURCES})
-    append_local_and_parent(PLSSVM_TARGETS_TO_INSTALL "${PLSSVM_SYCL_BACKEND_DPCPP_LIBRARY_NAME}")
+#    set(PLSSVM_SYCL_BACKEND_DPCPP_LIBRARY_NAME plssvm-SYCL_dpcpp CACHE INTERNAL "")
+#    add_library(${PLSSVM_SYCL_BACKEND_DPCPP_LIBRARY_NAME} SHARED ${PLSSVM_SYCL_SOURCES} ${PLSSVM_SYCL_DPCPP_SOURCES})
+#    append_local_and_parent(PLSSVM_TARGETS_TO_INSTALL "${PLSSVM_SYCL_BACKEND_DPCPP_LIBRARY_NAME}")
     
     # necessary target_*_directories if more than one SYCL implementation could be found
     if (DEFINED ENV{PLSSVM_SYCL_DPCPP_INCLUDE_DIR})
@@ -115,8 +121,8 @@ if (PLSSVM_SYCL_BACKEND_CHECK_FOR_DPCPP_COMPILER)
         if (NOT PLSSVM_NUM_AMD_TARGET_ARCHS EQUAL 1)
             message(SEND_ERROR "DPC++ currently only supports a single AMD architecture specification but ${PLSSVM_NUM_AMD_TARGET_ARCHS} were provided!")
         endif ()
-        target_compile_options(${PLSSVM_SYCL_BACKEND_DPCPP_LIBRARY_NAME} PRIVATE -Xsycl-target-backend=amdgcn-amd-amdhsa --offload-arch=${PLSSVM_AMD_TARGET_ARCHS})
-        target_link_options(${PLSSVM_SYCL_BACKEND_DPCPP_LIBRARY_NAME} PRIVATE -Xsycl-target-backend=amdgcn-amd-amdhsa --offload-arch=${PLSSVM_AMD_TARGET_ARCHS})
+        #target_compile_options(${PLSSVM_SYCL_BACKEND_DPCPP_LIBRARY_NAME} PRIVATE -Xsycl-target-backend=amdgcn-amd-amdhsa --offload-arch=${PLSSVM_AMD_TARGET_ARCHS})
+        #target_link_options(${PLSSVM_SYCL_BACKEND_DPCPP_LIBRARY_NAME} PRIVATE -Xsycl-target-backend=amdgcn-amd-amdhsa --offload-arch=${PLSSVM_AMD_TARGET_ARCHS})
     endif ()
     # intel targets
     if (DEFINED PLSSVM_INTEL_TARGET_ARCHS)
@@ -125,8 +131,8 @@ if (PLSSVM_SYCL_BACKEND_CHECK_FOR_DPCPP_COMPILER)
     endif ()
     # set -fsycl-targets
     list(JOIN PLSSVM_DPCPP_FSYCL_TARGETS "," PLSSVM_DPCPP_FSYCL_TARGETS_STRING)
-    target_compile_options(${PLSSVM_SYCL_BACKEND_DPCPP_LIBRARY_NAME} PRIVATE -fsycl-targets=${PLSSVM_DPCPP_FSYCL_TARGETS_STRING})
-    target_link_options(${PLSSVM_SYCL_BACKEND_DPCPP_LIBRARY_NAME} PRIVATE -fsycl-targets=${PLSSVM_DPCPP_FSYCL_TARGETS_STRING})
+    #target_compile_options(${PLSSVM_SYCL_BACKEND_DPCPP_LIBRARY_NAME} PRIVATE -fsycl-targets=${PLSSVM_DPCPP_FSYCL_TARGETS_STRING})
+    #target_link_options(${PLSSVM_SYCL_BACKEND_DPCPP_LIBRARY_NAME} PRIVATE -fsycl-targets=${PLSSVM_DPCPP_FSYCL_TARGETS_STRING})
     
     # add option for DPC++ Ahead-of-Time (AOT) compilation
     option(PLSSVM_SYCL_BACKEND_DPCPP_ENABLE_AOT "Enables Ahead-of-Time compilation for DPC++." ON)
