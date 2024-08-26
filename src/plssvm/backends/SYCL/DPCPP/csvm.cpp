@@ -15,7 +15,7 @@
 #include "plssvm/backends/SYCL/cg_explicit/kernel_matrix_assembly_basic.hpp"         // plssvm::sycl::detail::basic::{device_kernel_assembly_linear, device_kernel_assembly_polynomial, device_kernel_assembly_rbf}
 #include "plssvm/backends/SYCL/cg_explicit/kernel_matrix_assembly_hierarchical.hpp"  // plssvm::sycl::detail::hierarchical::{device_kernel_assembly_linear, device_kernel_assembly_polynomial, device_kernel_assembly_rbf}
 #include "plssvm/backends/SYCL/cg_explicit/kernel_matrix_assembly_work_group.hpp"    // plssvm::sycl::detail::work_group::{device_kernel_assembly_linear, device_kernel_assembly_polynomial, device_kernel_assembly_rbf}
-#include "plssvm/backends/SYCL/cg_implicit/kernel_matrix_assembly_blas.hpp"          // plssvm::sycl::{device_kernel_assembly_linear_symm, device_kernel_assembly_polynomial_symm, device_kernel_assembly_rbf_symm}
+//#include "plssvm/backends/SYCL/cg_implicit/kernel_matrix_assembly_blas.hpp"          // plssvm::sycl::{device_kernel_assembly_linear_symm, device_kernel_assembly_polynomial_symm, device_kernel_assembly_rbf_symm}
 #include "plssvm/backends/SYCL/detail/utility.hpp"                                   // plssvm::sycl::detail::calculate_execution_range
 #include "plssvm/backends/SYCL/DPCPP/detail/device_ptr.hpp"                          // plssvm::dpcpp::detail::::device_ptr
 #include "plssvm/backends/SYCL/DPCPP/detail/queue_impl.hpp"                          // plssvm::dpcpp::detail::queue (PImpl implementation)
@@ -314,6 +314,7 @@ void csvm::run_blas_level_3_kernel_explicit(const real_type alpha, const device_
     detail::device_synchronize(devices_[0]);
 }
 
+/***
 void csvm::run_assemble_kernel_matrix_implicit_blas_level_3(const real_type alpha, const device_ptr_type &A_d, const parameter &params, const device_ptr_type &q_red, const real_type QA_cost, const device_ptr_type &B_d, device_ptr_type &C_d) const {
     const unsigned long long num_rows_reduced = A_d.shape().x - 1;
     const unsigned long long num_features = A_d.shape().y;
@@ -351,6 +352,7 @@ void csvm::run_assemble_kernel_matrix_implicit_blas_level_3(const real_type alph
     detail::device_synchronize(devices_[0]);
 }
 
+ **/
 //***************************************************//
 //                   predict, score                  //
 //***************************************************//

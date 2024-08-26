@@ -281,7 +281,8 @@ void gpu_csvm<device_ptr_t, queue_t>::blas_level_3(const solver_type solver, con
         PLSSVM_ASSERT(!A_d.empty(), "The A matrix may not be empty!");
         PLSSVM_ASSERT(!q_red_d.empty(), "The q_red vector may not be empty!");
 
-        this->run_assemble_kernel_matrix_implicit_blas_level_3(alpha, A_d, params, q_red_d, QA_cost, B_d, C_d);
+        exit(11);
+//        this->run_assemble_kernel_matrix_implicit_blas_level_3(alpha, A_d, params, q_red_d, QA_cost, B_d, C_d);
     } else {
         // TODO: implement for other solver types
         throw exception{ fmt::format("The GEMM calculation using the {} CG variation is currently not implemented!", solver) };
