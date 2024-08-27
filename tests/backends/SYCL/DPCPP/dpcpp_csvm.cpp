@@ -27,6 +27,8 @@
 
 #include "gtest/gtest.h"  // TEST_F, EXPECT_NO_THROW, INSTANTIATE_TYPED_TEST_SUITE_P, ::testing::Test
 
+#include <sycl/ext/intel/fpga_extensions.hpp>
+
 #include <tuple>  // std::make_tuple, std::tuple
 
 class DPCPPCSVM : public ::testing::Test,

@@ -186,14 +186,14 @@ endif ()
 set(PLSSVM_EXECUTABLE_TRAIN_NAME plssvm-train)
 add_executable(${PLSSVM_EXECUTABLE_TRAIN_NAME} ${CMAKE_CURRENT_SOURCE_DIR}/src/main_train.cpp)
 ## create predict executable
-set(PLSSVM_EXECUTABLE_PREDICT_NAME plssvm-predict)
-add_executable(${PLSSVM_EXECUTABLE_PREDICT_NAME} ${CMAKE_CURRENT_SOURCE_DIR}/src/main_predict.cpp)
+# set(PLSSVM_EXECUTABLE_PREDICT_NAME plssvm-predict)
+# add_executable(${PLSSVM_EXECUTABLE_PREDICT_NAME} ${CMAKE_CURRENT_SOURCE_DIR}/src/main_predict.cpp)
 ## create scale executable
-set(PLSSVM_EXECUTABLE_SCALE_NAME plssvm-scale)
-add_executable(${PLSSVM_EXECUTABLE_SCALE_NAME} ${CMAKE_CURRENT_SOURCE_DIR}/src/main_scale.cpp)
+# set(PLSSVM_EXECUTABLE_SCALE_NAME plssvm-scale)
+# add_executable(${PLSSVM_EXECUTABLE_SCALE_NAME} ${CMAKE_CURRENT_SOURCE_DIR}/src/main_scale.cpp)
 
 ## append executables to installed targets
-list(APPEND PLSSVM_TARGETS_TO_INSTALL ${PLSSVM_EXECUTABLE_TRAIN_NAME} ${PLSSVM_EXECUTABLE_PREDICT_NAME} ${PLSSVM_EXECUTABLE_SCALE_NAME})
+# list(APPEND PLSSVM_TARGETS_TO_INSTALL ${PLSSVM_EXECUTABLE_TRAIN_NAME} ${PLSSVM_EXECUTABLE_PREDICT_NAME} ${PLSSVM_EXECUTABLE_SCALE_NAME})
 
 ########################################################################################################################
 ##                                            setup code coverage analysis                                            ##
@@ -233,8 +233,8 @@ if (uppercase_CMAKE_BUILD_TYPE MATCHES COVERAGE)
 
     # add executables as coverage target
     add_dependencies(coverage ${PLSSVM_EXECUTABLE_TRAIN_NAME})
-    add_dependencies(coverage ${PLSSVM_EXECUTABLE_PREDICT_NAME})
-    add_dependencies(coverage ${PLSSVM_EXECUTABLE_SCALE_NAME})
+    # add_dependencies(coverage ${PLSSVM_EXECUTABLE_PREDICT_NAME})
+    # add_dependencies(coverage ${PLSSVM_EXECUTABLE_SCALE_NAME})
 
     # add custom target `make clean_coverage` which calls `make clean` and also removes all generate *.gcda and *.gcno files
     add_custom_target(clean_coverage)
@@ -404,8 +404,8 @@ endif ()
 
 ## link backends against executables
 target_link_libraries(${PLSSVM_EXECUTABLE_TRAIN_NAME} ${PLSSVM_ALL_LIBRARY_NAME})
-target_link_libraries(${PLSSVM_EXECUTABLE_PREDICT_NAME} ${PLSSVM_ALL_LIBRARY_NAME})
-target_link_libraries(${PLSSVM_EXECUTABLE_SCALE_NAME} ${PLSSVM_ALL_LIBRARY_NAME})
+# target_link_libraries(${PLSSVM_EXECUTABLE_PREDICT_NAME} ${PLSSVM_ALL_LIBRARY_NAME})
+# target_link_libraries(${PLSSVM_EXECUTABLE_SCALE_NAME} ${PLSSVM_ALL_LIBRARY_NAME})
 
 ########################################################################################################################
 ##                                         add additional compile definitions                                         ##
@@ -481,8 +481,8 @@ if (PLSSVM_ENABLE_LTO)
     if (PLSSVM_LTO_SUPPORTED)
         message(STATUS "Interprocedural optimization (IPO/LTO) enabled.")
         set_property(TARGET ${PLSSVM_EXECUTABLE_TRAIN_NAME} PROPERTY INTERPROCEDURAL_OPTIMIZATION TRUE)
-        set_property(TARGET ${PLSSVM_EXECUTABLE_PREDICT_NAME} PROPERTY INTERPROCEDURAL_OPTIMIZATION TRUE)
-        set_property(TARGET ${PLSSVM_EXECUTABLE_SCALE_NAME} PROPERTY INTERPROCEDURAL_OPTIMIZATION TRUE)
+        # set_property(TARGET ${PLSSVM_EXECUTABLE_PREDICT_NAME} PROPERTY INTERPROCEDURAL_OPTIMIZATION TRUE)
+        # set_property(TARGET ${PLSSVM_EXECUTABLE_SCALE_NAME} PROPERTY INTERPROCEDURAL_OPTIMIZATION TRUE)
         target_compile_definitions(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC PLSSVM_LTO_SUPPORTED)
     else ()
         message(STATUS "Interprocedural optimization (IPO/LTO) not supported.")

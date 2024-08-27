@@ -14,6 +14,7 @@
 #include "plssvm/detail/assert.hpp"                          // PLSSVM_ASSERT
 
 #include "sycl/sycl.hpp"  // ::sycl::malloc_device, ::sycl::free
+#include <sycl/ext/intel/fpga_extensions.hpp>
 
 #include "fmt/format.h"  // fmt::format
 

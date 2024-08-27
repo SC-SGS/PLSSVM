@@ -14,6 +14,7 @@
 #include "plssvm/target_platforms.hpp"          // plssvm::target_platform
 
 #include "sycl/sycl.hpp"  // sycl::range
+#include <sycl/ext/intel/fpga_extensions.hpp>
 
 #include "gtest/gtest.h"  // TEST, EXPECT_NE, EXPECT_FALSE
 

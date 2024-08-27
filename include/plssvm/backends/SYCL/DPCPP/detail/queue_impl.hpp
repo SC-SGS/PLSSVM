@@ -16,6 +16,7 @@
 #include "plssvm/backends/SYCL/DPCPP/detail/queue.hpp"  // plssvm::dpcpp::detail::queue
 
 #include "sycl/sycl.hpp"  // sycl::queue
+#include <sycl/ext/intel/fpga_extensions.hpp>
 
 #include <utility>  // std::forward
 

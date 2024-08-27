@@ -29,6 +29,8 @@
 
 #include "igor/igor.hpp"  // igor::parser
 
+
+
 #include <cstddef>      // std::size_t
 #include <type_traits>  // std::is_same_v, std::true_type
 #include <utility>      // std::forward
@@ -180,8 +182,8 @@ class csvm : public ::plssvm::detail::gpu_csvm<detail::device_ptr, detail::queue
     /**
      * @copydoc plssvm::detail::gpu_csvm::run_inplace_matrix_addition
      */
-    void run_inplace_matrix_addition(std::size_t device_id, const ::plssvm::detail::execution_range &exec, device_ptr_type &lhs_d, const device_ptr_type &rhs_d) const override;
-    /**
+    // void run_inplace_matrix_addition(std::size_t device_id, const ::plssvm::detail::execution_range &exec, device_ptr_type &lhs_d, const device_ptr_type &rhs_d) const override;
+     /**
      * @copydoc plssvm::detail::gpu_csvm::run_inplace_matrix_scale
      */
     void run_inplace_matrix_scale(std::size_t device_id, const ::plssvm::detail::execution_range &exec, device_ptr_type &lhs_d, real_type scale) const override;
@@ -192,7 +194,7 @@ class csvm : public ::plssvm::detail::gpu_csvm<detail::device_ptr, detail::queue
     /**
      * @copydoc plssvm::detail::gpu_csvm::run_w_kernel
      */
-    [[nodiscard]] device_ptr_type run_w_kernel(std::size_t device_id, const ::plssvm::detail::execution_range &exec, const device_ptr_type &alpha_d, const device_ptr_type &sv_d) const final;
+    // [[nodiscard]] device_ptr_type run_w_kernel(std::size_t device_id, const ::plssvm::detail::execution_range &exec, const device_ptr_type &alpha_d, const device_ptr_type &sv_d) const final;
     /**
      * @copydoc plssvm::detail::gpu_csvm::run_predict_kernel
      */

@@ -18,7 +18,7 @@
 #include "plssvm/backends/SYCL/kernel/cg_explicit/blas.hpp"                         // plssvm::sycl::detail::{device_kernel_symm, device_kernel_symm_mirror, device_kernel_inplace_matrix_add, device_kernel_inplace_matrix_scale}
 #include "plssvm/backends/SYCL/kernel/cg_explicit/kernel_matrix_assembly.hpp"       // plssvm::sycl::detail::device_kernel_assembly
 #include "plssvm/backends/SYCL/kernel/cg_implicit/kernel_matrix_assembly_blas.hpp"  // plssvm::sycl::detail::device_kernel_assembly_symm
-#include "plssvm/backends/SYCL/kernel/predict_kernel.hpp"                           // plssvm::sycl::detail::{device_kernel_w_linear, device_kernel_predict_linear, device_kernel_predict}
+// #include "plssvm/backends/SYCL/kernel/predict_kernel.hpp"                           // plssvm::sycl::detail::{device_kernel_w_linear, device_kernel_predict_linear, device_kernel_predict}
 #include "plssvm/backends/SYCL/kernel_invocation_types.hpp"                         // plssvm::kernel_invocation_type
 #include "plssvm/constants.hpp"                                                     // plssvm::{real_type, THREAD_BLOCK_SIZE, INTERNAL_BLOCK_SIZE, PADDING_SIZE}
 #include "plssvm/detail/assert.hpp"                                                 // PLSSVM_ASSERT
@@ -35,6 +35,7 @@
 #include "plssvm/verbosity_levels.hpp"                                              // plssvm::verbosity_level
 
 #include "sycl/sycl.hpp"  // sycl::queue, sycl::range, sycl::nd_range, sycl::handler, sycl::info::device
+#include <sycl/ext/intel/fpga_extensions.hpp>
 
 #include "fmt/color.h"   // fmt::fg, fmt::color::orange
 #include "fmt/format.h"  // fmt::format
@@ -319,23 +320,23 @@ void csvm::run_blas_level_3_kernel_explicit(const std::size_t device_id, const :
     detail::device_synchronize(device);
 }
 
-void csvm::run_inplace_matrix_addition(const std::size_t device_id, const ::plssvm::detail::execution_range &exec, device_ptr_type &lhs_d, const device_ptr_type &rhs_d) const {
-    const std::size_t num_rhs = lhs_d.shape().x;
-    const queue_type &device = devices_[device_id];
+// void csvm::run_inplace_matrix_addition(const std::size_t device_id, const ::plssvm::detail::execution_range &exec, device_ptr_type &lhs_d, const device_ptr_type &rhs_d) const {
+//     const std::size_t num_rhs = lhs_d.shape().x;
+//     const queue_type &device = devices_[device_id];
 
-    // convert execution range block to SYCL's native range<2>
-    const ::sycl::range native_block = detail::dim_type_to_native<2>(exec.block);
+//     // convert execution range block to SYCL's native range<2>
+//     const ::sycl::range native_block = detail::dim_type_to_native<2>(exec.block);
 
-    for (const auto &[partial_grid, offsets] : exec.grids) {
-        // convert execution range partial_grid to SYCL's native range<2>
-        const ::sycl::range native_partial_grid = detail::dim_type_to_native<2>(partial_grid) * native_block;
+//     for (const auto &[partial_grid, offsets] : exec.grids) {
+//         // convert execution range partial_grid to SYCL's native range<2>
+//         const ::sycl::range native_partial_grid = detail::dim_type_to_native<2>(partial_grid) * native_block;
 
-        const ::sycl::nd_range native_exec{ native_partial_grid, native_block };
+//         const ::sycl::nd_range native_exec{ native_partial_grid, native_block };
 
-        device.impl->sycl_queue.parallel_for(native_exec, sycl::detail::device_kernel_inplace_matrix_add{ num_rhs, lhs_d.get(), rhs_d.get(), offsets.y, offsets.x });
-    }
-    detail::device_synchronize(device);
-}
+//         device.impl->sycl_queue.parallel_for(native_exec, sycl::detail::device_kernel_inplace_matrix_add{ num_rhs, lhs_d.get(), rhs_d.get(), offsets.y, offsets.x });
+//     }
+//     detail::device_synchronize(device);
+// }
 
 void csvm::run_inplace_matrix_scale(const std::size_t device_id, const ::plssvm::detail::execution_range &exec, device_ptr_type &lhs_d, const real_type scale) const {
     const std::size_t num_rhs = lhs_d.shape().x;
@@ -356,103 +357,104 @@ void csvm::run_inplace_matrix_scale(const std::size_t device_id, const ::plssvm:
 }
 
 void csvm::run_assemble_kernel_matrix_implicit_blas_level_3(const std::size_t device_id, const ::plssvm::detail::execution_range &exec, const real_type alpha, const device_ptr_type &A_d, const parameter &params, const device_ptr_type &q_red, const real_type QA_cost, const device_ptr_type &B_d, device_ptr_type &C_d) const {
-    const std::size_t num_rows_reduced = A_d.shape().x - 1;
-    const std::size_t num_features = A_d.shape().y;
-    const std::size_t num_classes = B_d.shape().x;
-    const queue_type &device = devices_[device_id];
+    // const std::size_t num_rows_reduced = A_d.shape().x - 1;
+    // const std::size_t num_features = A_d.shape().y;
+    // const std::size_t num_classes = B_d.shape().x;
+    // const queue_type &device = devices_[device_id];
 
-    // calculate the number of data points this device is responsible for
-    const std::size_t device_specific_num_rows = data_distribution_->place_specific_num_rows(device_id);
-    // get the offset of the data points this device is responsible for
-    const std::size_t row_offset = data_distribution_->place_row_offset(device_id);
+    // // calculate the number of data points this device is responsible for
+    // const std::size_t device_specific_num_rows = data_distribution_->place_specific_num_rows(device_id);
+    // // get the offset of the data points this device is responsible for
+    // const std::size_t row_offset = data_distribution_->place_row_offset(device_id);
 
-    const real_type cost_factor = real_type{ 1.0 } / params.cost;
+    // const real_type cost_factor = real_type{ 1.0 } / params.cost;
 
-    // convert execution range block to SYCL's native range<2>
-    const ::sycl::range native_block = detail::dim_type_to_native<2>(exec.block);
+    // // convert execution range block to SYCL's native range<2>
+    // const ::sycl::range native_block = detail::dim_type_to_native<2>(exec.block);
 
-    for (const auto &[partial_grid, offsets] : exec.grids) {
-        // convert execution range partial_grid to SYCL's native range<2>
-        const ::sycl::range native_partial_grid = detail::dim_type_to_native<2>(partial_grid) * native_block;
+    // for (const auto &[partial_grid, offsets] : exec.grids) {
+    //     // convert execution range partial_grid to SYCL's native range<2>
+    //     const ::sycl::range native_partial_grid = detail::dim_type_to_native<2>(partial_grid) * native_block;
 
-        const ::sycl::nd_range native_exec{ native_partial_grid, native_block };
+    //     const ::sycl::nd_range native_exec{ native_partial_grid, native_block };
 
-        switch (params.kernel_type) {
-            case kernel_function_type::linear:
-                // device.impl->sycl_queue.submit([&, &offsets_ref = offsets](::sycl::handler &cgh) {
-                //     cgh.parallel_for(native_exec, sycl::detail::device_kernel_assembly_symm<kernel_function_type::linear>{ cgh, alpha, q_red.get(), A_d.get(), num_rows_reduced, device_specific_num_rows, row_offset, num_features, QA_cost, cost_factor, B_d.get(), C_d.get(), num_classes, offsets_ref.y, offsets_ref.x });
-                // });
-                break;
-            case kernel_function_type::polynomial:
-                // device.impl->sycl_queue.submit([&, &offsets_ref = offsets](::sycl::handler &cgh) {
-                //     using functor_type = sycl::detail::device_kernel_assembly_symm<kernel_function_type::polynomial, decltype(params.degree), real_type, decltype(params.coef0)>;
-                //     cgh.parallel_for(native_exec, functor_type{ cgh, alpha, q_red.get(), A_d.get(), num_rows_reduced, device_specific_num_rows, row_offset, num_features, QA_cost, cost_factor, B_d.get(), C_d.get(), num_classes, offsets_ref.y, offsets_ref.x, params.degree, std::get<real_type>(params.gamma), params.coef0 });
-                // });
-                break;
-            case kernel_function_type::rbf:
-                // device.impl->sycl_queue.submit([&, &offsets_ref = offsets](::sycl::handler &cgh) {
-                //     using functor_type = sycl::detail::device_kernel_assembly_symm<kernel_function_type::rbf, real_type>;
-                //     cgh.parallel_for(native_exec, functor_type{ cgh, alpha, q_red.get(), A_d.get(), num_rows_reduced, device_specific_num_rows, row_offset, num_features, QA_cost, cost_factor, B_d.get(), C_d.get(), num_classes, offsets_ref.y, offsets_ref.x, std::get<real_type>(params.gamma) });
-                // });
-                break;
-            case kernel_function_type::sigmoid:
-                // device.impl->sycl_queue.submit([&, &offsets_ref = offsets](::sycl::handler &cgh) {
-                //     using functor_type = sycl::detail::device_kernel_assembly_symm<kernel_function_type::sigmoid, real_type, decltype(params.coef0)>;
-                //     cgh.parallel_for(native_exec, functor_type{ cgh, alpha, q_red.get(), A_d.get(), num_rows_reduced, device_specific_num_rows, row_offset, num_features, QA_cost, cost_factor, B_d.get(), C_d.get(), num_classes, offsets_ref.y, offsets_ref.x, std::get<real_type>(params.gamma), params.coef0 });
-                // });
-                break;
-            case kernel_function_type::laplacian:
-                // device.impl->sycl_queue.submit([&, &offsets_ref = offsets](::sycl::handler &cgh) {
-                //     using functor_type = sycl::detail::device_kernel_assembly_symm<kernel_function_type::laplacian, real_type>;
-                //     cgh.parallel_for(native_exec, functor_type{ cgh, alpha, q_red.get(), A_d.get(), num_rows_reduced, device_specific_num_rows, row_offset, num_features, QA_cost, cost_factor, B_d.get(), C_d.get(), num_classes, offsets_ref.y, offsets_ref.x, std::get<real_type>(params.gamma) });
-                // });
-                break;
-            case kernel_function_type::chi_squared:
-                // device.impl->sycl_queue.submit([&, &offsets_ref = offsets](::sycl::handler &cgh) {
-                //     using functor_type = sycl::detail::device_kernel_assembly_symm<kernel_function_type::chi_squared, real_type>;
-                //     cgh.parallel_for(native_exec, functor_type{ cgh, alpha, q_red.get(), A_d.get(), num_rows_reduced, device_specific_num_rows, row_offset, num_features, QA_cost, cost_factor, B_d.get(), C_d.get(), num_classes, offsets_ref.y, offsets_ref.x, std::get<real_type>(params.gamma) });
-                // });
-                break;
-        }
-    }
-    detail::device_synchronize(device);
+    //     switch (params.kernel_type) {
+    //         case kernel_function_type::linear:
+    //             // device.impl->sycl_queue.submit([&, &offsets_ref = offsets](::sycl::handler &cgh) {
+    //             //     cgh.parallel_for(native_exec, sycl::detail::device_kernel_assembly_symm<kernel_function_type::linear>{ cgh, alpha, q_red.get(), A_d.get(), num_rows_reduced, device_specific_num_rows, row_offset, num_features, QA_cost, cost_factor, B_d.get(), C_d.get(), num_classes, offsets_ref.y, offsets_ref.x });
+    //             // });
+    //             break;
+    //         case kernel_function_type::polynomial:
+    //             // device.impl->sycl_queue.submit([&, &offsets_ref = offsets](::sycl::handler &cgh) {
+    //             //     using functor_type = sycl::detail::device_kernel_assembly_symm<kernel_function_type::polynomial, decltype(params.degree), real_type, decltype(params.coef0)>;
+    //             //     cgh.parallel_for(native_exec, functor_type{ cgh, alpha, q_red.get(), A_d.get(), num_rows_reduced, device_specific_num_rows, row_offset, num_features, QA_cost, cost_factor, B_d.get(), C_d.get(), num_classes, offsets_ref.y, offsets_ref.x, params.degree, std::get<real_type>(params.gamma), params.coef0 });
+    //             // });
+    //             break;
+    //         case kernel_function_type::rbf:
+    //             // device.impl->sycl_queue.submit([&, &offsets_ref = offsets](::sycl::handler &cgh) {
+    //             //     using functor_type = sycl::detail::device_kernel_assembly_symm<kernel_function_type::rbf, real_type>;
+    //             //     cgh.parallel_for(native_exec, functor_type{ cgh, alpha, q_red.get(), A_d.get(), num_rows_reduced, device_specific_num_rows, row_offset, num_features, QA_cost, cost_factor, B_d.get(), C_d.get(), num_classes, offsets_ref.y, offsets_ref.x, std::get<real_type>(params.gamma) });
+    //             // });
+    //             break;
+    //         case kernel_function_type::sigmoid:
+    //             // device.impl->sycl_queue.submit([&, &offsets_ref = offsets](::sycl::handler &cgh) {
+    //             //     using functor_type = sycl::detail::device_kernel_assembly_symm<kernel_function_type::sigmoid, real_type, decltype(params.coef0)>;
+    //             //     cgh.parallel_for(native_exec, functor_type{ cgh, alpha, q_red.get(), A_d.get(), num_rows_reduced, device_specific_num_rows, row_offset, num_features, QA_cost, cost_factor, B_d.get(), C_d.get(), num_classes, offsets_ref.y, offsets_ref.x, std::get<real_type>(params.gamma), params.coef0 });
+    //             // });
+    //             break;
+    //         case kernel_function_type::laplacian:
+    //             // device.impl->sycl_queue.submit([&, &offsets_ref = offsets](::sycl::handler &cgh) {
+    //             //     using functor_type = sycl::detail::device_kernel_assembly_symm<kernel_function_type::laplacian, real_type>;
+    //             //     cgh.parallel_for(native_exec, functor_type{ cgh, alpha, q_red.get(), A_d.get(), num_rows_reduced, device_specific_num_rows, row_offset, num_features, QA_cost, cost_factor, B_d.get(), C_d.get(), num_classes, offsets_ref.y, offsets_ref.x, std::get<real_type>(params.gamma) });
+    //             // });
+    //             break;
+    //         case kernel_function_type::chi_squared:
+    //             // device.impl->sycl_queue.submit([&, &offsets_ref = offsets](::sycl::handler &cgh) {
+    //             //     using functor_type = sycl::detail::device_kernel_assembly_symm<kernel_function_type::chi_squared, real_type>;
+    //             //     cgh.parallel_for(native_exec, functor_type{ cgh, alpha, q_red.get(), A_d.get(), num_rows_reduced, device_specific_num_rows, row_offset, num_features, QA_cost, cost_factor, B_d.get(), C_d.get(), num_classes, offsets_ref.y, offsets_ref.x, std::get<real_type>(params.gamma) });
+    //             // });
+    //             break;
+    //     }
+    // }
+    // detail::device_synchronize(device);
 }
 
 //***************************************************//
 //                   predict, score                  //
 //***************************************************//
 
-auto csvm::run_w_kernel(const std::size_t device_id, const ::plssvm::detail::execution_range &exec, const device_ptr_type &alpha_d, const device_ptr_type &sv_d) const -> device_ptr_type {
-    const std::size_t num_classes = alpha_d.shape().x;
-    const std::size_t num_sv = alpha_d.shape().y;
-    const std::size_t device_specific_num_sv = sv_d.shape().x;
-    const std::size_t num_features = sv_d.shape().y;
-    const queue_type &device = devices_[device_id];
+// auto csvm::run_w_kernel(const std::size_t device_id, const ::plssvm::detail::execution_range &exec, const device_ptr_type &alpha_d, const device_ptr_type &sv_d) const -> device_ptr_type {
+//     const std::size_t num_classes = alpha_d.shape().x;
+//     const std::size_t num_sv = alpha_d.shape().y;
+//     const std::size_t device_specific_num_sv = sv_d.shape().x;
+//     const std::size_t num_features = sv_d.shape().y;
+//     const queue_type &device = devices_[device_id];
 
-    // get the offset of the data points this device is responsible for
-    const std::size_t sv_offset = data_distribution_->place_row_offset(device_id);
+//     // get the offset of the data points this device is responsible for
+//     const std::size_t sv_offset = data_distribution_->place_row_offset(device_id);
 
-    device_ptr_type w_d{ shape{ num_classes, num_features }, shape{ PADDING_SIZE, PADDING_SIZE }, device };
+//     device_ptr_type w_d{ shape{ num_classes, num_features }, shape{ PADDING_SIZE, PADDING_SIZE }, device };
 
-    // convert execution range block to SYCL's native range<2>
-    const ::sycl::range native_block = detail::dim_type_to_native<2>(exec.block);
+//     // convert execution range block to SYCL's native range<2>
+//     const ::sycl::range native_block = detail::dim_type_to_native<2>(exec.block);
 
-    for (const auto &[partial_grid, offsets] : exec.grids) {
-        // convert execution range partial_grid to SYCL's native range<2>
-        const ::sycl::range native_partial_grid = detail::dim_type_to_native<2>(partial_grid) * native_block;
+//     for (const auto &[partial_grid, offsets] : exec.grids) {
+//         // convert execution range partial_grid to SYCL's native range<2>
+//         const ::sycl::range native_partial_grid = detail::dim_type_to_native<2>(partial_grid) * native_block;
 
-        const ::sycl::nd_range native_exec{ native_partial_grid, native_block };
+//         const ::sycl::nd_range native_exec{ native_partial_grid, native_block };
 
-        device.impl->sycl_queue.submit([&, &offsets_ref = offsets](::sycl::handler &cgh) {
-            cgh.parallel_for(native_exec, sycl::detail::device_kernel_w_linear{ cgh, w_d.get(), alpha_d.get(), sv_d.get(), num_classes, num_sv, device_specific_num_sv, sv_offset, offsets_ref.y, offsets_ref.x });
-        });
-    }
-    detail::device_synchronize(device);
+//         device.impl->sycl_queue.submit([&, &offsets_ref = offsets](::sycl::handler &cgh) {
+//             cgh.parallel_for(native_exec, sycl::detail::device_kernel_w_linear{ cgh, w_d.get(), alpha_d.get(), sv_d.get(), num_classes, num_sv, device_specific_num_sv, sv_offset, offsets_ref.y, offsets_ref.x });
+//         });
+//     }
+//     detail::device_synchronize(device);
 
-    return w_d;
-}
-/**
+//     return w_d;
+// }
+
 auto csvm::run_predict_kernel(const std::size_t device_id, const ::plssvm::detail::execution_range &exec, const parameter &params, const device_ptr_type &alpha_d, const device_ptr_type &rho_d, const device_ptr_type &sv_or_w_d, const device_ptr_type &predict_points_d) const -> device_ptr_type {
+
     const std::size_t num_classes = alpha_d.shape().x;
     const std::size_t num_predict_points = predict_points_d.shape().x;  // = device_specific_num_rows
     const std::size_t num_features = predict_points_d.shape().y;
@@ -460,7 +462,7 @@ auto csvm::run_predict_kernel(const std::size_t device_id, const ::plssvm::detai
     const queue_type &device = devices_[device_id];
 
     device_ptr_type out_d{ shape{ num_predict_points, num_classes }, shape{ PADDING_SIZE, PADDING_SIZE }, device };
-
+/**
     // convert execution range block to SYCL's native range<2>
     const ::sycl::range native_block = detail::dim_type_to_native<2>(exec.block);
 
@@ -509,8 +511,9 @@ auto csvm::run_predict_kernel(const std::size_t device_id, const ::plssvm::detai
         }
     }
     detail::device_synchronize(device);
-
+  */
     return out_d;
+
 }
-*/
+
 }  // namespace plssvm::dpcpp

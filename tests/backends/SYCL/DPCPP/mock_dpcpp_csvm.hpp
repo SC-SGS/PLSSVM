@@ -62,8 +62,8 @@ class mock_dpcpp_csvm final : public plssvm::dpcpp::csvm {
     using base_type::run_blas_level_3_kernel_explicit;
     using base_type::run_inplace_matrix_addition;
     using base_type::run_inplace_matrix_scale;
-    using base_type::run_predict_kernel;
-    using base_type::run_w_kernel;
+    // using base_type::run_predict_kernel;
+    // using base_type::run_w_kernel;
 
     using base_type::data_distribution_;
     using base_type::devices_;

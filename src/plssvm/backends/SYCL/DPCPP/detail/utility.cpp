@@ -15,6 +15,7 @@
 #include "plssvm/target_platforms.hpp"                       // plssvm::target_platform, plssvm::determine_default_target_platform
 
 #include "sycl/sycl.hpp"  // ::sycl::platform, ::sycl::device, ::sycl::property::queue, ::sycl::info
+#include <sycl/ext/intel/fpga_extensions.hpp>
 
 #include "fmt/format.h"  // fmt::format
 

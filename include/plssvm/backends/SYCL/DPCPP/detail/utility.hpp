@@ -18,6 +18,7 @@
 #include "plssvm/target_platforms.hpp"                  // plssvm::target_platform
 
 #include "sycl/sycl.hpp"  // sycl::range
+#include <sycl/ext/intel/fpga_extensions.hpp>
 
 #include <cstddef>  // std::size_t
 #include <string>   // std::string

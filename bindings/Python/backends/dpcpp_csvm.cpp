@@ -21,6 +21,8 @@
 
 #include <memory>  // std::make_unique
 
+#include <sycl/ext/intel/fpga_extensions.hpp>
+
 namespace py = pybind11;
 
 py::module_ init_dpcpp_csvm(py::module_ &m, const py::exception<plssvm::exception> &base_exception) {
