@@ -34,6 +34,9 @@ std::vector<target_platform> list_available_target_platforms() {
 #if defined(PLSSVM_HAS_INTEL_TARGET)
     available_targets.push_back(target_platform::gpu_intel);
 #endif
+#if defined(PLSSVM_HAS_FPGA_TARGET)
+    available_targets.push_back(target_platform::fpga);
+#endif
 
     // automatic is ALWAYS available but AT LEAST ONE other target must be available in addition
     PLSSVM_ASSERT(available_targets.size() > 1, "Besides \"automatic\" at least one other target must be available!");
@@ -65,6 +68,8 @@ std::ostream &operator<<(std::ostream &out, const target_platform target) {
             return out << "gpu_amd";
         case target_platform::gpu_intel:
             return out << "gpu_intel";
+        case target_platform::fpga:
+            return out << "fpga";
     }
     return out << "unknown";
 }
@@ -84,6 +89,8 @@ std::istream &operator>>(std::istream &in, target_platform &target) {
         target = target_platform::gpu_amd;
     } else if (str == "gpu_intel") {
         target = target_platform::gpu_intel;
+    } else if (str == "fpga") {
+        target = target_platform::fpga;
     } else {
         in.setstate(std::ios::failbit);
     }

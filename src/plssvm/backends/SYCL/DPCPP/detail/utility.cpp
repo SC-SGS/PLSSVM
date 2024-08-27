@@ -25,7 +25,35 @@
 #include <utility>  // std::pair, std::make_pair, std::move
 #include <vector>   // std::vector
 
+
+#include <sycl/ext/intel/fpga_extensions.hpp>
+
 namespace plssvm::dpcpp::detail {
+
+
+
+// Helper function to check if device is an FPGA
+bool is_fpga(const sycl::device& dev) {
+    auto device_name = dev.get_info<sycl::info::device::name>();
+    auto device_type = dev.get_info<sycl::info::device::device_type>();
+
+    std::cout << "device_name: " << device_name << "\n";
+
+    // Select either:
+    //  - the FPGA emulator device (CPU emulation of the FPGA)
+    //  - the FPGA device (a real FPGA)
+    #if defined(FPGA_EMULATOR)
+      auto device_name_needle = "Intel(R) FPGA Emulation Device";
+    #else
+      auto device_name_needle = "BittWare";
+    #endif
+
+    // Adjust these checks based on your FPGA vendor
+    return (device_type == sycl::info::device_type::accelerator) &&
+           (device_name.find(device_name_needle) != std::string::npos);
+}
+
+
 
 [[nodiscard]] std::pair<std::vector<queue>, ::plssvm::target_platform> get_device_list(target_platform target) {
     // iterate over all platforms and save all available devices
@@ -70,6 +98,10 @@ namespace plssvm::dpcpp::detail {
                         platform_devices.insert({ target_platform::gpu_intel, device });
                     }
 #endif
+                }
+            } else if (is_fpga(device)){
+                if (::plssvm::detail::contains(available_target_platforms, target_platform::fpga)) {
+                    platform_devices.insert({ target_platform::fpga, device });
                 }
             }
         }

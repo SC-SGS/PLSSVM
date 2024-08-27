@@ -35,7 +35,9 @@ enum class target_platform {
     /** Target GPUs from AMD. */
     gpu_amd,
     /** Target GPUs from Intel. */
-    gpu_intel
+    gpu_intel,
+    /** Target fpga */
+    fpga
 };
 
 /**

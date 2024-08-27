@@ -214,9 +214,9 @@ if (uppercase_CMAKE_BUILD_TYPE MATCHES COVERAGE)
     # assertions must be available for a coverage analysis
     message(STATUS "Enabling assertions since they are necessary for the coverage analysis.")
     set(PLSSVM_ENABLE_ASSERTS ON CACHE BOOL "" FORCE)
-    
+
     message(STATUS "Enable code coverage analysis using lcov.")
-    
+
     # Create the coverage target. Run coverage tests with 'make coverage'
     add_custom_target(coverage
                       COMMAND lcov --zerocounters --directory .
@@ -230,12 +230,12 @@ if (uppercase_CMAKE_BUILD_TYPE MATCHES COVERAGE)
                       BYPRODUCTS ${CMAKE_BINARY_DIR}/test_base.info ${CMAKE_BINARY_DIR}/test_test.info ${CMAKE_BINARY_DIR}/test_total.info ${CMAKE_BINARY_DIR}/test_clean.info ${CMAKE_BINARY_DIR}/coverage
                       WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
     )
-    
+
     # add executables as coverage target
     add_dependencies(coverage ${PLSSVM_EXECUTABLE_TRAIN_NAME})
     add_dependencies(coverage ${PLSSVM_EXECUTABLE_PREDICT_NAME})
     add_dependencies(coverage ${PLSSVM_EXECUTABLE_SCALE_NAME})
-    
+
     # add custom target `make clean_coverage` which calls `make clean` and also removes all generate *.gcda and *.gcno files
     add_custom_target(clean_coverage)
     add_custom_command(
@@ -262,20 +262,20 @@ else ()
     if (NOT Python3_FOUND)
         message(FATAL_ERROR "Can't find Python3. Please manually specify PLSSVM_TARGET_PLATFORMS (e.g. -DPLSSVM_TARGET_PLATFORMS=\"cpu;nvidia:sm_70,sm_86;amd:gfx906;intel:skl\"!")
     endif ()
-    
+
     include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/check_python_libs.cmake)
     set(PLSSVM_TARGET_PLATFORMS_PYTHON_SCRIPT_REQUIRED_LIBS cpuinfo GPUtil pyamdgpuinfo pylspci)
     message(STATUS "Checking required Python3 libraries (${PLSSVM_TARGET_PLATFORMS_PYTHON_SCRIPT_REQUIRED_LIBS}) to automatically determine the PLSSVM_TARGET_PLATFORMS.")
     set(PLSSVM_TARGET_PLATFORMS_PYTHON_SCRIPT_REQUIRED_LIBS_ERROR_MESSAGE "or manually define PLSSVM_TARGET_PLATFORMS (e.g. -DPLSSVM_TARGET_PLATFORMS=\"cpu;nvidia:sm_70,sm_86;amd:gfx906;intel:skl\"!")
     check_python_libs(${PLSSVM_TARGET_PLATFORMS_PYTHON_SCRIPT_REQUIRED_LIBS} ${PLSSVM_TARGET_PLATFORMS_PYTHON_SCRIPT_REQUIRED_LIBS_ERROR_MESSAGE})
-    
+
     # run our `plssvm_target_platforms.py` script to determine the PLSSVM_TARGET_PLATFORMS string
     execute_process(
             COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/utility_scripts/plssvm_target_platforms.py" "--quiet"
             RESULT_VARIABLE PLSSVM_PYTHON_TARGET_PLATFORMS_EXIT_CODE
             OUTPUT_VARIABLE PLSSVM_PYTHON_TARGET_PLATFORMS_OUTPUT
     )
-    
+
     # an error occurred when running our python script
     if (NOT ${PLSSVM_PYTHON_TARGET_PLATFORMS_EXIT_CODE} EQUAL 0)
         message(FATAL_ERROR
@@ -283,7 +283,7 @@ else ()
                 "Please manually specify PLSSVM_TARGET_PLATFORMS (e.g. -DPLSSVM_TARGET_PLATFORMS=\"cpu;nvidia:sm_70,sm_86;amd:gfx906;intel:skl\"!"
         )
     endif ()
-    
+
     # set PLSSVM_TARGET_PLATFORMS
     string(STRIP "${PLSSVM_PYTHON_TARGET_PLATFORMS_OUTPUT}" PLSSVM_TARGET_PLATFORMS)
     message(STATUS "Automatically derived PLSSVM_TARGET_PLATFORMS=\"${PLSSVM_TARGET_PLATFORMS}\".")
@@ -306,6 +306,14 @@ foreach (PLSSVM_PLATFORM ${PLSSVM_TARGET_PLATFORMS})
         endif ()
         target_compile_definitions(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC PLSSVM_HAS_CPU_TARGET)
         list(APPEND PLSSVM_PLATFORM_NAME_LIST "cpu")
+    elseif (PLSSVM_PLATFORM MATCHES "^fpga")
+        # parse provided CPU architectures
+        parse_architecture_info(${PLSSVM_PLATFORM} PLSSVM_CPU_TARGET_ARCHS PLSSVM_NUM_FPGA_TARGET_ARCHS)
+        if (PLSSVM_NUM_FPGA_TARGET_ARCHS GREATER 1)
+            message(FATAL_ERROR "Target platform \"fpga\" must at most have one architecture specification!")
+        endif ()
+        target_compile_definitions(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC PLSSVM_HAS_FPGA_TARGET)
+        list(APPEND PLSSVM_PLATFORM_NAME_LIST "fpga")
     elseif (PLSSVM_PLATFORM MATCHES "^nvidia")
         # parse provided NVIDIA GPU architectures
         parse_architecture_info(${PLSSVM_PLATFORM} PLSSVM_NVIDIA_TARGET_ARCHS PLSSVM_NUM_NVIDIA_TARGET_ARCHS)
@@ -409,7 +417,7 @@ option(PLSSVM_ENABLE_ASSERTS "Enables PLSSVM asserts even if NDEBUG is set." OFF
 if (PLSSVM_ENABLE_ASSERTS)
     message(STATUS "Enable additional debugging assertions.")
     target_compile_definitions(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC PLSSVM_ENABLE_ASSERTS)
-    
+
     # disable vectorization warning in clang in Release mode
     # -> loops can't be vectorized due to the PLSSVM_ASSERTs in the matrix::operator() member function
     # target_compile_options(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC

@@ -13,7 +13,7 @@
 #define PLSSVM_BACKENDS_SYCL_PREDICT_KERNEL_HPP_
 #pragma once
 
-#include "plssvm/backends/SYCL/detail/atomics.hpp"           // plssvm::sycl::detail::atomic_op
+// #include "plssvm/backends/SYCL/detail/atomics.hpp"           // plssvm::sycl::detail::atomic_op
 #include "plssvm/backends/SYCL/kernel/kernel_functions.hpp"  // plssvm::sycl::detail::{feature_reduce, apply_kernel_function}
 #include "plssvm/constants.hpp"                              // plssvm::{real_type, THREAD_BLOCK_SIZE, INTERNAL_BLOCK_SIZE, FEATURE_BLOCK_SIZE, PADDING_SIZE}
 #include "plssvm/kernel_function_types.hpp"                  // plssvm::kernel_function_type
@@ -400,8 +400,10 @@ class device_kernel_predict {
                 for (unsigned internal = 0; internal < INTERNAL_BLOCK_SIZE; ++internal) {
                     const auto global_pp_idx = pp_idx + static_cast<std::size_t>(internal);
 
-                    detail::atomic_op<real_type>{ prediction_d_[global_pp_idx * (num_classes_ + PADDING_SIZE_uz) + dim + threadIdx_x] } += out_cache[local_id_0][internal * THREAD_BLOCK_SIZE + local_id_1];
-                    detail::atomic_op<real_type>{ prediction_d_[global_pp_idx * (num_classes_ + PADDING_SIZE_uz) + dim + threadIdx_x + THREAD_BLOCK_SIZE_uz] } += out_cache[local_id_0 + THREAD_BLOCK_SIZE][internal * THREAD_BLOCK_SIZE + local_id_1];
+                    // detail::atomic_op<real_type>{ prediction_d_[global_pp_idx * (num_classes_ + PADDING_SIZE_uz) + dim + threadIdx_x] } += out_cache[local_id_0][internal * THREAD_BLOCK_SIZE + local_id_1];
+                    prediction_d_[global_pp_idx * (num_classes_ + PADDING_SIZE_uz) + dim + threadIdx_x] += out_cache[local_id_0][internal * THREAD_BLOCK_SIZE + local_id_1];
+                    // detail::atomic_op<real_type>{ prediction_d_[global_pp_idx * (num_classes_ + PADDING_SIZE_uz) + dim + threadIdx_x + THREAD_BLOCK_SIZE_uz] } += out_cache[local_id_0 + THREAD_BLOCK_SIZE][internal * THREAD_BLOCK_SIZE + local_id_1];
+                    prediction_d_[global_pp_idx * (num_classes_ + PADDING_SIZE_uz) + dim + threadIdx_x + THREAD_BLOCK_SIZE_uz] += out_cache[local_id_0 + THREAD_BLOCK_SIZE][internal * THREAD_BLOCK_SIZE + local_id_1];
                 }
                 nd_idx.barrier();  // wait until all work-items updated their part of the prediction
             }
