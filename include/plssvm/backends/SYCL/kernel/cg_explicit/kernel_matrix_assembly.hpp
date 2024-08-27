@@ -29,7 +29,7 @@ namespace plssvm::sycl::detail {
  * @tparam kernel_function the type of the used kernel function
  * @tparam Args the types of the parameters necessary for the specific kernel function; stored in a `standard_layout_tuple`
  */
-template <kernel_function_type kernel_function, typename... Args>
+template <typename... Args>
 class device_kernel_assembly {
   public:
     /**
@@ -116,8 +116,8 @@ class device_kernel_assembly {
                 for (unsigned block_dim = 0; block_dim < FEATURE_BLOCK_SIZE; ++block_dim) {
                     for (unsigned internal_i = 0; internal_i < INTERNAL_BLOCK_SIZE; ++internal_i) {
                         for (unsigned internal_j = 0; internal_j < INTERNAL_BLOCK_SIZE; ++internal_j) {
-                            temp[internal_i][internal_j] += detail::feature_reduce<kernel_function>(data_cache_i_[block_dim][local_id_1 * INTERNAL_BLOCK_SIZE + internal_i],
-                                                                                                    data_cache_j_[block_dim][local_id_0 * INTERNAL_BLOCK_SIZE + internal_j]);
+                            temp[internal_i][internal_j] += data_cache_i_[block_dim][local_id_1 * INTERNAL_BLOCK_SIZE + internal_i]*
+                                                                                                    data_cache_j_[block_dim][local_id_0 * INTERNAL_BLOCK_SIZE + internal_j];
                         }
                     }
                 }
@@ -136,7 +136,7 @@ class device_kernel_assembly {
                     // be sure to not perform out of bounds accesses for the kernel matrix (only using the upper triangular matrix)
                     if (device_global_i < (num_rows_ - row_offset_) && device_global_j < device_num_rows_ && global_i >= global_j) {
                         real_type temp_ij = temp[internal_i][internal_j];
-                        temp_ij = detail::apply_kernel_function<kernel_function>(temp_ij, kernel_function_parameter_) + QA_cost_ - q_[global_i] - q_[global_j];
+                        temp_ij =temp_ij + QA_cost_ - q_[global_i] - q_[global_j];
                         // apply the cost on the diagonal
                         if (global_i == global_j) {
                             temp_ij += cost_;

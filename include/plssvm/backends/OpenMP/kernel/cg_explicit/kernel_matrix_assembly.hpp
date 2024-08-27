@@ -37,7 +37,7 @@ namespace plssvm::openmp::detail {
  * @param[in] cost 1 / the cost parameter in the C-SVM
  * @param[in] kernel_function_parameter the potential additional arguments for the @p kernel function
  */
-template <kernel_function_type kernel, typename... Args>
+
 void device_kernel_assembly(const std::vector<real_type> &q, std::vector<real_type> &kernel_matrix, const soa_matrix<real_type> &data, const real_type QA_cost, const real_type cost, Args... kernel_function_parameter) {
     PLSSVM_ASSERT(q.size() == data.num_rows() - 1, "Sizes mismatch!: {} != {}", q.size(), data.num_rows() - 1);
     PLSSVM_ASSERT(kernel_matrix.size() == (q.size() + PADDING_SIZE) * (q.size() + PADDING_SIZE + 1) / 2, "Sizes mismatch (SYMM)!: {} != {}", kernel_matrix.size(), (q.size() + PADDING_SIZE) * (q.size() + PADDING_SIZE + 1) / 2);
@@ -91,7 +91,7 @@ void device_kernel_assembly(const std::vector<real_type> &q, std::vector<real_ty
                                 // be sure to not perform out of bounds accesses for the kernel matrix (only using the upper triangular matrix)
                                 if (global_row < dept && global_col < dept && global_row >= global_col) {
                                     real_type temp_ij = temp[internal_row][internal_col];
-                                    temp_ij = detail::apply_kernel_function<kernel>(temp_ij, kernel_function_parameter...) + QA_cost - q[global_row] - q[global_col];
+                                    temp_ij = temp_ij + QA_cost - q[global_row] - q[global_col];
                                     // apply the cost on the diagonal
                                     if (global_row == global_col) {
                                         temp_ij += cost;
