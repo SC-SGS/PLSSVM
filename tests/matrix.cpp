@@ -2063,12 +2063,12 @@ TYPED_TEST(MatrixOperations, operator_masked_rowwise_scale) {
     // rowwise scale
     {
         const plssvm::matrix<real_type, layout> C{ { { 0.0, 0.0, 0.0 }, { -10.0, -12.5, -15.0 } } };
-        const std::vector<int> mask{ 0, 1 };
+        const std::vector<unsigned long long> mask{ 0, 1 };
         EXPECT_FLOATING_POINT_MATRIX_EQ(masked_rowwise_scale(mask, this->get_c(), this->get_A()), C);
     }
     {
         const plssvm::matrix<real_type, layout> C{ { { 2.25, 3.75, 5.25 }, { 0.0, 0.0, 0.0 } } };
-        const std::vector<int> mask{ 1, 0 };
+        const std::vector<unsigned long long> mask{ 1, 0 };
         EXPECT_FLOATING_POINT_MATRIX_EQ(masked_rowwise_scale(mask, this->get_c(), this->get_B()), C);
     }
 }
@@ -2081,13 +2081,13 @@ TYPED_TEST(MatrixOperationsDeathTest, operator_masked_rowwise_scale) {
     using real_type = typename TestFixture::fixture_real_type;
 
     const std::vector<real_type> scale{ 1.0, 2.0 };
-    const std::vector<int> mask{ 1, 0 };
+    const std::vector<unsigned long long> mask{ 1, 0 };
 
     // sizes missmatch
     EXPECT_DEATH(std::ignore = masked_rowwise_scale(mask, {}, this->get_A()), ::testing::HasSubstr("Error: shapes missmatch! (0 != 2 (num_rows))"));
     EXPECT_DEATH(std::ignore = masked_rowwise_scale(mask, std::vector<real_type>{ 1.0, 2.0, 3.0 }, this->get_A()), ::testing::HasSubstr("Error: shapes missmatch! (3 != 2 (num_rows))"));
-    EXPECT_DEATH(std::ignore = masked_rowwise_scale(std::vector<int>{}, scale, this->get_A()), ::testing::HasSubstr("Error: shapes missmatch! (0 != 2 (num_rows))"));
-    EXPECT_DEATH(std::ignore = masked_rowwise_scale(std::vector<int>{ 1, 0, 1 }, scale, this->get_A()), ::testing::HasSubstr("Error: shapes missmatch! (3 != 2 (num_rows))"));
+    EXPECT_DEATH(std::ignore = masked_rowwise_scale(std::vector<unsigned long long>{}, scale, this->get_A()), ::testing::HasSubstr("Error: shapes missmatch! (0 != 2 (num_rows))"));
+    EXPECT_DEATH(std::ignore = masked_rowwise_scale(std::vector<unsigned long long>{ 1, 0, 1 }, scale, this->get_A()), ::testing::HasSubstr("Error: shapes missmatch! (3 != 2 (num_rows))"));
 }
 
 TYPED_TEST(MatrixOperations, operator_variance) {

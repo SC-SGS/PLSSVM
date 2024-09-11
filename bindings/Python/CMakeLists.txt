@@ -11,8 +11,8 @@ message(STATUS "Building Python language bindings for PLSSVM.")
 find_package(Python COMPONENTS Interpreter Development)
 
 ## try finding pybind11
-set(PLSSVM_pybind11_VERSION v2.12.0)
-find_package(pybind11 2.12.0 QUIET)
+set(PLSSVM_pybind11_VERSION v2.13.3)
+find_package(pybind11 2.13.3 QUIET)
 if (pybind11_FOUND)
     message(STATUS "Found package pybind11.")
 else ()

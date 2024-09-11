@@ -158,8 +158,8 @@ template <typename... Args>
  * @return the C-SVM (`[[nodiscard]]`)
  */
 template <typename... Args>
-[[nodiscard]] inline std::unique_ptr<csvm> make_csvm(const backend_type backend, Args &&...args) {
-    return detail::make_csvm_impl(backend, std::forward<Args>(args)...);
+[[nodiscard]] inline std::unique_ptr<csvm> make_csvm(const backend_type backend, Args ...args) {
+    return detail::make_csvm_impl(backend, args...);
 }
 
 /**
@@ -170,8 +170,8 @@ template <typename... Args>
  * @return the C-SVM (`[[nodiscard]]`)
  */
 template <typename... Args>
-[[nodiscard]] inline std::unique_ptr<csvm> make_csvm(Args &&...args) {
-    return detail::make_csvm_impl(backend_type::automatic, std::forward<Args>(args)...);
+[[nodiscard]] inline std::unique_ptr<csvm> make_csvm(Args ...args) {
+    return detail::make_csvm_impl(backend_type::automatic, args...);
 }
 
 }  // namespace plssvm

@@ -66,6 +66,10 @@ void parse_provided_params(svc &self, const py::kwargs &args) {
             kernel = plssvm::kernel_function_type::rbf;
         } else if (kernel_str == "sigmoid") {
             kernel = plssvm::kernel_function_type::sigmoid;
+	} else if (kernel_str == "laplacian") {
+	    kernel = plssvm::kernel_function_type::laplacian;
+	} else if (kernel_str == "chi_squared") {
+	    kernel = plssvm::kernel_function_type::chi_squared;
         } else if (kernel_str == "precomputed") {
             throw py::attribute_error{ R"(The "kernel = 'precomputed'" parameter for a call to the 'SVC' constructor is not implemented yet!)" };
         } else {

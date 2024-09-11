@@ -161,9 +161,9 @@ void cpu_hardware_sampler::sampling_loop() {
             } else if (detail::starts_with(line, "Frequency boost")) {
                 clock_samples_.frequency_boost_ = value == "enabled";
             } else if (detail::starts_with(line, "CPU max MHz")) {
-                clock_samples_.min_frequency_ = detail::convert_to<decltype(clock_samples_.min_frequency_)::value_type>(value);
-            } else if (detail::starts_with(line, "CPU min MHz")) {
                 clock_samples_.max_frequency_ = detail::convert_to<decltype(clock_samples_.max_frequency_)::value_type>(value);
+            } else if (detail::starts_with(line, "CPU min MHz")) {
+                clock_samples_.min_frequency_ = detail::convert_to<decltype(clock_samples_.min_frequency_)::value_type>(value);
             } else if (detail::starts_with(line, "L1d cache")) {
                 memory_samples_.l1d_cache_ = detail::convert_to<decltype(memory_samples_.l1d_cache_)::value_type>(value);
             } else if (detail::starts_with(line, "L1i cache")) {
@@ -294,7 +294,7 @@ void cpu_hardware_sampler::sampling_loop() {
                 idle_state_samples_.package_low_power_idle_state_percent_ = vector_type{ detail::convert_to<typename vector_type::value_type>(values[i]) };
             } else if (header[i] == "PkgWatt") {
                 using vector_type = decltype(power_samples_.package_watt_)::value_type;
-                idle_state_samples_.package_low_power_idle_state_percent_ = vector_type{ detail::convert_to<typename vector_type::value_type>(values[i]) };
+                power_samples_.package_watt_ = vector_type{ detail::convert_to<typename vector_type::value_type>(values[i]) };
             } else if (header[i] == "CorWatt") {
                 using vector_type = decltype(power_samples_.core_watt_)::value_type;
                 power_samples_.core_watt_ = vector_type{ detail::convert_to<typename vector_type::value_type>(values[i]) };
@@ -439,7 +439,7 @@ void cpu_hardware_sampler::sampling_loop() {
                         idle_state_samples_.package_low_power_idle_state_percent_->push_back(detail::convert_to<typename vector_type::value_type>(values[i]));
                     } else if (header[i] == "PkgWatt") {
                         using vector_type = decltype(power_samples_.package_watt_)::value_type;
-                        idle_state_samples_.package_low_power_idle_state_percent_->push_back(detail::convert_to<typename vector_type::value_type>(values[i]));
+                        power_samples_.package_watt_->push_back(detail::convert_to<typename vector_type::value_type>(values[i]));
                     } else if (header[i] == "CorWatt") {
                         using vector_type = decltype(power_samples_.core_watt_)::value_type;
                         power_samples_.core_watt_->push_back(detail::convert_to<typename vector_type::value_type>(values[i]));

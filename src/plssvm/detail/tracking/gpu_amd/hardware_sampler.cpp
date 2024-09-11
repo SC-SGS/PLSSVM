@@ -282,10 +282,11 @@ void gpu_amd_hardware_sampler::sampling_loop() {
 
         // queried samples -> retrieved every iteration if available
         [[maybe_unused]] std::uint64_t timestamp{};
-        [[maybe_unused]] float resolution{};
+        float resolution{};
         decltype(power_samples_.power_total_energy_consumption_)::value_type::value_type power_total_energy_consumption{};
-        if (rsmi_dev_energy_count_get(device_id_, &power_total_energy_consumption, &resolution, &timestamp) == RSMI_STATUS_SUCCESS) {  // TODO: returns the same value for all invocations
-            power_samples_.power_total_energy_consumption_ = decltype(power_samples_.power_total_energy_consumption_)::value_type{ power_total_energy_consumption };
+        if (rsmi_dev_energy_count_get(device_id_, &power_total_energy_consumption, &resolution, &timestamp) == RSMI_STATUS_SUCCESS) {
+            const double scaled_value = static_cast<double>(power_total_energy_consumption) * static_cast<double>(resolution);
+            power_samples_.power_total_energy_consumption_ = decltype(power_samples_.power_total_energy_consumption_)::value_type{ static_cast<decltype(power_total_energy_consumption)>(scaled_value) };
         }
     }
 
@@ -540,10 +541,11 @@ void gpu_amd_hardware_sampler::sampling_loop() {
 
                 if (power_samples_.power_total_energy_consumption_.has_value()) {
                     [[maybe_unused]] std::uint64_t timestamp{};
-                    [[maybe_unused]] float resolution{};
+                    float resolution{};
                     decltype(power_samples_.power_total_energy_consumption_)::value_type::value_type value{};
-                    PLSSVM_ROCM_SMI_ERROR_CHECK(rsmi_dev_energy_count_get(device_id_, &value, &resolution, &timestamp));  // TODO: returns the same value for all invocations
-                    power_samples_.power_total_energy_consumption_->push_back(value);
+                    PLSSVM_ROCM_SMI_ERROR_CHECK(rsmi_dev_energy_count_get(device_id_, &value, &resolution, &timestamp));
+                    const double scaled_value = static_cast<double>(value) * static_cast<double>(resolution);
+                    power_samples_.power_total_energy_consumption_->push_back(static_cast<decltype(value)>(scaled_value));
                 }
 
                 if (power_samples_.power_profile_.has_value()) {

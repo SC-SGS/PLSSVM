@@ -36,7 +36,7 @@ using namespace std::chrono_literals;
 
 /**
  * @brief Create @p num_devices many hardware samplers for the @p target platform.
- * @details If available, the CPU is **always** sampled regardless the @p target platform. If the @p target is `plssvm::target_platform::cpu`, only one hardware sampler is created.
+ * @details If the @p target is `plssvm::target_platform::cpu`, no sampler is created since the CPU is always tracked.
  * @param[in] target the target platform that should be sampled
  * @param[in] num_devices the number of devices to sample
  * @param[in] sampling_interval the sampling interval to use; default value determined during CMake configuration

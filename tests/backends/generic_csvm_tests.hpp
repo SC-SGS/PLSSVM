@@ -433,11 +433,11 @@ TYPED_TEST_P(GenericCSVM, conjugate_gradients_trivial) {
                                                      { plssvm::real_type{ -1.0 }, plssvm::real_type{ 1.0 }, plssvm::real_type{ -1.0 }, plssvm::real_type{ 1.0 } } } };
 
     // solve AX = B
-    const auto [X, num_iter] = svm.conjugate_gradients(A, B, plssvm::real_type{ 0.00001 }, 4, solver);
+    const auto [X, num_iters] = svm.conjugate_gradients(A, B, plssvm::real_type{ 0.00001 }, 4, solver);
 
     // check result
     EXPECT_FLOATING_POINT_MATRIX_NEAR(X, (plssvm::soa_matrix<plssvm::real_type>{ B, plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE } }));
-    EXPECT_GT(num_iter, 0);
+    EXPECT_THAT(num_iters, ::testing::Each(::testing::Gt(0)));
 }
 
 TYPED_TEST_P(GenericCSVM, conjugate_gradients) {
@@ -472,7 +472,7 @@ TYPED_TEST_P(GenericCSVM, conjugate_gradients) {
 
     // check result
     EXPECT_FLOATING_POINT_MATRIX_NEAR(X, correct_X);
-    EXPECT_GT(num_iters, 0);
+    EXPECT_THAT(num_iters, ::testing::Each(::testing::Gt(0)));
 }
 
 REGISTER_TYPED_TEST_SUITE_P(GenericCSVM,
@@ -798,7 +798,7 @@ TYPED_TEST_P(GenericCSVMSolver, solve_lssvm_system_of_linear_equations_trivial) 
     // | Q  1 |  *  | x |  =  | y |
     // | 1  0 |     | b |     | 0 |
     // with Q = A^TA
-    const auto &[calculated_x, calculated_rho, num_iter] = svm.solve_lssvm_system_of_linear_equations(A, B, params, plssvm::epsilon = 0.00001, plssvm::solver = solver);
+    const auto &[calculated_x, calculated_rho, num_iters] = svm.solve_lssvm_system_of_linear_equations(A, B, params, plssvm::epsilon = 0.00001, plssvm::solver = solver);
 
     // check the calculated result for correctness
     EXPECT_FLOATING_POINT_MATRIX_NEAR_EPS(calculated_x, (plssvm::aos_matrix<plssvm::real_type>{ B, plssvm::shape{ plssvm::PADDING_SIZE, plssvm::PADDING_SIZE } }), 1e6);
@@ -806,7 +806,7 @@ TYPED_TEST_P(GenericCSVMSolver, solve_lssvm_system_of_linear_equations_trivial) 
     for (const auto rho : calculated_rho) {
         EXPECT_FLOATING_POINT_NEAR(std::abs(rho) - std::numeric_limits<plssvm::real_type>::epsilon(), std::numeric_limits<plssvm::real_type>::epsilon());
     }
-    EXPECT_GT(num_iter, 0);
+    EXPECT_THAT(num_iters, ::testing::Each(::testing::Gt(0)));
 }
 
 TYPED_TEST_P(GenericCSVMSolver, solve_lssvm_system_of_linear_equations) {
@@ -835,7 +835,7 @@ TYPED_TEST_P(GenericCSVMSolver, solve_lssvm_system_of_linear_equations) {
     // | Q  1 |  *  | x |  =  | y |
     // | 1  0 |     | b |     | 0 |
     // with Q = A^TA
-    const auto &[calculated_x, calculated_rho, num_iter] = svm.solve_lssvm_system_of_linear_equations(A, B, params, plssvm::epsilon = 0.00001, plssvm::solver = solver);
+    const auto &[calculated_x, calculated_rho, num_iters] = svm.solve_lssvm_system_of_linear_equations(A, B, params, plssvm::epsilon = 0.00001, plssvm::solver = solver);
 
     plssvm::aos_matrix<plssvm::real_type> correct_x{ { { plssvm::real_type{ 0.4285714285714278 }, plssvm::real_type{ -1.1904761904761898 }, plssvm::real_type{ 1.1904761904761898 }, plssvm::real_type{ -0.4285714285714278 } },
                                                        { plssvm::real_type{ -0.4285714285714278 }, plssvm::real_type{ 1.1904761904761898 }, plssvm::real_type{ -1.1904761904761898 }, plssvm::real_type{ 0.4285714285714278 } } },
@@ -846,7 +846,7 @@ TYPED_TEST_P(GenericCSVMSolver, solve_lssvm_system_of_linear_equations) {
     for (const auto rho : calculated_rho) {
         EXPECT_FLOATING_POINT_NEAR_EPS(std::abs(rho), std::abs(calculated_rho.front()), 1e6);  // due to hand provided results
     }
-    EXPECT_GT(num_iter, 0);
+    EXPECT_THAT(num_iters, ::testing::Each(::testing::Gt(0)));
 }
 
 REGISTER_TYPED_TEST_SUITE_P(GenericCSVMSolver,

@@ -22,13 +22,16 @@
 #endif
 #include "plssvm/detail/tracking/hardware_sampler_factory.hpp"  // plssvm::detail::tracking::make_hardware_sampler
 #include "plssvm/detail/utility.hpp"                            // plssvm::detail::unreachable
+#include "plssvm/detail/utility.hpp"                            // PLSSVM_IS_DEFINED
 #include "plssvm/exceptions/exceptions.hpp"                     // plssvm::exception, plssvm::hardware_sampler_exception
 #include "plssvm/target_platforms.hpp"                          // plssvm::target_platform
 
 #include "bindings/Python/utility.hpp"  // register_py_exception
 
 #include "fmt/format.h"         // fmt::format
+#include "pybind11/chrono.h"    // bind std::chrono types
 #include "pybind11/pybind11.h"  // py::module_, py::class_
+#include "pybind11/stl.h"       // bind STL types
 
 #include <chrono>   // std::chrono::milliseconds, std::chrono_literals namespace
 #include <cstddef>  // std::size_t
@@ -90,6 +93,12 @@ void init_hardware_sampler(py::module_ &m, const py::exception<plssvm::exception
             // unreachable!
             plssvm::detail::unreachable();
         });
+
+    // add functions to check which hardware samplers are available
+    m.def("has_cpu_hardware_sampler", []() { return PLSSVM_IS_DEFINED(PLSSVM_HARDWARE_TRACKING_FOR_CPUS_ENABLED); }, "check whether the CPU hardware sampler is available");
+    m.def("has_gpu_nvidia_hardware_sampler", []() { return PLSSVM_IS_DEFINED(PLSSVM_HARDWARE_TRACKING_FOR_NVIDIA_GPUS_ENABLED); }, "check whether the NVIDIA GPU hardware sampler is available");
+    m.def("has_gpu_amd_hardware_sampler", []() { return PLSSVM_IS_DEFINED(PLSSVM_HARDWARE_TRACKING_FOR_AMD_GPUS_ENABLED); }, "check whether the AMD GPU hardware sampler is available");
+    m.def("has_gpu_intel_hardware_sampler", []() { return PLSSVM_IS_DEFINED(PLSSVM_HARDWARE_TRACKING_FOR_INTEL_GPUS_ENABLED); }, "check whether the Intel GPU hardware sampler is available");
 
     // register hardware sampler specific exception
     register_py_exception<plssvm::hardware_sampling_exception>(m, "HardwareSamplerError", base_exception);

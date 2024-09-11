@@ -447,8 +447,13 @@ find_package(OpenMP 4.0 QUIET)
 if (OpenMP_FOUND)
     message(STATUS "Found OpenMP ${OpenMP_CXX_VERSION} to speed-up library utilities (like file parsing).")
     set(PLSSVM_FOUND_OPENMP_FOR_UTILITY ON)
-    target_link_libraries(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC $<$<NOT:$<CXX_COMPILER_ID:MSVC>>:OpenMP::OpenMP_CXX>)
-    target_compile_options(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC $<$<CXX_COMPILER_ID:MSVC>:-openmp:llvm -openmp:experimental>)
+    if (${CMAKE_CXX_COMPILER_ID} MATCHES "IntelLLVM")
+        target_link_libraries(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC -fopenmp)
+    elseif (${CMAKE_CXX_COMPILER_ID} MATCHES "MSVC")
+        target_compile_options(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC -openmp:llvm -openmp:experimental)
+    else ()
+        target_link_libraries(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC OpenMP::OpenMP_CXX)
+    endif ()
 else ()
     # disable warning for unknown OpenMP pragmas if no OpenMP could be found
     target_compile_options(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC
@@ -488,7 +493,7 @@ else ()
 endif ()
 
 ## try finding fast_float
-set(PLSSVM_fast_float_VERSION v6.1.1)
+set(PLSSVM_fast_float_VERSION v6.1.3)
 find_package(fast_float QUIET)
 if (fast_float_FOUND)
     # TODO: get used fast_float version
@@ -506,11 +511,7 @@ else ()
                          GIT_TAG ${PLSSVM_fast_float_VERSION}
                          QUIET
     )
-    FetchContent_GetProperties(fast_float)
-    if (NOT fast_float_POPULATED)
-        FetchContent_Populate(fast_float)
-        add_subdirectory(${fast_float_SOURCE_DIR} EXCLUDE_FROM_ALL)
-    endif ()
+    FetchContent_MakeAvailable(fast_float)
     add_dependencies(${PLSSVM_BASE_LIBRARY_NAME} fast_float)
     target_include_directories(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC
                                $<BUILD_INTERFACE:${fast_float_SOURCE_DIR}/include>
@@ -536,11 +537,7 @@ else ()
                          GIT_TAG ${PLSSVM_igor_VERSION}
                          QUIET
     )
-    FetchContent_GetProperties(igor)
-    if (NOT igor_POPULATED)
-        FetchContent_Populate(igor)
-        add_subdirectory(${igor_SOURCE_DIR} EXCLUDE_FROM_ALL)
-    endif ()
+    FetchContent_MakeAvailable(igor)
     add_dependencies(${PLSSVM_BASE_LIBRARY_NAME} igor)
     target_include_directories(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC
                                $<BUILD_INTERFACE:${igor_SOURCE_DIR}/include>
@@ -550,8 +547,8 @@ else ()
 endif ()
 
 ## try finding fmt
-set(PLSSVM_fmt_VERSION 11.0.1)
-find_package(fmt 11.0.1 QUIET)
+set(PLSSVM_fmt_VERSION 11.0.2)
+find_package(fmt 11.0.2 QUIET)
 if (fmt_FOUND)
     message(STATUS "Found package fmt.")
 else ()
@@ -580,10 +577,6 @@ else ()
     set_property(TARGET fmt PROPERTY POSITION_INDEPENDENT_CODE ON)
     target_compile_definitions(fmt PRIVATE FMT_USE_FULL_CACHE_DRAGONBOX)
     add_dependencies(${PLSSVM_BASE_LIBRARY_NAME} fmt)
-    target_include_directories(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC
-                               $<BUILD_INTERFACE:${fmt_SOURCE_DIR}/include>
-                               $<INSTALL_INTERFACE:include>
-    )
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS_OLD}")
 endif ()
 target_link_libraries(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC fmt::fmt)
@@ -620,7 +613,7 @@ endif ()
 ########################################################################################################################
 ##                                              enable language bindings                                              ##
 ########################################################################################################################
-option(PLSSVM_ENABLE_LANGUAGE_BINDINGS "Build langauge bindings, e.g., for Python." OFF)
+option(PLSSVM_ENABLE_LANGUAGE_BINDINGS "Build language bindings, e.g., for Python." OFF)
 if (PLSSVM_ENABLE_LANGUAGE_BINDINGS)
     add_subdirectory(bindings)
 endif ()

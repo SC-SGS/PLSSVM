@@ -86,11 +86,6 @@ std::vector<std::unique_ptr<hardware_sampler>> create_hardware_sampler(const tar
         }
     }
 
-#if defined(PLSSVM_HARDWARE_TRACKING_FOR_CPUS_ENABLED)
-    // if available, ALWAYS add a CPU hardware sampler
-    sampler.push_back(make_hardware_sampler(target_platform::cpu, 0, sampling_interval));
-#endif
-
     return sampler;
 }
 
