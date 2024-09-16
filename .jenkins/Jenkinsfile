@@ -37,7 +37,7 @@ def onlineNodes(label) {
             onlineNodes.add(node.getDisplayName())
         }
     }
-  return ['pcsgs02','pcsgs03','pcsgs04','pcsgs05','simcl1n3','pcsgs11',] //TODO fix
+  return ['pcsgs02','pcsgs03','pcsgs04','pcsgs05','pcsgs13','pcsgs11',] //TODO fix
 }
 
 pipeline {
