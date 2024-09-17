@@ -85,6 +85,16 @@ pipeline {
     stages{
         stage('Dependency -- Spack')
         {
+        response = input(
+        id: 'update_spack',
+        message: 'Update Spack to new version.',
+        parameters: [
+            choice(
+                choices: ['yes', 'no'],
+                description: 'Update Spack to new version.',
+                name: 'update_spack'),
+        ])
+}
         steps{
             script{
                 def labels = onlineNodes('sgs_workstation')
@@ -100,6 +110,9 @@ pipeline {
                                     if [[ ! -d  "$SGSSCRATCH/spack" ]]; then
                                         cd $SGSSCRATCH
                                         git clone https://github.com/spack/spack.git spack || true
+                                    else if [[ respones == "yes" ]]; then
+                                        cd $SGSSCRATCH/spack
+                                        git pull || true
                                     fi
                                     source $SGSSCRATCH/spack/share/spack/setup-env.sh
                                     if [[ ! -d  "$SGSSCRATCH/PLSSVM-spack" ]]; then
