@@ -94,7 +94,6 @@ pipeline {
                 description: 'Update Spack to new version.',
                 name: 'update_spack'),
         ])
-}
         steps{
             script{
                 def labels = onlineNodes('sgs_workstation')
