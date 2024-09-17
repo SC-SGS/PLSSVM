@@ -83,12 +83,13 @@ pipeline {
     }
 
     stages{
-        Map response = [:]
 
         stage('Dependency -- Spack')
         {
 
         steps{
+            script{
+            Map response = [:]
             response = input(
             id: 'update_spack',
             message: 'Update Spack to new version.',
@@ -98,8 +99,6 @@ pipeline {
                     description: 'Update Spack to new version.',
                     name: 'update_spack'),
             ])
-
-            script{
                 def labels = onlineNodes('sgs_workstation')
                 def builders = [: ]
                 for (x in labels){
