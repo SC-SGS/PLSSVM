@@ -43,6 +43,10 @@ def onlineNodes(label) {
 pipeline {
     agent { label 'sgs_workstation' }
 
+    parameters{
+    booleanParam(defaultValue: false, description: 'Update Spack to new version.', name: 'update_spack')
+    }
+
     options {
         buildDiscarder(
             logRotator(
@@ -89,16 +93,7 @@ pipeline {
 
         steps{
             script{
-            Map response = [:]
-            response = input(
-            id: 'update_spack',
-            message: 'Update Spack to new version.',
-            parameters: [
-                choice(
-                    choices: ['yes', 'no'],
-                    description: 'Update Spack to new version.',
-                    name: 'update_spack'),
-            ])
+
                 def labels = onlineNodes('sgs_workstation')
                 def builders = [: ]
                 for (x in labels){
@@ -112,7 +107,7 @@ pipeline {
                                     if [[ ! -d  "$SGSSCRATCH/spack" ]]; then
                                         cd $SGSSCRATCH
                                         git clone https://github.com/spack/spack.git spack || true
-                                    else if [[ respones == "yes" ]]; then
+                                    else if [[ params.update_spack ]]; then
                                         cd $SGSSCRATCH/spack
                                         git pull || true
                                     fi
