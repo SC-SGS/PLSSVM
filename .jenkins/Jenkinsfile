@@ -83,17 +83,21 @@ pipeline {
     }
 
     stages{
+        Map response = [:]
+        stage("Choose combinations") {
+          response = input(
+            id: 'update_spack',
+            message: 'Update Spack to new version.',
+            parameters: [
+                choice(
+                    choices: ['yes', 'no'],
+                    description: 'Update Spack to new version.',
+                    name: 'update_spack'),
+            ])
+        }
         stage('Dependency -- Spack')
         {
-        response = input(
-        id: 'update_spack',
-        message: 'Update Spack to new version.',
-        parameters: [
-            choice(
-                choices: ['yes', 'no'],
-                description: 'Update Spack to new version.',
-                name: 'update_spack'),
-        ])
+
         steps{
             script{
                 def labels = onlineNodes('sgs_workstation')
