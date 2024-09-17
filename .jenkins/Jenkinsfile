@@ -107,7 +107,7 @@ pipeline {
                                     if [[ ! -d  "$SGSSCRATCH/spack" ]]; then
                                         cd $SGSSCRATCH
                                         git clone https://github.com/spack/spack.git spack || true
-                                    else if [[ params.update_spack ]]; then
+                                    elif [[ params.update_spack ]]; then
                                         cd $SGSSCRATCH/spack
                                         git pull || true
                                     fi
