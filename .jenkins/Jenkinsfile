@@ -364,7 +364,7 @@ pipeline {
                                             build_type=$BUILD_TYPE \
                                             arch=$(spack arch) || true
 
-                                        env.installpath=$(spack dev-build plssvm@develop$([[ $BACKEND == ADAPTIVECPP ]] && echo "%clang" ) \
+                                        echo $(spack dev-build plssvm@develop$([[ $BACKEND == ADAPTIVECPP ]] && echo "%clang" ) \
                                             $([[ $BACKEND == OPENMP ]] && echo "+openmp" || echo "~openmp") \
                                             $([[ $BACKEND == CUDA ]] && echo "+cuda" || echo "~cuda") \
                                             $([[ $BACKEND == HIP ]] && echo "+hip" || echo "~hip") \
@@ -394,7 +394,9 @@ pipeline {
                                             $([[ $BACKEND == ADAPTIVECPP ]] && echo "^py-scipy%gcc" ) \
                                             $([[ $BACKEND == ADAPTIVECPP ]] && echo "^openblas%gcc" ) \
                                             $([[ $BACKEND == ADAPTIVECPP ]] && echo "^llvm@17~gold~libomptarget") \
-                                            | tee /dev/tty | tail -n 1 | cut -d " " -f 2)
+                                            | tee /dev/tty | tail -n 1 | cut -d " " -f 2) > $BUILD_TYPE-$BACKEND-$ARCHITECTURE-$BUILD_TYPE-$TEST_TYPE.installpath
+
+                                        installpath=$(cat $BUILD_TYPE-$BACKEND-$ARCHITECTURE-$BUILD_TYPE-$TEST_TYPE.installpath)
 
                                         echo "Install path: $installpath"
                                 '''
@@ -426,6 +428,8 @@ pipeline {
                                     ;;
                                     *) ;;
                                 esac
+
+                                installpath=$(cat $BUILD_TYPE-$BACKEND-$ARCHITECTURE-$BUILD_TYPE-$TEST_TYPE.installpath)
 
                                 cd ${installpath}
 
