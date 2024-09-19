@@ -394,9 +394,9 @@ pipeline {
                                             $([[ $BACKEND == ADAPTIVECPP ]] && echo "^py-scipy%gcc" ) \
                                             $([[ $BACKEND == ADAPTIVECPP ]] && echo "^openblas%gcc" ) \
                                             $([[ $BACKEND == ADAPTIVECPP ]] && echo "^llvm@17~gold~libomptarget") \
-                                            | tee /dev/tty | tail -n 1 | cut -d " " -f 2) > $BUILD_TYPE-$BACKEND-$ARCHITECTURE-$BUILD_TYPE-$TEST_TYPE.installpath
+                                            | tee /dev/tty | tail -n 1 | cut -d " " -f 2) > ${WORKSPACE}/plssvm/${BUILD_TYPE}-${BACKEND}-${ARCHITECTURE}-${TEST_TYPE}.installpath
 
-                                        installpath=$(cat $BUILD_TYPE-$BACKEND-$ARCHITECTURE-$BUILD_TYPE-$TEST_TYPE.installpath)
+                                        installpath=$(cat ${WORKSPACE}/plssvm/${BUILD_TYPE}-${BACKEND}-${ARCHITECTURE}-${TEST_TYPE}.installpath)
 
                                         echo "Install path: $installpath"
                                 '''
@@ -429,7 +429,7 @@ pipeline {
                                     *) ;;
                                 esac
 
-                                installpath=$(cat $BUILD_TYPE-$BACKEND-$ARCHITECTURE-$BUILD_TYPE-$TEST_TYPE.installpath)
+                                installpath=$(cat ${WORKSPACE}/plssvm/${BUILD_TYPE}-${BACKEND}-${ARCHITECTURE}-${TEST_TYPE}.installpath)
 
                                 cd ${installpath}
 
