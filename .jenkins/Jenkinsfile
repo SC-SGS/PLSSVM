@@ -319,6 +319,7 @@ pipeline {
                                         fi
 
                                         source $SGSSCRATCH/spack/share/spack/setup-env.sh
+                                        mkdir -p ${WORKSPACE}/plssvm
                                         cd ${WORKSPACE}/plssvm
 
                                         echo $(hostname)
@@ -408,7 +409,6 @@ pipeline {
                             sh '''
 
                                 source $SGSSCRATCH/spack/share/spack/setup-env.sh
-                                spack find package plssvm@develop
                                 echo $hostname
 
                                 case $BACKEND in
