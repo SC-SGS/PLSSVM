@@ -452,21 +452,21 @@ pipeline {
                                 fi
 
 
-                                spack test-env "plssvm@develop$([[ $BACKEND == ADAPTIVECPP ]] && echo "%clang" )\
-$([[ $BACKEND == OPENMP ]] && echo "+openmp" || echo "~openmp")\
-$([[ $BACKEND == CUDA ]] && echo "+cuda" || echo "~cuda")\
-$([[ $BACKEND == HIP ]] && echo "+hip" || echo "~hip")\
-$([[ $BACKEND == OPENCL ]] && echo "+opencl" || echo "~opencl")\
-$([[ $BACKEND == ADAPTIVECPP ]] && echo " +adaptivecpp" || echo "~adaptivecpp")\
-$([[ $BACKEND == DPCPP ]] && echo "+icpx" || echo "~icpx")\
-$([[ $BACKEND == *"STDPAR"* ]] && echo "+stdpar" || echo "~stdpar")\
-$([[ $BACKEND == STDPAR-GNU-TBB ]] && echo "stdparimplementation=gnu-tbb" )\
-$([[ $BACKEND == STDPAR-DPCPP ]] && echo "stdparimplementation=icpx" )\
-$([[ $BACKEND == STDPAR-NVHPC ]] && echo "stdparimplementation=nvhpc" )\
-$([[ $BACKEND == STDPAR-ADAPTIVECPP ]] && echo "stdparimplementation=adaptivecpp" )\
-$([[ $ARCHITECTURE == NVIDIA ]] && echo "cuda_arch=86")\
-$([[ SET_NVIDIA_GPU_NONE == 1 ]] && echo "cuda_arch=none")\
-$([[ $ARCHITECTURE == AMD ]] && echo "amdgpu_target=gfx90a")\
+                                spack test-env "plssvm@develop$([[ $BACKEND == ADAPTIVECPP ]] && echo "%clang" ) \
+$([[ $BACKEND == OPENMP ]] && echo "+openmp" || echo "~openmp") \
+$([[ $BACKEND == CUDA ]] && echo "+cuda" || echo "~cuda") \
+$([[ $BACKEND == HIP ]] && echo "+hip" || echo "~hip") \
+$([[ $BACKEND == OPENCL ]] && echo "+opencl" || echo "~opencl") \
+$([[ $BACKEND == ADAPTIVECPP ]] && echo " +adaptivecpp" || echo "~adaptivecpp") \
+$([[ $BACKEND == DPCPP ]] && echo "+icpx" || echo "~icpx") \
+$([[ $BACKEND == *"STDPAR"* ]] && echo "+stdpar" || echo "~stdpar") \
+$([[ $BACKEND == STDPAR-GNU-TBB ]] && echo "stdparimplementation=gnu-tbb" ) \
+$([[ $BACKEND == STDPAR-DPCPP ]] && echo "stdparimplementation=icpx" ) \
+$([[ $BACKEND == STDPAR-NVHPC ]] && echo "stdparimplementation=nvhpc" ) \
+$([[ $BACKEND == STDPAR-ADAPTIVECPP ]] && echo "stdparimplementation=adaptivecpp" ) \
+$([[ $ARCHITECTURE == NVIDIA ]] && echo "cuda_arch=86") \
+$([[ SET_NVIDIA_GPU_NONE == 1 ]] && echo "cuda_arch=none") \
+$([[ $ARCHITECTURE == AMD ]] && echo "amdgpu_target=gfx90a") \
 $([[ SET_AMD_GPU_NONE == 1 ]] && "amdgpu_target=none") \
 build_type=$BUILD_TYPE \
 arch=$(spack arch)" \
