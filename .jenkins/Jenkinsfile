@@ -308,7 +308,7 @@ pipeline {
                 stages{
                     stage('Build PLSSVM'){
                         steps{
-                                sh '''
+                                sh ''' #!/bin/bash
 
                                         if [ "$BUILD_TYPE" == Release ]; then
                                             export NUM_DATA_POINTS=200
@@ -407,7 +407,7 @@ pipeline {
                     }
                     stage('Ctest PLSSVM'){
                         steps{
-                            sh '''
+                            sh ''' #!/bin/bash
 
                                 source $SGSSCRATCH/spack/share/spack/setup-env.sh
                                 echo $hostname
@@ -478,7 +478,7 @@ $([[ $TEST_TYPE == BASE ]] && echo \"-R "Base*\"" || echo "-E \"Base*\"")
                     }
                     stage('test installed PLSSVM'){
                         steps{
-                            sh '''
+                            sh ''' #!/bin/bash
                                 source $SGSSCRATCH/spack/share/spack/setup-env.sh
 
                                 if [ "TEST_TYPE" == BASE ]; then
