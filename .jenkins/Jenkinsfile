@@ -432,7 +432,9 @@ pipeline {
 
                                 installpath=$(cat ${WORKSPACE}/plssvm/${BUILD_TYPE}-${BACKEND}-${ARCHITECTURE}-${TEST_TYPE}.installpath)
 
-                                cd ${installpath}
+                                cd ${WORKSPACE}/plssvm
+                                cd build-$(spack arch)-$(echo ${installpath##*-}| cut -c1-7)
+
 
 
                                 if [[ $ARCHITECTURE == NVIDIA ]]; then
