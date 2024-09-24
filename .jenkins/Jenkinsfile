@@ -365,7 +365,7 @@ pipeline {
                                             build_type=$BUILD_TYPE \
                                             arch=$(spack arch) || true
 
-                                        set -o pipefail
+                                        set -e -o pipefail
                                         echo $(spack dev-build plssvm@develop$([[ $BACKEND == ADAPTIVECPP ]] && echo "%clang" ) \
                                             $([[ $BACKEND == OPENMP ]] && echo "+openmp" || echo "~openmp") \
                                             $([[ $BACKEND == CUDA ]] && echo "+cuda" || echo "~cuda") \
