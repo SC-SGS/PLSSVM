@@ -452,6 +452,8 @@ pipeline {
                                     ACPP_VISIBILITY_MASK=omp
                                 fi
 
+                                ls -la
+
 
                                 spack test-env "plssvm@develop$([[ $BACKEND == ADAPTIVECPP ]] && echo "%clang" ) \
 $([[ $BACKEND == OPENMP ]] && echo "+openmp" || echo "~openmp") \
