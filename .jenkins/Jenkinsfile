@@ -398,6 +398,8 @@ pipeline {
                                             $([[ $BACKEND == ADAPTIVECPP ]] && echo "^llvm@17~gold~libomptarget") \
                                             | tee /dev/tty | tail -n 1 | cut -d " " -f 2) > ${WORKSPACE}/plssvm/${BUILD_TYPE}-${BACKEND}-${ARCHITECTURE}-${TEST_TYPE}.installpath
 
+                                        echo ${PIPESTATUS[@]}
+
                                         installpath=$(cat ${WORKSPACE}/plssvm/${BUILD_TYPE}-${BACKEND}-${ARCHITECTURE}-${TEST_TYPE}.installpath)
 
                                         echo "Install path: $installpath"
