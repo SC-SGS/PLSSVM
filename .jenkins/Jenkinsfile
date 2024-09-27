@@ -366,7 +366,7 @@ pipeline {
                                             arch=$(spack arch) || true
 
                                         set -e -o pipefail
-                                        echo $(spack dev-build plssvm@develop$([[ $BACKEND == ADAPTIVECPP ]] && echo "%clang" ) \
+                                        spack dev-build plssvm@develop$([[ $BACKEND == ADAPTIVECPP ]] && echo "%clang" ) \
                                             $([[ $BACKEND == OPENMP ]] && echo "+openmp" || echo "~openmp") \
                                             $([[ $BACKEND == CUDA ]] && echo "+cuda" || echo "~cuda") \
                                             $([[ $BACKEND == HIP ]] && echo "+hip" || echo "~hip") \
@@ -396,7 +396,7 @@ pipeline {
                                             $([[ $BACKEND == ADAPTIVECPP ]] && echo "^py-scipy%gcc" ) \
                                             $([[ $BACKEND == ADAPTIVECPP ]] && echo "^openblas%gcc" ) \
                                             $([[ $BACKEND == ADAPTIVECPP ]] && echo "^llvm@17~gold~libomptarget") \
-                                            | tee -p --output-error=exit /dev/tty | tail -n 1 | cut -d " " -f 2) > ${WORKSPACE}/plssvm/${BUILD_TYPE}-${BACKEND}-${ARCHITECTURE}-${TEST_TYPE}.installpath
+                                            | tee /dev/tty | tail -n 1 | cut -d " " -f 2 > ${WORKSPACE}/plssvm/${BUILD_TYPE}-${BACKEND}-${ARCHITECTURE}-${TEST_TYPE}.installpath
 
                                         echo ${PIPESTATUS[@]}
 
