@@ -14,15 +14,18 @@
 #define PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_HPP_
 #pragma once
 
-#include "plssvm/detail/cmd/parser_predict.hpp"         // plssvm::detail::cmd::parser_predict
-#include "plssvm/detail/cmd/parser_scale.hpp"           // plssvm::detail::cmd::parser_scale
-#include "plssvm/detail/cmd/parser_train.hpp"           // plssvm::detail::cmd::parser_train
-#include "plssvm/detail/memory_size.hpp"                // plssvm::detail::memory_size
-#include "plssvm/detail/tracking/events.hpp"            // plssvm::detail::tracking::{events, event}
-#include "plssvm/detail/tracking/hardware_sampler.hpp"  // plssvm::detail::tracking::hardware_sampler
-#include "plssvm/detail/type_traits.hpp"                // plssvm::detail::remove_cvref_t
-#include "plssvm/detail/utility.hpp"                    // PLSSVM_EXTERN
-#include "plssvm/parameter.hpp"                         // plssvm::parameter
+#include "plssvm/detail/cmd/parser_predict.hpp"  // plssvm::detail::cmd::parser_predict
+#include "plssvm/detail/cmd/parser_scale.hpp"    // plssvm::detail::cmd::parser_scale
+#include "plssvm/detail/cmd/parser_train.hpp"    // plssvm::detail::cmd::parser_train
+#include "plssvm/detail/memory_size.hpp"         // plssvm::detail::memory_size
+#include "plssvm/detail/tracking/events.hpp"     // plssvm::detail::tracking::{events, event}
+#include "plssvm/detail/type_traits.hpp"         // plssvm::detail::remove_cvref_t
+#include "plssvm/detail/utility.hpp"             // PLSSVM_EXTERN
+#include "plssvm/parameter.hpp"                  // plssvm::parameter
+
+#if defined(PLSSVM_HARDWARE_SAMPLING_ENABLED)
+    #include "hardware_sampling/system_hardware_sampler.hpp"  // hws::system_hardware_sampler
+#endif
 
 #include "fmt/base.h"     // fmt::formatter
 #include "fmt/chrono.h"   // format std::chrono types
@@ -206,13 +209,14 @@ class performance_tracker {
      * @param[in] entry the entry to add
      */
     void add_tracking_entry(const tracking_entry<cmd::parser_scale> &entry);
+#if defined(PLSSVM_HARDWARE_SAMPLING_ENABLED)
     /**
-     * @brief A `plssvm::detail::tracking::hardware_tracker` (or any of its subclasses) from which all samples should be added.
+     * @brief Add the content of the `hws::system_hardware_sampler` to this performance tracker.
      * @details Saves a string containing the entry name and value in a map with the entry category as key.
-     *          Uses the `plssvm::detail::tracking::hardware_tracker::generate_yaml_string` function to generate the tracking entry.
-     * @param[in] entry the hardware sampler to add the samples from
+     * @param[in] entry the hws hardware sampler to add the samples from
      */
-    void add_hardware_sampler_entry(const hardware_sampler &entry);
+    void add_hws_entry(const hws::system_hardware_sampler &entry);
+#endif
 
     /**
      * @brief Add an event to this hardware sampler.
@@ -387,11 +391,6 @@ void performance_tracker::add_tracking_entry(const tracking_entry<std::vector<T>
  * @details Adds the provided entry to the `plssvm::detail::tracking::performance_tracker` singleton if performance tracking has been enabled during the CMake configuration.
  */
 /**
- * @def PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_HARDWARE_SAMPLER_ENTRY
- * @brief Defines the `PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_HARDWARE_SAMPLER_ENTRY` macro if `PLSSVM_PERFORMANCE_TRACKER_ENABLED` is defined.
- * @details Adds the provided entry to the `plssvm::detail::tracking::performance_tracker` singleton if performance tracking has been enabled during the CMake configuration.
- */
-/**
  * @def PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_EVENT
  * @brief Defines the `PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_EVENT` macro if `PLSSVM_PERFORMANCE_TRACKER_ENABLED` is defined.
  * @details Adds the provided event (name) to the `plssvm::detail::tracking::performance_tracker` singleton if performance tracking has been enabled during the CMake configuration.
@@ -413,9 +412,6 @@ void performance_tracker::add_tracking_entry(const tracking_entry<std::vector<T>
     #define PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY(entry) \
         ::plssvm::detail::tracking::global_performance_tracker().add_tracking_entry(entry)
 
-    #define PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_HARDWARE_SAMPLER_ENTRY(sampler) \
-        ::plssvm::detail::tracking::global_performance_tracker().add_hardware_sampler_entry(sampler)
-
     #define PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_EVENT(event_name) \
         ::plssvm::detail::tracking::global_performance_tracker().add_event(event_name)
 
@@ -426,9 +422,20 @@ void performance_tracker::add_tracking_entry(const tracking_entry<std::vector<T>
     #define PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_SAVE(filename)
     #define PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_SET_REFERENCE_TIME(time)
     #define PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY(entry)
-    #define PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_HARDWARE_SAMPLER_ENTRY(sampler)
     #define PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_EVENT(event_name)
 
+#endif
+
+/**
+ * @def PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_HWS_ENTRY
+ * @brief Defines the `PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_HWS_ENTRY` macro if `PLSSVM_HARDWARE_SAMPLING_ENABLED` is defined.
+ * @details Adds the provided entry to the `plssvm::detail::tracking::performance_tracker` singleton if performance tracking has been enabled during the CMake configuration.
+ */
+#if defined(PLSSVM_HARDWARE_SAMPLING_ENABLED)
+    #define PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_HWS_ENTRY(sampler) \
+        ::plssvm::detail::tracking::global_performance_tracker().add_hws_entry(sampler)
+#else
+    #define PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_HWS_ENTRY(sampler)
 #endif
 
 }  // namespace plssvm::detail::tracking

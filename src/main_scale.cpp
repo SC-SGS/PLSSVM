@@ -13,13 +13,11 @@
 #include "plssvm/detail/cmd/parser_scale.hpp"              // plssvm::detail::cmd::parser_scale
 #include "plssvm/detail/logging.hpp"                       // plssvm::detail::log
 #include "plssvm/detail/tracking/performance_tracker.hpp"  // plssvm::detail::tracking::tracking_entry, PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_SAVE,
-                                                           // PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_HARDWARE_SAMPLER_ENTRY, PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_SET_REFERENCE_TIME
+                                                           // PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_HWS_ENTRY, PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_SET_REFERENCE_TIME
 #include "plssvm/detail/utility.hpp"                       // PLSSVM_IS_DEFINED
 
 #if defined(PLSSVM_HARDWARE_SAMPLING_ENABLED)
-    #include "plssvm/detail/tracking/cpu/hardware_sampler.hpp"      // plssvm::detail::tracking::cpu_hardware_sampler
-    #include "plssvm/detail/tracking/hardware_sampler.hpp"          // plssvm::detail::tracking::hardware_sampler
-    #include "plssvm/detail/tracking/hardware_sampler_factory.hpp"  // plssvm::detail::tracking::make_hardware_sampler
+    #include "hardware_sampling/system_hardware_sampler.hpp" // hws::system_hardware_sampler
 #endif
 
 #include <algorithm>   // std::for_each
@@ -41,9 +39,9 @@ int main(int argc, char *argv[]) {
         PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_SET_REFERENCE_TIME(start_time);
 
         // create and start CPU hardware sampler if available
-#if defined(PLSSVM_HARDWARE_TRACKING_FOR_CPUS_ENABLED)
-        plssvm::detail::tracking::cpu_hardware_sampler cpu_sampler{ PLSSVM_HARDWARE_SAMPLING_INTERVAL };
-        cpu_sampler.start_sampling();
+#if defined(PLSSVM_HARDWARE_SAMPLING_ENABLED)
+        hws::system_hardware_sampler sampler{ PLSSVM_HARDWARE_SAMPLING_INTERVAL };
+        sampler.start_sampling();
 #endif
 
         // create default parameters
@@ -94,9 +92,9 @@ int main(int argc, char *argv[]) {
         std::visit(data_set_visitor, plssvm::detail::cmd::data_set_factory(cmd_parser));
 
         // stop CPU hardware sampler and dump results if available
-#if defined(PLSSVM_HARDWARE_TRACKING_FOR_CPUS_ENABLED)
-        cpu_sampler.stop_sampling();
-        PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_HARDWARE_SAMPLER_ENTRY(cpu_sampler);
+#if defined(PLSSVM_HARDWARE_SAMPLING_ENABLED)
+        sampler.stop_sampling();
+        PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_HWS_ENTRY(sampler);
 #endif
 
         const std::chrono::steady_clock::time_point end_time = std::chrono::steady_clock::now();

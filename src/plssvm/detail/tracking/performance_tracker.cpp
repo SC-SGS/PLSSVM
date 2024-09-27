@@ -14,12 +14,19 @@
 #include "plssvm/detail/cmd/parser_predict.hpp"          // plssvm::detail::cmd::parser_predict
 #include "plssvm/detail/cmd/parser_scale.hpp"            // plssvm::detail::cmd::parser_scale
 #include "plssvm/detail/cmd/parser_train.hpp"            // plssvm::detail::cmd::parser_train
-#include "plssvm/detail/tracking/hardware_sampler.hpp"   // plssvm::detail::tracking::hardware_sampler
+#include "plssvm/detail/string_utility.hpp"              // plssvm::detail::replace_all
 #include "plssvm/detail/utility.hpp"                     // plssvm::detail::current_date_time, PLSSVM_IS_DEFINED
 #include "plssvm/gamma.hpp"                              // plssvm::get_gamma_string
 #include "plssvm/parameter.hpp"                          // plssvm::parameter
 #include "plssvm/version/git_metadata/git_metadata.hpp"  // plssvm::version::git_metadata::commit_sha1
 #include "plssvm/version/version.hpp"                    // plssvm::version::{version, detail::target_platforms}
+
+#if defined(PLSSVM_HARDWARE_SAMPLING_ENABLED)
+    #include "plssvm/detail/tracking/utility.hpp"
+
+    #include "hardware_sampling/hardware_sampler.hpp"         // hws::hardware_sampler
+    #include "hardware_sampling/system_hardware_sampler.hpp"  // hws::system_hardware_sampler
+#endif
 
 #include "cxxopts.hpp"   // CXXOPTS__VERSION_MAJOR, CXXOPTS__VERSION_MINOR, CXXOPTS__VERSION_MINOR
 #include "fmt/base.h"    // FMT_VERSION
@@ -152,12 +159,30 @@ void performance_tracker::add_tracking_entry(const tracking_entry<cmd::parser_sc
     }
 }
 
-void performance_tracker::add_hardware_sampler_entry(const hardware_sampler &entry) {
+#if defined(PLSSVM_HARDWARE_SAMPLING_ENABLED)
+void performance_tracker::add_hws_entry(const hws::system_hardware_sampler &entry) {
     // check whether entries should currently be tracked
+    const std::string entry_category{ "hardware_sampler" };
     if (this->is_tracking()) {
-        tracking_entries_[std::string{ "hardware_samples" }][entry.device_identification()].push_back(entry.generate_yaml_string(reference_time_));
+        for (const std::unique_ptr<hws::hardware_sampler> &sampler : entry.samplers()) {
+            // get the sample string and append two newlines to each line
+            std::string sample_str = sampler->samples_only_as_yaml_string();
+            detail::replace_all(sample_str, "\n", "\n    ");
+
+            // generate entry for current sampler
+            const std::string entry_string = fmt::format("\n"
+                                                         "    sampling_interval: {}\n"
+                                                         "    time_points: [{}]\n\n"
+                                                         "    {}",
+                                                         sampler->sampling_interval(),
+                                                         fmt::join(detail::tracking::durations_from_reference_time(sampler->sampling_time_points(), this->reference_time_), ", "),
+                                                         sample_str);
+
+            tracking_entries_[entry_category][sampler->device_identification()].push_back(entry_string);
+        }
     }
 }
+#endif
 
 void performance_tracker::add_event(const std::string name) {
     events_.add_event(std::chrono::steady_clock::now(), std::move(name));

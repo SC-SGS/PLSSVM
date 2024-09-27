@@ -19,30 +19,6 @@
 #include <type_traits>  // std::result_of_t
 #include <vector>       // std::vector
 
-struct fixed_member_test {
-    PLSSVM_SAMPLE_STRUCT_FIXED_MEMBER(int, sample)
-};
-
-struct sampling_member_test {
-    PLSSVM_SAMPLE_STRUCT_SAMPLING_MEMBER(int, sample)
-};
-
-TEST(TrackingUtility, generate_struct_fixed_member_macro) {
-    // test the return type
-    ::testing::StaticAssertTypeEq<std::result_of_t<decltype (&fixed_member_test::get_sample)(fixed_member_test)>, const std::optional<int> &>();
-
-    const fixed_member_test s{};
-    EXPECT_EQ(s.get_sample(), std::nullopt);
-}
-
-TEST(TrackingUtility, generate_struct_sampling_member_macro) {
-    // test the return type
-    ::testing::StaticAssertTypeEq<std::result_of_t<decltype (&sampling_member_test::get_sample)(sampling_member_test)>, const std::optional<std::vector<int>> &>();
-
-    const sampling_member_test s{};
-    EXPECT_EQ(s.get_sample(), std::nullopt);
-}
-
 TEST(TrackingUtility, durations_from_reference_time) {
     // create different time points
     std::vector<std::chrono::steady_clock::time_point> time_points{ std::chrono::steady_clock::now() };
@@ -73,28 +49,4 @@ TEST(TrackingUtility, time_points_to_epoch) {
     for (std::size_t i = 0; i < time_points.size(); ++i) {
         EXPECT_EQ(epochs[i], time_points[i].time_since_epoch());
     }
-}
-
-TEST(TrackingUtility, value_or_default__value) {
-    // create optionals containing a value
-    const std::optional<int> opt1{ 42 };
-    const std::optional<double> opt2{ 3.1415 };
-    const std::optional<std::string> opt3{ "Hello, World!" };
-
-    // check the value
-    EXPECT_EQ(plssvm::detail::tracking::value_or_default(opt1), 42);
-    EXPECT_EQ(plssvm::detail::tracking::value_or_default(opt2), 3.1415);
-    EXPECT_EQ(plssvm::detail::tracking::value_or_default(opt3), std::string{ "Hello, World!" });
-}
-
-TEST(TrackingUtility, value_or_default__default) {
-    // create optionals containing no value
-    const std::optional<int> opt1{ std::nullopt };
-    const std::optional<double> opt2{ std::nullopt };
-    const std::optional<std::string> opt3{ std::nullopt };
-
-    // check the value
-    EXPECT_EQ(plssvm::detail::tracking::value_or_default(opt1), 0);
-    EXPECT_EQ(plssvm::detail::tracking::value_or_default(opt2), 0.0);
-    EXPECT_EQ(plssvm::detail::tracking::value_or_default(opt3), std::string{});
 }
