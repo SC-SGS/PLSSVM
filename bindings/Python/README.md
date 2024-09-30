@@ -15,8 +15,6 @@
         - [plssvm.Version](#plssvmversion)
         - [plssvm.detail.tracking.PerformanceTracker](#plssvmdetailtrackingperformancetracker)
         - [plssvm.detail.tracking.Events](#plssvmdetailtrackingevent-plssvmdetailtrackingevents)
-        - [plssvm.detail.tracking.HardwareSampler](#plssvmdetailtrackinghardwaresampler)
-        - [plssvm.detail.tracking.CpuHardwareSampler, plssvm.detail.tracking.GpuNvidiaHardwareSampler, plssvm.detail.tracking.GpuAmdHardwareSampler, plssvm.detail.tracking.GpuIntelHardwareSampler](#plssvmdetailtrackingcpuhardwaresampler-plssvmdetailtrackinggpunvidiahardwaresampler-plssvmdetailtrackinggpuamdhardwaresampler-plssvmdetailtrackinggpuintelhardwaresampler)
     - [Free functions](#free-functions)
     - [Exceptions](#exceptions)
 
@@ -436,7 +434,6 @@ The tracked metrics can be saved to a YAML file for later post-processing.
 |----------------------------------------------------|-----------------------------------------------------------------------------------------|
 | `add_string_tracking_entry(category, name, value)` | Add a new tracking entry to the provided category with the given name and value.        |
 | `add_parameter_tracking_entry(params)`             | Add a new tracking entry for the provided `plssvm.Parameter` object.                    |
-| `add_hardware_sampler_entry(sampler)`              | Add a new tracking entry including all hardware samples collected by the given sampler. |
 | `add_event()`                                      | Add a new generic event to the tracker.                                                 |
 | `pause()`                                          | Pause the current performance tracking.                                                 |
 | `resume()`                                         | Resume performance tracking.                                                            |
@@ -481,68 +478,6 @@ The `plssvm.detail.tracking.Events` class stores multiple `plssvm.detail.trackin
 | `get_time_points()`           | Return all recorded time points.                                              |
 | `get_names()`                 | Return all recorded names.                                                    |
 
-#### `plssvm.detail.tracking.HardwareSampler`
-
-The main class responsible for sampling different hardware information like device utilization, clock frequencies,
-memory utilization, or power consumption.
-**Note**: the target specific hardware samplers are only available if the respective target has been enabled during
-PLSSVM's build step.
-These backend specific CSVMs can also directly be used,
-e.g., `plssvm.detail.tracking.HardwareSampler(plssvm.TargetPlatform.GPU_NVIDIA)` is equal
-to `plssvm.detail.tracking.GpuNvidiaHardwareSampler` (the same also holds for all other target platforms).
-**Note**: in this case, the various getters for the hardware samplers will not be available!
-
-| constructors                                            | description                                                                                                                                                             |
-|---------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `HardwareSampler(target, device_id, sampling_interval)` | Create a new hardware sampler for the provided target. The device with the given ID is used and the samples are generated after sampling_interval much time has passed. |
-| `HardwareSampler(target, device_id)`                    | Create a new hardware sampler for the provided target. The device with the given ID is used. The sampling interval is determined during PLSSVM's build step.            |
-
-| methods               | description                                                                                                                      |
-|-----------------------|----------------------------------------------------------------------------------------------------------------------------------|
-| `start()`             | Start the hardware sampling. May only be called once for each hardware sampler.                                                  |
-| `stop()`              | Stop the hardware sampling. May only be called once for each hardware sampler. `start()` must be called first!                   |
-| `pause()`             | Pause the hardware sampling.                                                                                                     |
-| `resume()`            | Resume the hardware sampling.                                                                                                    |
-| `has_started()`       | Check whether the hardware sampling has already started. Also returns `True` after a call to `stop()`.                           |
-| `is_sampling()`       | Check whether the hardware sampler is currently sampling. `True` if the sampler hasn't been started yet or `pause()` was called. |
-| `has_stopped()`       | Check whether the hardware sampling has been stopped.                                                                            |
-| `time_points()`       | Return the time points at which the samples have been queried.                                                                   |
-| `sampling_interval()` | The interval in milliseconds at which the samples are recorded.                                                                  |
-| `sampling_target()`   | Return the `plssvm.TargetPlatform` that is sampled by this hardware sampler.                                                     |
-
-#### `plssvm.detail.tracking.CpuHardwareSampler`, `plssvm.detail.tracking.GpuNvidiaHardwareSampler`, `plssvm.detail.tracking.GpuAmdHardwareSampler`, `plssvm.detail.tracking.GpuIntelHardwareSampler`
-
-These classes represent the target specific hardware sampler.
-**Note**: they are only available if the respective target has been enabled during PLSSVM's build step.
-
-These classes inherit all methods from the base `plssvm.detail.tracking.HardwareSampler` class.
-
-| constructors                                    | description                                                                                                                                     |
-|-------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------|
-| `HardwareSampler(device_id, sampling_interval)` | Create a new hardware sampler. The device with the given ID is used and the samples are generated after sampling_interval much time has passed. |
-| `HardwareSampler(device_id)`                    | Create a new hardware sampler. The device with the given ID is used. The sampling interval is determined during PLSSVM's build step.            |
-
-All hardware samplers have the following additional methods.
-**Note**: the return types differ between the different hardware samplers.
-
-| methods                 | description                                              |
-|-------------------------|----------------------------------------------------------|
-| `general_samples()`     | Return all collect general hardware samples.             |
-| `clock_samples()`       | Return all collect clock related hardware samples.       |
-| `power_samples()`       | Return all collect power related hardware samples.       |
-| `memory_samples()`      | Return all collect memory related hardware samples.      |
-| `temperature_samples()` | Return all collect temperature related hardware samples. |
-
-In case of the CPU hardware sampler, two additional methods are available.
-
-| methods                | description                                             |
-|------------------------|---------------------------------------------------------|
-| `gfx_samples()`        | Return all collect gfx (iGPU) related hardware samples. |
-| `idle_state_samples()` | Return all collect idle state related hardware samples. |
-
-For the definitions and available methods of the returned sampling structs (encapsulating the actual samples using
-optionals), refer to the respective binding implementation files.
-
 ### Free functions
 
 The following table lists all free functions in PLSSVM directly callable via `plssvm.`.
@@ -582,15 +517,6 @@ If a stdpar implementation is available, additional free functions are available
 |-------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------|
 | `list_available_stdpar_implementations()` | List all available stdpar implementations (determined during PLSSVM's build step; currently always guaranteed to be only one implementation). |
 
-If hardware sampling is available, additional free functions are available:
-
-| function                            | description                                                                          |
-|-------------------------------------|--------------------------------------------------------------------------------------|
-| `has_cpu_hardware_sampler()`        | Returns `true` if the CPU hardware sampler is available, `false` otherwise.          |
-| `has_gpu_nvidia_hardware_sampler()` | Returns `true` if the NVIDIA GPU hardware sampler is available, `false` otherwise.   |
-| `has_gpu_amd_hardware_sampler()`    | Returns `true` if the NVIDIA AMD hardware sampler is available, `false` otherwise.   |
-| `has_gpu_intel_hardware_sampler()`  | Returns `true` if the NVIDIA Intel hardware sampler is available, `false` otherwise. |
-
 ### Exceptions
 
 The PLSSVM Python3 bindings define a few new exception types:
@@ -607,6 +533,5 @@ The PLSSVM Python3 bindings define a few new exception types:
 | `UnsupportedKernelTypeError` | If an unsupported target platform has been requested.                                                                  |
 | `GPUDevicePtrError`          | If something went wrong in one of the backend's GPU device pointers. **Note**: shouldn't occur in user code.           |
 | `MatrixError`                | If something went wrong in the internal matrix class. **Note**: shouldn't occur in user code.                          |
-| `HardwareSamplerError`       | If something during the hardware sampling went wrong. **Note**: only available if hardware sampling is available!      |
 
 Depending on the available backends, additional `BackendError`s are also available (e.g., `plssvm.cuda.BackendError`).
