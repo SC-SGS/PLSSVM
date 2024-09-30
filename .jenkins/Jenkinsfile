@@ -397,7 +397,7 @@ pipeline {
                                             $([[ $BACKEND == ADAPTIVECPP ]] && echo "^py-scipy%gcc" ) \
                                             $([[ $BACKEND == ADAPTIVECPP ]] && echo "^openblas%gcc" ) \
                                             $([[ $BACKEND == ADAPTIVECPP ]] && echo "^llvm@17~gold~libomptarget") \
-                                            | tee /dev/tty | tail -n 1 | cut -d " " -f 2 > ${WORKSPACE}/plssvm/${BUILD_TYPE}-${BACKEND}-${ARCHITECTURE}-${TEST_TYPE}.installpath
+                                            | tee /dev/stdout | tail -n 1 | cut -d " " -f 2 > ${WORKSPACE}/plssvm/${BUILD_TYPE}-${BACKEND}-${ARCHITECTURE}-${TEST_TYPE}.installpath
 
                                         echo ${PIPESTATUS[@]}
 
