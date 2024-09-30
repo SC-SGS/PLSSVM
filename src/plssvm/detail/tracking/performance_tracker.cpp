@@ -24,9 +24,9 @@
 #if defined(PLSSVM_HARDWARE_SAMPLING_ENABLED)
     #include "plssvm/detail/tracking/utility.hpp"
 
-    #include "hardware_sampling/hardware_sampler.hpp"         // hws::hardware_sampler
-    #include "hardware_sampling/system_hardware_sampler.hpp"  // hws::system_hardware_sampler
-    #include "hardware_sampling/version.hpp"                  // hws::version::version
+    #include "hws/hardware_sampler.hpp"         // hws::hardware_sampler
+    #include "hws/system_hardware_sampler.hpp"  // hws::system_hardware_sampler
+    #include "hws/version.hpp"                  // hws::version::version
 #endif
 
 #include "cxxopts.hpp"   // CXXOPTS__VERSION_MAJOR, CXXOPTS__VERSION_MINOR, CXXOPTS__VERSION_MINOR

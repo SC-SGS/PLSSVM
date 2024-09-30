@@ -25,7 +25,6 @@ if (PLSSVM_ENABLE_HARDWARE_SAMPLING)
     ## option for the used sampling interval
     set(PLSSVM_HARDWARE_SAMPLING_INTERVAL "100" CACHE STRING "The interval in milliseconds in which the hardware information (like clock frequency or power draw) are queried.")
     check_integer(PLSSVM_HARDWARE_SAMPLING_INTERVAL)
-    message(STATUS "Setting the hardware sampler interval to ${PLSSVM_HARDWARE_SAMPLING_INTERVAL}ms.")
     target_compile_definitions(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC PLSSVM_HARDWARE_SAMPLING_INTERVAL=${PLSSVM_HARDWARE_SAMPLING_INTERVAL}ms)
     
     include(FetchContent)

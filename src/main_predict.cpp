@@ -18,7 +18,7 @@
 #include "plssvm/detail/utility.hpp"                       // PLSSVM_IS_DEFINED
 
 #if defined(PLSSVM_HARDWARE_SAMPLING_ENABLED)
-    #include "hardware_sampling/system_hardware_sampler.hpp"  // hws::system_hardware_sampler
+    #include "hws/system_hardware_sampler.hpp"  // hws::system_hardware_sampler
 #endif
 
 #include "fmt/format.h"  // fmt::print
