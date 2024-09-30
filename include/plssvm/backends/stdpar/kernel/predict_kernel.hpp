@@ -54,6 +54,7 @@ inline void device_kernel_w_linear(soa_matrix<real_type> &w, const aos_matrix<re
 
     // calculate indices over which we parallelize
     std::vector<std::pair<std::size_t, std::size_t>> range(blocked_num_features * blocked_num_classes);
+#pragma omp parallel for
     for (std::size_t i = 0; i < range.size(); ++i) {
         range[i] = std::make_pair(i / blocked_num_classes, i % blocked_num_classes);
     }
@@ -117,6 +118,7 @@ inline void device_kernel_predict_linear(aos_matrix<real_type> &prediction, cons
 
     // calculate indices over which we parallelize
     std::vector<std::pair<std::size_t, std::size_t>> range(blocked_num_predict_points * blocked_num_classes);
+#pragma omp parallel for
     for (std::size_t i = 0; i < range.size(); ++i) {
         range[i] = std::make_pair(i / blocked_num_classes, i % blocked_num_classes);
     }
@@ -189,6 +191,7 @@ inline void device_kernel_predict(aos_matrix<real_type> &prediction, const aos_m
 
     // calculate indices over which we parallelize
     std::vector<std::pair<std::size_t, std::size_t>> range(blocked_num_predict_points * blocked_num_support_vectors);
+#pragma omp parallel for
     for (std::size_t i = 0; i < range.size(); ++i) {
         range[i] = std::make_pair(i / blocked_num_support_vectors, i % blocked_num_support_vectors);
     }
