@@ -16,7 +16,7 @@
 #include "plssvm/constants.hpp"              // plssvm::real_type
 #include "plssvm/kernel_function_types.hpp"  // plssvm::kernel_function_type
 
-#if defined(PLSSVM_STDPAR_BACKEND_HAS_INTEL_LLVM)
+#if defined(PLSSVM_STDPAR_BACKEND_HAS_INTEL_LLVM)   // TODO: remove after linker error is fixed on AMD GPUs
     #include "sycl/sycl.hpp"  // override std::* math functions
 #endif
 
