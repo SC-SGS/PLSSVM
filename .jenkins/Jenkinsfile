@@ -303,10 +303,9 @@ pipeline {
                   }
 
 
-                def labels = onlineNodes('sgs_workstation')
 
 
-                agent { label "${env.ARCHITECTURE.equalsIgnoreCase('AMD') ? 'amd' : 'sgs_nvidia_gpu_node'} && (${lables.join(' || ')})" }
+                agent { label "${env.ARCHITECTURE.equalsIgnoreCase('AMD') ? 'amd' : 'sgs_nvidia_gpu_node'} && " onlineNodes('sgs_workstation').join(' || ') }
 
                 stages{
                     stage('Build PLSSVM'){
