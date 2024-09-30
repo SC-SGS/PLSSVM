@@ -40,6 +40,16 @@ def onlineNodes(label) {
   return ['pcsgs02','pcsgs03','pcsgs04','pcsgs05','pcsgs13','pcsgs11',] //TODO fix
 }
 
+
+// @NonCPS
+def onlineNodes_label_string(label, concat) {
+    def online_nodes = onlineNodes(label)
+    def online_nodes_string = online_nodes.join(' ||')
+    def complete_string = concat + " && ( " + online_nodes_string " )"
+
+  return  complete_string
+}
+
 pipeline {
     agent { label 'sgs_workstation' }
 
@@ -305,7 +315,7 @@ pipeline {
 
 
 
-                agent { label "${env.ARCHITECTURE.equalsIgnoreCase('AMD') ? 'amd' : 'sgs_nvidia_gpu_node'} && " onlineNodes('sgs_workstation').join(' || ') }
+                agent { label onlineNodes_label_string }
 
                 stages{
                     stage('Build PLSSVM'){
