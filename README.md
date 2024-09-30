@@ -55,7 +55,7 @@ We decided to use the [Conjugate Gradient (CG)](https://en.wikipedia.org/wiki/Co
 
 The main highlights of our SVM implementations are:
 1. Drop-in replacement for LIBSVM's `svm-train`, `svm-predict`, and `svm-scale` (some features currently not implemented).
-2. Support of multiple different programming frameworks for parallelisation (also called backends in our PLSSVM implementation) which allows us to target GPUs and CPUs from different vendors like NVIDIA, AMD, or Intel:
+2. Support of multiple different programming frameworks for parallelization (also called backends in our PLSSVM implementation) which allows us to target GPUs and CPUs from different vendors like NVIDIA, AMD, or Intel:
    - [OpenMP](https://www.openmp.org/)
    - [stdpar](https://en.cppreference.com/w/cpp/algorithm) (supported implementations are [nvc++](https://developer.nvidia.com/hpc-sdk) from NVIDIA's HPC SDK, [roc-stdpar](https://github.com/ROCm/roc-stdpar) as a patched LLVM, [icpx](https://www.intel.com/content/www/us/en/developer/tools/oneapi/dpc-compiler.html) as Intel's oneAPI compiler, [AdaptiveCpp](https://github.com/AdaptiveCpp/AdaptiveCpp), and [GNU GCC](https://gcc.gnu.org/) using TBB). <br>
      **Note**: due to the nature of the used USM mechanics in the `stdpar` implementations, the `stdpar` backend **can't** be enabled together with **any** other backend! <br>
@@ -64,7 +64,7 @@ The main highlights of our SVM implementations are:
    - [HIP](https://github.com/ROCm-Developer-Tools/HIP) (only tested on AMD GPUs)
    - [OpenCL](https://www.khronos.org/opencl/)
    - [SYCL](https://www.khronos.org/sycl/) (supported implementations are [DPC++](https://github.com/intel/llvm) and [AdaptiveCpp](https://github.com/AdaptiveCpp/AdaptiveCpp) (formerly known as hipSYCL); specifically the versions [sycl-nightly/20231201](https://github.com/intel/llvm/tree/sycl-nightly/20230110) and AdaptiveCpp release [v24.06.0](https://github.com/AdaptiveCpp/AdaptiveCpp/releases/tag/v23.10.0))
-3. Six different kernel functions to be able to classify a large variaty of different problems:
+3. Six different kernel functions to be able to classify a large variety of different problems:
    - linear: $\vec{u}^T \cdot \vec{v}$
    - polynomial: $(\gamma \cdot \vec{u}^T \cdot \vec{v} + coef0)^{d}$
    - radial basis function (rbf): $\exp(-\gamma \cdot |\vec{u} - \vec{v}|^2)$
