@@ -26,6 +26,7 @@
 
     #include "hardware_sampling/hardware_sampler.hpp"         // hws::hardware_sampler
     #include "hardware_sampling/system_hardware_sampler.hpp"  // hws::system_hardware_sampler
+    #include "hardware_sampling/version.hpp"                  // hws::version::version
 #endif
 
 #include "cxxopts.hpp"   // CXXOPTS__VERSION_MAJOR, CXXOPTS__VERSION_MINOR, CXXOPTS__VERSION_MINOR
@@ -341,11 +342,10 @@ void performance_tracker::save(std::ostream &out) {
 #else
     const std::string tbb_version{ "unknown/unused" };
 #endif
-    // subprocess.h version
-#if defined(PLSSVM_subprocess_VERSION)
-    const std::string subprocess_version{ PLSSVM_subprocess_VERSION };
+#if defined(PLSSVM_HARDWARE_SAMPLING_ENABLED)
+    const std::string_view hws_version = hws::version::version;
 #else
-    const std::string subprocess_version{ "unknown" };
+    const std::string_view hws_version{ "unknown/unused" };
 #endif
 
     out << "dependencies:\n";
@@ -379,7 +379,7 @@ void performance_tracker::save(std::ostream &out) {
         "  boost_version: {}\n"
         "  oneDPL_version: {}\n"
         "  tbb_version: {}\n"
-        "  subprocess_version: {}\n\n",
+        "  hws_version: {}\n\n",
         fmt::format("{:<{}}\"{}\"", "", max_dependency_entry_name_length - 15, cxxopts_version),
         fmt::format("{:<{}}\"{}\"", "", max_dependency_entry_name_length - 11, fmt_version),
         fmt::format("{:<{}}\"{}\"", "", max_dependency_entry_name_length - 18, fast_float_version),
@@ -387,7 +387,7 @@ void performance_tracker::save(std::ostream &out) {
         fmt::format("{:<{}}\"{}\"", "", max_dependency_entry_name_length - 13, boost_version),
         fmt::format("{:<{}}\"{}\"", "", max_dependency_entry_name_length - 14, oneDPL_version),
         fmt::format("{:<{}}\"{}\"", "", max_dependency_entry_name_length - 11, tbb_version),
-        fmt::format("{:<{}}\"{}\"", "", max_dependency_entry_name_length - 18, subprocess_version));
+        fmt::format("{:<{}}\"{}\"", "", max_dependency_entry_name_length - 11, hws_version));
 
     //*************************************************************************************************************************************//
     //                                                          events, if present                                                         //
