@@ -44,7 +44,7 @@ def onlineNodes(label) {
 // @NonCPS
 def onlineNodes_label_string(label, concat) {
     def online_nodes = onlineNodes(label)
-    def online_nodes_string = online_nodes.join(' ||')
+    def online_nodes_string = online_nodes.join(' || ')
     def complete_string = "${concat} && ( ${online_nodes_string} )"
 
   return  complete_string
@@ -315,7 +315,7 @@ pipeline {
 
 
 
-                agent { label onlineNodes_label_string('sgs_workstation', {env.ARCHITECTURE.equalsIgnoreCase('AMD') ? 'amd' : 'sgs_nvidia_gpu_node'}) }
+                agent { label onlineNodes_label_string('sgs_workstation', "${env.ARCHITECTURE.equalsIgnoreCase('AMD') ? 'amd' : 'sgs_nvidia_gpu_node'}") }
 
                 stages{
                     stage('Build PLSSVM'){
