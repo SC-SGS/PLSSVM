@@ -101,6 +101,7 @@ pipeline {
                         builders[label] = {
                             node(label) {
                                 sh '''
+                                    hostname
                                     mkdir -p $SGSSCRATCH
                                     mkdir -p $SPACK_SYSTEM_CONFIG_PATH
 
@@ -193,7 +194,7 @@ pipeline {
                         builders[label] = {
                             node(label) {
                               sh '''
-
+                              hostname
                               cd ${WORKSPACE}/plssvm
                               python3 -m pip install --user -r  install/python_requirements.txt
                               '''
@@ -309,7 +310,7 @@ pipeline {
                     stage('Build PLSSVM'){
                         steps{
                                 sh ''' #!/bin/bash
-
+                                        hostname
                                         if [ "$BUILD_TYPE" == Release ]; then
                                             export NUM_DATA_POINTS=200
                                             export NUM_FEATURES=20
@@ -410,7 +411,7 @@ pipeline {
                     stage('Ctest PLSSVM'){
                         steps{
                             sh ''' #!/bin/bash
-
+                                hostname
                                 source $SGSSCRATCH/spack/share/spack/setup-env.sh
                                 echo $hostname
 
@@ -484,6 +485,7 @@ $([[ $TEST_TYPE == BASE ]] && echo \"-R "Base*\"" || echo "-E \"Base*\"")
                     stage('test installed PLSSVM'){
                         steps{
                             sh ''' #!/bin/bash
+                                hostname
                                 source $SGSSCRATCH/spack/share/spack/setup-env.sh
 
                                 if [ "TEST_TYPE" == BASE ]; then
