@@ -280,6 +280,16 @@ pipeline {
                     //     values 'CPU'
                     //   }
                     // }
+                    exclude { // TODO: enable if pocl is supported in spack
+                      axis{
+                        name 'ARCHITECTURE'
+                        values 'OPENCL'
+                      }
+                      axis{
+                        name 'BUILD_TYPE'
+                        values 'CPU'
+                      }
+                    }
                     exclude {
                       axis{
                         name 'BACKEND'
