@@ -315,7 +315,7 @@ pipeline {
 
 
 
-                agent { label onlineNodes_label_string('sgs_workstation', "${env.ARCHITECTURE.equalsIgnoreCase('AMD') ? 'amd' : 'sgs_nvidia_gpu_node'}") }
+                agent { label onlineNodes_label_string('sgs_workstation', "${env.ARCHITECTURE.equalsIgnoreCase('AMD') ? 'sgs_amd_gpu_node' : 'sgs_nvidia_gpu_node'}") }
 
                 stages{
                     stage('Build PLSSVM'){
