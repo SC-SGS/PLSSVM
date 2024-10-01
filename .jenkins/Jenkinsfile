@@ -382,7 +382,7 @@ pipeline {
                                             $([[ $BACKEND == STDPAR-ROC ]] && echo "stdparimplementation=roc" ) \
                                             $([[ $ARCHITECTURE == NVIDIA ]] && echo "cuda_arch=86") \
                                             $([[ SET_NVIDIA_GPU_NONE == 1 ]] && echo "cuda_arch=none") \
-                                            $([[ $ARCHITECTURE == AMD ]] && echo "amdgpu_target=gfx90a") \
+                                            $([[ $ARCHITECTURE == AMD ]] && echo "amdgpu_target=gfx1101") \
                                             $([[ SET_AMD_GPU_NONE == 1 ]] && echo "amdgpu_target=none") \
                                             build_type=$BUILD_TYPE \
                                             arch=$(spack arch) || true
@@ -403,7 +403,7 @@ pipeline {
                                             $([[ $BACKEND == STDPAR-ROC ]] && echo "stdparimplementation=roc" ) \
                                             $([[ $ARCHITECTURE == NVIDIA ]] && echo "cuda_arch=86") \
                                             $([[ SET_NVIDIA_GPU_NONE == 1 ]] && echo "cuda_arch=none") \
-                                            $([[ $ARCHITECTURE == AMD ]] && echo "amdgpu_target=gfx90a") \
+                                            $([[ $ARCHITECTURE == AMD ]] && echo "amdgpu_target=gfx1101") \
                                             $([[ SET_AMD_GPU_NONE == 1 ]] && "amdgpu_target=none") \
                                             +language_bindings \
                                             +test_file \
@@ -499,7 +499,7 @@ $([[ $BACKEND == STDPAR-NVHPC ]] && echo "stdparimplementation=nvhpc" ) \
 $([[ $BACKEND == STDPAR-ADAPTIVECPP ]] && echo "stdparimplementation=adaptivecpp" ) \
 $([[ $ARCHITECTURE == NVIDIA ]] && echo "cuda_arch=86") \
 $([[ SET_NVIDIA_GPU_NONE == 1 ]] && echo "cuda_arch=none") \
-$([[ $ARCHITECTURE == AMD ]] && echo "amdgpu_target=gfx90a") \
+$([[ $ARCHITECTURE == AMD ]] && echo "amdgpu_target=gfx1101") \
 $([[ SET_AMD_GPU_NONE == 1 ]] && "amdgpu_target=none") \
 build_type=$BUILD_TYPE \
 arch=$(spack arch)" \
@@ -548,7 +548,7 @@ $([[ $BACKEND == OPENMP ]] &&  || echo "-E \"Base*\"") # Exclude base tests for 
                                         $([[ $BACKEND == STDPAR-ADAPTIVECPP ]] && echo "stdparimplementation=adaptivecpp" ) \
                                         $([[ $ARCHITECTURE == NVIDIA ]] && echo "cuda_arch=86") \
                                         $([[ SET_NVIDIA_GPU_NONE == 1 ]] && echo "cuda_arch=none") \
-                                        $([[ $ARCHITECTURE == AMD ]] && echo "amdgpu_target=gfx90a") \
+                                        $([[ $ARCHITECTURE == AMD ]] && echo "amdgpu_target=gfx1101") \
                                         $([[ SET_AMD_GPU_NONE == 1 ]] && "amdgpu_target=none") \
                                         build_type=$BUILD_TYPE \
                                         arch=$(spack arch)"
