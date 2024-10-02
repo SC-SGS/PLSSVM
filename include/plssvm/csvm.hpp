@@ -836,6 +836,8 @@ std::tuple<aos_matrix<real_type>, std::vector<real_type>, std::vector<unsigned l
             return failed_constraints;
         };
 
+        // TODO: LOGIC for cg_streaming!
+
         // select solver type based on the available memory
         // check whether the explicit (partial) kernel matrix can fit into each device memory
         if (const std::vector<std::size_t> failed_cg_explicit_constraints = check_sizes(total_memory_needed_explicit_per_device, usable_device_memory_per_device); failed_cg_explicit_constraints.empty()) {
