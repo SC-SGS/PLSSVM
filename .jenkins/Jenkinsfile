@@ -415,9 +415,9 @@ pipeline {
                                             test_file_num_data_points=$NUM_DATA_POINTS \
                                             test_file_num_features=$NUM_FEATURES \
                                             $([[ $BACKEND == "STDPAR"* ]] && echo "~asserts" || echo "+asserts") \
-                                            $([[ $BACKEND == "STDPAR"* ]]) && [[ $ARCHITECTURE == CPU ]] && echo "amdgpu_target=none cuda_arch=none" ) \
-                                            $([[ $BACKEND == "STDPAR"* ]]) && [[ $ARCHITECTURE == AMD ]] && echo "cuda_arch=none" ) \
-                                            $([[ $BACKEND == "STDPAR"* ]]) && [[ $ARCHITECTURE == NVIDIA ]] && echo "amdgpu_target=none" ) \
+                                            $([[ $BACKEND == "STDPAR"* ]] && [[ $ARCHITECTURE == CPU ]] && echo "amdgpu_target=none cuda_arch=none" ) \
+                                            $([[ $BACKEND == "STDPAR"* ]] && [[ $ARCHITECTURE == AMD ]] && echo "cuda_arch=none" ) \
+                                            $([[ $BACKEND == "STDPAR"* ]] && [[ $ARCHITECTURE == NVIDIA ]] && echo "amdgpu_target=none" ) \
                                             ~fast-math \
                                             arch=$(spack arch) \
                                             build_type=$BUILD_TYPE \
