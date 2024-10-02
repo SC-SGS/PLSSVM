@@ -25,21 +25,25 @@
 namespace plssvm::cuda::detail {
 
 template <typename T>
-device_ptr<T>::device_ptr(const size_type size, const queue_type device) :
-    device_ptr{ plssvm::shape{ size, 1 }, plssvm::shape{ 0, 0 }, device } { }
+device_ptr<T>::device_ptr(const size_type size, const queue_type device, const bool use_usm_allocations) :
+    device_ptr{ plssvm::shape{ size, 1 }, plssvm::shape{ 0, 0 }, device, use_usm_allocations } { }
 
 template <typename T>
-device_ptr<T>::device_ptr(const plssvm::shape shape, const queue_type device) :
-    device_ptr{ shape, plssvm::shape{ 0, 0 }, device } { }
+device_ptr<T>::device_ptr(const plssvm::shape shape, const queue_type device, const bool use_usm_allocations) :
+    device_ptr{ shape, plssvm::shape{ 0, 0 }, device, use_usm_allocations } { }
 
 template <typename T>
-device_ptr<T>::device_ptr(const plssvm::shape shape, const plssvm::shape padding, const queue_type device) :
-    base_type{ shape, padding, device } {
+device_ptr<T>::device_ptr(const plssvm::shape shape, const plssvm::shape padding, const queue_type device, const bool use_usm_allocations) :
+    base_type{ shape, padding, device, use_usm_allocations } {
     if (queue_ < 0 || queue_ >= static_cast<int>(get_device_count())) {
         throw backend_exception{ fmt::format("Illegal device ID! Must be in range: [0, {}) but is {}.", get_device_count(), queue_) };
     }
     detail::set_device(queue_);
-    PLSSVM_CUDA_ERROR_CHECK(cudaMalloc(&data_, this->size_padded() * sizeof(value_type)))
+    if (use_usm_allocations_) {
+        PLSSVM_CUDA_ERROR_CHECK(cudaMallocManaged(&data_, this->size_padded() * sizeof(value_type)))
+    } else {
+        PLSSVM_CUDA_ERROR_CHECK(cudaMalloc(&data_, this->size_padded() * sizeof(value_type)))
+    }
     this->memset(0);
 }
 
