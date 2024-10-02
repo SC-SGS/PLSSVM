@@ -459,7 +459,9 @@ pipeline {
 
                                 installpath=$(cat ${WORKSPACE}/plssvm/${BUILD_TYPE}-${BACKEND}-${ARCHITECTURE}-${TEST_TYPE}.installpath)
 
-                                cd ${WORKSPACE}/plssvm
+                                cd ${WORKSPACE}/
+                                ls -l
+                                ls -l build-$(spack arch)-$(echo ${installpath##*-}| cut -c1-7)
                                 cd build-$(spack arch)-$(echo ${installpath##*-}| cut -c1-7)/spack-build-$(echo ${installpath##*-}| cut -c1-7)
 
 
