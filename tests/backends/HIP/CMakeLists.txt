@@ -7,9 +7,14 @@
 ## create HIP tests
 set(PLSSVM_HIP_TEST_NAME HIP_tests)
 
+if (DEFINED PLSSVM_NVIDIA_TARGET_ARCHS)
+    # NOTE: not sure why that should be necessary!
+    set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -ftemplate-depth=2048")
+endif ()
+
 include(CheckLanguage)
-check_language(HIP)
-enable_language(HIP)
+check_language(${PLSSVM_HIP_BACKEND_GPU_RUNTIME})
+enable_language(${PLSSVM_HIP_BACKEND_GPU_RUNTIME})
 find_package(HIP REQUIRED)
 
 # list all necessary sources
@@ -22,16 +27,25 @@ set(PLSSVM_HIP_TEST_SOURCES
     ${CMAKE_CURRENT_LIST_DIR}/hip_csvm.hip
 )
 
+# set source file language
+set_source_files_properties(${PLSSVM_HIP_TEST_SOURCES} PROPERTIES LANGUAGE ${PLSSVM_HIP_BACKEND_GPU_RUNTIME})
+
 # set target properties
 set_local_and_parent(PLSSVM_HIP_BACKEND_TEST_LIBRARY_NAME plssvm-HIP_test)
 add_library(${PLSSVM_HIP_BACKEND_TEST_LIBRARY_NAME} SHARED ${PLSSVM_HIP_TEST_SOURCES})
 
 # set target architecture
-set_property(TARGET ${PLSSVM_HIP_BACKEND_TEST_LIBRARY_NAME} PROPERTY HIP_ARCHITECTURES ${PLSSVM_AMD_TARGET_ARCHS})
+if (DEFINED PLSSVM_AMD_TARGET_ARCHS)
+    set_property(TARGET ${PLSSVM_HIP_BACKEND_LIBRARY_NAME} PROPERTY HIP_ARCHITECTURES ${PLSSVM_AMD_TARGET_ARCHS})
+elseif (DEFINED PLSSVM_NVIDIA_TARGET_ARCHS)
+    # prepare architectures for CMake's CUDA_ARCHITECTURES
+    list(TRANSFORM PLSSVM_NVIDIA_TARGET_ARCHS REPLACE "sm_" "")
+    set_property(TARGET ${PLSSVM_HIP_BACKEND_LIBRARY_NAME} PROPERTY CUDA_ARCHITECTURES ${PLSSVM_NVIDIA_TARGET_ARCHS})
+endif ()
 
 # link base library against HIP library
 target_link_libraries(${PLSSVM_HIP_BACKEND_TEST_LIBRARY_NAME} PRIVATE hip::device hip::host)
-set_target_properties(${PLSSVM_HIP_BACKEND_TEST_LIBRARY_NAME} PROPERTIES LINKER_LANGUAGE HIP)
+set_target_properties(${PLSSVM_HIP_BACKEND_TEST_LIBRARY_NAME} PROPERTIES LINKER_LANGUAGE ${PLSSVM_HIP_BACKEND_GPU_RUNTIME})
 
 target_link_libraries(${PLSSVM_HIP_BACKEND_TEST_LIBRARY_NAME} PUBLIC ${PLSSVM_BASE_TEST_LIBRARY_NAME})
 

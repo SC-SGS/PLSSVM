@@ -18,9 +18,9 @@ endif ()
 
 # set used HIP target based on the provided PLSSVM target archs
 if (DEFINED PLSSVM_AMD_TARGET_ARCHS)
-    set(PLSSVM_HIP_BACKEND_GPU_RUNTIME "HIP")
+    set_local_and_parent(PLSSVM_HIP_BACKEND_GPU_RUNTIME "HIP")
 elseif (DEFINED PLSSVM_NVIDIA_TARGET_ARCHS)
-    set(PLSSVM_HIP_BACKEND_GPU_RUNTIME "CUDA")
+    set_local_and_parent(PLSSVM_HIP_BACKEND_GPU_RUNTIME "CUDA")
 else ()
     if (PLSSVM_ENABLE_HIP_BACKEND MATCHES "ON")
         message(SEND_ERROR "Found no AMD or NVIDIA targets for the requested HIP backend!")
