@@ -434,6 +434,7 @@ pipeline {
                                         echo "Install path: $installpath"
                                         ls -l
                                         hostname
+                                        pwd
                                 '''
 
                         }
