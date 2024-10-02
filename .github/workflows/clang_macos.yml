@@ -1,5 +1,7 @@
 name: macOS CPU
-on: push
+on:
+  workflow_dispatch:
+  push:
 jobs:
   macOS-Test:
     runs-on: macos-latest
