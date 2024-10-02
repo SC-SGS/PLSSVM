@@ -49,8 +49,12 @@ else ()
     # environment variable is not defined -> we set it
     if (DEFINED PLSSVM_AMD_TARGET_ARCHS)
         set(ENV{HIP_PLATFORM} "amd")
+        set(HIP_PLATFORM "amd" CACHE STRING "set the HIP_PLATFORM to AMD" FORCE)
+        set(CMAKE_HIP_PLATFORM "amd" CACHE STRING "set the HIP_PLATFORM to AMD" FORCE)
     elseif (DEFINED PLSSVM_NVIDIA_TARGET_ARCHS)
         set(ENV{HIP_PLATFORM} "nvidia")
+        set(HIP_PLATFORM "nvidia" CACHE STRING "set the HIP_PLATFORM to NVIDIA" FORCE)
+        set(CMAKE_HIP_PLATFORM "nvidia" CACHE STRING "set the HIP_PLATFORM to NVIDIA" FORCE)
     endif ()
     message(STATUS "Environment variable \"HIP_PLATFORM\" is not defined. Setting it to \"$ENV{HIP_PLATFORM}\"")
 endif ()
@@ -83,13 +87,32 @@ message(CHECK_PASS "found")
 set(CMAKE_HIP_STANDARD 17)
 set(CMAKE_HIP_STANDARD_REQUIRED ON)
 
-set(CMAKE_HIP_FLAGS "${CMAKE_HIP_FLAGS} -std=c++17 -Wall -Wextra -Wdouble-promotion -Wshadow -Wcast-qual -Wnull-dereference -Wextra-semi -Wunreachable-code -Wuninitialized -Wmost -Wconversion")
-# set fast-math if requested
-if (PLSSVM_ENABLE_FAST_MATH)
-    set(CMAKE_HIP_FLAGS "${CMAKE_HIP_FLAGS} -ffast-math")
+if (DEFINED PLSSVM_AMD_TARGET_ARCHS)
+    ## hipcc is used to compile the HIP code -> set flags accordingly
+    set(CMAKE_HIP_FLAGS "${CMAKE_HIP_FLAGS} -std=c++17 -Wall -Wextra -Wdouble-promotion -Wshadow -Wcast-qual -Wnull-dereference -Wextra-semi -Wunreachable-code -Wuninitialized -Wmost -Wconversion")
+    # build type specific flags
+    set(CMAKE_HIP_FLAGS_RELWITHDEBINFO "${CMAKE_HIP_FLAGS_RELWITHDEBINFO} -O2")
+    set(CMAKE_HIP_FLAGS_RELEASE "${CMAKE_HIP_FLAGS_RELEASE} -O3")
+    # set fast-math if requested
+    if (PLSSVM_ENABLE_FAST_MATH)
+        set(CMAKE_HIP_FLAGS "${CMAKE_HIP_FLAGS} -ffast-math")
+    endif ()
+elseif (DEFINED PLSSVM_NVIDIA_TARGET_ARCHS)
+    ## nvcc is used to compile the HIP code -> set flags accordingly
+    set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -Xcompiler '-fPIC' -Xcudafe --diag_suppress=unsigned_compare_with_zero -lineinfo")
+    # build type specific flags
+    set(CMAKE_CUDA_FLAGS_DEBUG "${CMAKE_CUDA_FLAGS_DEBUG} -Xptxas=-v -Xptxas -dlcm=cg -Xcudafe --diag_suppress=unrecognized_gcc_pragma")
+    set(CMAKE_CUDA_FLAGS_RELWITHDEBINFO "${CMAKE_CUDA_FLAGS_RELWITHDEBINFO} -O2")
+    set(CMAKE_CUDA_FLAGS_RELEASE "${CMAKE_CUDA_FLAGS_RELEASE} -O3")
+    # set fast-math if requested
+    if (PLSSVM_ENABLE_FAST_MATH)
+        set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} --use_fast_math")
+    endif ()
+    # set OpenMP specific flags
+    if (OpenMP_FOUND)
+        set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -Xcompiler '-fopenmp'")
+    endif ()
 endif ()
-set(CMAKE_HIP_FLAGS_RELWITHDEBINFO "${CMAKE_HIP_FLAGS_RELWITHDEBINFO} -O2")
-set(CMAKE_HIP_FLAGS_RELEASE "${CMAKE_HIP_FLAGS_RELEASE} -O3")
 
 # explicitly set sources
 set(PLSSVM_HIP_SOURCES
