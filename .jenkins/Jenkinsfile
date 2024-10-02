@@ -37,7 +37,7 @@ def onlineNodes(label) {
             onlineNodes.add(node.getDisplayName())
         }
     }
-  return ['pcsgs02','pcsgs04','pcsgs05', 'pcsgs09','pcsgs11', 'simcl1n3' ] //TODO fix
+  return ['pcsgs02','pcsgs04','pcsgs05', 'pcsgs09','pcsgs11', 'simcl1n3', 'pcsgs13' ] //TODO fix
 }
 
 
@@ -234,10 +234,6 @@ pipeline {
                         name 'BUILD_TYPE'
                         values 'Release', 'Debug'
                     }
-                    axis {
-                        name 'TEST_TYPE'
-                        values 'BASE', 'BACKEND'
-                    }
                   }
                   excludes {
                     exclude {
@@ -298,26 +294,6 @@ pipeline {
                       axis{
                         name 'BUILD_TYPE'
                         values 'Debug'
-                      }
-                    }
-                    exclude {
-                      axis{
-                        name 'TEST_TYPE'
-                        values 'BASE'
-                      }
-                      axis{
-                        name 'ARCHITECTURE'
-                        notValues 'CPU'
-                      }
-                    }
-                    exclude {
-                      axis{
-                        name 'TEST_TYPE'
-                        values 'BASE'
-                      }
-                      axis{
-                        name 'BACKEND'
-                        notValues 'OPENMP'
                       }
                     }
                   }
@@ -425,11 +401,11 @@ pipeline {
                                             $([[ $BACKEND == ADAPTIVECPP ]] && echo "^py-scipy%gcc" ) \
                                             $([[ $BACKEND == ADAPTIVECPP ]] && echo "^openblas%gcc" ) \
                                             $([[ $BACKEND == ADAPTIVECPP ]] && echo "^llvm@17~gold~libomptarget") \
-                                            | tee $(tty) | tail -n 1 | cut -d " " -f 2 > ${WORKSPACE}/plssvm/${BUILD_TYPE}-${BACKEND}-${ARCHITECTURE}-${TEST_TYPE}.installpath
+                                            | tee $(tty) | tail -n 1 | cut -d " " -f 2 > ${WORKSPACE}/plssvm/${BUILD_TYPE}-${BACKEND}-${ARCHITECTURE}.installpath
 
                                         echo ${PIPESTATUS[@]}
 
-                                        installpath=$(cat ${WORKSPACE}/plssvm/${BUILD_TYPE}-${BACKEND}-${ARCHITECTURE}-${TEST_TYPE}.installpath)
+                                        installpath=$(cat ${WORKSPACE}/plssvm/${BUILD_TYPE}-${BACKEND}-${ARCHITECTURE}.installpath)
 
                                         echo "Install path: $installpath"
                                         ls -l
@@ -464,7 +440,7 @@ pipeline {
                                     *) ;;
                                 esac
 
-                                installpath=$(cat ${WORKSPACE}/plssvm/${BUILD_TYPE}-${BACKEND}-${ARCHITECTURE}-${TEST_TYPE}.installpath)
+                                installpath=$(cat ${WORKSPACE}/plssvm/${BUILD_TYPE}-${BACKEND}-${ARCHITECTURE}.installpath)
 
                                 cd ${WORKSPACE}/plssvm
                                 ls -l
@@ -578,9 +554,9 @@ $([[ $BACKEND != OPENMP ]] &&  echo "-E \"Base*\"") # Exclude base tests for all
                                 fi
 
                                 plssvm-scale --help
-                                plssvm-train -i 1 5x4.libsvm ${BACKEND}-${ARCHITECTURE}-${BUILD_TYPE}-${TEST_TYPE}.model
-                                plssvm-predict 5x4.libsvm ${BACKEND}-${ARCHITECTURE}-${BUILD_TYPE}-${TEST_TYPE}.model
-                                rm ${BACKEND}-${ARCHITECTURE}-${BUILD_TYPE}-${TEST_TYPE}.model
+                                plssvm-train -i 1 5x4.libsvm ${BACKEND}-${ARCHITECTURE}-${BUILD_TYPE}.model
+                                plssvm-predict 5x4.libsvm ${BACKEND}-${ARCHITECTURE}-${BUILD_TYPE}.model
+                                rm ${BACKEND}-${ARCHITECTURE}-${BUILD_TYPE}.model
 
 
 
