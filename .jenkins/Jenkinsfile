@@ -432,6 +432,8 @@ pipeline {
                                         installpath=$(cat ${WORKSPACE}/plssvm/${BUILD_TYPE}-${BACKEND}-${ARCHITECTURE}-${TEST_TYPE}.installpath)
 
                                         echo "Install path: $installpath"
+                                        ls -l
+                                        hostname
                                 '''
 
                         }
