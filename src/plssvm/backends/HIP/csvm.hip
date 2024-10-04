@@ -56,22 +56,39 @@ csvm::csvm(target_platform target, parameter params) :
 
 void csvm::init(const target_platform target) {
     // check if supported target platform has been selected
+#if defined(PLSSVM_HIP_BACKEND_USE_HIP_RUNTIME)
     if (target != target_platform::automatic && target != target_platform::gpu_amd) {
-        throw backend_exception{ fmt::format("Invalid target platform '{}' for the HIP backend!", target) };
+        throw backend_exception{ fmt::format("Invalid target platform '{}' for the HIP backend using the HIP runtime!", target) };
     } else {
-#if !defined(PLSSVM_HAS_AMD_TARGET)
+    #if !defined(PLSSVM_HAS_AMD_TARGET)
         throw backend_exception{ fmt::format("Requested target platform 'gpu_amd' that hasn't been enabled using PLSSVM_TARGET_PLATFORMS!", target) };
-#endif
+    #endif
     }
+#elif defined(PLSSVM_HIP_BACKEND_USE_CUDA_RUNTIME)
+    if (target != target_platform::automatic && target != target_platform::gpu_nvidia) {
+        throw backend_exception{ fmt::format("Invalid target platform '{}' for the HIP backend using the CUDA runtime!", target) };
+    } else {
+    #if !defined(PLSSVM_HAS_NVIDIA_TARGET)
+        throw backend_exception{ fmt::format("Requested target platform 'gpu_nvidia' that hasn't been enabled using PLSSVM_TARGET_PLATFORMS!", target) };
+    #endif
+    }
+#endif
 
     plssvm::detail::log(verbosity_level::full,
-                        "\nUsing HIP ({}) as backend.\n",
-                        plssvm::detail::tracking::tracking_entry{ "dependencies", "hip_runtime_version", detail::get_runtime_version() });
+                        "\nUsing HIP ({}; runtime: {}) as backend.\n",
+                        plssvm::detail::tracking::tracking_entry{ "dependencies", "hip_runtime_version", detail::get_runtime_version() },
+                        plssvm::detail::tracking::tracking_entry{ "dependencies", "hip_runtime", detail::get_runtime() });
     PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking::tracking_entry{ "backend", "backend", plssvm::backend_type::hip }));
     PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((plssvm::detail::tracking::tracking_entry{ "backend", "target_platform", plssvm::target_platform::gpu_amd }));
 
     // update the target platform
-    target_ = plssvm::target_platform::gpu_amd;
+    if (target_ == target_platform::automatic) {
+#if defined(PLSSVM_HIP_BACKEND_USE_HIP_RUNTIME)
+        target_ = plssvm::target_platform::gpu_amd;
+#elif defined(PLSSVM_HIP_BACKEND_USE_CUDA_RUNTIME)
+        target_ = plssvm::target_platform::gpu_nvidia;
+#endif
+    }
 
     // get all available devices wrt the requested target platform
     devices_.resize(static_cast<std::vector<queue_type>::size_type>(detail::get_device_count()));

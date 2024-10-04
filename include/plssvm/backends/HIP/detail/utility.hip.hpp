@@ -76,6 +76,13 @@ void device_synchronize(int device);
  */
 [[nodiscard]] std::string get_runtime_version();
 
+/**
+ * @brief Get the HIP runtime string.
+ * @details Either HIP or CUDA depending on which runtimes was used during CMake.
+ * @return the used HIP runtime (`[[nodiscard]]`)
+ */
+[[nodiscard]] std::string get_runtime();
+
 }  // namespace plssvm::hip::detail
 
 template <>

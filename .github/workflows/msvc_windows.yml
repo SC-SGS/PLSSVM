@@ -1,5 +1,7 @@
 name: Windows MSVC CPU
-on: push
+on:
+  workflow_dispatch:
+  push:
 jobs:
   MSVC-Test:
     runs-on: windows-latest

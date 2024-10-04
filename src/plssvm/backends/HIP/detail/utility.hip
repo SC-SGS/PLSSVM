@@ -50,14 +50,32 @@ void device_synchronize(const int device) {
 }
 
 std::string get_runtime_version() {
-    // get the CUDA runtime version
+    // get the HIP runtime version
     int runtime_version{};
     PLSSVM_HIP_ERROR_CHECK(hipRuntimeGetVersion(&runtime_version))
-    // TODO: may be different on the CUDA platform
+#if defined(PLSSVM_HIP_BACKEND_USE_HIP_RUNTIME)
     // parse it to a more useful string
     int major_version = runtime_version / 10'000'000;
     int minor_version = runtime_version % 10'000'000 / 100'000;
     return fmt::format("{}.{}", major_version, minor_version);
+#elif defined(PLSSVM_HIP_BACKEND_USE_CUDA_RUNTIME)
+    // parse it to a more useful string
+    int major_version = runtime_version / 1000;
+    int minor_version = runtime_version % 1000 / 10;
+    return fmt::format("{}.{}", major_version, minor_version);
+#else
+    return "unknown";
+#endif
+}
+
+std::string get_runtime() {
+#if defined(PLSSVM_HIP_BACKEND_USE_HIP_RUNTIME)
+    return "HIP";
+#elif defined(PLSSVM_HIP_BACKEND_USE_CUDA_RUNTIME)
+    return "CUDA";
+#else
+    return "unknown";
+#endif
 }
 
 }  // namespace plssvm::hip::detail

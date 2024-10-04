@@ -288,13 +288,13 @@ void performance_tracker::save(std::ostream &out) {
 #if defined(PLSSVM_fast_float_VERSION)
     const std::string fast_float_version{ PLSSVM_fast_float_VERSION };
 #else
-    const std::string fast_float_version{ "unknown" };
+    const std::string fast_float_version{ "unknown/external" };
 #endif
     // igor version
 #if defined(PLSSVM_igor_VERSION)
     const std::string igor_version{ PLSSVM_igor_VERSION };
 #else
-    const std::string igor_version{ "unknown" };
+    const std::string igor_version{ "unknown/external" };
 #endif
 
     // stdpar backend specific versions

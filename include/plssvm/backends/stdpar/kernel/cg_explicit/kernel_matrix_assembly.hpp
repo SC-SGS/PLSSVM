@@ -66,7 +66,6 @@ void device_kernel_assembly(const std::vector<real_type> &q, std::vector<real_ty
         }
     }
 
-    // TODO: profile?
     std::for_each(std::execution::par_unseq, range.begin(), range.end(), [=, q_ptr = q.data(), data_ptr = data.data(), kernel_matrix_ptr = kernel_matrix.data()](const std::pair<std::size_t, std::size_t> idx) {
         // calculate the indices used in the current thread
         const auto [row, col] = idx;
