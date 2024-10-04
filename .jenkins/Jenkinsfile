@@ -400,7 +400,8 @@ pipeline {
                                             +reducing_label_types \
                                             $([[ $BACKEND == ADAPTIVECPP ]] && echo "^py-scipy%gcc" ) \
                                             $([[ $BACKEND == ADAPTIVECPP ]] && echo "^openblas%gcc" ) \
-                                            $([[ $BACKEND == ADAPTIVECPP ]] && echo "^llvm@18~gold~libomptarget") \
+                                            $([[ $BACKEND == ADAPTIVECPP ]] && [[ $ARCHITECTURE == AMD ]] && echo "^llvm@18~gold~libomptarget") \
+                                            $([[ $BACKEND == ADAPTIVECPP ]] && [[ $ARCHITECTURE == NVIDIA ]] && echo "^llvm@17~gold~libomptarget") \
                                             | tee $(tty) | tail -n 1 | cut -d " " -f 2 > ${WORKSPACE}/plssvm/${BUILD_TYPE}-${BACKEND}-${ARCHITECTURE}.installpath
 
                                         echo ${PIPESTATUS[@]}
