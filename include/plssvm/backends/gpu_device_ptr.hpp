@@ -56,6 +56,7 @@ class gpu_device_ptr {
      * @brief Construct a device_ptr for the device managed by @p queue with the extents { @p size, 1 }.
      * @param[in] size the size of the managed memory
      * @param[in] queue the queue (or similar) to manage the device_ptr
+     * @param[in] use_usm_allocations if `true` use USM allocations in the respective backend
      */
     gpu_device_ptr(size_type size, const queue_type queue, bool use_usm_allocations);
     /**
@@ -63,6 +64,7 @@ class gpu_device_ptr {
      * @details The managed memory size is: extents[0] * extents[1].
      * @param[in] shape the 2D size of the managed memory; size = shape.x * shape.y
      * @param[in] queue the queue (or similar) to manage the device_ptr
+     * @param[in] use_usm_allocations if `true` use USM allocations in the respective backend
      */
     gpu_device_ptr(plssvm::shape shape, const queue_type queue, bool use_usm_allocations);
     /**
@@ -71,6 +73,7 @@ class gpu_device_ptr {
      * @param[in] shape the extents of the managed memory
      * @param[in] padding the padding applied to the extents
      * @param[in] queue the queue (or similar) to manage the device_ptr
+     * @param[in] use_usm_allocations if `true` use USM allocations in the respective backend
      */
     gpu_device_ptr(plssvm::shape shape, plssvm::shape padding, const queue_type queue, bool use_usm_allocations);
 
