@@ -24,6 +24,7 @@
 #include <type_traits>    // std::enable_if_t, std::remove_cv_t, std::remove_reference_t, std::false_type, std::true_type
 #include <unordered_map>  // std::unordered_map, std::unordered_multimap
 #include <unordered_set>  // std::unordered_set, std::unordered_multiset
+#include <variant>        // std::variant
 #include <vector>         // std::vector
 
 namespace plssvm::detail {
@@ -341,6 +342,25 @@ constexpr bool is_unordered_associative_container_v = is_unordered_set_v<T> || i
  */
 template <typename T>
 constexpr bool is_container_v = is_sequence_container_v<T> || is_associative_container_v<T> || is_unordered_associative_container_v<T>;
+
+/**
+ * @brief Type trait to check whether @p T is a `std::variant`.
+ * @tparam T the type to check
+ */
+template <typename T>
+struct is_variant : std::false_type { };
+
+/**
+ * @copybrief plssvm::detail::is_variant
+ */
+template <typename... Args>
+struct is_variant<std::variant<Args...>> : std::true_type { };
+
+/**
+ * @copybrief plssvm::detail::is_variant
+ */
+template <typename T>
+constexpr bool is_variant_v = is_variant<T>::value;
 
 }  // namespace plssvm::detail
 
