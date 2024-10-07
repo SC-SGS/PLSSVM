@@ -230,6 +230,7 @@ std::vector<::plssvm::detail::move_only_any> gpu_csvm<device_ptr_t, queue_t, pin
     PLSSVM_ASSERT(!q_red.empty(), "The q_red vector must not be empty!");
     PLSSVM_ASSERT(q_red.size() == A.num_rows() - 1, "The q_red size ({}) mismatches the number of data points after dimensional reduction ({})!", q_red.size(), A.num_rows() - 1);
 
+    const bool use_usm_allocations = solver == solver_type::cg_streaming;
     const std::size_t num_devices = this->num_available_devices();
     const std::size_t num_rows_reduced = A.shape().x - 1;
 
@@ -253,8 +254,8 @@ std::vector<::plssvm::detail::move_only_any> gpu_csvm<device_ptr_t, queue_t, pin
         const queue_type &device = devices_[device_id];
 
         // allocate memory on the device
-        data_d[device_id] = device_ptr_type{ A.shape(), A.padding(), device };
-        q_red_d[device_id] = device_ptr_type{ q_red.size() + PADDING_SIZE, device };
+        data_d[device_id] = device_ptr_type{ A.shape(), A.padding(), device, use_usm_allocations };
+        q_red_d[device_id] = device_ptr_type{ q_red.size() + PADDING_SIZE, device, use_usm_allocations };
     }
 
     // pin the data matrix
@@ -296,7 +297,7 @@ std::vector<::plssvm::detail::move_only_any> gpu_csvm<device_ptr_t, queue_t, pin
             case solver_type::cg_streaming:
                 {
                     // explicitly assemble the (potential partial) kernel matrix
-                    device_ptr_type kernel_matrix = this->run_assemble_kernel_matrix_explicit(device_id, exec, params, solver == solver_type::cg_streaming, data_d[device_id], q_red_d[device_id], QA_cost);
+                    device_ptr_type kernel_matrix = this->run_assemble_kernel_matrix_explicit(device_id, exec, params, use_usm_allocations, data_d[device_id], q_red_d[device_id], QA_cost);
                     kernel_matrices_parts[device_id] = ::plssvm::detail::move_only_any{ std::move(kernel_matrix) };
                 }
                 break;
@@ -323,6 +324,7 @@ void gpu_csvm<device_ptr_t, queue_t, pinned_memory_t>::blas_level_3(const solver
     PLSSVM_ASSERT(B.shape() == C.shape(), "The B ({}) and C ({}) matrices must have the same shape!", B.shape(), C.shape());
     PLSSVM_ASSERT(B.padding() == C.padding(), "The B ({}) and C ({}) matrices must have the same padding!", B.padding(), C.padding());
 
+    const bool use_usm_allocations = solver == solver_type::cg_streaming;
     const std::size_t num_devices = this->num_available_devices();
 
     // the C and B matrices; completely stored on each device
@@ -332,7 +334,7 @@ void gpu_csvm<device_ptr_t, queue_t, pinned_memory_t>::blas_level_3(const solver
     // the partial C result from a specific device later stored on device 0 to perform the C reduction (inplace matrix addition)
     device_ptr_type partial_C_d{};
     if (num_devices > 1) {
-        partial_C_d = device_ptr_type{ C.shape(), C.padding(), devices_[0], solver == solver_type::cg_streaming };
+        partial_C_d = device_ptr_type{ C.shape(), C.padding(), devices_[0], use_usm_allocations };
     }
 
     // split memory allocation and memory copy!
@@ -345,8 +347,8 @@ void gpu_csvm<device_ptr_t, queue_t, pinned_memory_t>::blas_level_3(const solver
         const queue_type &device = devices_[device_id];
 
         // allocate memory on the device
-        B_d[device_id] = device_ptr_type{ B.shape(), B.padding(), device, solver == solver_type::cg_streaming };
-        C_d[device_id] = device_ptr_type{ C.shape(), C.padding(), device, solver == solver_type::cg_streaming };
+        B_d[device_id] = device_ptr_type{ B.shape(), B.padding(), device, use_usm_allocations };
+        C_d[device_id] = device_ptr_type{ C.shape(), C.padding(), device, use_usm_allocations };
     }
 
 #pragma omp parallel for ordered if (num_devices > 1)
