@@ -20,6 +20,7 @@
 
 #include <cstddef>  // std::size_t
 #include <iosfwd>   // std::ostream forward declaration
+#include <utility>  // std::pair
 #include <vector>   // std::vector
 
 namespace plssvm::detail {
@@ -163,6 +164,22 @@ class triangular_data_distribution : public data_distribution {
      * @return the theoretical maximum single memory allocation size per place for cg_explicit (`[[nodiscard]]`)
      */
     [[nodiscard]] std::vector<memory_size> calculate_maximum_explicit_kernel_matrix_memory_allocation_size_per_place(std::size_t num_features, std::size_t num_classes) const;
+
+    /**
+     * @brief Calculate the theoretical total memory needed per place for assembling the kernel matrix using USM.
+     * @param[in] num_features the total number of features
+     * @param[in] num_classes the total number of classes
+     * @return the theoretical total memory needed per place for cg_streaming (`[[nodiscard]]`)
+     */
+    [[nodiscard]] std::pair<memory_size, std::vector<memory_size>> calculate_maximum_streaming_kernel_matrix_memory_needed_per_place(std::size_t num_features, std::size_t num_classes) const;
+
+    /**
+     * @brief Calculate the theoretical maximum single memory allocation size per place for assembling the kernel matrix using USM.
+     * @param[in] num_features the total number of features
+     * @param[in] num_classes the total number of classes
+     * @return the theoretical maximum single memory allocation size per place for cg_streaming (`[[nodiscard]]`)
+     */
+    [[nodiscard]] std::vector<memory_size> calculate_maximum_streaming_kernel_matrix_memory_allocation_size_per_place(std::size_t num_features, std::size_t num_classes) const;
 
     /**
      * @brief Calculate the theoretical total memory needed per place for implicitly assembling the kernel matrix.
