@@ -43,15 +43,16 @@ device_ptr<T>::device_ptr(const plssvm::shape shape, const command_queue &queue,
 template <typename T>
 device_ptr<T>::device_ptr(const plssvm::shape shape, const plssvm::shape padding, const command_queue &queue, const bool use_usm_allocations) :
     base_type{ shape, padding, &queue, use_usm_allocations } {
-    error_code err{};
     cl_context cont{};
     PLSSVM_OPENCL_ERROR_CHECK(clGetCommandQueueInfo(queue_->queue, CL_QUEUE_CONTEXT, sizeof(cl_context), static_cast<void *>(&cont), nullptr), "error retrieving the command queue context")
     if (use_usm_allocations_) {
         usm_ptr_ = static_cast<T *>(clSVMAlloc(cont, CL_MEM_READ_WRITE, this->size_padded() * sizeof(value_type), 0));
+        PLSSVM_ASSERT(usm_ptr_ != nullptr, "error creating OpenCL SVM allocation");
     } else {
+        error_code err{};
         data_ = clCreateBuffer(cont, CL_MEM_READ_WRITE, this->size_padded() * sizeof(value_type), nullptr, &err);
+        PLSSVM_OPENCL_ERROR_CHECK(err, "error creating the buffer")
     }
-    PLSSVM_OPENCL_ERROR_CHECK(err, "error creating the buffer")
     this->memset(0);
 }
 
