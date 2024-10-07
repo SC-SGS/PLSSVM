@@ -100,6 +100,7 @@ std::vector<::plssvm::detail::move_only_any> csvm::assemble_kernel_matrix(const 
             // unreachable
             break;
         case solver_type::cg_explicit:
+        case solver_type::cg_streaming:
             {
                 const plssvm::detail::triangular_data_distribution dist{ A.num_rows() - 1, this->num_available_devices() };
                 std::vector<real_type> kernel_matrix(dist.calculate_explicit_kernel_matrix_num_entries_padded(0));  // only explicitly store the upper triangular matrix
@@ -153,6 +154,7 @@ void csvm::blas_level_3(const solver_type solver, const real_type alpha, const s
             // unreachable
             break;
         case solver_type::cg_explicit:
+        case solver_type::cg_streaming:
             {
                 const std::size_t num_rhs = B.shape().x;
                 const std::size_t num_rows = B.shape().y;
