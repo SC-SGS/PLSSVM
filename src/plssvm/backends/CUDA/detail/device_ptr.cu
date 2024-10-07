@@ -35,7 +35,7 @@ device_ptr<T>::device_ptr(const plssvm::shape shape, const queue_type device, co
 template <typename T>
 device_ptr<T>::device_ptr(const plssvm::shape shape, const plssvm::shape padding, const queue_type device, const bool use_usm_allocations) :
     base_type{ shape, padding, device, use_usm_allocations } {
-    if (queue_ < 0 || queue_ >= static_cast<int>(get_device_count())) {
+    if (queue_ < 0 || queue_ >= get_device_count()) {
         throw backend_exception{ fmt::format("Illegal device ID! Must be in range: [0, {}) but is {}.", get_device_count(), queue_) };
     }
     detail::set_device(queue_);
@@ -97,9 +97,11 @@ void device_ptr<T>::copy_to_device(const_host_pointer_type data_to_copy, const s
     PLSSVM_ASSERT(data_ != nullptr, "Invalid data pointer! Maybe *this has been default constructed?");
     PLSSVM_ASSERT(data_to_copy != nullptr, "Invalid host pointer for the data to copy!");
 
-    detail::set_device(queue_);
-    const size_type rcount = std::min(count, this->size_padded() - pos);
-    PLSSVM_CUDA_ERROR_CHECK(cudaMemcpy(data_ + pos, data_to_copy, rcount * sizeof(value_type), cudaMemcpyHostToDevice))
+    if (!use_usm_allocations_) {
+        detail::set_device(queue_);
+        const size_type rcount = std::min(count, this->size_padded() - pos);
+        PLSSVM_CUDA_ERROR_CHECK(cudaMemcpy(data_ + pos, data_to_copy, rcount * sizeof(value_type), cudaMemcpyHostToDevice))
+    }
 }
 
 template <typename T>
@@ -120,9 +122,11 @@ void device_ptr<T>::copy_to_host(host_pointer_type buffer, const size_type pos, 
     PLSSVM_ASSERT(data_ != nullptr, "Invalid data pointer! Maybe *this has been default constructed?");
     PLSSVM_ASSERT(buffer != nullptr, "Invalid host pointer for the data to copy!");
 
-    detail::set_device(queue_);
-    const size_type rcount = std::min(count, this->size_padded() - pos);
-    PLSSVM_CUDA_ERROR_CHECK(cudaMemcpy(buffer, data_ + pos, rcount * sizeof(value_type), cudaMemcpyDeviceToHost))
+    if (!use_usm_allocations_) {
+        detail::set_device(queue_);
+        const size_type rcount = std::min(count, this->size_padded() - pos);
+        PLSSVM_CUDA_ERROR_CHECK(cudaMemcpy(buffer, data_ + pos, rcount * sizeof(value_type), cudaMemcpyDeviceToHost))
+    }
 }
 
 template <typename T>
