@@ -879,6 +879,15 @@ std::tuple<aos_matrix<real_type>, std::vector<real_type>, std::vector<unsigned l
         // get the maximum possible memory allocation size per device
         const std::vector<detail::memory_size> max_mem_alloc_size_per_device = this->get_max_mem_alloc_size();
 
+        // utility function returning a vector of memory sizes that where the reasons for a failed check
+        const auto get_failed_memory_sizes = [&max_mem_alloc_size_per_device](const std::vector<std::size_t> &failed_devices) {
+            std::vector<detail::memory_size> failed_memory_sizes{};
+            for (const std::size_t device : failed_devices) {
+                failed_memory_sizes.push_back(max_mem_alloc_size_per_device[device]);
+            }
+            return failed_memory_sizes;
+        };
+
         // get the maximum single allocation size per device
         const std::vector<detail::memory_size> max_single_allocation_cg_explicit_size_per_device = data_distribution.calculate_maximum_explicit_kernel_matrix_memory_allocation_size_per_place(num_features, num_rhs);
         const std::vector<detail::memory_size> max_single_allocation_cg_streaming_size_per_device = data_distribution.calculate_maximum_streaming_kernel_matrix_memory_allocation_size_per_place(num_features, num_rhs);
@@ -903,9 +912,11 @@ std::tuple<aos_matrix<real_type>, std::vector<real_type>, std::vector<unsigned l
         // check whether the maximum single cg_explicit memory allocation size can be satisfied
         if (const std::vector<std::size_t> failed_cg_explicit_constraints = check_sizes(max_single_allocation_cg_explicit_size_per_device, max_mem_alloc_size_per_device);
             used_solver == solver_type::cg_explicit && !failed_cg_explicit_constraints.empty()) {
+
             // max mem alloc size constraints not fulfilled
             detail::log(verbosity_level::full,
-                        "Cannot use cg_explicit due to maximum single memory allocation constraints on device(s) {}! Falling back to cg_streaming.\n",
+                        "Cannot use cg_explicit due to maximum single memory allocation constraints ({}) on device(s) {}! Falling back to cg_streaming.\n",
+                        format_vector(get_failed_memory_sizes(failed_cg_explicit_constraints)),
                         format_vector(failed_cg_explicit_constraints));
             // can't use cg_explicit
             used_solver = solver_type::cg_streaming;
@@ -914,7 +925,8 @@ std::tuple<aos_matrix<real_type>, std::vector<real_type>, std::vector<unsigned l
             used_solver == solver_type::cg_streaming && !failed_cg_streaming_constraints.empty()) {
             // max mem alloc size constraints not fulfilled
             detail::log(verbosity_level::full,
-                        "Cannot use cg_streaming due to maximum single memory allocation constraints on device(s) {}! Falling back to cg_implicit.\n",
+                        "Cannot use cg_streaming due to maximum single memory allocation constraints ({}) on device(s) {}! Falling back to cg_implicit.\n",
+                        format_vector(get_failed_memory_sizes(failed_cg_streaming_constraints)),
                         format_vector(failed_cg_streaming_constraints));
             // can't use cg_streaming
             used_solver = solver_type::cg_implicit;
@@ -925,7 +937,7 @@ std::tuple<aos_matrix<real_type>, std::vector<real_type>, std::vector<unsigned l
             plssvm::detail::log(verbosity_level::full | verbosity_level::warning,
                                 "WARNING: if you are sure that the guaranteed maximum memory allocation size can be safely ignored on your device, "
                                 "this check can be disabled via \"-DPLSSVM_ENFORCE_MAX_MEM_ALLOC_SIZE=OFF\" during the CMake configuration!\n");
-            throw kernel_launch_resources{ fmt::format("Can't fulfill maximum single memory allocation constraint for device(s) {} even for the cg_implicit solver!", format_vector(failed_cg_implicit_constraints)) };
+            throw kernel_launch_resources{ fmt::format("Can't fulfill maximum single memory allocation constraint ({}) for device(s) {} even for the cg_implicit solver!", format_vector(get_failed_memory_sizes(failed_cg_implicit_constraints)), format_vector(failed_cg_implicit_constraints)) };
         }
 #endif
     }
