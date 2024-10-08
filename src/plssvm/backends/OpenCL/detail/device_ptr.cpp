@@ -14,6 +14,7 @@
 #include "plssvm/backends/OpenCL/detail/utility.hpp"        // PLSSVM_OPENCL_ERROR_CHECK
 #include "plssvm/backends/OpenCL/exceptions.hpp"            // plssvm::opencl::backend_exception
 #include "plssvm/detail/assert.hpp"                         // PLSSVM_ASSERT
+#include "plssvm/detail/memory_size.hpp"                    // plssvm::detail::memory_size
 #include "plssvm/exceptions/exceptions.hpp"                 // plssvm::exception
 #include "plssvm/shape.hpp"                                 // plssvm::shape
 
@@ -47,6 +48,9 @@ device_ptr<T>::device_ptr(const plssvm::shape shape, const plssvm::shape padding
     PLSSVM_OPENCL_ERROR_CHECK(clGetCommandQueueInfo(queue_->queue, CL_QUEUE_CONTEXT, sizeof(cl_context), static_cast<void *>(&cont), nullptr), "error retrieving the command queue context")
     if (use_usm_allocations_) {
         usm_ptr_ = static_cast<T *>(clSVMAlloc(cont, CL_MEM_READ_WRITE, this->size_padded() * sizeof(value_type), 0));
+        if (usm_ptr_ == nullptr) {
+            throw backend_exception{ fmt::format("Failed to allocate {} of memory using clSVMAlloc(...). Maybe that's larger than CL_DEVICE_MAX_MEM_ALLOC_SIZE?", ::plssvm::detail::memory_size{ this->size_padded() * sizeof(value_type) }) };
+        }
         PLSSVM_ASSERT(usm_ptr_ != nullptr, "error creating OpenCL SVM allocation");
     } else {
         error_code err{};
