@@ -213,7 +213,7 @@ std::pair<memory_size, std::vector<memory_size>> triangular_data_distribution::c
 }
 
 std::vector<memory_size> triangular_data_distribution::calculate_maximum_streaming_kernel_matrix_memory_allocation_size_per_place(const std::size_t num_features, const std::size_t num_classes) const {
-    return this->calculate_maximum_implicit_kernel_matrix_memory_allocation_size_per_place(num_features, num_classes);
+    return this->calculate_maximum_explicit_kernel_matrix_memory_allocation_size_per_place(num_features, num_classes);
 }
 
 std::vector<memory_size> triangular_data_distribution::calculate_maximum_explicit_kernel_matrix_memory_allocation_size_per_place(const std::size_t num_features, const std::size_t num_classes) const {
