@@ -28,17 +28,19 @@ if (PLSSVM_ENABLE_HARDWARE_SAMPLING)
     target_compile_definitions(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC PLSSVM_HARDWARE_SAMPLING_INTERVAL=${PLSSVM_HARDWARE_SAMPLING_INTERVAL}ms)
     
     include(FetchContent)
+    set(PLSSVM_hws_VERSION v1.0.1)
     find_package(hws QUIET)
     if (hws_FOUND)
         message(STATUS "Found package hws.")
     else ()
-        message(STATUS "Couldn't find package hws. Building from source.")
+        set(PLSSVM_)
+        message(STATUS "Couldn't find package hws. Building version ${PLSSVM_hws_VERSION} from source.")
         set(HWS_ENABLE_ERROR_CHECKS ${PLSSVM_ENABLE_ASSERTS} CACHE INTERNAL "" FORCE)
         set(HWS_SAMPLING_INTERVAL ${PLSSVM_HARDWARE_SAMPLING_INTERVAL} CACHE INTERNAL "" FORCE)
         set(HWS_ENABLE_PYTHON_BINDINGS OFF CACHE INTERNAL "" FORCE)
         FetchContent_Declare(hws
                              GIT_REPOSITORY https://github.com/SC-SGS/hardware_sampling
-                             GIT_TAG unification # TODO: use release tag after one was created
+                             GIT_TAG ${PLSSVM_hws_VERSION}
                              QUIET
         )
         FetchContent_MakeAvailable(hws)
