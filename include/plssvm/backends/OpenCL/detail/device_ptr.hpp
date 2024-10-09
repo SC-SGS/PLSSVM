@@ -29,9 +29,9 @@ namespace plssvm::opencl::detail {
  * @tparam T the type of the kernel pointer to wrap
  */
 template <typename T>
-class device_ptr : public ::plssvm::detail::gpu_device_ptr<T, const command_queue *, cl_mem, device_ptr<T>> {
+class device_ptr : public ::plssvm::detail::gpu_device_ptr<T, const command_queue *, std::variant<cl_mem, T*>, device_ptr<T>> {
     /// The template base type of the OpenCL device_ptr class.
-    using base_type = ::plssvm::detail::gpu_device_ptr<T, const command_queue *, cl_mem, device_ptr<T>>;
+    using base_type = ::plssvm::detail::gpu_device_ptr<T, const command_queue *, std::variant<cl_mem, T*>, device_ptr<T>>;
 
     using base_type::data_;
     using base_type::queue_;
@@ -105,19 +105,6 @@ class device_ptr : public ::plssvm::detail::gpu_device_ptr<T, const command_queu
     ~device_ptr() override;
 
     /**
-     * @brief Get a pointer to the device memory.
-     * @details If USM allocations are used, returns a `T*` otherwise returns a `cl_mem` object.
-     * @return a variant containing the device memory pointer (`[[nodiscard]]`)
-     */
-    [[nodiscard]] std::variant<device_pointer_type, T *> get_variant();
-    /**
-     * @brief Get a pointer to the device memory.
-     * @details If USM allocations are used, returns a `T*` otherwise returns a `cl_mem` object.
-     * @return a variant containing the device memory pointer (`[[nodiscard]]`)
-     */
-    [[nodiscard]] std::variant<device_pointer_type, T *> get_variant() const;
-
-    /**
      * @copydoc plssvm::detail::gpu_device_ptr::memset(int, size_type, size_type)
      */
     void memset(int pattern, size_type pos, size_type num_bytes) override;
@@ -141,10 +128,6 @@ class device_ptr : public ::plssvm::detail::gpu_device_ptr<T, const command_queu
      * @copydoc plssvm::detail::gpu_device_ptr::copy_to_other_device(derived_gpu_device_ptr &, size_type, size_type) const
      */
     void copy_to_other_device(device_ptr &target, size_type pos, size_type count) const override;
-
-  private:
-    /// The USM pointer used if `use_usm_allocations_` is `true`.
-    T *usm_ptr_{ nullptr };
 };
 
 extern template class device_ptr<float>;

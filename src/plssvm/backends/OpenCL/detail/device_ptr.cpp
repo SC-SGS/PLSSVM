@@ -22,10 +22,9 @@
 
 #include "fmt/format.h"  // fmt::format
 
-#include <algorithm>  // std::min, std::fill
+#include <algorithm>  // std::min
 #include <array>      // std::array
 #include <cstddef>    // std::size_t
-#include <cstring>    // std::memcpy
 #include <exception>  // std::terminate
 #include <iostream>   // std::cerr, std::endl
 #include <variant>    // std::variant
@@ -47,11 +46,11 @@ device_ptr<T>::device_ptr(const plssvm::shape shape, const plssvm::shape padding
     cl_context cont{};
     PLSSVM_OPENCL_ERROR_CHECK(clGetCommandQueueInfo(queue_->queue, CL_QUEUE_CONTEXT, sizeof(cl_context), static_cast<void *>(&cont), nullptr), "error retrieving the command queue context")
     if (use_usm_allocations_) {
-        usm_ptr_ = static_cast<T *>(clSVMAlloc(cont, CL_MEM_READ_WRITE, this->size_padded() * sizeof(value_type), 0));
-        if (usm_ptr_ == nullptr) {
+        T* usm_ptr = static_cast<T *>(clSVMAlloc(cont, CL_MEM_READ_WRITE, this->size_padded() * sizeof(value_type), 0));
+        if (usm_ptr == nullptr) {
             throw backend_exception{ fmt::format("Failed to allocate {} of memory using clSVMAlloc(...). Maybe that's larger than CL_DEVICE_MAX_MEM_ALLOC_SIZE?", ::plssvm::detail::memory_size{ this->size_padded() * sizeof(value_type) }) };
         }
-        PLSSVM_ASSERT(usm_ptr_ != nullptr, "error creating OpenCL SVM allocation");
+        data_ = usm_ptr;
     } else {
         error_code err{};
         data_ = clCreateBuffer(cont, CL_MEM_READ_WRITE, this->size_padded() * sizeof(value_type), nullptr, &err);
@@ -64,13 +63,18 @@ template <typename T>
 device_ptr<T>::~device_ptr() {
     // avoid compiler warnings
     try {
-        if (data_ != nullptr) {
-            PLSSVM_OPENCL_ERROR_CHECK(clReleaseMemObject(data_), "error releasing the buffer")
-        }
-        if (use_usm_allocations_ && usm_ptr_ != nullptr) {
-            cl_context cont{};
-            PLSSVM_OPENCL_ERROR_CHECK(clGetCommandQueueInfo(queue_->queue, CL_QUEUE_CONTEXT, sizeof(cl_context), static_cast<void *>(&cont), nullptr), "error retrieving the command queue context")
-            clSVMFree(cont, usm_ptr_);
+        if (use_usm_allocations_) {
+            T* usm_ptr = std::get<T*>(data_);
+            if (usm_ptr != nullptr) {
+                cl_context cont{};
+                PLSSVM_OPENCL_ERROR_CHECK(clGetCommandQueueInfo(queue_->queue, CL_QUEUE_CONTEXT, sizeof(cl_context), static_cast<void *>(&cont), nullptr), "error retrieving the command queue context")
+                clSVMFree(cont, usm_ptr);
+            }
+        } else {
+            cl_mem mem = std::get<cl_mem>(data_);
+            if (mem != nullptr) {
+                PLSSVM_OPENCL_ERROR_CHECK(clReleaseMemObject(mem), "error releasing the buffer")
+            }
         }
     } catch (const plssvm::exception &e) {
         std::cout << e.what_with_loc() << std::endl;
@@ -79,45 +83,28 @@ device_ptr<T>::~device_ptr() {
 }
 
 template <typename T>
-auto device_ptr<T>::get_variant() -> std::variant<device_pointer_type, T *> {
-    if (use_usm_allocations_) {
-        return { usm_ptr_ };
-    } else {
-        return { this->get() };
-    }
-}
-
-template <typename T>
-auto device_ptr<T>::get_variant() const -> std::variant<device_pointer_type, T *> {
-    if (use_usm_allocations_) {
-        return { usm_ptr_ };
-    } else {
-        return { this->get() };
-    }
-}
-
-template <typename T>
 void device_ptr<T>::memset(const int pattern, const size_type pos, const size_type num_bytes) {
-    PLSSVM_ASSERT(data_ != nullptr, "Invalid data pointer! Maybe *this has been default constructed?");
+    PLSSVM_ASSERT(data_ != device_ptr_type{}, "Invalid data pointer! Maybe *this has been default constructed?");
 
     if (pos >= this->size_padded()) {
         throw backend_exception{ fmt::format("Illegal access in memset!: {} >= {}", pos, this->size_padded()) };
     }
     const size_type rnum_bytes = std::min(num_bytes, (this->size_padded() - pos) * sizeof(value_type));
+
+    const auto correct_value = static_cast<unsigned char>(pattern);
+    error_code err;
     if (use_usm_allocations_) {
-        std::memset(usm_ptr_ + pos, pattern, rnum_bytes);
+        err = clEnqueueSVMMemFill(queue_->queue, std::get<T*>(data_) + pos, &correct_value, sizeof(unsigned char), rnum_bytes, 0, nullptr, nullptr);
     } else {
-        error_code err;
-        const auto correct_value = static_cast<unsigned char>(pattern);
-        err = clEnqueueFillBuffer(queue_->queue, data_, &correct_value, sizeof(unsigned char), pos * sizeof(value_type), rnum_bytes, 0, nullptr, nullptr);
-        PLSSVM_OPENCL_ERROR_CHECK(err, "error filling the buffer via memset")
+        err = clEnqueueFillBuffer(queue_->queue, std::get<cl_mem>(data_), &correct_value, sizeof(unsigned char), pos * sizeof(value_type), rnum_bytes, 0, nullptr, nullptr);
     }
+    PLSSVM_OPENCL_ERROR_CHECK(err, "error filling the buffer via memset")
     device_synchronize(*queue_);
 }
 
 template <typename T>
 void device_ptr<T>::fill(const value_type value, const size_type pos, const size_type count) {
-    PLSSVM_ASSERT(data_ != nullptr, "Invalid data pointer! Maybe *this has been default constructed?");
+    PLSSVM_ASSERT(data_ != device_ptr_type{}, "Invalid data pointer! Maybe *this has been default constructed?");
 
     if (pos >= this->size_padded()) {
         throw backend_exception{ fmt::format("Illegal access in fill!: {} >= {}", pos, this->size_padded()) };
@@ -125,35 +112,37 @@ void device_ptr<T>::fill(const value_type value, const size_type pos, const size
 
     // run GPU kernel
     const size_type rcount = std::min(count, this->size_padded() - pos);
+
+    error_code err;
     if (use_usm_allocations_) {
-        std::fill(usm_ptr_ + pos, usm_ptr_ + pos + rcount, value);
+        err = clEnqueueSVMMemFill(queue_->queue, std::get<T*>(data_) + pos, &value, sizeof(value_type), rcount * sizeof(value_type), 0, nullptr, nullptr);
     } else {
-        error_code err;
-        err = clEnqueueFillBuffer(queue_->queue, data_, &value, sizeof(value_type), pos * sizeof(value_type), rcount * sizeof(value_type), 0, nullptr, nullptr);
-        PLSSVM_OPENCL_ERROR_CHECK(err, "error filling the buffer via fill")
+        err = clEnqueueFillBuffer(queue_->queue, std::get<cl_mem>(data_), &value, sizeof(value_type), pos * sizeof(value_type), rcount * sizeof(value_type), 0, nullptr, nullptr);
     }
+    PLSSVM_OPENCL_ERROR_CHECK(err, "error filling the buffer via fill")
     device_synchronize(*queue_);
 }
 
 template <typename T>
 void device_ptr<T>::copy_to_device(const_host_pointer_type data_to_copy, const size_type pos, const size_type count) {
-    PLSSVM_ASSERT(data_ != nullptr, "Invalid data pointer! Maybe *this has been default constructed?");
+    PLSSVM_ASSERT(data_ != device_ptr_type{}, "Invalid data pointer! Maybe *this has been default constructed?");
     PLSSVM_ASSERT(data_to_copy != nullptr, "Invalid host pointer for the data to copy!");
 
     const size_type rcount = std::min(count, this->size_padded() - pos);
+
+    error_code err;
     if (use_usm_allocations_) {
-        std::memcpy(usm_ptr_ + pos, data_to_copy, rcount);
+        err = clEnqueueSVMMemcpy(queue_->queue, CL_TRUE, std::get<T*>(data_) + pos, data_to_copy, rcount * sizeof(value_type), 0, nullptr, nullptr);
     } else {
-        error_code err;
-        err = clEnqueueWriteBuffer(queue_->queue, data_, CL_TRUE, pos * sizeof(value_type), rcount * sizeof(value_type), data_to_copy, 0, nullptr, nullptr);
-        PLSSVM_OPENCL_ERROR_CHECK(err, "error copying the data to the device buffer")
+        err = clEnqueueWriteBuffer(queue_->queue, std::get<cl_mem>(data_), CL_TRUE, pos * sizeof(value_type), rcount * sizeof(value_type), data_to_copy, 0, nullptr, nullptr);
     }
+    PLSSVM_OPENCL_ERROR_CHECK(err, "error copying the data to the device buffer")
     device_synchronize(*queue_);
 }
 
 template <typename T>
 void device_ptr<T>::copy_to_device_strided(const_host_pointer_type data_to_copy, const std::size_t spitch, const std::size_t width, const std::size_t height) {
-    PLSSVM_ASSERT(data_ != nullptr, "Invalid data pointer! Maybe *this has been default constructed?");
+    PLSSVM_ASSERT(data_ != device_ptr_type{}, "Invalid data pointer! Maybe *this has been default constructed?");
     PLSSVM_ASSERT(data_to_copy != nullptr, "Invalid host pointer for the data to copy!");
 
     if (width > spitch) {
@@ -183,7 +172,7 @@ void device_ptr<T>::copy_to_device_strided(const_host_pointer_type data_to_copy,
         const std::size_t host_slice_pitch = 0;
 
         error_code err;
-        err = clEnqueueWriteBufferRect(queue_->queue, data_, CL_TRUE, buffer_origin.data(), host_origin.data(), region.data(), buffer_row_pitch, buffer_slice_pitch, host_row_pitch, host_slice_pitch, data_to_copy, 0, nullptr, nullptr);
+        err = clEnqueueWriteBufferRect(queue_->queue, std::get<cl_mem>(data_), CL_TRUE, buffer_origin.data(), host_origin.data(), region.data(), buffer_row_pitch, buffer_slice_pitch, host_row_pitch, host_slice_pitch, data_to_copy, 0, nullptr, nullptr);
         PLSSVM_OPENCL_ERROR_CHECK(err, "error copying the strided data to the device buffer")
     }
     device_synchronize(*queue_);
@@ -191,23 +180,24 @@ void device_ptr<T>::copy_to_device_strided(const_host_pointer_type data_to_copy,
 
 template <typename T>
 void device_ptr<T>::copy_to_host(host_pointer_type buffer, const size_type pos, const size_type count) const {
-    PLSSVM_ASSERT(data_ != nullptr, "Invalid data pointer! Maybe *this has been default constructed?");
+    PLSSVM_ASSERT(data_ != device_ptr_type{}, "Invalid data pointer! Maybe *this has been default constructed?");
     PLSSVM_ASSERT(buffer != nullptr, "Invalid host pointer for the data to copy!");
 
     const size_type rcount = std::min(count, this->size_padded() - pos);
+
+    error_code err;
     if (use_usm_allocations_) {
-        std::memcpy(buffer, usm_ptr_ + pos, rcount);
+        err = clEnqueueSVMMemcpy(queue_->queue, CL_TRUE, buffer, std::get<T*>(data_) + pos, rcount * sizeof(value_type), 0, nullptr, nullptr);
     } else {
-        error_code err;
-        err = clEnqueueReadBuffer(queue_->queue, data_, CL_TRUE, pos * sizeof(value_type), rcount * sizeof(value_type), buffer, 0, nullptr, nullptr);
-        PLSSVM_OPENCL_ERROR_CHECK(err, "error copying the data from the device buffer")
+        err = clEnqueueReadBuffer(queue_->queue, std::get<cl_mem>(data_), CL_TRUE, pos * sizeof(value_type), rcount * sizeof(value_type), buffer, 0, nullptr, nullptr);
     }
+    PLSSVM_OPENCL_ERROR_CHECK(err, "error copying the data from the device buffer")
     device_synchronize(*queue_);
 }
 
 template <typename T>
 void device_ptr<T>::copy_to_other_device(device_ptr &target, const size_type pos, const size_type count) const {
-    PLSSVM_ASSERT(data_ != nullptr, "Invalid data pointer! Maybe *this has been default constructed?");
+    PLSSVM_ASSERT(data_ != device_ptr_type{}, "Invalid data pointer! Maybe *this has been default constructed?");
     PLSSVM_ASSERT(target.get() != nullptr, "Invalid target pointer! Maybe target has been default constructed?");
 
     const size_type rcount = std::min(count, this->size_padded() - pos);

@@ -290,22 +290,22 @@ auto csvm::run_assemble_kernel_matrix_explicit(const std::size_t device_id, cons
 
         switch (params.kernel_type) {
             case kernel_function_type::linear:
-                detail::run_kernel(device, device.get_kernel(detail::compute_kernel_name::assemble_kernel_matrix_explicit), native_partial_grid, native_block, kernel_matrix_d.get_variant(), data_d.get(), num_rows_reduced, device_specific_num_rows, row_offset, num_features, q_red_d.get(), QA_cost, cost_factor, grid_offset_x, grid_offset_y);
+                detail::run_kernel(device, device.get_kernel(detail::compute_kernel_name::assemble_kernel_matrix_explicit), native_partial_grid, native_block, kernel_matrix_d.get(), data_d.get(), num_rows_reduced, device_specific_num_rows, row_offset, num_features, q_red_d.get(), QA_cost, cost_factor, grid_offset_x, grid_offset_y);
                 break;
             case kernel_function_type::polynomial:
-                detail::run_kernel(device, device.get_kernel(detail::compute_kernel_name::assemble_kernel_matrix_explicit), native_partial_grid, native_block, kernel_matrix_d.get_variant(), data_d.get(), num_rows_reduced, device_specific_num_rows, row_offset, num_features, q_red_d.get(), QA_cost, cost_factor, grid_offset_x, grid_offset_y, params.degree, std::get<real_type>(params.gamma), params.coef0);
+                detail::run_kernel(device, device.get_kernel(detail::compute_kernel_name::assemble_kernel_matrix_explicit), native_partial_grid, native_block, kernel_matrix_d.get(), data_d.get(), num_rows_reduced, device_specific_num_rows, row_offset, num_features, q_red_d.get(), QA_cost, cost_factor, grid_offset_x, grid_offset_y, params.degree, std::get<real_type>(params.gamma), params.coef0);
                 break;
             case kernel_function_type::rbf:
-                detail::run_kernel(device, device.get_kernel(detail::compute_kernel_name::assemble_kernel_matrix_explicit), native_partial_grid, native_block, kernel_matrix_d.get_variant(), data_d.get(), num_rows_reduced, device_specific_num_rows, row_offset, num_features, q_red_d.get(), QA_cost, cost_factor, grid_offset_x, grid_offset_y, std::get<real_type>(params.gamma));
+                detail::run_kernel(device, device.get_kernel(detail::compute_kernel_name::assemble_kernel_matrix_explicit), native_partial_grid, native_block, kernel_matrix_d.get(), data_d.get(), num_rows_reduced, device_specific_num_rows, row_offset, num_features, q_red_d.get(), QA_cost, cost_factor, grid_offset_x, grid_offset_y, std::get<real_type>(params.gamma));
                 break;
             case kernel_function_type::sigmoid:
-                detail::run_kernel(device, device.get_kernel(detail::compute_kernel_name::assemble_kernel_matrix_explicit), native_partial_grid, native_block, kernel_matrix_d.get_variant(), data_d.get(), num_rows_reduced, device_specific_num_rows, row_offset, num_features, q_red_d.get(), QA_cost, cost_factor, grid_offset_x, grid_offset_y, std::get<real_type>(params.gamma), params.coef0);
+                detail::run_kernel(device, device.get_kernel(detail::compute_kernel_name::assemble_kernel_matrix_explicit), native_partial_grid, native_block, kernel_matrix_d.get(), data_d.get(), num_rows_reduced, device_specific_num_rows, row_offset, num_features, q_red_d.get(), QA_cost, cost_factor, grid_offset_x, grid_offset_y, std::get<real_type>(params.gamma), params.coef0);
                 break;
             case kernel_function_type::laplacian:
-                detail::run_kernel(device, device.get_kernel(detail::compute_kernel_name::assemble_kernel_matrix_explicit), native_partial_grid, native_block, kernel_matrix_d.get_variant(), data_d.get(), num_rows_reduced, device_specific_num_rows, row_offset, num_features, q_red_d.get(), QA_cost, cost_factor, grid_offset_x, grid_offset_y, std::get<real_type>(params.gamma));
+                detail::run_kernel(device, device.get_kernel(detail::compute_kernel_name::assemble_kernel_matrix_explicit), native_partial_grid, native_block, kernel_matrix_d.get(), data_d.get(), num_rows_reduced, device_specific_num_rows, row_offset, num_features, q_red_d.get(), QA_cost, cost_factor, grid_offset_x, grid_offset_y, std::get<real_type>(params.gamma));
                 break;
             case kernel_function_type::chi_squared:
-                detail::run_kernel(device, device.get_kernel(detail::compute_kernel_name::assemble_kernel_matrix_explicit), native_partial_grid, native_block, kernel_matrix_d.get_variant(), data_d.get(), num_rows_reduced, device_specific_num_rows, row_offset, num_features, q_red_d.get(), QA_cost, cost_factor, grid_offset_x, grid_offset_y, std::get<real_type>(params.gamma));
+                detail::run_kernel(device, device.get_kernel(detail::compute_kernel_name::assemble_kernel_matrix_explicit), native_partial_grid, native_block, kernel_matrix_d.get(), data_d.get(), num_rows_reduced, device_specific_num_rows, row_offset, num_features, q_red_d.get(), QA_cost, cost_factor, grid_offset_x, grid_offset_y, std::get<real_type>(params.gamma));
                 break;
         }
     }
@@ -337,7 +337,7 @@ void csvm::run_blas_level_3_kernel_explicit(const std::size_t device_id, const :
         const cl_ulong grid_offset_x = offsets.x;
         const cl_ulong grid_offset_y = offsets.y;
 
-        detail::run_kernel(device, device.get_kernel(detail::compute_kernel_name::symm_kernel_explicit), native_partial_grid, native_block, num_rows, num_rhs, device_specific_num_rows, row_offset, alpha, A_d.get_variant(), B_d.get(), beta, C_d.get(), grid_offset_x, grid_offset_y);
+        detail::run_kernel(device, device.get_kernel(detail::compute_kernel_name::symm_kernel_explicit), native_partial_grid, native_block, num_rows, num_rhs, device_specific_num_rows, row_offset, alpha, A_d.get(), B_d.get(), beta, C_d.get(), grid_offset_x, grid_offset_y);
     }
 
     // convert execution range block to OpenCL's native std::vector
@@ -354,7 +354,7 @@ void csvm::run_blas_level_3_kernel_explicit(const std::size_t device_id, const :
             const cl_ulong grid_offset_x = offsets.x;
             const cl_ulong grid_offset_y = offsets.y;
 
-            detail::run_kernel(device, device.get_kernel(detail::compute_kernel_name::mirror_symm_kernel_explicit), native_partial_grid, native_mirror_block, num_rows, num_rhs, num_mirror_rows, device_specific_num_rows, row_offset, alpha, A_d.get_variant(), B_d.get(), beta, C_d.get(), grid_offset_x, grid_offset_y);
+            detail::run_kernel(device, device.get_kernel(detail::compute_kernel_name::mirror_symm_kernel_explicit), native_partial_grid, native_mirror_block, num_rows, num_rhs, num_mirror_rows, device_specific_num_rows, row_offset, alpha, A_d.get(), B_d.get(), beta, C_d.get(), grid_offset_x, grid_offset_y);
         }
     }
     detail::device_synchronize(device);
