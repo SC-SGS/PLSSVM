@@ -28,7 +28,7 @@ if (PLSSVM_ENABLE_HARDWARE_SAMPLING)
     target_compile_definitions(${PLSSVM_BASE_LIBRARY_NAME} PUBLIC PLSSVM_HARDWARE_SAMPLING_INTERVAL=${PLSSVM_HARDWARE_SAMPLING_INTERVAL}ms)
     
     include(FetchContent)
-    set(PLSSVM_hws_VERSION v1.0.1)
+    set(PLSSVM_hws_VERSION v1.0.2)
     find_package(hws QUIET)
     if (hws_FOUND)
         message(STATUS "Found package hws.")
