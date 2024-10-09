@@ -84,7 +84,7 @@ device_ptr<T>::~device_ptr() {
 
 template <typename T>
 void device_ptr<T>::memset(const int pattern, const size_type pos, const size_type num_bytes) {
-    PLSSVM_ASSERT(data_ != device_ptr_type{}, "Invalid data pointer! Maybe *this has been default constructed?");
+    PLSSVM_ASSERT(data_ != device_pointer_type{}, "Invalid data pointer! Maybe *this has been default constructed?");
 
     if (pos >= this->size_padded()) {
         throw backend_exception{ fmt::format("Illegal access in memset!: {} >= {}", pos, this->size_padded()) };
@@ -104,7 +104,7 @@ void device_ptr<T>::memset(const int pattern, const size_type pos, const size_ty
 
 template <typename T>
 void device_ptr<T>::fill(const value_type value, const size_type pos, const size_type count) {
-    PLSSVM_ASSERT(data_ != device_ptr_type{}, "Invalid data pointer! Maybe *this has been default constructed?");
+    PLSSVM_ASSERT(data_ != device_pointer_type{}, "Invalid data pointer! Maybe *this has been default constructed?");
 
     if (pos >= this->size_padded()) {
         throw backend_exception{ fmt::format("Illegal access in fill!: {} >= {}", pos, this->size_padded()) };
@@ -125,7 +125,7 @@ void device_ptr<T>::fill(const value_type value, const size_type pos, const size
 
 template <typename T>
 void device_ptr<T>::copy_to_device(const_host_pointer_type data_to_copy, const size_type pos, const size_type count) {
-    PLSSVM_ASSERT(data_ != device_ptr_type{}, "Invalid data pointer! Maybe *this has been default constructed?");
+    PLSSVM_ASSERT(data_ != device_pointer_type{}, "Invalid data pointer! Maybe *this has been default constructed?");
     PLSSVM_ASSERT(data_to_copy != nullptr, "Invalid host pointer for the data to copy!");
 
     const size_type rcount = std::min(count, this->size_padded() - pos);
@@ -142,7 +142,7 @@ void device_ptr<T>::copy_to_device(const_host_pointer_type data_to_copy, const s
 
 template <typename T>
 void device_ptr<T>::copy_to_device_strided(const_host_pointer_type data_to_copy, const std::size_t spitch, const std::size_t width, const std::size_t height) {
-    PLSSVM_ASSERT(data_ != device_ptr_type{}, "Invalid data pointer! Maybe *this has been default constructed?");
+    PLSSVM_ASSERT(data_ != device_pointer_type{}, "Invalid data pointer! Maybe *this has been default constructed?");
     PLSSVM_ASSERT(data_to_copy != nullptr, "Invalid host pointer for the data to copy!");
 
     if (width > spitch) {
@@ -180,7 +180,7 @@ void device_ptr<T>::copy_to_device_strided(const_host_pointer_type data_to_copy,
 
 template <typename T>
 void device_ptr<T>::copy_to_host(host_pointer_type buffer, const size_type pos, const size_type count) const {
-    PLSSVM_ASSERT(data_ != device_ptr_type{}, "Invalid data pointer! Maybe *this has been default constructed?");
+    PLSSVM_ASSERT(data_ != device_pointer_type{}, "Invalid data pointer! Maybe *this has been default constructed?");
     PLSSVM_ASSERT(buffer != nullptr, "Invalid host pointer for the data to copy!");
 
     const size_type rcount = std::min(count, this->size_padded() - pos);
@@ -197,8 +197,8 @@ void device_ptr<T>::copy_to_host(host_pointer_type buffer, const size_type pos, 
 
 template <typename T>
 void device_ptr<T>::copy_to_other_device(device_ptr &target, const size_type pos, const size_type count) const {
-    PLSSVM_ASSERT(data_ != device_ptr_type{}, "Invalid data pointer! Maybe *this has been default constructed?");
-    PLSSVM_ASSERT(target.get() != nullptr, "Invalid target pointer! Maybe target has been default constructed?");
+    PLSSVM_ASSERT(data_ != device_pointer_type{}, "Invalid data pointer! Maybe *this has been default constructed?");
+    PLSSVM_ASSERT(target.get() != device_pointer_type{}, "Invalid target pointer! Maybe target has been default constructed?");
 
     const size_type rcount = std::min(count, this->size_padded() - pos);
     if (target.size_padded() < rcount) {
