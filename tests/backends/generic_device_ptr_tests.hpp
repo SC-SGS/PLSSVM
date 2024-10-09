@@ -40,13 +40,14 @@ TYPED_TEST_SUITE_P(DevicePtr);
 TYPED_TEST_P(DevicePtr, default_construct) {
     using test_type = typename TestFixture::fixture_test_type;
     using device_ptr_type = typename test_type::device_ptr_type;
+    using data_ptr_type = typename device_ptr_type::device_pointer_type;
 
     // default construct device_ptr
     const device_ptr_type ptr{};
 
     // empty data
     EXPECT_FALSE(static_cast<bool>(ptr));
-    EXPECT_EQ(ptr.get(), nullptr);
+    EXPECT_EQ(ptr.get(), data_ptr_type{});
     EXPECT_EQ(ptr.size(), 0);
     EXPECT_EQ(ptr.shape(), (plssvm::shape{ 0, 0 }));
     EXPECT_TRUE(ptr.empty());
@@ -55,15 +56,17 @@ TYPED_TEST_P(DevicePtr, default_construct) {
 TYPED_TEST_P(DevicePtr, construct_size) {
     using test_type = typename TestFixture::fixture_test_type;
     using device_ptr_type = typename test_type::device_ptr_type;
+    using data_ptr_type = typename device_ptr_type::device_pointer_type;
     using queue_type = typename test_type::queue_type;
     const queue_type &queue = test_type::default_queue();
+    constexpr bool use_usm_allocations = test_type::use_usm_allocations;
 
     // construct device_ptr
-    const device_ptr_type ptr{ 42, queue };
+    const device_ptr_type ptr{ 42, queue, use_usm_allocations };
 
     // check data
     EXPECT_TRUE(static_cast<bool>(ptr));
-    EXPECT_NE(ptr.get(), nullptr);
+    EXPECT_NE(ptr.get(), data_ptr_type{});
     EXPECT_EQ(ptr.shape(), (plssvm::shape{ 42, 1 }));
     // check padding
     EXPECT_EQ(ptr.padding(), (plssvm::shape{ 0, 0 }));
@@ -73,15 +76,17 @@ TYPED_TEST_P(DevicePtr, construct_size) {
 TYPED_TEST_P(DevicePtr, construct_shape) {
     using test_type = typename TestFixture::fixture_test_type;
     using device_ptr_type = typename test_type::device_ptr_type;
+    using data_ptr_type = typename device_ptr_type::device_pointer_type;
     using queue_type = typename test_type::queue_type;
     const queue_type &queue = test_type::default_queue();
+    constexpr bool use_usm_allocations = test_type::use_usm_allocations;
 
     // construct device_ptr
-    const device_ptr_type ptr{ plssvm::shape{ 42, 16 }, queue };
+    const device_ptr_type ptr{ plssvm::shape{ 42, 16 }, queue, use_usm_allocations };
 
     // check data
     EXPECT_TRUE(static_cast<bool>(ptr));
-    EXPECT_NE(ptr.get(), nullptr);
+    EXPECT_NE(ptr.get(), data_ptr_type{});
     EXPECT_EQ(ptr.shape(), (plssvm::shape{ 42, 16 }));
     // check padding
     EXPECT_EQ(ptr.padding(), (plssvm::shape{ 0, 0 }));
@@ -91,15 +96,17 @@ TYPED_TEST_P(DevicePtr, construct_shape) {
 TYPED_TEST_P(DevicePtr, construct_shape_and_padding) {
     using test_type = typename TestFixture::fixture_test_type;
     using device_ptr_type = typename test_type::device_ptr_type;
+    using data_ptr_type = typename device_ptr_type::device_pointer_type;
     using queue_type = typename test_type::queue_type;
     const queue_type &queue = test_type::default_queue();
+    constexpr bool use_usm_allocations = test_type::use_usm_allocations;
 
     // construct device_ptr
-    const device_ptr_type ptr{ plssvm::shape{ 42, 16 }, plssvm::shape{ 4, 4 }, queue };
+    const device_ptr_type ptr{ plssvm::shape{ 42, 16 }, plssvm::shape{ 4, 4 }, queue, use_usm_allocations };
 
     // check data
     EXPECT_TRUE(static_cast<bool>(ptr));
-    EXPECT_NE(ptr.get(), nullptr);
+    EXPECT_NE(ptr.get(), data_ptr_type{});
     EXPECT_EQ(ptr.shape(), (plssvm::shape{ 42, 16 }));
     // check padding
     EXPECT_EQ(ptr.padding(), (plssvm::shape{ 4, 4 }));
@@ -109,17 +116,19 @@ TYPED_TEST_P(DevicePtr, construct_shape_and_padding) {
 TYPED_TEST_P(DevicePtr, move_construct) {
     using test_type = typename TestFixture::fixture_test_type;
     using device_ptr_type = typename test_type::device_ptr_type;
+    using data_ptr_type = typename device_ptr_type::device_pointer_type;
     using queue_type = typename test_type::queue_type;
     const queue_type &queue = test_type::default_queue();
+    constexpr bool use_usm_allocations = test_type::use_usm_allocations;
 
     // construct device_ptr
-    device_ptr_type first{ 42, queue };
+    device_ptr_type first{ 42, queue, use_usm_allocations };
     const device_ptr_type second{ std::move(first) };
 
     // check data
     EXPECT_TRUE(static_cast<bool>(second));
     // EXPECT_EQ(second.queue(), queue);
-    EXPECT_NE(second.get(), nullptr);
+    EXPECT_NE(second.get(), data_ptr_type{});
     EXPECT_EQ(second.shape(), (plssvm::shape{ 42, 1 }));
     // check padding
     EXPECT_EQ(second.padding(), (plssvm::shape{ 0, 0 }));
@@ -127,7 +136,7 @@ TYPED_TEST_P(DevicePtr, move_construct) {
 
     // check moved-from data
     EXPECT_FALSE(static_cast<bool>(first));
-    EXPECT_EQ(first.get(), nullptr);
+    EXPECT_EQ(first.get(), data_ptr_type{});
     EXPECT_EQ(first.shape(), (plssvm::shape{ 0, 0 }));
     // check padding
     EXPECT_EQ(first.padding(), (plssvm::shape{ 0, 0 }));
@@ -137,17 +146,19 @@ TYPED_TEST_P(DevicePtr, move_construct) {
 TYPED_TEST_P(DevicePtr, move_construct_with_padding) {
     using test_type = typename TestFixture::fixture_test_type;
     using device_ptr_type = typename test_type::device_ptr_type;
+    using data_ptr_type = typename device_ptr_type::device_pointer_type;
     using queue_type = typename test_type::queue_type;
     const queue_type &queue = test_type::default_queue();
+    constexpr bool use_usm_allocations = test_type::use_usm_allocations;
 
     // construct device_ptr
-    device_ptr_type first{ plssvm::shape{ 42, 10 }, plssvm::shape{ 4, 5 }, queue };
+    device_ptr_type first{ plssvm::shape{ 42, 10 }, plssvm::shape{ 4, 5 }, queue, use_usm_allocations };
     const device_ptr_type second{ std::move(first) };
 
     // check data
     EXPECT_TRUE(static_cast<bool>(second));
     // EXPECT_EQ(second.queue(), queue);
-    EXPECT_NE(second.get(), nullptr);
+    EXPECT_NE(second.get(), data_ptr_type{});
     EXPECT_EQ(second.shape(), (plssvm::shape{ 42, 10 }));
     // check padding
     EXPECT_EQ(second.padding(), (plssvm::shape{ 4, 5 }));
@@ -155,7 +166,7 @@ TYPED_TEST_P(DevicePtr, move_construct_with_padding) {
 
     // check moved-from data
     EXPECT_FALSE(static_cast<bool>(first));
-    EXPECT_EQ(first.get(), nullptr);
+    EXPECT_EQ(first.get(), data_ptr_type{});
     EXPECT_EQ(first.shape(), (plssvm::shape{ 0, 0 }));
     // check padding
     EXPECT_EQ(first.padding(), (plssvm::shape{ 0, 0 }));
@@ -165,11 +176,13 @@ TYPED_TEST_P(DevicePtr, move_construct_with_padding) {
 TYPED_TEST_P(DevicePtr, move_assign) {
     using test_type = typename TestFixture::fixture_test_type;
     using device_ptr_type = typename test_type::device_ptr_type;
+    using data_ptr_type = typename device_ptr_type::device_pointer_type;
     using queue_type = typename test_type::queue_type;
     const queue_type &queue = test_type::default_queue();
+    constexpr bool use_usm_allocations = test_type::use_usm_allocations;
 
     // construct device_ptr
-    device_ptr_type first{ 42, queue };
+    device_ptr_type first{ 42, queue, use_usm_allocations };
     device_ptr_type second;
 
     // move assign
@@ -177,7 +190,7 @@ TYPED_TEST_P(DevicePtr, move_assign) {
 
     // check data
     EXPECT_TRUE(static_cast<bool>(second));
-    EXPECT_NE(second.get(), nullptr);
+    EXPECT_NE(second.get(), data_ptr_type{});
     EXPECT_EQ(second.shape(), (plssvm::shape{ 42, 1 }));
     // check padding
     EXPECT_EQ(second.padding(), (plssvm::shape{ 0, 0 }));
@@ -185,7 +198,7 @@ TYPED_TEST_P(DevicePtr, move_assign) {
 
     // check moved-from data
     EXPECT_FALSE(static_cast<bool>(first));
-    EXPECT_EQ(first.get(), nullptr);
+    EXPECT_EQ(first.get(), data_ptr_type{});
     EXPECT_EQ(first.shape(), (plssvm::shape{ 0, 0 }));
     // check padding
     EXPECT_EQ(first.padding(), (plssvm::shape{ 0, 0 }));
@@ -195,11 +208,13 @@ TYPED_TEST_P(DevicePtr, move_assign) {
 TYPED_TEST_P(DevicePtr, move_assign_with_padding) {
     using test_type = typename TestFixture::fixture_test_type;
     using device_ptr_type = typename test_type::device_ptr_type;
+    using data_ptr_type = typename device_ptr_type::device_pointer_type;
     using queue_type = typename test_type::queue_type;
     const queue_type &queue = test_type::default_queue();
+    constexpr bool use_usm_allocations = test_type::use_usm_allocations;
 
     // construct device_ptr
-    device_ptr_type first{ plssvm::shape{ 42, 10 }, plssvm::shape{ 4, 5 }, queue };
+    device_ptr_type first{ plssvm::shape{ 42, 10 }, plssvm::shape{ 4, 5 }, queue, use_usm_allocations };
     device_ptr_type second;
 
     // move assign
@@ -207,7 +222,7 @@ TYPED_TEST_P(DevicePtr, move_assign_with_padding) {
 
     // check data
     EXPECT_TRUE(static_cast<bool>(second));
-    EXPECT_NE(second.get(), nullptr);
+    EXPECT_NE(second.get(), data_ptr_type{});
     EXPECT_EQ(second.shape(), (plssvm::shape{ 42, 10 }));
     // check padding
     EXPECT_EQ(second.padding(), (plssvm::shape{ 4, 5 }));
@@ -215,7 +230,7 @@ TYPED_TEST_P(DevicePtr, move_assign_with_padding) {
 
     // check moved-from data
     EXPECT_FALSE(static_cast<bool>(first));
-    EXPECT_EQ(first.get(), nullptr);
+    EXPECT_EQ(first.get(), data_ptr_type{});
     EXPECT_EQ(first.shape(), (plssvm::shape{ 0, 0 }));
     // check padding
     EXPECT_EQ(first.padding(), (plssvm::shape{ 0, 0 }));
@@ -225,11 +240,13 @@ TYPED_TEST_P(DevicePtr, move_assign_with_padding) {
 TYPED_TEST_P(DevicePtr, swap_member_function) {
     using test_type = typename TestFixture::fixture_test_type;
     using device_ptr_type = typename test_type::device_ptr_type;
+    using data_ptr_type = typename device_ptr_type::device_pointer_type;
     using queue_type = typename test_type::queue_type;
     const queue_type &queue = test_type::default_queue();
+    constexpr bool use_usm_allocations = test_type::use_usm_allocations;
 
     // construct two device_ptr
-    device_ptr_type first{ 42, queue };
+    device_ptr_type first{ 42, queue, use_usm_allocations };
     device_ptr_type second{};
 
     // swap both device_ptr using the member function
@@ -237,14 +254,14 @@ TYPED_TEST_P(DevicePtr, swap_member_function) {
 
     // check data
     EXPECT_TRUE(static_cast<bool>(second));
-    EXPECT_NE(second.get(), nullptr);
+    EXPECT_NE(second.get(), data_ptr_type{});
     EXPECT_EQ(second.shape(), (plssvm::shape{ 42, 1 }));
     // check padding
     EXPECT_EQ(second.padding(), (plssvm::shape{ 0, 0 }));
     EXPECT_EQ(second.shape_padded(), (plssvm::shape{ 42, 1 }));
 
     EXPECT_FALSE(static_cast<bool>(first));
-    EXPECT_EQ(first.get(), nullptr);
+    EXPECT_EQ(first.get(), data_ptr_type{});
     EXPECT_EQ(first.shape(), (plssvm::shape{ 0, 0 }));
     // check padding
     EXPECT_EQ(first.padding(), (plssvm::shape{ 0, 0 }));
@@ -254,11 +271,13 @@ TYPED_TEST_P(DevicePtr, swap_member_function) {
 TYPED_TEST_P(DevicePtr, swap_member_function_with_padding) {
     using test_type = typename TestFixture::fixture_test_type;
     using device_ptr_type = typename test_type::device_ptr_type;
+    using data_ptr_type = typename device_ptr_type::device_pointer_type;
     using queue_type = typename test_type::queue_type;
     const queue_type &queue = test_type::default_queue();
+    constexpr bool use_usm_allocations = test_type::use_usm_allocations;
 
     // construct two device_ptr
-    device_ptr_type first{ plssvm::shape{ 42, 10 }, plssvm::shape{ 4, 5 }, queue };
+    device_ptr_type first{ plssvm::shape{ 42, 10 }, plssvm::shape{ 4, 5 }, queue, use_usm_allocations };
     device_ptr_type second{};
 
     // swap both device_ptr using the member function
@@ -266,14 +285,14 @@ TYPED_TEST_P(DevicePtr, swap_member_function_with_padding) {
 
     // check data
     EXPECT_TRUE(static_cast<bool>(second));
-    EXPECT_NE(second.get(), nullptr);
+    EXPECT_NE(second.get(), data_ptr_type{});
     EXPECT_EQ(second.shape(), (plssvm::shape{ 42, 10 }));
     // check padding
     EXPECT_EQ(second.padding(), (plssvm::shape{ 4, 5 }));
     EXPECT_EQ(second.shape_padded(), (plssvm::shape{ 46, 15 }));
 
     EXPECT_FALSE(static_cast<bool>(first));
-    EXPECT_EQ(first.get(), nullptr);
+    EXPECT_EQ(first.get(), data_ptr_type{});
     EXPECT_EQ(first.shape(), (plssvm::shape{ 0, 0 }));
     // check padding
     EXPECT_EQ(first.padding(), (plssvm::shape{ 0, 0 }));
@@ -283,12 +302,14 @@ TYPED_TEST_P(DevicePtr, swap_member_function_with_padding) {
 TYPED_TEST_P(DevicePtr, swap_free_function) {
     using test_type = typename TestFixture::fixture_test_type;
     using device_ptr_type = typename test_type::device_ptr_type;
+    using data_ptr_type = typename device_ptr_type::device_pointer_type;
     using queue_type = typename test_type::queue_type;
     const queue_type &queue = test_type::default_queue();
+    constexpr bool use_usm_allocations = test_type::use_usm_allocations;
 
     // construct two device_ptr
-    device_ptr_type first{ 42, queue };
-    device_ptr_type second;
+    device_ptr_type first{ 42, queue, use_usm_allocations };
+    device_ptr_type second{};
 
     // swap both device_ptr using the free function
     using std::swap;
@@ -296,14 +317,14 @@ TYPED_TEST_P(DevicePtr, swap_free_function) {
 
     // check data
     EXPECT_TRUE(static_cast<bool>(second));
-    EXPECT_NE(second.get(), nullptr);
+    EXPECT_NE(second.get(), data_ptr_type{});
     EXPECT_EQ(second.shape(), (plssvm::shape{ 42, 1 }));
     // check padding
     EXPECT_EQ(second.padding(), (plssvm::shape{ 0, 0 }));
     EXPECT_EQ(second.shape_padded(), (plssvm::shape{ 42, 1 }));
 
     EXPECT_FALSE(static_cast<bool>(first));
-    EXPECT_EQ(first.get(), nullptr);
+    EXPECT_EQ(first.get(), data_ptr_type{});
     EXPECT_EQ(first.shape(), (plssvm::shape{ 0, 0 }));
     // check padding
     EXPECT_EQ(first.padding(), (plssvm::shape{ 0, 0 }));
@@ -313,12 +334,14 @@ TYPED_TEST_P(DevicePtr, swap_free_function) {
 TYPED_TEST_P(DevicePtr, swap_free_function_with_padding) {
     using test_type = typename TestFixture::fixture_test_type;
     using device_ptr_type = typename test_type::device_ptr_type;
+    using data_ptr_type = typename device_ptr_type::device_pointer_type;
     using queue_type = typename test_type::queue_type;
     const queue_type &queue = test_type::default_queue();
+    constexpr bool use_usm_allocations = test_type::use_usm_allocations;
 
     // construct two device_ptr
-    device_ptr_type first{ plssvm::shape{ 42, 10 }, plssvm::shape{ 4, 5 }, queue };
-    device_ptr_type second;
+    device_ptr_type first{ plssvm::shape{ 42, 10 }, plssvm::shape{ 4, 5 }, queue, use_usm_allocations };
+    device_ptr_type second{};
 
     // swap both device_ptr using the free function
     using std::swap;
@@ -326,14 +349,14 @@ TYPED_TEST_P(DevicePtr, swap_free_function_with_padding) {
 
     // check data
     EXPECT_TRUE(static_cast<bool>(second));
-    EXPECT_NE(second.get(), nullptr);
+    EXPECT_NE(second.get(), data_ptr_type{});
     EXPECT_EQ(second.shape(), (plssvm::shape{ 42, 10 }));
     // check padding
     EXPECT_EQ(second.padding(), (plssvm::shape{ 4, 5 }));
     EXPECT_EQ(second.shape_padded(), (plssvm::shape{ 46, 15 }));
 
     EXPECT_FALSE(static_cast<bool>(first));
-    EXPECT_EQ(first.get(), nullptr);
+    EXPECT_EQ(first.get(), data_ptr_type{});
     EXPECT_EQ(first.shape(), (plssvm::shape{ 0, 0 }));
     // check padding
     EXPECT_EQ(first.padding(), (plssvm::shape{ 0, 0 }));
@@ -345,9 +368,10 @@ TYPED_TEST_P(DevicePtr, operator_bool) {
     using device_ptr_type = typename test_type::device_ptr_type;
     using queue_type = typename test_type::queue_type;
     const queue_type &queue = test_type::default_queue();
+    constexpr bool use_usm_allocations = test_type::use_usm_allocations;
 
     // construct device_ptr
-    const device_ptr_type ptr1{ 42, queue };
+    const device_ptr_type ptr1{ 42, queue, use_usm_allocations };
     EXPECT_TRUE(static_cast<bool>(ptr1));
 
     // construct empty device_ptr
@@ -360,17 +384,18 @@ TYPED_TEST_P(DevicePtr, size) {
     using device_ptr_type = typename test_type::device_ptr_type;
     using queue_type = typename test_type::queue_type;
     const queue_type &queue = test_type::default_queue();
+    constexpr bool use_usm_allocations = test_type::use_usm_allocations;
 
     // construct device_ptr
-    const device_ptr_type ptr1{ 42, queue };
+    const device_ptr_type ptr1{ 42, queue, use_usm_allocations };
     EXPECT_EQ(ptr1.size(), 42);
 
     // construct device_ptr with shape
-    const device_ptr_type ptr2{ plssvm::shape{ 42, 16 }, queue };
+    const device_ptr_type ptr2{ plssvm::shape{ 42, 16 }, queue, use_usm_allocations };
     EXPECT_EQ(ptr2.size(), 42 * 16);
 
     // construct device_ptr with shape and padding
-    const device_ptr_type ptr3{ plssvm::shape{ 42, 16 }, plssvm::shape{ 3, 3 }, queue };
+    const device_ptr_type ptr3{ plssvm::shape{ 42, 16 }, plssvm::shape{ 3, 3 }, queue, use_usm_allocations };
     EXPECT_EQ(ptr3.size(), 42 * 16);
 
     // construct empty device_ptr
@@ -383,17 +408,18 @@ TYPED_TEST_P(DevicePtr, shape) {
     using device_ptr_type = typename test_type::device_ptr_type;
     using queue_type = typename test_type::queue_type;
     const queue_type &queue = test_type::default_queue();
+    constexpr bool use_usm_allocations = test_type::use_usm_allocations;
 
     // construct device_ptr
-    const device_ptr_type ptr1{ 42, queue };
+    const device_ptr_type ptr1{ 42, queue, use_usm_allocations };
     EXPECT_EQ(ptr1.shape(), (plssvm::shape{ 42, 1 }));
 
     // construct device_ptr with shape
-    const device_ptr_type ptr2{ plssvm::shape{ 42, 16 }, queue };
+    const device_ptr_type ptr2{ plssvm::shape{ 42, 16 }, queue, use_usm_allocations };
     EXPECT_EQ(ptr2.shape(), (plssvm::shape{ 42, 16 }));
 
     // construct device_ptr with shape and padding
-    const device_ptr_type ptr3{ plssvm::shape{ 42, 16 }, plssvm::shape{ 3, 3 }, queue };
+    const device_ptr_type ptr3{ plssvm::shape{ 42, 16 }, plssvm::shape{ 3, 3 }, queue, use_usm_allocations };
     EXPECT_EQ(ptr3.shape(), (plssvm::shape{ 42, 16 }));
 
     // construct empty device_ptr
@@ -406,21 +432,22 @@ TYPED_TEST_P(DevicePtr, empty) {
     using device_ptr_type = typename test_type::device_ptr_type;
     using queue_type = typename test_type::queue_type;
     const queue_type &queue = test_type::default_queue();
+    constexpr bool use_usm_allocations = test_type::use_usm_allocations;
 
     // construct device_ptr
-    const device_ptr_type ptr1{ 42, queue };
+    const device_ptr_type ptr1{ 42, queue, use_usm_allocations };
     EXPECT_FALSE(ptr1.empty());
 
     // construct device_ptr
-    const device_ptr_type ptr2{ plssvm::shape{ 42, 16 }, queue };
+    const device_ptr_type ptr2{ plssvm::shape{ 42, 16 }, queue, use_usm_allocations };
     EXPECT_FALSE(ptr2.empty());
 
     // construct device_ptr
-    const device_ptr_type ptr3{ plssvm::shape{ 42, 16 }, plssvm::shape{ 3, 3 }, queue };
+    const device_ptr_type ptr3{ plssvm::shape{ 42, 16 }, plssvm::shape{ 3, 3 }, queue, use_usm_allocations };
     EXPECT_FALSE(ptr3.empty());
 
     // construct device_ptr
-    const device_ptr_type ptr4{ plssvm::shape{ 0, 0 }, plssvm::shape{ 3, 3 }, queue };
+    const device_ptr_type ptr4{ plssvm::shape{ 0, 0 }, plssvm::shape{ 3, 3 }, queue, use_usm_allocations };
     EXPECT_TRUE(ptr4.empty());
 
     // construct empty device_ptr
@@ -433,9 +460,10 @@ TYPED_TEST_P(DevicePtr, padding) {
     using device_ptr_type = typename test_type::device_ptr_type;
     using queue_type = typename test_type::queue_type;
     const queue_type &queue = test_type::default_queue();
+    constexpr bool use_usm_allocations = test_type::use_usm_allocations;
 
     // construct device_ptr
-    const device_ptr_type ptr{ plssvm::shape{ 42, 16 }, plssvm::shape{ 4, 5 }, queue };
+    const device_ptr_type ptr{ plssvm::shape{ 42, 16 }, plssvm::shape{ 4, 5 }, queue, use_usm_allocations };
     EXPECT_EQ(ptr.padding(), (plssvm::shape{ 4, 5 }));
     ;
 }
@@ -445,9 +473,10 @@ TYPED_TEST_P(DevicePtr, size_padded) {
     using device_ptr_type = typename test_type::device_ptr_type;
     using queue_type = typename test_type::queue_type;
     const queue_type &queue = test_type::default_queue();
+    constexpr bool use_usm_allocations = test_type::use_usm_allocations;
 
     // construct device_ptr
-    const device_ptr_type ptr{ plssvm::shape{ 42, 16 }, plssvm::shape{ 4, 5 }, queue };
+    const device_ptr_type ptr{ plssvm::shape{ 42, 16 }, plssvm::shape{ 4, 5 }, queue, use_usm_allocations };
     EXPECT_EQ(ptr.size_padded(), (42 + 4) * (16 + 5));
 }
 
@@ -456,17 +485,18 @@ TYPED_TEST_P(DevicePtr, shape_padded) {
     using device_ptr_type = typename test_type::device_ptr_type;
     using queue_type = typename test_type::queue_type;
     const queue_type &queue = test_type::default_queue();
+    constexpr bool use_usm_allocations = test_type::use_usm_allocations;
 
     // construct device_ptr
-    const device_ptr_type ptr1{ 42, queue };
+    const device_ptr_type ptr1{ 42, queue, use_usm_allocations };
     EXPECT_EQ(ptr1.shape_padded(), (plssvm::shape{ 42, 1 }));
 
     // construct device_ptr with shape
-    const device_ptr_type ptr2{ plssvm::shape{ 42, 16 }, queue };
+    const device_ptr_type ptr2{ plssvm::shape{ 42, 16 }, queue, use_usm_allocations };
     EXPECT_EQ(ptr2.shape_padded(), (plssvm::shape{ 42, 16 }));
 
     // construct device_ptr with shape and padding
-    const device_ptr_type ptr3{ plssvm::shape{ 42, 16 }, plssvm::shape{ 3, 3 }, queue };
+    const device_ptr_type ptr3{ plssvm::shape{ 42, 16 }, plssvm::shape{ 3, 3 }, queue, use_usm_allocations };
     EXPECT_EQ(ptr3.shape_padded(), (plssvm::shape{ 45, 19 }));
 
     // construct empty device_ptr
@@ -479,25 +509,26 @@ TYPED_TEST_P(DevicePtr, is_padded) {
     using device_ptr_type = typename test_type::device_ptr_type;
     using queue_type = typename test_type::queue_type;
     const queue_type &queue = test_type::default_queue();
+    constexpr bool use_usm_allocations = test_type::use_usm_allocations;
 
     // construct device_ptr
-    const device_ptr_type ptr1{ 42, queue };
+    const device_ptr_type ptr1{ 42, queue, use_usm_allocations };
     EXPECT_FALSE(ptr1.is_padded());
 
     // construct device_ptr
-    const device_ptr_type ptr2{ plssvm::shape{ 42, 16 }, queue };
+    const device_ptr_type ptr2{ plssvm::shape{ 42, 16 }, queue, use_usm_allocations };
     EXPECT_FALSE(ptr2.is_padded());
 
     // construct device_ptr
-    const device_ptr_type ptr3{ plssvm::shape{ 42, 16 }, plssvm::shape{ 3, 3 }, queue };
+    const device_ptr_type ptr3{ plssvm::shape{ 42, 16 }, plssvm::shape{ 3, 3 }, queue, use_usm_allocations };
     EXPECT_TRUE(ptr3.is_padded());
 
     // construct device_ptr
-    const device_ptr_type ptr4{ plssvm::shape{ 0, 0 }, plssvm::shape{ 3, 3 }, queue };
+    const device_ptr_type ptr4{ plssvm::shape{ 0, 0 }, plssvm::shape{ 3, 3 }, queue, use_usm_allocations };
     EXPECT_TRUE(ptr4.is_padded());
 
     // construct device_ptr
-    const device_ptr_type ptr5{ plssvm::shape{ 42, 16 }, plssvm::shape{ 0, 0 }, queue };
+    const device_ptr_type ptr5{ plssvm::shape{ 42, 16 }, plssvm::shape{ 0, 0 }, queue, use_usm_allocations };
     EXPECT_FALSE(ptr5.is_padded());
 
     // construct empty device_ptr
@@ -511,9 +542,10 @@ TYPED_TEST_P(DevicePtr, memset) {
     using value_type = typename device_ptr_type::value_type;
     using queue_type = typename test_type::queue_type;
     const queue_type &queue = test_type::default_queue();
+    constexpr bool use_usm_allocations = test_type::use_usm_allocations;
 
     // construct device_ptr
-    device_ptr_type ptr{ 10, queue };
+    device_ptr_type ptr{ 10, queue, use_usm_allocations };
 
     // memset values to all ones
     ptr.memset(1, 2);
@@ -534,9 +566,10 @@ TYPED_TEST_P(DevicePtr, memset_with_numbytes) {
     using value_type = typename device_ptr_type::value_type;
     using queue_type = typename test_type::queue_type;
     const queue_type &queue = test_type::default_queue();
+    constexpr bool use_usm_allocations = test_type::use_usm_allocations;
 
     // construct device_ptr
-    device_ptr_type ptr{ 10, queue };
+    device_ptr_type ptr{ 10, queue, use_usm_allocations };
 
     // memset values to all ones
     ptr.memset(1, 2, 4 * sizeof(value_type));
@@ -556,9 +589,10 @@ TYPED_TEST_P(DevicePtr, memset_invalid_pos) {
     using device_ptr_type = typename test_type::device_ptr_type;
     using queue_type = typename test_type::queue_type;
     const queue_type &queue = test_type::default_queue();
+    constexpr bool use_usm_allocations = test_type::use_usm_allocations;
 
     // construct device_ptr
-    device_ptr_type ptr{ 10, queue };
+    device_ptr_type ptr{ 10, queue, use_usm_allocations };
 
     // perform invalid memset
     EXPECT_THROW_WHAT(ptr.memset(0, 10, 1),
@@ -572,9 +606,10 @@ TYPED_TEST_P(DevicePtr, fill) {
     using value_type = typename device_ptr_type::value_type;
     using queue_type = typename test_type::queue_type;
     const queue_type &queue = test_type::default_queue();
+    constexpr bool use_usm_allocations = test_type::use_usm_allocations;
 
     // construct device_ptr
-    device_ptr_type ptr{ 10, queue };
+    device_ptr_type ptr{ 10, queue, use_usm_allocations };
 
     // fill values with a specific value
     ptr.fill(value_type{ 42.0 }, 2);
@@ -595,9 +630,10 @@ TYPED_TEST_P(DevicePtr, fill_with_count) {
     using value_type = typename device_ptr_type::value_type;
     using queue_type = typename test_type::queue_type;
     const queue_type &queue = test_type::default_queue();
+    constexpr bool use_usm_allocations = test_type::use_usm_allocations;
 
     // construct device_ptr
-    device_ptr_type ptr{ 10, queue };
+    device_ptr_type ptr{ 10, queue, use_usm_allocations };
 
     // fill values with a specific value
     ptr.fill(value_type{ 42.0 }, 2, 4);
@@ -618,9 +654,10 @@ TYPED_TEST_P(DevicePtr, fill_invalid_pos) {
     using value_type = typename device_ptr_type::value_type;
     using queue_type = typename test_type::queue_type;
     const queue_type &queue = test_type::default_queue();
+    constexpr bool use_usm_allocations = test_type::use_usm_allocations;
 
     // construct device_ptr
-    device_ptr_type ptr{ 10, queue };
+    device_ptr_type ptr{ 10, queue, use_usm_allocations };
 
     // perform invalid fill
     EXPECT_THROW_WHAT(ptr.fill(value_type{ 42.0 }, 10, 1),
@@ -634,9 +671,10 @@ TYPED_TEST_P(DevicePtr, copy_vector) {
     using value_type = typename device_ptr_type::value_type;
     using queue_type = typename test_type::queue_type;
     const queue_type &queue = test_type::default_queue();
+    constexpr bool use_usm_allocations = test_type::use_usm_allocations;
 
     // construct device_ptr
-    device_ptr_type ptr{ 10, queue };
+    device_ptr_type ptr{ 10, queue, use_usm_allocations };
 
     // create data to copy to the device
     std::vector<value_type> data(14, 42);
@@ -657,9 +695,10 @@ TYPED_TEST_P(DevicePtr, copy_vector_with_count_copy_back_all) {
     using value_type = typename device_ptr_type::value_type;
     using queue_type = typename test_type::queue_type;
     const queue_type &queue = test_type::default_queue();
+    constexpr bool use_usm_allocations = test_type::use_usm_allocations;
 
     // construct device_ptr
-    device_ptr_type ptr{ 6, queue };
+    device_ptr_type ptr{ 6, queue, use_usm_allocations };
 
     // create data to copy to the device
     std::vector<value_type> data(6, 42);
@@ -680,9 +719,10 @@ TYPED_TEST_P(DevicePtr, copy_vector_with_count_copy_back_some) {
     using value_type = typename device_ptr_type::value_type;
     using queue_type = typename test_type::queue_type;
     const queue_type &queue = test_type::default_queue();
+    constexpr bool use_usm_allocations = test_type::use_usm_allocations;
 
     // construct device_ptr
-    device_ptr_type ptr{ 6, queue };
+    device_ptr_type ptr{ 6, queue, use_usm_allocations };
 
     // create data to copy to the device
     std::vector<value_type> data(6, 42);
@@ -703,9 +743,10 @@ TYPED_TEST_P(DevicePtr, copy_vector_with_count_copy_to_too_many) {
     using value_type = typename device_ptr_type::value_type;
     using queue_type = typename test_type::queue_type;
     const queue_type &queue = test_type::default_queue();
+    constexpr bool use_usm_allocations = test_type::use_usm_allocations;
 
     // construct device_ptr
-    device_ptr_type ptr{ 6, queue };
+    device_ptr_type ptr{ 6, queue, use_usm_allocations };
 
     // create data to copy to the device
     std::vector<value_type> data(6, 42);
@@ -726,9 +767,10 @@ TYPED_TEST_P(DevicePtr, copy_vector_too_few_host_elements) {
     using value_type = typename device_ptr_type::value_type;
     using queue_type = typename test_type::queue_type;
     const queue_type &queue = test_type::default_queue();
+    constexpr bool use_usm_allocations = test_type::use_usm_allocations;
 
     // construct device_ptr
-    device_ptr_type ptr{ 10, queue };
+    device_ptr_type ptr{ 10, queue, use_usm_allocations };
 
     // try copying data to the device with too few elements
     std::vector<value_type> data(8, 42);
@@ -741,9 +783,10 @@ TYPED_TEST_P(DevicePtr, copy_vector_too_few_buffer_elements) {
     using value_type = typename device_ptr_type::value_type;
     using queue_type = typename test_type::queue_type;
     const queue_type &queue = test_type::default_queue();
+    constexpr bool use_usm_allocations = test_type::use_usm_allocations;
 
     // construct device_ptr
-    device_ptr_type ptr{ 10, queue };
+    device_ptr_type ptr{ 10, queue, use_usm_allocations };
 
     // try copying data back to the host with a buffer with too few elements
     std::vector<value_type> buffer(8);
@@ -756,9 +799,10 @@ TYPED_TEST_P(DevicePtr, copy_vector_with_count_too_few_host_elements) {
     using value_type = typename device_ptr_type::value_type;
     using queue_type = typename test_type::queue_type;
     const queue_type &queue = test_type::default_queue();
+    constexpr bool use_usm_allocations = test_type::use_usm_allocations;
 
     // construct device_ptr
-    device_ptr_type ptr{ 10, queue };
+    device_ptr_type ptr{ 10, queue, use_usm_allocations };
 
     // try copying data to the device with too few elements
     std::vector<value_type> data(4, 42);
@@ -771,9 +815,10 @@ TYPED_TEST_P(DevicePtr, copy_vector_with_count_too_few_buffer_elements) {
     using value_type = typename device_ptr_type::value_type;
     using queue_type = typename test_type::queue_type;
     const queue_type &queue = test_type::default_queue();
+    constexpr bool use_usm_allocations = test_type::use_usm_allocations;
 
     // construct device_ptr
-    device_ptr_type ptr{ 6, queue };
+    device_ptr_type ptr{ 6, queue, use_usm_allocations };
 
     // try copying data back to the host with a buffer with too few elements
     std::vector<value_type> buffer(4);
@@ -786,9 +831,10 @@ TYPED_TEST_P(DevicePtr, copy_vector_strided) {
     using value_type = typename device_ptr_type::value_type;
     using queue_type = typename test_type::queue_type;
     const queue_type &queue = test_type::default_queue();
+    constexpr bool use_usm_allocations = test_type::use_usm_allocations;
 
     // construct device_ptr
-    device_ptr_type ptr{ plssvm::shape{ 2, 2 }, queue };
+    device_ptr_type ptr{ plssvm::shape{ 2, 2 }, queue, use_usm_allocations };
 
     // create data to copy to the device
     std::vector<value_type> data(20);  // 5 x 4
@@ -811,9 +857,10 @@ TYPED_TEST_P(DevicePtr, copy_vector_strided_invalid_spitch_width_combination) {
     using value_type = typename device_ptr_type::value_type;
     using queue_type = typename test_type::queue_type;
     const queue_type &queue = test_type::default_queue();
+    constexpr bool use_usm_allocations = test_type::use_usm_allocations;
 
     // construct device_ptr
-    device_ptr_type ptr{ plssvm::shape{ 2, 2 }, queue };
+    device_ptr_type ptr{ plssvm::shape{ 2, 2 }, queue, use_usm_allocations };
 
     // create data to copy to the device
     std::vector<value_type> data(20);  // 5 x 4
@@ -828,9 +875,10 @@ TYPED_TEST_P(DevicePtr, copy_vector_strided_submatrix_too_big) {
     using value_type = typename device_ptr_type::value_type;
     using queue_type = typename test_type::queue_type;
     const queue_type &queue = test_type::default_queue();
+    constexpr bool use_usm_allocations = test_type::use_usm_allocations;
 
     // construct device_ptr
-    device_ptr_type ptr{ plssvm::shape{ 2, 2 }, queue };
+    device_ptr_type ptr{ plssvm::shape{ 2, 2 }, queue, use_usm_allocations };
 
     // create data to copy to the device
     std::vector<value_type> data(20);  // 5 x 4
@@ -845,9 +893,10 @@ TYPED_TEST_P(DevicePtr, copy_ptr) {
     using value_type = typename device_ptr_type::value_type;
     using queue_type = typename test_type::queue_type;
     const queue_type &queue = test_type::default_queue();
+    constexpr bool use_usm_allocations = test_type::use_usm_allocations;
 
     // construct device_ptr
-    device_ptr_type ptr{ 10, queue };
+    device_ptr_type ptr{ 10, queue, use_usm_allocations };
 
     // create data to copy to the device
     std::vector<value_type> data(14, 42);
@@ -868,9 +917,10 @@ TYPED_TEST_P(DevicePtr, copy_ptr_with_count_copy_back_all) {
     using value_type = typename device_ptr_type::value_type;
     using queue_type = typename test_type::queue_type;
     const queue_type &queue = test_type::default_queue();
+    constexpr bool use_usm_allocations = test_type::use_usm_allocations;
 
     // construct device_ptr
-    device_ptr_type ptr{ 6, queue };
+    device_ptr_type ptr{ 6, queue, use_usm_allocations };
 
     // create data to copy to the device
     std::vector<value_type> data(6, 42);
@@ -891,9 +941,10 @@ TYPED_TEST_P(DevicePtr, copy_ptr_with_count_copy_back_some) {
     using value_type = typename device_ptr_type::value_type;
     using queue_type = typename test_type::queue_type;
     const queue_type &queue = test_type::default_queue();
+    constexpr bool use_usm_allocations = test_type::use_usm_allocations;
 
     // construct device_ptr
-    device_ptr_type ptr{ 6, queue };
+    device_ptr_type ptr{ 6, queue, use_usm_allocations };
 
     // create data to copy to the device
     std::vector<value_type> data(6, 42);
@@ -914,9 +965,10 @@ TYPED_TEST_P(DevicePtr, copy_ptr_with_count_copy_to_too_many) {
     using value_type = typename device_ptr_type::value_type;
     using queue_type = typename test_type::queue_type;
     const queue_type &queue = test_type::default_queue();
+    constexpr bool use_usm_allocations = test_type::use_usm_allocations;
 
     // construct device_ptr
-    device_ptr_type ptr{ 6, queue };
+    device_ptr_type ptr{ 6, queue, use_usm_allocations };
 
     // create data to copy to the device
     std::vector<value_type> data(6, 42);
@@ -937,9 +989,10 @@ TYPED_TEST_P(DevicePtr, copy_ptr_strided) {
     using value_type = typename device_ptr_type::value_type;
     using queue_type = typename test_type::queue_type;
     const queue_type &queue = test_type::default_queue();
+    constexpr bool use_usm_allocations = test_type::use_usm_allocations;
 
     // construct device_ptr
-    device_ptr_type ptr{ plssvm::shape{ 2, 2 }, queue };
+    device_ptr_type ptr{ plssvm::shape{ 2, 2 }, queue, use_usm_allocations };
 
     // create data to copy to the device
     std::vector<value_type> data(20);  // 5 x 4
@@ -962,9 +1015,10 @@ TYPED_TEST_P(DevicePtr, copy_ptr_strided_invalid_spitch_width_combination) {
     using value_type = typename device_ptr_type::value_type;
     using queue_type = typename test_type::queue_type;
     const queue_type &queue = test_type::default_queue();
+    constexpr bool use_usm_allocations = test_type::use_usm_allocations;
 
     // construct device_ptr
-    device_ptr_type ptr{ plssvm::shape{ 2, 2 }, queue };
+    device_ptr_type ptr{ plssvm::shape{ 2, 2 }, queue, use_usm_allocations };
 
     // create data to copy to the device
     std::vector<value_type> data(20);  // 5 x 4
@@ -979,9 +1033,10 @@ TYPED_TEST_P(DevicePtr, copy_device_ptr_to_other_device) {
     using value_type = typename device_ptr_type::value_type;
     using queue_type = typename test_type::queue_type;
     const queue_type &queue = test_type::default_queue();
+    constexpr bool use_usm_allocations = test_type::use_usm_allocations;
 
     // construct device_ptr
-    device_ptr_type ptr{ 10, queue };
+    device_ptr_type ptr{ 10, queue, use_usm_allocations };
 
     // create data to copy to the device
     std::vector<value_type> data(14, 42);
@@ -990,7 +1045,7 @@ TYPED_TEST_P(DevicePtr, copy_device_ptr_to_other_device) {
     ptr.copy_to_device(data);
 
     // other device_ptr
-    device_ptr_type other_ptr{ 10, queue };
+    device_ptr_type other_ptr{ 10, queue, !use_usm_allocations };
     ptr.copy_to_other_device(other_ptr);
 
     // copy data back to the host
@@ -1007,9 +1062,10 @@ TYPED_TEST_P(DevicePtr, copy_device_ptr_to_other_device_too_few_device_elements)
     using value_type = typename device_ptr_type::value_type;
     using queue_type = typename test_type::queue_type;
     const queue_type &queue = test_type::default_queue();
+    constexpr bool use_usm_allocations = test_type::use_usm_allocations;
 
     // construct device_ptr
-    device_ptr_type ptr{ 10, queue };
+    device_ptr_type ptr{ 10, queue, use_usm_allocations };
 
     // create data to copy to the device
     std::vector<value_type> data(14, 42);
@@ -1018,7 +1074,7 @@ TYPED_TEST_P(DevicePtr, copy_device_ptr_to_other_device_too_few_device_elements)
     ptr.copy_to_device(data);
 
     // other device_ptr
-    device_ptr_type other_ptr{ 5, queue };
+    device_ptr_type other_ptr{ 5, queue, !use_usm_allocations };
     EXPECT_THROW_WHAT(ptr.copy_to_other_device(other_ptr), plssvm::exception, "Buffer too small to perform copy (needed: 10, provided: 5)!");
 }
 
@@ -1028,9 +1084,10 @@ TYPED_TEST_P(DevicePtr, copy_device_ptr_to_other_device_with_count) {
     using value_type = typename device_ptr_type::value_type;
     using queue_type = typename test_type::queue_type;
     const queue_type &queue = test_type::default_queue();
+    constexpr bool use_usm_allocations = test_type::use_usm_allocations;
 
     // construct device_ptr
-    device_ptr_type ptr{ 10, queue };
+    device_ptr_type ptr{ 10, queue, use_usm_allocations };
 
     // create data to copy to the device
     std::vector<value_type> data(14, 42);
@@ -1039,7 +1096,7 @@ TYPED_TEST_P(DevicePtr, copy_device_ptr_to_other_device_with_count) {
     ptr.copy_to_device(data);
 
     // other device_ptr
-    device_ptr_type other_ptr{ 5, queue };
+    device_ptr_type other_ptr{ 5, queue, !use_usm_allocations };
     ptr.copy_to_other_device(other_ptr, 1, 5);
 
     // copy data back to the host
@@ -1113,9 +1170,10 @@ TYPED_TEST_P(DevicePtrLayout, copy_matrix) {
     using queue_type = typename test_type::queue_type;
     const queue_type &queue = test_type::default_queue();
     constexpr plssvm::layout_type layout = util::test_parameter_value_at_v<0, TypeParam>;
+    constexpr bool use_usm_allocations = test_type::use_usm_allocations;
 
     // construct device_ptr
-    device_ptr_type ptr{ 10, queue };
+    device_ptr_type ptr{ 10, queue, use_usm_allocations };
 
     // create data to copy to the device
     const plssvm::matrix<value_type, layout> data{ plssvm::shape{ 5, 3 }, value_type{ 42 } };
@@ -1146,9 +1204,10 @@ TYPED_TEST_P(DevicePtrLayout, copy_matrix_with_padding) {
     using queue_type = typename test_type::queue_type;
     const queue_type &queue = test_type::default_queue();
     constexpr plssvm::layout_type layout = util::test_parameter_value_at_v<0, TypeParam>;
+    constexpr bool use_usm_allocations = test_type::use_usm_allocations;
 
     // construct device_ptr
-    device_ptr_type ptr{ plssvm::shape{ 5, 3 }, plssvm::shape{ 4, 4 }, queue };
+    device_ptr_type ptr{ plssvm::shape{ 5, 3 }, plssvm::shape{ 4, 4 }, queue, use_usm_allocations };
 
     // create data to copy to the device
     const plssvm::matrix<value_type, layout> data{ plssvm::shape{ 5, 3 }, value_type{ 42 }, plssvm::shape{ 4, 4 } };
@@ -1171,9 +1230,10 @@ TYPED_TEST_P(DevicePtrLayout, copy_matrix_different_layouts) {
     const queue_type &queue = test_type::default_queue();
     constexpr plssvm::layout_type layout = util::test_parameter_value_at_v<0, TypeParam>;
     constexpr plssvm::layout_type other_layout = layout == plssvm::layout_type::aos ? plssvm::layout_type::soa : plssvm::layout_type::aos;
+    constexpr bool use_usm_allocations = test_type::use_usm_allocations;
 
     // construct device_ptr
-    device_ptr_type ptr{ 10, queue };
+    device_ptr_type ptr{ 10, queue, use_usm_allocations };
 
     // create data to copy to the device
     const plssvm::matrix<value_type, layout> data{ plssvm::shape{ 5, 3 }, value_type{ 42 } };
@@ -1204,9 +1264,10 @@ TYPED_TEST_P(DevicePtrLayout, copy_matrix_too_few_host_elements) {
     using queue_type = typename test_type::queue_type;
     const queue_type &queue = test_type::default_queue();
     constexpr plssvm::layout_type layout = util::test_parameter_value_at_v<0, TypeParam>;
+    constexpr bool use_usm_allocations = test_type::use_usm_allocations;
 
     // construct device_ptr
-    device_ptr_type ptr{ 10, queue };
+    device_ptr_type ptr{ 10, queue, use_usm_allocations };
 
     // try copying data to the device with too few elements
     plssvm::matrix<value_type, layout> data{ plssvm::shape{ 2, 4 }, value_type{ 42 } };
@@ -1220,9 +1281,10 @@ TYPED_TEST_P(DevicePtrLayout, copy_matrix_too_few_buffer_elements) {
     using queue_type = typename test_type::queue_type;
     const queue_type &queue = test_type::default_queue();
     constexpr plssvm::layout_type layout = util::test_parameter_value_at_v<0, TypeParam>;
+    constexpr bool use_usm_allocations = test_type::use_usm_allocations;
 
     // construct device_ptr
-    device_ptr_type ptr{ 10, queue };
+    device_ptr_type ptr{ 10, queue, use_usm_allocations };
 
     // try copying data back to the host with a buffer with too few elements
     plssvm::matrix<value_type, layout> buffer{ plssvm::shape{ 2, 4 } };
@@ -1236,9 +1298,10 @@ TYPED_TEST_P(DevicePtrLayout, copy_matrix_strided) {
     using queue_type = typename test_type::queue_type;
     const queue_type &queue = test_type::default_queue();
     constexpr plssvm::layout_type layout = util::test_parameter_value_at_v<0, TypeParam>;
+    constexpr bool use_usm_allocations = test_type::use_usm_allocations;
 
     // construct device_ptr
-    device_ptr_type ptr{ plssvm::shape(2, 3), queue };
+    device_ptr_type ptr{ plssvm::shape(2, 3), queue, use_usm_allocations };
 
     // create data to copy to the device
     const auto data = util::generate_specific_matrix<plssvm::matrix<value_type, layout>>(plssvm::shape{ 5, 3 });
@@ -1261,9 +1324,10 @@ TYPED_TEST_P(DevicePtrLayout, copy_matrix_strided_with_padding) {
     using queue_type = typename test_type::queue_type;
     const queue_type &queue = test_type::default_queue();
     constexpr plssvm::layout_type layout = util::test_parameter_value_at_v<0, TypeParam>;
+    constexpr bool use_usm_allocations = test_type::use_usm_allocations;
 
     // construct device_ptr
-    device_ptr_type ptr{ plssvm::shape{ 3, 3 }, plssvm::shape{ 4, 4 }, queue };
+    device_ptr_type ptr{ plssvm::shape{ 3, 3 }, plssvm::shape{ 4, 4 }, queue, use_usm_allocations };
 
     // create data to copy to the device
     const auto data = util::generate_specific_matrix<plssvm::matrix<value_type, layout>>(plssvm::shape{ 5, 3 }, plssvm::shape{ 4, 4 });
@@ -1291,9 +1355,10 @@ TYPED_TEST_P(DevicePtrLayout, copy_matrix_strided_different_layouts) {
     const queue_type &queue = test_type::default_queue();
     constexpr plssvm::layout_type layout = util::test_parameter_value_at_v<0, TypeParam>;
     constexpr plssvm::layout_type other_layout = layout == plssvm::layout_type::aos ? plssvm::layout_type::soa : plssvm::layout_type::aos;
+    constexpr bool use_usm_allocations = test_type::use_usm_allocations;
 
     // construct device_ptr
-    device_ptr_type ptr{ plssvm::shape{ 2, 3 }, queue };
+    device_ptr_type ptr{ plssvm::shape{ 2, 3 }, queue, use_usm_allocations };
 
     // create data to copy to the device
     const auto data = util::generate_specific_matrix<plssvm::matrix<value_type, layout>>(plssvm::shape{ 5, 3 });
@@ -1325,9 +1390,10 @@ TYPED_TEST_P(DevicePtrLayout, copy_full_matrix_strided) {
     using queue_type = typename test_type::queue_type;
     const queue_type &queue = test_type::default_queue();
     constexpr plssvm::layout_type layout = util::test_parameter_value_at_v<0, TypeParam>;
+    constexpr bool use_usm_allocations = test_type::use_usm_allocations;
 
     // construct device_ptr
-    device_ptr_type ptr{ plssvm::shape(5, 3), queue };
+    device_ptr_type ptr{ plssvm::shape(5, 3), queue, use_usm_allocations };
 
     // create data to copy to the device
     const auto data = util::generate_specific_matrix<plssvm::matrix<value_type, layout>>(plssvm::shape{ 5, 3 });
@@ -1349,9 +1415,10 @@ TYPED_TEST_P(DevicePtrLayout, copy_matrix_strided_too_few_host_elements) {
     using queue_type = typename test_type::queue_type;
     const queue_type &queue = test_type::default_queue();
     constexpr plssvm::layout_type layout = util::test_parameter_value_at_v<0, TypeParam>;
+    constexpr bool use_usm_allocations = test_type::use_usm_allocations;
 
     // construct device_ptr
-    device_ptr_type ptr{ plssvm::shape{ 2, 5 }, queue };
+    device_ptr_type ptr{ plssvm::shape{ 2, 5 }, queue, use_usm_allocations };
 
     // try copying data to the device with too few elements
     plssvm::matrix<value_type, layout> data{ plssvm::shape{ 2, 4 }, value_type{ 42 } };
@@ -1365,9 +1432,10 @@ TYPED_TEST_P(DevicePtrLayout, copy_matrix_strided_invalid_submatrix) {
     using queue_type = typename test_type::queue_type;
     const queue_type &queue = test_type::default_queue();
     constexpr plssvm::layout_type layout = util::test_parameter_value_at_v<0, TypeParam>;
+    constexpr bool use_usm_allocations = test_type::use_usm_allocations;
 
     // construct device_ptr
-    device_ptr_type ptr{ plssvm::shape{ 2, 5 }, queue };
+    device_ptr_type ptr{ plssvm::shape{ 2, 5 }, queue, use_usm_allocations };
 
     // try copying data to the device with too few elements
     plssvm::matrix<value_type, layout> data{ plssvm::shape{ 4, 5 }, value_type{ 42 } };
@@ -1423,9 +1491,10 @@ TYPED_TEST_P(DevicePtrDeathTest, copy_invalid_host_ptr) {
     using device_ptr_type = typename test_type::device_ptr_type;
     using queue_type = typename test_type::queue_type;
     const queue_type &queue = test_type::default_queue();
+    constexpr bool use_usm_allocations = test_type::use_usm_allocations;
 
     // construct device_ptr
-    device_ptr_type ptr{ 10, queue };
+    device_ptr_type ptr{ 10, queue, use_usm_allocations };
 
     // copy with invalid data pointer
     EXPECT_DEATH(ptr.copy_to_device(nullptr), ::testing::HasSubstr("Invalid host pointer for the data to copy!"));
@@ -1456,9 +1525,10 @@ TYPED_TEST_P(DevicePtrDeathTest, copy_with_count_invalid_host_ptr) {
     using device_ptr_type = typename test_type::device_ptr_type;
     using queue_type = typename test_type::queue_type;
     const queue_type &queue = test_type::default_queue();
+    constexpr bool use_usm_allocations = test_type::use_usm_allocations;
 
     // construct device_ptr
-    device_ptr_type ptr{ 10, queue };
+    device_ptr_type ptr{ 10, queue, use_usm_allocations };
 
     // copy with invalid data pointer
     EXPECT_DEATH(ptr.copy_to_device(nullptr, 0, 10), ::testing::HasSubstr("Invalid host pointer for the data to copy!"));
@@ -1486,9 +1556,10 @@ TYPED_TEST_P(DevicePtrDeathTest, copy_strided_invalid_host_ptr) {
     using device_ptr_type = typename test_type::device_ptr_type;
     using queue_type = typename test_type::queue_type;
     const queue_type &queue = test_type::default_queue();
+    constexpr bool use_usm_allocations = test_type::use_usm_allocations;
 
     // construct device_ptr
-    device_ptr_type ptr{ 1, queue };
+    device_ptr_type ptr{ 1, queue, use_usm_allocations };
 
     // copy with invalid data pointer
     EXPECT_DEATH(ptr.copy_to_device_strided(nullptr, 0, 0, 0), ::testing::HasSubstr("Invalid host pointer for the data to copy!"));
@@ -1513,10 +1584,11 @@ TYPED_TEST_P(DevicePtrDeathTest, copy_to_other_device_invalid_device_ptr) {
     using device_ptr_type = typename test_type::device_ptr_type;
     using queue_type = typename test_type::queue_type;
     const queue_type &queue = test_type::default_queue();
+    constexpr bool use_usm_allocations = test_type::use_usm_allocations;
 
     // construct default device_ptr
     device_ptr_type def{};
-    device_ptr_type ptr{ 2, queue };
+    device_ptr_type ptr{ 2, queue, use_usm_allocations };
 
     // copy with invalid device pointer
     EXPECT_DEATH(def.copy_to_other_device(ptr), ::testing::HasSubstr("Invalid data pointer! Maybe *this has been default constructed?"));
@@ -1528,10 +1600,11 @@ TYPED_TEST_P(DevicePtrDeathTest, copy_to_other_device_with_count_invalid_device_
     using device_ptr_type = typename test_type::device_ptr_type;
     using queue_type = typename test_type::queue_type;
     const queue_type &queue = test_type::default_queue();
+    constexpr bool use_usm_allocations = test_type::use_usm_allocations;
 
     // construct default device_ptr
     device_ptr_type def{};
-    device_ptr_type ptr{ 10, queue };
+    device_ptr_type ptr{ 10, queue, use_usm_allocations };
 
     // copy with invalid device pointer
     EXPECT_DEATH(def.copy_to_other_device(ptr, 0, 10), ::testing::HasSubstr("Invalid data pointer! Maybe *this has been default constructed?"));

@@ -20,10 +20,11 @@
 
 #include <tuple>  // std::tuple
 
-template <typename T>
+template <typename T, bool UUA>
 struct adaptivecpp_device_ptr_test_type {
     using device_ptr_type = plssvm::adaptivecpp::detail::device_ptr<T>;
     using queue_type = typename device_ptr_type::queue_type;
+    constexpr static bool use_usm_allocations = UUA;
 
     static const queue_type &default_queue() {
         static const queue_type queue = plssvm::adaptivecpp::detail::get_default_queue();
@@ -31,7 +32,7 @@ struct adaptivecpp_device_ptr_test_type {
     }
 };
 
-using adaptivecpp_device_ptr_tuple = std::tuple<adaptivecpp_device_ptr_test_type<float>, adaptivecpp_device_ptr_test_type<double>>;
+using adaptivecpp_device_ptr_tuple = std::tuple<adaptivecpp_device_ptr_test_type<float, false>, adaptivecpp_device_ptr_test_type<double, false>>;
 
 // the tests used in the instantiated GTest test suites
 using adaptivecpp_device_ptr_type_gtest = util::combine_test_parameters_gtest_t<util::cartesian_type_product_t<adaptivecpp_device_ptr_tuple>>;
@@ -42,3 +43,19 @@ INSTANTIATE_TYPED_TEST_SUITE_P(AdaptiveCppDevicePtr, DevicePtr, adaptivecpp_devi
 INSTANTIATE_TYPED_TEST_SUITE_P(AdaptiveCppDevicePtr, DevicePtrLayout, adaptivecpp_device_ptr_layout_type_gtest, naming::test_parameter_to_name);
 
 INSTANTIATE_TYPED_TEST_SUITE_P(AdaptiveCppDevicePtrDeathTest, DevicePtrDeathTest, adaptivecpp_device_ptr_type_gtest, naming::test_parameter_to_name);
+
+//
+// test USM pointer
+//
+
+using adaptivecpp_device_ptr_usm_tuple = std::tuple<adaptivecpp_device_ptr_test_type<float, true>, adaptivecpp_device_ptr_test_type<double, true>>;
+
+// the tests used in the instantiated GTest test suites
+using adaptivecpp_device_ptr_usm_type_gtest = util::combine_test_parameters_gtest_t<util::cartesian_type_product_t<adaptivecpp_device_ptr_usm_tuple>>;
+using adaptivecpp_device_ptr_usm_layout_type_gtest = util::combine_test_parameters_gtest_t<util::cartesian_type_product_t<adaptivecpp_device_ptr_usm_tuple>, util::layout_type_list>;
+
+// instantiate type-parameterized tests
+INSTANTIATE_TYPED_TEST_SUITE_P(AdaptiveCppDevicePtrUSM, DevicePtr, adaptivecpp_device_ptr_usm_type_gtest, naming::test_parameter_to_name);
+INSTANTIATE_TYPED_TEST_SUITE_P(AdaptiveCppDevicePtrUSM, DevicePtrLayout, adaptivecpp_device_ptr_usm_layout_type_gtest, naming::test_parameter_to_name);
+
+INSTANTIATE_TYPED_TEST_SUITE_P(AdaptiveCppDevicePtrUSMDeathTest, DevicePtrDeathTest, adaptivecpp_device_ptr_usm_type_gtest, naming::test_parameter_to_name);
