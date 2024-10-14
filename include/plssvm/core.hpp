@@ -42,6 +42,9 @@ namespace plssvm { }
 /// Namespace containing versioning information.
 namespace plssvm::version { }
 
+/// Namespace containing Git versioning information.
+namespace plssvm::version::git_metadata { }
+
 /// Namespace containing implementation details. **Should not** directly be used by users.
 namespace plssvm::detail { }
 
@@ -62,6 +65,15 @@ namespace plssvm::operators { }
 
 /// Namespace containing the C-SVM using the OpenMP backend.
 namespace plssvm::openmp { }
+
+/// Namespace containing OpenMP backend specific implementation details. **Should not** directly be used by users.
+namespace plssvm::openmp::detail { }
+
+/// Namespace containing the C-SVM using the stdpar backend.
+namespace plssvm::stdpar { }
+
+/// Namespace containing stdpar backend specific implementation details. **Should not** directly be used by users.
+namespace plssvm::stdpar::detail { }
 
 /// Namespace containing the C-SVM using the CUDA backend.
 namespace plssvm::cuda { }
