@@ -19,11 +19,6 @@ namespace py = pybind11;
 void init_verbosity_levels(py::module_ &);
 void init_performance_tracker(py::module_ &);
 void init_events(py::module_ &);
-void init_hardware_sampler(py::module_ &, const py::exception<plssvm::exception> &);
-void init_cpu_hardware_sampler(py::module_ &);
-void init_gpu_nvidia_hardware_sampler(py::module_ &);
-void init_gpu_amd_hardware_sampler(py::module_ &);
-void init_gpu_intel_hardware_sampler(py::module_ &);
 void init_target_platforms(py::module_ &);
 void init_solver_types(py::module_ &);
 void init_backend_types(py::module_ &);
@@ -68,19 +63,6 @@ PYBIND11_MODULE(plssvm, m) {
 #if defined(PLSSVM_PERFORMANCE_TRACKER_ENABLED)
     init_performance_tracker(m);
     init_events(m);
-    init_hardware_sampler(m, base_exception);
-#endif
-#if defined(PLSSVM_HARDWARE_TRACKING_FOR_CPUS_ENABLED)
-    init_cpu_hardware_sampler(m);
-#endif
-#if defined(PLSSVM_HARDWARE_TRACKING_FOR_NVIDIA_GPUS_ENABLED)
-    init_gpu_nvidia_hardware_sampler(m);
-#endif
-#if defined(PLSSVM_HARDWARE_TRACKING_FOR_AMD_GPUS_ENABLED)
-    init_gpu_amd_hardware_sampler(m);
-#endif
-#if defined(PLSSVM_HARDWARE_TRACKING_FOR_INTEL_GPUS_ENABLED)
-    init_gpu_intel_hardware_sampler(m);
 #endif
 
     init_target_platforms(m);

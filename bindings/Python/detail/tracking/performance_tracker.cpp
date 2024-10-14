@@ -9,7 +9,6 @@
 #include "plssvm/detail/tracking/performance_tracker.hpp"  // plssvm::detail::tracking::{global_tracker, tracking_entry}
 
 #include "plssvm/detail/tracking/events.hpp"            // plssvm::detail::tracking::events
-#include "plssvm/detail/tracking/hardware_sampler.hpp"  // plssvm::detail::tracking::hardware_sampler
 #include "plssvm/parameter.hpp"                         // plssvm::parameter
 
 #include "pybind11/chrono.h"    // automatic bindings for std::chrono::milliseconds
@@ -36,9 +35,6 @@ void init_performance_tracker(py::module_ &m) {
         .def("add_parameter_tracking_entry", [](const plssvm::parameter &params) {
             plssvm::detail::tracking::global_performance_tracker().add_tracking_entry(plssvm::detail::tracking::tracking_entry{ "parameter", "", params });
         }, "add a new parameter tracking entry")
-        .def("add_hardware_sampler_entry", [](const plssvm::detail::tracking::hardware_sampler &sampler) {
-            plssvm::detail::tracking::global_performance_tracker().add_hardware_sampler_entry(sampler);
-        }, "add all the samples recorded by the provided hardware sampler")
         // clang-format on
         .def("add_event", [](const std::string &name) { plssvm::detail::tracking::global_performance_tracker().add_event(name); }, "add a new event")
         .def("pause", []() { plssvm::detail::tracking::global_performance_tracker().pause_tracking(); }, "pause performance tracking")
