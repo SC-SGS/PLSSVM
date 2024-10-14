@@ -47,6 +47,9 @@ std::vector<backend_type> list_available_backends() {
 #if defined(PLSSVM_HAS_SYCL_BACKEND)
     available_backends.push_back(backend_type::sycl);
 #endif
+#if defined(PLSSVM_HAS_KOKKOS_BACKEND)
+    available_backends.push_back(backend_type::kokkos);
+#endif
 
     // automatic is ALWAYS available but AT LEAST ONE other backend must be available in addition
     PLSSVM_ASSERT(available_backends.size() > 1, "Besides \"automatic\" at least one other backend must be available!");
@@ -58,10 +61,10 @@ backend_type determine_default_backend(const std::vector<backend_type> &availabl
     // the decision order based on empiric findings
     using decision_order_type = std::pair<target_platform, std::vector<backend_type>>;
     const std::array decision_order = {
-        decision_order_type{ target_platform::gpu_nvidia, { backend_type::cuda, backend_type::hip, backend_type::opencl, backend_type::sycl, backend_type::stdpar } },
-        decision_order_type{ target_platform::gpu_amd, { backend_type::hip, backend_type::opencl, backend_type::sycl, backend_type::stdpar } },
-        decision_order_type{ target_platform::gpu_intel, { backend_type::sycl, backend_type::opencl, backend_type::stdpar } },
-        decision_order_type{ target_platform::cpu, { backend_type::sycl, backend_type::opencl, backend_type::openmp, backend_type::stdpar } }
+        decision_order_type{ target_platform::gpu_nvidia, { backend_type::cuda, backend_type::hip, backend_type::opencl, backend_type::sycl, backend_type::kokkos, backend_type::stdpar } },
+        decision_order_type{ target_platform::gpu_amd, { backend_type::hip, backend_type::opencl, backend_type::sycl, backend_type::kokkos, backend_type::stdpar } },
+        decision_order_type{ target_platform::gpu_intel, { backend_type::sycl, backend_type::opencl, backend_type::kokkos, backend_type::stdpar } },
+        decision_order_type{ target_platform::cpu, { backend_type::sycl, backend_type::kokkos, backend_type::opencl, backend_type::openmp, backend_type::stdpar } }
     };
 
     // return the default backend based on the previously defined decision order
@@ -95,6 +98,8 @@ std::ostream &operator<<(std::ostream &out, const backend_type backend) {
             return out << "opencl";
         case backend_type::sycl:
             return out << "sycl";
+        case backend_type::kokkos:
+            return out << "kokkos";
     }
     return out << "unknown";
 }
@@ -118,6 +123,8 @@ std::istream &operator>>(std::istream &in, backend_type &backend) {
         backend = backend_type::opencl;
     } else if (str == "sycl") {
         backend = backend_type::sycl;
+    } else if (str == "kokkos") {
+        backend = backend_type::kokkos;
     } else {
         in.setstate(std::ios::failbit);
     }

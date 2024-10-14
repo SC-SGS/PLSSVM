@@ -44,7 +44,9 @@ enum class backend_type {
     /** [OpenCL](https://www.khronos.org/opencl/) to target CPUs and GPUs from different vendors. */
     opencl,
     /** [SYCL](https://www.khronos.org/sycl/) to target CPUs and GPUs from different vendors. Currently tested SYCL implementations are [DPC++](https://github.com/intel/llvm) and [AdaptiveCpp](https://github.com/AdaptiveCpp/AdaptiveCpp) (formerly known as hipSYCL). */
-    sycl
+    sycl,
+    /** [Kokkos](https://github.com/kokkos/kokkos) to target CPUs and GPUs from different vendors. */
+    kokkos
 };
 
 /**
@@ -89,6 +91,7 @@ namespace hip { class csvm; }
 namespace opencl { class csvm; }
 namespace adaptivecpp { class csvm; }
 namespace dpcpp { class csvm; }
+namespace kokkos { class csvm; }
 
 // clang-format on
 
@@ -167,6 +170,15 @@ struct csvm_to_backend_type<dpcpp::csvm> {
     constexpr static backend_type value = backend_type::sycl;
     /// The enum value representing the SYCL implementation for the (DPC++) SYCL backend.
     constexpr static sycl::implementation_type impl = sycl::implementation_type::dpcpp;
+};
+
+/**
+ * @brief Sets the `value` to `plssvm::backend_type::kokkos` for the Kokkos C-SVM.
+ */
+template <>
+struct csvm_to_backend_type<kokkos::csvm> {
+    /// The enum value representing the Kokkos backend.
+    constexpr static backend_type value = backend_type::kokkos;
 };
 
 }  // namespace detail
