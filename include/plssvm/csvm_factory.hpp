@@ -45,6 +45,9 @@
         #include "plssvm/backends/SYCL/AdaptiveCpp/csvm.hpp"  // plssvm::adaptivecpp::csvm, plssvm::csvm_backend_exists_v
     #endif
 #endif
+#if defined(PLSSVM_HAS_KOKKOS_BACKEND)
+    #include "plssvm/backends/Kokkos/csvm.hpp"  // plssvm::kokkos::csvm, plssvm::csvm_backend_exists_v
+#endif
 
 #include "fmt/format.h"   // fmt::format
 #include "igor/igor.hpp"  // igor::parser, igor::has_unnamed_arguments
@@ -138,6 +141,8 @@ template <typename... Args>
             return make_csvm_default_impl<opencl::csvm>(std::forward<Args>(args)...);
         case backend_type::sycl:
             return make_csvm_sycl_impl(std::forward<Args>(args)...);
+        case backend_type::kokkos:
+            return make_csvm_default_impl<kokkos::csvm>(std::forward<Args>(args)...);
     }
     throw unsupported_backend_exception{ "Unrecognized backend provided!" };
 }

@@ -107,4 +107,10 @@ using namespace plssvm::PLSSVM_SYCL_BACKEND_PREFERRED_IMPLEMENTATION;
 /// Namespace containing the C-SVM using the SYCL backend with the preferred SYCL implementation. **Should not** directly be used by users.
 namespace plssvm::sycl::detail { }
 
+/// Namespace containing the C-SVM using the Kokkos backend.
+namespace plssvm::kokkos { }
+
+/// Namespace containing Kokkos backend specific implementation details. **Should not** directly be used by users.
+namespace plssvm::kokkos::detail { }
+
 #endif  // PLSSVM_CORE_HPP_

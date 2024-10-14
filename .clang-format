@@ -79,7 +79,7 @@ IncludeBlocks: Regroup
 IncludeCategories:
   - Regex: '^"plssvm/'
     Priority: 1
-  - Regex: '^"(cuda|hip|CL|sycl|omp)'
+  - Regex: '^"(cuda|hip|CL|sycl|omp|Kokkos)'
     Priority: 2
   - Regex: '^"(tests|bindings)/'
     Priority: 3

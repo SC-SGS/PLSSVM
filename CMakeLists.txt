@@ -380,6 +380,13 @@ if (PLSSVM_ENABLE_SYCL_BACKEND MATCHES "AUTO" OR PLSSVM_ENABLE_SYCL_BACKEND)
     add_subdirectory(src/plssvm/backends/SYCL)
 endif ()
 
+## check for Kokkos backend
+set(PLSSVM_ENABLE_KOKKOS_BACKEND AUTO CACHE STRING "Enable SYCL Backend")
+set_property(CACHE PLSSVM_ENABLE_KOKKOS_BACKEND PROPERTY STRINGS AUTO ON OFF)
+if (PLSSVM_ENABLE_KOKKOS_BACKEND MATCHES "AUTO" OR PLSSVM_ENABLE_KOKKOS_BACKEND)
+    add_subdirectory(src/plssvm/backends/Kokkos)
+endif ()
+
 ## check if ANY backend is available/has been enabled
 get_target_property(PLSSVM_LINKED_BACKENDS ${PLSSVM_ALL_LIBRARY_NAME} INTERFACE_LINK_LIBRARIES)
 if (NOT PLSSVM_LINKED_BACKENDS)
@@ -689,6 +696,10 @@ if (TARGET ${PLSSVM_SYCL_BACKEND_LIBRARY_NAME})
         message(STATUS "${SUMMARY_STRING}")
     endforeach ()
     list(APPEND PLSSVM_BACKEND_NAME_LIST "sycl")
+endif ()
+if (TARGET ${PLSSVM_KOKKOS_BACKEND_LIBRARY_NAME})
+    message(STATUS "${PLSSVM_KOKKOS_BACKEND_SUMMARY_STRING}")
+    list(APPEND PLSSVM_BACKEND_NAME_LIST "kokkos")
 endif ()
 message(STATUS "")
 

@@ -17,6 +17,10 @@
                                                            // PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_SET_REFERENCE_TIME
 #include "plssvm/detail/utility.hpp"                       // PLSSVM_IS_DEFINED
 
+#if defined(PLSSVM_HAS_KOKKOS_BACKEND)
+    #include "Kokkos_Core.hpp"  // Kokkos::initialize, Kokkos::is_initialized, Kokkos::finalize, Kokkos::is_finalized
+#endif
+
 #if defined(PLSSVM_HARDWARE_SAMPLING_ENABLED)
     #include "plssvm/detail/tracking/cpu/hardware_sampler.hpp"      // plssvm::detail::tracking::cpu_hardware_sampler
     #include "plssvm/detail/tracking/hardware_sampler.hpp"          // plssvm::detail::tracking::hardware_sampler
@@ -72,6 +76,16 @@ int main(int argc, char *argv[]) {
 
             // check whether SYCL is used as backend (it is either requested directly or as automatic backend)
             const bool use_sycl_as_backend{ cmd_parser.backend == plssvm::backend_type::sycl || (cmd_parser.backend == plssvm::backend_type::automatic && plssvm::determine_default_backend() == plssvm::backend_type::sycl) };
+            // check whether Kokkos is used as backend (it is either requested directly or as automatic backend)
+            const bool use_kokkos_as_backend{ cmd_parser.backend == plssvm::backend_type::kokkos || (cmd_parser.backend == plssvm::backend_type::automatic && plssvm::determine_default_backend() == plssvm::backend_type::kokkos) };
+
+            // initialize Kokkos if necessary
+#if defined(PLSSVM_HAS_KOKKOS_BACKEND)
+            if (use_kokkos_as_backend) {
+                Kokkos::initialize(argc, argv);  // TODO: set device?
+                PLSSVM_ASSERT(Kokkos::is_initialized(), "Something went wrong initializing the Kokkos environment!");
+            }
+#endif
 
             // create default csvm
             const std::unique_ptr<plssvm::csvm> svm = use_sycl_as_backend ? plssvm::make_csvm(cmd_parser.backend, cmd_parser.target, plssvm::sycl_implementation_type = cmd_parser.sycl_implementation_type)
@@ -163,6 +177,14 @@ int main(int argc, char *argv[]) {
             std::for_each(sampler.cbegin(), sampler.cend(), [&](const std::unique_ptr<plssvm::detail::tracking::hardware_sampler> &s) {
                 PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_HARDWARE_SAMPLER_ENTRY(*s);
             });
+#endif
+
+            // finalize Kokkos if necessary
+#if defined(PLSSVM_HAS_KOKKOS_BACKEND)
+            if (use_kokkos_as_backend) {  // TODO: what if an exception occurred?
+                Kokkos::finalize();
+                PLSSVM_ASSERT(Kokkos::is_finalized(), "Something went wrong finalizing the Kokkos environment!");
+            }
 #endif
         };
         std::visit(data_set_visitor, plssvm::detail::cmd::data_set_factory(cmd_parser));
