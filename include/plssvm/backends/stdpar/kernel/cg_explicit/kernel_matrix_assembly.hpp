@@ -21,10 +21,10 @@
 
 #include <algorithm>  // std::for_each
 #include <array>      // std::array
-#include <cmath>      // std::ceil
+#include <cmath>      // std::ceil, std::sqrt
 #include <cstddef>    // std::size_t
 #include <execution>  // std::execution::par_unseq
-#include <utility>    // std::pair, std::make_pair
+#include <numeric>    // std::iota
 #include <vector>     // std::vector
 
 namespace plssvm::stdpar::detail {
@@ -54,21 +54,15 @@ void device_kernel_assembly(const std::vector<real_type> &q, std::vector<real_ty
     const auto INTERNAL_BLOCK_SIZE_uz = static_cast<std::size_t>(INTERNAL_BLOCK_SIZE);
     const auto PADDING_SIZE_uz = static_cast<std::size_t>(PADDING_SIZE);
 
-    // calculate indices over which we parallelize
-    std::vector<std::pair<std::size_t, std::size_t>> range(blocked_dept * (blocked_dept + 1) / 2);
-#pragma omp parallel for
-    for (std::size_t i = 0; i < blocked_dept * blocked_dept; ++i) {
-        const std::size_t row = i / blocked_dept;
-        const std::size_t col = i % blocked_dept;
-        // only create valid row <-> col index pairs
-        if (row >= col) {
-            range[col * blocked_dept + row - col * (col + 1) / 2] = std::make_pair(row, col);
-        }
-    }
+    // define range over which should be iterated
+    std::vector<std::size_t> range(blocked_dept * (blocked_dept + 1) / 2);
+    std::iota(range.begin(), range.end(), 0);
 
-    std::for_each(std::execution::par_unseq, range.begin(), range.end(), [=, q_ptr = q.data(), data_ptr = data.data(), kernel_matrix_ptr = kernel_matrix.data()](const std::pair<std::size_t, std::size_t> idx) {
+    std::for_each(std::execution::par_unseq, range.begin(), range.end(), [=, q_ptr = q.data(), data_ptr = data.data(), kernel_matrix_ptr = kernel_matrix.data()](const std::size_t idx) {
         // calculate the indices used in the current thread
-        const auto [row, col] = idx;
+        const std::size_t col = static_cast<std::size_t>(0.5 * (2 * blocked_dept + 1 - std::sqrt(4 * blocked_dept * blocked_dept + 4 * blocked_dept - 8 * idx + 1)));
+        const std::size_t row = static_cast<std::size_t>(idx - (col * blocked_dept - 0.5 * col * col - 0.5 * col));
+
         const std::size_t row_idx = row * INTERNAL_BLOCK_SIZE_uz;
         const std::size_t col_idx = col * INTERNAL_BLOCK_SIZE_uz;
 

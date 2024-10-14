@@ -26,7 +26,7 @@
 #include <cmath>      // std::fma
 #include <cstddef>    // std::size_t
 #include <execution>  // std::execution::par_unseq
-#include <utility>    // std::pair, std::make_pair
+#include <numeric>    // std::iota
 #include <vector>     // std::vector
 
 namespace plssvm::stdpar::detail {
@@ -52,16 +52,15 @@ inline void device_kernel_w_linear(soa_matrix<real_type> &w, const aos_matrix<re
     const auto INTERNAL_BLOCK_SIZE_uz = static_cast<std::size_t>(INTERNAL_BLOCK_SIZE);
     const auto PADDING_SIZE_uz = static_cast<std::size_t>(PADDING_SIZE);
 
-    // calculate indices over which we parallelize
-    std::vector<std::pair<std::size_t, std::size_t>> range(blocked_num_features * blocked_num_classes);
-#pragma omp parallel for
-    for (std::size_t i = 0; i < range.size(); ++i) {
-        range[i] = std::make_pair(i / blocked_num_classes, i % blocked_num_classes);
-    }
+    // define range over which should be iterated
+    std::vector<std::size_t> range(blocked_num_features * blocked_num_classes);
+    std::iota(range.begin(), range.end(), 0);
 
-    std::for_each(std::execution::par_unseq, range.begin(), range.end(), [=, w_ptr = w.data(), alpha_ptr = alpha.data(), sv_ptr = support_vectors.data()](const std::pair<std::size_t, std::size_t> idx) {
+    std::for_each(std::execution::par_unseq, range.begin(), range.end(), [=, w_ptr = w.data(), alpha_ptr = alpha.data(), sv_ptr = support_vectors.data()](const std::size_t idx) {
         // calculate the indices used in the current thread
-        const auto [feature, c] = idx;
+        const std::size_t feature = idx / blocked_num_classes;
+        const std::size_t c = idx % blocked_num_classes;
+
         const std::size_t feature_idx = feature * INTERNAL_BLOCK_SIZE_uz;
         const std::size_t class_idx = c * INTERNAL_BLOCK_SIZE_uz;
 
@@ -116,16 +115,15 @@ inline void device_kernel_predict_linear(aos_matrix<real_type> &prediction, cons
     const auto INTERNAL_BLOCK_SIZE_uz = static_cast<std::size_t>(INTERNAL_BLOCK_SIZE);
     const auto PADDING_SIZE_uz = static_cast<std::size_t>(PADDING_SIZE);
 
-    // calculate indices over which we parallelize
-    std::vector<std::pair<std::size_t, std::size_t>> range(blocked_num_predict_points * blocked_num_classes);
-#pragma omp parallel for
-    for (std::size_t i = 0; i < range.size(); ++i) {
-        range[i] = std::make_pair(i / blocked_num_classes, i % blocked_num_classes);
-    }
+    // define range over which should be iterated
+    std::vector<std::size_t> range(blocked_num_predict_points * blocked_num_classes);
+    std::iota(range.begin(), range.end(), 0);
 
-    std::for_each(std::execution::par_unseq, range.begin(), range.end(), [=, prediction_ptr = prediction.data(), w_ptr = w.data(), rho_ptr = rho.data(), pp_ptr = predict_points.data()](const std::pair<std::size_t, std::size_t> idx) {
+    std::for_each(std::execution::par_unseq, range.begin(), range.end(), [=, prediction_ptr = prediction.data(), w_ptr = w.data(), rho_ptr = rho.data(), pp_ptr = predict_points.data()](const std::size_t idx) {
         // calculate the indices used in the current thread
-        const auto [pp, c] = idx;
+        const std::size_t pp = idx / blocked_num_classes;
+        const std::size_t c = idx % blocked_num_classes;
+
         const std::size_t pp_idx = pp * INTERNAL_BLOCK_SIZE_uz;
         const std::size_t class_idx = c * INTERNAL_BLOCK_SIZE_uz;
 
@@ -189,16 +187,15 @@ inline void device_kernel_predict(aos_matrix<real_type> &prediction, const aos_m
     const auto INTERNAL_BLOCK_SIZE_uz = static_cast<std::size_t>(INTERNAL_BLOCK_SIZE);
     const auto PADDING_SIZE_uz = static_cast<std::size_t>(PADDING_SIZE);
 
-    // calculate indices over which we parallelize
-    std::vector<std::pair<std::size_t, std::size_t>> range(blocked_num_predict_points * blocked_num_support_vectors);
-#pragma omp parallel for
-    for (std::size_t i = 0; i < range.size(); ++i) {
-        range[i] = std::make_pair(i / blocked_num_support_vectors, i % blocked_num_support_vectors);
-    }
+    // define range over which should be iterated
+    std::vector<std::size_t> range(blocked_num_predict_points * blocked_num_support_vectors);
+    std::iota(range.begin(), range.end(), 0);
 
-    std::for_each(std::execution::par_unseq, range.begin(), range.end(), [=, prediction_ptr = prediction.data(), alpha_ptr = alpha.data(), rho_ptr = rho.data(), sv_ptr = support_vectors.data(), pp_ptr = predict_points.data()](const std::pair<std::size_t, std::size_t> idx) {
+    std::for_each(std::execution::par_unseq, range.begin(), range.end(), [=, prediction_ptr = prediction.data(), alpha_ptr = alpha.data(), rho_ptr = rho.data(), sv_ptr = support_vectors.data(), pp_ptr = predict_points.data()](const std::size_t idx) {
         // calculate the indices used in the current thread
-        const auto [pp, sv] = idx;
+        const std::size_t pp = idx / blocked_num_support_vectors;
+        const std::size_t sv = idx % blocked_num_support_vectors;
+
         const std::size_t pp_idx = pp * INTERNAL_BLOCK_SIZE_uz;
         const std::size_t sv_idx = sv * INTERNAL_BLOCK_SIZE_uz;
 
