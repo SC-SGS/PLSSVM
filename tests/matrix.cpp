@@ -1481,6 +1481,257 @@ TYPED_TEST(Matrix, at_const_out_of_bounce_with_padding) {
     EXPECT_THROW_WHAT(std::ignore = matr.at(0, 10), plssvm::matrix_exception, "The current column (10) must be smaller than the number of columns including padding (2 + 3)!");
 }
 
+TYPED_TEST(Matrix, subscript_operator) {
+    using real_type = typename TestFixture::fixture_real_type;
+    constexpr plssvm::layout_type layout = TestFixture::fixture_layout;
+
+    // create the 2D vector
+    const std::vector<std::vector<real_type>> matr_2D{ { real_type{ 0.1 }, real_type{ 0.2 } },
+                                                       { real_type{ 1.1 }, real_type{ 1.2 } } };
+
+    // create random matrix
+    plssvm::matrix<real_type, layout> matr{ matr_2D };
+
+    // check content
+    ASSERT_EQ(matr.shape(), (plssvm::shape{ 2, 2 }));
+    for (std::size_t row = 0; row < matr.num_rows(); ++row) {
+        for (std::size_t col = 0; col < matr.num_cols(); ++col) {
+            SCOPED_TRACE(fmt::format("row: {}; col: {}", row, col));
+            if constexpr (layout == plssvm::layout_type::aos) {
+                EXPECT_EQ(matr[row * 2 + col], matr_2D[row][col]);
+            } else {
+                EXPECT_EQ(matr[col * 2 + row], matr_2D[row][col]);
+            }
+        }
+    }
+}
+
+TYPED_TEST(Matrix, subscript_operator_with_padding) {
+    using real_type = typename TestFixture::fixture_real_type;
+    constexpr plssvm::layout_type layout = TestFixture::fixture_layout;
+
+    // create the 2D vector
+    const std::vector<std::vector<real_type>> matr_2D{ { real_type{ 0.1 }, real_type{ 0.2 } },
+                                                       { real_type{ 1.1 }, real_type{ 1.2 } } };
+
+    // create random matrix
+    plssvm::matrix<real_type, layout> matr{ matr_2D, plssvm::shape{ 4, 5 } };
+
+    // check content
+    ASSERT_EQ(matr.shape(), (plssvm::shape{ 2, 2 }));
+    ASSERT_EQ(matr.padding(), (plssvm::shape{ 4, 5 }));
+    ASSERT_EQ(matr.shape_padded(), (plssvm::shape{ 6, 7 }));
+    for (std::size_t row = 0; row < matr.num_rows(); ++row) {
+        for (std::size_t col = 0; col < matr.num_cols(); ++col) {
+            SCOPED_TRACE(fmt::format("row: {}; col: {}", row, col));
+            if constexpr (layout == plssvm::layout_type::aos) {
+                EXPECT_EQ(matr[row * (2 + 5) + col], matr_2D[row][col]);
+            } else {
+                EXPECT_EQ(matr[col * (2 + 4) + row], matr_2D[row][col]);
+            }
+        }
+    }
+}
+
+TYPED_TEST(Matrix, subscript_operator_const) {
+    using real_type = typename TestFixture::fixture_real_type;
+    constexpr plssvm::layout_type layout = TestFixture::fixture_layout;
+
+    // create the 2D vector
+    const std::vector<std::vector<real_type>> matr_2D{ { real_type{ 0.1 }, real_type{ 0.2 } },
+                                                       { real_type{ 1.1 }, real_type{ 1.2 } } };
+
+    // create random matrix
+    const plssvm::matrix<real_type, layout> matr{ matr_2D };
+
+    // check content
+    ASSERT_EQ(matr.shape(), (plssvm::shape{ 2, 2 }));
+    for (std::size_t row = 0; row < matr.num_rows(); ++row) {
+        for (std::size_t col = 0; col < matr.num_cols(); ++col) {
+            SCOPED_TRACE(fmt::format("row: {}; col: {}", row, col));
+            if constexpr (layout == plssvm::layout_type::aos) {
+                EXPECT_EQ(matr[row * 2 + col], matr_2D[row][col]);
+            } else {
+                EXPECT_EQ(matr[col * 2 + row], matr_2D[row][col]);
+            }
+        }
+    }
+}
+
+TYPED_TEST(Matrix, subscript_operator_const_with_padding) {
+    using real_type = typename TestFixture::fixture_real_type;
+    constexpr plssvm::layout_type layout = TestFixture::fixture_layout;
+
+    // create the 2D vector
+    const std::vector<std::vector<real_type>> matr_2D{ { real_type{ 0.1 }, real_type{ 0.2 } }, { real_type{ 1.1 }, real_type{ 1.2 } } };
+
+    // create random matrix
+    const plssvm::matrix<real_type, layout> matr{ matr_2D, plssvm::shape{ 4, 5 } };
+
+    // check content
+    ASSERT_EQ(matr.shape(), (plssvm::shape{ 2, 2 }));
+    ASSERT_EQ(matr.padding(), (plssvm::shape{ 4, 5 }));
+    ASSERT_EQ(matr.shape_padded(), (plssvm::shape{ 6, 7 }));
+    for (std::size_t row = 0; row < matr.num_rows(); ++row) {
+        for (std::size_t col = 0; col < matr.num_cols(); ++col) {
+            SCOPED_TRACE(fmt::format("row: {}; col: {}", row, col));
+            if constexpr (layout == plssvm::layout_type::aos) {
+                EXPECT_EQ(matr[row * (2 + 5) + col], matr_2D[row][col]);
+            } else {
+                EXPECT_EQ(matr[col * (2 + 4) + row], matr_2D[row][col]);
+            }
+        }
+    }
+}
+
+TYPED_TEST(Matrix, linear_at) {
+    using real_type = typename TestFixture::fixture_real_type;
+    constexpr plssvm::layout_type layout = TestFixture::fixture_layout;
+
+    // create the 2D vector
+    const std::vector<std::vector<real_type>> matr_2D{ { real_type{ 0.1 }, real_type{ 0.2 } },
+                                                       { real_type{ 1.1 }, real_type{ 1.2 } } };
+
+    // create random matrix
+    plssvm::matrix<real_type, layout> matr{ matr_2D };
+
+    // check content
+    ASSERT_EQ(matr.shape(), (plssvm::shape{ 2, 2 }));
+    for (std::size_t row = 0; row < matr.num_rows(); ++row) {
+        for (std::size_t col = 0; col < matr.num_cols(); ++col) {
+            SCOPED_TRACE(fmt::format("row: {}; col: {}", row, col));
+            if constexpr (layout == plssvm::layout_type::aos) {
+                EXPECT_EQ(matr.at(row * 2 + col), matr_2D[row][col]);
+            } else {
+                EXPECT_EQ(matr.at(col * 2 + row), matr_2D[row][col]);
+            }
+        }
+    }
+}
+
+TYPED_TEST(Matrix, linear_at_with_padding) {
+    using real_type = typename TestFixture::fixture_real_type;
+    constexpr plssvm::layout_type layout = TestFixture::fixture_layout;
+
+    // create the 2D vector
+    const std::vector<std::vector<real_type>> matr_2D{ { real_type{ 0.1 }, real_type{ 0.2 } },
+                                                       { real_type{ 1.1 }, real_type{ 1.2 } } };
+
+    // create random matrix
+    plssvm::matrix<real_type, layout> matr{ matr_2D, plssvm::shape{ 4, 5 } };
+
+    // check content
+    ASSERT_EQ(matr.shape(), (plssvm::shape{ 2, 2 }));
+    ASSERT_EQ(matr.padding(), (plssvm::shape{ 4, 5 }));
+    ASSERT_EQ(matr.shape_padded(), (plssvm::shape{ 6, 7 }));
+    for (std::size_t row = 0; row < matr.num_rows(); ++row) {
+        for (std::size_t col = 0; col < matr.num_cols(); ++col) {
+            SCOPED_TRACE(fmt::format("row: {}; col: {}", row, col));
+            if constexpr (layout == plssvm::layout_type::aos) {
+                EXPECT_EQ(matr[row * (2 + 5) + col], matr_2D[row][col]);
+            } else {
+                EXPECT_EQ(matr[col * (2 + 4) + row], matr_2D[row][col]);
+            }
+        }
+    }
+}
+
+TYPED_TEST(Matrix, linear_at_out_of_bounce) {
+    using real_type = typename TestFixture::fixture_real_type;
+    constexpr plssvm::layout_type layout = TestFixture::fixture_layout;
+
+    // create random matrix
+    plssvm::matrix<real_type, layout> matr{ plssvm::shape{ 2, 2 } };
+
+    // try out-of-bounce access
+    EXPECT_THROW_WHAT(std::ignore = matr.at(4), plssvm::matrix_exception, "The current index (4) must be smaller than the total number of matrix entries (4)!");
+}
+
+TYPED_TEST(Matrix, linear_at_out_of_bounce_with_padding) {
+    using real_type = typename TestFixture::fixture_real_type;
+    constexpr plssvm::layout_type layout = TestFixture::fixture_layout;
+
+    // create random matrix
+    plssvm::matrix<real_type, layout> matr{ plssvm::shape{ 2, 2 }, plssvm::shape{ 3, 3 } };
+
+    // try out-of-bounce access
+    EXPECT_THROW_WHAT(std::ignore = matr.at(36), plssvm::matrix_exception, "The current index (36) must be smaller than the total number of matrix entries (25)!");
+}
+
+TYPED_TEST(Matrix, linear_at_const) {
+    using real_type = typename TestFixture::fixture_real_type;
+    constexpr plssvm::layout_type layout = TestFixture::fixture_layout;
+
+    // create the 2D vector
+    const std::vector<std::vector<real_type>> matr_2D{ { real_type{ 0.1 }, real_type{ 0.2 } },
+                                                       { real_type{ 1.1 }, real_type{ 1.2 } } };
+
+    // create random matrix
+    const plssvm::matrix<real_type, layout> matr{ matr_2D };
+
+    // check content
+    ASSERT_EQ(matr.shape(), (plssvm::shape{ 2, 2 }));
+    for (std::size_t row = 0; row < matr.num_rows(); ++row) {
+        for (std::size_t col = 0; col < matr.num_cols(); ++col) {
+            SCOPED_TRACE(fmt::format("row: {}; col: {}", row, col));
+            if constexpr (layout == plssvm::layout_type::aos) {
+                EXPECT_EQ(matr.at(row * 2 + col), matr_2D[row][col]);
+            } else {
+                EXPECT_EQ(matr.at(col * 2 + row), matr_2D[row][col]);
+            }
+        }
+    }
+}
+
+TYPED_TEST(Matrix, linear_at_const_with_padding) {
+    using real_type = typename TestFixture::fixture_real_type;
+    constexpr plssvm::layout_type layout = TestFixture::fixture_layout;
+
+    // create the 2D vector
+    const std::vector<std::vector<real_type>> matr_2D{ { real_type{ 0.1 }, real_type{ 0.2 } },
+                                                       { real_type{ 1.1 }, real_type{ 1.2 } } };
+
+    // create random matrix
+    const plssvm::matrix<real_type, layout> matr{ matr_2D, plssvm::shape{ 4, 5 } };
+
+    // check content
+    ASSERT_EQ(matr.shape(), (plssvm::shape{ 2, 2 }));
+    ASSERT_EQ(matr.padding(), (plssvm::shape{ 4, 5 }));
+    ASSERT_EQ(matr.shape_padded(), (plssvm::shape{ 6, 7 }));
+    for (std::size_t row = 0; row < matr.num_rows(); ++row) {
+        for (std::size_t col = 0; col < matr.num_cols(); ++col) {
+            SCOPED_TRACE(fmt::format("row: {}; col: {}", row, col));
+            if constexpr (layout == plssvm::layout_type::aos) {
+                EXPECT_EQ(matr[row * (2 + 5) + col], matr_2D[row][col]);
+            } else {
+                EXPECT_EQ(matr[col * (2 + 4) + row], matr_2D[row][col]);
+            }
+        }
+    }
+}
+
+TYPED_TEST(Matrix, linear_at_const_out_of_bounce) {
+    using real_type = typename TestFixture::fixture_real_type;
+    constexpr plssvm::layout_type layout = TestFixture::fixture_layout;
+
+    // create random matrix
+    const plssvm::matrix<real_type, layout> matr{ plssvm::shape{ 2, 2 } };
+
+    // try out-of-bounce access
+    EXPECT_THROW_WHAT(std::ignore = matr.at(4), plssvm::matrix_exception, "The current index (4) must be smaller than the total number of matrix entries (4)!");
+}
+
+TYPED_TEST(Matrix, linear_at_const_out_of_bounce_with_padding) {
+    using real_type = typename TestFixture::fixture_real_type;
+    constexpr plssvm::layout_type layout = TestFixture::fixture_layout;
+
+    // create random matrix
+    const plssvm::matrix<real_type, layout> matr{ plssvm::shape{ 2, 2 }, plssvm::shape{ 3, 3 } };
+
+    // try out-of-bounce access
+    EXPECT_THROW_WHAT(std::ignore = matr.at(36), plssvm::matrix_exception, "The current index (36) must be smaller than the total number of matrix entries (25)!");
+}
+
 TYPED_TEST(Matrix, to_2D_vector) {
     using real_type = typename TestFixture::fixture_real_type;
     constexpr plssvm::layout_type layout = TestFixture::fixture_layout;
@@ -2161,4 +2412,48 @@ TYPED_TEST(MatrixDeathTest, function_call_operator_const_out_of_bounce_with_padd
     // try out-of-bounce access
     EXPECT_DEATH(std::ignore = matr(6, 0), ::testing::HasSubstr("The current row (6) must be smaller than the number of padded rows (6)!"));
     EXPECT_DEATH(std::ignore = matr(0, 10), ::testing::HasSubstr("The current column (10) must be smaller than the number of padded columns (7)!"));
+}
+
+TYPED_TEST(MatrixDeathTest, subscript_operator_out_of_bounce) {
+    using real_type = typename TestFixture::fixture_real_type;
+    constexpr plssvm::layout_type layout = TestFixture::fixture_layout;
+
+    // create random matrix
+    plssvm::matrix<real_type, layout> matr{ plssvm::shape{ 2, 2 } };
+
+    // try out-of-bounce access
+    EXPECT_DEATH(std::ignore = matr[4], ::testing::HasSubstr("The current index (4) must be smaller than the total number of matrix entries (4)!"));
+}
+
+TYPED_TEST(MatrixDeathTest, subscript_operator_out_of_bounce_with_padding) {
+    using real_type = typename TestFixture::fixture_real_type;
+    constexpr plssvm::layout_type layout = TestFixture::fixture_layout;
+
+    // create random matrix
+    plssvm::matrix<real_type, layout> matr{ plssvm::shape{ 2, 2 }, plssvm::shape{ 3, 3 } };
+
+    // try out-of-bounce access
+    EXPECT_DEATH(std::ignore = matr[36], ::testing::HasSubstr("The current index (36) must be smaller than the total number of matrix entries (25)!"));
+}
+
+TYPED_TEST(MatrixDeathTest, subscript_operator_const_out_of_bounce) {
+    using real_type = typename TestFixture::fixture_real_type;
+    constexpr plssvm::layout_type layout = TestFixture::fixture_layout;
+
+    // create random matrix
+    const plssvm::matrix<real_type, layout> matr{ plssvm::shape{ 2, 2 } };
+
+    // try out-of-bounce access
+    EXPECT_DEATH(std::ignore = matr[4], ::testing::HasSubstr("The current index (4) must be smaller than the total number of matrix entries (4)!"));
+}
+
+TYPED_TEST(MatrixDeathTest, subscript_operator_const_out_of_bounce_with_padding) {
+    using real_type = typename TestFixture::fixture_real_type;
+    constexpr plssvm::layout_type layout = TestFixture::fixture_layout;
+
+    // create random matrix
+    const plssvm::matrix<real_type, layout> matr{ plssvm::shape{ 2, 2 }, plssvm::shape{ 4, 5 } };
+
+    // try out-of-bounce access
+    EXPECT_DEATH(std::ignore = matr[36], ::testing::HasSubstr("The current index (36) must be smaller than the total number of matrix entries (25)!"));
 }
