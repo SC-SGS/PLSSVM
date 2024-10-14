@@ -46,6 +46,7 @@
 #include <cstddef>      // std::size_t
 #include <limits>       // std::numeric_limits::lowest
 #include <memory>       // std::unique_ptr
+#include <numeric>      // std::accumulate
 #include <optional>     // std::optional, std::make_optional, std::nullopt
 #include <ratio>        // std::milli
 #include <tuple>        // std::tie
@@ -791,6 +792,7 @@ std::tuple<aos_matrix<real_type>, std::vector<real_type>, std::vector<unsigned l
         // calculate the maximum total memory needed for the explicit and implicit kernel matrix per device
         const detail::triangular_data_distribution data_distribution{ num_rows_reduced, this->num_available_devices() };
         const std::vector<detail::memory_size> total_memory_needed_explicit_per_device = data_distribution.calculate_maximum_explicit_kernel_matrix_memory_needed_per_place(num_features, num_rhs);
+        const std::pair<detail::memory_size, std::vector<detail::memory_size>> total_memory_needed_streaming_per_device = data_distribution.calculate_maximum_streaming_kernel_matrix_memory_needed_per_place(num_features, num_rhs);
         const std::vector<detail::memory_size> total_memory_needed_implicit_per_device = data_distribution.calculate_maximum_implicit_kernel_matrix_memory_needed_per_place(num_features, num_rhs);
 
         // format a vector differentiating between it containing only a single entry or multiple
@@ -810,7 +812,8 @@ std::tuple<aos_matrix<real_type>, std::vector<real_type>, std::vector<unsigned l
                     "  - total device memory: {4}\n"
                     "  - usable device memory (with safety margin of min({0} %, {1}): {5}\n"
                     "  - maximum memory needed (cg_explicit): {6}\n"
-                    "  - maximum memory needed (cg_implicit): {7}\n",
+                    "  - maximum memory needed (cg_streaming): {7} (device) + {8} (system total)\n"
+                    "  - maximum memory needed (cg_implicit): {9}\n",
                     static_cast<double>(percentual_safety_margin * 100.0L),
                     minimal_safety_margin,
                     detail::tracking::tracking_entry{ "solver", "system_memory", total_system_memory },
@@ -818,11 +821,15 @@ std::tuple<aos_matrix<real_type>, std::vector<real_type>, std::vector<unsigned l
                     format_vector(total_device_memory_per_device),
                     format_vector(usable_device_memory_per_device),
                     format_vector(total_memory_needed_explicit_per_device),
+                    format_vector(total_memory_needed_streaming_per_device.second),
+                    total_memory_needed_streaming_per_device.first,
                     format_vector(total_memory_needed_implicit_per_device));
         PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((detail::tracking::tracking_entry{ "solver", "device_memory", total_device_memory_per_device }));
         PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((detail::tracking::tracking_entry{ "solver", "usable_device_memory_with_safety_margin", usable_device_memory_per_device }));
-        PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((detail::tracking::tracking_entry{ "solver", "needed_device_memory_cg_explicit", total_memory_needed_explicit_per_device }));
-        PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((detail::tracking::tracking_entry{ "solver", "needed_device_memory_cg_implicit", total_memory_needed_implicit_per_device }));
+        PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((detail::tracking::tracking_entry{ "solver", "needed_memory_cg_explicit", total_memory_needed_explicit_per_device }));
+        PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((detail::tracking::tracking_entry{ "solver", "needed_system_memory_cg_streaming", total_memory_needed_streaming_per_device.first }));
+        PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((detail::tracking::tracking_entry{ "solver", "needed_device_memory_cg_streaming", total_memory_needed_streaming_per_device.second }));
+        PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((detail::tracking::tracking_entry{ "solver", "needed_memory_cg_implicit", total_memory_needed_implicit_per_device }));
 
         // helper function to check whether ALL devices fulfill the requested memory constraint for the specific solver type
         const auto check_sizes = [](const auto &needed_memory_per_device, const auto &memory_constraint) -> std::vector<std::size_t> {
@@ -844,13 +851,26 @@ std::tuple<aos_matrix<real_type>, std::vector<real_type>, std::vector<unsigned l
         } else {
             detail::log(verbosity_level::full, "Cannot use cg_explicit due to memory constraints on device(s) {}!\n", format_vector(failed_cg_explicit_constraints));
 
-            // check whether there is enough memory available for cg_implicit
-            if (const std::vector<std::size_t> failed_cg_implicit_constraints = check_sizes(total_memory_needed_implicit_per_device, usable_device_memory_per_device); failed_cg_implicit_constraints.empty()) {
+            if (const std::vector<std::size_t> failed_cg_streaming_constraints = check_sizes(total_memory_needed_streaming_per_device.second, usable_device_memory_per_device);
+                total_memory_needed_streaming_per_device.first <= usable_system_memory && failed_cg_streaming_constraints.empty()) {
                 // use the implicit solver type
-                used_solver = solver_type::cg_implicit;
+                used_solver = solver_type::cg_streaming;
             } else {
-                // not enough device memory available for the implicit case
-                throw kernel_launch_resources{ fmt::format("Not enough device memory available on device(s) {} even for the cg_implicit solver!", format_vector(failed_cg_implicit_constraints)) };
+                if (!failed_cg_streaming_constraints.empty()) {
+                    detail::log(verbosity_level::full, "Cannot use cg_streaming due to memory constraints on device(s) {}!\n", format_vector(failed_cg_streaming_constraints));
+                }
+                if (total_memory_needed_streaming_per_device.first > usable_system_memory) {
+                    detail::log(verbosity_level::full, "Cannot use cg_streaming due to system memory constraints!\n");
+                }
+
+                // check whether there is enough memory available for cg_implicit
+                if (const std::vector<std::size_t> failed_cg_implicit_constraints = check_sizes(total_memory_needed_implicit_per_device, usable_device_memory_per_device); failed_cg_implicit_constraints.empty()) {
+                    // use the implicit solver type
+                    used_solver = solver_type::cg_implicit;
+                } else {
+                    // not enough device memory available for the implicit case
+                    throw kernel_launch_resources{ fmt::format("Not enough device memory available on device(s) {} even for the cg_implicit solver!", format_vector(failed_cg_implicit_constraints)) };
+                }
             }
         }
 
@@ -859,31 +879,56 @@ std::tuple<aos_matrix<real_type>, std::vector<real_type>, std::vector<unsigned l
         // get the maximum possible memory allocation size per device
         const std::vector<detail::memory_size> max_mem_alloc_size_per_device = this->get_max_mem_alloc_size();
 
+        // utility function returning a vector of memory sizes that where the reasons for a failed check
+        const auto get_failed_memory_sizes = [&max_mem_alloc_size_per_device](const std::vector<std::size_t> &failed_devices) {
+            std::vector<detail::memory_size> failed_memory_sizes{};
+            for (const std::size_t device : failed_devices) {
+                failed_memory_sizes.push_back(max_mem_alloc_size_per_device[device]);
+            }
+            return failed_memory_sizes;
+        };
+
         // get the maximum single allocation size per device
         const std::vector<detail::memory_size> max_single_allocation_cg_explicit_size_per_device = data_distribution.calculate_maximum_explicit_kernel_matrix_memory_allocation_size_per_place(num_features, num_rhs);
+        const std::vector<detail::memory_size> max_single_allocation_cg_streaming_size_per_device = data_distribution.calculate_maximum_streaming_kernel_matrix_memory_allocation_size_per_place(num_features, num_rhs);
         const std::vector<detail::memory_size> max_single_allocation_cg_implicit_size_per_device = data_distribution.calculate_maximum_implicit_kernel_matrix_memory_allocation_size_per_place(num_features, num_rhs);
 
         // output the maximum memory allocation size per device
         detail::log(verbosity_level::full,
                     "  - maximum supported single memory allocation size: {}\n"
                     "  - maximum needed single memory allocation size (cg_explicit): {}\n"
+                    "  - maximum needed single memory allocation size (cg_streaming): {}\n"
                     "  - maximum needed single memory allocation size (cg_implicit): {}\n",
                     format_vector(max_mem_alloc_size_per_device),
                     format_vector(max_single_allocation_cg_explicit_size_per_device),
+                    format_vector(max_single_allocation_cg_streaming_size_per_device),
                     format_vector(max_single_allocation_cg_implicit_size_per_device));
         PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((detail::tracking::tracking_entry{ "solver", "device_max_single_mem_alloc_size", max_mem_alloc_size_per_device }));
         PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((detail::tracking::tracking_entry{ "solver", "device_max_mem_alloc_size_cg_explicit", max_single_allocation_cg_explicit_size_per_device }));
+        PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((detail::tracking::tracking_entry{ "solver", "device_max_mem_alloc_size_cg_streaming", max_single_allocation_cg_streaming_size_per_device }));
         PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY((detail::tracking::tracking_entry{ "solver", "device_max_mem_alloc_size_cg_implicit", max_single_allocation_cg_implicit_size_per_device }));
 
         // check whether the maximum single memory allocation sizes per device can be satisfied
         // check whether the maximum single cg_explicit memory allocation size can be satisfied
         if (const std::vector<std::size_t> failed_cg_explicit_constraints = check_sizes(max_single_allocation_cg_explicit_size_per_device, max_mem_alloc_size_per_device);
             used_solver == solver_type::cg_explicit && !failed_cg_explicit_constraints.empty()) {
+
             // max mem alloc size constraints not fulfilled
             detail::log(verbosity_level::full,
-                        "Cannot use cg_explicit due to maximum single memory allocation constraints on device(s) {}! Falling back to cg_implicit.\n",
+                        "Cannot use cg_explicit due to maximum single memory allocation constraints ({}) on device(s) {}! Falling back to cg_streaming.\n",
+                        format_vector(get_failed_memory_sizes(failed_cg_explicit_constraints)),
                         format_vector(failed_cg_explicit_constraints));
             // can't use cg_explicit
+            used_solver = solver_type::cg_streaming;
+        }
+        if (const std::vector<std::size_t> failed_cg_streaming_constraints = check_sizes(max_single_allocation_cg_streaming_size_per_device, max_mem_alloc_size_per_device);
+            used_solver == solver_type::cg_streaming && !failed_cg_streaming_constraints.empty()) {
+            // max mem alloc size constraints not fulfilled
+            detail::log(verbosity_level::full,
+                        "Cannot use cg_streaming due to maximum single memory allocation constraints ({}) on device(s) {}! Falling back to cg_implicit.\n",
+                        format_vector(get_failed_memory_sizes(failed_cg_streaming_constraints)),
+                        format_vector(failed_cg_streaming_constraints));
+            // can't use cg_streaming
             used_solver = solver_type::cg_implicit;
         }
         if (const std::vector<std::size_t> failed_cg_implicit_constraints = check_sizes(max_single_allocation_cg_implicit_size_per_device, max_mem_alloc_size_per_device);
@@ -892,7 +937,7 @@ std::tuple<aos_matrix<real_type>, std::vector<real_type>, std::vector<unsigned l
             plssvm::detail::log(verbosity_level::full | verbosity_level::warning,
                                 "WARNING: if you are sure that the guaranteed maximum memory allocation size can be safely ignored on your device, "
                                 "this check can be disabled via \"-DPLSSVM_ENFORCE_MAX_MEM_ALLOC_SIZE=OFF\" during the CMake configuration!\n");
-            throw kernel_launch_resources{ fmt::format("Can't fulfill maximum single memory allocation constraint for device(s) {} even for the cg_implicit solver!", format_vector(failed_cg_implicit_constraints)) };
+            throw kernel_launch_resources{ fmt::format("Can't fulfill maximum single memory allocation constraint ({}) for device(s) {} even for the cg_implicit solver!", format_vector(get_failed_memory_sizes(failed_cg_implicit_constraints)), format_vector(failed_cg_implicit_constraints)) };
         }
 #endif
     }

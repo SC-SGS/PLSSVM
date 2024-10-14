@@ -141,12 +141,13 @@ class gpu_csvm : public ::plssvm::csvm {
      * @param[in] device_id the device to run the kernel on
      * @param[in] exec the execution range used in the device call
      * @param[in] params the parameters (e.g., kernel function) used to assemble the kernel matrix
+     * @param[in] use_usm_allocations if `true` use USM allocations for the `cg_streaming` implementation
      * @param[in] data_d the data set to create the kernel matrix from
      * @param[in] q_red_d the vector used in the dimensional reduction
      * @param[in] QA_cost the scalar used in the dimensional reduction
      * @return the explicit kernel matrix stored on the device (`[[nodiscard]]`)
      */
-    [[nodiscard]] virtual device_ptr_type run_assemble_kernel_matrix_explicit(std::size_t device_id, const execution_range &exec, const parameter &params, const device_ptr_type &data_d, const device_ptr_type &q_red_d, real_type QA_cost) const = 0;
+    [[nodiscard]] virtual device_ptr_type run_assemble_kernel_matrix_explicit(std::size_t device_id, const execution_range &exec, const parameter &params, bool use_usm_allocations, const device_ptr_type &data_d, const device_ptr_type &q_red_d, real_type QA_cost) const = 0;
     /**
      * @brief Perform an explicit BLAS level 3 operation: `C = alpha * A * B + beta * C` where @p A, @p B, and @p C are matrices, and @p alpha and @p beta are scalars.
      * @param[in] device_id the device to run the kernel on
@@ -229,6 +230,7 @@ std::vector<::plssvm::detail::move_only_any> gpu_csvm<device_ptr_t, queue_t, pin
     PLSSVM_ASSERT(!q_red.empty(), "The q_red vector must not be empty!");
     PLSSVM_ASSERT(q_red.size() == A.num_rows() - 1, "The q_red size ({}) mismatches the number of data points after dimensional reduction ({})!", q_red.size(), A.num_rows() - 1);
 
+    const bool use_usm_allocations = solver == solver_type::cg_streaming;
     const std::size_t num_devices = this->num_available_devices();
     const std::size_t num_rows_reduced = A.shape().x - 1;
 
@@ -292,9 +294,10 @@ std::vector<::plssvm::detail::move_only_any> gpu_csvm<device_ptr_t, queue_t, pin
                 // unreachable
                 break;
             case solver_type::cg_explicit:
+            case solver_type::cg_streaming:
                 {
                     // explicitly assemble the (potential partial) kernel matrix
-                    device_ptr_type kernel_matrix = this->run_assemble_kernel_matrix_explicit(device_id, exec, params, data_d[device_id], q_red_d[device_id], QA_cost);
+                    device_ptr_type kernel_matrix = this->run_assemble_kernel_matrix_explicit(device_id, exec, params, use_usm_allocations, data_d[device_id], q_red_d[device_id], QA_cost);
                     kernel_matrices_parts[device_id] = ::plssvm::detail::move_only_any{ std::move(kernel_matrix) };
                 }
                 break;
@@ -385,6 +388,7 @@ void gpu_csvm<device_ptr_t, queue_t, pinned_memory_t>::blas_level_3(const solver
                 // unreachable
                 break;
             case solver_type::cg_explicit:
+            case solver_type::cg_streaming:
                 {
                     const auto &A_d = detail::move_only_any_cast<const device_ptr_type &>(A[device_id]);
                     PLSSVM_ASSERT(!A_d.empty(), "The A matrix must not be empty!");

@@ -15,13 +15,12 @@
 
 #include "CL/cl.h"  // cl_context, cl_platform_id, cl_device_id
 
-#include <vector>  // std::vector
-
 namespace plssvm::opencl::detail {
 
 /**
  * @brief RAII wrapper class around a cl_context.
- * @details Also contains the associated platform and a list of all associated devices.
+ * @details Also contains the associated platform and device.
+ * @note Each context is guaranteed to only contain a single device, i.e., on multi-device system, one context for each device is created.
  */
 class context {
   public:
@@ -35,7 +34,7 @@ class context {
      * @param[in] platform the OpenCL platform associated with this OpenCL context
      * @param[in] devices the list of devices associated with this OpenCL cl_context
      */
-    context(cl_context device_context, cl_platform_id platform, std::vector<cl_device_id> devices);
+    context(cl_context device_context, cl_platform_id platform, cl_device_id device);
 
     /**
      * @brief Delete copy-constructor to make context a move only type.
@@ -78,8 +77,8 @@ class context {
     cl_context device_context{};
     /// The OpenCL platform associated with this context.
     cl_platform_id platform{};
-    /// All devices associated with this context.
-    std::vector<cl_device_id> devices{};
+    /// The device associated with this context.
+    cl_device_id device{};
 };
 
 }  // namespace plssvm::opencl::detail

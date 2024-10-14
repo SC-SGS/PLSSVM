@@ -32,6 +32,7 @@ class device_ptr : public ::plssvm::detail::gpu_device_ptr<T, int, T *, device_p
     using base_type::data_;
     using base_type::queue_;
     using base_type::shape_;
+    using base_type::use_usm_allocations_;
 
   public:
     // Be able to use overloaded base class functions.
@@ -58,24 +59,27 @@ class device_ptr : public ::plssvm::detail::gpu_device_ptr<T, int, T *, device_p
      * @brief Allocates `size * sizeof(T)` bytes on the device with ID @p device.
      * @param[in] size the number of elements represented by the device_ptr
      * @param[in] device the associated CUDA device
+     * @param[in] use_usm_allocations if `true` use USM allocations
      * @throws plssvm::cuda::backend_exception if the given device ID is smaller than 0 or greater or equal than the available number of devices
      */
-    explicit device_ptr(size_type size, queue_type device);
+    device_ptr(size_type size, queue_type device, bool use_usm_allocations = false);
     /**
      * @brief Allocates `shape.x * shape.y * sizeof(T)` bytes on the device with ID @p device.
      * @param[in] shape the number of elements represented by the device_ptr
      * @param[in] device the associated CUDA device
+     * @param[in] use_usm_allocations if `true` use USM allocations
      * @throws plssvm::cuda::backend_exception if the given device ID is smaller than 0 or greater or equal than the available number of devices
      */
-    explicit device_ptr(plssvm::shape shape, queue_type device);
+    device_ptr(plssvm::shape shape, queue_type device, bool use_usm_allocations = false);
     /**
      * @brief Allocates `(shape.x + padding.x) * (shape.y + padding.y) * sizeof(T)` bytes on the device with ID @p device.
      * @param[in] shape the number of elements represented by the device_ptr
      * @param[in] padding the number of padding elements added to the extent values
      * @param[in] device the associated CUDA device
+     * @param[in] use_usm_allocations if `true` use USM allocations
      * @throws plssvm::cuda::backend_exception if the given device ID is smaller than 0 or greater or equal than the available number of devices
      */
-    device_ptr(plssvm::shape shape, plssvm::shape padding, queue_type device);
+    device_ptr(plssvm::shape shape, plssvm::shape padding, queue_type device, bool use_usm_allocations = false);
 
     /**
      * @copydoc plssvm::detail::gpu_device_ptr::gpu_device_ptr(const plssvm::detail::gpu_device_ptr &)

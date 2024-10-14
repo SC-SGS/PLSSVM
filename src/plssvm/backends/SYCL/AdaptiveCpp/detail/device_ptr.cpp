@@ -26,17 +26,21 @@
 namespace plssvm::adaptivecpp::detail {
 
 template <typename T>
-device_ptr<T>::device_ptr(const size_type size, const queue &q) :
-    device_ptr{ plssvm::shape{ size, 1 }, plssvm::shape{ 0, 0 }, q } { }
+device_ptr<T>::device_ptr(const size_type size, const queue &q, const bool use_usm_allocations) :
+    device_ptr{ plssvm::shape{ size, 1 }, plssvm::shape{ 0, 0 }, q, use_usm_allocations } { }
 
 template <typename T>
-device_ptr<T>::device_ptr(const plssvm::shape shape, const queue &q) :
-    device_ptr{ shape, plssvm::shape{ 0, 0 }, q } { }
+device_ptr<T>::device_ptr(const plssvm::shape shape, const queue &q, const bool use_usm_allocations) :
+    device_ptr{ shape, plssvm::shape{ 0, 0 }, q, use_usm_allocations } { }
 
 template <typename T>
-device_ptr<T>::device_ptr(const plssvm::shape shape, const plssvm::shape padding, const queue &q) :
-    base_type{ shape, padding, q } {
-    data_ = ::sycl::malloc_device<value_type>(this->size_padded(), queue_.impl->sycl_queue);
+device_ptr<T>::device_ptr(const plssvm::shape shape, const plssvm::shape padding, const queue &q, const bool use_usm_allocations) :
+    base_type{ shape, padding, q, use_usm_allocations } {
+    if (use_usm_allocations_) {
+        data_ = ::sycl::malloc_shared<value_type>(this->size_padded(), queue_.impl->sycl_queue);
+    } else {
+        data_ = ::sycl::malloc_device<value_type>(this->size_padded(), queue_.impl->sycl_queue);
+    }
     this->memset(0);
 }
 

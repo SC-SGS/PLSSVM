@@ -150,7 +150,7 @@ std::size_t csvm::get_max_work_group_size(const std::size_t device_id) const {
 //                        fit                        //
 //***************************************************//
 
-auto csvm::run_assemble_kernel_matrix_explicit(const std::size_t device_id, const ::plssvm::detail::execution_range &exec, const parameter &params, const device_ptr_type &data_d, const device_ptr_type &q_red_d, real_type QA_cost) const -> device_ptr_type {
+auto csvm::run_assemble_kernel_matrix_explicit(const std::size_t device_id, const ::plssvm::detail::execution_range &exec, const parameter &params, const bool use_usm_allocations, const device_ptr_type &data_d, const device_ptr_type &q_red_d, real_type QA_cost) const -> device_ptr_type {
     const unsigned long long num_rows_reduced = data_d.shape().x - 1;
     const unsigned long long num_features = data_d.shape().y;
     const queue_type &device = devices_[device_id];
@@ -165,7 +165,10 @@ auto csvm::run_assemble_kernel_matrix_explicit(const std::size_t device_id, cons
     const ::plssvm::detail::triangular_data_distribution &dist = dynamic_cast<::plssvm::detail::triangular_data_distribution &>(*data_distribution_);
     const std::size_t num_entries_padded = dist.calculate_explicit_kernel_matrix_num_entries_padded(device_id);
 
-    device_ptr_type kernel_matrix_d{ num_entries_padded, device };  // only explicitly store the upper triangular matrix
+    // only store the upper triangular matrix
+    // if solver == solver_type::cg_explicit: store it explicitly
+    // if solver == solver_type::cg_streaming: store it using USM
+    device_ptr_type kernel_matrix_d{ num_entries_padded, device, use_usm_allocations };
     const real_type cost_factor = real_type{ 1.0 } / params.cost;
 
     // convert execution range block to CUDA's native dim3

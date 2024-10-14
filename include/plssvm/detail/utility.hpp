@@ -51,6 +51,21 @@
 namespace plssvm::detail {
 
 /**
+ * @brief Shorthand for a more readable `std::visit` overload set.
+ * @tparam Ts the visited types
+ */
+template <class... Ts>
+struct visit_overload : Ts... {
+    using Ts::operator()...;
+};
+
+/**
+ * @brief plssvm::detail::visit_overload
+ */
+template <class... Ts>
+visit_overload(Ts...) -> visit_overload<Ts...>;
+
+/**
  * @brief Invokes undefined behavior. Used to mark code paths that may never be reachable.
  * @details See: C++23 [`std::unreachable`](https://en.cppreference.com/w/cpp/utility/unreachable)
  */

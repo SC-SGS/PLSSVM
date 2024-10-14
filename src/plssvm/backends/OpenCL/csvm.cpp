@@ -106,16 +106,9 @@ void csvm::init(const target_platform target) {
     // get all available OpenCL contexts for the current target including devices with respect to the requested target platform
     std::tie(contexts_, target_) = detail::get_contexts(target);
 
-    // currently, only EXACTLY one OpenCL context is allowed
+    // at least one context must be created
     if (contexts_.empty()) {
         throw backend_exception{ fmt::format("No OpenCL context for the target {} could be found!", target_) };
-    } else if (contexts_.size() > 1) {
-        throw backend_exception{ fmt::format("Currently only a single OpenCL context is allowed, but {} were found for the target {}!", contexts_.size(), target_) };
-    }
-
-    // throw exception if no devices for the requested target could be found
-    if (contexts_[0].devices.empty()) {
-        throw backend_exception{ fmt::format("OpenCL backend selected but no devices for the target {} were found!", target) };
     }
 
     // print OpenCL info
@@ -262,7 +255,7 @@ std::size_t csvm::get_max_work_group_size(const std::size_t device_id) const {
 //                        fit                        //
 //***************************************************//
 
-auto csvm::run_assemble_kernel_matrix_explicit(const std::size_t device_id, const ::plssvm::detail::execution_range &exec, const parameter &params, const device_ptr_type &data_d, const device_ptr_type &q_red_d, real_type QA_cost) const -> device_ptr_type {
+auto csvm::run_assemble_kernel_matrix_explicit(const std::size_t device_id, const ::plssvm::detail::execution_range &exec, const parameter &params, const bool use_usm_allocations, const device_ptr_type &data_d, const device_ptr_type &q_red_d, real_type QA_cost) const -> device_ptr_type {
     const cl_ulong num_rows_reduced = data_d.shape().x - 1;
     const cl_ulong num_features = data_d.shape().y;
     const queue_type &device = devices_[device_id];
@@ -277,7 +270,9 @@ auto csvm::run_assemble_kernel_matrix_explicit(const std::size_t device_id, cons
     const ::plssvm::detail::triangular_data_distribution &dist = dynamic_cast<::plssvm::detail::triangular_data_distribution &>(*data_distribution_);
     const std::size_t num_entries_padded = dist.calculate_explicit_kernel_matrix_num_entries_padded(device_id);
 
-    device_ptr_type kernel_matrix_d{ num_entries_padded, device };  // only explicitly store the upper triangular matrix
+    // if solver == solver_type::cg_explicit: store it explicitly
+    // if solver == solver_type::cg_streaming: store it using USM
+    device_ptr_type kernel_matrix_d{ num_entries_padded, device, use_usm_allocations };
     const real_type cost_factor = real_type{ 1.0 } / params.cost;
 
     // convert execution range block to OpenCL's native std::vector

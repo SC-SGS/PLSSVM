@@ -20,10 +20,11 @@
 
 #include <tuple>  // std::tuple
 
-template <typename T>
+template <typename T, bool UUA>
 struct dpcpp_device_ptr_test_type {
     using device_ptr_type = plssvm::dpcpp::detail::device_ptr<T>;
     using queue_type = typename device_ptr_type::queue_type;
+    constexpr static bool use_usm_allocations = UUA;
 
     static const queue_type &default_queue() {
         static const queue_type queue = plssvm::dpcpp::detail::get_default_queue();
@@ -31,7 +32,7 @@ struct dpcpp_device_ptr_test_type {
     }
 };
 
-using dpcpp_device_ptr_tuple = std::tuple<dpcpp_device_ptr_test_type<float>, dpcpp_device_ptr_test_type<double>>;
+using dpcpp_device_ptr_tuple = std::tuple<dpcpp_device_ptr_test_type<float, false>, dpcpp_device_ptr_test_type<double, false>>;
 
 // the tests used in the instantiated GTest test suites
 using dpcpp_device_ptr_type_gtest = util::combine_test_parameters_gtest_t<util::cartesian_type_product_t<dpcpp_device_ptr_tuple>>;
@@ -42,3 +43,19 @@ INSTANTIATE_TYPED_TEST_SUITE_P(DPCPPDevicePtr, DevicePtr, dpcpp_device_ptr_type_
 INSTANTIATE_TYPED_TEST_SUITE_P(DPCPPDevicePtr, DevicePtrLayout, dpcpp_device_ptr_layout_type_gtest, naming::test_parameter_to_name);
 
 INSTANTIATE_TYPED_TEST_SUITE_P(DPCPPDevicePtrDeathTest, DevicePtrDeathTest, dpcpp_device_ptr_type_gtest, naming::test_parameter_to_name);
+
+//
+// test USM pointer
+//
+
+using dpcpp_device_ptr_usm_tuple = std::tuple<dpcpp_device_ptr_test_type<float, true>, dpcpp_device_ptr_test_type<double, true>>;
+
+// the tests used in the instantiated GTest test suites
+using dpcpp_device_ptr_usm_type_gtest = util::combine_test_parameters_gtest_t<util::cartesian_type_product_t<dpcpp_device_ptr_usm_tuple>>;
+using dpcpp_device_ptr_usm_layout_type_gtest = util::combine_test_parameters_gtest_t<util::cartesian_type_product_t<dpcpp_device_ptr_usm_tuple>, util::layout_type_list>;
+
+// instantiate type-parameterized tests
+INSTANTIATE_TYPED_TEST_SUITE_P(DPCPPDevicePtrUSM, DevicePtr, dpcpp_device_ptr_usm_type_gtest, naming::test_parameter_to_name);
+INSTANTIATE_TYPED_TEST_SUITE_P(DPCPPDevicePtrUSM, DevicePtrLayout, dpcpp_device_ptr_usm_layout_type_gtest, naming::test_parameter_to_name);
+
+INSTANTIATE_TYPED_TEST_SUITE_P(DPCPPDevicePtrUSMDeathTest, DevicePtrDeathTest, dpcpp_device_ptr_usm_type_gtest, naming::test_parameter_to_name);

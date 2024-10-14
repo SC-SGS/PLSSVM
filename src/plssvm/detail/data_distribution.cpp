@@ -18,6 +18,7 @@
 #include <algorithm>  // std::max, std::fill
 #include <cstddef>    // std::size_t
 #include <ostream>    // std::ostream
+#include <utility>    // std::pair, std::make_pair
 #include <vector>     // std::vector
 
 [[nodiscard]] std::size_t calculate_data_set_num_entries(const std::size_t num_data_points, const std::size_t num_features) noexcept {
@@ -168,6 +169,51 @@ std::vector<memory_size> triangular_data_distribution::calculate_maximum_explici
     }
 
     return res;
+}
+
+std::pair<memory_size, std::vector<memory_size>> triangular_data_distribution::calculate_maximum_streaming_kernel_matrix_memory_needed_per_place(const std::size_t num_features, const std::size_t num_classes) const {
+    PLSSVM_ASSERT(num_features > 0, "At least one feature must be present!");
+    PLSSVM_ASSERT(num_classes > 0, "At least two classes must be present!");
+
+    const std::size_t num_places = this->num_places();
+    const std::size_t num_rows = this->num_rows() + 1;  // account for dimensional reduction
+    // first: system memory
+    // second: device memory
+    std::pair<memory_size, std::vector<memory_size>> res = std::make_pair(0_B, std::vector<memory_size>(num_places, 0_B));
+
+    for (std::size_t device_id = 0; device_id < num_places; ++device_id) {
+        // check whether the current device is responsible for at least one data point!
+        if (this->place_specific_num_rows(device_id) == 0) {
+            continue;
+        }
+
+        // data set including padding
+        const std::size_t data_set_size = ::calculate_data_set_num_entries(num_rows, num_features);
+
+        // the size of q_red
+        const std::size_t q_red_size = ::calculate_q_red_num_entries(num_rows);
+
+        // the size of the explicitly stored kernel matrix
+        const std::size_t kernel_matrix_size{ this->calculate_explicit_kernel_matrix_num_entries_padded(device_id) };
+
+        // the B and C matrices for the explicit SYMM kernel
+        std::size_t blas_matrices_size = 2 * ::calculate_blas_matrix_entries(num_rows, num_classes);
+        if (device_id == 0 && num_places > 1) {
+            // device 0 has to save an additional matrix used to accumulate the partial results from the other devices
+            blas_matrices_size += ::calculate_blas_matrix_entries(num_rows, num_classes);
+        }
+
+        // add up the individual sizes and report the memory size in BYTES
+        // for streaming, the kernel matrix is on the host, while everything else is on the device
+        res.first += memory_size{ sizeof(real_type) * kernel_matrix_size };
+        res.second[device_id] = memory_size{ sizeof(real_type) * (q_red_size + std::max(data_set_size, blas_matrices_size)) };
+    }
+
+    return res;
+}
+
+std::vector<memory_size> triangular_data_distribution::calculate_maximum_streaming_kernel_matrix_memory_allocation_size_per_place(const std::size_t num_features, const std::size_t num_classes) const {
+    return this->calculate_maximum_explicit_kernel_matrix_memory_allocation_size_per_place(num_features, num_classes);
 }
 
 std::vector<memory_size> triangular_data_distribution::calculate_maximum_explicit_kernel_matrix_memory_allocation_size_per_place(const std::size_t num_features, const std::size_t num_classes) const {

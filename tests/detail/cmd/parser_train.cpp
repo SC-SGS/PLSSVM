@@ -383,7 +383,7 @@ TEST_P(ParserTrainSolver, parsing) {
 // clang-format off
 INSTANTIATE_TEST_SUITE_P(ParserTrain, ParserTrainSolver, ::testing::Combine(
                 ::testing::Values("-l", "--solver"),
-                ::testing::Values(plssvm::solver_type::automatic, plssvm::solver_type::cg_explicit, plssvm::solver_type::cg_implicit)),
+                ::testing::Values(plssvm::solver_type::automatic, plssvm::solver_type::cg_explicit, plssvm::solver_type::cg_streaming, plssvm::solver_type::cg_implicit)),
                 naming::pretty_print_parameter_flag_and_value<ParserTrainSolver>);
 // clang-format on
 

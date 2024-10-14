@@ -194,6 +194,7 @@ template <typename csvm_type, typename device_ptr_type, typename matrix_type, ty
                 return result;  // dummy return only necessary for the DeathTests -> VALUE NOT USED!
             }
         case plssvm::solver_type::cg_explicit:
+        case plssvm::solver_type::cg_streaming:
             // no additional arguments are used
             return init_explicit_matrices<csvm_type, device_ptr_type>(std::move(matr), csvm);
         case plssvm::solver_type::cg_implicit:
@@ -900,7 +901,7 @@ TYPED_TEST_P(GenericCSVMSolverKernelFunction, assemble_kernel_matrix_minimal) {
 #else
         SUCCEED() << "Solver type is automatic, but assertions are disabled!";
 #endif
-    } else if constexpr (solver == plssvm::solver_type::cg_explicit) {
+    } else if constexpr (solver == plssvm::solver_type::cg_explicit || solver == plssvm::solver_type::cg_streaming) {
         // run the assemble the kernel matrix kernels
         const std::vector<plssvm::detail::move_only_any> kernel_matrix_d = svm.assemble_kernel_matrix(solver, params, data, q_red, QA_cost);
         ASSERT_EQ(kernel_matrix_d.size(), num_devices);
@@ -1010,7 +1011,7 @@ TYPED_TEST_P(GenericCSVMSolverKernelFunction, assemble_kernel_matrix) {
 #else
         SUCCEED() << "Solver type is automatic, but assertions are disabled!";
 #endif
-    } else if constexpr (solver == plssvm::solver_type::cg_explicit) {
+    } else if constexpr (solver == plssvm::solver_type::cg_explicit || solver == plssvm::solver_type::cg_streaming) {
         // run the assemble the kernel matrix kernels
         const std::vector<plssvm::detail::move_only_any> kernel_matrix_d = svm.assemble_kernel_matrix(solver, params, data, q_red, QA_cost);
         ASSERT_EQ(kernel_matrix_d.size(), num_devices);

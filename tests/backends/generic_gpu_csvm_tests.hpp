@@ -409,7 +409,82 @@ TYPED_TEST_P(GenericGPUCSVMKernelFunction, run_assemble_kernel_matrix_explicit) 
         const plssvm::detail::execution_range exec{ block, svm.get_max_work_group_size(device_id), grid, svm.get_max_grid_size(device_id) };
 
         // calculate the current part of the kernel matrix
-        const device_ptr_type kernel_matrix_d = svm.run_assemble_kernel_matrix_explicit(device_id, exec, params, data_d, q_red_d, QA_cost);
+        const device_ptr_type kernel_matrix_d = svm.run_assemble_kernel_matrix_explicit(device_id, exec, params, false, data_d, q_red_d, QA_cost);
+
+        // copy the kernel matrix back to the host
+        std::vector<plssvm::real_type> kernel_matrix(kernel_matrix_d.size());
+        kernel_matrix_d.copy_to_host(kernel_matrix);
+
+        // calculate ground truth
+        const std::vector<plssvm::real_type> correct_kernel_matrix = ground_truth::assemble_device_specific_kernel_matrix(params, data_matr, q_red, QA_cost, *svm.data_distribution_, device_id);
+
+        // check for correctness
+        ASSERT_EQ(kernel_matrix.size(), correct_kernel_matrix.size());
+        EXPECT_FLOATING_POINT_VECTOR_NEAR_EPS(kernel_matrix, correct_kernel_matrix, 1e6);
+    }
+}
+
+TYPED_TEST_P(GenericGPUCSVMKernelFunction, run_assemble_kernel_matrix_explicit_USM) {
+    using csvm_test_type = util::test_parameter_type_at_t<0, TypeParam>;
+    using mock_csvm_type = typename csvm_test_type::mock_csvm_type;
+    using device_ptr_type = typename csvm_test_type::device_ptr_type;
+    constexpr plssvm::kernel_function_type kernel = util::test_parameter_value_at_v<0, TypeParam>;
+
+    plssvm::parameter params{ plssvm::kernel_type = kernel };
+    if constexpr (kernel != plssvm::kernel_function_type::linear) {
+        params.gamma = plssvm::real_type{ 0.001 };
+    }
+    const plssvm::data_set data{ PLSSVM_TEST_FILE };
+    auto data_matr{ data.data() };
+    if constexpr (kernel == plssvm::kernel_function_type::chi_squared) {
+        // chi-squared is well-defined for non-negative values only
+        data_matr = util::matrix_abs(data_matr);
+    }
+
+    // create C-SVM: must be done using the mock class since the member function to test is private or protected
+    const mock_csvm_type svm = util::construct_from_tuple<mock_csvm_type>(params, csvm_test_type::additional_arguments);
+    const std::size_t num_devices = svm.num_available_devices();
+    // be sure to use the correct data distribution
+    svm.data_distribution_ = std::make_unique<plssvm::detail::triangular_data_distribution>(data.num_data_points() - 1, num_devices);
+
+    // perform dimensional reduction
+    const auto [q_red, QA_cost] = ground_truth::perform_dimensional_reduction(params, data_matr);
+
+    for (std::size_t device_id = 0; device_id < num_devices; ++device_id) {
+        SCOPED_TRACE(fmt::format("device_id {} ({}/{})", device_id, device_id + 1, num_devices));
+
+        // check whether the current device is responsible for at least one data point!
+        if (svm.data_distribution_->place_specific_num_rows(device_id) == 0) {
+            continue;
+        }
+        auto &device = svm.devices_[device_id];
+
+        // upload complete A and q_red to each device
+        device_ptr_type data_d{ data_matr.shape(), data_matr.padding(), device };
+        data_d.copy_to_device(data_matr);
+
+        device_ptr_type q_red_d{ q_red.size() + plssvm::PADDING_SIZE, device };
+        q_red_d.copy_to_device(q_red, 0, q_red.size());
+
+        // kernel launch specific sizes
+        const unsigned long long num_rows_reduced = data_matr.shape().x;
+        const unsigned long long device_specific_num_rows = svm.data_distribution_->place_specific_num_rows(device_id);
+        const unsigned long long device_row_offset = svm.data_distribution_->place_row_offset(device_id);
+
+        // the block dimension is THREAD_BLOCK_SIZE x THREAD_BLOCK_SIZE
+        const plssvm::detail::dim_type block{ std::size_t{ plssvm::THREAD_BLOCK_SIZE }, std::size_t{ plssvm::THREAD_BLOCK_SIZE } };
+
+        // define the full execution grid
+        const plssvm::detail::dim_type grid{
+            static_cast<std::size_t>(std::ceil(static_cast<double>(num_rows_reduced - device_row_offset) / static_cast<double>(block.x * plssvm::INTERNAL_BLOCK_SIZE))),
+            static_cast<std::size_t>(std::ceil(static_cast<double>(device_specific_num_rows) / static_cast<double>(block.y * plssvm::INTERNAL_BLOCK_SIZE)))
+        };
+
+        // create the final execution range
+        const plssvm::detail::execution_range exec{ block, svm.get_max_work_group_size(device_id), grid, svm.get_max_grid_size(device_id) };
+
+        // calculate the current part of the kernel matrix
+        const device_ptr_type kernel_matrix_d = svm.run_assemble_kernel_matrix_explicit(device_id, exec, params, true, data_d, q_red_d, QA_cost);
 
         // copy the kernel matrix back to the host
         std::vector<plssvm::real_type> kernel_matrix(kernel_matrix_d.size());
@@ -606,6 +681,7 @@ TYPED_TEST_P(GenericGPUCSVMKernelFunction, run_predict_kernel) {
 
 REGISTER_TYPED_TEST_SUITE_P(GenericGPUCSVMKernelFunction,
                             run_assemble_kernel_matrix_explicit,
+                            run_assemble_kernel_matrix_explicit_USM,
                             run_assemble_kernel_matrix_implicit_blas_level_3,
                             run_predict_kernel);
 

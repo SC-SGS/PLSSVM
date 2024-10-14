@@ -20,6 +20,7 @@
 #include "CL/cl.h"  // cl_mem
 
 #include <cstddef>  // std::size_t
+#include <variant>  // std::variant
 
 namespace plssvm::opencl::detail {
 
@@ -28,13 +29,14 @@ namespace plssvm::opencl::detail {
  * @tparam T the type of the kernel pointer to wrap
  */
 template <typename T>
-class device_ptr : public ::plssvm::detail::gpu_device_ptr<T, const command_queue *, cl_mem, device_ptr<T>> {
+class device_ptr : public ::plssvm::detail::gpu_device_ptr<T, const command_queue *, std::variant<cl_mem, T*>, device_ptr<T>> {
     /// The template base type of the OpenCL device_ptr class.
-    using base_type = ::plssvm::detail::gpu_device_ptr<T, const command_queue *, cl_mem, device_ptr<T>>;
+    using base_type = ::plssvm::detail::gpu_device_ptr<T, const command_queue *, std::variant<cl_mem, T*>, device_ptr<T>>;
 
     using base_type::data_;
     using base_type::queue_;
     using base_type::shape_;
+    using base_type::use_usm_allocations_;
 
   public:
     // Be able to use overloaded base class functions.
@@ -60,21 +62,24 @@ class device_ptr : public ::plssvm::detail::gpu_device_ptr<T, const command_queu
      * @brief Allocates `size * sizeof(T)` bytes on the device associated with @p queue.
      * @param[in] size the number of elements represented by the device_ptr
      * @param[in] queue the associated command queue
+     * @param[in] use_usm_allocations if `true` use USM allocations
      */
-    device_ptr(size_type size, const command_queue &queue);
+    device_ptr(size_type size, const command_queue &queue, bool use_usm_allocations = false);
     /**
      * @brief Allocates `shape.x * shape.y * sizeof(T)` bytes on the device associated with @p queue.
      * @param[in] shape the number of elements represented by the device_ptr
      * @param[in] queue the associated command queue
+     * @param[in] use_usm_allocations if `true` use USM allocations
      */
-    device_ptr(plssvm::shape shape, const command_queue &queue);
+    device_ptr(plssvm::shape shape, const command_queue &queue, bool use_usm_allocations = false);
     /**
      * @brief Allocates `(shape.x + padding.x) * (shape.y + padding.y) * sizeof(T)` bytes on the device associated with @p queue.
      * @param[in] shape the number of elements represented by the device_ptr
      * @param[in] padding the number of padding elements added to the extent values
      * @param[in] queue the associated command queue
+     * @param[in] use_usm_allocations if `true` use USM allocations
      */
-    device_ptr(plssvm::shape shape, plssvm::shape padding, const command_queue &queue);
+    device_ptr(plssvm::shape shape, plssvm::shape padding, const command_queue &queue, bool use_usm_allocations = false);
 
     /**
      * @copydoc plssvm::detail::gpu_device_ptr::gpu_device_ptr(const plssvm::detail::gpu_device_ptr &)

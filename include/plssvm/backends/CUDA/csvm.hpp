@@ -22,6 +22,7 @@
 #include "plssvm/detail/memory_size.hpp"                  // plssvm::detail::memory_size
 #include "plssvm/detail/type_traits.hpp"                  // PLSSVM_REQUIRES
 #include "plssvm/parameter.hpp"                           // plssvm::parameter
+#include "plssvm/solver_types.hpp"                        // plssvm::solver_type
 #include "plssvm/target_platforms.hpp"                    // plssvm::target_platform
 
 #include <cstddef>      // std::size_t
@@ -152,7 +153,7 @@ class csvm : public ::plssvm::detail::gpu_csvm<detail::device_ptr, int, detail::
     /**
      * @copydoc plssvm::detail::gpu_csvm::run_assemble_kernel_matrix_explicit
      */
-    [[nodiscard]] device_ptr_type run_assemble_kernel_matrix_explicit(std::size_t device_id, const ::plssvm::detail::execution_range &exec, const parameter &params, const device_ptr_type &data_d, const device_ptr_type &q_red_d, real_type QA_cost) const final;
+    [[nodiscard]] device_ptr_type run_assemble_kernel_matrix_explicit(std::size_t device_id, const ::plssvm::detail::execution_range &exec, const parameter &params, bool use_usm_allocations, const device_ptr_type &data_d, const device_ptr_type &q_red_d, real_type QA_cost) const final;
     /**
      * @copydoc plssvm::detail::gpu_csvm::run_blas_level_3_kernel_explicit
      */
