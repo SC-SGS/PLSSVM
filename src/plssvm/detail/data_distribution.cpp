@@ -205,7 +205,11 @@ std::pair<memory_size, std::vector<memory_size>> triangular_data_distribution::c
 
         // add up the individual sizes and report the memory size in BYTES
         // for streaming, the kernel matrix is on the host, while everything else is on the device
-        res.first += memory_size{ sizeof(real_type) * kernel_matrix_size };
+        res.first += memory_size{ sizeof(real_type) };
+        if (device_id == 0) {
+            // we also store the data set, q vector and BLAS matrices on the system
+            res.first += memory_size{ sizeof(real_type) * (data_set_size + q_red_size + blas_matrices_size) };
+        }
         res.second[device_id] = memory_size{ sizeof(real_type) * (q_red_size + std::max(data_set_size, blas_matrices_size)) };
     }
 
