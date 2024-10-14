@@ -1,0 +1,147 @@
+/**
+ * @file
+ * @author Alexander Van Craen
+ * @author Marcel Breyer
+ * @copyright 2018-today The PLSSVM project - All Rights Reserved
+ * @license This file is part of the PLSSVM project which is released under the MIT license.
+ *          See the LICENSE.md file in the project root for full license information.
+ *
+ * @brief Small wrapper around a Kokkos view.
+ */
+
+#ifndef PLSSVM_BACKENDS_KOKKOS_DETAIL_DEVICE_PTR_HPP_
+#define PLSSVM_BACKENDS_KOKKOS_DETAIL_DEVICE_PTR_HPP_
+#pragma once
+
+#include "plssvm/backends/gpu_device_ptr.hpp"  // plssvm::detail::gpu_device_ptr
+#include "plssvm/shape.hpp"                    // plssvm::shape
+
+#include "Kokkos_Core.hpp"  // TODO:
+
+#include <cstddef>  // std::size_t
+
+namespace plssvm::kokkos::detail {
+
+template <typename T>
+using device_view_type = Kokkos::View<T *, Kokkos::DefaultExecutionSpace>;
+
+template <typename T>
+using device_subview_type = Kokkos::Subview<T *, Kokkos::DefaultExecutionSpace>;
+
+template <typename T>
+using host_view_type = Kokkos::View<T *, Kokkos::HostSpace, Kokkos::MemoryUnmanaged>;
+
+/**
+ * @brief Small wrapper class around a Kokkos view together with commonly used device functions.
+ * @tparam T the type of the kernel view to wrap
+ */
+template <typename T>
+class device_ptr : public ::plssvm::detail::gpu_device_ptr<T, int, device_view_type<T>, device_ptr<T>> {
+    /// The template base type of the Kokkos device_ptr class.
+    using base_type = ::plssvm::detail::gpu_device_ptr<T, int, device_view_type<T>, device_ptr<T>>;
+
+    using base_type::data_;
+    using base_type::queue_;
+    using base_type::shape_;
+
+  public:
+    // Be able to use overloaded base class functions.
+    using base_type::copy_to_device;
+    using base_type::copy_to_device_strided;
+    using base_type::copy_to_host;
+    using base_type::copy_to_other_device;
+    using base_type::fill;
+    using base_type::memset;
+
+    using typename base_type::const_host_pointer_type;
+    using typename base_type::device_pointer_type;
+    using typename base_type::host_pointer_type;
+    using typename base_type::queue_type;
+    using typename base_type::size_type;
+    using typename base_type::value_type;
+
+    // TODO: DOKU
+
+    /**
+     * @brief Default construct a CUDA device_ptr with a size of 0.
+     * @details Always associated with device 0.
+     */
+    device_ptr() = default;
+    /**
+     * @brief Allocates `size * sizeof(T)` bytes on the device with ID @p device.
+     * @param[in] size the number of elements represented by the device_ptr
+     * @param[in] device the associated CUDA device
+     * @throws plssvm::cuda::backend_exception if the given device ID is smaller than 0 or greater or equal than the available number of devices
+     */
+    explicit device_ptr(size_type size, int device);
+    /**
+     * @brief Allocates `shape.x * shape.y * sizeof(T)` bytes on the device with ID @p device.
+     * @param[in] shape the number of elements represented by the device_ptr
+     * @param[in] device the associated CUDA device
+     * @throws plssvm::cuda::backend_exception if the given device ID is smaller than 0 or greater or equal than the available number of devices
+     */
+    explicit device_ptr(plssvm::shape shape, int device);
+    /**
+     * @brief Allocates `(shape.x + padding.x) * (shape.y + padding.y) * sizeof(T)` bytes on the device with ID @p device.
+     * @param[in] shape the number of elements represented by the device_ptr
+     * @param[in] padding the number of padding elements added to the extent values
+     * @param[in] device the associated CUDA device
+     * @throws plssvm::cuda::backend_exception if the given device ID is smaller than 0 or greater or equal than the available number of devices
+     */
+    device_ptr(plssvm::shape shape, plssvm::shape padding, int device);
+
+    /**
+     * @copydoc plssvm::detail::gpu_device_ptr::gpu_device_ptr(const plssvm::detail::gpu_device_ptr &)
+     */
+    device_ptr(const device_ptr &) = delete;
+    /**
+     * @copydoc plssvm::detail::gpu_device_ptr::gpu_device_ptr(plssvm::detail::gpu_device_ptr &&)
+     */
+    device_ptr(device_ptr &&other) noexcept = default;
+
+    /**
+     * @copydoc plssvm::detail::gpu_device_ptr::operator=(const plssvm::detail::gpu_device_ptr &)
+     */
+    device_ptr &operator=(const device_ptr &) = delete;
+    /**
+     * @copydoc plssvm::detail::gpu_device_ptr::operator=(plssvm::detail::gpu_device_ptr &&)
+     */
+    device_ptr &operator=(device_ptr &&other) noexcept = default;
+
+    /**
+     * @copydoc plssvm::detail::gpu_device_ptr::~gpu_device_ptr()
+     */
+    ~device_ptr() override;
+
+    /**
+     * @copydoc plssvm::detail::gpu_device_ptr::memset(int, size_type, size_type)
+     */
+    void memset(int pattern, size_type pos, size_type num_bytes) override;
+    /**
+     * @copydoc plssvm::detail::gpu_device_ptr::fill(value_type, size_type, size_type)
+     */
+    void fill(value_type value, size_type pos, size_type count) override;
+    /**
+     * @copydoc plssvm::detail::gpu_device_ptr::copy_to_device(const_host_pointer_type, size_type, size_type)
+     */
+    void copy_to_device(const_host_pointer_type data_to_copy, size_type pos, size_type count) override;
+    /**
+     * @copydoc plssvm::detail::gpu_device_ptr::copy_to_device_strided(const_host_pointer_type, std::size_t, std::size_t, std::size_t)
+     */
+    void copy_to_device_strided(const_host_pointer_type data_to_copy, std::size_t spitch, std::size_t width, std::size_t height) override;
+    /**
+     * @copydoc plssvm::detail::gpu_device_ptr::copy_to_host(host_pointer_type, size_type, size_type) const
+     */
+    void copy_to_host(host_pointer_type buffer, size_type pos, size_type count) const override;
+    /**
+     * @copydoc plssvm::detail::gpu_device_ptr::copy_to_other_device(derived_gpu_device_ptr &, size_type, size_type) const
+     */
+    void copy_to_other_device(device_ptr &target, size_type pos, size_type count) const override;
+};
+
+extern template class device_ptr<float>;
+extern template class device_ptr<double>;
+
+}  // namespace plssvm::kokkos::detail
+
+#endif  // PLSSVM_BACKENDS_KOKKOS_DETAIL_DEVICE_PTR_HPP_
