@@ -119,8 +119,8 @@ pipeline {
                                         cd $SGSSCRATCH
                                         git clone https://github.com/spack/spack.git spack || true
                                     elif [[ params.update_spack ]]; then
-                                        cd $SGSSCRATCH/spack
-                                        git checkout 594a376 || true
+                                        #cd $SGSSCRATCH/spack
+                                        #git checkout 594a376 || true
                                     fi
                                     source $SGSSCRATCH/spack/share/spack/setup-env.sh
                                     if [[ ! -d  "$SGSSCRATCH/PLSSVM-spack" ]]; then
