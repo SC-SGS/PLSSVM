@@ -399,7 +399,7 @@ export CMAKE_PREFIX_PATH=${CMAKE_INSTALL_PREFIX}/share/plssvm/cmake:${CMAKE_PREF
 export MANPATH=${CMAKE_INSTALL_PREFIX}/share/man:$MANPATH
 
 export PATH=${CMAKE_INSTALL_PREFIX}/bin:${PATH}
-export LD_LIBRARY_PATH=${CMAKE_INSTALL_PREFIX}/lib:${LD_LIBRARY_PATH}
+export LD_LIBRARY_PATH=${CMAKE_INSTALL_PREFIX}/lib:${CMAKE_INSTALL_PREFIX}/lib64:${LD_LIBRARY_PATH}
 export CPLUS_INCLUDE_PATH=${CMAKE_INSTALL_PREFIX}/include:${CPLUS_INCLUDE_PATH}
 ```
 
@@ -724,7 +724,7 @@ except RuntimeError as e:
 **Note:** it may be necessary to set the environment variable `PYTHONPATH` to the `lib` folder in the PLSSVM install path.
 
 ```bash
-export PYTHONPATH=${CMAKE_INSTALL_PREFIX}/lib:${PYTHONPATH}
+export PYTHONPATH=${CMAKE_INSTALL_PREFIX}/lib:${CMAKE_INSTALL_PREFIX}/lib64:${PYTHONPATH}
 ```
 
 We also provide Python bindings for a `plssvm.SVC` class that offers the same interface as the [`sklearn.svm.SVC`](https://scikit-learn.org/stable/modules/generated/sklearn.svm.SVC.html) class.
