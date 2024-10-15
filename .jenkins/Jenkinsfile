@@ -528,6 +528,25 @@ $([[ $BACKEND != OPENMP ]] &&  echo "-E \"Base*\"") # Exclude base tests for all
                                     *) ;;
                                 esac
 
+                                if [[ $ARCHITECTURE == NVIDIA ]]; then
+                                    export ONEAPI_DEVICE_SELECTOR=cuda:*
+                                    export ACPP_VISIBILITY_MASK=cuda
+                                    ONEAPI_DEVICE_SELECTOR=cuda:*
+                                    ACPP_VISIBILITY_MASK=cuda
+                                    export CUDA_VISIBLE_DEVICES=0
+                                elif [[ $ARCHITECTURE == AMD ]]; then
+                                    export ONEAPI_DEVICE_SELECTOR=hip:*
+                                    export ACPP_VISIBILITY_MASK=hip
+                                    ONEAPI_DEVICE_SELECTOR=hip:*
+                                    ACPP_VISIBILITY_MASK=hip
+                                    export HIP_VISIBLE_DEVICES=0
+                                else
+                                    export ONEAPI_DEVICE_SELECTOR=*:cpu
+                                    export ACPP_VISIBILITY_MASK=omp
+                                    ONEAPI_DEVICE_SELECTOR=*:cpu
+                                    ACPP_VISIBILITY_MASK=omp
+                                fi
+
                                 spack load "plssvm@develop $([[ $BACKEND == ADAPTIVECPP ]] && echo "%clang" )\
                                         $([[ $BACKEND == OPENMP ]] && echo " +openmp" || echo "~openmp") \
                                         $([[ $BACKEND == CUDA ]] && echo "+cuda" || echo "~cuda") \
