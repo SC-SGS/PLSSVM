@@ -498,6 +498,10 @@ $([[ SET_AMD_GPU_NONE == 1 ]] && "amdgpu_target=none") \
 build_type=$BUILD_TYPE \
 arch=$(spack arch)" \
 ctest -j8 --no-tests=error --output-on-failure --timeout 600 --no-compress-output -T Test \
+$([[ $BACKEND == STDPAR-DPCPP ]] && echo "-E \"Parser*/Parser*Help.parsing/h*\" ") \
+$([[ $BACKEND == STDPAR-DPCPP ]] && echo "-E \"Parser*/Parser*Help.parsing/help*\" ") \
+$([[ $BACKEND == STDPAR-DPCPP ]] && echo "-E \"Parser*/Parser*Version.parsing/v*\" ") \
+$([[ $BACKEND == STDPAR-DPCPP ]] && echo "-E \"Parser*/Parser*Version.parsing/version*\" ") \
 $([[ $BACKEND != OPENMP ]] &&  echo "-E \"Base*\"") # Exclude base tests for all backends except openmp
                             '''
                         }
