@@ -152,6 +152,12 @@ pipeline {
                                         echo "      - /data/scratch/jenkins/spack_tmp" >> $SPACK_SYSTEM_CONFIG_PATH/config.yaml
                                     fi
 
+                                    bash
+                                    spack external find --scope system || true
+                                    spack external find --scope system cuda || true
+                                    spack external find --scope system  || true
+
+
                                     spack uninstall -a -y plssvm@develop || true
                                 '''
 
@@ -338,13 +344,7 @@ pipeline {
                                             *) ;;
                                         esac
 
-                                        case $ARCHITECTURE in
-                                            NVIDIA)
-                                                module load cuda
-                                                ;;
-                                            *)
-                                                ;;
-                                        esac
+
 
 
 
