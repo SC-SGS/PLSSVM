@@ -338,6 +338,15 @@ pipeline {
                                             *) ;;
                                         esac
 
+                                        case $ARCHITECTURE in
+                                            NVIDIA)
+                                                module load cuda
+                                                ;;
+                                            *)
+                                                ;;
+                                        esac
+
+
 
 
                                         spack uninstall -a -y plssvm@develop$([[ $BACKEND == ADAPTIVECPP ]] && echo "%clang" )  \
