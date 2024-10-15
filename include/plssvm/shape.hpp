@@ -120,7 +120,11 @@ struct hash<plssvm::shape> {
 
 }  // namespace std
 
+/// @cond Doxygen_suppress
+
 template <>
 struct fmt::formatter<plssvm::shape> : fmt::ostream_formatter { };
+
+/// @endcond
 
 #endif  // PLSSVM_SHAPE_HPP_

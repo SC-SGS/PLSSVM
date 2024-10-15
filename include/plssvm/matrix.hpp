@@ -1086,6 +1086,8 @@ using soa_matrix = matrix<T, layout_type::soa>;
 
 }  // namespace plssvm
 
+/// @cond Doxygen_suppress
+
 template <>
 struct fmt::formatter<plssvm::layout_type> : fmt::ostream_formatter { };
 
@@ -1160,5 +1162,7 @@ struct fmt::formatter<plssvm::matrix<T, layout>> {
         return it;
     }
 };
+
+/// @endcond
 
 #endif  // PLSSVM_DETAIL_MATRIX_HPP_

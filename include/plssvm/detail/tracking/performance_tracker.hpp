@@ -126,8 +126,8 @@ template <typename T>
 struct is_tracking_entry : impl::is_tracking_entry<detail::remove_cvref_t<T>> { };
 
 /**
- * @copydoc plssvm::detail::is_tracking_entry
- * @details A shorthand for `plssvm::is_tracking_entry::value`.
+ * @copydoc plssvm::detail::tracking::is_tracking_entry
+ * @details A shorthand for `plssvm::detail::tracking::is_tracking_entry::value`.
  */
 template <typename T>
 constexpr bool is_tracking_entry_v = is_tracking_entry<T>::value;
@@ -440,7 +440,11 @@ void performance_tracker::add_tracking_entry(const tracking_entry<std::vector<T>
 
 }  // namespace plssvm::detail::tracking
 
+/// @cond Doxygen_suppress
+
 template <typename T>
 struct fmt::formatter<plssvm::detail::tracking::tracking_entry<T>> : fmt::ostream_formatter { };
+
+/// @endcond
 
 #endif  // PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_HPP_

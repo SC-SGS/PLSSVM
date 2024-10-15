@@ -196,10 +196,14 @@ class rectangular_data_distribution : public data_distribution {
 
 }  // namespace plssvm::detail
 
+/// @cond Doxygen_suppress
+
 template <>
 struct fmt::formatter<plssvm::detail::triangular_data_distribution> : fmt::ostream_formatter { };
 
 template <>
 struct fmt::formatter<plssvm::detail::rectangular_data_distribution> : fmt::ostream_formatter { };
+
+/// @endcond
 
 #endif  // PLSSVM_DETAIL_DATA_DISTRIBUTION_HPP_
