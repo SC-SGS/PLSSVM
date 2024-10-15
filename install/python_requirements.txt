@@ -20,9 +20,6 @@ matplotlib
 
 ## for the automatic PLSSVM target platform determination
 # argparse
-py-cpuinfo
-GPUtil
-pyamdgpuinfo; platform_system != "Windows"
 pylspci
 
 

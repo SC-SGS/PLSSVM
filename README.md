@@ -179,9 +179,7 @@ Valid targets are:
 
 At least one of the above targets must be present. If the option `PLSSVM_TARGET_PLATFORMS` is not present, the targets 
 are automatically determined using the Python3 `utility_scripts/plssvm_target_platforms.py` script (required Python3 dependencies:
-[`argparse`](https://docs.python.org/3/library/argparse.html), [`py-cpuinfo`](https://pypi.org/project/py-cpuinfo/),
-[`GPUtil`](https://pypi.org/project/GPUtil/), [`pyamdgpuinfo`](https://pypi.org/project/pyamdgpuinfo/), and
-[`pylspci`](https://pypi.org/project/pylspci/)).
+[`argparse`](https://docs.python.org/3/library/argparse.html), and [`pylspci`](https://pypi.org/project/pylspci/)).
 
 Note that when using DPC++ only a single architectural specification for `cpu`, `nvidia` or `amd` is allowed and that
 automatically retrieving AMD GPU information on Windows is currently not supported due to `pyamdgpuinfo` limitations.
@@ -194,8 +192,9 @@ python3 utility_scripts/plssvm_target_platforms.py --help
 usage: plssvm_target_platforms.py [-h] [--quiet]
 
 optional arguments:
-  -h, --help  show this help message and exit
-  --quiet     only output the final PLSSVM_TARGET_PLATFORMS string
+  -h, --help   show this help message and exit
+  --quiet      only output the final PLSSVM_TARGET_PLATFORMS string
+  --gpus_only  only output gpu architectures to the final PLSSVM_TARGET_PLATFORMS string
 ```
 
 Example invocation:
@@ -204,10 +203,9 @@ Example invocation:
 python3 utility_scripts/plssvm_target_platforms.py
 ```
 ```
-Intel(R) Core(TM) i9-10980XE CPU @ 3.00GHz: {'avx512': True, 'avx2': True, 'avx': True, 'sse4_2': True}
+supported CPU SIMD flags: {'avx512': True, 'avx2': True, 'avx': True, 'sse4_2': True}
 
-Found 1 NVIDIA GPU(s):
-  1x NVIDIA GeForce RTX 3080: sm_86
+Found 1 NVIDIA GPU(s): [sm_86]
 
 Possible -DPLSSVM_TARGET_PLATFORMS entries:
 cpu:avx512;nvidia:sm_86
@@ -221,13 +219,11 @@ or with the `--quiet` flag provided:
 python3 utility_scripts/plssvm_target_platforms.py --quiet
 ```
 ```
-cpu:avx512;intel:dg1
+cpu:avx512;nvidia:sm_86
 ```
 
 If the architectural information for the requested GPU could not be retrieved, one option would be to have a look at:
 
-- for NVIDIA GPUs:  [Your GPU Compute Capability](https://developer.nvidia.com/cuda-gpus)
-- for AMD GPUs: [clang AMDGPU backend usage](https://llvm.org/docs/AMDGPUUsage.html)
 - for Intel GPUs and CPUs: [Ahead of Time Compilation](https://www.intel.com/content/www/us/en/develop/documentation/oneapi-dpcpp-cpp-compiler-dev-guide-and-reference/top/compilation/ahead-of-time-compilation.html) and [Intel graphics processor table](https://dgpu-docs.intel.com/devices/hardware-table.html)
 
 
