@@ -2455,5 +2455,5 @@ TYPED_TEST(MatrixDeathTest, subscript_operator_const_out_of_bounce_with_padding)
     const plssvm::matrix<real_type, layout> matr{ plssvm::shape{ 2, 2 }, plssvm::shape{ 4, 5 } };
 
     // try out-of-bounce access
-    EXPECT_DEATH(std::ignore = matr[36], ::testing::HasSubstr("The current index (36) must be smaller than the total number of matrix entries (25)!"));
+    EXPECT_DEATH(std::ignore = matr[42], ::testing::HasSubstr("The current index (42) must be smaller than the total number of matrix entries (42)!"));
 }
