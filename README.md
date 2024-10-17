@@ -341,6 +341,67 @@ If the stdpar backend is available, an additional options can be set.
 
 - `PLSSVM_STDPAR_BACKEND_IMPLEMENTATION` (default: `AUTO`): explicitly specify the used stdpar implementation; must be one of: `AUTO`, `NVHPC`, `roc-stdpar`, `IntelLLVM`, `ACPP`, `GNU_TBB`.
 
+#### CMake presets
+
+We also provide a number of basic CMake presets. We currently have `configure`, `build`, `test`, and `workflow` presets. 
+As an example, to list the available `configure` presets, `cmake --list-presets` is used 
+(for more information regarding CMake presets see the [CMake documentation](https://cmake.org/cmake/help/latest/manual/cmake-presets.7.html)):
+
+```bash
+Available configure presets:
+
+  "openmp"                  - OpenMP backend
+  "openmp_python"           - OpenMP backend + Python bindings
+  "openmp_test"             - OpenMP backend tests
+  "cuda"                    - CUDA backend
+  "cuda_python"             - CUDA backend + Python bindings
+  "cuda_test"               - CUDA backend tests
+  "hip"                     - HIP backend
+  "hip_python"              - HIP backend + Python bindings
+  "hip_test"                - HIP backend tests
+  "opencl"                  - OpenCL backend
+  "opencl_python"           - OpenCL backend + Python bindings
+  "opencl_test"             - OpenCL backend tests
+  "acpp"                    - AdaptiveCpp SYCL backend
+  "acpp_python"             - AdaptiveCpp SYCL backend + Python bindings
+  "acpp_test"               - AdaptiveCpp SYCL backend tests
+  "dpcpp"                   - DPC++/icpx SYCL backend
+  "dpcpp_python"            - DPC++/icpx backend + Python bindings
+  "dpcpp_test"              - DPC++/icpx backend tests
+  "all"                     - All available backends
+  "all_python"              - All available backends + Python bindings
+  "all_test"                - All available backends tests
+  "stdpar"                  - stdpar backend
+  "stdpar_python"           - stdpar backend + Python bindings
+  "stdpar_test"             - stdpar backend tests
+  "stdpar_gcc"              - stdpar GCC + TBB backend
+  "stdpar_gcc_python"       - stdpar GCC + TBB backend + Python bindings
+  "stdpar_gcc_test"         - stdpar GCC + TBB backend tests
+  "stdpar_nvhpc"            - stdpar NVHPC (nvc++) backend
+  "stdpar_nvhpc_python"     - stdpar NVHPC (nvc++) backend + Python bindings
+  "stdpar_nvhpc_test"       - stdpar NVHPC (nvc++) backend tests
+  "stdpar_rocstdpar"        - stdpar rocstdpar backend
+  "stdpar_rocstdpar_python" - stdpar rocstdpar backend + Python bindings
+  "stdpar_rocstdpar_test"   - stdpar rocstdpar backend tests
+  "stdpar_acpp"             - stdpar AdaptiveCpp backend
+  "stdpar_acpp_python"      - stdpar AdaptiveCpp backend + Python bindings
+  "stdpar_acpp_test"        - stdpar AdaptiveCpp backend tests
+  "stdpar_intelllvm"        - stdpar IntelLLVM (icpx) backend
+  "stdpar_intelllvm_python" - stdpar IntelLLVM (icpx) backend + Python bindings
+  "stdpar_intelllvm_test"   - stdpar IntelLLVM (icpx) backend tests
+```
+
+With these presets, building and testing, e.g., our CUDA backend is as simple as typing (in the PLSSVM root directory):
+
+```bash
+cmake --workflow --preset cuda_test
+```
+
+**Note**: not all possible combinations of CMake presets are provided by us (e.g., performance tracking and hardware sampling) since that would result in way to many presets.
+However, these additional options can be enabled using normal CMake options. 
+
+**Note**: the `all` presets always exclude the `stdpar` backend since it is currently not supported to enable them with any other backend.
+
 ### Running the Tests
 
 To run the tests after building the library (with `PLSSVM_ENABLE_TESTING` set to `ON`) use:

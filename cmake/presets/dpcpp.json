@@ -1,0 +1,161 @@
+{
+  "version": 6,
+  "include": ["common.json"],
+  "configurePresets": [
+    {
+      "name": "dpcpp",
+      "displayName": "DPC++/icpx SYCL backend",
+      "inherits": "build",
+      "cacheVariables": {
+        "CMAKE_CXX_COMPILER": "clang++",
+        "PLSSVM_ENABLE_SYCL_BACKEND": "ON",
+        "PLSSVM_ENABLE_SYCL_ADAPTIVECPP_BACKEND": "OFF",
+        "PLSSVM_ENABLE_SYCL_DPCPP_BACKEND": "ON",
+        "PLSSVM_SYCL_BACKEND_DPCPP_ENABLE_AOT": "ON",
+        "PLSSVM_SYCL_BACKEND_DPCPP_USE_LEVEL_ZERO": "ON",
+        "PLSSVM_SYCL_BACKEND_DPCPP_GPU_AMD_USE_HIP": "ON",
+        "PLSSVM_SYCL_BACKEND_PREFERRED_IMPLEMENTATION": "dpcpp"
+      }
+    },
+    {
+      "name": "dpcpp_python",
+      "displayName": "DPC++/icpx backend + Python bindings",
+      "inherits": "build",
+      "cacheVariables": {
+        "CMAKE_CXX_COMPILER": "clang++",
+        "PLSSVM_ENABLE_SYCL_BACKEND": "ON",
+        "PLSSVM_ENABLE_SYCL_ADAPTIVECPP_BACKEND": "OFF",
+        "PLSSVM_ENABLE_SYCL_DPCPP_BACKEND": "ON",
+        "PLSSVM_SYCL_BACKEND_DPCPP_ENABLE_AOT": "ON",
+        "PLSSVM_SYCL_BACKEND_DPCPP_USE_LEVEL_ZERO": "ON",
+        "PLSSVM_SYCL_BACKEND_DPCPP_GPU_AMD_USE_HIP": "ON",
+        "PLSSVM_SYCL_BACKEND_PREFERRED_IMPLEMENTATION": "dpcpp",
+        "PLSSVM_ENABLE_LANGUAGE_BINDINGS": "ON",
+        "PLSSVM_ENABLE_PYTHON_BINDINGS": "ON"
+      }
+    },
+    {
+      "name": "dpcpp_test",
+      "displayName": "DPC++/icpx backend tests",
+      "inherits": "test",
+      "cacheVariables": {
+        "CMAKE_CXX_COMPILER": "clang++",
+        "PLSSVM_ENABLE_SYCL_BACKEND": "ON",
+        "PLSSVM_ENABLE_SYCL_ADAPTIVECPP_BACKEND": "OFF",
+        "PLSSVM_ENABLE_SYCL_DPCPP_BACKEND": "ON",
+        "PLSSVM_SYCL_BACKEND_DPCPP_ENABLE_AOT": "ON",
+        "PLSSVM_SYCL_BACKEND_DPCPP_USE_LEVEL_ZERO": "ON",
+        "PLSSVM_SYCL_BACKEND_DPCPP_GPU_AMD_USE_HIP": "ON",
+        "PLSSVM_SYCL_BACKEND_PREFERRED_IMPLEMENTATION": "dpcpp"
+      }
+    }
+  ],
+  "buildPresets": [
+    {
+      "name": "dpcpp",
+      "displayName": "DPC++/icpx SYCL backend",
+      "configurePreset": "dpcpp",
+      "configuration": "RelWithDebInfo",
+      "inherits": "common"
+    },
+    {
+      "name": "dpcpp_python",
+      "displayName": "DPC++/icpx backend + Python bindings",
+      "configurePreset": "dpcpp_python",
+      "configuration": "RelWithDebInfo",
+      "inherits": "common"
+    },
+    {
+      "name": "dpcpp_test",
+      "displayName": "DPC++/icpx SYCL backend tests",
+      "configurePreset": "dpcpp_test",
+      "configuration": "Debug",
+      "inherits": "common"
+    }
+  ],
+  "testPresets": [
+    {
+      "name": "dpcpp_test",
+      "displayName": "DPC++/icpx SYCL backend all tests",
+      "configurePreset": "dpcpp_test",
+      "inherits": "common"
+    },
+    {
+      "name": "dpcpp_backend_test",
+      "displayName": "DPC++/icpx SYCL backend specific tests",
+      "configurePreset": "dpcpp_test",
+      "inherits": "common",
+      "filter": {
+        "include": {
+          "name": "DPCPP.*"
+        }
+      }
+    }
+  ],
+  "workflowPresets": [
+    {
+      "name": "dpcpp",
+      "displayName": "DPC++/icpx SYCL backend workflow",
+      "steps": [
+        {
+          "name": "dpcpp",
+          "type": "configure"
+        },
+        {
+          "name": "dpcpp",
+          "type": "build"
+        }
+      ]
+    },
+    {
+      "name": "dpcpp_python",
+      "displayName": "DPC++/icpx SYCL backend + Python bindings workflow",
+      "steps": [
+        {
+          "name": "dpcpp_python",
+          "type": "configure"
+        },
+        {
+          "name": "dpcpp_python",
+          "type": "build"
+        }
+      ]
+    },
+    {
+      "name": "dpcpp_test",
+      "displayName": "DPC++/icpx SYCL test workflow",
+      "steps": [
+        {
+          "name": "dpcpp_test",
+          "type": "configure"
+        },
+        {
+          "name": "dpcpp_test",
+          "type": "build"
+        },
+        {
+          "name": "dpcpp_test",
+          "type": "test"
+        }
+      ]
+    },
+    {
+      "name": "dpcpp_backend_test",
+      "displayName": "DPC++/icpx SYCL backend test workflow",
+      "steps": [
+        {
+          "name": "dpcpp_test",
+          "type": "configure"
+        },
+        {
+          "name": "dpcpp_test",
+          "type": "build"
+        },
+        {
+          "name": "dpcpp_backend_test",
+          "type": "test"
+        }
+      ]
+    }
+  ]
+}

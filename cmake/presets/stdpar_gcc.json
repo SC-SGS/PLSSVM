@@ -1,0 +1,144 @@
+{
+  "version": 6,
+  "include": ["common.json"],
+  "configurePresets": [
+    {
+      "name": "stdpar_gcc",
+      "displayName": "stdpar GCC + TBB backend",
+      "inherits": "build",
+      "cacheVariables": {
+        "PLSSVM_ENABLE_STDPAR_BACKEND": "ON",
+        "PLSSVM_STDPAR_BACKEND_IMPLEMENTATION": "GNU_TBB"
+      }
+    },
+    {
+      "name": "stdpar_gcc_python",
+      "displayName": "stdpar GCC + TBB backend + Python bindings",
+      "inherits": "build",
+      "cacheVariables": {
+        "PLSSVM_ENABLE_STDPAR_BACKEND": "ON",
+        "PLSSVM_STDPAR_BACKEND_IMPLEMENTATION": "GNU_TBB",
+        "PLSSVM_ENABLE_LANGUAGE_BINDINGS": "ON",
+        "PLSSVM_ENABLE_PYTHON_BINDINGS": "ON"
+      }
+    },
+    {
+      "name": "stdpar_gcc_test",
+      "displayName": "stdpar GCC + TBB backend tests",
+      "inherits": "test",
+      "cacheVariables": {
+        "PLSSVM_ENABLE_ASSERTS": "OFF",
+        "PLSSVM_ENABLE_STDPAR_BACKEND": "ON",
+        "PLSSVM_STDPAR_BACKEND_IMPLEMENTATION": "GNU_TBB"
+      }
+    }
+  ],
+  "buildPresets": [
+    {
+      "name": "stdpar_gcc",
+      "displayName": "stdpar GCC + TBB backend",
+      "configurePreset": "stdpar_gcc",
+      "configuration": "RelWithDebInfo",
+      "inherits": "common"
+    },
+    {
+      "name": "stdpar_gcc_python",
+      "displayName": "stdpar GCC + TBB backend + Python bindings",
+      "configurePreset": "stdpar_gcc_python",
+      "configuration": "RelWithDebInfo",
+      "inherits": "common"
+    },
+    {
+      "name": "stdpar_gcc_test",
+      "displayName": "stdpar GCC + TBB backend tests",
+      "configurePreset": "stdpar_gcc_test",
+      "configuration": "Debug",
+      "inherits": "common"
+    }
+  ],
+  "testPresets": [
+    {
+      "name": "stdpar_gcc_test",
+      "displayName": "stdpar GCC + TBB backend all tests",
+      "configurePreset": "stdpar_gcc_test",
+      "inherits": "common"
+    },
+    {
+      "name": "stdpar_gcc_backend_test",
+      "displayName": "stdpar GCC + TBB backend specific tests",
+      "configurePreset": "stdpar_gcc_test",
+      "inherits": "common",
+      "filter": {
+        "include": {
+          "name": "stdpar.*"
+        }
+      }
+    }
+  ],
+  "workflowPresets": [
+    {
+      "name": "stdpar_gcc",
+      "displayName": "stdpar GCC + TBB backend workflow",
+      "steps": [
+        {
+          "name": "stdpar_gcc",
+          "type": "configure"
+        },
+        {
+          "name": "stdpar_gcc",
+          "type": "build"
+        }
+      ]
+    },
+    {
+      "name": "stdpar_gcc_python",
+      "displayName": "stdpar GCC + TBB backend + Python bindings workflow",
+      "steps": [
+        {
+          "name": "stdpar_gcc_python",
+          "type": "configure"
+        },
+        {
+          "name": "stdpar_gcc_python",
+          "type": "build"
+        }
+      ]
+    },
+    {
+      "name": "stdpar_gcc_test",
+      "displayName": "stdpar GCC + TBB test workflow",
+      "steps": [
+        {
+          "name": "stdpar_gcc_test",
+          "type": "configure"
+        },
+        {
+          "name": "stdpar_gcc_test",
+          "type": "build"
+        },
+        {
+          "name": "stdpar_gcc_test",
+          "type": "test"
+        }
+      ]
+    },
+    {
+      "name": "stdpar_gcc_backend_test",
+      "displayName": "stdpar GCC + TBB backend test workflow",
+      "steps": [
+        {
+          "name": "stdpar_gcc_test",
+          "type": "configure"
+        },
+        {
+          "name": "stdpar_gcc_test",
+          "type": "build"
+        },
+        {
+          "name": "stdpar_gcc_backend_test",
+          "type": "test"
+        }
+      ]
+    }
+  ]
+}

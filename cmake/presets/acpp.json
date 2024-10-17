@@ -1,0 +1,152 @@
+{
+  "version": 6,
+  "include": ["common.json"],
+  "configurePresets": [
+    {
+      "name": "acpp",
+      "displayName": "AdaptiveCpp SYCL backend",
+      "inherits": "build",
+      "cacheVariables": {
+        "PLSSVM_ENABLE_SYCL_BACKEND": "ON",
+        "PLSSVM_ENABLE_SYCL_ADAPTIVECPP_BACKEND": "ON",
+        "PLSSVM_ENABLE_SYCL_DPCPP_BACKEND": "OFF",
+        "PLSSVM_SYCL_BACKEND_ADAPTIVECPP_USE_GENERIC_SSCP": "ON",
+        "PLSSVM_SYCL_BACKEND_PREFERRED_IMPLEMENTATION": "adaptivecpp"
+      }
+    },
+    {
+      "name": "acpp_python",
+      "displayName": "AdaptiveCpp SYCL backend + Python bindings",
+      "inherits": "build",
+      "cacheVariables": {
+        "PLSSVM_ENABLE_SYCL_BACKEND": "ON",
+        "PLSSVM_ENABLE_SYCL_ADAPTIVECPP_BACKEND": "ON",
+        "PLSSVM_ENABLE_SYCL_DPCPP_BACKEND": "OFF",
+        "PLSSVM_SYCL_BACKEND_ADAPTIVECPP_USE_GENERIC_SSCP": "ON",
+        "PLSSVM_SYCL_BACKEND_PREFERRED_IMPLEMENTATION": "adaptivecpp",
+        "PLSSVM_ENABLE_LANGUAGE_BINDINGS": "ON",
+        "PLSSVM_ENABLE_PYTHON_BINDINGS": "ON"
+      }
+    },
+    {
+      "name": "acpp_test",
+      "displayName": "AdaptiveCpp SYCL backend tests",
+      "inherits": "test",
+      "cacheVariables": {
+        "PLSSVM_ENABLE_SYCL_BACKEND": "ON",
+        "PLSSVM_ENABLE_SYCL_ADAPTIVECPP_BACKEND": "ON",
+        "PLSSVM_ENABLE_SYCL_DPCPP_BACKEND": "OFF",
+        "PLSSVM_SYCL_BACKEND_ADAPTIVECPP_USE_GENERIC_SSCP": "ON",
+        "PLSSVM_SYCL_BACKEND_PREFERRED_IMPLEMENTATION": "adaptivecpp"
+      }
+    }
+  ],
+  "buildPresets": [
+    {
+      "name": "acpp",
+      "displayName": "AdaptiveCpp SYCL backend",
+      "configurePreset": "acpp",
+      "configuration": "RelWithDebInfo",
+      "inherits": "common"
+    },
+    {
+      "name": "acpp_python",
+      "displayName": "AdaptiveCpp SYCL backend + Python bindings",
+      "configurePreset": "acpp_python",
+      "configuration": "RelWithDebInfo",
+      "inherits": "common"
+    },
+    {
+      "name": "acpp_test",
+      "displayName": "AdaptiveCpp SYCL backend tests",
+      "configurePreset": "acpp_test",
+      "configuration": "Debug",
+      "inherits": "common"
+    }
+  ],
+  "testPresets": [
+    {
+      "name": "acpp_test",
+      "displayName": "AdaptiveCpp SYCL backend all tests",
+      "configurePreset": "acpp_test",
+      "inherits": "common"
+    },
+    {
+      "name": "acpp_backend_test",
+      "displayName": "AdaptiveCpp SYCL backend specific tests",
+      "configurePreset": "acpp_test",
+      "inherits": "common",
+      "filter": {
+        "include": {
+          "name": "AdaptiveCpp.*"
+        }
+      }
+    }
+  ],
+  "workflowPresets": [
+    {
+      "name": "acpp",
+      "displayName": "AdaptiveCpp SYCL backend workflow",
+      "steps": [
+        {
+          "name": "acpp",
+          "type": "configure"
+        },
+        {
+          "name": "acpp",
+          "type": "build"
+        }
+      ]
+    },
+    {
+      "name": "acpp_python",
+      "displayName": "AdaptiveCpp SYCL backend + Python bindings workflow",
+      "steps": [
+        {
+          "name": "acpp_python",
+          "type": "configure"
+        },
+        {
+          "name": "acpp_python",
+          "type": "build"
+        }
+      ]
+    },
+    {
+      "name": "acpp_test",
+      "displayName": "AdaptiveCpp SYCL test workflow",
+      "steps": [
+        {
+          "name": "acpp_test",
+          "type": "configure"
+        },
+        {
+          "name": "acpp_test",
+          "type": "build"
+        },
+        {
+          "name": "acpp_test",
+          "type": "test"
+        }
+      ]
+    },
+    {
+      "name": "acpp_backend_test",
+      "displayName": "AdaptiveCpp SYCL backend test workflow",
+      "steps": [
+        {
+          "name": "acpp_test",
+          "type": "configure"
+        },
+        {
+          "name": "acpp_test",
+          "type": "build"
+        },
+        {
+          "name": "acpp_backend_test",
+          "type": "test"
+        }
+      ]
+    }
+  ]
+}
