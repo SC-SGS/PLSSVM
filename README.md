@@ -139,10 +139,7 @@ Additional dependencies if `PLSSVM_ENABLE_TESTING` and `PLSSVM_GENERATE_TEST_FIL
 
 Additional dependencies if `PLSSVM_ENABLE_PERFORMANCE_TRACKING` and `PLSSVM_ENABLE_HARDWARE_SAMPLING` are both set to `ON`:
 
-- if a CPU should be targeted (or **optionally** for all targets): at least one of [`turbostat`](https://www.linux.org/docs/man8/turbostat.html) (may require root privileges), [`lscpu`](https://man7.org/linux/man-pages/man1/lscpu.1.html), or [`free`](https://man7.org/linux/man-pages/man1/free.1.html) and the [`subprocess.h`](https://github.com/sheredom/subprocess.h) library (automatically build during the CMake configuration if they couldn't be found using the respective `find_package` call)
-- if an NVIDIA GPU should be targeted: NVIDIA's Management Library [`NVML`](https://docs.nvidia.com/deploy/nvml-api/)
-- if an AMD GPU should be targeted: AMD's ROCm SMI library [`rocm_smi_lib`](https://rocm.docs.amd.com/projects/rocm_smi_lib/en/latest/doxygen/html/modules.html)
-- if an Intel GPU should be targeted: Intel's [`Level Zero library`](https://spec.oneapi.io/level-zero/latest/core/INTRO.html)
+- our hardware sampling library [hws ≥ v1.0.3](https://github.com/SC-SGS/hardware_sampling) (automatically build during the CMake configuration if it couldn't be found using the `find_package` call)
 
 ### Building PLSSVM
 
