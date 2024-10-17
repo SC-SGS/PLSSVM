@@ -61,7 +61,7 @@ The main highlights of our SVM implementations are:
      **Note**: due to the nature of the used USM mechanics in the `stdpar` implementations, the `stdpar` backend **can't** be enabled together with **any** other backend! <br>
      **Note**: since every translation units need to be compiled with the same flag, we currently globally set `CMAKE_CXX_FLAGS` although it's discouraged in favor of `target_compile_options`.
    - [CUDA](https://developer.nvidia.com/cuda-zone)
-   - [HIP](https://github.com/ROCm-Developer-Tools/HIP) (only tested on AMD GPUs)
+   - [HIP](https://github.com/ROCm-Developer-Tools/HIP)
    - [OpenCL](https://www.khronos.org/opencl/)
    - [SYCL](https://www.khronos.org/sycl/) (supported implementations are [DPC++](https://github.com/intel/llvm) and [AdaptiveCpp](https://github.com/AdaptiveCpp/AdaptiveCpp) (formerly known as hipSYCL); specifically the versions [sycl-nightly/20231201](https://github.com/intel/llvm/tree/sycl-nightly/20230110) and AdaptiveCpp release [v24.06.0](https://github.com/AdaptiveCpp/AdaptiveCpp/releases/tag/v23.10.0))
 3. Six different kernel functions to be able to classify a large variety of different problems:
