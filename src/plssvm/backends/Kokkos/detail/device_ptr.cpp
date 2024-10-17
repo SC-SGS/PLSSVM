@@ -15,7 +15,7 @@
 
 #include "Kokkos_Core.hpp"
 
-#include "fmt/format.h"  // fmt::format
+#include "fmt/core.h"  // fmt::format
 
 #include <cstddef>    // std::size_t
 #include <exception>  // std::terminate
@@ -25,31 +25,23 @@
 namespace plssvm::kokkos::detail {
 
 template <typename T>
-device_ptr<T>::device_ptr(const size_type size, const int queue) :
-    device_ptr{ plssvm::shape{ size, 1 }, plssvm::shape{ 0, 0 }, queue } { }
+device_ptr<T>::device_ptr(const size_type size, const Kokkos::DefaultExecutionSpace exec) :
+    device_ptr{ plssvm::shape{ size, 1 }, plssvm::shape{ 0, 0 }, exec } { }
 
 template <typename T>
-device_ptr<T>::device_ptr(const plssvm::shape shape, const int queue) :
-    device_ptr{ shape, plssvm::shape{ 0, 0 }, queue } { }
+device_ptr<T>::device_ptr(const plssvm::shape shape, const Kokkos::DefaultExecutionSpace exec) :
+    device_ptr{ shape, plssvm::shape{ 0, 0 }, exec } { }
 
 template <typename T>
-device_ptr<T>::device_ptr(const plssvm::shape shape, const plssvm::shape padding, const int queue) :
-    base_type{ shape, padding, queue } {
-    static std::size_t count = 0;
-    // TODO: queue type, check range?
-    // TODO: how to assign a view to a GPU in a multi-GPU setting?
-    data_ = device_view_type<T>{ fmt::format("device_ptr_{}", count++), this->size_padded() };
+device_ptr<T>::device_ptr(const plssvm::shape shape, const plssvm::shape padding, const Kokkos::DefaultExecutionSpace exec) :
+    base_type{ shape, padding, exec } {
+    // TODO: GUARD behind ifdef!
+    data_ = device_view_type<T>{ fmt::format("device_{}_view", exec.cuda_device()), this->size_padded() };
 }
 
 template <typename T>
 device_ptr<T>::~device_ptr() {
-    // avoid compiler warnings
-    try {
-        // TODO:
-    } catch (const plssvm::exception &e) {
-        std::cout << e.what_with_loc() << std::endl;
-        std::terminate();
-    }
+    // Kokkos automatically frees the memory of a Kokkos::View if the View goes out of scope
 }
 
 template <typename T>
@@ -65,7 +57,6 @@ void device_ptr<T>::copy_to_device(const_host_pointer_type data_to_copy, const s
     PLSSVM_ASSERT(data_ != view_type<T>{}, "Invalid data pointer! Maybe *this has been default constructed?");
     PLSSVM_ASSERT(data_to_copy != nullptr, "Invalid host pointer for the data to copy!");
 
-    // detail::set_device(queue_);  // TODO:
     const size_type rcount = std::min(count, this->size_padded() - pos);
 
     // create view of the host data
@@ -94,7 +85,6 @@ void device_ptr<T>::copy_to_host(host_pointer_type buffer, const size_type pos, 
     PLSSVM_ASSERT(data_ != view_type<T>{}, "Invalid data pointer! Maybe *this has been default constructed?");
     PLSSVM_ASSERT(buffer != nullptr, "Invalid host pointer for the data to copy!");
 
-    // detail::set_device(queue_);  // TODO:
     const size_type rcount = std::min(count, this->size_padded() - pos);
 
     // create view of the host data

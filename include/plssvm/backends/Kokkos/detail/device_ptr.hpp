@@ -16,7 +16,7 @@
 #include "plssvm/backends/gpu_device_ptr.hpp"  // plssvm::detail::gpu_device_ptr
 #include "plssvm/shape.hpp"                    // plssvm::shape
 
-#include "Kokkos_Core.hpp"  // TODO:
+#include "Kokkos_Core.hpp"  // TODO: Kokkos::DefaultExecutionSpace
 
 #include <cstddef>  // std::size_t
 
@@ -36,9 +36,9 @@ using host_view_type = Kokkos::View<T *, Kokkos::HostSpace, Kokkos::MemoryUnmana
  * @tparam T the type of the kernel view to wrap
  */
 template <typename T>
-class device_ptr : public ::plssvm::detail::gpu_device_ptr<T, int, device_view_type<T>, device_ptr<T>> {
+class device_ptr : public ::plssvm::detail::gpu_device_ptr<T, Kokkos::DefaultExecutionSpace, device_view_type<T>, device_ptr<T>> {
     /// The template base type of the Kokkos device_ptr class.
-    using base_type = ::plssvm::detail::gpu_device_ptr<T, int, device_view_type<T>, device_ptr<T>>;
+    using base_type = ::plssvm::detail::gpu_device_ptr<T, Kokkos::DefaultExecutionSpace, device_view_type<T>, device_ptr<T>>;
 
     using base_type::data_;
     using base_type::queue_;
@@ -60,35 +60,30 @@ class device_ptr : public ::plssvm::detail::gpu_device_ptr<T, int, device_view_t
     using typename base_type::size_type;
     using typename base_type::value_type;
 
-    // TODO: DOKU
-
     /**
-     * @brief Default construct a CUDA device_ptr with a size of 0.
+     * @brief Default construct a Kokkos device_ptr with a size of 0.
      * @details Always associated with device 0.
      */
     device_ptr() = default;
     /**
-     * @brief Allocates `size * sizeof(T)` bytes on the device with ID @p device.
+     * @brief Allocates `size * sizeof(T)` bytes in the Kokkos execution space @p exec.
      * @param[in] size the number of elements represented by the device_ptr
-     * @param[in] device the associated CUDA device
-     * @throws plssvm::cuda::backend_exception if the given device ID is smaller than 0 or greater or equal than the available number of devices
+     * @param[in] exec the associated Kokkos execution space
      */
-    explicit device_ptr(size_type size, int device);
+    explicit device_ptr(size_type size, Kokkos::DefaultExecutionSpace exec);
     /**
-     * @brief Allocates `shape.x * shape.y * sizeof(T)` bytes on the device with ID @p device.
+     * @brief Allocates `shape.x * shape.y * sizeof(T)` bytes in the Kokkos execution space @p exec.
      * @param[in] shape the number of elements represented by the device_ptr
-     * @param[in] device the associated CUDA device
-     * @throws plssvm::cuda::backend_exception if the given device ID is smaller than 0 or greater or equal than the available number of devices
+     * @param[in] exec the associated Kokkos execution space
      */
-    explicit device_ptr(plssvm::shape shape, int device);
+    explicit device_ptr(plssvm::shape shape, Kokkos::DefaultExecutionSpace exec);
     /**
-     * @brief Allocates `(shape.x + padding.x) * (shape.y + padding.y) * sizeof(T)` bytes on the device with ID @p device.
+     * @brief Allocates `(shape.x + padding.x) * (shape.y + padding.y) * sizeof(T)` bytes in the Kokkos execution space @p exec.
      * @param[in] shape the number of elements represented by the device_ptr
      * @param[in] padding the number of padding elements added to the extent values
-     * @param[in] device the associated CUDA device
-     * @throws plssvm::cuda::backend_exception if the given device ID is smaller than 0 or greater or equal than the available number of devices
+     * @param[in] exec the associated Kokkos execution space
      */
-    device_ptr(plssvm::shape shape, plssvm::shape padding, int device);
+    device_ptr(plssvm::shape shape, plssvm::shape padding, Kokkos::DefaultExecutionSpace exec);
 
     /**
      * @copydoc plssvm::detail::gpu_device_ptr::gpu_device_ptr(const plssvm::detail::gpu_device_ptr &)

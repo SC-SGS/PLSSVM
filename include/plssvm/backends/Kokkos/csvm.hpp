@@ -24,6 +24,8 @@
 #include "plssvm/parameter.hpp"                               // plssvm::parameter, plssvm::detail::parameter
 #include "plssvm/target_platforms.hpp"                        // plssvm::target_platform
 
+#include "Kokkos_Core.hpp"  // TODO:
+
 #include <cstddef>      // std::size_t
 #include <type_traits>  // std::true_type
 #include <utility>      // std::forward
@@ -36,11 +38,11 @@ namespace kokkos {
 /**
  * @brief A C-SVM implementation using Kokkos as backend.
  */
-class csvm : public ::plssvm::detail::gpu_csvm<detail::device_ptr, int, detail::pinned_memory> {
+class csvm : public ::plssvm::detail::gpu_csvm<detail::device_ptr, Kokkos::DefaultExecutionSpace, detail::pinned_memory> {
   protected:
     // protected for the test mock class
     /// The template base type of the Kokkos C-SVM class.
-    using base_type = ::plssvm::detail::gpu_csvm<detail::device_ptr, int, detail::pinned_memory>;
+    using base_type = ::plssvm::detail::gpu_csvm<detail::device_ptr, Kokkos::DefaultExecutionSpace, detail::pinned_memory>;
 
     using base_type::data_distribution_;
     using base_type::devices_;
