@@ -15,6 +15,9 @@
 
 #include "CL/cl.h"  // cl_int, CL_SUCCESS
 
+#include "fmt/base.h"     // fmt::formatter
+#include "fmt/ostream.h"  // fmt::ostream_formatter
+
 #include <iosfwd>       // forward declare std::ostream
 #include <string_view>  // std::string_view
 
@@ -106,5 +109,12 @@ std::ostream &operator<<(std::ostream &out, error_code ec);
 [[nodiscard]] bool operator!=(error_code lhs, error_code rhs) noexcept;
 
 }  // namespace plssvm::opencl::detail
+
+/// @cond Doxygen_suppress
+
+template <>
+struct fmt::formatter<plssvm::opencl::detail::error_code> : fmt::ostream_formatter { };
+
+/// @endcond
 
 #endif  // PLSSVM_BACKENDS_OPENCL_DETAIL_ERROR_CODE_HPP_

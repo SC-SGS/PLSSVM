@@ -48,7 +48,11 @@ std::istream &operator>>(std::istream &in, kernel_invocation_type &invocation);
 
 }  // namespace plssvm::sycl
 
+/// @cond Doxygen_suppress
+
 template <>
 struct fmt::formatter<plssvm::sycl::kernel_invocation_type> : fmt::ostream_formatter { };
+
+/// @endcond
 
 #endif  // PLSSVM_BACKENDS_SYCL_KERNEL_INVOCATION_TYPE_HPP_

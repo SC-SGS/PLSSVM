@@ -315,6 +315,8 @@ std::istream &operator>>(std::istream &in, classification_report::zero_division_
 
 }  // namespace plssvm
 
+/// @cond Doxygen_suppress
+
 template <>
 struct fmt::formatter<plssvm::classification_report> : fmt::ostream_formatter { };
 
@@ -323,5 +325,7 @@ struct fmt::formatter<plssvm::classification_report::accuracy_metric> : fmt::ost
 
 template <>
 struct fmt::formatter<plssvm::classification_report::zero_division_behavior> : fmt::ostream_formatter { };
+
+/// @endcond
 
 #endif  // PLSSVM_CLASSIFICATION_REPORT_HPP_

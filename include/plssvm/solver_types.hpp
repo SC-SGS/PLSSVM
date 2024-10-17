@@ -54,7 +54,11 @@ std::istream &operator>>(std::istream &in, solver_type &solving);
 
 }  // namespace plssvm
 
+/// @cond Doxygen_suppress
+
 template <>
 struct fmt::formatter<plssvm::solver_type> : fmt::ostream_formatter { };
+
+/// @endcond
 
 #endif  // PLSSVM_SOLVING_TYPES_HPP_

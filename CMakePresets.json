@@ -1,0 +1,18 @@
+{
+  "version": 6,
+  "include": [
+    "cmake/presets/openmp.json",
+    "cmake/presets/stdpar.json",
+    "cmake/presets/stdpar_gcc.json",
+    "cmake/presets/stdpar_nvhpc.json",
+    "cmake/presets/stdpar_rocstdpar.json",
+    "cmake/presets/stdpar_acpp.json",
+    "cmake/presets/stdpar_intelllvm.json",
+    "cmake/presets/cuda.json",
+    "cmake/presets/hip.json",
+    "cmake/presets/opencl.json",
+    "cmake/presets/acpp.json",
+    "cmake/presets/dpcpp.json",
+    "cmake/presets/all.json"
+  ]
+}

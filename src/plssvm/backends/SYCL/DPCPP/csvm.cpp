@@ -137,7 +137,7 @@ csvm::~csvm() {
     try {
         // be sure that all operations on the SYCL queues have finished before destruction
         for (const queue_type &q : devices_) {
-            device_synchronize(q);
+            detail::device_synchronize(q);
         }
     } catch (const plssvm::exception &e) {
         std::cout << e.what() << std::endl;

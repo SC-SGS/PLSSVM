@@ -17,7 +17,6 @@
 #include "plssvm/detail/memory_size.hpp"         // plssvm::detail::memory_size (literals)
 #include "plssvm/detail/tracking/events.hpp"     // plssvm::detail::tracking::{events, event}
 
-#include "tests/detail/tracking/mock_hardware_sampler.hpp"  // mock_hardware_sampler
 #include "tests/naming.hpp"                                 // naming::test_parameter_to_name
 #include "tests/types_to_test.hpp"                          // util::{label_type_gtest, test_parameter_type_at_t}
 #include "tests/utility.hpp"                                // util::redirect_output
@@ -197,31 +196,6 @@ TEST_F(PerformanceTracker, add_entry_macro) {
 
     // clear tracking entries for next test
     plssvm::detail::tracking::global_performance_tracker().clear_tracking_entries();
-}
-
-TEST_F(PerformanceTracker, add_hardware_sampler_entry_macro) {
-    using namespace std::chrono_literals;
-
-    // create the mocked hardware sampler
-    const mock_hardware_sampler sampler1{ std::size_t{ 0 }, 50ms };
-    const mock_hardware_sampler sampler2{ std::size_t{ 1 }, 100ms };
-
-    EXPECT_CALL(sampler1, generate_yaml_string(::testing::An<std::chrono::steady_clock::time_point>())).Times(1);
-    EXPECT_CALL(sampler1, device_identification()).Times(1);
-    EXPECT_CALL(sampler2, generate_yaml_string(::testing::An<std::chrono::steady_clock::time_point>())).Times(1);
-    EXPECT_CALL(sampler2, device_identification()).Times(1);
-
-    // save the sampling entries
-    PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_HARDWARE_SAMPLER_ENTRY(sampler1);
-    PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_HARDWARE_SAMPLER_ENTRY(sampler2);
-
-    // get the tracking entries
-    const std::map<std::string, std::map<std::string, std::vector<std::string>>> entries = plssvm::detail::tracking::global_performance_tracker().get_tracking_entries();
-
-    // check entries for correctness
-    ASSERT_EQ(entries.size(), 1);
-
-    EXPECT_EQ(entries.at("hardware_samples").size(), 2);
 }
 
 TEST_F(PerformanceTracker, add_event_macro) {
@@ -413,34 +387,6 @@ TEST_F(PerformanceTracker, add_parser_scale_tracking_entry) {
     EXPECT_EQ(entries.size(), 1);
 
     ASSERT_EQ(entries.at("parameter").size(), 10);
-}
-
-TEST_F(PerformanceTracker, add_hardware_sampler_entry) {
-    using namespace std::chrono_literals;
-
-    // create the mocked hardware sampler
-    const mock_hardware_sampler sampler1{ std::size_t{ 0 }, 50ms };
-    const mock_hardware_sampler sampler2{ std::size_t{ 1 }, 100ms };
-
-    EXPECT_CALL(sampler1, generate_yaml_string(::testing::An<std::chrono::steady_clock::time_point>())).Times(1);
-    EXPECT_CALL(sampler1, device_identification()).Times(1);
-    EXPECT_CALL(sampler2, generate_yaml_string(::testing::An<std::chrono::steady_clock::time_point>())).Times(1);
-    EXPECT_CALL(sampler2, device_identification()).Times(1);
-
-    // get performance tracker from fixture class
-    plssvm::detail::tracking::performance_tracker &tracker = this->get_performance_tracker();
-
-    // save the sampling entries
-    tracker.add_hardware_sampler_entry(sampler1);
-    tracker.add_hardware_sampler_entry(sampler2);
-
-    // get the tracking entries
-    const std::map<std::string, std::map<std::string, std::vector<std::string>>> entries = tracker.get_tracking_entries();
-
-    // check entries for correctness
-    ASSERT_EQ(entries.size(), 1);
-
-    EXPECT_EQ(entries.at("hardware_samples").size(), 2);
 }
 
 TEST_F(PerformanceTracker, add_event) {

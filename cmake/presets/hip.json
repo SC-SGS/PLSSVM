@@ -1,0 +1,142 @@
+{
+  "version": 6,
+  "include": [
+    "common.json"
+  ],
+  "configurePresets": [
+    {
+      "name": "hip",
+      "displayName": "HIP backend",
+      "inherits": "build",
+      "cacheVariables": {
+        "PLSSVM_ENABLE_HIP_BACKEND": "ON"
+      }
+    },
+    {
+      "name": "hip_python",
+      "displayName": "HIP backend + Python bindings",
+      "inherits": "build",
+      "cacheVariables": {
+        "PLSSVM_ENABLE_HIP_BACKEND": "ON",
+        "PLSSVM_ENABLE_LANGUAGE_BINDINGS": "ON",
+        "PLSSVM_ENABLE_PYTHON_BINDINGS": "ON"
+      }
+    },
+    {
+      "name": "hip_test",
+      "displayName": "HIP backend tests",
+      "inherits": "test",
+      "cacheVariables": {
+        "PLSSVM_ENABLE_HIP_BACKEND": "ON"
+      }
+    }
+  ],
+  "buildPresets": [
+    {
+      "name": "hip",
+      "displayName": "HIP backend",
+      "configurePreset": "hip",
+      "configuration": "RelWithDebInfo",
+      "inherits": "common"
+    },
+    {
+      "name": "hip_python",
+      "displayName": "HIP backend + Python bindings",
+      "configurePreset": "hip_python",
+      "configuration": "RelWithDebInfo",
+      "inherits": "common"
+    },
+    {
+      "name": "hip_test",
+      "displayName": "HIP backend tests",
+      "configurePreset": "hip_test",
+      "configuration": "Debug",
+      "inherits": "common"
+    }
+  ],
+  "testPresets": [
+    {
+      "name": "hip_test",
+      "displayName": "HIP backend all tests",
+      "configurePreset": "hip_test",
+      "inherits": "common"
+    },
+    {
+      "name": "hip_backend_test",
+      "displayName": "HIP backend specific tests",
+      "configurePreset": "hip_test",
+      "inherits": "common",
+      "filter": {
+        "include": {
+          "name": "HIP.*"
+        }
+      }
+    }
+  ],
+  "workflowPresets": [
+    {
+      "name": "hip",
+      "displayName": "HIP backend workflow",
+      "steps": [
+        {
+          "name": "hip",
+          "type": "configure"
+        },
+        {
+          "name": "hip",
+          "type": "build"
+        }
+      ]
+    },
+    {
+      "name": "hip_python",
+      "displayName": "HIP backend + Python bindings workflow",
+      "steps": [
+        {
+          "name": "hip_python",
+          "type": "configure"
+        },
+        {
+          "name": "hip_python",
+          "type": "build"
+        }
+      ]
+    },
+    {
+      "name": "hip_test",
+      "displayName": "HIP test workflow",
+      "steps": [
+        {
+          "name": "hip_test",
+          "type": "configure"
+        },
+        {
+          "name": "hip_test",
+          "type": "build"
+        },
+        {
+          "name": "hip_test",
+          "type": "test"
+        }
+      ]
+    },
+    {
+      "name": "hip_backend_test",
+      "displayName": "HIP backend test workflow",
+      "steps": [
+        {
+          "name": "hip_test",
+          "type": "configure"
+        },
+        {
+          "name": "hip_test",
+          "type": "build"
+        },
+        {
+          "name": "hip_backend_test",
+          "type": "test"
+        }
+      ]
+    }
+  ]
+}

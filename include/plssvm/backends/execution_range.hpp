@@ -201,10 +201,14 @@ std::ostream &operator<<(std::ostream &out, const execution_range &exec);
 
 }  // namespace plssvm::detail
 
+/// @cond Doxygen_suppress
+
 template <>
 struct fmt::formatter<plssvm::detail::dim_type> : fmt::ostream_formatter { };
 
 template <>
 struct fmt::formatter<plssvm::detail::execution_range> : fmt::ostream_formatter { };
+
+/// @endcond
 
 #endif  // PLSSVM_BACKENDS_EXECUTION_RANGE_HPP_

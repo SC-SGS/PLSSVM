@@ -48,7 +48,11 @@ std::istream &operator>>(std::istream &in, file_format_type &format);
 
 }  // namespace plssvm
 
+/// @cond Doxygen_suppress
+
 template <>
 struct fmt::formatter<plssvm::file_format_type> : fmt::ostream_formatter { };
+
+/// @endcond
 
 #endif  // PLSSVM_FILE_FORMAT_TYPES_HPP_

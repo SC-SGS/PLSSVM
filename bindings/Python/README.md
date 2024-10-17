@@ -15,8 +15,6 @@
         - [plssvm.Version](#plssvmversion)
         - [plssvm.detail.tracking.PerformanceTracker](#plssvmdetailtrackingperformancetracker)
         - [plssvm.detail.tracking.Events](#plssvmdetailtrackingevent-plssvmdetailtrackingevents)
-        - [plssvm.detail.tracking.HardwareSampler](#plssvmdetailtrackinghardwaresampler)
-        - [plssvm.detail.tracking.CpuHardwareSampler, plssvm.detail.tracking.GpuNvidiaHardwareSampler, plssvm.detail.tracking.GpuAmdHardwareSampler, plssvm.detail.tracking.GpuIntelHardwareSampler](#plssvmdetailtrackingcpuhardwaresampler-plssvmdetailtrackinggpunvidiahardwaresampler-plssvmdetailtrackinggpuamdhardwaresampler-plssvmdetailtrackinggpuintelhardwaresampler)
     - [Free functions](#free-functions)
     - [Exceptions](#exceptions)
 
@@ -41,23 +39,23 @@ The following parameters are supported
 by [`sklearn.svm.SVC`](https://scikit-learn.org/stable/modules/generated/sklearn.svm.SVC.html) when construction a
 new `SVC`:
 
-| implementation status | parameter                                                                                  | sklearn description                                                                                                                                                                                                                                                      |
-|:---------------------:|--------------------------------------------------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-|  :white_check_mark:   | `C : real_type, default=1.0`                                                               | Regularization parameter. The strength of the regularization is inversely proportional to C. Must be strictly positive. The penalty is a squared l2 penalty.                                                                                                             |
-|  :white_check_mark:   | `kernel : {'linear', 'poly', 'rbf', 'sigmoid', 'laplacian', 'chi_squared'}, default='rbf'` | Specifies the kernel type to be used in the algorithm. If none is given, 'rbf' will be used. **Note**: 'precomputed' isn't supported, but 'laplacian' and 'chi_squared' are supported in addition.                                                                       |
-|  :white_check_mark:   | `degree : int, default=3`                                                                  | Degree of the polynomial kernel function (‘poly’). Must be non-negative. Ignored by all other kernels.                                                                                                                                                                   |
-|  :white_check_mark:   | `gamma : {'scale', 'auto'} or real_type, default='scale'`                                  | Kernel coefficient for various kernel functions. **Note**: PLSSVM's normal default is `'auto'`.                                                                                                                                                                          |
-|  :white_check_mark:   | `coef0 : real_type, default=0.0`                                                           | Independent term in kernel function. It is only significant in 'poly' or 'sigmoid'.                                                                                                                                                                                      |
-|          :x:          | `shrinking : bool, default=False`                                                          | Whether to use the shrinking heuristic. **Note**: not supported, therefore, the default is set to `False`                                                                                                                                                                |
-|          :x:          | `probability : bool, default=False`                                                        | Whether to enable probability estimates.                                                                                                                                                                                                                                 |
-|  :white_check_mark:   | `tol : real_type, default=1e-3`                                                            | Tolerance for stopping criterion. **Note**: in PLSSVM, this is equal to the (relative) epsilon used in the CG algorithm and, therefore, other values may be necessary than for `sklearn.SVC`'s SVM implementation.                                                       |
-|          :x:          | `cache_size : real_type, default=0`                                                        | Specify the size of the kernel cache (in MB). **Note**: not applicable in PLSSVM.                                                                                                                                                                                        |
-|          :x:          | `class_weight : dict or 'balanced, default=None`                                           | Set the parameter C of class i to class_weight[i]*C for SVC. If not given, all classes are supposed to have weight one.                                                                                                                                                  |
-|  :white_check_mark:   | `verbose : bool, default=False`                                                            | Enable verbose output. **Note**: if set to True, more information will be displayed than it would be the case with LIBSVM (and, therefore, `sklearn.svm.SVC`).                                                                                                           |
-|  :white_check_mark:   | `max_iter : int, default=-1`                                                               | Hard limit on iterations within solver, or -1 for no limit. **Note**: if -1 is provided, at most `#data_points - 1` many CG iterations are performed.                                                                                                                    |
-|  :white_check_mark:   | `decision_function_shape : {'ovr', 'ovo'}, default='ovr'`                                  | Whether to return a one-vs-rest ('ovr') decision function of shape (n_samples, n_classes) as all other classifiers, or the original one-vs-one ('ovo') decision function of libsvm which has shape (n_samples, n_classes * (n_classes - 1) / 2).                         |
-|          :x:          | `break_ties : bool, default=False`                                                         | If true, `decision_function_shape='ovr'`, and number of classes > 2, predict will break ties according to the confidence values of decision_function; otherwise the first class among the tied classes is returned. **Note**: PLSSVM behaves as if `False` was provided. |
-|          :x:          | `random_state : int, RandomState instance or None, default=None`                           | Controls the pseudo random number generation for shuffling the data for probability estimates. Ignored when `probability` is False.                                                                                                                                      |
+| implementation status | parameter                                                                                  | sklearn description                                                                                                                                                                                                                                                  |
+|:---------------------:|--------------------------------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+|  :white_check_mark:   | `C : real_type, default=1.0`                                                               | Regularization parameter. The strength of the regularization is inversely proportional to C. Must be strictly positive. The penalty is a squared l2 penalty.                                                                                                         |
+|  :white_check_mark:   | `kernel : {'linear', 'poly', 'rbf', 'sigmoid', 'laplacian', 'chi_squared'}, default='rbf'` | Specifies the kernel type to be used in the algorithm. If none is given, 'rbf' will be used. **Note**: 'precomputed' is not supported, but 'laplacian' and 'chi_squared' are supported in addition.                                                                  |
+|  :white_check_mark:   | `degree : int, default=3`                                                                  | Degree of the polynomial kernel function (‘poly’). Must be non-negative. Ignored by all other kernels.                                                                                                                                                               |
+|  :white_check_mark:   | `gamma : {'scale', 'auto'} or real_type, default='scale'`                                  | Kernel coefficient for various kernel functions. **Note**: the default in PLSSVM is 'auto'.                                                                                                                                                                          |
+|  :white_check_mark:   | `coef0 : real_type, default=0.0`                                                           | Independent term in kernel function. It is only significant in 'poly' or 'sigmoid'.                                                                                                                                                                                  |
+|          :x:          | `shrinking : bool, default=False`                                                          | Whether to use the shrinking heuristic. **Note**: not supported, therefore, the default is set to `False`                                                                                                                                                            |
+|          :x:          | `probability : bool, default=False`                                                        | Whether to enable probability estimates.                                                                                                                                                                                                                             |
+|  :white_check_mark:   | `tol : real_type, default=1e-3`                                                            | Tolerance for stopping criterion. **Note**: in PLSSVM, this is equal to the (relative) epsilon used in the CG algorithm and, therefore, other values may be necessary than for `sklearn.SVC` SVM implementation.                                                     |
+|          :x:          | `cache_size : real_type, default=0`                                                        | Specify the size of the kernel cache (in MB). **Note**: not applicable in PLSSVM.                                                                                                                                                                                    |
+|          :x:          | `class_weight : dict or 'balanced, default=None`                                           | Set the parameter C of class i to class_weight[i]*C for SVC. If not given, all classes are supposed to have weight one.                                                                                                                                              |
+|  :white_check_mark:   | `verbose : bool, default=False`                                                            | Enable verbose output. **Note**: if set to True, more information will be displayed than it would be the case with LIBSVM (and, therefore, `sklearn.svm.SVC`).                                                                                                       |
+|  :white_check_mark:   | `max_iter : int, default=-1`                                                               | Hard limit on iterations within solver, or -1 for no limit. **Note**: if -1 is provided, at most `#data_points - 1` many CG iterations are performed.                                                                                                                |
+|  :white_check_mark:   | `decision_function_shape : {'ovr', 'ovo'}, default='ovr'`                                  | Whether to return a one-vs-rest ('ovr') decision function of shape (n_samples, n_classes) as all other classifiers, or the original one-vs-one ('ovo') decision function of libsvm which has shape (n_samples, n_classes * (n_classes - 1) / 2).                     |
+|          :x:          | `break_ties : bool, default=False`                                                         | If true, decision_function_shape='ovr', and number of classes > 2, predict will break ties according to the confidence values of decision_function; otherwise the first class among the tied classes is returned. **Note**: PLSSVM behaves as if False was provided. |
+|          :x:          | `random_state : int, RandomState instance or None, default=None`                           | Controls the pseudo random number generation for shuffling the data for probability estimates. Ignored when `probability` is False.                                                                                                                                  |
 
 **Note**: the `plssvm.SVC` automatically uses the optimal (in the sense of performance) backend and target platform, as
 they were made available during PLSSVM's build step.
@@ -162,8 +160,7 @@ More detailed description of the class methods:
     - Returns:
         - `score : float`: Mean accuracy of `self.predict(X)` w.r.t. `y`.
 
-- `set_fit_request(*, sample_weight: bool | None | str = '$UNCHANGED$') → SVC`: Request metadata passed to the fit
-  method.
+- `set_fit_request(*, sample_weight: bool | None | str = "$UNCHANGED$") → SVC`: Request metadata passed to the fit method.
     - Parameters:
         - `sample_weight : str, True, False, or None, default=sklearn.utils.metadata_routing.UNCHANGED`: Metadata
           routing for `sample_weight` parameter in `fit`.
@@ -176,7 +173,7 @@ More detailed description of the class methods:
     - Returns:
         - `self : object`: Estimator instance.
 
-- `set_score_request(*, sample_weight: bool | None | str = '$UNCHANGED$') → SVC`: Request metadata passed to the score
+- `set_score_request(*, sample_weight: bool | None | str = "$UNCHANGED$") → SVC`: Request metadata passed to the score
   method.
     - Parameters:
         - `sample_weightstr, True, False, or None, default=sklearn.utils.metadata_routing.UNCHANGED`: Metadata routing
@@ -432,21 +429,20 @@ A submodule used to track various performance statistics like runtimes, but also
 The tracked metrics can be saved to a YAML file for later post-processing.
 **Note**: only available if PLSSVM was built with `-DPLSSVM_ENABLE_PERFORMANCE_TRACKING=ON`!
 
-| function                                           | description                                                                             |
-|----------------------------------------------------|-----------------------------------------------------------------------------------------|
-| `add_string_tracking_entry(category, name, value)` | Add a new tracking entry to the provided category with the given name and value.        |
-| `add_parameter_tracking_entry(params)`             | Add a new tracking entry for the provided `plssvm.Parameter` object.                    |
-| `add_hardware_sampler_entry(sampler)`              | Add a new tracking entry including all hardware samples collected by the given sampler. |
-| `add_event()`                                      | Add a new generic event to the tracker.                                                 |
-| `pause()`                                          | Pause the current performance tracking.                                                 |
-| `resume()`                                         | Resume performance tracking.                                                            |
-| `save(filename)`                                   | Save all collected tracking information to the provided file.                           |
-| `set_reference_time(time)`                         | Set a new reference time to which the relative event and samples times are calculated.  |
-| `get_reference_time()`                             | Get the current reference type.                                                         |
-| `is_tracking()`                                    | Check whether performance tracking is currently enabled.                                |
-| `get_tracking_entries()`                           | Return a dictionary that contains all previously added tracking entries.                |
-| `get_events()`                                     | Return all previously recorded events.                                                  |
-| `clear_tracking_entries()`                         | Remove all currently tracked entries from the performance tracker.                      |
+| function                                           | description                                                                            |
+|----------------------------------------------------|----------------------------------------------------------------------------------------|
+| `add_string_tracking_entry(category, name, value)` | Add a new tracking entry to the provided category with the given name and value.       |
+| `add_parameter_tracking_entry(params)`             | Add a new tracking entry for the provided `plssvm.Parameter` object.                   |
+| `add_event()`                                      | Add a new generic event to the tracker.                                                |
+| `pause()`                                          | Pause the current performance tracking.                                                |
+| `resume()`                                         | Resume performance tracking.                                                           |
+| `save(filename)`                                   | Save all collected tracking information to the provided file.                          |
+| `set_reference_time(time)`                         | Set a new reference time to which the relative event and samples times are calculated. |
+| `get_reference_time()`                             | Get the current reference type.                                                        |
+| `is_tracking()`                                    | Check whether performance tracking is currently enabled.                               |
+| `get_tracking_entries()`                           | Return a dictionary that contains all previously added tracking entries.               |
+| `get_events()`                                     | Return all previously recorded events.                                                 |
+| `clear_tracking_entries()`                         | Remove all currently tracked entries from the performance tracker.                     |
 
 #### `plssvm.detail.tracking.Event`, `plssvm.detail.tracking.Events`
 
@@ -480,68 +476,6 @@ The `plssvm.detail.tracking.Events` class stores multiple `plssvm.detail.trackin
 | `empty()`                     | Check whether currently any event has been stored/recorded.                   |
 | `get_time_points()`           | Return all recorded time points.                                              |
 | `get_names()`                 | Return all recorded names.                                                    |
-
-#### `plssvm.detail.tracking.HardwareSampler`
-
-The main class responsible for sampling different hardware information like device utilization, clock frequencies,
-memory utilization, or power consumption.
-**Note**: the target specific hardware samplers are only available if the respective target has been enabled during
-PLSSVM's build step.
-These backend specific CSVMs can also directly be used,
-e.g., `plssvm.detail.tracking.HardwareSampler(plssvm.TargetPlatform.GPU_NVIDIA)` is equal
-to `plssvm.detail.tracking.GpuNvidiaHardwareSampler` (the same also holds for all other target platforms).
-**Note**: in this case, the various getters for the hardware samplers will not be available!
-
-| constructors                                            | description                                                                                                                                                             |
-|---------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `HardwareSampler(target, device_id, sampling_interval)` | Create a new hardware sampler for the provided target. The device with the given ID is used and the samples are generated after sampling_interval much time has passed. |
-| `HardwareSampler(target, device_id)`                    | Create a new hardware sampler for the provided target. The device with the given ID is used. The sampling interval is determined during PLSSVM's build step.            |
-
-| methods               | description                                                                                                                      |
-|-----------------------|----------------------------------------------------------------------------------------------------------------------------------|
-| `start()`             | Start the hardware sampling. May only be called once for each hardware sampler.                                                  |
-| `stop()`              | Stop the hardware sampling. May only be called once for each hardware sampler. `start()` must be called first!                   |
-| `pause()`             | Pause the hardware sampling.                                                                                                     |
-| `resume()`            | Resume the hardware sampling.                                                                                                    |
-| `has_started()`       | Check whether the hardware sampling has already started. Also returns `True` after a call to `stop()`.                           |
-| `is_sampling()`       | Check whether the hardware sampler is currently sampling. `True` if the sampler hasn't been started yet or `pause()` was called. |
-| `has_stopped()`       | Check whether the hardware sampling has been stopped.                                                                            |
-| `time_points()`       | Return the time points at which the samples have been queried.                                                                   |
-| `sampling_interval()` | The interval in milliseconds at which the samples are recorded.                                                                  |
-| `sampling_target()`   | Return the `plssvm.TargetPlatform` that is sampled by this hardware sampler.                                                     |
-
-#### `plssvm.detail.tracking.CpuHardwareSampler`, `plssvm.detail.tracking.GpuNvidiaHardwareSampler`, `plssvm.detail.tracking.GpuAmdHardwareSampler`, `plssvm.detail.tracking.GpuIntelHardwareSampler`
-
-These classes represent the target specific hardware sampler.
-**Note**: they are only available if the respective target has been enabled during PLSSVM's build step.
-
-These classes inherit all methods from the base `plssvm.detail.tracking.HardwareSampler` class.
-
-| constructors                                    | description                                                                                                                                     |
-|-------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------|
-| `HardwareSampler(device_id, sampling_interval)` | Create a new hardware sampler. The device with the given ID is used and the samples are generated after sampling_interval much time has passed. |
-| `HardwareSampler(device_id)`                    | Create a new hardware sampler. The device with the given ID is used. The sampling interval is determined during PLSSVM's build step.            |
-
-All hardware samplers have the following additional methods.
-**Note**: the return types differ between the different hardware samplers.
-
-| methods                 | description                                              |
-|-------------------------|----------------------------------------------------------|
-| `general_samples()`     | Return all collect general hardware samples.             |
-| `clock_samples()`       | Return all collect clock related hardware samples.       |
-| `power_samples()`       | Return all collect power related hardware samples.       |
-| `memory_samples()`      | Return all collect memory related hardware samples.      |
-| `temperature_samples()` | Return all collect temperature related hardware samples. |
-
-In case of the CPU hardware sampler, two additional methods are available.
-
-| methods                | description                                             |
-|------------------------|---------------------------------------------------------|
-| `gfx_samples()`        | Return all collect gfx (iGPU) related hardware samples. |
-| `idle_state_samples()` | Return all collect idle state related hardware samples. |
-
-For the definitions and available methods of the returned sampling structs (encapsulating the actual samples using
-optionals), refer to the respective binding implementation files.
 
 ### Free functions
 
@@ -582,15 +516,6 @@ If a stdpar implementation is available, additional free functions are available
 |-------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------|
 | `list_available_stdpar_implementations()` | List all available stdpar implementations (determined during PLSSVM's build step; currently always guaranteed to be only one implementation). |
 
-If hardware sampling is available, additional free functions are available:
-
-| function                            | description                                                                          |
-|-------------------------------------|--------------------------------------------------------------------------------------|
-| `has_cpu_hardware_sampler()`        | Returns `true` if the CPU hardware sampler is available, `false` otherwise.          |
-| `has_gpu_nvidia_hardware_sampler()` | Returns `true` if the NVIDIA GPU hardware sampler is available, `false` otherwise.   |
-| `has_gpu_amd_hardware_sampler()`    | Returns `true` if the NVIDIA AMD hardware sampler is available, `false` otherwise.   |
-| `has_gpu_intel_hardware_sampler()`  | Returns `true` if the NVIDIA Intel hardware sampler is available, `false` otherwise. |
-
 ### Exceptions
 
 The PLSSVM Python3 bindings define a few new exception types:
@@ -607,6 +532,5 @@ The PLSSVM Python3 bindings define a few new exception types:
 | `UnsupportedKernelTypeError` | If an unsupported target platform has been requested.                                                                  |
 | `GPUDevicePtrError`          | If something went wrong in one of the backend's GPU device pointers. **Note**: shouldn't occur in user code.           |
 | `MatrixError`                | If something went wrong in the internal matrix class. **Note**: shouldn't occur in user code.                          |
-| `HardwareSamplerError`       | If something during the hardware sampling went wrong. **Note**: only available if hardware sampling is available!      |
 
 Depending on the available backends, additional `BackendError`s are also available (e.g., `plssvm.cuda.BackendError`).

@@ -74,7 +74,7 @@ void device_ptr<T>::memset(const int pattern, const size_type pos, const size_ty
     const auto correct_value = static_cast<unsigned char>(pattern);
     err = clEnqueueFillBuffer(queue_->queue, data_, &correct_value, sizeof(unsigned char), pos * sizeof(value_type), rnum_bytes, 0, nullptr, nullptr);
     PLSSVM_OPENCL_ERROR_CHECK(err, "error filling the buffer via memset")
-    device_synchronize(*queue_);
+    detail::device_synchronize(*queue_);
 }
 
 template <typename T>
@@ -90,7 +90,7 @@ void device_ptr<T>::fill(const value_type value, const size_type pos, const size
     error_code err;
     err = clEnqueueFillBuffer(queue_->queue, data_, &value, sizeof(value_type), pos * sizeof(value_type), rcount * sizeof(value_type), 0, nullptr, nullptr);
     PLSSVM_OPENCL_ERROR_CHECK(err, "error filling the buffer via fill")
-    device_synchronize(*queue_);
+    detail::device_synchronize(*queue_);
 }
 
 template <typename T>
@@ -102,7 +102,7 @@ void device_ptr<T>::copy_to_device(const_host_pointer_type data_to_copy, const s
     error_code err;
     err = clEnqueueWriteBuffer(queue_->queue, data_, CL_TRUE, pos * sizeof(value_type), rcount * sizeof(value_type), data_to_copy, 0, nullptr, nullptr);
     PLSSVM_OPENCL_ERROR_CHECK(err, "error copying the data to the device buffer")
-    device_synchronize(*queue_);
+    detail::device_synchronize(*queue_);
 }
 
 template <typename T>
@@ -125,7 +125,7 @@ void device_ptr<T>::copy_to_device_strided(const_host_pointer_type data_to_copy,
     error_code err;
     err = clEnqueueWriteBufferRect(queue_->queue, data_, CL_TRUE, buffer_origin.data(), host_origin.data(), region.data(), buffer_row_pitch, buffer_slice_pitch, host_row_pitch, host_slice_pitch, data_to_copy, 0, nullptr, nullptr);
     PLSSVM_OPENCL_ERROR_CHECK(err, "error copying the strided data to the device buffer")
-    device_synchronize(*queue_);
+    detail::device_synchronize(*queue_);
 }
 
 template <typename T>
@@ -137,7 +137,7 @@ void device_ptr<T>::copy_to_host(host_pointer_type buffer, const size_type pos, 
     error_code err;
     err = clEnqueueReadBuffer(queue_->queue, data_, CL_TRUE, pos * sizeof(value_type), rcount * sizeof(value_type), buffer, 0, nullptr, nullptr);
     PLSSVM_OPENCL_ERROR_CHECK(err, "error copying the data from the device buffer")
-    device_synchronize(*queue_);
+    detail::device_synchronize(*queue_);
 }
 
 template <typename T>

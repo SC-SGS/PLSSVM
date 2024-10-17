@@ -1,0 +1,147 @@
+{
+  "version": 6,
+  "include": ["common.json"],
+  "configurePresets": [
+    {
+      "name": "stdpar_rocstdpar",
+      "displayName": "stdpar rocstdpar backend",
+      "inherits": "build",
+      "cacheVariables": {
+        "CMAKE_CXX_COMPILER": "clang++",
+        "PLSSVM_ENABLE_STDPAR_BACKEND": "ON",
+        "PLSSVM_STDPAR_BACKEND_IMPLEMENTATION": "roc-stdpar"
+      }
+    },
+    {
+      "name": "stdpar_rocstdpar_python",
+      "displayName": "stdpar rocstdpar backend + Python bindings",
+      "inherits": "build",
+      "cacheVariables": {
+        "CMAKE_CXX_COMPILER": "clang++",
+        "PLSSVM_ENABLE_STDPAR_BACKEND": "ON",
+        "PLSSVM_STDPAR_BACKEND_IMPLEMENTATION": "roc-stdpar",
+        "PLSSVM_ENABLE_LANGUAGE_BINDINGS": "ON",
+        "PLSSVM_ENABLE_PYTHON_BINDINGS": "ON"
+      }
+    },
+    {
+      "name": "stdpar_rocstdpar_test",
+      "displayName": "stdpar rocstdpar backend tests",
+      "inherits": "test",
+      "cacheVariables": {
+        "CMAKE_CXX_COMPILER": "clang++",
+        "PLSSVM_ENABLE_ASSERTS": "OFF",
+        "PLSSVM_ENABLE_STDPAR_BACKEND": "ON",
+        "PLSSVM_STDPAR_BACKEND_IMPLEMENTATION": "roc-stdpar"
+      }
+    }
+  ],
+  "buildPresets": [
+    {
+      "name": "stdpar_rocstdpar",
+      "displayName": "stdpar rocstdpar backend",
+      "configurePreset": "stdpar_rocstdpar",
+      "configuration": "RelWithDebInfo",
+      "inherits": "common"
+    },
+    {
+      "name": "stdpar_rocstdpar_python",
+      "displayName": "stdpar rocstdpar backend + Python bindings",
+      "configurePreset": "stdpar_rocstdpar_python",
+      "configuration": "RelWithDebInfo",
+      "inherits": "common"
+    },
+    {
+      "name": "stdpar_rocstdpar_test",
+      "displayName": "stdpar rocstdpar backend tests",
+      "configurePreset": "stdpar_rocstdpar_test",
+      "configuration": "Debug",
+      "inherits": "common"
+    }
+  ],
+  "testPresets": [
+    {
+      "name": "stdpar_rocstdpar_test",
+      "displayName": "stdpar rocstdpar backend all tests",
+      "configurePreset": "stdpar_rocstdpar_test",
+      "inherits": "common"
+    },
+    {
+      "name": "stdpar_rocstdpar_backend_test",
+      "displayName": "stdpar rocstdpar backend specific tests",
+      "configurePreset": "stdpar_rocstdpar_test",
+      "inherits": "common",
+      "filter": {
+        "include": {
+          "name": "stdpar.*"
+        }
+      }
+    }
+  ],
+  "workflowPresets": [
+    {
+      "name": "stdpar_rocstdpar",
+      "displayName": "stdpar rocstdpar backend workflow",
+      "steps": [
+        {
+          "name": "stdpar_rocstdpar",
+          "type": "configure"
+        },
+        {
+          "name": "stdpar_rocstdpar",
+          "type": "build"
+        }
+      ]
+    },
+    {
+      "name": "stdpar_rocstdpar_python",
+      "displayName": "stdpar rocstdpar backend + Python bindings workflow",
+      "steps": [
+        {
+          "name": "stdpar_rocstdpar_python",
+          "type": "configure"
+        },
+        {
+          "name": "stdpar_rocstdpar_python",
+          "type": "build"
+        }
+      ]
+    },
+    {
+      "name": "stdpar_rocstdpar_test",
+      "displayName": "stdpar rocstdpar test workflow",
+      "steps": [
+        {
+          "name": "stdpar_rocstdpar_test",
+          "type": "configure"
+        },
+        {
+          "name": "stdpar_rocstdpar_test",
+          "type": "build"
+        },
+        {
+          "name": "stdpar_rocstdpar_test",
+          "type": "test"
+        }
+      ]
+    },
+    {
+      "name": "stdpar_rocstdpar_backend_test",
+      "displayName": "stdpar rocstdpar backend test workflow",
+      "steps": [
+        {
+          "name": "stdpar_rocstdpar_test",
+          "type": "configure"
+        },
+        {
+          "name": "stdpar_rocstdpar_test",
+          "type": "build"
+        },
+        {
+          "name": "stdpar_rocstdpar_backend_test",
+          "type": "test"
+        }
+      ]
+    }
+  ]
+}

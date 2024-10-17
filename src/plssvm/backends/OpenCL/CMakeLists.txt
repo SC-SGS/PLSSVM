@@ -185,7 +185,7 @@ if (PLSSVM_ENABLE_FAST_MATH)
 endif ()
 
 # needed to link the OpenCL backend to a third-party executable
-target_compile_options(${PLSSVM_OPENCL_BACKEND_LIBRARY_NAME} PRIVATE -fPIE)
+target_compile_options(${PLSSVM_OPENCL_BACKEND_LIBRARY_NAME} PRIVATE -fPIE -fPIC)
 
 # set compile definition that the OpenCL backend is available
 target_compile_definitions(${PLSSVM_BASE_LIBRARY_NAME} PRIVATE PLSSVM_HAS_OPENCL_BACKEND)

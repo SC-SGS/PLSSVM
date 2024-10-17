@@ -23,7 +23,7 @@
 #include <cmath>      // std::ceil
 #include <cstddef>    // std::size_t
 #include <execution>  // std::execution::par_unseq
-#include <utility>    // std::pair, std::make_pair
+#include <numeric>    // std::iota
 #include <vector>     // std::vector
 
 namespace plssvm::stdpar::detail {
@@ -51,16 +51,15 @@ inline void device_kernel_symm(const std::size_t num_rows, const std::size_t num
     const auto INTERNAL_BLOCK_SIZE_uz = static_cast<std::size_t>(INTERNAL_BLOCK_SIZE);
     const auto PADDING_SIZE_uz = static_cast<std::size_t>(PADDING_SIZE);
 
-    // calculate indices over which we parallelize
-    std::vector<std::pair<std::size_t, std::size_t>> range(blocked_num_rhs * blocked_num_rows);
-#pragma omp parallel for
-    for (std::size_t i = 0; i < range.size(); ++i) {
-        range[i] = std::make_pair(i / blocked_num_rows, i % blocked_num_rows);
-    }
+    // define range over which should be iterated
+    std::vector<std::size_t> range(blocked_num_rhs * blocked_num_rows);
+    std::iota(range.begin(), range.end(), 0);
 
-    std::for_each(std::execution::par_unseq, range.begin(), range.end(), [=, A_ptr = A.data(), B_ptr = B.data(), C_ptr = C.data()](const std::pair<std::size_t, std::size_t> idx) {
+    std::for_each(std::execution::par_unseq, range.begin(), range.end(), [=, A_ptr = A.data(), B_ptr = B.data(), C_ptr = C.data()](const std::size_t idx) {
         // calculate the indices used in the current thread
-        const auto [rhs, row] = idx;
+        const std::size_t rhs = idx / blocked_num_rows;
+        const std::size_t row = idx % blocked_num_rows;
+
         const std::size_t rhs_idx = rhs * INTERNAL_BLOCK_SIZE_uz;
         const std::size_t row_idx = row * INTERNAL_BLOCK_SIZE_uz;
 
