@@ -13,6 +13,7 @@
     "cmake/presets/opencl.json",
     "cmake/presets/acpp.json",
     "cmake/presets/dpcpp.json",
+    "cmake/presets/kokkos.json",
     "cmake/presets/all.json"
   ]
 }
