@@ -92,7 +92,11 @@ verbosity_level operator&=(verbosity_level &lhs, verbosity_level rhs);
 
 }  // namespace plssvm
 
+/// @cond Doxygen_suppress
+
 template <>
 struct fmt::formatter<plssvm::verbosity_level> : fmt::ostream_formatter { };
+
+/// @endcond
 
 #endif  // PLSSVM_VERBOSITY_LEVELS_HPP_

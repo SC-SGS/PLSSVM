@@ -1,0 +1,142 @@
+{
+  "version": 6,
+  "include": [
+    "common.json"
+  ],
+  "configurePresets": [
+    {
+      "name": "cuda",
+      "displayName": "CUDA backend",
+      "inherits": "build",
+      "cacheVariables": {
+        "PLSSVM_ENABLE_CUDA_BACKEND": "ON"
+      }
+    },
+    {
+      "name": "cuda_python",
+      "displayName": "CUDA backend + Python bindings",
+      "inherits": "build",
+      "cacheVariables": {
+        "PLSSVM_ENABLE_CUDA_BACKEND": "ON",
+        "PLSSVM_ENABLE_LANGUAGE_BINDINGS": "ON",
+        "PLSSVM_ENABLE_PYTHON_BINDINGS": "ON"
+      }
+    },
+    {
+      "name": "cuda_test",
+      "displayName": "CUDA backend tests",
+      "inherits": "test",
+      "cacheVariables": {
+        "PLSSVM_ENABLE_CUDA_BACKEND": "ON"
+      }
+    }
+  ],
+  "buildPresets": [
+    {
+      "name": "cuda",
+      "displayName": "CUDA backend",
+      "configurePreset": "cuda",
+      "configuration": "RelWithDebInfo",
+      "inherits": "common"
+    },
+    {
+      "name": "cuda_python",
+      "displayName": "CUDA backend + Python bindings",
+      "configurePreset": "cuda_python",
+      "configuration": "RelWithDebInfo",
+      "inherits": "common"
+    },
+    {
+      "name": "cuda_test",
+      "displayName": "CUDA backend tests",
+      "configurePreset": "cuda_test",
+      "configuration": "Debug",
+      "inherits": "common"
+    }
+  ],
+  "testPresets": [
+    {
+      "name": "cuda_test",
+      "displayName": "CUDA backend all tests",
+      "configurePreset": "cuda_test",
+      "inherits": "common"
+    },
+    {
+      "name": "cuda_backend_test",
+      "displayName": "CUDA backend specific tests",
+      "configurePreset": "cuda_test",
+      "inherits": "common",
+      "filter": {
+        "include": {
+          "name": "CUDA.*"
+        }
+      }
+    }
+  ],
+  "workflowPresets": [
+    {
+      "name": "cuda",
+      "displayName": "CUDA backend workflow",
+      "steps": [
+        {
+          "name": "cuda",
+          "type": "configure"
+        },
+        {
+          "name": "cuda",
+          "type": "build"
+        }
+      ]
+    },
+    {
+      "name": "cuda_python",
+      "displayName": "CUDA backend + Python bindings workflow",
+      "steps": [
+        {
+          "name": "cuda_python",
+          "type": "configure"
+        },
+        {
+          "name": "cuda_python",
+          "type": "build"
+        }
+      ]
+    },
+    {
+      "name": "cuda_test",
+      "displayName": "CUDA test workflow",
+      "steps": [
+        {
+          "name": "cuda_test",
+          "type": "configure"
+        },
+        {
+          "name": "cuda_test",
+          "type": "build"
+        },
+        {
+          "name": "cuda_test",
+          "type": "test"
+        }
+      ]
+    },
+    {
+      "name": "cuda_backend_test",
+      "displayName": "CUDA backend test workflow",
+      "steps": [
+        {
+          "name": "cuda_test",
+          "type": "configure"
+        },
+        {
+          "name": "cuda_test",
+          "type": "build"
+        },
+        {
+          "name": "cuda_backend_test",
+          "type": "test"
+        }
+      ]
+    }
+  ]
+}

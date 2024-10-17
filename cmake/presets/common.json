@@ -1,0 +1,64 @@
+{
+  "version": 6,
+  "configurePresets": [
+    {
+      "name": "common",
+      "hidden": true,
+      "binaryDir": "build/${presetName}",
+      "cacheVariables": {
+        "PLSSVM_ENABLE_OPENMP_BACKEND": "OFF",
+        "PLSSVM_ENABLE_STDPAR_BACKEND": "OFF",
+        "PLSSVM_ENABLE_CUDA_BACKEND": "OFF",
+        "PLSSVM_ENABLE_HIP_BACKEND": "OFF",
+        "PLSSVM_ENABLE_OPENCL_BACKEND": "OFF",
+        "PLSSVM_ENABLE_SYCL_BACKEND": "OFF"
+      }
+    },
+    {
+      "name": "build",
+      "hidden": true,
+      "inherits": "common",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "RelWithDebInfo",
+        "PLSSVM_ENABLE_FAST_MATH": "ON",
+        "PLSSVM_ENABLE_ASSERTS": "OFF",
+        "PLSSVM_ENFORCE_MAX_MEM_ALLOC_SIZE": "OFF",
+        "PLSSVM_ENABLE_TESTING": "OFF"
+      }
+    },
+    {
+      "name": "test",
+      "hidden": true,
+      "inherits": "common",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "PLSSVM_ENABLE_FAST_MATH": "OFF",
+        "PLSSVM_ENABLE_ASSERTS": "ON",
+        "PLSSVM_ENFORCE_MAX_MEM_ALLOC_SIZE": "OFF",
+        "PLSSVM_ENABLE_TESTING": "ON",
+        "PLSSVM_TEST_FILE_NUM_DATA_POINTS": "250",
+        "PLSSVM_TEST_FILE_NUM_FEATURES": "100",
+        "PLSSVM_TEST_WITH_REDUCED_LABEL_TYPES": "ON"
+      }
+    }
+  ],
+  "buildPresets": [
+    {
+      "name": "common",
+      "hidden": true,
+      "jobs": 8
+    }
+  ],
+  "testPresets": [
+    {
+      "name": "common",
+      "hidden": true,
+      "output": {
+        "outputOnFailure": true
+      },
+      "execution": {
+        "jobs": 8
+      }
+    }
+  ]
+}

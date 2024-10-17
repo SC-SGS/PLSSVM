@@ -298,7 +298,7 @@ class matrix {
      * @brief Returns the value at @p row and @p col as defined by the matrix's layout type.
      * @param[in] row the value's row
      * @param[in] col the value's column
-     * @return a const reference to the value (`[[nodiscard]]`)
+     * @return a reference to the value (`[[nodiscard]]`)
      */
     [[nodiscard]] reference operator()(size_type row, size_type col);
     /**
@@ -316,9 +316,36 @@ class matrix {
      * @param[in] col the value's column
      * @throws plssvm::matrix_exception if the provided @p row is equal or large than the number of rows in the matrix
      * @throws plssvm::matrix_exception if the provided @p col is equal or large than the number of columns in the matrix
-     * @return the value (`[[nodiscard]]`)
+     * @return a reference to the value (`[[nodiscard]]`)
      */
     [[nodiscard]] reference at(size_type row, size_type col);
+
+    /**
+     * @brief Returns the value at @p idx.
+     * @param[in] idx the values index
+     * @return the value (`[[nodiscard]]`)
+     */
+    [[nodiscard]] value_type operator[](size_type idx) const;
+    /**
+     * @brief Returns the value at @p idx.
+     * @param[in] idx the values index
+     * @return a reference to the value (`[[nodiscard]]`)
+     */
+    [[nodiscard]] reference operator[](size_type idx);
+    /**
+     * @brief Returns the value at @p idx.
+     * @param[in] idx the values index
+     * @throws plssvm::matrix_exception if the provided @p idx is equal or larger than the number of matrix entries
+     * @return the value (`[[nodiscard]]`)
+     */
+    [[nodiscard]] value_type at(size_type idx) const;
+    /**
+     * @brief Returns the value at @p idx.
+     * @param[in] idx the values index
+     * @throws plssvm::matrix_exception if the provided @p idx is equal or larger than the number of matrix entries
+     * @return a reference to the value (`[[nodiscard]]`)
+     */
+    [[nodiscard]] reference at(size_type idx);
 
     /**
      * @brief Return a pointer to the underlying one-dimensional data structure.
@@ -655,6 +682,34 @@ auto matrix<T, layout_>::at(const size_type row, const size_type col) -> referen
     }
 
     return (*this)(row, col);
+}
+
+template <typename T, layout_type layout_>
+auto matrix<T, layout_>::operator[](const size_type idx) const -> value_type {
+    PLSSVM_ASSERT(idx < this->size_padded(), fmt::format("The current index ({}) must be smaller than the total number of matrix entries ({})!", idx, this->size_padded()));
+    return data_[idx];
+}
+
+template <typename T, layout_type layout_>
+auto matrix<T, layout_>::operator[](const size_type idx) -> reference {
+    PLSSVM_ASSERT(idx < this->size_padded(), fmt::format("The current index ({}) must be smaller than the total number of matrix entries ({})!", idx, this->size_padded()));
+    return data_[idx];
+}
+
+template <typename T, layout_type layout_>
+auto matrix<T, layout_>::at(const size_type idx) const -> value_type {
+    if (idx >= this->size_padded()) {
+        throw matrix_exception{ fmt::format("The current index ({}) must be smaller than the total number of matrix entries ({})!", idx, this->size_padded()) };
+    }
+    return data_[idx];
+}
+
+template <typename T, layout_type layout_>
+auto matrix<T, layout_>::at(const size_type idx) -> reference {
+    if (idx >= this->size_padded()) {
+        throw matrix_exception{ fmt::format("The current index ({}) must be smaller than the total number of matrix entries ({})!", idx, this->size_padded()) };
+    }
+    return data_[idx];
 }
 
 template <typename T, layout_type layout_>
@@ -1031,6 +1086,8 @@ using soa_matrix = matrix<T, layout_type::soa>;
 
 }  // namespace plssvm
 
+/// @cond Doxygen_suppress
+
 template <>
 struct fmt::formatter<plssvm::layout_type> : fmt::ostream_formatter { };
 
@@ -1105,5 +1162,7 @@ struct fmt::formatter<plssvm::matrix<T, layout>> {
         return it;
     }
 };
+
+/// @endcond
 
 #endif  // PLSSVM_DETAIL_MATRIX_HPP_

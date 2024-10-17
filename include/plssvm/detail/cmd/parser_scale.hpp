@@ -69,7 +69,11 @@ std::ostream &operator<<(std::ostream &out, const parser_scale &params);
 
 }  // namespace plssvm::detail::cmd
 
+/// @cond Doxygen_suppress
+
 template <>
 struct fmt::formatter<plssvm::detail::cmd::parser_scale> : fmt::ostream_formatter { };
+
+/// @endcond
 
 #endif  // PLSSVM_DETAIL_CMD_PARSER_SCALE_HPP_

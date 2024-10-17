@@ -329,7 +329,11 @@ struct hash<plssvm::detail::memory_size> {
 
 }  // namespace std
 
+/// @cond Doxygen_suppress
+
 template <>
 struct fmt::formatter<plssvm::detail::memory_size> : fmt::ostream_formatter { };
+
+/// @endcond
 
 #endif  // PLSSVM_DETAIL_MEMORY_SIZE_HPP_

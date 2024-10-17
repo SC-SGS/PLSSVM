@@ -41,7 +41,7 @@ set(CMAKE_CUDA_STANDARD_REQUIRED ON)
 
 if (CMAKE_CUDA_COMPILER_ID STREQUAL "NVIDIA")
     # use nvcc to compile CUDA code
-    set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -Xcompiler '-fPIC' -Xcudafe --diag_suppress=unsigned_compare_with_zero -lineinfo")
+    set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -Xcompiler '-fPIC' -Xcudafe \"--diag_suppress=unsigned_compare_with_zero --diag_suppress=128\" -lineinfo")
     # build type specific flags
     set(CMAKE_CUDA_FLAGS_DEBUG "${CMAKE_CUDA_FLAGS_DEBUG} -Xptxas=-v -Xptxas -dlcm=cg -Xcudafe --diag_suppress=unrecognized_gcc_pragma")
     set(CMAKE_CUDA_FLAGS_RELWITHDEBINFO "${CMAKE_CUDA_FLAGS_RELWITHDEBINFO} -O2")

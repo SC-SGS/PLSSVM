@@ -85,7 +85,11 @@ void device_synchronize(int device);
 
 }  // namespace plssvm::hip::detail
 
+/// @cond Doxygen_suppress
+
 template <>
 struct fmt::formatter<hipError_t> : fmt::ostream_formatter { };
+
+/// @endcond
 
 #endif  // PLSSVM_BACKENDS_HIP_DETAIL_UTILITY_HPP_

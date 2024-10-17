@@ -1,0 +1,140 @@
+{
+  "version": 6,
+  "include": ["common.json"],
+  "configurePresets": [
+    {
+      "name": "openmp",
+      "displayName": "OpenMP backend",
+      "inherits": "build",
+      "cacheVariables": {
+        "PLSSVM_ENABLE_OPENMP_BACKEND": "ON"
+      }
+    },
+    {
+      "name": "openmp_python",
+      "displayName": "OpenMP backend + Python bindings",
+      "inherits": "build",
+      "cacheVariables": {
+        "PLSSVM_ENABLE_OPENMP_BACKEND": "ON",
+        "PLSSVM_ENABLE_LANGUAGE_BINDINGS": "ON",
+        "PLSSVM_ENABLE_PYTHON_BINDINGS": "ON"
+      }
+    },
+    {
+      "name": "openmp_test",
+      "displayName": "OpenMP backend tests",
+      "inherits": "test",
+      "cacheVariables": {
+        "PLSSVM_ENABLE_OPENMP_BACKEND": "ON"
+      }
+    }
+  ],
+  "buildPresets": [
+    {
+      "name": "openmp",
+      "displayName": "OpenMP backend",
+      "configurePreset": "openmp",
+      "configuration": "RelWithDebInfo",
+      "inherits": "common"
+    },
+    {
+      "name": "openmp_python",
+      "displayName": "OpenMP backend + Python bindings",
+      "configurePreset": "openmp_python",
+      "configuration": "RelWithDebInfo",
+      "inherits": "common"
+    },
+    {
+      "name": "openmp_test",
+      "displayName": "OpenMP backend tests",
+      "configurePreset": "openmp_test",
+      "configuration": "Debug",
+      "inherits": "common"
+    }
+  ],
+  "testPresets": [
+    {
+      "name": "openmp_test",
+      "displayName": "OpenMP backend all tests",
+      "configurePreset": "openmp_test",
+      "inherits": "common"
+    },
+    {
+      "name": "openmp_backend_test",
+      "displayName": "OpenMP backend specific tests",
+      "configurePreset": "openmp_test",
+      "inherits": "common",
+      "filter": {
+        "include": {
+          "name": "OpenMP.*"
+        }
+      }
+    }
+  ],
+  "workflowPresets": [
+    {
+      "name": "openmp",
+      "displayName": "OpenMP backend workflow",
+      "steps": [
+        {
+          "name": "openmp",
+          "type": "configure"
+        },
+        {
+          "name": "openmp",
+          "type": "build"
+        }
+      ]
+    },
+    {
+      "name": "openmp_python",
+      "displayName": "OpenMP backend + Python bindings workflow",
+      "steps": [
+        {
+          "name": "openmp_python",
+          "type": "configure"
+        },
+        {
+          "name": "openmp_python",
+          "type": "build"
+        }
+      ]
+    },
+    {
+      "name": "openmp_test",
+      "displayName": "OpenMP test workflow",
+      "steps": [
+        {
+          "name": "openmp_test",
+          "type": "configure"
+        },
+        {
+          "name": "openmp_test",
+          "type": "build"
+        },
+        {
+          "name": "openmp_test",
+          "type": "test"
+        }
+      ]
+    },
+    {
+      "name": "openmp_backend_test",
+      "displayName": "OpenMP backend test workflow",
+      "steps": [
+        {
+          "name": "openmp_test",
+          "type": "configure"
+        },
+        {
+          "name": "openmp_test",
+          "type": "build"
+        },
+        {
+          "name": "openmp_backend_test",
+          "type": "test"
+        }
+      ]
+    }
+  ]
+}

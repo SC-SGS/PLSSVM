@@ -203,7 +203,11 @@ constexpr backend_type csvm_to_backend_type_v = csvm_to_backend_type<T>::value;
 
 }  // namespace plssvm
 
+/// @cond Doxygen_suppress
+
 template <>
 struct fmt::formatter<plssvm::backend_type> : fmt::ostream_formatter { };
+
+/// @endcond
 
 #endif  // PLSSVM_BACKEND_TYPES_HPP_

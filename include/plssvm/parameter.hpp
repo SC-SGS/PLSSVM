@@ -286,7 +286,11 @@ std::ostream &operator<<(std::ostream &out, const parameter &params);
 
 }  // namespace plssvm
 
+/// @cond Doxygen_suppress
+
 template <>
 struct fmt::formatter<plssvm::parameter> : fmt::ostream_formatter { };
+
+/// @endcond
 
 #endif  // PLSSVM_PARAMETER_HPP_

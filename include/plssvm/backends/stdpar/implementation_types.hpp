@@ -62,7 +62,11 @@ std::istream &operator>>(std::istream &in, implementation_type &impl);
 
 }  // namespace plssvm::stdpar
 
+/// @cond Doxygen_suppress
+
 template <>
 struct fmt::formatter<plssvm::stdpar::implementation_type> : fmt::ostream_formatter { };
+
+/// @endcond
 
 #endif  // PLSSVM_BACKENDS_STDPAR_IMPLEMENTATION_TYPE_HPP_

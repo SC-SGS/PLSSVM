@@ -1,0 +1,158 @@
+{
+  "version": 6,
+  "include": ["common.json"],
+  "configurePresets": [
+    {
+      "name": "all",
+      "displayName": "All available backends",
+      "inherits": "build",
+      "cacheVariables": {
+        "CMAKE_CXX_COMPILER": "clang++",
+        "PLSSVM_ENABLE_OPENMP_BACKEND": "AUTO",
+        "PLSSVM_ENABLE_STDPAR_BACKEND": "OFF",
+        "PLSSVM_ENABLE_CUDA_BACKEND": "AUTO",
+        "PLSSVM_ENABLE_HIP_BACKEND": "AUTO",
+        "PLSSVM_ENABLE_OPENCL_BACKEND": "AUTO",
+        "PLSSVM_ENABLE_SYCL_BACKEND": "AUTO"
+      }
+    },
+    {
+      "name": "all_python",
+      "displayName": "All available backends + Python bindings",
+      "inherits": "build",
+      "cacheVariables": {
+        "CMAKE_CXX_COMPILER": "clang++",
+        "PLSSVM_ENABLE_OPENMP_BACKEND": "AUTO",
+        "PLSSVM_ENABLE_STDPAR_BACKEND": "OFF",
+        "PLSSVM_ENABLE_CUDA_BACKEND": "AUTO",
+        "PLSSVM_ENABLE_HIP_BACKEND": "AUTO",
+        "PLSSVM_ENABLE_OPENCL_BACKEND": "AUTO",
+        "PLSSVM_ENABLE_SYCL_BACKEND": "AUTO",
+        "PLSSVM_ENABLE_LANGUAGE_BINDINGS": "ON",
+        "PLSSVM_ENABLE_PYTHON_BINDINGS": "ON"
+      }
+    },
+    {
+      "name": "all_test",
+      "displayName": "All available backends tests",
+      "inherits": "test",
+      "cacheVariables": {
+        "CMAKE_CXX_COMPILER": "clang++",
+        "PLSSVM_ENABLE_OPENMP_BACKEND": "AUTO",
+        "PLSSVM_ENABLE_STDPAR_BACKEND": "OFF",
+        "PLSSVM_ENABLE_CUDA_BACKEND": "AUTO",
+        "PLSSVM_ENABLE_HIP_BACKEND": "AUTO",
+        "PLSSVM_ENABLE_OPENCL_BACKEND": "AUTO",
+        "PLSSVM_ENABLE_SYCL_BACKEND": "AUTO"
+      }
+    }
+  ],
+  "buildPresets": [
+    {
+      "name": "all",
+      "displayName": "All available backends",
+      "configurePreset": "all",
+      "configuration": "RelWithDebInfo",
+      "inherits": "common"
+    },
+    {
+      "name": "all_python",
+      "displayName": "All available backends + Python bindings",
+      "configurePreset": "all_python",
+      "configuration": "RelWithDebInfo",
+      "inherits": "common"
+    },
+    {
+      "name": "all_test",
+      "displayName": "All available backends tests",
+      "configurePreset": "all_test",
+      "configuration": "Debug",
+      "inherits": "common"
+    }
+  ],
+  "testPresets": [
+    {
+      "name": "all_test",
+      "displayName": "All available backends all tests",
+      "configurePreset": "all_test",
+      "inherits": "common"
+    },
+    {
+      "name": "all_backend_test",
+      "displayName": "All available backends specific tests",
+      "configurePreset": "all_test",
+      "inherits": "common",
+      "filter": {
+        "include": {
+          "name": "OpenMP.*|CUDA.*|HIP.*|OpenCL.*|AdaptiveCpp.*|DPCPP.*"
+        }
+      }
+    }
+  ],
+  "workflowPresets": [
+    {
+      "name": "all",
+      "displayName": "All available backends workflow",
+      "steps": [
+        {
+          "name": "all",
+          "type": "configure"
+        },
+        {
+          "name": "all",
+          "type": "build"
+        }
+      ]
+    },
+    {
+      "name": "all_python",
+      "displayName": "All available backends + Python bindings workflow",
+      "steps": [
+        {
+          "name": "all_python",
+          "type": "configure"
+        },
+        {
+          "name": "all_python",
+          "type": "build"
+        }
+      ]
+    },
+    {
+      "name": "all_test",
+      "displayName": "All available backends test workflow",
+      "steps": [
+        {
+          "name": "all_test",
+          "type": "configure"
+        },
+        {
+          "name": "all_test",
+          "type": "build"
+        },
+        {
+          "name": "all_test",
+          "type": "test"
+        }
+      ]
+    },
+    {
+      "name": "all_backend_test",
+      "displayName": "All available backends backend test workflow",
+      "steps": [
+        {
+          "name": "all_test",
+          "type": "configure"
+        },
+        {
+          "name": "all_test",
+          "type": "build"
+        },
+        {
+          "name": "all_backend_test",
+          "type": "test"
+        }
+      ]
+    }
+  ]
+}
