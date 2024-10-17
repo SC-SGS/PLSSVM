@@ -509,10 +509,10 @@ Another example targeting NVIDIA GPUs using the SYCL backend looks like:
 
 The `--backend=automatic` option works as follows:
 
-- if the `gpu_nvidia` target is available, check for existing backends in order `cuda` 🠦 `hip` 🠦 `opencl` 🠦 `sycl`
-- otherwise, if the `gpu_amd` target is available, check for existing backends in order `hip` 🠦 `opencl` 🠦 `sycl`
-- otherwise, if the `gpu_intel` target is available, check for existing backends in order `sycl` 🠦 `opencl`
-- otherwise, if the `cpu` target is available, check for existing backends in order `sycl` 🠦 `opencl` 🠦 `openmp`
+- if the `gpu_nvidia` target is available, check for existing backends in order `cuda` 🠦 `hip` 🠦 `opencl` 🠦 `sycl` 🠦 `stdpar`
+- otherwise, if the `gpu_amd` target is available, check for existing backends in order `hip` 🠦 `opencl` 🠦 `sycl` 🠦 `stdpar`
+- otherwise, if the `gpu_intel` target is available, check for existing backends in order `sycl` 🠦 `opencl` 🠦 `stdpar`
+- otherwise, if the `cpu` target is available, check for existing backends in order `sycl` 🠦 `opencl` 🠦 `openmp` 🠦 `stdpar`
 
 Note that during CMake configuration it is guaranteed that at least one of the above combinations does exist.
 
