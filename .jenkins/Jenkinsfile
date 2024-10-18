@@ -487,6 +487,8 @@ pipeline {
 
                                 export ONEAPI_DEVICE_SELECTOR=${ONEAPI_DEVICE_SELECTOR}
                                 export ACPP_VISIBILITY_MASK=${ACPP_VISIBILITY_MASK}
+                                export HIP_VISIBLE_DEVICES=0
+                                export CUDA_VISIBLE_DEVICES=0
                                 spack test-env --dirty "plssvm@develop$([[ $BACKEND == ADAPTIVECPP ]] && echo "%clang" ) \
 $([[ $BACKEND == OPENMP ]] && echo "+openmp" || echo "~openmp") \
 $([[ $BACKEND == CUDA ]] && echo "+cuda" || echo "~cuda") \
