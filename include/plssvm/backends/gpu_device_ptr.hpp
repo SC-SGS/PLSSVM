@@ -416,14 +416,14 @@ void gpu_device_ptr<T, queue_t, device_pointer_t, derived_gpu_device_ptr>::swap(
 
 template <typename T, typename queue_t, typename device_pointer_t, typename derived_gpu_device_ptr>
 void gpu_device_ptr<T, queue_t, device_pointer_t, derived_gpu_device_ptr>::memset(const int pattern, const size_type pos) {
-    PLSSVM_ASSERT(data_ != nullptr, "Invalid data pointer! Maybe *this has been default constructed?");
+    PLSSVM_ASSERT(data_ != device_pointer_type{}, "Invalid data pointer! Maybe *this has been default constructed?");
 
     this->memset(pattern, pos, this->size_padded() * sizeof(value_type));
 }
 
 template <typename T, typename queue_t, typename device_pointer_t, typename derived_gpu_device_ptr>
 void gpu_device_ptr<T, queue_t, device_pointer_t, derived_gpu_device_ptr>::fill(const value_type value, const size_type pos) {
-    PLSSVM_ASSERT(data_ != nullptr, "Invalid data pointer! Maybe *this has been default constructed?");
+    PLSSVM_ASSERT(data_ != device_pointer_type{}, "Invalid data pointer! Maybe *this has been default constructed?");
 
     this->fill(value, pos, this->size_padded());
 }
@@ -431,7 +431,7 @@ void gpu_device_ptr<T, queue_t, device_pointer_t, derived_gpu_device_ptr>::fill(
 template <typename T, typename queue_t, typename device_pointer_t, typename derived_gpu_device_ptr>
 template <layout_type layout>
 void gpu_device_ptr<T, queue_t, device_pointer_t, derived_gpu_device_ptr>::copy_to_device(const matrix<value_type, layout> &data_to_copy) {
-    PLSSVM_ASSERT(data_ != nullptr, "Invalid data pointer! Maybe *this has been default constructed?");
+    PLSSVM_ASSERT(data_ != device_pointer_type{}, "Invalid data pointer! Maybe *this has been default constructed?");
 
     if (data_to_copy.size_padded() < this->size_padded()) {
         throw gpu_device_ptr_exception{ fmt::format("Too few data to perform copy (needed: {}, provided: {})!", this->size_padded(), data_to_copy.size_padded()) };
@@ -441,14 +441,14 @@ void gpu_device_ptr<T, queue_t, device_pointer_t, derived_gpu_device_ptr>::copy_
 
 template <typename T, typename queue_t, typename device_pointer_t, typename derived_gpu_device_ptr>
 void gpu_device_ptr<T, queue_t, device_pointer_t, derived_gpu_device_ptr>::copy_to_device(const std::vector<value_type> &data_to_copy) {
-    PLSSVM_ASSERT(data_ != nullptr, "Invalid data pointer! Maybe *this has been default constructed?");
+    PLSSVM_ASSERT(data_ != device_pointer_type{}, "Invalid data pointer! Maybe *this has been default constructed?");
 
     this->copy_to_device(data_to_copy, 0, this->size_padded());
 }
 
 template <typename T, typename queue_t, typename device_pointer_t, typename derived_gpu_device_ptr>
 void gpu_device_ptr<T, queue_t, device_pointer_t, derived_gpu_device_ptr>::copy_to_device(const std::vector<value_type> &data_to_copy, const size_type pos, const size_type count) {
-    PLSSVM_ASSERT(data_ != nullptr, "Invalid data pointer! Maybe *this has been default constructed?");
+    PLSSVM_ASSERT(data_ != device_pointer_type{}, "Invalid data pointer! Maybe *this has been default constructed?");
 
     const size_type rcount = std::min(count, this->size_padded() - pos);
     if (data_to_copy.size() < rcount) {
@@ -459,7 +459,7 @@ void gpu_device_ptr<T, queue_t, device_pointer_t, derived_gpu_device_ptr>::copy_
 
 template <typename T, typename queue_t, typename device_pointer_t, typename derived_gpu_device_ptr>
 void gpu_device_ptr<T, queue_t, device_pointer_t, derived_gpu_device_ptr>::copy_to_device(const_host_pointer_type data_to_copy) {
-    PLSSVM_ASSERT(data_ != nullptr, "Invalid data pointer! Maybe *this has been default constructed?");
+    PLSSVM_ASSERT(data_ != device_pointer_type{}, "Invalid data pointer! Maybe *this has been default constructed?");
     PLSSVM_ASSERT(data_to_copy != nullptr, "Invalid host pointer for the data to copy!");
 
     this->copy_to_device(data_to_copy, 0, this->size_padded());
@@ -468,7 +468,7 @@ void gpu_device_ptr<T, queue_t, device_pointer_t, derived_gpu_device_ptr>::copy_
 template <typename T, typename queue_t, typename device_pointer_t, typename derived_gpu_device_ptr>
 template <layout_type layout>
 void gpu_device_ptr<T, queue_t, device_pointer_t, derived_gpu_device_ptr>::copy_to_device_strided(const matrix<value_type, layout> &data_to_copy, const std::size_t start_row, const std::size_t num_rows) {
-    PLSSVM_ASSERT(data_ != nullptr, "Invalid data pointer! Maybe *this has been default constructed?");
+    PLSSVM_ASSERT(data_ != device_pointer_type{}, "Invalid data pointer! Maybe *this has been default constructed?");
 
     if (start_row + num_rows > data_to_copy.num_rows()) {
         throw gpu_device_ptr_exception{ fmt::format("Tried to copy lines {}-{} (zero-based index) to the device, but the matrix has only {} lines!", start_row, start_row + num_rows - 1, data_to_copy.num_rows()) };
@@ -494,7 +494,7 @@ void gpu_device_ptr<T, queue_t, device_pointer_t, derived_gpu_device_ptr>::copy_
 
 template <typename T, typename queue_t, typename device_pointer_t, typename derived_gpu_device_ptr>
 void gpu_device_ptr<T, queue_t, device_pointer_t, derived_gpu_device_ptr>::copy_to_device_strided(const std::vector<value_type> &data_to_copy, std::size_t spitch, std::size_t width, std::size_t height) {
-    PLSSVM_ASSERT(data_ != nullptr, "Invalid data pointer! Maybe *this has been default constructed?");
+    PLSSVM_ASSERT(data_ != device_pointer_type{}, "Invalid data pointer! Maybe *this has been default constructed?");
 
     if (width > spitch) {
         throw gpu_device_ptr_exception{ fmt::format("Invalid width and spitch combination specified (width: {} <= spitch: {})!", width, spitch) };
@@ -509,7 +509,7 @@ void gpu_device_ptr<T, queue_t, device_pointer_t, derived_gpu_device_ptr>::copy_
 template <typename T, typename queue_t, typename device_pointer_t, typename derived_gpu_device_ptr>
 template <layout_type layout>
 void gpu_device_ptr<T, queue_t, device_pointer_t, derived_gpu_device_ptr>::copy_to_host(matrix<value_type, layout> &buffer) const {
-    PLSSVM_ASSERT(data_ != nullptr, "Invalid data pointer! Maybe *this has been default constructed?");
+    PLSSVM_ASSERT(data_ != device_pointer_type{}, "Invalid data pointer! Maybe *this has been default constructed?");
 
     if (buffer.size_padded() < this->size_padded()) {
         throw gpu_device_ptr_exception{ fmt::format("Buffer too small to perform copy (needed: {}, provided: {})!", this->size_padded(), buffer.size_padded()) };
@@ -519,14 +519,14 @@ void gpu_device_ptr<T, queue_t, device_pointer_t, derived_gpu_device_ptr>::copy_
 
 template <typename T, typename queue_t, typename device_pointer_t, typename derived_gpu_device_ptr>
 void gpu_device_ptr<T, queue_t, device_pointer_t, derived_gpu_device_ptr>::copy_to_host(std::vector<value_type> &buffer) const {
-    PLSSVM_ASSERT(data_ != nullptr, "Invalid data pointer! Maybe *this has been default constructed?");
+    PLSSVM_ASSERT(data_ != device_pointer_type{}, "Invalid data pointer! Maybe *this has been default constructed?");
 
     this->copy_to_host(buffer, 0, this->size_padded());
 }
 
 template <typename T, typename queue_t, typename device_pointer_t, typename derived_gpu_device_ptr>
 void gpu_device_ptr<T, queue_t, device_pointer_t, derived_gpu_device_ptr>::copy_to_host(std::vector<value_type> &buffer, const size_type pos, const size_type count) const {
-    PLSSVM_ASSERT(data_ != nullptr, "Invalid data pointer! Maybe *this has been default constructed?");
+    PLSSVM_ASSERT(data_ != device_pointer_type{}, "Invalid data pointer! Maybe *this has been default constructed?");
 
     const size_type rcount = std::min(count, this->size_padded() - pos);
     if (buffer.size() < rcount) {
@@ -537,7 +537,7 @@ void gpu_device_ptr<T, queue_t, device_pointer_t, derived_gpu_device_ptr>::copy_
 
 template <typename T, typename queue_t, typename device_pointer_t, typename derived_gpu_device_ptr>
 void gpu_device_ptr<T, queue_t, device_pointer_t, derived_gpu_device_ptr>::copy_to_host(host_pointer_type buffer) const {
-    PLSSVM_ASSERT(data_ != nullptr, "Invalid data pointer! Maybe *this has been default constructed?");
+    PLSSVM_ASSERT(data_ != device_pointer_type{}, "Invalid data pointer! Maybe *this has been default constructed?");
     PLSSVM_ASSERT(buffer != nullptr, "Invalid host pointer for the data to copy!");
 
     this->copy_to_host(buffer, 0, this->size_padded());
@@ -545,8 +545,8 @@ void gpu_device_ptr<T, queue_t, device_pointer_t, derived_gpu_device_ptr>::copy_
 
 template <typename T, typename queue_t, typename device_pointer_t, typename derived_gpu_device_ptr>
 void gpu_device_ptr<T, queue_t, device_pointer_t, derived_gpu_device_ptr>::copy_to_other_device(derived_gpu_device_ptr &target) const {
-    PLSSVM_ASSERT(data_ != nullptr, "Invalid data pointer! Maybe *this has been default constructed?");
-    PLSSVM_ASSERT(target.get() != nullptr, "Invalid target pointer! Maybe target has been default constructed?");
+    PLSSVM_ASSERT(data_ != device_pointer_type{}, "Invalid data pointer! Maybe *this has been default constructed?");
+    PLSSVM_ASSERT(target.get() != device_pointer_type{}, "Invalid target pointer! Maybe target has been default constructed?");
 
     this->copy_to_other_device(target, 0, this->size_padded());
 }
