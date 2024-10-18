@@ -246,7 +246,7 @@ pipeline {
                       }
                       axis{
                         name 'ARCHITECTURE'
-                        notValues 'AMD'
+                        notValues 'AMD', 'NVIDIA'
                       }
                     }
                     exclude {
@@ -297,6 +297,16 @@ pipeline {
                       axis{
                         name 'BUILD_TYPE'
                         values 'Debug'
+                      }
+                    }
+                    exclude { // TODO: enable if icpx extension for current rocm Version is available
+                      axis{
+                        name 'BACKEND'
+                        values 'DPCPP'
+                      }
+                      axis{
+                        name 'ARCHITECTURE'
+                        values 'AMD'
                       }
                     }
                   }
