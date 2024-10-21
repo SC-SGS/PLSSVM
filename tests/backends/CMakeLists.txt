@@ -33,3 +33,8 @@ endif ()
 if (TARGET ${PLSSVM_SYCL_BACKEND_LIBRARY_NAME})
     add_subdirectory(SYCL)
 endif ()
+
+# create Kokkos tests if the Kokkos backend is available
+if (TARGET ${PLSSVM_KOKKOS_BACKEND_LIBRARY_NAME})
+    add_subdirectory(Kokkos)
+endif ()
