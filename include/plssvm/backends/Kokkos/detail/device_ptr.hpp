@@ -105,8 +105,9 @@ class device_ptr : public ::plssvm::detail::gpu_device_ptr<T, Kokkos::DefaultExe
 
     /**
      * @copydoc plssvm::detail::gpu_device_ptr::~gpu_device_ptr()
+     * @details Kokkos automatically frees the memory of a Kokkos::View if the View goes out of scope.
      */
-    ~device_ptr() override;
+    ~device_ptr() override = default;
 
     /**
      * @copydoc plssvm::detail::gpu_device_ptr::memset(int, size_type, size_type)
