@@ -94,6 +94,20 @@ TEST(DimType, swap_free_function) {
     EXPECT_EQ(dim2.z, 1ull);
 }
 
+TEST(DimType, total_size) {
+    // create dim types
+    constexpr plssvm::detail::dim_type dim1{};
+    constexpr plssvm::detail::dim_type dim2{ 64ull };
+    constexpr plssvm::detail::dim_type dim3{ 64ull, 32ull };
+    constexpr plssvm::detail::dim_type dim4{ 64ull, 32ull, 16ull };
+
+    // test total_size function
+    EXPECT_EQ(dim1.total_size(), 1ull);
+    EXPECT_EQ(dim2.total_size(), 64ull);
+    EXPECT_EQ(dim3.total_size(), 2048ull);
+    EXPECT_EQ(dim4.total_size(), 32768ull);
+}
+
 TEST(DimType, equality) {
     // create dim types
     constexpr plssvm::detail::dim_type dim1{};

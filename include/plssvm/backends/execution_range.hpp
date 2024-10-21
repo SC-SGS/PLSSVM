@@ -77,6 +77,15 @@ struct [[nodiscard]] dim_type {
         swap_ull(z, other.z);
     }
 
+    /**
+     * @brief Return the total number of elements in the dimensional type.
+     * @details Equal to: `x * y * z`.
+     * @return the total number of elements (`[[nodiscard]]`)
+     */
+    [[nodiscard]] constexpr unsigned long long total_size() const noexcept {
+        return x * y * z;
+    }
+
     /// The dimensional size in x direction.
     unsigned long long x{ 1 };
     /// The dimensional size in y direction.
