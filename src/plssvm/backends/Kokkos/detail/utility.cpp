@@ -126,8 +126,8 @@ std::string get_device_name(const execution_space space, const std::size_t devic
     return "unknown";
 }
 
-void device_synchronize_all() {
-    Kokkos::DefaultExecutionSpace::impl_static_fence("synchronize all");
+void device_synchronize(const Kokkos::DefaultExecutionSpace& exec) {
+    exec.fence();
 }
 
 std::string get_kokkos_version() {

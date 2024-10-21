@@ -15,6 +15,7 @@
 #include "plssvm/detail/tracking/performance_tracker.hpp"  // plssvm::detail::tracking::tracking_entry, PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_SAVE,
                                                            // PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_TRACKING_ENTRY, PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_ADD_HWS_ENTRY
                                                            // PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_SET_REFERENCE_TIME
+#include "plssvm/detail/assert.hpp"                        // PLSSVM_ASSERT
 #include "plssvm/detail/utility.hpp"                       // PLSSVM_IS_DEFINED
 
 #if defined(PLSSVM_HAS_KOKKOS_BACKEND)
@@ -74,11 +75,12 @@ int main(int argc, char *argv[]) {
 
             // check whether SYCL is used as backend (it is either requested directly or as automatic backend)
             const bool use_sycl_as_backend{ cmd_parser.backend == plssvm::backend_type::sycl || (cmd_parser.backend == plssvm::backend_type::automatic && plssvm::determine_default_backend() == plssvm::backend_type::sycl) };
+
+#if defined(PLSSVM_HAS_KOKKOS_BACKEND)
             // check whether Kokkos is used as backend (it is either requested directly or as automatic backend)
             const bool use_kokkos_as_backend{ cmd_parser.backend == plssvm::backend_type::kokkos || (cmd_parser.backend == plssvm::backend_type::automatic && plssvm::determine_default_backend() == plssvm::backend_type::kokkos) };
 
             // initialize Kokkos if necessary
-#if defined(PLSSVM_HAS_KOKKOS_BACKEND)
             if (use_kokkos_as_backend) {
                 Kokkos::initialize(argc, argv);  // TODO: set device?
                 PLSSVM_ASSERT(Kokkos::is_initialized(), "Something went wrong initializing the Kokkos environment!");

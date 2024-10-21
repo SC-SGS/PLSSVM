@@ -8,8 +8,7 @@
 
 #include "plssvm/backends/Kokkos/csvm.hpp"
 
-#include "plssvm/backends/execution_range.hpp"                                        // plssvm::detail::dim_type
-#include "plssvm/backends/execution_range.hpp"                                        // plssvm::detail::execution_range
+#include "plssvm/backends/execution_range.hpp"                                        // plssvm::detail::{execution_range, dim_type}
 #include "plssvm/backends/Kokkos/detail/device_ptr.hpp"                               // plssvm::kokkos::detail::device_ptr
 #include "plssvm/backends/Kokkos/detail/execution_space.hpp"                          // plssvm::kokkos::detail::execution_space
 #include "plssvm/backends/Kokkos/detail/utility.hpp"                                  // plssvm::kokkos::detail::get_runtime_version
@@ -18,11 +17,14 @@
 #include "plssvm/backends/Kokkos/kernel/cg_explicit/kernel_matrix_assembly.hpp"       // plssvm::kokkos::detail::device_kernel_assembly
 #include "plssvm/backends/Kokkos/kernel/cg_implicit/kernel_matrix_assembly_blas.hpp"  // plssvm::kokkos::detail::device_kernel_assembly_symm
 #include "plssvm/backends/Kokkos/kernel/predict_kernel.hpp"                           // plssvm::kokkos::detail::{device_kernel_w_linear, device_kernel_predict_linear, device_kernel_predict}
+#include "plssvm/constants.hpp"                                                       // plssvm::THREAD_BLOCK_SIZE, plssvm::INTERNAL_BLOCK_SIZE, plssvm::FEATURE_BLOCK_SIZE
 #include "plssvm/detail/data_distribution.hpp"                                        // plssvm::detail::triangular_data_distribution
 #include "plssvm/detail/logging.hpp"                                                  // plssvm::detail::log
 #include "plssvm/detail/memory_size.hpp"                                              // plssvm::detail::memory_size
 #include "plssvm/detail/tracking/performance_tracker.hpp"                             // plssvm::detail::tracking::tracking_entry
+#include "plssvm/detail/utility.hpp"                                                  // plssvm::detail::unreachable // TODO: remove
 #include "plssvm/exceptions/exceptions.hpp"                                           // plssvm::exception
+#include "plssvm/kernel_function_types.hpp"                                           // plssvm::kernel_function_type
 #include "plssvm/parameter.hpp"                                                       // plssvm::parameter
 #include "plssvm/target_platforms.hpp"                                                // plssvm::target_platform
 #include "plssvm/verbosity_levels.hpp"                                                // plssvm::verbosity_level
@@ -141,8 +143,10 @@ void csvm::init(const target_platform target) {
 
 csvm::~csvm() {
     try {
-        // be sure that all operations on the Kokkos execution spaces have finished before destruction
-        detail::device_synchronize_all();
+        // be sure that all operations on the CUDA devices have finished before destruction
+        for (const queue_type &device : devices_) {
+            detail::device_synchronize(device);
+        }
     } catch (const plssvm::exception &e) {
         std::cout << e.what_with_loc() << std::endl;
         std::terminate();
@@ -191,9 +195,12 @@ std::vector<::plssvm::detail::memory_size> csvm::get_max_mem_alloc_size() const 
         case detail::execution_space::serial:
             throw backend_exception{ fmt::format("Currently not implemented for the execution space: {}!", space_) };
     }
+    ::plssvm::detail::unreachable();
 }
 
 std::size_t csvm::get_max_work_group_size(const std::size_t device_id) const {
+    PLSSVM_ASSERT(device_id < this->num_available_devices(), "Invalid device {} requested!", device_id);
+
     // TODO: implement for other execution spaces, guard behind ifdef
     switch (space_) {
         case detail::execution_space::cuda:
@@ -212,9 +219,12 @@ std::size_t csvm::get_max_work_group_size(const std::size_t device_id) const {
         case detail::execution_space::serial:
             throw backend_exception{ fmt::format("Currently not implemented for the execution space: {}!", space_) };
     }
+    ::plssvm::detail::unreachable();
 }
 
-::plssvm::detail::dim_type csvm::get_max_grid_size([[maybe_unused]] const std::size_t device_id) const {
+::plssvm::detail::dim_type csvm::get_max_grid_size(const std::size_t device_id) const {
+    PLSSVM_ASSERT(device_id < this->num_available_devices(), "Invalid device {} requested!", device_id);
+
     // TODO: implement for other execution spaces, guard behind ifdef
     switch (space_) {
         case detail::execution_space::cuda:
@@ -233,6 +243,7 @@ std::size_t csvm::get_max_work_group_size(const std::size_t device_id) const {
         case detail::execution_space::serial:
             throw backend_exception{ fmt::format("Currently not implemented for the execution space: {}!", space_) };
     }
+    ::plssvm::detail::unreachable();
 }
 
 //***************************************************//
@@ -256,37 +267,55 @@ auto csvm::run_assemble_kernel_matrix_explicit(const std::size_t device_id, cons
 
     device_ptr_type kernel_matrix_d{ num_entries_padded, device };  // only explicitly store the upper triangular matrix
     const real_type cost_factor = real_type{ 1.0 } / params.cost;
+    const std::size_t scratch_memory_size = static_cast<std::size_t>(2u * FEATURE_BLOCK_SIZE * THREAD_BLOCK_SIZE * INTERNAL_BLOCK_SIZE) * sizeof(real_type);
 
-    // TODO: implement
-    // // convert execution range block to CUDA's native dim3
-    // const dim3 native_block = detail::dim_type_to_native(exec.block);
-    //
-    // for (const auto &[partial_grid, offsets] : exec.grids) {
-    //     // convert execution range partial_grid to CUDA's native dim3
-    //     const dim3 native_partial_grid = detail::dim_type_to_native(partial_grid);
-    //
-    //     switch (params.kernel_type) {
-    //         case kernel_function_type::linear:
-    //             detail::device_kernel_assembly<kernel_function_type::linear><<<native_partial_grid, native_block>>>(kernel_matrix_d.get(), data_d.get(), num_rows_reduced, device_specific_num_rows, row_offset, num_features, q_red_d.get(), QA_cost, cost_factor, offsets.x, offsets.y);
-    //             break;
-    //         case kernel_function_type::polynomial:
-    //             detail::device_kernel_assembly<kernel_function_type::polynomial><<<native_partial_grid, native_block>>>(kernel_matrix_d.get(), data_d.get(), num_rows_reduced, device_specific_num_rows, row_offset, num_features, q_red_d.get(), QA_cost, cost_factor, offsets.x, offsets.y, params.degree, std::get<real_type>(params.gamma), params.coef0);
-    //             break;
-    //         case kernel_function_type::rbf:
-    //             detail::device_kernel_assembly<kernel_function_type::rbf><<<native_partial_grid, native_block>>>(kernel_matrix_d.get(), data_d.get(), num_rows_reduced, device_specific_num_rows, row_offset, num_features, q_red_d.get(), QA_cost, cost_factor, offsets.x, offsets.y, std::get<real_type>(params.gamma));
-    //             break;
-    //         case kernel_function_type::sigmoid:
-    //             detail::device_kernel_assembly<kernel_function_type::sigmoid><<<native_partial_grid, native_block>>>(kernel_matrix_d.get(), data_d.get(), num_rows_reduced, device_specific_num_rows, row_offset, num_features, q_red_d.get(), QA_cost, cost_factor, offsets.x, offsets.y, std::get<real_type>(params.gamma), params.coef0);
-    //             break;
-    //         case kernel_function_type::laplacian:
-    //             detail::device_kernel_assembly<kernel_function_type::laplacian><<<native_partial_grid, native_block>>>(kernel_matrix_d.get(), data_d.get(), num_rows_reduced, device_specific_num_rows, row_offset, num_features, q_red_d.get(), QA_cost, cost_factor, offsets.x, offsets.y, std::get<real_type>(params.gamma));
-    //             break;
-    //         case kernel_function_type::chi_squared:
-    //             detail::device_kernel_assembly<kernel_function_type::chi_squared><<<native_partial_grid, native_block>>>(kernel_matrix_d.get(), data_d.get(), num_rows_reduced, device_specific_num_rows, row_offset, num_features, q_red_d.get(), QA_cost, cost_factor, offsets.x, offsets.y, std::get<real_type>(params.gamma));
-    //             break;
-    //     }
-    // }
-    detail::device_synchronize_all();
+    // save the team sizes
+    const ::plssvm::detail::dim_type team_sizes = exec.block;
+
+    for (const auto &[partial_grid, offsets] : exec.grids) {
+        // create a Kokkos TeamPolicy
+        Kokkos::TeamPolicy<> team_policy(device, static_cast<int>(partial_grid.total_size()), static_cast<int>(team_sizes.total_size()), Kokkos::AUTO);
+
+        switch (params.kernel_type) {
+            case kernel_function_type::linear:
+                {
+                    using functor_type = detail::device_kernel_assembly<kernel_function_type::linear>;
+                    Kokkos::parallel_for("assemble_kernel_matrix_explicit_linear", team_policy.set_scratch_size(0, Kokkos::PerTeam(scratch_memory_size)), functor_type{ kernel_matrix_d.get(), data_d.get(), num_rows_reduced, device_specific_num_rows, row_offset, num_features, q_red_d.get(), QA_cost, cost_factor, offsets.x, offsets.y, partial_grid.x });
+                }
+                break;
+            case kernel_function_type::polynomial:
+                {
+                    using functor_type = detail::device_kernel_assembly<kernel_function_type::polynomial, decltype(params.degree), real_type, decltype(params.coef0)>;
+                    Kokkos::parallel_for("assemble_kernel_matrix_explicit_polynomial", team_policy.set_scratch_size(0, Kokkos::PerTeam(scratch_memory_size)), functor_type{ kernel_matrix_d.get(), data_d.get(), num_rows_reduced, device_specific_num_rows, row_offset, num_features, q_red_d.get(), QA_cost, cost_factor, offsets.x, offsets.y, partial_grid.x, params.degree, std::get<real_type>(params.gamma), params.coef0 });
+                }
+                break;
+            case kernel_function_type::rbf:
+                {
+                    using functor_type = detail::device_kernel_assembly<kernel_function_type::rbf, real_type>;
+                    Kokkos::parallel_for("assemble_kernel_matrix_explicit_rbf", team_policy.set_scratch_size(0, Kokkos::PerTeam(scratch_memory_size)), functor_type{ kernel_matrix_d.get(), data_d.get(), num_rows_reduced, device_specific_num_rows, row_offset, num_features, q_red_d.get(), QA_cost, cost_factor, offsets.x, offsets.y, partial_grid.x, std::get<real_type>(params.gamma) });
+                }
+                break;
+            case kernel_function_type::sigmoid:
+                {
+                    using functor_type = detail::device_kernel_assembly<kernel_function_type::sigmoid, real_type, decltype(params.coef0)>;
+                    Kokkos::parallel_for("assemble_kernel_matrix_explicit_sigmoid", team_policy.set_scratch_size(0, Kokkos::PerTeam(scratch_memory_size)), functor_type{ kernel_matrix_d.get(), data_d.get(), num_rows_reduced, device_specific_num_rows, row_offset, num_features, q_red_d.get(), QA_cost, cost_factor, offsets.x, offsets.y, partial_grid.x, std::get<real_type>(params.gamma), params.coef0 });
+                }
+                break;
+            case kernel_function_type::laplacian:
+                {
+                    using functor_type = detail::device_kernel_assembly<kernel_function_type::laplacian, real_type>;
+                    Kokkos::parallel_for("assemble_kernel_matrix_explicit_laplacian", team_policy.set_scratch_size(0, Kokkos::PerTeam(scratch_memory_size)), functor_type{ kernel_matrix_d.get(), data_d.get(), num_rows_reduced, device_specific_num_rows, row_offset, num_features, q_red_d.get(), QA_cost, cost_factor, offsets.x, offsets.y, partial_grid.x, std::get<real_type>(params.gamma) });
+                }
+                break;
+            case kernel_function_type::chi_squared:
+                {
+                    using functor_type = detail::device_kernel_assembly<kernel_function_type::chi_squared, real_type>;
+                    Kokkos::parallel_for("assemble_kernel_matrix_explicit_chi_squared", team_policy.set_scratch_size(0, Kokkos::PerTeam(scratch_memory_size)), functor_type{ kernel_matrix_d.get(), data_d.get(), num_rows_reduced, device_specific_num_rows, row_offset, num_features, q_red_d.get(), QA_cost, cost_factor, offsets.x, offsets.y, partial_grid.x, std::get<real_type>(params.gamma) });
+                }
+                break;
+        }
+    }
+    detail::device_synchronize(device);
 
     return kernel_matrix_d;
 }
@@ -300,72 +329,65 @@ void csvm::run_blas_level_3_kernel_explicit(const std::size_t device_id, const :
     const unsigned long long device_specific_num_rows = data_distribution_->place_specific_num_rows(device_id);
     // get the offset of the data points this device is responsible for
     const unsigned long long row_offset = data_distribution_->place_row_offset(device_id);
+    // the necessary amount of scratch memory for the kernels
+    const std::size_t scratch_memory_size = static_cast<std::size_t>(2u * FEATURE_BLOCK_SIZE * THREAD_BLOCK_SIZE * INTERNAL_BLOCK_SIZE) * sizeof(real_type);
 
-    // TODO: implement
-    // // convert execution range block to CUDA's native dim3
-    // const dim3 native_block = detail::dim_type_to_native(exec.block);
-    //
-    // detail::set_device(device);
-    // for (const auto &[partial_grid, offsets] : exec.grids) {
-    //     // convert execution range partial_grid to CUDA's native dim3
-    //     const dim3 native_partial_grid = detail::dim_type_to_native(partial_grid);
-    //
-    //     detail::device_kernel_symm<<<native_partial_grid, native_block>>>(num_rows, num_rhs, device_specific_num_rows, row_offset, alpha, A_d.get(), B_d.get(), beta, C_d.get(), offsets.x, offsets.y);
-    // }
-    //
-    // // convert execution range block to CUDA's native dim3
-    // const dim3 native_mirror_block = detail::dim_type_to_native(mirror_exec.block);
-    //
-    // for (const auto &[partial_grid, offsets] : mirror_exec.grids) {
-    //     const unsigned long long num_mirror_rows = num_rows - row_offset - device_specific_num_rows;
-    //
-    //     if (num_mirror_rows > 0) {
-    //         // convert execution range partial_grid to CUDA's native dim3
-    //         const dim3 native_partial_grid = detail::dim_type_to_native(partial_grid);
-    //
-    //         detail::device_kernel_symm_mirror<<<native_partial_grid, native_mirror_block>>>(num_rows, num_rhs, num_mirror_rows, device_specific_num_rows, row_offset, alpha, A_d.get(), B_d.get(), beta, C_d.get(), offsets.x, offsets.y);
-    //     }
-    // }
-    // detail::peek_at_last_error();
-    detail::device_synchronize_all();
+    // save the team sizes
+    const ::plssvm::detail::dim_type team_sizes = exec.block;
+
+    for (const auto &[partial_grid, offsets] : exec.grids) {
+        // create a Kokkos TeamPolicy
+        Kokkos::TeamPolicy<> team_policy{ device, static_cast<int>(partial_grid.total_size()), static_cast<int>(team_sizes.total_size()), Kokkos::AUTO };
+
+        Kokkos::parallel_for("blas_level_3_kernel_explicit", team_policy.set_scratch_size(0, Kokkos::PerTeam(scratch_memory_size)), detail::device_kernel_symm(num_rows, num_rhs, device_specific_num_rows, row_offset, alpha, A_d.get(), B_d.get(), beta, C_d.get(), offsets.x, offsets.y, partial_grid.x));
+    }
+
+    // save the mirror team sizes
+    const ::plssvm::detail::dim_type mirror_team_sizes = mirror_exec.block;
+
+    for (const auto &[partial_grid, offsets] : mirror_exec.grids) {
+        const unsigned long long num_mirror_rows = num_rows - row_offset - device_specific_num_rows;
+
+        if (num_mirror_rows > 0) {
+            // create a Kokkos TeamPolicy
+            Kokkos::TeamPolicy<> team_policy{ static_cast<int>(partial_grid.total_size()), static_cast<int>(mirror_team_sizes.total_size()), Kokkos::AUTO };
+
+            Kokkos::parallel_for("blas_level_3_kernel_explicit_mirror", team_policy.set_scratch_size(0, Kokkos::PerTeam(scratch_memory_size)), detail::device_kernel_symm_mirror(num_rows, num_rhs, num_mirror_rows, device_specific_num_rows, row_offset, alpha, A_d.get(), B_d.get(), beta, C_d.get(), offsets.x, offsets.y, partial_grid.x));
+        }
+    }
+    detail::device_synchronize(device);
 }
 
 void csvm::run_inplace_matrix_addition(const std::size_t device_id, const ::plssvm::detail::execution_range &exec, device_ptr_type &lhs_d, const device_ptr_type &rhs_d) const {
     const unsigned long long num_rhs = lhs_d.shape().x;
     const queue_type &device = devices_[device_id];
 
-    // // TODO: implement
-    // // convert execution range block to CUDA's native dim3
-    // const dim3 native_block = detail::dim_type_to_native(exec.block);
-    //
-    // detail::set_device(device);
-    // for (const auto &[partial_grid, offsets] : exec.grids) {
-    //     // convert execution range partial_grid to CUDA's native dim3
-    //     const dim3 native_partial_grid = detail::dim_type_to_native(partial_grid);
-    //
-    //     detail::device_kernel_inplace_matrix_add<<<native_partial_grid, native_block>>>(num_rhs, lhs_d.get(), rhs_d.get(), offsets.x, offsets.y);
-    // }
-    // detail::peek_at_last_error();
-    detail::device_synchronize_all();
+    // save the team sizes
+    const ::plssvm::detail::dim_type team_sizes = exec.block;
+
+    for (const auto &[partial_grid, offsets] : exec.grids) {
+        // create a Kokkos TeamPolicy
+        Kokkos::TeamPolicy<> team_policy{ static_cast<int>(partial_grid.total_size()), static_cast<int>(team_sizes.total_size()), Kokkos::AUTO };
+
+        Kokkos::parallel_for("inplace_matrix_addition", team_policy, detail::device_kernel_inplace_matrix_add(num_rhs, lhs_d.get(), rhs_d.get(), offsets.x, offsets.y, partial_grid.x));
+    }
+    detail::device_synchronize(device);
 }
 
 void csvm::run_inplace_matrix_scale(const std::size_t device_id, const ::plssvm::detail::execution_range &exec, device_ptr_type &lhs_d, const real_type scale) const {
     const unsigned long long num_rhs = lhs_d.shape().x;
     const queue_type &device = devices_[device_id];
 
-    // TODO: implement
-    // // convert execution range block to CUDA's native dim3
-    // const dim3 native_block = detail::dim_type_to_native(exec.block);
-    //
-    // detail::set_device(device);
-    // for (const auto &[partial_grid, offsets] : exec.grids) {
-    //     // convert execution range partial_grid to CUDA's native dim3
-    //     const dim3 native_partial_grid = detail::dim_type_to_native(partial_grid);
-    //
-    //     detail::device_kernel_inplace_matrix_scale<<<native_partial_grid, native_block>>>(num_rhs, lhs_d.get(), scale, offsets.x, offsets.y);
-    // }
-    // detail::peek_at_last_error();
-    detail::device_synchronize_all();
+    // save the team sizes
+    const ::plssvm::detail::dim_type team_sizes = exec.block;
+
+    for (const auto &[partial_grid, offsets] : exec.grids) {
+        // create a Kokkos TeamPolicy
+        Kokkos::TeamPolicy<> team_policy{ static_cast<int>(partial_grid.total_size()), static_cast<int>(team_sizes.total_size()), Kokkos::AUTO };
+
+        Kokkos::parallel_for("inplace_matrix_scale", team_policy, detail::device_kernel_inplace_matrix_scale(num_rhs, lhs_d.get(), scale, offsets.x, offsets.y, partial_grid.x));
+    }
+    detail::device_synchronize(device);
 }
 
 void csvm::run_assemble_kernel_matrix_implicit_blas_level_3(const std::size_t device_id, const ::plssvm::detail::execution_range &exec, const real_type alpha, const device_ptr_type &A_d, const parameter &params, const device_ptr_type &q_red, const real_type QA_cost, const device_ptr_type &B_d, device_ptr_type &C_d) const {
@@ -380,39 +402,55 @@ void csvm::run_assemble_kernel_matrix_implicit_blas_level_3(const std::size_t de
     const unsigned long long row_offset = data_distribution_->place_row_offset(device_id);
 
     const real_type cost_factor = real_type{ 1.0 } / params.cost;
+    const std::size_t scratch_memory_size = static_cast<std::size_t>(2u * FEATURE_BLOCK_SIZE * THREAD_BLOCK_SIZE * INTERNAL_BLOCK_SIZE) * sizeof(real_type);
 
-    // TODO: implement
-    // // convert general execution range's block to CUDA specific block
-    // const dim3 native_block = detail::dim_type_to_native(exec.block);
-    //
-    // detail::set_device(device);
-    // for (const auto &[partial_grid, offsets] : exec.grids) {
-    //     // convert execution range partial_grid to CUDA's native dim3
-    //     const dim3 native_partial_grid = detail::dim_type_to_native(partial_grid);
-    //
-    //     switch (params.kernel_type) {
-    //         case kernel_function_type::linear:
-    //             detail::device_kernel_assembly_symm<kernel_function_type::linear><<<native_partial_grid, native_block>>>(alpha, q_red.get(), A_d.get(), num_rows_reduced, device_specific_num_rows, row_offset, num_features, QA_cost, cost_factor, B_d.get(), C_d.get(), num_classes, offsets.x, offsets.y);
-    //             break;
-    //         case kernel_function_type::polynomial:
-    //             detail::device_kernel_assembly_symm<kernel_function_type::polynomial><<<native_partial_grid, native_block>>>(alpha, q_red.get(), A_d.get(), num_rows_reduced, device_specific_num_rows, row_offset, num_features, QA_cost, cost_factor, B_d.get(), C_d.get(), num_classes, offsets.x, offsets.y, params.degree, std::get<real_type>(params.gamma), params.coef0);
-    //             break;
-    //         case kernel_function_type::rbf:
-    //             detail::device_kernel_assembly_symm<kernel_function_type::rbf><<<native_partial_grid, native_block>>>(alpha, q_red.get(), A_d.get(), num_rows_reduced, device_specific_num_rows, row_offset, num_features, QA_cost, cost_factor, B_d.get(), C_d.get(), num_classes, offsets.x, offsets.y, std::get<real_type>(params.gamma));
-    //             break;
-    //         case kernel_function_type::sigmoid:
-    //             detail::device_kernel_assembly_symm<kernel_function_type::sigmoid><<<native_partial_grid, native_block>>>(alpha, q_red.get(), A_d.get(), num_rows_reduced, device_specific_num_rows, row_offset, num_features, QA_cost, cost_factor, B_d.get(), C_d.get(), num_classes, offsets.x, offsets.y, std::get<real_type>(params.gamma), params.coef0);
-    //             break;
-    //         case kernel_function_type::laplacian:
-    //             detail::device_kernel_assembly_symm<kernel_function_type::laplacian><<<native_partial_grid, native_block>>>(alpha, q_red.get(), A_d.get(), num_rows_reduced, device_specific_num_rows, row_offset, num_features, QA_cost, cost_factor, B_d.get(), C_d.get(), num_classes, offsets.x, offsets.y, std::get<real_type>(params.gamma));
-    //             break;
-    //         case kernel_function_type::chi_squared:
-    //             detail::device_kernel_assembly_symm<kernel_function_type::chi_squared><<<native_partial_grid, native_block>>>(alpha, q_red.get(), A_d.get(), num_rows_reduced, device_specific_num_rows, row_offset, num_features, QA_cost, cost_factor, B_d.get(), C_d.get(), num_classes, offsets.x, offsets.y, std::get<real_type>(params.gamma));
-    //             break;
-    //     }
-    // }
-    // detail::peek_at_last_error();
-    detail::device_synchronize_all();
+    // save the team sizes
+    const ::plssvm::detail::dim_type team_sizes = exec.block;
+
+    for (const auto &[partial_grid, offsets] : exec.grids) {
+        // create a Kokkos TeamPolicy
+        Kokkos::TeamPolicy<> team_policy(device, static_cast<int>(partial_grid.total_size()), static_cast<int>(team_sizes.total_size()), Kokkos::AUTO);
+
+        switch (params.kernel_type) {
+            case kernel_function_type::linear:
+                {
+                    using functor_type = detail::device_kernel_assembly_symm<kernel_function_type::linear>;
+                    Kokkos::parallel_for("assemble_kernel_matrix_implicit_blas_level_3_linear", team_policy.set_scratch_size(0, Kokkos::PerTeam(scratch_memory_size)), functor_type{ alpha, q_red.get(), A_d.get(), num_rows_reduced, device_specific_num_rows, row_offset, num_features, QA_cost, cost_factor, B_d.get(), C_d.get(), num_classes, offsets.x, offsets.y, partial_grid.x });
+                }
+                break;
+            case kernel_function_type::polynomial:
+                {
+                    using functor_type = detail::device_kernel_assembly_symm<kernel_function_type::polynomial, decltype(params.degree), real_type, decltype(params.coef0)>;
+                    Kokkos::parallel_for("assemble_kernel_matrix_implicit_blas_level_3_polynomial", team_policy.set_scratch_size(0, Kokkos::PerTeam(scratch_memory_size)), functor_type{ alpha, q_red.get(), A_d.get(), num_rows_reduced, device_specific_num_rows, row_offset, num_features, QA_cost, cost_factor, B_d.get(), C_d.get(), num_classes, offsets.x, offsets.y, partial_grid.x, params.degree, std::get<real_type>(params.gamma), params.coef0 });
+                }
+                break;
+            case kernel_function_type::rbf:
+                {
+                    using functor_type = detail::device_kernel_assembly_symm<kernel_function_type::rbf, real_type>;
+                    Kokkos::parallel_for("assemble_kernel_matrix_implicit_blas_level_3_rbf", team_policy.set_scratch_size(0, Kokkos::PerTeam(scratch_memory_size)), functor_type{ alpha, q_red.get(), A_d.get(), num_rows_reduced, device_specific_num_rows, row_offset, num_features, QA_cost, cost_factor, B_d.get(), C_d.get(), num_classes, offsets.x, offsets.y, partial_grid.x, std::get<real_type>(params.gamma) });
+                }
+                break;
+            case kernel_function_type::sigmoid:
+                {
+                    using functor_type = detail::device_kernel_assembly_symm<kernel_function_type::sigmoid, real_type, decltype(params.coef0)>;
+                    Kokkos::parallel_for("assemble_kernel_matrix_implicit_blas_level_3_sigmoid", team_policy.set_scratch_size(0, Kokkos::PerTeam(scratch_memory_size)), functor_type{ alpha, q_red.get(), A_d.get(), num_rows_reduced, device_specific_num_rows, row_offset, num_features, QA_cost, cost_factor, B_d.get(), C_d.get(), num_classes, offsets.x, offsets.y, partial_grid.x, std::get<real_type>(params.gamma), params.coef0 });
+                }
+                break;
+            case kernel_function_type::laplacian:
+                {
+                    using functor_type = detail::device_kernel_assembly_symm<kernel_function_type::laplacian, real_type>;
+                    Kokkos::parallel_for("assemble_kernel_matrix_implicit_blas_level_3_laplacian", team_policy.set_scratch_size(0, Kokkos::PerTeam(scratch_memory_size)), functor_type{ alpha, q_red.get(), A_d.get(), num_rows_reduced, device_specific_num_rows, row_offset, num_features, QA_cost, cost_factor, B_d.get(), C_d.get(), num_classes, offsets.x, offsets.y, partial_grid.x, std::get<real_type>(params.gamma) });
+                }
+                break;
+            case kernel_function_type::chi_squared:
+                {
+                    using functor_type = detail::device_kernel_assembly_symm<kernel_function_type::chi_squared, real_type>;
+                    Kokkos::parallel_for("assemble_kernel_matrix_implicit_blas_level_3_chi_squared", team_policy.set_scratch_size(0, Kokkos::PerTeam(scratch_memory_size)), functor_type{ alpha, q_red.get(), A_d.get(), num_rows_reduced, device_specific_num_rows, row_offset, num_features, QA_cost, cost_factor, B_d.get(), C_d.get(), num_classes, offsets.x, offsets.y, partial_grid.x, std::get<real_type>(params.gamma) });
+                }
+                break;
+        }
+    }
+    detail::device_synchronize(device);
 }
 
 //***************************************************//
@@ -431,19 +469,18 @@ auto csvm::run_w_kernel(const std::size_t device_id, const ::plssvm::detail::exe
 
     device_ptr_type w_d{ shape{ num_classes, num_features }, shape{ PADDING_SIZE, PADDING_SIZE }, device };
 
-    // TODO: implement
-    // // convert execution range block to CUDA's native dim3
-    // const dim3 native_block = detail::dim_type_to_native(exec.block);
-    //
-    // detail::set_device(device);
-    // for (const auto &[partial_grid, offsets] : exec.grids) {
-    //     // convert execution range partial_grid to CUDA's native dim3
-    //     const dim3 native_partial_grid = detail::dim_type_to_native(partial_grid);
-    //
-    //     detail::device_kernel_w_linear<<<native_partial_grid, native_block>>>(w_d.get(), alpha_d.get(), sv_d.get(), num_classes, num_sv, device_specific_num_sv, sv_offset, offsets.x, offsets.y);
-    // }
-    // detail::peek_at_last_error();
-    detail::device_synchronize_all();
+    const std::size_t scratch_memory_size = static_cast<std::size_t>(2u * THREAD_BLOCK_SIZE * THREAD_BLOCK_SIZE * INTERNAL_BLOCK_SIZE) * sizeof(real_type);
+
+    // save the team sizes
+    const ::plssvm::detail::dim_type team_sizes = exec.block;
+
+    for (const auto &[partial_grid, offsets] : exec.grids) {
+        // create a Kokkos TeamPolicy
+        Kokkos::TeamPolicy<> team_policy{ static_cast<int>(partial_grid.total_size()), static_cast<int>(team_sizes.total_size()), Kokkos::AUTO };
+
+        Kokkos::parallel_for("w_kernel", team_policy.set_scratch_size(0, Kokkos::PerTeam(scratch_memory_size)), detail::device_kernel_w_linear(w_d.get(), alpha_d.get(), sv_d.get(), num_classes, num_sv, device_specific_num_sv, sv_offset, offsets.x, offsets.y, partial_grid.x));
+    }
+    detail::device_synchronize(device);
 
     return w_d;
 }
@@ -457,38 +494,55 @@ auto csvm::run_predict_kernel(const std::size_t device_id, const ::plssvm::detai
 
     device_ptr_type out_d{ shape{ num_predict_points, num_classes }, shape{ PADDING_SIZE, PADDING_SIZE }, device };
 
-    // TODO: implement
-    // // convert execution range block to CUDA's native dim3
-    // const dim3 native_block = detail::dim_type_to_native(exec.block);
-    //
-    // detail::set_device(device);
-    // for (const auto &[partial_grid, offsets] : exec.grids) {
-    //     // convert execution range partial_grid to CUDA's native dim3
-    //     const dim3 native_partial_grid = detail::dim_type_to_native(partial_grid);
-    //
-    //     switch (params.kernel_type) {
-    //         case kernel_function_type::linear:
-    //             detail::device_kernel_predict_linear<<<native_partial_grid, native_block>>>(out_d.get(), sv_or_w_d.get(), rho_d.get(), predict_points_d.get(), num_classes, num_predict_points, num_features, offsets.x, offsets.y);
-    //             break;
-    //         case kernel_function_type::polynomial:
-    //             detail::device_kernel_predict<kernel_function_type::polynomial><<<native_partial_grid, native_block>>>(out_d.get(), alpha_d.get(), rho_d.get(), sv_or_w_d.get(), predict_points_d.get(), num_classes, num_sv, num_predict_points, num_features, offsets.x, offsets.y, params.degree, std::get<real_type>(params.gamma), params.coef0);
-    //             break;
-    //         case kernel_function_type::rbf:
-    //             detail::device_kernel_predict<kernel_function_type::rbf><<<native_partial_grid, native_block>>>(out_d.get(), alpha_d.get(), rho_d.get(), sv_or_w_d.get(), predict_points_d.get(), num_classes, num_sv, num_predict_points, num_features, offsets.x, offsets.y, std::get<real_type>(params.gamma));
-    //             break;
-    //         case kernel_function_type::sigmoid:
-    //             detail::device_kernel_predict<kernel_function_type::sigmoid><<<native_partial_grid, native_block>>>(out_d.get(), alpha_d.get(), rho_d.get(), sv_or_w_d.get(), predict_points_d.get(), num_classes, num_sv, num_predict_points, num_features, offsets.x, offsets.y, std::get<real_type>(params.gamma), params.coef0);
-    //             break;
-    //         case kernel_function_type::laplacian:
-    //             detail::device_kernel_predict<kernel_function_type::laplacian><<<native_partial_grid, native_block>>>(out_d.get(), alpha_d.get(), rho_d.get(), sv_or_w_d.get(), predict_points_d.get(), num_classes, num_sv, num_predict_points, num_features, offsets.x, offsets.y, std::get<real_type>(params.gamma));
-    //             break;
-    //         case kernel_function_type::chi_squared:
-    //             detail::device_kernel_predict<kernel_function_type::chi_squared><<<native_partial_grid, native_block>>>(out_d.get(), alpha_d.get(), rho_d.get(), sv_or_w_d.get(), predict_points_d.get(), num_classes, num_sv, num_predict_points, num_features, offsets.x, offsets.y, std::get<real_type>(params.gamma));
-    //             break;
-    //     }
-    // }
-    // detail::peek_at_last_error();
-    detail::device_synchronize_all();
+    const std::size_t scratch_memory_size = static_cast<std::size_t>(2u * FEATURE_BLOCK_SIZE * THREAD_BLOCK_SIZE * INTERNAL_BLOCK_SIZE) * sizeof(real_type);
+
+    // save the team sizes
+    const ::plssvm::detail::dim_type team_sizes = exec.block;
+
+    for (const auto &[partial_grid, offsets] : exec.grids) {
+        // create a Kokkos TeamPolicy
+        Kokkos::TeamPolicy<> team_policy{ static_cast<int>(partial_grid.total_size()), static_cast<int>(team_sizes.total_size()), Kokkos::AUTO };
+
+        switch (params.kernel_type) {
+            case kernel_function_type::linear:
+                {
+                    using functor_type = detail::device_kernel_predict_linear;
+                    Kokkos::parallel_for("predict_kernel_linear", team_policy.set_scratch_size(0, Kokkos::PerTeam(scratch_memory_size)), functor_type{ out_d.get(), sv_or_w_d.get(), rho_d.get(), predict_points_d.get(), num_classes, num_predict_points, num_features, offsets.x, offsets.y, partial_grid.x });
+                }
+                break;
+            case kernel_function_type::polynomial:
+                {
+                    using functor_type = detail::device_kernel_predict<kernel_function_type::polynomial, decltype(params.degree), real_type, decltype(params.coef0)>;
+                    Kokkos::parallel_for("predict_kernel_polynomial", team_policy.set_scratch_size(0, Kokkos::PerTeam(scratch_memory_size)), functor_type{ out_d.get(), alpha_d.get(), rho_d.get(), sv_or_w_d.get(), predict_points_d.get(), num_classes, num_sv, num_predict_points, num_features, offsets.x, offsets.y, partial_grid.x, params.degree, std::get<real_type>(params.gamma), params.coef0 });
+                }
+                break;
+            case kernel_function_type::rbf:
+                {
+                    using functor_type = detail::device_kernel_predict<kernel_function_type::rbf, real_type>;
+                    Kokkos::parallel_for("predict_kernel_rbf", team_policy.set_scratch_size(0, Kokkos::PerTeam(scratch_memory_size)), functor_type{ out_d.get(), alpha_d.get(), rho_d.get(), sv_or_w_d.get(), predict_points_d.get(), num_classes, num_sv, num_predict_points, num_features, offsets.x, offsets.y, partial_grid.x, std::get<real_type>(params.gamma) });
+                }
+                break;
+            case kernel_function_type::sigmoid:
+                {
+                    using functor_type = detail::device_kernel_predict<kernel_function_type::sigmoid, real_type, decltype(params.coef0)>;
+                    Kokkos::parallel_for("predict_kernel_sigmoid", team_policy.set_scratch_size(0, Kokkos::PerTeam(scratch_memory_size)), functor_type{ out_d.get(), alpha_d.get(), rho_d.get(), sv_or_w_d.get(), predict_points_d.get(), num_classes, num_sv, num_predict_points, num_features, offsets.x, offsets.y, partial_grid.x, std::get<real_type>(params.gamma), params.coef0 });
+                }
+                break;
+            case kernel_function_type::laplacian:
+                {
+                    using functor_type = detail::device_kernel_predict<kernel_function_type::laplacian, real_type>;
+                    Kokkos::parallel_for("predict_kernel_laplacian", team_policy.set_scratch_size(0, Kokkos::PerTeam(scratch_memory_size)), functor_type{ out_d.get(), alpha_d.get(), rho_d.get(), sv_or_w_d.get(), predict_points_d.get(), num_classes, num_sv, num_predict_points, num_features, offsets.x, offsets.y, partial_grid.x, std::get<real_type>(params.gamma) });
+                }
+                break;
+            case kernel_function_type::chi_squared:
+                {
+                    using functor_type = detail::device_kernel_predict<kernel_function_type::chi_squared, real_type>;
+                    Kokkos::parallel_for("predict_kernel_chi_squared", team_policy.set_scratch_size(0, Kokkos::PerTeam(scratch_memory_size)), functor_type{ out_d.get(), alpha_d.get(), rho_d.get(), sv_or_w_d.get(), predict_points_d.get(), num_classes, num_sv, num_predict_points, num_features, offsets.x, offsets.y, partial_grid.x, std::get<real_type>(params.gamma) });
+                }
+                break;
+        }
+    }
+    detail::device_synchronize(device);
 
     return out_d;
 }

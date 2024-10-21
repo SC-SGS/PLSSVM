@@ -80,7 +80,8 @@ void check_execution_space_target_platform_combination(execution_space space, ta
 
 [[nodiscard]] std::string get_device_name(execution_space space, std::size_t device_id);
 
-void device_synchronize_all();
+void device_synchronize(const Kokkos::DefaultExecutionSpace& exec);
+
 
 [[nodiscard]] std::string get_kokkos_version();
 
