@@ -100,20 +100,9 @@ void csvm::init(const target_platform target) {
     }
 
     // get all available devices wrt the requested target platform
-// TODO: HOW CAN ONE USE MULTIPLE KOKKOS DEVICES
-// TODO: implement for other Kokkos execution spaces
-#if defined(KOKKOS_ENABLE_CUDA)
-    for (int device = 0; device < Kokkos::num_devices(); ++device) {
-        // create CUDA stream using the CUDA specific functions
-        cudaSetDevice(device);
-        cudaStream_t stream{};
-        cudaStreamCreate(&stream);
-        // create Kokkos execution space for the specific device
-        devices_.emplace_back(Kokkos::Cuda(stream, true));
-    }
-#endif
+    devices_ = detail::get_device_list(space_, target_);
 
-    // throw exception if no CUDA devices could be found
+    // throw exception if no devices in the current execution space could be found
     if (devices_.empty()) {
         throw backend_exception{ fmt::format("Not devices found for the Kokkos execution space {} with the target platform {}!", space_, target_) };
     }
