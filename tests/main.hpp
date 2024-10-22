@@ -1,0 +1,47 @@
+/**
+ * @file
+ * @author Alexander Van Craen
+ * @author Marcel Breyer
+ * @copyright 2018-today The PLSSVM project - All Rights Reserved
+ * @license This file is part of the PLSSVM project which is released under the MIT license.
+ *          See the LICENSE.md file in the project root for full license information.
+ *
+ * @brief Header file for the GoogleTest main files to reduce code duplication.
+ */
+
+#ifndef PLSSVM_TESTS_MAIN_HPP_
+#define PLSSVM_TESTS_MAIN_HPP_
+#pragma once
+
+#include "gtest/gtest.h"  // GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST
+
+// silence GTest warnings/test errors
+
+// generic CSVM tests
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(GenericCSVM);
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(GenericCSVMKernelFunction);
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(GenericCSVMSolver);
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(GenericCSVMSolverKernelFunction);
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(GenericCSVMKernelFunctionClassification);
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(GenericCSVMSolverKernelFunctionClassification);
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(GenericCSVMDeathTest);
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(GenericCSVMSolverDeathTest);
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(GenericCSVMKernelFunctionDeathTest);
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(GenericCSVMSolverKernelFunctionDeathTest);
+// generic GPU CSVM tests
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(GenericGPUCSVM);
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(GenericGPUCSVMKernelFunction);
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(GenericGPUCSVMDeathTest);
+// pinned memory tests
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(PinnedMemory);
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(PinnedMemoryLayout);
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(PinnedMemoryDeathTest);
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(PinnedMemoryLayoutDeathTest);
+// device pointer tests
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(DevicePtr);
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(DevicePtrLayout);
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(DevicePtrDeathTest);
+// exception tests
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(Exception);
+
+#endif  // PLSSVM_TESTS_MAIN_HPP_
