@@ -8,36 +8,36 @@
 
 #include "plssvm/backends/Kokkos/detail/device_ptr.hpp"
 
-#include "plssvm/backends/Kokkos/detail/utility.hpp"  // plssvm::detail::device_synchronize
-#include "plssvm/backends/Kokkos/exceptions.hpp"      // plssvm::kokkos::backend_exception
-#include "plssvm/detail/assert.hpp"                   // PLSSVM_ASSERT
-#include "plssvm/exceptions/exceptions.hpp"           // plssvm::exception
-#include "plssvm/shape.hpp"                           // plssvm::shape
+#include "plssvm/backends/Kokkos/detail/typedefs.hpp"  // plssvm::kokkos::detail::{device_view_type, host_view_type}
+#include "plssvm/backends/Kokkos/detail/utility.hpp"   // plssvm::detail::device_synchronize
+#include "plssvm/backends/Kokkos/exceptions.hpp"       // plssvm::kokkos::backend_exception
+#include "plssvm/detail/assert.hpp"                    // PLSSVM_ASSERT
+#include "plssvm/shape.hpp"                            // plssvm::shape
 
-#include "Kokkos_Core.hpp"
+#include "Kokkos_Core.hpp"  // Kokkos::DefaultExecutionSpace, Kokkos::subview, Kokkos::parallel_for, KOKKOS_LAMBDA, Kokkos::deep_copy
 
 #include "fmt/core.h"  // fmt::format
 
+#include <algorithm>  // std::min
 #include <cstddef>    // std::size_t
-#include <exception>  // std::terminate
-#include <iostream>   // std::cout, std::endl
+#include <cstring>    // std::memcpy
+#include <utility>    // std::make_pair
 #include <vector>     // std::vector
 
 namespace plssvm::kokkos::detail {
 
 template <typename T>
-device_ptr<T>::device_ptr(const size_type size, const Kokkos::DefaultExecutionSpace exec) :
+device_ptr<T>::device_ptr(const size_type size, const Kokkos::DefaultExecutionSpace &exec) :
     device_ptr{ plssvm::shape{ size, 1 }, plssvm::shape{ 0, 0 }, exec } { }
 
 template <typename T>
-device_ptr<T>::device_ptr(const plssvm::shape shape, const Kokkos::DefaultExecutionSpace exec) :
+device_ptr<T>::device_ptr(const plssvm::shape shape, const Kokkos::DefaultExecutionSpace &exec) :
     device_ptr{ shape, plssvm::shape{ 0, 0 }, exec } { }
 
 template <typename T>
-device_ptr<T>::device_ptr(const plssvm::shape shape, const plssvm::shape padding, const Kokkos::DefaultExecutionSpace exec) :
+device_ptr<T>::device_ptr(const plssvm::shape shape, const plssvm::shape padding, const Kokkos::DefaultExecutionSpace &exec) :
     base_type{ shape, padding, exec } {
-    // TODO: GUARD behind ifdef!
-    data_ = device_view_type<T>{ fmt::format("device_{}_view", exec.cuda_device()), this->size_padded() };
+    data_ = device_view_type<T>{ "device_ptr_view", this->size_padded() };
 }
 
 template <typename T>

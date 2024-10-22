@@ -13,10 +13,12 @@
 #define PLSSVM_BACKENDS_KOKKOS_CG_EXPLICIT_BLAS_HPP_
 #pragma once
 
-#include "plssvm/backends/Kokkos/detail/device_ptr.hpp"  // TODO: view type aliases
-#include "plssvm/constants.hpp"                          // plssvm::{real_type, THREAD_BLOCK_SIZE, INTERNAL_BLOCK_SIZE, FEATURE_BLOCK_SIZE, PADDING_SIZE}
+#include "plssvm/backends/Kokkos/detail/typedefs.hpp"  // plssvm::kokkos::detail::device_view_type
+#include "plssvm/constants.hpp"                        // plssvm::{real_type, THREAD_BLOCK_SIZE, INTERNAL_BLOCK_SIZE, FEATURE_BLOCK_SIZE, PADDING_SIZE}
 
-#include "Kokkos_Core.hpp"  // TODO:
+#include "Kokkos_Core.hpp"  // KOKKOS_INLINE_FUNCTION, Kokkos::TeamPolicy, Kokkos::mdspan, Kokkos::dextents
+
+#include <cstddef>  // std::size_t
 
 namespace plssvm::kokkos::detail {
 
@@ -317,9 +319,7 @@ class device_kernel_inplace_matrix_add {
                 const auto global_i = i + static_cast<std::size_t>(internal_i);
                 const auto global_j = j + static_cast<std::size_t>(internal_j);
 
-                // if (global_i < lhs_.extent(0) && global_j < rhs_.extent(0)) {  // TODO:
                 lhs_[global_i * (num_cols_ + PADDING_SIZE_sz) + global_j] += rhs_[global_i * (num_cols_ + PADDING_SIZE_sz) + global_j];
-                // }
             }
         }
     }
@@ -378,9 +378,7 @@ class device_kernel_inplace_matrix_scale {
                 const auto global_i = i + static_cast<std::size_t>(internal_i);
                 const auto global_j = j + static_cast<std::size_t>(internal_j);
 
-                // if (global_i < lhs_.extent(0)) {  // TODO:
                 lhs_[global_i * (num_cols_ + PADDING_SIZE_sz) + global_j] *= scale_;
-                // }
             }
         }
     }
