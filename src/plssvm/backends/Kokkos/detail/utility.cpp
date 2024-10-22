@@ -30,7 +30,7 @@ target_platform determine_default_target_platform_from_execution_space(const exe
         case execution_space::cuda:
             return target_platform::gpu_nvidia;
         case execution_space::hip:
-            return target_platform::gpu_amd;
+            return target_platform::gpu_amd;  // TODO: or gpu_nvidia :/
         case execution_space::sycl:
         case execution_space::openmp_target:
         case execution_space::openacc:
@@ -56,7 +56,7 @@ void check_execution_space_target_platform_combination(const execution_space spa
             }
             break;
         case execution_space::hip:
-            if (target != target_platform::gpu_amd) {
+            if (target != target_platform::gpu_amd && target != target_platform::gpu_nvidia) {
                 throw backend_exception{ fmt::format("The target platform {} is not supported for Kokkos {} execution space!", target, space) };
             }
             break;
