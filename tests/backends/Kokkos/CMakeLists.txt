@@ -14,6 +14,7 @@ set(PLSSVM_KOKKOS_TEST_SOURCES
 #    ${CMAKE_CURRENT_LIST_DIR}/detail/utility.cu
     ${CMAKE_CURRENT_LIST_DIR}/kokkos_csvm.cpp
     ${CMAKE_CURRENT_LIST_DIR}/exceptions.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/execution_space.cpp
 )
 
 find_package(Kokkos REQUIRED)

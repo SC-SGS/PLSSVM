@@ -49,7 +49,7 @@ csvm::csvm(parameter params) :
 
 csvm::csvm(target_platform target, parameter params) :
     base_type{ params },
-    space_{ determine_execution_space<Kokkos::DefaultExecutionSpace>() } {
+    space_{ determine_execution_space() } {
     this->init(target);
 }
 

@@ -13,15 +13,11 @@
 #define PLSSVM_BACKENDS_KOKKOS_EXECUTION_SPACE_HPP_
 #pragma once
 
-#include "plssvm/detail/utility.hpp"  // plssvm::unreachable
-
-#include "Kokkos_Core.hpp"  // Kokkos macros, Kokkos ExecutionSpace types
-
 #include "fmt/base.h"     // fmt::formatter
 #include "fmt/ostream.h"  // fmt::ostream_formatter
 
-#include <iosfwd>       // std::ostream forward declaration
-#include <type_traits>  // std::is_same_v
+#include <iosfwd>  // std::ostream forward declaration
+#include <vector>  // std::vector
 
 namespace plssvm::kokkos {
 
@@ -50,61 +46,17 @@ enum class execution_space {
 };
 
 /**
- * @brief Create an `execution_space` from the provided Kokkos @p ExecSpace.
- * @tparam ExecSpace the type of the provided Kokkos ExecutionSpace
- * @return the enum value representing the provided Kokkos ExecutionSpace (`[[nodiscard]]`)
+ * @brief Create an `execution_space` from the current `Kokkos::DefaultExecutionSpace`.
+ * @return the enum value representing the current `Kokkos::DefaultExecutionSpace` (`[[nodiscard]]`)
  */
-template <typename ExecSpace>
-[[nodiscard]] inline execution_space determine_execution_space() noexcept {
-    // determine the execution_space enumeration value based on the provided Kokkos execution space
-#if defined(KOKKOS_ENABLE_CUDA)
-    if constexpr (std::is_same_v<ExecSpace, Kokkos::Cuda>) {
-        return execution_space::cuda;
-    }
-#endif
-#if defined(KOKKOS_ENABLE_HIP)
-    if constexpr (std::is_same_v<ExecSpace, Kokkos::HIP>) {
-        return execution_space::hip;
-    }
-#endif
-#if defined(KOKKOS_ENABLE_SYCL)
-    if constexpr (std::is_same_v<ExecSpace, Kokkos::SYCL>) {
-        return execution_space::sycl;
-    }
-#endif
-#if defined(KOKKOS_ENABLE_HPX)
-    if constexpr (std::is_same_v<ExecSpace, Kokkos::Experimental::HPX>) {
-        return execution_space::hpx;
-    }
-#endif
-#if defined(KOKKOS_ENABLE_OPENMP)
-    if constexpr (std::is_same_v<ExecSpace, Kokkos::OpenMP>) {
-        return execution_space::openmp;
-    }
-#endif
-#if defined(KOKKOS_ENABLE_OPENMPTARGET)
-    if constexpr (std::is_same_v<ExecSpace, Kokkos::OpenMPTarget>) {
-        return execution_space::openmp_target;
-    }
-#endif
-#if defined(KOKKOS_ENABLE_OPENACC)
-    if constexpr (std::is_same_v<ExecSpace, Kokkos::Experimental::OpenACC>) {
-        return execution_space::openacc;
-    }
-#endif
-#if defined(KOKKOS_ENABLE_THREADS)
-    if constexpr (std::is_same_v<ExecSpace, Kokkos::Threads>) {
-        return execution_space::threads;
-    }
-#endif
-#if defined(KOKKOS_ENABLE_SERIAL)
-    if constexpr (std::is_same_v<ExecSpace, Kokkos::Serial>) {
-        return execution_space::serial;
-    }
-#endif
-    // at least one execution space must always be available!
-    ::plssvm::detail::unreachable();
-}
+[[nodiscard]] execution_space determine_execution_space() noexcept;
+
+/**
+ * @brief List all available Kokkos::ExecutionSpaces.
+ * @details At least one execution space must **always** be available!
+ * @return a vector containing all available execution spaces (`[[nodiscard]]`)
+ */
+[[nodiscard]] std::vector<execution_space> available_execution_spaces();
 
 /**
  * @brief Output the execution @p space to the given output-stream @p out.
