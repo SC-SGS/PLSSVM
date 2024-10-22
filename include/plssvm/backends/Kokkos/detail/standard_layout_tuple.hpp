@@ -15,6 +15,8 @@
 
 #include "plssvm/constants.hpp"  // plssvm::real_type
 
+#include "Kokkos_Core.hpp"  // KOKKOS_INLINE_FUNCTION
+
 #include <cstddef>      // std::size_t
 #include <type_traits>  // std::is_standard_layout
 #include <utility>      // std::forward
