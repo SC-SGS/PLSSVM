@@ -76,7 +76,7 @@ std::istream &operator>>(std::istream &in, execution_space &space) {
     return in;
 }
 
-execution_space determine_execution_space() noexcept {
+execution_space determine_default_execution_space() noexcept {
     // determine the execution_space enumeration value based on the provided Kokkos execution space
 #if defined(KOKKOS_ENABLE_CUDA)
     if constexpr (std::is_same_v<Kokkos::DefaultExecutionSpace, Kokkos::Cuda>) {

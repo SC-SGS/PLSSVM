@@ -49,7 +49,7 @@ enum class execution_space {
  * @brief Create an `execution_space` from the current `Kokkos::DefaultExecutionSpace`.
  * @return the enum value representing the current `Kokkos::DefaultExecutionSpace` (`[[nodiscard]]`)
  */
-[[nodiscard]] execution_space determine_execution_space() noexcept;
+[[nodiscard]] execution_space determine_default_execution_space() noexcept;
 
 /**
  * @brief List all available Kokkos::ExecutionSpaces.

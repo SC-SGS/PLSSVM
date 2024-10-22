@@ -12,8 +12,8 @@
 
 #include "tests/custom_test_macros.hpp"  // EXPECT_CONVERSION_TO_STRING, EXPECT_CONVERSION_FROM_STRING
 
-#include "gtest/gtest-matchers.h"  // EXPECT_THAT; ::testing::AnyOf
-#include "gtest/gtest.h"           // TEST, EXPECT_TRUE
+#include "gmock/gmock.h"  // EXPECT_THAT; ::testing::AnyOf
+#include "gtest/gtest.h"  // TEST, EXPECT_TRUE
 
 #include <sstream>  // std::istringstream
 
@@ -70,7 +70,7 @@ TEST(KokkosExecutionSpace, from_string_unknown) {
 
 TEST(KokkosExecutionSpace, determine_execution_space) {
     // check that "unreachable" is never reached
-    EXPECT_THAT(plssvm::kokkos::determine_execution_space(), ::testing::AnyOf(plssvm::kokkos::execution_space::cuda, plssvm::kokkos::execution_space::hip, plssvm::kokkos::execution_space::sycl, plssvm::kokkos::execution_space::hpx, plssvm::kokkos::execution_space::openmp, plssvm::kokkos::execution_space::openmp_target, plssvm::kokkos::execution_space::openacc, plssvm::kokkos::execution_space::threads, plssvm::kokkos::execution_space::serial));
+    EXPECT_THAT(plssvm::kokkos::determine_default_execution_space(), ::testing::AnyOf(plssvm::kokkos::execution_space::cuda, plssvm::kokkos::execution_space::hip, plssvm::kokkos::execution_space::sycl, plssvm::kokkos::execution_space::hpx, plssvm::kokkos::execution_space::openmp, plssvm::kokkos::execution_space::openmp_target, plssvm::kokkos::execution_space::openacc, plssvm::kokkos::execution_space::threads, plssvm::kokkos::execution_space::serial));
 }
 
 TEST(KokkosExecutionSpace, available_execution_spaces) {
