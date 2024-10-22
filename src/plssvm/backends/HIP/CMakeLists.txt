@@ -234,6 +234,11 @@ elseif (DEFINED PLSSVM_NVIDIA_TARGET_ARCHS)
     target_compile_definitions(${PLSSVM_HIP_BACKEND_LIBRARY_NAME} PUBLIC PLSSVM_HIP_BACKEND_USE_CUDA_RUNTIME)
 endif ()
 
+if (DEFINED HIP_PATH)
+    target_include_directories(${PLSSVM_HIP_BACKEND_LIBRARY_NAME} PRIVATE ${HIP_PATH}/include)
+elseif (DEFINED ENV{HIP_PATH})
+    target_include_directories(${PLSSVM_HIP_BACKEND_LIBRARY_NAME} PRIVATE $ENV{HIP_PATH}/include)
+endif()
 # link against interface library
 target_link_libraries(${PLSSVM_ALL_LIBRARY_NAME} INTERFACE ${PLSSVM_HIP_BACKEND_LIBRARY_NAME})
 
@@ -250,5 +255,4 @@ endif ()
 
 list(POP_BACK CMAKE_MESSAGE_INDENT)
 
-set_target_properties(${PLSSVM_HIP_BACKEND_LIBRARY_NAME} PROPERTIES LINKER_LANGUAGE HIP)
 
