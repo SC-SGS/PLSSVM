@@ -23,11 +23,11 @@ message(CHECK_PASS "found")
 # explicitly set sources
 set(PLSSVM_KOKKOS_SOURCES
     ${CMAKE_CURRENT_LIST_DIR}/detail/device_ptr.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/detail/execution_space.cpp
     ${CMAKE_CURRENT_LIST_DIR}/detail/pinned_memory.cpp
     ${CMAKE_CURRENT_LIST_DIR}/detail/utility.cpp
     ${CMAKE_CURRENT_LIST_DIR}/csvm.cpp
     ${CMAKE_CURRENT_LIST_DIR}/exceptions.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/execution_space.cpp
 )
 
 # set target properties

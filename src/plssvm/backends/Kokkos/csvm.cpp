@@ -9,27 +9,29 @@
 #include "plssvm/backends/Kokkos/csvm.hpp"
 
 #include "plssvm/backends/execution_range.hpp"                                        // plssvm::detail::{execution_range, dim_type}
+#include "plssvm/backends/Kokkos/detail/conditional_execution.hpp"                    // PLSSVM_KOKKOS_BACKEND_INVOKE_IF_*
 #include "plssvm/backends/Kokkos/detail/device_ptr.hpp"                               // plssvm::kokkos::detail::device_ptr
-#include "plssvm/backends/Kokkos/detail/execution_space.hpp"                          // plssvm::kokkos::detail::execution_space
 #include "plssvm/backends/Kokkos/detail/utility.hpp"                                  // plssvm::kokkos::detail::get_runtime_version
 #include "plssvm/backends/Kokkos/exceptions.hpp"                                      // plssvm::kokkos::backend_exception
+#include "plssvm/backends/Kokkos/execution_space.hpp"                                 // plssvm::kokkos::execution_space
 #include "plssvm/backends/Kokkos/kernel/cg_explicit/blas.hpp"                         // plssvm::kokkos::detail::{device_kernel_symm, device_kernel_symm_mirror, device_kernel_inplace_matrix_add, device_kernel_inplace_matrix_scale}
 #include "plssvm/backends/Kokkos/kernel/cg_explicit/kernel_matrix_assembly.hpp"       // plssvm::kokkos::detail::device_kernel_assembly
 #include "plssvm/backends/Kokkos/kernel/cg_implicit/kernel_matrix_assembly_blas.hpp"  // plssvm::kokkos::detail::device_kernel_assembly_symm
 #include "plssvm/backends/Kokkos/kernel/predict_kernel.hpp"                           // plssvm::kokkos::detail::{device_kernel_w_linear, device_kernel_predict_linear, device_kernel_predict}
 #include "plssvm/constants.hpp"                                                       // plssvm::THREAD_BLOCK_SIZE, plssvm::INTERNAL_BLOCK_SIZE, plssvm::FEATURE_BLOCK_SIZE
+#include "plssvm/detail/assert.hpp"                                                   // PLSSVM_ASSERT
 #include "plssvm/detail/data_distribution.hpp"                                        // plssvm::detail::triangular_data_distribution
 #include "plssvm/detail/logging.hpp"                                                  // plssvm::detail::log
 #include "plssvm/detail/memory_size.hpp"                                              // plssvm::detail::memory_size
 #include "plssvm/detail/tracking/performance_tracker.hpp"                             // plssvm::detail::tracking::tracking_entry
-#include "plssvm/detail/utility.hpp"                                                  // plssvm::detail::unreachable // TODO: remove
+#include "plssvm/detail/utility.hpp"                                                  // plssvm::detail::{get_system_memory, unreachable}
 #include "plssvm/exceptions/exceptions.hpp"                                           // plssvm::exception
 #include "plssvm/kernel_function_types.hpp"                                           // plssvm::kernel_function_type
 #include "plssvm/parameter.hpp"                                                       // plssvm::parameter
 #include "plssvm/target_platforms.hpp"                                                // plssvm::target_platform
 #include "plssvm/verbosity_levels.hpp"                                                // plssvm::verbosity_level
 
-#include "Kokkos_Core.hpp"  // TODO:
+#include "Kokkos_Core.hpp"  // TODO: docu
 
 #include "fmt/core.h"    // fmt::format
 #include "fmt/format.h"  // fmt::format
@@ -46,7 +48,8 @@ csvm::csvm(parameter params) :
     csvm{ plssvm::target_platform::automatic, params } { }
 
 csvm::csvm(target_platform target, parameter params) :
-    base_type{ params } {
+    base_type{ params },
+    space_{ determine_execution_space<Kokkos::DefaultExecutionSpace>() } {
     this->init(target);
 }
 
@@ -76,11 +79,6 @@ void csvm::init(const target_platform target) {
 #endif
             break;
     }
-
-    // TODO: document: we ALWAYS use the default execution space
-
-    // set the execution space -> we always only use the Kokkos::DefaultExecutionSpace
-    space_ = detail::determine_execution_space<Kokkos::DefaultExecutionSpace>();
 
     plssvm::detail::log(verbosity_level::full,
                         "\nUsing Kokkos ({}) as backend with the Kokkos::DefaultExecutionSpace \"{}\".\n",
@@ -129,7 +127,7 @@ void csvm::init(const target_platform target) {
     std::vector<std::string> device_names{};
     device_names.reserve(devices_.size());
     for (typename std::vector<queue_type>::size_type device = 0; device < devices_.size(); ++device) {
-        const std::string device_name = detail::get_device_name(space_, device);
+        const std::string device_name = detail::get_device_name(space_, devices_[device]);
         plssvm::detail::log(verbosity_level::full,
                             "  [{}, {}]\n",
                             device,
@@ -154,95 +152,127 @@ csvm::~csvm() {
 }
 
 std::vector<::plssvm::detail::memory_size> csvm::get_device_memory() const {
-    // TODO: implement for other execution spaces, guard behind ifdef
+    // TODO: implement for other execution spaces
     std::vector<::plssvm::detail::memory_size> res(this->num_available_devices());
     switch (space_) {
-        case detail::execution_space::cuda:
-            {
-                cudaDeviceProp prop{};
+        case execution_space::cuda:
+            PLSSVM_KOKKOS_BACKEND_INVOKE_IF_CUDA([&]() {
                 for (std::size_t device_id = 0; device_id < this->num_available_devices(); ++device_id) {
-                    cudaGetDeviceProperties(&prop, devices_[device_id].cuda_device());
-                    res[device_id] = ::plssvm::detail::memory_size{ static_cast<unsigned long long>(prop.totalGlobalMem) };
+                    res[device_id] = ::plssvm::detail::memory_size{ static_cast<unsigned long long>(devices_[device_id].cuda_device_prop().totalGlobalMem) };
                 }
-            }
-            break;
-        case detail::execution_space::hip:
-        case detail::execution_space::sycl:
-        case detail::execution_space::openmp_target:
-        case detail::execution_space::openacc:
-        case detail::execution_space::openmp:
-        case detail::execution_space::hpx:
-        case detail::execution_space::threads:
-        case detail::execution_space::serial:
+                return res;
+            });
+        case execution_space::hip:
+            PLSSVM_KOKKOS_BACKEND_INVOKE_IF_HIP([&]() {
+                for (std::size_t device_id = 0; device_id < this->num_available_devices(); ++device_id) {
+                    res[device_id] = ::plssvm::detail::memory_size{ static_cast<unsigned long long>(devices_[device_id].hip_device_prop().totalGlobalMem) };
+                }
+                return res;
+            });
+        case execution_space::sycl:
+            PLSSVM_KOKKOS_BACKEND_INVOKE_IF_SYCL([&]() {
+                for (std::size_t device_id = 0; device_id < this->num_available_devices(); ++device_id) {
+                    res[device_id] = ::plssvm::detail::memory_size{ static_cast<unsigned long long>(devices_[device_id].sycl_queue().get_device().get_info<::sycl::info::device::global_mem_size>()) };
+                }
+                return res;
+            });
+        case execution_space::openmp:
+        case execution_space::hpx:
+        case execution_space::threads:
+        case execution_space::serial:
+            return std::vector<::plssvm::detail::memory_size>(this->num_available_devices(), ::plssvm::detail::get_system_memory());
+        case execution_space::openmp_target:
+        case execution_space::openacc:
             throw backend_exception{ fmt::format("Currently not implemented for the execution space: {}!", space_) };
     }
-
-    return res;
+    // all possible cases should be handled by the previous switch
+    // -> silence missing return statement compiler warnings due to throw statement
+    ::plssvm::detail::unreachable();
 }
 
 std::vector<::plssvm::detail::memory_size> csvm::get_max_mem_alloc_size() const {
-    // TODO: implement for other execution spaces, guard behind ifdef
+    // TODO: implement for other execution spaces
     switch (space_) {
-        case detail::execution_space::cuda:
+        case execution_space::cuda:
+        case execution_space::hip:
             return this->get_device_memory();
-        case detail::execution_space::hip:
-        case detail::execution_space::sycl:
-        case detail::execution_space::openmp_target:
-        case detail::execution_space::openacc:
-        case detail::execution_space::openmp:
-        case detail::execution_space::hpx:
-        case detail::execution_space::threads:
-        case detail::execution_space::serial:
+        case execution_space::sycl:
+            PLSSVM_KOKKOS_BACKEND_INVOKE_IF_SYCL([&]() {
+                for (std::size_t device_id = 0; device_id < this->num_available_devices(); ++device_id) {
+                    res[device_id] = ::plssvm::detail::memory_size{ static_cast<unsigned long long>(devices_[device_id].sycl_queue().get_device().get_info<::sycl::info::device::max_mem_alloc_size>()) };
+                }
+                return res;
+            });
+        case execution_space::openmp:
+        case execution_space::hpx:
+        case execution_space::threads:
+        case execution_space::serial:
+            return this->get_device_memory();
+        case execution_space::openmp_target:
+        case execution_space::openacc:
             throw backend_exception{ fmt::format("Currently not implemented for the execution space: {}!", space_) };
     }
+    // all possible cases should be handled by the previous switch
+    // -> silence missing return statement compiler warnings due to throw statement
     ::plssvm::detail::unreachable();
 }
 
 std::size_t csvm::get_max_work_group_size(const std::size_t device_id) const {
     PLSSVM_ASSERT(device_id < this->num_available_devices(), "Invalid device {} requested!", device_id);
 
-    // TODO: implement for other execution spaces, guard behind ifdef
+    // TODO: implement for other execution spaces
     switch (space_) {
-        case detail::execution_space::cuda:
-            {
-                cudaDeviceProp prop{};
-                cudaGetDeviceProperties(&prop, devices_[device_id].cuda_device());
-                return static_cast<std::size_t>(prop.maxThreadsPerBlock);
-            }
-        case detail::execution_space::hip:
-        case detail::execution_space::sycl:
-        case detail::execution_space::openmp_target:
-        case detail::execution_space::openacc:
-        case detail::execution_space::openmp:
-        case detail::execution_space::hpx:
-        case detail::execution_space::threads:
-        case detail::execution_space::serial:
+        case execution_space::cuda:
+            PLSSVM_KOKKOS_BACKEND_INVOKE_IF_CUDA([&]() {
+                return static_cast<std::size_t>(devices_[device_id].cuda_device_prop().maxThreadsPerBlock);
+            });
+        case execution_space::hip:
+            PLSSVM_KOKKOS_BACKEND_INVOKE_IF_HIP([&]() {
+                return static_cast<std::size_t>(devices_[device_id].hip_device_prop().maxThreadsPerBlock);
+            });
+        case execution_space::sycl:
+            PLSSVM_KOKKOS_BACKEND_INVOKE_IF_SYCL([&]() {
+                return devices_[device_id].sycl_queue().get_device().get_info<::sycl::info::device::max_work_group_size>();
+            });
+        case execution_space::openmp_target:
+        case execution_space::openacc:
+        case execution_space::openmp:
+        case execution_space::hpx:
+        case execution_space::threads:
+        case execution_space::serial:
             throw backend_exception{ fmt::format("Currently not implemented for the execution space: {}!", space_) };
     }
+    // all possible cases should be handled by the previous switch
+    // -> silence missing return statement compiler warnings due to throw statement
     ::plssvm::detail::unreachable();
 }
 
 ::plssvm::detail::dim_type csvm::get_max_grid_size(const std::size_t device_id) const {
     PLSSVM_ASSERT(device_id < this->num_available_devices(), "Invalid device {} requested!", device_id);
 
-    // TODO: implement for other execution spaces, guard behind ifdef
+    // TODO: implement for other execution spaces
     switch (space_) {
-        case detail::execution_space::cuda:
-            {
-                cudaDeviceProp prop{};
-                cudaGetDeviceProperties(&prop, devices_[device_id].cuda_device());
+        case execution_space::cuda:
+            PLSSVM_KOKKOS_BACKEND_INVOKE_IF_CUDA(([&]() -> ::plssvm::detail::dim_type {
+                const cudaDeviceProp &prop = devices_[device_id].cuda_device_prop();
                 return { static_cast<std::size_t>(prop.maxGridSize[0]), static_cast<std::size_t>(prop.maxGridSize[1]), static_cast<std::size_t>(prop.maxGridSize[2]) };
-            }
-        case detail::execution_space::hip:
-        case detail::execution_space::sycl:
-        case detail::execution_space::openmp_target:
-        case detail::execution_space::openacc:
-        case detail::execution_space::openmp:
-        case detail::execution_space::hpx:
-        case detail::execution_space::threads:
-        case detail::execution_space::serial:
+            }));
+        case execution_space::hip:
+            PLSSVM_KOKKOS_BACKEND_INVOKE_IF_HIP(([&]() -> ::plssvm::detail::dim_type {
+                const hipDeviceProp &prop = devices_[device_id].hip_device_prop();
+                return { static_cast<std::size_t>(prop.maxGridSize[0]), static_cast<std::size_t>(prop.maxGridSize[1]), static_cast<std::size_t>(prop.maxGridSize[2]) };
+            }));
+        case execution_space::sycl:
+        case execution_space::openmp_target:
+        case execution_space::openacc:
+        case execution_space::openmp:
+        case execution_space::hpx:
+        case execution_space::threads:
+        case execution_space::serial:
             throw backend_exception{ fmt::format("Currently not implemented for the execution space: {}!", space_) };
     }
+    // all possible cases should be handled by the previous switch
+    // -> silence missing return statement compiler warnings due to throw statement
     ::plssvm::detail::unreachable();
 }
 

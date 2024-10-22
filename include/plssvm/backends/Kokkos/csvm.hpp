@@ -13,18 +13,19 @@
 #define PLSSVM_BACKENDS_KOKKOS_CSVM_HPP_
 #pragma once
 
-#include "plssvm/backends/execution_range.hpp"                // plssvm::detail::{dim_type, execution_range}
-#include "plssvm/backends/gpu_csvm.hpp"                       // plssvm::detail::gpu_csvm
-#include "plssvm/backends/Kokkos/detail/device_ptr.hpp"       // plssvm::kokkos::detail::device_ptr
-#include "plssvm/backends/Kokkos/detail/execution_space.hpp"  // plssvm::kokkos::detail::execution_space
-#include "plssvm/backends/Kokkos/detail/pinned_memory.hpp"    // plssvm::kokkos::detail::pinned_memory
-#include "plssvm/csvm.hpp"                                    // plssvm::detail::csvm_backend_exists
-#include "plssvm/detail/memory_size.hpp"                      // plssvm::detail::memory_size
-#include "plssvm/detail/type_traits.hpp"                      // PLSSVM_REQUIRES
-#include "plssvm/parameter.hpp"                               // plssvm::parameter, plssvm::detail::parameter
-#include "plssvm/target_platforms.hpp"                        // plssvm::target_platform
+#include "plssvm/backends/execution_range.hpp"              // plssvm::detail::{dim_type, execution_range}
+#include "plssvm/backends/gpu_csvm.hpp"                     // plssvm::detail::gpu_csvm
+#include "plssvm/backends/Kokkos/detail/device_ptr.hpp"     // plssvm::kokkos::detail::device_ptr
+#include "plssvm/backends/Kokkos/detail/pinned_memory.hpp"  // plssvm::kokkos::detail::pinned_memory
+#include "plssvm/backends/Kokkos/execution_space.hpp"       // plssvm::kokkos::execution_space
+#include "plssvm/constants.hpp"                             // plssvm::real_type
+#include "plssvm/csvm.hpp"                                  // plssvm::detail::csvm_backend_exists
+#include "plssvm/detail/memory_size.hpp"                    // plssvm::detail::memory_size
+#include "plssvm/detail/type_traits.hpp"                    // PLSSVM_REQUIRES
+#include "plssvm/parameter.hpp"                             // plssvm::parameter, plssvm::detail::parameter
+#include "plssvm/target_platforms.hpp"                      // plssvm::target_platform
 
-#include "Kokkos_Core.hpp"  // TODO:
+#include "Kokkos_Core_fwd.hpp"  // Kokkos::DefaultExecutionSpace
 
 #include <cstddef>      // std::size_t
 #include <type_traits>  // std::true_type
@@ -37,6 +38,7 @@ namespace kokkos {
 
 /**
  * @brief A C-SVM implementation using Kokkos as backend.
+ * @details Internally, we always only use the `Kokkos::DefaultExecutionSpace`.
  */
 class csvm : public ::plssvm::detail::gpu_csvm<detail::device_ptr, Kokkos::DefaultExecutionSpace, detail::pinned_memory> {
   protected:
@@ -117,6 +119,12 @@ class csvm : public ::plssvm::detail::gpu_csvm<detail::device_ptr, Kokkos::Defau
      */
     ~csvm() override;
 
+    /**
+     * @brief Return the currently used `execution_space` determined using `Kokkos::ExecutionSpace`.
+     * @return the execution space (`[[nodiscard]]`)
+     */
+    [[nodiscard]] execution_space get_execution_space() const noexcept { return space_; }
+
   protected:
     /**
      * @brief Initialize all important states related to the Kokkos backend.
@@ -180,7 +188,7 @@ class csvm : public ::plssvm::detail::gpu_csvm<detail::device_ptr, Kokkos::Defau
     [[nodiscard]] device_ptr_type run_predict_kernel(std::size_t device_id, const ::plssvm::detail::execution_range &exec, const parameter &params, const device_ptr_type &alpha_d, const device_ptr_type &rho_d, const device_ptr_type &sv_or_w_d, const device_ptr_type &predict_points_d) const final;
 
     /// The used Kokkos execution space.
-    detail::execution_space space_;
+    execution_space space_{};
 };
 
 }  // namespace kokkos

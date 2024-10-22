@@ -8,11 +8,11 @@
 
 #include "plssvm/backends/Kokkos/detail/utility.hpp"
 
-#include "plssvm/backends/Kokkos/detail/execution_space.hpp"  // plssvm::kokkos::detail::execution_space
-#include "plssvm/backends/Kokkos/exceptions.hpp"              // plssvm::kokkos::backend_exception
-#include "plssvm/detail/assert.hpp"                           // PLSSVM_ASSERT
-#include "plssvm/detail/utility.hpp"                          // plssvm::detail::unreachable
-#include "plssvm/target_platforms.hpp"                        // plssvm::target_platform
+#include "plssvm/backends/Kokkos/exceptions.hpp"       // plssvm::kokkos::backend_exception
+#include "plssvm/backends/Kokkos/execution_space.hpp"  // plssvm::kokkos::execution_space
+#include "plssvm/detail/assert.hpp"                    // PLSSVM_ASSERT
+#include "plssvm/detail/utility.hpp"                   // plssvm::detail::unreachable
+#include "plssvm/target_platforms.hpp"                 // plssvm::target_platform
 
 #include "Kokkos_Macros.hpp"
 
@@ -86,47 +86,7 @@ void check_execution_space_target_platform_combination(const execution_space spa
 
 // TODO: error checks?
 
-std::string get_device_name(const execution_space space, const std::size_t device_id) {
-    // TODO: implement for other backends!
-    switch (space) {
-        case execution_space::cuda:
-#if defined(KOKKOS_ENABLE_CUDA)
-            {
-                cudaDeviceProp prop{};
-                cudaGetDeviceProperties(&prop, static_cast<int>(device_id));
-                return std::string{ prop.name };
-            }
-#else
-            throw backend_exception{ fmt::format("Unsupported Kokkos execution space \"{}\"!", space) };
-#endif
-        case execution_space::hip:
-#if defined(KOKKOS_ENABLE_HIP)
-            {
-                hipDeviceProp_t prop{};
-                hipGetDeviceProperties(&prop, static_cast<int>(device_id));
-                return std::string{ prop.name };
-            }
-#else
-            throw backend_exception{ fmt::format("Unsupported Kokkos execution space \"{}\"!", space) };
-#endif
-        case execution_space::openmp:
-#if defined(KOKKOS_ENABLE_HIP)
-            return "CPU host device";
-#else
-            throw backend_exception{ fmt::format("Unsupported Kokkos execution space \"{}\"!", space) };
-#endif
-        case execution_space::sycl:
-        case execution_space::hpx:
-        case execution_space::openmp_target:
-        case execution_space::openacc:
-        case execution_space::threads:
-        case execution_space::serial:
-            throw backend_exception{ fmt::format("Unsupported Kokkos execution space \"{}\"!", space) };
-    }
-    return "unknown";
-}
-
-void device_synchronize(const Kokkos::DefaultExecutionSpace& exec) {
+void device_synchronize(const Kokkos::DefaultExecutionSpace &exec) {
     exec.fence();
 }
 
@@ -134,5 +94,7 @@ std::string get_kokkos_version() {
     // get the Kokkos version
     return fmt::format("{}.{}.{}", KOKKOS_VERSION_MAJOR, KOKKOS_VERSION_MINOR, KOKKOS_VERSION_PATCH);
 }
+
+// TODO: https://godbolt.org/z/eMYrbxsTj
 
 }  // namespace plssvm::kokkos::detail
