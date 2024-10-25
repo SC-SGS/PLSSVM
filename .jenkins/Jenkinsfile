@@ -141,6 +141,7 @@ pipeline {
                                         rm ~/.spack/linux/compilers.yaml
                                     fi
                                     spack clean -a  || true
+                                    spack install hip+cuda || true
 
                                     if [ ! -f $SPACK_SYSTEM_CONFIG_PATH/config.yaml ]; then
                                         touch  $SPACK_SYSTEM_CONFIG_PATH/config.yaml
@@ -282,7 +283,7 @@ pipeline {
                     exclude { // TODO: enable if pocl is supported in spack
                       axis{
                         name 'ARCHITECTURE'
-                        values 'OPENCL'
+                        values 'OPENCL',  'STDPAR-DPCPP'
                       }
                       axis{
                         name 'BUILD_TYPE'
@@ -418,6 +419,8 @@ pipeline {
                                             $([[ $BACKEND == ADAPTIVECPP ]] && echo "^openblas%gcc" ) \
                                             $([[ $BACKEND == ADAPTIVECPP ]] && [[ $ARCHITECTURE == AMD ]] && echo "^llvm@18~gold~libomptarget") \
                                             $([[ $BACKEND == ADAPTIVECPP ]] && [[ $ARCHITECTURE == NVIDIA ]] && echo "^llvm@17~gold~libomptarget") \
+                                            $([[ $BACKEND == STDPAR-ADAPTIVECPP ]] && [[ $ARCHITECTURE == AMD ]] && echo "^llvm@18~gold~libomptarget") \
+                                            $([[ $BACKEND == STDPAR-ADAPTIVECPP ]] && [[ $ARCHITECTURE == NVIDIA ]] && echo "^llvm@17~gold~libomptarget") \
                                             | tee $(tty) | tail -n 1 | cut -d " " -f 2 > ${WORKSPACE}/plssvm/${BUILD_TYPE}-${BACKEND}-${ARCHITECTURE}.installpath
 
                                         echo ${PIPESTATUS[@]}
