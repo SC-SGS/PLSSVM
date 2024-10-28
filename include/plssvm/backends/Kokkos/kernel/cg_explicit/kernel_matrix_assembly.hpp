@@ -14,12 +14,11 @@
 #pragma once
 
 #include "plssvm/backends/Kokkos/detail/standard_layout_tuple.hpp"  // plssvm::kokkos::detail::standard_layout_tuple
-#include "plssvm/backends/Kokkos/detail/typedefs.hpp"               // plssvm::kokkos::detail::device_view_type
 #include "plssvm/backends/Kokkos/kernel/kernel_functions.hpp"       // plssvm::kokkos::detail::{feature_reduce, apply_kernel_function}
 #include "plssvm/constants.hpp"                                     // plssvm::{real_type, THREAD_BLOCK_SIZE, INTERNAL_BLOCK_SIZE, FEATURE_BLOCK_SIZE, PADDING_SIZE}
 #include "plssvm/kernel_function_types.hpp"                         // plssvm::kernel_function_type
 
-#include "Kokkos_Core.hpp"  // KOKKOS_INLINE_FUNCTION, Kokkos::TeamPolicy, Kokkos::mdspan, Kokkos::dextents
+#include "Kokkos_Core.hpp"  // KOKKOS_INLINE_FUNCTION, Kokkos::View, Kokkos::TeamPolicy, Kokkos::mdspan, Kokkos::dextents
 
 #include <cstddef>  // std::size_t
 
@@ -27,15 +26,21 @@ namespace plssvm::kokkos::detail {
 
 /**
  * @brief Create the explicit kernel matrix using the @p kernel_function.
+ * @tparam ExecutionSpace the Kokkos::ExecutionSpace used to execute the kernel
  * @tparam kernel_function the type of the used kernel function
  * @tparam Args the types of the parameters necessary for the specific kernel function; stored in a `standard_layout_tuple`
  */
-template <kernel_function_type kernel_function, typename... Args>
+template <typename ExecutionSpace, kernel_function_type kernel_function, typename... Args>
 class device_kernel_assembly {
+    /**
+     * @brief The type of the used Kokkos::View.
+     */
+    template <typename T>
+    using device_view_type = Kokkos::View<T *, ExecutionSpace>;
+
   public:
     /**
-     * @brief Initialize the SYCL kernel function object.
-     * @param[in] cgh the SYCL handler used to allocate the local memory
+     * @brief Initialize the Kokkos kernel function object.
      * @param[out] kernel_matrix_d the calculated kernel matrix
      * @param[in] data_d the data points to calculate the kernel matrix from
      * @param[in] num_rows the number of data points
@@ -47,6 +52,7 @@ class device_kernel_assembly {
      * @param[in] cost the cost factor the diagonal is scaled with
      * @param[in] grid_x_offset the offset in x-dimension into the data points if more than one execution grid has to be used
      * @param[in] grid_y_offset the offset in y-dimension into the data points if more than one execution grid has to be used
+     * @param[in] grid_size_x the size of the execution grid in x-dimension
      * @param[in] kernel_function_parameter the parameters necessary to apply the @p kernel_function
      */
     device_kernel_assembly(device_view_type<real_type> kernel_matrix_d, device_view_type<real_type> data_d, const std::size_t num_rows, const std::size_t device_num_rows, const std::size_t row_offset, const std::size_t num_features, device_view_type<real_type> q, const real_type QA_cost, const real_type cost, const std::size_t grid_x_offset, const std::size_t grid_y_offset, const std::size_t grid_size_x, Args... kernel_function_parameter) :
@@ -65,8 +71,12 @@ class device_kernel_assembly {
         kernel_function_parameter_{ detail::make_standard_layout_tuple(std::forward<Args>(kernel_function_parameter)...) } {
     }
 
+    /**
+     * @brief Function call operator overload performing the actual calculation.
+     * @param[in] team the Kokkos team representing the current point in the execution space
+     */
     KOKKOS_INLINE_FUNCTION
-    void operator()(const Kokkos::TeamPolicy<>::member_type &team) const {
+    void operator()(const typename Kokkos::TeamPolicy<ExecutionSpace>::member_type &team) const {
         // cast all values to 64-bit std::size_t to prevent potential 32-bit overflows
         const auto INTERNAL_BLOCK_SIZE_sz = static_cast<std::size_t>(INTERNAL_BLOCK_SIZE);
         const auto THREAD_BLOCK_SIZE_sz = static_cast<std::size_t>(THREAD_BLOCK_SIZE);
@@ -104,10 +114,10 @@ class device_kernel_assembly {
                     const auto global_j = row_offset_ + j_linear + static_cast<std::size_t>(internal) * THREAD_BLOCK_SIZE_sz;
 
                     // FEATURE_BLOCK_SIZE = 2 * THREAD_BLOCK_SIZE -> store twice as many values in the shared memory
-                    data_cache_i(threadIdx_y, internal * THREAD_BLOCK_SIZE + threadIdx_x) = data_d_[(dim + threadIdx_y) * (num_rows_ + 1ull + PADDING_SIZE_sz) + global_i];
-                    data_cache_i(threadIdx_y + THREAD_BLOCK_SIZE, internal * THREAD_BLOCK_SIZE + threadIdx_x) = data_d_[(dim + threadIdx_y + THREAD_BLOCK_SIZE_sz) * (num_rows_ + 1ull + PADDING_SIZE_sz) + global_i];
-                    data_cache_j(threadIdx_y, internal * THREAD_BLOCK_SIZE + threadIdx_x) = data_d_[(dim + threadIdx_y) * (num_rows_ + 1ull + PADDING_SIZE_sz) + global_j];
-                    data_cache_j(threadIdx_y + THREAD_BLOCK_SIZE, internal * THREAD_BLOCK_SIZE + threadIdx_x) = data_d_[(dim + threadIdx_y + THREAD_BLOCK_SIZE_sz) * (num_rows_ + 1ull + PADDING_SIZE_sz) + global_j];
+                    data_cache_i(threadIdx_y, internal * THREAD_BLOCK_SIZE + threadIdx_x) = data_d_[(dim + threadIdx_y) * (num_rows_ + std::size_t{ 1 } + PADDING_SIZE_sz) + global_i];
+                    data_cache_i(threadIdx_y + THREAD_BLOCK_SIZE, internal * THREAD_BLOCK_SIZE + threadIdx_x) = data_d_[(dim + threadIdx_y + THREAD_BLOCK_SIZE_sz) * (num_rows_ + std::size_t{ 1 } + PADDING_SIZE_sz) + global_i];
+                    data_cache_j(threadIdx_y, internal * THREAD_BLOCK_SIZE + threadIdx_x) = data_d_[(dim + threadIdx_y) * (num_rows_ + std::size_t{ 1 } + PADDING_SIZE_sz) + global_j];
+                    data_cache_j(threadIdx_y + THREAD_BLOCK_SIZE, internal * THREAD_BLOCK_SIZE + threadIdx_x) = data_d_[(dim + threadIdx_y + THREAD_BLOCK_SIZE_sz) * (num_rows_ + std::size_t{ 1 } + PADDING_SIZE_sz) + global_j];
                 }
                 team.team_barrier();  // wait until all threads loaded their part of the data
 
@@ -141,7 +151,7 @@ class device_kernel_assembly {
                             temp_ij += cost_;
                         }
                         // update the kernel matrix
-                        kernel_matrix_d_[device_global_j * (num_rows_ - row_offset_ + PADDING_SIZE_sz) - device_global_j * (device_global_j + 1ull) / 2ull + device_global_i] = temp_ij;
+                        kernel_matrix_d_[device_global_j * (num_rows_ - row_offset_ + PADDING_SIZE_sz) - device_global_j * (device_global_j + std::size_t{ 1 }) / std::size_t{ 2 }; + device_global_i] = temp_ij;
                     }
                 }
             }

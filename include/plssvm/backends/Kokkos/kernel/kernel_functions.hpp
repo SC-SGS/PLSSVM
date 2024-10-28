@@ -17,7 +17,7 @@
 #include "plssvm/detail/utility.hpp"                                // plssvm::detail::always_false_v
 #include "plssvm/kernel_function_types.hpp"                         // plssvm::kernel_function_type
 
-#include "Kokkos_MathematicalFunctions.hpp"  // Kokkos::pow, Kokkos::exp, Kokkos::tanh, Kokkos::abs
+#include "Kokkos_MathematicalFunctions.hpp"  // KOKKOS_INLINE_FUNCTION, Kokkos::pow, Kokkos::exp, Kokkos::tanh, Kokkos::abs
 
 #include <type_traits>  // std::is_same_v
 
@@ -59,7 +59,7 @@ KOKKOS_INLINE_FUNCTION real_type feature_reduce<kernel_function_type::rbf>(const
  */
 template <>
 KOKKOS_INLINE_FUNCTION real_type feature_reduce<kernel_function_type::laplacian>(const real_type val1, const real_type val2) {
-    return ::Kokkos::fabs(val1 - val2);
+    return Kokkos::fabs(val1 - val2);
 }
 
 /**
@@ -73,9 +73,9 @@ template <>
 KOKKOS_INLINE_FUNCTION real_type feature_reduce<kernel_function_type::chi_squared>(const real_type val1, const real_type val2) {
     const real_type d = val1 - val2;
     if constexpr (std::is_same_v<real_type, float>) {
-        return (real_type{ 1.0 } / (val1 + val2 + FLT_MIN)) * d * d;  // TODO: std::numeric_limits::min
+        return (real_type{ 1.0 } / (val1 + val2 + FLT_MIN)) * d * d;
     } else {
-        return (real_type{ 1.0 } / (val1 + val2 + DBL_MIN)) * d * d;  // TODO: std::numeric_limits::min
+        return (real_type{ 1.0 } / (val1 + val2 + DBL_MIN)) * d * d;
     }
 }
 
@@ -92,19 +92,19 @@ KOKKOS_INLINE_FUNCTION real_type feature_reduce<kernel_function_type::chi_square
  * @return the result value (`[[nodiscard]]`)
  */
 template <kernel_function_type kernel_function, typename... Args>
-KOKKOS_INLINE_FUNCTION real_type apply_kernel_function(const real_type value, const detail::standard_layout_tuple<Args...> params) {
+KOKKOS_INLINE_FUNCTION real_type apply_kernel_function(const real_type value, [[maybe_unused]] const detail::standard_layout_tuple<Args...> params) {
     if constexpr (kernel_function == kernel_function_type::linear) {
         return value;
     } else if constexpr (kernel_function == kernel_function_type::polynomial) {
-        return ::Kokkos::pow(detail::get<1>(params) * value + detail::get<2>(params), detail::get<0>(params));
+        return Kokkos::pow(detail::get<1>(params) * value + detail::get<2>(params), detail::get<0>(params));
     } else if constexpr (kernel_function == kernel_function_type::rbf) {
-        return ::Kokkos::exp(-detail::get<0>(params) * value);
+        return Kokkos::exp(-detail::get<0>(params) * value);
     } else if constexpr (kernel_function == kernel_function_type::sigmoid) {
-        return ::Kokkos::tanh(detail::get<0>(params) * value + detail::get<1>(params));
+        return Kokkos::tanh(detail::get<0>(params) * value + detail::get<1>(params));
     } else if constexpr (kernel_function == kernel_function_type::laplacian) {
-        return ::Kokkos::exp(-detail::get<0>(params) * value);
+        return Kokkos::exp(-detail::get<0>(params) * value);
     } else if constexpr (kernel_function == kernel_function_type::chi_squared) {
-        return ::Kokkos::exp(-detail::get<0>(params) * value);
+        return Kokkos::exp(-detail::get<0>(params) * value);
     } else {
         static_assert(::plssvm::detail::always_false_v<Args...>, "Unsupported kernel function!");
     }

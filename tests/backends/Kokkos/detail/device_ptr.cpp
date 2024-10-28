@@ -10,6 +10,8 @@
 
 #include "plssvm/backends/Kokkos/detail/device_ptr.hpp"  // plssvm::kokkos::detail::device_ptr
 
+#include "plssvm/backends/Kokkos/detail/device_wrapper.hpp"  // plssvm::kokkos::detail::device_wrapper
+
 #include "Kokkos_Core.hpp"  // Kokkos::DefaultExecutionSpace
 
 #include "tests/backends/generic_device_ptr_tests.hpp"  // generic device pointer tests to instantiate
@@ -23,10 +25,10 @@
 template <typename T>
 struct kokkos_device_ptr_test_type {
     using device_ptr_type = plssvm::kokkos::detail::device_ptr<T>;
-    using queue_type = Kokkos::DefaultExecutionSpace;
+    using queue_type = plssvm::kokkos::detail::device_wrapper;
 
     static const queue_type &default_queue() {
-        static const queue_type queue{};
+        static const queue_type queue{ Kokkos::DefaultExecutionSpace{} };
         return queue;
     }
 };

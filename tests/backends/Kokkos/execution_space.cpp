@@ -68,12 +68,74 @@ TEST(KokkosExecutionSpace, from_string_unknown) {
     EXPECT_TRUE(input.fail());
 }
 
-TEST(KokkosExecutionSpace, determine_execution_space) {
-    // check that "unreachable" is never reached
-    EXPECT_THAT(plssvm::kokkos::determine_default_execution_space(), ::testing::AnyOf(plssvm::kokkos::execution_space::cuda, plssvm::kokkos::execution_space::hip, plssvm::kokkos::execution_space::sycl, plssvm::kokkos::execution_space::hpx, plssvm::kokkos::execution_space::openmp, plssvm::kokkos::execution_space::openmp_target, plssvm::kokkos::execution_space::openacc, plssvm::kokkos::execution_space::threads, plssvm::kokkos::execution_space::serial));
+TEST(KokkosExecutionSpace, execution_space_to_kokkos_type) {
+    // check conversions
+#if defined(KOKKOS_ENABLE_CUDA)
+    ::testing::StaticAssertTypeEq<plssvm::kokkos::execution_space_to_kokkos_type_t<plssvm::kokkos::execution_space::cuda>, Kokkos::Cuda>();
+#endif
+#if defined(KOKKOS_ENABLE_HIP)
+    ::testing::StaticAssertTypeEq<plssvm::kokkos::execution_space_to_kokkos_type_t<plssvm::kokkos::execution_space::hip>, Kokkos::HIP>();
+#endif
+#if defined(KOKKOS_ENABLE_SYCL)
+    ::testing::StaticAssertTypeEq<plssvm::kokkos::execution_space_to_kokkos_type_t<plssvm::kokkos::execution_space::sycl>, Kokkos::SYCL>();
+#endif
+#if defined(KOKKOS_ENABLE_HPX)
+    ::testing::StaticAssertTypeEq<plssvm::kokkos::execution_space_to_kokkos_type_t<plssvm::kokkos::execution_space::hpx>, Kokkos::Experimental::HPX>();
+#endif
+#if defined(KOKKOS_ENABLE_OPENMP)
+    ::testing::StaticAssertTypeEq<plssvm::kokkos::execution_space_to_kokkos_type_t<plssvm::kokkos::execution_space::openmp>, Kokkos::OpenMP>();
+#endif
+#if defined(KOKKOS_ENABLE_OPENMPTARGET)
+    ::testing::StaticAssertTypeEq<plssvm::kokkos::execution_space_to_kokkos_type_t<plssvm::kokkos::execution_space::openmp_target>, Kokkos::OpenMPTarget>();
+#endif
+#if defined(KOKKOS_ENABLE_OPENACC)
+    ::testing::StaticAssertTypeEq<plssvm::kokkos::execution_space_to_kokkos_type_t<plssvm::kokkos::execution_space::openacc>, Kokkos::OpenACC>();
+#endif
+#if defined(KOKKOS_ENABLE_THREADS)
+    ::testing::StaticAssertTypeEq<plssvm::kokkos::execution_space_to_kokkos_type_t<plssvm::kokkos::execution_space::threads>, Kokkos::Threads>();
+#endif
+#if defined(KOKKOS_ENABLE_SERIAL)
+    ::testing::StaticAssertTypeEq<plssvm::kokkos::execution_space_to_kokkos_type_t<plssvm::kokkos::execution_space::serial>, Kokkos::Serial>();
+#endif
 }
 
-TEST(KokkosExecutionSpace, available_execution_spaces) {
+TEST(KokkosExecutionSpace, kokkos_type_to_execution_space) {
+    // check conversions
+#if defined(KOKKOS_ENABLE_CUDA)
+    EXPECT_EQ(plssvm::kokkos::kokkos_type_to_execution_space_v<Kokkos::Cuda>, plssvm::kokkos::execution_space::cuda);
+#endif
+#if defined(KOKKOS_ENABLE_HIP)
+    EXPECT_EQ(plssvm::kokkos::kokkos_type_to_execution_space_v<Kokkos::HIP>, plssvm::kokkos::execution_space::hip);
+#endif
+#if defined(KOKKOS_ENABLE_SYCL)
+    EXPECT_EQ(plssvm::kokkos::kokkos_type_to_execution_space_v<Kokkos::SYCL>, plssvm::kokkos::execution_space::sycl);
+#endif
+#if defined(KOKKOS_ENABLE_HPX)
+    EXPECT_EQ(plssvm::kokkos::kokkos_type_to_execution_space_v<Kokkos::Experimental::HPX>, plssvm::kokkos::execution_space::hpx);
+#endif
+#if defined(KOKKOS_ENABLE_OPENMP)
+    EXPECT_EQ(plssvm::kokkos::kokkos_type_to_execution_space_v<Kokkos::OpenMP>, plssvm::kokkos::execution_space::openmp);
+#endif
+#if defined(KOKKOS_ENABLE_OPENMPTARGET)
+    EXPECT_EQ(plssvm::kokkos::kokkos_type_to_execution_space_v<Kokkos::OpenMPTarget>, plssvm::kokkos::execution_space::openmp_target);
+#endif
+#if defined(KOKKOS_ENABLE_OPENACC)
+    EXPECT_EQ(plssvm::kokkos::kokkos_type_to_execution_space_v<Kokkos::Experimental::OpenACC>, plssvm::kokkos::execution_space::openacc);
+#endif
+#if defined(KOKKOS_ENABLE_THREADS)
+    EXPECT_EQ(plssvm::kokkos::kokkos_type_to_execution_space_v<Kokkos::Threads>, plssvm::kokkos::execution_space::threads);
+#endif
+#if defined(KOKKOS_ENABLE_SERIAL)
+    EXPECT_EQ(plssvm::kokkos::kokkos_type_to_execution_space_v<Kokkos::Serial>, plssvm::kokkos::execution_space::serial);
+#endif
+}
+
+TEST(KokkosExecutionSpace, constexpr_available_execution_spaces) {
     // at least one execution space must always be available
-    EXPECT_FALSE(plssvm::kokkos::available_execution_spaces().empty());
+    EXPECT_FALSE(plssvm::kokkos::detail::constexpr_available_execution_spaces().empty());
+}
+
+TEST(KokkosExecutionSpace, list_available_execution_spaces) {
+    // at least one execution space must always be available
+    EXPECT_FALSE(plssvm::kokkos::list_available_execution_spaces().empty());
 }

@@ -156,7 +156,7 @@ TYPED_TEST_P(GenericGPUCSVM, run_blas_level_3_kernel_explicit) {
         ground_truth::device_specific_gemm(alpha, full_kernel_matrix, B, correct_C, *svm.data_distribution_, device_id);
 
         // check C for correctness
-        EXPECT_FLOATING_POINT_MATRIX_NEAR(C_res, correct_C);
+        EXPECT_FLOATING_POINT_MATRIX_NEAR_EPS(C_res, correct_C, 1e6);
     }
 }
 

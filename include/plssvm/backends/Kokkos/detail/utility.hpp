@@ -13,52 +13,76 @@
 #define PLSSVM_BACKENDS_KOKKOS_DETAIL_UTILITY_HPP_
 #pragma once
 
-#include "plssvm/backends/Kokkos/execution_space.hpp"               // plssvm::kokkos::execution_space
-#include "plssvm/target_platforms.hpp"                              // plssvm::target_platform
+#include "plssvm/backends/Kokkos/detail/device_wrapper.hpp"  // plssvm::kokkos::detail::device_wrapper
+#include "plssvm/backends/Kokkos/execution_space.hpp"        // plssvm::kokkos::execution_space
+#include "plssvm/detail/type_traits.hpp"                     // PLSSVM_REQUIRES
+#include "plssvm/target_platforms.hpp"                       // plssvm::target_platform
 
-#include "Kokkos_Core.hpp"  // Kokkos::DefaultExecutionSpace
+#include "Kokkos_Core.hpp"  // Kokkos::ExecutionSpace::fence
 
-#include <string>  // std::string
-#include <vector>  // std::vector
+#include <map>          // std::map
+#include <string>       // std::string
+#include <type_traits>  // std::disjunction, std::is_same
+#include <variant>      // std::variant
+#include <vector>       // std::vector
 
 namespace plssvm::kokkos::detail {
 
-/**
- * @brief Given the execution @p space, determine the respective default target platform.
- * @param[in] space the Kokkos::ExecutionSpace for which the default target platform should be determined
- * @return the default target platform (`[[nodiscard]]`)
- */
-[[nodiscard]] target_platform determine_default_target_platform_from_execution_space(execution_space space);
+namespace impl {
 
 /**
- * @brief Check whether the execution @p space supports the @p target platform. Throws an `plssvm::kokkos::backend_exception` if that's not the case.
- * @param[in] space the Kokkos::ExecutionSpace to investigate
- * @param[in] target the target platform to check
- * @throws plssvm::kokkos::backend_exception if @p space doesn't support the @p target platform
+ * @brief Uninstantiated base type for the check whether a type @p appears in a std::variant @p Variant.
+ * @tparam T the type to check for inclusion
+ * @tparam Variant the std::variant that should include the type @p T
  */
-void check_execution_space_target_platform_combination(execution_space space, target_platform target);
+template <typename T, typename Variant>
+struct is_type_in_variant;
 
 /**
- * @brief Get a list of all available devices in the execution @p space that are supported by the @p target platform.
- * @param[in] space the Kokkos::ExecutionSpace to retrieve the devices from
- * @param[in] target the target platform that must be supported
- * @return all devices for the @p target in the Kokkos::ExecutionSpace @p space (`[[nodiscard]]`)
+ * @brief Implement the inclusion check using `std::disjunction`.
+ * @tparam T the type to check for inclusion
+ * @tparam Variant the std::variant that should include the type @p T
  */
-[[nodiscard]] std::vector<Kokkos::DefaultExecutionSpace> get_device_list(execution_space space, target_platform target);
+template <typename T, typename... Types>
+struct is_type_in_variant<T, std::variant<Types...>> : std::disjunction<std::is_same<T, Types>...> { };
 
 /**
- * @brief Get the name of the device represented by the Kokkos::ExecutionSpace @p exec in the execution @p space.
- * @param[in] space the Kokkos::ExecutionSpace
- * @param[in] exec the device
+ * @copydoc plssvm::kokkos::detail::impl::is_type_in_variant
+ */
+template <typename T, typename Variant>
+inline constexpr bool is_type_in_variant_v = is_type_in_variant<T, Variant>::value;
+
+}  // namespace impl
+
+/**
+ * @brief Return a `std::map` containing a mapping from all available target platforms to the available Kokkos::ExecutionSpace that supports said target platform.
+ * @details If a target platform is supported by multiple Kokkos::ExecutionSpace, the order is determined by the order as returned by `list_available_execution_spaces`.
+ * @return the mapping of all available target_platform <-> Kokkos::ExecutionSpace combinations (`[[nodiscard]]`)
+ */
+[[nodiscard]] std::map<target_platform, std::vector<execution_space>> available_target_platform_to_execution_space_mapping();
+
+/**
+ * @brief Get the name of the device represented by the `device_wrapper` @p dev.
+ * @param[in] dev the device wrapper
  * @return the device name (`[[nodiscard]]`)
  */
-[[nodiscard]] std::string get_device_name(execution_space space, const Kokkos::DefaultExecutionSpace &exec);
+[[nodiscard]] std::string get_device_name(const device_wrapper &dev);
 
 /**
- * @brief Wait for all kernel and/or other operations on the Kokkos::ExecutionSpace @p exec to finish
- * @param[in] exec the Kokkos::ExecutionSpace to synchronize
+ * @brief Wait for all kernel and/or other operations on the device wrapper in the @p dev to finish.
+ * @param[in] dev the device wrapper
  */
-void device_synchronize(const Kokkos::DefaultExecutionSpace &exec);
+void device_synchronize(const device_wrapper &dev);
+
+/**
+ * @brief Wait for all kernel and/or other operations on the device represented by the Kokkos::ExecutionSpace @p exec to finish.
+ * @tparam ExecutionSpace the type of the Kokkos::ExecutionSpace
+ * @param[in] exec the device represented by a Kokkos::ExecutionSpace
+ */
+template <typename ExecutionSpace, PLSSVM_REQUIRES(impl::is_type_in_variant_v<ExecutionSpace, typename impl::create_device_variant_type::type>)>
+void device_synchronize(const ExecutionSpace &exec) {
+    exec.fence();
+}
 
 /**
  * @brief Get the used Kokkos library version.

@@ -10,7 +10,8 @@ set(PLSSVM_KOKKOS_TEST_NAME Kokkos_tests)
 # list all necessary sources
 set(PLSSVM_KOKKOS_TEST_SOURCES
     ${CMAKE_CURRENT_LIST_DIR}/detail/device_ptr.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/detail/typedefs.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/detail/device_view_wrapper.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/detail/device_wrapper.cpp
     ${CMAKE_CURRENT_LIST_DIR}/detail/standard_layout_tuple.cpp
     ${CMAKE_CURRENT_LIST_DIR}/detail/pinned_memory.cpp
     ${CMAKE_CURRENT_LIST_DIR}/detail/utility.cpp

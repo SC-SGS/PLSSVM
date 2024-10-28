@@ -36,6 +36,7 @@
 #include "tests/utility.hpp"                // util::{redirect_output, generate_specific_matrix, construct_from_tuple, flatten, generate_random_matrix}
 
 #include "fmt/format.h"   // fmt::format
+#include "fmt/ranges.h"
 #include "gmock/gmock.h"  // ::testing::HasSubstr
 #include "gtest/gtest.h"  // TYPED_TEST_SUITE_P, TYPED_TEST_P, REGISTER_TYPED_TEST_SUITE_P, EXPECT_EQ, EXPECT_NE, EXPECT_GT, EXPECT_TRUE, EXPECT_DEATH,
                           // ASSERT_EQ, GTEST_SKIP, SUCCEED, ::testing::Test
@@ -891,7 +892,7 @@ TYPED_TEST_P(GenericCSVMSolverKernelFunction, assemble_kernel_matrix_minimal) {
     const mock_csvm_type svm = util::construct_from_tuple<mock_csvm_type>(params, csvm_test_type::additional_arguments);
     const std::size_t num_devices = svm.num_available_devices();
     // be sure to use the correct data distribution
-    svm.data_distribution_ = std::make_unique<plssvm::detail::triangular_data_distribution>(data.num_rows() - 1, 1);
+    svm.data_distribution_ = std::make_unique<plssvm::detail::triangular_data_distribution>(data.num_rows() - 1, num_devices);
 
     // automatic solver type not permitted
     if constexpr (solver == plssvm::solver_type::automatic) {
@@ -1001,7 +1002,7 @@ TYPED_TEST_P(GenericCSVMSolverKernelFunction, assemble_kernel_matrix) {
     const mock_csvm_type svm = util::construct_from_tuple<mock_csvm_type>(params, csvm_test_type::additional_arguments);
     const std::size_t num_devices = svm.num_available_devices();
     // be sure to use the correct data distribution
-    svm.data_distribution_ = std::make_unique<plssvm::detail::triangular_data_distribution>(data.num_rows() - 1, 1);
+    svm.data_distribution_ = std::make_unique<plssvm::detail::triangular_data_distribution>(data.num_rows() - 1, num_devices);
 
     // automatic solver type not permitted
     if constexpr (solver == plssvm::solver_type::automatic) {

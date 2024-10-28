@@ -14,12 +14,11 @@
 #pragma once
 
 #include "plssvm/backends/Kokkos/detail/standard_layout_tuple.hpp"  // plssvm::kokkos::detail::standard_layout_tuple
-#include "plssvm/backends/Kokkos/detail/typedefs.hpp"               // plssvm::kokkos::detail::device_view_type
 #include "plssvm/backends/Kokkos/kernel/kernel_functions.hpp"       // plssvm::kokkos::detail::{feature_reduce, apply_kernel_function}
 #include "plssvm/constants.hpp"                                     // plssvm::{real_type, THREAD_BLOCK_SIZE, INTERNAL_BLOCK_SIZE, FEATURE_BLOCK_SIZE, PADDING_SIZE}
 #include "plssvm/kernel_function_types.hpp"                         // plssvm::kernel_function_type
 
-#include "Kokkos_Core.hpp"  // KOKKOS_INLINE_FUNCTION, Kokkos::TeamPolicy, Kokkos::mdspan, Kokkos::dextents, Kokkos::atomic_add
+#include "Kokkos_Core.hpp"  // KOKKOS_INLINE_FUNCTION, Kokkos::View, Kokkos::TeamPolicy, Kokkos::mdspan, Kokkos::dextents, Kokkos::atomic_add
 
 #include <cstddef>  // std::size_t
 
@@ -27,11 +26,18 @@ namespace plssvm::kokkos::detail {
 
 /**
  * @brief Perform an implicit BLAS SYMM-like operation: `C = alpha * A * B + C` where `A` is the implicitly calculated kernel matrix using the @p kernel_function (never actually stored, reducing the amount of needed global memory), @p B and @p C are matrices, and @p alpha is a scalar.
+ * @tparam ExecutionSpace the Kokkos::ExecutionSpace used to execute the kernel
  * @tparam kernel_function the type of the used kernel function
  * @tparam Args the types of the parameters necessary for the specific kernel function
  */
-template <kernel_function_type kernel_function, typename... Args>
+template <typename ExecutionSpace, kernel_function_type kernel_function, typename... Args>
 class device_kernel_assembly_symm {
+    /**
+     * @brief The type of the used Kokkos::View.
+     */
+    template <typename T>
+    using device_view_type = Kokkos::View<T *, ExecutionSpace>;
+
   public:
     /**
      * @brief Initialize the Kokkos kernel function object.
@@ -49,6 +55,7 @@ class device_kernel_assembly_symm {
      * @param[in] num_classes the number of classes in the data set
      * @param[in] grid_x_offset the offset in x-dimension into the data points if more than one execution grid has to be used
      * @param[in] grid_y_offset the offset in y-dimension into the data points if more than one execution grid has to be used
+     * @param[in] grid_size_x the size of the execution grid in x-dimension
      * @param[in] kernel_function_parameter the parameters necessary to apply the @p kernel_function
      */
     device_kernel_assembly_symm(const real_type alpha, device_view_type<const real_type> q, device_view_type<const real_type> data_d, const std::size_t num_rows, const std::size_t device_num_rows, const std::size_t row_offset, const std::size_t num_features, const real_type QA_cost, const real_type cost, device_view_type<const real_type> B, device_view_type<real_type> C, const std::size_t num_classes, const std::size_t grid_x_offset, const std::size_t grid_y_offset, const std::size_t grid_size_x, Args... kernel_function_parameter) :
@@ -69,8 +76,12 @@ class device_kernel_assembly_symm {
         grid_size_x_{ grid_size_x },
         kernel_function_parameter_{ detail::make_standard_layout_tuple(std::forward<Args>(kernel_function_parameter)...) } { }
 
+    /**
+     * @brief Function call operator overload performing the actual calculation.
+     * @param[in] team the Kokkos team representing the current point in the execution space
+     */
     KOKKOS_INLINE_FUNCTION
-    void operator()(const Kokkos::TeamPolicy<>::member_type &team) const {
+    void operator()(const typename Kokkos::TeamPolicy<ExecutionSpace>::member_type &team) const {
         // cast all values to 64-bit std::size_t to prevent potential 32-bit overflows
         const auto INTERNAL_BLOCK_SIZE_sz = static_cast<std::size_t>(INTERNAL_BLOCK_SIZE);
         const auto THREAD_BLOCK_SIZE_sz = static_cast<std::size_t>(THREAD_BLOCK_SIZE);

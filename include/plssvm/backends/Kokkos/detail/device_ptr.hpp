@@ -6,18 +6,17 @@
  * @license This file is part of the PLSSVM project which is released under the MIT license.
  *          See the LICENSE.md file in the project root for full license information.
  *
- * @brief Small wrapper around a Kokkos view.
+ * @brief Small wrapper around a Kokkos::View.
  */
 
 #ifndef PLSSVM_BACKENDS_KOKKOS_DETAIL_DEVICE_PTR_HPP_
 #define PLSSVM_BACKENDS_KOKKOS_DETAIL_DEVICE_PTR_HPP_
 #pragma once
 
-#include "plssvm/backends/gpu_device_ptr.hpp"          // plssvm::detail::gpu_device_ptr
-#include "plssvm/backends/Kokkos/detail/typedefs.hpp"  // plssvm::kokkos::detail::device_view_type
-#include "plssvm/shape.hpp"                            // plssvm::shape
-
-#include "Kokkos_Core.hpp"  // Kokkos::DefaultExecutionSpace
+#include "plssvm/backends/gpu_device_ptr.hpp"                     // plssvm::detail::gpu_device_ptr
+#include "plssvm/backends/Kokkos/detail/device_view_wrapper.hpp"  // plssvm::kokkos::detail::device_view_wrapper
+#include "plssvm/backends/Kokkos/detail/device_wrapper.hpp"       // plssvm::kokkos::detail::device_wrapper
+#include "plssvm/shape.hpp"                                       // plssvm::shape
 
 #include <cstddef>  // std::size_t
 
@@ -28,9 +27,9 @@ namespace plssvm::kokkos::detail {
  * @tparam T the type of the kernel view to wrap
  */
 template <typename T>
-class device_ptr : public ::plssvm::detail::gpu_device_ptr<T, Kokkos::DefaultExecutionSpace, device_view_type<T>, device_ptr<T>> {
+class device_ptr : public ::plssvm::detail::gpu_device_ptr<T, device_wrapper, device_view_wrapper<T *>, device_ptr<T>> {
     /// The template base type of the Kokkos device_ptr class.
-    using base_type = ::plssvm::detail::gpu_device_ptr<T, Kokkos::DefaultExecutionSpace, device_view_type<T>, device_ptr<T>>;
+    using base_type = ::plssvm::detail::gpu_device_ptr<T, device_wrapper, device_view_wrapper<T *>, device_ptr<T>>;
 
     using base_type::data_;
     using base_type::queue_;
@@ -60,22 +59,22 @@ class device_ptr : public ::plssvm::detail::gpu_device_ptr<T, Kokkos::DefaultExe
     /**
      * @brief Allocates `size * sizeof(T)` bytes in the Kokkos execution space @p exec.
      * @param[in] size the number of elements represented by the device_ptr
-     * @param[in] exec the associated Kokkos execution space
+     * @param[in] device the device wrapper
      */
-    explicit device_ptr(size_type size, const Kokkos::DefaultExecutionSpace &exec);
+    explicit device_ptr(size_type size, const device_wrapper &device);
     /**
      * @brief Allocates `shape.x * shape.y * sizeof(T)` bytes in the Kokkos execution space @p exec.
      * @param[in] shape the number of elements represented by the device_ptr
-     * @param[in] exec the associated Kokkos execution space
+     * @param[in] device the device wrapper
      */
-    explicit device_ptr(plssvm::shape shape, const Kokkos::DefaultExecutionSpace &exec);
+    explicit device_ptr(plssvm::shape shape, const device_wrapper &device);
     /**
      * @brief Allocates `(shape.x + padding.x) * (shape.y + padding.y) * sizeof(T)` bytes in the Kokkos execution space @p exec.
      * @param[in] shape the number of elements represented by the device_ptr
      * @param[in] padding the number of padding elements added to the extent values
-     * @param[in] exec the associated Kokkos execution space
+     * @param[in] device the device wrapper
      */
-    device_ptr(plssvm::shape shape, plssvm::shape padding, const Kokkos::DefaultExecutionSpace &exec);
+    device_ptr(plssvm::shape shape, plssvm::shape padding, const device_wrapper &device);
 
     /**
      * @copydoc plssvm::detail::gpu_device_ptr::gpu_device_ptr(const plssvm::detail::gpu_device_ptr &)

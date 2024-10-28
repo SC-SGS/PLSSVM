@@ -13,12 +13,11 @@
 #define PLSSVM_BACKENDS_KOKKOS_PREDICT_KERNEL_HPP_
 #pragma once
 
-#include "plssvm/backends/Kokkos/detail/typedefs.hpp"          // plssvm::kokkos::detail::device_view_type
 #include "plssvm/backends/Kokkos/kernel/kernel_functions.hpp"  // plssvm::kokkos::detail::{feature_reduce, apply_kernel_function}
 #include "plssvm/constants.hpp"                                // plssvm::{real_type, THREAD_BLOCK_SIZE, INTERNAL_BLOCK_SIZE, FEATURE_BLOCK_SIZE, PADDING_SIZE}
 #include "plssvm/kernel_function_types.hpp"                    // plssvm::kernel_function_type
 
-#include "Kokkos_Core.hpp"  // KOKKOS_INLINE_FUNCTION, Kokkos::TeamPolicy, Kokkos::mdspan, Kokkos::dextents, Kokkos::atomic_add
+#include "Kokkos_Core.hpp"  // KOKKOS_INLINE_FUNCTION, Kokkos::View, Kokkos::TeamPolicy, Kokkos::mdspan, Kokkos::dextents, Kokkos::atomic_add
 
 #include <cstddef>  // std::size_t
 
@@ -26,8 +25,16 @@ namespace plssvm::kokkos::detail {
 
 /**
  * @brief Calculate the `q` vector used to speedup the prediction using the linear kernel function.
+ * @tparam ExecutionSpace the Kokkos::ExecutionSpace used to execute the kernel
  */
+template <typename ExecutionSpace>
 class device_kernel_w_linear {
+    /**
+     * @brief The type of the used Kokkos::View.
+     */
+    template <typename T>
+    using device_view_type = Kokkos::View<T *, ExecutionSpace>;
+
   public:
     /**
      * @brief Initialize the Kokkos kernel function object.
@@ -40,6 +47,7 @@ class device_kernel_w_linear {
      * @param[in] sv_offset the first support vector (row in @p alpha_d) the current device is responsible for
      * @param[in] grid_x_offset the offset in x-dimension into the data points if more than one execution grid has to be used
      * @param[in] grid_y_offset the offset in y-dimension into the data points if more than one execution grid has to be used
+     * @param[in] grid_size_x the size of the execution grid in x-dimension
      */
     device_kernel_w_linear(device_view_type<real_type> w_d, device_view_type<const real_type> alpha_d, device_view_type<const real_type> sv_d, const std::size_t num_classes, const std::size_t num_sv, const std::size_t device_specific_num_sv, const std::size_t sv_offset, const std::size_t grid_x_offset, const std::size_t grid_y_offset, const std::size_t grid_size_x) :
         w_d_{ w_d },
@@ -53,8 +61,12 @@ class device_kernel_w_linear {
         grid_y_offset_{ grid_y_offset },
         grid_size_x_{ grid_size_x } { }
 
+    /**
+     * @brief Function call operator overload performing the actual calculation.
+     * @param[in] team the Kokkos team representing the current point in the execution space
+     */
     KOKKOS_INLINE_FUNCTION
-    void operator()(const Kokkos::TeamPolicy<>::member_type &team) const {
+    void operator()(const typename Kokkos::TeamPolicy<ExecutionSpace>::member_type &team) const {
         // cast all values to 64-bit std::size_t to prevent potential 32-bit overflows
         const auto INTERNAL_BLOCK_SIZE_sz = static_cast<std::size_t>(INTERNAL_BLOCK_SIZE);
         const auto THREAD_BLOCK_SIZE_sz = static_cast<std::size_t>(THREAD_BLOCK_SIZE);
@@ -132,8 +144,16 @@ class device_kernel_w_linear {
 
 /**
  * @brief Predict the @p predict_points_d using the linear kernel speeding up the calculation using the @p w_d vector.
+ * @tparam ExecutionSpace the Kokkos::ExecutionSpace used to execute the kernel
  */
+template <typename ExecutionSpace>
 class device_kernel_predict_linear {
+    /**
+     * @brief The type of the used Kokkos::View.
+     */
+    template <typename T>
+    using device_view_type = Kokkos::View<T *, ExecutionSpace>;
+
   public:
     /**
      * @brief Initialize the Kokkos kernel function object.
@@ -146,6 +166,7 @@ class device_kernel_predict_linear {
      * @param[in] num_features the number of features per data point
      * @param[in] grid_x_offset the offset in x-dimension into the data points if more than one execution grid has to be used
      * @param[in] grid_y_offset the offset in y-dimension into the data points if more than one execution grid has to be used
+     * @param[in] grid_size_x the size of the execution grid in x-dimension
      */
     device_kernel_predict_linear(device_view_type<real_type> prediction_d, device_view_type<const real_type> w_d, device_view_type<const real_type> rho_d, device_view_type<const real_type> predict_points_d, const std::size_t num_classes, const std::size_t num_predict_points, const std::size_t num_features, const std::size_t grid_x_offset, const std::size_t grid_y_offset, const std::size_t grid_size_x) :
         prediction_d_{ prediction_d },
@@ -159,8 +180,12 @@ class device_kernel_predict_linear {
         grid_y_offset_{ grid_y_offset },
         grid_size_x_{ grid_size_x } { }
 
+    /**
+     * @brief Function call operator overload performing the actual calculation.
+     * @param[in] team the Kokkos team representing the current point in the execution space
+     */
     KOKKOS_INLINE_FUNCTION
-    void operator()(const Kokkos::TeamPolicy<>::member_type &team) const {
+    void operator()(const typename Kokkos::TeamPolicy<ExecutionSpace>::member_type &team) const {
         // cast all values to 64-bit std::size_t to prevent potential 32-bit overflows
         const auto INTERNAL_BLOCK_SIZE_sz = static_cast<std::size_t>(INTERNAL_BLOCK_SIZE);
         const auto THREAD_BLOCK_SIZE_sz = static_cast<std::size_t>(THREAD_BLOCK_SIZE);
@@ -242,11 +267,18 @@ class device_kernel_predict_linear {
 
 /**
  * @brief Predict the @p predict_points_d using the @p kernel_function.
+ * @tparam ExecutionSpace the Kokkos::ExecutionSpace used to execute the kernel
  * @tparam kernel_function the type of the used kernel function
  * @tparam Args the types of the parameters necessary for the specific kernel function
  */
-template <kernel_function_type kernel_function, typename... Args>
+template <typename ExecutionSpace, kernel_function_type kernel_function, typename... Args>
 class device_kernel_predict {
+    /**
+     * @brief The type of the used Kokkos::View.
+     */
+    template <typename T>
+    using device_view_type = Kokkos::View<T *, ExecutionSpace>;
+
   public:
     /**
      * @brief Initialize the SYCL kernel function object.
@@ -261,6 +293,7 @@ class device_kernel_predict {
      * @param[in] num_features the number of features per data point
      * @param[in] grid_x_offset the offset in x-dimension into the data points if more than one execution grid has to be used
      * @param[in] grid_y_offset the offset in y-dimension into the data points if more than one execution grid has to be used
+     * @param[in] grid_size_x the size of the execution grid in x-dimension
      * @param[in] kernel_function_parameter the parameters necessary to apply the @p kernel_function
      */
     device_kernel_predict(device_view_type<real_type> prediction_d, device_view_type<const real_type> alpha_d, device_view_type<const real_type> rho_d, device_view_type<const real_type> sv_d, device_view_type<const real_type> predict_points_d, const std::size_t num_classes, const std::size_t num_sv, const std::size_t num_predict_points, const std::size_t num_features, const std::size_t grid_x_offset, const std::size_t grid_y_offset, const std::size_t grid_size_x, Args... kernel_function_parameter) :
@@ -278,8 +311,12 @@ class device_kernel_predict {
         grid_size_x_{ grid_size_x },
         kernel_function_parameter_{ detail::make_standard_layout_tuple(std::forward<Args>(kernel_function_parameter)...) } { }
 
+    /**
+     * @brief Function call operator overload performing the actual calculation.
+     * @param[in] team the Kokkos team representing the current point in the execution space
+     */
     KOKKOS_INLINE_FUNCTION
-    void operator()(const Kokkos::TeamPolicy<>::member_type &team) const {
+    void operator()(const typename Kokkos::TeamPolicy<ExecutionSpace>::member_type &team) const {
         // cast all values to 64-bit std::size_t to prevent potential 32-bit overflows
         const auto INTERNAL_BLOCK_SIZE_sz = static_cast<std::size_t>(INTERNAL_BLOCK_SIZE);
         const auto THREAD_BLOCK_SIZE_sz = static_cast<std::size_t>(THREAD_BLOCK_SIZE);
@@ -359,7 +396,7 @@ class device_kernel_predict {
                     alpha_cache(threadIdx_y + THREAD_BLOCK_SIZE, internal * THREAD_BLOCK_SIZE + threadIdx_x) = alpha_d_[(dim + threadIdx_y + THREAD_BLOCK_SIZE_sz) * (num_sv_ + PADDING_SIZE_sz) + global_sv_idx];
 
                     // the bias (rho) must only be applied once for all support vectors
-                    if (blockIdx_y == 0ull) {
+                    if (blockIdx_y == std::size_t{ 0 }) {
                         out_cache(threadIdx_y, internal * THREAD_BLOCK_SIZE + threadIdx_x) = -rho_d_[dim + threadIdx_y];
                         out_cache(threadIdx_y + THREAD_BLOCK_SIZE, internal * THREAD_BLOCK_SIZE + threadIdx_x) = -rho_d_[dim + threadIdx_y + THREAD_BLOCK_SIZE_sz];
                     } else {
