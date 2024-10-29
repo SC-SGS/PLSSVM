@@ -151,7 +151,7 @@ class device_kernel_assembly {
                             temp_ij += cost_;
                         }
                         // update the kernel matrix
-                        kernel_matrix_d_[device_global_j * (num_rows_ - row_offset_ + PADDING_SIZE_sz) - device_global_j * (device_global_j + std::size_t{ 1 }) / std::size_t{ 2 }; + device_global_i] = temp_ij;
+                        kernel_matrix_d_[device_global_j * (num_rows_ - row_offset_ + PADDING_SIZE_sz) - device_global_j * (device_global_j + std::size_t{ 1 }) / std::size_t{ 2 } + device_global_i] = temp_ij;
                     }
                 }
             }
