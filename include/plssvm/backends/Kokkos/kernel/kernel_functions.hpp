@@ -19,6 +19,7 @@
 
 #include "Kokkos_MathematicalFunctions.hpp"  // KOKKOS_INLINE_FUNCTION, Kokkos::pow, Kokkos::exp, Kokkos::tanh, Kokkos::abs
 
+#include <float.h>      // LT_MIN, DBL_MIN
 #include <type_traits>  // std::is_same_v
 
 namespace plssvm::kokkos::detail {
