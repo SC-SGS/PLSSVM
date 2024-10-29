@@ -60,7 +60,6 @@ void device_ptr<T>::memset(const int pattern, const size_type pos, const size_ty
     }
     const size_type rnum_bytes = std::min(num_bytes, (this->size_padded() - pos) * sizeof(value_type));
 
-    // TODO: use Kokkos ZeroMemset specialization?
     data_.execute([&](const auto &data) {
         using kokkos_execution_space_type = typename ::plssvm::detail::remove_cvref_t<decltype(data)>::execution_space;
 
@@ -69,7 +68,7 @@ void device_ptr<T>::memset(const int pattern, const size_type pos, const size_ty
         auto p = static_cast<unsigned char>(pattern);
         // memset subview
         Kokkos::parallel_for("device_ptr_memset",
-                             Kokkos::RangePolicy<kokkos_execution_space_type>(0, rnum_bytes),
+                             Kokkos::RangePolicy<kokkos_execution_space_type, size_type>(size_type{ 0 }, rnum_bytes),
                              device_memset_kernel{ data_ptr, p });
 
         detail::device_synchronize(queue_);
