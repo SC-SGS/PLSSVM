@@ -13,7 +13,9 @@
 #define PLSSVM_BACKENDS_KOKKOS_DETAIL_DEVICE_VIEW_WRAPPER_HPP_
 
 #include "plssvm/backends/Kokkos/detail/conditional_execution.hpp"  // PLSSVM_KOKKOS_BACKEND_INVOKE_IF_*
+#include "plssvm/backends/Kokkos/detail/device_wrapper.hpp"         // plssvm::kokkos::detail::device_wrapper
 #include "plssvm/backends/Kokkos/execution_space.hpp"               // plssvm::kokkos::{execution_space, execution_space_to_kokkos_type_t}, plssvm::kokkos::detail::constexpr_available_execution_spaces
+#include "plssvm/detail/type_traits.hpp"                            // plssvm::detail::remove_cvref_t
 #include "plssvm/detail/utility.hpp"                                // plssvm::detail::unreachable
 
 #include "Kokkos_Core.hpp"  // Kokkos::View, Kokkos::ExecutionSpace
@@ -167,62 +169,17 @@ class device_view_wrapper {
 /**
  * @brief Given a execution @p space and the number of elements @p size, creates a Kokkos::View in the respective memory space.
  * @tparam T the value type of the underlying Kokkos::View
- * @param[in] space the specific execution space
+ * @param[in] device the device for which this view should be allocated
  * @param[in] size the size of the Kokkos::View (number of elements **not** byte!)
  * @return a Kokkos::View wrapper where the active member of the internal `std::variant` corresponds to the Kokkos::View in the Kokkos::ExecutionSpace specified by @p space (`[[nodiscard]]`)
  */
 template <typename T>
-[[nodiscard]] device_view_wrapper<T> make_device_view_wrapper(const execution_space &space, const std::size_t size) {
-    switch (space) {
-        case execution_space::cuda:
-            PLSSVM_KOKKOS_BACKEND_INVOKE_IF_CUDA(([&]() {
-                return device_view_wrapper{ Kokkos::View<T, Kokkos::Cuda>{ "cuda_device_ptr_view", size } };
-            }));
-            break;
-        case execution_space::hip:
-            PLSSVM_KOKKOS_BACKEND_INVOKE_IF_HIP(([&]() {
-                return device_view_wrapper{ Kokkos::View<T, Kokkos::HIP>{ "hip_device_ptr_view", size } };
-            }));
-            break;
-        case execution_space::sycl:
-            PLSSVM_KOKKOS_BACKEND_INVOKE_IF_SYCL(([&]() {
-                return device_view_wrapper{ Kokkos::View<T, Kokkos::SYCL>{ "sycl_device_ptr_view", size } };
-            }));
-            break;
-        case execution_space::hpx:
-            PLSSVM_KOKKOS_BACKEND_INVOKE_IF_HPX(([&]() {
-                return device_view_wrapper{ Kokkos::View<T, Kokkos::Experimental::HPX>{ "hpx_device_ptr_view", size } };
-            }));
-            break;
-        case execution_space::openmp:
-            PLSSVM_KOKKOS_BACKEND_INVOKE_IF_OPENMP(([&]() {
-                return device_view_wrapper{ Kokkos::View<T, Kokkos::OpenMP>{ "openmp_device_ptr_view", size } };
-            }));
-            break;
-        case execution_space::openmp_target:
-            PLSSVM_KOKKOS_BACKEND_INVOKE_IF_OPENMPTARGET(([&]() {
-                return device_view_wrapper{ Kokkos::View<T Kokkos::OpenMPTarget>{ "openmptarget_device_ptr_view", size } };
-            }));
-            break;
-        case execution_space::openacc:
-            PLSSVM_KOKKOS_BACKEND_INVOKE_IF_OPENACC(([&]() {
-                return device_view_wrapper{ Kokkos::View<T, Kokkos::Experimental::OpenACC>{ "openacc_device_ptr_view", size } };
-            }));
-            break;
-        case execution_space::threads:
-            PLSSVM_KOKKOS_BACKEND_INVOKE_IF_THREADS(([&]() {
-                return device_view_wrapper{ Kokkos::View<T, Kokkos::Threads>{ "threads_device_ptr_view", size } };
-            }));
-            break;
-        case execution_space::serial:
-            PLSSVM_KOKKOS_BACKEND_INVOKE_IF_SERIAL(([&]() {
-                return device_view_wrapper{ Kokkos::View<T, Kokkos::Serial>{ "serial_device_ptr_view", size } };
-            }));
-            break;
-    }
-    // all possible cases should be handled by the previous switch
-    // -> silence missing return statement compiler warnings due to throw statement
-    ::plssvm::detail::unreachable();
+[[nodiscard]] device_view_wrapper<T> make_device_view_wrapper(const device_wrapper &device, const std::size_t size) {
+    return device.execute_and_return([&](const auto &value) {
+        using kokkos_execution_space_type = ::plssvm::detail::remove_cvref_t<decltype(value)>;
+
+        return device_view_wrapper{ Kokkos::View<T, kokkos_execution_space_type>{ Kokkos::view_alloc(value, "device_ptr_view"), size } };
+    });
 }
 
 }  // namespace plssvm::kokkos::detail

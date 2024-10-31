@@ -47,7 +47,7 @@ device_ptr<T>::device_ptr(const plssvm::shape shape, const device_wrapper &devic
 template <typename T>
 device_ptr<T>::device_ptr(const plssvm::shape shape, const plssvm::shape padding, const device_wrapper &device) :
     base_type{ shape, padding, device } {
-    data_ = make_device_view_wrapper<T *>(device.get_execution_space(), this->size_padded());
+    data_ = make_device_view_wrapper<T *>(device, this->size_padded());
     this->memset(0);
 }
 
@@ -61,18 +61,25 @@ void device_ptr<T>::memset(const int pattern, const size_type pos, const size_ty
     const size_type rnum_bytes = std::min(num_bytes, (this->size_padded() - pos) * sizeof(value_type));
 
     data_.execute([&](const auto &data) {
-        using kokkos_execution_space_type = typename ::plssvm::detail::remove_cvref_t<decltype(data)>::execution_space;
-
         // create subview of the device data
         auto *data_ptr = reinterpret_cast<unsigned char *>(data.data() + pos);
         auto p = static_cast<unsigned char>(pattern);
         // memset subview
-        Kokkos::parallel_for("device_ptr_memset",
-                             Kokkos::RangePolicy<kokkos_execution_space_type, size_type>(size_type{ 0 }, rnum_bytes),
-                             device_memset_kernel{ data_ptr, p });
+        // TODO: warning?
+        // TODO: if possible, use fill(0) kernel?
+        queue_.execute([&](const auto &exec) {
+            using kokkos_execution_space_type = ::plssvm::detail::remove_cvref_t<decltype(exec)>;
 
-        detail::device_synchronize(queue_);
+            // create the execution policy
+            const Kokkos::RangePolicy<kokkos_execution_space_type> policy{ exec, size_type{ 0 }, rnum_bytes };
+            // launch the memset kernel
+            Kokkos::parallel_for("device_ptr_memset",
+                                 policy,
+                                 device_memset_kernel{ data_ptr, p });
+        });
     });
+
+    detail::device_synchronize(queue_);
 }
 
 template <typename T>
@@ -87,11 +94,13 @@ void device_ptr<T>::fill(const value_type value, const size_type pos, const size
     data_.execute([&](const auto &data) {
         // create subview of the device data
         auto data_subview = Kokkos::subview(data, std::make_pair(pos, pos + rcount));
-        // fill subview with constant data
-        Kokkos::deep_copy(data_subview, value);
-
-        detail::device_synchronize(queue_);
+        queue_.execute([&](const auto &exec) {
+            // fill subview with constant data
+            Kokkos::deep_copy(exec, data_subview, value);
+        });
     });
+
+    detail::device_synchronize(queue_);
 }
 
 template <typename T>
@@ -106,11 +115,13 @@ void device_ptr<T>::copy_to_device(const_host_pointer_type data_to_copy, const s
         const host_view_type<const T> host_view{ data_to_copy, rcount };
         // create subview of the device data
         auto data_subview = Kokkos::subview(data, std::make_pair(pos, pos + rcount));
-        // copy the data to the device subview
-        Kokkos::deep_copy(data_subview, host_view);
-
-        detail::device_synchronize(queue_);
+        queue_.execute([&](const auto &exec) {
+            // fill subview with constant data
+            Kokkos::deep_copy(exec, data_subview, host_view);
+        });
     });
+
+    detail::device_synchronize(queue_);
 }
 
 template <typename T>
@@ -151,11 +162,13 @@ void device_ptr<T>::copy_to_host(host_pointer_type buffer, const size_type pos, 
         const host_view_type<T> host_view{ buffer, rcount };
         // create subview of the device data
         auto data_subview = Kokkos::subview(data, std::make_pair(pos, pos + rcount));
-        // copy the data to the host
-        Kokkos::deep_copy(host_view, data_subview);
-
-        detail::device_synchronize(queue_);
+        queue_.execute([&](const auto &exec) {
+            // fill subview with constant data
+            Kokkos::deep_copy(exec, host_view, data_subview);
+        });
     });
+
+    detail::device_synchronize(queue_);
 }
 
 template <typename T>

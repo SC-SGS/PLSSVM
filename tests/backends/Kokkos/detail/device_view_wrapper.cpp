@@ -75,3 +75,5 @@ TEST(KokkosDeviceViewWrapper, inequality) {
     // should not be unequal
     EXPECT_FALSE(view1 != view2);
 }
+
+// TODO: make_device_view_wrapper
