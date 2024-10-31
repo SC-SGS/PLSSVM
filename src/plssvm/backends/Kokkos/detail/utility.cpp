@@ -21,9 +21,10 @@
 
 #include "fmt/core.h"  // fmt::format
 
-#include <map>     // std::map
-#include <string>  // std::string
-#include <vector>  // std::vector
+#include <map>            // std::map
+#include <string>         // std::string
+#include <unordered_set>  // std::unordered_set
+#include <vector>         // std::vector
 
 namespace plssvm::kokkos::detail {
 
@@ -39,12 +40,54 @@ std::map<target_platform, std::vector<execution_space>> available_target_platfor
                 available_map[target_platform::gpu_nvidia].push_back(execution_space::cuda);
                 break;
             case execution_space::hip:
-                // NVIDIA and AMD GPUs possible
-                available_map[target_platform::gpu_nvidia].push_back(execution_space::hip);
+                // NVIDIA or AMD GPUs possible (both simultaneously are unsupported)
+#if defined(KOKKOS_ENABLE_HIP)
+    #if defined(__HIP_PLATFORM_AMD__)
                 available_map[target_platform::gpu_amd].push_back(execution_space::hip);
+    #elif defined(__HIP_PLATFORM_NVIDIA__)
+                available_map[target_platform::gpu_nvidia].push_back(execution_space::hip);
+    #else
+        #error "Unknown HIP platform"
+    #endif
+#endif
                 break;
             case execution_space::sycl:
+                // list all potential target platforms currently available in SYCL
+#if defined(KOKKOS_ENABLE_SYCL)
+                {
+                    std::unordered_set<target_platform> targets{};
+                    for (const auto &platform : sycl::platform::get_platforms()) {
+                        for (const auto &device : platform.get_devices()) {
+                            // Note: Kokkos is Intel LLVM/DPC++/icpx only -> we can use the specific implementation defined enum values
+                            if (device.is_cpu()) {
+                                targets.insert(target_platform::cpu);
+                            } else if (device.is_gpu()) {
+                                // the current device is a GPU
+                                // get vendor string and convert it to all lower case
+                                const std::string vendor_string = ::plssvm::detail::as_lower_case(device.get_info<::sycl::info::device::vendor>());
+                                // get platform name of current GPU device and convert it to all lower case
+                                const std::string platform_string = ::plssvm::detail::as_lower_case(platform.get_info<::sycl::info::platform::name>());
+
+                                // check vendor string and insert to correct target platform
+                                if (::plssvm::detail::contains(vendor_string, "nvidia")) {
+                                    targets.insert(target_platform::gpu_nvidia);
+                                } else if (::plssvm::detail::contains(vendor_string, "amd") || ::plssvm::detail::contains(vendor_string, "advanced micro devices")) {
+                                    targets.insert(target_platform::gpu_amd);
+                                } else if (::plssvm::detail::contains(vendor_string, "intel")) {
+                                    targets.insert(target_platform::gpu_intel);
+                                }
+                            }
+                        }
+                    }
+                    // now we know which target platforms are available in SYCL -> add them to our mapping
+                    for (const target_platform target : targets) {
+                        available_map[target].push_back(execution_space::sycl);
+                    }
+                }
+#endif
+                break;
             case execution_space::openacc:
+                // TODO: restrict to available devices
                 // all GPUs and CPU possible
                 available_map[target_platform::gpu_nvidia].push_back(execution_space::sycl);
                 available_map[target_platform::gpu_amd].push_back(execution_space::sycl);
@@ -52,6 +95,7 @@ std::map<target_platform, std::vector<execution_space>> available_target_platfor
                 available_map[target_platform::cpu].push_back(execution_space::sycl);
                 break;
             case execution_space::openmp_target:
+                // TODO: restrict to available devices
                 // all GPUs
                 available_map[target_platform::gpu_nvidia].push_back(execution_space::openmp_target);
                 available_map[target_platform::gpu_amd].push_back(execution_space::openmp_target);
