@@ -32,7 +32,7 @@
 #include <exception>    // std::exception
 #include <functional>   // std::mem_fn
 #include <iostream>     // std::cerr, std::endl
-#include <memory>       // std::unique_ptr
+#include <memory>       // std::unique_ptr, std::make_unique
 #include <type_traits>  // std::remove_reference_t
 #include <utility>      // std::pair
 #include <variant>      // std::visit
@@ -41,6 +41,12 @@
 using namespace std::chrono_literals;
 
 int main(int argc, char *argv[]) {
+#if defined(PLSSVM_HAS_KOKKOS_BACKEND)
+    // create std::unique_ptr containing a Kokkos::ScopeGuard
+    // -> used to automatically handle Kokkos::finalize
+    std::unique_ptr<Kokkos::ScopeGuard> kokkos_guard{};
+#endif
+
     try {
         const std::chrono::steady_clock::time_point start_time = std::chrono::steady_clock::now();
         PLSSVM_DETAIL_TRACKING_PERFORMANCE_TRACKER_SET_REFERENCE_TIME(start_time);
@@ -79,7 +85,7 @@ int main(int argc, char *argv[]) {
 
             // initialize Kokkos if necessary
             if (use_kokkos_as_backend) {
-                Kokkos::initialize(argc, argv);  // TODO: set device?
+                kokkos_guard = std::make_unique<Kokkos::ScopeGuard>(argc, argv);
                 PLSSVM_ASSERT(Kokkos::is_initialized(), "Something went wrong initializing the Kokkos environment!");
             }
 #endif
@@ -102,14 +108,6 @@ int main(int argc, char *argv[]) {
                                plssvm::solver = cmd_parser.solver);
             // save model to file
             model.save(cmd_parser.model_filename);
-
-            // finalize Kokkos if necessary
-#if defined(PLSSVM_HAS_KOKKOS_BACKEND)
-            if (use_kokkos_as_backend) {  // TODO: what if an exception occurred
-                Kokkos::finalize();
-                PLSSVM_ASSERT(Kokkos::is_finalized(), "Something went wrong finalizing the Kokkos environment!");
-            }
-#endif
         };
         std::visit(data_set_visitor, plssvm::detail::cmd::data_set_factory(cmd_parser));
 
