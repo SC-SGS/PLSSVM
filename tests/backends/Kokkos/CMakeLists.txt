@@ -23,7 +23,7 @@ set(PLSSVM_KOKKOS_TEST_SOURCES
 find_package(Kokkos REQUIRED)
 
 # add test executable
-add_executable(${PLSSVM_KOKKOS_TEST_NAME} ${CMAKE_CURRENT_LIST_DIR}/../../kokkos_main.cpp ${PLSSVM_KOKKOS_TEST_SOURCES})
+add_executable(${PLSSVM_KOKKOS_TEST_NAME} ${CMAKE_CURRENT_LIST_DIR}/../../main.cpp ${PLSSVM_KOKKOS_TEST_SOURCES})
 
 # link against test library
 target_link_libraries(${PLSSVM_KOKKOS_TEST_NAME} PRIVATE ${PLSSVM_BASE_TEST_LIBRARY_NAME})
